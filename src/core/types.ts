@@ -1,4 +1,5 @@
 // Types de base partagés par tout le jeu (téléphone, serveur, simulations).
+import type { SkillDef, Talent } from './battle/types';
 
 export const FACTIONS = ['knights', 'assassins', 'mages', 'demons', 'angels', 'myths'] as const;
 export type Faction = (typeof FACTIONS)[number];
@@ -13,13 +14,22 @@ export type Role = (typeof ROLES)[number];
 export const RARITIES = ['common', 'rare', 'epic', 'legendary'] as const;
 export type Rarity = (typeof RARITIES)[number];
 
-/** Fiche fixe d'un héros (la même pour tous les joueurs). */
+/** Fiche fixe d'un héros (la même pour tous les joueurs). Statistiques au niveau 1, ★1. */
 export interface HeroDef {
   id: string;
+  name: string;
   faction: Faction;
   element: Element;
   role: Role;
   rarity: Rarity;
+  ranged: boolean;
+  hp: number;
+  atk: number;
+  def: number;
+  /** Temps entre deux attaques, en tours de 100 ms. */
+  interval: number;
+  skill: SkillDef;
+  talent: Talent;
 }
 
 /**

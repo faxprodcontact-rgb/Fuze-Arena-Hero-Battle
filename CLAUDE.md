@@ -9,21 +9,34 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
 
 ## Où en est le projet
 
-Étape 1 (conception) : cahier validé en grande partie, règles de base et simulations de progression en place.
-Étapes suivantes : prototype (combat 5 contre 5) → cœur du jeu → habillage → social → argent → bêta → lancement.
+- Étape 1 (conception) et étape 2 (prototype du combat) : faites.
+- En cours : **version complète avec dessins provisoires**, tout le jeu jouable hors ligne (sauvegarde sur le
+  téléphone) pour travailler l'interface. En ligne pour le propriétaire : https://claude.ai/artifact/EigGhykFPgfeb7L1UoYfDX
+  (republier avec l'outil Artifact : la page = `dist/` construit, le CSS recopié dans la page, le JS en fichier joint).
+- Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 
 ## Organisation du code
 
 | Dossier | Rôle |
 |---|---|
 | `src/core/` | Règles du jeu, **sans aucun affichage** : le même code servira au téléphone, au serveur et aux simulations |
-| `src/core/data/` | Tous les réglages (étoiles, fusion, invocations, économie, campagne). On équilibre ici, pas ailleurs |
+| `src/core/data/` | Tous les réglages (héros, monstres, étoiles, fusion, invocations, économie, campagne, modes, boutique). On équilibre ici, pas ailleurs |
+| `src/core/battle/` | Moteur de combat déterministe (graine + choix du joueur = combat rejouable par le serveur) |
+| `src/game/state/` | État du joueur et **toutes ses actions** (`actions.ts` = la seule porte d'entrée ; à brancher sur le serveur plus tard) |
+| `src/game/ui/` | Menus (Preact) : `app.tsx` (coquille), `screens/*` (un fichier par écran), `kit.tsx`, `style.css` |
+| `src/game/battle-scene.ts` | Écran de combat (Phaser), utilisé par tous les modes |
+| `src/game/art.ts` | Dessins provisoires faits par le code (héros et monstres) |
+| `src/game/i18n.ts` | Tous les textes, français et anglais |
 | `simulations/` | Joueurs virtuels qui jouent des mois en accéléré pour vérifier le rythme |
 | `tests/` | Tests automatiques des règles |
 | `docs/` | Résultats des simulations |
 
-Commandes : `npm test` (tests), `npm run verifier` (vérification du code), `npm run simuler` (rapport),
-`npm run simuler -- --calibrer` (recalcule la difficulté de la campagne, à recopier dans `src/core/data/campaign.ts`).
+Commandes : `npm run dev` (jeu en local), `npm run build` (construit `dist/`), `npm test` (tests),
+`npm run verifier` (vérification du code), `npm run simuler` (rapport de progression),
+`npm run simuler -- --calibrer` (recalcule la difficulté de la campagne, à recopier dans `src/core/data/campaign.ts`),
+`npm run combat` (force des monstres à puissance égale), `npx tsx simulations/premiers-jours.ts` (première semaine du
+vrai jeu jouée par un joueur automatique). Réglages → « Outils de test » dans le jeu : avancer le temps, ressources,
+tout débloquer.
 
 ## Règles de travail
 

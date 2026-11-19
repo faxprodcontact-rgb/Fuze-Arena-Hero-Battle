@@ -1,12 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import { Battle } from '../src/core/battle/engine';
-import { ENERGY_MAX, type BattleSetup } from '../src/core/battle/types';
-import { heroUnit, stageWaves } from '../src/core/data/prototype';
+import { heroToUnit } from '../src/core/battle/units';
+import { ENERGY_MAX, type BattleSetup, type Slot } from '../src/core/battle/types';
 import { hasAdvantage } from '../src/core/data/elements';
+import { heroesOf } from '../src/core/data/heroes';
+import { campaignWaves } from '../src/core/stages';
+import type { Hero } from '../src/core/types';
+
+const team: [string, Slot][] = [
+  [heroesOf('knights', 'epic')[0]!.id, 0],
+  [heroesOf('demons', 'epic')[1]!.id, 1],
+  [heroesOf('mages', 'epic')[1]!.id, 2],
+  [heroesOf('angels', 'epic')[3]!.id, 3],
+  [heroesOf('myths', 'epic')[2]!.id, 4],
+];
 
 const setup = (seed: number, auto = true): BattleSetup => ({
-  heroes: [heroUnit('knight', 12, 0), heroUnit('angel', 12, 3), heroUnit('mage', 12, 2), heroUnit('assassin', 12, 1), heroUnit('myth', 12, 4)],
-  waves: stageWaves(9),
+  heroes: team.map(([defId, slot], i) => heroToUnit({ uid: i + 1, defId, stars: 4, level: 60 } as Hero, slot)),
+  waves: campaignWaves(300),
   seed,
   auto,
 });
@@ -47,7 +58,7 @@ describe('moteur de combat', () => {
   it('les ennemis frappent d’abord la défense', () => {
     const battle = new Battle(setup(3));
     const back = battle.heroes.find((h) => h.slot === 3)!;
-    for (let i = 0; i < 40; i++) battle.step();
+    for (let i = 0; i < 30; i++) battle.step();
     const front = battle.heroes.filter((h) => h.slot <= 1);
     expect(front.some((h) => h.hp < h.maxHp)).toBe(true);
     expect(back.hp).toBe(back.maxHp);
@@ -59,5 +70,9 @@ describe('moteur de combat', () => {
     expect(hasAdvantage('wind', 'earth')).toBe(true);
     expect(hasAdvantage('earth', 'water')).toBe(true);
     expect(hasAdvantage('fire', 'water')).toBe(false);
+  });
+
+  it('les 1 200 niveaux de campagne se construisent', () => {
+    for (let s = 1; s <= 1200; s++) expect(campaignWaves(s).length).toBeGreaterThan(0);
   });
 });

@@ -1,0 +1,253 @@
+// Fenêtres : quêtes, boutique et passe, réglages, récompenses, pub simulée, confirmation.
+import { useEffect, useState } from 'preact/hooks';
+import {
+  AD_SECONDS, ARENA_SHOP, DAILY_CHESTS, DAILY_QUESTS, GUILD_SHOP, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL,
+  WEEKLY_CHESTS, WEEKLY_QUESTS, type Reward,
+} from '../../../core/data/modes';
+import { heroDef } from '../../../core/data/heroes';
+import { t } from '../../i18n';
+import {
+  buyExchange, buyOffer, claimChest, claimPass, claimQuest, demoUnlockAll, giveTestResources, passLevel, questPoints,
+  resetGame, setLang, setName, setSpeed, timeTravel,
+} from '../../state/actions';
+import { now, useGame } from '../../state/store';
+import type { Gain } from '../../state/types';
+import { Bar, Btn, Cur, HeroCard, ItemIcon, Modal, Tabs } from '../kit';
+import { close, open, toast } from '../nav';
+import { ShopTile } from './adventure';
+
+function RewardLine({ reward }: { reward: Reward }) {
+  return <span class="row gap-s wrap">{Object.entries(reward).map(([k, v]) => <Cur k={k} n={v ?? 0} />)}</span>;
+}
+
+export function QuestsModal() {
+  const s = useGame();
+  const [kind, setKind] = useState<'daily' | 'weekly'>('daily');
+  const defs = kind === 'daily' ? DAILY_QUESTS : WEEKLY_QUESTS;
+  const box = kind === 'daily' ? s.daily : s.weekly;
+  const chests = kind === 'daily' ? DAILY_CHESTS : WEEKLY_CHESTS;
+  const points = questPoints(kind);
+  const max = chests[chests.length - 1]!.points;
+  return (
+    <Modal title={t('side.quests')} wide>
+      <Tabs value={kind} onChange={setKind} options={[['daily', t('quests.daily')], ['weekly', t('quests.weekly')]]} />
+      <div class="activity">
+        <Bar value={points} max={max} color="var(--gold)" label={`${t('quests.activity')} ${points}`} />
+        <div class="chests">
+          {chests.map((c, i) => {
+            const done = box.chests.includes(i);
+            const ready = !done && points >= c.points;
+            return (
+              <button class={`chest-btn${done ? ' done' : ''}${ready ? ' ready' : ''}`} style={{ left: `${(c.points / max) * 100}%` }}
+                onClick={() => {
+                  const gain = claimChest(i, kind);
+                  if (gain) open({ type: 'gain', title: t('quests.activity'), gain });
+                }}>
+                <span class="chest-mini" />
+                <small>{c.points}</small>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <ul class="quests">
+        {defs.map((q) => {
+          const progress = Math.min(q.goal, box.quests[q.id] ?? 0);
+          const claimed = box.claimed.includes(q.id);
+          const ready = !claimed && progress >= q.goal;
+          return (
+            <li class={claimed ? 'done' : ''}>
+              <div class="grow">
+                <strong>{t(`quest.${q.event}`)}</strong>
+                <Bar value={progress} max={q.goal} label={`${progress} / ${q.goal}`} />
+              </div>
+              <span class="pts">+{q.points}</span>
+              {claimed ? <span class="muted small">{t('claimed')}</span> : (
+                <Btn kind={ready ? 'gold' : 'ghost'} small disabled={!ready} onClick={() => claimQuest(q.id, kind)}>{t('claim')}</Btn>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </Modal>
+  );
+}
+
+function simulatedBuy(id: string) {
+  open({
+    type: 'confirm',
+    text: t('shop.simulated'),
+    onYes: () => {
+      const gain = buyOffer(id);
+      if (gain) open({ type: 'gain', title: id.startsWith('gems') ? t('shop.gems') : t(`offer.${id}`), gain });
+    },
+  });
+}
+
+export function ShopModal({ tab: initial = 'offers' }: { tab?: 'offers' | 'pass' | 'exchange' }) {
+  const s = useGame();
+  const [tab, setTab] = useState<'offers' | 'gems' | 'pass' | 'exchange'>(initial);
+  const level = passLevel(s);
+  return (
+    <Modal title={t('side.shop')} wide>
+      <Tabs value={tab} onChange={setTab} options={[
+        ['offers', t('shop.offers')], ['gems', t('shop.gems')], ['pass', t('shop.pass')], ['exchange', t('shop.exchange')],
+      ]} />
+      {tab === 'offers' && (
+        <div class="list">
+          {OFFERS.filter((o) => o.kind !== 'gems').map((o) => {
+            const bought = s.shop.bought[o.id] ?? 0;
+            const soldOut = o.limit > 0 && bought >= o.limit;
+            const cardDays = Math.ceil((s.shop.cardUntil - now()) / 86_400_000);
+            return (
+              <div class={`card offer offer-${o.kind}`}>
+                <div class="grow">
+                  <strong>{t(`offer.${o.id}`)}</strong>
+                  {o.kind === 'card' && <p class="muted small">{cardDays > 0 ? t('offer.daysLeft', { n: cardDays }) : t('offer.card.desc')}</p>}
+                  {o.kind === 'noAds' && <p class="muted small">{t('offer.noads.desc')}</p>}
+                  <RewardLine reward={o.reward} />
+                </div>
+                <Btn kind="gold" small disabled={soldOut} onClick={() => simulatedBuy(o.id)}>{soldOut ? t('offer.owned') : o.price}</Btn>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {tab === 'gems' && (
+        <div class="shop-grid">
+          {OFFERS.filter((o) => o.kind === 'gems').map((o) => (
+            <ShopTile cost={o.price} reward={o.reward} onBuy={() => simulatedBuy(o.id)} />
+          ))}
+        </div>
+      )}
+      {tab === 'pass' && (
+        <div class="list">
+          <div class="card">
+            <div class="row between"><strong>{t('pass.level', { n: level })}</strong><span class="muted">{t('pass.points', { n: s.pass.points % PASS_POINTS_PER_LEVEL, m: PASS_POINTS_PER_LEVEL })}</span></div>
+            <Bar value={s.pass.points % PASS_POINTS_PER_LEVEL} max={PASS_POINTS_PER_LEVEL} color="#a35cff" />
+            {!s.shop.passPremium && <Btn kind="purple" wide onClick={() => simulatedBuy('pass')}>{t('offer.pass')} · 9,99 €</Btn>}
+          </div>
+          <div class="pass-grid">
+            <span class="muted small">{t('pass.free')}</span><span /><span class="muted small">{t('pass.premium')}</span>
+            {PASS_LEVELS.slice(0, Math.max(10, level + 3)).map((lv, i) => (
+              <>
+                <PassCell reward={lv.free} done={s.pass.claimedFree.includes(i)} ready={i < level} onClaim={() => claimPass(i, false)} />
+                <span class={`pass-num${i < level ? ' on' : ''}`}>{i + 1}</span>
+                <PassCell reward={lv.premium} done={s.pass.claimedPremium.includes(i)} ready={i < level && s.shop.passPremium} locked={!s.shop.passPremium} onClaim={() => claimPass(i, true)} />
+              </>
+            ))}
+          </div>
+        </div>
+      )}
+      {tab === 'exchange' && (
+        <div class="list">
+          <h3><Cur k="arenaTokens" n={s.wallet.arenaTokens} /></h3>
+          <div class="shop-grid">
+            {ARENA_SHOP.map((x) => <ShopTile cost={<Cur k="arenaTokens" n={x.cost} />} reward={x.reward} disabled={s.wallet.arenaTokens < x.cost}
+              onBuy={() => { const g = buyExchange('arena', x.id); if (g) open({ type: 'gain', title: t('shop.exchange'), gain: g }); }} />)}
+          </div>
+          <h3><Cur k="guildCoins" n={s.wallet.guildCoins} /></h3>
+          <div class="shop-grid">
+            {GUILD_SHOP.map((x) => <ShopTile cost={<Cur k="guildCoins" n={x.cost} />} reward={x.reward} disabled={s.wallet.guildCoins < x.cost}
+              onBuy={() => { const g = buyExchange('guild', x.id); if (g) open({ type: 'gain', title: t('shop.exchange'), gain: g }); }} />)}
+          </div>
+        </div>
+      )}
+    </Modal>
+  );
+}
+
+function PassCell(p: { reward: Reward; done: boolean; ready: boolean; locked?: boolean; onClaim: () => void }) {
+  return (
+    <button class={`pass-cell${p.done ? ' done' : ''}${p.ready && !p.done ? ' ready' : ''}${p.locked ? ' locked' : ''}`}
+      onClick={() => p.ready && !p.done && p.onClaim()}>
+      <RewardLine reward={p.reward} />
+    </button>
+  );
+}
+
+export function SettingsModal() {
+  const s = useGame();
+  const [name, setNameInput] = useState(s.name);
+  return (
+    <Modal title={t('side.settings')}>
+      <label class="field">
+        <span>{t('settings.name')}</span>
+        <input id="player-name" value={name} maxLength={16} onInput={(e) => setNameInput((e.target as HTMLInputElement).value)}
+          onBlur={() => setName(name)} />
+      </label>
+      <div class="field">
+        <span>{t('settings.lang')}</span>
+        <div class="row gap-s">
+          <Btn kind={s.lang === 'fr' ? 'blue' : 'ghost'} small onClick={() => setLang('fr')}>Français</Btn>
+          <Btn kind={s.lang === 'en' ? 'blue' : 'ghost'} small onClick={() => setLang('en')}>English</Btn>
+        </div>
+      </div>
+      <div class="field">
+        <span>{t('settings.speed')}</span>
+        <div class="row gap-s">
+          {([1, 2, 3] as const).map((v) => <Btn kind={s.speed === v ? 'blue' : 'ghost'} small onClick={() => setSpeed(v)}>×{v}</Btn>)}
+        </div>
+      </div>
+      <h3 class="tests-title">{t('settings.tests')}</h3>
+      <div class="row gap-s wrap">
+        <Btn kind="ghost" small onClick={() => { timeTravel(2); toast('+2 h'); }}>{t('settings.h2')}</Btn>
+        <Btn kind="ghost" small onClick={() => { timeTravel(12); toast('+12 h'); }}>{t('settings.h12')}</Btn>
+        <Btn kind="ghost" small onClick={() => { timeTravel(24); toast('+24 h'); }}>{t('settings.d1')}</Btn>
+        <Btn kind="ghost" small onClick={() => { giveTestResources(); toast('✓'); }}>{t('settings.resources')}</Btn>
+        <Btn kind="purple" small onClick={() => { demoUnlockAll(); toast('✓'); }}>{t('settings.unlock')}</Btn>
+        <Btn kind="red" small onClick={() => open({ type: 'confirm', text: t('settings.resetConfirm'), onYes: () => { resetGame(); close(); } })}>{t('settings.reset')}</Btn>
+      </div>
+    </Modal>
+  );
+}
+
+export function GainModal({ title, gain, damage, win }: { title: string; gain: Gain; damage?: number; win?: boolean }) {
+  const empty = !Object.keys(gain.currencies).length && !gain.heroes.length && !gain.items.length && !gain.fragments;
+  return (
+    <Modal title={title}>
+      {win !== undefined && <div class={`result-title ${win ? 'win' : 'lose'}`}>{win ? t('result.victory') : t('result.defeat')}</div>}
+      {damage !== undefined && <p class="center">{t('result.damage')} : <b class="gold-text">{damage.toLocaleString('fr-FR')}</b></p>}
+      <div class="gain">
+        {Object.entries(gain.currencies).map(([k, v]) => <Cur k={k} n={v ?? 0} big />)}
+        {gain.fragments && <span class="cur cur-big">{heroDef(gain.fragments.defId).name} <Cur k="fragments" n={gain.fragments.amount} /></span>}
+      </div>
+      {gain.items.length > 0 && <div class="items-row">{gain.items.map((it) => <ItemIcon item={it} />)}</div>}
+      {gain.heroes.length > 0 && <div class="grid">{gain.heroes.map((h) => <HeroCard hero={h} small />)}</div>}
+      {empty && damage === undefined && win !== true && <p class="center muted">{t('result.nothing')}</p>}
+      <Btn kind="green" wide onClick={close}>{t('ok')}</Btn>
+    </Modal>
+  );
+}
+
+export function AdModal({ onDone }: { onDone: () => void }) {
+  const [left, setLeft] = useState(AD_SECONDS);
+  useEffect(() => {
+    if (left <= 0) {
+      close();
+      onDone();
+      return;
+    }
+    const id = setTimeout(() => setLeft(left - 1), 1000);
+    return () => clearTimeout(id);
+  }, [left]);
+  return (
+    <div class="modal-back ad">
+      <div class="ad-box">
+        <span class="tag">{t('ad')}</span>
+        <div class="ad-count">{left}</div>
+      </div>
+    </div>
+  );
+}
+
+export function ConfirmModal({ text, onYes }: { text: string; onYes: () => void }) {
+  return (
+    <Modal title={text}>
+      <div class="row gap">
+        <Btn kind="green" wide onClick={() => { close(); onYes(); }}>{t('yes')}</Btn>
+        <Btn kind="ghost" wide onClick={close}>{t('no')}</Btn>
+      </div>
+    </Modal>
+  );
+}
