@@ -70,7 +70,8 @@ tout débloquer.
   l'interface et les fonctions. On met des valeurs raisonnables, et on fait **un grand réglage final avant la bêta**
   (`npm run simuler -- --calibrer`, `npm run combat`, `simulations/premiers-jours.ts`, puis `docs/simulations.md`).
   Ne lancer une simulation plus tôt que si le propriétaire le demande.
-- **Univers** : style manga inspiré de Black Clover, mais aucun nom, personnage, symbole ou histoire repris.
+- **Univers** : Black Clover a seulement inspiré les TYPES de personnages (pas le style graphique, abandonné le 19/11/2026).
+  Aucun nom, personnage, symbole ou histoire repris. Graphismes : faits par Claude, sans autre abonnement d’IA (choix du propriétaire).
 - **Langues** : français et anglais dès le départ ; aucun texte écrit en dur dans le code de l'interface.
 - **Supabase** : ne rien lire ni modifier sans l'accord explicite du propriétaire, ne jamais lui demander de
   clé dans la conversation. Décidé : au début de l'étape 3, supprimer l'ancien projet Fuze Arena (après une
