@@ -141,16 +141,8 @@ export function HeroDetail({ uid }: { uid: number }) {
                 </>
               )}
             </ul>
-            <Btn
-              kind="purple"
-              wide
-              disabled={!preview.plan}
-              onClick={() => {
-                const gain = fuse(uid);
-                if (gain) toast('★');
-              }}
-            >
-              {t('detail.fuse')}
+            <Btn kind="purple" wide onClick={() => open({ type: 'fusion', uid })}>
+              {t('detail.fuse')}{preview.plan ? ' ★' : ''}
             </Btn>
           </>
         )}

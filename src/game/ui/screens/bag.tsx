@@ -8,7 +8,7 @@ import {
 } from '../../../core/data/items';
 import { ITEM_COLORS } from '../../art';
 import { t } from '../../i18n';
-import { equipItem, forgeAll, forgeItem, forgePartners, recycleItems, unequipItem, upgradeSlot } from '../../state/actions';
+import { equipItem, forgeItem, forgePartners, recycleItems, unequipItem, upgradeSlot } from '../../state/actions';
 import { heroByUid, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import type { PlayerState } from '../../state/types';
@@ -26,20 +26,57 @@ function sortItems(items: Item[]): Item[] {
 export function BagView() {
   const s = useGame();
   const [slot, setSlot] = useState<GearSlot | 'all'>('all');
+  const [picking, setPicking] = useState(false);
+  const [picked, setPicked] = useState<Set<number>>(new Set());
   const items = sortItems(s.items.filter((it) => slot === 'all' || it.slot === slot));
-  const low = s.items.filter((it) => it.heroUid === undefined && it.rarity <= 1);
+  const free = (it: Item) => it.heroUid === undefined;
+  const dust = s.items.filter((it) => picked.has(it.uid)).reduce((sum, it) => sum + recycleDust(it), 0);
+  const toggle = (it: Item) => {
+    if (!free(it)) return;
+    const next = new Set(picked);
+    if (next.has(it.uid)) next.delete(it.uid);
+    else next.add(it.uid);
+    setPicked(next);
+  };
+  const selectRarity = (rarity: number) => setPicked(new Set([...picked, ...s.items.filter((it) => free(it) && it.rarity === rarity).map((it) => it.uid)]));
+  const stop = () => {
+    setPicking(false);
+    setPicked(new Set());
+  };
+
   return (
     <div class="screen bag">
       <div class="row between">
         <h2>{t('bag.title')} <span class="muted">{s.items.length}</span></h2>
         <Cur k="dust" n={s.wallet.dust} />
       </div>
-      <div class="row gap-s">
-        <Btn kind="gold" small wide onClick={() => toast(t('bag.forged', { n: forgeAll().length }))}>{t('bag.forgeAll')}</Btn>
-        <Btn kind="ghost" small wide disabled={!low.length} onClick={() => toast(t('bag.recycled', { n: recycleItems(low.map((it) => it.uid)) }))}>
-          {t('bag.recycleLow')}
-        </Btn>
-      </div>
+      {picking ? (
+        <div class="recycle-bar">
+          <div class="row between center-y">
+            <span>{t('recycle.count', { n: picked.size })}</span>
+            <Cur k="dust" n={dust} big />
+          </div>
+          <div class="row gap-s">
+            {[0, 1, 2].map((r) => (
+              <button class="chip" onClick={() => selectRarity(r)}><span class="chip-dot" style={{ background: ITEM_COLORS[r] }} />{t(`item.${r}`)}</button>
+            ))}
+            <button class="chip" onClick={() => setPicked(new Set())}>✕</button>
+          </div>
+          <div class="row gap-s">
+            <Btn kind="ghost" small wide onClick={stop}>{t('cancel')}</Btn>
+            <Btn kind="red" small wide disabled={!picked.size} onClick={() => {
+              const got = recycleItems([...picked]);
+              stop();
+              toast(t('bag.recycled', { n: got }));
+            }}>{t('recycle.confirm')}</Btn>
+          </div>
+        </div>
+      ) : (
+        <div class="row gap-s">
+          <Btn kind="gold" small wide onClick={() => open({ type: 'forge' })}><Icon name="weapon" size={18} /> {t('forge.title')}</Btn>
+          <Btn kind="ghost" small wide onClick={() => setPicking(true)}>♻ {t('item.recycle')}</Btn>
+        </div>
+      )}
       <div class="chips">
         <button class={`chip${slot === 'all' ? ' on' : ''}`} onClick={() => setSlot('all')}>{t('all')}</button>
         {GEAR_SLOTS.map((g) => (
@@ -51,8 +88,10 @@ export function BagView() {
           {items.map((it) => {
             const o = owner(s, it);
             return (
-              <ItemIcon item={it} heroDefId={o?.defId} level={o ? slotLevel(s, o.uid, it.slot) : 0}
-                onClick={() => open({ type: 'item', uid: it.uid })} />
+              <span class={`pickable${picking && !free(it) ? ' locked-item' : ''}${picked.has(it.uid) ? ' picked' : ''}`}>
+                <ItemIcon item={it} heroDefId={o?.defId} level={o ? slotLevel(s, o.uid, it.slot) : 0}
+                  onClick={() => (picking ? toggle(it) : open({ type: 'item', uid: it.uid }))} />
+              </span>
             );
           })}
         </div>

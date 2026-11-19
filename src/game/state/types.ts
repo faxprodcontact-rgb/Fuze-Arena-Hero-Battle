@@ -62,6 +62,8 @@ export interface PlayerState {
   fragments: Record<string, number>;
   /** Le Légendaire que visent les fragments des boutiques. */
   fragmentTarget?: string;
+  /** Héros déjà obtenus au moins une fois : on ne montre jamais un héros pas encore découvert. */
+  discovered: string[];
   heroes: Hero[];
   items: Item[];
   /** Niveau de renforcement de chaque emplacement de chaque héros (uid → emplacement → +N). */

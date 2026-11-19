@@ -124,8 +124,9 @@ export function Stars({ stars }: { stars: number }) {
 export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; selected?: boolean; dim?: boolean; badge?: string; small?: boolean }) {
   const d = heroDef(p.hero.defId);
   const color = p.hero.stars >= MYTHIC_STARS ? '#ff4d5e' : RARITY_COLOR[d.rarity];
+  const Tag = p.onClick ? 'button' : 'span';
   return (
-    <button
+    <Tag
       class={`hcard${p.selected ? ' hcard-on' : ''}${p.dim ? ' hcard-dim' : ''}${p.small ? ' hcard-small' : ''}`}
       style={{ '--rar': color } as never}
       onClick={p.onClick}
@@ -136,27 +137,42 @@ export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; 
       <Stars stars={p.hero.stars} />
       {p.power !== undefined && <span class="hcard-pow">{fmt(p.power)}</span>}
       {p.badge && <span class="hcard-badge">{p.badge}</span>}
-    </button>
+    </Tag>
   );
 }
 
 export function ItemIcon(p: { item?: Item; level?: number; onClick?: () => void; heroDefId?: string; slot?: string; hideLevel?: boolean }) {
   const { item } = p;
+  const Tag = p.onClick ? 'button' : 'span';
   if (!item) {
     return (
-      <button class="item item-empty" onClick={p.onClick}>
+      <Tag class="item item-empty" onClick={p.onClick}>
         {p.slot && <span class="item-ghost"><Icon name={p.slot} size={30} /></span>}
         {!!p.level && <span class="item-level">+{p.level}</span>}
-      </button>
+      </Tag>
     );
   }
   return (
-    <button class="item" style={{ '--rar': ITEM_COLORS[item.rarity] } as never} onClick={p.onClick}>
+    <Tag class="item" style={{ '--rar': ITEM_COLORS[item.rarity] } as never} onClick={p.onClick}>
       <Icon name={item.slot} size={32} />
       <span class="item-bonus">+{equippedBonus(item, p.level ?? 0)}%</span>
       {!!p.level && !p.hideLevel && <span class="item-level">+{p.level}</span>}
       {p.heroDefId && <img class="item-owner" src={heroImage(p.heroDefId)} alt="" />}
-    </button>
+    </Tag>
+  );
+}
+
+// ---------- Pages plein écran (préparation, forge, fusion) ----------
+
+export function Page({ title, children }: { title: string; children: ComponentChildren }) {
+  return (
+    <div class="page">
+      <header class="prep-head">
+        <button class="x" aria-label={t('back')} onClick={close}>‹</button>
+        <h2>{title}</h2>
+      </header>
+      <div class="page-body">{children}</div>
+    </div>
   );
 }
 

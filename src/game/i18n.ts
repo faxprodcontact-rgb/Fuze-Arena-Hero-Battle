@@ -6,7 +6,8 @@ const FR = {
   'nav.campaign': 'Campagne', 'nav.heroes': 'Héros', 'nav.summon': 'Invoquer', 'nav.adventure': 'Aventure', 'nav.guild': 'Guilde',
   'side.quests': 'Quêtes', 'side.shop': 'Boutique', 'side.pass': 'Passe', 'side.ranking': 'Classement', 'side.chat': 'Tchat', 'side.settings': 'Réglages',
 
-  'cur.dust': 'Poussière de forge',
+  'cur.dust': 'Poussière de forge', 'forge.title': 'Forge', 'fusion.title': 'Fusion', cancel: 'Annuler',
+  'recycle.count': '✓ {n}', 'recycle.confirm': 'Recycler',
   'bag.title': 'Sac', 'bag.forgeAll': 'Tout forger', 'bag.recycleLow': 'Recycler gris et verts', 'bag.empty': 'Sac vide',
   'bag.forged': '{n} objets forgés', 'bag.recycled': '+{n} poussière',
   'item.chapter': 'Chapitre {n}', 'item.forge': 'Forger', 'item.forgeNeed': '{have} / 3 identiques', 'item.recycle': 'Recycler',
@@ -114,7 +115,8 @@ const EN: Record<Key, string> = {
   'nav.campaign': 'Campaign', 'nav.heroes': 'Heroes', 'nav.summon': 'Summon', 'nav.adventure': 'Adventure', 'nav.guild': 'Guild',
   'side.quests': 'Quests', 'side.shop': 'Shop', 'side.pass': 'Pass', 'side.ranking': 'Ranking', 'side.chat': 'Chat', 'side.settings': 'Settings',
 
-  'cur.dust': 'Forge dust',
+  'cur.dust': 'Forge dust', 'forge.title': 'Forge', 'fusion.title': 'Fusion', cancel: 'Cancel',
+  'recycle.count': '✓ {n}', 'recycle.confirm': 'Recycle',
   'bag.title': 'Bag', 'bag.forgeAll': 'Forge all', 'bag.recycleLow': 'Recycle grey and green', 'bag.empty': 'Bag empty',
   'bag.forged': '{n} items forged', 'bag.recycled': '+{n} dust',
   'item.chapter': 'Chapter {n}', 'item.forge': 'Forge', 'item.forgeNeed': '{have} / 3 identical', 'item.recycle': 'Recycle',

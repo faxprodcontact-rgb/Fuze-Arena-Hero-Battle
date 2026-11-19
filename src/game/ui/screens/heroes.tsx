@@ -1,16 +1,16 @@
-// Héros : la collection (tri, filtre par faction), la section et la fusion groupée.
+// Héros : la collection (tri dépliable), la section et l'accès à la page de fusion.
 import { useState } from 'preact/hooks';
 import { LEADER_SLOT } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
-import { FACTIONS, RARITIES, type Faction, type Hero } from '../../../core/types';
-import { FACTION_COLOR, heroImage } from '../../art';
+import { RARITIES, type Hero } from '../../../core/types';
+import { heroImage } from '../../art';
 import { fmt, t } from '../../i18n';
-import { fuseAllSimple, fusionPreview } from '../../state/actions';
+import { fusionPreview } from '../../state/actions';
 import { canLevelUp, heroPower, teamHeroes, teamPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import type { PlayerState } from '../../state/types';
 import { Btn, HeroCard, Icon, RedDot } from '../kit';
-import { open, prepare, toast } from '../nav';
+import { open, prepare } from '../nav';
 import { BagView } from './bag';
 import { Tabs } from '../kit';
 
@@ -37,10 +37,10 @@ export function HeroesScreen() {
 
 function HeroList() {
   const s = useGame();
-  const [faction, setFaction] = useState<Faction | 'all'>('all');
   const [sort, setSort] = useState<Sort>('power');
+  const [menu, setMenu] = useState(false);
   const inTeam = new Set(s.formation.map(([u]) => u));
-  const list = sortHeroes(s, s.heroes.filter((h) => faction === 'all' || heroDef(h.defId).faction === faction), sort);
+  const list = sortHeroes(s, s.heroes, sort);
   const sorts: Sort[] = ['power', 'stars', 'rarity'];
 
   return (
@@ -61,19 +61,18 @@ function HeroList() {
       <div class="row between">
         <h2>{t('nav.heroes')} <span class="muted">{s.heroes.length}</span></h2>
         <div class="row gap-s">
-          <Btn kind="ghost" small onClick={() => setSort(sorts[(sorts.indexOf(sort) + 1) % sorts.length]!)}>⇅ {t(`sort.${sort}`)}</Btn>
-          <Btn kind="gold" small onClick={() => toast(t('heroes.fused', { n: fuseAllSimple() }))}>{t('heroes.fuseAll')}</Btn>
+          <Btn kind="purple" small onClick={() => open({ type: 'fusion' })}>{t('fusion.title')}</Btn>
+          <div class="dropdown">
+            <Btn kind="ghost" small onClick={() => setMenu(!menu)}>{t(`sort.${sort}`)} ▾</Btn>
+            {menu && (
+              <div class="dropdown-menu">
+                {sorts.map((x) => (
+                  <button class={x === sort ? 'on' : ''} onClick={() => { setSort(x); setMenu(false); }}>{t(`sort.${x}`)}</button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-
-      <div class="chips">
-        <button class={`chip${faction === 'all' ? ' on' : ''}`} onClick={() => setFaction('all')}>{t('all')}</button>
-        {FACTIONS.map((f) => (
-          <button class={`chip${faction === f ? ' on' : ''}`} onClick={() => setFaction(f)}>
-            <span class="chip-dot" style={{ background: FACTION_COLOR[f] }} />
-            {t(`faction.${f}`)}
-          </button>
-        ))}
       </div>
 
       <div class="grid">

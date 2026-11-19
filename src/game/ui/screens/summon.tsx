@@ -5,10 +5,10 @@ import { FRAGMENTS_PER_COPY } from '../../../core/data/stars';
 import { RARITIES, type Hero } from '../../../core/types';
 import { RARITY_COLOR, heroImage } from '../../art';
 import { t } from '../../i18n';
-import { adsLeft, claimFragments, setFragmentTarget, summon, summonCost, watchAd } from '../../state/actions';
+import { adsLeft, claimFragments, newlyFound, summon, summonCost, watchAd } from '../../state/actions';
 import { useGame } from '../../state/store';
-import { Btn, Cur, HeroCard, Icon, Modal, Stars } from '../kit';
-import { open, toast } from '../nav';
+import { Bar, Btn, Cur, HeroCard, Icon, Modal, Stars } from '../kit';
+import { open } from '../nav';
 
 function SummonButton({ kind, count }: { kind: 'normal' | 'basic'; count: 1 | 10 }) {
   const s = useGame();
@@ -31,9 +31,8 @@ function SummonButton({ kind, count }: { kind: 'normal' | 'basic'; count: 1 | 10
 
 export function SummonScreen() {
   const s = useGame();
-  const legendaries = HEROES.filter((h) => h.rarity === 'legendary');
-  const target = s.fragmentTarget ?? legendaries[0]!.id;
-  const have = s.fragments[target] ?? 0;
+  // Seulement les héros dont on a des fragments : on ne dévoile jamais un héros pas encore rencontré.
+  const owned = Object.entries(s.fragments).filter(([, n]) => n > 0);
   return (
     <div class="screen summon">
       <section class="card portal">
@@ -72,28 +71,24 @@ export function SummonScreen() {
         </div>
       </section>
 
-      <section class="card">
-        <h2>{t('summon.fragments')}</h2>
-        <div class="row gap center-y">
-          <img class="frag-img" src={heroImage(target)} alt="" />
-          <div class="grow">
-            <strong>{heroDef(target).name}</strong>
-            <div class="row gap-s center-y"><Cur k="fragments" n={have} /> <span class="muted">/ {FRAGMENTS_PER_COPY}</span></div>
-          </div>
-          <Btn kind="gold" small disabled={have < FRAGMENTS_PER_COPY} onClick={() => {
-            const h = claimFragments(target);
-            if (h) open({ type: 'summon', heroes: [h] });
-          }}>{t('summon.copy')}</Btn>
-        </div>
-        <p class="muted small">{t('summon.target')}</p>
-        <div class="frag-list">
-          {legendaries.map((d) => (
-            <button class={`frag-pick${d.id === target ? ' on' : ''}`} onClick={() => { setFragmentTarget(d.id); toast(d.name); }}>
-              <img src={heroImage(d.id)} alt={d.name} />
-            </button>
+      {owned.length > 0 && (
+        <section class="card">
+          <h2>{t('summon.fragments')}</h2>
+          {owned.map(([defId, n]) => (
+            <div class="row gap center-y frag-row">
+              <img class="frag-img" src={heroImage(defId)} alt="" />
+              <div class="grow">
+                <strong>{heroDef(defId).name}</strong>
+                <Bar value={n} max={FRAGMENTS_PER_COPY} color="var(--gold)" label={`${n} / ${FRAGMENTS_PER_COPY}`} />
+              </div>
+              <Btn kind="gold" small disabled={n < FRAGMENTS_PER_COPY} onClick={() => {
+                const h = claimFragments(defId);
+                if (h) open({ type: 'summon', heroes: [h] });
+              }}>{t('summon.copy')}</Btn>
+            </div>
           ))}
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
@@ -108,6 +103,7 @@ export function SummonResult({ heroes }: { heroes: Hero[] }) {
           return (
             <div class="reveal-card" style={{ animationDelay: `${i * 90}ms`, '--rar': RARITY_COLOR[d.rarity] } as never}>
               <HeroCard hero={h} small />
+              {newlyFound.has(h.uid) && <span class="new-tag">{t('new')} !</span>}
               <span class="reveal-name">{d.name}</span>
             </div>
           );

@@ -401,3 +401,43 @@ p { margin: 6px 0; }
 .item-big { font: 800 30px var(--font-title); color: var(--rar); }
 .rar-dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #000; display: inline-block; }
 .slot-info { display: flex; flex-direction: column; gap: 2px; padding-left: 12px; }
+
+/* ---------- Pages Forge et Fusion ---------- */
+.page { position: absolute; inset: 0; z-index: 45; display: flex; flex-direction: column; background: var(--bg-2);
+  padding: max(10px, env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px)); animation: up 0.18s ease-out; }
+.page-body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 10px 0 max(16px, env(safe-area-inset-bottom, 0px)); }
+.fuse-stage { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 20px; border: 2px solid var(--purple);
+  background: radial-gradient(circle at 50% 0%, #8f4cf044, #0000 70%), var(--panel); }
+.fuse-main { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.fuse-big { width: 104px; }
+.fuse-big.result { filter: drop-shadow(0 0 14px #ffc94a88); }
+.fuse-op { font: 800 34px var(--font-title); color: var(--gold); }
+.fuse-plus { font: 800 24px var(--font-title); color: var(--muted); }
+.fuse-needs { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; }
+.fuse-slot { width: 64px; }
+.fuse-slot.missing { position: relative; aspect-ratio: 3 / 4; border-radius: 12px; border: 2px dashed var(--fac, var(--line)); background: #0005;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 3px; overflow: hidden; }
+.fuse-slot.missing img { position: absolute; top: 2px; width: 90%; filter: grayscale(1) brightness(0.45); }
+.fuse-slot.missing .stars { position: relative; color: #ffffff66; }
+.fuse-faction { position: absolute; top: 14px; width: 30px; height: 30px; border-radius: 50%; background: var(--fac); opacity: 0.45; }
+.fuse-label { position: relative; font: 800 9px var(--font); color: var(--muted); text-align: center; line-height: 1; }
+.fuse-crystals.missing { opacity: 0.45; filter: grayscale(1); }
+.ready-tag { position: absolute; top: -6px; right: -4px; background: var(--purple); color: #fff; border-radius: 8px; padding: 0 5px; font: 800 12px var(--font-title); }
+.forge-row { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
+.item.missing { opacity: 0.5; border-style: dashed; border-color: var(--rar); }
+.forge-result .item { box-shadow: 0 0 16px var(--rar); }
+.forge-pick { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; border-radius: 12px; }
+.forge-pick.on { background: #ffffff18; box-shadow: inset 0 0 0 2px var(--gold); }
+.forge-count { font: 800 11px var(--font-title); color: var(--muted); }
+.forge-pick.ready .forge-count { color: var(--gold); }
+.recycle-bar { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 16px; background: #e5484d22; border: 2px solid #e5484d66; }
+.pickable { position: relative; display: inline-flex; }
+.pickable.picked::after { content: '✓'; position: absolute; inset: 0; display: grid; place-items: center; border-radius: 12px; background: #e5484d88; font: 800 26px var(--font-title); pointer-events: none; }
+.locked-item { opacity: 0.3; }
+.dropdown { position: relative; }
+.dropdown-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 10; min-width: 140px; display: flex; flex-direction: column; padding: 4px;
+  background: var(--panel-2); border: 2px solid var(--line); border-radius: 12px; box-shadow: 0 8px 20px #000a; }
+.dropdown-menu button { padding: 10px 12px; text-align: left; border-radius: 8px; font-weight: 800; }
+.dropdown-menu button.on { color: var(--gold); background: #ffffff10; }
+.frag-row { padding: 4px 0; }
+.new-tag { margin-top: -10px; z-index: 1; background: var(--red); border-radius: 8px; padding: 0 6px; font: 800 11px var(--font-title); }

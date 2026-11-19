@@ -18,7 +18,7 @@ import {
   TOWER_STAGE_PER_FLOOR, WEEKLY_CHESTS, WEEKLY_QUESTS, accountXpForLevel, type DungeonKind, type QuestEvent,
   type Reward,
 } from '../../core/data/modes';
-import { FRAGMENTS_PER_COPY, RARITY_RULES } from '../../core/data/stars';
+import { FRAGMENTS_PER_COPY, LADDER, RARITY_RULES } from '../../core/data/stars';
 import { applyFusion, canGainStar, planFusion, type FusionPlan } from '../../core/fusion';
 import { levelRefund } from '../../core/power';
 import { createRng, pick, type Rng } from '../../core/rng';
@@ -63,9 +63,16 @@ function addReward(s: PlayerState, gain: Gain, reward: Reward) {
   for (const [k, v] of Object.entries(reward)) addCurrency(s, gain, k as keyof Wallet, v ?? 0);
 }
 
+/** Héros obtenus pour la première fois pendant cette session (étiquette « Nouveau ! » à la révélation). */
+export const newlyFound = new Set<number>();
+
 function addHero(s: PlayerState, defId: string): Hero {
   const hero: Hero = { uid: s.nextUid++, defId, stars: RARITY_RULES[heroDef(defId).rarity].bornStars, level: 1 };
   s.heroes.push(hero);
+  if (!s.discovered.includes(defId)) {
+    s.discovered.push(defId);
+    newlyFound.add(hero.uid);
+  }
   return hero;
 }
 
@@ -368,6 +375,48 @@ export function fusionPreview(uid: number): { plan: FusionPlan | null; maxed: bo
   if (!hero || !canGainStar(hero)) return { plan: null, maxed: true };
   const protect = new Set(s.formation.map(([u]) => u).filter((u) => u !== uid));
   return { plan: planFusion(s.heroes, uid, { protect, crystalsOwned: s.wallet.crystals }), maxed: false };
+}
+
+export interface FusionNeed {
+  kind: 'identical' | 'copy' | 'fodder';
+  stars: number;
+  faction: string;
+  defId?: string;
+  /** Le héros qui remplit ce besoin, s'il y en a un de disponible. */
+  hero?: Hero;
+}
+
+/**
+ * Ce que demande la prochaine étoile d'un héros, case par case, rempli avec les héros disponibles
+ * (hors section), dans le même ordre que la fusion automatique : ce qui manque reste vide (grisé à l'écran).
+ */
+export function fusionNeeds(uid: number): { needs: FusionNeed[]; crystals: number; newStars: number; ready: boolean } | null {
+  const s = getState();
+  const hero = heroByUid(s, uid);
+  if (!hero || !canGainStar(hero)) return null;
+  const d = heroDef(hero.defId);
+  const rule = RARITY_RULES[d.rarity];
+  const inTeam = new Set(s.formation.map(([u]) => u).filter((u) => u !== uid));
+  const free = s.heroes.filter((h) => h.uid !== uid && !inTeam.has(h.uid)).sort((a, b) => a.level - b.level);
+  const needs: FusionNeed[] = [];
+  let crystals = 0;
+  if (rule.fusion === 'triple') {
+    const same = free.filter((h) => h.defId === hero.defId && h.stars === hero.stars);
+    for (let i = 0; i < 2; i++) needs.push({ kind: 'identical', stars: hero.stars, faction: d.faction, defId: d.id, hero: same[i] });
+  } else {
+    const step = LADDER[hero.stars + 1]!;
+    crystals = step.crystals;
+    const copies = free.filter((h) => h.defId === hero.defId && h.stars === rule.bornStars);
+    for (let i = 0; i < step.copies; i++) needs.push({ kind: 'copy', stars: rule.bornStars, faction: d.faction, defId: d.id, hero: copies[i] });
+    const used = new Set(copies.slice(0, step.copies).map((h) => h.uid));
+    const rank = { common: 0, rare: 1, epic: 2, legendary: 3 } as const;
+    const fodder = free
+      .filter((h) => !used.has(h.uid) && h.stars === step.fodderStars && heroDef(h.defId).faction === d.faction && heroDef(h.defId).rarity !== 'legendary')
+      .sort((a, b) => rank[heroDef(a.defId).rarity] - rank[heroDef(b.defId).rarity] || a.level - b.level);
+    for (let i = 0; i < step.fodderCount; i++) needs.push({ kind: 'fodder', stars: step.fodderStars, faction: d.faction, hero: fodder[i] });
+  }
+  const ready = needs.every((n) => n.hero) && s.wallet.crystals >= crystals;
+  return { needs, crystals, newStars: hero.stars + 1, ready };
 }
 
 function doFusion(s: PlayerState, plan: FusionPlan, gain: Gain) {
@@ -944,7 +993,9 @@ export function buyExchange(shop: 'arena' | 'guild', id: string): Gain | null {
     const { fragments, item, ...rest } = entry.reward;
     addReward(s, gain, rest);
     if (fragments) {
-      const target = s.fragmentTarget ?? HEROES.find((h) => h.rarity === 'legendary')!.id;
+      // Les fragments vont à un Légendaire déjà découvert (sinon à un Légendaire au hasard, qui se découvre ainsi).
+      const known = HEROES.filter((h) => h.rarity === 'legendary' && s.discovered.includes(h.id));
+      const target = known.length ? pick(nextRng(s), known).id : pick(nextRng(s), HEROES.filter((h) => h.rarity === 'legendary')).id;
       s.fragments[target] = (s.fragments[target] ?? 0) + fragments;
       gain.fragments = { defId: target, amount: fragments };
     }

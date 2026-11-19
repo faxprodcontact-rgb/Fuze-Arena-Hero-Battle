@@ -25,6 +25,7 @@ export function fresh(now = Date.now()): PlayerState {
     account: { level: 1, xp: 0 },
     wallet: { gold: 300, essence: 150, gems: 0, scrolls: 0, basicScrolls: 0, arenaTokens: 0, guildCoins: 0, crystals: 0, dust: 0 },
     fragments: {},
+    discovered: [starter],
     heroes: [{ uid: 1, defId: starter, stars: RARITY_RULES.epic.bornStars, level: 1 }],
     items: [],
     slotLevels: {},
@@ -58,7 +59,8 @@ function load(): PlayerState {
       const saved = JSON.parse(raw) as PlayerState;
       if (saved.v === 2) {
         const base = fresh();
-        return { ...base, ...saved, wallet: { ...base.wallet, ...saved.wallet } };
+        const discovered = saved.discovered ?? [...new Set((saved.heroes ?? []).map((h) => h.defId))];
+        return { ...base, ...saved, discovered, wallet: { ...base.wallet, ...saved.wallet } };
       }
     }
   } catch {
