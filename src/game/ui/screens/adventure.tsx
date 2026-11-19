@@ -2,13 +2,13 @@
 import { useEffect, useState } from 'preact/hooks';
 import { stagePower } from '../../../core/data/campaign';
 import {
-  ARENA_FREE_TICKETS, ARENA_LEAGUES, ARENA_SHOP, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DUNGEON_BY_WEEKDAY,
-  DUNGEON_ENTRIES_PER_DAY, DUNGEON_TIERS, TOWER_STAGE_PER_FLOOR, UNLOCKS, type DungeonKind,
+  ARENA_FREE_TICKETS, ARENA_LEAGUES, ARENA_SHOP, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS,
+  DUNGEON_ATTEMPTS_PER_DAY, TOWER_STAGE_PER_FLOOR, UNLOCKS, type DungeonKind,
 } from '../../../core/data/modes';
 import { heroImage, monsterImage } from '../../art';
 import { fmt, t } from '../../i18n';
 import {
-  arenaPlan, buyExchange, claimMission, dailyBossId, dailyBossPlan, dungeonPlan, markSeen, missionEnd,
+  arenaPlan, buyExchange, claimMission, dailyBossId, dailyBossPlan, dungeonAttemptsLeft, markSeen, missionEnd,
   missionTemplate, opponentPower, refreshOpponents, towerPlan,
 } from '../../state/actions';
 import { isUnlocked, teamPower } from '../../state/selectors';
@@ -133,34 +133,26 @@ function Missions() {
   );
 }
 
+const DUNGEON_KINDS: DungeonKind[] = ['gold', 'essence', 'gear'];
+export const DUNGEON_ICON: Record<DungeonKind, string> = { gold: 'gold', essence: 'essence', gear: 'weapon' };
+
 function Dungeons() {
   const s = useGame();
-  const open_ = DUNGEON_BY_WEEKDAY[new Date(now()).getDay()] ?? [];
-  const kinds: DungeonKind[] = ['gold', 'essence', 'gear'];
-  const ref = stagePower(Math.max(1, s.campaign.cleared));
   return (
     <section class="list">
       <h1>{t('adv.dungeons')}</h1>
-      {kinds.map((k) => {
-        const isOpen = open_.includes(k);
-        const used = s.daily.entries[k];
+      {DUNGEON_KINDS.map((k) => {
+        const left = dungeonAttemptsLeft(s, k);
         return (
-          <div class={`card dungeon dungeon-${k}${isOpen ? '' : ' closed'}`}>
-            <div class="row between">
-              <h2><Icon name={k === 'gear' ? 'arena' : k} size={24} /> {t(`dungeon.${k}`)}</h2>
-              <span class="muted small">{isOpen ? t('dungeon.entries', { n: DUNGEON_ENTRIES_PER_DAY - used, m: DUNGEON_ENTRIES_PER_DAY }) : t('dungeon.closed')}</span>
-            </div>
-            {isOpen && (
-              <div class="tiers">
-                {DUNGEON_TIERS.map((f, tier) => (
-                  <Btn kind={teamPower(s) >= ref * f ? 'green' : 'ghost'} small disabled={used >= DUNGEON_ENTRIES_PER_DAY}
-                    onClick={() => prepare(dungeonPlan(k, tier))}>
-                    {t('dungeon.tier', { n: tier + 1 })} · {fmt(ref * f)}
-                  </Btn>
-                ))}
-              </div>
-            )}
-          </div>
+          <button class={`card dungeon dungeon-${k}`} onClick={() => open({ type: 'dungeon', kind: k })}>
+            <span class="dungeon-icon"><Icon name={DUNGEON_ICON[k]} size={34} /></span>
+            <span class="grow">
+              <strong>{t(`dungeon.${k}`)}</strong>
+              <span class="muted small">{t('dungeon.level', { n: s.dungeons[k] })}</span>
+            </span>
+            <span class={`dungeon-tries${left ? '' : ' none'}`}>{left} / {DUNGEON_ATTEMPTS_PER_DAY}</span>
+            {left > 0 && <span class="dot" />}
+          </button>
         );
       })}
     </section>

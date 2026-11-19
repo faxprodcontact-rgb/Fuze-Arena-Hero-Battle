@@ -11,8 +11,8 @@ import {
 } from '../../core/data/items';
 import {
   ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, RENAME_COST, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
-  ARENA_WIN_POINTS, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ENTRIES_PER_DAY,
-  DUNGEON_REWARD_HOURS, DUNGEON_TIERS, ESSENCE_RATIO, FAST_LOOT_COSTS, FAST_LOOT_HOURS, GEMS_PER_10_SUMMONS,
+  ARENA_WIN_POINTS, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ATTEMPTS_PER_DAY,
+  DUNGEON_LEVELS, DUNGEON_REWARD_HOURS, DUNGEON_STAGE_PER_LEVEL, ESSENCE_RATIO, dungeonItems, FAST_LOOT_COSTS, FAST_LOOT_HOURS, GEMS_PER_10_SUMMONS,
   GEMS_PER_SUMMON, GUILD_BOSS_ATTEMPTS, GUILD_COINS_PER_ATTACK, GUILD_SHOP, IDLE_ITEM_HOURS, MISSION_TEMPLATES,
   MISSIONS_PER_DAY, MONTHLY_CARD, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL, RESET_COST, STAGE_GEMS, TOWER_REWARD,
   TOWER_STAGE_PER_FLOOR, WEEKLY_CHESTS, WEEKLY_QUESTS, accountXpForLevel, type DungeonKind, type QuestEvent,
@@ -594,7 +594,7 @@ export interface BattleRequest {
   seed: number;
   /** Combat de boss : on compte les dégâts, il n'y a pas de défaite. */
   damageMode?: boolean;
-  dungeon?: { kind: DungeonKind; tier: number };
+  dungeon?: { kind: DungeonKind; level: number };
   opponentId?: string;
 }
 
@@ -636,15 +636,18 @@ function referencePower(s: PlayerState): number {
   return stagePower(Math.max(1, s.campaign.cleared));
 }
 
-export function dungeonBattle(kind: DungeonKind, tier: number): BattleRequest {
-  return update((s) => ({
-    kind: 'dungeon' as const,
-    title: `${tier + 1}`,
-    heroes: teamUnits(s),
-    waves: dungeonPreview(s, kind, tier),
-    seed: seedFor(s),
-    dungeon: { kind, tier },
-  }));
+export function dungeonBattle(kind: DungeonKind): BattleRequest {
+  return update((s) => {
+    const level = s.dungeons[kind] + 1;
+    return {
+      kind: 'dungeon' as const,
+      title: `${level}`,
+      heroes: teamUnits(s),
+      waves: dungeonWaves(kind, level),
+      seed: seedFor(s),
+      dungeon: { kind, level },
+    };
+  });
 }
 
 /** Les boss tournent selon le jour de la semaine. Ils sont très résistants : on vise le plus de dégâts. */
@@ -723,16 +726,56 @@ function towerWaves(floor: number): UnitInit[][] {
   });
 }
 
-export function dungeonPlan(kind: DungeonKind, tier: number): BattlePlan {
-  const s = getState();
-  const req = dungeonPreview(s, kind, tier);
-  return { kind: 'dungeon', title: `${tier + 1}`, waves: req, need: referencePower(s) * DUNGEON_TIERS[tier]!, build: () => dungeonBattle(kind, tier) };
+export function dungeonPower(level: number): number {
+  return stagePower(Math.max(1, level * DUNGEON_STAGE_PER_LEVEL));
 }
 
-function dungeonPreview(s: PlayerState, kind: DungeonKind, tier: number): UnitInit[][] {
+/** Le prochain niveau d'un donjon (à combattre). */
+export function dungeonPlan(kind: DungeonKind): BattlePlan | null {
+  const level = getState().dungeons[kind] + 1;
+  if (level > DUNGEON_LEVELS) return null;
+  return { kind: 'dungeon', title: `${level}`, waves: dungeonWaves(kind, level), need: dungeonPower(level), build: () => dungeonBattle(kind) };
+}
+
+function dungeonWaves(kind: DungeonKind, level: number): UnitInit[][] {
   return buildWaves({
-    power: referencePower(s) * DUNGEON_TIERS[tier]!, count: Math.min(5, Math.max(1, s.formation.length)), waves: 2,
-    element: (['fire', 'water', 'earth'] as const)[['gold', 'essence', 'gear'].indexOf(kind)]!, seed: tier * 31 + kind.length,
+    power: dungeonPower(level), count: 5, waves: 2,
+    element: (['fire', 'water', 'earth'] as const)[['gold', 'essence', 'gear'].indexOf(kind)]!, seed: level * 7919 + kind.length,
+  });
+}
+
+/** Ce que rapporte un niveau de donjon (même chose en combat ou en balayage). */
+export function dungeonRewardPreview(kind: DungeonKind, level: number): { gold?: number; essence?: number; items?: number } {
+  const perHour = incomePerHour(level * DUNGEON_STAGE_PER_LEVEL);
+  if (kind === 'gold') return { gold: Math.round(perHour * DUNGEON_REWARD_HOURS * 1.5) };
+  if (kind === 'essence') return { essence: Math.round(perHour * DUNGEON_REWARD_HOURS) };
+  return { items: dungeonItems(level).count };
+}
+
+function giveDungeonReward(s: PlayerState, gain: Gain, kind: DungeonKind, level: number) {
+  const r = dungeonRewardPreview(kind, level);
+  if (r.gold) addCurrency(s, gain, 'gold', r.gold);
+  if (r.essence) addCurrency(s, gain, 'essence', r.essence);
+  if (r.items) {
+    const rng = nextRng(s);
+    for (let i = 0; i < r.items; i++) gain.items.push(makeItem(s, rng, undefined, dungeonItems(level).luck));
+  }
+  s.daily.entries[kind] += 1;
+  track(s, 'dungeon');
+}
+
+export function dungeonAttemptsLeft(s: PlayerState, kind: DungeonKind): number {
+  return Math.max(0, DUNGEON_ATTEMPTS_PER_DAY - s.daily.entries[kind]);
+}
+
+/** Balayage : on rejoue instantanément le dernier niveau gagné, sans combat, contre un essai. */
+export function sweepDungeon(kind: DungeonKind): Gain | null {
+  const s0 = getState();
+  if (s0.dungeons[kind] < 1 || dungeonAttemptsLeft(s0, kind) <= 0) return null;
+  return update((s) => {
+    const gain = emptyGain();
+    giveDungeonReward(s, gain, kind, s.dungeons[kind]);
+    return gain;
   });
 }
 
@@ -804,15 +847,12 @@ export function finishBattle(req: BattleRequest, res: BattleResult): Gain {
         break;
       }
       case 'dungeon': {
+        // Un essai n'est compté que si on gagne.
         if (!res.win || !req.dungeon) break;
-        const { kind, tier } = req.dungeon;
-        s.daily.entries[kind] += 1;
-        s.dungeons[kind] = Math.max(s.dungeons[kind], tier + 1);
-        const hours = DUNGEON_REWARD_HOURS[tier]!;
-        if (kind === 'gold') addCurrency(s, gain, 'gold', perHour * hours * 1.5);
-        if (kind === 'essence') addCurrency(s, gain, 'essence', perHour * hours);
-        if (kind === 'gear') for (let i = 0; i < tier + 2; i++) gain.items.push(makeItem(s, rng, undefined, 1 + tier));
-        track(s, 'dungeon');
+        const { kind, level } = req.dungeon;
+        if (dungeonAttemptsLeft(s, kind) <= 0 || level !== s.dungeons[kind] + 1) break;
+        s.dungeons[kind] = level;
+        giveDungeonReward(s, gain, kind, level);
         break;
       }
       case 'dailyBoss': {

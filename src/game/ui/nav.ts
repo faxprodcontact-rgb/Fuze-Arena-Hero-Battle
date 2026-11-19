@@ -27,6 +27,7 @@ export type Modal =
   | { type: 'forge' }
   | { type: 'reset'; uid?: number }
   | { type: 'mission'; id: string }
+  | { type: 'dungeon'; kind: 'gold' | 'essence' | 'gear' }
   | { type: 'item'; uid: number }
   | { type: 'legal'; doc: 'privacy' | 'terms' | 'notice' | 'credits' | 'support' };
 

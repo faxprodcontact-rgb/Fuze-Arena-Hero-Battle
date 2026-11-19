@@ -234,9 +234,7 @@ p { margin: 6px 0; }
 .mission { flex-direction: row; align-items: center; }
 .mini-team { display: flex; }
 .mini-team img { width: 34px; margin-right: -6px; }
-.dungeon.closed { opacity: 0.55; }
 .dungeon-gold { border-color: #b8860b; } .dungeon-essence { border-color: #2a9d8f; } .dungeon-gear { border-color: #8f4cf0; }
-.tiers { display: flex; flex-direction: column; gap: 6px; }
 .boss-img { width: 130px; transform: scaleX(-1); filter: drop-shadow(0 0 20px #e5484d88); }
 .boss-tiers { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .boss-tiers span { display: flex; flex-direction: column; align-items: center; background: #0004; border-radius: 10px; padding: 4px 6px; }
@@ -478,3 +476,19 @@ p { margin: 6px 0; }
 .boss-mark small { font: 800 11px var(--font-title); line-height: 1; }
 .boss-mark::after { content: ''; width: 2px; height: 8px; margin-top: 2px; background: #fff8; }
 .boss-mark.on { opacity: 1; filter: none; }
+
+/* ---------- Donjons ---------- */
+button.dungeon { position: relative; display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 12px; text-align: left; width: 100%; border-width: 2px; border-style: solid; }
+button.dungeon .grow { display: flex; flex-direction: column; gap: 2px; }
+.dungeon-icon { width: 54px; height: 54px; border-radius: 14px; display: grid; place-items: center; background: #0005; }
+.dungeon-tries { font: 800 15px var(--font-title); color: var(--green); }
+.dungeon-tries.none { color: var(--muted); }
+.dungeon-tries.big { font-size: 18px; }
+.dungeon-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-radius: 16px; border: 2px solid; background: var(--panel); }
+.dungeon-ladder { display: flex; flex-direction: column; gap: 8px; }
+.dungeon-step { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 14px; background: var(--panel); border: 2px solid var(--line); }
+.dungeon-step .grow { display: flex; flex-direction: column; gap: 4px; }
+.dungeon-step.locked { opacity: 0.45; }
+.dungeon-step.next { border-color: var(--red); box-shadow: 0 0 14px #e5484d55; }
+.dungeon-step.last { border-color: var(--gold); }
+.dungeon-step.old { opacity: 0.6; }

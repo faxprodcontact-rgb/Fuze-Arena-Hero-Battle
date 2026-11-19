@@ -18,6 +18,7 @@ import { ForgePage } from './screens/forge';
 import { FusionPage } from './screens/fusion';
 import { ResetPage } from './screens/reset';
 import { MissionPage } from './screens/mission';
+import { DungeonPage } from './screens/dungeon';
 import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
 import { AdModal, ConfirmModal, GainModal, LegalModal, NameScreen, QuestsModal, RenameModal, SettingsModal, ShopModal } from './screens/meta';
@@ -87,6 +88,7 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'forge': return <ForgePage />;
     case 'reset': return <ResetPage uid={modal.uid} />;
     case 'mission': return <MissionPage id={modal.id} />;
+    case 'dungeon': return <DungeonPage kind={modal.kind} />;
     case 'item': return <ItemModal uid={modal.uid} />;
     case 'legal': return <LegalModal doc={modal.doc} />;
   }

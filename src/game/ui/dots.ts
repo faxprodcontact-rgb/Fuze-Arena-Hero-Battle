@@ -1,9 +1,9 @@
 // Points rouges : « il y a quelque chose à faire ici ».
 import {
-  ARENA_FREE_TICKETS, DAILY_BOSS_ATTEMPTS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_BY_WEEKDAY, DUNGEON_ENTRIES_PER_DAY,
+  ARENA_FREE_TICKETS, DAILY_BOSS_ATTEMPTS, DAILY_CHESTS, DAILY_QUESTS,
   GUILD_BOSS_ATTEMPTS, UNLOCKS, WEEKLY_CHESTS, WEEKLY_QUESTS, type Feature,
 } from '../../core/data/modes';
-import { fusionPreview, missionEnd, passLevel, questPoints } from '../state/actions';
+import { dungeonAttemptsLeft, fusionPreview, missionEnd, passLevel, questPoints } from '../state/actions';
 import { canLevelUp, heroByUid, idlePreview, isUnlocked } from '../state/selectors';
 import { now } from '../state/store';
 import type { PlayerState } from '../state/types';
@@ -22,10 +22,7 @@ export const dots = {
   summon: (s: PlayerState) => s.wallet.scrolls >= 1 || s.wallet.basicScrolls >= 1,
   missions: (s: PlayerState) =>
     s.daily.missions.some((m) => !m.claimed && (!m.startedAt || now() >= missionEnd(m))),
-  dungeons: (s: PlayerState) => {
-    const open = DUNGEON_BY_WEEKDAY[new Date(now()).getDay()] ?? [];
-    return open.some((k) => s.daily.entries[k] < DUNGEON_ENTRIES_PER_DAY);
-  },
+  dungeons: (s: PlayerState) => (['gold', 'essence', 'gear'] as const).some((k) => dungeonAttemptsLeft(s, k) > 0),
   dailyBoss: (s: PlayerState) => s.daily.bossAttempts < DAILY_BOSS_ATTEMPTS,
   arena: (s: PlayerState) => s.daily.arenaFights < ARENA_FREE_TICKETS,
   tower: () => false,

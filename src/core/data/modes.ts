@@ -54,14 +54,18 @@ export const TOWER_REWARD = { essencePerFloor: 40, scrollsEvery: 5, gemsEvery: 1
 
 export type DungeonKind = 'gold' | 'essence' | 'gear';
 /** Donjon ouvert selon le jour de la semaine (0 = dimanche : tous). */
-export const DUNGEON_BY_WEEKDAY: DungeonKind[][] = [
-  ['gold', 'essence', 'gear'], ['gold'], ['essence'], ['gear'], ['gold'], ['essence'], ['gear'],
-];
-export const DUNGEON_ENTRIES_PER_DAY = 2;
-/** Difficulté : puissance demandée = celle du niveau de campagne atteint × ce facteur. */
-export const DUNGEON_TIERS = [0.6, 0.85, 1.1];
-/** Récompense en heures de butin hors ligne, par difficulté. */
-export const DUNGEON_REWARD_HOURS = [3, 5, 8];
+// Trois donjons toujours ouverts (or, essence, armurerie), chacun avec ses niveaux à gravir.
+// On combat le niveau suivant (obligatoire pour avancer) ou on « balaie » le dernier niveau gagné (instantané).
+export const DUNGEON_ATTEMPTS_PER_DAY = 3;
+export const DUNGEON_LEVELS = 150;
+/** Force d'un niveau de donjon = celle du niveau de campagne (niveau × ce nombre). */
+export const DUNGEON_STAGE_PER_LEVEL = 8;
+/** Récompense : heures de butin hors ligne du niveau de campagne équivalent. */
+export const DUNGEON_REWARD_HOURS = 6;
+/** Armurerie : nombre d'objets et chance de rareté selon le niveau. */
+export function dungeonItems(level: number): { count: number; luck: number } {
+  return { count: Math.min(6, 2 + Math.floor(level / 30)), luck: 1 + Math.floor(level / 25) };
+}
 
 // ---------- Missions ----------
 
