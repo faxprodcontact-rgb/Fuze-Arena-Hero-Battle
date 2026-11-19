@@ -441,3 +441,5 @@ p { margin: 6px 0; }
 .dropdown-menu button.on { color: var(--gold); background: #ffffff10; }
 .frag-row { padding: 4px 0; }
 .new-tag { margin-top: -10px; z-index: 1; background: var(--red); border-radius: 8px; padding: 0 6px; font: 800 11px var(--font-title); }
+.fuse-slot.pick { padding: 0; border-radius: 12px; }
+.fuse-slot.on { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 12px; }

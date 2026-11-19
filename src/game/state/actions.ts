@@ -19,7 +19,7 @@ import {
   type Reward,
 } from '../../core/data/modes';
 import { FRAGMENTS_PER_COPY, LADDER, RARITY_RULES } from '../../core/data/stars';
-import { applyFusion, canGainStar, planFusion, type FusionPlan } from '../../core/fusion';
+import { applyFusion, canGainStar, isValidFusion, planFusion, type FusionPlan } from '../../core/fusion';
 import { levelRefund } from '../../core/power';
 import { createRng, pick, type Rng } from '../../core/rng';
 import { BOSSES } from '../../core/data/monsters';
@@ -377,46 +377,92 @@ export function fusionPreview(uid: number): { plan: FusionPlan | null; maxed: bo
   return { plan: planFusion(s.heroes, uid, { protect, crystalsOwned: s.wallet.crystals }), maxed: false };
 }
 
+export type NeedKind = 'identical' | 'copy' | 'fodder';
+export type FusionPicks = Record<NeedKind, number[]>;
+
 export interface FusionNeed {
-  kind: 'identical' | 'copy' | 'fodder';
+  kind: NeedKind;
   stars: number;
   faction: string;
   defId?: string;
-  /** Le héros qui remplit ce besoin, s'il y en a un de disponible. */
+  /** Le héros choisi pour cette case, s'il y en a un. */
   hero?: Hero;
 }
 
-/**
- * Ce que demande la prochaine étoile d'un héros, case par case, rempli avec les héros disponibles
- * (hors section), dans le même ordre que la fusion automatique : ce qui manque reste vide (grisé à l'écran).
- */
-export function fusionNeeds(uid: number): { needs: FusionNeed[]; crystals: number; newStars: number; ready: boolean } | null {
-  const s = getState();
+interface FusionSetup {
+  hero: Hero;
+  /** Nombre de cases de chaque sorte, et ce qu'elles demandent. */
+  slots: { kind: NeedKind; count: number; stars: number; defId?: string }[];
+  /** Héros qui peuvent remplir chaque sorte de case (hors section), les moins précieux d'abord. */
+  pools: Record<NeedKind, Hero[]>;
+  crystals: number;
+  newStars: number;
+}
+
+const RANK = { common: 0, rare: 1, epic: 2, legendary: 3 } as const;
+
+function fusionSetup(s: PlayerState, uid: number): FusionSetup | null {
   const hero = heroByUid(s, uid);
   if (!hero || !canGainStar(hero)) return null;
   const d = heroDef(hero.defId);
   const rule = RARITY_RULES[d.rarity];
   const inTeam = new Set(s.formation.map(([u]) => u).filter((u) => u !== uid));
-  const free = s.heroes.filter((h) => h.uid !== uid && !inTeam.has(h.uid)).sort((a, b) => a.level - b.level);
-  const needs: FusionNeed[] = [];
-  let crystals = 0;
+  const free = s.heroes
+    .filter((h) => h.uid !== uid && !inTeam.has(h.uid))
+    .sort((a, b) => RANK[heroDef(a.defId).rarity] - RANK[heroDef(b.defId).rarity] || a.level - b.level);
+  const pools: Record<NeedKind, Hero[]> = { identical: [], copy: [], fodder: [] };
   if (rule.fusion === 'triple') {
-    const same = free.filter((h) => h.defId === hero.defId && h.stars === hero.stars);
-    for (let i = 0; i < 2; i++) needs.push({ kind: 'identical', stars: hero.stars, faction: d.faction, defId: d.id, hero: same[i] });
-  } else {
-    const step = LADDER[hero.stars + 1]!;
-    crystals = step.crystals;
-    const copies = free.filter((h) => h.defId === hero.defId && h.stars === rule.bornStars);
-    for (let i = 0; i < step.copies; i++) needs.push({ kind: 'copy', stars: rule.bornStars, faction: d.faction, defId: d.id, hero: copies[i] });
-    const used = new Set(copies.slice(0, step.copies).map((h) => h.uid));
-    const rank = { common: 0, rare: 1, epic: 2, legendary: 3 } as const;
-    const fodder = free
-      .filter((h) => !used.has(h.uid) && h.stars === step.fodderStars && heroDef(h.defId).faction === d.faction && heroDef(h.defId).rarity !== 'legendary')
-      .sort((a, b) => rank[heroDef(a.defId).rarity] - rank[heroDef(b.defId).rarity] || a.level - b.level);
-    for (let i = 0; i < step.fodderCount; i++) needs.push({ kind: 'fodder', stars: step.fodderStars, faction: d.faction, hero: fodder[i] });
+    pools.identical = free.filter((h) => h.defId === hero.defId && h.stars === hero.stars);
+    return { hero, slots: [{ kind: 'identical', count: 2, stars: hero.stars, defId: d.id }], pools, crystals: 0, newStars: hero.stars + 1 };
   }
-  const ready = needs.every((n) => n.hero) && s.wallet.crystals >= crystals;
-  return { needs, crystals, newStars: hero.stars + 1, ready };
+  const step = LADDER[hero.stars + 1]!;
+  pools.copy = free.filter((h) => h.defId === hero.defId && h.stars === rule.bornStars);
+  pools.fodder = free.filter((h) => h.stars === step.fodderStars && heroDef(h.defId).faction === d.faction);
+  const slots: FusionSetup['slots'] = [];
+  if (step.copies) slots.push({ kind: 'copy', count: step.copies, stars: rule.bornStars, defId: d.id });
+  if (step.fodderCount) slots.push({ kind: 'fodder', count: step.fodderCount, stars: step.fodderStars });
+  return { hero, slots, pools, crystals: step.crystals, newStars: hero.stars + 1 };
+}
+
+/** Choix proposé d'office : les moins précieux, jamais un Légendaire en nourriture. */
+export function autoPicks(uid: number): FusionPicks {
+  const picks: FusionPicks = { identical: [], copy: [], fodder: [] };
+  const setup = fusionSetup(getState(), uid);
+  if (!setup) return picks;
+  const used = new Set<number>();
+  for (const slot of setup.slots) {
+    const pool = setup.pools[slot.kind].filter((h) => !used.has(h.uid) && (slot.kind !== 'fodder' || heroDef(h.defId).rarity !== 'legendary'));
+    picks[slot.kind] = pool.slice(0, slot.count).map((h) => h.uid);
+    picks[slot.kind].forEach((u) => used.add(u));
+  }
+  return picks;
+}
+
+/** Les héros qui peuvent remplir une sorte de case. */
+export function fusionPool(uid: number, kind: NeedKind): Hero[] {
+  return fusionSetup(getState(), uid)?.pools[kind] ?? [];
+}
+
+/**
+ * Ce que demande la prochaine étoile, case par case, rempli avec les héros choisis
+ * (ou le choix proposé d'office) : ce qui manque reste vide (grisé à l'écran).
+ */
+export function fusionNeeds(uid: number, picks?: FusionPicks): { needs: FusionNeed[]; crystals: number; newStars: number; ready: boolean; consumed: number[] } | null {
+  const s = getState();
+  const setup = fusionSetup(s, uid);
+  if (!setup) return null;
+  const chosen = picks ?? autoPicks(uid);
+  const d = heroDef(setup.hero.defId);
+  const needs: FusionNeed[] = [];
+  const used = new Set<number>();
+  for (const slot of setup.slots) {
+    const ok = new Set(setup.pools[slot.kind].map((h) => h.uid));
+    const heroes = chosen[slot.kind].filter((u) => ok.has(u) && !used.has(u)).slice(0, slot.count).map((u) => heroByUid(s, u)!);
+    heroes.forEach((h) => used.add(h.uid));
+    for (let i = 0; i < slot.count; i++) needs.push({ kind: slot.kind, stars: slot.stars, faction: d.faction, defId: slot.defId, hero: heroes[i] });
+  }
+  const ready = needs.every((n) => n.hero) && s.wallet.crystals >= setup.crystals;
+  return { needs, crystals: setup.crystals, newStars: setup.newStars, ready, consumed: [...used] };
 }
 
 function doFusion(s: PlayerState, plan: FusionPlan, gain: Gain) {
@@ -430,8 +476,17 @@ function doFusion(s: PlayerState, plan: FusionPlan, gain: Gain) {
   track(s, 'fuse');
 }
 
-export function fuse(uid: number): Gain | null {
-  const { plan } = fusionPreview(uid);
+/** Fusionne. Sans liste, les héros sacrifiés sont choisis d'office ; avec une liste, ce sont ceux-là (vérifiés). */
+export function fuse(uid: number, consumed?: number[]): Gain | null {
+  let plan = fusionPreview(uid).plan;
+  if (consumed) {
+    const s = getState();
+    const needs = fusionNeeds(uid, { identical: consumed, copy: consumed, fodder: consumed });
+    const hero = heroByUid(s, uid);
+    if (!hero || !needs?.ready || needs.consumed.length !== consumed.length) return null;
+    plan = { targetUid: uid, consumed, crystals: needs.crystals, newStars: needs.newStars };
+    if (!isValidFusion(s.heroes, plan, s.wallet.crystals)) return null;
+  }
   if (!plan) return null;
   return update((s) => {
     const gain = emptyGain();
