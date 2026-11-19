@@ -211,3 +211,9 @@ export const GUILD_SHOP: ShopItem[] = [
   { id: 'g-crystal', cost: 300, reward: { crystals: 50 } },
   { id: 'g-item', cost: 350, reward: { item: 4 } },
 ];
+
+// ---------- Amis ----------
+
+export const FRIENDS_MAX = 20;
+/** Un cadeau d'ami reçu vaut ceci (envoyer ne coûte rien, une fois par jour et par ami). */
+export const FRIEND_GIFT = { basicScrolls: 1 };

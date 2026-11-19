@@ -33,6 +33,13 @@ export interface ArenaOpponent {
   team: { defId: string; stars: number; level: number; slot: Slot }[];
 }
 
+export interface Friend {
+  id: string;
+  code: string;
+  name: string;
+  team: { defId: string; stars: number; level: number; slot: Slot }[];
+}
+
 export interface ChatMessage {
   from: string;
   text: string;
@@ -75,6 +82,8 @@ export interface PlayerState {
   tower: { floor: number };
   dungeons: Record<DungeonKind, number>;
   /** Mode Défense : dernier niveau gagné, étoiles par niveau, et les héros posés (uid → emplacement). */
+  /** Amis : la liste, les cadeaux envoyés aujourd'hui et ceux reçus à ouvrir (par id d'ami). */
+  friends: { list: Friend[]; day: string; sent: string[]; inbox: string[] };
   defense: { level: number; stars: Record<number, number>; placement: [number, number][]; chests?: number };
   arena: { points: number; opponents: ArenaOpponent[] };
   guild: { joined: string | null; bossDamage: number; chat: ChatMessage[]; lastBotAt: number };

@@ -7,7 +7,7 @@ import { fmt, t } from '../i18n';
 import { ensureDay, finishBattle, type BattleRequest } from '../state/actions';
 import { getState, useGame } from '../state/store';
 import { dots } from './dots';
-import { Cur, Icon, RedDot } from './kit';
+import { Icon, RedDot } from './kit';
 import { teamPower } from '../state/selectors';
 import { close, go, open, startBattle, useNav, type Modal, type Tab } from './nav';
 import { AdventureScreen } from './screens/adventure';
@@ -20,6 +20,7 @@ import { ResetPage } from './screens/reset';
 import { MissionPage } from './screens/mission';
 import { DungeonPage } from './screens/dungeon';
 import { DefensePrep, DefenseRun } from './screens/defense';
+import { FriendsPage } from './screens/friends';
 import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
 import { AdModal, ConfirmModal, GainModal, LegalModal, NameScreen, QuestsModal, RenameModal, SettingsModal, ShopModal } from './screens/meta';
@@ -27,6 +28,18 @@ import { ChatModal, GuildScreen, RankingModal } from './screens/social';
 import { OddsModal, SummonResult, SummonScreen } from './screens/summon';
 
 const TABS: Tab[] = ['campaign', 'heroes', 'summon', 'adventure', 'guild'];
+
+/** Une monnaie du haut : l'icône déborde à gauche, le nombre est aligné à droite, un « + » s'il y a une boutique. */
+function WalletPill({ k, n, onPlus }: { k: string; n: number; onPlus?: () => void }) {
+  const Tag = onPlus ? 'button' : 'span';
+  return (
+    <Tag class="pill" onClick={onPlus}>
+      <span class="pill-icon"><Icon name={k} size={22} /></span>
+      <span class="pill-n">{fmt(n)}</span>
+      {onPlus && <span class="plus">+</span>}
+    </Tag>
+  );
+}
 
 function TopBar() {
   const s = useGame();
@@ -43,12 +56,9 @@ function TopBar() {
         <span class="power-chip"><Icon name="power" size={14} />{fmt(teamPower(s))}</span>
       </div>
       <div class="wallet">
-        <Cur k="gold" n={s.wallet.gold} />
-        <Cur k="essence" n={s.wallet.essence} />
-        <button class="gems" onClick={() => open({ type: 'shop' })}>
-          <Cur k="gems" n={s.wallet.gems} />
-          <span class="plus">+</span>
-        </button>
+        <WalletPill k="gold" n={s.wallet.gold} />
+        <WalletPill k="essence" n={s.wallet.essence} />
+        <WalletPill k="gems" n={s.wallet.gems} onPlus={() => open({ type: 'shop' })} />
       </div>
     </header>
   );
@@ -91,6 +101,7 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'mission': return <MissionPage id={modal.id} />;
     case 'dungeon': return <DungeonPage kind={modal.kind} />;
     case 'defensePrep': return <DefensePrep level={modal.level} />;
+    case 'friends': return <FriendsPage />;
     case 'defenseRun': return <DefenseRun req={modal.req} />;
     case 'item': return <ItemModal uid={modal.uid} />;
     case 'legal': return <LegalModal doc={modal.doc} />;

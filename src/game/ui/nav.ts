@@ -30,6 +30,7 @@ export type Modal =
   | { type: 'mission'; id: string }
   | { type: 'dungeon'; kind: 'gold' | 'essence' | 'gear' }
   | { type: 'defensePrep'; level: number }
+  | { type: 'friends' }
   | { type: 'defenseRun'; req: DefenseRequest }
   | { type: 'item'; uid: number }
   | { type: 'legal'; doc: 'privacy' | 'terms' | 'notice' | 'credits' | 'support' };

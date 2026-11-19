@@ -66,11 +66,14 @@ p { margin: 6px 0; }
 .avatar-lv { position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); background: var(--bg); border-radius: 8px; padding: 0 6px; font: 800 12px var(--font-title); color: var(--gold); }
 .avatar-xp { position: absolute; bottom: 0; left: 0; height: 3px; background: var(--green); }
 .who { display: flex; flex-direction: column; min-width: 0; line-height: 1.1; }
-.who strong { font: 800 15px var(--font-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; }
-.wallet { flex: 1; display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap; }
-.wallet .cur, .gems { background: #0006; border-radius: 14px; padding: 3px 9px 3px 5px; }
-.gems { display: flex; align-items: center; gap: 4px; }
-.gems .cur { background: none; padding: 0; }
+.who strong { font: 800 15px var(--font-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 76px; }
+@media (max-width: 370px) { .who strong { max-width: 58px; } .wallet { gap: 12px; } .pill { min-width: 48px; padding-right: 6px; } }
+.wallet { flex: 1; display: flex; gap: 13px; justify-content: flex-end; align-items: center; flex-wrap: nowrap; padding-left: 9px; min-width: 0; }
+.pill { position: relative; display: flex; align-items: center; height: 26px; min-width: 54px; padding: 0 7px 0 16px; border-radius: 13px; flex: none;
+  background: #0008; box-shadow: inset 0 0 0 1px #ffffff1a; }
+.pill-icon { position: absolute; left: -9px; top: 50%; transform: translateY(-50%); display: grid; place-items: center; filter: drop-shadow(0 1px 2px #000a); }
+.pill-n { flex: 1; text-align: right; white-space: nowrap; font: 800 13px var(--font); font-variant-numeric: tabular-nums; }
+.pill .plus { margin: 0 -4px 0 4px; width: 16px; height: 16px; border-radius: 5px; font-size: 13px; }
 .plus { background: var(--green); color: #fff; border-radius: 6px; width: 18px; height: 18px; display: grid; place-items: center; font-weight: 800; line-height: 1; }
 
 
@@ -504,3 +507,25 @@ button.dungeon .grow { display: flex; flex-direction: column; gap: 2px; }
 .star-chest { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 10px; width: 100%; }
 .star-chest .muted { grid-column: 2; text-align: center; }
 .star-chest-gift { display: flex; align-items: center; gap: 6px; }
+
+/* ---------- Amis ---------- */
+.friend { flex-direction: row; align-items: center; gap: 10px; padding: 10px; }
+.friend .grow { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.friend-face { width: 48px; height: 48px; border-radius: 50%; background: var(--bg); border: 2px solid var(--line); object-fit: cover; }
+.friend-x { color: var(--muted); padding: 4px; font-size: 14px; }
+.gift-btn { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #ff6fa833; color: #ff6fa8; position: relative; }
+.gift-btn.done { opacity: 0.35; }
+.gift-btn.waiting::after { content: ''; position: absolute; top: -3px; right: -3px; width: 12px; height: 12px; border-radius: 50%; background: var(--gold); }
+.code-chip { font: 800 20px var(--font-title); letter-spacing: 2px; color: var(--gold); background: #0005; border-radius: 12px; padding: 4px 12px; }
+.friend-code .input { flex: 1; min-width: 0; height: 42px; border-radius: 12px; border: 2px solid var(--line); background: #0006; color: var(--text); padding: 0 12px; font: 800 16px var(--font); text-transform: uppercase; letter-spacing: 2px; }
+
+/* ---------- Guerre de guildes (aperçu) ---------- */
+.war-head { flex-direction: row; align-items: center; justify-content: space-between; }
+.war-side { display: flex; flex-direction: column; align-items: center; gap: 2px; flex: 1; text-align: center; }
+.war-side strong { font-size: 13px; }
+.war-score { font: 800 18px var(--font-title); color: var(--gold); }
+.war-vs { font: 800 26px var(--font-title); color: var(--red); }
+.war-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.war-fort { align-items: center; gap: 2px; padding: 8px 4px; text-align: center; }
+.war-fort img { width: 54px; }
+.war-fort strong { font-size: 12px; }

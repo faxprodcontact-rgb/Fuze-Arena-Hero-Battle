@@ -70,7 +70,7 @@ const FR = {
   'league.bronze': 'Bronze', 'league.silver': 'Argent', 'league.gold': 'Or', 'league.platinum': 'Platine', 'league.diamond': 'Diamant',
   'defense.prepare': 'Placer les héros', 'defense.replay': 'Rejouer',
 
-  'guild.join': 'Rejoindre', 'guild.leave': 'Quitter', 'guild.members': 'Membres', 'guild.boss': 'Boss', 'guild.chat': 'Tchat',
+  'guild.join': 'Rejoindre', 'guild.leave': 'Quitter', 'guild.members': 'Membres', 'guild.boss': 'Boss', 'guild.war': 'Guerre', 'guild.chat': 'Tchat',
   'guild.shop': 'Boutique', 'guild.total': 'Dégâts de la guilde', 'guild.level': 'Niv. {n}',
 
   'quests.daily': 'Du jour', 'quests.weekly': 'De la semaine', 'quests.activity': 'Activité',
@@ -104,7 +104,11 @@ const FR = {
 
   'result.victory': 'Victoire !', 'result.defeat': 'Défaite', 'result.damage': 'Dégâts', 'result.nothing': 'Rien cette fois',
   'battle.quit': 'Quitter', 'battle.wave': 'Vague', 'battle.auto': 'AUTO',
-  'mode.campaign': 'Niveau', 'mode.tower': 'Étage', 'mode.dungeon': 'Donjon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arène', 'mode.guildBoss': 'Guilde',
+  'mode.campaign': 'Niveau', 'mode.tower': 'Étage', 'mode.dungeon': 'Donjon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arène', 'mode.guildBoss': 'Guilde', 'mode.friend': 'Défi',
+  'friends.title': 'Amis', 'friends.code': 'Mon code', 'friends.add': 'Ajouter', 'friends.placeholder': 'Code ami',
+  'friends.sendAll': 'Tout envoyer', 'friends.claim': 'Ouvrir', 'friends.challenge': 'Défier', 'friends.suggest': 'Suggestions',
+  'friends.copied': 'Code copié', 'friends.added': 'Ami ajouté', 'friends.self': "C'est ton code", 'friends.already': 'Déjà ami',
+  'friends.full': 'Liste pleine', 'friends.invalid': 'Code invalide', 'friends.remove': 'Retirer cet ami ?',
   'new.feature': 'Débloqué !',
 };
 
@@ -178,7 +182,7 @@ const EN: Record<Key, string> = {
   'league.bronze': 'Bronze', 'league.silver': 'Silver', 'league.gold': 'Gold', 'league.platinum': 'Platinum', 'league.diamond': 'Diamond',
   'defense.prepare': 'Place heroes', 'defense.replay': 'Replay',
 
-  'guild.join': 'Join', 'guild.leave': 'Leave', 'guild.members': 'Members', 'guild.boss': 'Boss', 'guild.chat': 'Chat',
+  'guild.join': 'Join', 'guild.leave': 'Leave', 'guild.members': 'Members', 'guild.boss': 'Boss', 'guild.war': 'War', 'guild.chat': 'Chat',
   'guild.shop': 'Shop', 'guild.total': 'Guild damage', 'guild.level': 'Lv. {n}',
 
   'quests.daily': 'Daily', 'quests.weekly': 'Weekly', 'quests.activity': 'Activity',
@@ -212,7 +216,11 @@ const EN: Record<Key, string> = {
 
   'result.victory': 'Victory!', 'result.defeat': 'Defeat', 'result.damage': 'Damage', 'result.nothing': 'Nothing this time',
   'battle.quit': 'Quit', 'battle.wave': 'Wave', 'battle.auto': 'AUTO',
-  'mode.campaign': 'Stage', 'mode.tower': 'Floor', 'mode.dungeon': 'Dungeon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arena', 'mode.guildBoss': 'Guild',
+  'mode.campaign': 'Stage', 'mode.tower': 'Floor', 'mode.dungeon': 'Dungeon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arena', 'mode.guildBoss': 'Guild', 'mode.friend': 'Challenge',
+  'friends.title': 'Friends', 'friends.code': 'My code', 'friends.add': 'Add', 'friends.placeholder': 'Friend code',
+  'friends.sendAll': 'Send all', 'friends.claim': 'Open', 'friends.challenge': 'Challenge', 'friends.suggest': 'Suggestions',
+  'friends.copied': 'Code copied', 'friends.added': 'Friend added', 'friends.self': 'This is your code', 'friends.already': 'Already a friend',
+  'friends.full': 'List full', 'friends.invalid': 'Invalid code', 'friends.remove': 'Remove this friend?',
   'new.feature': 'Unlocked!',
 };
 

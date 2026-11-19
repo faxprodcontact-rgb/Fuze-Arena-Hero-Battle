@@ -66,6 +66,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
         <div class="edge edge-right">
           <EdgeButton icon="ranking" label={t('side.ranking')} onClick={() => open({ type: 'ranking' })} />
           <EdgeButton icon="chat" label={t('side.chat')} onClick={() => open({ type: 'chat' })} />
+          <EdgeButton icon="friends" label={t('friends.title')} dot={s.friends.inbox.length > 0} onClick={() => open({ type: 'friends' })} />
         </div>
       </div>
 

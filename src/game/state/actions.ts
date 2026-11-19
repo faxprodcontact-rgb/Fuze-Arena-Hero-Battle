@@ -10,7 +10,7 @@ import {
   type GearSlot, type Item,
 } from '../../core/data/items';
 import {
-  ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, RENAME_COST, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
+  ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, FRIEND_GIFT, FRIENDS_MAX, RENAME_COST, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
   ARENA_WIN_POINTS, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ATTEMPTS_PER_DAY,
   DUNGEON_LEVELS, DUNGEON_REWARD_HOURS, DUNGEON_STAGE_PER_LEVEL, ESSENCE_RATIO, dungeonItems, FAST_LOOT_COSTS, FAST_LOOT_HOURS, GEMS_PER_10_SUMMONS,
   GEMS_PER_SUMMON, GUILD_BOSS_ATTEMPTS, GUILD_COINS_PER_ATTACK, GUILD_SHOP, IDLE_ITEM_HOURS, MISSION_TEMPLATES,
@@ -32,7 +32,7 @@ import { summonBasic, summonOne } from '../../core/summon';
 import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
 import { CRYSTAL_HOURS, gearPct, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
-import type { ArenaOpponent, Gain, MissionState, PlayerState, Wallet } from './types';
+import type { ArenaOpponent, Friend, Gain, MissionState, PlayerState, Wallet } from './types';
 
 // ---------- Outils ----------
 
@@ -98,6 +98,7 @@ function track(s: PlayerState, event: QuestEvent, n = 1) {
 
 /** Nouveau jour, nouvelle semaine : remises à zéro et livraisons quotidiennes. */
 export function ensureDay(): void {
+  friendsDay();
   const s = getState();
   const today = dayKey(now());
   const week = weekKey(now());
@@ -590,7 +591,7 @@ export function claimFragments(defId: string): Hero | null {
 
 // ---------- Combats ----------
 
-export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss';
+export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss' | 'friend';
 
 export interface BattleRequest {
   kind: BattleKind;
@@ -1371,4 +1372,105 @@ export function finishDefense(req: DefenseRequest, lives: number): Gain {
     s.defense.chests = Math.max(s.defense.chests ?? 0, earned);
     return gain;
   });
+}
+
+// ---------- Amis ----------
+// Hors ligne pour l'instant : un code ami fabrique un joueur fictif toujours identique (même code = même ami).
+// Avec le serveur, le code désignera un vrai joueur.
+
+function codeSeed(code: string): number {
+  let h = 2166136261;
+  for (const ch of code) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return h >>> 0;
+}
+
+function friendFromCode(s: PlayerState, code: string): Friend {
+  const rng = createRng(codeSeed(code));
+  const ratio = 0.7 + rng() * 0.6;
+  const target = (Math.max(500, teamPower(s)) * ratio) / 5;
+  const slots: Slot[] = [0, 1, 2, 3, 4];
+  const team = slots.map((slot) => {
+    const def = pick(rng, HEROES.filter((h) => h.rarity !== 'common'));
+    const stars = RARITY_RULES[def.rarity].bornStars;
+    const hero: Hero = { uid: 0, defId: def.id, stars, level: 1 };
+    while (heroPower(s, hero) < target && hero.level < 400) hero.level += 1;
+    return { defId: def.id, stars, level: hero.level, slot };
+  });
+  return { id: `f-${code}`, code, name: BOT_NAMES[codeSeed(code) % BOT_NAMES.length]!, team };
+}
+
+/** Des codes de joueurs à proposer quand on a peu d'amis. */
+export function friendSuggestions(s: PlayerState = getState()): Friend[] {
+  const have = new Set(s.friends.list.map((f) => f.code));
+  const rng = createRng(codeSeed(playerId(s)) + s.friends.list.length);
+  const out: Friend[] = [];
+  for (let i = 0; i < 6 && out.length < 3; i++) {
+    const code = Math.floor(rng() * 2_176_782_336).toString(36).toUpperCase().padStart(6, '0');
+    if (!have.has(code)) out.push(friendFromCode(s, code));
+  }
+  return out;
+}
+
+export function addFriend(rawCode: string): 'added' | 'self' | 'already' | 'full' | 'invalid' {
+  const code = rawCode.trim().toUpperCase();
+  return update((s) => {
+    if (!/^[0-9A-Z]{6}$/.test(code)) return 'invalid';
+    if (code === playerId(s)) return 'self';
+    if (s.friends.list.some((f) => f.code === code)) return 'already';
+    if (s.friends.list.length >= FRIENDS_MAX) return 'full';
+    s.friends.list.push(friendFromCode(s, code));
+    return 'added';
+  });
+}
+
+export function removeFriend(id: string): void {
+  update((s) => {
+    s.friends.list = s.friends.list.filter((f) => f.id !== id);
+    s.friends.inbox = s.friends.inbox.filter((x) => x !== id);
+  });
+}
+
+/** Chaque jour, les amis (fictifs) envoient leur cadeau, environ 2 sur 3. */
+export function friendsDay(): void {
+  const today = dayKey(now());
+  if (getState().friends.day === today) return;
+  update((s) => {
+    const rng = createRng(codeSeed(today + playerId(s)));
+    s.friends.day = today;
+    s.friends.sent = [];
+    s.friends.inbox = s.friends.list.filter(() => rng() < 0.67).map((f) => f.id);
+  });
+}
+
+export function sendGift(id?: string): number {
+  return update((s) => {
+    const targets = s.friends.list.filter((f) => (id ? f.id === id : true) && !s.friends.sent.includes(f.id));
+    s.friends.sent.push(...targets.map((f) => f.id));
+    return targets.length;
+  });
+}
+
+export function claimGifts(): Gain {
+  return update((s) => {
+    const gain = emptyGain();
+    const n = s.friends.inbox.filter((id) => s.friends.list.some((f) => f.id === id)).length;
+    addCurrency(s, gain, 'basicScrolls', n * FRIEND_GIFT.basicScrolls);
+    s.friends.inbox = [];
+    return gain;
+  });
+}
+
+export function friendPower(f: Friend): number {
+  return opponentPower({ id: f.id, name: f.name, points: 0, team: f.team });
+}
+
+/** Défier un ami : combat automatique contre sa section, pour le plaisir (pas de récompense). */
+export function friendPlan(id: string): BattlePlan | null {
+  const f = getState().friends.list.find((x) => x.id === id);
+  if (!f) return null;
+  const o = { id: f.id, name: f.name, points: 0, team: f.team };
+  return {
+    kind: 'friend', title: f.name, waves: [arenaEnemies(o)], need: friendPower(f),
+    build: () => update((s) => ({ kind: 'friend' as const, title: f.name, heroes: teamUnits(s), waves: [arenaEnemies(o)], seed: seedFor(s) })),
+  };
 }

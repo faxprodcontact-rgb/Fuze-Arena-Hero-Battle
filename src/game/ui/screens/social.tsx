@@ -38,7 +38,7 @@ function botDamage(): number {
 
 export function GuildScreen() {
   const s = useGame();
-  const [tab, setTab] = useState<'boss' | 'members' | 'chat' | 'shop'>('boss');
+  const [tab, setTab] = useState<'boss' | 'war' | 'members' | 'chat' | 'shop'>('boss');
   useEffect(() => markSeen('guild'), []);
   if (!isUnlocked(s, 'guild')) {
     return <div class="screen"><section class="card center"><Icon name="guild" size={64} /><h1>{t('nav.guild')}</h1><Locked stage={UNLOCKS.guild} /></section></div>;
@@ -68,7 +68,7 @@ export function GuildScreen() {
         <div class="row between"><span class="muted">{t('guild.level', { n: 7 })} · 22 / 30</span><Cur k="guildCoins" n={s.wallet.guildCoins} /></div>
       </div>
       <Tabs value={tab} onChange={setTab} options={[
-        ['boss', t('guild.boss'), left > 0], ['members', t('guild.members')], ['chat', t('guild.chat')], ['shop', t('guild.shop')],
+        ['boss', t('guild.boss'), left > 0], ['war', t('guild.war')], ['members', t('guild.members')], ['chat', t('guild.chat')], ['shop', t('guild.shop')],
       ]} />
       {tab === 'boss' && (
         <section class="card center">
@@ -89,6 +89,7 @@ export function GuildScreen() {
           <Btn kind="ghost" small onClick={() => open({ type: 'confirm', text: `${t('guild.leave')} ?`, onYes: leaveGuild })}>{t('guild.leave')}</Btn>
         </section>
       )}
+      {tab === 'war' && <GuildWar guild={s.guild.joined} />}
       {tab === 'chat' && <Chat target="guild" />}
       {tab === 'shop' && (
         <div class="shop-grid">
@@ -102,6 +103,39 @@ export function GuildScreen() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Guerre de guildes : APERÇU de l'écran, les règles sont encore à décider avec le propriétaire.
+ * Deux guildes face à face, les défenses adverses à attaquer, les étoiles gagnées.
+ */
+function GuildWar({ guild }: { guild: string }) {
+  const s = useGame();
+  const foe = BOT_GUILDS.find((g) => g !== guild) ?? BOT_GUILDS[0]!;
+  const enemies = members(foe);
+  return (
+    <section class="list war">
+      <div class="card war-head">
+        <div class="war-side"><Icon name="guild" size={34} /><strong>{guild}</strong><span class="war-score">★ 0</span></div>
+        <span class="war-vs">VS</span>
+        <div class="war-side"><Icon name="guild" size={34} /><strong>{foe}</strong><span class="war-score">★ 0</span></div>
+      </div>
+      <div class="row between center-y">
+        <span class="tag">{t('soon')}</span>
+        <span class="muted">{t('boss.attempts', { n: 2, m: 2 })}</span>
+      </div>
+      <div class="war-grid">
+        {enemies.map((m) => (
+          <div class="card war-fort">
+            <img src={heroImage(m.defId)} alt="" />
+            <strong>{m.name}</strong>
+            <span class={`power-chip ${teamPower(s) >= m.power ? 'ok' : 'low'}`}><Icon name="power" size={14} />{fmt(m.power)}</span>
+            <span class="def-stars"><span class="off">★★★</span></span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
