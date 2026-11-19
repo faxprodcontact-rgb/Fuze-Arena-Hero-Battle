@@ -1,0 +1,17 @@
+{
+  "name": "fuze-arena-hero-battle",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "verifier": "tsc --noEmit",
+    "test": "vitest run",
+    "simuler": "tsx simulations/progression.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}
