@@ -6,7 +6,7 @@ import { GEAR_SLOTS } from '../../../core/data/items';
 import { levelCap } from '../../../core/data/stats';
 import { ELEMENT_COLOR, RARITY_COLOR, heroImage } from '../../art';
 import { fmt, t } from '../../i18n';
-import { equipBest, levelUp, resetHero, toggleInFormation, unequipAll } from '../../state/actions';
+import { canReset, equipBest, levelUp, toggleInFormation, unequipAll } from '../../state/actions';
 import { canLevelUp, gearPct, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import { Btn, Cur, Icon, ItemIcon, Modal, Stars } from '../kit';
@@ -106,12 +106,8 @@ export function HeroDetail({ uid }: { uid: number }) {
         }}>
           {inTeam ? t('heroes.inTeam') : t('heroes.addTeam')}
         </Btn>
-        {hero.level > 1 && (
-          <Btn kind="red" small onClick={() => open({ type: 'confirm', text: `${t('detail.reset')} ?`, onYes: () => {
-            resetHero(uid);
-          } })}>
-            {t('detail.reset')}
-          </Btn>
+        {canReset(s, hero) && (
+          <Btn kind="red" small onClick={() => open({ type: 'reset', uid })}>{t('detail.reset')}</Btn>
         )}
       </div>
       <button class="sr-only" onClick={close}>{t('close')}</button>

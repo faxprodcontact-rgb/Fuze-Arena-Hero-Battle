@@ -21,6 +21,8 @@ export const ESSENCE_RATIO = 0.5;
 export const IDLE_ITEM_HOURS = 2;
 /** Changer de nom après le premier choix coûte des gemmes. */
 export const RENAME_COST = 500;
+/** Prix (en gemmes) pour réinitialiser un héros : tout ce qui a été dépensé sur lui est rendu. */
+export const RESET_COST = 50;
 /** Butin rapide : 2 h de butin d'un coup. Le premier de la journée est gratuit, puis il coûte des gemmes. */
 export const FAST_LOOT_HOURS = 2;
 export const FAST_LOOT_COSTS = [0, 50, 100, 200];

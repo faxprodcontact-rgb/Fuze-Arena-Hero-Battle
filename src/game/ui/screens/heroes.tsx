@@ -60,12 +60,7 @@ function HeroList() {
 
       <div class="row between">
         <h2>{t('nav.heroes')} <span class="muted">{s.heroes.length}</span></h2>
-        <div class="row gap-s">
-          <span class="hcard-wrap">
-            <Btn kind="purple" small onClick={() => open({ type: 'fusion' })}>{t('fusion.title')}</Btn>
-            {s.formation.some(([u]) => !!fusionPreview(u).plan) && <RedDot />}
-          </span>
-          <div class="dropdown">
+        <div class="dropdown">
             <Btn kind="ghost" small onClick={() => setMenu(!menu)}>{t(`sort.${sort}`)} ▾</Btn>
             {menu && (
               <div class="dropdown-menu">
@@ -74,8 +69,14 @@ function HeroList() {
                 ))}
               </div>
             )}
-          </div>
         </div>
+      </div>
+      <div class="row gap-s">
+        <span class="hcard-wrap grow">
+          <Btn kind="purple" small wide onClick={() => open({ type: 'fusion' })}>★ {t('fusion.title')}</Btn>
+          {s.formation.some(([u]) => !!fusionPreview(u).plan) && <RedDot />}
+        </span>
+        <Btn kind="ghost" small wide onClick={() => open({ type: 'reset' })}>↺ {t('detail.reset')}</Btn>
       </div>
 
       <div class="grid">

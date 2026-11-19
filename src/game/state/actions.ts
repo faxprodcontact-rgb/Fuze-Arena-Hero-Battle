@@ -14,7 +14,7 @@ import {
   ARENA_WIN_POINTS, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ENTRIES_PER_DAY,
   DUNGEON_REWARD_HOURS, DUNGEON_TIERS, ESSENCE_RATIO, FAST_LOOT_COSTS, FAST_LOOT_HOURS, GEMS_PER_10_SUMMONS,
   GEMS_PER_SUMMON, GUILD_BOSS_ATTEMPTS, GUILD_COINS_PER_ATTACK, GUILD_SHOP, IDLE_ITEM_HOURS, MISSION_TEMPLATES,
-  MISSIONS_PER_DAY, MONTHLY_CARD, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL, STAGE_GEMS, TOWER_REWARD,
+  MISSIONS_PER_DAY, MONTHLY_CARD, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL, RESET_COST, STAGE_GEMS, TOWER_REWARD,
   TOWER_STAGE_PER_FLOOR, WEEKLY_CHESTS, WEEKLY_QUESTS, accountXpForLevel, type DungeonKind, type QuestEvent,
   type Reward,
 } from '../../core/data/modes';
@@ -216,36 +216,53 @@ export function levelUp(uid: number, times = 1): number {
   });
 }
 
-function refundHero(s: PlayerState, hero: Hero, gain?: Gain) {
-  const gold = levelRefund(hero.level);
-  s.wallet.gold += gold;
-  s.wallet.essence += Math.round(gold * ESSENCE_RATIO);
-  if (gain) {
-    gain.currencies.gold = (gain.currencies.gold ?? 0) + gold;
-    gain.currencies.essence = (gain.currencies.essence ?? 0) + Math.round(gold * ESSENCE_RATIO);
-  }
-  for (const it of s.items) if (it.heroUid === hero.uid) delete it.heroUid;
+/** Ce qu'on récupère en vidant un héros : niveaux, renforcement des emplacements, objets portés. */
+export function heroRefund(s: PlayerState, hero: Hero): { gold: number; essence: number; dust: number; items: number } {
+  const levelGold = levelRefund(hero.level);
+  let gold = levelGold;
+  let dust = 0;
   // Le renforcement des emplacements est rendu aussi (« rien n'est perdu »).
   const levels = s.slotLevels[hero.uid] ?? {};
   for (const slot of GEAR_SLOTS) {
     for (let l = 0; l < (levels[slot] ?? 0); l++) {
       const cost = slotUpgradeCost(l);
-      s.wallet.gold += cost.gold;
-      s.wallet.dust += cost.dust;
-      if (gain) {
-        gain.currencies.gold = (gain.currencies.gold ?? 0) + cost.gold;
-        gain.currencies.dust = (gain.currencies.dust ?? 0) + cost.dust;
-      }
+      gold += cost.gold;
+      dust += cost.dust;
     }
   }
+  const items = s.items.filter((it) => it.heroUid === hero.uid).length;
+  return { gold, essence: Math.round(levelGold * ESSENCE_RATIO), dust, items };
+}
+
+function refundHero(s: PlayerState, hero: Hero, gain?: Gain) {
+  const r = heroRefund(s, hero);
+  s.wallet.gold += r.gold;
+  s.wallet.essence += r.essence;
+  s.wallet.dust += r.dust;
+  if (gain) {
+    gain.currencies.gold = (gain.currencies.gold ?? 0) + r.gold;
+    gain.currencies.essence = (gain.currencies.essence ?? 0) + r.essence;
+    gain.currencies.dust = (gain.currencies.dust ?? 0) + r.dust;
+  }
+  for (const it of s.items) if (it.heroUid === hero.uid) delete it.heroUid;
   delete s.slotLevels[hero.uid];
 }
 
-export function resetHero(uid: number): Gain {
+/** Un héros vaut la peine d'être réinitialisé s'il a des niveaux, des emplacements renforcés ou des objets. */
+export function canReset(s: PlayerState, hero: Hero): boolean {
+  const r = heroRefund(s, hero);
+  return hero.level > 1 || r.dust > 0 || r.items > 0;
+}
+
+/** Réinitialise un héros (niveau 1, objets au sac) contre RESET_COST gemmes ; tout est rendu. */
+export function resetHero(uid: number): Gain | null {
+  const s0 = getState();
+  const h0 = heroByUid(s0, uid);
+  if (!h0 || !canReset(s0, h0) || s0.wallet.gems < RESET_COST) return null;
   return update((s) => {
     const gain = emptyGain();
-    const hero = heroByUid(s, uid);
-    if (!hero) return gain;
+    const hero = heroByUid(s, uid)!;
+    s.wallet.gems -= RESET_COST;
     refundHero(s, hero, gain);
     hero.level = 1;
     return gain;

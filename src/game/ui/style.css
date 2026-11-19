@@ -443,3 +443,6 @@ p { margin: 6px 0; }
 .new-tag { margin-top: -10px; z-index: 1; background: var(--red); border-radius: 8px; padding: 0 6px; font: 800 11px var(--font-title); }
 .fuse-slot.pick { padding: 0; border-radius: 12px; }
 .fuse-slot.on { outline: 3px solid var(--gold); outline-offset: 2px; border-radius: 12px; }
+.reset-stage { border-color: var(--red); background: radial-gradient(circle at 50% 0%, #e5484d33, #0000 70%), var(--panel); }
+.reset-lv { display: block; text-align: center; margin-top: 4px; font: 800 13px var(--font-title); color: var(--muted); }
+.reset-back { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; }

@@ -25,6 +25,7 @@ export type Modal =
   | { type: 'rename' }
   | { type: 'fusion'; uid?: number }
   | { type: 'forge' }
+  | { type: 'reset'; uid?: number }
   | { type: 'item'; uid: number }
   | { type: 'slot'; heroUid: number; slot: 'weapon' | 'armor' | 'helmet' | 'boots' }
   | { type: 'legal'; doc: 'privacy' | 'terms' | 'notice' | 'credits' | 'support' };
