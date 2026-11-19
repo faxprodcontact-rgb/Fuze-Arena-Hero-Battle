@@ -1,4 +1,5 @@
 // Équipement : 4 emplacements par héros, 6 raretés. Le bonus grandit avec le chapitre où l'objet a été trouvé.
+import type { StatMods } from '../battle/types';
 import type { Rng } from '../rng';
 
 export const GEAR_SLOTS = ['weapon', 'armor', 'helmet', 'boots'] as const;
@@ -17,6 +18,69 @@ export interface Item {
   tier: number;
   /** Héros qui le porte, s'il est équipé. */
   heroUid?: number;
+  /** Panoplie (à partir des objets Bleus) : 4 objets de la même panoplie donnent un bonus. */
+  set?: GearSet;
+}
+
+// ---------- Ce que donne chaque emplacement ----------
+
+/** Statistique principale de chaque emplacement (en %, sur la statistique du héros). */
+export const SLOT_STAT: Record<GearSlot, 'atk' | 'hp' | 'def' | 'speed'> = { weapon: 'atk', armor: 'hp', helmet: 'def', boots: 'speed' };
+/** La vitesse compte beaucoup : les bottes en donnent moins. */
+const MAIN_SCALE: Record<GearSlot, number> = { weapon: 1, armor: 1, helmet: 1, boots: 0.4 };
+
+/** Statistique principale de l'objet posé dans un emplacement renforcé (en %). */
+export function itemMain(item: Pick<Item, 'rarity' | 'tier' | 'slot'>, slotLevel = 0): number {
+  return Math.round(equippedBonus(item, slotLevel) * MAIN_SCALE[item.slot]);
+}
+
+/** Statistiques secondaires, à partir des objets Bleus (rareté 2), plus fortes avec la rareté. */
+export function itemSubs(item: Pick<Item, 'rarity' | 'slot'>): StatMods {
+  const r = item.rarity - 1;
+  if (r < 1) return {};
+  switch (item.slot) {
+    case 'weapon': return { crit: 0.01 * r, ...(item.rarity >= 4 ? { critDmg: 0.05 * (item.rarity - 3) } : {}) };
+    case 'armor': return { def: 0.03 * r };
+    case 'helmet': return { tenacity: 0.02 * r };
+    case 'boots': return { dodge: 0.015 * r };
+  }
+}
+
+// ---------- Panoplies ----------
+
+export const GEAR_SETS = ['fury', 'rampart', 'storm', 'vampire', 'guard'] as const;
+export type GearSet = (typeof GEAR_SETS)[number];
+export const SET_PIECES = 4;
+/** Bonus d'une panoplie complète (4 objets). */
+export const SET_BONUS: Record<GearSet, StatMods> = {
+  fury: { critDmg: 0.25 },
+  rampart: { hp: 0.12 },
+  storm: { speed: 0.1 },
+  vampire: { lifesteal: 0.1 },
+  guard: { tenacity: 0.15 },
+};
+
+/** Tout ce que l'équipement d'un héros lui apporte (objets + renforcement des emplacements + panoplie). */
+export function gearStats(worn: { item: Item; level: number }[]): StatMods {
+  const total: Required<StatMods> = { hp: 0, atk: 0, def: 0, speed: 0, crit: 0, critDmg: 0, dodge: 0, tenacity: 0, lifesteal: 0 };
+  const add = (m: StatMods) => {
+    for (const [k, v] of Object.entries(m)) total[k as keyof StatMods] += v ?? 0;
+  };
+  const sets = new Map<GearSet, number>();
+  for (const { item, level } of worn) {
+    add({ [SLOT_STAT[item.slot]]: itemMain(item, level) / 100 });
+    add(itemSubs(item));
+    if (item.set) sets.set(item.set, (sets.get(item.set) ?? 0) + 1);
+  }
+  for (const [set, n] of sets) if (n >= SET_PIECES) add(SET_BONUS[set]);
+  return total;
+}
+
+/** La panoplie complète portée, s'il y en a une. */
+export function activeSet(worn: readonly Item[]): GearSet | undefined {
+  const sets = new Map<GearSet, number>();
+  for (const it of worn) if (it.set) sets.set(it.set, (sets.get(it.set) ?? 0) + 1);
+  return [...sets].find(([, n]) => n >= SET_PIECES)?.[0];
 }
 
 /** Bonus de force de l'objet, en %. */
@@ -59,7 +123,7 @@ export function slotUpgradeCost(level: number): { gold: number; dust: number } {
   return { gold: Math.round(1500 * 1.75 ** level), dust: 5 * (level + 1) ** 2 };
 }
 
-/** Bonus en % d'un objet posé dans un emplacement renforcé. */
+/** Bonus en % d'un objet posé dans un emplacement renforcé (sert aussi à la puissance affichée). */
 export function equippedBonus(item: Pick<Item, 'rarity' | 'tier'>, slotLevel: number): number {
   return Math.round(itemBonus(item) * (1 + SLOT_LEVEL_GAIN * slotLevel));
 }

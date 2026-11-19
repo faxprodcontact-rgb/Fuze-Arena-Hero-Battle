@@ -1,9 +1,11 @@
 // Sac : tous les objets, la forge (3 identiques → rareté au-dessus), le recyclage en poussière de forge,
 // et le panneau d'un emplacement de héros (choisir l'objet, renforcer l'emplacement), affiché dans la fiche du héros.
 import { useState } from 'preact/hooks';
+import { describeStats } from '../../describe';
 import { heroDef } from '../../../core/data/heroes';
 import {
-  FORGE_COUNT, GEAR_SLOTS, ITEM_RARITIES, SLOT_MAX_LEVEL, equippedBonus, itemBonus, recycleDust, slotUpgradeCost,
+  FORGE_COUNT, GEAR_SLOTS, ITEM_RARITIES, SET_BONUS, SET_PIECES, SLOT_MAX_LEVEL, SLOT_STAT, itemBonus, itemMain, itemSubs,
+  recycleDust, slotUpgradeCost,
   type GearSlot, type Item,
 } from '../../../core/data/items';
 import { ITEM_COLORS } from '../../art';
@@ -112,11 +114,19 @@ export function ItemModal({ uid }: { uid: number }) {
       <div class="item-top" style={{ '--rar': ITEM_COLORS[item.rarity] } as never}>
         <ItemIcon item={item} level={o ? slotLevel(s, o.uid, item.slot) : 0} />
         <div>
-          <div class="item-big">+{itemBonus(item)} %</div>
+          <div class="item-big">{t(`stat.${SLOT_STAT[item.slot]}`)} +{itemMain(item, o ? slotLevel(s, o.uid, item.slot) : 0)} %</div>
+          {describeStats(itemSubs(item)) && <div class="small">{describeStats(itemSubs(item))}</div>}
           <div class="muted small">{t('item.chapter', { n: item.tier + 1 })}</div>
           {o && <div class="small">{t('item.wornBy', { n: heroDef(o.defId).name })}</div>}
         </div>
       </div>
+      {item.set && (
+        <div class={`set-line set-${item.set}`}>
+          <strong>{t(`set.${item.set}`)}</strong>
+          <span class="muted small">{o ? `${s.items.filter((it) => it.heroUid === o.uid && it.set === item.set).length} / ${SET_PIECES}` : `${SET_PIECES} ×`}</span>
+          <span class="small">{describeStats(SET_BONUS[item.set])}</span>
+        </div>
+      )}
       {canForge && (
         <section class="block">
           <div class="row between center-y">
@@ -181,7 +191,7 @@ export function SlotPanel({ heroUid, slot }: { heroUid: number; slot: GearSlot }
           <strong>{t('slot.level', { n: level })} / {SLOT_MAX_LEVEL}</strong>
           {current && (
             <span class="muted">
-              +{equippedBonus(current, level)} %{cost && <> → <b class="gold-text">+{equippedBonus(current, level + 1)} %</b></>}
+              {t(`stat.${SLOT_STAT[slot]}`)} +{itemMain(current, level)} %{cost && <> → <b class="gold-text">+{itemMain(current, level + 1)} %</b></>}
             </span>
           )}
         </div>

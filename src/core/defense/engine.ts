@@ -189,55 +189,48 @@ export class DefenseBattle {
   }
 
   private hit(t: Tower, c: Creep, power: number, events: DefenseEvent[], skill?: string) {
-    const crit = this.rng() < CRIT_CHANCE;
+    const crit = this.rng() < (t.unit.crit ?? CRIT_CHANCE);
     const adv = hasAdvantage(t.unit.element, c.element);
     const melee = t.unit.ranged ? 1 : DEFENSE_MELEE_BONUS;
     const variance = 0.9 + this.rng() * 0.2;
-    const amount = Math.max(1, Math.round(t.unit.atk * power * melee * (100 / (100 + c.def)) * (adv ? ADVANTAGE_MULT : 1) * (crit ? CRIT_MULT : 1) * variance));
+    const amount = Math.max(1, Math.round(t.unit.atk * power * melee * (100 / (100 + c.def)) * (adv ? ADVANTAGE_MULT : 1) * (crit ? (t.unit.critDmg ?? CRIT_MULT) : 1) * variance));
     c.hp = Math.max(0, c.hp - amount);
     events.push({ type: 'hit', source: t.id, target: c.id, amount, crit, skill });
   }
 
-  /** Compétences adaptées à la Défense : dégâts de zone, gros coup, étourdissement, ralentissement, réparation du camp. */
+  /**
+   * Compétences adaptées à la Défense, lues dans la liste d'effets du héros :
+   * dégâts de zone si la compétence touche plusieurs ennemis, sinon un gros coup ; un étourdissement arrête les monstres ;
+   * un bouclier ou une provocation ralentit ceux qui passent ; un soin répare le camp (une vie).
+   */
   private cast(t: Tower, inRange: Creep[], target: Creep, events: DefenseEvent[]) {
     t.energy = 0;
     const { skill } = t.unit;
+    const fx = skill.effects;
     const targets: Creep[] = [];
-    switch (skill.kind) {
-      case 'aoe':
-      case 'smash':
-        for (const c of inRange) {
-          this.hit(t, c, skill.power, events, skill.id);
-          targets.push(c);
-        }
-        break;
-      case 'stunFront':
-        for (const c of inRange) {
-          this.hit(t, c, skill.power, events, skill.id);
-          c.stun = Math.max(c.stun, skill.stunTicks ?? 15);
-          targets.push(c);
-        }
-        break;
-      case 'shieldAll':
-        // Le protecteur ralentit tout ce qui passe près de lui.
-        for (const c of inRange) {
-          c.slow = Math.max(c.slow, 40);
-          targets.push(c);
-        }
-        break;
-      case 'healAll':
-        // Le soigneur répare le camp (une vie).
-        this.lives = Math.min(DEFENSE_LIVES, this.lives + 1);
-        events.push({ type: 'heal', lives: this.lives });
-        this.hit(t, target, 1, events);
-        break;
-      default:
-        // Gros coup sur le monstre visé (le plus résistant pour l'assassin).
-        {
-          const c = skill.kind === 'strikeBack' ? inRange.reduce((a, b) => (b.hp > a.hp ? b : a)) : target;
-          this.hit(t, c, skill.power, events, skill.id);
-          targets.push(c);
-        }
+    const damages = fx.filter((e): e is Extract<typeof e, { type: 'damage' }> => e.type === 'damage');
+    const stun = fx.find((e) => e.type === 'status' && e.status === 'stun');
+    const wide = damages.some((e) => ['all', 'frontRow', 'backRow', 'random3'].includes(e.target));
+    if (fx.some((e) => e.type === 'heal' || e.type === 'revive')) {
+      this.lives = Math.min(DEFENSE_LIVES, this.lives + 1);
+      events.push({ type: 'heal', lives: this.lives });
+    }
+    if (fx.some((e) => e.type === 'shield' || (e.type === 'status' && (e.status === 'taunt' || e.status === 'slow' || e.status === 'defDown')))) {
+      for (const c of inRange) {
+        c.slow = Math.max(c.slow, 40);
+        targets.push(c);
+      }
+    }
+    if (damages.length) {
+      const power = damages.reduce((a, e) => a + e.power, 0);
+      const hitList = wide ? inRange : [damages.some((e) => e.target === 'highestAtk' || e.target === 'lowestHp' || e.target === 'back') ? inRange.reduce((a, b) => (b.hp > a.hp ? b : a)) : target];
+      for (const c of hitList) {
+        this.hit(t, c, power, events, skill.id);
+        if (stun && 'seconds' in stun) c.stun = Math.max(c.stun, Math.round(stun.seconds * 10));
+        targets.push(c);
+      }
+    } else if (!targets.length) {
+      this.hit(t, target, 1, events);
     }
     events.push({ type: 'skill', source: t.id, skill: skill.id, targets: targets.map((c) => c.id) });
   }

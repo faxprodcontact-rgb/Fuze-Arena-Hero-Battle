@@ -1,9 +1,19 @@
 // Fabrique les combattants du moteur à partir des héros d'un joueur et des monstres.
-import { heroDef } from '../data/heroes';
+import { AWAKEN_SKILL, AWAKEN_STARS, heroDef } from '../data/heroes';
 import { monsterDef } from '../data/monsters';
 import { BASE_POWER, LEVEL_GAIN, STAR_MULT } from '../data/stats';
 import type { Element, Hero } from '../types';
-import type { Slot, UnitInit } from './types';
+import { applyStatMods } from './engine';
+import type { Effect, SkillDef, Slot, StatMods, UnitInit } from './types';
+
+/** Éveil (★10) : la compétence gagne en force. */
+function awaken(skill: SkillDef): SkillDef {
+  const up = (e: Effect): Effect =>
+    e.type === 'damage' || e.type === 'shield' ? { ...e, power: Math.round(e.power * AWAKEN_SKILL * 100) / 100 }
+      : e.type === 'heal' ? { ...e, power: e.power && Math.round(e.power * AWAKEN_SKILL * 100) / 100, pctMax: e.pctMax && e.pctMax * AWAKEN_SKILL }
+        : e;
+  return { id: skill.id, effects: skill.effects.map(up) };
+}
 
 /** Multiplicateur de force d'un héros : niveau × étoiles × équipement (bonus en %). */
 export function heroMultiplier(hero: Hero, gearPct = 0): number {
@@ -20,10 +30,14 @@ function scaledDef(def: number, mult: number): number {
   return Math.round(def * Math.pow(mult, 0.25));
 }
 
-export function heroToUnit(hero: Hero, slot: Slot, gearPct = 0): UnitInit {
+/**
+ * Le combattant d'un héros. `gear` = ce que donne son équipement : soit un pourcentage global (ancien calcul,
+ * gardé pour les simulations), soit les vraies statistiques de ses objets (atq, PV, déf, vitesse, critique…).
+ */
+export function heroToUnit(hero: Hero, slot: Slot, gear: number | StatMods = 0): UnitInit {
   const d = heroDef(hero.defId);
-  const mult = heroMultiplier(hero, gearPct);
-  return {
+  const mult = heroMultiplier(hero, typeof gear === 'number' ? gear : 0);
+  const unit: UnitInit = {
     id: `h-${hero.uid}`,
     defId: d.id,
     side: 'hero',
@@ -33,10 +47,19 @@ export function heroToUnit(hero: Hero, slot: Slot, gearPct = 0): UnitInit {
     atk: Math.round(d.atk * mult),
     def: scaledDef(d.def, mult),
     interval: d.interval,
+    crit: d.crit,
+    critDmg: d.critDmg,
+    dodge: d.dodge,
+    tenacity: d.tenacity,
     ranged: d.ranged,
-    skill: d.skill,
+    hitsBack: d.hitsBack,
+    skill: hero.stars >= AWAKEN_STARS ? awaken(d.skill) : d.skill,
+    // Les passifs se débloquent avec les étoiles.
+    passives: d.passives.filter((p) => hero.stars >= p.stars).map((p) => p.passive),
     talent: d.talent,
+    hero: true,
   };
+  return typeof gear === 'number' ? unit : applyStatMods(unit, gear);
 }
 
 export function monsterToUnit(monsterId: string, slot: Slot, element: Element, mult: number, id: string): UnitInit {

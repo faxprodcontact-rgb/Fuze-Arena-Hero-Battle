@@ -1,6 +1,8 @@
 // Fiche d'un héros : niveau, équipement, talent de chef (s'il en a un), compétence avec son aperçu en boucle.
 // La fusion et la Renaissance se font sur leurs pages (onglet Héros).
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { applyStatMods } from '../../../core/battle/engine';
+import { AWAKEN_SKILL, AWAKEN_STARS } from '../../../core/data/heroes';
 import { heroToUnit } from '../../../core/battle/units';
 import type { Talent } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
@@ -9,24 +11,33 @@ import { levelCap } from '../../../core/data/stats';
 import { ELEMENT_COLOR, RARITY_COLOR, heroImage } from '../../art';
 import { fmt, t } from '../../i18n';
 import { equipBest, levelUp, toggleInFormation, unequipAll } from '../../state/actions';
-import { canLevelUp, gearPct, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
+import { canLevelUp, gearStatsOf, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import { Btn, Cur, Icon, ItemIcon, Modal, Stars } from '../kit';
 import { SlotPanel, betterInBag } from './bag';
+import { describePassive, describeSkill, describeTalent } from '../../describe';
 import { runSkillPreview } from '../../skill-scene';
 import type { UnitInit } from '../../../core/battle/types';
 import { close, open, toast } from '../nav';
 
 export function talentText(talent: Talent | undefined): string {
-  const parts: string[] = [];
-  if (!talent) return '';
-  const pct = (x: number) => Math.round((x - 1) * 100);
-  if (talent.atkMult) parts.push(t('talent.atkMult', { n: pct(talent.atkMult) }));
-  if (talent.defMult) parts.push(t('talent.defMult', { n: pct(talent.defMult) }));
-  if (talent.intervalMult) parts.push(t('talent.intervalMult', { n: Math.round((1 - talent.intervalMult) * 100) }));
-  if (talent.energyMult) parts.push(t('talent.energyMult', { n: pct(talent.energyMult) }));
-  if (talent.startEnergy) parts.push(t('talent.startEnergy', { n: talent.startEnergy }));
-  return parts.join(' · ');
+  return describeTalent(talent);
+}
+
+/** Les 8 statistiques du héros, avec ses passifs permanents déjà débloqués. */
+function StatsGrid({ unit }: { unit: UnitInit }) {
+  let u = unit;
+  for (const p of unit.passives ?? []) if (p.kind === 'stats') u = applyStatMods(u, p.stats);
+  const pct = (x = 0) => `${Math.round(x * 100)} %`;
+  const rows: [string, string][] = [
+    ['hp', fmt(u.maxHp)], ['atk', fmt(u.atk)], ['def', fmt(u.def)], ['speed', String(Math.round(1000 / u.interval))],
+    ['crit', pct(u.crit)], ['critDmg', pct((u.critDmg ?? 1.5) - 1)], ['dodge', pct(u.dodge)], ['tenacity', pct(u.tenacity)],
+  ];
+  return (
+    <div class="stat-grid">
+      {rows.map(([k, v]) => <span><small>{t(`stat.${k}`)}</small><b>{v}</b></span>)}
+    </div>
+  );
 }
 
 /** La compétence jouée en boucle contre des monstres. Redémarre si la force du héros change. */
@@ -47,7 +58,7 @@ export function HeroDetail({ uid }: { uid: number }) {
   const hero = heroByUid(s, uid);
   if (!hero) return null;
   const d = heroDef(hero.defId);
-  const unit = heroToUnit(hero, 0, gearPct(s, uid));
+  const unit = heroToUnit(hero, 0, gearStatsOf(s, uid));
   const cost = levelUpCost(hero);
   const items = heroItems(s, uid);
   const inTeam = s.formation.some(([u]) => u === uid);
@@ -64,13 +75,9 @@ export function HeroDetail({ uid }: { uid: number }) {
             <span class="tag" style={{ color: ELEMENT_COLOR[d.element] }}>{t(`element.${d.element}`)}</span>
           </div>
           <div class="power-chip"><Icon name="power" size={18} />{fmt(heroPower(s, hero))}</div>
-          <div class="stats">
-            <span>{t('detail.hp')} <b>{fmt(unit.maxHp)}</b></span>
-            <span>{t('detail.atk')} <b>{fmt(unit.atk)}</b></span>
-            <span>{t('detail.def')} <b>{fmt(unit.def)}</b></span>
-          </div>
         </div>
       </div>
+      <StatsGrid unit={unit} />
 
       <section class="block">
         <div class="row between">
@@ -121,8 +128,20 @@ export function HeroDetail({ uid }: { uid: number }) {
 
       <section class="block">
         <h3>{t('detail.skill')} · {t(`skill.${d.skill.id}`)}</h3>
-        <p class="muted">{t(`skilltext.${d.skill.kind}`)}</p>
+        <p class="muted">{describeSkill(unit.skill)}</p>
         <SkillPreview unit={unit} />
+        {d.rarity === 'legendary' && (
+          <p class={`small ${hero.stars >= AWAKEN_STARS ? 'gold-text' : 'muted'}`}>{t('detail.awaken', { n: AWAKEN_STARS, p: Math.round((AWAKEN_SKILL - 1) * 100) })}</p>
+        )}
+      </section>
+
+      <section class="block">
+        {d.passives.map((p, i) => (
+          <div class={`passive${hero.stars >= p.stars ? '' : ' locked'}`}>
+            <h3>{hero.stars >= p.stars ? '◆' : '🔒'} {t('detail.passive')} {i + 1} <span class="muted small">{t('detail.unlockAt', { n: p.stars })}</span></h3>
+            <p class="muted">{describePassive(p.passive)}</p>
+          </div>
+        ))}
       </section>
 
       <div class="row gap">

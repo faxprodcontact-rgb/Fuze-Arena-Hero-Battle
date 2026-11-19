@@ -1,7 +1,7 @@
 // Petites pièces d'interface réutilisées partout.
 import type { ComponentChildren } from 'preact';
 import { heroDef } from '../../core/data/heroes';
-import { equippedBonus, type Item } from '../../core/data/items';
+import { itemMain, type Item } from '../../core/data/items';
 import { MAX_YELLOW, MYTHIC_STARS } from '../../core/data/stars';
 import type { Hero } from '../../core/types';
 import { ELEMENT_COLOR, ITEM_COLORS, RARITY_COLOR, heroImage } from '../art';
@@ -159,7 +159,8 @@ export function ItemIcon(p: { item?: Item; level?: number; onClick?: () => void;
   return (
     <Tag class="item" style={{ '--rar': ITEM_COLORS[item.rarity] } as never} onClick={p.onClick}>
       <Icon name={item.slot} size={32} />
-      <span class="item-bonus">+{equippedBonus(item, p.level ?? 0)}%</span>
+      <span class="item-bonus">+{itemMain(item, p.level ?? 0)}%</span>
+      {item.set && <span class={`item-set set-${item.set}`} />}
       {!!p.level && !p.hideLevel && <span class="item-level">+{p.level}</span>}
       {p.heroDefId && <img class="item-owner" src={heroImage(p.heroDefId)} alt="" />}
     </Tag>

@@ -1,7 +1,7 @@
 // Forge : [objet] + [objet] + [objet] = [rareté au-dessus]. Ce qui manque est grisé.
 // En dessous, les objets du sac regroupés (même emplacement, même rareté), les forgeables en premier.
 import { useState } from 'preact/hooks';
-import { FORGE_COUNT, ITEM_RARITIES, itemBonus, type GearSlot, type Item } from '../../../core/data/items';
+import { FORGE_COUNT, ITEM_RARITIES, SLOT_STAT, itemMain, type GearSlot, type Item } from '../../../core/data/items';
 import { ITEM_COLORS } from '../../art';
 import { t } from '../../i18n';
 import { forgeAll, forgeItem } from '../../state/actions';
@@ -56,7 +56,7 @@ export function ForgePage() {
             <span class="fuse-op">=</span>
             <span class="forge-result"><ItemIcon item={{ uid: 0, ...result }} /></span>
           </div>
-          <p class="center muted small">+{itemBonus(used[0]!)} % → <b class="gold-text">+{itemBonus(result)} %</b></p>
+          <p class="center muted small">{t(`stat.${SLOT_STAT[g.slot]}`)} +{itemMain(used[0]!)} % → <b class="gold-text">+{itemMain(result)} %</b></p>
           <Btn kind="gold" wide disabled={g.items.length < FORGE_COUNT} onClick={() => {
             if (forgeItem(g.items[0]!.uid)) toast('✓');
           }}>{t('item.forge')}</Btn>

@@ -158,7 +158,9 @@ function drawHeroOn(c: Ctx, d: HeroDef, index: number) {
       fill(c, '#fff3c4');
       c.fillRect(96, 74, 4, 20);
       break;
-    case 'attacker':
+    case 'warrior':
+    case 'marksman':
+    case 'assassin':
       if (d.ranged && d.faction !== 'mages') {
         c.globalAlpha = 1;
         c.strokeStyle = '#9b6b3a';

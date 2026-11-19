@@ -6,7 +6,7 @@ import { stagePower } from '../../core/data/campaign';
 import { incomePerHour, REWARDS, STAGE_REWARD_HOURS, STAGES_PER_CHAPTER } from '../../core/data/economy';
 import { HEROES, heroDef } from '../../core/data/heroes';
 import {
-  FORGE_COUNT, GEAR_SLOTS, ITEM_RARITIES, SLOT_MAX_LEVEL, itemBonus, recycleDust, rollItemRarity, slotUpgradeCost,
+  FORGE_COUNT, GEAR_SETS, GEAR_SLOTS, ITEM_RARITIES, SLOT_MAX_LEVEL, itemBonus, recycleDust, rollItemRarity, slotUpgradeCost,
   type GearSlot, type Item,
 } from '../../core/data/items';
 import {
@@ -32,7 +32,7 @@ import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '.
 import { summonBasic, summonOne } from '../../core/summon';
 import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
-import { CRYSTAL_HOURS, formationOf, gearPct, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
+import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
 import type { TeamKind } from './selectors';
 import type { ArenaOpponent, Friend, Gain, GuildWarState, MissionState, PlayerState, Wallet } from './types';
 
@@ -89,6 +89,8 @@ function makeItem(s: PlayerState, rng: Rng, rarity?: number, luck = 0): Item {
     rarity: rarity ?? rollItemRarity(rng, luck),
     tier: chapterOf(Math.max(1, s.campaign.cleared)) - 1,
   };
+  // À partir des objets Bleus, une panoplie au hasard.
+  if (item.rarity >= 2) item.set = pick(rng, GEAR_SETS);
   s.items.push(item);
   return item;
 }
@@ -169,7 +171,8 @@ export function fastLoot(): Gain | null {
 // ---------- Section ----------
 
 const PREFERRED_SLOTS: Record<string, Slot[]> = {
-  protector: [0, 1, 2, 3, 4], attacker: [1, 2, 0, 3, 4], healer: [3, 4, 2, 1, 0], support: [4, 3, 2, 1, 0],
+  protector: [0, 1, 2, 3, 4], warrior: [1, 0, 2, 3, 4], marksman: [3, 4, 2, 1, 0], assassin: [4, 3, 2, 1, 0],
+  healer: [3, 4, 2, 1, 0], support: [4, 3, 2, 1, 0],
 };
 
 /** Lit/écrit la section voulue (principale ou défense). La défense part d'une copie de la principale. */
@@ -361,6 +364,10 @@ function forgeWith(s: PlayerState, items: Item[]): Item {
     rarity: Math.min(ITEM_RARITIES - 1, first.rarity + 1),
     tier: Math.max(...items.map((it) => it.tier)),
   };
+  // La panoplie : celle du premier objet ; un objet qui devient Bleu en reçoit une au hasard.
+  const set = items.find((it) => it.set)?.set;
+  if (set) result.set = set;
+  else if (result.rarity >= 2) result.set = pick(nextRng(s), GEAR_SETS);
   s.items.push(result);
   return result;
 }
@@ -1365,7 +1372,7 @@ export function defenseRequest(level: number): DefenseRequest | null {
   return update((s) => {
     const placement = defensePlacement(s);
     if (!placement.length || level < 1 || level > Math.min(DEFENSE_LEVELS, s.defense.level + 1)) return null;
-    const towers = placement.map(([uid, pad]) => ({ unit: heroToUnit(heroByUid(s, uid)!, 0, gearPct(s, uid)), pad }));
+    const towers = placement.map(([uid, pad]) => ({ unit: heroToUnit(heroByUid(s, uid)!, 0, gearStatsOf(s, uid)), pad }));
     return { level, setup: { towers, power: defensePower(level), element: chapterElement(level), seed: seedFor(s) } };
   });
 }

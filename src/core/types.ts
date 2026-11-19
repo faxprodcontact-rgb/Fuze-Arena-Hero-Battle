@@ -1,5 +1,5 @@
 // Types de base partagés par tout le jeu (téléphone, serveur, simulations).
-import type { SkillDef, Talent } from './battle/types';
+import type { Passive, SkillDef, Talent } from './battle/types';
 
 export const FACTIONS = ['knights', 'assassins', 'mages', 'demons', 'angels', 'myths'] as const;
 export type Faction = (typeof FACTIONS)[number];
@@ -7,7 +7,8 @@ export type Faction = (typeof FACTIONS)[number];
 export const ELEMENTS = ['fire', 'wind', 'water', 'earth'] as const;
 export type Element = (typeof ELEMENTS)[number];
 
-export const ROLES = ['protector', 'attacker', 'healer', 'support'] as const;
+/** Protecteur et Guerrier devant ; Tireur, Assassin, Soigneur et Soutien derrière (l'Assassin frappe l'arrière). */
+export const ROLES = ['protector', 'warrior', 'marksman', 'assassin', 'healer', 'support'] as const;
 export type Role = (typeof ROLES)[number];
 
 /** Raretés obtenues à l'invocation. Mythique n'en fait pas partie : c'est un Légendaire éveillé. */
@@ -28,8 +29,16 @@ export interface HeroDef {
   def: number;
   /** Temps entre deux attaques, en tours de 100 ms. */
   interval: number;
+  crit: number;
+  critDmg: number;
+  dodge: number;
+  tenacity: number;
+  /** L'attaque normale vise l'arrière ennemi (Assassins). */
+  hitsBack?: boolean;
   skill: SkillDef;
-  /** Talent de chef de section : seulement pour certains héros. */
+  /** Passifs, chacun débloqué à partir d'un nombre d'étoiles. */
+  passives: { stars: number; passive: Passive }[];
+  /** Talent de chef de section : pour un héros sur trois. */
   talent?: Talent;
 }
 

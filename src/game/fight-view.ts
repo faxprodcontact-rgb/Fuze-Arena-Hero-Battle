@@ -18,6 +18,13 @@ const ROW_DY: Record<Slot, number> = { 0: 90, 3: 90, 2: 180, 1: 270, 4: 270 };
 
 const HERO_IDS = new Set(HEROES.map((h) => h.id));
 
+/** Couleur des statuts affichés au-dessus des combattants. */
+const STATUS_COLOR: Partial<Record<string, string>> = {
+  burn: '#ff8a3d', poison: '#9be15d', bleed: '#ff5a6a', regen: '#5dff9a', stun: '#ffe27a', silence: '#c39bff',
+  slow: '#7fc8ff', taunt: '#ffb15c', atkUp: '#ffcf5a', atkDown: '#b0b7d6', defUp: '#7fc8ff', defDown: '#b0b7d6',
+  speedUp: '#9be15d', critUp: '#ffcf5a',
+};
+
 function hex(color: string): number {
   return Number.parseInt(color.slice(1), 16);
 }
@@ -140,6 +147,12 @@ export abstract class FightScene extends Phaser.Scene {
         case 'skill':
           this.animateSkill(e.source, e.skill.id, e.hits, speed);
           break;
+        case 'passive':
+          this.time.delayedCall(250 / speed, () => e.hits.forEach((h) => this.showHit(h, false)));
+          break;
+        case 'tick':
+          e.hits.forEach((h) => this.showHit(h, false));
+          break;
         case 'death': {
           const v = this.views.get(e.unit);
           if (v) {
@@ -190,6 +203,14 @@ export abstract class FightScene extends Phaser.Scene {
   private showHit(hit: Hit, big: boolean) {
     const v = this.views.get(hit.target);
     if (!v) return;
+    if (hit.kind === 'miss' || hit.kind === 'status' || hit.kind === 'revive') {
+      if (hit.kind === 'revive') this.tweens.add({ targets: v.body, alpha: 1, y: this.slotPos(v.unit).y, angle: 0, duration: 400 });
+      const label = hit.kind === 'miss' ? t('fx.miss') : hit.kind === 'revive' ? '✚' : t(`st.${hit.status}`, { n: '' }).replace(/[+−-]\s*%/, '').trim();
+      const color = hit.kind === 'miss' ? '#c8d0ff' : hit.kind === 'revive' ? '#5dff9a' : STATUS_COLOR[hit.status ?? 'stun'] ?? '#ffe27a';
+      const n = this.text(v.body.x, v.body.y - 92, label, 22, color).setDepth(2000);
+      this.tweens.add({ targets: n, y: n.y - 34, alpha: 0, duration: 800, onComplete: () => n.destroy() });
+      return;
+    }
     const x = v.body.x + Phaser.Math.Between(-18, 18);
     const y = v.body.y - 40;
     let color: string;
@@ -211,7 +232,8 @@ export abstract class FightScene extends Phaser.Scene {
         this.tweens.add({ targets: star, angle: 360, alpha: 0, duration: 900, onComplete: () => star.destroy() });
       }
     }
-    const n = this.text(x, y, hit.crit ? `${label}!` : label, (big ? 34 : 26) + (hit.crit ? 8 : 0), color).setDepth(2000);
+    if (hit.dot) color = hit.kind === 'heal' ? '#5dff9a' : STATUS_COLOR[hit.status ?? 'burn'] ?? color;
+    const n = this.text(x, y, hit.crit ? `${label}!` : label, hit.dot ? 20 : (big ? 34 : 26) + (hit.crit ? 8 : 0), color).setDepth(2000);
     this.tweens.add({ targets: n, y: y - 60, alpha: 0, duration: 750, ease: 'Quad.easeOut', onComplete: () => n.destroy() });
   }
 

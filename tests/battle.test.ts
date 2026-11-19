@@ -3,16 +3,17 @@ import { Battle } from '../src/core/battle/engine';
 import { heroToUnit } from '../src/core/battle/units';
 import { ENERGY_MAX, type BattleSetup, type Slot } from '../src/core/battle/types';
 import { hasAdvantage } from '../src/core/data/elements';
-import { heroesOf } from '../src/core/data/heroes';
+import { HEROES } from '../src/core/data/heroes';
 import { campaignWaves } from '../src/core/stages';
 import type { Hero } from '../src/core/types';
 
+const epic = (element: string, role: string) => HEROES.find((h) => h.rarity === 'epic' && h.element === element && h.role === role)!.id;
 const team: [string, Slot][] = [
-  [heroesOf('knights', 'epic')[0]!.id, 0],
-  [heroesOf('demons', 'epic')[1]!.id, 1],
-  [heroesOf('mages', 'epic')[1]!.id, 2],
-  [heroesOf('angels', 'epic')[3]!.id, 3],
-  [heroesOf('myths', 'epic')[2]!.id, 4],
+  [epic('fire', 'protector'), 0],
+  [epic('water', 'warrior'), 1],
+  [epic('wind', 'support'), 2],
+  [epic('earth', 'healer'), 3],
+  [epic('fire', 'marksman'), 4],
 ];
 
 const setup = (seed: number, auto = true): BattleSetup => ({

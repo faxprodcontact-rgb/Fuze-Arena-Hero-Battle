@@ -25,8 +25,12 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
 - Décidé : plus de camps (factions) dans le jeu ; la fusion demande des héros du **même élément**. Le champ `faction`
   des héros provisoires ne sert plus qu'au dessin, il disparaîtra avec la création des vrais héros.
 - Courrier de l'équipe : `src/core/data/mail.ts` (un `id` unique par message, jamais réutilisé). Tutoriel : `src/game/ui/tutorial.tsx`.
-- Prochaine étape demandée : créer les vrais héros (statistiques, attaques, compétences, types) et les armes, côté règles
-  (pas les dessins). Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
+- Base des héros faite (19/11/2026, détaillée dans le cahier, section « Base des héros et des équipements ») : 72 gabarits
+  rareté × élément × rôle × variante dans `src/core/data/heroes.ts` (6 rôles, 8 statistiques, 2 passifs à ★3/★5, éveil ★10,
+  1 chef sur 3) ; bibliothèque d'effets et statuts dans `src/core/battle/types.ts` + `engine.ts` ; textes fabriqués par
+  `src/game/describe.ts` ; équipements par emplacement + panoplies dans `src/core/data/items.ts`. Les noms et dessins
+  sont provisoires : l'habillage (nom, histoire, dessin) viendra par-dessus chaque gabarit.
+- Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 
 ## Organisation du code
