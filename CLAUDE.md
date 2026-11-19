@@ -22,6 +22,11 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   écran de préparation (`screens/prep.tsx`) ; réglages par l'avatar.
 - Outil de test à retirer avant la bêta : `TEST_OPEN_ALL_MODES` (`src/core/data/modes.ts`, tous les modes ouverts dès le
   début, demandé par le propriétaire pour les regarder), en plus des « Outils de test » des réglages.
+- Décidé : plus de camps (factions) dans le jeu ; la fusion demande des héros du **même élément**. Le champ `faction`
+  des héros provisoires ne sert plus qu'au dessin, il disparaîtra avec la création des vrais héros.
+- Courrier de l'équipe : `src/core/data/mail.ts` (un `id` unique par message, jamais réutilisé). Tutoriel : `src/game/ui/tutorial.tsx`.
+- Prochaine étape demandée : créer les vrais héros (statistiques, attaques, compétences, types) et les armes, côté règles
+  (pas les dessins). Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 
 ## Organisation du code
