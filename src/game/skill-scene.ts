@@ -1,14 +1,18 @@
-// Aperçu d'une compétence (fiche d'un héros) : le héros seul lance sa compétence en boucle contre trois monstres.
+// Aperçu d'une compétence (fiche d'un héros) : le héros seul lance sa compétence contre trois monstres,
+// puis la relance toutes les 2 secondes. Pas d'attaque de base, les monstres ne ripostent pas.
 import Phaser from 'phaser';
 import { Battle } from '../core/battle/engine';
-import { ENERGY_MAX, ENERGY_PER_ATTACK, TICK_MS, type UnitInit } from '../core/battle/types';
+import { ENERGY_MAX, type UnitInit } from '../core/battle/types';
 import { monsterToUnit } from '../core/battle/units';
 import { FightScene, W } from './fight-view';
 
 export const SKILL_H = 470;
-const SPEED = 1;
-/** Temps laissé pour voir l'effet de la compétence avant de recommencer. */
-const AFTER_SKILL_MS = 2200;
+/** Vitesse des animations (moins de 1 = ralenti). */
+const SPEED = 0.7;
+/** Temps entre deux lancers de la compétence. */
+const EVERY_MS = 2000;
+/** Personne n'attaque tout seul : seule la compétence demandée est jouée. */
+const NEVER = 1e9;
 
 interface SkillData {
   hero: UnitInit;
@@ -16,9 +20,7 @@ interface SkillData {
 
 export class SkillScene extends FightScene {
   private hero!: UnitInit;
-  private acc = 0;
-  private wait = 0;
-  private seed = 1;
+  private wait = 600;
 
   constructor() {
     super('skill');
@@ -32,45 +34,52 @@ export class SkillScene extends FightScene {
 
   create() {
     this.drawArena(SKILL_H);
-    // On zoome sur les combattants (le reste de l'arène est hors cadre).
-    this.cameras.main.setZoom(1.45).centerOn(375, 300);
-    this.start();
+    this.cameras.main.setZoom(1.15).centerOn(375, 290);
+    this.setup();
   }
 
-  private start() {
+  private setup() {
     const h = this.hero;
-    // Monstres solides mais peu dangereux : on voit les dégâts sans que le combat se termine.
+    // Monstres très solides : on voit les dégâts sans qu'ils tombent.
     const enemies = ([0, 2, 1] as const).map((slot, i) => {
       const m = monsterToUnit(['goblin', 'wolf', 'golem'][i]!, slot, h.element, 1, `m${i}`);
-      return { ...m, maxHp: h.atk * 40, atk: Math.max(1, Math.round(h.maxHp / 400)), def: 0 };
+      return { ...m, maxHp: h.atk * 60, def: 0 };
     });
-    this.seed += 1;
-    this.battle = new Battle({ heroes: [h], waves: [enemies], seed: this.seed, auto: true });
-    // Une attaque normale d'abord, puis la jauge est pleine et la compétence part.
-    this.battle.heroes[0]!.energy = ENERGY_MAX - ENERGY_PER_ATTACK;
+    this.battle = new Battle({ heroes: [h], waves: [enemies], seed: 1, auto: false });
     this.clearViews();
     for (const u of this.battle.heroes) this.addView(u);
     for (const u of this.battle.enemies) this.addView(u);
-    this.wait = 0;
+  }
+
+  /** Remet tout le monde d'aplomb et fait lancer la compétence au héros. */
+  private cast() {
+    if (this.battle.over) this.setup(); // au bout d'une demi-heure, le combat atteint sa durée maximale
+    for (const u of [...this.battle.heroes, ...this.battle.enemies]) {
+      u.cooldown = NEVER;
+      u.stun = 0;
+      if (u.side === 'enemy') u.energy = 0;
+      if (u.hp < u.maxHp * 0.4) u.hp = u.maxHp;
+    }
+    const hero = this.battle.heroes[0]!;
+    hero.hp = hero.maxHp;
+    hero.shield = 0;
+    hero.energy = ENERGY_MAX;
+    this.battle.requestSkill(hero.id);
+    const events = this.battle.step().filter((e) => e.type === 'skill');
+    this.handle(events, SPEED);
   }
 
   update(_time: number, delta: number) {
-    if (this.wait > 0) {
-      this.wait -= delta;
-      if (this.wait <= 0) this.start();
-    }
-    this.acc = Math.min(this.acc + delta * SPEED, 1000);
-    while (this.acc >= TICK_MS && !this.battle.over) {
-      this.acc -= TICK_MS;
-      const events = this.battle.step();
-      if (this.wait <= 0 && events.some((e) => e.type === 'skill' && e.source === this.hero.id)) this.wait = AFTER_SKILL_MS;
-      this.handle(events, SPEED);
+    this.wait -= delta;
+    if (this.wait <= 0) {
+      this.wait = EVERY_MS;
+      this.cast();
     }
     this.syncUnits();
   }
 
   protected onEnd() {
-    this.wait = 600;
+    // L'aperçu ne se termine jamais.
   }
 }
 
