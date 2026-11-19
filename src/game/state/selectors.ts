@@ -4,7 +4,7 @@ import type { Slot, UnitInit } from '../../core/battle/types';
 import { incomePerHour, OFFLINE_CAP_HOURS, levelCost } from '../../core/data/economy';
 import { heroDef } from '../../core/data/heroes';
 import { equippedBonus, type GearSlot, type Item } from '../../core/data/items';
-import { ESSENCE_RATIO, IDLE_ITEM_HOURS, UNLOCKS, type Feature } from '../../core/data/modes';
+import { ESSENCE_RATIO, IDLE_ITEM_HOURS, TEST_OPEN_ALL_MODES, UNLOCKS, type Feature } from '../../core/data/modes';
 import { levelCap } from '../../core/data/stats';
 import { slotsAt } from '../../core/stages';
 import type { Hero } from '../../core/types';
@@ -53,7 +53,7 @@ export function slotCount(s: PlayerState): number {
 }
 
 export function isUnlocked(s: PlayerState, feature: Feature): boolean {
-  return s.campaign.cleared >= UNLOCKS[feature];
+  return TEST_OPEN_ALL_MODES || s.campaign.cleared >= UNLOCKS[feature];
 }
 
 /** Butin hors ligne accumulé depuis la dernière récolte. */

@@ -13,6 +13,12 @@ export const UNLOCKS = {
 } as const;
 export type Feature = keyof typeof UNLOCKS;
 
+/**
+ * OUTIL DE TEST (site de test) : tous les modes ouverts dès le début, pour que le propriétaire puisse les regarder.
+ * À REMETTRE À false AVANT LA BÊTA. Le nombre de héros dans la section suit toujours la campagne.
+ */
+export const TEST_OPEN_ALL_MODES = true;
+
 // ---------- Campagne et butin ----------
 
 /** Butin hors ligne : l'or vaut le revenu horaire, l'essence la moitié. */

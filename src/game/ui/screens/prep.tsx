@@ -12,8 +12,33 @@ import { Btn, HeroCard, Icon, Stars } from '../kit';
 import { close, startBattle, toast } from '../nav';
 import { talentText } from './hero-detail';
 
-/** Position des postes sur le plateau : l'avant est à droite, comme au combat. */
-const BOARD: Record<Slot, [number, number]> = { 3: [0, 0], 4: [0, 1], 2: [1, 0.5], 0: [2, 0], 1: [2, 1] };
+/**
+ * Le plateau est la moitié du terrain de combat côté héros, avec les mêmes positions qu'au combat
+ * (voir HERO_X et ROW_DY dans fight-view.ts) : l'avant est à droite, face aux ennemis.
+ */
+const FIELD_W = 420;
+const FIELD_H = 330;
+const FIELD_GROUND = 50;
+/** Les rangées sont un peu resserrées (×0,85) pour laisser de la place à la liste des héros. */
+const POS: Record<Slot, [number, number]> = { 3: [110, 76], 4: [110, 230], 2: [215, 153], 0: [315, 76], 1: [315, 230] };
+
+function FieldBackground() {
+  return (
+    <svg class="field-bg" viewBox={`0 0 ${FIELD_W} ${FIELD_H}`} preserveAspectRatio="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="field-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b3a78" /><stop offset="1" stop-color="#6b5ca8" /></linearGradient>
+        <linearGradient id="field-ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d6b4a" /><stop offset="1" stop-color="#274a34" /></linearGradient>
+      </defs>
+      <rect width={FIELD_W} height={FIELD_GROUND + 30} fill="url(#field-sky)" />
+      {[0, 1, 2, 3].map((i) => (
+        <polygon fill="#4a5a9a" opacity="0.6"
+          points={`${i * 150 - 40},${FIELD_GROUND + 10} ${i * 150 + 60},${FIELD_GROUND - 40 - (i % 2) * 22} ${i * 150 + 160},${FIELD_GROUND + 10}`} />
+      ))}
+      <rect y={FIELD_GROUND} width={FIELD_W} height={FIELD_H - FIELD_GROUND} fill="url(#field-ground)" />
+      <ellipse cx={FIELD_W} cy={FIELD_GROUND + 153} rx="380" ry="150" fill="#fff" opacity="0.06" />
+    </svg>
+  );
+}
 
 export function Board() {
   const s = useGame();
@@ -28,20 +53,23 @@ export function Board() {
   };
   const leaderUid = s.formation.find(([, sl]) => sl === LEADER_SLOT)?.[0];
   const leader = leaderUid !== undefined ? heroByUid(s, leaderUid) : undefined;
+  const chief = leader ? heroDef(leader.defId).talent : undefined;
   return (
     <div class="board-wrap">
-      <div class="board">
-        {([0, 1, 2, 3, 4] as Slot[]).map((slot) => {
+      <div class="field">
+        <FieldBackground />
+        {([3, 0, 2, 4, 1] as Slot[]).map((slot) => {
           const uid = s.formation.find(([, sl]) => sl === slot)?.[0];
           const hero = uid !== undefined ? heroByUid(s, uid) : undefined;
-          const [col, row] = BOARD[slot];
+          const [x, dy] = POS[slot];
           return (
             <button
-              class={`board-slot${picked === slot ? ' on' : ''}${slot === LEADER_SLOT ? ' leader' : ''}`}
-              style={{ left: `${6 + col * 30}%`, top: `${row * 50}%` }}
+              class={`field-slot${picked === slot ? ' on' : ''}${slot === LEADER_SLOT ? ' leader' : ''}${hero ? '' : ' empty'}`}
+              style={{ left: `${(x / FIELD_W) * 100}%`, top: `${((FIELD_GROUND + dy) / FIELD_H) * 100}%`, zIndex: dy }}
               onClick={() => tap(slot)}
             >
-              {slot === LEADER_SLOT && <span class="crown">♛</span>}
+              <span class="field-spot" />
+              {slot === LEADER_SLOT && (!hero || chief) && <span class="crown">♛</span>}
               {hero && <img src={heroImage(hero.defId)} alt="" />}
               {hero && <Stars stars={hero.stars} />}
             </button>
@@ -49,7 +77,7 @@ export function Board() {
         })}
         <span class="board-arrow">›</span>
       </div>
-      {leader && heroDef(leader.defId).talent && <p class="leader-line">♛ {talentText(heroDef(leader.defId).talent)}</p>}
+      {chief && <p class="leader-line">♛ {talentText(chief)}</p>}
     </div>
   );
 }
