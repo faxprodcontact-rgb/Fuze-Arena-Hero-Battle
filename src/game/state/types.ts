@@ -69,12 +69,13 @@ export interface PlayerState {
   /** Niveau de renforcement de chaque emplacement de chaque héros (uid → emplacement → +N). */
   slotLevels: Record<number, Partial<Record<GearSlot, number>>>;
   formation: [number, Slot][];
-  campaign: { cleared: number; idleFrom: number; itemHours: number };
+  /** crystalHours : heures de butin pas encore transformées en cristal (reste d'une collecte à l'autre). */
+  campaign: { cleared: number; idleFrom: number; itemHours: number; crystalHours?: number };
   summon: { pity: number; total: number };
   tower: { floor: number };
   dungeons: Record<DungeonKind, number>;
   /** Mode Défense : dernier niveau gagné, étoiles par niveau, et les héros posés (uid → emplacement). */
-  defense: { level: number; stars: Record<number, number>; placement: [number, number][] };
+  defense: { level: number; stars: Record<number, number>; placement: [number, number][]; chests?: number };
   arena: { points: number; opponents: ArenaOpponent[] };
   guild: { joined: string | null; bossDamage: number; chat: ChatMessage[]; lastBotAt: number };
   worldChat: ChatMessage[];

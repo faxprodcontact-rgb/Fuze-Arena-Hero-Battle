@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import {
   DEFENSE_H, DEFENSE_HEROES, DEFENSE_LEVELS, DEFENSE_PADS, DEFENSE_PATH, DEFENSE_RANGE, DEFENSE_REWARD, DEFENSE_STAGE_PER_LEVEL, DEFENSE_W,
+  defenseCrystals,
 } from '../../../core/data/defense';
 import { incomePerHour } from '../../../core/data/economy';
 import { heroDef } from '../../../core/data/heroes';
@@ -10,7 +11,7 @@ import { heroImage } from '../../art';
 import { runDefense } from '../../defense-scene';
 import { fmt, t } from '../../i18n';
 import {
-  autoDefense, defensePlacement, defensePower, defenseRequest, finishDefense, placeDefender, removeDefender, swapPads,
+  autoDefense, defensePlacement, defensePower, defenseRequest, defenseStarTotal, finishDefense, placeDefender, removeDefender, swapPads,
   type DefenseRequest,
 } from '../../state/actions';
 import { heroByUid, heroPower } from '../../state/selectors';
@@ -36,6 +37,7 @@ export function DefenseScreen() {
     <section class="list">
       <div class="card center defense-card">
         <h1>{t('adv.defense')}</h1>
+        <StarChest />
         <MiniMap />
         {!done && (
           <>
@@ -43,7 +45,7 @@ export function DefenseScreen() {
             <div class="def-rewards">
               <span class="power-chip"><Icon name="power" size={16} />{fmt(defensePower(next))}</span>
               <Cur k="gold" n={Math.round(incomePerHour(next * DEFENSE_STAGE_PER_LEVEL) * DEFENSE_REWARD.goldHours)} />
-              <Cur k="gems" n={DEFENSE_REWARD.gemsPerStar * 3} />
+              <Cur k="crystals" n={defenseCrystals(next)} />
             </div>
             <Btn kind="green" wide onClick={() => open({ type: 'defensePrep', level: next })}>{t('defense.prepare')}</Btn>
           </>
@@ -56,6 +58,24 @@ export function DefenseScreen() {
         </div>
       ))}
     </section>
+  );
+}
+
+/** Barre des coffres d'étoiles : les étoiles gagnées remplissent le prochain coffre. */
+function StarChest() {
+  const s = useGame();
+  const total = defenseStarTotal(s);
+  const into = total % DEFENSE_REWARD.chestEvery;
+  return (
+    <div class="star-chest">
+      <span class="def-stars">★ {total}</span>
+      <div class="boss-bar grow"><span style={{ width: `${(into / DEFENSE_REWARD.chestEvery) * 100}%`, background: 'linear-gradient(90deg, #b8860b, #ffc94a)' }} /></div>
+      <span class="star-chest-gift">
+        <Cur k="crystals" n={DEFENSE_REWARD.chest.crystals} />
+        <Cur k="scrolls" n={DEFENSE_REWARD.chest.scrolls} />
+      </span>
+      <span class="muted small">{into} / {DEFENSE_REWARD.chestEvery}</span>
+    </div>
   );
 }
 

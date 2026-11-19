@@ -43,8 +43,16 @@ export const DEFENSE_BOSS_HP = 3;
 export const DEFENSE_WAVE_GROWTH = 0.12;
 
 export const DEFENSE_LEVELS = 120;
-/** Récompenses : à la première victoire (heures de butin hors ligne), puis des gemmes par nouvelle étoile. */
-export const DEFENSE_REWARD = { goldHours: 3, gemsPerStar: 20 };
+/**
+ * Récompenses (le Siège est la grande source de cristaux d'éveil, pour le Mythique) :
+ * première victoire = or (heures de butin) + cristaux ; tous les `chestEvery` étoiles gagnées = un coffre.
+ */
+export const DEFENSE_REWARD = { goldHours: 3, chestEvery: 15, chest: { crystals: 50, scrolls: 2 } };
+
+/** Cristaux de la première victoire d'un niveau : 10, puis 1 de plus tous les 10 niveaux. */
+export function defenseCrystals(level: number): number {
+  return 10 + Math.floor(level / 10);
+}
 
 /** Étoiles selon les vies restantes. */
 export function defenseStars(lives: number): number {

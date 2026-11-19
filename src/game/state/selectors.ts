@@ -1,7 +1,7 @@
 // Calculs dérivés de l'état du joueur (rien n'est modifié ici).
 import { heroPowerWithGear, heroToUnit } from '../../core/battle/units';
 import type { Slot, UnitInit } from '../../core/battle/types';
-import { incomePerHour, OFFLINE_CAP_HOURS, levelCost } from '../../core/data/economy';
+import { incomePerHour, OFFLINE_CAP_HOURS, REWARDS, levelCost } from '../../core/data/economy';
 import { heroDef } from '../../core/data/heroes';
 import { equippedBonus, type GearSlot, type Item } from '../../core/data/items';
 import { ESSENCE_RATIO, IDLE_ITEM_HOURS, TEST_OPEN_ALL_MODES, UNLOCKS, type Feature } from '../../core/data/modes';
@@ -57,6 +57,9 @@ export function isUnlocked(s: PlayerState, feature: Feature): boolean {
 }
 
 /** Butin hors ligne accumulé depuis la dernière récolte. */
+/** Heures de butin pour un cristal (crystalsPerDay par jour). */
+export const CRYSTAL_HOURS = 24 / REWARDS.crystalsPerDay;
+
 export function idlePreview(s: PlayerState) {
   const hours = Math.min(OFFLINE_CAP_HOURS, Math.max(0, (now() - s.campaign.idleFrom) / 3.6e6));
   const perHour = incomePerHour(s.campaign.cleared);
@@ -66,6 +69,8 @@ export function idlePreview(s: PlayerState) {
     gold: Math.floor(hours * perHour),
     essence: Math.floor(hours * perHour * ESSENCE_RATIO),
     items: Math.floor((s.campaign.itemHours + hours) / IDLE_ITEM_HOURS),
+    // Cristaux d'éveil : à partir d'un niveau de campagne avancé, quelques-uns par jour dans le butin.
+    crystals: s.campaign.cleared >= REWARDS.crystalsFromStage ? Math.floor(((s.campaign.crystalHours ?? 0) + hours) / CRYSTAL_HOURS) : 0,
     perHour,
   };
 }

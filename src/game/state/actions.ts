@@ -21,7 +21,7 @@ import {
 import { FRAGMENTS_PER_COPY, LADDER, RARITY_RULES } from '../../core/data/stars';
 import type { DefenseSetup } from '../../core/defense/engine';
 import {
-  DEFENSE_HEROES, DEFENSE_LEVELS, DEFENSE_PADS, DEFENSE_REWARD, DEFENSE_STAGE_PER_LEVEL, defenseStars,
+  DEFENSE_HEROES, DEFENSE_LEVELS, DEFENSE_PADS, DEFENSE_REWARD, DEFENSE_STAGE_PER_LEVEL, defenseCrystals, defenseStars,
 } from '../../core/data/defense';
 import { applyFusion, canGainStar, isValidFusion, planFusion, type FusionPlan } from '../../core/fusion';
 import { levelRefund } from '../../core/power';
@@ -31,7 +31,7 @@ import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '.
 import { summonBasic, summonOne } from '../../core/summon';
 import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
-import { gearPct, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
+import { CRYSTAL_HOURS, gearPct, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
 import type { ArenaOpponent, Gain, MissionState, PlayerState, Wallet } from './types';
 
 // ---------- Outils ----------
@@ -132,7 +132,9 @@ export function collectIdle(): Gain {
     const rng = nextRng(s);
     for (let i = 0; i < p.items; i++) gain.items.push(makeItem(s, rng));
     addCurrency(s, gain, 'basicScrolls', p.items);
+    addCurrency(s, gain, 'crystals', p.crystals);
     s.campaign.itemHours = (s.campaign.itemHours + p.hours) % IDLE_ITEM_HOURS;
+    if (s.campaign.cleared >= REWARDS.crystalsFromStage) s.campaign.crystalHours = ((s.campaign.crystalHours ?? 0) + p.hours) % CRYSTAL_HOURS;
     s.campaign.idleFrom = now();
     track(s, 'collectIdle');
     return gain;
@@ -1343,21 +1345,30 @@ export function defenseRequest(level: number): DefenseRequest | null {
   });
 }
 
-/** Fin de partie : première victoire = butin ; chaque nouvelle étoile = des gemmes. */
+/** Total des étoiles gagnées au Siège. */
+export function defenseStarTotal(s: PlayerState = getState()): number {
+  return Object.values(s.defense.stars).reduce((a, n) => a + n, 0);
+}
+
+/** Fin de partie : première victoire = or + cristaux ; les étoiles remplissent les coffres d'étoiles. */
 export function finishDefense(req: DefenseRequest, lives: number): Gain {
   return update((s) => {
     const gain = emptyGain();
     const stars = defenseStars(lives);
     if (stars <= 0) return gain;
-    const before = s.defense.stars[req.level] ?? 0;
     if (req.level === s.defense.level + 1) {
       s.defense.level = req.level;
       addCurrency(s, gain, 'gold', incomePerHour(req.level * DEFENSE_STAGE_PER_LEVEL) * DEFENSE_REWARD.goldHours);
+      addCurrency(s, gain, 'crystals', defenseCrystals(req.level));
     }
-    if (stars > before) {
-      s.defense.stars[req.level] = stars;
-      addCurrency(s, gain, 'gems', (stars - before) * DEFENSE_REWARD.gemsPerStar);
+    if (stars > (s.defense.stars[req.level] ?? 0)) s.defense.stars[req.level] = stars;
+    // Coffres d'étoiles : donnés d'office dès qu'un palier est franchi.
+    const earned = Math.floor(defenseStarTotal(s) / DEFENSE_REWARD.chestEvery);
+    for (let c = s.defense.chests ?? 0; c < earned; c++) {
+      addCurrency(s, gain, 'crystals', DEFENSE_REWARD.chest.crystals);
+      addCurrency(s, gain, 'scrolls', DEFENSE_REWARD.chest.scrolls);
     }
+    s.defense.chests = Math.max(s.defense.chests ?? 0, earned);
     return gain;
   });
 }

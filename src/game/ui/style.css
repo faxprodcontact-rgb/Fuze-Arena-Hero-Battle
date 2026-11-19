@@ -501,3 +501,6 @@ button.dungeon .grow { display: flex; flex-direction: column; gap: 2px; }
 .def-stars { color: var(--gold); letter-spacing: 1px; }
 .def-stars .off { color: #ffffff30; }
 .def-rewards { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 14px; }
+.star-chest { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 10px; width: 100%; }
+.star-chest .muted { grid-column: 2; text-align: center; }
+.star-chest-gift { display: flex; align-items: center; gap: 6px; }
