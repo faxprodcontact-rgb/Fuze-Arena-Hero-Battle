@@ -178,7 +178,12 @@ export class BattleScene extends FightScene {
   private finish() {
     if (this.ended) return;
     this.ended = true;
-    this.done({ win: this.battle.over && this.battle.win, damage: this.damage(), inputs: this.battle.inputs });
+    this.done({
+      win: this.battle.over && this.battle.win,
+      damage: this.damage(),
+      alive: this.battle.heroes.filter((h) => h.hp > 0).length / Math.max(1, this.battle.heroes.length),
+      inputs: this.battle.inputs,
+    });
   }
 }
 

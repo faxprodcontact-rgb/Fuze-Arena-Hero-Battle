@@ -217,3 +217,22 @@ export const GUILD_SHOP: ShopItem[] = [
 export const FRIENDS_MAX = 20;
 /** Un cadeau d'ami reçu vaut ceci (envoyer ne coûte rien, une fois par jour et par ami). */
 export const FRIEND_GIFT = { basicScrolls: 1 };
+
+// ---------- Guerre de guildes ----------
+// Une guerre par semaine : lundi préparation (adversaire connu, défense à régler), mardi → samedi combats,
+// dimanche résultats. Chaque membre attaque 2 fois par jour ; un héros n'attaque qu'une fois par jour.
+// Les étoiles de chaque attaque s'additionnent : la guilde qui en a le plus gagne.
+
+export const GUILD_WAR = {
+  attacksPerDay: 2,
+  defenses: 9,
+  /** Pièces de guilde par étoile gagnée en attaque (tout de suite). */
+  coinsPerStar: 10,
+  reward: {
+    win: { guildCoins: 600, scrolls: 5 },
+    draw: { guildCoins: 450, scrolls: 3 },
+    loss: { guildCoins: 300, scrolls: 2 },
+  },
+  /** Bonus pour le meilleur attaquant de la guilde. */
+  bestAttacker: { scrolls: 3 },
+};

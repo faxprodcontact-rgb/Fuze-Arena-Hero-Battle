@@ -529,3 +529,11 @@ button.dungeon .grow { display: flex; flex-direction: column; gap: 2px; }
 .war-fort { align-items: center; gap: 2px; padding: 8px 4px; text-align: center; }
 .war-fort img { width: 54px; }
 .war-fort strong { font-size: 12px; }
+.field-slot.tired img { filter: grayscale(1) brightness(0.6); }
+.field-slot.tired::after { content: '✕'; position: absolute; top: 20%; z-index: 3; font: 800 28px var(--font-title); color: var(--red); text-shadow: 0 1px 3px #000; }
+.war-side.foe .war-score { color: #ff8a8a; }
+button.war-fort { border-width: 2px; border-style: solid; }
+button.war-fort:disabled { opacity: 0.6; }
+.war-ranking { gap: 4px; padding: 10px 14px; }
+.war-ranking .me { color: var(--gold); font-weight: 800; }
+.war-result.win h2 { color: var(--gold); } .war-result.loss h2 { color: #ff8a8a; }

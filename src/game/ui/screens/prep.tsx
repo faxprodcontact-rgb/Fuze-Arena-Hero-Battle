@@ -40,7 +40,7 @@ function FieldBackground() {
   );
 }
 
-export function Board() {
+export function Board({ tired }: { tired?: Set<number> } = {}) {
   const s = useGame();
   const [picked, setPicked] = useState<Slot | null>(null);
   const tap = (slot: Slot) => {
@@ -64,7 +64,7 @@ export function Board() {
           const [x, dy] = POS[slot];
           return (
             <button
-              class={`field-slot${picked === slot ? ' on' : ''}${slot === LEADER_SLOT ? ' leader' : ''}${hero ? '' : ' empty'}`}
+              class={`field-slot${picked === slot ? ' on' : ''}${slot === LEADER_SLOT ? ' leader' : ''}${hero ? '' : ' empty'}${hero && tired?.has(hero.uid) ? ' tired' : ''}`}
               style={{ left: `${(x / FIELD_W) * 100}%`, top: `${((FIELD_GROUND + dy) / FIELD_H) * 100}%`, zIndex: dy }}
               onClick={() => tap(slot)}
             >
@@ -85,7 +85,11 @@ export function Board() {
 export function Prep({ plan }: { plan: BattlePlan | null }) {
   const s = useGame();
   const inTeam = new Set(s.formation.map(([u]) => u));
-  const mine = teamPower(s);
+  const tired = new Set(plan?.exclude ?? []);
+  // En guerre de guildes, les héros qui ont déjà attaqué aujourd'hui ne comptent pas.
+  const mine = tired.size
+    ? s.formation.filter(([u]) => !tired.has(u)).reduce((sum, [u]) => sum + heroPower(s, heroByUid(s, u)!), 0)
+    : teamPower(s);
   const waves = plan?.waves ?? [];
   return (
     <div class="prep">
@@ -111,17 +115,18 @@ export function Prep({ plan }: { plan: BattlePlan | null }) {
         </section>
       )}
 
-      <Board />
+      <Board tired={tired} />
 
       <div class="row between prep-bar">
         <strong>{t('heroes.team')} {s.formation.length} / {slotCount(s)}</strong>
-        <Btn kind="ghost" small onClick={autoFormation}>{t('heroes.autoTeam')}</Btn>
+        <Btn kind="ghost" small onClick={() => autoFormation([...tired])}>{t('heroes.autoTeam')}</Btn>
       </div>
 
       <div class="roster">
         {sortedHeroes(s).map((h) => (
-          <HeroCard key={h.uid} hero={h} small power={heroPower(s, h)} selected={inTeam.has(h.uid)}
+          <HeroCard key={h.uid} hero={h} small power={heroPower(s, h)} selected={inTeam.has(h.uid)} dim={tired.has(h.uid)}
             onClick={() => {
+              if (tired.has(h.uid) && !inTeam.has(h.uid)) return toast(t('war.tired'));
               const r = toggleInFormation(h.uid);
               if (r === 'full') toast(t('heroes.full'));
             }} />

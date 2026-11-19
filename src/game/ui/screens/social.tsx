@@ -1,12 +1,13 @@
 // Social : guilde (boss commun, membres, tchat, boutique), tchat général, classements.
 // Dans le prototype, les autres joueurs sont des joueurs fictifs : le vrai social arrivera avec le serveur.
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { GUILD_BOSS_ATTEMPTS, GUILD_SHOP, UNLOCKS } from '../../../core/data/modes';
+import { GUILD_BOSS_ATTEMPTS, GUILD_SHOP, GUILD_WAR, UNLOCKS } from '../../../core/data/modes';
 import { createRng } from '../../../core/rng';
 import { heroImage, monsterImage } from '../../art';
 import { CHAT_LINES, fmt, t } from '../../i18n';
 import {
-  BOT_GUILDS, botChatter, buyExchange, guildBossPlan, joinGuild, leaveGuild, markSeen, sendChat,
+  BOT_GUILDS, botChatter, buyExchange, claimWar, ensureWar, guildBossPlan, joinGuild, leaveGuild, markSeen, sendChat,
+  warAttacksLeft, warDefenses, warPhase, warPlan, warScores,
 } from '../../state/actions';
 import { isUnlocked, teamPower } from '../../state/selectors';
 import { getState, now, useGame } from '../../state/store';
@@ -14,6 +15,7 @@ import type { ChatMessage } from '../../state/types';
 import { Bar, Btn, Cur, Icon, Locked, Modal, Tabs } from '../kit';
 import { open, prepare } from '../nav';
 import { ShopTile } from './adventure';
+import { TeamStrip } from './heroes';
 
 const MEMBER_NAMES = ['Kaïro', 'Lunaria', 'Vaelis', 'Tormund', 'Ishara', 'Mikaze', 'Orsolya', 'Bastien', 'Yuna', 'Ragnis', 'Selka', 'Noctis'];
 const GUILD_BOSS_HP = 50_000_000;
@@ -68,7 +70,7 @@ export function GuildScreen() {
         <div class="row between"><span class="muted">{t('guild.level', { n: 7 })} · 22 / 30</span><Cur k="guildCoins" n={s.wallet.guildCoins} /></div>
       </div>
       <Tabs value={tab} onChange={setTab} options={[
-        ['boss', t('guild.boss'), left > 0], ['war', t('guild.war')], ['members', t('guild.members')], ['chat', t('guild.chat')], ['shop', t('guild.shop')],
+        ['boss', t('guild.boss'), left > 0], ['war', t('guild.war'), !!s.guildWar && (warAttacksLeft(s.guildWar) > 0 || !!s.guildWar.pending || (warPhase() === 'results' && !s.guildWar.claimed))], ['members', t('guild.members')], ['chat', t('guild.chat')], ['shop', t('guild.shop')],
       ]} />
       {tab === 'boss' && (
         <section class="card center">
@@ -107,32 +109,65 @@ export function GuildScreen() {
 }
 
 /**
- * Guerre de guildes : APERÇU de l'écran, les règles sont encore à décider avec le propriétaire.
- * Deux guildes face à face, les défenses adverses à attaquer, les étoiles gagnées.
+ * Guerre de guildes, une par semaine : lundi préparation, mardi → samedi 2 attaques par jour
+ * (un héros n'attaque qu'une fois par jour), dimanche résultats et récompenses.
  */
 function GuildWar({ guild }: { guild: string }) {
   const s = useGame();
-  const foe = BOT_GUILDS.find((g) => g !== guild) ?? BOT_GUILDS[0]!;
-  const enemies = members(foe);
+  useEffect(() => void ensureWar(), []);
+  const w = s.guildWar;
+  if (!w) return null;
+  const phase = warPhase();
+  const sc = warScores(s, w);
+  const defenses = warDefenses(s, w);
+  const left = warAttacksLeft(w);
+  const mine = teamPower(s);
+  const showResult = phase === 'results' && !w.claimed;
+  const pending = w.pending;
+  const result = showResult ? (sc.mine > sc.foe ? 'win' : sc.mine === sc.foe ? 'draw' : 'loss') : pending?.result;
+
   return (
     <section class="list war">
       <div class="card war-head">
-        <div class="war-side"><Icon name="guild" size={34} /><strong>{guild}</strong><span class="war-score">★ 0</span></div>
+        <div class="war-side"><Icon name="guild" size={34} /><strong>{guild}</strong><span class="war-score">★ {sc.mine}</span></div>
         <span class="war-vs">VS</span>
-        <div class="war-side"><Icon name="guild" size={34} /><strong>{foe}</strong><span class="war-score">★ 0</span></div>
+        <div class="war-side foe"><Icon name="guild" size={34} /><strong>{w.foe}</strong><span class="war-score">★ {sc.foe}</span></div>
       </div>
+
+      {(showResult || pending) && (
+        <div class={`card center war-result ${result}`}>
+          <h2>{t(`war.${result}`)}</h2>
+          <Btn kind="gold" wide onClick={() => {
+            const gain = claimWar();
+            if (gain) open({ type: 'gain', title: t('guild.war'), gain });
+          }}>{t('claim')}</Btn>
+        </div>
+      )}
+
       <div class="row between center-y">
-        <span class="tag">{t('soon')}</span>
-        <span class="muted">{t('boss.attempts', { n: 2, m: 2 })}</span>
+        <span class="tag">{t(`war.${phase}`)}{phase === 'battle' && ` · ${t('war.day', { n: Math.min(5, Math.floor((new Date(now()).getDay() + 6) % 7)) })}`}</span>
+        {phase === 'battle' && <span class={left ? 'gold-text' : 'muted'}>{t('war.attacks', { n: left, m: GUILD_WAR.attacksPerDay })}</span>}
       </div>
+
+      <TeamStrip />
+
       <div class="war-grid">
-        {enemies.map((m) => (
-          <div class="card war-fort">
-            <img src={heroImage(m.defId)} alt="" />
-            <strong>{m.name}</strong>
-            <span class={`power-chip ${teamPower(s) >= m.power ? 'ok' : 'low'}`}><Icon name="power" size={14} />{fmt(m.power)}</span>
-            <span class="def-stars"><span class="off">★★★</span></span>
-          </div>
+        {defenses.map((d, i) => {
+          const leader = d.team.find((m) => m.slot === 2) ?? d.team[0]!;
+          return (
+            <button class="card war-fort" disabled={!left} onClick={() => { const p = warPlan(i); if (p) prepare(p); }}>
+              <img src={heroImage(leader.defId)} alt="" />
+              <strong>{d.name}</strong>
+              <span class={`power-chip ${mine >= d.power ? 'ok' : 'low'}`}><Icon name="power" size={14} />{fmt(d.power)}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <h3>{t('war.ranking')}</h3>
+      <div class="card war-ranking">
+        {sc.members.map((m, i) => (
+          <div class={`row between${m.me ? ' me' : ''}`}><span>{i + 1}. {m.name}</span><span class="gold-text">★ {m.stars}</span></div>
         ))}
       </div>
     </section>

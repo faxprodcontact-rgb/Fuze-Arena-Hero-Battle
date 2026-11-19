@@ -10,7 +10,7 @@ import {
   type GearSlot, type Item,
 } from '../../core/data/items';
 import {
-  ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, FRIEND_GIFT, FRIENDS_MAX, RENAME_COST, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
+  ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, FRIEND_GIFT, FRIENDS_MAX, GUILD_WAR, RENAME_COST, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
   ARENA_WIN_POINTS, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ATTEMPTS_PER_DAY,
   DUNGEON_LEVELS, DUNGEON_REWARD_HOURS, DUNGEON_STAGE_PER_LEVEL, ESSENCE_RATIO, dungeonItems, FAST_LOOT_COSTS, FAST_LOOT_HOURS, GEMS_PER_10_SUMMONS,
   GEMS_PER_SUMMON, GUILD_BOSS_ATTEMPTS, GUILD_COINS_PER_ATTACK, GUILD_SHOP, IDLE_ITEM_HOURS, MISSION_TEMPLATES,
@@ -32,7 +32,7 @@ import { summonBasic, summonOne } from '../../core/summon';
 import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
 import { CRYSTAL_HOURS, gearPct, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
-import type { ArenaOpponent, Friend, Gain, MissionState, PlayerState, Wallet } from './types';
+import type { ArenaOpponent, Friend, Gain, GuildWarState, MissionState, PlayerState, Wallet } from './types';
 
 // ---------- Outils ----------
 
@@ -99,6 +99,7 @@ function track(s: PlayerState, event: QuestEvent, n = 1) {
 /** Nouveau jour, nouvelle semaine : remises à zéro et livraisons quotidiennes. */
 export function ensureDay(): void {
   friendsDay();
+  ensureWar();
   const s = getState();
   const today = dayKey(now());
   const week = weekKey(now());
@@ -192,9 +193,9 @@ export function swapSlots(a: Slot, b: Slot): void {
 }
 
 /** Remplit la section avec les héros les plus forts, chacun à son poste conseillé. */
-export function autoFormation(): void {
+export function autoFormation(exclude: readonly number[] = []): void {
   update((s) => {
-    const best = [...s.heroes].sort((a, b) => heroPower(s, b) - heroPower(s, a)).slice(0, slotsAt(s.campaign.cleared));
+    const best = [...s.heroes].filter((h) => !exclude.includes(h.uid)).sort((a, b) => heroPower(s, b) - heroPower(s, a)).slice(0, slotsAt(s.campaign.cleared));
     const taken = new Set<Slot>();
     s.formation = best.map((h) => {
       const slot = PREFERRED_SLOTS[heroDef(h.defId).role]!.find((x) => !taken.has(x))!;
@@ -591,7 +592,7 @@ export function claimFragments(defId: string): Hero | null {
 
 // ---------- Combats ----------
 
-export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss' | 'friend';
+export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss' | 'friend' | 'guildWar';
 
 export interface BattleRequest {
   kind: BattleKind;
@@ -608,6 +609,8 @@ export interface BattleRequest {
 export interface BattleResult {
   win: boolean;
   damage: number;
+  /** Part des héros encore debout à la fin (0 à 1). */
+  alive?: number;
   inputs: BattleInput[];
 }
 
@@ -706,6 +709,8 @@ export interface BattlePlan {
   title: string;
   waves: UnitInit[][];
   need?: number;
+  /** Héros qui ne peuvent pas combattre ici (déjà utilisés aujourd'hui en guerre de guildes). */
+  exclude?: number[];
   build: () => BattleRequest | null;
 }
 
@@ -879,6 +884,16 @@ export function finishBattle(req: BattleRequest, res: BattleResult): Gain {
         addCurrency(s, gain, 'arenaTokens', res.win ? ARENA_TOKENS_PER_FIGHT.win : ARENA_TOKENS_PER_FIGHT.loss);
         s.arena.opponents = makeOpponents(s);
         track(s, 'arena');
+        break;
+      }
+      case 'guildWar': {
+        const war = s.guildWar;
+        if (!war) break;
+        war.attacks += 1;
+        war.used.push(...req.heroes.map((u) => Number(u.id.slice(2))));
+        const stars = warStars(res.win, res.alive ?? 0);
+        war.myStars += stars;
+        addCurrency(s, gain, 'guildCoins', stars * GUILD_WAR.coinsPerStar);
         break;
       }
       case 'guildBoss': {
@@ -1473,4 +1488,155 @@ export function friendPlan(id: string): BattlePlan | null {
     kind: 'friend', title: f.name, waves: [arenaEnemies(o)], need: friendPower(f),
     build: () => update((s) => ({ kind: 'friend' as const, title: f.name, heroes: teamUnits(s), waves: [arenaEnemies(o)], seed: seedFor(s) })),
   };
+}
+
+// ---------- Guerre de guildes ----------
+// Hors ligne pour l'instant : l'adversaire et les autres membres sont simulés de façon fixe pour la semaine
+// (même semaine = mêmes adversaires, mêmes scores). Avec le serveur, ce seront de vraies guildes.
+
+const FOE_GUILDS = ['Les Crocs d’Ébène', 'La Garde Céleste', 'Les Fils du Tonnerre', 'Cercle d’Écume', 'Les Veilleurs', 'Flamme Noire'];
+const WAR_NAMES = ['Kaïro', 'Lunaria', 'Vaelis', 'Tormund', 'Ishara', 'Mikaze', 'Orsolya', 'Bastien', 'Yuna', 'Ragnis', 'Selka', 'Noctis', 'Aïko', 'Feyd', 'Mirelle', 'Draven7'];
+
+export type WarPhase = 'prep' | 'battle' | 'results';
+
+export function warPhase(ms = now()): WarPhase {
+  const d = new Date(ms).getDay();
+  return d === 1 ? 'prep' : d === 0 ? 'results' : 'battle';
+}
+
+/** Jours de combat écoulés cette semaine (mardi = 0) et part de la journée en cours. */
+function warDays(ms = now()): number {
+  const d = new Date(ms);
+  const idx = (d.getDay() + 6) % 7; // lundi = 0 … dimanche = 6
+  if (idx === 0) return 0;
+  if (idx === 6) return 5;
+  return idx - 1 + (d.getHours() * 60 + d.getMinutes()) / 1440;
+}
+
+function freshWar(s: PlayerState, week: string): GuildWarState {
+  const rng = createRng(codeSeed(week + (s.guild.joined ?? '')));
+  return { week, foe: pick(rng, FOE_GUILDS), basePower: Math.max(500, teamPower(s)), day: dayKey(now()), attacks: 0, used: [], myStars: 0, claimed: false };
+}
+
+/** La guerre de la semaine (créée au besoin). La récompense d'une guerre finie et non prise est mise de côté. */
+export function ensureWar(): GuildWarState | null {
+  const s0 = getState();
+  if (!s0.guild.joined) return null;
+  const week = weekKey(now());
+  const today = dayKey(now());
+  const w0 = s0.guildWar;
+  if (w0 && w0.week === week && w0.day === today) return w0;
+  return update((s) => {
+    const w = s.guildWar;
+    if (!w || w.week !== week) {
+      const pending = w && !w.claimed ? warReward(s, w, 5) : w?.pending;
+      s.guildWar = { ...freshWar(s, week), pending };
+    } else if (w.day !== today) {
+      w.day = today;
+      w.attacks = 0;
+      w.used = [];
+    }
+    return s.guildWar!;
+  });
+}
+
+/** Les défenses de la guilde adverse : fixes pour la semaine. */
+export function warDefenses(s: PlayerState, w: GuildWarState): { name: string; team: ArenaOpponent['team']; power: number }[] {
+  const rng = createRng(codeSeed(w.week + w.foe));
+  const slots: Slot[] = [0, 1, 2, 3, 4];
+  return Array.from({ length: GUILD_WAR.defenses }, (_, i) => {
+    const ratio = 0.7 + (i / (GUILD_WAR.defenses - 1)) * 0.6; // du plus faible au plus fort
+    const target = (w.basePower * ratio) / 5;
+    const team = slots.map((slot) => {
+      const def = pick(rng, HEROES.filter((h) => h.rarity !== 'common'));
+      const stars = RARITY_RULES[def.rarity].bornStars;
+      const hero: Hero = { uid: 0, defId: def.id, stars, level: 1 };
+      while (heroPower(s, hero) < target && hero.level < 400) hero.level += 1;
+      return { defId: def.id, stars, level: hero.level, slot };
+    });
+    const o = { id: `w${i}`, name: WAR_NAMES[(codeSeed(w.foe) + i) % WAR_NAMES.length]!, points: 0, team };
+    return { name: o.name, team, power: opponentPower(o) };
+  });
+}
+
+/** Scores : mes étoiles + celles des autres membres (simulées), contre celles de la guilde adverse. */
+export function warScores(s: PlayerState, w: GuildWarState, days = warDays()): { mine: number; foe: number; members: { name: string; stars: number; me?: boolean }[] } {
+  const rng = createRng(codeSeed(w.week + 'scores'));
+  const full = Math.floor(days);
+  const part = days - full;
+  const members = WAR_NAMES.slice(0, 9).map((name) => {
+    let stars = 0;
+    for (let d = 0; d < 5; d++) {
+      const daily = 2 + Math.floor(rng() * 4); // 2 à 5 étoiles par jour
+      stars += d < full ? daily : d === full ? Math.floor(daily * part) : 0;
+    }
+    return { name, stars };
+  });
+  // Ma défense compte : plus elle est forte par rapport au début de semaine, moins l'adversaire marque.
+  const defense = Math.max(0.85, Math.min(1.15, 1.15 - 0.3 * (teamPower(s) / w.basePower - 1)));
+  let foe = 0;
+  for (let d = 0; d < 5; d++) {
+    const daily = 10 * (2 + rng() * 3.4) * defense;
+    foe += d < full ? daily : d === full ? daily * part : 0;
+  }
+  const all = [...members, { name: s.name, stars: w.myStars, me: true }].sort((a, b) => b.stars - a.stars);
+  return { mine: all.reduce((a, m) => a + m.stars, 0), foe: Math.round(foe), members: all };
+}
+
+function warReward(s: PlayerState, w: GuildWarState, days: number): NonNullable<GuildWarState['pending']> {
+  const sc = warScores(s, w, days);
+  const result = sc.mine > sc.foe ? 'win' : sc.mine === sc.foe ? 'draw' : 'loss';
+  const r = GUILD_WAR.reward[result];
+  const best = sc.members[0]?.me ? GUILD_WAR.bestAttacker.scrolls : 0;
+  return { result, guildCoins: r.guildCoins, scrolls: r.scrolls + best };
+}
+
+/** Le dimanche, ou pour une guerre précédente : récupérer la récompense. */
+export function claimWar(): Gain | null {
+  const w0 = ensureWar();
+  if (!w0) return null;
+  return update((s) => {
+    const w = s.guildWar!;
+    const gain = emptyGain();
+    let r = w.pending;
+    if (r) w.pending = undefined;
+    else if (warPhase() === 'results' && !w.claimed) {
+      r = warReward(s, w, 5);
+      w.claimed = true;
+    }
+    if (!r) return null;
+    addCurrency(s, gain, 'guildCoins', r.guildCoins);
+    addCurrency(s, gain, 'scrolls', r.scrolls);
+    return gain;
+  });
+}
+
+export function warAttacksLeft(w: GuildWarState): number {
+  return warPhase() === 'battle' ? Math.max(0, GUILD_WAR.attacksPerDay - w.attacks) : 0;
+}
+
+/** Attaquer une défense adverse. Les héros qui ont déjà attaqué aujourd'hui restent sur le côté. */
+export function warPlan(index: number): BattlePlan | null {
+  const w = ensureWar();
+  const s = getState();
+  if (!w) return null;
+  const d = warDefenses(s, w)[index];
+  if (!d) return null;
+  const o = { id: `w${index}`, name: d.name, points: 0, team: d.team };
+  return {
+    kind: 'guildWar', title: d.name, waves: [arenaEnemies(o)], need: d.power, exclude: [...w.used],
+    build: () => update((st) => {
+      const war = st.guildWar;
+      if (!war || warAttacksLeft(war) <= 0) return null;
+      const heroes = teamUnits(st).filter((u) => !war.used.includes(Number(u.id.slice(2))));
+      if (!heroes.length) return null;
+      return { kind: 'guildWar' as const, title: d.name, heroes, waves: [arenaEnemies(o)], seed: seedFor(st) };
+    }),
+  };
+}
+
+/** Étoiles d'une attaque gagnée : selon la part de héros encore debout. */
+export function warStars(win: boolean, alive: number): number {
+  if (!win) return 0;
+  return alive >= 0.99 ? 3 : alive >= 0.5 ? 2 : 1;
 }

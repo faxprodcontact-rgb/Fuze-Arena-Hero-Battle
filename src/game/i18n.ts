@@ -70,7 +70,9 @@ const FR = {
   'league.bronze': 'Bronze', 'league.silver': 'Argent', 'league.gold': 'Or', 'league.platinum': 'Platine', 'league.diamond': 'Diamant',
   'defense.prepare': 'Placer les héros', 'defense.replay': 'Rejouer',
 
-  'guild.join': 'Rejoindre', 'guild.leave': 'Quitter', 'guild.members': 'Membres', 'guild.boss': 'Boss', 'guild.war': 'Guerre', 'guild.chat': 'Tchat',
+  'guild.join': 'Rejoindre', 'guild.leave': 'Quitter', 'guild.members': 'Membres', 'guild.boss': 'Boss', 'guild.war': 'Guerre', 'war.prep': 'Préparation', 'war.battle': 'Combats', 'war.results': 'Résultats',
+  'war.day': 'jour {n} / 5', 'war.attacks': 'Attaques : {n} / {m}', 'war.ranking': 'Étoiles de la guilde', 'war.tired': 'Déjà attaqué aujourd’hui',
+  'war.win': 'Victoire !', 'war.draw': 'Égalité', 'war.loss': 'Défaite', 'mode.guildWar': 'Guerre', 'guild.chat': 'Tchat',
   'guild.shop': 'Boutique', 'guild.total': 'Dégâts de la guilde', 'guild.level': 'Niv. {n}',
 
   'quests.daily': 'Du jour', 'quests.weekly': 'De la semaine', 'quests.activity': 'Activité',
@@ -182,7 +184,9 @@ const EN: Record<Key, string> = {
   'league.bronze': 'Bronze', 'league.silver': 'Silver', 'league.gold': 'Gold', 'league.platinum': 'Platinum', 'league.diamond': 'Diamond',
   'defense.prepare': 'Place heroes', 'defense.replay': 'Replay',
 
-  'guild.join': 'Join', 'guild.leave': 'Leave', 'guild.members': 'Members', 'guild.boss': 'Boss', 'guild.war': 'War', 'guild.chat': 'Chat',
+  'guild.join': 'Join', 'guild.leave': 'Leave', 'guild.members': 'Members', 'guild.boss': 'Boss', 'guild.war': 'War', 'war.prep': 'Preparation', 'war.battle': 'Battles', 'war.results': 'Results',
+  'war.day': 'day {n} / 5', 'war.attacks': 'Attacks: {n} / {m}', 'war.ranking': 'Guild stars', 'war.tired': 'Already attacked today',
+  'war.win': 'Victory!', 'war.draw': 'Draw', 'war.loss': 'Defeat', 'mode.guildWar': 'War', 'guild.chat': 'Chat',
   'guild.shop': 'Shop', 'guild.total': 'Guild damage', 'guild.level': 'Lv. {n}',
 
   'quests.daily': 'Daily', 'quests.weekly': 'Weekly', 'quests.activity': 'Activity',

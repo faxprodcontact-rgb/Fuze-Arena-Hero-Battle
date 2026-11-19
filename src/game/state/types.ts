@@ -40,6 +40,21 @@ export interface Friend {
   team: { defId: string; stars: number; level: number; slot: Slot }[];
 }
 
+export interface GuildWarState {
+  week: string;
+  foe: string;
+  /** Puissance de la section en début de semaine (sert à la force des défenses adverses). */
+  basePower: number;
+  day: string;
+  attacks: number;
+  /** Héros ayant déjà attaqué aujourd'hui. */
+  used: number[];
+  myStars: number;
+  claimed: boolean;
+  /** Récompense de la guerre précédente, pas encore récupérée. */
+  pending?: { result: 'win' | 'draw' | 'loss'; guildCoins: number; scrolls: number };
+}
+
 export interface ChatMessage {
   from: string;
   text: string;
@@ -86,6 +101,8 @@ export interface PlayerState {
   friends: { list: Friend[]; day: string; sent: string[]; inbox: string[] };
   defense: { level: number; stars: Record<number, number>; placement: [number, number][]; chests?: number };
   arena: { points: number; opponents: ArenaOpponent[] };
+  /** Guerre de guildes de la semaine en cours (et récompense de la précédente si pas encore prise). */
+  guildWar?: GuildWarState;
   guild: { joined: string | null; bossDamage: number; chat: ChatMessage[]; lastBotAt: number };
   worldChat: ChatMessage[];
   shop: { bought: Record<string, number>; cardUntil: number; passPremium: boolean; noAds: boolean };
