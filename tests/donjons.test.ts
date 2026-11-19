@@ -14,11 +14,11 @@ describe('donjons', () => {
   it('gagner le niveau suivant avance d\'un niveau et compte un essai', () => {
     const plan = dungeonPlan('gold')!;
     const req = plan.build();
-    finishBattle(req, { win: true, damage: 0 } as never);
+    finishBattle(req!, { win: true, damage: 0 } as never);
     expect(getState().dungeons.gold).toBe(1);
     expect(getState().daily.entries.gold).toBe(1);
     // Une défaite ne coûte rien.
-    finishBattle(dungeonPlan('gold')!.build(), { win: false, damage: 0 } as never);
+    finishBattle(dungeonPlan("gold")!.build()!, { win: false, damage: 0 } as never);
     expect(getState().dungeons.gold).toBe(1);
     expect(getState().daily.entries.gold).toBe(1);
   });

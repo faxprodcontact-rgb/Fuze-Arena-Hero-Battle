@@ -19,6 +19,10 @@ import {
   type Reward,
 } from '../../core/data/modes';
 import { FRAGMENTS_PER_COPY, LADDER, RARITY_RULES } from '../../core/data/stars';
+import type { DefenseSetup } from '../../core/defense/engine';
+import {
+  DEFENSE_HEROES, DEFENSE_LEVELS, DEFENSE_PADS, DEFENSE_REWARD, DEFENSE_STAGE_PER_LEVEL, defenseStars,
+} from '../../core/data/defense';
 import { applyFusion, canGainStar, isValidFusion, planFusion, type FusionPlan } from '../../core/fusion';
 import { levelRefund } from '../../core/power';
 import { createRng, pick, type Rng } from '../../core/rng';
@@ -27,7 +31,7 @@ import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '.
 import { summonBasic, summonOne } from '../../core/summon';
 import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
-import { heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
+import { gearPct, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
 import type { ArenaOpponent, Gain, MissionState, PlayerState, Wallet } from './types';
 
 // ---------- Outils ----------
@@ -1264,4 +1268,96 @@ export function resetGame(): void {
 /** Lance le combat préparé avec la section actuelle. */
 export function startBattleFromPlan(plan: BattlePlan): BattleRequest | null {
   return plan.build();
+}
+
+// ---------- Défense ----------
+
+/** Puissance demandée par un niveau de Défense. */
+export function defensePower(level: number): number {
+  return stagePower(Math.max(1, level * DEFENSE_STAGE_PER_LEVEL));
+}
+
+/** Les héros posés encore présents dans la collection (un héros sacrifié en fusion disparaît du plan). */
+export function defensePlacement(s: PlayerState = getState()): [number, number][] {
+  const owned = new Set(s.heroes.map((h) => h.uid));
+  return s.defense.placement.filter(([u, pad]) => owned.has(u) && pad < DEFENSE_PADS.length);
+}
+
+/** Poser un héros sur un emplacement (ou l'enlever s'il y est déjà). Un emplacement ne garde qu'un héros. */
+export function placeDefender(uid: number, pad: number): 'placed' | 'removed' | 'full' {
+  return update((s) => {
+    const list = defensePlacement(s);
+    const here = list.find(([u]) => u === uid);
+    if (here && here[1] === pad) {
+      s.defense.placement = list.filter(([u]) => u !== uid);
+      return 'removed';
+    }
+    const others = list.filter(([u, p]) => u !== uid && p !== pad);
+    if (!here && others.length >= DEFENSE_HEROES) return 'full';
+    s.defense.placement = [...others, [uid, pad]];
+    return 'placed';
+  });
+}
+
+export function removeDefender(uid: number): void {
+  update((s) => {
+    s.defense.placement = defensePlacement(s).filter(([u]) => u !== uid);
+  });
+}
+
+/** Échange deux emplacements (ou déplace un héros vers un emplacement vide). */
+export function swapPads(a: number, b: number): void {
+  update((s) => {
+    s.defense.placement = defensePlacement(s).map(([u, p]) => [u, p === a ? b : p === b ? a : p]);
+  });
+}
+
+/** Placement automatique : les 5 plus forts ; ceux à distance au milieu de la carte, ceux au corps à corps près des virages. */
+export function autoDefense(): void {
+  update((s) => {
+    const best = [...s.heroes].sort((a, b) => heroPower(s, b) - heroPower(s, a)).slice(0, DEFENSE_HEROES);
+    const rangedPads = [4, 1, 3, 7, 0, 6, 2, 5, 8];
+    const meleePads = [2, 5, 0, 7, 6, 4, 1, 3, 8];
+    const used = new Set<number>();
+    s.defense.placement = best.map((h) => {
+      const pads = heroDef(h.defId).ranged ? rangedPads : meleePads;
+      const pad = pads.find((p) => !used.has(p))!;
+      used.add(pad);
+      return [h.uid, pad];
+    });
+  });
+}
+
+export interface DefenseRequest {
+  level: number;
+  setup: DefenseSetup;
+}
+
+/** Prépare la partie du prochain niveau (ou d'un niveau déjà gagné, pour faire mieux). */
+export function defenseRequest(level: number): DefenseRequest | null {
+  return update((s) => {
+    const placement = defensePlacement(s);
+    if (!placement.length || level < 1 || level > Math.min(DEFENSE_LEVELS, s.defense.level + 1)) return null;
+    const towers = placement.map(([uid, pad]) => ({ unit: heroToUnit(heroByUid(s, uid)!, 0, gearPct(s, uid)), pad }));
+    return { level, setup: { towers, power: defensePower(level), element: chapterElement(level), seed: seedFor(s) } };
+  });
+}
+
+/** Fin de partie : première victoire = butin ; chaque nouvelle étoile = des gemmes. */
+export function finishDefense(req: DefenseRequest, lives: number): Gain {
+  return update((s) => {
+    const gain = emptyGain();
+    const stars = defenseStars(lives);
+    if (stars <= 0) return gain;
+    const before = s.defense.stars[req.level] ?? 0;
+    if (req.level === s.defense.level + 1) {
+      s.defense.level = req.level;
+      addCurrency(s, gain, 'gold', incomePerHour(req.level * DEFENSE_STAGE_PER_LEVEL) * DEFENSE_REWARD.goldHours);
+    }
+    if (stars > before) {
+      s.defense.stars[req.level] = stars;
+      addCurrency(s, gain, 'gems', (stars - before) * DEFENSE_REWARD.gemsPerStar);
+    }
+    return gain;
+  });
 }

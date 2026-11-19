@@ -68,7 +68,7 @@ const FR = {
   'boss.best': 'Record', 'boss.attempts': 'Essais : {n} / {m}', 'boss.attack': 'Attaquer',
   'arena.points': 'Points', 'arena.tickets': 'Combats : {n} / {m}', 'arena.refresh': 'Autres adversaires', 'arena.shop': 'Boutique',
   'league.bronze': 'Bronze', 'league.silver': 'Argent', 'league.gold': 'Or', 'league.platinum': 'Platine', 'league.diamond': 'Diamant',
-  'defense.text': 'Place tes héros autour du chemin.',
+  'defense.prepare': 'Placer les héros', 'defense.replay': 'Rejouer',
 
   'guild.join': 'Rejoindre', 'guild.leave': 'Quitter', 'guild.members': 'Membres', 'guild.boss': 'Boss', 'guild.chat': 'Tchat',
   'guild.shop': 'Boutique', 'guild.total': 'Dégâts de la guilde', 'guild.level': 'Niv. {n}',
@@ -176,7 +176,7 @@ const EN: Record<Key, string> = {
   'boss.best': 'Best', 'boss.attempts': 'Tries: {n} / {m}', 'boss.attack': 'Attack',
   'arena.points': 'Points', 'arena.tickets': 'Fights: {n} / {m}', 'arena.refresh': 'New opponents', 'arena.shop': 'Shop',
   'league.bronze': 'Bronze', 'league.silver': 'Silver', 'league.gold': 'Gold', 'league.platinum': 'Platinum', 'league.diamond': 'Diamond',
-  'defense.text': 'Place your heroes around the path.',
+  'defense.prepare': 'Place heroes', 'defense.replay': 'Replay',
 
   'guild.join': 'Join', 'guild.leave': 'Leave', 'guild.members': 'Members', 'guild.boss': 'Boss', 'guild.chat': 'Chat',
   'guild.shop': 'Shop', 'guild.total': 'Guild damage', 'guild.level': 'Lv. {n}',

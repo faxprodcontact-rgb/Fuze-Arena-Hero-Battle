@@ -36,6 +36,7 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
 | `src/game/fight-view.ts` | Base commune des scènes de combat (personnages, coups, chiffres) |
 | `src/game/battle-scene.ts` | Écran de combat (Phaser), utilisé par tous les modes |
 | `src/game/idle-scene.ts` | Combat permanent de l'accueil (image du butin hors ligne) |
+| `src/core/defense/engine.ts` + `src/game/defense-scene.ts` | Mode Défense (tower defense) : règles déterministes, puis l'affichage ; réglages dans `src/core/data/defense.ts` |
 | `src/game/art.ts` | Dessins provisoires faits par le code (héros et monstres) |
 | `src/game/i18n.ts` | Tous les textes, français et anglais |
 | `simulations/` | Joueurs virtuels qui jouent des mois en accéléré pour vérifier le rythme |

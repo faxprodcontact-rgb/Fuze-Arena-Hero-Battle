@@ -1,3 +1,4 @@
+import type { DefenseRequest } from '../state/actions';
 // Navigation : onglet ouvert, sous-écran, fenêtres empilées, combat en cours, petit message.
 import { useEffect, useState } from 'preact/hooks';
 import type { Feature } from '../../core/data/modes';
@@ -28,6 +29,8 @@ export type Modal =
   | { type: 'reset'; uid?: number }
   | { type: 'mission'; id: string }
   | { type: 'dungeon'; kind: 'gold' | 'essence' | 'gear' }
+  | { type: 'defensePrep'; level: number }
+  | { type: 'defenseRun'; req: DefenseRequest }
   | { type: 'item'; uid: number }
   | { type: 'legal'; doc: 'privacy' | 'terms' | 'notice' | 'credits' | 'support' };
 

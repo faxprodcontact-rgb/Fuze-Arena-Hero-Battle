@@ -73,6 +73,8 @@ export interface PlayerState {
   summon: { pity: number; total: number };
   tower: { floor: number };
   dungeons: Record<DungeonKind, number>;
+  /** Mode Défense : dernier niveau gagné, étoiles par niveau, et les héros posés (uid → emplacement). */
+  defense: { level: number; stars: Record<number, number>; placement: [number, number][] };
   arena: { points: number; opponents: ArenaOpponent[] };
   guild: { joined: string | null; bossDamage: number; chat: ChatMessage[]; lastBotAt: number };
   worldChat: ChatMessage[];

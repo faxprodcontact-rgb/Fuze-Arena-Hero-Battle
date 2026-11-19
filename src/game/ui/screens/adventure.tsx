@@ -15,6 +15,7 @@ import { isUnlocked, teamPower } from '../../state/selectors';
 import { now, useGame } from '../../state/store';
 import { ADVENTURE_ORDER, dots, isNew } from '../dots';
 import { TeamStrip } from './heroes';
+import { DefenseScreen } from './defense';
 import { Bar, Btn, Cur, Icon, Locked, duration } from '../kit';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
 
@@ -29,7 +30,7 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
         {sub === 'dungeons' && <Dungeons />}
         {sub === 'dailyBoss' && <DailyBoss />}
         {sub === 'arena' && <Arena />}
-        {sub === 'defense' && <Defense />}
+        {sub === 'defense' && <DefenseScreen />}
       </div>
     );
   }
@@ -253,19 +254,3 @@ export function ShopTile(p: { cost: preact.ComponentChildren; reward: Record<str
   );
 }
 
-function Defense() {
-  return (
-    <section class="card center defense">
-      <h1>{t('adv.defense')}</h1>
-      <svg viewBox="0 0 300 200" class="defense-map" aria-hidden="true">
-        <path d="M0 160 C 80 160, 80 40, 150 40 S 220 160, 300 120" stroke="#c08a4a" stroke-width="26" fill="none" stroke-linecap="round" />
-        <circle cx="70" cy="80" r="16" fill="#4c8dff" />
-        <circle cx="150" cy="100" r="16" fill="#3ccf7a" />
-        <circle cx="230" cy="70" r="16" fill="#ffc94a" />
-        <circle cx="280" cy="125" r="10" fill="#e5484d" />
-      </svg>
-      <p class="muted">{t('defense.text')}</p>
-      <span class="tag">{t('soon')}</span>
-    </section>
-  );
-}

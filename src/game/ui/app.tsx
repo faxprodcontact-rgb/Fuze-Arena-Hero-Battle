@@ -19,6 +19,7 @@ import { FusionPage } from './screens/fusion';
 import { ResetPage } from './screens/reset';
 import { MissionPage } from './screens/mission';
 import { DungeonPage } from './screens/dungeon';
+import { DefensePrep, DefenseRun } from './screens/defense';
 import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
 import { AdModal, ConfirmModal, GainModal, LegalModal, NameScreen, QuestsModal, RenameModal, SettingsModal, ShopModal } from './screens/meta';
@@ -89,6 +90,8 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'reset': return <ResetPage uid={modal.uid} />;
     case 'mission': return <MissionPage id={modal.id} />;
     case 'dungeon': return <DungeonPage kind={modal.kind} />;
+    case 'defensePrep': return <DefensePrep level={modal.level} />;
+    case 'defenseRun': return <DefenseRun req={modal.req} />;
     case 'item': return <ItemModal uid={modal.uid} />;
     case 'legal': return <LegalModal doc={modal.doc} />;
   }
