@@ -35,6 +35,25 @@ export function HeroesScreen() {
   );
 }
 
+/** Bandeau « Section » : les visages, la puissance ; toucher pour changer la section. */
+export function TeamStrip() {
+  const s = useGame();
+  return (
+    <button class="team-strip" onClick={() => prepare(null)}>
+      <span class="team-faces">
+        {teamHeroes(s).map(({ hero, slot }) => (
+          <span class={`team-face${slot === LEADER_SLOT ? ' leader' : ''}`}><img src={heroImage(hero.defId)} alt="" /></span>
+        ))}
+      </span>
+      <span class="team-info">
+        <strong>{t('heroes.team')}</strong>
+        <span class="power-chip"><Icon name="power" size={16} />{fmt(teamPower(s))}</span>
+      </span>
+      <span class="chev">›</span>
+    </button>
+  );
+}
+
 function HeroList() {
   const s = useGame();
   const [sort, setSort] = useState<Sort>('power');
@@ -45,18 +64,7 @@ function HeroList() {
 
   return (
     <div class="screen heroes">
-      <button class="team-strip" onClick={() => prepare(null)}>
-        <span class="team-faces">
-          {teamHeroes(s).map(({ hero, slot }) => (
-            <span class={`team-face${slot === LEADER_SLOT ? ' leader' : ''}`}><img src={heroImage(hero.defId)} alt="" /></span>
-          ))}
-        </span>
-        <span class="team-info">
-          <strong>{t('heroes.team')}</strong>
-          <span class="power-chip"><Icon name="power" size={16} />{fmt(teamPower(s))}</span>
-        </span>
-        <span class="chev">›</span>
-      </button>
+      <TeamStrip />
 
       <div class="row between">
         <h2>{t('nav.heroes')} <span class="muted">{s.heroes.length}</span></h2>

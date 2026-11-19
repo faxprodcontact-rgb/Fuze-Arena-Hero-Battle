@@ -9,11 +9,12 @@ import { heroImage, monsterImage } from '../../art';
 import { fmt, t } from '../../i18n';
 import {
   arenaPlan, buyExchange, claimMission, dailyBossId, dailyBossPlan, dungeonPlan, markSeen, missionEnd,
-  missionTemplate, opponentPower, refreshOpponents, sendMission, towerPlan,
+  missionTemplate, opponentPower, refreshOpponents, towerPlan,
 } from '../../state/actions';
 import { isUnlocked, teamPower } from '../../state/selectors';
 import { now, useGame } from '../../state/store';
 import { ADVENTURE_ORDER, dots, isNew } from '../dots';
+import { TeamStrip } from './heroes';
 import { Bar, Btn, Cur, Icon, Locked, duration } from '../kit';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
 
@@ -120,7 +121,7 @@ function Missions() {
                 })}</div>
               )}
             </div>
-            {!m.startedAt && <Btn kind="blue" small onClick={() => !sendMission(m.id) && toast(t('mission.missing'))}>{t('send')}</Btn>}
+            {!m.startedAt && <Btn kind="blue" small onClick={() => open({ type: 'mission', id: m.id })}>{t('send')}</Btn>}
             {ready && <Btn kind="gold" small dot onClick={() => {
               const gain = claimMission(m.id);
               if (gain) open({ type: 'gain', title: t(`mission.${tpl.id}`), gain });
@@ -170,14 +171,24 @@ function DailyBoss() {
   const s = useGame();
   const boss = dailyBossId();
   const left = DAILY_BOSS_ATTEMPTS - s.daily.bossAttempts;
+  const total = dailyBossPlan().waves[0]!.reduce((a, u) => a + u.maxHp, 0);
+  const best = Math.min(1, s.daily.bossBest / total);
   return (
     <section class="card center">
       <h1>{t('adv.dailyBoss')} · {t(`monster.${boss}`)}</h1>
       <img class="boss-img" src={monsterImage(boss, 'fire')} alt="" />
-      <p>{t('boss.best')} : <b>{fmt(s.daily.bossBest)}</b></p>
-      <div class="boss-tiers">{DAILY_BOSS_TIERS.map((tier) => <span><Cur k="gems" n={tier.gems} /><small>{Math.round(tier.share * 100)} %</small></span>)}</div>
-      <p class="muted">{t('boss.attempts', { n: left, m: DAILY_BOSS_ATTEMPTS })}</p>
-      <Btn kind="red" wide disabled={left <= 0} onClick={() => prepare(dailyBossPlan())}>{t('boss.attack')}</Btn>
+      {/* Les récompenses sont des paliers sur la barre des dégâts : on voit d'un coup d'œil où on en est. */}
+      <div class="boss-track">
+        {DAILY_BOSS_TIERS.map((tier) => (
+          <span class={`boss-mark${best >= tier.share ? ' on' : ''}`} style={{ left: `${tier.share * 100}%` }}>
+            <Icon name="gems" size={16} />
+            <small>{tier.gems}</small>
+          </span>
+        ))}
+        <div class="boss-bar"><span style={{ width: `${best * 100}%` }} /></div>
+      </div>
+      <p class="muted small">{t('boss.best')} <b>{fmt(s.daily.bossBest)}</b></p>
+      <Btn kind="red" wide disabled={left <= 0} onClick={() => prepare(dailyBossPlan())}>{t('boss.attack')} · {left} / {DAILY_BOSS_ATTEMPTS}</Btn>
     </section>
   );
 }
@@ -206,6 +217,7 @@ function Arena() {
       </div>
       {tab === 'fight' ? (
         <>
+          <TeamStrip />
           <div class="row between"><span class="muted">{t('arena.tickets', { n: left, m: ARENA_FREE_TICKETS })}</span>
             <Btn kind="ghost" small onClick={refreshOpponents}>{t('arena.refresh')}</Btn></div>
           {s.arena.opponents.map((o) => (
@@ -215,7 +227,7 @@ function Arena() {
                 <div class="mini-team">{o.team.map((m) => <img src={heroImage(m.defId)} alt="" />)}</div>
               </div>
               <div class="col-end">
-                <span class="power-chip"><Icon name="power" size={16} />{fmt(opponentPower(o))}</span>
+                <span class={`power-chip ${teamPower(s) >= opponentPower(o) ? 'ok' : 'low'}`}><Icon name="power" size={16} />{fmt(opponentPower(o))}</span>
                 <Btn kind="red" small disabled={left <= 0} onClick={() => prepare(arenaPlan(o.id))}>{t('fight')}</Btn>
               </div>
             </div>

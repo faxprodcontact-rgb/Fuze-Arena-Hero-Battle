@@ -26,6 +26,7 @@ export type Modal =
   | { type: 'fusion'; uid?: number }
   | { type: 'forge' }
   | { type: 'reset'; uid?: number }
+  | { type: 'mission'; id: string }
   | { type: 'item'; uid: number }
   | { type: 'legal'; doc: 'privacy' | 'terms' | 'notice' | 'credits' | 'support' };
 

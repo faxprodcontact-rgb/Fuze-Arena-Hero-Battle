@@ -867,18 +867,30 @@ export function missionEnd(m: MissionState): number {
 }
 
 /** Envoie les héros disponibles les moins utiles (hors section) qui remplissent la condition. */
-export function sendMission(id: string): boolean {
+/** Héros qui peuvent partir en mission (assez d'étoiles, pas déjà partis), les moins utiles d'abord. */
+export function missionCandidates(id: string): { eligible: Hero[]; need: number; minStars: number } | null {
+  const s = getState();
+  const m = s.daily.missions.find((x) => x.id === id);
+  if (!m || m.startedAt) return null;
+  const t = missionTemplate(m);
+  const busy = new Set(s.daily.missions.filter((x) => x.startedAt && !x.claimed).flatMap((x) => x.heroUids));
+  const inTeam = new Set(s.formation.map(([u]) => u));
+  const eligible = s.heroes
+    .filter((h) => !busy.has(h.uid) && h.stars >= t.minStars)
+    .sort((a, b) => Number(inTeam.has(a.uid)) - Number(inTeam.has(b.uid)) || a.stars - b.stars || a.level - b.level);
+  return { eligible, need: t.heroes, minStars: t.minStars };
+}
+
+/** Envoie une mission avec les héros choisis (ou, sans liste, ceux proposés d'office). */
+export function sendMission(id: string, heroUids?: number[]): boolean {
+  const c = missionCandidates(id);
+  if (!c) return false;
+  const ok = new Set(c.eligible.map((h) => h.uid));
+  const team = heroUids ?? c.eligible.slice(0, c.need).map((h) => h.uid);
+  if (team.length !== c.need || new Set(team).size !== team.length || team.some((u) => !ok.has(u))) return false;
   return update((s) => {
-    const m = s.daily.missions.find((x) => x.id === id);
-    if (!m || m.startedAt) return false;
-    const t = missionTemplate(m);
-    const busy = new Set(s.daily.missions.filter((x) => x.startedAt && !x.claimed).flatMap((x) => x.heroUids));
-    const inTeam = new Set(s.formation.map(([u]) => u));
-    const pool = s.heroes
-      .filter((h) => !busy.has(h.uid) && h.stars >= t.minStars)
-      .sort((a, b) => Number(inTeam.has(a.uid)) - Number(inTeam.has(b.uid)) || a.stars - b.stars || a.level - b.level);
-    if (pool.length < t.heroes) return false;
-    m.heroUids = pool.slice(0, t.heroes).map((h) => h.uid);
+    const m = s.daily.missions.find((x) => x.id === id)!;
+    m.heroUids = team;
     m.startedAt = now();
     return true;
   });
