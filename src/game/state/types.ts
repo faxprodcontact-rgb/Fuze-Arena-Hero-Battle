@@ -1,6 +1,6 @@
 // Ce que le jeu sait d'un joueur. Aujourd'hui sur le téléphone ; demain, la même chose sur le serveur.
 import type { Slot } from '../../core/battle/types';
-import type { Item } from '../../core/data/items';
+import type { GearSlot, Item } from '../../core/data/items';
 import type { DungeonKind } from '../../core/data/modes';
 import type { Hero } from '../../core/types';
 
@@ -13,6 +13,8 @@ export interface Wallet {
   arenaTokens: number;
   guildCoins: number;
   crystals: number;
+  /** Poussière de forge : recyclage des objets, sert à renforcer les emplacements. */
+  dust: number;
 }
 export type Currency = keyof Wallet;
 
@@ -62,6 +64,8 @@ export interface PlayerState {
   fragmentTarget?: string;
   heroes: Hero[];
   items: Item[];
+  /** Niveau de renforcement de chaque emplacement de chaque héros (uid → emplacement → +N). */
+  slotLevels: Record<number, Partial<Record<GearSlot, number>>>;
   formation: [number, Slot][];
   campaign: { cleared: number; idleFrom: number; itemHours: number };
   summon: { pity: number; total: number };

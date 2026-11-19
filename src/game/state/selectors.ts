@@ -3,7 +3,7 @@ import { heroPowerWithGear, heroToUnit } from '../../core/battle/units';
 import type { Slot, UnitInit } from '../../core/battle/types';
 import { incomePerHour, OFFLINE_CAP_HOURS, levelCost } from '../../core/data/economy';
 import { heroDef } from '../../core/data/heroes';
-import { itemBonus, type GearSlot, type Item } from '../../core/data/items';
+import { equippedBonus, type GearSlot, type Item } from '../../core/data/items';
 import { ESSENCE_RATIO, IDLE_ITEM_HOURS, UNLOCKS, type Feature } from '../../core/data/modes';
 import { levelCap } from '../../core/data/stats';
 import { slotsAt } from '../../core/stages';
@@ -21,8 +21,13 @@ export function heroItems(s: PlayerState, uid: number): Partial<Record<GearSlot,
   return out;
 }
 
+export function slotLevel(s: PlayerState, uid: number, slot: GearSlot): number {
+  return s.slotLevels[uid]?.[slot] ?? 0;
+}
+
+/** Bonus total de l'équipement d'un héros, en % (objets × renforcement de leurs emplacements). */
 export function gearPct(s: PlayerState, uid: number): number {
-  return s.items.filter((it) => it.heroUid === uid).reduce((sum, it) => sum + itemBonus(it), 0);
+  return s.items.filter((it) => it.heroUid === uid).reduce((sum, it) => sum + equippedBonus(it, slotLevel(s, uid, it.slot)), 0);
 }
 
 export function heroPower(s: PlayerState, hero: Hero): number {

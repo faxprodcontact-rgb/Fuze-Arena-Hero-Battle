@@ -6,6 +6,12 @@ const FR = {
   'nav.campaign': 'Campagne', 'nav.heroes': 'Héros', 'nav.summon': 'Invoquer', 'nav.adventure': 'Aventure', 'nav.guild': 'Guilde',
   'side.quests': 'Quêtes', 'side.shop': 'Boutique', 'side.pass': 'Passe', 'side.ranking': 'Classement', 'side.chat': 'Tchat', 'side.settings': 'Réglages',
 
+  'cur.dust': 'Poussière de forge',
+  'bag.title': 'Sac', 'bag.forgeAll': 'Tout forger', 'bag.recycleLow': 'Recycler gris et verts', 'bag.empty': 'Sac vide',
+  'bag.forged': '{n} objets forgés', 'bag.recycled': '+{n} poussière',
+  'item.chapter': 'Chapitre {n}', 'item.forge': 'Forger', 'item.forgeNeed': '{have} / 3 identiques', 'item.recycle': 'Recycler',
+  'item.unequip': 'Retirer', 'item.wornBy': 'Porté par {n}', 'item.equip': 'Équiper',
+  'slot.upgrade': 'Renforcer', 'slot.level': 'Emplacement +{n}', 'slot.max': 'Renforcement maximum', 'slot.choose': 'Objets du sac',
   'cur.gold': 'Or', 'cur.essence': 'Essence', 'cur.gems': 'Gemmes', 'cur.scrolls': 'Parchemins', 'cur.basicScrolls': 'Parchemins simples',
   'cur.arenaTokens': "Jetons d'arène", 'cur.guildCoins': 'Pièces de guilde', 'cur.crystals': "Cristaux d'éveil", 'cur.fragments': 'Fragments',
 
@@ -108,6 +114,12 @@ const EN: Record<Key, string> = {
   'nav.campaign': 'Campaign', 'nav.heroes': 'Heroes', 'nav.summon': 'Summon', 'nav.adventure': 'Adventure', 'nav.guild': 'Guild',
   'side.quests': 'Quests', 'side.shop': 'Shop', 'side.pass': 'Pass', 'side.ranking': 'Ranking', 'side.chat': 'Chat', 'side.settings': 'Settings',
 
+  'cur.dust': 'Forge dust',
+  'bag.title': 'Bag', 'bag.forgeAll': 'Forge all', 'bag.recycleLow': 'Recycle grey and green', 'bag.empty': 'Bag empty',
+  'bag.forged': '{n} items forged', 'bag.recycled': '+{n} dust',
+  'item.chapter': 'Chapter {n}', 'item.forge': 'Forge', 'item.forgeNeed': '{have} / 3 identical', 'item.recycle': 'Recycle',
+  'item.unequip': 'Remove', 'item.wornBy': 'Worn by {n}', 'item.equip': 'Equip',
+  'slot.upgrade': 'Upgrade', 'slot.level': 'Slot +{n}', 'slot.max': 'Max upgrade', 'slot.choose': 'Items in bag',
   'cur.gold': 'Gold', 'cur.essence': 'Essence', 'cur.gems': 'Gems', 'cur.scrolls': 'Scrolls', 'cur.basicScrolls': 'Basic scrolls',
   'cur.arenaTokens': 'Arena tokens', 'cur.guildCoins': 'Guild coins', 'cur.crystals': 'Awakening crystals', 'cur.fragments': 'Shards',
 

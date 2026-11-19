@@ -11,6 +11,8 @@ import { useGame } from '../../state/store';
 import type { PlayerState } from '../../state/types';
 import { Btn, HeroCard, Icon, RedDot } from '../kit';
 import { open, prepare, toast } from '../nav';
+import { BagView } from './bag';
+import { Tabs } from '../kit';
 
 type Sort = 'power' | 'stars' | 'rarity';
 
@@ -24,6 +26,16 @@ function sortHeroes(s: PlayerState, list: Hero[], sort: Sort): Hero[] {
 }
 
 export function HeroesScreen() {
+  const [view, setView] = useState<'heroes' | 'bag'>('heroes');
+  return (
+    <div class="screen">
+      <Tabs value={view} onChange={setView} options={[['heroes', t('nav.heroes')], ['bag', t('bag.title')]]} />
+      {view === 'heroes' ? <HeroList /> : <BagView />}
+    </div>
+  );
+}
+
+function HeroList() {
   const s = useGame();
   const [faction, setFaction] = useState<Faction | 'all'>('all');
   const [sort, setSort] = useState<Sort>('power');

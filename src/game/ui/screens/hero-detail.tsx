@@ -9,7 +9,7 @@ import { canGainStar } from '../../../core/fusion';
 import { ELEMENT_COLOR, RARITY_COLOR, heroImage } from '../../art';
 import { fmt, t } from '../../i18n';
 import { equipBest, fuse, fusionPreview, levelUp, resetHero, toggleInFormation, unequipAll } from '../../state/actions';
-import { canLevelUp, gearPct, heroByUid, heroItems, heroPower, levelUpCost } from '../../state/selectors';
+import { canLevelUp, gearPct, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import type { PlayerState } from '../../state/types';
 import { Btn, Cur, Icon, ItemIcon, Modal, Stars } from '../kit';
@@ -109,7 +109,7 @@ export function HeroDetail({ uid }: { uid: number }) {
         <div class="items-row">
           {GEAR_SLOTS.map((slot) => (
             <div class="item-cell">
-              <ItemIcon item={items[slot]} onClick={() => equipBest(uid)} />
+              <ItemIcon item={items[slot]} slot={slot} level={slotLevel(s, uid, slot)} onClick={() => open({ type: 'slot', heroUid: uid, slot })} />
               <span class="muted small">{t(`slot.${slot}`)}</span>
             </div>
           ))}

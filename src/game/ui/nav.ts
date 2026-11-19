@@ -23,6 +23,8 @@ export type Modal =
   | { type: 'prep'; plan: BattlePlan | null }
   | { type: 'fastLoot' }
   | { type: 'rename' }
+  | { type: 'item'; uid: number }
+  | { type: 'slot'; heroUid: number; slot: 'weapon' | 'armor' | 'helmet' | 'boots' }
   | { type: 'legal'; doc: 'privacy' | 'terms' | 'notice' | 'credits' | 'support' };
 
 interface NavState {

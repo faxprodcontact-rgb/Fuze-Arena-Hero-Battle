@@ -34,3 +34,32 @@ export function rollItemRarity(rng: Rng, luck = 0): number {
   }
   return 0;
 }
+
+// ---------- Forge, recyclage, renforcement ----------
+
+/** Forge : 3 objets de même emplacement et même rareté donnent 1 objet de la rareté au-dessus. */
+export const FORGE_COUNT = 3;
+
+/** Poussière de forge rendue en recyclant un objet, selon sa rareté (un peu plus pour les chapitres avancés). */
+const RECYCLE_DUST = [1, 3, 8, 20, 50, 120];
+export function recycleDust(item: Pick<Item, 'rarity' | 'tier'>): number {
+  return Math.round((RECYCLE_DUST[item.rarity] ?? 0) * (1 + 0.1 * item.tier));
+}
+
+/**
+ * Renforcement des EMPLACEMENTS d'un héros (pas des objets) : +1 à +10.
+ * Chaque cran ajoute 10 % au bonus de l'objet posé dans cet emplacement, quel qu'il soit :
+ * changer d'objet ne fait rien perdre.
+ */
+export const SLOT_MAX_LEVEL = 10;
+export const SLOT_LEVEL_GAIN = 0.1;
+
+/** Coût pour passer l'emplacement du niveau `level` au niveau `level + 1`. Valeurs provisoires (réglage final avant la bêta). */
+export function slotUpgradeCost(level: number): { gold: number; dust: number } {
+  return { gold: Math.round(1500 * 1.75 ** level), dust: 5 * (level + 1) ** 2 };
+}
+
+/** Bonus en % d'un objet posé dans un emplacement renforcé. */
+export function equippedBonus(item: Pick<Item, 'rarity' | 'tier'>, slotLevel: number): number {
+  return Math.round(itemBonus(item) * (1 + SLOT_LEVEL_GAIN * slotLevel));
+}

@@ -13,6 +13,7 @@ import { close, go, open, startBattle, useNav, type Modal, type Tab } from './na
 import { AdventureScreen } from './screens/adventure';
 import { CampaignScreen, FastLootModal } from './screens/campaign';
 import { Prep } from './screens/prep';
+import { ItemModal, SlotModal } from './screens/bag';
 import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
 import { AdModal, ConfirmModal, GainModal, LegalModal, NameScreen, QuestsModal, RenameModal, SettingsModal, ShopModal } from './screens/meta';
@@ -78,6 +79,8 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'prep': return <Prep plan={modal.plan} />;
     case 'fastLoot': return <FastLootModal />;
     case 'rename': return <RenameModal />;
+    case 'item': return <ItemModal uid={modal.uid} />;
+    case 'slot': return <SlotModal heroUid={modal.heroUid} slot={modal.slot} />;
     case 'legal': return <LegalModal doc={modal.doc} />;
   }
 }

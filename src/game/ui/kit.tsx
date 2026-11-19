@@ -1,7 +1,7 @@
 // Petites pièces d'interface réutilisées partout.
 import type { ComponentChildren } from 'preact';
 import { heroDef } from '../../core/data/heroes';
-import { itemBonus, type Item } from '../../core/data/items';
+import { equippedBonus, type Item } from '../../core/data/items';
 import { MAX_YELLOW, MYTHIC_STARS } from '../../core/data/stars';
 import type { Hero } from '../../core/types';
 import { ELEMENT_COLOR, ITEM_COLORS, RARITY_COLOR, heroImage } from '../art';
@@ -31,6 +31,11 @@ const ICONS: Record<string, ComponentChildren> = {
   ranking: <><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="#ffc94a" stroke="#b8860b" stroke-width="2" /><path d="M12 14v4M8 20h8M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" stroke="#b8860b" stroke-width="2" fill="none" /></>,
   chat: <><path d="M4 5h16v11H9l-5 4z" fill="#4c8dff" stroke="#1d4fa8" stroke-width="2" stroke-linejoin="round" /><circle cx="9" cy="10.5" r="1.3" fill="#fff" /><circle cx="13" cy="10.5" r="1.3" fill="#fff" /><circle cx="17" cy="10.5" r="1.3" fill="#fff" /></>,
   settings: <><circle cx="12" cy="12" r="3.5" fill="none" stroke="#c7cbe0" stroke-width="2" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3" stroke="#c7cbe0" stroke-width="2" /></>,
+  weapon: <><path d="M19 3l2 2-11 11-3 1 1-3z" fill="#d7dce6" stroke="#7d8191" stroke-width="1.2" /><path d="M5 15l4 4M3 21l3-3" stroke="#c98a3a" stroke-width="2.4" stroke-linecap="round" /></>,
+  armor: <><path d="M7 3h10l3 4-2 3v11H6V10L4 7z" fill="#9aa3b5" stroke="#5c606d" stroke-width="1.4" stroke-linejoin="round" /><path d="M9 3l3 4 3-4" fill="none" stroke="#5c606d" stroke-width="1.4" /></>,
+  helmet: <><path d="M4 15a8 8 0 0 1 16 0v3H4z" fill="#9aa3b5" stroke="#5c606d" stroke-width="1.4" /><path d="M4 13h16M12 7v6" stroke="#5c606d" stroke-width="1.6" /></>,
+  boots: <><path d="M7 3h6v10l6 3v4H5V13z" fill="#a0703a" stroke="#5a3a10" stroke-width="1.4" stroke-linejoin="round" /><path d="M5 17h14" stroke="#5a3a10" stroke-width="1.4" /></>,
+  dust: <><circle cx="8" cy="15" r="3.5" fill="#7cf7e1" /><circle cx="15" cy="10" r="4.5" fill="#4fd1c5" /><circle cx="16" cy="18" r="2.5" fill="#b388ff" /><circle cx="9" cy="7" r="1.8" fill="#fff" /></>,
   lock: <><rect x="5" y="10" width="14" height="11" rx="2" fill="currentColor" /><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.2" /></>,
   power: <><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="#ffc94a" stroke="#b8860b" stroke-width="1.2" /></>,
   clock: <><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" fill="none" /></>,
@@ -135,12 +140,22 @@ export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; 
   );
 }
 
-export function ItemIcon({ item, onClick }: { item?: Item; onClick?: () => void }) {
-  if (!item) return <button class="item item-empty" onClick={onClick} />;
+export function ItemIcon(p: { item?: Item; level?: number; onClick?: () => void; heroDefId?: string; slot?: string; hideLevel?: boolean }) {
+  const { item } = p;
+  if (!item) {
+    return (
+      <button class="item item-empty" onClick={p.onClick}>
+        {p.slot && <span class="item-ghost"><Icon name={p.slot} size={30} /></span>}
+        {!!p.level && <span class="item-level">+{p.level}</span>}
+      </button>
+    );
+  }
   return (
-    <button class="item" style={{ '--rar': ITEM_COLORS[item.rarity] } as never} onClick={onClick}>
-      <span class="item-slot">{t(`slot.${item.slot}`).slice(0, 1)}</span>
-      <span class="item-bonus">+{itemBonus(item)}%</span>
+    <button class="item" style={{ '--rar': ITEM_COLORS[item.rarity] } as never} onClick={p.onClick}>
+      <Icon name={item.slot} size={32} />
+      <span class="item-bonus">+{equippedBonus(item, p.level ?? 0)}%</span>
+      {!!p.level && !p.hideLevel && <span class="item-level">+{p.level}</span>}
+      {p.heroDefId && <img class="item-owner" src={heroImage(p.heroDefId)} alt="" />}
     </button>
   );
 }

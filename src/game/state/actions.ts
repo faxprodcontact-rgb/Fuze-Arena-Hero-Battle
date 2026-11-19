@@ -5,7 +5,10 @@ import { heroToUnit } from '../../core/battle/units';
 import { stagePower } from '../../core/data/campaign';
 import { incomePerHour, REWARDS, STAGE_REWARD_HOURS, STAGES_PER_CHAPTER } from '../../core/data/economy';
 import { HEROES, heroDef } from '../../core/data/heroes';
-import { GEAR_SLOTS, itemBonus, rollItemRarity, type Item } from '../../core/data/items';
+import {
+  FORGE_COUNT, GEAR_SLOTS, ITEM_RARITIES, SLOT_MAX_LEVEL, itemBonus, recycleDust, rollItemRarity, slotUpgradeCost,
+  type GearSlot, type Item,
+} from '../../core/data/items';
 import {
   ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, RENAME_COST, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
   ARENA_WIN_POINTS, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ENTRIES_PER_DAY,
@@ -24,7 +27,7 @@ import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '.
 import { summonBasic, summonOne } from '../../core/summon';
 import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
-import { heroByUid, heroPower, idlePreview, levelUpCost, teamPower, teamUnits } from './selectors';
+import { heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
 import type { ArenaOpponent, Gain, MissionState, PlayerState, Wallet } from './types';
 
 // ---------- Outils ----------
@@ -215,6 +218,20 @@ function refundHero(s: PlayerState, hero: Hero, gain?: Gain) {
     gain.currencies.essence = (gain.currencies.essence ?? 0) + Math.round(gold * ESSENCE_RATIO);
   }
   for (const it of s.items) if (it.heroUid === hero.uid) delete it.heroUid;
+  // Le renforcement des emplacements est rendu aussi (« rien n'est perdu »).
+  const levels = s.slotLevels[hero.uid] ?? {};
+  for (const slot of GEAR_SLOTS) {
+    for (let l = 0; l < (levels[slot] ?? 0); l++) {
+      const cost = slotUpgradeCost(l);
+      s.wallet.gold += cost.gold;
+      s.wallet.dust += cost.dust;
+      if (gain) {
+        gain.currencies.gold = (gain.currencies.gold ?? 0) + cost.gold;
+        gain.currencies.dust = (gain.currencies.dust ?? 0) + cost.dust;
+      }
+    }
+  }
+  delete s.slotLevels[hero.uid];
 }
 
 export function resetHero(uid: number): Gain {
@@ -246,6 +263,101 @@ export function equipBest(uid: number): void {
 export function unequipAll(uid: number): void {
   update((s) => {
     for (const it of s.items) if (it.heroUid === uid) delete it.heroUid;
+  });
+}
+
+/** Pose un objet sur un héros (l'objet déjà à cet emplacement retourne au sac ; un objet porté par un autre héros change de héros). */
+export function equipItem(itemUid: number, heroUid: number): void {
+  update((s) => {
+    const item = s.items.find((it) => it.uid === itemUid);
+    if (!item) return;
+    for (const it of s.items) if (it.heroUid === heroUid && it.slot === item.slot) delete it.heroUid;
+    item.heroUid = heroUid;
+  });
+}
+
+export function unequipItem(itemUid: number): void {
+  update((s) => {
+    const item = s.items.find((it) => it.uid === itemUid);
+    if (item) delete item.heroUid;
+  });
+}
+
+/** Renforce un emplacement d'un héros (+1). Renvoie faux s'il manque de l'or ou de la poussière. */
+export function upgradeSlot(heroUid: number, slot: GearSlot): boolean {
+  return update((s) => {
+    const level = slotLevel(s, heroUid, slot);
+    if (level >= SLOT_MAX_LEVEL) return false;
+    const cost = slotUpgradeCost(level);
+    if (s.wallet.gold < cost.gold || s.wallet.dust < cost.dust) return false;
+    s.wallet.gold -= cost.gold;
+    s.wallet.dust -= cost.dust;
+    s.slotLevels[heroUid] = { ...(s.slotLevels[heroUid] ?? {}), [slot]: level + 1 };
+    return true;
+  });
+}
+
+/** Les objets du sac (non portés) qui peuvent être forgés avec celui-ci. */
+export function forgePartners(s: PlayerState, item: Item): Item[] {
+  return s.items
+    .filter((it) => it.uid !== item.uid && it.heroUid === undefined && it.slot === item.slot && it.rarity === item.rarity)
+    .sort((a, b) => a.tier - b.tier);
+}
+
+function forgeWith(s: PlayerState, items: Item[]): Item {
+  const used = new Set(items.map((it) => it.uid));
+  const first = items[0]!;
+  s.items = s.items.filter((it) => !used.has(it.uid));
+  const result: Item = {
+    uid: s.nextUid++,
+    slot: first.slot,
+    rarity: Math.min(ITEM_RARITIES - 1, first.rarity + 1),
+    tier: Math.max(...items.map((it) => it.tier)),
+  };
+  s.items.push(result);
+  return result;
+}
+
+/** Forge cet objet (non porté) avec 2 autres identiques du sac. */
+export function forgeItem(itemUid: number): Item | null {
+  return update((s) => {
+    const item = s.items.find((it) => it.uid === itemUid);
+    if (!item || item.heroUid !== undefined || item.rarity >= ITEM_RARITIES - 1) return null;
+    const partners = forgePartners(s, item);
+    if (partners.length < FORGE_COUNT - 1) return null;
+    return forgeWith(s, [item, ...partners.slice(0, FORGE_COUNT - 1)]);
+  });
+}
+
+/** « Tout forger » : forge les objets du sac, des plus faibles aux plus forts, jusqu'à la rareté `upTo` (incluse) comme résultat. */
+export function forgeAll(upTo = 4): Item[] {
+  return update((s) => {
+    const made: Item[] = [];
+    for (let rarity = 0; rarity < upTo; rarity++) {
+      for (const slot of GEAR_SLOTS) {
+        for (;;) {
+          const pool = s.items.filter((it) => it.heroUid === undefined && it.slot === slot && it.rarity === rarity).sort((a, b) => a.tier - b.tier);
+          if (pool.length < FORGE_COUNT) break;
+          made.push(forgeWith(s, pool.slice(0, FORGE_COUNT)));
+        }
+      }
+    }
+    return made;
+  });
+}
+
+/** Recycle des objets du sac (jamais ceux portés) en poussière de forge. */
+export function recycleItems(itemUids: number[]): number {
+  return update((s) => {
+    const ids = new Set(itemUids);
+    let dust = 0;
+    s.items = s.items.filter((it) => {
+      if (!ids.has(it.uid) || it.heroUid !== undefined) return true;
+      dust += recycleDust(it);
+      return false;
+    });
+    s.wallet.dust += dust;
+    return dust;
   });
 }
 
@@ -935,6 +1047,7 @@ export function giveTestResources(): void {
     s.wallet.crystals += 1000;
     s.wallet.arenaTokens += 2000;
     s.wallet.guildCoins += 2000;
+    s.wallet.dust += 3000;
   });
 }
 
