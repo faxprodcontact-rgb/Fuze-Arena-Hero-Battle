@@ -1,10 +1,36 @@
-# Recherche graphique (proposition du 19/11/2026, pas encore dans le jeu)
+# Recherche graphique (proposition en cours, pas encore dans le jeu)
 
 Personnages « chibi » de trois-quarts dessinés par le code, aux positions réelles du combat (5 contre 5 sur 3 rangées).
 
-- `kit.cjs` : outils de peinture (contour, lumière, ombre, volume, contre-jour).
+- `kit.cjs` : outils de peinture (lumière, ombre, volume, contre-jour, contour par grande partie).
 - `chibi.cjs` : le personnage paramétrable (coiffure, tenue, arme, pose, oreilles, visage…).
 - `cast.cjs` : les 5 héros et les 5 ennemis de la planche.
-- `scene.cjs` : la scène du jeu (720 × 980) avec le terrain en profondeur ; `sheet.cjs` : la planche des personnages.
+- `scene.cjs` : la scène du jeu (720 × 980) ; `sheet.cjs` et `big.cjs` : planches des personnages (petit / grand).
 
-Pour régénérer : `node scene.cjs` (écrit `scene.html`), puis une capture d'écran avec Playwright.
+Pour régénérer : `node big.cjs` ou `node scene.cjs` (écrit un `.html`), puis une capture d'écran avec Playwright.
+
+## Demandes du propriétaire (style)
+
+- Inspiration : les héros d'Idle Heroes (grosse tête, trois-quarts, très soignés), mais personnages originaux.
+- Pas d'effet « formes posées les unes sur les autres » : un contour par grande partie, membres d'un seul tenant.
+- Peu d'éléments par personnage (3 ou 4 éléments forts), simples mais bien faits.
+- Proportions soignées : front haut, yeux bas dans la tête. Mains en moufle.
+- À l'écran : personnages plutôt petits, les deux camps bien écartés, placés comme dans le combat du jeu.
+
+## Liste de contrôle de cohérence (à vérifier EN GRAND sur chaque personnage, avant de le montrer)
+
+1. **Cheveux** : toute la chevelure visible est UNE seule forme, qui suit le crâne (dessus, côtés, nuque). Aucune mèche
+   ou pique qui repart d'ailleurs, rien qui dépasse au-dessus de la tête par-derrière, aucun trait isolé.
+2. **Capuche** : un anneau fermé autour du visage, qui descend jusqu'aux épaules (col). Elle ne s'arrête jamais dans le vide.
+3. **Ce qui fait le tour de quelque chose va d'un bord à l'autre** : ceinture, écharpe de taille, ourlet, bandeau,
+   diadème, masque. On les peint DANS la forme qu'ils entourent (découpe), jamais posés par-dessus avec une longueur fixe.
+4. **Écharpe / cache-cou** : fait le tour du cou ; les pans partent bien du nœud.
+5. **Mains et objets** : chaque objet tenu passe dans une main ; chaque main est au bout d'un bras visible (ou cachée
+   derrière l'objet, comme pour le bouclier). Pas de main qui flotte, pas d'arme qui flotte.
+6. **Arc** : une main sur la poignée, l'autre sur la corde à l'encoche de la flèche ; la corde relie les deux bouts.
+7. **Oreilles** : devant les cheveux de la nuque ; avec une capuche, soit cachées, soit clairement par-dessus.
+8. **Casques et coiffes** : posés sur le crâne, bord net, ils couvrent ce qu'ils doivent couvrir (oreille sous un casque).
+9. **Articulations** : pas de trait au coude, au genou, à la cheville ; pas de contour entre deux pièces de même matière.
+10. **Visage** : deux yeux à l'intérieur du visage (l'œil du fond plus étroit), sourcils au-dessus, rien ne cache les yeux.
+11. **Lumière** : vient du même côté pour tous (y compris les ennemis retournés) ; ombre portée au sol sous chacun.
+12. **Lisibilité** : vérifier aussi à la taille réelle du jeu (personnage d'environ 65 px de haut sur un téléphone).

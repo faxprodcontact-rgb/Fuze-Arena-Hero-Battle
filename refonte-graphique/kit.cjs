@@ -16,19 +16,20 @@ function painter(L = [0.5, -0.85]) {
   /** Peint une forme. Renvoie l'identifiant de sa découpe (pour y projeter des ombres ensuite). */
   function S(d, t, o = {}) {
     const id = 's' + uid++;
+    const fr = o.eo ? ' fill-rule="evenodd" clip-rule="evenodd"' : '';
     const sh = o.sh ?? (t.metal ? 6 : 8), hl = o.hl ?? (t.metal ? 3.5 : 5), bl = o.bl ?? (t.metal ? 1 : 2);
-    defs += `<clipPath id="${id}"><path d="${d}"/></clipPath>`;
-    defs += `<mask id="${id}m" maskUnits="userSpaceOnUse" x="-150" y="-150" width="600" height="600"><rect x="-150" y="-150" width="600" height="600" fill="#fff"/><path d="${d}" fill="#000" transform="translate(${(L[0] * sh).toFixed(1)} ${(L[1] * sh).toFixed(1)})" filter="url(#g${bl})"/></mask>`;
-    defs += `<mask id="${id}r" maskUnits="userSpaceOnUse" x="-150" y="-150" width="600" height="600"><rect x="-150" y="-150" width="600" height="600" fill="#fff"/><path d="${d}" fill="#000" transform="translate(${sx * 3.2} 0.8)" filter="url(#g1)"/></mask>`;
-    let s = o.line ? `<path d="${d}" fill="${t.edge}" stroke="${t.edge}" stroke-width="${o.line}" stroke-linejoin="round"/>` : '';
+    defs += `<clipPath id="${id}"><path${fr} d="${d}"/></clipPath>`;
+    defs += `<mask id="${id}m" maskUnits="userSpaceOnUse" x="-150" y="-150" width="600" height="600"><rect x="-150" y="-150" width="600" height="600" fill="#fff"/><path${fr} d="${d}" fill="#000" transform="translate(${(L[0] * sh).toFixed(1)} ${(L[1] * sh).toFixed(1)})" filter="url(#g${bl})"/></mask>`;
+    defs += `<mask id="${id}r" maskUnits="userSpaceOnUse" x="-150" y="-150" width="600" height="600"><rect x="-150" y="-150" width="600" height="600" fill="#fff"/><path${fr} d="${d}" fill="#000" transform="translate(${sx * 3.2} 0.8)" filter="url(#g1)"/></mask>`;
+    let s = o.line ? `<path${fr} d="${d}" fill="${t.edge}" stroke="${t.edge}" stroke-width="${o.line}" stroke-linejoin="round"/>` : '';
     s += `<g clip-path="url(#${id})">`;
-    s += `<path d="${d}" fill="${t.light}"/>`;
-    s += `<path d="${d}" fill="${t.base}" transform="translate(${(-L[0] * hl).toFixed(1)} ${(-L[1] * hl).toFixed(1)})" filter="url(#g${bl})"/>`;
-    s += `<path d="${d}" fill="${t.shadow}" mask="url(#${id}m)" opacity="${o.so ?? 0.92}"/>`;
-    s += `<path d="${d}" fill="url(#vol)"/>`;
-    if (o.far) s += `<path d="${d}" fill="#1a0c2e" opacity="0.28"/>`;
+    s += `<path${fr} d="${d}" fill="${t.light}"/>`;
+    s += `<path${fr} d="${d}" fill="${t.base}" transform="translate(${(-L[0] * hl).toFixed(1)} ${(-L[1] * hl).toFixed(1)})" filter="url(#g${bl})"/>`;
+    s += `<path${fr} d="${d}" fill="${t.shadow}" mask="url(#${id}m)" opacity="${o.so ?? 0.92}"/>`;
+    s += `<path${fr} d="${d}" fill="url(#vol)"/>`;
+    if (o.far) s += `<path${fr} d="${d}" fill="#1a0c2e" opacity="0.28"/>`;
     if (o.inner) s += o.inner;
-    if (o.rim !== false) s += `<path d="${d}" fill="${t.rim}" mask="url(#${id}r)" opacity="${o.ro ?? 0.32}"/>`;
+    if (o.rim !== false) s += `<path${fr} d="${d}" fill="${t.rim}" mask="url(#${id}r)" opacity="${o.ro ?? 0.32}"/>`;
     s += `</g>`;
     out.push(s);
     return id;

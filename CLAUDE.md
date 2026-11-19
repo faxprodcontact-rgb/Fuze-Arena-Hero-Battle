@@ -30,6 +30,10 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   1 chef sur 3) ; bibliothèque d'effets et statuts dans `src/core/battle/types.ts` + `engine.ts` ; textes fabriqués par
   `src/game/describe.ts` ; équipements par emplacement + panoplies dans `src/core/data/items.ts`. Les noms et dessins
   sont provisoires : l'habillage (nom, histoire, dessin) viendra par-dessus chaque gabarit.
+- En cours : **graphismes**. Recherche de style dans `refonte-graphique/` (pas encore dans le jeu) : personnages chibi
+  de trois-quarts façon Idle Heroes, dessinés par le code. AVANT de montrer un personnage, passer la **liste de contrôle
+  de cohérence** de `refonte-graphique/LISEZMOI.md` (cheveux d'un seul tenant, capuche fermée, ceintures d'un bord à
+  l'autre, mains et objets, etc.) en le regardant en grand, et montrer la scène dans l'écran réel du jeu.
 - Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 

@@ -3,7 +3,8 @@ const fs = require('fs');
 const { HEROES, ENEMIES } = require('./cast.cjs');
 const { SHARED_DEFS } = require('./kit.cjs');
 const W = 720, H = 980, GT = 560, SQ = 0.8;
-const HERO_X = { 3: 110, 4: 110, 2: 215, 0: 315, 1: 315 }, ENEMY_X = { 0: 405, 1: 405, 2: 505, 3: 610, 4: 610 };
+// lignes de devant écartées (300 / 420 au lieu de 315 / 405) pour que les deux camps ne se chevauchent pas
+const HERO_X = { 3: 95, 4: 95, 2: 198, 0: 300, 1: 300 }, ENEMY_X = { 0: 420, 1: 420, 2: 522, 3: 625, 4: 625 };
 const ROW_DY = { 0: 90, 3: 90, 2: 180, 1: 270, 4: 270 };
 const px = (x) => 360 + (x - 360) * SQ;
 function rnd(seed) { let s = seed; return () => ((s = (s * 16807) % 2147483647) / 2147483647); }
@@ -108,8 +109,8 @@ function scene() {
   const heroTeam = { 0: 'protector', 1: 'warrior', 2: 'healer', 3: 'archer', 4: 'assassin' };
   const foeTeam = { 0: 'grunt', 1: 'rogue', 2: 'brute', 3: 'shaman', 4: 'hunter' };
   const hp = { protector: 1, warrior: 0.82, healer: 1, archer: 0.94, assassin: 0.7, grunt: 0.45, rogue: 0.8, brute: 0.9, shaman: 1, hunter: 0.66 };
-  for (const [slot, name] of Object.entries(heroTeam)) cast.push({ name, c: HEROES[name], x: px(HERO_X[slot]), y: GT + ROW_DY[slot] + 56, flip: false, k: 0.53 });
-  for (const [slot, name] of Object.entries(foeTeam)) cast.push({ name, c: ENEMIES[name], x: px(ENEMY_X[slot]), y: GT + ROW_DY[slot] + 56, flip: true, k: name === 'brute' ? 0.62 : 0.53 });
+  for (const [slot, name] of Object.entries(heroTeam)) cast.push({ name, c: HEROES[name], x: px(HERO_X[slot]), y: GT + ROW_DY[slot] + 56, flip: false, k: 0.47 });
+  for (const [slot, name] of Object.entries(foeTeam)) cast.push({ name, c: ENEMIES[name], x: px(ENEMY_X[slot]), y: GT + ROW_DY[slot] + 56, flip: true, k: name === 'brute' ? 0.54 : 0.47 });
   cast.sort((a, b) => a.y - b.y);
   let s = '', bars = '';
   for (const u of cast) {
@@ -117,7 +118,7 @@ function scene() {
     const tx = u.flip ? u.x + 120 * u.k : u.x - 120 * u.k;
     s += `<g transform="translate(${tx} ${u.y - 250 * u.k}) scale(${u.flip ? -u.k : u.k} ${u.k})" filter="url(#sil)">${u.c.body}</g>`;
     // barres de vie et d'énergie (comme dans le jeu)
-    const by = u.y - 250 * u.k - (u.name === 'healer' ? 30 : 14), w = 56;
+    const by = u.y - 250 * u.k - (u.name === 'healer' ? 26 : 12), w = 52;
     bars += `<rect x="${u.x - w / 2 - 2}" y="${by - 2}" width="${w + 4}" height="12" rx="5" fill="#120a1c" opacity="0.85"/><rect x="${u.x - w / 2}" y="${by}" width="${w * hp[u.name]}" height="8" rx="3.5" fill="${u.flip ? '#e5484d' : '#3ccf7a'}"/><rect x="${u.x - w / 2}" y="${by}" width="${w * hp[u.name]}" height="3" rx="1.5" fill="#fff" opacity="0.35"/>`;
     if (!u.flip) bars += `<rect x="${u.x - w / 2}" y="${by + 11}" width="${w * (0.3 + hp[u.name] * 0.5)}" height="3.4" rx="1.5" fill="#4fd1ff"/>`;
   }
