@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import { applyFusion, isValidFusion, planFusion } from '../src/core/fusion';
 import { LADDER } from '../src/core/data/stars';
-import { heroesOf } from '../src/core/data/heroes';
+import { heroesOf, heroesOfElement } from '../src/core/data/heroes';
 import type { Hero } from '../src/core/types';
 
 let uid = 1;
 const id = (faction: Parameters<typeof heroesOf>[0], rarity: Parameters<typeof heroesOf>[1], n = 0) =>
   heroesOf(faction, rarity)[n]!.id;
 const hero = (defId: string, stars: number, level = 1): Hero => ({ uid: uid++, defId, stars, level });
+const el = (element: Parameters<typeof heroesOfElement>[0], rarity: Parameters<typeof heroesOfElement>[1], n = 0) =>
+  heroesOfElement(element, rarity)[n]!.id;
 
 describe('fusion des Communs et des Rares', () => {
   it('3 héros identiques donnent +1 étoile', () => {
@@ -27,28 +29,28 @@ describe('fusion des Communs et des Rares', () => {
 });
 
 describe('fusion des Épiques et des Légendaires', () => {
-  it('★3 → ★4 : 1 copie + 2 héros ★3 de la même faction', () => {
-    const target = hero(id('mages', 'epic'), 3);
-    const roster = [target, hero(id('mages', 'epic'), 3), hero(id('mages', 'common'), 3), hero(id('mages', 'rare'), 3), hero(id('demons', 'rare'), 3)];
+  it('★3 → ★4 : 1 copie + 2 héros ★3 du même élément', () => {
+    const target = hero(el('fire', 'epic'), 3);
+    const roster = [target, hero(el('fire', 'epic'), 3), hero(el('fire', 'common'), 3), hero(el('fire', 'rare'), 3), hero(el('water', 'rare'), 3)];
     const plan = planFusion(roster, target.uid);
     expect(plan).not.toBeNull();
     expect(plan!.consumed).toHaveLength(1 + LADDER[4]!.fodderCount);
     expect(isValidFusion(roster, plan!, 0)).toBe(true);
   });
 
-  it('refuse un héros d’une autre faction', () => {
-    const target = hero(id('mages', 'epic'), 3);
-    const copy = hero(id('mages', 'epic'), 3);
-    const roster = [target, copy, hero(id('demons', 'common'), 3), hero(id('demons', 'rare'), 3)];
+  it('refuse un héros d’un autre élément', () => {
+    const target = hero(el('fire', 'epic'), 3);
+    const copy = hero(el('fire', 'epic'), 3);
+    const roster = [target, copy, hero(el('water', 'common'), 3), hero(el('earth', 'rare'), 3)];
     expect(planFusion(roster, target.uid)).toBeNull();
     const cheat = { targetUid: target.uid, consumed: roster.slice(1).map((h) => h.uid), crystals: 0, newStars: 4 };
     expect(isValidFusion(roster, cheat, 0)).toBe(false);
   });
 
   it('ne sacrifie jamais un héros protégé ni un Légendaire', () => {
-    const target = hero(id('angels', 'epic'), 3);
-    const kept = hero(id('angels', 'common'), 3);
-    const roster = [target, hero(id('angels', 'epic'), 3), kept, hero(id('angels', 'rare'), 3), hero(id('angels', 'legendary'), 3)];
+    const target = hero(el('wind', 'epic'), 3);
+    const kept = hero(el('wind', 'common'), 3);
+    const roster = [target, hero(el('wind', 'epic'), 3), kept, hero(el('wind', 'rare'), 3), hero(el('wind', 'legendary'), 3)];
     expect(planFusion(roster, target.uid, { protect: new Set([kept.uid]) })).toBeNull();
   });
 

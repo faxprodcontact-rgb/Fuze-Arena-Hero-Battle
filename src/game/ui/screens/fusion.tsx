@@ -4,8 +4,8 @@
 import { useState } from 'preact/hooks';
 import { heroDef } from '../../../core/data/heroes';
 import { canGainStar } from '../../../core/fusion';
-import type { Faction, Hero } from '../../../core/types';
-import { FACTION_COLOR, heroImage } from '../../art';
+import type { Element, Hero } from '../../../core/types';
+import { ELEMENT_COLOR, heroImage } from '../../art';
 import { t } from '../../i18n';
 import { autoPicks, fuse, fuseAllSimple, fusionNeeds, fusionPool, type FusionNeed, type FusionPicks, type NeedKind } from '../../state/actions';
 import { heroByUid, heroPower } from '../../state/selectors';
@@ -19,10 +19,10 @@ function NeedSlot({ need, on, onClick }: { need: FusionNeed; on: boolean; onClic
   }
   // Case vide : on montre ce qu'il faut, en grisé.
   return (
-    <button class={`fuse-slot missing${on ? ' on' : ''}`} style={{ '--fac': FACTION_COLOR[need.faction as Faction] } as never} onClick={onClick}>
+    <button class={`fuse-slot missing${on ? ' on' : ''}`} style={{ '--fac': ELEMENT_COLOR[need.element as Element] } as never} onClick={onClick}>
       {need.defId ? <img src={heroImage(need.defId)} alt="" /> : <span class="fuse-faction" />}
       <Stars stars={need.stars} />
-      <span class="fuse-label">{need.defId ? heroDef(need.defId).name : t(`faction.${need.faction}`)}</span>
+      <span class="fuse-label">{need.defId ? heroDef(need.defId).name : t(`element.${need.element}`)}</span>
     </button>
   );
 }

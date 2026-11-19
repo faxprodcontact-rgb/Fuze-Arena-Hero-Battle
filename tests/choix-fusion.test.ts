@@ -6,8 +6,8 @@ import { getState, update } from '../src/game/state/store';
 
 describe('fusion : héros choisis', () => {
   const epic = HEROES.find((h) => h.rarity === 'epic')!;
-  const sameFaction = HEROES.filter((h) => h.faction === epic.faction && h.rarity === 'rare');
-  const otherFaction = HEROES.find((h) => h.faction !== epic.faction && h.rarity === 'rare')!;
+  const sameFaction = HEROES.filter((h) => h.element === epic.element && h.rarity === 'rare');
+  const otherFaction = HEROES.find((h) => h.element !== epic.element && h.rarity === 'rare')!;
 
   function setup() {
     update((s) => {
@@ -34,7 +34,7 @@ describe('fusion : héros choisis', () => {
     expect(getState().heroes.find((h) => h.uid === 1)!.stars).toBe(4);
   });
 
-  it("refuse un héros d'un autre camp", () => {
+  it("refuse un héros d'un autre élément", () => {
     setup();
     expect(fusionNeeds(1, { identical: [], copy: [2], fodder: [3, 6] })!.ready).toBe(false);
     expect(fuse(1, [2, 3, 6])).toBeNull();

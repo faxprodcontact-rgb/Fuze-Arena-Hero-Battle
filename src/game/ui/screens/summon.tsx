@@ -17,6 +17,7 @@ function SummonButton({ kind, count }: { kind: 'normal' | 'basic'; count: 1 | 10
   return (
     <Btn
       kind={kind === 'normal' ? 'purple' : 'blue'}
+      class={kind === 'normal' && count === 10 ? 'tuto-summon10' : ''}
       wide
       disabled={!ok}
       onClick={() => {

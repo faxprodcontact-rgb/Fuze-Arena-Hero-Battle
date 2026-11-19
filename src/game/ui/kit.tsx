@@ -25,6 +25,8 @@ const ICONS: Record<string, ComponentChildren> = {
   summon: <><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.2" /><path d="M12 6l1.8 4 4.2.4-3.2 2.8 1 4.2-3.8-2.3-3.8 2.3 1-4.2L6 10.4l4.2-.4z" fill="currentColor" /></>,
   adventure: <><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z M9 4v14 M15 6v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></>,
   guild: <><path d="M6 3h12v12l-6 5-6-5z" fill="none" stroke="currentColor" stroke-width="2.2" /><path d="M9 8h6M9 11h6" stroke="currentColor" stroke-width="2" /></>,
+  calendar: <><rect x="3" y="5" width="18" height="16" rx="3" fill="#fff3d6" stroke="#c9a227" stroke-width="2" /><rect x="3" y="5" width="18" height="5" rx="2" fill="#e5484d" /><path d="M8 3v4M16 3v4" stroke="#8a6200" stroke-width="2" stroke-linecap="round" /><path d="M8.5 15l2.2 2.2 4.8-4.8" stroke="#35c873" stroke-width="2.4" fill="none" stroke-linecap="round" /></>,
+  mail: <><rect x="3" y="6" width="18" height="13" rx="2" fill="#dfe7ff" stroke="#4c8dff" stroke-width="2" /><path d="M4 7l8 6 8-6" stroke="#4c8dff" stroke-width="2" fill="none" /></>,
   quests: <><rect x="5" y="3" width="14" height="18" rx="2" fill="#ffe8b0" stroke="#c9a227" stroke-width="2" /><path d="M8 9l2 2 4-4M8 15h8" stroke="#8a6200" stroke-width="2" fill="none" /></>,
   shop: <><path d="M4 8h16l-1.5 12h-13z" fill="#ffc94a" stroke="#b8860b" stroke-width="2" /><path d="M8 8a4 4 0 0 1 8 0" fill="none" stroke="#b8860b" stroke-width="2" /></>,
   pass: <><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4z" fill="#a35cff" stroke="#5b2a9f" stroke-width="2" /><path d="M12 9l1 2h2l-1.6 1.3.6 2.2-2-1.3-2 1.3.6-2.2L9 11h2z" fill="#fff" /></>,

@@ -10,7 +10,7 @@ import {
   type GearSlot, type Item,
 } from '../../core/data/items';
 import {
-  ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, FRIEND_GIFT, FRIENDS_MAX, GUILD_WAR, RENAME_COST, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
+  ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, FRIEND_GIFT, FRIENDS_MAX, GUILD_WAR, LOGIN_MONTH, LOGIN_WELCOME, type LoginReward, RENAME_COST, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
   ARENA_WIN_POINTS, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ATTEMPTS_PER_DAY,
   DUNGEON_LEVELS, DUNGEON_REWARD_HOURS, DUNGEON_STAGE_PER_LEVEL, ESSENCE_RATIO, dungeonItems, FAST_LOOT_COSTS, FAST_LOOT_HOURS, GEMS_PER_10_SUMMONS,
   GEMS_PER_SUMMON, GUILD_BOSS_ATTEMPTS, GUILD_COINS_PER_ATTACK, GUILD_SHOP, IDLE_ITEM_HOURS, MISSION_TEMPLATES,
@@ -26,12 +26,14 @@ import {
 import { applyFusion, canGainStar, isValidFusion, planFusion, type FusionPlan } from '../../core/fusion';
 import { levelRefund } from '../../core/power';
 import { createRng, pick, type Rng } from '../../core/rng';
+import { MAIL_KEEP_DAYS, MAILS, type MailDef } from '../../core/data/mail';
 import { BOSSES } from '../../core/data/monsters';
 import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '../../core/stages';
 import { summonBasic, summonOne } from '../../core/summon';
 import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
-import { CRYSTAL_HOURS, gearPct, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
+import { CRYSTAL_HOURS, formationOf, gearPct, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
+import type { TeamKind } from './selectors';
 import type { ArenaOpponent, Friend, Gain, GuildWarState, MissionState, PlayerState, Wallet } from './types';
 
 // ---------- Outils ----------
@@ -98,6 +100,7 @@ function track(s: PlayerState, event: QuestEvent, n = 1) {
 
 /** Nouveau jour, nouvelle semaine : remises à zéro et livraisons quotidiennes. */
 export function ensureDay(): void {
+  checkMail();
   friendsDay();
   ensureWar();
   const s = getState();
@@ -169,46 +172,51 @@ const PREFERRED_SLOTS: Record<string, Slot[]> = {
   protector: [0, 1, 2, 3, 4], attacker: [1, 2, 0, 3, 4], healer: [3, 4, 2, 1, 0], support: [4, 3, 2, 1, 0],
 };
 
-export function toggleInFormation(uid: number): 'added' | 'removed' | 'full' | 'last' {
+/** Lit/écrit la section voulue (principale ou défense). La défense part d'une copie de la principale. */
+function editTeam(s: PlayerState, team: TeamKind, change: (list: [number, Slot][]) => [number, Slot][]): void {
+  if (team === 'main') s.formation = change(s.formation);
+  else s.defenseTeam = change(formationOf(s, 'defense').map(([u, sl]) => [u, sl]));
+}
+
+export function toggleInFormation(uid: number, team: TeamKind = 'main'): 'added' | 'removed' | 'full' | 'last' {
   return update((s) => {
-    if (s.formation.some(([u]) => u === uid)) {
-      if (s.formation.length <= 1) return 'last';
-      s.formation = s.formation.filter(([u]) => u !== uid);
+    const list = formationOf(s, team);
+    if (list.some(([u]) => u === uid)) {
+      if (list.length <= 1) return 'last';
+      editTeam(s, team, (l) => l.filter(([u]) => u !== uid));
       return 'removed';
     }
-    if (s.formation.length >= slotsAt(s.campaign.cleared)) return 'full';
+    if (list.length >= slotsAt(s.campaign.cleared)) return 'full';
     const hero = heroByUid(s, uid);
     if (!hero) return 'full';
-    const taken = new Set(s.formation.map(([, slot]) => slot));
+    const taken = new Set(list.map(([, slot]) => slot));
     const slot = PREFERRED_SLOTS[heroDef(hero.defId).role]!.find((x) => !taken.has(x))!;
-    s.formation.push([uid, slot]);
+    editTeam(s, team, (l) => [...l, [uid, slot]]);
     return 'added';
   });
 }
 
-export function swapSlots(a: Slot, b: Slot): void {
-  update((s) => {
-    s.formation = s.formation.map(([u, slot]): [number, Slot] => [u, slot === a ? b : slot === b ? a : slot]);
-  });
+export function swapSlots(a: Slot, b: Slot, team: TeamKind = 'main'): void {
+  update((s) => editTeam(s, team, (l) => l.map(([u, slot]): [number, Slot] => [u, slot === a ? b : slot === b ? a : slot])));
 }
 
-/** Remplit la section avec les héros les plus forts, chacun à son poste conseillé. */
-export function autoFormation(exclude: readonly number[] = []): void {
+/** Remplit la section avec les héros les plus forts, chacun à son poste conseillé (un chef au centre si possible). */
+export function autoFormation(exclude: readonly number[] = [], team: TeamKind = 'main'): void {
   update((s) => {
     const best = [...s.heroes].filter((h) => !exclude.includes(h.uid)).sort((a, b) => heroPower(s, b) - heroPower(s, a)).slice(0, slotsAt(s.campaign.cleared));
     const taken = new Set<Slot>();
-    s.formation = best.map((h) => {
+    const list: [number, Slot][] = best.map((h) => {
       const slot = PREFERRED_SLOTS[heroDef(h.defId).role]!.find((x) => !taken.has(x))!;
       taken.add(slot);
       return [h.uid, slot];
     });
-    // Le centre revient au chef de section le plus fort de la section, s'il y en a un.
-    const center = s.formation.find(([, sl]) => sl === LEADER_SLOT);
-    const chief = s.formation.find(([u]) => !!heroDef(heroByUid(s, u)!.defId).talent);
+    const center = list.find(([, sl]) => sl === LEADER_SLOT);
+    const chief = list.find(([u]) => !!heroDef(heroByUid(s, u)!.defId).talent);
     if (chief && center && !heroDef(heroByUid(s, center[0])!.defId).talent) {
       center[1] = chief[1];
       chief[1] = LEADER_SLOT;
     }
+    editTeam(s, team, () => list);
   });
 }
 
@@ -415,7 +423,7 @@ export type FusionPicks = Record<NeedKind, number[]>;
 export interface FusionNeed {
   kind: NeedKind;
   stars: number;
-  faction: string;
+  element: string;
   defId?: string;
   /** Le héros choisi pour cette case, s'il y en a un. */
   hero?: Hero;
@@ -449,7 +457,7 @@ function fusionSetup(s: PlayerState, uid: number): FusionSetup | null {
   }
   const step = LADDER[hero.stars + 1]!;
   pools.copy = free.filter((h) => h.defId === hero.defId && h.stars === rule.bornStars);
-  pools.fodder = free.filter((h) => h.stars === step.fodderStars && heroDef(h.defId).faction === d.faction);
+  pools.fodder = free.filter((h) => h.stars === step.fodderStars && heroDef(h.defId).element === d.element);
   const slots: FusionSetup['slots'] = [];
   if (step.copies) slots.push({ kind: 'copy', count: step.copies, stars: rule.bornStars, defId: d.id });
   if (step.fodderCount) slots.push({ kind: 'fodder', count: step.fodderCount, stars: step.fodderStars });
@@ -491,7 +499,7 @@ export function fusionNeeds(uid: number, picks?: FusionPicks): { needs: FusionNe
     const ok = new Set(setup.pools[slot.kind].map((h) => h.uid));
     const heroes = chosen[slot.kind].filter((u) => ok.has(u) && !used.has(u)).slice(0, slot.count).map((u) => heroByUid(s, u)!);
     heroes.forEach((h) => used.add(h.uid));
-    for (let i = 0; i < slot.count; i++) needs.push({ kind: slot.kind, stars: slot.stars, faction: d.faction, defId: slot.defId, hero: heroes[i] });
+    for (let i = 0; i < slot.count; i++) needs.push({ kind: slot.kind, stars: slot.stars, element: d.element, defId: slot.defId, hero: heroes[i] });
   }
   const ready = needs.every((n) => n.hero) && s.wallet.crystals >= setup.crystals;
   return { needs, crystals: setup.crystals, newStars: setup.newStars, ready, consumed: [...used] };
@@ -1258,6 +1266,7 @@ export function giveTestResources(): void {
 /** Démonstration : saute au chapitre 11 avec une section solide, pour voir tout le jeu débloqué. */
 export function demoUnlockAll(): void {
   update((s) => {
+    s.tutorial = -1;
     s.campaign.cleared = Math.max(s.campaign.cleared, 410);
     const picks = ['knights-11', 'mages-10', 'angels-9', 'myths-12', 'assassins-10'];
     const slots: Slot[] = [0, 1, 3, 4, 2];
@@ -1573,7 +1582,7 @@ export function warScores(s: PlayerState, w: GuildWarState, days = warDays()): {
     return { name, stars };
   });
   // Ma défense compte : plus elle est forte par rapport au début de semaine, moins l'adversaire marque.
-  const defense = Math.max(0.85, Math.min(1.15, 1.15 - 0.3 * (teamPower(s) / w.basePower - 1)));
+  const defense = Math.max(0.85, Math.min(1.15, 1.15 - 0.3 * (teamPower(s, 'defense') / w.basePower - 1)));
   let foe = 0;
   for (let d = 0; d < 5; d++) {
     const daily = 10 * (2 + rng() * 3.4) * defense;
@@ -1639,4 +1648,95 @@ export function warPlan(index: number): BattlePlan | null {
 export function warStars(win: boolean, alive: number): number {
   if (!win) return 0;
   return alive >= 0.99 ? 3 : alive >= 0.5 ? 2 : 1;
+}
+
+// ---------- Calendrier de connexion ----------
+
+/** Le calendrier affiché (bienvenue, puis mois) et la case du jour. */
+export function loginCalendar(s: PlayerState = getState()): { kind: 'welcome' | 'month'; rewards: LoginReward[]; index: number; claimed: boolean } {
+  const count = s.login?.count ?? 0;
+  const claimed = s.login?.day === dayKey(now());
+  // La case du jour : déjà cochée aujourd'hui = la dernière cochée ; sinon la suivante.
+  const n = claimed ? count - 1 : count;
+  if (n < LOGIN_WELCOME.length) return { kind: 'welcome', rewards: LOGIN_WELCOME, index: n, claimed };
+  return { kind: 'month', rewards: LOGIN_MONTH, index: (n - LOGIN_WELCOME.length) % LOGIN_MONTH.length, claimed };
+}
+
+export function claimLogin(): Gain | null {
+  const cal = loginCalendar();
+  if (cal.claimed) return null;
+  return update((s) => {
+    const gain = emptyGain();
+    const { legendary, ...rest } = cal.rewards[cal.index]!;
+    addReward(s, gain, rest);
+    for (let i = 0; i < (legendary ?? 0); i++) {
+      // Un Légendaire pas encore possédé si possible : c'est un vrai cadeau de bienvenue.
+      const owned = new Set(s.heroes.map((h) => h.defId));
+      const pool = HEROES.filter((h) => h.rarity === 'legendary' && !owned.has(h.id));
+      gain.heroes.push(addHero(s, pick(nextRng(s), pool.length ? pool : HEROES.filter((h) => h.rarity === 'legendary')).id));
+    }
+    s.login = { day: dayKey(now()), count: (s.login?.count ?? 0) + 1 };
+    return gain;
+  });
+}
+
+// ---------- Courrier ----------
+
+/** Fait arriver les messages dont la date est passée (et oublie ceux de plus de 30 jours). */
+export function checkMail(): void {
+  const s0 = getState();
+  const t = now();
+  const fresh = MAILS.filter((m) => !(s0.mail?.got ?? {})[m.id] && (m.at === null || Date.parse(m.at) <= t));
+  if (!fresh.length) return;
+  update((s) => {
+    const box = (s.mail ??= { got: {}, read: [], claimed: [] });
+    for (const m of fresh) box.got[m.id] = m.at === null ? s.createdAt : Math.max(Date.parse(m.at), s.createdAt);
+  });
+}
+
+export interface MailItem {
+  def: MailDef;
+  at: number;
+  read: boolean;
+  claimed: boolean;
+}
+
+/** Les messages de la boîte, du plus récent au plus ancien. */
+export function mailbox(s: PlayerState = getState()): MailItem[] {
+  const box = s.mail;
+  if (!box) return [];
+  const limit = now() - MAIL_KEEP_DAYS * 864e5;
+  return MAILS.filter((m) => box.got[m.id] !== undefined && box.got[m.id]! >= limit)
+    .map((def) => ({ def, at: box.got[def.id]!, read: box.read.includes(def.id), claimed: box.claimed.includes(def.id) }))
+    .sort((a, b) => b.at - a.at);
+}
+
+export function readMail(id: string): void {
+  if (getState().mail?.read.includes(id)) return;
+  update((s) => void s.mail?.read.push(id));
+}
+
+/** Récupère le cadeau d'un message (ou de tous). */
+export function claimMail(id?: string): Gain {
+  return update((s) => {
+    const gain = emptyGain();
+    for (const m of mailbox(s)) {
+      if ((id && m.def.id !== id) || m.claimed || !m.def.reward) continue;
+      addReward(s, gain, m.def.reward);
+      s.mail!.claimed.push(m.def.id);
+      if (!s.mail!.read.includes(m.def.id)) s.mail!.read.push(m.def.id);
+    }
+    return gain;
+  });
+}
+
+/** Point rouge : un message non lu ou un cadeau à prendre. */
+export function mailWaiting(s: PlayerState = getState()): number {
+  return mailbox(s).filter((m) => !m.read || (m.def.reward && !m.claimed)).length;
+}
+
+// ---------- Tutoriel ----------
+
+export function setTutorial(step: number): void {
+  update((s) => void (s.tutorial = step));
 }

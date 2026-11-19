@@ -34,14 +34,24 @@ export function heroPower(s: PlayerState, hero: Hero): number {
   return heroPowerWithGear(hero, gearPct(s, hero.uid));
 }
 
-export function teamHeroes(s: PlayerState): { hero: Hero; slot: Slot }[] {
-  return s.formation
+export type TeamKind = 'main' | 'defense';
+
+/** La section principale, ou la section de défense (par défaut, la même que la principale). */
+export function formationOf(s: PlayerState, team: TeamKind = 'main'): [number, Slot][] {
+  if (team === 'main') return s.formation;
+  const owned = new Set(s.heroes.map((h) => h.uid));
+  const def = (s.defenseTeam ?? []).filter(([u]) => owned.has(u));
+  return def.length ? def : s.formation;
+}
+
+export function teamHeroes(s: PlayerState, team: TeamKind = 'main'): { hero: Hero; slot: Slot }[] {
+  return formationOf(s, team)
     .map(([uid, slot]) => ({ hero: heroByUid(s, uid)!, slot }))
     .filter((x) => x.hero);
 }
 
-export function teamPower(s: PlayerState): number {
-  return teamHeroes(s).reduce((sum, { hero }) => sum + heroPower(s, hero), 0);
+export function teamPower(s: PlayerState, team: TeamKind = 'main'): number {
+  return teamHeroes(s, team).reduce((sum, { hero }) => sum + heroPower(s, hero), 0);
 }
 
 export function teamUnits(s: PlayerState): UnitInit[] {

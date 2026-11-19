@@ -13,6 +13,7 @@ export function fresh(now = Date.now()): PlayerState {
     v: 2,
     name: '',
     named: false,
+    tutorial: 0,
     nameChanges: 0,
     settings: { sound: true, music: true, notifications: true },
     createdAt: now,
@@ -62,7 +63,9 @@ function load(): PlayerState {
       if (saved.v === 2) {
         const base = fresh();
         const discovered = saved.discovered ?? [...new Set((saved.heroes ?? []).map((h) => h.defId))];
-        return { ...base, ...saved, discovered, wallet: { ...base.wallet, ...saved.wallet } };
+        // Une ancienne partie déjà commencée ne refait pas le tutoriel.
+        const tutorial = saved.tutorial ?? ((saved.campaign?.cleared ?? 0) > 0 ? -1 : 0);
+        return { ...base, ...saved, discovered, tutorial, wallet: { ...base.wallet, ...saved.wallet } };
       }
     }
   } catch {

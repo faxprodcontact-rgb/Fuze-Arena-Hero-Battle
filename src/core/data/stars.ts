@@ -17,7 +17,7 @@ export interface RarityRule {
   bornStars: number;
   /** Étoiles maximum (11 = éveil Mythique). */
   maxStars: number;
-  /** `triple` : 3 héros identiques = +1 étoile. `ladder` : copies + héros de la même faction. */
+  /** `triple` : 3 héros identiques = +1 étoile. `ladder` : copies + héros du même élément. */
   fusion: 'triple' | 'ladder';
 }
 
@@ -33,7 +33,7 @@ export const TRIPLE_COUNT = 3;
 export interface LadderStep {
   /** Copies du même héros, telles qu'elles sortent de l'invocation. */
   copies: number;
-  /** Héros de la même faction à sacrifier, et leur nombre d'étoiles exact. */
+  /** Héros du même élément à sacrifier, et leur nombre d'étoiles exact. */
   fodderCount: number;
   fodderStars: number;
   /** Cristaux d'éveil (seulement pour Mythique). */

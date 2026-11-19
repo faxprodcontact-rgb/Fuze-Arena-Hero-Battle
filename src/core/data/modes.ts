@@ -236,3 +236,18 @@ export const GUILD_WAR = {
   /** Bonus pour le meilleur attaquant de la guilde. */
   bestAttacker: { scrolls: 3 },
 };
+
+// ---------- Calendrier de connexion ----------
+// Un jour coché par jour de connexion (un jour manqué ne fait rien perdre). D'abord 7 jours de bienvenue,
+// puis un calendrier de 28 jours qui recommence. Le 7e jour de bienvenue donne un héros Légendaire.
+
+export type LoginReward = Reward & { legendary?: number };
+
+export const LOGIN_WELCOME: LoginReward[] = [
+  { gold: 20000 }, { scrolls: 5 }, { essence: 10000 }, { gems: 300 }, { scrolls: 5 }, { basicScrolls: 10 }, { legendary: 1 },
+];
+
+export const LOGIN_MONTH: LoginReward[] = Array.from({ length: 28 }, (_, i): LoginReward => {
+  if (i % 7 === 6) return { scrolls: 3, crystals: 30 };
+  return [{ gold: 30000 }, { essence: 15000 }, { gems: 100 }, { basicScrolls: 5 }, { scrolls: 1 }, { gems: 150 }][i % 7]!;
+});

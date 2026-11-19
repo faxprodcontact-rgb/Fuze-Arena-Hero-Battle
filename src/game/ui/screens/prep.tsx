@@ -6,7 +6,7 @@ import { heroDef } from '../../../core/data/heroes';
 import { heroImage, monsterImage } from '../../art';
 import { fmt, t } from '../../i18n';
 import { autoFormation, startBattleFromPlan, swapSlots, toggleInFormation, type BattlePlan } from '../../state/actions';
-import { heroByUid, heroPower, slotCount, sortedHeroes, teamPower } from '../../state/selectors';
+import { formationOf, heroByUid, heroPower, slotCount, sortedHeroes, teamPower, type TeamKind } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import { Btn, HeroCard, Icon, Stars } from '../kit';
 import { close, startBattle, toast } from '../nav';
@@ -40,18 +40,19 @@ function FieldBackground() {
   );
 }
 
-export function Board({ tired }: { tired?: Set<number> } = {}) {
+export function Board({ tired, team = 'main' }: { tired?: Set<number>; team?: TeamKind } = {}) {
   const s = useGame();
+  const formation = formationOf(s, team);
   const [picked, setPicked] = useState<Slot | null>(null);
   const tap = (slot: Slot) => {
     if (picked === null) {
-      if (s.formation.some(([, sl]) => sl === slot)) setPicked(slot);
+      if (formation.some(([, sl]) => sl === slot)) setPicked(slot);
       return;
     }
-    if (picked !== slot) swapSlots(picked, slot);
+    if (picked !== slot) swapSlots(picked, slot, team);
     setPicked(null);
   };
-  const leaderUid = s.formation.find(([, sl]) => sl === LEADER_SLOT)?.[0];
+  const leaderUid = formation.find(([, sl]) => sl === LEADER_SLOT)?.[0];
   const leader = leaderUid !== undefined ? heroByUid(s, leaderUid) : undefined;
   const chief = leader ? heroDef(leader.defId).talent : undefined;
   return (
@@ -59,7 +60,7 @@ export function Board({ tired }: { tired?: Set<number> } = {}) {
       <div class="field">
         <FieldBackground />
         {([3, 0, 2, 4, 1] as Slot[]).map((slot) => {
-          const uid = s.formation.find(([, sl]) => sl === slot)?.[0];
+          const uid = formation.find(([, sl]) => sl === slot)?.[0];
           const hero = uid !== undefined ? heroByUid(s, uid) : undefined;
           const [x, dy] = POS[slot];
           return (
@@ -82,20 +83,21 @@ export function Board({ tired }: { tired?: Set<number> } = {}) {
   );
 }
 
-export function Prep({ plan }: { plan: BattlePlan | null }) {
+export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: TeamKind }) {
   const s = useGame();
-  const inTeam = new Set(s.formation.map(([u]) => u));
+  const formation = formationOf(s, team);
+  const inTeam = new Set(formation.map(([u]) => u));
   const tired = new Set(plan?.exclude ?? []);
   // En guerre de guildes, les héros qui ont déjà attaqué aujourd'hui ne comptent pas.
   const mine = tired.size
-    ? s.formation.filter(([u]) => !tired.has(u)).reduce((sum, [u]) => sum + heroPower(s, heroByUid(s, u)!), 0)
-    : teamPower(s);
+    ? formation.filter(([u]) => !tired.has(u)).reduce((sum, [u]) => sum + heroPower(s, heroByUid(s, u)!), 0)
+    : teamPower(s, team);
   const waves = plan?.waves ?? [];
   return (
     <div class="prep">
       <header class="prep-head">
         <button class="x" aria-label={t('close')} onClick={close}>‹</button>
-        <h2>{plan ? `${t(`mode.${plan.kind}`)} ${plan.kind === 'dailyBoss' || plan.kind === 'guildBoss' ? t(`monster.${plan.title}`) : plan.title}` : t('heroes.team')}</h2>
+        <h2>{plan ? `${t(`mode.${plan.kind}`)} ${plan.kind === 'dailyBoss' || plan.kind === 'guildBoss' ? t(`monster.${plan.title}`) : plan.title}` : team === 'defense' ? t('war.defense') : t('heroes.team')}</h2>
         <span class="power-chip"><Icon name="power" size={18} />{fmt(mine)}</span>
       </header>
 
@@ -115,11 +117,11 @@ export function Prep({ plan }: { plan: BattlePlan | null }) {
         </section>
       )}
 
-      <Board tired={tired} />
+      <Board tired={tired} team={team} />
 
       <div class="row between prep-bar">
-        <strong>{t('heroes.team')} {s.formation.length} / {slotCount(s)}</strong>
-        <Btn kind="ghost" small onClick={() => autoFormation([...tired])}>{t('heroes.autoTeam')}</Btn>
+        <strong>{t('heroes.team')} {formation.length} / {slotCount(s)}</strong>
+        <Btn kind="ghost" small onClick={() => autoFormation([...tired], team)}>{t('heroes.autoTeam')}</Btn>
       </div>
 
       <div class="roster">
@@ -127,7 +129,7 @@ export function Prep({ plan }: { plan: BattlePlan | null }) {
           <HeroCard key={h.uid} hero={h} small power={heroPower(s, h)} selected={inTeam.has(h.uid)} dim={tired.has(h.uid)}
             onClick={() => {
               if (tired.has(h.uid) && !inTeam.has(h.uid)) return toast(t('war.tired'));
-              const r = toggleInFormation(h.uid);
+              const r = toggleInFormation(h.uid, team);
               if (r === 'full') toast(t('heroes.full'));
             }} />
         ))}

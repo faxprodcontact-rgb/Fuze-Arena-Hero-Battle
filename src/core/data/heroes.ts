@@ -1,7 +1,7 @@
 // Les 72 héros du lancement : 6 factions × 12 héros (2 Communs, 3 Rares, 4 Épiques, 3 Légendaires).
 // Noms PROVISOIRES (inventés) : la vraie liste sera écrite avec l'univers.
 import type { SkillDef, Talent } from '../battle/types';
-import { ELEMENTS, FACTIONS, type Faction, type HeroDef, type Rarity, type Role } from '../types';
+import { ELEMENTS, FACTIONS, type Element, type Faction, type HeroDef, type Rarity, type Role } from '../types';
 
 export const HEROES_PER_FACTION: Rarity[] = [
   'common', 'common',
@@ -108,7 +108,12 @@ export function heroDef(id: string): HeroDef {
   return def;
 }
 
-/** Les héros d'une faction et d'une rareté, dans l'ordre de la liste. */
+/** Les héros d'un élément et d'une rareté (la fusion demande des héros du même élément). */
+export function heroesOfElement(element: Element, rarity: Rarity): HeroDef[] {
+  return HEROES.filter((h) => h.element === element && h.rarity === rarity);
+}
+
+/** Les héros d'un groupe de la liste provisoire et d'une rareté (les camps ne sont plus une règle du jeu). */
 export function heroesOf(faction: Faction, rarity: Rarity): HeroDef[] {
   return HEROES.filter((h) => h.faction === faction && h.rarity === rarity);
 }

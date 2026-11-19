@@ -6,7 +6,7 @@ import type { Hero, Rarity } from './types';
 
 export interface FusionPlan {
   targetUid: number;
-  /** Héros sacrifiés (copies et héros de la même faction). */
+  /** Héros sacrifiés (copies et héros du même élément). */
   consumed: number[];
   crystals: number;
   newStars: number;
@@ -45,13 +45,13 @@ export function isValidFusion(roster: readonly Hero[], plan: FusionPlan, crystal
   const step = LADDER[plan.newStars];
   if (!step || plan.crystals !== step.crystals || crystalsOwned < step.crystals) return false;
   const copies = others.filter((h) => h.defId === target.defId && h.stars === rule.bornStars);
-  // Une copie peut aussi compter comme héros de faction : on réserve d'abord les copies.
+  // Une copie peut aussi compter comme héros du même élément : on réserve d'abord les copies.
   const usedAsCopies = new Set(copies.slice(0, step.copies).map((h) => h.uid));
   if (usedAsCopies.size < step.copies) return false;
   const fodder = others.filter((h) => !usedAsCopies.has(h.uid));
   return (
     fodder.length === step.fodderCount &&
-    fodder.every((h) => heroDef(h.defId).faction === def.faction && h.stars === step.fodderStars)
+    fodder.every((h) => heroDef(h.defId).element === def.element && h.stars === step.fodderStars)
   );
 }
 
@@ -86,7 +86,7 @@ export function planFusion(
       (h) =>
         !copyIds.has(h.uid) &&
         h.stars === step.fodderStars &&
-        heroDef(h.defId).faction === def.faction &&
+        heroDef(h.defId).element === def.element &&
         heroDef(h.defId).rarity !== 'legendary', // jamais un Légendaire en nourriture automatique
     )
     .sort((a, b) => RARITY_RANK[heroDef(a.defId).rarity] - RARITY_RANK[heroDef(b.defId).rarity] || byLevel(a, b))

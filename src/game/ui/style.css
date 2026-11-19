@@ -537,3 +537,38 @@ button.war-fort:disabled { opacity: 0.6; }
 .war-ranking { gap: 4px; padding: 10px 14px; }
 .war-ranking .me { color: var(--gold); font-weight: 800; }
 .war-result.win h2 { color: var(--gold); } .war-result.loss h2 { color: #ff8a8a; }
+.team-strip.defense { border-color: #4c8dff88; background: linear-gradient(90deg, #4c8dff22, transparent), var(--panel); }
+
+/* ---------- Calendrier de connexion ---------- */
+.login-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.login-grid.month { grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.login-day { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; min-height: 64px;
+  border-radius: 12px; background: var(--panel-2); border: 2px solid var(--line); }
+.login-grid.month .login-day { min-height: 54px; padding: 4px 1px; }
+.login-grid.month .cur { font-size: 10px; flex-direction: column; gap: 0; }
+.login-day.big { border-color: var(--gold); background: radial-gradient(circle at 50% 30%, #ffc94a33, transparent 70%), var(--panel-2); }
+.login-grid.welcome .login-day.big { grid-column: span 2; }
+.login-day.today { border-color: var(--green); box-shadow: 0 0 12px #35c87388; animation: hop 0.8s ease-in-out infinite alternate; }
+.login-day.done { opacity: 0.55; }
+.login-n { font: 800 11px var(--font-title); color: var(--muted); }
+.login-reward { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.login-legend { font: 800 30px var(--font-title); color: var(--gold); text-shadow: 0 0 10px #ffc94a; }
+.login-check { position: absolute; inset: 0; display: grid; place-items: center; font: 800 28px var(--font-title); color: var(--green); }
+
+/* ---------- Courrier ---------- */
+.mail { gap: 8px; padding: 12px; }
+.mail-head { display: flex; justify-content: space-between; align-items: center; width: 100%; text-align: left; }
+.mail.unread { border-color: var(--blue); }
+.mail.unread .mail-head strong::after { content: ''; display: inline-block; width: 8px; height: 8px; margin-left: 6px; border-radius: 50%; background: var(--red); vertical-align: middle; }
+.mail-body { margin: 0; color: var(--text); line-height: 1.4; }
+.claimed { opacity: 0.4; }
+
+/* ---------- Tutoriel ---------- */
+.tuto-ring { position: fixed; z-index: 900; pointer-events: none; border-radius: 18px; border: 3px solid #ffe27a;
+  box-shadow: 0 0 0 9999px #00000055, 0 0 18px #ffe27a; animation: tuto-pulse 1s ease-in-out infinite alternate; }
+.tuto-hand { position: absolute; font-size: 44px; line-height: 1; transform: translate(-20%, 10%); filter: drop-shadow(0 3px 4px #000a);
+  animation: tuto-tap 0.9s ease-in-out infinite; }
+.tuto-skip { position: fixed; z-index: 901; left: 12px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); width: 40px; height: 40px;
+  border-radius: 50%; background: #0009; color: #fff; font: 800 22px var(--font-title); border: 2px solid #ffffff44; }
+@keyframes tuto-pulse { to { border-color: #fff; } }
+@keyframes tuto-tap { 0%, 100% { transform: translate(-20%, 10%); } 50% { transform: translate(-20%, 30%) scale(0.9); } }

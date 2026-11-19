@@ -101,6 +101,14 @@ export interface PlayerState {
   friends: { list: Friend[]; day: string; sent: string[]; inbox: string[] };
   defense: { level: number; stars: Record<number, number>; placement: [number, number][]; chests?: number };
   arena: { points: number; opponents: ArenaOpponent[] };
+  /** Étape du tutoriel des premières minutes (-1 = fini ou passé). */
+  tutorial?: number;
+  /** Courrier : messages reçus (id → date d'arrivée), lus, et cadeaux récupérés. */
+  mail?: { got: Record<string, number>; read: string[]; claimed: string[] };
+  /** Calendrier de connexion : dernier jour coché et nombre de jours cochés. */
+  login?: { day: string; count: number };
+  /** Section de défense (attaquée par les autres en guerre de guildes) ; vide = la section principale. */
+  defenseTeam?: [number, Slot][];
   /** Guerre de guildes de la semaine en cours (et récompense de la précédente si pas encore prise). */
   guildWar?: GuildWarState;
   guild: { joined: string | null; bossDamage: number; chat: ChatMessage[]; lastBotAt: number };

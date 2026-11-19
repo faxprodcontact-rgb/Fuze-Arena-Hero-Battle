@@ -6,7 +6,7 @@ import { RARITIES, type Hero } from '../../../core/types';
 import { heroImage } from '../../art';
 import { fmt, t } from '../../i18n';
 import { fusionPreview } from '../../state/actions';
-import { canLevelUp, heroPower, teamHeroes, teamPower } from '../../state/selectors';
+import { canLevelUp, heroPower, teamHeroes, teamPower, type TeamKind } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import type { PlayerState } from '../../state/types';
 import { Btn, HeroCard, Icon, RedDot } from '../kit';
@@ -36,18 +36,18 @@ export function HeroesScreen() {
 }
 
 /** Bandeau « Section » : les visages, la puissance ; toucher pour changer la section. */
-export function TeamStrip() {
+export function TeamStrip({ team = 'main' }: { team?: TeamKind } = {}) {
   const s = useGame();
   return (
-    <button class="team-strip" onClick={() => prepare(null)}>
+    <button class={`team-strip${team === 'defense' ? ' defense' : ''}`} onClick={() => prepare(null, team)}>
       <span class="team-faces">
-        {teamHeroes(s).map(({ hero, slot }) => (
+        {teamHeroes(s, team).map(({ hero, slot }) => (
           <span class={`team-face${slot === LEADER_SLOT ? ' leader' : ''}`}><img src={heroImage(hero.defId)} alt="" /></span>
         ))}
       </span>
       <span class="team-info">
-        <strong>{t('heroes.team')}</strong>
-        <span class="power-chip"><Icon name="power" size={16} />{fmt(teamPower(s))}</span>
+        <strong>{team === 'defense' ? t('war.defense') : t('heroes.team')}</strong>
+        <span class="power-chip"><Icon name="power" size={16} />{fmt(teamPower(s, team))}</span>
       </span>
       <span class="chev">›</span>
     </button>

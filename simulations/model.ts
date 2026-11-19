@@ -11,7 +11,7 @@ import {
   incomePerHour,
   levelCost,
 } from '../src/core/data/economy';
-import { heroDef, heroesOf } from '../src/core/data/heroes';
+import { heroDef, heroesOf, heroesOfElement } from '../src/core/data/heroes';
 import { FRAGMENTS_PER_COPY, MAX_YELLOW, MYTHIC_STARS, RARITY_RULES } from '../src/core/data/stars';
 import { GEAR_GAIN, LEVEL_GAIN, levelCap } from '../src/core/data/stats';
 import { applyFusion, canGainStar, planFusion } from '../src/core/fusion';
@@ -186,16 +186,16 @@ export class PlayerSim {
   }
 
   /**
-   * Un joker ★5 de la faction du Légendaire le plus avancé. Pour la simulation, c'est un Épique ★5
-   * de cette faction : il compte exactement comme un héros ★5 à sacrifier.
+   * Un joker ★5 de l'élément du Légendaire le plus avancé. Pour la simulation, c'est un Épique ★5
+   * de cet élément : il compte exactement comme un héros ★5 à sacrifier.
    */
   private addJoker(): void {
     const best = this.roster
       .filter((h) => heroDef(h.defId).rarity === 'legendary')
       .sort((a, b) => b.stars - a.stars)[0];
     if (!best) return;
-    const faction = heroDef(best.defId).faction;
-    const joker = this.addHero(heroesOf(faction, 'epic')[0]!.id);
+    const element = heroDef(best.defId).element;
+    const joker = this.addHero(heroesOfElement(element, 'epic')[0]!.id);
     joker.stars = MAX_YELLOW;
   }
 

@@ -1,5 +1,6 @@
 // Accueil : la section se bat en continu (c'est elle qui remplit le butin).
 // Sur les bords : quêtes, passe, offres, classement, tchat. En bas : coffre, Combattre, butin rapide.
+import { loginCalendar, mailWaiting } from '../../state/actions';
 import { useEffect, useRef } from 'preact/hooks';
 import { stagePower } from '../../../core/data/campaign';
 import { CAMPAIGN_STAGES, OFFLINE_CAP_HOURS, STAGES_PER_CHAPTER } from '../../../core/data/economy';
@@ -59,6 +60,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
           <span class="stage-progress"><span style={{ width: `${((pos - 1) / STAGES_PER_CHAPTER) * 100}%` }} /></span>
         </div>
         <div class="edge edge-left">
+          <EdgeButton icon="calendar" label={t('login.title')} dot={!loginCalendar(s).claimed} onClick={() => open({ type: 'login' })} />
           <EdgeButton icon="quests" label={t('side.quests')} dot={dots.quests(s)} onClick={() => open({ type: 'quests' })} />
           <EdgeButton icon="pass" label={t('side.pass')} dot={dots.pass(s)} onClick={() => open({ type: 'shop', tab: 'pass' })} />
           <EdgeButton icon="shop" label={t('shop.offers')} dot={!s.shop.bought.starter} onClick={() => open({ type: 'shop' })} />
@@ -66,6 +68,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
         <div class="edge edge-right">
           <EdgeButton icon="ranking" label={t('side.ranking')} onClick={() => open({ type: 'ranking' })} />
           <EdgeButton icon="chat" label={t('side.chat')} onClick={() => open({ type: 'chat' })} />
+          <EdgeButton icon="mail" label={t('mail.title')} dot={mailWaiting(s) > 0} onClick={() => open({ type: 'mail' })} />
           <EdgeButton icon="friends" label={t('friends.title')} dot={s.friends.inbox.length > 0} onClick={() => open({ type: 'friends' })} />
         </div>
       </div>

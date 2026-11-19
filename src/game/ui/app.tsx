@@ -21,6 +21,10 @@ import { MissionPage } from './screens/mission';
 import { DungeonPage } from './screens/dungeon';
 import { DefensePrep, DefenseRun } from './screens/defense';
 import { FriendsPage } from './screens/friends';
+import { LoginModal } from './screens/login';
+import { TutorialHand } from './tutorial';
+import { loginCalendar } from '../state/actions';
+import { MailPage } from './screens/mail';
 import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
 import { AdModal, ConfirmModal, GainModal, LegalModal, NameScreen, QuestsModal, RenameModal, SettingsModal, ShopModal } from './screens/meta';
@@ -92,7 +96,7 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'odds': return <OddsModal />;
     case 'confirm': return <ConfirmModal text={modal.text} onYes={modal.onYes} />;
     case 'ad': return <AdModal onDone={modal.onDone} />;
-    case 'prep': return <Prep plan={modal.plan} />;
+    case 'prep': return <Prep plan={modal.plan} team={modal.team} />;
     case 'fastLoot': return <FastLootModal />;
     case 'rename': return <RenameModal />;
     case 'fusion': return <FusionPage uid={modal.uid} />;
@@ -102,6 +106,8 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'dungeon': return <DungeonPage kind={modal.kind} />;
     case 'defensePrep': return <DefensePrep level={modal.level} />;
     case 'friends': return <FriendsPage />;
+    case 'login': return <LoginModal />;
+    case 'mail': return <MailPage />;
     case 'defenseRun': return <DefenseRun req={modal.req} />;
     case 'item': return <ItemModal uid={modal.uid} />;
     case 'legal': return <LegalModal doc={modal.doc} />;
@@ -124,8 +130,16 @@ function BattleOverlay({ request }: { request: BattleRequest }) {
   return <div class="battle" ref={host} />;
 }
 
+/** Le calendrier de connexion s'ouvre tout seul une fois par jour (après le tutoriel). */
+let loginShown = false;
+
 export function App() {
-  useGame();
+  const st = useGame();
+  useEffect(() => {
+    if (loginShown || !st.named || (st.tutorial ?? -1) !== -1 || loginCalendar(st).claimed) return;
+    loginShown = true;
+    open({ type: 'login' });
+  }, [st.named, st.tutorial]);
   const nav = useNav();
   const [, setClock] = useState(0);
   useEffect(() => {
@@ -153,6 +167,7 @@ export function App() {
       {nav.battle && <BattleOverlay request={nav.battle} />}
       {nav.toast && <div class="toast" onClick={close}>{nav.toast}</div>}
       {!getState().named && <NameScreen />}
+      <TutorialHand />
     </div>
   );
 }

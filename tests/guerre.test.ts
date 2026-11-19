@@ -57,3 +57,16 @@ describe('guerre de guildes', () => {
     expect(claimWar()).toBeNull();
   });
 });
+
+describe('section de défense', () => {
+  it('par défaut la même que la section ; modifiable sans toucher à la section', async () => {
+    const { formationOf } = await import('../src/game/state/selectors');
+    const { autoFormation } = await import('../src/game/state/actions');
+    const s0 = getState();
+    expect(formationOf(s0, 'defense')).toEqual(s0.formation);
+    const before = JSON.stringify(s0.formation);
+    autoFormation([], 'defense');
+    expect(JSON.stringify(getState().formation)).toBe(before);
+    expect(getState().defenseTeam?.length).toBeGreaterThan(0);
+  });
+});

@@ -84,7 +84,7 @@ export function HeroDetail({ uid }: { uid: number }) {
         </div>
         {cost ? (
           <div class="row gap">
-            <Btn kind="green" wide disabled={!canLevelUp(s, hero)} onClick={() => levelUp(uid)}>{t('detail.levelUp')}</Btn>
+            <Btn kind="green" wide class="tuto-levelup" disabled={!canLevelUp(s, hero)} onClick={() => levelUp(uid)}>{t('detail.levelUp')}</Btn>
             <Btn kind="green" small disabled={!canLevelUp(s, hero)} onClick={() => levelUp(uid, 10)}>{t('detail.levelUp10')}</Btn>
           </div>
         ) : (

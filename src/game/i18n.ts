@@ -72,7 +72,7 @@ const FR = {
 
   'guild.join': 'Rejoindre', 'guild.leave': 'Quitter', 'guild.members': 'Membres', 'guild.boss': 'Boss', 'guild.war': 'Guerre', 'war.prep': 'Préparation', 'war.battle': 'Combats', 'war.results': 'Résultats',
   'war.day': 'jour {n} / 5', 'war.attacks': 'Attaques : {n} / {m}', 'war.ranking': 'Étoiles de la guilde', 'war.tired': 'Déjà attaqué aujourd’hui',
-  'war.win': 'Victoire !', 'war.draw': 'Égalité', 'war.loss': 'Défaite', 'mode.guildWar': 'Guerre', 'guild.chat': 'Tchat',
+  'war.defense': 'Défense', 'war.win': 'Victoire !', 'war.draw': 'Égalité', 'war.loss': 'Défaite', 'mode.guildWar': 'Guerre', 'guild.chat': 'Tchat',
   'guild.shop': 'Boutique', 'guild.total': 'Dégâts de la guilde', 'guild.level': 'Niv. {n}',
 
   'quests.daily': 'Du jour', 'quests.weekly': 'De la semaine', 'quests.activity': 'Activité',
@@ -107,6 +107,8 @@ const FR = {
   'result.victory': 'Victoire !', 'result.defeat': 'Défaite', 'result.damage': 'Dégâts', 'result.nothing': 'Rien cette fois',
   'battle.quit': 'Quitter', 'battle.wave': 'Vague', 'battle.auto': 'AUTO',
   'mode.campaign': 'Niveau', 'mode.tower': 'Étage', 'mode.dungeon': 'Donjon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arène', 'mode.guildBoss': 'Guilde', 'mode.friend': 'Défi',
+  'mail.title': 'Courrier', 'mail.claimAll': 'Tout récupérer',
+  'login.title': 'Connexion', 'login.welcome': 'Bienvenue',
   'friends.title': 'Amis', 'friends.code': 'Mon code', 'friends.add': 'Ajouter', 'friends.placeholder': 'Code ami',
   'friends.sendAll': 'Tout envoyer', 'friends.claim': 'Ouvrir', 'friends.challenge': 'Défier', 'friends.suggest': 'Suggestions',
   'friends.copied': 'Code copié', 'friends.added': 'Ami ajouté', 'friends.self': "C'est ton code", 'friends.already': 'Déjà ami',
@@ -186,7 +188,7 @@ const EN: Record<Key, string> = {
 
   'guild.join': 'Join', 'guild.leave': 'Leave', 'guild.members': 'Members', 'guild.boss': 'Boss', 'guild.war': 'War', 'war.prep': 'Preparation', 'war.battle': 'Battles', 'war.results': 'Results',
   'war.day': 'day {n} / 5', 'war.attacks': 'Attacks: {n} / {m}', 'war.ranking': 'Guild stars', 'war.tired': 'Already attacked today',
-  'war.win': 'Victory!', 'war.draw': 'Draw', 'war.loss': 'Defeat', 'mode.guildWar': 'War', 'guild.chat': 'Chat',
+  'war.defense': 'Defense', 'war.win': 'Victory!', 'war.draw': 'Draw', 'war.loss': 'Defeat', 'mode.guildWar': 'War', 'guild.chat': 'Chat',
   'guild.shop': 'Shop', 'guild.total': 'Guild damage', 'guild.level': 'Lv. {n}',
 
   'quests.daily': 'Daily', 'quests.weekly': 'Weekly', 'quests.activity': 'Activity',
@@ -221,6 +223,8 @@ const EN: Record<Key, string> = {
   'result.victory': 'Victory!', 'result.defeat': 'Defeat', 'result.damage': 'Damage', 'result.nothing': 'Nothing this time',
   'battle.quit': 'Quit', 'battle.wave': 'Wave', 'battle.auto': 'AUTO',
   'mode.campaign': 'Stage', 'mode.tower': 'Floor', 'mode.dungeon': 'Dungeon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arena', 'mode.guildBoss': 'Guild', 'mode.friend': 'Challenge',
+  'mail.title': 'Mail', 'mail.claimAll': 'Claim all',
+  'login.title': 'Check-in', 'login.welcome': 'Welcome',
   'friends.title': 'Friends', 'friends.code': 'My code', 'friends.add': 'Add', 'friends.placeholder': 'Friend code',
   'friends.sendAll': 'Send all', 'friends.claim': 'Open', 'friends.challenge': 'Challenge', 'friends.suggest': 'Suggestions',
   'friends.copied': 'Code copied', 'friends.added': 'Friend added', 'friends.self': 'This is your code', 'friends.already': 'Already a friend',

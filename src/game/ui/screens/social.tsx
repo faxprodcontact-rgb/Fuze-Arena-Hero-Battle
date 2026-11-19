@@ -150,6 +150,7 @@ function GuildWar({ guild }: { guild: string }) {
       </div>
 
       <TeamStrip />
+      <TeamStrip team="defense" />
 
       <div class="war-grid">
         {defenses.map((d, i) => {

@@ -1,3 +1,4 @@
+import type { TeamKind } from '../state/selectors';
 import type { DefenseRequest } from '../state/actions';
 // Navigation : onglet ouvert, sous-écran, fenêtres empilées, combat en cours, petit message.
 import { useEffect, useState } from 'preact/hooks';
@@ -21,7 +22,7 @@ export type Modal =
   | { type: 'odds' }
   | { type: 'confirm'; text: string; onYes: () => void }
   | { type: 'ad'; onDone: () => void }
-  | { type: 'prep'; plan: BattlePlan | null }
+  | { type: 'prep'; plan: BattlePlan | null; team?: TeamKind }
   | { type: 'fastLoot' }
   | { type: 'rename' }
   | { type: 'fusion'; uid?: number }
@@ -31,6 +32,8 @@ export type Modal =
   | { type: 'dungeon'; kind: 'gold' | 'essence' | 'gear' }
   | { type: 'defensePrep'; level: number }
   | { type: 'friends' }
+  | { type: 'login' }
+  | { type: 'mail' }
   | { type: 'defenseRun'; req: DefenseRequest }
   | { type: 'item'; uid: number }
   | { type: 'legal'; doc: 'privacy' | 'terms' | 'notice' | 'credits' | 'support' };
@@ -100,6 +103,6 @@ export function toast(text: string): void {
 }
 
 /** Ouvre l'écran de préparation d'un combat (ou de la section seule si `plan` est null). */
-export function prepare(plan: BattlePlan | null): void {
-  open({ type: 'prep', plan });
+export function prepare(plan: BattlePlan | null, team?: TeamKind): void {
+  open({ type: 'prep', plan, team });
 }
