@@ -1,17 +1,14 @@
-// Fiche d'un héros : niveau, équipement, étoiles (fusion), compétence et talent de chef.
+// Fiche d'un héros : niveau, équipement, compétence et talent de chef (la fusion se fait sur sa page).
 import { heroToUnit } from '../../../core/battle/units';
 import type { Talent } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
 import { GEAR_SLOTS } from '../../../core/data/items';
-import { LADDER, RARITY_RULES, TRIPLE_COUNT } from '../../../core/data/stars';
 import { levelCap } from '../../../core/data/stats';
-import { canGainStar } from '../../../core/fusion';
 import { ELEMENT_COLOR, RARITY_COLOR, heroImage } from '../../art';
 import { fmt, t } from '../../i18n';
-import { equipBest, fuse, fusionPreview, levelUp, resetHero, toggleInFormation, unequipAll } from '../../state/actions';
+import { equipBest, levelUp, resetHero, toggleInFormation, unequipAll } from '../../state/actions';
 import { canLevelUp, gearPct, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import type { PlayerState } from '../../state/types';
 import { Btn, Cur, Icon, ItemIcon, Modal, Stars } from '../kit';
 import { close, open, toast } from '../nav';
 
@@ -26,25 +23,6 @@ export function talentText(talent: Talent): string {
   return parts.join(' · ');
 }
 
-/** Ce que le joueur possède pour la prochaine étoile (pour afficher « 1 / 2 »). */
-function starNeeds(s: PlayerState, uid: number) {
-  const hero = heroByUid(s, uid)!;
-  const d = heroDef(hero.defId);
-  const rule = RARITY_RULES[d.rarity];
-  const inTeam = new Set(s.formation.map(([u]) => u));
-  const others = s.heroes.filter((h) => h.uid !== uid && !inTeam.has(h.uid));
-  if (rule.fusion === 'triple') {
-    return { triple: others.filter((h) => h.defId === hero.defId && h.stars === hero.stars).length + 1 };
-  }
-  const step = LADDER[hero.stars + 1];
-  if (!step) return {};
-  const copies = others.filter((h) => h.defId === hero.defId && h.stars === rule.bornStars);
-  const fodder = others.filter(
-    (h) => heroDef(h.defId).faction === d.faction && h.stars === step.fodderStars && heroDef(h.defId).rarity !== 'legendary',
-  );
-  return { step, copies: copies.length, fodder: fodder.length };
-}
-
 export function HeroDetail({ uid }: { uid: number }) {
   const s = useGame();
   const hero = heroByUid(s, uid);
@@ -54,8 +32,6 @@ export function HeroDetail({ uid }: { uid: number }) {
   const cost = levelUpCost(hero);
   const items = heroItems(s, uid);
   const inTeam = s.formation.some(([u]) => u === uid);
-  const preview = fusionPreview(uid);
-  const needs = starNeeds(s, uid);
 
   return (
     <Modal title={d.name} wide>
@@ -114,38 +90,6 @@ export function HeroDetail({ uid }: { uid: number }) {
             </div>
           ))}
         </div>
-      </section>
-
-      <section class="block">
-        <h3>{t('detail.stars')}</h3>
-        {!canGainStar(hero) ? (
-          <p class="muted">{t('detail.maxStars')}</p>
-        ) : (
-          <>
-            <div class="row gap-s center-y">
-              <Stars stars={hero.stars} /> <span class="arrow">→</span> <Stars stars={hero.stars + 1} />
-            </div>
-            <ul class="needs">
-              {needs.triple !== undefined && <li class={needs.triple >= TRIPLE_COUNT ? 'ok' : ''}>{t('detail.triple', { have: needs.triple })}</li>}
-              {needs.step && (
-                <>
-                  <li class={(needs.copies ?? 0) >= needs.step.copies ? 'ok' : ''}>{t('detail.copies', { have: needs.copies ?? 0, need: needs.step.copies })}</li>
-                  {needs.step.fodderCount > 0 && (
-                    <li class={(needs.fodder ?? 0) >= needs.step.fodderCount ? 'ok' : ''}>
-                      {t('detail.fodder', { s: needs.step.fodderStars, have: needs.fodder ?? 0, need: needs.step.fodderCount })}
-                    </li>
-                  )}
-                  {needs.step.crystals > 0 && (
-                    <li class={s.wallet.crystals >= needs.step.crystals ? 'ok' : ''}>{t('detail.crystals', { have: s.wallet.crystals, need: needs.step.crystals })}</li>
-                  )}
-                </>
-              )}
-            </ul>
-            <Btn kind="purple" wide onClick={() => open({ type: 'fusion', uid })}>
-              {t('detail.fuse')}{preview.plan ? ' ★' : ''}
-            </Btn>
-          </>
-        )}
       </section>
 
       <section class="block">

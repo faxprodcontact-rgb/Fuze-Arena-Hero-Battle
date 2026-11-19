@@ -61,7 +61,10 @@ function HeroList() {
       <div class="row between">
         <h2>{t('nav.heroes')} <span class="muted">{s.heroes.length}</span></h2>
         <div class="row gap-s">
-          <Btn kind="purple" small onClick={() => open({ type: 'fusion' })}>{t('fusion.title')}</Btn>
+          <span class="hcard-wrap">
+            <Btn kind="purple" small onClick={() => open({ type: 'fusion' })}>{t('fusion.title')}</Btn>
+            {s.formation.some(([u]) => !!fusionPreview(u).plan) && <RedDot />}
+          </span>
           <div class="dropdown">
             <Btn kind="ghost" small onClick={() => setMenu(!menu)}>{t(`sort.${sort}`)} ▾</Btn>
             {menu && (
@@ -84,7 +87,7 @@ function HeroList() {
               selected={inTeam.has(h.uid)}
               onClick={() => open({ type: 'hero', uid: h.uid })}
             />
-            {inTeam.has(h.uid) && (canLevelUp(s, h) || !!fusionPreview(h.uid).plan) && <RedDot />}
+            {inTeam.has(h.uid) && canLevelUp(s, h) && <RedDot />}
           </div>
         ))}
       </div>
