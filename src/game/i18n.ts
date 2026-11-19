@@ -6,7 +6,7 @@ const FR = {
   'nav.campaign': 'Campagne', 'nav.heroes': 'Héros', 'nav.summon': 'Invoquer', 'nav.adventure': 'Aventure', 'nav.guild': 'Guilde',
   'side.quests': 'Quêtes', 'side.shop': 'Boutique', 'side.pass': 'Passe', 'side.ranking': 'Classement', 'side.chat': 'Tchat', 'side.settings': 'Réglages',
 
-  'cur.dust': 'Poussière de forge', 'forge.title': 'Forge', 'fusion.title': 'Fusion', cancel: 'Annuler', 'fusion.choose': 'Choisir', 'reset.none': 'Aucun héros à réinitialiser', 'fusion.none': 'Aucun héros disponible',
+  'cur.dust': 'Poussière de forge', 'forge.title': 'Forge', 'fusion.title': 'Fusion', cancel: 'Annuler', 'fusion.choose': 'Choisir', 'reset.none': 'Aucun héros', 'fusion.none': 'Aucun héros disponible',
   'recycle.count': '✓ {n}', 'recycle.confirm': 'Recycler',
   'bag.title': 'Sac', 'bag.forgeAll': 'Tout forger', 'bag.recycleLow': 'Recycler gris et verts', 'bag.empty': 'Sac vide',
   'bag.forged': '{n} objets forgés', 'bag.recycled': '+{n} poussière',
@@ -31,7 +31,7 @@ const FR = {
   'detail.copies': 'Copies : {have} / {need}', 'detail.fodder': 'Héros ★{s} de la faction : {have} / {need}',
   'detail.crystals': 'Cristaux : {have} / {need}', 'detail.fuse': 'Fusionner', 'detail.maxStars': 'Étoiles au maximum',
   'detail.triple': '3 héros identiques : {have} / 3', 'detail.equip': 'Équipement', 'detail.autoEquip': 'Équiper le meilleur',
-  'detail.unequip': 'Tout retirer', 'detail.reset': 'Réinitialiser', 'detail.hp': 'PV', 'detail.atk': 'ATQ', 'detail.def': 'DÉF',
+  'detail.unequip': 'Tout retirer', 'detail.reset': 'Renaissance', 'detail.hp': 'PV', 'detail.atk': 'ATQ', 'detail.def': 'DÉF',
   'detail.skill': 'Compétence', 'detail.leader': 'Chef de section',
 
   'rarity.common': 'Commun', 'rarity.rare': 'Rare', 'rarity.epic': 'Épique', 'rarity.legendary': 'Légendaire', 'rarity.mythic': 'Mythique',
@@ -115,7 +115,7 @@ const EN: Record<Key, string> = {
   'nav.campaign': 'Campaign', 'nav.heroes': 'Heroes', 'nav.summon': 'Summon', 'nav.adventure': 'Adventure', 'nav.guild': 'Guild',
   'side.quests': 'Quests', 'side.shop': 'Shop', 'side.pass': 'Pass', 'side.ranking': 'Ranking', 'side.chat': 'Chat', 'side.settings': 'Settings',
 
-  'cur.dust': 'Forge dust', 'forge.title': 'Forge', 'fusion.title': 'Fusion', cancel: 'Cancel', 'fusion.choose': 'Choose', 'reset.none': 'No hero to reset', 'fusion.none': 'No hero available',
+  'cur.dust': 'Forge dust', 'forge.title': 'Forge', 'fusion.title': 'Fusion', cancel: 'Cancel', 'fusion.choose': 'Choose', 'reset.none': 'No hero', 'fusion.none': 'No hero available',
   'recycle.count': '✓ {n}', 'recycle.confirm': 'Recycle',
   'bag.title': 'Bag', 'bag.forgeAll': 'Forge all', 'bag.recycleLow': 'Recycle grey and green', 'bag.empty': 'Bag empty',
   'bag.forged': '{n} items forged', 'bag.recycled': '+{n} dust',
@@ -140,7 +140,7 @@ const EN: Record<Key, string> = {
   'detail.copies': 'Copies: {have} / {need}', 'detail.fodder': '★{s} heroes of the faction: {have} / {need}',
   'detail.crystals': 'Crystals: {have} / {need}', 'detail.fuse': 'Fuse', 'detail.maxStars': 'Max stars',
   'detail.triple': '3 identical heroes: {have} / 3', 'detail.equip': 'Gear', 'detail.autoEquip': 'Equip best',
-  'detail.unequip': 'Remove all', 'detail.reset': 'Reset', 'detail.hp': 'HP', 'detail.atk': 'ATK', 'detail.def': 'DEF',
+  'detail.unequip': 'Remove all', 'detail.reset': 'Rebirth', 'detail.hp': 'HP', 'detail.atk': 'ATK', 'detail.def': 'DEF',
   'detail.skill': 'Skill', 'detail.leader': 'Squad leader',
 
   'rarity.common': 'Common', 'rarity.rare': 'Rare', 'rarity.epic': 'Epic', 'rarity.legendary': 'Legendary', 'rarity.mythic': 'Mythic',

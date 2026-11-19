@@ -1,4 +1,4 @@
-// Réinitialisation : [héros niv. X] = [héros niv. 1] + ce qu'on récupère (tout est rendu), contre quelques gemmes.
+// Renaissance : [héros niv. X] → [héros niv. 1] + ce qu'on récupère (tout est rendu), contre quelques gemmes.
 // En dessous, les héros qui ont quelque chose à rendre, les plus forts d'abord.
 import { useState } from 'preact/hooks';
 import { RESET_COST } from '../../../core/data/modes';
