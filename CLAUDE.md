@@ -52,8 +52,10 @@ tout débloquer.
   Écrans dégagés : un titre, des icônes, des chiffres. Montrer par un geste plutôt que par un texte.
 - **Le serveur est le juge** : invocations, achats, monnaies et récompenses sont décidés côté serveur.
   Le hasard passe par `src/core/rng.ts` (graine), pour que le serveur puisse rejouer et vérifier.
-- **Équilibrage** : toute modification de `src/core/data/` → relancer `npm run simuler`, et `--calibrer` si la
-  progression change ; mettre à jour `docs/simulations.md`.
+- **Équilibrage** : décision du propriétaire, **pas de simulation à chaque changement** pendant le travail sur
+  l'interface et les fonctions. On met des valeurs raisonnables, et on fait **un grand réglage final avant la bêta**
+  (`npm run simuler -- --calibrer`, `npm run combat`, `simulations/premiers-jours.ts`, puis `docs/simulations.md`).
+  Ne lancer une simulation plus tôt que si le propriétaire le demande.
 - **Univers** : style manga inspiré de Black Clover, mais aucun nom, personnage, symbole ou histoire repris.
 - **Langues** : français et anglais dès le départ ; aucun texte écrit en dur dans le code de l'interface.
 - **Supabase** : ne rien lire ni modifier sans l'accord explicite du propriétaire, ne jamais lui demander de
