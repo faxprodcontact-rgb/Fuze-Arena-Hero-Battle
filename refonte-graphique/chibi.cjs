@@ -78,6 +78,8 @@ function chibi(c) {
   // ================= Corps : jambes, tunique (ou robe), ceinture, plastron =================
   G(() => {
     if (c.offhand === 'bow') S('M138 138 C156 141 176 146 196 150 L194 166 C176 164 156 160 134 152 Z', sleeve, { far: true, rim: false });
+    else if (c.offhand === 'staff' || c.offhand === 'skullStaff') S('M138 138 C156 144 172 154 184 166 L172 180 C160 168 146 160 132 152 Z', sleeve, { far: true, rim: false });
+    else if (c.weapon === 'greatsword') { /* dessiné après la tunique : il passe devant le buste */ }
     else if (c.farArm !== false) S('M138 138 C154 146 164 158 170 170 L158 180 C150 168 140 160 132 152 Z', sleeve, { far: true, rim: false });
     let body;
     if (robe) {
@@ -101,6 +103,20 @@ function chibi(c) {
       }
     }
     cast(body, `<ellipse cx="126" cy="131" rx="46" ry="15" fill="#1a0c2e" filter="url(#g3)"/>`, 0.5);
+    if (c.weapon === 'greatsword') S('M136 140 C148 152 148 172 134 190 L118 184 C128 172 132 158 128 146 Z', sleeve, { far: true, rim: false });
+  });
+
+  // ================= Bras avant (d'un seul tenant) puis épaulière =================
+  // Priorités : la manche passe sur le corps, mais SOUS l'épaulière, le cache-cou / col de capuche, la barbe et la tête.
+  G(() => {
+    if (c.pose === 'shoulder') S('M86 136 C76 146 74 160 82 170 C92 178 106 176 120 170 L116 152 C108 156 100 156 98 150 C98 146 100 142 104 140 C98 134 90 134 86 136 Z', sleeve, { sh: 7 });
+    else if (c.pose === 'draw') S('M86 136 C76 146 76 158 86 164 C102 170 124 166 146 162 L144 144 C128 148 112 150 102 146 C102 144 103 142 104 140 C98 134 90 134 86 136 Z', sleeve, { sh: 7 });
+    else S('M86 136 C76 148 76 164 86 176 C98 186 114 190 130 188 L132 170 C120 170 108 166 102 158 C100 152 102 146 104 140 C98 134 90 134 86 136 Z', sleeve, { sh: 7 });
+    if (c.pad) {
+      const pt = T.padTone ?? steel;
+      S(c.pad === 'big' ? 'M62 142 C62 116 92 106 114 122 C120 138 110 154 92 158 C76 158 64 152 62 142 Z' : 'M70 140 C72 122 96 116 110 128 C112 140 104 150 92 152 C80 152 72 148 70 140 Z', pt, { sh: 8, line: 1.6, inner:
+        sf(c.pad === 'big' ? 'M72 128 C84 116 100 116 110 126' : 'M78 130 C86 122 98 122 106 130', '#ffffff', 5, 0.7, 1) + ln(c.pad === 'big' ? 'M56 140 C74 154 98 156 122 130' : 'M64 139 C80 152 100 152 118 126', gold.base, 4) });
+    }
   });
 
   // ================= Arme posée sur l'épaule (derrière la tête) =================
@@ -153,9 +169,9 @@ function chibi(c) {
     if (c.hairStyle === 'short') S('M82 76 C92 54 128 46 160 54 C170 58 176 66 178 74 C168 72 158 66 152 58 C144 70 128 78 112 78 C100 78 90 78 82 76 Z', hair, { sh: 6, line: 1.4 });
     if (c.hairStyle === 'mohawk') S('M92 46 C96 20 122 2 152 6 C142 16 140 28 144 40 C130 34 110 36 92 46 Z', hair, { line: 1.6, inner: ln('M104 36 C110 22 124 12 140 10', hair.light, 2, 0.7) });
     // oreille (par-dessus les cheveux de l'arrière)
-    if (c.ears === 'goblin' && !c.hood) S('M90 88 C66 72 42 70 22 78 C40 90 56 108 80 116 C88 114 94 100 90 88 Z', skin, { line: 1.6, inner: sf('M84 94 C68 82 50 78 34 80', skin.shadow, 4, 0.5, 1) });
+    if (c.ears === 'goblin' && !c.hood) S('M96 86 C68 70 42 70 22 78 C40 90 56 108 82 118 C92 116 100 100 96 86 Z', skin, { rim: false, inner: sf('M82 94 C66 82 50 78 34 80', skin.shadow, 4, 0.5, 1) + blob('M84 84 L104 84 L100 122 L82 122 Z', skin.base, 1, 3) }), raw(ln('M96 86 C68 70 42 70 22 78 C40 90 56 108 82 118', skin.edge, 1.8));
     else if (c.ears === 'elf' && !c.hood) S('M90 94 C72 84 52 72 36 68 C50 86 66 104 82 114 C88 114 92 104 90 94 Z', skin, { line: 1.6 });
-    else if (!c.hood && !c.helmet && c.hairStyle !== 'long') S('M86 90 C76 86 70 96 73 106 C76 114 84 116 90 110 Z', skin, { line: 1.6, inner: ln('M84 96 C79 98 78 104 81 109', skin.shadow, 2.2) });
+    else if (!c.hood && !c.helmet && c.hairStyle !== 'long') S('M92 90 C78 84 70 96 73 106 C76 115 86 117 94 110 Z', skin, { rim: false, inner: ln('M84 96 C79 98 78 104 81 109', skin.shadow, 2.2) + blob('M86 88 L98 88 L98 114 L86 114 Z', skin.base, 1, 2) }), raw(ln('M90 89 C78 84 70 96 73 106 C76 115 86 117 92 111', skin.edge, 1.8));
     // bandeau et diadème : découpés sur la tête, ils s'arrêtent exactement à son bord
     if (c.headband) raw(`<g clip-path="url(#hc${c.id})"><path d="M50 72 C100 50 152 48 200 62 L200 74 C152 60 100 62 50 85 Z" fill="${T.band.base}"/><path d="M50 73.5 C100 51.5 152 49.5 200 63.5" stroke="${T.band.light}" stroke-width="2" fill="none" opacity="0.8"/><path d="M50 84 C100 61 152 59 200 73" stroke="${T.band.shadow}" stroke-width="2.4" fill="none" opacity="0.8"/></g>`);
     if (c.circlet) raw(`<g clip-path="url(#hc${c.id})">` + ln('M50 78 C104 50 152 48 200 66', gold.edge, 6) + ln('M50 78 C104 50 152 48 200 66', gold.base, 3.6) + `</g>` +
@@ -174,8 +190,8 @@ function chibi(c) {
       S('M82 130 C100 142 150 142 168 128 C174 136 172 146 164 152 C142 160 106 160 88 152 C80 146 78 138 82 130 Z', T.hood, { sh: 6, rim: false });
       S(HOOD, T.hood, { eo: true, sh: 12, line: 1.8, inner:
         sf('M84 34 C108 18 148 18 174 40', T.hood.light, 8, 0.5, 2) + sf('M66 70 C62 88 64 104 72 118', T.hood.shadow, 8, 0.45, 3) + sf('M36 50 C46 44 56 44 64 48', T.hood.light, 3, 0.5, 1) });
-      if (c.ears === 'elf') S('M88 96 C70 86 50 74 34 70 C48 88 64 106 80 116 C86 116 90 106 88 96 Z', skin, { line: 1.6 });
-      if (c.ears === 'goblin') S('M88 92 C64 76 40 74 20 82 C38 94 54 112 78 120 C86 118 92 104 88 92 Z', skin, { line: 1.6, inner: sf('M82 98 C66 86 48 82 32 84', skin.shadow, 4, 0.5, 1) });
+      if (c.ears === 'elf') S('M102 94 C80 86 58 76 40 72 C54 90 72 108 92 120 C100 118 106 106 102 94 Z', skin, { rim: false, inner: sf('M90 98 C76 90 62 82 50 78', skin.shadow, 3, 0.5, 1) + blob('M92 92 L108 92 L104 124 L90 124 Z', skin.base, 1, 3) }), raw(ln('M100 93 C80 86 58 76 40 72 C54 90 72 108 92 120', skin.edge, 1.8));
+      if (c.ears === 'goblin') S('M102 90 C72 74 44 74 24 82 C42 94 60 112 90 122 C98 120 106 104 102 90 Z', skin, { rim: false, inner: sf('M88 98 C70 86 52 82 36 84', skin.shadow, 4, 0.5, 1) + blob('M92 88 L110 88 L104 126 L90 126 Z', skin.base, 1, 3) }), raw(ln('M100 89 C72 74 44 74 24 82 C42 94 60 112 90 122', skin.edge, 1.8));
       if (c.scarf) S('M88 128 C106 140 142 140 164 126 C170 132 170 142 164 148 C142 158 108 158 90 150 C84 144 84 134 88 128 Z', T.scarf, { sh: 6, line: 1.4, inner: sf('M96 138 C114 146 138 146 158 136', T.scarf.shadow, 4, 0.4, 2) });
     }
     if (c.skullcap) S('M78 62 C80 32 104 16 130 18 C156 20 176 36 178 62 C162 54 142 50 126 52 C108 52 92 56 78 62 Z', tone('#ebe3d0'), { line: 1.6, inner:
@@ -195,39 +211,35 @@ function chibi(c) {
       hand(196, 157, 80); // la main du fond tient la poignée de l'arc
     }
     if (c.offhand === 'staff' || c.offhand === 'skullStaff') {
-      S(quad([176, 250], [176, 72], 8), wood, { rim: false });
+      S(quad([184, 250], [184, 72], 8), wood, { rim: false });
       if (c.offhand === 'staff') {
-        raw(`<circle cx="176" cy="48" r="30" fill="${c.orb ?? '#6fd0ff'}" opacity="0.5" filter="url(#glow)"/>`);
-        S('M160 80 C148 66 150 42 166 30 C160 46 164 62 174 72 Z M192 80 C204 66 202 42 186 30 C192 46 188 62 178 72 Z', gold, { sh: 3 });
-        raw(`<circle cx="176" cy="50" r="13.5" fill="${c.orb ?? '#6fd0ff'}"/><circle cx="176" cy="50" r="13.5" fill="url(#orbg)"/><ellipse cx="171" cy="44" rx="5" ry="3.4" fill="#fff" opacity="0.95"/>`);
+        raw(`<circle cx="184" cy="48" r="30" fill="${c.orb ?? '#6fd0ff'}" opacity="0.5" filter="url(#glow)"/>`);
+        S('M168 80 C156 66 158 42 174 30 C168 46 172 62 182 72 Z M200 80 C212 66 210 42 194 30 C200 46 196 62 186 72 Z', gold, { sh: 3 });
+        raw(`<circle cx="184" cy="50" r="13.5" fill="${c.orb ?? '#6fd0ff'}"/><circle cx="184" cy="50" r="13.5" fill="url(#orbg)"/><ellipse cx="179" cy="44" rx="5" ry="3.4" fill="#fff" opacity="0.95"/>`);
       } else {
-        raw(`<circle cx="178" cy="52" r="24" fill="${c.orb ?? '#b46cff'}" opacity="0.35" filter="url(#glow)"/>`);
-        S('M158 66 C156 44 166 30 178 30 C190 30 198 44 194 66 C190 74 184 78 176 78 C168 78 162 74 158 66 Z', tone('#ebe3d0'), { inner: `<ellipse cx="170" cy="52" rx="5.5" ry="6.5" fill="#22121c"/><ellipse cx="186" cy="52" rx="5" ry="6.5" fill="#22121c"/><path d="M178 60 l3 6 l-6 0 Z" fill="#22121c"/><circle cx="170" cy="52" r="2.6" fill="${c.orb ?? '#b46cff'}"/><circle cx="186" cy="52" r="2.6" fill="${c.orb ?? '#b46cff'}"/>` });
+        raw(`<circle cx="186" cy="52" r="24" fill="${c.orb ?? '#b46cff'}" opacity="0.35" filter="url(#glow)"/>`);
+        S('M166 66 C164 44 174 30 186 30 C198 30 206 44 202 66 C198 74 192 78 184 78 C176 78 170 74 166 66 Z', tone('#ebe3d0'), { inner: `<ellipse cx="178" cy="52" rx="5.5" ry="6.5" fill="#22121c"/><ellipse cx="194" cy="52" rx="5" ry="6.5" fill="#22121c"/><path d="M186 60 l3 6 l-6 0 Z" fill="#22121c"/><circle cx="178" cy="52" r="2.6" fill="${c.orb ?? '#b46cff'}"/><circle cx="194" cy="52" r="2.6" fill="${c.orb ?? '#b46cff'}"/>` });
       }
-      hand(176, 174, 80);
+      hand(184, 174, 80);
     }
     if (c.offhand === 'dagger') { const b2 = blade([172, 176], [210, 196], 9, 0.7); S(b2.d, steel, { sh: 3, inner: ln(b2.edge, '#fff', 1.6, 0.9) }); hand(168, 174, 30, { far: true }); }
     // bouclier : la main est derrière, on ne la voit pas ; sans rien en main, elle se voit au bout du bras
-    if (!c.offhand && c.farArm !== false) hand(168, 174, 40, { far: true });
+    if (!c.offhand && c.farArm !== false && c.weapon !== 'greatsword') hand(168, 174, 40, { far: true });
   });
 
-  // ================= Bras avant (d'un seul tenant), arme, épaulière =================
+  // ================= Main avant et son arme : toujours tout devant =================
   G(() => {
-    if (c.pose === 'shoulder') {
-      S('M86 136 C76 146 74 160 82 170 C92 178 106 176 120 170 L116 152 C108 156 100 156 98 150 C98 146 100 142 104 140 C98 134 90 134 86 136 Z', sleeve, { sh: 7 });
-      hand(123, 158, -30);
-    } else if (c.pose === 'draw') {
-      S('M86 136 C76 146 76 158 86 164 C102 170 124 166 146 162 L144 144 C128 148 112 150 102 146 C102 144 103 142 104 140 C98 134 90 134 86 136 Z', sleeve, { sh: 7 });
-      raw(`<path d="M146 152 l-9 -7 l15 2 Z M146 152 l-9 7 l15 -2 Z" fill="${accent.base}"/>`);
-      hand(150, 152, 5);
-    } else {
-      S('M86 136 C76 148 76 164 86 176 C98 186 114 190 130 188 L132 170 C120 170 108 166 102 158 C100 152 102 146 104 140 C98 134 90 134 86 136 Z', sleeve, { sh: 7 });
+    if (c.pose === 'shoulder') hand(123, 158, -30);
+    else if (c.pose === 'draw') { raw(`<path d="M146 152 l-9 -7 l15 2 Z M146 152 l-9 7 l15 -2 Z" fill="${accent.base}"/>`); hand(150, 152, 5); }
+    else {
       if (c.weapon === 'greatsword') {
         const bl = blade([150, 170], [214, 82], 22, 0.84), bt = T.blade ?? metal('#d5deeb');
-        S(quad([124, 192], [148, 172], 8), belt, { rim: false });
+        S(quad([112, 202], [148, 172], 8), belt, { rim: false }); // poignée longue : une main au-dessus de l'autre
+        raw(`<circle cx="110" cy="204" r="6.5" fill="${gold.base}" stroke="${gold.edge}" stroke-width="1.6"/>`);
         S(bl.d, bt, { sh: 5, inner: ln(bl.mid, bt.shadow, 5, 0.5) + ln(bl.edge, '#ffffff', 2.4) + (c.bladeGlow ? sf(bl.mid, c.bladeGlow, 7, 0.75, 2) + ln(bl.mid, '#fff2c0', 1.6, 0.95) : '') });
         S(quad([132, 152], [166, 190], 11), gold, { sh: 3 });
         if (c.bladeGlow) raw(`<path d="${bl.d}" fill="${c.bladeGlow}" opacity="0.28" filter="url(#glow)"/>`);
+        hand(122, 193, -35, { far: true }); // main du fond, plus bas sur la poignée
       }
       if (c.weapon === 'dagger') {
         const b1 = blade([146, 174], [196, 150], 10, 0.72);
@@ -237,11 +249,6 @@ function chibi(c) {
       if (c.weapon === 'club') S('M130 188 L150 170 C162 150 182 132 204 128 C216 132 220 146 214 158 C198 170 176 176 158 186 L140 196 Z', wood, { sh: 8, inner:
         [[192, 138], [204, 150], [182, 158]].map(([x, y]) => `<path d="M${x} ${y} l4 -9 l5 8 Z" fill="#e2dccc"/>`).join('') });
       hand(136, 178, c.weapon ? -35 : 20);
-    }
-    if (c.pad) {
-      const pt = T.padTone ?? steel;
-      S(c.pad === 'big' ? 'M62 142 C62 116 92 106 114 122 C120 138 110 154 92 158 C76 158 64 152 62 142 Z' : 'M70 140 C72 122 96 116 110 128 C112 140 104 150 92 152 C80 152 72 148 70 140 Z', pt, { sh: 8, inner:
-        sf(c.pad === 'big' ? 'M72 128 C84 116 100 116 110 126' : 'M78 130 C86 122 98 122 106 130', '#ffffff', 5, 0.7, 1) + ln(c.pad === 'big' ? 'M56 140 C74 154 98 156 122 130' : 'M64 139 C80 152 100 152 118 126', gold.base, 4) });
     }
   });
   return { defs: P.defs, body: P.body };

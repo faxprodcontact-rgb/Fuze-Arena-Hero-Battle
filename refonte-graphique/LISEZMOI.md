@@ -28,9 +28,30 @@ Pour régénérer : `node big.cjs` ou `node scene.cjs` (écrit un `.html`), puis
 5. **Mains et objets** : chaque objet tenu passe dans une main ; chaque main est au bout d'un bras visible (ou cachée
    derrière l'objet, comme pour le bouclier). Pas de main qui flotte, pas d'arme qui flotte.
 6. **Arc** : une main sur la poignée, l'autre sur la corde à l'encoche de la flèche ; la corde relie les deux bouts.
-7. **Oreilles** : devant les cheveux de la nuque ; avec une capuche, soit cachées, soit clairement par-dessus.
+7. **Oreilles** : attachées à la tête (aucun trait à la base, la racine se fond dans la peau, bord net seulement côté
+   extérieur) ; devant les cheveux de la nuque ; avec une capuche, la base est sur le visage, dans l'ouverture.
 8. **Casques et coiffes** : posés sur le crâne, bord net, ils couvrent ce qu'ils doivent couvrir (oreille sous un casque).
 9. **Articulations** : pas de trait au coude, au genou, à la cheville ; pas de contour entre deux pièces de même matière.
 10. **Visage** : deux yeux à l'intérieur du visage (l'œil du fond plus étroit), sourcils au-dessus, rien ne cache les yeux.
 11. **Lumière** : vient du même côté pour tous (y compris les ennemis retournés) ; ombre portée au sol sous chacun.
 12. **Lisibilité** : vérifier aussi à la taille réelle du jeu (personnage d'environ 65 px de haut sur un téléphone).
+
+## Priorités de superposition (qui passe devant quoi)
+
+Règle générale, de l'arrière vers l'avant. À revérifier pour CHAQUE personnage, car l'ordre dépend de ce qu'il porte :
+
+1. Derrière le corps : cape, pans d'écharpe, cheveux longs du dos, carquois, oreille du fond.
+2. Bras du fond (sauf s'il croise devant le buste, comme pour l'épée à deux mains : alors il passe devant la tunique).
+3. Jambes, puis tunique ou robe, ceinture, plastron.
+4. Bras avant (la manche) : il passe sur le corps…
+5. …mais SOUS tout ce qui se porte par-dessus l'épaule ou autour du cou : épaulière, puis arme posée sur l'épaule
+   (son manche repose sur l'épaulière), puis cache-cou / écharpe / col de capuche.
+6. Tête : visage, barbe (elle tombe devant le cache-cou et l'épaulière), cheveux, puis casque ou capuche par-dessus les
+   cheveux ; l'écharpe d'un personnage à capuche se noue par-dessus la capuche.
+7. Ce que tient la main du fond et qui est devant le corps : bouclier, arc, bâton (la main sur l'objet, sauf le bouclier
+   qui la cache).
+8. Tout devant : la main avant et son arme.
+
+Questions à se poser pour un nouvel équipement : est-il porté dessous ou dessus (une cape passe sur les épaulières, un
+plastron sous l'écharpe) ? Fait-il le tour de quelque chose (alors il se peint dans cette forme) ? Est-il tenu (alors une
+main est dessus) ? Cache-t-il quelque chose (un casque cache l'oreille, un masque cache le nez et la bouche) ?
