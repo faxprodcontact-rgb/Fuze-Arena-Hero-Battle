@@ -568,7 +568,7 @@ button.war-fort:disabled { opacity: 0.6; }
   box-shadow: 0 0 0 9999px #00000055, 0 0 18px #ffe27a; animation: tuto-pulse 1s ease-in-out infinite alternate; }
 .tuto-hand { position: absolute; font-size: 44px; line-height: 1; transform: translate(-20%, 10%); filter: drop-shadow(0 3px 4px #000a);
   animation: tuto-tap 0.9s ease-in-out infinite; }
-.tuto-skip { position: fixed; z-index: 901; left: 12px; bottom: calc(86px + env(safe-area-inset-bottom, 0px)); width: 40px; height: 40px;
+.tuto-skip { position: fixed; z-index: 901; right: 12px; top: calc(78px + env(safe-area-inset-top, 0px)); width: 40px; height: 40px;
   border-radius: 50%; background: #0009; color: #fff; font: 800 22px var(--font-title); border: 2px solid #ffffff44; }
 @keyframes tuto-pulse { to { border-color: #fff; } }
 @keyframes tuto-tap { 0%, 100% { transform: translate(-20%, 10%); } 50% { transform: translate(-20%, 30%) scale(0.9); } }
