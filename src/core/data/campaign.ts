@@ -10,12 +10,12 @@ export interface Anchor {
 export const CAMPAIGN_ANCHORS: Anchor[] = [
   { stage: 1, power: 50 },
   { stage: 15, power: 870 },
-  { stage: 120, power: 3287 },
-  { stage: 360, power: 10282 },
-  { stage: 600, power: 21068 },
-  { stage: 800, power: 33657 },
-  { stage: 950, power: 46020 },
-  { stage: 1100, power: 77061 },
+  { stage: 120, power: 3175 },
+  { stage: 360, power: 10306 },
+  { stage: 700, power: 23370 },
+  { stage: 900, power: 32328 },
+  { stage: 1080, power: 52277 },
+  { stage: 1200, power: 86056 },
 ];
 
 export function curveFromAnchors(anchors: readonly Anchor[]): (stage: number) => number {

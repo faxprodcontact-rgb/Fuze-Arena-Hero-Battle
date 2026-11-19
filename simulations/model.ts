@@ -1,14 +1,9 @@
 // Modèle d'un joueur pour les simulations de progression.
 // Il joue ses sessions, récolte son butin, invoque, fusionne, monte ses héros et avance en campagne.
 import {
-  CHAPTER_SUMMONS,
-  CRYSTALS_FROM_STAGE,
-  CRYSTALS_PER_DAY,
-  FRAGMENTS_FROM_DAY,
-  FRAGMENTS_PER_DAY,
-  JOKER_EVERY_DAYS,
-  JOKER_FROM_DAY,
+  CAMPAIGN_STAGES,
   OFFLINE_CAP_HOURS,
+  REWARDS,
   SLOT_UNLOCK_STAGES,
   STAGE_REWARD_HOURS,
   STAGES_PER_CHAPTER,
@@ -16,7 +11,7 @@ import {
   incomePerHour,
   levelCost,
 } from '../src/core/data/economy';
-import { heroDef } from '../src/core/data/heroes';
+import { heroDef, heroesOf } from '../src/core/data/heroes';
 import { FRAGMENTS_PER_COPY, MAX_YELLOW, MYTHIC_STARS, RARITY_RULES } from '../src/core/data/stars';
 import { GEAR_GAIN, LEVEL_GAIN, levelCap } from '../src/core/data/stats';
 import { applyFusion, canGainStar, planFusion } from '../src/core/fusion';
@@ -46,12 +41,12 @@ export interface Profile {
 /** Puissance demandée pour gagner un niveau de campagne. */
 export type Curve = (stage: number) => number;
 
-export const STARTER_HERO = 'knights-3';
+export const STARTER_HERO = heroesOf('knights', 'epic')[0]!.id;
 export const TUTORIAL_SUMMONS = 10;
 /** Un combat dure 20 à 40 s ; en vitesse ×2 avec l'écran de victoire, environ 20 s. */
 const FIGHT_MINUTES = 1 / 3;
 
-export type Milestone = 'legendary' | 'star5' | 'red1' | 'red5' | 'teamRed' | 'mythic';
+export type Milestone = 'legendary' | 'star5' | 'red1' | 'red5' | 'teamRed' | 'mythic' | 'campaignEnd' | 'teamMythic';
 
 export interface DaySnapshot {
   day: number;
@@ -132,9 +127,9 @@ export class PlayerSim {
         this.summonsPending += this.profile.dailySummons;
         for (let i = 0; i < this.profile.dailyBasicSummons; i++) this.addHero(summonBasic(this.rng).id);
       }
-      if (day >= FRAGMENTS_FROM_DAY) this.fragments += FRAGMENTS_PER_DAY;
-      if (this.stage >= CRYSTALS_FROM_STAGE) this.crystals += CRYSTALS_PER_DAY;
-      if (day >= JOKER_FROM_DAY && (day - JOKER_FROM_DAY) % JOKER_EVERY_DAYS === 0) this.addJoker();
+      if (day >= REWARDS.fragmentsFromDay) this.fragments += REWARDS.fragmentsPerDay;
+      if (this.stage >= REWARDS.crystalsFromStage) this.crystals += REWARDS.crystalsPerDay;
+      if (day >= REWARDS.jokerFromDay && (day - REWARDS.jokerFromDay) % REWARDS.jokerEveryDays === 0) this.addJoker();
     }
     this.manage();
     this.campaign(minutes, day);
@@ -142,7 +137,7 @@ export class PlayerSim {
 
   private campaign(minutes: number, day: number): void {
     let left = minutes;
-    while (left >= FIGHT_MINUTES) {
+    while (left >= FIGHT_MINUTES && this.stage < CAMPAIGN_STAGES) {
       left -= FIGHT_MINUTES;
       if (teamPower(this.team()) < this.curve(this.stage + 1)) break;
       this.stage += 1;
@@ -151,7 +146,7 @@ export class PlayerSim {
         this.tutorialDone = true;
         this.tutorialSummons();
       }
-      if (this.stage % STAGES_PER_CHAPTER === 0) this.summonsPending += CHAPTER_SUMMONS;
+      if (this.stage % STAGES_PER_CHAPTER === 0) this.summonsPending += REWARDS.chapterSummons;
       this.manage();
       this.checkMilestones(day);
     }
@@ -166,7 +161,7 @@ export class PlayerSim {
     if (!fresh.some((h) => heroDef(h.defId).rarity === 'epic')) {
       const last = fresh[fresh.length - 1]!;
       this.roster = this.roster.filter((h) => h.uid !== last.uid);
-      this.addHero('mages-3');
+      this.addHero(heroesOf('mages', 'epic')[0]!.id);
     }
   }
 
@@ -200,7 +195,7 @@ export class PlayerSim {
       .sort((a, b) => b.stars - a.stars)[0];
     if (!best) return;
     const faction = heroDef(best.defId).faction;
-    const joker = this.addHero(`${faction}-3`);
+    const joker = this.addHero(heroesOf(faction, 'epic')[0]!.id);
     joker.stars = MAX_YELLOW;
   }
 
@@ -291,6 +286,8 @@ export class PlayerSim {
     mark('red5', stars.some((s) => s >= 2 * MAX_YELLOW));
     mark('teamRed', team.length === 5 && team.every((h) => h.stars > MAX_YELLOW));
     mark('mythic', stars.some((s) => s >= MYTHIC_STARS));
+    mark('teamMythic', team.length === 5 && team.every((h) => h.stars >= MYTHIC_STARS));
+    mark('campaignEnd', this.stage >= CAMPAIGN_STAGES);
   }
 
   private snapshot(day: number): void {

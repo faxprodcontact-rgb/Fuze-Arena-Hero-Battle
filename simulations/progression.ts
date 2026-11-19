@@ -7,28 +7,30 @@ import { starLabel } from '../src/core/data/stars';
 import { PlayerSim, type Milestone, type Profile } from './model';
 import { PROFILES, REGULAR } from './profiles';
 
-const DAYS = 730;
+const DAYS = 300;
 const SEEDS = 30;
-const CALIBRATION_SEEDS = [1, 2, 3, 4, 5];
+const CALIBRATION_SEEDS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
 
 /** Rythme visé pour le joueur régulier (cahier de conception, partie Progression). */
 const TARGETS: { label: string; hours: number; stage: number }[] = [
   { label: '10 premières minutes', hours: 0, stage: 15 },
   { label: 'Jour 1', hours: 24 - 0.01, stage: 120 },
   { label: 'Semaine 1', hours: 7 * 24 - 0.01, stage: 360 },
-  { label: 'Mois 1', hours: 30 * 24 - 0.01, stage: 600 },
-  { label: 'Mois 3', hours: 90 * 24 - 0.01, stage: 800 },
-  { label: 'Mois 6', hours: 180 * 24 - 0.01, stage: 950 },
-  { label: 'An 1', hours: 365 * 24 - 0.01, stage: 1100 },
+  { label: 'Mois 1', hours: 30 * 24 - 0.01, stage: 700 },
+  { label: 'Mois 2', hours: 60 * 24 - 0.01, stage: 900 },
+  { label: 'Mois 4', hours: 120 * 24 - 0.01, stage: 1080 },
+  { label: 'Mois 6,5 : fin de la campagne', hours: 200 * 24 - 0.01, stage: 1200 },
 ];
 
 const MILESTONES: { id: Milestone; label: string; target: string }[] = [
-  { id: 'legendary', label: 'Premier Légendaire', target: 'semaine 1' },
-  { id: 'star5', label: 'Premier héros ★5', target: 'mois 1' },
-  { id: 'red1', label: 'Première étoile rouge', target: 'mois 6' },
-  { id: 'red5', label: 'Premier ★5 rouge', target: '—' },
-  { id: 'teamRed', label: 'Section entière en étoiles rouges', target: 'plus d’un an' },
-  { id: 'mythic', label: 'Premier Mythique', target: '—' },
+  { id: 'legendary', label: 'Premier Légendaire', target: 'jour 1' },
+  { id: 'star5', label: 'Premier héros ★5', target: 'semaine 2' },
+  { id: 'red1', label: 'Première étoile rouge', target: 'mois 2' },
+  { id: 'teamRed', label: 'Section entière en étoiles rouges', target: 'mois 4' },
+  { id: 'red5', label: 'Premier ★5 rouge', target: 'mois 5,5' },
+  { id: 'mythic', label: 'Premier Mythique', target: 'mois 6' },
+  { id: 'campaignEnd', label: 'Fin de la campagne', target: 'mois 6,5' },
+  { id: 'teamMythic', label: 'Section entière Mythique', target: 'mois 7' },
 ];
 
 function stageAt(profile: Profile, anchors: Anchor[], hours: number, seed: number): number {
@@ -56,7 +58,7 @@ function calibrate(): Anchor[] {
   for (const target of TARGETS) {
     let lo = Math.log(anchors[anchors.length - 1]!.power);
     let hi = lo + Math.log(1000);
-    for (let i = 0; i < 28; i++) {
+    for (let i = 0; i < 22; i++) {
       const mid = (lo + hi) / 2;
       const trial = [...anchors, { stage: target.stage, power: Math.exp(mid) }];
       const stages = CALIBRATION_SEEDS.map((seed) => stageAt(REGULAR, trial, target.hours, seed));
@@ -84,7 +86,7 @@ function report(anchors: Anchor[]): void {
 
     const rows: string[] = [];
     rows.push(`  10 premières minutes : niveau ${median(sims.map((s) => s.stageAfterFirstSession))}`);
-    for (const day of [0, 6, 29, 89, 179, 364, DAYS - 1]) {
+    for (const day of [0, 6, 29, 59, 119, 199, DAYS - 1]) {
       const stages = sims.map((s) => s.days[day]!.stage);
       const ref = sims[0]!.days[day]!;
       const levels = sims.map((s) => median(s.days[day]!.teamLevels));
@@ -115,7 +117,8 @@ function report(anchors: Anchor[]): void {
       let longest = 0;
       let run = 0;
       let total = 0;
-      for (let d = 7; d < 365; d++) {
+      const end = Math.min(DAYS, Math.floor(s.milestones.campaignEnd ?? DAYS));
+      for (let d = 7; d < end; d++) {
         const flat = s.days[d]!.stage === s.days[d - 1]!.stage;
         run = flat ? run + 1 : 0;
         total += flat ? 1 : 0;
@@ -124,7 +127,7 @@ function report(anchors: Anchor[]): void {
       return { longest, total };
     });
     console.log(
-      `  Jours sans gagner de niveau de campagne (jours 8 à 365) : ${median(stalls.map((x) => x.total))}` +
+      `  Jours sans gagner de niveau de campagne (de la semaine 2 à la fin de la campagne) : ${median(stalls.map((x) => x.total))}` +
         `, plus longue série : ${median(stalls.map((x) => x.longest))} jours`,
     );
     console.log(`  Invocations faites en ${DAYS} jours : ${median(sims.map((s) => s.summonsDone))}`);

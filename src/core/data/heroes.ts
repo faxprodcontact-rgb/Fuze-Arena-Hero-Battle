@@ -1,11 +1,16 @@
-// Liste provisoire des 30 héros du lancement : 6 factions × (1 Commun, 1 Rare, 2 Épiques, 1 Légendaire).
-// Les vrais noms viendront avec l'univers ; ici seule la structure compte.
-import { ELEMENTS, FACTIONS, ROLES, type HeroDef, type Rarity } from '../types';
+// Liste provisoire des 72 héros du lancement : 6 factions × 12 héros
+// (2 Communs, 3 Rares, 4 Épiques, 3 Légendaires). Les vrais noms viendront avec l'univers.
+import { ELEMENTS, FACTIONS, ROLES, type Faction, type HeroDef, type Rarity } from '../types';
 
-const SLOTS: Rarity[] = ['common', 'rare', 'epic', 'epic', 'legendary'];
+export const HEROES_PER_FACTION: Rarity[] = [
+  'common', 'common',
+  'rare', 'rare', 'rare',
+  'epic', 'epic', 'epic', 'epic',
+  'legendary', 'legendary', 'legendary',
+];
 
 export const HEROES: HeroDef[] = FACTIONS.flatMap((faction, f) =>
-  SLOTS.map((rarity, i) => ({
+  HEROES_PER_FACTION.map((rarity, i) => ({
     id: `${faction}-${i + 1}`,
     faction,
     rarity,
@@ -20,4 +25,9 @@ export function heroDef(id: string): HeroDef {
   const def = BY_ID.get(id);
   if (!def) throw new Error(`Héros inconnu : ${id}`);
   return def;
+}
+
+/** Les héros d'une faction et d'une rareté, dans l'ordre de la liste. */
+export function heroesOf(faction: Faction, rarity: Rarity): HeroDef[] {
+  return HEROES.filter((h) => h.faction === faction && h.rarity === rarity);
 }

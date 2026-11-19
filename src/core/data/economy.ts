@@ -25,23 +25,20 @@ export const STAGE_REWARD_HOURS = 0.25;
 
 export const STAGES_PER_CHAPTER = 40;
 export const CAMPAIGN_STAGES = 1200;
-/** Parchemins d'invocation donnés à la fin de chaque chapitre. */
-export const CHAPTER_SUMMONS = 5;
-
 /** Places de la section : la place n°i s'ouvre une fois ce niveau de campagne gagné. */
 export const SLOT_UNLOCK_STAGES = [0, 4, 10, 20, 40];
 
-/** Cristaux d'éveil : gagnés chaque jour une fois ce niveau de campagne atteint. */
-export const CRYSTALS_FROM_STAGE = 900;
-export const CRYSTALS_PER_DAY = 3;
-
-/** Fragments du héros choisi, gagnés chaque jour dans les boutiques, à partir de ce jour. */
-export const FRAGMENTS_FROM_DAY = 7;
-export const FRAGMENTS_PER_DAY = 5;
-
-/**
- * Héros jokers ★5 (tour, événements, guilde) : un tous les `JOKER_EVERY_DAYS` jours à partir du jour `JOKER_FROM_DAY`.
- * Ils remplacent un héros ★5 de la même faction à sacrifier.
- */
-export const JOKER_FROM_DAY = 90;
-export const JOKER_EVERY_DAYS = 45;
+/** Récompenses qui font avancer les étoiles (réglées par les simulations). */
+export const REWARDS = {
+  /** Parchemins d'invocation donnés à la fin de chaque chapitre. */
+  chapterSummons: 5,
+  /** Fragments du Légendaire choisi, gagnés chaque jour dans les boutiques, à partir de ce jour. */
+  fragmentsFromDay: 7,
+  fragmentsPerDay: 20,
+  /** Héros jokers ★5 (tour, événements, guilde) : un tous les `jokerEveryDays` jours à partir du jour `jokerFromDay`. */
+  jokerFromDay: 30,
+  jokerEveryDays: 15,
+  /** Cristaux d'éveil : gagnés chaque jour une fois ce niveau de campagne atteint. */
+  crystalsFromStage: 900,
+  crystalsPerDay: 5,
+};
