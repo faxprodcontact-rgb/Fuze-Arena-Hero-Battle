@@ -2,5 +2,7 @@
 import { render } from 'preact';
 import { App } from './ui/app';
 import './ui/style.css';
+import { watchUpdates } from './updater';
 
 render(<App />, document.getElementById('game')!);
+watchUpdates();
