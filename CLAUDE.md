@@ -34,6 +34,9 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   de trois-quarts façon Idle Heroes, dessinés par le code. AVANT de montrer un personnage, passer la **liste de contrôle
   de cohérence** de `refonte-graphique/LISEZMOI.md` (cheveux d'un seul tenant, capuche fermée, ceintures d'un bord à
   l'autre, mains et objets, etc.) en le regardant en grand, et montrer la scène dans l'écran réel du jeu.
+  Essai d'images par IA fait le 19/11/2026 (`refonte-graphique/essai-ia/`, 10 crédits gratuits Higgsfield, épuisés) :
+  rendu peint bien plus beau, animation possible par poses. Le propriétaire doit encore choisir entre IA et dessin par
+  code. Ne jamais dépenser de crédits sans son accord.
 - Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 

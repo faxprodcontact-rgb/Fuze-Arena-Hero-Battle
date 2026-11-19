@@ -55,3 +55,8 @@ Règle générale, de l'arrière vers l'avant. À revérifier pour CHAQUE person
 Questions à se poser pour un nouvel équipement : est-il porté dessous ou dessus (une cape passe sur les épaulières, un
 plastron sous l'écharpe) ? Fait-il le tour de quelque chose (alors il se peint dans cette forme) ? Est-il tenu (alors une
 main est dessus) ? Cache-t-il quelque chose (un casque cache l'oreille, un masque cache le nez et la bouche) ?
+
+## Essai d'images par IA
+
+Voir `essai-ia/LISEZMOI.md` : 5 images d'essai (héros, ennemis, décor, version grosses têtes, poses d'animation),
+les outils de découpe et ce qu'on a appris.
