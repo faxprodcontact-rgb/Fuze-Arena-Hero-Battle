@@ -1,8 +1,9 @@
 // Fiche d'un héros : niveau, équipement, compétence et talent de chef (la fusion se fait sur sa page).
+import { useState } from 'preact/hooks';
 import { heroToUnit } from '../../../core/battle/units';
 import type { Talent } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
-import { GEAR_SLOTS } from '../../../core/data/items';
+import { GEAR_SLOTS, type GearSlot } from '../../../core/data/items';
 import { levelCap } from '../../../core/data/stats';
 import { ELEMENT_COLOR, RARITY_COLOR, heroImage } from '../../art';
 import { fmt, t } from '../../i18n';
@@ -10,6 +11,7 @@ import { canReset, equipBest, levelUp, toggleInFormation, unequipAll } from '../
 import { canLevelUp, gearPct, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import { Btn, Cur, Icon, ItemIcon, Modal, Stars } from '../kit';
+import { SlotPanel, betterInBag } from './bag';
 import { close, open, toast } from '../nav';
 
 export function talentText(talent: Talent): string {
@@ -25,6 +27,8 @@ export function talentText(talent: Talent): string {
 
 export function HeroDetail({ uid }: { uid: number }) {
   const s = useGame();
+  // Emplacement ouvert : le choix des objets s'affiche directement sous l'équipement.
+  const [gearSlot, setGearSlot] = useState<GearSlot | undefined>(undefined);
   const hero = heroByUid(s, uid);
   if (!hero) return null;
   const d = heroDef(hero.defId);
@@ -84,12 +88,14 @@ export function HeroDetail({ uid }: { uid: number }) {
         </div>
         <div class="items-row">
           {GEAR_SLOTS.map((slot) => (
-            <div class="item-cell">
-              <ItemIcon item={items[slot]} slot={slot} level={slotLevel(s, uid, slot)} onClick={() => open({ type: 'slot', heroUid: uid, slot })} />
+            <div class={`item-cell${gearSlot === slot ? ' on' : ''}`}>
+              <ItemIcon item={items[slot]} slot={slot} level={slotLevel(s, uid, slot)} onClick={() => setGearSlot(gearSlot === slot ? undefined : slot)} />
+              {betterInBag(s, uid, slot) && <span class="better">▲</span>}
               <span class="muted small">{t(`slot.${slot}`)}</span>
             </div>
           ))}
         </div>
+        {gearSlot && <SlotPanel heroUid={uid} slot={gearSlot} />}
       </section>
 
       <section class="block">

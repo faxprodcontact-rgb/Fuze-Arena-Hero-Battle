@@ -13,7 +13,7 @@ import { close, go, open, startBattle, useNav, type Modal, type Tab } from './na
 import { AdventureScreen } from './screens/adventure';
 import { CampaignScreen, FastLootModal } from './screens/campaign';
 import { Prep } from './screens/prep';
-import { ItemModal, SlotModal } from './screens/bag';
+import { ItemModal } from './screens/bag';
 import { ForgePage } from './screens/forge';
 import { FusionPage } from './screens/fusion';
 import { ResetPage } from './screens/reset';
@@ -86,7 +86,6 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'forge': return <ForgePage />;
     case 'reset': return <ResetPage uid={modal.uid} />;
     case 'item': return <ItemModal uid={modal.uid} />;
-    case 'slot': return <SlotModal heroUid={modal.heroUid} slot={modal.slot} />;
     case 'legal': return <LegalModal doc={modal.doc} />;
   }
 }

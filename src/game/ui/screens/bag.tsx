@@ -1,5 +1,5 @@
 // Sac : tous les objets, la forge (3 identiques → rareté au-dessus), le recyclage en poussière de forge,
-// et la fenêtre d'un emplacement de héros (choisir l'objet, renforcer l'emplacement).
+// et le panneau d'un emplacement de héros (choisir l'objet, renforcer l'emplacement), affiché dans la fiche du héros.
 import { useState } from 'preact/hooks';
 import { heroDef } from '../../../core/data/heroes';
 import {
@@ -145,42 +145,59 @@ export function ItemModal({ uid }: { uid: number }) {
   );
 }
 
-export function SlotModal({ heroUid, slot }: { heroUid: number; slot: GearSlot }) {
+/** Y a-t-il dans le sac un objet meilleur que celui porté sur cet emplacement ? */
+export function betterInBag(s: PlayerState, heroUid: number, slot: GearSlot): boolean {
+  const current = s.items.find((it) => it.heroUid === heroUid && it.slot === slot);
+  const now = current ? itemBonus(current) : 0;
+  return s.items.some((it) => it.slot === slot && it.heroUid === undefined && itemBonus(it) > now);
+}
+
+/**
+ * Un emplacement d'un héros : renforcer l'emplacement, et choisir l'objet d'un geste
+ * (objets du sac d'abord, puis ceux portés par d'autres héros, qu'on peut leur reprendre).
+ */
+export function SlotPanel({ heroUid, slot }: { heroUid: number; slot: GearSlot }) {
   const s = useGame();
-  const hero = heroByUid(s, heroUid);
-  if (!hero) return null;
   const level = slotLevel(s, heroUid, slot);
   const current = s.items.find((it) => it.heroUid === heroUid && it.slot === slot);
+  const now = current ? itemBonus(current) : 0;
   const bag = sortItems(s.items.filter((it) => it.slot === slot && it.heroUid === undefined));
+  const worn = sortItems(s.items.filter((it) => it.slot === slot && it.heroUid !== undefined && it.heroUid !== heroUid));
   const cost = level < SLOT_MAX_LEVEL ? slotUpgradeCost(level) : null;
   const ok = !!cost && s.wallet.gold >= cost.gold && s.wallet.dust >= cost.dust;
+  const choice = (it: Item) => {
+    const o = owner(s, it);
+    return (
+      <span class="pickable">
+        <ItemIcon item={it} level={level} hideLevel heroDefId={o?.defId} onClick={() => equipItem(it.uid, heroUid)} />
+        {itemBonus(it) > now && <span class="better">▲</span>}
+      </span>
+    );
+  };
   return (
-    <Modal title={`${heroDef(hero.defId).name} · ${t(`slot.${slot}`)}`}>
-      <section class="block">
-        <div class="row between center-y">
-          <ItemIcon item={current} slot={slot} level={level} onClick={() => current && open({ type: 'item', uid: current.uid })} />
-          <div class="grow slot-info">
-            <strong>{t('slot.level', { n: level })} / {SLOT_MAX_LEVEL}</strong>
-            {current && (
-              <span class="muted">
-                +{equippedBonus(current, level)} %{cost && <> → <b class="gold-text">+{equippedBonus(current, level + 1)} %</b></>}
-              </span>
-            )}
-          </div>
+    <div class="slot-panel">
+      <div class="row between center-y">
+        <div class="grow slot-info">
+          <strong>{t('slot.level', { n: level })} / {SLOT_MAX_LEVEL}</strong>
+          {current && (
+            <span class="muted">
+              +{equippedBonus(current, level)} %{cost && <> → <b class="gold-text">+{equippedBonus(current, level + 1)} %</b></>}
+            </span>
+          )}
         </div>
-        {cost ? (
-          <Btn kind="gold" wide disabled={!ok} onClick={() => upgradeSlot(heroUid, slot)}>
-            {t('slot.upgrade')} <Cur k="gold" n={cost.gold} /> <Cur k="dust" n={cost.dust} />
-          </Btn>
-        ) : <p class="center gold-text">{t('slot.max')}</p>}
         {current && <Btn kind="ghost" small onClick={() => unequipItem(current.uid)}>{t('item.unequip')}</Btn>}
-      </section>
-      <h3>{t('slot.choose')}</h3>
-      {bag.length === 0 ? <p class="muted">{t('bag.empty')}</p> : (
+      </div>
+      {cost ? (
+        <Btn kind="gold" wide disabled={!ok} onClick={() => upgradeSlot(heroUid, slot)}>
+          {t('slot.upgrade')} <Cur k="gold" n={cost.gold} /> <Cur k="dust" n={cost.dust} />
+        </Btn>
+      ) : <p class="center gold-text">{t('slot.max')}</p>}
+      {bag.length + worn.length === 0 ? <p class="muted center">{t('bag.empty')}</p> : (
         <div class="item-grid">
-          {bag.map((it) => <ItemIcon item={it} level={level} hideLevel onClick={() => equipItem(it.uid, heroUid)} />)}
+          {bag.map(choice)}
+          {worn.map(choice)}
         </div>
       )}
-    </Modal>
+    </div>
   );
 }
