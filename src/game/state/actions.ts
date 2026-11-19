@@ -380,15 +380,11 @@ export function campaignBattle(): BattleRequest {
 export function towerBattle(): BattleRequest {
   return update((s) => {
     const floor = s.tower.floor + 1;
-    const stage = Math.max(1, floor * TOWER_STAGE_PER_FLOOR);
     return {
       kind: 'tower' as const,
       title: `${floor}`,
       heroes: teamUnits(s),
-      waves: buildWaves({
-        power: stagePower(stage), count: 5, waves: floor % 10 === 0 ? 2 : 1, element: chapterElement(floor),
-        seed: floor * 104729, boss: floor % 10 === 0 ? BOSSES[(floor / 10) % BOSSES.length] : undefined,
-      }),
+      waves: towerWaves(floor),
       seed: seedFor(s),
     };
   });
@@ -403,10 +399,7 @@ export function dungeonBattle(kind: DungeonKind, tier: number): BattleRequest {
     kind: 'dungeon' as const,
     title: `${tier + 1}`,
     heroes: teamUnits(s),
-    waves: buildWaves({
-      power: referencePower(s) * DUNGEON_TIERS[tier]!, count: Math.min(5, s.formation.length), waves: 2,
-      element: (['fire', 'water', 'earth'] as const)[['gold', 'essence', 'gear'].indexOf(kind)]!, seed: tier * 31 + kind.length,
-    }),
+    waves: dungeonPreview(s, kind, tier),
     seed: seedFor(s),
     dungeon: { kind, tier },
   }));
@@ -448,13 +441,85 @@ export function arenaBattle(opponentId: string): BattleRequest | null {
   return update((s) => {
     const o = s.arena.opponents.find((x) => x.id === opponentId);
     if (!o || s.daily.arenaFights >= ARENA_FREE_TICKETS) return null;
-    const enemies = o.team.map((m, i) => ({
-      ...heroToUnit({ uid: 9000 + i, defId: m.defId, stars: m.stars, level: m.level }, m.slot),
-      id: `e-0-${i}`,
-      side: 'enemy' as const,
-    }));
-    return { kind: 'arena' as const, title: o.name, heroes: teamUnits(s), waves: [enemies], seed: seedFor(s), opponentId };
+    return { kind: 'arena' as const, title: o.name, heroes: teamUnits(s), waves: [arenaEnemies(o)], seed: seedFor(s), opponentId };
   });
+}
+
+/**
+ * Un combat avant son lancement : ce que montre l'écran de préparation (ennemis, force demandée),
+ * puis `build` crée le vrai combat avec la section choisie.
+ */
+export interface BattlePlan {
+  kind: BattleKind;
+  title: string;
+  waves: UnitInit[][];
+  need?: number;
+  build: () => BattleRequest | null;
+}
+
+export function campaignPlan(): BattlePlan {
+  const s = getState();
+  const stage = s.campaign.cleared + 1;
+  return {
+    kind: 'campaign', title: `${chapterOf(stage)}-${((stage - 1) % STAGES_PER_CHAPTER) + 1}`,
+    waves: campaignWaves(stage), need: stagePower(stage), build: campaignBattle,
+  };
+}
+
+export function towerPlan(): BattlePlan {
+  const floor = getState().tower.floor + 1;
+  return {
+    kind: 'tower', title: `${floor}`, need: stagePower(floor * TOWER_STAGE_PER_FLOOR),
+    waves: towerWaves(floor), build: towerBattle,
+  };
+}
+
+function towerWaves(floor: number): UnitInit[][] {
+  return buildWaves({
+    power: stagePower(Math.max(1, floor * TOWER_STAGE_PER_FLOOR)), count: 5, waves: floor % 10 === 0 ? 2 : 1,
+    element: chapterElement(floor), seed: floor * 104729, boss: floor % 10 === 0 ? BOSSES[(floor / 10) % BOSSES.length] : undefined,
+  });
+}
+
+export function dungeonPlan(kind: DungeonKind, tier: number): BattlePlan {
+  const s = getState();
+  const req = dungeonPreview(s, kind, tier);
+  return { kind: 'dungeon', title: `${tier + 1}`, waves: req, need: referencePower(s) * DUNGEON_TIERS[tier]!, build: () => dungeonBattle(kind, tier) };
+}
+
+function dungeonPreview(s: PlayerState, kind: DungeonKind, tier: number): UnitInit[][] {
+  return buildWaves({
+    power: referencePower(s) * DUNGEON_TIERS[tier]!, count: Math.min(5, Math.max(1, s.formation.length)), waves: 2,
+    element: (['fire', 'water', 'earth'] as const)[['gold', 'essence', 'gear'].indexOf(kind)]!, seed: tier * 31 + kind.length,
+  });
+}
+
+export function dailyBossPlan(): BattlePlan {
+  return { kind: 'dailyBoss', title: dailyBossId(), waves: bossWave(getState(), dailyBossId(), 12, 7), build: dailyBossBattle };
+}
+
+export function guildBossPlan(): BattlePlan {
+  return { kind: 'guildBoss', title: 'dragon', waves: bossWave(getState(), 'dragon', 40, 11), build: guildBossBattle };
+}
+
+export function arenaPlan(opponentId: string): BattlePlan | null {
+  const o = getState().arena.opponents.find((x) => x.id === opponentId);
+  if (!o) return null;
+  return { kind: 'arena', title: o.name, waves: [arenaEnemies(o)], need: opponentPower(o), build: () => arenaBattle(opponentId) };
+}
+
+function arenaEnemies(o: ArenaOpponent): UnitInit[] {
+  return o.team.map((m, i) => ({
+    ...heroToUnit({ uid: 9000 + i, defId: m.defId, stars: m.stars, level: m.level }, m.slot),
+    id: `e-0-${i}`,
+    side: 'enemy' as const,
+  }));
+}
+
+/** Le combat permanent de l'accueil : la section contre les vagues du dernier niveau gagné. */
+export function idleSetup(): { heroes: UnitInit[]; waves: UnitInit[][] } {
+  const s = getState();
+  return { heroes: teamUnits(s), waves: campaignWaves(Math.max(1, s.campaign.cleared)) };
 }
 
 /** Le résultat d'un combat : récompenses selon le mode. */
@@ -842,3 +907,8 @@ export function resetGame(): void {
   ensureDay();
 }
 
+
+/** Lance le combat préparé avec la section actuelle. */
+export function startBattleFromPlan(plan: BattlePlan): BattleRequest | null {
+  return plan.build();
+}

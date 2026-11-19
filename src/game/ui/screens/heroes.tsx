@@ -1,66 +1,58 @@
-// Héros : la section (5 postes) et toute la collection.
+// Héros : la collection (tri, filtre par faction), la section et la fusion groupée.
 import { useState } from 'preact/hooks';
-import { LEADER_SLOT, type Slot } from '../../../core/battle/types';
+import { LEADER_SLOT } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
-import { FACTIONS, type Faction } from '../../../core/types';
+import { FACTIONS, RARITIES, type Faction, type Hero } from '../../../core/types';
 import { FACTION_COLOR, heroImage } from '../../art';
-import { t } from '../../i18n';
-import { autoFormation, fuseAllSimple, swapSlots } from '../../state/actions';
-import { heroByUid, heroPower, slotCount, sortedHeroes, teamPower } from '../../state/selectors';
+import { fmt, t } from '../../i18n';
+import { fuseAllSimple, fusionPreview } from '../../state/actions';
+import { canLevelUp, heroPower, teamHeroes, teamPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import { Btn, HeroCard, Icon, Stars } from '../kit';
-import { open, toast } from '../nav';
+import type { PlayerState } from '../../state/types';
+import { Btn, HeroCard, Icon, RedDot } from '../kit';
+import { open, prepare, toast } from '../nav';
 
-/** Position des postes sur le plateau : l'avant est à droite, comme au combat. */
-const BOARD: Record<Slot, [number, number]> = { 3: [0, 0], 4: [0, 1], 2: [1, 0.5], 0: [2, 0], 1: [2, 1] };
+type Sort = 'power' | 'stars' | 'rarity';
+
+function sortHeroes(s: PlayerState, list: Hero[], sort: Sort): Hero[] {
+  const rarity = (h: Hero) => RARITIES.indexOf(heroDef(h.defId).rarity);
+  return [...list].sort((a, b) => {
+    if (sort === 'stars') return b.stars - a.stars || heroPower(s, b) - heroPower(s, a);
+    if (sort === 'rarity') return rarity(b) - rarity(a) || b.stars - a.stars;
+    return heroPower(s, b) - heroPower(s, a);
+  });
+}
 
 export function HeroesScreen() {
   const s = useGame();
-  const [picked, setPicked] = useState<Slot | null>(null);
   const [faction, setFaction] = useState<Faction | 'all'>('all');
+  const [sort, setSort] = useState<Sort>('power');
   const inTeam = new Set(s.formation.map(([u]) => u));
-  const heroes = sortedHeroes(s).filter((h) => faction === 'all' || heroDef(h.defId).faction === faction);
-
-  const tapSlot = (slot: Slot) => {
-    if (picked === null) {
-      if (s.formation.some(([, sl]) => sl === slot)) setPicked(slot);
-      return;
-    }
-    if (picked !== slot) swapSlots(picked, slot);
-    setPicked(null);
-  };
+  const list = sortHeroes(s, s.heroes.filter((h) => faction === 'all' || heroDef(h.defId).faction === faction), sort);
+  const sorts: Sort[] = ['power', 'stars', 'rarity'];
 
   return (
     <div class="screen heroes">
-      <section class="card">
-        <div class="row between">
-          <h2>{t('heroes.team')} {s.formation.length} / {slotCount(s)}</h2>
-          <span class="power-chip"><Icon name="power" size={18} />{Math.round(teamPower(s)).toLocaleString('fr-FR')}</span>
+      <button class="team-strip" onClick={() => prepare(null)}>
+        <span class="team-faces">
+          {teamHeroes(s).map(({ hero, slot }) => (
+            <span class={`team-face${slot === LEADER_SLOT ? ' leader' : ''}`}><img src={heroImage(hero.defId)} alt="" /></span>
+          ))}
+        </span>
+        <span class="team-info">
+          <strong>{t('heroes.team')}</strong>
+          <span class="power-chip"><Icon name="power" size={16} />{fmt(teamPower(s))}</span>
+        </span>
+        <span class="chev">›</span>
+      </button>
+
+      <div class="row between">
+        <h2>{t('nav.heroes')} <span class="muted">{s.heroes.length}</span></h2>
+        <div class="row gap-s">
+          <Btn kind="ghost" small onClick={() => setSort(sorts[(sorts.indexOf(sort) + 1) % sorts.length]!)}>⇅ {t(`sort.${sort}`)}</Btn>
+          <Btn kind="gold" small onClick={() => toast(t('heroes.fused', { n: fuseAllSimple() }))}>{t('heroes.fuseAll')}</Btn>
         </div>
-        <div class="board">
-          {([0, 1, 2, 3, 4] as Slot[]).map((slot) => {
-            const uid = s.formation.find(([, sl]) => sl === slot)?.[0];
-            const hero = uid !== undefined ? heroByUid(s, uid) : undefined;
-            const [col, row] = BOARD[slot];
-            return (
-              <button
-                class={`board-slot${picked === slot ? ' on' : ''}${slot === LEADER_SLOT ? ' leader' : ''}`}
-                style={{ left: `${8 + col * 31}%`, top: `${row * 50}%` }}
-                onClick={() => tapSlot(slot)}
-              >
-                {slot === LEADER_SLOT && <span class="crown">♛</span>}
-                {hero && <img src={heroImage(hero.defId)} alt="" />}
-                {hero && <Stars stars={hero.stars} />}
-              </button>
-            );
-          })}
-          <span class="board-arrow">›</span>
-        </div>
-        <div class="row gap">
-          <Btn kind="blue" small wide onClick={autoFormation}>{t('heroes.autoTeam')}</Btn>
-          <Btn kind="gold" small wide onClick={() => toast(t('heroes.fused', { n: fuseAllSimple() }))}>{t('heroes.fuseAll')}</Btn>
-        </div>
-      </section>
+      </div>
 
       <div class="chips">
         <button class={`chip${faction === 'all' ? ' on' : ''}`} onClick={() => setFaction('all')}>{t('all')}</button>
@@ -73,15 +65,16 @@ export function HeroesScreen() {
       </div>
 
       <div class="grid">
-        {heroes.map((h) => (
-          <HeroCard
-            key={h.uid}
-            hero={h}
-            power={heroPower(s, h)}
-            selected={inTeam.has(h.uid)}
-            badge={s.formation.find(([u]) => u === h.uid)?.[1] === LEADER_SLOT ? '♛' : undefined}
-            onClick={() => open({ type: 'hero', uid: h.uid })}
-          />
+        {list.map((h) => (
+          <div class="hcard-wrap">
+            <HeroCard
+              hero={h}
+              power={heroPower(s, h)}
+              selected={inTeam.has(h.uid)}
+              onClick={() => open({ type: 'hero', uid: h.uid })}
+            />
+            {inTeam.has(h.uid) && (canLevelUp(s, h) || !!fusionPreview(h.uid).plan) && <RedDot />}
+          </div>
         ))}
       </div>
     </div>

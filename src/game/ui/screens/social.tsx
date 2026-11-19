@@ -6,13 +6,13 @@ import { createRng } from '../../../core/rng';
 import { heroImage, monsterImage } from '../../art';
 import { CHAT_LINES, fmt, t } from '../../i18n';
 import {
-  BOT_GUILDS, botChatter, buyExchange, guildBossBattle, joinGuild, leaveGuild, markSeen, sendChat,
+  BOT_GUILDS, botChatter, buyExchange, guildBossPlan, joinGuild, leaveGuild, markSeen, sendChat,
 } from '../../state/actions';
 import { isUnlocked, teamPower } from '../../state/selectors';
 import { getState, now, useGame } from '../../state/store';
 import type { ChatMessage } from '../../state/types';
 import { Bar, Btn, Cur, Icon, Locked, Modal, Tabs } from '../kit';
-import { open, startBattle } from '../nav';
+import { open, prepare } from '../nav';
 import { ShopTile } from './adventure';
 
 const MEMBER_NAMES = ['Kaïro', 'Lunaria', 'Vaelis', 'Tormund', 'Ishara', 'Mikaze', 'Orsolya', 'Bastien', 'Yuna', 'Ragnis', 'Selka', 'Noctis'];
@@ -77,7 +77,7 @@ export function GuildScreen() {
           <Bar value={GUILD_BOSS_HP - total} max={GUILD_BOSS_HP} color="#e5484d" label={`${fmt(GUILD_BOSS_HP - total)} / ${fmt(GUILD_BOSS_HP)}`} />
           <p class="muted">{t('guild.total')} : <b>{fmt(total)}</b></p>
           <p class="muted">{t('boss.attempts', { n: left, m: GUILD_BOSS_ATTEMPTS })}</p>
-          <Btn kind="red" wide disabled={left <= 0} onClick={() => startBattle(guildBossBattle())}>{t('boss.attack')}</Btn>
+          <Btn kind="red" wide disabled={left <= 0} onClick={() => prepare(guildBossPlan())}>{t('boss.attack')}</Btn>
         </section>
       )}
       {tab === 'members' && (

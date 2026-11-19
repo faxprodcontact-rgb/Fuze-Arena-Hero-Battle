@@ -1,7 +1,7 @@
 // Navigation : onglet ouvert, sous-écran, fenêtres empilées, combat en cours, petit message.
 import { useEffect, useState } from 'preact/hooks';
 import type { Feature } from '../../core/data/modes';
-import type { BattleRequest } from '../state/actions';
+import type { BattlePlan, BattleRequest } from '../state/actions';
 import type { Gain } from '../state/types';
 import type { Hero } from '../../core/types';
 
@@ -19,7 +19,9 @@ export type Modal =
   | { type: 'settings' }
   | { type: 'odds' }
   | { type: 'confirm'; text: string; onYes: () => void }
-  | { type: 'ad'; onDone: () => void };
+  | { type: 'ad'; onDone: () => void }
+  | { type: 'prep'; plan: BattlePlan | null }
+  | { type: 'fastLoot' };
 
 interface NavState {
   tab: Tab;
@@ -83,4 +85,9 @@ export function toast(text: string): void {
     changed();
   }, 1800);
   changed();
+}
+
+/** Ouvre l'écran de préparation d'un combat (ou de la section seule si `plan` est null). */
+export function prepare(plan: BattlePlan | null): void {
+  open({ type: 'prep', plan });
 }

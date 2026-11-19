@@ -3,14 +3,16 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { accountXpForLevel } from '../../core/data/modes';
 import { heroImage } from '../art';
 import { runBattle } from '../battle-scene';
-import { t } from '../i18n';
+import { fmt, t } from '../i18n';
 import { ensureDay, finishBattle, type BattleRequest } from '../state/actions';
 import { useGame } from '../state/store';
 import { dots } from './dots';
 import { Cur, Icon, RedDot } from './kit';
+import { teamPower } from '../state/selectors';
 import { close, go, open, startBattle, useNav, type Modal, type Tab } from './nav';
 import { AdventureScreen } from './screens/adventure';
-import { CampaignScreen } from './screens/campaign';
+import { CampaignScreen, FastLootModal } from './screens/campaign';
+import { Prep } from './screens/prep';
 import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
 import { AdModal, ConfirmModal, GainModal, QuestsModal, SettingsModal, ShopModal } from './screens/meta';
@@ -24,11 +26,15 @@ function TopBar() {
   const leader = s.heroes.find((h) => h.uid === s.formation[0]?.[0]) ?? s.heroes[0];
   return (
     <header class="topbar">
-      <button class="avatar" onClick={() => open({ type: 'settings' })}>
+      <button class="avatar" aria-label={t('side.settings')} onClick={() => open({ type: 'settings' })}>
         {leader && <img src={heroImage(leader.defId)} alt="" />}
         <span class="avatar-lv">{s.account.level}</span>
         <span class="avatar-xp" style={{ width: `${(s.account.xp / accountXpForLevel(s.account.level)) * 100}%` }} />
       </button>
+      <div class="who">
+        <strong>{s.name}</strong>
+        <span class="power-chip"><Icon name="power" size={14} />{fmt(teamPower(s))}</span>
+      </div>
       <div class="wallet">
         <Cur k="gold" n={s.wallet.gold} />
         <Cur k="essence" n={s.wallet.essence} />
@@ -38,29 +44,6 @@ function TopBar() {
         </button>
       </div>
     </header>
-  );
-}
-
-function SideBar() {
-  const s = useGame();
-  const items: [string, () => void, boolean][] = [
-    ['quests', () => open({ type: 'quests' }), dots.quests(s)],
-    ['shop', () => open({ type: 'shop' }), !s.shop.bought.starter],
-    ['pass', () => open({ type: 'shop', tab: 'pass' }), dots.pass(s)],
-    ['ranking', () => open({ type: 'ranking' }), false],
-    ['chat', () => open({ type: 'chat' }), false],
-    ['settings', () => open({ type: 'settings' }), false],
-  ];
-  return (
-    <nav class="sidebar">
-      {items.map(([name, action, dot]) => (
-        <button class="side-btn" onClick={action}>
-          <Icon name={name} size={26} />
-          <span>{t(`side.${name}`)}</span>
-          {dot && <RedDot />}
-        </button>
-      ))}
-    </nav>
   );
 }
 
@@ -92,6 +75,8 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'odds': return <OddsModal />;
     case 'confirm': return <ConfirmModal text={modal.text} onYes={modal.onYes} />;
     case 'ad': return <AdModal onDone={modal.onDone} />;
+    case 'prep': return <Prep plan={modal.plan} />;
+    case 'fastLoot': return <FastLootModal />;
   }
 }
 
@@ -102,7 +87,8 @@ function BattleOverlay({ request }: { request: BattleRequest }) {
     return runBattle(host.current, request, (result) => {
       const gain = finishBattle(request, result);
       startBattle(null);
-      const title = t(`mode.${request.kind}`);
+      const named = request.kind === 'campaign' || request.kind === 'tower' || request.kind === 'dungeon';
+      const title = `${t(`mode.${request.kind}`)}${named ? ` ${request.title}` : ''}`;
       if (request.damageMode) open({ type: 'gain', title, gain, damage: result.damage });
       else open({ type: 'gain', title, gain, win: result.win });
     });
@@ -127,9 +113,8 @@ export function App() {
   return (
     <div class="app">
       <TopBar />
-      <SideBar />
-      <main class="content">
-        {nav.tab === 'campaign' && <CampaignScreen />}
+      <main class={`content${nav.tab === 'campaign' ? ' content-home' : ''}`}>
+        {nav.tab === 'campaign' && <CampaignScreen running={!nav.battle && !nav.modals.some((m) => m.type === 'prep')} />}
         {nav.tab === 'heroes' && <HeroesScreen />}
         {nav.tab === 'summon' && <SummonScreen />}
         {nav.tab === 'adventure' && <AdventureScreen sub={nav.sub} />}

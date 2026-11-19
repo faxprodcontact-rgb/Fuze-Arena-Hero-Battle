@@ -8,14 +8,14 @@ import {
 import { heroImage, monsterImage } from '../../art';
 import { fmt, t } from '../../i18n';
 import {
-  arenaBattle, buyExchange, claimMission, dailyBossBattle, dailyBossId, dungeonBattle, markSeen, missionEnd,
-  missionTemplate, opponentPower, refreshOpponents, sendMission, towerBattle,
+  arenaPlan, buyExchange, claimMission, dailyBossId, dailyBossPlan, dungeonPlan, markSeen, missionEnd,
+  missionTemplate, opponentPower, refreshOpponents, sendMission, towerPlan,
 } from '../../state/actions';
 import { isUnlocked, teamPower } from '../../state/selectors';
 import { now, useGame } from '../../state/store';
 import { ADVENTURE_ORDER, dots, isNew } from '../dots';
 import { Bar, Btn, Cur, Icon, Locked, duration } from '../kit';
-import { open, openSub, startBattle, toast, type Sub } from '../nav';
+import { open, openSub, prepare, toast, type Sub } from '../nav';
 
 export function AdventureScreen({ sub }: { sub: Sub }) {
   const s = useGame();
@@ -85,7 +85,7 @@ function Tower() {
         {floor % 10 === 0 && <Cur k="gems" n={100} />}
       </div>
       <PowerLine need={stagePower(floor * TOWER_STAGE_PER_FLOOR)} />
-      <Btn kind="green" wide onClick={() => startBattle(towerBattle())}>{t('tower.challenge')}</Btn>
+      <Btn kind="green" wide onClick={() => prepare(towerPlan())}>{t('tower.challenge')}</Btn>
     </section>
   );
 }
@@ -153,7 +153,7 @@ function Dungeons() {
               <div class="tiers">
                 {DUNGEON_TIERS.map((f, tier) => (
                   <Btn kind={teamPower(s) >= ref * f ? 'green' : 'ghost'} small disabled={used >= DUNGEON_ENTRIES_PER_DAY}
-                    onClick={() => startBattle(dungeonBattle(k, tier))}>
+                    onClick={() => prepare(dungeonPlan(k, tier))}>
                     {t('dungeon.tier', { n: tier + 1 })} · {fmt(ref * f)}
                   </Btn>
                 ))}
@@ -177,7 +177,7 @@ function DailyBoss() {
       <p>{t('boss.best')} : <b>{fmt(s.daily.bossBest)}</b></p>
       <div class="boss-tiers">{DAILY_BOSS_TIERS.map((tier) => <span><Cur k="gems" n={tier.gems} /><small>{Math.round(tier.share * 100)} %</small></span>)}</div>
       <p class="muted">{t('boss.attempts', { n: left, m: DAILY_BOSS_ATTEMPTS })}</p>
-      <Btn kind="red" wide disabled={left <= 0} onClick={() => startBattle(dailyBossBattle())}>{t('boss.attack')}</Btn>
+      <Btn kind="red" wide disabled={left <= 0} onClick={() => prepare(dailyBossPlan())}>{t('boss.attack')}</Btn>
     </section>
   );
 }
@@ -216,10 +216,7 @@ function Arena() {
               </div>
               <div class="col-end">
                 <span class="power-chip"><Icon name="power" size={16} />{fmt(opponentPower(o))}</span>
-                <Btn kind="red" small disabled={left <= 0} onClick={() => {
-                  const req = arenaBattle(o.id);
-                  if (req) startBattle(req);
-                }}>{t('fight')}</Btn>
+                <Btn kind="red" small disabled={left <= 0} onClick={() => prepare(arenaPlan(o.id))}>{t('fight')}</Btn>
               </div>
             </div>
           ))}

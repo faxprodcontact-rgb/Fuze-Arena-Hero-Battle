@@ -1,16 +1,44 @@
-// Campagne : le prochain combat, la progression du chapitre et le butin hors ligne.
+// Accueil : la section se bat en continu (c'est elle qui remplit le butin).
+// Sur les bords : quêtes, passe, offres, classement, tchat. En bas : coffre, Combattre, butin rapide.
+import { useEffect, useRef } from 'preact/hooks';
 import { stagePower } from '../../../core/data/campaign';
 import { CAMPAIGN_STAGES, OFFLINE_CAP_HOURS, STAGES_PER_CHAPTER } from '../../../core/data/economy';
-import { campaignWaves, chapterElement, chapterOf, isBossStage, stageInChapter } from '../../../core/stages';
-import { ELEMENT_COLOR, heroImage, monsterImage } from '../../art';
+import { chapterElement, chapterOf, isBossStage, stageInChapter } from '../../../core/stages';
+import { ELEMENT_COLOR } from '../../art';
+import { runIdle } from '../../idle-scene';
 import { fmt, t } from '../../i18n';
-import { adsLeft, campaignBattle, collectIdle, fastLoot, fastLootCost, watchAd } from '../../state/actions';
-import { idlePreview, teamHeroes, teamPower } from '../../state/selectors';
+import {
+  adsLeft, campaignPlan, collectIdle, fastLoot, fastLootCost, idleSetup, watchAd,
+} from '../../state/actions';
+import { idlePreview, teamPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import { Bar, Btn, Cur, Icon } from '../kit';
-import { open, startBattle } from '../nav';
+import { dots } from '../dots';
+import { Btn, Cur, Icon, Modal, RedDot } from '../kit';
+import { close, open, prepare } from '../nav';
 
-export function CampaignScreen() {
+function IdleStage({ running }: { running: boolean }) {
+  const s = useGame();
+  const host = useRef<HTMLDivElement>(null);
+  // La scène redémarre quand la section ou le niveau changent.
+  const key = `${s.campaign.cleared}|${s.formation.map(([u, sl]) => `${u}:${sl}`).join(',')}`;
+  useEffect(() => {
+    if (!running || !host.current) return;
+    return runIdle(host.current, idleSetup);
+  }, [running, key]);
+  return <div class="idle-canvas" ref={host} />;
+}
+
+function EdgeButton({ icon, label, dot, onClick }: { icon: string; label: string; dot?: boolean; onClick: () => void }) {
+  return (
+    <button class="edge-btn" onClick={onClick}>
+      <span class="edge-icon"><Icon name={icon} size={28} /></span>
+      <span class="edge-label">{label}</span>
+      {dot && <RedDot />}
+    </button>
+  );
+}
+
+export function CampaignScreen({ running }: { running: boolean }) {
   const s = useGame();
   const next = Math.min(s.campaign.cleared + 1, CAMPAIGN_STAGES);
   const done = s.campaign.cleared >= CAMPAIGN_STAGES;
@@ -18,90 +46,97 @@ export function CampaignScreen() {
   const pos = stageInChapter(next);
   const need = stagePower(next);
   const mine = teamPower(s);
-  const firstWave = campaignWaves(next)[0] ?? [];
   const loot = idlePreview(s);
-  const fastCost = fastLootCost(s);
-
-  const showGain = (gain: ReturnType<typeof collectIdle> | null, title: string) => {
-    if (gain) open({ type: 'gain', title, gain });
-  };
+  const h = Math.floor(loot.hours);
+  const m = Math.floor((loot.hours - h) * 60);
 
   return (
-    <div class="screen campaign">
-      <section class="card chapter" style={{ '--el': ELEMENT_COLOR[chapterElement(chapter)] } as never}>
-        <div class="chapter-head">
-          <h1>{t('chapter')} {chapter}</h1>
-          <span class="stage-tag">{chapter}-{pos}{isBossStage(next) ? ` · ${t('camp.boss')}` : ''}</span>
+    <div class="home" style={{ '--el': ELEMENT_COLOR[chapterElement(chapter)] } as never}>
+      <div class="stage">
+        <IdleStage running={running} />
+        <div class="stage-title">
+          <span class="stage-chapter">{t('chapter')} {chapter}</span>
+          <span class="stage-progress"><span style={{ width: `${((pos - 1) / STAGES_PER_CHAPTER) * 100}%` }} /></span>
         </div>
-        <Bar value={pos - 1} max={STAGES_PER_CHAPTER} color="var(--gold)" label={`${pos - 1} / ${STAGES_PER_CHAPTER}`} />
-
-        <div class="versus">
-          <div class="versus-side">
-            {teamHeroes(s).map(({ hero }) => <img key={hero.uid} src={heroImage(hero.defId)} alt="" />)}
-          </div>
-          <span class="vs">VS</span>
-          <div class="versus-side foes">
-            {firstWave.map((u) => <img key={u.id} src={monsterImage(u.defId, u.element)} alt="" class={u.boss ? 'boss' : ''} />)}
-          </div>
+        <div class="edge edge-left">
+          <EdgeButton icon="quests" label={t('side.quests')} dot={dots.quests(s)} onClick={() => open({ type: 'quests' })} />
+          <EdgeButton icon="pass" label={t('side.pass')} dot={dots.pass(s)} onClick={() => open({ type: 'shop', tab: 'pass' })} />
+          <EdgeButton icon="shop" label={t('shop.offers')} dot={!s.shop.bought.starter} onClick={() => open({ type: 'shop' })} />
         </div>
-
-        <div class={`power-line ${mine >= need ? 'ok' : 'low'}`}>
-          <Icon name="power" size={20} />
-          <strong>{fmt(mine)}</strong>
-          <span class="muted">/ {fmt(need)}</span>
+        <div class="edge edge-right">
+          <EdgeButton icon="ranking" label={t('side.ranking')} onClick={() => open({ type: 'ranking' })} />
+          <EdgeButton icon="chat" label={t('side.chat')} onClick={() => open({ type: 'chat' })} />
         </div>
+      </div>
 
-        {done ? (
-          <p class="center gold-text">{t('camp.done')}</p>
-        ) : (
-          <Btn kind="green" wide class={`btn-fight${s.campaign.cleared === 0 ? ' point' : ''}`} onClick={() => startBattle(campaignBattle())}>
-            {t('fight')} · {chapter}-{pos}
-          </Btn>
-        )}
-      </section>
+      <div class="dock">
+        <button class={`dock-chest${loot.hours >= 2 ? ' ready' : ''}${loot.full ? ' full' : ''}`}
+          onClick={() => open({ type: 'gain', title: t('camp.loot'), gain: collectIdle() })}>
+          <span class="chest" />
+          <span class="dock-time">{h} h {String(m).padStart(2, '0')}</span>
+          <span class="dock-bar"><span style={{ width: `${(loot.hours / OFFLINE_CAP_HOURS) * 100}%` }} /></span>
+          {loot.hours >= 2 && <RedDot />}
+        </button>
 
-      <section class="card loot">
-        <div class="loot-head">
-          <div class={`chest${loot.full ? ' chest-full' : ''}`} />
-          <div class="loot-info">
-            <h2>{t('camp.loot')}</h2>
-            <Bar value={loot.hours} max={OFFLINE_CAP_HOURS} color="#4fd1ff" label={`${loot.hours.toFixed(1)} h / ${OFFLINE_CAP_HOURS} h`} />
-            <div class="row gap wrap">
-              <Cur k="gold" n={loot.gold} />
-              <Cur k="essence" n={loot.essence} />
-              {loot.items > 0 && <span class="cur">⚔ ×{loot.items}</span>}
-            </div>
-            <span class="muted small">
-              <Cur k="gold" n={loot.perHour} /> {t('camp.perHour')}
+        <button class={`dock-fight${s.campaign.cleared === 0 ? ' point' : ''}`} disabled={done} onClick={() => prepare(campaignPlan())}>
+          <span class="dock-fight-label">{done ? t('camp.done') : t('fight')}</span>
+          {!done && (
+            <span class="dock-fight-stage">
+              {chapter}-{pos}{isBossStage(next) ? ` · ${t('camp.boss')}` : ''}
             </span>
+          )}
+          {!done && (
+            <span class={`dock-power ${mine >= need ? 'ok' : 'low'}`}>
+              <Icon name="power" size={14} />{fmt(mine)} / {fmt(need)}
+            </span>
+          )}
+        </button>
+
+        <button class="dock-fast" onClick={() => open({ type: 'fastLoot' })}>
+          <span class="hourglass" />
+          <span class="dock-time">{t('camp.fast')}</span>
+          {fastLootCost(s) === 0 && <RedDot />}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/** Butin rapide : 2 h de butin d'un coup (gratuit une fois par jour), ou +2 h avec une pub. */
+export function FastLootModal() {
+  const s = useGame();
+  const cost = fastLootCost(s);
+  const loot = idlePreview(s);
+  const show = (gain: ReturnType<typeof fastLoot>, title: string) => {
+    close();
+    if (gain) open({ type: 'gain', title, gain });
+  };
+  return (
+    <Modal title={t('camp.fast')}>
+      <div class="row gap center-y">
+        <span class="hourglass big" />
+        <div class="grow">
+          <strong>2 h</strong>
+          <div class="row gap-s wrap">
+            <Cur k="gold" n={loot.perHour * 2} />
+            <Cur k="essence" n={loot.perHour} />
+            <span class="cur">⚔ ×1</span>
           </div>
         </div>
-        <Btn kind="gold" wide dot={loot.hours >= 2} onClick={() => showGain(collectIdle(), t('camp.loot'))}>{t('collect')}</Btn>
-        <div class="row gap">
-          <Btn
-            kind="purple"
-            small
-            wide
-            disabled={fastCost === null || s.wallet.gems < (fastCost ?? 0)}
-            dot={fastCost === 0}
-            onClick={() => showGain(fastLoot(), t('camp.fast'))}
-          >
-            {t('camp.fast')} {fastCost === 0 ? `· ${t('free')}` : fastCost !== null ? <Cur k="gems" n={fastCost} /> : ''}
-          </Btn>
-          <Btn
-            kind="ghost"
-            small
-            disabled={adsLeft(s) <= 0}
-            onClick={() => {
-              const reward = () => showGain(watchAd('idle'), t('camp.adBoost'));
-              if (s.shop.noAds) reward();
-              else open({ type: 'ad', onDone: reward });
-            }}
-          >
-            <Icon name="ad" size={18} /> {t('camp.adBoost')}
-          </Btn>
-        </div>
-      </section>
-    </div>
+      </div>
+      <Btn kind="purple" wide disabled={cost === null || s.wallet.gems < (cost ?? 0)} onClick={() => show(fastLoot(), t('camp.fast'))}>
+        {cost === 0 ? t('free') : cost === null ? '—' : <Cur k="gems" n={cost} />}
+      </Btn>
+      <Btn kind="ghost" wide disabled={adsLeft(s) <= 0} onClick={() => {
+        const reward = () => show(watchAd('idle'), t('camp.adBoost'));
+        if (s.shop.noAds) reward();
+        else {
+          close();
+          open({ type: 'ad', onDone: reward });
+        }
+      }}>
+        <Icon name="ad" size={20} /> {t('camp.adBoost')} · {t('left', { n: adsLeft(s) })}
+      </Btn>
+    </Modal>
   );
 }

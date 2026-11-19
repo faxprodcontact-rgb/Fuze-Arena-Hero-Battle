@@ -10,9 +10,14 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
 ## Où en est le projet
 
 - Étape 1 (conception) et étape 2 (prototype du combat) : faites.
-- En cours : **version complète avec dessins provisoires**, tout le jeu jouable hors ligne (sauvegarde sur le
-  téléphone) pour travailler l'interface. En ligne pour le propriétaire : https://claude.ai/artifact/EigGhykFPgfeb7L1UoYfDX
-  (republier avec l'outil Artifact : la page = `dist/` construit, le CSS recopié dans la page, le JS en fichier joint).
+- En cours : **interface** (le propriétaire veut qu'elle soit parfaite avant la suite), sur la version complète avec
+  dessins provisoires, jouable hors ligne (sauvegarde sur le téléphone).
+- Site de test (comme l'ancien Fuze) : https://faxprodcontact-rgb.github.io/Fuze-Arena-Hero-Battle/ — mis en ligne
+  automatiquement à chaque envoi par `.github/workflows/site-test.yml` (branche `gh-pages`, à ne jamais modifier à la main).
+  Copie aussi sur claude.ai : https://claude.ai/artifact/EigGhykFPgfeb7L1UoYfDX (outil Artifact : `dist/`, CSS dans la page).
+- Disposition inspirée d'AFK Arena / Idle Heroes : accueil = combat permanent (`idle-scene.ts`) avec icônes sur les bords
+  (quêtes, passe, offres, classement, tchat), coffre de butin / Combattre / butin rapide en bas ; avant chaque combat,
+  écran de préparation (`screens/prep.tsx`) ; réglages par l'avatar.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 
 ## Organisation du code
@@ -24,7 +29,9 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
 | `src/core/battle/` | Moteur de combat déterministe (graine + choix du joueur = combat rejouable par le serveur) |
 | `src/game/state/` | État du joueur et **toutes ses actions** (`actions.ts` = la seule porte d'entrée ; à brancher sur le serveur plus tard) |
 | `src/game/ui/` | Menus (Preact) : `app.tsx` (coquille), `screens/*` (un fichier par écran), `kit.tsx`, `style.css` |
+| `src/game/fight-view.ts` | Base commune des scènes de combat (personnages, coups, chiffres) |
 | `src/game/battle-scene.ts` | Écran de combat (Phaser), utilisé par tous les modes |
+| `src/game/idle-scene.ts` | Combat permanent de l'accueil (image du butin hors ligne) |
 | `src/game/art.ts` | Dessins provisoires faits par le code (héros et monstres) |
 | `src/game/i18n.ts` | Tous les textes, français et anglais |
 | `simulations/` | Joueurs virtuels qui jouent des mois en accéléré pour vérifier le rythme |

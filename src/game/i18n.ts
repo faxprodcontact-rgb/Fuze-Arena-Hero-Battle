@@ -18,7 +18,7 @@ const FR = {
   'camp.done': 'Campagne terminée', 'camp.boss': 'Boss',
 
   'heroes.team': 'Section', 'heroes.autoTeam': 'Meilleure section', 'heroes.fuseAll': 'Tout fusionner', 'heroes.fused': '{n} fusions',
-  'heroes.full': 'Section complète', 'heroes.inTeam': 'Retirer de la section', 'heroes.addTeam': 'Ajouter à la section',
+  'heroes.full': 'Section complète', 'sort.power': 'Force', 'sort.stars': 'Étoiles', 'sort.rarity': 'Rareté', 'heroes.inTeam': 'Retirer de la section', 'heroes.addTeam': 'Ajouter à la section',
 
   'detail.levelUp': 'Niveau +1', 'detail.levelUp10': '+10', 'detail.cap': 'Niveau max : plus d’étoiles', 'detail.stars': 'Étoiles',
   'detail.copies': 'Copies : {have} / {need}', 'detail.fodder': 'Héros ★{s} de la faction : {have} / {need}',
@@ -109,7 +109,7 @@ const EN: Record<Key, string> = {
   'camp.done': 'Campaign complete', 'camp.boss': 'Boss',
 
   'heroes.team': 'Squad', 'heroes.autoTeam': 'Best squad', 'heroes.fuseAll': 'Fuse all', 'heroes.fused': '{n} fusions',
-  'heroes.full': 'Squad full', 'heroes.inTeam': 'Remove from squad', 'heroes.addTeam': 'Add to squad',
+  'heroes.full': 'Squad full', 'sort.power': 'Power', 'sort.stars': 'Stars', 'sort.rarity': 'Rarity', 'heroes.inTeam': 'Remove from squad', 'heroes.addTeam': 'Add to squad',
 
   'detail.levelUp': 'Level +1', 'detail.levelUp10': '+10', 'detail.cap': 'Max level: more stars needed', 'detail.stars': 'Stars',
   'detail.copies': 'Copies: {have} / {need}', 'detail.fodder': '★{s} heroes of the faction: {have} / {need}',
