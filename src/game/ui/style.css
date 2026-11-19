@@ -452,3 +452,6 @@ p { margin: 6px 0; }
   background: var(--green); color: #fff; font: 800 10px var(--font); box-shadow: 0 1px 3px #0008; pointer-events: none; }
 .slot-panel { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; padding: 10px; border-radius: 14px; background: #0003; animation: up 0.15s ease-out; }
 .slot-panel .better { right: auto; left: -4px; }
+.skill-preview { width: 100%; aspect-ratio: 720 / 470; margin-top: 8px; border-radius: 14px; overflow: hidden; background: #0004; }
+.skill-preview canvas { display: block; }
+.leader-block h3 { color: var(--gold); }

@@ -1,6 +1,6 @@
 // Toutes les actions du joueur. C'est LA porte d'entrée : à l'étape serveur, ces fonctions
 // enverront la demande au serveur (qui utilisera les mêmes règles de src/core) au lieu de calculer ici.
-import type { BattleInput, Slot, UnitInit } from '../../core/battle/types';
+import { LEADER_SLOT, type BattleInput, type Slot, type UnitInit } from '../../core/battle/types';
 import { heroToUnit } from '../../core/battle/units';
 import { stagePower } from '../../core/data/campaign';
 import { incomePerHour, REWARDS, STAGE_REWARD_HOURS, STAGES_PER_CHAPTER } from '../../core/data/economy';
@@ -194,6 +194,13 @@ export function autoFormation(): void {
       taken.add(slot);
       return [h.uid, slot];
     });
+    // Le centre revient au chef de section le plus fort de la section, s'il y en a un.
+    const center = s.formation.find(([, sl]) => sl === LEADER_SLOT);
+    const chief = s.formation.find(([u]) => !!heroDef(heroByUid(s, u)!.defId).talent);
+    if (chief && center && !heroDef(heroByUid(s, center[0])!.defId).talent) {
+      center[1] = chief[1];
+      chief[1] = LEADER_SLOT;
+    }
   });
 }
 

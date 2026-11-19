@@ -1,5 +1,6 @@
-// Fiche d'un héros : niveau, équipement, compétence et talent de chef (la fusion se fait sur sa page).
-import { useState } from 'preact/hooks';
+// Fiche d'un héros : niveau, équipement, talent de chef (s'il en a un), compétence avec son aperçu en boucle.
+// La fusion et la Renaissance se font sur leurs pages (onglet Héros).
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { heroToUnit } from '../../../core/battle/units';
 import type { Talent } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
@@ -7,15 +8,18 @@ import { GEAR_SLOTS, type GearSlot } from '../../../core/data/items';
 import { levelCap } from '../../../core/data/stats';
 import { ELEMENT_COLOR, RARITY_COLOR, heroImage } from '../../art';
 import { fmt, t } from '../../i18n';
-import { canReset, equipBest, levelUp, toggleInFormation, unequipAll } from '../../state/actions';
+import { equipBest, levelUp, toggleInFormation, unequipAll } from '../../state/actions';
 import { canLevelUp, gearPct, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import { Btn, Cur, Icon, ItemIcon, Modal, Stars } from '../kit';
 import { SlotPanel, betterInBag } from './bag';
+import { runSkillPreview } from '../../skill-scene';
+import type { UnitInit } from '../../../core/battle/types';
 import { close, open, toast } from '../nav';
 
-export function talentText(talent: Talent): string {
+export function talentText(talent: Talent | undefined): string {
   const parts: string[] = [];
+  if (!talent) return '';
   const pct = (x: number) => Math.round((x - 1) * 100);
   if (talent.atkMult) parts.push(t('talent.atkMult', { n: pct(talent.atkMult) }));
   if (talent.defMult) parts.push(t('talent.defMult', { n: pct(talent.defMult) }));
@@ -23,6 +27,17 @@ export function talentText(talent: Talent): string {
   if (talent.energyMult) parts.push(t('talent.energyMult', { n: pct(talent.energyMult) }));
   if (talent.startEnergy) parts.push(t('talent.startEnergy', { n: talent.startEnergy }));
   return parts.join(' · ');
+}
+
+/** La compétence jouée en boucle contre des monstres. Redémarre si la force du héros change. */
+function SkillPreview({ unit }: { unit: UnitInit }) {
+  const host = useRef<HTMLDivElement>(null);
+  const key = `${unit.id}|${unit.atk}|${unit.maxHp}`;
+  useEffect(() => {
+    if (!host.current) return;
+    return runSkillPreview(host.current, unit);
+  }, [key]);
+  return <div class="skill-preview" ref={host} />;
 }
 
 export function HeroDetail({ uid }: { uid: number }) {
@@ -45,7 +60,6 @@ export function HeroDetail({ uid }: { uid: number }) {
           <Stars stars={hero.stars} />
           <div class="tags">
             <span class="tag" style={{ color: RARITY_COLOR[d.rarity] }}>{t(`rarity.${d.rarity}`)}</span>
-            <span class="tag">{t(`faction.${d.faction}`)}</span>
             <span class="tag">{t(`role.${d.role}`)}</span>
             <span class="tag" style={{ color: ELEMENT_COLOR[d.element] }}>{t(`element.${d.element}`)}</span>
           </div>
@@ -98,11 +112,17 @@ export function HeroDetail({ uid }: { uid: number }) {
         {gearSlot && <SlotPanel heroUid={uid} slot={gearSlot} />}
       </section>
 
+      {d.talent && (
+        <section class="block leader-block">
+          <h3>♛ {t('detail.leader')}</h3>
+          <p class="muted">{talentText(d.talent)}</p>
+        </section>
+      )}
+
       <section class="block">
         <h3>{t('detail.skill')} · {t(`skill.${d.skill.id}`)}</h3>
         <p class="muted">{t(`skilltext.${d.skill.kind}`)}</p>
-        <h3>♛ {t('detail.leader')}</h3>
-        <p class="muted">{talentText(d.talent)}</p>
+        <SkillPreview unit={unit} />
       </section>
 
       <div class="row gap">
@@ -112,9 +132,6 @@ export function HeroDetail({ uid }: { uid: number }) {
         }}>
           {inTeam ? t('heroes.inTeam') : t('heroes.addTeam')}
         </Btn>
-        {canReset(s, hero) && (
-          <Btn kind="red" small onClick={() => open({ type: 'reset', uid })}>{t('detail.reset')}</Btn>
-        )}
       </div>
       <button class="sr-only" onClick={close}>{t('close')}</button>
     </Modal>

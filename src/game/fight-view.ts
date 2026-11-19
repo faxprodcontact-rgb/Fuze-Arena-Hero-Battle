@@ -87,7 +87,7 @@ export abstract class FightScene extends Phaser.Scene {
     const sprite = this.add.image(0, 0, this.texture(unit)).setScale(scale).setFlipX(!hero);
     const bars = this.add.graphics();
     body.add([shadow, sprite, bars]);
-    if (hero && unit.slot === LEADER_SLOT) body.add(this.text(0, -66 * scale - 30, '♛', 26, '#ffe27a'));
+    if (hero && unit.slot === LEADER_SLOT && unit.talent) body.add(this.text(0, -66 * scale - 30, '♛', 26, '#ffe27a'));
     this.views.set(unit.id, { unit, body, sprite, bars, homeX: x });
     if (enter) this.tweens.add({ targets: body, x, duration: 450, ease: 'Back.easeOut' });
   }

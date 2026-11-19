@@ -59,7 +59,14 @@ function skillFor(role: Role, ranged: boolean, f: number, i: number, rarity: Rar
   }
 }
 
-function talentFor(role: Role, rarity: Rarity, i: number): Talent {
+/**
+ * Seuls 6 héros sur 12 par faction sont chefs de section (talent quand ils sont au centre) :
+ * 1 Rare, 2 Épiques et les 3 Légendaires, avec des rôles variés.
+ */
+const LEADER_INDEXES = new Set([4, 5, 7, 9, 10, 11]);
+
+function talentFor(role: Role, rarity: Rarity, i: number): Talent | undefined {
+  if (!LEADER_INDEXES.has(i)) return undefined;
   const l = rarity === 'legendary';
   switch (role) {
     case 'protector': return { defMult: l ? 1.3 : 1.2 };

@@ -49,7 +49,7 @@ export function Board() {
         })}
         <span class="board-arrow">›</span>
       </div>
-      {leader && <p class="leader-line">♛ {talentText(heroDef(leader.defId).talent)}</p>}
+      {leader && heroDef(leader.defId).talent && <p class="leader-line">♛ {talentText(heroDef(leader.defId).talent)}</p>}
     </div>
   );
 }

@@ -29,7 +29,8 @@ export interface HeroDef {
   /** Temps entre deux attaques, en tours de 100 ms. */
   interval: number;
   skill: SkillDef;
-  talent: Talent;
+  /** Talent de chef de section : seulement pour certains héros. */
+  talent?: Talent;
 }
 
 /**
