@@ -17,8 +17,10 @@ export type Feature = keyof typeof UNLOCKS;
 
 /** Butin hors ligne : l'or vaut le revenu horaire, l'essence la moitié. */
 export const ESSENCE_RATIO = 0.5;
-/** Un objet d'équipement toutes les 2 h de butin. */
+/** Un objet d'équipement et un parchemin simple toutes les 2 h de butin (≈ 12 parchemins par jour). */
 export const IDLE_ITEM_HOURS = 2;
+/** Changer de nom après le premier choix coûte des gemmes. */
+export const RENAME_COST = 500;
 /** Butin rapide : 2 h de butin d'un coup. Le premier de la journée est gratuit, puis il coûte des gemmes. */
 export const FAST_LOOT_HOURS = 2;
 export const FAST_LOOT_COSTS = [0, 50, 100, 200];

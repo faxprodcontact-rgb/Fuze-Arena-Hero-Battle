@@ -41,6 +41,11 @@ export interface ChatMessage {
 export interface PlayerState {
   v: 2;
   name: string;
+  /** Le joueur a choisi son nom (premier lancement). */
+  named: boolean;
+  /** Nombre de changements de nom payés. */
+  nameChanges: number;
+  settings: { sound: boolean; music: boolean; notifications: boolean };
   createdAt: number;
   /** Décalage du temps pour les tests (avancer de quelques heures). */
   timeShift: number;

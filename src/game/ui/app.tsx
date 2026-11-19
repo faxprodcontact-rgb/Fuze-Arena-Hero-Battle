@@ -5,7 +5,7 @@ import { heroImage } from '../art';
 import { runBattle } from '../battle-scene';
 import { fmt, t } from '../i18n';
 import { ensureDay, finishBattle, type BattleRequest } from '../state/actions';
-import { useGame } from '../state/store';
+import { getState, useGame } from '../state/store';
 import { dots } from './dots';
 import { Cur, Icon, RedDot } from './kit';
 import { teamPower } from '../state/selectors';
@@ -15,7 +15,7 @@ import { CampaignScreen, FastLootModal } from './screens/campaign';
 import { Prep } from './screens/prep';
 import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
-import { AdModal, ConfirmModal, GainModal, QuestsModal, SettingsModal, ShopModal } from './screens/meta';
+import { AdModal, ConfirmModal, GainModal, LegalModal, NameScreen, QuestsModal, RenameModal, SettingsModal, ShopModal } from './screens/meta';
 import { ChatModal, GuildScreen, RankingModal } from './screens/social';
 import { OddsModal, SummonResult, SummonScreen } from './screens/summon';
 
@@ -77,6 +77,8 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'ad': return <AdModal onDone={modal.onDone} />;
     case 'prep': return <Prep plan={modal.plan} />;
     case 'fastLoot': return <FastLootModal />;
+    case 'rename': return <RenameModal />;
+    case 'legal': return <LegalModal doc={modal.doc} />;
   }
 }
 
@@ -124,6 +126,7 @@ export function App() {
       {nav.modals.map((m) => <ModalView modal={m} />)}
       {nav.battle && <BattleOverlay request={nav.battle} />}
       {nav.toast && <div class="toast" onClick={close}>{nav.toast}</div>}
+      {!getState().named && <NameScreen />}
     </div>
   );
 }

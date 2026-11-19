@@ -7,7 +7,7 @@ import { incomePerHour, REWARDS, STAGE_REWARD_HOURS, STAGES_PER_CHAPTER } from '
 import { HEROES, heroDef } from '../../core/data/heroes';
 import { GEAR_SLOTS, itemBonus, rollItemRarity, type Item } from '../../core/data/items';
 import {
-  ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
+  ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, RENAME_COST, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
   ARENA_WIN_POINTS, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ENTRIES_PER_DAY,
   DUNGEON_REWARD_HOURS, DUNGEON_TIERS, ESSENCE_RATIO, FAST_LOOT_COSTS, FAST_LOOT_HOURS, GEMS_PER_10_SUMMONS,
   GEMS_PER_SUMMON, GUILD_BOSS_ATTEMPTS, GUILD_COINS_PER_ATTACK, GUILD_SHOP, IDLE_ITEM_HOURS, MISSION_TEMPLATES,
@@ -117,6 +117,7 @@ export function collectIdle(): Gain {
     addCurrency(s, gain, 'essence', p.essence);
     const rng = nextRng(s);
     for (let i = 0; i < p.items; i++) gain.items.push(makeItem(s, rng));
+    addCurrency(s, gain, 'basicScrolls', p.items);
     s.campaign.itemHours = (s.campaign.itemHours + p.hours) % IDLE_ITEM_HOURS;
     s.campaign.idleFrom = now();
     track(s, 'collectIdle');
@@ -139,6 +140,7 @@ export function fastLoot(): Gain | null {
     addCurrency(s, gain, 'gold', perHour * FAST_LOOT_HOURS);
     addCurrency(s, gain, 'essence', perHour * FAST_LOOT_HOURS * ESSENCE_RATIO);
     gain.items.push(makeItem(s, nextRng(s)));
+    addCurrency(s, gain, 'basicScrolls', 1);
     return gain;
   });
 }
@@ -845,9 +847,65 @@ export function setLang(lang: 'fr' | 'en'): void {
   update((s) => void (s.lang = lang));
 }
 
-export function setName(name: string): void {
-  const clean = name.trim().slice(0, 16);
-  if (clean) update((s) => void (s.name = clean));
+const NAME_PATTERN = /^[\p{L}\p{N}][\p{L}\p{N} _-]{1,14}[\p{L}\p{N}]$/u;
+const BANNED = ['admin', 'modo', 'moderat', 'support', 'claude', 'anthropic'];
+
+/** Vérifie un nom : 3 à 16 caractères, lettres, chiffres, espaces, - et _. Renvoie la clé d'erreur ou null. */
+export function nameError(name: string): string | null {
+  const clean = name.trim();
+  if (clean.length < 3 || clean.length > 16) return 'name.length';
+  if (!NAME_PATTERN.test(clean)) return 'name.chars';
+  if (BANNED.some((w) => clean.toLowerCase().includes(w))) return 'name.taken';
+  return null;
+}
+
+/** Premier choix du nom (gratuit). */
+export function chooseName(name: string): string | null {
+  const err = nameError(name);
+  if (err) return err;
+  update((s) => {
+    s.name = name.trim();
+    s.named = true;
+  });
+  return null;
+}
+
+/** Changer de nom ensuite : payant, en gemmes. */
+export function rename(name: string): string | null {
+  const err = nameError(name);
+  if (err) return err;
+  if (getState().wallet.gems < RENAME_COST) return 'name.gems';
+  update((s) => {
+    s.wallet.gems -= RENAME_COST;
+    s.name = name.trim();
+    s.nameChanges += 1;
+  });
+  return null;
+}
+
+const NAME_PARTS = [
+  ['Ardent', 'Sombre', 'Vif', 'Brave', 'Rusé', 'Fier', 'Lunaire', 'Sauvage'],
+  ['Loup', 'Faucon', 'Lion', 'Corbeau', 'Dragon', 'Renard', 'Tigre', 'Ours'],
+];
+
+export function randomName(): string {
+  const a = NAME_PARTS[0]![Math.floor(Math.random() * 8)]!;
+  const b = NAME_PARTS[1]![Math.floor(Math.random() * 8)]!;
+  return `${b}${a}${Math.floor(Math.random() * 90 + 10)}`;
+}
+
+/** Identifiant de joueur affiché (pour l'assistance). */
+export function playerId(s: PlayerState): string {
+  return (s.createdAt % 2_176_782_336).toString(36).toUpperCase().padStart(6, '0');
+}
+
+export function setSetting(key: keyof PlayerState['settings'], on: boolean): void {
+  update((s) => void (s.settings[key] = on));
+}
+
+/** Supprime le compte. Aujourd'hui : efface la partie du téléphone. Avec le serveur : effacera aussi le compte en ligne. */
+export function deleteAccount(): void {
+  resetGame();
 }
 
 export function setSpeed(speed: 1 | 2 | 3): void {

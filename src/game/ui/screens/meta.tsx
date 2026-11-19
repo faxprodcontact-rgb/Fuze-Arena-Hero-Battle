@@ -4,11 +4,15 @@ import {
   AD_SECONDS, ARENA_SHOP, DAILY_CHESTS, DAILY_QUESTS, GUILD_SHOP, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL,
   WEEKLY_CHESTS, WEEKLY_QUESTS, type Reward,
 } from '../../../core/data/modes';
-import { heroDef } from '../../../core/data/heroes';
+import { heroDef, heroesOf } from '../../../core/data/heroes';
+import { RENAME_COST } from '../../../core/data/modes';
+import { heroImage } from '../../art';
+import { legalDoc, type LegalDoc } from '../../legal';
+import { APP_VERSION } from '../../version';
 import { t } from '../../i18n';
 import {
   buyExchange, buyOffer, claimChest, claimPass, claimQuest, demoUnlockAll, giveTestResources, passLevel, questPoints,
-  resetGame, setLang, setName, setSpeed, timeTravel,
+  chooseName, deleteAccount, playerId, randomName, rename, resetGame, setLang, setSetting, timeTravel,
 } from '../../state/actions';
 import { now, useGame } from '../../state/store';
 import type { Gain } from '../../state/types';
@@ -166,38 +170,151 @@ function PassCell(p: { reward: Reward; done: boolean; ready: boolean; locked?: b
   );
 }
 
+function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
+  return (
+    <button class="setting-row" role="switch" aria-checked={on} onClick={() => onChange(!on)}>
+      <span>{label}</span>
+      <span class={`switch${on ? ' on' : ''}`}><span /></span>
+    </button>
+  );
+}
+
+function LinkRow({ label, onClick, danger }: { label: string; onClick: () => void; danger?: boolean }) {
+  return (
+    <button class={`setting-row${danger ? ' danger' : ''}`} onClick={onClick}>
+      <span>{label}</span>
+      <span class="chev">›</span>
+    </button>
+  );
+}
+
 export function SettingsModal() {
   const s = useGame();
-  const [name, setNameInput] = useState(s.name);
   return (
     <Modal title={t('side.settings')}>
-      <label class="field">
-        <span>{t('settings.name')}</span>
-        <input id="player-name" value={name} maxLength={16} onInput={(e) => setNameInput((e.target as HTMLInputElement).value)}
-          onBlur={() => setName(name)} />
-      </label>
-      <div class="field">
-        <span>{t('settings.lang')}</span>
-        <div class="row gap-s">
-          <Btn kind={s.lang === 'fr' ? 'blue' : 'ghost'} small onClick={() => setLang('fr')}>Français</Btn>
-          <Btn kind={s.lang === 'en' ? 'blue' : 'ghost'} small onClick={() => setLang('en')}>English</Btn>
+      <section class="settings-group">
+        <h3>{t('settings.account')}</h3>
+        <div class="setting-row static">
+          <span>{t('settings.name')}</span>
+          <span class="row gap-s center-y">
+            <b>{s.name}</b>
+            <Btn kind="ghost" small onClick={() => open({ type: 'rename' })}>{t('settings.rename')}</Btn>
+          </span>
         </div>
-      </div>
-      <div class="field">
-        <span>{t('settings.speed')}</span>
-        <div class="row gap-s">
-          {([1, 2, 3] as const).map((v) => <Btn kind={s.speed === v ? 'blue' : 'ghost'} small onClick={() => setSpeed(v)}>×{v}</Btn>)}
+        <div class="setting-row static">
+          <span>{t('settings.id')}</span>
+          <b class="mono">{playerId(s)}</b>
         </div>
+      </section>
+
+      <section class="settings-group">
+        <h3>{t('settings.game')}</h3>
+        <div class="setting-row static">
+          <span>{t('settings.lang')}</span>
+          <span class="row gap-s">
+            <Btn kind={s.lang === 'fr' ? 'blue' : 'ghost'} small onClick={() => setLang('fr')}>Français</Btn>
+            <Btn kind={s.lang === 'en' ? 'blue' : 'ghost'} small onClick={() => setLang('en')}>English</Btn>
+          </span>
+        </div>
+        <Toggle label={t('settings.sound')} on={s.settings.sound} onChange={(v) => setSetting('sound', v)} />
+        <Toggle label={t('settings.music')} on={s.settings.music} onChange={(v) => setSetting('music', v)} />
+        <Toggle label={t('settings.notifications')} on={s.settings.notifications} onChange={(v) => setSetting('notifications', v)} />
+      </section>
+
+      <section class="settings-group">
+        <h3>{t('settings.info')}</h3>
+        <LinkRow label={t('legal.privacy')} onClick={() => open({ type: 'legal', doc: 'privacy' })} />
+        <LinkRow label={t('legal.terms')} onClick={() => open({ type: 'legal', doc: 'terms' })} />
+        <LinkRow label={t('legal.notice')} onClick={() => open({ type: 'legal', doc: 'notice' })} />
+        <LinkRow label={t('summon.odds')} onClick={() => open({ type: 'odds' })} />
+        <LinkRow label={t('legal.support')} onClick={() => open({ type: 'legal', doc: 'support' })} />
+        <LinkRow label={t('legal.credits')} onClick={() => open({ type: 'legal', doc: 'credits' })} />
+        <LinkRow label={t('settings.delete')} danger onClick={() => open({
+          type: 'confirm', text: t('settings.deleteConfirm'),
+          onYes: () => open({ type: 'confirm', text: t('settings.deleteConfirm2'), onYes: () => { deleteAccount(); close(); } }),
+        })} />
+        <p class="muted small center">{t('settings.version')} {APP_VERSION}</p>
+      </section>
+
+      <section class="settings-group tests">
+        <h3>{t('settings.tests')}</h3>
+        <div class="row gap-s wrap">
+          <Btn kind="ghost" small onClick={() => { timeTravel(2); toast('+2 h'); }}>{t('settings.h2')}</Btn>
+          <Btn kind="ghost" small onClick={() => { timeTravel(12); toast('+12 h'); }}>{t('settings.h12')}</Btn>
+          <Btn kind="ghost" small onClick={() => { timeTravel(24); toast('+24 h'); }}>{t('settings.d1')}</Btn>
+          <Btn kind="ghost" small onClick={() => { giveTestResources(); toast('✓'); }}>{t('settings.resources')}</Btn>
+          <Btn kind="purple" small onClick={() => { demoUnlockAll(); toast('✓'); }}>{t('settings.unlock')}</Btn>
+          <Btn kind="red" small onClick={() => open({ type: 'confirm', text: t('settings.resetConfirm'), onYes: () => { resetGame(); close(); } })}>{t('settings.reset')}</Btn>
+        </div>
+      </section>
+    </Modal>
+  );
+}
+
+/** Champ de nom avec un dé qui propose un nom au hasard. */
+function NameField({ value, onInput, error }: { value: string; onInput: (v: string) => void; error: string | null }) {
+  return (
+    <div class="name-field">
+      <div class="row gap-s">
+        <input id="player-name" value={value} maxLength={16} autoComplete="off"
+          onInput={(e) => onInput((e.target as HTMLInputElement).value)} />
+        <button class="dice" aria-label={t('name.random')} onClick={() => onInput(randomName())}>⚄</button>
       </div>
-      <h3 class="tests-title">{t('settings.tests')}</h3>
-      <div class="row gap-s wrap">
-        <Btn kind="ghost" small onClick={() => { timeTravel(2); toast('+2 h'); }}>{t('settings.h2')}</Btn>
-        <Btn kind="ghost" small onClick={() => { timeTravel(12); toast('+12 h'); }}>{t('settings.h12')}</Btn>
-        <Btn kind="ghost" small onClick={() => { timeTravel(24); toast('+24 h'); }}>{t('settings.d1')}</Btn>
-        <Btn kind="ghost" small onClick={() => { giveTestResources(); toast('✓'); }}>{t('settings.resources')}</Btn>
-        <Btn kind="purple" small onClick={() => { demoUnlockAll(); toast('✓'); }}>{t('settings.unlock')}</Btn>
-        <Btn kind="red" small onClick={() => open({ type: 'confirm', text: t('settings.resetConfirm'), onYes: () => { resetGame(); close(); } })}>{t('settings.reset')}</Btn>
+      <span class={`muted small${error ? ' error' : ''}`}>{error ? t(error) : t('name.rule')}</span>
+    </div>
+  );
+}
+
+/** Premier lancement : le joueur choisit son nom. */
+export function NameScreen() {
+  const [name, setName] = useState(randomName());
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div class="name-screen">
+      <div class="name-card">
+        <img src={heroImage(heroesOf('knights', 'epic')[0]!.id)} alt="" />
+        <h1>{t('name.title')}</h1>
+        <NameField value={name} onInput={(v) => { setName(v); setError(null); }} error={error} />
+        <Btn kind="green" wide onClick={() => setError(chooseName(name))}>{t('ok')}</Btn>
       </div>
+    </div>
+  );
+}
+
+export function RenameModal() {
+  const s = useGame();
+  const [name, setName] = useState(s.name);
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <Modal title={t('settings.rename')}>
+      <NameField value={name} onInput={(v) => { setName(v); setError(null); }} error={error} />
+      <Btn kind="gold" wide disabled={s.wallet.gems < RENAME_COST} onClick={() => {
+        const err = rename(name);
+        if (err) setError(err);
+        else { close(); toast('✓'); }
+      }}>
+        <Cur k="gems" n={RENAME_COST} />
+      </Btn>
+    </Modal>
+  );
+}
+
+export function LegalModal({ doc }: { doc: LegalDoc | 'support' }) {
+  const s = useGame();
+  if (doc === 'support') {
+    return (
+      <Modal title={t('legal.support')}>
+        <p>{t('legal.supportText')}</p>
+        <div class="setting-row static"><span>{t('settings.id')}</span><b class="mono">{playerId(s)}</b></div>
+        <p class="muted small">{t('legal.supportContact')}</p>
+      </Modal>
+    );
+  }
+  return (
+    <Modal title={t(`legal.${doc}`)}>
+      <article class="legal">
+        {legalDoc(doc, s.lang).map((b) => ('h' in b ? <h3>{b.h}</h3> : <p>{b.p}</p>))}
+      </article>
     </Modal>
   );
 }

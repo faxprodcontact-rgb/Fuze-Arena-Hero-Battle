@@ -11,7 +11,10 @@ export function fresh(now = Date.now()): PlayerState {
   const lang = typeof navigator !== 'undefined' && !navigator.language.startsWith('fr') ? 'en' : 'fr';
   return {
     v: 2,
-    name: 'Capitaine',
+    name: '',
+    named: false,
+    nameChanges: 0,
+    settings: { sound: true, music: true, notifications: true },
     createdAt: now,
     timeShift: 0,
     lang,

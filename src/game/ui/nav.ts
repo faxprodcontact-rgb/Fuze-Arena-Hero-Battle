@@ -21,7 +21,9 @@ export type Modal =
   | { type: 'confirm'; text: string; onYes: () => void }
   | { type: 'ad'; onDone: () => void }
   | { type: 'prep'; plan: BattlePlan | null }
-  | { type: 'fastLoot' };
+  | { type: 'fastLoot' }
+  | { type: 'rename' }
+  | { type: 'legal'; doc: 'privacy' | 'terms' | 'notice' | 'credits' | 'support' };
 
 interface NavState {
   tab: Tab;
