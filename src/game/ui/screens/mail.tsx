@@ -25,6 +25,11 @@ export function MailPage() {
 
   return (
     <Page title={t('mail.title')}>
+      {toClaim && (
+        <div class="row" style={{ justifyContent: 'flex-end' }}>
+          <Btn kind="gold" small onClick={() => take()}>{t('mail.claimAll')}</Btn>
+        </div>
+      )}
       {list.length === 0 && <p class="center muted">∅</p>}
       <section class="list">
         {list.map((m) => {
@@ -49,7 +54,6 @@ export function MailPage() {
           );
         })}
       </section>
-      {toClaim && <Btn kind="gold" wide onClick={() => take()}>{t('mail.claimAll')}</Btn>}
     </Page>
   );
 }

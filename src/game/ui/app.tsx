@@ -23,7 +23,6 @@ import { DefensePrep, DefenseRun } from './screens/defense';
 import { FriendsPage } from './screens/friends';
 import { LoginModal } from './screens/login';
 import { TutorialHand } from './tutorial';
-import { loginCalendar } from '../state/actions';
 import { MailPage } from './screens/mail';
 import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
@@ -130,16 +129,8 @@ function BattleOverlay({ request }: { request: BattleRequest }) {
   return <div class="battle" ref={host} />;
 }
 
-/** Le calendrier de connexion s'ouvre tout seul une fois par jour (après le tutoriel). */
-let loginShown = false;
-
 export function App() {
-  const st = useGame();
-  useEffect(() => {
-    if (loginShown || !st.named || (st.tutorial ?? -1) !== -1 || loginCalendar(st).claimed) return;
-    loginShown = true;
-    open({ type: 'login' });
-  }, [st.named, st.tutorial]);
+  useGame();
   const nav = useNav();
   const [, setClock] = useState(0);
   useEffect(() => {

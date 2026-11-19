@@ -9,7 +9,7 @@ export function LoginModal() {
   const s = useGame();
   const cal = loginCalendar(s);
   return (
-    <Modal title={t(cal.kind === 'welcome' ? 'login.welcome' : 'login.title')} wide>
+    <Modal title={t(cal.kind === 'welcome' ? 'login.welcome' : 'login.title')} wide center>
       <div class={`login-grid ${cal.kind}`}>
         {cal.rewards.map((r, i) => {
           const done = i < cal.index || (i === cal.index && cal.claimed);

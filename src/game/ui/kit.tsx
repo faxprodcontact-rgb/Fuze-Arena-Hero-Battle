@@ -182,9 +182,9 @@ export function Page({ title, children }: { title: string; children: ComponentCh
 
 // ---------- Fenêtres ----------
 
-export function Modal(p: { title: string; children: ComponentChildren; wide?: boolean; onClose?: () => void }) {
+export function Modal(p: { title: string; children: ComponentChildren; wide?: boolean; center?: boolean; onClose?: () => void }) {
   return (
-    <div class="modal-back" onClick={(e) => e.target === e.currentTarget && (p.onClose ?? close)()}>
+    <div class={`modal-back${p.center ? ' center' : ''}`} onClick={(e) => e.target === e.currentTarget && (p.onClose ?? close)()}>
       <div class={`modal${p.wide ? ' modal-wide' : ''}`}>
         <div class="modal-head">
           <h2>{p.title}</h2>
