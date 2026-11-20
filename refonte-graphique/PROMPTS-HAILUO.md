@@ -150,3 +150,32 @@ Elle avait encore une main en trop (qui tenait son voile). Tous les autres perso
 Redraw this sheet as 2D mobile RPG character art. The sheet shows the same dancer three times: draw three versions of her, one per figure, nothing else; the rest of the sheet stays EMPTY white. Each keeps its species, head shape, outfit, colors, weapon in the same hand, pose and silhouette: full body, three-quarter view facing right. She has exactly two arms and two hands: one arm raises a pink lotus, the other is bent with its hand at her chest; her pink veils hang behind her and no hand holds them. Fully repaint her as detailed hand-painted cartoon art with crisp ink lines and textured shading, not the flat vector look of the sheet. Upgrade: chibi proportions, fierce expressive faces, clean anatomy, fingers gripping items, rich materials (metal, cloth, fur, scales), painted cel shading, light from top right, rim light, one bold dark outline, vibrant colors, glowing parts glow. Pure white background, soft shadow under feet. No text, frames, scenery, extra limbs; nothing cropped, no weapon over a face, the three figures never touch.
 The dancer: Thai-style celestial dancer, golden spired tiara, teal and gold outfit, bare feet, graceful dance pose.
 ```
+
+## Effets d'attaque
+
+Deux planches de 16 effets (6 × 3, les 2 dernières cases vides pour la signature), fond NOIR : dans le jeu, les effets
+s'ajoutent à la lumière, le noir devient transparent tout seul (pas de découpage du fond). Croquis simples faits par
+`node refonte-graphique/effets-ia.cjs 1|2 sortie.png` : Hailuo fait le rendu. Effets gardés pour une prochaine planche
+si besoin : bulle de protection, tourbillon d'eau, malédiction, renforcement.
+
+### Effets 1 — physique, feu, eau et glace
+
+Planche : `effets-1.png`
+
+```
+Redraw this sheet as 2D mobile RPG attack VFX sprites. Keep EXACTLY the same 16 effects in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY black. Each effect keeps its shape, direction, size and colors. Upgrade: premium hand-painted cartoon VFX like top mobile RPGs, bright white-hot cores, saturated glowing edges, soft bloom, motion streaks, small energy particles and sparks, clean readable silhouettes. Pure flat BLACK background everywhere (the black is removed in game), no gradient, no vignette. No characters, no weapons, no text, no frames, no ground or scenery; nothing cropped, effects never touch.
+Row 1, physical: white sword slash arc | golden X cross slash | three red claw slash marks | yellow hit impact star burst | ground shockwave ring with rocks and dust | light-blue piercing thrust streak with air rings.
+Row 2, fire: fireball with ember trail | fiery explosion with smoke | flame pillar from the ground | orange fire slash arc | flaming meteor rock falling | ember spark burst.
+Row 3, water and ice: water bolt with droplet trail | crashing water splash wave | ice spikes from the ground | frost snowflake burst.
+```
+
+### Effets 2 — vent, foudre, terre, nature, soin, lumière, ombre
+
+Planche : `effets-2.png`
+
+```
+Redraw this sheet as 2D mobile RPG attack VFX sprites. Keep EXACTLY the same 16 effects in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY black. Each effect keeps its shape, direction, size and colors. Upgrade: premium hand-painted cartoon VFX like top mobile RPGs, bright white-hot cores, saturated glowing edges, soft bloom, motion streaks, small energy particles and sparks, clean readable silhouettes. Pure flat BLACK background everywhere (the black is removed in game), no gradient, no vignette. No characters, no weapons, no text, no frames, no ground or scenery; nothing cropped, effects never touch.
+Row 1, wind and lightning: green wind tornado | three green wind blade crescents | yellow lightning bolt strike | blue electric energy orb with arcs | gust of wind with flying leaves | white sonic shockwave rings.
+Row 2, earth and nature: brown rock spikes bursting from the ground | ground crack quake with flying rocks | green poison gas cloud with bubbles | thorny green vine whip | swirling leaf storm | falling boulder with dust.
+Row 3, support and magic: green healing sparkles with plus signs | golden holy light beam from the sky | golden magic shield | purple dark void orb with tendrils.
+```
