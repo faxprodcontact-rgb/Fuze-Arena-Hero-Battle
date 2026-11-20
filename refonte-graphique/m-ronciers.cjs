@@ -7,8 +7,10 @@ const BARK = '#6a4a30', BARKD = '#46301e', LEAF = '#5fa83a', FALL = '#e08a2a', M
 const grain = (list) => `<g stroke="#2e1e12" stroke-width="2.4" fill="none" opacity="0.55" stroke-linecap="round">${list.map((d) => `<path d="${d}"/>`).join('')}</g>`;
 const veins = (list, c = '#a85a14') => `<g stroke="${c}" stroke-width="2.2" fill="none" opacity="0.6" stroke-linecap="round">${list.map((d) => `<path d="${d}"/>`).join('')}</g>`;
 /** Une ronce : une liane sombre et ses épines, qui alternent d'un côté et de l'autre (à mettre dans « inner »). */
-const bramble = (pts, w = 4) => { let d = `M${pts[0][0]} ${pts[0][1]}`, th = ''; for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; d += ` L${x1} ${y1}`; const mx = (x0 + x1) / 2, my = (y0 + y1) / 2, dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy) || 1, k = i % 2 ? 1 : -1, nx = -dy / l * k, ny = dx / l * k; th += `<path d="M${(mx - dx / l * 3.5).toFixed(1)} ${(my - dy / l * 3.5).toFixed(1)} L${(mx + nx * 9).toFixed(1)} ${(my + ny * 9).toFixed(1)} L${(mx + dx / l * 3.5).toFixed(1)} ${(my + dy / l * 3.5).toFixed(1)} Z"/>`; } return `<path d="${d}" stroke="${THORN}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/><g fill="${THORN}">${th}</g>`; };
+const bramble = (pts, w = 4, c = '#7fae3e') => { let d = `M${pts[0][0]} ${pts[0][1]}`, th = ''; for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; d += ` L${x1} ${y1}`; const mx = (x0 + x1) / 2, my = (y0 + y1) / 2, dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy) || 1, k = i % 2 ? 1 : -1, nx = -dy / l * k, ny = dx / l * k; th += `<path d="M${(mx - dx / l * 3.5).toFixed(1)} ${(my - dy / l * 3.5).toFixed(1)} L${(mx + nx * 9).toFixed(1)} ${(my + ny * 9).toFixed(1)} L${(mx + dx / l * 3.5).toFixed(1)} ${(my + dy / l * 3.5).toFixed(1)} Z"/>`; } return `<g fill="${THORN}" stroke="${THORN}" stroke-width="1.6" stroke-linejoin="round">${th}</g><path d="${d}" stroke="${THORN}" stroke-width="${w + 2.6}" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" stroke="${c}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`; };
 const berries = (list) => `<g fill="#d8382e" stroke="#5a1410" stroke-width="1">${list.map(([x, y, r = 3.6]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g><g fill="#fff" opacity="0.7">${list.map(([x, y]) => `<circle cx="${x - 1}" cy="${y - 1.2}" r="1"/>`).join('')}</g>`;
+/** Une feuille peinte dans une forme (pour « inner ») : pointe tournée de « a » degrés. */
+const leafIn = (x, y, a, len, w, c) => `<g transform="translate(${x} ${y}) rotate(${a})"><path d="M0 0 C${-w} ${-len * 0.3} ${-w * 0.8} ${-len * 0.8} 0 ${-len} C${w * 0.8} ${-len * 0.8} ${w} ${-len * 0.3} 0 0 Z" fill="${c}" stroke="#8a3c0c" stroke-width="1.3"/><path d="M0 -2 L0 ${-len + 4}" stroke="#8a3c0c" stroke-width="1.3" opacity="0.75"/></g>`;
 /** Œil de sève : il luit en vert. */
 const sap = (h, x, y, rx, ry, o = {}) => { h.halo(x, y, rx + 5, GLOW, 0.6); h.eye(x, y, rx, ry, { sclera: '#f4ffd8', iris: GLOW, pupil: 'slit', lid: 0.44, tilt: 1, ...o }); };
 /** Une feuille posée : pointe vers (x, y − len), tournée de « a » degrés. */
@@ -16,8 +18,8 @@ const leafAt = (h, x, y, a, len, w, t, far) => h.at(`translate(${x} ${y}) rotate
 
 // 0 · rapide — Renard de feuilles : un pelage de feuilles d'automne, une queue en feuille d'érable, des pattes de brindille
 Mo('ronciers', 0, 'Renard de feuilles', { scale: 0.96, atk: 'slash', wind: -14, hit: 20, colors: { leaf: FALL, dark: '#b8601a', bark: BARKD, pale: '#f6e0b0' }, swing: ['head'], grp: { tail: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [126, 158], back: [56, 174], torso: [90, 196] } },
-  (h) => { const { S, raw, T, G, beast, neck, brow, under } = h;
-    const legs = beast({ front: 114, hind: 60, top: 190, w: 11, t: 'bark', dark: 'bark' });
+  (h) => { const { S, raw, T, G, beast, brow, under } = h;
+    const legs = beast({ front: 114, hind: 60, top: 190, w: 11, t: 'leaf', dark: 'dark' });
     G('tail', () => S('M60 180 C44 184 26 176 16 160 L30 156 L8 142 L28 136 L8 120 L30 118 L18 96 L40 106 L42 84 L58 106 C68 122 74 150 68 174 Z', T.leaf, { sh: 7, hl: 5,
       inner: veins(['M62 172 C52 148 42 126 36 100', 'M54 152 L28 138', 'M48 134 L28 120', 'M44 118 L38 102']) + '<path d="M18 96 L40 106 L42 84 L52 100 C46 108 34 108 26 104 Z" fill="#f6e0b0"/>' }));
     G('farLegs', () => legs.far());
@@ -25,16 +27,13 @@ Mo('ronciers', 0, 'Renard de feuilles', { scale: 0.96, atk: 'slash', wind: -14, 
     G('body', () => {
       // les feuilles du dos, couchées vers l'arrière
       S('M60 162 L44 142 L70 152 L62 126 L86 148 L84 122 L104 144 L106 124 L122 148 Z', T.dark, { sh: 4 });
-      S('M44 178 C42 162 54 152 72 152 C88 148 102 140 120 142 C134 144 140 158 138 174 C136 194 114 204 88 204 C62 204 46 196 44 178 Z', T.leaf, { sh: 9, hl: 6,
-        inner: under('M52 194 C76 208 114 206 138 186 L140 214 L50 214 Z', '#f6e0b0', 0.9) + '<g fill="none" stroke="#a85a14" stroke-width="2.4" opacity="0.6" stroke-linecap="round"><path d="M52 164 q9 10 18 0 q9 10 18 0 q9 10 18 0 q9 10 18 0 M60 180 q9 10 18 0 q9 10 18 0 q9 10 18 0"/></g>' });
-      neck([114, 162], [132, 150], [148, 152], 38, 30, 'leaf', { inner: veins(['M124 148 q8 8 16 0']) });
+      S('M44 178 C42 162 54 152 72 152 C88 148 102 140 120 142 C132 140 142 136 154 134 L160 172 C150 182 142 192 132 197 C120 204 104 204 88 204 C62 204 46 196 44 178 Z', T.leaf, { sh: 9, hl: 6,
+        inner: under('M52 194 C76 208 114 206 138 186 L140 214 L50 214 Z', '#f6e0b0', 0.9) + leafIn(82, 186, -98, 26, 9, '#f0b030') + leafIn(80, 168, -80, 28, 9, '#d8501c') + leafIn(110, 182, -96, 30, 10, '#c8461a') + leafIn(108, 162, -80, 30, 10, '#f0b030') + leafIn(138, 186, -98, 28, 9, '#f0b030') + leafIn(138, 168, -78, 30, 10, '#d8501c') });
     });
     G('head', () => {
       S('M136 130 L126 94 L152 116 Z', T.leaf, { sh: 3, inner: '<path d="M136 122 L132 104 L146 116 Z" fill="#5a2a0c"/>' }); S('M156 120 L164 90 L178 124 Z', T.dark, { sh: 3 });
-      S('M130 164 L118 176 L134 174 L130 188 L146 176 Z', T.dark, { sh: 3 });
       S('M128 148 C126 130 140 120 156 120 C170 120 182 128 190 138 C200 144 212 150 214 156 C214 162 208 164 202 164 C190 168 176 174 162 174 C142 174 129 164 128 148 Z', T.leaf, { sh: 9, hl: 6,
-        inner: under('M160 160 C176 152 196 152 216 158 L214 172 L156 178 Z', '#f6e0b0', 0.95) + '<path d="M206 152 C211 151 216 155 215 160 C210 162 206 158 206 152 Z" fill="#1c120a"/><path d="M208 166 C198 170 186 172 174 172" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/>' + veins(['M132 142 L146 146', 'M134 156 L146 156']) });
-      raw('<path d="M196 167 L194 176 L190 168 Z M184 170 L183 178 L179 171 Z" fill="#fff8e6" stroke="#1c120a" stroke-width="1" stroke-linejoin="round"/>');
+        inner: under('M160 160 C176 152 196 152 216 158 L214 172 L156 178 Z', '#f6e0b0', 0.95) + '<path d="M206 152 C211 151 216 155 215 160 C210 162 206 158 206 152 Z" fill="#1c120a"/><path d="M208 166 C198 170 186 172 174 172" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M197 160 L195 169 L191 162 Z" fill="#fff8e6" stroke="#1c120a" stroke-width="1" stroke-linejoin="round"/>' + veins(['M132 142 L146 146', 'M134 156 L146 156']) });
       sap(h, 164, 142, 9.5, 7.5); brow(164, 131, 24, 1, '#5a2a0c', 5);
     });
   });
@@ -108,7 +107,7 @@ Mo('ronciers', 4, 'Mante-brindille', { scale: 1.22, atk: 'slash', wind: -44, hit
     G('armF', () => { S(limb([[176, 128], [198, 132], [208, 158]], 12, 2, 16), T.dark, { sh: 3, far: true }); L([[[[124, 116], [152, 138], [178, 128]], 9, 7]], 'dark', { far: true }); });
     G('farLegs', () => L([[[[84, 160], [56, 176], [44, 226]], 6, 4], [[[104, 158], [130, 180], [138, 226]], 6, 4]], 'dark', { far: true, N: 16 }));
     // l'abdomen : une feuille repliée, nervures visibles
-    G('abdomen', () => { leafAt(h, 60, 158, -70, 40, 13, 'leaf'); S(limb([[98, 150], [58, 172], [20, 150]], 24, 6, 18), T.twig, { sh: 6, inner: '<path d="M90 156 C70 168 46 164 26 152" stroke="#4e5a22" stroke-width="2" fill="none" opacity="0.7"/><path d="M82 158 l-6 10 M66 164 l-6 10 M50 162 l-6 8 M36 156 l-4 7" stroke="#4e5a22" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>' }); });
+    G('abdomen', () => { leafAt(h, 60, 158, -70, 40, 13, 'leaf'); S(limb([[98, 150], [58, 172], [20, 150]], 24, 6, 18), T.twig, { sh: 6, inner: '<path d="M90 156 C70 168 46 164 26 152" stroke="#4e5a22" stroke-width="2" fill="none" opacity="0.7"/><path d="M82 158 l-6 10 M66 164 l-6 10 M50 162 l-6 8 M36 156 l-4 7" stroke="#4e5a22" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>' }); leafAt(h, 98, 148, -68, 56, 12, 'leaf'); });
     G('legs', () => { L([[[[90, 162], [66, 184], [60, 226]], 7, 4], [[[106, 160], [118, 188], [122, 226]], 7, 4]], 'twig', { N: 16 }); S(disc(68, 184, 5.5), T.twig, { sh: 2 }); S(disc(118, 188, 5.5), T.twig, { sh: 2 }); });
     // la patte ravisseuse de devant : levée haut, à droite de la tête ; elle part de sous le thorax
     G('armN', () => { S(limb([[166, 72], [190, 64], [202, 100]], 14, 2, 16), T.blade, { sh: 3, hl: 3, inner: spikes([[176, 74, 200], [186, 76, 190], [194, 84, 170]]) }); L([[[[116, 114], [146, 106], [168, 72]], 10, 8]], 'twig'); S(disc(168, 72, 6.5), T.twig, { sh: 2 }); });
@@ -122,7 +121,7 @@ Mo('ronciers', 4, 'Mante-brindille', { scale: 1.22, atk: 'slash', wind: -44, hit
   });
 
 // 5 · boss — Grand Cerf des ronces : ses bois sont une forêt, ses flancs sont cerclés d'épines, la mousse lui fait un manteau
-Mo('ronciers', 5, 'Grand Cerf des ronces', { scale: 1.38, atk: 'smash', wind: -20, hit: 28, colors: { bark: BARK, dark: BARKD, moss: MOSS, leaf: LEAF, antler: '#8a6a44' }, swing: ['head'], grp: { tail: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [112, 150], back: [30, 150], torso: [82, 190] }, shine: [[148, 96, 9, GLOW]], shineGrp: 'swing' },
+Mo('ronciers', 5, 'Grand Cerf des ronces', { scale: 1.38, atk: 'smash', wind: -20, hit: 28, colors: { bark: BARK, dark: BARKD, moss: MOSS, leaf: LEAF, antler: '#8a6a44' }, swing: ['head'], grp: { tail: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [116, 150], back: [30, 150], torso: [82, 190] }, shine: [[170, 116, 9, GLOW]], shineGrp: 'swing' },
   (h) => { const { S, raw, T, G, L, beast, fringe, neck, brow, limb } = h;
     const legs = beast({ front: 102, hind: 48, top: 182, w: 14, t: 'bark', dark: 'dark', hoof: true, hoofT: '#2a1c12', gap: 13 });
     G('tail', () => { leafAt(h, 30, 152, -100, 20, 8, 'leaf'); leafAt(h, 30, 150, -60, 18, 7, 'moss'); });
@@ -130,18 +129,18 @@ Mo('ronciers', 5, 'Grand Cerf des ronces', { scale: 1.38, atk: 'smash', wind: -2
     G('legs', () => legs.near());
     G('body', () => {
       S('M24 164 C22 138 44 124 72 124 C96 118 116 122 126 138 C132 150 132 172 124 190' + fringe(124, 34, 190, 7, 10) + ' C26 182 24 174 24 164 Z', T.bark, { sh: 11, hl: 7,
-        inner: grain(['M40 144 C38 158 40 174 46 186', 'M64 132 C62 152 64 172 70 188', 'M92 128 C94 148 92 170 88 186']) + bramble([[24, 160], [44, 168], [66, 164], [88, 170], [110, 164], [130, 168]], 4.2) + bramble([[28, 178], [50, 184], [74, 180], [98, 186], [122, 180]], 3.6) + '<path d="M34 134 C52 120 86 116 110 124 C92 132 56 136 34 134 Z" fill="#7ab84a"/><path d="M44 128 C60 122 82 120 98 124" stroke="#c8f09a" stroke-width="4" fill="none" opacity="0.6" stroke-linecap="round"/>' + berries([[58, 174], [102, 176], [82, 190]]) });
-      // le cou monte, crinière de mousse sur le poitrail
-      neck([104, 158], [108, 126], [126, 104], 50, 34, 'bark', { inner: grain(['M100 150 C100 132 108 116 120 104']) + '<path d="M112 172 C124 160 132 140 136 118 L146 126 C142 148 132 168 118 180 Z" fill="#7ab84a" opacity="0.9"/>' });
+        inner: grain(['M40 144 C38 158 40 174 46 186', 'M64 132 C62 152 64 172 70 188', 'M92 128 C94 148 92 170 88 186']) + bramble([[24, 160], [44, 168], [66, 164], [88, 170], [110, 164], [130, 168]], 4.2) + bramble([[28, 178], [50, 184], [74, 180], [98, 186], [122, 180]], 3.6) + '<path d="M26 148 C36 124 70 114 104 118 C118 120 128 130 130 142 C124 138 120 148 112 144 C104 140 100 152 92 148 C84 144 78 154 70 150 C62 146 56 156 48 152 C40 148 34 154 26 148 Z" fill="#7ab84a"/><path d="M44 128 C60 122 82 120 98 124" stroke="#c8f09a" stroke-width="4" fill="none" opacity="0.6" stroke-linecap="round"/>' + berries([[58, 174], [102, 176], [82, 190]]) });
+      // l'encolure part vers l'avant, tête baissée pour charger ; crinière de mousse sur la nuque
+      neck([108, 152], [126, 130], [148, 122], 50, 36, 'bark', { inner: grain(['M108 150 C116 138 128 130 142 126']) + '<path d="M94 138 C108 116 130 102 154 100 L158 118 C152 114 147 124 141 120 C135 116 132 128 126 126 C120 124 118 136 112 134 C107 132 105 145 99 146 Z" fill="#7ab84a"/><path d="M110 124 C122 114 136 108 150 106" stroke="#c8f09a" stroke-width="3.4" fill="none" opacity="0.6" stroke-linecap="round"/>' });
     });
     G('head', () => {
       // les bois partent de derrière le front : deux grandes branches, des feuilles et des baies
-      for (const [p, w, far] of [[[[146, 82], [172, 46], [206, 36]], 9, 1], [[[176, 52], [182, 26], [196, 10]], 6, 1], [[[160, 66], [150, 40], [158, 22]], 6, 1], [[[132, 84], [112, 40], [128, -2]], 11, 0], [[[120, 52], [94, 40], [78, 14]], 8, 0], [[[122, 28], [146, 18], [156, -4]], 7, 0], [[[104, 44], [84, 52], [66, 44]], 6, 0]]) S(limb(p, w, 2.5, 16), T.antler, { sh: 3, far: !!far });
-      leafAt(h, 78, 16, -20, 22, 9, 'leaf'); leafAt(h, 66, 46, -80, 20, 8, 'leaf'); leafAt(h, 128, 0, 10, 22, 9, 'leaf'); leafAt(h, 156, -2, 30, 20, 8, 'moss'); leafAt(h, 206, 38, 60, 20, 8, 'leaf', true); leafAt(h, 196, 12, 30, 18, 7, 'leaf', true);
-      raw(berries([[92, 34], [140, 22], [112, 22]]));
-      S('M110 104 L98 86 L120 92 Z', T.bark, { sh: 3 });
-      S('M104 110 C104 92 118 80 136 80 C150 80 162 88 170 98 C182 104 196 112 198 122 C198 130 190 134 182 132 C170 138 156 142 142 140 C120 138 104 128 104 110 Z', T.bark, { sh: 10, hl: 6,
-        inner: grain(['M112 108 C116 120 124 130 136 136', 'M124 88 C130 98 132 108 130 118']) + '<path d="M188 114 C193 113 198 117 197 122 C192 124 188 120 188 114 Z" fill="#1c120a"/><path d="M190 130 C182 133 172 133 164 131" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M108 124 C118 136 132 142 146 142 L144 152 L106 146 Z" fill="#7ab84a" opacity="0.85" filter="url(#g2)"/>' });
-      sap(h, 148, 100, 9.5, 7.5, { pupil: 'none', irisK: 0.8 }); brow(148, 89, 26, 1, '#1c120a', 5.5);
+      for (const [p, w, far] of [[[[160, 98], [186, 64], [214, 56]], 9, 1], [[[188, 68], [192, 44], [204, 30]], 6, 1], [[[174, 82], [166, 58], [174, 40]], 6, 1], [[[148, 102], [130, 58], [150, 14]], 11, 0], [[[136, 68], [112, 56], [96, 28]], 8, 0], [[[138, 42], [160, 34], [170, 14]], 7, 0], [[[122, 60], [102, 66], [86, 58]], 6, 0]]) S(limb(p, w, 2.5, 16), T.antler, { sh: 3, far: !!far });
+      leafAt(h, 96, 30, -20, 22, 9, 'leaf'); leafAt(h, 86, 60, -80, 20, 8, 'leaf'); leafAt(h, 150, 16, 10, 22, 9, 'leaf'); leafAt(h, 170, 16, 30, 20, 8, 'moss'); leafAt(h, 214, 58, 60, 20, 8, 'leaf', true); leafAt(h, 204, 32, 30, 18, 7, 'leaf', true);
+      raw(berries([[110, 48], [156, 36], [130, 38]]));
+      S('M138 118 L120 102 L146 106 Z', T.bark, { sh: 3 });
+      S('M132 124 C132 106 146 96 162 96 C174 96 184 102 192 112 C202 120 214 132 216 142 C217 150 210 154 202 152 C190 157 172 158 158 154 C142 150 132 140 132 124 Z', T.bark, { sh: 10, hl: 6,
+        inner: grain(['M140 122 C144 134 152 144 164 150', 'M152 102 C158 112 160 122 158 132']) + '<path d="M205 134 C210 133 216 137 215 143 C210 145 205 141 205 134 Z" fill="#1c120a"/><path d="M206 152 C198 155 188 156 178 154" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M136 140 C146 152 160 158 174 156 L172 166 L134 160 Z" fill="#7ab84a" opacity="0.85" filter="url(#g2)"/>' });
+      sap(h, 170, 116, 9.5, 7.5, { pupil: 'none', irisK: 0.8 }); brow(170, 105, 26, 1, '#1c120a', 5.5);
     });
   });
