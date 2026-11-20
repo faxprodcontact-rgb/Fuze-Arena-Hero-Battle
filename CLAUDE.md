@@ -52,7 +52,10 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   `src/game/art-meta.ts` (fabriqué par `python3 refonte-graphique/art-jeu.py`, après `decoupe-hailuo.py` / `decoupe-decors.py`).
   `src/game/look.ts` choisit le terrain et la famille de monstres selon le mode et le chapitre (8 régions de campagne,
   une famille par élément et par région ; tour, donjons, antre des boss, arène). Les règles ne changent pas : seuls les
-  dessins des anciens monstres (gobelin, loup…) sont remplacés. Effets : `FX`, `MELEE_FX`, `SKILL_FX`… dans `fight-view.ts`.
+  dessins des anciens monstres (gobelin, loup…) sont remplacés. Décidé (v0.22.0) : les images d'effets ne servent
+  qu'aux compétences (attaques spéciales), chacune avec sa mini-chorégraphie (`skillFx` dans `fight-view.ts` : la lame balaie et
+  percute, l'éclair tombe, les pics jaillissent, le météore s'écrase…) ; les attaques de base restent discrètes, dessinées
+  par le code (`basicMelee`, `basicShot`). Au corps à corps, le héros fonce sur sa cible pendant sa compétence.
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.
   Aperçu animé sur le site de test : `public/apercu/` (page à part, bouton « Aperçu des animations » dans les Outils de
   test des réglages) : les personnages v5 animés morceau par morceau. Les images viennent de

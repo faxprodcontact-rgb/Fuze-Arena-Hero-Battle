@@ -51,21 +51,29 @@ const FEET = 47;
 type FxName = keyof typeof ART_META.fx;
 /** Largeur d'affichage de chaque effet (pixels) et point d'ancrage : centre, ou sol (le bas de l'effet aux pieds). */
 const FX: Record<FxName, [number, 'c' | 'g']> = {
-  slash: [150, 'c'], crossSlash: [165, 'c'], claw: [140, 'c'], impact: [120, 'c'], shockwave: [230, 'g'], pierce: [200, 'c'],
-  fireball: [110, 'c'], explosion: [175, 'c'], flamePillar: [130, 'g'], fireSlash: [150, 'c'], meteor: [150, 'c'], emberBurst: [150, 'c'],
-  waterBolt: [115, 'c'], splash: [165, 'g'], iceSpikes: [170, 'g'], frostBurst: [150, 'c'], tornado: [130, 'g'], windBlades: [140, 'c'],
-  lightning: [110, 'g'], electricOrb: [80, 'c'], featherGust: [170, 'c'], sonicRing: [130, 'c'], rockSpikes: [170, 'g'], quake: [210, 'g'],
-  poison: [140, 'c'], thornVines: [140, 'c'], leafStorm: [170, 'c'], boulder: [80, 'c'], heal: [130, 'c'], holyBeam: [120, 'g'],
+  slash: [180, 'c'], crossSlash: [195, 'c'], claw: [170, 'c'], impact: [120, 'c'], shockwave: [230, 'g'], pierce: [200, 'c'],
+  fireball: [110, 'c'], explosion: [175, 'c'], flamePillar: [130, 'g'], fireSlash: [180, 'c'], meteor: [150, 'c'], emberBurst: [150, 'c'],
+  waterBolt: [115, 'c'], splash: [165, 'g'], iceSpikes: [170, 'g'], frostBurst: [150, 'c'], tornado: [130, 'g'], windBlades: [170, 'c'],
+  lightning: [150, 'g'], electricOrb: [80, 'c'], featherGust: [170, 'c'], sonicRing: [130, 'c'], rockSpikes: [170, 'g'], quake: [210, 'g'],
+  poison: [140, 'c'], thornVines: [140, 'c'], leafStorm: [170, 'c'], boulder: [115, 'c'], heal: [130, 'c'], holyBeam: [120, 'g'],
   goldShield: [105, 'c'], darkOrb: [130, 'c'],
 };
-/** Coup au corps à corps, projectile et son impact, compétences : selon l'élément de celui qui frappe. */
-const MELEE_FX: Record<Element, FxName> = { fire: 'fireSlash', wind: 'windBlades', water: 'slash', earth: 'claw' };
-const SHOT_FX: Record<Element, FxName> = { fire: 'fireball', wind: 'electricOrb', water: 'waterBolt', earth: 'boulder' };
-const SHOT_HIT_FX: Record<Element, FxName> = { fire: 'explosion', wind: 'impact', water: 'splash', earth: 'impact' };
-const SKILL_FX: Record<Element, readonly FxName[]> = {
-  fire: ['flamePillar', 'meteor', 'explosion'], water: ['iceSpikes', 'frostBurst', 'splash'],
-  wind: ['lightning', 'tornado', 'featherGust'], earth: ['rockSpikes', 'quake', 'thornVines'],
+/**
+ * Compétences (attaques spéciales) : les images Hailuo, chacune avec sa petite chorégraphie (voir `skillFx`).
+ * Les combattants au corps à corps et à distance n'ont pas les mêmes ; la compétence choisit dans sa liste.
+ * Les attaques de base, elles, restent discrètes et sont dessinées par le code (`basicMelee`, `basicShot`).
+ */
+const SKILL_FX: Record<Element, { melee: readonly FxName[]; ranged: readonly FxName[] }> = {
+  fire: { melee: ['fireSlash', 'explosion', 'flamePillar'], ranged: ['fireball', 'meteor', 'flamePillar'] },
+  water: { melee: ['slash', 'iceSpikes', 'splash'], ranged: ['waterBolt', 'frostBurst', 'iceSpikes'] },
+  wind: { melee: ['windBlades', 'crossSlash', 'tornado'], ranged: ['lightning', 'tornado', 'featherGust'] },
+  earth: { melee: ['claw', 'rockSpikes', 'quake'], ranged: ['boulder', 'rockSpikes', 'thornVines'] },
 };
+/** Ce qui éclate à l'arrivée d'un projectile de compétence. */
+const ARRIVAL_FX: Partial<Record<FxName, FxName>> = { fireball: 'explosion', meteor: 'explosion', waterBolt: 'splash', electricOrb: 'sonicRing', boulder: 'quake' };
+type Pt = { x: number; y: number; feet: number };
+/** Temps avant l'impact (projectiles, météore : ils doivent d'abord voyager). */
+const TRAVEL: Partial<Record<FxName, number>> = { meteor: 300, fireball: 260, waterBolt: 260, electricOrb: 260, boulder: 260 };
 const STATUS_FX: Partial<Record<string, FxName>> = {
   poison: 'poison', burn: 'emberBurst', stun: 'sonicRing', silence: 'darkOrb', atkDown: 'darkOrb', defDown: 'darkOrb',
   slow: 'frostBurst', regen: 'leafStorm', atkUp: 'emberBurst', critUp: 'emberBurst',
@@ -252,17 +260,200 @@ export abstract class FightScene extends Phaser.Scene {
     }
   }
 
-  /** Un effet (image d'effet Hailuo) qui grossit un peu puis s'efface. `ground` = posé aux pieds. */
-  protected fx(name: FxName, x: number, y: number, o: { size?: number; flip?: boolean; dur?: number; depth?: number } = {}) {
+  /** Une image d'effet posée en (x, y), à sa taille de base (`k` = échelle correspondante). */
+  private fxImage(name: FxName, x: number, y: number, flip = false, ground = FX[name][1] === 'g') {
     const key = `fx-${name}`;
-    if (!this.textures.exists(key)) return;
-    const [size, anchor] = FX[name];
-    const img = this.add.image(x, y, key).setOrigin(0.5, anchor === 'g' ? 0.95 : 0.5).setFlipX(!!o.flip).setDepth(o.depth ?? 1500);
-    const k = (size * (o.size ?? 1)) / img.width;
+    if (!this.textures.exists(key)) return null;
+    const img = this.add.image(x, y, key).setOrigin(0.5, ground ? 0.95 : 0.5).setFlipX(flip).setDepth(1500);
+    const k = FX[name][0] / img.width;
+    img.setScale(k);
+    return { img, k };
+  }
+
+  /** Effet simple (soin, bouclier, statut) : il grossit un peu puis s'efface. */
+  protected fx(name: FxName, x: number, y: number, o: { size?: number; flip?: boolean; dur?: number } = {}) {
+    const f = this.fxImage(name, x, y, o.flip);
+    if (!f) return;
+    const { img } = f, k = f.k * (o.size ?? 1), dur = o.dur ?? 420;
     img.setScale(k * 0.7).setAlpha(0.95);
-    const dur = o.dur ?? 420;
     this.tweens.add({ targets: img, scale: k, duration: dur * 0.35, ease: 'Back.easeOut' });
     this.tweens.add({ targets: img, alpha: 0, delay: dur * 0.5, duration: dur * 0.5, onComplete: () => img.destroy() });
+  }
+
+  /** Un éclair de lumière bref au point d'impact. */
+  private flashAt(x: number, y: number, color = 0xffffff, r = 34, t = 1) {
+    const c = this.add.circle(x, y, r, color, 0.8).setDepth(1600).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: c, scale: 1.8, alpha: 0, duration: 180 * t, onComplete: () => c.destroy() });
+  }
+
+  /**
+   * La chorégraphie d'une compétence sur une cible : chaque image a sa façon d'arriver, de frapper et de partir
+   * (la lame balaie et percute, l'éclair tombe et claque, les pics jaillissent du sol, le météore s'écrase…).
+   * `t` = 1 / vitesse du combat. Renvoie le moment de l'impact (ms), pour y caler les chiffres de dégâts.
+   */
+  private skillFx(name: FxName, from: Pt, to: Pt, dir: number, t: number): number {
+    const flip = dir < 0;
+    const end = (img: Phaser.GameObjects.Image, delay: number, dur: number, extra: Record<string, unknown> = {}) =>
+      this.tweens.add({ targets: img, alpha: 0, delay, duration: dur, ...extra, onComplete: () => img.destroy() });
+    const shake = (ms: number, k: number) => this.cameras.main.shake(ms, k);
+    switch (name) {
+      case 'slash': case 'fireSlash': case 'claw': case 'windBlades': case 'crossSlash': {
+        // la lame arrive de derrière en tournant, s'écrase sur la cible en grossissant, puis file en s'étirant
+        const f = this.fxImage(name, to.x - dir * 60, to.y, flip);
+        if (!f) return 0;
+        const { img, k } = f, cross = name === 'crossSlash';
+        img.setScale(k * (cross ? 1.7 : 0.35), k * (cross ? 1.7 : 0.9)).setAngle(cross ? dir * 90 : -dir * 40).setAlpha(0.3);
+        this.tweens.add({ targets: img, x: to.x + dir * 8, angle: 0, scaleX: k * 1.15, scaleY: k * 1.15, alpha: 1, duration: 120 * t, ease: 'Cubic.easeOut' });
+        this.time.delayedCall(110 * t, () => { this.flashAt(to.x, to.y, 0xffffff, 26, t); shake(70, 0.004); });
+        end(img, 170 * t, 200 * t, { x: to.x + dir * 50, scaleX: k * 1.5, scaleY: k * 0.5 });
+        return 110 * t;
+      }
+      case 'pierce': {
+        const f = this.fxImage(name, to.x - dir * 160, to.y, flip);
+        if (!f) return 0;
+        const { img, k } = f;
+        img.setScale(k * 0.4, k);
+        this.tweens.add({ targets: img, x: to.x + dir * 40, scaleX: k * 1.3, duration: 150 * t, ease: 'Quad.easeIn' });
+        this.time.delayedCall(140 * t, () => this.flashAt(to.x, to.y, 0xcfe8ff, 28, t));
+        end(img, 170 * t, 160 * t, { x: to.x + dir * 90 });
+        return 140 * t;
+      }
+      case 'fireball': case 'waterBolt': case 'electricOrb': case 'boulder': {
+        // le projectile part du lanceur, grossit en approchant (le rocher tourne sur lui-même), puis éclate
+        const f = this.fxImage(name, from.x + dir * 30, from.y, false);
+        if (!f) return 0;
+        const { img, k } = f, travel = 260 * t;
+        img.setScale(k * 0.6).setRotation(Math.atan2(to.y - from.y, to.x - from.x));
+        this.tweens.add({ targets: img, x: to.x, y: to.y, scale: k * 1.1, duration: travel, ease: 'Quad.easeIn', onComplete: () => img.destroy() });
+        if (name === 'boulder') this.tweens.add({ targets: img, angle: img.angle + dir * 540, duration: travel });
+        if (name === 'electricOrb') this.tweens.add({ targets: img, alpha: 0.6, yoyo: true, repeat: 3, duration: travel / 8 });
+        this.time.delayedCall(travel, () => this.skillFx(ARRIVAL_FX[name]!, from, to, dir, t));
+        return travel;
+      }
+      case 'meteor': {
+        // tombe du ciel en diagonale, de plus en plus vite, puis s'écrase : explosion, sol fendu, secousse
+        const f = this.fxImage(name, to.x - dir * 230, to.y - 360, flip);
+        if (!f) return 0;
+        const { img, k } = f, fall = 300 * t;
+        img.setScale(k * 0.55);
+        this.tweens.add({ targets: img, x: to.x - dir * 20, y: to.y - 30, scale: k * 1.05, duration: fall, ease: 'Quad.easeIn', onComplete: () => img.destroy() });
+        this.time.delayedCall(fall, () => { this.skillFx('explosion', from, to, dir, t); this.skillFx('quake', from, to, dir, t); shake(220, 0.012); });
+        return fall;
+      }
+      case 'lightning': {
+        // l'éclair jaillit d'un coup jusqu'au sol, clignote, claque (flash + secousse), puis s'amincit
+        const f = this.fxImage(name, to.x, to.feet, flip, true);
+        if (!f) return 0;
+        const { img, k } = f;
+        img.setScale(k * 0.8, 0);
+        this.tweens.add({ targets: img, scaleY: k * 1.3, duration: 70 * t, ease: 'Expo.easeOut' });
+        this.tweens.add({ targets: img, alpha: 0.35, delay: 80 * t, duration: 45 * t, yoyo: true, repeat: 2 });
+        this.time.delayedCall(70 * t, () => { this.flashAt(to.x, to.feet - 10, 0xfff3a0, 44, t); this.flashAt(to.x, to.y, 0xffffff, 30, t); shake(140, 0.01); });
+        end(img, 380 * t, 160 * t, { scaleX: 0 });
+        return 70 * t;
+      }
+      case 'flamePillar': case 'iceSpikes': case 'rockSpikes': case 'splash': case 'holyBeam': {
+        // jaillit du sol en s'étirant vers le haut (avec un rebond), tient un instant, puis rentre dans le sol
+        const f = this.fxImage(name, to.x, to.feet, flip, true);
+        if (!f) return 0;
+        const { img, k } = f, beam = name === 'holyBeam';
+        img.setScale(beam ? 0 : k * 0.7, beam ? k * 1.2 : 0);
+        this.tweens.add({ targets: img, scaleX: k, scaleY: k * (beam ? 1.2 : 1.15), duration: 170 * t, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: img, scaleY: k * (beam ? 1.2 : 1), delay: 170 * t, duration: 120 * t });
+        if (name === 'rockSpikes' || name === 'iceSpikes') this.time.delayedCall(90 * t, () => shake(110, 0.007));
+        if (name === 'flamePillar') this.tweens.add({ targets: img, scaleX: k * 1.08, delay: 200 * t, duration: 70 * t, yoyo: true, repeat: 2 });
+        this.time.delayedCall(90 * t, () => this.flashAt(to.x, to.feet - 20, beam ? 0xfff3b0 : 0xffffff, 30, t));
+        end(img, 480 * t, 200 * t, beam ? { scaleX: 0 } : { scaleY: 0 });
+        return 90 * t;
+      }
+      case 'quake': case 'shockwave': {
+        // l'onde part des pieds et s'élargit au ras du sol pendant que l'écran tremble
+        const f = this.fxImage(name, to.x, to.feet + 6, flip, true);
+        if (!f) return 0;
+        const { img, k } = f;
+        img.setScale(k * 0.25, k * 0.4);
+        this.tweens.add({ targets: img, scaleX: k * 1.35, scaleY: k * 1.05, duration: 260 * t, ease: 'Cubic.easeOut' });
+        shake(200, 0.009);
+        end(img, 220 * t, 260 * t);
+        return 60 * t;
+      }
+      case 'explosion': case 'emberBurst': case 'impact': case 'sonicRing': case 'frostBurst': {
+        // éclate d'un petit point à plus grand que nature, en tournant un peu, puis se dissipe en gonflant
+        const f = this.fxImage(name, to.x, to.y, flip);
+        if (!f) return 0;
+        const { img, k } = f;
+        img.setScale(k * 0.2).setAngle(name === 'frostBurst' ? -40 : Phaser.Math.Between(-15, 15));
+        this.tweens.add({ targets: img, scale: k * 1.15, angle: name === 'frostBurst' ? 30 : img.angle, duration: 150 * t, ease: 'Back.easeOut' });
+        this.flashAt(to.x, to.y, name === 'frostBurst' ? 0xcff4ff : 0xfff0c0, 36, t);
+        if (name === 'explosion') shake(160, 0.01);
+        end(img, 200 * t, 240 * t, { scale: k * 1.4 });
+        return 20 * t;
+      }
+      case 'tornado': {
+        // la tornade naît au sol, grandit, oscille de gauche à droite en se retournant, puis s'évanouit
+        const f = this.fxImage(name, to.x, to.feet, flip, true);
+        if (!f) return 0;
+        const { img, k } = f;
+        img.setScale(k * 0.2);
+        this.tweens.add({ targets: img, scale: k * 1.1, duration: 200 * t, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: img, x: to.x + 14, delay: 120 * t, duration: 90 * t, yoyo: true, repeat: 3, onRepeat: () => img.toggleFlipX() });
+        end(img, 640 * t, 200 * t, { scaleX: 0 });
+        return 160 * t;
+      }
+      case 'featherGust': case 'leafStorm': {
+        // la rafale traverse la cible depuis le lanceur, en s'étirant (les feuilles tournent)
+        const f = this.fxImage(name, to.x - dir * 150, to.y, flip);
+        if (!f) return 0;
+        const { img, k } = f;
+        img.setScale(k * 0.6, k * 0.8).setAlpha(0.2);
+        this.tweens.add({ targets: img, x: to.x + dir * 30, scaleX: k * 1.15, scaleY: k, alpha: 1, duration: 260 * t, ease: 'Sine.easeOut' });
+        if (name === 'leafStorm') this.tweens.add({ targets: img, angle: dir * 120, duration: 600 * t });
+        end(img, 300 * t, 260 * t, { x: to.x + dir * 120 });
+        return 200 * t;
+      }
+      case 'thornVines': {
+        // la liane fouette : elle part couchée en arrière et claque sur la cible
+        const f = this.fxImage(name, to.x, to.y, flip);
+        if (!f) return 0;
+        const { img, k } = f;
+        img.setScale(k * 0.5).setAngle(-dir * 75);
+        this.tweens.add({ targets: img, angle: dir * 12, scale: k * 1.1, duration: 170 * t, ease: 'Back.easeOut' });
+        this.time.delayedCall(150 * t, () => { this.flashAt(to.x, to.y, 0xd8ffb0, 28, t); shake(80, 0.005); });
+        end(img, 320 * t, 200 * t, { scale: k * 0.8 });
+        return 150 * t;
+      }
+      case 'darkOrb': case 'poison': {
+        // tourbillon qui se resserre sur la cible (orbe), ou nuage qui gonfle et monte (poison)
+        const f = this.fxImage(name, to.x, to.y, flip);
+        if (!f) return 0;
+        const { img, k } = f, orb = name === 'darkOrb';
+        img.setScale(orb ? k * 1.5 : k * 0.4).setAlpha(orb ? 0.2 : 1);
+        this.tweens.add({ targets: img, scale: orb ? k * 0.8 : k * 1.1, angle: orb ? -360 : 0, y: orb ? to.y : to.y - 18, alpha: 1, duration: 420 * t, ease: 'Sine.easeInOut' });
+        end(img, 420 * t, 220 * t);
+        return 200 * t;
+      }
+      case 'heal': {
+        const f = this.fxImage(name, to.x, to.y + 20, flip);
+        if (!f) return 0;
+        const { img, k } = f;
+        img.setScale(k * 0.6);
+        this.tweens.add({ targets: img, y: to.y - 30, scale: k, duration: 500 * t, ease: 'Sine.easeOut' });
+        end(img, 300 * t, 300 * t);
+        return 0;
+      }
+      case 'goldShield': {
+        // le bouclier se pose d'un coup (grand → normal), brille, puis se resserre sur le héros
+        const f = this.fxImage(name, to.x, to.y, flip);
+        if (!f) return 0;
+        const { img, k } = f;
+        img.setScale(k * 1.7).setAlpha(0);
+        this.tweens.add({ targets: img, scale: k, alpha: 1, duration: 200 * t, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: img, alpha: 0.6, delay: 220 * t, duration: 110 * t, yoyo: true });
+        end(img, 520 * t, 200 * t, { scale: k * 0.5 });
+        return 0;
+      }
+    }
+    return 0;
   }
 
   /** Le centre du corps d'un combattant (là où les coups portent) et ses pieds. */
@@ -270,30 +461,43 @@ export abstract class FightScene extends Phaser.Scene {
     return { x: v.body.x, y: v.body.y + (FEET + v.barY) / 2 + 10, feet: v.body.y + FEET };
   }
 
+  /** Attaque de base au corps à corps : petit élan et une courte traînée de coup, discrète, à la couleur de l'élément. */
+  private basicMelee(to: Pt, dir: number, color: number, t: number) {
+    const g = this.add.graphics().setDepth(1400).setPosition(to.x - dir * 4, to.y);
+    g.lineStyle(5, color, 0.9).beginPath().arc(0, 0, 24, dir > 0 ? -1.2 : Math.PI - 1.2, dir > 0 ? 1.0 : Math.PI + 1.0).strokePath();
+    g.lineStyle(2, 0xffffff, 0.9).beginPath().arc(0, 0, 24, dir > 0 ? -1.0 : Math.PI - 1.0, dir > 0 ? 0.8 : Math.PI + 0.8).strokePath();
+    g.setScale(0.6).setAngle(dir * -20);
+    this.tweens.add({ targets: g, scale: 1.1, angle: dir * 15, alpha: 0, duration: 200 * t, ease: 'Quad.easeOut', onComplete: () => g.destroy() });
+  }
+
+  /** Attaque de base à distance : une petite boule d'énergie avec une traînée, et un petit anneau à l'arrivée. */
+  private basicShot(from: Pt, to: Pt, dir: number, color: number, t: number) {
+    const x0 = from.x + dir * 30;
+    const tail = this.add.ellipse(x0, from.y, 22, 6, color, 0.5).setDepth(1000);
+    const ball = this.add.circle(x0, from.y, 6, color).setStrokeStyle(2, 0xffffff, 0.9).setDepth(1001);
+    tail.setRotation(Math.atan2(to.y - from.y, to.x - x0));
+    this.tweens.add({ targets: [ball, tail], x: to.x, y: to.y, duration: 220 * t, onComplete: () => { ball.destroy(); tail.destroy(); } });
+    this.time.delayedCall(220 * t, () => {
+      const ring = this.add.circle(to.x, to.y, 8).setStrokeStyle(3, color).setDepth(1400);
+      this.tweens.add({ targets: ring, scale: 2.2, alpha: 0, duration: 220 * t, onComplete: () => ring.destroy() });
+    });
+  }
+
   private animateAttack(sourceId: string, hit: Hit, speed: number) {
     const src = this.views.get(sourceId);
     const dst = this.views.get(hit.target);
     if (!src || !dst) return;
     const dir = src.unit.side === 'hero' ? 1 : -1;
-    const el = src.unit.element;
+    const color = hex(ELEMENT_COLOR[src.unit.element]);
+    const t = 1 / speed;
     const to = this.chest(dst);
     if (src.unit.ranged) {
-      const from = this.chest(src);
-      const key = `fx-${SHOT_FX[el]}`;
-      const shot = this.textures.exists(key)
-        ? this.add.image(from.x + 30 * dir, from.y, key).setDisplaySize(FX[SHOT_FX[el]][0], (FX[SHOT_FX[el]][0] * this.textures.getFrame(key).height) / this.textures.getFrame(key).width)
-        : this.add.circle(from.x + 30 * dir, from.y, 7, hex(ELEMENT_COLOR[el]));
-      shot.setDepth(1000).setRotation(Math.atan2(to.y - from.y, to.x - from.x - 30 * dir));
-      this.tweens.add({ targets: shot, x: to.x, y: to.y, duration: 220 / speed, onComplete: () => shot.destroy() });
-      this.time.delayedCall(220 / speed, () => this.fx(SHOT_HIT_FX[el], to.x, el === 'water' ? to.feet : to.y, { size: 0.65, dur: 360 / speed }));
+      this.basicShot(this.chest(src), to, dir, color, t);
     } else {
-      this.tweens.add({ targets: src.body, x: src.homeX + 46 * dir, duration: 90 / speed, yoyo: true, ease: 'Quad.easeOut' });
-      this.time.delayedCall(110 / speed, () => {
-        this.fx(hit.kind === 'damage' && hit.crit ? 'crossSlash' : MELEE_FX[el], to.x - 6 * dir, to.y, { flip: dir < 0, dur: 320 / speed });
-        if (hit.kind === 'damage' && hit.crit) this.fx('impact', to.x, to.y, { size: 0.7, dur: 300 / speed });
-      });
+      this.tweens.add({ targets: src.body, x: src.homeX + 46 * dir, duration: 90 * t, yoyo: true, ease: 'Quad.easeOut' });
+      this.time.delayedCall(100 * t, () => this.basicMelee(to, dir, color, t));
     }
-    this.time.delayedCall(140 / speed, () => this.showHit(hit, false));
+    this.time.delayedCall(140 * t, () => this.showHit(hit, false));
   }
 
   private animateSkill(sourceId: string, skillId: string, hits: Hit[], speed: number) {
@@ -306,28 +510,45 @@ export abstract class FightScene extends Phaser.Scene {
     const flash = this.add.circle(src.body.x, src.body.y, 30, hero ? 0xffe27a : 0xff6b6b, 0.6).setDepth(999);
     this.tweens.add({ targets: flash, scale: 4, alpha: 0, duration: 380 / speed, onComplete: () => flash.destroy() });
     if (hits.filter((h) => h.kind === 'damage').length > 1) this.cameras.main.shake(180, 0.006);
-    // l'effet de la compétence sur chaque cible touchée (un même effet pour toute la compétence)
-    const list = SKILL_FX[src.unit.element];
+    // la chorégraphie de la compétence sur chaque cible touchée (une même image pour toute la compétence)
+    const list = SKILL_FX[src.unit.element][src.unit.ranged ? 'ranged' : 'melee'];
     const fxName = list[hash(skillId) % list.length]!;
+    const tm = 1 / speed;
+    const from = this.chest(src);
+    let impact = 200 * tm;
+    // au corps à corps, le héros fonce sur sa première cible, frappe, puis revient à sa place
+    const first = hits.find((h) => h.kind === 'damage' && this.views.get(h.target));
+    if (!src.unit.ranged && first) {
+      const tgt = this.views.get(first.target)!, dir = hero ? 1 : -1;
+      this.tweens.add({ targets: src.body, x: tgt.body.x - dir * 85, y: tgt.body.y, duration: 120 * tm, ease: 'Quad.easeOut' });
+      this.tweens.add({ targets: src.body, x: src.homeX, y: this.slotPos(src.unit).y, delay: 520 * tm, duration: 200 * tm, ease: 'Quad.easeInOut' });
+    }
     const seen = new Set<string>();
-    hits.forEach((h, i) => {
+    hits.forEach((h) => {
       if (h.kind !== 'damage' || seen.has(h.target)) return;
-      seen.add(h.target);
       const v = this.views.get(h.target);
       if (!v) return;
-      const p = this.chest(v);
-      this.time.delayedCall((140 + i * 40) / speed, () => this.fx(fxName, p.x, FX[fxName][1] === 'g' ? p.feet : p.y, { flip: !hero, dur: 560 / speed }));
+      const delay = (120 + seen.size * 70) * tm;
+      seen.add(h.target);
+      const at = this.skillFx.bind(this, fxName, from, this.chest(v), hero ? 1 : -1, tm);
+      // l'impact (et les chiffres) arrive quand l'effet touche : on l'estime avant de lancer
+      impact = Math.max(impact, delay + (TRAVEL[fxName] ?? 100) * tm);
+      this.time.delayedCall(delay, at);
     });
-    this.time.delayedCall(200 / speed, () => hits.forEach((h) => this.showHit(h, true)));
+    this.time.delayedCall(impact, () => hits.forEach((h) => this.showHit(h, true)));
   }
 
   private showHit(hit: Hit, big: boolean) {
     const v = this.views.get(hit.target);
     if (!v) return;
-    if (hit.kind === 'status' && hit.status && STATUS_FX[hit.status]) this.fx(STATUS_FX[hit.status]!, v.body.x, this.chest(v).y, { size: 0.8, dur: 600 });
-    if (hit.kind === 'revive') this.fx('holyBeam', v.body.x, v.body.y + FEET, { dur: 800 });
-    if (hit.kind === 'heal' && !hit.dot) this.fx('heal', v.body.x, this.chest(v).y, { size: 0.85, dur: 600 });
-    if (hit.kind === 'shield') this.fx('goldShield', v.body.x, this.chest(v).y, { dur: 600 });
+    // les images d'effets ne viennent qu'avec les compétences (big) ; le reste reste discret
+    if (big) {
+      const p = this.chest(v), dir = v.unit.side === 'hero' ? 1 : -1;
+      if (hit.kind === 'status' && hit.status && STATUS_FX[hit.status]) this.fx(STATUS_FX[hit.status]!, p.x, p.y, { size: 0.8, dur: 600 });
+      if (hit.kind === 'revive') this.skillFx('holyBeam', p, p, dir, 1);
+      if (hit.kind === 'heal' && !hit.dot) this.skillFx('heal', p, p, dir, 1);
+      if (hit.kind === 'shield') this.skillFx('goldShield', p, p, dir, 1);
+    }
     if (hit.kind === 'miss' || hit.kind === 'status' || hit.kind === 'revive') {
       if (hit.kind === 'revive') this.tweens.add({ targets: v.body, alpha: 1, y: this.slotPos(v.unit).y, angle: 0, duration: 400 });
       const label = hit.kind === 'miss' ? t('fx.miss') : hit.kind === 'revive' ? '✚' : t(`st.${hit.status}`, { n: '' }).replace(/[+−-]\s*%/, '').trim();
