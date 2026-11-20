@@ -146,4 +146,9 @@ Demande du propriétaire : des **familles de 6 monstres**, beaucoup, pour tous l
   une famille (avec son élite, puis son boss).
 - Mêmes contrôles que pour les héros : rien ne passe devant un œil ou une gueule, rien de coupé, pattes lisibles (pas
   d'enchevêtrement), silhouette différente pour chacun des 6.
+- **À vérifier sur CHAQUE monstre** (remarque du propriétaire) : une gueule ouverte est **découpée dans la silhouette**
+  (le corps a une vraie encoche jusqu'au coin de la bouche, l'intérieur sombre est dessiné derrière avec un bord avant
+  creusé : aucun trait ne referme la bouche) ; pattes, pinces, tiges d'yeux, tentacules et « trompes » partent de **sous
+  le corps** (dessinés avant lui, il recouvre leur attache) et à un endroit naturel : jamais posés dessus avec un contour.
+  Deux parties du même corps (manteau et tête du calmar) = une seule forme.
 - Faite : **Les Abysses** (en attente de l'avis du propriétaire sur le style avant de lancer les 11 autres).
