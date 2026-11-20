@@ -27,28 +27,31 @@ H('water', 2, 'Corsaire', 'pirate des mers du sud', {
   far: { hand: [176, 162], el: [160, 158], handKind: 'none', item: ['small', { kind: 'hook', dir: [20, -14], off: -2 }] } });
 
 H('water', 3, 'Kappa', 'kappa, génie des rivières (Japon)', {
+  shine: [[106, 44, 'head']],
   scale: 0.94, body: 'round', shape: { drop: 10 }, colors: { skin: '#6fae5a', muz: '#e6dca0', shell: '#7a5a34', hair: '#2a4a2a', boot: '#4a8a44' },
   bare: true, bareArms: true, noBelt: true, chest: [['belly', { t: 'muz' }], ['raw', { svg: '<path d="M100 132 L134 134 M102 146 L134 148" stroke="#b8a868" stroke-width="2.4"/>' }]],
   legs: { kind: 'legs', leg: 'thick', t: 'skin', foot: 'webbed', stance: 'mid' },
-  head: { kind: 'turtle', patchT: '#e0a030', eyes: { style: 'wide', color: '#2a2226', sclera: '#fff3a8' }, brow: { shape: 'none' } }, gear: [['dish', {}]], back: [['shell', {}]],
+  head: { kind: 'turtle', patchT: '#e0a030', eyes: { style: 'calm', color: '#2a2226', sclera: '#fff3a8' }, brow: { shape: 'none' } }, gear: [['dish', {}]], back: [['shell', {}]],
   near: { hand: [150, 142], el: [112, 154], over: true, handKind: 'open', dir: [1, -0.25], r: 12 }, far: { hand: [180, 124], el: [158, 138], handKind: 'open', dir: [1, -0.3], r: 11 }, atk: 'smash', rig: { wind: -40, hit: 30 } });
 
 H('water', 4, 'Requin', 'homme-requin des légendes du Pacifique', {
   body: 'brute', shape: { sw: 44, hs: 1 }, colors: { skin: '#6a8aa8', muz: '#e9eef2', pants: '#1f3a6a', boot: '#6a8aa8', tail: '#6a8aa8', bone: '#ece4d0', belt: '#c83a3a' },
   bare: true, bareArms: true, chest: [['belly', { t: 'muz' }], ['muscle']], skirt: { len: 22, t: 'pants', ragged: true }, legs: { kind: 'legs', leg: 'thick', t: 'skin', foot: 'webbed' },
-  head: { kind: 'shark', eyes: { style: 'dot' }, brow: { shape: 'none' } }, gear: [['fin', {}]], back: [['tail', { kind: 'lizard', w: 24 }]],
+  head: { kind: 'shark', eyes: { style: 'angry', color: '#170a12', sclera: '#f4f8ff' }, brow: { k: 5.5, c: '#2a3a52', shape: 'angry' }, scar: true }, gear: [['fin', {}]], back: [['tail', { kind: 'lizard', w: 24 }]],
   near: { hand: [128, 172], el: [92, 160], item: ['small', { kind: 'tooth', dir: [36, 12], len: 56, t: 'bone', off: 0 }] },
   far: { hand: [172, 142], el: [162, 150], r: 14, item: ['small', { kind: 'claw', dir: [30, -8], t: 'bone', off: 6 }] }, atk: 'slash' });
 
 H('water', 5, 'Naïade', 'naïade, nymphe des sources (Grèce)', {
+  shine: [[170, 150, 'far']],
   body: 'curvy', colors: { skin: '#f6dcc8', hair: '#3fb8c8', cloth: '#dff4ff', belt: '#3fb8c8', jar: '#c8824a' },
   bareArms: true, legs: { kind: 'mermaid', w: 50 },
-  head: { kind: 'human', eyes: { style: 'wide', color: '#2a8a9a', lash: true }, brow: { shape: 'arch', k: 3, c: '#2a8a9a' }, mouth: 'smile', ear: false },
+  head: { kind: 'human', eyes: { style: 'calm', color: '#2a8a9a', lash: true }, brow: { shape: 'arch', k: 3, c: '#2a8a9a' }, mouth: 'smile', ear: false },
   gear: [['hair', { style: 'parted' }], ['flower', { color: '#fff', x: 84, y: 56 }]], back: [['hairBack', { style: 'waves' }]],
-  near: { hand: [132, 152], el: [94, 162] },
-  far: { hand: [158, 142], el: [154, 152], over: true, items: [['jar', { hand: [146, 146], tilt: 62, water: '#6fd0ff', stream: 'M172 148 C188 154 192 180 190 214' }]] } });
+  near: { hand: [128, 168], el: [94, 166] },
+  far: { hand: [160, 142], el: [156, 154], over: true, items: [['jar', { hand: [158, 150], tilt: 62, water: '#6fd0ff', stream: 'M171 151 C183 155 187 172 187 192 M187 200 L187 206 M180 196 L178 202' }]] } });
 
 H('water', 6, 'Sirène', 'sirène au chant envoûtant', {
+  shine: [[84, 58, 'head', 10, '#ffe27a']],
   body: 'curvy', colors: { skin: '#f6dcc8', hair: '#f0604a', tail: '#2fa3b8', fin: '#6fd8c8', belt: '#e6ac3c' },
   bare: true, bareArms: true, chest: [['raw', { svg: '<path d="M20 114 L190 114 L190 138 C130 148 90 148 20 138 Z" fill="#f07a6a"/>' }]], legs: 'tail',
   head: { kind: 'human', jaw: 'point', eyes: { style: 'sly', color: '#2a8a9a', lash: true }, brow: { shape: 'arch', k: 3 }, mouth: 'shout', mouthC: '#b83a4a', ear: false },
@@ -95,6 +98,7 @@ H('water', 11, 'Mazu', 'Mazu, protectrice des marins (Chine)', {
   near: { hand: [128, 152], el: [92, 166], w0: 24, w1: 32, handKind: 'none' }, far: { pose: 'staff', w0: 20, w1: 26, item: ['staff', { kind: 'lantern', top: 44 }] } });
 
 H('water', 12, 'Yuki-onna', 'la femme des neiges (Japon)', {
+  shine: [[184, 98, 'far']],
   grp: { top: 'far' },
   body: 'slim', colors: { skin: '#e9f2ff', hair: '#1c1a24', cloth: '#f4f8ff', belt: '#6fc8f0' },
   chest: [['wrap', { t: 'belt' }]], legs: { kind: 'straight', w: 40, base: 'mist', baseC: '#dff4ff', folds: true },
@@ -127,6 +131,7 @@ H('water', 15, 'Scylla', 'Scylla, monstre du détroit (Grèce)', {
   near: { pose: 'up', item: ['small', { kind: 'hook', dir: [26, -30], off: 4 }] }, far: { pose: 'high', item: ['small', { kind: 'hook', dir: [20, -30], off: 4 }] } });
 
 H('water', 16, 'Mère des eaux', 'Yemoja, mère des eaux (Yoruba)', {
+  shine: [[168, 70, 'far']],
   body: 'round', shape: { sw: 30, ww: 28, belly: 6 }, colors: { skin: '#7a4a34', cloth: '#f4f8ff', belt: '#3f8fd8', turban: '#f4f8ff', cape: '#3f8fd8', fan: '#dff4ff' },
   bareArms: true, legs: { kind: 'bell', w: 58, tiers: true, panel: '#6fc8f0', trim: '#3f8fd8' },
   head: { kind: 'human', jaw: 'chubby', eyes: { style: 'happy', lash: true }, brow: { shape: 'arch', k: 3.4, c: '#2a1c18' }, mouth: 'smile', mouthC: '#3a1c1c', nose: 'button' },
@@ -134,9 +139,9 @@ H('water', 16, 'Mère des eaux', 'Yemoja, mère des eaux (Yoruba)', {
   near: { pose: 'hip', over: true }, far: { hand: [162, 106], el: [162, 132], item: ['fanRound', { emblem: 'wave', ec: '#3f8fd8' }] } });
 
 H('water', 17, 'Roi dragon', 'Ryūjin, roi dragon des mers (Japon)', {
-  scale: 1.1, body: 'tall', shape: { sw: 32 }, colors: { skin: '#2fa39a', muz: '#bfe8d8', hair: '#f4f8ff', cloth: '#1f3a6a', belt: '#e6ac3c', tail: '#2fa39a', bone: gold },
+  scale: 1.1, body: 'tall', shape: { sw: 32, drop: -2, hdy: -6 }, colors: { skin: '#2fa39a', muz: '#bfe8d8', hair: '#f4f8ff', cloth: '#1f3a6a', belt: '#e6ac3c', tail: '#2fa39a', bone: gold },
   skirt: { len: 42, t: 'cloth', trim: 'gold', flare: 7 }, legs: { kind: 'legs', leg: 'baggy', t: 'cloth', foot: 'talon', footT: 'skin', stance: 'mid' },
   head: { kind: 'dragon', eyes: { style: 'tired', color: '#ffe14a', sclera: '#fff3a8', slit: true } },
   gear: [['antlers', { t: 'bone' }], ['frill', { t: 'hair', len: 20 }], ['whiskers', {}]], back: [['tail', { kind: 'up', w: 18 }]],
-  near: { hand: [70, 162], el: [66, 146], w0: 22, w1: 28, handKind: 'none' },
+  near: { hand: [78, 176], el: [70, 152], w0: 19, w1: 26, handKind: 'none' },
   far: { hand: [174, 178], el: [156, 166], handKind: 'open', dir: [0.2, -1], w0: 18, w1: 26, item: ['orb', { color: '#dff4ff', r: 13, dy: 26 }] } });

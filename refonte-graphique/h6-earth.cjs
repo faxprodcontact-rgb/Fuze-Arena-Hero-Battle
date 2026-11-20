@@ -12,6 +12,7 @@ H('earth', 0, 'Nain des forges', 'nain forgeron des sagas nordiques', {
   far: { noArm: true, handKind: 'none', item: ['shield', { kind: 'kite', c: [160, 158], }] }, atk: 'smash' });
 
 H('earth', 1, 'Satyre', 'satyre, compagnon des bois (Grèce)', {
+  shine: [[76, 44, 'head']],
   body: 'slim', shape: { sw: 31, lean: 12, hdx: 4 }, colors: { skin: '#d9a074', hair: '#5a3a22', fur: '#6a4a2e', pants: '#6a4a2e', bone: '#d8c8a0', wood: '#7a5230', boot: '#2a2226', belt: '#4f8a3a' },
   bare: true, bareArms: true, chest: [['muscle']], skirt: { len: 14, t: 'fur', ragged: true }, legs: { kind: 'beast', foot: 'hoof', t: 'fur' },
   head: { kind: 'human', jaw: 'point', eyes: { style: 'sly', color: '#6a8a2a' }, brow: { k: 5.5, shape: 'arch' }, mouth: 'grin', beard: 'chin', nose: 'hook', ear: false },
@@ -19,6 +20,7 @@ H('earth', 1, 'Satyre', 'satyre, compagnon des bois (Grèce)', {
   near: { hand: [56, 158], el: [64, 142], r: 12 }, far: { hand: [150, 168], el: [158, 150], r: 11 }, atk: 'smash', rig: { wind: -16, hit: 24 } });
 
 H('earth', 2, 'Frondeur', 'berger à la fronde (David, Proche-Orient)', {
+  shine: [[32, 49, 'near']],
   grp: { top: 'swing' },
   colors: { skin: '#e2a878', hair: '#3a2a20', cloth: '#d8c8a0', belt: '#8a5a34', boot: '#e2a878', strap: '#8a5a34', rope: '#8a5a34' },
   bareArms: true, chest: [['sash', { t: 'strap' }]], skirt: { len: 24, flare: 6 }, legs: { kind: 'legs', leg: 'bare', foot: 'sandal', stance: 'lunge', strapT: 'strap' },
@@ -28,6 +30,7 @@ H('earth', 2, 'Frondeur', 'berger à la fronde (David, Proche-Orient)', {
   top: [['raw', { svg: '<path d="M62 96 L26 56 M62 96 L40 46" stroke="#8a5a34" stroke-width="3" stroke-linecap="round"/>' }], ['shape', { d: 'M18 58 C16 44 34 34 46 44 C48 56 30 68 18 58 Z', t: 'strap', sh: 3 }], ['disc', { x: 32, y: 49, r: 7.5, t: '#9a9aa8' }]], atk: 'shoot' });
 
 H('earth', 3, 'Cyclope', 'cyclope, géant à l\'œil unique (Grèce)', {
+  shine: [[92, -6, 'near']],
   both: true, grp: { afterHead: 'swing' },
   scale: 1.12, body: 'round', shape: { sw: 40, arm: [28, 24] }, colors: { skin: '#b8a078', hair: '#4a3a30', pelt: '#6a4a2e', belt: '#3a2a22', boot: '#b8a078', rock: '#8a8a94' },
   bare: true, bareArms: true, chest: [['belly', { t: '#c8b088' }]], skirt: { len: 26, t: 'pelt', ragged: true }, legs: { kind: 'legs', leg: 'thick', t: 'skin', foot: 'bare', stance: 'wide' },
@@ -45,6 +48,7 @@ H('earth', 4, 'Homme-scorpion', 'homme-scorpion, gardien du désert (Mésopotami
   near: { hand: [118, 150], el: [88, 158] }, far: { pose: 'stab', items: [['pole', { butt: [84, 166], end: [202, 118], head: 'spear', hl: 30, hw: 15 }]] }, atk: 'stab', rig: { wind: -10, hit: 14 } });
 
 H('earth', 5, 'Dryade', 'dryade, nymphe des arbres (Grèce)', {
+  shine: [[172, 76, 'far']],
   colors: { skin: '#c8dca0', hair: '#4f9a3a', cloth: '#7a5a3a', belt: '#8fc85a', leaf: '#8fc85a' },
   bareArms: true, legs: { kind: 'ragged', w: 46, folds: true },
   head: { kind: 'human', eyes: { style: 'happy', lash: true }, brow: { shape: 'arch', k: 3, c: '#3a6a2a' }, mouth: 'smile', mouthC: '#3a6a2a', blush: '#8fc85a', ear: false },
@@ -76,6 +80,7 @@ H('earth', 8, 'Minotaure', 'le Minotaure du labyrinthe (Crète)', {
   near: { hand: [108, 176], el: [74, 166], over: true, item: ['axe', { to: [190, 170], double: true, z: 1.05, back: 30 }] }, far: { hand: [150, 173], el: [170, 158], over: true, r: 15 }, atk: 'slash', rig: { wind: -30, hit: 30 } });
 
 H('earth', 9, 'Gorgone', 'Méduse, la gorgone au regard de pierre (Grèce)', {
+  shine: [[150, 84, 'head', 11, '#eaff6a']],
   grp: { top: 'head' },
   body: 'curvy', colors: { skin: '#a8c8a0', hair: '#3f7a4a', cloth: '#6a5a8a', tail: '#3f7a4a', belly: '#c8dc9a', belt: '#e6ac3c' },
   bareArms: true, bracers: 'gold', chest: [['scales', { t: '#7a6a9a' }]], legs: 'naga',
@@ -94,6 +99,7 @@ H('earth', 10, 'Anubis', 'Anubis, gardien des morts (Égypte)', {
   far: { hand: [174, 152], el: [158, 150], item: ['sword', { to: [216, 104], w: 16, curve: 16, guard: 0 }] } });
 
 H('earth', 11, 'Isis', 'Isis, la magicienne aux ailes (Égypte)', {
+  shine: [[188, 100, 'far']],
   body: 'curvy', grp: { top: 'far' },
   colors: { skin: '#d9a074', hair: '#1c1a24', cloth: '#f4f0e6', belt: '#2fa3a0', wing: '#2fa3a0', wood: '#e6ac3c' },
   bareArms: true, bracers: 'gold', legs: { kind: 'mermaid', w: 40, trim: 'gold' },
@@ -105,6 +111,7 @@ H('earth', 11, 'Isis', 'Isis, la magicienne aux ailes (Égypte)', {
   top: [['raw', { svg: '<g stroke="#e6ac3c" stroke-width="5" fill="none" stroke-linecap="round"><ellipse cx="188" cy="98" rx="6" ry="8"/><path d="M188 106 L188 126 M180 112 L196 112"/></g>' }]] });
 
 H('earth', 12, 'Baron des ombres', 'Baron Samedi, maître des cimetières (Haïti)', {
+  shine: [[126, 138, 'near', 10, '#e0b0ff']],
   main: 'far',
   body: 'tall', colors: { skin: '#5a3a2e', hair: '#1c1a24', cloth: '#f4f0e6', coat: '#3a2a4a', sleeve: '#3a2a4a', pants: '#2a2230', hat: '#2a2230', scarf: '#8a3a9a', belt: '#8a3a9a', boot: '#1c1a24', jar: '#6fae5a', wood: '#1c1a24', bone: '#f4efe2' },
   chest: [['vest', { t: 'coat' }]], skirt: { len: 40, t: 'coat', flare: 6 }, legs: { kind: 'legs', leg: 'thin', foot: 'shoe', stance: 'narrow' },
@@ -114,6 +121,7 @@ H('earth', 12, 'Baron des ombres', 'Baron Samedi, maître des cimetières (Haït
   near: { hand: [124, 164], el: [88, 164], item: ['cane', { top: 'skull', lean: 2 }] }, far: { pose: 'up', item: ['bottle', {}] } });
 
 H('earth', 13, 'Héraclès', 'Héraclès et la peau du lion de Némée (Grèce)', {
+  shine: [[130, 160, 'near']],
   scale: 1.12, body: 'brute', colors: { skin: '#e2a878', hair: '#6a4a2e', pelt: '#d8a050', cape: '#d8a050', fur: '#8a5a2a', belt: '#5e3a22', boot: '#e2a878', strap: '#5e3a22' },
   bare: true, bareArms: true, bracers: 'belt', chest: [['muscle'], ['sash', { t: 'pelt' }]], skirt: { len: 24, t: 'pelt', ragged: true }, legs: { kind: 'legs', leg: 'bare', foot: 'bare', wrap: 'strap', stance: 'lunge' },
   head: { kind: 'human', jaw: 'square', eyes: { style: 'angry', color: '#5a3a20' }, brow: { k: 7, c: '#4a3220' }, mouth: 'grin', beard: 'full', nose: 'big', scar: true, band: { t: 'pelt', y: 56, k: 7 } },
@@ -137,6 +145,7 @@ H('earth', 15, 'Arachné', 'Arachné, la tisseuse changée en araignée (Grèce)
   top: [['raw', { svg: '<path d="M150 142 C160 120 164 104 164 88" stroke="#f4efe2" stroke-width="1.6" fill="none" opacity="0.9"/>' }]] });
 
 H('earth', 16, 'Gaïa', 'Gaïa, la Terre-mère (Grèce)', {
+  shine: [[146, 138, 'near']],
   both: true, grp: { top: 'swing' },
   scale: 1.06, body: 'round', colors: { skin: '#a8703a', hair: '#3f8a3a', cloth: '#6aa84a', belt: '#e0c070' },
   bareArms: true, legs: { kind: 'bell', w: 60, trim: '#e0c070', panel: '#8fc85a' },

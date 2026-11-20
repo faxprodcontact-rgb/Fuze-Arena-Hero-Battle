@@ -26,8 +26,8 @@
   const CH = {};
   for (const n of Object.keys(D.chars)) { const c = D.chars[n], st = STATS[n]; CH[n] = { ...c, E, src: 'a/' + n + '.png', stats: st.slice(0, 3), k: st[3], top: st[4], rig: c.rig.atk === 'stab' ? { farWind: -25, farHit: 55, ...c.rig } : c.rig }; }
   const HS = window.HEROS ? window.HEROS.list : [];
-  for (const h of HS) CH[h.id] = { enemy: false, rig: h.rig, parts: h.parts, E: window.HEROS.E, src: 'h/' + h.id + '.png', stats: ROLE_STATS[h.role], role: h.role, label: h.name,
-    k: 0.56 * Math.max(0.86, Math.min(1.22, h.scale)), top: Math.max(-34, Math.min(...h.parts.filter((p) => p.name !== 'glow').map((p) => p.oy))) };
+  for (const h of HS) CH[h.id] = { enemy: false, rig: h.rig, parts: h.parts, E: window.HEROS.E, src: 'h/' + h.id + '.png', stats: ROLE_STATS[h.role], role: h.role, label: h.name, aura: { epic: '#b06cff', legendary: '#ffc94a' }[h.rarity],
+    k: 0.56 * Math.max(0.86, Math.min(1.22, h.scale)), top: Math.max(-34, Math.min(...h.parts.filter((p) => p.name !== 'glow' && p.name !== 'shine').map((p) => p.oy))) };
   const img = {};
   const image = (n) => img[n] || (img[n] = Object.assign(new Image(), { src: CH[n].src }));
   const bg = new Image(); bg.src = 'bg.jpg';
@@ -207,7 +207,9 @@
     if (A.width !== w || A.height !== h) { A.width = B.width = w; A.height = B.height = h; } else { ag.setTransform(1, 0, 0, 1, 0, 0); ag.clearRect(0, 0, w, h); }
     // une arme portée sur l'épaule passe devant la tête quand elle s'abat
     const over = c.rig.top && P.swing > 35, list = over ? [...c.parts.filter((p) => !c.rig.top.includes(p.name)), ...c.parts.filter((p) => c.rig.top.includes(p.name))] : c.parts;
+    let shineP = null;
     for (const p of list) {
+      if (p.name === 'shine') { shineP = p; continue; } // l'éclat se dessine en dernier, par-dessus
       if (p.name === 'glow') { // halo : directement à l'écran, derrière le personnage
         ST(flip * s, 0, 0, s, X - flip * 106 * s, Y - 228 * s); groupTransform(ctx, c.group.glow, P, c.rig.piv || PIV);
         const cx = p.ox + p.w / E / 2, cy = p.oy + p.h / E / 2; ctx.translate(cx, cy); ctx.scale(P.glow, P.glow); ctx.translate(-cx, -cy);
@@ -221,8 +223,18 @@
     bgx.setTransform(1, 0, 0, 1, 0, 0); bgx.globalCompositeOperation = 'copy'; bgx.drawImage(A, 0, 0); bgx.globalCompositeOperation = 'source-in'; bgx.fillStyle = '#190c24'; bgx.fillRect(0, 0, w, h);
     ST(flip, 0, 0, 1, X, Y); ctx.rotate(fall * RAD); ctx.globalAlpha = alpha;
     const ox = -(OX + 106) * s, oy = -(OY + 228) * s, r = Math.max(1, 1.6 * q);
+    if (c.aura && !u.dead) { // aura des hautes raretés : la silhouette projette un halo de couleur
+      ctx.shadowColor = c.aura; ctx.shadowBlur = (13 + 4 * Math.sin(time * 2 + u.ph)) * q / 0.56;
+      ctx.drawImage(B, ox, oy); ctx.drawImage(B, ox, oy); ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
+    }
     for (let i = 0; i < 8; i++) ctx.drawImage(B, ox + Math.cos(i * 0.785) * r, oy + Math.sin(i * 0.785) * r);
     ctx.drawImage(A, ox, oy); ctx.globalAlpha = 1;
+    if (shineP && !u.dead) { // l'éclat : il suit son objet et scintille
+      const tw = 0.5 + 0.5 * Math.sin(time * 3.2 + u.ph * 2.3), cx = shineP.ox + shineP.w / E / 2, cy = shineP.oy + shineP.h / E / 2;
+      ST(flip * s, 0, 0, s, X - flip * 106 * s, Y - 228 * s); groupTransform(ctx, c.group.shine, P, c.rig.piv || PIV);
+      ctx.translate(cx, cy); ctx.rotate(0.5 * Math.sin(time * 1.7 + u.ph)); ctx.scale(0.7 + 0.45 * tw, 0.7 + 0.45 * tw); ctx.translate(-cx, -cy);
+      ctx.globalAlpha = alpha * (0.5 + 0.5 * tw); ctx.drawImage(im, shineP.x, shineP.y, shineP.w, shineP.h, shineP.ox, shineP.oy, shineP.w / E, shineP.h / E); ctx.globalAlpha = 1;
+    }
   }
   function bars(u, V) {
     if (u.dead) return;

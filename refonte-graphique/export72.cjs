@@ -20,7 +20,7 @@ const gameId = (el, i) => { const n = ELEMENTS.indexOf(el) * 18 + i; return `${F
   const list = [];
   for (const x of all()) {
     const c = x.fig, id = gameId(x.element, x.index);
-    const parts = [...(c.glow ? [{ name: 'glow', svg: c.glow }] : []), ...c.parts];
+    const parts = [...(c.glow ? [{ name: 'glow', svg: c.glow }] : []), ...c.parts, ...(c.fx ? [{ name: 'shine', svg: c.fx }] : [])];
     const svgs = parts.map((p) => `<svg xmlns="http://www.w3.org/2000/svg" width="${CW * E}" height="${CH * E}" viewBox="${-MX} ${-MY} ${CW} ${CH}"><defs>${SHARED_DEFS}${c.defs}</defs>${p.svg}</svg>`);
     const res = await page.evaluate(async ({ svgs, W, H }) => {
       const cut = [];

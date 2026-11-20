@@ -118,6 +118,11 @@ Demande du propriétaire : 72 héros **très différents les uns des autres**, i
 - **Pas de doublon** : avant d'ajouter un héros, compter ce qui existe déjà (coiffe, arme, pose, carrure, jambes,
   regard). Deux héros ne partagent jamais à la fois la silhouette, la pose et l'arme. Variété : humains, bêtes et
   esprits, plusieurs cultures, tailles différentes (`scale`).
+- **Éclat** (demande du 20/11/2026) : chaque héros a un élément qui brille, une petite étoile posée sur son objet fort.
+  Elle est placée toute seule (arme, orbe, bouclier…) ; sinon on la règle avec `shine: [[x, y, 'near' | 'far' | 'head' |
+  'torso', taille, couleur]]`. Elle est exportée à part (morceau `shine`), dessinée par-dessus et scintille en combat.
+- **Aura** : les Épiques (violet) et les Légendaires (or) ont un halo autour de la silhouette, sur les planches, dans la
+  galerie et en combat (`aura` dans `public/apercu/apercu.js`, ombre portée de la silhouette).
 - Animation : `both: true` = arme tenue à deux mains (les deux bras bougent ensemble) ; `main: 'far'` = c'est le bras
   du fond qui frappe ; `grp: { top: 'swing' }` = un effet suit un bras (ou `head`, `far`).
 - Dents de scie (`saw`) : toujours parcourir la ligne **du bas vers le haut**, sinon les pointes rentrent dans la forme.

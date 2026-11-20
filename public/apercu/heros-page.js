@@ -14,11 +14,13 @@
     for (const p of h.parts) if (p.name === 'glow') put(g, p);
     A.width = B.width = W; A.height = B.height = H;
     const a = A.getContext('2d'), b = B.getContext('2d');
-    for (const p of h.parts) if (p.name !== 'glow') put(a, p);
+    for (const p of h.parts) if (p.name !== 'glow' && p.name !== 'shine') put(a, p);
     b.drawImage(A, 0, 0); b.globalCompositeOperation = 'source-in'; b.fillStyle = '#190c24'; b.fillRect(0, 0, W, H);
-    const r = Math.max(1, 1.6 * q);
+    const r = Math.max(1, 1.6 * q), aura = { epic: '#b06cff', legendary: '#ffc94a' }[h.rarity];
+    if (aura) { g.shadowColor = aura; g.shadowBlur = 16 * q; g.drawImage(B, 0, 0); g.drawImage(B, 0, 0); g.shadowBlur = 0; g.shadowColor = 'transparent'; }
     for (let i = 0; i < 8; i++) g.drawImage(B, Math.cos(i * 0.785) * r, Math.sin(i * 0.785) * r);
     g.drawImage(A, 0, 0);
+    for (const p of h.parts) if (p.name === 'shine') put(g, p);
   }
   const seen = new IntersectionObserver((list) => { for (const e of list) if (e.isIntersecting) { seen.unobserve(e.target); const h = e.target.hero, img = new Image(); img.onload = () => render(e.target, h, img); img.src = 'h/' + h.id + '.png'; } }, { rootMargin: '300px' });
   function show(el) {

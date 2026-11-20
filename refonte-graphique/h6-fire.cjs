@@ -19,6 +19,7 @@ H('fire', 1, 'Forgeron', 'forgeron des dieux', {
   far: { pose: 'down' }, atk: 'smash', rig: { wind: -18, hit: 125 } });
 
 H('fire', 2, 'Cracheur de feu', 'saltimbanque cracheur de feu', {
+  shine: [[182, 104, 'head']],
   grp: { top: 'head' },
   body: 'slim', colors: { skin: '#e6b88a', hair: '#2a2226', vest: '#8a2a2a', pants: '#e0b040', boot: '#3a2a22', belt: '#3a2a22' },
   bare: true, bareArms: true, chest: [['muscle'], ['vest', { t: 'vest' }]], legs: { kind: 'legs', leg: 'baggy', stripe: '#b8482a', foot: 'shoe', cuffT: 'vest' },
@@ -45,6 +46,7 @@ H('fire', 4, 'Salamandre', 'salamandre, esprit du feu', {
   far: { hand: [172, 146], el: [158, 150], item: ['small', { kind: 'dagger', t: '#2a2228', dir: [30, -12] }] } });
 
 H('fire', 5, 'Vestale', 'prêtresse du foyer sacré (Vesta)', {
+  shine: [[134, 130, 'far']],
   body: 'slim', colors: { skin: '#f2c9a4', cloth: '#f4ead8', belt: '#c83a3a', veil: '#f4ead8' },
   legs: { kind: 'straight', panel: '#ecd9be', folds: true },
   head: { kind: 'human', eyes: { style: 'closed', lash: true }, brow: { shape: 'arch', k: 3, c: '#6a4a2a' }, mouth: 'smile', nose: 'button', ear: false },
@@ -62,6 +64,7 @@ H('fire', 6, 'Chamane du volcan', 'Pélé, déesse hawaïenne des volcans', {
   far: { pose: 'high', handKind: 'open', dir: [0, -1], item: ['orb', { color: LAVA, flame: true, r: 13, dy: 30 }] } });
 
 H('fire', 7, 'Golem de magma', 'géant de pierre et de lave', {
+  shine: [[112, 150, 'torso', 11, '#ffb04a']],
   scale: 1.15, body: 'brute', shape: { arm: [34, 30], hs: 0.88, hdy: 8 }, colors: { skin: '#4a3c42', boot: '#33282e', rock: '#33282e' },
   bare: true, bareArms: true, noBelt: true, chest: [['cracks', { c: LAVA }]], legs: { kind: 'stone', t: 'skin' },
   head: { kind: 'golem', eyes: { color: LAVA }, maw: true, paint: crack('M82 58 L94 72 L88 84 M132 52 L126 66') },
@@ -85,6 +88,7 @@ H('fire', 9, 'Lancier-dragon', 'artilleur à la lance de feu (Chine ancienne)', 
   far: { hand: [150, 150], el: [152, 152], over: true, tint: true } });
 
 H('fire', 10, 'Kitsune', 'renarde à plusieurs queues (Japon)', {
+  shine: [[182, 110, 'far', 10, '#bfe9ff']],
   scale: 0.97, body: 'curvy', colors: { skin: '#f6d2b4', hair: '#f4ead8', cloth: '#f4ead8', pants: '#c83a3a', tail: '#f08a2a', fox: '#f08a2a', belt: '#c83a3a', boot: '#f4ead8' },
   chest: [['wrap', { t: '#c83a3a' }]], legs: { kind: 'legs', leg: 'hakama', foot: 'geta', stance: 'lunge' },
   head: { kind: 'human', jaw: 'point', eyes: { style: 'sly', color: '#f0a020', lash: true }, brow: { shape: 'arch', k: 3.4, c: '#b8a890' }, mouth: 'grin', ear: false,
@@ -94,6 +98,7 @@ H('fire', 10, 'Kitsune', 'renarde à plusieurs queues (Japon)', {
   far: { pose: 'open', handKind: 'open', dir: [0.2, -1], item: ['orb', { color: '#6fd8ff', flame: true, r: 10, dy: 26 }] } });
 
 H('fire', 11, 'Prêtre du soleil', 'prêtre aztèque du dieu soleil', {
+  shine: [[184, 48, 'far']],
   colors: { skin: '#b87a4a', hair: '#2a2226', red: '#c83a3a', belt: '#e6ac3c', boot: '#b87a4a' },
   bare: true, bareArms: true, bracers: 'gold', chest: [['muscle']], skirt: { len: 20, t: 'red', flap: 'gold', flapLen: 0, trim: 'gold' },
   legs: { kind: 'legs', leg: 'bare', foot: 'sandal', stance: 'narrow', anklet: 'gold' },
@@ -103,6 +108,7 @@ H('fire', 11, 'Prêtre du soleil', 'prêtre aztèque du dieu soleil', {
   far: { pose: 'high', hand: [176, 80], el: [166, 118], items: [['glow', { x: 184, y: 48, r: 30, c: '#ffcf5a', layer: 'front' }], ['disc', { x: 184, y: 48, r: 22, t: 'gold', sh: 4, layer: 'front', inner: '<circle cx="184" cy="48" r="13" fill="none" stroke="#b8482a" stroke-width="3"/><circle cx="184" cy="48" r="5" fill="#b8482a"/>' }]] } });
 
 H('fire', 12, 'Djinn', 'djinn des contes arabes', {
+  shine: [[124, 46, 'head']],
   body: 'round', colors: { skin: '#e8793a', hair: '#2a2226', smoke: '#7a4a5a', vest: '#5a3a8a', turban: '#f4ead8', belt: '#e6ac3c' },
   bare: true, bareArms: true, bracers: 'gold', chest: [['muscle'], ['vest', { t: 'vest' }]], legs: 'smoke',
   head: { kind: 'human', jaw: 'chubby', eyes: { style: 'sly', color: '#ffe14a', sclera: '#fff3a8' }, brow: { shape: 'arch', lift: [6, 0], k: 5.5 }, mouth: 'grin', mustache: 'handle', nose: 'big' },
@@ -144,6 +150,7 @@ H('fire', 16, 'Phénix', 'le phénix qui renaît de ses cendres', {
   far: { pose: 'open', handKind: 'open', dir: [0.4, -1], item: ['orb', { flame: true, color: '#ffb84a', r: 11, dy: 28 }] } });
 
 H('fire', 17, 'Amaterasu', 'Amaterasu, déesse du soleil (Japon)', {
+  shine: [[114, 146, 'torso']],
   body: 'slim', colors: { skin: '#f8dcc4', hair: '#2a2226', cloth: '#f4ead8', belt: '#c83a3a' },
   chest: [['wrap', { t: '#c83a3a' }]], legs: { kind: 'bell', w: 56, panel: '#c83a3a', tiers: true, trim: 'gold' },
   head: { kind: 'human', eyes: { style: 'soft', color: '#c8641e', lash: true }, brow: { shape: 'flat', k: 3 }, mouth: 'smile', mouthC: '#c83a3a', ear: false },
