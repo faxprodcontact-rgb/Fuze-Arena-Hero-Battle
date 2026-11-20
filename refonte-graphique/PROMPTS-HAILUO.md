@@ -179,3 +179,54 @@ Row 1, wind and lightning: green wind tornado | three green wind blade crescents
 Row 2, earth and nature: brown rock spikes bursting from the ground | ground crack quake with flying rocks | green poison gas cloud with bubbles | thorny green vine whip | swirling leaf storm | falling boulder with dust.
 Row 3, support and magic: green healing sparkles with plus signs | golden holy light beam from the sky | golden magic shield | purple dark void orb with tendrils.
 ```
+
+## Terrains de combat
+
+12 terrains en hauteur (comme l'écran de combat), 3 par planche au format que rend Hailuo (21:9, 3696 × 1584), bande
+noire en bas pour la signature. Croquis faits par `node refonte-graphique/terrains-ia.cjs 1..4 sortie.png`. Disposition
+commune : ciel et décor au loin en haut, horizon au milieu, sol plat dégagé en bas avec l'ovale de combat au centre.
+La campagne (30 chapitres de 40 niveaux) change de terrain tous les 3-4 chapitres.
+
+### Terrains 1 — Campagne 1 à 3 : prairie aux moulins (chapitres 1-4), forêt des ronces (5-8), marais du bayou (9-12)
+
+Planche : `terrains-1.png`
+
+```
+Redraw this sheet as 3 separate vertical battle backgrounds for a 2D mobile RPG, side by side, same order, same layout, separated by thin black gaps; the black strip at the bottom stays EMPTY black. Fully repaint each one as rich hand-painted cartoon game art like premium mobile RPG battle scenes, not the flat vector look of the sketch: depth, atmospheric perspective, soft light, detailed textures, vibrant colors. Keep each scene's place, colors, mood and composition: sky and distant scenery in the top half, horizon near the middle, flat open ground in the bottom half with the oval battle area in the center left completely clear for the fighters; decor only on the left and right edges. Front view, slightly from above. No characters, no creatures, no people, no text, no UI, no frames.
+Left: sunny farmland meadow with a windmill, rolling green hills, wooden fence, dirt arena, flowers and haystacks.
+Middle: deep bramble forest, giant tree trunks, thorny bramble arches, sun rays, mossy ground, red mushrooms, fireflies.
+Right: misty swamp bayou, cypress trees with hanging moss, still water, wooden boardwalk platform, lily pads, lanterns.
+```
+
+### Terrains 2 — Campagne 4 à 6 : savane de cendres (13-16), toundra glacée (17-20), pics d'orage (21-24)
+
+Planche : `terrains-2.png`
+
+```
+Redraw this sheet as 3 separate vertical battle backgrounds for a 2D mobile RPG, side by side, same order, same layout, separated by thin black gaps; the black strip at the bottom stays EMPTY black. Fully repaint each one as rich hand-painted cartoon game art like premium mobile RPG battle scenes, not the flat vector look of the sketch: depth, atmospheric perspective, soft light, detailed textures, vibrant colors. Keep each scene's place, colors, mood and composition: sky and distant scenery in the top half, horizon near the middle, flat open ground in the bottom half with the oval battle area in the center left completely clear for the fighters; decor only on the left and right edges. Front view, slightly from above. No characters, no creatures, no people, no text, no UI, no frames.
+Left: ash savanna at dusk, erupting volcano far away, dark acacia trees, cracked dark ground with glowing lava cracks, embers.
+Middle: frozen tundra, aurora in the sky, snowy mountains, snowy pine trees, icy ground, ice crystals.
+Right: stormy mountain peaks, dark purple storm clouds, lightning, sharp rock spires, rope bridge, windswept stone plateau.
+```
+
+### Terrains 3 — Campagne 7-8 et Tour : désert du temple d'airain (25-27), grotte des abysses (28-30), sommet de la Tour des Épreuves
+
+Planche : `terrains-3.png`
+
+```
+Redraw this sheet as 3 separate vertical battle backgrounds for a 2D mobile RPG, side by side, same order, same layout, separated by thin black gaps; the black strip at the bottom stays EMPTY black. Fully repaint each one as rich hand-painted cartoon game art like premium mobile RPG battle scenes, not the flat vector look of the sketch: depth, atmospheric perspective, soft light, detailed textures, vibrant colors. Keep each scene's place, colors, mood and composition: sky and distant scenery in the top half, horizon near the middle, flat open ground in the bottom half with the oval battle area in the center left completely clear for the fighters; decor only on the left and right edges. Front view, slightly from above. No characters, no creatures, no people, no text, no UI, no frames.
+Left: golden desert at sunset, ancient bronze temple with columns, two giant bronze statues, sand dunes, sand arena with stone tiles.
+Middle: deep underwater abyss cave, stalactites, light shafts from above, glowing jellyfish, sunken shipwreck, pink corals, glowing sea floor.
+Right: top of a magic tower above the clouds, round stone platform with glowing blue runes, broken white pillars, floating rocks.
+```
+
+### Terrains 4 — Modes : donjons, arène, antre des boss (boss du jour et de guilde)
+
+Planche : `terrains-4.png`
+
+```
+Redraw this sheet as 3 separate vertical battle backgrounds for a 2D mobile RPG, side by side, same order, same layout, separated by thin black gaps; the black strip at the bottom stays EMPTY black. Fully repaint each one as rich hand-painted cartoon game art like premium mobile RPG battle scenes, not the flat vector look of the sketch: depth, atmospheric perspective, soft light, detailed textures, vibrant colors. Keep each scene's place, colors, mood and composition: sky and distant scenery in the top half, horizon near the middle, flat open ground in the bottom half with the oval battle area in the center left completely clear for the fighters; decor only on the left and right edges. Front view, slightly from above. No characters, no creatures, no people, no text, no UI, no frames.
+Left: underground dungeon cave, dark cave mouth, purple and blue crystals, piles of gold coins, wall torches, stone floor.
+Middle: sunny gladiator arena, stone colosseum walls with red banners, sand floor, blue sky.
+Right: boss lair, dark red volcanic hall, huge gate with chains, fire braziers, lava streams, stone floor with a glowing orange circle.
+```
