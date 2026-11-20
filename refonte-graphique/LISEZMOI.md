@@ -60,3 +60,19 @@ main est dessus) ? Cache-t-il quelque chose (un casque cache l'oreille, un masqu
 
 Voir `essai-ia/LISEZMOI.md` : 5 images d'essai (héros, ennemis, décor, version grosses têtes, poses d'animation),
 les outils de découpe et ce qu'on a appris.
+
+## Version épurée (v5, 20/11/2026)
+
+Demande du propriétaire après l'essai par IA : rester sur le dessin par code, mais **plus petit, plus épuré, un ou deux
+éléments forts par personnage, cohérent, avec un minimum d'allure**.
+
+- `mini.cjs` : le gabarit (boîte 200 × 240, pieds à y = 228). Peu de formes : dos → bras du fond → jambes + buste →
+  manche de devant → ce qui repose sur l'épaule ou entoure le cou → tête (visage, coiffe) → main et arme en dernier.
+- `cast5.cjs` : les 5 héros et les 5 gobelins. `sheet5.cjs` : planche en grand. `scene5.cjs` : la scène du jeu.
+- Chaque personnage se reconnaît à sa silhouette : bouclier + casque à cornes, grande épée + écharpe, arc + capuche,
+  bâton à orbe + longue chevelure, deux dagues + écharpe au vent ; gobelins : massue, dagues, grande hache, bâton à
+  crâne, arc.
+- Regard dur : œil en amande coupé par une paupière en biais, sourcil épais (`calm` pour un regard doux).
+- Pas de petits détails (boucles, galons, épaulières, carquois). Les membres sont d'un seul tenant (`limb`).
+- Les halos (orbe, lame de feu) sont rendus à part, derrière le personnage, sinon le contour les salit.
+- La liste de contrôle de cohérence ci-dessus s'applique toujours.

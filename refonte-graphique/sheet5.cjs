@@ -1,0 +1,10 @@
+const fs = require('fs');
+const { HEROES, ENEMIES } = require('./cast5.cjs');
+const { SHARED_DEFS } = require('./kit.cjs');
+const all = [...Object.values(HEROES), ...Object.values(ENEMIES)];
+const K = 1.9;
+let body = '';
+all.forEach((c, i) => { const tr = `translate(${20 + (i % 5) * 410} ${20 + Math.floor(i / 5) * 470}) scale(${K})`;
+  body += `<g transform="${tr}">${c.glow}</g><g transform="${tr}" filter="url(#sil)">${c.body}</g>`; });
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="2080" height="960" viewBox="0 0 2080 960"><defs>${SHARED_DEFS}${all.map((c) => c.defs).join('')}</defs><rect width="2080" height="960" fill="#86b872"/>${body}</svg>`;
+fs.writeFileSync('sheet5.html', `<html><body style="margin:0">${svg}</body></html>`);

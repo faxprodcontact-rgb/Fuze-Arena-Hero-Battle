@@ -35,8 +35,9 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   de cohérence** de `refonte-graphique/LISEZMOI.md` (cheveux d'un seul tenant, capuche fermée, ceintures d'un bord à
   l'autre, mains et objets, etc.) en le regardant en grand, et montrer la scène dans l'écran réel du jeu.
   Essai d'images par IA fait le 19/11/2026 (`refonte-graphique/essai-ia/`, 10 crédits gratuits Higgsfield, épuisés) :
-  rendu peint bien plus beau, animation possible par poses. Le propriétaire doit encore choisir entre IA et dessin par
-  code. Ne jamais dépenser de crédits sans son accord.
+  rendu peint plus beau mais des défauts de cohérence. **Décidé le 20/11/2026 : on continue avec le dessin par code**,
+  en version épurée (v5 : `refonte-graphique/mini.cjs` + `cast5.cjs`) : personnages petits à l'écran, peu de formes,
+  un ou deux éléments forts par personnage, regard dur. Ne jamais dépenser de crédits sans son accord.
 - Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 
