@@ -1,7 +1,7 @@
 // Planche d'un élément : 18 héros (6 × 3) avec nom provisoire, rareté, rôle, chef, inspiration.
 //   node sheet72.cjs fire [sortie.html]
 const fs = require('fs');
-const { all } = require('./heroes72.cjs');
+const { all } = require('./heroes6.cjs');
 const { SHARED_DEFS } = require('./kit.cjs');
 const el = process.argv[2] || 'fire';
 const BG = { fire: '#f1d6c2', wind: '#d3ece4', water: '#cfe0f4', earth: '#e2dcc0' }[el];

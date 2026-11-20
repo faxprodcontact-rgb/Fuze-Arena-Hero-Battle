@@ -41,10 +41,16 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   Aperçu animé sur le site de test : `public/apercu/` (page à part, bouton « Aperçu des animations » dans les Outils de
   test des réglages) : les personnages v5 animés morceau par morceau. Les images viennent de
   `node refonte-graphique/export5.cjs` (à relancer après tout changement de dessin). Pas encore branché dans le vrai combat.
-  **Les 72 héros sont dessinés** (20/11/2026, noms provisoires, inspirés des mythologies du monde) : liste dans
-  `refonte-graphique/HEROS.md`, dessins dans `heroes-fire|wind|water|earth.cjs` (pièces : `fig72.cjs`, `lib72.cjs`,
-  `arms72.cjs`), export `node refonte-graphique/export72.cjs` → `public/apercu/h/<identifiant du jeu>.png` + `heros.js`.
+  **Les 72 héros sont dessinés, version 6** (20/11/2026, noms provisoires, inspirés des mythologies du monde) : refaits
+  un par un après la demande du propriétaire (« améliore x100 ») : carrures, jambes, visages et poses différents, aucun
+  héros ne part d'un autre, museaux et becs d'une seule courbe. Liste dans `refonte-graphique/HEROS.md`, gabarit
+  `fig6.cjs` + `face6.cjs` + `legs6.cjs` + `wear6.cjs` + `items6.cjs`, héros dans `h6-fire|wind|water|earth.cjs`,
+  export `node refonte-graphique/export72.cjs` → `public/apercu/h/<identifiant du jeu>.png` + `heros.js` + `HEROS.md`.
   Galerie : `public/apercu/heros.html` ; la page d'animations tire des équipes au hasard parmi les 72.
+  AVANT de montrer un héros nouveau ou modifié : le regarder en grand (`node zoom6.cjs "fire:4" sortie.html`) et passer
+  le contrôle de `refonte-graphique/LISEZMOI.md` (rien ne traverse une barbe, un visage ou un museau ; rien de coupé
+  ni de flottant ; arme dans le bon sens ; pas de doublon de silhouette, de pose ou d'arme), puis faire relire les
+  planches par un regard neuf (agent de relecture) : il trouve ce qu'on ne voit plus.
 - Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 

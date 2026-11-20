@@ -95,18 +95,31 @@ Demande du propriétaire : 72 héros **très différents les uns des autres**, i
 « badass » en priorité, avec toutes les règles ci-dessus.
 
 - Liste complète (identifiant du jeu, nom provisoire, rareté, rôle, inspiration) : `HEROS.md`.
-- `fig72.cjs` : le gabarit configurable (carrure normale / lourde / fine, jambes, robe, queue de poisson, corps de
-  serpent, volute de djinn, tentacules, sabots ; tête humaine ou animale avec museau, bec, œil unique…).
-- `lib72.cjs` : dos (capes, ailes, queues, carapace, halo, soleil, tambours, pattes d'araignée…), cou, coiffes
-  (cheveux, casques, capuches, cornes, bois, couronnes, chapeaux, plumes…).
-- `arms72.cjs` : armes de la main de devant et objets de la main du fond (épées, haches, marteaux, lances, tridents,
-  arcs, bâtons, boucliers, lyre, lanterne, miroir…).
-- `heroes-fire.cjs`, `heroes-wind.cjs`, `heroes-water.cjs`, `heroes-earth.cjs` : 18 héros chacun, dans l'ordre de
-  `ELEMENT_ROSTER` (rôle, rareté et chef viennent du jeu, on ne les change pas ici).
-- `node sheet72.cjs fire` : planche d'un élément ; `node zoom72.cjs "fire:4,wind:9" sortie.html` : vue en grand pour
-  le contrôle de cohérence ; `node export72.cjs` : export vers le site de test (galerie + animations).
-- Variété : chaque élément mélange humains, bêtes et esprits, plusieurs cultures, trois tailles (petit, normal,
-  géant) et des silhouettes qui ne se répètent pas (éviter deux héros avec la même coiffe ET la même arme).
+- **Version 6 (refaite le 20/11/2026)** après la remarque du propriétaire : corps, jambes, visages et poses trop
+  semblables, doublons (« l'archer d'une autre couleur »), bras qui passent dans une barbe, museaux cassants.
+  Chaque héros est maintenant dessiné pour lui-même : aucun ne part d'un autre.
+- `fig6.cjs` : le gabarit. Carrures (`BODY` : normal, heavy, brute, slim, curvy, round, small, tall, plus `shape`
+  pour régler à la main), mains placées librement (`near` / `far` : `hand`, `el`, ou une pose toute faite), ordre des
+  couches, et le squelette d'animation (quel bras frappe, articulations selon la carrure).
+- `face6.cjs` : visages (12 regards, sourcils, bouches, nez, barbes, moustaches, mâchoires) et têtes d'animaux
+  **d'une seule courbe du crâne au museau** (chacal, lion, taureau, requin, lézard, dragon, singe, belette, crâne),
+  aigle, tortue, golem, cyclope.
+- `legs6.cjs` : jambes (droites, nues, bouffantes, épaisses, fines, hakama ; 12 sortes de pieds ; 4 appuis), pattes
+  de bête, danse, lévitation, pierre, queue de poisson, serpent, volute, tentacules, scorpion, araignée, robes.
+- `wear6.cjs` : cheveux, coiffes, dos (capes, ailes, queues…), cou. `items6.cjs` : armes et objets tenus.
+- `heroes6.cjs` : le registre ; `h6-fire.cjs`, `h6-wind.cjs`, `h6-water.cjs`, `h6-earth.cjs` : 18 héros chacun, dans
+  l'ordre de `ELEMENT_ROSTER` (rôle, rareté et chef viennent du jeu, on ne les change pas ici).
+- `node sheet72.cjs fire` : planche d'un élément ; `node zoom6.cjs "fire:4,wind:9" sortie.html` : vue en grand pour
+  le contrôle ; `node export72.cjs` : export vers le site de test (galerie + animations) et `HEROS.md`.
+- **Contrôle de chaque héros, en grand** (demande du propriétaire) : rien ne passe à travers autre chose (bras dans
+  une barbe → `over: true` ou une autre pose ; arme devant le visage, le museau ou la bouche → la déplacer) ; rien de
+  coupé ni de flottant ; pan de ceinture ni trop long ni trop court ; coiffe à la taille de la tête ; arme dans le
+  bon sens ; pics de cheveux vers l'arrière ; museau et bec dans la continuité du crâne.
+- **Pas de doublon** : avant d'ajouter un héros, compter ce qui existe déjà (coiffe, arme, pose, carrure, jambes,
+  regard). Deux héros ne partagent jamais à la fois la silhouette, la pose et l'arme. Variété : humains, bêtes et
+  esprits, plusieurs cultures, tailles différentes (`scale`).
+- Animation : `both: true` = arme tenue à deux mains (les deux bras bougent ensemble) ; `main: 'far'` = c'est le bras
+  du fond qui frappe ; `grp: { top: 'swing' }` = un effet suit un bras (ou `head`, `far`).
 - Dents de scie (`saw`) : toujours parcourir la ligne **du bas vers le haut**, sinon les pointes rentrent dans la forme.
 - Originalité : on s'inspire des mythes (domaine public), jamais du dessin d'un autre jeu, film ou manga.
 

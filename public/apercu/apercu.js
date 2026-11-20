@@ -39,6 +39,7 @@
       if (r.swing && r.swing.includes(p.name)) g = 'swing';
       if (r.far && r.far.includes(p.name)) g = 'far';
       if (p.name === 'glow') g = r.glow || 'torso';
+      if (r.grp && r.grp[p.name]) g = r.grp[p.name];
       c.group[p.name] = g;
     }
   }
@@ -180,11 +181,11 @@
   const A = document.createElement('canvas'), B = document.createElement('canvas'), ag = A.getContext('2d'), bgx = B.getContext('2d');
   const OX = 150, OY = 110, BW = 500, BH = 370; // cadre hors écran (unités de dessin) : de la place pour les armes en mouvement
   /** Place un morceau selon son groupe (le repère de base, en unités de dessin, est déjà posé). */
-  function groupTransform(g, grp, P) {
+  function groupTransform(g, grp, P, piv) {
     if (grp === 'legs') return;
-    g.translate(P.dx, P.bob); g.translate(PIV.torso[0], PIV.torso[1]); g.rotate(P.lean * RAD); g.translate(-PIV.torso[0], -PIV.torso[1]);
+    g.translate(P.dx, P.bob); g.translate(piv.torso[0], piv.torso[1]); g.rotate(P.lean * RAD); g.translate(-piv.torso[0], -piv.torso[1]);
     if (grp === 'torso') return;
-    const pv = PIV[grp], ang = grp === 'swing' ? P.swing : grp === 'far' ? P.far : grp === 'head' ? P.head : P.back;
+    const pv = piv[grp], ang = grp === 'swing' ? P.swing : grp === 'far' ? P.far : grp === 'head' ? P.head : P.back;
     if (grp === 'far') g.translate(0, P.farY);
     g.translate(pv[0], pv[1]); g.rotate(ang * RAD); g.translate(-pv[0], -pv[1]);
   }
@@ -208,11 +209,11 @@
     const over = c.rig.top && P.swing > 35, list = over ? [...c.parts.filter((p) => !c.rig.top.includes(p.name)), ...c.parts.filter((p) => c.rig.top.includes(p.name))] : c.parts;
     for (const p of list) {
       if (p.name === 'glow') { // halo : directement à l'écran, derrière le personnage
-        ST(flip * s, 0, 0, s, X - flip * 106 * s, Y - 228 * s); groupTransform(ctx, c.group.glow, P);
+        ST(flip * s, 0, 0, s, X - flip * 106 * s, Y - 228 * s); groupTransform(ctx, c.group.glow, P, c.rig.piv || PIV);
         const cx = p.ox + p.w / E / 2, cy = p.oy + p.h / E / 2; ctx.translate(cx, cy); ctx.scale(P.glow, P.glow); ctx.translate(-cx, -cy);
         ctx.globalAlpha = alpha * Math.min(1, 0.6 * P.glow); ctx.drawImage(im, p.x, p.y, p.w, p.h, p.ox, p.oy, p.w / E, p.h / E); ctx.globalAlpha = 1; continue;
       }
-      ag.setTransform(s, 0, 0, s, OX * s, OY * s); groupTransform(ag, c.group[p.name], P);
+      ag.setTransform(s, 0, 0, s, OX * s, OY * s); groupTransform(ag, c.group[p.name], P, c.rig.piv || PIV);
       ag.drawImage(im, p.x, p.y, p.w, p.h, p.ox, p.oy, p.w / E, p.h / E);
     }
     if (u.hurt > 0) { ag.setTransform(1, 0, 0, 1, 0, 0); ag.globalCompositeOperation = 'source-atop'; ag.fillStyle = `rgba(255,255,255,${0.5 * u.hurt / 0.28})`; ag.fillRect(0, 0, w, h); ag.globalCompositeOperation = 'source-over'; }

@@ -1,10 +1,11 @@
 // Exporte les 72 héros en morceaux pour le site de test (galerie + aperçu des animations) :
 //   public/apercu/h/<identifiant du jeu>.png  et  public/apercu/heros.js
+//   + refonte-graphique/HEROS.md (la liste)
 //   node refonte-graphique/export72.cjs
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
-const { all, ELEMENTS } = require('./heroes72.cjs');
+const { all, ELEMENTS } = require('./heroes6.cjs');
 const { SHARED_DEFS } = require('./kit.cjs');
 
 const OUT = path.join(__dirname, '..', 'public', 'apercu');
@@ -46,6 +47,12 @@ const gameId = (el, i) => { const n = ELEMENTS.indexOf(el) * 18 + i; return `${F
     process.stdout.write('.');
   }
   fs.writeFileSync(path.join(OUT, 'heros.js'), '// Fabriqué par refonte-graphique/export72.cjs — ne pas modifier à la main.\nwindow.HEROS = ' + JSON.stringify({ E, list }) + ';\n');
+  // la liste en clair, pour le propriétaire
+  const RAR = { common: 'Commun', rare: 'Rare', epic: 'Épique', legendary: 'Légendaire' }, ROLE = { protector: 'Protecteur', warrior: 'Guerrier', marksman: 'Tireur', assassin: 'Assassin', healer: 'Soigneur', support: 'Soutien' };
+  const TITLE = { fire: 'Feu', wind: 'Vent', water: 'Eau', earth: 'Terre' };
+  let md = '# Les 72 héros (habillage provisoire)\n\nFabriqué par `export72.cjs` (ne pas modifier à la main : changer les fichiers `h6-*.cjs` puis relancer).\nNoms provisoires. ♛ = chef de section. Inspirations : mythologies et légendes du monde, jamais un personnage d\'un autre jeu.\n';
+  for (const el of ELEMENTS) { md += `\n## ${TITLE[el]}\n\n| Identifiant | Nom provisoire | Rareté | Rôle | Inspiration |\n|---|---|---|---|---|\n`; for (const h of list.filter((x) => x.element === el)) md += `| \`${h.id}\` | ${h.leader ? '♛ ' : ''}${h.name} | ${RAR[h.rarity]} | ${ROLE[h.role]} | ${h.from} |\n`; }
+  fs.writeFileSync(path.join(__dirname, 'HEROS.md'), md);
   console.log('\n' + list.length + ' héros exportés');
   await browser.close();
 })();

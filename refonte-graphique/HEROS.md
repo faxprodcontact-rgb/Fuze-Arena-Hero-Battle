@@ -1,6 +1,6 @@
 # Les 72 héros (habillage provisoire)
 
-Fabriqué par `heroes72.cjs` (ne pas modifier à la main : changer les fichiers `heroes-*.cjs` puis relancer).
+Fabriqué par `export72.cjs` (ne pas modifier à la main : changer les fichiers `h6-*.cjs` puis relancer).
 Noms provisoires. ♛ = chef de section. Inspirations : mythologies et légendes du monde, jamais un personnage d'un autre jeu.
 
 ## Feu
@@ -9,7 +9,7 @@ Noms provisoires. ♛ = chef de section. Inspirations : mythologies et légendes
 |---|---|---|---|---|
 | `knights-1` | Garde-braise | Commun | Protecteur | hoplite, gardien du feu sacré |
 | `knights-2` | Forgeron | Commun | Guerrier | forgeron des dieux |
-| `knights-3` | Archer de cendre | Commun | Tireur | archer aux flèches enflammées |
+| `knights-3` | Cracheur de feu | Commun | Tireur | saltimbanque cracheur de feu |
 | `knights-4` | Légionnaire de lave | Rare | Protecteur | légionnaire romain, bouclier d'obsidienne |
 | `knights-5` | Salamandre | Rare | Assassin | salamandre, esprit du feu |
 | `knights-6` | Vestale | Rare | Soigneur | prêtresse du foyer sacré (Vesta) |
@@ -46,7 +46,7 @@ Noms provisoires. ♛ = chef de section. Inspirations : mythologies et légendes
 | `mages-8` | ♛ Roi singe | Légendaire | Guerrier | le Roi singe du Voyage en Occident (Chine) |
 | `mages-9` | ♛ Maître de la foudre | Légendaire | Tireur | Zeus, roi des dieux (Grèce) |
 | `mages-10` | Morrigane | Légendaire | Assassin | la Morrígan, déesse-corbeau (Irlande) |
-| `mages-11` | Séraphin | Légendaire | Soigneur | ange gardien |
+| `mages-11` | Séraphin | Légendaire | Soigneur | séraphin aux six ailes |
 | `mages-12` | ♛ Raijin | Légendaire | Soutien | Raijin, dieu du tonnerre (Japon) |
 
 ## Eau
@@ -76,14 +76,14 @@ Noms provisoires. ♛ = chef de section. Inspirations : mythologies et légendes
 
 | Identifiant | Nom provisoire | Rareté | Rôle | Inspiration |
 |---|---|---|---|---|
-| `angels-7` | Nain au bouclier | Commun | Protecteur | nain des montagnes (mythologie nordique) |
+| `angels-7` | Nain des forges | Commun | Protecteur | nain forgeron des sagas nordiques |
 | `angels-8` | Satyre | Commun | Guerrier | satyre, compagnon des bois (Grèce) |
-| `angels-9` | Chasseur à la sarbacane | Commun | Tireur | chasseur de la forêt profonde |
+| `angels-9` | Frondeur | Commun | Tireur | berger à la fronde (David, Proche-Orient) |
 | `angels-10` | Cyclope | Rare | Protecteur | cyclope, géant à l'œil unique (Grèce) |
 | `angels-11` | Homme-scorpion | Rare | Assassin | homme-scorpion, gardien du désert (Mésopotamie) |
 | `angels-12` | Dryade | Rare | Soigneur | dryade, nymphe des arbres (Grèce) |
 | `myths-1` | ♛ Druide | Rare | Soutien | druide des forêts celtes |
-| `myths-2` | ♛ Golem d'argile | Épique | Protecteur | le golem des légendes de Prague |
+| `myths-2` | ♛ Général d'argile | Épique | Protecteur | armée de terre cuite du Premier Empereur (Chine) |
 | `myths-3` | Minotaure | Épique | Guerrier | le Minotaure du labyrinthe (Crète) |
 | `myths-4` | Gorgone | Épique | Tireur | Méduse, la gorgone au regard de pierre (Grèce) |
 | `myths-5` | Anubis | Épique | Assassin | Anubis, gardien des morts (Égypte) |
