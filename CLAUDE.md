@@ -42,6 +42,11 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   lance lui-même). Planches 4K de 18 personnages sans texte : `node refonte-graphique/planche-ia.cjs heros|monstres
   fire|wind|water|earth sortie.png` ; prompts (moins de 1 500 caractères, en anglais) dans `refonte-graphique/PROMPTS-HAILUO.md`.
   La refonte par le code des familles de monstres est en pause (Glaces, Échiquier, Feu faits ; les autres à moitié).
+  **Les 144 dessins Hailuo sont dans l'aperçu** (v0.20.0) : images rendues gardées dans `refonte-graphique/hailuo-v1/`,
+  découpées par `python3 refonte-graphique/decoupe-hailuo.py` → `public/apercu/hl/<id>.webp` + `hailuo.js` (taille et place
+  calées sur la silhouette du dessin d'origine). Un seul morceau par personnage : l'aperçu anime le corps entier (respiration,
+  élan, frappe, recul, chute) + effets ; bouton « Hailuo / Code » pour comparer. Étape suivante possible : animations
+  d'attaque par la vidéo de Hailuo (à essayer sur 2-3 personnages avant de dépenser des crédits). Pas encore dans le vrai jeu.
   Aperçu animé sur le site de test : `public/apercu/` (page à part, bouton « Aperçu des animations » dans les Outils de
   test des réglages) : les personnages v5 animés morceau par morceau. Les images viennent de
   `node refonte-graphique/export5.cjs` (à relancer après tout changement de dessin). Pas encore branché dans le vrai combat.

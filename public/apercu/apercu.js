@@ -1,5 +1,6 @@
-// Aperçu des animations de combat (site de test) : les personnages v5 sont animés morceau par morceau
-// (jambes, buste, tête, bras, arme). Dessins fabriqués par refonte-graphique/export5.cjs.
+// Aperçu des animations de combat (site de test). Deux sortes de dessins :
+// - par morceaux (jambes, buste, tête, bras, arme), fabriqués par refonte-graphique/export72.cjs et exportM.cjs ;
+// - d'un seul morceau, redessinés par Hailuo (refonte-graphique/decoupe-hailuo.py) : le corps entier est animé.
 (() => {
   const D = window.APERCU, E = D.E;
   const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
@@ -33,6 +34,10 @@
   const SLOT_STATS = { fast: [520, 90, 1.7], tank: [1000, 60, 2.4], shooter: [440, 80, 2.1], caster: [460, 70, 2.4], elite: [900, 100, 2.0], boss: [1900, 120, 2.3] };
   for (const m of MS) CH[m.id] = { enemy: true, rig: m.rig, parts: m.parts, E: window.MONSTRES.E, src: 'm/' + m.id + '.png', stats: SLOT_STATS[m.slot], label: m.name, aura: { elite: '#ff8a2a', boss: '#ff2a3a' }[m.slot],
     k: 0.56 * Math.max(0.8, Math.min(1.36, m.scale)), top: Math.max(-40, Math.min(...m.parts.filter((p) => p.name !== 'glow' && p.name !== 'shine').map((p) => p.oy))) };
+  // Dessins redessinés par Hailuo (window.HAILUO, un seul morceau par personnage) : utilisés à la place des dessins
+  // par morceaux, sauf avec #code dans l'adresse (pour comparer).
+  const HL = location.hash === '#code' ? null : window.HAILUO;
+  if (HL) for (const id of Object.keys(CH)) { const w = HL[id]; if (w) Object.assign(CH[id], { whole: w, src: 'hl/' + id + '.webp', top: Math.max(-40, w.oy) }); }
   const img = {};
   const image = (n) => img[n] || (img[n] = Object.assign(new Image(), { src: CH[n].src }));
   const bg = new Image(); bg.src = 'bg.jpg';
@@ -217,10 +222,21 @@
     // morceaux → A
     const w = Math.ceil(BW * s), h = Math.ceil(BH * s);
     if (A.width !== w || A.height !== h) { A.width = B.width = w; A.height = B.height = h; } else { ag.setTransform(1, 0, 0, 1, 0, 0); ag.clearRect(0, 0, w, h); }
-    const soft = c.rig.soft === true ? 1 : +c.rig.soft || 0; // 1 = monstres, 0,6 = héros (jonctions plus fines)
+    if (c.whole) { // dessin d'un seul morceau : le corps entier respire, s'élance, frappe et recule (pivot aux pieds)
+      const wh = c.whole, br = Math.sin(time * 2.4 + u.ph), sw = clamp(P.swing / 60, -1, 1);
+      ag.setTransform(s, 0, 0, s, OX * s, OY * s);
+      ag.translate(106 + P.dx, 228 + (P.farY || 0) * 1.4);
+      ag.rotate(P.lean * 0.45 * RAD);
+      ag.transform(1, 0, -0.2 * sw, 1, 0, 0); // le haut part en arrière à l'élan, en avant à la frappe
+      const st = 1 + 0.07 * Math.max(0, sw) + 0.04 * Math.max(0, (P.glow || 1) - 1);
+      ag.scale((1 - 0.012 * br) * st, (1 + 0.022 * br) / Math.sqrt(st));
+      ag.translate(-106, -228);
+      ag.drawImage(im, wh.ox, wh.oy, wh.w, wh.h);
+    }
+    const soft = c.whole ? 0 : c.rig.soft === true ? 1 : +c.rig.soft || 0; // 1 = monstres, 0,6 = héros (jonctions plus fines)
     if (soft) { if (C.width !== w || C.height !== h) { C.width = w; C.height = h; } else { cg.setTransform(1, 0, 0, 1, 0, 0); cg.clearRect(0, 0, w, h); } ag.shadowColor = 'rgba(26,12,46,0.5)'; ag.shadowBlur = (3 + 3 * soft) * s; ag.shadowOffsetY = s; }
     // une arme portée sur l'épaule passe devant la tête quand elle s'abat
-    const over = c.rig.top && P.swing > 35, list = over ? [...c.parts.filter((p) => !c.rig.top.includes(p.name)), ...c.parts.filter((p) => c.rig.top.includes(p.name))] : c.parts;
+    const over = c.rig.top && P.swing > 35, list = c.whole ? [] : over ? [...c.parts.filter((p) => !c.rig.top.includes(p.name)), ...c.parts.filter((p) => c.rig.top.includes(p.name))] : c.parts;
     let shineP = null;
     for (const p of list) {
       if (p.name === 'shine') { shineP = p; continue; } // l'éclat se dessine en dernier, par-dessus
@@ -254,7 +270,7 @@
       ctx.shadowColor = c.aura; ctx.shadowBlur = (13 + 4 * Math.sin(time * 2 + u.ph)) * q / 0.56;
       ctx.drawImage(B, ox, oy); ctx.drawImage(B, ox, oy); ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';
     }
-    for (let i = 0; i < 8; i++) ctx.drawImage(B, ox + Math.cos(i * 0.785) * r, oy + Math.sin(i * 0.785) * r);
+    if (!c.whole) for (let i = 0; i < 8; i++) ctx.drawImage(B, ox + Math.cos(i * 0.785) * r, oy + Math.sin(i * 0.785) * r); // (les dessins Hailuo ont déjà leur contour)
     ctx.drawImage(A, ox, oy); ctx.globalAlpha = 1;
     if (shineP && !u.dead) { // l'élément qui brille : il suit son objet et sa lumière respire
       const tw = 0.5 + 0.5 * Math.sin(time * 3.2 + u.ph * 2.3), cx = shineP.ox + shineP.w / E / 2, cy = shineP.oy + shineP.h / E / 2;
@@ -356,6 +372,7 @@
   $('slow').onclick = () => { speed = speed === 0.3 ? 1 : 0.3; $('slow').classList.toggle('on', speed === 0.3); $('fast').classList.remove('on'); };
   $('fast').onclick = () => { speed = speed === 2 ? 1 : 2; $('fast').classList.toggle('on', speed === 2); $('slow').classList.remove('on'); };
   $('again').onclick = () => reset();
+  if ($('style')) { $('style').textContent = HL ? 'Hailuo' : 'Code'; $('style').onclick = () => { location.hash = HL ? '#code' : ''; location.reload(); }; }
   cv.addEventListener('pointerdown', (e) => { // toucher un personnage : il lance sa compétence
     const x = (e.clientX * dpr - offX) / V, y = (e.clientY * dpr - offY) / V;
     let best = null, bd = 70;
