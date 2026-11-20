@@ -229,11 +229,11 @@
     }
     for (let i = 0; i < 8; i++) ctx.drawImage(B, ox + Math.cos(i * 0.785) * r, oy + Math.sin(i * 0.785) * r);
     ctx.drawImage(A, ox, oy); ctx.globalAlpha = 1;
-    if (shineP && !u.dead) { // l'éclat : il suit son objet et scintille
+    if (shineP && !u.dead) { // l'élément qui brille : il suit son objet et sa lumière respire
       const tw = 0.5 + 0.5 * Math.sin(time * 3.2 + u.ph * 2.3), cx = shineP.ox + shineP.w / E / 2, cy = shineP.oy + shineP.h / E / 2;
       ST(flip * s, 0, 0, s, X - flip * 106 * s, Y - 228 * s); groupTransform(ctx, c.group.shine, P, c.rig.piv || PIV);
-      ctx.translate(cx, cy); ctx.rotate(0.5 * Math.sin(time * 1.7 + u.ph)); ctx.scale(0.7 + 0.45 * tw, 0.7 + 0.45 * tw); ctx.translate(-cx, -cy);
-      ctx.globalAlpha = alpha * (0.5 + 0.5 * tw); ctx.drawImage(im, shineP.x, shineP.y, shineP.w, shineP.h, shineP.ox, shineP.oy, shineP.w / E, shineP.h / E); ctx.globalAlpha = 1;
+      ctx.translate(cx, cy); ctx.scale(0.9 + 0.25 * tw, 0.9 + 0.25 * tw); ctx.translate(-cx, -cy);
+      ctx.globalAlpha = alpha * (0.45 + 0.55 * tw); ctx.drawImage(im, shineP.x, shineP.y, shineP.w, shineP.h, shineP.ox, shineP.oy, shineP.w / E, shineP.h / E); ctx.globalAlpha = 1;
     }
   }
   function bars(u, V) {

@@ -42,7 +42,6 @@ H('wind', 4, 'Ombre du vent', 'shinobi au grand shuriken', {
   far: { pose: 'stab', handBehind: true, item: ['small', { kind: 'kunai', dir: [28, -22], layer: 'behind' }] } });
 
 H('wind', 5, 'Sylphe', 'sylphe, esprit de l\'air', {
-  shine: [[154, 110, 'near']],
   scale: 0.84, body: 'slim', shape: { hs: 1.1 }, colors: { skin: '#f8e0cc', hair: '#9fe0b0', cloth: '#7fcf8a', belt: '#e6ac3c', boot: '#5fae6a', pants: '#f8e0cc' },
   skirt: { len: 26, ragged: true, flare: 10 }, legs: { kind: 'float' },
   head: { kind: 'human', eyes: { style: 'happy' }, brow: { shape: 'arch', k: 3 }, mouth: 'smile', blush: '#ff9aa8', ear: false },
@@ -51,7 +50,6 @@ H('wind', 5, 'Sylphe', 'sylphe, esprit de l\'air', {
   far: { hand: [164, 109], el: [156, 132], over: true, tint: true } });
 
 H('wind', 6, 'Barde des tempêtes', 'Orphée, le musicien des légendes grecques', {
-  shine: [[166, 120, 'far']],
   colors: { skin: '#f2c9a4', hair: '#7a4a2a', cloth: '#f4f8ff', belt: '#2f8f8a', cape: '#2f8f8a', leaf: '#e6ac3c', boot: '#f2c9a4' },
   bare: true, bareArms: true, chest: [['muscle'], ['toga', { t: 'cloth' }]], skirt: { len: 26 }, legs: { kind: 'legs', leg: 'bare', foot: 'sandal', stance: 'narrow' },
   head: { kind: 'human', eyes: { style: 'soft', color: '#2a8a9a' }, brow: { shape: 'arch', k: 3.6 }, mouth: 'o' },
@@ -76,6 +74,7 @@ H('wind', 8, 'Tengu', 'tengu, démon-corbeau des montagnes (Japon)', {
   far: { hand: [170, 152], el: [156, 152], item: ['sword', { to: [216, 122], w: 13, curve: 7, guard: 9 }] } });
 
 H('wind', 9, 'Garuda', 'Garuda, l\'homme-aigle (Inde)', {
+  shine: true,
   colors: { skin: '#f4ead8', cloth: '#d8a040', sleeve: '#d8a040', glove: '#d8a040', pants: '#c8502a', wing: '#c8502a', belt: '#e6ac3c', boot: '#e6ac3c', crest: '#c8502a' },
   bracers: 'gold', legs: { kind: 'legs', leg: 'baggy', foot: 'talon', cuffT: 'gold', stance: 'mid' }, neck: [['collar', { gem: '#c8502a' }]],
   head: { kind: 'eagle', eyes: { style: 'fierce', color: '#c8502a', sclera: '#fff3a8' }, browC: '#8a3a1c' },
@@ -92,7 +91,7 @@ H('wind', 10, 'Kamaitachi', 'kamaitachi, la belette aux faucilles (Japon)', {
   far: { hand: [174, 152], el: [158, 152], item: ['small', { kind: 'sickle', dir: [30, -10] }] } });
 
 H('wind', 11, 'Apsara', 'apsara, danseuse céleste (Inde)', {
-  shine: [[164, 66, 'far', 10, '#ffd0e6']],
+  shine: [[164, 66, 'far', 11, '#ffd0e6']],
   body: 'curvy', colors: { skin: '#d9a074', hair: '#2a2226', cloth: '#2fa39a', belt: '#e6ac3c', scarf: '#ffb0cf', pants: '#2fa39a', boot: '#d9a074' },
   bare: true, bareArms: true, bracers: 'gold', chest: [['raw', { svg: '<path d="M20 114 L190 114 L190 138 C130 148 90 148 20 138 Z" fill="#2fa39a"/><path d="M20 138 C90 148 130 148 190 138" stroke="#e6ac3c" stroke-width="4" fill="none"/>' }]],
   skirt: { len: 24, flare: 4, trim: 'gold' }, legs: { kind: 'dance' },
@@ -101,7 +100,6 @@ H('wind', 11, 'Apsara', 'apsara, danseuse céleste (Inde)', {
   far: { pose: 'high', handKind: 'open', dir: [0.3, -1], item: ['lotus', { color: '#ffb0cf' }] }, near: { hand: [148, 148], el: [110, 156], over: true, handKind: 'open', dir: [1, 0.3] } });
 
 H('wind', 12, 'Fūjin', 'Fūjin, dieu du vent (Japon)', {
-  shine: [[84, 10, 'torso']],
   scale: 1.05, body: 'heavy', shape: { belly: 10 }, colors: { skin: '#5fae6a', hair: '#3a3a4e', pelt: '#e8c070', belt: '#c83a3a', bag: '#f4f0e6', bone: '#f4ead8', boot: '#5fae6a' },
   bare: true, bareArms: true, chest: [['muscle']], skirt: { len: 28, t: 'pelt', flare: 5 }, legs: { kind: 'legs', leg: 'thick', t: 'skin', foot: 'bare', anklet: 'gold', stance: 'lunge' },
   head: { kind: 'human', jaw: 'chubby', eyes: { style: 'wide', color: '#ffe14a', sclera: '#fff3a8' }, brow: { k: 6, c: '#3a3a4e', shape: 'angry' }, mouth: 'grin', tusks: 'small', nose: 'big', ear: false },
@@ -116,6 +114,7 @@ H('wind', 13, 'Roi singe', 'le Roi singe du Voyage en Occident (Chine)', {
   near: { pose: 'pole' }, far: { pose: 'pole', items: [['pole', { butt: [50, 190], end: [178, 110], head: 'staff', thick: 8 }]] } });
 
 H('wind', 14, 'Maître de la foudre', 'Zeus, roi des dieux (Grèce)', {
+  shine: true,
   main: 'far',
   scale: 1.1, body: 'brute', colors: { boot: '#f2c9a4', skin: '#f2c9a4', hair: '#e8c05a', cloth: '#f4f8ff', belt: '#e6ac3c', leaf: '#e6ac3c', cape: '#5a4a8a' },
   bareArms: true, bracers: 'gold', chest: [['raw', { svg: '<path d="M0 80 L130 80 C122 122 92 144 0 156 Z" fill="#f2c9a4"/><path d="M130 86 C122 124 94 146 30 156" stroke="#b8c4d8" stroke-width="3" fill="none"/>' }], ['muscle']],
@@ -131,7 +130,7 @@ H('wind', 15, 'Morrigane', 'la Morrígan, déesse-corbeau (Irlande)', {
   near: { hand: [122, 164], el: [86, 164], item: ['sword', { to: [188, 138], w: 13, guard: 10 }] }, far: { pose: 'up', handKind: 'open', dir: [0.6, -1] } });
 
 H('wind', 16, 'Séraphin', 'séraphin aux six ailes', {
-  shine: [[210, 86, 'far']],
+  shine: [[104, 26, 'head', 14, '#fff3c0']],
   colors: { boot: '#e6ac3c', skin: '#f8dcc4', hair: '#f0d070', cloth: '#f4f8ff', belt: '#e6ac3c', wing: '#f4f8ff' },
   skirt: { len: 36, t: 'cloth', flare: 8, trim: 'gold' }, legs: { kind: 'float', t: 'skin', footT: 'boot' },
   head: { kind: 'human', eyes: { style: 'calm', color: '#3f8fd8' }, brow: { shape: 'flat', k: 3, c: '#c8a040' }, mouth: 'flat', ear: false },

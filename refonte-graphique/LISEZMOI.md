@@ -118,9 +118,10 @@ Demande du propriétaire : 72 héros **très différents les uns des autres**, i
 - **Pas de doublon** : avant d'ajouter un héros, compter ce qui existe déjà (coiffe, arme, pose, carrure, jambes,
   regard). Deux héros ne partagent jamais à la fois la silhouette, la pose et l'arme. Variété : humains, bêtes et
   esprits, plusieurs cultures, tailles différentes (`scale`).
-- **Éclat** (demande du 20/11/2026) : chaque héros a un élément qui brille, une petite étoile posée sur son objet fort.
-  Elle est placée toute seule (arme, orbe, bouclier…) ; sinon on la règle avec `shine: [[x, y, 'near' | 'far' | 'head' |
-  'torso', taille, couleur]]`. Elle est exportée à part (morceau `shine`), dessinée par-dessus et scintille en combat.
+- **Élément qui brille** (demande du 20/11/2026) : **pas sur tous les héros, et pas d'étoile**. Seulement ceux qui ont
+  un petit élément lumineux (flamme, perle, lanterne, regard, disque solaire…) : cet élément entier s'illumine, par un
+  halo doux posé par-dessus. Dans la fiche : `shine: true` (sur l'objet tenu) ou `shine: [[x, y, 'near' | 'far' |
+  'head' | 'torso', taille, couleur]]`. Exporté à part (morceau `shine`), sa lumière respire en combat.
 - **Aura** : les Épiques (violet) et les Légendaires (or) ont un halo autour de la silhouette, sur les planches, dans la
   galerie et en combat (`aura` dans `public/apercu/apercu.js`, ombre portée de la silhouette).
 - Animation : `both: true` = arme tenue à deux mains (les deux bras bougent ensemble) ; `main: 'far'` = c'est le bras

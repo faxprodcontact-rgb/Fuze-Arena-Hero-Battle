@@ -167,7 +167,7 @@ function build(s) {
   const rig = { ...(both ? { swing: [...nearParts, ...farParts], far: [] } : main === 'far' ? { swing: farParts, far: nearParts } : { swing: nearParts, far: farParts, ...(hasShoulder ? { top: nearParts } : {}) }),
     piv: { swing: tp(main === 'far' && !both ? shF : shN), far: tp(main === 'far' && !both ? shN : shF), head: tp([CX, 119]), back: tp([96, 122]), torso: [CX, HIP + 4 + B.drop] },
     atk, wind, hit, ...(atk === 'stab' && !both && armed(near) && armed(far) ? { farWind: -25, farHit: 55 } : {}), ...(s.grp ? { grp: s.grp } : {}), ...(s.rig ?? {}) };
-  // ---- l'élément qui brille : une étoile de lumière sur l'objet fort du héros (dessinée par-dessus, sans contour)
+  // ---- l'élément qui brille : pour certains héros, un petit élément entier s'illumine (dessiné par-dessus, sans contour)
   const ELC = { fi: '#ffd76a', wi: '#eafff2', wa: '#dff4ff', ea: '#f0ffb0' }[String(s.id).slice(0, 2)] ?? '#fff6c8';
   const spotOf = (a) => { if (!a) return null; for (const [n, o0] of a.items) { const o = o0 ?? {}, hd = o.hand ?? a.hand;
     if (n === 'sword') return [hd[0] + (o.to[0] - hd[0]) * 0.72, hd[1] + (o.to[1] - hd[1]) * 0.72];
@@ -181,10 +181,12 @@ function build(s) {
     if (n === 'gun') return [hd[0] + 58, hd[1] - 12];
     if (n === 'small') { const d = o.dir ?? [33, 13], k = ((o.len ?? 36) * 0.8 + (o.off ?? 8)) / Math.hypot(d[0], d[1]); return [hd[0] + d[0] * k, hd[1] + d[1] * k]; }
     if (n === 'bow') return [(o.x ?? hd[0] - 16) + 36, (o.pull ?? [120, 128])[1]]; } return null; };
-  const auto = () => { const n = spotOf(near), fa = spotOf(far); return n ? [[...n, 'near']] : fa ? [[...fa, 'far']] : [[112, 52, 'head']]; };
-  const shine = s.shine === false ? [] : (s.shine ?? auto());
-  const star = (x, y, r, c) => `<g transform="translate(${f(x)} ${f(y)})"><circle r="${f(r * 1.7)}" fill="${c}" opacity="0.6" filter="url(#glow)"/><path d="M0 ${-r} Q${f(r * 0.16)} ${f(-r * 0.16)} ${r} 0 Q${f(r * 0.16)} ${f(r * 0.16)} 0 ${r} Q${f(-r * 0.16)} ${f(r * 0.16)} ${-r} 0 Q${f(-r * 0.16)} ${f(-r * 0.16)} 0 ${-r} Z" fill="#fff"/><path d="M0 ${f(-r * 0.5)} L${f(r * 0.5)} 0 L0 ${f(r * 0.5)} L${f(-r * 0.5)} 0 Z" fill="#fff" opacity="0.85" transform="rotate(45)"/></g>`;
-  const fx = shine.map(([x, y, src = 'near', r = 10, c = ELC]) => `<g${(src === 'head' ? HT : U) ? ` transform="${src === 'head' ? HT : U}"` : ''}>${star(x, y, r, c)}</g>`).join('');
+  const auto = () => { const n = spotOf(near), fa = spotOf(far); return n ? [[...n, 'near']] : fa ? [[...fa, 'far']] : []; };
+  // pas pour tout le monde : seulement les héros dont la fiche le demande (shine: true = sur l'objet tenu, ou une liste de points)
+  const shine = !s.shine ? [] : s.shine === true ? auto() : s.shine;
+  // pas d'étoile : l'élément entier s'illumine (un halo doux par-dessus, cœur plus clair)
+  const bloom = (x, y, r, c) => `<g transform="translate(${f(x)} ${f(y)})"><circle r="${f(r * 1.25)}" fill="${c}" opacity="0.7" filter="url(#glow)"/><circle r="${f(r * 0.6)}" fill="#fff" opacity="0.55" filter="url(#glow)"/></g>`;
+  const fx = shine.map(([x, y, src = 'near', r = 11, c = ELC]) => `<g${(src === 'head' ? HT : U) ? ` transform="${src === 'head' ? HT : U}"` : ''}>${bloom(x, y, r, c)}</g>`).join('');
   if (shine.length) { const src = shine[0][2] ?? 'near'; rig.grp = { ...(rig.grp ?? {}), shine: src === 'head' ? 'head' : src === 'torso' ? 'torso' : both ? 'swing' : (src === 'near') === (main === 'far') ? 'far' : 'swing' }; }
   const body = P.body;
   return { defs: P.defs, body, glow: glows.join(''), fx, parts: marks.map((k) => ({ name: k.name, svg: body.slice(k.start, k.end) })), rig, spec: s };

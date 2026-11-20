@@ -47,8 +47,9 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   `fig6.cjs` + `face6.cjs` + `legs6.cjs` + `wear6.cjs` + `items6.cjs`, héros dans `h6-fire|wind|water|earth.cjs`,
   export `node refonte-graphique/export72.cjs` → `public/apercu/h/<identifiant du jeu>.png` + `heros.js` + `HEROS.md`.
   Galerie : `public/apercu/heros.html` ; la page d'animations tire des équipes au hasard parmi les 72.
-  Chaque héros a un **éclat** (étoile sur son objet fort, `shine` dans sa fiche) ; les Épiques et Légendaires ont une
-  **aura** (violette / dorée), visibles aussi dans les combats de l'aperçu.
+  Certains héros (pas tous, et jamais d'étoile) ont un **petit élément entier qui brille** (flamme, perle, lanterne… :
+  `shine` dans leur fiche) ; les Épiques et Légendaires ont une **aura** (violette / dorée). Visibles aussi dans les
+  combats de l'aperçu.
   AVANT de montrer un héros nouveau ou modifié : le regarder en grand (`node zoom6.cjs "fire:4" sortie.html`) et passer
   le contrôle de `refonte-graphique/LISEZMOI.md` (rien ne traverse une barbe, un visage ou un museau ; rien de coupé
   ni de flottant ; arme dans le bon sens ; pas de doublon de silhouette, de pose ou d'arme), puis faire relire les
