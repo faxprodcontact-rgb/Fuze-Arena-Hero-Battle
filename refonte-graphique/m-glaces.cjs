@@ -14,7 +14,7 @@ Mo('glaces', 0, 'Tigre à dents de sabre', { atk: 'slash', wind: -14, hit: 20, c
       inner: '<path d="M48 196 C76 210 116 208 138 188 L140 214 L46 214 Z" fill="#f6e8cc" opacity="0.8" filter="url(#g3)"/><g stroke="#7a4a22" stroke-width="6" stroke-linecap="round" opacity="0.75"><path d="M60 146 L64 166 M78 142 L80 164 M96 142 L96 162"/></g>' }));
     G('head', () => {
       S('M122 116 L112 88 L136 102 Z', T.fur, { sh: 3 }); S('M148 102 L156 80 L168 106 Z', T.dark, { sh: 3 });
-      raw(`<path d="M187 148 L146 157 L180 172 C166 166 166 156 187 148 Z" fill="${MAW}"/>`);
+      raw(`<path d="M187 148 L146 157 L175 169 C166 166 166 156 187 148 Z" fill="${MAW}"/>`);
       S('M108 140 C104 116 124 100 146 100 C166 100 182 112 186 130 C188 137 188 142 186 147 L150 157 L178 169 C170 180 154 184 138 180 L118 190 L122 172 L100 172 L112 158 C109 152 108 146 108 140 Z', T.fur, { sh: 9, hl: 6,
         inner: '<path d="M156 136 C168 132 180 134 190 140 L190 150 L150 156 Z" fill="#f6e8cc" opacity="0.85" filter="url(#g2)"/><path d="M178 128 C183 126 189 130 188 136 C183 138 178 134 178 128 Z" fill="#3a1c1c"/><g stroke="#7a4a22" stroke-width="5" stroke-linecap="round" opacity="0.7"><path d="M112 134 L126 138 M114 148 L126 148 M134 104 L138 116"/></g>' });
       raw(`<path d="M182 148 L184 182 L171 151 Z M166 153 L166 176 L156 155 Z" fill="${IVORY}" stroke="#3a2416" stroke-width="1.6" stroke-linejoin="round"/>`);
@@ -83,7 +83,7 @@ Mo('glaces', 4, 'Ours des cavernes', { scale: 1.2, atk: 'smash', wind: -50, hit:
       inner: `<path d="M86 130 C100 122 120 122 132 132 C132 170 122 196 108 198 C94 196 84 168 86 130 Z" fill="#c8a078" opacity="0.5" filter="url(#g3)"/><path d="M72 104 C88 90 124 88 142 100" stroke="${ICE}" stroke-width="7" fill="none" opacity="0.6" stroke-linecap="round" filter="url(#g2)"/>` }));
     G('head', () => {
       S('M96 70 C90 60 96 50 106 52 C112 54 114 62 110 68 Z', T.fur, { sh: 3 }); S('M128 62 C128 50 138 46 146 52 C150 58 146 66 140 68 Z', T.dark, { sh: 3 });
-      raw(`<path d="M178 99 L136 107 L172 126 C156 118 156 108 178 99 Z" fill="${MAW}"/>`);
+      raw(`<path d="M178 99 L136 107 L167 123 C156 118 156 108 178 99 Z" fill="${MAW}"/>`);
       S('M92 98 C88 74 104 56 124 56 C140 56 152 68 155 82 C165 84 175 90 177 99 L142 106 L170 123 C162 132 146 134 132 130 L112 134 L116 122 C102 118 94 108 92 98 Z', T.fur, { sh: 9, hl: 6,
         inner: '<path d="M150 84 C160 84 172 90 178 100 L178 106 L146 104 Z" fill="#c8a078" opacity="0.8" filter="url(#g2)"/><path d="M170 90 C174 88 180 92 179 97 C174 99 170 96 170 90 Z" fill="#2a1612"/>' });
       teeth([173, 100], [146, 105.5], 3, 9, 1); teeth([167, 121], [146, 109], 3, -8, 1);

@@ -12,7 +12,7 @@ Mo('abysses', 0, 'Poisson-hache', { scale: 0.9, atk: 'stab', wind: -8, hit: 10, 
     G('body', () => {
       S('M88 110 L96 70 L112 98 L120 74 L132 104 Z', T.fin, { sh: 3 });
       // l'intérieur de la gueule, derrière le corps : son bord avant est creusé, il ne ferme pas la bouche
-      raw(`<path d="M168 143 L128 153 L178 161 C158 158 152 150 168 143 Z" fill="${MAW}"/>`);
+      raw(`<path d="M168 143 L128 153 L173 158 C158 158 152 150 168 143 Z" fill="${MAW}"/>`);
       // le corps : la gueule est une vraie encoche dans la silhouette (lèvre du haut → coin → menton en avant)
       S('M58 148 C66 122 94 104 128 102 C150 101 166 112 170 128 C171 135 170 140 167 144 L134 153 L178 160 C176 170 168 177 158 181 C150 196 136 208 118 210 C98 212 82 200 74 180 C68 168 62 158 58 148 Z', T.body, { sh: 10, hl: 6,
         inner: '<path d="M66 150 C92 170 118 174 132 156" stroke="#24465c" stroke-width="2.4" fill="none" opacity="0.4"/><path d="M96 152 C92 170 96 190 108 204" stroke="#24465c" stroke-width="2" fill="none" opacity="0.35"/>' });
@@ -68,7 +68,7 @@ Mo('abysses', 3, 'Baudroie à lanterne', { atk: 'cast', fx: LURE, colors: { body
     G('lure', () => { S(limb([[112, 110], [128, 48], [170, 74]], 6, 3.5), T.fin, { sh: 2 }); S(disc(172, 80, 9.5), T.lure, { sh: 2, hl: 4 }); });
     G('body', () => {
       S('M78 108 L70 82 L88 100 L92 76 L104 98 Z', T.fin, { sh: 3 });
-      raw(`<path d="M175 142 L108 155 L173 176 C150 168 150 150 175 142 Z" fill="${MAW}"/><path d="M130 153 C138 150 146 152 150 158 C144 163 136 163 130 159 Z" fill="#b8485a"/>`);
+      raw(`<path d="M175 142 L108 155 L168 173 C150 168 150 150 175 142 Z" fill="${MAW}"/><path d="M130 153 C138 150 146 152 150 158 C144 163 136 163 130 159 Z" fill="#b8485a"/>`);
       // la gueule : une encoche jusqu'au coin de la bouche, rien ne la referme devant
       S('M40 152 C38 116 72 94 106 96 C138 98 166 114 172 136 C173 138 174 140 174 142 L114 155 L172 174 C163 197 132 208 100 208 C70 208 42 188 40 152 Z', T.body, { sh: 11, hl: 7,
         inner: '<path d="M52 186 C80 206 130 208 166 184 L176 214 L44 214 Z" fill="#6a6f96" opacity="0.7" filter="url(#g3)"/>' });

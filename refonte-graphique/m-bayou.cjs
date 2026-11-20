@@ -32,7 +32,7 @@ Mo('bayou', 1, 'Tortue-alligator', { scale: 1.1, atk: 'smash', wind: -16, hit: 2
     G('legs', () => legs.near());
     // la tête sort de sous le bord de la carapace
     G('head', () => {
-      raw(`<path d="M196 180 L162 184 L190 196 C178 192 178 186 196 180 Z" fill="${MAW}"/>`);
+      raw(`<path d="M196 180 L162 184 L185 193 C178 192 178 186 196 180 Z" fill="${MAW}"/>`);
       S('M126 184 C130 162 150 152 170 156 C184 160 194 170 196 179 L164 184 L190 194 C182 204 164 206 148 202 C134 198 126 192 126 184 Z', T.skin, { sh: 8, hl: 5,
         inner: '<path d="M178 162 l8 6 M168 158 l6 5" stroke="#46522e" stroke-width="2.4" stroke-linecap="round" opacity="0.6"/>' });
       raw('<path d="M196 179 L190 190 L184 181 Z" fill="#e8dcb0" stroke="#2a2416" stroke-width="1.4" stroke-linejoin="round"/>');
@@ -81,7 +81,7 @@ Mo('bayou', 4, 'Silure géant', { scale: 1.16, atk: 'smash', wind: -12, hit: 18,
     G('barb', () => { L([[[[170, 172], [206, 148], [210, 196]], 4.5, 1.6], [[[160, 170], [186, 126], [204, 140]], 4, 1.6]], 'dark', { N: 18 }); });
     G('body', () => {
       S('M84 150 L92 126 L112 146 Z', T.dark, { sh: 3 });
-      raw(`<path d="M190 178 L134 186 L186 200 C164 194 164 186 190 178 Z" fill="${MAW}"/><path d="M144 186 C150 184 158 186 162 190 C156 193 148 193 144 190 Z" fill="#b8485a"/>`);
+      raw(`<path d="M190 178 L134 186 L181 197 C164 194 164 186 190 178 Z" fill="${MAW}"/><path d="M144 186 C150 184 158 186 162 190 C156 193 148 193 144 190 Z" fill="#b8485a"/>`);
       S('M32 188 C38 160 78 142 120 142 C150 142 178 154 188 174 L190 177 L140 186 L186 198 C176 212 142 216 106 214 C70 214 40 208 32 188 Z', T.skin, { sh: 11, hl: 7,
         inner: '<path d="M36 196 C70 214 150 216 186 198 L190 222 L34 222 Z" fill="#d8d4a8" opacity="0.8" filter="url(#g3)"/><g fill="#3e4830" opacity="0.5"><circle cx="80" cy="164" r="5"/><circle cx="104" cy="156" r="4"/><circle cx="62" cy="178" r="3.6"/><circle cx="124" cy="168" r="3"/></g>' });
       teeth([186, 178], [146, 185.5], 5, 6, 1); teeth([182, 197], [146, 188], 5, -6, 1);
@@ -99,7 +99,7 @@ Mo('bayou', 5, 'Vieux Crocodile', { scale: 1.34, atk: 'smash', wind: -14, hit: 2
     G('body', () => S('M34 196 C30 168 50 154 62 150 L68 134 L80 148 L90 130 L102 148 L114 134 L124 152 C136 158 142 170 142 186 C140 204 116 212 86 212 C58 212 36 208 34 196 Z', T.skin, { sh: 11, hl: 7,
       inner: '<path d="M40 204 C70 216 116 214 142 196 L146 222 L38 222 Z" fill="#d8d8a0" opacity="0.8" filter="url(#g3)"/><g fill="#8fc85a" opacity="0.85"><ellipse cx="70" cy="160" rx="12" ry="6"/><ellipse cx="104" cy="164" rx="10" ry="5"/><ellipse cx="50" cy="176" rx="7" ry="4"/></g>' }));
     G('head', () => {
-      raw(`<path d="M210 152 L140 166 L204 190 C176 180 176 164 210 152 Z" fill="${MAW}"/><path d="M150 168 C160 165 168 168 172 174 C166 178 156 178 150 173 Z" fill="#b8485a"/>`);
+      raw(`<path d="M210 152 L140 166 L199 187 C176 180 176 164 210 152 Z" fill="${MAW}"/><path d="M150 168 C160 165 168 168 172 174 C166 178 156 178 150 173 Z" fill="#b8485a"/>`);
       S('M112 170 C110 148 124 132 140 132 C150 126 162 130 164 142 C178 142 192 138 204 140 C212 142 213 150 208 153 L146 166 L202 186 C206 192 200 198 192 198 C168 202 142 200 126 192 C116 186 112 178 112 170 Z', T.skin, { sh: 10, hl: 6,
         inner: '<path d="M130 196 C156 202 184 200 204 190 L206 206 L128 206 Z" fill="#d8d8a0" opacity="0.8" filter="url(#g2)"/><ellipse cx="202" cy="144" rx="2.6" ry="2" fill="#1f2a18"/><g stroke="#33492a" stroke-width="2.6" stroke-linecap="round" opacity="0.6"><path d="M172 146 l8 3 M186 144 l8 3 M120 160 l10 2"/></g>' });
       teeth([206, 153], [152, 164.5], 7, 9, 1); teeth([200, 186], [152, 168], 6, -9, 1);

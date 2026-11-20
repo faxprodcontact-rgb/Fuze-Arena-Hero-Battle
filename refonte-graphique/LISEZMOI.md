@@ -154,6 +154,8 @@ Demande du propriétaire : des **familles de 6 monstres**, beaucoup, pour tous l
 - Style validé par le propriétaire sur les Abysses (20/11/2026) ; il demande de **se vérifier à chaque fois**.
 - Bêtes à quatre pattes : trapues (grosse tête, pattes courtes), pattes par `beast({ front, hind, top, w, … })` (cuisse,
   jarret, patte ; à dessiner avant le corps), fourrure hérissée par `fringe(…)` dans le chemin du corps.
+- Le contour arrondit mal les très petites formes (un petit rond devient un carré) : les étincelles, braises et points
+  lumineux se font avec `halo` / `shine`, jamais avec de petites formes dans un morceau.
 - L'intérieur sombre d'une gueule recule vers le coin de la bouche (bord avant très creusé) : rien ne « bouche » l'avant.
 - Doubles évités entre familles (changements par rapport à la liste annoncée) : Fauves → Buffle de braise (au lieu du
   rhinocéros, déjà dans les Glaces) ; Volière → Paon d'orage (au lieu du hibou, harfang dans les Glaces) ; Cuirassés →
