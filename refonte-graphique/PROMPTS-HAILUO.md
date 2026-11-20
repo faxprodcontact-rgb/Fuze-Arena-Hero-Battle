@@ -4,6 +4,11 @@ Fabriquées par `refonte-graphique/planche-ia.cjs` (`node planche-ia.cjs heros f
 Images 4K (3840 × 2160, format 16:9), 18 personnages par planche, fond blanc, sans texte ni aura de rareté
 (le jeu ajoute l'aura lui-même). Une planche = un prompt (même numéro). Chaque prompt fait moins de 1 500 caractères.
 
+## Les images rendues par Hailuo
+
+Gardées dans `refonte-graphique/hailuo-v1/` (8 planches + 2 de rattrapage, telles que Hailuo les rend : 3696 × 1584,
+signature en bas à droite). Ce sont les sources des futurs dessins du jeu.
+
 ## Comment faire
 
 1. Dans Hailuo, choisir la création d'image **à partir d'une image de référence**, et importer la planche.
@@ -134,4 +139,14 @@ Redraw this sheet as 2D mobile RPG monster art. Keep EXACTLY the same 16 creatur
 Row 1: bronze colossus | great bronze idol, furnace belly | cassowary | thunderbird, lightning wings | giant catfish | old crocodile.
 Row 2: twig mantis | bramble stag | woolly mammoth with only two tusks | ember buffalo, four legs, huge horns | worker bee | armored soldier bee.
 Row 3: wax-spitting larva | nurse bee, honey cup | giant hornet | crowned queen bee, scepter.
+```
+
+### Rattrapage Apsara (après le deuxième passage)
+
+Planche : `rattrapage-apsara.png` : la même héroïne 3 fois (une seule génération, 3 essais : garder le meilleur).
+Elle avait encore une main en trop (qui tenait son voile). Tous les autres personnages du rattrapage sont bons.
+
+```
+Redraw this sheet as 2D mobile RPG character art. The sheet shows the same dancer three times: draw three versions of her, one per figure, nothing else; the rest of the sheet stays EMPTY white. Each keeps its species, head shape, outfit, colors, weapon in the same hand, pose and silhouette: full body, three-quarter view facing right. She has exactly two arms and two hands: one arm raises a pink lotus, the other is bent with its hand at her chest; her pink veils hang behind her and no hand holds them. Fully repaint her as detailed hand-painted cartoon art with crisp ink lines and textured shading, not the flat vector look of the sheet. Upgrade: chibi proportions, fierce expressive faces, clean anatomy, fingers gripping items, rich materials (metal, cloth, fur, scales), painted cel shading, light from top right, rim light, one bold dark outline, vibrant colors, glowing parts glow. Pure white background, soft shadow under feet. No text, frames, scenery, extra limbs; nothing cropped, no weapon over a face, the three figures never touch.
+The dancer: Thai-style celestial dancer, golden spired tiara, teal and gold outfit, bare feet, graceful dance pose.
 ```

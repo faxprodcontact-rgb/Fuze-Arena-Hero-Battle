@@ -19,7 +19,7 @@ let list, DEFS = '';
 if (LIST) {
   const { all } = require('./heroes6.cjs'), M = require('./mon6.cjs'), HD = require('./fig6.cjs').HERO_DEFS;
   const heroes = all(); DEFS = HD + M.MON_DEFS;
-  list = el.split(',').map((k) => { const [t, a, b] = k.split(':');
+  list = el.split(',').map((k) => { if (k === '_') return null; const [t, a, b] = k.split(':');
     const x = t === 'h' ? heroes.find((y) => y.element === a && y.index === +b) : M.all([a]).find((y) => y.index === +b);
     if (!x) throw new Error('inconnu : ' + k); SILS[x.name] = t === 'h' ? 'silH' : 'sil2'; return x; });
 } else if (kind === 'heros') {
@@ -36,6 +36,7 @@ const SIL = (x) => SILS[x.name] ?? (kind === 'heros' ? 'silH' : 'sil2');
 
 let body = '', defs = '';
 list.forEach((x, n) => {
+  if (!x) return; // « _ » = case laissée vide
   const col = n % COLS, row = Math.floor(n / COLS);
   // même taille de base pour tous, les grands gardent un peu plus de place (sans déborder de leur case)
   const k = (WIDE ? 1.8 : 2.25) * Math.min(1.1, Math.max(0.9, x.scale)), gy = row * CH + CH - (WIDE ? 30 : 52);
@@ -54,5 +55,5 @@ const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
   await p.goto('file://' + tmp); await p.waitForTimeout(800);
   await p.screenshot({ path: out });
   await b.close();
-  console.log(out, list.map((x) => x.name).join(' | '));
+  console.log(out, list.filter(Boolean).map((x) => x.name).join(' | '));
 })();
