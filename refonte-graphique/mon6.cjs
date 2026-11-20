@@ -50,7 +50,27 @@ function creature(s, draw) {
     for (let i = 0; i < n; i++) { const t0 = (i + 0.1) / n, t1 = (i + 0.9) / n, p0 = [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0], p1 = [a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1]; d += `M${pt(p0)} L${f((p0[0] + p1[0]) / 2)} ${f((p0[1] + p1[1]) / 2 + dir * len)} L${pt(p1)} Z `; }
     raw(`<path d="${d}" fill="${c}" stroke="#2a1420" stroke-width="0.9" stroke-linejoin="round"/>`);
   };
-  const h = { S, raw, T, TK, G, glow, halo, eye, teeth, tone, metal, mix, sf, blob, ...K };
+  /** Plusieurs membres d'un coup : [[points, largeur début, largeur fin], …]. */
+  const L = (list, t, o = {}) => { for (const [p, w0 = 12, w1 = w0] of list) S(limb(p, w0, w1, o.N ?? 14), TK(t), { sh: o.sh ?? 4, far: o.far, inner: o.inner }); };
+  /**
+   * Pattes d'une bête à quatre pattes, trapue (grosse tête, pattes courtes) : cuisse ronde et jarret derrière, patte droite devant.
+   * o : { front, hind (x des pattes de devant / de derrière), top (y de l'attache), w, t, dark, gap (décalage des pattes du fond), hoof, claws }
+   * Renvoie { far(), near() } à appeler AVANT le corps : il recouvre les attaches.
+   */
+  const beast = (o) => {
+    const g = 227, w = o.w ?? 18, top = o.top ?? 186, gap = o.gap ?? 14;
+    const paw = (x, far) => {
+      if (o.hoof) return S(`M${f(x - w * 0.5)} ${g - 10} L${f(x + w * 0.55)} ${g - 10} L${f(x + w * 0.62)} ${g} L${f(x - w * 0.58)} ${g} Z`, TK(o.hoofT ?? '#2a2026'), { sh: 2, far });
+      S(`M${f(x - w * 0.62)} ${g} C${f(x - w * 0.7)} ${g - 10} ${f(x + w * 0.2)} ${g - 13} ${f(x + w * 0.72)} ${g - 8} C${f(x + w * 0.95)} ${g - 5} ${f(x + w * 0.95)} ${g} ${f(x + w * 0.8)} ${g} Z`, TK(far ? o.dark : o.t), { sh: 3, far });
+      if (o.claws && !far) raw(`<path d="M${f(x + w * 0.3)} ${g - 1} l3 -6 M${f(x + w * 0.55)} ${g - 1} l3 -5 M${f(x + w * 0.05)} ${g - 1} l3 -6" stroke="#2a1a16" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/>`);
+    };
+    const fleg = (x, far) => { S(limb([[x, top], [x + 3, (top + g) / 2], [x, g - 7]], w, w * 0.86), TK(far ? o.dark : o.t), { sh: 4, far }); paw(x, far); };
+    const hleg = (x, far) => { S(ell(x, top + 2, w * 1.02, w * 1.16), TK(far ? o.dark : o.t), { sh: 5, far }); S(limb([[x - 2, top + 10], [x - w * 0.75, (top + g) / 2 + 6], [x, g - 7]], w * 0.86, w * 0.76), TK(far ? o.dark : o.t), { sh: 4, far }); paw(x, far); };
+    return { far: () => { fleg(o.front + gap, true); hleg(o.hind + gap, true); }, near: () => { hleg(o.hind, false); fleg(o.front, false); } };
+  };
+  /** Frange de poils : zigzag de (x0, y) à (x1, y), pointes vers le bas (d > 0) ou le haut. À coller dans un chemin. */
+  const fringe = (x0, x1, y, n, d) => { let p = ''; for (let i = 0; i < n; i++) { const a = x0 + (x1 - x0) * (i + 0.5) / n, b = x0 + (x1 - x0) * (i + 1) / n; p += ` L${f(a)} ${f(y + d)} L${f(b)} ${f(y)}`; } return p; };
+  const h = { S, raw, T, TK, G, L, beast, fringe, glow, halo, eye, teeth, tone, metal, mix, sf, blob, ...K };
   draw(h);
   const body = P.body;
   const bloom = (x, y, r, c) => `<g transform="translate(${f(x)} ${f(y)})"><circle r="${f(r * 1.25)}" fill="${c}" opacity="0.7" filter="url(#glow)"/><circle r="${f(r * 0.6)}" fill="#fff" opacity="0.55" filter="url(#glow)"/></g>`;

@@ -151,4 +151,13 @@ Demande du propriétaire : des **familles de 6 monstres**, beaucoup, pour tous l
   creusé : aucun trait ne referme la bouche) ; pattes, pinces, tiges d'yeux, tentacules et « trompes » partent de **sous
   le corps** (dessinés avant lui, il recouvre leur attache) et à un endroit naturel : jamais posés dessus avec un contour.
   Deux parties du même corps (manteau et tête du calmar) = une seule forme.
-- Faite : **Les Abysses** (en attente de l'avis du propriétaire sur le style avant de lancer les 11 autres).
+- Style validé par le propriétaire sur les Abysses (20/11/2026) ; il demande de **se vérifier à chaque fois**.
+- Bêtes à quatre pattes : trapues (grosse tête, pattes courtes), pattes par `beast({ front, hind, top, w, … })` (cuisse,
+  jarret, patte ; à dessiner avant le corps), fourrure hérissée par `fringe(…)` dans le chemin du corps.
+- L'intérieur sombre d'une gueule recule vers le coin de la bouche (bord avant très creusé) : rien ne « bouche » l'avant.
+- Doubles évités entre familles (changements par rapport à la liste annoncée) : Fauves → Buffle de braise (au lieu du
+  rhinocéros, déjà dans les Glaces) ; Volière → Paon d'orage (au lieu du hibou, harfang dans les Glaces) ; Cuirassés →
+  Scarabée-rhinocéros (au lieu de la tortue, déjà dans le Bayou) ; Ronciers → Blaireau de mousse (au lieu du sanglier,
+  phacochère dans les Fauves) et Phalène d'écorce (au lieu de la chouette).
+- Familles faites : Abysses, Horde des glaces, Bayou. Restent : Parade des pétards, Fauves de cendre, Idoles d'airain,
+  Épouvantails, Ruche, Volière d'orage, Échiquier, Cuirassés, Ronciers.
