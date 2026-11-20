@@ -1,112 +1,147 @@
 // LES RONCIERS (terre) — des bêtes faites de ronces, de mousse, de feuilles et d'écorce : la forêt qui se défend.
-// Gueule ouverte découpée dans la silhouette, membres attachés sous le corps (voir LISEZMOI, « Les monstres »).
+// Niveau de la famille de référence (m-glaces.cjs) : cou, dos travaillé, museau d'un seul tenant, matière végétale lisible
+// (plaques d'écorce veinées, lianes à épines, feuilles en couches, mousse, baies), yeux de sève qui luisent.
+// Un seul contour par créature, gueule ouverte découpée dans la silhouette, membres attachés sous le corps.
 const { Mo } = require('./mon6.cjs');
-const BARK = '#6a4a30', BARKD = '#46301e', LEAF = '#5fa83a', FALL = '#e08a2a', MOSS = '#7ab84a', GLOW = '#b8ff6a', MAW = '#1c120a';
+const BARK = '#6a4a30', BARKD = '#46301e', LEAF = '#5fa83a', FALL = '#e08a2a', MOSS = '#7ab84a', THORN = '#3a2618', GLOW = '#b8ff6a', MAW = '#1c120a';
 const grain = (list) => `<g stroke="#2e1e12" stroke-width="2.4" fill="none" opacity="0.55" stroke-linecap="round">${list.map((d) => `<path d="${d}"/>`).join('')}</g>`;
 const veins = (list, c = '#a85a14') => `<g stroke="${c}" stroke-width="2.2" fill="none" opacity="0.6" stroke-linecap="round">${list.map((d) => `<path d="${d}"/>`).join('')}</g>`;
+/** Une ronce : une liane sombre et ses épines, qui alternent d'un côté et de l'autre (à mettre dans « inner »). */
+const bramble = (pts, w = 4) => { let d = `M${pts[0][0]} ${pts[0][1]}`, th = ''; for (let i = 1; i < pts.length; i++) { const [x0, y0] = pts[i - 1], [x1, y1] = pts[i]; d += ` L${x1} ${y1}`; const mx = (x0 + x1) / 2, my = (y0 + y1) / 2, dx = x1 - x0, dy = y1 - y0, l = Math.hypot(dx, dy) || 1, k = i % 2 ? 1 : -1, nx = -dy / l * k, ny = dx / l * k; th += `<path d="M${(mx - dx / l * 3.5).toFixed(1)} ${(my - dy / l * 3.5).toFixed(1)} L${(mx + nx * 9).toFixed(1)} ${(my + ny * 9).toFixed(1)} L${(mx + dx / l * 3.5).toFixed(1)} ${(my + dy / l * 3.5).toFixed(1)} Z"/>`; } return `<path d="${d}" stroke="${THORN}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/><g fill="${THORN}">${th}</g>`; };
+const berries = (list) => `<g fill="#d8382e" stroke="#5a1410" stroke-width="1">${list.map(([x, y, r = 3.6]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g><g fill="#fff" opacity="0.7">${list.map(([x, y]) => `<circle cx="${x - 1}" cy="${y - 1.2}" r="1"/>`).join('')}</g>`;
+/** Œil de sève : il luit en vert. */
+const sap = (h, x, y, rx, ry, o = {}) => { h.halo(x, y, rx + 5, GLOW, 0.6); h.eye(x, y, rx, ry, { sclera: '#f4ffd8', iris: GLOW, pupil: 'slit', lid: 0.44, tilt: 1, ...o }); };
+/** Une feuille posée : pointe vers (x, y − len), tournée de « a » degrés. */
+const leafAt = (h, x, y, a, len, w, t, far) => h.at(`translate(${x} ${y}) rotate(${a})`, () => h.S(`M0 0 C${-w} ${-len * 0.3} ${-w * 0.8} ${-len * 0.8} 0 ${-len} C${w * 0.8} ${-len * 0.8} ${w} ${-len * 0.3} 0 0 Z`, h.TK(t), { sh: 3, hl: 3, far, inner: `<path d="M0 -2 L0 ${-len + 3}" stroke="#2e5a1e" stroke-width="1.4" opacity="0.6"/>` }));
 
-// 0 · rapide — Renard de feuilles : un pelage de feuilles d'automne, il file entre les troncs
-Mo('ronciers', 0, 'Renard de feuilles', { scale: 0.94, atk: 'slash', wind: -14, hit: 20, colors: { leaf: FALL, dark: '#b8601a', bark: BARKD, pale: '#f6e0b0' }, swing: ['head'], grp: { tail: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [116, 164], back: [52, 170], torso: [90, 196] } },
-  ({ S, raw, T, G, beast, eye }) => {
-    const legs = beast({ front: 114, hind: 62, top: 190, w: 12, t: 'bark', dark: 'bark', claws: false });
-    G('tail', () => S('M58 176 C40 180 22 172 14 156 L26 152 L10 138 L26 134 L12 118 L30 118 L22 100 L40 108 C56 122 66 148 64 168 Z', T.leaf, { sh: 7, hl: 5, inner: veins(['M56 166 C44 146 34 128 26 112']) + '<path d="M22 100 L40 108 C36 116 28 120 20 118 L30 118 Z" fill="#f6e0b0"/>' }));
-    G('farLegs', () => legs.far());
-    G('legs', () => legs.near());
-    G('body', () => S('M48 178 C46 164 54 156 64 152 L62 138 L76 148 L82 132 L92 146 L102 132 L108 148 L122 140 L122 156 C132 162 136 170 134 180 C132 196 112 204 88 204 C64 204 50 196 48 178 Z', T.leaf, { sh: 9, hl: 6,
-      inner: veins(['M70 156 L78 190', 'M90 152 L94 194', 'M110 156 L108 190']) + '<path d="M56 194 C76 206 112 204 134 186 L136 212 L54 212 Z" fill="#f6e0b0" opacity="0.8" filter="url(#g3)"/>' }));
-    G('head', () => {
-      S('M118 132 L110 96 L136 118 Z', T.leaf, { sh: 3 }); S('M140 120 L148 90 L162 122 Z', T.dark, { sh: 3 });
-      S('M108 154 C106 132 124 120 144 122 C160 124 174 136 192 152 C196 156 194 162 188 162 C174 168 158 178 140 180 C122 180 109 168 108 154 Z', T.leaf, { sh: 9, hl: 6,
-        inner: '<path d="M142 160 C158 156 176 156 192 158 L190 172 L138 180 Z" fill="#f6e0b0" opacity="0.9" filter="url(#g2)"/><path d="M184 150 C189 149 194 153 193 158 C188 160 184 156 184 150 Z" fill="#1c120a"/><path d="M186 164 C176 168 166 170 156 170" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/>' });
-      eye(150, 144, 9.5, 8, { sclera: '#f4ffd8', iris: LEAF, pupil: 'slit', lid: 0.46, tilt: 1 });
-    });
-  });
-
-// 1 · costaud — Blaireau de mousse : trapu, têtu, le dos couvert de mousse et de champignons
-Mo('ronciers', 1, 'Blaireau de mousse', { scale: 1.08, atk: 'smash', wind: -16, hit: 22, colors: { bark: BARK, dark: BARKD, moss: MOSS, birch: '#e8e0cc', cap: '#d8482e' }, swing: ['head'], grp: { farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [116, 176], torso: [86, 200] } },
-  ({ S, raw, T, G, beast, fringe, eye, ell }) => {
-    const legs = beast({ front: 110, hind: 54, top: 196, w: 20, t: 'bark', dark: 'dark', claws: true, gap: 12 });
+// 0 · rapide — Renard de feuilles : un pelage de feuilles d'automne, une queue en feuille d'érable, des pattes de brindille
+Mo('ronciers', 0, 'Renard de feuilles', { scale: 0.96, atk: 'slash', wind: -14, hit: 20, colors: { leaf: FALL, dark: '#b8601a', bark: BARKD, pale: '#f6e0b0' }, swing: ['head'], grp: { tail: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [126, 158], back: [56, 174], torso: [90, 196] } },
+  (h) => { const { S, raw, T, G, beast, neck, brow, under } = h;
+    const legs = beast({ front: 114, hind: 60, top: 190, w: 11, t: 'bark', dark: 'bark' });
+    G('tail', () => S('M60 180 C44 184 26 176 16 160 L30 156 L8 142 L28 136 L8 120 L30 118 L18 96 L40 106 L42 84 L58 106 C68 122 74 150 68 174 Z', T.leaf, { sh: 7, hl: 5,
+      inner: veins(['M62 172 C52 148 42 126 36 100', 'M54 152 L28 138', 'M48 134 L28 120', 'M44 118 L38 102']) + '<path d="M18 96 L40 106 L42 84 L52 100 C46 108 34 108 26 104 Z" fill="#f6e0b0"/>' }));
     G('farLegs', () => legs.far());
     G('legs', () => legs.near());
     G('body', () => {
-      raw('<path d="M66 144 L66 128 M94 136 L94 120" stroke="#e8e0cc" stroke-width="5" stroke-linecap="round"/>');
-      S(ell(66, 124, 13, 8), T.cap, { sh: 3, hl: 3 }); S(ell(94, 116, 11, 7), T.cap, { sh: 3, hl: 3 });
-      S('M28 184 C26 156 52 140 84 140 C112 140 134 154 136 178 C137 190 132 198 126 204' + fringe(126, 38, 204, 7, 9) + ' C30 198 28 192 28 184 Z', T.bark, { sh: 11, hl: 6,
-        inner: '<path d="M30 172 C40 146 70 136 96 138 C116 140 130 150 136 166 C112 156 60 156 30 172 Z" fill="#7ab84a"/><path d="M40 162 C56 148 80 144 100 146" stroke="#b8e88a" stroke-width="5" fill="none" opacity="0.6" stroke-linecap="round"/>' });
+      // les feuilles du dos, couchées vers l'arrière
+      S('M60 162 L44 142 L70 152 L62 126 L86 148 L84 122 L104 144 L106 124 L122 148 Z', T.dark, { sh: 4 });
+      S('M44 178 C42 162 54 152 72 152 C88 148 102 140 120 142 C134 144 140 158 138 174 C136 194 114 204 88 204 C62 204 46 196 44 178 Z', T.leaf, { sh: 9, hl: 6,
+        inner: under('M52 194 C76 208 114 206 138 186 L140 214 L50 214 Z', '#f6e0b0', 0.9) + '<g fill="none" stroke="#a85a14" stroke-width="2.4" opacity="0.6" stroke-linecap="round"><path d="M52 164 q9 10 18 0 q9 10 18 0 q9 10 18 0 q9 10 18 0 M60 180 q9 10 18 0 q9 10 18 0 q9 10 18 0"/></g>' });
+      neck([114, 162], [132, 150], [148, 152], 38, 30, 'leaf', { inner: veins(['M124 148 q8 8 16 0']) });
     });
     G('head', () => {
-      S(ell(120, 152, 9, 10), T.dark, { sh: 3 }); S(ell(148, 146, 8, 9), T.dark, { sh: 3 });
-      S('M108 176 C106 156 122 144 142 146 C160 148 178 160 194 176 C198 182 196 190 188 190 C172 198 150 202 132 198 C116 194 109 186 108 176 Z', T.dark, { sh: 9, hl: 6,
-        inner: '<path d="M124 148 C140 152 164 164 194 178 L192 188 C166 176 142 166 122 162 Z" fill="#e8e0cc"/><path d="M130 198 C150 202 172 198 190 190 L190 204 L128 206 Z" fill="#e8e0cc" opacity="0.8" filter="url(#g2)"/><path d="M186 176 C191 175 196 179 195 184 C190 186 186 182 186 176 Z" fill="#1c120a"/>' });
-      eye(150, 176, 8, 7, { sclera: '#f4ffd8', iris: LEAF, pupilK: 0.5, lid: 0.5, tilt: 1 });
+      S('M136 130 L126 94 L152 116 Z', T.leaf, { sh: 3, inner: '<path d="M136 122 L132 104 L146 116 Z" fill="#5a2a0c"/>' }); S('M156 120 L164 90 L178 124 Z', T.dark, { sh: 3 });
+      S('M130 164 L118 176 L134 174 L130 188 L146 176 Z', T.dark, { sh: 3 });
+      S('M128 148 C126 130 140 120 156 120 C170 120 182 128 190 138 C200 144 212 150 214 156 C214 162 208 164 202 164 C190 168 176 174 162 174 C142 174 129 164 128 148 Z', T.leaf, { sh: 9, hl: 6,
+        inner: under('M160 160 C176 152 196 152 216 158 L214 172 L156 178 Z', '#f6e0b0', 0.95) + '<path d="M206 152 C211 151 216 155 215 160 C210 162 206 158 206 152 Z" fill="#1c120a"/><path d="M208 166 C198 170 186 172 174 172" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/>' + veins(['M132 142 L146 146', 'M134 156 L146 156']) });
+      raw('<path d="M196 167 L194 176 L190 168 Z M184 170 L183 178 L179 171 Z" fill="#fff8e6" stroke="#1c120a" stroke-width="1" stroke-linejoin="round"/>');
+      sap(h, 164, 142, 9.5, 7.5); brow(164, 131, 24, 1, '#5a2a0c', 5);
     });
   });
 
-// 2 · tireur — Porc-épic d'épines : il se hérisse et décoche ses ronces
-Mo('ronciers', 2, 'Porc-épic d\'épines', { atk: 'shoot', colors: { bark: BARK, dark: BARKD, thorn: '#3e2a1a', tip: '#e8e0cc' }, grp: { quills: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { back: [96, 190], head: [128, 186], torso: [96, 204] } },
-  ({ S, raw, T, G, beast, eye, saw, arcPts, pt }) => {
-    const legs = beast({ front: 124, hind: 70, top: 204, w: 14, t: 'bark', dark: 'dark', claws: true, gap: 10 });
-    G('quills', () => { const pts = arcPts(92, 186, 60, 62, 172, 352, 11); S(`M${pt(pts[0])}` + saw(pts, 40, [-4, -4]) + ' Z', T.thorn, { sh: 9, hl: 5, inner: '<path d="M40 176 C50 130 100 112 140 140" stroke="#e8e0cc" stroke-width="3" fill="none" opacity="0.35" stroke-dasharray="3 12" stroke-linecap="round"/>' }); });
+// 1 · costaud — Blaireau de mousse : trapu, têtu, un tapis de mousse et de champignons sur le dos, des griffes de terrassier
+Mo('ronciers', 1, 'Blaireau de mousse', { scale: 1.1, atk: 'smash', wind: -16, hit: 22, colors: { bark: BARK, dark: BARKD, moss: MOSS, birch: '#e8e0cc', cap: '#d8482e' }, swing: ['head'], grp: { shrooms: 'torso', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [122, 184], torso: [84, 200] } },
+  (h) => { const { S, raw, T, G, beast, fringe, neck, brow, eye, ell } = h;
+    const legs = beast({ front: 110, hind: 52, top: 198, w: 21, t: 'bark', dark: 'dark', claws: true, gap: 12 });
+    // les champignons poussent sur le dos : leurs pieds partent de sous la mousse
+    G('shrooms', () => { raw('<path d="M62 150 L60 126 M90 142 L92 114" stroke="#e8e0cc" stroke-width="6" stroke-linecap="round"/>'); S(ell(60, 122, 15, 9), T.cap, { sh: 3, hl: 3, inner: '<g fill="#fff6e0"><circle cx="54" cy="120" r="2.4"/><circle cx="64" cy="117" r="2"/></g>' }); S(ell(92, 110, 13, 8), T.cap, { sh: 3, hl: 3, inner: '<g fill="#fff6e0"><circle cx="88" cy="108" r="2.2"/><circle cx="97" cy="110" r="1.8"/></g>' }); });
     G('farLegs', () => legs.far());
     G('legs', () => legs.near());
-    G('body', () => S('M40 196 C38 170 62 154 92 154 C120 154 142 168 144 190 C144 206 122 214 92 214 C62 214 42 210 40 196 Z', T.bark, { sh: 9, hl: 6 }));
+    G('body', () => {
+      S('M24 186 C22 158 46 140 78 138 C108 136 132 150 138 174 C140 188 136 198 128 204' + fringe(128, 36, 204, 7, 10) + ' C26 198 24 192 24 186 Z', T.bark, { sh: 11, hl: 6,
+        inner: grain(['M40 180 q4 10 0 20', 'M60 184 q4 10 0 18', 'M84 186 q4 10 0 16', 'M108 184 q4 10 0 16']) + '<path d="M22 180 C30 148 62 134 92 136 C118 138 134 152 140 170 C132 164 126 176 116 168 C108 162 102 176 92 168 C84 162 76 176 66 170 C58 164 50 178 42 172 C36 168 28 176 22 180 Z" fill="#7ab84a"/><path d="M36 160 C52 146 78 142 100 144" stroke="#c8f09a" stroke-width="5" fill="none" opacity="0.6" stroke-linecap="round"/><g fill="#4f8a2e" opacity="0.7"><circle cx="48" cy="164" r="3"/><circle cx="76" cy="156" r="3"/><circle cx="106" cy="158" r="3"/><circle cx="124" cy="164" r="2.4"/></g>' });
+      neck([114, 176], [130, 182], [146, 186], 50, 42, 'dark');
+    });
     G('head', () => {
-      S('M112 190 C110 172 126 162 144 164 C160 166 176 176 190 190 C194 196 192 202 186 202 C170 208 150 210 134 206 C120 202 113 198 112 190 Z', T.dark, { sh: 8, hl: 5,
-        inner: '<path d="M182 190 C187 189 192 193 191 198 C186 200 182 196 182 190 Z" fill="#1c120a"/><path d="M184 203 C174 206 164 206 154 204" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/>' });
-      eye(148, 184, 8.5, 7.5, { sclera: '#f4ffd8', iris: FALL, pupilK: 0.45, lid: 0.44, tilt: 1 });
+      S(ell(128, 158, 10, 11), T.dark, { sh: 3, inner: '<ellipse cx="128" cy="158" rx="5" ry="6" fill="#e8e0cc"/>' }); S(ell(154, 152, 8, 9), T.dark, { sh: 3 });
+      S('M118 184 C116 164 132 152 150 154 C168 156 188 168 204 184 C208 190 206 198 198 198 C182 206 158 210 140 206 C124 202 118 194 118 184 Z', T.dark, { sh: 9, hl: 6,
+        inner: '<path d="M130 156 C148 158 176 170 206 186 L204 196 C176 182 150 174 128 170 Z" fill="#e8e0cc"/><path d="M138 206 C160 210 184 206 202 198 L202 212 L136 214 Z" fill="#e8e0cc" opacity="0.85" filter="url(#g2)"/><path d="M196 182 C201 181 207 185 206 191 C201 193 196 189 196 182 Z" fill="#1c120a"/><path d="M200 199 C190 202 180 202 170 200" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/>' });
+      eye(158, 184, 8, 7, { sclera: '#f4ffd8', iris: GLOW, pupilK: 0.5, lid: 0.5, tilt: 1 }); brow(158, 174, 22, 1, '#1c120a', 5);
     });
   });
 
-// 3 · sorts — Phalène d'écorce : ses ailes ont des yeux, sa poussière endort
-Mo('ronciers', 3, 'Phalène d\'écorce', { atk: 'cast', fx: GLOW, colors: { wing: '#8a6a48', dark: BARKD, fuzz: '#d8c8a0' }, swing: ['wingN'], far: ['wingF'], grp: { body: 'torso' }, piv: { swing: [98, 130], far: [118, 130], torso: [108, 150] }, shine: [[58, 104, 11, GLOW]], shineGrp: 'swing' },
-  ({ S, raw, T, G, L, halo, eye }) => {
-    const spot = (x, y) => `<circle cx="${x}" cy="${y}" r="15" fill="#2e1e12"/><circle cx="${x}" cy="${y}" r="10" fill="${GLOW}"/><circle cx="${x}" cy="${y}" r="5" fill="#1c120a"/>`;
-    halo(58, 104, 18, GLOW, 0.7); halo(160, 104, 16, GLOW, 0.6);
-    G('wingF', () => S('M116 128 C134 80 176 64 204 82 C204 116 186 140 160 146 C176 160 172 190 150 198 C132 190 120 162 116 138 Z', T.wing, { sh: 8, far: true, inner: spot(160, 106) + grain(['M124 130 C146 108 172 96 196 92', 'M122 142 C136 160 146 178 150 192']) }));
-    G('wingN', () => S('M100 128 C82 80 40 64 12 82 C12 116 30 140 56 146 C40 160 44 190 66 198 C84 190 96 162 100 138 Z', T.wing, { sh: 9, hl: 6, inner: spot(58, 106) + grain(['M92 130 C70 108 44 96 20 92', 'M94 142 C80 160 70 178 66 192', 'M84 150 C66 146 44 136 26 118']) }));
+// 2 · tireur — Porc-épic d'épines : un roncier sur pattes, il se hérisse et décoche ses épines
+Mo('ronciers', 2, 'Porc-épic d\'épines', { atk: 'shoot', colors: { bark: BARK, dark: BARKD, thorn: THORN, quill: '#5e4028' }, grp: { quillsF: 'back', quills: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { back: [96, 196], head: [132, 192], torso: [96, 206] } },
+  (h) => { const { S, raw, T, G, beast, eye, brow, saw, arcPts, pt, ell } = h;
+    const legs = beast({ front: 126, hind: 70, top: 204, w: 14, t: 'bark', dark: 'dark', claws: true, gap: 10 });
+    G('quillsF', () => { const pts = arcPts(92, 190, 68, 72, 174, 354, 12); S(`M${pt(pts[0])}` + saw(pts, 40, [-4, -6]) + ' Z', T.thorn, { sh: 9, hl: 5 }); });
+    G('farLegs', () => legs.far());
+    G('legs', () => legs.near());
+    G('body', () => S('M40 198 C38 172 62 156 92 156 C120 156 142 170 144 192 C144 208 122 216 92 216 C62 216 42 212 40 198 Z', T.bark, { sh: 9, hl: 6 }));
+    // la rangée d'épines de devant : plus courte, avec les baies du roncier
+    G('quills', () => { const pts = arcPts(88, 196, 50, 46, 178, 338, 9); S(`M${pt(pts[0])}` + saw(pts, 26, [-3, -4]) + ' Z', T.quill, { sh: 7, hl: 5, inner: bramble([[44, 190], [58, 170], [78, 160], [100, 158], [122, 166]], 3.4) + berries([[60, 182], [84, 172], [108, 174], [72, 190]]) }); });
+    G('head', () => {
+      S(ell(122, 170, 8, 9), T.dark, { sh: 3, inner: '<ellipse cx="122" cy="171" rx="4" ry="5" fill="#8a5a3a"/>' });
+      S('M112 192 C110 174 126 164 144 166 C160 168 176 178 192 192 C196 198 194 204 188 204 C172 210 150 212 134 208 C120 204 113 200 112 192 Z', T.dark, { sh: 8, hl: 5,
+        inner: '<path d="M150 198 C164 194 180 196 194 200 L192 210 L146 212 Z" fill="#8a5a3a" opacity="0.8" filter="url(#g2)"/><path d="M184 190 C189 189 195 193 194 199 C189 201 184 197 184 190 Z" fill="#1c120a"/><path d="M188 205 C178 208 168 208 158 206" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/>' });
+      raw('<path d="M178 205 L177 212 L173 206 Z" fill="#fff8e6" stroke="#1c120a" stroke-width="1" stroke-linejoin="round"/>');
+      eye(150, 186, 8.5, 7.5, { sclera: '#f4ffd8', iris: FALL, pupilK: 0.45, lid: 0.46, tilt: 1 }); brow(150, 176, 22, 1, '#1c120a', 5);
+    });
+  });
+
+// 3 · sorts — Phalène d'écorce : ses ailes sont deux écorces à ocelles, sa poussière endort
+Mo('ronciers', 3, 'Phalène d\'écorce', { atk: 'cast', fx: GLOW, colors: { wing: '#8a6a48', low: '#6a4e34', dark: BARKD, fuzz: '#d8c8a0' }, swing: ['wingN'], far: ['wingF'], grp: { body: 'torso' }, piv: { swing: [98, 130], far: [118, 130], torso: [108, 150] }, shine: [[56, 104, 11, GLOW]], shineGrp: 'swing' },
+  (h) => { const { S, raw, T, G, L, halo, eye, tuft } = h;
+    const spot = (x, y) => `<circle cx="${x}" cy="${y}" r="16" fill="#2e1e12"/><circle cx="${x}" cy="${y}" r="11" fill="${GLOW}"/><circle cx="${x}" cy="${y}" r="5.5" fill="#1c120a"/><circle cx="${x - 3}" cy="${y - 3}" r="2" fill="#fff"/>`;
+    const lichen = (list) => `<g fill="#b8c88a" opacity="0.6">${list.map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g>`;
+    halo(56, 104, 18, GLOW, 0.7); halo(162, 104, 16, GLOW, 0.6);
+    G('wingF', () => { S('M118 142 C140 150 168 160 178 180 C172 198 152 204 138 196 L134 208 L124 192 C118 176 116 158 118 142 Z', T.low, { sh: 6, far: true });
+      S('M116 128 C130 84 170 60 210 76 L200 90 L210 100 L198 110 L204 124 L188 130 L186 144 C164 152 132 148 116 138 Z', T.wing, { sh: 8, far: true, inner: spot(162, 106) + grain(['M124 130 C146 106 174 92 202 86', 'M126 138 C150 132 172 132 188 138']) + lichen([[190, 98, 5], [140, 124, 4]]) }); });
+    G('wingN', () => { S('M98 142 C76 150 48 160 38 180 C44 198 64 204 78 196 L82 208 L92 192 C98 176 100 158 98 142 Z', T.low, { sh: 6, inner: grain(['M92 150 C76 160 60 172 50 184']) });
+      S('M100 128 C86 84 46 60 6 76 L16 90 L6 100 L18 110 L12 124 L28 130 L30 144 C52 152 84 148 100 138 Z', T.wing, { sh: 9, hl: 6, inner: spot(56, 106) + grain(['M92 130 C70 106 42 92 14 86', 'M90 138 C66 132 44 132 28 138', 'M82 122 C74 104 62 90 48 82']) + lichen([[26, 98, 5], [78, 126, 4], [40, 126, 3]]) }); });
     G('body', () => {
-      L([[[[100, 96], [84, 74], [66, 72]], 4, 2.5], [[[116, 96], [132, 74], [150, 72]], 4, 2.5]], 'dark');
-      raw('<g stroke="#46301e" stroke-width="2" stroke-linecap="round"><path d="M92 82 l-4 -8 M84 76 l-2 -9 M76 73 l0 -9 M124 82 l4 -8 M132 76 l2 -9 M140 73 l0 -9"/></g>');
-      S('M92 124 C90 104 98 92 108 92 C118 92 126 104 124 124 C124 152 118 186 108 196 C98 186 92 152 92 124 Z', T.fuzz, { sh: 8, hl: 6, inner: grain(['M94 140 L122 140', 'M95 154 L121 154', 'M98 168 L118 168']) });
-      eye(101, 108, 7, 7, { sclera: '#1c120a', iris: GLOW, pupil: 'none', irisK: 0.5, lid: 0.4, tilt: 1, lidC: '#8a7a5a' }); eye(116, 108, 6.5, 7, { sclera: '#1c120a', iris: GLOW, pupil: 'none', irisK: 0.5, lid: 0.4, tilt: -1, lidC: '#8a7a5a' });
+      // antennes en peigne
+      L([[[[100, 96], [84, 74], [64, 70]], 4.5, 2.5], [[[116, 96], [132, 74], [152, 70]], 4.5, 2.5]], 'dark');
+      raw('<g stroke="#46301e" stroke-width="2.2" stroke-linecap="round"><path d="M94 86 l-6 -9 M86 78 l-3 -10 M77 73 l0 -10 M69 71 l3 -9 M122 86 l6 -9 M130 78 l3 -10 M139 73 l0 -10 M147 71 l-3 -9"/></g>');
+      S('M94 138 C92 150 96 180 108 200 C120 180 124 150 122 138 Z', T.fuzz, { sh: 6, hl: 5, inner: grain(['M96 150 L120 150', 'M98 162 L118 162', 'M101 174 L115 174', 'M104 186 L112 186']) });
+      tuft(108, 138, 180, 12, 34, 'wing', { n: 5 });
+      S('M90 118 C88 100 96 90 108 90 C120 90 128 100 126 118 C126 130 118 138 108 138 C98 138 90 130 90 118 Z', T.fuzz, { sh: 7, hl: 5 });
+      eye(100, 110, 7.5, 7.5, { sclera: '#1c120a', iris: GLOW, pupil: 'none', irisK: 0.55, lid: 0.42, tilt: 1, lidC: '#8a7a5a' }); eye(117, 110, 7, 7.5, { sclera: '#1c120a', iris: GLOW, pupil: 'none', irisK: 0.55, lid: 0.42, tilt: -1, lidC: '#8a7a5a' });
     });
   });
 
 // 4 · élite — Mante-brindille : on la prend pour une branche, jusqu'au coup de faux
-Mo('ronciers', 4, 'Mante-brindille', { scale: 1.2, atk: 'slash', wind: -44, hit: 40, colors: { twig: '#7a8a3a', dark: '#4e5a22', leaf: LEAF, blade: '#c8d88a' }, swing: ['armN'], far: ['armF'], grp: { farLegs: 'legs', legs: 'legs', abdomen: 'back', body: 'torso' }, piv: { swing: [116, 110], far: [126, 108], head: [124, 84], back: [92, 150], torso: [100, 160] } },
-  ({ S, raw, T, G, L, eye, limb }) => {
-    G('armF', () => { L([[[[126, 110], [152, 96], [150, 62]], 8, 6]], 'dark', { far: true }); S(limb([[150, 66], [176, 54], [196, 84]], 11, 2, 16), T.dark, { sh: 3, far: true }); });
+Mo('ronciers', 4, 'Mante-brindille', { scale: 1.22, atk: 'slash', wind: -44, hit: 40, colors: { twig: '#7a8a3a', dark: '#4e5a22', leaf: LEAF, blade: '#c8d88a' }, swing: ['armN'], far: ['armF'], grp: { farLegs: 'legs', legs: 'legs', abdomen: 'back', body: 'torso' }, piv: { swing: [116, 114], far: [124, 116], head: [122, 86], back: [92, 150], torso: [100, 160] } },
+  (h) => { const { S, raw, T, G, L, eye, brow, limb, disc } = h;
+    const spikes = (pts) => `<g fill="#4e5a22">${pts.map(([x, y, a]) => `<path d="M-3 0 L0 -7 L3 0 Z" transform="translate(${x} ${y}) rotate(${a})"/>`).join('')}</g>`;
+    // patte ravisseuse du fond : tendue vers l'avant, lame vers le bas
+    G('armF', () => { S(limb([[176, 128], [198, 132], [208, 158]], 12, 2, 16), T.dark, { sh: 3, far: true }); L([[[[124, 116], [152, 138], [178, 128]], 9, 7]], 'dark', { far: true }); });
     G('farLegs', () => L([[[[84, 160], [56, 176], [44, 226]], 6, 4], [[[104, 158], [130, 180], [138, 226]], 6, 4]], 'dark', { far: true, N: 16 }));
-    G('abdomen', () => S(limb([[98, 150], [58, 170], [22, 148]], 22, 6, 18), T.twig, { sh: 6, inner: '<path d="M82 156 l-4 10 M66 162 l-4 10 M50 160 l-4 8" stroke="#4e5a22" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/>' }));
-    G('legs', () => L([[[[90, 162], [66, 184], [60, 226]], 7, 4], [[[106, 160], [118, 188], [122, 226]], 7, 4]], 'twig', { N: 16 }));
-    // les bras-faux partent de sous le thorax
-    G('armN', () => { L([[[[116, 112], [140, 128], [160, 106]], 9, 7]], 'twig'); S(limb([[158, 110], [184, 82], [206, 106]], 13, 2, 16), T.blade, { sh: 3, hl: 3, inner: '<path d="M168 100 l4 6 M178 92 l4 6 M188 90 l3 6" stroke="#4e5a22" stroke-width="1.8" stroke-linecap="round"/>' }); });
-    G('body', () => S(limb([[98, 160], [102, 130], [122, 100]], 20, 16, 16), T.twig, { sh: 7, inner: '<path d="M104 150 L108 124" stroke="#4e5a22" stroke-width="2.4" stroke-linecap="round" opacity="0.6"/>' }));
+    // l'abdomen : une feuille repliée, nervures visibles
+    G('abdomen', () => { leafAt(h, 60, 158, -70, 40, 13, 'leaf'); S(limb([[98, 150], [58, 172], [20, 150]], 24, 6, 18), T.twig, { sh: 6, inner: '<path d="M90 156 C70 168 46 164 26 152" stroke="#4e5a22" stroke-width="2" fill="none" opacity="0.7"/><path d="M82 158 l-6 10 M66 164 l-6 10 M50 162 l-6 8 M36 156 l-4 7" stroke="#4e5a22" stroke-width="2.2" stroke-linecap="round" opacity="0.7"/>' }); });
+    G('legs', () => { L([[[[90, 162], [66, 184], [60, 226]], 7, 4], [[[106, 160], [118, 188], [122, 226]], 7, 4]], 'twig', { N: 16 }); S(disc(68, 184, 5.5), T.twig, { sh: 2 }); S(disc(118, 188, 5.5), T.twig, { sh: 2 }); });
+    // la patte ravisseuse de devant : levée haut, à droite de la tête ; elle part de sous le thorax
+    G('armN', () => { S(limb([[166, 72], [190, 64], [202, 100]], 14, 2, 16), T.blade, { sh: 3, hl: 3, inner: spikes([[176, 74, 200], [186, 76, 190], [194, 84, 170]]) }); L([[[[116, 114], [146, 106], [168, 72]], 10, 8]], 'twig'); S(disc(168, 72, 6.5), T.twig, { sh: 2 }); });
+    G('body', () => { leafAt(h, 102, 142, -150, 22, 8, 'leaf'); S(limb([[98, 162], [100, 132], [120, 104]], 21, 16, 16), T.twig, { sh: 7, inner: '<path d="M102 152 L106 126" stroke="#4e5a22" stroke-width="2.4" stroke-linecap="round" opacity="0.6"/><ellipse cx="100" cy="140" rx="4" ry="3" fill="#4e5a22" opacity="0.7"/><ellipse cx="110" cy="120" rx="3.4" ry="2.6" fill="#4e5a22" opacity="0.7"/>' }); });
     G('head', () => {
-      L([[[[116, 70], [108, 48], [96, 40]], 3.5, 2.5], [[[130, 68], [136, 46], [148, 40]], 3.5, 2.5]], 'dark');
-      S('M100 78 C98 66 110 60 124 60 C138 60 150 66 148 78 C146 90 134 104 124 106 C114 104 102 90 100 78 Z', T.twig, { sh: 7, hl: 5, inner: '<path d="M118 96 l6 6 l6 -6" stroke="#2e3410" stroke-width="2.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>' });
-      eye(110, 76, 9, 8, { sclera: '#f4ffd8', iris: FALL, pupilK: 0.4, lid: 0.44, tilt: 1 }); eye(138, 76, 8, 8, { sclera: '#f4ffd8', iris: FALL, pupilK: 0.4, lid: 0.44, tilt: -1 });
+      L([[[[114, 70], [104, 48], [90, 42]], 3.5, 2.5], [[[130, 68], [136, 46], [150, 42]], 3.5, 2.5]], 'dark');
+      S('M98 78 C96 66 108 60 122 60 C136 60 148 66 146 78 C144 90 132 106 122 108 C112 106 100 90 98 78 Z', T.twig, { sh: 7, hl: 5, inner: '<path d="M116 98 l6 6 l6 -6" stroke="#2e3410" stroke-width="2.4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>' });
+      eye(108, 76, 9.5, 8.5, { sclera: '#f4ffd8', iris: FALL, pupilK: 0.4, lid: 0.46, tilt: 1 }); eye(137, 76, 8.5, 8.5, { sclera: '#f4ffd8', iris: FALL, pupilK: 0.4, lid: 0.46, tilt: -1 });
+      brow(108, 65, 20, 1, '#2e3410', 4); brow(137, 65, 18, -1, '#2e3410', 4);
     });
   });
 
-// 5 · boss — Grand Cerf des ronces : ses bois sont une forêt, ses flancs sont cerclés d'épines
-Mo('ronciers', 5, 'Grand Cerf des ronces', { scale: 1.36, atk: 'smash', wind: -20, hit: 28, colors: { bark: BARK, dark: BARKD, moss: MOSS, leaf: LEAF, antler: '#8a6a44' }, swing: ['head'], grp: { tail: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [118, 150], back: [36, 150], torso: [84, 190] }, shine: [[144, 110, 9, GLOW]], shineGrp: 'swing' },
-  ({ S, raw, T, G, L, beast, fringe, halo, eye, limb, ell }) => {
-    const legs = beast({ front: 104, hind: 52, top: 180, w: 15, t: 'bark', dark: 'dark', hoof: true, gap: 13 });
-    const leafAt = (x, y, a, far) => S(`M${x} ${y} C${x - 10} ${y - 8} ${x - 8} ${y - 22} ${x} ${y - 28} C${x + 8} ${y - 22} ${x + 10} ${y - 8} ${x} ${y} Z`.replace(/M|C|Z/g, (m) => m), T.leaf, { sh: 3, hl: 3, far });
-    G('tail', () => S('M38 148 L22 136 L26 152 L16 160 L34 162 Z', T.moss, { sh: 3 }));
+// 5 · boss — Grand Cerf des ronces : ses bois sont une forêt, ses flancs sont cerclés d'épines, la mousse lui fait un manteau
+Mo('ronciers', 5, 'Grand Cerf des ronces', { scale: 1.38, atk: 'smash', wind: -20, hit: 28, colors: { bark: BARK, dark: BARKD, moss: MOSS, leaf: LEAF, antler: '#8a6a44' }, swing: ['head'], grp: { tail: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [112, 150], back: [30, 150], torso: [82, 190] }, shine: [[148, 96, 9, GLOW]], shineGrp: 'swing' },
+  (h) => { const { S, raw, T, G, L, beast, fringe, neck, brow, limb } = h;
+    const legs = beast({ front: 102, hind: 48, top: 182, w: 14, t: 'bark', dark: 'dark', hoof: true, hoofT: '#2a1c12', gap: 13 });
+    G('tail', () => { leafAt(h, 30, 152, -100, 20, 8, 'leaf'); leafAt(h, 30, 150, -60, 18, 7, 'moss'); });
     G('farLegs', () => legs.far());
     G('legs', () => legs.near());
-    G('body', () => S('M28 160 C26 132 52 118 84 120 C110 122 128 136 130 158 C131 170 128 180 122 188' + fringe(122, 36, 188, 7, 9) + ' C30 180 28 170 28 160 Z', T.bark, { sh: 11, hl: 7,
-      inner: grain(['M44 140 C42 156 44 172 50 184', 'M70 128 C68 148 70 170 76 186', 'M100 128 C102 148 100 168 96 184']) + '<path d="M30 152 C56 164 104 162 130 148 M32 170 C58 180 102 178 128 166" stroke="#2e1e12" stroke-width="4" fill="none"/><g fill="#2e1e12"><path d="M48 156 l4 -10 l4 10 Z M76 162 l4 -10 l4 10 Z M104 156 l4 -10 l4 10 Z M60 174 l4 -9 l4 9 Z M92 176 l4 -9 l4 9 Z"/></g><path d="M40 128 C56 118 84 116 104 122" stroke="#7ab84a" stroke-width="8" fill="none" stroke-linecap="round" opacity="0.9"/>' }));
+    G('body', () => {
+      S('M24 164 C22 138 44 124 72 124 C96 118 116 122 126 138 C132 150 132 172 124 190' + fringe(124, 34, 190, 7, 10) + ' C26 182 24 174 24 164 Z', T.bark, { sh: 11, hl: 7,
+        inner: grain(['M40 144 C38 158 40 174 46 186', 'M64 132 C62 152 64 172 70 188', 'M92 128 C94 148 92 170 88 186']) + bramble([[24, 160], [44, 168], [66, 164], [88, 170], [110, 164], [130, 168]], 4.2) + bramble([[28, 178], [50, 184], [74, 180], [98, 186], [122, 180]], 3.6) + '<path d="M34 134 C52 120 86 116 110 124 C92 132 56 136 34 134 Z" fill="#7ab84a"/><path d="M44 128 C60 122 82 120 98 124" stroke="#c8f09a" stroke-width="4" fill="none" opacity="0.6" stroke-linecap="round"/>' + berries([[58, 174], [102, 176], [82, 190]]) });
+      // le cou monte, crinière de mousse sur le poitrail
+      neck([104, 158], [108, 126], [126, 104], 50, 34, 'bark', { inner: grain(['M100 150 C100 132 108 116 120 104']) + '<path d="M112 172 C124 160 132 140 136 118 L146 126 C142 148 132 168 118 180 Z" fill="#7ab84a" opacity="0.9"/>' });
+    });
     G('head', () => {
-      // les bois partent de derrière le front
-      for (const [p, w, far] of [[[[142, 92], [168, 54], [200, 44]], 8, 1], [[[170, 62], [176, 34], [190, 20]], 6, 1], [[[128, 94], [112, 46], [130, 8]], 10, 0], [[[118, 58], [92, 44], [80, 20]], 7, 0], [[[122, 34], [144, 26], [152, 6]], 6, 0]]) S(limb(p, w, 2.5, 16), T.antler, { sh: 3, far: !!far });
-      leafAt(82, 22, 0, false); leafAt(154, 10, 0, false); leafAt(202, 46, 0, true);
-      S('M96 134 L84 118 L106 122 Z', T.bark, { sh: 3 });
-      S('M100 170 C96 148 102 122 116 108 C120 94 134 86 148 90 C158 92 166 100 172 110 C182 116 192 124 194 134 C194 142 186 146 178 144 C168 148 156 150 146 150 C140 160 136 172 136 186 C120 190 104 184 100 170 Z', T.bark, { sh: 10, hl: 6,
-        inner: grain(['M112 150 C110 162 112 174 116 182', 'M126 130 C122 140 122 150 124 158']) + '<path d="M184 126 C189 125 194 129 193 134 C188 136 184 132 184 126 Z" fill="#1c120a"/><path d="M186 142 C178 144 170 144 162 142" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M100 168 C110 180 124 186 136 186 L134 200 L100 196 Z" fill="#7ab84a" opacity="0.8" filter="url(#g2)"/>' });
-      halo(144, 110, 12, GLOW, 0.7);
-      eye(144, 110, 9, 7.5, { sclera: '#f4ffd8', iris: GLOW, pupilK: 0.4, lid: 0.46, tilt: 1 });
+      // les bois partent de derrière le front : deux grandes branches, des feuilles et des baies
+      for (const [p, w, far] of [[[[146, 82], [172, 46], [206, 36]], 9, 1], [[[176, 52], [182, 26], [196, 10]], 6, 1], [[[160, 66], [150, 40], [158, 22]], 6, 1], [[[132, 84], [112, 40], [128, -2]], 11, 0], [[[120, 52], [94, 40], [78, 14]], 8, 0], [[[122, 28], [146, 18], [156, -4]], 7, 0], [[[104, 44], [84, 52], [66, 44]], 6, 0]]) S(limb(p, w, 2.5, 16), T.antler, { sh: 3, far: !!far });
+      leafAt(h, 78, 16, -20, 22, 9, 'leaf'); leafAt(h, 66, 46, -80, 20, 8, 'leaf'); leafAt(h, 128, 0, 10, 22, 9, 'leaf'); leafAt(h, 156, -2, 30, 20, 8, 'moss'); leafAt(h, 206, 38, 60, 20, 8, 'leaf', true); leafAt(h, 196, 12, 30, 18, 7, 'leaf', true);
+      raw(berries([[92, 34], [140, 22], [112, 22]]));
+      S('M110 104 L98 86 L120 92 Z', T.bark, { sh: 3 });
+      S('M104 110 C104 92 118 80 136 80 C150 80 162 88 170 98 C182 104 196 112 198 122 C198 130 190 134 182 132 C170 138 156 142 142 140 C120 138 104 128 104 110 Z', T.bark, { sh: 10, hl: 6,
+        inner: grain(['M112 108 C116 120 124 130 136 136', 'M124 88 C130 98 132 108 130 118']) + '<path d="M188 114 C193 113 198 117 197 122 C192 124 188 120 188 114 Z" fill="#1c120a"/><path d="M190 130 C182 133 172 133 164 131" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/><path d="M108 124 C118 136 132 142 146 142 L144 152 L106 146 Z" fill="#7ab84a" opacity="0.85" filter="url(#g2)"/>' });
+      sap(h, 148, 100, 9.5, 7.5, { pupil: 'none', irisK: 0.8 }); brow(148, 89, 26, 1, '#1c120a', 5.5);
     });
   });
