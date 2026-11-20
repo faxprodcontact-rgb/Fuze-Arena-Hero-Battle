@@ -41,6 +41,10 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   Aperçu animé sur le site de test : `public/apercu/` (page à part, bouton « Aperçu des animations » dans les Outils de
   test des réglages) : les personnages v5 animés morceau par morceau. Les images viennent de
   `node refonte-graphique/export5.cjs` (à relancer après tout changement de dessin). Pas encore branché dans le vrai combat.
+  **Les 72 héros sont dessinés** (20/11/2026, noms provisoires, inspirés des mythologies du monde) : liste dans
+  `refonte-graphique/HEROS.md`, dessins dans `heroes-fire|wind|water|earth.cjs` (pièces : `fig72.cjs`, `lib72.cjs`,
+  `arms72.cjs`), export `node refonte-graphique/export72.cjs` → `public/apercu/h/<identifiant du jeu>.png` + `heros.js`.
+  Galerie : `public/apercu/heros.html` ; la page d'animations tire des équipes au hasard parmi les 72.
 - Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 

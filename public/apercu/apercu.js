@@ -21,12 +21,18 @@
   const seg = (p, a, b) => clamp((p - a) / (b - a));
   let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 
-  // ---------- images ----------
-  const img = {}; let loaded = 0; const names = Object.keys(D.chars);
+  // ---------- personnages : les gobelins de la première démonstration + les 72 héros ----------
+  const ROLE_STATS = { protector: [950, 55, 2.3], warrior: [640, 95, 1.9], marksman: [440, 85, 2.0], assassin: [480, 105, 1.7], healer: [470, 60, 2.4], support: [520, 70, 2.3] };
+  const CH = {};
+  for (const n of Object.keys(D.chars)) { const c = D.chars[n], st = STATS[n]; CH[n] = { ...c, E, src: 'a/' + n + '.png', stats: st.slice(0, 3), k: st[3], top: st[4], rig: c.rig.atk === 'stab' ? { farWind: -25, farHit: 55, ...c.rig } : c.rig }; }
+  const HS = window.HEROS ? window.HEROS.list : [];
+  for (const h of HS) CH[h.id] = { enemy: false, rig: h.rig, parts: h.parts, E: window.HEROS.E, src: 'h/' + h.id + '.png', stats: ROLE_STATS[h.role], role: h.role, label: h.name,
+    k: 0.56 * Math.max(0.86, Math.min(1.22, h.scale)), top: Math.max(-34, Math.min(...h.parts.filter((p) => p.name !== 'glow').map((p) => p.oy))) };
+  const img = {};
+  const image = (n) => img[n] || (img[n] = Object.assign(new Image(), { src: CH[n].src }));
   const bg = new Image(); bg.src = 'bg.jpg';
-  for (const n of names) { img[n] = new Image(); img[n].onload = () => loaded++; img[n].src = 'a/' + n + '.png'; }
-  for (const n of names) {
-    const c = D.chars[n], r = c.rig;
+  for (const n of Object.keys(CH)) {
+    const c = CH[n], r = c.rig;
     c.group = {};
     for (const p of c.parts) {
       let g = p.name === 'legs' ? 'legs' : p.name === 'torso' || p.name === 'afterBody' ? 'torso' : p.name === 'head' || p.name === 'afterHead' ? 'head' : p.name === 'back' ? (c.enemy ? 'head' : 'back') : 'torso';
@@ -36,15 +42,25 @@
       c.group[p.name] = g;
     }
   }
+  /** Tire deux équipes : 5 héros au hasard (un protecteur et un guerrier devant), contre des gobelins ou 5 autres héros. */
+  let fights = 0;
+  function pickTeams() {
+    const R = () => Math.random(), used = new Set();
+    const take = (roles) => { const pool = HS.filter((h) => roles.includes(h.role) && !used.has(h.id)); const h = pool[Math.floor(R() * pool.length)]; used.add(h.id); return h.id; };
+    const team = () => ({ 0: take(['protector']), 1: take(['warrior']), 2: take(['healer', 'support']), 3: take(['marksman']), 4: take(['assassin', 'support', 'healer']) });
+    const vsHeroes = HS.length >= 10 && fights % 2 === 1; fights++;
+    return { hero: HS.length >= 10 ? team() : TEAM.hero, foe: vsHeroes ? team() : TEAM.foe };
+  }
 
   // ---------- état du combat ----------
   let units = [], shots = [], fx = [], nums = [], time = 0, shake = 0, dim = 0, over = 0, speed = 1, paused = false;
   function reset() {
     units = []; shots = []; fx = []; nums = []; over = 0; dim = 0; seed = 7 + Math.floor(time * 10) % 50;
+    const teams = pickTeams();
     for (const side of ['hero', 'foe']) for (const slot of [0, 1, 2, 3, 4]) {
-      const name = TEAM[side][slot], [hp, atk, cd, k, top] = STATS[name];
+      const name = teams[side][slot], c0 = CH[name], [hp, atk, cd] = c0.stats, k = c0.k, top = c0.top; image(name);
       const x = px((side === 'hero' ? HERO_X : ENEMY_X)[slot]), y = GT + ROW_DY[slot] + 56;
-      units.push({ name, side, slot, c: D.chars[name], k, top, hx: x, hy: y, x, y, hp, max: hp, shown: hp, atk, cd, wait: 0.6 + rnd() * cd, energy: side === 'hero' ? 30 + rnd() * 40 : rnd() * 40,
+      units.push({ name, side, slot, c: c0, k, top, hx: x, hy: y, x, y, hp, max: hp, shown: hp, atk, cd, wait: 0.6 + rnd() * cd, energy: side === 'hero' ? 30 + rnd() * 40 : rnd() * 40,
         ph: rnd() * 6, act: null, hurt: 0, dead: 0, dir: side === 'hero' ? 1 : -1, heals: 0 });
     }
   }
@@ -122,7 +138,7 @@
       const wind = ease.out(seg(p, 0, 0.2)), hit = ease.back(seg(p, 0.36, 0.47)), rel = ease.io(seg(p, 0.6, 0.9));
       P.swing = (r.wind * wind + (r.hit - r.wind) * hit) * (1 - rel);
       P.lean = (-9 * wind + 22 * hit) * (1 - rel);
-      if (a.type === 'stab') { P.far = (-25 * wind + 55 * ease.back(seg(p, 0.46, 0.56))) * (1 - rel); P.dx = 8 * hit * (1 - rel); }
+      if (a.type === 'stab') { P.far = ((r.farWind ?? 0) * wind + ((r.farHit ?? 0) - (r.farWind ?? 0)) * ease.back(seg(p, 0.46, 0.56))) * (1 - rel); P.dx = 8 * hit * (1 - rel); }
       once('d', 0.17, () => dust(u.hx, u.hy));
       once('h', 0.42, () => {
         damage(u, T, m * (a.type === 'stab' ? 0.6 : 1), col); slashFx(T.x - u.dir * 8, T.y - 64 * T.k, u.dir, col, a.skill ? 70 : 46);
@@ -173,7 +189,7 @@
     g.translate(pv[0], pv[1]); g.rotate(ang * RAD); g.translate(-pv[0], -pv[1]);
   }
   function drawUnit(u, V) {
-    const c = u.c, q = u.k * V, im = img[u.name];
+    const c = u.c, q = u.k * V, im = image(u.name), E = c.E;
     const P = { dx: 0, bob: Math.sin(time * 2.4 + u.ph) * 1.3, lean: 0, swing: Math.sin(time * 2.4 + u.ph + 1) * 2.2, far: Math.sin(time * 2.4 + u.ph + 2) * 1.5, farY: 0,
       head: Math.sin(time * 1.3 + u.ph) * 1.6, back: Math.sin(time * 2.1 + u.ph) * 5, hop: 0, scale: 1, glow: 1 + 0.15 * Math.sin(time * 3 + u.ph), aura: 0 };
     if (u.act) actionPose(u, P, 0);
@@ -270,8 +286,8 @@
   function frame(now) {
     const raw = Math.min(0.05, (now - (frame.last || now)) / 1000); frame.last = now;
     const dt = paused ? 0 : raw * speed;
-    if (loaded === names.length) {
-      if (!units.length) reset();
+    if (!units.length) reset();
+    if (units.every((u) => image(u.name).complete && image(u.name).naturalWidth)) {
       // les actions avancent ici (une seule fois par image), le dessin relit ensuite la pose
       for (const u of units) if (u.act && !u.dead) { const P = { }; actionPose(u, P, dt); }
       update(dt);

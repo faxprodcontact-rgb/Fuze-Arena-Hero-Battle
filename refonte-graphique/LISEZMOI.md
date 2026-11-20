@@ -88,3 +88,25 @@ Demande du propriétaire après l'essai par IA : rester sur le dessin par code, 
 - Remarques du propriétaire (20/11/2026) à toujours vérifier : **les pics des cheveux vont tous dans le même sens**
   (couchés vers l'arrière, aucun qui repart vers l'avant), et **le sens des armes** (tête de marteau en travers du
   manche, lames pointées vers l'adversaire).
+
+## Les 72 héros (20/11/2026)
+
+Demande du propriétaire : 72 héros **très différents les uns des autres**, inspirés des **mythologies et légendes**,
+« badass » en priorité, avec toutes les règles ci-dessus.
+
+- Liste complète (identifiant du jeu, nom provisoire, rareté, rôle, inspiration) : `HEROS.md`.
+- `fig72.cjs` : le gabarit configurable (carrure normale / lourde / fine, jambes, robe, queue de poisson, corps de
+  serpent, volute de djinn, tentacules, sabots ; tête humaine ou animale avec museau, bec, œil unique…).
+- `lib72.cjs` : dos (capes, ailes, queues, carapace, halo, soleil, tambours, pattes d'araignée…), cou, coiffes
+  (cheveux, casques, capuches, cornes, bois, couronnes, chapeaux, plumes…).
+- `arms72.cjs` : armes de la main de devant et objets de la main du fond (épées, haches, marteaux, lances, tridents,
+  arcs, bâtons, boucliers, lyre, lanterne, miroir…).
+- `heroes-fire.cjs`, `heroes-wind.cjs`, `heroes-water.cjs`, `heroes-earth.cjs` : 18 héros chacun, dans l'ordre de
+  `ELEMENT_ROSTER` (rôle, rareté et chef viennent du jeu, on ne les change pas ici).
+- `node sheet72.cjs fire` : planche d'un élément ; `node zoom72.cjs "fire:4,wind:9" sortie.html` : vue en grand pour
+  le contrôle de cohérence ; `node export72.cjs` : export vers le site de test (galerie + animations).
+- Variété : chaque élément mélange humains, bêtes et esprits, plusieurs cultures, trois tailles (petit, normal,
+  géant) et des silhouettes qui ne se répètent pas (éviter deux héros avec la même coiffe ET la même arme).
+- Dents de scie (`saw`) : toujours parcourir la ligne **du bas vers le haut**, sinon les pointes rentrent dans la forme.
+- Originalité : on s'inspire des mythes (domaine public), jamais du dessin d'un autre jeu, film ou manga.
+
