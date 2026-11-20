@@ -72,7 +72,7 @@ H('earth', 8, 'Minotaure', 'le Minotaure du labyrinthe (Crète)', {
   scale: 1.14, body: 'brute', colors: { skin: '#7a4a34', muz: '#c8a080', bone: '#ece4d0', pants: '#3a2a22', pelt: '#8a2a2a', belt: '#e6ac3c', boot: '#2a2226', fur: '#5a3424' },
   bare: true, bareArms: true, bracers: 'gold', chest: [['muscle']], skirt: { len: 26, t: 'pelt', trim: 'gold' }, legs: { kind: 'legs', leg: 'thick', t: 'fur', foot: 'hoof', stance: 'wide' },
   head: { kind: 'bull', eyes: { style: 'glow', color: '#ff5a2a' }, ring: true }, gear: [['horns', { kind: 'bull' }]],
-  near: { hand: [110, 168], el: [76, 160], over: true, item: ['axe', { to: [190, 160], double: true, z: 1.05, back: 30 }] }, far: { hand: [150, 164], el: [168, 152], over: true, r: 15 }, atk: 'slash', rig: { wind: -30, hit: 30 } });
+  near: { hand: [108, 176], el: [74, 166], over: true, item: ['axe', { to: [190, 170], double: true, z: 1.05, back: 30 }] }, far: { hand: [150, 173], el: [170, 158], over: true, r: 15 }, atk: 'slash', rig: { wind: -30, hit: 30 } });
 
 H('earth', 9, 'Gorgone', 'Méduse, la gorgone au regard de pierre (Grèce)', {
   grp: { top: 'head' },
