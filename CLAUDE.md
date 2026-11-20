@@ -38,6 +38,9 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   rendu peint plus beau mais des défauts de cohérence. **Décidé le 20/11/2026 : on continue avec le dessin par code**,
   en version épurée (v5 : `refonte-graphique/mini.cjs` + `cast5.cjs`) : personnages petits à l'écran, peu de formes,
   un ou deux éléments forts par personnage, regard dur. Ne jamais dépenser de crédits sans son accord.
+  Aperçu animé sur le site de test : `public/apercu/` (page à part, bouton « Aperçu des animations » dans les Outils de
+  test des réglages) : les personnages v5 animés morceau par morceau. Les images viennent de
+  `node refonte-graphique/export5.cjs` (à relancer après tout changement de dessin). Pas encore branché dans le vrai combat.
 - Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 

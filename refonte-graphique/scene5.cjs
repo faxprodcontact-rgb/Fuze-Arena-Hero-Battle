@@ -126,6 +126,6 @@ function scene() {
     if (!u.flip) bars += `<rect x="${u.x - w / 2}" y="${by + 11}" width="${w * (0.3 + hp[u.name] * 0.5)}" height="3.4" rx="1.5" fill="#4fd1ff"/>`;
   }
   const defs = [...Object.values(HEROES), ...Object.values(ENEMIES)].map((c) => c.defs).join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${SHARED_DEFS}${defs}</defs>${background()}${s}${bars}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${SHARED_DEFS}${defs}</defs>${background()}${process.env.NOCAST ? '' : s + bars}</svg>`;
 }
-fs.writeFileSync('scene.html', `<html><body style="margin:0;background:#000">${scene()}</body></html>`);
+fs.writeFileSync(process.env.OUT || 'scene.html', `<html><body style="margin:0;background:#000">${scene()}</body></html>`);

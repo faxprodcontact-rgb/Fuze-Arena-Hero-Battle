@@ -244,6 +244,8 @@ export function SettingsModal() {
           <Btn kind="ghost" small onClick={() => { timeTravel(24); toast('+24 h'); }}>{t('settings.d1')}</Btn>
           <Btn kind="ghost" small onClick={() => { giveTestResources(); toast('✓'); }}>{t('settings.resources')}</Btn>
           <Btn kind="purple" small onClick={() => { demoUnlockAll(); toast('✓'); }}>{t('settings.unlock')}</Btn>
+          {/* Page à part (public/apercu) : les nouveaux personnages animés, pas encore dans le jeu. */}
+          <Btn kind="blue" small onClick={() => { location.href = 'apercu/index.html'; }}>{t('settings.preview')}</Btn>
           <Btn kind="red" small onClick={() => open({ type: 'confirm', text: t('settings.resetConfirm'), onYes: () => { resetGame(); close(); } })}>{t('settings.reset')}</Btn>
         </div>
       </section>

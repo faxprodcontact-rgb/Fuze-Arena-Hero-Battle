@@ -66,7 +66,9 @@ function figure(c) {
   for (const [k, v] of Object.entries(c.colors)) T[k] = typeof v === 'string' ? tone(v) : v;
   T.steel ??= metal('#b9c2d0'); T.gold ??= metal('#e6ac3c'); T.wood ??= tone('#8a5a34'); T.boot ??= tone('#4a3226'); T.belt ??= tone('#5e3a22');
   T.pants ??= tone('#3a3550'); T.sleeve ??= T.cloth; T.glove ??= T.skin; T.hair ??= tone('#333');
-  const G = (fn) => { raw('<g filter="url(#ol)">'); fn(); raw('</g>'); };
+  // Chaque grande partie = un seul contour, et un morceau séparé pour l'animation (parts).
+  const marks = [];
+  const G = (name, fn) => { const start = P.body.length; raw('<g filter="url(#ol)">'); fn(); raw('</g>'); marks.push({ name, start, end: P.body.length }); };
   const fist = (x, y, r = 9, t = T.glove, o = {}) => S(disc(x, y, r), t, { sh: 4, hl: 3, rim: false, ...o });
   const glows = [];
   // Les halos (orbe, lame de feu) sont rendus à part, derrière le personnage, pour ne pas être pris dans son contour.
@@ -74,33 +76,32 @@ function figure(c) {
   const h = { S, raw, G, T, fist, P, c, glow };
   const gob = c.kind === 'goblin';
   const head = gob ? GHEAD : HEAD;
-  raw(`<defs><clipPath id="hc${c.id}"><path d="${head}"/></clipPath></defs>`);
 
   // ---- derrière : cape, écharpe, cheveux longs, oreille du fond
-  G(() => {
+  G('back', () => {
     c.back?.(h);
     if (gob) S('M142 70 C154 56 170 48 184 48 C178 62 166 76 150 86 Z', T.skin, { far: true });
   });
   // ---- bras du fond (et ce qu'il tient derrière le corps)
-  if (c.farArm) G(() => c.farArm(h));
+  if (c.farArm) G('farArm', () => c.farArm(h));
   // ---- corps : jambes + buste, ou robe ; la ceinture est peinte dans la forme, donc d'un bord à l'autre
   const beltY = c.beltY ?? 156;
   const band = (t, y, k = 9) => `<path d="M50 ${y} C90 ${y + 10} 126 ${y + 10} 164 ${y} L164 ${y + k} C126 ${y + k + 10} 90 ${y + k + 10} 50 ${y + k} Z" fill="${t.base}"/><path d="M50 ${y + k} C90 ${y + k + 10} 126 ${y + k + 10} 164 ${y + k}" stroke="${t.shadow}" stroke-width="2" fill="none" opacity="0.8"/>`;
-  G(() => {
-    if (c.robe) S(ROBE, T.cloth, { sh: 10, inner: (c.robeInner ?? '') + band(T.belt, beltY, 11) });
-    else {
+  if (c.robe) G('torso', () => S(ROBE, T.cloth, { sh: 10, inner: (c.robeInner ?? '') + band(T.belt, beltY, 11) }));
+  else {
+    G('legs', () => {
       S(limb([[88, 166], [80, 190], [76, 212]], 25, 21), T.pants, { sh: 6 });
       S(limb([[126, 166], [140, 188], [148, 212]], 25, 21), T.pants, { sh: 6 });
       const cuff = (x) => `<path d="M${x} 207 L${x + 34} 207" stroke="${T.boot.light}" stroke-width="3" opacity="0.6"/>`;
       S('M62 204 L91 204 L93 215 L105 221 C110 224 109 228 104 228 L62 228 C58 228 58 224 60 220 Z', T.boot, { sh: 5, inner: cuff(60) });
       S('M134 204 L163 204 L165 215 L178 221 C183 224 182 228 177 228 L134 228 C130 228 130 224 132 220 Z', T.boot, { sh: 5, inner: cuff(132) });
-      S(TORSO, T.cloth, { sh: 9, inner: (c.torsoInner ?? '') + band(T.belt, beltY) });
-    }
-  });
-  if (c.nearArm) G(() => c.nearArm(h));
-  if (c.afterBody) G(() => c.afterBody(h));
+    });
+    G('torso', () => S(TORSO, T.cloth, { sh: 9, inner: (c.torsoInner ?? '') + band(T.belt, beltY) }));
+  }
+  if (c.nearArm) G('nearArm', () => c.nearArm(h));
+  if (c.afterBody) G('afterBody', () => c.afterBody(h));
   // ---- tête : visage, puis coiffe (cheveux, casque, capuche) dans le même contour
-  G(() => {
+  G('head', () => {
     const E = c.eyes ?? {};
     const ny = gob ? 85 : 88;
     const lidC = gob ? mix(T.skin.base, '#14200c', 0.7) : (E.lid ?? '#2a1424');
@@ -122,9 +123,12 @@ function figure(c) {
     c.headgear?.(h);
     if (gob) S('M72 80 C56 66 36 58 16 60 C28 76 46 94 70 102 Z', T.skin, { sh: 6, inner: sf('M64 86 C50 76 38 70 26 67', T.skin.shadow, 3, 0.5, 1) });
   });
-  if (c.afterHead) G(() => c.afterHead(h));
+  if (c.afterHead) G('afterHead', () => c.afterHead(h));
+  // ---- ce que tient la main du fond devant le corps (bouclier, bâton, arc)
+  if (c.farFront) G('farFront', () => c.farFront(h));
   // ---- devant : bras de devant, main et arme en dernier
-  if (c.front) G(() => c.front(h));
-  return { defs: P.defs, body: P.body, glow: glows.join('') };
+  if (c.front) G('front', () => c.front(h));
+  const body = P.body;
+  return { defs: P.defs, body, glow: glows.join(''), parts: marks.map((k) => ({ name: k.name, svg: body.slice(k.start, k.end) })), rig: c.rig ?? {} };
 }
 module.exports = { figure, limb, blade, bar, disc, eye, HOOD, HEAD, GHEAD, tone, metal, mix, ln, sf, blob };

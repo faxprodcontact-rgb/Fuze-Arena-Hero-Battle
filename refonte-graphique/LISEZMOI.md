@@ -76,3 +76,15 @@ Demande du propriétaire après l'essai par IA : rester sur le dessin par code, 
 - Pas de petits détails (boucles, galons, épaulières, carquois). Les membres sont d'un seul tenant (`limb`).
 - Les halos (orbe, lame de feu) sont rendus à part, derrière le personnage, sinon le contour les salit.
 - La liste de contrôle de cohérence ci-dessus s'applique toujours.
+
+### Animations (aperçu sur le site de test)
+
+- Chaque personnage est fabriqué en **morceaux** (`parts` : dos, bras du fond, jambes, buste, manche, épaule, tête,
+  main du fond, main + arme) avec un **squelette** (`rig` dans `cast5.cjs` : quels morceaux suivent le bras qui frappe,
+  le bras du fond, type d'attaque, angles d'élan et de frappe).
+- `node refonte-graphique/export5.cjs` écrit `public/apercu/a/*.png` (une planche par personnage), `data.js` et `bg.jpg`.
+- `public/apercu/apercu.js` : petit moteur de démonstration (respiration, élan, bond, coup, tir, sort, soin, touché,
+  chute, compétence en touchant un personnage). Le contour de la silhouette est refait à l'écran à chaque image.
+- Remarques du propriétaire (20/11/2026) à toujours vérifier : **les pics des cheveux vont tous dans le même sens**
+  (couchés vers l'arrière, aucun qui repart vers l'avant), et **le sens des armes** (tête de marteau en travers du
+  manche, lames pointées vers l'adversaire).

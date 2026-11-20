@@ -127,7 +127,7 @@ const FR = {
   'name.gems': 'Pas assez de gemmes',
   'settings.name': 'Nom', 'settings.lang': 'Langue', 'settings.speed': 'Vitesse des combats', 'settings.tests': 'Outils de test',
   'settings.h2': '+2 h', 'settings.h12': '+12 h', 'settings.d1': '+1 jour', 'settings.resources': 'Ressources',
-  'settings.unlock': 'Tout débloquer', 'settings.reset': 'Recommencer', 'settings.resetConfirm': 'Effacer la partie ?',
+  'settings.unlock': 'Tout débloquer', 'settings.preview': 'Aperçu des animations', 'settings.reset': 'Recommencer', 'settings.resetConfirm': 'Effacer la partie ?',
 
   'result.victory': 'Victoire !', 'result.defeat': 'Défaite', 'result.damage': 'Dégâts', 'result.nothing': 'Rien cette fois',
   'battle.quit': 'Quitter', 'battle.wave': 'Vague', 'battle.auto': 'AUTO',
@@ -268,7 +268,7 @@ const EN: Record<Key, string> = {
   'name.gems': 'Not enough gems',
   'settings.name': 'Name', 'settings.lang': 'Language', 'settings.speed': 'Battle speed', 'settings.tests': 'Test tools',
   'settings.h2': '+2 h', 'settings.h12': '+12 h', 'settings.d1': '+1 day', 'settings.resources': 'Resources',
-  'settings.unlock': 'Unlock everything', 'settings.reset': 'Start over', 'settings.resetConfirm': 'Erase progress?',
+  'settings.unlock': 'Unlock everything', 'settings.preview': 'Animation preview', 'settings.reset': 'Start over', 'settings.resetConfirm': 'Erase progress?',
 
   'result.victory': 'Victory!', 'result.defeat': 'Defeat', 'result.damage': 'Damage', 'result.nothing': 'Nothing this time',
   'battle.quit': 'Quit', 'battle.wave': 'Wave', 'battle.auto': 'AUTO',
