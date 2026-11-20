@@ -726,6 +726,8 @@ export interface BattlePlan {
   need?: number;
   /** Héros qui ne peuvent pas combattre ici (déjà utilisés aujourd'hui en guerre de guildes). */
   exclude?: number[];
+  /** Donjon combattu (choisit le décor). */
+  dungeon?: DungeonKind;
   build: () => BattleRequest | null;
 }
 
@@ -761,7 +763,7 @@ export function dungeonPower(level: number): number {
 export function dungeonPlan(kind: DungeonKind): BattlePlan | null {
   const level = getState().dungeons[kind] + 1;
   if (level > DUNGEON_LEVELS) return null;
-  return { kind: 'dungeon', title: `${level}`, waves: dungeonWaves(kind, level), need: dungeonPower(level), build: () => dungeonBattle(kind) };
+  return { kind: 'dungeon', title: `${level}`, waves: dungeonWaves(kind, level), need: dungeonPower(level), dungeon: kind, build: () => dungeonBattle(kind) };
 }
 
 function dungeonWaves(kind: DungeonKind, level: number): UnitInit[][] {

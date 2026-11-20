@@ -37,7 +37,7 @@
   // Dessins redessinés par Hailuo (window.HAILUO, un seul morceau par personnage) : utilisés à la place des dessins
   // par morceaux, sauf avec #code dans l'adresse (pour comparer).
   const HL = location.hash === '#code' ? null : window.HAILUO;
-  if (HL) for (const id of Object.keys(CH)) { const w = HL[id]; if (w) Object.assign(CH[id], { whole: w, src: 'hl/' + id + '.webp', top: Math.max(-40, w.oy) }); }
+  if (HL) for (const id of Object.keys(CH)) { const w = HL[id]; if (w) Object.assign(CH[id], { whole: w, src: '../art/p/' + id + '.webp', top: Math.max(-40, w.oy) }); }
   const img = {};
   const image = (n) => img[n] || (img[n] = Object.assign(new Image(), { src: CH[n].src }));
   const bg = new Image(); bg.src = 'bg.jpg';

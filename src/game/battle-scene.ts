@@ -5,6 +5,7 @@ import { Battle } from '../core/battle/engine';
 import { ENERGY_MAX, TICK_MS, type Slot, type Unit } from '../core/battle/types';
 import { C, FightScene, W } from './fight-view';
 import { t } from './i18n';
+import { battleLook } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
 import { getState } from './state/store';
 
@@ -45,6 +46,11 @@ export class BattleScene extends FightScene {
     this.acc = 0;
     this.ended = false;
     this.bigBoss = !!data.request.damageMode;
+    this.look = battleLook(data.request.kind, data.request.title, data.request.dungeon?.kind);
+  }
+
+  protected preloadUnits() {
+    return [...this.req.heroes, ...this.req.waves.flat()];
   }
 
   private button(x: number, y: number, w: number, h: number, label: string, color: number, onClick: () => void) {
@@ -104,11 +110,12 @@ export class BattleScene extends FightScene {
       const y = 1000;
       const glow = this.add.circle(x, y, 66, C.energy, 0.35).setVisible(false);
       const frame = this.add.circle(x, y, 56, 0x14162b).setStrokeStyle(4, 0x3a4180);
-      const img = this.add.image(x, y + 4, this.texture(unit)).setScale(0.78);
+      const card = `c-${this.charId(unit)}`;
+      const img = this.textures.exists(card) ? this.add.image(x, y, card).setDisplaySize(108, 108) : this.add.image(x, y + 4, this.texture(unit)).setScale(0.78);
       const ring = this.add.graphics();
       this.tweens.add({ targets: glow, scale: 1.12, alpha: 0.6, yoyo: true, repeat: -1, duration: 380 });
       frame.setInteractive({ useHandCursor: true }).on('pointerdown', () => {
-        if (this.battle.requestSkill(unit.id)) this.tweens.add({ targets: img, scale: 0.9, yoyo: true, duration: 90 });
+        if (this.battle.requestSkill(unit.id)) this.tweens.add({ targets: img, scale: img.scale * 0.9, yoyo: true, duration: 90 });
       });
       this.portraits.push({ unit, x, ring, glow, img });
     });

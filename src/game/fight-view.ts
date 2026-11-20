@@ -4,8 +4,11 @@ import Phaser from 'phaser';
 import type { Battle } from '../core/battle/engine';
 import { ENERGY_MAX, LEADER_SLOT, type BattleEvent, type Hit, type Slot, type Unit } from '../core/battle/types';
 import { HEROES } from '../core/data/heroes';
-import { ELEMENT_COLOR, heroCanvas, monsterCanvas } from './art';
+import type { Element } from '../core/types';
+import { ELEMENT_COLOR, artUrl, cardUrl, hasArt, heroCanvas, monsterCanvas } from './art';
+import { ART_META } from './art-meta';
 import { t } from './i18n';
+import { battleLook, monsterArtId, type Look } from './look';
 
 export const W = 720;
 export const FONT = '"Baloo 2", "Trebuchet MS", "Segoe UI", Roboto, sans-serif';
@@ -35,7 +38,39 @@ export interface View {
   sprite: Phaser.GameObjects.Image;
   bars: Phaser.GameObjects.Graphics;
   homeX: number;
+  /** Hauteur et largeur de la barre de vie (au-dessus de la tête du dessin). */
+  barY: number;
+  barW: number;
 }
+
+/** Taille des dessins Hailuo : pixels de l'écran par unité du repère du dessin (un héros mesure ~190 unités). */
+const UNIT_PX = 0.64;
+/** Les pieds sont un peu sous le centre du conteneur (comme les anciens dessins). */
+const FEET = 47;
+
+type FxName = keyof typeof ART_META.fx;
+/** Largeur d'affichage de chaque effet (pixels) et point d'ancrage : centre, ou sol (le bas de l'effet aux pieds). */
+const FX: Record<FxName, [number, 'c' | 'g']> = {
+  slash: [150, 'c'], crossSlash: [165, 'c'], claw: [140, 'c'], impact: [120, 'c'], shockwave: [230, 'g'], pierce: [200, 'c'],
+  fireball: [110, 'c'], explosion: [175, 'c'], flamePillar: [130, 'g'], fireSlash: [150, 'c'], meteor: [150, 'c'], emberBurst: [150, 'c'],
+  waterBolt: [115, 'c'], splash: [165, 'g'], iceSpikes: [170, 'g'], frostBurst: [150, 'c'], tornado: [130, 'g'], windBlades: [140, 'c'],
+  lightning: [110, 'g'], electricOrb: [80, 'c'], featherGust: [170, 'c'], sonicRing: [130, 'c'], rockSpikes: [170, 'g'], quake: [210, 'g'],
+  poison: [140, 'c'], thornVines: [140, 'c'], leafStorm: [170, 'c'], boulder: [80, 'c'], heal: [130, 'c'], holyBeam: [120, 'g'],
+  goldShield: [105, 'c'], darkOrb: [130, 'c'],
+};
+/** Coup au corps à corps, projectile et son impact, compétences : selon l'élément de celui qui frappe. */
+const MELEE_FX: Record<Element, FxName> = { fire: 'fireSlash', wind: 'windBlades', water: 'slash', earth: 'claw' };
+const SHOT_FX: Record<Element, FxName> = { fire: 'fireball', wind: 'electricOrb', water: 'waterBolt', earth: 'boulder' };
+const SHOT_HIT_FX: Record<Element, FxName> = { fire: 'explosion', wind: 'impact', water: 'splash', earth: 'impact' };
+const SKILL_FX: Record<Element, readonly FxName[]> = {
+  fire: ['flamePillar', 'meteor', 'explosion'], water: ['iceSpikes', 'frostBurst', 'splash'],
+  wind: ['lightning', 'tornado', 'featherGust'], earth: ['rockSpikes', 'quake', 'thornVines'],
+};
+const STATUS_FX: Partial<Record<string, FxName>> = {
+  poison: 'poison', burn: 'emberBurst', stun: 'sonicRing', silence: 'darkOrb', atkDown: 'darkOrb', defDown: 'darkOrb',
+  slow: 'frostBurst', regen: 'leafStorm', atkUp: 'emberBurst', critUp: 'emberBurst',
+};
+const hash = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
 
 export abstract class FightScene extends Phaser.Scene {
   protected battle!: Battle;
@@ -46,6 +81,27 @@ export abstract class FightScene extends Phaser.Scene {
   protected bigBoss = false;
   /** Resserre le terrain vers le centre (écran d'accueil, plus étroit). */
   protected xSquash = 1;
+  /** Terrain et famille de monstres de ce combat. */
+  protected look: Look = battleLook('arena', '');
+
+  /** Les combattants à charger avant le combat (les autres arrivent plus tard, avec l'ancien dessin en attendant). */
+  protected abstract preloadUnits(): { defId: string; element: string }[];
+
+  preload() {
+    const terrain = this.look.terrain;
+    if (!this.textures.exists(`t-${terrain}`)) this.load.image(`t-${terrain}`, `art/t/${terrain}.jpg`);
+    for (const name of Object.keys(ART_META.fx)) if (!this.textures.exists(`fx-${name}`)) this.load.image(`fx-${name}`, `art/fx/${name}.webp`);
+    for (const u of this.preloadUnits()) {
+      const id = this.charId(u);
+      if (hasArt(id) && !this.textures.exists(`p-${id}`)) this.load.image(`p-${id}`, artUrl(id));
+      if (hasArt(id) && HERO_IDS.has(u.defId) && !this.textures.exists(`c-${id}`)) this.load.image(`c-${id}`, cardUrl(id));
+    }
+  }
+
+  /** Le dessin d'un combattant : un héros, ou le monstre de la famille de ce décor. */
+  protected charId(u: { defId: string; element: string }): string {
+    return HERO_IDS.has(u.defId) ? u.defId : monsterArtId(u.defId, u.element as Element, this.look);
+  }
 
   protected text(x: number, y: number, value: string, size = 28, color = '#ffffff') {
     return this.add
@@ -64,8 +120,15 @@ export abstract class FightScene extends Phaser.Scene {
     return key;
   }
 
-  /** Ciel, sol et cercle d'arène. */
+  /** Le terrain : l'image du décor, le centre de son arène au milieu des rangées de combattants. */
   protected drawArena(bottom: number) {
+    const key = `t-${this.look.terrain}`;
+    const m = ART_META.terrains[this.look.terrain];
+    if (this.textures.exists(key) && m) {
+      const cy = this.groundTop + (ROW_DY[0] + ROW_DY[1]) / 2;
+      const k = Math.max(W / m.w, cy / (m.cy * m.h), (bottom - cy) / ((1 - m.cy) * m.h));
+      return this.add.image(W / 2, cy - m.cy * m.h * k, key).setOrigin(0.5, 0).setScale(k).setDepth(-10);
+    }
     const g = this.add.graphics().setDepth(-10);
     const top = this.groundTop;
     g.fillGradientStyle(0x2b3a78, 0x2b3a78, 0x6b5ca8, 0x6b5ca8, 1);
@@ -88,14 +151,30 @@ export abstract class FightScene extends Phaser.Scene {
   protected addView(unit: Unit, enter = false) {
     const hero = unit.side === 'hero';
     const { x, y } = this.slotPos(unit);
-    const scale = unit.boss ? (this.bigBoss ? 2 : 1.45) : 0.95;
     const body = this.add.container(enter ? x + 320 : x, unit.boss && this.bigBoss ? y - 30 : y).setDepth(y);
-    const shadow = this.add.ellipse(0, 50 * scale, 90 * scale, 22, 0x000000, 0.3);
-    const sprite = this.add.image(0, 0, this.texture(unit)).setScale(scale).setFlipX(!hero);
+    const id = this.charId(unit);
+    let sprite: Phaser.GameObjects.Image;
+    let shadow: Phaser.GameObjects.Ellipse;
+    let barY: number;
+    let barW = unit.boss ? 130 : 86;
+    if (this.textures.exists(`p-${id}`)) {
+      // dessin Hailuo : les pieds (point 106, 228 du repère) sur la ligne de sol ; retourné autour de ce point
+      const [ox, oy, w, h, sc] = ART_META.chars[id as keyof typeof ART_META.chars];
+      const k = UNIT_PX * Math.max(0.85, Math.min(1.35, sc)) * (unit.boss ? (this.bigBoss ? 1.45 : 1.12) : 1);
+      sprite = this.add.image(0, FEET, `p-${id}`).setDisplaySize(w * k, h * k).setOrigin((106 - ox) / w, (228 - oy) / h).setFlipX(!hero);
+      shadow = this.add.ellipse(0, FEET, Math.min(160, w * k * 0.55), 20, 0x000000, 0.3);
+      barY = FEET - (228 - Math.max(oy, 228 - 330)) * k - 6;
+      barW = unit.boss ? 130 : 86;
+    } else {
+      const scale = unit.boss ? (this.bigBoss ? 2 : 1.45) : 0.95;
+      shadow = this.add.ellipse(0, 50 * scale, 90 * scale, 22, 0x000000, 0.3);
+      sprite = this.add.image(0, 0, this.texture(unit)).setScale(scale).setFlipX(!hero);
+      barY = unit.boss ? -100 : -72;
+    }
     const bars = this.add.graphics();
     body.add([shadow, sprite, bars]);
-    if (hero && unit.slot === LEADER_SLOT && unit.talent) body.add(this.text(0, -66 * scale - 30, '♛', 26, '#ffe27a'));
-    this.views.set(unit.id, { unit, body, sprite, bars, homeX: x });
+    if (hero && unit.slot === LEADER_SLOT && unit.talent) body.add(this.text(0, barY - 22, '♛', 26, '#ffe27a'));
+    this.views.set(unit.id, { unit, body, sprite, bars, homeX: x, barY, barW });
     if (enter) this.tweens.add({ targets: body, x, duration: 450, ease: 'Back.easeOut' });
   }
 
@@ -113,8 +192,8 @@ export abstract class FightScene extends Phaser.Scene {
       const g = v.bars;
       g.clear();
       if (u.hp <= 0) continue;
-      const w = u.boss ? 130 : 86;
-      const y = u.boss ? -100 : -72;
+      const w = v.barW;
+      const y = v.barY;
       g.fillStyle(0x000000, 0.6);
       g.fillRoundedRect(-w / 2 - 2, y - 2, w + 4, 16, 5);
       g.fillStyle(u.side === 'hero' ? C.green : C.red);
@@ -173,16 +252,46 @@ export abstract class FightScene extends Phaser.Scene {
     }
   }
 
+  /** Un effet (image d'effet Hailuo) qui grossit un peu puis s'efface. `ground` = posé aux pieds. */
+  protected fx(name: FxName, x: number, y: number, o: { size?: number; flip?: boolean; dur?: number; depth?: number } = {}) {
+    const key = `fx-${name}`;
+    if (!this.textures.exists(key)) return;
+    const [size, anchor] = FX[name];
+    const img = this.add.image(x, y, key).setOrigin(0.5, anchor === 'g' ? 0.95 : 0.5).setFlipX(!!o.flip).setDepth(o.depth ?? 1500);
+    const k = (size * (o.size ?? 1)) / img.width;
+    img.setScale(k * 0.7).setAlpha(0.95);
+    const dur = o.dur ?? 420;
+    this.tweens.add({ targets: img, scale: k, duration: dur * 0.35, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: img, alpha: 0, delay: dur * 0.5, duration: dur * 0.5, onComplete: () => img.destroy() });
+  }
+
+  /** Le centre du corps d'un combattant (là où les coups portent) et ses pieds. */
+  private chest(v: View) {
+    return { x: v.body.x, y: v.body.y + (FEET + v.barY) / 2 + 10, feet: v.body.y + FEET };
+  }
+
   private animateAttack(sourceId: string, hit: Hit, speed: number) {
     const src = this.views.get(sourceId);
     const dst = this.views.get(hit.target);
     if (!src || !dst) return;
     const dir = src.unit.side === 'hero' ? 1 : -1;
+    const el = src.unit.element;
+    const to = this.chest(dst);
     if (src.unit.ranged) {
-      const shot = this.add.circle(src.body.x + 30 * dir, src.body.y - 10, 7, hex(ELEMENT_COLOR[src.unit.element])).setDepth(1000);
-      this.tweens.add({ targets: shot, x: dst.body.x, y: dst.body.y - 10, duration: 220 / speed, onComplete: () => shot.destroy() });
+      const from = this.chest(src);
+      const key = `fx-${SHOT_FX[el]}`;
+      const shot = this.textures.exists(key)
+        ? this.add.image(from.x + 30 * dir, from.y, key).setDisplaySize(FX[SHOT_FX[el]][0], (FX[SHOT_FX[el]][0] * this.textures.getFrame(key).height) / this.textures.getFrame(key).width)
+        : this.add.circle(from.x + 30 * dir, from.y, 7, hex(ELEMENT_COLOR[el]));
+      shot.setDepth(1000).setRotation(Math.atan2(to.y - from.y, to.x - from.x - 30 * dir));
+      this.tweens.add({ targets: shot, x: to.x, y: to.y, duration: 220 / speed, onComplete: () => shot.destroy() });
+      this.time.delayedCall(220 / speed, () => this.fx(SHOT_HIT_FX[el], to.x, el === 'water' ? to.feet : to.y, { size: 0.65, dur: 360 / speed }));
     } else {
       this.tweens.add({ targets: src.body, x: src.homeX + 46 * dir, duration: 90 / speed, yoyo: true, ease: 'Quad.easeOut' });
+      this.time.delayedCall(110 / speed, () => {
+        this.fx(hit.kind === 'damage' && hit.crit ? 'crossSlash' : MELEE_FX[el], to.x - 6 * dir, to.y, { flip: dir < 0, dur: 320 / speed });
+        if (hit.kind === 'damage' && hit.crit) this.fx('impact', to.x, to.y, { size: 0.7, dur: 300 / speed });
+      });
     }
     this.time.delayedCall(140 / speed, () => this.showHit(hit, false));
   }
@@ -197,12 +306,28 @@ export abstract class FightScene extends Phaser.Scene {
     const flash = this.add.circle(src.body.x, src.body.y, 30, hero ? 0xffe27a : 0xff6b6b, 0.6).setDepth(999);
     this.tweens.add({ targets: flash, scale: 4, alpha: 0, duration: 380 / speed, onComplete: () => flash.destroy() });
     if (hits.filter((h) => h.kind === 'damage').length > 1) this.cameras.main.shake(180, 0.006);
+    // l'effet de la compétence sur chaque cible touchée (un même effet pour toute la compétence)
+    const list = SKILL_FX[src.unit.element];
+    const fxName = list[hash(skillId) % list.length]!;
+    const seen = new Set<string>();
+    hits.forEach((h, i) => {
+      if (h.kind !== 'damage' || seen.has(h.target)) return;
+      seen.add(h.target);
+      const v = this.views.get(h.target);
+      if (!v) return;
+      const p = this.chest(v);
+      this.time.delayedCall((140 + i * 40) / speed, () => this.fx(fxName, p.x, FX[fxName][1] === 'g' ? p.feet : p.y, { flip: !hero, dur: 560 / speed }));
+    });
     this.time.delayedCall(200 / speed, () => hits.forEach((h) => this.showHit(h, true)));
   }
 
   private showHit(hit: Hit, big: boolean) {
     const v = this.views.get(hit.target);
     if (!v) return;
+    if (hit.kind === 'status' && hit.status && STATUS_FX[hit.status]) this.fx(STATUS_FX[hit.status]!, v.body.x, this.chest(v).y, { size: 0.8, dur: 600 });
+    if (hit.kind === 'revive') this.fx('holyBeam', v.body.x, v.body.y + FEET, { dur: 800 });
+    if (hit.kind === 'heal' && !hit.dot) this.fx('heal', v.body.x, this.chest(v).y, { size: 0.85, dur: 600 });
+    if (hit.kind === 'shield') this.fx('goldShield', v.body.x, this.chest(v).y, { dur: 600 });
     if (hit.kind === 'miss' || hit.kind === 'status' || hit.kind === 'revive') {
       if (hit.kind === 'revive') this.tweens.add({ targets: v.body, alpha: 1, y: this.slotPos(v.unit).y, angle: 0, duration: 400 });
       const label = hit.kind === 'miss' ? t('fx.miss') : hit.kind === 'revive' ? '✚' : t(`st.${hit.status}`, { n: '' }).replace(/[+−-]\s*%/, '').trim();
@@ -225,8 +350,9 @@ export abstract class FightScene extends Phaser.Scene {
       return;
     } else {
       color = hit.crit ? '#ffe27a' : hit.advantage ? '#ffb15c' : v.unit.side === 'hero' ? '#ff9b9b' : '#ffffff';
-      v.sprite.setTintFill(0xffffff);
-      this.time.delayedCall(70, () => v.sprite.clearTint());
+      // touché : le dessin rougit un instant (un flash tout blanc effaçait les grands dessins)
+      v.sprite.setTint(0xff9a9a);
+      this.time.delayedCall(90, () => v.sprite.clearTint());
       if (hit.stun) {
         const star = this.text(v.body.x + 30, v.body.y - 70, '✦', 28, '#ffe27a').setDepth(2000);
         this.tweens.add({ targets: star, angle: 360, alpha: 0, duration: 900, onComplete: () => star.destroy() });

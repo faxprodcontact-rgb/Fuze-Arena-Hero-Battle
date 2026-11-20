@@ -46,7 +46,14 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   découpées par `python3 refonte-graphique/decoupe-hailuo.py` → `public/apercu/hl/<id>.webp` + `hailuo.js` (taille et place
   calées sur la silhouette du dessin d'origine). Un seul morceau par personnage : l'aperçu anime le corps entier (respiration,
   élan, frappe, recul, chute) + effets ; bouton « Hailuo / Code » pour comparer. Étape suivante possible : animations
-  d'attaque par la vidéo de Hailuo (à essayer sur 2-3 personnages avant de dépenser des crédits). Pas encore dans le vrai jeu.
+  d'attaque par la vidéo de Hailuo (à essayer sur 2-3 personnages avant de dépenser des crédits).
+  **Branchés dans le vrai jeu depuis la v0.21.0** (combats, accueil, préparation, Siège, menus) : tout est dans `public/art/`
+  (`p/` personnages entiers, `c/` vignettes carrées, `t/` 12 terrains, `fx/` 32 effets d'attaque sans fond noir), décrit par
+  `src/game/art-meta.ts` (fabriqué par `python3 refonte-graphique/art-jeu.py`, après `decoupe-hailuo.py` / `decoupe-decors.py`).
+  `src/game/look.ts` choisit le terrain et la famille de monstres selon le mode et le chapitre (8 régions de campagne,
+  une famille par élément et par région ; tour, donjons, antre des boss, arène). Les règles ne changent pas : seuls les
+  dessins des anciens monstres (gobelin, loup…) sont remplacés. Effets : `FX`, `MELEE_FX`, `SKILL_FX`… dans `fight-view.ts`.
+  Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.
   Aperçu animé sur le site de test : `public/apercu/` (page à part, bouton « Aperçu des animations » dans les Outils de
   test des réglages) : les personnages v5 animés morceau par morceau. Les images viennent de
   `node refonte-graphique/export5.cjs` (à relancer après tout changement de dessin). Pas encore branché dans le vrai combat.

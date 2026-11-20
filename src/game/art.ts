@@ -1,8 +1,10 @@
-// Dessins provisoires faits par le code (le vrai style manga arrive à l'étape 4).
-// Chaque héros = la tête de sa faction + l'accessoire de son rôle + les couleurs de son élément.
+// Dessins des personnages. Les dessins redessinés par Hailuo (public/art/, voir art-meta.ts) sont utilisés quand ils
+// existent ; sinon, les anciens dessins provisoires faits par le code ci-dessous (tête de faction + accessoire de rôle).
 // Tous regardent vers la droite ; les monstres sont retournés au combat.
 import { heroDef } from '../core/data/heroes';
 import type { Element, Faction, HeroDef, Rarity } from '../core/types';
+import { ART_META } from './art-meta';
+import { DEFAULT_LOOK, monsterArtId, type Look } from './look';
 
 export const FACTION_COLOR: Record<Faction, string> = {
   knights: '#c9a227', assassins: '#3a3f58', mages: '#7b4bd6', demons: '#b3262e', angels: '#e9e4f5', myths: '#2a9d8f',
@@ -309,8 +311,22 @@ export function monsterCanvas(monsterId: string, element: Element = 'earth'): HT
 
 const urls = new Map<string, string>();
 
+/** Les dessins redessinés par Hailuo existent-ils pour ce personnage (héros `knights-1`, monstre `glaces-6`…) ? */
+export function hasArt(id: string): boolean {
+  return id in ART_META.chars;
+}
+/** Image entière d'un personnage, pour les combats (pieds au point (106, 228) du repère du dessin). */
+export function artUrl(id: string): string {
+  return `art/p/${id}.webp`;
+}
+/** Vignette carrée d'un personnage, pour les menus. */
+export function cardUrl(id: string): string {
+  return `art/c/${id}.webp`;
+}
+
 /** Image pour les menus (balise <img>). */
 export function heroImage(defId: string): string {
+  if (hasArt(defId)) return cardUrl(defId);
   let url = urls.get(defId);
   if (!url) {
     url = heroCanvas(defId).toDataURL();
@@ -319,7 +335,10 @@ export function heroImage(defId: string): string {
   return url;
 }
 
-export function monsterImage(monsterId: string, element: Element = 'earth'): string {
+/** Image d'un monstre pour les menus ; `look` choisit la famille (celle du combat à venir). */
+export function monsterImage(monsterId: string, element: Element = 'earth', look: Look = DEFAULT_LOOK): string {
+  const art = monsterArtId(monsterId, element, look);
+  if (hasArt(art)) return cardUrl(art);
   const key = `${monsterId}:${element}`;
   let url = urls.get(key);
   if (!url) {

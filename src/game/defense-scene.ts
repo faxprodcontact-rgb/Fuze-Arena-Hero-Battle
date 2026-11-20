@@ -4,9 +4,13 @@ import Phaser from 'phaser';
 import { TICK_MS } from '../core/battle/types';
 import { DEFENSE_H, DEFENSE_LIVES, DEFENSE_PADS, DEFENSE_PATH, DEFENSE_W, defenseStars } from '../core/data/defense';
 import { DefenseBattle, type Creep, type DefenseEvent, type DefenseSetup } from '../core/defense/engine';
-import { ELEMENT_COLOR, heroCanvas, monsterCanvas } from './art';
+import { ELEMENT_COLOR, cardUrl, hasArt, heroCanvas, monsterCanvas } from './art';
 import { FONT } from './fight-view';
 import { t } from './i18n';
+import { DEFAULT_LOOK, monsterArtId } from './look';
+
+/** Les monstres des règles qui peuvent venir (leur dessin dépend de l'élément du niveau). */
+const CREEP_IDS = ['goblin', 'wolf', 'golem', 'archer', 'shaman', 'wraith', 'ogre', 'lich', 'dragon'];
 
 const TOP = 96;
 export const DEF_H = DEFENSE_H + TOP;
@@ -54,6 +58,15 @@ export class DefenseScene extends Phaser.Scene {
       .setOrigin(0.5).setShadow(0, 2, '#000000', 3, false, true);
   }
 
+  /** Vignettes des dessins Hailuo : héros posés et monstres possibles. */
+  preload() {
+    for (const { unit } of this.setup.towers) if (hasArt(unit.defId)) this.load.image(`c-${unit.defId}`, cardUrl(unit.defId));
+    for (const id of CREEP_IDS) {
+      const art = monsterArtId(id, this.setup.element, DEFAULT_LOOK);
+      if (hasArt(art)) this.load.image(`c-${art}`, cardUrl(art));
+    }
+  }
+
   private tex(key: string, make: () => HTMLCanvasElement): string {
     if (!this.textures.exists(key)) this.textures.addCanvas(key, make());
     return key;
@@ -65,7 +78,10 @@ export class DefenseScene extends Phaser.Scene {
     this.battle.towers.forEach((tw) => {
       const c = this.add.container(tw.x, tw.y + TOP).setDepth(tw.y + TOP);
       const shadow = this.add.ellipse(0, 46, 84, 22, 0x000000, 0.35);
-      const img = this.add.image(0, 0, this.tex(`h-${tw.unit.defId}`, () => heroCanvas(tw.unit.defId))).setScale(0.78);
+      const card = `c-${tw.unit.defId}`;
+      const img = this.textures.exists(card)
+        ? this.add.image(0, 46, card).setOrigin(0.5, 0.96).setDisplaySize(118, 118)
+        : this.add.image(0, 0, this.tex(`h-${tw.unit.defId}`, () => heroCanvas(tw.unit.defId))).setScale(0.78);
       c.add([shadow, img]);
       this.towers.set(tw.id, c);
     });
@@ -135,7 +151,10 @@ export class DefenseScene extends Phaser.Scene {
     const scale = c.boss ? 0.95 : 0.55;
     const body = this.add.container(c.x, c.y + TOP);
     const shadow = this.add.ellipse(0, 52 * scale, 80 * scale, 18, 0x000000, 0.3);
-    const sprite = this.add.image(0, 0, this.tex(`m-${c.defId}-${c.element}`, () => monsterCanvas(c.defId, c.element))).setScale(scale).setFlipX(true);
+    const card = `c-${monsterArtId(c.defId, c.element, DEFAULT_LOOK)}`;
+    const sprite = (this.textures.exists(card)
+      ? this.add.image(0, 52 * scale, card).setOrigin(0.5, 0.96).setDisplaySize(150 * scale, 150 * scale)
+      : this.add.image(0, 0, this.tex(`m-${c.defId}-${c.element}`, () => monsterCanvas(c.defId, c.element))).setScale(scale)).setFlipX(true);
     const bar = this.add.graphics();
     body.add([shadow, sprite, bar]);
     this.creeps.set(c.id, { body, sprite, bar });
@@ -159,7 +178,7 @@ export class DefenseScene extends Phaser.Scene {
             const dx = Math.sign(v.body.x - c.x) * 18;
             this.tweens.add({ targets: c, x: tw.x + dx, duration: 70 / this.speed, yoyo: true });
           }
-          v.sprite.setTintFill(0xffffff);
+          v.sprite.setTint(0xff9a9a);
           this.time.delayedCall(60, () => v.sprite.clearTint());
           if (e.crit || e.skill) {
             const n = this.text(v.body.x, v.body.y - 40, e.amount.toLocaleString('fr-FR'), e.skill ? 30 : 24, e.crit ? '#ffe27a' : '#ffffff').setDepth(4000);

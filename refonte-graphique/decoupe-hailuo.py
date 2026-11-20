@@ -1,7 +1,7 @@
 # Découpe les personnages des planches rendues par Hailuo (refonte-graphique/hailuo-v1/*.jpg) :
 # fond blanc et ombre au sol retirés, lueurs gardées en transparence, un fichier par personnage.
 #   python3 refonte-graphique/decoupe-hailuo.py [dossier-de-controle]
-# Sortie : public/apercu/hl/<identifiant du jeu>.webp + public/apercu/hailuo.js (taille et place de chaque dessin,
+# Sortie : public/art/p/<identifiant du jeu>.webp + public/apercu/hailuo.js (taille et place de chaque dessin,
 # calées sur la silhouette du dessin d'origine pour garder les mêmes tailles dans le jeu).
 import json, os, sys
 import numpy as np
@@ -158,7 +158,7 @@ for c in load_js('heros.js', 'HEROS')['list'] + load_js('monstres.js', 'MONSTRES
     ps = [p for p in c['parts'] if p['name'] not in ('glow', 'shine')]
     orig[c['id']] = (min(p['ox'] for p in ps), min(p['oy'] for p in ps), max(p['ox'] + p['w'] / E for p in ps), max(p['oy'] + p['h'] / E for p in ps))
 
-os.makedirs(os.path.join(OUT, 'hl'), exist_ok=True)
+os.makedirs(os.path.join(OUT, '..', 'art', 'p'), exist_ok=True)
 if CHECK:
     os.makedirs(CHECK, exist_ok=True)
 meta = {}
@@ -209,7 +209,7 @@ for fname, cols, rows, ids in SHEETS:
         # image du site : 2,4 pixels par unité de dessin (net sur téléphone), en WebP transparent
         scale = 2.4 * k
         out = img.resize((max(1, round(img.width * scale)), max(1, round(img.height * scale))), Image.LANCZOS)
-        out.save(os.path.join(OUT, 'hl', cid + '.webp'), 'WEBP', quality=88, method=6)
+        out.save(os.path.join(OUT, '..', 'art', 'p', cid + '.webp'), 'WEBP', quality=88, method=6)
         meta[cid] = {'ox': round(wx, 2), 'oy': round(wy, 2), 'w': round(img.width * k, 2), 'h': round(img.height * k, 2)}
         if CHECK:
             img.save(os.path.join(CHECK, cid + '.png'))

@@ -4,6 +4,8 @@ import Phaser from 'phaser';
 import { Battle } from '../core/battle/engine';
 import { TICK_MS, type UnitInit, type Unit } from '../core/battle/types';
 import { FightScene, W } from './fight-view';
+import { idleLook } from './look';
+import { getState } from './state/store';
 
 export const IDLE_H = 980;
 const IDLE_SPEED = 1.2;
@@ -31,6 +33,12 @@ export class IdleScene extends FightScene {
     this.getSetup = data.setup;
     this.groundTop = 560;
     this.xSquash = 0.8;
+    this.look = idleLook(getState().campaign.cleared);
+  }
+
+  protected preloadUnits() {
+    const { heroes, waves } = this.getSetup();
+    return [...heroes, ...waves.flat()];
   }
 
   create() {

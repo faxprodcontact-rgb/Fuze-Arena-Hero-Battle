@@ -47,7 +47,7 @@
     g.drawImage(A, 0, 0);
     for (const p of h.parts) if (p.name === 'shine') put(g, p);
   }
-  const seen = new IntersectionObserver((list) => { for (const e of list) if (e.isIntersecting) { seen.unobserve(e.target); const h = e.target.hero, img = new Image(); img.onload = () => render(e.target, h, img); img.src = HL[h.id] ? 'hl/' + h.id + '.webp' : (h.slot ? 'm/' : 'h/') + h.id + '.png'; } }, { rootMargin: '300px' });
+  const seen = new IntersectionObserver((list) => { for (const e of list) if (e.isIntersecting) { seen.unobserve(e.target); const h = e.target.hero, img = new Image(); img.onload = () => render(e.target, h, img); img.src = HL[h.id] ? '../art/p/' + h.id + '.webp' : (h.slot ? 'm/' : 'h/') + h.id + '.png'; } }, { rootMargin: '300px' });
   function show(el) {
     grid.innerHTML = '';
     for (const b of tabs.children) b.classList.toggle('on', b.dataset.el === el);

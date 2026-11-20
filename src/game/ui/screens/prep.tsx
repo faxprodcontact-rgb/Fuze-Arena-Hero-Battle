@@ -4,6 +4,8 @@ import { useState } from 'preact/hooks';
 import { LEADER_SLOT, type Slot } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
 import { heroImage, monsterImage } from '../../art';
+import { ART_META } from '../../art-meta';
+import { battleLook, type Terrain } from '../../look';
 import { fmt, t } from '../../i18n';
 import { autoFormation, startBattleFromPlan, swapSlots, toggleInFormation, type BattlePlan } from '../../state/actions';
 import { formationOf, heroByUid, heroPower, slotCount, sortedHeroes, teamPower, type TeamKind } from '../../state/selectors';
@@ -22,7 +24,12 @@ const FIELD_GROUND = 50;
 /** Les rangées sont un peu resserrées (×0,85) pour laisser de la place à la liste des héros. */
 const POS: Record<Slot, [number, number]> = { 3: [110, 76], 4: [110, 230], 2: [215, 153], 0: [315, 76], 1: [315, 230] };
 
-function FieldBackground() {
+function FieldBackground({ terrain }: { terrain?: Terrain }) {
+  // Le décor du combat à venir : la moitié gauche du terrain (côté héros), l'arène à hauteur des postes.
+  if (terrain) {
+    const m = ART_META.terrains[terrain];
+    return <div class="field-bg" style={{ backgroundImage: `url(art/t/${terrain}.jpg)`, backgroundSize: '171% auto', backgroundPosition: `0% ${Math.round(m.cy * 100 - 4)}%` }} />;
+  }
   return (
     <svg class="field-bg" viewBox={`0 0 ${FIELD_W} ${FIELD_H}`} preserveAspectRatio="none" aria-hidden="true">
       <defs>
@@ -40,7 +47,7 @@ function FieldBackground() {
   );
 }
 
-export function Board({ tired, team = 'main' }: { tired?: Set<number>; team?: TeamKind } = {}) {
+export function Board({ tired, team = 'main', terrain }: { tired?: Set<number>; team?: TeamKind; terrain?: Terrain } = {}) {
   const s = useGame();
   const formation = formationOf(s, team);
   const [picked, setPicked] = useState<Slot | null>(null);
@@ -58,7 +65,7 @@ export function Board({ tired, team = 'main' }: { tired?: Set<number>; team?: Te
   return (
     <div class="board-wrap">
       <div class="field">
-        <FieldBackground />
+        <FieldBackground terrain={terrain} />
         {([3, 0, 2, 4, 1] as Slot[]).map((slot) => {
           const uid = formation.find(([, sl]) => sl === slot)?.[0];
           const hero = uid !== undefined ? heroByUid(s, uid) : undefined;
@@ -93,6 +100,7 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
     ? formation.filter(([u]) => !tired.has(u)).reduce((sum, [u]) => sum + heroPower(s, heroByUid(s, u)!), 0)
     : teamPower(s, team);
   const waves = plan?.waves ?? [];
+  const look = plan ? battleLook(plan.kind, plan.title, plan.dungeon) : undefined;
   return (
     <div class="prep">
       <header class="prep-head">
@@ -111,13 +119,13 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
           </div>
           <div class="enemy-row">
             {(waves[waves.length - 1] ?? []).map((u) => (
-              <img class={u.boss ? 'boss' : ''} src={u.side === 'enemy' && u.defId.includes('-') ? heroImage(u.defId) : monsterImage(u.defId, u.element)} alt="" />
+              <img class={u.boss ? 'boss' : ''} src={u.side === 'enemy' && u.defId.includes('-') ? heroImage(u.defId) : monsterImage(u.defId, u.element, look)} alt="" />
             ))}
           </div>
         </section>
       )}
 
-      <Board tired={tired} team={team} />
+      <Board tired={tired} team={team} terrain={look?.terrain} />
 
       <div class="row between prep-bar">
         <strong>{t('heroes.team')} {formation.length} / {slotCount(s)}</strong>
