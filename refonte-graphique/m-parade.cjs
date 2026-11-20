@@ -44,14 +44,14 @@ Mo('parade', 2, 'Singe artificier', { scale: 0.96, atk: 'cast', fx: SPARK, color
     G('farLeg', () => { L([[[[120, 194], [134, 208], [128, 220]], 13, 10]], 'fur', { far: true }); S(ell(134, 223, 12, 5), T.fur, { sh: 2, far: true }); });
     G('leg', () => { L([[[[96, 196], [84, 208], [92, 220]], 14, 11]], 'fur'); S(ell(98, 223, 13, 5), T.fur, { sh: 2 }); });
     // la fusée et le bras qui la tient partent de sous le corps
-    G('rocket', () => { S(bar([118, 178], [152, 160], 3), T.gold, { sh: 1 }); S(bar([146, 164], [190, 140], 15), T.vest, { sh: 4, hl: 3, inner: '<path d="M160 146 l8 16 M174 138 l8 16" stroke="#e6ac3c" stroke-width="4"/>' }); S('M186 132 L206 132 L196 148 Z', T.gold, { sh: 3 }); L([[[[112, 164], [130, 176], [150, 166]], 11, 9]], 'fur'); S(disc(152, 164, 7), T.fur, { sh: 3 }); });
+    G('rocket', () => { S(bar([118, 178], [152, 160], 3), T.gold, { sh: 1 }); S(bar([146, 164], [190, 140], 15), T.vest, { sh: 4, hl: 3, inner: '<path d="M160 146 l8 16 M174 138 l8 16" stroke="#e6ac3c" stroke-width="4"/>' }); S('M186 132 L206 132 L196 148 Z', T.gold, { sh: 3 }); L([[[[112, 164], [134, 172], [160, 158]], 11, 9]], 'fur'); S(disc(162, 156, 9), T.fur, { sh: 3 }); });
     G('body', () => S('M84 180 C80 156 94 142 110 142 C126 142 136 156 134 176 C132 196 118 206 106 206 C94 206 86 194 84 180 Z', T.fur, { sh: 9, hl: 6,
       inner: '<path d="M80 150 C96 142 124 142 138 152 L136 186 C120 196 98 196 84 186 Z" fill="#d8382e"/><path d="M110 144 L110 196" stroke="#e6ac3c" stroke-width="4"/>' }));
     G('head', () => {
       S(disc(96, 112, 13), T.fur, { sh: 4, inner: '<circle cx="96" cy="112" r="6.5" fill="#f0cfa0"/>' });
       S('M96 116 C94 94 110 80 130 80 C148 80 162 94 162 112 C162 130 148 144 130 144 C110 144 98 132 96 116 Z', T.fur, { sh: 9, hl: 6,
-        inner: '<path d="M112 108 C116 94 132 94 136 106 C140 94 156 96 158 110 C162 124 150 140 134 140 C120 140 108 126 112 108 Z" fill="#f0cfa0"/><path d="M122 128 C130 136 142 136 150 128" stroke="#3a1c14" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M128 131 l3 4 l3 -4 l3 4 l3 -4" stroke="#fff6e0" stroke-width="2" fill="none" stroke-linejoin="round"/>' });
-      eye(124, 112, 8.5, 8.5, { iris: '#3a1c14', pupil: 'none', irisK: 0.6, lid: 0.4, tilt: 1 }); eye(146, 112, 7.5, 8, { iris: '#3a1c14', pupil: 'none', irisK: 0.6, lid: 0.4, tilt: -1 });
+        inner: '<path d="M112 108 C116 94 132 94 136 106 C140 94 156 96 158 110 C162 124 150 140 134 140 C120 140 108 126 112 108 Z" fill="#f0cfa0"/><path d="M120 126 L152 124 L148 136 L124 136 Z" fill="#3a1c14"/><path d="M124 127 l3 6 l3 -6 l3 6 l3 -6 l3 6 l3 -6 l3 6 l3 -6" stroke="#fff6e0" stroke-width="2" fill="none" stroke-linejoin="round"/>' });
+      eye(124, 110, 9, 8, { iris: '#ffe14a', pupilK: 0.45, lid: 0.5, tilt: 1, lidC: '#5a3a20' }); eye(146, 110, 8, 7.5, { iris: '#ffe14a', pupilK: 0.45, lid: 0.5, tilt: -1, lidC: '#5a3a20' });
     });
   });
 
@@ -81,28 +81,28 @@ Mo('parade', 4, 'Tambour géant', { scale: 1.16, atk: 'smash', wind: -60, hit: 4
       S('M40 152 C40 118 62 104 100 104 C138 104 162 118 162 152 C162 186 138 202 100 202 C62 202 40 186 40 152 Z', T.body, { sh: 12, hl: 8,
         inner: '<path d="M46 122 C80 108 122 108 156 122 L156 132 C122 118 80 118 46 132 Z M46 176 C80 190 122 190 156 176 L156 186 C122 200 80 200 46 186 Z" fill="#e6ac3c"/><g fill="#fff3c0"><circle cx="60" cy="150" r="3"/><circle cx="78" cy="152" r="3"/></g>' });
       S(ell(134, 152, 30, 46), T.skin, { sh: 6, hl: 5, inner: '<path d="M120 172 C128 180 142 180 150 170" stroke="#5a1c12" stroke-width="3.4" fill="none" stroke-linecap="round"/><path d="M126 174 l4 6 l4 -5 l4 5 l4 -6" stroke="#5a1c12" stroke-width="2" fill="none" stroke-linejoin="round"/><circle cx="134" cy="152" r="36" fill="none" stroke="#d8382e" stroke-width="3" opacity="0.5"/>' });
-      eye(124, 140, 9.5, 10, { iris: '#d8382e', pupilK: 0.5, lid: 0.44, tilt: 1 }); eye(146, 138, 8, 10, { iris: '#d8382e', pupilK: 0.5, lid: 0.44, tilt: -1 });
+      eye(124, 140, 9.5, 10, { iris: '#d8382e', pupilK: 0.5, lid: 0.46, tilt: 1, look: [2, 1] }); eye(146, 138, 8, 10, { iris: '#d8382e', pupilK: 0.5, lid: 0.46, tilt: -1, look: [1, 1] });
     });
   });
 
-// 5 · boss — Dragon de parade : une tête de fête immense, un corps de tissu porté par ses danseurs
-Mo('parade', 5, 'Dragon de parade', { scale: 1.34, atk: 'smash', wind: -16, hit: 22, fx: SPARK, colors: { body: RED, gold: GOLD, fur: FUR, green: '#2fa36a' }, swing: ['head'], grp: { farLegs: 'legs', legs: 'legs', body: 'back' }, piv: { swing: [116, 150], back: [80, 170], torso: [84, 200] } },
-  (h) => { const { S, raw, T, G, L, fringe, eye, teeth, limb } = h;
-    G('farLegs', () => dancer(h, [40, 84], true));
-    G('legs', () => dancer(h, [26, 68, 108], false));
+// 5 · boss — Dragon de parade : un long corps de tissu qui ondule au bout de ses perches, une tête de fête immense
+Mo('parade', 5, 'Dragon de parade', { scale: 1.34, atk: 'smash', wind: -16, hit: 22, fx: SPARK, colors: { body: RED, gold: GOLD, fur: FUR, green: '#2fa36a', wood: '#8a5a34' }, swing: ['head'], grp: { poles: 'legs', body: 'back' }, piv: { swing: [116, 150], back: [80, 150], torso: [84, 200] } },
+  (h) => { const { S, raw, T, G, L, eye, teeth, limb, bar } = h;
+    G('poles', () => { for (const [x, y] of [[28, 150], [70, 112], [112, 160]]) S(bar([x, y], [x, 228], 5), T.wood, { sh: 2 }); });
     G('body', () => {
-      S('M14 188 C12 150 30 118 56 112 C80 108 96 126 108 146 L128 150 L124 196' + fringe(124, 18, 196, 9, 9) + ' Z', T.body, { sh: 10, hl: 6,
-        inner: '<g fill="none" stroke="#e6ac3c" stroke-width="3"><path d="M22 160 q8 10 16 0 q8 10 16 0 q8 10 16 0 q8 10 16 0 q8 10 16 0 q8 10 16 0 M18 178 q8 10 16 0 q8 10 16 0 q8 10 16 0 q8 10 16 0 q8 10 16 0 q8 10 16 0 M32 140 q8 10 16 0 q8 10 16 0 q8 10 16 0"/></g>' });
-      S('M18 150 L10 126 L28 136 L32 110 L46 126 L58 100 L66 122 L84 106 L86 128 C70 122 40 128 18 150 Z', T.green, { sh: 4 });
+      S('M22 150 L4 136 L10 156 L-4 168 L20 170 Z', T.green, { sh: 3 });
+      S('M20 140 L24 116 L38 126 L46 98 L58 110 L70 84 L80 100 L96 86 L100 108 L114 112 L112 130 Z', T.green, { sh: 4 });
+      S(limb([[18, 158], [64, 70], [124, 152]], 26, 44, 20), T.body, { sh: 9, hl: 6, inner: '<g fill="none" stroke="#e6ac3c" stroke-width="3"><path d="M26 146 q8 10 16 0 M40 124 q8 10 16 0 M58 110 q8 10 16 0 M78 112 q8 10 16 0 M96 128 q8 10 16 0"/></g>' });
     });
     G('head', () => {
       S('M112 108 L90 94 L102 116 L80 120 L100 132 L84 146 L106 150 L140 124 Z', T.green, { sh: 4 });
       L([[[[130, 92], [118, 62], [132, 40]], 9, 3], [[[124, 70], [108, 60], [104, 46]], 6, 2.5]], T.gold, { N: 16 }); L([[[[158, 88], [168, 62], [188, 46]], 8, 3], [[[170, 64], [186, 66], [196, 56]], 5, 2.5]], T.gold, { N: 16, far: true });
-      L([[[[206, 128], [234, 116], [230, 156]], 4.5, 2], [[[198, 134], [222, 156], [208, 176]], 4, 2]], T.gold, { N: 18 });
+      // les moustaches partent du nez vers le haut, loin de la gueule
+      L([[[[208, 116], [228, 104], [232, 78]], 4.5, 2], [[[200, 110], [212, 92], [208, 72]], 4, 2]], T.gold, { N: 18 });
       raw(`<path d="M216 139 L156 150 L205 169 C182 166 182 150 216 139 Z" fill="${MAW}"/><path d="M162 153 C172 151 180 155 184 161 C176 165 168 164 162 159 Z" fill="#f08a9a"/>`);
-      S('M106 142 C102 108 124 86 150 86 C168 86 180 96 188 106 C198 104 210 110 216 120 C220 128 219 134 215 139 L162 149 L208 170 C200 184 174 190 150 186 L128 196 L130 180 L104 176 L116 160 C110 154 107 148 106 142 Z', T.body, { sh: 11, hl: 7,
+      S('M106 142 C102 108 124 86 150 86 C168 86 180 96 188 106 C198 104 210 110 216 120 C220 128 219 134 215 139 L162 149 L208 170 C200 184 174 190 150 186 C126 186 107 166 106 142 Z', T.body, { sh: 11, hl: 7,
         inner: '<path d="M116 104 L128 92 L136 104 L148 92 L154 104 L166 96 L170 108" stroke="#fff6e0" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M204 112 C209 109 215 113 215 119 C210 122 205 119 204 112 Z" fill="#7a1a16"/><path d="M128 172 C146 184 176 186 200 172" stroke="#e6ac3c" stroke-width="5" fill="none" stroke-linecap="round"/>' });
-      teeth([212, 140], [166, 148.5], 6, 9, 1, '#fff6e0'); teeth([204, 169], [166, 152], 5, -8, 1, '#fff6e0');
+      teeth([210, 141], [168, 148.5], 5, 9, 1, '#fff6e0'); teeth([202, 168], [168, 153], 4, -8, 1, '#fff6e0');
       eye(138, 126, 13, 12, { iris: '#ffe14a', pupil: 'slit', lid: 0.4, tilt: 1, lidC: '#7a1a16' }); eye(168, 122, 10, 10.5, { iris: '#ffe14a', pupil: 'slit', lid: 0.4, tilt: -1, lidC: '#7a1a16' });
     });
   });

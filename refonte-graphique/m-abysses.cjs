@@ -4,22 +4,19 @@
 const { Mo, tone, metal } = require('./mon6.cjs');
 const LUM = '#6ff0ff', LURE = '#ffe27a', MAW = '#1c0f1e';
 
-// 0 · rapide — Poisson-hache : corps en lame d'argent, mâchoire en avant, rangée de lumières sous le ventre
-Mo('abysses', 0, 'Poisson-hache', { scale: 0.9, atk: 'stab', wind: -8, hit: 10, colors: { body: metal('#8fb2c4'), fin: '#2f5f7a' }, grp: { tail: 'back', body: 'torso' }, piv: { back: [62, 146], torso: [106, 150] }, fx: LUM },
-  ({ S, raw, T, G, halo, eye, teeth }) => {
-    for (const [x, y] of [[88, 196], [102, 203], [117, 205], [132, 201]]) halo(x, y, 9, LUM, 0.75);
-    G('tail', () => S('M72 146 L30 112 C40 138 40 158 28 184 L72 156 Z', T.fin, { sh: 5, inner: '<path d="M62 148 L40 126 M62 154 L40 172" stroke="#17323f" stroke-width="2" opacity="0.5"/>' }));
+// 0 · rapide — Poisson-hache : un corps haut et mince comme une lame, un œil énorme, des lumières sous le ventre
+Mo('abysses', 0, 'Poisson-hache', { scale: 0.9, atk: 'stab', wind: -8, hit: 10, colors: { body: metal('#9fc0d0'), fin: '#2f5f7a' }, grp: { tail: 'back', body: 'torso' }, piv: { back: [84, 152], torso: [116, 150] }, fx: LUM },
+  ({ S, raw, T, G, halo, eye }) => {
+    for (const [x, y] of [[98, 196], [110, 208], [124, 212], [138, 206]]) halo(x, y, 9, LUM, 0.75);
+    G('tail', () => S('M88 148 L50 126 L60 152 L48 178 L90 166 Z', T.fin, { sh: 5 }));
     G('body', () => {
-      S('M88 110 L96 70 L112 98 L120 74 L132 104 Z', T.fin, { sh: 3 });
-      // l'intérieur de la gueule, derrière le corps : son bord avant est creusé, il ne ferme pas la bouche
-      raw(`<path d="M168 143 L128 153 L173 158 C158 158 152 150 168 143 Z" fill="${MAW}"/>`);
-      // le corps : la gueule est une vraie encoche dans la silhouette (lèvre du haut → coin → menton en avant)
-      S('M58 148 C66 122 94 104 128 102 C150 101 166 112 170 128 C171 135 170 140 167 144 L134 153 L178 160 C176 170 168 177 158 181 C150 196 136 208 118 210 C98 212 82 200 74 180 C68 168 62 158 58 148 Z', T.body, { sh: 10, hl: 6,
-        inner: '<path d="M66 150 C92 170 118 174 132 156" stroke="#24465c" stroke-width="2.4" fill="none" opacity="0.4"/><path d="M96 152 C92 170 96 190 108 204" stroke="#24465c" stroke-width="2" fill="none" opacity="0.35"/>' });
-      teeth([166, 144], [138, 152], 4, 8, 1); teeth([176, 160], [140, 154], 5, -9, 1);
-      S('M100 152 C90 160 86 174 90 186 C100 180 108 168 110 154 Z', T.fin, { sh: 3 });
-      for (const [x, y] of [[88, 194], [102, 201], [117, 203], [132, 199]]) raw(`<circle cx="${x}" cy="${y}" r="4.4" fill="${LUM}" stroke="#24465c" stroke-width="1.4"/><circle cx="${x - 1}" cy="${y - 1}" r="1.5" fill="#fff"/>`);
-      eye(142, 123, 14, 13, { iris: '#ffe14a', pupil: 'slit', lid: 0.34, tilt: 1, look: [3, 1] });
+      S('M96 104 L98 72 L116 94 L124 70 L138 98 Z', T.fin, { sh: 3 });
+      // la « hache » : dos droit, ventre très profond, petite bouche serrée tournée vers le haut
+      S('M82 138 C84 110 108 94 136 98 C154 100 164 112 164 126 L174 130 L162 142 C162 172 150 206 126 216 C104 218 90 194 84 164 C82 154 81 146 82 138 Z', T.body, { sh: 10, hl: 6,
+        inner: '<path d="M92 150 C108 168 132 170 156 150" stroke="#24465c" stroke-width="2.4" fill="none" opacity="0.4"/><path d="M106 152 C104 174 110 196 122 212" stroke="#24465c" stroke-width="2" fill="none" opacity="0.35"/><path d="M172 131 C164 136 156 138 148 136" stroke="#17323f" stroke-width="2.6" fill="none" stroke-linecap="round"/>' });
+      S('M112 154 C102 162 98 176 102 188 C112 182 120 170 122 156 Z', T.fin, { sh: 3 });
+      for (const [x, y] of [[98, 194], [110, 206], [124, 210], [138, 204]]) raw(`<circle cx="${x}" cy="${y}" r="4.6" fill="${LUM}" stroke="#24465c" stroke-width="1.4"/><circle cx="${x - 1}" cy="${y - 1}" r="1.5" fill="#fff"/>`);
+      eye(138, 120, 15, 14, { iris: '#ffe14a', pupil: 'slit', lid: 0.36, tilt: 1, look: [3, 1] });
     });
   });
 
@@ -74,18 +71,18 @@ Mo('abysses', 3, 'Baudroie à lanterne', { atk: 'cast', fx: LURE, colors: { body
         inner: '<path d="M52 186 C80 206 130 208 166 184 L176 214 L44 214 Z" fill="#6a6f96" opacity="0.7" filter="url(#g3)"/>' });
       teeth([172, 142], [120, 153.5], 6, 13, 1); teeth([170, 173], [120, 157], 6, -12, 1);
       S('M84 168 C70 172 62 184 64 196 C76 192 86 184 92 172 Z', T.fin, { sh: 3 });
-      eye(130, 122, 8.5, 8, { iris: '#bfe9ff', pupilK: 0.4, lid: 0.36, tilt: 1 });
+      eye(130, 122, 9, 8.5, { iris: '#ffe14a', pupilK: 0.45, lid: 0.44, tilt: 1 });
     });
   });
 
 // 4 · élite — Crabe-araignée : petite carapace hérissée perchée sur de longues pattes, pinces dressées
-Mo('abysses', 4, 'Crabe-araignée', { scale: 1.14, atk: 'stab', wind: -34, hit: 30, colors: { shell: '#d8552e', leg: '#e88a4a', dark: '#8a3a22' }, swing: ['claws'], grp: { farLegs: 'legs', legs: 'legs', shell: 'torso', eyes: 'torso', farClaw: 'far' }, piv: { swing: [136, 140], far: [112, 110], torso: [106, 150] } },
+Mo('abysses', 4, 'Crabe-araignée', { scale: 1.14, atk: 'stab', wind: -34, hit: 30, colors: { shell: '#d8552e', leg: '#e88a4a', dark: '#8a3a22' }, swing: ['claws'], grp: { farLegs: 'legs', legs: 'legs', shell: 'torso', eyes: 'torso', farClaw: 'far' }, piv: { swing: [130, 154], far: [112, 110], torso: [106, 150] } },
   ({ S, raw, T, G, eye, limb, disc }) => {
     G('farLegs', () => { for (const p of [[[94, 132], [70, 60], [46, 227]], [[120, 132], [146, 60], [164, 227]]]) S(limb(p, 8, 3.5, 20), T.dark, { sh: 3, far: true }); });
     G('farClaw', () => { S(limb([[112, 112], [124, 80], [112, 58]], 9, 7), T.dark, { sh: 3, far: true }); S(limb([[114, 62], [98, 44], [114, 34]], 12, 3), T.dark, { sh: 3, far: true }); S(limb([[110, 60], [122, 48], [118, 36]], 8, 3), T.dark, { sh: 3, far: true }); });
     G('legs', () => { for (const p of [[[86, 136], [36, 74], [18, 227]], [[94, 142], [62, 110], [56, 227]], [[120, 142], [150, 110], [150, 227]], [[128, 136], [180, 74], [192, 227]]]) S(limb(p, 9, 4, 20), T.leg, { sh: 3 }); });
     // la pince sort de sous le bord de la carapace, loin des yeux
-    G('claws', () => { S(limb([[132, 142], [182, 138], [178, 80]], 11, 9, 18), T.leg, { sh: 3 }); S(limb([[176, 84], [168, 50], [192, 48]], 16, 3), T.shell, { sh: 4 }); S(limb([[182, 84], [198, 68], [196, 52]], 10, 3), T.shell, { sh: 3 }); S(disc(178, 82, 9), T.shell, { sh: 3 }); });
+    G('claws', () => { S(limb([[128, 156], [190, 150], [178, 80]], 11, 9, 18), T.leg, { sh: 3 }); S(limb([[176, 84], [168, 50], [192, 48]], 16, 3), T.shell, { sh: 4 }); S(limb([[182, 84], [198, 68], [196, 52]], 10, 3), T.shell, { sh: 3 }); S(disc(178, 82, 9), T.shell, { sh: 3 }); });
     G('shell', () => S('M68 134 C66 120 72 108 80 102 L72 84 L90 96 C94 94 98 93 102 93 L104 72 L113 93 C119 94 125 97 129 101 L143 85 L138 107 C142 115 144 123 143 132 C141 148 126 160 106 160 C87 160 70 150 68 134 Z', T.shell, { sh: 10, hl: 6,
       inner: '<g fill="#ffd9b0" opacity="0.8"><circle cx="88" cy="114" r="3.6"/><circle cx="102" cy="107" r="3"/><circle cx="94" cy="128" r="2.6"/><circle cx="82" cy="134" r="2.4"/></g><path d="M108 148 l6 5 l6 -5 l6 5" stroke="#5a1c12" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' }));
     G('eyes', () => { eye(112, 126, 9, 9, { iris: '#ffe14a', pupilK: 0.5, lid: 0.36, tilt: 1 }); eye(131, 126, 7, 8, { iris: '#ffe14a', pupilK: 0.5, lid: 0.36, tilt: -1 }); });

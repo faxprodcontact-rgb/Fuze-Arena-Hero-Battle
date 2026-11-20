@@ -15,7 +15,7 @@ Mo('fauves', 0, 'Hyène', { atk: 'slash', wind: -14, hit: 20, colors: { fur: '#b
     G('body', () => S('M40 180 C38 162 52 152 70 148 C88 140 104 128 122 130 C138 132 144 148 142 168 C140 190 118 204 88 204 C60 204 42 196 40 180 Z', T.fur, { sh: 9, hl: 6,
       inner: '<g fill="#5a463c" opacity="0.75"><circle cx="64" cy="166" r="5"/><circle cx="82" cy="156" r="4.4"/><circle cx="76" cy="178" r="4"/><circle cx="98" cy="168" r="4.6"/><circle cx="56" cy="184" r="3.4"/><circle cx="100" cy="150" r="3.6"/></g>' }));
     G('head', () => {
-      S(disc(124, 116, 12), T.fur, { sh: 4, inner: '<circle cx="124" cy="116" r="6" fill="#5a463c"/>' }); S(disc(154, 106, 10), T.dark, { sh: 3 });
+      S('M126 124 C112 112 110 96 118 86 C130 92 138 106 138 120 Z', T.fur, { sh: 4, inner: '<path d="M124 116 C118 108 118 100 120 94 C128 100 132 108 132 116 Z" fill="#5a463c"/>' }); S('M150 114 C148 98 154 86 164 82 C170 94 168 108 162 118 Z', T.dark, { sh: 3 });
       raw(`<path d="M190 158 L148 165 L179 180 C166 177 166 165 190 158 Z" fill="${MAW}"/><path d="M150 168 C158 166 166 169 170 175 C164 178 156 178 150 174 Z" fill="#c8586a"/>`);
       S('M112 150 C110 126 128 112 150 112 C170 112 186 124 190 142 C192 149 192 153 190 157 L152 164 L182 181 C174 191 158 196 142 194 C126 192 112 172 112 150 Z', T.fur, { sh: 9, hl: 6,
         inner: '<path d="M160 144 C172 140 184 142 192 148 L192 158 L154 164 Z" fill="#5a463c" opacity="0.8" filter="url(#g2)"/><path d="M180 136 C185 134 191 138 190 144 C185 146 180 142 180 136 Z" fill="#1c1218"/>' });
@@ -54,9 +54,9 @@ Mo('fauves', 2, 'Serpent cracheur', { atk: 'cast', fx: EMBER, colors: { skin: '#
     G('head', () => {
       S('M112 60 C80 62 62 88 66 120 C70 146 92 164 106 170 L122 170 C140 160 158 144 160 120 C162 88 144 60 112 60 Z', T.skin, { sh: 9, hl: 6,
         inner: '<path d="M96 98 C92 120 98 146 112 164 C128 148 134 124 130 100 Z" fill="#e0b070" opacity="0.85"/><g stroke="#4a4046" stroke-width="2.4" opacity="0.6"><path d="M98 116 L130 114 M100 130 L130 128 M104 144 L126 142"/></g>' + cracks('M76 96 L84 108 L78 120 M148 96 L144 110') });
-      raw(`<path d="M178 102 L140 108 L167 121 C156 118 156 108 178 102 Z" fill="${MAW}"/><path d="M146 111 C156 111 164 114 172 113" stroke="#e0485a" stroke-width="2.4" fill="none" stroke-linecap="round"/>`);
-      S('M100 98 C100 80 116 70 136 72 C154 74 172 84 178 98 L178 101 L144 108 L170 122 C162 130 148 132 134 130 C114 128 100 116 100 98 Z', T.skin, { sh: 8, hl: 5, inner: '<ellipse cx="170" cy="92" rx="2" ry="1.6" fill="#1c1218"/>' });
-      raw(`<path d="M170 103 L168 118 L163 104 Z M158 105 L156 116 L152 106 Z" fill="${IVORY}" stroke="#2a1420" stroke-width="1" stroke-linejoin="round"/>`);
+      raw(`<path d="M184 97 L132 108 L171 125 C152 122 150 110 184 97 Z" fill="${MAW}"/><path d="M140 111 C148 109 156 112 160 117 C154 120 146 119 140 116 Z" fill="#e0485a"/>`);
+      S('M98 98 C98 78 116 66 138 68 C158 70 178 82 185 95 L138 108 L174 127 C166 138 148 140 132 136 C112 132 98 116 98 98 Z', T.skin, { sh: 8, hl: 5, inner: '<ellipse cx="174" cy="88" rx="2" ry="1.6" fill="#1c1218"/>' });
+      raw(`<path d="M178 99 L175 122 L168 101 Z M162 103 L160 119 L154 105 Z" fill="${IVORY}" stroke="#2a1420" stroke-width="1" stroke-linejoin="round"/>`);
       eye(140, 90, 9.5, 8, { iris: '#ff9a2a', pupil: 'slit', lid: 0.42, tilt: 1 });
     });
   });
@@ -76,22 +76,23 @@ Mo('fauves', 3, 'Vautour', { atk: 'cast', fx: EMBER, colors: { feather: '#3a3238
     });
   });
 
-// 4 · élite — Lionne noire : elle rampe vers sa proie, des braises dans le regard
-Mo('fauves', 4, 'Lionne noire', { scale: 1.16, atk: 'slash', wind: -14, hit: 22, colors: { fur: '#3a3238', dark: '#241e24', pale: '#7a6a6c' }, swing: ['head'], grp: { tail: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [116, 172], back: [34, 178], torso: [86, 198] }, shine: [[16, 112, 9, EMBER]], shineGrp: 'back' },
-  ({ S, raw, T, TK, G, L, beast, halo, eye, disc }) => {
-    const legs = beast({ front: 118, hind: 50, top: 192, w: 16, t: 'fur', dark: 'dark', claws: true });
-    halo(16, 112, 14, EMBER, 0.85);
-    G('tail', () => { L([[[[36, 178], [2, 172], [14, 122]], 10, 5]], 'fur', { N: 18 }); S('M8 124 C4 112 12 104 14 94 C22 104 26 114 20 124 C18 128 10 128 8 124 Z', TK('#ff9a2a'), { sh: 2, hl: 3 }); });
+// 4 · élite — Lionne noire : ramassée pour bondir, des braises dans le regard
+Mo('fauves', 4, 'Lionne noire', { scale: 1.2, atk: 'slash', wind: -14, hit: 22, colors: { fur: '#3a3238', dark: '#241e24', pale: '#7a6a6c' }, swing: ['head'], grp: { tail: 'back', farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [124, 184], back: [30, 150], torso: [86, 200] }, shine: [[10, 92, 9, EMBER]], shineGrp: 'back' },
+  ({ S, raw, T, TK, G, L, beast, halo, eye }) => {
+    const legs = beast({ front: 124, hind: 46, top: 194, w: 15, t: 'fur', dark: 'dark', claws: true });
+    halo(10, 92, 14, EMBER, 0.85);
+    G('tail', () => { L([[[[32, 152], [0, 148], [8, 102]], 9, 5]], 'fur', { N: 18 }); S('M2 104 C-2 92 6 84 8 74 C16 84 20 94 14 104 C12 108 4 108 2 104 Z', TK('#ff9a2a'), { sh: 2, hl: 3 }); });
     G('farLegs', () => legs.far());
     G('legs', () => legs.near());
-    G('body', () => S('M30 182 C30 162 50 154 80 154 C110 154 136 160 142 178 C144 196 120 206 86 206 C54 206 32 200 30 182 Z', T.fur, { sh: 9, hl: 6, inner: cracks('M50 172 L64 180 L76 168 L90 178 M104 166 L112 178') }));
+    // l'arrière-train est haut, les épaules au ras du sol
+    G('body', () => S('M24 164 C22 140 44 128 70 132 C100 136 132 158 144 184 C146 200 126 208 94 208 C58 208 26 196 24 164 Z', T.fur, { sh: 9, hl: 6, inner: cracks('M44 150 L58 162 L70 150 L86 166 M104 172 L116 184') }));
     G('head', () => {
-      S(disc(124, 132, 11), T.fur, { sh: 4, inner: '<circle cx="124" cy="132" r="5.5" fill="#7a6a6c"/>' }); S(disc(152, 124, 9.5), T.dark, { sh: 3 });
-      S('M108 164 C106 142 124 128 146 128 C164 128 180 138 186 152 C190 160 189 170 183 177 C173 187 157 192 141 191 C122 190 109 178 108 164 Z', T.fur, { sh: 9, hl: 6,
-        inner: '<path d="M156 162 C168 158 180 160 190 166 L188 182 L150 186 Z" fill="#7a6a6c" opacity="0.7" filter="url(#g2)"/><path d="M178 152 C183 150 189 154 188 160 C183 162 178 158 178 152 Z" fill="#120a0e"/><path d="M186 168 C176 174 164 176 152 174" stroke="#120a0e" stroke-width="2.4" fill="none" stroke-linecap="round"/>' });
-      raw(`<path d="M178 171 L176 184 L171 173 Z M164 175 L163 186 L158 176 Z" fill="${IVORY}" stroke="#120a0e" stroke-width="1" stroke-linejoin="round"/>`);
-      halo(156, 150, 12, EMBER, 0.7);
-      eye(156, 150, 9.5, 7.5, { sclera: '#ffd76a', iris: EMBER, pupil: 'slit', lid: 0.42, tilt: 1 });
+      S('M126 158 L104 138 L134 146 Z', T.fur, { sh: 3 }); S('M150 152 L140 128 L164 148 Z', T.dark, { sh: 3 });
+      S('M116 182 C114 162 130 150 150 150 C166 150 180 156 190 166 C198 172 200 184 194 192 C188 200 176 200 168 204 C150 210 130 208 122 198 C118 194 116 188 116 182 Z', T.fur, { sh: 9, hl: 6,
+        inner: '<path d="M166 178 C178 174 190 178 198 186 L194 200 L160 204 Z" fill="#7a6a6c" opacity="0.7" filter="url(#g2)"/><path d="M186 170 C191 168 197 172 196 178 C191 180 186 176 186 170 Z" fill="#120a0e"/><path d="M194 190 C184 194 174 194 164 190" stroke="#120a0e" stroke-width="2.4" fill="none" stroke-linecap="round"/>' });
+      raw(`<path d="M186 192 L184 204 L179 193 Z M172 193 L171 203 L166 193 Z" fill="${IVORY}" stroke="#120a0e" stroke-width="1" stroke-linejoin="round"/>`);
+      halo(160, 172, 12, EMBER, 0.7);
+      eye(160, 172, 9.5, 7, { sclera: '#ffd76a', iris: EMBER, pupil: 'slit', lid: 0.46, tilt: 1 });
     });
   });
 
@@ -109,7 +110,7 @@ Mo('fauves', 5, 'Buffle de braise', { scale: 1.36, atk: 'smash', wind: -18, hit:
       S(limb([[156, 114], [206, 100], [198, 56]], 17, 3, 18), T.horn, { sh: 4, far: true }); S(limb([[128, 118], [78, 104], [88, 58]], 19, 3, 18), T.horn, { sh: 5, hl: 3 });
       halo(196, 166, 16, EMBER, 0.8);
       S('M112 144 C110 120 128 106 150 108 C168 110 182 122 188 140 C194 154 194 170 186 180 C176 190 160 188 148 192 C134 196 120 188 114 172 C112 162 112 152 112 144 Z', T.fur, { sh: 11, hl: 7,
-        inner: '<path d="M160 160 C172 156 186 160 194 168 L190 186 L152 190 Z" fill="#6a5a5c" opacity="0.8" filter="url(#g2)"/><ellipse cx="184" cy="164" rx="3" ry="2.4" fill="#ffb04a"/><ellipse cx="174" cy="170" rx="2.6" ry="2" fill="#ffb04a"/><path d="M186 178 C178 184 168 185 160 182" stroke="#120a0e" stroke-width="2.4" fill="none" stroke-linecap="round"/>' });
+        inner: '<path d="M160 160 C172 156 186 160 194 168 L190 186 L152 190 Z" fill="#6a5a5c" opacity="0.8" filter="url(#g2)"/><ellipse cx="184" cy="164" rx="3" ry="2.4" fill="#ffb04a"/><ellipse cx="174" cy="170" rx="2.6" ry="2" fill="#ffb04a"/><path d="M186 184 C178 180 168 180 160 184" stroke="#120a0e" stroke-width="2.4" fill="none" stroke-linecap="round"/>' });
       S('M122 118 C136 104 162 104 172 114 C162 124 136 126 122 118 Z', T.horn, { sh: 4, hl: 3 });
       eye(148, 142, 9.5, 8, { sclera: '#ffd76a', iris: EMBER, pupilK: 0.45, lid: 0.46, tilt: 1 });
     });

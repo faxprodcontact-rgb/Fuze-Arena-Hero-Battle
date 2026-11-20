@@ -43,13 +43,14 @@ Mo('idoles', 1, 'Taureau d\'airain', { scale: 1.12, atk: 'smash', wind: -16, hit
   });
 
 // 2 · tireur — Archer de bronze : une statue qui bande son arc sans jamais se lasser
-Mo('idoles', 2, 'Archer de bronze', { atk: 'shoot', fx: HOT, colors: { br: BR, dark: BRD }, swing: ['armN'], far: ['bow'], grp: { base: 'legs', body: 'torso' }, piv: { swing: [92, 126], far: [130, 126], head: [110, 104], torso: [106, 200] } },
+Mo('idoles', 2, 'Archer de bronze', { atk: 'shoot', fx: HOT, colors: { br: BR, dark: BRD }, swing: ['armN', 'bow'], grp: { base: 'legs', body: 'torso' }, piv: { swing: [92, 126], far: [130, 126], head: [110, 104], torso: [106, 200] } },
   ({ S, raw, T, G, L, eye, limb, disc, bar }) => {
-    G('bow', () => { raw('<path d="M158 66 L122 128 L158 190" stroke="#f4d8a0" stroke-width="1.8" fill="none"/>'); S(limb([[158, 64], [196, 128], [158, 192]], 8, 8, 18), T.dark, { sh: 3 }); L([[[[128, 126], [150, 122], [176, 128]], 14, 12]], 'dark', { far: true }); S(disc(178, 128, 8), T.dark, { sh: 3 }); S(bar([118, 128], [196, 128], 3.5), T.br, { sh: 1 }); S('M208 128 L194 120 L194 136 Z', T.br, { sh: 2 }); });
+    G('bow', () => { raw('<path d="M158 66 L122 128 L158 190" stroke="#f4d8a0" stroke-width="1.8" fill="none"/>'); S(limb([[158, 64], [196, 128], [158, 192]], 8, 8, 18), T.dark, { sh: 3 }); S(bar([118, 128], [196, 128], 3.5), T.br, { sh: 1 }); S('M208 128 L194 120 L194 136 Z', T.br, { sh: 2 }); S(disc(122, 128, 8), T.dark, { sh: 3, far: true }); });
     G('base', () => { S('M64 206 L148 206 L156 228 L56 228 Z', T.dark, { sh: 5, inner: seams('M60 216 L152 216') }); L([[[[94, 176], [92, 194], [92, 208]], 17, 16], [[[120, 176], [124, 194], [122, 208]], 17, 16]], 'br'); });
     G('body', () => S('M78 132 C76 114 90 106 108 106 C126 106 140 114 138 132 L132 176 C130 184 86 184 84 176 Z', T.br, { sh: 9, hl: 6,
       inner: seams('M108 110 L108 180 M84 156 L132 156') + `<path d="M92 128 C100 120 116 120 124 128 C120 140 96 140 92 128 Z" fill="${VERD}" opacity="0.6"/>` }));
-    G('armN', () => { L([[[[92, 128], [78, 140], [116, 130]], 15, 12]], 'br'); S(disc(120, 129, 8), T.br, { sh: 3 }); });
+    // le bras tendu tient l'arc par sa poignée
+    G('armN', () => { L([[[[94, 126], [134, 142], [176, 130]], 15, 12]], 'br'); S(disc(178, 129, 9), T.br, { sh: 3 }); });
     G('head', () => {
       S('M88 60 C96 40 124 40 132 60 L128 70 L92 70 Z', T.dark, { sh: 4 }); S('M104 46 L110 24 L116 46 Z', T.br, { sh: 3 });
       S('M86 84 C84 66 96 56 110 56 C124 56 136 66 134 84 C134 100 124 110 110 110 C96 110 86 100 86 84 Z', T.br, { sh: 8, hl: 5, inner: seams('M100 98 C106 102 116 102 122 98') + '<path d="M118 86 l5 6 l-6 1" stroke="#5a3214" stroke-width="2" fill="none" stroke-linecap="round"/>' });

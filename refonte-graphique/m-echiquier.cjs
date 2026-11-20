@@ -15,7 +15,7 @@ Mo('echiquier', 0, 'Cavalier', { scale: 0.98, atk: 'stab', wind: -12, hit: 16, c
     G('body', () => {
       S('M96 96 L74 104 L92 112 L70 124 L90 130 L70 146 L92 148 L78 166 L100 164 Z', T.dark, { sh: 4 });
       S('M84 202 C78 164 86 124 106 98 L100 72 L118 86 C142 84 166 102 176 126 C180 136 174 144 164 142 L142 138 C134 152 136 172 142 202 Z', T.iv, { sh: 10, hl: 7,
-        inner: crack('M112 150 L120 162 L114 174 M146 96 L140 108') + '<path d="M176 132 C168 136 158 136 150 132" stroke="#5a4a34" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="170" cy="124" rx="2.4" ry="3" fill="#5a4a34"/>' });
+        inner: crack('M112 150 L120 162 L114 174 M146 96 L140 108') + '<path d="M176 134 C168 130 158 130 150 134" stroke="#5a4a34" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="170" cy="124" rx="2.4" ry="3" fill="#5a4a34"/>' });
       eye(138, 108, 9.5, 8.5, { sclera: '#3a2a22', iris: RED, pupil: 'none', irisK: 0.5, lid: 0.44, tilt: 1, lidC: '#8a7a5a' });
     });
   });
@@ -53,7 +53,7 @@ Mo('echiquier', 3, 'Fou', { atk: 'cast', heal: true, fx: '#fff3c0', colors: C, g
     G('head', () => {
       S(disc(106, 38, 11), T.gold, { sh: 3, hl: 3 });
       S('M106 46 C128 62 138 86 134 104 C130 118 120 124 106 124 C92 124 82 118 78 104 C74 86 84 62 106 46 Z', T.iv, { sh: 9, hl: 7,
-        inner: '<path d="M112 52 L126 78 L118 82 L106 58 Z" fill="#3a2a22"/>' + glare('M88 96 L102 100 L90 106 Z M126 96 L112 100 L124 106 Z') + '<path d="M98 114 q8 4 16 0" stroke="#5a4a34" stroke-width="2.4" fill="none" stroke-linecap="round"/>' });
+        inner: '<path d="M112 52 L126 78 L118 82 L106 58 Z" fill="#3a2a22"/>' + glare('M88 96 L102 100 L90 106 Z M126 96 L112 100 L124 106 Z') + '<path d="M98 116 q8 -4 16 0" stroke="#5a4a34" stroke-width="2.4" fill="none" stroke-linecap="round"/>' });
     });
   });
 
@@ -73,7 +73,7 @@ Mo('echiquier', 4, 'Dame', { scale: 1.16, atk: 'stab', wind: -20, hit: 24, color
 // 5 · boss — Roi : il se déplace d'une case, mais il écrase tout ce qui s'y trouve
 Mo('echiquier', 5, 'Roi', { scale: 1.36, atk: 'smash', wind: -60, hit: 40, colors: C, swing: ['arm'], far: ['armF'], grp: { base: 'legs', body: 'torso' }, piv: { swing: [80, 134], far: [132, 134], head: [106, 112], torso: [106, 212] } },
   (h) => { const { S, raw, T, G, L, disc, ell, bar } = h;
-    G('armF', () => { L([[[[132, 136], [158, 150], [164, 172]], 16, 14]], 'dark', { far: true }); S(disc(164, 176, 10), T.dark, { sh: 3, far: true }); });
+    G('armF', () => { L([[[[132, 136], [158, 150], [164, 172]], 16, 14]], 'iv', { far: true }); S(disc(164, 176, 10), T.iv, { sh: 3, far: true }); });
     G('base', () => base(h, 44, 168));
     G('arm', () => { S(bar([52, 118], [44, 40], 6), T.gold, { sh: 2 }); S('M26 22 L62 18 L64 46 L28 50 Z', T.gold, { sh: 5, hl: 4, inner: '<path d="M34 28 L56 26 L58 40 L36 42 Z" fill="none" stroke="#8a5a1c" stroke-width="2"/>' }); L([[[[80, 136], [50, 142], [50, 116]], 18, 16]], 'iv'); S(disc(50, 112, 11), T.iv, { sh: 4 }); });
     G('body', () => { S('M68 202 C84 180 90 158 88 130 L124 130 C122 158 128 180 144 202 Z', T.iv, { sh: 11, hl: 7, inner: crack('M100 160 L110 174 L102 188 M124 150 L130 164') + '<path d="M96 138 L116 138 L112 196 L100 196 Z" fill="#d8a83a" opacity="0.5"/>' }); S(ell(106, 130, 34, 9), T.iv, { sh: 3, inner: '<path d="M74 130 L138 130" stroke="#d8a83a" stroke-width="5"/>' }); });

@@ -15,7 +15,7 @@ Mo('ruche', 0, 'Ouvrière', { scale: 0.86, atk: 'stab', wind: -10, hit: 14, colo
     G('body', () => S('M48 164 C46 144 62 132 84 134 C100 136 112 146 114 160 C114 176 98 184 80 184 C62 184 50 178 48 164 Z', T.y, { sh: 8, hl: 6, inner: stripes(['M62 134 C58 150 60 170 66 186 L78 186 C72 170 72 150 76 134 Z', 'M88 134 C86 150 88 170 94 186 L106 186 C102 170 100 150 102 134 Z']) }));
     G('head', () => {
       L([[[[130, 112], [134, 92], [148, 86]], 3.5, 3], [[[144, 112], [154, 96], [166, 96]], 3.5, 3]], 'k');
-      S('M106 138 C104 120 118 108 136 110 C152 112 162 124 160 140 C158 156 144 164 130 162 C116 160 108 152 106 138 Z', T.y, { sh: 8, hl: 6, inner: '<path d="M140 150 l6 6 M148 148 l6 5" stroke="#2a2226" stroke-width="2.6" stroke-linecap="round"/>' });
+      S('M106 138 C104 120 118 108 136 110 C152 112 162 124 160 140 C158 156 144 164 130 162 C116 160 108 152 106 138 Z', T.y, { sh: 8, hl: 6 });
       eye(138, 132, 11, 12, { sclera: '#2a2226', iris: '#fff', pupil: 'none', irisK: 0.42, lid: 0.3, tilt: 1, look: [3, -3], lidC: '#a8700a' });
     });
   });
@@ -36,20 +36,20 @@ Mo('ruche', 1, 'Soldat à dard', { scale: 1.1, atk: 'smash', wind: -16, hit: 22,
     });
   });
 
-// 2 · tireur — Cracheuse de cire : elle vise avec son abdomen gonflé de cire brûlante
-Mo('ruche', 2, 'Cracheuse de cire', { scale: 0.96, atk: 'cast', fx: HONEY, colors: { y: Y, k: K, wax: '#ffd76a' }, grp: { wings: 'back', legs: 'torso', body: 'torso' }, piv: { back: [84, 120], head: [78, 124], torso: [106, 150] }, shine: [[176, 170, 11, HONEY]] },
-  (h) => { const { S, raw, T, G, L, halo, eye } = h;
-    halo(176, 170, 16, HONEY, 0.8);
-    G('wings', () => wings(h, 86, 120));
-    G('legs', () => L([[[[84, 156], [76, 172], [84, 182]], 5, 3], [[[98, 160], [98, 176], [106, 184]], 5, 3]], 'k'));
-    G('body', () => {
-      S('M96 150 C100 130 126 124 148 134 C166 142 178 156 180 170 C170 186 142 190 120 182 C104 176 94 164 96 150 Z', T.y, { sh: 9, hl: 6, inner: stripes(['M116 128 C112 146 114 168 122 184 L134 186 C126 168 126 146 130 128 Z', 'M142 132 C140 148 142 168 150 186 L162 184 C154 166 154 148 156 138 Z']) });
-      S('M170 160 C180 158 188 164 188 172 C186 180 176 182 170 178 Z', T.wax, { sh: 3, hl: 3 });
-    });
+// 2 · tireur — Cracheuse de cire : l'abdomen recourbé vers l'avant, gonflé de cire brûlante
+Mo('ruche', 2, 'Cracheuse de cire', { scale: 0.98, atk: 'cast', fx: HONEY, colors: { y: Y, k: K, wax: '#ffd76a', pale: '#f6e0a0' }, swing: ['abdomen'], grp: { wings: 'back', legs: 'torso', body: 'torso' }, piv: { swing: [92, 158], back: [92, 122], head: [128, 126], torso: [106, 150] }, shine: [[172, 186, 11, HONEY]], shineGrp: 'swing' },
+  (h) => { const { S, raw, T, G, L, halo, eye, limb } = h;
+    halo(172, 186, 16, HONEY, 0.8);
+    G('wings', () => wings(h, 92, 122));
+    // l'abdomen passe sous le corps et pointe vers l'ennemi, une poche de cire au bout
+    G('abdomen', () => { S(limb([[88, 150], [84, 208], [158, 192]], 30, 34, 18), T.pale, { sh: 8, hl: 6, inner: stripes(['M72 172 L104 180 L100 192 L70 186 Z', 'M96 200 L126 190 L130 204 L102 214 Z']) }); S('M152 176 C168 172 182 180 182 190 C180 200 166 204 154 200 Z', T.wax, { sh: 3, hl: 3 }); });
+    G('legs', () => L([[[[102, 152], [112, 168], [124, 172]], 5, 3], [[[114, 148], [128, 160], [140, 160]], 5, 3]], 'k'));
+    G('body', () => S('M70 142 C68 124 82 114 98 114 C114 114 126 124 124 142 C122 156 110 164 96 164 C82 164 72 156 70 142 Z', T.y, { sh: 8, hl: 6, inner: stripes(['M84 116 C80 130 82 150 88 164 L100 164 C94 150 94 130 98 114 Z']) }));
     G('head', () => {
-      L([[[[72, 104], [62, 86], [48, 84]], 3.5, 3], [[[86, 102], [84, 82], [72, 74]], 3.5, 3]], 'k');
-      S('M52 128 C50 110 64 98 82 100 C98 102 108 114 106 130 C104 146 90 154 76 152 C62 150 54 142 52 128 Z', T.y, { sh: 8, hl: 6, inner: '<path d="M84 142 q6 4 12 -2" stroke="#2a2226" stroke-width="2.6" fill="none" stroke-linecap="round"/>' });
-      eye(86, 124, 10.5, 11.5, { sclera: '#2a2226', iris: '#fff', pupil: 'none', irisK: 0.42, lid: 0.4, tilt: 1, look: [3, -2], lidC: '#a8700a' });
+      L([[[[130, 100], [134, 80], [148, 74]], 3.5, 3], [[[144, 100], [156, 84], [168, 86]], 3.5, 3]], 'k');
+      S('M142 146 L158 156 L150 140 Z', T.k, { sh: 2 });
+      S('M108 126 C106 108 120 96 138 98 C154 100 164 112 162 128 C160 144 146 152 132 150 C118 148 110 140 108 126 Z', T.y, { sh: 8, hl: 6 });
+      eye(140, 120, 10.5, 11, { sclera: '#2a2226', iris: '#fff', pupil: 'none', irisK: 0.42, lid: 0.46, tilt: 1, look: [3, -2], lidC: '#a8700a' });
     });
   });
 
@@ -96,7 +96,7 @@ Mo('ruche', 5, 'Reine', { scale: 1.34, atk: 'smash', wind: -50, hit: 40, fx: HON
     G('body', () => { S('M92 142 C90 120 104 110 120 110 C136 110 148 122 146 142 C144 160 132 170 118 170 C104 170 94 158 92 142 Z', T.k, { sh: 8, hl: 5 }); S('M90 116 L96 130 L104 118 L112 132 L120 118 L128 132 L136 118 L144 130 L150 116 C136 104 104 104 90 116 Z', T.fur, { sh: 4 }); });
     G('head', () => {
       L([[[[112, 62], [106, 44], [94, 40]], 4, 3], [[[134, 62], [146, 46], [158, 48]], 4, 3]], 'k');
-      S('M94 90 C92 70 106 60 122 60 C138 60 152 70 150 90 C148 106 136 116 122 116 C108 116 96 106 94 90 Z', T.y, { sh: 8, hl: 6, inner: '<path d="M126 104 q8 4 14 -2" stroke="#2a2226" stroke-width="2.6" fill="none" stroke-linecap="round"/>' });
+      S('M94 90 C92 70 106 60 122 60 C138 60 152 70 150 90 C148 106 136 116 122 116 C108 116 96 106 94 90 Z', T.y, { sh: 8, hl: 6, inner: '<path d="M126 106 q8 -4 14 0" stroke="#2a2226" stroke-width="2.6" fill="none" stroke-linecap="round"/>' });
       S('M102 64 L100 42 L112 54 L122 36 L132 54 L144 42 L142 64 Z', T.gold, { sh: 4, hl: 3, inner: '<circle cx="122" cy="52" r="3.5" fill="#d8382e"/>' });
       eye(130, 86, 11.5, 11, { sclera: '#2a2226', iris: '#ff5ad8', pupil: 'none', irisK: 0.42, lid: 0.42, tilt: 1, look: [3, -2], lidC: '#a8700a' });
     });

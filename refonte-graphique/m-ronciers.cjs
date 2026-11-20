@@ -53,7 +53,7 @@ Mo('ronciers', 2, 'Porc-épic d\'épines', { atk: 'shoot', colors: { bark: BARK,
     G('head', () => {
       S('M112 190 C110 172 126 162 144 164 C160 166 176 176 190 190 C194 196 192 202 186 202 C170 208 150 210 134 206 C120 202 113 198 112 190 Z', T.dark, { sh: 8, hl: 5,
         inner: '<path d="M182 190 C187 189 192 193 191 198 C186 200 182 196 182 190 Z" fill="#1c120a"/><path d="M184 203 C174 206 164 206 154 204" stroke="#1c120a" stroke-width="2.2" fill="none" stroke-linecap="round"/>' });
-      eye(148, 184, 8, 7, { sclera: '#f4ffd8', iris: LEAF, pupilK: 0.5, lid: 0.5, tilt: 1 });
+      eye(148, 184, 8.5, 7.5, { sclera: '#f4ffd8', iris: FALL, pupilK: 0.45, lid: 0.44, tilt: 1 });
     });
   });
 
@@ -62,7 +62,7 @@ Mo('ronciers', 3, 'Phalène d\'écorce', { atk: 'cast', fx: GLOW, colors: { wing
   ({ S, raw, T, G, L, halo, eye }) => {
     const spot = (x, y) => `<circle cx="${x}" cy="${y}" r="15" fill="#2e1e12"/><circle cx="${x}" cy="${y}" r="10" fill="${GLOW}"/><circle cx="${x}" cy="${y}" r="5" fill="#1c120a"/>`;
     halo(58, 104, 18, GLOW, 0.7); halo(160, 104, 16, GLOW, 0.6);
-    G('wingF', () => S('M116 128 C134 80 176 64 204 82 C204 116 186 140 160 146 C176 160 172 190 150 198 C132 190 120 162 116 138 Z', T.dark, { sh: 8, far: true, inner: spot(160, 106) }));
+    G('wingF', () => S('M116 128 C134 80 176 64 204 82 C204 116 186 140 160 146 C176 160 172 190 150 198 C132 190 120 162 116 138 Z', T.wing, { sh: 8, far: true, inner: spot(160, 106) + grain(['M124 130 C146 108 172 96 196 92', 'M122 142 C136 160 146 178 150 192']) }));
     G('wingN', () => S('M100 128 C82 80 40 64 12 82 C12 116 30 140 56 146 C40 160 44 190 66 198 C84 190 96 162 100 138 Z', T.wing, { sh: 9, hl: 6, inner: spot(58, 106) + grain(['M92 130 C70 108 44 96 20 92', 'M94 142 C80 160 70 178 66 192', 'M84 150 C66 146 44 136 26 118']) }));
     G('body', () => {
       L([[[[100, 96], [84, 74], [66, 72]], 4, 2.5], [[[116, 96], [132, 74], [150, 72]], 4, 2.5]], 'dark');
@@ -79,9 +79,9 @@ Mo('ronciers', 4, 'Mante-brindille', { scale: 1.2, atk: 'slash', wind: -44, hit:
     G('farLegs', () => L([[[[84, 160], [56, 176], [44, 226]], 6, 4], [[[104, 158], [130, 180], [138, 226]], 6, 4]], 'dark', { far: true, N: 16 }));
     G('abdomen', () => S(limb([[98, 150], [58, 170], [22, 148]], 22, 6, 18), T.twig, { sh: 6, inner: '<path d="M82 156 l-4 10 M66 162 l-4 10 M50 160 l-4 8" stroke="#4e5a22" stroke-width="2.4" stroke-linecap="round" opacity="0.7"/>' }));
     G('legs', () => L([[[[90, 162], [66, 184], [60, 226]], 7, 4], [[[106, 160], [118, 188], [122, 226]], 7, 4]], 'twig', { N: 16 }));
-    G('body', () => S(limb([[98, 160], [102, 130], [122, 100]], 20, 16, 16), T.twig, { sh: 7, inner: '<path d="M104 150 L108 124" stroke="#4e5a22" stroke-width="2.4" stroke-linecap="round" opacity="0.6"/>' }));
     // les bras-faux partent de sous le thorax
     G('armN', () => { L([[[[116, 112], [140, 128], [160, 106]], 9, 7]], 'twig'); S(limb([[158, 110], [184, 82], [206, 106]], 13, 2, 16), T.blade, { sh: 3, hl: 3, inner: '<path d="M168 100 l4 6 M178 92 l4 6 M188 90 l3 6" stroke="#4e5a22" stroke-width="1.8" stroke-linecap="round"/>' }); });
+    G('body', () => S(limb([[98, 160], [102, 130], [122, 100]], 20, 16, 16), T.twig, { sh: 7, inner: '<path d="M104 150 L108 124" stroke="#4e5a22" stroke-width="2.4" stroke-linecap="round" opacity="0.6"/>' }));
     G('head', () => {
       L([[[[116, 70], [108, 48], [96, 40]], 3.5, 2.5], [[[130, 68], [136, 46], [148, 40]], 3.5, 2.5]], 'dark');
       S('M100 78 C98 66 110 60 124 60 C138 60 150 66 148 78 C146 90 134 104 124 106 C114 104 102 90 100 78 Z', T.twig, { sh: 7, hl: 5, inner: '<path d="M118 96 l6 6 l6 -6" stroke="#2e3410" stroke-width="2.2" fill="none" stroke-linejoin="round" stroke-linecap="round"/>' });

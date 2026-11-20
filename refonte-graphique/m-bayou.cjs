@@ -18,8 +18,8 @@ Mo('bayou', 0, 'Lézard basilic', { scale: 0.96, atk: 'stab', wind: -10, hit: 14
     G('head', () => {
       S('M116 100 C108 72 128 52 150 60 C142 70 140 82 144 92 Z', T.crest, { sh: 4 });
       S('M110 120 C108 98 126 86 148 88 C168 90 184 102 188 116 C190 124 186 130 180 132 C170 142 154 146 140 144 C122 142 112 134 110 120 Z', T.skin, { sh: 9, hl: 6,
-        inner: '<path d="M184 128 C172 132 158 134 146 132" stroke="#1f4a30" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M144 144 C160 146 176 140 186 128 L190 150 L140 150 Z" fill="#e6e8a0" opacity="0.8" filter="url(#g2)"/><ellipse cx="182" cy="114" rx="2.2" ry="1.7" fill="#1f4a30"/>' });
-      eye(154, 108, 11, 10, { iris: '#ffb020', pupil: 'slit', lid: 0.4, tilt: 1 });
+        inner: '<path d="M186 126 C174 126 160 128 148 134" stroke="#1f4a30" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M176 127 l2 6 l3 -6 M164 129 l2 6 l3 -6" stroke="#f4f0d8" stroke-width="2" fill="none" stroke-linejoin="round"/><path d="M144 144 C160 146 176 140 186 128 L190 150 L140 150 Z" fill="#e6e8a0" opacity="0.8" filter="url(#g2)"/><ellipse cx="182" cy="114" rx="2.2" ry="1.7" fill="#1f4a30"/>' });
+      eye(154, 108, 11, 9.5, { iris: '#ffb020', pupil: 'slit', lid: 0.5, tilt: 1 });
     });
   });
 
@@ -68,7 +68,7 @@ Mo('bayou', 3, 'Feu follet', { atk: 'cast', fx: WISP, colors: { flame: '#3fd0a8'
     G('body', () => {
       S('M106 62 C114 84 126 92 134 104 C138 96 138 88 136 82 C150 100 146 122 142 136 C146 160 130 190 106 190 C82 190 66 164 70 138 C72 118 82 110 88 96 C92 104 96 108 98 100 C100 88 104 76 106 62 Z', T.flame, { sh: 10, hl: 7, so: 0.7,
         inner: '<path d="M106 110 C120 126 126 144 122 160 C118 176 94 176 90 160 C86 144 94 128 106 110 Z" fill="#c8fff0" opacity="0.8" filter="url(#g3)"/>' });
-      raw('<path d="M88 134 L104 142 L90 148 Z M124 134 L110 142 L122 148 Z" fill="#0f3a34"/><path d="M98 160 C102 156 110 156 114 160 C110 166 102 166 98 160 Z" fill="#0f3a34"/>');
+      raw('<ellipse cx="95" cy="140" rx="7" ry="10" fill="#0f3a34" transform="rotate(14 95 140)"/><ellipse cx="118" cy="140" rx="7" ry="10" fill="#0f3a34" transform="rotate(-14 118 140)"/><path d="M94 164 l5 -5 l5 5 l5 -5 l5 5 l5 -5" stroke="#0f3a34" stroke-width="3" fill="none" stroke-linejoin="round" stroke-linecap="round"/>');
     });
   });
 
@@ -76,9 +76,9 @@ Mo('bayou', 3, 'Feu follet', { atk: 'cast', fx: WISP, colors: { flame: '#3fd0a8'
 Mo('bayou', 4, 'Silure géant', { scale: 1.16, atk: 'smash', wind: -12, hit: 18, colors: { skin: '#5a6444', dark: '#3e4830', belly: '#d8d4a8' }, swing: ['barb'], grp: { tail: 'back', fin: 'legs', body: 'torso' }, piv: { swing: [172, 168], back: [40, 182], torso: [106, 200] } },
   ({ S, raw, T, G, L, eye, teeth }) => {
     G('tail', () => S('M46 178 L10 150 C20 172 20 190 8 212 L48 196 Z', T.dark, { sh: 5 }));
-    G('fin', () => { S('M116 200 C104 206 98 218 102 227 L138 227 C136 216 128 206 116 200 Z', T.dark, { sh: 3 }); S('M70 204 C62 210 60 220 64 227 L90 227 C88 218 80 208 70 204 Z', T.dark, { sh: 3, far: true }); });
+    G('fin', () => { S('M124 204 C112 208 98 218 92 228 C108 228 124 222 136 210 Z', T.dark, { sh: 3 }); S('M78 206 C68 210 58 218 54 228 C68 228 80 222 88 212 Z', T.dark, { sh: 3, far: true }); });
     // les barbillons partent de sous la lèvre
-    G('barb', () => { L([[[[170, 172], [206, 148], [210, 196]], 4.5, 1.6], [[[160, 170], [186, 126], [204, 140]], 4, 1.6]], 'dark', { N: 18 }); });
+    G('barb', () => { L([[[[172, 160], [202, 136], [216, 150]], 4.5, 1.6], [[[160, 154], [176, 120], [196, 116]], 4, 1.6]], 'dark', { N: 18 }); });
     G('body', () => {
       S('M84 150 L92 126 L112 146 Z', T.dark, { sh: 3 });
       raw(`<path d="M190 178 L134 186 L181 197 C164 194 164 186 190 178 Z" fill="${MAW}"/><path d="M144 186 C150 184 158 186 162 190 C156 193 148 193 144 190 Z" fill="#b8485a"/>`);

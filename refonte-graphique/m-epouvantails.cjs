@@ -52,7 +52,7 @@ Mo('epouvantails', 3, 'Carillon', { atk: 'cast', heal: true, fx: WIND, colors: {
     G('tubes', () => { for (const [x, l] of [[76, 158], [92, 178], [120, 184], [136, 162]]) { raw(`<path d="M${x} 108 L${x} 120" stroke="#2a1c14" stroke-width="1.6"/>`); S(bar([x, 118], [x, l], 10), T.tube, { sh: 3, hl: 2 }); } });
     G('strip', () => { raw('<path d="M106 108 L106 150" stroke="#2a1c14" stroke-width="1.6"/>'); S(disc(106, 154, 9), T.wood, { sh: 3 }); S('M98 164 L114 164 L118 208 L108 200 L96 212 Z', T.paper, { sh: 3, inner: '<path d="M106 172 L107 196" stroke="#d8382e" stroke-width="3" stroke-linecap="round"/>' }); });
     G('body', () => {
-      S('M98 56 C98 46 114 46 114 56 Z', T.wood, { sh: 2 });
+      raw('<path d="M106 46 C106 30 120 30 120 40" stroke="#7a5230" stroke-width="4" fill="none" stroke-linecap="round"/>'); S('M98 58 C98 46 114 46 114 58 Z', T.wood, { sh: 2 });
       S('M54 92 C70 58 142 58 158 92 C150 100 142 96 138 112 L74 112 C70 96 62 100 54 92 Z', T.roof, { sh: 9, hl: 6,
         inner: '<path d="M70 96 L142 96 L138 114 L74 114 Z" fill="#12222a"/>' + '<path d="M82 100 L98 104 L84 110 Z M130 100 L114 104 L128 110 Z" fill="#ffe14a"/><path d="M66 84 C84 70 128 70 146 84" stroke="#dffff0" stroke-width="4" fill="none" opacity="0.5" stroke-linecap="round"/>' });
     });
@@ -64,7 +64,7 @@ Mo('epouvantails', 4, 'Faucheur de paille', { scale: 1.18, atk: 'slash', wind: -
     G('body', () => S('M60 170 C56 132 76 110 104 110 C132 110 150 132 148 168 L156 224 L140 212 L132 228 L120 214 L108 228 L96 214 L84 228 L76 212 L58 224 Z', T.straw, { sh: 11, hl: 7,
       inner: hay('M76 140 L72 200 M92 132 L90 210 M108 130 L108 214 M124 132 L128 210 M140 142 L144 200') + '<path d="M62 170 C90 180 124 180 148 168 L149 178 C124 190 90 190 62 180 Z" fill="#7a5230"/>' }));
     // la faux et le bras qui la tient partent de sous la capuche
-    G('scythe', () => { S(bar([150, 224], [168, 46], 6), T.wood, { sh: 2 }); S(limb([[166, 50], [204, 52], [216, 98]], 16, 2, 18), T.steel, { sh: 3, hl: 3 }); L([[[[90, 132], [124, 156], [156, 146]], 18, 16]], 'straw', { inner: hay('M104 142 L140 150') }); S(disc(158, 146, 10), T.straw, { sh: 3 }); });
+    G('scythe', () => { S(bar([150, 224], [168, 46], 6), T.wood, { sh: 2 }); S(limb([[166, 50], [204, 52], [216, 98]], 16, 2, 18), T.steel, { sh: 3, hl: 3 }); L([[[[94, 118], [124, 156], [156, 146]], 18, 16]], 'straw', { inner: hay('M110 140 L140 150') }); S(disc(158, 146, 10), T.straw, { sh: 3 }); });
     G('head', () => {
       S('M72 102 C66 70 86 52 108 52 C132 52 150 70 144 102 C140 120 126 128 108 128 C90 128 76 120 72 102 Z', T.jute, { sh: 9, hl: 6,
         inner: '<path d="M90 98 C88 80 100 70 114 70 C128 70 138 80 136 98 C134 110 124 116 112 116 C100 116 92 110 90 98 Z" fill="#1c140e"/><path d="M98 90 L112 96 L100 102 Z M134 90 L120 96 L132 102 Z" fill="#ffe14a"/><path d="M98 90 L112 96 L100 102 Z M134 90 L120 96 L132 102 Z" fill="#ffe14a" opacity="0.6" filter="url(#g2)"/>' });
@@ -74,12 +74,12 @@ Mo('epouvantails', 4, 'Faucheur de paille', { scale: 1.18, atk: 'slash', wind: -
 
 // 5 · boss — Grand Moulin : il s'est arraché à sa colline, ses ailes fauchent tout
 Mo('epouvantails', 5, 'Grand Moulin', { scale: 1.34, atk: 'smash', wind: -70, hit: 110, colors: { stone: '#c8b89a', roof: TEAL, wood: WOOD, sail: '#f4efe2' }, swing: ['sails'], grp: { feet: 'legs', body: 'torso' }, piv: { swing: [106, 112], torso: [106, 214] } },
-  ({ S, raw, T, G, teeth, bar, ell, disc, poly }) => {
+  ({ S, raw, T, G, teeth, eye, bar, ell, disc, poly }) => {
     const R = (x, y, a) => { const c = Math.cos(a * Math.PI / 180), s = Math.sin(a * Math.PI / 180); return [106 + x * c - y * s, 112 + x * s + y * c]; };
     G('feet', () => { S(ell(80, 221, 20, 8), T.stone, { sh: 3 }); S(ell(132, 221, 20, 8), T.stone, { sh: 3 }); });
     G('body', () => {
       S('M70 112 C72 96 140 96 142 112 L156 216 L56 216 Z', T.stone, { sh: 11, hl: 7,
-        inner: '<g stroke="#8a7a60" stroke-width="2.2" opacity="0.6" fill="none"><path d="M68 134 L144 134 M64 160 L148 160 M60 188 L152 188 M92 134 L90 160 M122 134 L124 160 M106 160 L106 188"/></g><path d="M90 216 L90 190 C90 174 122 174 122 190 L122 216 Z" fill="#1c140e"/><path d="M90 158 L106 164 L92 172 Z M132 156 L116 163 L130 170 Z" fill="#ffe14a"/>' });
+        inner: '<g stroke="#8a7a60" stroke-width="2.2" opacity="0.6" fill="none"><path d="M68 134 L144 134 M64 160 L148 160 M60 188 L152 188 M92 134 L90 160 M122 134 L124 160 M106 160 L106 188"/></g><path d="M90 216 L90 190 C90 174 122 174 122 190 L122 216 Z" fill="#1c140e"/>' });
       teeth([92, 190], [120, 190], 4, 9, 1, '#e8dcc0');
       S('M62 114 C74 72 138 72 150 114 Z', T.roof, { sh: 8, hl: 5, inner: '<path d="M74 104 C90 86 122 86 138 104" stroke="#dffff0" stroke-width="4" fill="none" opacity="0.4" stroke-linecap="round"/>' });
     });
@@ -88,6 +88,7 @@ Mo('epouvantails', 5, 'Grand Moulin', { scale: 1.34, atk: 'smash', wind: -70, hi
         S(poly([R(14, -4, a), R(88, -4, a), R(88, -28, a), R(14, -28, a)]), T.sail, { sh: 4, inner: `<g stroke="#7a5230" stroke-width="2" opacity="0.7">${[32, 50, 68].map((x) => `<path d="M${R(x, -4, a).map((v) => v.toFixed(1)).join(' ')} L${R(x, -28, a).map((v) => v.toFixed(1)).join(' ')}"/>`).join('')}<path d="M${R(14, -16, a).map((v) => v.toFixed(1)).join(' ')} L${R(88, -16, a).map((v) => v.toFixed(1)).join(' ')}"/></g>` });
         S(bar(R(0, 0, a), R(92, 0, a), 6), T.wood, { sh: 2 });
       }
-      S(disc(106, 112, 11), T.wood, { sh: 4, inner: '<circle cx="106" cy="112" r="4" fill="#2a1c14"/>' });
+      // le moyeu est son œil unique : rien ne passe jamais devant
+      S(disc(106, 112, 19), T.wood, { sh: 4 }); eye(106, 112, 13, 13, { iris: '#ffe14a', pupil: 'slit', lid: 0.36, tilt: 0.6 });
     });
   });

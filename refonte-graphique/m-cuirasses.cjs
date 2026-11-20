@@ -30,7 +30,7 @@ Mo('cuirasses', 1, 'Scarabée-rhinocéros', { scale: 1.1, atk: 'smash', wind: -2
     // la tête et la corne partent de sous le pronotum
     G('head', () => {
       S(limb([[156, 160], [196, 150], [190, 96]], 20, 9, 18), T.shell, { sh: 5, hl: 4 }); S('M184 104 L170 82 L190 92 L196 70 L206 100 Z', T.shell, { sh: 4, hl: 3 });
-      S('M128 172 C128 154 142 146 158 150 C172 154 180 166 178 180 C176 190 164 196 150 194 C136 192 128 184 128 172 Z', T.dark, { sh: 6, hl: 4, inner: '<path d="M168 184 l8 8 M158 190 l4 10" stroke="#120a0e" stroke-width="3" stroke-linecap="round"/>' });
+      S('M128 172 C128 154 142 146 158 150 C172 154 180 166 178 180 C176 190 164 196 150 194 C136 192 128 184 128 172 Z', T.dark, { sh: 6, hl: 4 });
       eye(160, 168, 7.5, 7, { iris: '#ffb020', pupilK: 0.5, lid: 0.46, tilt: 1 });
     });
     G('shell', () => { S('M34 188 C30 150 54 124 88 122 C112 122 128 136 132 160 C134 176 130 188 124 196 C100 202 60 202 34 188 Z', T.shell, { sh: 11, hl: 8, inner: '<path d="M84 122 C80 150 80 178 86 200" stroke="#2e1c14" stroke-width="3" fill="none"/><path d="M48 150 C56 136 72 130 84 130" stroke="#f4d8a0" stroke-width="6" fill="none" opacity="0.5" stroke-linecap="round"/>' }); S('M112 132 C132 128 148 140 150 158 C150 172 142 182 130 186 C122 172 116 152 112 132 Z', T.shell, { sh: 6, hl: 5 }); });
@@ -44,12 +44,12 @@ Mo('cuirasses', 2, 'Pangolin lanceur', { atk: 'shoot', colors: { scale: '#a87a4a
     G('farLeg', () => { L([[[[110, 196], [120, 212], [116, 222]], 14, 12]], 'dark', { far: true }); S(ell(122, 224, 12, 5), T.dark, { sh: 2, far: true }); });
     G('leg', () => { L([[[[90, 198], [84, 212], [88, 222]], 15, 13]], 'scale'); S(ell(92, 224, 13, 5), T.scale, { sh: 2 }); });
     // le bras levé tient une écaille, prêt à la lancer ; il part de sous l'épaule
-    G('arm', () => { S('M52 82 L70 76 L72 102 L56 100 Z', T.scale, { sh: 3, hl: 3 }); L([[[[100, 142], [74, 130], [64, 104]], 12, 10]], 'skin'); });
+    G('arm', () => { S('M62 108 C48 96 46 76 58 60 C72 72 76 92 70 108 Z', T.scale, { sh: 3, hl: 3, inner: '<path d="M60 100 L59 70" stroke="#5a3e22" stroke-width="2" opacity="0.6"/>' }); L([[[[100, 142], [74, 130], [64, 104]], 12, 10]], 'skin'); });
     G('body', () => S('M70 170 C66 140 82 122 102 122 C122 122 136 138 134 166 C132 192 120 208 102 208 C84 208 72 194 70 170 Z', T.scale, { sh: 10, hl: 6,
       inner: '<path d="M108 136 C124 140 132 156 130 172 C128 190 118 202 108 204 C104 184 104 158 108 136 Z" fill="#e0c0a0"/>' + sc([[68, 140, 3], [62, 154, 3], [62, 168, 3], [66, 182, 3], [72, 196, 2]]) }));
     G('head', () => {
-      S('M100 128 C96 108 108 94 126 94 C142 94 156 102 170 114 C178 120 180 128 174 132 C160 136 144 140 128 140 C112 140 102 136 100 128 Z', T.skin, { sh: 7, hl: 5,
-        inner: '<path d="M98 124 C96 106 108 94 126 94 C136 94 144 98 150 104 C136 104 118 112 108 128 Z" fill="#a87a4a"/><ellipse cx="174" cy="124" rx="2.6" ry="2.2" fill="#3a2416"/>' });
+      S('M100 128 C96 108 108 94 126 94 C144 94 164 104 186 120 C192 124 192 130 186 132 C168 136 146 140 128 140 C112 140 102 136 100 128 Z', T.skin, { sh: 7, hl: 5,
+        inner: '<path d="M96 126 C96 106 108 92 126 92 C142 92 156 100 168 110 C150 112 126 116 106 132 Z" fill="#a87a4a"/><g fill="none" stroke="#5a3e22" stroke-width="2" opacity="0.7"><path d="M106 108 q7 8 14 0 M122 100 q7 8 14 0 M138 102 q7 8 14 0"/></g><ellipse cx="186" cy="124" rx="2.6" ry="2.2" fill="#3a2416"/><path d="M184 132 C174 134 164 134 154 132" stroke="#3a2416" stroke-width="2" fill="none" stroke-linecap="round"/>' });
       eye(140, 116, 7.5, 7, { iris: '#ffb020', pupilK: 0.5, lid: 0.5, tilt: 1 });
     });
   });
@@ -85,26 +85,26 @@ Mo('cuirasses', 4, 'Tricératops', { scale: 1.2, atk: 'smash', wind: -18, hit: 2
       S('M110 176 C92 160 86 126 100 104 L96 88 L110 96 L116 78 L128 92 L140 78 L146 96 C150 110 148 130 140 150 Z', T.frill, { sh: 7, hl: 5, inner: '<g fill="#8a6a34" opacity="0.7"><circle cx="110" cy="124" r="6"/><circle cx="126" cy="108" r="5"/><circle cx="118" cy="146" r="5"/></g>' });
       S(limb([[150, 128], [176, 108], [198, 74]], 12, 2, 16), T.horn, { sh: 3, far: true }); S(limb([[134, 132], [150, 100], [176, 68]], 14, 2, 16), T.horn, { sh: 4, hl: 3 });
       S('M112 162 C110 140 126 128 148 130 C166 132 180 142 190 156 C198 164 200 174 194 180 C188 186 180 184 174 188 C158 196 138 196 124 188 C116 182 112 172 112 162 Z', T.skin, { sh: 10, hl: 6,
-        inner: '<path d="M192 178 C184 182 176 182 168 180" stroke="#3a3020" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="186" cy="164" rx="2.4" ry="2" fill="#3a3020"/>' });
+        inner: '<path d="M192 182 C184 178 176 178 168 182" stroke="#3a3020" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="186" cy="164" rx="2.4" ry="2" fill="#3a3020"/>' });
       S('M184 160 L196 138 L198 164 Z', T.horn, { sh: 3 });
       eye(148, 154, 8.5, 7.5, { iris: '#ffb020', pupil: 'slit', lid: 0.46, tilt: 1 });
     });
   });
 
 // 5 · boss — Ankylosaure : un char d'assaut vivant, une massue au bout de la queue
-Mo('cuirasses', 5, 'Ankylosaure', { scale: 1.36, atk: 'smash', wind: -50, hit: 60, colors: { skin: '#7a6a4a', dark: '#544830', plate: '#a89868', horn: IVORY }, swing: ['tail'], grp: { farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [40, 172], head: [128, 180], torso: [86, 196] } },
+Mo('cuirasses', 5, 'Ankylosaure', { scale: 1.36, atk: 'smash', wind: -50, hit: 60, colors: { skin: '#5e6a6e', dark: '#40494c', plate: '#b8a878', horn: IVORY }, swing: ['tail'], grp: { farLegs: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [40, 172], head: [128, 180], torso: [86, 196] } },
   ({ S, raw, T, G, L, beast, eye, limb, ell }) => {
     const legs = beast({ front: 112, hind: 52, top: 196, w: 20, t: 'skin', dark: 'dark', claws: true, gap: 12 });
     // la queue se dresse au-dessus du dos, massue en l'air
-    G('tail', () => { S(limb([[42, 174], [-6, 150], [26, 96]], 22, 10, 18), T.skin, { sh: 5 }); S(ell(30, 86, 22, 17), T.plate, { sh: 6, hl: 4, inner: '<path d="M16 82 C24 74 38 74 46 82" stroke="#f0e4c8" stroke-width="4" fill="none" opacity="0.6" stroke-linecap="round"/>' }); S('M12 78 L0 66 L18 72 Z M42 72 L52 58 L50 78 Z', T.horn, { sh: 2 }); });
+    G('tail', () => { S(limb([[42, 174], [-6, 150], [26, 96]], 22, 10, 18), T.skin, { sh: 5 }); S(ell(30, 86, 22, 17), T.plate, { sh: 6, hl: 4, inner: '<path d="M16 82 C24 74 38 74 46 82" stroke="#f0e4c8" stroke-width="4" fill="none" opacity="0.6" stroke-linecap="round"/>' }); S(ell(14, 92, 9, 8), T.plate, { sh: 3 }); S(ell(46, 90, 9, 8), T.plate, { sh: 3 }); });
     G('farLegs', () => legs.far());
     G('legs', () => legs.near());
     G('body', () => S('M24 190 C22 166 40 152 54 150 L58 132 L72 146 L82 124 L94 144 L106 126 L114 148 L128 136 L130 156 C142 162 146 176 144 190 C140 206 112 210 84 210 C54 210 26 206 24 190 Z', T.skin, { sh: 11, hl: 7,
-      inner: '<g fill="#a89868">' + [[50, 168], [70, 160], [92, 158], [114, 162], [60, 184], [82, 180], [104, 180], [126, 180]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="9" ry="6"/>`).join('') + '</g><path d="M30 200 C60 212 116 212 144 196 L146 220 L28 220 Z" fill="#d8cc9a" opacity="0.6" filter="url(#g3)"/>' }));
+      inner: '<g fill="#b8a878">' + [[50, 168], [70, 160], [92, 158], [114, 162], [60, 184], [82, 180], [104, 180], [126, 180]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="9" ry="6"/>`).join('') + '</g><path d="M30 200 C60 212 116 212 144 196 L146 220 L28 220 Z" fill="#d8cc9a" opacity="0.6" filter="url(#g3)"/>' }));
     G('head', () => {
       S('M126 162 L118 142 L138 152 Z', T.horn, { sh: 3 }); S('M150 158 L158 140 L166 162 Z', T.horn, { sh: 3, far: true });
       S('M118 184 C116 164 132 154 152 156 C170 158 188 168 196 180 C200 188 198 196 190 198 C174 204 148 206 132 200 C122 196 118 190 118 184 Z', T.skin, { sh: 9, hl: 6,
-        inner: '<path d="M124 164 C140 156 162 158 176 168 C160 172 138 172 124 164 Z" fill="#a89868"/><path d="M194 190 C184 194 174 194 164 192" stroke="#3a3020" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="190" cy="180" rx="2.4" ry="2" fill="#3a3020"/>' });
+        inner: '<path d="M124 164 C140 156 162 158 176 168 C160 172 138 172 124 164 Z" fill="#b8a878"/><path d="M194 192 C184 188 174 188 164 192" stroke="#3a3020" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="190" cy="180" rx="2.4" ry="2" fill="#3a3020"/>' });
       eye(156, 178, 8, 7, { iris: '#ffb020', pupil: 'slit', lid: 0.48, tilt: 1 });
     });
   });
