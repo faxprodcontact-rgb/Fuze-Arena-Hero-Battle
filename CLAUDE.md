@@ -54,6 +54,10 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   le contrôle de `refonte-graphique/LISEZMOI.md` (rien ne traverse une barbe, un visage ou un museau ; rien de coupé
   ni de flottant ; arme dans le bon sens ; pas de doublon de silhouette, de pose ou d'arme), puis faire relire les
   planches par un regard neuf (agent de relecture) : il trouve ce qu'on ne voit plus.
+- **Monstres** (commencés le 20/11/2026) : 12 familles de 6 validées par le propriétaire (liste et règles dans
+  `refonte-graphique/LISEZMOI.md`, section « Les monstres » ; pas de famille vue partout, plutôt de vraies créatures).
+  Gabarit `refonte-graphique/mon6.cjs`, une famille par fichier `m-<famille>.cjs`, export `node refonte-graphique/exportM.cjs`
+  → `public/apercu/m/` + `monstres.js`. Faite : les Abysses ; attendre son avis sur le style avant les 11 autres.
 - Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 

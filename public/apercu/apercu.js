@@ -28,6 +28,11 @@
   const HS = window.HEROS ? window.HEROS.list : [];
   for (const h of HS) CH[h.id] = { enemy: false, rig: h.rig, parts: h.parts, E: window.HEROS.E, src: 'h/' + h.id + '.png', stats: ROLE_STATS[h.role], role: h.role, label: h.name, aura: { epic: '#b06cff', legendary: '#ffc94a' }[h.rarity],
     k: 0.56 * Math.max(0.86, Math.min(1.22, h.scale)), top: Math.max(-34, Math.min(...h.parts.filter((p) => p.name !== 'glow' && p.name !== 'shine').map((p) => p.oy))) };
+  // les monstres : par familles de 6 (rapide, costaud, tireur, sorts, élite, boss)
+  const MS = window.MONSTRES ? window.MONSTRES.list : [];
+  const SLOT_STATS = { fast: [520, 90, 1.7], tank: [1000, 60, 2.4], shooter: [440, 80, 2.1], caster: [460, 70, 2.4], elite: [900, 100, 2.0], boss: [1900, 120, 2.3] };
+  for (const m of MS) CH[m.id] = { enemy: true, rig: m.rig, parts: m.parts, E: window.MONSTRES.E, src: 'm/' + m.id + '.png', stats: SLOT_STATS[m.slot], label: m.name,
+    k: 0.56 * Math.max(0.8, Math.min(1.36, m.scale)), top: Math.max(-40, Math.min(...m.parts.filter((p) => p.name !== 'glow' && p.name !== 'shine').map((p) => p.oy))) };
   const img = {};
   const image = (n) => img[n] || (img[n] = Object.assign(new Image(), { src: CH[n].src }));
   const bg = new Image(); bg.src = 'bg.jpg';
@@ -35,7 +40,7 @@
     const c = CH[n], r = c.rig;
     c.group = {};
     for (const p of c.parts) {
-      let g = p.name === 'legs' ? 'legs' : p.name === 'torso' || p.name === 'afterBody' ? 'torso' : p.name === 'head' || p.name === 'afterHead' ? 'head' : p.name === 'back' ? (c.enemy ? 'head' : 'back') : 'torso';
+      let g = p.name === 'legs' ? 'legs' : p.name === 'torso' || p.name === 'afterBody' ? 'torso' : p.name === 'head' || p.name === 'afterHead' ? 'head' : p.name === 'back' ? (c.enemy && !r.piv ? 'head' : 'back') : 'torso';
       if (r.swing && r.swing.includes(p.name)) g = 'swing';
       if (r.far && r.far.includes(p.name)) g = 'far';
       if (p.name === 'glow') g = r.glow || 'torso';
@@ -49,8 +54,13 @@
     const R = () => Math.random(), used = new Set();
     const take = (roles) => { const pool = HS.filter((h) => roles.includes(h.role) && !used.has(h.id)); const h = pool[Math.floor(R() * pool.length)]; used.add(h.id); return h.id; };
     const team = () => ({ 0: take(['protector']), 1: take(['warrior']), 2: take(['healer', 'support']), 3: take(['marksman']), 4: take(['assassin', 'support', 'healer']) });
-    const vsHeroes = HS.length >= 10 && fights % 2 === 1; fights++;
-    return { hero: HS.length >= 10 ? team() : TEAM.hero, foe: vsHeroes ? team() : TEAM.foe };
+    // tour à tour : une famille de monstres (avec son élite, puis son boss), puis une autre équipe de héros
+    const fams = [...new Set(MS.map((m) => m.family))], n = fights++;
+    if (fams.length && n % 3 !== 2) {
+      const fam = fams[Math.floor(R() * fams.length)], of = (slot) => (MS.find((m) => m.family === fam && m.slot === slot) || MS.find((m) => m.family === fam)).id;
+      return { hero: team(), foe: { 0: of('tank'), 1: of('fast'), 2: of(n % 3 === 1 ? 'boss' : 'elite'), 3: of('shooter'), 4: of('caster') } };
+    }
+    return { hero: HS.length >= 10 ? team() : TEAM.hero, foe: HS.length >= 10 ? team() : TEAM.foe };
   }
 
   // ---------- état du combat ----------

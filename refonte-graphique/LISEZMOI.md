@@ -129,3 +129,21 @@ Demande du propriétaire : 72 héros **très différents les uns des autres**, i
 - Dents de scie (`saw`) : toujours parcourir la ligne **du bas vers le haut**, sinon les pointes rentrent dans la forme.
 - Originalité : on s'inspire des mythes (domaine public), jamais du dessin d'un autre jeu, film ou manga.
 
+
+## Les monstres (commencés le 20/11/2026)
+
+Demande du propriétaire : des **familles de 6 monstres**, beaucoup, pour tous les niveaux, et **pas de famille vue partout**
+(pas de squelettes ni de gobelins) ; plutôt de **vraies créatures** que des objets du quotidien qui prennent vie.
+
+- 12 familles validées, 3 par élément (72 monstres) — Feu : Parade des pétards, Fauves de cendre, Idoles d'airain ·
+  Vent : Épouvantails, Ruche, Volière d'orage · Eau : Abysses, Horde des glaces, Bayou · Terre : Échiquier, Cuirassés,
+  Ronciers. Écartées : grenouilles, potager, jouets, objets oubliés, fanfare, cirés, forge.
+- Dans chaque famille, 6 places : rapide, costaud (devant) · tireur, sorts ou soin (derrière) · élite · boss.
+- `mon6.cjs` : le petit gabarit des créatures (morceaux animables `G(nom, …)`, œil de bête `eye`, dents `teeth`, registre
+  `Mo(famille, place, nom, réglages, dessin)`), une famille par fichier `m-<famille>.cjs`.
+- `node zoomM.cjs abysses sortie.html` : la famille en grand (contrôle) ; ajouter `planche` pour la planche à montrer.
+- `node exportM.cjs` : export vers `public/apercu/m/` + `monstres.js` ; la page d'animations fait affronter les héros et
+  une famille (avec son élite, puis son boss).
+- Mêmes contrôles que pour les héros : rien ne passe devant un œil ou une gueule, rien de coupé, pattes lisibles (pas
+  d'enchevêtrement), silhouette différente pour chacun des 6.
+- Faite : **Les Abysses** (en attente de l'avis du propriétaire sur le style avant de lancer les 11 autres).
