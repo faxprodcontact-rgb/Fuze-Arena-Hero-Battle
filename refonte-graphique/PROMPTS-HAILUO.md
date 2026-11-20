@@ -230,3 +230,76 @@ Left: underground dungeon cave, dark cave mouth, purple and blue crystals, piles
 Middle: sunny gladiator arena, stone colosseum walls with red banners, sand floor, blue sky.
 Right: boss lair, dark red volcanic hall, huge gate with chains, fire braziers, lava streams, stone floor with a glowing orange circle.
 ```
+
+## Interface
+
+6 planches de 16 éléments (6 × 3, les 2 dernières cases vides pour la signature), fond blanc, sans texte. Croquis faits par
+`node refonte-graphique/ui-ia.cjs 1..6 sortie.png` : les pictos actuels du jeu (`kit.tsx`) et des croquis simples pour le
+reste. Direction artistique (réponses du propriétaire, 19/11/2026) : monde lumineux et joyeux, fantasy médiévale, ados et
+adultes, menus « moderne épuré » ; pictos dans le même rendu que les héros Hailuo (contour net, ombré peint).
+
+### Interface 1 — Monnaies et ressources
+
+Planche : `interface-1.png`
+
+```
+Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as premium hand-painted cartoon icons for a bright, joyful medieval-fantasy mobile RPG with semi-chibi heroes: chunky simple shapes readable at small size, crisp dark outline, soft painted shading, light from top right, glossy highlights, vibrant colors, slight 3D volume, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
+Row 1, currencies: gold coin with an embossed crown | teal essence droplet | pink faceted gem | golden summoning scroll with purple wax seal | plain blue-grey basic scroll | purple magic crystal.
+Row 2: golden hero soul shards | sparkling teal and purple dust (recycling) | red arena token with crossed swords | blue guild coin with a shield crest | yellow lightning bolt (power) | gift box with ribbon.
+Row 3: green play-video button | round clock | padlock | gold star.
+```
+
+### Interface 2 — Menus
+
+Planche : `interface-2.png`
+
+```
+Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as premium hand-painted cartoon icons for a bright, joyful medieval-fantasy mobile RPG with semi-chibi heroes: chunky simple shapes readable at small size, crisp dark outline, soft painted shading, light from top right, glossy highlights, vibrant colors, slight 3D volume, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
+Row 1, menus: red battle flag on a pole | knight shield | glowing star medallion (summon) | folded treasure map | guild banner with crest | calendar with a green check mark.
+Row 2: envelope letter | quest scroll with check mark | shopping bag | purple pass ticket with a star | golden trophy cup | two friends silhouettes.
+Row 3: blue chat speech bubble | settings gear | purple and gold orbs merging (fusion) | teal circular arrow around a soul (rebirth).
+```
+
+### Interface 3 — Modes et équipement
+
+Planche : `interface-3.png`
+
+```
+Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as premium hand-painted cartoon icons for a bright, joyful medieval-fantasy mobile RPG with semi-chibi heroes: chunky simple shapes readable at small size, crisp dark outline, soft painted shading, light from top right, glossy highlights, vibrant colors, slight 3D volume, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
+Row 1, game modes: stone trial tower | compass | dungeon gate archway | horned skull (boss) | two crossed swords (arena) | wooden siege catapult.
+Row 2: gold mine entrance with coins | magic spring of teal essence | anvil with a sword (armory) | sword | chest armor | knight helmet.
+Row 3: leather boots | leather bag | forge hammer on an anvil | recycle arrows with sparkling dust.
+```
+
+### Interface 4 — Éléments, rôles et statistiques
+
+Planche : `interface-4.png`
+
+```
+Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as premium hand-painted cartoon icons for a bright, joyful medieval-fantasy mobile RPG with semi-chibi heroes: chunky simple shapes readable at small size, crisp dark outline, soft painted shading, light from top right, glossy highlights, vibrant colors, slight 3D volume, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
+Row 1, elements and roles: fire flame | green wind swirl | blue water drop | brown earth rock peak with grass | blue protector shield with cross | warrior crossed swords.
+Row 2: wooden bow with arrow | twin daggers | green healing cross | golden support figure with aura | red heart (health) | short sword (attack).
+Row 3: steel shield (defense) | winged boot (speed) | red target (critical) | swift blue wind trails (dodge).
+```
+
+### Interface 5 — Accueil et récompenses (coffre, sablier…)
+
+Planche : `interface-5.png`
+
+```
+Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as premium hand-painted cartoon icons for a bright, joyful medieval-fantasy mobile RPG with semi-chibi heroes: chunky simple shapes readable at small size, crisp dark outline, soft painted shading, light from top right, glossy highlights, vibrant colors, slight 3D volume, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
+Row 1, home and rewards: closed wooden treasure chest with gold trim | open chest overflowing with gold coins and a gem | golden hourglass with flowing sand | small silver reward chest | purple summoning portal | golden crown with a ruby.
+Row 2: golden victory trophy | broken sword (defeat) | empty grey star | pile of gold coins | pile of pink gems | orange star burst (critical damage).
+Row 3: clenched fist (tenacity) | red notification badge with exclamation mark | green level-up arrow | round gold avatar frame with a small level badge.
+```
+
+### Interface 6 — Boutons, cadres et fenêtres
+
+Planche : `interface-6.png`
+
+```
+Redraw this sheet as a 2D mobile RPG user interface kit. Keep EXACTLY the same 16 elements in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its shape, proportions and main color. Style: modern and clean, not ornate, matching a bright joyful medieval-fantasy mobile RPG: glossy rounded shapes, soft bevel, subtle gold accents, soft painted shading, light from top right, crisp dark outline. Every button, frame and panel keeps a large FLAT EMPTY center (text is added in game). Front view, no perspective. Pure white background. No text, no letters, no numbers, no icons inside buttons; nothing cropped, elements never touch.
+Row 1: wide rounded buttons, green | red | blue | purple | gold | grey (disabled).
+Row 2: round dark navy icon button with gold rim | round dark close button with white X | empty hero card frames: grey common | blue rare | purple epic | gold legendary with a small star.
+Row 3: dark navy window panel with thin gold border and header strip | red ribbon title banner | dark resource capsule with a coin slot and green plus button | dark bottom tab bar with one highlighted tab.
+```
