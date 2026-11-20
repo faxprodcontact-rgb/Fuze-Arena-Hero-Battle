@@ -101,3 +101,17 @@ Row 1, living ivory chess pieces on felt bases, red glowing cracks: knight horse
 Row 2, armored beasts: armadillo | rhinoceros beetle | pangolin | stone snail with crystals | triceratops | ankylosaurus with club tail.
 Row 3, bramble forest: autumn-leaf fox | moss badger with mushrooms | thorn porcupine | bark moth with eye spots | twig mantis | bramble stag with leafy antlers.
 ```
+
+## Rattrapage (après le premier passage)
+
+Planche : `rattrapage.png` (format 21:9, comme les images rendues par Hailuo, grille 7 × 3).
+Les 2 personnages du bas à droite de chaque planche (cachés par la signature de Hailuo), la chamane du volcan
+(3 bras au premier passage) et le mammouth (défenses ratées). Le bas à droite est laissé vide pour la signature.
+Fabriquée par `node planche-ia.cjs liste "h:fire:6,…,m:glaces:5" sortie.png`.
+
+```
+Redraw this sheet as 2D mobile RPG art: 9 heroes then 9 monsters. Keep EXACTLY the same 18 figures in the same 7x3 grid and order, none added or removed; the bottom-right corner stays EMPTY white. Each keeps its species, outfit, colors, items in the same hands, pose and silhouette: full body, facing right. Every hero has exactly two arms. Upgrade: chibi heroes with fierce expressive faces, monsters with real anatomy, menacing faces and fangs, rich materials, painted cel shading, light from top right, rim light, one bold dark outline per figure, vibrant colors, glowing parts glow. Pure white background, soft shadow under feet. No text, frames, scenery, extra arms, extra tusks; nothing cropped, figures never touch.
+Row 1: volcano priestess with only two arms, one raising a flame, the other at her side | phoenix girl, flame wings | sun goddess, radiant crown, gold mirror | angel, halo, six white wings | blue thunder god, ring of red drums | water mother, white turban, water orb | dragon king, antlers, blue robe, pearl.
+Row 2: earth mother, flowery green hair, earth orb | underworld king, spiked crown, bident, blue flame | bronze colossus | great bronze idol, furnace belly | cassowary | thunderbird, lightning wings | giant catfish with barbels.
+Row 3: old crocodile | twig mantis | bramble stag, leafy antlers | woolly mammoth with only two long curved ivory tusks, trunk between them.
+```
