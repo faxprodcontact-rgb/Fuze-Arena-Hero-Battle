@@ -157,9 +157,10 @@ Demande du propriétaire : des **familles de 6 monstres**, beaucoup, pour tous l
 - Le contour arrondit mal les très petites formes (un petit rond devient un carré) : les étincelles, braises et points
   lumineux se font avec `halo` / `shine`, jamais avec de petites formes dans un morceau.
 - L'intérieur sombre d'une gueule recule vers le coin de la bouche (bord avant très creusé) : rien ne « bouche » l'avant.
-- Doubles évités entre familles (changements par rapport à la liste annoncée) : Fauves → Buffle de braise (au lieu du
-  rhinocéros, déjà dans les Glaces) ; Volière → Paon d'orage (au lieu du hibou, harfang dans les Glaces) ; Cuirassés →
-  Scarabée-rhinocéros (au lieu de la tortue, déjà dans le Bayou) ; Ronciers → Blaireau de mousse (au lieu du sanglier,
-  phacochère dans les Fauves) et Phalène d'écorce (au lieu de la chouette).
-- Familles faites : Abysses, Horde des glaces, Bayou. Restent : Parade des pétards, Fauves de cendre, Idoles d'airain,
-  Épouvantails, Ruche, Volière d'orage, Échiquier, Cuirassés, Ronciers.
+- Doubles évités entre familles (changements par rapport à la liste annoncée au propriétaire) : Fauves → Buffle de
+  braise (rhinocéros déjà dans les Glaces) ; Volière → Paon d'orage (au lieu du hibou) et Casoar (au lieu du condor,
+  trop proche du vautour des Fauves) ; Cuirassés → Scarabée-rhinocéros (au lieu de la tortue du Bayou) et Tricératops (au
+  lieu du glyptodon, trop proche de l'ankylosaure) ; Ronciers → Blaireau de mousse (au lieu du sanglier), Phalène
+  d'écorce (au lieu de la chouette), Mante-brindille (élite) et Grand Cerf des ronces (boss, au lieu de l'ours-chêne :
+  il y a déjà l'ours des cavernes) ; Parade → Singe artificier (tireur).
+- **Les 12 familles sont dessinées** (72 monstres, 20/11/2026) ; liste dans `MONSTRES.md` (écrite par `exportM.cjs`).

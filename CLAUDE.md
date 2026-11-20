@@ -57,7 +57,9 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
 - **Monstres** (commencés le 20/11/2026) : 12 familles de 6 validées par le propriétaire (liste et règles dans
   `refonte-graphique/LISEZMOI.md`, section « Les monstres » ; pas de famille vue partout, plutôt de vraies créatures).
   Gabarit `refonte-graphique/mon6.cjs`, une famille par fichier `m-<famille>.cjs`, export `node refonte-graphique/exportM.cjs`
-  → `public/apercu/m/` + `monstres.js`. Faite : les Abysses ; attendre son avis sur le style avant les 11 autres.
+  → `public/apercu/m/` + `monstres.js` + `MONSTRES.md`. **Les 72 monstres sont dessinés** ; la page d'animations fait
+  affronter les héros et une famille tirée au hasard. À vérifier sur CHAQUE monstre (demande du propriétaire) : gueule
+  ouverte découpée dans la silhouette, membres attachés sous le corps. Pas encore branchés dans le vrai jeu.
 - Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 

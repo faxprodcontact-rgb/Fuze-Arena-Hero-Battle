@@ -44,6 +44,12 @@ const E = 1.5, MX = 70, MY = 70, CW = 340, CH = 320;
     process.stdout.write('.');
   }
   fs.writeFileSync(path.join(OUT, 'monstres.js'), '// Fabriqué par refonte-graphique/exportM.cjs — ne pas modifier à la main.\nwindow.MONSTRES = ' + JSON.stringify({ E, list }) + ';\n');
+  // la liste en clair, pour le propriétaire
+  const { FAMILIES, SLOT_FR } = require('./mon6.cjs');
+  const EL = { fire: 'Feu', wind: 'Vent', water: 'Eau', earth: 'Terre' };
+  let md = '# Les monstres (72, en 12 familles de 6)\n\nFabriqué par `exportM.cjs` (ne pas modifier à la main : changer les fichiers `m-<famille>.cjs` puis relancer).\nDans chaque famille : rapide, costaud (devant) · tireur, sorts ou soin (derrière) · élite · boss.\n';
+  for (const fam of FAMILIES) { const ms = list.filter((m) => m.family === fam.key); if (!ms.length) continue; md += `\n## ${fam.name} (${EL[fam.element]})\n\n| Identifiant | Monstre | Place |\n|---|---|---|\n` + ms.map((m) => `| \`${m.id}\` | ${m.name} | ${SLOT_FR[m.slot]} |`).join('\n') + '\n'; }
+  fs.writeFileSync(path.join(__dirname, 'MONSTRES.md'), md);
   console.log('\n' + list.length + ' monstres exportés');
   await browser.close();
 })();
