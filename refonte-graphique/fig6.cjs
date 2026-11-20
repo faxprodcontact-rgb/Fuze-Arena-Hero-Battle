@@ -87,8 +87,10 @@ function build(s) {
   const U = ((B.lean ? `rotate(${B.lean} ${CX} ${HIP + B.drop}) ` : '') + (B.drop ? `translate(0 ${B.drop})` : '')).trim();
   const HT = (U + ` translate(${CX + B.hdx} ${121 + B.hdy}) scale(${B.hs}) translate(${-CX} -121)`).trim();
   const marks = [], glows = [];
-  let cur = '';
-  const G = (name, fn, tr = U) => { const start = P.body.length; cur = tr; raw(`<g${tr ? ` transform="${tr}"` : ''} filter="url(#ol)">`); fn(); raw('</g>'); cur = ''; if (P.body.length - start > 60) marks.push({ name, start, end: P.body.length }); };
+  let cur = '', gid = 0;
+  // Un morceau = un groupe SANS contour : le héros n'a qu'un contour, autour de sa silhouette entière. Là où un morceau en
+  // recouvre un autre, il pose une ombre douce et un filet léger (comme les monstres) : plus d'effet « formes collées ».
+  const G = (name, fn, tr = U) => { const start = P.body.length, id = `${s.id}-p${gid++}`; cur = tr; raw(`<g id="${id}"${tr ? ` transform="${tr}"` : ''}>`); const inner = P.body.length; fn(); const empty = P.body.length === inner; raw('</g>'); cur = ''; if (!empty) marks.push({ name, id, start, end: P.body.length }); };
   const at = (t, fn) => { const prev = cur; cur = (cur + ' ' + t).trim(); raw(`<g transform="${t}">`); fn(); raw('</g>'); cur = prev; };
   const glow = (svg) => glows.push(`<g${cur ? ` transform="${cur}"` : ''}>${svg}</g>`);
   const halo = (x, y, r, c, op = 0.8) => glow(`<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="${c}" opacity="${op}" filter="url(#glow)"/>`);
@@ -188,8 +190,13 @@ function build(s) {
   const bloom = (x, y, r, c) => `<g transform="translate(${f(x)} ${f(y)})"><circle r="${f(r * 1.25)}" fill="${c}" opacity="0.7" filter="url(#glow)"/><circle r="${f(r * 0.6)}" fill="#fff" opacity="0.55" filter="url(#glow)"/></g>`;
   const fx = shine.map(([x, y, src = 'near', r = 11, c = ELC]) => `<g${(src === 'head' ? HT : U) ? ` transform="${src === 'head' ? HT : U}"` : ''}>${bloom(x, y, r, c)}</g>`).join('');
   if (shine.length) { const src = shine[0][2] ?? 'near'; rig.grp = { ...(rig.grp ?? {}), shine: src === 'head' ? 'head' : src === 'torso' ? 'torso' : both ? 'swing' : (src === 'near') === (main === 'far') ? 'far' : 'swing' }; }
-  const body = P.body;
-  return { defs: P.defs, body, glow: glows.join(''), fx, parts: marks.map((k) => ({ name: k.name, svg: body.slice(k.start, k.end) })), rig, spec: s };
+  const flat = P.body, mk = 'mk-' + s.id;
+  const maskDef = `<mask id="${mk}" maskUnits="userSpaceOnUse" x="-150" y="-150" width="600" height="600"><g filter="url(#hwh)">${marks.map((k) => `<use href="#${k.id}"/>`).join('')}</g></mask>`;
+  let body = '', last = 0;
+  marks.forEach((k, i) => { body += flat.slice(last, k.start) + (i ? `<use href="#${k.id}" filter="url(#hcs)" mask="url(#${mk})"/>` : '') + flat.slice(k.start, k.end); last = k.end; });
+  body += flat.slice(last);
+  rig.soft = 0.6;
+  return { defs: P.defs + maskDef, body, glow: glows.join(''), fx, parts: marks.map((k) => ({ name: k.name, svg: flat.slice(k.start, k.end) })), rig, spec: s };
 }
 
 // ---------- commandes de base, utilisables dans toutes les couches ----------
@@ -205,4 +212,10 @@ C.glow = (h, o, ph) => { if (ph && (o.ph ?? 'front') !== ph) return; if (o.d) h.
 C.at = (h, o, ph) => { if (ph && (o.ph ?? 'front') !== ph) return; h.at(o.t, () => h.run(o.list)); };
 C.hand = (h, o) => h.hand(o.p, o);
 
-module.exports = { build, LIB, BODY, NEAR, FAR, CX, GROUND, HIP, f, pt, poly, add, unit, perp, disc, ell, ring, limb, qpoint, blade, bar, saw, arcPts, tone, metal, mix, ln, sf, blob };
+/** Filtres des héros : ombre de contact entre morceaux (hcs), masque de la silhouette (hwh), contour unique + lumière d'ensemble (silH). */
+const HERO_DEFS = '<filter id="hcs" x="-40%" y="-40%" width="180%" height="180%"><feMorphology in="SourceAlpha" operator="dilate" radius="0.55" result="d"/><feGaussianBlur in="SourceAlpha" stdDeviation="2.8" result="b"/><feOffset in="b" dy="1" result="o"/><feFlood flood-color="#1a0c2e" flood-opacity="0.4" result="c1"/><feComposite in="c1" in2="o" operator="in" result="sh"/><feFlood flood-color="#1a0c2e" flood-opacity="0.16" result="c2"/><feComposite in="c2" in2="d" operator="in" result="ln"/><feMerge><feMergeNode in="sh"/><feMergeNode in="ln"/></feMerge></filter>'
+  + '<filter id="hwh" x="-10%" y="-10%" width="120%" height="120%"><feFlood flood-color="#fff"/><feComposite in2="SourceAlpha" operator="in"/></filter>'
+  + '<filter id="silH" x="-15%" y="-15%" width="130%" height="130%"><feOffset in="SourceAlpha" dx="4" dy="-5" result="a1"/><feComposite in="SourceAlpha" in2="a1" operator="out" result="r1"/><feGaussianBlur in="r1" stdDeviation="2.4" result="r1b"/><feFlood flood-color="#1a0c2e" flood-opacity="0.3"/><feComposite in2="r1b" operator="in" result="s0"/><feComposite in="s0" in2="SourceAlpha" operator="in" result="sh"/>'
+  + '<feOffset in="SourceAlpha" dx="-3" dy="4" result="a2"/><feComposite in="SourceAlpha" in2="a2" operator="out" result="r2"/><feGaussianBlur in="r2" stdDeviation="1.6" result="r2b"/><feFlood flood-color="#fff6d8" flood-opacity="0.26"/><feComposite in2="r2b" operator="in" result="l0"/><feComposite in="l0" in2="SourceAlpha" operator="in" result="li"/>'
+  + '<feMorphology in="SourceAlpha" operator="dilate" radius="2" result="d"/><feFlood flood-color="#190c24"/><feComposite in2="d" operator="in" result="o"/><feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/><feMergeNode in="sh"/><feMergeNode in="li"/></feMerge></filter>';
+module.exports = { build, HERO_DEFS, LIB, BODY, NEAR, FAR, CX, GROUND, HIP, f, pt, poly, add, unit, perp, disc, ell, ring, limb, qpoint, blade, bar, saw, arcPts, tone, metal, mix, ln, sf, blob };

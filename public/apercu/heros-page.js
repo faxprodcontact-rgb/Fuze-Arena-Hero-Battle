@@ -5,7 +5,7 @@
   const RAR = { common: ['Commun', '#7c8596'], rare: ['Rare', '#2f6fe0'], epic: ['Épique', '#8a3ce0'], legendary: ['Légendaire', '#c98a10'] };
   const ROLE = { protector: 'Protecteur', warrior: 'Guerrier', marksman: 'Tireur', assassin: 'Assassin', healer: 'Soigneur', support: 'Soutien' };
   const grid = document.getElementById('grid'), tabs = document.getElementById('tabs');
-  const A = document.createElement('canvas'), B = document.createElement('canvas');
+  const A = document.createElement('canvas'), B = document.createElement('canvas'), LC = document.createElement('canvas');
   function render(cv, h, img) {
     const dpr = Math.min(3, window.devicePixelRatio || 1), W = cv.width = Math.round(cv.clientWidth * dpr), H = cv.height = Math.round(cv.clientHeight * dpr);
     const g = cv.getContext('2d'), q = H / 292 * Math.min(1.12, h.scale) * 0.9, ox = W / 2 - 106 * q, oy = H * 0.95 - 228 * q;
@@ -14,9 +14,23 @@
     for (const p of h.parts) if (p.name === 'glow') put(g, p);
     A.width = B.width = W; A.height = B.height = H;
     const a = A.getContext('2d'), b = B.getContext('2d');
-    for (const p of h.parts) if (p.name !== 'glow' && p.name !== 'shine') put(a, p);
-    b.drawImage(A, 0, 0); b.globalCompositeOperation = 'source-in'; b.fillStyle = '#190c24'; b.fillRect(0, 0, W, H);
-    const r = Math.max(1, 1.6 * q), aura = { epic: '#b06cff', legendary: '#ffc94a' }[h.rarity];
+    const soft = +h.rig.soft || 0, body = h.parts.filter((p) => p.name !== 'glow' && p.name !== 'shine');
+    // un seul contour : chaque morceau pose une ombre douce sur ceux du dessous, découpée par la silhouette entière
+    for (const p of body) put(b, p);
+    if (soft) { a.shadowColor = 'rgba(26,12,46,0.5)'; a.shadowBlur = (3 + 3 * soft) * q; a.shadowOffsetY = q; }
+    for (const p of body) put(a, p);
+    a.shadowColor = 'transparent'; a.shadowBlur = 0; a.shadowOffsetY = 0;
+    if (soft) {
+      a.globalCompositeOperation = 'destination-in'; a.drawImage(B, 0, 0);
+      const m = 0.5 + 0.5 * soft; LC.width = W; LC.height = H; const d = LC.getContext('2d');
+      for (const [dx, dy, col, bl] of [[5, -7, `rgba(26,12,46,${0.42 * m})`, 6.4], [-4, 6, `rgba(255,246,216,${0.34 * m})`, 4.4]]) {
+        d.globalCompositeOperation = 'copy'; d.drawImage(B, 0, 0); d.globalCompositeOperation = 'destination-out'; d.drawImage(B, dx * m * q, dy * m * q);
+        a.globalCompositeOperation = 'source-atop'; a.shadowColor = col; a.shadowBlur = bl * m * q; a.shadowOffsetX = 3 * W; a.drawImage(LC, -3 * W, 0);
+      }
+      a.globalCompositeOperation = 'source-over'; a.shadowColor = 'transparent'; a.shadowBlur = 0; a.shadowOffsetX = 0;
+    }
+    b.globalCompositeOperation = 'source-in'; b.fillStyle = '#190c24'; b.fillRect(0, 0, W, H);
+    const r = Math.max(1, (soft ? 1.25 + 1.25 * soft : 1.6) * q), aura = { epic: '#b06cff', legendary: '#ffc94a' }[h.rarity];
     if (aura) { g.shadowColor = aura; g.shadowBlur = 16 * q; g.drawImage(B, 0, 0); g.drawImage(B, 0, 0); g.shadowBlur = 0; g.shadowColor = 'transparent'; }
     for (let i = 0; i < 8; i++) g.drawImage(B, Math.cos(i * 0.785) * r, Math.sin(i * 0.785) * r);
     g.drawImage(A, 0, 0);

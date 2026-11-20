@@ -54,6 +54,8 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   le contrôle de `refonte-graphique/LISEZMOI.md` (rien ne traverse une barbe, un visage ou un museau ; rien de coupé
   ni de flottant ; arme dans le bon sens ; pas de doublon de silhouette, de pose ou d'arme), puis faire relire les
   planches par un regard neuf (agent de relecture) : il trouve ce qu'on ne voit plus.
+  Héros et monstres ont **un seul contour par personnage** (ombres douces entre les morceaux, lumière d'ensemble) :
+  ne jamais remettre un contour par morceau.
 - **Monstres** (commencés le 20/11/2026) : 12 familles de 6 validées par le propriétaire (liste et règles dans
   `refonte-graphique/LISEZMOI.md`, section « Les monstres » ; pas de famille vue partout, plutôt de vraies créatures).
   Gabarit `refonte-graphique/mon6.cjs`, une famille par fichier `m-<famille>.cjs`, export `node refonte-graphique/exportM.cjs`

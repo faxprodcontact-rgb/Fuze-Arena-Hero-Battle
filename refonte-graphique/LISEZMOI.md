@@ -2,7 +2,7 @@
 
 Personnages « chibi » de trois-quarts dessinés par le code, aux positions réelles du combat (5 contre 5 sur 3 rangées).
 
-- `kit.cjs` : outils de peinture (lumière, ombre, volume, contre-jour, contour par grande partie).
+- `kit.cjs` : outils de peinture (lumière, ombre, volume, contre-jour).
 - `chibi.cjs` : le personnage paramétrable (coiffure, tenue, arme, pose, oreilles, visage…).
 - `cast.cjs` : les 5 héros et les 5 ennemis de la planche.
 - `scene.cjs` : la scène du jeu (720 × 980) ; `sheet.cjs` et `big.cjs` : planches des personnages (petit / grand).
@@ -12,7 +12,11 @@ Pour régénérer : `node big.cjs` ou `node scene.cjs` (écrit un `.html`), puis
 ## Demandes du propriétaire (style)
 
 - Inspiration : les héros d'Idle Heroes (grosse tête, trois-quarts, très soignés), mais personnages originaux.
-- Pas d'effet « formes posées les unes sur les autres » : un contour par grande partie, membres d'un seul tenant.
+- Pas d'effet « formes posées les unes sur les autres » : **un seul contour par personnage** (héros comme monstres,
+  depuis le 20/11/2026). Les morceaux (`G(...)` dans `fig6.cjs`) n'ont plus de contour chacun : la silhouette entière en
+  reçoit un (`silH`, avec une lumière d'ensemble), et un morceau qui en recouvre un autre pose une ombre douce (`hcs`,
+  découpée par la silhouette). À l'écran, le moteur de l'aperçu et la galerie font la même chose (`rig.soft`, 0,6 pour
+  les héros, 1 pour les monstres). Membres d'un seul tenant.
 - Peu d'éléments par personnage (3 ou 4 éléments forts), simples mais bien faits.
 - Proportions soignées : front haut, yeux bas dans la tête. Mains en moufle.
 - À l'écran : personnages plutôt petits, les deux camps bien écartés, placés comme dans le combat du jeu.
