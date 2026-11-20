@@ -104,7 +104,7 @@ Mo('voliere', 2, 'Corbeau lanceur', { scale: 0.98, atk: 'cast', fx: BOLT, colors
   swing: ['legN'], grp: { tailF: 'back', legF: 'legs', body: 'torso', wing: 'torso' }, piv: { swing: [112, 176], back: [62, 164], head: [132, 138], torso: [100, 180] }, shine: [[156, 204, 11, BOLT]], shineGrp: 'swing' },
   (h) => { const { S, raw, T, G, L, neck, tuft, brow, stripes, under, halo, eye, teeth } = h;
     halo(156, 204, 17, BOLT, 0.75);
-    G('tailF', () => tailFan(h, [70, 164], 170, 56, 4, 24, 15, [T.dark, T.k]));
+    G('tailF', () => tailFan(h, [72, 164], 168, 54, 5, 38, 13, [T.dark, T.k]));
     G('legF', () => { L([[[[98, 178], [94, 202], [102, 221]], 7.5, 6]], 'leg', { far: true }); foot(h, 102, 219, 1, T.leg, true); });
     G('body', () => {
       S('M54 162 C56 142 80 130 106 132 C128 134 140 150 136 166 C132 182 108 190 86 188 C66 186 52 178 54 162 Z', T.k, { sh: 9, hl: 6, inner: under('M70 178 C92 186 118 182 134 168 C128 184 108 190 88 188 Z', '#43426a', 0.6) });
@@ -148,7 +148,7 @@ Mo('voliere', 3, 'Paon d\'orage', { scale: 1.02, atk: 'cast', fx: BOLT, colors: 
       eye(132, 105, 6.4, 6, { iris: BOLT, pupilK: 0.55, lid: 0.32, tilt: 0.9 }); brow(132, 96, 18, 1, '#10203c', 4.2);
     });
     G('body', () => S('M64 190 C62 172 80 162 102 162 C122 162 134 174 132 190 C130 204 116 212 98 212 C80 212 66 204 64 190 Z', T.teal, { sh: 9, hl: 6,
-      inner: under('M66 186 C76 170 104 168 118 180 C112 196 86 202 66 186 Z', '#1c3a6a', 0.85) + stripes(['M78 180 q8 8 18 3', 'M96 178 q8 7 17 2', 'M72 190 q10 7 20 2', 'M92 192 q9 6 18 0'], '#0e2244', 2.2, 0.7) }));
+      inner: under('M62 192 C70 172 100 166 120 176 C112 190 90 198 62 192 Z', '#1c3a6a', 0.9) + stripes(['M112 176 L74 186', 'M114 182 L78 192', 'M108 188 L84 196'], '#0e2244', 2, 0.7) }));
   });
 
 // 4 · élite — Casoar : un casque de corne, un cou bleu, et une griffe-poignard au bout de la patte
@@ -181,27 +181,27 @@ Mo('voliere', 4, 'Casoar', { scale: 1.22, atk: 'slash', wind: -30, hit: 34, colo
 Mo('voliere', 5, 'Oiseau-tonnerre', { scale: 1.38, atk: 'smash', wind: -40, hit: 44, fx: BOLT, colors: { blue: '#33509a', deep: '#1e2c64', night: '#161c48', pale: '#dfe8f8', gold: '#f0b020', yel: '#e8a824' },
   swing: ['wingN', 'wingNc'], far: ['wingF', 'wingFc'], grp: { tailF: 'back', crest: 'head', legF: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [88, 130], far: [128, 130], back: [108, 184], head: [116, 116], torso: [108, 196] }, shine: [[108, 152, 12, BOLT]] },
   (h) => { const { S, raw, T, G, L, at, neck, brow, stripes, under, halo, eye, fringe } = h;
-    const wn = wing([88, 132], [66, 14], [12, 24], { n: 8, len: 64, side: -1, sweep: 0.45 }), wf = wing([128, 132], [150, 14], [202, 24], { n: 8, len: 64, side: 1, sweep: 0.45 });
+    const wn = wing([88, 134], [52, 6], [4, 40], { n: 8, len: 70, side: -1, sweep: 0.4, cov: 0.52 }), wf = wing([128, 134], [164, 6], [212, 40], { n: 8, len: 70, side: 1, sweep: 0.4, cov: 0.52 });
     G('tailF', () => tailFan(h, [108, 182], 96, 42, 5, 76, 19, [T.night, T.deep]));
-    G('wingF', () => S(wf.prim.d, T.deep, { sh: 8, hl: 3, inner: stripes(wf.prim.lines, '#0a0e2a', 2.2, 0.6) + spark('M180 62 L164 74 L174 82 L156 98', 3.2) }));
-    G('wingFc', () => S(wf.cov.d, T.blue, { sh: 6, hl: 4, inner: stripes(wf.cov.lines, '#121a48', 1.8, 0.55) }));
-    G('wingN', () => S(wn.prim.d, T.deep, { sh: 8, hl: 3, inner: stripes(wn.prim.lines, '#0a0e2a', 2.2, 0.6) + spark('M34 62 L50 74 L40 82 L58 98', 3.2) }));
-    G('wingNc', () => S(wn.cov.d, T.blue, { sh: 6, hl: 4, inner: stripes(wn.cov.lines, '#121a48', 1.8, 0.55) }));
+    G('wingF', () => S(wf.prim.d, T.deep, { sh: 8, hl: 3, inner: stripes(wf.prim.lines, '#0a0e2a', 2.2, 0.6) }));
+    G('wingFc', () => S(wf.cov.d, T.blue, { sh: 6, hl: 4, inner: stripes(wf.cov.lines, '#121a48', 1.8, 0.55) + spark('M156 50 L170 60 L162 68 L178 80', 3) }));
+    G('wingN', () => S(wn.prim.d, T.deep, { sh: 8, hl: 3, inner: stripes(wn.prim.lines, '#0a0e2a', 2.2, 0.6) }));
+    G('wingNc', () => S(wn.cov.d, T.blue, { sh: 6, hl: 4, inner: stripes(wn.cov.lines, '#121a48', 1.8, 0.55) + spark('M60 50 L46 60 L54 68 L38 80', 3) }));
     // culottes de plumes, tarses épais, serres plantées
     G('legF', () => { S(`M112 176 C112 166 142 166 142 178 L136 204${fringe(136, 118, 206, 3, 7)} Z`, T.deep, { sh: 5, hl: 3 }); L([[[[127, 202], [127, 212], [127, 221]], 11, 10]], 'yel', { inner: stripes(['M123 208 l8 0', 'M123 214 l8 0'], '#8a5a10', 1.6, 0.6) }); foot(h, 127, 218, 1.6, T.yel); });
     G('legs', () => { S(`M74 176 C74 166 104 166 104 178 L98 204${fringe(98, 80, 206, 3, 7)} Z`, T.deep, { sh: 5, hl: 3 }); L([[[[89, 202], [89, 212], [89, 221]], 11, 10]], 'yel', { inner: stripes(['M85 208 l8 0', 'M85 214 l8 0'], '#8a5a10', 1.6, 0.6) }); foot(h, 89, 218, 1.6, T.yel); });
     G('body', () => {
       S('M72 134 C74 110 142 110 146 134 C152 160 140 188 108 198 C78 188 66 160 72 134 Z', T.blue, { sh: 11, hl: 7,
-        inner: under('M88 132 C100 124 118 124 130 132 C134 156 126 178 108 190 C92 178 84 156 88 132 Z', '#dfe8f8', 0.9)
-          + stripes(['M90 146 q9 8 18 0 q9 8 18 0', 'M92 160 q8 8 16 0 q8 8 16 0', 'M98 174 q5 6 10 0 q5 6 10 0'], '#8496c8', 2.2, 0.7) + spark('M114 132 L102 152 L114 152 L102 176', 3.6) });
-      neck([108, 130], [114, 114], [124, 98], 48, 38, 'blue');
+        inner: stripes(['M80 150 q7 7 14 0 q7 7 14 0 q7 7 14 0 q7 7 14 0', 'M84 164 q6 7 12 0 q6 7 12 0 q6 7 12 0 q6 7 12 0', 'M92 178 q5 6 10 0 q5 6 10 0 q5 6 10 0'], '#1e2c64', 2.4, 0.7) + spark('M116 134 L102 154 L114 154 L100 178', 4) });
+      neck([108, 132], [114, 116], [124, 100], 44, 36, 'pale', { inner: stripes(['M96 122 l8 8 l6 -6 l8 8 l6 -6 l8 8'], '#9aa8c8', 2.2, 0.7) });
     });
     G('crest', () => at('translate(-16 2)', () => { for (const p of [[[134, 66], [118, 50], [92, 50]], [[140, 62], [130, 38], [108, 24]], [[150, 62], [150, 38], [138, 16]]]) S(h.limb(p, 13, 3, 14), T.gold, { sh: 3, hl: 3 }); }));
     G('head', () => at('translate(-16 2)', () => {
       // bec ouvert : le fond de la gueule d'abord, puis le bec entaillé, crochet vers le bas
-      raw(`<path d="M177 90 L157 91 L176 104 C172 99 172 94 177 90 Z" fill="${MAW}"/>`);
-      S('M150 64 C170 58 192 68 197 88 C198 96 195 103 190 108 C189 99 185 92 177 89 L157 91 L181 107 C173 114 160 112 150 104 Z', T.gold, { sh: 5, hl: 4, inner: '<path d="M186 72 C196 82 199 96 190 108 C189 99 185 92 179 89 Z" fill="#7a4a10" opacity="0.8"/>' });
-      S('M120 84 C118 66 131 55 147 57 C161 59 170 71 168 85 C166 99 154 108 141 106 C129 104 121 96 120 84 Z', T.blue, { sh: 8, hl: 5, inner: under('M132 96 C142 90 156 92 166 90 C164 100 154 108 142 106 C136 104 132 100 132 96 Z', '#dfe8f8', 0.9) + '<path d="M122 78 C126 64 138 56 150 58 C158 60 164 66 166 72 C152 68 136 70 122 78 Z" fill="#1e2c64"/>' });
-      eye(152, 79, 8.4, 7.6, { iris: BOLT, sclera: '#fff8c0', pupilK: 0.4, lid: 0.3, tilt: 1, lidC: '#141a3a' }); brow(153, 69, 24, 1, '#0a0e2a', 5.2);
+      raw(`<path d="M174 90 L157 91 L173 102 C170 98 170 93 174 90 Z" fill="${MAW}"/>`);
+      S('M152 66 C170 60 187 68 191 86 C192 94 189 101 185 106 C184 98 181 92 174 89 L157 91 L177 105 C170 111 158 110 150 104 Z', T.gold, { sh: 5, hl: 4, inner: '<path d="M181 72 C190 80 193 94 185 106 C184 98 181 92 176 89 Z" fill="#7a4a10" opacity="0.8"/>' });
+      // tête blanche d'aigle, plumes de nuque hérissées, masque sombre autour de l'œil
+      S('M126 64 C134 56 150 55 160 60 C167 64 170 72 170 82 C168 98 154 108 141 106 C134 105 128 102 124 98 L110 104 L118 91 L104 90 L117 81 L106 72 L122 70 Z', T.pale, { sh: 8, hl: 5, inner: '<path d="M134 78 C142 66 158 64 170 74 L170 84 C160 80 146 82 136 90 Z" fill="#1e2c64"/>' });
+      eye(154, 79, 7.8, 7, { iris: BOLT, sclera: '#fff8c0', pupilK: 0.4, lid: 0.3, tilt: 1, lidC: '#141a3a' }); brow(155, 70, 24, 1, '#0a0e2a', 5.2);
     }));
   });

@@ -79,8 +79,8 @@ Mo('parade', 2, 'Singe artificier', { scale: 0.98, atk: 'cast', fx: SPARK, color
 Mo('parade', 3, 'Lanterne volante', { atk: 'cast', heal: true, fx: SPARK, colors: { paper: '#f08a3a', dark: '#b8482a', gold: GOLD, cord: RED }, grp: { cords: 'back', flame: 'torso', body: 'torso' }, piv: { back: [106, 78], torso: [106, 130] }, shine: [[106, 200, 11, SPARK]] },
   ({ S, raw, T, G, L, halo, ell, disc }) => {
     halo(106, 124, 60, '#ffb84a', 0.55); halo(106, 200, 18, SPARK, 0.9);
-    // les glands pendent des coins du toit, derrière le papier
-    G('cords', () => { L([[[[58, 76], [54, 94], [58, 112]], 4, 3], [[[154, 76], [158, 94], [154, 112]], 4, 3]], 'cord'); S('M50 108 L66 108 L68 140 L58 130 L48 140 Z', T.cord, { sh: 3, inner: '<path d="M50 114 L66 114" stroke="#e6ac3c" stroke-width="3"/>' }); S('M146 108 L162 108 L164 140 L154 130 L144 140 Z', T.cord, { sh: 3, far: true, inner: '<path d="M146 114 L162 114" stroke="#e6ac3c" stroke-width="3"/>' }); });
+    // deux cordons pendent des coins du toit : un nœud doré, puis une frange
+    G('cords', () => { L([[[[58, 76], [54, 94], [58, 112]], 4, 3], [[[154, 76], [158, 94], [154, 112]], 4, 3]], 'cord'); S('M54 116 L62 116 L64 146 L61 138 L58 148 L55 138 L52 146 Z', T.cord, { sh: 2 }); S(disc(58, 113, 5.5), T.gold, { sh: 2 }); S('M150 116 L158 116 L160 146 L157 138 L154 148 L151 138 L148 146 Z', T.cord, { sh: 2, far: true }); S(disc(154, 113, 5.5), T.gold, { sh: 2, far: true }); });
     G('flame', () => S('M98 202 C94 192 102 188 104 178 C110 186 118 192 114 202 C112 208 100 208 98 202 Z', T.gold, { sh: 2, hl: 3 }));
     G('body', () => {
       S(disc(106, 44, 7), T.gold, { sh: 2 });
@@ -116,9 +116,9 @@ Mo('parade', 5, 'Dragon de parade', { scale: 1.36, atk: 'smash', wind: -16, hit:
   (h) => { const { S, raw, T, G, L, halo, eye, brow, teeth, limb, bar, disc } = h;
     G('poles', () => { for (const [x, y] of [[32, 124], [62, 150], [94, 116]]) { S(bar([x, y], [x, 228], 5), T.wood, { sh: 2 }); S(disc(x, 196, 7), T.gold, { sh: 2 }); } });
     G('body', () => {
-      // deux boucles : le corps ondule ; crête et nageoire de queue sortent de dessous
+      // deux boucles : le corps ondule ; la crête dépasse tout le long du dos, la nageoire de queue sort de dessous
       S('M12 170 L-8 156 L0 176 L-10 192 L14 188 Z', T.green, { sh: 3 });
-      S('M10 152 L12 126 L24 134 L28 104 L40 118 L50 100 L54 126 L64 134 L60 150 Z', T.green, { sh: 4 }); S('M62 138 L66 110 L78 118 L84 88 L94 104 L108 90 L110 114 L122 124 L114 142 Z', T.green, { sh: 4 });
+      S('M10 150 L10 114 L22 124 L30 76 L40 100 L48 82 L54 110 L64 100 L62 150 Z', T.green, { sh: 4 }); S('M64 150 L64 102 L76 110 L80 70 L90 92 L96 60 L104 90 L110 150 Z', T.green, { sh: 4 });
       S(limb([[8, 174], [32, 62], [64, 152]], 18, 30, 18), T.body, { sh: 8, hl: 5, inner: scaleGrid(0, 100, 70, 180, 14, '#e6ac3c', 2.6) });
       S(limb([[58, 152], [92, 58], [128, 154]], 30, 46, 20), T.body, { sh: 9, hl: 6, inner: scaleGrid(50, 92, 140, 178, 16, '#e6ac3c', 2.8) });
     });

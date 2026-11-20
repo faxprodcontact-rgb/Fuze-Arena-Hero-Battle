@@ -1,103 +1,170 @@
-// LA RUCHE (vent) — une colonie d'abeilles : rayures jaune et noir, ailes de verre, miel et cire.
-// Membres attachés sous le corps, rien de posé par-dessus avec un contour (voir LISEZMOI, « Les monstres »).
+// LA RUCHE (vent) — une colonie d'abeilles : tête, thorax velu, taille fine, abdomen annelé, pattes à articulations,
+// mandibules, ailes de verre nervurées, miel et cire.
+// Un seul contour par créature : ailes, pattes, mandibules et abdomen partent de SOUS le thorax (voir LISEZMOI, « Les monstres »).
 const { Mo } = require('./mon6.cjs');
-const Y = '#f0b020', K = '#2a2226', HONEY = '#ffb020', WING = '#dff4ff';
-/** Une paire d'ailes transparentes (derrière le corps). */
-const wings = (h, x, y, k = 1, far = false) => { for (const [a, l] of [[-58, 62], [-28, 50]]) h.raw(`<ellipse cx="${x - 20 * k}" cy="${y - l * 0.5 * k}" rx="${11 * k}" ry="${l * 0.5 * k}" transform="rotate(${a} ${x} ${y})" fill="${WING}" opacity="${far ? 0.5 : 0.8}" stroke="#2c1626" stroke-width="2"/>`); };
-const stripes = (list) => `<g fill="${K}">${list.map((d) => `<path d="${d}"/>`).join('')}</g>`;
+const Y = '#f0b020', K = '#2a2226', FUZZ = '#dc9a1c', HONEY = '#ffb020', GLASS = '#cfe4f0';
+const F = (v) => Math.round(v * 10) / 10, P = (p) => `${F(p[0])} ${F(p[1])}`;
+/** Aile de verre nervurée : part de « root », tournée de « a » degrés, longueur len, demi-largeur w. Pas de contour à elle. */
+const iwing = (h, root, a, len, w, o = {}) => h.at(`translate(${root[0]} ${root[1]}) rotate(${a})`, () => h.S(
+  `M0 0 C${F(len * 0.25)} ${F(-w * 0.9)} ${F(len * 0.85)} ${F(-w * 1.15)} ${F(len)} ${F(-w * 0.2)} C${F(len * 1.02)} ${F(w * 0.5)} ${F(len * 0.45)} ${F(w * 0.55)} 0 0 Z`,
+  h.TK(o.t ?? GLASS), { sh: 3, hl: 3, far: o.far, inner: `<g stroke="${o.vein ?? '#5a7a96'}" stroke-width="1.5" fill="none" opacity="0.7" stroke-linecap="round"><path d="M2 -1 C${F(len * 0.3)} ${F(-w * 0.55)} ${F(len * 0.7)} ${F(-w * 0.72)} ${F(len * 0.96)} ${F(-w * 0.2)}"/><path d="M${F(len * 0.12)} ${F(-w * 0.1)} L${F(len * 0.92)} ${F(w * 0.14)}"/><path d="M${F(len * 0.4)} ${F(-w * 0.62)} L${F(len * 0.5)} ${F(w * 0.34)}"/><path d="M${F(len * 0.66)} ${F(-w * 0.74)} L${F(len * 0.74)} ${F(w * 0.26)}"/></g>` }));
+/** Patte (ou antenne) à articulations : une suite de points, un segment droit entre chaque, de plus en plus fin. */
+const jleg = (h, pts, w, t, far) => { for (let i = pts.length - 2; i >= 0; i--) { const a = pts[i], b = pts[i + 1]; h.S(h.limb([a, [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], b], w * (1 - 0.2 * i), w * (1 - 0.2 * (i + 1)), 8), t, { sh: 2, far }); } };
+/** Mandibule : un croc courbe qui s'affine jusqu'à la pointe. */
+const mand = (h, pts, w, t, far) => h.S(h.limb(pts, w, 1.6, 12), t, { sh: 2, hl: 1.5, far });
+/** Bandes sombres et anneaux d'un abdomen (pour « inner »). */
+const bands = (h, list, w, c = K, rings = []) => h.stripes(list, c, w, 1) + h.stripes(rings, '#7a4a08', 1.6, 0.55);
+/** Œil à facettes : une amande sombre penchée, un reflet, la paupière en biais. */
+const ceye = (h, x, y, rx, ry, rot, glint, lid = 0.34) => h.at(`rotate(${rot} ${x} ${y})`, () => h.eye(x, y, rx, ry, { sclera: '#1c1418', iris: glint, pupil: 'none', irisK: 0.5, lid, tilt: 0.9, look: [rx * 0.25, -ry * 0.1], lidC: '#7a4a08' }));
 
-// 0 · rapide — Ouvrière : petite, vive, toujours la première sur l'intrus
-Mo('ruche', 0, 'Ouvrière', { scale: 0.86, atk: 'stab', wind: -10, hit: 14, colors: { y: Y, k: K }, grp: { wings: 'back', sting: 'torso', legs: 'torso', body: 'torso' }, piv: { back: [96, 124], head: [132, 132], torso: [106, 150] } },
-  (h) => { const { S, raw, T, G, L, eye } = h;
-    G('wings', () => wings(h, 98, 124));
-    G('sting', () => S('M52 160 L28 170 L54 172 Z', T.k, { sh: 2 }));
-    G('legs', () => L([[[[100, 172], [96, 188], [104, 198]], 5, 3], [[[116, 170], [118, 188], [126, 196]], 5, 3], [[[130, 164], [140, 180], [148, 186]], 5, 3]], 'k'));
-    G('body', () => S('M48 164 C46 144 62 132 84 134 C100 136 112 146 114 160 C114 176 98 184 80 184 C62 184 50 178 48 164 Z', T.y, { sh: 8, hl: 6, inner: stripes(['M62 134 C58 150 60 170 66 186 L78 186 C72 170 72 150 76 134 Z', 'M88 134 C86 150 88 170 94 186 L106 186 C102 170 100 150 102 134 Z']) }));
+// 0 · rapide — Ouvrière : petite, tendue comme une flèche, la tête basse et les mandibules ouvertes
+Mo('ruche', 0, 'Ouvrière', { scale: 0.9, atk: 'stab', wind: -10, hit: 14, colors: { y: Y, k: K, fuzz: FUZZ },
+  grp: { wings: 'back', abdomen: 'back', legs: 'torso', body: 'torso' }, piv: { back: [92, 148], head: [124, 160], torso: [106, 154] } },
+  (h) => { const { S, raw, T, G, tuft, eye } = h;
+    G('wings', () => { iwing(h, [102, 138], -150, 58, 13, { far: true }); iwing(h, [104, 136], -122, 68, 15); });
+    G('abdomen', () => {
+      S('M34 128 L4 118 L28 140 Z', T.k, { sh: 2 });
+      S('M94 142 C84 124 56 114 38 120 C26 124 24 136 30 144 C42 160 72 170 92 162 C98 158 98 148 94 142 Z', T.y, { sh: 7, hl: 5,
+        inner: bands(h, ['M76 120 C70 134 72 152 80 166', 'M56 114 C50 128 52 146 62 160', 'M38 118 C34 128 36 140 44 150'], 9, K, ['M66 116 C60 130 62 148 70 162', 'M46 116 C42 128 44 142 52 154']) });
+    });
+    G('legs', () => { jleg(h, [[100, 168], [88, 184], [72, 186]], 5, T.k); jleg(h, [[110, 170], [106, 190], [90, 198]], 5, T.k); jleg(h, [[120, 170], [128, 190], [116, 202]], 5, T.k); });
+    G('body', () => { S('M84 152 C84 138 96 128 110 130 C122 132 130 142 128 156 C126 168 114 176 102 174 C92 172 84 164 84 152 Z', T.fuzz, { sh: 7, hl: 5 }); tuft(100, 132, -14, 8, 26, 'fuzz', { n: 5 }); });
     G('head', () => {
-      L([[[[130, 112], [134, 92], [148, 86]], 3.5, 3], [[[144, 112], [154, 96], [166, 96]], 3.5, 3]], 'k');
-      S('M106 138 C104 120 118 108 136 110 C152 112 162 124 160 140 C158 156 144 164 130 162 C116 160 108 152 106 138 Z', T.y, { sh: 8, hl: 6 });
-      eye(138, 132, 11, 12, { sclera: '#2a2226', iris: '#fff', pupil: 'none', irisK: 0.42, lid: 0.3, tilt: 1, look: [3, -3], lidC: '#a8700a' });
+      jleg(h, [[136, 148], [128, 128], [110, 122]], 4, T.k); jleg(h, [[146, 150], [146, 128], [130, 116]], 4, T.k, true);
+      mand(h, [[150, 176], [164, 180], [166, 194]], 8, T.k); mand(h, [[140, 180], [146, 192], [158, 198]], 8, T.k, true);
+      S('M120 162 C118 148 130 140 142 142 C154 144 160 154 158 166 C156 178 146 184 136 182 C126 180 121 172 120 162 Z', T.y, { sh: 7, hl: 5 });
+      ceye(h, 144, 160, 9.5, 12, -24, '#ffe9a0');
     });
   });
 
-// 1 · costaud — Soldat : cuirasse épaisse, grosses mandibules
-Mo('ruche', 1, 'Soldat à dard', { scale: 1.1, atk: 'smash', wind: -16, hit: 22, colors: { y: Y, k: K, plate: '#5a4a3a' }, swing: ['head'], grp: { wings: 'back', abdomen: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [116, 150], back: [92, 124], torso: [106, 200] } },
-  (h) => { const { S, raw, T, G, L, eye } = h;
-    G('wings', () => wings(h, 92, 126, 1.1));
-    G('abdomen', () => { S('M30 206 L8 218 L34 216 Z', T.k, { sh: 2 }); S('M86 162 C56 158 28 172 26 196 C26 212 44 220 66 218 C88 216 104 200 102 182 C100 172 94 164 86 162 Z', T.y, { sh: 9, hl: 6, inner: stripes(['M44 166 C36 182 38 204 46 220 L58 220 C50 204 50 182 58 162 Z', 'M70 160 C64 178 66 202 74 218 L86 214 C80 198 80 178 84 162 Z']) }); });
-    G('legs', () => L([[[[94, 182], [84, 204], [90, 226]], 9, 6], [[[112, 184], [112, 206], [118, 226]], 9, 6], [[[128, 180], [142, 202], [148, 226]], 9, 6]], 'k'));
-    G('body', () => S('M70 162 C68 140 84 126 104 126 C124 126 138 138 138 158 C138 178 124 190 104 190 C84 190 72 180 70 162 Z', T.plate, { sh: 9, hl: 6, inner: '<path d="M76 152 C92 142 118 142 134 152 M74 168 C92 160 118 160 136 168" stroke="#f0b020" stroke-width="5" fill="none"/>' }));
+// 1 · costaud — Soldat à dard : cuirasse de chitine, six pattes plantées, des mandibules de lucane
+Mo('ruche', 1, 'Soldat à dard', { scale: 1.12, atk: 'smash', wind: -16, hit: 22, colors: { y: Y, k: K, plate: '#4c3e34', fuzz: FUZZ },
+  swing: ['head'], grp: { wings: 'back', abdomen: 'legs', legF: 'legs', legs: 'legs', shield: 'torso', body: 'torso' }, piv: { swing: [128, 158], back: [92, 144], torso: [106, 200] } },
+  (h) => { const { S, raw, T, G, tuft, stripes, under } = h;
+    G('wings', () => { iwing(h, [96, 142], -172, 70, 13, { far: true }); iwing(h, [98, 140], -156, 76, 14); });
+    G('abdomen', () => {
+      S('M24 180 L2 190 L24 200 Z', T.k, { sh: 2 });
+      S('M86 166 C72 148 40 146 24 160 C10 174 12 196 28 206 C48 216 78 210 90 192 C96 184 92 172 86 166 Z', T.y, { sh: 9, hl: 6,
+        inner: bands(h, ['M70 150 C62 168 64 192 74 210', 'M48 150 C40 166 42 190 52 210', 'M28 160 C22 174 24 190 32 204'], 11, K, ['M60 148 C52 166 54 192 64 212', 'M38 152 C30 168 32 192 42 208']) });
+    });
+    G('legF', () => { jleg(h, [[98, 186], [82, 172], [76, 222], [86, 226]], 9, T.k, true); jleg(h, [[136, 182], [160, 164], [170, 222], [180, 226]], 9, T.k, true); });
+    G('legs', () => { jleg(h, [[90, 190], [66, 178], [56, 222], [66, 226]], 10, T.k); jleg(h, [[108, 194], [104, 176], [112, 222], [122, 226]], 10, T.k); jleg(h, [[124, 188], [146, 170], [152, 222], [162, 226]], 10, T.k); });
+    G('body', () => S('M72 172 C70 148 88 134 108 134 C128 134 142 148 140 170 C138 188 124 198 106 198 C88 198 74 188 72 172 Z', T.plate, { sh: 9, hl: 6,
+      inner: stripes(['M78 158 C92 150 120 150 136 160', 'M76 174 C94 168 120 168 138 176'], Y, 4.5, 1) + h.spots([[84, 166, 2.2], [130, 168, 2.2], [106, 186, 2.2]], '#c8b090', 0.8) }));
+    // le bouclier du cou : une plaque qui remonte derrière la tête
+    G('shield', () => S('M88 148 C88 124 108 112 128 118 C138 122 142 130 140 138 C128 138 116 146 110 158 Z', T.plate, { sh: 5, hl: 4, inner: stripes(['M96 142 C100 130 114 122 130 124'], Y, 4, 1) }));
     G('head', () => {
-      L([[[[140, 110], [142, 90], [156, 82]], 4, 3], [[[154, 112], [166, 96], [178, 98]], 4, 3]], 'k');
-      // les mandibules sortent de sous la tête
-      S('M156 160 L178 178 L164 152 Z', T.k, { sh: 2 }); S('M142 166 L152 188 L154 162 Z', T.k, { sh: 2 });
-      S('M114 140 C112 120 128 108 146 110 C164 112 174 126 172 144 C170 160 156 170 140 168 C124 166 116 156 114 140 Z', T.y, { sh: 8, hl: 6, inner: '<path d="M116 124 C132 112 160 114 172 130 L170 120 C158 106 130 104 116 116 Z" fill="#5a4a3a"/>' });
-      eye(148, 138, 11, 11, { sclera: '#2a2226', iris: '#ff5a3a', pupil: 'none', irisK: 0.42, lid: 0.42, tilt: 1, look: [3, -2], lidC: '#a8700a' });
+      jleg(h, [[150, 132], [150, 112], [166, 104]], 4.5, T.k); jleg(h, [[160, 136], [168, 118], [184, 116]], 4.5, T.k, true);
+      // mandibules de lucane, de sous la tête
+      mand(h, [[164, 170], [194, 166], [196, 194]], 13, T.k); mand(h, [[150, 176], [168, 196], [190, 200]], 13, T.k, true);
+      S('M124 156 C122 138 136 126 154 128 C170 130 180 142 178 158 C176 174 162 184 148 182 C134 180 125 170 124 156 Z', T.y, { sh: 8, hl: 6,
+        inner: under('M124 150 C128 134 144 126 158 128 C168 130 174 136 178 144 C162 136 140 138 124 150 Z', '#4c3e34', 1) });
+      ceye(h, 158, 154, 10, 12, -22, '#ff5a3a', 0.4);
     });
   });
 
-// 2 · tireur — Cracheuse de cire : l'abdomen recourbé vers l'avant, gonflé de cire brûlante
-Mo('ruche', 2, 'Cracheuse de cire', { scale: 0.98, atk: 'cast', fx: HONEY, colors: { y: Y, k: K, wax: '#ffd76a', pale: '#f6e0a0' }, swing: ['abdomen'], grp: { wings: 'back', legs: 'torso', body: 'torso' }, piv: { swing: [92, 158], back: [92, 122], head: [128, 126], torso: [106, 150] }, shine: [[172, 186, 11, HONEY]], shineGrp: 'swing' },
-  (h) => { const { S, raw, T, G, L, halo, eye, limb } = h;
-    halo(172, 186, 16, HONEY, 0.8);
-    G('wings', () => wings(h, 92, 122));
-    // l'abdomen passe sous le corps et pointe vers l'ennemi, une poche de cire au bout
-    G('abdomen', () => { S(limb([[88, 150], [84, 208], [158, 192]], 30, 34, 18), T.pale, { sh: 8, hl: 6, inner: stripes(['M72 172 L104 180 L100 192 L70 186 Z', 'M96 200 L126 190 L130 204 L102 214 Z']) }); S('M152 176 C168 172 182 180 182 190 C180 200 166 204 154 200 Z', T.wax, { sh: 3, hl: 3 }); });
-    G('legs', () => L([[[[102, 152], [112, 168], [124, 172]], 5, 3], [[[114, 148], [128, 160], [140, 160]], 5, 3]], 'k'));
-    G('body', () => S('M70 142 C68 124 82 114 98 114 C114 114 126 124 124 142 C122 156 110 164 96 164 C82 164 72 156 70 142 Z', T.y, { sh: 8, hl: 6, inner: stripes(['M84 116 C80 130 82 150 88 164 L100 164 C94 150 94 130 98 114 Z']) }));
+// 2 · tireur — Cracheuse de cire : l'abdomen gonflé recourbé sous elle, une goutte de cire brûlante au bout
+Mo('ruche', 2, 'Cracheuse de cire', { scale: 1, atk: 'cast', fx: HONEY, colors: { y: '#e8c060', k: '#4a3426', fuzz: '#c98a2c', wax: '#ffd76a', pale: '#f6e4b0' },
+  swing: ['abdomen'], grp: { wings: 'back', legs: 'torso', body: 'torso' }, piv: { swing: [92, 150], back: [92, 118], head: [124, 124], torso: [100, 140] }, shine: [[176, 190, 11, HONEY]], shineGrp: 'swing' },
+  (h) => { const { S, raw, T, G, tuft, halo, limb, stripes, under } = h;
+    halo(176, 190, 16, HONEY, 0.8);
+    G('wings', () => { iwing(h, [90, 120], -146, 60, 14, { far: true }); iwing(h, [92, 118], -112, 70, 16); });
+    // l'abdomen passe sous le corps et vise l'ennemi : un sac de cire qui grossit vers le bout, une buse sombre, la goutte
+    G('abdomen', () => {
+      S('M162 178 C174 174 188 180 188 190 C188 200 174 206 162 202 Z', T.wax, { sh: 3, hl: 3 });
+      S(limb([[90, 150], [70, 216], [156, 192]], 28, 40, 20), T.pale, { sh: 9, hl: 6,
+        inner: under('M96 206 C116 214 146 208 166 192 C150 214 116 222 92 214 Z', '#ffb020', 0.55) + bands(h, ['M72 166 L104 174', 'M72 190 L104 190', 'M96 216 L112 184', 'M126 216 L134 178'], 6.5, '#4a3426', []) + '<path d="M152 172 C160 180 160 200 152 210 L164 206 C170 196 170 184 164 176 Z" fill="#4a3426"/>' });
+    });
+    G('legs', () => { jleg(h, [[102, 150], [120, 160], [116, 176]], 5, T.k); jleg(h, [[112, 146], [134, 152], [134, 168]], 5, T.k); });
+    G('body', () => { S('M72 138 C70 122 82 110 98 110 C114 110 126 122 124 138 C122 152 110 162 96 162 C82 162 74 152 72 138 Z', T.fuzz, { sh: 8, hl: 6 }); tuft(88, 112, -16, 8, 26, 'fuzz', { n: 5 }); });
     G('head', () => {
-      L([[[[130, 100], [134, 80], [148, 74]], 3.5, 3], [[[144, 100], [156, 84], [168, 86]], 3.5, 3]], 'k');
-      S('M142 146 L158 156 L150 140 Z', T.k, { sh: 2 });
-      S('M108 126 C106 108 120 96 138 98 C154 100 164 112 162 128 C160 144 146 152 132 150 C118 148 110 140 108 126 Z', T.y, { sh: 8, hl: 6 });
-      eye(140, 120, 10.5, 11, { sclera: '#2a2226', iris: '#fff', pupil: 'none', irisK: 0.42, lid: 0.46, tilt: 1, look: [3, -2], lidC: '#a8700a' });
+      jleg(h, [[132, 100], [128, 80], [112, 72]], 4, T.k); jleg(h, [[142, 102], [146, 82], [132, 70]], 4, T.k, true);
+      mand(h, [[148, 136], [160, 142], [160, 154]], 8, T.k); mand(h, [[138, 140], [142, 152], [152, 158]], 8, T.k, true);
+      S('M112 122 C110 106 122 96 136 98 C150 100 158 110 156 124 C154 138 144 146 132 144 C120 142 113 134 112 122 Z', T.y, { sh: 7, hl: 5 });
+      ceye(h, 140, 118, 9.5, 11.5, -22, '#ffe9a0', 0.4);
     });
   });
 
 // 3 · sorts — Nourrice : sa gelée royale remet la colonie sur pattes
-Mo('ruche', 3, 'Nourrice', { atk: 'cast', heal: true, fx: '#fff3c0', colors: { y: '#f6cf6a', k: '#6a4a3a', pot: '#b8703a', honey: HONEY }, swing: ['arm'], grp: { wings: 'back', legs: 'legs', body: 'torso' }, piv: { swing: [112, 152], back: [96, 126], head: [108, 118], torso: [106, 200] }, shine: [[154, 150, 10, HONEY]], shineGrp: 'swing' },
-  (h) => { const { S, raw, T, G, L, halo, eye, disc } = h;
-    halo(154, 150, 14, HONEY, 0.7);
-    G('wings', () => wings(h, 94, 128, 0.9));
-    G('legs', () => L([[[[94, 198], [90, 212], [96, 224]], 7, 5], [[[118, 198], [122, 212], [128, 224]], 7, 5]], 'k'));
-    G('arm', () => { S('M142 152 L166 152 L164 174 C160 180 148 180 144 174 Z', T.pot, { sh: 4, hl: 3, inner: '<path d="M142 152 L166 152 L166 158 L142 158 Z" fill="#ffb020"/>' }); L([[[[112, 152], [130, 164], [146, 162]], 8, 6]], 'k'); });
-    G('body', () => S('M76 172 C72 146 88 132 106 132 C124 132 140 146 136 172 C134 192 122 204 106 204 C90 204 78 192 76 172 Z', T.y, { sh: 9, hl: 6, inner: `<g fill="#6a4a3a">${['M74 156 C92 148 120 148 138 156 L138 166 C120 158 92 158 74 166 Z', 'M76 180 C94 174 118 174 136 180 L134 190 C118 184 94 184 78 190 Z'].map((d) => `<path d="${d}"/>`).join('')}</g><path d="M78 138 C92 130 120 130 134 138 C128 146 84 146 78 138 Z" fill="#fff6e0"/>` }));
+Mo('ruche', 3, 'Nourrice', { atk: 'cast', heal: true, fx: '#fff3c0', colors: { y: '#f6d47a', k: '#6a4a3a', fuzz: '#fff3d8', pot: '#b8703a', jelly: '#fff0b0' },
+  swing: ['arm'], far: ['armF'], grp: { wings: 'back', legs: 'legs', abdomen: 'torso', body: 'torso' }, piv: { swing: [112, 136], far: [122, 134], back: [92, 120], head: [106, 112], torso: [104, 200] }, shine: [[152, 132, 10, '#fff0b0']], shineGrp: 'swing' },
+  (h) => { const { S, raw, T, G, tuft, halo, stripes, under, fringe } = h;
+    halo(152, 132, 15, '#fff0b0', 0.8);
+    G('wings', () => { iwing(h, [90, 124], -160, 56, 13, { far: true }); iwing(h, [92, 122], -128, 62, 14); });
+    G('legs', () => { jleg(h, [[114, 196], [124, 210], [118, 224], [128, 226]], 7, T.k, true); jleg(h, [[94, 198], [86, 212], [92, 224], [102, 226]], 7.5, T.k); });
+    G('armF', () => jleg(h, [[122, 136], [134, 154], [150, 152]], 7, T.k, true));
+    // l'abdomen pend sous le thorax, rond et annelé
+    G('abdomen', () => S('M76 170 C72 150 136 150 134 172 C132 194 122 210 106 212 C90 212 78 194 76 170 Z', T.y, { sh: 9, hl: 6,
+      inner: bands(h, ['M74 172 C92 164 120 164 136 172', 'M78 190 C94 184 118 184 132 190'], 8, '#6a4a3a', ['M76 181 C92 174 120 174 134 181', 'M84 201 C96 196 116 196 128 201']) }));
+    G('body', () => { S(`M80 140 C80 126 132 126 132 140 C132 152 126 160 120 164${fringe(120, 92, 164, 4, 6)} C84 158 80 150 80 140 Z`, T.fuzz, { sh: 6, hl: 5 }); });
+    G('arm', () => {
+      // le pot de gelée royale, tenu à deux pattes
+      S('M140 128 L166 128 L164 152 C160 158 146 158 142 152 Z', T.pot, { sh: 4, hl: 3, inner: '<path d="M140 128 L166 128 L166 135 L140 135 Z" fill="#fff0b0"/><path d="M146 135 C146 142 150 144 150 138 Z" fill="#fff0b0"/>' });
+      jleg(h, [[112, 138], [128, 150], [146, 142]], 7.5, T.k);
+    });
     G('head', () => {
-      L([[[[96, 86], [88, 68], [76, 66]], 3.5, 3], [[[116, 86], [124, 68], [136, 66]], 3.5, 3]], 'k');
-      S('M80 110 C78 92 92 82 106 82 C120 82 134 92 132 110 C130 126 120 134 106 134 C92 134 82 126 80 110 Z', T.y, { sh: 8, hl: 6, inner: '<path d="M98 122 q8 6 16 0" stroke="#6a4a3a" stroke-width="2.4" fill="none" stroke-linecap="round"/><g fill="#f08a9a" opacity="0.6"><circle cx="88" cy="116" r="5"/><circle cx="124" cy="116" r="5"/></g>' });
-      raw('<path d="M90 106 q6 6 12 0 M110 106 q6 6 12 0" stroke="#3a2a22" stroke-width="2.8" fill="none" stroke-linecap="round"/>');
+      jleg(h, [[98, 78], [92, 60], [78, 58]], 4, T.k); jleg(h, [[116, 78], [124, 60], [138, 60]], 4, T.k, true);
+      S('M80 102 C78 84 92 74 108 74 C124 74 136 86 134 102 C132 118 120 128 106 128 C92 128 82 118 80 102 Z', T.y, { sh: 8, hl: 6 });
+      // yeux clos, calme : pas de sourire
+      raw('<path d="M96 100 q7 7 14 1 M116 100 q6 6 12 0" stroke="#3a2a22" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M110 116 l8 0" stroke="#6a4a3a" stroke-width="2.4" stroke-linecap="round"/>');
     });
   });
 
-// 4 · élite — Frelon mercenaire : plus grand, plus sombre, il ne vit pas ici, on le paie
-Mo('ruche', 4, 'Frelon mercenaire', { scale: 1.2, atk: 'stab', wind: -34, hit: 30, colors: { y: '#e8782a', k: '#3a1c14', dark: '#241210' }, swing: ['armN'], far: ['armF'], grp: { wings: 'back', sting: 'torso', legs: 'legs', body: 'torso' }, piv: { swing: [110, 138], far: [124, 138], back: [92, 112], head: [128, 104], torso: [106, 190] } },
-  (h) => { const { S, raw, T, G, L, eye, limb } = h;
-    G('wings', () => wings(h, 92, 112, 1.25));
-    G('armF', () => { L([[[[124, 138], [150, 140], [168, 122]], 7, 5]], 'dark', { far: true }); S('M164 126 L192 110 L172 132 Z', T.dark, { sh: 2, far: true }); });
-    G('sting', () => { S(limb([[84, 150], [48, 186], [70, 214]], 44, 16, 18), T.y, { sh: 8, inner: `<g fill="#3a1c14"><path d="M44 168 L84 186 L78 198 L42 182 Z"/><path d="M50 196 L80 204 L76 214 L54 208 Z"/></g>` }); S('M64 208 L72 228 L80 210 Z', T.k, { sh: 2 }); });
-    G('legs', () => L([[[[96, 164], [92, 196], [98, 224]], 8, 5], [[[116, 164], [124, 196], [130, 224]], 8, 5]], 'k'));
-    G('body', () => S('M76 134 C76 114 92 104 108 104 C124 104 138 114 136 136 C134 156 122 168 106 168 C90 168 78 154 76 134 Z', T.k, { sh: 9, hl: 6, inner: '<path d="M82 126 C96 118 120 118 132 126" stroke="#e8782a" stroke-width="5" fill="none"/>' }));
-    G('armN', () => { S('M176 150 L208 146 L180 160 Z', T.dark, { sh: 2 }); L([[[[110, 138], [144, 164], [178, 154]], 8, 6]], 'k'); });
+// 4 · élite — Frelon mercenaire : taille de guêpe, bras en lames, on le paie pour tuer
+Mo('ruche', 4, 'Frelon mercenaire', { scale: 1.22, atk: 'stab', wind: -34, hit: 30, colors: { y: '#e8782a', k: '#3a1c14', dark: '#241210', blade: '#58382a', amber: '#e8c890' },
+  swing: ['armN'], far: ['armF'], grp: { wings: 'back', abdomen: 'torso', legF: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [110, 138], far: [122, 132], back: [90, 108], head: [124, 112], torso: [104, 190] } },
+  (h) => { const { S, raw, T, G, limb, stripes, under, saw } = h;
+    const blade = (a, b, t, far) => { const dx = b[0] - a[0], dy = b[1] - a[1], m = Math.hypot(dx, dy), u = [dx / m, dy / m], n = [-u[1], u[0]]; let d = `M${P([a[0] - n[0] * 5, a[1] - n[1] * 5])} L${P(b)}`; for (let i = 4; i >= 1; i--) { const p = [a[0] + dx * i / 5, a[1] + dy * i / 5]; d += ` L${P([p[0] + n[0] * 9 + u[0] * 3, p[1] + n[1] * 9 + u[1] * 3])} L${P([p[0] + n[0] * 4 - u[0] * 3, p[1] + n[1] * 4 - u[1] * 3])}`; } S(d + ` L${P([a[0] + n[0] * 6, a[1] + n[1] * 6])} Z`, t, { sh: 2, hl: 2, far }); };
+    G('wings', () => { iwing(h, [88, 110], -152, 70, 14, { far: true, t: '#e8c890', vein: '#8a5a2a' }); iwing(h, [90, 108], -118, 84, 17, { t: '#e8c890', vein: '#8a5a2a' }); });
+    G('armF', () => { blade([166, 112], [200, 92], T.blade, true); jleg(h, [[122, 132], [148, 136], [168, 112]], 8, T.dark, true); });
+    // l'abdomen se recourbe sous lui, le dard pointé vers l'avant
+    G('abdomen', () => {
+      S('M70 204 L108 224 L72 218 Z', T.dark, { sh: 2 });
+      S(limb([[88, 146], [42, 180], [78, 214]], 44, 13, 20), T.y, { sh: 9, hl: 6, inner: bands(h, ['M52 152 L86 176', 'M42 176 L78 190', 'M50 200 L74 202'], 8, '#3a1c14', ['M48 164 L82 184', 'M44 188 L76 196']) });
+    });
+    G('legF', () => jleg(h, [[110, 158], [140, 176], [136, 222], [148, 226]], 8, T.dark, true));
+    G('legs', () => jleg(h, [[98, 162], [124, 186], [112, 222], [124, 226]], 9, T.k));
+    G('body', () => S('M74 132 C74 112 90 100 108 102 C126 104 138 118 136 136 C134 154 120 166 104 164 C88 162 76 150 74 132 Z', T.k, { sh: 9, hl: 6, inner: stripes(['M80 124 C94 114 120 116 132 126', 'M78 142 C94 136 120 138 134 146'], '#e8782a', 4.5, 1) }));
+    G('armN', () => { blade([172, 150], [208, 138], T.blade); jleg(h, [[110, 138], [140, 162], [174, 150]], 9, T.k); });
     G('head', () => {
-      L([[[[122, 72], [124, 52], [140, 44]], 4, 3], [[[138, 74], [152, 58], [166, 62]], 4, 3]], 'k');
-      S('M100 100 C98 80 114 68 132 70 C150 72 160 86 158 104 C156 120 142 130 128 128 C112 126 102 116 100 100 Z', T.y, { sh: 8, hl: 6 });
-      S('M142 120 L160 132 L150 116 Z', T.k, { sh: 2 }); S('M130 124 L140 140 L140 122 Z', T.k, { sh: 2 });
-      eye(134, 96, 12, 11, { sclera: '#241210', iris: '#ffe14a', pupil: 'none', irisK: 0.42, lid: 0.44, tilt: 1, look: [3, -2], lidC: '#a8700a' });
+      jleg(h, [[122, 70], [118, 46], [136, 34]], 4.5, T.k); jleg(h, [[138, 72], [146, 50], [164, 46]], 4.5, T.k, true);
+      mand(h, [[146, 116], [164, 124], [162, 142]], 11, T.dark); mand(h, [[132, 122], [140, 138], [154, 144]], 11, T.dark, true);
+      // tête en coin, joues larges, front bas
+      S('M102 96 C100 78 114 66 132 68 C150 70 162 84 158 100 C154 116 144 128 132 126 C118 124 104 112 102 96 Z', T.y, { sh: 8, hl: 6,
+        inner: under('M104 90 C108 74 122 66 136 68 C146 70 154 76 158 86 C142 78 122 80 104 90 Z', '#3a1c14', 0.9) + stripes(['M112 108 L124 118'], '#3a1c14', 2.4, 0.8) });
+      ceye(h, 138, 96, 11, 13.5, -26, '#ffe14a', 0.42);
     });
   });
 
-// 5 · boss — Reine : un abdomen énorme, une couronne de cire, un sceptre dégoulinant de miel
-Mo('ruche', 5, 'Reine', { scale: 1.34, atk: 'smash', wind: -50, hit: 40, fx: HONEY, colors: { y: Y, k: K, gold: '#ffd76a', fur: '#fff6e0', wood: '#7a5230' }, swing: ['arm'], grp: { wings: 'back', abdomen: 'legs', legs: 'legs', body: 'torso' }, piv: { swing: [118, 132], back: [98, 116], head: [120, 96], torso: [106, 200] }, shine: [[180, 76, 12, HONEY]], shineGrp: 'swing' },
-  (h) => { const { S, raw, T, G, L, halo, eye, limb, bar, disc } = h;
-    halo(180, 76, 18, HONEY, 0.8);
-    G('wings', () => wings(h, 98, 116, 1.3));
-    G('abdomen', () => S('M100 150 C64 146 28 160 22 188 C18 210 44 226 76 226 C104 226 124 210 124 186 C124 170 114 156 100 150 Z', T.y, { sh: 12, hl: 8, inner: stripes(['M40 158 C32 178 34 204 46 222 L62 226 C48 206 48 178 56 154 Z', 'M72 150 C66 172 68 204 80 226 L98 222 C86 200 84 170 90 150 Z']) }));
-    G('legs', () => L([[[[110, 168], [112, 198], [120, 224]], 8, 5], [[[128, 164], [138, 196], [146, 224]], 8, 5]], 'k'));
-    G('arm', () => { S(bar([146, 150], [176, 86], 5), T.wood, { sh: 2 }); S(disc(180, 76, 13), T.gold, { sh: 4, hl: 4, inner: '<path d="M172 82 C174 92 178 98 182 90 Z" fill="#ffb020"/>' }); L([[[[118, 134], [140, 146], [156, 132]], 9, 7]], 'k'); });
-    G('body', () => { S('M92 142 C90 120 104 110 120 110 C136 110 148 122 146 142 C144 160 132 170 118 170 C104 170 94 158 92 142 Z', T.k, { sh: 8, hl: 5 }); S('M90 116 L96 130 L104 118 L112 132 L120 118 L128 132 L136 118 L144 130 L150 116 C136 104 104 104 90 116 Z', T.fur, { sh: 4 }); });
+// 5 · boss — Reine : un abdomen énorme, un manteau d'ailes, une couronne de cire et un sceptre dégoulinant de miel
+Mo('ruche', 5, 'Reine', { scale: 1.36, atk: 'smash', wind: -50, hit: 40, fx: HONEY, colors: { y: Y, k: K, gold: '#ffd76a', fur: '#fff6e0', wood: '#7a5230', royal: '#7a2a8a' },
+  swing: ['arm'], far: ['armF'], grp: { wings: 'back', abdomen: 'legs', legF: 'legs', legs: 'legs', body: 'torso', collar: 'torso' }, piv: { swing: [118, 132], far: [130, 130], back: [98, 114], head: [120, 108], torso: [106, 200] }, shine: [[178, 70, 12, HONEY]], shineGrp: 'swing' },
+  (h) => { const { S, raw, T, G, halo, limb, bar, disc, stripes, under, spots, fringe } = h;
+    halo(178, 70, 18, HONEY, 0.8);
+    G('wings', () => { iwing(h, [94, 118], -170, 74, 16, { far: true }); iwing(h, [96, 116], -142, 92, 19, { far: true }); iwing(h, [98, 114], -112, 104, 21); });
+    G('abdomen', () => {
+      S('M24 196 L4 210 L28 212 Z', T.k, { sh: 2 });
+      S('M104 148 C70 138 26 150 16 182 C10 208 40 226 78 226 C108 226 128 210 128 186 C128 170 118 154 104 148 Z', T.y, { sh: 12, hl: 8,
+        inner: bands(h, ['M92 144 C82 168 84 204 98 226', 'M66 142 C56 166 58 204 72 228', 'M40 150 C30 170 32 204 46 224', 'M20 172 C16 186 18 204 26 216'], 12, K, ['M80 142 C70 166 72 206 86 228', 'M54 146 C44 168 46 206 60 228', 'M30 158 C22 176 24 204 36 220'])
+          + spots([[88, 186, 2.6], [62, 186, 2.6], [36, 188, 2.4]], '#ffd76a', 0.9) });
+    });
+    G('legF', () => jleg(h, [[126, 166], [148, 190], [142, 222], [154, 226]], 8, T.k, true));
+    G('legs', () => jleg(h, [[112, 170], [130, 196], [120, 222], [132, 226]], 9, T.k));
+    G('armF', () => { jleg(h, [[130, 132], [154, 130], [172, 142]], 8, T.k, true); S('M170 138 L186 140 L174 146 L184 152 L168 148 Z', T.k, { sh: 2, far: true }); });
+    G('body', () => S('M90 140 C88 120 104 110 120 110 C136 110 148 122 146 140 C144 158 132 170 118 170 C104 170 92 158 90 140 Z', T.royal, { sh: 8, hl: 5, inner: stripes(['M96 150 C108 144 130 144 142 150'], '#ffd76a', 4, 1) + spots([[118, 160, 3]], '#ffd76a', 0.9) }));
+    // col d'hermine
+    G('collar', () => S(`M88 120 C96 104 142 104 150 120 L146 132${fringe(146, 92, 132, 5, 8)} Z`, T.fur, { sh: 4, hl: 3, inner: spots([[102, 120, 2.2, 3], [118, 118, 2.2, 3], [134, 120, 2.2, 3]], '#2a2226', 0.85) }));
+    G('arm', () => {
+      S(bar([148, 170], [174, 82], 5.5), T.wood, { sh: 2 });
+      // la tête du sceptre : une louche à miel striée, une coulure
+      S('M164 64 C166 52 190 52 192 64 C196 72 194 86 178 88 C164 86 160 72 164 64 Z', T.gold, { sh: 4, hl: 4, inner: stripes(['M163 66 L193 66', 'M162 74 L194 74', 'M165 81 L191 81'], '#b87a18', 2.4, 0.9) + '<path d="M170 84 C170 96 176 100 176 88 Z" fill="#ffb020"/>' });
+      jleg(h, [[118, 134], [140, 150], [158, 136]], 9, T.k);
+    });
     G('head', () => {
-      L([[[[112, 62], [106, 44], [94, 40]], 4, 3], [[[134, 62], [146, 46], [158, 48]], 4, 3]], 'k');
-      S('M94 90 C92 70 106 60 122 60 C138 60 152 70 150 90 C148 106 136 116 122 116 C108 116 96 106 94 90 Z', T.y, { sh: 8, hl: 6, inner: '<path d="M126 106 q8 -4 14 0" stroke="#2a2226" stroke-width="2.6" fill="none" stroke-linecap="round"/>' });
-      S('M102 64 L100 42 L112 54 L122 36 L132 54 L144 42 L142 64 Z', T.gold, { sh: 4, hl: 3, inner: '<circle cx="122" cy="52" r="3.5" fill="#d8382e"/>' });
-      eye(130, 86, 11.5, 11, { sclera: '#2a2226', iris: '#ff5ad8', pupil: 'none', irisK: 0.42, lid: 0.42, tilt: 1, look: [3, -2], lidC: '#a8700a' });
+      jleg(h, [[110, 62], [100, 40], [84, 38]], 4.5, T.k); jleg(h, [[134, 62], [146, 42], [162, 46]], 4.5, T.k, true);
+      mand(h, [[138, 106], [152, 112], [150, 126]], 9, T.k); mand(h, [[126, 110], [130, 122], [142, 128]], 9, T.k, true);
+      S('M94 88 C92 70 106 60 122 60 C138 60 152 70 150 88 C148 104 136 116 122 116 C108 116 96 104 94 88 Z', T.y, { sh: 8, hl: 6 });
+      S('M100 66 L96 40 L110 54 L122 32 L134 54 L148 40 L144 66 C132 60 112 60 100 66 Z', T.gold, { sh: 4, hl: 3, inner: '<circle cx="122" cy="52" r="3.8" fill="#d8382e"/>' });
+      ceye(h, 132, 88, 10.5, 12.5, -24, '#ff5ad8', 0.42);
     });
   });

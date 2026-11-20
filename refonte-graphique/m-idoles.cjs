@@ -50,17 +50,18 @@ Mo('idoles', 1, 'Taureau d\'airain', { scale: 1.12, atk: 'smash', wind: -16, hit
       S('M28 166 C26 134 52 116 84 114 C104 104 128 110 138 128 C146 142 146 162 140 178 C134 196 114 204 86 204 C54 204 30 194 28 166 Z', T.br, { sh: 12, hl: 8,
         inner: patina('M36 138 C52 120 90 112 116 112 C92 120 62 126 44 148 Z') + seams('M48 128 C42 150 44 178 52 198 M110 112 C120 138 120 174 110 200') + rivets([[38, 156], [38, 172], [42, 188], [102, 120], [108, 136], [110, 152]])
           + '<path d="M60 150 L96 150 L96 186 L60 186 Z" fill="#2a0f14"/>' + hot('M66 184 C62 170 72 166 74 156 C80 164 84 158 86 152 C92 164 94 174 90 184 Z') + '<g stroke="#5a3214" stroke-width="3.4" fill="none"><path d="M60 150 L96 150 L96 186 L60 186 Z"/><path d="M72 150 L72 186 M84 150 L84 186"/></g>' + rivets([[56, 156], [56, 180]], 3) });
-      neck([118, 146], [136, 150], [150, 162], 64, 54, 'br', { inner: seams('M128 124 C136 140 136 164 128 182') });
+      neck([118, 146], [134, 148], [148, 156], 64, 56, 'br', { inner: seams('M128 124 C136 140 136 164 128 182') });
     });
     G('head', () => {
-      // tête baissée, cornes pointées vers l'avant
-      S(limb([[158, 130], [186, 100], [216, 112]], 13, 3, 16), T.dark, { sh: 4, far: true }); S(limb([[142, 134], [164, 96], [206, 100]], 17, 3, 16), T.br, { sh: 4, hl: 3, inner: seams('M158 112 l10 8 M174 102 l8 10') });
-      S('M134 138 C122 126 110 126 104 132 C110 142 122 148 132 150 Z', T.dark, { sh: 3 });
-      raw('<path d="M188 192 a9 10 0 1 0 14 -3" stroke="#3a2416" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M188 192 a9 10 0 1 0 14 -3" stroke="#d09a50" stroke-width="3.6" fill="none" stroke-linecap="round"/>');
-      halo(200, 174, 12, HOT, 0.55);
-      S('M124 150 C124 130 140 120 158 124 C176 124 190 132 196 146 C204 156 208 172 204 186 C200 198 184 200 172 196 C154 200 136 190 128 172 C125 164 124 156 124 150 Z', T.br, { sh: 11, hl: 7,
-        inner: seams('M174 146 C182 158 184 176 178 194') + rivets([[140, 132], [152, 130]]) + hot('M190 170 C195 168 200 171 200 176 C195 179 190 175 190 170 Z') + '<path d="M202 188 C192 186 180 187 172 192" stroke="#5a3214" stroke-width="2.4" fill="none" stroke-linecap="round"/>' + crack('M134 164 L142 172 L138 182') });
-      eye(158, 152, 9.5, 8, { sclera: '#ffe27a', iris: HOT, pupilK: 0.45, lid: 0.46, tilt: 1, lidC: '#5a3214' }); brow(158, 141, 26, 1, '#5a3214', 6);
+      // cornes courtes et épaisses, sur les côtés du crâne, recourbées vers l'avant et le haut
+      S(limb([[162, 128], [184, 106], [206, 84]], 15, 4, 14), T.dark, { sh: 4, far: true }); S(limb([[140, 136], [146, 98], [180, 80]], 19, 4, 14), T.br, { sh: 4, hl: 3, inner: seams('M140 116 l14 4 M148 102 l12 8') });
+      S('M132 142 C120 132 108 134 104 142 C112 152 124 154 132 152 Z', T.dark, { sh: 3 });
+      raw('<path d="M190 195 a9 10 0 1 0 14 -2" stroke="#3a2416" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M190 195 a9 10 0 1 0 14 -2" stroke="#d09a50" stroke-width="3.6" fill="none" stroke-linecap="round"/>');
+      halo(206, 168, 13, HOT, 0.6);
+      // front lourd, mufle court et carré
+      S('M124 152 C122 134 134 122 150 122 C162 120 174 124 182 134 L196 146 C204 150 208 158 208 168 L206 184 C204 192 198 196 190 196 L164 196 C146 198 130 188 126 172 C124 164 124 158 124 152 Z', T.br, { sh: 11, hl: 7,
+        inner: seams('M180 146 C176 162 176 180 180 196') + rivets([[138, 132], [150, 128], [162, 130]]) + '<ellipse cx="198" cy="166" rx="6" ry="5" fill="#5a3214"/>' + hot('M194 166 C196 162 202 162 203 166 C202 170 196 170 194 166 Z') + '<path d="M206 184 C198 181 190 183 184 190" stroke="#5a3214" stroke-width="2.6" fill="none" stroke-linecap="round"/>' + crack('M134 164 L142 172 L138 182') });
+      eye(156, 150, 9.5, 8, { sclera: '#ffe27a', iris: HOT, pupilK: 0.45, lid: 0.48, tilt: 1, lidC: '#5a3214' }); brow(156, 139, 28, 1, '#5a3214', 6.5);
     });
   });
 
@@ -90,7 +91,7 @@ Mo('idoles', 2, 'Archer de bronze', { atk: 'shoot', fx: HOT, colors: { br: BR, d
   });
 
 // 3 · sorts — Porteuse d'encens : sa fumée referme les fissures du bronze
-Mo('idoles', 3, 'Porteuse d\'encens', { atk: 'cast', heal: true, fx: '#bfe8d8', colors: { br: BR, dark: BRD }, swing: ['censer'], grp: { skirt: 'legs', body: 'torso' }, piv: { swing: [124, 130], head: [106, 100], torso: [106, 200] }, shine: [[170, 168, 9, HOT]], shineGrp: 'swing' },
+Mo('idoles', 3, 'Porteuse d\'encens', { atk: 'cast', heal: true, fx: '#bfe8d8', colors: { br: BR, dark: BRD, veil: metal('#9a6634') }, swing: ['censer'], grp: { skirt: 'legs', body: 'torso' }, piv: { swing: [124, 130], head: [106, 104], torso: [106, 200] }, shine: [[170, 168, 9, HOT]], shineGrp: 'swing' },
   ({ S, raw, T, G, L, glow, halo, disc, ell }) => {
     halo(170, 168, 14, HOT, 0.8);
     G('skirt', () => S('M74 150 C70 180 62 206 54 228 L158 228 C150 206 142 180 138 150 Z', T.br, { sh: 9, hl: 6,
@@ -104,13 +105,14 @@ Mo('idoles', 3, 'Porteuse d\'encens', { atk: 'cast', heal: true, fx: '#bfe8d8', 
       L([[[[124, 130], [146, 140], [158, 126]], 13, 11]], 'br'); S(disc(158, 124, 7.5), T.br, { sh: 3 });
     });
     G('body', () => S('M80 128 C78 112 92 106 106 106 C120 106 134 112 132 128 L138 156 C120 164 92 164 74 156 Z', T.br, { sh: 8, hl: 5,
-      inner: '<path d="M86 116 C94 132 118 132 126 116" stroke="#5a3214" stroke-width="3" fill="none" opacity="0.7"/>' + `<circle cx="106" cy="134" r="6.5" fill="${VERD}" opacity="0.85"/>` + seams('M80 148 C96 156 116 156 132 148') + rivets([[84, 152], [106, 156], [128, 152]]) }));
+      inner: '<path d="M86 118 C94 134 118 134 126 118" stroke="#5a3214" stroke-width="3" fill="none" opacity="0.7"/>' + `<circle cx="106" cy="136" r="6.5" fill="${VERD}" opacity="0.85"/>` + seams('M80 148 C96 156 116 156 132 148') + rivets([[84, 152], [106, 156], [128, 152]]) }));
     G('head', () => {
-      // voile, diadème à trois pointes, visage serein
-      S('M80 66 C68 88 70 112 76 130 L136 130 C142 112 144 88 132 66 Z', T.dark, { sh: 5, far: true, inner: seams('M82 84 C78 100 78 116 82 128 M130 84 C134 100 134 116 130 128') });
-      S('M86 60 L84 34 L98 46 L106 18 L114 46 L128 34 L126 60 Z', T.dark, { sh: 3, hl: 2, inner: `<circle cx="106" cy="42" r="5" fill="${VERD}" opacity="0.9"/>` });
-      S('M82 82 C78 62 92 52 106 52 C120 52 134 62 130 82 C130 98 120 108 106 108 C92 108 82 98 82 82 Z', T.br, { sh: 8, hl: 5, inner: '<path d="M80 72 C90 58 122 58 132 72 C120 64 92 64 80 72 Z" fill="#7a4a22"/>' + seams('M98 96 C102 99 110 99 114 96') });
-      raw('<path d="M91 80 q7 5 14 0 M112 80 q6 5 12 0" stroke="#5a3214" stroke-width="2.6" fill="none" stroke-linecap="round"/>');
+      // voile drapé sur les épaules, diadème à trois pointes, visage serein
+      S('M84 60 C66 82 62 112 70 136 L142 136 C150 112 146 82 128 60 Z', T.veil, { sh: 5, hl: 4,
+        inner: seams('M78 80 C70 98 70 118 76 134 M88 108 C84 118 84 128 88 136 M134 80 C142 98 142 118 136 134 M124 108 C128 118 128 128 124 136') + `<path d="M68 132 L144 132" stroke="${VERD}" stroke-width="7" opacity="0.6"/>` + rivets([[80, 132], [106, 132], [132, 132]], 2) });
+      S('M86 58 L84 28 L98 42 L106 14 L114 42 L128 28 L126 58 Z', T.dark, { sh: 3, hl: 2, inner: `<circle cx="106" cy="38" r="5" fill="${VERD}" opacity="0.9"/>` });
+      S('M79 84 C75 60 91 47 106 47 C121 47 137 60 133 84 C133 102 121 113 106 113 C91 113 79 102 79 84 Z', T.br, { sh: 8, hl: 5, inner: '<path d="M77 74 C89 55 123 55 135 74 C121 64 91 64 77 74 Z" fill="#7a4a22"/>' + seams('M97 101 C102 104 110 104 115 101') + '<path d="M106 84 l-3 8 l6 0" stroke="#5a3214" stroke-width="2" fill="none" stroke-linecap="round" opacity="0.7"/>' });
+      raw('<path d="M88 84 q8 6 16 0 M112 84 q7 6 14 0" stroke="#5a3214" stroke-width="2.8" fill="none" stroke-linecap="round"/>');
     });
   });
 
