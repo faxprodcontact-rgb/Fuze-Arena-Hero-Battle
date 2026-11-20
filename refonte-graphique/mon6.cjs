@@ -26,7 +26,9 @@ function creature(s, draw) {
   for (const [k, v] of Object.entries(s.colors ?? {})) T[k] = typeof v === 'string' ? tone(v) : v;
   const TK = (k, d) => (k && typeof k === 'object' ? k : k && k[0] === '#' ? tone(k) : T[k ?? d] ?? T[d]);
   const marks = [], glows = [];
-  const G = (name, fn) => { const start = P.body.length; raw('<g filter="url(#ol)">'); fn(); raw('</g>'); marks.push({ name, start, end: P.body.length }); };
+  // Un morceau = un groupe SANS contour : la créature n'a qu'un contour, autour de sa silhouette entière. Là où un morceau
+  // en recouvre un autre, il pose une ombre douce (et un filet léger) au lieu d'un trait dur : plus d'effet « formes collées ».
+  const G = (name, fn) => { const id = `${s.id}-p${marks.length}`, start = P.body.length; raw(`<g id="${id}">`); fn(); raw('</g>'); marks.push({ name, id, start, end: P.body.length }); };
   const glow = (svg) => glows.push(svg);
   const halo = (x, y, r, c, op = 0.8) => glow(`<circle cx="${f(x)}" cy="${f(y)}" r="${f(r)}" fill="${c}" opacity="${op}" filter="url(#glow)"/>`);
   /**
@@ -72,12 +74,15 @@ function creature(s, draw) {
   const fringe = (x0, x1, y, n, d) => { let p = ''; for (let i = 0; i < n; i++) { const a = x0 + (x1 - x0) * (i + 0.5) / n, b = x0 + (x1 - x0) * (i + 1) / n; p += ` L${f(a)} ${f(y + d)} L${f(b)} ${f(y)}`; } return p; };
   const h = { S, raw, T, TK, G, L, beast, fringe, glow, halo, eye, teeth, tone, metal, mix, sf, blob, ...K };
   draw(h);
-  const body = P.body;
+  const flat = P.body, mk = 'mk-' + s.id;
+  const maskDef = `<mask id="${mk}" maskUnits="userSpaceOnUse" x="-150" y="-150" width="600" height="600"><g filter="url(#mwh)">${marks.map((k) => `<use href="#${k.id}"/>`).join('')}</g></mask>`;
+  const body = marks.map((k, i) => (i ? `<use href="#${k.id}" filter="url(#mcs)" mask="url(#${mk})"/>` : '') + flat.slice(k.start, k.end)).join('');
   const bloom = (x, y, r, c) => `<g transform="translate(${f(x)} ${f(y)})"><circle r="${f(r * 1.25)}" fill="${c}" opacity="0.7" filter="url(#glow)"/><circle r="${f(r * 0.6)}" fill="#fff" opacity="0.55" filter="url(#glow)"/></g>`;
   const fx = (s.shine ?? []).map(([x, y, r = 11, c = '#dff4ff']) => bloom(x, y, r, c)).join('');
   const rig = { swing: s.swing ?? [], far: s.far ?? [], piv: { swing: [106, 150], far: [130, 150], head: [106, 140], back: [80, 150], torso: [106, 190], ...(s.piv ?? {}) },
     atk: s.atk ?? 'slash', wind: s.wind ?? -40, hit: s.hit ?? 35, grp: { ...(s.grp ?? {}), ...(fx ? { shine: s.shineGrp ?? 'torso' } : {}) }, ...(s.fx ? { fx: s.fx } : {}), ...(s.heal ? { heal: true } : {}) };
-  return { defs: P.defs, body, glow: glows.join(''), fx, parts: marks.map((k) => ({ name: k.name, svg: body.slice(k.start, k.end) })), rig, spec: s };
+  rig.soft = true;
+  return { defs: P.defs + maskDef, body, glow: glows.join(''), fx, parts: marks.map((k) => ({ name: k.name, svg: flat.slice(k.start, k.end) })), rig, spec: s };
 }
 
 const SPECS = {};
@@ -88,5 +93,9 @@ function all(only) {
   for (const fam of FAMILIES) (SPECS[fam.key] ?? []).forEach((m, i) => { if (m && (!only || only.includes(fam.key + ':' + i) || only.includes(fam.key))) out.push({ id: fam.key + '-' + (i + 1), family: fam.key, familyName: fam.name, element: fam.element, index: i, slot: SLOTS[i], name: m.name, scale: m.spec.scale ?? 1, fig: creature(m.spec, m.draw) }); });
   return out;
 }
-module.exports = { Mo, all, creature, FAMILIES, SLOTS, SLOT_FR, tone, metal, mix };
+/** Filtres des monstres : ombre de contact entre morceaux (mcs), masque de la silhouette (mwh), contour unique (sil2). */
+const MON_DEFS = '<filter id="mcs" x="-40%" y="-40%" width="180%" height="180%"><feMorphology in="SourceAlpha" operator="dilate" radius="0.6" result="d"/><feGaussianBlur in="SourceAlpha" stdDeviation="3.2" result="b"/><feOffset in="b" dy="1" result="o"/><feFlood flood-color="#1a0c2e" flood-opacity="0.46" result="c1"/><feComposite in="c1" in2="o" operator="in" result="sh"/><feFlood flood-color="#1a0c2e" flood-opacity="0.2" result="c2"/><feComposite in="c2" in2="d" operator="in" result="ln"/><feMerge><feMergeNode in="sh"/><feMergeNode in="ln"/></feMerge></filter>'
+  + '<filter id="mwh" x="-10%" y="-10%" width="120%" height="120%"><feFlood flood-color="#fff"/><feComposite in2="SourceAlpha" operator="in"/></filter>'
+  + '<filter id="sil2" x="-15%" y="-15%" width="130%" height="130%"><feMorphology in="SourceAlpha" operator="dilate" radius="2.3" result="d"/><feFlood flood-color="#190c24"/><feComposite in2="d" operator="in" result="o"/><feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+module.exports = { Mo, all, creature, FAMILIES, SLOTS, SLOT_FR, MON_DEFS, tone, metal, mix };
 for (const fam of FAMILIES) { try { require('./m-' + fam.key + '.cjs'); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND' || !String(e.message).includes('m-' + fam.key)) throw e; } }

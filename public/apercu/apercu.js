@@ -189,6 +189,7 @@
   let ofx = 0, ofy = 0;
   const ST = (a, b, c, d, e, f) => ctx.setTransform(a, b, c, d, e + ofx, f + ofy);
   const A = document.createElement('canvas'), B = document.createElement('canvas'), ag = A.getContext('2d'), bgx = B.getContext('2d');
+  const C = document.createElement('canvas'), cg = C.getContext('2d'); // la silhouette sans ombres (monstres : un seul contour, ombres douces entre les morceaux)
   const OX = 150, OY = 110, BW = 500, BH = 370; // cadre hors écran (unités de dessin) : de la place pour les armes en mouvement
   /** Place un morceau selon son groupe (le repère de base, en unités de dessin, est déjà posé). */
   function groupTransform(g, grp, P, piv) {
@@ -215,6 +216,8 @@
     // morceaux → A
     const w = Math.ceil(BW * s), h = Math.ceil(BH * s);
     if (A.width !== w || A.height !== h) { A.width = B.width = w; A.height = B.height = h; } else { ag.setTransform(1, 0, 0, 1, 0, 0); ag.clearRect(0, 0, w, h); }
+    const soft = !!c.rig.soft;
+    if (soft) { if (C.width !== w || C.height !== h) { C.width = w; C.height = h; } else { cg.setTransform(1, 0, 0, 1, 0, 0); cg.clearRect(0, 0, w, h); } ag.shadowColor = 'rgba(26,12,46,0.5)'; ag.shadowBlur = 6 * s; ag.shadowOffsetY = s; }
     // une arme portée sur l'épaule passe devant la tête quand elle s'abat
     const over = c.rig.top && P.swing > 35, list = over ? [...c.parts.filter((p) => !c.rig.top.includes(p.name)), ...c.parts.filter((p) => c.rig.top.includes(p.name))] : c.parts;
     let shineP = null;
@@ -227,12 +230,15 @@
       }
       ag.setTransform(s, 0, 0, s, OX * s, OY * s); groupTransform(ag, c.group[p.name], P, c.rig.piv || PIV);
       ag.drawImage(im, p.x, p.y, p.w, p.h, p.ox, p.oy, p.w / E, p.h / E);
+      if (soft) { cg.setTransform(s, 0, 0, s, OX * s, OY * s); groupTransform(cg, c.group[p.name], P, c.rig.piv || PIV); cg.drawImage(im, p.x, p.y, p.w, p.h, p.ox, p.oy, p.w / E, p.h / E); }
     }
+    // les ombres entre morceaux ne débordent pas de la silhouette
+    if (soft) { ag.shadowColor = 'transparent'; ag.shadowBlur = 0; ag.shadowOffsetY = 0; ag.setTransform(1, 0, 0, 1, 0, 0); ag.globalCompositeOperation = 'destination-in'; ag.drawImage(C, 0, 0); ag.globalCompositeOperation = 'source-over'; }
     if (u.hurt > 0) { ag.setTransform(1, 0, 0, 1, 0, 0); ag.globalCompositeOperation = 'source-atop'; ag.fillStyle = `rgba(255,255,255,${0.5 * u.hurt / 0.28})`; ag.fillRect(0, 0, w, h); ag.globalCompositeOperation = 'source-over'; }
     // silhouette sombre → B, puis contour = 8 copies décalées
     bgx.setTransform(1, 0, 0, 1, 0, 0); bgx.globalCompositeOperation = 'copy'; bgx.drawImage(A, 0, 0); bgx.globalCompositeOperation = 'source-in'; bgx.fillStyle = '#190c24'; bgx.fillRect(0, 0, w, h);
     ST(flip, 0, 0, 1, X, Y); ctx.rotate(fall * RAD); ctx.globalAlpha = alpha;
-    const ox = -(OX + 106) * s, oy = -(OY + 228) * s, r = Math.max(1, 1.6 * q);
+    const ox = -(OX + 106) * s, oy = -(OY + 228) * s, r = Math.max(1, (soft ? 2.5 : 1.6) * q);
     if (c.aura && !u.dead) { // aura des hautes raretés : la silhouette projette un halo de couleur
       ctx.shadowColor = c.aura; ctx.shadowBlur = (13 + 4 * Math.sin(time * 2 + u.ph)) * q / 0.56;
       ctx.drawImage(B, ox, oy); ctx.drawImage(B, ox, oy); ctx.shadowBlur = 0; ctx.shadowColor = 'transparent';

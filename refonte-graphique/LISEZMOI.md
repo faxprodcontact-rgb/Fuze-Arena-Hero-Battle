@@ -151,6 +151,11 @@ Demande du propriétaire : des **familles de 6 monstres**, beaucoup, pour tous l
   creusé : aucun trait ne referme la bouche) ; pattes, pinces, tiges d'yeux, tentacules et « trompes » partent de **sous
   le corps** (dessinés avant lui, il recouvre leur attache) et à un endroit naturel : jamais posés dessus avec un contour.
   Deux parties du même corps (manteau et tête du calmar) = une seule forme.
+- **Un seul contour par créature** (demande du propriétaire, 20/11/2026 : « moins d'effet de formes posées les unes sur
+  les autres, des transitions entre les membres mieux faites ») : les morceaux n'ont PLUS de contour chacun. La silhouette
+  entière reçoit un contour (`sil2`), et là où un morceau en recouvre un autre il pose une ombre douce (`mcs`, limitée à
+  la silhouette par un masque) au lieu d'un trait dur. Dans l'aperçu animé, même chose (`rig.soft` : ombre portée de chaque
+  morceau, puis découpe par la silhouette). Pas de cran « papier découpé » à l'arrière des têtes : des courbes lisses.
 - Style validé par le propriétaire sur les Abysses (20/11/2026) ; il demande de **se vérifier à chaque fois**.
 - Bêtes à quatre pattes : trapues (grosse tête, pattes courtes), pattes par `beast({ front, hind, top, w, … })` (cuisse,
   jarret, patte ; à dessiner avant le corps), fourrure hérissée par `fringe(…)` dans le chemin du corps.
