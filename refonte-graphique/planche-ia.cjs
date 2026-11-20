@@ -2,7 +2,7 @@
 // fond blanc uni, AUCUN texte (l'IA recopierait des lettres abîmées), pas d'aura de rareté (le jeu l'ajoute lui-même).
 //   node planche-ia.cjs heros fire  sortie.png      → les 18 héros d'un élément (rangée 1 = communs/rares, etc.)
 //   node planche-ia.cjs monstres fire sortie.png    → les 3 familles de monstres d'un élément (une famille par rangée)
-//   node planche-ia.cjs liste "h:fire:6,m:glaces:5" sortie.png → personnages choisis, 21:9, bas à droite laissé vide
+//   node planche-ia.cjs liste "h:fire:6,m:glaces:5" sortie.png [colonnes] → personnages choisis, 21:9, bas à droite vide
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
@@ -11,7 +11,7 @@ const [, , kind, el, out] = process.argv;
 // mode « liste » : des personnages choisis (h:fire:6 = héros, m:glaces:5 = monstre), grille 7 × 3 au format 21:9
 // (celui que rend Hailuo), cases vides en bas à droite (là où Hailuo pose sa signature)
 const LIST = kind === 'liste';
-const W = LIST ? 3696 : 3840, H = LIST ? 1584 : 2160, COLS = LIST ? 7 : 6, ROWS = 3, CW = W / COLS, CH = H / ROWS;
+const W = LIST ? 3696 : 3840, H = LIST ? 1584 : 2160, COLS = LIST ? +(process.argv[5] || 7) : 6, ROWS = 3, CW = W / COLS, CH = H / ROWS;
 const SILS = {};
 let list, DEFS = '';
 if (LIST) {
