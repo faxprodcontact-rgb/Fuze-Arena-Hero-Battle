@@ -64,7 +64,8 @@ function creature(s, draw) {
     const paw = (x, far) => {
       if (o.hoof) return S(`M${f(x - w * 0.5)} ${g - 10} L${f(x + w * 0.55)} ${g - 10} L${f(x + w * 0.62)} ${g} L${f(x - w * 0.58)} ${g} Z`, TK(o.hoofT ?? '#2a2026'), { sh: 2, far });
       S(`M${f(x - w * 0.62)} ${g} C${f(x - w * 0.7)} ${g - 10} ${f(x + w * 0.2)} ${g - 13} ${f(x + w * 0.72)} ${g - 8} C${f(x + w * 0.95)} ${g - 5} ${f(x + w * 0.95)} ${g} ${f(x + w * 0.8)} ${g} Z`, TK(far ? o.dark : o.t), { sh: 3, far });
-      if (o.claws && !far) raw(`<path d="M${f(x + w * 0.3)} ${g - 1} l3 -6 M${f(x + w * 0.55)} ${g - 1} l3 -5 M${f(x + w * 0.05)} ${g - 1} l3 -6" stroke="#2a1a16" stroke-width="1.6" stroke-linecap="round" opacity="0.7"/>`);
+      if (o.claws) raw(`<g fill="${o.clawC ?? '#f4ead0'}" stroke="#2a1a16" stroke-width="1" stroke-linejoin="round" opacity="${far ? 0.6 : 1}">${[0.2, 0.5, 0.8].map((k) => `<path d="M${f(x + w * k - 2.6)} ${g - 3} L${f(x + w * k + 3.4)} ${g + 1.5} L${f(x + w * k + 2.6)} ${g - 5} Z"/>`).join('')}</g>`);
+      if (!far && !o.hoof) raw(`<path d="M${f(x + w * 0.02)} ${g - 3} q1 -5 4 -8 M${f(x + w * 0.34)} ${g - 3} q1 -5 4 -8" stroke="#2a1a16" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.45"/>`);
     };
     const fleg = (x, far) => { S(limb([[x, top], [x + 3, (top + g) / 2], [x, g - 7]], w, w * 0.86), TK(far ? o.dark : o.t), { sh: 4, far }); paw(x, far); };
     const hleg = (x, far) => { S(ell(x, top + 2, w * 1.02, w * 1.16), TK(far ? o.dark : o.t), { sh: 5, far }); S(limb([[x - 2, top + 10], [x - w * 0.75, (top + g) / 2 + 6], [x, g - 7]], w * 0.86, w * 0.76), TK(far ? o.dark : o.t), { sh: 4, far }); paw(x, far); };
@@ -72,7 +73,19 @@ function creature(s, draw) {
   };
   /** Frange de poils : zigzag de (x0, y) à (x1, y), pointes vers le bas (d > 0) ou le haut. À coller dans un chemin. */
   const fringe = (x0, x1, y, n, d) => { let p = ''; for (let i = 0; i < n; i++) { const a = x0 + (x1 - x0) * (i + 0.5) / n, b = x0 + (x1 - x0) * (i + 1) / n; p += ` L${f(a)} ${f(y + d)} L${f(b)} ${f(y)}`; } return p; };
-  const h = { S, raw, T, TK, G, L, beast, fringe, glow, halo, eye, teeth, tone, metal, mix, sf, blob, ...K };
+  /** Place et tourne ce qu'on dessine dedans (une tête baissée, une patte levée…). */
+  const at = (t, fn) => { raw(`<g transform="${t}">`); fn(); raw('</g>'); };
+  /** Un cou : il relie le corps à la tête d'un seul tenant (à dessiner dans le morceau du corps, la tête le recouvre). */
+  const neck = (a, c, b, w0, w1, t, o = {}) => S(limb([a, c, b], w0, w1, 16), TK(t), { sh: o.sh ?? 6, hl: o.hl ?? 4, inner: o.inner });
+  /** Une touffe de poils : n pointes en éventail autour de (x, y), tournée de « a » degrés. */
+  const tuft = (x, y, a, len, w, t, o = {}) => { const n = o.n ?? 3; let d = `M${f(-w / 2)} 0`; for (let i = 0; i < n; i++) { const x0 = -w / 2 + w * i / n, x1 = -w / 2 + w * (i + 1) / n; d += ` L${f((x0 + x1) / 2 + (o.lean ?? 0))} ${f(-len * (i % 2 ? 0.78 : 1))} L${f(x1)} 0`; } at(`translate(${f(x)} ${f(y)}) rotate(${a})`, () => S(d + ` Q0 ${f(w * 0.3)} ${f(-w / 2)} 0 Z`, TK(t), { sh: 3, hl: 2, far: o.far })); };
+  /** Sourcil : un trait épais au-dessus d'un œil, incliné vers le nez (regard dur). */
+  const brow = (x, y, w, tilt = 1, c = '#1c1020', k = 4.5) => raw(`<path d="M${f(x - w / 2)} ${f(y - tilt * w * 0.22)} L${f(x + w / 2)} ${f(y + tilt * w * 0.22)}" stroke="${c}" stroke-width="${k}" stroke-linecap="round"/>`);
+  /** Rayures, taches, ventre : à mettre dans « inner » d'une forme (elles restent dedans). */
+  const stripes = (list, c, w = 5, op = 0.75) => `<g stroke="${c}" stroke-width="${w}" stroke-linecap="round" fill="none" opacity="${op}">${list.map((d) => `<path d="${d}"/>`).join('')}</g>`;
+  const spots = (list, c, op = 0.7) => `<g fill="${c}" opacity="${op}">${list.map(([x, y, r, ry]) => `<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${ry ?? r}"/>`).join('')}</g>`;
+  const under = (d, c, op = 0.8) => `<path d="${d}" fill="${c}" opacity="${op}" filter="url(#g3)"/>`;
+  const h = { S, raw, T, TK, G, L, at, neck, tuft, brow, stripes, spots, under, beast, fringe, glow, halo, eye, teeth, tone, metal, mix, sf, blob, ...K };
   draw(h);
   const flat = P.body, mk = 'mk-' + s.id;
   const maskDef = `<mask id="${mk}" maskUnits="userSpaceOnUse" x="-150" y="-150" width="600" height="600"><g filter="url(#mwh)">${marks.map((k) => `<use href="#${k.id}"/>`).join('')}</g></mask>`;
@@ -96,6 +109,11 @@ function all(only) {
 /** Filtres des monstres : ombre de contact entre morceaux (mcs), masque de la silhouette (mwh), contour unique (sil2). */
 const MON_DEFS = '<filter id="mcs" x="-40%" y="-40%" width="180%" height="180%"><feMorphology in="SourceAlpha" operator="dilate" radius="0.6" result="d"/><feGaussianBlur in="SourceAlpha" stdDeviation="3.2" result="b"/><feOffset in="b" dy="1" result="o"/><feFlood flood-color="#1a0c2e" flood-opacity="0.46" result="c1"/><feComposite in="c1" in2="o" operator="in" result="sh"/><feFlood flood-color="#1a0c2e" flood-opacity="0.2" result="c2"/><feComposite in="c2" in2="d" operator="in" result="ln"/><feMerge><feMergeNode in="sh"/><feMergeNode in="ln"/></feMerge></filter>'
   + '<filter id="mwh" x="-10%" y="-10%" width="120%" height="120%"><feFlood flood-color="#fff"/><feComposite in2="SourceAlpha" operator="in"/></filter>'
-  + '<filter id="sil2" x="-15%" y="-15%" width="130%" height="130%"><feMorphology in="SourceAlpha" operator="dilate" radius="2.3" result="d"/><feFlood flood-color="#190c24"/><feComposite in2="d" operator="in" result="o"/><feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/></feMerge></filter>';
+  + '<filter id="sil2" x="-15%" y="-15%" width="130%" height="130%"><feOffset in="SourceAlpha" dx="5" dy="-7" result="a1"/><feComposite in="SourceAlpha" in2="a1" operator="out" result="r1"/><feGaussianBlur in="r1" stdDeviation="3.2" result="r1b"/><feFlood flood-color="#1a0c2e" flood-opacity="0.42"/><feComposite in2="r1b" operator="in" result="s0"/><feComposite in="s0" in2="SourceAlpha" operator="in" result="sh"/>'
+  + '<feOffset in="SourceAlpha" dx="-4" dy="6" result="a2"/><feComposite in="SourceAlpha" in2="a2" operator="out" result="r2"/><feGaussianBlur in="r2" stdDeviation="2.2" result="r2b"/><feFlood flood-color="#fff6d8" flood-opacity="0.34"/><feComposite in2="r2b" operator="in" result="l0"/><feComposite in="l0" in2="SourceAlpha" operator="in" result="li"/>'
+  + '<feMorphology in="SourceAlpha" operator="dilate" radius="2.3" result="d"/><feFlood flood-color="#190c24"/><feComposite in2="d" operator="in" result="o"/><feMerge><feMergeNode in="o"/><feMergeNode in="SourceGraphic"/><feMergeNode in="sh"/><feMergeNode in="li"/></feMerge></filter>'
+  // aura des élites (orangée) et des boss (rouge), derrière la créature
+  + '<filter id="auraEl" x="-40%" y="-40%" width="180%" height="180%"><feMorphology in="SourceAlpha" operator="dilate" radius="3"/><feGaussianBlur stdDeviation="6" result="b"/><feFlood flood-color="#ff8a2a" flood-opacity="0.75"/><feComposite in2="b" operator="in"/></filter>'
+  + '<filter id="auraBo" x="-40%" y="-40%" width="180%" height="180%"><feMorphology in="SourceAlpha" operator="dilate" radius="4"/><feGaussianBlur stdDeviation="7" result="b"/><feFlood flood-color="#ff2a3a" flood-opacity="0.9"/><feComposite in2="b" operator="in"/></filter>';
 module.exports = { Mo, all, creature, FAMILIES, SLOTS, SLOT_FR, MON_DEFS, tone, metal, mix };
 for (const fam of FAMILIES) { try { require('./m-' + fam.key + '.cjs'); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND' || !String(e.message).includes('m-' + fam.key)) throw e; } }

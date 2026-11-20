@@ -156,6 +156,12 @@ Demande du propriétaire : des **familles de 6 monstres**, beaucoup, pour tous l
   entière reçoit un contour (`sil2`), et là où un morceau en recouvre un autre il pose une ombre douce (`mcs`, limitée à
   la silhouette par un masque) au lieu d'un trait dur. Dans l'aperçu animé, même chose (`rig.soft` : ombre portée de chaque
   morceau, puis découpe par la silhouette). Pas de cran « papier découpé » à l'arrière des têtes : des courbes lisses.
+- **Montée en qualité « x100 »** (demande du 20/11/2026) : famille de référence = `m-glaces.cjs`. Chaque bête a un cou
+  (`neck`, dans le morceau du corps) qui relie la tête au corps, un profil de dos travaillé (garrot, croupe, bosse), un
+  museau d'un seul tenant avec le crâne, des marques de pelage (`stripes`, `spots`, ventre clair `under`), des griffes
+  (`beast({ claws: true })`), un sourcil dur (`brow`), des touffes (`tuft`, de la couleur du pelage, jamais claires : on
+  dirait des dents). `at(transform, fn)` place et tourne un bout de dessin. Éclairage d'ensemble sur toute la silhouette
+  (filtre `sil2`). Aura orangée pour l'élite, rouge pour le boss (planches et aperçu animé).
 - Style validé par le propriétaire sur les Abysses (20/11/2026) ; il demande de **se vérifier à chaque fois**.
 - Bêtes à quatre pattes : trapues (grosse tête, pattes courtes), pattes par `beast({ front, hind, top, w, … })` (cuisse,
   jarret, patte ; à dessiner avant le corps), fourrure hérissée par `fringe(…)` dans le chemin du corps.

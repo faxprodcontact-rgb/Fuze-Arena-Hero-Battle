@@ -14,7 +14,7 @@ list.forEach((x, n) => {
   defs += x.fig.defs;
   const tr = `translate(${ox + CW / 2 - 106 * k} ${gy - 228 * k}) scale(${k})`;
   if (sheet) body += `<rect x="${ox + 8}" y="${oy + 6}" width="${CW - 16}" height="${CH - 14}" rx="18" fill="#fff" opacity="0.45"/><rect x="${ox + 8}" y="${oy + CH - 96}" width="${CW - 16}" height="88" rx="18" fill="${x.slot === 'boss' ? '#e6a020' : x.slot === 'elite' ? '#9a4cf0' : '#8c95a6'}" opacity="0.2"/>`;
-  body += `<ellipse cx="${ox + CW / 2}" cy="${gy}" rx="${66 * k}" ry="${11 * k}" fill="#1a1c2c" opacity="0.22"/><g transform="${tr}">${x.fig.glow}</g><g transform="${tr}" filter="url(#sil2)">${x.fig.body}</g><g transform="${tr}">${x.fig.fx}</g>`;
+  body += `<ellipse cx="${ox + CW / 2}" cy="${gy}" rx="${66 * k}" ry="${11 * k}" fill="#1a1c2c" opacity="0.22"/>` + (x.slot === 'boss' || x.slot === 'elite' ? `<g transform="${tr}" filter="url(#${x.slot === 'boss' ? 'auraBo' : 'auraEl'})">${x.fig.body}</g>` : '') + `<g transform="${tr}">${x.fig.glow}</g><g transform="${tr}" filter="url(#sil2)">${x.fig.body}</g><g transform="${tr}">${x.fig.fx}</g>`;
   body += sheet ? `<text x="${ox + CW / 2}" y="${oy + CH - 62}" text-anchor="middle" font-size="24" font-weight="800" fill="#241a2c">${x.name.replace(/&/g, '&amp;')}</text><text x="${ox + CW / 2}" y="${oy + CH - 34}" text-anchor="middle" font-size="18" font-weight="700" fill="#4a4050">${SLOT_FR[x.slot]}</text>`
     : `<text x="${ox + 16}" y="${oy + 30}" font-size="22" font-weight="700" fill="#241a2c">${x.index} · ${x.name.replace(/&/g, '&amp;')} (${SLOT_FR[x.slot]})</text>`;
 });
