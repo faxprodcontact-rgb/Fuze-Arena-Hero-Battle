@@ -74,7 +74,7 @@ H('fire', 8, 'Oni rouge', 'oni, ogre des légendes japonaises', {
   head: { kind: 'human', jaw: 'square', eyes: { style: 'fierce', color: '#ffe14a', sclera: '#fff3a8' }, brow: { k: 6.5, c: '#2a2226' }, mouth: 'shout', tusks: 'big', nose: 'big', ear: false },
   gear: [['horns', { kind: 'oni' }]], neck: [['beads', { t: 'bone', r: 5.5 }]],
   near: { hand: [126, 152], el: [90, 160], item: ['club', { to: [200, 88], studs: true, bend: 6, w1: 30 }] },
-  far: { hand: [166, 160], el: [164, 152] }, atk: 'smash' });
+  far: { hand: [178, 150], el: [166, 150] }, atk: 'smash' });
 
 H('fire', 9, 'Lancier-dragon', 'artilleur à la lance de feu (Chine ancienne)', {
   colors: { skin: '#e6b88a', hair: '#2a2226', cloth: '#8a2a2a', pants: '#3a3038', steel: bronze, iron, crest: '#d8452a', boot: '#2a2226' },
@@ -87,7 +87,7 @@ H('fire', 9, 'Lancier-dragon', 'artilleur à la lance de feu (Chine ancienne)', 
 H('fire', 10, 'Kitsune', 'renarde à plusieurs queues (Japon)', {
   scale: 0.97, body: 'curvy', colors: { skin: '#f6d2b4', hair: '#f4ead8', cloth: '#f4ead8', pants: '#c83a3a', tail: '#f08a2a', fox: '#f08a2a', belt: '#c83a3a', boot: '#f4ead8' },
   chest: [['wrap', { t: '#c83a3a' }]], legs: { kind: 'legs', leg: 'hakama', foot: 'geta', stance: 'lunge' },
-  head: { kind: 'human', jaw: 'point', eyes: { style: 'wink', color: '#f0a020', lash: true }, brow: { shape: 'arch', k: 3.4, c: '#b8a890' }, mouth: 'grin', ear: false,
+  head: { kind: 'human', jaw: 'point', eyes: { style: 'sly', color: '#f0a020', lash: true }, brow: { shape: 'arch', k: 3.4, c: '#b8a890' }, mouth: 'grin', ear: false,
     paint: '<path d="M70 98 L84 100 M70 106 L82 106" stroke="#c83a3a" stroke-width="3" stroke-linecap="round"/>' },
   gear: [['ears', { kind: 'fox', t: 'fox', inner: 'hair' }], ['hair', { style: 'bob' }]], back: [['tail', { kind: 'fox', n: 3 }]],
   near: { pose: 'fwd', item: ['small', { kind: 'kunai', dir: [33, 6] }] },
@@ -100,7 +100,7 @@ H('fire', 11, 'Prêtre du soleil', 'prêtre aztèque du dieu soleil', {
   head: { kind: 'human', jaw: 'square', eyes: { style: 'closed' }, brow: { k: 5 }, mouth: 'shout', ear: false, paint: '<path d="M40 100 L170 96" stroke="#c83a3a" stroke-width="5" opacity="0.85"/>' },
   gear: [['feathers', { colors: ['#e0483a', '#f0b23a', '#2fa37a'], n: 7 }], ['hair', { style: 'short' }]], neck: [['collar', { gem: '#2fa37a', stripes: '#c83a3a' }]],
   near: { pose: 'chest', handKind: 'open', dir: [1, -0.2] },
-  far: { pose: 'high', hand: [164, 88], items: [['glow', { x: 168, y: 58, r: 30, c: '#ffcf5a', layer: 'front' }], ['disc', { x: 168, y: 58, r: 22, t: 'gold', sh: 4, layer: 'front', inner: '<circle cx="168" cy="58" r="13" fill="none" stroke="#b8482a" stroke-width="3"/><circle cx="168" cy="58" r="5" fill="#b8482a"/>' }]] } });
+  far: { pose: 'high', hand: [176, 80], el: [166, 118], items: [['glow', { x: 184, y: 48, r: 30, c: '#ffcf5a', layer: 'front' }], ['disc', { x: 184, y: 48, r: 22, t: 'gold', sh: 4, layer: 'front', inner: '<circle cx="184" cy="48" r="13" fill="none" stroke="#b8482a" stroke-width="3"/><circle cx="184" cy="48" r="5" fill="#b8482a"/>' }]] } });
 
 H('fire', 12, 'Djinn', 'djinn des contes arabes', {
   body: 'round', colors: { skin: '#e8793a', hair: '#2a2226', smoke: '#7a4a5a', vest: '#5a3a8a', turban: '#f4ead8', belt: '#e6ac3c' },
@@ -113,17 +113,18 @@ H('fire', 13, 'Surt', 'Surt, roi des géants de feu (Scandinavie)', {
   scale: 1.22, body: 'brute', colors: { skin: '#3a2c30', hair: '#ff8a2a', cloth: '#2a2228', pants: '#2a2228', boot: '#1c161a', steel: iron, bone: '#1c161a', cape: '#2a2228', belt: '#8a2a2a' },
   bareArms: true, chest: [['plate', { t: 'steel' }], ['cracks', { c: LAVA, d: 'M96 128 L110 142 L104 154 M120 126 L126 138' }]], skirt: { len: 26, ragged: true },
   legs: { kind: 'legs', leg: 'thick', foot: 'sabaton', footT: 'steel', shin: 'steel' },
-  head: { kind: 'human', jaw: 'long', eyes: { style: 'glow', color: '#ffcf5a', lid: '#1c161a' }, brow: { k: 6, c: '#ff8a2a' }, mouth: 'gritted', nose: 'none', ear: false, paint: crack('M84 60 L92 72 M132 56 L128 66', 2.6) },
+  head: { kind: 'human', jaw: 'long', eyes: { style: 'glow', color: '#ffcf5a', lid: '#1c161a' }, brow: { k: 6, c: '#ff8a2a' }, mouth: 'frown', nose: 'none', ear: false, paint: crack('M84 60 L92 72 M132 56 L128 66', 2.6) },
   gear: [['horns', { kind: 'bull', t: 'bone' }], ['hair', { style: 'flame' }]], back: [['cape', { len: 'torn' }]],
   neck: [['pad', { t: 'steel', spike: true, spikeT: 'bone' }], ['padFar', { t: 'steel' }]],
-  near: { pose: 'up', over: true, item: ['sword', { to: [214, 40], w: 28, guard: 22, glow: LAVA, flame: true }] }, far: { hand: [170, 146], el: [166, 152] } });
+  near: { hand: [128, 158], el: [92, 164], over: true, item: ['sword', { to: [220, 88], w: 28, guard: 22, glow: LAVA, flame: true }] }, far: { hand: [170, 146], el: [166, 152] } });
 
 H('fire', 14, 'Sekhmet', 'Sekhmet, déesse lionne (Égypte)', {
   body: 'curvy', colors: { skin: '#e0a850', muz: '#f0cf90', boot: '#e0a850', cloth: '#f4ead8', belt: '#c83a3a', bow: metal('#e6ac3c'), nem: '#2a3a6a' },
   bareArms: true, bracers: 'gold', skirt: { len: 46, t: 'cloth', trim: 'gold', flare: 8 }, legs: { kind: 'legs', leg: 'bare', foot: 'sandal', stance: 'narrow', anklet: 'gold' }, neck: [['collar', { gem: '#3fa8d8', stripes: '#3fa8d8' }]],
   head: { kind: 'lion', eyes: { style: 'fierce', color: '#ffb020', sclera: '#fff3a8', slit: true }, whiskerDots: true, band: { t: 'gold', y: 56, k: 8, gem: '#c83a3a' } },
   gear: [['sundisc', {}], ['ears', { kind: 'cat' }]], back: [['cape', { len: 'short', t: '#c83a3a' }]],
-  near: { pose: 'pull' }, far: { pose: 'fwd', item: ['bow', { glow: '#ffb84a', top: 56, bot: 200, layer: 'behind' }] } });
+  main: 'far', near: { pose: 'hip' },
+  far: { hand: [178, 152], el: [160, 152], items: [['small', { kind: 'needle', dir: [14, -30], len: 60, t: 'gold', glow: '#ffb84a', off: 2 }], ['small', { kind: 'needle', dir: [26, -20], len: 60, t: 'gold', off: 2 }], ['small', { kind: 'needle', dir: [32, -6], len: 58, t: 'gold', off: 2 }]] } });
 
 H('fire', 15, 'Ifrit', 'ifrit, démon de feu', {
   body: 'tall', colors: { skin: '#2c2228', cloth: '#8a2a2a', wing: '#8a2a2a', bone: '#c83a3a', steel: iron, tail: '#2c2228', belt: '#e6ac3c', pants: '#5a1c22', boot: '#2c2228' },
@@ -136,7 +137,7 @@ H('fire', 15, 'Ifrit', 'ifrit, démon de feu', {
 
 H('fire', 16, 'Phénix', 'le phénix qui renaît de ses cendres', {
   body: 'curvy', colors: { skin: '#f6d2b4', hair: '#ff6a2a', cloth: '#f4ead8', belt: '#e6ac3c', wing: '#ff8a2a' },
-  legs: { kind: 'ragged', w: 50, panel: '#ffb84a', base: 'mist', baseC: '#ffb84a' },
+  skirt: { len: 38, t: 'cloth', ragged: true, flare: 10 }, legs: { kind: 'legs', leg: 'thin', t: '#e0803a', foot: 'talon', footT: 'gold', stance: 'narrow' },
   head: { kind: 'human', eyes: { style: 'soft', color: '#c8641e', lash: true }, brow: { shape: 'arch', k: 3 }, mouth: 'smile', blush: '#ff8a6a', ear: false },
   gear: [['hair', { style: 'parted' }], ['tiara', { gem: '#ff5a4a' }]], back: [['wings', { kind: 'big', glow: '#ffb84a' }], ['tail', { kind: 'feathers', t: 'wing' }], ['hairBack', { style: 'long' }]],
   near: { hand: [60, 144], el: [70, 152], handKind: 'open', dir: [-1, -0.5] },
@@ -147,5 +148,6 @@ H('fire', 17, 'Amaterasu', 'Amaterasu, déesse du soleil (Japon)', {
   chest: [['wrap', { t: '#c83a3a' }]], legs: { kind: 'bell', w: 56, panel: '#c83a3a', tiers: true, trim: 'gold' },
   head: { kind: 'human', eyes: { style: 'soft', color: '#c8641e', lash: true }, brow: { shape: 'flat', k: 3 }, mouth: 'smile', mouthC: '#c83a3a', ear: false },
   gear: [['hair', { style: 'long' }], ['crown', { kind: 'spire', gem: '#ff5a4a' }]], back: [['sun', {}], ['hairBack', { style: 'floor' }]],
-  near: { pose: 'center', hand: [120, 156], el: [88, 164], w0: 22, w1: 30 },
-  far: { pose: 'center', hand: [152, 156], el: [154, 158], over: true, w0: 20, w1: 28, items: [['mirror', { hand: [132, 172], handle: false, r: 20, color: '#fff3c0' }]] } });
+  near: { hand: [58, 162], el: [66, 146], w0: 22, w1: 30, handKind: 'open', dir: [-0.7, 0.5] },
+  far: { hand: [178, 152], el: [158, 146], w0: 20, w1: 28, handKind: 'open', dir: [0.8, 0.4], tint: false },
+  top: [['mirror', { hand: [110, 176], handle: false, r: 15, color: '#fff3c0' }]] });

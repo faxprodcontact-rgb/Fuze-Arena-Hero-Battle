@@ -13,16 +13,16 @@ H('wind', 0, 'Garde des cimes', 'montagnard gardien des cols', {
 H('wind', 1, 'Pillard du nord', 'guerrier viking', {
   shape: { sw: 36 }, colors: { skin: '#f2c9a4', hair: '#e8c05a', cloth: '#4a6a8a', pants: '#5a4634', boot: '#3a2a22', fur: '#8a6a4a', shieldFace: '#b8482a', steel: metal('#a9b4c2') },
   chest: [['scales', { t: 'steel' }]], skirt: { len: 18 }, legs: { kind: 'legs', foot: 'fur', furT: 'fur', wrap: '#8a6a4a', stance: 'lunge' },
-  head: { kind: 'human', jaw: 'square', eyes: { style: 'fierce', color: '#3f8fd8' }, brow: { k: 6 }, beard: 'fork', ear: false },
+  head: { kind: 'human', jaw: 'square', eyes: { style: 'fierce', color: '#3f8fd8' }, brow: { k: 6 }, beard: 'short', ear: false },
   gear: [['helm', { kind: 'dome', nose: true, plain: true }]], back: [['roundBack', { t: 'wood', face: 'shieldFace' }]],
-  near: { hand: [54, 108], el: [50, 134], item: ['axe', { to: [34, 34], z: 0.95, side: -1 }] }, far: { hand: [176, 150], el: [162, 154] } });
+  near: { hand: [54, 108], el: [50, 134], item: ['axe', { to: [34, 34], z: 0.95, side: 1 }] }, far: { hand: [176, 150], el: [162, 154] } });
 
 H('wind', 2, 'Archer des steppes', 'cavalier-archer des steppes', {
   colors: { skin: '#e6b88a', hair: '#2a2226', cloth: '#8a5a3a', hat: '#b8483a', fur: '#f4f0e6', belt: '#2f8f8a', bow: '#c9a070', boot: '#3a2a22', pants: '#3d4a5e', quiv: '#5a3a22' },
   chest: [['wrap', { t: 'belt' }]], skirt: { len: 40, trim: 'belt', flare: 10 }, legs: { kind: 'legs', foot: 'boot', stance: 'mid' },
   head: { kind: 'human', eyes: { style: 'wink', color: '#5a3a20' }, brow: { k: 4.5 }, mouth: 'smirk', nose: 'button', stubble: '#3a2a22', ear: false },
   gear: [['furhat', { point: true }]], back: [['shape', { d: 'M62 116 L84 108 L98 176 L78 184 Z', t: 'quiv', sh: 5 }], ['raw', { svg: '<path d="M60 104 l-6 -22 l8 6 l2 -12 l6 26 Z M72 100 l-4 -24 l8 6 l4 -10 l2 26 Z" fill="#f4f0e6" stroke="#2c1626" stroke-width="2" stroke-linejoin="round"/>' }], ['hairBack', { style: 'braid' }]],
-  near: { hand: [121, 134], el: [94, 152] }, far: { hand: [169, 102], el: [150, 116], items: [['at', { t: 'rotate(-35 130 130)', layer: 'behind', list: [['bow', { x: 162, recurve: true, top: 74, bot: 184, pull: [120, 128] }]] }]] } });
+  near: { pose: 'pull' }, far: { pose: 'fwd', item: ['bow', { recurve: true, top: 74, bot: 184, layer: 'behind' }] } });
 
 H('wind', 3, 'Chevalier-griffon', 'chevalier des cieux', {
   body: 'heavy', colors: { skin: '#eebf98', cloth: '#f4f8ff', steel: silver, sleeve: silver, glove: silver, shieldFace: '#2f8f8a', cape: '#2f8f8a', crest: '#f4f8ff', pants: silver, boot: silver, belt: '#e6ac3c' },
@@ -62,7 +62,7 @@ H('wind', 7, 'Valkyrie', 'valkyrie, guerrière d\'Odin', {
   head: { kind: 'human', jaw: 'point', eyes: { style: 'angry', color: '#3f8fd8', lash: true }, brow: { k: 3.6 }, mouth: 'flat', ear: false },
   gear: [['helm', { kind: 'dome', wings: true }]], back: [['cape', { len: 'short' }], ['hairBack', { style: 'braid' }]],
   near: { pose: 'up', item: ['pole', { butt: [84, 182], end: [176, 98], head: 'spear' }] },
-  far: { noArm: true, handKind: 'none', item: ['shield', { kind: 'round', emblem: 'star', ec: '#ffd76a' }] }, atk: 'stab', rig: { wind: -14, hit: 16 } });
+  far: { noArm: true, handKind: 'none', item: ['shield', { kind: 'round' }] }, atk: 'stab', rig: { wind: -14, hit: 16 } });
 
 H('wind', 8, 'Tengu', 'tengu, démon-corbeau des montagnes (Japon)', {
   shape: { sw: 34 }, colors: { skin: '#c83a3a', hair: '#f4f0e6', cloth: '#f4f0e6', pants: '#2a2630', wing: '#2a2630', belt: '#2a2630', fan: '#e6ac3c', boot: '#f4f0e6' },
@@ -78,8 +78,8 @@ H('wind', 9, 'Garuda', 'Garuda, l\'homme-aigle (Inde)', {
   bracers: 'gold', legs: { kind: 'legs', leg: 'baggy', foot: 'talon', cuffT: 'gold', stance: 'mid' }, neck: [['collar', { gem: '#c8502a' }]],
   head: { kind: 'eagle', eyes: { style: 'fierce', color: '#c8502a', sclera: '#fff3a8' }, browC: '#8a3a1c' },
   gear: [['hair', { style: 'crest', t: 'crest' }]], back: [['wings', { kind: 'big' }]],
-  near: { pose: 'raise', items: [['chakram', { c: [58, 84], r: 20, layer: 'back', glow: '#ffe27a' }]] },
-  far: { pose: 'open', item: ['chakram', { c: [186, 116], r: 15 }] } });
+  near: { hand: [46, 120], el: [54, 140], items: [['chakram', { c: [34, 98], r: 20, glow: '#ffe27a' }]] },
+  far: { hand: [178, 158], el: [160, 154], item: ['chakram', { c: [190, 140], r: 16 }] } });
 
 H('wind', 10, 'Kamaitachi', 'kamaitachi, la belette aux faucilles (Japon)', {
   scale: 0.9, body: 'slim', shape: { lean: 5, hdx: 2 }, colors: { skin: '#d8b078', muz: '#f6ead6', cloth: '#2f8f8a', tail: '#d8b078', tip: '#f6ead6', scarf: '#c83a3a', boot: '#b8905a', belt: '#5a4634' },
@@ -92,8 +92,8 @@ H('wind', 10, 'Kamaitachi', 'kamaitachi, la belette aux faucilles (Japon)', {
 H('wind', 11, 'Apsara', 'apsara, danseuse céleste (Inde)', {
   body: 'curvy', colors: { skin: '#d9a074', hair: '#2a2226', cloth: '#2fa39a', belt: '#e6ac3c', scarf: '#ffb0cf', pants: '#2fa39a', boot: '#d9a074' },
   bare: true, bareArms: true, bracers: 'gold', chest: [['raw', { svg: '<path d="M20 114 L190 114 L190 138 C130 148 90 148 20 138 Z" fill="#2fa39a"/><path d="M20 138 C90 148 130 148 190 138" stroke="#e6ac3c" stroke-width="4" fill="none"/>' }]],
-  skirt: { len: 24, flap: 'gold', flapLen: 0, flare: 4 }, legs: { kind: 'dance' },
-  head: { kind: 'human', eyes: { style: 'wink', color: '#5a3a20', lash: true }, brow: { shape: 'arch', k: 3 }, mouth: 'smile', mouthC: '#b83a4a' },
+  skirt: { len: 24, flare: 4, trim: 'gold' }, legs: { kind: 'dance' },
+  head: { kind: 'human', eyes: { style: 'calm', color: '#5a3a20', lash: true }, brow: { shape: 'arch', k: 3 }, mouth: 'smile', mouthC: '#b83a4a' },
   gear: [['hair', { style: 'bun', bx: 106, by: 26, br: 12 }], ['crown', { kind: 'spire', gem: '#ff5a8a' }]], back: [['scarfTail', { two: true }]], neck: [['collar', { gem: '#ff5a8a' }]],
   far: { pose: 'high', handKind: 'open', dir: [0.3, -1], item: ['lotus', { color: '#ffb0cf' }] }, near: { hand: [148, 148], el: [110, 156], over: true, handKind: 'open', dir: [1, 0.3] } });
 
@@ -113,9 +113,9 @@ H('wind', 13, 'Roi singe', 'le Roi singe du Voyage en Occident (Chine)', {
 
 H('wind', 14, 'Maître de la foudre', 'Zeus, roi des dieux (Grèce)', {
   main: 'far',
-  scale: 1.1, body: 'brute', colors: { boot: '#f2c9a4', skin: '#f2c9a4', hair: '#f4f8ff', cloth: '#f4f8ff', belt: '#e6ac3c', leaf: '#e6ac3c', cape: '#5a4a8a' },
+  scale: 1.1, body: 'brute', colors: { boot: '#f2c9a4', skin: '#f2c9a4', hair: '#e8c05a', cloth: '#f4f8ff', belt: '#e6ac3c', leaf: '#e6ac3c', cape: '#5a4a8a' },
   bareArms: true, bracers: 'gold', chest: [['raw', { svg: '<path d="M0 80 L130 80 C122 122 92 144 0 156 Z" fill="#f2c9a4"/><path d="M130 86 C122 124 94 146 30 156" stroke="#b8c4d8" stroke-width="3" fill="none"/>' }], ['muscle']],
-  skirt: { len: 34, t: 'cloth', flare: 6, trim: 'gold' }, legs: { kind: 'legs', leg: 'bare', foot: 'sandal', stance: 'wide' }, head: { kind: 'human', jaw: 'square', eyes: { style: 'fierce', color: '#6fc8f0' }, brow: { k: 6.5, c: '#c8d4e4' }, nose: 'big', beard: 'full' },
+  skirt: { len: 34, t: 'cloth', flare: 6, trim: 'gold' }, legs: { kind: 'legs', leg: 'bare', foot: 'sandal', stance: 'wide' }, head: { kind: 'human', jaw: 'square', eyes: { style: 'glow', color: '#dff4ff', lid: '#8a6a2a' }, brow: { k: 6.5, c: '#b8902a' }, nose: 'big', beard: 'full' },
   gear: [['hair', { style: 'slick' }], ['leaves', { t: 'leaf' }]], back: [['cape', { len: 'long' }], ['hairBack', { style: 'mid' }]],
   near: { pose: 'hip', r: 13 }, far: { pose: 'high', item: ['bolt', {}] } });
 
@@ -124,15 +124,14 @@ H('wind', 15, 'Morrigane', 'la Morrígan, déesse-corbeau (Irlande)', {
   chest: [['collarV', { t: 'belt' }]], skirt: { len: 30, ragged: true }, legs: { kind: 'legs', leg: 'thin', foot: 'boot', stance: 'narrow' },
   head: { kind: 'human', jaw: 'point', eyes: { style: 'sly', color: '#c83a3a', lash: true }, brow: { shape: 'arch', k: 3.4 }, mouth: 'smirk', mouthC: '#8a2a3a', ear: false },
   gear: [['hair', { style: 'parted' }], ['tiara', { gem: '#c83a3a' }]], back: [['wings', { kind: 'down' }], ['hairBack', { style: 'long' }]], neck: [['fur', {}]],
-  top: [['shape', { d: 'M52 106 C52 94 66 88 76 96 L90 98 L78 103 C78 112 66 116 58 111 L42 118 Z', t: 'wing', sh: 3 }], ['raw', { svg: '<circle cx="72" cy="98" r="1.8" fill="#c83a3a"/>' }]],
   near: { hand: [122, 164], el: [86, 164], item: ['sword', { to: [188, 138], w: 13, guard: 10 }] }, far: { pose: 'up', handKind: 'open', dir: [0.6, -1] } });
 
 H('wind', 16, 'Séraphin', 'séraphin aux six ailes', {
-  colors: { skin: '#f8dcc4', hair: '#f0d070', cloth: '#f4f8ff', belt: '#e6ac3c', wing: '#f4f8ff' },
-  legs: { kind: 'bell', w: 44, panel: '#cfe6ff', base: 'mist', baseC: '#fff3c0' },
+  colors: { boot: '#e6ac3c', skin: '#f8dcc4', hair: '#f0d070', cloth: '#f4f8ff', belt: '#e6ac3c', wing: '#f4f8ff' },
+  skirt: { len: 36, t: 'cloth', flare: 8, trim: 'gold' }, legs: { kind: 'float', t: 'skin', footT: 'boot' },
   head: { kind: 'human', eyes: { style: 'calm', color: '#3f8fd8' }, brow: { shape: 'flat', k: 3, c: '#c8a040' }, mouth: 'flat', ear: false },
-  gear: [['hair', { style: 'curly' }]], back: [['halo', {}], ['wings', { kind: 'big', glow: '#fff3c0' }], ['wings', { kind: 'down' }], ['wings', { kind: 'small' }]],
-  near: { hand: [60, 168], el: [66, 150], handKind: 'open', dir: [-0.6, 0.6] }, far: { hand: [176, 118], el: [158, 136], handKind: 'open', dir: [0.5, -1] } });
+  gear: [['hair', { style: 'curly' }]], back: [['halo', {}], ['wings', { kind: 'feather', glow: '#fff3c0' }], ['wings', { kind: 'down' }], ['wings', { kind: 'small' }]],
+  near: { pose: 'chest', handKind: 'open', dir: [1, -0.2] }, far: { hand: [172, 106], el: [160, 132], item: ['horn', { dir: [1, -0.55], t: 'gold' }] } });
 
 H('wind', 17, 'Raijin', 'Raijin, dieu du tonnerre (Japon)', {
   scale: 1.08, body: 'brute', colors: { skin: '#7a82c8', hair: '#ffe14a', drum: '#c83a3a', pelt: '#3a3058', belt: '#e6ac3c', bone: '#f4ead8', wood: '#f4ead8', boot: '#7a82c8' },

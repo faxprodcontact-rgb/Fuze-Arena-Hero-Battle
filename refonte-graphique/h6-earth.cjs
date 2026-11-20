@@ -6,17 +6,17 @@ H('earth', 0, 'Nain des forges', 'nain forgeron des sagas nordiques', {
   scale: 0.96, body: 'small', shape: { sw: 40, ww: 38, hw: 44, arm: [26, 22] },
   colors: { skin: '#eebf98', hair: '#d8642a', cloth: '#6a5a4a', steel: metal('#8a94a4'), iron: metal('#5a5a6c'), pants: '#4a3a30', boot: '#3a2a22', belt: '#3a2a22', shieldFace: '#8a4a2a' },
   chest: [['plate', { t: 'steel' }]], legs: { kind: 'legs', leg: 'thick', foot: 'sabaton', stance: 'wide' },
-  head: { kind: 'human', jaw: 'square', eyes: { style: 'angry', color: '#5a3a20' }, brow: { k: 7.5, c: '#b84a1a' }, nose: 'big', beard: 'bushy', mustache: 'walrus', ear: false },
+  head: { kind: 'human', jaw: 'square', eyes: { style: 'angry', color: '#5a3a20' }, brow: { k: 7.5, c: '#b84a1a' }, nose: 'big', beard: 'braids', mustache: 'walrus', ear: false },
   gear: [['hair', { style: 'mane' }]],
   near: { hand: [46, 128], el: [52, 150], item: ['mace', { kind: 'ball', to: [28, 54], t: 'iron' }] },
-  far: { noArm: true, handKind: 'none', item: ['shield', { kind: 'kite', c: [160, 158], emblem: 'star', ec: '#e6ac3c' }] }, atk: 'smash' });
+  far: { noArm: true, handKind: 'none', item: ['shield', { kind: 'kite', c: [160, 158], }] }, atk: 'smash' });
 
 H('earth', 1, 'Satyre', 'satyre, compagnon des bois (Grèce)', {
-  body: 'slim', shape: { sw: 31, lean: 5 }, colors: { skin: '#d9a074', hair: '#5a3a22', fur: '#6a4a2e', pants: '#6a4a2e', bone: '#d8c8a0', wood: '#7a5230', boot: '#2a2226', belt: '#4f8a3a' },
+  body: 'slim', shape: { sw: 31, lean: 12, hdx: 4 }, colors: { skin: '#d9a074', hair: '#5a3a22', fur: '#6a4a2e', pants: '#6a4a2e', bone: '#d8c8a0', wood: '#7a5230', boot: '#2a2226', belt: '#4f8a3a' },
   bare: true, bareArms: true, chest: [['muscle']], skirt: { len: 14, t: 'fur', ragged: true }, legs: { kind: 'beast', foot: 'hoof', t: 'fur' },
   head: { kind: 'human', jaw: 'point', eyes: { style: 'sly', color: '#6a8a2a' }, brow: { k: 5.5, shape: 'arch' }, mouth: 'grin', beard: 'chin', nose: 'hook', ear: false },
   gear: [['hair', { style: 'curly' }], ['horns', { kind: 'ram' }], ['ears', { kind: 'elf' }]],
-  near: { pose: 'up', item: ['club', { to: [176, 78], w0: 8, w1: 20, bend: 8, spikes: false }] }, far: { hand: [166, 150], el: [160, 152], r: 11 }, atk: 'smash' });
+  near: { hand: [56, 158], el: [64, 142], r: 12 }, far: { hand: [150, 168], el: [158, 150], r: 11 }, atk: 'smash', rig: { wind: -16, hit: 24 } });
 
 H('earth', 2, 'Frondeur', 'berger à la fronde (David, Proche-Orient)', {
   grp: { top: 'swing' },
@@ -31,7 +31,7 @@ H('earth', 3, 'Cyclope', 'cyclope, géant à l\'œil unique (Grèce)', {
   both: true, grp: { afterHead: 'swing' },
   scale: 1.12, body: 'round', shape: { sw: 40, arm: [28, 24] }, colors: { skin: '#b8a078', hair: '#4a3a30', pelt: '#6a4a2e', belt: '#3a2a22', boot: '#b8a078', rock: '#8a8a94' },
   bare: true, bareArms: true, chest: [['belly', { t: '#c8b088' }]], skirt: { len: 26, t: 'pelt', ragged: true }, legs: { kind: 'legs', leg: 'thick', t: 'skin', foot: 'bare', stance: 'wide' },
-  head: { kind: 'cyclops', jaw: 'chubby', eyes: { style: 'wide', color: '#8a5a20' }, brow: { k: 8, c: '#4a3a30', shape: 'flat' }, mouth: 'gritted', tusks: 'small', ear: false },
+  head: { kind: 'cyclops', jaw: 'chubby', eyes: { style: 'wide', color: '#8a5a20' }, brow: { k: 8, c: '#4a3a30', shape: 'flat' }, mouth: 'grin', tusks: 'small', ear: false },
   near: { hand: [62, 46], el: [46, 92], over: true }, far: { hand: [154, 44], el: [170, 92], over: true },
   afterHead: [['shape', { d: 'M56 30 L64 -6 L92 -24 L128 -22 L154 -4 L162 26 L140 46 L84 48 Z', t: 'rock', sh: 9, hl: 6 }], ['raw', { svg: '<path d="M92 -22 L104 6 L84 22 M128 -20 L122 10 L142 24" stroke="#5a5a66" stroke-width="2.6" fill="none" opacity="0.7"/>' }]],
   atk: 'smash', rig: { wind: -20, hit: 40 } });
@@ -49,7 +49,8 @@ H('earth', 5, 'Dryade', 'dryade, nymphe des arbres (Grèce)', {
   bareArms: true, legs: { kind: 'ragged', w: 46, folds: true },
   head: { kind: 'human', eyes: { style: 'happy', lash: true }, brow: { shape: 'arch', k: 3, c: '#3a6a2a' }, mouth: 'smile', mouthC: '#3a6a2a', blush: '#8fc85a', ear: false },
   gear: [['hair', { style: 'leaf' }]], neck: [['collar', { t: 'leaf' }]],
-  near: { hand: [136, 150], el: [100, 162] }, far: { hand: [150, 148], el: [156, 156], over: true, item: ['sprout', { hand: [143, 142] }] } });
+  near: { hand: [48, 104], el: [54, 132], handKind: 'open', dir: [-0.4, -1] }, far: { hand: [172, 100], el: [160, 128], handKind: 'open', dir: [0.4, -1], item: ['sprout', {}] },
+  top: [['glow', { x: 44, y: 88, r: 16, c: '#8fff9a', op: 0.7 }]] });
 
 H('earth', 6, 'Druide', 'druide des forêts celtes', {
   main: 'far',
@@ -65,7 +66,7 @@ H('earth', 7, 'Général d\'argile', 'armée de terre cuite du Premier Empereur 
   chest: [['lamellar', { t: 'arm' }], ['cracks', {}]], skirt: { len: 30, t: 'arm', strips: 5 }, legs: { kind: 'legs', leg: 'baggy', foot: 'shoe', stance: 'mid', cuffT: 'boot' },
   head: { kind: 'human', jaw: 'square', eyes: { style: 'angry', color: '#3a2a20' }, brow: { k: 5.5, c: '#8a5a3a', shape: 'flat' }, mouth: 'flat', mustache: 'handle', beard: 'chin', beardT: 'hair' },
   gear: [['hair', { style: 'bun', bx: 110, by: 28, br: 11 }]], neck: [['scarf', {}]],
-  near: { pose: 'hip' }, far: { hand: [172, 150], el: [160, 152], item: ['sword', { to: [176, 44], w: 14, guard: 11 }] }, atk: 'slash' });
+  near: { pose: 'hip' }, far: { hand: [180, 148], el: [164, 150], item: ['sword', { to: [184, 42], w: 14, guard: 11 }] }, atk: 'slash' });
 
 H('earth', 8, 'Minotaure', 'le Minotaure du labyrinthe (Crète)', {
   both: true,
@@ -93,13 +94,15 @@ H('earth', 10, 'Anubis', 'Anubis, gardien des morts (Égypte)', {
   far: { hand: [174, 152], el: [158, 150], item: ['sword', { to: [216, 104], w: 16, curve: 16, guard: 0 }] } });
 
 H('earth', 11, 'Isis', 'Isis, la magicienne aux ailes (Égypte)', {
-  body: 'curvy', colors: { skin: '#d9a074', hair: '#1c1a24', cloth: '#f4f0e6', belt: '#2fa3a0', wing: '#2fa3a0', wood: '#e6ac3c' },
+  body: 'curvy', grp: { top: 'far' },
+  colors: { skin: '#d9a074', hair: '#1c1a24', cloth: '#f4f0e6', belt: '#2fa3a0', wing: '#2fa3a0', wood: '#e6ac3c' },
   bareArms: true, bracers: 'gold', legs: { kind: 'mermaid', w: 40, trim: 'gold' },
   head: { kind: 'human', eyes: { style: 'calm', color: '#2a2226', lash: true }, brow: { shape: 'flat', k: 3.4, c: '#1c1a24' }, mouth: 'smile', mouthC: '#b83a4a', ear: false,
     paint: '<path d="M88 92 L74 94 M140 90 L150 90" stroke="#1c1a24" stroke-width="2.6" stroke-linecap="round"/>' },
   gear: [['hair', { style: 'bob', band: 'gold' }], ['shape', { d: 'M96 36 L96 14 L108 14 L108 4 L122 4 L122 36 Z', t: 'gold', sh: 4 }]], neck: [['collar', { t: 'gold', stripes: '#2fa3a0' }]],
-  near: { hand: [148, 142], el: [110, 150], over: true, handKind: 'open', dir: [1, 0.1], items: [['shape', { d: 'M98 150 L150 140 L152 158 L142 152 L140 174 L128 160 L124 184 L112 166 L104 188 L96 164 Z', t: 'wing', sh: 5 }]] },
-  far: { pose: 'staff', item: ['staff', { kind: 'ankh', top: 44 }] } });
+  near: { hand: [46, 142], el: [62, 136], handKind: 'open', dir: [-1, 0.1], items: [['shape', { d: 'M86 142 L44 147 L42 166 L52 159 L54 182 L66 165 L70 190 L80 171 L88 192 L92 152 Z', t: 'wing', sh: 5 }]] },
+  far: { hand: [184, 134], el: [160, 134], handKind: 'open', dir: [1, 0], items: [['shape', { d: 'M136 140 L184 140 L186 160 L176 153 L174 176 L162 161 L158 186 L147 167 L140 188 L136 164 Z', t: 'wing', sh: 5 }]] },
+  top: [['raw', { svg: '<g stroke="#e6ac3c" stroke-width="5" fill="none" stroke-linecap="round"><ellipse cx="188" cy="98" rx="6" ry="8"/><path d="M188 106 L188 126 M180 112 L196 112"/></g>' }]] });
 
 H('earth', 12, 'Baron des ombres', 'Baron Samedi, maître des cimetières (Haïti)', {
   main: 'far',
@@ -108,14 +111,14 @@ H('earth', 12, 'Baron des ombres', 'Baron Samedi, maître des cimetières (Haït
   head: { kind: 'human', jaw: 'long', eyes: { style: 'sly', color: '#c86aff', sclera: '#f4efe2' }, brow: { shape: 'arch', k: 4 }, mouth: 'gritted', ear: false,
     paint: '<path d="M86 78 C96 70 110 72 114 84 C112 96 96 100 86 92 Z M124 76 C134 70 146 74 148 84 C144 96 130 96 124 88 Z" fill="#f4efe2" opacity="0.92"/>' },
   gear: [['tophat', { emblem: 'skull' }]],
-  near: { hand: [84, 168], el: [66, 148], item: ['cane', { top: 'skull', lean: 4 }] }, far: { pose: 'up', item: ['bottle', {}] } });
+  near: { hand: [124, 164], el: [88, 164], item: ['cane', { top: 'skull', lean: 2 }] }, far: { pose: 'up', item: ['bottle', {}] } });
 
 H('earth', 13, 'Héraclès', 'Héraclès et la peau du lion de Némée (Grèce)', {
   scale: 1.12, body: 'brute', colors: { skin: '#e2a878', hair: '#6a4a2e', pelt: '#d8a050', cape: '#d8a050', fur: '#8a5a2a', belt: '#5e3a22', boot: '#e2a878', strap: '#5e3a22' },
   bare: true, bareArms: true, bracers: 'belt', chest: [['muscle'], ['sash', { t: 'pelt' }]], skirt: { len: 24, t: 'pelt', ragged: true }, legs: { kind: 'legs', leg: 'bare', foot: 'bare', wrap: 'strap', stance: 'lunge' },
   head: { kind: 'human', jaw: 'square', eyes: { style: 'angry', color: '#5a3a20' }, brow: { k: 7, c: '#4a3220' }, mouth: 'grin', beard: 'full', nose: 'big', scar: true, band: { t: 'pelt', y: 56, k: 7 } },
   gear: [['hair', { style: 'short' }]], back: [['cape', { len: 'torn' }]], neck: [['fur', {}]],
-  near: { hand: [128, 162], el: [90, 170], r: 15 }, far: { hand: [182, 134], el: [160, 142], r: 15 }, atk: 'smash', rig: { wind: -30, hit: 36 } });
+  near: { hand: [128, 162], el: [90, 170], r: 15 }, far: { hand: [178, 150], el: [162, 150], r: 15, item: ['club', { to: [184, 210], w0: 10, w1: 28, spikes: false }] }, atk: 'smash', rig: { wind: -30, hit: 36 } });
 
 H('earth', 14, 'Herne le Veneur', 'Herne, le chasseur aux bois de cerf (Angleterre)', {
   scale: 1.08, body: 'tall', colors: { skin: '#ece4d0', bone: '#ece4d0', cloth: '#3a4a34', hood: '#3a4a34', belt: '#6a4a2e', bow: '#6a4a2e', cape: '#2a3426', fur: '#5a4634', glove: '#2a2226' },
