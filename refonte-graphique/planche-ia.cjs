@@ -2,7 +2,7 @@
 // fond blanc uni, AUCUN texte (l'IA recopierait des lettres abîmées), pas d'aura de rareté (le jeu l'ajoute lui-même).
 //   node planche-ia.cjs heros fire  sortie.png      → les 18 héros d'un élément (rangée 1 = communs/rares, etc.)
 //   node planche-ia.cjs monstres fire sortie.png    → les 3 familles de monstres d'un élément (une famille par rangée)
-//   node planche-ia.cjs liste "h:fire:6,m:glaces:5" sortie.png [colonnes] → personnages choisis, 21:9, bas à droite vide
+//   node planche-ia.cjs liste "h:fire:6,m:glaces:5" sortie.png [colonnes] [16:9] → personnages choisis, bas à droite vide
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
@@ -11,7 +11,9 @@ const [, , kind, el, out] = process.argv;
 // mode « liste » : des personnages choisis (h:fire:6 = héros, m:glaces:5 = monstre), grille 7 × 3 au format 21:9
 // (celui que rend Hailuo), cases vides en bas à droite (là où Hailuo pose sa signature)
 const LIST = kind === 'liste';
-const W = LIST ? 3696 : 3840, H = LIST ? 1584 : 2160, COLS = LIST ? +(process.argv[5] || 7) : 6, ROWS = 3, CW = W / COLS, CH = H / ROWS;
+// format « 16:9 » (6ᵉ argument) : mêmes conditions que les premières planches (4K, mêmes tailles), qui ont le mieux marché
+const WIDE = LIST && process.argv[6] !== '16:9';
+const W = WIDE ? 3696 : 3840, H = WIDE ? 1584 : 2160, COLS = LIST ? +(process.argv[5] || 7) : 6, ROWS = 3, CW = W / COLS, CH = H / ROWS;
 const SILS = {};
 let list, DEFS = '';
 if (LIST) {
@@ -36,7 +38,7 @@ let body = '', defs = '';
 list.forEach((x, n) => {
   const col = n % COLS, row = Math.floor(n / COLS);
   // même taille de base pour tous, les grands gardent un peu plus de place (sans déborder de leur case)
-  const k = (LIST ? 1.8 : 2.25) * Math.min(1.1, Math.max(0.9, x.scale)), gy = row * CH + CH - (LIST ? 30 : 52);
+  const k = (WIDE ? 1.8 : 2.25) * Math.min(1.1, Math.max(0.9, x.scale)), gy = row * CH + CH - (WIDE ? 30 : 52);
   const tr = `translate(${col * CW + CW / 2 - 106 * k} ${gy - 228 * k}) scale(${k})`;
   defs += x.fig.defs;
   body += `<ellipse cx="${col * CW + CW / 2}" cy="${gy}" rx="${60 * k}" ry="${9 * k}" fill="#000" opacity="0.08"/>`

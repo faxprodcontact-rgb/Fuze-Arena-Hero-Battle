@@ -104,21 +104,25 @@ Row 3, bramble forest: autumn-leaf fox | moss badger with mushrooms | thorn porc
 
 ## Rattrapage (après le premier passage)
 
-Deux planches au format 21:9 (celui que rend Hailuo), le bas à droite laissé vide pour la signature de Hailuo.
+Deux planches dans les mêmes conditions que les premières (4K 16:9, grille 6 × 3, mêmes tailles) : un essai au format
+21:9, avec des personnages plus petits et mélangés, est ressorti presque identique aux dessins d'origine. Le bas à
+droite est laissé vide pour la signature de Hailuo. Le prompt reprend mot pour mot celui qui a marché, avec en plus
+une phrase qui demande de tout repeindre (« not the flat vector look of the sheet »).
 On y a remis : les 2 personnages du bas à droite de chaque planche (cachés par la signature), et ceux ratés au
 premier passage : chamane du volcan, apsara et Morrigane (un bras en trop), minotaure (deux têtes), mammouth
-(défenses), buffle de braise (pattes en trop), les 6 abeilles de la Ruche (becs d'oiseau au lieu de mandibules).
-Fabriquées par `node planche-ia.cjs liste "h:fire:6,…" sortie.png 5` (héros, 5 colonnes) et `… 6` (monstres).
+(défenses), buffle de braise (pattes en trop), les 6 abeilles de la Ruche (becs d'oiseau au lieu de mandibules) ;
+en bonus Fūjin (sac à vent), Général d'argile (lance en trop) et Ifrit (une lame perdue).
+Fabriquées par `node planche-ia.cjs liste "h:fire:6,…" sortie.png 6 16:9`.
 
 ### Rattrapage héros
 
 Planche : `rattrapage-heros.png`
 
 ```
-Redraw this sheet as 2D mobile RPG character art. Keep EXACTLY the same 12 characters in the same 5x3 grid and order, none added or removed; the last three cells of the bottom row stay EMPTY white. Each keeps its species, outfit, colors, items in the same hand, pose and silhouette: full body, three-quarter view facing right. Every character has exactly two arms, two hands and one head. Upgrade: chibi proportions, fierce expressive faces, clean anatomy, fingers gripping items, rich materials, painted cel shading, light from top right, rim light, one bold dark outline per character, vibrant colors, glowing parts glow. Pure white background, soft shadow under feet. No text, frames, scenery, extra arms or heads; nothing cropped, characters never touch.
-Row 1: volcano priestess, one arm raising a flame, the other at her side | phoenix girl, flame wings | sun goddess, radiant crown, gold mirror | angel, halo, six white wings, golden horn | blue thunder god, ring of red drums.
-Row 2: water mother, white turban, water orb | dragon king, antlers, blue robe, pearl | earth mother, flowery green hair, earth orb | underworld king, spiked crown, bident, blue flame | dancer, tiara, pink veils, one arm raising a lotus, the other bent at her chest.
-Row 3: dark queen, crow cloak, one fist raised, the other hand holding a sword | minotaur with a single bull head, nose ring, double axe.
+Redraw this sheet as 2D mobile RPG character art. Keep EXACTLY the same 15 characters in the same 6x3 grid and order, none added or removed; the last three cells stay EMPTY. Each keeps its species, head shape, outfit, colors, weapon in the same hand, pose and silhouette: full body, three-quarter view facing right. Each has exactly two arms and one head. Fully repaint each figure as detailed hand-painted cartoon art with crisp ink lines and textured shading, not the flat vector look of the sheet. Upgrade: chibi proportions, fierce expressive faces, clean anatomy, fingers gripping items, rich materials (metal, cloth, fur, scales), painted cel shading, light from top right, rim light, one bold dark outline per character, vibrant colors, glowing parts glow. Pure white background, soft shadow under feet. No text, frames, scenery, extra limbs; nothing cropped, no weapon over a face, characters never touch.
+Row 1: volcano priestess raising a flame | phoenix girl, flame wings | sun goddess, gold mirror | angel, six wings, golden horn | blue thunder god, ring of drums | water mother, turban, water orb.
+Row 2: dragon king, pearl | earth mother, earth orb | underworld king, bident | dancer raising a lotus | dark queen, sword, raised fist | minotaur, double axe.
+Row 3: green wind demon, wind bag | terracotta general, sword | black winged demon, two blades.
 ```
 
 ### Rattrapage monstres
@@ -126,8 +130,8 @@ Row 3: dark queen, crow cloak, one fist raised, the other hand holding a sword |
 Planche : `rattrapage-monstres.png`
 
 ```
-Redraw this sheet as 2D mobile RPG monster art. Keep EXACTLY the same 16 creatures in the same 6x3 grid and order, none added or removed; the last two cells of the bottom row stay EMPTY white. Each keeps its species, body shape, colors, pose and silhouette: full body, facing right. Upgrade: real creature anatomy with the right number of legs, one head each, menacing faces, sharp eyes, fangs, rich textures, painted cel shading, light from top right, rim light, one bold dark outline per creature, vibrant colors, glowing parts glow. The six hive insects have real insect heads with mandibles and antennae, never bird beaks. Pure white background, soft shadow under feet. No text, frames, scenery, extra legs, extra tusks; nothing cropped, creatures never touch.
-Row 1: bronze colossus | great bronze idol, furnace belly | cassowary | thunderbird, lightning wings | giant catfish with barbels | old crocodile.
-Row 2: twig mantis | bramble stag, leafy antlers | woolly mammoth with only two curved tusks | ember buffalo with exactly four legs, huge horns | worker bee | armored soldier bee.
-Row 3: wax-spitting larva | nurse bee with honey cup | giant hornet | crowned queen bee with scepter.
+Redraw this sheet as 2D mobile RPG monster art. Keep EXACTLY the same 16 creatures in the same 6x3 grid and order, none added or removed; the last two cells stay EMPTY. Each keeps its species, body shape, colors, pose and silhouette: full body, facing right. Each has one head and the right number of legs; the six bees and hornets have insect mandibles, never bird beaks. Fully repaint each figure as detailed hand-painted cartoon art with crisp ink lines and textured shading, not the flat vector look of the sheet. Upgrade: real creature anatomy, menacing faces, sharp eyes, open mouths with fangs, legs, wings and tails attached naturally under the body, rich textures, painted cel shading, light from top right, rim light, one bold dark outline per creature, vibrant colors, glowing parts glow. Pure white background, soft shadow under feet. No text, frames, scenery, people, extra limbs; nothing cropped, creatures never touch.
+Row 1: bronze colossus | great bronze idol, furnace belly | cassowary | thunderbird, lightning wings | giant catfish | old crocodile.
+Row 2: twig mantis | bramble stag | woolly mammoth with only two tusks | ember buffalo, four legs, huge horns | worker bee | armored soldier bee.
+Row 3: wax-spitting larva | nurse bee, honey cup | giant hornet | crowned queen bee, scepter.
 ```
