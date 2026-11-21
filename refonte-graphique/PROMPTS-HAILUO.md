@@ -198,6 +198,20 @@ Middle: deep bramble forest, giant tree trunks, thorny bramble arches, sun rays,
 Right: misty swamp bayou, cypress trees with hanging moss, still water, wooden boardwalk platform, lily pads, lanterns.
 ```
 
+### Terrains 1 bis — à refaire (21/11/2026) : prairie, forêt des ronces et bayou n'avaient pas le style du jeu
+
+Le premier rendu (21:9) est sorti en peinture réaliste (bayou) et en paysage d'animé doux (prairie) : il jure avec les
+héros. Planche 16:9 : `node refonte-graphique/terrains-ia.cjs 1 terrains-1-v2.png 16:9` (bayou plus lumineux, avec
+l'ovale de combat). À rendre en **4K 16:9** comme les planches 2 à 4. Si Hailuo accepte une 2e image, joindre
+`reference-style-terrains.jpg` (4 fonds au bon style + quelques héros, fabriquée à partir de `public/art/`).
+
+```
+Redraw this sheet as 3 separate vertical battle backgrounds for a 2D mobile RPG, side by side, same order, same layout, separated by thin black gaps; the black strip at the bottom stays EMPTY black. Art style: stylized cartoon mobile-game background art, the same style as Hero Wars or AFK Arena battle maps: clean bold shapes, crisp dark outlines around objects, bright saturated cheerful colors, simple cel shading with soft gradients, chunky simplified trees, rocks and props, clear readable silhouettes, light fantasy mood. NOT realistic, NOT photographic, NOT a soft anime landscape painting, no fine texture noise, no murky or muted colors, no fog over the ground. Keep each scene's place, colors and composition: sky and distant scenery in the top half, horizon near the middle, flat open ground in the bottom half with a round battle circle in the center left completely clear for the fighters; decor only on the left and right edges. Front view, slightly from above. No characters, no creatures, no people, no text, no UI, no frames.
+Left: sunny farmland meadow, cute windmill, rolling green hills, wooden fence, dirt battle circle, flowers, haystacks.
+Middle: bright enchanted forest, big stylized tree trunks, thorny bramble arches, golden sun rays, mossy grass circle, red mushrooms, fireflies.
+Right: cheerful swamp bayou in daylight, stylized cypress trees with hanging moss, turquoise water, round wooden boardwalk platform, lily pads, glowing lanterns.
+```
+
 ### Terrains 2 — Campagne 4 à 6 : savane de cendres (13-16), toundra glacée (17-20), pics d'orage (21-24)
 
 Planche : `terrains-2.png`

@@ -2,12 +2,14 @@
 // Hailuo (21:9, 3696 × 1584), et une bande noire en bas pour sa signature. Croquis simples : Hailuo fait le rendu.
 // Même disposition pour tous (comme l'écran de combat) : ciel et décor lointain en haut, horizon vers le milieu,
 // sol plat et dégagé en bas (là où se tiennent les 10 combattants), décor sur les bords seulement.
-//   node terrains-ia.cjs 1 sortie.png   (1 à 4)
+//   node terrains-ia.cjs 1 sortie.png [16:9]   (1 à 4)
 const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
-const [, , which, out] = process.argv;
-const W = 3696, H = 1584, PW = 1232, PH = 1440, G = 12;
+const [, , which, out, fmt] = process.argv;
+// « 16:9 » : planche 3840 × 2160 (le format 4K que Hailuo a rendu pour les planches 2 à 4, qui ont le bon style)
+const [W, H, PW, PH] = fmt === '16:9' ? [3840, 2160, 1280, 1980] : [3696, 1584, 1232, 1440];
+const G = 12;
 const f = (n) => +n.toFixed(1);
 let uid = 0;
 // repère de chaque terrain : 1000 × 1200, horizon à y ≈ 600, combattants entre y ≈ 720 et 1120
@@ -32,13 +34,13 @@ const T = {
       + R(110, 330, 70, 270, '#c9b089') + P('M145 300 L80 340 L210 340 Z', '#8a4a3a') + `<g transform="translate(145 330)">${[0, 1, 2, 3].map((i) => R(-8, -150, 16, 150, '#f4ecd8', `transform="rotate(${i * 90 + 20})"`)).join('')}${C(0, 0, 16, '#6a4a3a')}</g>`
       + [0, 1, 2, 3, 4, 5, 6, 7, 8].map((i) => R(i * 120, 640, 14, 70, '#9a6a3a')).join('') + R(0, 650, 1000, 12, '#9a6a3a') + R(0, 680, 1000, 12, '#9a6a3a')
       + arena('#c9a46a', '#a8844e') + E(70, 1080, 80, 60, '#e8c060') + E(930, 1060, 90, 66, '#e8c060') + [[200, 760], [820, 780], [120, 900], [880, 930]].map(([x, y]) => C(x, y, 10, '#ff6a8a') + C(x + 20, y + 8, 8, '#fff26a')).join(''); },
-  bramble: () => { const s = sky('#1e4a2a', '#7ab86a'), g = ground(620, '#3a6a2a', '#1e3a18');
+  bramble: () => { const s = sky('#2e6a3a', '#a8d88a'), g = ground(620, '#4a8a34', '#2a5a22');
     return s.def + g.def + '|' + s.svg + P('M380 0 L460 0 L620 700 L300 700 Z', '#e8ffb0', 'opacity="0.25"') + [80, 220, 760, 900].map((x, i) => R(x - 40, 0, 80, 700, '#3a2a1a') + C(x, 60, 160, '#2a5a22')).join('') + range(640, 6, '#2a4a20', 9) + g.svg
       + S('M0 520 Q180 380 300 540', '#4a2a1a', 26) + S('M1000 500 Q820 380 700 560', '#4a2a1a', 26) + arena('#4a6a2a', '#2a3a14')
       + [[90, 1000], [930, 1020], [150, 760], [860, 780]].map(([x, y]) => R(x - 8, y - 40, 16, 40, '#e8d8c0') + E(x, y - 44, 36, 22, '#d0304a')).join('') + [[300, 300], [650, 260], [500, 420], [820, 480]].map(([x, y]) => C(x, y, 8, '#f8ff9a', 'opacity="0.9"')).join(''); },
-  bayou: () => { const s = sky('#2a5a5a', '#bfe0c8'), g = ground(640, '#3a5a4a', '#22382e');
+  bayou: () => { const s = sky('#3fa0c8', '#d8f4d0'), g = ground(640, '#4a8a5a', '#2e5a3a');
     return s.def + g.def + '|' + s.svg + E(500, 600, 600, 60, '#e8fff0', 'opacity="0.5"') + [60, 200, 800, 940].map((x) => R(x - 30, 120, 60, 520, '#3a3024') + E(x, 140, 150, 60, '#2a4a2a') + S(`M${x - 80} 160 L${x - 70} 330 M${x + 60} 170 L${x + 70} 300`, '#8aa87a', 12)).join('') + R(0, 600, 1000, 60, '#3a6a6a') + g.svg
-      + R(80, 760, 840, 330, '#7a5a3a') + [0, 1, 2, 3, 4, 5, 6].map((i) => R(80 + i * 120, 760, 6, 330, '#5a4028')).join('') + E(500, 920, 360, 140, '#8a6a46', 'opacity="0.5"')
+      + R(80, 760, 840, 330, '#7a5a3a') + [0, 1, 2, 3, 4, 5, 6].map((i) => R(80 + i * 120, 760, 6, 330, '#5a4028')).join('') + arena('#a8804e', '#6a4a2a')
       + [[40, 1150], [960, 1140], [30, 720]].map(([x, y]) => E(x, y, 60, 18, '#5a9a4a')).join('') + [[120, 700], [880, 700]].map(([x, y]) => R(x - 6, y - 120, 12, 120, '#3a3024') + C(x, y - 130, 22, '#ffcc5a')).join(''); },
   ash: () => { const s = sky('#5a1a1a', '#ff8a3a'), g = ground(620, '#4a3a34', '#2a1e1a');
     return s.def + g.def + '|' + s.svg + P('M560 620 L700 300 L760 300 L900 620 Z', '#3a2a28') + P('M700 300 Q730 200 680 100 Q760 180 760 300 Z', '#ff6a1a', 'opacity="0.9"') + C(730, 120, 60, '#5a4a48', 'opacity="0.8"') + range(640, 5, '#4a2a24', 4)
