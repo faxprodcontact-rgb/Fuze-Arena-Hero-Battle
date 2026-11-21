@@ -10,7 +10,13 @@ from PIL import Image, ImageDraw
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, 'hailuo-v1')
 OUT = os.path.join(ROOT, '..', 'public', 'apercu')
-CHECK = sys.argv[1] if len(sys.argv) > 1 else None
+ARGS = [a for a in sys.argv[1:] if not a.startswith('--')]
+CHECK = ARGS[0] if ARGS else None
+# --seulement=id,id : ne refait que ces personnages (les autres gardent leur image et leur place)
+ONLY = next((set(a.split('=', 1)[1].split(',')) for a in sys.argv[1:] if a.startswith('--seulement=')), None)
+# Personnages très pâles (le hibou blanc) : par les trous de leur contour, le fond blanc « coule » dans leur ventre et
+# leurs ailes. Pour eux, le contour est épaissi pendant le détourage, et la règle des trous blancs fermés est coupée.
+PLEIN = {'glaces-4': 4, 'angels-10': 12}  # identifiant : épaisseur ajoutée au contour (pixels)
 
 ELEMENTS = ['fire', 'wind', 'water', 'earth']
 FAMS = {'fire': ['parade', 'fauves', 'idoles'], 'wind': ['epouvantails', 'ruche', 'voliere'],
@@ -111,7 +117,7 @@ def split(m, box, cw, ch, cols, rows):
                 return out
     return [(m, box)]
 
-def cut(path):
+def cut(path, holes=True, seal=0):
     rgb = np.array(Image.open(path).convert('RGB')).astype(np.float32)
     H, W, _ = rgb.shape
     mn, mx = rgb.min(2), rgb.max(2)
@@ -119,10 +125,13 @@ def cut(path):
     # 1) le fond : clair et gris (blanc + ombre au sol), relié aux bords de l'image
     cand = (mn > 150) & (sat < 22)
     border = [(0, x) for x in range(0, W, 7)] + [(H - 1, x) for x in range(0, W, 7)] + [(y, 0) for y in range(0, H, 7)] + [(y, W - 1) for y in range(0, H, 7)]
-    bg = flood(cand, border)
+    if seal:  # trait du contour pas fermé partout : on l'épaissit le temps du remplissage, pour que le fond n'entre pas
+        bg = dilate(flood(cand & ~dilate(~cand, seal), border), seal) & cand
+    else:
+        bg = flood(cand, border)
     # 2) trous fermés (entre un bras et le corps, dans un anneau) : grandes zones d'un blanc pur
     # Un vrai trou est bordé par le trait sombre du contour ; un habit blanc peint est bordé d'ombres grises : on le garde.
-    holes = (mn > 246) & (sat < 10) & ~bg
+    holes = (mn > 246) & (sat < 10) & ~bg & holes
     for m, (y0, x0, y1, x1) in components(holes, 500):
         Y0, X0, Y1, X1 = max(0, y0 - 6), max(0, x0 - 6), min(H, y1 + 6), min(W, x1 + 6)
         mc = m[Y0:Y1, X0:X1]
@@ -161,9 +170,12 @@ for c in load_js('heros.js', 'HEROS')['list'] + load_js('monstres.js', 'MONSTRES
 os.makedirs(os.path.join(OUT, '..', 'art', 'p'), exist_ok=True)
 if CHECK:
     os.makedirs(CHECK, exist_ok=True)
-meta = {}
+meta = load_js('hailuo.js', 'HAILUO') if ONLY else {}
 for fname, cols, rows, ids in SHEETS:
+    if ONLY and not ONLY & set(ids):
+        continue
     col, alpha = cut(os.path.join(SRC, fname))
+    plain = {}
     H, W = alpha.shape
     cw, ch = W / cols, H / rows
     cells = {}
@@ -191,10 +203,20 @@ for fname, cols, rows, ids in SHEETS:
             if cid:
                 print('MANQUE', fname, n, cid)
             continue
+        if ONLY and cid not in ONLY:
+            continue
         keep = mains[n][0].copy()
         for m in extra[n]:
             keep |= m
         a = np.where(keep, alpha, 0)
+        if cid in PLEIN:  # sans la règle des trous blancs fermés
+            if PLEIN[cid] not in plain:
+                plain[PLEIN[cid]] = cut(os.path.join(SRC, fname), holes=False, seal=PLEIN[cid])
+            pl = plain[PLEIN[cid]]
+            ys, xs = np.nonzero(keep)
+            keep = keep | flood(pl[1] > 0.04, list(zip(ys[::40], xs[::40])))
+            col = np.where(keep[..., None], pl[0], col)
+            a = np.where(keep, pl[1], 0)
         y0, x0, y1, x1 = bbox_alpha(a, 0.04)
         pad = 4
         y0, x0, y1, x1 = max(0, y0 - pad), max(0, x0 - pad), min(H, y1 + pad), min(W, x1 + pad)

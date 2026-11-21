@@ -1,5 +1,5 @@
 # Prépare les dessins Hailuo pour le vrai jeu (à relancer après decoupe-hailuo.py ou decoupe-decors.py) :
-#   python3 refonte-graphique/art-jeu.py
+#   python3 refonte-graphique/art-jeu.py [--cartes | --cartes=id,id]
 # - public/art/c/<id>.webp : vignettes carrées (menus, cartes, portraits), personnage entier, pieds en bas ;
 # - src/game/art-meta.ts : place et taille de chaque dessin, des terrains et des effets (fichier fabriqué, ne pas modifier).
 import json, os
@@ -19,7 +19,10 @@ decors = json.load(open(os.path.join(ROOT, 'decors-meta.json')))
 
 os.makedirs(os.path.join(ART, 'c'), exist_ok=True)
 S, PAD = 256, 10
-for cid in (chars if '--cartes' in __import__('sys').argv else []):
+ARGV = __import__('sys').argv
+# --cartes : refait toutes les vignettes ; --cartes=id,id : seulement celles-là
+CARDS = next(([c for c in a.split('=', 1)[1].split(',')] if '=' in a else list(chars) for a in ARGV if a.startswith('--cartes')), [])
+for cid in CARDS:
     im = Image.open(os.path.join(ART, 'p', cid + '.webp')).convert('RGBA')
     bb = im.getchannel('A').point(lambda v: 255 if v > 24 else 0).getbbox()
     im = im.crop(bb)
