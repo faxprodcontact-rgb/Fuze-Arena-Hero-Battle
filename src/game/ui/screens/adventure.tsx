@@ -52,9 +52,12 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
             >
               <TileScene kind={f} />
               <ModeIcon kind={f} />
-              <span class="tile-name">{t(`adv.${f}`)}</span>
-              {!unlocked && <Locked stage={UNLOCKS[f]} />}
-              {unlocked && isNew(s, f) && <span class="tile-new">{t('new')}</span>}
+              <span class="tile-name">
+                {t(`adv.${f}`)}
+                {/* l'information de la tuile est accrochée au bandeau du nom : elle ne recouvre jamais le picto */}
+                {!unlocked && <Locked stage={UNLOCKS[f]} />}
+                {unlocked && isNew(s, f) && <span class="tile-new">{t('new')}</span>}
+              </span>
               {unlocked && !isNew(s, f) && dots[f](s) && <span class="dot" />}
             </button>
           );

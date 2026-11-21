@@ -1,5 +1,6 @@
 // Les pictos des six modes de l'Aventure, dessinés par le code et animés, dans le même trait que le décor de l'onglet :
-// volumes en dégradés, lumière venue du haut à droite, un seul contour autour de chaque objet (filtre de `.mi-body`).
+// volumes en dégradés, lumière venue du haut à droite, un seul contour d'épaisseur constante autour de chaque objet
+// (filtres `mi-out-c`, bleu nuit, pour les pictos froids et `mi-out-w`, brun, pour les chauds).
 //   tour      : la tour des Épreuves, son cristal qui flotte, sa fenêtre allumée, ses bannières
 //   missions  : la boussole, dont l'aiguille cherche le nord
 //   dungeons  : la porte du donjon, sa herse, ses torches, la lueur du fond
@@ -32,6 +33,17 @@ function Defs() {
       <radialGradient id="mi-fire"><stop offset="0" stop-color="#ffe9a0" stop-opacity="0.95" /><stop offset="0.45" stop-color="#ff9a3d" stop-opacity="0.55" /><stop offset="1" stop-color="#ff9a3d" stop-opacity="0" /></radialGradient>
       <radialGradient id="mi-eye"><stop offset="0" stop-color="#fff6c2" /><stop offset="0.4" stop-color="#ff7a3a" /><stop offset="1" stop-color="#d1201a" stop-opacity="0" /></radialGradient>
       <radialGradient id="mi-cyan"><stop offset="0" stop-color="#d6fbff" stop-opacity="0.95" /><stop offset="0.5" stop-color="#6fd6f2" stop-opacity="0.45" /><stop offset="1" stop-color="#6fd6f2" stop-opacity="0" /></radialGradient>
+      {[['c', '#2a2038'], ['w', '#4a2412']].map(([k, c]) => (
+        <filter id={`mi-out-${k}`} x="-12%" y="-12%" width="124%" height="124%" color-interpolation-filters="sRGB">
+          <feMorphology in="SourceAlpha" operator="dilate" radius="1.500" result="d" /><feFlood flood-color={c} result="c" /><feComposite in="c" in2="d" operator="in" result="o" />
+          <feMerge><feMergeNode in="o" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      ))}
+      <linearGradient id="mi-ivory" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a8927c" /><stop offset="0.4" stop-color="#e2d6c0" /><stop offset="0.78" stop-color="#fffaf0" /><stop offset="1" stop-color="#e6dac4" /></linearGradient>
+      <linearGradient id="mi-inner" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#f1e6d0" /><stop offset="0.55" stop-color="#c2a888" /><stop offset="1" stop-color="#7a5a48" /></linearGradient>
+      <linearGradient id="mi-horn2" x1="44" y1="46" x2="18" y2="4" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#d2b78c" /><stop offset="0.55" stop-color="#86694e" /><stop offset="1" stop-color="#211816" /></linearGradient>
+      <clipPath id="mi-ring"><path clip-rule="evenodd" d="M20 104 V56 Q20 17 60 17 Q100 17 100 56 V104 Z M38 104 V58 Q38 38 60 38 Q82 38 82 58 V104 Z" /></clipPath>
+      <clipPath id="mi-colo"><path d="M13 38 A47 16.500 0 0 0 107 38 V84 A47 16.500 0 0 1 13 84 Z" /></clipPath>
       <clipPath id="mi-gate"><path d="M38 104 V58 Q38 38 60 38 Q82 38 82 58 V104 Z" /></clipPath>
     </defs>
   );
@@ -47,193 +59,225 @@ function Flame({ x, y, s = 1, delay = 0 }: { x: number; y: number; s?: number; d
   );
 }
 
+/** Un œil en feu : l'orbite éclairée de l'intérieur, une grande flamme à quatre couleurs qui s'en échappe en penchant vers
+ *  l'extérieur, la braise blanche au cœur, des étincelles qui montent. `side` = -1 (œil gauche) ou 1 (œil droit). */
+function EyeFire({ x, y, side }: { x: number; y: number; side: number }) {
+  const lean = side * 16;
+  return (
+    <g>
+      <circle class="an-glow" cx={x} cy={y - 2} r="15" fill="url(#mi-eye)" />
+      <g transform={`translate(${x} ${y + 4}) rotate(${lean})`}>
+        <path class="ad-flame mi-f1" d="M-8 1 C-12 -6 -7 -11 -8.500 -19 C-4 -16 -2.500 -12 -1 -27 C4 -18 10.500 -11 8 1 Z" fill="#e0281a" />
+        <path class="ad-flame mi-f2" d="M-6 1 C-9 -5 -5 -9 -5.500 -15 C-2 -12 -0.500 -9 0.500 -21 C4 -14 8 -8 6 1 Z" fill="#ff7a1e" />
+        <path class="ad-flame mi-f3" d="M-4 1 C-6 -3.500 -3 -6.500 -3 -10.500 C-0.500 -8.500 0.500 -6 1 -14.500 C3.500 -9.500 5.500 -5 4 1 Z" fill="#ffd23a" />
+        <path class="ad-flame mi-f2" d="M-2 1 C-3 -1.500 -1.200 -3.500 -1 -6 C0.800 -4 2.800 -2 2 1 Z" fill="#fffbe0" />
+      </g>
+      <ellipse class="mi-flicker" cx={x} cy={y + 0.500} rx="4.200" ry="3" fill="#fffbe0" />
+      {[0, 1, 2].map((i) => <circle class="mi-eyespark" style={{ animationDelay: `${-i * 0.7 - (side > 0 ? 0.35 : 0)}s`, '--dx': `${side * (3 + i * 3)}px` } as never} cx={x + side * (i - 1) * 2} cy={y - 14} r={1.300 - i * 0.200} fill={i === 1 ? '#fffbe0' : '#ffb347'} />)}
+    </g>
+  );
+}
+
 // ---------- la tour des Épreuves ----------
 function TowerIcon() {
+  const OUT = 'url(#mi-out-c)';
   return (
     <>
-      <circle class="an-glow" cx="60" cy="13" r="21" fill="url(#mi-cyan)" />
+      <circle class="an-glow" cx="60" cy="11" r="19" fill="url(#mi-cyan)" />
       <g class="mi-bob mi-slow">
-        <g class="mi-body">
-          {/* le rocher qui porte la tour, suspendu au-dessus des nuages */}
-          <path d="M22 96 H98 L88 104 L80 102 L72 112 L62 106 L54 117 L46 105 L36 108 L30 100 Z" fill="#5a4a8c" />
-          <path d="M98 96 L88 104 L80 102 L72 112 L62 106 L62 96 Z" fill="#8f7fc4" /><path d="M22 96 H98 L96 98.500 H25 Z" fill="#b9a8ea" />
-          {/* le socle, en deux marches */}
-          <path d="M24 97 L29 88 H91 L96 97 Z" fill="url(#mi-stone)" /><path d="M29 88 H91 L93 91.500 H27 Z" fill="#fff" opacity="0.55" />
-          <path d="M32 88 L35 82 H85 L88 88 Z" fill="url(#mi-stone)" /><path d="M35 82 H85 L86.200 84.500 H33.800 Z" fill="#fff" opacity="0.55" />
-          {/* le fût, ses pierres */}
-          <path d="M37 82 L40.500 44 H79.500 L83 82 Z" fill="url(#mi-stone)" />
-          <g fill="#fff" opacity="0.5"><rect x="66" y="70" width="9" height="4.500" rx="0.800" /><rect x="70" y="52" width="7" height="4.500" rx="0.800" /></g>
-          <g fill="#4a4470" opacity="0.2"><rect x="43" y="74" width="8" height="4.500" rx="0.800" /><rect x="44" y="50" width="6" height="4.500" rx="0.800" /><rect x="71" y="61" width="8" height="4.500" rx="0.800" /></g>
-          <g stroke="#5f5a80" stroke-width="1" stroke-linecap="round" opacity="0.55"><path d="M40 78.500 H51 M71 78.500 H82 M41 69.500 H49 M66 69.500 H82 M42 56 H50 M70 56.500 H80 M54 47.500 H66" /></g>
-          <path d="M37 82 L40.500 44 H53 L50.500 82 Z" fill="#332c58" opacity="0.26" />
-          <path d="M79.500 44 L83 82" stroke="#fff" stroke-width="1.500" opacity="0.8" />
-          {/* le bandeau d'or */}
-          <path d="M39.300 63 H80.700 L81 66 H39 Z" fill="url(#mi-gold)" /><path d="M39.300 63 H80.700" stroke="#fff6c2" stroke-width="0.900" />
-          {/* la porte, cerclée d'or */}
-          <path d="M50 82 V72 Q50 62.500 60 62.500 Q70 62.500 70 72 V82 Z" fill="url(#mi-gold)" />
-          <path d="M52.200 82 V72.200 Q52.200 64.700 60 64.700 Q67.800 64.700 67.800 72.200 V82 Z" fill="url(#mi-wood)" />
-          <path d="M52.200 73.500 H67.800 M60 64.700 V82" stroke="#4a2a12" stroke-width="1.200" /><circle cx="63.200" cy="76" r="1.300" fill="#ffd45c" />
-          {/* la fenêtre allumée */}
-          <path d="M55.300 59 V53.500 Q55.300 48 60 48 Q64.700 48 64.700 53.500 V59 Z" fill="#4a4470" />
-          <path class="mi-flicker" d="M56.800 59 V53.700 Q56.800 49.600 60 49.600 Q63.200 49.600 63.200 53.700 V59 Z" fill="#ffd98a" /><path d="M60 49.600 V59" stroke="#4a4470" stroke-width="0.900" />
-          {/* les bannières */}
-          {[41.500, 68.500].map((x, i) => (
-            <g class="mi-sway" style={{ transformOrigin: `${x + 5}px 45px`, animationDelay: `${-i * 1.3}s` }}>
-              <path d={`M${x} 45 H${x + 10} V66 L${x + 5} 61.500 L${x} 66 Z`} fill="url(#mi-blue)" />
-              <path d={`M${x} 45 H${x + 10} V47.800 H${x} Z`} fill="#ffd45c" /><path d={`M${x + 5} 51 l2.800 3.800 l-2.800 3.800 l-2.800 -3.800 Z`} fill="#ffd45c" />
-            </g>
-          ))}
-          {/* l'encorbellement et ses petites arches */}
-          <path d="M33 44.500 L35.500 37.500 H84.500 L87 44.500 Z" fill="#9f9abc" /><path d="M35.500 37.500 H84.500 L85.500 40 H34.500 Z" fill="#fff" opacity="0.45" />
-          <g fill="#3a3358">{[38, 45.500, 53, 60.500, 68, 75.500].map((x) => <path d={`M${x} 44.500 v-2 q0 -2.200 2.300 -2.200 q2.300 0 2.300 2.200 v2 Z`} />)}</g>
-          {/* les créneaux, coiffés d'or */}
-          <path d="M31 38 V24 h10 v6 h7 v-6 h8.500 v6 h7 v-6 h8.500 v6 h7 v-6 h10 V38 Z" fill="url(#mi-stone)" />
-          <path d="M31 38 V24 h10 v6 h4 V38 Z" fill="#332c58" opacity="0.26" />
-          <g fill="url(#mi-gold)"><rect x="30.300" y="22.300" width="11.400" height="3.200" rx="1" /><rect x="47.300" y="22.300" width="9.900" height="3.200" rx="1" /><rect x="62.800" y="22.300" width="9.900" height="3.200" rx="1" /><rect x="78.300" y="22.300" width="11.400" height="3.200" rx="1" /></g>
-          <path d="M35 33.500 h5 M50 34.500 h6 M66 33.500 h5 M80 34.500 h5" stroke="#5f5a80" stroke-width="1" stroke-linecap="round" opacity="0.55" />
-          <path d="M89 24 V38" stroke="#fff" stroke-width="1.400" opacity="0.8" />
+        <g transform="translate(60 118) scale(0.92) translate(-60 -118)">
+          <g filter={OUT}>
+            {/* l'île de roche qui porte la tour : trois facettes, la plus claire à droite */}
+            <path d="M22 96 H98 L91 106 L82 104 L75 117 L65 111 L56 128 L46 110 L36 114 L29 102 Z" fill="#6a58a4" />
+            <path d="M22 96 H50 L46 110 L36 114 L29 102 Z" fill="#4a3c80" /><path d="M72 96 H98 L91 106 L82 104 L75 117 L65 111 Z" fill="#9c8ad2" />
+            <path d="M22 96 H98 L96.500 98.500 H24 Z" fill="#c4b4f0" />
+            {/* le socle : deux marches, dessus clair et tranche plus sombre */}
+            <path d="M24 97 L29 88 H91 L96 97 Z" fill="#b4afcc" /><path d="M29 88 H91 L93 91.500 H27 Z" fill="#eeebf6" /><path d="M24 97 L29 88 H40 L36 97 Z" fill="#332c58" opacity="0.2" />
+            <path d="M32 88 L35 82 H85 L88 88 Z" fill="#b4afcc" /><path d="M35 82 H85 L86.200 84.500 H33.800 Z" fill="#eeebf6" /><path d="M32 88 L35 82 H44 L41.500 88 Z" fill="#332c58" opacity="0.2" />
+            {/* le fût, quelques pierres */}
+            <path d="M37 82 L40.500 44 H79.500 L83 82 Z" fill="url(#mi-stone)" />
+            <g fill="#fff" opacity="0.5"><rect x="67" y="71" width="9" height="4.500" rx="0.800" /><rect x="70" y="50" width="7" height="4.500" rx="0.800" /></g>
+            <g fill="#4a4470" opacity="0.2"><rect x="42.500" y="73" width="6" height="4.500" rx="0.800" /><rect x="71" y="57" width="8" height="4.500" rx="0.800" /></g>
+            <path d="M37 82 L40.500 44 H53 L50.500 82 Z" fill="#332c58" opacity="0.26" />
+            <path d="M79.500 44 L83 82" stroke="#fff" stroke-width="1.500" opacity="0.8" />
+            {/* le bandeau d'or */}
+            <path d="M39.300 63 H80.700 L81 66 H39 Z" fill="url(#mi-gold)" /><path d="M39.300 63 H80.700" stroke="#fff6c2" stroke-width="0.900" />
+            {/* la porte, cerclée d'or */}
+            <path d="M50 82 V73 Q50 64 60 64 Q70 64 70 73 V82 Z" fill="url(#mi-gold)" />
+            <path d="M52.200 82 V73.200 Q52.200 66.200 60 66.200 Q67.800 66.200 67.800 73.200 V82 Z" fill="url(#mi-wood)" />
+            <path d="M60 66.200 V82" stroke="#4a2a12" stroke-width="1.200" /><circle cx="63.200" cy="76" r="1.300" fill="#ffd45c" />
+            {/* la fenêtre */}
+            <path d="M55 60 V54 Q55 48 60 48 Q65 48 65 54 V60 Z" fill="#4a4470" />
+            <path class="mi-flicker" d="M56.600 60 V54.200 Q56.600 49.800 60 49.800 Q63.400 49.800 63.400 54.200 V60 Z" fill="#ffe66a" />
+            {/* les bannières : étroites, elles s'arrêtent au-dessus du bandeau */}
+            {[42.500, 69.500].map((x, i) => (
+              <g class="mi-sway" style={{ transformOrigin: `${x + 4}px 45px`, animationDelay: `${-i * 1.3}s` }}>
+                <path d={`M${x} 45 H${x + 8} V60 L${x + 4} 56.500 L${x} 60 Z`} fill="url(#mi-blue)" />
+                <path d={`M${x} 45 H${x + 8} V47.500 H${x} Z`} fill="#ffd45c" /><circle cx={x + 4} cy="52" r="1.700" fill="#ffd45c" />
+              </g>
+            ))}
+            {/* l'encorbellement et ses petites arches */}
+            <path d="M33 44.500 L35.500 37.500 H84.500 L87 44.500 Z" fill="#9f9abc" /><path d="M35.500 37.500 H84.500 L85.500 40 H34.500 Z" fill="#fff" opacity="0.45" />
+            <g fill="#3a3358">{[38, 45.500, 53, 60.500, 68, 75.500].map((x) => <path d={`M${x} 44.500 v-2 q0 -2.200 2.300 -2.200 q2.300 0 2.300 2.200 v2 Z`} />)}</g>
+            {/* les créneaux, coiffés d'or, bleuis par le cristal */}
+            <path d="M31 38 V24 h10 v6 h7 v-6 h8.500 v6 h7 v-6 h8.500 v6 h7 v-6 h10 V38 Z" fill="url(#mi-stone)" />
+            <path d="M31 38 V24 h10 v6 h4 V38 Z" fill="#332c58" opacity="0.26" />
+            <path d="M48 30 h24 V38 H48 Z" fill="#6fd6f2" opacity="0.3" />
+            <g fill="url(#mi-gold)"><rect x="30.300" y="22.300" width="11.400" height="3.200" rx="1" /><rect x="47.300" y="22.300" width="9.900" height="3.200" rx="1" /><rect x="62.800" y="22.300" width="9.900" height="3.200" rx="1" /><rect x="78.300" y="22.300" width="11.400" height="3.200" rx="1" /></g>
+            <path d="M89 24 V38" stroke="#fff" stroke-width="1.400" opacity="0.8" />
+          </g>
+          <circle class="an-glow" cx="60" cy="54" r="11" fill="url(#mi-fire)" opacity="0.8" />
+          {[[40, 116, 0], [80, 112, 1.1]].map(([x, y, d]) => <path class="mi-pebble" style={{ animationDelay: `${-d!}s` }} d={`M${x} ${y} l3 2 l-1 3 l-3 -1 Z`} fill="#6a58a4" />)}
         </g>
-        {[[40, 112, 0], [78, 110, 1.1]].map(([x, y, d]) => <path class="mi-pebble" style={{ animationDelay: `${-d!}s` }} d={`M${x} ${y} l3 2 l-1 3 l-3 -1 Z`} fill="#5a4a8c" />)}
       </g>
-      {/* le cristal qui flotte au-dessus */}
+      {/* le cristal, nettement détaché au-dessus des créneaux */}
       <g class="mi-bob">
-        <g class="mi-body">
-          <path d="M60 0 L68.500 12 L60 25 L51.500 12 Z" fill="url(#mi-crystal)" />
-          <path d="M60 0 L68.500 12 H60 Z" fill="#e9fdff" /><path d="M60 12 H68.500 L60 25 Z" fill="#7fdcf5" /><path d="M60 0 L51.500 12 H60 Z" fill="#a6ecfb" /><path d="M51.500 12 H60 V25 Z" fill="#3fa0d8" />
-          <path d="M62 4.500 L65.500 10" stroke="#fff" stroke-width="1.400" stroke-linecap="round" />
+        <g filter={OUT}>
+          <path d="M60 -2 L68 9.500 L60 22 L52 9.500 Z" fill="url(#mi-crystal)" />
+          <path d="M60 -2 L68 9.500 H60 Z" fill="#e9fdff" /><path d="M60 9.500 H68 L60 22 Z" fill="#7fdcf5" /><path d="M60 -2 L52 9.500 H60 Z" fill="#a6ecfb" /><path d="M52 9.500 H60 V22 Z" fill="#3fa0d8" />
+          <path d="M62 2.500 L65.200 7.500" stroke="#fff" stroke-width="1.400" stroke-linecap="round" />
         </g>
       </g>
-      {twinkle(42, 12, 5)}{twinkle(80, 17, 4, 'an-late')}{twinkle(73, 3, 3, 'an-later')}
+      {twinkle(42, 10, 5)}{twinkle(80, 15, 4, 'an-late')}{twinkle(74, 1, 3, 'an-later')}
     </>
   );
 }
 
 // ---------- la boussole des Missions ----------
 function CompassIcon() {
+  const OUT = 'url(#mi-out-w)';
   const C = { x: 60, y: 66 };
   return (
     <>
-      <ellipse cx="60" cy="112" rx="34" ry="5" fill="#000" opacity="0.26" />
+      <ellipse cx="60" cy="113" rx="34" ry="5" fill="#000" opacity="0.26" />
       <g transform="rotate(-10 60 66)">
-        <g class="mi-body">
-          {/* l'anneau et le col */}
-          <circle cx="60" cy="14" r="7.500" fill="none" stroke="#c2760a" stroke-width="6" /><circle cx="60" cy="14" r="7.500" fill="none" stroke="#ffd45c" stroke-width="3.400" />
-          <rect x="54" y="20" width="12" height="9" rx="2.500" fill="url(#mi-gold)" /><path d="M54 24 H66" stroke="#a8650a" stroke-width="1.2" />
-          {/* le boîtier */}
+        <g filter={OUT}>
+          {/* l'anneau et son attache */}
+          <circle cx="60" cy="13" r="7.500" fill="none" stroke="#c2760a" stroke-width="6" /><circle cx="60" cy="13" r="7.500" fill="none" stroke="#ffd45c" stroke-width="3.400" />
+          <path d="M53 20 H67 L65.500 29 H54.500 Z" fill="url(#mi-gold)" /><path d="M53.500 23 H66.500" stroke="#a8650a" stroke-width="1.400" />
+          {/* le boîtier : une lunette épaisse, quatre rivets */}
           <circle cx={C.x} cy={C.y} r="43" fill="url(#mi-gold)" />
-          {Array.from({ length: 24 }, (_, i) => { const a = (i / 24) * Math.PI * 2; return <path d={`M${f(C.x + Math.cos(a) * 38.500)} ${f(C.y + Math.sin(a) * 38.500)} L${f(C.x + Math.cos(a) * 41.500)} ${f(C.y + Math.sin(a) * 41.500)}`} stroke="#a8650a" stroke-width="1.6" stroke-linecap="round" opacity="0.6" />; })}
-          <circle cx={C.x} cy={C.y} r="36.500" fill="#a8650a" /><circle cx={C.x} cy={C.y} r="35" fill="#ffe28a" />
-          {/* le cadran */}
-          <circle cx={C.x} cy={C.y} r="33" fill="url(#mi-dial)" />
-          <path d="M60 33 A33 33 0 0 0 27 66 A34 34 0 0 1 60 36 Z" fill="#8a6a3a" opacity="0.18" />
+          <path d="M60 23 A43 43 0 0 1 103 66 A44 44 0 0 0 60 26 Z" fill="#fff" opacity="0.35" />
+          {[45, 135, 225, 315].map((a) => { const r = (a * Math.PI) / 180; return <g><circle cx={f(C.x + Math.cos(r) * 39.500)} cy={f(C.y + Math.sin(r) * 39.500)} r="2.200" fill="#a8650a" /><circle cx={f(C.x + Math.cos(r) * 39.500 + 0.500)} cy={f(C.y + Math.sin(r) * 39.500 - 0.500)} r="1.300" fill="#fff6c2" /></g>; })}
+          <circle cx={C.x} cy={C.y} r="35.500" fill="#a8650a" /><circle cx={C.x} cy={C.y} r="34" fill="#ffe28a" />
+          {/* le cadran, dans l'ombre de la lunette du côté de la lumière */}
+          <circle cx={C.x} cy={C.y} r="32" fill="url(#mi-dial)" />
+          <path d="M60 34 A32 32 0 0 1 92 66 A35 35 0 0 0 60 38.500 Z" fill="#6b4a22" opacity="0.2" />
           {/* la rose des vents */}
-          <g fill="#d9bd8c">{[45, 135, 225, 315].map((a) => <path transform={`rotate(${a} 60 66)`} d="M60 49 L63 66 L60 83 L57 66 Z" />)}</g>
-          <g>{[0, 90, 180, 270].map((a) => <g transform={`rotate(${a} 60 66)`}><path d="M60 40 L64 66 H60 Z" fill="#b8925a" /><path d="M60 40 L56 66 H60 Z" fill="#8f6c3c" /></g>)}</g>
-          {Array.from({ length: 24 }, (_, i) => <path transform={`rotate(${i * 15} 60 66)`} d={i % 6 === 0 ? 'M60 34.500 V39.500' : 'M60 34.500 V37'} stroke="#6b4a22" stroke-width={i % 6 === 0 ? 2 : 1.1} stroke-linecap="round" />)}
-          <path d="M60 33.500 L62.800 38.500 H57.200 Z" fill="#d1493f" />
+          <g fill="#dcc296">{[45, 135, 225, 315].map((a) => <path transform={`rotate(${a} 60 66)`} d="M60 50 L63 66 L60 82 L57 66 Z" />)}</g>
+          <g>{[0, 90, 180, 270].map((a) => <g transform={`rotate(${a} 60 66)`}><path d="M60 41 L64 66 H60 Z" fill="#b8925a" /><path d="M60 41 L56 66 H60 Z" fill="#8f6c3c" /></g>)}</g>
+          {Array.from({ length: 12 }, (_, i) => <path transform={`rotate(${i * 30} 60 66)`} d={i % 3 === 0 ? 'M60 35.500 V40.500' : 'M60 35.500 V38'} stroke="#6b4a22" stroke-width={i % 3 === 0 ? 2.200 : 1.400} stroke-linecap="round" />)}
         </g>
-        {/* l'aiguille, qui cherche le nord */}
+        {/* l'aiguille, qui cherche le nord : rouge d'un côté, bleu acier de l'autre */}
         <g class="mi-needle" style={{ transformOrigin: '60px 66px' }}>
-          <path d="M61.500 44 L67 68 L61.500 94 L56 68 Z" fill="#3a2a1a" opacity="0.22" />
-          <g class="mi-body">
-            <path d="M60 41 L65.500 66 H60 Z" fill="#f4705e" /><path d="M60 41 L54.500 66 H60 Z" fill="#b8352f" />
-            <path d="M60 91 L65.500 66 H60 Z" fill="#f6f9fc" /><path d="M60 91 L54.500 66 H60 Z" fill="#a4b3c8" />
+          <path d="M61.500 46 L67 68 L61.500 90 L56 68 Z" fill="#3a2a1a" opacity="0.22" />
+          <g filter={OUT}>
+            <path d="M60 43 L65.500 66 H60 Z" fill="#f4705e" /><path d="M60 43 L54.500 66 H60 Z" fill="#b8352f" />
+            <path d="M60 89 L65.500 66 H60 Z" fill="#8fb0dc" /><path d="M60 89 L54.500 66 H60 Z" fill="#4f74a8" />
           </g>
         </g>
-        <circle cx={C.x} cy={C.y} r="4.600" fill="#a8650a" /><circle cx={C.x} cy={C.y} r="3.400" fill="url(#mi-gold)" /><circle cx="61" cy="65" r="1.200" fill="#fff" />
+        <circle cx={C.x} cy={C.y} r="4.800" fill="#a8650a" /><circle cx={C.x} cy={C.y} r="3.500" fill="url(#mi-gold)" /><circle cx="61" cy="65" r="1.200" fill="#fff" />
         {/* le verre */}
-        <path d="M64 37.500 A29 29 0 0 1 88.500 60" fill="none" stroke="#fff" stroke-width="4.500" stroke-linecap="round" opacity="0.55" />
-        <path d="M90 66 A30 30 0 0 1 86.500 80" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.35" />
+        <path d="M66 39 A28 28 0 0 1 87.500 60" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity="0.5" />
       </g>
-      {twinkle(96, 36, 5.500)}{twinkle(22, 92, 4, 'an-late')}
+      {twinkle(98, 36, 5.500)}{twinkle(20, 94, 4, 'an-late')}
     </>
   );
 }
 
 // ---------- la porte des Donjons ----------
 function GateIcon() {
-  const joints = [-158, -134, -110, -70, -46, -22];
+  const OUT = 'url(#mi-out-c)';
+  const cuts = [180, 205, 230, 256, 284, 310, 335, 360]; // limites des claveaux, en degrés
+  const P = (a: number, rx: number, ry: number) => `${f(60 + Math.cos((a * Math.PI) / 180) * rx)} ${f(58 + Math.sin((a * Math.PI) / 180) * ry)}`;
   return (
     <>
-      <ellipse cx="60" cy="112" rx="50" ry="5.500" fill="#000" opacity="0.28" />
-      <circle class="an-glow" cx="29" cy="50" r="17" fill="url(#mi-fire)" /><circle class="an-glow an-late" cx="91" cy="50" r="17" fill="url(#mi-fire)" />
-      <g class="mi-body">
+      <ellipse cx="60" cy="113" rx="50" ry="5.500" fill="#000" opacity="0.28" />
+      <g filter={OUT}>
         {/* le seuil */}
-        <path d="M8 113 L16 103 H104 L112 113 Z" fill="url(#mi-stone)" /><path d="M16 103 H104 L107 107 H13 Z" fill="#fff" opacity="0.5" />
+        <path d="M8 113 L16 103 H104 L112 113 Z" fill="#b4afcc" /><path d="M16 103 H104 L107 107 H13 Z" fill="#eeebf6" /><path d="M8 113 L16 103 H30 L24 113 Z" fill="#332c58" opacity="0.2" />
         {/* l'arche de pierre */}
         <path d="M20 104 V56 Q20 17 60 17 Q100 17 100 56 V104 Z" fill="url(#mi-stone)" />
-        <path d="M20 104 V56 Q20 28 42 19.500 L46 40 Q38 46 38 58 V104 Z" fill="#3a3358" opacity="0.24" />
-        <path d="M100 104 V56 Q100 30 80 20.500" fill="none" stroke="#fff" stroke-width="1.6" opacity="0.7" />
-        {/* le fond : la nuit du donjon, et le feu qui rougeoie */}
+        {/* les claveaux : des aplats de deux tons, un sur deux */}
+        <g clip-path="url(#mi-ring)">
+          {cuts.slice(0, -1).map((a, i) => i === 3 ? null : <path d={`M${P(a, 18, 16)} L${P(a, 52, 52)} L${P(cuts[i + 1]!, 52, 52)} L${P(cuts[i + 1]!, 18, 16)} Z`} fill={i % 2 ? '#fff' : '#3a3358'} opacity={i % 2 ? 0.3 : 0.14} />)}
+          {/* les assises des jambages */}
+          <g fill="#3a3358" opacity="0.14"><rect x="20" y="72" width="18" height="11" /><rect x="82" y="83" width="18" height="11" /><rect x="20" y="94" width="18" height="10" /></g>
+          <g fill="#fff" opacity="0.3"><rect x="20" y="83" width="18" height="11" /><rect x="82" y="72" width="18" height="11" /></g>
+          <rect x="82" y="58" width="18" height="46" fill="#3a3358" opacity="0.1" />
+          {/* la chaleur des torches sur la pierre */}
+          <circle cx="29" cy="48" r="17" fill="url(#mi-fire)" opacity="0.75" /><circle cx="91" cy="48" r="17" fill="url(#mi-fire)" opacity="0.75" />
+        </g>
+        <path d="M20 104 V56 Q20 28 42 19.500 L46 40 Q38 46 38 58 V104 Z" fill="#3a3358" opacity="0.2" />
+        <path d="M100 104 V56 Q100 30 80 20.500" fill="none" stroke="#fff" stroke-width="1.600" opacity="0.75" />
+        {/* le fond : du noir en haut au rougeoiement en bas, des marches en silhouette, la herse à demi levée */}
         <path d="M38 104 V58 Q38 38 60 38 Q82 38 82 58 V104 Z" fill="url(#mi-cave)" />
         <g clip-path="url(#mi-gate)">
-          <ellipse class="an-glow" cx="60" cy="106" rx="30" ry="22" fill="url(#mi-fire)" />
-          {/* la herse, à demi levée */}
+          <ellipse class="an-glow" cx="60" cy="108" rx="28" ry="20" fill="url(#mi-fire)" />
+          <path d="M38 104 V99 H45 V95 H52 V91 H68 V95 H75 V99 H82 V104 Z" fill="#170f22" opacity="0.92" />
+          <path d="M52 91 H68 M45 95 H52 M68 95 H75" stroke="#ff9a3d" stroke-width="0.900" opacity="0.7" />
           <g fill="#2f2c3c">
-            {[44.500, 52, 59.500, 67, 74.500].map((x) => <path d={`M${x - 1.600} 36 H${x + 1.600} V86 L${x} 91 L${x - 1.600} 86 Z`} />)}
-            <rect x="38" y="50" width="44" height="3.200" /><rect x="38" y="64" width="44" height="3.200" /><rect x="38" y="78" width="44" height="3.200" />
+            {[44.500, 52, 59.500, 67, 74.500].map((x) => <path d={`M${x - 1.700} 36 H${x + 1.700} V82 L${x} 87.500 L${x - 1.700} 82 Z`} />)}
+            <rect x="38" y="50" width="44" height="3.400" /><rect x="38" y="64" width="44" height="3.400" /><rect x="38" y="77" width="44" height="3.400" />
           </g>
-          <g stroke="#7a7690" stroke-width="0.900" opacity="0.8">{[44.500, 52, 59.500, 67, 74.500].map((x) => <path d={`M${x + 0.900} 38 V85`} />)}</g>
+          <g stroke="#8a86a0" stroke-width="0.900" opacity="0.8">{[44.500, 52, 59.500, 67, 74.500].map((x) => <path d={`M${x + 1} 38 V81`} />)}</g>
         </g>
-        <path d="M38 104 V58 Q38 38 60 38 Q82 38 82 58 V104" fill="none" stroke="#5a5672" stroke-width="2" />
-        <g fill="#fff" opacity="0.45"><rect x="22" y="71.500" width="6.500" height="11.500" /><rect x="92" y="85.500" width="7" height="9.500" /><rect x="84" y="71.500" width="6.500" height="11.500" /></g>
-        <g fill="#3a3358" opacity="0.16"><rect x="29.500" y="71.500" width="7.500" height="11.500" /><rect x="22" y="85.500" width="9.500" height="9.500" /><rect x="84" y="97" width="9.500" height="7" /></g>
-        {/* les claveaux et les assises */}
-        <g stroke="#5f5a78" stroke-width="1.200" stroke-linecap="round" opacity="0.75">
-          {joints.map((a) => { const r = (a * Math.PI) / 180; return <path d={`M${f(60 + Math.cos(r) * 22.500)} ${f(58 + Math.sin(r) * 20.500)} L${f(60 + Math.cos(r) * 39)} ${f(57 + Math.sin(r) * 39)}`} />; })}
-          <path d="M21 70 H37 M21 84 H37 M21 96 H37 M83 70 H99 M83 84 H99 M83 96 H99 M29 70 V84 M32 84 V96 M26 96 V104 M91 70 V84 M88 84 V96 M94 96 V104" />
-        </g>
-        <path d="M22 70.800 H36 M84 70.800 H98 M22 84.800 H36 M84 84.800 H98" stroke="#fff" stroke-width="0.800" opacity="0.5" />
+        <path d="M38 104 V58 Q38 38 60 38 Q82 38 82 58 V104" fill="none" stroke="#4f4a68" stroke-width="2.200" />
         {/* la clef de voûte et sa gemme */}
-        <path d="M52.500 17.500 H67.500 L65 39 H55 Z" fill="#f6f3fb" /><path d="M52.500 17.500 H60 V39 H55 Z" fill="#3a3358" opacity="0.14" />
-        <path d="M60 22.500 L64.500 29 L60 35.500 L55.500 29 Z" fill="#b81f2e" /><path class="mi-flicker" d="M60 22.500 L64.500 29 H60 Z" fill="#ff8a7a" /><path d="M60 29 H64.500 L60 35.500 Z" fill="#e23a44" />
-        {/* les torchères */}
-        {[29, 91].map((x) => <g><path d={`M${x - 5.500} 54 H${x + 5.500} L${x + 3.500} 61 H${x - 3.500} Z`} fill="#3a3648" /><path d={`M${x - 5.500} 54 H${x + 5.500} L${x + 5} 56 H${x - 5} Z`} fill="#8a86a0" /><rect x={x - 1.500} y="61" width="3" height="9" fill="#5a3418" /></g>)}
+        <path d="M52.500 17.200 H67.500 L65 39 H55 Z" fill="#f6f3fb" /><path d="M52.500 17.200 H60 V39 H55 Z" fill="#3a3358" opacity="0.14" />
+        <path d="M60 22 L64.800 29 L60 36 L55.200 29 Z" fill="#b81f2e" /><path class="mi-flicker" d="M60 22 L64.800 29 H60 Z" fill="#ff8a7a" /><path d="M60 29 H64.800 L60 36 Z" fill="#e23a44" />
+        {/* les appliques de fer et leurs torches */}
+        {[29, 91].map((x) => (
+          <g>
+            <path d={`M${x - 4.500} 72 H${x + 4.500} L${x + 3} 77 H${x - 3} Z`} fill="#3a3648" /><rect x={x - 1.700} y="60" width="3.400" height="13" rx="1" fill="#6b4420" />
+            <path d={`M${x - 6} 53.500 H${x + 6} L${x + 4} 61 H${x - 4} Z`} fill="#3a3648" /><path d={`M${x - 6} 53.500 H${x + 6} L${x + 5.400} 55.700 H${x - 5.400} Z`} fill="#8a86a0" />
+          </g>
+        ))}
       </g>
-      <Flame x={29} y={54.500} /><Flame x={91} y={54.500} delay={0.4} />
-      {[[50, 100, 0], [66, 102, 1.4], [58, 98, 2.6]].map(([x, y, d]) => <circle class="ts-ember" style={{ animationDelay: `${-d!}s` }} cx={x} cy={y} r="1.500" fill="#ffd27a" />)}
+      <circle class="an-glow" cx="29" cy="46" r="13" fill="url(#mi-fire)" /><circle class="an-glow an-late" cx="91" cy="46" r="13" fill="url(#mi-fire)" />
+      <Flame x={29} y={54} s={1.1} /><Flame x={91} y={54} s={1.1} delay={0.4} />
+      {[[50, 98, 0], [66, 100, 1.4], [58, 96, 2.6]].map(([x, y, d]) => <circle class="ts-ember" style={{ animationDelay: `${-d!}s` }} cx={x} cy={y} r="1.500" fill="#ffd27a" />)}
     </>
   );
 }
 
 // ---------- le crâne du Boss du jour ----------
 function SkullIcon() {
-  const horn = (
+  const OUT = 'url(#mi-out-w)';
+  /** Une corne fine et pointue, de l'ivoire sombre au noir de la pointe ; `light` = le bord qui prend la lumière. */
+  const horn = (light: string) => (
     <>
-      <path d="M45 39 C31 34 15 39 12.500 23 C11.500 15 13.500 9 17 3 C3 13 -2 30 6.500 44 C14 56.500 29 59 41 56 Z" fill="url(#mi-horn)" />
-      <path d="M17 3 C3 13 -2 30 6.500 44 C14 56.500 29 59 41 56 L40 52 C29 54 17 51 11 41 C4.500 30 7 15 17 3 Z" fill="#2c201e" opacity="0.4" />
-      <path d="M45 39 C31 34 15 39 12.500 23 C11.500 15 13.500 9 17 3 C15.500 10 15 16 16.500 22 C19 33 32 31 45 35.500 Z" fill="#fff" opacity="0.26" />
-      <path d="M9 34 q5 -3 8.500 0 M15 45 q5 -4 9 -1 M25 51.500 q4 -5 8.500 -3" fill="none" stroke="#2c201e" stroke-width="1.300" stroke-linecap="round" opacity="0.6" />
+      <path d="M46 38 C34 33 21 37 18 25 C16 17 17.500 9 20.500 1 C8 11 3 27 10 39.500 C16.500 50.500 30 53 41 51 Z" fill="url(#mi-horn2)" />
+      <path d={light} fill="none" stroke="#fff" stroke-width="1.800" stroke-linecap="round" opacity="0.5" />
     </>
   );
   return (
     <>
-      <ellipse cx="60" cy="112" rx="32" ry="5" fill="#000" opacity="0.3" />
+      <ellipse cx="60" cy="113" rx="32" ry="5" fill="#000" opacity="0.3" />
       <g class="mi-bob mi-slow">
-        <g class="mi-body">
-          {horn}<g transform="translate(120 0) scale(-1 1)">{horn}</g>
+        <g filter={OUT}>
+          {horn('M43.500 38.500 C33 35 22 37 19.500 26 C18.500 21 18.500 16 19.500 11')}
+          <g transform="translate(120 0) scale(-1 1)">{horn('M17.500 6 C8.500 15 5.500 28 11.500 38.500')}</g>
           {/* le crâne : voûte large, pommettes saillantes, mâchoire étroite */}
           <path d="M60 22 C82 22 95 36 94 55 C93.700 62 91 68 87 72 L90 78 L82.500 83 L81 93 H39 L37.500 83 L30 78 L33 72 C29 68 26.300 62 26 55 C25 36 38 22 60 22 Z" fill="url(#mi-bone)" />
-          <path d="M60 22 C38 22 25 36 26 55 C26.300 62 29 68 33 72 L30 78 L37.500 83 L39 93 H50 L48 77 C41 70 38 62 38 53 C38 40 46 29 60 22 Z" fill="#5a3f4a" opacity="0.22" />
+          <path d="M60 22 C38 22 25 36 26 55 C26.300 62 29 68 33 72 L30 78 L37.500 83 L39 93 H47 C45.500 86 45 80 42 75 C38 68 36 61 36 53 C36 40 44 28 60 22 Z" fill="#5a3f4a" opacity="0.2" />
           <path d="M87 72 C91 68 93.700 62 94 55 C94.500 45 91 36 84 30" fill="none" stroke="#fff" stroke-width="1.500" opacity="0.75" />
-          <path d="M46 30 C52 27 60 26 68 28" fill="none" stroke="#fff" stroke-width="2.400" stroke-linecap="round" opacity="0.55" />
-          {/* les arcades et les orbites, en colère */}
-          <path d="M31 47 L57 57 M89 47 L63 57" stroke="#fff" stroke-width="2.400" stroke-linecap="round" opacity="0.6" />
+          {/* le front accroche la lumière, à droite */}
+          <path d="M62 27.500 C70 27 78 30 83 36" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity="0.6" />
+          {/* les orbites, en colère */}
           <path d="M33 50 L56.500 59 L54.500 72.500 C47 76.500 38.500 74 35 65 Z" fill="#1f0e17" /><path d="M87 50 L63.500 59 L65.500 72.500 C73 76.500 81.500 74 85 65 Z" fill="#1f0e17" />
-          {/* le nez, les pommettes, une fêlure */}
+          <path d="M36.500 55 L54 61.500 L52.500 71 C47 73.500 40.500 71.500 38 65 Z" fill="#7a1418" opacity="0.85" /><path d="M83.500 55 L66 61.500 L67.500 71 C73 73.500 79.500 71.500 82 65 Z" fill="#7a1418" opacity="0.85" />
+          {/* le nez, l'ombre sous les pommettes, une fêlure */}
           <path d="M60 71 L54 85 Q60 81.500 66 85 Z" fill="#1f0e17" />
-          <path d="M33 72 L30 78 L37.500 83 L44 80 L42 73 Z M87 72 L90 78 L82.500 83 L76 80 L78 73 Z" fill="#5a3f4a" opacity="0.2" />
-          <path d="M64 23.500 L59.500 32 L65 38 L61 45.500" fill="none" stroke="#8a7658" stroke-width="1.400" stroke-linecap="round" stroke-linejoin="round" />
-          <path d="M76 26 l-3 5 l4 3" fill="none" stroke="#8a7658" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.7" />
-          {/* les dents : quatre incisives entre deux crocs */}
-          <rect x="39" y="89.500" width="42" height="4.500" fill="#4a3438" opacity="0.55" />
+          <path d="M31 78 L37.500 83 L43 81 Q38 81 31 78 Z M89 78 L82.500 83 L77 81 Q82 81 89 78 Z" fill="#5a3f4a" opacity="0.3" />
+          <path d="M57 23.500 L54 31.500 L59 37 L56 44" fill="none" stroke="#8a7658" stroke-width="1.400" stroke-linecap="round" stroke-linejoin="round" />
+          {/* les dents : quatre incisives entre deux crocs, sous l'ombre courbe de la mâchoire */}
+          <path d="M39 89 Q60 94 81 89 V93 H39 Z" fill="#4a3438" opacity="0.5" />
           <path d="M40.500 92 h7.500 l-3.800 15 Z M72 92 h7.500 l-3.700 15 Z" fill="#fffaec" /><path d="M40.500 92 h3.700 v15 Z M72 92 h3.700 v15 Z" fill="#bfa988" opacity="0.6" />
           {[49, 54.700, 60.400, 66.100].map((x) => <g><rect x={x} y="92" width="4.900" height="9" rx="1.800" fill="#fffaec" /><rect x={x} y="92" width="1.700" height="9" rx="0.800" fill="#bfa988" opacity="0.6" /></g>)}
         </g>
-        {/* les yeux : des braises, et la flamme qui s'en échappe */}
-        <circle class="an-glow" cx="45.500" cy="66" r="10" fill="url(#mi-eye)" /><circle class="an-glow" cx="74.500" cy="66" r="10" fill="url(#mi-eye)" />
-        <g opacity="0.92"><Flame x={42} y={62} s={0.62} /><Flame x={78} y={62} s={0.62} delay={0.3} /></g>
-        <ellipse class="mi-flicker" cx="46" cy="66.500" rx="3.600" ry="2.700" fill="#fff3b0" /><ellipse class="mi-flicker" cx="74" cy="66.500" rx="3.600" ry="2.700" fill="#fff3b0" />
+        {/* les yeux : deux brasiers qui débordent des orbites */}
+        <EyeFire x={45} y={66} side={-1} /><EyeFire x={75} y={66} side={1} />
       </g>
       {[[30, 104, 0, '#ffb09a'], [90, 102, 1.2, '#ffd27a'], [50, 110, 2.3, '#ffd27a'], [72, 108, 3.1, '#ffb09a']].map(([x, y, d, c]) => <circle class="ts-ember" style={{ animationDelay: `${-(d as number)}s` }} cx={x} cy={y} r="1.700" fill={c as string} />)}
     </>
@@ -242,24 +286,21 @@ function SkullIcon() {
 
 // ---------- le bouclier et les épées de l'Arène ----------
 /** Une épée dessinée pointe en haut, autour du point où les deux lames se croisent. */
-function Sword({ angle, flip }: { angle: number; flip?: boolean }) {
+function Sword({ angle, reverse }: { angle: number; reverse?: boolean }) {
   return (
-    <g class="mi-clash" style={{ transformOrigin: '60px 52px', animationDirection: flip ? 'reverse' : 'normal' }}>
-      <g transform={`translate(60 52) rotate(${angle})`}>
-        <g class="mi-body">
-          {/* la lame : deux pans et une gorge */}
-          <path d="M-6.500 -38 L0 -51 L6.500 -38 V24 H-6.500 Z" fill="#c9d4e2" />
-          <path d={flip ? 'M0 -51 L6.500 -38 V24 H0 Z' : 'M-6.500 -38 L0 -51 V24 H-6.500 Z'} fill="#ffffff" />
-          <path d={flip ? 'M-6.500 -38 L0 -51 V24 H-6.500 Z' : 'M0 -51 L6.500 -38 V24 H0 Z'} fill="#8c9bb5" />
-          <path d="M-1.300 -34 H1.300 V20 H-1.300 Z" fill="#5f6c86" opacity="0.55" />
-          {/* la garde : deux quillons relevés, une gemme */}
-          <path d="M-17 20.500 H17 Q20.500 20.500 20.500 24 Q20.500 27.500 17 27.500 H-17 Q-20.500 27.500 -20.500 24 Q-20.500 20.500 -17 20.500 Z" fill="url(#mi-gold)" />
-          <path d="M-17 25 H17 Q19.500 25 20.300 23.500 Q20.800 27.500 17 27.500 H-17 Q-20.800 27.500 -20.300 23.500 Q-19.500 25 -17 25 Z" fill="#c2760a" opacity="0.55" />
-          <path d="M-16 22 H16" stroke="#fff6c2" stroke-width="1.100" stroke-linecap="round" />
-          <path d="M0 20 l3.800 4 l-3.800 4 l-3.800 -4 Z" fill="#b81f2e" /><path d="M0 20 l3.800 4 H0 Z" fill="#ff8a7a" />
-          {/* la fusée gainée de cuir, le pommeau */}
-          <rect x="-4" y="27.500" width="8" height="16" rx="1.600" fill="url(#mi-wood)" /><path d="M-4 31 L4 33.500 M-4 35.500 L4 38 M-4 40 L4 42.500" stroke="#4a2a12" stroke-width="1.200" />
-          <circle cx="0" cy="47.500" r="5.600" fill="url(#mi-gold)" /><circle cx="1.400" cy="46.200" r="1.600" fill="#fff" opacity="0.85" />
+    <g class="mi-clash" style={{ transformOrigin: '60px 56px', animationDirection: reverse ? 'reverse' : 'normal' }}>
+      <g transform={`translate(60 56) rotate(${angle})`}>
+        <g filter="url(#mi-out-c)">
+          {/* la lame : pointe en losange, pan clair du côté de la lumière */}
+          <path d="M-5.500 -40 L0 -53 L5.500 -40 V25 H-5.500 Z" fill="#8c9bb5" />
+          <path d="M0 -53 L5.500 -40 V25 H0 Z" fill="#ffffff" />
+          <path d="M-1 -36 H1 V21 H-1 Z" fill="#5f6c86" opacity="0.5" />
+          {/* la garde : courte et fine */}
+          <rect x="-11" y="24" width="22" height="5" rx="2.500" fill="url(#mi-gold)" /><path d="M-9 25.300 H9" stroke="#fff6c2" stroke-width="1" stroke-linecap="round" />
+          <circle cx="0" cy="26.500" r="2.300" fill="#b81f2e" /><circle cx="0.600" cy="25.900" r="0.900" fill="#ff8a7a" />
+          {/* la fusée et son anneau, le pommeau */}
+          <rect x="-3.400" y="29" width="6.800" height="13" rx="1.500" fill="url(#mi-wood)" /><rect x="-3.800" y="34.500" width="7.600" height="2.200" rx="1" fill="url(#mi-gold)" />
+          <circle cx="0" cy="45.500" r="4.800" fill="url(#mi-gold)" /><circle cx="1.200" cy="44.400" r="1.400" fill="#fff" opacity="0.85" />
         </g>
         <path class="mi-glint" d={spark(0, 10, 5.500)} fill="#fff" />
       </g>
@@ -270,17 +311,18 @@ function Sword({ angle, flip }: { angle: number; flip?: boolean }) {
 function SwordsIcon() {
   return (
     <>
-      <ellipse cx="60" cy="113" rx="38" ry="5" fill="#000" opacity="0.26" />
-      <g class="mi-body">
-        <circle cx="60" cy="62" r="39" fill="url(#mi-gold)" /><circle cx="60" cy="62" r="33.500" fill="#a8650a" /><circle cx="60" cy="62" r="32" fill="url(#mi-shield)" />
-        <path d="M60 30 V94 M28 62 H92" stroke="#1f4288" stroke-width="1.600" opacity="0.5" />
-        <circle cx="60" cy="62" r="20" fill="none" stroke="#9cc0f5" stroke-width="1.200" opacity="0.6" />
-        {[45, 135, 225, 315].map((a) => { const r = (a * Math.PI) / 180; return <g><circle cx={f(60 + Math.cos(r) * 36.200)} cy={f(62 + Math.sin(r) * 36.200)} r="2.300" fill="#a8650a" /><circle cx={f(60 + Math.cos(r) * 36.200 + 0.400)} cy={f(62 + Math.sin(r) * 36.200 - 0.400)} r="1.500" fill="#fff6c2" /></g>; })}
-        <path d="M67 32.500 A30 30 0 0 1 89.500 54" fill="none" stroke="#fff" stroke-width="4.500" stroke-linecap="round" opacity="0.4" />
+      <ellipse cx="60" cy="114" rx="38" ry="5" fill="#000" opacity="0.26" />
+      <g filter="url(#mi-out-c)">
+        {/* le bouclier : cerclé d'or, bombé (clair en haut à droite, sombre en bas à gauche), six rivets, un emblème */}
+        <circle cx="60" cy="62" r="42" fill="url(#mi-gold)" /><circle cx="60" cy="62" r="35.500" fill="#a8650a" /><circle cx="60" cy="62" r="34" fill="url(#mi-shield)" />
+        <path d="M30 76 A34 34 0 0 0 78 91 A40 40 0 0 1 28 68 Z" fill="#16306e" opacity="0.35" />
+        <path d="M66 31 A31 31 0 0 1 90.500 54" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity="0.4" />
+        {[0, 60, 120, 180, 240, 300].map((a) => { const r = ((a + 30) * Math.PI) / 180; return <g><circle cx={f(60 + Math.cos(r) * 38.800)} cy={f(62 + Math.sin(r) * 38.800)} r="2.400" fill="#a8650a" /><circle cx={f(60 + Math.cos(r) * 38.800 + 0.500)} cy={f(62 + Math.sin(r) * 38.800 - 0.500)} r="1.500" fill="#fff6c2" /></g>; })}
+        <path d="M60 78 l7 8 l-7 8 l-7 -8 Z" fill="url(#mi-gold)" /><path d="M60 81.500 l3.800 4.500 l-3.800 4.500 l-3.800 -4.500 Z" fill="#28509c" />
       </g>
-      <Sword angle={-38} /><Sword angle={38} flip />
+      <Sword angle={-32} /><Sword angle={32} reverse />
       {/* l'éclat du choc, là où les lames se croisent */}
-      <g class="mi-spark" style={{ transformOrigin: '60px 52px' }}><path d={spark(60, 52, 13)} fill="#fff" /><path d={spark(60, 52, 7)} fill="#ffe27a" /></g>
+      <g class="mi-spark" style={{ transformOrigin: '60px 56px' }}><path d={spark(60, 56, 13)} fill="#fff" /><path d={spark(60, 56, 7)} fill="#ffe27a" /></g>
     </>
   );
 }
@@ -288,41 +330,51 @@ function SwordsIcon() {
 // ---------- le Colisée ----------
 function ColosseumIcon() {
   const E = { x: 60, rx: 47, ry: 16.500 };
-  const rows: [number, number][] = [[47, 8], [61, 10.500], [77, 12]]; // base de l'arcade (au centre), hauteur
-  const flags: [number, number][] = [[28, 0], [60, 0.6], [92, 1.2]];
+  const rows: [number, number][] = [[50, 9.500], [65.500, 10.500], [82, 11.500]]; // base de l'arcade (au centre), hauteur
+  const flags: [number, number][] = [[27, 0], [60, 0.6], [93, 1.2]];
   const backY = (x: number) => 38 - E.ry * Math.sqrt(Math.max(0, 1 - ((x - E.x) / E.rx) ** 2));
+  const front = (y: number, rx = E.rx, ry = E.ry) => `M${E.x - rx} ${y} A${rx} ${ry} 0 0 0 ${E.x + rx} ${y}`;
   return (
     <>
-      <ellipse cx="60" cy="106" rx="52" ry="7" fill="#000" opacity="0.26" />
-      {/* les oriflammes de la galerie du fond */}
-      {flags.map(([x, d]) => (
-        <g><path d={`M${x} ${f(backY(x) + 2)} V${f(backY(x) - 15)}`} stroke="#5a3806" stroke-width="1.600" stroke-linecap="round" /><path class="bd-flag" style={{ transformOrigin: `${x}px ${f(backY(x) - 11)}px`, animationDelay: `${-d}s` }} d={`M${x} ${f(backY(x) - 15)} q8 -1 14 3.500 q-6 4 -14 4.500 Z`} fill="#e0463c" /></g>
-      ))}
-      <g class="mi-body">
-        {/* l'intérieur : la galerie du fond, les gradins, la piste */}
-        <ellipse cx={E.x} cy="38" rx={E.rx} ry={E.ry} fill="#7a5226" />
-        <path d={`M${E.x - E.rx} 38 A${E.rx} ${E.ry} 0 0 1 ${E.x + E.rx} 38 L${E.x + 41} 41 A41 13.500 0 0 0 ${E.x - 41} 41 Z`} fill="#c9a060" />
-        <ellipse cx={E.x} cy="41" rx="41" ry="13.500" fill="#9a7038" /><ellipse cx={E.x} cy="42.500" rx="35" ry="11" fill="#b88a4c" /><ellipse cx={E.x} cy="44" rx="29.500" ry="9" fill="#d2a866" />
-        <ellipse cx={E.x} cy="45.500" rx="24" ry="7" fill="#f3dfa6" /><ellipse cx="66" cy="44.500" rx="13" ry="3.600" fill="#fff6d2" opacity="0.7" />
-        {/* la façade : trois étages d'arcades */}
-        <path d={`M${E.x - E.rx} 38 A${E.rx} ${E.ry} 0 0 0 ${E.x + E.rx} 38 V84 A${E.rx} ${E.ry} 0 0 1 ${E.x - E.rx} 84 Z`} fill="url(#mi-sand)" />
-        <path d={`M${E.x - E.rx} 38 A${E.rx} ${E.ry} 0 0 0 ${E.x + E.rx} 38`} fill="none" stroke="#fff6d2" stroke-width="2.400" />
-        {[52, 67].map((y) => <g><path d={`M${E.x - E.rx} ${y} A${E.rx} ${E.ry} 0 0 0 ${E.x + E.rx} ${y}`} fill="none" stroke="#8a5e28" stroke-width="1.500" opacity="0.6" /><path d={`M${E.x - E.rx} ${y + 1.600} A${E.rx} ${E.ry} 0 0 0 ${E.x + E.rx} ${y + 1.600}`} fill="none" stroke="#fff6d2" stroke-width="1" opacity="0.55" /></g>)}
-        {rows.map(([base, h]) => Array.from({ length: 9 }, (_, i) => {
-          const t = (Math.PI * (i + 1)) / 10, x = E.x - E.rx * Math.cos(t), yb = base + E.ry * Math.sin(t), w = Math.max(2.400, 7.400 * Math.sin(t)), top = yb - h + w / 2;
-          return (
-            <g>
-              <path d={`M${f(x - w / 2)} ${f(yb)} V${f(top)} A${f(w / 2)} ${f(w / 2)} 0 0 1 ${f(x + w / 2)} ${f(top)} V${f(yb)} Z`} fill="#4a2c0c" />
-              <path d={`M${f(x - w / 2)} ${f(yb)} V${f(top)} A${f(w / 2)} ${f(w / 2)} 0 0 1 ${f(x)} ${f(top - w / 2)} A${f(w * 0.36)} ${f(w / 2)} 0 0 0 ${f(x - w * 0.14)} ${f(top)} V${f(yb)} Z`} fill="#8a5e28" opacity="0.75" />
-            </g>
-          );
-        }))}
-        {/* l'ombre du côté gauche, le liseré de lumière à droite */}
-        <path d={`M${E.x - E.rx} 38 A${E.rx} ${E.ry} 0 0 0 ${E.x - 20} 53 V99 A${E.rx} ${E.ry} 0 0 1 ${E.x - E.rx} 84 Z`} fill="#4a2c0c" opacity="0.18" />
-        <path d={`M${E.x + E.rx} 38 V84`} stroke="#fff6d2" stroke-width="1.400" opacity="0.8" />
+      <ellipse cx="60" cy="108" rx="54" ry="7" fill="#000" opacity="0.26" />
+      <g filter="url(#mi-out-w)">
+        {/* le socle : deux marches */}
+        <path d={`${front(92, 55, 19)} V97 A55 19 0 0 1 5 97 Z`} fill="#b8a48c" /><path d={`${front(92, 55, 19)}`} fill="none" stroke="#e9ddc8" stroke-width="2" />
+        <path d={`${front(87, 51, 17.800)} V92 A51 17.800 0 0 1 9 92 Z`} fill="#d2c2a8" /><path d={`${front(87, 51, 17.800)}`} fill="none" stroke="#fffaf0" stroke-width="2" />
+        {/* l'intérieur, creusé : la paroi du fond (claire à gauche, dans l'ombre à droite), deux gradins, la piste */}
+        <ellipse cx={E.x} cy="38" rx={E.rx} ry={E.ry} fill="#fffaf0" />
+        <ellipse cx={E.x} cy="39" rx="41" ry="13.500" fill="url(#mi-inner)" />
+        <ellipse cx={E.x} cy="43.500" rx="35" ry="10.500" fill="#b89a78" /><path d="M25 43.500 A35 10.500 0 0 1 95 43.500" fill="none" stroke="#f1e6d0" stroke-width="1.400" />
+        <ellipse cx={E.x} cy="46.500" rx="29" ry="8.500" fill="#9c7e60" /><path d="M31 46.500 A29 8.500 0 0 1 89 46.500" fill="none" stroke="#e2d2b6" stroke-width="1.400" />
+        <ellipse cx={E.x} cy="49" rx="23" ry="6.500" fill="#f3dfa6" /><ellipse cx="55" cy="49.500" rx="12" ry="3.200" fill="#fff6d2" opacity="0.8" />
+        {/* les oriflammes, plantées sur le rebord du fond */}
+        {flags.map(([x, d]) => (
+          <g><path d={`M${x} ${f(backY(x) + 3)} V${f(backY(x) - 14)}`} stroke="#5a3418" stroke-width="1.800" stroke-linecap="round" /><path class="bd-flag" style={{ transformOrigin: `${x}px ${f(backY(x) - 10)}px`, animationDelay: `${-d}s` }} d={`M${x} ${f(backY(x) - 14)} q8 -1 14 3.500 q-6 4 -14 4.500 Z`} fill="#e0463c" /></g>
+        ))}
+        {/* la façade : trois étages, sept grandes arcades chacun, une porte au milieu */}
+        <path d={`${front(38)} V84 A${E.rx} ${E.ry} 0 0 1 ${E.x - E.rx} 84 Z`} fill="url(#mi-ivory)" />
+        <g clip-path="url(#mi-colo)">
+          {[55.500, 71].map((y) => <g><path d={front(y)} fill="none" stroke="#8a6248" stroke-width="1.600" opacity="0.55" /><path d={front(y + 1.800)} fill="none" stroke="#fffaf0" stroke-width="1.200" opacity="0.7" /></g>)}
+          {rows.map(([base, h], row) => Array.from({ length: 7 }, (_, i) => {
+            const door = row === 2 && i === 3;
+            const t = (Math.PI * (i + 1)) / 8, x = E.x - E.rx * Math.cos(t), yb = base + E.ry * Math.sin(t) + (door ? 2 : 0);
+            const w = Math.max(3, (door ? 12 : 9) * Math.sin(t)), hh = door ? h + 4 : h, top = yb - hh + w / 2;
+            return (
+              <g>
+                <path d={`M${f(x - w / 2)} ${f(yb)} V${f(top)} A${f(w / 2)} ${f(w / 2)} 0 0 1 ${f(x + w / 2)} ${f(top)} V${f(yb)} Z`} fill="#3f2218" />
+                <path d={`M${f(x - w / 2)} ${f(yb)} V${f(top)} A${f(w / 2)} ${f(w / 2)} 0 0 1 ${f(x)} ${f(top - w / 2)} A${f(w * 0.34)} ${f(w / 2)} 0 0 0 ${f(x - w * 0.16)} ${f(top)} V${f(yb)} Z`} fill="#8a5a40" opacity="0.8" />
+              </g>
+            );
+          }))}
+          {/* le côté gauche dans l'ombre */}
+          <path d="M13 38 H40 V104 H13 Z" fill="#6b3a2a" opacity="0.14" />
+        </g>
+        {/* le rebord du haut, épais et clair */}
+        <path d={`${front(38)} L${E.x + E.rx} 42 A${E.rx} ${E.ry} 0 0 1 ${E.x - E.rx} 42 Z`} fill="#fffaf0" />
+        <path d={front(42)} fill="none" stroke="#8a6248" stroke-width="1" opacity="0.45" />
       </g>
-      {[[52, 45, 0], [68, 46, 1.6], [60, 43, 3]].map(([x, y, d]) => <circle class="ts-dust" style={{ animationDelay: `${-d!}s` }} cx={x} cy={y} r="1.500" fill="#fff" />)}
-      {twinkle(100, 34, 5)}{twinkle(20, 60, 3.500, 'an-late')}
+      {[[52, 49, 0], [68, 50, 1.6], [60, 47, 3]].map(([x, y, d]) => <circle class="ts-dust" style={{ animationDelay: `${-d!}s` }} cx={x} cy={y} r="1.500" fill="#fff" />)}
+      {twinkle(102, 30, 5)}{twinkle(16, 64, 3.500, 'an-late')}
     </>
   );
 }

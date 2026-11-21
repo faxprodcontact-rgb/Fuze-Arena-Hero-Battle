@@ -103,8 +103,6 @@
 
 /* ---------- pictos animés des modes (mode-icons.tsx) ---------- */
 .mode-icon { overflow: visible; }
-/* un seul contour, fin et sombre, autour de chaque objet */
-.mi-body { filter: drop-shadow(0.9px 0 0 #2a2038) drop-shadow(-0.9px 0 0 #2a2038) drop-shadow(0 0.9px 0 #2a2038) drop-shadow(0 -0.9px 0 #2a2038); }
 .mi-bob { animation: mi-bob 2.8s ease-in-out infinite; }
 .mi-bob.mi-slow { animation-duration: 4s; }
 .mi-sway { animation: mi-sway 3.6s ease-in-out infinite; }
@@ -125,3 +123,8 @@
 /* les petits cailloux qui se détachent du rocher de la tour */
 .mi-pebble { animation: mi-pebble 3.4s ease-in infinite; }
 @keyframes mi-pebble { 0%, 20% { transform: translateY(0); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(14px); opacity: 0; } }
+
+/* les yeux en feu du crâne : trois langues de flamme à des rythmes différents, des étincelles qui s'envolent */
+.mi-f1 { animation-duration: 0.62s; } .mi-f2 { animation-duration: 0.47s; animation-delay: -0.2s; } .mi-f3 { animation-duration: 0.38s; animation-delay: -0.1s; }
+.mi-eyespark { animation: mi-eyespark 2.1s ease-out infinite; }
+@keyframes mi-eyespark { 0% { transform: translate(0, 6px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx), -20px); opacity: 0; } }

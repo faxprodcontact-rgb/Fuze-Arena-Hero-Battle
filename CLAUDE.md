@@ -147,6 +147,11 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   qui se heurtent, Colisée à trois étages d'arcades. Un seul contour par objet (filtre `.mi-body` dans `anim.css`), dégradés
   communs dans `Defs`. Les pictos peints (Hailuo) de ces six modes ne servent plus dans les tuiles ; ils restent dans
   `icons.webp` pour le reste du jeu.
+  v0.32.1, après relecture par un regard neuf et retours du propriétaire : **vrai contour d'épaisseur constante** par filtre de
+  dilatation (`mi-out-c` bleu nuit pour les pictos froids, `mi-out-w` brun pour les chauds ; ne pas revenir aux ombres portées
+  empilées, qui donnaient un contour décalé), grandes masses plutôt que petits traits répétés, Colisée en pierre ivoire sur son
+  socle, yeux du crâne en brasiers (`EyeFire`). **Les étiquettes d'information des tuiles (« Nouveau », niveau requis) sont
+  accrochées au bandeau du nom** (dans `.tile-name`), jamais posées sur le picto. La taille des pictos suit la hauteur des tuiles.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier
