@@ -6,7 +6,6 @@ import { RARITIES, type Hero } from '../../../core/types';
 import { RARITY_COLOR, heroImage } from '../../art';
 import { useState } from 'preact/hooks';
 import { fmt, t } from '../../i18n';
-import { Halo } from '../anim';
 import { SummonBackdrop } from '../backdrop-summon';
 import { SummonStage } from '../summon-stage';
 import { TitleBanner } from '../title-banner';
@@ -125,31 +124,47 @@ export function FragmentsModal() {
   );
 }
 
-/** La révélation : sur fond de nuit, chaque héros arrive de dos dans un faisceau de la couleur de sa rareté, puis se retourne. */
+/** La révélation : sur fond de nuit, les héros les plus rares d'abord ; chacun arrive de dos dans une lueur de la couleur de
+ *  sa rareté, puis se retourne. Les meilleurs sont mis en valeur (halo, éclat) ; un héros seul est montré en grand. */
 export function SummonResult({ heroes }: { heroes: Hero[] }) {
-  const best = heroes.reduce((a, h) => Math.max(a, RARITIES.indexOf(heroDef(h.defId).rarity)), 0);
-  const top = RARITIES[best]!;
+  const rank = (h: Hero) => RARITIES.indexOf(heroDef(h.defId).rarity);
+  const sorted = [...heroes].sort((a, b) => rank(b) - rank(a));
+  const top = RARITIES[rank(sorted[0]!)]!;
+  const one = heroes.length === 1;
   return (
-    <div class={`reveal-screen reveal-${top}${heroes.length === 1 ? ' reveal-one' : ''}`} style={{ '--best': RARITY_COLOR[top] } as never}>
+    <div class={`reveal-screen reveal-${top}${one ? ' reveal-one' : ' reveal-many'}`} style={{ '--best': RARITY_COLOR[top] } as never}>
       <div class="reveal-decor"><SummonBackdrop /></div>
       <div class="reveal-sky" />
-      {(top === 'legendary' || top === 'epic') && <Halo size={330} color={RARITY_COLOR[top]} class="reveal-halo" />}
-      <TitleBanner title={t('summon.normal')} ribbon={['#a565f0', '#5f2fb4', '#2f1466']} />
-      <div class="reveal">
-        {heroes.map((h, i) => {
-          const d = heroDef(h.defId);
-          return (
-            <div class={`reveal-card r-${d.rarity}`} style={{ animationDelay: `${i * 90}ms`, '--rar': RARITY_COLOR[d.rarity], '--d': `${300 + i * 140}ms` } as never}>
-              <span class="reveal-beam" />
-              <div class="reveal-flip"><HeroCard hero={h} small /></div>
-              <Art class="reveal-back" name="cardBack" />
-              {newlyFound.has(h.uid) && <span class="new-tag new-ribbon">{t('new')} !</span>}
-              <span class="reveal-name">{d.name}</span>
-            </div>
-          );
-        })}
+      <h2 class="sr-only">{t('summon.normal')}</h2>
+      <div class="reveal-stage">
+        {one && (
+          <>
+            {/* l'éclat derrière le héros : une étoile à huit branches qui tourne, une onde, des étincelles projetées */}
+            <svg class="reveal-burst" viewBox="-100 -100 200 200" aria-hidden="true">
+              <defs><radialGradient id="rv-star"><stop offset="0" stop-color="#fff" stop-opacity="0.95" /><stop offset="0.4" stop-color="var(--best)" stop-opacity="0.7" /><stop offset="1" stop-color="var(--best)" stop-opacity="0" /></radialGradient></defs>
+              <g class="rv-spin">{Array.from({ length: 8 }, (_, i) => <path transform={`rotate(${i * 45})`} d={i % 2 ? 'M-7 0 L0 -62 L7 0 Z' : 'M-10 0 L0 -96 L10 0 Z'} fill="url(#rv-star)" />)}</g>
+              <circle class="rv-wave" r="40" fill="none" stroke="#fff" stroke-width="3" />
+            </svg>
+            {Array.from({ length: 12 }, (_, i) => <span class="rv-spark" style={{ '--a': `${i * 30 + 10}deg`, '--r': `${120 + (i % 3) * 30}px`, animationDelay: `${450 + (i % 4) * 60}ms` } as never} />)}
+          </>
+        )}
+        <div class="reveal">
+          {sorted.map((h, i) => {
+            const d = heroDef(h.defId);
+            const best = d.rarity === top && top !== 'common';
+            return (
+              <div class={`reveal-card r-${d.rarity}${best ? ' is-best' : ''}`} style={{ animationDelay: `${i * 90}ms`, '--rar': RARITY_COLOR[d.rarity], '--d': `${300 + i * 140}ms` } as never}>
+                <span class="reveal-beam" />
+                <div class="reveal-flip"><HeroCard hero={h} small={!one} /></div>
+                <Art class="reveal-back" name="cardBack" />
+                {newlyFound.has(h.uid) && <span class="new-tag new-ribbon">{t('new')} !</span>}
+                <span class="reveal-name">{d.name}</span>
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <button class="btn btn-gold btn-wide reveal-ok" onClick={close}>{t('ok')}</button>
+      <button class="sum-btn sum-btn-10 reveal-ok" onClick={close}><span class="sum-btn-n">{t('ok')}</span></button>
     </div>
   );
 }

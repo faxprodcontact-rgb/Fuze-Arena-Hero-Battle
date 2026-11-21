@@ -168,6 +168,13 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   boutons ×1 et ×10, invocation gratuite). **Séquence d'invocation** (`casting`, 1 s : le portail enfle, onde au sol, éclair
   blanc) puis **révélation plein écran** (`SummonResult` : décor assombri, halo de runes, un faisceau par héros, cartes qui se
   retournent). Vérifier avec `scratchpad/art5/sum.cjs` et `tailles.cjs 3 s`.
+  v0.34.1, après relecture par un regard neuf (leçons à garder) : **de l'air autour du sujet** (obélisques écartés du portail,
+  îles et lune loin de l'axe, pas de lune derrière les médaillons) ; aurores qui sortent des deux bords (jamais de bord net) ;
+  lumière au sol en flaque, pas en cône ; pas de fissures au sol (deux ellipses gravées suffisent) ; signes du portail inventés
+  (`RUNES`, plus rien qui ressemble à une lettre) ; comètes à traîne en orbite plutôt que des billes ; pendant le lancement le
+  panneau est assombri par un filtre (pas par transparence, sinon le décor passe au travers). Révélation : héros triés du plus
+  rare au plus commun, les meilleurs cerclés de lumière, les communs assombris, **4 cartes par rangée** (grandes) pour ×10,
+  une seule grande carte au cadre d'or avec étoile de lumière, onde et étincelles pour ×1, bouton OK en bas.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

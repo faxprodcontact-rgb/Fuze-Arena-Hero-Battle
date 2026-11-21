@@ -30,12 +30,11 @@ export function spark(x: number, y: number, r: number): string {
   return `M${x} ${y - r} L${x + q} ${y - q} L${x + r} ${y} L${x + q} ${y + q} L${x} ${y + r} L${x - q} ${y + q} L${x - r} ${y} L${x - q} ${y - q} Z`;
 }
 
-/** Les runes : de petits signes faits de traits droits (aucune lettre réelle). */
+/** Les signes : inventés (chevrons, arcs, points, losanges), jamais une forme de lettre. */
 export const RUNES = [
-  'M-4 -7 L-4 7 M-4 -7 L4 -1 L-4 3', 'M0 -7 L0 7 M-5 -2 L5 -6 M-5 4 L5 0', 'M-5 -7 L5 7 M5 -7 L-5 7 M0 -7 L0 -2',
-  'M-4 7 L0 -7 L4 7 M-2 1 L2 1', 'M-5 -6 L5 -6 L0 0 L5 6 L-5 6', 'M0 -7 L0 7 M0 -7 L5 -2 M0 -1 L5 4',
-  'M-5 0 L0 -7 L5 0 L0 7 Z', 'M-4 -7 L-4 7 L4 7 M-4 0 L3 0', 'M-5 -7 L0 0 L5 -7 M0 0 L0 7',
-  'M-4 -7 L4 -7 L-4 7 L4 7', 'M0 -7 L0 7 M-5 -3 L0 2 L5 -3', 'M-5 7 L-5 -7 L5 7 L5 -7',
+  'M-5 5 L0 -5 L5 5', 'M0 -6 L5 0 L0 6 L-5 0 Z', 'M-5 3 Q0 -8 5 3', 'M-3 -6 V6 M3 -6 V6',
+  'M0 -6 L5.500 5 H-5.500 Z', 'M-4.500 0 h0.010 M0 0 h0.010 M4.500 0 h0.010', 'M-5 -3 Q0 3 5 -3 M-5 3 Q0 9 5 3', 'M-4.500 0 A4.500 4.500 0 1 0 4.500 0 A4.500 4.500 0 1 0 -4.500 0',
+  'M-5 -4 Q0 -9 5 -4 M0 -2 V6', 'M-5 5 L0 0 L-5 -5 M1 5 L6 0 L1 -5', 'M0 -6 V6 M-5 0 h0.010 M5 0 h0.010', 'M-5 -2 L0 -6 L5 -2 M-5 4 L0 0 L5 4',
 ];
 
 export function Portal({ kind = 'normal', size = 208, base = true, claws = false }: { kind?: 'normal' | 'basic'; size?: number; base?: boolean; claws?: boolean }) {
@@ -140,12 +139,11 @@ export function Portal({ kind = 'normal', size = 208, base = true, claws = false
         {claws && (
           <g class="pt-claws">
             {Array.from({ length: 8 }, (_, i) => {
-              const long = i % 2 === 0, h = long ? 34 : 19, w = long ? 10 : 7;
+              const long = i % 4 === 0, h = long ? 34 : i % 2 === 0 ? 20 : 16, w = long ? 10 : 7;
               return (
                 <g transform={`rotate(${i * 45} ${C} ${C}) translate(${C} ${C})`}>
                   <path d={`M${-w} -103 Q0 -110 ${w} -103 L${w * 0.35} ${-103 - h * 0.7} L0 ${-106 - h} L${-w * 0.35} ${-103 - h * 0.7} Z`} fill={`url(#${id}-gold)`} stroke={INK} stroke-width="3" stroke-linejoin="round" />
                   <path d={`M0 -105 L${w * 0.3} ${-103 - h * 0.7} L0 ${-106 - h} Z`} fill="#fff" opacity="0.45" />
-                  {long && <path d="M0 -114 l4 6 l-4 6 l-4 -6 Z" fill="var(--p-gem)" stroke={INK} stroke-width="1.800" stroke-linejoin="round" />}
                 </g>
               );
             })}

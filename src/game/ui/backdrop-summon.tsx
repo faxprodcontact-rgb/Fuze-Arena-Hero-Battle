@@ -92,7 +92,7 @@ function Back() {
 
 function Mid() {
   const r = rng(11);
-  const moon = { x: 66, y: 92 };
+  const moon = { x: 302, y: 118 };
   return (
     <>
       <defs>
@@ -104,21 +104,19 @@ function Mid() {
       </defs>
       {/* la voûte étoilée */}
       <g fill="#fff">{Array.from({ length: 70 }, () => <circle class="bd-star" style={{ animationDelay: `${(-r() * 5).toFixed(1)}s` }} cx={f(r() * W)} cy={f(r() * (GROUND - 40))} r={f(0.500 + r() * 1.300)} />)}</g>
-      {[[150, 46, 5], [338, 196, 4], [236, 150, 3.500], [24, 262, 3.500]].map(([x, y, k], i) => <path class={`an-twinkle ${i % 2 ? 'an-late' : ''}`} style={{ transformOrigin: `${x}px ${y}px` }} d={spark(x!, y!, k!)} fill="#fff" />)}
+      {[[150, 46, 5], [346, 232, 4], [236, 150, 3.500], [24, 262, 3.500]].map(([x, y, k], i) => <path class={`an-twinkle ${i % 2 ? 'an-late' : ''}`} style={{ transformOrigin: `${x}px ${y}px` }} d={spark(x!, y!, k!)} fill="#fff" />)}
       {/* l'aurore : deux voiles qui ondulent */}
-      <path class="sm-aurora" d="M96 70 C150 20 220 96 286 44 S388 60 420 16 L420 96 C384 132 332 104 296 128 C232 170 168 86 110 150 Z" fill="url(#sm-aur)" />
-      <path class="sm-aurora sm-aurora-2" d="M-20 190 C40 150 100 210 170 170 S290 200 330 160 L336 220 C290 250 220 224 176 246 C110 280 50 220 -20 262 Z" fill="url(#sm-aur2)" />
-      {/* la lune, son halo, son cercle de signes */}
-      <circle class="bd-sun" cx={moon.x} cy={moon.y} r="96" fill="url(#sm-halo)" />
-      <g class="bd-ring" style={{ transformOrigin: `${moon.x}px ${moon.y}px`, animationDuration: '120s' }} fill="none" stroke="#d9c8ff" opacity="0.6">
-        <circle cx={moon.x} cy={moon.y} r="50" stroke-width="1.200" /><circle cx={moon.x} cy={moon.y} r="53.500" stroke-width="0.600" opacity="0.7" />
-        {GLYPHS.map((d, i) => { const a = (i / GLYPHS.length) * Math.PI * 2; return <path d={d} stroke-width="1.700" stroke-linecap="round" stroke-linejoin="round" transform={`translate(${f(moon.x + Math.cos(a) * 43.500)} ${f(moon.y + Math.sin(a) * 43.500)}) rotate(${((a * 180) / Math.PI + 90).toFixed(0)}) scale(0.560)`} />; })}
+      <path class="sm-aurora" d="M-60 96 C10 40 90 110 170 60 S330 80 450 30 L450 110 C380 150 300 110 240 140 C150 180 60 110 -60 176 Z" fill="url(#sm-aur)" />
+      <path class="sm-aurora sm-aurora-2" d="M-60 200 C20 150 110 216 190 172 S340 206 450 150 L450 220 C370 262 280 226 210 250 C130 284 40 224 -60 272 Z" fill="url(#sm-aur2)" />
+      {/* la lune : petite et discrète, pour ne pas voler la vedette au portail */}
+      <circle class="bd-sun" cx={moon.x} cy={moon.y} r="52" fill="url(#sm-halo)" opacity="0.6" />
+      <g opacity="0.8">
+        <circle cx={moon.x} cy={moon.y} r="20" fill="url(#sm-moon)" />
+        <g fill="#b9a6ea" opacity="0.5"><circle cx={moon.x - 6} cy={moon.y - 5} r="4" /><circle cx={moon.x + 6} cy={moon.y + 3} r="3" /><circle cx={moon.x - 2} cy={moon.y + 9} r="2.200" /></g>
+        <path d={`M${moon.x + 20} ${moon.y} A20 20 0 0 1 ${moon.x} ${moon.y + 20} A23 23 0 0 0 ${moon.x + 20} ${moon.y} Z`} fill="#7a62c8" opacity="0.3" />
       </g>
-      <circle cx={moon.x} cy={moon.y} r="31" fill="url(#sm-moon)" />
-      <g fill="#b9a6ea" opacity="0.5"><circle cx={moon.x - 10} cy={moon.y - 8} r="6" /><circle cx={moon.x + 9} cy={moon.y + 4} r="4.500" /><circle cx={moon.x - 4} cy={moon.y + 13} r="3.500" /><circle cx={moon.x + 12} cy={moon.y - 13} r="2.500" /></g>
-      <path d={`M${moon.x - 31} ${moon.y} A31 31 0 0 0 ${moon.x} ${moon.y + 31} A36 36 0 0 1 ${moon.x - 31} ${moon.y} Z`} fill="#7a62c8" opacity="0.3" />
       {/* une étoile filante, de temps en temps */}
-      <path class="sm-shoot" d="M330 36 L270 84" stroke="url(#sm-shoot)" stroke-width="2.200" stroke-linecap="round" />
+      <path class="sm-shoot" d="M150 30 L90 78" stroke="url(#sm-shoot)" stroke-width="2.200" stroke-linecap="round" />
     </>
   );
 }
@@ -135,19 +133,15 @@ function Front() {
       <path d={crags(13, GROUND + 4, 18, 58, 18, 40)} fill="#1c1250" />
       <rect y={GROUND - 46} width={W} height="70" fill="url(#sm-mist)" />
       {/* les îles qui flottent */}
-      <Island x={46} y={262} s={0.9} flip /><Island x={346} y={214} s={0.78} /><Island x={300} y={318} s={0.42} /><Island x={104} y={338} s={0.36} flip />
-      {/* le plateau : de grandes dalles en arcs autour du centre, des fissures où court la lueur */}
-      <g fill="none" stroke="#5a48b4" opacity="0.5"><ellipse cx="195" cy="470" rx="150" ry="32" stroke-width="1.400" /><ellipse cx="195" cy="486" rx="230" ry="52" stroke-width="1.200" /><ellipse cx="195" cy="510" rx="320" ry="80" stroke-width="1" /></g>
-      <ellipse cx="195" cy="452" rx="170" ry="46" fill="url(#sm-pool)" />
-      <g fill="none" stroke="#8fe6ff" stroke-linecap="round" stroke-linejoin="round" opacity="0.5">
-        <path d="M150 470 L118 484 L104 478 L70 500 L52 496" stroke-width="1.400" /><path d="M240 470 L270 486 L290 480 L322 502 L346 498" stroke-width="1.400" />
-        <path d="M170 494 L150 520 L156 540 L132 566" stroke-width="1.200" /><path d="M222 494 L244 522 L236 544 L262 570" stroke-width="1.200" /><path d="M104 478 L96 462 M290 480 L300 464" stroke-width="1" />
-      </g>
+      <Island x={112} y={112} s={0.46} /><Island x={372} y={156} s={0.56} flip /><Island x={292} y={300} s={0.36} flip /><Island x={96} y={318} s={0.32} />
+      {/* le plateau : deux anneaux gravés autour du centre, et le reflet du portail sur la pierre */}
+      <g fill="none" stroke="#5a48b4" opacity="0.55"><ellipse cx="195" cy="474" rx="170" ry="38" stroke-width="1.400" /><ellipse cx="195" cy="494" rx="250" ry="60" stroke-width="1.200" /></g>
+      <ellipse cx="195" cy="462" rx="190" ry="56" fill="url(#sm-pool)" />
       {/* les pierres levées */}
       {STONES.map((st) => <Menhir x={st.x} y={st.y} w={st.w} h={st.h} side={st.x < 195 ? 1 : -1} />)}
       {/* au premier plan : des gerbes de cristaux sombres, de chaque côté */}
-      <Shards x={18} y={540} s={1.500} c="#2f2478" light="#6f5ae0" dark="#150e3c" /><Shards x={372} y={546} s={1.700} c="#2f2478" light="#6f5ae0" dark="#150e3c" />
-      <Shards x={52} y={560} s={0.900} c="#3fb6e6" light="#c8f6ff" dark="#1f6aa8" /><Shards x={338} y={566} s={1} c="#b06aff" light="#ecd6ff" dark="#6a2fc0" />
+      <Shards x={10} y={560} s={2.400} c="#2f2478" light="#6f5ae0" dark="#150e3c" /><Shards x={380} y={564} s={2.600} c="#2f2478" light="#6f5ae0" dark="#150e3c" />
+      <Shards x={44} y={566} s={1.300} c="#3fb6e6" light="#c8f6ff" dark="#1f6aa8" /><Shards x={346} y={570} s={1.400} c="#b06aff" light="#ecd6ff" dark="#6a2fc0" />
     </>
   );
 }
@@ -168,8 +162,8 @@ function Top() {
         </g>
       ))}
       {/* les cristaux des îles et du premier plan luisent */}
-      <circle class="an-glow" cx="42" cy="246" r="20" fill="url(#sm-glow-c)" /><circle class="an-glow an-late" cx="350" cy="200" r="18" fill="url(#sm-glow-v)" />
-      <circle class="an-glow an-late" cx="52" cy="540" r="26" fill="url(#sm-glow-c)" /><circle class="an-glow" cx="338" cy="544" r="28" fill="url(#sm-glow-v)" />
+      <circle class="an-glow" cx="110" cy="104" r="12" fill="url(#sm-glow-c)" /><circle class="an-glow an-late" cx="374" cy="146" r="14" fill="url(#sm-glow-v)" />
+      <circle class="an-glow an-late" cx="44" cy="536" r="34" fill="url(#sm-glow-c)" /><circle class="an-glow" cx="346" cy="538" r="36" fill="url(#sm-glow-v)" />
       {/* la brume du plateau glisse */}
       <rect class="sm-mist" x="-60" y={GROUND + 10} width={W + 120} height="60" fill="url(#sm-mist)" opacity="0.8" />
       {/* des lucioles montent du sol */}

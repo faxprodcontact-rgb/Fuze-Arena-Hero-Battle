@@ -157,7 +157,11 @@
 @keyframes ss-rune { 0%, 100% { opacity: 0.22; } 50% { opacity: 1; } }
 @keyframes ss-arc { to { stroke-dashoffset: -22; } }
 @keyframes ss-pull { 0% { transform: translate(var(--dx), var(--dy)) scale(1); opacity: 0; } 18% { opacity: 1; } 100% { transform: translate(0, 0) scale(0.15); opacity: 0; } }
-/* l'invocation part : le portail enfle, les anneaux s'emballent, une onde court sur le sol, tout vire au blanc */
+/* l'invocation part : le portail reste bien coloré et enfle à peine, ses anneaux s'emballent, des traits de lumière
+   jaillissent, une onde file vers les bords, une autre court sur le sol, le cœur éclate en blanc, les bords s'assombrissent */
+.sum-burst { z-index: 0; }
+.ss-rays { opacity: 0; }
+.ss-wave { transform-box: fill-box; transform-origin: center; opacity: 0; }
 .casting .sum-portal { animation: ss-surge 1.05s ease-in forwards; }
 .casting .ss-floor-ring { animation-duration: 2.4s; }
 .casting .ss-orbit { animation-duration: 1.1s; }
@@ -165,6 +169,13 @@
 .casting .ss-arc { stroke-width: 4.5; }
 .casting .ss-shock { animation: ss-shock 0.9s ease-out; }
 .casting .ss-flash { animation: ss-flash 1.05s ease-in forwards; }
-@keyframes ss-surge { 0% { transform: scale(1); } 30% { transform: scale(0.94); } 70% { transform: scale(1.1); filter: brightness(1.3); } 100% { transform: scale(1.22); filter: brightness(2); } }
+.casting .ss-wave { animation: ss-wave 0.8s ease-out 0.25s; }
+.casting .ss-rays { animation: ss-rays 1.05s ease-in forwards; }
+.sum-casting .sum-stage::after { content: ''; position: absolute; inset: -40px; pointer-events: none; background: radial-gradient(60% 50% at 50% 42%, #0000 40%, #05031acc 100%); animation: fade 0.4s; }
+.sum-casting::after { content: ''; position: absolute; inset: -20px; z-index: 5; pointer-events: none; background: #fff; opacity: 0; animation: ss-white 1.05s ease-in forwards; }
+@keyframes ss-surge { 0% { transform: scale(1); } 30% { transform: scale(0.95); } 100% { transform: scale(1.1); } }
 @keyframes ss-shock { 0% { transform: scale(0.6); opacity: 0.95; } 100% { transform: scale(3.4); opacity: 0; } }
-@keyframes ss-flash { 0%, 55% { transform: scale(0.2); opacity: 0; } 75% { opacity: 0.85; } 100% { transform: scale(7); opacity: 1; } }
+@keyframes ss-flash { 0%, 35% { transform: scale(0.2); opacity: 0; } 60% { transform: scale(0.9); opacity: 0.9; } 100% { transform: scale(1.5); opacity: 1; } }
+@keyframes ss-wave { 0% { transform: scale(0.8); opacity: 0.9; } 100% { transform: scale(4.5); opacity: 0; } }
+@keyframes ss-rays { 0%, 30% { opacity: 0; transform: scale(0.5) rotate(0deg); } 55% { opacity: 0.9; transform: scale(1) rotate(6deg); } 100% { opacity: 0.6; transform: scale(1.5) rotate(14deg); } }
+@keyframes ss-white { 0%, 88% { opacity: 0; } 100% { opacity: 1; } }
