@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#fffaf0" />
+    <title>Fuze Arena – Hero Battle</title>
+    <link rel="icon" type="image/png" href="art/ui/icon-192.png" />
+    <link rel="apple-touch-icon" href="art/ui/icon-180.png" />
+    <style>
+      /* écran de chargement : visible pendant le téléchargement du jeu, retiré par main.tsx */
+      #splash { position: fixed; inset: 0; z-index: 9999; background: #2a2238 url(art/ui/loading.jpg) center / cover no-repeat; transition: opacity .5s; }
+      #splash.gone { opacity: 0; pointer-events: none; }
+      #splash img { position: absolute; left: 50%; top: max(5%, env(safe-area-inset-top)); width: min(78vw, 46vh); transform: translateX(-50%); filter: drop-shadow(0 6px 10px #0008); }
+      #splash .load { position: absolute; left: 50%; bottom: 9.5%; width: min(64vw, 36vh); height: 16px; transform: translateX(-50%); border-radius: 10px; background: #1c2a14; box-shadow: 0 0 0 3px #f0bf2e, 0 4px 10px #0008; overflow: hidden; }
+      #splash .load i { position: absolute; inset: 0; width: 0; background: linear-gradient(#ffe27a, #f0a020); animation: splash-load 6s cubic-bezier(.2,.7,.3,1) forwards; }
+      @keyframes splash-load { to { width: 92%; } }
+      #splash.done .load i { width: 100%; transition: width .3s; animation: none; }
+    </style>
+    <!-- la planche de pictos sert à tous les menus : elle part tout de suite, en même temps que le code -->
+    <link rel="preload" as="image" type="image/webp" href="art/icons.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@500;700;800&display=swap" />
+    <script type="module" crossorigin src="./assets/index-CVzeqbmd.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/index-DGj8vbTV.css">
+  </head>
+  <body>
+    <div id="splash"><img src="art/ui/logo.webp" alt="Fuze Arena – Hero Battle" /><div class="load"><i></i></div></div>
+    <div id="game"></div>
+  </body>
+</html>
