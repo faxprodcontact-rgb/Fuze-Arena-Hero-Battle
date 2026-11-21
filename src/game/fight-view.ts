@@ -272,8 +272,9 @@ export abstract class FightScene extends Phaser.Scene {
     const rig = RIGS[id];
     if (hasArt(id) && (this.textures.exists(`p-${id}`) || (rig && this.textures.exists(`r-${id}`)))) {
       // dessin Hailuo : les pieds (point 106, 228 du repère) sur la ligne de sol
-      const [ox, oy, w, h, sc] = ART_META.chars[id as keyof typeof ART_META.chars];
-      const k = UNIT_PX * Math.max(0.85, Math.min(1.35, sc)) * (unit.boss ? (this.bigBoss ? 1.45 : 1.12) : 1);
+      // norm : la même stature pour tous les héros (mesurée par art-jeu.py) ; les monstres gardent leur échelle
+      const [ox, oy, w, h, sc, norm] = ART_META.chars[id as keyof typeof ART_META.chars];
+      const k = UNIT_PX * (norm || Math.max(0.85, Math.min(1.35, sc))) * (unit.boss ? (this.bigBoss ? 1.45 : 1.12) : 1);
       fig.setPosition(0, FEET);
       if (rig && this.textures.exists(`r-${id}`)) {
         // découpé en morceaux : le corps, puis chaque morceau posé sur son articulation (ceux « derrière » avant le corps).

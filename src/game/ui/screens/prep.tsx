@@ -7,6 +7,7 @@ import { heroDef } from '../../../core/data/heroes';
 import { ELEMENT_COLOR, heroImage, monsterImage } from '../../art';
 import { battleLook } from '../../look';
 import { FormationStage, Plate, STAGE_H, STAGE_POS, STAGE_W } from '../formation-stage';
+import { HeroFigure } from '../hero-figure';
 import { fmt, t } from '../../i18n';
 import { autoFormation, startBattleFromPlan, swapSlots, toggleInFormation, type BattlePlan } from '../../state/actions';
 import { formationOf, heroByUid, heroPower, slotCount, sortedHeroes, teamPower, type TeamKind } from '../../state/selectors';
@@ -47,7 +48,7 @@ export function Board({ tired, team = 'main' }: { tired?: Set<number>; team?: Te
             >
               <Plate leader={slot === LEADER_SLOT} empty={!hero} color={hero ? ELEMENT_COLOR[heroDef(hero.defId).element] : undefined} />
               {slot === LEADER_SLOT && (!hero || chief) && <Art name="crown" size={22} class="crown" />}
-              {hero && <img src={heroImage(hero.defId)} alt="" />}
+              {hero && <span class="field-hero"><HeroFigure defId={hero.defId} /></span>}
               {hero && <Stars stars={hero.stars} />}
             </button>
           );

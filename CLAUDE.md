@@ -208,6 +208,14 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   plateau bord à bord sous le titre (plus de cadre), bas fondu dans le sol, fond de page bleu nuit uni (`.prep-bg`, à la place
   des montagnes). Avant un combat (`.prep-plan`) le plateau se resserre et se fond aussi sur les côtés (`.field-art` garde
   les proportions). Vérifier avec `scratchpad/art5/her5.cjs`.
+  v0.35.3 (retour du propriétaire : selon l'endroit, un héros paraissait plus grand qu'un autre) : **tous les héros ont la même
+  stature partout**. `art-jeu.py` mesure la stature de chaque héros (des pieds au sommet de la tête, sans l'arme, le bouclier,
+  les ailes ni la queue, grâce aux découpes `rig-out/`) et écrit un 6e nombre `norm` dans `art-meta.ts` (0 pour les monstres,
+  qui gardent leur échelle). `norm` sert aux combats (`addView` de `fight-view.ts`), aux héros en pied (`HeroFigure`) et aux
+  vignettes `art/c/` des héros, refaites à stature égale (`python3 refonte-graphique/art-jeu.py --cartes=heros` ; ce qui dépasse
+  du carré, pointe d'arme ou aile, est coupé). Le plateau de la section montre maintenant les héros en pied (`.field-hero`).
+  Ne plus cadrer une vignette de héros sur toute sa silhouette : une longue lance le rapetisse. Essais de mesure gardés en
+  tête : la boîte de la tête seule est trop bruitée (museaux, coiffes, chevelures).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

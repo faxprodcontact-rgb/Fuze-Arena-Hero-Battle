@@ -426,8 +426,11 @@ p { margin: 6px 0; }
 .field-slot { position: absolute; width: 23.5%; aspect-ratio: 1; transform: translate(-50%, -84%); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
 .field-plate { position: absolute; left: 50%; bottom: -6%; width: 108%; translate: -50% 0; overflow: visible; transition: filter 0.15s; }
 .field-slot.on .field-plate { filter: drop-shadow(0 0 7px #fff) brightness(1.15); }
-.field-slot img { position: absolute; bottom: 12%; width: 88%; filter: drop-shadow(0 3px 2px #00000080); }
-.field-slot.on img { animation: hop 0.6s ease-in-out infinite alternate; }
+/* le héros en pied : ses pieds (53 %, 95 % de sa boîte) au centre de la dalle (50 %, 84 % du poste) */
+.field-hero { position: absolute; left: 50%; top: 84%; width: 80%; transform: translate(-53%, -95%); pointer-events: none; }
+.field-hero .hfig { transform-origin: 53% 95%; animation: hf-breathe 3.4s ease-in-out infinite; }
+.field-slot.on .field-hero { animation: hop-fig 0.6s ease-in-out infinite alternate; }
+@keyframes hop-fig { from { transform: translate(-53%, -95%); } to { transform: translate(-53%, -101%); } }
 .field-slot .stars { position: relative; z-index: 1; font-size: 10px; margin-bottom: -5%; }
 .fd-ring { transform-origin: 0 0; animation: an-spin 22s linear infinite; }
 .fd-plus { animation: glow-pulse 1.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
@@ -436,7 +439,7 @@ p { margin: 6px 0; }
 .field-slot .crown, .crown { position: absolute; top: -6%; z-index: 2; color: var(--gold-hi); font-size: 18px; filter: drop-shadow(0 1px 2px #000a); }
 .board-arrow { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font-size: 40px; color: var(--red-hi); text-shadow: 0 2px 3px #000c; }
 .field .board-arrow { z-index: 400; }
-.field-slot.tired img { filter: grayscale(1) brightness(0.7); }
+.field-slot.tired .field-hero { filter: grayscale(1) brightness(0.7); }
 .field-slot.tired::after { content: '✕'; position: absolute; top: 20%; z-index: 3; font: 800 28px var(--font-title); color: var(--red-hi); text-shadow: 0 2px 3px #000; }
 @keyframes hop { to { transform: translateY(-6px); } }
 
