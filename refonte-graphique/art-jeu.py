@@ -19,7 +19,7 @@ decors = json.load(open(os.path.join(ROOT, 'decors-meta.json')))
 
 os.makedirs(os.path.join(ART, 'c'), exist_ok=True)
 S, PAD = 256, 10
-for cid in chars:
+for cid in (chars if '--cartes' in __import__('sys').argv else []):
     im = Image.open(os.path.join(ART, 'p', cid + '.webp')).convert('RGBA')
     bb = im.getchannel('A').point(lambda v: 255 if v > 24 else 0).getbbox()
     im = im.crop(bb)
@@ -29,7 +29,15 @@ for cid in chars:
     card.paste(im, ((S - im.width) // 2, S - PAD - im.height), im)
     card.save(os.path.join(ART, 'c', cid + '.webp'), 'WEBP', quality=86, method=6)
 
+# personnages découpés en morceaux (refonte-graphique/rig.py) : taille de l'image et morceaux
+rigs = {}
+RO = os.path.join(ROOT, 'rig-out')
+if os.path.isdir(RO):
+    for f in sorted(os.listdir(RO)):
+        if f.endswith('.json') and f[:-5] in chars and os.path.isdir(os.path.join(ART, 'r', f[:-5])):
+            rigs[f[:-5]] = json.load(open(os.path.join(RO, f)))
 meta = {
+    'rigs': rigs,
     'chars': {cid: [m['ox'], m['oy'], m['w'], m['h'], scale.get(cid, 1)] for cid, m in sorted(chars.items())},
     'terrains': decors['terrains'],
     'fx': decors['fx'],
@@ -39,4 +47,4 @@ with open(os.path.join(ROOT, '..', 'src', 'game', 'art-meta.ts'), 'w', encoding=
             '// chars : [ox, oy, w, h, échelle] dans le repère du dessin (boîte 200 × 240, pieds à x = 106, y = 228).\n'
             '// terrains : taille de l\'image et hauteur du centre de l\'arène (fraction) ; fx : taille des effets.\n'
             'export const ART_META = ' + json.dumps(meta, separators=(',', ':')) + ' as const;\n')
-print(len(chars), 'vignettes,', len(meta['terrains']), 'terrains,', len(meta['fx']), 'effets')
+print(len(rigs), 'découpés,', len(chars), 'personnages,', len(meta['terrains']), 'terrains,', len(meta['fx']), 'effets')

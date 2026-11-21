@@ -36,7 +36,14 @@ function hex(color: string): number {
 export interface View {
   unit: Unit;
   body: Phaser.GameObjects.Container;
-  sprite: Phaser.GameObjects.Image;
+  /** Le dessin : un conteneur posé aux pieds (retourné pour les ennemis). Image d'un bloc, ou morceaux animés. */
+  sprite: Phaser.GameObjects.Container;
+  /** Toutes ses images (pour les teintes). */
+  imgs: Phaser.GameObjects.Image[];
+  /** Morceaux animés (personnages découpés) : l'image et son réglage. */
+  parts: { img: Phaser.GameObjects.Image; p: RigPart }[];
+  /** Geste en cours (attaque de base ou compétence) : les morceaux le suivent. */
+  act?: { k: 'atk' | 'skill'; t0: number; sp: number; lead: number };
   bars: Phaser.GameObjects.Graphics;
   homeX: number;
   homeY: number;
@@ -63,6 +70,16 @@ const UNIT_PX = 0.56;
 const FEET = 47;
 
 type FxName = keyof typeof ART_META.fx;
+type RigPart = { n: string; k: string; x: number; y: number; w: number; h: number; px: number; py: number; s: readonly number[]; m: readonly number[]; b: number; i: number };
+const RIGS = ART_META.rigs as unknown as Record<string, { size: readonly number[]; parts: readonly RigPart[] }>;
+const ease = {
+  out: (t: number) => 1 - (1 - t) ** 3,
+  inOut: (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2),
+  back: (t: number) => 1 + 2.7 * (t - 1) ** 3 + 1.7 * (t - 1) ** 2,
+};
+const seg = (t: number, a: number, b: number) => Math.max(0, Math.min(1, (t - a) / (b - a)));
+/** Rythme du repos de chaque sorte de morceau (la tête suit le souffle, la queue et les ailes vont à leur rythme). */
+const IDLE_SPEED: Record<string, [number, number]> = { head: [2.3, -0.6], weapon: [2.3, -1], offhand: [2.3, -0.4], limb: [2.3, -1.4], tail: [1.6, 0.5], wing: [3.4, 0] };
 /** Largeur d'affichage de chaque effet (pixels) et point d'ancrage : centre, ou sol (le bas de l'effet aux pieds). */
 const FX: Record<FxName, [number, 'c' | 'g']> = {
   slash: [180, 'c'], crossSlash: [195, 'c'], claw: [170, 'c'], impact: [120, 'c'], shockwave: [230, 'g'], pierce: [200, 'c'],
@@ -123,7 +140,12 @@ export abstract class FightScene extends Phaser.Scene {
     for (const name of Object.keys(ART_META.fx)) if (!this.textures.exists(`fx-${name}`)) this.load.image(`fx-${name}`, `art/fx/${name}.webp`);
     for (const u of this.preloadUnits()) {
       const id = this.charId(u);
-      if (hasArt(id) && !this.textures.exists(`p-${id}`)) this.load.image(`p-${id}`, artUrl(id));
+      const rig = RIGS[id];
+      if (rig) {
+        if (!this.textures.exists(`r-${id}-base`)) this.load.image(`r-${id}-base`, `art/r/${id}/base.webp`);
+        for (const p of rig.parts) if (!this.textures.exists(`r-${id}-${p.n}`)) this.load.image(`r-${id}-${p.n}`, `art/r/${id}/${p.n}.webp`);
+      }
+      if (hasArt(id) && (!rig || HERO_IDS.has(u.defId)) && !this.textures.exists(`p-${id}`)) this.load.image(`p-${id}`, artUrl(id));
       if (hasArt(id) && HERO_IDS.has(u.defId) && !this.textures.exists(`c-${id}`)) this.load.image(`c-${id}`, cardUrl(id));
     }
   }
@@ -184,28 +206,53 @@ export abstract class FightScene extends Phaser.Scene {
     const { x, y } = this.slotPos(unit);
     const body = this.add.container(enter ? x + 320 : x, unit.boss && this.bigBoss ? y - 30 : y).setDepth(y);
     const id = this.charId(unit);
-    let sprite: Phaser.GameObjects.Image;
+    const fig = this.add.container(0, 0);
+    const imgs: Phaser.GameObjects.Image[] = [];
+    const parts: View['parts'] = [];
     let shadow: Phaser.GameObjects.Ellipse;
     let barY: number;
-    let barW = unit.boss ? 130 : 86;
-    if (this.textures.exists(`p-${id}`)) {
-      // dessin Hailuo : les pieds (point 106, 228 du repère) sur la ligne de sol ; retourné autour de ce point
+    const barW = unit.boss ? 130 : 86;
+    const rig = RIGS[id];
+    if (hasArt(id) && (this.textures.exists(`p-${id}`) || (rig && this.textures.exists(`r-${id}-base`)))) {
+      // dessin Hailuo : les pieds (point 106, 228 du repère) sur la ligne de sol
       const [ox, oy, w, h, sc] = ART_META.chars[id as keyof typeof ART_META.chars];
       const k = UNIT_PX * Math.max(0.85, Math.min(1.35, sc)) * (unit.boss ? (this.bigBoss ? 1.45 : 1.12) : 1);
-      sprite = this.add.image(0, FEET, `p-${id}`).setDisplaySize(w * k, h * k).setOrigin((106 - ox) / w, (228 - oy) / h).setFlipX(!hero);
+      fig.setPosition(0, FEET);
+      if (rig && this.textures.exists(`r-${id}-base`)) {
+        // découpé en morceaux : le corps, puis chaque morceau posé sur son articulation (ceux « derrière » avant le corps)
+        const [W0, H0] = rig.size as [number, number];
+        const u = (w * k) / W0, fx = ((106 - ox) / w) * W0, fy = ((228 - oy) / h) * H0;
+        const inner = this.add.container(-fx * u, -fy * u).setScale(u);
+        const base = this.add.image(0, 0, `r-${id}-base`).setOrigin(0);
+        const mk = (p: RigPart) => {
+          const img = this.add.image(p.px, p.py, `r-${id}-${p.n}`).setOrigin((p.px - p.x) / p.w, (p.py - p.y) / p.h);
+          parts.push({ img, p });
+          return img;
+        };
+        const behind = rig.parts.filter((p) => p.b).map(mk), front = rig.parts.filter((p) => !p.b).map(mk);
+        inner.add([...behind, base, ...front]);
+        imgs.push(base, ...behind, ...front);
+        fig.add(inner);
+      } else {
+        const img = this.add.image(0, 0, `p-${id}`).setDisplaySize(w * k, h * k).setOrigin((106 - ox) / w, (228 - oy) / h);
+        fig.add(img);
+        imgs.push(img);
+      }
       shadow = this.add.ellipse(0, FEET, Math.min(160, w * k * 0.55), 20, 0x000000, 0.3);
       barY = FEET - (228 - Math.max(oy, 228 - 330)) * k - 6;
-      barW = unit.boss ? 130 : 86;
     } else {
       const scale = unit.boss ? (this.bigBoss ? 2 : 1.45) : 0.95;
       shadow = this.add.ellipse(0, 50 * scale, 90 * scale, 22, 0x000000, 0.3);
-      sprite = this.add.image(0, 0, this.texture(unit)).setScale(scale).setFlipX(!hero);
+      const img = this.add.image(0, 0, this.texture(unit)).setScale(scale);
+      fig.add(img);
+      imgs.push(img);
       barY = unit.boss ? -100 : -72;
     }
+    fig.setScale(hero ? 1 : -1, 1);
     const bars = this.add.graphics();
-    body.add([shadow, sprite, bars]);
+    body.add([shadow, fig, bars]);
     if (hero && unit.slot === LEADER_SLOT && unit.talent) body.add(this.text(0, barY - 22, '♛', 26, '#ffe27a'));
-    this.views.set(unit.id, { unit, body, sprite, bars, homeX: x, homeY: body.y, barY, barW, hp: unit.hp, sx: sprite.scaleX, sy: sprite.scaleY, ph: Math.random() * 6.28 });
+    this.views.set(unit.id, { unit, body, sprite: fig, imgs, parts, bars, homeX: x, homeY: body.y, barY, barW, hp: unit.hp, sx: fig.scaleX, sy: 1, ph: Math.random() * 6.28 });
     if (enter) this.tweens.add({ targets: body, x, duration: 450 / speed, ease: 'Back.easeOut' });
   }
 
@@ -242,9 +289,66 @@ export abstract class FightScene extends Phaser.Scene {
         v.sprite.setScale(v.sx * (1 - 0.014 * b), v.sy * (1 + 0.03 * b));
       }
       const sway = Math.sin(now * 1.3 + v.ph * 2) * (u.side === 'enemy' ? 1.6 : 0.8);
-      v.sprite.setAngle(u.stun > 0 ? Math.sin(this.time.now / 60) * 8 : sway);
+      v.sprite.setAngle(u.stun > 0 ? Math.sin(this.time.now / 60) * 8 : sway + this.animateParts(v, now));
     }
     this.syncGlows();
+  }
+
+  /**
+   * Les morceaux d'un personnage découpé : un petit mouvement de repos chacun, et le geste en cours (élan, coup,
+   * compétence) avec les angles de son réglage. Renvoie l'inclinaison du corps entier (degrés).
+   */
+  private animateParts(v: View, now: number): number {
+    const dir = v.unit.side === 'hero' ? 1 : -1;
+    let w = 0, h = 0, r = 0, skill = false;
+    if (v.act) {
+      const t = (this.time.now - v.act.t0) * v.act.sp;
+      if (v.act.k === 'atk') {
+        w = ease.out(seg(t, 0, 70)); h = ease.back(seg(t, 70, 165)); r = ease.inOut(seg(t, 240, 410));
+        if (t > 420) v.act = undefined;
+      } else {
+        const L = v.act.lead;
+        skill = true;
+        w = ease.out(seg(t, 0, L)); h = ease.back(seg(t, L, L + 170)); r = ease.inOut(seg(t, L + 450, L + 720));
+        if (t > L + 740) v.act = undefined;
+      }
+    }
+    const b = Math.sin(now * 2.3 + v.ph);
+    for (const { img, p } of v.parts) {
+      const [sp, ph] = IDLE_SPEED[p.k] ?? [2.3, 0];
+      let ang = Math.sin(now * sp + v.ph + ph) * p.i;
+      const wind = p.s[0]! * (skill ? 1.3 : 1), hit = skill ? p.s[2]! : p.s[1]!;
+      ang += (wind * w + (hit - wind) * h) * (1 - r);
+      const mv = h * (1 - r);
+      img.setAngle(ang).setPosition(p.px + p.m[0]! * mv, p.py + p.m[1]! * mv + (p.k === 'head' ? -4 * b : 0));
+    }
+    const lean = skill ? [-6, 14] : [-4, 10];
+    return dir * (lean[0]! * w + (lean[1]! - lean[0]!) * h) * (1 - r);
+  }
+
+  /** Une teinte sur tout le dessin (morceaux compris), ou aucune. */
+  private tint(v: View, color?: number) {
+    for (const img of v.imgs) {
+      if (color === undefined) img.clearTint();
+      else img.setTint(color);
+    }
+  }
+
+  /** Copie du dessin dans sa pose de l'instant (pour le double lumineux de la compétence). */
+  private cloneFig(c: Phaser.GameObjects.Container): Phaser.GameObjects.Container {
+    const out = this.add.container(c.x, c.y).setScale(c.scaleX, c.scaleY).setAngle(c.angle);
+    for (const ch of c.list) {
+      if (ch instanceof Phaser.GameObjects.Container) out.add(this.cloneFig(ch));
+      else if (ch instanceof Phaser.GameObjects.Image) {
+        out.add(this.add.image(ch.x, ch.y, ch.texture.key).setOrigin(ch.originX, ch.originY).setScale(ch.scaleX, ch.scaleY).setAngle(ch.angle).setBlendMode(Phaser.BlendModes.ADD));
+      }
+    }
+    return out;
+  }
+
+  private tintDeep(c: Phaser.GameObjects.GameObject, color: number) {
+    if (c instanceof Phaser.GameObjects.Container) c.each((ch: Phaser.GameObjects.GameObject) => this.tintDeep(ch, color));
+    else if (c instanceof Phaser.GameObjects.Image) c.setTint(color);
   }
 
   /** Les doubles lumineux suivent leur effet (position, taille, rotation, transparence). */
@@ -596,6 +700,7 @@ export abstract class FightScene extends Phaser.Scene {
     const t = 1 / speed;
     const to = this.chest(dst);
     const touch = hit.kind === 'damage';
+    src.act = { k: 'atk', t0: this.time.now, sp: speed, lead: 0 };
     let at: number;
     if (src.unit.ranged) {
       // le tireur recule d'un coup sec au départ du tir
@@ -644,22 +749,13 @@ export abstract class FightScene extends Phaser.Scene {
     this.tweens.add({ targets: rays, scale: 1.25, alpha: 1, angle: 50, duration: 260 * t, ease: 'Cubic.easeOut', onUpdate: () => rays.setPosition(v.body.x, v.body.y + dy) });
     this.tweens.add({ targets: rays, alpha: 0, angle: 90, delay: 260 * t, duration: v.unit.ranged ? 300 * t : 120 * t, onUpdate: () => rays.setPosition(v.body.x, v.body.y + dy), onComplete: () => rays.destroy() });
     const s = v.sprite;
-    const ghost = this.add.image(s.x, s.y, s.texture.key).setOrigin(s.originX, s.originY).setFlipX(s.flipX).setScale(v.sx, v.sy)
-      .setTint(color).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.9).setAngle(s.angle);
+    const ghost = this.cloneFig(s);
+    this.tintDeep(ghost, color);
+    ghost.setAlpha(0.9);
     v.body.addAt(ghost, v.body.getIndex(s) + 1);
     this.tweens.add({ targets: ghost, scaleX: v.sx * 1.4, scaleY: v.sy * 1.4, alpha: 0, delay: 120 * t, duration: 380 * t, ease: 'Cubic.easeOut', onComplete: () => ghost.destroy() });
     s.setScale(v.sx, v.sy);
     this.tweens.add({ targets: s, scaleX: v.sx * 1.18, scaleY: v.sy * 1.18, duration: 170 * t, yoyo: true, hold: 80 * t, ease: 'Back.easeOut' });
-    if (s.preFX && this.renderer.type === Phaser.WEBGL) {
-      // halo autour du dessin ; on coupe le mode « effets » ensuite (il coûte cher au téléphone s'il reste allumé)
-      s.preFX.setPadding(16);
-      const glow = s.preFX.addGlow(color, 0, 0, false, 0.1, 12);
-      this.tweens.add({ targets: glow, outerStrength: 7, duration: 200 * t, yoyo: true, hold: 500 * t, onComplete: () => {
-        if (!s.preFX) return;
-        s.preFX.remove(glow);
-        if (!s.preFX.list.length) s.preFX.disable();
-      } });
-    }
   }
 
   /** Bandeau de cinéma (héros) : le héros traverse l'écran dans une bande inclinée avec le nom de sa compétence. */
@@ -725,6 +821,7 @@ export abstract class FightScene extends Phaser.Scene {
       this.tweens.add({ targets: name, y: name.y - 40, alpha: 0, delay: 500 * tm, duration: 500 * tm, onComplete: () => name.destroy() });
       lead = 260 * tm;
     }
+    src.act = { k: 'skill', t0: this.time.now, sp: speed, lead: lead * speed };
     // 2. la chorégraphie de la compétence sur chaque cible touchée (une même image pour toute la compétence)
     const list = SKILL_FX[src.unit.element][src.unit.ranged ? 'ranged' : 'melee'];
     const fxName = list[hash(skillId) % list.length]!;
@@ -794,8 +891,8 @@ export abstract class FightScene extends Phaser.Scene {
     } else {
       color = hit.crit ? '#ffe27a' : hit.advantage ? '#ffb15c' : v.unit.side === 'hero' ? '#ff9b9b' : '#ffffff';
       // touché : le dessin rougit un instant (un flash tout blanc effaçait les grands dessins)
-      v.sprite.setTint(0xff9a9a);
-      this.time.delayedCall(90, () => v.sprite.clearTint());
+      this.tint(v, 0xff9a9a);
+      this.time.delayedCall(90, () => this.tint(v));
       if (hit.stun) {
         const star = this.text(v.body.x + 30, v.body.y - 70, '✦', 28, '#ffe27a').setDepth(2000);
         this.tweens.add({ targets: star, angle: 360, alpha: 0, duration: 900, onComplete: () => star.destroy() });
