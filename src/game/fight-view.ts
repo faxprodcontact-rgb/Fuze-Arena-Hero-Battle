@@ -14,8 +14,9 @@ export const W = 720;
 export const FONT = '"Baloo 2", "Trebuchet MS", "Segoe UI", Roboto, sans-serif';
 export const C = { panel: 0x1f2340, panelLight: 0x2c3260, green: 0x3ccf7a, red: 0xe5484d, blue: 0x4c8dff, energy: 0x4fd1ff, gold: 0xffc94a };
 
-const HERO_X: Record<Slot, number> = { 3: 110, 4: 110, 2: 215, 0: 315, 1: 315 };
-const ENEMY_X: Record<Slot, number> = { 0: 405, 1: 405, 2: 505, 3: 610, 4: 610 };
+// Les deux équipes sont bien séparées (244 px entre les deux premières lignes) : on voit qui fonce sur qui.
+const HERO_X: Record<Slot, number> = { 3: 62, 4: 62, 2: 150, 0: 238, 1: 238 };
+const ENEMY_X: Record<Slot, number> = { 0: 482, 1: 482, 2: 570, 3: 658, 4: 658 };
 /** Hauteur des rangées, mesurée depuis le haut du sol (`groundTop`). */
 const ROW_DY: Record<Slot, number> = { 0: 90, 3: 90, 2: 180, 1: 270, 4: 270 };
 
@@ -43,16 +44,20 @@ export interface View {
   barW: number;
   /** Vie affichée : elle baisse quand le coup est montré, pas quand les règles l'ont calculé. */
   hp: number;
+  /** Échelle de repos du dessin et décalage de sa respiration (chacun respire à son rythme). */
+  sx: number;
+  sy: number;
+  ph: number;
 }
 
 /**
  * Chacun son tour : pendant qu'un coup se joue, le combat est en pause (les règles ne changent pas, seul l'affichage
  * attend). Durée d'un tour, en ms à vitesse ×1 ; ×2 et ×3 les raccourcissent.
  */
-const TURN_MS = { attack: 430, skill: 980, passive: 260, wave: 550 };
+const TURN_MS = { attack: 470, skill: 1450, passive: 260, wave: 550 };
 
 /** Taille des dessins Hailuo : pixels de l'écran par unité du repère du dessin (un héros mesure ~190 unités). */
-const UNIT_PX = 0.64;
+const UNIT_PX = 0.56;
 /** Les pieds sont un peu sous le centre du conteneur (comme les anciens dessins). */
 const FEET = 47;
 
@@ -80,6 +85,10 @@ const SKILL_FX: Record<Element, { melee: readonly FxName[]; ranged: readonly FxN
 /** Ce qui éclate à l'arrivée d'un projectile de compétence. */
 const ARRIVAL_FX: Partial<Record<FxName, FxName>> = { fireball: 'explosion', meteor: 'explosion', waterBolt: 'splash', electricOrb: 'sonicRing', boulder: 'quake' };
 type Pt = { x: number; y: number; feet: number };
+/** Effets lumineux : un double additif posé dessus les fait vraiment briller (pas les rochers ni la terre). */
+const LIGHT = new Set<FxName>(['slash', 'fireSlash', 'crossSlash', 'windBlades', 'claw', 'pierce', 'lightning', 'explosion', 'emberBurst',
+  'impact', 'sonicRing', 'frostBurst', 'flamePillar', 'holyBeam', 'electricOrb', 'fireball', 'waterBolt', 'meteor', 'iceSpikes', 'heal', 'goldShield', 'darkOrb']);
+const rgb = (c: number) => [(c >> 16) & 255, (c >> 8) & 255, c & 255] as const;
 /** Temps avant l'impact (projectiles, météore : ils doivent d'abord voyager). */
 const TRAVEL: Partial<Record<FxName, number>> = { meteor: 300, fireball: 260, waterBolt: 260, electricOrb: 260, boulder: 260 };
 const STATUS_FX: Partial<Record<string, FxName>> = {
@@ -190,7 +199,7 @@ export abstract class FightScene extends Phaser.Scene {
     const bars = this.add.graphics();
     body.add([shadow, sprite, bars]);
     if (hero && unit.slot === LEADER_SLOT && unit.talent) body.add(this.text(0, barY - 22, '♛', 26, '#ffe27a'));
-    this.views.set(unit.id, { unit, body, sprite, bars, homeX: x, barY, barW, hp: unit.hp });
+    this.views.set(unit.id, { unit, body, sprite, bars, homeX: x, barY, barW, hp: unit.hp, sx: sprite.scaleX, sy: sprite.scaleY, ph: Math.random() * 6.28 });
     if (enter) this.tweens.add({ targets: body, x, duration: 450, ease: 'Back.easeOut' });
   }
 
@@ -220,8 +229,29 @@ export abstract class FightScene extends Phaser.Scene {
       }
       g.fillStyle(C.energy);
       g.fillRect(-w / 2, y + 15, w * (u.energy / ENERGY_MAX), 4);
-      v.sprite.setAngle(u.stun > 0 ? Math.sin(this.time.now / 60) * 8 : 0);
+      // au repos, chacun respire (le haut du corps monte et descend, pivot aux pieds) et se balance un peu
+      const now = this.time.now / 1000;
+      if (!this.tweens.isTweening(v.sprite)) {
+        const b = Math.sin(now * (u.boss ? 1.5 : 2.3) + v.ph);
+        v.sprite.setScale(v.sx * (1 - 0.014 * b), v.sy * (1 + 0.03 * b));
+      }
+      const sway = Math.sin(now * 1.3 + v.ph * 2) * (u.side === 'enemy' ? 1.6 : 0.8);
+      v.sprite.setAngle(u.stun > 0 ? Math.sin(this.time.now / 60) * 8 : sway);
     }
+    this.syncGlows();
+  }
+
+  /** Les doubles lumineux suivent leur effet (position, taille, rotation, transparence). */
+  private glows: { src: Phaser.GameObjects.Image; g: Phaser.GameObjects.Image }[] = [];
+  private syncGlows() {
+    this.glows = this.glows.filter(({ src, g }) => {
+      if (!src.active) {
+        g.destroy();
+        return false;
+      }
+      g.setPosition(src.x, src.y).setScale(src.scaleX * 1.06, src.scaleY * 1.06).setAngle(src.angle).setAlpha(src.alpha * 0.55).setFlipX(src.flipX);
+      return true;
+    });
   }
 
   /** Ce que chaque scène fait de plus quand une vague arrive, qu'un combattant tombe, ou à la fin. */
@@ -309,9 +339,11 @@ export abstract class FightScene extends Phaser.Scene {
   private fxImage(name: FxName, x: number, y: number, flip = false, ground = FX[name][1] === 'g') {
     const key = `fx-${name}`;
     if (!this.textures.exists(key)) return null;
-    const img = this.add.image(x, y, key).setOrigin(0.5, ground ? 0.95 : 0.5).setFlipX(flip).setDepth(1500);
+    const oy = ground ? 0.95 : 0.5;
+    const img = this.add.image(x, y, key).setOrigin(0.5, oy).setFlipX(flip).setDepth(1500);
     const k = FX[name][0] / img.width;
     img.setScale(k);
+    if (LIGHT.has(name)) this.glows.push({ src: img, g: this.add.image(x, y, key).setOrigin(0.5, oy).setDepth(1501).setBlendMode(Phaser.BlendModes.ADD).setScale(k) });
     return { img, k };
   }
 
@@ -325,10 +357,32 @@ export abstract class FightScene extends Phaser.Scene {
     this.tweens.add({ targets: img, alpha: 0, delay: dur * 0.5, duration: dur * 0.5, onComplete: () => img.destroy() });
   }
 
-  /** Un éclair de lumière bref au point d'impact. */
+  /** Un éclair de lumière bref au point d'impact, avec une onde qui s'élargit. */
   private flashAt(x: number, y: number, color = 0xffffff, r = 34, t = 1) {
     const c = this.add.circle(x, y, r, color, 0.8).setDepth(1600).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: c, scale: 1.8, alpha: 0, duration: 180 * t, onComplete: () => c.destroy() });
+    const ring = this.add.circle(x, y, r * 0.8).setStrokeStyle(5, color, 0.9).setDepth(1600).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: ring, scale: 3, alpha: 0, duration: 300 * t, ease: 'Cubic.easeOut', onComplete: () => ring.destroy() });
+  }
+
+  /** Gerbe d'étincelles (traits qui partent en étoile). */
+  private sparks(x: number, y: number, color: number, n: number, len: number, t: number) {
+    const g = this.add.graphics().setDepth(1450).setPosition(x, y).setBlendMode(Phaser.BlendModes.ADD);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + Math.random() * 0.5, l = len * (0.55 + Math.random() * 0.45);
+      g.lineStyle(4, color, 0.9).lineBetween(Math.cos(a) * 6, Math.sin(a) * 6, Math.cos(a) * l, Math.sin(a) * l);
+      g.lineStyle(1.5, 0xffffff, 1).lineBetween(Math.cos(a) * 6, Math.sin(a) * 6, Math.cos(a) * l * 0.7, Math.sin(a) * l * 0.7);
+    }
+    g.setScale(0.35);
+    this.tweens.add({ targets: g, scale: 1.15, alpha: 0, duration: 200 * t, ease: 'Cubic.easeOut', onComplete: () => g.destroy() });
+  }
+
+  /** Le coup porte : la cible est repoussée, s'écrase un instant puis reprend sa forme. */
+  private recoil(v: View, dir: number, px: number, t: number) {
+    v.body.x = v.homeX + dir * px;
+    this.tweens.add({ targets: v.body, x: v.homeX, duration: 170 * t, ease: 'Quad.easeOut' });
+    v.sprite.setScale(v.sx, v.sy);
+    this.tweens.add({ targets: v.sprite, scaleX: v.sx * 0.9, scaleY: v.sy * 1.06, duration: 50 * t, yoyo: true });
   }
 
   /**
@@ -506,26 +560,25 @@ export abstract class FightScene extends Phaser.Scene {
     return { x: v.body.x, y: v.body.y + (FEET + v.barY) / 2 + 10, feet: v.body.y + FEET };
   }
 
-  /** Attaque de base au corps à corps : petit élan et une courte traînée de coup, discrète, à la couleur de l'élément. */
+  /** Attaque de base au corps à corps : la traînée du coup et l'étincelle au contact, sobres, à la couleur de l'élément. */
   private basicMelee(to: Pt, dir: number, color: number, t: number) {
-    const g = this.add.graphics().setDepth(1400).setPosition(to.x - dir * 4, to.y);
-    g.lineStyle(5, color, 0.9).beginPath().arc(0, 0, 24, dir > 0 ? -1.2 : Math.PI - 1.2, dir > 0 ? 1.0 : Math.PI + 1.0).strokePath();
-    g.lineStyle(2, 0xffffff, 0.9).beginPath().arc(0, 0, 24, dir > 0 ? -1.0 : Math.PI - 1.0, dir > 0 ? 0.8 : Math.PI + 0.8).strokePath();
-    g.setScale(0.6).setAngle(dir * -20);
-    this.tweens.add({ targets: g, scale: 1.1, angle: dir * 15, alpha: 0, duration: 200 * t, ease: 'Quad.easeOut', onComplete: () => g.destroy() });
+    const g = this.add.graphics().setDepth(1400).setPosition(to.x - dir * 4, to.y).setBlendMode(Phaser.BlendModes.ADD);
+    const a0 = dir > 0 ? -1.3 : Math.PI - 1.3, a1 = dir > 0 ? 1.1 : Math.PI + 1.1;
+    g.lineStyle(9, color, 0.75).beginPath().arc(0, 0, 32, a0, a1).strokePath();
+    g.lineStyle(3, 0xffffff, 1).beginPath().arc(0, 0, 32, a0 + 0.2, a1 - 0.2).strokePath();
+    g.setScale(0.5).setAngle(dir * -35);
+    this.tweens.add({ targets: g, scale: 1.15, angle: dir * 20, alpha: 0, duration: 170 * t, ease: 'Cubic.easeOut', onComplete: () => g.destroy() });
+    this.sparks(to.x, to.y, color, 7, 42, t);
   }
 
-  /** Attaque de base à distance : une petite boule d'énergie avec une traînée, et un petit anneau à l'arrivée. */
+  /** Attaque de base à distance : un trait d'énergie rapide (cœur blanc, traînée colorée), une petite étincelle à l'arrivée. */
   private basicShot(from: Pt, to: Pt, dir: number, color: number, t: number) {
-    const x0 = from.x + dir * 30;
-    const tail = this.add.ellipse(x0, from.y, 22, 6, color, 0.5).setDepth(1000);
-    const ball = this.add.circle(x0, from.y, 6, color).setStrokeStyle(2, 0xffffff, 0.9).setDepth(1001);
-    tail.setRotation(Math.atan2(to.y - from.y, to.x - x0));
-    this.tweens.add({ targets: [ball, tail], x: to.x, y: to.y, duration: 220 * t, onComplete: () => { ball.destroy(); tail.destroy(); } });
-    this.time.delayedCall(220 * t, () => {
-      const ring = this.add.circle(to.x, to.y, 8).setStrokeStyle(3, color).setDepth(1400);
-      this.tweens.add({ targets: ring, scale: 2.2, alpha: 0, duration: 220 * t, onComplete: () => ring.destroy() });
-    });
+    const x0 = from.x + dir * 34, ang = Math.atan2(to.y - from.y, to.x - x0);
+    const tail = this.add.ellipse(x0, from.y, 46, 7, color, 0.75).setDepth(1000).setRotation(ang).setBlendMode(Phaser.BlendModes.ADD);
+    const ball = this.add.ellipse(x0, from.y, 16, 9, 0xffffff).setDepth(1001).setRotation(ang);
+    this.flashAt(x0, from.y, color, 9, t);
+    this.tweens.add({ targets: [ball, tail], x: to.x, y: to.y, duration: 170 * t, ease: 'Quad.easeIn', onComplete: () => { ball.destroy(); tail.destroy(); } });
+    this.time.delayedCall(170 * t, () => this.sparks(to.x, to.y, color, 6, 30, t));
   }
 
   private animateAttack(sourceId: string, hit: Hit, speed: number) {
@@ -536,51 +589,157 @@ export abstract class FightScene extends Phaser.Scene {
     const color = hex(ELEMENT_COLOR[src.unit.element]);
     const t = 1 / speed;
     const to = this.chest(dst);
+    const touch = hit.kind === 'damage';
+    let at: number;
     if (src.unit.ranged) {
+      // le tireur recule d'un coup sec au départ du tir
+      this.tweens.add({ targets: src.body, x: src.homeX - dir * 9, duration: 50 * t, yoyo: true, ease: 'Quad.easeOut' });
       this.basicShot(this.chest(src), to, dir, color, t);
+      at = 170 * t;
+      if (touch) this.time.delayedCall(at, () => this.recoil(dst, dir, 8, t));
     } else {
-      this.tweens.add({ targets: src.body, x: src.homeX + 46 * dir, duration: 90 * t, yoyo: true, ease: 'Quad.easeOut' });
-      this.time.delayedCall(100 * t, () => this.basicMelee(to, dir, color, t));
+      // élan en arrière, ruée jusqu'à la cible, coup, puis retour à sa place
+      const home = this.slotPos(src.unit).y;
+      this.tweens.add({ targets: src.body, x: src.homeX - dir * 14, duration: 70 * t, ease: 'Quad.easeOut' });
+      this.tweens.add({ targets: src.body, x: dst.body.x - dir * 78, y: dst.body.y, delay: 70 * t, duration: 90 * t, ease: 'Expo.easeIn' });
+      this.tweens.add({ targets: src.body, x: src.homeX, y: home, delay: 230 * t, duration: 170 * t, ease: 'Quad.easeInOut' });
+      at = 160 * t;
+      this.time.delayedCall(at, () => {
+        this.basicMelee(to, dir, color, t);
+        if (touch) {
+          this.recoil(dst, dir, hit.crit ? 20 : 13, t);
+          this.cameras.main.shake(70, hit.crit ? 0.005 : 0.0025);
+        }
+      });
     }
-    this.time.delayedCall(140 * t, () => this.showHit(hit, false));
+    this.time.delayedCall(at, () => this.showHit(hit, false));
+  }
+
+  /** Le décor s'assombrit pendant une compétence : seuls les combattants et les effets restent éclairés. */
+  private dim(ms: number) {
+    const r = this.add.rectangle(0, 0, W, this.groundTop + ROW_DY[1] + 110, 0x05030f, 0).setOrigin(0).setDepth(5);
+    this.tweens.add({ targets: r, fillAlpha: 0.55, duration: 140, ease: 'Quad.easeOut' });
+    this.tweens.add({ targets: r, fillAlpha: 0, delay: ms, duration: 260, onComplete: () => r.destroy() });
+  }
+
+  /** Le lanceur se charge : rayons de lumière derrière lui, halo autour du dessin, double lumineux qui jaillit. */
+  private charge(v: View, color: number, t: number) {
+    const p = this.chest(v);
+    const rays = this.add.graphics().setDepth(v.body.depth - 1).setPosition(p.x, p.y).setBlendMode(Phaser.BlendModes.ADD);
+    for (let i = 0; i < 14; i++) {
+      const a = (i / 14) * Math.PI * 2, l = i % 2 ? 120 : 165;
+      rays.fillStyle(i % 2 ? 0xffffff : color, i % 2 ? 0.35 : 0.55);
+      rays.fillTriangle(Math.cos(a - 0.07) * 18, Math.sin(a - 0.07) * 18, Math.cos(a + 0.07) * 18, Math.sin(a + 0.07) * 18, Math.cos(a) * l, Math.sin(a) * l);
+    }
+    rays.setScale(0.3).setAlpha(0);
+    this.tweens.add({ targets: rays, scale: 1.25, alpha: 1, angle: 50, duration: 260 * t, ease: 'Cubic.easeOut' });
+    this.tweens.add({ targets: rays, alpha: 0, angle: 90, delay: 300 * t, duration: 300 * t, onComplete: () => rays.destroy() });
+    const s = v.sprite;
+    const ghost = this.add.image(s.x, s.y, s.texture.key).setOrigin(s.originX, s.originY).setFlipX(s.flipX).setScale(v.sx, v.sy)
+      .setTint(color).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.9);
+    v.body.add(ghost);
+    this.tweens.add({ targets: ghost, scaleX: v.sx * 1.4, scaleY: v.sy * 1.4, alpha: 0, delay: 120 * t, duration: 380 * t, ease: 'Cubic.easeOut', onComplete: () => ghost.destroy() });
+    s.setScale(v.sx, v.sy);
+    this.tweens.add({ targets: s, scaleX: v.sx * 1.18, scaleY: v.sy * 1.18, duration: 170 * t, yoyo: true, hold: 80 * t, ease: 'Back.easeOut' });
+    if (s.preFX) {
+      const glow = s.preFX.addGlow(color, 0, 0, false, 0.1, 12);
+      this.tweens.add({ targets: glow, outerStrength: 7, duration: 200 * t, yoyo: true, hold: 500 * t, onComplete: () => s.preFX?.remove(glow) });
+    }
+  }
+
+  /** Bandeau de cinéma (héros) : le héros traverse l'écran dans une bande inclinée avec le nom de sa compétence. */
+  private cutIn(v: View, skillId: string, color: number, t: number) {
+    const y = Math.max(150, this.groundTop - 125), h = 116;
+    const band = this.add.container(W, y).setDepth(2600);
+    const g = this.add.graphics();
+    g.fillStyle(0x0a0818, 0.82).fillPoints([{ x: -60, y: -h / 2 + 16 }, { x: W + 60, y: -h / 2 - 16 }, { x: W + 60, y: h / 2 - 16 }, { x: -60, y: h / 2 + 16 }], true);
+    g.fillStyle(color, 0.35).fillPoints([{ x: -60, y: h / 2 + 2 }, { x: W + 60, y: h / 2 - 30 }, { x: W + 60, y: h / 2 - 16 }, { x: -60, y: h / 2 + 16 }], true);
+    g.lineStyle(4, color, 1).lineBetween(-60, -h / 2 + 16, W + 60, -h / 2 - 16).lineBetween(-60, h / 2 + 16, W + 60, h / 2 - 16);
+    band.add(g);
+    const key = `p-${this.charId(v.unit)}`;
+    if (this.textures.exists(key)) {
+      const img = this.add.image(120, h / 2 + 8, key).setOrigin(0.5, 1);
+      img.setScale(Math.min(200 / img.height, 220 / img.width));
+      band.add(img);
+      this.tweens.add({ targets: img, x: 175, duration: 560 * t });
+    }
+    const name = this.text(W * 0.64, -2, this.skillName(skillId), 40, '#ffe27a');
+    band.add(name);
+    this.tweens.add({ targets: band, x: 0, duration: 150 * t, ease: 'Cubic.easeOut' });
+    this.tweens.add({ targets: band, x: -W, alpha: 0, delay: 430 * t, duration: 160 * t, ease: 'Cubic.easeIn', onComplete: () => band.destroy() });
+    // un trait de lumière balaie l'écran au moment où le bandeau arrive
+    const streak = this.add.rectangle(-80, y, 60, h * 1.6, 0xffffff, 0.7).setDepth(2601).setAngle(-12).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: streak, x: W + 80, duration: 260 * t, ease: 'Quad.easeIn', onComplete: () => streak.destroy() });
+  }
+
+  private skillName(skillId: string) {
+    return t(`skill.${skillId}`);
+  }
+
+  private baseZoom = 0;
+  /** L'impact d'une compétence : éclair de couleur sur tout l'écran, secousse, petit coup de zoom, distorsion. */
+  private punch(color: number, strong: boolean, t: number) {
+    const cam = this.cameras.main;
+    if (!this.baseZoom) this.baseZoom = cam.zoom;
+    const flash = this.add.rectangle(0, 0, W, 2000, color, 0.32).setOrigin(0).setDepth(1900).setBlendMode(Phaser.BlendModes.ADD);
+    this.tweens.add({ targets: flash, fillAlpha: 0, duration: 220 * t, onComplete: () => flash.destroy() });
+    cam.shake(strong ? 260 : 170, strong ? 0.013 : 0.008);
+    this.tweens.add({ targets: cam, zoom: this.baseZoom * 1.035, duration: 70 * t, yoyo: true, ease: 'Quad.easeOut', onComplete: () => cam.setZoom(this.baseZoom) });
+    if (this.renderer.type === Phaser.WEBGL && cam.postFX) {
+      const fx = cam.postFX.addBarrel(1);
+      this.tweens.add({ targets: fx, amount: strong ? 1.1 : 1.06, duration: 90 * t, yoyo: true, ease: 'Quad.easeOut', onComplete: () => cam.postFX.remove(fx) });
+    }
   }
 
   private animateSkill(sourceId: string, skillId: string, hits: Hit[], speed: number) {
     const src = this.views.get(sourceId);
     if (!src) return;
     const hero = src.unit.side === 'hero';
-    this.tweens.add({ targets: src.sprite, scale: src.sprite.scale * 1.25, yoyo: true, duration: 160 / speed });
-    const name = this.text(src.body.x, src.body.y - 130, t(`skill.${skillId}`), 30, hero ? '#ffe27a' : '#ff8a8a').setDepth(2000);
-    this.tweens.add({ targets: name, y: name.y - 40, alpha: 0, delay: 500 / speed, duration: 500 / speed, onComplete: () => name.destroy() });
-    const flash = this.add.circle(src.body.x, src.body.y, 30, hero ? 0xffe27a : 0xff6b6b, 0.6).setDepth(999);
-    this.tweens.add({ targets: flash, scale: 4, alpha: 0, duration: 380 / speed, onComplete: () => flash.destroy() });
-    if (hits.filter((h) => h.kind === 'damage').length > 1) this.cameras.main.shake(180, 0.006);
-    // la chorégraphie de la compétence sur chaque cible touchée (une même image pour toute la compétence)
+    const dir = hero ? 1 : -1;
+    const tm = 1 / speed;
+    const color = hex(ELEMENT_COLOR[src.unit.element]);
+    // 1. le décor s'assombrit, le lanceur se charge ; les héros ont leur bandeau de cinéma
+    this.dim(1250 * tm);
+    this.charge(src, color, tm);
+    let lead: number;
+    if (hero) {
+      this.cutIn(src, skillId, color, tm);
+      lead = 470 * tm;
+    } else {
+      const name = this.text(src.body.x, src.body.y + src.barY - 34, this.skillName(skillId), 30, '#ff8a8a').setDepth(2000);
+      this.tweens.add({ targets: name, y: name.y - 40, alpha: 0, delay: 500 * tm, duration: 500 * tm, onComplete: () => name.destroy() });
+      lead = 260 * tm;
+    }
+    // 2. la chorégraphie de la compétence sur chaque cible touchée (une même image pour toute la compétence)
     const list = SKILL_FX[src.unit.element][src.unit.ranged ? 'ranged' : 'melee'];
     const fxName = list[hash(skillId) % list.length]!;
-    const tm = 1 / speed;
     const from = this.chest(src);
-    let impact = 200 * tm;
-    // au corps à corps, le héros fonce sur sa première cible, frappe, puis revient à sa place
+    let impact = lead + 120 * tm;
+    // au corps à corps, le lanceur fonce sur sa première cible, frappe, puis revient à sa place
     const first = hits.find((h) => h.kind === 'damage' && this.views.get(h.target));
     if (!src.unit.ranged && first) {
-      const tgt = this.views.get(first.target)!, dir = hero ? 1 : -1;
-      this.tweens.add({ targets: src.body, x: tgt.body.x - dir * 85, y: tgt.body.y, duration: 120 * tm, ease: 'Quad.easeOut' });
-      this.tweens.add({ targets: src.body, x: src.homeX, y: this.slotPos(src.unit).y, delay: 520 * tm, duration: 200 * tm, ease: 'Quad.easeInOut' });
+      const tgt = this.views.get(first.target)!;
+      this.tweens.add({ targets: src.body, x: tgt.body.x - dir * 85, y: tgt.body.y, delay: lead - 120 * tm, duration: 120 * tm, ease: 'Expo.easeIn' });
+      this.tweens.add({ targets: src.body, x: src.homeX, y: this.slotPos(src.unit).y, delay: lead + 520 * tm, duration: 220 * tm, ease: 'Quad.easeInOut' });
     }
     const seen = new Set<string>();
     hits.forEach((h) => {
       if (h.kind !== 'damage' || seen.has(h.target)) return;
       const v = this.views.get(h.target);
       if (!v) return;
-      const delay = (120 + seen.size * 70) * tm;
+      const delay = lead + seen.size * 70 * tm;
       seen.add(h.target);
-      const at = this.skillFx.bind(this, fxName, from, this.chest(v), hero ? 1 : -1, tm);
+      const at = this.skillFx.bind(this, fxName, from, this.chest(v), dir, tm);
       // l'impact (et les chiffres) arrive quand l'effet touche : on l'estime avant de lancer
       impact = Math.max(impact, delay + (TRAVEL[fxName] ?? 100) * tm);
       this.time.delayedCall(delay, at);
+      this.time.delayedCall(delay + (TRAVEL[fxName] ?? 100) * tm, () => this.recoil(v, dir, 22, tm));
     });
-    this.time.delayedCall(impact, () => hits.forEach((h) => this.showHit(h, true)));
+    // 3. l'impact : éclair, secousse, zoom, distorsion, puis les chiffres
+    this.time.delayedCall(impact, () => {
+      if (seen.size) this.punch(color, seen.size > 1 || fxName === 'meteor' || fxName === 'lightning', tm);
+      hits.forEach((h) => this.showHit(h, true));
+    });
   }
 
   private showHit(hit: Hit, big: boolean) {

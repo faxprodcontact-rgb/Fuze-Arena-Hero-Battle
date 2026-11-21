@@ -22,7 +22,7 @@ const FIELD_W = 420;
 const FIELD_H = 330;
 const FIELD_GROUND = 50;
 /** Les rangées sont un peu resserrées (×0,85) pour laisser de la place à la liste des héros. */
-const POS: Record<Slot, [number, number]> = { 3: [110, 76], 4: [110, 230], 2: [215, 153], 0: [315, 76], 1: [315, 230] };
+const POS: Record<Slot, [number, number]> = { 3: [75, 76], 4: [75, 230], 2: [175, 153], 0: [275, 76], 1: [275, 230] };
 
 function FieldBackground({ terrain }: { terrain?: Terrain }) {
   // Le décor du combat à venir : la moitié gauche du terrain (côté héros), l'arène à hauteur des postes.
