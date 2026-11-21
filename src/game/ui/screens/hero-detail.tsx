@@ -13,7 +13,7 @@ import { fmt, t } from '../../i18n';
 import { equipBest, levelUp, toggleInFormation, unequipAll } from '../../state/actions';
 import { canLevelUp, gearStatsOf, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import { Btn, Cur, Icon, ItemIcon, Modal, Stars } from '../kit';
+import { Art, Btn, Cur, Icon, ItemIcon, Modal, Stars } from '../kit';
 import { SlotPanel, betterInBag } from './bag';
 import { describePassive, describeSkill, describeTalent } from '../../describe';
 import { runSkillPreview } from '../../skill-scene';
@@ -65,14 +65,14 @@ export function HeroDetail({ uid }: { uid: number }) {
 
   return (
     <Modal title={d.name} wide>
-      <div class="detail-top" style={{ '--rar': RARITY_COLOR[d.rarity] } as never}>
+      <div class="detail-top" style={{ '--rar': RARITY_COLOR[d.rarity], '--el': ELEMENT_COLOR[d.element] } as never}>
         <img class="detail-img" src={heroImage(d.id)} alt="" />
         <div class="detail-info">
           <Stars stars={hero.stars} />
           <div class="tags">
             <span class="tag" style={{ color: RARITY_COLOR[d.rarity] }}>{t(`rarity.${d.rarity}`)}</span>
             <span class="tag">{t(`role.${d.role}`)}</span>
-            <span class="tag" style={{ color: ELEMENT_COLOR[d.element] }}>{t(`element.${d.element}`)}</span>
+            <span class="tag tag-el" style={{ color: ELEMENT_COLOR[d.element] }}><Art name={d.element} size={16} /> {t(`element.${d.element}`)}</span>
           </div>
           <div class="power-chip"><Icon name="power" size={18} />{fmt(heroPower(s, hero))}</div>
         </div>

@@ -3,7 +3,7 @@
 import Phaser from 'phaser';
 import { Battle } from '../core/battle/engine';
 import { ENERGY_MAX, TICK_MS, type Slot, type Unit } from '../core/battle/types';
-import { C, FightScene, W } from './fight-view';
+import { C, FONT, FightScene, W } from './fight-view';
 import { t } from './i18n';
 import { battleLook } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
@@ -53,16 +53,22 @@ export class BattleScene extends FightScene {
     return [...this.req.heroes, ...this.req.waves.flat()];
   }
 
-  private button(x: number, y: number, w: number, h: number, label: string, color: number, onClick: () => void) {
+  /** Un bouton dans le style des menus : contour d'encre, reflet en haut, tranche plus sombre en bas. */
+  private button(x: number, y: number, w: number, h: number, label: string, color: number, onClick: () => void, dark = color, ink = false) {
     const c = this.add.container(x, y).setDepth(4000);
     const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.35);
-    g.fillRoundedRect(-w / 2, -h / 2 + 5, w, h, 16);
+    const r = Math.min(20, h / 2.6);
+    g.fillStyle(C.ink);
+    g.fillRoundedRect(-w / 2 - 4, -h / 2 - 4, w + 8, h + 14, r + 4);
+    g.fillStyle(dark);
+    g.fillRoundedRect(-w / 2, -h / 2, w, h + 5, r);
     g.fillStyle(color);
-    g.fillRoundedRect(-w / 2, -h / 2, w, h, 16);
-    g.fillStyle(0xffffff, 0.16);
-    g.fillRoundedRect(-w / 2 + 6, -h / 2 + 5, w - 12, h * 0.38, 10);
-    const label_ = this.text(0, 0, label, 30);
+    g.fillRoundedRect(-w / 2, -h / 2, w, h - 6, r);
+    g.fillStyle(0xffffff, 0.4);
+    g.fillRoundedRect(-w / 2 + 7, -h / 2 + 5, w - 14, h * 0.26, Math.min(r - 4, h * 0.13));
+    const label_ = ink
+      ? this.add.text(0, -3, label, { fontFamily: FONT, fontSize: `${Math.round(h * 0.42)}px`, color: '#2f2244', fontStyle: 'bold' }).setOrigin(0.5)
+      : this.text(0, -3, label, Math.round(h * 0.42));
     c.add([g, label_]);
     c.setSize(w, h).setInteractive({ useHandCursor: true });
     c.on('pointerdown', () => c.setScale(0.95));
@@ -77,13 +83,17 @@ export class BattleScene extends FightScene {
   create() {
     this.battle = new Battle({ heroes: this.req.heroes, waves: this.req.waves, seed: this.req.seed, auto: getState().auto });
     this.drawArena(780);
-    this.add.rectangle(W / 2, 780 + (H - 780) / 2, W, H - 780, 0x14162b).setDepth(-5);
+    // le bas de l'écran : du papier crème (comme le bas de l'accueil), bordé d'encre et d'or sous le terrain
+    this.add.rectangle(W / 2, 780 + (H - 780) / 2, W, H - 780, C.paper).setDepth(-5);
+    this.add.rectangle(W / 2, 780, W, 12, C.gold).setDepth(1350);
+    this.add.rectangle(W / 2, 773, W, 5, C.ink).setDepth(1351);
+    this.add.rectangle(W / 2, 787, W, 5, C.ink).setDepth(1351);
 
     this.text(W / 2, 60, `${t(`mode.${this.req.kind}`)} ${this.titleSuffix()}`, 32, '#ffe27a').setDepth(3000);
-    this.waveLabel = this.text(W / 2, 104, '', 24, '#a9b0d6').setDepth(3000);
+    this.waveLabel = this.text(W / 2, 104, '', 24, '#ffffff').setDepth(3000);
     this.updateWaveLabel();
     if (this.req.damageMode) this.damageLabel = this.text(W / 2, 160, '0', 44, '#ffe27a').setDepth(3000);
-    this.button(90, 60, 150, 60, t('battle.quit'), C.panelLight, () => this.finish());
+    this.button(92, 58, 150, 56, t('battle.quit'), C.paper, () => this.finish(), C.paper3, true);
 
     for (const u of this.battle.heroes) this.addView(u);
     for (const u of this.battle.enemies) this.addView(u);
@@ -100,16 +110,24 @@ export class BattleScene extends FightScene {
   }
 
   private drawHud() {
+    // le panneau des héros : papier crème, contour d'encre, tranche plus sombre
     const g = this.add.graphics();
-    g.fillStyle(C.panel);
-    g.fillRoundedRect(10, 900, 700, 220, 22);
+    g.fillStyle(C.ink);
+    g.fillRoundedRect(8, 892, 704, 236, 30);
+    g.fillStyle(C.paper3);
+    g.fillRoundedRect(13, 897, 694, 226, 25);
+    g.fillStyle(C.paper);
+    g.fillRoundedRect(13, 897, 694, 216, 25);
+    g.fillStyle(0xffffff);
+    g.fillRoundedRect(22, 903, 676, 16, 8);
     PORTRAIT_ORDER.forEach((slot, i) => {
       const unit = this.battle.heroes.find((h) => h.slot === slot);
       if (!unit) return;
       const x = 90 + i * 135;
       const y = 1000;
       const glow = this.add.circle(x, y, 66, C.energy, 0.35).setVisible(false);
-      const frame = this.add.circle(x, y, 56, 0x14162b).setStrokeStyle(4, 0x3a4180);
+      this.add.circle(x, y, 63, C.ink);
+      const frame = this.add.circle(x, y, 56, 0xbfe4ff).setStrokeStyle(5, 0xffffff);
       const card = `c-${this.charId(unit)}`;
       const img = this.textures.exists(card) ? this.add.image(x, y, card).setDisplaySize(108, 108) : this.add.image(x, y + 4, this.texture(unit)).setScale(0.78);
       const ring = this.add.graphics();
@@ -124,17 +142,17 @@ export class BattleScene extends FightScene {
       const next = ((getState().speed % 3) + 1) as 1 | 2 | 3;
       setSpeed(next);
       speed.label.setText(`×${next}`);
-    });
+    }, C.blueDark);
   }
 
   private drawAuto() {
     const on = getState().auto;
-    const b = this.button(190, 1190, 260, 80, t('battle.auto'), on ? C.green : C.panelLight, () => {
+    const b = this.button(190, 1190, 260, 80, t('battle.auto'), on ? C.green : C.paper, () => {
       setAuto(!on);
       this.battle.setAuto(!on);
       b.c.destroy();
       this.drawAuto();
-    });
+    }, on ? C.greenDark : C.paper3, !on);
   }
 
   update(_time: number, delta: number) {
@@ -153,14 +171,21 @@ export class BattleScene extends FightScene {
       p.img.setAlpha(u.hp > 0 ? 1 : 0.3);
       p.ring.clear();
       if (u.hp <= 0) continue;
-      p.ring.lineStyle(8, ready ? 0xffe27a : C.energy);
+      p.ring.lineStyle(9, ready ? C.gold : C.energy);
       p.ring.beginPath();
-      p.ring.arc(p.x, 1000, 60, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (u.energy / ENERGY_MAX));
+      p.ring.arc(p.x, 1000, 59, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (u.energy / ENERGY_MAX));
       p.ring.strokePath();
-      p.ring.fillStyle(0x000000, 0.6);
-      p.ring.fillRoundedRect(p.x - 52, 1068, 104, 12, 4);
-      p.ring.fillStyle(C.green);
-      p.ring.fillRoundedRect(p.x - 52, 1068, 104 * (u.hp / u.maxHp), 12, 4);
+      p.ring.fillStyle(C.ink);
+      p.ring.fillRoundedRect(p.x - 55, 1072, 110, 18, 8);
+      p.ring.fillStyle(0x5b4d75);
+      p.ring.fillRoundedRect(p.x - 52, 1075, 104, 12, 5);
+      const wHp = 104 * (u.hp / u.maxHp);
+      if (wHp > 1) {
+        p.ring.fillStyle(C.green);
+        p.ring.fillRoundedRect(p.x - 52, 1075, wHp, 12, Math.min(5, wHp / 2));
+        p.ring.fillStyle(0xffffff, 0.35);
+        p.ring.fillRect(p.x - 50, 1076.5, Math.max(0, wHp - 4), 3);
+      }
     }
   }
 
@@ -197,7 +222,7 @@ export function runBattle(parent: HTMLElement, request: BattleRequest, done: (r:
     width: W,
     height: H,
     backgroundColor: '#14162b',
-    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH },
+    scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY },
     scene: [],
   });
   game.scene.add('battle', BattleScene, true, {

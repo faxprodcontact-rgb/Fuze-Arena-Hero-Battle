@@ -16,7 +16,8 @@ import { battleLook, monsterArtId, type Look } from './look';
 
 export const W = 720;
 export const FONT = '"Baloo 2", "Trebuchet MS", "Segoe UI", Roboto, sans-serif';
-export const C = { panel: 0x1f2340, panelLight: 0x2c3260, green: 0x3ccf7a, red: 0xe5484d, blue: 0x4c8dff, energy: 0x4fd1ff, gold: 0xffc94a };
+/** Couleurs de l'interface des combats : les mêmes que les menus (style.css). */
+export const C = { ink: 0x2f2244, paper: 0xfffaf0, paper2: 0xfff1d4, paper3: 0xf3deb0, sky: 0xd9efff, panel: 0xfffaf0, panelLight: 0xffffff, green: 0x45c96b, greenDark: 0x23954a, red: 0xf25757, redDark: 0xc22f3a, blue: 0x4a9bff, blueDark: 0x2467d6, energy: 0x4fc3ff, gold: 0xffc531, goldDark: 0xe0940f };
 
 // Les deux équipes sont bien séparées (230 px entre les deux premières lignes, les rangs du fond assez loin des bords pour ne pas être coupés) : on voit qui fonce sur qui.
 export const HERO_X: Record<Slot, number> = { 3: 82, 4: 82, 2: 163, 0: 245, 1: 245 };
@@ -171,7 +172,8 @@ export abstract class FightScene extends Phaser.Scene {
     return this.add
       .text(x, y, value, { fontFamily: FONT, fontSize: `${size}px`, color, fontStyle: 'bold', align: 'center' })
       .setOrigin(0.5)
-      .setShadow(0, 2, '#000000', 3, false, true);
+      .setStroke('#2f2244', Math.max(4, Math.round(size * 0.2)))
+      .setShadow(0, Math.max(2, Math.round(size * 0.07)), '#2f2244', 0, true, true);
   }
 
   /** Les adversaires d'arène sont des héros : le dessin dépend de ce qu'est le combattant, pas de son camp. */
@@ -321,10 +323,17 @@ export abstract class FightScene extends Phaser.Scene {
       if (v.hp <= 0 && u.hp <= 0) continue;
       const w = v.barW;
       const y = v.barY;
-      g.fillStyle(0x000000, 0.6);
-      g.fillRoundedRect(-w / 2 - 2, y - 2, w + 4, 16, 5);
-      g.fillStyle(u.side === 'hero' ? C.green : C.red);
-      g.fillRoundedRect(-w / 2, y, w * (Math.max(0, v.hp) / u.maxHp), 12, 4);
+      g.fillStyle(C.ink);
+      g.fillRoundedRect(-w / 2 - 3, y - 3, w + 6, 18, 7);
+      g.fillStyle(0x5b4d75);
+      g.fillRoundedRect(-w / 2, y, w, 12, 4);
+      const wHp = w * (Math.max(0, v.hp) / u.maxHp);
+      if (wHp > 1) {
+        g.fillStyle(u.side === 'hero' ? C.green : C.red);
+        g.fillRoundedRect(-w / 2, y, wHp, 12, Math.min(4, wHp / 2));
+        g.fillStyle(0xffffff, 0.35);
+        g.fillRect(-w / 2 + 2, y + 1.5, Math.max(0, wHp - 4), 3);
+      }
       if (u.shield > 0) {
         g.fillStyle(0x9fd8ff, 0.85);
         g.fillRoundedRect(-w / 2, y, Math.min(w, w * (u.shield / u.maxHp)), 6, 3);

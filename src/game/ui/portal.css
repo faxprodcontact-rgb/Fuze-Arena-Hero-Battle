@@ -1,0 +1,49 @@
+/* Le portail d'invocation (portal.tsx) : couleurs et mouvements. */
+.portal { position: relative; flex: none; }
+.portal svg { position: relative; display: block; overflow: visible; }
+/* il flotte : le dessin monte et descend, son ombre au sol rétrécit quand il monte */
+.pt-float { animation: pt-float 3.6s ease-in-out infinite; }
+.pt-shadow { position: absolute; left: 22%; right: 22%; bottom: 0; height: 9%; border-radius: 50%; background: radial-gradient(closest-side, #2f224455, #2f224400); animation: pt-shadow 3.6s ease-in-out infinite; }
+.portal-normal {
+  --p-core: #fdf3ff; --p-mid: #c98bff; --p-deep: #6a3fd6; --p-edge: #2f1f6e; --p-glow: #c79bff;
+  --p-arm-a: #7a52e8; --p-arm-b: #6fe3ff; --p-band: #4a3391; --p-rune: #ffe58a; --p-spark: #ffe58a;
+  --p-ring-hi: #fff0a8; --p-ring: #ffc531; --p-ring-lo: #d98a0b; --p-gem: #ff6fb5;
+}
+.portal-basic {
+  --p-core: #f2fbff; --p-mid: #8fd4ff; --p-deep: #3f86e0; --p-edge: #1c3a7a; --p-glow: #9ad6ff;
+  --p-arm-a: #4a9bff; --p-arm-b: #a9f3ff; --p-band: #2f4f8f; --p-rune: #d6f0ff; --p-spark: #bfeaff;
+  --p-ring-hi: #ffffff; --p-ring: #cfd9ea; --p-ring-lo: #8a97b3; --p-gem: #5fd0ff;
+}
+/* tout ce qui tourne ou bat le fait autour du centre du dessin */
+.pt-halo, .pt-wave, .pt-rays, .pt-swirl, .pt-core, .pt-runes, .pt-ring, .pt-orbit, .pt-spark { transform-box: view-box; transform-origin: 120px 120px; }
+
+.pt-halo { animation: pt-breathe 3.2s ease-in-out infinite; }
+.pt-wave { animation: pt-wave 2.8s ease-out infinite; }
+.pt-wave-2 { animation-delay: -1.4s; }
+.pt-rays { animation: pt-spin 26s linear infinite; }
+.pt-twinkle { transform-box: view-box; animation: pt-twinkle 2.7s ease-in-out infinite; }
+.pt-rune { animation: pt-rune 3.6s ease-in-out infinite; }
+.pt-swirl-a { animation: pt-spin 9s linear infinite; }
+.pt-swirl-b { animation: pt-spin 5.5s linear infinite; }
+.pt-swirl-c { animation: pt-spin 3s linear infinite; }
+.pt-core { animation: pt-beat 1.6s ease-in-out infinite; }
+.pt-core-2 { animation-delay: -0.5s; animation-duration: 2.3s; }
+.pt-runes { animation: pt-spin 30s linear infinite reverse; }
+.pt-ring { animation: pt-spin 44s linear infinite; }
+.pt-orbit { animation: pt-spin 7s linear infinite; }
+.pt-spark { animation: pt-fly 3.6s ease-out infinite; }
+
+@keyframes pt-spin { to { transform: rotate(360deg); } }
+@keyframes pt-breathe { 0%, 100% { transform: scale(0.94); opacity: 0.75; } 50% { transform: scale(1.04); opacity: 1; } }
+@keyframes pt-beat { 0%, 100% { transform: scale(0.82); } 50% { transform: scale(1.14); } }
+@keyframes pt-fly {
+  0% { transform: translate(0, 0) scale(0.2) rotate(0deg); opacity: 0; }
+  15% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(1.15) rotate(160deg); opacity: 0; }
+}
+@keyframes pt-wave { 0% { transform: scale(0.92); opacity: 0.75; } 100% { transform: scale(1.2); opacity: 0; } }
+@keyframes pt-twinkle { 0%, 100% { transform: scale(0.2); opacity: 0; } 50% { transform: scale(1); opacity: 1; } }
+@keyframes pt-rune { 0%, 70%, 100% { opacity: 0.75; } 82% { opacity: 1; stroke: #fff; } }
+@keyframes pt-float { 0%, 100% { transform: translateY(2%); } 50% { transform: translateY(-2%); } }
+@keyframes pt-shadow { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(0.82); opacity: 0.6; } }

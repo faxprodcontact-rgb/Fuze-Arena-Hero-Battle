@@ -5,6 +5,7 @@ import { FRAGMENTS_PER_COPY } from '../../../core/data/stars';
 import { RARITIES, type Hero } from '../../../core/types';
 import { RARITY_COLOR, heroImage } from '../../art';
 import { t } from '../../i18n';
+import { Portal } from '../portal';
 import { adsLeft, claimFragments, newlyFound, summon, summonCost, watchAd } from '../../state/actions';
 import { useGame } from '../../state/store';
 import { Art, Bar, Btn, Cur, HeroCard, Icon, Modal, Stars } from '../kit';
@@ -36,8 +37,8 @@ export function SummonScreen() {
   const owned = Object.entries(s.fragments).filter(([, n]) => n > 0);
   return (
     <div class="screen summon">
-      <section class="card portal">
-        <Art class="portal-altar" name="summonAltar" />
+      <section class="card portal-card">
+        <Portal />
         <h1>{t('summon.normal')}</h1>
         <p class="muted">{t('summon.pity', { n: LEGENDARY_PITY - s.summon.pity })}</p>
         <div class="row gap">
@@ -64,11 +65,14 @@ export function SummonScreen() {
         </div>
       </section>
 
-      <section class="card portal basic">
-        <h2>{t('summon.basic')}</h2>
-        <div class="row gap">
-          <SummonButton kind="basic" count={1} />
-          <SummonButton kind="basic" count={10} />
+      <section class="card portal-card basic">
+        <Portal kind="basic" size={92} />
+        <div class="grow">
+          <h2>{t('summon.basic')}</h2>
+          <div class="row gap">
+            <SummonButton kind="basic" count={1} />
+            <SummonButton kind="basic" count={10} />
+          </div>
         </div>
       </section>
 

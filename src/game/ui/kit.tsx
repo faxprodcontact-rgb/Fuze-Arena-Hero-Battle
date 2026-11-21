@@ -152,10 +152,10 @@ export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; 
   return (
     <Tag
       class={`hcard${p.selected ? ' hcard-on' : ''}${p.dim ? ' hcard-dim' : ''}${p.small ? ' hcard-small' : ''}`}
-      style={{ '--rar': color } as never}
+      style={{ '--rar': color, '--el': ELEMENT_COLOR[d.element] } as never}
       onClick={p.onClick}
     >
-      <span class="hcard-el" style={{ background: ELEMENT_COLOR[d.element] }} />
+      <Art name={d.element} class="hcard-el" />
       <img src={heroImage(d.id)} alt={d.name} />
       <span class="hcard-lv">{p.hero.level}</span>
       <Stars stars={p.hero.stars} />
