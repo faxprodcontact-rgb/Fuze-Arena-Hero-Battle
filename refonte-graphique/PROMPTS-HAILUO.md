@@ -389,3 +389,84 @@ Hailuo, tête agrandie ×1,3 (le bras et le lotus gardés à leur place).
 ```
 Redraw image 1 as 2D mobile RPG character art in the drawing style of image 2. The sheet shows the same dancer three times: draw three versions of her, one per figure, nothing else; the right part of the sheet stays EMPTY white. Keep her outfit, colors, golden spired tiara, pink lotus, pink veils and pose: full body, three-quarter view facing right. Give her the same head size, proportions and finish as the heroes of image 2: chibi proportions, simple clean shapes, one bold dark outline, bright vibrant colors, cel shading, light from top right. She has exactly two arms and two hands: one arm raises a pink lotus, the other is bent with its hand at her chest; her veils hang behind her and no hand holds them. Not realistic, no soft watercolor painting, no fine detail. Pure white background, soft shadow under feet. No text, frames, scenery, extra limbs; nothing cropped, the three figures never touch.
 ```
+
+## Dernières planches (21/11/2026) : tout ce qui manquait
+
+Croquis : `node refonte-graphique/planches-fin.cjs equipements|effets|boutique|guilde|defense|logo|monde sortie.png`
+(donjons : `node refonte-graphique/terrains-ia.cjs 5 sortie.png 16:9`). Références : `reference-style-objets.jpg`
+(pictos Hailuo déjà rendus), `reference-style-terrains.jpg`, `reference-style-personnages.jpg`.
+
+### 13 — Équipements : 4 sortes × 6 raretés — `equipements.png` (référence : objets)
+
+```
+Redraw image 1 as 2D mobile RPG equipment icons in the drawing style of image 2. Keep EXACTLY the same 24 items in the same 7x4 grid and order, one per cell, none added or removed; the last column stays EMPTY white.
+Rows: sword | chest armor | knight helmet | boots. The 6 columns are 6 rarities, each clearly richer than the one before, keeping the main color of the sketch: 1 grey: plain iron and worn leather | 2 green: sturdy steel with green cloth and bronze | 3 blue: polished steel, blue enamel, a small gem | 4 purple: ornate, purple magic runes, violet gem | 5 gold: golden with gems, horns or small wings, soft golden glow | 6 red: legendary crimson and gold, flame details, ruby, red glow.
+Same item shape along each row so the four kinds stay easy to recognize.
+Style: cartoon game icons, chunky simple shapes readable at small size, crisp bold dark outline, cel shading, glossy highlights, bright saturated colors, light from top right, slight 3D volume. Not realistic. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind items; nothing cropped, items never touch.
+```
+
+### 14 — Panoplies, effets en combat, ligues de l'arène, dos de carte — `effets.png` (référence : objets)
+
+```
+Redraw image 1 as 2D mobile RPG game icons in the drawing style of image 2. Keep EXACTLY the same 25 icons in the same 7x4 grid and order, one per cell, none added or removed; the last three cells stay EMPTY white. The sketch uses emoji only to show the idea: repaint each as a real game icon, not an emoji.
+Row 1: five round gear-set emblems: fury (flaming sword) | rampart (stone tower) | storm (lightning bolt) | vampire (bat with a red drop) | guard (golden shield); then status icons: burning flame | green poison bubbles.
+Row 2: red droplets (bleed) | green leaf with a plus (regeneration) | yellow stars circling (stun) | zipped mouth (silence) | blue snail (slow) | red exclamation mark (taunt) | sword with a green up arrow.
+Row 3: sword with a red down arrow | shield with a green up arrow | shield with a red down arrow | boot with a green up arrow | target with a green up arrow | arena league badges: bronze | silver.
+Row 4: gold badge | platinum badge | diamond badge (each league badge a winged shield, richer at each rank) | back of a hero card: dark blue card with gold border and a gold star emblem.
+Style: cartoon game icons, chunky simple shapes readable at small size, crisp bold dark outline, cel shading, glossy highlights, bright saturated colors, light from top right, slight 3D volume. Not realistic. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind items; nothing cropped, items never touch.
+```
+
+### 15 — Offres de la boutique, missions, autel d'invocation — `boutique.png` (référence : objets)
+
+```
+Redraw image 1 as 2D mobile RPG shop and mission illustrations in the drawing style of image 2. Keep EXACTLY the same 16 items in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. The sketch uses emoji only to show the idea: repaint each as a real game icon, not an emoji.
+Row 1, shop offers: starter pack: small gift box with pink gems | growth pack: magic sapling with gems | monthly card: golden card with sparkles | battle pass: purple ticket with a gold star | no ads: small screen crossed out by a red circle | small handful of pink gems.
+Row 2: pile of pink gems | gold bag full of gems | huge mountain of pink gems | missions: patrol: lantern and boots on a path | escort: covered wagon with a horse | ruins: broken stone columns with an old scroll.
+Row 3: hunt: bow and arrow with deer antlers | relic: glowing ancient vase | siege: wooden ladder against a castle wall | summon altar: stone altar with a glowing magic circle and a floating crystal orb.
+Style: cartoon game icons, chunky simple shapes readable at small size, crisp bold dark outline, cel shading, glossy highlights, bright saturated colors, light from top right, slight 3D volume. Not realistic. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind items; nothing cropped, items never touch.
+```
+
+### 16 — Fonds des 3 donjons : mine d'or, source d'essence, armurerie — `donjons.png` (référence : terrains)
+
+```
+Redraw image 1, in the drawing style of image 2, as 3 separate vertical battle backgrounds for a 2D mobile RPG, side by side, same order, same layout, separated by thin black gaps; the black strip at the bottom stays EMPTY black. Art style: stylized cartoon mobile-game background art like Hero Wars battle maps: clean bold shapes, crisp dark outlines around objects, bright saturated colors, simple cel shading with soft gradients, chunky simplified props, clear silhouettes. NOT realistic, NOT photographic, no fine texture noise, no murky colors. Keep each scene's composition: back wall and scenery in the top half, flat open ground in the bottom half with a round battle circle in the center left completely clear for the fighters; props only on the left and right edges. Front view, from slightly above. No characters, creatures, people, text, UI, frames.
+Left: gold mine cave: wooden mine entrance and beams, mine rails going off to the left, cart full of gold, gold nuggets, lanterns.
+Middle: magic essence spring: dark cave, glowing turquoise pool, beam of light from above, teal and violet crystals, glowing drops.
+Right: castle armory hall: stone walls with weapon racks, spears and maces, red banners, anvil and glowing forge at the sides.
+```
+
+### 17 — Cartes du mode Défense (prairie, désert, neige) — `defense.png` (référence : terrains)
+
+```
+Redraw image 1, in the drawing style of image 2, as 3 separate top-down maps for the tower defense mode of a 2D mobile RPG, side by side, separated by black gaps; the black strip at the bottom stays EMPTY black. Top-down view, straight from above. Keep EXACTLY the same winding road, the same 9 round stone platforms and the same places: the road enters at the top left and ends at the bottom, where a small camp tent stands; never move, add or remove a platform or a turn of the road. Platforms: round flat stone pads, empty, all alike.
+Left: green meadow, dirt road, bushes, flowers, small rocks.
+Middle: desert canyon, sandy road, cacti, sandstone rocks, dry bushes.
+Right: snowy forest, icy road, snowy pine trees, ice crystals.
+Decor only away from the road and the platforms. Stylized cartoon mobile-game map art, clean bold shapes, crisp dark outlines, bright saturated colors, cel shading. Not realistic. No characters, creatures, text, UI, frames.
+```
+
+### 18 — Icône de l'application, logo, écran de chargement — `logo.png` (référence : personnages)
+
+```
+Redraw image 1 in the drawing style of image 2 as 3 separate pieces of art for a bright medieval-fantasy mobile RPG, on a white background, same places as the sketch.
+Left: the app icon: rounded square, close-up of the same Roman legionary hero (red crested helmet, sword, black shield with glowing cracks), determined look, warm orange sunset background. No text on the icon.
+Middle: the game logo: the words FUZE ARENA in big chunky golden letters with a dark outline and a light 3D bevel, HERO BATTLE on a red ribbon below, two crossed swords behind. Spell the text exactly: FUZE ARENA and HERO BATTLE.
+Right: vertical loading screen: the same five heroes posing together, heroic and joyful, on a grassy hill at sunset; keep the top third as empty sky (the logo is added later) and an empty band at the bottom (for the loading bar). No text on this one.
+Style: stylized cartoon game art, chibi heroes, one bold dark outline per character, bright vibrant colors, cel shading, light from top right. Not realistic. Nothing cropped, the three pieces never touch.
+```
+
+### 19 — Emblèmes de guilde et guide du tutoriel (hibou) — `guilde.png` (référence : personnages)
+
+```
+Redraw image 1 as 2D mobile RPG guild emblems and a guide character in the drawing style of image 2. Keep EXACTLY the same 16 items in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. The sketch uses emoji only to show the idea: repaint each in the game style, not as an emoji.
+Rows 1 and 2: 12 guild emblems, each a round heraldic badge with a colored background and a gold rim: lion | wolf | dragon | eagle | phoenix | octopus | oak tree | axe | crown | crescent moon | sun | anchor.
+Row 3: the tutorial guide, a small friendly owl wizard with a scholar cap and a tiny book, the same owl four times: explaining | happy | pointing to the right with a wing | surprised.
+Style: cartoon game icons, chunky simple shapes readable at small size, crisp bold dark outline, cel shading, glossy highlights, bright saturated colors, light from top right, slight 3D volume. Not realistic. Centered, same size. Pure white background. No text, no letters, no numbers, no frames; nothing cropped, items never touch.
+```
+
+### 20 — Carte du monde de la campagne — `monde.png` (référence : terrains)
+
+```
+Redraw image 1, in the drawing style of image 2, as one illustrated world map for the campaign of a 2D mobile RPG, seen from above like a fantasy board game, keeping the same layout. One big island in a blue sea; eight regions linked by a dotted golden path, in this order: sunny meadow with windmills (bottom left) | bramble forest | swamp bayou with cypress trees | ash savanna with a volcano | frozen tundra with snowy mountains | storm peaks with lightning | desert with a bronze temple | deep sea coast with a whirlpool (right). A tall magic tower stands in the middle of the island.
+Stylized cartoon game map: clean bold shapes, crisp dark outlines, bright saturated colors, cel shading, small cute landmarks, soft waves around the island. The bottom right corner stays open sea. Not realistic. No text, no labels, no characters, no frames.
+```
