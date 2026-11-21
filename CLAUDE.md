@@ -130,6 +130,11 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   garder cet ordre, sinon les nuages passent devant le château. Tuiles : une vraie petite scène par mode dans `tile-scene.tsx`
   (nuit et mer de nuages, route et fanion, grotte et cristaux, antre et lave, colonnes et bannières, arcades du Colisée).
   C'est le niveau de dessin attendu pour les prochaines parties (Héros, Invocation, Guilde, Accueil).
+  Relu par un regard neuf puis corrigé (v0.31.1). Leçons à garder pour les prochains décors : **sous une grille de tuiles ou
+  de cartes, le décor reste calme** (collines seules ; chemin, rivière et arbres coupés par les tuiles font du bruit) ; tout
+  élément est posé (ombre courte à gauche, pied qui mord dans l'herbe) ; raccords par une lisière de forêt (`forest`), pas par
+  des bandes de brume ; faces à l'ombre bleu-violet, faces éclairées tiédies ; signes inventés (`GLYPHS`), jamais de lettres ;
+  l'anneau des tuiles passe derrière leur décor.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier
