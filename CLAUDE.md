@@ -195,6 +195,12 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   au héros) ; volcan et soleil décentrés, jamais dans l'axe du héros ; un astre différent par décor ; ne jamais cacher un
   `TitleBanner` par `display: none` (ses dégradés ont les mêmes identifiants : les autres bandeaux se vident) ; la grille de
   l'application a `minmax(0, 1fr)` pour ne plus déborder à droite sur petit téléphone.
+  v0.35.1 (retours du propriétaire, « c'est très bien ») : sur la page d'un héros, **le panneau du bas se déploie vers le haut**
+  (glisser vers le haut ou toucher la poignée `.hp-grab` ; `.hp-panel.tall`, 76 % de l'écran, par-dessus la scène sans la
+  déplacer ; glisser vers le bas le referme) ; **plateau de la section refait** (`Board` de `screens/prep.tsx`) : ce n'est plus
+  le terrain du combat mais l'estrade de la salle des héros vue de près, faite pour les cinq postes (`POS` : deux à l'arrière,
+  le chef au centre sur sa dalle d'or, deux à l'avant), une dalle par poste (`Plate`, « + » sur un poste vide), le tracé de
+  la formation serti d'or, trois chevrons vers l'avant, deux braseros. Vérifier avec `scratchpad/art5/her4.cjs`.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

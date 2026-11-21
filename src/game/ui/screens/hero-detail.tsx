@@ -100,6 +100,24 @@ export function HeroDetail({ uid }: { uid: number }) {
   const s = useGame();
   const [tab, setTab] = useState<PanelTab>('stats');
   const [gearSlot, setGearSlot] = useState<GearSlot>(GEAR_SLOTS[0]!);
+  // Le panneau du bas se déploie vers le haut (glisser vers le haut, ou toucher sa poignée) pour lire plus à l'aise.
+  const [tall, setTall] = useState(false);
+  const body = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ y: number; top: number } | null>(null);
+  const atTop = () => (body.current?.scrollTop ?? 0) <= 0;
+  const dragStart = (e: TouchEvent) => { drag.current = { y: e.touches[0]!.clientY, top: body.current?.scrollTop ?? 0 }; };
+  const dragEnd = (e: TouchEvent) => {
+    const d = drag.current;
+    drag.current = null;
+    if (!d) return;
+    const dy = e.changedTouches[0]!.clientY - d.y;
+    if (dy < -28) setTall(true);
+    else if (dy > 44 && d.top <= 0 && atTop()) setTall(false);
+  };
+  const wheel = (e: WheelEvent) => {
+    if (e.deltaY > 0) setTall(true);
+    else if (e.deltaY < 0 && atTop()) setTall(false);
+  };
   const hero = heroByUid(s, uid);
   // Un niveau gagné : un éclair monte du piédestal.
   const seen = useRef({ uid, level: hero?.level ?? 0 });
@@ -172,13 +190,15 @@ export function HeroDetail({ uid }: { uid: number }) {
         </div>
       </div>
 
-      <div class="hp-panel">
+      <div class="hp-panel-slot">
+      <div class={`hp-panel${tall ? ' tall' : ''}`} onTouchStart={dragStart} onTouchEnd={dragEnd} onWheel={wheel}>
+        <button class="hp-grab" aria-label={tall ? '▼' : '▲'} onClick={() => setTall(!tall)}><i /></button>
         <Tabs value={tab} onChange={setTab} options={[
           ['stats', t('detail.tabStats'), inTeam && canLevelUp(s, hero)],
           ['skills', t('detail.skill')],
           ['gear', t('detail.equip'), GEAR_SLOTS.some((g) => betterInBag(s, uid, g))],
         ]} />
-        <div class="hp-body">
+        <div class="hp-body" ref={body}>
           {tab === 'stats' && (
             <>
               <div class="hp-level">
@@ -236,6 +256,7 @@ export function HeroDetail({ uid }: { uid: number }) {
             </>
           )}
         </div>
+      </div>
       </div>
     </div>
   );
