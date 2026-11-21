@@ -470,3 +470,27 @@ Style: cartoon game icons, chunky simple shapes readable at small size, crisp bo
 Redraw image 1, in the drawing style of image 2, as one illustrated world map for the campaign of a 2D mobile RPG, seen from above like a fantasy board game, keeping the same layout. One big island in a blue sea; eight regions linked by a dotted golden path, in this order: sunny meadow with windmills (bottom left) | bramble forest | swamp bayou with cypress trees | ash savanna with a volcano | frozen tundra with snowy mountains | storm peaks with lightning | desert with a bronze temple | deep sea coast with a whirlpool (right). A tall magic tower stands in the middle of the island.
 Stylized cartoon game map: clean bold shapes, crisp dark outlines, bright saturated colors, cel shading, small cute landmarks, soft waves around the island. The bottom right corner stays open sea. Not realistic. No text, no labels, no characters, no frames.
 ```
+
+## Rattrapage des dernières planches (21/11/2026)
+
+Rendus gardés : `hailuo-v1/fin-*.jpg` (équipements, effets, boutique, guilde, logo, donjons ; `fin-defense.jpg` ne
+servira pas : le mode Défense est remplacé par le Colisée ; `fin-monde-v1.jpg` refusé : paysages mélangés).
+
+### 21 — silence, provocation, badge platine, Colisée, hibou — `rattrapage-fin.png` (référence : objets)
+
+```
+Redraw image 1 as 2D mobile RPG game icons in the drawing style of image 2. Keep EXACTLY 8 items in the same 5x2 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Change each one as described:
+1. silence: purple speech bubble crossed by a red slash.
+2. taunt: red war horn blowing, with orange sound waves.
+3. platinum league badge: same winged shield shape, pale silver-white metal with teal trim and a white pearl in the middle.
+4. colosseum: round stone amphitheater with two rows of arches, two red banners on top, warm sandstone.
+5 to 8: the same owl guide four times, identical design in all four: brown owl, black scholar cap with gold tassel, ROUND GOLD GLASSES ON ALL FOUR, red book; wings end in feathers, never hands or fingers. 5 explaining with one wing tip raised | 6 happy, eyes closed, big smile | 7 pointing to the right with a wing tip | 8 surprised, wide eyes.
+Style: cartoon game icons, chunky simple shapes, crisp bold dark outline, cel shading, glossy highlights, bright saturated colors, light from top right. Not realistic. Centered, same size. Pure white background. No text, no letters, no numbers, no frames; nothing cropped, items never touch.
+```
+
+### 22 — carte des régions v2 — `node refonte-graphique/planches-fin.cjs monde2 sortie.png` (référence : terrains)
+
+```
+Redraw image 1, in the drawing style of image 2, as one level select screen for a 2D mobile RPG, seen from high above, keeping EXACTLY the same layout: eight separate round plateaus with brown cliff sides standing in calm blue water, linked by short wooden bridges in a zigzag, and a tall magic tower on a small rock in the middle. Each plateau has ONE landscape only, filling it from edge to edge, with one big landmark in its center; nothing from one plateau spills onto another. Bottom row, left to right: sunny meadow with a windmill and wheat | green forest with big round trees and thorny brambles | swamp with cypress trees and lily pads | dry savanna with a small smoking volcano. Top row, right to left: snowy mountains with pine trees | rocky peaks under dark clouds with a lightning bolt | sandy desert with a bronze temple | rocky shore with a whirlpool.
+Style: stylized cartoon game art, few big chunky shapes, crisp bold dark outlines, bright saturated colors, cel shading, no tiny details. Not realistic. No text, no labels, no characters, no frames.
+```

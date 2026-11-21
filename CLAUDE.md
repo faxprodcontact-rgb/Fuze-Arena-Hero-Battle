@@ -97,6 +97,8 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   ouverte découpée dans la silhouette, membres attachés sous le corps, et **un seul contour par créature** (ombres
   douces aux jonctions, jamais un contour par morceau : pas d'effet « formes posées les unes sur les autres »).
   Pas encore branchés dans le vrai jeu.
+- **Décidé le 21/11/2026 : le mode Défense (tower defense) est retiré**, remplacé par le **Colisée** : duel 1 contre 1 entre
+  deux équipes de 3 héros qui entrent chacun leur tour ; il réutilise les fonds existants (picto à venir de Hailuo).
 - Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 

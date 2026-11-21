@@ -139,6 +139,21 @@ function worldSheet() {
     <svg style="position:absolute;left:1700px;top:640px" width="420" height="640" viewBox="0 0 100 150"><path d="M30 150 L36 40 L64 40 L70 150 Z" fill="#b8b0c8" stroke="#2a2238" stroke-width="4"/><path d="M26 40 L50 6 L74 40 Z" fill="#6a4ad0" stroke="#2a2238" stroke-width="4"/><rect x="44" y="60" width="12" height="18" fill="#2a2238"/><rect x="44" y="100" width="12" height="18" fill="#2a2238"/></svg>`;
 }
 
+
+// carte du monde v2 : 8 plateaux bien séparés (un seul paysage chacun), reliés par des ponts, en zigzag ; la Tour au milieu
+function worldSheet2() {
+  const R = [[520, 1640, '#8fd06a', '🌾'], [1420, 1700, '#3e8a2a', '🌳'], [2320, 1700, '#4a8a6a', '🐊'], [3220, 1600, '#d88a4a', '🌋'],
+    [3220, 620, '#eef6ff', '🏔️'], [2320, 520, '#7a7a9a', '⛈️'], [1420, 520, '#f0c070', '🏛️'], [520, 620, '#2a8aaa', '🌀']];
+  const plat = R.map(([x, y, col, e]) => `<div style="position:absolute;left:${x - 360}px;top:${y - 280}px;width:720px;height:560px;border-radius:50%;background:#8a6a4a;border:12px solid ${INK}"></div>
+    <div style="position:absolute;left:${x - 360}px;top:${y - 330}px;width:720px;height:520px;border-radius:50%;background:${col};border:12px solid ${INK};display:flex;align-items:center;justify-content:center;font-size:260px">${e}</div>`).join('');
+  const bridges = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7]].map(([a, b]) => {
+    const [x1, y1] = R[a], [x2, y2] = R[b], mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - 40, len = Math.hypot(x2 - x1, y2 - y1) - 680, ang = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+    return `<div style="position:absolute;left:${mx - len / 2}px;top:${my - 45}px;width:${len}px;height:90px;background:repeating-linear-gradient(90deg,#c89858 0 50px,#8a6236 50px 60px);border:10px solid ${INK};transform:rotate(${ang}deg)"></div>`;
+  }).join('');
+  return `<div style="position:absolute;inset:0;background:#4aa8d8"></div>${bridges}${plat}
+    <svg style="position:absolute;left:1700px;top:700px" width="440" height="720" viewBox="0 0 100 160"><ellipse cx="50" cy="150" rx="48" ry="10" fill="#8a6a4a" stroke="#2a2238" stroke-width="3"/><path d="M30 150 L36 40 L64 40 L70 150 Z" fill="#b8b0c8" stroke="#2a2238" stroke-width="4"/><path d="M26 40 L50 6 L74 40 Z" fill="#6a4ad0" stroke="#2a2238" stroke-width="4"/><rect x="44" y="60" width="12" height="18" fill="#2a2238"/><rect x="44" y="100" width="12" height="18" fill="#2a2238"/></svg>`;
+}
+
 let body;
 if (SHEETS[which]) {
   const { cols, rows, cells } = SHEETS[which], cw = W / cols, ch = H / rows;
@@ -146,6 +161,7 @@ if (SHEETS[which]) {
 } else if (which === 'defense') body = defenseSheet();
 else if (which === 'logo') body = logoSheet();
 else if (which === 'monde') body = worldSheet();
+else if (which === 'monde2') body = worldSheet2();
 else throw new Error('planche inconnue : ' + which);
 const bg = which === 'defense' ? '#000' : '#fff';
 const html = `<html><head><style>body{margin:0;width:${W}px;height:${H}px;position:relative;background:${bg};overflow:hidden;font-family:'Noto Color Emoji',sans-serif}
