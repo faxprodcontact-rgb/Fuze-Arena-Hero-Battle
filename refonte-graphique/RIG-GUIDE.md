@@ -69,3 +69,6 @@ pendant les combats (repos, attaque de base, attaque spéciale). Exemple fini : 
 ## Lancer tout
 
 `python3 refonte-graphique/rig.py tout` puis `python3 refonte-graphique/art-jeu.py` (met à jour `src/game/art-meta.ts`).
+
+Le corps et les morceaux d'un personnage sont regroupés dans **une seule image** `public/art/r/<id>.webp` (moins de
+fichiers à télécharger) ; la place de chaque morceau dans cette image est dans `rig-out/<id>.json` (`base`, `ax`, `ay`).

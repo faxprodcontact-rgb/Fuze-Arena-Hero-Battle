@@ -17,7 +17,7 @@
 #
 # Sortie : public/art/r/<id>/<morceau>.webp + base.webp, et refonte-graphique/rig-out/<id>.json (pour art-jeu.py).
 # Planche de contrôle : refonte-graphique/rig-out/<id>.png : [contours | corps rebouché | repos | élan | coup | spéciale].
-import json, os, sys
+import json, os, shutil, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
@@ -170,8 +170,37 @@ def build(cid):
     meta = {'size': list(img.size), 'parts': parts}
     os.makedirs(OUT_META, exist_ok=True)
     json.dump(meta, open(os.path.join(OUT_META, cid + '.json'), 'w'), indent=1)
+    pack(cid)
     sheet(cid, img, Image.fromarray(base.astype(np.uint8), 'RGBA'), [(p, Image.fromarray(l.astype(np.uint8), 'RGBA')) for p, l in layers], spec)
     print(cid, 'ok :', ', '.join(f"{p['n']}({p['k']})" for p in parts))
+
+
+def pack(cid):
+    """Regroupe le corps et les morceaux d'un personnage dans UNE image (public/art/r/<id>.webp) : un seul fichier à
+    télécharger. Le corps est rogné à sa partie visible ; la place de chaque morceau dans l'image va dans rig-out/<id>.json
+    (base : [x, y, l, h, ax, ay] = place dans le dessin puis dans l'image regroupée ; morceaux : ax, ay)."""
+    d = os.path.join(PUB, 'art', 'r', cid)
+    meta = json.load(open(os.path.join(OUT_META, cid + '.json')))
+    base = Image.open(os.path.join(d, 'base.webp')).convert('RGBA')
+    bb = base.getbbox()
+    base = base.crop(bb)
+    ims = [Image.open(os.path.join(d, q['n'] + '.webp')).convert('RGBA') for q in meta['parts']]
+    G = 2  # marge entre les morceaux
+    col_h = max([base.height] + [i.height for i in ims])
+    x, y, cw, pos = base.width + G, 0, 0, []
+    for im in ims:  # en colonnes à droite du corps
+        if y and y + im.height > col_h:
+            x, y, cw = x + cw + G, 0, 0
+        pos.append((x, y)); y += im.height + G; cw = max(cw, im.width)
+    W = max(base.width, max([px + im.width for (px, _), im in zip(pos, ims)] or [0]))
+    atlas = Image.new('RGBA', (W, col_h), (0, 0, 0, 0))
+    atlas.paste(base, (0, 0))
+    for (px, py), im, q in zip(pos, ims, meta['parts']):
+        atlas.paste(im, (px, py)); q['ax'], q['ay'] = px, py
+    meta['base'] = [bb[0], bb[1], base.width, base.height, 0, 0]
+    atlas.save(os.path.join(PUB, 'art', 'r', cid + '.webp'), 'WEBP', quality=88, method=6)
+    json.dump(meta, open(os.path.join(OUT_META, cid + '.json'), 'w'), indent=1)
+    shutil.rmtree(d)
 
 
 def pose(img_size, base, layers, feet, phase):
@@ -239,6 +268,9 @@ if __name__ == '__main__':
     if a[0] == 'grille':
         for cid in a[1:]:
             grid(cid)
+    elif a[0] == 'regrouper':  # anciens dossiers public/art/r/<id>/ → une image par personnage
+        for cid in sorted(f for f in os.listdir(os.path.join(PUB, 'art', 'r')) if os.path.isdir(os.path.join(PUB, 'art', 'r', f))):
+            pack(cid)
     else:
         ids = sorted(f[:-5] for f in os.listdir(SPEC) if f.endswith('.json')) if a[0] == 'tout' else a
         for cid in ids:

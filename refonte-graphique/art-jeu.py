@@ -37,7 +37,7 @@ rigs = {}
 RO = os.path.join(ROOT, 'rig-out')
 if os.path.isdir(RO):
     for f in sorted(os.listdir(RO)):
-        if f.endswith('.json') and f[:-5] in chars and os.path.isdir(os.path.join(ART, 'r', f[:-5])):
+        if f.endswith('.json') and f[:-5] in chars and os.path.isfile(os.path.join(ART, 'r', f[:-5] + '.webp')):
             rigs[f[:-5]] = json.load(open(os.path.join(RO, f)))
 meta = {
     'rigs': rigs,

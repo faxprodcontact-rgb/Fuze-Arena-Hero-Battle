@@ -67,7 +67,7 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   v0.25.0 : **les 144 personnages sont découpés en morceaux** (tête, bras armé + arme, bouclier, ailes, queue…) qui tournent
   autour de leurs articulations (repos, attaque, spéciale). Méthode et contrôle : `refonte-graphique/RIG-GUIDE.md` ; un
   fichier par personnage `refonte-graphique/rig/<id>.json` ; `python3 refonte-graphique/rig.py <id>` (ou `tout`) fabrique
-  `public/art/r/<id>/` (corps rebouché `base.webp` + morceaux) et la planche de contrôle `rig-out/<id>.png` ; puis
+  `public/art/r/<id>.webp` (corps rebouché + morceaux regroupés dans une seule image) et la planche de contrôle `rig-out/<id>.png` ; puis
   `art-jeu.py` (champ `rigs` de `art-meta.ts`). Dans le combat : `addView` / `animateParts` de `fight-view.ts`
   (`act` = attaque ou spéciale en cours).
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.

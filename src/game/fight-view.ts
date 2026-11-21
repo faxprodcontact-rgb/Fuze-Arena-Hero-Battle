@@ -70,8 +70,9 @@ const UNIT_PX = 0.56;
 const FEET = 47;
 
 type FxName = keyof typeof ART_META.fx;
-type RigPart = { n: string; k: string; x: number; y: number; w: number; h: number; px: number; py: number; s: readonly number[]; m: readonly number[]; b: number; i: number };
-const RIGS = ART_META.rigs as unknown as Record<string, { size: readonly number[]; parts: readonly RigPart[] }>;
+type RigPart = { n: string; k: string; x: number; y: number; w: number; h: number; px: number; py: number; s: readonly number[]; m: readonly number[]; b: number; i: number; ax: number; ay: number };
+// base : [x, y, largeur, hauteur, ax, ay] = place du corps dans le dessin, puis dans l'image regroupée (art/r/<id>.webp)
+const RIGS = ART_META.rigs as unknown as Record<string, { size: readonly number[]; base: readonly number[]; parts: readonly RigPart[] }>;
 const ease = {
   out: (t: number) => 1 - (1 - t) ** 3,
   inOut: (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2),
@@ -142,8 +143,7 @@ export abstract class FightScene extends Phaser.Scene {
       const id = this.charId(u);
       const rig = RIGS[id];
       if (rig) {
-        if (!this.textures.exists(`r-${id}-base`)) this.load.image(`r-${id}-base`, `art/r/${id}/base.webp`);
-        for (const p of rig.parts) if (!this.textures.exists(`r-${id}-${p.n}`)) this.load.image(`r-${id}-${p.n}`, `art/r/${id}/${p.n}.webp`);
+        if (!this.textures.exists(`r-${id}`)) this.load.image(`r-${id}`, `art/r/${id}.webp`);
       }
       if (hasArt(id) && (!rig || HERO_IDS.has(u.defId)) && !this.textures.exists(`p-${id}`)) this.load.image(`p-${id}`, artUrl(id));
       if (hasArt(id) && HERO_IDS.has(u.defId) && !this.textures.exists(`c-${id}`)) this.load.image(`c-${id}`, cardUrl(id));
@@ -213,19 +213,26 @@ export abstract class FightScene extends Phaser.Scene {
     let barY: number;
     const barW = unit.boss ? 130 : 86;
     const rig = RIGS[id];
-    if (hasArt(id) && (this.textures.exists(`p-${id}`) || (rig && this.textures.exists(`r-${id}-base`)))) {
+    if (hasArt(id) && (this.textures.exists(`p-${id}`) || (rig && this.textures.exists(`r-${id}`)))) {
       // dessin Hailuo : les pieds (point 106, 228 du repère) sur la ligne de sol
       const [ox, oy, w, h, sc] = ART_META.chars[id as keyof typeof ART_META.chars];
       const k = UNIT_PX * Math.max(0.85, Math.min(1.35, sc)) * (unit.boss ? (this.bigBoss ? 1.45 : 1.12) : 1);
       fig.setPosition(0, FEET);
-      if (rig && this.textures.exists(`r-${id}-base`)) {
-        // découpé en morceaux : le corps, puis chaque morceau posé sur son articulation (ceux « derrière » avant le corps)
+      if (rig && this.textures.exists(`r-${id}`)) {
+        // découpé en morceaux : le corps, puis chaque morceau posé sur son articulation (ceux « derrière » avant le corps).
+        // Tout est dans une seule image : on y repère une fois la place de chaque morceau.
+        const key = `r-${id}`, tex = this.textures.get(key);
+        const [bx, by, bw, bh, bax, bay] = rig.base as unknown as [number, number, number, number, number, number];
+        if (!tex.has('base')) {
+          tex.add('base', 0, bax, bay, bw, bh);
+          for (const p of rig.parts) tex.add(p.n, 0, p.ax, p.ay, p.w, p.h);
+        }
         const [W0, H0] = rig.size as [number, number];
         const u = (w * k) / W0, fx = ((106 - ox) / w) * W0, fy = ((228 - oy) / h) * H0;
         const inner = this.add.container(-fx * u, -fy * u).setScale(u);
-        const base = this.add.image(0, 0, `r-${id}-base`).setOrigin(0);
+        const base = this.add.image(bx, by, key, 'base').setOrigin(0);
         const mk = (p: RigPart) => {
-          const img = this.add.image(p.px, p.py, `r-${id}-${p.n}`).setOrigin((p.px - p.x) / p.w, (p.py - p.y) / p.h);
+          const img = this.add.image(p.px, p.py, key, p.n).setOrigin((p.px - p.x) / p.w, (p.py - p.y) / p.h);
           parts.push({ img, p });
           return img;
         };
@@ -340,7 +347,7 @@ export abstract class FightScene extends Phaser.Scene {
     for (const ch of c.list) {
       if (ch instanceof Phaser.GameObjects.Container) out.add(this.cloneFig(ch));
       else if (ch instanceof Phaser.GameObjects.Image) {
-        out.add(this.add.image(ch.x, ch.y, ch.texture.key).setOrigin(ch.originX, ch.originY).setScale(ch.scaleX, ch.scaleY).setAngle(ch.angle).setBlendMode(Phaser.BlendModes.ADD));
+        out.add(this.add.image(ch.x, ch.y, ch.texture.key, ch.frame.name).setOrigin(ch.originX, ch.originY).setScale(ch.scaleX, ch.scaleY).setAngle(ch.angle).setBlendMode(Phaser.BlendModes.ADD));
       }
     }
     return out;
