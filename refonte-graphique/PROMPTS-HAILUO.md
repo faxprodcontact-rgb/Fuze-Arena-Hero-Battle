@@ -504,3 +504,12 @@ sage dragon (angels-6) à la place des trois autres.
 Redraw image 1, in the drawing style of image 2, as a vertical loading screen for a bright medieval-fantasy mobile RPG, keeping EXACTLY the same five heroes, their places, sizes and poses: the Roman legionary in the center front (biggest); behind him on the left the purple drum spirit inside his ring of drums; behind him on the right the brown bull-headed warrior with his axe; front left the phoenix girl with fiery wings; front right the blue dragon sage holding a white pearl. They pose together, heroic and joyful, on a grassy hill at sunset, with a castle far away. Keep the top third as empty sky (the logo is added later) and the empty rounded band at the bottom (for the loading bar). Nothing outside the frame; the rest of the sheet stays EMPTY white.
 Style: stylized cartoon game art, chibi heroes, one bold dark outline per character, bright vibrant colors, cel shading, light from top right. Not realistic. No text. Nothing cropped, no hero hides another's face.
 ```
+
+### 24 — Écran de chargement v3 — `chargement-v3.png` (référence : `fin-chargement-v2a.jpg`)
+
+Dans la v2, l'épée du gladiateur passait sur le visage de la fille phénix : elle est déplacée.
+
+```
+Redraw image 1, in the drawing style of image 2, as a vertical loading screen for a bright medieval-fantasy mobile RPG, keeping EXACTLY the same five heroes, their places, sizes and poses: the Roman legionary in the center front (biggest), his sword raised in the open space ABOVE the phoenix girl, never over anyone's face; behind him on the left the purple drum spirit inside his ring of drums; behind him on the right the brown bull-headed warrior with his axe; front left the phoenix girl with fiery wings, her face fully visible; front right the blue dragon sage holding a white pearl, his face fully visible. Grassy hill at sunset with a castle far away, like image 2. Keep the top third as empty sky (the logo is added later) and the empty rounded band at the bottom (for the loading bar). The rest of the sheet stays EMPTY white.
+Style: stylized cartoon game art, chibi heroes, one bold dark outline per character, bright vibrant colors, cel shading, light from top right. Not realistic. No text. Nothing cropped, no weapon over a face.
+```
