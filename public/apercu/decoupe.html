@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#161233">
+<title>Essai de découpe</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #161233; overflow: hidden; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #fff; }
+  canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .top { position: fixed; left: 0; right: 0; top: 0; padding: calc(8px + env(safe-area-inset-top)) 12px 8px; display: flex; align-items: center; gap: 10px; font-weight: 700; }
+  .bar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 12px calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  a.btn, button { appearance: none; border: 0; border-radius: 12px; padding: 10px 14px; font: inherit; font-weight: 700; font-size: 15px; color: #fff; background: #2d2760; text-decoration: none; box-shadow: 0 3px 0 #0c0920; }
+  button.on { background: #2fbf71; }
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="top"><a class="btn" href="index.html">←</a><span>Essai : héros découpé en morceaux</span></div>
+<div class="bar">
+  <button id="b-idle">Repos</button>
+  <button id="b-atk">Attaque</button>
+  <button id="b-skill">Spéciale</button>
+  <button id="b-loop" class="on">Boucle</button>
+  <button id="b-parts">Voir les morceaux</button>
+</div>
+<script>
+// Le légionnaire découpé par refonte-graphique/rig-essai.py : corps, bras de l'épée, tête, bouclier.
+// Chaque morceau tourne autour de son articulation ; le corps entier se penche autour des pieds.
+(async () => {
+  const DIR = 'rig/knights-4/';
+  const rig = await (await fetch(DIR + 'rig.json')).json();
+  const img = {};
+  await Promise.all(rig.parts.map((p) => new Promise((ok) => { const i = new Image(); i.onload = ok; i.src = DIR + p.name + '.png'; img[p.name] = i; })));
+  const terrain = new Image(); terrain.src = '../art/t/arena.jpg';
+  const cv = document.getElementById('cv'), g = cv.getContext('2d');
+  const FEET = [250, 540];
+  let W, H, dpr;
+  const resize = () => { dpr = Math.min(3, devicePixelRatio || 1); W = cv.width = innerWidth * dpr; H = cv.height = innerHeight * dpr; };
+  addEventListener('resize', resize); resize();
+
+  const ease = { out: (t) => 1 - (1 - t) ** 3, inOut: (t) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2), back: (t) => 1 + 2.7 * (t - 1) ** 3 + 1.7 * (t - 1) ** 2 };
+  const seg = (t, a, b) => Math.max(0, Math.min(1, (t - a) / (b - a)));
+  const mix = (a, b, k) => a + (b - a) * k;
+  // une pose = angles (degrés) et décalages de chaque morceau
+  const rest = () => ({ lean: 0, dx: 0, dy: 0, sy: 1, arm: 0, head: 0, headY: 0, shield: 0, shieldX: 0, glow: 0, flash: 0 });
+
+  let action = null, loop = true, showParts = false, start = performance.now();
+  const play = (name) => { action = { name, t0: performance.now() }; };
+  const LEN = { atk: 650, skill: 1500 };
+
+  function pose(now) {
+    const p = rest(), s = now / 1000;
+    // repos : respiration (le corps s'étire un peu), la tête suit avec un léger retard, l'épée et le bouclier se balancent
+    const b = Math.sin(s * 2.3);
+    p.sy = 1 + 0.018 * b; p.headY = -3 * b; p.head = 1.5 * Math.sin(s * 2.3 - 0.6);
+    p.arm = 3 * Math.sin(s * 2.3 - 1.0); p.shield = 1.2 * Math.sin(s * 2.3 - 0.4); p.shieldX = 1.5 * b;
+    if (!action) return p;
+    const t = now - action.t0;
+    if (action.name === 'atk') {
+      // élan (l'épée part en arrière, le corps recule), coup (l'épée s'abat en avant, le corps plonge), retour
+      const wind = ease.out(seg(t, 0, 180)), hit = ease.back(seg(t, 180, 300)), back = ease.inOut(seg(t, 380, 650));
+      p.arm += (-38 * wind + 128 * hit) * (1 - back);
+      p.lean = (-4 * wind + 10 * hit) * (1 - back);
+      p.dx = (-10 * wind + 60 * hit) * (1 - back);
+      p.head += (-4 * wind + 6 * hit) * (1 - back);
+      p.shield += (-3 * wind + 4 * hit) * (1 - back); p.shieldX += 10 * hit * (1 - back);
+      p.flash = t > 240 && t < 360 ? 1 - seg(t, 240, 360) : 0;
+      if (t > LEN.atk) action = null;
+    } else if (action.name === 'skill') {
+      // l'épée se lève haut et se charge de lumière, petit saut, grand coup en arc, coup de bouclier, retour
+      const up = ease.out(seg(t, 0, 420)), jump = Math.sin(seg(t, 350, 820) * Math.PI), cut = ease.back(seg(t, 620, 800));
+      const bash = Math.sin(seg(t, 860, 1080) * Math.PI), back = ease.inOut(seg(t, 1150, 1500));
+      p.arm += (-55 * up + 205 * cut) * (1 - back);
+      p.glow = up * (1 - seg(t, 800, 1000));
+      p.dy = -70 * jump * (1 - back); p.dx = (90 * cut + 25 * bash) * (1 - back);
+      p.lean = (-6 * up + 16 * cut - 6 * bash) * (1 - back);
+      p.head += (-6 * up + 8 * cut) * (1 - back);
+      p.shield += (8 * up - 18 * bash) * (1 - back); p.shieldX += 45 * bash * (1 - back);
+      p.flash = Math.max(t > 760 && t < 920 ? 1 - seg(t, 760, 920) : 0, t > 960 && t < 1060 ? 0.6 * (1 - seg(t, 960, 1060)) : 0);
+      if (t > LEN.skill) action = null;
+    }
+    return p;
+  }
+
+  function drawPart(name, p, k) {
+    const part = rig.parts.find((q) => q.name === name), im = img[name];
+    const [px, py] = part.pivot;
+    g.save();
+    if (name !== 'base') {
+      const ang = name === 'arm' ? p.arm : name === 'head' ? p.head : p.shield;
+      const ox = name === 'shield' ? p.shieldX : 0, oy = name === 'head' ? p.headY : 0;
+      g.translate(px + ox, py + oy); g.rotate(ang * Math.PI / 180); g.translate(-px, -py);
+    }
+    if (showParts) { g.globalAlpha = 0.92; }
+    g.drawImage(im, part.x, part.y);
+    if (name === 'arm' && p.glow > 0) { // l'épée chargée : un double lumineux par-dessus
+      g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.55 * p.glow; g.filter = 'blur(6px)';
+      g.drawImage(im, part.x, part.y); g.filter = 'none'; g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    }
+    if (showParts) { g.globalAlpha = 1; g.fillStyle = '#ffe27a'; g.beginPath(); g.arc(px, py, 7, 0, 7); g.fill(); }
+    g.restore();
+  }
+
+  function frame(now) {
+    if (!action && loop) { const c = (now - start) % 5200; if (c < 20) play('atk'); else if (c > 2600 && c < 2620) play('skill'); }
+    const p = pose(now);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    if (terrain.complete && terrain.width) { const k = Math.max(W / terrain.width, H / terrain.height); g.drawImage(terrain, (W - terrain.width * k) / 2, (H - terrain.height * k) / 2, terrain.width * k, terrain.height * k); }
+    else { g.fillStyle = '#2a3a2a'; g.fillRect(0, 0, W, H); }
+    const k = Math.min(W / 1100, H / 900), fx = W * 0.36, fy = H * 0.78;
+    // ombre au sol
+    g.fillStyle = 'rgba(0,0,0,.3)'; g.beginPath(); g.ellipse(fx + p.dx * k, fy, 150 * k * (1 - p.dy / -300), 26 * k, 0, 0, 7); g.fill();
+    g.setTransform(k, 0, 0, k, fx + p.dx * k, fy + p.dy * k);
+    g.rotate(p.lean * Math.PI / 180);
+    g.scale(1 / Math.sqrt(p.sy), p.sy);
+    g.translate(-FEET[0], -FEET[1]);
+    if (showParts) {
+      // les morceaux écartés les uns des autres, pour voir le découpage
+      const off = { base: [0, 0], arm: [-90, -40], head: [0, -110], shield: [110, 0] };
+      for (const n of ['base', 'arm', 'head', 'shield']) { g.save(); g.translate(...off[n]); drawPart(n, rest(), k); g.restore(); }
+    } else {
+      for (const n of ['base', 'arm', 'head', 'shield']) drawPart(n, p, k);
+    }
+    if (p.flash > 0) { g.setTransform(1, 0, 0, 1, 0, 0); g.fillStyle = `rgba(255,240,200,${0.35 * p.flash})`; g.fillRect(0, 0, W, H); }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  const $ = (id) => document.getElementById(id);
+  $('b-idle').onclick = () => { action = null; loop = false; $('b-loop').classList.remove('on'); };
+  $('b-atk').onclick = () => { loop = false; $('b-loop').classList.remove('on'); play('atk'); };
+  $('b-skill').onclick = () => { loop = false; $('b-loop').classList.remove('on'); play('skill'); };
+  $('b-loop').onclick = () => { loop = !loop; start = performance.now(); $('b-loop').classList.toggle('on', loop); };
+  $('b-parts').onclick = () => { showParts = !showParts; $('b-parts').classList.toggle('on', showParts); };
+})();
+</script>
+</body>
+</html>
