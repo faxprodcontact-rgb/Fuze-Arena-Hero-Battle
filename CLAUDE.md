@@ -114,6 +114,14 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   fanions, nuages. Panneaux : coins ouvragés dorés (`--corner-*`), reflet en haut et ombre en bas (`--sheen`). Petits
   mouvements (fin de `style.css`) : pictos des modes qui flottent, onglet ouvert qui saute, reflet sur Combattre et sur les
   barres, éclat qui tourne sur les médaillons, fanion du chapitre, monnaies, reflet d'or sur les cases légendaires.
+  **Le propriétaire valide cette direction (22/11/2026) et veut avancer « partie par partie »**. v0.30.0, **partie Aventure** :
+  décor refait avec soin (`ui/backdrop-adventure.tsx` : soleil et cercle de runes, sommets enneigés, château sur son rocher,
+  nuages, montgolfière, oiseaux, chemin qui serpente, sapins ; lumière venue de la droite), bandeau en haut de l'écran
+  (`.adv-banner`, titre sur une `.plaque`) pour que le panorama se voie, tuiles au fond animé (`ui/tile-scene.tsx` : lueur,
+  anneau gravé qui tourne, et un petit décor par mode). **La tuile Siège est remplacée par le Colisée** (picto `colisee`,
+  clé interne toujours `defense`) : écran de présentation avec « Bientôt », **les règles du Colisée restent à construire** ;
+  l'ancien mode Défense n'est plus accessible (son code est encore là). Prochaines parties à refaire de la même façon : Héros,
+  Invocation, Guilde, Accueil.
   Attention : dans le CSS, ne pas écrire `url(art/…)` (mal résolu une fois le jeu construit) : passer l'adresse par un
   `style` dans le TSX. Tour complet en captures : `scratchpad/art5/tour.cjs` (à refaire si besoin).
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.

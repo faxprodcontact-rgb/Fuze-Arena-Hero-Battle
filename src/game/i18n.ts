@@ -85,7 +85,7 @@ const FR = {
   'summon.fragments': 'Fragments', 'summon.copy': 'Obtenir une copie', 'summon.target': 'Cible des fragments',
 
   'adv.tower': 'Tour des Épreuves', 'adv.dungeons': 'Donjons', 'adv.missions': 'Missions', 'adv.dailyBoss': 'Boss du jour',
-  'adv.arena': 'Arène', 'adv.defense': 'Siège',
+  'adv.arena': 'Arène', 'adv.defense': 'Colisée',
   'tower.floor': 'Étage {n}', 'tower.challenge': 'Défier',
   'dungeon.gold': "Mine d'or", 'dungeon.essence': "Source d'essence", 'dungeon.gear': 'Armurerie', 'dungeon.level': 'Niveau {n}', 'dungeon.sweep': 'Balayer', 'dungeon.tries': 'Essais',
   'mission.patrol': 'Patrouille', 'mission.escort': 'Escorte', 'mission.ruins': 'Ruines', 'mission.hunt': 'Chasse',
@@ -226,7 +226,7 @@ const EN: Record<Key, string> = {
   'summon.fragments': 'Shards', 'summon.copy': 'Get a copy', 'summon.target': 'Shard target',
 
   'adv.tower': 'Tower of Trials', 'adv.dungeons': 'Dungeons', 'adv.missions': 'Missions', 'adv.dailyBoss': 'Daily boss',
-  'adv.arena': 'Arena', 'adv.defense': 'Siege',
+  'adv.arena': 'Arena', 'adv.defense': 'Colosseum',
   'tower.floor': 'Floor {n}', 'tower.challenge': 'Challenge',
   'dungeon.gold': 'Gold mine', 'dungeon.essence': 'Essence spring', 'dungeon.gear': 'Armory', 'dungeon.level': 'Level {n}', 'dungeon.sweep': 'Sweep', 'dungeon.tries': 'Tries',
   'mission.patrol': 'Patrol', 'mission.escort': 'Escort', 'mission.ruins': 'Ruins', 'mission.hunt': 'Hunt',

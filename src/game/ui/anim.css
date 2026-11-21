@@ -60,3 +60,26 @@
 @keyframes bd-flag { 0%, 100% { transform: skewY(-8deg) scaleX(1); } 50% { transform: skewY(8deg) scaleX(0.86); } }
 @keyframes bd-sway { 0%, 100% { transform: rotate(-1.6deg); } 50% { transform: rotate(1.6deg); } }
 @keyframes bd-beam { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
+
+/* ---------- fonds animés des tuiles de mode (tile-scene.tsx) ---------- */
+.tile-scene { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.ts-ring, .ts-ring-2 { transform-box: view-box; transform-origin: 90px 63px; }
+.ts-ring { animation: an-spin 30s linear infinite; }
+.ts-ring-2 { animation: an-spin 22s linear infinite reverse; }
+.ts-cloud { animation: ts-drift 18s ease-in-out infinite alternate; }
+.ts-cloud.ts-back { animation-duration: 26s; animation-direction: alternate-reverse; }
+.ts-route { animation: ts-march 1.6s linear infinite; }
+.ts-ember { animation: ts-ember 4.2s ease-out infinite; }
+.ts-dust { animation: ts-dust 5.6s ease-in-out infinite; }
+@keyframes ts-drift { from { transform: translateX(0); } to { transform: translateX(34px); } }
+@keyframes ts-march { to { stroke-dashoffset: -12; } }
+@keyframes ts-ember { 0% { transform: translateY(8px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translateY(-70px) translateX(6px); opacity: 0; } }
+@keyframes ts-dust { 0% { transform: translateX(-10px); opacity: 0; } 30% { opacity: 0.8; } 100% { transform: translateX(40px) translateY(-10px); opacity: 0; } }
+/* chaque tuile a son propre rythme, pour que rien ne bouge à l'unisson */
+.tile:nth-child(2n) .ts-ring { animation-duration: 38s; } .tile:nth-child(3n) .ts-ring { animation-direction: reverse; }
+.tile:nth-child(2n) .an-glow { animation-delay: -1.3s; } .tile:nth-child(3n) .an-glow { animation-delay: -2.1s; }
+
+/* la montgolfière du décor de l'Aventure : elle dérive et se balance doucement */
+.ad-balloon { animation: ad-balloon 26s ease-in-out infinite alternate; }
+.ad-balloon > g { animation: float 4.4s ease-in-out infinite; }
+@keyframes ad-balloon { from { transform: translate(-26px, 6px); } to { transform: translate(18px, -10px); } }

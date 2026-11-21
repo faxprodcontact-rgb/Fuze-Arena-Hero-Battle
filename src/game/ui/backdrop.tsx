@@ -4,6 +4,7 @@
 // très lentement, des poussières de lumière qui montent. Les mouvements sont dans anim.css.
 import type { ComponentChildren } from 'preact';
 import './anim.css';
+import { AdventureScene } from './backdrop-adventure';
 import { RUNES, spark } from './portal';
 
 export type BackdropKind = 'heroes' | 'summon' | 'adventure' | 'guild' | 'page';
@@ -98,35 +99,7 @@ function Banner({ x, len, w, fill, trim }: { x: number; len: number; w: number; 
 }
 
 function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
-  if (kind === 'adventure') {
-    return (
-      <>
-        <defs>
-          <linearGradient id="bd-a" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f7fc4" /><stop offset="0.5" stop-color="#7fbfe2" /><stop offset="0.78" stop-color="#f0dcae" /><stop offset="1" stop-color="#3f7a52" /></linearGradient>
-          <radialGradient id="bd-sun"><stop offset="0" stop-color="#fff8d6" /><stop offset="0.35" stop-color="#ffe9a0" stop-opacity="0.75" /><stop offset="1" stop-color="#ffe9a0" stop-opacity="0" /></radialGradient>
-        </defs>
-        <rect width={W} height={H} fill="url(#bd-a)" />
-        <circle class="bd-sun" cx="296" cy="250" r="150" fill="url(#bd-sun)" />
-        <circle cx="296" cy="250" r="34" fill="#fff6cf" />
-        <RuneCircle cx={296} cy={250} r={120} color="#fff" opacity={0.22} />
-        <g fill="#fff" opacity="0.6">
-          <path class="bd-cloud" d="M30 180 q8 -22 32 -14 q10 -20 34 -8 q24 -6 26 16 q16 2 14 14 H24 q-8 -8 6 -8 Z" />
-          <path class="bd-cloud bd-slow" d="M210 380 q6 -16 24 -10 q8 -14 26 -6 q18 -4 20 12 q12 2 10 10 H206 q-6 -6 4 -6 Z" opacity="0.8" />
-        </g>
-        <g fill="none" stroke="#2f4a6a" stroke-width="1.8" stroke-linecap="round" class="bd-birds"><path d="M70 300 q6 -6 10 0 q4 -6 10 0" /><path d="M98 318 q5 -5 8 0 q3 -5 8 0" /><path d="M52 326 q4 -4 7 0 q3 -4 7 0" /></g>
-        <path d={ridge(11, 560, 150, 62)} fill="#7aa6cc" />
-        <rect y="470" width={W} height="170" fill="url(#bd-mist)" />
-        <path d={ridge(23, 620, 120, 48)} fill="#5a8cae" />
-        <rect y="560" width={W} height="150" fill="url(#bd-mist)" />
-        <Tower x={64} y={566} w={20} h={90} fill="#4a7896" flag="#e0564e" />
-        <Tower x={96} y={590} w={16} h={70} fill="#4a7896" />
-        <path d="M54 660 V610 h8 v-8 h8 v8 h8 v-8 h8 v8 h8 v-8 h8 v8 h12 V660 Z" fill="#4a7896" />
-        <path d={hills(5, 690, 60, 110)} fill="#4f9060" />
-        <path d={hills(9, 760, 46, 90)} fill="#3f7a52" />
-        <Motes seed={3} color="#fff8d6" n={6} />
-      </>
-    );
-  }
+  if (kind === 'adventure') return <AdventureScene />;
   if (kind === 'summon') {
     return (
       <>
@@ -226,7 +199,7 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
 export function Backdrop({ kind }: { kind: BackdropKind }) {
   return (
     <div class={`backdrop backdrop-${kind}`} aria-hidden="true">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio={kind === 'adventure' ? 'xMidYMin slice' : 'xMidYMid slice'}>
         <defs><linearGradient id="bd-mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0" /><stop offset="1" stop-color="#fff" stop-opacity="0.3" /></linearGradient></defs>
         <Scene kind={kind} />
       </svg>

@@ -15,7 +15,7 @@ import { isUnlocked, teamPower } from '../../state/selectors';
 import { now, useGame } from '../../state/store';
 import { ADVENTURE_ORDER, dots, isNew } from '../dots';
 import { TeamStrip } from './heroes';
-import { DefenseScreen } from './defense';
+import { TileScene } from '../tile-scene';
 import { Art, Bar, Btn, Cur, Icon, Locked, duration } from '../kit';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
 
@@ -30,12 +30,13 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
         {sub === 'dungeons' && <Dungeons />}
         {sub === 'dailyBoss' && <DailyBoss />}
         {sub === 'arena' && <Arena />}
-        {sub === 'defense' && <DefenseScreen />}
+        {sub === 'defense' && <Colisee />}
       </div>
     );
   }
   return (
-    <div class="screen">
+    <div class="screen adventure">
+      <div class="adv-banner"><h1 class="plaque"><Icon name="adventure" size={22} />{t('nav.adventure')}</h1></div>
       <div class="tiles">
         {ADVENTURE_ORDER.map((f) => {
           const unlocked = isUnlocked(s, f);
@@ -48,7 +49,8 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
                 openSub(f);
               }}
             >
-              <Icon name={f} size={44} />
+              <TileScene kind={f} />
+              <Icon name={f === 'defense' ? 'colisee' : f} size={44} />
               <span class="tile-name">{t(`adv.${f}`)}</span>
               {!unlocked && <Locked stage={UNLOCKS[f]} />}
               {unlocked && isNew(s, f) && <span class="tile-new">{t('new')}</span>}
@@ -58,6 +60,24 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
         })}
       </div>
     </div>
+  );
+}
+
+/** Le Colisée (il remplace le Siège) : deux équipes de 3, un duel à la fois. Les règles restent à construire. */
+function Colisee() {
+  const s = useGame();
+  const mine = s.formation.slice(0, 3).map(([uid]) => s.heroes.find((h) => h.uid === uid)).filter(Boolean);
+  return (
+    <section class="card center">
+      <h1>{t('adv.defense')}</h1>
+      <div class="boss-scene colisee-scene" style={{ backgroundImage: 'url(art/t/arena.jpg)' }}><Art name="colisee" class="colisee-art" /></div>
+      <div class="colisee-duel">
+        <div class="team-faces">{mine.map((h) => <span class="team-face"><img src={heroImage(h!.defId)} alt="" /></span>)}</div>
+        <span class="vs">VS</span>
+        <div class="team-faces">{[0, 1, 2].map(() => <span class="team-face unknown">?</span>)}</div>
+      </div>
+      <Btn kind="gold" wide disabled>{t('soon')}</Btn>
+    </section>
   );
 }
 
