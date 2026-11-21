@@ -38,6 +38,9 @@ SHEETS = [
     ('fin-rattrapage.webp', 5, 2, ['st-silence', 'st-taunt', 'league-platinum', 'colisee', 'owl-explain', 'owl-happy', 'owl-point', 'owl-surprised']),
 ]
 SIZE = 128
+# Pictos où le fond blanc passe à travers le dessin (anse, trou, entre l'arc et la corde) : seuls ceux-là sont troués.
+# Partout ailleurs le blanc fait partie du dessin (reflets des lames, des pièces, des gemmes) et on n'y touche pas.
+HOLES = {'lock', 'settings', 'marksman', 'mission-hunt', 'bag', 'trophy', 'ranking'}
 
 
 def flood(mask, seeds):
@@ -69,7 +72,7 @@ def comps(mask, min_area):
     return out
 
 
-def cutout(rgb):
+def cutout(rgb, holes=False, report=None):
     """Fond blanc → transparent : le blanc relié au bord de la case, puis un bord adouci (le trait sombre reste net)."""
     a = np.asarray(rgb).astype(np.float32)
     mn, sat = a.min(2), a.max(2) - a.min(2)
@@ -78,11 +81,22 @@ def cutout(rgb):
     bg = flood((mn > 228) & (sat < 26), border)
     # le fond enfermé (entre la corde et l'arc, dans l'anse d'un cadenas, entre deux épées…) : zones d'un blanc pur,
     # bordées par le trait sombre du contour (un blanc peint, lui, est bordé d'ombres grises : on le garde)
-    holes = (mn > 238) & (sat < 16) & ~bg
-    for m in comps(holes, max(40, H * W // 2500)):
-        ring = dilate(m, 4) & ~dilate(m, 1)
-        if ring.any() and (mn[ring] < 150).mean() > 0.35:
-            bg |= m
+    # SEULEMENT pour les pictos de HOLES (un reflet blanc peint sur une lame ou une pièce ressemble à un trou : on ne
+    # touche jamais au blanc des autres)
+    if holes or report is not None:
+        cand = (mn > 238) & (sat < 16) & ~bg
+        found = []
+        for m in comps(cand, max(40, H * W // 2500)):
+            ring = dilate(m, 4) & ~dilate(m, 1)
+            if ring.any() and (mn[ring] < 150).mean() > 0.35:
+                found.append(m)
+        if report is not None:
+            report.extend(found)
+        if holes and found:  # seulement les grands trous (les petits reflets restent)
+            big = max(m.sum() for m in found)
+            for m in found:
+                if m.sum() >= big * 0.6:
+                    bg |= m
     # les lueurs et ombres très claires collées au fond deviennent transparentes à proportion de leur blancheur
     near = np.asarray(Image.fromarray((bg * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(7))) > 0
     soft = near & ~bg & (mn > 170)
@@ -136,7 +150,7 @@ def main():
                 continue
             r, c = divmod(i, cols)
             cell = sheet.crop((int(c * cw), int(r * ch), int((c + 1) * cw), int((r + 1) * ch)))
-            save_icon(keep_main(cutout(cell)), name)
+            save_icon(keep_main(cutout(cell, holes=name in HOLES)), name)
             if name not in names:
                 names.append(name)
         print(fname, 'ok', flush=True)
