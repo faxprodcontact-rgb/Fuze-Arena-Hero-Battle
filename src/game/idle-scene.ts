@@ -33,6 +33,7 @@ export class IdleScene extends FightScene {
     this.getSetup = data.setup;
     this.groundTop = 560;
     this.xSquash = 0.8;
+    this.cutInBand = false;
     this.look = idleLook(getState().campaign.cleared);
   }
 

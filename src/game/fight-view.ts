@@ -14,9 +14,9 @@ export const W = 720;
 export const FONT = '"Baloo 2", "Trebuchet MS", "Segoe UI", Roboto, sans-serif';
 export const C = { panel: 0x1f2340, panelLight: 0x2c3260, green: 0x3ccf7a, red: 0xe5484d, blue: 0x4c8dff, energy: 0x4fd1ff, gold: 0xffc94a };
 
-// Les deux équipes sont bien séparées (244 px entre les deux premières lignes) : on voit qui fonce sur qui.
-const HERO_X: Record<Slot, number> = { 3: 62, 4: 62, 2: 150, 0: 238, 1: 238 };
-const ENEMY_X: Record<Slot, number> = { 0: 482, 1: 482, 2: 570, 3: 658, 4: 658 };
+// Les deux équipes sont bien séparées (230 px entre les deux premières lignes, les rangs du fond assez loin des bords pour ne pas être coupés) : on voit qui fonce sur qui.
+export const HERO_X: Record<Slot, number> = { 3: 82, 4: 82, 2: 163, 0: 245, 1: 245 };
+const ENEMY_X: Record<Slot, number> = { 0: 475, 1: 475, 2: 557, 3: 638, 4: 638 };
 /** Hauteur des rangées, mesurée depuis le haut du sol (`groundTop`). */
 const ROW_DY: Record<Slot, number> = { 0: 90, 3: 90, 2: 180, 1: 270, 4: 270 };
 
@@ -39,6 +39,7 @@ export interface View {
   sprite: Phaser.GameObjects.Image;
   bars: Phaser.GameObjects.Graphics;
   homeX: number;
+  homeY: number;
   /** Hauteur et largeur de la barre de vie (au-dessus de la tête du dessin). */
   barY: number;
   barW: number;
@@ -106,6 +107,10 @@ export abstract class FightScene extends Phaser.Scene {
   protected bigBoss = false;
   /** Resserre le terrain vers le centre (écran d'accueil, plus étroit). */
   protected xSquash = 1;
+  /** Bandeau de cinéma des compétences des héros (pas sur l'accueil ni dans l'aperçu de la fiche, trop petits). */
+  protected cutInBand = true;
+  /** Bas du terrain (pour l'assombrir en entier). */
+  private arenaBottom = 0;
   /** Terrain et famille de monstres de ce combat. */
   protected look: Look = battleLook('arena', '');
 
@@ -147,6 +152,7 @@ export abstract class FightScene extends Phaser.Scene {
 
   /** Le terrain : l'image du décor, le centre de son arène au milieu des rangées de combattants. */
   protected drawArena(bottom: number) {
+    this.arenaBottom = bottom;
     const key = `t-${this.look.terrain}`;
     const m = ART_META.terrains[this.look.terrain];
     if (this.textures.exists(key) && m) {
@@ -173,7 +179,7 @@ export abstract class FightScene extends Phaser.Scene {
     return { x: W / 2 + (x - W / 2) * this.xSquash, y: this.groundTop + ROW_DY[unit.slot] };
   }
 
-  protected addView(unit: Unit, enter = false) {
+  protected addView(unit: Unit, enter = false, speed = 1) {
     const hero = unit.side === 'hero';
     const { x, y } = this.slotPos(unit);
     const body = this.add.container(enter ? x + 320 : x, unit.boss && this.bigBoss ? y - 30 : y).setDepth(y);
@@ -199,8 +205,8 @@ export abstract class FightScene extends Phaser.Scene {
     const bars = this.add.graphics();
     body.add([shadow, sprite, bars]);
     if (hero && unit.slot === LEADER_SLOT && unit.talent) body.add(this.text(0, barY - 22, '♛', 26, '#ffe27a'));
-    this.views.set(unit.id, { unit, body, sprite, bars, homeX: x, barY, barW, hp: unit.hp, sx: sprite.scaleX, sy: sprite.scaleY, ph: Math.random() * 6.28 });
-    if (enter) this.tweens.add({ targets: body, x, duration: 450, ease: 'Back.easeOut' });
+    this.views.set(unit.id, { unit, body, sprite, bars, homeX: x, homeY: body.y, barY, barW, hp: unit.hp, sx: sprite.scaleX, sy: sprite.scaleY, ph: Math.random() * 6.28 });
+    if (enter) this.tweens.add({ targets: body, x, duration: 450 / speed, ease: 'Back.easeOut' });
   }
 
   protected clearViews(side?: 'hero' | 'enemy') {
@@ -325,7 +331,7 @@ export abstract class FightScene extends Phaser.Scene {
         }
         case 'wave':
           this.clearViews('enemy');
-          for (const u of e.units) this.addView(u, true);
+          for (const u of e.units) this.addView(u, true, speed);
           this.onWave(e.index);
           break;
         case 'end':
@@ -599,10 +605,9 @@ export abstract class FightScene extends Phaser.Scene {
       if (touch) this.time.delayedCall(at, () => this.recoil(dst, dir, 8, t));
     } else {
       // élan en arrière, ruée jusqu'à la cible, coup, puis retour à sa place
-      const home = this.slotPos(src.unit).y;
       this.tweens.add({ targets: src.body, x: src.homeX - dir * 14, duration: 70 * t, ease: 'Quad.easeOut' });
-      this.tweens.add({ targets: src.body, x: dst.body.x - dir * 78, y: dst.body.y, delay: 70 * t, duration: 90 * t, ease: 'Expo.easeIn' });
-      this.tweens.add({ targets: src.body, x: src.homeX, y: home, delay: 230 * t, duration: 170 * t, ease: 'Quad.easeInOut' });
+      this.tweens.add({ targets: src.body, x: dst.homeX - dir * 78, y: dst.homeY, delay: 70 * t, duration: 90 * t, ease: 'Expo.easeIn' });
+      this.tweens.add({ targets: src.body, x: src.homeX, y: src.homeY, delay: 230 * t, duration: 170 * t, ease: 'Quad.easeInOut' });
       at = 160 * t;
       this.time.delayedCall(at, () => {
         this.basicMelee(to, dir, color, t);
@@ -615,11 +620,14 @@ export abstract class FightScene extends Phaser.Scene {
     this.time.delayedCall(at, () => this.showHit(hit, false));
   }
 
-  /** Le décor s'assombrit pendant une compétence : seuls les combattants et les effets restent éclairés. */
+  /** Le décor s'assombrit pendant une compétence : seuls les combattants et les effets restent éclairés. Un seul voile, réutilisé. */
+  private veil?: Phaser.GameObjects.Rectangle;
   private dim(ms: number) {
-    const r = this.add.rectangle(0, 0, W, this.groundTop + ROW_DY[1] + 110, 0x05030f, 0).setOrigin(0).setDepth(5);
+    if (!this.veil || !this.veil.active) this.veil = this.add.rectangle(0, 0, W, this.arenaBottom || 2000, 0x05030f, 0).setOrigin(0).setDepth(5);
+    const r = this.veil;
+    this.tweens.killTweensOf(r);
     this.tweens.add({ targets: r, fillAlpha: 0.55, duration: 140, ease: 'Quad.easeOut' });
-    this.tweens.add({ targets: r, fillAlpha: 0, delay: ms, duration: 260, onComplete: () => r.destroy() });
+    this.tweens.add({ targets: r, fillAlpha: 0, delay: ms, duration: 260 });
   }
 
   /** Le lanceur se charge : rayons de lumière derrière lui, halo autour du dessin, double lumineux qui jaillit. */
@@ -632,24 +640,31 @@ export abstract class FightScene extends Phaser.Scene {
       rays.fillTriangle(Math.cos(a - 0.07) * 18, Math.sin(a - 0.07) * 18, Math.cos(a + 0.07) * 18, Math.sin(a + 0.07) * 18, Math.cos(a) * l, Math.sin(a) * l);
     }
     rays.setScale(0.3).setAlpha(0);
-    this.tweens.add({ targets: rays, scale: 1.25, alpha: 1, angle: 50, duration: 260 * t, ease: 'Cubic.easeOut' });
-    this.tweens.add({ targets: rays, alpha: 0, angle: 90, delay: 300 * t, duration: 300 * t, onComplete: () => rays.destroy() });
+    const dy = p.y - v.body.y;
+    this.tweens.add({ targets: rays, scale: 1.25, alpha: 1, angle: 50, duration: 260 * t, ease: 'Cubic.easeOut', onUpdate: () => rays.setPosition(v.body.x, v.body.y + dy) });
+    this.tweens.add({ targets: rays, alpha: 0, angle: 90, delay: 260 * t, duration: v.unit.ranged ? 300 * t : 120 * t, onUpdate: () => rays.setPosition(v.body.x, v.body.y + dy), onComplete: () => rays.destroy() });
     const s = v.sprite;
     const ghost = this.add.image(s.x, s.y, s.texture.key).setOrigin(s.originX, s.originY).setFlipX(s.flipX).setScale(v.sx, v.sy)
-      .setTint(color).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.9);
-    v.body.add(ghost);
+      .setTint(color).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.9).setAngle(s.angle);
+    v.body.addAt(ghost, v.body.getIndex(s) + 1);
     this.tweens.add({ targets: ghost, scaleX: v.sx * 1.4, scaleY: v.sy * 1.4, alpha: 0, delay: 120 * t, duration: 380 * t, ease: 'Cubic.easeOut', onComplete: () => ghost.destroy() });
     s.setScale(v.sx, v.sy);
     this.tweens.add({ targets: s, scaleX: v.sx * 1.18, scaleY: v.sy * 1.18, duration: 170 * t, yoyo: true, hold: 80 * t, ease: 'Back.easeOut' });
-    if (s.preFX) {
+    if (s.preFX && this.renderer.type === Phaser.WEBGL) {
+      // halo autour du dessin ; on coupe le mode « effets » ensuite (il coûte cher au téléphone s'il reste allumé)
+      s.preFX.setPadding(16);
       const glow = s.preFX.addGlow(color, 0, 0, false, 0.1, 12);
-      this.tweens.add({ targets: glow, outerStrength: 7, duration: 200 * t, yoyo: true, hold: 500 * t, onComplete: () => s.preFX?.remove(glow) });
+      this.tweens.add({ targets: glow, outerStrength: 7, duration: 200 * t, yoyo: true, hold: 500 * t, onComplete: () => {
+        if (!s.preFX) return;
+        s.preFX.remove(glow);
+        if (!s.preFX.list.length) s.preFX.disable();
+      } });
     }
   }
 
   /** Bandeau de cinéma (héros) : le héros traverse l'écran dans une bande inclinée avec le nom de sa compétence. */
   private cutIn(v: View, skillId: string, color: number, t: number) {
-    const y = Math.max(150, this.groundTop - 125), h = 116;
+    const y = Math.max(150, this.groundTop - (this.bigBoss ? 85 : 125)), h = 116;
     const band = this.add.container(W, y).setDepth(2600);
     const g = this.add.graphics();
     g.fillStyle(0x0a0818, 0.82).fillPoints([{ x: -60, y: -h / 2 + 16 }, { x: W + 60, y: -h / 2 - 16 }, { x: W + 60, y: h / 2 - 16 }, { x: -60, y: h / 2 + 16 }], true);
@@ -668,7 +683,7 @@ export abstract class FightScene extends Phaser.Scene {
     this.tweens.add({ targets: band, x: 0, duration: 150 * t, ease: 'Cubic.easeOut' });
     this.tweens.add({ targets: band, x: -W, alpha: 0, delay: 430 * t, duration: 160 * t, ease: 'Cubic.easeIn', onComplete: () => band.destroy() });
     // un trait de lumière balaie l'écran au moment où le bandeau arrive
-    const streak = this.add.rectangle(-80, y, 60, h * 1.6, 0xffffff, 0.7).setDepth(2601).setAngle(-12).setBlendMode(Phaser.BlendModes.ADD);
+    const streak = this.add.rectangle(-80, y, 44, h * 1.6, 0xffffff, 0.35).setDepth(2599).setAngle(-12).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: streak, x: W + 80, duration: 260 * t, ease: 'Quad.easeIn', onComplete: () => streak.destroy() });
   }
 
@@ -702,11 +717,11 @@ export abstract class FightScene extends Phaser.Scene {
     this.dim(1250 * tm);
     this.charge(src, color, tm);
     let lead: number;
-    if (hero) {
+    if (hero && this.cutInBand) {
       this.cutIn(src, skillId, color, tm);
       lead = 470 * tm;
     } else {
-      const name = this.text(src.body.x, src.body.y + src.barY - 34, this.skillName(skillId), 30, '#ff8a8a').setDepth(2000);
+      const name = this.text(src.body.x, src.body.y + src.barY - 34, this.skillName(skillId), 30, hero ? '#ffe27a' : '#ff8a8a').setDepth(2000);
       this.tweens.add({ targets: name, y: name.y - 40, alpha: 0, delay: 500 * tm, duration: 500 * tm, onComplete: () => name.destroy() });
       lead = 260 * tm;
     }
@@ -719,8 +734,8 @@ export abstract class FightScene extends Phaser.Scene {
     const first = hits.find((h) => h.kind === 'damage' && this.views.get(h.target));
     if (!src.unit.ranged && first) {
       const tgt = this.views.get(first.target)!;
-      this.tweens.add({ targets: src.body, x: tgt.body.x - dir * 85, y: tgt.body.y, delay: lead - 120 * tm, duration: 120 * tm, ease: 'Expo.easeIn' });
-      this.tweens.add({ targets: src.body, x: src.homeX, y: this.slotPos(src.unit).y, delay: lead + 520 * tm, duration: 220 * tm, ease: 'Quad.easeInOut' });
+      this.tweens.add({ targets: src.body, x: tgt.homeX - dir * 85, y: tgt.homeY, delay: lead - 120 * tm, duration: 120 * tm, ease: 'Expo.easeIn' });
+      this.tweens.add({ targets: src.body, x: src.homeX, y: src.homeY, delay: lead + 520 * tm, duration: 220 * tm, ease: 'Quad.easeInOut' });
     }
     const seen = new Set<string>();
     hits.forEach((h) => {
@@ -757,7 +772,7 @@ export abstract class FightScene extends Phaser.Scene {
       if (hit.kind === 'shield') this.skillFx('goldShield', p, p, dir, 1);
     }
     if (hit.kind === 'miss' || hit.kind === 'status' || hit.kind === 'revive') {
-      if (hit.kind === 'revive') this.tweens.add({ targets: v.body, alpha: 1, y: this.slotPos(v.unit).y, angle: 0, duration: 400 });
+      if (hit.kind === 'revive') this.tweens.add({ targets: v.body, alpha: 1, y: v.homeY, angle: 0, duration: 400 });
       const label = hit.kind === 'miss' ? t('fx.miss') : hit.kind === 'revive' ? '✚' : t(`st.${hit.status}`, { n: '' }).replace(/[+−-]\s*%/, '').trim();
       const color = hit.kind === 'miss' ? '#c8d0ff' : hit.kind === 'revive' ? '#5dff9a' : STATUS_COLOR[hit.status ?? 'stun'] ?? '#ffe27a';
       const n = this.text(v.body.x, v.body.y - 92, label, 22, color).setDepth(2000);

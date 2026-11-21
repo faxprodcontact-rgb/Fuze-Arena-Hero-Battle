@@ -79,10 +79,10 @@ export class BattleScene extends FightScene {
     this.drawArena(780);
     this.add.rectangle(W / 2, 780 + (H - 780) / 2, W, H - 780, 0x14162b).setDepth(-5);
 
-    this.text(W / 2, 60, `${t(`mode.${this.req.kind}`)} ${this.titleSuffix()}`, 32, '#ffe27a');
-    this.waveLabel = this.text(W / 2, 104, '', 24, '#a9b0d6');
+    this.text(W / 2, 60, `${t(`mode.${this.req.kind}`)} ${this.titleSuffix()}`, 32, '#ffe27a').setDepth(3000);
+    this.waveLabel = this.text(W / 2, 104, '', 24, '#a9b0d6').setDepth(3000);
     this.updateWaveLabel();
-    if (this.req.damageMode) this.damageLabel = this.text(W / 2, 190, '0', 44, '#ffe27a');
+    if (this.req.damageMode) this.damageLabel = this.text(W / 2, 160, '0', 44, '#ffe27a').setDepth(3000);
     this.button(90, 60, 150, 60, t('battle.quit'), C.panelLight, () => this.finish());
 
     for (const u of this.battle.heroes) this.addView(u);
@@ -170,7 +170,7 @@ export class BattleScene extends FightScene {
 
   protected onWave(index: number) {
     this.updateWaveLabel();
-    this.banner(`${t('battle.wave')} ${index + 1}`);
+    this.banner(`${t('battle.wave')} ${index + 1}`, 165);
   }
 
   protected onEnd() {

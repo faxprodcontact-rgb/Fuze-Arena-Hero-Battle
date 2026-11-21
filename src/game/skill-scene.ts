@@ -30,6 +30,7 @@ export class SkillScene extends FightScene {
     // Pas de talent de chef dans l'aperçu : on ne montre que la compétence.
     this.hero = { ...data.hero, slot: 2, talent: undefined };
     this.groundTop = 130;
+    this.cutInBand = false;
   }
 
   protected preloadUnits() {

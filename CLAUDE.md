@@ -59,6 +59,11 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   Décidé (v0.23.0) : **chacun son tour** en combat (héros et ennemis) : `advance()` dans `fight-view.ts` joue les coups un
   par un et met les règles en pause pendant chaque coup (`TURN_MS` : attaque 430 ms, compétence 980 ms à ×1). Les règles et
   le résultat ne changent pas (le serveur peut toujours rejouer) ; les barres de vie suivent les coups montrés (`View.hp`).
+  v0.24.0 (demande du propriétaire) : équipes plus espacées (`HERO_X`/`ENEMY_X`, repris par l'écran de préparation),
+  respiration et léger balancement au repos (`syncUnits`) ; coups de base sobres mais percutants (élan, ruée, recul de la
+  cible, étincelles, petite secousse) ; compétences spectaculaires : décor assombri (`dim`), lanceur qui se charge
+  (`charge` : rayons, double lumineux, halo `preFX` coupé ensuite), bandeau de cinéma des héros (`cutIn`, pas sur
+  l'accueil ni dans la fiche), puis impact (`punch` : éclair de couleur, secousse, zoom, distorsion). Relu par un agent.
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.
   Aperçu animé sur le site de test : `public/apercu/` (page à part, bouton « Aperçu des animations » dans les Outils de
   test des réglages) : les personnages v5 animés morceau par morceau. Les images viennent de

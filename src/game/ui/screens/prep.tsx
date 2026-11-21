@@ -1,6 +1,7 @@
 // Préparation d'un combat : les ennemis en haut, la section sur le plateau, les héros en bas.
 // Toucher un héros = l'ajouter ou le retirer. Toucher deux postes = les échanger.
 import { useState } from 'preact/hooks';
+import { HERO_X } from '../../fight-view';
 import { LEADER_SLOT, type Slot } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
 import { heroImage, monsterImage } from '../../art';
@@ -22,7 +23,7 @@ const FIELD_W = 420;
 const FIELD_H = 330;
 const FIELD_GROUND = 50;
 /** Les rangées sont un peu resserrées (×0,85) pour laisser de la place à la liste des héros. */
-const POS: Record<Slot, [number, number]> = { 3: [75, 76], 4: [75, 230], 2: [175, 153], 0: [275, 76], 1: [275, 230] };
+const POS: Record<Slot, [number, number]> = { 3: [HERO_X[3], 76], 4: [HERO_X[4], 230], 2: [HERO_X[2], 153], 0: [HERO_X[0], 76], 1: [HERO_X[1], 230] };
 
 function FieldBackground({ terrain }: { terrain?: Terrain }) {
   // Le décor du combat à venir : la moitié gauche du terrain (côté héros), l'arène à hauteur des postes.
