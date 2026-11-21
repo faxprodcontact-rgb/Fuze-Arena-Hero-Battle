@@ -307,7 +307,7 @@ export abstract class FightScene extends Phaser.Scene {
     v.stKey = key;
     v.stIcons?.forEach((i) => i.destroy());
     v.stIcons = kinds.map((k, i) => {
-      const img = this.add.image(-v.barW / 2 + 9 + i * 20, v.barY - 13, 'icons', ICON_INDEX[`st-${k}`]).setDisplaySize(19, 19);
+      const img = this.add.image(-v.barW / 2 + 12 + i * 27, v.barY - 18, 'icons', ICON_INDEX[`st-${k}`]).setDisplaySize(27, 27);
       v.body.add(img);
       return img;
     });

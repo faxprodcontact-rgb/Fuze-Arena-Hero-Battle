@@ -81,7 +81,7 @@ function HeroList() {
       </div>
       <div class="row gap-s">
         <span class="hcard-wrap grow">
-          <Btn kind="purple" small wide onClick={() => open({ type: 'fusion' })}>★ {t('fusion.title')}</Btn>
+          <Btn kind="purple" small wide onClick={() => open({ type: 'fusion' })}><Icon name="fusion" size={20} /> {t('fusion.title')}</Btn>
           {s.formation.some(([u]) => !!fusionPreview(u).plan) && <RedDot />}
         </span>
         <Btn kind="ghost" small wide onClick={() => open({ type: 'reset' })}>↺ {t('detail.reset')}</Btn>

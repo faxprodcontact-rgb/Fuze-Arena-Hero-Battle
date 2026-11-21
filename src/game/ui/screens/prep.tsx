@@ -11,7 +11,7 @@ import { fmt, t } from '../../i18n';
 import { autoFormation, startBattleFromPlan, swapSlots, toggleInFormation, type BattlePlan } from '../../state/actions';
 import { formationOf, heroByUid, heroPower, slotCount, sortedHeroes, teamPower, type TeamKind } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import { Btn, HeroCard, Icon, Stars } from '../kit';
+import { Art, Btn, HeroCard, Icon, Stars } from '../kit';
 import { close, startBattle, toast } from '../nav';
 import { talentText } from './hero-detail';
 
@@ -27,6 +27,7 @@ const POS: Record<Slot, [number, number]> = { 3: [HERO_X[3], 76], 4: [HERO_X[4],
 
 function FieldBackground({ terrain }: { terrain?: Terrain }) {
   // Le décor du combat à venir : la moitié gauche du terrain (côté héros), l'arène à hauteur des postes.
+  terrain ??= 'meadow';
   if (terrain) {
     const m = ART_META.terrains[terrain];
     return <div class="field-bg" style={{ backgroundImage: `url(art/t/${terrain}.jpg)`, backgroundSize: '171% auto', backgroundPosition: `0% ${Math.round(m.cy * 100 - 4)}%` }} />;
@@ -78,7 +79,7 @@ export function Board({ tired, team = 'main', terrain }: { tired?: Set<number>; 
               onClick={() => tap(slot)}
             >
               <span class="field-spot" />
-              {slot === LEADER_SLOT && (!hero || chief) && <span class="crown">♛</span>}
+              {slot === LEADER_SLOT && (!hero || chief) && <Art name="crown" size={22} class="crown" />}
               {hero && <img src={heroImage(hero.defId)} alt="" />}
               {hero && <Stars stars={hero.stars} />}
             </button>
@@ -86,7 +87,7 @@ export function Board({ tired, team = 'main', terrain }: { tired?: Set<number>; 
         })}
         <span class="board-arrow">›</span>
       </div>
-      {chief && <p class="leader-line">♛ {talentText(chief)}</p>}
+      {chief && <p class="leader-line"><Icon name="crown" size={18} /> {talentText(chief)}</p>}
     </div>
   );
 }

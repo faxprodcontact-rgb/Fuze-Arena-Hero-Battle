@@ -121,7 +121,7 @@ export function HeroDetail({ uid }: { uid: number }) {
 
       {d.talent && (
         <section class="block leader-block">
-          <h3>♛ {t('detail.leader')}</h3>
+          <h3><Icon name="crown" size={20} /> {t('detail.leader')}</h3>
           <p class="muted">{talentText(d.talent)}</p>
         </section>
       )}
@@ -138,7 +138,7 @@ export function HeroDetail({ uid }: { uid: number }) {
       <section class="block">
         {d.passives.map((p, i) => (
           <div class={`passive${hero.stars >= p.stars ? '' : ' locked'}`}>
-            <h3>{hero.stars >= p.stars ? '◆' : '🔒'} {t('detail.passive')} {i + 1} <span class="muted small">{t('detail.unlockAt', { n: p.stars })}</span></h3>
+            <h3>{hero.stars < p.stars && <Icon name="lock" size={16} />} {t('detail.passive')} {i + 1} <span class="muted small">{t('detail.unlockAt', { n: p.stars })}</span></h3>
             <p class="muted">{describePassive(p.passive)}</p>
           </div>
         ))}

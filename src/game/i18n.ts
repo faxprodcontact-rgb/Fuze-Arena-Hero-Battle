@@ -78,7 +78,7 @@ const FR = {
   'skilltext.strikeBack': "Frappe l'arrière le plus fragile", 'skilltext.strike': 'Gros coup sur l’avant', 'skilltext.drain': 'Frappe et se soigne',
 
   'monster.goblin': 'Gobelin', 'monster.wolf': 'Loup', 'monster.golem': 'Golem', 'monster.archer': 'Archer', 'monster.shaman': 'Chaman',
-  'monster.wraith': 'Spectre', 'monster.ogre': 'Ogre', 'monster.lich': 'Liche', 'monster.dragon': 'Dragon',
+  'monster.wraith': 'Spectre', 'monster.ogre': 'Mammouth', 'monster.lich': 'Kraken', 'monster.dragon': 'Dragon',
 
   'summon.normal': 'Invocation', 'summon.basic': 'Invocation simple', 'summon.x1': '×1', 'summon.x10': '×10',
   'summon.pity': 'Légendaire garanti dans {n}', 'summon.odds': 'Chances', 'summon.adFree': 'Invocation gratuite',
@@ -219,7 +219,7 @@ const EN: Record<Key, string> = {
   'skilltext.strikeBack': 'Hits the weakest back-row enemy', 'skilltext.strike': 'Heavy hit on the front', 'skilltext.drain': 'Hits and heals itself',
 
   'monster.goblin': 'Goblin', 'monster.wolf': 'Wolf', 'monster.golem': 'Golem', 'monster.archer': 'Archer', 'monster.shaman': 'Shaman',
-  'monster.wraith': 'Wraith', 'monster.ogre': 'Ogre', 'monster.lich': 'Lich', 'monster.dragon': 'Dragon',
+  'monster.wraith': 'Wraith', 'monster.ogre': 'Mammoth', 'monster.lich': 'Kraken', 'monster.dragon': 'Dragon',
 
   'summon.normal': 'Summon', 'summon.basic': 'Basic summon', 'summon.x1': '×1', 'summon.x10': '×10',
   'summon.pity': 'Legendary guaranteed in {n}', 'summon.odds': 'Odds', 'summon.adFree': 'Free summon',
@@ -290,8 +290,9 @@ export function t(key: Key | string, vars: Record<string, string | number> = {})
 }
 
 export function fmt(n: number): string {
-  if (n >= 1e9) return `${(n / 1e9).toFixed(1)} G`;
-  if (n >= 1e6) return `${(n / 1e6).toFixed(1)} M`;
+  const dec = (v: number) => (getState().lang === 'en' ? v.toFixed(1) : v.toFixed(1).replace('.', ','));
+  if (n >= 1e9) return `${dec(n / 1e9)} G`;
+  if (n >= 1e6) return `${dec(n / 1e6)} M`;
   if (n >= 1e4) return `${Math.floor(n / 1e3)} k`;
   return Math.floor(n).toLocaleString(getState().lang === 'en' ? 'en-US' : 'fr-FR');
 }

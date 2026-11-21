@@ -61,12 +61,12 @@ export function ForgePage() {
             if (forgeItem(g.items[0]!.uid)) toast('✓');
           }}>{t('item.forge')}</Btn>
         </section>
-      ) : <p class="center muted">{t('bag.empty')}</p>}
+      ) : <div class="empty"><Icon name="forge" size={96} /><p class="muted">{t('bag.empty')}</p></div>}
 
-      <div class="row between">
+      {list.length > 0 && <div class="row between">
         <strong>{t('bag.title')}</strong>
         <Btn kind="ghost" small onClick={() => toast(t('bag.forged', { n: forgeAll().length }))}>{t('bag.forgeAll')}</Btn>
-      </div>
+      </div>}
       <div class="item-grid">
         {list.map((x) => (
           <button class={`forge-pick${x.key === g?.key ? ' on' : ''}${x.items.length >= FORGE_COUNT ? ' ready' : ''}`} onClick={() => setKey(x.key)}>

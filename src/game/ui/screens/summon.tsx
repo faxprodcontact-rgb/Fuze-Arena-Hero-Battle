@@ -38,7 +38,7 @@ export function SummonScreen() {
   return (
     <div class="screen summon">
       <section class="card portal-card">
-        <Portal />
+        <div class="summon-scene"><Portal size={236} /></div>
         <h1>{t('summon.normal')}</h1>
         <p class="muted">{t('summon.pity', { n: LEGENDARY_PITY - s.summon.pity })}</p>
         <div class="row gap">
@@ -66,7 +66,7 @@ export function SummonScreen() {
       </section>
 
       <section class="card portal-card basic">
-        <Portal kind="basic" size={92} />
+        <Portal kind="basic" size={92} base={false} />
         <div class="grow">
           <h2>{t('summon.basic')}</h2>
           <div class="row gap">
@@ -106,10 +106,10 @@ export function SummonResult({ heroes }: { heroes: Hero[] }) {
         {heroes.map((h, i) => {
           const d = heroDef(h.defId);
           return (
-            <div class="reveal-card" style={{ animationDelay: `${i * 90}ms`, '--rar': RARITY_COLOR[d.rarity], '--d': `${300 + i * 140}ms` } as never}>
+            <div class={`reveal-card r-${d.rarity}`} style={{ animationDelay: `${i * 90}ms`, '--rar': RARITY_COLOR[d.rarity], '--d': `${300 + i * 140}ms` } as never}>
               <div class="reveal-flip"><HeroCard hero={h} small /></div>
               <Art class="reveal-back" name="cardBack" />
-              {newlyFound.has(h.uid) && <span class="new-tag">{t('new')} !</span>}
+              {newlyFound.has(h.uid) && <span class="new-tag new-ribbon">{t('new')} !</span>}
               <span class="reveal-name">{d.name}</span>
             </div>
           );

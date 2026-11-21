@@ -80,6 +80,19 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   (`WorldMapModal`, en touchant « Chapitre »). Combats : chaque terrain a son cercle tracé au sol (`OVALS` de
   `decoupe-decors.py`) et `drawArena` place l'équipe dedans ; le premier plan (`FRONT` → `art/t/<nom>-fg.webp`) passe
   devant les combattants (effacé pendant l'assombrissement des compétences).
+  v0.27.0 (22/11/2026) : **refonte complète de l'interface**, demandée par le propriétaire (« couleurs claires, épurées
+  mais soignées, à la hauteur des dessins »). Thème clair dans le trait des dessins : ciel doux, panneaux « papier crème »,
+  gros contour à l'encre (`--ink`), reflet en haut et tranche sombre en bas sur les boutons, liserés dorés, texte blanc
+  cerné d'encre sur les couleurs (`--stroke`). Tout est dans `src/game/ui/style.css` (variables en tête). Cases de héros :
+  fond aux couleurs de l'élément (halo, rayons, sol), cadre de rareté, picto d'élément ; cases d'équipement colorées par
+  rareté. **Portail d'invocation dessiné par le code et animé** (`ui/portal.tsx` + `portal.css` : socle de pierre, anneau
+  d'or, runes qui s'allument, tourbillon à trois vitesses, étincelles), dans sa scène (`.summon-scene`). Combats : l'écran
+  s'étire selon le téléphone (`H`..`H_MAX` dans `battle-scene.ts`), décor sur toute la hauteur, panneau des héros et
+  boutons ancrés en bas (`hudY`), mêmes couleurs que les menus (`C` de `fight-view.ts`). Une scène peinte par mode (boss
+  dans l'antre, tour, donjons). Étiquettes claires à bord coloré (plus de pastilles sombres), pictos à la place des
+  caractères de texte, virgule décimale en français. Relu par un agent sur 50 captures, corrigé.
+  Attention : dans le CSS, ne pas écrire `url(art/…)` (mal résolu une fois le jeu construit) : passer l'adresse par un
+  `style` dans le TSX. Tour complet en captures : `scratchpad/art5/tour.cjs` (à refaire si besoin).
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.
   Aperçu animé sur le site de test : `public/apercu/` (page à part, bouton « Aperçu des animations » dans les Outils de
   test des réglages) : les personnages v5 animés morceau par morceau. Les images viennent de

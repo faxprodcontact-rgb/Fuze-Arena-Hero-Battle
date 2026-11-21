@@ -31,7 +31,7 @@ export function DungeonPage({ kind }: { kind: DungeonKind }) {
 
   return (
     <Page title={t(`dungeon.${kind}`)}>
-      <div class={`dungeon-head dungeon-${kind}`}>
+      <div class={`dungeon-head dungeon-${kind}`} style={{ '--scene': `url(${new URL(`art/t/${({ gold: 'mine', essence: 'spring', gear: 'armory' })[kind]}.jpg`, document.baseURI).href})` } as never}>
         <Icon name={DUNGEON_ICON[kind]} size={40} />
         <span class={`dungeon-tries big${left ? '' : ' none'}`}>{t('dungeon.tries')} {left} / {DUNGEON_ATTEMPTS_PER_DAY}</span>
       </div>

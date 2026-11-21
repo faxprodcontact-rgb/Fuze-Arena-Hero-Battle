@@ -1,6 +1,7 @@
 // Le portail d'invocation : dessiné par le code et toujours en mouvement.
-// Un anneau d'or serti de gemmes, un anneau de runes qui tourne à l'envers, un tourbillon de magie en spirale
-// (trois couches à des vitesses différentes), un cœur qui bat, des étincelles qui s'échappent, deux pierres qui gravitent.
+// Posé sur un socle de pierre gravé : un anneau d'or serti de gemmes, un anneau de runes qui tourne à l'envers et
+// s'allume tour à tour, un tourbillon de magie en spirale (trois couches à des vitesses différentes), un cœur qui bat,
+// des ondes et des étincelles de lumière. `scene` l'installe dans son décor (rayons doux, lueur au sol).
 import './portal.css';
 
 const INK = '#2f2244';
@@ -37,13 +38,29 @@ const RUNES = [
   'M-4 -7 L4 -7 L-4 7 L4 7', 'M0 -7 L0 7 M-5 -3 L0 2 L5 -3', 'M-5 7 L-5 -7 L5 7 L5 -7',
 ];
 
-export function Portal({ kind = 'normal', size = 208 }: { kind?: 'normal' | 'basic'; size?: number }) {
+export function Portal({ kind = 'normal', size = 208, base = true }: { kind?: 'normal' | 'basic'; size?: number; base?: boolean }) {
   const id = `pt-${kind}`;
   const arms = (n: number, r0: number, r1: number, w: number, twist: number) =>
     Array.from({ length: n }, (_, i) => arm((i * Math.PI * 2) / n, r0, r1, w, twist));
   return (
-    <div class={`portal portal-${kind}`} style={{ width: `${size}px`, height: `${size * 1.06}px` }} aria-hidden="true">
-      <span class="pt-shadow" />
+    <div class={`portal portal-${kind}`} style={{ width: `${size}px`, height: `${size * (base ? 1.23 : 1)}px` }} aria-hidden="true">
+      {base && (
+        <svg class="pt-base" viewBox="0 0 240 70" width="100%" height={size * 0.292}>
+          {/* le socle : deux marches de pierre, un cercle de runes qui luit, deux cristaux */}
+          <ellipse cx="120" cy="50" rx="104" ry="17" fill={INK} opacity="0.18" />
+          <path d="M26 34 L26 46 A94 15 0 0 0 214 46 L214 34 Z" fill="#a79cc0" stroke={INK} stroke-width="3.5" stroke-linejoin="round" />
+          <ellipse cx="120" cy="34" rx="94" ry="15" fill="#d9d2e6" stroke={INK} stroke-width="3.5" />
+          <path d="M48 22 L48 31 A72 11.5 0 0 0 192 31 L192 22 Z" fill="#b9afd0" stroke={INK} stroke-width="3.5" stroke-linejoin="round" />
+          <ellipse cx="120" cy="22" rx="72" ry="11.5" fill="#eeeaf6" stroke={INK} stroke-width="3.5" />
+          <ellipse class="pt-seal" cx="120" cy="22" rx="52" ry="7.5" fill="none" stroke="var(--p-arm-b)" stroke-width="3" />
+          <ellipse class="pt-seal" cx="120" cy="22" rx="30" ry="4" fill="var(--p-glow)" opacity="0.7" />
+          {[[70, 41], [96, 46], [146, 46], [172, 41]].map(([x, y]) => <path d={`M${x! - 4} ${y} l4 -5 l4 5 l-4 5 Z`} fill="var(--p-arm-b)" stroke={INK} stroke-width="1.6" />)}
+          <path d="M22 40 L30 18 L40 34 L36 48 Z" fill="var(--p-gem)" stroke={INK} stroke-width="3" stroke-linejoin="round" />
+          <path d="M28 30 L31 22 L35 30 Z" fill="#fff" opacity="0.7" />
+          <path d="M218 42 L210 22 L201 36 L205 49 Z" fill="var(--p-arm-b)" stroke={INK} stroke-width="3" stroke-linejoin="round" />
+          <path d="M209 33 L211 26 L214 33 Z" fill="#fff" opacity="0.7" />
+        </svg>
+      )}
       <svg class="pt-float" viewBox="0 0 240 240" width="100%" height={size}>
         <defs>
           <radialGradient id={`${id}-deep`} cx="50%" cy="50%" r="50%">
@@ -62,6 +79,10 @@ export function Portal({ kind = 'normal', size = 208 }: { kind?: 'normal' | 'bas
             <stop offset="0.5" stop-color="var(--p-ring)" />
             <stop offset="1" stop-color="var(--p-ring-lo)" />
           </linearGradient>
+          <radialGradient id={`${id}-rim`} cx="50%" cy="50%" r="50%">
+            <stop offset="0.68" stop-color="#1b1040" stop-opacity="0" />
+            <stop offset="1" stop-color="#1b1040" stop-opacity="0.6" />
+          </radialGradient>
           <clipPath id={`${id}-clip`}><circle cx={C} cy={C} r="71" /></clipPath>
         </defs>
 
@@ -69,13 +90,6 @@ export function Portal({ kind = 'normal', size = 208 }: { kind?: 'normal' | 'bas
         <circle class="pt-halo" cx={C} cy={C} r="118" fill={`url(#${id}-glow)`} />
         <circle class="pt-wave" cx={C} cy={C} r="104" fill="none" stroke="var(--p-glow)" stroke-width="5" />
         <circle class="pt-wave pt-wave-2" cx={C} cy={C} r="104" fill="none" stroke="var(--p-glow)" stroke-width="5" />
-        <g class="pt-rays">
-          {Array.from({ length: 12 }, (_, i) => {
-            const a = (i * Math.PI) / 6, w = i % 2 ? 0.085 : 0.05, r = i % 2 ? 116 : 104;
-            return <path d={`M${C} ${C} L${C + Math.cos(a - w) * r} ${C + Math.sin(a - w) * r} L${C + Math.cos(a + w) * r} ${C + Math.sin(a + w) * r} Z`} fill="var(--p-glow)" opacity="0.5" />;
-          })}
-        </g>
-
         {/* le tourbillon : fond profond, puis trois couches de bras en spirale */}
         <circle cx={C} cy={C} r="73" fill={INK} />
         <g clip-path={`url(#${id}-clip)`}>
@@ -91,6 +105,7 @@ export function Portal({ kind = 'normal', size = 208 }: { kind?: 'normal' | 'bas
           <circle class="pt-core pt-core-2" cx={C} cy={C} r="30" fill="var(--p-core)" opacity="0.55" />
           {/* reflet de verre en haut du tourbillon */}
           <path d="M62 96 Q84 58 126 54 Q96 66 78 104 Z" fill="#fff" opacity="0.28" />
+          <circle cx={C} cy={C} r="72" fill={`url(#${id}-rim)`} />
           <circle cx={C} cy={C} r="69.5" fill="none" stroke="var(--p-arm-b)" stroke-width="3" opacity="0.8" />
         </g>
 
@@ -108,7 +123,8 @@ export function Portal({ kind = 'normal', size = 208 }: { kind?: 'normal' | 'bas
         <g class="pt-ring">
           <circle cx={C} cy={C} r="99" fill="none" stroke={INK} stroke-width="15" />
           <circle cx={C} cy={C} r="99" fill="none" stroke={`url(#${id}-gold)`} stroke-width="10" />
-          <circle cx={C} cy={C} r="101.5" fill="none" stroke="#fff" stroke-width="1.6" opacity="0.7" stroke-dasharray="60 120 30 400" />
+          <circle cx={C} cy={C} r="95.5" fill="none" stroke="var(--p-ring-lo)" stroke-width="2" opacity="0.9" />
+          <circle cx={C} cy={C} r="101.5" fill="none" stroke="#fff" stroke-width="2.2" opacity="0.85" stroke-dasharray="70 110 34 60 16 400" stroke-linecap="round" />
           {Array.from({ length: 6 }, (_, i) => {
             const a = (i * Math.PI) / 3 - Math.PI / 2, x = C + Math.cos(a) * 99, y = C + Math.sin(a) * 99;
             return (
@@ -120,21 +136,11 @@ export function Portal({ kind = 'normal', size = 208 }: { kind?: 'normal' | 'bas
           })}
         </g>
 
-        {/* deux pierres qui gravitent autour du portail */}
-        <g class="pt-orbit">
-          <g transform={`translate(${C + 112} ${C})`}>
-            <path d="M0 -9 L7 0 L0 9 L-7 0 Z" fill="var(--p-gem)" stroke={INK} stroke-width="2.4" stroke-linejoin="round" />
-          </g>
-          <g transform={`translate(${C - 112} ${C})`}>
-            <path d="M0 -7 L5.5 0 L0 7 L-5.5 0 Z" fill="var(--p-ring-hi)" stroke={INK} stroke-width="2.2" stroke-linejoin="round" />
-          </g>
-        </g>
-
         {/* les étincelles qui s'échappent du tourbillon */}
         {Array.from({ length: 8 }, (_, i) => {
           const a = (i / 8) * Math.PI * 2 + 0.4;
           return (
-            <path class="pt-spark" d={spark(C, C, i % 3 === 0 ? 10 : 7)} fill={i % 2 ? '#fff' : 'var(--p-spark)'} stroke={INK} stroke-width="1.4" stroke-linejoin="round"
+            <path class="pt-spark" d={spark(C, C, i % 3 === 0 ? 10 : 7)} fill={i % 2 ? '#fff' : 'var(--p-spark)'}
               style={{ '--dx': `${Math.cos(a) * 112}px`, '--dy': `${Math.sin(a) * 112}px`, animationDelay: `${-i * 0.45}s` } as never} />
           );
         })}

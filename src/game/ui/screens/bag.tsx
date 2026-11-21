@@ -76,7 +76,7 @@ export function BagView() {
       ) : (
         <div class="row gap-s">
           <Btn kind="gold" small wide onClick={() => open({ type: 'forge' })}><Icon name="weapon" size={18} /> {t('forge.title')}</Btn>
-          <Btn kind="ghost" small wide onClick={() => setPicking(true)}>♻ {t('item.recycle')}</Btn>
+          <Btn kind="ghost" small wide onClick={() => setPicking(true)}><Icon name="recycle" size={20} /> {t('item.recycle')}</Btn>
         </div>
       )}
       <div class="chips">

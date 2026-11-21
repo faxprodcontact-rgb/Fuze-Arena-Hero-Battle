@@ -3,7 +3,8 @@
 .portal svg { position: relative; display: block; overflow: visible; }
 /* il flotte : le dessin monte et descend, son ombre au sol rétrécit quand il monte */
 .pt-float { animation: pt-float 3.6s ease-in-out infinite; }
-.pt-shadow { position: absolute; left: 22%; right: 22%; bottom: 0; height: 9%; border-radius: 50%; background: radial-gradient(closest-side, #2f224455, #2f224400); animation: pt-shadow 3.6s ease-in-out infinite; }
+.pt-base { position: absolute !important; left: 0; bottom: 0; }
+.pt-seal { animation: pt-seal 1.8s ease-in-out infinite; }
 .portal-normal {
   --p-core: #fdf3ff; --p-mid: #c98bff; --p-deep: #6a3fd6; --p-edge: #2f1f6e; --p-glow: #c79bff;
   --p-arm-a: #7a52e8; --p-arm-b: #6fe3ff; --p-band: #4a3391; --p-rune: #ffe58a; --p-spark: #ffe58a;
@@ -20,7 +21,6 @@
 .pt-halo { animation: pt-breathe 3.2s ease-in-out infinite; }
 .pt-wave { animation: pt-wave 2.8s ease-out infinite; }
 .pt-wave-2 { animation-delay: -1.4s; }
-.pt-rays { animation: pt-spin 26s linear infinite; }
 .pt-twinkle { transform-box: view-box; animation: pt-twinkle 2.7s ease-in-out infinite; }
 .pt-rune { animation: pt-rune 3.6s ease-in-out infinite; }
 .pt-swirl-a { animation: pt-spin 9s linear infinite; }
@@ -30,7 +30,6 @@
 .pt-core-2 { animation-delay: -0.5s; animation-duration: 2.3s; }
 .pt-runes { animation: pt-spin 30s linear infinite reverse; }
 .pt-ring { animation: pt-spin 44s linear infinite; }
-.pt-orbit { animation: pt-spin 7s linear infinite; }
 .pt-spark { animation: pt-fly 3.6s ease-out infinite; }
 
 @keyframes pt-spin { to { transform: rotate(360deg); } }
@@ -39,11 +38,20 @@
 @keyframes pt-fly {
   0% { transform: translate(0, 0) scale(0.2) rotate(0deg); opacity: 0; }
   15% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { transform: translate(var(--dx), var(--dy)) scale(1.15) rotate(160deg); opacity: 0; }
+  55% { opacity: 1; }
+  100% { transform: translate(var(--dx), var(--dy)) scale(0.5) rotate(160deg); opacity: 0; }
 }
 @keyframes pt-wave { 0% { transform: scale(0.92); opacity: 0.75; } 100% { transform: scale(1.2); opacity: 0; } }
 @keyframes pt-twinkle { 0%, 100% { transform: scale(0.2); opacity: 0; } 50% { transform: scale(1); opacity: 1; } }
 @keyframes pt-rune { 0%, 70%, 100% { opacity: 0.75; } 82% { opacity: 1; stroke: #fff; } }
-@keyframes pt-float { 0%, 100% { transform: translateY(2%); } 50% { transform: translateY(-2%); } }
-@keyframes pt-shadow { 0%, 100% { transform: scaleX(1); opacity: 1; } 50% { transform: scaleX(0.82); opacity: 0.6; } }
+@keyframes pt-float { 0%, 100% { transform: translateY(1.5%); } 50% { transform: translateY(-2%); } }
+@keyframes pt-seal { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+
+/* la scène de l'invocation : un ciel de magie, des rayons doux qui tournent derrière le portail, une lueur au sol */
+.summon-scene { position: relative; display: grid; place-items: center; align-self: stretch; margin: -14px -14px 0; padding: 18px 0 10px; overflow: hidden; border-radius: 15px 15px 0 0;
+  border-bottom: 2.5px solid var(--ink); background: linear-gradient(180deg, #b79bff 0%, #d9c8ff 45%, #f3e9ff 100%); box-shadow: inset 0 -4px 0 var(--gold), inset 0 -5.5px 0 var(--gold-dark); }
+.summon-scene::before { content: ''; position: absolute; left: 50%; top: 44%; width: 150%; aspect-ratio: 1; translate: -50% -50%;
+  background: repeating-conic-gradient(from 0deg, #ffffff66 0 7deg, #ffffff00 7deg 20deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 20%, #0000 78%); mask-image: radial-gradient(closest-side, #000 20%, #0000 78%); animation: pt-spin 40s linear infinite; }
+.summon-scene::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 26%; background: radial-gradient(60% 100% at 50% 100%, #ffffffcc, #ffffff00); }
+.summon-scene .portal { position: relative; z-index: 1; }

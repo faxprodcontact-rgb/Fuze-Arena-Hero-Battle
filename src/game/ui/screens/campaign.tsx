@@ -125,7 +125,7 @@ export function FastLootModal() {
           <div class="row gap-s wrap">
             <Cur k="gold" n={loot.perHour * 2} />
             <Cur k="essence" n={loot.perHour} />
-            <span class="cur">⚔ ×1</span>
+            <span class="cur"><Icon name="weapon" size={18} /> ×1</span>
           </div>
         </div>
       </div>

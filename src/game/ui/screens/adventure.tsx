@@ -5,7 +5,7 @@ import {
   ARENA_FREE_TICKETS, ARENA_LEAGUES, ARENA_SHOP, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS,
   DUNGEON_ATTEMPTS_PER_DAY, TOWER_STAGE_PER_FLOOR, UNLOCKS, type DungeonKind,
 } from '../../../core/data/modes';
-import { heroImage, monsterImage } from '../../art';
+import { ITEM_COLORS, heroImage, monsterImage } from '../../art';
 import { fmt, t } from '../../i18n';
 import {
   arenaPlan, buyExchange, claimMission, dailyBossId, dailyBossPlan, dungeonAttemptsLeft, markSeen, missionEnd,
@@ -77,7 +77,7 @@ function Tower() {
   return (
     <section class="card center">
       <h1>{t('adv.tower')}</h1>
-      <div class="tower-art">
+      <div class="tower-art" style={{ backgroundImage: 'url(art/t/tower.jpg)' }}>
         {[2, 1, 0].map((k) => <div class={`tower-floor${k === 0 ? ' current' : ''}`}>{t('tower.floor', { n: floor + k })}</div>)}
         {s.tower.floor > 0 && <div class="tower-floor done">{t('tower.floor', { n: s.tower.floor })}</div>}
       </div>
@@ -146,7 +146,7 @@ function Dungeons() {
       {DUNGEON_KINDS.map((k) => {
         const left = dungeonAttemptsLeft(s, k);
         return (
-          <button class={`card dungeon dungeon-${k}`} onClick={() => open({ type: 'dungeon', kind: k })}>
+          <button class={`card dungeon dungeon-${k}`} style={{ '--scene': `url(${new URL(`art/t/${({ gold: 'mine', essence: 'spring', gear: 'armory' })[k]}.jpg`, document.baseURI).href})` } as never} onClick={() => open({ type: 'dungeon', kind: k })}>
             <span class="dungeon-icon"><Icon name={DUNGEON_ICON[k]} size={34} /></span>
             <span class="grow">
               <strong>{t(`dungeon.${k}`)}</strong>
@@ -170,7 +170,7 @@ function DailyBoss() {
   return (
     <section class="card center">
       <h1>{t('adv.dailyBoss')} · {t(`monster.${boss}`)}</h1>
-      <img class="boss-img" src={monsterImage(boss, 'fire')} alt="" />
+      <div class="boss-scene" style={{ backgroundImage: 'url(art/t/lair.jpg)' }}><img class="boss-img" src={monsterImage(boss, 'fire')} alt="" /></div>
       {/* Les récompenses sont des paliers sur la barre des dégâts : on voit d'un coup d'œil où on en est. */}
       <div class="boss-track">
         {DAILY_BOSS_TIERS.map((tier) => (
@@ -248,7 +248,7 @@ export function ShopTile(p: { cost: preact.ComponentChildren; reward: Record<str
       {p.art && <Art class="shop-art" name={p.art} />}
       <div class="shop-reward">
         {Object.entries(p.reward).map(([k, v]) =>
-          k === 'item' ? <span class="cur"><Icon name={`weapon-${v}`} size={26} /> {t(`item.${v}`)}</span> : <Cur k={k} n={v ?? 0} big />,
+          k === 'item' ? <span class="item" style={{ '--rar': ITEM_COLORS[v ?? 0] } as never}><Icon name={`weapon-${v}`} size={38} /></span> : <Cur k={k} n={v ?? 0} big />,
         )}
       </div>
       <Btn kind="gold" small wide disabled={p.disabled} onClick={p.onBuy}>{p.cost}</Btn>

@@ -34,7 +34,7 @@ function members(guild: string) {
   return MEMBER_NAMES.slice(0, 9).map((name, i) => ({
     name,
     power: Math.round(mine * (0.6 + rng() * 0.9)),
-    role: i === 0 ? '♛' : i < 3 ? '★' : '',
+    role: i === 0 ? 'crown' : i < 3 ? 'star' : '',
     defId: ['knights-10', 'mages-11', 'angels-12', 'demons-10', 'myths-10', 'assassins-11', 'knights-6', 'mages-7', 'angels-8'][i]!,
   }));
 }
@@ -82,7 +82,7 @@ export function GuildScreen() {
       ]} />
       {tab === 'boss' && (
         <section class="card center">
-          <img class="boss-img" src={monsterImage('dragon', 'fire')} alt="" />
+          <div class="boss-scene" style={{ backgroundImage: 'url(art/t/lair.jpg)' }}><img class="boss-img" src={monsterImage('dragon', 'fire')} alt="" /></div>
           <h2>{t('monster.dragon')}</h2>
           <Bar value={GUILD_BOSS_HP - total} max={GUILD_BOSS_HP} color="#e5484d" label={`${fmt(GUILD_BOSS_HP - total)} / ${fmt(GUILD_BOSS_HP)}`} />
           <p class="muted">{t('guild.total')} : <b>{fmt(total)}</b></p>
@@ -94,7 +94,7 @@ export function GuildScreen() {
         <section class="list">
           <div class="card member me"><img src={heroImage(s.heroes[0]!.defId)} alt="" /><strong class="grow">{s.name}</strong><span class="power-chip"><Icon name="power" size={16} />{fmt(teamPower(s))}</span></div>
           {members(s.guild.joined).map((m) => (
-            <div class="card member"><img src={heroImage(m.defId)} alt="" /><strong class="grow">{m.role} {m.name}</strong><span class="power-chip"><Icon name="power" size={16} />{fmt(m.power)}</span></div>
+            <div class="card member"><img src={heroImage(m.defId)} alt="" /><strong class="grow">{m.role && <Icon name={m.role} size={18} />} {m.name}</strong><span class="power-chip"><Icon name="power" size={16} />{fmt(m.power)}</span></div>
           ))}
           <Btn kind="ghost" small onClick={() => open({ type: 'confirm', text: `${t('guild.leave')} ?`, onYes: leaveGuild })}>{t('guild.leave')}</Btn>
         </section>
@@ -137,9 +137,9 @@ function GuildWar({ guild }: { guild: string }) {
   return (
     <section class="list war">
       <div class="card war-head">
-        <div class="war-side"><Icon name="guild" size={34} /><strong>{guild}</strong><span class="war-score">★ {sc.mine}</span></div>
+        <div class="war-side"><Icon name={emblem(guild)} size={44} /><strong>{guild}</strong><span class="war-score"><Icon name="star" size={18} /> {sc.mine}</span></div>
         <span class="war-vs">VS</span>
-        <div class="war-side foe"><Icon name="guild" size={34} /><strong>{w.foe}</strong><span class="war-score">★ {sc.foe}</span></div>
+        <div class="war-side foe"><Icon name={emblem(w.foe)} size={44} /><strong>{w.foe}</strong><span class="war-score"><Icon name="star" size={18} /> {sc.foe}</span></div>
       </div>
 
       {(showResult || pending) && (
@@ -176,7 +176,7 @@ function GuildWar({ guild }: { guild: string }) {
       <h3>{t('war.ranking')}</h3>
       <div class="card war-ranking">
         {sc.members.map((m, i) => (
-          <div class={`row between${m.me ? ' me' : ''}`}><span>{i + 1}. {m.name}</span><span class="gold-text">★ {m.stars}</span></div>
+          <div class={`row between${m.me ? ' me' : ''}`}><span>{i + 1}. {m.name}</span><span class="gold-text"><Icon name="star" size={16} /> {m.stars}</span></div>
         ))}
       </div>
     </section>

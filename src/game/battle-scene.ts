@@ -9,7 +9,9 @@ import { battleLook } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
 import { getState } from './state/store';
 
+/** Hauteur de base de l'écran de combat ; sur un téléphone plus allongé, l'écran s'étire (jusqu'à `H_MAX`) et le décor en profite. */
 export const H = 1280;
+const H_MAX = 1640;
 const PORTRAIT_ORDER: Slot[] = [3, 4, 2, 0, 1];
 
 interface Portrait {
@@ -64,8 +66,10 @@ export class BattleScene extends FightScene {
     g.fillRoundedRect(-w / 2, -h / 2, w, h + 5, r);
     g.fillStyle(color);
     g.fillRoundedRect(-w / 2, -h / 2, w, h - 6, r);
-    g.fillStyle(0xffffff, 0.4);
-    g.fillRoundedRect(-w / 2 + 7, -h / 2 + 5, w - 14, h * 0.26, Math.min(r - 4, h * 0.13));
+    g.fillStyle(0xffffff, 0.22);
+    g.fillRoundedRect(-w / 2, -h / 2, w, (h - 6) * 0.5, { tl: r, tr: r, bl: 0, br: 0 });
+    g.fillStyle(0xffffff, 0.6);
+    g.fillRoundedRect(-w / 2 + r * 0.6, -h / 2 + 3, w - r * 1.2, 4, 2);
     const label_ = ink
       ? this.add.text(0, -3, label, { fontFamily: FONT, fontSize: `${Math.round(h * 0.42)}px`, color: '#2f2244', fontStyle: 'bold' }).setOrigin(0.5)
       : this.text(0, -3, label, Math.round(h * 0.42));
@@ -80,14 +84,22 @@ export class BattleScene extends FightScene {
     return { c, label: label_ };
   }
 
+  /** Haut du panneau des héros (tout le bas de l'écran se place à partir de là). */
+  private hudY = 908;
+
   create() {
     this.battle = new Battle({ heroes: this.req.heroes, waves: this.req.waves, seed: this.req.seed, auto: getState().auto });
-    this.drawArena(780);
+    // disposition : les boutons et le panneau des héros sont ancrés en bas, le décor prend tout le reste
+    const H = this.scale.height;
+    this.hudY = H - 372;
+    const arenaBottom = this.hudY - 26;
+    this.groundTop = arenaBottom - 430;
+    this.drawArena(arenaBottom);
     // le bas de l'écran : du papier crème (comme le bas de l'accueil), bordé d'encre et d'or sous le terrain
-    this.add.rectangle(W / 2, 780 + (H - 780) / 2, W, H - 780, C.paper).setDepth(-5);
-    this.add.rectangle(W / 2, 780, W, 12, C.gold).setDepth(1350);
-    this.add.rectangle(W / 2, 773, W, 5, C.ink).setDepth(1351);
-    this.add.rectangle(W / 2, 787, W, 5, C.ink).setDepth(1351);
+    this.add.rectangle(W / 2, arenaBottom + (H - arenaBottom) / 2, W, H - arenaBottom, C.paper).setDepth(-5);
+    this.add.rectangle(W / 2, arenaBottom, W, 12, C.gold).setDepth(1350);
+    this.add.rectangle(W / 2, arenaBottom - 7, W, 5, C.ink).setDepth(1351);
+    this.add.rectangle(W / 2, arenaBottom + 7, W, 5, C.ink).setDepth(1351);
 
     this.text(W / 2, 60, `${t(`mode.${this.req.kind}`)} ${this.titleSuffix()}`, 32, '#ffe27a').setDepth(3000);
     this.waveLabel = this.text(W / 2, 104, '', 24, '#ffffff').setDepth(3000);
@@ -113,18 +125,17 @@ export class BattleScene extends FightScene {
     // le panneau des héros : papier crème, contour d'encre, tranche plus sombre
     const g = this.add.graphics();
     g.fillStyle(C.ink);
-    g.fillRoundedRect(8, 892, 704, 236, 30);
+    const top = this.hudY;
+    g.fillRoundedRect(8, top, 704, 236, 30);
     g.fillStyle(C.paper3);
-    g.fillRoundedRect(13, 897, 694, 226, 25);
-    g.fillStyle(C.paper);
-    g.fillRoundedRect(13, 897, 694, 216, 25);
+    g.fillRoundedRect(13, top + 5, 694, 226, 25);
     g.fillStyle(0xffffff);
-    g.fillRoundedRect(22, 903, 676, 16, 8);
+    g.fillRoundedRect(13, top + 5, 694, 216, 25);
     PORTRAIT_ORDER.forEach((slot, i) => {
       const unit = this.battle.heroes.find((h) => h.slot === slot);
       if (!unit) return;
       const x = 90 + i * 135;
-      const y = 1000;
+      const y = this.hudY + 104;
       const glow = this.add.circle(x, y, 66, C.energy, 0.35).setVisible(false);
       this.add.circle(x, y, 63, C.ink);
       const frame = this.add.circle(x, y, 56, 0xbfe4ff).setStrokeStyle(5, 0xffffff);
@@ -138,7 +149,7 @@ export class BattleScene extends FightScene {
       this.portraits.push({ unit, x, ring, glow, img });
     });
     this.drawAuto();
-    const speed = this.button(530, 1190, 260, 80, `×${getState().speed}`, C.blue, () => {
+    const speed = this.button(530, this.hudY + 290, 290, 78, `×${getState().speed}`, C.blue, () => {
       const next = ((getState().speed % 3) + 1) as 1 | 2 | 3;
       setSpeed(next);
       speed.label.setText(`×${next}`);
@@ -147,7 +158,7 @@ export class BattleScene extends FightScene {
 
   private drawAuto() {
     const on = getState().auto;
-    const b = this.button(190, 1190, 260, 80, t('battle.auto'), on ? C.green : C.paper, () => {
+    const b = this.button(190, this.hudY + 290, 290, 78, t('battle.auto'), on ? C.green : C.paper, () => {
       setAuto(!on);
       this.battle.setAuto(!on);
       b.c.destroy();
@@ -173,18 +184,18 @@ export class BattleScene extends FightScene {
       if (u.hp <= 0) continue;
       p.ring.lineStyle(9, ready ? C.gold : C.energy);
       p.ring.beginPath();
-      p.ring.arc(p.x, 1000, 59, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (u.energy / ENERGY_MAX));
+      p.ring.arc(p.x, this.hudY + 104, 59, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (u.energy / ENERGY_MAX));
       p.ring.strokePath();
       p.ring.fillStyle(C.ink);
-      p.ring.fillRoundedRect(p.x - 55, 1072, 110, 18, 8);
+      p.ring.fillRoundedRect(p.x - 55, this.hudY + 180, 110, 18, 8);
       p.ring.fillStyle(0x5b4d75);
-      p.ring.fillRoundedRect(p.x - 52, 1075, 104, 12, 5);
+      p.ring.fillRoundedRect(p.x - 52, this.hudY + 183, 104, 12, 5);
       const wHp = 104 * (u.hp / u.maxHp);
       if (wHp > 1) {
         p.ring.fillStyle(C.green);
-        p.ring.fillRoundedRect(p.x - 52, 1075, wHp, 12, Math.min(5, wHp / 2));
+        p.ring.fillRoundedRect(p.x - 52, this.hudY + 183, wHp, 12, Math.min(5, wHp / 2));
         p.ring.fillStyle(0xffffff, 0.35);
-        p.ring.fillRect(p.x - 50, 1076.5, Math.max(0, wHp - 4), 3);
+        p.ring.fillRect(p.x - 50, this.hudY + 184.5, Math.max(0, wHp - 4), 3);
       }
     }
   }
@@ -220,8 +231,8 @@ export function runBattle(parent: HTMLElement, request: BattleRequest, done: (r:
     type: Phaser.AUTO,
     parent,
     width: W,
-    height: H,
-    backgroundColor: '#14162b',
+    height: Math.max(H, Math.min(H_MAX, Math.round((W * (parent.clientHeight || H)) / (parent.clientWidth || W)))),
+    backgroundColor: '#fffaf0',
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY },
     scene: [],
   });

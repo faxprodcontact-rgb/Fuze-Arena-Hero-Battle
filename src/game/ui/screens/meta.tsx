@@ -273,7 +273,7 @@ export function NameScreen() {
   const [name, setName] = useState(randomName());
   const [error, setError] = useState<string | null>(null);
   return (
-    <div class="name-screen">
+    <div class="name-screen" style={{ backgroundImage: 'linear-gradient(180deg, #2f224466, #2f224499), url(art/ui/loading.jpg)' }}>
       <div class="name-card">
         <img src={heroImage(heroesOf('knights', 'epic')[0]!.id)} alt="" />
         <h1>{t('name.title')}</h1>
