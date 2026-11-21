@@ -4,7 +4,7 @@
 // très lentement, des poussières de lumière qui montent. Les mouvements sont dans anim.css.
 import type { ComponentChildren } from 'preact';
 import './anim.css';
-import { AdventureScene } from './backdrop-adventure';
+import { AdventureBackdrop } from './backdrop-adventure';
 import { RUNES, spark } from './portal';
 
 export type BackdropKind = 'heroes' | 'summon' | 'adventure' | 'guild' | 'page';
@@ -99,7 +99,6 @@ function Banner({ x, len, w, fill, trim }: { x: number; len: number; w: number; 
 }
 
 function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
-  if (kind === 'adventure') return <AdventureScene />;
   if (kind === 'summon') {
     return (
       <>
@@ -197,9 +196,10 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
 
 /** Le fond d'un écran. `dim` l'assombrit un peu (pages chargées en panneaux). */
 export function Backdrop({ kind }: { kind: BackdropKind }) {
+  if (kind === 'adventure') return <div class="backdrop backdrop-adventure" aria-hidden="true"><AdventureBackdrop /></div>;
   return (
     <div class={`backdrop backdrop-${kind}`} aria-hidden="true">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio={kind === 'adventure' ? 'xMidYMin slice' : 'xMidYMid slice'}>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">
         <defs><linearGradient id="bd-mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0" /><stop offset="1" stop-color="#fff" stop-opacity="0.3" /></linearGradient></defs>
         <Scene kind={kind} />
       </svg>

@@ -122,6 +122,14 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   clé interne toujours `defense`) : écran de présentation avec « Bientôt », **les règles du Colisée restent à construire** ;
   l'ancien mode Défense n'est plus accessible (son code est encore là). Prochaines parties à refaire de la même façon : Héros,
   Invocation, Guilde, Accueil.
+  v0.31.0 : le propriétaire trouve l'Aventure « bien mieux » et demande des **dessins « 100 fois mieux, plus travaillés, plus
+  professionnels »**. Décor entièrement redessiné (`backdrop-adventure.tsx`) : sommets à deux faces et arêtes brisées (`Peak`),
+  nuages en volume (`Cloud`), château à tours rondes ombrées en cylindre (`Tower`), remparts, châtelet, cascade, moulin dont les
+  ailes tournent, hameau, rivière et pont, sapins et arbres ronds éclairés à droite, campement et feu au premier plan.
+  **Quatre calques** superposés (fond fixe, soleil et nuages qui bougent, château et campagne fixes, puis ce qui bouge devant) :
+  garder cet ordre, sinon les nuages passent devant le château. Tuiles : une vraie petite scène par mode dans `tile-scene.tsx`
+  (nuit et mer de nuages, route et fanion, grotte et cristaux, antre et lave, colonnes et bannières, arcades du Colisée).
+  C'est le niveau de dessin attendu pour les prochaines parties (Héros, Invocation, Guilde, Accueil).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier
