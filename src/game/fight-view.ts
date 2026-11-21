@@ -2,7 +2,7 @@
 // Le moteur (src/core/battle) calcule ; ces scènes animent ce qu'il raconte.
 import Phaser from 'phaser';
 import type { Battle } from '../core/battle/engine';
-import { ENERGY_MAX, LEADER_SLOT, type BattleEvent, type Hit, type Slot, type Unit } from '../core/battle/types';
+import { ENERGY_MAX, LEADER_SLOT, TICK_MS, type BattleEvent, type Hit, type Slot, type Unit } from '../core/battle/types';
 import { HEROES } from '../core/data/heroes';
 import type { Element } from '../core/types';
 import { ELEMENT_COLOR, artUrl, cardUrl, hasArt, heroCanvas, monsterCanvas } from './art';
@@ -41,7 +41,15 @@ export interface View {
   /** Hauteur et largeur de la barre de vie (au-dessus de la tête du dessin). */
   barY: number;
   barW: number;
+  /** Vie affichée : elle baisse quand le coup est montré, pas quand les règles l'ont calculé. */
+  hp: number;
 }
+
+/**
+ * Chacun son tour : pendant qu'un coup se joue, le combat est en pause (les règles ne changent pas, seul l'affichage
+ * attend). Durée d'un tour, en ms à vitesse ×1 ; ×2 et ×3 les raccourcissent.
+ */
+const TURN_MS = { attack: 430, skill: 980, passive: 260, wave: 550 };
 
 /** Taille des dessins Hailuo : pixels de l'écran par unité du repère du dessin (un héros mesure ~190 unités). */
 const UNIT_PX = 0.64;
@@ -182,7 +190,7 @@ export abstract class FightScene extends Phaser.Scene {
     const bars = this.add.graphics();
     body.add([shadow, sprite, bars]);
     if (hero && unit.slot === LEADER_SLOT && unit.talent) body.add(this.text(0, barY - 22, '♛', 26, '#ffe27a'));
-    this.views.set(unit.id, { unit, body, sprite, bars, homeX: x, barY, barW });
+    this.views.set(unit.id, { unit, body, sprite, bars, homeX: x, barY, barW, hp: unit.hp });
     if (enter) this.tweens.add({ targets: body, x, duration: 450, ease: 'Back.easeOut' });
   }
 
@@ -199,13 +207,13 @@ export abstract class FightScene extends Phaser.Scene {
       const u = v.unit;
       const g = v.bars;
       g.clear();
-      if (u.hp <= 0) continue;
+      if (v.hp <= 0 && u.hp <= 0) continue;
       const w = v.barW;
       const y = v.barY;
       g.fillStyle(0x000000, 0.6);
       g.fillRoundedRect(-w / 2 - 2, y - 2, w + 4, 16, 5);
       g.fillStyle(u.side === 'hero' ? C.green : C.red);
-      g.fillRoundedRect(-w / 2, y, w * (u.hp / u.maxHp), 12, 4);
+      g.fillRoundedRect(-w / 2, y, w * (Math.max(0, v.hp) / u.maxHp), 12, 4);
       if (u.shield > 0) {
         g.fillStyle(0x9fd8ff, 0.85);
         g.fillRoundedRect(-w / 2, y, Math.min(w, w * (u.shield / u.maxHp)), 6, 3);
@@ -224,6 +232,43 @@ export abstract class FightScene extends Phaser.Scene {
     void unit;
   }
   protected abstract onEnd(win: boolean): void;
+
+  private queue: { e: BattleEvent; speed: number }[] = [];
+  private busy = 0;
+  private stepAcc = 0;
+
+  /**
+   * Fait avancer le combat un coup à la fois : on joue le coup suivant de la file, on attend qu'il soit fini, et
+   * quand la file est vide les règles avancent jusqu'au prochain coup. Les coups calculés au même instant passent
+   * donc l'un après l'autre, héros comme ennemis.
+   */
+  protected advance(delta: number, speed: number) {
+    if (this.busy > 0) {
+      this.busy -= delta;
+      return;
+    }
+    while (this.queue.length) {
+      const q = this.queue.shift()!;
+      this.handle([q.e], q.speed);
+      const ms = q.e.type === 'attack' ? TURN_MS.attack : q.e.type === 'skill' ? TURN_MS.skill : q.e.type === 'passive' ? TURN_MS.passive : q.e.type === 'wave' ? TURN_MS.wave : 0;
+      if (ms) {
+        this.busy = ms / q.speed;
+        return;
+      }
+    }
+    // file vide : les barres de vie rattrapent les règles (brûlures, etc.), puis les règles avancent
+    for (const v of this.views.values()) v.hp = v.unit.hp;
+    this.stepAcc = Math.min(this.stepAcc + delta * speed, 1000);
+    while (this.stepAcc >= TICK_MS && !this.battle.over) {
+      this.stepAcc -= TICK_MS;
+      const events = this.battle.step();
+      for (const e of events) this.queue.push({ e, speed });
+      if (events.some((e) => e.type !== 'tick')) {
+        this.stepAcc = 0;
+        break;
+      }
+    }
+  }
 
   protected handle(events: BattleEvent[], speed: number) {
     for (const e of events) {
@@ -541,6 +586,9 @@ export abstract class FightScene extends Phaser.Scene {
   private showHit(hit: Hit, big: boolean) {
     const v = this.views.get(hit.target);
     if (!v) return;
+    if (hit.kind === 'damage') v.hp = Math.max(0, v.hp - hit.amount);
+    else if (hit.kind === 'heal') v.hp = Math.min(v.unit.maxHp, v.hp + hit.amount);
+    else if (hit.kind === 'revive') v.hp = v.unit.hp;
     // les images d'effets ne viennent qu'avec les compétences (big) ; le reste reste discret
     if (big) {
       const p = this.chest(v), dir = v.unit.side === 'hero' ? 1 : -1;

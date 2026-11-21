@@ -56,6 +56,9 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   qu'aux compétences (attaques spéciales), chacune avec sa mini-chorégraphie (`skillFx` dans `fight-view.ts` : la lame balaie et
   percute, l'éclair tombe, les pics jaillissent, le météore s'écrase…) ; les attaques de base restent discrètes, dessinées
   par le code (`basicMelee`, `basicShot`). Au corps à corps, le héros fonce sur sa cible pendant sa compétence.
+  Décidé (v0.23.0) : **chacun son tour** en combat (héros et ennemis) : `advance()` dans `fight-view.ts` joue les coups un
+  par un et met les règles en pause pendant chaque coup (`TURN_MS` : attaque 430 ms, compétence 980 ms à ×1). Les règles et
+  le résultat ne changent pas (le serveur peut toujours rejouer) ; les barres de vie suivent les coups montrés (`View.hp`).
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.
   Aperçu animé sur le site de test : `public/apercu/` (page à part, bouton « Aperçu des animations » dans les Outils de
   test des réglages) : les personnages v5 animés morceau par morceau. Les images viennent de

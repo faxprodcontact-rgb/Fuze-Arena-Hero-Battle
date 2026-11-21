@@ -139,12 +139,7 @@ export class BattleScene extends FightScene {
 
   update(_time: number, delta: number) {
     if (this.ended) return;
-    const speed = getState().speed;
-    this.acc += delta * speed;
-    while (this.acc >= TICK_MS && !this.battle.over) {
-      this.acc -= TICK_MS;
-      this.handle(this.battle.step(), speed);
-    }
+    this.advance(delta, getState().speed);
     this.syncUnits();
     this.syncPortraits();
     if (this.damageLabel) this.damageLabel.setText(this.damage().toLocaleString('fr-FR'));

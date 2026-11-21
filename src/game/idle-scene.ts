@@ -62,11 +62,7 @@ export class IdleScene extends FightScene {
       if (this.pause <= 0) this.startFight();
       return;
     }
-    this.acc = Math.min(this.acc + delta * IDLE_SPEED, 1000);
-    while (this.acc >= TICK_MS && !this.battle.over) {
-      this.acc -= TICK_MS;
-      this.handle(this.battle.step(), IDLE_SPEED);
-    }
+    this.advance(delta, IDLE_SPEED);
     this.syncUnits();
   }
 
