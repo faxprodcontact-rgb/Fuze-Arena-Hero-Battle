@@ -141,6 +141,12 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   `app.tsx`, dessin remonté de `TOP` dans `backdrop-adventure.tsx`), le bandeau a une hauteur liée à la largeur (44 %, comme
   le dessin) et **les six tuiles se partagent le reste de la hauteur : rien ne défile**. À vérifier pour chaque partie refaite :
   `scratchpad/art5/tailles.cjs` (cinq tailles de téléphone, encoche imitée) doit répondre « tient sans défiler ».
+  v0.32.0 : **les six pictos des modes de l'Aventure sont dessinés par le code et animés** (`ui/mode-icons.tsx`, `ModeIcon`,
+  demande du propriétaire : « même style graphique, du mieux possible ») : tour sur son rocher flottant et cristal, boussole
+  dont l'aiguille cherche le nord, porte du donjon avec herse et torches, crâne cornu aux yeux en flammes, bouclier et épées
+  qui se heurtent, Colisée à trois étages d'arcades. Un seul contour par objet (filtre `.mi-body` dans `anim.css`), dégradés
+  communs dans `Defs`. Les pictos peints (Hailuo) de ces six modes ne servent plus dans les tuiles ; ils restent dans
+  `icons.webp` pour le reste du jeu.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

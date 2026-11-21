@@ -100,3 +100,28 @@
 /* la fumée du hameau : des bouffées qui montent en s'élargissant */
 .ad-smoke { transform-box: fill-box; transform-origin: center; animation: ad-smoke 4.5s ease-out infinite; }
 @keyframes ad-smoke { 0% { transform: translate(0, 0) scale(0.5); opacity: 0; } 15% { opacity: 0.6; } 100% { transform: translate(6px, -18px) scale(2.4); opacity: 0; } }
+
+/* ---------- pictos animés des modes (mode-icons.tsx) ---------- */
+.mode-icon { overflow: visible; }
+/* un seul contour, fin et sombre, autour de chaque objet */
+.mi-body { filter: drop-shadow(0.9px 0 0 #2a2038) drop-shadow(-0.9px 0 0 #2a2038) drop-shadow(0 0.9px 0 #2a2038) drop-shadow(0 -0.9px 0 #2a2038); }
+.mi-bob { animation: mi-bob 2.8s ease-in-out infinite; }
+.mi-bob.mi-slow { animation-duration: 4s; }
+.mi-sway { animation: mi-sway 3.6s ease-in-out infinite; }
+.mi-flicker { animation: mi-flicker 2.2s ease-in-out infinite; }
+.mi-needle { animation: mi-needle 5.5s ease-in-out infinite; }
+.mi-clash { animation: mi-clash 3.2s ease-in-out infinite; }
+.mi-glint { animation: mi-glint 3.2s ease-in-out infinite; }
+.mi-spark { animation: mi-spark 3.2s ease-out infinite; }
+@keyframes mi-bob { 0%, 100% { transform: translateY(1px); } 50% { transform: translateY(-3px); } }
+@keyframes mi-sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes mi-flicker { 0%, 100% { opacity: 1; } 42% { opacity: 0.72; } 58% { opacity: 1; } 76% { opacity: 0.84; } }
+@keyframes mi-needle { 0% { transform: rotate(-34deg); } 14% { transform: rotate(22deg); } 27% { transform: rotate(-13deg); } 39% { transform: rotate(8deg); } 50% { transform: rotate(-4deg); } 60%, 88% { transform: rotate(0deg); } 100% { transform: rotate(-34deg); } }
+/* les épées s'écartent un peu, se heurtent, l'éclat jaillit, un reflet file le long des lames */
+@keyframes mi-clash { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(-5deg); } 40% { transform: rotate(1.5deg); } 46% { transform: rotate(0deg); } }
+@keyframes mi-spark { 0%, 36% { transform: scale(0); opacity: 0; } 42% { transform: scale(1.15) rotate(20deg); opacity: 1; } 62%, 100% { transform: scale(0.2) rotate(60deg); opacity: 0; } }
+@keyframes mi-glint { 0%, 50% { transform: translateY(8px) scale(0.2); opacity: 0; } 58% { opacity: 1; } 82% { transform: translateY(-46px) scale(1); opacity: 0.9; } 100% { transform: translateY(-58px) scale(0.2); opacity: 0; } }
+
+/* les petits cailloux qui se détachent du rocher de la tour */
+.mi-pebble { animation: mi-pebble 3.4s ease-in infinite; }
+@keyframes mi-pebble { 0%, 20% { transform: translateY(0); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(14px); opacity: 0; } }

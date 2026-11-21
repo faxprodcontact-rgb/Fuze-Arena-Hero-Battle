@@ -16,6 +16,7 @@ import { now, useGame } from '../../state/store';
 import { ADVENTURE_ORDER, dots, isNew } from '../dots';
 import { TeamStrip } from './heroes';
 import { TileScene } from '../tile-scene';
+import { ModeIcon } from '../mode-icons';
 import { Art, Bar, Btn, Cur, Icon, Locked, duration } from '../kit';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
 
@@ -50,7 +51,7 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
               }}
             >
               <TileScene kind={f} />
-              <Icon name={f === 'defense' ? 'colisee' : f} size={44} />
+              <ModeIcon kind={f} />
               <span class="tile-name">{t(`adv.${f}`)}</span>
               {!unlocked && <Locked stage={UNLOCKS[f]} />}
               {unlocked && isNew(s, f) && <span class="tile-new">{t('new')}</span>}
@@ -70,7 +71,7 @@ function Colisee() {
   return (
     <section class="card center">
       <h1>{t('adv.defense')}</h1>
-      <div class="boss-scene colisee-scene" style={{ backgroundImage: 'url(art/t/arena.jpg)' }}><Art name="colisee" class="colisee-art" /></div>
+      <div class="boss-scene colisee-scene" style={{ backgroundImage: 'url(art/t/arena.jpg)' }}><ModeIcon kind="defense" size={132} class="colisee-art" /></div>
       <div class="colisee-duel">
         <div class="team-faces">{mine.map((h) => <span class="team-face"><img src={heroImage(h!.defId)} alt="" /></span>)}</div>
         <span class="vs">VS</span>
