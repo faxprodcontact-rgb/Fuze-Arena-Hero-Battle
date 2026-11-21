@@ -64,12 +64,16 @@ export class BattleScene extends FightScene {
     g.fillRoundedRect(-w / 2 - 3, -h / 2 + 3, w + 6, h + 8, r + 3);
     g.fillStyle(C.ink);
     g.fillRoundedRect(-w / 2 - 3, -h / 2 - 3, w + 6, h + 8, r + 3);
-    g.fillStyle(dark);
+    g.fillStyle(C.trim);
     g.fillRoundedRect(-w / 2, -h / 2, w, h + 2, r);
+    g.fillStyle(C.ink);
+    g.fillRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 4, r - 2);
+    g.fillStyle(dark);
+    g.fillRoundedRect(-w / 2 + 5, -h / 2 + 5, w - 10, h - 8, r - 4);
     g.fillStyle(color);
-    g.fillRoundedRect(-w / 2, -h / 2, w, h - 4, r);
-    g.fillStyle(0xffffff, 0.2);
-    g.fillRoundedRect(-w / 2 + 3, -h / 2 + 3, w - 6, (h - 6) * 0.45, { tl: r - 2, tr: r - 2, bl: 8, br: 8 });
+    g.fillRoundedRect(-w / 2 + 5, -h / 2 + 5, w - 10, h - 13, r - 4);
+    g.fillStyle(0xffffff, 0.22);
+    g.fillRoundedRect(-w / 2 + 8, -h / 2 + 8, w - 16, (h - 16) * 0.42, { tl: r - 6, tr: r - 6, bl: 8, br: 8 });
     const label_ = ink
       ? this.add.text(0, -3, label, { fontFamily: FONT, fontSize: `${Math.round(h * 0.42)}px`, color: C.hudText, fontStyle: 'bold' }).setOrigin(0.5)
       : this.text(0, -3, label, Math.round(h * 0.42));
@@ -102,6 +106,11 @@ export class BattleScene extends FightScene {
     this.add.rectangle(W / 2, arenaBottom - 4, W, 3, C.ink).setDepth(1351);
     this.add.rectangle(W / 2, arenaBottom + 4, W, 3, C.ink).setDepth(1351);
     this.add.rectangle(W / 2, arenaBottom + 16, W, 22, 0x000000, 0.18).setDepth(-4);
+    const under = this.add.graphics().setDepth(-4);
+    under.fillGradientStyle(0xffffff, 0xffffff, 0xffffff, 0xffffff, 0.16, 0.16, 0, 0);
+    under.fillRect(0, arenaBottom + 6, W, 150);
+    under.fillGradientStyle(0x000000, 0x000000, 0x000000, 0x000000, 0, 0, 0.3, 0.3);
+    under.fillRect(0, H - 160, W, 160);
 
     this.text(W / 2, 60, `${t(`mode.${this.req.kind}`)} ${this.titleSuffix()}`, 32, '#ffe27a').setDepth(3000);
     this.waveLabel = this.text(W / 2, 104, '', 24, '#ffffff').setDepth(3000);

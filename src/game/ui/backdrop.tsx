@@ -115,13 +115,15 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
         </g>
         <g fill="none" stroke="#2f4a6a" stroke-width="1.8" stroke-linecap="round" class="bd-birds"><path d="M70 300 q6 -6 10 0 q4 -6 10 0" /><path d="M98 318 q5 -5 8 0 q3 -5 8 0" /><path d="M52 326 q4 -4 7 0 q3 -4 7 0" /></g>
         <path d={ridge(11, 560, 150, 62)} fill="#7aa6cc" />
+        <rect y="470" width={W} height="170" fill="url(#bd-mist)" />
         <path d={ridge(23, 620, 120, 48)} fill="#5a8cae" />
+        <rect y="560" width={W} height="150" fill="url(#bd-mist)" />
         <Tower x={64} y={566} w={20} h={90} fill="#4a7896" flag="#e0564e" />
         <Tower x={96} y={590} w={16} h={70} fill="#4a7896" />
         <path d="M54 660 V610 h8 v-8 h8 v8 h8 v-8 h8 v8 h8 v-8 h8 v8 h12 V660 Z" fill="#4a7896" />
         <path d={hills(5, 690, 60, 110)} fill="#4f9060" />
         <path d={hills(9, 760, 46, 90)} fill="#3f7a52" />
-        <Motes seed={3} color="#fff8d6" n={10} />
+        <Motes seed={3} color="#fff8d6" n={6} />
       </>
     );
   }
@@ -129,7 +131,7 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
     return (
       <>
         <defs>
-          <linearGradient id="bd-s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1848" /><stop offset="0.55" stop-color="#3d2c88" /><stop offset="1" stop-color="#7a54c6" /></linearGradient>
+          <linearGradient id="bd-s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c2670" /><stop offset="0.55" stop-color="#5440a8" /><stop offset="1" stop-color="#8f6ad6" /></linearGradient>
           <radialGradient id="bd-moon"><stop offset="0" stop-color="#d9c8ff" stop-opacity="0.7" /><stop offset="1" stop-color="#d9c8ff" stop-opacity="0" /></radialGradient>
         </defs>
         <rect width={W} height={H} fill="url(#bd-s)" />
@@ -148,7 +150,7 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
           <path d="M80 640 L88 720 L104 730 Z M312 650 L304 730 L290 740 Z" fill="#8f6fe8" opacity="0.5" />
           <path d="M-10 844 V780 Q100 740 195 770 Q300 800 400 760 V844 Z" fill="#221656" />
         </g>
-        <Motes seed={12} color="#e6d6ff" n={18} />
+        <Motes seed={12} color="#e6d6ff" n={10} />
       </>
     );
   }
@@ -173,7 +175,7 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
           <path d="M-10 844 V660 h22 v-14 h20 v14 h20 v-14 h20 v14 h20 v-14 h20 v14 h20 v-14 h20 v14 h20 v-14 h20 v14 h20 v-14 h20 v14 h20 v-14 h20 v14 h20 v-14 h20 v14 h20 v-14 h20 v14 h20 v-14 h20 v14 h30 V844 Z" />
           <path d="M165 844 V730 Q165 696 195 696 Q225 696 225 730 V844 Z" fill="#2c1428" />
         </g>
-        <Motes seed={21} color="#ffe9a0" n={12} />
+        <Motes seed={21} color="#ffe9a0" n={7} />
       </>
     );
   }
@@ -181,27 +183,26 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
     return (
       <>
         <defs>
-          <linearGradient id="bd-h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f3f63" /><stop offset="0.6" stop-color="#4f6f92" /><stop offset="1" stop-color="#33456a" /></linearGradient>
-          <linearGradient id="bd-hw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c7" stop-opacity="0.85" /><stop offset="1" stop-color="#9fd0f0" stop-opacity="0.35" /></linearGradient>
+          <linearGradient id="bd-h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d5580" /><stop offset="0.6" stop-color="#5f84a8" /><stop offset="1" stop-color="#445c88" /></linearGradient>
+          <linearGradient id="bd-hw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c7" stop-opacity="0.42" /><stop offset="1" stop-color="#9fd0f0" stop-opacity="0.16" /></linearGradient>
           <linearGradient id="bd-beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c7" stop-opacity="0.34" /><stop offset="1" stop-color="#fff3c7" stop-opacity="0" /></linearGradient>
         </defs>
         <rect width={W} height={H} fill="url(#bd-h)" />
         {/* la grande fenêtre en ogive et sa lumière */}
         <path d="M135 470 V250 Q135 170 195 150 Q255 170 255 250 V470 Z" fill="url(#bd-hw)" />
-        <path d="M195 150 V470 M135 300 H255 M135 390 H255" stroke="#2f3f63" stroke-width="5" />
-        <path d="M135 470 V250 Q135 170 195 150 Q255 170 255 250 V470 Z" fill="none" stroke="#24304f" stroke-width="8" />
+        <path d="M195 150 V470 M135 300 H255 M135 390 H255" stroke="#3d5580" stroke-width="3" opacity="0.6" />
+        <path d="M135 470 V250 Q135 170 195 150 Q255 170 255 250 V470 Z" fill="none" stroke="#33466e" stroke-width="5" />
         <path class="bd-beam" d="M135 470 L20 844 H370 L255 470 Z" fill="url(#bd-beam)" />
         <RuneCircle cx={195} cy={310} r={150} color="#ffe9a8" opacity={0.16} />
         {/* les colonnes */}
-        <g fill="#24304f">
-          <path d="M-6 0 H46 V844 H-6 Z M344 0 H396 V844 H344 Z" />
-          <path d="M-10 96 H56 V116 H-10 Z M334 96 H400 V116 H334 Z M-10 730 H60 V760 H-10 Z M330 730 H400 V760 H330 Z" fill="#1c2640" />
+        <g fill="#33466e">
+          <path d="M-6 0 H30 V844 H-6 Z M360 0 H396 V844 H360 Z" />
+          <path d="M-10 96 H40 V112 H-10 Z M350 96 H400 V112 H350 Z M-10 736 H44 V760 H-10 Z M346 736 H400 V760 H346 Z" fill="#2a3a5e" />
         </g>
-        <path d="M14 116 V730 M30 116 V730 M360 116 V730 M376 116 V730" stroke="#33456a" stroke-width="2" opacity="0.7" />
-        <Banner x={92} len={190} w={46} fill="#b8433f" trim="#ffd45c" />
-        <Banner x={298} len={190} w={46} fill="#3f6fc0" trim="#ffd45c" />
-        <path d="M-10 844 V770 H400 V844 Z" fill="#1c2640" />
-        <Motes seed={17} color="#fff3c7" n={14} />
+        <Banner x={64} len={150} w={34} fill="#b8433f" trim="#ffd45c" />
+        <Banner x={326} len={150} w={34} fill="#3f6fc0" trim="#ffd45c" />
+        <path d="M-10 844 V770 H400 V844 Z" fill="#2a3a5e" />
+        <Motes seed={17} color="#fff3c7" n={7} />
       </>
     );
   }
@@ -212,9 +213,11 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
       <Stars seed={4} n={24} />
       <RuneCircle cx={300} cy={230} r={150} color="#ffe2c8" opacity={0.18} />
       <path d={ridge(41, 640, 150, 66)} fill="#6a6aa0" />
+      <rect y="520" width={W} height="180" fill="url(#bd-mist)" />
       <path d={ridge(47, 700, 120, 50)} fill="#4a4f88" />
+      <rect y="620" width={W} height="160" fill="url(#bd-mist)" />
       <path d={hills(13, 780, 50, 100)} fill="#2c3560" />
-      <Motes seed={8} color="#ffe2c8" n={10} />
+      <Motes seed={8} color="#ffe2c8" n={6} />
     </>
   );
 }
@@ -223,7 +226,10 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
 export function Backdrop({ kind }: { kind: BackdropKind }) {
   return (
     <div class={`backdrop backdrop-${kind}`} aria-hidden="true">
-      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice"><Scene kind={kind} /></svg>
+      <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">
+        <defs><linearGradient id="bd-mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity="0" /><stop offset="1" stop-color="#fff" stop-opacity="0.3" /></linearGradient></defs>
+        <Scene kind={kind} />
+      </svg>
     </div>
   );
 }

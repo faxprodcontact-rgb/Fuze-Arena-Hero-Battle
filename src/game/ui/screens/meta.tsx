@@ -332,7 +332,7 @@ export function GainModal({ title, gain, damage, win }: { title: string; gain: G
   const empty = !Object.keys(gain.currencies).length && !gain.heroes.length && !gain.items.length && !gain.fragments;
   return (
     <Modal title={title}>
-      {win !== undefined && <div class="result-stage">{win && <Halo size={210} />}<Art class={`result-art ${win ? 'win' : 'lose'}`} name={win ? 'trophy' : 'defeat'} /></div>}
+      {win !== undefined && <div class="result-stage">{win && <Halo size={164} />}<Art class={`result-art ${win ? 'win' : 'lose'}`} name={win ? 'trophy' : 'defeat'} /></div>}
       {win !== undefined && <div class={`result-title ${win ? 'win' : 'lose'}`}>{win ? t('result.victory') : t('result.defeat')}</div>}
       {damage !== undefined && <p class="center">{t('result.damage')} : <b class="gold-text">{damage.toLocaleString('fr-FR')}</b></p>}
       <div class="gain">

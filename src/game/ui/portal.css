@@ -51,7 +51,6 @@
 .summon-scene { position: relative; display: grid; place-items: center; align-self: stretch; margin: -14px -14px 0; padding: 18px 0 10px; overflow: hidden; border-radius: 12px 12px 0 0;
   border-bottom: 1.5px solid var(--edge); background: radial-gradient(90% 70% at 50% 46%, #7a5ad0 0%, #4a3192 48%, #2a1c5c 100%); box-shadow: inset 0 -2px 0 var(--trim), inset 0 0 40px #00000059; }
 .summon-scene::before { content: ''; position: absolute; left: 50%; top: 44%; width: 150%; aspect-ratio: 1; translate: -50% -50%;
-  background: repeating-conic-gradient(from 0deg, #c9a8ff40 0 7deg, #ffffff00 7deg 20deg);
-  -webkit-mask-image: radial-gradient(closest-side, #000 20%, #0000 78%); mask-image: radial-gradient(closest-side, #000 20%, #0000 78%); animation: pt-spin 40s linear infinite; }
+  background: radial-gradient(closest-side, #c9a8ff73 0, #a98aff33 45%, #a98aff00 72%); animation: pt-breathe 4.5s ease-in-out infinite; }
 .summon-scene::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 26%; background: radial-gradient(60% 100% at 50% 100%, #c9a8ff66, #ffffff00); }
 .summon-scene .portal { position: relative; z-index: 1; }
