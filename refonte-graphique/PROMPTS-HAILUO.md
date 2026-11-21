@@ -494,3 +494,13 @@ Style: cartoon game icons, chunky simple shapes, crisp bold dark outline, cel sh
 Redraw image 1, in the drawing style of image 2, as one level select screen for a 2D mobile RPG, seen from high above, keeping EXACTLY the same layout: eight separate round plateaus with brown cliff sides standing in calm blue water, linked by short wooden bridges in a zigzag, and a tall magic tower on a small rock in the middle. Each plateau has ONE landscape only, filling it from edge to edge, with one big landmark in its center; nothing from one plateau spills onto another. Bottom row, left to right: sunny meadow with a windmill and wheat | green forest with big round trees and thorny brambles | swamp with cypress trees and lily pads | dry savanna with a small smoking volcano. Top row, right to left: snowy mountains with pine trees | rocky peaks under dark clouds with a lightning bolt | sandy desert with a bronze temple | rocky shore with a whirlpool.
 Style: stylized cartoon game art, few big chunky shapes, crisp bold dark outlines, bright saturated colors, cel shading, no tiny details. Not realistic. No text, no labels, no characters, no frames.
 ```
+
+### 23 — Écran de chargement v2 — `chargement-v2.png` (référence : l'écran du rendu `fin-logo.jpg`)
+
+Gladiateur (knights-4) et esprit aux tambours (mages-12) gardés ; fille phénix (assassins-5), minotaure (myths-3) et
+sage dragon (angels-6) à la place des trois autres.
+
+```
+Redraw image 1, in the drawing style of image 2, as a vertical loading screen for a bright medieval-fantasy mobile RPG, keeping EXACTLY the same five heroes, their places, sizes and poses: the Roman legionary in the center front (biggest); behind him on the left the purple drum spirit inside his ring of drums; behind him on the right the brown bull-headed warrior with his axe; front left the phoenix girl with fiery wings; front right the blue dragon sage holding a white pearl. They pose together, heroic and joyful, on a grassy hill at sunset, with a castle far away. Keep the top third as empty sky (the logo is added later) and the empty rounded band at the bottom (for the loading bar). Nothing outside the frame; the rest of the sheet stays EMPTY white.
+Style: stylized cartoon game art, chibi heroes, one bold dark outline per character, bright vibrant colors, cel shading, light from top right. Not realistic. No text. Nothing cropped, no hero hides another's face.
+```
