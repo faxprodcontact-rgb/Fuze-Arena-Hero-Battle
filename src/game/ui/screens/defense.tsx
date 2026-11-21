@@ -8,7 +8,7 @@ import {
 import { incomePerHour } from '../../../core/data/economy';
 import { heroDef } from '../../../core/data/heroes';
 import { heroImage } from '../../art';
-import { runDefense } from '../../defense-scene';
+import { runDefense } from '../../scenes';
 import { fmt, t } from '../../i18n';
 import {
   autoDefense, defensePlacement, defensePower, defenseRequest, defenseStarTotal, finishDefense, placeDefender, removeDefender, swapPads,

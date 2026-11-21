@@ -16,7 +16,7 @@ import { useGame } from '../../state/store';
 import { Art, Btn, Cur, Icon, ItemIcon, Modal, Stars } from '../kit';
 import { SlotPanel, betterInBag } from './bag';
 import { describePassive, describeSkill, describeTalent } from '../../describe';
-import { runSkillPreview } from '../../skill-scene';
+import { runSkillPreview } from '../../scenes';
 import type { UnitInit } from '../../../core/battle/types';
 import { close, open, toast } from '../nav';
 

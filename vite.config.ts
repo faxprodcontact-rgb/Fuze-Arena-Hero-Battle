@@ -18,5 +18,6 @@ export default defineConfig({
   base: './',
   define: { __BUILD__: JSON.stringify(BUILD_ID) },
   plugins: [versionFile()],
-  build: { outDir: 'dist', assetsInlineLimit: 0, chunkSizeWarningLimit: 2000 },
+  // Phaser (les deux tiers du code) a son propre fichier : il ne change pas d'une mise à jour à l'autre, les téléphones le gardent.
+  build: { outDir: 'dist', assetsInlineLimit: 0, chunkSizeWarningLimit: 2000, rollupOptions: { output: { manualChunks: { phaser: ['phaser'] } } } },
 });

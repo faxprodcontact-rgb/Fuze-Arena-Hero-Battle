@@ -186,7 +186,7 @@ def main():
     for i, n in enumerate(names):
         im = Image.open(os.path.join(OUT, n + '.webp')).convert('RGBA')
         atlas.paste(im, ((i % COLS) * SIZE, (i // COLS) * SIZE), im)
-    atlas.save(os.path.join(PUB, 'art', 'icons.webp'), 'WEBP', quality=90, method=6)
+    atlas.save(os.path.join(PUB, 'art', 'icons.webp'), 'WEBP', quality=80, method=6)  # 80 : 200 Ko de moins à télécharger, sans différence visible
     os.makedirs(os.path.join(ROOT, 'pictos'), exist_ok=True)  # les pictos un par un, gardés pour les retouches (pas dans le jeu)
     for n in names:
         shutil.move(os.path.join(OUT, n + '.webp'), os.path.join(ROOT, 'pictos', n + '.webp'))

@@ -122,6 +122,14 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   clé interne toujours `defense`) : écran de présentation avec « Bientôt », **les règles du Colisée restent à construire** ;
   l'ancien mode Défense n'est plus accessible (son code est encore là). Prochaines parties à refaire de la même façon : Héros,
   Invocation, Guilde, Accueil.
+  **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
+  de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
+  fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier
+  (`manualChunks` dans `vite.config.ts`), gardé par les téléphones d'une mise à jour à l'autre ; les 32 images d'effets et la
+  planche de pictos de Phaser se chargent en arrière-plan après l'affichage (`preload` de `fight-view.ts`) ; la planche de pictos
+  est préchargée dans `index.html` et l'écran de chargement s'efface dès qu'elle est là (plus d'attente de tout le reste).
+  Mesure : `scratchpad/art5/net2.cjs` (premier écran en 3,8 s au lieu de 9,7 s sur un réseau ralenti).
+  La copie claude.ai a maintenant plusieurs fichiers de code dans `assets/` : les publier tous et retirer les anciens.
   Attention : dans le CSS, ne pas écrire `url(art/…)` (mal résolu une fois le jeu construit) : passer l'adresse par un
   `style` dans le TSX. Tour complet en captures : `scratchpad/art5/tour.cjs` (à refaire si besoin).
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.

@@ -1,7 +1,7 @@
 // Préparation d'un combat : les ennemis en haut, la section sur le plateau, les héros en bas.
 // Toucher un héros = l'ajouter ou le retirer. Toucher deux postes = les échanger.
 import { useState } from 'preact/hooks';
-import { HERO_X } from '../../fight-view';
+import { HERO_X } from '../../scenes';
 import { LEADER_SLOT, type Slot } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
 import { heroImage, monsterImage } from '../../art';

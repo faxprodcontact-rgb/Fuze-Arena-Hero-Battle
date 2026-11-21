@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { accountXpForLevel } from '../../core/data/modes';
 import { heroImage } from '../art';
-import { runBattle } from '../battle-scene';
+import { runBattle } from '../scenes';
 import { fmt, t } from '../i18n';
 import { Backdrop } from './backdrop';
 import { ensureDay, finishBattle, type BattleRequest } from '../state/actions';

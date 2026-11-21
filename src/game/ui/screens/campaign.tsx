@@ -6,7 +6,7 @@ import { stagePower } from '../../../core/data/campaign';
 import { CAMPAIGN_STAGES, OFFLINE_CAP_HOURS, STAGES_PER_CHAPTER } from '../../../core/data/economy';
 import { chapterElement, chapterOf, isBossStage, stageInChapter } from '../../../core/stages';
 import { ELEMENT_COLOR } from '../../art';
-import { runIdle } from '../../idle-scene';
+import { runIdle } from '../../scenes';
 import { regionChapters } from '../../look';
 import { fmt, t } from '../../i18n';
 import {

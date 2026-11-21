@@ -13,6 +13,7 @@ import { ICON_INDEX } from './icons-meta';
 const STATUS_ICONS = ['burn', 'poison', 'bleed', 'regen', 'stun', 'silence', 'slow', 'taunt', 'atkUp', 'atkDown', 'defUp', 'defDown', 'speedUp', 'critUp'];
 import { t } from './i18n';
 import { themeColor } from './theme';
+import { HERO_X } from './scenes';
 import { battleLook, monsterArtId, type Look } from './look';
 
 export const W = 720;
@@ -33,12 +34,14 @@ export function applyTheme() {
 }
 
 // Les deux équipes sont bien séparées (230 px entre les deux premières lignes, les rangs du fond assez loin des bords pour ne pas être coupés) : on voit qui fonce sur qui.
-export const HERO_X: Record<Slot, number> = { 3: 82, 4: 82, 2: 163, 0: 245, 1: 245 };
+export { HERO_X };
 const ENEMY_X: Record<Slot, number> = { 0: 475, 1: 475, 2: 557, 3: 638, 4: 638 };
 /** Hauteur des rangées, mesurée depuis le haut du sol (`groundTop`). */
 const ROW_DY: Record<Slot, number> = { 0: 90, 3: 90, 2: 180, 1: 270, 4: 270 };
 
 const HERO_IDS = new Set(HEROES.map((h) => h.id));
+/** Les effets et la planche de pictos ont déjà été téléchargés une fois (le navigateur les a gardés). */
+let laterFetched = false;
 
 /** Couleur des statuts affichés au-dessus des combattants. */
 const STATUS_COLOR: Partial<Record<string, string>> = {
@@ -163,8 +166,21 @@ export abstract class FightScene extends Phaser.Scene {
     if (!this.textures.exists(`t-${terrain}`)) this.load.image(`t-${terrain}`, `art/t/${terrain}.jpg`);
     const tm = ART_META.terrains[terrain] as { fg?: number };
     if (tm?.fg && !this.textures.exists(`t-${terrain}-fg`)) this.load.image(`t-${terrain}-fg`, `art/t/${terrain}-fg.webp`);
-    for (const name of Object.keys(ART_META.fx)) if (!this.textures.exists(`fx-${name}`)) this.load.image(`fx-${name}`, `art/fx/${name}.webp`);
-    if (!this.textures.exists('icons')) this.load.spritesheet('icons', 'art/icons.webp', { frameWidth: 128, frameHeight: 128 });
+    // Les images d'effets (1,2 Mo) et la planche de pictos n'empêchent plus la scène de démarrer : elles se chargent
+    // en arrière-plan une fois le combat affiché (un effet pas encore arrivé est simplement sauté).
+    this.events.once('create', () => {
+      const fetchLater = () => {
+        if (!this.sys.isActive()) return;
+        for (const name of Object.keys(ART_META.fx)) if (!this.textures.exists(`fx-${name}`)) this.load.image(`fx-${name}`, `art/fx/${name}.webp`);
+        if (!this.textures.exists('icons')) this.load.spritesheet('icons', 'art/icons.webp', { frameWidth: 128, frameHeight: 128 });
+        this.load.start();
+        laterFetched = true;
+      };
+      // au tout premier lancement, on laisse d'abord arriver ce que l'écran montre (pictos, polices) ; ensuite c'est immédiat
+      if (laterFetched) fetchLater();
+      else if (document.readyState === 'complete') setTimeout(fetchLater, 800);
+      else addEventListener('load', () => setTimeout(fetchLater, 800), { once: true });
+    });
     for (const u of this.preloadUnits()) {
       const id = this.charId(u);
       const rig = RIGS[id];
@@ -315,6 +331,7 @@ export abstract class FightScene extends Phaser.Scene {
   /** Les effets en cours, en petits pictos alignés au-dessus de la barre de vie (4 au plus). */
   private syncStatusIcons(v: View) {
     const kinds = [...new Set(v.unit.statuses.map((x) => x.kind))].filter((k) => `st-${k}` in ICON_INDEX).slice(0, 4);
+    if (!this.textures.exists('icons')) return;
     const key = kinds.join(',');
     if (key === v.stKey) return;
     v.stKey = key;
@@ -945,7 +962,7 @@ export abstract class FightScene extends Phaser.Scene {
       if (hit.kind === 'revive') this.tweens.add({ targets: v.body, alpha: 1, y: v.homeY, angle: 0, duration: 400 });
       const label = hit.kind === 'miss' ? t('fx.miss') : hit.kind === 'revive' ? '✚' : t(`st.${hit.status}`, { n: '' }).replace(/[+−-]\s*%/, '').trim();
       const color = hit.kind === 'miss' ? '#c8d0ff' : hit.kind === 'revive' ? '#5dff9a' : STATUS_COLOR[hit.status ?? 'stun'] ?? '#ffe27a';
-      const icon = hit.kind === 'status' && `st-${hit.status}` in ICON_INDEX;
+      const icon = hit.kind === 'status' && `st-${hit.status}` in ICON_INDEX && this.textures.exists('icons');
       const n = icon ? this.add.image(v.body.x, v.body.y - 92, 'icons', ICON_INDEX[`st-${hit.status}`]).setDisplaySize(40, 40).setDepth(2000) : this.text(v.body.x, v.body.y - 92, label, 22, color).setDepth(2000);
       this.tweens.add({ targets: n, y: n.y - 34, alpha: 0, duration: icon ? 1000 : 800, onComplete: () => n.destroy() });
       return;
