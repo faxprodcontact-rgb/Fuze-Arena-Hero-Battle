@@ -38,6 +38,8 @@ pendant les combats (repos, attaque de base, attaque spéciale). Exemple fini : 
   une arme tenue vers le bas remonte en frappant (négatif). Plus l'arme est grande, plus l'angle doit rester raisonnable.
 - `move` : décalage en pixels au moment du coup (estoc, coup de bouclier, morsure en avant).
 - `behind` : true pour un morceau qui doit passer DERRIÈRE le corps (aile ou bras du fond, queue derrière les jambes).
+- `fill` : false pour un morceau fin posé sur le vide à côté du corps (manche de faux, hampe, lance) : sinon un « fantôme »
+  plein reste à son ancienne place quand il bouge (le corps est prolongé jusqu'à ~20 px derrière les morceaux).
 - L'ordre de la liste = l'ordre d'affichage devant le corps (le dernier est tout devant). Si deux contours se recouvrent,
   le pixel commun va au morceau le plus en avant.
 

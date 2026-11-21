@@ -13,6 +13,7 @@
 #           le coup de l'attaque de base et le geste de l'attaque spéciale ; par défaut selon le kind (KIND ci-dessous).
 #   move : décalage (pixels) du morceau au moment du coup (coup d'estoc, coup de bouclier) ; facultatif.
 #   behind : true = le morceau passe DERRIÈRE le corps (bras du fond, queue, aile du fond).
+#   fill : false = morceau fin posé sur le vide (manche de faux, lance) : le corps n'est pas « prolongé » derrière lui.
 #
 # Sortie : public/art/r/<id>/<morceau>.webp + base.webp, et refonte-graphique/rig-out/<id>.json (pour art-jeu.py).
 # Planche de contrôle : refonte-graphique/rig-out/<id>.png : [contours | corps rebouché | repos | élan | coup | spéciale].
@@ -83,16 +84,31 @@ def mask_of(poly, size, alpha):
     return np.minimum(np.asarray(m, np.float32) / 255, alpha)
 
 
-def inpaint(rgba, hole, iters=500):
-    """Rebouche `hole` en diffusant les couleurs voisines (couleurs prémultipliées ; la transparence aussi)."""
-    a = rgba[..., 3:4] / 255
-    pre = np.concatenate([rgba[..., :3] / 255 * a, a], axis=2)
-    known = hole < 0.5
-    pre[~known] = 0
+def diffuse(pre, known, iters):
     for _ in range(iters):
         p = np.pad(pre, ((1, 1), (1, 1), (0, 0)), mode='edge')
         avg = (p[:-2, 1:-1] + p[2:, 1:-1] + p[1:-1, :-2] + p[1:-1, 2:]) / 4
         pre = np.where(known[..., None], pre, avg)
+    return pre
+
+
+def inpaint(rgba, hole, iters=300):
+    """Rebouche `hole` en diffusant les couleurs voisines (couleurs prémultipliées ; la transparence aussi).
+    D'abord en petit (les grands trous se remplissent jusqu'au milieu), puis en grand pour les détails."""
+    a = rgba[..., 3:4] / 255
+    pre = np.concatenate([rgba[..., :3] / 255 * a, a], axis=2)
+    known = hole < 0.5
+    H, W = known.shape
+    f = 6
+    h, w = -(-H // f), -(-W // f)
+    P = np.zeros((h * f, w * f, 4), np.float32); P[:H, :W] = np.where(known[..., None], pre, 0)
+    K = np.zeros((h * f, w * f), np.float32); K[:H, :W] = known
+    ks = K.reshape(h, f, w, f).sum(axis=(1, 3))
+    ps = P.reshape(h, f, w, f, 4).sum(axis=(1, 3)) / np.maximum(ks, 1)[..., None]
+    coarse = diffuse(ps, ks > f * f * 0.5, 400)
+    up = np.repeat(np.repeat(coarse, f, 0), f, 1)[:H, :W]
+    pre = np.where(known[..., None], pre, up)
+    pre = diffuse(pre, known, iters)
     out = np.zeros_like(rgba, np.float32)
     al = np.clip(pre[..., 3], 0, 1)
     al = np.where(al < 0.35, 0, np.clip((al - 0.35) / 0.4, 0, 1))
@@ -111,6 +127,7 @@ def build(cid):
     for f in os.listdir(out):
         os.remove(os.path.join(out, f))
     hole = np.zeros(alpha.shape, np.float32)
+    nofill = np.zeros(alpha.shape, np.float32)
     cutout = np.zeros(alpha.shape, np.float32)  # morceaux « derrière » : on les retire du corps sans reboucher (le fond est derrière eux)
     parts, layers = [], []
     taken = np.zeros(alpha.shape, np.float32)  # un pixel n'appartient qu'à un morceau (le premier de la liste qui le prend… sauf l'avant)
@@ -122,17 +139,19 @@ def build(cid):
         layer[..., 3] = rgba[..., 3] * np.minimum(soft * 1.15, 1)
         layers.append((p, layer))
         if p.get('behind'):
-            cutout = np.maximum(cutout, m)
+            cutout = np.maximum(cutout, (m > 0.01).astype(np.float32))
         else:
-            hole = np.maximum(hole, (m > 0.02).astype(np.float32))
+            hole = np.maximum(hole, (m > 0.01).astype(np.float32))
+            if p.get('fill') is False:  # morceau fin posé sur le vide (manche, lance) : pas de remplissage plein derrière lui
+                nofill = np.maximum(nofill, (m > 0.01).astype(np.float32))
     layers.reverse()
     grow = np.asarray(Image.fromarray((hole * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3)), np.float32) / 255
     base = inpaint(rgba, grow)
-    # derrière un morceau, le corps continue : jusqu'à 30 px du corps visible, le trou reste plein (couleurs prolongées)
+    # derrière un morceau, le corps continue : jusqu'à ~20 px du corps visible, le trou reste plein (couleurs prolongées)
     body = Image.fromarray((((alpha > 0.5) & (grow < 0.5)) * 255).astype(np.uint8))
-    for _ in range(6):
+    for _ in range(4):
         body = body.filter(ImageFilter.MaxFilter(11))
-    near = (np.asarray(body) > 0) & (grow > 0.5) & (alpha > 0.5)
+    near = (np.asarray(body) > 0) & (grow > 0.5) & (alpha > 0.5) & (nofill < 0.5)
     base[..., 3] = np.where(near, 255, base[..., 3])
     # ce qui appartient à un morceau de derrière (et pas à un morceau de devant) disparaît du corps
     base[..., 3] = np.where(grow > 0.5, base[..., 3], base[..., 3] * (1 - np.clip(cutout * 1.2, 0, 1)))
