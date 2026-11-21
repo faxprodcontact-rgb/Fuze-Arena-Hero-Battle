@@ -179,3 +179,17 @@
 @keyframes ss-wave { 0% { transform: scale(0.8); opacity: 0.9; } 100% { transform: scale(4.5); opacity: 0; } }
 @keyframes ss-rays { 0%, 30% { opacity: 0; transform: scale(0.5) rotate(0deg); } 55% { opacity: 0.9; transform: scale(1) rotate(6deg); } 100% { opacity: 0.6; transform: scale(1.5) rotate(14deg); } }
 @keyframes ss-white { 0%, 88% { opacity: 0; } 100% { opacity: 1; } }
+
+/* ---------- la salle des héros (backdrop-heroes.tsx) ---------- */
+.hh-ring { transform-origin: 0 0; animation: an-spin 70s linear infinite; }
+
+/* ---------- les décors de la page d'un héros (hero-scene.tsx) ---------- */
+/* le vent : un trait qui file le long de sa volute ; les feuilles traversent l'écran */
+.hs-gust { stroke-dasharray: 60 260; animation: hs-gust 4.6s linear infinite; }
+.hs-gust-2 { animation-duration: 6.2s; animation-delay: -2s; }
+@keyframes hs-gust { from { stroke-dashoffset: 320; } to { stroke-dashoffset: 0; } }
+.hs-leaf { animation: hs-leaf 8s linear infinite; }
+@keyframes hs-leaf { 0% { transform: translate(0, 0); opacity: 0; } 8% { opacity: 1; } 50% { transform: translate(220px, 22px); } 92% { opacity: 1; } 100% { transform: translate(440px, -30px); opacity: 0; } }
+/* l'eau : des ronds qui s'élargissent à la surface du bassin */
+.hs-ripple { animation: hs-ripple 4.8s ease-out infinite; }
+@keyframes hs-ripple { 0% { transform: scale(0.3); opacity: 0; } 20% { opacity: 0.9; } 100% { transform: scale(1.9); opacity: 0; } }

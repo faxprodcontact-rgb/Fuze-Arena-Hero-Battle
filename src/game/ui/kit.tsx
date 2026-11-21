@@ -148,16 +148,20 @@ export function Stars({ stars }: { stars: number }) {
 
 export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; selected?: boolean; dim?: boolean; badge?: string; small?: boolean }) {
   const d = heroDef(p.hero.defId);
-  const color = p.hero.stars >= MYTHIC_STARS ? '#ff4d5e' : RARITY_COLOR[d.rarity];
+  const mythic = p.hero.stars >= MYTHIC_STARS;
+  const color = mythic ? '#ff4d5e' : RARITY_COLOR[d.rarity];
   const Tag = p.onClick ? 'button' : 'span';
+  // Derrière le héros : un mur à la couleur de sa rareté, frappé de l'emblème de son élément, et un sol éclairé.
+  // Par-dessus : un cadre de métal de la même couleur (il luit sur les Légendaires), le niveau, l'élément, les étoiles.
   return (
     <Tag
-      class={`hcard hcard-${d.rarity}${p.selected ? ' hcard-on' : ''}${p.dim ? ' hcard-dim' : ''}${p.small ? ' hcard-small' : ''}`}
+      class={`hcard hcard-${d.rarity} el-${d.element}${mythic ? ' hcard-mythic' : ''}${p.selected ? ' hcard-on' : ''}${p.dim ? ' hcard-dim' : ''}${p.small ? ' hcard-small' : ''}`}
       style={{ '--rar': color, '--el': ELEMENT_COLOR[d.element] } as never}
       onClick={p.onClick}
     >
-      <Art name={d.element} class="hcard-el" />
       <img src={heroImage(d.id)} alt={d.name} />
+      <i class="hcard-frame" />
+      <Art name={d.element} class="hcard-el" />
       <span class="hcard-lv">{p.hero.level}</span>
       <Stars stars={p.hero.stars} />
       {p.power !== undefined && <span class="hcard-pow">{fmt(p.power)}</span>}

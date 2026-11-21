@@ -84,6 +84,12 @@ export function open(modal: Modal): void {
   changed();
 }
 
+/** Remplace la fenêtre du dessus (passer d'un héros au suivant sans empiler les pages). */
+export function swap(modal: Modal): void {
+  nav.modals[Math.max(0, nav.modals.length - 1)] = modal;
+  changed();
+}
+
 export function close(): void {
   nav.modals.pop();
   changed();

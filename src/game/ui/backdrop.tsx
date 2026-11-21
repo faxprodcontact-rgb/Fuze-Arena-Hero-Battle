@@ -6,6 +6,7 @@ import type { ComponentChildren } from 'preact';
 import './anim.css';
 import { AdventureBackdrop } from './backdrop-adventure';
 import { SummonBackdrop } from './backdrop-summon';
+import { HeroesBackdrop } from './backdrop-heroes';
 import { RUNES, spark } from './portal';
 
 export type BackdropKind = 'heroes' | 'summon' | 'adventure' | 'guild' | 'page';
@@ -152,33 +153,6 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
       </>
     );
   }
-  if (kind === 'heroes') {
-    return (
-      <>
-        <defs>
-          <linearGradient id="bd-h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3d5580" /><stop offset="0.6" stop-color="#5f84a8" /><stop offset="1" stop-color="#445c88" /></linearGradient>
-          <linearGradient id="bd-hw" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c7" stop-opacity="0.42" /><stop offset="1" stop-color="#9fd0f0" stop-opacity="0.16" /></linearGradient>
-          <linearGradient id="bd-beam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c7" stop-opacity="0.34" /><stop offset="1" stop-color="#fff3c7" stop-opacity="0" /></linearGradient>
-        </defs>
-        <rect width={W} height={H} fill="url(#bd-h)" />
-        {/* la grande fenêtre en ogive et sa lumière */}
-        <path d="M135 470 V250 Q135 170 195 150 Q255 170 255 250 V470 Z" fill="url(#bd-hw)" />
-        <path d="M195 150 V470 M135 300 H255 M135 390 H255" stroke="#3d5580" stroke-width="3" opacity="0.6" />
-        <path d="M135 470 V250 Q135 170 195 150 Q255 170 255 250 V470 Z" fill="none" stroke="#33466e" stroke-width="5" />
-        <path class="bd-beam" d="M135 470 L20 844 H370 L255 470 Z" fill="url(#bd-beam)" />
-        <RuneCircle cx={195} cy={310} r={150} color="#ffe9a8" opacity={0.16} />
-        {/* les colonnes */}
-        <g fill="#33466e">
-          <path d="M-6 0 H30 V844 H-6 Z M360 0 H396 V844 H360 Z" />
-          <path d="M-10 96 H40 V112 H-10 Z M350 96 H400 V112 H350 Z M-10 736 H44 V760 H-10 Z M346 736 H400 V760 H346 Z" fill="#2a3a5e" />
-        </g>
-        <Banner x={64} len={150} w={34} fill="#b8433f" trim="#ffd45c" />
-        <Banner x={326} len={150} w={34} fill="#3f6fc0" trim="#ffd45c" />
-        <path d="M-10 844 V770 H400 V844 Z" fill="#2a3a5e" />
-        <Motes seed={17} color="#fff3c7" n={7} />
-      </>
-    );
-  }
   return (
     <>
       <defs><linearGradient id="bd-p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#27356a" /><stop offset="0.5" stop-color="#58649e" /><stop offset="0.8" stop-color="#d99a86" /><stop offset="1" stop-color="#2c3560" /></linearGradient></defs>
@@ -199,6 +173,7 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
 export function Backdrop({ kind }: { kind: BackdropKind }) {
   if (kind === 'adventure') return <div class="backdrop backdrop-adventure" aria-hidden="true"><AdventureBackdrop /></div>;
   if (kind === 'summon') return <div class="backdrop backdrop-summon" aria-hidden="true"><SummonBackdrop /></div>;
+  if (kind === 'heroes') return <div class="backdrop backdrop-heroes" aria-hidden="true"><HeroesBackdrop /></div>;
   return (
     <div class={`backdrop backdrop-${kind}`} aria-hidden="true">
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">
