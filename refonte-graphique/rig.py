@@ -111,6 +111,7 @@ def build(cid):
     for f in os.listdir(out):
         os.remove(os.path.join(out, f))
     hole = np.zeros(alpha.shape, np.float32)
+    cutout = np.zeros(alpha.shape, np.float32)  # morceaux « derrière » : on les retire du corps sans reboucher (le fond est derrière eux)
     parts, layers = [], []
     taken = np.zeros(alpha.shape, np.float32)  # un pixel n'appartient qu'à un morceau (le premier de la liste qui le prend… sauf l'avant)
     for p in reversed(spec['parts']):  # l'avant d'abord : il garde les pixels communs
@@ -120,7 +121,10 @@ def build(cid):
         layer = rgba.copy()
         layer[..., 3] = rgba[..., 3] * np.minimum(soft * 1.15, 1)
         layers.append((p, layer))
-        hole = np.maximum(hole, (m > 0.02).astype(np.float32))
+        if p.get('behind'):
+            cutout = np.maximum(cutout, m)
+        else:
+            hole = np.maximum(hole, (m > 0.02).astype(np.float32))
     layers.reverse()
     grow = np.asarray(Image.fromarray((hole * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3)), np.float32) / 255
     base = inpaint(rgba, grow)
@@ -130,6 +134,8 @@ def build(cid):
         body = body.filter(ImageFilter.MaxFilter(11))
     near = (np.asarray(body) > 0) & (grow > 0.5) & (alpha > 0.5)
     base[..., 3] = np.where(near, 255, base[..., 3])
+    # ce qui appartient à un morceau de derrière (et pas à un morceau de devant) disparaît du corps
+    base[..., 3] = np.where(grow > 0.5, base[..., 3], base[..., 3] * (1 - np.clip(cutout * 1.2, 0, 1)))
     Image.fromarray(base.astype(np.uint8), 'RGBA').save(os.path.join(out, 'base.webp'), 'WEBP', quality=88, method=6)
     for p, layer in layers:
         im = Image.fromarray(layer.astype(np.uint8), 'RGBA')
