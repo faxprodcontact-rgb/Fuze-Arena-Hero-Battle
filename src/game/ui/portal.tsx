@@ -38,7 +38,7 @@ export const RUNES = [
   'M-4 -7 L4 -7 L-4 7 L4 7', 'M0 -7 L0 7 M-5 -3 L0 2 L5 -3', 'M-5 7 L-5 -7 L5 7 L5 -7',
 ];
 
-export function Portal({ kind = 'normal', size = 208, base = true }: { kind?: 'normal' | 'basic'; size?: number; base?: boolean }) {
+export function Portal({ kind = 'normal', size = 208, base = true, claws = false }: { kind?: 'normal' | 'basic'; size?: number; base?: boolean; claws?: boolean }) {
   const id = `pt-${kind}`;
   const arms = (n: number, r0: number, r1: number, w: number, twist: number) =>
     Array.from({ length: n }, (_, i) => arm((i * Math.PI * 2) / n, r0, r1, w, twist));
@@ -135,6 +135,22 @@ export function Portal({ kind = 'normal', size = 208, base = true }: { kind?: 'n
             );
           })}
         </g>
+
+        {/* la couronne de pointes : huit lames d'or autour de l'anneau, longues aux quatre points cardinaux */}
+        {claws && (
+          <g class="pt-claws">
+            {Array.from({ length: 8 }, (_, i) => {
+              const long = i % 2 === 0, h = long ? 34 : 19, w = long ? 10 : 7;
+              return (
+                <g transform={`rotate(${i * 45} ${C} ${C}) translate(${C} ${C})`}>
+                  <path d={`M${-w} -103 Q0 -110 ${w} -103 L${w * 0.35} ${-103 - h * 0.7} L0 ${-106 - h} L${-w * 0.35} ${-103 - h * 0.7} Z`} fill={`url(#${id}-gold)`} stroke={INK} stroke-width="3" stroke-linejoin="round" />
+                  <path d={`M0 -105 L${w * 0.3} ${-103 - h * 0.7} L0 ${-106 - h} Z`} fill="#fff" opacity="0.45" />
+                  {long && <path d="M0 -114 l4 6 l-4 6 l-4 -6 Z" fill="var(--p-gem)" stroke={INK} stroke-width="1.800" stroke-linejoin="round" />}
+                </g>
+              );
+            })}
+          </g>
+        )}
 
         {/* les étincelles qui s'échappent du tourbillon */}
         {Array.from({ length: 8 }, (_, i) => {

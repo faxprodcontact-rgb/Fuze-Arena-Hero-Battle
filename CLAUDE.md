@@ -158,6 +158,16 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   `TitleBanner` : ruban cramoisi, plaque de bois dans un cadre d'or, fleuron, gemmes, lettres d'or, reflet qui passe), à
   réutiliser pour les titres des autres parties ; décor enrichi (tour de guet reliée au château par un pont de pierre, lierre,
   champs et meules au hameau, strates des sommets, nuages lointains, halo du soleil sur les montagnes).
+  v0.34.0 : **partie Invocation refaite** (demande : « plus badass, comme la partie d'avant, donne tout »). Décor
+  `ui/backdrop-summon.tsx` (sanctuaire la nuit : lune et cercle de signes, étoiles, aurore, étoile filante, pics noirs, îles
+  flottantes à cristaux, pierres levées gravées, plateau fendu de lueurs), dans la zone de contenu comme l'Aventure. Scène du
+  portail `ui/summon-stage.tsx` : cercle de signes couché au sol, estrade à trois marches, deux obélisques à cristal, arcs
+  d'énergie, orbes en orbite, étincelles aspirées ; le portail a une couronne de pointes (`claws` de `Portal`). Écran sans
+  défilement : bandeau (`TitleBanner`, ruban violet ou bleu), médaillons à gauche pour choisir le portail (avec le nombre de
+  parchemins), « Chances » et « Fragments » à droite (fenêtre `fragments`), panneau du bas (jauge du Légendaire garanti, gros
+  boutons ×1 et ×10, invocation gratuite). **Séquence d'invocation** (`casting`, 1 s : le portail enfle, onde au sol, éclair
+  blanc) puis **révélation plein écran** (`SummonResult` : décor assombri, halo de runes, un faisceau par héros, cartes qui se
+  retournent). Vérifier avec `scratchpad/art5/sum.cjs` et `tailles.cjs 3 s`.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

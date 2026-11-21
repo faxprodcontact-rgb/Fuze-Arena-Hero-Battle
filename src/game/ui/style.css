@@ -441,21 +441,88 @@ p { margin: 6px 0; }
 h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon { vertical-align: -3px; }
 
 /* ---------- Invocation ---------- */
-.summon .portal-card { position: relative; align-items: center; text-align: center; overflow: hidden; gap: 8px; }
-.summon .portal-card.basic { flex-direction: row; align-items: center; text-align: left; gap: 10px; }
-.summon .portal-card .row { width: 100%; }
-.summon .portal-card > .row { gap: 10px; }
-.summon .portal-card > .row > .btn { flex: 1; }
-.summon .portal-card.basic .row { width: auto; flex: 1; }
-.summon .portal-card.basic .grow { display: flex; flex-direction: column; gap: 8px; }
+/* l'écran tient dans la hauteur, sans défilement : le titre, la scène du portail (elle prend la place qui reste), le panneau */
+.adv-scroll > .screen.summon { flex: 1 1 0; min-height: 0; gap: 8px; }
+.sum-title { flex: none; display: flex; justify-content: center; padding-top: 2px; }
+.sum-stage { position: relative; flex: 1; min-height: 0; display: grid; place-items: center; container-type: size; }
+.sum-art { position: relative; width: min(100%, 340px); aspect-ratio: 360 / 400; }
+.sum-art { width: min(100cqw, 90cqh, 420px); }
+.sum-art > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.sum-portal { position: absolute; left: 50%; top: 42.5%; width: 62.2%; aspect-ratio: 1; translate: -50% -50%; }
+.sum-portal .portal { width: 100% !important; height: 100% !important; }
+.sum-portal .portal svg { height: 100%; }
+/* les médaillons des bords de la scène */
+.sum-side { position: absolute; top: 0; display: flex; flex-direction: column; gap: 8px; z-index: 2; }
+.sum-left { left: 0; } .sum-right { right: 0; }
+.sum-med { position: relative; display: flex; flex-direction: column; align-items: center; width: 54px; color: #fff; }
+.sum-med-icon { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 30%, #6a55c8, #2a1c66 70%); border: 1.5px solid #0d0824;
+  box-shadow: inset 0 0 0 1.5px #8f7ae6, inset 0 0 0 3px #00000059, 0 3px 6px #000a; transition: transform 0.1s; }
+.sum-med-icon .icon { filter: drop-shadow(0 1px 2px #000a); }
+.sum-med-label { margin-top: -5px; z-index: 1; font: 800 10.5px var(--font-title); white-space: nowrap; background: #0d0824d9; border: 1px solid #8f7ae680; border-radius: 7px; padding: 0 6px; }
+.sum-med.on .sum-med-icon { box-shadow: inset 0 0 0 2px var(--gold-hi), inset 0 0 0 3.5px #00000059, 0 0 12px 2px var(--gold), 0 3px 6px #000a; background: radial-gradient(circle at 50% 30%, #a98aff, #4a2fa0 70%); }
+.sum-med.on .sum-med-label { color: var(--gold-hi); border-color: var(--gold); }
+.sum-med:active .sum-med-icon { transform: translateY(2px); }
+.sum-med .dot { top: -3px; right: 2px; z-index: 2; }
+/* le panneau du bas : pierre de nuit sertie d'or */
+.sum-panel { flex: none; min-height: 146px; justify-content: center; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 11px; border-radius: 16px; color: #fff; border: 1.5px solid #0d0824;
+  background: var(--corner-tl) 3px 3px no-repeat, var(--corner-tr) calc(100% - 3px) 3px no-repeat, var(--corner-bl) 3px calc(100% - 3px) no-repeat, var(--corner-br) calc(100% - 3px) calc(100% - 3px) no-repeat,
+    linear-gradient(180deg, #ffffff26 0, #ffffff00 30px), linear-gradient(180deg, #4a3690 0%, #2c1d62 55%, #1c1246 100%);
+  box-shadow: inset 0 0 0 1.5px #e3b548, inset 0 0 0 3px #00000059, 0 6px 14px #000000a6; }
+.sum-kind-basic .sum-panel { background: var(--corner-tl) 3px 3px no-repeat, var(--corner-tr) calc(100% - 3px) 3px no-repeat, var(--corner-bl) 3px calc(100% - 3px) no-repeat, var(--corner-br) calc(100% - 3px) calc(100% - 3px) no-repeat,
+    linear-gradient(180deg, #ffffff26 0, #ffffff00 30px), linear-gradient(180deg, #34589c 0%, #1f3a78 55%, #142656 100%); }
+/* la jauge du Légendaire garanti */
+.sum-pity { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
+.sum-pity .icon { filter: drop-shadow(0 0 5px var(--gold)); animation: coin 4s ease-in-out infinite; }
+.sum-pity-bar { flex: 1; height: 12px; border-radius: 7px; background: #0d0824; border: 1px solid #000; box-shadow: inset 0 2px 3px #000a, 0 1px 0 #ffffff26; overflow: hidden; }
+.sum-pity-bar span { position: relative; display: block; height: 100%; min-width: 6px; border-radius: 6px; background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-dark)); box-shadow: 0 0 8px var(--gold); }
+.sum-pity strong { min-width: 22px; text-align: right; font: 800 16px var(--font-title); color: var(--gold-hi); text-shadow: 0 1px 2px #000; }
+/* les deux gros boutons */
+.sum-buttons { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; }
+.sum-btn { --c1: #b592ff; --c2: #8a58e8; --c3: #5a30b0; --ce: #24104e;
+  position: relative; overflow: hidden; min-height: 58px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; color: #fff;
+  border: 1.5px solid var(--ce); background: linear-gradient(180deg, var(--c1) 0%, var(--c2) 45%, var(--c3) 100%);
+  box-shadow: inset 0 1px 0 #ffffff80, inset 0 -4px 0 #00000038, 0 0 0 1.5px #e3b548, 0 0 0 3px #0d0824, 0 5px 9px #000a; text-shadow: 0 1px 2px #000000b3; transition: transform 0.08s, filter 0.08s; }
+.sum-btn::before { content: ''; position: absolute; left: 6px; right: 6px; top: 4px; height: 38%; border-radius: 9px 9px 14px 14px; background: linear-gradient(180deg, #ffffff47, #ffffff0d); pointer-events: none; }
+.sum-btn-10 { --c1: #ffd978; --c2: #f0a030; --c3: #c0600f; --ce: #5a2a05; }
+.sum-btn-10::after { content: ''; position: absolute; top: 0; bottom: 0; left: -40%; width: 30%; background: linear-gradient(100deg, #fff0, #ffffff8c 50%, #fff0); transform: skewX(-20deg); animation: sheen 3.2s ease-in-out infinite; pointer-events: none; }
+.sum-kind-basic .sum-btn { --c1: #9cc8ff; --c2: #4f8fe6; --c3: #2a5aaa; --ce: #10264e; }
+.sum-kind-basic .sum-btn-10 { --c1: #c8f0ff; --c2: #5fc0f0; --c3: #2a86c0; --ce: #0c3050; }
+.sum-btn-n { font: 800 25px/1 var(--font-title); }
+.sum-btn .cur { background: #0000004d; border-radius: 9px; padding: 0 8px 0 4px; font-size: 14px; }
+.sum-btn:active:not(:disabled) { transform: translateY(2px); filter: brightness(0.94); }
+.sum-btn:disabled { filter: grayscale(0.85) brightness(0.8); }
+.sum-free { align-self: center; display: inline-flex; align-items: center; gap: 6px; font: 800 13px var(--font-title); color: #e6dcff; background: #ffffff1f; border: 1px solid #ffffff40; border-radius: 10px; padding: 3px 12px; }
+.sum-free:disabled { opacity: 0.45; }
+@media (max-height: 700px) { .sum-btn { min-height: 48px; } .sum-btn-n { font-size: 21px; } .sum-panel { gap: 6px; padding: 8px 10px 9px; min-height: 126px; } }
+/* pendant que l'invocation part, on ne touche plus à rien (sans griser les boutons) */
+.sum-casting .sum-panel, .sum-casting .sum-side { pointer-events: none; }
+
+/* la révélation : la nuit, un faisceau par héros, la carte qui se retourne */
+.reveal-screen { position: absolute; inset: 0; z-index: 60 !important; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 18px 12px; overflow: hidden; animation: fade 0.3s; }
+.reveal-screen::after { content: ''; position: absolute; inset: 0; background: #fff; pointer-events: none; animation: reveal-white 0.7s ease-out forwards; }
+@keyframes reveal-white { from { opacity: 1; } to { opacity: 0; } }
+.reveal-decor { position: absolute; inset: 0; }
+.reveal-decor svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.reveal-sky { position: absolute; inset: 0; background: radial-gradient(75% 46% at 50% 46%, color-mix(in srgb, var(--best) 50%, #2a1a66cc) 0, #1a1148d9 50%, #07051af2 100%); }
+.reveal-screen > .title-banner, .reveal-screen > .reveal, .reveal-screen > .reveal-ok { position: relative; z-index: 1; }
+.reveal-halo { top: 47%; opacity: 0.8; }
+.reveal { display: flex; flex-wrap: wrap; gap: 16px 10px; justify-content: center; padding: 14px 0 6px; max-width: 360px; }
+.reveal-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; animation: pop 0.4s backwards cubic-bezier(.2,1.6,.4,1); }
+.reveal-beam { position: absolute; left: 50%; bottom: 16px; width: 70px; height: 210px; translate: -50% 0; z-index: -1; pointer-events: none; clip-path: polygon(24% 100%, 76% 100%, 100% 0, 0 0);
+  background: linear-gradient(0deg, color-mix(in srgb, var(--rar) 92%, #fff), transparent); opacity: 0; animation: beam-in 0.6s ease-out forwards; animation-delay: var(--d); }
+@keyframes beam-in { from { opacity: 0; transform: scaleY(0.2); transform-origin: 50% 100%; } to { opacity: 0.85; transform: scaleY(1); transform-origin: 50% 100%; } }
+.reveal-name { font-size: 11px; font-weight: 800; color: #fff; background: color-mix(in srgb, var(--rar) 55%, #15101c); border: 1px solid color-mix(in srgb, var(--rar) 60%, #000); border-radius: 7px; padding: 0 6px; max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reveal-one .hcard-small { width: 138px; }
+.reveal-one .reveal-name { font-size: 15px; max-width: 160px; padding: 1px 10px; }
+.reveal-one .reveal-beam { width: 120px; height: 300px; }
+.reveal-one .reveal-back { width: 138px; height: 138px; }
+.reveal-ok { max-width: 240px; flex: none; }
 .frag-img { width: 56px; border-radius: 10px; background: radial-gradient(circle at 50% 30%, #6fa8dc, #2f5a94 75%); border: 1.5px solid var(--edge); }
 .frag-list { display: flex; gap: 6px; overflow-x: auto; }
 .frag-row { padding: 4px 0; }
 .frag-pick { flex: none; width: 52px; height: 52px; border-radius: 10px; }
 .frag-pick.on { border-color: var(--trim); box-shadow: inset 0 0 0 1.5px var(--trim); }
 .reveal { display: flex; flex-wrap: wrap; gap: 14px 10px; justify-content: center; padding: 12px 0 6px; }
-.reveal-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; animation: pop 0.4s backwards cubic-bezier(.2,1.6,.4,1); }
-.reveal-name { font-size: 11px; font-weight: 800; color: #fff; background: color-mix(in srgb, var(--rar) 55%, #15101c); border: 1px solid color-mix(in srgb, var(--rar) 60%, #000); border-radius: 7px; padding: 0 6px; max-width: 76px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @keyframes pop { from { transform: scale(0.3) rotateY(90deg); opacity: 0; } }
 .reveal-card.r-epic .hcard { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--rar) 55%, #fff), 0 0 14px 3px #a66bff; }
 .reveal-card.r-legendary .hcard { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--rar) 55%, #fff), 0 0 18px 5px #ffc531; }

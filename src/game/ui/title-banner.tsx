@@ -5,7 +5,9 @@ import type { ComponentChildren } from 'preact';
 import './anim.css';
 import { spark } from './portal';
 
-export function TitleBanner({ title, children }: { title: string; children?: ComponentChildren }) {
+/** `ribbon` = les deux tons du ruban et celui de son repli (cramoisi par défaut). Sans picto (`children`), le titre est centré. */
+export function TitleBanner({ title, children, ribbon = ['#e2574c', '#9c2a2e', '#5e1418'] }: { title: string; children?: ComponentChildren; ribbon?: [string, string, string] }) {
+  const tx = children ? 126 : 108, size = title.length > 11 ? 17.500 : 23.500, ty = title.length > 11 ? 32 : 34;
   const gem = (x: number) => (
     <g>
       <path d={`M${x} 17 L${x + 8} 26 L${x} 35 L${x - 8} 26 Z`} fill="#2f1b0c" />
@@ -26,9 +28,9 @@ export function TitleBanner({ title, children }: { title: string; children?: Com
         {/* le ruban : deux bouts repliés derrière la plaque */}
         {[0, 1].map((i) => (
           <g transform={i ? 'translate(216 0) scale(-1 1)' : undefined}>
-            <path d="M32 44 L22 51 V44 Z" fill="#5e1418" />
+            <path d="M32 44 L22 51 V44 Z" fill={ribbon[2]} />
             <path d="M1 17 H33 V45 H1 L10 31 Z" fill="#2f1b0c" />
-            <path d="M3.800 18.500 H31.500 V43.500 H3.800 L11.800 31 Z" fill="url(#tb-ribbon)" />
+            <path d="M3.800 18.500 H31.500 V43.500 H3.800 L11.800 31 Z" fill={ribbon[1]} /><path d="M3.800 18.500 H31.500 V31 H11.800 Z" fill={ribbon[0]} />
             <path d="M3.800 18.500 H31.500 V21.200 H5.500 Z M5.500 40.800 H31.500 V43.500 H3.800 Z" fill="#ffd45c" />
             <path d="M24 21.200 H31.500 V40.800 H24 Z" fill="#000" opacity="0.2" />
           </g>
@@ -56,8 +58,8 @@ export function TitleBanner({ title, children }: { title: string; children?: Com
         {/* une gemme de chaque côté */}
         {gem(20)}{gem(196)}
         {/* le titre, en lettres d'or cernées de brun */}
-        <text x="126" y="35.500" text-anchor="middle" font-family="'Baloo 2', 'Trebuchet MS', sans-serif" font-weight="800" font-size="23.500" fill="#1f1006" opacity="0.4" stroke="#1f1006" stroke-width="3.400" stroke-linejoin="round">{title}</text>
-        <text x="126" y="34" text-anchor="middle" font-family="'Baloo 2', 'Trebuchet MS', sans-serif" font-weight="800" font-size="23.500" fill="url(#tb-text)" stroke="#2f1b0c" stroke-width="3.400" stroke-linejoin="round" paint-order="stroke">{title}</text>
+        <text x={tx} y={ty + 1.500} text-anchor="middle" font-family="'Baloo 2', 'Trebuchet MS', sans-serif" font-weight="800" font-size={size} fill="#1f1006" opacity="0.4" stroke="#1f1006" stroke-width="3.400" stroke-linejoin="round">{title}</text>
+        <text x={tx} y={ty} text-anchor="middle" font-family="'Baloo 2', 'Trebuchet MS', sans-serif" font-weight="800" font-size={size} fill="url(#tb-text)" stroke="#2f1b0c" stroke-width="3.400" stroke-linejoin="round" paint-order="stroke">{title}</text>
         <path class="an-twinkle" style={{ transformOrigin: '20px 20px' }} d={spark(20, 20, 4)} fill="#fff" /><path class="an-twinkle an-late" style={{ transformOrigin: '196px 20px' }} d={spark(196, 20, 4)} fill="#fff" />
       </svg>
       {children}

@@ -5,6 +5,7 @@
 import type { ComponentChildren } from 'preact';
 import './anim.css';
 import { AdventureBackdrop } from './backdrop-adventure';
+import { SummonBackdrop } from './backdrop-summon';
 import { RUNES, spark } from './portal';
 
 export type BackdropKind = 'heroes' | 'summon' | 'adventure' | 'guild' | 'page';
@@ -197,6 +198,7 @@ function Scene({ kind }: { kind: BackdropKind }): ComponentChildren {
 /** Le fond d'un écran. `dim` l'assombrit un peu (pages chargées en panneaux). */
 export function Backdrop({ kind }: { kind: BackdropKind }) {
   if (kind === 'adventure') return <div class="backdrop backdrop-adventure" aria-hidden="true"><AdventureBackdrop /></div>;
+  if (kind === 'summon') return <div class="backdrop backdrop-summon" aria-hidden="true"><SummonBackdrop /></div>;
   return (
     <div class={`backdrop backdrop-${kind}`} aria-hidden="true">
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">

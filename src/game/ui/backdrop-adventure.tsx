@@ -162,7 +162,7 @@ function Tower({ x, w, top, base, roof, slits = 1, lit = false }: { x: number; w
 }
 
 /** Des signes inventés pour le cercle du soleil (aucune lettre). */
-const GLYPHS = ['M-3 3 L0 -3 L3 3', 'M0 -4 L3 0 L0 4 L-3 0 Z', 'M-3 2 Q0 -5 3 2', 'M-2 -4 V4 M2 -4 V4', 'M0 -4 L3.500 3 H-3.500 Z', 'M-3 0 h0.01 M0 0 h0.01 M3 0 h0.01', 'M-3 -2 Q0 2 3 -2 M-3 2 Q0 6 3 2', 'M-3 0 A3 3 0 1 0 3 0 A3 3 0 1 0 -3 0', 'M-3 3 L0 -3 L3 3', 'M0 -4 L3 0 L0 4 L-3 0 Z', 'M-3 2 Q0 -5 3 2', 'M-2 -4 V4 M2 -4 V4'];
+export const GLYPHS = ['M-3 3 L0 -3 L3 3', 'M0 -4 L3 0 L0 4 L-3 0 Z', 'M-3 2 Q0 -5 3 2', 'M-2 -4 V4 M2 -4 V4', 'M0 -4 L3.500 3 H-3.500 Z', 'M-3 0 h0.01 M0 0 h0.01 M3 0 h0.01', 'M-3 -2 Q0 2 3 -2 M-3 2 Q0 6 3 2', 'M-3 0 A3 3 0 1 0 3 0 A3 3 0 1 0 -3 0', 'M-3 3 L0 -3 L3 3', 'M0 -4 L3 0 L0 4 L-3 0 Z', 'M-3 2 Q0 -5 3 2', 'M-2 -4 V4 M2 -4 V4'];
 
 /** Une corniche du rocher : dessus clair, dessous dans l'ombre. */
 function Ledge({ x0, x1, y }: { x0: number; x1: number; y: number }) {

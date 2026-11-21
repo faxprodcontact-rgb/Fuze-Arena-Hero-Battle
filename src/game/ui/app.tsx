@@ -29,7 +29,7 @@ import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
 import { AdModal, ConfirmModal, GainModal, LegalModal, NameScreen, QuestsModal, RenameModal, SettingsModal, ShopModal } from './screens/meta';
 import { ChatModal, GuildScreen, RankingModal } from './screens/social';
-import { OddsModal, SummonResult, SummonScreen } from './screens/summon';
+import { FragmentsModal, OddsModal, SummonResult, SummonScreen } from './screens/summon';
 
 const TABS: Tab[] = ['campaign', 'heroes', 'summon', 'adventure', 'guild'];
 
@@ -94,6 +94,7 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'chat': return <ChatModal />;
     case 'settings': return <SettingsModal />;
     case 'odds': return <OddsModal />;
+    case 'fragments': return <FragmentsModal />;
     case 'confirm': return <ConfirmModal text={modal.text} onYes={modal.onYes} />;
     case 'ad': return <AdModal onDone={modal.onDone} />;
     case 'prep': return <Prep plan={modal.plan} team={modal.team} />;
@@ -147,12 +148,13 @@ export function App() {
   }, []);
   return (
     <div class="app">
-      {nav.tab !== 'campaign' && nav.tab !== 'adventure' && <Backdrop kind={nav.tab} />}
+      {nav.tab !== 'campaign' && nav.tab !== 'adventure' && nav.tab !== 'summon' && <Backdrop kind={nav.tab} />}
       <TopBar />
-      <main class={`content${nav.tab === 'campaign' ? ' content-home' : ''}${nav.tab === 'adventure' ? ' content-adv' : ''}`}>
+      <main class={`content${nav.tab === 'campaign' ? ' content-home' : ''}${nav.tab === 'adventure' || nav.tab === 'summon' ? ' content-adv' : ''}`}>
         {nav.tab === 'campaign' && <CampaignScreen running={!nav.battle && !nav.modals.some((m) => m.type === 'prep')} />}
         {nav.tab === 'heroes' && <HeroesScreen />}
-        {nav.tab === 'summon' && <SummonScreen />}
+        {nav.tab === 'summon' && <Backdrop kind="summon" />}
+        {nav.tab === 'summon' && <div class="adv-scroll"><SummonScreen /></div>}
         {nav.tab === 'adventure' && <Backdrop kind="adventure" />}
         {nav.tab === 'adventure' && <div class="adv-scroll"><AdventureScreen sub={nav.sub} /></div>}
         {nav.tab === 'guild' && <GuildScreen />}
