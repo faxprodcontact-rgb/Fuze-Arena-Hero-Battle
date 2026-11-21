@@ -216,6 +216,18 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   du carré, pointe d'arme ou aile, est coupé). Le plateau de la section montre maintenant les héros en pied (`.field-hero`).
   Ne plus cadrer une vignette de héros sur toute sa silhouette : une longue lance le rapetisse. Essais de mesure gardés en
   tête : la boîte de la tête seule est trop bruitée (museaux, coiffes, chevelures).
+  v0.35.4 (retour du propriétaire : « des zones blanches derrière les personnages, pas pro ») : **détourage refait**.
+  `decoupe-hailuo.py` laissait du blanc dans les petites zones fermées (entre deux mèches, entre un bras et le corps, dans
+  une boucle d'oreille) et un liseré clair le long du contour. Ajouts dans `cut()` : règle « 2 bis » (petites zones blanches
+  retirées si elles sont cernées de trait noir sans couleur contre elles, ou près du bord et bien cernées, ou collées au
+  fond ; le blanc peint est gardé : voisin d'une couleur vive, rond et plein comme un reflet d'œil, ombré) ; le liseré du
+  bord est traité partout, comme du trait noir mêlé de blanc. Exceptions par personnage : `BLANC_PEINT` (motif blanc d'un
+  bouclier, blanc d'un œil) en plus de `PLEIN`. Quatre planches à la fois (10 min au lieu de 35). **Ordre à suivre après
+  tout nouveau détourage** : garder une copie de `public/art/p/` et de `public/apercu/hailuo.js`, lancer
+  `decoupe-hailuo.py`, puis `python3 refonte-graphique/recadre.py <copie>` (remet chaque dessin dans son ancien cadre au
+  pixel près, sinon les découpes animées se décalent), puis `rig.py tout` (14 min), puis `art-jeu.py --cartes`.
+  Contrôle fait sur les 144 personnages, sur fond sombre, zone retirée par zone retirée. Les images sources sont des JPG :
+  les PNG d'origine du propriétaire donneraient des bords encore plus nets, mais ne sont pas nécessaires.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

@@ -17,6 +17,17 @@ ONLY = next((set(a.split('=', 1)[1].split(',')) for a in sys.argv[1:] if a.start
 # Personnages très pâles (le hibou blanc) : par les trous de leur contour, le fond blanc « coule » dans leur ventre et
 # leurs ailes. Pour eux, le contour est épaissi pendant le détourage, et la règle des trous blancs fermés est coupée.
 PLEIN = {'glaces-4': 4, 'angels-10': 12}  # identifiant : épaisseur ajoutée au contour (pixels)
+# Blanc PEINT pris à tort pour du fond (vu sur les planches de contrôle) : pour ces personnages on coupe une règle.
+#   'trous'  : ni la règle des grands trous blancs fermés, ni celle des petits (motif blanc sur un bouclier…)
+#   'petits' : seulement la règle des petites zones blanches (blanc d'un œil au bout d'une antenne, reflet…)
+BLANC_PEINT = {'assassins-7': 'trous', 'cuirasses-4': 'petits', 'bayou-4': 'petits'}
+def variant(cid):
+    """Réglages du détourage propres à ce personnage : (trous, épaisseur de contour, petites zones), ou None."""
+    if cid in PLEIN:
+        return (False, PLEIN[cid], False)
+    if cid in BLANC_PEINT:
+        return (BLANC_PEINT[cid] == 'petits', 0, False)
+    return None
 
 ELEMENTS = ['fire', 'wind', 'water', 'earth']
 FAMS = {'fire': ['parade', 'fauves', 'idoles'], 'wind': ['epouvantails', 'ruche', 'voliere'],
@@ -122,7 +133,7 @@ def split(m, box, cw, ch, cols, rows):
                 return out
     return [(m, box)]
 
-def cut(path, holes=True, seal=0):
+def cut(path, holes=True, seal=0, small=True):
     rgb = np.array(Image.open(path).convert('RGB')).astype(np.float32)
     H, W, _ = rgb.shape
     mn, mx = rgb.min(2), rgb.max(2)
@@ -143,14 +154,61 @@ def cut(path, holes=True, seal=0):
         ring = dilate(mc, 4) & ~dilate(mc, 1)
         if ring.any() and (mn[Y0:Y1, X0:X1][ring] < 110).mean() > 0.55:
             bg |= m
+    # 2 bis) petites zones blanches fermées (entre deux mèches, entre un bras et le corps, dans une boucle d'oreille) :
+    # trop petites ou pas assez pures pour la règle 2, elles restaient en blanc sur les fonds sombres du jeu.
+    # On les retire si elles sont près du bord du personnage et cernées par le trait sombre, ou collées au fond.
+    # On garde le blanc PEINT : celui qui touche une couleur vive (blanc de l'œil contre l'iris, cœur d'une flamme,
+    # dents dans la bouche) et celui qui est loin du bord (au milieu du visage ou du corps).
+    if small:
+        bg0 = bg.copy()    # les distances se mesurent au fond du DEHORS : un trou retiré n'en entraîne pas un autre
+        def far(box, m_box, limit=30):
+            """Nombre de pas avant que la zone touche le fond (limit + 1 si elle ne le touche pas)."""
+            (Y0, X0, Y1, X1) = box
+            cur, b = m_box.copy(), bg0[Y0:Y1, X0:X1]
+            for k in range(1, limit + 1):
+                cur = dilate(cur, 1)
+                if (cur & b).any():
+                    return k
+            return limit + 1
+        white = (mn > 228) & (sat < 16) & ~bg
+        for m, (y0, x0, y1, x1) in components(white, 10, f=1):
+            inside = mn[y0:y1, x0:x1][m[y0:y1, x0:x1]]
+            area, mean, pure = int(inside.size), float(inside.mean()), float((inside >= 252).mean())
+            if area > 4000 or mean < 239:
+                continue
+            Y0, X0, Y1, X1 = max(0, y0 - 34), max(0, x0 - 34), min(H, y1 + 34), min(W, x1 + 34)
+            mc = m[Y0:Y1, X0:X1]
+            ring = dilate(mc, 5) & ~dilate(mc, 2)
+            tight = dilate(mc, 3) & ~dilate(mc, 1)                 # ce qui touche la zone : trait noir, ou couleur ?
+            if not ring.any():
+                continue
+            dark = (mn[Y0:Y1, X0:X1][ring] < 110).mean()
+            vivid = (sat[Y0:Y1, X0:X1][tight] > 70).mean()
+            # a) entièrement cernée de trait noir, aucune couleur contre elle : un trou, même au cœur du personnage.
+            #    Sauf si elle est ronde et pleine (elle remplit sa boîte) : c'est un reflet dans un œil noir.
+            fill = area / ((y1 - y0) * (x1 - x0))
+            if area >= 30 and dark >= 0.85 and vivid <= 0.05 and mean >= 243 and fill < 0.62:
+                bg |= m
+                continue
+            if (sat[Y0:Y1, X0:X1][ring] > 70).mean() >= 0.3:      # voisine d'une couleur vive : blanc peint
+                continue
+            d = far((Y0, X0, Y1, X1), mc)
+            # b) une miette collée au fond ; c) près du bord et bien cernée de noir ; d) à demi cernée mais d'un blanc
+            #    très pur (le papier), tout près du bord. Un blanc peint ombré (heaume, lame, perle) ne passe pas.
+            if (d <= 2 and area <= 120) or (d <= 30 and dark >= 0.75 and vivid <= 0.08) or (d <= 12 and dark >= 0.5 and vivid <= 0.05 and mean >= 247 and pure >= 0.3):
+                bg |= m
     # 3) bord et lueurs : les pixels clairs collés au fond deviennent transparents à proportion de leur blancheur
     near_any = dilate(bg, 3)
     near_glow = dilate(bg, 26)
-    soft = ~bg & (mn > 120) & (near_any | (near_glow & (sat > 24)))
-    soft = soft & flood(soft | bg, border) & ~bg  # seulement ce qui touche le fond (pas l'intérieur des habits blancs)
+    edge = ~bg & (mn > 120) & near_any                      # le liseré du contour, partout (trous compris)
+    glow = ~bg & (mn > 120) & near_glow & (sat > 24)        # les lueurs colorées, seulement si elles touchent le dehors
+    glow = glow & flood(glow | edge | bg, border)
+    soft = (edge | glow) & ~bg
     alpha = np.where(bg, 0.0, 1.0)
     a_soft = np.clip((255 - mn) / 255 * 1.0, 0, 1) ** 0.85
-    a_soft = np.maximum(a_soft, np.clip((255 - mn) / 110, 0, 1) * (sat <= 24))  # le trait du bord reste net
+    # le trait du bord est sombre : un pixel gris clair collé au fond est du trait mêlé de blanc. On lui rend sa part de
+    # trait (opacité selon sa noirceur, couleur débarrassée du blanc) : plus de liseré clair sur les fonds sombres.
+    a_soft = np.maximum(a_soft, np.clip((255 - mn) / 190, 0, 1) * (sat <= 24))
     alpha = np.where(soft, np.minimum(1, a_soft), alpha)
     col = rgb.copy()
     sa = np.maximum(alpha, 1e-3)[..., None]
@@ -177,9 +235,10 @@ if CHECK:
     os.makedirs(CHECK, exist_ok=True)
 meta = load_js('hailuo.js', 'HAILUO') if ONLY else {}
 LAST = {cid: f for f, _, _, ids in SHEETS for cid in ids if cid}  # la planche la plus récente de chaque personnage
-for fname, cols, rows, ids in SHEETS:
-    if ONLY and not any(LAST.get(c) == fname for c in ONLY & set(ids)):
-        continue
+def do_sheet(sheet):
+    """Découpe une planche : écrit les images des personnages dont c'est la planche la plus récente, rend leurs mesures."""
+    fname, cols, rows, ids = sheet
+    part = {}
     col, alpha = cut(os.path.join(SRC, fname))
     plain = {}
     H, W = alpha.shape
@@ -209,16 +268,17 @@ for fname, cols, rows, ids in SHEETS:
             if cid:
                 print('MANQUE', fname, n, cid)
             continue
-        if ONLY and (cid not in ONLY or LAST[cid] != fname):
+        if LAST[cid] != fname or (ONLY and cid not in ONLY):
             continue
         keep = mains[n][0].copy()
         for m in extra[n]:
             keep |= m
         a = np.where(keep, alpha, 0)
-        if cid in PLEIN:  # sans la règle des trous blancs fermés
-            if PLEIN[cid] not in plain:
-                plain[PLEIN[cid]] = cut(os.path.join(SRC, fname), holes=False, seal=PLEIN[cid])
-            pl = plain[PLEIN[cid]]
+        if variant(cid):  # détourage refait pour lui, avec ses réglages
+            v = variant(cid)
+            if v not in plain:
+                plain[v] = cut(os.path.join(SRC, fname), holes=v[0], seal=v[1], small=v[2])
+            pl = plain[v]
             ys, xs = np.nonzero(keep)
             keep = keep | flood(pl[1] > 0.04, list(zip(ys[::40], xs[::40])))
             col = np.where(keep[..., None], pl[0], col)
@@ -238,10 +298,18 @@ for fname, cols, rows, ids in SHEETS:
         scale = 2.4 * k
         out = img.resize((max(1, round(img.width * scale)), max(1, round(img.height * scale))), Image.LANCZOS)
         out.save(os.path.join(OUT, '..', 'art', 'p', cid + '.webp'), 'WEBP', quality=88, method=6)
-        meta[cid] = {'ox': round(wx, 2), 'oy': round(wy, 2), 'w': round(img.width * k, 2), 'h': round(img.height * k, 2)}
+        part[cid] = {'ox': round(wx, 2), 'oy': round(wy, 2), 'w': round(img.width * k, 2), 'h': round(img.height * k, 2)}
         if CHECK:
             img.save(os.path.join(CHECK, cid + '.png'))
     print(fname, 'ok', flush=True)
+    return part
+
+# quatre planches à la fois (chaque planche prend deux minutes)
+import multiprocessing
+todo = [sh for sh in SHEETS if not ONLY or any(LAST.get(c) == sh[0] for c in ONLY & set(sh[3]))]
+with multiprocessing.Pool(min(4, max(1, len(todo)))) as pool:
+    for part in pool.map(do_sheet, todo):
+        meta.update(part)
 
 with open(os.path.join(OUT, 'hailuo.js'), 'w', encoding='utf-8') as f:
     f.write('// Fabriqué par refonte-graphique/decoupe-hailuo.py — ne pas modifier à la main.\n'
