@@ -178,14 +178,14 @@ function Back() {
       <defs>
         <linearGradient id="ad-sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c56b0" /><stop offset="0.13" stop-color="#3684d8" /><stop offset="0.25" stop-color="#8fcaf0" /><stop offset="0.32" stop-color="#d9f0fb" /><stop offset="1" stop-color="#d9f0fb" /></linearGradient>
       </defs>
-      <rect width={W} height={H} fill="url(#ad-sky)" />
+      <rect y="-40" width={W} height={H + 140} fill="url(#ad-sky)" />
     </>
   );
 }
 
 /** Derrière les montagnes, en mouvement : le soleil, son cercle de signes, les nuages. */
 function Mid() {
-  const sun = { x: 318, y: 128 };
+  const sun = { x: 318, y: 124 };
   return (
     <>
       <defs>
@@ -195,15 +195,15 @@ function Mid() {
       </defs>
       <circle class="bd-sun" cx={sun.x} cy={sun.y} r="150" fill="url(#ad-bloom)" />
       <g class="bd-ring" style={{ transformOrigin: `${sun.x}px ${sun.y}px`, animationDuration: '90s' }} fill="none" stroke="#fff" opacity="0.7">
-        <circle cx={sun.x} cy={sun.y} r="52" stroke-width="1.4" /><circle cx={sun.x} cy={sun.y} r="55.500" stroke-width="0.7" opacity="0.7" />
-        <circle cx={sun.x} cy={sun.y} r="39" stroke-width="1" stroke-dasharray="1 7" stroke-linecap="round" />
+        <circle cx={sun.x} cy={sun.y} r="46" stroke-width="1.4" /><circle cx={sun.x} cy={sun.y} r="49" stroke-width="0.7" opacity="0.7" />
+        <circle cx={sun.x} cy={sun.y} r="34" stroke-width="1" stroke-dasharray="1 7" stroke-linecap="round" />
         {GLYPHS.map((d, i) => {
           const a = (i / GLYPHS.length) * Math.PI * 2;
-          return <path d={d} stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform={`translate(${f(sun.x + Math.cos(a) * 45.500)} ${f(sun.y + Math.sin(a) * 45.500)}) rotate(${((a * 180) / Math.PI + 90).toFixed(0)}) scale(0.62)`} />;
+          return <path d={d} stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" transform={`translate(${f(sun.x + Math.cos(a) * 40)} ${f(sun.y + Math.sin(a) * 40)}) rotate(${((a * 180) / Math.PI + 90).toFixed(0)}) scale(0.56)`} />;
         })}
-        {[0, 1, 2, 3].map((i) => { const a = (i / 4) * Math.PI * 2 + Math.PI / 4, x = sun.x + Math.cos(a) * 52, y = sun.y + Math.sin(a) * 52; return <path d={`M${f(x)} ${f(y - 4)} L${f(x + 2)} ${f(y)} L${f(x)} ${f(y + 4)} L${f(x - 2)} ${f(y)} Z`} transform={`rotate(${(a * 180) / Math.PI + 90} ${f(x)} ${f(y)})`} fill="#fff" stroke="none" />; })}
+        {[0, 1, 2, 3].map((i) => { const a = (i / 4) * Math.PI * 2 + Math.PI / 4, x = sun.x + Math.cos(a) * 46, y = sun.y + Math.sin(a) * 46; return <path d={`M${f(x)} ${f(y - 4)} L${f(x + 2)} ${f(y)} L${f(x)} ${f(y + 4)} L${f(x - 2)} ${f(y)} Z`} transform={`rotate(${(a * 180) / Math.PI + 90} ${f(x)} ${f(y)})`} fill="#fff" stroke="none" />; })}
       </g>
-      <circle cx={sun.x} cy={sun.y} r="27" fill="url(#ad-sun)" />
+      <circle cx={sun.x} cy={sun.y} r="25" fill="url(#ad-sun)" />
       <g class="bd-cloud bd-slow"><Cloud x={-46} y={176} s={1.1} lobes={CLOUD_C} w={126} /></g>
       <g class="bd-cloud"><Cloud x={150} y={106} s={0.6} lobes={CLOUD_B} w={62} /></g>
     </>
@@ -242,9 +242,9 @@ function Front() {
       <path d="M226 290 L252 228 L270 256 L266 290 Z" fill="#6f84c2" /><path d="M252 228 L270 256 L266 290 H288 Z" fill="#b9c8e8" />
       <path d="M322 290 L340 240 L354 262 L350 290 Z" fill="#6f84c2" /><path d="M340 240 L354 262 L350 290 H368 Z" fill="#b9c8e8" />
       {/* une brume légère, seulement au pied */}
-      <rect y="232" width={W} height="52" fill="url(#ad-mist)" opacity="0.55" />
+      <rect y="196" width={W} height="50" fill="url(#ad-mist)" opacity="0.55" />
       {/* la forêt du fond : une lisière de cimes inégales */}
-      <path d={forest(5, 272, 5, 13, 6, 12)} fill="#6aa7a6" />
+      <path d={forest(5, 235, 5, 13, 6, 12)} fill="#6aa7a6" />
 
       {/* le rocher du château */}
       <path d="M6 290 L20 242 L36 230 L44 208 L56 198 L58 185 L162 185 L164 198 L176 208 L186 232 L198 248 L212 290 Z" fill="url(#ad-rock)" />
@@ -252,15 +252,15 @@ function Front() {
       <path d="M162 185 L164 198 L176 208 L186 232 L198 248 L212 290 H164 L152 240 L138 208 Z" fill="#c9d0e6" />
       <path d="M86 206 L98 236 L92 290 M138 208 L128 238 L138 290 M112 198 L116 244 L110 290" fill="none" stroke="#3d4c8a" stroke-width="1" opacity="0.45" />
       <path d="M162 185 L164 198 L176 208 L186 232 L198 248 L212 290" fill="none" stroke="#fff" stroke-width="1.2" opacity="0.6" />
-      <Ledge x0={41} x1={64} y={207} /><Ledge x0={158} x1={180} y={207} /><Ledge x0={17} x1={42} y={241} /><Ledge x0={182} x1={203} y={248} />
-      <Pine x={53} y={206} s={0.34} dark="#2f6d55" light="#4c9a6a" /><Pine x={169} y={206} s={0.3} dark="#2f6d55" light="#4c9a6a" /><Pine x={30} y={240} s={0.36} dark="#2f6d55" light="#4c9a6a" /><Pine x={192} y={247} s={0.32} dark="#2f6d55" light="#4c9a6a" />
+      <Ledge x0={41} x1={64} y={207} /><Ledge x0={158} x1={180} y={207} />
+      <Pine x={53} y={206} s={0.34} dark="#2f6d55" light="#4c9a6a" /><Pine x={169} y={206} s={0.3} dark="#2f6d55" light="#4c9a6a" />
       {/* le plateau : une vraie épaisseur d'herbe, et l'ombre du château dessus */}
       <path d="M54 186 Q110 178 166 186 L163 194 Q110 188 57 194 Z" fill="#4f9a58" />
       <path d="M54 186 Q110 178 166 186 L165 189 Q110 182 55 189 Z" fill="#9bd98a" />
       <ellipse cx="104" cy="186" rx="50" ry="3.500" fill="#1f4a34" opacity="0.3" />
       {/* la cascade : elle sort d'une arche sous le rempart, en rubans inégaux */}
       <path d="M73 201 Q80 191 87 201 V206 H73 Z" fill="#2c3a66" />
-      <path d="M75 202 H85 L88 280 H72 Z" fill="url(#ad-fall)" /><path d="M86 208 h3 l2.500 70 h-4.500 Z" fill="#fff" opacity="0.7" /><path d="M71 214 h2.500 l-1.500 64 h-3 Z" fill="#fff" opacity="0.55" />
+      <path d="M75 202 H85 L87.500 244 H72.500 Z" fill="url(#ad-fall)" /><path d="M86 208 h3 l1.500 34 h-3.500 Z" fill="#fff" opacity="0.7" /><path d="M71 213 h2.500 l-1 29 h-2.500 Z" fill="#fff" opacity="0.55" />
 
       {/* le château (réduit autour de son pied pour tenir sur le plateau) */}
       <g transform={CASTLE}>
@@ -289,25 +289,25 @@ function Front() {
       <g fill="#7fc87a">{[68, 79, 90, 104, 118, 129, 141, 151].map((x, i) => <path d={`M${x - 4} 188 Q${x - 2} ${182 - (i % 2)} ${x} 186 Q${x + 2} ${181 + (i % 2)} ${x + 4} 188 Z`} />)}</g>
 
       {/* la colline du moulin et son hameau */}
-      <path d="M262 290 Q296 250 334 252 Q368 248 402 262 V290 Z" fill="#8fcf8c" />
-      <path d="M262 290 Q296 250 334 252 Q368 248 402 262" fill="none" stroke="#d3f2bc" stroke-width="1.4" />
-      <House x={294} y={267} w={10} roof="#c9503f" /><House x={308} y={270} w={8.500} roof="#4a76b8" /><House x={366} y={265} w={10} roof="#c9503f" /><House x={381} y={268} w={8} roof="#d99a3a" />
-      <Oak x={323} y={268} s={0.3} /><Oak x={358} y={263} s={0.34} />
-      <ellipse cx="338" cy="263" rx="12" ry="2.400" fill="#123a2a" opacity="0.24" />
-      <path d="M335 263 L338 234 H350 L353 263 Z" fill="url(#ad-stone)" /><path d="M337 234 L344 224 L351 234 Z" fill="url(#ad-roof)" />
-      <rect x="342.500" y="253" width="3.4" height="10" rx="1.6" fill="#4a3f36" /><rect x="343" y="241" width="2.4" height="3.600" fill="#4a3f36" />
+      <path d="M258 260 Q294 214 334 216 Q368 212 402 226 V260 Z" fill="#8fcf8c" />
+      <path d="M258 260 Q294 214 334 216 Q368 212 402 226" fill="none" stroke="#d3f2bc" stroke-width="1.4" />
+      <House x={294} y={231} w={10} roof="#c9503f" /><House x={308} y={234} w={8.500} roof="#4a76b8" /><House x={366} y={229} w={10} roof="#c9503f" /><House x={381} y={232} w={8} roof="#d99a3a" />
+      <Oak x={323} y={232} s={0.3} /><Oak x={358} y={227} s={0.34} />
+      <ellipse cx="338" cy="227" rx="12" ry="2.400" fill="#123a2a" opacity="0.24" />
+      <path d="M335 227 L338 198 H350 L353 227 Z" fill="url(#ad-stone)" /><path d="M337 198 L344 188 L351 198 Z" fill="url(#ad-roof)" />
+      <rect x="342.500" y="217" width="3.4" height="10" rx="1.6" fill="#4a3f36" /><rect x="343" y="205" width="2.4" height="3.600" fill="#4a3f36" />
 
       {/* la forêt proche : elle cache le pied du rocher, sauf là où tombe la cascade */}
-      <path d={forest(11, 282, 6, 16, 7, 13)} fill="#4f9a7c" />
-      <path d={forest(23, 288, 4, 12, 6, 11)} fill="#3f8a66" />
+      <path d={forest(11, 243, 6, 15, 7, 13)} fill="#4f9a7c" />
+      <path d={forest(23, 249, 4, 11, 6, 11)} fill="#3f8a66" />
       {/* le bassin au pied de la cascade */}
-      <ellipse cx="80" cy="282" rx="34" ry="8" fill="#3f7a5e" /><ellipse cx="80" cy="281" rx="31" ry="6.500" fill="url(#ad-river)" />
-      <path d="M58 281 q8 -2 14 0 M92 284 q7 -1.500 12 0" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity="0.8" />
-      <path d="M48 284 l5 -5 l6 2 l2 4 Z M104 286 l4 -6 l6 1 l3 5 Z" fill="#8a94b8" /><path d="M53 279 l6 2 l2 4 h-4 Z M108 280 l6 1 l3 5 h-4 Z" fill="#c9d0e6" />
+      <ellipse cx="80" cy="244" rx="34" ry="7.500" fill="#3f7a5e" /><ellipse cx="80" cy="243" rx="31" ry="6" fill="url(#ad-river)" />
+      <path d="M58 243 q8 -2 14 0 M92 246 q7 -1.500 12 0" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity="0.8" />
+      <path d="M48 246 l5 -5 l6 2 l2 4 Z M104 248 l4 -6 l6 1 l3 5 Z" fill="#8a94b8" /><path d="M53 241 l6 2 l2 4 h-4 Z M108 242 l6 1 l3 5 h-4 Z" fill="#c9d0e6" />
 
       {/* la prairie : des collines seules, calmes, sous la grille des tuiles */}
-      <path d={hills(7, 300, 16, 130)} fill="url(#ad-h1)" />
-      <path d={crest(7, 300, 16, 130)} fill="none" stroke="#e2f6cc" stroke-width="1.6" opacity="0.9" />
+      <path d={hills(7, 262, 14, 130)} fill="url(#ad-h1)" />
+      <path d={crest(7, 262, 14, 130)} fill="none" stroke="#e2f6cc" stroke-width="1.6" opacity="0.9" />
       <path d={hills(19, 400, 40, 160)} fill="url(#ad-h2)" />
       <path d={crest(19, 400, 40, 160)} fill="none" stroke="#c9eeb4" stroke-width="1.6" opacity="0.7" />
       <path d={hills(29, 540, 50, 180)} fill="url(#ad-h3)" />
@@ -339,7 +339,7 @@ function Top() {
         <radialGradient id="ad-foamg"><stop offset="0" stop-color="#fff" stop-opacity="0.95" /><stop offset="1" stop-color="#fff" stop-opacity="0" /></radialGradient>
         <linearGradient id="ad-balloon" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a8322e" /><stop offset="0.45" stop-color="#e0564e" /><stop offset="0.8" stop-color="#f58a72" /><stop offset="1" stop-color="#d94f47" /></linearGradient>
       </defs>
-      <g class="bd-cloud bd-slow"><Cloud x={226} y={226} s={0.5} lobes={CLOUD_A} w={90} opacity={0.96} /></g>
+      <g class="bd-cloud bd-slow"><Cloud x={226} y={192} s={0.46} lobes={CLOUD_A} w={90} opacity={0.96} /></g>
 
       {/* les fanions et les fenêtres allumées du château */}
       <g transform={CASTLE}>
@@ -349,21 +349,21 @@ function Top() {
         <g fill="#fff3c4"><circle class="bd-star" cx="112" cy="129.500" r="1.5" /><circle class="bd-star" style={{ animationDelay: '-1.7s' }} cx="137.500" cy="157" r="1.3" /></g>
       </g>
       {/* la cascade : des filets d'eau inégaux qui filent, l'écume qui bouillonne dans le bassin */}
-      <path class="ad-fall" d="M78 204 L77 278 M82.500 204 L84 278" fill="none" stroke="#bfe6fb" stroke-width="1.2" stroke-dasharray="11 5 4 9 16 6" stroke-linecap="round" opacity="0.9" />
-      <ellipse class="ad-foam" cx="80" cy="279" rx="19" ry="7" fill="url(#ad-foamg)" />
-      <g fill="#fff"><circle class="ad-foam" cx="73" cy="279" r="4" /><circle class="ad-foam" style={{ animationDelay: '-0.7s' }} cx="80" cy="281" r="5" /><circle class="ad-foam" style={{ animationDelay: '-1.3s' }} cx="88" cy="279" r="3.600" /></g>
+      <path class="ad-fall" d="M78 204 L77.500 242 M82.500 204 L83 242" fill="none" stroke="#bfe6fb" stroke-width="1.2" stroke-dasharray="11 5 4 9 16 6" stroke-linecap="round" opacity="0.9" />
+      <ellipse class="ad-foam" cx="80" cy="242" rx="19" ry="6.500" fill="url(#ad-foamg)" />
+      <g fill="#fff"><circle class="ad-foam" cx="73" cy="242" r="3.600" /><circle class="ad-foam" style={{ animationDelay: '-0.7s' }} cx="80" cy="243.500" r="4.400" /><circle class="ad-foam" style={{ animationDelay: '-1.3s' }} cx="88" cy="242" r="3.200" /></g>
 
       {/* la fumée d'une cheminée du hameau */}
-      {[0, 1, 2].map((i) => <circle class="ad-smoke" style={{ animationDelay: `${-i * 1.5}s` }} cx="301" cy="254" r="1.700" fill="#fff" />)}
+      {[0, 1, 2].map((i) => <circle class="ad-smoke" style={{ animationDelay: `${-i * 1.5}s` }} cx="301" cy="218" r="1.700" fill="#fff" />)}
       {/* les ailes du moulin */}
-      <g class="ad-sails" style={{ transformOrigin: '344px 234px' }}>
+      <g class="ad-sails" style={{ transformOrigin: '344px 198px' }}>
         {[0, 90, 180, 270].map((a) => (
-          <g transform={`rotate(${a} 344 234)`}>
-            <path d="M344 234 V214" stroke="#5e4026" stroke-width="1.2" stroke-linecap="round" />
-            <path d="M345 231 H351 V215 H345 Z" fill="#f6efdc" stroke="#8f8068" stroke-width="0.6" /><path d="M345 226 H351 M345 220.500 H351 M348 231 V215" stroke="#8f8068" stroke-width="0.5" />
+          <g transform={`rotate(${a} 344 198)`}>
+            <path d="M344 198 V178" stroke="#5e4026" stroke-width="1.2" stroke-linecap="round" />
+            <path d="M345 195 H351 V179 H345 Z" fill="#f6efdc" stroke="#8f8068" stroke-width="0.6" /><path d="M345 190 H351 M345 184.500 H351 M348 195 V179" stroke="#8f8068" stroke-width="0.5" />
           </g>
         ))}
-        <circle cx="344" cy="234" r="1.8" fill="#5e4026" />
+        <circle cx="344" cy="198" r="1.8" fill="#5e4026" />
       </g>
 
       {/* la montgolfière */}
@@ -387,14 +387,18 @@ function Top() {
   );
 }
 
+/** Le haut du dessin utile : il vient se placer juste sous la barre du haut. */
+const TOP = 62;
+
 export function AdventureBackdrop() {
   const box = { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'xMidYMin slice' };
+  const up = `translate(0 ${-TOP})`;
   return (
     <>
-      <svg {...box}><Back /></svg>
-      <svg {...box}><Mid /></svg>
-      <svg {...box}><Front /></svg>
-      <svg {...box}><Top /></svg>
+      <svg {...box}><g transform={up}><Back /></g></svg>
+      <svg {...box}><g transform={up}><Mid /></g></svg>
+      <svg {...box}><g transform={up}><Front /></g></svg>
+      <svg {...box}><g transform={up}><Top /></g></svg>
     </>
   );
 }

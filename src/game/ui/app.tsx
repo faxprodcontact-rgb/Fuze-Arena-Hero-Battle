@@ -147,13 +147,14 @@ export function App() {
   }, []);
   return (
     <div class="app">
-      {nav.tab !== 'campaign' && <Backdrop kind={nav.tab} />}
+      {nav.tab !== 'campaign' && nav.tab !== 'adventure' && <Backdrop kind={nav.tab} />}
       <TopBar />
-      <main class={`content${nav.tab === 'campaign' ? ' content-home' : ''}`}>
+      <main class={`content${nav.tab === 'campaign' ? ' content-home' : ''}${nav.tab === 'adventure' ? ' content-adv' : ''}`}>
         {nav.tab === 'campaign' && <CampaignScreen running={!nav.battle && !nav.modals.some((m) => m.type === 'prep')} />}
         {nav.tab === 'heroes' && <HeroesScreen />}
         {nav.tab === 'summon' && <SummonScreen />}
-        {nav.tab === 'adventure' && <AdventureScreen sub={nav.sub} />}
+        {nav.tab === 'adventure' && <Backdrop kind="adventure" />}
+        {nav.tab === 'adventure' && <div class="adv-scroll"><AdventureScreen sub={nav.sub} /></div>}
         {nav.tab === 'guild' && <GuildScreen />}
       </main>
       <TabBar tab={nav.tab} />

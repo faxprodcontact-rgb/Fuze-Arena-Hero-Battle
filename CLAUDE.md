@@ -135,6 +135,12 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   élément est posé (ombre courte à gauche, pied qui mord dans l'herbe) ; raccords par une lisière de forêt (`forest`), pas par
   des bandes de brume ; faces à l'ombre bleu-violet, faces éclairées tiédies ; signes inventés (`GLYPHS`), jamais de lettres ;
   l'anneau des tuiles passe derrière leur décor.
+  v0.31.2 (retour du propriétaire, capture de son iPhone) : à l'arrivée sur l'onglet il fallait faire défiler, et le titre
+  passait sur le château. Cause : le décor était calé sur toute l'application alors que la barre du haut est plus haute sur
+  un iPhone à encoche. Désormais **le décor de l'Aventure vit dans la zone de contenu** (`.content-adv` + `.adv-scroll` dans
+  `app.tsx`, dessin remonté de `TOP` dans `backdrop-adventure.tsx`), le bandeau a une hauteur liée à la largeur (44 %, comme
+  le dessin) et **les six tuiles se partagent le reste de la hauteur : rien ne défile**. À vérifier pour chaque partie refaite :
+  `scratchpad/art5/tailles.cjs` (cinq tailles de téléphone, encoche imitée) doit répondre « tient sans défiler ».
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

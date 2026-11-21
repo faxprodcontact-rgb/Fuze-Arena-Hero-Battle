@@ -476,9 +476,18 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 
 /* ---------- Aventure ---------- */
 .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-/* l'onglet Aventure : le panorama en haut (le décor se voit à travers), le titre sur sa plaque, puis les tuiles */
-.adventure { gap: 12px; }
-.adv-banner { height: 196px; flex: none; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; }
+/* l'onglet Aventure : son décor est calé juste sous la barre du haut (quelle que soit la hauteur de l'encoche), le panorama
+   occupe un bandeau dont la hauteur suit la largeur de l'écran (comme le dessin), et les six tuiles se partagent tout le
+   reste : l'écran tient exactement dans la hauteur, sans défilement, dès l'arrivée */
+.content-adv { position: relative; padding: 0; overflow: hidden; display: flex; }
+.adv-scroll { position: relative; z-index: 1; flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px max(12px, env(safe-area-inset-right, 0px)) 14px max(12px, env(safe-area-inset-left, 0px)); }
+.adventure { gap: 12px; height: 100%; }
+.adv-banner { height: calc(min(100vw, 480px) * 0.44); flex: none; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; }
+.adventure .tiles { flex: 1; min-height: 0; grid-template-rows: repeat(3, minmax(0, 1fr)); }
+.adventure .tile { min-height: 0; }
+/* petits écrans : un bandeau plus court et des pictos plus petits, pour que les six tuiles tiennent toujours */
+@media (max-height: 700px) { .adv-banner { height: 112px; } .adventure .tile > .icon { width: 64px !important; height: 64px !important; } .adventure .tile-name { font-size: 14px; padding: 2px 6px 4px; } }
+.backdrop-adventure::after { background: linear-gradient(180deg, #0a0a2438 0%, #0a0a2400 9%, #0a0a2400 78%, #0a0a2440 100%); }
 /* une plaque de titre : bois, double filet d'or, rubans de chaque côté (la même que celle du chapitre) */
 .plaque { position: relative; display: inline-flex; align-items: center; gap: 7px; margin: 0 16px; padding: 3px 22px 5px; font: 800 19px var(--font-title); color: var(--gold-hi) !important; text-shadow: 0 1px 2px #000c;
   background: var(--bar); border: 1.5px solid var(--edge); border-radius: 10px;
