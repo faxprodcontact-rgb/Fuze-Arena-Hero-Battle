@@ -513,3 +513,31 @@ Dans la v2, l'épée du gladiateur passait sur le visage de la fille phénix : e
 Redraw image 1, in the drawing style of image 2, as a vertical loading screen for a bright medieval-fantasy mobile RPG, keeping EXACTLY the same five heroes, their places, sizes and poses: the Roman legionary in the center front (biggest), his sword raised in the open space ABOVE the phoenix girl, never over anyone's face; behind him on the left the purple drum spirit inside his ring of drums; behind him on the right the brown bull-headed warrior with his axe; front left the phoenix girl with fiery wings, her face fully visible; front right the blue dragon sage holding a white pearl, his face fully visible. Grassy hill at sunset with a castle far away, like image 2. Keep the top third as empty sky (the logo is added later) and the empty rounded band at the bottom (for the loading bar). The rest of the sheet stays EMPTY white.
 Style: stylized cartoon game art, chibi heroes, one bold dark outline per character, bright vibrant colors, cel shading, light from top right. Not realistic. No text. Nothing cropped, no weapon over a face.
 ```
+
+## Interface peinte (22/11/2026)
+
+Le propriétaire a refusé l'interface dessinée par le code (thème clair, puis trois directions à tons moyens : « trop simple,
+trop plat ») et choisi des **cadres peints par Hailuo**, dans la matière des décors (bois sculpté, parchemin, or).
+Croquis : `node refonte-graphique/planches-ui.cjs cadres|boutons sortie.png` (emplacements des pièces dans `ui-pieces.json`,
+pour la découpe). Référence : `reference-style-objets.jpg`.
+
+### 25 — Cadres, barres et plaques — `cadres.png`
+
+```
+Redraw image 1 as hand-painted 2D mobile RPG user interface pieces in the drawing style of image 2 (image 2 is only the style reference). Keep EXACTLY the same 6 pieces at the same places, sizes and proportions, none added or removed. Rich and detailed, not flat: carved wood with visible grain and chiseled edges, aged parchment with soft stains, polished gold trims with small engraved ornaments and rivets, a few small gems; soft painted shading, glossy highlights, light from the top, thin crisp dark outline. Warm mid-tone colors, not too dark, not too bright. Strict front view, no perspective, straight edges, symmetric shapes; the sides of each frame stay regular. Large centers stay plain and EMPTY.
+Left: tall window frame, carved dark wood border, gold corner ornaments, plain parchment inside, a darker wood title strip on top with a gold line under it.
+Middle top: simple parchment panel with a thin wood edge. Middle bottom: hanging wooden sign with gold frame, two short chains and a gold ribbon tail on each side.
+Right, top to bottom: long wooden plank bar with a gold line along its bottom edge and a gold stud at each end | red title ribbon with gold edges and folded tails | long grey stone slab with small cracks.
+Pure white background. No text, no letters, no numbers, no icons, no characters; nothing cropped, pieces never touch; bottom right corner stays empty.
+```
+
+### 26 — Boutons, cases de héros et d'équipement — `boutons.png`
+
+```
+Redraw image 1 as hand-painted 2D mobile RPG user interface pieces in the drawing style of image 2 (image 2 is only the style reference). Keep EXACTLY the same 27 pieces in the same 7x4 grid and order, same shapes, proportions and main colors, none added or removed; the last cell stays EMPTY white. Rich, not flat: polished gold rims with small engraved ornaments, gem-like glossy surfaces, carved wood, soft painted shading, light from the top, thin crisp dark outline. Mid-tone colors. Strict front view, straight symmetric shapes. Centers stay plain and EMPTY.
+Row 1: wide glossy buttons with gold rim: green | blue | gold | red | purple | grey with iron rim | parchment.
+Row 2: round gold ring medallion with dark blue center | red square button with white X | wooden square button with white left arrow | green square button with white plus | dark capsule with gold rim | dark empty gauge with gold caps | green round check mark badge.
+Row 3: four portrait card frames, ornate border around a plain soft colored center, richer each time: grey iron | blue steel | purple with gems | gold with a star on top; then a round gold portrait frame with blue center | gold tab | dark wood tab.
+Row 4: six square item slot frames with a plain soft colored center: grey | green | blue | purple | gold | red.
+Pure white background. No text, no letters, no numbers, no characters inside frames; nothing cropped, pieces never touch.
+```

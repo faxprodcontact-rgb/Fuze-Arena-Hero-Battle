@@ -99,6 +99,12 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   par défaut), `royal` (bleu roi et or), `crepuscule` (prune et or). Le panneau des combats suit la direction (`applyTheme` dans
   `fight-view.ts`, variables `--hud-*`). Quand le propriétaire aura choisi : retirer les deux autres et le sélecteur.
   Captures des trois directions : `scratchpad/art5/themes.cjs`.
+  **Réponse du propriétaire (22/11/2026) : aucune des trois, « trop simple, trop plat » → il veut des cadres PEINTS par Hailuo**
+  (bois sculpté, parchemin, or). Planches et prompts 25 (cadres, barres, plaque, ruban) et 26 (boutons, cases de héros et
+  d'équipement par rareté) : `node refonte-graphique/planches-ui.cjs cadres|boutons`, prompts à la fin de `PROMPTS-HAILUO.md`,
+  emplacements des pièces dans `refonte-graphique/ui-pieces.json`. En attendant ses rendus, le jeu garde la direction `bois`.
+  À faire à leur arrivée : les ranger dans `hailuo-v1/ui-cadres.jpg` et `ui-boutons.jpg`, les découper (fond blanc retiré),
+  puis monter l'interface avec (`border-image` pour les cadres et boutons étirables, image entière pour les cases).
   Attention : dans le CSS, ne pas écrire `url(art/…)` (mal résolu une fois le jeu construit) : passer l'adresse par un
   `style` dans le TSX. Tour complet en captures : `scratchpad/art5/tour.cjs` (à refaire si besoin).
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.
