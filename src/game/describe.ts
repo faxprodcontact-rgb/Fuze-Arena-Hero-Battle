@@ -1,6 +1,10 @@
 // Textes des compétences, passifs et talents, fabriqués à partir des effets (aucune phrase écrite à la main par héros).
 import type { Effect, Passive, SkillDef, StatMods, Talent } from '../core/battle/types';
 import { t } from './i18n';
+import { getState } from './state/store';
+
+/** Un nombre à virgule, écrit selon la langue (2,8 en français). */
+const num = (v: number) => (getState().lang === 'en' ? String(v) : String(v).replace('.', ','));
 
 const pct = (x: number) => Math.round(x * 100);
 
@@ -11,11 +15,11 @@ function target(e: { target: string }): string {
 export function describeEffect(e: Effect): string {
   switch (e.type) {
     case 'damage':
-      return t('fx.damage', { p: e.power, t: target(e) })
+      return t('fx.damage', { p: num(e.power), t: target(e) })
         + (e.execute ? t('fx.execute', { n: pct(e.execute) }) : '')
         + (e.lifesteal ? t('fx.lifesteal', { n: pct(e.lifesteal) }) : '');
     case 'heal':
-      return e.pctMax ? t('fx.healPct', { t: target(e), n: pct(e.pctMax) }) : t('fx.heal', { t: target(e), p: e.power ?? 0 });
+      return e.pctMax ? t('fx.healPct', { t: target(e), n: pct(e.pctMax) }) : t('fx.heal', { t: target(e), p: num(e.power ?? 0) });
     case 'shield':
       return t('fx.shield', { t: target(e), n: pct(e.power) });
     case 'energy':

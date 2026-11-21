@@ -175,6 +175,26 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   panneau est assombri par un filtre (pas par transparence, sinon le décor passe au travers). Révélation : héros triés du plus
   rare au plus commun, les meilleurs cerclés de lumière, les communs assombris, **4 cartes par rangée** (grandes) pour ×10,
   une seule grande carte au cadre d'or avec étoile de lumière, onde et étincelles pour ×1, bouton OK en bas.
+  v0.35.0 : **partie Héros refaite** (demande : « améliore 100 fois la page, et le fond derrière les héros, prends exemple sur
+  les jeux connus »). Onglet : `ui/backdrop-heroes.tsx` = la salle des héros (verrière au ciel du soir, colonnes, bannières,
+  braseros, estrade ronde `DAIS`) dans la zone de contenu ; la section se tient **en pied sur l'estrade** sur deux rangs
+  (`Hall` et `SPOTS` de `screens/heroes.tsx`, `ui/hero-figure.tsx` : `HeroFigure` pose le dessin entier `art/p/` les pieds
+  au point 53 % / 95 % de sa boîte), la toucher ouvre son réglage ; médaillons Fusion et Renaissance ; filtre par élément
+  (`el-pick`) et tri ; seule la liste défile (`.hall-scroll`). **Cases de héros** (`HeroCard` de `kit.tsx`, partout dans le jeu) :
+  mur sombre teinté de la rareté avec l'emblème de l'élément (`--crest`, classes `el-*`), lumière derrière le buste, sol
+  éclairé (le héros y est posé : image ancrée par le bas), cadre de métal `.hcard-frame` (anneau en dégradé, il luit sur les
+  Légendaires), niveau en haut à gauche, élément dans son œillet, « dans la section » = liseré d'or + écusson vert à gauche.
+  **Page d'un héros** (`screens/hero-detail.tsx`, plein écran, plus une fenêtre) : décor animé par élément
+  (`ui/hero-scene.tsx` : volcan, sanctuaire des cimes, grotte marine, canyon), héros sur son piédestal (`Pedestal`, teintes
+  de l'élément, gemme de la rareté), aura selon la rareté, équipement de part et d'autre (le toucher ouvre l'onglet
+  Équipement), flèches pour passer au héros suivant (`swap` de `nav.ts`), bouton « dans la section » en haut à droite, plaque
+  étoiles + puissance, panneau sombre à trois onglets (attributs avec pictos `StatIcon`, compétence, équipement) ; un niveau
+  gagné fait jaillir un éclair, des étincelles et le nouveau niveau. Vérifier avec `scratchpad/art5/her2.cjs` (et `her2.cjs se`),
+  `her3.cjs` (sac, préparation, fusion), `tailles.cjs 2 h`. Leçons de la relecture : la rareté se lit dans le cadre et la lueur,
+  pas dans un aplat saturé ; une place réservée par information sur une case ; panneau du bas sombre (le clair vole le regard
+  au héros) ; volcan et soleil décentrés, jamais dans l'axe du héros ; un astre différent par décor ; ne jamais cacher un
+  `TitleBanner` par `display: none` (ses dégradés ont les mêmes identifiants : les autres bandeaux se vident) ; la grille de
+  l'application a `minmax(0, 1fr)` pour ne plus déborder à droite sur petit téléphone.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

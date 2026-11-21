@@ -86,16 +86,25 @@ function Back() {
       <defs>
         <linearGradient id="hh-wall" x1="0" y1="0" x2="0" y2={FLOOR} gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#10153a" /><stop offset="0.55" stop-color="#232e6a" /><stop offset="1" stop-color="#3d4c96" /></linearGradient>
         <linearGradient id="hh-floor" x1="0" y1={FLOOR} x2="0" y2="560" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#5565b2" /><stop offset="0.1" stop-color="#34407e" /><stop offset="0.3" stop-color="#232b5c" /><stop offset="1" stop-color="#141938" /></linearGradient>
-        <linearGradient id="hh-glass" x1="0" y1="0" x2="0" y2={FLOOR} gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffb86a" /><stop offset="0.45" stop-color="#ffe9a0" /><stop offset="0.8" stop-color="#fffbe6" /><stop offset="1" stop-color="#ffd98a" /></linearGradient>
-        <radialGradient id="hh-shine" cx="195" cy="108" r="200" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffe9a0" stop-opacity="0.75" /><stop offset="0.4" stop-color="#ffb86a" stop-opacity="0.28" /><stop offset="1" stop-color="#ffb86a" stop-opacity="0" /></radialGradient>
-        <radialGradient id="hh-pool" cx="195" cy="214" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(195 214) scale(230 46) translate(-195 -214)"><stop offset="0" stop-color="#ffe9a0" stop-opacity="0.5" /><stop offset="0.55" stop-color="#ffb86a" stop-opacity="0.14" /><stop offset="1" stop-color="#ffb86a" stop-opacity="0" /></radialGradient>
+        <linearGradient id="hh-glass" x1="0" y1="0" x2="0" y2={FLOOR} gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4a5ab8" /><stop offset="0.36" stop-color="#9a78c8" /><stop offset="0.62" stop-color="#f09a8a" /><stop offset="0.84" stop-color="#ffd088" /><stop offset="1" stop-color="#ffe9a8" /></linearGradient>
+        <radialGradient id="hh-sunset"><stop offset="0" stop-color="#fffbe6" stop-opacity="0.95" /><stop offset="0.35" stop-color="#ffe08a" stop-opacity="0.6" /><stop offset="1" stop-color="#ffb86a" stop-opacity="0" /></radialGradient>
+        <radialGradient id="hh-shine" cx="195" cy="108" r="200" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffe9a0" stop-opacity="0.42" /><stop offset="0.4" stop-color="#ffb86a" stop-opacity="0.2" /><stop offset="1" stop-color="#ffb86a" stop-opacity="0" /></radialGradient>
+        <radialGradient id="hh-pool" cx="195" cy="214" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(195 214) scale(230 46) translate(-195 -214)"><stop offset="0" stop-color="#ffe9a0" stop-opacity="0.7" /><stop offset="0.55" stop-color="#ffb86a" stop-opacity="0.22" /><stop offset="1" stop-color="#ffb86a" stop-opacity="0" /></radialGradient>
       </defs>
       <rect y="-40" width={W} height={FLOOR + 40} fill="url(#hh-wall)" />
       {/* les travées latérales : deux niches en ogive, à peine plus claires que le mur */}
       {[43, 347].map((x) => <path d={`M${x - 24} ${FLOOR} V70 Q${x - 24} 38 ${x} 26 Q${x + 24} 38 ${x + 24} 70 V${FLOOR} Z`} fill="#1a2254" stroke="#3a4888" stroke-width="1.500" />)}
       {/* la grande verrière : une ogive large, son remplage (trois lancettes et leurs arcs) */}
-      <path d="M103 150 V58 Q103 -6 195 -40 Q287 -6 287 58 V150 Z" fill="url(#hh-glass)" />
-      <g fill="#ff7a5a" opacity="0.2"><path d="M103 150 V58 Q103 26 134 2 V150 Z" /><path d="M287 150 V58 Q287 26 256 2 V150 Z" /></g>
+      <clipPath id="hh-win"><path d="M103 150 V58 Q103 -6 195 -40 Q287 -6 287 58 V150 Z" /></clipPath>
+      <g clip-path="url(#hh-win)">
+        <rect x="100" y="-40" width="190" height="192" fill="url(#hh-glass)" />
+        {/* le soleil bas, derrière la section */}
+        <circle cx="195" cy="126" r="66" fill="url(#hh-sunset)" /><circle cx="195" cy="126" r="15" fill="#fffbe6" />
+        {/* le lointain : deux chaînes de collines, un donjon et ses tours */}
+        <path d="M100 150 V122 L118 108 L134 120 L150 104 L168 118 L186 110 L204 122 L222 106 L240 120 L258 110 L276 124 L290 114 V150 Z" fill="#a8689a" opacity="0.8" />
+        <path d="M100 150 V134 L122 124 L146 136 L166 126 L190 138 L214 128 L238 138 L262 126 L290 136 V150 Z" fill="#6a4a8e" />
+        <path d="M236 136 V112 H240 V108 H243 V112 H247 V108 H250 V112 H254 V136 Z M254 136 V122 H266 V136 Z M226 136 V124 H236 V136 Z M243 108 L246.500 98 L250 108 Z" fill="#553a7c" />
+      </g>
       <g fill="none" stroke="#1a2254" stroke-linecap="round"><path d="M134 150 V74 Q134 52 164.500 44 Q195 52 195 74 V150 M195 74 Q195 52 225.500 44 Q256 52 256 74 V150 M134 74 Q134 62 118.500 56 M256 74 Q256 62 271.500 56" stroke-width="3" /><path d="M164.500 44 V8 M225.500 44 V8" stroke-width="2.400" /></g>
       <path d="M103 150 V58 Q103 -6 195 -40 Q287 -6 287 58 V150" fill="none" stroke="#141a40" stroke-width="6" /><path d="M106 150 V58 Q106 -3 195 -36 Q284 -3 284 58 V150" fill="none" stroke="#7f8fd0" stroke-width="1.400" opacity="0.8" />
       <rect y="-40" width={W} height={FLOOR + 60} fill="url(#hh-shine)" />
@@ -115,7 +124,7 @@ function Mid() {
   return (
     <>
       <defs>
-        <radialGradient id="hh-breath" cx="195" cy="96" r="150" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fffbe6" stop-opacity="0.6" /><stop offset="0.5" stop-color="#ffd98a" stop-opacity="0.18" /><stop offset="1" stop-color="#ffd98a" stop-opacity="0" /></radialGradient>
+        <radialGradient id="hh-breath" cx="195" cy="96" r="150" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#fffbe6" stop-opacity="0.34" /><stop offset="0.5" stop-color="#ffd98a" stop-opacity="0.12" /><stop offset="1" stop-color="#ffd98a" stop-opacity="0" /></radialGradient>
       </defs>
       <circle class="bd-sun" cx="195" cy="96" r="150" fill="url(#hh-breath)" />
       {/* les poussières qui dansent dans la lumière */}

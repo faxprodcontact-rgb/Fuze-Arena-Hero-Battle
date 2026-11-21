@@ -40,9 +40,10 @@ export function HeroesScreen() {
   );
 }
 
-/** Où se tient chaque héros sur l'estrade (en % de la largeur de la salle) : le chef devant, au centre ; les autres en arc. */
+/** Où se tient chaque héros sur l'estrade (en % de la salle) : deux devant (le chef à gauche), trois derrière, plus petits. */
 const SPOTS = [
-  { x: 50, y: 88.5, w: 23 }, { x: 34.2, y: 84.2, w: 20.8 }, { x: 65.8, y: 84.2, w: 20.8 }, { x: 19.6, y: 80.2, w: 19 }, { x: 80.4, y: 80.2, w: 19 },
+  { x: 36.5, y: 89, w: 23.5, back: false }, { x: 63.5, y: 89, w: 23.5, back: false },
+  { x: 50, y: 80.6, w: 19.5, back: true }, { x: 23.5, y: 81.2, w: 19.5, back: true }, { x: 76.5, y: 81.2, w: 19.5, back: true },
 ];
 
 /** La salle des héros : le titre, la section debout sur l'estrade (la toucher ouvre son réglage), sa puissance, les médaillons. */
@@ -60,7 +61,7 @@ function Hall() {
       <div class="hall-title"><TitleBanner title={t('nav.heroes')} ribbon={['#5a8cf0', '#2a4fb5', '#172c6e']} /></div>
       <button class="hall-team" aria-label={t('heroes.team')} onClick={() => prepare(null, 'main')}>
         {order.map(({ hero, spot }, i) => (
-          <span class="hall-hero" style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, animationDelay: `${-i * 0.7}s` }}>
+          <span class={`hall-hero${spot.back ? ' hall-back' : ''}`} style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, animationDelay: `${-i * 0.7}s` }}>
             <HeroFigure defId={hero.defId} />
           </span>
         ))}
@@ -95,14 +96,16 @@ function RebirthIcon() {
   );
 }
 
-/** Le médaillon « tous les éléments » : un disque à quatre quartiers, un par élément. */
+/** Le médaillon « tous les éléments » : quatre gemmes en losange, une par élément. */
 function AllElements() {
+  const gem = (x: number, y: number, c: string, light: string) => (
+    <g transform={`translate(${x} ${y})`}>
+      <path d="M0 -6 L6 0 L0 6 L-6 0 Z" fill="#160d06" /><path d="M0 -4.600 L4.600 0 L0 4.600 L-4.600 0 Z" fill={c} /><path d="M0 -4.600 L4.600 0 H0 Z" fill={light} /><path d="M0 0 H4.600 L0 4.600 Z" fill="#000" opacity="0.2" />
+    </g>
+  );
   return (
-    <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="10.500" fill="#160d06" />
-      <path d="M12 12 V2.500 A9.500 9.500 0 0 1 21.500 12 Z" fill="#5bd17a" /><path d="M12 12 H21.500 A9.500 9.500 0 0 1 12 21.500 Z" fill="#c08a4a" />
-      <path d="M12 12 V21.500 A9.500 9.500 0 0 1 2.500 12 Z" fill="#3da5ff" /><path d="M12 12 H2.500 A9.500 9.500 0 0 1 12 2.500 Z" fill="#ff6b3d" />
-      <path d="M12 2.500 V21.500 M2.500 12 H21.500" stroke="#160d06" stroke-width="1.400" /><circle cx="12" cy="12" r="3" fill="#fff6c8" stroke="#160d06" stroke-width="1.200" />
+    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
+      {gem(13, 6.500, '#ff6b3d', '#ffc0a0')}{gem(19.500, 13, '#5bd17a', '#c8f5d0')}{gem(13, 19.500, '#3da5ff', '#bfe0ff')}{gem(6.500, 13, '#c08a4a', '#f0d0a0')}
     </svg>
   );
 }

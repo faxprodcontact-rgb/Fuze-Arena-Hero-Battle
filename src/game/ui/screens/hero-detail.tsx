@@ -2,6 +2,7 @@
 // équipement de part et d'autre, ses étoiles et sa puissance dessous ; en bas, un panneau à trois onglets (attributs et
 // niveau, compétences, équipement). Les flèches du titre passent au héros suivant. La fusion et la Renaissance se font
 // sur leurs pages (onglet Héros).
+import type preact from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { applyStatMods } from '../../../core/battle/engine';
 import { AWAKEN_SKILL, AWAKEN_STARS } from '../../../core/data/heroes';
@@ -25,25 +26,44 @@ import { SlotPanel, betterInBag } from './bag';
 import { describePassive, describeSkill, describeTalent } from '../../describe';
 import { runSkillPreview } from '../../scenes';
 import type { UnitInit } from '../../../core/battle/types';
-import { close, swap, toast } from '../nav';
+import { close, open, swap, toast } from '../nav';
 
 export function talentText(talent: Talent | undefined): string {
   return describeTalent(talent);
 }
 
-/** Les 8 statistiques du héros, avec ses passifs permanents déjà débloqués. */
+/** Le picto d'un attribut (cœur, épée, bouclier, aile, cible, éclat, plume, roc). */
+function StatIcon({ k }: { k: string }) {
+  const o = '#160d06';
+  const art: Record<string, preact.ComponentChildren> = {
+    hp: <><path d="M10 17.500 C3.500 12.500 2 9.500 2 7 A4.200 4.200 0 0 1 10 5.200 A4.200 4.200 0 0 1 18 7 C18 9.500 16.500 12.500 10 17.500 Z" fill="#ff5a6a" stroke={o} stroke-width="1.400" stroke-linejoin="round" /><path d="M5 6.500 Q6 4.800 8 5.400" fill="none" stroke="#ffd0d4" stroke-width="1.400" stroke-linecap="round" /></>,
+    atk: <><path d="M16.500 2 L18 3.500 L8.500 13 L6 14 L7 11.500 Z" fill="#e6ecf5" stroke={o} stroke-width="1.300" stroke-linejoin="round" /><path d="M4.500 10.500 L9.500 15.500" stroke={o} stroke-width="3.600" stroke-linecap="round" /><path d="M4.500 10.500 L9.500 15.500" stroke="#ffc531" stroke-width="1.800" stroke-linecap="round" /><path d="M6 14 L3 17" stroke={o} stroke-width="3.400" stroke-linecap="round" /><path d="M6 14 L3 17" stroke="#b8720a" stroke-width="1.600" stroke-linecap="round" /></>,
+    def: <><path d="M10 2 L17 4.500 V9.500 C17 13.500 14 16.500 10 18 C6 16.500 3 13.500 3 9.500 V4.500 Z" fill="#4f8ae0" stroke={o} stroke-width="1.400" stroke-linejoin="round" /><path d="M10 4 L15 5.800 V9.500 C15 12.400 13 14.600 10 15.900 Z" fill="#9cc4ff" /></>,
+    speed: <><path d="M3 15 C5 9 9 5 17 3.500 C16 6 14.500 7.500 12.500 8.500 H15 C13.500 11 11.500 12.200 9 12.600 H11 C9 15 6 15.800 3 15 Z" fill="#5fe0a0" stroke={o} stroke-width="1.300" stroke-linejoin="round" /></>,
+    crit: <><circle cx="10" cy="10" r="6.200" fill="none" stroke={o} stroke-width="3.400" /><circle cx="10" cy="10" r="6.200" fill="none" stroke="#ffb02a" stroke-width="1.700" /><path d="M10 1.500 V5 M10 15 V18.500 M1.500 10 H5 M15 10 H18.500" stroke={o} stroke-width="3.200" stroke-linecap="round" /><path d="M10 1.500 V5 M10 15 V18.500 M1.500 10 H5 M15 10 H18.500" stroke="#ffb02a" stroke-width="1.500" stroke-linecap="round" /><circle cx="10" cy="10" r="1.800" fill="#fff3b0" stroke={o} stroke-width="0.800" /></>,
+    critDmg: <><path d="M10 1.500 L12 7 L17.500 5 L14 9.500 L18.500 12.500 L13 13 L13.500 18.500 L10 14.500 L6.500 18.500 L7 13 L1.500 12.500 L6 9.500 L2.500 5 L8 7 Z" fill="#ff7a3a" stroke={o} stroke-width="1.300" stroke-linejoin="round" /><path d="M10 6 L11 9 L14 10 L11 11 L10 14 L9 11 L6 10 L9 9 Z" fill="#fff3b0" /></>,
+    dodge: <><path d="M16.500 2.500 C9 3 4.500 7.500 4 15 L2.500 17.500 L5.500 16.500 C12 16 16 11.500 16.500 2.500 Z" fill="#7fd8f5" stroke={o} stroke-width="1.300" stroke-linejoin="round" /><path d="M5 16 L13.500 6" stroke={o} stroke-width="1.100" stroke-linecap="round" /></>,
+    tenacity: <><path d="M10 2 L16 5.500 L17.500 12 L13 17.500 H7 L2.500 12 L4 5.500 Z" fill="#a98aff" stroke={o} stroke-width="1.400" stroke-linejoin="round" /><path d="M10 2 L16 5.500 L12 9 Z" fill="#dccdff" /><path d="M12 9 L17.500 12 L13 17.500 Z" fill="#6a48d0" /></>,
+  };
+  return <svg class="stat-icon" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">{art[k]}</svg>;
+}
+
+/** Les 8 attributs du héros, avec ses passifs permanents déjà débloqués. */
 function StatsGrid({ unit }: { unit: UnitInit }) {
   let u = unit;
   for (const p of unit.passives ?? []) if (p.kind === 'stats') u = applyStatMods(u, p.stats);
   const pct = (x = 0) => `${Math.round(x * 100)} %`;
-  const rows: [string, string][] = [
-    ['hp', fmt(u.maxHp)], ['atk', fmt(u.atk)], ['def', fmt(u.def)], ['speed', String(Math.round(1000 / u.interval))],
-    ['crit', pct(u.crit)], ['critDmg', pct((u.critDmg ?? 1.5) - 1)], ['dodge', pct(u.dodge)], ['tenacity', pct(u.tenacity)],
-  ];
+  const main: [string, string][] = [['hp', fmt(u.maxHp)], ['atk', fmt(u.atk)], ['def', fmt(u.def)], ['speed', String(Math.round(1000 / u.interval))]];
+  const minor: [string, string][] = [['crit', pct(u.crit)], ['critDmg', pct((u.critDmg ?? 1.5) - 1)], ['dodge', pct(u.dodge)], ['tenacity', pct(u.tenacity)]];
   return (
-    <div class="stat-grid">
-      {rows.map(([k, v]) => <span><small>{t(`stat.${k}`)}</small><b>{v}</b></span>)}
-    </div>
+    <>
+      <div class="stat-main">
+        {main.map(([k, v]) => <span><StatIcon k={k} /><b>{v}</b><small>{t(`stat.${k}`)}</small></span>)}
+      </div>
+      <div class="stat-minor">
+        {minor.map(([k, v]) => <span><StatIcon k={k} /><small>{t(`stat.${k}`)}</small><b>{v}</b></span>)}
+      </div>
+    </>
   );
 }
 
@@ -112,9 +132,7 @@ export function HeroDetail({ uid }: { uid: number }) {
       <HeroScene element={d.element} />
       <header class="hp-head">
         <button class="x hp-back" aria-label={t('back')} onClick={close}>‹</button>
-        {order.length > 1 && <button class="hp-arrow" aria-label="‹" onClick={() => step(-1)}><Chevron dir={-1} /></button>}
         <TitleBanner title={d.name} ribbon={RIBBON[d.rarity]} />
-        {order.length > 1 && <button class="hp-arrow hp-arrow-r" aria-label="›" onClick={() => step(1)}><Chevron dir={1} /></button>}
         <button class={`hp-team${inTeam ? ' on' : ''}`} aria-label={inTeam ? t('heroes.inTeam') : t('heroes.addTeam')} onClick={() => {
           const r = toggleInFormation(uid);
           if (r === 'full') toast(t('heroes.full'));
@@ -135,9 +153,17 @@ export function HeroDetail({ uid }: { uid: number }) {
           <i class="hp-aura" />
           {d.rarity === 'legendary' && <Halo size={260} color="#ffd45c" class="hp-halo" />}
           <Pedestal element={d.element} rarity={rar} />
-          {flash > 0 && <i class="hp-flash" key={flash} />}
+          {flash > 0 && (
+            <span class="hp-levelup" key={flash}>
+              <i class="hp-flash" />
+              {Array.from({ length: 9 }, (_, i) => <i class="hp-spark" style={{ left: `${22 + ((i * 37) % 56)}%`, animationDelay: `${(i % 4) * 70}ms`, '--h': `${90 + ((i * 53) % 90)}px` } as never} />)}
+              <b class="hp-lvpop">{t('lv')} {hero.level}</b>
+            </span>
+          )}
           <span class={`hp-fig${flash > 0 ? ' hp-up' : ''}`} key={`${d.id}-${flash}`}><HeroFigure defId={d.id} /></span>
         </div>
+        {order.length > 1 && <button class="hp-arrow hp-arrow-l" aria-label="‹" onClick={() => step(-1)}><Chevron dir={-1} /></button>}
+        {order.length > 1 && <button class="hp-arrow hp-arrow-r" aria-label="›" onClick={() => step(1)}><Chevron dir={1} /></button>}
         <div class="hp-slots hp-slots-l">{LEFT_SLOTS.map(slot)}</div>
         <div class="hp-slots hp-slots-r">{RIGHT_SLOTS.map(slot)}</div>
         <div class="hp-plate">
@@ -166,7 +192,7 @@ export function HeroDetail({ uid }: { uid: number }) {
                   <Btn kind="green" small disabled={!canLevelUp(s, hero)} onClick={() => levelUp(uid, 10)}>{t('detail.levelUp10')}</Btn>
                 </div>
               ) : (
-                <p class="muted center">{t('detail.cap')}</p>
+                <Btn kind="gold" wide onClick={() => open({ type: 'fusion', uid })}><Icon name="fusion" size={20} /> {t('fusion.title')}</Btn>
               )}
               <StatsGrid unit={unit} />
             </>
@@ -205,11 +231,7 @@ export function HeroDetail({ uid }: { uid: number }) {
                 <Btn kind="blue" small wide onClick={() => equipBest(uid)}>{t('detail.autoEquip')}</Btn>
                 <Btn kind="ghost" small onClick={() => unequipAll(uid)}>{t('detail.unequip')}</Btn>
               </div>
-              <div class="hp-gear-tabs">
-                {GEAR_SLOTS.map((g) => (
-                  <button class={`chip${gearSlot === g ? ' on' : ''}`} onClick={() => setGearSlot(g)}><Icon name={g} size={16} /> {t(`slot.${g}`)}</button>
-                ))}
-              </div>
+              <h3 class="hp-slot-name"><Icon name={gearSlot} size={18} /> {t(`slot.${gearSlot}`)}</h3>
               <SlotPanel heroUid={uid} slot={gearSlot} />
             </>
           )}
