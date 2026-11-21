@@ -10,6 +10,7 @@ import { heroImage } from '../../art';
 import { legalDoc, type LegalDoc } from '../../legal';
 import { APP_VERSION } from '../../version';
 import { t } from '../../i18n';
+import { THEMES, getTheme, setTheme } from '../../theme';
 import {
   buyExchange, buyOffer, claimChest, claimPass, claimQuest, demoUnlockAll, giveTestResources, passLevel, questPoints,
   chooseName, deleteAccount, playerId, randomName, rename, resetGame, setLang, setSetting, timeTravel,
@@ -239,6 +240,10 @@ export function SettingsModal() {
 
       <section class="settings-group tests">
         <h3>{t('settings.tests')}</h3>
+        {/* Essai : trois directions graphiques au choix, le temps que le propriétaire en retienne une. */}
+        <div class="tabs">
+          {THEMES.map((th) => <button class={`tab${getTheme() === th ? ' tab-on' : ''}`} onClick={() => { setTheme(th); close(); toast('✓'); }}>{t(`theme.${th}`)}</button>)}
+        </div>
         <div class="row gap-s wrap">
           <Btn kind="ghost" small onClick={() => { timeTravel(2); toast('+2 h'); }}>{t('settings.h2')}</Btn>
           <Btn kind="ghost" small onClick={() => { timeTravel(12); toast('+12 h'); }}>{t('settings.h12')}</Btn>

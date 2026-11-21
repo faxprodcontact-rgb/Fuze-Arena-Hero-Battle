@@ -12,12 +12,25 @@ import { ICON_INDEX } from './icons-meta';
 /** Effets en combat qui ont leur picto (case st-<effet> de public/art/icons.webp). */
 const STATUS_ICONS = ['burn', 'poison', 'bleed', 'regen', 'stun', 'silence', 'slow', 'taunt', 'atkUp', 'atkDown', 'defUp', 'defDown', 'speedUp', 'critUp'];
 import { t } from './i18n';
+import { themeColor } from './theme';
 import { battleLook, monsterArtId, type Look } from './look';
 
 export const W = 720;
 export const FONT = '"Baloo 2", "Trebuchet MS", "Segoe UI", Roboto, sans-serif';
 /** Couleurs de l'interface des combats : les mêmes que les menus (style.css). */
-export const C = { ink: 0x2f2244, paper: 0xfffaf0, paper2: 0xfff1d4, paper3: 0xf3deb0, sky: 0xd9efff, panel: 0xfffaf0, panelLight: 0xffffff, green: 0x45c96b, greenDark: 0x23954a, red: 0xf25757, redDark: 0xc22f3a, blue: 0x4a9bff, blueDark: 0x2467d6, energy: 0x4fc3ff, gold: 0xffc531, goldDark: 0xe0940f };
+export const C = { ink: 0x2a1c12, paper: 0x5c3a1e, paper2: 0xecd9a8, paper3: 0xdfc58c, sky: 0x6b8fb5, panel: 0xecd9a8, panelLight: 0xffffff, trim: 0xd9a63e, hudText: '#4a2a0e',
+  green: 0x3fae5a, greenDark: 0x2a8442, red: 0xdc4f4f, redDark: 0xa83232, blue: 0x3f86e0, blueDark: 0x2a5fb5, energy: 0x4fc3ff, gold: 0xf0b530, goldDark: 0xc8860f };
+
+/** Les couleurs du panneau de combat suivent la direction graphique des menus (variables de style.css). */
+export function applyTheme() {
+  C.ink = themeColor('hud-edge', C.ink);
+  C.paper = themeColor('hud-under', C.paper);
+  C.panel = C.paper2 = themeColor('hud-panel', C.panel);
+  C.trim = themeColor('trim', C.trim);
+  const light = ((C.panel >> 16) & 255) * 0.3 + ((C.panel >> 8) & 255) * 0.59 + (C.panel & 255) * 0.11 > 150;
+  C.paper3 = Phaser.Display.Color.ValueToColor(C.panel).darken(light ? 12 : 18).color;
+  C.hudText = light ? '#4a2a0e' : '#ffffff';
+}
 
 // Les deux équipes sont bien séparées (230 px entre les deux premières lignes, les rangs du fond assez loin des bords pour ne pas être coupés) : on voit qui fonce sur qui.
 export const HERO_X: Record<Slot, number> = { 3: 82, 4: 82, 2: 163, 0: 245, 1: 245 };
@@ -172,7 +185,7 @@ export abstract class FightScene extends Phaser.Scene {
     return this.add
       .text(x, y, value, { fontFamily: FONT, fontSize: `${size}px`, color, fontStyle: 'bold', align: 'center' })
       .setOrigin(0.5)
-      .setStroke('#2f2244', Math.max(4, Math.round(size * 0.2)))
+      .setStroke('#1a1420', Math.max(3, Math.round(size * 0.13)))
       .setShadow(0, Math.max(2, Math.round(size * 0.07)), '#2f2244', 0, true, true);
   }
 
@@ -324,8 +337,9 @@ export abstract class FightScene extends Phaser.Scene {
       const w = v.barW;
       const y = v.barY;
       g.fillStyle(C.ink);
-      g.fillRoundedRect(-w / 2 - 3, y - 3, w + 6, 18, 7);
-      g.fillStyle(0x5b4d75);
+      g.fillStyle(0x15101c);
+      g.fillRoundedRect(-w / 2 - 2, y - 2, w + 4, 16, 6);
+      g.fillStyle(0x2a2230);
       g.fillRoundedRect(-w / 2, y, w, 12, 4);
       const wHp = w * (Math.max(0, v.hp) / u.maxHp);
       if (wHp > 1) {

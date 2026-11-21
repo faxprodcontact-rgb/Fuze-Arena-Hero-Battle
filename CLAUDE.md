@@ -91,6 +91,14 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   boutons ancrés en bas (`hudY`), mêmes couleurs que les menus (`C` de `fight-view.ts`). Une scène peinte par mode (boss
   dans l'antre, tour, donjons). Étiquettes claires à bord coloré (plus de pastilles sombres), pictos à la place des
   caractères de texte, virgule décimale en français. Relu par un agent sur 50 captures, corrigé.
+  **v0.28.0 (22/11/2026) : le thème clair est REFUSÉ par le propriétaire** (« trop clair, traits trop grossiers »). Interface
+  refaite de zéro dans `style.css` : tons moyens tirés des décors, traits fins (1,5 px), double filet (bord sombre + filet doré),
+  rivets aux coins, fond de l'application = un décor flouté et teinté (`public/art/ui/bg-<onglet>.jpg`, `.app-bg`), cases de
+  héros et d'équipement = couleur unie de la rareté en dégradé. **Trois directions à l'essai** (`src/game/theme.ts`, attribut
+  `data-theme` sur `<html>`, choix dans Réglages → Outils de test, ou `#theme=royal` dans l'adresse) : `bois` (bois et parchemin,
+  par défaut), `royal` (bleu roi et or), `crepuscule` (prune et or). Le panneau des combats suit la direction (`applyTheme` dans
+  `fight-view.ts`, variables `--hud-*`). Quand le propriétaire aura choisi : retirer les deux autres et le sélecteur.
+  Captures des trois directions : `scratchpad/art5/themes.cjs`.
   Attention : dans le CSS, ne pas écrire `url(art/…)` (mal résolu une fois le jeu construit) : passer l'adresse par un
   `style` dans le TSX. Tour complet en captures : `scratchpad/art5/tour.cjs` (à refaire si besoin).
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.

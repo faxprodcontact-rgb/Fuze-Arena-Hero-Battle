@@ -125,7 +125,7 @@ const FR = {
   'name.title': 'Ton nom', 'name.random': 'Nom au hasard', 'name.rule': '3 à 16 caractères',
   'name.length': '3 à 16 caractères', 'name.chars': 'Lettres, chiffres, espaces, - et _ seulement', 'name.taken': 'Nom non autorisé',
   'name.gems': 'Pas assez de gemmes',
-  'settings.name': 'Nom', 'settings.lang': 'Langue', 'settings.speed': 'Vitesse des combats', 'settings.tests': 'Outils de test',
+  'settings.name': 'Nom', 'settings.lang': 'Langue', 'settings.speed': 'Vitesse des combats', 'settings.tests': 'Outils de test', 'theme.bois': 'Bois', 'theme.royal': 'Royal', 'theme.crepuscule': 'Crépuscule',
   'settings.h2': '+2 h', 'settings.h12': '+12 h', 'settings.d1': '+1 jour', 'settings.resources': 'Ressources',
   'settings.unlock': 'Tout débloquer', 'settings.preview': 'Aperçu des graphismes', 'settings.reset': 'Recommencer', 'settings.resetConfirm': 'Effacer la partie ?',
 
@@ -266,7 +266,7 @@ const EN: Record<Key, string> = {
   'name.title': 'Your name', 'name.random': 'Random name', 'name.rule': '3 to 16 characters',
   'name.length': '3 to 16 characters', 'name.chars': 'Letters, digits, spaces, - and _ only', 'name.taken': 'Name not allowed',
   'name.gems': 'Not enough gems',
-  'settings.name': 'Name', 'settings.lang': 'Language', 'settings.speed': 'Battle speed', 'settings.tests': 'Test tools',
+  'settings.name': 'Name', 'settings.lang': 'Language', 'settings.speed': 'Battle speed', 'settings.tests': 'Test tools', 'theme.bois': 'Wood', 'theme.royal': 'Royal', 'theme.crepuscule': 'Dusk',
   'settings.h2': '+2 h', 'settings.h12': '+12 h', 'settings.d1': '+1 day', 'settings.resources': 'Resources',
   'settings.unlock': 'Unlock everything', 'settings.preview': 'Art preview', 'settings.reset': 'Start over', 'settings.resetConfirm': 'Erase progress?',
 
