@@ -59,21 +59,22 @@ function Flame({ x, y, s = 1, delay = 0 }: { x: number; y: number; s?: number; d
   );
 }
 
-/** Un œil en feu : l'orbite éclairée de l'intérieur, une grande flamme à quatre couleurs qui s'en échappe en penchant vers
- *  l'extérieur, la braise blanche au cœur, des étincelles qui montent. `side` = -1 (œil gauche) ou 1 (œil droit). */
+/** Un œil en feu : une flamme en goutte, arrondie en dessous (aucune coupure), à quatre couleurs emboîtées, qui tient dans
+ *  l'orbite et dont seule la pointe dépasse en penchant vers l'extérieur ; la braise blanche au cœur, deux étincelles.
+ *  `side` = -1 (œil gauche) ou 1 (œil droit). */
 function EyeFire({ x, y, side }: { x: number; y: number; side: number }) {
-  const lean = side * 16;
+  // la même goutte à quatre tailles : base ronde centrée sur l'œil, pointe vers le haut
+  const drop = (k: number) => `M0 ${f(4.500 * k)} C${f(-5.500 * k)} ${f(4.500 * k)} ${f(-6.500 * k)} ${f(-0.500 * k)} ${f(-5 * k)} ${f(-4 * k)} C${f(-4 * k)} ${f(-6.500 * k)} ${f(-1.800 * k)} ${f(-8 * k)} ${f(-0.800 * k)} ${f(-14 * k)} C${f(1.800 * k)} ${f(-10 * k)} ${f(6 * k)} ${f(-7 * k)} ${f(6 * k)} ${f(-1.500 * k)} C${f(6 * k)} ${f(2.500 * k)} ${f(3.500 * k)} ${f(4.500 * k)} 0 ${f(4.500 * k)} Z`;
   return (
     <g>
-      <circle class="an-glow" cx={x} cy={y - 2} r="15" fill="url(#mi-eye)" />
-      <g transform={`translate(${x} ${y + 4}) rotate(${lean})`}>
-        <path class="ad-flame mi-f1" d="M-8 1 C-12 -6 -7 -11 -8.500 -19 C-4 -16 -2.500 -12 -1 -27 C4 -18 10.500 -11 8 1 Z" fill="#e0281a" />
-        <path class="ad-flame mi-f2" d="M-6 1 C-9 -5 -5 -9 -5.500 -15 C-2 -12 -0.500 -9 0.500 -21 C4 -14 8 -8 6 1 Z" fill="#ff7a1e" />
-        <path class="ad-flame mi-f3" d="M-4 1 C-6 -3.500 -3 -6.500 -3 -10.500 C-0.500 -8.500 0.500 -6 1 -14.500 C3.500 -9.500 5.500 -5 4 1 Z" fill="#ffd23a" />
-        <path class="ad-flame mi-f2" d="M-2 1 C-3 -1.500 -1.200 -3.500 -1 -6 C0.800 -4 2.800 -2 2 1 Z" fill="#fffbe0" />
+      <circle class="an-glow" cx={x} cy={y - 1} r="11.500" fill="url(#mi-eye)" />
+      <g transform={`translate(${x} ${y + 1.500}) rotate(${side * 12})`}>
+        <path class="mi-drop mi-f1" d={drop(1)} fill="#e0281a" />
+        <path class="mi-drop mi-f2" d={drop(0.760)} fill="#ff7a1e" />
+        <path class="mi-drop mi-f3" d={drop(0.520)} fill="#ffd23a" />
+        <path class="mi-drop mi-f2" d={drop(0.280)} fill="#fffbe0" />
       </g>
-      <ellipse class="mi-flicker" cx={x} cy={y + 0.500} rx="4.200" ry="3" fill="#fffbe0" />
-      {[0, 1, 2].map((i) => <circle class="mi-eyespark" style={{ animationDelay: `${-i * 0.7 - (side > 0 ? 0.35 : 0)}s`, '--dx': `${side * (3 + i * 3)}px` } as never} cx={x + side * (i - 1) * 2} cy={y - 14} r={1.300 - i * 0.200} fill={i === 1 ? '#fffbe0' : '#ffb347'} />)}
+      {[0, 1].map((i) => <circle class="mi-eyespark" style={{ animationDelay: `${-i * 1.050 - (side > 0 ? 0.500 : 0)}s`, '--dx': `${side * (3 + i * 3)}px` } as never} cx={x + side * (i * 2 - 1)} cy={y - 11} r={1.100 - i * 0.200} fill={i ? '#fffbe0' : '#ffb347'} />)}
     </g>
   );
 }

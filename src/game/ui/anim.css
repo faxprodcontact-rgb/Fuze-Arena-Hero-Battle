@@ -125,9 +125,11 @@
 @keyframes mi-pebble { 0%, 20% { transform: translateY(0); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(14px); opacity: 0; } }
 
 /* les yeux en feu du crâne : trois langues de flamme à des rythmes différents, des étincelles qui s'envolent */
-.mi-f1 { animation-duration: 0.62s; } .mi-f2 { animation-duration: 0.47s; animation-delay: -0.2s; } .mi-f3 { animation-duration: 0.38s; animation-delay: -0.1s; }
+.mi-drop.mi-f1 { animation-duration: 0.66s; } .mi-drop.mi-f2 { animation-duration: 0.5s; animation-delay: -0.2s; } .mi-drop.mi-f3 { animation-duration: 0.4s; animation-delay: -0.1s; }
+.mi-drop { transform-box: fill-box; transform-origin: 50% 82%; animation: mi-drop 0.6s ease-in-out infinite alternate; }
+@keyframes mi-drop { from { transform: scale(0.96, 0.9) skewX(-3deg); } to { transform: scale(1.03, 1.1) skewX(4deg); } }
 .mi-eyespark { animation: mi-eyespark 2.1s ease-out infinite; }
-@keyframes mi-eyespark { 0% { transform: translate(0, 6px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx), -20px); opacity: 0; } }
+@keyframes mi-eyespark { 0% { transform: translate(0, 4px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx), -15px); opacity: 0; } }
 
 /* le reflet qui traverse la plaque du bandeau de titre */
 .tb-sheen { animation: tb-sheen 4.5s ease-in-out infinite; }
