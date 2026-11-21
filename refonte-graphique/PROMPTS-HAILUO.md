@@ -107,6 +107,32 @@ Row 2, armored beasts: armadillo | rhinoceros beetle | pangolin | stone snail wi
 Row 3, bramble forest: autumn-leaf fox | moss badger with mushrooms | thorn porcupine | bark moth with eye spots | twig mantis | bramble stag with leafy antlers.
 ```
 
+## Monstres « animaux » à refaire (21/11/2026) : trop réalistes à côté des héros
+
+Les 6 familles d'animaux (Bayou, Cuirassés, Fauves de cendre, Horde des glaces, Ronciers, Volière) sont sorties comme des
+illustrations animalières réalistes (poils, écailles, couleurs ternes) ; les héros sont des chibis nets. Planches 16:9,
+7 × 3, les 3 dernières cases vides : `node refonte-graphique/planche-ia.cjs liste "m:bayou:0,…,_,_,_" sortie.png 7 16:9`.
+À rendre en **4K 16:9**. Si Hailuo accepte une 2e image : `reference-style-personnages.jpg` (6 héros + 6 monstres au bon
+style). Après rendu : refaire leur découpe (`decoupe-hailuo.py`) ET leurs morceaux animés (`rig/<id>.json` à reprendre).
+
+### Monstres animaux 1 — Bayou · Cuirassés · Fauves de cendre
+
+Planche : `monstres-style-1.png`
+
+```
+Redraw this sheet as 2D mobile RPG monster art. Keep EXACTLY the same 18 creatures in the same 7x3 grid and order, none added or removed; the last three cells stay EMPTY white. Each keeps its species, body shape, colors, pose and silhouette: full body, facing right. Art style: fierce cartoon creatures matching the chibi heroes of a mobile RPG like AFK Arena or Hero Wars: stylized proportions, big head, short sturdy legs, large expressive angry eyes, simplified shapes, fur and scales in a few clean strokes, crisp bold dark outline, bright saturated colors, cel shading with soft gradients, light from top right. NOT realistic, NOT a wildlife illustration, no detailed fur, scale or feather texture, no gritty or muddy colors. Open mouths with a few cartoon fangs; legs, wings and tails attached naturally; glowing parts glow. Pure white background, soft shadow under feet. No text, frames, scenery, people, extra limbs; nothing cropped, creatures never touch.
+In order: basilisk lizard with orange crest | snapping turtle | archer fish | will-o'-wisp ghost flame | giant catfish | old crocodile | armadillo | rhinoceros beetle | pangolin | stone snail with green crystals | triceratops | ankylosaurus with tail club | spotted hyena | warthog | spitting cobra | vulture | black lioness with ember cracks | ember buffalo, huge horns.
+```
+
+### Monstres animaux 2 — Horde des glaces · Ronciers · Volière d'orage
+
+Planche : `monstres-style-2.png`
+
+```
+Redraw this sheet as 2D mobile RPG monster art. Keep EXACTLY the same 18 creatures in the same 7x3 grid and order, none added or removed; the last three cells stay EMPTY white. Each keeps its species, body shape, colors, pose and silhouette: full body, facing right. Art style: fierce cartoon creatures matching the chibi heroes of a mobile RPG like AFK Arena or Hero Wars: stylized proportions, big head, short sturdy legs, large expressive angry eyes, simplified shapes, fur and scales in a few clean strokes, crisp bold dark outline, bright saturated colors, cel shading with soft gradients, light from top right. NOT realistic, NOT a wildlife illustration, no detailed fur, scale or feather texture, no gritty or muddy colors. Open mouths with a few cartoon fangs; legs, wings and tails attached naturally; glowing parts glow. Pure white background, soft shadow under feet. No text, frames, scenery, people, extra limbs; nothing cropped, creatures never touch.
+In order: sabertooth tiger | woolly rhinoceros | narwhal | snowy owl | cave bear | woolly mammoth with only two tusks | leaf fox | moss badger | thorn porcupine | bark moth | twig mantis | bramble stag | falcon | marabou stork | crow | storm peacock | cassowary | thunderbird with lightning wings.
+```
+
 ## Rattrapage (après le premier passage)
 
 Deux planches dans les mêmes conditions que les premières (4K 16:9, grille 6 × 3, mêmes tailles) : un essai au format
@@ -251,13 +277,15 @@ Right: boss lair, dark red volcanic hall, huge gate with chains, fire braziers, 
 `node refonte-graphique/ui-ia.cjs 1..6 sortie.png` : les pictos actuels du jeu (`kit.tsx`) et des croquis simples pour le
 reste. Direction artistique (réponses du propriétaire, 19/11/2026) : monde lumineux et joyeux, fantasy médiévale, ados et
 adultes, menus « moderne épuré » ; pictos dans le même rendu que les héros Hailuo (contour net, ombré peint).
+21/11/2026 : style renforcé dans les 6 prompts (« Hero Wars / AFK Arena », pas réaliste). À rendre en 4K 16:9 ; si Hailuo
+accepte une 2e image, joindre `reference-style-personnages.jpg`.
 
 ### Interface 1 — Monnaies et ressources
 
 Planche : `interface-1.png`
 
 ```
-Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as premium hand-painted cartoon icons for a bright, joyful medieval-fantasy mobile RPG with semi-chibi heroes: chunky simple shapes readable at small size, crisp dark outline, soft painted shading, light from top right, glossy highlights, vibrant colors, slight 3D volume, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
+Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as cartoon game icons in the style of Hero Wars or AFK Arena, for a bright, joyful medieval-fantasy mobile RPG with chibi heroes: chunky simple shapes readable at small size, crisp bold dark outline, cel shading with soft gradients, light from top right, glossy highlights, bright saturated colors, slight 3D volume. NOT realistic, no photo textures, no fine detail, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
 Row 1, currencies: gold coin with an embossed crown | teal essence droplet | pink faceted gem | golden summoning scroll with purple wax seal | plain blue-grey basic scroll | purple magic crystal.
 Row 2: golden hero soul shards | sparkling teal and purple dust (recycling) | red arena token with crossed swords | blue guild coin with a shield crest | yellow lightning bolt (power) | gift box with ribbon.
 Row 3: green play-video button | round clock | padlock | gold star.
@@ -268,7 +296,7 @@ Row 3: green play-video button | round clock | padlock | gold star.
 Planche : `interface-2.png`
 
 ```
-Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as premium hand-painted cartoon icons for a bright, joyful medieval-fantasy mobile RPG with semi-chibi heroes: chunky simple shapes readable at small size, crisp dark outline, soft painted shading, light from top right, glossy highlights, vibrant colors, slight 3D volume, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
+Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as cartoon game icons in the style of Hero Wars or AFK Arena, for a bright, joyful medieval-fantasy mobile RPG with chibi heroes: chunky simple shapes readable at small size, crisp bold dark outline, cel shading with soft gradients, light from top right, glossy highlights, bright saturated colors, slight 3D volume. NOT realistic, no photo textures, no fine detail, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
 Row 1, menus: red battle flag on a pole | knight shield | glowing star medallion (summon) | folded treasure map | guild banner with crest | calendar with a green check mark.
 Row 2: envelope letter | quest scroll with check mark | shopping bag | purple pass ticket with a star | golden trophy cup | two friends silhouettes.
 Row 3: blue chat speech bubble | settings gear | purple and gold orbs merging (fusion) | teal circular arrow around a soul (rebirth).
@@ -279,7 +307,7 @@ Row 3: blue chat speech bubble | settings gear | purple and gold orbs merging (f
 Planche : `interface-3.png`
 
 ```
-Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as premium hand-painted cartoon icons for a bright, joyful medieval-fantasy mobile RPG with semi-chibi heroes: chunky simple shapes readable at small size, crisp dark outline, soft painted shading, light from top right, glossy highlights, vibrant colors, slight 3D volume, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
+Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as cartoon game icons in the style of Hero Wars or AFK Arena, for a bright, joyful medieval-fantasy mobile RPG with chibi heroes: chunky simple shapes readable at small size, crisp bold dark outline, cel shading with soft gradients, light from top right, glossy highlights, bright saturated colors, slight 3D volume. NOT realistic, no photo textures, no fine detail, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
 Row 1, game modes: stone trial tower | compass | dungeon gate archway | horned skull (boss) | two crossed swords (arena) | wooden siege catapult.
 Row 2: gold mine entrance with coins | magic spring of teal essence | anvil with a sword (armory) | sword | chest armor | knight helmet.
 Row 3: leather boots | leather bag | forge hammer on an anvil | recycle arrows with sparkling dust.
@@ -290,7 +318,7 @@ Row 3: leather boots | leather bag | forge hammer on an anvil | recycle arrows w
 Planche : `interface-4.png`
 
 ```
-Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as premium hand-painted cartoon icons for a bright, joyful medieval-fantasy mobile RPG with semi-chibi heroes: chunky simple shapes readable at small size, crisp dark outline, soft painted shading, light from top right, glossy highlights, vibrant colors, slight 3D volume, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
+Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as cartoon game icons in the style of Hero Wars or AFK Arena, for a bright, joyful medieval-fantasy mobile RPG with chibi heroes: chunky simple shapes readable at small size, crisp bold dark outline, cel shading with soft gradients, light from top right, glossy highlights, bright saturated colors, slight 3D volume. NOT realistic, no photo textures, no fine detail, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
 Row 1, elements and roles: fire flame | green wind swirl | blue water drop | brown earth rock peak with grass | blue protector shield with cross | warrior crossed swords.
 Row 2: wooden bow with arrow | twin daggers | green healing cross | golden support figure with aura | red heart (health) | short sword (attack).
 Row 3: steel shield (defense) | winged boot (speed) | red target (critical) | swift blue wind trails (dodge).
@@ -301,7 +329,7 @@ Row 3: steel shield (defense) | winged boot (speed) | red target (critical) | sw
 Planche : `interface-5.png`
 
 ```
-Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as premium hand-painted cartoon icons for a bright, joyful medieval-fantasy mobile RPG with semi-chibi heroes: chunky simple shapes readable at small size, crisp dark outline, soft painted shading, light from top right, glossy highlights, vibrant colors, slight 3D volume, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
+Redraw this sheet as 2D mobile RPG game icons. Keep EXACTLY the same 16 icons in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its object, shape, main colors and orientation. Fully repaint each as cartoon game icons in the style of Hero Wars or AFK Arena, for a bright, joyful medieval-fantasy mobile RPG with chibi heroes: chunky simple shapes readable at small size, crisp bold dark outline, cel shading with soft gradients, light from top right, glossy highlights, bright saturated colors, slight 3D volume. NOT realistic, no photo textures, no fine detail, not the flat vector look of the sketch. Centered, same size. Pure white background. No text, no letters, no numbers, no frames, no backdrop behind icons; nothing cropped, icons never touch.
 Row 1, home and rewards: closed wooden treasure chest with gold trim | open chest overflowing with gold coins and a gem | golden hourglass with flowing sand | small silver reward chest | purple summoning portal | golden crown with a ruby.
 Row 2: golden victory trophy | broken sword (defeat) | empty grey star | pile of gold coins | pile of pink gems | orange star burst (critical damage).
 Row 3: clenched fist (tenacity) | red notification badge with exclamation mark | green level-up arrow | round gold avatar frame with a small level badge.
@@ -312,7 +340,7 @@ Row 3: clenched fist (tenacity) | red notification badge with exclamation mark |
 Planche : `interface-6.png`
 
 ```
-Redraw this sheet as a 2D mobile RPG user interface kit. Keep EXACTLY the same 16 elements in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its shape, proportions and main color. Style: modern and clean, not ornate, matching a bright joyful medieval-fantasy mobile RPG: glossy rounded shapes, soft bevel, subtle gold accents, soft painted shading, light from top right, crisp dark outline. Every button, frame and panel keeps a large FLAT EMPTY center (text is added in game). Front view, no perspective. Pure white background. No text, no letters, no numbers, no icons inside buttons; nothing cropped, elements never touch.
+Redraw this sheet as a 2D mobile RPG user interface kit. Keep EXACTLY the same 16 elements in the same 6x3 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Each keeps its shape, proportions and main color. Style: modern and clean, not ornate, matching a bright joyful medieval-fantasy mobile RPG: glossy rounded shapes, soft bevel, subtle gold accents, cel shading with soft gradients, light from top right, crisp bold dark outline, like Hero Wars or AFK Arena menus. NOT realistic, no photo textures, no ornate detail. Every button, frame and panel keeps a large FLAT EMPTY center (text is added in game). Front view, no perspective. Pure white background. No text, no letters, no numbers, no icons inside buttons; nothing cropped, elements never touch.
 Row 1: wide rounded buttons, green | red | blue | purple | gold | grey (disabled).
 Row 2: round dark navy icon button with gold rim | round dark close button with white X | empty hero card frames: grey common | blue rare | purple epic | gold legendary with a small star.
 Row 3: dark navy window panel with thin gold border and header strip | red ribbon title banner | dark resource capsule with a coin slot and green plus button | dark bottom tab bar with one highlighted tab.
