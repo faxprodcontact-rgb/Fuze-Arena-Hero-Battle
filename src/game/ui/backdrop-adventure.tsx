@@ -46,6 +46,26 @@ function forest(seed: number, base: number, hMin: number, hMax: number, wMin: nu
   return `${d} L${W + 12} ${base + 40} Z`;
 }
 
+/** Le dessus d'un bois de feuillus : une ligne qui ondule, faite de petites bosses rondes. `open` = le trait du haut seul. */
+function canopy(seed: number, base: number, amp: number, r: number, open = false): string {
+  const y = (x: number) => base - amp * (0.5 + 0.5 * Math.sin(x / 53 + seed)) - amp * 0.35 * Math.sin(x / 19 + seed * 2);
+  const step = r * 1.700;
+  let d = open ? `M-12 ${f(y(-12))}` : `M-12 ${base + 60} L-12 ${f(y(-12))}`;
+  for (let x = -12; x < W + 12; x += step) d += ` a${r} ${r} 0 0 1 ${f(step)} ${f(y(x + step) - y(x))}`;
+  return open ? d : `${d} L${f(W + 12 + step)} ${base + 60} Z`;
+}
+
+/** Des touffes d'herbe le long d'une crête. */
+function tufts(seed: number, base: number, amp: number, step: number): string {
+  const r = rng(seed);
+  let d = '';
+  for (let x = -6; x < W + 6; x += step * (0.7 + r() * 0.6)) {
+    const y = base - amp * r(), h = 3.500 + r() * 3;
+    d += `M${f(x)} ${f(y + 1)} l1.300 ${f(-h)} l1 ${f(h - 0.800)} l1.400 ${f(-h - 1.500)} l1 ${f(h + 1)} l1.300 ${f(-h + 0.800)} l0.700 ${f(h)} Z `;
+  }
+  return d;
+}
+
 type Pt = [number, number];
 /** Abscisse d'une ligne brisée à une hauteur donnée. */
 function xAt(line: Pt[], y: number): number {
@@ -206,6 +226,8 @@ function Mid() {
       <circle cx={sun.x} cy={sun.y} r="25" fill="url(#ad-sun)" />
       <g class="bd-cloud bd-slow"><Cloud x={-46} y={176} s={1.1} lobes={CLOUD_C} w={126} /></g>
       <g class="bd-cloud"><Cloud x={150} y={106} s={0.6} lobes={CLOUD_B} w={62} /></g>
+      <g class="bd-cloud bd-slow"><Cloud x={104} y={176} s={0.4} lobes={CLOUD_A} w={90} opacity={0.75} /></g>
+      <g class="bd-cloud"><Cloud x={262} y={204} s={0.36} lobes={CLOUD_C} w={126} opacity={0.7} /></g>
     </>
   );
 }
@@ -221,7 +243,10 @@ function Front() {
         <linearGradient id="ad-roof" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8a3040" /><stop offset="0.35" stop-color="#c9503f" /><stop offset="0.7" stop-color="#f08460" /><stop offset="1" stop-color="#c8543f" /></linearGradient>
         <linearGradient id="ad-rock" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5a6aa6" /><stop offset="0.55" stop-color="#7f97c6" /><stop offset="1" stop-color="#a9b9da" /></linearGradient>
         <linearGradient id="ad-fall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" /><stop offset="1" stop-color="#d6f0ff" /></linearGradient>
-        <linearGradient id="ad-h1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b8e4a0" /><stop offset="1" stop-color="#84c888" /></linearGradient>
+        <linearGradient id="ad-h1" x1="0" y1="246" x2="0" y2="400" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#4f9f66" /><stop offset="0.16" stop-color="#72bd7c" /><stop offset="0.5" stop-color="#92d48e" /><stop offset="1" stop-color="#7cc586" /></linearGradient>
+        <linearGradient id="ad-wood1" x1="0" y1="206" x2="0" y2="250" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#9cc4c8" /><stop offset="1" stop-color="#6fa7a6" /></linearGradient>
+        <linearGradient id="ad-wood2" x1="0" y1="222" x2="0" y2="250" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7fb8a6" /><stop offset="1" stop-color="#4f9584" /></linearGradient>
+        <linearGradient id="ad-wood3" x1="0" y1="228" x2="0" y2="252" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#6fc47a" /><stop offset="0.5" stop-color="#4fa466" /><stop offset="1" stop-color="#3a8656" /></linearGradient>
         <linearGradient id="ad-h2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#93d490" /><stop offset="0.45" stop-color="#68b878" /></linearGradient>
         <linearGradient id="ad-h3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#74c17e" /><stop offset="0.45" stop-color="#4fa268" /></linearGradient>
         <linearGradient id="ad-h4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#57a86c" /><stop offset="0.55" stop-color="#357c52" /></linearGradient>
@@ -241,10 +266,16 @@ function Front() {
       <path d="M150 290 L186 212 L210 250 L206 290 Z" fill="#6f84c2" /><path d="M186 212 L210 250 L206 290 H232 Z" fill="#b9c8e8" />
       <path d="M226 290 L252 228 L270 256 L266 290 Z" fill="#6f84c2" /><path d="M252 228 L270 256 L266 290 H288 Z" fill="#b9c8e8" />
       <path d="M322 290 L340 240 L354 262 L350 290 Z" fill="#6f84c2" /><path d="M340 240 L354 262 L350 290 H368 Z" fill="#b9c8e8" />
+      {/* quelques strates et plaques de neige, pour que les grandes faces ne soient pas nues */}
+      <g fill="#aebfe6" opacity="0.7"><path d="M222 160 L236 178 L226 182 Z M244 190 L256 208 L246 210 Z M300 196 L312 214 L302 216 Z M388 180 L402 200 L392 204 Z M36 200 L48 220 L38 222 Z" /></g>
+      <g fill="#fff" opacity="0.8"><path d="M190 176 l5 -6 l4 7 l-5 2 Z M270 190 l4 -5 l4 6 l-5 1 Z M360 190 l4 -6 l4 7 l-5 2 Z" /></g>
       {/* une brume légère, seulement au pied */}
-      <rect y="196" width={W} height="50" fill="url(#ad-mist)" opacity="0.55" />
+      <rect y="186" width={W} height="46" fill="url(#ad-mist)" opacity="0.5" />
+      {/* les collines boisées, entre les montagnes et la forêt : c'est elles qui donnent la profondeur */}
+      <path d={canopy(2, 222, 14, 4.500)} fill="url(#ad-wood1)" />
+      <path d={canopy(2, 222, 14, 4.500, true)} fill="none" stroke="#c6e0de" stroke-width="1.200" opacity="0.8" />
       {/* la forêt du fond : une lisière de cimes inégales */}
-      <path d={forest(5, 235, 5, 13, 6, 12)} fill="#6aa7a6" />
+      <path d={forest(5, 231, 5, 12, 6, 11)} fill="url(#ad-wood2)" />
 
       {/* le rocher du château */}
       <path d="M6 290 L20 242 L36 230 L44 208 L56 198 L58 185 L162 185 L164 198 L176 208 L186 232 L198 248 L212 290 Z" fill="url(#ad-rock)" />
@@ -254,10 +285,22 @@ function Front() {
       <path d="M162 185 L164 198 L176 208 L186 232 L198 248 L212 290" fill="none" stroke="#fff" stroke-width="1.2" opacity="0.6" />
       <Ledge x0={41} x1={64} y={207} /><Ledge x0={158} x1={180} y={207} />
       <Pine x={53} y={206} s={0.34} dark="#2f6d55" light="#4c9a6a" /><Pine x={169} y={206} s={0.3} dark="#2f6d55" light="#4c9a6a" />
+      {/* le piton de la tour de guet */}
+      <path d="M186 260 L191 206 L196 190 L199 185 H215 L218 192 L224 210 L230 260 Z" fill="url(#ad-rock)" />
+      <path d="M199 185 L196 190 L191 206 L186 260 H204 L206 214 Z" fill="#46549a" opacity="0.8" /><path d="M215 185 L218 192 L224 210 L230 260 H216 L212 212 Z" fill="#c9d0e6" />
+      <path d="M197 186.500 Q207 182 217 186.500 L216 190 Q207 186.500 198 190 Z" fill="#4f9a58" /><path d="M197 186.500 Q207 182 217 186.500 L216.500 188 Q207 184 197.500 188 Z" fill="#9bd98a" />
+      <Tower x={201} w={12} top={166} base={187} roof={17} slits={1} lit />
+      <path d="M207 149 V140" stroke="#4a3f36" stroke-width="1.100" stroke-linecap="round" />
+      {/* le pont de pierre : une arche, un parapet clair */}
+      <path d="M158 180.500 H202 V187 H198 Q180 173 162 187 H158 Z" fill="url(#ad-wall)" />
+      <path d="M162 187 Q180 173 198 187" fill="none" stroke="#8f8068" stroke-width="1" opacity="0.7" />
+      <path d="M158 180.500 H202" stroke="#fffaf0" stroke-width="1.600" /><path d="M158 183 H202" stroke="#8f8068" stroke-width="0.700" opacity="0.6" />
       {/* le plateau : une vraie épaisseur d'herbe, et l'ombre du château dessus */}
       <path d="M54 186 Q110 178 166 186 L163 194 Q110 188 57 194 Z" fill="#4f9a58" />
       <path d="M54 186 Q110 178 166 186 L165 189 Q110 182 55 189 Z" fill="#9bd98a" />
       <ellipse cx="104" cy="186" rx="50" ry="3.500" fill="#1f4a34" opacity="0.3" />
+      <g fill="#4f9a58"><path d="M96 191 q2 8 -1 14 q5 -4 6 -13 Z M128 191 q-1 9 3 16 q3 -7 2 -15 Z M146 190 q3 6 1 11 q4 -4 4 -11 Z M64 191 q-1 6 2 10 q2 -5 2 -10 Z" /></g>
+      <g fill="#8fd08a"><path d="M98 191 q2 5 1 9 q2 -4 2 -9 Z M131 191 q0 6 2 10 q1 -5 0 -10 Z" /></g>
       {/* la cascade : elle sort d'une arche sous le rempart, en rubans inégaux */}
       <path d="M73 201 Q80 191 87 201 V206 H73 Z" fill="#2c3a66" />
       <path d="M75 202 H85 L87.500 244 H72.500 Z" fill="url(#ad-fall)" /><path d="M86 208 h3 l1.500 34 h-3.500 Z" fill="#fff" opacity="0.7" /><path d="M71 213 h2.500 l-1 29 h-2.500 Z" fill="#fff" opacity="0.55" />
@@ -291,23 +334,34 @@ function Front() {
       {/* la colline du moulin et son hameau */}
       <path d="M258 260 Q294 214 334 216 Q368 212 402 226 V260 Z" fill="#8fcf8c" />
       <path d="M258 260 Q294 214 334 216 Q368 212 402 226" fill="none" stroke="#d3f2bc" stroke-width="1.4" />
+      <path d="M300 226 Q312 219 328 217.500 L331 222 Q315 224 305 231 Z" fill="#e2d36c" /><path d="M300 226 Q312 219 328 217.500 L328.500 218.800 Q313 220.500 300.800 227.500 Z" fill="#f4ea9c" />
+      <path d="M356 218 Q372 214 390 219 L390 225 Q373 220 358 223.500 Z" fill="#c9dc6c" /><path d="M356 218 Q372 214 390 219 L390 220.300 Q372 215.500 356.500 219.300 Z" fill="#e6f2a2" />
+      <path d="M344 227 Q338 236 320 244 L316 244 Q334 236 341 227 Z" fill="#ecd9a0" opacity="0.9" />
+      <g><ellipse cx="318" cy="225.500" rx="2.600" ry="2" fill="#d9b85a" /><ellipse cx="324" cy="223.500" rx="2.200" ry="1.700" fill="#d9b85a" /><ellipse cx="318.500" cy="225" rx="1.400" ry="1" fill="#f4e08a" /></g>
       <House x={294} y={231} w={10} roof="#c9503f" /><House x={308} y={234} w={8.500} roof="#4a76b8" /><House x={366} y={229} w={10} roof="#c9503f" /><House x={381} y={232} w={8} roof="#d99a3a" />
       <Oak x={323} y={232} s={0.3} /><Oak x={358} y={227} s={0.34} />
       <ellipse cx="338" cy="227" rx="12" ry="2.400" fill="#123a2a" opacity="0.24" />
       <path d="M335 227 L338 198 H350 L353 227 Z" fill="url(#ad-stone)" /><path d="M337 198 L344 188 L351 198 Z" fill="url(#ad-roof)" />
       <rect x="342.500" y="217" width="3.4" height="10" rx="1.6" fill="#4a3f36" /><rect x="343" y="205" width="2.4" height="3.600" fill="#4a3f36" />
 
-      {/* la forêt proche : elle cache le pied du rocher, sauf là où tombe la cascade */}
-      <path d={forest(11, 243, 6, 15, 7, 13)} fill="#4f9a7c" />
-      <path d={forest(23, 249, 4, 11, 6, 11)} fill="#3f8a66" />
+      {/* la forêt proche : un bois de feuillus dont le dessus prend le soleil ; il cache le pied des rochers */}
+      <path d={canopy(7, 240, 5, 4)} fill="url(#ad-wood3)" />
+      <path d={canopy(7, 240, 5, 4, true)} fill="none" stroke="#b6eaa0" stroke-width="1.400" opacity="0.85" />
+      {/* la prairie commence dans l'ombre des arbres, puis s'éclaircit : plus de bande, un fondu */}
+      <path d={hills(7, 246, 5, 70)} fill="url(#ad-h1)" />
+      <ellipse cx="195" cy="246" rx="230" ry="7" fill="#2f7a4c" opacity="0.35" />
       {/* le bassin au pied de la cascade */}
-      <ellipse cx="80" cy="244" rx="34" ry="7.500" fill="#3f7a5e" /><ellipse cx="80" cy="243" rx="31" ry="6" fill="url(#ad-river)" />
-      <path d="M58 243 q8 -2 14 0 M92 246 q7 -1.500 12 0" fill="none" stroke="#fff" stroke-width="1.2" stroke-linecap="round" opacity="0.8" />
-      <path d="M48 246 l5 -5 l6 2 l2 4 Z M104 248 l4 -6 l6 1 l3 5 Z" fill="#8a94b8" /><path d="M53 241 l6 2 l2 4 h-4 Z M108 242 l6 1 l3 5 h-4 Z" fill="#c9d0e6" />
+      <ellipse cx="80" cy="243" rx="34" ry="7.500" fill="#3f7a5e" /><ellipse cx="80" cy="242" rx="31" ry="6" fill="url(#ad-river)" />
+      <path d="M58 242 q8 -2 14 0 M92 245 q7 -1.500 12 0" fill="none" stroke="#fff" stroke-width="1.200" stroke-linecap="round" opacity="0.8" />
+      <path d="M48 245 l5 -5 l6 2 l2 4 Z M104 247 l4 -6 l6 1 l3 5 Z" fill="#8a94b8" /><path d="M53 240 l6 2 l2 4 h-4 Z M108 241 l6 1 l3 5 h-4 Z" fill="#c9d0e6" />
+      {/* des sapins et des arbres ronds en avant du bois, les pieds dans l'herbe */}
+      <Pine x={14} y={247} s={0.46} dark="#2f7a52" light="#58b070" /><Pine x={30} y={249} s={0.36} dark="#2f7a52" light="#58b070" /><Oak x={132} y={248} s={0.3} /><Pine x={146} y={249} s={0.34} dark="#2f7a52" light="#58b070" />
+      <Oak x={236} y={248} s={0.34} /><Pine x={250} y={249} s={0.4} dark="#2f7a52" light="#58b070" /><Pine x={262} y={248} s={0.3} dark="#2f7a52" light="#58b070" /><Oak x={300} y={249} s={0.28} /><Pine x={372} y={248} s={0.44} dark="#2f7a52" light="#58b070" /><Oak x={386} y={250} s={0.36} />
+      {/* des touffes d'herbe sur la crête, quelques fleurs */}
+      <path d={tufts(4, 249, 2.500, 10)} fill="#3f9058" /><path d={tufts(9, 252, 3, 19)} fill="#86cf86" />
+      {[[40, 252, '#fff'], [46, 254, '#ffd45c'], [176, 252, '#ff9fb5'], [182, 254, '#fff'], [222, 253, '#ffd45c'], [336, 253, '#fff'], [342, 255, '#ff9fb5']].map(([x, y, c]) => <g><circle cx={x} cy={y} r="1.700" fill={c as string} /><circle cx={x} cy={y} r="0.600" fill="#f0a020" /></g>)}
 
       {/* la prairie : des collines seules, calmes, sous la grille des tuiles */}
-      <path d={hills(7, 262, 14, 130)} fill="url(#ad-h1)" />
-      <path d={crest(7, 262, 14, 130)} fill="none" stroke="#e2f6cc" stroke-width="1.6" opacity="0.9" />
       <path d={hills(19, 400, 40, 160)} fill="url(#ad-h2)" />
       <path d={crest(19, 400, 40, 160)} fill="none" stroke="#c9eeb4" stroke-width="1.6" opacity="0.7" />
       <path d={hills(29, 540, 50, 180)} fill="url(#ad-h3)" />
@@ -336,10 +390,14 @@ function Top() {
   return (
     <>
       <defs>
+        <radialGradient id="ad-haze"><stop offset="0" stop-color="#fff8dc" stop-opacity="0.5" /><stop offset="0.5" stop-color="#fff8dc" stop-opacity="0.16" /><stop offset="1" stop-color="#fff8dc" stop-opacity="0" /></radialGradient>
         <radialGradient id="ad-foamg"><stop offset="0" stop-color="#fff" stop-opacity="0.95" /><stop offset="1" stop-color="#fff" stop-opacity="0" /></radialGradient>
         <linearGradient id="ad-balloon" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a8322e" /><stop offset="0.45" stop-color="#e0564e" /><stop offset="0.8" stop-color="#f58a72" /><stop offset="1" stop-color="#d94f47" /></linearGradient>
       </defs>
+      {/* la lumière du soleil déborde sur les sommets voisins */}
+      <circle class="bd-sun" cx="318" cy="124" r="120" fill="url(#ad-haze)" />
       <g class="bd-cloud bd-slow"><Cloud x={226} y={192} s={0.46} lobes={CLOUD_A} w={90} opacity={0.96} /></g>
+      <path class="bd-flag" style={{ transformOrigin: '207px 144px', animationDelay: '-0.3s' }} d="M207 140 q5 -0.500 10 2.500 q-5 3 -10 3.500 Z" fill="#e0564e" />
 
       {/* les fanions et les fenêtres allumées du château */}
       <g transform={CASTLE}>
@@ -350,7 +408,7 @@ function Top() {
       </g>
       {/* la cascade : des filets d'eau inégaux qui filent, l'écume qui bouillonne dans le bassin */}
       <path class="ad-fall" d="M78 204 L77.500 242 M82.500 204 L83 242" fill="none" stroke="#bfe6fb" stroke-width="1.2" stroke-dasharray="11 5 4 9 16 6" stroke-linecap="round" opacity="0.9" />
-      <ellipse class="ad-foam" cx="80" cy="242" rx="19" ry="6.500" fill="url(#ad-foamg)" />
+      <ellipse class="ad-foam" cx="80" cy="241" rx="19" ry="6.500" fill="url(#ad-foamg)" />
       <g fill="#fff"><circle class="ad-foam" cx="73" cy="242" r="3.600" /><circle class="ad-foam" style={{ animationDelay: '-0.7s' }} cx="80" cy="243.500" r="4.400" /><circle class="ad-foam" style={{ animationDelay: '-1.3s' }} cx="88" cy="242" r="3.200" /></g>
 
       {/* la fumée d'une cheminée du hameau */}
@@ -368,7 +426,7 @@ function Top() {
 
       {/* la montgolfière */}
       <g class="ad-balloon">
-        <g transform="translate(232 112)">
+        <g transform="translate(236 94)">
           <path d="M-6 21 L-3.500 27 M6 21 L3.500 27 M0 22 V27" stroke="#5e4026" stroke-width="0.8" />
           <path d="M-4.500 27 H4.500 L3.600 33 H-3.600 Z" fill="#9a6a38" /><path d="M-4.500 27 H4.500 L4.200 29 H-4.200 Z" fill="#c99556" />
           <path d="M0 -20 C15 -20 20 -8 17.500 2 C15.500 10 8.500 16 6 21 H-6 C-8.500 16 -15.500 10 -17.500 2 C-20 -8 -15 -20 0 -20 Z" fill="url(#ad-balloon)" />

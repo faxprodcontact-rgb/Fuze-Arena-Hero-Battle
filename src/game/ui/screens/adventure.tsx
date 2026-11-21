@@ -17,6 +17,7 @@ import { ADVENTURE_ORDER, dots, isNew } from '../dots';
 import { TeamStrip } from './heroes';
 import { TileScene } from '../tile-scene';
 import { ModeIcon } from '../mode-icons';
+import { TitleBanner } from '../title-banner';
 import { Art, Bar, Btn, Cur, Icon, Locked, duration } from '../kit';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
 
@@ -37,7 +38,7 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
   }
   return (
     <div class="screen adventure">
-      <div class="adv-banner"><h1 class="plaque"><Icon name="adventure" size={22} />{t('nav.adventure')}</h1></div>
+      <div class="adv-banner"><h1 class="sr-only">{t('nav.adventure')}</h1><TitleBanner title={t('nav.adventure')}><Icon name="adventure" size={27} /></TitleBanner></div>
       <div class="tiles">
         {ADVENTURE_ORDER.map((f) => {
           const unlocked = isUnlocked(s, f);

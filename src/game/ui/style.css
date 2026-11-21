@@ -489,6 +489,10 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 /* petits écrans : un bandeau plus court et des pictos plus petits, pour que les six tuiles tiennent toujours */
 @media (max-height: 700px) { .adv-banner { height: 112px; } .adventure .tile > .icon { width: 64px !important; height: 64px !important; } .adventure .tile-name { font-size: 14px; padding: 2px 6px 4px; } }
 .backdrop-adventure::after { background: linear-gradient(180deg, #0a0a2438 0%, #0a0a2400 9%, #0a0a2400 78%, #0a0a2440 100%); }
+/* le bandeau de titre dessiné (title-banner.tsx) : le picto de la partie se pose à gauche du titre */
+.title-banner { position: relative; width: 216px; height: 54px; flex: none; margin-bottom: 1px; filter: drop-shadow(0 5px 6px #00000080); }
+.title-banner svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.title-banner > .icon { position: absolute; left: 39px; top: 13px; filter: drop-shadow(0 1px 2px #000a); animation: sway 3.2s ease-in-out infinite; }
 /* une plaque de titre : bois, double filet d'or, rubans de chaque côté (la même que celle du chapitre) */
 .plaque { position: relative; display: inline-flex; align-items: center; gap: 7px; margin: 0 16px; padding: 3px 22px 5px; font: 800 19px var(--font-title); color: var(--gold-hi) !important; text-shadow: 0 1px 2px #000c;
   background: var(--bar); border: 1.5px solid var(--edge); border-radius: 10px;

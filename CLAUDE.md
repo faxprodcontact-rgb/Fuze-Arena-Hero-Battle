@@ -152,6 +152,12 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   empilées, qui donnaient un contour décalé), grandes masses plutôt que petits traits répétés, Colisée en pierre ivoire sur son
   socle, yeux du crâne en brasiers (`EyeFire`). **Les étiquettes d'information des tuiles (« Nouveau », niveau requis) sont
   accrochées au bandeau du nom** (dans `.tile-name`), jamais posées sur le picto. La taille des pictos suit la hauteur des tuiles.
+  v0.33.0 (retours du propriétaire sur le haut de l'Aventure) : **raccord panorama-prairie refait** (collines boisées au pied
+  des montagnes, bois de feuillus au dessus éclairé `canopy`, prairie qui commence dans l'ombre des arbres puis s'éclaircit,
+  touffes d'herbe `tufts`, sapins posés dans l'herbe : plus de bande sombre) ; **bandeau de titre dessiné** (`ui/title-banner.tsx`,
+  `TitleBanner` : ruban cramoisi, plaque de bois dans un cadre d'or, fleuron, gemmes, lettres d'or, reflet qui passe), à
+  réutiliser pour les titres des autres parties ; décor enrichi (tour de guet reliée au château par un pont de pierre, lierre,
+  champs et meules au hameau, strates des sommets, nuages lointains, halo du soleil sur les montagnes).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

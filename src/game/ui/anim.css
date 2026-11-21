@@ -128,3 +128,7 @@
 .mi-f1 { animation-duration: 0.62s; } .mi-f2 { animation-duration: 0.47s; animation-delay: -0.2s; } .mi-f3 { animation-duration: 0.38s; animation-delay: -0.1s; }
 .mi-eyespark { animation: mi-eyespark 2.1s ease-out infinite; }
 @keyframes mi-eyespark { 0% { transform: translate(0, 6px); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(var(--dx), -20px); opacity: 0; } }
+
+/* le reflet qui traverse la plaque du bandeau de titre */
+.tb-sheen { animation: tb-sheen 4.5s ease-in-out infinite; }
+@keyframes tb-sheen { 0%, 55% { transform: translateX(10px); opacity: 0; } 62% { opacity: 0.32; } 95% { transform: translateX(200px); opacity: 0.32; } 100% { transform: translateX(212px); opacity: 0; } }
