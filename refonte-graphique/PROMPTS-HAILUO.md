@@ -380,3 +380,12 @@ Redraw image 1 as 2D mobile RPG game icons in the drawing style of image 2. Keep
 8. tab bar: long dark navy horizontal bar with thin gold border, split into four equal empty tabs, the second tab raised and lit in gold.
 Centered, same size. Pure white background. No text, no letters, no numbers, no frames; nothing cropped, icons never touch.
 ```
+
+### Retouche Apsara — `retouche-apsara.png` (3 essais, garder le meilleur)
+
+Tête trop petite, corps trop fin et dessin trop « aquarelle » à côté des autres héros. Planche faite à partir de son rendu
+Hailuo, tête agrandie ×1,3 (le bras et le lotus gardés à leur place).
+
+```
+Redraw image 1 as 2D mobile RPG character art in the drawing style of image 2. The sheet shows the same dancer three times: draw three versions of her, one per figure, nothing else; the right part of the sheet stays EMPTY white. Keep her outfit, colors, golden spired tiara, pink lotus, pink veils and pose: full body, three-quarter view facing right. Give her the same head size, proportions and finish as the heroes of image 2: chibi proportions, simple clean shapes, one bold dark outline, bright vibrant colors, cel shading, light from top right. She has exactly two arms and two hands: one arm raises a pink lotus, the other is bent with its hand at her chest; her veils hang behind her and no hand holds them. Not realistic, no soft watercolor painting, no fine detail. Pure white background, soft shadow under feet. No text, frames, scenery, extra limbs; nothing cropped, the three figures never touch.
+```
