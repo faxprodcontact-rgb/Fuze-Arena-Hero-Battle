@@ -715,3 +715,8 @@ button.war-fort:disabled { opacity: 0.6; }
 .wmap-tag { position: absolute; left: 50%; bottom: -4px; transform: translateX(-50%); white-space: nowrap; font: 800 12px var(--font-title); color: #fff; background: var(--ink); padding: 0 7px; border-radius: 8px; }
 @keyframes pin-glow { 50% { box-shadow: 0 0 0 3px var(--gold), 0 0 34px 10px #ffd84acc; } }
 .tag-el { display: inline-flex; align-items: center; gap: 3px; }
+
+/* ---------- Retouches ---------- */
+.bar { align-self: stretch; flex: none; }
+.tab .dot { top: -6px; right: -4px; }
+.hcard .stars { font-size: 12px; }
