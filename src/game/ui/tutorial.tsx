@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { setTutorial } from '../state/actions';
 import { useGame } from '../state/store';
+import { Art } from './kit';
 
 /** Ce qu'il faut toucher à chaque étape (sélecteur CSS de l'élément). */
 export const TUTORIAL_STEPS: string[] = [
@@ -66,7 +67,7 @@ export function TutorialHand() {
         </div>
       )}
       {/* le hibou guide : il montre l'endroit à toucher (il lève l'aile au premier pas) */}
-      <img class={`tuto-owl${rect && rect.left + rect.width / 2 < innerWidth / 2 ? ' tuto-owl-right' : ''}`} src={`art/i/owl-${step === 0 ? 'explain' : rect ? 'point' : 'happy'}.webp`} alt="" />
+      <Art class={`tuto-owl${rect && rect.left + rect.width / 2 < innerWidth / 2 ? ' tuto-owl-right' : ''}`} name={`owl-${step === 0 ? 'explain' : rect ? 'point' : 'happy'}`} />
       <button class="tuto-skip" aria-label="skip" onClick={() => setTutorial(-1)}>»</button>
     </>
   );

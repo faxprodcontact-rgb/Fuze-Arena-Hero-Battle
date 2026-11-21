@@ -7,7 +7,7 @@ import { RARITY_COLOR, heroImage } from '../../art';
 import { t } from '../../i18n';
 import { adsLeft, claimFragments, newlyFound, summon, summonCost, watchAd } from '../../state/actions';
 import { useGame } from '../../state/store';
-import { Bar, Btn, Cur, HeroCard, Icon, Modal, Stars } from '../kit';
+import { Art, Bar, Btn, Cur, HeroCard, Icon, Modal, Stars } from '../kit';
 import { open } from '../nav';
 
 function SummonButton({ kind, count }: { kind: 'normal' | 'basic'; count: 1 | 10 }) {
@@ -37,7 +37,7 @@ export function SummonScreen() {
   return (
     <div class="screen summon">
       <section class="card portal">
-        <img class="portal-altar" src="art/i/summonAltar.webp" alt="" />
+        <Art class="portal-altar" name="summonAltar" />
         <h1>{t('summon.normal')}</h1>
         <p class="muted">{t('summon.pity', { n: LEGENDARY_PITY - s.summon.pity })}</p>
         <div class="row gap">
@@ -104,7 +104,7 @@ export function SummonResult({ heroes }: { heroes: Hero[] }) {
           return (
             <div class="reveal-card" style={{ animationDelay: `${i * 90}ms`, '--rar': RARITY_COLOR[d.rarity], '--d': `${300 + i * 140}ms` } as never}>
               <div class="reveal-flip"><HeroCard hero={h} small /></div>
-              <img class="reveal-back" src="art/i/cardBack.webp" alt="" />
+              <Art class="reveal-back" name="cardBack" />
               {newlyFound.has(h.uid) && <span class="new-tag">{t('new')} !</span>}
               <span class="reveal-name">{d.name}</span>
             </div>

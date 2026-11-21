@@ -16,7 +16,7 @@ import { now, useGame } from '../../state/store';
 import { ADVENTURE_ORDER, dots, isNew } from '../dots';
 import { TeamStrip } from './heroes';
 import { DefenseScreen } from './defense';
-import { Bar, Btn, Cur, Icon, Locked, duration } from '../kit';
+import { Art, Bar, Btn, Cur, Icon, Locked, duration } from '../kit';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
 
 export function AdventureScreen({ sub }: { sub: Sub }) {
@@ -245,7 +245,7 @@ function Arena() {
 export function ShopTile(p: { cost: preact.ComponentChildren; reward: Record<string, number | undefined>; disabled?: boolean; onBuy: () => void; art?: string }) {
   return (
     <div class="card shop-tile">
-      {p.art && <img class="shop-art" src={p.art} alt="" />}
+      {p.art && <Art class="shop-art" name={p.art} />}
       <div class="shop-reward">
         {Object.entries(p.reward).map(([k, v]) =>
           k === 'item' ? <span class="cur"><Icon name={`weapon-${v}`} size={26} /> {t(`item.${v}`)}</span> : <Cur k={k} n={v ?? 0} big />,

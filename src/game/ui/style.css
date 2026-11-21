@@ -636,3 +636,11 @@ button.war-fort:disabled { opacity: 0.6; }
 .result-art { display: block; width: 96px; height: 96px; margin: -6px auto 0; object-fit: contain; filter: drop-shadow(0 4px 6px #000a); animation: pop .5s backwards cubic-bezier(.2,1.6,.4,1); }
 .result-art.win { filter: drop-shadow(0 0 18px #ffd84a) drop-shadow(0 4px 6px #000a); }
 .stage-title .stage-chapter { pointer-events: auto; background: none; padding: 0; color: var(--gold); }
+.art { display: inline-block; flex: none; background-repeat: no-repeat; vertical-align: middle; filter: drop-shadow(0 1px 1px #0007); }
+.icon.icon-art { filter: drop-shadow(0 1px 1px #0007); }
+.item .icon.icon-art { width: 78% !important; height: 78% !important; }
+.chest.chest-art, .dock-chest .chest.chest-art { width: 62px; height: 62px; }
+.chest-mini.chest-art { width: 32px; height: 32px; }
+.hourglass.hourglass-art { width: 52px; height: 52px; }
+.hourglass.hourglass-art.big { width: 64px; height: 64px; }
+.reveal-back { width: 72px; height: 72px; top: 4px; }

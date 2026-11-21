@@ -7,9 +7,9 @@ import { HEROES } from '../core/data/heroes';
 import type { Element } from '../core/types';
 import { ELEMENT_COLOR, artUrl, cardUrl, hasArt, heroCanvas, monsterCanvas } from './art';
 import { ART_META } from './art-meta';
-import { ART_ICONS } from './icons-meta';
+import { ICON_INDEX } from './icons-meta';
 
-/** Effets en combat qui ont leur picto (public/art/i/st-<effet>.webp). */
+/** Effets en combat qui ont leur picto (case st-<effet> de public/art/icons.webp). */
 const STATUS_ICONS = ['burn', 'poison', 'bleed', 'regen', 'stun', 'silence', 'slow', 'taunt', 'atkUp', 'atkDown', 'defUp', 'defDown', 'speedUp', 'critUp'];
 import { t } from './i18n';
 import { battleLook, monsterArtId, type Look } from './look';
@@ -150,7 +150,7 @@ export abstract class FightScene extends Phaser.Scene {
     const tm = ART_META.terrains[terrain] as { fg?: number };
     if (tm?.fg && !this.textures.exists(`t-${terrain}-fg`)) this.load.image(`t-${terrain}-fg`, `art/t/${terrain}-fg.webp`);
     for (const name of Object.keys(ART_META.fx)) if (!this.textures.exists(`fx-${name}`)) this.load.image(`fx-${name}`, `art/fx/${name}.webp`);
-    for (const st of STATUS_ICONS) if (ART_ICONS.has(`st-${st}`) && !this.textures.exists(`st-${st}`)) this.load.image(`st-${st}`, `art/i/st-${st}.webp`);
+    if (!this.textures.exists('icons')) this.load.spritesheet('icons', 'art/icons.webp', { frameWidth: 128, frameHeight: 128 });
     for (const u of this.preloadUnits()) {
       const id = this.charId(u);
       const rig = RIGS[id];
@@ -299,13 +299,13 @@ export abstract class FightScene extends Phaser.Scene {
 
   /** Les effets en cours, en petits pictos alignés au-dessus de la barre de vie (4 au plus). */
   private syncStatusIcons(v: View) {
-    const kinds = [...new Set(v.unit.statuses.map((x) => x.kind))].filter((k) => this.textures.exists(`st-${k}`)).slice(0, 4);
+    const kinds = [...new Set(v.unit.statuses.map((x) => x.kind))].filter((k) => `st-${k}` in ICON_INDEX).slice(0, 4);
     const key = kinds.join(',');
     if (key === v.stKey) return;
     v.stKey = key;
     v.stIcons?.forEach((i) => i.destroy());
     v.stIcons = kinds.map((k, i) => {
-      const img = this.add.image(-v.barW / 2 + 9 + i * 20, v.barY - 13, `st-${k}`).setDisplaySize(19, 19);
+      const img = this.add.image(-v.barW / 2 + 9 + i * 20, v.barY - 13, 'icons', ICON_INDEX[`st-${k}`]).setDisplaySize(19, 19);
       v.body.add(img);
       return img;
     });
@@ -922,8 +922,8 @@ export abstract class FightScene extends Phaser.Scene {
       if (hit.kind === 'revive') this.tweens.add({ targets: v.body, alpha: 1, y: v.homeY, angle: 0, duration: 400 });
       const label = hit.kind === 'miss' ? t('fx.miss') : hit.kind === 'revive' ? '✚' : t(`st.${hit.status}`, { n: '' }).replace(/[+−-]\s*%/, '').trim();
       const color = hit.kind === 'miss' ? '#c8d0ff' : hit.kind === 'revive' ? '#5dff9a' : STATUS_COLOR[hit.status ?? 'stun'] ?? '#ffe27a';
-      const icon = hit.kind === 'status' && this.textures.exists(`st-${hit.status}`);
-      const n = icon ? this.add.image(v.body.x, v.body.y - 92, `st-${hit.status}`).setDisplaySize(40, 40).setDepth(2000) : this.text(v.body.x, v.body.y - 92, label, 22, color).setDepth(2000);
+      const icon = hit.kind === 'status' && `st-${hit.status}` in ICON_INDEX;
+      const n = icon ? this.add.image(v.body.x, v.body.y - 92, 'icons', ICON_INDEX[`st-${hit.status}`]).setDisplaySize(40, 40).setDepth(2000) : this.text(v.body.x, v.body.y - 92, label, 22, color).setDepth(2000);
       this.tweens.add({ targets: n, y: n.y - 34, alpha: 0, duration: icon ? 1000 : 800, onComplete: () => n.destroy() });
       return;
     }

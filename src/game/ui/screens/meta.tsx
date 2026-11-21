@@ -16,7 +16,7 @@ import {
 } from '../../state/actions';
 import { now, useGame } from '../../state/store';
 import type { Gain } from '../../state/types';
-import { Bar, Btn, Cur, HeroCard, ItemIcon, Modal, Tabs, iconUrl } from '../kit';
+import { Art, Bar, Btn, Cur, HeroCard, ItemIcon, Modal, Tabs } from '../kit';
 import { close, open, toast } from '../nav';
 import { ShopTile } from './adventure';
 
@@ -47,7 +47,7 @@ export function QuestsModal() {
                   const gain = claimChest(i, kind);
                   if (gain) open({ type: 'gain', title: t('quests.activity'), gain });
                 }}>
-                <img class="chest-mini chest-art" src={`art/i/${done ? 'chestOpen' : 'questChest'}.webp`} alt="" />
+                <Art class="chest-mini chest-art" name={done ? 'chestOpen' : 'questChest'} />
                 <small>{c.points}</small>
               </button>
             );
@@ -105,7 +105,7 @@ export function ShopModal({ tab: initial = 'offers' }: { tab?: 'offers' | 'pass'
             const cardDays = Math.ceil((s.shop.cardUntil - now()) / 86_400_000);
             return (
               <div class={`card offer offer-${o.kind}`}>
-                {iconUrl(`offer-${o.kind}`) && <img class="offer-art" src={iconUrl(`offer-${o.kind}`)} alt="" />}
+                <Art class="offer-art" name={`offer-${o.kind}`} />
                 <div class="grow">
                   <strong>{t(`offer.${o.id}`)}</strong>
                   {o.kind === 'card' && <p class="muted small">{cardDays > 0 ? t('offer.daysLeft', { n: cardDays }) : t('offer.card.desc')}</p>}
@@ -121,7 +121,7 @@ export function ShopModal({ tab: initial = 'offers' }: { tab?: 'offers' | 'pass'
       {tab === 'gems' && (
         <div class="shop-grid">
           {OFFERS.filter((o) => o.kind === 'gems').map((o) => (
-            <ShopTile cost={o.price} reward={o.reward} onBuy={() => simulatedBuy(o.id)} art={iconUrl(`offer-${o.id}`)} />
+            <ShopTile cost={o.price} reward={o.reward} onBuy={() => simulatedBuy(o.id)} art={`offer-${o.id}`} />
           ))}
         </div>
       )}
@@ -326,7 +326,7 @@ export function GainModal({ title, gain, damage, win }: { title: string; gain: G
   const empty = !Object.keys(gain.currencies).length && !gain.heroes.length && !gain.items.length && !gain.fragments;
   return (
     <Modal title={title}>
-      {win !== undefined && <img class={`result-art ${win ? 'win' : 'lose'}`} src={`art/i/${win ? 'trophy' : 'defeat'}.webp`} alt="" />}
+      {win !== undefined && <Art class={`result-art ${win ? 'win' : 'lose'}`} name={win ? 'trophy' : 'defeat'} />}
       {win !== undefined && <div class={`result-title ${win ? 'win' : 'lose'}`}>{win ? t('result.victory') : t('result.defeat')}</div>}
       {damage !== undefined && <p class="center">{t('result.damage')} : <b class="gold-text">{damage.toLocaleString('fr-FR')}</b></p>}
       <div class="gain">

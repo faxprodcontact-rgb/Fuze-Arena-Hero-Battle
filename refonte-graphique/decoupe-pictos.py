@@ -1,9 +1,10 @@
 # Découpe les pictos et images d'interface rendus par Hailuo (refonte-graphique/hailuo-v1/) pour le jeu :
 #   python3 refonte-graphique/decoupe-pictos.py
-# - public/art/i/<nom>.webp : pictos 128 × 128 sur fond transparent (monnaies, menus, modes, éléments, rôles, statistiques,
+# - public/art/icons.webp : tous les pictos (128 × 128, fond transparent) dans une seule image ; un par un dans
+#   refonte-graphique/pictos/ (pour les retouches) ; (monnaies, menus, modes, éléments, rôles, statistiques,
 #   équipements par rareté, effets de combat, panoplies, ligues, boutique, missions, emblèmes de guilde, hibou guide…) ;
 # - public/art/ui/ : logo, icône de l'application, écran de chargement, carte des régions ;
-# - src/game/icons-meta.ts : la liste des pictos disponibles (fichier fabriqué, ne pas modifier).
+# - src/game/icons-meta.ts : la place de chaque picto dans l'image (fichier fabriqué, ne pas modifier).
 # Les planches les plus récentes passent en dernier : elles remplacent les pictos retouchés.
 import os
 import numpy as np
@@ -176,10 +177,25 @@ def main():
     # carte des régions
     mp = Image.open(os.path.join(SRC, 'fin-monde.jpg')).convert('RGB')
     mp.resize((1600, round(mp.height * 1600 / mp.width)), Image.LANCZOS).save(os.path.join(UI, 'map.jpg'), quality=84, optimize=True, progressive=True)
+    # tous les pictos dans UNE image (moins de fichiers à télécharger) : grille de COLS colonnes, 128 × 128 par picto
+    import json, shutil
+    names = sorted(names)
+    COLS = 16
+    rows = -(-len(names) // COLS)
+    atlas = Image.new('RGBA', (COLS * SIZE, rows * SIZE), (0, 0, 0, 0))
+    for i, n in enumerate(names):
+        im = Image.open(os.path.join(OUT, n + '.webp')).convert('RGBA')
+        atlas.paste(im, ((i % COLS) * SIZE, (i // COLS) * SIZE), im)
+    atlas.save(os.path.join(PUB, 'art', 'icons.webp'), 'WEBP', quality=90, method=6)
+    os.makedirs(os.path.join(ROOT, 'pictos'), exist_ok=True)  # les pictos un par un, gardés pour les retouches (pas dans le jeu)
+    for n in names:
+        shutil.move(os.path.join(OUT, n + '.webp'), os.path.join(ROOT, 'pictos', n + '.webp'))
+    shutil.rmtree(OUT)
     with open(os.path.join(ROOT, '..', 'src', 'game', 'icons-meta.ts'), 'w', encoding='utf-8') as f:
         f.write('// Fabriqué par refonte-graphique/decoupe-pictos.py — ne pas modifier à la main.\n'
-                '// Pictos dessinés par Hailuo, dans public/art/i/<nom>.webp (128 × 128, fond transparent).\n'
-                'export const ART_ICONS: ReadonlySet<string> = new Set(' + repr(sorted(names)).replace("'", '"') + ');\n')
+                '// Pictos dessinés par Hailuo, tous dans public/art/icons.webp : grille de ICON_COLS × ICON_ROWS cases de 128 px.\n'
+                f'export const ICON_COLS = {COLS};\nexport const ICON_ROWS = {rows};\n'
+                'export const ICON_INDEX: Readonly<Record<string, number>> = ' + json.dumps({n: i for i, n in enumerate(names)}, separators=(',', ':')) + ';\n')
     print(len(names), 'pictos ; logo, icône, chargement (', ch, '), carte')
 
 

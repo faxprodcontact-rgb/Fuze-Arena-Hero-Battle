@@ -15,7 +15,7 @@ import {
 import { idlePreview, teamPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import { dots } from '../dots';
-import { Btn, Cur, Icon, Modal, RedDot } from '../kit';
+import { Art, Btn, Cur, Icon, Modal, RedDot } from '../kit';
 import { close, open, prepare } from '../nav';
 
 function IdleStage({ running }: { running: boolean }) {
@@ -77,7 +77,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
       <div class="dock">
         <button class={`dock-chest${loot.hours >= 2 ? ' ready' : ''}${loot.full ? ' full' : ''}`}
           onClick={() => open({ type: 'gain', title: t('camp.loot'), gain: collectIdle() })}>
-          <img class="chest chest-art" src={`art/i/${loot.hours >= 2 ? 'chestOpen' : 'chestClosed'}.webp`} alt="" />
+          <Art class="chest chest-art" name={loot.hours >= 2 ? 'chestOpen' : 'chestClosed'} />
           <span class="dock-time">{h} h {String(m).padStart(2, '0')}</span>
           <span class="dock-bar"><span style={{ width: `${(loot.hours / OFFLINE_CAP_HOURS) * 100}%` }} /></span>
           {loot.hours >= 2 && <RedDot />}
@@ -98,7 +98,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
         </button>
 
         <button class="dock-fast" onClick={() => open({ type: 'fastLoot' })}>
-          <img class="hourglass hourglass-art" src="art/i/hourglass.webp" alt="" />
+          <Art class="hourglass hourglass-art" name="hourglass" />
           <span class="dock-time">{t('camp.fast')}</span>
           {fastLootCost(s) === 0 && <RedDot />}
         </button>
@@ -119,7 +119,7 @@ export function FastLootModal() {
   return (
     <Modal title={t('camp.fast')}>
       <div class="row gap center-y">
-        <img class="hourglass hourglass-art big" src="art/i/hourglass.webp" alt="" />
+        <Art class="hourglass hourglass-art big" name="hourglass" />
         <div class="grow">
           <strong>2 h</strong>
           <div class="row gap-s wrap">

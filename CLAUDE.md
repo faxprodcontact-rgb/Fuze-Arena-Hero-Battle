@@ -72,8 +72,8 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   (`act` = attaque ou spéciale en cours).
   v0.26.0 (21/11/2026) : **tous les nouveaux dessins Hailuo branchés**. 36 monstres « animaux » + 6 retouches + Apsara refaits
   (`decoupe-hailuo.py --seulement=…`, la planche la plus récente gagne) et leurs découpes animées refaites ; fonds prairie,
-  forêt, bayou refaits + 3 fonds de donjons (`mine`, `spring`, `armory`, dans `look.ts`) ; **162 pictos** dans `public/art/i/`
-  (`decoupe-pictos.py` → `src/game/icons-meta.ts` ; `Icon` de `kit.tsx` prend l'image si elle existe) : monnaies, menus,
+  forêt, bayou refaits + 3 fonds de donjons (`mine`, `spring`, `armory`, dans `look.ts`) ; **162 pictos** dans une seule image `public/art/icons.webp` (un par un dans `refonte-graphique/pictos/`)
+  (`decoupe-pictos.py` → `src/game/icons-meta.ts` ; `Icon` / `Art` de `kit.tsx` la découpent ; seuls les pictos de `HOLES` ont leurs trous de fond retirés, le blanc peint des dessins est gardé) : monnaies, menus,
   modes, équipements par rareté (`weapon-0..5`…), panoplies (`set-*`), effets en combat (`st-*`, au-dessus des barres de vie),
   ligues, boutique (`offer-*`), missions, autel et dos de carte (invocation), emblèmes de guilde, hibou du tutoriel,
   colisée ; `public/art/ui/` : logo, icône de l'application, écran de chargement (`index.html`), carte des régions
