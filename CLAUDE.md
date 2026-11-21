@@ -201,6 +201,13 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   le terrain du combat mais l'estrade de la salle des héros vue de près, faite pour les cinq postes (`POS` : deux à l'arrière,
   le chef au centre sur sa dalle d'or, deux à l'avant), une dalle par poste (`Plate`, « + » sur un poste vide), le tracé de
   la formation serti d'or, trois chevrons vers l'avant, deux braseros. Vérifier avec `scratchpad/art5/her4.cjs`.
+  v0.35.2 (le propriétaire voulait le fond du choix de la section « plus travaillé, plus cohérent ») : tout l'écran est
+  maintenant **dans la salle des héros** : `ui/formation-stage.tsx` (`FormationStage` : mur, verrière au ciel du soir, niches
+  et bannières, colonnes, braseros, grande estrade à deux marches avec sa frise de signes gravés qui tourne, tracé de la
+  formation ; `Plate` : dalle cerclée de la couleur de l'élément du héros, or pour le chef ; `STAGE_POS` = les cinq postes),
+  plateau bord à bord sous le titre (plus de cadre), bas fondu dans le sol, fond de page bleu nuit uni (`.prep-bg`, à la place
+  des montagnes). Avant un combat (`.prep-plan`) le plateau se resserre et se fond aussi sur les côtés (`.field-art` garde
+  les proportions). Vérifier avec `scratchpad/art5/her5.cjs`.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier
