@@ -105,6 +105,15 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   emplacements des pièces dans `refonte-graphique/ui-pieces.json`. En attendant ses rendus, le jeu garde la direction `bois`.
   À faire à leur arrivée : les ranger dans `hailuo-v1/ui-cadres.jpg` et `ui-boutons.jpg`, les découper (fond blanc retiré),
   puis monter l'interface avec (`border-image` pour les cadres et boutons étirables, image entière pour les cases).
+  **v0.29.0 (22/11/2026), demandes du propriétaire** : plus AUCUNE rayure (ni hachures sur les panneaux, ni rayons répétés) ;
+  il **aime beaucoup le style du portail** (dessin par le code, animé) et veut d'autres éléments dans ce trait. Faits :
+  `ui/anim.tsx` + `anim.css` (sablier dont le sable coule puis qui se retourne, coffre de butin fermé / entrouvert / plein,
+  halo de runes derrière le trophée et le héros fusionné) ; `ui/backdrop.tsx` = **fonds dessinés par le code**, épurés mais
+  décorés et vivants (un par onglet : salle des héros, nuit d'invocation, route de l'aventure, forteresse de la guilde, et
+  un crépuscule pour les pages) : silhouettes, grand cercle de runes qui tourne lentement, poussières de lumière, bannières,
+  fanions, nuages. Panneaux : coins ouvragés dorés (`--corner-*`), reflet en haut et ombre en bas (`--sheen`). Petits
+  mouvements (fin de `style.css`) : pictos des modes qui flottent, onglet ouvert qui saute, reflet sur Combattre et sur les
+  barres, éclat qui tourne sur les médaillons, fanion du chapitre, monnaies, reflet d'or sur les cases légendaires.
   Attention : dans le CSS, ne pas écrire `url(art/…)` (mal résolu une fois le jeu construit) : passer l'adresse par un
   `style` dans le TSX. Tour complet en captures : `scratchpad/art5/tour.cjs` (à refaire si besoin).
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.

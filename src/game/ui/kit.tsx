@@ -4,6 +4,7 @@ import { heroDef } from '../../core/data/heroes';
 import { itemMain, type Item } from '../../core/data/items';
 import { MAX_YELLOW, MYTHIC_STARS } from '../../core/data/stars';
 import type { Hero } from '../../core/types';
+import { Backdrop } from './backdrop';
 import { ELEMENT_COLOR, ITEM_COLORS, RARITY_COLOR, heroImage } from '../art';
 import { fmt, t } from '../i18n';
 import { close } from './nav';
@@ -151,7 +152,7 @@ export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; 
   const Tag = p.onClick ? 'button' : 'span';
   return (
     <Tag
-      class={`hcard${p.selected ? ' hcard-on' : ''}${p.dim ? ' hcard-dim' : ''}${p.small ? ' hcard-small' : ''}`}
+      class={`hcard hcard-${d.rarity}${p.selected ? ' hcard-on' : ''}${p.dim ? ' hcard-dim' : ''}${p.small ? ' hcard-small' : ''}`}
       style={{ '--rar': color, '--el': ELEMENT_COLOR[d.element] } as never}
       onClick={p.onClick}
     >
@@ -192,6 +193,7 @@ export function ItemIcon(p: { item?: Item; level?: number; onClick?: () => void;
 export function Page({ title, children }: { title: string; children: ComponentChildren }) {
   return (
     <div class="page">
+      <Backdrop kind="page" />
       <header class="prep-head">
         <button class="x" aria-label={t('back')} onClick={close}>‹</button>
         <h2>{title}</h2>

@@ -23,8 +23,3 @@ export function themeColor(name: string, fallback: number): number {
   const v = getComputedStyle(document.documentElement).getPropertyValue(`--${name}`).trim();
   return /^#[0-9a-f]{6}$/i.test(v) ? Number.parseInt(v.slice(1), 16) : fallback;
 }
-
-/** Adresse complète d'un dessin, pour le passer au CSS dans une variable (une adresse relative y serait mal résolue). */
-export function cssArt(path: string): string {
-  return `url(${new URL(path, document.baseURI).href})`;
-}

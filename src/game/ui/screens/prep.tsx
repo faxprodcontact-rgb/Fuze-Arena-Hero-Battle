@@ -13,6 +13,7 @@ import { formationOf, heroByUid, heroPower, slotCount, sortedHeroes, teamPower, 
 import { useGame } from '../../state/store';
 import { Art, Btn, HeroCard, Icon, Stars } from '../kit';
 import { close, startBattle, toast } from '../nav';
+import { Backdrop } from '../backdrop';
 import { talentText } from './hero-detail';
 
 /**
@@ -105,6 +106,7 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
   const look = plan ? battleLook(plan.kind, plan.title, plan.dungeon) : undefined;
   return (
     <div class="prep">
+      <Backdrop kind="page" />
       <header class="prep-head">
         <button class="x" aria-label={t('close')} onClick={close}>‹</button>
         <h2>{plan ? `${t(`mode.${plan.kind}`)} ${plan.kind === 'dailyBoss' || plan.kind === 'guildBoss' ? t(`monster.${plan.title}`) : plan.title}` : team === 'defense' ? t('war.defense') : t('heroes.team')}</h2>

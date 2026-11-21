@@ -25,13 +25,13 @@ function arm(turn: number, r0: number, r1: number, width: number, twist: number)
 }
 
 /** Une étoile à quatre branches (étincelle). */
-function spark(x: number, y: number, r: number): string {
+export function spark(x: number, y: number, r: number): string {
   const q = r * 0.28;
   return `M${x} ${y - r} L${x + q} ${y - q} L${x + r} ${y} L${x + q} ${y + q} L${x} ${y + r} L${x - q} ${y + q} L${x - r} ${y} L${x - q} ${y - q} Z`;
 }
 
 /** Les runes : de petits signes faits de traits droits (aucune lettre réelle). */
-const RUNES = [
+export const RUNES = [
   'M-4 -7 L-4 7 M-4 -7 L4 -1 L-4 3', 'M0 -7 L0 7 M-5 -2 L5 -6 M-5 4 L5 0', 'M-5 -7 L5 7 M5 -7 L-5 7 M0 -7 L0 -2',
   'M-4 7 L0 -7 L4 7 M-2 1 L2 1', 'M-5 -6 L5 -6 L0 0 L5 6 L-5 6', 'M0 -7 L0 7 M0 -7 L5 -2 M0 -1 L5 4',
   'M-5 0 L0 -7 L5 0 L0 7 Z', 'M-4 -7 L-4 7 L4 7 M-4 0 L3 0', 'M-5 -7 L0 0 L5 -7 M0 0 L0 7',

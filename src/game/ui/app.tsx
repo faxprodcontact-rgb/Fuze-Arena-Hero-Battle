@@ -4,7 +4,7 @@ import { accountXpForLevel } from '../../core/data/modes';
 import { heroImage } from '../art';
 import { runBattle } from '../battle-scene';
 import { fmt, t } from '../i18n';
-import { cssArt } from '../theme';
+import { Backdrop } from './backdrop';
 import { ensureDay, finishBattle, type BattleRequest } from '../state/actions';
 import { getState, useGame } from '../state/store';
 import { dots } from './dots';
@@ -146,8 +146,8 @@ export function App() {
     };
   }, []);
   return (
-    <div class="app" style={{ '--page-bg': cssArt('art/ui/bg-heroes.jpg') } as never}>
-      {nav.tab !== 'campaign' && <div class="app-bg" style={{ backgroundImage: `url(art/ui/bg-${nav.tab}.jpg)` }} />}
+    <div class="app">
+      {nav.tab !== 'campaign' && <Backdrop kind={nav.tab} />}
       <TopBar />
       <main class={`content${nav.tab === 'campaign' ? ' content-home' : ''}`}>
         {nav.tab === 'campaign' && <CampaignScreen running={!nav.battle && !nav.modals.some((m) => m.type === 'prep')} />}

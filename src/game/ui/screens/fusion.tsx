@@ -12,6 +12,7 @@ import { heroByUid, heroPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import { Btn, Cur, HeroCard, Page, Stars } from '../kit';
 import { toast } from '../nav';
+import { Halo } from '../anim';
 
 function NeedSlot({ need, on, onClick }: { need: FusionNeed; on: boolean; onClick: () => void }) {
   if (need.hero) {
@@ -72,7 +73,7 @@ export function FusionPage({ uid }: { uid?: number }) {
           <div class="fuse-main">
             <div class="fuse-big"><HeroCard hero={target} /></div>
             <span class="fuse-op">=</span>
-            <div class="fuse-big result"><HeroCard hero={{ ...target, stars: needs.newStars }} /></div>
+            <div class="fuse-big result"><Halo size={190} /><HeroCard hero={{ ...target, stars: needs.newStars }} /></div>
           </div>
           <div class="fuse-needs">
             {needs.needs.map((n) => (
