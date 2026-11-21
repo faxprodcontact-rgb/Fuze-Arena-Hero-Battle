@@ -345,3 +345,38 @@ Row 1: wide rounded buttons, green | red | blue | purple | gold | grey (disabled
 Row 2: round dark navy icon button with gold rim | round dark close button with white X | empty hero card frames: grey common | blue rare | purple epic | gold legendary with a small star.
 Row 3: dark navy window panel with thin gold border and header strip | red ribbon title banner | dark resource capsule with a coin slot and green plus button | dark bottom tab bar with one highlighted tab.
 ```
+
+## Retouches après le rendu du 21/11/2026
+
+Rendus gardés dans `hailuo-v1/` : `terrains-1.jpg` (l'ancien : `terrains-1-v1.jpg`), `monstres-style-1.jpg`,
+`monstres-style-2.jpg`, `interface-1..6.jpg`. Planches de retouche faites à partir de ces rendus (découpés tels quels) :
+6 monstres à l'anatomie fausse et 8 pictos peu lisibles ou en double. À rendre en 4K 16:9, référence
+`reference-style-personnages.jpg`.
+
+### Retouche monstres — `retouche-monstres.png` (silure, pangolin, ankylosaure, lionne, mante, casoar)
+
+```
+Redraw image 1 as 2D mobile RPG monster art in the drawing style of image 2. Keep EXACTLY the same 6 creatures in the same 4x2 grid and order, none added or removed; the last two cells stay EMPTY white. Keep each one's colors, face, size and look, full body, facing right, and only fix its anatomy:
+1. giant catfish: one long fish body lying low, its tail fin stays low and flat behind it, never raised like a neck; long whiskers.
+2. pangolin: only ONE scaly tail, curled behind it; no second tail.
+3. ankylosaurus: short thick tail held low behind it with a bony club at the tip, near the ground; no long raised tail.
+4. black lioness: a slim big cat, cat head with small ears and a longer muzzle, long legs, long thin tail with an ember tip; NOT a bear.
+5. twig mantis: a praying mantis with exactly four thin walking legs and two folded front claws, long thin body.
+6. cassowary: a big flightless bird standing on its two legs only, no arms, no hands, tiny wings hidden in its black feathers.
+Style: stylized cartoon game art, one bold dark outline per creature, bright vibrant colors, cel shading, light from top right. Not realistic. Pure white background, soft shadow under feet. No text, frames, scenery, people, extra limbs; nothing cropped, creatures never touch.
+```
+
+### Retouche interface — `retouche-interface.png` (fragments, bannière de guilde, amis, forge, recyclage, guerrier, soutien, barre d'onglets)
+
+```
+Redraw image 1 as 2D mobile RPG game icons in the drawing style of image 2. Keep EXACTLY 8 icons in the same 5x2 grid and order, one per cell, none added or removed; the last two cells stay EMPTY white. Keep their cartoon look (crisp bold dark outline, cel shading, glossy highlights, bright saturated colors, slight 3D volume) but change each one as described:
+1. hero soul shards: three glowing golden crystal shards with a soft glow.
+2. guild banner: blue hanging banner with gold trim and a golden lion head crest in the middle.
+3. friends: two smiling cartoon adventurer faces side by side, one in a blue hood, one with brown hair.
+4. forge: a big blacksmith hammer striking a glowing orange hot blade on an anvil, sparks.
+5. recycle: two curved teal arrows chasing each other in a circle, sparkling dust in the middle.
+6. warrior role: one big double-bladed battle axe, steel head, wooden handle.
+7. support role: a golden magic staff topped with a glowing star, soft yellow aura.
+8. tab bar: long dark navy horizontal bar with thin gold border, split into four equal empty tabs, the second tab raised and lit in gold.
+Centered, same size. Pure white background. No text, no letters, no numbers, no frames; nothing cropped, icons never touch.
+```
