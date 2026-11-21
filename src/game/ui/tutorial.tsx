@@ -65,6 +65,8 @@ export function TutorialHand() {
           <span class="tuto-hand" style={{ left: `${rect.width / 2 + 6}px`, top: `${rect.height / 2 + 6}px` }}>👆</span>
         </div>
       )}
+      {/* le hibou guide : il montre l'endroit à toucher (il lève l'aile au premier pas) */}
+      <img class={`tuto-owl${rect && rect.left + rect.width / 2 < innerWidth / 2 ? ' tuto-owl-right' : ''}`} src={`art/i/owl-${step === 0 ? 'explain' : rect ? 'point' : 'happy'}.webp`} alt="" />
       <button class="tuto-skip" aria-label="skip" onClick={() => setTutorial(-1)}>»</button>
     </>
   );

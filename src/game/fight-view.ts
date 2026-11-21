@@ -7,6 +7,10 @@ import { HEROES } from '../core/data/heroes';
 import type { Element } from '../core/types';
 import { ELEMENT_COLOR, artUrl, cardUrl, hasArt, heroCanvas, monsterCanvas } from './art';
 import { ART_META } from './art-meta';
+import { ART_ICONS } from './icons-meta';
+
+/** Effets en combat qui ont leur picto (public/art/i/st-<effet>.webp). */
+const STATUS_ICONS = ['burn', 'poison', 'bleed', 'regen', 'stun', 'silence', 'slow', 'taunt', 'atkUp', 'atkDown', 'defUp', 'defDown', 'speedUp', 'critUp'];
 import { t } from './i18n';
 import { battleLook, monsterArtId, type Look } from './look';
 
@@ -52,6 +56,9 @@ export interface View {
   barW: number;
   /** Vie affichée : elle baisse quand le coup est montré, pas quand les règles l'ont calculé. */
   hp: number;
+  /** Petits pictos des effets en cours (brûlure, étourdi, bonus…) au-dessus de la barre de vie. */
+  stIcons?: Phaser.GameObjects.Image[];
+  stKey?: string;
   /** Échelle de repos du dessin et décalage de sa respiration (chacun respire à son rythme). */
   sx: number;
   sy: number;
@@ -127,6 +134,8 @@ export abstract class FightScene extends Phaser.Scene {
   protected xSquash = 1;
   /** Bandeau de cinéma des compétences des héros (pas sur l'accueil ni dans l'aperçu de la fiche, trop petits). */
   protected cutInBand = true;
+  /** Premier plan du terrain (rochers, piliers…) : il passe devant les combattants. */
+  private fg?: Phaser.GameObjects.Image;
   /** Bas du terrain (pour l'assombrir en entier). */
   private arenaBottom = 0;
   /** Terrain et famille de monstres de ce combat. */
@@ -138,7 +147,10 @@ export abstract class FightScene extends Phaser.Scene {
   preload() {
     const terrain = this.look.terrain;
     if (!this.textures.exists(`t-${terrain}`)) this.load.image(`t-${terrain}`, `art/t/${terrain}.jpg`);
+    const tm = ART_META.terrains[terrain] as { fg?: number };
+    if (tm?.fg && !this.textures.exists(`t-${terrain}-fg`)) this.load.image(`t-${terrain}-fg`, `art/t/${terrain}-fg.webp`);
     for (const name of Object.keys(ART_META.fx)) if (!this.textures.exists(`fx-${name}`)) this.load.image(`fx-${name}`, `art/fx/${name}.webp`);
+    for (const st of STATUS_ICONS) if (ART_ICONS.has(`st-${st}`) && !this.textures.exists(`st-${st}`)) this.load.image(`st-${st}`, `art/i/st-${st}.webp`);
     for (const u of this.preloadUnits()) {
       const id = this.charId(u);
       const rig = RIGS[id];
@@ -178,9 +190,19 @@ export abstract class FightScene extends Phaser.Scene {
     const key = `t-${this.look.terrain}`;
     const m = ART_META.terrains[this.look.terrain];
     if (this.textures.exists(key) && m) {
-      const cy = this.groundTop + (ROW_DY[0] + ROW_DY[1]) / 2;
-      const k = Math.max(W / m.w, cy / (m.cy * m.h), (bottom - cy) / ((1 - m.cy) * m.h));
-      return this.add.image(W / 2, cy - m.cy * m.h * k, key).setOrigin(0.5, 0).setScale(k).setDepth(-10);
+      // le centre du cercle tracé au sol sous le milieu des pieds des combattants, et l'image assez grande pour que
+      // toute l'équipe (pieds et largeur des dessins) tienne dans ce cercle ; l'écran reste couvert
+      const [ox, oy, orx, ory] = (m as unknown as { oval: [number, number, number, number] }).oval;
+      const cy = this.groundTop + (ROW_DY[0] + ROW_DY[1]) / 2 + FEET;
+      const dx = (W / 2 - HERO_X[3]) * this.xSquash + 42, dy = (ROW_DY[1] - ROW_DY[0]) / 2 + 26;
+      const k = Math.max(
+        Math.hypot(dx / (orx * m.w), dy / (ory * m.h)),
+        W / 2 / (ox * m.w), W / 2 / ((1 - ox) * m.w), cy / (oy * m.h), (bottom - cy) / ((1 - oy) * m.h),
+      );
+      const x0 = W / 2 - ox * m.w * k, y0 = cy - oy * m.h * k;
+      const fgKey = `${key}-fg`;
+      if (this.textures.exists(fgKey)) this.fg = this.add.image(x0, y0, fgKey).setOrigin(0).setScale(k).setDepth(1300);
+      return this.add.image(x0, y0, key).setOrigin(0).setScale(k).setDepth(-10);
     }
     const g = this.add.graphics().setDepth(-10);
     const top = this.groundTop;
@@ -271,7 +293,23 @@ export abstract class FightScene extends Phaser.Scene {
     }
   }
 
+  /** Les effets en cours, en petits pictos alignés au-dessus de la barre de vie (4 au plus). */
+  private syncStatusIcons(v: View) {
+    const kinds = [...new Set(v.unit.statuses.map((x) => x.kind))].filter((k) => this.textures.exists(`st-${k}`)).slice(0, 4);
+    const key = kinds.join(',');
+    if (key === v.stKey) return;
+    v.stKey = key;
+    v.stIcons?.forEach((i) => i.destroy());
+    v.stIcons = kinds.map((k, i) => {
+      const img = this.add.image(-v.barW / 2 + 9 + i * 20, v.barY - 13, `st-${k}`).setDisplaySize(19, 19);
+      v.body.add(img);
+      return img;
+    });
+  }
+
   protected syncUnits() {
+    // quand le décor s'assombrit (compétence), le premier plan s'efface : le décor assombri est déjà dessous
+    if (this.fg) this.fg.setAlpha(this.veil?.active ? 1 - Math.min(1, this.veil.fillAlpha * 2.2) : 1);
     for (const v of this.views.values()) {
       const u = v.unit;
       const g = v.bars;
@@ -289,6 +327,7 @@ export abstract class FightScene extends Phaser.Scene {
       }
       g.fillStyle(C.energy);
       g.fillRect(-w / 2, y + 15, w * (u.energy / ENERGY_MAX), 4);
+      this.syncStatusIcons(v);
       // au repos, chacun respire (le haut du corps monte et descend, pivot aux pieds) et se balance un peu
       const now = this.time.now / 1000;
       if (!this.tweens.isTweening(v.sprite)) {
@@ -879,8 +918,9 @@ export abstract class FightScene extends Phaser.Scene {
       if (hit.kind === 'revive') this.tweens.add({ targets: v.body, alpha: 1, y: v.homeY, angle: 0, duration: 400 });
       const label = hit.kind === 'miss' ? t('fx.miss') : hit.kind === 'revive' ? '✚' : t(`st.${hit.status}`, { n: '' }).replace(/[+−-]\s*%/, '').trim();
       const color = hit.kind === 'miss' ? '#c8d0ff' : hit.kind === 'revive' ? '#5dff9a' : STATUS_COLOR[hit.status ?? 'stun'] ?? '#ffe27a';
-      const n = this.text(v.body.x, v.body.y - 92, label, 22, color).setDepth(2000);
-      this.tweens.add({ targets: n, y: n.y - 34, alpha: 0, duration: 800, onComplete: () => n.destroy() });
+      const icon = hit.kind === 'status' && this.textures.exists(`st-${hit.status}`);
+      const n = icon ? this.add.image(v.body.x, v.body.y - 92, `st-${hit.status}`).setDisplaySize(40, 40).setDepth(2000) : this.text(v.body.x, v.body.y - 92, label, 22, color).setDepth(2000);
+      this.tweens.add({ targets: n, y: n.y - 34, alpha: 0, duration: icon ? 1000 : 800, onComplete: () => n.destroy() });
       return;
     }
     const x = v.body.x + Phaser.Math.Between(-18, 18);

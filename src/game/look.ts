@@ -31,6 +31,12 @@ const REGIONS: { chapters: number; terrain: Terrain; families: Record<Element, s
 ];
 const LOOP = REGIONS.reduce((n, r) => n + r.chapters, 0);
 
+/** Les 8 régions de la carte : premier et dernier chapitre de chacune (dans l'ordre de la campagne). */
+export function regionChapters(): { from: number; to: number }[] {
+  let c = 1;
+  return REGIONS.map((r) => { const out = { from: c, to: c + r.chapters - 1 }; c += r.chapters; return out; });
+}
+
 /** Monstres des règles → place dans la famille (1 rapide, 2 costaud, 3 tireur, 4 sorts, 5 élite, 6 boss). */
 const SLOT_OF: Record<string, number> = { goblin: 1, wolf: 5, golem: 2, archer: 3, shaman: 4, wraith: 4 };
 /** Les boss du jour et de guilde ont leur propre dessin. */
@@ -71,7 +77,7 @@ export function battleLook(kind: string, title: string, dungeon?: DungeonKind): 
     }
     case 'dungeon': {
       const i = Math.max(0, DUNGEONS.indexOf(dungeon ?? 'gold'));
-      return { terrain: 'dungeon', family: (e) => FAMILIES[e][i]! };
+      return { terrain: (['mine', 'spring', 'armory'] as const)[i]!, family: (e) => FAMILIES[e][i]! };
     }
     case 'dailyBoss':
     case 'guildBoss':

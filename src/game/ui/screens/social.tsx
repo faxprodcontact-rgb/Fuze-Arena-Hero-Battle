@@ -21,6 +21,13 @@ const MEMBER_NAMES = ['Kaïro', 'Lunaria', 'Vaelis', 'Tormund', 'Ishara', 'Mikaz
 const GUILD_BOSS_HP = 50_000_000;
 
 /** Membres fictifs de la guilde : leur force suit celle du joueur, leurs dégâts montent avec le temps. */
+/** Emblème d'une guilde (12 dessins) : choisi d'après son nom, toujours le même pour une guilde. */
+function emblem(guild: string): string {
+  let h = 0;
+  for (const c of guild) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return `emblem-${h % 12}`;
+}
+
 function members(guild: string) {
   const rng = createRng(guild.length * 977);
   const mine = Math.max(1000, teamPower(getState()));
@@ -51,7 +58,8 @@ export function GuildScreen() {
         <h1>{t('nav.guild')}</h1>
         {BOT_GUILDS.map((g, i) => (
           <div class="card row between center-y">
-            <div>
+            <Icon name={emblem(g)} size={52} />
+            <div class="grow">
               <strong>{g}</strong>
               <div class="muted small">{t('guild.level', { n: 5 + i * 3 })} · {18 + i * 4} / 30</div>
             </div>
@@ -66,7 +74,7 @@ export function GuildScreen() {
   return (
     <div class="screen">
       <div class="card guild-head">
-        <h1>{s.guild.joined}</h1>
+        <h1 class="row gap-s center-y"><Icon name={emblem(s.guild.joined)} size={48} />{s.guild.joined}</h1>
         <div class="row between"><span class="muted">{t('guild.level', { n: 7 })} · 22 / 30</span><Cur k="guildCoins" n={s.wallet.guildCoins} /></div>
       </div>
       <Tabs value={tab} onChange={setTab} options={[

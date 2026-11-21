@@ -7,6 +7,7 @@ import type { Hero } from '../../core/types';
 import { ELEMENT_COLOR, ITEM_COLORS, RARITY_COLOR, heroImage } from '../art';
 import { fmt, t } from '../i18n';
 import { close } from './nav';
+import { ART_ICONS } from '../icons-meta';
 
 // ---------- Icônes (dessins vectoriels simples) ----------
 
@@ -52,7 +53,14 @@ const ICONS: Record<string, ComponentChildren> = {
   defense: <><path d="M3 20c4-6 6-2 9-8s5-6 9-8" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3" /><circle cx="7" cy="10" r="2.5" fill="currentColor" /><circle cx="16" cy="17" r="2.5" fill="currentColor" /></>,
 };
 
+/** Adresse du picto dessiné (public/art/i), s'il existe. */
+export function iconUrl(name: string): string | undefined {
+  return ART_ICONS.has(name) ? `art/i/${name}.webp` : undefined;
+}
+
 export function Icon({ name, size = 22 }: { name: string; size?: number }) {
+  const url = iconUrl(name);
+  if (url) return <img class="icon icon-art" src={url} width={size} height={size} alt="" draggable={false} />;
   return (
     <svg class="icon" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
       {ICONS[name] ?? null}
@@ -158,9 +166,9 @@ export function ItemIcon(p: { item?: Item; level?: number; onClick?: () => void;
   }
   return (
     <Tag class="item" style={{ '--rar': ITEM_COLORS[item.rarity] } as never} onClick={p.onClick}>
-      <Icon name={item.slot} size={32} />
+      <Icon name={iconUrl(`${item.slot}-${item.rarity}`) ? `${item.slot}-${item.rarity}` : item.slot} size={38} />
       <span class="item-bonus">+{itemMain(item, p.level ?? 0)}%</span>
-      {item.set && <span class={`item-set set-${item.set}`} />}
+      {item.set && (iconUrl(`set-${item.set}`) ? <img class="item-set-art" src={iconUrl(`set-${item.set}`)} alt="" /> : <span class={`item-set set-${item.set}`} />)}
       {!!p.level && !p.hideLevel && <span class="item-level">+{p.level}</span>}
       {p.heroDefId && <img class="item-owner" src={heroImage(p.heroDefId)} alt="" />}
     </Tag>

@@ -11,7 +11,7 @@ import { Icon, RedDot } from './kit';
 import { teamPower } from '../state/selectors';
 import { close, go, open, startBattle, useNav, type Modal, type Tab } from './nav';
 import { AdventureScreen } from './screens/adventure';
-import { CampaignScreen, FastLootModal } from './screens/campaign';
+import { CampaignScreen, FastLootModal, WorldMapModal } from './screens/campaign';
 import { Prep } from './screens/prep';
 import { ItemModal } from './screens/bag';
 import { ForgePage } from './screens/forge';
@@ -97,6 +97,7 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'ad': return <AdModal onDone={modal.onDone} />;
     case 'prep': return <Prep plan={modal.plan} team={modal.team} />;
     case 'fastLoot': return <FastLootModal />;
+    case 'worldMap': return <WorldMapModal />;
     case 'rename': return <RenameModal />;
     case 'fusion': return <FusionPage uid={modal.uid} />;
     case 'forge': return <ForgePage />;

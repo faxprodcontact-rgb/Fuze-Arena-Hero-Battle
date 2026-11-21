@@ -41,6 +41,11 @@ RM = [('idoles', 4), ('idoles', 5), ('voliere', 4), ('voliere', 5), ('bayou', 4)
       ('fauves', 5), ('ruche', 0), ('ruche', 1), ('ruche', 2), ('ruche', 3), ('ruche', 4), ('ruche', 5)]
 SHEETS.append(('rattrapage-monstres.jpg', 6, 3, [mon_id(f, i) for f, i in RM]))
 SHEETS.append(('rattrapage-apsara.webp', 3, 1, [None, hero_id('wind', 11), None]))  # la version du milieu
+# 21/11/2026 : les 36 monstres « animaux » refaits dans le style des héros, 6 retouches d'anatomie, l'Apsara refaite
+SHEETS.append(('monstres-style-1.jpg', 7, 3, [mon_id(f, i) for f in ('bayou', 'cuirasses', 'fauves') for i in range(6)] + [None] * 3))
+SHEETS.append(('monstres-style-2.jpg', 7, 3, [mon_id(f, i) for f in ('glaces', 'ronciers', 'voliere') for i in range(6)] + [None] * 3))
+SHEETS.append(('retouche-monstres.jpg', 4, 2, ['bayou-5', 'cuirasses-3', 'cuirasses-6', 'fauves-5', 'ronciers-5', 'voliere-5', None, None]))
+SHEETS.append(('retouche-apsara.webp', 4, 1, [hero_id('wind', 11), None, None, None]))  # le premier des 3 essais
 # Sur les 8 premières planches, les 2 dernières cases sont sous la signature : elles viennent du rattrapage.
 for s in SHEETS[:8]:
     s[3][16] = s[3][17] = None
@@ -171,8 +176,9 @@ os.makedirs(os.path.join(OUT, '..', 'art', 'p'), exist_ok=True)
 if CHECK:
     os.makedirs(CHECK, exist_ok=True)
 meta = load_js('hailuo.js', 'HAILUO') if ONLY else {}
+LAST = {cid: f for f, _, _, ids in SHEETS for cid in ids if cid}  # la planche la plus récente de chaque personnage
 for fname, cols, rows, ids in SHEETS:
-    if ONLY and not ONLY & set(ids):
+    if ONLY and not any(LAST.get(c) == fname for c in ONLY & set(ids)):
         continue
     col, alpha = cut(os.path.join(SRC, fname))
     plain = {}
@@ -203,7 +209,7 @@ for fname, cols, rows, ids in SHEETS:
             if cid:
                 print('MANQUE', fname, n, cid)
             continue
-        if ONLY and cid not in ONLY:
+        if ONLY and (cid not in ONLY or LAST[cid] != fname):
             continue
         keep = mains[n][0].copy()
         for m in extra[n]:

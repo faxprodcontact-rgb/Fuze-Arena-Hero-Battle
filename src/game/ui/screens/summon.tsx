@@ -37,7 +37,7 @@ export function SummonScreen() {
   return (
     <div class="screen summon">
       <section class="card portal">
-        <div class="portal-ring" />
+        <img class="portal-altar" src="art/i/summonAltar.webp" alt="" />
         <h1>{t('summon.normal')}</h1>
         <p class="muted">{t('summon.pity', { n: LEGENDARY_PITY - s.summon.pity })}</p>
         <div class="row gap">
@@ -102,8 +102,9 @@ export function SummonResult({ heroes }: { heroes: Hero[] }) {
         {heroes.map((h, i) => {
           const d = heroDef(h.defId);
           return (
-            <div class="reveal-card" style={{ animationDelay: `${i * 90}ms`, '--rar': RARITY_COLOR[d.rarity] } as never}>
-              <HeroCard hero={h} small />
+            <div class="reveal-card" style={{ animationDelay: `${i * 90}ms`, '--rar': RARITY_COLOR[d.rarity], '--d': `${300 + i * 140}ms` } as never}>
+              <div class="reveal-flip"><HeroCard hero={h} small /></div>
+              <img class="reveal-back" src="art/i/cardBack.webp" alt="" />
               {newlyFound.has(h.uid) && <span class="new-tag">{t('new')} !</span>}
               <span class="reveal-name">{d.name}</span>
             </div>

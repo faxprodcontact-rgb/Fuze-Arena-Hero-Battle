@@ -108,6 +108,7 @@ function Missions() {
         const ready = !!m.startedAt && now() >= end;
         return (
           <div class="card mission">
+            <Icon name={`mission-${tpl.id}`} size={52} />
             <div class="grow">
               <strong>{t(`mission.${tpl.id}`)}</strong>
               <div class="muted small"><Icon name="clock" size={14} /> {tpl.hours} h · {t('mission.need', { n: tpl.heroes, s: tpl.minStars })}</div>
@@ -199,7 +200,7 @@ function Arena() {
       <div class="card arena-head">
         <h1>{t('adv.arena')}</h1>
         <div class="row between">
-          <span class={`league league-${leagueOf(s.arena.points)}`}>{t(`league.${leagueOf(s.arena.points)}`)}</span>
+          <span class={`league league-${leagueOf(s.arena.points)}`}><Icon name={`league-${leagueOf(s.arena.points)}`} size={34} />{t(`league.${leagueOf(s.arena.points)}`)}</span>
           <span><b>{s.arena.points}</b> {t('arena.points')}</span>
           <Cur k="arenaTokens" n={s.wallet.arenaTokens} />
         </div>
@@ -241,12 +242,13 @@ function Arena() {
   );
 }
 
-export function ShopTile(p: { cost: preact.ComponentChildren; reward: Record<string, number | undefined>; disabled?: boolean; onBuy: () => void }) {
+export function ShopTile(p: { cost: preact.ComponentChildren; reward: Record<string, number | undefined>; disabled?: boolean; onBuy: () => void; art?: string }) {
   return (
     <div class="card shop-tile">
+      {p.art && <img class="shop-art" src={p.art} alt="" />}
       <div class="shop-reward">
         {Object.entries(p.reward).map(([k, v]) =>
-          k === 'item' ? <span class="cur">⚔ {t(`item.${v}`)}</span> : <Cur k={k} n={v ?? 0} big />,
+          k === 'item' ? <span class="cur"><Icon name={`weapon-${v}`} size={26} /> {t(`item.${v}`)}</span> : <Cur k={k} n={v ?? 0} big />,
         )}
       </div>
       <Btn kind="gold" small wide disabled={p.disabled} onClick={p.onBuy}>{p.cost}</Btn>

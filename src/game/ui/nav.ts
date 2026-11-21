@@ -24,6 +24,7 @@ export type Modal =
   | { type: 'ad'; onDone: () => void }
   | { type: 'prep'; plan: BattlePlan | null; team?: TeamKind }
   | { type: 'fastLoot' }
+  | { type: 'worldMap' }
   | { type: 'rename' }
   | { type: 'fusion'; uid?: number }
   | { type: 'forge' }

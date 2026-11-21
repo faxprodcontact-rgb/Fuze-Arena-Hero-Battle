@@ -7,6 +7,7 @@ import { CAMPAIGN_STAGES, OFFLINE_CAP_HOURS, STAGES_PER_CHAPTER } from '../../..
 import { chapterElement, chapterOf, isBossStage, stageInChapter } from '../../../core/stages';
 import { ELEMENT_COLOR } from '../../art';
 import { runIdle } from '../../idle-scene';
+import { regionChapters } from '../../look';
 import { fmt, t } from '../../i18n';
 import {
   adsLeft, campaignPlan, collectIdle, fastLoot, fastLootCost, idleSetup, watchAd,
@@ -56,7 +57,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
       <div class="stage">
         <IdleStage running={running} />
         <div class="stage-title">
-          <span class="stage-chapter">{t('chapter')} {chapter}</span>
+          <button class="stage-chapter" onClick={() => open({ type: 'worldMap' })}><Icon name="campaign" size={20} /> {t('chapter')} {chapter}</button>
           <span class="stage-progress"><span style={{ width: `${((pos - 1) / STAGES_PER_CHAPTER) * 100}%` }} /></span>
         </div>
         <div class="edge edge-left">
@@ -76,7 +77,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
       <div class="dock">
         <button class={`dock-chest${loot.hours >= 2 ? ' ready' : ''}${loot.full ? ' full' : ''}`}
           onClick={() => open({ type: 'gain', title: t('camp.loot'), gain: collectIdle() })}>
-          <span class="chest" />
+          <img class="chest chest-art" src={`art/i/${loot.hours >= 2 ? 'chestOpen' : 'chestClosed'}.webp`} alt="" />
           <span class="dock-time">{h} h {String(m).padStart(2, '0')}</span>
           <span class="dock-bar"><span style={{ width: `${(loot.hours / OFFLINE_CAP_HOURS) * 100}%` }} /></span>
           {loot.hours >= 2 && <RedDot />}
@@ -97,7 +98,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
         </button>
 
         <button class="dock-fast" onClick={() => open({ type: 'fastLoot' })}>
-          <span class="hourglass" />
+          <img class="hourglass hourglass-art" src="art/i/hourglass.webp" alt="" />
           <span class="dock-time">{t('camp.fast')}</span>
           {fastLootCost(s) === 0 && <RedDot />}
         </button>
@@ -118,7 +119,7 @@ export function FastLootModal() {
   return (
     <Modal title={t('camp.fast')}>
       <div class="row gap center-y">
-        <span class="hourglass big" />
+        <img class="hourglass hourglass-art big" src="art/i/hourglass.webp" alt="" />
         <div class="grow">
           <strong>2 h</strong>
           <div class="row gap-s wrap">
@@ -141,6 +142,30 @@ export function FastLootModal() {
       }}>
         <Icon name="ad" size={20} /> {t('camp.adBoost')} · {t('left', { n: adsLeft(s) })}
       </Btn>
+    </Modal>
+  );
+}
+
+/** Place de chaque région sur la carte (public/art/ui/map.jpg), en fraction de l'image. */
+const MAP_PINS: [number, number][] = [[0.12, 0.71], [0.375, 0.76], [0.62, 0.75], [0.86, 0.72], [0.86, 0.2], [0.62, 0.19], [0.375, 0.18], [0.135, 0.2]];
+
+/** Carte des 8 régions de la campagne : celles finies, celle en cours (qui brille) et celles encore fermées. */
+export function WorldMapModal() {
+  const s = useGame();
+  const cur = chapterOf(Math.min(s.campaign.cleared + 1, CAMPAIGN_STAGES));
+  return (
+    <Modal title={t('chapter')} wide>
+      <div class="wmap" style={{ backgroundImage: 'url(art/ui/map.jpg)' }}>
+        {regionChapters().map((r, i) => {
+          const [x, y] = MAP_PINS[i]!;
+          const state = cur > r.to ? 'done' : cur >= r.from ? 'here' : 'locked';
+          return (
+            <span class={`wmap-pin ${state}`} style={{ left: `${x * 100}%`, top: `${y * 100}%` }}>
+              <span class="wmap-tag">{r.from === r.to ? r.from : `${r.from}-${r.to}`}</span>
+            </span>
+          );
+        })}
+      </div>
     </Modal>
   );
 }
