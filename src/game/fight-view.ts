@@ -201,7 +201,11 @@ export abstract class FightScene extends Phaser.Scene {
       );
       const x0 = W / 2 - ox * m.w * k, y0 = cy - oy * m.h * k;
       const fgKey = `${key}-fg`;
-      if (this.textures.exists(fgKey)) this.fg = this.add.image(x0, y0, fgKey).setOrigin(0).setScale(k).setDepth(1300);
+      if (this.textures.exists(fgKey)) {
+        // coupé au bas du terrain : rien ne déborde sur le panneau du bas
+        this.fg = this.add.image(x0, y0, fgKey).setOrigin(0).setScale(k).setDepth(1300);
+        this.fg.setCrop(0, 0, m.w, Math.max(0, (bottom - y0) / k));
+      }
       return this.add.image(x0, y0, key).setOrigin(0).setScale(k).setDepth(-10);
     }
     const g = this.add.graphics().setDepth(-10);

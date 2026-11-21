@@ -70,6 +70,16 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   `public/art/r/<id>.webp` (corps rebouché + morceaux regroupés dans une seule image) et la planche de contrôle `rig-out/<id>.png` ; puis
   `art-jeu.py` (champ `rigs` de `art-meta.ts`). Dans le combat : `addView` / `animateParts` de `fight-view.ts`
   (`act` = attaque ou spéciale en cours).
+  v0.26.0 (21/11/2026) : **tous les nouveaux dessins Hailuo branchés**. 36 monstres « animaux » + 6 retouches + Apsara refaits
+  (`decoupe-hailuo.py --seulement=…`, la planche la plus récente gagne) et leurs découpes animées refaites ; fonds prairie,
+  forêt, bayou refaits + 3 fonds de donjons (`mine`, `spring`, `armory`, dans `look.ts`) ; **162 pictos** dans `public/art/i/`
+  (`decoupe-pictos.py` → `src/game/icons-meta.ts` ; `Icon` de `kit.tsx` prend l'image si elle existe) : monnaies, menus,
+  modes, équipements par rareté (`weapon-0..5`…), panoplies (`set-*`), effets en combat (`st-*`, au-dessus des barres de vie),
+  ligues, boutique (`offer-*`), missions, autel et dos de carte (invocation), emblèmes de guilde, hibou du tutoriel,
+  colisée ; `public/art/ui/` : logo, icône de l'application, écran de chargement (`index.html`), carte des régions
+  (`WorldMapModal`, en touchant « Chapitre »). Combats : chaque terrain a son cercle tracé au sol (`OVALS` de
+  `decoupe-decors.py`) et `drawArena` place l'équipe dedans ; le premier plan (`FRONT` → `art/t/<nom>-fg.webp`) passe
+  devant les combattants (effacé pendant l'assombrissement des compétences).
   Sources Hailuo des terrains et effets : `refonte-graphique/hailuo-v1/terrains-*.jpg`, `effets-*.jpg`.
   Aperçu animé sur le site de test : `public/apercu/` (page à part, bouton « Aperçu des animations » dans les Outils de
   test des réglages) : les personnages v5 animés morceau par morceau. Les images viennent de
