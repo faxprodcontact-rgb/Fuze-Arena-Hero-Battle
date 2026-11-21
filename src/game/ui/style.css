@@ -480,8 +480,9 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
    occupe un bandeau dont la hauteur suit la largeur de l'écran (comme le dessin), et les six tuiles se partagent tout le
    reste : l'écran tient exactement dans la hauteur, sans défilement, dès l'arrivée */
 .content-adv { position: relative; padding: 0; overflow: hidden; display: flex; }
-.adv-scroll { position: relative; z-index: 1; flex: 1; min-width: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px max(12px, env(safe-area-inset-right, 0px)) 14px max(12px, env(safe-area-inset-left, 0px)); }
-.adventure { gap: 12px; height: 100%; }
+.adv-scroll { position: relative; z-index: 1; flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; overscroll-behavior: contain; padding: 12px max(12px, env(safe-area-inset-right, 0px)) 14px max(12px, env(safe-area-inset-left, 0px)); }
+.adv-scroll > .screen { flex: none; }
+.adv-scroll > .adventure { flex: 1 1 0; min-height: 0; gap: 12px; }
 .adv-banner { height: calc(min(100vw, 480px) * 0.44); flex: none; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 2px; }
 .adventure .tiles { flex: 1; min-height: 0; grid-template-rows: repeat(3, minmax(0, 1fr)); }
 .adventure .tile { min-height: 0; }
