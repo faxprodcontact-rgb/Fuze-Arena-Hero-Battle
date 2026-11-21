@@ -146,9 +146,10 @@ def build(cid):
                 nofill = np.maximum(nofill, (m > 0.01).astype(np.float32))
     layers.reverse()
     grow = np.asarray(Image.fromarray((hole * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3)), np.float32) / 255
-    base = inpaint(rgba, grow)
+    # les morceaux de derrière comptent aussi comme trous : leurs couleurs ne bavent pas dans le corps rebouché
+    base = inpaint(rgba, np.maximum(grow, cutout))
     # derrière un morceau, le corps continue : jusqu'à ~20 px du corps visible, le trou reste plein (couleurs prolongées)
-    body = Image.fromarray((((alpha > 0.5) & (grow < 0.5)) * 255).astype(np.uint8))
+    body = Image.fromarray((((alpha > 0.5) & (grow < 0.5) & (cutout < 0.5)) * 255).astype(np.uint8))
     for _ in range(4):
         body = body.filter(ImageFilter.MaxFilter(11))
     near = (np.asarray(body) > 0) & (grow > 0.5) & (alpha > 0.5) & (nofill < 0.5)
