@@ -9,8 +9,13 @@ Pas encore branché dans le jeu : la page d'exemple sert de vitrine.
 
 1. Choisir le **suivant de la file** (plus bas). Regarder l'original une fois en petit :
    `refonte-graphique/vecto/originaux/<id>.jpg` (le cadre w × h du dessin = la taille de cette image).
-2. Gros plans quadrillés **seulement** des zones difficiles (visage, mains, objet) :
-   `python3 refonte-graphique/vecto/outils/zoom.py <id> x0 y0 x1 y1 4 /tmp/z.png`.
+2. **Décalquer, pas dessiner à l'œil** (demande du propriétaire : « soit plus précis sur le calque ») :
+   - le bord extérieur exact (tête, oreilles, pattes, queue…) se mesure sur l'image :
+     `python3 refonte-graphique/vecto/outils/contour.py <id> x0 y0 x1 y1` donne les points « x,y » du contour, déjà
+     rentrés de l'épaisseur de notre trait (il faut `pip install opencv-python-headless`) ;
+   - le tracé intérieur (œil, bouche, dents, limite crème / orange) se lit sur un gros plan quadrillé, zoom 5 pour un
+     numéro tous les 10 px : `python3 refonte-graphique/vecto/outils/zoom.py <id> x0 y0 x1 y1 5 /tmp/z.png` ;
+   - relever aussi les vraies couleurs sur l'original (le renard était trop foncé au premier essai).
 3. Écrire `refonte-graphique/vecto/<id>.cjs` en partant du fichier fait le plus proche (voir « Pièces à reprendre ») :
    copier sa structure, ses outils et ses dégradés, puis changer les formes. Ne pas tout réinventer.
 4. Contrôle, dans cet ordre et sans multiplier les images :
@@ -52,6 +57,8 @@ entier (lire seulement la partie utile : `grep -n` puis `sed -n`), agents en par
 ## Liste de contrôle (en plus de `refonte-graphique/LISEZMOI.md`, section « Liste de contrôle de cohérence »)
 
 Leçons de la première série (corrections demandées par le propriétaire ou le relecteur) :
+- **Forme fidèle** : la tête et les pattes doivent avoir la forme de l'original (renard refusé une première fois :
+  museau trop long, œil trop petit, mâchoire mal placée). Toujours comparer en « calque » sur la tête et les pattes.
 - **Mains** : doigts courts et arrondis (jamais pointus, jamais des « orteils » en bosses), pouce bien distinct, la
   main **dans l'axe de l'avant-bras** (pas de poignet cassé à 90°), le poignet qui rentre dans la manche. Un objet
   tenu passe dans la main ; une flûte touche les lèvres.

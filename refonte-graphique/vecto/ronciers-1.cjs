@@ -2,7 +2,7 @@
 // même cadre (442 × 337, mêmes proportions, même pose) : renard orange de profil tourné vers la droite, qui grogne ;
 // grande queue en éventail de feuilles d'automne, manteau de feuilles rouges, orange et jaunes posées en tuiles sur le
 // dos, deux oreilles pointues à l'intérieur sombre, œil jaune furieux sous un gros sourcil, museau à truffe noire,
-// gueule ouverte à crocs, joues et poitrail crème en touffes, quatre pattes aux petites griffes claires.
+// gueule ouverte à crocs, joues et poitrail crème en touffes, quatre pattes aux petites griffes sombres.
 // La lumière vient d'en haut à droite : les ombres portées tombent en bas à gauche.
 const { figure, lin, rad, n, use, clip, line, shape, dot, oval } = require('./lib.cjs');
 
@@ -132,16 +132,17 @@ const SH = { fur: '#6a2408', cream: '#7a5a68', dark: '#24080a' };
 
 // ---------- dégradés ----------
 const defs = [
-  lin('g-fur', 300, 120, 220, 290, [[0, FUR.lite], [0.4, FUR.base], [1, '#cc6a1e']]),
-  lin('g-head', 390, 100, 270, 210, [[0, '#ffcf72'], [0.45, '#f8a43a'], [1, '#d87424']]),
-  lin('g-far', 0, 0, 0, 1, [[0, '#d27428'], [1, '#9a4614']], false),
+  lin('g-fur', 300, 120, 220, 290, [[0, '#ffc864'], [0.45, '#fbaa40'], [1, '#e08a30']]),
+  lin('g-head', 390, 100, 270, 210, [[0, '#ffd27a'], [0.45, '#fcae44'], [1, '#e8902e']]),
+  lin('g-far', 0, 0, 0, 1, [[0, '#ec9a3c'], [1, '#c4722a']], false),
   lin('g-leg', 0, 0, 1, 0, [[0, '#c4601c'], [0.55, FUR.base], [1, FUR.lite]], false),
   lin('g-cream', 0, 0, 0, 1, [[0, CREAM.hi], [0.55, CREAM.base], [1, CREAM.shade]], false),
   rad('g-tail', 140, 196, 178, [[0, '#a83a16'], [0.3, '#dc6a28'], [0.62, '#f29c38'], [1, '#ffd468']]),
-  lin('g-ear', 0, 0, 1, 0, [[0, '#d46a20'], [0.6, FUR.base], [1, FUR.lite]], false),
-  lin('g-earIn', 0, 0, 0, 1, [[0, '#5a1814'], [0.7, '#8a2a24'], [1, '#b8504a']], false),
+  lin('g-ear', 0, 0, 1, 0, [[0, '#e08a2c'], [0.6, '#fbaa40'], [1, '#ffc864']], false),
+  lin('g-earIn', 0, 0, 0, 1, [[0, '#9a4a4e'], [0.6, '#c06d72'], [1, '#d88a84']], false),
+  lin('g-earInN', 0, 0, 0, 1, [[0, '#4a1a10'], [0.55, '#8a3a18'], [1, '#e07c1e']], false),
   rad('g-sclera', 0.6, 0.35, 0.8, [[0, '#ffffff'], [0.7, '#fbf6f2'], [1, '#e2d4d4']], false),
-  rad('g-iris', 0.62, 0.38, 0.75, [[0, '#fffbd8'], [0.35, '#f8e46a'], [0.75, '#e2b02c'], [1, '#a8661a']], false),
+  rad('g-iris', 0.62, 0.38, 0.75, [[0, '#fffde0'], [0.4, '#fbf27a'], [0.8, '#e8c83a'], [1, '#b08020']], false),
   rad('g-pupil', 0.5, 0.8, 0.7, [[0, '#5a2a10'], [0.6, '#24100a'], [1, '#120608']], false),
   lin('g-lid', 0, 0, 0, 1, [[0, '#3a1408', 0.75], [0.5, '#3a1408', 0]], false),
   lin('g-eyelid', 0, 0, 0, 1, [[0, FUR.lite], [0.6, FUR.base], [1, FUR.mid]], false),
@@ -150,31 +151,35 @@ const defs = [
 ].join('');
 
 // ---------- silhouettes ----------
+// Tête et pattes décalquées sur le dessin d'origine : leur bord extérieur suit le contour du trait noir d'origine,
+// rentré de l'épaisseur de notre contour (mesuré sur l'image, pas à l'œil).
 const S = {
   // les pattes du fond (plus sombres) : la patte arrière gauche, la patte avant droite qui s'avance
-  legBF: sm('96,236 120,232 130,256 126,282 126,300 133,312 134,328! 112,331! 92,330! 88,321 94,308 98,286 96,262'),
-  legFF: sm('284,226 312,230 328,252 342,276 354,290 370,298 378,308 377,318 369,323! 346,322! 328,321 320,314 324,302 314,284 298,262 286,244'),
+  legBF: sm('106,224 98,234 95,250 93,268 91,278 91,288 89,298 84,311 85,321! 96,323 116,323 126,321! 124,314 117,309 113,305 114,292 116,286 119,283 124,268 126,246 120,230'),
+  legFF: sm('288,240 300,228 318,226 324,233 320,241 321,252 320,260 327,268 340,288 349,298 359,297 367,300 372,308 372,317! 331,316! 330,310 325,304 318,296 311,292 306,287 299,284 291,278 289,270 286,256'),
   // la queue : la réunion de ses feuilles
   tail: TAIL.map((l) => leafD(l)).join(''),
-  // le corps : le dos (caché sous le manteau), le ventre crème entre les pattes
-  body: sm('104,200 130,180 170,170 220,166 262,160 300,170 318,196 312,226 296,248 270,260 236,266 196,268 160,266 132,258 112,242 102,222'),
-  // les pattes de devant (plus claires) : la patte arrière droite (grosse cuisse), la patte avant gauche
-  legBN: sm('110,234 126,216 160,212 188,224 196,246 190,266 182,286 184,300 196,309 205,318 203,329! 180,332! 156,331! 146,325 148,313 154,302 150,284 140,272 122,264 110,252'),
-  legFN: sm('226,234 260,234 268,256 262,280 262,297 276,305 291,315 295,325 289,332! 266,333! 246,332! 238,325 240,312 238,290 232,264'),
+  // le corps : le dos (caché sous le manteau), le ventre entre les pattes
+  body: sm('104,200 130,180 170,170 220,166 262,160 300,170 318,196 316,226 300,248 289,268 282,264 270,265 262,268 240,270 224,272 214,266 204,268 196,276 170,276 146,280 132,283 118,282 110,262 102,232'),
+  // les pattes de devant (plus claires) : la patte arrière droite et sa grosse cuisse, la patte avant gauche
+  legBN: sm('124,232 140,226 170,222 192,230 204,246 206,262 200,272 195,280 189,281 180,283 176,288 176,294 178,299 183,303 191,304 195,308 198,316! 156,317! 156,309 154,302 152,291 148,283 140,262 130,246'),
+  legFN: sm('222,244 240,236 262,238 270,252 266,268 263,272 263,279 270,305 274,309 284,310 291,317 292,326! 282,329 267,328 260,329 244,326! 243,315 241,303 235,292 228,283 227,276 222,262'),
   // le manteau de feuilles
   mantle: MANTLE.map((l) => leafD(l)).join(''),
-  // le poitrail crème, en touffes qui pendent vers l'arrière
-  chest: sm('262,150 292,160 318,176 334,196 338,214 332,228! 326,222 324,240! 314,232 306,248! 296,236 284,246! 276,232 262,236! 258,222 250,214 248,190 250,168'),
-  // les oreilles, derrière la tête
-  earF: sm('252,120 245,86 241,56 243,34! 260,50 280,74 298,98 292,120'),
-  earN: sm('312,108 313,74 317,46 322,28! 336,44 352,68 368,96 354,112'),
-  // la gueule (l'intérieur, derrière la mâchoire et la tête)
-  mouth: sm('356,170 430,171 432,184 420,198 404,212 384,220 364,218 350,206 348,186'),
+  // le cou et le poitrail, crème, sous la joue et jusqu'entre les pattes ; son bord arrière en touffes contre les feuilles
+  chest: sm('256,170 280,190 300,198 330,200 346,208 338,210 330,217 329,228 324,236 312,252 296,266 284,265 270,266 256,258 248,250! 253,240 244,231! 251,222 244,211! 251,203 246,191! 253,182'),
+  // les oreilles, derrière la tête : celle du fond est large, celle de devant plus fine
+  earF: sm('247,41! 259,49 289,67 307,83 302,100 276,114 260,108 256,95 252,79 246,52'),
+  earN: sm('313,86 316,79 319,51 323.5,33! 336,49 355,77 363,94 366,104 344,108 318,100'),
+  // la gueule (l'intérieur, derrière la mâchoire et la tête) ; devant, le croc du haut dépasse
+  mouth: sm('352,168 390,172 428,170 431,178 425,182 421,190! 417,184 410,185 405,189 398,192 395,198 398,204 392,212 372,210 354,204 345,192'),
   // la mâchoire du bas, ouverte
-  jaw: sm('344,190 360,198 376,202 394,204 408,204 415,208! 413,215 402,221 386,224 366,222 350,214 340,204'),
-  // la tête : le crâne, le museau jusqu'à la truffe, la lèvre du haut, la joue qui finit en touffes vers l'arrière
-  head: sm('250,128 258,112 276,102 300,98 326,100 350,106 368,116 378,126 398,138 420,150 432,155 440,160 443,167 437,174 426,176 408,177 388,176 370,174 360,176 354,186 352,196 '
-    + '346,205! 338,200 332,215! 324,206 312,222! 304,210 290,220! 284,204 270,207! 268,192 256,191! 258,178 246,169! 250,156 242,146! 248,138'),
+  jaw: sm('338,206 346,199 352,199 364,205 380,209 392,210 398,206! 400,212 397,219 389,223 376,223 362,217 348,211'),
+  // la tête : le crâne entre les oreilles (avec les touffes claires au pied de l'oreille), le front, le stop, le museau
+  // jusqu'à la truffe, la lèvre du haut, puis la joue en touffes qui partent vers l'arrière, et la nuque
+  head: sm('270,108 288,96 304,88 312,85 322,90 332,89 338,95 350,92 356,98 366,98 371,106 391,119 397,125 399,134 400,142 404,146 420,153 430,157 434,161 435,167 '
+    + '432,173 424,179 416,183 408,185 400,184 392,182 382,178 372,176 362,175 354,176 349,184 346,194 '
+    + '341,203! 332,198 323,206! 315,200 305,205! 297,198 287,201! 281,193 272,193! 270,184 260,174! 262,164 251,154! 256,144 246,132! 254,124 247,116! 258,114'),
 };
 
 // ---------- le visage ----------
@@ -185,104 +190,108 @@ function tooth([x1, y1], [x2, y2], [tx, ty]) {
   const half = `M${x1} ${y1}L${tx} ${ty}L${n(mx)} ${n(my)}Z`;
   return shape(d, '#fbf4e8') + shape(half, '#d8c8bc', 0.8) + line(`M${n(mx + (x2 - mx) * 0.5)} ${n(my + (y2 - my) * 0.5)}L${n(tx + (x2 - tx) * 0.2)} ${n(ty + (y2 - ty) * 0.2)}`, '#ffffff', 1.2, 0.9);
 }
-const TEETH_T = [[[367, 174], [377, 175], [374, 193]], [[381, 176], [389, 176], [386, 185]], [[395, 176], [406, 177], [403, 194]], [[410, 176], [418, 176], [415, 185]]];
-const TEETH_B = [[[355, 198], [364, 200], [360, 189]], [[383, 203], [393, 204], [389, 192]], [[407, 205], [413, 206], [411, 197]]];
+// les dents du haut (le gros croc au milieu, le croc de devant qui dépasse) ; celles du bas, plantées dans la mâchoire
+const TEETH_T = [[[356, 172], [364, 173], [361, 182]], [[366, 174], [375, 175], [371, 186]], [[378, 176], [389, 178], [385, 192]], [[400, 181], [409, 182], [406, 191]], [[416, 178], [426, 177], [421, 190]]];
+const TEETH_B = [[[359, 205], [367, 207], [364, 195]], [[371, 209], [381, 211], [377, 199]], [[384, 212], [392, 212], [389, 201]], [[393, 210], [400, 206], [398, 196]]];
 
 /**
- * L'œil : l'anneau sombre, le blanc, l'iris jaune en dégradé, la pupille, l'ombre de la paupière, deux reflets ;
- * puis le gros sourcil froncé par-dessus, qui coupe le haut de l'iris (regard furieux). Le clignement : une paupière de fourrure.
+ * L'œil, en forme de haricot : le bord du haut est droit et penché vers le nez (le sourcil le coupe), le bas est rond.
+ * L'anneau sombre, le blanc, l'iris jaune, la pupille, l'ombre de la paupière, deux reflets ; puis le sourcil épais
+ * qui plonge vers le museau. Le clignement : une paupière de fourrure.
  */
-const EYE = { cx: 349, cy: 146, rx: 19, ry: 16, ix: 354, iy: 149, ir: 10.5, pr: 5.2 };
+const EYE = 'M325 126 L374 141 C375 150 369 157 358 160 C346 162 335 159 329 152 C323 145 322 135 325 126 Z';
+const IRIS = { x: 353, y: 148, r: 11.5, p: 7.4 };
 function eye() {
-  const { cx, cy, rx, ry, ix, iy, ir, pr } = EYE;
-  const white = `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${2 * rx} 0a${rx} ${ry} 0 1 0 ${-2 * rx} 0Z`;
-  const brow = 'M314 127 C332 115 360 119 386 135 C388 140 385 146 380 146 C358 137 338 134 321 139 C314 137 311 131 314 127 Z';
-  return oval(cx, cy + 0.4, rx + 2.6, ry + 2.6, '#2a1430')
-    + `<clipPath id="c-eye"><path d="${white}"/></clipPath><path d="${white}" fill="url(#g-sclera)"/>`
+  const { x, y, r, p } = IRIS;
+  const brow = 'M322 119 C340 123 360 129 377 135 C380 137 380 142 376 143 C366 141 356 138 346 135 C336 132 330 130 324 128 C320 126 319 121 322 119 Z';
+  return `<path d="${EYE}" fill="#2a1430" stroke="#2a1430" stroke-width="5"/>`
+    + `<clipPath id="c-eye"><path d="${EYE}"/></clipPath><path d="${EYE}" fill="url(#g-sclera)"/>`
     + `<g clip-path="url(#c-eye)">`
-    + dot(ix, iy, ir, 'url(#g-iris)') + dot(ix + 1.4, iy + 0.6, pr, 'url(#g-pupil)')
-    + `<rect x="${cx - rx - 3}" y="${cy - ry - 3}" width="${2 * rx + 6}" height="${n(ry * 1.3)}" fill="url(#g-lid)"/>`
-    + dot(n(ix - ir * 0.36), n(iy - ir * 0.34), n(ir * 0.26), '#fff') + dot(n(ix + ir * 0.5), n(iy + ir * 0.4), n(ir * 0.12), '#fff', 0.9)
+    + dot(x, y, r, 'url(#g-iris)') + dot(x - 0.4, y - 3, p, 'url(#g-pupil)')
+    + `<rect x="322" y="126" width="56" height="14" fill="url(#g-lid)" transform="rotate(17 350 134)"/>`
+    + dot(x + 5.5, y - 2.5, 2.4, '#fff') + dot(x - 4.5, y + 4.5, 1.1, '#fff', 0.9)
     + '</g>'
-    + `<g class="a-blink" opacity="0"><path d="${white}" fill="url(#g-eyelid)" stroke="#2a1430" stroke-width="2.6"/>${line(`M${cx - rx + 2} ${cy + 3} Q${cx} ${cy + 9} ${cx + rx - 1} ${cy + 2}`, '#2a1430', 2.6)}</g>`
-    // le sourcil : son ombre portée sur l'œil, le sourcil sombre, son arête éclairée
-    + `<path d="${brow}" transform="translate(-2 3)" fill="${SH.dark}" opacity="0.45"/>` + shape(brow, '#5a2010')
-    + glint([[318, 125, 0], [340, 119, 2.6], [366, 124, 2.4], [384, 135, 0]], '#c8662a', 0.9);
+    + `<g class="a-blink" opacity="0"><path d="${EYE}" fill="url(#g-eyelid)" stroke="#2a1430" stroke-width="2.6"/>${line('M327 144 Q348 158 373 147', '#2a1430', 2.6)}</g>`
+    // le sourcil : son ombre portée sur l'œil, le sourcil sombre, le bourrelet de fourrure éclairé au-dessus
+    + `<path d="${brow}" transform="translate(-1.5 2.5)" fill="${SH.dark}" opacity="0.4"/>` + shape(brow, '#3a1408')
+    + glint([[326, 117, 0], [346, 119, 3.4], [366, 125, 3], [380, 131, 0]], FUR.hi, 0.8);
 }
 
 const headBody = use('head', 'url(#g-head)') + clip('head',
-  // le bas de la tête, crème : la joue, la lèvre du haut, le dessous du museau
-  shape(sm('230,170 262,160 296,166 330,170 352,166 372,162 396,160 420,163 446,166 446,240 230,240'), 'url(#g-cream)')
-  // l'ombre propre : le derrière de la tête et la joue, en bas à gauche
-  + shape(sm('240,150 256,172 280,190 312,204 346,206 340,232 236,232'), CREAM.shade, 0.45)
-  + shape(sm('238,100 258,104 266,120 262,140 250,160 236,160'), FUR.shade, 0.45)
+  // le bas de la tête, crème : la joue en touffes, la lèvre du haut, le dessous du museau
+  shape(sm('236,192 262,178 282,174 301,170 322,164 346,161 370,157 390,152 412,153 440,160 446,240 236,240'), 'url(#g-cream)')
+  // le bas de la joue, à l'ombre (lavande), au-dessus des touffes
+  + shape(sm('266,188 290,190 314,194 338,196 346,212 266,212'), CREAM.shade, 0.6)
+  // la nuque à l'ombre, en bas à gauche
+  + shape(sm('240,114 258,120 268,140 266,166 260,184 240,184'), FUR.shade, 0.45)
+  // les touffes claires au pied de l'oreille de devant
+  + shape(sm('322,96 330,90 336,99 346,92 352,101 362,99 368,108 330,108'), FUR.hi, 0.6)
   // le front et l'arête du museau, éclairés
-  + glint([[280, 104, 0], [310, 102, 4], [344, 108, 3.6], [368, 118, 0]], FUR.hi, 0.7)
-  + glint([[382, 129, 0], [404, 141, 3.2], [428, 153, 0]], FUR.hi, 0.85)
-  // une touffe plus claire sur la joue, sous l'œil
-  + shape(sm('300,170 318,176 336,182! 326,184 312,184'), CREAM.hi, 0.8)
-  // les points des moustaches
-  + dot(390, 157, 1.7, '#9a4a1a') + dot(397, 162, 1.5, '#9a4a1a') + dot(389, 166, 1.4, '#9a4a1a')
+  + glint([[282, 100, 0], [304, 92, 3.6], [330, 96, 0]], FUR.hi, 0.6)
+  + glint([[404, 145, 0], [418, 151, 3], [430, 157, 0]], FUR.hi, 0.85)
+  // la tache orange et les points des moustaches
+  + oval(393, 154, 2.4, 1.8, '#c8641c', 0.9) + dot(391, 160, 1.3, '#5a2a1a') + dot(397, 164, 1.2, '#5a2a1a') + dot(390, 167, 1.2, '#5a2a1a') + dot(396, 170, 1.1, '#5a2a1a')
   // la truffe
-  + `<path d="M418 158 C424 151 436 152 441 160 C444 167 439 174 431 174 C423 174 417 168 418 158 Z" fill="url(#g-nose)"/>`
-  + oval(434, 157.5, 3.4, 2, '#b4a8b8', 0.85, 20) + oval(426, 167, 2, 1.3, '#0a0408', 0.8, 20)
+  + `<path d="M412 159 C416 152 427 151 436 155 C441 158 442 166 438 171 C433 175 423 175 417 171 C412 168 411 163 412 159 Z" fill="url(#g-nose)"/>`
+  + oval(421, 156.5, 3.6, 1.8, '#d8d0dc', 0.9, -10)
   // le coin de la gueule, retroussé
-  + glint([[356, 176, 0], [362, 182, 3], [362, 190, 0]], '#7a2a2a', 0.55)
+  + glint([[352, 174, 0], [350, 182, 2.6], [347, 190, 0]], '#7a2a2a', 0.5)
   + eye()
 );
 
 // ---------- les pattes ----------
-/** L'habillage d'une patte : la fourrure, l'ombre du côté arrière, deux plis entre les doigts, trois griffes claires. */
+/** L'habillage d'une patte : la fourrure, l'ombre du côté arrière, deux plis entre les doigts, trois griffes sombres. */
 function legBody(id, fill, shadeD, toes, claws, liteD) {
   return use(id, fill) + clip(id,
     shape(shadeD, SH.fur, 0.35)
     + (liteD ? glint(liteD, FUR.hi, 0.5) : '')
     + toes.map(([x, y, x2, y2]) => glint([[x, y, 0], [(x + x2) / 2, (y + y2) / 2, 2.4], [x2, y2, 0]], SH.fur, 0.6)
       + glint([[x + 2, y, 0], [(x + x2) / 2 + 2, (y + y2) / 2, 1.4], [x2 + 2, y2, 0]], FUR.hi, 0.5)).join('')
-    + claws.map(([x, y]) => oval(x, y, 2.4, 1.6, '#f6ecdc', 1, 30) + oval(x + 0.6, y - 0.4, 1, 0.6, '#ffffff')).join(''));
+    + claws.map(([x, y]) => oval(x, y, 2.6, 1.7, '#3a2418', 1, 30) + oval(x + 0.7, y - 0.5, 1, 0.6, '#d8c8b8')).join(''));
 }
 
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx, dy, color, o) => ({ on, dx, dy, color, o });
 const parts = [
-  { id: 'legBF', cls: 'a-legBF', d: S.legBF, body: legBody('legBF', 'url(#g-far)', sm('86,232 102,240 106,270 104,300 112,322 86,334'), [[112, 316, 112, 330], [122, 314, 123, 329]], [[132, 328], [124, 329]]) },
-  { id: 'legFF', cls: 'a-legFF', d: S.legFF, body: legBody('legFF', 'url(#g-far)', sm('282,230 296,252 312,278 326,302 330,326 318,326 280,240'), [[352, 308, 354, 321], [362, 306, 364, 320]], [[376, 319], [366, 321], [356, 321]]) },
+  { id: 'legBF', cls: 'a-legBF', d: S.legBF, body: legBody('legBF', 'url(#g-far)', sm('80,228 100,238 104,270 100,300 104,328 78,328'), [[106, 311, 107, 322], [116, 310, 117, 322]], [[124, 320], [114, 322], [104, 322]]) },
+  { id: 'legFF', cls: 'a-legFF', d: S.legFF, body: legBody('legFF', 'url(#g-far)', sm('284,236 300,262 316,286 332,302 336,322 320,322 282,250'), [[352, 302, 353, 315], [362, 302, 363, 315]], [[371, 315], [362, 316], [352, 316]]) },
   { id: 'tail', cls: 'a-tail', d: S.tail, body: use('tail', 'url(#g-tail)') + clip('tail', leaves(TAIL, '#5a1806', 0.38)) },
   { id: 'body', cls: 'a-body', d: S.body, shadow: [sh(['legBF', 'legFF'], -3, 5, SH.dark, 0.45), sh(['tail'], -3, 5, SH.fur, 0.4)],
     body: use('body', 'url(#g-fur)') + clip('body',
       // le ventre crème entre les pattes, son ombre lavande dessous
-      shape(sm('140,244 180,250 230,252 280,240 306,226 300,262 140,270'), 'url(#g-cream)')
-      + shape(sm('140,258 190,262 240,262 290,250 296,272 140,274'), CREAM.shade, 0.7)) },
-  { id: 'legBN', cls: 'a-legBN', d: S.legBN, shadow: [sh(['body', 'tail'], -3, 5, SH.fur, 0.4)],
-    body: legBody('legBN', 'url(#g-fur)', sm('108,232 124,250 146,262 156,282 160,300 154,334 104,334'), [[170, 312, 172, 327], [184, 312, 186, 327]], [[202, 326], [192, 328], [182, 329]],
-      [[150, 218, 0], [176, 224, 4], [190, 244, 3], [186, 270, 0]]) },
+      shape(sm('140,260 190,264 240,260 290,250 306,236 300,290 140,290'), 'url(#g-cream)')
+      + shape(sm('140,272 190,272 240,268 290,260 296,290 140,290'), CREAM.shade, 0.7)) },
+  { id: 'legBN', cls: 'a-legBN', d: S.legBN, shadow: [sh(['body', 'tail', 'legBF'], -3, 5, SH.fur, 0.4)],
+    body: legBody('legBN', 'url(#g-fur)', sm('120,232 136,250 146,272 154,296 158,322 138,322'), [[176, 305, 177, 316], [186, 305, 187, 316]], [[196, 315], [186, 317], [176, 317]],
+      [[166, 226, 0], [194, 236, 4], [204, 256, 3], [198, 276, 0]]) },
   { id: 'legFN', cls: 'a-legFN', d: S.legFN, shadow: [sh(['body', 'legFF'], -3, 5, SH.fur, 0.4)],
-    body: legBody('legFN', 'url(#g-fur)', sm('224,236 234,262 240,290 244,312 240,336 222,336'), [[266, 316, 268, 330], [278, 316, 280, 330]], [[292, 328], [282, 330], [272, 331]],
-      [[256, 240, 0], [264, 262, 3.6], [262, 290, 0]]) },
+    body: legBody('legFN', 'url(#g-fur)', sm('218,240 230,262 238,290 246,312 248,332 216,332'), [[266, 314, 267, 327], [278, 313, 279, 326]], [[290, 325], [280, 328], [269, 328]],
+      [[258, 240, 0], [266, 256, 3.6], [266, 276, 2.4], [272, 300, 0]]) },
   { id: 'mantle', cls: 'a-body', d: S.mantle, shadow: [sh(['body', 'legBN', 'legFN', 'tail'], -4, 6, SH.fur, 0.45)],
     body: use('mantle', LEAF.O.base) + clip('mantle', leaves(MANTLE)) },
-  { id: 'chest', cls: 'a-body', d: S.chest, shadow: [sh(['mantle', 'legFN', 'body'], -3, 5, SH.fur, 0.35)],
+  { id: 'chest', cls: 'a-body', d: S.chest, shadow: [sh(['mantle', 'body'], -3, 4, SH.fur, 0.22), sh(['legFN', 'legFF'], -3, 5, SH.fur, 0.35)],
     body: use('chest', 'url(#g-cream)') + clip('chest',
-      shape(sm('248,170 262,200 286,222 300,238 296,252 248,252'), CREAM.shade, 0.55)
-      + glint([[300, 168, 0], [320, 186, 4], [332, 210, 0]], CREAM.hi, 0.9)
-      + glint([[288, 214, 0], [300, 226, 2.6], [306, 242, 0]], CREAM.mid, 0.8)) },
+      // le bas du poitrail à l'ombre (lavande), un reflet devant
+      shape(sm('244,238 262,252 284,258 304,254 318,244 316,272 244,272'), CREAM.shade, 0.6)
+      + glint([[318, 206, 0], [330, 216, 3], [328, 232, 0]], CREAM.hi, 0.9)) },
   { id: 'earF', cls: 'a-earF', d: S.earF, body: use('earF', 'url(#g-ear)') + clip('earF',
-    shape(sm('254,114 249,88 247,58 248,46! 262,62 278,82 290,102 272,112'), 'url(#g-earIn)')
-    + shape(sm('292,120 284,106 277,93! 274,104 266,97! 264,110 254,120'), CREAM.mid, 0.9)
-    + glint([[248, 40, 0], [262, 56, 2.6], [282, 80, 0]], FUR.hi, 0.7)) },
+    // l'intérieur rose sombre, le bord orange à droite, la touffe crème au fond
+    shape(sm('250,50 262,58 282,74 292,90 284,104 266,108 260,100 257,86 253,70'), 'url(#g-earIn)')
+    + shape(sm('294,104 290,92 284,82 281,92 275,82 272,94 265,88 266,100 262,110 280,112'), CREAM.mid, 0.95)
+    + glint([[252, 44, 0], [270, 56, 2.6], [296, 76, 0]], FUR.hi, 0.7)) },
   { id: 'earN', cls: 'a-earN', d: S.earN, body: use('earN', 'url(#g-ear)') + clip('earN',
-    shape(sm('318,106 318,80 320,58 323,44! 334,60 346,80 356,98 340,106'), 'url(#g-earIn)')
-    + shape(sm('358,114 349,101 344,88! 340,100 332,92! 331,106 320,114'), CREAM.mid, 0.9)
-    + glint([[326, 34, 0], [342, 52, 3], [362, 86, 0]], FUR.hi, 0.75)) },
+    // l'intérieur brun sombre vers la pointe, qui s'éclaircit vers le bas
+    shape(sm('320,54 324,40 334,52 350,76 358,96 344,102 322,98 319,76'), 'url(#g-earInN)')
+    + glint([[326, 36, 0], [344, 54, 3], [362, 88, 0]], FUR.hi, 0.75)) },
   { id: 'mouth', cls: 'a-head', d: S.mouth, body: use('mouth', 'url(#g-mouth)') + clip('mouth',
     // la langue, au fond, et les dents du bas suivent la mâchoire (même mouvement qu'elle) ; puis les dents du haut
-    `<g class="a-teeth">${shape('M356 206 C364 194 382 191 398 197 C406 201 406 210 400 214 L356 216 Z', '#d85a68')
-    + glint([[366, 198, 0], [380, 195, 3], [394, 198, 0]], '#f49aa2', 0.8)
+    `<g class="a-teeth">${shape('M350 204 C356 190 372 186 386 192 C392 196 392 204 386 208 L350 210 Z', '#d85a68')
+    + glint([[358, 194, 0], [370, 190, 3], [384, 194, 0]], '#f49aa2', 0.8)
     + TEETH_B.map((t) => tooth(...t)).join('')}</g>`
     + TEETH_T.map((t) => tooth(...t)).join('')) },
   { id: 'jaw', cls: 'a-jaw', d: S.jaw, shadow: [sh(['chest'], -3, 5, SH.cream, 0.35)], body: use('jaw', 'url(#g-cream)') + clip('jaw',
-    shape(sm('340,210 366,220 392,222 414,212 414,228 340,228'), CREAM.shade, 0.7)
-    + glint([[360, 201, 0], [384, 205, 2.4], [408, 206, 0]], '#fff8f0', 0.9)) },
+    shape(sm('336,212 362,220 390,224 402,214 404,230 336,230'), CREAM.shade, 0.7)
+    + glint([[354, 201, 0], [376, 208, 2.4], [396, 208, 0]], '#fff8f0', 0.9)) },
   { id: 'head', cls: 'a-head', d: S.head, shadow: [sh(['mantle', 'earF', 'earN'], -3, 6, SH.fur, 0.4), sh(['chest', 'jaw'], -3, 5, SH.cream, 0.28)], body: headBody },
 ];
 
@@ -299,8 +308,8 @@ const flying = { id: 'fly', d: 'M-900 -900', body: FLY.map(([x, y, a, c], i) => 
 // ouverte, mord (la mâchoire claque), la queue fouette et perd quelques feuilles ; puis il revient exactement à sa place.
 // L'attaque s'ajoute au repos (animation-composition) ; le bond lui-même est porté par un groupe qui contient tout.
 const G = [232, 331];
-const PIV = { root: G, body: [210, 268], head: [300, 172], jaw: [350, 192], tail: [140, 196], earF: [270, 114], earN: [336, 106],
-  legBF: [112, 240], legBN: [160, 224], legFN: [246, 240], legFF: [296, 236] };
+const PIV = { root: G, body: [210, 268], head: [300, 180], jaw: [344, 200], tail: [140, 196], earF: [282, 104], earN: [338, 100],
+  legBF: [110, 236], legBN: [166, 232], legFN: [244, 248], legFF: [302, 240] };
 const IDLE = {
   'a-body': ['body', 'body 1.3s ease-in-out infinite alternate'],
   'a-head': ['head', 'head 2.6s ease-in-out infinite alternate'],
