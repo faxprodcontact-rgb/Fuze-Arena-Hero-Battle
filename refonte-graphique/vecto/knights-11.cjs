@@ -27,6 +27,21 @@ function sm(pts, closed = true, k = 1) {
 }
 
 /** Une forme effilée (mèche, pli) : une lentille de (x0, y0) à (x1, y1), bombée vers (cx, cy), large de `w` au milieu. */
+/** Un doigt replié vers le haut (main ouverte qui tient la flamme) : de la base (cachée dans la paume) au bout arrondi. */
+const FING = { fing4: [577, 353, 584, 339, 10], fing3: [567, 357, 573, 338, 11.5], fing2: [557, 360, 561, 340, 12], fing1: [546, 362, 549, 344, 12] };
+function fingerPts(bx, by, tx, ty, w) {
+  const L = Math.hypot(tx - bx, ty - by), ux = (tx - bx) / L, uy = (ty - by) / L, nx = -uy, ny = ux, h = w / 2;
+  const P = (t, k) => [bx + (tx - bx) * t + nx * h * k, by + (ty - by) * t + ny * h * k];
+  // le bout : un demi-cercle (le coussinet du doigt), pas une pointe
+  const arc = [-0.75, -0.3, 0.3, 0.75].map((a) => [tx + (nx * Math.sin(a * 2) + ux * Math.cos(a * 2)) * h, ty + (ny * Math.sin(a * 2) + uy * Math.cos(a * 2)) * h]);
+  return [P(0, 1), P(0.55, 1.02), P(1, 1), arc[3], arc[2], arc[1], arc[0], P(1, -1), P(0.55, -1.02), P(0, -1), [bx - ux * h * 0.7, by - uy * h * 0.7]];
+}
+/** Le pli d'une phalange : un petit arc en travers du doigt. */
+function crease(bx, by, tx, ty, w, t = 0.52) {
+  const L = Math.hypot(tx - bx, ty - by), ux = (tx - bx) / L, uy = (ty - by) / L, nx = -uy, ny = ux, h = w * 0.36;
+  const cx = bx + (tx - bx) * t, cy = by + (ty - by) * t;
+  return `M${n(cx + nx * h)} ${n(cy + ny * h)} Q${n(cx + ux * 2.2)} ${n(cy + uy * 2.2)} ${n(cx - nx * h)} ${n(cy - ny * h)}`;
+}
 function taper(x0, y0, cx, cy, x1, y1, w) {
   const dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1;
   const nx = (-dy / L) * w, ny = (dx / L) * w;
@@ -71,6 +86,7 @@ const defs = [
   lin('g-ear', 0, 0, 0, 1, [[0, '#ffbf5c'], [0.5, '#f59a30'], [1, '#dd781b']], false),
   lin('g-pink', 0, 0, 0, 1, [[0, '#ffc9bf'], [0.6, '#f2a19b'], [1, '#df8486']], false),
   lin('g-skin', 0, 0, 0, 1, [[0, '#ffe9d4'], [0.6, SKIN.base], [1, '#f6bf9c']], false),
+  lin('g-fingTop', 0, 0, 0, 1, [[0, '#d8f2ff', 0.7], [0.5, '#d8f2ff', 0]], false),
   lin('g-foot', 0, 0, 0, 1, [[0, '#f9d2b0'], [0.6, '#f0b892'], [1, '#d68a68']], false),
   rad('g-cheek', 0.32, 0.6, 0.55, [[0, '#fff3e4', 0.9], [1, '#fff3e4', 0]], false),
   rad('g-blush', 0.5, 0.5, 0.5, [[0, '#ff7f7a', 0.5], [1, '#ff7f7a', 0]], false),
@@ -139,11 +155,12 @@ const S = {
   // le bras droit : la grande manche ouverte, la main paume en haut
   thumbL: sm([[220, 407], [230, 401], [242, 399], [252, 401], [258, 406], [256, 412], [246, 414], [232, 413], [222, 412]]),
   sleeveR: sm([[404, 338], [440, 344], [466, 352], [492, 350], [499, 362], [503, 390], [508, 430], [494, 436], [474, 432], [458, 424], [446, 412], [434, 398], [418, 390], [404, 386], [398, 362]]),
-  handR: sm([[492, 352], [500, 340], [505, 330], [512, 323], [520, 323], [526, 330], [528, 340], [534, 344], [542, 336], [550, 328], [558, 323], [567, 322], [575, 326], [580, 334], [581, 344], [578, 356], [572, 368], [560, 376], [536, 380], [510, 380], [494, 375]]),
+  handR: sm([[492, 352], [500, 340], [505, 330], [512, 323], [520, 323], [526, 330], [528, 340], [533, 348], [544, 352], [558, 351], [570, 347], [579, 346], [583, 352], [580, 362], [572, 370], [560, 376], [536, 380], [510, 380], [494, 375]]),
   // le bout des doigts repliés, vus de face
-  fing3: sm([[566, 350], [569, 342], [576, 340], [580, 346], [580, 357], [576, 364], [569, 364], [565, 358]]),
-  fing2: sm([[552, 362], [555, 355], [562, 353], [567, 358], [568, 368], [563, 373], [555, 373], [551, 368]]),
-  fing1: sm([[537, 357], [540, 349], [547, 346], [553, 351], [554, 362], [549, 368], [541, 368], [537, 363]]),
+  fing4: sm(fingerPts(...FING.fing4)),
+  fing3: sm(fingerPts(...FING.fing3)),
+  fing2: sm(fingerPts(...FING.fing2)),
+  fing1: sm(fingerPts(...FING.fing1)),
   // le mantelet rouge sur les épaules
   capeL: sm([[332, 332], [316, 318], [296, 309], [270, 305], [244, 307], [222, 314], [208, 325], [204, 336, 1], [214, 344], [232, 348], [252, 352], [270, 360], [288, 368], [302, 373, 1], [314, 362], [324, 348]]),
   capeR: sm([[384, 326], [396, 318], [412, 314], [428, 318], [442, 328], [450, 342, 1], [440, 350], [426, 356], [412, 358, 1], [404, 350], [392, 344]]),
@@ -411,24 +428,25 @@ const parts = [
       // le creux de la paume, éclairé en bleu par la flamme ; le dessous de la main
       oval(540, 352, 18, 10, '#bfe6ff', 0.6, -8)
       + shape('M496 370 C520 376 548 376 570 366 L576 384 L494 384 Z', SKIN.shade, 0.65)
-      // les doigts du fond, repliés vers le haut, dans l'ombre
-      + shape('M534 344 C542 336 550 328 558 323 C567 322 575 326 580 334 L581 341 C571 337 556 340 545 348 Z', SKIN.shade, 0.5)
-      + shape(taper(556, 326, 566, 326, 576, 332, 2.5), '#cdeeff', 0.8)
       + oval(512, 334, 4.5, 8, 'url(#g-soft)', 1, 14)
       // le bracelet
       + `<path d="M497 348 C493 356 493 368 497 377" fill="none" stroke="${GOLD.line}" stroke-width="5.6"/>`
       + `<path d="M497 348 C493 356 493 368 497 377" fill="none" stroke="${GOLD.base}" stroke-width="3.4"/>`)
       // le pli du pouce, la séparation des doigts du fond
-      + line('M527 339 C530 345 532 351 533 357', SKIN.line, 1.4, 0.75)
-      + line('M560 324 C563 329 564 334 563 340', SKIN.line, 1.3, 0.6) },
+      + line('M527 339 C530 345 532 351 533 357', SKIN.line, 1.4, 0.75) },
   // le bout des doigts : chacun pose une ombre douce sur la paume ; un trait fin dessine son bord du haut
-  ...[['fing3', 'M566 352 C566 345 570 341 576 341'], ['fing2', 'M552 364 C553 357 557 354 563 354'], ['fing1', 'M537 358 C538 351 542 347 548 347']].map(([id, top]) => ({
-    id, cls: 'a-arm', d: S[id], rim: { on: ['fing3', 'fing2'].filter((o) => o !== id), color: SKIN.line, w: 1.1, o: 0.8 },
-    shadow: [{ on: ['handR', 'fing3', 'fing2'], dx: -2, dy: 3, color: SH.skin, o: 0.4 }],
-    body: use(id, SKIN.shade) + clip(id,
-      `<use href="#s-${id}" fill="url(#g-skin)" transform="translate(1.5 -2.5)"/>`
-      + `<use href="#s-${id}" fill="#d4f0ff" opacity="0.35" transform="translate(1.5 -9)"/>`)
-      + line(top, SKIN.line, 1.5, 0.9) })),
+  ...['fing4', 'fing3', 'fing2', 'fing1'].map((id, i, all) => {
+    const [bx, by, tx, ty, w] = FING[id];
+    return {
+      id, cls: 'a-arm', d: S[id], rim: { on: all.slice(0, i), color: SKIN.line, w: 1.1, o: 0.8 },
+      shadow: [{ on: ['handR', ...all.slice(0, i)], dx: -2.5, dy: 2.5, color: SH.skin, o: 0.38 }],
+      body: use(id, SKIN.shade) + clip(id,
+        `<use href="#s-${id}" fill="url(#g-skin)" transform="translate(2 -1)"/>`
+        + use(id, 'url(#g-fingTop)')
+        + line(crease(bx, by, tx, ty, w, 0.4), SKIN.line, 1.1, 0.5)
+        + oval(n(tx + 1.8), n(ty - 1), 2.2, 2.8, '#fff6ec', 0.75, 15)),
+    };
+  }),
 
   // --- le mantelet rouge sur les épaules ---
   { id: 'capeL', cls: 'a-bob', d: S.capeL, shadow: [{ on: ['torso', 'sleeveL'], dx: -3, dy: 6, color: SH.red, o: 0.35 }],

@@ -162,10 +162,10 @@ const S = {
 // ---------- la tête ----------
 // les yeux : fendus en biais ; leur bord du haut est coupé net par la dalle du sourcil, le bas est arrondi
 const EYE_L = 'M213 95 L268 111 C263 119 254 126 242 127 C229 128 219 122 216 113 C214 107 213 101 213 95 Z';
-const EYE_R = 'M289 106 L337 92 C340 103 338 115 330 122 C322 129 309 130 300 125 C295 121 291 114 289 106 Z';
+const EYE_R = 'M290 117 L331 104 C333 113 330 122 323 128 C316 133 305 134 298 130 C294 126 291 122 290 117 Z';
 // les sourcils : deux dalles épaisses et séparées, en biais vers le nez ; leur bord du bas coupe le haut des yeux
 const BROW_L = 'M210 85 L213 77 C214 75 216 74 219 75 L266 90 C269 91 271 94 271 97 L271 106 C271 109 269 111 266 110 L214 95 C211 94 210 91 210 85 Z';
-const BROW_R = 'M287 101 L288 95 C288 92 290 90 293 89 L333 77 C336 76 339 78 340 81 L340 88 C340 90 339 92 337 92 L292 106 C289 107 287 105 287 101 Z';
+const BROW_R = 'M287 112 L288 106 C288 103 290 101 293 100 L333 88 C336 87 339 89 340 92 L340 99 C340 101 339 103 337 103 L292 117 C289 118 287 116 287 112 Z';
 // la bouche : la ligne du milieu du zigzag ; l'épaisseur se compte à la verticale (les pointes restent nettes)
 const MOUTH = [[221, 166, 0.72], [238, 153, 1], [250.5, 166.5, 0.75], [272, 154.5, 0.95], [289.5, 165.8, 0.75], [303, 156.5, 0.9], [309, 166, 0.55]];
 const zig = (t, c, o = 1) => {
@@ -232,13 +232,13 @@ const headBody = use('head', 'url(#g-head)') + clip('head',
   + crack([[316, 158, 0], [322, 166, 2], [320, 176, 0]], 0.8)
 )
   // les yeux de lave, enfoncés : le creux autour est rougi par leur lumière
-  + oval(240, 112, 33, 23, 'url(#g-socket)', 1, 17) + oval(314, 112, 29, 21, 'url(#g-socket)', 1, -17)
+  + oval(240, 112, 33, 23, 'url(#g-socket)', 1, 17) + oval(311, 120, 26, 19, 'url(#g-socket)', 1, -17)
   + `<path d="${EYE_L}" fill="${LAVA.red}" stroke="#f2621e" stroke-width="4.4"/><path d="${EYE_R}" fill="${LAVA.red}" stroke="#f2621e" stroke-width="4"/>`
   + `<g class="a-eyes">${eyeGlow(EYE_L, 'eL')}${eyeGlow(EYE_R, 'eR')}`
-  + oval(241, 115, 1.9, 4.8, '#6a1c08', 1, -10) + oval(310, 113, 1.7, 4.4, '#6a1c08', 0.9, -6) + '</g>'
+  + oval(241, 115, 1.9, 4.8, '#6a1c08', 1, -10) + oval(309, 120, 1.6, 4.1, '#6a1c08', 0.9, -6) + '</g>'
   // l'ombre des sourcils sur le haut des yeux
   + `<g clip-path="url(#c-eL)"><path d="M206 92.5 L270 111.2 L270 122 L206 103 Z" fill="url(#g-browSh)"/></g>`
-  + `<g clip-path="url(#c-eR)"><path d="M284 108.5 L340 91 L340 102 L284 119.5 Z" fill="url(#g-browSh)"/></g>`
+  + `<g clip-path="url(#c-eR)"><path d="M284 119 L336 102 L336 113 L284 130 Z" fill="url(#g-browSh)"/></g>`
   // les sourcils : deux dalles épaisses ; le dessus éclairé, la face avant moyenne, le dessous dans l'ombre
   // chaque dalle pose son ombre sur le visage (en bas à gauche), puis : la face avant, le plan du dessus éclairé,
   // l'arête vive entre les deux, et le dessous dans l'ombre
@@ -246,9 +246,9 @@ const headBody = use('head', 'url(#g-head)') + clip('head',
   + shape(BROW_L, '#5f534d') + stone('211 80 214 75 266 90 271 96 265 98 214 84', '#94857a', 1, 0.4)
   + edge([[213, 83, 0], [240, 90, 1.6], [267, 98, 0]], EDGE, 0.8)
   + stone('212 91 266 106 271 106 266 110 214 95', '#30282c', 1, 0.3)
-  + shape(BROW_R, '#5a4e49') + stone('288 95 293 89 333 77 340 81 334 84 292 97', '#908174', 1, 0.4)
-  + edge([[290, 97, 0], [314, 90, 1.6], [337, 83, 0]], EDGE, 0.75)
-  + stone('289 102 336 88 340 88 337 92 292 106', '#30282c', 1, 0.3)
+  + shape(BROW_R, '#5a4e49') + stone('288 106 293 100 333 88 340 92 334 95 292 108', '#908174', 1, 0.4)
+  + edge([[290, 108, 0], [314, 101, 1.6], [337, 94, 0]], EDGE, 0.75)
+  + stone('289 113 336 99 340 99 337 103 292 117', '#30282c', 1, 0.3)
   // le nez : un bloc taillé entre les yeux ; l'arête étroite, puis le bout en trois plans (ombre à gauche, face,
   // plan éclairé à droite), les narines, et son ombre portée sur le visage (en bas à gauche)
   + shape('M261 143 L294 143 L291 151 L265 152 Z', '#211a20', 0.75)
