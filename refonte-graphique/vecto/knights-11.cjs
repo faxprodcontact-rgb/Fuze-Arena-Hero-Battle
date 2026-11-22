@@ -147,13 +147,14 @@ const S = {
   knot: sm([[322, 430], [330, 420], [343, 416], [357, 419], [365, 428], [364, 441], [355, 449], [342, 451], [329, 447], [322, 439]]),
   // le bras gauche : la manche, puis le poing posé sur la hanche
   sleeveL: sm([[212, 325], [252, 322], [266, 336], [262, 352], [252, 370], [243, 385], [235, 394, 1], [218, 401], [202, 406], [186, 411], [172, 409], [160, 404, 1], [164, 392], [170, 379], [173, 365], [179, 351], [194, 337]]),
-  fistL: sm([[188, 409], [202, 404], [218, 400], [234, 398], [246, 400], [254, 406], [258, 416], [259, 430], [256, 441], [248, 447], [234, 449], [220, 449], [207, 448], [202, 445, 1], [195, 449], [182, 448], [172, 442], [167, 432], [169, 421], [177, 413]]),
+  fistL: sm([[182, 409], [198, 404], [216, 400], [232, 399], [242, 402], [246, 410], [247, 428], [245, 444], [236, 449], [216, 450], [196, 449], [180, 445], [170, 436], [168, 424], [172, 414]]),
   // les doigts repliés, du haut vers le bas, au bout du poing
-  fk1: sm([[235, 411], [248, 409], [256, 412], [261, 418], [258, 424], [247, 426], [235, 425]]),
-  fk2: sm([[237, 425], [250, 423], [259, 426], [263, 432], [260, 438], [249, 440], [237, 439]]),
-  fk3: sm([[236, 439], [247, 437], [255, 440], [258, 445], [253, 449], [243, 450], [236, 449]]),
+  fk1: sm([[232, 409], [246, 407], [257, 409], [262, 414], [260, 419], [248, 420], [233, 419]]),
+  fk2: sm([[233, 419], [248, 418], [259, 420], [264, 425], [262, 430], [249, 431], [234, 430]]),
+  fk3: sm([[233, 430], [247, 429], [258, 431], [262, 436], [260, 441], [248, 442], [234, 441]]),
+  fk4: sm([[232, 441], [244, 440], [252, 442], [256, 446], [253, 450], [243, 451], [233, 450]]),
   // le bras droit : la grande manche ouverte, la main paume en haut
-  thumbL: sm([[220, 407], [230, 401], [242, 399], [252, 401], [258, 406], [256, 412], [246, 414], [232, 413], [222, 412]]),
+  thumbL: sm([[214, 405], [226, 400], [238, 402], [248, 408], [256, 415], [257, 423], [251, 427], [243, 424], [233, 417], [222, 412], [215, 410]]),
   sleeveR: sm([[404, 338], [440, 344], [466, 352], [492, 350], [499, 362], [503, 390], [508, 430], [494, 436], [474, 432], [458, 424], [446, 412], [434, 398], [418, 390], [404, 386], [398, 362]]),
   handR: sm([[492, 352], [500, 340], [505, 330], [512, 323], [520, 323], [526, 330], [528, 340], [533, 348], [544, 352], [558, 351], [570, 347], [579, 346], [583, 352], [580, 362], [572, 370], [560, 376], [536, 380], [510, 380], [494, 375]]),
   // le bout des doigts repliés, vus de face
@@ -361,14 +362,14 @@ const parts = [
   { id: 'fistL', cls: 'a-bob', d: S.fistL, rim: { on: ['sleeveL', 'belt'], color: SKIN.line, w: 1.1, o: 0.7 },
     shadow: [{ on: ['tail', 'legL', 'belt'], dx: -3, dy: 5, color: SH.fox, o: 0.35 }],
     body: use('fistL', 'url(#g-skin)') + clip('fistL',
-      shape('M164 430 C172 444 190 450 214 450 C236 451 250 448 258 440 L262 456 L160 456 Z', SKIN.shade, 0.6)
-      // l'ombre du poignet sous la manche
-      + shape('M184 408 C200 404 218 400 236 397 L238 404 C220 406 202 410 186 416 Z', SKIN.deep, 0.45)
-      + oval(214, 418, 13, 7, 'url(#g-soft)', 1, -12) + oval(180, 425, 7, 5, 'url(#g-soft)', 1, -20))
-      // le pli entre le talon de la main et le dos de la main
-      + shape(taper(202, 445, 198, 432, 201, 418, 1.6), SKIN.line, 0.7) },
-  // les doigts repliés : trois phalanges rondes, chacune pose une ombre douce sur la suivante (les jointures se lisent)
-  ...['fk3', 'fk2', 'fk1'].map((id, i, all) => ({
+      // le dessous du poing dans l'ombre, l'ombre du poignet sous la manche
+      shape('M166 432 C176 446 196 451 218 451 C234 451 244 448 250 440 L252 456 L160 456 Z', SKIN.shade, 0.6)
+      + shape('M182 408 C198 404 216 400 234 398 L236 405 C218 407 200 411 184 415 Z', SKIN.deep, 0.42)
+      // le dos de la main éclairé, et le relief des jointures avant les doigts
+      + oval(208, 420, 20, 8, 'url(#g-soft)', 1, -8)
+      + [[229, 413], [231, 424], [231, 435]].map(([x, y]) => oval(x, y, 3.2, 4.4, '#fff4ea', 0.55)).join('')) },
+  // les doigts repliés : quatre phalanges, chacune pose une ombre douce sur la suivante (les jointures se lisent)
+  ...['fk4', 'fk3', 'fk2', 'fk1'].map((id, i, all) => ({
     id, cls: 'a-bob', d: S[id], rim: { on: ['fistL', ...all.slice(0, i)], color: SKIN.line, w: 1.1, o: 0.8 },
     shadow: [{ on: ['fistL', ...all.slice(0, i)], dx: -2, dy: 3, color: SH.skin, o: 0.4 }],
     body: use(id, SKIN.shade) + clip(id, `<use href="#s-${id}" fill="url(#g-skin)" transform="translate(1.5 -2.5)"/>`) })),
@@ -376,9 +377,10 @@ const parts = [
   { id: 'thumbL', cls: 'a-bob', d: S.thumbL, rim: { on: ['fistL', 'fk1'], color: SKIN.line, w: 1.1, o: 0.8 },
     shadow: [{ on: ['fistL', 'fk1', 'fk2'], dx: -2, dy: 4, color: SH.skin, o: 0.42 }],
     body: use('thumbL', 'url(#g-skin)') + clip('thumbL',
-      shape('M218 410 C228 413 242 414 258 410 L258 418 L218 418 Z', SKIN.shade, 0.55)
-      + oval(236, 404, 9, 3, 'url(#g-soft)', 1, -3))
-      + shape('M246 404 C250 403 254 404 256 407 C254 410 250 411 247 410 C245 409 245 406 246 404 Z', '#ffe9dc', 0.95) },
+      shape('M214 410 C226 415 240 423 252 428 L250 436 L208 420 Z', SKIN.shade, 0.55)
+      + oval(234, 407, 11, 3.2, 'url(#g-soft)', 1, 30))
+      // l'ongle, au bout du pouce replié sur l'index
+      + shape('M249 414 C253 414 256 417 256 421 C254 423 251 423 249 421 C247 419 247 416 249 414 Z', '#ffe9dc', 0.95) },
 
   // --- le bras droit : la grande manche, la main ouverte ---
   { id: 'sleeveR', cls: 'a-arm', d: S.sleeveR, rim: { on: ['torso'], color: CLOTH.line, w: 1.1, o: 0.6 },
