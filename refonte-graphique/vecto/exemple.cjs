@@ -22,6 +22,7 @@ const HERO_X = { 3: 82, 4: 82, 2: 163, 0: 245, 1: 245 };
 const ENEMY_X = { 0: 475, 1: 475, 2: 557, 3: 638, 4: 638 };
 const ROW_DY = { 0: 90, 3: 90, 2: 180, 1: 270, 4: 270 };
 const GT = 733, FEET = 47, UNIT_PX = 0.56, SW = 720, SH = 1163;
+const CROP = 430; // le haut du ciel coupé dans la page
 
 // la place de chaque dessin dans le jeu : [ox, oy, w, h, échelle, stature] (art-meta.ts) ; les pieds au point 106, 228
 const meta = fs.readFileSync(`${REPO}/src/game/art-meta.ts`, 'utf8');
@@ -80,13 +81,16 @@ const heroes = HEROES.map((u) => unit(u, true));
 const monsters = MONSTERS.map((u) => unit(u, false));
 const all = [...heroes, ...monsters];
 const pc = (v, of) => `${((v / of) * 100).toFixed(3)}%`;
-const sceneUnit = (u, i) => `<div class="unit${u.hero ? '' : ' foe'}" data-p="${u.P}" style="left:${pc(u.box.left, SW)};top:${pc(u.box.top, SH)};width:${pc(u.box.width, SW)};z-index:${Math.round(u.Y)}">`
+const sceneUnit = (u, i) => `<div class="unit${u.hero ? '' : ' foe'}" data-p="${u.P}" style="left:${pc(u.box.left, SW)};top:${pc(u.box.top - CROP, SH - CROP)};width:${pc(u.box.width, SW)};z-index:${Math.round(u.Y)}">`
   + `<span class="shadow" style="left:${pc(u.X - u.box.left - u.shadow / 2, u.box.width)};top:${pc(u.Y - u.box.top - 10, u.box.height)};width:${pc(u.shadow, u.box.width)}"></span>`
   + `<div class="fig" style="animation-duration:${(2.6 + (i % 5) * 0.23).toFixed(2)}s">${u.svg}</div></div>`;
 
 const card = (u) => {
   const P = `g${n++}`;
-  const svg = scope(load(u.id).svg(true), P).replace('<svg ', `<svg class="fig-svg" data-p="${P}" `);
+  // dans la galerie, le dessin est cadré sur son cadre d'origine (sans la marge des animations) : même taille que l'ancien
+  const svg = scope(load(u.id).svg(true), P)
+    .replace(/<svg ([^>]*?)viewBox="[^"]*" width="[^"]*" height="[^"]*"/, `<svg $1viewBox="0 0 ${u.w} ${u.h}" width="${u.w}" height="${u.h}"`)
+    .replace('<svg ', `<svg class="fig-svg" data-p="${P}" `);
   return `<article class="card">
   <h2>${u.name}<small>${u.hero ? 'héros' : 'monstre'}</small></h2>
   <div class="pair">
@@ -108,8 +112,8 @@ main { max-width: 480px; margin: 0 auto; }
 header { padding: 18px 16px 10px; }
 h1 { margin: 0; font-size: 22px; color: var(--gold); }
 header p { margin: 4px 0 0; color: #c9d2f0; font-size: 14px; }
-.scene { position: relative; width: 100%; aspect-ratio: ${SW} / ${SH}; overflow: hidden; background: #8ec6e8; }
-.scene > img { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.scene { position: relative; width: 100%; aspect-ratio: ${SW} / ${SH - CROP}; overflow: hidden; background: #8ec6e8; }
+.scene > img { position: absolute; left: 0; top: ${((-CROP / (SH - CROP)) * 100).toFixed(3)}%; width: 100%; height: auto; display: block; }
 .unit { position: absolute; }
 .fig { position: relative; transform-origin: 50% 92%; animation: breathe 2.8s ease-in-out infinite; }
 .foe .fig { transform: scaleX(-1); }
