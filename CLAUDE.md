@@ -250,6 +250,15 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   regardée à côté du dessin d'origine ; 58 zones de fond ajoutées à `retirer` dans `retouches-detourage.json` (entre un bras
   et la tête, sous une jupe, entre des pics, entre les cordes d'une lyre…). Logo, 32 effets et premiers plans des décors
   contrôlés : rien à corriger. Chaîne complète en une commande : voir l'ordre de la v0.36.0 (25 minutes).
+  **v0.37.0 (22/11/2026), page d'un héros refaite** (le propriétaire : « les héros passent moins bien en gros », page « un peu
+  plus comme avant ») : le héros se tient, à taille modeste, dans **sa case** (fenêtre sur le décor de son élément : `HeroScene`
+  avec `crop` ; cadre de métal de la rareté `.hcard-frame`, niveau, élément, couronne du chef, étoiles ; flèches à cheval sur le
+  cadre, ou geste sur la case) ; à côté : rareté et rôle, puissance, les quatre attributs principaux ; dessous, les quatre
+  secondaires sur une rangée ; puis un panneau sombre qui défile : équipement (un emplacement ouvre sa fenêtre qui monte du bas,
+  `.hp-sheet`), niveau, attaque spéciale (aperçu en boucle à la demande, bouton ▶), talents (★3, ★5), chef de section. Les
+  passifs s'appellent « Talent » dans le jeu. Plus d'onglets ni de panneau déployable. Vérifier avec `scratchpad/art5/her7.cjs`
+  (et `her7.cjs se`). Essai abandonné le même jour à la demande du propriétaire : Ruka redessinée entièrement par le code
+  (`refonte-graphique/vecto/`) ; on garde les dessins Hailuo.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

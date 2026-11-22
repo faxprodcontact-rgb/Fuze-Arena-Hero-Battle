@@ -524,9 +524,10 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 }
 
 /* ---------- La page d'un héros (screens/hero-detail.tsx, hero-scene.tsx) ---------- */
-/* de haut en bas : le titre et ses flèches, les étiquettes, la scène (elle prend la place qui reste), le panneau */
-.hero-page { background: #0b0f2a; gap: 0; animation: fade 0.2s; }
-.hero-scene::after { background: linear-gradient(180deg, #05061a8c 0%, #05061a00 16%, #05061a00 56%, #05061a99 78%, #05061ae6 100%); }
+/* de haut en bas : le titre ; la case du héros et, à côté, sa puissance et ses attributs ; le panneau sombre (il défile) */
+.hero-page { background: #0b0f2a; gap: 10px; animation: fade 0.2s; }
+.hero-page > .hp-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(70% 34% at 28% 22%, color-mix(in srgb, var(--el) 30%, #0000), #0000 100%), linear-gradient(180deg, #1a2154 0%, #0e1336 48%, #0b0f2a 100%); }
 .hp-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding-top: max(10px, env(safe-area-inset-top, 0px)); }
 .hp-head .title-banner { flex: 0 1 216px; min-width: 0; }
 .hp-back { width: 38px; height: 38px; flex: none; font: 800 24px/1 var(--font-title); padding-bottom: 4px; color: #fff6dc; border-radius: 12px;
@@ -539,108 +540,164 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 .hp-team.on { box-shadow: inset 0 0 0 2px var(--gold-hi), 0 0 10px 1px var(--gold), 0 2px 5px #000a; }
 .hp-team.on .icon { filter: none; }
 .hp-team.on i { background: linear-gradient(180deg, var(--green-hi), var(--green-dark)); font-size: 11px; }
-.hp-arrow { position: absolute; top: 14%; z-index: 3; width: 36px; height: 50px; display: grid; place-items: center; filter: drop-shadow(0 2px 3px #000a); animation: hp-nudge 1.8s ease-in-out infinite; }
-.hp-arrow-l { left: 6px; } .hp-arrow-r { right: 6px; animation-name: hp-nudge-r; }
-.hp-arrow:active { filter: brightness(1.3); }
-@keyframes hp-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-3px); } }
-@keyframes hp-nudge-r { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
-.hp-tags { flex: none; display: flex; justify-content: center; gap: 6px; margin-top: 3px; }
-.hp-tag { display: inline-flex; align-items: center; gap: 4px; padding: 0 9px; border-radius: 9px; font: 800 12px/20px var(--font-title); color: #fff; text-shadow: 0 1px 0 #0009;
-  background: #0b0f2ad9; border: 1px solid #ffffff4d; box-shadow: 0 2px 4px #0006; }
-.hp-tag-rar { background: linear-gradient(180deg, color-mix(in srgb, var(--rar) 80%, #fff), color-mix(in srgb, var(--rar) 70%, #000)); border-color: color-mix(in srgb, var(--rar) 40%, #000); }
-.hp-tag-lead { padding: 0 6px; background: linear-gradient(180deg, #5a3a0a, #2f1b0c); border-color: var(--gold); }
-/* la scène : le héros sur son piédestal (ses pieds au point 50 %, 76 % du dessin), son équipement de chaque côté */
-.hp-stage { position: relative; flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; container-type: size; padding-bottom: 6px; }
-.hp-art { position: relative; flex: none; width: min(78%, 300px); aspect-ratio: 300 / 310; }
-.hp-art { width: min(80cqw, (100cqh - 64px) * 0.9, 370px); }
-.pedestal { position: absolute; left: 0; bottom: 0; width: 100%; height: auto; overflow: visible; }
-.pd-ring { transform-origin: 0 0; animation: an-spin 26s linear infinite; }
-.hp-fig { position: absolute; left: 50%; top: 76.1%; width: 68%; transform: translate(-53%, -95%); animation: hp-enter 0.32s ease-out; }
+
+/* le haut : la case (46 % de la largeur) et la colonne d'à côté */
+.hp-top { flex: none; display: grid; grid-template-columns: 46% minmax(0, 1fr); gap: 12px; align-items: stretch; }
+.hp-card-wrap { position: relative; }
+/* la case : une fenêtre sur le décor de l'élément, cerclée de métal de la couleur de la rareté (.hcard-frame) */
+.hp-card { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden; isolation: isolate; border: 1.5px solid #070a1c;
+  background: #0b0f2a; box-shadow: 0 6px 14px #000000a6; }
+.hp-card .hero-scene { z-index: 0; }
+.hp-card .hero-scene::after { background: linear-gradient(180deg, #05061a59 0%, #05061a00 22%, #05061a00 66%, #05061ad9 100%); }
+.hp-card .hcard-frame { border-radius: 12.5px; padding: 4.5px; z-index: 5; }
+.hp-ped { position: absolute; left: 10%; width: 80%; top: 79%; transform: translateY(-28.8%); z-index: 1; }
+.hp-ped .pedestal { position: static; display: block; }
+.hp-fig { position: absolute; left: 50%; top: 79%; width: 64%; z-index: 2; transform: translate(-53%, -95%); animation: hp-enter 0.32s ease-out; }
 .hp-fig.hp-up { animation: none; }
 .hp-fig .hfig { transform-origin: 53% 95%; animation: hf-breathe 3.4s ease-in-out infinite; }
-.hp-fig .hfig img { filter: drop-shadow(0 4px 4px #000000a6); }
+.hp-fig .hfig img { filter: drop-shadow(0 3px 3px #000000a6); }
 .hp-fig.hp-up .hfig img { animation: hp-bright 0.6s ease-out; }
 @keyframes hp-enter { from { opacity: 0; transform: translate(-53%, -93%) scale(0.92); } to { opacity: 1; transform: translate(-53%, -95%) scale(1); } }
-@keyframes hp-bright { 0% { filter: drop-shadow(0 4px 4px #000000a6) brightness(2.2); } 100% { filter: drop-shadow(0 4px 4px #000000a6) brightness(1); } }
+@keyframes hp-bright { 0% { filter: drop-shadow(0 3px 3px #000000a6) brightness(2.2); } 100% { filter: drop-shadow(0 3px 3px #000000a6) brightness(1); } }
 /* la lueur derrière le héros : de la couleur de sa rareté, plus forte quand il est rare */
-.hp-aura { position: absolute; left: 50%; top: 44%; width: 118%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; pointer-events: none;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--rar) 70%, #fff) 0, color-mix(in srgb, var(--rar) 60%, #0000) 34%, #0000 100%); opacity: 0.3; animation: glow-pulse 3.2s ease-in-out infinite; }
-.hp-rare .hp-aura { opacity: 0.45; } .hp-epic .hp-aura { opacity: 0.6; } .hp-legendary .hp-aura { opacity: 0.72; }
-.hp-halo { position: absolute; left: 50%; top: 44%; translate: -50% -50%; opacity: 0.8; pointer-events: none; }
+.hp-aura { position: absolute; left: 50%; top: 52%; width: 100%; aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; pointer-events: none; z-index: 1;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--rar) 70%, #fff) 0, color-mix(in srgb, var(--rar) 60%, #0000) 34%, #0000 100%); opacity: 0.25; animation: glow-pulse 3.2s ease-in-out infinite; }
+.hp-rare .hp-aura { opacity: 0.4; } .hp-epic .hp-aura { opacity: 0.52; } .hp-legendary .hp-aura { opacity: 0.62; }
+.hp-halo { position: absolute; left: 50%; top: 50%; translate: -50% -50%; opacity: 0.75; pointer-events: none; z-index: 1; }
+/* ce qui est posé sur le cadre : le niveau (onglet en haut à gauche), l'élément dans son œillet, la couronne du chef, les étoiles */
+.hp-card-lv { position: absolute; top: 0; left: 0; z-index: 6; padding: 0 8px 0 9px; font: 800 13px/22px var(--font-title); color: #fff6dc; text-shadow: 0 1px 0 #000a;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rar) 60%, #1a1030), color-mix(in srgb, var(--rar) 30%, #0b0718)); border-radius: 13px 0 10px 0;
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--rar) 55%, #fff6), 0 2px 4px #0008; }
+.hp-card-el { position: absolute; top: 5px; right: 5px; z-index: 6; width: 28px !important; height: 28px !important; border-radius: 50%; background-color: #160d06d9;
+  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--rar) 55%, #fff), 0 1px 3px #000c; }
+.hp-card-lead { position: absolute; top: 38px; right: 5px; z-index: 6; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #6a4a12, #2f1b0c 75%); box-shadow: 0 0 0 1.5px var(--gold), 0 1px 3px #000c; }
+.hp-card-stars { position: absolute; left: 0; right: 0; bottom: 7px; z-index: 6; display: flex; justify-content: center; }
+.hp-card-stars .stars { font-size: 15px; line-height: 17px; filter: drop-shadow(0 1px 2px #000); }
 /* un niveau gagné : un anneau s'élargit sur le piédestal, une colonne de lumière monte, des étincelles s'envolent,
    le nouveau niveau jaillit au-dessus du héros */
-.hp-levelup { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
-.hp-flash { position: absolute; left: 50%; top: 76.1%; width: 72%; aspect-ratio: 5.4; translate: -50% -50%; border-radius: 50%; border: 4px solid #fff; box-shadow: 0 0 18px 6px var(--el), inset 0 0 12px 3px var(--el); opacity: 0; animation: hp-flash 0.8s ease-out; }
-.hp-flash::after { content: ''; position: absolute; left: 6%; right: 6%; bottom: 50%; height: 1500%; border-radius: 40% 40% 0 0 / 8% 8% 0 0;
+.hp-levelup { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.hp-flash { position: absolute; left: 50%; top: 79%; width: 70%; aspect-ratio: 5.4; translate: -50% -50%; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 14px 5px var(--el), inset 0 0 10px 3px var(--el); opacity: 0; animation: hp-flash 0.8s ease-out; }
+.hp-flash::after { content: ''; position: absolute; left: 6%; right: 6%; bottom: 50%; height: 1100%; border-radius: 40% 40% 0 0 / 8% 8% 0 0;
   background: linear-gradient(0deg, #fffffff2, color-mix(in srgb, var(--el) 75%, #fff0) 36%, color-mix(in srgb, var(--el) 30%, #fff0) 70%, #fff0); animation: hp-column 0.8s ease-out forwards; }
 @keyframes hp-flash { 0% { transform: scale(0.4); opacity: 1; } 100% { transform: scale(1.6); opacity: 0; } }
 @keyframes hp-column { 0% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(0.25); opacity: 0; } }
-.hp-spark { position: absolute; top: 74%; width: 7px; height: 7px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 3px var(--el); opacity: 0; animation: hp-spark 0.9s ease-out forwards; }
+.hp-spark { position: absolute; top: 77%; width: 6px; height: 6px; border-radius: 50%; background: #fff; box-shadow: 0 0 7px 3px var(--el); opacity: 0; animation: hp-spark 0.9s ease-out forwards; }
 @keyframes hp-spark { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(calc(var(--h) * -1)) scale(0.3); opacity: 0; } }
-.hp-lvpop { position: absolute; left: 50%; top: 6%; translate: -50% 0; white-space: nowrap; font: 800 26px/1 var(--font-title); color: #fff6c8; -webkit-text-stroke: 4px #2f1b0c; paint-order: stroke fill;
-  text-shadow: 0 0 14px var(--el), 0 3px 0 #2f1b0c; opacity: 0; animation: hp-lvpop 1.1s cubic-bezier(.2, 1.4, .4, 1) forwards; }
-@keyframes hp-lvpop { 0% { transform: translateY(40px) scale(0.4); opacity: 0; } 25% { transform: translateY(0) scale(1.15); opacity: 1; } 70% { transform: translateY(-8px) scale(1); opacity: 1; } 100% { transform: translateY(-26px) scale(1); opacity: 0; } }
-/* l'équipement : deux emplacements de chaque côté du héros */
-.hp-slots { position: absolute; bottom: 74px; display: flex; flex-direction: column; gap: 10px; z-index: 2; }
-.hp-slots-l { left: 0; } .hp-slots-r { right: 0; }
-.hp-slot { position: relative; border-radius: 13px; }
+.hp-lvpop { position: absolute; left: 50%; top: 9%; translate: -50% 0; white-space: nowrap; font: 800 22px/1 var(--font-title); color: #fff6c8; -webkit-text-stroke: 4px #2f1b0c; paint-order: stroke fill;
+  text-shadow: 0 0 12px var(--el), 0 3px 0 #2f1b0c; opacity: 0; animation: hp-lvpop 1.1s cubic-bezier(.2, 1.4, .4, 1) forwards; }
+@keyframes hp-lvpop { 0% { transform: translateY(30px) scale(0.4); opacity: 0; } 25% { transform: translateY(0) scale(1.15); opacity: 1; } 70% { transform: translateY(-6px) scale(1); opacity: 1; } 100% { transform: translateY(-20px) scale(1); opacity: 0; } }
+/* les flèches : à mi-hauteur de la case, à cheval sur son cadre */
+.hp-arrow { position: absolute; top: 50%; z-index: 7; width: 28px; height: 44px; margin-top: -22px; display: grid; place-items: center; filter: drop-shadow(0 2px 3px #000c); animation: hp-nudge 1.8s ease-in-out infinite; }
+.hp-arrow svg { width: 18px; height: 28px; }
+.hp-arrow-l { left: -11px; } .hp-arrow-r { right: -11px; animation-name: hp-nudge-r; }
+.hp-arrow:active { filter: brightness(1.3); }
+@keyframes hp-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(-3px); } }
+@keyframes hp-nudge-r { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
+
+/* la colonne d'à côté : étiquettes, puissance, attributs */
+.hp-side { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+.hp-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.hp-tag { display: inline-flex; align-items: center; gap: 4px; padding: 0 8px; border-radius: 9px; font: 800 12px/21px var(--font-title); color: #fff; text-shadow: 0 1px 0 #0009;
+  background: #ffffff14; border: 1px solid #ffffff38; box-shadow: 0 2px 4px #0006; white-space: nowrap; }
+.hp-tag-rar { background: linear-gradient(180deg, color-mix(in srgb, var(--rar) 80%, #fff), color-mix(in srgb, var(--rar) 70%, #000)); border-color: color-mix(in srgb, var(--rar) 40%, #000); }
+.hp-power { display: flex; align-items: center; gap: 6px; padding: 4px 12px 4px 8px; border-radius: 12px;
+  background: linear-gradient(180deg, #34407e, #121738); border: 1.5px solid #070a1c; box-shadow: inset 0 0 0 1.5px #e3b548, inset 0 0 0 3px #00000040, 0 4px 8px #000a; }
+.hp-power b { font: 800 24px/30px var(--font-title); color: var(--gold-hi); text-shadow: 0 2px 0 #2a1802; letter-spacing: 0.3px; }
+/* les attributs : quatre principaux en creux (picto, valeur, nom), quatre secondaires plus petits */
+.stat-main { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.stat-main span { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 5px; padding: 7px 9px 5px 7px; border-radius: 10px;
+  background: #070b2499; border: 1px solid #070b24; box-shadow: inset 0 2px 4px #00000073, 0 1px 0 #ffffff1a; }
+.stat-main b { font: 800 17px/19px var(--font-title); color: #fff; text-align: right; white-space: nowrap; }
+.stat-main small { grid-column: 1 / -1; font-size: 10.5px; font-weight: 800; color: #b9c6e6; text-align: right; line-height: 13px; }
+/* les secondaires : une rangée de quatre, sous la case */
+.stat-minor { flex: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.stat-minor span { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 4px; padding: 4px 7px 3px 5px; border-radius: 9px;
+  background: #070b2480; border: 1px solid #070b24cc; box-shadow: inset 0 2px 3px #00000059; min-width: 0; }
+.stat-minor .stat-icon { width: 16px; height: 16px; }
+.stat-minor b { font: 800 13.5px/16px var(--font-title); color: #fff; text-align: right; white-space: nowrap; }
+.stat-minor small { grid-column: 1 / -1; font-size: 10px; font-weight: 800; color: #b9c6e6; text-align: right; line-height: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stat-icon { flex: none; filter: drop-shadow(0 1px 1px #0009); }
+
+/* le panneau du bas : pierre de nuit sertie d'or ; tout ce qu'il contient défile dedans. Les pièces qu'il contient
+   (blocs, boutons clairs, textes) prennent ses couleurs par ces variables. */
+.hp-panel { --panel-flat: #2c3a78; --groove: #0b1030; --edge: #070a1c; --trim: #e3b548; --trim-soft: #ffffff3d; --inset: #070b2466; --inset-line: #070b24a6; --field: #101b3f99;
+  --text: #f4f0e4; --muted: #b9c6e6; --title: #ffe6a8; --accent-text: #ffd978; --ghost-1: #ffffff2e; --ghost-2: #ffffff14; --ghost-edge: #070a1c; --ghost-text: #f4f0e4; --chip: #ffffff1f;
+  flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 9px; color: var(--text);
+  margin: 0 calc(-1 * max(12px, env(safe-area-inset-right, 0px))) 0 calc(-1 * max(12px, env(safe-area-inset-left, 0px)));
+  padding: 14px max(12px, env(safe-area-inset-right, 0px)) max(14px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  background: var(--corner-tl) 4px 4px no-repeat, var(--corner-tr) calc(100% - 4px) 4px no-repeat, linear-gradient(180deg, #ffffff1f 0, #ffffff00 26px), linear-gradient(180deg, #2f3b7c 0%, #1f275c 40%, #121634 100%);
+  background-attachment: local; border-top: 1.5px solid #070a1c; border-radius: 18px 18px 0 0; box-shadow: inset 0 1.5px 0 #e3b548, inset 0 3px 0 #00000040, 0 -6px 14px #000a; }
+.hp-panel > * { flex: none; }
+.hp-panel h3 { color: var(--title); margin: 0; font: 800 14px/18px var(--font-title); }
+.hp-panel p { margin: 0; font-size: 13px; line-height: 18px; color: #dfe5f7; }
+.hp-panel .gold-text { color: var(--gold-hi); }
+/* l'équipement : quatre emplacements, puis le bouton qui équipe le meilleur */
+.hp-gear { display: flex; align-items: center; gap: 8px; }
+.hp-slot { position: relative; flex: none; border-radius: 13px; }
 .hp-slot .item { box-shadow: 0 3px 7px #000a; }
 .hp-slot .item-empty { background: radial-gradient(circle at 50% 40%, #232c66, #0b0f2a 80%); border: 1.5px solid #070a1c; box-shadow: inset 0 3px 6px #000c, inset 0 0 0 1.5px #7f8fd059, 0 3px 7px #000a; }
 .hp-slot .item-empty .item-ghost { opacity: 0.42; filter: grayscale(1) brightness(1.7); }
 .hp-slot .item-empty::after { content: '+'; position: absolute; right: -5px; bottom: -5px; width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; font: 800 14px/1 var(--font); color: #4a2c00;
   background: linear-gradient(180deg, var(--gold-hi), var(--gold-dark)); border: 1.5px solid #2f1b0c; }
 .hp-slot.on { box-shadow: 0 0 0 2px var(--gold-hi), 0 0 12px 2px var(--gold); }
-/* la plaque sous le piédestal : les étoiles, la puissance */
-.hp-plate { position: relative; z-index: 2; flex: none; display: flex; align-items: center; gap: 10px; margin-top: -10px; padding: 1px 16px 2px; border-radius: 12px;
-  background: linear-gradient(180deg, #34407e, #121738); border: 1.5px solid #070a1c; box-shadow: inset 0 0 0 1.5px #e3b548, inset 0 0 0 3px #00000040, 0 4px 8px #000a; }
-.hp-plate .stars { font-size: 17px; letter-spacing: 0; }
-.hp-power { display: inline-flex; align-items: center; gap: 3px; font: 800 16px/26px var(--font-title); color: var(--gold-hi); text-shadow: 0 1px 0 #000a; }
-/* le panneau du bas : pierre de nuit sertie d'or, trois onglets, le contenu défile dedans. Les pièces qu'il contient
-   (onglets, blocs, boutons clairs, textes) prennent ses couleurs par ces variables. */
-.hp-panel { --panel-flat: #2c3a78; --groove: #0b1030; --edge: #070a1c; --trim: #e3b548; --trim-soft: #ffffff3d; --inset: #070b2466; --inset-line: #070b24a6; --field: #101b3f99;
-  --text: #f4f0e4; --muted: #b9c6e6; --title: #ffe6a8; --accent-text: #ffd978; --ghost-1: #ffffff2e; --ghost-2: #ffffff14; --ghost-edge: #070a1c; --ghost-text: #f4f0e4; --chip: #ffffff1f;
-  position: absolute; left: 0; right: 0; bottom: 0; height: 100%; display: flex; flex-direction: column; gap: 7px; color: var(--text); transition: height 0.3s cubic-bezier(.2, .9, .3, 1);
-  padding: 0 max(12px, env(safe-area-inset-right, 0px)) 0 max(12px, env(safe-area-inset-left, 0px));
-  background: var(--corner-tl) 4px 4px no-repeat, var(--corner-tr) calc(100% - 4px) 4px no-repeat, linear-gradient(180deg, #ffffff24 0, #ffffff00 26px), linear-gradient(180deg, #3a4888 0%, #232c66 40%, #141938 100%);
-  border-top: 1.5px solid #070a1c; border-radius: 18px 18px 0 0; box-shadow: inset 0 1.5px 0 #e3b548, inset 0 3px 0 #00000040, 0 -6px 14px #000a; }
-/* la place du panneau dans la page ; déployé (.tall), il monte par-dessus la scène sans la déplacer */
-.hp-panel-slot { position: relative; z-index: 4; flex: 0 0 clamp(236px, 31%, 290px); min-height: 0;
-  margin: 0 calc(-1 * max(12px, env(safe-area-inset-right, 0px))) 0 calc(-1 * max(12px, env(safe-area-inset-left, 0px))); }
-.hp-panel.tall { height: 76vh; height: 76dvh; box-shadow: inset 0 1.5px 0 #e3b548, inset 0 3px 0 #00000040, 0 -10px 30px #000c; }
-/* la poignée : une barrette d'or, en haut du panneau */
-.hp-grab { flex: none; align-self: stretch; height: 15px; display: grid; place-items: center; margin-bottom: -5px; }
-.hp-grab i { width: 46px; height: 5px; border-radius: 3px; background: linear-gradient(180deg, var(--gold-hi), var(--gold-dark)); box-shadow: 0 0 0 1px #070a1c, 0 1px 3px #000a; }
-.hp-panel .tab:not(.tab-on) { color: #c9d2f5; }
-.hp-panel h3 { color: var(--title); }
-.hp-panel .gold-text { color: var(--gold-hi); }
-.hp-slot-name { display: flex; align-items: center; gap: 6px; margin: 0; font: 800 15px var(--font-title); }
-/* les attributs : quatre principaux gravés en creux (picto, valeur, nom), quatre secondaires sur une ligne */
-.stat-main { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.stat-main span { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 4px; padding: 5px 6px 4px; border-radius: 10px; background: #070b2480; border: 1px solid #070b24cc; box-shadow: inset 0 2px 4px #00000073, 0 1px 0 #ffffff1f; }
-.stat-main b { font: 800 16px/18px var(--font-title); color: #fff; text-align: right; }
-.stat-main small { grid-column: 1 / -1; font-size: 10px; font-weight: 800; color: var(--muted); text-align: right; line-height: 12px; }
-.stat-minor { display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 6px; }
-.stat-minor span { display: flex; align-items: center; gap: 5px; padding: 2px 8px 2px 5px; border-radius: 9px; background: #070b2459; border: 1px solid #070b2499; }
-.stat-minor .stat-icon { width: 17px; height: 17px; }
-.stat-minor small { flex: 1; font-size: 11.5px; font-weight: 800; color: var(--muted); white-space: nowrap; }
-.stat-minor b { font: 800 14px var(--font-title); color: #fff; }
-.stat-icon { flex: none; filter: drop-shadow(0 1px 1px #0009); }
-.hp-panel > .tabs { flex: none; }
-.hp-body { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; padding: 1px 1px max(12px, env(safe-area-inset-bottom, 0px));
-  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 14px), #0000); mask-image: linear-gradient(180deg, #000 calc(100% - 14px), #0000); }
-.hp-body > * { flex: none; }
+.hp-auto { flex: 1; min-width: 0; align-self: stretch; padding: 4px 6px !important; font-size: 12.5px !important; line-height: 15px !important; white-space: normal; text-align: center; }
+/* le niveau */
 .hp-level { display: flex; align-items: center; gap: 10px; }
 .hp-level strong { font: 800 16px var(--font-title); white-space: nowrap; }
 .hp-level .bar { flex: 1; min-width: 30px; height: 12px; }
-.hp-body .slot-panel { margin-top: 0; }
+/* l'attaque spéciale et les talents : des plaques en creux */
+.hp-skill, .hp-talent { border-radius: 12px; background: #070b2470; border: 1px solid #070b24b3; box-shadow: inset 0 2px 5px #00000066, 0 1px 0 #ffffff14; }
+.hp-skill { display: flex; flex-direction: column; gap: 6px; padding: 9px 10px 10px; }
+.hp-skill-head { display: flex; align-items: center; gap: 9px; }
+.hp-medal { flex: none; width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--el) 45%, #1a2154), #0b0f2a 78%); box-shadow: 0 0 0 2px #070a1c, 0 0 0 3.5px var(--gold), 0 2px 5px #000a; }
+.hp-skill-name { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.hp-skill-name small { font-size: 11px; font-weight: 800; color: var(--muted); line-height: 13px; }
+.hp-skill-name b { font: 800 16px/20px var(--font-title); color: var(--title); }
+.hp-play { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border-radius: 50%; color: #4a2c00;
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold-dark)); border: 1.5px solid #2f1b0c; box-shadow: inset 0 1.5px 0 #fff8, 0 2px 4px #000a; }
+.hp-play.on { color: #fff; background: linear-gradient(180deg, #3a4888, #1a2254); border-color: #070a1c; box-shadow: inset 0 0 0 1.5px #e3b548a6, 0 2px 4px #000a; }
+.hp-play:active { transform: translateY(1px); }
+.hp-skill .skill-preview { margin-top: 2px; }
+.hp-talent { display: flex; align-items: flex-start; gap: 10px; padding: 8px 10px; }
+.hp-talent > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hp-req { flex: none; min-width: 38px; height: 24px; display: inline-flex; align-items: center; justify-content: center; gap: 2px; padding: 0 6px; margin-top: 1px; border-radius: 12px;
+  font: 800 13px/1 var(--font-title); color: #4a2c00; background: linear-gradient(180deg, var(--gold-hi), var(--gold-dark)); border: 1.5px solid #2f1b0c; }
+.hp-talent.locked { opacity: 0.62; }
+.hp-talent.locked .hp-req { color: #dfe5f7; background: linear-gradient(180deg, #4a5584, #262e5a); border-color: #070a1c; }
+.hp-lead .hp-req { background: radial-gradient(circle at 50% 35%, #6a4a12, #2f1b0c 75%); border-color: var(--gold); }
+
+/* un emplacement ouvert : une fenêtre qui monte du bas, par-dessus la page (toucher au-dessus la referme) */
+.hp-sheet-wrap { position: absolute !important; inset: 0; z-index: 20 !important; display: flex; flex-direction: column; justify-content: flex-end; background: #03051299; animation: fade 0.18s; }
+.hp-sheet { --panel-flat: #2c3a78; --groove: #0b1030; --edge: #070a1c; --trim: #e3b548; --trim-soft: #ffffff3d; --inset: #070b2466; --inset-line: #070b24a6; --field: #101b3f99;
+  --text: #f4f0e4; --muted: #b9c6e6; --title: #ffe6a8; --accent-text: #ffd978; --ghost-1: #ffffff2e; --ghost-2: #ffffff14; --ghost-edge: #070a1c; --ghost-text: #f4f0e4; --chip: #ffffff1f;
+  max-height: 78%; display: flex; flex-direction: column; gap: 9px; color: var(--text); animation: hp-sheet-up 0.26s cubic-bezier(.2, .9, .3, 1);
+  padding: 12px max(12px, env(safe-area-inset-right, 0px)) max(14px, env(safe-area-inset-bottom, 0px)) max(12px, env(safe-area-inset-left, 0px));
+  background: var(--corner-tl) 4px 4px no-repeat, var(--corner-tr) calc(100% - 4px) 4px no-repeat, linear-gradient(180deg, #ffffff24 0, #ffffff00 26px), linear-gradient(180deg, #3a4888 0%, #232c66 40%, #141938 100%);
+  border-top: 1.5px solid #070a1c; border-radius: 18px 18px 0 0; box-shadow: inset 0 1.5px 0 #e3b548, inset 0 3px 0 #00000040, 0 -10px 30px #000c; }
+@keyframes hp-sheet-up { from { transform: translateY(40%); opacity: 0.4; } to { transform: translateY(0); opacity: 1; } }
+.hp-sheet-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hp-sheet-slots { display: flex; gap: 6px; }
+.hp-sheet-tab { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 12px; background: #070b2480; border: 1.5px solid #070a1c; box-shadow: inset 0 2px 4px #0008; }
+.hp-sheet-tab .icon { filter: saturate(0.4) brightness(0.8); }
+.hp-sheet-tab.on { background: linear-gradient(180deg, #4a5aa8, #232c66); box-shadow: inset 0 0 0 2px var(--gold-hi), 0 0 9px 1px var(--gold); }
+.hp-sheet-tab.on .icon { filter: none; }
+.hp-sheet-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px; }
+.hp-sheet-body > * { flex: none; }
+.hp-sheet h3 { color: var(--title); }
+.hp-slot-name { display: flex; align-items: center; gap: 6px; margin: 0; font: 800 15px var(--font-title); }
+.hp-sheet .slot-panel { margin-top: 0; }
+
 @media (max-height: 700px) {
-  .hp-panel-slot { flex-basis: 250px; }
-  .hp-panel { gap: 6px; }
-  .hp-body .btn { min-height: 40px; }
-  .hp-body { gap: 6px; }
-  .stat-main span { padding: 3px 6px 2px; }
-  .stat-minor span { padding: 1px 8px 1px 5px; }
-  .hp-slots { gap: 6px; }
+  .hero-page { gap: 8px; }
+  .hp-top { grid-template-columns: 44% minmax(0, 1fr); gap: 10px; }
+  .hp-side { gap: 6px; }
+  .hp-power b { font-size: 20px; line-height: 26px; }
+  .stat-main span { padding: 3px 7px 2px 5px; }
+  .stat-minor span { padding: 3px 6px 2px 4px; }
+  .hp-panel { gap: 7px; padding-top: 12px; }
+  .hp-panel .btn { min-height: 40px; }
 }
 
 /* ---------- Invocation ---------- */

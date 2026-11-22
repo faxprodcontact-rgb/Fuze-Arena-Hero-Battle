@@ -386,8 +386,9 @@ const EARTH: Layers = {
 
 const SCENES: Record<Element, Layers> = { fire: FIRE, wind: WIND, water: WATER, earth: EARTH };
 
-export function HeroScene({ element }: { element: Element }) {
-  const box = { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'xMidYMin slice' };
+/** `crop` = [haut, hauteur] : seulement cette bande du décor, centrée dans la place donnée (la case de la page d'un héros). */
+export function HeroScene({ element, crop }: { element: Element; crop?: [number, number] }) {
+  const box = crop ? { viewBox: `0 ${crop[0]} ${W} ${crop[1]}`, preserveAspectRatio: 'xMidYMid slice' } : { viewBox: `0 0 ${W} ${H}`, preserveAspectRatio: 'xMidYMin slice' };
   const { Back, Mid, Front, Top } = SCENES[element];
   // la clé force le navigateur à redessiner les quatre calques quand on passe d'un héros à un autre élément
   return (
