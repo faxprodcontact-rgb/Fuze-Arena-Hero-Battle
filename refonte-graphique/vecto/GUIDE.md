@@ -89,6 +89,7 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Plumes en faucille (queue de coq) | `epouvantails-1.cjs` → `quillPts`, `TAIL` (un dégradé par plume, de la racine à la pointe) |
 | Plumes et ailes | `assassins-5.cjs` → `feather`, `quill`, `plume` (réutilisées par `<use>`, fichier léger) ; `glaces-4.cjs` → `feather`, `row`, `ruff` |
 | Ailes translucides | `assassins-12.cjs` → morceaux `wingU`, `wingD` |
+| Éclair tenu et sa lueur, couronne de laurier, regard en colère (paupière lourde) | `mages-9.cjs` → `boltBody`, `leafPt`, morceau `crown`, paupières dans `faceBody` |
 | Flammes, lueur intérieure | `bayou-4.cjs` → `tongue`, `band`, `face` ; flamme tenue : `knights-11.cjs` (morceau `flame`) |
 | Roche, lave, fissures | `knights-8.cjs` → `stone`, `crack`, `fissure`, `glowSteps` |
 | Métal à rivets, dents, étincelle | `parade-1.cjs` → `stud`, `tooth`, `sparkBody` |
@@ -107,9 +108,9 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Hampe tenue (trident, lance), flamme bleue sans contour | `myths-12.cjs` → morceaux `trident`, `handL`, `flame` (`flameBody`) |
 | Épaulière en écailles, bottes de fer | `myths-12.cjs` → morceaux `pauR`, `legL`, `legR` |
 
-## Faits (19)
+## Faits (20)
 
-Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Séraphin `angels-4`, Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
+Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Séraphin `angels-4`, Nimue `mages-9` (le dessin montre un dieu de l'orage doré), Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
 Rook `assassins-5` · monstres : pétard `parade-1`, méduse `abysses-3`, feu follet `bayou-4`, chouette `glaces-4`,
 escargot de cristal `cuirasses-4`, épouvantail `epouvantails-2`, renard de feuilles `ronciers-1`, dino-voile `bayou-1`, lion de la parade `parade-2`, coq-girouette `epouvantails-1`, blaireau moussu `ronciers-2`.
 
@@ -118,7 +119,7 @@ escargot de cristal `cuirasses-4`, épouvantail `epouvantails-2`, renard de feui
 Ordre : d'abord les monstres que le joueur rencontre en premier (région 1 de la campagne : familles `parade`,
 `epouvantails`, `bayou`, `ronciers`), en intercalant un héros Légendaire (l'invocation les montre en grand).
 
-1. héros `mages-9` Nimue 2. `bayou-6` 3. `parade-3` 4. héros `assassins-2` Kael
+1. `bayou-6` 2. `parade-3` 3. héros `assassins-2` Kael
 Ensuite : le reste des familles de la région 1, puis `fauves` et `ruche` (région 2), `voliere` et `cuirasses`
 (régions 3-4)… et un Légendaire tous les deux monstres (liste : `npx tsx` sur `HEROES` de
 `src/core/data/heroes.ts`, rareté `legendary`), puis les Épiques.
