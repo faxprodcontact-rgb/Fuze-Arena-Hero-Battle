@@ -1,0 +1,112 @@
+{
+ "_": "Retouches du détourage des pictos, après contrôle un par un. Positions en fraction de la case de la planche. Voir decoupe-pictos.py (RETOUCHES).",
+ "points": {
+  "shop": [
+   [
+    0.5172,
+    0.2486
+   ]
+  ],
+  "offer-noAds": [
+   [
+    0.7222,
+    0.4444
+   ],
+   [
+    0.6409,
+    0.6782
+   ],
+   [
+    0.5258,
+    0.5069
+   ]
+  ],
+  "mission-relic": [
+   [
+    0.2718,
+    0.2847
+   ],
+   [
+    0.6647,
+    0.2731
+   ]
+  ],
+  "missions": [
+   [
+    0.7188,
+    0.2403
+   ]
+  ],
+  "mission-escort": [
+   [
+    0.6806,
+    0.6759
+   ],
+   [
+    0.5873,
+    0.7153
+   ],
+   [
+    0.7877,
+    0.6921
+   ],
+   [
+    0.4266,
+    0.7153
+   ],
+   [
+    0.2401,
+    0.7083
+   ]
+  ],
+  "fragments": [
+   [
+    0.561,
+    0.788
+   ]
+  ]
+ },
+ "auto": {
+  "mission-escort": [
+   0,
+   0.5,
+   1,
+   1,
+   0.15
+  ],
+  "defense": [
+   0,
+   0.45,
+   1,
+   1
+  ],
+  "offer-noAds": [
+   0.4,
+   0.2,
+   1,
+   0.9
+  ]
+ },
+ "halo": {
+  "armor-4": 30,
+  "armor-5": 30,
+  "boots-4": 30,
+  "boots-5": 30,
+  "helmet-4": 30,
+  "helmet-5": 30,
+  "weapon-4": 30,
+  "weapon-5": 30,
+  "fragments": 45,
+  "support": 140
+ },
+ "effacer": {
+  "mission-escort": [
+   [
+    0.418,
+    0.648,
+    0.455,
+    0.712
+   ]
+  ]
+ }
+}

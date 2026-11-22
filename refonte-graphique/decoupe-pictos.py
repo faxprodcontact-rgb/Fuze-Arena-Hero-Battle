@@ -42,6 +42,16 @@ SIZE = 128
 # Pictos où le fond blanc passe à travers le dessin (anse, trou, entre l'arc et la corde) : seuls ceux-là sont troués.
 # Partout ailleurs le blanc fait partie du dessin (reflets des lames, des pièces, des gemmes) et on n'y touche pas.
 HOLES = {'lock', 'settings', 'marksman', 'mission-hunt', 'bag', 'trophy', 'ranking'}
+# Retouches après contrôle picto par picto (refonte-graphique/retouches-pictos.json, positions en fraction de la case) :
+#   points : un point dans chaque zone de fond blanc restée enfermée (anse d'un sac, intérieur d'un panneau, sous un cheval) ;
+#   auto   : dans ce rectangle, toutes les petites zones blanches cernées de trait sombre (rayons de roue, entre deux poutres) ;
+#   effacer : rectangles où une tache claire a été peinte par erreur (tout ce qui y est clair et gris est retiré) ;
+#   halo   : pictos entourés d'une lueur claire (équipements rares, éclats) : la lueur devient transparente selon sa blancheur,
+#            au lieu de rester en liseré blanc sur les fonds foncés (le nombre = jusqu'à combien de pixels du bord).
+RETOUCHES = {'points': {}, 'auto': {}, 'halo': {}}
+if os.path.isfile(os.path.join(ROOT, 'retouches-pictos.json')):
+    import json as _json
+    RETOUCHES.update(_json.load(open(os.path.join(ROOT, 'retouches-pictos.json'), encoding='utf-8')))
 
 
 def flood(mask, seeds):
@@ -73,7 +83,7 @@ def comps(mask, min_area):
     return out
 
 
-def cutout(rgb, holes=False, report=None):
+def cutout(rgb, holes=False, report=None, name=None):
     """Fond blanc → transparent : le blanc relié au bord de la case, puis un bord adouci (le trait sombre reste net)."""
     a = np.asarray(rgb).astype(np.float32)
     mn, sat = a.min(2), a.max(2) - a.min(2)
@@ -98,9 +108,33 @@ def cutout(rgb, holes=False, report=None):
             for m in found:
                 if m.sum() >= big * 0.6:
                     bg |= m
+    # retouches à la main (voir RETOUCHES)
+    bg0 = bg.copy()
+    white = (mn > 228) & (sat < 26) & ~bg
+    for fx, fy in RETOUCHES['points'].get(name, []):
+        x, y = min(W - 1, int(fx * W)), min(H - 1, int(fy * H))
+        if not white[y, x]:
+            ys, xs = np.nonzero(white[max(0, y - 5):y + 6, max(0, x - 5):x + 6])
+            if not len(ys):
+                print('retouche', name, (fx, fy), ': rien à cet endroit'); continue
+            y, x = max(0, y - 5) + int(ys[0]), max(0, x - 5) + int(xs[0])
+        bg |= flood(white, [(y, x)])
+    for x0, y0, x1, y1 in RETOUCHES.get('effacer', {}).get(name, []):   # une tache claire peinte par erreur : on l'efface
+        box = np.zeros_like(bg); box[int(y0 * H):int(y1 * H), int(x0 * W):int(x1 * W)] = True
+        bg |= box & (mn > 165) & (sat < 50)
+    if name in RETOUCHES['auto']:
+        x0, y0, x1, y1, need = (list(RETOUCHES['auto'][name]) + [0.5])[:5]   # 5e nombre : part de trait sombre exigée autour
+        box = np.zeros_like(bg); box[int(y0 * H):int(y1 * H), int(x0 * W):int(x1 * W)] = True
+        for m in comps((mn > 232) & (sat < 22) & ~bg & box, 6):
+            ring = dilate(m, 5) & ~dilate(m, 2)
+            if ring.any() and (mn[ring] < 110).mean() >= need and mn[m].mean() >= 243:
+                bg |= m
     # les lueurs et ombres très claires collées au fond deviennent transparentes à proportion de leur blancheur
     near = np.asarray(Image.fromarray((bg * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(7))) > 0
-    soft = near & ~bg & (mn > 170)
+    if name in RETOUCHES['halo']:  # toute la lueur claire reliée au dehors, jusqu'à 30 pixels du bord
+        light = (mn > 150) & ~bg
+        near |= flood(light | bg0, border) & light & dilate(bg0, int(RETOUCHES['halo'][name]))
+    soft = near & ~bg & (mn > (150 if name in RETOUCHES['halo'] else 170))
     alpha = np.where(bg, 0.0, 1.0)
     alpha = np.where(soft, np.clip((255 - mn) / 85, 0, 1), alpha)
     alpha = np.asarray(Image.fromarray((alpha * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.7)), np.float32) / 255
@@ -151,7 +185,7 @@ def main():
                 continue
             r, c = divmod(i, cols)
             cell = sheet.crop((int(c * cw), int(r * ch), int((c + 1) * cw), int((r + 1) * ch)))
-            save_icon(keep_main(cutout(cell, holes=name in HOLES)), name)
+            save_icon(keep_main(cutout(cell, holes=name in HOLES, name=name)), name)
             if name not in names:
                 names.append(name)
         print(fname, 'ok', flush=True)
@@ -199,4 +233,5 @@ def main():
     print(len(names), 'pictos ; logo, icône, chargement (', ch, '), carte')
 
 
-main()
+if __name__ == "__main__":
+    main()

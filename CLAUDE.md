@@ -240,6 +240,16 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   lumière, bord fondu sur un pixel. Appliqué par `decoupe-hailuo.py` à chaque dessin (`--brut` pour s'en passer). Ordre
   complet : copie de `public/art/p/` → `decoupe-hailuo.py` → `recadre.py <copie>` → `rig.py` (en quatre lots) → `art-jeu.py --cartes`.
   Si le propriétaire trouve l'adoucissement trop fort ou trop faible : paramètre `k` de `soften` (1 = réglage actuel).
+  v0.36.1 (retour du propriétaire, capture du picto « Escorte » : « des fonds blancs un peu partout, même sur les pictos ») :
+  **toutes les découpes reprises.** Pictos : les 162 revus un par un ; retouches dans `refonte-graphique/retouches-pictos.json`
+  (lu par `decoupe-pictos.py`, positions en fraction de la case) : `points` (fond resté enfermé : sous le cheval du chariot,
+  dans le panneau « sans pub », anse du sac, anses du vase, anneau de la boussole), `auto` (petits restes cernés de trait dans
+  un rectangle : rayons de roue, entre les poutres), `effacer` (tache claire peinte par erreur), `halo` (lueur des
+  équipements rares, des fragments et du sceptre : transparente selon sa blancheur, plus de liseré blanc). Le blanc PEINT
+  des pictos (reflets des lames, gemmes, yeux du hibou, cadran) est gardé. Sprites : chaque zone blanche restée opaque (290)
+  regardée à côté du dessin d'origine ; 58 zones de fond ajoutées à `retirer` dans `retouches-detourage.json` (entre un bras
+  et la tête, sous une jupe, entre des pics, entre les cordes d'une lyre…). Logo, 32 effets et premiers plans des décors
+  contrôlés : rien à corriger. Chaîne complète en une commande : voir l'ordre de la v0.36.0 (25 minutes).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

@@ -96,7 +96,7 @@ def retouch(cid, a, col, orig, box, scale):
                 sub_a[isle] = 0.0
                 continue
             mn_, mx_ = sub_o.min(2), sub_o.max(2)
-            m = flood((mn_ > 205) & (mx_ - mn_ < 34) & (sub_a > 0.5), [(y, x)])
+            m = flood((mn_ > 228) & (mx_ - mn_ < 24) & (sub_a > 0.5), [(y, x)])
             if not m.any():
                 print('RETIRER', cid, item, ': rien à cet endroit'); continue
             ring = dilate(m, 2) & ~m & (sub_o.min(2) > 120)     # le liseré clair autour : il prend l'opacité de sa noirceur
