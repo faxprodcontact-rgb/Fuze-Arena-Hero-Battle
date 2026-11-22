@@ -11,7 +11,7 @@ const { figure, lin, rad, n, use, clip, line, shape, dot, oval } = require('./li
 const W = 572, H = 496, PAD = 60;
 
 // ---------- couleurs ----------
-const HAIR = { sheen: '#645a92', hi: '#b8b0e4', warm: '#9c7a48', warmHi: '#e6c48c', deep: '#09080f' };
+const HAIR = { sheen: '#645a92', hi: '#b8b0e4', warm: '#58547e', warmHi: '#8a86ba', deep: '#09080f' };
 const SKIN = { base: '#f8e8e6', shade: '#e6c6cc', deep: '#d2a2b0', line: '#a87482' };
 const ARM = { lite: '#5c5a6e' };
 const SIL = { hi: '#ffffff', lite: '#e4e8f0', base: '#bfc4d2', mid: '#8e94a8', shade: '#5f6478' };
@@ -36,54 +36,53 @@ const gripD = (() => {
 })();
 
 /**
- * Un ruban lisse le long d'une ligne : `pts` = [x, y, largeur] ; bords lissés, bouts arrondis. Sert aux bandes de
- * reflet de la chevelure (des formes effilées qui suivent les mèches, pas des traits).
+ * Les reflets de la chevelure : une ou deux nappes douces par côté, à cheval sur plusieurs mèches (chaque mèche la
+ * peint dans sa propre forme, au même endroit : on lit une seule lumière sur la masse, pas des rayures).
  */
-function strip(pts) {
-  const N = pts.length, L = [], R = [];
-  for (let i = 0; i < N; i++) {
-    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(N - 1, i + 1)];
-    let tx = b[0] - a[0], ty = b[1] - a[1];
-    const tl = Math.hypot(tx, ty) || 1; tx /= tl; ty /= tl;
-    const h = pts[i][2] / 2;
-    L.push([pts[i][0] - ty * h, pts[i][1] + tx * h]);
-    R.push([pts[i][0] + ty * h, pts[i][1] - tx * h]);
-  }
-  const smooth = (Q) => {
-    let d = '';
-    for (let i = 0; i < Q.length - 1; i++) {
-      const p0 = Q[Math.max(0, i - 1)], p1 = Q[i], p2 = Q[i + 1], p3 = Q[Math.min(Q.length - 1, i + 2)];
-      d += ` C${n(p1[0] + (p2[0] - p0[0]) / 6)} ${n(p1[1] + (p2[1] - p0[1]) / 6)} ${n(p2[0] - (p3[0] - p1[0]) / 6)} ${n(p2[1] - (p3[1] - p1[1]) / 6)} ${n(p2[0])} ${n(p2[1])}`;
-    }
-    return d;
-  };
-  const Rr = R.slice().reverse(), he = n(pts[N - 1][2] / 2 + 0.01), hs = n(pts[0][2] / 2 + 0.01);
-  return `M${n(L[0][0])} ${n(L[0][1])}${smooth(L)} A${he} ${he} 0 0 0 ${n(Rr[0][0])} ${n(Rr[0][1])}${smooth(Rr)} A${hs} ${hs} 0 0 0 ${n(L[0][0])} ${n(L[0][1])} Z`;
-}
-/** Une bande de reflet : la nappe large en dégradé, puis son cœur plus clair et plus fin. */
-const sheenBand = (pts, grad, core) => shape(strip(pts), grad) + shape(strip(pts.map(([x, y, w]) => [x, y, n(w * 0.34)])), core, 0.55);
+const SHEEN_L1 = oval(162, 234, 96, 30, 'url(#g-sheenSoft)', 1, -37);
+const SHEEN_L2 = oval(150, 332, 58, 18, 'url(#g-sheenSoft)', 0.7, -48);
+const SHEEN_R = oval(508, 304, 64, 22, 'url(#g-sheenSoft)', 0.85, 52);
 
 // ---------- l'attaque : l'épée tourne autour de l'épaule (A) et du poignet (B) ----------
 const SHOULDER = [268, 250], WRIST = [244, 372];
 // [instant, A, B] : repos, armé en arrière, coup porté, fin du geste, retour au repos
 const SWING = [[0, -0.5, 0], [0.30, 22, -27], [0.46, -20, 56], [0.58, -23, 60], [1, -0.5, 0]];
 const rot = (p, c, deg) => { const a = (deg * Math.PI) / 180, x = p[0] - c[0], y = p[1] - c[1]; return [c[0] + x * Math.cos(a) - y * Math.sin(a), c[1] + x * Math.sin(a) + y * Math.cos(a)]; };
+// la courbe de vitesse de chaque étape du coup (la même que dans l'animation)
+const EASE = ['cubic-bezier(.3,0,.4,1)', 'cubic-bezier(.7,0,.9,.55)', 'cubic-bezier(.15,.55,.35,1)', 'cubic-bezier(.4,0,.3,1)'];
+function bezier(spec) {
+  const [x1, y1, x2, y2] = spec.match(/[\d.]+/g).map(Number);
+  return (x) => {
+    let lo = 0, hi = 1;
+    for (let i = 0; i < 40; i++) { const t = (lo + hi) / 2, xt = 3 * (1 - t) ** 2 * t * x1 + 3 * (1 - t) * t * t * x2 + t ** 3; if (xt < x) lo = t; else hi = t; }
+    const t = (lo + hi) / 2;
+    return 3 * (1 - t) ** 2 * t * y1 + 3 * (1 - t) * t * t * y2 + t ** 3;
+  };
+}
+/** La pose de l'épée [A, B] à un instant de l'attaque (de 0 à 1). */
+const poseAt = (t) => {
+  let i = 0;
+  while (i < SWING.length - 2 && t >= SWING[i + 1][0]) i++;
+  const [t0, A0, B0] = SWING[i], [t1, A1, B1] = SWING[i + 1], y = bezier(EASE[i])((t - t0) / (t1 - t0));
+  return [A0 + (A1 - A0) * y, B0 + (B1 - B0) * y];
+};
+const bladePt = (pt, t) => { const [A, B] = poseAt(t); return rot(rot(pt, WRIST, B), SHOULDER, A); };
 /**
- * La traînée du coup, accrochée à la lame (elle tourne avec elle, juste derrière son tranchant du haut) : la zone que
- * la moitié extérieure de la lame vient de balayer, 16° en arrière autour du poignet, effilée vers l'arrière.
+ * La traînée du coup : posée sur le chemin que le bout de la lame parcourt pendant la partie rapide du coup (40 à 46 %
+ * de l'attaque), de son tranchant jusqu'au milieu de la lame ; fine et transparente du côté d'où vient la lame.
  */
-const SMEAR = 16;
-const smearD = (() => {
+const TR0 = 0.40, TR1 = 0.46;
+const trailD = (() => {
   const out = [], inn = [];
-  for (let k = 0; k <= 10; k++) {
-    const t = -SMEAR * (k / 10);
-    out.push(rot([566, 272], WRIST, t));
-    inn.push(rot(onAxis(470 + 64 * (k / 10), -10.5), WRIST, t));
+  for (let k = 0; k <= 16; k++) {
+    const t = TR0 + (TR1 - TR0) * (k / 16);
+    out.push(bladePt([566, 272], t));
+    inn.push(bladePt(onAxis(548 - 118 * (k / 16), -10.5), t));
   }
   const pts = [...out, ...inn.reverse()];
   return `M${pts.map((q) => `${n(q[0])} ${n(q[1])}`).join(' L')} Z`;
 })();
-const G0 = onAxis(522, -10.5), G1 = rot(onAxis(548, -10.5), WRIST, -SMEAR);
+const T0 = bladePt([566, 272], TR0), T1 = bladePt([566, 272], TR1);
 
 // ---------- dégradés ----------
 const defs = [
@@ -101,8 +100,7 @@ const defs = [
   lin('g-rim', 0, 0, 0, 1, [[0, '#ffffff'], [0.5, '#d4d8e6'], [1, '#8e94a8']], false),
   lin('g-belt', 0, 0, 0, 1, [[0, '#a4a4b8'], [0.45, '#66667e'], [1, '#3a3a4c']], false),
   lin('g-leg', 0, 0, 1, 0, [[0, '#15131b'], [0.35, '#23212b'], [0.7, '#353347'], [0.88, '#4a4862'], [1, '#2a2836']], false),
-  lin('g-shL', 1, 0, 0, 1, [[0, '#9a94e0', 0], [0.3, '#a49ee8', 0.75], [0.55, '#cfcbff', 0.85], [0.8, '#a49ee8', 0.55], [1, '#9a94e0', 0]], false),
-  lin('g-shR', 0, 0, 1, 1, [[0, '#c09a5c', 0], [0.3, '#d4ae70', 0.8], [0.6, '#f0d49c', 0.85], [1, '#c09a5c', 0]], false),
+  rad('g-sheenSoft', 0.5, 0.5, 0.5, [[0, '#a49ee6', 0.62], [0.45, '#9a94de', 0.32], [1, '#9a94de', 0]], false),
   lin('g-plate', 0, 0, 0, 1, [[0, '#9896ac'], [0.35, '#6a687c'], [1, '#3a3846']], false),
   lin('g-sleeve', 0, 0, 0, 1, [[0, '#5a586c'], [0.35, '#3c3a48'], [1, '#22202a']], false),
   lin('g-band', 0, 0, 0, 1, [[0, '#eef0f6'], [0.5, '#a9aec0'], [1, '#6a6f84']], false),
@@ -119,7 +117,7 @@ const defs = [
   lin('g-bladeT', 0, 0, 0, 1, [[0, '#ffffff'], [1, '#e2e6f0']], false),
   lin('g-bladeB', 0, 0, 0, 1, [[0, '#b8bed0'], [1, '#8a90a6']], false),
   lin('g-glint', 0, 0, 1, 0, [[0, '#ffffff', 0], [0.5, '#ffffff', 0.95], [1, '#ffffff', 0]], false),
-  lin('g-smear', G0[0], G0[1], n(G1[0]), n(G1[1]), [[0, '#ffffff', 0.9], [0.4, '#e4ecff', 0.5], [1, '#ffffff', 0]]),
+  lin('g-trail', n(T0[0]), n(T0[1]), n(T1[0]), n(T1[1]), [[0, '#ffffff', 0], [0.45, '#dfe8ff', 0.35], [1, '#ffffff', 0.92]]),
   rad('g-iris', 0.5, 0.8, 0.85, [[0, '#ffc08a'], [0.28, '#ff6a32'], [0.62, '#d82418'], [1, '#6e0810']], false),
   rad('g-blush', 0.5, 0.5, 0.5, [[0, '#ff8088', 0.5], [1, '#ff8088', 0]], false),
   lin('g-lid', 0, 0, 0, 1, [[0, '#2a0614', 0.75], [0.5, '#2a0614', 0]], false),
@@ -134,11 +132,11 @@ const S = {
   // la masse de la chevelure derrière la tête et le dos (presque toute cachée)
   hairBack: 'M232 66 C214 100 204 150 200 200 C198 250 206 300 220 340 C228 360 238 374 250 380 L300 372 L380 332 L440 318 C452 300 466 270 462 230 C458 190 452 140 448 100 C444 76 436 56 420 40 C394 20 366 14 336 14 C290 16 254 38 232 66 Z',
   // la chevelure de gauche : cinq grandes mèches en éventail, de l'extérieur vers le corps
-  hl1: 'M244 52 C226 76 212 110 204 140 C196 172 182 204 158 226 C130 246 92 254 62 268 C40 280 24 300 14 324 C7 342 4 360 5 378 C10 362 18 346 30 330 C50 308 82 296 116 284 C152 270 186 252 210 226 C232 200 244 164 250 128 Z',
-  hl2: 'M226 140 C214 176 194 214 160 240 C126 264 84 276 58 302 C40 322 32 350 29 378 C27 394 28 408 32 418 C36 404 42 386 52 366 C66 340 92 322 124 306 C164 286 204 262 232 224 Z',
-  hl3: 'M232 182 C216 214 188 244 150 268 C114 290 84 312 68 346 C56 372 52 404 52 428 C52 436 53 442 55 447 C62 432 72 414 84 390 C100 360 126 336 160 316 C196 296 226 276 244 250 Z',
-  hl4: 'M240 244 C220 270 188 292 156 314 C130 334 114 360 106 390 C101 408 99 426 100 440 C108 426 116 410 126 392 C142 368 166 350 194 336 C216 326 234 316 248 302 Z',
-  hl5: 'M246 300 C226 318 200 336 176 352 C160 364 148 380 142 396 C138 404 136 410 136 414 C150 404 168 394 190 384 C210 376 230 370 248 364 Z',
+  hl1: 'M244 52 C226 76 212 110 204 140 C196 172 182 204 158 226 C130 246 92 254 62 268 C40 280 24 300 14 324 C7 342 3 358 3 372 C3 380 0 386 -5 389 C3 384 10 372 14 360 C19 348 24 338 30 330 C50 308 82 296 116 284 C152 270 186 252 210 226 C232 200 244 164 250 128 Z',
+  hl2: 'M226 140 C214 176 194 214 160 240 C126 264 84 276 58 302 C40 322 32 350 28 380 C25 400 24 418 26 434 C31 418 37 398 43 380 C46 373 49 369 52 366 C66 340 92 322 124 306 C164 286 204 262 232 224 Z',
+  hl3: 'M232 182 C216 214 188 244 150 268 C114 290 84 312 68 346 C56 372 53 398 54 418 C55 427 58 433 64 436 C67 426 74 408 84 390 C100 360 126 336 160 316 C196 296 226 276 244 250 Z',
+  hl4: 'M240 244 C220 270 188 292 156 314 C130 334 114 360 105 390 C99 410 97 426 100 438 C103 446 110 449 117 446 C112 440 112 428 117 412 C120 404 123 398 126 392 C142 368 166 350 194 336 C216 326 234 316 248 302 Z',
+  hl5: 'M246 300 C226 318 200 336 176 352 C160 364 150 378 145 390 C141 399 137 405 131 409 C142 404 156 396 170 390 C178 387 184 385 190 384 C210 376 230 370 248 364 Z',
   // la chevelure de droite : trois mèches qui tombent sous le bras levé
   hr1: 'M450 214 C478 230 508 250 532 276 C550 296 562 322 566 348 C568 360 567 370 565 378 C560 362 554 346 544 330 C528 304 504 286 478 270 C462 262 450 256 442 252 Z',
   hr2: 'M448 248 C472 270 496 296 514 326 C528 352 536 380 538 408 C539 422 538 434 536 445 C530 428 524 410 516 392 C504 362 486 336 466 314 C456 304 448 296 442 290 Z',
@@ -174,7 +172,7 @@ const S = {
   face: 'M291 70 L289 145 C289 166 292 182 300 194 C312 207 334 215 362 216 C386 216 406 206 419 191 C428 178 433 162 433 142 L433 70 Z',
   sideR: 'M430 126 C433 144 432 162 427 178 C423 190 419 198 421 206 C429 211 439 210 446 206 C451 190 453 168 453 146 C453 134 452 124 450 114 Z',
   cap: 'M226 72 C244 40 290 12 336 9 C384 6 428 30 446 70 C452 86 454 104 453 124 C449 130 442 134 435 136 C430 128 424 120 417 110 C411 102 407 92 404 80 C390 76 360 74 340 78 C334 86 326 96 318 104 C308 112 300 122 293 132 C286 132 278 131 270 131 C258 132 248 130 238 122 C228 114 222 102 222 90 C222 84 224 78 226 72 Z',
-  tiara: 'M364 5 C368 16 374 26 382 36 L398 58 C392 68 386 80 376 98 C370 86 362 76 350 72 L339 64 L354 40 C358 28 361 16 364 5 Z M306 46 C314 52 324 60 336 66 L300 72 C300 62 302 54 306 46 Z M418 36 C421 48 424 60 428 72 L406 66 C410 56 414 46 418 36 Z',
+  tiara: 'M364 5 C368 16 374 26 382 36 L398 58 C392 68 386 80 376 98 C370 86 362 76 350 72 L339 64 L354 40 C358 28 361 16 364 5 Z M306 51 C314 57 324 65 336 71 L300 77 C300 67 302 59 306 51 Z M418 41 C421 53 424 65 428 77 L406 71 C410 61 414 51 418 41 Z',
   blade: bladeD,
   guard: 'M283 330 C290 328 298 331 300 337 C301 341 298 343 295 341 C293 338 290 337 288 338 C290 350 292 362 296 374 C299 384 302 392 304 398 C304 403 299 405 295 402 C292 398 290 392 287 386 C283 374 279 360 277 346 C276 338 278 332 283 330 Z M265 371 A7.5 7.5 0 1 1 280 371 A7.5 7.5 0 1 1 265 371 Z',
 };
@@ -202,6 +200,16 @@ function eye(key, white, cx, cy, r, lash, lower, shut, shadow, hl) {
     + `<g class="a-blink" opacity="0"><path d="${white}" fill="#f2dcdc" stroke="#f2dcdc" stroke-width="3"/>${line(shut, '#170a14', 3.2)}</g>`;
 }
 
+// le bandeau du diadème : un arc d'ellipse autour du crâne (centre 364,132 ; 112 × 62), plus épais au milieu
+const bandPt = (x, off) => { const dx = (x - 364) / 112; return [x, n(132 - 62 * Math.sqrt(Math.max(0, 1 - dx * dx)) + off)]; };
+const bandHalf = (x) => 1.6 + 2.6 * (1 - Math.abs(x - 364) / 112);
+const BAND_X = [256, 264, 276, 290, 306, 324, 344, 364, 384, 404, 422, 438, 452, 464];
+const bandLine = (sgn) => BAND_X.map((x) => bandPt(x, sgn * bandHalf(x)));
+const polyline = (pts) => `M${pts.map((p) => `${p[0]} ${p[1]}`).join(' L')}`;
+const BAND = `${polyline(bandLine(-1))} L${bandLine(1).reverse().map((p) => `${p[0]} ${p[1]}`).join(' L')} Z`;
+const BAND_TOP = polyline(BAND_X.map((x) => bandPt(x, -bandHalf(x) + 0.7)));
+const BAND_LOW = polyline(BAND_X.map((x) => bandPt(x, bandHalf(x) - 0.6)));
+
 /** Une mèche : sa couleur, l'ombre de son bord, une nappe de reflet (violet à gauche, chaud à droite), un reflet vif. */
 const lock = (id, grad, sheen, hi, shade, sheenColor = HAIR.sheen, hiColor = HAIR.hi, k = 1) => use(id, grad)
   + clip(id, (shade ? shape(shade, HAIR.deep, 0.55) : '') + (sheen ? shape(sheen, sheenColor, n(0.34 * k)) : '') + (hi ? shape(hi, hiColor, n(0.55 * k)) : ''));
@@ -221,47 +229,28 @@ const parts = [
   { id: 'hairBack', d: S.hairBack, shadow: [{ on: ['cape'], dx: -4, dy: 4, color: SH.cape, o: 0.5 }],
     body: use('hairBack', '#15131b') },
   { id: 'hl1', cls: 'a-hl', d: S.hl1,
-    body: lock('hl1', 'url(#g-hairL)',
-      'M232 92 C220 130 208 176 182 210 C152 244 104 262 66 282 C44 296 30 316 20 340 C40 312 70 296 104 282 C146 264 184 244 206 212 C224 184 232 140 236 96 Z',
-      '',
+    body: lock('hl1', 'url(#g-hairL)', '', '',
       'M250 128 C244 164 232 200 210 226 C186 252 152 270 116 284 C82 296 50 308 30 330 C40 316 60 304 84 296 C122 282 160 266 188 244 C214 222 236 186 246 140 Z')
-      + clip('hl1', sheenBand([[228, 96, 3], [216, 140, 6], [200, 182, 8], [174, 216, 8.5], [140, 240, 7.5], [102, 257, 5], [72, 268, 2]], 'url(#g-shL)', '#e4e2ff')) },
+      + clip('hl1', SHEEN_L1) },
   { id: 'hl2', cls: 'a-hl', d: S.hl2, shadow: [{ on: ['hl1'], dx: -6, dy: 3, color: SH.hair, o: 0.5 }],
-    body: lock('hl2', 'url(#g-hairL)',
-      'M214 180 C196 214 168 240 130 262 C98 280 68 298 50 326 C44 340 38 356 34 374 C44 344 62 318 92 300 C130 278 170 256 196 226 C206 214 212 198 214 180 Z',
-      '',
-      'M232 224 C204 262 164 286 124 306 C92 322 66 340 52 366 C46 380 40 398 34 414 C42 392 54 368 72 348 C98 324 132 306 168 288 C198 270 222 250 232 224 Z', HAIR.sheen, HAIR.hi, 0.85)
-      + clip('hl2', sheenBand([[221, 166, 3], [207, 200, 6], [185, 228, 8], [153, 252, 8], [117, 272, 6], [86, 290, 4], [66, 304, 2]], 'url(#g-shL)', '#e4e2ff')) },
+    body: lock('hl2', 'url(#g-hairL)', '', '',
+      'M232 224 C204 262 164 286 124 306 C92 322 66 340 52 366 C46 380 40 398 34 414 C42 392 54 368 72 348 C98 324 132 306 168 288 C198 270 222 250 232 224 Z')
+      + clip('hl2', SHEEN_L1) },
   { id: 'hl3', cls: 'a-hl', d: S.hl3, shadow: [{ on: ['hl1', 'hl2'], dx: -6, dy: 3, color: SH.hair, o: 0.5 }],
-    body: lock('hl3', 'url(#g-hairL)',
-      'M222 214 C204 240 176 262 140 284 C110 302 88 322 76 350 C68 370 62 396 58 420 C68 390 80 364 98 342 C122 316 154 298 186 278 C204 266 216 244 222 214 Z',
-      '',
-      'M244 250 C224 276 196 296 160 316 C126 336 100 360 84 390 C74 410 64 428 56 444 C66 420 80 392 98 368 C122 336 156 316 190 298 C214 284 234 270 244 250 Z', HAIR.sheen, HAIR.hi, 0.7)
-      + clip('hl3', sheenBand([[227, 205, 3], [211, 231, 6], [187, 255, 8], [155, 277, 8], [123, 297, 6], [97, 317, 4], [81, 334, 2]], 'url(#g-shL)', '#e4e2ff')) },
+    body: lock('hl3', 'url(#g-hairL)', '', '',
+      'M244 250 C224 276 196 296 160 316 C126 336 100 360 84 390 C74 410 64 428 56 444 C66 420 80 392 98 368 C122 336 156 316 190 298 C214 284 234 270 244 250 Z')
+      + clip('hl3', SHEEN_L1 + SHEEN_L2) },
   { id: 'hl4', cls: 'a-hl2', d: S.hl4, shadow: [{ on: ['hl2', 'hl3'], dx: -6, dy: 3, color: SH.hair, o: 0.5 }],
-    body: lock('hl4', 'url(#g-hairL)',
-      'M232 262 C210 282 180 302 152 324 C130 342 118 364 110 392 C106 408 104 424 102 436 C110 404 124 374 146 352 C172 326 204 306 228 280 C232 276 234 268 232 262 Z',
-      'M214 286 C204 296 192 306 180 316 C192 310 204 300 214 286 Z', '', HAIR.sheen, HAIR.hi, 0.6) },
+    body: lock('hl4', 'url(#g-hairL)', '', '', '') + clip('hl4', SHEEN_L2) },
   { id: 'hl5', cls: 'a-hl2', d: S.hl5, shadow: [{ on: ['hl3', 'hl4'], dx: -6, dy: 3, color: SH.hair, o: 0.5 }],
-    body: lock('hl5', 'url(#g-hairL)',
-      'M236 314 C216 330 194 344 174 358 C160 368 150 382 144 398 C156 382 172 368 192 356 C210 344 228 330 236 314 Z', '', '', HAIR.sheen, HAIR.hi, 0.55) },
-  { id: 'hr1', cls: 'a-hr', d: S.hr1,
-    body: lock('hr1', 'url(#g-hairR)',
-      'M474 234 C500 250 524 270 540 294 C552 312 558 330 562 346 C552 326 540 308 526 294 C510 278 492 262 472 244 Z',
-      '',
-      '', HAIR.warm, HAIR.warmHi)
-      + clip('hr1', sheenBand([[462, 226, 2], [486, 240, 5], [512, 258, 7], [534, 282, 7], [550, 308, 5], [558, 330, 2]], 'url(#g-shR)', '#fff0cc')) },
+    body: lock('hl5', 'url(#g-hairL)', '', '', '') + clip('hl5', SHEEN_L2) },
+  { id: 'hr1', cls: 'a-hr', d: S.hr1, body: lock('hr1', 'url(#g-hairR)', '', '', '') + clip('hr1', SHEEN_R) },
   { id: 'hr2', cls: 'a-hr', d: S.hr2, shadow: [{ on: ['hr1'], dx: -5, dy: 3, color: SH.hair, o: 0.5 }],
-    body: lock('hr2', 'url(#g-hairR)',
-      'M466 270 C486 292 504 316 518 344 C526 362 530 378 532 394 C524 374 514 356 504 340 C492 320 478 302 462 284 Z',
-      '',
-      'M442 290 C458 306 474 324 488 344 C502 366 512 390 518 414 C508 392 496 370 480 350 C468 334 456 320 442 306 Z', HAIR.warm, HAIR.warmHi)
-      + clip('hr2', sheenBand([[458, 262, 2], [478, 282, 5], [498, 306, 7], [514, 334, 7], [526, 362, 5], [532, 388, 2]], 'url(#g-shR)', '#fff0cc')) },
+    body: lock('hr2', 'url(#g-hairR)', '', '',
+      'M442 290 C458 306 474 324 488 344 C502 366 512 390 518 414 C508 392 496 370 480 350 C468 334 456 320 442 306 Z')
+      + clip('hr2', SHEEN_R) },
   { id: 'hr3', cls: 'a-hr', d: S.hr3, shadow: [{ on: ['hr2', 'cape'], dx: -5, dy: 3, color: SH.hair, o: 0.5 }],
-    body: lock('hr3', 'url(#g-hairR)',
-      'M454 306 C468 328 478 352 486 380 C490 398 492 414 493 428 C488 410 482 392 476 376 C468 352 458 330 448 312 Z',
-      'M468 340 C474 352 478 364 481 378 C476 368 471 358 466 348 Z',
-      '', HAIR.warm, HAIR.warmHi) },
+    body: lock('hr3', 'url(#g-hairR)', '', '', '') + clip('hr3', SHEEN_R) },
 
   // --- les jambes : cuisse, genouillère bombée bordée d'argent, grève qui s'affine, soleret à plaques ---
   { id: 'legL', d: S.legL, shadow: [{ on: ['cape', ...BACK], dx: -5, dy: 3, color: SH.armor, o: 0.45 }],
@@ -420,27 +409,26 @@ const parts = [
     ) },
   { id: 'fistR', cls: 'a-fist', d: S.fistR,
     body: use('fistR', 'url(#g-armor)') + clip('fistR',
-      // les quatre jointures (le haut du poing), éclairées par le haut
-      shape('M496 136 C496 127 501 121 508 120 C512 124 514 131 512 138 C506 141 500 140 496 136 Z', '#4a4858')
-      + shape('M509 119 C512 116 517 115 521 116 C524 114 529 114 533 116 C534 123 533 131 529 137 C523 139 517 139 512 137 C514 130 513 124 509 119 Z', '#56546a')
-      + shape('M533 116 C538 114 543 115 547 118 C549 125 548 132 544 138 C539 139 534 138 530 136 C533 130 534 123 533 116 Z', '#5e5c74')
-      + shape('M547 118 C552 119 556 124 556 130 C558 135 557 140 554 144 C551 145 548 144 545 143 C547 135 548 126 547 118 Z', '#66647c')
+      // les quatre jointures (le haut du poing) : des plaques bombées, éclairées en haut à droite, bordées d'argent
+      shape('M496 136 C496 127 501 121 508 120 C512 124 514 131 512 138 C506 141 500 140 496 136 Z', 'url(#g-cup)')
+      + shape('M509 119 C512 116 517 115 521 116 C524 114 529 114 533 116 C534 123 533 131 529 137 C523 139 517 139 512 137 C514 130 513 124 509 119 Z', 'url(#g-cup)')
+      + shape('M533 116 C538 114 543 115 547 118 C549 125 548 132 544 138 C539 139 534 138 530 136 C533 130 534 123 533 116 Z', 'url(#g-cup)')
+      + shape('M547 118 C552 119 556 124 556 130 C558 135 557 140 554 144 C551 145 548 144 545 143 C547 135 548 126 547 118 Z', 'url(#g-cup)')
       + line('M499 128 C502 123 506 121 509 121 M513 117.5 C517 116 521 116 524 115.5 M528 115 C532 114.6 536 114.8 539 115.4 M542 115.8 C546 116.6 550 118.6 553 121.6', '#d8d6ea', 1.8, 0.9)
-      // les doigts repliés : quatre phalanges bombées, séparées par un sillon
-      + shape('M495 140 C512 145 535 146 558 141 C559 149 558 156 555 162 C534 166 512 166 494 161 C493 154 493 147 495 140 Z', '#302e3a')
-      + shape('M498 143 C503 145 508 146 512 146 C511 150 510 154 508 157 C504 155 500 153 497 150 Z', '#46445a', 0.8)
-      + shape('M515 146 C520 147 525 147.4 529 147.4 C528 151 527 155 525 158 C521 157 517 156 514 154 Z', '#4c4a60', 0.8)
-      + shape('M532 147.4 C537 147 541 146.6 545 146 C545 150 544 154 542 157 C538 157 534 157 531 156 Z', '#54526a', 0.8)
-      + shape('M548 145.4 C551 145 554 144 557 143 C557 148 556 152 554 156 C552 156 550 156 547 155 Z', '#5c5a72', 0.8)
-      + line('M513.5 139 C514.5 146 514.5 153 513.5 161 M530 139 C531 146 531 154 530 162 M546 141 C547 147 547 154 546 161', '#121016', 1.3, 0.7)
-      // le pouce, en travers devant les doigts
-      + shape('M496 168 C505 161 520 158 534 160 C542 162 547 167 547 173 C539 181 524 185 508 184 C501 180 496 174 496 168 Z', '#3e3c4a')
-      + shape('M501 165 C511 161 525 160 536 163 C525 163 513 165 503 168 Z', '#c4c2d8', 0.75)
-      + line('M518 170 C526 170 533 172 539 176', '#121016', 1.3, 0.55)
-      // le reflet froid sur les jointures
       + shape('M528 117 C537 115 546 117 552 122 C546 120 538 119 530 120 Z', SPEC, 0.8)
-      // une petite gemme rouge sur le gantelet
-      + oval(521, 153, 3.6, 3, 'url(#g-gem)') + dot(522.2, 151.9, 1, '#ffe2d8')
+      // les quatre doigts repliés : des phalanges bombées, séparées par des creux sombres
+      + shape('M495 140 C512 145 535 146 558 141 C559 149 558 156 555 163 C534 167 512 167 494 162 C493 155 493 147 495 140 Z', '#0c0b10')
+      + shape('M497 144 C501 143 507 144 511 145.5 C512 151 511 157 509 162 C504 162 499 161 496 159 C495 154 495 149 497 144 Z', 'url(#g-cup)')
+      + shape('M514 146.5 C519 147 524 147.5 528 147.5 C529 153 528 159 526 164 C521 164.5 517 164.5 513 163.5 C512 158 512 152 514 146.5 Z', 'url(#g-cup)')
+      + shape('M531 147.5 C536 147.5 540 147 544 146.5 C545 152 544 158 542 163.5 C538 164.5 534 164.5 530 164 C529 158 529 152 531 147.5 Z', 'url(#g-cup)')
+      + shape('M547 146 C550 145.5 553 144.5 556 143.5 C557 149 556 155 554 161 C552 162 549 162.5 546 162.5 C545 156 545 151 547 146 Z', 'url(#g-cup)')
+      + oval(507, 147.5, 2.4, 1.1, '#d8d6ea', 0.8, 10) + oval(524, 150, 2.4, 1.1, '#d8d6ea', 0.85, 6)
+      + oval(540, 150, 2.4, 1.1, '#e4e2f2', 0.9, 0) + oval(552.5, 148, 2, 1, '#e4e2f2', 0.9, -10)
+      // le pouce, en travers devant les doigts
+      + shape('M496 168 C505 161 520 158 534 160 C542 162 547 167 547 173 C539 181 524 185 508 184 C501 180 496 174 496 168 Z', 'url(#g-cup)')
+      + shape('M501 165 C511 161 525 160 536 163 C525 163 513 165 503 168 Z', '#c4c2d8', 0.75)
+      + shape('M532 162 C539 163 545 167 546.5 172 C541 171 536 168 532 165 Z', '#9896b0', 0.6)
+      + line('M518 170 C526 170 533 172 539 176', '#0c0b10', 1.3, 0.55)
       + shape('M500 182 C512 190 528 190 546 180 L548 194 L498 200 Z', '#121016', 0.45)
     ) },
   { id: 'cuffR', cls: 'a-raise', d: S.cuffR, shadow: [{ on: ['armR', 'fistR'], dx: -3, dy: 4, color: SH.armor, o: 0.5 }],
@@ -557,18 +545,18 @@ const parts = [
       + shape('M365.5 108 C365.5 115 368.5 119 372 119 C375.5 119 378.5 115 378.5 108 C376.5 112 374.5 113.8 372 113.8 C369.5 113.8 367.5 112 365.5 108 Z', '#3a2434')
       + dot(372, 109.2, 1.7, '#3a2434')
       // les yeux : grands iris, paupières lourdes, regard assuré
-      + eye('eL', 'M301 146 C306 139 318 135 333 135 C345 135 353 139 357 145 C358 151 356 157 351 160 C342 163.5 324 163 314 160 C307 157 302 152 301 146 Z', 333.3, 148, 14.5,
-        'M301 147 C298 141 295 134 291 127 C296 130 300 132 305 133 C314 130 324 129.5 334 130 C346 130.5 355 134 359 140 C361 143 362 147 361 151 C358 146 355 142 351 139.5 C344 136 337 135.5 331 135.5 C320 135.5 311 137.5 305 141.5 Z M350 134 L357 129.5 L355 135.5 Z M355 137 L361.5 134.5 L358.5 140 Z',
-        'M302 149 C308 157 320 162.5 334 163 C344 163 352 160 357 152', 'M302 147 C316 154 344 154 359 147',
-        'M296 129 C310 122 336 121 352 126 C358 129 362 134 362 140 C356 132 344 129 332 129 C318 129 306 132 298 136 Z', [-0.46, -0.4, 0.53, -0.08])
-      + eye('eR', 'M386.5 147 C388 141 395 137.5 404 136 C412 135 418 136 421.5 140 C423 146 421 153 416 157.5 C408 162 395 161.5 390.5 157 C387.5 154 386 150.5 386.5 147 Z', 402.5, 148.8, 11.5,
-        'M385 149 C384 142 388 137 395 134 C403 131 412 130 420 130 C424 129.5 428 127.5 431 124.5 C430.5 129 428.5 132.5 425 135 L422 138 C416 135.5 409 135.5 402 136.5 C394.5 138 389.5 142.5 387.5 149 Z M424 131 L432 128.5 L427 134 Z',
-        'M387 151 C391 158 400 162 409 161.5 C415 161 419 157 421.5 150', 'M386.5 148 C397 153.5 412 153.5 422 146',
-        'M386 134 C394 127 408 124 420 125 C425 126 428 128 430 131 C420 129 408 130 398 133 C394 134.5 390 137 387 140 Z', [-0.46, -0.4, 0.53, -0.08])
-      // les sourcils : épais, froncés vers le nez
-      + shape('M302 123 C312 119 328 118 342 121 C351 123 358 127 362 131 C363 135 360 137 356 136 C346 132 334 128 320 126 C312 125 306 125 302 126 Z', '#221822')
-      + shape('M385 130 C389 124 398 120 408 117 C413 115.5 418 115 421 115.5 C423 116.5 423 119 420 120 C412 121 403 124 395 128 C391 130.5 388 133 386 133 C384.5 133 384 131.5 385 130 Z', '#221822')
-      + line('M310 121 C322 119 336 120 348 124', '#5a4458', 1.1, 0.55) + line('M392 124 C400 120 410 117.5 418 117', '#5a4458', 1.1, 0.55)
+      + eye('eL', 'M300 148 C306 145 316 142.5 328 142 C339 141.8 350 144 358 150 C359 155 356 159.5 351 162 C342 165 324 164.5 314 161.5 C307 159 302 154 300 148 Z', 331, 150, 14,
+        'M299 149 C296 144 292 139 287 134 C293 136 298 138 302 140 C311 136.5 326 134.5 340 136 C349 137 356 141 360 147 C361.5 149.5 361.5 152 360.5 154 C357 150 353 147 347 145 C337 142.5 322 142.5 311 144.5 C306 145.5 302.5 147 299 149 Z',
+        'M302 151.5 C308 158.5 320 163.5 334 164 C344 164 352 161 357 154', 'M300 149 C316 155 344 155 359 149',
+        'M297 140 C310 132 336 130 354 135 C359 138 362 142 362 147 C356 140 344 137 332 137 C318 137 306 139 298 144 Z', [-0.42, -0.08, 0.5, 0.22])
+      + eye('eR', 'M386 151 C391 146.5 400 143.5 409 143 C415 142.8 420 143.5 423 145.5 C423.5 151.5 420.5 156.5 415.5 159.5 C407.5 163.5 395.5 163 390.5 159 C388 157 386 154.5 386 151 Z', 402.5, 151, 11,
+        'M384.5 153 C385 147 389 142.5 396 140 C404 137.5 413 137 420 137.5 C424.5 137.5 428.5 135.5 432 132 C431.5 136.5 429.5 140 426.5 142.5 L425 147 C420 145 413 144.5 406 145 C398 145.5 391.5 148.5 387 154.5 Z',
+        'M388 156 C392 161 400 164 409 163.5 C415 163 419 160 421.5 154', 'M386.5 151.5 C397 157 412 157 422.5 149.5',
+        'M386 141 C394 134 408 131 420 132 C425 133 428 135 430 138 C420 136 408 137 398 140 C394 141.5 390 144 387 147 Z', [-0.42, -0.08, 0.5, 0.22])
+      // les sourcils : épais, ils plongent vers le nez (le regard malicieux)
+      + shape('M298 123 C306 118 318 116 330 118 C342 120 353 126 361 133 C364 136 362 139 358 138.5 C350 134 340 130 328 128 C318 126 308 126 300 128 C297 127 296 125 298 123 Z', '#221822')
+      + shape('M425 116 C420 113 412 113 404 116 C396 119 389 124 385 130 C383 133 384 137 388 136.5 C393 131 400 126 408 123.5 C414 122 420 121 424 121 C427 120 427 117 425 116 Z', '#221822')
+      + line('M306 120 C318 117.5 332 119 346 125', '#5a4458', 1.1, 0.55) + line('M418 115.5 C410 116.5 400 120.5 392 126', '#5a4458', 1.1, 0.55)
       // le nez
       + line('M380.5 160.5 C384.5 164 386 169 383.5 173 C381.5 175.5 378.5 176.5 375.5 176', SKIN.line, 1.5, 0.8)
       + oval(374, 174.5, 4.6, 2.2, SKIN.deep, 0.55, -8) + oval(382, 168, 1.8, 3, '#ffffff', 0.7, -10)
@@ -581,33 +569,28 @@ const parts = [
       + line('M359 201 C364.5 202.4 370 202.4 375 201', SKIN.deep, 1.3, 0.65) },
   { id: 'sideR', cls: 'a-sr', d: S.sideR, shadow: [{ on: ['face'], dx: -3, dy: 4, color: SH.skin, o: 0.45 }, { on: ['armR', 'pauR', ...BACK], dx: -3, dy: 4, color: SH.hair, o: 0.5 }],
     body: use('sideR', 'url(#g-side)') + clip('sideR',
-      shape('M446 124 C449 142 449 160 446 176 C450 162 451 146 450 132 C449 128 448 126 446 124 Z', HAIR.warm, 0.6)
-      + shape('M448 136 C449 146 449 156 447 166 C450 156 450 146 449 138 Z', HAIR.warmHi, 0.5)
-      + shape('M433 144 C434 160 432 174 427 188 C433 178 436 162 436 148 Z', HAIR.sheen, 0.35)
+      oval(444, 156, 7, 26, 'url(#g-sheenSoft)', 0.8, 4)
     ) },
   { id: 'cap', d: S.cap, shadow: [{ on: ['face', 'ear'], dx: -3, dy: 7, color: SH.skin, o: 0.4 }, { on: ['sideL', 'sideR', ...BACK], dx: -3, dy: 6, color: SH.hair, o: 0.5 }],
     body: use('cap', 'url(#g-cap)') + clip('cap',
       // le reflet froid du dessus de la tête (à gauche) et le reflet chaud du côté éclairé
       shape('M238 72 C254 46 282 28 316 21 C290 34 268 54 254 78 C248 78 242 76 238 72 Z', HAIR.sheen, 0.5)
       + shape('M248 76 C258 60 274 46 294 37 C280 50 268 62 260 78 Z', HAIR.hi, 0.45)
-      + shape('M404 30 C422 42 436 58 444 78 C446 86 447 94 447 100 C440 82 430 66 418 52 C412 44 408 36 404 30 Z', HAIR.warm, 0.6)
-      + shape('M422 52 C430 62 436 72 440 84 C434 76 428 68 422 60 Z', HAIR.warmHi, 0.55)
-      // le diadème : son bandeau fait le tour de la tête (plus épais devant, plus fin sur les côtés) ;
-      // les mèches qui tombent du sommet le recouvrent de chaque côté
-      + `<path d="M232 112 C244 106 252 102 262 98 C276 92 288 86 300 82 C314 77 328 73 344 70 C360 67 376 66 392 66 C406 67 418 69 430 72 C440 75 450 78 458 82 L458 88 C450 84 440 82 430 80 C418 77 406 76 392 75.5 C376 75.5 360 77 344 79.5 C328 82 314 86 302 91 C288 96 276 100 264 104 C254 108 244 112 234 117 Z" fill="url(#g-band)"/>`
-      + line('M233 112.5 C262 98.5 300 82.5 344 70.5 C376 66.5 406 67.5 430 72.5 C442 75.5 450 78.5 458 82.5', '#f6f8fc', 1.1, 0.85)
-      + line('M235 116 C264 103 302 90 344 78.8 C376 74.8 406 75.8 430 79.5 C442 81.5 450 84 458 87.5', SIL.shade, 1, 0.8)
-      + shape('M300 92 C322 85 346 80 370 79 C394 79 420 82 452 92 L452 98 C420 89 394 86 370 86 C346 87 322 91 302 98 Z', HAIR.deep, 0.5)
-      // la mèche de gauche passe sur le bandeau
+      + oval(426, 58, 26, 11, 'url(#g-sheenSoft)', 0.8, 52)
+      // le diadème : son bandeau suit le tour du crâne (un arc d'ellipse, plus fin sur les côtés qui fuient) ;
+      // ses deux bouts passent sous les mèches qui tombent du sommet
+      + shape(BAND, 'url(#g-band)')
+      + line(BAND_TOP, '#f6f8fc', 1.1, 0.85) + line(BAND_LOW, SIL.shade, 1, 0.8)
+      + shape('M300 90 C322 83 346 79 366 78 C388 79 412 83 444 94 L444 100 C412 90 388 86 366 85 C346 86 322 90 302 97 Z', HAIR.deep, 0.45)
+      // la mèche de gauche passe sur le bandeau ; le bandeau s'assombrit en passant dessous
+      + shape('M266 90 C273 96 278 103 281 111 L276 113 C273 106 268 99 261 94 Z', '#0c0b10', 0.5)
       + shape('M220 64 C238 74 256 86 270 98 C278 105 284 114 287 124 L282 134 L232 134 C222 118 214 98 220 64 Z', 'url(#g-cap)')
-      + shape('M262 92 C268 96 272 100 275 104 C270 104 266 104 262 106 Z', HAIR.deep, 0.5)
       + shape('M230 80 C244 90 258 102 268 116 C256 108 242 98 228 88 Z', HAIR.sheen, 0.45)
-      + shape('M236 88 C246 96 254 104 260 112 C252 106 244 100 236 94 Z', HAIR.hi, 0.3)
       + shape('M272 98 C279 104 284 112 287 124 L282 128 C280 118 276 108 268 100 Z', HAIR.deep, 0.4)
       // la mèche de droite, aussi
+      + shape('M427 64 C430 74 433 84 435 93 L430 92 C428 84 426 75 423 66 Z', '#0c0b10', 0.45)
       + shape('M424 50 C437 60 448 74 454 88 C456 96 457 104 456 112 C450 106 443 100 436 95 C433 82 430 66 424 50 Z', 'url(#g-cap)')
       + shape('M436 76 C434 82 435 88 437 95 L432 90 C431 86 432 80 436 76 Z', HAIR.deep, 0.45)
-      + shape('M430 58 C440 68 448 80 452 94 C446 84 438 74 430 66 Z', HAIR.warm, 0.55)
       // les mèches du front, de part et d'autre
       + shape('M340 78 C334 86 326 96 318 104 C308 112 300 122 293 132 C300 116 312 100 326 88 Z', HAIR.sheen, 0.4)
       + shape('M404 80 C407 92 411 102 417 110 C424 120 430 128 435 136 C424 124 414 110 408 96 Z', HAIR.warm, 0.55)
@@ -617,8 +600,8 @@ const parts = [
       // chaque pointe a une face claire et une face dans l'ombre, de part et d'autre de son arête
       shape('M364 5 L354 40 L339 64 L350 72 L366 60 Z', '#f4f6fb') + shape('M364 5 L366 60 L398 58 L382 36 Z', '#a8aec2')
       + shape('M339 64 L350 72 C362 76 370 86 376 98 L366 60 Z', '#c8ccd8') + shape('M366 60 L376 98 C386 80 392 68 398 58 Z', '#7c8296')
-      + shape('M306 46 L300 72 L318 64 Z', '#ffffff') + shape('M306 46 L318 64 L336 66 C324 60 314 52 306 46 Z', '#9aa0b4')
-      + shape('M418 36 L406 66 L418 66 Z', '#f0f2f8') + shape('M418 36 L418 66 L428 72 C424 60 421 48 418 36 Z', '#8c92a6')
+      + shape('M306 51 L300 77 L318 69 Z', '#ffffff') + shape('M306 51 L318 69 L336 71 C324 65 314 57 306 51 Z', '#9aa0b4')
+      + shape('M418 41 L406 71 L418 71 Z', '#f0f2f8') + shape('M418 41 L418 71 L428 77 C424 65 421 53 418 41 Z', '#8c92a6')
       + line('M364 5 L366 60 M339 64 L366 60 L398 58 M366 60 L376 98', '#ffffff', 1, 0.6)
       // la gemme rouge dans sa monture
       + shape('M371 36.5 L385.5 54 L373 73.5 L357.5 56 Z', '#eef1f7') + line('M371 36.5 L385.5 54 L373 73.5 L357.5 56 Z', '#6a6f84', 1, 0.7)
@@ -627,8 +610,7 @@ const parts = [
 
   // --- devant tout : la lame, puis la garde d'or ---
   { id: 'blade', cls: 'a-sw', d: S.blade, shadow: [{ on: ['torso', 'tassetL', 'tassetR', 'belt', 'skirt', 'fur', 'legR', 'cape', ...RIGHT, 'hairBack'], dx: -3, dy: 7, color: '#000', o: 0.35 }],
-    body: `<g class="a-smear" opacity="0"><path d="${smearD}" fill="url(#g-smear)"/></g>`
-      + use('blade', 'url(#g-bladeB)')
+    body: use('blade', 'url(#g-bladeB)')
       // le tranchant du haut, éclairé ; l'arête au milieu
       + shape(`M${P(onAxis(288, -10.5))} L${P(onAxis(547, -10.5))} L566 272 L${P(onAxis(551, 0))} L${P(onAxis(288, 0))} Z`, 'url(#g-bladeT)')
       + line(`M${P(onAxis(300, 0))} L${P(onAxis(546, 0))}`, '#7a8098', 1.4, 0.8)
@@ -656,7 +638,6 @@ const WX = WRIST[0] - SHOULDER[0], WY = WRIST[1] - SHOULDER[1];
 const swordT = (A, B) => `rotate(${A}deg) translate(${WX}px,${WY}px) rotate(${B}deg) translate(${-WX}px,${-WY}px)`;
 const FX = 494 - 418, FY = 186 - 222; // le poignet levé, depuis l'épaule
 const fistT = (A, s) => `rotate(${A}deg) translate(${FX}px,${FY}px) scale(${s}) translate(${-FX}px,${-FY}px)`;
-const EASE = ['cubic-bezier(.3,0,.4,1)', 'cubic-bezier(.7,0,.9,.55)', 'cubic-bezier(.15,.55,.35,1)', 'cubic-bezier(.4,0,.3,1)'];
 const style = [
   `.a-cape{transform-origin:350px 238px;animation:cape 3.8s ease-in-out infinite alternate}`,
   `.a-hl{transform-origin:248px 120px;animation:hl 4.4s ease-in-out infinite alternate}`,
@@ -689,7 +670,7 @@ const style = [
   `.atk .a-raise{animation:raise-atk .75s ease-in-out both}.atk .a-fist{animation:fist-atk .75s ease-in-out both}`,
   `.atk .a-hl{animation:hl-atk .75s ease-in-out both}.atk .a-hl2{animation:hl2-atk .75s ease-in-out both}.atk .a-hr{animation:hr-atk .75s ease-in-out both}`,
   `.atk .a-cape{animation:cape-atk .75s ease-in-out both}.atk .a-fur{animation:fur-atk .75s ease-in-out both}`,
-  `.atk .a-smear{animation:smear .75s linear both}`,
+  `.atk .a-trail{animation:trail .75s linear both}`,
   kf('sa-atk', SWING.map(([t, A], i) => [t, R(A), EASE[i]])),
   kf('sw-atk', SWING.map(([t, A, B], i) => [t, swordT(A, B), EASE[i]])),
   kf('raise-atk', [[0, R(0)], [0.3, R(-7)], [0.46, R(5)], [0.62, R(4)], [1, R(0)]]),
@@ -699,7 +680,14 @@ const style = [
   kf('hr-atk', [[0, R(1)], [0.3, R(2.2)], [0.5, R(-3.6)], [0.68, R(1.6)], [0.86, R(-0.4)], [1, R(1)]]),
   kf('cape-atk', [[0, R(-0.8)], [0.3, R(-2)], [0.52, R(2.6)], [0.72, R(-1.2)], [1, R(-0.8)]]),
   kf('fur-atk', [[0, R(-1.4)], [0.3, R(3)], [0.48, R(-5)], [0.68, R(2.5)], [1, R(-1.4)]]),
-  `@keyframes smear{0%,39%{opacity:0}43%{opacity:.85}46%{opacity:1}51%{opacity:.35}55%,100%{opacity:0}}`,
+  `@keyframes trail{0%,41%{opacity:0}44%{opacity:.9}46.5%{opacity:1}50%{opacity:.5}55%,100%{opacity:0}}`,
 ].join('');
 
-module.exports = { id: 'mages-10', w: W, h: H, pad: PAD, foot: [356, 485], svg: (anime = true) => figure({ w: W, h: H, pad: PAD, defs, style, parts, anime }) };
+// la traînée, posée devant tout (seulement dans l'image animée)
+const TRAIL = `<g class="a-trail" opacity="0"><path d="${trailD}" fill="url(#g-trail)"/></g>`;
+const svg = (anime = true) => {
+  const s = figure({ w: W, h: H, pad: PAD, defs, style, parts, anime });
+  return anime ? s.replace(/<\/svg>$/, `${TRAIL}</svg>`) : s;
+};
+
+module.exports = { id: 'mages-10', w: W, h: H, pad: PAD, foot: [356, 485], svg };

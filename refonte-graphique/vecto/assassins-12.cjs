@@ -55,14 +55,16 @@ const GOLD = { hi: '#fff3b0', base: '#f1c548', mid: '#d79a22', shade: '#9c6510',
 // les ombres portées : une teinte par matière qui la reçoit
 const SH = { skin: '#c4664a', hair: '#1f5a33', leaf: '#245a30', wood: '#5c3010' };
 
-// ---------- la flûte : un tube droit, des lèvres au bout de droite ----------
-const FL = { ax: 288, ay: 289, bx: 498, by: 243, r0: 9.2, r1: 8.2 };
+// ---------- la flûte : un tube droit, des lèvres au bout de droite ; l'embouchure, plus fine, entre dans la bouche ----------
+const FL = { ax: 294, ay: 281.5, bx: 498, by: 243, r0: 9.2, r1: 8.2, tip: 5.4 };
 const FU = (() => { const L = Math.hypot(FL.bx - FL.ax, FL.by - FL.ay); return { x: (FL.bx - FL.ax) / L, y: (FL.by - FL.ay) / L, L }; })();
 const FN = { x: -FU.y, y: FU.x }; // la normale : vers le dessous de la flûte
 const FA = (Math.atan2(FU.y, FU.x) * 180) / Math.PI; // son angle
 /** Un point de la flûte : `t` le long (0 = lèvres, 1 = bout), `s` en travers (-1 = dessus, 1 = dessous). */
+const ease = (v) => { const c = Math.max(0, Math.min(1, v)); return c * c * (3 - 2 * c); };
+const radius = (t) => (t < 0.13 ? FL.tip + (FL.r0 - FL.tip) * ease((t - 0.045) / 0.085) : FL.r0 + (FL.r1 - FL.r0) * Math.min(1, t));
 const fp = (t, s = 0, k = 1) => {
-  const r = (FL.r0 + (FL.r1 - FL.r0) * Math.max(0, Math.min(1, t))) * k;
+  const r = radius(t) * k;
   return [FL.ax + FU.x * FU.L * t + FN.x * r * s, FL.ay + FU.y * FU.L * t + FN.y * r * s];
 };
 const fq = (t, s, k) => P(...fp(t, s, k));
@@ -85,18 +87,18 @@ const defs = [
   lin('g-sleeve', 0, 290, 0, 352, [[0, '#a2e68b'], [0.45, '#76d06a'], [1, '#4fa757']]),
   // les bouffants de la manche : chacun bombé, éclairé en haut à droite
   rad('g-puff0', 240, 312, 34, [[0, '#9be385'], [0.6, '#74cd68'], [1, '#55ad5a']]),
-  rad('g-puff1', 282, 312, 34, [[0, '#a4e78b'], [0.6, '#78d06b'], [1, '#57b05b']]),
-  rad('g-puff2', 312, 306, 30, [[0, '#a8e98e'], [0.6, '#7ad26c'], [1, '#5ab35c']]),
-  rad('g-puff3', 338, 300, 26, [[0, '#acea90'], [0.6, '#7ed46e'], [1, '#5db65e']]),
+  // l'avant-bras : éclairé sur le dessus, plus sombre dessous ; le revers du poignet, plus clair
+  lin('g-fore', 318, 318, 334, 340, [[0, '#a6e88c'], [0.45, '#78d06b'], [1, '#4fa757']]),
+  lin('g-cuffN', 330, 300, 350, 322, [[0, '#c6f3a4'], [0.5, '#8fdc79'], [1, '#5cb35d']]),
   lin('g-torso', 226, 0, 354, 0, [[0, '#4fa757'], [0.55, '#72cd68'], [1, '#a0e48b']]),
   lin('g-skirt', 165, 0, 385, 0, [[0, '#3f9450'], [0.5, '#5fbb5e'], [1, '#93dc7b']]),
   lin('g-leg', 0, 0, 1, 0, [[0, '#efbb9b'], [0.45, '#fcdcbc'], [1, '#fff1e0']], false),
   lin('g-boot', 0, 0, 1, 0, [[0, '#479e52'], [0.5, '#74cd68'], [1, '#b2eb8f']], false),
   lin('g-wood', ...fp(0, -1).map(n), ...fp(0, 1).map(n), [[0, WOOD.hi], [0.28, WOOD.lite], [0.6, WOOD.base], [1, WOOD.shade]]),
   lin('g-gold', 0, 0, 0, 1, [[0, GOLD.hi], [0.45, GOLD.base], [1, GOLD.shade]], false),
-  lin('g-goldS', 0, 0, 1, 0, [[0, GOLD.shade], [0.5, GOLD.mid], [1, '#e9b23a']], false),
   rad('g-petal', 0.62, 0.25, 0.85, [[0, '#ffffff'], [0.55, '#fbfcff'], [1, '#d3dcee']], false),
   rad('g-heart', 0.38, 0.32, 0.75, [[0, '#fff8c0'], [0.5, '#f8d240'], [1, '#d8961a']], false),
+  lin('g-lips', 0, 0, 0, 1, [[0, '#f29a8c'], [0.5, '#e57768'], [1, '#c95a58']], false),
   rad('g-finger', 0.6, 0.28, 0.8, [[0, '#ffeedd'], [0.55, '#fbd9b8'], [1, '#f2c09f']], false),
   rad('g-glow', 0.5, 0.5, 0.5, [[0, '#ffffff', 1], [0.3, '#f6ffd8', 0.85], [1, '#d6ffb0', 0]], false),
   rad('g-ring', 0.5, 0.5, 0.5, [[0.55, '#fffbe0', 0], [0.78, '#fffbe0', 0.9], [1, '#fff3a0', 0]], false),
@@ -115,13 +117,13 @@ const S = {
   legL: sm('224,440 221,462 219,478 215,490 212,504 213,519 218,530 225,537 232,540 239,536 245,527 248,512 250,496 252,484 255,468 257,446'),
   legR: sm('276,446 278,466 274,482 267,497 262,510 261,524 265,535 272,540 280,537 288,528 295,515 299,502 306,493 316,485 325,471 329,450'),
   // le bras du fond : il sort de derrière le buste et monte vers la main de droite
-  armF: sm('336,316 352,305 372,299 392,295 410,290 426,286 441,284 449,292 447,303 437,315 422,330 405,343 390,353! 378,347 362,349 347,348 337,338'),
+  armF: sm('336,316 352,305 372,299 392,295 404,288 420,281 440,279 450,284 449,292 447,303 437,315 422,330 405,343 390,353! 378,347 362,349 347,348 337,338'),
   torso: sm('232,298 262,292 300,290 336,294 352,304 356,326 352,350 346,374 342,396 300,404 254,402 228,396 224,372 222,346 224,318'),
   // la robe de feuilles : chaque pointe est une feuille
   skirt: sm('230,385 290,394 340,386 352,402 364,420 376,434 384,446! 372,451 364,456 354,472! 343,461 333,459 320,466! 310,458 300,462 286,476! 276,463 266,463 254,472! 244,461 233,461 218,469! 210,456 203,452 191,459! 186,448 177,445 164,441! 172,427 186,413 202,400 216,391'),
   belt: sm('226,382 258,389 292,393 322,389 344,381 346,390 323,399 292,403 257,399 227,392'),
   // le bras de devant, plié devant la poitrine : épaule à gauche, poignet sous la main près de la bouche
-  armN: sm('221,322 224,306 232,298 246,296 260,300 276,300 294,297 312,294 330,290 346,290 356,296 359,306 354,316 342,322 326,330 304,338 282,344 262,348 244,350 230,346 222,336'),
+  armN: sm('221,322 224,306 232,298 246,296 260,300 276,300 294,297 312,293 330,287 346,284 356,289 362,298 360,308 348,322 334,336 320,348 306,354 290,353 270,351 250,352 234,348 223,338'),
   // la tête
   earR: sm('400,196 412,195 421,199! 415,206 406,213 398,212'),
   earL: sm('108,190! 132,193 156,198 180,205 194,214 196,236 192,250 186,253 176,248 158,236 138,221 121,204'),
@@ -143,8 +145,13 @@ S.flower = sm(PETALS.flatMap(([a, r], i) => {
 }).join(' '));
 
 // la flûte : bout gauche arrondi (le nœud du bois), bague un peu plus large au bout de droite
-S.flute = sm([fq(-0.035, -0.4), ...[0, 0.25, 0.5, 0.75, 0.92].map((t) => fq(t, -1)), `${fq(0.928, -1.22)}!`, fq(0.97, -1.2), `${fq(1.004, -1.0)}`, fq(1.012, 0), fq(1.004, 1.0), fq(0.97, 1.2), `${fq(0.928, 1.22)}!`,
-  ...[0.92, 0.75, 0.5, 0.25, 0].map((t) => fq(t, 1)), fq(-0.035, 0.4)]);
+S.flute = sm([fq(-0.03, -0.45), ...[0, 0.045, 0.09, 0.13, 0.25, 0.5, 0.75, 0.92].map((t) => fq(t, -1)), `${fq(0.928, -1.22)}!`, fq(0.97, -1.2), `${fq(1.004, -1.0)}`, fq(1.012, 0), fq(1.004, 1.0), fq(0.97, 1.2), `${fq(0.928, 1.22)}!`,
+  ...[0.92, 0.75, 0.5, 0.25, 0.13, 0.09, 0.045, 0].map((t) => fq(t, 1)), fq(-0.03, 0.45)]);
+
+// les lèvres, en cul de poule autour de l'embouchure : dessinées par-dessus la flûte (repère de la flûte : x le long, y en travers)
+const lipAt = (x, y) => P(FL.ax + FU.x * x + FN.x * y, FL.ay + FU.y * x + FN.y * y);
+S.lips = sm([lipAt(5.6, -5.6), lipAt(4.4, -8.4), lipAt(0.5, -9.8), lipAt(-4, -8.4), lipAt(-6.2, -3.8), lipAt(-6.3, 1.6), lipAt(-4.6, 7.4),
+  lipAt(0, 9.6), lipAt(4.4, 8.2), lipAt(5.6, 5.6), `${lipAt(3.6, 0)}!`]);
 
 // ---------- les mains : quatre doigts repliés sur la flûte, les jointures au-dessus ----------
 /** Une main en poing sur la flûte : `fingers` = [x du haut, y du haut, x du bas, y du bas, largeur] pour chaque doigt. */
@@ -159,8 +166,11 @@ function fist(fingers, heel) {
   });
   return { outline, body };
 }
-const NEAR = fist([[345.5, 266, 343.5, 291, 10.6], [356.5, 263, 355.5, 294, 11.4], [367.5, 264, 367, 294, 11], [378, 269, 378.5, 291, 9.6]],
-  '337,292 338,276 340,266 346,260 352,260 357,257 363,258 368,258 374,261 380,263 385,268 389,276 390,286 388,296 381,304 367,308 352,307 342,301');
+// la main de devant est remontée de 3,5 px avec la flûte (ses doigts passent toujours par-dessus)
+const up = (pts, dy) => pts.map(([a, b, c, d, w]) => [a, b + dy, c, d + dy, w]);
+const upS = (str, dy) => str.split(' ').map((q) => { const [x, y] = q.split(',').map(Number); return `${x},${n(y + dy)}`; }).join(' ');
+const NEAR = fist(up([[345.5, 266, 343.5, 291, 10.6], [356.5, 263, 355.5, 294, 11.4], [367.5, 264, 367, 294, 11], [378, 269, 378.5, 291, 9.6]], -3.5),
+  upS('337,292 338,276 340,266 346,260 352,260 357,257 363,258 368,258 374,261 380,263 385,268 389,276 390,286 388,296 381,304 367,308 352,307 342,301', -3.5));
 const FAR = fist([[423, 245, 421.5, 270, 10.4], [434.5, 240, 434, 273, 11.2], [446, 240, 446, 272, 10.8], [456.5, 246, 456, 267, 9.4]],
   '414,270 415,256 417,246 422,240 428,239 433,235 440,234 445,235 451,236 456,239 461,244 463,252 463,262 460,272 454,282 443,290 429,292 418,286');
 S.handN = NEAR.outline; S.handF = FAR.outline;
@@ -224,28 +234,29 @@ function skirtBody() {
   return s;
 }
 
-// ---------- la manche de devant : l'épaule bombée, puis des bouffants de plus en plus petits jusqu'au poignet ----------
-const armTop = (x) => 312 - (x - 255) * 0.25, armBot = (x) => 349 - (x - 255) * 0.34;
-// le bord gauche de chaque bouffant (il recouvre le précédent) ; ils rapetissent vers la main, qui vient vers nous
-const PUFFS = [[257, 'g-puff1'], [291, 'g-puff2'], [321, 'g-puff3']];
-function sleeveBody() {
-  let s = '';
-  PUFFS.forEach(([x], i) => {
-    const t = armTop(x + 8), b = armBot(x + 8), m = (t + b) / 2;
-    const d = sm(`${P(x + 10, t - 8)} ${P(x + 2, m - (b - t) * 0.3)} ${P(x - 1, m + 1)} ${P(x + 3, b - 3)} ${P(x + 12, b + 8)} ${P(390, b + 8)} ${P(390, t - 10)}`);
-    s += `<path d="${d}" transform="translate(-3 3)" fill="${SH.leaf}" opacity="0.42"/>`;
-    s += shape(d, `url(#${PUFFS[i][1]})`);
-    // la lumière sur le haut du bouffant
-    const w = (PUFFS[i + 1] ? PUFFS[i + 1][0] : 350) - x;
-    s += shape(sm(`${P(x + 6, t + 4)} ${P(x + w * 0.45, t + 1.5)} ${P(x + w * 0.8, t + 4)} ${P(x + w * 0.45, t + 7.5)}`), LEAF.hi, 0.75);
-  });
-  // l'épaule, ronde, par-dessus le haut du bras
-  s += `<path d="${sm('214,314 224,298 242,295 258,302 264,322 258,344 240,353 220,346')}" transform="translate(-3 3)" fill="${SH.leaf}" opacity="0.3"/>`
-    + shape(sm('214,314 224,298 242,295 258,302 264,322 258,344 240,353 220,346'), 'url(#g-puff0)')
-    + oval(240, 307, 13, 6.5, LEAF.hi, 0.7, -12);
-  // le dessous du bras dans l'ombre
-  s += shape(sm('218,334 230,346 248,350 274,348 302,342 328,332 348,321 357,312 352,326 328,340 300,350 270,354 240,354 216,344'), LEAF.deep, 0.45);
-  return s;
+// ---------- le bras de devant : l'épaule ronde, le haut du bras, puis l'avant-bras qui remonte en biais vers la main ----------
+const ELB = [306, 338], WRI = [355, 296];
+const AU = (() => { const dx = WRI[0] - ELB[0], dy = WRI[1] - ELB[1], L = Math.hypot(dx, dy); return { x: dx / L, y: dy / L, L }; })();
+/** Un point de l'avant-bras : `f` le long (0 = coude, 1 = poignet), `s` en travers (-1 = dessus, 1 = dessous), largeur qui s'affine. */
+const fa = (f, s) => { const h = 17 - 4.5 * f; return P(ELB[0] + AU.x * AU.L * f - AU.y * h * s, ELB[1] + AU.y * AU.L * f + AU.x * h * s); };
+// l'avant-bras : coude arrondi (en bas à gauche), poignet caché sous la main
+const FOREARM = sm([`${fa(1.18, -1)}!`, fa(0.5, -1), fa(0, -1), fa(-0.22, -0.5), fa(-0.2, 0.55), fa(0, 1), fa(0.5, 1), `${fa(1.18, 1)}!`]);
+function armBody() {
+  // le haut du bras : dans l'ombre de l'avant-bras, plus sombre en dessous
+  return shape(sm('218,334 232,347 252,352 276,352 298,353 300,340 270,340 240,336'), LEAF.deep, 0.42)
+    // deux plis du coude, de longueurs différentes, qui partent du creux du bras
+    + shape(sm('298,331! 282,324 264,321! 280,328'), LEAF.deep, 0.4)
+    + shape(sm('300,343! 284,346 268,349! 286,349'), LEAF.deep, 0.3)
+    // l'épaule ronde
+    + `<path d="${sm('214,314 224,298 242,295 260,302 266,322 260,343 240,352 220,346')}" transform="translate(-3 3)" fill="${SH.leaf}" opacity="0.3"/>`
+    + shape(sm('214,314 224,298 242,295 260,302 266,322 260,343 240,352 220,346'), 'url(#g-puff0)')
+    + oval(240, 307, 13, 6.5, LEAF.hi, 0.7, -12)
+    // l'avant-bras : son ombre sur le haut du bras, puis lui, éclairé sur le dessus
+    + `<path d="${FOREARM}" transform="translate(-3 5)" fill="${SH.leaf}" opacity="0.45"/>`
+    + shape(FOREARM, 'url(#g-fore)')
+    + shape(sm([fa(0.12, -0.72), fa(0.55, -0.82), `${fa(0.9, -0.7)}!`, fa(0.55, -0.45), fa(0.15, -0.4)]), LEAF.hi, 0.7)
+    // le poignet de la manche : un revers de feuilles, deux pointes qui retombent vers le coude
+    + shape(sm([fa(0.84, -1.1), fa(1.2, -1.1), fa(1.2, 1.1), fa(0.84, 1.1), `${fa(0.66, 0.75)}!`, fa(0.8, 0.2), `${fa(0.62, -0.25)}!`, fa(0.8, -0.7)]), 'url(#g-cuffN)');
 }
 
 // ---------- ce qui n'apparaît que dans l'image vivante : poussière de fée, onde et notes de l'attaque ----------
@@ -339,12 +350,12 @@ const parts = [
       shape(sm('352,306 372,300 390,297 378,305 360,312'), LEAF.hi, 0.6)
       + shape(sm('398,292 452,280 456,306 430,328 404,346 396,320'), LEAF.mid, 0.75)
       + shape(sm('340,334 376,338 392,334 396,346 390,353! 376,350 350,352'), LEAF.deep, 0.5)
-      // le galon d'or qui ferme la manche au coude : il fait le tour du bras (peint d'un bord à l'autre)
-      + shape(sm('392,292 401,291 404,316 399,342 390,356 385,354 393,334 396,312'), 'url(#g-goldS)')
-      + line('M397 294 C400 312 398 330 392 348', GOLD.hi, 1.2, 0.6)
-      // le bracelet du poignet, en travers de l'avant-bras
-      + shape(sm('404,289 426,287 450,292 450,303 426,300 405,301'), 'url(#g-gold)')
-      + line('M408 291.5 C424 290 438 291 448 294', GOLD.hi, 1.3, 0.85)
+      // l'ouverture de la manche : un creux plus sombre, sans trait
+      + shape(sm('384,300 396,296 401,318 397,342 390,354 386,348 392,328 392,310'), LEAF.deep, 0.32)
+      // le bracelet d'or : un anneau autour du poignet, peint dans la manche d'un bord à l'autre (bombé, sombre en bas)
+      + shape(sm('398,288 414,283.5 432,282 452,285 452,299 432,296.5 414,297.5 398,301'), 'url(#g-gold)')
+      + shape(sm('398,296 414,293 432,292 452,295 452,299 432,296.5 414,297.5 398,301'), GOLD.shade, 0.55)
+      + oval(436, 287, 6, 1.8, GOLD.hi, 0.9, 4)
     ) },
   { id: 'torso', cls: UP, d: S.torso, shadow: [{ on: ['armF'], dx: -3, dy: 4, color: SH.leaf, o: 0.35 }],
     body: use('torso', 'url(#g-torso)') + clip('torso',
@@ -366,7 +377,7 @@ const parts = [
 
   // --- le bras de devant ---
   { id: 'armN', cls: UP, d: S.armN, shadow: [{ on: ['torso', 'belt', 'skirt', 'armF'], dx: -3, dy: 6, color: SH.leaf, o: 0.42 }],
-    body: use('armN', '#62bd5f') + clip('armN', sleeveBody()) },
+    body: use('armN', 'url(#g-sleeve)') + clip('armN', armBody()) },
 
   // --- la tête ---
   { id: 'earR', cls: UP, d: S.earR, body: use('earR', 'url(#g-skin)') + shape(sm('404,200 414,199 410,205 404,208'), SKIN.shade, 0.6) },
@@ -400,9 +411,8 @@ const parts = [
     + shape(sm('322,252 326,243 334,240 342,245 344,253 336,258 328,258'), '#f8c3a1')
     + shape(sm('327,246 333,242 340,245 334,247'), SKIN.hi, 0.95)
     + shape(sm('323,253 330,256 338,256 343,252 337,259 328,259'), '#d98a74', 0.8)
-    // la joue gonflée qui souffle, et les lèvres en cul de poule posées sur la flûte
-    + line('M276 258 C280 264 280 270 277 276', SKIN.line, 1.5, 0.6)
-    + oval(300, 277, 7.4, 6.4, '#e57f72') + oval(300.4, 278.4, 4.2, 3.4, '#5a1a1e') + oval(298, 273.2, 2.5, 1.3, '#ffcfbe', 0.9) },
+    // la joue gonflée qui souffle
+    + line('M276 258 C280 264 280 270 277 276', SKIN.line, 1.5, 0.6) },
   { id: 'cap', cls: UP, d: S.cap, shadow: [{ on: ['face', 'earL', 'earR'], dx: -2, dy: 5, color: SH.skin, o: 0.3 }, { on: ['hairB'], dx: -3, dy: 5, color: SH.hair, o: 0.35 }],
     body: use('cap', 'url(#g-hair)') + clip('cap',
       // le côté gauche et la mèche qui couvre l'oreille : dans l'ombre de la tête
@@ -457,10 +467,19 @@ const parts = [
       + `<path d="M${fq(0.925, -1.4)} L${fq(0.945, -1.4)} L${fq(0.945, 1.4)} L${fq(0.925, 1.4)} Z" fill="${WOOD.line}" opacity="0.5"/>`
       + line(`M${fq(0.955, -0.6)} L${fq(0.995, -0.6)}`, WOOD.hi, 1.8, 0.8)
     ) + FX_MARK },
+  // les lèvres, par-dessus l'embouchure : la lèvre du haut éclairée, celle du bas plus sombre, la flûte entre les deux
+  { id: 'lips', cls: UP, d: S.lips, rim: { on: ['face', 'flute'], color: '#b4505a', w: 1, o: 0.85 },
+    shadow: [{ on: ['face', 'flute'], dx: -2, dy: 3, color: SH.skin, o: 0.35 }],
+    body: use('lips', 'url(#g-lips)') + clip('lips',
+      shape(sm([lipAt(-6.5, 0.8), lipAt(5, 0.8), lipAt(6, 10), lipAt(-6.5, 10)]), '#c9585e', 0.45)
+      + oval(...[lipAt(-0.8, -6.3)].join().split(',').map(Number), 2.6, 1.3, '#ffd2c4', 0.95, FA)
+      + oval(...[lipAt(-1, 6.4)].join().split(',').map(Number), 2.2, 1, '#ffb8aa', 0.8, FA)
+      + line(`M${lipAt(-5.6, 0.6)} Q${lipAt(-1, 1.4)} ${lipAt(3.6, 0)}`, '#7a2430', 1.4, 0.8)
+    ) },
   { id: 'handF', cls: UP, d: S.handF, shadow: [{ on: ['flute', 'armF'], dx: -3, dy: 5, color: SH.wood, o: 0.35 }],
     body: fistBody('handF', FAR, sm('414,270 421,282 433,289 447,288 458,279 462,268 459,284 445,294 427,295 413,285')) },
   { id: 'handN', cls: UP, d: S.handN, shadow: [{ on: ['flute', 'armN', 'face'], dx: -3, dy: 5, color: SH.skin, o: 0.4 }],
-    body: fistBody('handN', NEAR, sm('337,288 345,300 360,306 376,304 387,294 389,284 386,300 371,310 352,310 339,300')) },
+    body: fistBody('handN', NEAR, sm(upS('337,288 345,300 360,306 376,304 387,294 389,284 386,300 371,310 352,310 339,300', -3.5))) },
 ];
 
 // ---------- la vie au repos : elle flotte, les ailes battent vite, le haut du corps se balance au rythme de la flûte ----------

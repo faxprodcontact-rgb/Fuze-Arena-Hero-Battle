@@ -98,7 +98,8 @@ const S = {
 const defs = [
   rad('g-shell', 226, 166, 215, [[0, '#b7ada3'], [0.3, '#91877f'], [0.6, '#796f6d'], [0.86, '#5d5359'], [1, '#463d47']]),
   lin('g-body', 0, 200, 0, 376, [[0, '#f1dca0'], [0.45, BODY.base], [1, '#d9b875']]),
-  lin('g-neck', 262, 0, 372, 0, [[0, '#bf914c'], [0.25, '#d6b062'], [0.6, BODY.base], [1, '#f2dca0']]),
+  lin('g-neck', 262, 0, 372, 0, [[0, '#bf914c'], [0.25, '#d6b062'], [0.62, BODY.base], [1, '#ebd296']]),
+  rad('g-chin', 0.5, 0.3, 0.7, [[0, BODY.shade, 0.6], [0.6, BODY.shade, 0.25], [1, BODY.shade, 0]], false),
   lin('g-headTone', 0, 196, 0, 300, [[0, '#f3e6bf', 0.6], [1, '#f3e6bf', 0]]),
   lin('g-foot', 0, 330, 0, 377, [[0, '#e4cf9c'], [0.5, '#d2b986'], [1, '#b49866']]),
   lin('g-stalk', 0, 0, 1, 0, [[0, '#c8aa6c'], [0.45, '#e6cf96'], [1, '#f6e8c0']], false),
@@ -120,9 +121,12 @@ function spiral() {
   const sp = (tx, ty, color, w, o) => `<path d="${SPIRAL}" transform="translate(${tx} ${ty})" fill="none" stroke="${color}" stroke-width="${w}" opacity="${o}"/>`;
   // la lumière vient d'en haut : chaque tour est un boudin, sombre juste au-dessus de la rainure, clair juste dessous
   // (sur les côtés de la spirale, le filet clair passe sous la rainure : il ne se voit qu'en haut et en bas de chaque tour)
-  return sp(0, -9, STONE.deep, 14, 0.3) + sp(0, -5, STONE.deep, 10, 0.35)
-    + sp(0, 12, '#fff4e4', 12, 0.08) + sp(0, 9, '#fff4e4', 7, 0.16) + sp(0, 6.6, '#efe6d8', 2.6, 0.9)
-    + sp(0, 0, '#3a3240', 10, 0.8) + sp(0, -1, '#231c28', 4.4, 1);
+  // la rainure n'est pas un trait noir : une bande de pierre dans l'ombre, plus sombre sur son bord du haut (le côté
+  // qui ne reçoit pas la lumière), puis l'arête éclairée du tour suivant
+  return sp(0, -10, STONE.deep, 14, 0.2) + sp(0, -6, STONE.deep, 9, 0.28)
+    + sp(0, 12, '#fff4e4', 12, 0.08) + sp(0, 9, '#fff4e4', 7, 0.16)
+    + sp(0, 0, '#51475a', 11, 0.95) + sp(0, -3.2, '#382f40', 4.2, 0.9) + sp(0, 3.2, '#695f6f', 3.4, 0.8)
+    + sp(0, 6.4, '#ddd3c6', 3.2, 0.8) + sp(0, 7.6, '#f4ecdf', 1.4, 0.45);
 }
 
 /**
@@ -199,12 +203,14 @@ const parts = [
         + shape('M162 9 L164 61 L188 47 Z', 'url(#g-cryTip)')
         + shape('M125 48 L164 61 L165 138 L124 138 Z', 'url(#g-cryL)')
         + shape('M164 61 L188 47 L188 138 L165 138 Z', 'url(#g-cryR)')
-        // la lumière qui court dans la pierre : lames claires, une veine sombre, les arêtes vives
-        + shape('M138 60 L146 63 L148 134 L140 134 Z', CRY.lite, 0.5)
-        + shape('M150 65 L154 66 L156 134 L152 134 Z', CRY.deep, 0.22)
-        + shape('M176 58 L183 54 L184 134 L177 134 Z', '#d9ffc8', 0.45)
+        // la lumière qui court dans la pierre : des plans de biais, clairs ou sombres, jamais parallèles
+        + shape('M127 52 L151 60 L132 120 Z', CRY.lite, 0.45)
+        + shape('M154 66 L160 68 L147 112 Z', '#e6ffd8', 0.35)
+        + shape('M164 78 L164 116 L139 130 Z', CRY.deep, 0.2)
+        + shape('M170 60 L187 51 L186 94 Z', '#d9ffc8', 0.5)
+        + shape('M165 110 L188 97 L188 138 L165 138 Z', CRY.shade, 0.25)
         + line('M125 48 L164 61 L188 47', '#efffe6', 1.5, 0.6) + line('M164 61 L165 138', '#efffe6', 2, 0.75)
-        + `<g class="a-g3">${shape('M161 15 L131 47 L138 49 Z', CRY.hi, 0.95)}${shape('M168 69 L173 67 L174 126 L169 128 Z', CRY.hi, 0.6)}`
+        + `<g class="a-g3">${shape('M161 15 L131 47 L138 49 Z', CRY.hi, 0.95)}${shape('M168 66 L174 63 L168 102 Z', CRY.hi, 0.6)}`
         // une petite étoile de lumière sur la pointe
         + shape('M170 30 L172 37 L179 39 L172 41 L170 48 L168 41 L161 39 L168 37 Z', '#ffffff', 0.95) + `</g>`
         + `<rect x="120" y="92" width="72" height="50" fill="url(#g-cryBase)"/>`
@@ -250,37 +256,36 @@ const parts = [
       + shape('M300 206 C318 203 336 208 348 222 C354 232 357 244 357 252 C350 240 340 226 326 216 C316 210 306 208 300 206 Z', BODY.hi, 0.7)
       // le cou : deux grands plis de la peau, chacun avec son ombre et son bord éclairé
       + shape('M276 292 C286 308 293 330 296 374 L306 374 C304 344 298 318 286 300 Z', BODY.shade, 0.4)
-      + shape('M289 306 C298 324 303 346 305 374 L308 374 C307 346 302 322 291 304 Z', BODY.hi, 0.3)
+      + shape('M289 306 C298 324 303 346 305 374 L308 374 C307 346 302 322 291 304 Z', BODY.hi, 0.2)
       + shape('M321 318 C325 334 327 352 324 371 L316 371 C320 352 320 334 321 318 Z', BODY.shade, 0.38)
-      + shape('M323 322 C327 338 329 354 327 371 L324 371 C326 354 325 338 322 324 Z', BODY.hi, 0.4)
       // le dessous du menton et de la lèvre, dans l'ombre
-      + shape('M325 330 C327 318 333 308 341 301 C335 312 331 322 331 336 C331 348 333 358 335 366 L326 368 C324 356 324 344 325 330 Z', BODY.shade, 0.45)
+      + `<ellipse cx="338" cy="316" rx="24" ry="44" fill="url(#g-chin)"/>`
       // le bec (la lèvre du haut) : dessus clair, dessous dans l'ombre
       + shape('M352 256 C360 256 368 260 372 268 C368 264 360 262 352 262 Z', BODY.hi, 0.85)
       + shape('M354 268 C361 272 367 278 372 278 C370 281 365 281 361 277 C358 273 355 270 350 269 Z', BODY.shade, 0.6)
       // la bouche ouverte : le fond sombre recule vers le coin, une grosse dent et une petite
-      + shape('M349 269 C342 269 334 272 329 278 C333 282 339 284 345 283 C348 281 350 279 352 281 L347 275 Z', 'url(#g-mouth)')
-      + shape('M338 271 L347 271 L343.5 282 Z', '#f2efe2')
-      + shape('M338 271 L341.5 271 L340.5 278 Z', '#ffffff', 0.9)
-      + shape('M331 277 L336.5 276 L334.5 281.5 Z', '#e6e0ce', 0.95)
+      + shape('M349 269 C342 268 334 270.5 329 275.5 C326.5 278 325 281 324.5 284 C331 285.5 339 285.8 346 284.2 C349 283.5 351 282 352 281 L347 275 Z', 'url(#g-mouth)')
+      + shape('M336.5 270.6 L347 270 L342.8 283 Z', '#f2efe2')
+      + shape('M336.5 270.6 L340.4 270.4 L339.6 278 Z', '#ffffff', 0.9)
+      + shape('M329.5 276 L335.6 274.4 L333.2 281.2 Z', '#e6e0ce', 0.95)
+      + shape('M339.4 285.4 L345 284.6 L342.6 279.4 Z', '#e6e0ce', 0.95)
       // la lèvre du bas qui boude : une avancée claire au-dessus, bien ombrée dessous
-      + shape('M333 286 C340 283 349 283 354 287 C356 291 356 295 355 298 C351 292 343 288 333 288 Z', BODY.hi, 0.65)
+      + shape('M331 287.5 C339 284 349 284 355 288 C357 292 357 296 355.5 299.5 C351 293 342 289.5 331 290 Z', BODY.hi, 0.65)
       + shape('M339 297 C345 299 351 301 356 300 C352 303.5 345 303.5 339 300 Z', BODY.shade, 0.7)
       // la moue : le coin de la bouche descend en un pli effilé
-      + shape('M331 279 C322 280 312 286 306 296 C305 299 305 302 306 304 C308 297 314 290 322 286 C326 284 329 283 332 283 Z', BODY.line, 0.85)
-      // le sourcil : un gros bourrelet de peau en biais (il descend vers le bec), clair dessus, un pli sombre dessous
-      + shape('M310 240 C320 242 332 247 342 253 L340 257 C330 252 320 248 309 246 Z', BODY.shade, 0.35)
-      + shape('M306 234.5 C306.5 230.5 311 229.5 316 230.5 C326 232.5 337 238.5 345 245.5 C347.5 248 346.5 252.5 342.5 252.5 C333 247.5 322 242.5 311.5 240 C308 239.2 305.8 237.5 306 234.5 Z', '#f1dfae')
-      + shape('M308 233 C311 231 316 231 321 232.5 C329 234.5 337 239 343 244.5 C335 240.5 326 236 318 234 C313 233 310 233.5 308 233 Z', BODY.hi)
-      + line('M310 240.3 C321 242.6 333 247.6 342.5 252.6', BODY.line, 1.8, 0.65)
-      // l'œil du visage : grand blanc coupé en biais en haut, grosse pupille, reflets
-      + `<clipPath id="c-fe"><path id="s-fe" d="M312.5 245 C321 246.5 331 249.5 338.5 252.5 C339.5 259 334.5 264.5 326.5 264.5 C318.5 264.5 312.5 259 312.5 251 Z"/></clipPath>`
+      + shape('M327 281 C319 283 311 289 306 298 C305 301 305 304 306 306 C308.5 298.5 314.5 291.5 322.5 287.5 C325.5 286 328 285.4 330 285.2 Z', BODY.line, 0.9)
+      // le sourcil : un gros bourrelet de peau en biais (il descend vers le bec), clair dessus ; il coupe le haut de l'œil
+      + shape('M306 231 C306.5 227 311 226 316 227 C326 229.5 337 236 345 243.5 C347.5 246 347 251 343 251.5 C333 247 322 242.5 311.5 239.2 C308 238.2 305.8 234.5 306 231 Z', '#f1dfae')
+      + shape('M308 229.5 C311 227.5 316 227.5 321 229 C329 231 337 236 343 242 C335 237.5 326 232.5 318 230.5 C313 229.5 310 230 308 229.5 Z', BODY.hi)
+      // l'œil du visage : un rond coupé en biais par le sourcil, grosse pupille, reflets (relevé sur l'original)
+      + `<clipPath id="c-fe"><path id="s-fe" d="M318.3 244.0L335.4 251.1A10.4 10.4 0 1 1 318.3 244.0Z"/></clipPath>`
       + `<use href="#s-fe" fill="#fbfbf4"/>`
-      + `<g clip-path="url(#c-fe)">${oval(327.5, 255, 7.2, 7.6, '#0e1116')}${dot(330.5, 251.5, 2.2, '#fff')}${dot(322.8, 258.6, 1, '#fff', 0.85)}`
-      + `${oval(325, 263, 11, 3, '#cfd6e0', 0.3)}</g>`
+      + `<g clip-path="url(#c-fe)">${oval(324, 251.6, 6.5, 6.9, '#0e1116')}${dot(327.2, 248.4, 2.1, '#fff')}${dot(320.2, 255.2, 0.9, '#fff', 0.85)}`
+      + `${oval(324, 261, 10, 2.6, '#cfd6e0', 0.3)}`
+      + `<path d="M309 238 L341 251 L341 246 L309 233 Z" fill="${BODY.line}" opacity="0.3"/></g>`
       + `<use href="#s-fe" fill="none" stroke="#33241c" stroke-width="2.2"/>`
-      + line('M311 244.5 C321 246 331 249 340 252.5', '#33241c', 2.8)
-      + `<g class="a-blink" opacity="0"><use href="#s-fe" fill="${BODY.lite}" stroke="${BODY.lite}" stroke-width="2"/>${line('M312 251 C320 256 331 257 339 253', '#33241c', 2.4)}</g>`
+      + line('M310.2 240.6 C320 244.4 330 248.6 339.8 252.8', '#33241c', 2.8)
+      + `<g class="a-blink" opacity="0"><use href="#s-fe" fill="${BODY.lite}" stroke="${BODY.lite}" stroke-width="2"/>${line('M315 251 C320 256 330 257.5 335.5 253', '#33241c', 2.4)}</g>`
     ) },
 
   // --- la coquille, devant tout le corps ---

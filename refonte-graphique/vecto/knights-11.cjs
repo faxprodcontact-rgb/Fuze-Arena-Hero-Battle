@@ -33,46 +33,39 @@ function taper(x0, y0, cx, cy, x1, y1, w) {
   return `M${n(x0)} ${n(y0)}Q${n(cx + nx)} ${n(cy + ny)} ${n(x1)} ${n(y1)}Q${n(cx - nx)} ${n(cy - ny)} ${n(x0)} ${n(y0)}Z`;
 }
 
-/**
- * Une bande en arc le long d'une ellipse (centre cx, cy ; rayons rx, ry), de l'angle a0 à a1 (en degrés, 0 = en haut,
- * sens des aiguilles d'une montre), épaisse de `w` au milieu et effilée aux deux bouts : le reflet qui suit le crâne.
- * `flat` < 1 : une bande d'épaisseur presque égale, qui ne s'effile qu'aux bouts.
- */
-function arcBand(cx, cy, rx, ry, a0, a1, w, flat = 1, steps = 14) {
-  const at = (a, d) => { const r = (a * Math.PI) / 180; return [cx + (rx + d) * Math.sin(r), cy - (ry + d) * Math.cos(r)]; };
-  const top = [], bot = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps, a = a0 + (a1 - a0) * t, h = (w / 2) * Math.pow(Math.sin(Math.PI * t), flat);
-    top.push(at(a, h)); bot.push(at(a, -h));
-  }
-  const ends = (p, i, all) => (i === 0 || i === all.length - 1 ? [...p, 1] : p);
-  return sm([...top.map(ends), ...bot.reverse().map(ends)]);
-}
-
 // ---------- couleurs ----------
-const HAIR = { hi: '#ffffff', base: '#fbf5ec', mid: '#e9e2e6', shade: '#c7bdd2', deep: '#a397b2', line: '#857a98' };
+const HAIR = { hi: '#fffdf7', base: '#fbf3e3', mid: '#efe4d2', shade: '#d3c3ae', deep: '#ad9a86', line: '#8c7a68' };
 const SKIN = { hi: '#fff3e6', base: '#fdd8ba', shade: '#efab8c', deep: '#da8a6c', line: '#ad5c45' };
 const FOX = { hi: '#fff1c6', lite: '#ffc96a', base: '#f59a30', mid: '#e27c1c', shade: '#b8560f', line: '#8a3f0c' };
 const CLOTH = { hi: '#ffffff', base: '#f3eee9', shade: '#d8cdd8', deep: '#b3a3bc', line: '#8c7a99' };
 const RED = { hi: '#ff9a6a', lite: '#f2683b', base: '#da462a', mid: '#bb3323', shade: '#8c2121', deep: '#661624', line: '#561024' };
 const ORA = { hi: '#ffc58e', base: '#f3823f', mid: '#dc6229', shade: '#a8411c', line: '#7a2c14' };
-const MAR = { hi: '#c75f79', base: '#9b304d', shade: '#6c1f3c', line: '#4e1430' };
+const MAR = { hi: '#d36a66', base: '#962431', shade: '#6a1825', line: '#4a0f19' };
 const GOLD = { hi: '#fff3b0', base: '#f6c64a', mid: '#dd9a26', shade: '#a2650f', line: '#74440a' };
 const FIRE = { core: '#f4feff', hi: '#bdeeff', lite: '#86d0fb', base: '#4ea9f3', mid: '#2f83e4', deep: '#2059c6', line: '#173d98' };
 // les ombres portées : une teinte par matière qui la reçoit
-const SH = { skin: '#c4553e', hair: '#5e5160', cloth: '#6b5884', red: '#45091a', fox: '#7a3208' };
+const SH = { skin: '#c4553e', hair: '#5c4a3e', cloth: '#6b5884', red: '#45091a', fox: '#7a3208' };
 
 // ---------- dégradés ----------
 const defs = [
   lin('g-tail', 210, 530, 70, 330, [[0, '#c95816'], [0.3, '#ea8126'], [0.68, '#f8a236'], [1, '#ffc65e']]),
-  lin('g-fur', 120, 400, 40, 540, [[0, '#ffffff'], [0.45, '#fbf5ef'], [1, '#d9cdd0']]),
-  // la chevelure : blanc crème en haut à droite, gris lavande froid en bas à gauche
-  lin('g-hairF', 452, 92, 226, 250, [[0, '#ffffff'], [0.35, '#fcf7ef'], [0.66, '#f4efed'], [0.88, '#e1d9e4'], [1, '#cfc5d8']]),
-  // l'ombre douce du côté gauche de la tête, qui s'efface vers la droite
-  lin('g-hairL', 0, 170, 0, 310, [[0, '#c4b9cf', 0], [0.45, '#bdb1c9', 0.35], [1, '#a99cb8', 0.75]]),
-  lin('g-hairB', 150, 0, 500, 0, [[0, '#c3bacd'], [0.18, '#dbd5e1'], [0.4, '#e9e5ee'], [0.84, '#f3f1f6'], [1, '#e2f1fd']]),
-  // le bas du carré, plus sombre : la lavande des pointes
-  lin('g-hairBot', 0, 200, 0, 312, [[0, '#9c8fae', 0], [0.5, '#9c8fae', 0.3], [1, '#9c8fae', 0.6]]),
+  lin('g-fur', 120, 400, 40, 540, [[0, '#ffffff'], [0.45, '#fcf6ee'], [1, '#ddd0c6']]),
+  // les ombres et lumières douces de la queue (des taches fondues, jamais des traits)
+  rad('g-tailShade', 0.5, 0.5, 0.5, [[0, '#a9440f', 0.6], [1, '#a9440f', 0]], false),
+  rad('g-tailLight', 0.5, 0.5, 0.5, [[0, '#ffd27a', 0.85], [1, '#ffd27a', 0]], false),
+  rad('g-furShade', 0.5, 0.5, 0.5, [[0, '#a8968a', 0.55], [1, '#a8968a', 0]], false),
+  // la chevelure : ivoire chaud, presque blanc en haut à droite, gris chaud en bas à gauche
+  lin('g-hairF', 452, 92, 226, 250, [[0, '#fffdf6'], [0.35, '#fbf4e6'], [0.66, '#f3e9d8'], [0.88, '#e2d3bf'], [1, '#d2c0aa']]),
+  // l'ombre douce du côté gauche de la tête : une tache fondue, sans bord
+  rad('g-hairL', 0.5, 0.5, 0.5, [[0, '#b3a08c', 0.55], [0.6, '#b3a08c', 0.3], [1, '#b3a08c', 0]], false),
+  lin('g-hairB', 150, 0, 500, 0, [[0, '#baa999'], [0.18, '#d3c5b6'], [0.4, '#e9dfd1'], [0.84, '#f6f1ea'], [1, '#e6f0f8']]),
+  // le bas du carré, plus sombre : le gris chaud des pointes
+  lin('g-hairBot', 0, 200, 0, 312, [[0, '#9e8b77', 0], [0.5, '#9e8b77', 0.3], [1, '#9e8b77', 0.55]]),
+  // le dessous de la frange, qui s'assombrit doucement vers les pointes
+  lin('g-fringeSh', 352, 156, 342, 206, [[0, '#c9b8a2', 0], [1, '#c9b8a2', 0.38]]),
+  // une lumière douce (cheveux, reflets) : une tache fondue, sans bord
+  rad('g-sheen', 0.5, 0.5, 0.5, [[0, '#ffffff', 0.95], [0.55, '#ffffff', 0.5], [1, '#ffffff', 0]], false),
+  rad('g-sheenR', 0.5, 0.5, 0.5, [[0, '#ffb08a', 0.85], [1, '#ffb08a', 0]], false),
   // la lumière bleue de la flamme sur la chevelure et la joue
   rad('g-blue', 560, 250, 125, [[0, '#6cc2ff', 0.95], [0.55, '#8fd2ff', 0.55], [1, '#9ad6ff', 0]]),
   lin('g-ear', 0, 0, 0, 1, [[0, '#ffbf5c'], [0.5, '#f59a30'], [1, '#dd781b']], false),
@@ -93,9 +86,10 @@ const defs = [
   lin('g-belt', 0, 408, 0, 444, [[0, '#ff9a5a'], [0.3, '#ec6b33'], [0.75, '#d4542a'], [1, '#a83d1c']]),
   rad('g-knot', 0.62, 0.3, 0.75, [[0, '#ffa463'], [0.55, '#ea6a2f'], [1, '#b34219']], false),
   lin('g-ora', 0, 0, 0, 1, [[0, '#ffa465'], [1, '#d7602a']], false),
-  lin('g-maroon', 0, 0, 0, 1, [[0, '#bf4f69'], [0.5, '#9b304d'], [1, '#68203a']], false),
-  lin('g-capeL', 300, 312, 230, 352, [[0, '#ef6238'], [0.5, '#d8452a'], [1, '#a82c23']]),
-  lin('g-capeR', 446, 318, 394, 352, [[0, '#cf607a'], [0.5, '#a5354f'], [1, '#6e2140']]),
+  lin('g-maroon', 0, 0, 0, 1, [[0, '#c2474a'], [0.5, '#962431'], [1, '#5f1622']], false),
+  lin('g-capeL', 290, 304, 236, 366, [[0, '#f26c40'], [0.45, '#d8452a'], [1, '#9e2622']]),
+  lin('g-capeR', 446, 316, 396, 356, [[0, '#c84a46'], [0.5, '#9a2630'], [1, '#621624']]),
+  lin('g-beltL', 250, 0, 312, 0, [[0, '#7a2c14', 0.45], [1, '#7a2c14', 0]]),
   lin('g-gold', 0, 0, 0, 1, [[0, GOLD.hi], [0.45, GOLD.base], [1, GOLD.shade]], false),
   lin('g-waist', 0, 384, 0, 436, [[0, '#6b5884', 0], [1, '#6b5884', 0.32]]),
   lin('g-wrap', 0, 0, 0, 1, [[0, '#fff4dc'], [1, '#e2c49a']], false),
@@ -104,6 +98,10 @@ const defs = [
   lin('g-flame', 0, 170, 0, 326, [[0, '#2f86ea'], [0.45, '#48a6f4'], [1, '#78c6fb']]),
   lin('g-flameIn', 0, 200, 0, 330, [[0, '#8fd5ff'], [1, '#d9f5ff']]),
   rad('g-core', 548, 303, 26, [[0, '#ffffff'], [0.5, '#f2fdff'], [1, '#c8f0ff', 0]]),
+  // la flamme lancée : une boule de feu à traîne
+  lin('g-shot', 478, 0, 600, 0, [[0, '#8fd4ff', 0], [0.45, '#4ea9f3', 0.85], [1, '#2f86ea']]),
+  rad('g-shotHalo', 0.5, 0.5, 0.5, [[0, '#9adaff', 0.6], [1, '#9adaff', 0]], false),
+  rad('g-shotCore', 0.5, 0.5, 0.5, [[0, '#ffffff'], [0.6, '#effcff'], [1, '#c8f0ff', 0]], false),
   rad('g-soft', 0.5, 0.5, 0.5, [[0, '#fff6ea', 0.85], [1, '#fff6ea', 0]], false),
 ].join('');
 
@@ -129,7 +127,7 @@ const S = {
   neck: sm([[334, 298], [398, 298], [402, 330], [384, 352], [358, 364], [334, 350], [328, 325]]),
   // le kimono : col en V, la poitrine, le flanc
   torso: sm([[218, 326], [260, 313], [300, 315], [328, 322, 1], [357, 353, 1], [392, 320, 1], [418, 320], [444, 336], [432, 370], [410, 388], [400, 408], [404, 430], [330, 436], [266, 432], [250, 410], [236, 372]]),
-  belt: sm([[256, 410, 1], [290, 412], [322, 418], [362, 418], [404, 410], [411, 418, 1], [410, 434, 1], [364, 440], [322, 442], [290, 440], [258, 437, 1]]),
+  belt: sm([[252, 411, 1], [290, 417], [322, 423], [362, 424], [400, 419], [430, 413], [446, 410, 1], [451, 419], [448, 430, 1], [430, 433], [400, 437], [362, 443], [322, 444], [290, 441], [254, 435, 1]]),
   knot: sm([[322, 430], [330, 420], [343, 416], [357, 419], [365, 428], [364, 441], [355, 449], [342, 451], [329, 447], [322, 439]]),
   // le bras gauche : la manche, puis le poing posé sur la hanche
   sleeveL: sm([[212, 325], [252, 322], [266, 336], [262, 352], [252, 370], [243, 385], [235, 394, 1], [218, 401], [202, 406], [186, 411], [172, 409], [160, 404, 1], [164, 392], [170, 379], [173, 365], [179, 351], [194, 337]]),
@@ -147,8 +145,8 @@ const S = {
   fing2: sm([[552, 362], [555, 355], [562, 353], [567, 358], [568, 368], [563, 373], [555, 373], [551, 368]]),
   fing1: sm([[537, 357], [540, 349], [547, 346], [553, 351], [554, 362], [549, 368], [541, 368], [537, 363]]),
   // le mantelet rouge sur les épaules
-  capeL: sm([[330, 330], [300, 318], [268, 310], [238, 311], [216, 317], [205, 327], [206, 336, 1], [222, 338], [248, 344], [272, 354], [296, 364], [318, 350]]),
-  capeR: sm([[384, 322], [406, 317], [428, 324], [442, 337], [447, 348, 1], [430, 352], [413, 354], [399, 349], [390, 338]]),
+  capeL: sm([[332, 332], [316, 318], [296, 309], [270, 305], [244, 307], [222, 314], [208, 325], [204, 336, 1], [214, 344], [232, 348], [252, 352], [270, 360], [288, 368], [302, 373, 1], [314, 362], [324, 348]]),
+  capeR: sm([[384, 326], [396, 318], [412, 314], [428, 318], [442, 328], [450, 342, 1], [440, 350], [426, 356], [412, 358, 1], [404, 350], [392, 344]]),
   // la tête : le carré (dos), les oreilles, le visage, puis le dessus de la chevelure et la frange
   hairB: sm([[212, 118], [196, 138], [187, 160], [182, 184], [172, 203], [153, 221, 1], [172, 223], [179, 232], [180, 250], [182, 266], [180, 282, 1], [192, 276, 1], [198, 288], [206, 302, 1], [214, 290, 1], [224, 298], [236, 310, 1], [250, 305], [270, 300], [290, 292], [312, 280], [330, 268], [388, 292], [400, 312], [412, 318], [428, 322], [442, 320, 1], [449, 305], [456, 290], [463, 280], [474, 272, 1], [466, 252], [463, 238], [468, 226], [476, 232, 1], [482, 222], [493, 216, 1], [483, 207], [478, 194], [475, 178], [469, 158], [460, 141], [447, 126], [420, 96], [380, 76], [335, 72], [290, 78], [245, 95]]),
   earS: sm([[238, 212], [222, 207], [210, 214], [205, 232], [206, 252], [213, 267], [226, 276], [240, 277], [252, 260], [252, 225]]),
@@ -188,22 +186,14 @@ const parts = [
     body: use('tail', 'url(#g-tail)') + clip('tail',
       // la fourrure blanche : de grandes touffes pointent vers la pointe orange, la racine orange y avance en langues
       shape('M-10 392 L14 396 C20 391 25 382 28 374 C31 383 35 391 41 398 C45 388 48 377 50 366 C54 378 59 390 66 398 C69 393 72 389 74 384 C77 391 82 397 90 401 L150 398 L150 404 C134 407 122 412 114 416 C110 418 106 419 101 420 C108 424 113 428 116 433 C104 440 90 446 76 452 C88 458 98 464 104 470 C98 474 93 477 88 480 C95 484 101 488 104 493 C116 500 134 502 152 505 C168 508 184 512 200 520 L200 580 L-10 580 Z', 'url(#g-fur)')
-      // des mèches orange dans la fourrure du dessous
-      + shape(taper(108, 518, 140, 524, 178, 528, 4), '#f39a3a', 0.75)
-      + shape(taper(118, 534, 150, 540, 182, 538, 3), '#e88a30', 0.55)
-      // le dessous de la queue, dans l'ombre
-      + shape('M8 418 C10 458 28 498 62 524 C88 544 120 552 152 552 L152 562 L0 562 L0 418 Z', '#9d8fae', 0.42)
-      + shape(taper(14, 440, 26, 484, 62, 522, 5), '#8a7c9c', 0.35)
-      // la pointe : une nappe claire côté lumière, une plus sombre dehors
-      + shape(taper(66, 326, 58, 352, 62, 384, 4), '#ffe7a0', 0.9)
-      + shape(taper(58, 332, 38, 352, 26, 384, 4), '#c9631a', 0.5)
-      // la racine orange : grandes touffes d'ombre et de lumière, le bas plus sombre
-      + shape(taper(204, 474, 160, 470, 118, 446, 6), '#b9531a', 0.45)
-      + shape(taper(200, 512, 150, 512, 108, 494, 6), '#b9531a', 0.4)
-      + shape(taper(194, 444, 160, 436, 126, 416, 5), '#ffc768', 0.75)
-      + shape(taper(176, 494, 140, 486, 104, 470, 3.5), '#ffc768', 0.55)
-      // un reflet sur le galbe de la fourrure
-      + shape(taper(34, 404, 32, 440, 46, 478, 3), '#ffffff', 0.9)
+      // le dessous de la queue, dans l'ombre : de grandes ombres fondues
+      + oval(70, 512, 70, 34, 'url(#g-furShade)', 1, 38) + oval(26, 446, 22, 52, 'url(#g-furShade)', 0.8, -4)
+      // la pointe : une lumière douce côté lumière
+      + oval(58, 356, 9, 26, 'url(#g-tailLight)', 1, 8)
+      // la racine orange : une ombre large en bas, une lumière large en haut
+      + oval(158, 500, 66, 22, 'url(#g-tailShade)', 1, -8) + oval(170, 428, 52, 16, 'url(#g-tailLight)', 1, 18)
+      // une lumière douce sur le galbe de la fourrure
+      + oval(40, 440, 9, 36, 'url(#g-sheen)', 0.9, -8)
     ) },
 
   // --- le pan bordeaux derrière la jambe droite ---
@@ -271,7 +261,7 @@ const parts = [
   // le pan de la ceinture qui retombe sur la cuisse droite
   { id: 'sashR', d: S.sashR, shadow: [{ on: ['legR'], dx: -3, dy: 4, color: SH.red, o: 0.45 }],
     body: use('sashR', 'url(#g-maroon)') + clip('sashR',
-      shape(taper(404, 416, 440, 428, 468, 458, 3), '#ecbccc', 0.75)
+      shape(taper(404, 416, 440, 428, 468, 458, 3), '#e98c82', 0.65)
       + shape(taper(408, 436, 436, 448, 458, 462, 2.5), MAR.line, 0.5)) },
 
   // --- le tablier blanc entre les jambes, les rubans du nœud ---
@@ -303,11 +293,12 @@ const parts = [
   // --- le kimono : panneau rouge du côté gauche, col orange en travers ---
   { id: 'torso', cls: 'a-chest', d: S.torso, shadow: [{ on: ['legL', 'legR', 'apron', 'tieL', 'tieR'], dx: -3, dy: 5, color: SH.red, o: 0.35 }],
     body: use('torso', 'url(#g-cloth)') + clip('torso',
-      // le panneau rouge : dans l'ombre contre le bras, vif le long du revers, liseré d'or
-      shape('M246 330 L300 318 C307 332 312 346 315 360 L316 436 L256 436 C250 404 246 366 246 330 Z', 'url(#g-red)')
-      + shape('M246 330 L284 322 C280 352 280 400 286 436 L256 436 C250 404 246 366 246 330 Z', RED.deep, 0.6)
-      + shape(taper(298, 346, 303, 390, 302, 432, 3), '#ffc8a8', 0.55)
-      + line('M313 350 C315 374 315 398 314 432', GOLD.base, 2.4)
+      // le kimono blanc sous le bras, dans l'ombre
+      shape('M246 330 C248 370 252 404 258 436 L284 436 C278 404 270 370 262 334 Z', CLOTH.deep, 0.45)
+      // le revers rouge du kimono : une bande qui descend de l'épaule à la ceinture, son liseré d'or
+      + shape('M272 322 L298 317 C305 332 309 348 311 364 L314 436 L294 436 C292 404 288 374 283 350 C280 338 277 330 272 322 Z', 'url(#g-red)')
+      + shape(taper(292, 346, 301, 390, 302, 432, 2.4), '#ffb898', 0.55)
+      + line('M311 362 C313 386 314 410 314 434', GOLD.base, 2.2)
       // le col orange qui croise la poitrine
       + shape('M319 347 L328 341 L393 409 L383 415 Z', 'url(#g-ora)')
       + line('M328 342 L393 410', ORA.hi, 1.4, 0.8)
@@ -321,10 +312,15 @@ const parts = [
   // --- la ceinture et son gros nœud rond ---
   { id: 'belt', d: S.belt, shadow: [{ on: ['legL', 'legR', 'apron', 'tieL', 'tieR', 'sashR', 'tail'], dx: -2, dy: 5, color: SH.red, o: 0.4 }],
     body: use('belt', 'url(#g-belt)') + clip('belt',
-      shape('M256 410 C290 412 322 418 362 418 C380 416 394 413 404 410 L411 418 L411 422 C392 419 378 422 362 423 C322 423 290 417 256 415 Z', ORA.hi, 0.8)
-      + line('M262 424 C282 427 300 431 320 432', ORA.shade, 1.6, 0.55)
-      + line('M368 431 C382 430 396 427 409 424', ORA.shade, 1.6, 0.55)
-      + shape('M256 434 C290 436 322 440 364 438 C380 437 396 433 412 430 L412 446 L256 446 Z', ORA.shade, 0.4)) },
+      // la lumière du bord du haut, qui suit la courbe de la taille
+      shape(sm([[248, 410, 1], [290, 416], [322, 422], [362, 423], [400, 418], [430, 412], [452, 408, 1], [452, 414, 1], [430, 418], [400, 424], [362, 429], [322, 428], [290, 422], [248, 416, 1]]), ORA.hi, 0.8)
+      // l'ombre du bas, le bout gauche qui tourne dans l'ombre, le bout droit qui tourne vers la lumière
+      + shape(sm([[248, 430, 1], [290, 436], [322, 439], [362, 438], [400, 432], [430, 428], [454, 424, 1], [454, 448, 1], [248, 448, 1]]), ORA.shade, 0.4)
+      + `<rect x="248" y="404" width="64" height="46" fill="url(#g-beltL)"/>`
+      + shape(taper(446, 413, 450, 421, 447, 429, 2), ORA.hi, 0.7)
+      // deux plis
+      + line('M262 425 C276 428 292 432 306 434', ORA.shade, 1.6, 0.5)
+      + line('M384 432 C400 429 416 425 432 421', ORA.shade, 1.6, 0.5)) },
   { id: 'knot', d: S.knot, shadow: [{ on: ['belt', 'apron', 'tieL', 'tieR'], dx: -3, dy: 4, color: SH.red, o: 0.4 }],
     body: use('knot', 'url(#g-knot)')
       // une spirale gravée
@@ -401,7 +397,14 @@ const parts = [
       + `<path d="M560 196 C558 193 559 189 561 187 C563 189 563 193 560 196 Z"/>`
       + `<path d="M584 215 C582 211 583 207 586 204 C588 207 588 211 584 215 Z"/>`
       + `<path d="M587 232 C585 228 586 224 589 221 C591 224 591 228 587 232 Z"/>`
-      + `</g></g>` },
+      + `</g></g>`
+      // la boule de feu lancée pendant l'attaque (invisible au repos)
+      + `<g class="a-shot" opacity="0"><circle cx="576" cy="290" r="36" fill="url(#g-shotHalo)"/>`
+      + `<path d="M600 290 C600 303 589 313 575 313 C548 313 518 303 474 292 C518 281 548 267 575 267 C589 267 600 277 600 290 Z" fill="url(#g-shot)"/>`
+      + `<path d="M593 290 C593 299 585 306 575 306 C557 306 537 300 508 291 C537 282 557 274 575 274 C585 274 593 281 593 290 Z" fill="${FIRE.hi}" opacity="0.85"/>`
+      + `<ellipse cx="578" cy="290" rx="12" ry="10" fill="url(#g-shotCore)"/>`
+      + `<path d="M520 276 C517 273 518 269 521 267 C523 270 523 273 520 276 Z M528 307 C525 304 526 300 529 298 C531 301 531 304 528 307 Z M496 284 C493 281 494 278 497 276 C499 279 499 282 496 284 Z" fill="${FIRE.base}"/>`
+      + `</g>` },
   { id: 'handR', cls: 'a-arm', d: S.handR, rim: { on: ['sleeveR'], color: SKIN.line, w: 1.1, o: 0.7 },
     shadow: [{ on: ['sleeveR'], dx: -3, dy: 4, color: SH.cloth, o: 0.35 }],
     body: use('handR', 'url(#g-skin)') + clip('handR',
@@ -430,16 +433,20 @@ const parts = [
   // --- le mantelet rouge sur les épaules ---
   { id: 'capeL', cls: 'a-bob', d: S.capeL, shadow: [{ on: ['torso', 'sleeveL'], dx: -3, dy: 6, color: SH.red, o: 0.35 }],
     body: use('capeL', 'url(#g-capeL)') + clip('capeL',
-      shape(taper(222, 318, 254, 314, 296, 322, 3), '#ffb08a', 0.7)
-      + shape(taper(244, 322, 270, 334, 298, 354, 4), '#ffa27c', 0.45)
-      + shape(taper(226, 326, 250, 334, 270, 348, 3), RED.shade, 0.45)
-      + shape(taper(276, 324, 296, 336, 316, 350, 3), RED.shade, 0.4)
-      + shape('M204 318 C212 322 220 328 226 338 L204 338 Z', RED.deep, 0.45))
-      + line('M209 334 C234 338 260 346 295 361', GOLD.base, 2.2, 0.95) },
+      // le rond de l'épaule, éclairé ; le dessous, contre le bras, dans l'ombre
+      oval(272, 316, 36, 10, 'url(#g-sheenR)', 1, 4)
+      + shape('M200 330 C212 338 226 344 242 348 L240 364 L196 364 Z', RED.deep, 0.4)
+      // le grand pli qui descend de l'épaule vers la pointe, son bord éclairé
+      + shape(taper(256, 314, 278, 342, 298, 370, 5), RED.shade, 0.5)
+      + shape(taper(266, 312, 290, 336, 306, 364, 2.5), '#ff9a72', 0.55))
+      // l'ourlet doré suit le bord du châle
+      + line('M208 341 C228 347 250 351 270 359 C282 365 292 369 300 372', GOLD.base, 2.2, 0.95) },
   { id: 'capeR', cls: 'a-bob', d: S.capeR, shadow: [{ on: ['torso', 'sleeveR'], dx: -3, dy: 6, color: SH.red, o: 0.35 }],
     body: use('capeR', 'url(#g-capeR)') + clip('capeR',
-      shape('M396 324 C412 318 428 322 440 334 L436 338 C426 328 412 326 398 330 Z', MAR.hi, 0.8))
-      + line('M398 348 C412 352 428 350 445 347', GOLD.base, 2, 0.9) },
+      // le rond de l'épaule, éclairé ; un pli qui retombe
+      oval(422, 322, 20, 6, 'url(#g-sheenR)', 1, 16)
+      + shape(taper(410, 318, 418, 338, 414, 358, 4), MAR.shade, 0.5))
+      + line('M392 345 C404 352 418 356 448 344', GOLD.base, 2, 0.9) },
 
   // --- la tête ---
   // le carré, derrière : on n'en voit que les côtés (à gauche dans l'ombre, à droite éclairé en bleu par la flamme)
@@ -448,20 +455,16 @@ const parts = [
       // le dedans du carré, près du visage
       shape('M240 196 C226 222 222 254 232 284 C238 296 246 304 254 308 L262 308 L262 196 Z', HAIR.deep, 0.3)
       + `<rect x="150" y="200" width="120" height="120" fill="url(#g-hairBot)"/>`
-      // le haut du côté gauche, plus clair (il tourne vers la lumière)
-      + shape(taper(208, 126, 190, 168, 170, 208, 7), '#f1edf4', 0.8)
-      + shape(taper(198, 214, 191, 244, 194, 270, 6), '#eee9f2', 0.75)
-      // les pointes du bas, à gauche : chaque mèche a sa lumière, une raie sombre les sépare
-      + shape(taper(190, 232, 184, 258, 181, 280, 5), '#ddd5e3', 0.75)
-      + shape(taper(206, 246, 209, 276, 206, 300, 5.5), '#ddd5e3', 0.75)
-      + shape(taper(226, 262, 232, 288, 236, 308, 4.5), '#ddd5e3', 0.7)
-      + shape(taper(192, 276, 192, 256, 195, 236, 3), HAIR.deep, 0.75)
-      + shape(taper(214, 290, 212, 268, 215, 248, 3), HAIR.deep, 0.75)
-      // à droite : la mèche éclairée en bleu par la flamme, son côté gris contre le visage, ses pointes
+      // le haut du côté gauche tourne vers la lumière ; une lueur douce sur chaque pointe du bas
+      + oval(198, 172, 12, 36, 'url(#g-sheen)', 0.55, 20)
+      + oval(187, 258, 6, 18, 'url(#g-sheen)', 0.6, 6) + oval(209, 276, 6, 20, 'url(#g-sheen)', 0.6, -4)
+      // une ombre courte sépare les pointes
+      + shape(taper(192, 276, 192, 260, 195, 244, 2.6), HAIR.deep, 0.6)
+      + shape(taper(214, 290, 212, 274, 215, 258, 2.6), HAIR.deep, 0.6)
+      // à droite : la mèche éclairée en bleu par la flamme, son côté plus sombre contre le visage
       + `<rect x="420" y="120" width="90" height="210" fill="url(#g-blue)"/>`
-      + shape(taper(442, 214, 447, 260, 438, 306, 6), HAIR.shade, 0.7)
-      + shape(taper(456, 204, 467, 238, 472, 270, 5), '#ffffff', 0.6)
-      + shape(taper(449, 270, 450, 290, 443, 316, 3), '#ffffff', 0.5)) },
+      + shape(taper(442, 214, 447, 260, 438, 306, 6), HAIR.shade, 0.6)
+      + oval(464, 242, 7, 30, 'url(#g-sheen)', 0.7, -10)) },
   // l'oreille (humaine) sur le côté de la tête, devant le carré
   { id: 'earS', cls: 'a-bob', d: S.earS, shadow: [{ on: ['hairB'], dx: -3, dy: 4, color: SH.hair, o: 0.35 }],
     body: use('earS', 'url(#g-skin)')
@@ -492,20 +495,18 @@ const parts = [
     // la marque de la joue
     + shape('M295 264 C298 262 303 262 306 265 C305 269 302 273 300 275 C298 272 294 268 295 264 Z', '#e0545e')
     + oval(301, 266, 2, 1.2, '#ff9aa0', 0.9)
-    // les yeux : amande dure, la paupière du haut tombe en biais vers le nez et coupe le haut de l'iris
-    + eye('eL', 'M289 234 C292 228 299 225 308 224 C320 223 331 226 338 231 C342 235 344 239 343 244 C339 250 331 254 320 255 C307 256 297 252 292 245 C289 241 288 237 289 234 Z', 323, 240, 13.5, 15.5,
-      'M279 213 C284 217 288 219 292 220 C300 216 311 215 321 215 C333 216 344 222 352 232 C346 231 341 230 338 230 C330 226 319 224 308 224 C300 225 294 229 290 235 C287 230 285 226 284 223 C282 219 280 216 279 213 Z',
-      'M292 246 C300 254 312 257 325 256 C334 255 340 251 343 245', 'M290 238 C304 248 328 249 344 239')
-    + eye('eR', 'M391 241 C396 234 404 229 414 227 C424 225 434 225 440 225 C442 232 442 240 440 247 C435 253 424 256 412 256 C402 256 395 250 391 241 Z', 411, 242, 12.5, 14.5,
-      'M385 245 C390 236 398 229 409 224 C419 220 430 218 439 218 L436 211 C440 213 443 216 444 219 L450 215 C449 221 446 225 442 228 C433 226 424 226 415 228 C405 231 397 236 385 245 Z',
-      'M394 249 C401 254 411 257 422 256 C431 255 437 251 440 246', 'M391 242 C405 251 428 251 441 240')
-    // les sourcils froncés, qui plongent vers le nez
-    + shape('M284 200 C304 199 326 205 344 215 C352 220 357 226 359 233 C354 232 349 230 343 227 C325 219 305 213 286 208 C283 206 282 202 284 200 Z', '#a08884')
-    + line('M286 208 C305 213 325 219 343 227 C349 230 354 232 359 233', '#5b4146', 2.2)
-    + shape('M384 234 C391 224 405 214 422 207 C432 203 442 200 448 199 C449 203 448 207 445 208 C431 212 415 219 401 228 C394 232 389 235 384 234 Z', '#a08884')
-    + line('M384 234 C389 235 394 232 401 228 C415 219 431 212 445 208', '#5b4146', 2.2)
-    + line('M291 203 C306 203 324 208 340 216', '#c9b4ae', 1.3, 0.9) + line('M396 220 C410 212 426 206 441 202', '#c9b4ae', 1.3, 0.9)
-    + line('M357 212 C354 217 354 222 356 226', SKIN.line, 1.3, 0.5)
+    // les yeux : la paupière du haut est une ligne droite qui plonge vers le nez et coupe le haut de l'iris
+    + eye('eL', 'M287 231 C302 225 324 228 346 241 C344 249 336 255 322 256 C306 257 294 251 289 243 C287 239 286 235 287 231 Z', 322, 243, 13.5, 15,
+      'M278 220 C283 223 287 225 290 226 C305 221 326 224 351 239 L352 244 C340 237 324 231 307 231 C299 231 293 235 289 240 C286 235 283 229 278 220 Z',
+      'M291 247 C300 254 312 257 325 256 C334 255 340 251 344 246', 'M289 239 C304 247 328 249 345 242')
+    + eye('eR', 'M386 243 C400 231 420 226 441 227 C443 234 443 241 440 247 C435 253 424 256 412 256 C400 256 391 250 386 243 Z', 413, 244, 12.5, 14,
+      'M383 244 C396 231 418 223 442 223 L438 216 C442 218 445 221 446 224 L451 221 C450 226 447 229 443 232 C432 230 420 231 410 234 C400 237 392 241 384 248 Z',
+      'M394 250 C401 254 411 257 422 256 C431 255 437 251 440 247', 'M387 244 C402 252 426 252 441 240')
+    // les sourcils : brun sombre, épais, ils plongent vers le nez et appuient sur l'œil
+    + shape('M280 205 C300 201 322 207 342 219 C350 224 356 230 360 238 C352 238 345 235 338 231 C320 221 302 215 283 214 C279 212 278 208 280 205 Z', '#4a2e27')
+    + shape('M380 238 C387 227 401 217 419 209 C431 204 442 200 451 198 C453 203 452 208 448 211 C432 214 416 222 402 231 C394 236 387 240 380 238 Z', '#4a2e27')
+    + line('M286 207 C304 205 322 210 338 219', '#86625a', 1.4, 0.8) + line('M398 221 C412 213 428 206 445 202', '#86625a', 1.4, 0.8)
+    + line('M358 210 C355 215 355 221 357 226', SKIN.line, 1.3, 0.5)
     // la petite marque du front : trois langues de feu
     + `<g transform="translate(375 207) scale(0.85) translate(-375 -207)">` + shape('M375 195 C379 200 382 205 382 209 C382 214 379 217 375 217 C371 217 368 214 368 209 C368 205 371 200 375 195 Z', '#6c1f30')
     + shape('M375 203 C376 206 377 208 377 210 C377 212 376 213 375 213 C374 211 374 207 375 203 Z', '#d0465a', 0.9)
@@ -521,37 +522,27 @@ const parts = [
     + shape('M328 274 L400 274 L398 281 C396 285 393 289 390 293 L387 286 C378 288 368 288 358 288 C352 288 348 287 344 286 L340 293 C337 289 334 285 332 281 Z', '#fff')
     + line('M345 286 C352 288 372 289 386 287', '#c9c8de', 1.4, 0.8)
     + `</g><use href="#s-mouth" fill="none" stroke="#3a0c18" stroke-width="2.4"/></g>` },
-  // le dessus de la chevelure et la frange : blanc en haut et à droite, gris dans l'ombre à gauche
+  // le dessus de la chevelure et la frange : ivoire presque blanc en haut à droite, gris chaud dans l'ombre à gauche
   { id: 'hairF', cls: 'a-bob', d: S.hairF,
     shadow: [{ on: ['face', 'earS'], dx: -3, dy: 7, color: SH.skin, o: 0.4 }, { on: ['hairB', 'earL', 'earR'], dx: -2, dy: 3, color: SH.hair, o: 0.14 }],
     body: use('hairF', 'url(#g-hairF)') + clip('hairF',
       // la lumière bleue de la flamme
       `<rect x="430" y="110" width="70" height="130" fill="url(#g-blue)"/>`
-      // l'ombre douce, lavande, du côté gauche de la tête
-      + `<path d="M196 150 L304 150 L304 320 L196 320 Z" fill="url(#g-hairL)"/>`
-      // le reflet qui suit le crâne (lumière d'en haut à droite) : une bande blanche coupée par les raies, une ombre
-      // légère juste en dessous pour qu'il se détache
-      + shape(arcBand(345, 184, 104, 79, -70, 62, 15, 0.35), '#d8cfdc', 0.75)
-      + shape(arcBand(345, 184, 116, 91, -68, 60, 10, 0.35), '#ffffff')
-      // au-dessus du reflet, le sommet du crâne est crème
-      + shape(arcBand(345, 184, 128, 103, -50, 44, 12, 0.5), '#f3ede6', 0.8)
-      // les raies : trois mèches de la frange partent de l'épi, chacune finit sur sa pointe ; la raie de la mèche de droite
-      + shape(taper(386, 110, 398, 128, 402, 150, 4), HAIR.shade, 0.75)
-      + shape(taper(382, 112, 370, 150, 348, 185, 9), HAIR.shade, 0.5)
-      + shape(taper(372, 108, 336, 136, 300, 186, 10), HAIR.shade, 0.4)
-      // le volume des mèches de la frange : une lumière sur chacune
-      + shape(taper(376, 130, 368, 156, 360, 180, 7), '#ffffff', 0.9)
-      + shape(taper(346, 136, 330, 164, 318, 190, 7), '#ffffff', 0.85)
-      // le bout de chaque mèche tourne vers le front : un peu plus gris
-      + shape(taper(379, 170, 376, 180, 370, 188, 3.5), HAIR.shade, 0.6)
-      + shape(taper(348, 185, 342, 196, 334, 204, 3.5), HAIR.shade, 0.6)
-      + shape(taper(318, 193, 312, 203, 305, 211, 3.5), HAIR.shade, 0.6)
-      // la mèche de droite : son côté gris contre le visage, sa lumière dehors
-      + shape(taper(404, 154, 430, 182, 447, 214, 4.5), HAIR.shade, 0.75)
-      + shape(taper(444, 140, 468, 172, 482, 206, 5), '#ffffff', 0.7)
-      // la mèche devant la joue gauche : une lumière, une ombre dessous
-      + shape(taper(262, 222, 265, 254, 280, 282, 4), '#ffffff', 0.7)
-      + shape(taper(250, 232, 254, 266, 268, 300, 4), HAIR.deep, 0.45)) },
+      // l'ombre douce, gris chaud, du côté gauche et du bas de la tête
+      + oval(222, 238, 38, 78, 'url(#g-hairL)', 1, 8)
+      // la lumière du dessus de la tête, venue d'en haut à droite : deux grandes lueurs fondues, pas une bande
+      + oval(374, 100, 62, 22, 'url(#g-sheen)', 1, 14) + oval(298, 114, 34, 14, 'url(#g-sheen)', 0.7, -20)
+      // la raie : la frange part de l'épi vers la gauche, la mèche de droite vers la droite
+      + shape(taper(386, 110, 397, 130, 402, 150, 3.5), HAIR.shade, 0.7)
+      // le dessous de la frange s'assombrit doucement vers les pointes
+      + `<path d="M270 186 L320 168 L372 146 L404 128 L414 196 L270 236 Z" fill="url(#g-fringeSh)"/>`
+      // une lueur douce sur chaque grande mèche de la frange
+      + oval(371, 150, 7, 22, 'url(#g-sheen)', 0.8, 32) + oval(339, 163, 8, 24, 'url(#g-sheen)', 0.75, 40)
+      // la mèche de droite : son côté plus sombre contre le visage, sa lumière dehors
+      + shape(taper(404, 154, 430, 182, 447, 214, 4.5), HAIR.shade, 0.55)
+      + oval(462, 174, 8, 30, 'url(#g-sheen)', 0.8, -28)
+      // la mèche devant la joue gauche : une lumière douce
+      + oval(268, 254, 6, 26, 'url(#g-sheen)', 0.7, -12)) },
 ];
 
 
@@ -559,7 +550,8 @@ const parts = [
 // Au repos (propriétés `translate`, `rotate`, `scale`) : le buste respire, la tête et les bras suivent, les oreilles
 // frémissent de temps en temps, la queue balaie, la flamme vacille, les yeux clignent.
 // L'attaque (classe `atk` sur le <svg>, 0,75 s) passe par la propriété `transform` : elle s'ajoute au repos sans le couper,
-// et revient à zéro à la fin, donc le passage de l'un à l'autre ne se voit pas.
+// et revient à zéro à la fin, donc le passage de l'un à l'autre ne se voit pas. Elle ramène la main en arrière (la flamme se
+// ramasse), pousse la paume vers l'avant : la flamme part en boule de feu à traîne, puis une nouvelle renaît dans la main.
 const WAIST = [330, 440], SHOULDER = [410, 352], EAR_L = [266, 120], EAR_R = [420, 112], TAIL = [226, 482], FLAME = [549, 326];
 const rad_ = (d) => (d * Math.PI) / 180;
 const rot = ([x, y], a) => [x * Math.cos(rad_(a)) - y * Math.sin(rad_(a)), x * Math.sin(rad_(a)) + y * Math.cos(rad_(a))];
@@ -583,6 +575,7 @@ const style = [
   '.a-tail{transform-origin:226px 482px;animation:tail 3.8s ease-in-out infinite alternate}',
   '.a-flap{transform-origin:456px 488px;animation:flap 2.4s ease-in-out infinite alternate}',
   '.a-flare,.a-fl,.a-fl2{transform-origin:549px 326px}',
+  '.a-shot{transform-origin:576px 290px}',
   '.a-fl{animation:fl .8s ease-in-out infinite alternate}',
   '.a-fl2{animation:fl2 .55s ease-in-out infinite alternate}',
   '.a-core{transform-origin:548px 303px;animation:core .7s ease-in-out infinite alternate}',
@@ -611,14 +604,16 @@ const style = [
   '.atk .a-arm{animation:bob 3.2s ease-in-out infinite alternate,sway 2.6s ease-in-out infinite alternate,arm .75s ease-in-out}',
   '.atk .a-tail{animation:tail 3.8s ease-in-out infinite alternate,whip .75s ease-in-out}',
   '.atk .a-flare{animation:flare .75s ease-in-out}',
+  '.atk .a-shot{animation:shot .75s ease-out}',
   '.atk .a-mouth{animation:roar .75s ease-in-out}',
   kf('lean', (i) => `rotate(${LEAN[i]}deg)`),
   kf('earLa', (i) => bend(EAR_L, LEAN[i], [0, 0], [0, -6, -12, -9, 0][i])),
   kf('earRa', (i) => bend(EAR_R, LEAN[i], [0, 0], [0, 6, 12, 9, 0][i])),
   kf('arm', (i) => bend(SHOULDER, LEAN[i], ARM.t[i], ARM.turn[i])),
   kf('whip', (i) => `rotate(${[0, 7, -8, -5, 0][i]}deg)`),
-  kf('flare', (i) => `scale(${[1, 0.85, 1.65, 1.5, 1][i]})`),
+  '@keyframes flare{0%{transform:scale(1);opacity:1}30%{transform:scale(.85);opacity:1}38%{transform:scale(1.3);opacity:1}43%,70%{transform:scale(.05);opacity:0}90%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}',
+  '@keyframes shot{0%,36%{opacity:0;transform:translate(-16px,6px) scale(.8)}41%{opacity:1;transform:translate(0,0) scale(1.4)}62%{opacity:1;transform:translate(60px,-6px) scale(1.6,1.4)}74%,100%{opacity:0;transform:translate(84px,-8px) scale(1.7,1.3)}}',
   kf('roar', (i) => `scale(${[1, 1, 1.07, 1.05, 1][i]},${[1, 0.92, 1.28, 1.2, 1][i]})`),
 ].join('');
 
-module.exports = { id: 'knights-11', w: W, h: H, pad: 50, foot: [329, 566], svg: (anime = true) => figure({ w: W, h: H, pad: 50, defs, style, parts, anime }) };
+module.exports = { id: 'knights-11', w: W, h: H, pad: 110, foot: [329, 566], svg: (anime = true) => figure({ w: W, h: H, pad: 110, defs, style, parts, anime }) };

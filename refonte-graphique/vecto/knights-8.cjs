@@ -126,10 +126,10 @@ const defs = [
   // le creux autour de l'œil, éclairé par la lave de l'œil
   rad('g-socket', 0.5, 0.5, 0.5, [[0.45, '#ff9a2a', 0.95], [0.68, '#f0641f', 0.6], [1, '#c0400f', 0]], false),
   lin('g-browSh', 0, 0, 0, 1, [[0, '#3a0d04', 0.85], [1, '#3a0d04', 0]], false),
+  rad('g-heart', 0.5, 0.5, 0.5, [[0, '#fffbe6', 0.9], [0.3, '#ffe68a', 0.55], [0.65, '#ffb040', 0.2], [1, '#ff9a30', 0]], false),
   rad('g-lavaBed', 248, 244, 120, [[0, '#fffbe2'], [0.1, '#ffec8e'], [0.24, '#ffbe40'], [0.45, '#ff8a22'], [0.7, '#e2501a'], [1, '#9a2410']]),
   rad('g-plateLight', 248, 246, 150, [[0, '#ffb050', 0.5], [0.2, '#ff9a40', 0.32], [0.42, '#ff8030', 0.14], [0.7, '#f26a26', 0.04], [1, '#e85a20', 0]]),
   rad('g-plateGlow', 248, 244, 120, [[0, '#ffe08a'], [0.25, '#ffa23a'], [0.55, '#f26a24'], [1, '#c83c16']]),
-  rad('g-armBed', 348, 230, 70, [[0, '#ffe58a'], [0.3, '#ffa83a'], [0.7, '#f0642a'], [1, '#b8361a']]),
   lin('g-molten', 0, 300, 0, 342, [[0, '#a8280f'], [0.5, '#e8521a'], [0.8, '#ff9a2a'], [1, '#ffd864']]),
   lin('g-loinGlow', 0, 296, 0, 328, [[0, '#ff7a24', 0], [0.5, '#ff8a2a', 0.7], [1, '#ffc24a']]),
   lin('g-shBot', 0, 150, 0, 200, [[0, '#ff7a28', 0], [0.7, '#ff7a28', 0.1], [1, '#ff9a3a', 0.45]]),
@@ -149,7 +149,7 @@ const S = {
   footR: 'M263 384 C280 372 320 366 340 368 C358 370 371 378 377 388 C380 394 380 400 378 404 C350 408 300 406 267 402 C264 396 263 390 263 384 Z',
   thighR: 'M252 270 C270 264 292 266 300 274 C302 286 315 294 324 302 C332 312 337 324 348 334 C350 344 346 352 340 356 C310 358 282 354 266 347 C252 342 240 335 238 330 C240 310 244 290 252 270 Z',
   kneeR: 'M301 330 L310 318 L330 313 L345 318 L352 330 L350 345 L340 354 L318 357 L305 351 L300 341 Z',
-  armR: 'M326 160 C340 168 360 176 380 184 L420 220 L420 270 C400 286 380 296 366 299 C352 290 338 280 330 272 C322 264 314 256 310 250 C312 232 318 212 324 194 Z',
+  armR: 'M326 160 C340 168 360 176 380 184 L420 220 L420 270 C400 286 380 296 366 299 C352 290 338 280 330 272 C322 264 314 256 310 250 L294 252 L298 200 L312 166 Z',
   torso: 'M165 142 L330 150 L332 175 C328 195 318 225 310 250 L304 256 C300 262 297 268 299 278 C290 290 262 298 232 299 C200 299 160 294 134 284 C130 276 132 268 133 262 C140 244 144 214 146 190 C148 170 154 154 165 142 Z',
   loin: 'M209 279 C230 282 250 282 266 279 C268 294 267 306 263 318 L252 328 L242 335 L231 340 L220 334 L212 326 C209 310 208 294 209 279 Z',
   shR: 'M320 152 C326 144 334 140 340 141 L348 137 L355 146 L369 137 L373 150 L380 153 L384 158 C387 164 388 170 388 177 L390 183 C386 194 372 200 356 200 C340 199 326 194 318 188 C316 174 317 162 320 152 Z',
@@ -160,12 +160,12 @@ const S = {
 };
 
 // ---------- la tête ----------
-// les yeux : deux globes de lave en ovale incliné ; les sourcils en mordent le haut, côté nez
-const EYE_L = 'M215.8 107.8 A24 17 15 1 1 262.2 120.2 A24 17 15 1 1 215.8 107.8 Z';
-const EYE_R = 'M291.7 125.4 A21 15 -15 1 1 332.3 114.6 A21 15 -15 1 1 291.7 125.4 Z';
-// les sourcils : deux dalles épaisses ; leur bord du bas descend sur le haut des yeux (ils les surplombent)
-const BROW_L = 'M207 85 L213 70 C217 67 223 67 228 69 L271 98 C274 100 276 103 275 106 L272 125 C271 128 268 129 265 128 L211 96 C208 95 206 92 207 85 Z';
-const BROW_R = 'M285 106 C285 103 287 101 289 100 L329 73 C332 71 335 73 336 76 L339 88 C339 91 338 93 335 94 L291 125 C288 126 285 124 285 121 Z';
+// les yeux : fendus en biais ; leur bord du haut est coupé net par la dalle du sourcil, le bas est arrondi
+const EYE_L = 'M213 95 L268 111 C263 119 254 126 242 127 C229 128 219 122 216 113 C214 107 213 101 213 95 Z';
+const EYE_R = 'M289 106 L337 92 C340 103 338 115 330 122 C322 129 309 130 300 125 C295 121 291 114 289 106 Z';
+// les sourcils : deux dalles épaisses et séparées, en biais vers le nez ; leur bord du bas coupe le haut des yeux
+const BROW_L = 'M210 85 L213 77 C214 75 216 74 219 75 L266 90 C269 91 271 94 271 97 L271 106 C271 109 269 111 266 110 L214 95 C211 94 210 91 210 85 Z';
+const BROW_R = 'M287 101 L288 95 C288 92 290 90 293 89 L333 77 C336 76 339 78 340 81 L340 88 C340 90 339 92 337 92 L292 106 C289 107 287 105 287 101 Z';
 // la bouche : la ligne du milieu du zigzag ; l'épaisseur se compte à la verticale (les pointes restent nettes)
 const MOUTH = [[221, 166, 0.72], [238, 153, 1], [250.5, 166.5, 0.75], [272, 154.5, 0.95], [289.5, 165.8, 0.75], [303, 156.5, 0.9], [309, 166, 0.55]];
 const zig = (t, c, o = 1) => {
@@ -232,24 +232,34 @@ const headBody = use('head', 'url(#g-head)') + clip('head',
   + crack([[316, 158, 0], [322, 166, 2], [320, 176, 0]], 0.8)
 )
   // les yeux de lave, enfoncés : le creux autour est rougi par leur lumière
-  + oval(239, 116, 33, 23, 'url(#g-socket)', 1, 22) + oval(311, 120, 29, 21, 'url(#g-socket)', 1, -20)
+  + oval(240, 112, 33, 23, 'url(#g-socket)', 1, 17) + oval(314, 112, 29, 21, 'url(#g-socket)', 1, -17)
   + `<path d="${EYE_L}" fill="${LAVA.red}" stroke="#f2621e" stroke-width="4.4"/><path d="${EYE_R}" fill="${LAVA.red}" stroke="#f2621e" stroke-width="4"/>`
   + `<g class="a-eyes">${eyeGlow(EYE_L, 'eL')}${eyeGlow(EYE_R, 'eR')}`
-  + oval(243, 120, 1.9, 4.8, '#6a1c08', 1, -10) + oval(306, 125, 1.6, 4.2, '#6a1c08', 0.9, -6) + '</g>'
+  + oval(241, 115, 1.9, 4.8, '#6a1c08', 1, -10) + oval(310, 113, 1.7, 4.4, '#6a1c08', 0.9, -6) + '</g>'
   // l'ombre des sourcils sur le haut des yeux
-  + `<g clip-path="url(#c-eL)"><path d="M206 92 L270 130 L270 140 L206 102 Z" fill="url(#g-browSh)"/></g>`
-  + `<g clip-path="url(#c-eR)"><path d="M284 124 L340 86 L340 96 L284 134 Z" fill="url(#g-browSh)"/></g>`
+  + `<g clip-path="url(#c-eL)"><path d="M206 92.5 L270 111.2 L270 122 L206 103 Z" fill="url(#g-browSh)"/></g>`
+  + `<g clip-path="url(#c-eR)"><path d="M284 108.5 L340 91 L340 102 L284 119.5 Z" fill="url(#g-browSh)"/></g>`
   // les sourcils : deux dalles épaisses ; le dessus éclairé, la face avant moyenne, le dessous dans l'ombre
-  + shape(BROW_L, '#665950') + stone('213 70 228 69 271 98 275 105 267 106 227 78 212 75', '#84756a', 1, 0.5)
-  + edge([[215, 71, 0], [244, 85, 1.6], [271, 100, 0]], EDGE, 0.75)
-  + shape(BROW_R, '#5c504a') + stone('289 100 329 73 335 75 336 81 296 107 287 104', '#7a6c62', 1, 0.5)
-  + edge([[292, 101, 0], [312, 88, 1.6], [333, 75, 0]], EDGE, 0.75)
-  // le nez : un bloc taillé entre les yeux
-  + shape('M271 104 L287 104 L288 122 L270 122 Z', '#4c4240')
-  + edge([[283, 105, 0], [286, 113, 2], [287, 121, 0]], '#7a6d68', 0.8)
-  + shape('M270 121 C276 119 284 119 289 121 L295 139 C288 143 270 143 263 140 Z', '#5d524e')
-  + shape('M282 121 C285 120 288 120 289 121 L295 139 C292 141 289 142 286 142 Z', '#8e8079')
-  + shape('M263 140 C270 143 288 143 295 139 L294 144 C286 148 270 148 262 145 Z', '#261e24', 0.9)
+  // chaque dalle pose son ombre sur le visage (en bas à gauche), puis : la face avant, le plan du dessus éclairé,
+  // l'arête vive entre les deux, et le dessous dans l'ombre
+  + `<path d="${BROW_L}" transform="translate(-2 4)" fill="#1f181e" opacity="0.6"/><path d="${BROW_R}" transform="translate(-2 4)" fill="#1f181e" opacity="0.6"/>`
+  + shape(BROW_L, '#5f534d') + stone('211 80 214 75 266 90 271 96 265 98 214 84', '#94857a', 1, 0.4)
+  + edge([[213, 83, 0], [240, 90, 1.6], [267, 98, 0]], EDGE, 0.8)
+  + stone('212 91 266 106 271 106 266 110 214 95', '#30282c', 1, 0.3)
+  + shape(BROW_R, '#5a4e49') + stone('288 95 293 89 333 77 340 81 334 84 292 97', '#908174', 1, 0.4)
+  + edge([[290, 97, 0], [314, 90, 1.6], [337, 83, 0]], EDGE, 0.75)
+  + stone('289 102 336 88 340 88 337 92 292 106', '#30282c', 1, 0.3)
+  // le nez : un bloc taillé entre les yeux ; l'arête étroite, puis le bout en trois plans (ombre à gauche, face,
+  // plan éclairé à droite), les narines, et son ombre portée sur le visage (en bas à gauche)
+  + shape('M261 143 L294 143 L291 151 L265 152 Z', '#211a20', 0.75)
+  + shape('M270 104 L278 104 L278 122 L268 122 Z', '#3d3436') + shape('M278 104 L288 104 L290 122 L278 122 Z', '#62564f')
+  + edge([[286, 105, 0], [288, 113, 1.8], [289, 121, 0]], '#a39386', 0.8)
+  + shape('M268 121 L290 121 L297 132 L295 141 L282 146 L268 145 L261 139 L263 130 Z', '#564b47')
+  + shape('M268 121 L276 121 L272 134 L267 145 L261 139 L263 130 Z', '#3a3134')
+  + shape('M284 121 L290 121 L297 132 L295 141 L287 144 L289 132 Z', '#8a7b70')
+  + shape('M271 121 L288 121 L285 127 L274 127 Z', '#76685f')
+  + edge([[289, 122, 0], [295, 131, 1.6], [294, 140, 0]], EDGE, 0.75)
+  + oval(273, 141, 2, 1.2, '#1f181e', 0.75, 15) + oval(286, 141, 2, 1.2, '#1f181e', 0.75, -15)
   // la bouche : un zigzag de lave taillé dans la pierre
   + zig(14, '#5a1a12') + glowSteps(zig, 12, 3.6, [[0, '#e0481a'], [0.22, '#ff9a2a'], [0.48, '#ffc63c'], [1, '#fff0a0']], 7);
 
@@ -274,38 +284,36 @@ const torsoBody = use('torso', 'url(#g-lavaBed)') + clip('torso',
   // le col, sous le menton, au-dessus des deux bras du Y
   plate('pCol', '120 110 350 110 346 164 336 171 322 180 306 191 290 202 266 212 254 219 248 223 242 219 232 213 210 202 190 189 166 175 150 168 120 166', '#43393a',
     shape('M120 110 L350 110 L346 150 L300 150 L240 160 L180 156 L120 150 Z', '#382f33'))
-  // les pectoraux : deux grandes plaques bombées ; l'arête du haut éclairée, le bas dans l'ombre
-  + plate('pPecL', '120 176 150 177 166 183 188 196 208 207 230 218 239 226 241 233 239 242 232 248 214 250 190 252 170 255 150 258 120 258', '#4e4340',
-    shape('M120 176 L150 177 L166 183 L188 196 L208 207 L231 219 L241 227 L243 234 L242 238 L224 230 L200 220 L178 208 L156 198 L120 196 Z', '#86654d')
+  // chaque moitié du torse : une seule plaque (pectoral, ventre, flanc) ; seul le pied du Y les sépare
+  + plate('pL', '110 176 150 177 166 183 188 196 208 207 230 218 239 226 242 236 244 250 245 264 245 282 244 300 110 300', '#4e4340',
+    shape('M110 176 L150 177 L166 183 L188 196 L208 207 L231 219 L241 227 L243 234 L242 238 L224 230 L200 220 L178 208 L156 198 L110 196 Z', '#86654d')
     + edge([[150, 180, 0], [170, 186, 2.2], [192, 199, 2.4], [214, 211, 2.2], [238, 226, 0]], '#c9b29e', 0.9)
-    + stone('124 238 150 236 176 240 200 246 196 252 170 255 150 258 124 258', '#3c3335', 0.9, 0.6)
+    // le bas du pectoral, dans l'ombre, puis le ventre qui avance (son arête du haut éclairée), le flanc en retrait
+    + stone('116 236 150 236 178 241 206 248 232 252 244 254 244 262 214 260 186 262 160 264 116 266', '#3a3134', 0.9, 0.6)
+    + stone('166 270 188 265 214 263 240 265 244 272 214 271 190 274 166 280', '#64574f', 1, 0.6)
+    + stone('110 262 150 264 160 270 162 300 110 300', '#3a3134', 0.9, 0.6)
     + glint([[150, 200, 0], [149, 224, 2.6], [154, 250, 0]], COOL, 0.35)
     + fissure([[192, 230, 0], [200, 235, 1.4], [204, 241, 0]]))
-  + plate('pPecR', '256 232 257 226 268 218 290 208 308 196 324 185 338 175 360 175 360 252 322 249 290 251 266 249 258 243', '#4e4340',
+  + plate('pR', '257 226 268 218 290 208 308 196 324 185 338 175 360 175 360 300 250 300 251 282 252 264 253 250 255 236', '#4e4340',
     shape('M253 230 L253 226 L266 218 L290 208 L308 196 L324 185 L338 175 L360 175 L360 190 L330 206 L300 220 L272 230 L254 238 Z', '#8e6c52')
     + edge([[256, 225, 0], [284, 212, 2.4], [310, 198, 2.4], [334, 179, 0]], '#d2bba6', 0.9)
-    + stone('270 240 300 238 330 236 360 236 360 252 322 249 290 251 268 249', '#3c3335', 0.9, 0.6)
+    + stone('252 254 268 252 296 248 330 244 360 242 360 262 330 262 300 262 270 262 252 264', '#3a3134', 0.9, 0.6)
+    + stone('254 270 270 265 290 266 302 270 304 276 288 273 268 274 254 278', '#64574f', 1, 0.6)
+    + stone('306 262 360 262 360 300 304 300', '#3a3134', 0.9, 0.6)
     + fissure([[300, 228, 0], [306, 232, 1.3], [308, 239, 0]]))
-  // les abdominaux et les flancs, au-dessus de la ceinture
-  + plate('pAbL', '171 262 188 258 212 256 232 257 241 266 241 280 236 300 168 300 165 276', '#433937',
-    shape('M171 262 L188 258 L212 256 L238 257 L242 262 L212 262 L188 265 L168 270 Z', '#655850'))
-  + plate('pAbR', '262 258 274 256 290 258 300 264 302 276 298 300 256 300 254 278 255 266', '#3f3534',
-    shape('M254 258 L270 256 L290 258 L300 264 L300 268 L284 263 L266 262 L253 265 Z', '#655850'), 'url(#g-plateGlow)', 0.55)
-  + plate('pFlL', '110 262 150 262 161 266 163 300 110 300', '#3d3436', '', 'url(#g-plateGlow)', 0.8)
-  + plate('pFlR', '306 258 330 254 360 254 360 300 304 300 307 280', '#3d3436', '', 'url(#g-plateGlow)', 0.8)
-  // le cœur de la lave, là où le Y se croise, et quelques fissures qui partent des crevasses
-  + shape('M248 231 L252 241 L254 250 L251 260 L248 270 L245 260 L242 250 L244 241 Z', '#fff6c8', 0.95)
-  + crack([[200, 251, 0], [196, 258, 2], [198, 266, 0]], 0.7) + crack([[282, 251, 0], [286, 258, 2], [284, 266, 0]], 0.7)
-  + crack([[166, 256, 0], [176, 247, 2], [180, 238, 0]], 0.7) + crack([[212, 205, 0], [214, 214, 1.8], [210, 222, 0]], 0.6)
-  + crack([[290, 207, 0], [294, 216, 1.8], [300, 224, 0]], 0.6) + crack([[226, 272, 0], [234, 266, 1.8], [238, 262, 0]], 0.6)
+  // le cœur du Y, rond et doux (il pulse) ; puis les branches qui partent du cœur sous les pectoraux, effilées
+  + `<g class="a-glow"><circle cx="248" cy="240" r="26" fill="url(#g-heart)"/></g>`
+  + crack([[246, 250, 0], [234, 254, 4.4], [220, 252, 3.8], [208, 257, 3], [198, 263, 2.2], [190, 271, 0]], 1)
+  + crack([[220, 252, 0], [214, 243, 1.8], [206, 239, 0]], 0.7) + crack([[208, 257, 0], [206, 266, 1.6], [209, 274, 0]], 0.6)
+  + crack([[251, 250, 0], [263, 254, 4.2], [276, 252, 3.6], [288, 257, 2.8], [298, 263, 2], [306, 270, 0]], 1)
+  + crack([[276, 252, 0], [282, 244, 1.6], [290, 241, 0]], 0.6)
+  + crack([[212, 205, 0], [214, 214, 1.8], [210, 222, 0]], 0.6) + crack([[290, 207, 0], [294, 216, 1.8], [300, 224, 0]], 0.6)
   + crack([[150, 214, 0], [160, 220, 2], [168, 230, 0]], 0.7) + crack([[322, 212, 0], [330, 220, 1.8], [334, 230, 0]], 0.7)
   // les veines des pectoraux et du col
   + crack([[164, 196, 0], [174, 206, 2.6], [180, 218, 2.4], [178, 232, 0]], 0.85) + crack([[180, 218, 0], [192, 222, 1.8], [202, 220, 0]], 0.6)
   + crack([[296, 214, 0], [308, 222, 2.6], [318, 232, 2.2], [324, 244, 0]], 0.85) + crack([[308, 222, 0], [314, 212, 1.6], [322, 206, 0]], 0.6)
   + crack([[206, 204, 0], [210, 194, 2], [216, 186, 1.6], [214, 176, 0]], 0.7) + crack([[288, 206, 0], [292, 196, 2], [298, 188, 0]], 0.7)
   + crack([[178, 182, 0], [186, 178, 1.6], [196, 180, 0]], 0.6) + crack([[300, 186, 0], [310, 182, 1.6], [318, 184, 0]], 0.6)
-  // les veines des abdominaux
-  + crack([[214, 258, 0], [220, 268, 2.2], [218, 280, 0]], 0.7) + crack([[278, 260, 0], [274, 270, 2.2], [278, 282, 0]], 0.7)
   // la ceinture : elle fait le tour de la taille, d'un bord à l'autre ; la lave d'au-dessus la rougit
   + `<path d="M120 261 C150 265 184 275 214 280 C240 283 276 278 314 265 L316 286 C280 298 240 302 210 298 C180 294 150 284 120 280 Z" fill="url(#g-belt)"/>`
   + `<g clip-path="url(#c-belt)">${chestLight(0.4)}</g>`
@@ -409,15 +417,16 @@ const parts = [
 
   // --- le bras droit (épaule et coude) : il passe sur le flanc ; le biceps est un bloc cerclé de lave ---
   { id: 'armR', cls: 'a-armR', d: S.armR,
-    body: use('armR', 'url(#g-armBed)') + clip('armR',
+    body: use('armR', '#3b2b28') + clip('armR',
+      `<g class="a-glow2">${spill(330, 236, 34, 40, 0.9)}${spill(372, 250, 26, 30, 0.6)}</g>`
       // l'avant-bras : deux plaques de roche rougies par la lave, une veine entre elles
-      plate('pFore', '308 246 324 240 350 244 368 252 372 272 366 296 350 292 332 280 316 264', '#4d403c',
+      + plate('pFore', '308 246 324 240 350 244 368 252 372 272 366 296 350 292 332 280 316 264', '#4d403c',
         stone('314 247 328 242 350 246 362 252 346 256 328 256', '#6a5a52', 1, 0.6), 'url(#g-plateGlow)', 1)
       + plate('pElb', '372 246 392 236 420 232 420 270 400 284 384 292 374 288 376 268', '#45393a', '', 'url(#g-plateGlow)', 0.9)
       // le haut du bras, derrière le biceps
       + plate('pUpp', '322 160 340 168 362 176 382 186 380 196 360 194 338 192 322 194', '#4a3f3e', '', 'url(#g-plateGlow)', 0.6)
       // le biceps : un gros bloc rond, cerclé d'une fente de lave ; son dessus éclairé, son flanc gauche rougi
-      + plate('pBic', '326 202 340 196 358 197 374 204 380 218 374 232 358 238 340 236 328 228', '#55473f',
+      + plate('pBic', '312 210 326 200 340 196 358 197 374 204 380 218 374 232 358 240 340 243 322 241 310 228', '#55473f',
         stone('330 202 344 198 360 199 372 205 362 210 346 210 334 212', '#7d6d61', 1, 0.6)
         + edge([[334, 200, 0], [352, 198, 1.8], [370, 204, 0]], EDGE, 0.75)
         + fissure([[350, 214, 0], [356, 220, 1.3], [354, 228, 0]]), 'url(#g-plateGlow)', 1)
@@ -449,8 +458,8 @@ const parts = [
       // le plan de gauche, dans l'ombre ; le bas rougi par la lave qui sort dessous
       + stone('318 160 330 152 338 160 336 178 328 190 318 186', '#3b3437', 1, 0.7)
       + `<g class="a-glow2"><rect x="310" y="150" width="90" height="55" fill="url(#g-shBot)"/></g>`
-      + crack([[322, 184, 0], [334, 182, 2.6], [346, 187, 3.2], [358, 184, 2.8], [371, 178, 2], [382, 180, 0]], 1)
-      + crack([[343, 140, 0], [347, 150, 2.4], [350, 160, 2.2], [352, 170, 1.8], [348, 182, 0]], 0.9)
+      + crack([[343, 140, 0], [347, 150, 2.4], [350, 160, 2.6], [352, 170, 2.8], [349, 181, 2.6]], 0.9)
+      + crack([[349, 180, 2.4], [343, 188, 2.2], [337, 198, 0]], 0.9) + crack([[350, 180, 0], [360, 186, 2.4], [372, 191, 1.8], [380, 199, 0]], 0.85)
       + crack([[358, 148, 0], [362, 156, 1.8], [364, 166, 0]], 0.7)
       + fissure([[330, 168, 0], [334, 174, 1.3], [332, 180, 0]])) },
 
@@ -474,49 +483,50 @@ const parts = [
 
   // --- le poing levé : la tranche dans l'ombre à gauche, quatre doigts repliés (le premier finit par le pouce) ---
   { id: 'fistL', cls: 'a-fistL', d: S.fistL, shadow: [{ on: ['torso', 'armL', 'head', 'thighL'], dx: -3, dy: 7, color: SH, o: 0.6 }],
-    body: use('fistL', '#1f181e') + clip('fistL',
-      // la tranche de la main et le dos, dans l'ombre ; un filet de reflet froid sur le bord
-      shape('M30 164 C20 176 13 188 11 198 C9 206 10 212 14 218 C16 226 17 234 21 242 C27 252 37 259 49 264 C46 244 44 222 44 200 C44 188 42 178 38 170 Z', '#2c2429')
+    body: use('fistL', '#463c3a') + clip('fistL',
+      // le dos de la main, à gauche, et le dessous : dans l'ombre (en bas à gauche) ; un filet de reflet froid au bord
+      shape('M30 164 C20 176 13 188 11 198 C9 206 10 212 14 218 C16 226 17 234 21 242 C27 252 37 259 49 264 C46 244 44 222 44 200 C44 188 42 178 38 170 Z', '#30282c')
+      + shape('M20 244 C40 252 80 256 128 250 L122 262 C110 272 92 280 70 279 C52 276 34 264 20 250 Z', '#2b2328')
       + glint([[26, 170, 0], [14, 194, 2.4], [16, 224, 2.4], [30, 252, 0]], COOL, 0.65)
       + stone('22 196 32 188 42 192 44 214 40 234 30 238 22 226', '#3a3134', 1, 0.8)
       + edge([[24, 195, 0], [32, 189, 1.6], [41, 193, 0]], '#857873', 0.75)
-      + fissure([[30, 206, 0], [34, 214, 1.2], [32, 222, 0]])
-      // premier doigt : face du dessus éclairée, face avant, dessous dans l'ombre ; il finit par le bout du pouce
-      + stone('22 160 32 148 50 141 72 138 92 137 104 140 110 148 112 160 106 172 92 177 70 179 48 178 32 172', '#544944')
-      + stone('32 150 50 142 72 139 92 138 104 141 98 146 76 147 56 150 40 156', '#8a7b70', 1, 0.6)
-      + edge([[34, 149, 0], [56, 142, 1.8], [80, 139, 1.8], [102, 141, 0]], EDGE, 0.8)
-      + stone('30 170 52 174 76 174 98 170 108 166 100 176 76 179 50 178 34 174', '#2f272b', 1, 0.6)
-      + stone('86 145 94 139 104 140 110 148 112 158 108 167 98 170 90 164 86 154', '#62564f', 1, 0.6)
-      + stone('94 140 104 140 110 147 111 154 104 150 97 146', '#a39386', 1, 0.5)
-      + chip(106, 141, 5, 35)
-      + crack([[84, 142, 0], [88, 150, 2.2], [92, 160, 1.6], [90, 170, 0]], 0.8)
-      + fissure([[56, 158, 0], [62, 163, 1.3], [64, 170, 0]])
-      // deuxième doigt, plus court ; la jointure ronde à droite
-      + stone('44 186 58 181 80 180 102 181 114 184 120 190 119 198 112 203 96 205 72 205 52 204 44 197', '#4f4541')
-      + stone('50 185 62 182 82 181 102 182 112 185 116 190 104 189 84 189 62 190', '#7f7166', 1, 0.6)
-      + edge([[52, 184, 0], [82, 181, 1.6], [112, 185, 0]], EDGE, 0.75)
-      + stone('48 199 70 201 96 201 116 197 110 204 94 206 70 206 50 204', '#2f272b', 1, 0.6)
-      // troisième doigt, le plus gros, avec la grosse articulation ronde à droite
-      + stone('48 214 58 209 80 208 100 208 118 207 132 206 142 211 147 220 147 232 142 241 130 246 108 248 82 249 58 247 50 237 47 225', '#544944')
-      + stone('54 213 64 210 86 209 106 209 116 209 104 214 86 216 66 218 56 220', '#857668', 1, 0.6)
-      + stone('122 208 132 206 141 210 146 219 147 229 140 224 132 218 122 215', '#9a8a7c', 1, 0.5)
-      + edge([[56, 212, 0], [90, 209, 1.8], [118, 208, 0]], EDGE, 0.7)
-      + stone('56 236 80 240 108 241 132 238 142 236 132 246 108 248 82 249 58 247', '#2f272b', 1, 0.6)
-      + fissure([[78, 224, 0], [86, 229, 1.4], [90, 237, 0]])
-      // les creux entre les doigts : la lave luit au fond, du côté du torse
-      + crack([[96, 179, 0], [108, 180, 1.8], [120, 186, 0]], 0.7)
-      + crack([[110, 205, 0], [122, 205, 2], [134, 207, 0]], 0.7)
-      // le bas du poing, dans l'ombre
-      + shape('M28 250 L60 252 L96 253 L128 251 L122 262 L108 272 L92 278 L70 278 L50 268 Z', '#2b2328')
-      + edge([[40, 252, 0], [80, 254, 1.6], [120, 252, 0]], '#5d5250', 0.9)
-      // la lave du torse éclaire le côté du poing tourné vers elle
+      // l'index replié : un gros bloc arrondi en haut, son dessus éclairé
+      + stone('18 168 26 152 44 142 66 137 90 136 100 140 104 150 100 162 90 170 66 175 44 177 28 175', '#544944')
+      + stone('28 152 46 143 66 138 90 137 99 141 92 146 70 147 50 151 36 158', '#8a7b70', 1, 0.6)
+      + edge([[30, 151, 0], [52, 142, 1.8], [78, 138, 1.8], [98, 141, 0]], EDGE, 0.8)
+      + stone('28 170 50 173 72 172 92 168 100 163 92 172 66 177 44 178 30 176', '#30282c', 1, 0.5)
+      + fissure([[54, 158, 0], [60, 163, 1.3], [62, 170, 0]])
+      // le majeur : une jointure ronde, plus petite, à droite de l'index
+      + stone('88 150 96 141 108 140 116 147 118 160 112 170 100 173 90 166', '#5c5049')
+      + stone('94 143 106 141 114 147 116 154 108 150 98 148', '#9a8a7d', 1, 0.5)
+      + chip(110, 142, 5, 35)
+      // les deux autres doigts repliés, sous l'index, à gauche (en partie cachés par le pouce)
+      + stone('44 184 52 179 62 182 64 200 60 222 56 240 48 244 44 226 43 204', '#4c423f')
+      + edge([[46, 184, 0], [54, 180, 1.4], [62, 183, 0]], '#9a8b80', 0.7)
+      // le pouce : un gros bloc qui passe en travers devant les doigts, du bas à gauche vers le haut à droite
+      + stone('60 196 76 184 96 177 112 175 122 180 124 191 116 200 102 212 90 228 80 242 66 247 58 240 56 220', '#665951')
+      + stone('64 194 78 184 96 178 112 176 120 181 112 186 96 190 80 196 68 204', '#a39386', 1, 0.6)
+      + edge([[66, 193, 0], [86, 182, 1.8], [110, 176, 1.6], [121, 182, 0]], EDGE, 0.85)
+      + stone('58 238 66 246 80 242 90 228 100 214 92 222 78 236 66 240', '#3a3134', 1, 0.5)
+      // le bout du pouce, arrondi, et son ongle de pierre
+      + stone('104 180 114 175 122 179 125 188 120 196 110 197 104 190', '#7a6c62', 1, 0.5)
+      + stone('110 178 118 177 122 182 118 186 112 184', '#bcac9e', 1, 0.4)
+      // l'annulaire et l'auriculaire, au bout des doigts, à droite : deux phalanges inégales et un pli courbe
+      + stone('98 210 116 200 134 200 145 208 148 222 145 237 134 246 112 248 96 244 92 228', '#5a4f49')
+      + stone('104 208 118 201 134 201 143 207 132 210 116 212', '#8f8075', 1, 0.5)
+      + edge([[100, 226, 0], [114, 222, 1.6], [130, 224, 1.4], [146, 228, 0]], '#2b2328', 0.8)
+      + edge([[104, 228, 0], [124, 226, 1.2], [140, 229, 0]], '#9a8b80', 0.6)
+      + stone('98 238 118 240 140 236 145 237 134 246 112 248 96 244', '#30282c', 1, 0.5)
+      // les creux : la lave luit au fond, entre l'index et le pouce, et sous le bout du pouce
+      + crack([[94, 168, 0], [104, 172, 1.8], [114, 176, 0]], 0.7)
+      + crack([[118, 198, 0], [126, 203, 1.8], [136, 202, 0]], 0.6)
+      // la lave du torse éclaire le côté du poing tourné vers elle : une lueur large, sans liseré
       + chestLight(0.8)
-      + `<g class="a-glow">${spill(142, 218, 14, 30, 0.8)}</g>`
-      + glint([[118, 168, 0], [134, 182, 2.4], [144, 204, 2.4], [144, 226, 0]], LAVA.org, 0.6)) },
+      + `<g class="a-glow">${spill(140, 205, 26, 52, 0.75)}</g>`) },
 
   // --- le poing en avant : trois jointures, les doigts repliés et le pouce ; le côté du bras rougi par la lave ---
   { id: 'fistR', cls: 'a-fistR', d: S.fistR, shadow: [{ on: ['armR', 'shR'], dx: -4, dy: 6, color: SH, o: 0.6 }],
-    body: use('fistR', '#1f181e') + clip('fistR',
+    body: use('fistR', '#463c3a') + clip('fistR',
       // la base du pouce, à gauche : un gros bloc arrondi, tourné vers la lave du bras ; son bord rougi
       stone('352 236 362 222 376 216 388 222 392 244 390 270 384 292 370 298 356 290 350 266', '#46393a')
       + stone('362 224 374 218 386 222 388 236 380 230 368 232', '#76665a', 1, 0.5)
@@ -524,7 +534,7 @@ const parts = [
       + `<g class="a-glow">${spill(356, 256, 12, 32, 0.6)}</g>`
       + crack([[378, 230, 0], [382, 244, 2], [380, 258, 0]], 0.7)
       // le flanc droit, dans l'ombre, et son filet de reflet froid
-      + shape('M466 202 C476 216 480 232 478 250 C476 264 470 277 460 287 C466 272 470 256 471 240 C471 226 469 214 466 202 Z', '#29222a')
+      + shape('M466 202 C476 216 480 232 478 250 C476 264 470 277 460 287 C466 272 470 256 471 240 C471 226 469 214 466 202 Z', '#3e3536')
       + glint([[476, 236, 0], [473, 256, 2.2], [464, 276, 0]], COOL, 0.6)
       // les trois jointures du haut : la face du dessus éclairée, la face avant, le dessous dans l'ombre
       + stone('381 192 388 182 400 179 408 183 413 194 413 210 408 221 396 226 386 221 380 208', '#4a403f')
@@ -569,11 +579,14 @@ const parts = [
 // Coup de poing (classe « atk » sur le <svg>, 0,75 s) : tout le haut du corps bascule autour des hanches (HIP), d'abord en
 // arrière (élan), puis en avant pendant que le poing droit part vers la droite ; retour exact à la pose du repos.
 const HIP = [220, 296];
-/** Une image clé du coup : bascule `lean` autour des hanches, puis le mouvement propre du morceau autour de son pivot O. */
-const key = (O, [p, lean, dx = 0, dy = 0, r = 0, sc = 1]) =>
-  `${p}%{transform:translate(${HIP[0] - O[0]}px,${HIP[1] - O[1]}px) rotate(${lean}deg) translate(${O[0] - HIP[0]}px,${O[1] - HIP[1]}px) translate(${dx}px,${dy}px) rotate(${r}deg) scale(${sc})}`;
-// la bascule commune : 0 → élan en arrière → frappe en avant → petit rebond → repos
-const LEAN = { 0: 0, 30: -3.4, 46: 4.8, 60: 3.8, 80: -0.6, 100: 0 };
+/**
+ * Une image clé du coup : le haut du corps glisse de tx, bascule de lean et se tasse (sx, sy) autour des hanches,
+ * puis le morceau fait son mouvement propre autour de son pivot O. Même liste de fonctions partout.
+ */
+const key = (O, [p, [lean, tx, sx, sy], dx = 0, dy = 0, r = 0, sc = 1]) =>
+  `${p}%{transform:translate(${HIP[0] - O[0]}px,${HIP[1] - O[1]}px) translate(${tx}px,0px) rotate(${lean}deg) scale(${sx},${sy}) translate(${O[0] - HIP[0]}px,${O[1] - HIP[1]}px) translate(${dx}px,${dy}px) rotate(${r}deg) scale(${sc})}`;
+// le buste : 0 → élan (en arrière, tassé) → frappe (en avant, étiré) → tient → petit rebond → repos
+const LEAN = { 0: [0, 0, 1, 1], 30: [-6, -5, 1.03, 0.95], 46: [9, 8, 0.98, 1.03], 60: [7.5, 7, 0.99, 1.02], 80: [-1, 0, 1, 1], 100: [0, 0, 1, 1] };
 const atk = (name, O, own = {}) => `@keyframes ${name}{${Object.keys(LEAN).map((p) => key(O, [p, LEAN[p], ...(own[p] || [])])).join('')}}`;
 const PIV = { torso: HIP, loin: [238, 280], head: [252, 192], shR: [352, 180], armR: [338, 180], armL: [150, 140], fistL: [115, 165], fistR: [372, 250] };
 const at = (k) => `transform-origin:${PIV[k][0]}px ${PIV[k][1]}px`;
@@ -609,15 +622,15 @@ const style = [
   ...['torso', 'loin', 'head', 'shR', 'armR', 'armL', 'fistL', 'fistR'].map((k) => `.atk .a-${k}{animation:${k}-atk .75s ease-in-out}`),
   '.atk .a-eyes{animation:none}.atk .a-glow,.atk .a-glow2{animation:glow-atk .75s ease-in-out}.atk .a-hit{animation:hit .75s linear}',
   atk('torso-atk', PIV.torso), atk('loin-atk', PIV.loin),
-  atk('head-atk', PIV.head, { 30: [0, 0, -3], 46: [3, 0, 3], 60: [2, 0, 2], 80: [0, 0, -0.4] }),
-  atk('shR-atk', PIV.shR, { 30: [-5, 1], 46: [10, -2], 60: [8, -2] }),
-  atk('armR-atk', PIV.armR, { 30: [-10, 2, 4], 46: [22, -5, -8], 60: [18, -4, -7], 80: [1, 0, 0] }),
+  atk('head-atk', PIV.head, { 30: [0, 2, -4], 46: [4, 0, 4], 60: [3, 0, 3], 80: [0, 0, -0.5] }),
+  atk('shR-atk', PIV.shR, { 30: [-8, 2], 46: [16, -3], 60: [13, -3] }),
+  atk('armR-atk', PIV.armR, { 30: [-14, 4, 6], 46: [34, -10, -12], 60: [28, -8, -10], 80: [2, 0, 0] }),
   atk('armL-atk', PIV.armL, { 30: [0, -2] }),
   atk('fistL-atk', PIV.fistL, { 30: [2, -5, -3], 46: [6, 3, 4], 60: [5, 2, 3] }),
-  atk('fistR-atk', PIV.fistR, { 30: [-18, 1, -8, 0.97], 46: [42, -18, 6, 1.08], 60: [37, -15, 4, 1.06], 80: [4, -1, 0, 1] }),
+  atk('fistR-atk', PIV.fistR, { 30: [-24, 4, -10, 0.96], 46: [70, -36, 8, 1.14], 60: [62, -31, 6, 1.1], 80: [5, -2, 0, 1] }),
   '@keyframes glow-atk{0%{opacity:1}30%{opacity:0.45}46%,60%{opacity:1}100%{opacity:1}}',
   '.a-hit{transform-box:fill-box;transform-origin:center}',
   '@keyframes hit{0%,40%{opacity:0;transform:scale(0.5)}48%{opacity:1;transform:scale(1)}70%{opacity:0;transform:scale(1.35)}100%{opacity:0;transform:scale(1.35)}}',
 ].join('');
 
-module.exports = { id: 'knights-8', w: W, h: H, pad: 72, foot: [212, 406], svg: (anime = true) => figure({ w: W, h: H, pad: 72, defs, style, parts, anime }) };
+module.exports = { id: 'knights-8', w: W, h: H, pad: 110, foot: [212, 406], svg: (anime = true) => figure({ w: W, h: H, pad: 110, defs, style, parts, anime }) };
