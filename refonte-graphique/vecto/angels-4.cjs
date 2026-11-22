@@ -215,6 +215,8 @@ const parts = [
     + shape(sm('110,150 90,180 66,200 52,214! 80,198 104,176 120,156'), HAIR.hi, 0.4)
     + shape(sm('180,60 160,96 150,140 152,190 170,240! 166,190 168,140 178,100 196,70'), '#5a5688', 0.45)
     + glint([[376, 150, 0], [384, 190, 3], [372, 228, 0]], HAIR.sheen, 0.5)) },
+  // le fond des tentacules, pris dans la silhouette de l'original (derrière les tentacules dessinés)
+  { id: 'tentBase', cls: 'a-t1', d: sm('5,422 5,431 9,439 21,452 37,459 35,461 55,463 58,459 72,457 91,448 139,407 157,399 183,393 184,394 167,426 157,440 136,459 123,461 118,465 116,472 119,477 127,481 143,482 152,478 160,477 178,468 194,457 218,433 234,412 244,403 248,410 248,427 251,433 249,436 251,450 250,451 248,449 242,452 242,458 244,460 247,457 248,458 246,474 253,482 267,480 271,478 278,470 288,451 288,447 293,437 295,410 306,421 307,428 311,428 326,445 323,447 306,446 325,466 350,478 373,479 381,481 398,480 402,478 404,475 403,465 400,462 391,460 395,458 389,456 387,453 384,454 382,452 383,450 380,450 373,443 350,398 351,396 357,399 364,399 369,402 380,404 407,418 418,426 434,442 445,458 436,459 438,464 446,466 451,465 454,467 457,466 461,461 462,442 456,422 446,403 435,389 419,373 404,362 381,352 376,352 373,350 360,350 345,340 348,336 107,336 108,341 101,345 91,346 84,349 69,350 48,359 36,370 32,381 38,388 43,389 53,386 63,386 65,388 57,396 59,399 68,399 76,396 82,397 73,409 58,424 43,431 34,431 24,426 16,418 9,418') + sm('65,340 74,345 92,344 102,336 65,336'), body: use('tentBase', 'url(#g-tentFar)') },
   ...TENTS.filter((t) => t.far).map((t) => ({ id: t.id, cls: `a-${t.id}`, d: tentD(t), body: tentBody(t) })),
   { id: 'fin', cls: 'a-fin', d: S.fin, shadow: [sh(['hair'], -3, 4, SH.hair, 0.5)], body: use('fin', 'url(#g-fin)') + clip('fin',
     // les rayons de la nageoire : des fuseaux qui partent de la base, sombres d'un côté, clairs de l'autre
@@ -336,7 +338,7 @@ function nest(s, cls, outer) {
 }
 
 function svg(anime = true) {
-  let s = figure({ w: W, h: H, pad: PAD, defs, style, parts, anime });
+  let s = figure({ master: require('./silhouettes/angels-4.json'), w: W, h: H, pad: PAD, defs, style, parts, anime });
   if (!anime) return s;
   // le haut du corps (avec la tête, les cheveux, la nageoire, le bâton et les bras) flotte au-dessus des tentacules
   for (const c of ['a-head', 'a-hair', 'a-fin', 'a-staff', 'a-armR']) s = nest(s, c, 'a-body');

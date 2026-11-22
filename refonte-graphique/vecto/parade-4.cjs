@@ -192,7 +192,7 @@ const style = `
 `.replace(/\n/g, '');
 
 function svg(anime = true) {
-  const s = figure({ w: W, h: H, pad: PAD, defs, style, parts, anime });
+  const s = figure({ master: require('./silhouettes/parade-4.json'), w: W, h: H, pad: PAD, defs, style, parts, anime });
   if (!anime) return s;
   // toute la lanterne flotte (l'ombre au sol est posée par le jeu, pas par le dessin)
   const i0 = s.indexOf('<g fill="#2a1430"');

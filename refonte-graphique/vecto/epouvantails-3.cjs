@@ -100,8 +100,13 @@ const defs = [
 ].join('');
 
 // ---------- la queue : une ficelle qui ondule, et ses nœuds ----------
-const STR = [[240, 352, 5], [214, 362, 5], [188, 376, 5], [166, 396, 4.6], [146, 418, 4.4], [122, 434, 4.2], [96, 440, 4], [70, 434, 3.6], [50, 424, 3]];
-const STR2 = [[146, 418, 4], [148, 440, 3.6], [140, 460, 3.4], [128, 470, 3]];
+// la ficelle passe par les nœuds (mesurés sur l'original : jaune 172,372 ; bleu-vert 118,410 ; rouge 50,410 ; jaune du bas 112,460)
+const STR = [[240, 352, 5], [206, 362, 5], [172, 374, 5], [146, 394, 4.6], [120, 410, 4.4], [92, 420, 4], [64, 414, 3.6], [36, 410, 3]];
+const STR2 = [[120, 410, 4], [118, 434, 3.6], [112, 460, 3.2], [104, 474, 2.6]];
+// la queue entière (ficelle et nœuds) prise dans la silhouette de l'original ; les couleurs des nœuds relevées sur l'original
+const TAIL_D = sm('248,359 235,355 218,325 216,330 221,336 219,338 216,337 212,341 201,342 192,347 186,348 174,358 166,336 159,329 151,329 147,338 146,348 131,368 131,372 149,373 162,370 166,374 156,386 147,407 134,423 131,420 132,407 128,392 115,395 100,403 96,409 96,416 108,423 115,424 120,428 114,434 103,438 82,438 73,434 64,427 67,424 75,424 81,418 81,415 79,412 80,403 66,390 61,380 57,383 60,388 60,394 56,400 55,406 52,408 51,416 47,407 34,394 34,386 28,376 24,377 24,381 27,385 28,394 30,397 27,399 11,400 5,404 4,407 14,408 31,424 45,426 31,433 29,436 29,440 37,452 41,452 48,442 55,439 58,433 74,442 85,445 87,447 87,457 82,466 82,470 88,471 90,477 95,479 110,472 126,469 137,460 145,458 166,435 167,430 138,426 151,413 161,391 170,380 175,382 171,402 177,424 180,424 209,391 207,387 194,385 190,382 189,378 197,369 203,365 209,365 215,361 224,361 232,358 240,366');
+const COLS = {"yel": ["87,457 85,468 95,469 93,459 91,457", "104,460 104,464 112,465 115,468 125,467 131,463 131,458 129,457 128,452 117,453 116,450 112,450 106,456 106,459", "164,430 155,427 136,427 136,432 131,434 132,453 137,453 138,456 144,455 164,434", "152,328 150,345 146,347 140,353 140,357 136,359 136,370 151,371 160,368 165,368 166,373 171,373 172,376 175,377 175,385 177,386 177,415 183,416 206,392 206,387 194,384 189,380 187,371 191,365 191,361 186,361 184,364 171,361 171,352 169,344 167,343 164,336 161,333 161,330"], "teal": ["99,404 98,412 102,412 105,407 109,407 110,403 114,403 115,407 118,410 125,412 125,421 129,421 129,399 126,397 125,394 115,394 112,397 103,400", "222,318 222,327 226,332 228,339 232,343 232,348 236,348 237,342 234,332 235,323 234,321 231,321 229,318"], "red": ["98,472 109,471 110,469 117,469 118,464 112,458 105,458 102,461 102,463 99,464", "65,390 61,390 58,394 55,403 55,409 53,412 48,412 46,410 46,406 40,400 39,396 36,393 32,393 30,398 14,398 11,400 11,406 15,407 27,421 40,425 39,428 35,429 31,433 31,441 35,442 36,447 41,447 45,441 54,436 54,430 51,429 52,426 54,426 55,428 60,428 62,433 67,433 67,429 62,428 61,424 68,423 72,419 77,419 79,417 76,400 74,397 70,397 69,393"]};
+const KNOTS = [[172, 372, 'yel'], [118, 410, 'bowT'], [50, 410, 'bowR'], [112, 460, 'yel']];
 /** Un nœud de tissu : deux ailes en triangle bombé de part et d'autre du centre (x, y), tourné de `a` degrés. */
 function bow(x, y, a, s = 1) {
   const r = (a * Math.PI) / 180, c = Math.cos(r), si = Math.sin(r);
@@ -112,8 +117,7 @@ const BOWS = [[176, 384, -60, 'yel', 1.1], [128, 432, -20, 'bowT', 1], [56, 422,
 
 // ---------- silhouettes ----------
 const S = {
-  string: rib(STR) + rib(STR2),
-  bows: BOWS.map(([x, y, a, , s]) => bow(x, y, a, s)).join(''),
+  tail: TAIL_D,
   kite: sm(`${T[0]},${T[1]}! ${R[0]},${R[1]}! ${B[0]},${B[1]}! ${L[0]},${L[1]}!`),
   // les deux rubans de toile déchirée qui pendent sous le coin gauche
   rag: sm('176,244 184,258 186,272 194,286 196,296! 182,290 176,280 168,284! 166,270 168,258'),
@@ -154,10 +158,16 @@ const kiteBody = use('kite', 'url(#g-teal)') + clip('kite',
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx, dy, color, o) => ({ on, dx, dy, color, o });
 const parts = [
-  { id: 'string', cls: 'a-tail', d: S.string, body: use('string', STRING) + clip('string', glint(STR.map(([x, y], i) => [x + 1, y - 1.4, i === 0 || i === STR.length - 1 ? 0 : 1.6]), '#a87a5a', 0.8)) },
-  { id: 'bows', cls: 'a-tail', d: S.bows, body: BOWS.map(([x, y, a, g, s]) => shape(bow(x, y, a, s), `url(#g-${g})`) + dot(x, y, 4.4 * s, g === 'yel' ? YEL.shade : g === 'bowT' ? TEAL.shade : RED.shade)).join('') },
+  { id: 'tail', cls: 'a-tail', d: S.tail, body: use('tail', STRING) + clip('tail',
+    // la ficelle (le fond) : un reflet ; puis les ailes des nœuds dans leurs couleurs, une bosse claire et un pli sombre
+    glint(STR.map(([x, y], i) => [x + 1, y - 1.6, i === 0 || i === STR.length - 1 ? 0 : 1.8]), '#a87a5a', 0.8)
+    + [['yel', 'g-yel', YEL.shade], ['teal', 'g-bowT', TEAL.shade], ['red', 'g-bowR', RED.shade]].map(([k, g, dk]) => COLS[k].map((t) => {
+      const d = sm(t);
+      return shape(d, `url(#${g})`) + `<path d="${d}" fill="${dk}" opacity="0.35" transform="translate(-2 3)"/>`;
+    }).join('')).join('')
+    + KNOTS.map(([x, y, g]) => dot(x, y, 5.5, g === 'yel' ? YEL.shade : g === 'bowT' ? TEAL.shade : RED.shade) + dot(x + 1.5, y - 1.5, 2, '#ffffff', 0.6)).join('')) },
   { id: 'rag', cls: 'a-kite', d: S.rag, body: use('rag', '#4a3a3a') + clip('rag', glint([[178, 250, 0], [184, 270, 2], [190, 290, 0]], '#8a7a78', 0.7)) },
-  { id: 'kite', cls: 'a-kite', d: S.kite, shadow: [sh(['string', 'bows', 'rag'], -4, 6, SH.teal, 0.45)], body: kiteBody },
+  { id: 'kite', cls: 'a-kite', d: S.kite, shadow: [sh(['tail', 'rag'], -4, 6, SH.teal, 0.45)], body: kiteBody },
 ];
 
 // ---------- la vie au repos et l'attaque ----------
@@ -184,7 +194,7 @@ const style = `
 `.replace(/\n/g, '');
 
 function svg(anime = true) {
-  const s = figure({ w: W, h: H, pad: PAD, defs, style, parts, anime });
+  const s = figure({ master: require('./silhouettes/epouvantails-3.json'), w: W, h: H, pad: PAD, defs, style, parts, anime });
   if (!anime) return s;
   const i0 = s.indexOf('<g fill="#2a1430"');
   return s.slice(0, i0) + '<g class="a-root">' + s.slice(i0).replace(/<\/svg>$/, '</g></svg>');

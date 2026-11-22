@@ -9,13 +9,24 @@ Pas encore branché dans le jeu : la page d'exemple sert de vitrine.
 
 1. Choisir le **suivant de la file** (plus bas). Regarder l'original une fois en petit :
    `refonte-graphique/vecto/originaux/<id>.jpg` (le cadre w × h du dessin = la taille de cette image).
-2. **Décalquer, pas dessiner à l'œil** (demande du propriétaire : « soit plus précis sur le calque ») :
-   - le bord extérieur exact (tête, oreilles, pattes, queue…) se mesure sur l'image :
-     `python3 refonte-graphique/vecto/outils/contour.py <id> x0 y0 x1 y1` donne les points « x,y » du contour, déjà
-     rentrés de l'épaisseur de notre trait (il faut `pip install opencv-python-headless`) ;
-   - le tracé intérieur (œil, bouche, dents, limite crème / orange) se lit sur un gros plan quadrillé, zoom 5 pour un
-     numéro tous les 10 px : `python3 refonte-graphique/vecto/outils/zoom.py <id> x0 y0 x1 y1 5 /tmp/z.png` ;
-   - relever aussi les vraies couleurs sur l'original (le renard était trop foncé au premier essai).
+2. **Décalquer, pas dessiner à l'œil** (demande du propriétaire : « à chaque fois fidèle », aussi précis que le deuxième
+   renard). Il faut OpenCV (`pip install opencv-python-headless`).
+   - **Silhouette exacte** : `python3 refonte-graphique/vecto/outils/silhouette.py <id> --apercu /tmp/s.png` écrit
+     `silhouettes/<id>.json` (vérifier l'aperçu une fois : les trous entre les pattes doivent être gardés). Dans le fichier
+     du personnage : `figure({ master: require('./silhouettes/<id>.json'), … })`. Chaque morceau est alors découpé dans
+     la silhouette d'origine (contour et couleurs), dans son propre repère : il suffit de dessiner les morceaux un peu
+     plus grands que l'original sur les bords, et le bord tombe pile. Un morceau `free: true` (lueur) n'est pas découpé.
+   - **Pièces** : `python3 refonte-graphique/vecto/outils/zone.py <id> x,y [x,y…] --seuil 80 --boite x0,y0,x1,y1`
+     donne les points de la zone entourée de trait noir qui contient le point (une plume, une fusée, un œil) ;
+     `outils/contour.py` donne le bord extérieur d'une région.
+   - **Ce qui est difficile à découper** (ficelle, mousse, pattes qui se croisent, fond entre des fusées) : un morceau
+     « fond » placé tout derrière, dont la forme est la silhouette coupée par une boîte (voir `parade-3`, `myths-10`,
+     `angels-4` : `tailBase`, `legsBase`, `tentBase`), puis les morceaux dessinés par-dessus.
+   - Le tracé intérieur (œil, bouche, dents, limites de couleur) se lit sur un gros plan quadrillé, zoom 5 :
+     `python3 refonte-graphique/vecto/outils/zoom.py <id> x0 y0 x1 y1 5 /tmp/z.png` ; relever les vraies couleurs.
+   - **Mesurer** : `node refonte-graphique/vecto/outils/ecart.cjs <id> /tmp/e.png` donne le recouvrement des silhouettes
+     et une image (rouge = manque, bleu = dépasse). **Viser au moins 95 %** (une lueur transparente compte comme un
+     manque : la regarder à l'œil). Puis comparer en « calque » le visage, les mains et l'objet tenu.
 3. Écrire `refonte-graphique/vecto/<id>.cjs` en partant du fichier fait le plus proche (voir « Pièces à reprendre ») :
    copier sa structure, ses outils et ses dégradés, puis changer les formes. Ne pas tout réinventer.
 4. Contrôle, dans cet ordre et sans multiplier les images :
@@ -57,6 +68,7 @@ entier (lire seulement la partie utile : `grep -n` puis `sed -n`), agents en par
 ## Liste de contrôle (en plus de `refonte-graphique/LISEZMOI.md`, section « Liste de contrôle de cohérence »)
 
 Leçons de la première série (corrections demandées par le propriétaire ou le relecteur) :
+- **Fidélité mesurée** : chaque personnage passe `outils/ecart.cjs` (≥ 95 %) avant d'être montré.
 - **Forme fidèle** : la tête et les pattes doivent avoir la forme de l'original (renard refusé une première fois :
   museau trop long, œil trop petit, mâchoire mal placée). Toujours comparer en « calque » sur la tête et les pattes.
 - **Mains** : doigts courts et arrondis (jamais pointus, jamais des « orteils » en bosses), pouce bien distinct, la

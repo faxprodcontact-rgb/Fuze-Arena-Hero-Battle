@@ -100,6 +100,8 @@ const defs = [
   lin('g-lid', 0, 0, 0, 1, [[0, '#5a2a10', 0.7], [0.5, '#5a2a10', 0]], false),
   rad('g-blush', 0.5, 0.5, 0.5, [[0, '#ff8070', 0.5], [1, '#ff8070', 0]], false),
   lin('g-mouth', 0, 248, 0, 286, [[0, '#3a0a0a'], [0.6, '#6a1a1a'], [1, '#a83a3a']]),
+  // en travers de la lame d'énergie : très claire au milieu, elle s'efface vers les bords
+  rad('g-aura', 0.5, 0.5, 0.5, [[0, '#ffffff', 0.95], [0.45, '#fff2a8', 0.78], [0.75, '#ffdc60', 0.38], [1, '#ffd040', 0]], false),
   rad('g-glow', 0.5, 0.5, 0.5, [[0, '#fffbe0', 0.9], [0.42, '#ffe070', 0.45], [1, '#ffc830', 0]], false),
   lin('g-bolt', 0, 0, 1, 1, [[0, '#ffffff'], [0.5, '#fff4a0'], [1, '#ffc830']], false),
 ].join('');
@@ -177,9 +179,14 @@ const faceBody = use('face', 'url(#g-skin)') + clip('face',
 );
 
 // ---------- l'éclair (sans contour : il brille) ----------
+// la grande lame d'énergie qui sort du poing (mesurée sur l'original : du poing (400,190) à la pointe (512,12), large
+// d'environ 120 px avec sa lueur) : une lueur ovale allongée qui s'efface vers les bords, et un cœur plus clair
+const auraBody = `<g class="a-glow"><ellipse cx="452" cy="104" rx="132" ry="62" transform="rotate(-57.8 452 104)" fill="url(#g-aura)"/>`
+  + shape(rib([[396, 190, 0], [418, 152, 36], [446, 108, 50], [476, 62, 44], [500, 28, 26], [514, 10, 0]]), '#fff6c8', 0.8)
+  + shape(rib([[400, 184, 0], [422, 148, 22], [450, 104, 30], [480, 58, 24], [508, 18, 0]]), '#fffdf0', 0.92)
+  + shape(rib([[404, 176, 0], [430, 136, 10], [462, 86, 12], [500, 28, 0]]), '#ffffff', 0.95) + '</g>';
 const BOLT = 'M396 182 L428 136 L418 134 L458 86 L446 86 L500 30 L466 98 L478 98 L440 144 L450 146 L410 188 Z';
-const boltBody = `<g class="a-glow"><ellipse cx="448" cy="108" rx="56" ry="110" fill="url(#g-glow)" transform="rotate(42 448 108)"/></g>`
-  + `<g class="a-bolt">${shape(BOLT, 'url(#g-bolt)', 0.95)}${shape('M404 178 L432 140 L424 139 L460 94 L452 94 L490 46 L462 102 L470 102 L438 144 L444 146 Z', '#ffffff', 0.9)}</g>`
+const boltBody = `<g class="a-bolt">${shape(BOLT, 'url(#g-bolt)', 0.95)}${shape('M404 178 L432 140 L424 139 L460 94 L452 94 L490 46 L462 102 L470 102 L438 144 L444 146 Z', '#ffffff', 0.9)}</g>`
   + [[504, 40, 0], [492, 100, 1], [420, 120, 2]].map(([x, y, i]) => `<g class="a-spark${i + 1}">${shape(`M${x} ${y - 7}L${x + 2} ${y - 2}L${x + 7} ${y}L${x + 2} ${y + 2}L${x} ${y + 7}L${x - 2} ${y + 2}L${x - 7} ${y}L${x - 2} ${y - 2}Z`, '#fffbe0')}</g>`).join('');
 
 /** Une feuille de laurier posée sur le bandeau, penchée de `a` degrés ; `half` = sa moitié à l'ombre. */
@@ -229,6 +236,7 @@ const parts = [
     + glint([[140, 306, 0], [200, 318, 4], [270, 360, 0]], TOGA.shade, 0.7)) },
   { id: 'belt', d: S.belt, shadow: [sh(['toga'], -2, 4, SH.toga, 0.45)], body: use('belt', 'url(#g-gold)') + clip('belt',
     glint([[152, 377, 0], [220, 381, 2], [298, 376, 0]], GOLD.hi, 0.9) + shape(sm('214,376 232,376 234,396 214,396'), GOLD.mid)) },
+  { id: 'aura', cls: 'a-fire', d: 'M-900 -900', body: auraBody },
   { id: 'armL', cls: 'a-armL', d: S.armL, shadow: [sh(['toga', 'mane', 'cape'], -4, 5, SH.skin, 0.4)], body: use('armL', 'url(#g-skinB)') + clip('armL',
     glint([[306, 300, 0], [340, 290, 4], [376, 260, 0]], SKIN.hi, 0.6) + glint([[310, 322, 0], [344, 306, 4], [378, 282, 0]], SKIN.deep, 0.5)) },
   { id: 'cuffL', cls: 'a-armL', d: S.cuffL, shadow: [sh(['armL'], -2, 4, SH.skin, 0.45)], body: use('cuffL', 'url(#g-goldX)') + clip('cuffL',
@@ -308,4 +316,4 @@ ${atk('a-armL', 'armL-atk')}${atk('a-head', 'head-atk')}${atk('a-cape', 'cape-at
 `.replace(/\n/g, '');
 
 module.exports = { id: 'mages-9', w: W, h: H, pad: PAD, foot: [210, 514],
-  svg: (anime = true) => figure({ w: W, h: H, pad: PAD, defs, style, parts, anime }) };
+  svg: (anime = true) => figure({ master: require('./silhouettes/mages-9.json'), w: W, h: H, pad: PAD, defs, style, parts, anime }) };

@@ -269,7 +269,7 @@ function nest(s, cls, outer) {
 }
 
 function svg(anime = true) {
-  let s = figure({ w: W, h: H, pad: PAD, defs, style, parts, anime });
+  let s = figure({ master: require('./silhouettes/ronciers-2.json'), w: W, h: H, pad: PAD, defs, style, parts, anime });
   if (!anime) return s;
   // la tête emporte la mâchoire ; le corps emporte la tête, la mousse et les champignons
   s = nest(s, 'a-jaw', 'a-head');

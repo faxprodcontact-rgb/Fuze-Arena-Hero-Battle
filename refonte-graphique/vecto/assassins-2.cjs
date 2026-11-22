@@ -103,7 +103,8 @@ const defs = [
 ].join('');
 
 // ---------- l'épée : un axe, d'où se déduisent la lame, la garde, la poignée ----------
-const SA = [490, 345], SB = [745, 119]; // la base de la lame (au-dessus de la garde) et la pointe
+// mesuré sur l'original : tranchant du haut de (478,283) à (636,140), pointe (741,117), tranchant du bas jusqu'à (733,188) puis (535,348)
+const SA = [506, 318], SB = [732.3, 113.6]; // la base de la lame (au-dessus de la garde) et la direction de la pointe
 const SL = Math.hypot(SB[0] - SA[0], SB[1] - SA[1]), SU = [(SB[0] - SA[0]) / SL, (SB[1] - SA[1]) / SL], SN = [-SU[1], SU[0]];
 /** Un point de l'épée : `f` le long de l'axe (0 = base de la lame, 1 = pointe, négatif = vers le pommeau), `s` en travers (pixels). */
 const sp = (f, s) => `${n(SA[0] + SU[0] * SL * f + SN[0] * s)},${n(SA[1] + SU[1] * SL * f + SN[1] * s)}`;
@@ -136,8 +137,8 @@ const S = {
   pauR: sm('408,252 434,240 458,246 470,264 468,290 456,314 432,324 410,316 398,290'),
   armR: sm('420,312 452,304 470,330 476,362 470,388 448,398 428,384 420,350'),
   // l'épée : la lame (de la garde à la pointe), la garde dorée, la poignée et le pommeau
-  blade: sm(`${sp(0, 30)}! ${sp(0.88, 30)} ${sp(1, 0)}! ${sp(0.88, -30)} ${sp(0, -30)}!`),
-  guard: sm(`${sp(-0.02, 50)}! ${sp(0.02, 54)} ${sp(0.05, 44)} ${sp(0.04, 0)} ${sp(0.05, -44)} ${sp(0.02, -54)} ${sp(-0.02, -50)}! ${sp(-0.06, -30)} ${sp(-0.07, 0)} ${sp(-0.06, 30)}`),
+  blade: sm(`${sp(-0.04, 42)}! ${sp(0.84, 50)}! ${sp(1.01, 8)}! ${sp(0.71, -46)}! ${sp(-0.04, -46)}!`),
+  guard: sm(`${sp(-0.03, 58)}! ${sp(0.01, 62)} ${sp(0.03, 50)} ${sp(0.02, 0)} ${sp(0.03, -54)} ${sp(0.01, -64)} ${sp(-0.03, -58)}! ${sp(-0.06, -26)} ${sp(-0.07, 0)} ${sp(-0.06, 26)}`),
   grip: sm(`${sp(-0.05, 10)}! ${sp(-0.24, 10)}! ${sp(-0.24, -10)}! ${sp(-0.05, -10)}!`),
   pommel: sm(`${sp(-0.24, 14)} ${sp(-0.3, 0)} ${sp(-0.24, -14)} ${sp(-0.21, 0)}`),
   fist: sm('446,352 466,342 486,350 494,368 490,388 474,398 452,396 440,382 438,366'),
@@ -216,16 +217,28 @@ const parts = [
     [[244, 0], [276, 1], [306, 2]].map(([y, i]) => plate(sm(`${132 + i * 4},${y + 30} ${170},${y + 6} ${230 - i * 6},${y + 2} ${270 - i * 8},${y + 22} ${250 - i * 8},${y + 44} ${190},${y + 46} ${140 + i * 4},${y + 46}`),
       [[150 + i * 4, y + 22, 0], [200, y + 8, 3.4], [258 - i * 8, y + 20, 0]], [[140 + i * 4, y + 44, 3], [196, y + 48, 4], [246 - i * 8, y + 42, 3]])).join('')
     + oval(200, 246, 50, 16, FIRE.base, 0.3)) },
-  { id: 'swordGlow', cls: 'a-sword', d: 'M-900 -900', body: `<g class="a-sglow"><ellipse cx="${spa(0.5, 0)[0]}" cy="${spa(0.5, 0)[1]}" rx="${n(SL * 0.62)}" ry="56" transform="rotate(${n(Math.atan2(SU[1], SU[0]) * 180 / Math.PI)} ${spa(0.5, 0)[0]} ${spa(0.5, 0)[1]})" fill="url(#g-glow)" opacity="0.55"/></g>` },
+  // les flammes le long des deux tranchants (sans contour : elles brûlent), derrière la lame
+  // le feu le long des deux tranchants (sans contour : il brûle), derrière la lame : une bordure ondulée et irrégulière
+  // (orange, puis jaune contre la lame), et quelques braises qui s'envolent au-dessus
+  { id: 'swordFire', cls: 'a-sword', d: 'M-900 -900', body: `<g class="a-sglow">`
+    + `<ellipse cx="${spa(0.45, 0)[0]}" cy="${spa(0.45, 0)[1]}" rx="${n(SL * 0.68)}" ry="88" transform="rotate(${n(Math.atan2(SU[1], SU[0]) * 180 / Math.PI)} ${spa(0.45, 0)[0]} ${spa(0.45, 0)[1]})" fill="url(#g-glow)" opacity="0.6"/>`
+    + [[-46, -1, 0.0, 0.72, [6, 14, 9, 20, 12, 24, 10, 17, 22, 13, 19, 8, 4]], [44, 1, 0.0, 0.86, [5, 10, 16, 9, 18, 12, 22, 14, 10, 18, 9, 14, 6, 3]]].map(([s0, side, f0, f1, W]) => {
+      const pts = W.map((w, i) => { const f = f0 + (f1 - f0) * (i / (W.length - 1)); const p = spa(f, s0 + side * (w / 2 - 2)); return [p[0], p[1], i === 0 || i === W.length - 1 ? 0 : w]; });
+      const inner = W.map((w, i) => { const f = f0 + (f1 - f0) * (i / (W.length - 1)); const p = spa(f, s0 + side * 2); return [p[0], p[1], i === 0 || i === W.length - 1 ? 0 : Math.min(7, w * 0.45)]; });
+      return shape(rib(pts), FIRE.mid, 0.95) + shape(rib(pts.map(([x, y, w]) => [x, y, w * 0.6])), FIRE.base, 0.95) + shape(rib(inner), FIRE.hi, 0.95);
+    }).join('')
+    + [[0.2, -70, 3], [0.33, -64, 2.4], [0.47, -76, 2], [0.58, -62, 2.6], [0.12, -58, 2], [0.66, -72, 1.8]].map(([f, off, r]) => { const p = spa(f, off); return oval(p[0], p[1], r * 1.6, r, FIRE.base, 0.9, -42) + dot(p[0], p[1], r * 0.5, FIRE.hi); }).join('')
+    + '</g>' },
   { id: 'blade', cls: 'a-sword', d: S.blade, shadow: [sh(['torso', 'pauR', 'skirt'], -4, 6, SH.armor, 0.4)], body: use('blade', 'url(#g-blade)') + clip('blade',
-    // la lame noire : une gorge sombre au milieu (un côté sombre, une arête claire), deux tranchants de feu (une bande
-    // orange et un filet jaune-blanc le long de chaque bord)
-    glint([spa(0.02, -3).concat(0), spa(0.5, -3).concat(6), spa(0.9, -2).concat(0)], '#120c10', 0.8)
-    + glint([spa(0.02, 3).concat(0), spa(0.5, 3).concat(3), spa(0.9, 2).concat(0)], '#6a5054', 0.6)
-    + glint([spa(0, 25).concat(5), spa(0.5, 25).concat(7), spa(0.88, 25).concat(6), spa(1, 0).concat(0)], FIRE.base, 0.95)
-    + glint([spa(0, 27).concat(0), spa(0.5, 27).concat(2.6), spa(0.9, 25).concat(0)], FIRE.core, 0.95)
-    + glint([spa(0, -25).concat(5), spa(0.5, -25).concat(7), spa(0.88, -25).concat(6), spa(1, 0).concat(0)], FIRE.mid, 0.95)
-    + glint([spa(0, -27).concat(0), spa(0.5, -27).concat(2.6), spa(0.9, -25).concat(0)], FIRE.hi, 0.95)) },
+    // la lame noire, deux tranchants qui rougeoient (une bande orange et un filet jaune), deux traînées de feu dans la lame
+    glint([spa(-0.02, -40).concat(5), spa(0.4, -40).concat(7), spa(0.7, -41).concat(5), spa(1, 6).concat(0)], FIRE.mid, 0.9)
+    + glint([spa(-0.02, -43).concat(0), spa(0.4, -43).concat(2.6), spa(0.7, -44).concat(0)], FIRE.hi, 0.9)
+    + glint([spa(-0.02, 38).concat(5), spa(0.4, 41).concat(7), spa(0.83, 46).concat(5), spa(1, 8).concat(0)], FIRE.mid, 0.9)
+    + glint([spa(-0.02, 40).concat(0), spa(0.4, 43).concat(2.6), spa(0.83, 48).concat(0)], FIRE.hi, 0.9)
+    + glint([spa(0, -16).concat(0), spa(0.4, -10).concat(9), spa(0.78, -4).concat(0)], FIRE.base, 0.95) + glint([spa(0.02, -16).concat(0), spa(0.4, -10).concat(3), spa(0.76, -4).concat(0)], FIRE.core, 0.95)
+    + glint([spa(0, 22).concat(0), spa(0.42, 28).concat(9), spa(0.8, 34).concat(0)], FIRE.base, 0.95) + glint([spa(0.02, 22).concat(0), spa(0.42, 28).concat(3), spa(0.78, 34).concat(0)], FIRE.core, 0.95)
+    // la facette claire de la pointe (le chanfrein)
+    + shape(`M${spa(0.71, -46).join(' ')} L${spa(1.01, 8).join(' ')} L${spa(0.86, -10).join(' ')} Z`, '#6a5a60', 0.8)) },
   { id: 'grip', cls: 'a-sword', d: S.grip, body: use('grip', '#3a2420') + clip('grip', glint([spa(-0.06, 4).concat(0), spa(-0.15, 4).concat(3), spa(-0.24, 4).concat(0)], '#8a5a4a', 0.7)) },
   { id: 'pommel', cls: 'a-sword', d: S.pommel, body: use('pommel', 'url(#g-gold)') },
   { id: 'guard', cls: 'a-sword', d: S.guard, shadow: [sh(['blade', 'torso', 'grip'], -3, 5, SH.armor, 0.45)], body: use('guard', 'url(#g-gold)') + clip('guard',
@@ -285,4 +298,4 @@ ${atk('a-sword', 'sword-atk')}${atk('a-head', 'head-atk')}${atk('a-fire', 'fire-
 `.replace(/\n/g, '');
 
 module.exports = { id: 'assassins-2', w: W, h: H, pad: PAD, foot: [300, 552],
-  svg: (anime = true) => figure({ w: W, h: H, pad: PAD, defs, style, parts, anime }) };
+  svg: (anime = true) => figure({ master: require('./silhouettes/assassins-2.json'), w: W, h: H, pad: PAD, defs, style, parts, anime }) };

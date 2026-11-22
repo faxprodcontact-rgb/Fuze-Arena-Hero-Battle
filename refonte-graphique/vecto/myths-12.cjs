@@ -377,4 +377,4 @@ ${atk('a-tri', 'tri-atk')}${atk('a-head', 'head-atk')}${atk('a-hair', 'hair-atk'
 `.replace(/\n/g, '');
 
 module.exports = { id: 'myths-12', w: W, h: H, pad: PAD, foot: [318, 592],
-  svg: (anime = true) => figure({ w: W, h: H, pad: PAD, defs, style, parts, anime }) };
+  svg: (anime = true) => figure({ master: require('./silhouettes/myths-12.json'), w: W, h: H, pad: PAD, defs, style, parts, anime }) };

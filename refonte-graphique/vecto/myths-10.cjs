@@ -191,6 +191,8 @@ const legBody = (id, list, fill) => use(id, fill) + clip(id, list.map((L) => {
     + oval(P[2][0], P[2][1] + 4, 6, 4, RED.base, 0.75);
 }).join(''));
 const parts = [
+  // le fond des pattes, pris dans la silhouette de l'original (tout derrière : ce que les pattes dessinées ne couvrent pas)
+  { id: 'legsBase', cls: 'a-legsF', d: sm('6,453 6,457 10,457 12,459 7,467 7,473 10,475 9,492 13,500 20,502 27,498 40,472 46,467 45,462 50,457 54,447 62,441 67,448 84,463 83,475 92,485 90,487 96,488 96,484 102,479 103,473 109,476 106,485 106,510 111,518 118,518 124,511 131,498 135,498 141,502 144,501 154,504 188,506 194,508 196,511 201,511 207,514 209,510 210,518 215,521 219,520 225,513 229,514 238,510 293,504 296,502 319,503 326,499 338,497 344,492 339,489 346,483 347,478 356,472 370,497 370,503 374,504 380,516 388,518 392,515 394,510 392,495 396,494 397,489 395,472 391,464 384,456 383,449 377,435 363,412 364,410 384,405 388,409 399,413 400,418 414,429 416,436 422,441 427,453 435,461 453,500 451,503 439,504 439,506 454,508 458,507 464,509 470,504 471,498 470,473 465,454 465,447 443,403 427,380 37,380 33,388 33,394 39,394 41,399 25,419 16,438'), body: use('legsBase', 'url(#g-legFar)') },
   { id: 'legsFar', cls: 'a-legsF', d: S.legsFar, body: legBody('legsFar', FAR, 'url(#g-legFar)') },
   { id: 'abdomen', cls: 'a-abd', d: S.abdomen, shadow: [sh(['legsFar'], -4, 5, SH.chit, 0.45)], body: use('abdomen', 'url(#g-chit)') + clip('abdomen',
     // la bosse éclairée en haut à droite, le dessous à l'ombre, les marques rouges en sablier
@@ -290,7 +292,7 @@ function nest(s, cls, outer) {
 }
 
 function svg(anime = true) {
-  let s = figure({ w: W, h: H, pad: PAD, defs, style, parts, anime });
+  let s = figure({ master: require('./silhouettes/myths-10.json'), w: W, h: H, pad: PAD, defs, style, parts, anime });
   if (!anime) return s;
   // le buste emporte la tête et les bras
   for (const c of ['a-head', 'a-armL', 'a-armR']) s = nest(s, c, 'a-body');

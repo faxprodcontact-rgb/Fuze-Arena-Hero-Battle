@@ -113,8 +113,9 @@ function rocketGeo([ax, ay], [bx, by], w) {
   return { tube, cone, bands: [band(0.18, 0.24), band(0.46, 0.52), band(0.7, 0.78)], lite, coneLite: `M${P2(at(0.8, -0.2))} L${P2([bx, by])} L${P2(at(0.8, -1.3))} Z` };
 }
 // les quatre fusées du dos (de la plus au fond à la plus devant) et celle de la main
+// mesuré sur l'original : les pointes en 71,95 ; 109,59 ; 159,55, les tubes penchés vers le bas à droite
 const ROCKETS = [
-  { a: [150, 262], b: [72, 96], w: 32 }, { a: [194, 252], b: [112, 58], w: 34 }, { a: [228, 236], b: [162, 54], w: 34 },
+  { a: [132, 262], b: [70, 93], w: 36 }, { a: [168, 254], b: [108, 56], w: 38 }, { a: [204, 236], b: [159, 52], w: 38 },
 ];
 const HAND_R = { a: [260, 272], b: [440, 172], w: 30 };
 const rocketBody = (g, id) => use(id, 'url(#g-rocket)') + clip(id,
@@ -187,6 +188,10 @@ const headBody = use('head', 'url(#g-fur)') + clip('head',
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx, dy, color, o) => ({ on, dx, dy, color, o });
 const parts = [
+  // les fonds pris dans la silhouette de l'original (tout derrière) : la queue, les fusées du dos, la fusée tenue, les pieds
+  { id: 'tailBase', cls: 'a-tail', d: sm('17,183 16,189 4,212 4,235 6,238 5,243 10,252 10,257 22,275 21,278 28,285 33,287 37,293 62,303 90,304 100,302 101,303 98,310 150,310 150,170 87,170 103,197 103,201 107,205 121,233 120,244 123,248 121,256 124,258 128,251 132,259 129,262 120,261 117,259 112,259 107,262 97,261 99,264 109,267 99,274 91,274 86,277 71,276 62,273 47,263 35,247 30,235 29,227 31,216 35,209 47,201 54,202 62,208 65,214 65,221 63,227 57,232 52,228 49,230 48,236 50,239 50,246 62,254 65,252 70,252 80,245 85,236 87,227 87,213 84,203 75,188 68,182 54,176 38,177 33,180 27,178 24,184 21,180'), body: use('tailBase', 'url(#g-fur)') },
+  { id: 'rkBase', cls: 'a-rockets', d: sm('229,21 225,22 227,52 223,55 223,63 219,64 216,70 211,71 212,74 206,79 204,83 205,87 203,89 199,87 198,83 192,82 185,70 182,69 180,73 164,52 158,52 155,54 151,64 150,87 148,90 144,88 121,62 112,55 108,55 106,57 103,75 98,86 95,108 74,90 70,90 70,149 73,148 75,150 77,156 84,164 90,177 103,197 103,200 135,201 150,262 250,250 250,38 245,34 248,30 247,28 243,31') + sm('70,184 70,200 82,200 75,188'), body: use('rkBase', RED.deep) },
+  { id: 'feetBase', cls: 'a-legL', d: sm('60,300 60,302 68,304 101,303 92,325 85,333 85,341 82,348 82,355 84,357 104,357 109,359 113,359 115,357 128,358 130,356 145,357 146,352 139,340 134,336 125,334 123,330 128,322 134,325 151,324 170,306 192,314 203,315 218,313 237,321 239,323 235,327 235,330 231,336 231,339 235,341 232,347 232,355 236,357 269,356 283,358 285,355 297,354 300,356 304,355 302,344 295,334 289,332 282,334 277,331 269,333 267,331 271,326 273,317 273,306 269,300'), body: use('feetBase', 'url(#g-furX)') },
   { id: 'tail', cls: 'a-tail', d: S.tail, body: use('tail', 'url(#g-fur)') + clip('tail',
     glint([[136, 284, 0], [96, 288, 4], [54, 280, 4], [28, 256, 3], [24, 220, 0]], FUR.hi, 0.55)
     + glint([[130, 298, 0], [80, 304, 4], [40, 290, 0]], FUR.deep, 0.5)) },
@@ -200,12 +205,12 @@ const parts = [
     + [[248, 346], [266, 347], [284, 346]].map(([x, y]) => oval(x, y, 4, 2.4, '#f6ecdc')).join('') },
   { id: 'body', cls: 'a-body', d: S.body, shadow: [sh(['r0', 'r1', 'r2', 'r3', 'tail', 'legL', 'legR'], -4, 6, SH.red, 0.45)], body: use('body', 'url(#g-vest)') + clip('body',
     // la chemise blanche au milieu, le gilet rouge à galons dorés, la ceinture et sa boucle d'or
-    shape(sm('258,196 284,196 290,232 284,272 264,276 260,240'), 'url(#g-shirt)')
-    + shape(sm('186,206 214,200 226,230 222,262 196,268 184,240'), 'url(#g-shirt)')
-    + glint([[258, 198, 0], [262, 240, 4], [264, 280, 0]], GOLD.base, 0.85) + glint([[286, 198, 0], [292, 236, 4], [286, 278, 0]], GOLD.base, 0.85)
+    shape(sm('186,206 214,200 226,230 222,262 196,268 184,240'), 'url(#g-shirt)')
+    + glint([[270, 198, 0], [274, 240, 3], [276, 280, 0]], RED.deep, 0.7) + glint([[274, 198, 0], [278, 240, 2], [280, 280, 0]], RED.hi, 0.6)
     + [[300, 226], [316, 248], [236, 226], [240, 256]].map(([x, y]) => dot(x, y, 2.4, GOLD.base)).join('')
     + shape(sm('196,272 250,280 300,276 330,266 332,282 300,292 250,296 196,288'), FUR.deep, 0.9)
     + oval(276, 284, 14, 10, 'url(#g-gold)') + oval(274, 282, 6, 3, GOLD.hi, 0.8)) },
+  { id: 'rhBase', cls: 'a-armL', d: sm('450,172 447,170 437,171 382,167 382,173 386,178 383,183 352,198 351,202 347,206 330,207 330,256 336,254 340,257 345,257 348,254 353,253 361,245 366,236 373,236 383,230 386,231 395,225 402,234 407,234 412,229 416,230 433,200 447,182') + sm('344,150 330,150 330,184 341,164 341,154'), body: use('rhBase', 'url(#g-rocket)') },
   { id: 'stick', cls: 'a-armL', d: S.stick, shadow: [sh(['body'], -3, 5, SH.red, 0.4)], body: use('stick', 'url(#g-gold)') + clip('stick', glint([[272, 274, 0], [312, 252, 2], [350, 230, 0]], GOLD.hi, 0.9)) },
   { id: 'rocketH', cls: 'a-armL', d: S.rocketH, shadow: [sh(['body', 'stick'], -4, 6, SH.red, 0.4)], body: rocketBody(HG, 'rocketH') },
   { id: 'armL', cls: 'a-armL', d: S.armL, shadow: [sh(['body', 'rocketH'], -3, 5, SH.fur, 0.45)], body: use('armL', 'url(#g-furX)') + clip('armL',
@@ -283,7 +288,7 @@ function nest(s, cls, outer) {
 }
 
 function svg(anime = true) {
-  let s = figure({ w: W, h: H, pad: PAD, defs, style, parts, anime });
+  let s = figure({ master: require('./silhouettes/parade-3.json'), w: W, h: H, pad: PAD, defs, style, parts, anime });
   if (!anime) return s;
   // le corps emporte la tête, les bras, les fusées et la queue
   for (const c of ['a-head', 'a-armL', 'a-armR', 'a-rockets', 'a-tail']) s = nest(s, c, 'a-body');

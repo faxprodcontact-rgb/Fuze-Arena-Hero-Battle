@@ -15,26 +15,32 @@
  *   rim    : { on: [ids], color, w, o? } = filet fin, seulement là où le morceau passe devant ceux de la liste
  *            (peau sur peau : un bras devant le torse). Ce n'est pas un contour : il ne fait jamais le tour du morceau.
  * @param anime  true = image vivante (marge autour pour que rien ne soit coupé en bougeant), false = image fixe au cadre exact
+ * @param master la silhouette exacte du dessin d'origine (outils/silhouette.py → silhouettes/<id>.json : { out, in }) :
+ *   chaque morceau est découpé dedans (le contour dans `out`, les couleurs dans `in`), dans son propre repère, donc la
+ *   découpe bouge avec lui. Il suffit de dessiner les morceaux un peu plus grands que l'original sur les bords : le bord
+ *   du personnage tombe alors exactement sur l'original. Un morceau `free: true` (lueur, étincelle) n'est pas découpé.
  */
-function figure({ w, h, pad = 24, outline = '#2a1430', ow = 4.4, defs = '', style = '', parts, anime = true }) {
+function figure({ w, h, pad = 24, outline = '#2a1430', ow = 4.4, defs = '', style = '', parts, anime = true, master = null }) {
   const m = anime ? pad : 0;
   const sil = parts.map((p) => `<path id="s-${p.id}" d="${p.d}"/>`).join('');
-  const clips = parts.map((p) => `<clipPath id="c-${p.id}"><use href="#s-${p.id}"/></clipPath>`).join('');
+  const clips = parts.map((p) => `<clipPath id="c-${p.id}"><use href="#s-${p.id}"/></clipPath>`).join('')
+    + (master ? `<clipPath id="m-out"><path d="${master.out}" clip-rule="evenodd"/></clipPath><clipPath id="m-in"><path d="${master.in}" clip-rule="evenodd"/></clipPath>` : '');
+  const cut = (p, which, inner) => (master && !p.free && !p.d.startsWith('M-900') ? `<g clip-path="url(#m-${which})">${inner}</g>` : inner);
   const wrap = (p, inner) => (p.cls && anime ? `<g class="${p.cls}">${inner}</g>` : inner);
   let unions = '';
   const union = (cid, on) => { unions += `<clipPath id="${cid}">${on.map((o) => `<use href="#s-${o}"/>`).join('')}</clipPath>`; return cid; };
-  const ol = parts.map((p) => wrap(p, `<use href="#s-${p.id}"/>`)).join('');
+  const ol = parts.map((p) => wrap(p, cut(p, 'out', `<use href="#s-${p.id}"/>`))).join('');
   const col = parts.map((p) => {
     let under = '';
     (p.shadow || []).forEach((s, i) => {
       const cid = union(`u-${p.id}-${i}`, s.on);
-      under += `<g clip-path="url(#${cid})">${wrap(p, `<use href="#s-${p.id}" transform="translate(${s.dx} ${s.dy})" fill="${s.color}" opacity="${s.o}"/>`)}</g>`;
+      under += `<g clip-path="url(#${cid})">${wrap(p, cut(p, 'in', `<use href="#s-${p.id}" transform="translate(${s.dx} ${s.dy})" fill="${s.color}" opacity="${s.o}"/>`))}</g>`;
     });
     if (p.rim) {
       const cid = union(`r-${p.id}`, p.rim.on);
-      under += `<g clip-path="url(#${cid})">${wrap(p, `<use href="#s-${p.id}" fill="none" stroke="${p.rim.color}" stroke-width="${p.rim.w * 2}"${p.rim.o ? ` opacity="${p.rim.o}"` : ''}/>`)}</g>`;
+      under += `<g clip-path="url(#${cid})">${wrap(p, cut(p, 'in', `<use href="#s-${p.id}" fill="none" stroke="${p.rim.color}" stroke-width="${p.rim.w * 2}"${p.rim.o ? ` opacity="${p.rim.o}"` : ''}/>`))}</g>`;
     }
-    return under + wrap(p, p.body);
+    return under + wrap(p, cut(p, 'in', p.body));
   }).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${-m} ${-m} ${w + 2 * m} ${h + 2 * m}" width="${w + 2 * m}" height="${h + 2 * m}">`
     + `<defs>${defs}${sil}${clips}${unions}</defs>${anime && style ? `<style>${style}</style>` : ''}`
