@@ -99,6 +99,7 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Grande épée sur un axe (lame, garde, poignée, pommeau), tranchants de feu | `assassins-2.cjs` → `SA`, `SB`, `sp`, `spa`, morceaux `blade`, `guard`, `grip` |
 | Crinière de flammes (langues courbes, pas de rayons) | `assassins-2.cjs` → `TONGUES`, `fireBody` |
 | Objet vivant qui flotte, lumière intérieure, glands | `parade-4.cjs` → `g-inner`, `faceBody`, `tasselBody`, groupe `a-root` |
+| Nœuds de tissu, ficelle, pans de toile cousus | `epouvantails-3.cjs` → `bow`, `STR`, `kiteBody` |
 | Coquille en spirale, cristaux | `cuirasses-4.cjs` → `spiral`, `moss` |
 | Pattes et serres | `glaces-4.cjs` → `footD`, `nail` ; `assassins-5.cjs` → `toe`, `talon` |
 | Jupe de feuilles, notes de musique | `assassins-12.cjs` → `leafGeo`, `skirtBody`, `noteFx` |
@@ -113,13 +114,13 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Hampe tenue (trident, lance), flamme bleue sans contour | `myths-12.cjs` → morceaux `trident`, `handL`, `flame` (`flameBody`) |
 | Épaulière en écailles, bottes de fer | `myths-12.cjs` → morceaux `pauR`, `legL`, `legR` |
 
-## Faits (24)
+## Faits (25)
 
 Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Séraphin `angels-4`, Nimue `mages-9` (le dessin montre un dieu de
 l'orage doré), Kael `assassins-2`, Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
 Rook `assassins-5` · monstres : pétard `parade-1`, lion de la parade `parade-2`, singe aux fusées `parade-3`, lanterne `parade-4`, méduse
 `abysses-3`, dino-voile `bayou-1`, feu follet `bayou-4`, croco cuirassé `bayou-6`, chouette `glaces-4`, escargot de
-cristal `cuirasses-4`, coq-girouette `epouvantails-1`, épouvantail `epouvantails-2`, renard de feuilles `ronciers-1`,
+cristal `cuirasses-4`, coq-girouette `epouvantails-1`, épouvantail `epouvantails-2`, cerf-volant `epouvantails-3`, renard de feuilles `ronciers-1`,
 blaireau moussu `ronciers-2`.
 
 ## File d'attente (prendre le premier non fait)
@@ -127,7 +128,7 @@ blaireau moussu `ronciers-2`.
 Ordre : d'abord les monstres que le joueur rencontre en premier (région 1 de la campagne : familles `parade`,
 `epouvantails`, `bayou`, `ronciers`), en intercalant un héros Légendaire (l'invocation les montre en grand).
 
-1. `epouvantails-3` 2. héros `myths-10` Thor 4. `bayou-2` 5. `ronciers-3` 6. héros `angels-2` Ilian
+1. héros `myths-10` Thor 4. `bayou-2` 5. `ronciers-3` 6. héros `angels-2` Ilian
 7. `parade-5` 8. `epouvantails-4` 9. héros `mages-8` Eldra 10. `bayou-3` 11. `ronciers-4` 12. héros `assassins-3` Sable
 13. `parade-6` 14. `epouvantails-5` 15. héros `myths-8` Freyja 16. `bayou-5` 17. `ronciers-5` 18. héros `angels-3` Aube
 19. `epouvantails-6` 20. `ronciers-6` 21. héros `mages-11` Myrr
