@@ -80,6 +80,24 @@ function unit([id, name, slot], hero) {
 const heroes = HEROES.map((u) => unit(u, true));
 const monsters = MONSTERS.map((u) => unit(u, false));
 const all = [...heroes, ...monsters];
+
+// la galerie : TOUS les personnages déjà redessinés (un fichier <famille>-<n>.cjs dans ce dossier), héros d'abord
+const HERO_FAMILIES = ['knights', 'assassins', 'mages', 'demons', 'angels', 'myths'];
+const heroNames = {};
+for (const m of fs.readFileSync(`${REPO}/src/core/data/heroes.ts`, 'utf8').matchAll(/^\s+(\w+): \[('[^\n]*')\],$/gm)) {
+  [...m[2].matchAll(/'([^']*)'/g)].forEach((n, i) => { heroNames[`${m[1]}-${i + 1}`] = n[1]; });
+}
+/** Les noms des monstres redessinés (les monstres n'ont pas de nom dans le jeu) : à compléter à chaque nouveau monstre. */
+const MONSTER_NAMES = {
+  'parade-1': 'Pétard', 'abysses-3': 'Méduse des abysses', 'bayou-4': 'Feu follet', 'glaces-4': 'Chouette des neiges', 'cuirasses-4': 'Escargot de cristal',
+};
+const isHero = (id) => HERO_FAMILIES.includes(id.split('-')[0]);
+const done = fs.readdirSync(__dirname).filter((f) => /^[a-z]+-\d+\.cjs$/.test(f)).map((f) => f.slice(0, -4))
+  .sort((a, b) => (isHero(b) - isHero(a)) || a.localeCompare(b, 'fr', { numeric: true }));
+const gallery = done.map((id) => {
+  const ch = load(id);
+  return { id, hero: isHero(id), name: (isHero(id) ? heroNames[id] : MONSTER_NAMES[id]) || id, w: ch.w, h: ch.h };
+});
 const pc = (v, of) => `${((v / of) * 100).toFixed(3)}%`;
 const sceneUnit = (u, i) => `<div class="unit${u.hero ? '' : ' foe'}" data-p="${u.P}" style="left:${pc(u.box.left, SW)};top:${pc(u.box.top - CROP, SH - CROP)};width:${pc(u.box.width, SW)};z-index:${Math.round(u.Y)}">`
   + `<span class="shadow" style="left:${pc(u.X - u.box.left - u.shadow / 2, u.box.width)};top:${pc(u.Y - u.box.top - 10, u.box.height)};width:${pc(u.shadow, u.box.width)}"></span>`
@@ -137,12 +155,12 @@ figcaption { position: absolute; left: 8px; top: 6px; font-size: 12px; font-weig
   background: radial-gradient(130% 100% at 50% -10%, #ff9d7a, #dc4f4f 52%, #8f2626); box-shadow: inset 0 0 0 1.5px #e8b84a, 0 3px 0 #0a0e26; }
 .atk-btn:active { transform: translateY(2px); }
 </style></head><body><main>
-<header><h1>5 héros contre 5 monstres</h1><p>Redessinés par le code, dans le style de Ruka la sirène. Chacun son tour, comme dans le jeu.</p></header>
+<header><h1>Personnages redessinés</h1><p>Par le code, dans le style de Ruka la sirène. En haut, un combat chacun son tour comme dans le jeu ; en dessous, tous les personnages déjà faits.</p></header>
 <section class="scene"><img src="data:image/jpeg;base64,${b64(path.join(__dirname, 'prairie.jpg'))}" alt="">
 ${all.map(sceneUnit).join('\n')}
 </section>
 <section class="gallery">
-${all.map(card).join('\n')}
+${gallery.map(card).join('\n')}
 </section>
 </main>
 <script>
