@@ -340,11 +340,22 @@ const stalkAtk = (name, base, moves) => kf(name, HEAD_ATK.map(([p, dx, dy, sc], 
   const x = HEAD_O[0] + dx + sc * (base[0] - HEAD_O[0]), y = HEAD_O[1] + dy + sc * (base[1] - HEAD_O[1]);
   return [p, tf(x - base[0], y - base[1], moves[i][0], moves[i][1])];
 }));
-const style = `
-.a-sb{transform-origin:${STALK_B[0]}px ${STALK_B[1]}px;animation:sb 2.6s ease-in-out infinite alternate}
-.a-sf{transform-origin:${STALK_F[0]}px ${STALK_F[1]}px;animation:sf 3.3s ease-in-out -0.8s infinite alternate}
-.a-head{transform-origin:${HEAD_O[0]}px ${HEAD_O[1]}px;animation:head 2.2s ease-in-out infinite alternate}
-.a-shell{transform-origin:172px 350px;animation:shell 2.2s ease-in-out infinite alternate}
+// la vie au repos de chaque morceau qui bouge : [pivot, animation]
+const IDLE = {
+  'a-sb': [STALK_B, 'sb 2.6s ease-in-out infinite alternate'],
+  'a-sf': [STALK_F, 'sf 3.3s ease-in-out -0.8s infinite alternate'],
+  'a-head': [HEAD_O, 'head 2.2s ease-in-out infinite alternate'],
+  'a-shell': [[172, 350], 'shell 2.2s ease-in-out infinite alternate'],
+};
+/**
+ * L'attaque s'AJOUTE au repos (animation-composition: add) : le repos continue dessous, l'attaque part de zéro et y
+ * revient, donc rien ne saute quand la classe « atk » arrive ou s'en va. (Un navigateur qui ne connaît pas « add »
+ * joue seulement l'attaque, qui commence et finit à la pose de base.)
+ */
+const atk = (cls, name, ease = 'ease-in-out') => (IDLE[cls]
+  ? `.atk .${cls}{animation:${IDLE[cls][1]},${name} .75s ${ease};animation-composition:replace,add}`
+  : `.atk .${cls}{animation:${name} .75s ${ease}}`);
+const style = Object.entries(IDLE).map(([c, [o, a]]) => `.${c}{transform-origin:${o[0]}px ${o[1]}px;animation:${a}}`).join('') + `
 .a-g1{animation:glint 2.1s ease-in-out infinite alternate}
 .a-g2{animation:glint 1.7s ease-in-out -0.6s infinite alternate}
 .a-g3{animation:glint 2.7s ease-in-out -1.3s infinite alternate}
@@ -355,20 +366,14 @@ const style = `
 @keyframes shell{from{transform:none}to{transform:rotate(-0.7deg)}}
 @keyframes glint{from{opacity:0.25}to{opacity:1}}
 @keyframes blink{0%,92%{opacity:0}93.5%,96%{opacity:1}97.5%,100%{opacity:0}}
-.atk .a-head{animation:head-atk .75s ease-in-out}
-.atk .a-sb{animation:sb-atk .75s ease-in-out}
-.atk .a-sf{animation:sf-atk .75s ease-in-out}
-.atk .a-shell{animation:shell-atk .75s ease-in-out}
-.atk .a-flash{animation:flash .75s ease-out}
-.atk .a-cflash{animation:cflash .75s ease-out}
-.atk .a-g1,.atk .a-g2,.atk .a-g3{animation:glint-atk .75s ease-out}
+${atk('a-head', 'head-atk')}${atk('a-sb', 'sb-atk')}${atk('a-sf', 'sf-atk')}${atk('a-shell', 'shell-atk')}
+${atk('a-flash', 'flash', 'ease-out')}${atk('a-cflash', 'cflash', 'ease-out')}
 ${kf('head-atk', HEAD_ATK.map(([p, dx, dy, sc]) => [p, tf(dx, dy, 0, sc)]))}
 ${stalkAtk('sb-atk', STALK_B, [[0, 1], [10, 0.5], [-12, 1.1], [-8, 1.06], [0, 1]])}
 ${stalkAtk('sf-atk', STALK_F, [[0, 1], [-10, 0.5], [14, 1.1], [9, 1.06], [0, 1]])}
 @keyframes shell-atk{0%{transform:rotate(0deg)}35%{transform:rotate(-3deg)}50%{transform:rotate(2deg)}62%{transform:rotate(1.6deg)}100%{transform:rotate(0deg)}}
 @keyframes flash{0%,30%{opacity:0}48%{opacity:1}100%{opacity:0}}
 @keyframes cflash{0%,34%{opacity:0}46%{opacity:.6}60%{opacity:.15}100%{opacity:0}}
-@keyframes glint-atk{0%,30%{opacity:0.25}48%{opacity:1}100%{opacity:0.25}}
 `.replace(/\n/g, '');
 
 module.exports = { id: 'cuirasses-4', w: W, h: H, pad: 40, foot: [172, 377],

@@ -98,8 +98,6 @@ function plume(b, t, w, bend = 0) {
   const pt = (s, o) => [b[0] + ux * len * s + vx * (o + bend * Math.sin(Math.PI * s)), b[1] + uy * len * s + vy * (o + bend * Math.sin(Math.PI * s))];
   return [pt(0, w * 0.3), pt(0.3, w * 0.5), pt(0.62, w * 0.42), pt(0.86, w * 0.2), [...pt(1, 0), 1], pt(0.84, -w * 0.24), pt(0.58, -w * 0.46), pt(0.28, -w * 0.5), pt(0, -w * 0.3)];
 }
-/** Le trait du tuyau d'une plume (fin, de la couleur de la plume en plus sombre). */
-const shaft = (b, t, k = 0.9) => [b, [b[0] + (t[0] - b[0]) * k, b[1] + (t[1] - b[1]) * k]];
 
 // ---------- couleurs ----------
 const SKIN = { hi: '#fff1e6', base: '#fbd3bd', shade: '#eaa58f', deep: '#d0837a', line: '#a45a52' };
@@ -724,20 +722,29 @@ const defs = [...baseDefs, ...Object.values(featherGrads), ...featherDefs, ...le
 // L'attaque (classe « atk » sur le <svg>, 0,75 s) : les ailes se lèvent et le bras se replie (élan, 0–35 %), puis les ailes
 // battent pendant qu'elle projette la boule de feu vers l'avant (35–55 %), et tout revient à la pose du repos (55–100 %).
 // Le bras ne fait que tourner et s'étirer depuis l'épaule : sa racine reste cachée sous les plumes de l'épaule.
-// Chaque animation du repos part de la pose de base (« from » = aucune transformation, pas de délai) : la fin de
-// l'attaque retombe exactement dessus.
+// Chaque animation (repos et attaque) part de la pose de base et y revient (« from » = aucune transformation).
 const PIV = { wl: [226, 262], wr: [428, 264], tail: [236, 420], head: [318, 290], armR: [350, 300], armL: [262, 294], fire: [491, 280] };
-const o = (k) => `transform-origin:${PIV[k][0]}px ${PIV[k][1]}px`;
-const style = `
-.a-wl{${o('wl')};animation:wl 3.2s ease-in-out infinite alternate}
-.a-wr{${o('wr')};animation:wr 3.7s ease-in-out infinite alternate}
-.a-tail{${o('tail')};animation:tail 4.3s ease-in-out infinite alternate}
-.a-head{${o('head')};animation:head 3s ease-in-out infinite alternate}
-.a-hairB{${o('head')};animation:hairB 3s ease-in-out infinite alternate}
-.a-armR{${o('armR')};animation:armR 2.6s ease-in-out infinite alternate}
-.a-armL{${o('armL')};animation:armL 3.5s ease-in-out infinite alternate}
-.a-fire{${o('fire')};animation:fire .9s ease-in-out infinite alternate}
-.a-flame2{${o('fire')};animation:flame2 .62s ease-in-out infinite alternate}
+// la vie au repos de chaque morceau : [pivot, animation]
+const IDLE = {
+  'a-wl': ['wl', 'wl 3.2s ease-in-out infinite alternate'],
+  'a-wr': ['wr', 'wr 3.7s ease-in-out infinite alternate'],
+  'a-tail': ['tail', 'tail 4.3s ease-in-out infinite alternate'],
+  'a-head': ['head', 'head 3s ease-in-out infinite alternate'],
+  'a-hairB': ['head', 'hairB 3s ease-in-out infinite alternate'],
+  'a-armR': ['armR', 'armR 2.6s ease-in-out infinite alternate'],
+  'a-armL': ['armL', 'armL 3.5s ease-in-out infinite alternate'],
+  'a-fire': ['fire', 'fire .9s ease-in-out infinite alternate'],
+  'a-flame2': ['fire', 'flame2 .62s ease-in-out infinite alternate'],
+};
+/**
+ * L'attaque s'AJOUTE au repos (animation-composition: add) : le repos continue dessous, l'attaque part de zéro et y
+ * revient, donc rien ne saute quand la classe « atk » arrive ou s'en va. (Un navigateur qui ne connaît pas « add »
+ * joue seulement l'attaque, qui commence et finit à la pose de base.)
+ */
+const atk = (cls, name, ease = 'ease-in-out') => (IDLE[cls]
+  ? `.atk .${cls}{animation:${IDLE[cls][1]},${name} .75s ${ease};animation-composition:replace,add}`
+  : `.atk .${cls}{animation:${name} .75s ${ease}}`);
+const style = Object.entries(IDLE).map(([c, [k, a]]) => `.${c}{transform-origin:${PIV[k][0]}px ${PIV[k][1]}px;animation:${a}}`).join('') + `
 .a-core{transform-origin:494px 252px;animation:core .75s ease-in-out infinite alternate}
 .a-emb1{animation:emb 1.7s linear infinite}
 .a-emb2{animation:emb 1.7s linear -.6s infinite}
@@ -755,15 +762,8 @@ const style = `
 @keyframes core{from{transform:none;opacity:1}to{transform:scale(.9);opacity:.8}}
 @keyframes emb{0%{transform:translate(0,14px);opacity:0}20%{opacity:1}100%{transform:translate(6px,-34px);opacity:0}}
 @keyframes blink{0%,93%{opacity:0}94.5%,97%{opacity:1}98.5%,100%{opacity:0}}
-.atk .a-wl{animation:wl-atk .75s ease-in-out}
-.atk .a-wr{animation:wr-atk .75s ease-in-out}
-.atk .a-tail{animation:tail-atk .75s ease-in-out}
-.atk .a-head{animation:head-atk .75s ease-in-out}
-.atk .a-hairB{animation:hairB-atk .75s ease-in-out}
-.atk .a-armR{animation:armR-atk .75s ease-in-out}
-.atk .a-armL{animation:armL-atk .75s ease-in-out}
-.atk .a-fire{animation:fire-atk .75s ease-in-out}
-.atk .a-blast{animation:blast .75s ease-out}
+${atk('a-wl', 'wl-atk')}${atk('a-wr', 'wr-atk')}${atk('a-tail', 'tail-atk')}${atk('a-head', 'head-atk')}${atk('a-hairB', 'hairB-atk')}
+${atk('a-armR', 'armR-atk')}${atk('a-armL', 'armL-atk')}${atk('a-fire', 'fire-atk')}${atk('a-blast', 'blast', 'ease-out')}
 @keyframes wl-atk{0%{transform:none}32%{transform:rotate(8deg)}48%{transform:rotate(-7deg)}60%{transform:rotate(-5deg)}100%{transform:none}}
 @keyframes wr-atk{0%{transform:none}32%{transform:rotate(-8deg)}48%{transform:rotate(7deg)}60%{transform:rotate(5deg)}100%{transform:none}}
 @keyframes tail-atk{0%{transform:none}32%{transform:rotate(2deg)}50%{transform:rotate(-3deg)}100%{transform:none}}
