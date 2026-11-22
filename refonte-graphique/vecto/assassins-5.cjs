@@ -8,30 +8,64 @@ const { figure, lin, rad, n, use, clip, line, shape, dot, oval } = require('./li
 const W = 556, H = 515;
 
 // ---------- petits outils ----------
-/** Courbe lisse qui passe par des points (Catmull-Rom → Bézier). Un point [x, y, 1] est un angle vif. */
-function P(pts, closed = true) {
-  const N = pts.length;
+/**
+ * Courbe lisse qui passe par des points (Catmull-Rom → Bézier). Un point [x, y, 1] est un angle vif.
+ * `q` = nombre de décimales (0 pour les grandes formes : le dessin reste léger) ; aux points lisses, la courbe s'écrit
+ * avec « S » (le premier point de contrôle est le reflet du précédent), ce qui raccourcit le chemin d'un tiers.
+ */
+function P(pts, closed = true, q = 0) {
+  const N = pts.length, f = (v) => +v.toFixed(q);
   const at = (i) => (closed ? pts[(i + N) % N] : pts[Math.max(0, Math.min(N - 1, i))]);
   const sharp = (i) => !!at(i)[2] || (!closed && (i <= 0 || i >= N - 1));
   const tan = (i, dir) => {
     const p = at(i);
-    if (sharp(i)) { const q = at(i + dir); return [(q[0] - p[0]) * dir / 3, (q[1] - p[1]) * dir / 3]; }
+    if (sharp(i)) { const o = at(i + dir); return [(o[0] - p[0]) * dir / 3, (o[1] - p[1]) * dir / 3]; }
     const a = at(i - 1), b = at(i + 1);
     return [(b[0] - a[0]) / 6, (b[1] - a[1]) / 6];
   };
-  let d = `M${n(pts[0][0])} ${n(pts[0][1])}`;
+  let d = `M${f(pts[0][0])} ${f(pts[0][1])}`;
   const last = closed ? N : N - 1;
   for (let i = 0; i < last; i++) {
-    const p = at(i), q = at(i + 1), t1 = tan(i, 1), t2 = tan(i + 1, -1);
-    d += `C${n(p[0] + t1[0])} ${n(p[1] + t1[1])} ${n(q[0] - t2[0])} ${n(q[1] - t2[1])} ${n(q[0])} ${n(q[1])}`;
+    const p = at(i), o = at(i + 1), t1 = tan(i, 1), t2 = tan(i + 1, -1);
+    const end = `${f(o[0] - t2[0])} ${f(o[1] - t2[1])} ${f(o[0])} ${f(o[1])}`;
+    d += i > 0 && !sharp(i) ? `S${end}` : `C${f(p[0] + t1[0])} ${f(p[1] + t1[1])} ${end}`;
   }
   return closed ? d + 'Z' : d;
 }
 /** Même chose, mais toujours dans le même sens de rotation : plusieurs boucles dans un chemin s'additionnent. */
-function L(pts) {
+function L(pts, q = 0) {
   let a = 0;
-  for (let i = 0; i < pts.length; i++) { const p = pts[i], q = pts[(i + 1) % pts.length]; a += p[0] * q[1] - q[0] * p[1]; }
-  return P(a < 0 ? pts.slice().reverse() : pts);
+  for (let i = 0; i < pts.length; i++) { const p = pts[i], o = pts[(i + 1) % pts.length]; a += p[0] * o[1] - o[0] * p[1]; }
+  return P(a < 0 ? pts.slice().reverse() : pts, true, q);
+}
+/** Le point est-il dans le polygone (ses points de passage) ? */
+function inside([x, y], poly) {
+  let c = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > y) !== (yj > y) && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+/**
+ * La silhouette d'un groupe de plumes : seulement celles qui touchent le bord. Une plume entièrement recouverte par les
+ * autres, marge du contour comprise (6 px), n'ajoute rien au contour : on ne la répète pas dans la silhouette.
+ */
+function silhouette(polys) {
+  const keep = polys.filter((A, i) => {
+    const cx = A.reduce((t, p) => t + p[0], 0) / A.length, cy = A.reduce((t, p) => t + p[1], 0) / A.length;
+    const others = polys.filter((_, j) => j !== i);
+    return !A.every((p, k) => {
+      const a = A[(k + A.length - 1) % A.length], b = A[(k + 1) % A.length];
+      let nx = b[1] - a[1], ny = a[0] - b[0];
+      const l = Math.hypot(nx, ny) || 1;
+      nx /= l; ny /= l;
+      if (nx * (p[0] - cx) + ny * (p[1] - cy) < 0) { nx = -nx; ny = -ny; }
+      const out = [p[0] + nx * 6, p[1] + ny * 6], mid = [(p[0] + b[0]) / 2 + nx * 6, (p[1] + b[1]) / 2 + ny * 6];
+      return others.some((B) => inside(out, B)) && others.some((B) => inside(mid, B));
+    });
+  });
+  return keep.map((A) => L(A)).join('');
 }
 /**
  * Une plume : de sa base à sa pointe, bord d'attaque (`up`) puis bord de fuite (`lo`), chacun donné de la base vers la
@@ -78,38 +112,52 @@ const PAL = {
     edge: '#9a2a1a', light: '#ffd27a', shaft: '#ffd27a', vane: '#7a1a14' },
 };
 let fid = 0;
-const featherDefs = [];
+const featherDefs = [], featherGrads = {};
 const LIGHT = [Math.SQRT1_2, -Math.SQRT1_2];   // la direction de la lumière (en haut à droite)
+/**
+ * Le dégradé d'une gamme, de la base à la pointe, dans l'une des 8 directions (partagé par toutes les plumes de même
+ * gamme et de même direction, en coordonnées de la boîte de la plume).
+ */
+function featherGrad(pal, ux, uy) {
+  const a = Math.round(Math.atan2(uy, ux) / (Math.PI / 4)), id = `g-${pal}${(a + 8) % 8}`;
+  if (!featherGrads[id]) {
+    const c = PAL[pal], dx = Math.round(Math.cos(a * Math.PI / 4)), dy = Math.round(Math.sin(a * Math.PI / 4));
+    featherGrads[id] = lin(id, (1 - dx) / 2, (1 - dy) / 2, (1 + dx) / 2, (1 + dy) / 2, c.stops || [[0, c.base], [0.55, c.mid], [1, c.tip]], false);
+  }
+  return id;
+}
 /**
  * Une plume dans une aile : ombre portée sur ce qui est dessous ; la plume en dégradé de sa base à sa pointe ; ses deux
  * moitiés (de part et d'autre du tuyau), celle tournée vers la lumière claire, l'autre plus sombre ; un filet de lumière
  * sur le bord éclairé, un bord plus sombre côté ombre ; le tuyau en trait clair (grandes plumes seulement).
+ * Le contour de la plume n'est écrit qu'une fois (dans les defs) : tout le reste le réutilise (<use>).
  */
 function feather(f) {
-  const k = fid++, d = P(f.pts), c = PAL[f.pal];
+  const k = fid++, c = PAL[f.pal];
   const [bx, by] = f.b, [tx, ty] = f.t, len = Math.hypot(tx - bx, ty - by), ux = (tx - bx) / len, uy = (ty - by) / len;
-  let vx = -uy, vy = ux;
+  const vx = -uy, vy = ux;
   const lit = vx * LIGHT[0] + vy * LIGHT[1] > 0 ? 1 : -1;
   const bend = f.bend || 0;
   // le tuyau : une courbe de la base à la pointe (même courbure que la plume)
   const [cx, cy] = f.ax || [(bx + tx) / 2 + vx * bend * 2, (by + ty) / 2 + vy * bend * 2];
   const R = 120 * -lit;   // vers le côté de l'ombre
-  const vane = `M${n(bx)} ${n(by)}Q${n(cx)} ${n(cy)} ${n(tx)} ${n(ty)}L${n(tx + vx * R)} ${n(ty + vy * R)}L${n(bx + vx * R)} ${n(by + vy * R)}Z`;
-  featherDefs.push(lin(`g-fe${k}`, bx, by, tx, ty, c.stops || [[0, c.base], [0.55, c.mid], [1, c.tip]]));
+  const r = Math.round;
+  const vane = `M${r(bx)} ${r(by)}Q${r(cx)} ${r(cy)} ${r(tx)} ${r(ty)}L${r(tx + vx * R)} ${r(ty + vy * R)}L${r(bx + vx * R)} ${r(by + vy * R)}Z`;
+  featherDefs.push(`<path id="f${k}" d="${P(f.pts, true, 0)}"/><clipPath id="cf${k}"><use href="#f${k}"/></clipPath>`);
+  const u = (attrs) => `<use href="#f${k}"${attrs}/>`;
   const [sx, sy] = f.sh || [-3.5, 3.5];
-  const cast = f.so === 0 ? '' : `<path d="${d}" transform="translate(${sx} ${sy})" fill="${c.cast || '#6a0e06'}" opacity="${f.so || 0.3}"/>`;
+  const cast = f.so === 0 ? '' : u(` x="${sx}" y="${sy}" fill="${c.cast || '#6a0e06'}" opacity="${f.so || 0.3}"`);
   // le tuyau s'arrête un peu avant la pointe (même courbe, coupée à 90 %)
-  const q = (t) => [(1 - t) * (1 - t) * bx + 2 * t * (1 - t) * cx + t * t * tx, (1 - t) * (1 - t) * by + 2 * t * (1 - t) * cy + t * t * ty];
-  const [ex, ey] = q(0.9), [mx, my] = [(bx + cx) / 2 * 0.2 + cx * 0.8 - (bx - cx) * 0.0, 0];
-  const sw = f.shaft ? line(`M${n(bx)} ${n(by)}Q${n(0.1 * bx + 0.9 * cx)} ${n(0.1 * by + 0.9 * cy)} ${n(ex)} ${n(ey)}`, c.light, f.sw || 1.3, 0.55) : '';
-  return cast + `<clipPath id="cf${k}"><path d="${d}"/></clipPath><clipPath id="cg${k}"><path d="${d}" transform="translate(2 -2.2)"/></clipPath>`
-    + `<path d="${d}" fill="${c.edge}"/>`
-    + `<g clip-path="url(#cf${k})"><g clip-path="url(#cg${k})"><path d="${d}" fill="${c.light}" opacity="0.75"/>`
-    + `<path d="${d}" transform="translate(-1.3 1.3)" fill="url(#g-fe${k})"/></g>`
-    + `<path d="${vane}" fill="${c.vane || c.edge}" opacity="${f.vo || 0.32}"/>${f.extra || ''}${sw}</g>`;
+  const at = (t) => [(1 - t) * (1 - t) * bx + 2 * t * (1 - t) * cx + t * t * tx, (1 - t) * (1 - t) * by + 2 * t * (1 - t) * cy + t * t * ty];
+  const [ex, ey] = at(0.9);
+  const sw = f.shaft ? line(`M${r(bx)} ${r(by)}Q${r(0.1 * bx + 0.9 * cx)} ${r(0.1 * by + 0.9 * cy)} ${r(ex)} ${r(ey)}`, c.light, f.sw || 1.3, 0.55) : '';
+  // sous la plume, sa couleur de bord ; dessus, le dégradé décalé vers la lumière (il laisse un liseré sombre côté ombre)
+  return cast + u(` fill="${c.edge}"`)
+    + `<g clip-path="url(#cf${k})">${u(` x="1.4" y="-1.4" fill="url(#${featherGrad(f.pal, ux, uy)})"`)}`
+    + (f.vane === false ? '' : `<path d="${vane}" fill="${c.vane || c.edge}" opacity="${f.vo || 0.32}"/>`) + `${f.extra || ''}${sw}</g>`;
 }
 /** Une plume en amande générée (plume()), avec sa gamme. */
-const pl = (pal, b, t, w, bend = 0, more = {}) => ({ pal, b, t, bend, pts: plume(b, t, w, bend), ...more });
+const pl = (pal, b, t, w, bend = 0, more = {}) => ({ pal, b, t, bend, pts: plume(b, t, w, bend), vane: pal !== 'white', ...more });
 
 // --- l'aile gauche : quatre grandes rémiges (la plus haute devant), puis trois rangs de couvertures ---
 const WL = [
@@ -176,9 +224,9 @@ const WR_ROOT = [[366, 304], [378, 232], [394, 172], [412, 150], [440, 150], [46
 // ---------- les silhouettes ----------
 // le corps
 const S = {
-  tail: [TL_ROOT, ...TL.map((f) => f.pts)].map(L).join(''),
-  wingL: [WL_ROOT, ...WL.map((f) => f.pts)].map(L).join(''),
-  wingR: [WR_ROOT, ...WR.map((f) => f.pts)].map(L).join(''),
+  tail: silhouette([TL_ROOT, ...TL.map((f) => f.pts)]),
+  wingL: silhouette([WL_ROOT, ...WL.map((f) => f.pts)]),
+  wingR: silhouette([WR_ROOT, ...WR.map((f) => f.pts)]),
   // la chevelure de derrière : du sommet de la tête jusqu'aux épaules
   hairB: P([[300, 64], [268, 72], [240, 88], [218, 108], [204, 128], [196, 146], [192, 168], [195, 192], [199, 218],
     [204, 244], [208, 266], [212, 284, 1], [222, 280], [230, 296, 1], [240, 290], [254, 302, 1], [270, 294], [290, 292],
@@ -242,8 +290,8 @@ const S = {
  * s'étire en trait d'eye-liner vers l'extérieur) et la paupière du bas. `shut` = la courbe de l'œil fermé (clignement).
  */
 function eye(key, white, cx, cy, r, lash, lower, shut) {
-  return `<clipPath id="c-${key}"><path d="${white}"/></clipPath>`
-    + `<path d="${white}" fill="#fffaf6"/>`
+  return `<clipPath id="c-${key}"><path id="w-${key}" d="${white}"/></clipPath>`
+    + `<use href="#w-${key}" fill="#fffaf6"/>`
     + `<g clip-path="url(#c-${key})">`
     + `<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#g-iris)"/>`
     + `<circle cx="${cx}" cy="${cy}" r="${n(r - 0.7)}" fill="none" stroke="#5a200c" stroke-width="1.4"/>`
@@ -254,7 +302,7 @@ function eye(key, white, cx, cy, r, lash, lower, shut) {
     + dot(n(cx + r * 0.4), n(cy - r * 0.18), n(r * 0.15), '#fff', 0.95)
     + `</g>`
     + shape(lash, '#24100e') + shape(lower, '#5a2418', 0.9)
-    + `<g class="a-blink" opacity="0"><path d="${white}" fill="#f5c3ac" stroke="#f5c3ac" stroke-width="3"/>${line(shut, '#24100e', 3.2)}</g>`;
+    + `<g class="a-blink" opacity="0"><use href="#w-${key}" fill="#f5c3ac" stroke="#f5c3ac" stroke-width="3"/>${line(shut, '#24100e', 3.2)}</g>`;
 }
 
 
@@ -279,23 +327,30 @@ const LEG_L = { tarsus: [[237, 420], [268, 420], [267, 444], [262, 462], [257, 4
 const LEG_R = { tarsus: [[345, 420], [384, 420], [386, 440], [391, 455], [396, 466], [381, 474], [361, 474], [352, 460], [348, 440]],
   toes: [toe([387, 458], [444, 481], 17, 12.5), toe([384, 466], [426, 490], 17, 12.5), toe([376, 470], [406, 494], 16, 12), toe([359, 458], [351, 484], 14, 11)],
   claws: [talon([443, 482], [459, 500], 11, 2.5), talon([425, 490], [436, 507], 11, 2), talon([405, 493], [410, 509], 10, 1.5), talon([351, 483], [345, 501], 10, -2)] };
-S.legL = [LEG_L.tarsus, ...LEG_L.toes, ...LEG_L.claws].map(L).join('');
-S.legR = [LEG_R.tarsus, ...LEG_R.toes, ...LEG_R.claws].map(L).join('');
-/** Le dessin d'une patte : tarse en dégradé, doigts, un pli à chaque doigt, griffes nacrées. */
+S.legL = [LEG_L.tarsus, ...LEG_L.toes, ...LEG_L.claws].map((p) => L(p)).join('');
+S.legR = [LEG_R.tarsus, ...LEG_R.toes, ...LEG_R.claws].map((p) => L(p)).join('');
+const legDefs = [];
+/** Le dessin d'une patte : tarse en dégradé, doigts (chacun écrit une fois, réutilisé), un pli à chaque doigt, griffes nacrées. */
 function legBody(id, leg, grad, front) {
-  const toes = leg.toes.map((t) => shape(P(t), '#6a3a0a', 0.35).replace('<path ', '<path transform="translate(-1.5 2.5)" ')
-    + shape(P(t), 'url(#g-toe)') + `<path d="${P(t)}" fill="none" stroke="#8a5414" stroke-width="1.3" opacity="0.55"/>`).join('');
+  const r = Math.round;
+  const toes = leg.toes.map((t, i) => {
+    legDefs.push(`<path id="${id}t${i}" d="${P(t, true, 0)}"/>`);
+    const u = (a) => `<use href="#${id}t${i}"${a}/>`;
+    return u(' x="-1.5" y="2.5" fill="#6a3a0a" opacity=".35"') + u(' fill="url(#g-toe)" stroke="#8a5414" stroke-width="1.3" stroke-opacity=".55"');
+  }).join('');
   // un pli au milieu de chaque doigt (la phalange) et un reflet sur le dessus
   const folds = leg.toes.map((t) => {
     const m0 = t[2], m1 = t[t.length - 3];
-    return line(`M${n(m0[0])} ${n(m0[1])}Q${n((m0[0] + m1[0]) / 2 + 1.5)} ${n((m0[1] + m1[1]) / 2 + 1.5)} ${n(m1[0])} ${n(m1[1])}`, '#8a5414', 1.4, 0.5);
+    return `M${r(m0[0])} ${r(m0[1])}Q${r((m0[0] + m1[0]) / 2 + 1.5)} ${r((m0[1] + m1[1]) / 2 + 1.5)} ${r(m1[0])} ${r(m1[1])}`;
   }).join('');
-  const shine = leg.toes.map((t) => line(`M${n(t[1][0])} ${n(t[1][1] - 1)}L${n(t[3][0])} ${n(t[3][1] - 1)}`, '#fff0b8', 1.5, 0.5)).join('');
-  return clip(id, toes + shape(P(leg.tarsus), grad) + folds + shine
+  const shine = leg.toes.map((t) => `M${r(t[1][0])} ${r(t[1][1] - 1)}L${r(t[3][0])} ${r(t[3][1] - 1)}`).join('');
+  const claws = leg.claws.map((c) => P(c, true, 0)).join('');
+  const glint = leg.claws.map((c) => `M${r(c[1][0])} ${r(c[1][1])}Q${r((c[1][0] + c[3][0]) / 2 + 1)} ${r((c[1][1] + c[3][1]) / 2)} ${r(c[3][0])} ${r(c[3][1])}`).join('');
+  return clip(id, toes + shape(P(leg.tarsus, true, 0), grad) + line(folds, '#8a5414', 1.4, 0.5) + line(shine, '#fff0b8', 1.5, 0.5)
     // le côté du tarse dans l'ombre, le reflet sur le devant
     + shape(front, '#fff0b8', 0.5)
     + `<rect x="${leg.tarsus[0][0] - 60}" y="484" width="160" height="30" fill="#7a4810" opacity="0.18"/>`)
-    + leg.claws.map((c) => shape(P(c), 'url(#g-claw)') + line(`M${n(c[1][0])} ${n(c[1][1])}Q${n((c[1][0] + c[3][0]) / 2 + 1)} ${n((c[1][1] + c[3][1]) / 2)} ${n(c[3][0])} ${n(c[3][1])}`, '#ffffff', 1.2, 0.85)).join('');
+    + shape(claws, 'url(#g-claw)') + line(glint, '#ffffff', 1.2, 0.85);
 }
 
 // ---------- la jupe : rangs de plumes blanches, et les plumes de feu du dessous ----------
@@ -320,8 +375,8 @@ const SKIRT = [
   pl('white', [328, 364], [333, 397], 22, 1), pl('white', [346, 362], [355, 390], 22, 1),
 ];
 const SKIRT_TOP = [[260, 352], [356, 352], [372, 374], [360, 386], [262, 386], [246, 374]];
-S.skirtU = SKIRT_U.map((f) => L(f.pts)).join('');
-S.skirt = [SKIRT_TOP, ...SKIRT.map((f) => f.pts)].map(L).join('');
+S.skirtU = silhouette(SKIRT_U.map((f) => f.pts));
+S.skirt = silhouette([SKIRT_TOP, ...SKIRT.map((f) => f.pts)]);
 
 // ---------- dégradés ----------
 const baseDefs = [
@@ -344,7 +399,6 @@ const baseDefs = [
   lin('g-lid', 0, 0, 0, 1, [[0, '#3a1408', 0.7], [0.55, '#3a1408', 0]], false),
   rad('g-blush', 0.5, 0.5, 0.5, [[0, '#ff8a6e', 0.5], [1, '#ff8a6e', 0]], false),
   rad('g-faceSh', 0.78, 0.28, 0.95, [[0, '#fff3ea', 0], [0.62, '#fff3ea', 0], [1, '#d88a78', 0.55]], false),
-  lin('g-mouth', 0, 0, 0, 1, [[0, '#5a1018'], [1, '#9c2a32']], false),
   rad('g-soft', 0.5, 0.5, 0.5, [[0, '#fff6ee', 0.85], [1, '#fff6ee', 0]], false),
   // les lumières d'ensemble des ailes
   rad('g-wlGlow', 0.5, 0.5, 0.5, [[0, '#ffe680', 0.42], [0.6, '#ffd060', 0.16], [1, '#ffd060', 0]], false),
@@ -558,17 +612,17 @@ const parts = [
     // les yeux : gros iris ambre, trait de cils épais qui s'étire en pointe vers l'extérieur
     + eye('eL', 'M271 205 C276 200 288 197.5 300 198 C307 198.5 312 202 313.5 206 C312 212 306 217.5 298 219.5 C291 220.5 285 219 280.5 216 C276.5 213 273 209.5 271 205 Z', 297.5, 207.5, 12.6,
       P([[257, 185, 1], [266, 189.8], [277, 191], [289, 190.5], [301, 191], [309, 194.5], [313.5, 200], [314.5, 205.5, 1], [312, 202.5],
-        [307, 199], [300, 198], [288, 197.5], [276, 200], [271, 205, 1], [267.5, 200], [258.5, 197.5, 1], [264, 194.8], [261.5, 191]]),
+        [307, 199], [300, 198], [288, 197.5], [276, 200], [271, 205, 1], [267.5, 200], [258.5, 197.5, 1], [264, 194.8], [261.5, 191]], true, 1),
       'M270.5 205 C273.5 211 279 216.5 287 219.2 C293 221 302 220.4 308 217.6 C303 222.4 295 223.4 287.5 222.2 C278.5 220.2 272.4 214 270.5 205 Z', 'M270 206 C282 215 301 215 313 207')
     + eye('eR', 'M349.5 206 C351 202 357 199.5 365 199 C374 198.5 382 199.5 385.5 202 C386 208.5 383 214 377 217 C369 220 358 220 353 216 C350.5 213.5 349 210 349.5 206 Z', 361.5, 207.5, 12,
       P([[345.5, 207.5, 1], [347.5, 201], [353.5, 195], [362, 191.5], [373, 190], [383, 189.5], [389, 186], [394, 182.5, 1], [391, 189.5],
-        [388, 193.5], [389.5, 198, 1], [385.5, 202, 1], [380, 199.5], [374, 198.5], [365, 199], [357, 199.5], [351, 202.5], [349.5, 206, 1]]),
+        [388, 193.5], [389.5, 198, 1], [385.5, 202, 1], [380, 199.5], [374, 198.5], [365, 199], [357, 199.5], [351, 202.5], [349.5, 206, 1]], true, 1),
       'M386 203 C385.5 210.5 381 216 373 218.6 C366 220.6 358 220 353.5 216.8 C358 222.2 367 223.2 375 221.2 C383 218.8 387.5 211.5 386 203 Z', 'M348 206 C359 215 377 215 386 205')
     // le pli de la paupière, fin, au-dessus de chaque œil
     + line('M279 186.5 C290 184.5 302 185.5 311.5 192', SKIN.line, 1.3, 0.75) + line('M352 191.5 C361 187.5 373 185.5 385 187', SKIN.line, 1.3, 0.75)
     // les sourcils, épais et arqués : ils descendent vers le nez (l'air assuré)
-    + shape(P([[279, 175.5], [291, 173.5], [304, 176.5], [313, 181.5], [319.5, 186.5, 1], [316, 190.5], [307, 186.5], [296, 182.5], [285, 181], [278, 180.5]]), '#a92e26')
-    + shape(P([[344.5, 190.5], [345.5, 184.5], [351, 178], [361, 174], [373, 172.5], [382.5, 174.5, 1], [381.5, 180.5], [370, 180], [360, 182.5], [352, 187], [347.5, 192.5, 1]]), '#a92e26')
+    + shape(P([[279, 175.5], [291, 173.5], [304, 176.5], [313, 181.5], [319.5, 186.5, 1], [316, 190.5], [307, 186.5], [296, 182.5], [285, 181], [278, 180.5]], true, 1), '#a92e26')
+    + shape(P([[344.5, 190.5], [345.5, 184.5], [351, 178], [361, 174], [373, 172.5], [382.5, 174.5, 1], [381.5, 180.5], [370, 180], [360, 182.5], [352, 187], [347.5, 192.5, 1]], true, 1), '#a92e26')
     + line('M283 176.8 C292 175.2 302 177.5 310 181.5', '#d8604c', 1.4, 0.75) + line('M349 182.5 C356 177 366 174.6 378 175', '#d8604c', 1.4, 0.75)
     // le nez : une touche rose, le petit trait du bout
     + oval(338.5, 230.5, 5.5, 3.4, '#ee9a88', 0.35)
@@ -641,7 +695,7 @@ const parts = [
     + shape('M328.5 90 L331.5 86 L332.5 95 Z', '#ffffff', 0.95) + dot(338, 104, 1.2, '#ffd0c8', 0.8) },
 ];
 
-const defs = [...baseDefs, ...featherDefs].join('');
+const defs = [...baseDefs, ...Object.values(featherGrads), ...featherDefs, ...legDefs].join('');
 
 // ---------- la vie au repos ----------
 // Les ailes respirent (elles s'ouvrent et se referment un peu, chacune à son rythme), la traîne ondule, la tête et la
