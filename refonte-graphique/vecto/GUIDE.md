@@ -98,24 +98,25 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Tout le corps qui bascule pendant l'attaque | `epouvantails-2.cjs` → `LEAN`, `key`, `atkKeys` (autour du pied, ajouté au repos) |
 | Feuilles en tuiles, éventail de feuilles | `ronciers-1.cjs` → `leafPts`, `leafHalf`, `leaves` (manteau `MANTLE`, queue `TAIL`) |
 | Animal de profil : gueule ouverte, crocs, langue, mâchoire qui claque | `ronciers-1.cjs` → `tooth`, morceaux `mouth` et `jaw` (dents du bas dans `a-teeth`), `nest`, groupe `a-root` pour le bond |
-| Pattes de quadrupède, griffes | `ronciers-1.cjs` → `legBody` |
+| Pattes de quadrupède, griffes | `ronciers-1.cjs` → `legBody` ; griffes en croc : `bayou-1.cjs` → `claw` |
+| Crête, voile et nageoire à côtes en éventail | `bayou-1.cjs` → morceaux `crest`, `fin` |
 | Couronne à pointes, barbe avec favoris, yeux à paupière lourde | `myths-12.cjs` → morceaux `crown`, `beard`, `stache`, `eye` |
 | Hampe tenue (trident, lance), flamme bleue sans contour | `myths-12.cjs` → morceaux `trident`, `handL`, `flame` (`flameBody`) |
 | Épaulière en écailles, bottes de fer | `myths-12.cjs` → morceaux `pauR`, `legL`, `legR` |
 
-## Faits (14)
+## Faits (15)
 
 Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
 Rook `assassins-5` · monstres : pétard `parade-1`, méduse `abysses-3`, feu follet `bayou-4`, chouette `glaces-4`,
-escargot de cristal `cuirasses-4`, épouvantail `epouvantails-2`, renard de feuilles `ronciers-1`.
+escargot de cristal `cuirasses-4`, épouvantail `epouvantails-2`, renard de feuilles `ronciers-1`, dino-voile `bayou-1`.
 
 ## File d'attente (prendre le premier non fait)
 
 Ordre : d'abord les monstres que le joueur rencontre en premier (région 1 de la campagne : familles `parade`,
 `epouvantails`, `bayou`, `ronciers`), en intercalant un héros Légendaire (l'invocation les montre en grand).
 
-1. `bayou-1` 2. `parade-2` 3. héros `angels-4` Séraphin 4. `epouvantails-1` 5. `ronciers-2`
-6. héros `mages-9` Nimue 7. `bayou-6` 8. `parade-3` 9. héros `assassins-2` Kael
+1. `parade-2` 2. héros `angels-4` Séraphin 3. `epouvantails-1` 4. `ronciers-2`
+5. héros `mages-9` Nimue 6. `bayou-6` 7. `parade-3` 8. héros `assassins-2` Kael
 Ensuite : le reste des familles de la région 1, puis `fauves` et `ruche` (région 2), `voliere` et `cuirasses`
 (régions 3-4)… et un Légendaire tous les deux monstres (liste : `npx tsx` sur `HEROES` de
 `src/core/data/heroes.ts`, rareté `legendary`), puis les Épiques.
