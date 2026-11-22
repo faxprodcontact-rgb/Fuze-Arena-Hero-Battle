@@ -105,11 +105,11 @@ const html = `<!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Personnages redessinés</title>
 <style>
-:root { --ink: #0e1433; --gold: #ffd24a; }
+:root { --ink: #0e1433; --gold: #ffd24a; --bg: #121838; --fg: #fff3d6; color-scheme: dark; }
 * { box-sizing: border-box; }
 body { margin: 0; background: #121838; color: #fff3d6; font: 15px/1.4 system-ui, -apple-system, 'Segoe UI', sans-serif; }
 main { max-width: 480px; margin: 0 auto; }
-header { padding: 18px 16px 10px; }
+header { padding-block: 18px 10px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 h1 { margin: 0; font-size: 22px; color: var(--gold); }
 header p { margin: 4px 0 0; color: #c9d2f0; font-size: 14px; }
 .scene { position: relative; width: 100%; aspect-ratio: ${SW} / ${SH - CROP}; overflow: hidden; background: #8ec6e8; }
@@ -124,7 +124,7 @@ header p { margin: 4px 0 0; color: #c9d2f0; font-size: 14px; }
 @keyframes hit { 30% { translate: 6px 0; opacity: .75; } }
 .foe.hit .fig { animation-name: hit-foe; }
 @keyframes hit-foe { 30% { translate: -6px 0; opacity: .75; } }
-.gallery { padding: 8px 12px 40px; display: grid; gap: 14px; }
+.gallery { padding-block: 8px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 14px; }
 .card { background: linear-gradient(180deg, #2a3676, #18204b); border: 1.5px solid #0a0e26; border-radius: 16px; box-shadow: inset 0 0 0 1.5px #d9a63e88, 0 6px 14px #0006; padding: 12px; content-visibility: auto; contain-intrinsic-size: 300px; }
 .card h2 { margin: 0 0 8px; font-size: 18px; color: var(--gold); display: flex; justify-content: space-between; align-items: baseline; }
 .card h2 small { color: #c9d2f0; font-size: 13px; font-weight: 600; }
@@ -168,5 +168,10 @@ function play() {
 setInterval(play, 1500);
 </script>
 </body></html>`;
-fs.writeFileSync(out, html);
+// --artifact : la page pour claude.ai (l'enveloppe doctype / head / body est ajoutée à la publication)
+const page = flags.includes('--artifact')
+  ? html.replace(/^<!doctype html>\s*<html[^>]*><head>(?:<meta [^>]*>)*/, '').replace('<title>', '<title>').replace('</style></head><body>', '</style>\n').replace('</body></html>', '')
+    .replace(/^/, '').replace('<title>Personnages redessinés</title>', '<title>Personnages redessinés</title>\n<meta name="claude:viewport-fit-sides" content="cover">')
+  : html;
+fs.writeFileSync(out, page);
 console.log(out, `${(html.length / 1024).toFixed(0)} Ko`, all.filter((u) => load(u.id).essai).length ? '(essai : Ruka à la place des dessins manquants)' : '');
