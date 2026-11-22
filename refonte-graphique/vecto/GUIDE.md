@@ -86,21 +86,24 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Coquille en spirale, cristaux | `cuirasses-4.cjs` → `spiral`, `moss` |
 | Pattes et serres | `glaces-4.cjs` → `footD`, `nail` ; `assassins-5.cjs` → `toe`, `talon` |
 | Jupe de feuilles, notes de musique | `assassins-12.cjs` → `leafGeo`, `skirtBody`, `noteFx` |
+| Paille, touffes en mèches courbes | `epouvantails-2.cjs` → `strandAt`, `tuft`, `strawBody` (mèches larges, pas de brins fins : sinon stries) |
+| Yeux qui luisent dans un trou, bouche en dents de scie | `epouvantails-2.cjs` → `eye`, `brow`, `MOUTH` (lueur dedans : `g-mglow`) |
+| Tout le corps qui bascule pendant l'attaque | `epouvantails-2.cjs` → `LEAN`, `key`, `atkKeys` (autour du pied, ajouté au repos) |
 
-## Faits (11)
+## Faits (12)
 
 Ruka `demons-7` (modèle) · héros : Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
 Rook `assassins-5` · monstres : pétard `parade-1`, méduse `abysses-3`, feu follet `bayou-4`, chouette `glaces-4`,
-escargot de cristal `cuirasses-4`.
+escargot de cristal `cuirasses-4`, épouvantail `epouvantails-2`.
 
 ## File d'attente (prendre le premier non fait)
 
 Ordre : d'abord les monstres que le joueur rencontre en premier (région 1 de la campagne : familles `parade`,
 `epouvantails`, `bayou`, `ronciers`), en intercalant un héros Légendaire (l'invocation les montre en grand).
 
-1. `epouvantails-2` (épouvantail) 2. `ronciers-1` (renard de feuilles) 3. héros `myths-12` Zeus
-4. `bayou-1` 5. `parade-2` 6. héros `angels-4` Séraphin 7. `epouvantails-1` 8. `ronciers-2`
-9. héros `mages-9` Nimue 10. `bayou-6` 11. `parade-3` 12. héros `assassins-2` Kael
+1. `ronciers-1` (renard de feuilles) 2. héros `myths-12` Zeus
+3. `bayou-1` 4. `parade-2` 5. héros `angels-4` Séraphin 6. `epouvantails-1` 7. `ronciers-2`
+8. héros `mages-9` Nimue 9. `bayou-6` 10. `parade-3` 11. héros `assassins-2` Kael
 Ensuite : le reste des familles de la région 1, puis `fauves` et `ruche` (région 2), `voliere` et `cuirasses`
 (régions 3-4)… et un Légendaire tous les deux monstres (liste : `npx tsx` sur `HEROES` de
 `src/core/data/heroes.ts`, rareté `legendary`), puis les Épiques.
