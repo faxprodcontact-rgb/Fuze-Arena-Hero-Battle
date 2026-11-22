@@ -1,7 +1,7 @@
 // Le temple des sables : un couchant derrière un temple à colonnes. Le soleil, énorme et bas, se couche juste derrière
 // le fronton (son cercle de signes tourne) : le temple et ses deux gardiens de pierre sont à contre-jour, ourlés d'or.
 // Dunes, palmiers, braseros allumés ; on se bat sur une longue terrasse de grès, sa frise de signes gravés devant.
-import { CLOUD_A, CLOUD_C, GLYPHS, Flagstones, GlyphRing, Platform, RGrad, VGrad, W, bump, cloudSprite, curve, f, rng, tufts } from './kit';
+import { CLOUD_A, CLOUD_C, Flagstones, GlyphRing, Platform, RUNES, RGrad, VGrad, W, bump, cloudSprite, curve, f, rng, tufts } from './kit';
 import { Brazier, Emblem, flameSprite, glowSprite } from './props';
 import type { Ctx, Scene, Sprite } from './core';
 
@@ -110,7 +110,7 @@ function land(c: Ctx) {
       <Platform y0={p0} y1={p1} th={34} top="url(#terrace)" face="#b8784e" faceDark="#9a603e" lip="#ffe6b8" back="#5a2a2a"
         faceArt={<>
           <rect x="-20" y={p1 + 6} width={W + 40} height="2" fill="#7a4a30" opacity="0.6" /><rect x="-20" y={p1 + 26} width={W + 40} height="2" fill="#7a4a30" opacity="0.6" />
-          {Array.from({ length: 18 }, (_, i) => <path d={GLYPHS[i % GLYPHS.length]} fill="none" stroke="#6a3a26" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform={`translate(${f(20 + i * 40)} ${p1 + 17}) scale(1.4)`} />)}
+          {Array.from({ length: 18 }, (_, i) => <path d={RUNES[(i * 5) % RUNES.length]} fill="none" stroke="#6a3a26" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" transform={`translate(${f(20 + i * 40)} ${p1 + 17}) scale(1.4)`} />)}
         </>}>
         <Flagstones seed={18} y0={p0} y1={p1} rows={4} line="#b88050" light="#fff0c8" lightOpacity={0.22} />
         {Array.from({ length: 10 }, () => <ellipse cx={r() * W} cy={p0 + 10 + r() * (p1 - p0 - 20)} rx={14 + r() * 30} ry="3" fill="#f6d8a0" opacity="0.6" />)}

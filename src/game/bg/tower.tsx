@@ -1,7 +1,7 @@
 // Le sommet de la tour infinie : au-dessus d'une mer de nuages, en plein ciel. Des îles flottent (leurs cascades se
 // perdent dans le vide), une arche en ruine se dresse au fond avec son cristal suspendu ; on se bat sur la terrasse de
 // marbre du sommet, ses signes luisent de bleu. Les îles montent et descendent, le cristal respire, des nuages filent.
-import { CLOUD_A, CLOUD_B, CLOUD_C, Cloud, CloudGrad, Flagstones, GLYPHS, Oak, Platform, RGrad, VGrad, W, cloudSprite, f } from './kit';
+import { CLOUD_A, CLOUD_B, CLOUD_C, Cloud, CloudGrad, Flagstones, Oak, RUNES, Platform, RGrad, VGrad, W, cloudSprite, f } from './kit';
 import { Column, glowSprite } from './props';
 import type { Ctx, Scene, Sprite } from './core';
 
@@ -42,9 +42,8 @@ function land(c: Ctx) {
       {/* la terrasse : marbre clair, signes bleus gravés sur son flanc ; sous elle, le vide et les nuages */}
       <rect y={p1} width={W} height={bottom - p1 + 20} fill="url(#below)" />
       <Platform y0={p0} y1={p1} th={34} top="url(#marble)" face="#b8c6dc" faceDark="#9aaac4" lip="#ffffff" back="#6a8ab0"
-        faceArt={<>{Array.from({ length: 12 }, (_, i) => <path d={GLYPHS[(i * 7) % GLYPHS.length]} fill="none" stroke="#3aa8ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" transform={`translate(${f(30 + i * 60)} ${p1 + 17}) scale(1.5)`} />)}</>}>
+        faceArt={<>{Array.from({ length: 12 }, (_, i) => <path d={RUNES[(i * 3) % RUNES.length]} fill="none" stroke="#3aa8ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" transform={`translate(${f(30 + i * 60)} ${p1 + 17}) scale(1.5)`} />)}</>}>
         <Flagstones seed={26} y0={p0} y1={p1} rows={4} line="#b8c8dc" light="#ffffff" lightOpacity={0.4} />
-        <path d={`M-20 ${(p0 + p1) / 2} H${W + 20}`} stroke="#5ab8ff" stroke-width="3" opacity="0.5" />
       </Platform>
       {/* deux colonnes cassées sur les bords de la terrasse, posées sur sa marge du fond */}
       <Column x={36} y={p0 + 6} w={36} h={150} broken ivy lit="#ffffff" mid="#e6e2d6" dark="#b0aa9c" />
@@ -68,9 +67,10 @@ function front(c: Ctx) {
 function sprites(c: Ctx): Sprite[] {
   /** Une île flottante : dessus herbeux, une ruine, un arbre ; dessous de roche en pointe ; une cascade qui tombe et se perd. */
   const island = (w: number, ruin: boolean) => ({
-    w: w + 40, h: w * 1.1,
+    w: w + 40, h: w * 1.1 + 60,
     draw: () => {
-      const cx = (w + 40) / 2, top = w * 0.32;
+      // 60 px de marge en haut : l'arbre et les ruines dépassent du dessus de l'île
+      const cx = (w + 40) / 2, top = w * 0.32 + 60;
       return (
         <g>
           <defs><linearGradient id="fall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" /><stop offset="1" stop-color="#ffffff" stop-opacity="0" /></linearGradient></defs>

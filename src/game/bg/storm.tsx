@@ -13,13 +13,15 @@ function sky(c: Ctx) {
       <defs>
         <VGrad id="sky" y0={0} y1={c.hz} stops={[[0, '#120e22'], [0.45, '#2e2648'], [0.85, '#5a5278'], [1, '#7a7298']]} />
         <CloudGrad id="k-cloud" top="#4a4266" mid="#352e50" low="#241e3a" />
+        <VGrad id="lid" y0={-10} y1={Math.max(100, c.hz * 0.22)} stops={[[0, '#120e22'], [0.4, '#120e22', 0.85], [1, '#120e22', 0]]} />
       </defs>
       <rect width={W} height={c.hz + 60} fill="url(#sky)" />
       {/* un plafond de nuages lourds, en haut */}
       {[[-60, 3, CLOUD_C, 126], [180, 2.6, CLOUD_A, 90], [360, 3.2, CLOUD_C, 126], [580, 2.6, CLOUD_A, 90]].map(([x, s, lobes, w], i) => (
         <g transform={`translate(${x} ${Math.max(60, c.hz * 0.16) + (i % 2) * 24}) scale(${s})`}><Cloud lobes={lobes as [number, number, number][]} w={w as number} light="#5a5280" /></g>
       ))}
-      <rect y="-10" width={W} height={Math.max(50, c.hz * 0.1)} fill="#120e22" />
+      {/* le haut du ciel se perd dans le noir (un fondu, jamais un bord droit qui coupe les nuages) */}
+      <rect y="-10" width={W} height={Math.max(100, c.hz * 0.22) + 10} fill="url(#lid)" />
     </>
   );
 }
@@ -49,10 +51,15 @@ function land(c: Ctx) {
       <Peak a={[500, hz - 290 - L]} l={420} r={590} by={hz - 20} ridge={[[506, hz - 246 - L * 0.9], [494, hz - 180 - L * 0.6], [508, hz - 100 - L * 0.3], [500, hz - 20]]} snow={0} shade="#2a2442" lit="#4e4674" />
       <path d={`M150 ${hz - 250 - L} L163 ${hz - 214 - L * 0.9} L156 ${hz - 210 - L * 0.9} Z M500 ${hz - 290 - L} L513 ${hz - 252 - L * 0.9} L506 ${hz - 246 - L * 0.9} Z`} fill="#8a80c0" opacity="0.8" />
       {/* les deux falaises et le pont de corde qui les relie, à gauche */}
-      <path d={`M-20 ${hz} V${hz - 210 - L * 0.5} L40 ${hz - 226 - L * 0.5} L70 ${hz - 200 - L * 0.5} L84 ${hz} Z`} fill="#2a2440" />
-      <path d={`M40 ${hz - 226 - L * 0.5} L70 ${hz - 200 - L * 0.5} L84 ${hz} H50 Z`} fill="#4a4268" />
-      <path d={`M200 ${hz} L210 ${hz - 170 - L * 0.4} L240 ${hz - 190 - L * 0.4} L268 ${hz - 160 - L * 0.4} L280 ${hz} Z`} fill="#2a2440" />
-      <path d={`M240 ${hz - 190 - L * 0.4} L268 ${hz - 160 - L * 0.4} L280 ${hz} H250 Z`} fill="#4a4268" />
+      {/* (plus sombres que les aiguilles du fond : elles sont plus près, et on les distingue) */}
+      <path d={`M-20 ${hz} V${hz - 210 - L * 0.5} L40 ${hz - 226 - L * 0.5} L70 ${hz - 200 - L * 0.5} L84 ${hz} Z`} fill="#1d1830" />
+      <path d={`M40 ${hz - 226 - L * 0.5} L70 ${hz - 200 - L * 0.5} L84 ${hz} H50 Z`} fill="#3c355c" />
+      <path d={`M-20 ${hz - 210 - L * 0.5} L40 ${hz - 226 - L * 0.5} L70 ${hz - 200 - L * 0.5}`} fill="none" stroke="#8a80c0" stroke-width="2" opacity="0.5" />
+      <path d={`M200 ${hz} L210 ${hz - 170 - L * 0.4} L240 ${hz - 190 - L * 0.4} L268 ${hz - 160 - L * 0.4} L280 ${hz} Z`} fill="#1d1830" />
+      <path d={`M240 ${hz - 190 - L * 0.4} L268 ${hz - 160 - L * 0.4} L280 ${hz} H250 Z`} fill="#3c355c" />
+      <path d={`M210 ${hz - 170 - L * 0.4} L240 ${hz - 190 - L * 0.4} L268 ${hz - 160 - L * 0.4}`} fill="none" stroke="#8a80c0" stroke-width="2" opacity="0.5" />
+      {/* les poteaux où le pont est attaché, plantés au bord de chaque falaise */}
+      {([[64, hz - 205 - L * 0.5], [216, hz - 174 - L * 0.4]] as [number, number][]).map(([x, y]) =><g><rect x={x - 3} y={y - 22} width="6" height="24" fill="#5a4a38" /><rect x={x} y={y - 22} width="3" height="24" fill="#8a7458" /><rect x={x - 4} y={y - 24} width="8" height="3" fill="#3a2e24" /></g>)}
       <path d={`M66 ${hz - 206 - L * 0.5} Q140 ${hz - 150 - L * 0.45} 214 ${hz - 172 - L * 0.4}`} fill="none" stroke="#8a7a60" stroke-width="3" />
       <path d={`M66 ${hz - 218 - L * 0.5} Q140 ${hz - 166 - L * 0.45} 214 ${hz - 184 - L * 0.4}`} fill="none" stroke="#8a7a60" stroke-width="2" />
       {Array.from({ length: 11 }, (_, i) => {
@@ -115,18 +122,19 @@ function sprites(c: Ctx): Sprite[] {
   const cA = cloudSprite(CLOUD_C, 126, 2, dark), cB = cloudSprite(CLOUD_A, 90, 1.5, dark);
   /** Un éclair : un trait brisé blanc dans un halo violet. */
   const bolt = (h: number) => ({
-    w: 140, h,
+    w: 140, h: h + 24,
     draw: () => {
       const pts = [[70, 0], [56, h * 0.22], [80, h * 0.36], [52, h * 0.58], [74, h * 0.7], [48, h]];
       const d = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' ');
-      return <g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d={d} stroke="#b89aff" stroke-width="14" opacity="0.35" /><path d={d} stroke="#e8dcff" stroke-width="6" /><path d={d} stroke="#ffffff" stroke-width="2.4" /><path d={`M56 ${h * 0.22} L30 ${h * 0.34} M52 ${h * 0.58} L84 ${h * 0.66}`} stroke="#e8dcff" stroke-width="3" /></g>;
+      // 12 px de marge en haut et en bas : le halo de l'éclair déborde du trait
+      return <g transform="translate(0 12)" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d={d} stroke="#b89aff" stroke-width="14" opacity="0.35" /><path d={d} stroke="#e8dcff" stroke-width="6" /><path d={d} stroke="#ffffff" stroke-width="2.4" /><path d={`M56 ${h * 0.22} L30 ${h * 0.34} M52 ${h * 0.58} L84 ${h * 0.66}`} stroke="#e8dcff" stroke-width="3" /></g>;
     },
   });
   return [
     { id: 'cloudA', ...cA, at: [[100, Math.max(140, c.hz * 0.32)], [560, Math.max(110, c.hz * 0.24)]], depth: -28, anim: { k: 'drift', speed: 22, from: -320, to: 1040 }, alpha: 0.95 },
     { id: 'cloudB', ...cB, at: [[380, Math.max(180, c.hz * 0.42)]], depth: -28, anim: { k: 'drift', speed: 34, from: -320, to: 1040 }, alpha: 0.9 },
     { id: 'flashSky', ...glowSprite(900, '#c8b0ff', 0.55), at: [[460, Math.max(160, c.hz * 0.3)]], depth: -27, anim: { k: 'flash', every: 6 }, add: true },
-    { id: 'bolt', ...bolt(Math.max(160, c.hz - 260 - L)), origin: [0.5, 0], at: [[470, Math.max(40, c.hz * 0.1)]], depth: -27, anim: { k: 'flash', every: 6 }, add: true },
+    { id: 'bolt', ...bolt(Math.max(160, c.hz - 260 - L)), origin: [0.5, 0], at: [[470, Math.max(28, c.hz * 0.1 - 12)]], depth: -27, anim: { k: 'flash', every: 6 }, add: true },
     {
       id: 'flag', w: 60, h: 30, origin: [0, 0.5], at: [[607, c.hz - 126 - L * 0.4 - 146]], depth: -18, anim: { k: 'sway', deg: 9, period: 0.9 },
       draw: () => <path d="M0 4 Q20 0 34 8 Q46 14 58 10 Q48 20 34 18 Q18 16 0 22 Z" fill="#c83a4a" />,

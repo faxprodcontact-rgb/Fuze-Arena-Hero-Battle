@@ -77,8 +77,12 @@ function mineLand(c: Ctx) {
       {/* le cadre de bois de l'entrée du tunnel, les rails qui en sortent */}
       <Frame x0={tx - 84} x1={tx + 84} y={ty} h={126} />
       <rect y={hz - 6} width={W} height={p0 - hz + 6} fill="url(#ground)" />
-      <path d={`M${tx - 40} ${ty} L${tx - 150} ${p0} M${tx + 40} ${ty} L${tx - 60} ${p0}`} stroke="#8a8a90" stroke-width="4" />
-      {Array.from({ length: 4 }, (_, i) => { const k = (i + 0.5) / 4, y = ty + (p0 - ty) * k; return <path d={`M${tx - 44 - 110 * k} ${y} H${tx + 44 - 100 * k}`} stroke="#5a3a22" stroke-width="5" />; })}
+      {/* la voie : les traverses de bois d'abord, les deux rails d'acier par-dessus (jamais l'inverse : ça fait des pointillés) */}
+      {[0.2, 0.52, 0.84].map((k) => {
+        const y = ty + (p0 - ty) * k, xl = tx - 40 - 110 * k, xr = tx + 40 - 100 * k;
+        return <g><path d={`M${f(xl - 12)} ${f(y - 3)} H${f(xr + 12)} L${f(xr + 10)} ${f(y + 3)} H${f(xl - 14)} Z`} fill="#4a3020" /><path d={`M${f(xl - 12)} ${f(y - 3)} H${f(xr + 12)}`} stroke="#7a5236" stroke-width="1.6" /></g>;
+      })}
+      {[[tx - 40, tx - 150], [tx + 40, tx - 60]].map(([a, b]) => <g><path d={`M${a} ${ty} L${b} ${p0}`} stroke="#5a5a62" stroke-width="5" /><path d={`M${a} ${ty - 1.5} L${b} ${p0 - 1.5}`} stroke="#c8c8d0" stroke-width="1.6" /></g>)}
       {/* les étais de la galerie, à gauche et à droite */}
       <Frame x0={-20} x1={150} y={p0 - 2} h={hz * 0.6} /><Frame x0={570} x1={740} y={p0 - 2} h={hz * 0.6} />
       {/* le wagonnet, un tas de minerai, des caisses, une pioche */}
@@ -184,7 +188,6 @@ function springLand(c: Ctx) {
       <Platform y0={p0} y1={p1} th={30} top="url(#stone)" face="#26465e" faceDark="#1e3a50" lip="#9fe8f8" back="#081a2a"
         faceArt={<>{[60, 250, 460, 650].map((x, i) => <g transform={`translate(${x} ${p1 + 30}) scale(${i % 2 ? 0.5 : 0.6}) rotate(180)`}><Crystals x={0} y={0} s={1} color="#5ff0ff" light="#e8ffff" dark="#1a8aa8" /></g>)}</>}>
         <Flagstones seed={32} y0={p0} y1={p1} rows={4} line="#26465e" light="#9fd8ec" lightOpacity={0.14} />
-        {[[120, 0.4, 70], [400, 0.7, 90], [620, 0.3, 50]].map(([x, k, w]) => <ellipse cx={x} cy={p0 + (p1 - p0) * (k as number)} rx={w} ry="8" fill="#9ff0ff" opacity="0.25" />)}
       </Platform>
     </>
   );
@@ -205,8 +208,8 @@ function springSprites(c: Ctx): Sprite[] {
   return [
     // l'eau qui tombe : des traînées d'écume douces qui descendent (pas de rayures)
     {
-      id: 'flow', w: 70, h: 120, origin: [0.5, 0], at: [[360, top]], depth: -18, anim: { k: 'flow', speed: 140 }, flowH: c.hz - 16 - top, add: true, alpha: 0.6,
-      draw: () => <><defs><RGrad id="b" stops={[[0, '#ffffff', 0.55], [1, '#ffffff', 0]]} /></defs>{[[22, 30, 12, 40], [46, 84, 11, 46], [30, 108, 9, 30]].map(([x, y, rx, ry]) => <ellipse cx={x} cy={y} rx={rx} ry={ry} fill="url(#b)" />)}</>,
+      id: 'flow', w: 70, h: 160, origin: [0.5, 0], at: [[360, top]], depth: -18, anim: { k: 'flow', speed: 140 }, flowH: c.hz - 16 - top, add: true, alpha: 0.6,
+      draw: () => <><defs><RGrad id="b" stops={[[0, '#ffffff', 0.55], [1, '#ffffff', 0]]} /></defs>{[[22, 46, 12, 36], [46, 104, 11, 40], [30, 140, 8, 16]].map(([x, y, rx, ry]) => <ellipse cx={x} cy={y} rx={rx} ry={ry} fill="url(#b)" />)}</>,
     },
     { id: 'splash', ...glowSprite(220, '#bffcff', 0.7), at: [[360, c.hz - 14]], depth: -17, anim: { k: 'pulse', min: 0.5, period: 1.6 }, add: true },
     { id: 'cglow', ...glowSprite(130, '#9a7aff', 0.6), at: [[60, c.hz - 140], [680, c.hz - 172], [684, c.p0 - 30], [40, c.p0 - 30]], depth: -16, anim: { k: 'pulse', min: 0.3, period: 3.2 }, add: true },

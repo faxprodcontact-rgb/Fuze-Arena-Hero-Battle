@@ -5,7 +5,22 @@ import { Peak, Pine, Platform, RGrad, Stars, VGrad, W, forest, rng } from './kit
 import { Crystals, glowSprite } from './props';
 import type { Ctx, Scene, Sprite } from './core';
 
-const moonAt = (c: Ctx) => ({ x: 150, y: Math.max(110, c.hz * 0.26) });
+/** La lune : à droite (la lumière des sommets vient de la droite), entre deux sommets, sous l'aurore (jamais dedans). */
+const moonAt = (c: Ctx) => ({ x: 590, y: Math.max(200, c.hz - 420) });
+/** Une petite étoile qui scintille : quatre branches fines et nettes, un cœur à peine flou (pas une tache floue). */
+const sparkle = (size: number, color = '#ffffff') => ({
+  w: size, h: size,
+  draw: () => {
+    const m = size / 2, t = size * 0.07;
+    return (
+      <>
+        <defs><RGrad id="sp" stops={[[0, color, 0.8], [0.35, color, 0.2], [1, color, 0]]} /></defs>
+        <circle cx={m} cy={m} r={m * 0.6} fill="url(#sp)" />
+        <path d={`M${m} 0 L${m + t} ${m - t} L${size} ${m} L${m + t} ${m + t} L${m} ${size} L${m - t} ${m + t} L0 ${m} L${m - t} ${m - t} Z`} fill={color} />
+      </>
+    );
+  },
+});
 const lift = (c: Ctx) => Math.max(0, Math.min(110, (c.hz - 480) * 0.36));
 
 /** Un sapin sous la neige : le sapin, puis une couche blanche sur le haut de chaque étage. */
@@ -83,7 +98,6 @@ function land(c: Ctx) {
           {ICICLES.map(([x, l]) => <path d={`M${x - 5} ${p1 + 30} L${x} ${p1 + 30 + l} L${x + 5} ${p1 + 30} Z`} fill="#bfe4fa" />)}
         </>}>
         <path d={`M-20 ${p0} H${W + 20} V${p0 + 30} ${DRIFT.map(([x, d]) => `Q${x + 30} ${p0 + 30 + d} ${x} ${p0 + 26 + d * 0.4}`).join(' ')} L-20 ${p0 + 34} Z`} fill="#f4faff" opacity="0.85" />
-        <ellipse cx="440" cy={(p0 + p1) / 2 + 16} rx="240" ry="40" fill="#ffffff" opacity="0.3" />
         <path d={`M60 ${p1 - 30} L120 ${p1 - 52} L190 ${p1 - 40} L250 ${p1 - 62} M120 ${p1 - 52} L136 ${p1 - 80} M470 ${p1 - 24} L540 ${p1 - 44} L610 ${p1 - 34} M540 ${p1 - 44} L556 ${p1 - 76}`} fill="none" stroke="#ffffff" stroke-width="2.4" opacity="0.8" stroke-linecap="round" />
       </Platform>
     </>
@@ -105,10 +119,11 @@ function front(c: Ctx) {
 
 function sprites(c: Ctx): Sprite[] {
   const m = moonAt(c);
-  const ay = Math.max(70, c.hz * 0.2);
-  /** Un rideau d'aurore : une bande douce et ondulée, qui pâlit vers le bas. */
-  const curtain = (color: string, w: number, h: number) => ({
-    w, h,
+  // l'aurore passe en biais AU-DESSUS de la lune : basse à gauche, haute à droite ; elle sort des deux bords
+  const ay = m.y - 50;
+  /** Un rideau d'aurore : une bande douce et ondulée, qui pâlit vers le bas ; `tilt` = de combien elle descend vers la gauche. */
+  const curtain = (color: string, w: number, h: number, tilt: number) => ({
+    w, h: h + tilt,
     draw: () => (
       <>
         <defs>
@@ -116,17 +131,19 @@ function sprites(c: Ctx): Sprite[] {
           <linearGradient id="fade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0" /><stop offset="0.25" stop-color="#fff" /><stop offset="0.75" stop-color="#fff" /><stop offset="1" stop-color="#fff" stop-opacity="0" /></linearGradient>
           <mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width={w} height={h}><rect width={w} height={h} fill="url(#fade)" /></mask>
         </defs>
-        <path mask="url(#m)" d={`M0 ${h * 0.3} Q${w * 0.25} ${h * 0.05} ${w * 0.5} ${h * 0.25} Q${w * 0.75} ${h * 0.45} ${w} ${h * 0.15} V${h * 0.85} Q${w * 0.75} ${h} ${w * 0.5} ${h * 0.8} Q${w * 0.25} ${h * 0.6} 0 ${h * 0.9} Z`} fill="url(#a)" />
+        <g transform={`matrix(1 ${(-tilt / w).toFixed(4)} 0 1 0 ${tilt})`}>
+          <path mask="url(#m)" d={`M0 ${h * 0.3} Q${w * 0.25} ${h * 0.05} ${w * 0.5} ${h * 0.25} Q${w * 0.75} ${h * 0.45} ${w} ${h * 0.15} V${h * 0.85} Q${w * 0.75} ${h} ${w * 0.5} ${h * 0.8} Q${w * 0.25} ${h * 0.6} 0 ${h * 0.9} Z`} fill="url(#a)" />
+        </g>
       </>
     ),
   });
   return [
-    { id: 'aurora1', ...curtain('#5affb0', 760, 240), at: [[360, ay + 40]], depth: -29, anim: { k: 'pulse', min: 0.45, period: 7 }, add: true },
-    { id: 'aurora2', ...curtain('#9a7aff', 620, 200), at: [[440, ay - 10]], depth: -29, anim: { k: 'pulse', min: 0.3, period: 9 }, add: true },
-    { id: 'aurora3', ...curtain('#4ad8ff', 520, 160), at: [[220, ay + 70]], depth: -29, anim: { k: 'bob', amp: 8, period: 8 }, add: true, alpha: 0.7 },
+    { id: 'aurora1', ...curtain('#5affb0', 760, 240, 140), at: [[360, ay]], depth: -29, anim: { k: 'pulse', min: 0.45, period: 7 }, add: true },
+    { id: 'aurora2', ...curtain('#9a7aff', 620, 200, 120), at: [[450, ay - 40]], depth: -29, anim: { k: 'pulse', min: 0.3, period: 9 }, add: true },
+    { id: 'aurora3', ...curtain('#4ad8ff', 520, 160, 100), at: [[230, ay + 30]], depth: -29, anim: { k: 'bob', amp: 8, period: 8 }, add: true, alpha: 0.7 },
     { id: 'moon', ...glowSprite(260, '#cfe6ff', 0.4), at: [[m.x, m.y]], depth: -28, anim: { k: 'pulse', min: 0.6, period: 6 }, add: true },
-    { id: 'twinkle', ...glowSprite(26, '#ffffff', 0.9), at: [[300, c.hz * 0.12], [480, c.hz * 0.3], [610, c.hz * 0.16], [60, c.hz * 0.4], [400, c.hz * 0.44]], depth: -28, anim: { k: 'pulse', min: 0, period: 2.4 }, add: true },
-    { id: 'glint', ...glowSprite(50, '#ffffff', 0.55), at: [[450, c.p0 + 60], [180, c.p1 - 30], [620, c.p1 - 24]], depth: -14, anim: { k: 'pulse', min: 0, period: 3.4 }, add: true },
+    { id: 'twinkle', ...sparkle(22), at: [[300, c.hz * 0.12], [470, c.hz * 0.3], [140, c.hz * 0.2], [60, c.hz * 0.42], [400, c.hz * 0.44], [690, c.hz * 0.1]], depth: -28, anim: { k: 'pulse', min: 0, period: 2.4 }, add: true },
+    { id: 'glint', ...sparkle(18), at: [[450, c.p0 + 60], [180, c.p1 - 30], [620, c.p1 - 24]], depth: -14, anim: { k: 'pulse', min: 0, period: 3.4 }, add: true },
   ];
 }
 

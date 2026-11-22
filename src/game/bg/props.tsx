@@ -4,8 +4,11 @@
 import type preact from 'preact';
 import { RGrad, VGrad, f, rng } from './kit';
 
-/** Un grand tronc de la forêt : racines qui mordent le sol, écorce en deux tons, un nœud. Pied en (x, y), hauteur h vers le haut. */
-export function Trunk({ x, y, w, h, dark = '#3a2a24', mid = '#5e4334', lit = '#8a6448', moss = '#5f9a4a', flip = false }: { x: number; y: number; w: number; h: number; dark?: string; mid?: string; lit?: string; moss?: string; flip?: boolean }) {
+/**
+ * Un grand tronc de la forêt : racines qui mordent le sol, écorce en deux tons, un nœud. Pied en (x, y), hauteur h vers le
+ * haut. `band` = l'anneau de mousse à mi-hauteur (à retirer quand le tronc est très haut : il ressemble à une feuille collée).
+ */
+export function Trunk({ x, y, w, h, dark = '#3a2a24', mid = '#5e4334', lit = '#8a6448', moss = '#5f9a4a', flip = false, band = true }: { x: number; y: number; w: number; h: number; dark?: string; mid?: string; lit?: string; moss?: string; flip?: boolean; band?: boolean }) {
   const s = flip ? -1 : 1;
   const hw = w / 2;
   return (
@@ -15,7 +18,7 @@ export function Trunk({ x, y, w, h, dark = '#3a2a24', mid = '#5e4334', lit = '#8
       <path d={`M${-hw * 2.1} 0 Q${-hw * 1.2} ${-w * 0.2} ${-hw} ${-w * 0.7} L${-hw * 0.82} ${-h} H${-hw * 0.2} L${-hw * 0.3} ${-w * 0.6} Q${-hw * 0.6} ${-w * 0.14} ${-hw * 0.6} ${-w * 0.1} Q${-hw * 1.3} ${-w * 0.04} ${-hw * 2.1} 0 Z`} fill={dark} />
       <path d={`M${hw * 0.3} ${-h} L${hw * 0.4} ${-w * 0.7} Q${hw * 0.7} ${-w * 0.14} ${hw * 1.5} ${-w * 0.03} Q${hw * 1.2} ${-w * 0.2} ${hw} ${-w * 0.7} L${hw * 0.82} ${-h} Z`} fill={lit} />
       <ellipse cx={hw * 0.05} cy={-h * 0.42} rx={w * 0.09} ry={w * 0.14} fill={dark} /><ellipse cx={hw * 0.1} cy={-h * 0.42} rx={w * 0.05} ry={w * 0.08} fill="#1c120e" />
-      <path d={`M${-hw * 0.82} ${-h * 0.62} Q${-hw * 0.2} ${-h * 0.66} ${hw * 0.3} ${-h * 0.6} L${hw * 0.2} ${-h * 0.57} Q${-hw * 0.3} ${-h * 0.61} ${-hw * 0.84} ${-h * 0.57} Z`} fill={moss} opacity="0.8" />
+      {band && <path d={`M${-hw * 0.82} ${-h * 0.62} Q${-hw * 0.2} ${-h * 0.66} ${hw * 0.3} ${-h * 0.6} L${hw * 0.2} ${-h * 0.57} Q${-hw * 0.3} ${-h * 0.61} ${-hw * 0.84} ${-h * 0.57} Z`} fill={moss} opacity="0.8" />}
       <path d={`M${-hw * 1.9} -1 Q${-hw * 1.3} ${-w * 0.14} ${-hw * 0.9} ${-w * 0.4} L${-hw * 0.75} ${-w * 0.36} Q${-hw * 1.2} ${-w * 0.1} ${-hw * 1.8} 0 Z`} fill={moss} opacity="0.7" />
     </g>
   );
@@ -103,7 +106,8 @@ export function Torch({ x, y, s, metal = '#3a2c28' }: { x: number; y: number; s:
 export function Emblem({ kind, color }: { kind: number; color: string }) {
   const k = kind % 4;
   if (k === 0) return <g fill={color}><path d="M0 -12 L10 0 L0 12 L-10 0 Z" /><circle r="4" fill="none" stroke={color} stroke-width="2" /></g>;
-  if (k === 1) return <g fill={color}><path d="M4 -11 A11 11 0 1 0 4 11 A8 8 0 1 1 4 -11 Z" /><path d="M8 -4 L9.5 -1 L13 -0.5 L10.5 2 L11 5.5 L8 4 L5 5.5 L5.5 2 L3 -0.5 L6.5 -1 Z" /></g>;
+  // (le croissant : un grand arc dehors, un arc plus petit dedans ; l'étoile loge dans son creux)
+  if (k === 1) return <g fill={color} transform="translate(1 0)"><path d="M5.5 -9.5 A11 11 0 1 0 5.5 9.5 A9.67 9.67 0 1 1 5.5 -9.5 Z" /><path d="M5 -4.5 L6.12 -1.54 L9.28 -1.39 L6.81 0.59 L7.65 3.64 L5 1.9 L2.35 3.64 L3.19 0.59 L0.72 -1.39 L3.88 -1.54 Z" /></g>;
   if (k === 2) return <path d="M0 -13 Q9 -4 7 4 Q5 11 0 12 Q-5 11 -7 4 Q-8 -2 -3 -6 Q-2 0 1 1 Q2 -6 0 -13 Z" fill={color} />;
   return <g stroke={color} stroke-width="3" stroke-linecap="round"><path d="M-9 -10 L9 10 M9 -10 L-9 10" /><path d="M-11 6 L-6 11 M11 6 L6 11" stroke-width="2.4" /></g>;
 }
@@ -211,12 +215,30 @@ export function RockWall({ seed, y0, y1, dark, mid, light, edge, drips = true }:
     out.push(<path d={d.replace(/ L760 [^Z]*Z$/, '').replace(/^M-20 [^L]*L/, 'M')} fill="none" stroke={edge} stroke-width="2.4" opacity="0.28" />);
   }
   if (drips) {
+    // les stalactites, puis la voûte par-dessus : une masse de roche au bord bosselé, qui cache leur racine (aucune ne pend
+    // du vide) ; elle se fond dans le noir vers le haut
     for (let x = 10; x < 720;) {
       const w = 14 + r() * 22, l = 20 + r() * 60;
-      out.push(<path d={`M${f(x)} ${f(y0 - 4)} L${f(x + w / 2)} ${f(y0 + l)} L${f(x + w)} ${f(y0 - 4)} Z`} fill={dark} />);
-      out.push(<path d={`M${f(x + w / 2)} ${f(y0 + l)} L${f(x + w)} ${f(y0 - 4)} H${f(x + w * 0.62)} Z`} fill={light} opacity="0.5" />);
+      out.push(<path d={`M${f(x)} ${f(y0 - 16)} L${f(x + w / 2)} ${f(y0 + l)} L${f(x + w)} ${f(y0 - 16)} Z`} fill={dark} />);
+      out.push(<path d={`M${f(x + w / 2)} ${f(y0 + l)} L${f(x + w)} ${f(y0 - 16)} H${f(x + w * 0.62)} Z`} fill={light} opacity="0.5" />);
       x += w + 20 + r() * 70;
     }
+    const pts: [number, number][] = [];
+    for (let x = 760; x > -40; x -= 34 + r() * 40) pts.push([x, y0 + r() * 14 - 6]);
+    pts.push([-40, y0 + 2]);
+    const first = pts[0]!, last = pts[pts.length - 1]!;
+    let curve = '';
+    for (let i = 1; i < pts.length; i++) {
+      const [px, py] = pts[i - 1]!, [qx, qy] = pts[i]!;
+      curve += ` Q${f(px)} ${f(py)} ${f((px + qx) / 2)} ${f((py + qy) / 2)}`;
+    }
+    curve += ` L${f(last[0])} ${f(last[1])}`;
+    const edgeD = `M${f(first[0])} ${f(first[1])}${curve}`;
+    const id = `rwc${seed}`;
+    out.push(<defs><VGrad id={id} y0={y0 - 300} y1={y0 + 10} stops={[[0, dark, 0], [0.55, dark, 0.85], [1, dark, 1]]} /></defs>);
+    out.push(<path d={`M-40 ${f(y0 - 320)} H760 V${f(first[1])}${curve} Z`} fill={`url(#${id})`} />);
+    out.push(<path d={edgeD} fill="none" stroke={mid} stroke-width="7" opacity="0.8" transform="translate(0 -3)" />);
+    out.push(<path d={edgeD} fill="none" stroke={edge} stroke-width="2.4" opacity="0.35" />);
   }
   return <g>{out}</g>;
 }

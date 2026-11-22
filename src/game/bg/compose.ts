@@ -21,7 +21,8 @@ function load(svg: string): Promise<HTMLImageElement> {
 
 interface Layer { depth: number; img: Promise<HTMLImageElement>; place: { x: number; y: number; w: number; h: number; alpha: number; add: boolean }[] }
 
-async function compose(scene: Scene, c: Ctx): Promise<string> {
+/** Le décor entier en une image fixe (adresse d'un fichier en mémoire), pour une mise en page donnée. */
+export async function composeScene(scene: Scene, c: Ctx, type = 'image/jpeg'): Promise<string> {
   const layers: Layer[] = [
     { depth: -30, img: load(svgString(scene.sky(c), BW, Math.ceil(c.hz + 60))), place: [{ x: 0, y: 0, w: BW, h: Math.ceil(c.hz + 60), alpha: 1, add: false }] },
     { depth: -20, img: load(svgString(scene.land(c), BW, c.bottom)), place: [{ x: 0, y: 0, w: BW, h: c.bottom, alpha: 1, add: false }] },
@@ -50,7 +51,7 @@ async function compose(scene: Scene, c: Ctx): Promise<string> {
       g.drawImage(img, p.x, p.y, p.w, p.h);
     }
   }
-  return new Promise((ok, ko) => canvas.toBlob((b) => (b ? ok(URL.createObjectURL(b)) : ko(new Error('blob'))), 'image/jpeg', 0.86));
+  return new Promise((ok, ko) => canvas.toBlob((b) => (b ? ok(URL.createObjectURL(b)) : ko(new Error('blob'))), type, 0.86));
 }
 
 const MADE = new Map<string, Promise<string>>();
@@ -60,7 +61,7 @@ export function terrainImage(terrain: string): Promise<string> {
   let p = MADE.get(terrain);
   if (!p) {
     const scene = SCENES[terrain];
-    p = scene ? compose(scene, menuCtx()) : Promise.reject(new Error(terrain));
+    p = scene ? composeScene(scene, menuCtx()) : Promise.reject(new Error(terrain));
     MADE.set(terrain, p);
   }
   return p;

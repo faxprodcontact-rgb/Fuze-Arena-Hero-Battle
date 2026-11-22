@@ -1,7 +1,7 @@
 // Les abysses : sous la mer, au milieu de ruines englouties. La lumière tombe de la surface, très haut ; au loin, des
 // arches de roche et une épave couchée ; de part et d'autre, des rochers couverts de coraux. On se bat sur une vieille
 // chaussée de pierre engloutie, ses signes luisent encore. Algues qui ondulent, méduses, bancs de poissons, bulles.
-import { Flagstones, GLYPHS, Platform, RGrad, VGrad, W, bump, curve, f, rng } from './kit';
+import { Flagstones, Platform, RUNES, RGrad, VGrad, W, bump, curve, f, rng } from './kit';
 import { glowSprite } from './props';
 import type { Ctx, Scene, Sprite } from './core';
 
@@ -87,9 +87,8 @@ function land(c: Ctx) {
       {/* la chaussée engloutie, d'un bord à l'autre : dalles moussues de bleu, signes qui luisent sur son flanc */}
       <rect y={p1} width={W} height={bottom - p1 + 20} fill="#1e4270" />
       <Platform y0={p0} y1={p1} th={34} top="url(#road)" face="#2e4e72" faceDark="#243e60" lip="#9fd0ea" back="#0a1e3a"
-        faceArt={<>{Array.from({ length: 12 }, (_, i) => <path d={GLYPHS[(i * 5) % GLYPHS.length]} fill="none" stroke="#5ff0ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" transform={`translate(${f(30 + i * 60)} ${p1 + 17}) scale(1.5)`} opacity="0.85" />)}</>}>
+        faceArt={<>{Array.from({ length: 12 }, (_, i) => <path d={RUNES[i % RUNES.length]} fill="none" stroke="#5ff0ff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" transform={`translate(${f(30 + i * 60)} ${p1 + 17}) scale(1.5)`} opacity="0.85" />)}</>}>
         <Flagstones seed={22} y0={p0} y1={p1} rows={4} line="#2e4a68" light="#9fc0d8" lightOpacity={0.15} />
-        {Array.from({ length: 9 }, (_, i) => <ellipse cx={40 + i * 82} cy={p0 + 20 + (i % 3) * 40} rx="40" ry="10" fill="#a8e8ff" opacity="0.12" />)}
       </Platform>
       {/* sous la chaussée : coquillages et étoiles de mer */}
       {[[90, p1 + 56, '#ff9a6a'], [380, p1 + 60, '#ffd06a'], [600, p1 + 54, '#ff7a9a']].map(([x, y, col]) => <path d={`M${x} ${(y as number) - 8} L${(x as number) + 2.5} ${(y as number) - 2} L${(x as number) + 9} ${(y as number) - 1} L${(x as number) + 3.5} ${(y as number) + 3} L${(x as number) + 5.5} ${(y as number) + 9} L${x} ${(y as number) + 5} L${(x as number) - 5.5} ${(y as number) + 9} L${(x as number) - 3.5} ${(y as number) + 3} L${(x as number) - 9} ${(y as number) - 1} L${(x as number) - 2.5} ${(y as number) - 2} Z`} fill={col as string} />)}

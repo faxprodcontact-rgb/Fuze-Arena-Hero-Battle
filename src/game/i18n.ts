@@ -127,7 +127,10 @@ const FR = {
   'name.gems': 'Pas assez de gemmes',
   'settings.name': 'Nom', 'settings.lang': 'Langue', 'settings.speed': 'Vitesse des combats', 'settings.tests': 'Outils de test', 'theme.bois': 'Bois', 'theme.royal': 'Royal', 'theme.crepuscule': 'Crépuscule',
   'settings.h2': '+2 h', 'settings.h12': '+12 h', 'settings.d1': '+1 jour', 'settings.resources': 'Ressources',
-  'settings.unlock': 'Tout débloquer', 'settings.preview': 'Aperçu des graphismes', 'settings.reset': 'Recommencer', 'settings.resetConfirm': 'Effacer la partie ?',
+  'settings.unlock': 'Tout débloquer', 'settings.preview': 'Aperçu des graphismes', 'settings.fond': 'Décor des combats',
+  'fond.auto': 'Normal', 'fond.meadow': 'Prairie', 'fond.bramble': 'Forêt des ronciers', 'fond.bayou': 'Bayou', 'fond.ash': 'Terres de cendre',
+  'fond.tundra': 'Toundra', 'fond.storm': 'Pics de l’orage', 'fond.temple': 'Temple des sables', 'fond.abyss': 'Abysses', 'fond.tower': 'Tour',
+  'fond.mine': 'Mine d’or', 'fond.spring': 'Source d’essence', 'fond.armory': 'Armurerie', 'fond.lair': 'Antre', 'fond.arena': 'Arène', 'settings.reset': 'Recommencer', 'settings.resetConfirm': 'Effacer la partie ?',
 
   'result.victory': 'Victoire !', 'result.defeat': 'Défaite', 'result.damage': 'Dégâts', 'result.nothing': 'Rien cette fois',
   'battle.quit': 'Quitter', 'battle.wave': 'Vague', 'battle.auto': 'AUTO',
@@ -268,7 +271,10 @@ const EN: Record<Key, string> = {
   'name.gems': 'Not enough gems',
   'settings.name': 'Name', 'settings.lang': 'Language', 'settings.speed': 'Battle speed', 'settings.tests': 'Test tools', 'theme.bois': 'Wood', 'theme.royal': 'Royal', 'theme.crepuscule': 'Dusk',
   'settings.h2': '+2 h', 'settings.h12': '+12 h', 'settings.d1': '+1 day', 'settings.resources': 'Resources',
-  'settings.unlock': 'Unlock everything', 'settings.preview': 'Art preview', 'settings.reset': 'Start over', 'settings.resetConfirm': 'Erase progress?',
+  'settings.unlock': 'Unlock everything', 'settings.preview': 'Art preview', 'settings.fond': 'Battle background',
+  'fond.auto': 'Normal', 'fond.meadow': 'Meadow', 'fond.bramble': 'Bramble forest', 'fond.bayou': 'Bayou', 'fond.ash': 'Ashlands',
+  'fond.tundra': 'Tundra', 'fond.storm': 'Storm peaks', 'fond.temple': 'Sand temple', 'fond.abyss': 'Abyss', 'fond.tower': 'Tower',
+  'fond.mine': 'Gold mine', 'fond.spring': 'Essence spring', 'fond.armory': 'Armory', 'fond.lair': 'Lair', 'fond.arena': 'Arena', 'settings.reset': 'Start over', 'settings.resetConfirm': 'Erase progress?',
 
   'result.victory': 'Victory!', 'result.defeat': 'Defeat', 'result.damage': 'Damage', 'result.nothing': 'Nothing this time',
   'battle.quit': 'Quit', 'battle.wave': 'Wave', 'battle.auto': 'AUTO',

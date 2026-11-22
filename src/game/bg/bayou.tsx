@@ -111,7 +111,6 @@ function land(c: Ctx) {
         faceArt={<>{PILES.map((x) => <circle cx={x} cy={p1 + 11} r="3" fill="#2a1c12" />)}</>}>
         {BOARDS(p0, p1).map(([y, h], i) => <g><rect x="-20" y={y} width={W + 40} height={h} fill={i % 2 ? '#c49466' : '#b8885a'} /><rect x="-20" y={y + h - 2.2} width={W + 40} height="2.2" fill="#7a5236" opacity="0.6" /></g>)}
         {Array.from({ length: 16 }, (_, i) => <g><circle cx={20 + i * 46} cy={p0 + 8 + (i % 3) * 30} r="1.8" fill="#5a3a24" /><circle cx={40 + i * 46} cy={p1 - 14 - (i % 2) * 34} r="2" fill="#5a3a24" /></g>)}
-        <ellipse cx={cx + 90} cy={(p0 + p1) / 2} rx="300" ry="60" fill="#f0c890" opacity="0.18" />
       </Platform>
       {/* les lanternes, debout sur le bord du fond du ponton, reliées par une corde */}
       <path d={`M${128 + 25} ${p0 + 8 - 88 * 1.15} Q${cx} ${p0 - 40} ${592 - 25} ${p0 + 8 - 88 * 1.15}`} fill="none" stroke="#5e4026" stroke-width="2" />

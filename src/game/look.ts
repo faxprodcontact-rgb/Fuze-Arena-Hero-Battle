@@ -66,10 +66,23 @@ export function campaignLook(chapter: number): Look {
 
 const DUNGEONS: DungeonKind[] = ['gold', 'essence', 'gear'];
 
-/** Outil de test : `#fond=<terrain>` dans l'adresse impose un décor à tous les combats (et à l'accueil). */
-function forced(look: Look): Look {
+/** Les 14 décors dessinés, dans l'ordre de la campagne puis des modes (pour l'outil de test des réglages). */
+export const TERRAINS: Terrain[] = ['meadow', 'bramble', 'bayou', 'ash', 'tundra', 'storm', 'temple', 'abyss', 'tower', 'mine', 'spring', 'armory', 'lair', 'arena'];
+
+const FOND_KEY = 'fuze-fond';
+/** Outil de test : le décor imposé à tous les combats et à l'accueil (réglages, ou `#fond=<terrain>` dans l'adresse). */
+export function forcedTerrain(): Terrain | null {
   const m = typeof location === 'undefined' ? null : /(?:^#|&)fond=([a-z]+)/.exec(location.hash);
-  return m && m[1]! in ART_META.terrains ? { ...look, terrain: m[1] as Terrain } : look;
+  let v: string | null = m?.[1] ?? null;
+  if (!v) try { v = localStorage.getItem(FOND_KEY); } catch { v = null; }
+  return v && v in ART_META.terrains ? (v as Terrain) : null;
+}
+export function setForcedTerrain(t: Terrain | null) {
+  try { if (t) localStorage.setItem(FOND_KEY, t); else localStorage.removeItem(FOND_KEY); } catch { /* rien */ }
+}
+function forced(look: Look): Look {
+  const t = forcedTerrain();
+  return t ? { ...look, terrain: t } : look;
 }
 
 /** Le décor d'un combat, d'après son mode et son titre (« 3-12 » en campagne, l'étage de la tour…). */

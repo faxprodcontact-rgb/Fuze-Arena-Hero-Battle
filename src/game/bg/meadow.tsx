@@ -167,7 +167,6 @@ function land(c: Ctx) {
           <FaceStones seed={41} y0={p1} y1={p1 + 28} color="#8a7a68" lit="#c2b49c" n={13} />
           <Overhang seed={37} y={p1 + 1} color="#5aa866" light="#7cc47e" />
         </>}>
-        <rect x="-20" y={p0} width={W + 40} height={(p1 - p0) * 0.4} fill="#c49a62" opacity="0.35" />
         <Pebbles seed={3} x={cx} y={(p0 + p1) / 2 + 6} n={34} rx={360} ry={(p1 - p0) * 0.42} color="#a8916a" lit="#e8d6ae" k={1.25} />
       </Platform>
       {/* sous la plateforme, l'herbe : fleurs et touffes */}
@@ -214,7 +213,8 @@ function sprites(c: Ctx): Sprite[] {
       ),
     },
     {
-      id: 'sails', w: 132, h: 132, origin: [0.5, 0.5], at: [[609, millBase(c) - 39]], depth: -19, anim: { k: 'spin', period: 14 },
+      // le moyeu au sommet de la tour, juste sous le toit ; ailes assez courtes pour laisser voir la tour
+      id: 'sails', w: 132, h: 132, origin: [0.5, 0.5], at: [[609, millBase(c) - 52]], scale: [0.74], depth: -19, anim: { k: 'spin', period: 14 },
       draw: () => (
         <g transform="translate(66 66)">
           {[0, 90, 180, 270].map((a) => (

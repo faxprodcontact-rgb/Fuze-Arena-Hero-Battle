@@ -8,6 +8,21 @@ import { BW } from './core';
 export { GLYPHS };
 export const W = BW;
 
+/**
+ * Les signes des frises gravées (flancs des plateformes, piliers) : inventés, et aucun ne ressemble à une lettre ou à un
+ * chiffre (pas de « II », de « Λ » ni de « O », qu'on lirait en grand). Tracés au trait, bouts ronds ; un `h0.01` = un point.
+ */
+export const RUNES = [
+  'M0 -4 L3 0 L0 4 L-3 0 Z M0 0 h0.01',
+  'M0 -4 L3.5 3 H-3.5 Z M0 1 h0.01',
+  'M-3 2 Q0 -5 3 2 M0 3.6 h0.01',
+  'M-3 -2 Q0 2 3 -2 M-3 2 Q0 6 3 2',
+  'M-4 0 Q0 -4 4 0 Q0 4 -4 0 Z M0 0 h0.01',
+  'M0 -4 L2.5 -1.5 L0 1 L-2.5 -1.5 Z M0 1 V4',
+  'M-3 -0.5 L0 -3.5 L3 -0.5 M-3 3 L0 0 L3 3',
+  'M-3.5 1 Q0 -4 3.5 1 M-2 3.4 H2',
+];
+
 export function rng(seed: number) {
   let s = seed;
   return () => { s = (s * 16807) % 2147483647; return s / 2147483647; };
@@ -265,8 +280,9 @@ export function GlyphRing({ r, color = '#fff', glyph = 0.9 }: { r: number; color
     <g fill="none" stroke={color}>
       <circle r={r} stroke-width="2.2" /><circle r={r + 5} stroke-width="1.1" opacity="0.7" />
       <circle r={r * 0.74} stroke-width="1.6" stroke-dasharray="1.5 11" stroke-linecap="round" />
-      {GLYPHS.map((d, i) => {
-        const a = (i / GLYPHS.length) * Math.PI * 2;
+      {/* douze signes inventés (les RUNES, puis les quatre premiers encore) : rien qui se lise comme une lettre */}
+      {[...RUNES, ...RUNES.slice(0, 4)].map((d, i) => {
+        const a = (i / 12) * Math.PI * 2;
         return <path d={d} stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" transform={`translate(${f(Math.cos(a) * r * 0.87)} ${f(Math.sin(a) * r * 0.87)}) rotate(${((a * 180) / Math.PI + 90).toFixed(0)}) scale(${glyph})`} />;
       })}
       {[0, 1, 2, 3].map((i) => {
@@ -340,27 +356,52 @@ export function FaceStones({ seed, y0, y1, color, lit, n = 14 }: { seed: number;
 }
 
 /** Des dalles irrégulières sur le dessus d'une plateforme, en rangées qui s'élargissent vers le devant (perspective). */
-export function Flagstones({ seed, y0, y1, rows, line, light, lightOpacity = 0.25 }: { seed: number; y0: number; y1: number; rows: number; line: string; light?: string; lightOpacity?: number }) {
+/** La disposition des dalles (mêmes tirages que leur dessin) : pour chaque rangée, ses bords, ses joints, ses reflets. */
+function flagLayout(seed: number, y0: number, y1: number, rows: number, light: boolean) {
   const r = rng(seed);
-  const out: ComponentChildren[] = [];
   const weights = Array.from({ length: rows }, (_, i) => 0.6 + (0.8 * (i + 0.5)) / rows);
   const total = weights.reduce((a, b) => a + b, 0);
+  const out: { y: number; yb: number; k: number; joints: [number, number][]; lights: [number, number][] }[] = [];
   let y = y0;
   weights.forEach((wt, i) => {
     const k = (i + 1) / rows;
     const yb = i === rows - 1 ? y1 : y + ((y1 - y0) * wt) / total;
-    if (i < rows - 1) out.push(<path d={`M-20 ${f(yb)} H${W + 20}`} stroke={line} stroke-width={f(1.4 + k)} opacity="0.55" />);
     let x = -20 - r() * 60;
     const step = 70 + 60 * k;
+    const joints: [number, number][] = [], lights: [number, number][] = [];
     while (x < W + 20) {
       const w = step * (0.7 + r() * 0.6);
-      out.push(<path d={`M${f(x + w)} ${f(y + 1)} L${f(x + w + (r() - 0.5) * 8)} ${f(yb - 1)}`} stroke={line} stroke-width={f(1.3 + k)} opacity="0.5" />);
-      if (light && r() < 0.35) out.push(<rect x={f(x + 5)} y={f(y + 3)} width={f(w - 10)} height={f((yb - y) * 0.45)} rx="4" fill={light} opacity={lightOpacity} />);
+      joints.push([x + w, x + w + (r() - 0.5) * 8]);
+      if (light && r() < 0.35) lights.push([x, w]);
       x += w;
     }
+    out.push({ y, yb, k, joints, lights });
     y = yb;
   });
+  return out;
+}
+
+export function Flagstones({ seed, y0, y1, rows, line, light, lightOpacity = 0.25 }: { seed: number; y0: number; y1: number; rows: number; line: string; light?: string; lightOpacity?: number }) {
+  const out: ComponentChildren[] = [];
+  flagLayout(seed, y0, y1, rows, !!light).forEach(({ y, yb, k, joints, lights }, i) => {
+    if (i < rows - 1) out.push(<path d={`M-20 ${f(yb)} H${W + 20}`} stroke={line} stroke-width={f(1.4 + k)} opacity="0.55" />);
+    for (const [a, b] of joints) out.push(<path d={`M${f(a)} ${f(y + 1)} L${f(b)} ${f(yb - 1)}`} stroke={line} stroke-width={f(1.3 + k)} opacity="0.5" />);
+    for (const [x, w] of lights) out.push(<rect x={f(x + 5)} y={f(y + 3)} width={f(w - 10)} height={f((yb - y) * 0.45)} rx="4" fill={light} opacity={lightOpacity} />);
+  });
   return <g stroke-linecap="round">{out}</g>;
+}
+
+/**
+ * Tous les joints des dalles (mêmes arguments que `Flagstones`, `light` = s'il y a des reflets) en un seul tracé, pour y
+ * faire luire quelque chose (la lave sous la chaussée) : la lueur suit les dalles, jamais des traits au hasard.
+ */
+export function flagJoints(seed: number, y0: number, y1: number, rows: number, light: boolean): string {
+  let d = '';
+  flagLayout(seed, y0, y1, rows, light).forEach(({ y, yb, joints }, i) => {
+    if (i < rows - 1) d += ` M-20 ${f(yb)} H${W + 20}`;
+    for (const [a, b] of joints) if (a > -20 && a < W + 20) d += ` M${f(a)} ${f(y + 1)} L${f(b)} ${f(yb - 1)}`;
+  });
+  return d.trim();
 }
 
 /** Un groupe d'éléments posé à (x, y), réduit de `s`. */

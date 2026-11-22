@@ -48,8 +48,8 @@ function sky(c: Ctx) {
         const col = i % 2 ? '#8fbc8e' : '#a6cda0';
         return (
           <g transform={`rotate(${tilt} ${x} ${base})`}>
-            <path d={`M${x! - w! * 1.6} ${base} Q${x! - w! * 0.7} ${base - 14} ${x! - w! * 0.6} ${base - 60} L${x! - w! * 0.45} ${hz - 340 - (i % 4) * 60} H${x! + w! * 0.45} L${x! + w! * 0.6} ${base - 60} Q${x! + w! * 0.7} ${base - 14} ${x! + w! * 1.7} ${base} Z`} fill={col} />
-            <path d={`M${x! + w! * 0.1} ${hz - 340 - (i % 4) * 60} H${x! + w! * 0.45} L${x! + w! * 0.6} ${base - 60} Q${x! + w! * 0.7} ${base - 14} ${x! + w! * 1.7} ${base} H${x! + w! * 0.5} Q${x! + w! * 0.3} ${base - 40} ${x! + w! * 0.1} ${base - 70} Z`} fill="#d6ecc8" opacity="0.5" />
+            <path d={`M${x! - w! * 1.6} ${base} Q${x! - w! * 0.7} ${base - 14} ${x! - w! * 0.6} ${base - 60} L${x! - w! * 0.45} ${-20} H${x! + w! * 0.45} L${x! + w! * 0.6} ${base - 60} Q${x! + w! * 0.7} ${base - 14} ${x! + w! * 1.7} ${base} Z`} fill={col} />
+            <path d={`M${x! + w! * 0.1} ${-20} H${x! + w! * 0.45} L${x! + w! * 0.6} ${base - 60} Q${x! + w! * 0.7} ${base - 14} ${x! + w! * 1.7} ${base} H${x! + w! * 0.5} Q${x! + w! * 0.3} ${base - 40} ${x! + w! * 0.1} ${base - 70} Z`} fill="#d6ecc8" opacity="0.5" />
           </g>
         );
       })}
@@ -68,18 +68,23 @@ function land(c: Ctx) {
       <defs>
         <VGrad id="floor" y0={hz - 10} y1={bottom} stops={[[0, '#2f6a44'], [0.18, '#4f9058'], [0.5, '#6aad66'], [1, '#5c9e5e']]} />
         <VGrad id="leaf" y0={-20} y1={top + 120} stops={[[0, '#0f2a1c'], [0.7, '#1f4a32'], [1, '#2f6a44']]} />
+        {/* le même dégradé, retourné : la voûte est dessinée tête en bas (scale(1 -1)), et un dégradé suit le dessin qui
+            l'utilise ; celui-ci retombe donc exactement sur le précédent à l'écran (aucune marche entre les deux) */}
+        <VGrad id="leafFlip" y0={2 * top + 80} y1={top - 60} stops={[[0, '#0f2a1c'], [0.7, '#1f4a32'], [1, '#2f6a44']]} />
         <RGrad id="pool" stops={[[0, '#fff6c0', 0.55], [0.6, '#f0f0a0', 0.2], [1, '#f0f0a0', 0]]} />
         <VGrad id="path" y0={c.p0} y1={c.p1} stops={[[0, '#7f9a72'], [0.4, '#93ae84'], [1, '#a2bc90']]} />
       </defs>
-      {/* la voûte : un grand dais de feuilles en haut de l'écran, ourlé de lumière, troué à droite */}
-      <path d={`M-20 -20 H740 V${top - 30} H-20 Z`} fill="#0f2a1c" />
-      <path d={canopy(4, top + 30, 34, 18)} transform={`scale(1 -1) translate(0 ${-2 * top - 60})`} fill="url(#leaf)" />
+      {/* les arbres du milieu : troncs moyens, leur pied dans l'ombre de la lisière ; dessinés avant la voûte, qui cache leur
+          sommet (aucun tronc ne s'arrête dans le vide) */}
+      <Trunk x={150} y={hz + 4} w={34} h={hz + 40} dark="#2c4a38" mid="#3f6450" lit="#5f8a6a" moss="#6fae62" band={false} />
+      <Trunk x={566} y={hz + 6} w={30} h={hz + 40} dark="#2c4a38" mid="#3f6450" lit="#5f8a6a" moss="#6fae62" flip band={false} />
+      <Trunk x={352} y={hz - 4} w={22} h={hz + 40} dark="#34584a" mid="#4a7060" lit="#6a927a" moss="#7fb86e" band={false} />
+      {/* la voûte : un grand dais de feuilles en haut de l'écran, ourlé de lumière, troué à droite (même dégradé partout :
+          aucun bord droit) */}
+      <path d={`M-20 -20 H740 V${top - 30} H-20 Z`} fill="url(#leaf)" />
+      <path d={canopy(4, top + 30, 34, 18)} transform={`scale(1 -1) translate(0 ${-2 * top - 60})`} fill="url(#leafFlip)" />
       <path d={canopy(4, top + 30, 34, 18, true)} transform={`scale(1 -1) translate(0 ${-2 * top - 60})`} fill="none" stroke="#5faa5a" stroke-width="3" opacity="0.45" />
       {Array.from({ length: 14 }, (_, i) => <ellipse cx={20 + i * 52} cy={top + 18 + (i % 3) * 9} rx="13" ry="7" fill={i % 2 ? '#3f8050' : '#2f6a44'} opacity="0.9" />)}
-      {/* les arbres du milieu : troncs moyens, leur pied dans l'ombre de la lisière */}
-      <Trunk x={150} y={hz + 4} w={34} h={hz - top + 40} dark="#2c4a38" mid="#3f6450" lit="#5f8a6a" moss="#6fae62" />
-      <Trunk x={566} y={hz + 6} w={30} h={hz - top + 40} dark="#2c4a38" mid="#3f6450" lit="#5f8a6a" moss="#6fae62" flip />
-      <Trunk x={352} y={hz - 4} w={22} h={hz - top + 30} dark="#34584a" mid="#4a7060" lit="#6a927a" moss="#7fb86e" />
       {/* la lisière : des bosquets bas derrière l'arène */}
       <path d={canopy(13, hz + 2, 14, 10)} fill="#2f6a44" />
       <path d={canopy(13, hz + 2, 14, 10, true)} fill="none" stroke="#7fc47a" stroke-width="2.4" opacity="0.7" />
@@ -87,8 +92,8 @@ function land(c: Ctx) {
       <rect y={hz} width={W} height={bottom - hz} fill="url(#floor)" />
       <ellipse cx={g.x - 40} cy={p0 + 40} rx="300" ry="60" fill="url(#pool)" />
       {/* les grands troncs des bords, qui encadrent l'arène ; leurs racines plongent derrière la plateforme */}
-      <Trunk x={18} y={p0 + 4} w={86} h={p0 + 30} />
-      <Trunk x={708} y={p0 + 4} w={92} h={p0 + 30} flip />
+      <Trunk x={18} y={p0 + 4} w={86} h={p0 + 30} band={false} />
+      <Trunk x={708} y={p0 + 4} w={92} h={p0 + 30} flip band={false} />
       {/* ronces, champignons géants et fougères, juste derrière la plateforme */}
       <Bramble x={130} y={p0 - 2} s={1.1} /><Bramble x={596} y={p0 - 2} s={1.2} flip />
       <Mushroom x={84} y={p0 - 1} s={1.7} /><Mushroom x={110} y={p0 - 4} s={1} flip />

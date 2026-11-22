@@ -282,6 +282,19 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   (`public/art/t/`) ne servent plus (sauf `dungeon`, terrain inutilisé).
   v0.38.1 : le combat (`.battle`, plan 48) passe au-dessus des pages (45) : un combat de donjon, lancé depuis la page du
   donjon restée ouverte, était caché derrière elle (bug signalé par le propriétaire) ; les fenêtres de résultat (50) restent dessus.
+  **v0.38.2 (22/11/2026), les 14 décors revus un par un** (le propriétaire avait trouvé un arbre coupé sur une île de la Tour
+  et veut tout regarder lui-même : planches « décor seul / en combat » envoyées, il dit ce qui ne va pas, on corrige). Outils :
+  `scratchpad/bgcheck/` (`check.tsx` + `run.cjs` : signale tout élément animé dont le dessin sort de son image, il doit dire
+  « rien ne déborde » ; `clean.tsx` + `clean.cjs` : une image propre de chaque décor dans `propres/` ; `planches.py` : les
+  14 planches dans `.apercus/decors/`) ; dans le jeu, Réglages → Outils de test → « Décor des combats » impose un décor.
+  Corrigé : îles de la Tour et éclair de l'orage (marges), ailes du moulin plus petites au sommet de la tour, troncs de la
+  forêt qui montent sous la voûte (dégradé retourné `leafFlip` : la voûte est dessinée tête en bas), plus de taches claires
+  sur les plateformes, lune de la toundra à droite sous une aurore en biais (`tilt`), étoiles nettes (`sparkle`), ciel de
+  l'orage fondu dans le noir et poteaux du pont, voûte de roche d'où pendent les stalactites (`RockWall`), rails posés sur
+  leurs traverses, hotte et conduit de la forge jusqu'à la poutre (plus de torche dans la cheminée), murs des salles qui
+  montent et se perdent dans le noir (`Gloom`), bouches de pierre des chutes de lave, porte de l'arène à la place de l'arche
+  du milieu, public aux arches, fanions de deux couleurs, lave qui luit dans tous les joints des dalles (`flagJoints`).
+  Signes des frises : `RUNES` de `bg/kit.tsx` (aucun ne ressemble à une lettre ; les `GLYPHS` restent pour les menus).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

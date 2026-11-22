@@ -11,6 +11,7 @@ import { legalDoc, type LegalDoc } from '../../legal';
 import { APP_VERSION } from '../../version';
 import { t } from '../../i18n';
 import { THEMES, getTheme, setTheme } from '../../theme';
+import { TERRAINS, forcedTerrain, setForcedTerrain } from '../../look';
 import {
   buyExchange, buyOffer, claimChest, claimPass, claimQuest, demoUnlockAll, giveTestResources, passLevel, questPoints,
   chooseName, deleteAccount, playerId, randomName, rename, resetGame, setLang, setSetting, timeTravel,
@@ -18,7 +19,7 @@ import {
 import { now, useGame } from '../../state/store';
 import type { Gain } from '../../state/types';
 import { Art, Bar, Btn, Cur, HeroCard, ItemIcon, Modal, Tabs } from '../kit';
-import { close, open, toast } from '../nav';
+import { close, go, open, toast } from '../nav';
 import { Chest, Halo } from '../anim';
 import { ShopTile } from './adventure';
 
@@ -254,6 +255,19 @@ export function SettingsModal() {
           {/* Page à part (public/apercu) : les nouveaux personnages animés, pas encore dans le jeu. */}
           <Btn kind="blue" small onClick={() => { location.href = 'apercu/index.html'; }}>{t('settings.preview')}</Btn>
           <Btn kind="red" small onClick={() => open({ type: 'confirm', text: t('settings.resetConfirm'), onYes: () => { resetGame(); close(); } })}>{t('settings.reset')}</Btn>
+        </div>
+        {/* Voir chaque décor de combat, l'un après l'autre : il remplace celui de l'accueil et des combats jusqu'à « Normal ». */}
+        <h3>{t('settings.fond')}</h3>
+        <div class="row gap-s wrap">
+          {[null, ...TERRAINS].map((ter) => (
+            <Btn kind={forcedTerrain() === ter ? 'gold' : 'ghost'} small onClick={() => {
+              setForcedTerrain(ter);
+              close();
+              // l'accueil relance son combat avec le nouveau décor
+              go('heroes');
+              setTimeout(() => go('campaign'), 60);
+            }}>{t(ter ? `fond.${ter}` : 'fond.auto')}</Btn>
+          ))}
         </div>
       </section>
     </Modal>

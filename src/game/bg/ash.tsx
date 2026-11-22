@@ -1,7 +1,7 @@
 // Les terres de cendre : une savane brûlée au crépuscule. Au fond, le volcan crache sa fumée, des coulées descendent ses
 // flancs ; des acacias à cime plate se découpent sur le ciel rouge ; on se bat sur une dalle de basalte fendue, ses
 // fissures luisent de lave. Braises qui montent, cendre qui tombe.
-import { CLOUD_A, CLOUD_C, Cloud, CloudGrad, Flagstones, Pebbles, Platform, RGrad, VGrad, W, ridge, rng, tufts } from './kit';
+import { CLOUD_A, CLOUD_C, Cloud, CloudGrad, Flagstones, Pebbles, Platform, flagJoints, RGrad, VGrad, W, ridge, rng, tufts } from './kit';
 import { glowSprite } from './props';
 import type { Ctx, Scene, Sprite } from './core';
 
@@ -17,22 +17,6 @@ function Acacia({ x, y, s, flip = false }: { x: number; y: number; s: number; fl
       <path d="M14 -76 Q36 -78 48 -68 Q36 -70 20 -73 Z M30 -70 Q48 -68 62 -60 Q50 -62 38 -64 Z" fill="#ff8a4a" opacity="0.8" />
     </g>
   );
-}
-
-/** Des fissures de lave sur la chaussée : des lignes brisées qui serpentent d'un bout à l'autre de la bande. */
-function cracks(seed: number, y0: number, y1: number): string {
-  const r = rng(seed);
-  let d = '';
-  for (let i = 0; i < 7; i++) {
-    let x = -10 + r() * 740, y = y0 + 10 + r() * (y1 - y0 - 20), a = (r() - 0.5) * 1.2 + (r() < 0.5 ? 0 : Math.PI);
-    d += `M${x.toFixed(1)} ${y.toFixed(1)}`;
-    for (let k = 0; k < 6; k++) {
-      a += (r() - 0.5) * 0.9;
-      x += Math.cos(a) * 34; y = Math.max(y0 + 6, Math.min(y1 - 6, y + Math.sin(a) * 12));
-      d += ` L${x.toFixed(1)} ${y.toFixed(1)}`;
-    }
-  }
-  return d;
 }
 
 function sky(c: Ctx) {
@@ -68,6 +52,7 @@ function land(c: Ctx) {
         <VGrad id="floor" y0={hz} y1={bottom} stops={[[0, '#2e1c20'], [0.3, '#3a2628'], [1, '#2a1a1e']]} />
         <RGrad id="crater" stops={[[0, '#fff0a0'], [0.3, '#ffa040'], [1, '#ff6020', 0]]} />
         <VGrad id="slab" y0={c.p0} y1={c.p1} stops={[[0, '#3e3034'], [1, '#4c3c40']]} />
+        <VGrad id="seam" y0={c.p0} y1={c.p1} stops={[[0, '#ff7a2a', 0.12], [0.6, '#ff8a3a', 0.45], [1, '#ffb050', 0.85]]} />
         <VGrad id="lava" y0={c.p1} y1={c.bottom} stops={[[0, '#ff7a1a'], [0.4, '#ffb03a'], [1, '#ff8a2a']]} />
       </defs>
       {/* les crêtes lointaines */}
@@ -101,8 +86,8 @@ function land(c: Ctx) {
       <Platform y0={p0} y1={p1} th={30} top="url(#slab)" face="#2a1a1e" faceDark="#3a1a16" lip="#8a6a6e" back="#000"
         faceArt={<rect x="-20" y={p1 + 22} width={W + 40} height="8" fill="#ff6a2a" opacity="0.55" />}>
         <Flagstones seed={12} y0={p0} y1={p1} rows={4} line="#241418" light="#6a5458" lightOpacity={0.2} />
-        <path d={cracks(7, p0, p1)} fill="none" stroke="#4a1410" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
-        <path d={cracks(7, p0, p1)} fill="none" stroke="#ff8a3a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" />
+        {/* la lave luit sous la chaussée, à travers les joints : à peine au fond, plus fort devant (la rivière est dessous) */}
+        <path d={flagJoints(12, p0, p1, 4, true)} fill="none" stroke="url(#seam)" stroke-width="2.4" stroke-linecap="round" />
         <Pebbles seed={9} x={360} y={(p0 + p1) / 2} n={16} rx={360} ry={(p1 - p0) * 0.42} color="#2a1e22" lit="#5a4448" k={1.3} />
       </Platform>
     </>
@@ -132,8 +117,9 @@ function sprites(c: Ctx): Sprite[] {
     },
     // les fissures de la dalle respirent
     {
-      id: 'crack', w: W, h: Math.ceil(c.p1 - c.p0), origin: [0, 0], at: [[0, c.p0]], depth: -14, anim: { k: 'pulse', min: 0.2, period: 3.2 }, add: true,
-      draw: () => <path d={cracks(7, 0, c.p1 - c.p0)} fill="none" stroke="#ffb050" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.8" />,
+      // (4 px de marge en haut et en bas : le trait déborde des joints)
+      id: 'crack', w: W + 80, h: Math.ceil(c.p1 - c.p0) + 8, origin: [0, 0], at: [[-40, c.p0 - 4]], depth: -14, anim: { k: 'pulse', min: 0.2, period: 3.2 }, add: true,
+      draw: () => <><defs><VGrad id="s" y0={0} y1={c.p1 - c.p0} stops={[[0, '#ffb050', 0], [0.5, '#ffb050', 0.3], [1, '#ffc870', 0.9]]} /></defs><path transform="translate(40 4)" d={flagJoints(12, 0, c.p1 - c.p0, 4, true)} fill="none" stroke="url(#s)" stroke-width="5" stroke-linecap="round" /></>,
     },
     { id: 'lavaGlow', ...glowSprite(300, '#ffd060', 0.6), at: [[120, c.p1 + 50], [420, c.p1 + 56], [660, c.p1 + 48]], depth: -13, anim: { k: 'pulse', min: 0.3, period: 2.6 }, add: true, scale: [1.2, 1, 1.1] },
     { id: 'lava', ...glowSprite(160, '#ff7a2a', 0.6), at: [[v.x - 50, v.top + 120], [v.x + 60, v.top + 100]], depth: -18, anim: { k: 'pulse', min: 0.4, period: 2.2 }, add: true },
