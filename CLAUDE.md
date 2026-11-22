@@ -278,8 +278,10 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   juste derrière `p0`. Les menus (tour, donjons, boss du jour, Colisée) montrent la même scène en image fixe
   (`bg/compose.ts` + `ui/terrain-image.ts`, sans Phaser). Outil de test : `#fond=<terrain>` dans l'adresse impose un décor.
   Vérifier avec `scratchpad/art5/fonds.cjs <pro|se|grand> <terrains…>` (vrai combat + accueil), `zooms.py` (bande du paysage et
-  bas en pleine résolution), `menus-fonds.cjs`. Les anciens fonds peints (`public/art/t/`) ne servent plus (sauf `dungeon`,
-  terrain inutilisé).
+  bas en pleine résolution), `menus-fonds.cjs`, `modes.cjs` (vrai combat dans chaque mode). Les anciens fonds peints
+  (`public/art/t/`) ne servent plus (sauf `dungeon`, terrain inutilisé).
+  v0.38.1 : le combat (`.battle`, plan 48) passe au-dessus des pages (45) : un combat de donjon, lancé depuis la page du
+  donjon restée ouverte, était caché derrière elle (bug signalé par le propriétaire) ; les fenêtres de résultat (50) restent dessus.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

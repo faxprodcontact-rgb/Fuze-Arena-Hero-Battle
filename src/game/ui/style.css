@@ -310,7 +310,8 @@ p { margin: 6px 0; }
 .modal-back.center .modal-body { padding-bottom: 18px; }
 @keyframes pop-in { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .toast { position: absolute; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 80 !important; background: #000000d9; color: #fff; border: 1.5px solid var(--trim); padding: 9px 18px; border-radius: 12px; font-weight: 800; box-shadow: var(--shadow); white-space: nowrap; }
-.battle { position: absolute; inset: 0; z-index: 40 !important; background: var(--hud-under); padding-top: env(safe-area-inset-top, 0px); }
+/* le combat passe au-dessus des pages (45 : un donjon lancé depuis sa page reste ouvert dessous) et sous les fenêtres (50 : le résultat) */
+.battle { position: absolute; inset: 0; z-index: 48 !important; background: var(--hud-under); padding-top: env(safe-area-inset-top, 0px); }
 .back { align-self: flex-start; font: 800 14px var(--font-title); color: var(--bar-text); padding: 4px 12px 5px 9px; background: var(--bar); border: 1.5px solid var(--edge); border-radius: 10px; box-shadow: inset 0 0 0 1px var(--trim-soft), 0 2px 5px #00000066; }
 .prep, .page { position: absolute; inset: 0; z-index: 45 !important; display: flex; flex-direction: column; overflow: hidden;
   background: #27356a;
