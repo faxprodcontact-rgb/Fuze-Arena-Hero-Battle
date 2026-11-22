@@ -10,24 +10,35 @@ const W = 401, H = 386;
 // ---------- petits outils ----------
 /**
  * Courbe lisse qui passe par des points (Catmull-Rom → Bézier). Un point [x, y, 1] est un angle vif.
- * `closed` = forme fermée (sinon un simple trait).
+ * `closed` = forme fermée (sinon un simple trait). Écriture compacte, pour que le dessin reste léger : `q` décimales,
+ * coordonnées relatives (« c », « s ») et, aux points lisses, « s » (le premier point de contrôle est le reflet du précédent).
  */
-function P(pts, closed = true) {
-  const N = pts.length;
+function P(pts, closed = true, q = 1) {
+  const N = pts.length, k = 10 ** q;
+  const R = (v) => Math.round(v * k);                       // en unités de 1/k, entières (pas de dérive)
+  const num = (v) => {
+    let t = (v / k).toFixed(q);
+    if (q) t = t.replace(/\.?0+$/, '').replace(/^(-?)0\./, '$1.');   // 2.50 → 2.5, 0.5 → .5 (seulement après la virgule)
+    return t === '-0' ? '0' : t;
+  };
+  const list = (vs) => vs.map((v, i) => (i && v >= 0 ? ' ' : '') + num(v)).join('');
   const at = (i) => (closed ? pts[(i + N) % N] : pts[Math.max(0, Math.min(N - 1, i))]);
   const sharp = (i) => !!at(i)[2] || (!closed && (i <= 0 || i >= N - 1));
   // tangente au point i (dir = +1 en partant, -1 en arrivant)
   const tan = (i, dir) => {
     const p = at(i);
-    if (sharp(i)) { const q = at(i + dir); return [(q[0] - p[0]) * dir / 3, (q[1] - p[1]) * dir / 3]; }
+    if (sharp(i)) { const o = at(i + dir); return [(o[0] - p[0]) * dir / 3, (o[1] - p[1]) * dir / 3]; }
     const a = at(i - 1), b = at(i + 1);
     return [(b[0] - a[0]) / 6, (b[1] - a[1]) / 6];
   };
-  let d = `M${n(pts[0][0])} ${n(pts[0][1])}`;
+  let X = R(pts[0][0]), Y = R(pts[0][1]);
+  let d = `M${list([X, Y])}`;
   const last = closed ? N : N - 1;
   for (let i = 0; i < last; i++) {
-    const p = at(i), q = at(i + 1), t1 = tan(i, 1), t2 = tan(i + 1, -1);
-    d += `C${n(p[0] + t1[0])} ${n(p[1] + t1[1])} ${n(q[0] - t2[0])} ${n(q[1] - t2[1])} ${n(q[0])} ${n(q[1])}`;
+    const p = at(i), o = at(i + 1), t1 = tan(i, 1), t2 = tan(i + 1, -1);
+    const c2 = [R(o[0] - t2[0]) - X, R(o[1] - t2[1]) - Y], e = [R(o[0]) - X, R(o[1]) - Y];
+    d += i > 0 && !sharp(i) ? `s${list([...c2, ...e])}` : `c${list([R(p[0] + t1[0]) - X, R(p[1] + t1[1]) - Y, ...c2, ...e])}`;
+    X += e[0]; Y += e[1];
   }
   return closed ? d + 'Z' : d;
 }
@@ -266,8 +277,8 @@ const parts = [
       + `<clipPath id="c-fe"><path id="s-fe" d="M312.5 245 C321 246.5 331 249.5 338.5 252.5 C339.5 259 334.5 264.5 326.5 264.5 C318.5 264.5 312.5 259 312.5 251 Z"/></clipPath>`
       + `<use href="#s-fe" fill="#fbfbf4"/>`
       + `<g clip-path="url(#c-fe)">${oval(327.5, 255, 7.2, 7.6, '#0e1116')}${dot(330.5, 251.5, 2.2, '#fff')}${dot(322.8, 258.6, 1, '#fff', 0.85)}`
-      + `${oval(325, 262, 12, 3.5, '#cfd6e0', 0.5)}</g>`
-      + `<use href="#s-fe" fill="none" stroke="#33241c" stroke-width="1.5"/>`
+      + `${oval(325, 263, 11, 3, '#cfd6e0', 0.3)}</g>`
+      + `<use href="#s-fe" fill="none" stroke="#33241c" stroke-width="2.2"/>`
       + line('M311 244.5 C321 246 331 249 340 252.5', '#33241c', 2.8)
       + `<g class="a-blink" opacity="0"><use href="#s-fe" fill="${BODY.lite}" stroke="${BODY.lite}" stroke-width="2"/>${line('M312 251 C320 256 331 257 339 253', '#33241c', 2.4)}</g>`
     ) },
