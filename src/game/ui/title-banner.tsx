@@ -7,7 +7,12 @@ import { spark } from './portal';
 
 /** `ribbon` = les deux tons du ruban et celui de son repli (cramoisi par défaut). Sans picto (`children`), le titre est centré. */
 export function TitleBanner({ title, children, ribbon = ['#e2574c', '#9c2a2e', '#5e1418'] }: { title: string; children?: ComponentChildren; ribbon?: [string, string, string] }) {
-  const tx = children ? 126 : 108, size = title.length > 11 ? 17.500 : 23.500, ty = title.length > 11 ? 32 : 34;
+  // la place du titre sur la plaque (moins large avec un picto à gauche) ; un titre long prend une taille plus petite, et
+  // s'il dépasse encore, il est resserré pour tenir (jamais coupé)
+  const tx = children ? 127 : 108, room = children ? 112 : 146;
+  const size = Math.max(13, Math.min(23.5, room / (title.length * 0.5)));
+  const ty = 27 + size * 0.32;
+  const fit = title.length * 0.53 * size > room ? { textLength: room, lengthAdjust: 'spacingAndGlyphs' } : {};
   const gem = (x: number) => (
     <g>
       <path d={`M${x} 17 L${x + 8} 26 L${x} 35 L${x - 8} 26 Z`} fill="#2f1b0c" />
@@ -58,8 +63,8 @@ export function TitleBanner({ title, children, ribbon = ['#e2574c', '#9c2a2e', '
         {/* une gemme de chaque côté */}
         {gem(20)}{gem(196)}
         {/* le titre, en lettres d'or cernées de brun */}
-        <text x={tx} y={ty + 1.500} text-anchor="middle" font-family="'Baloo 2', 'Trebuchet MS', sans-serif" font-weight="800" font-size={size} fill="#1f1006" opacity="0.4" stroke="#1f1006" stroke-width="3.400" stroke-linejoin="round">{title}</text>
-        <text x={tx} y={ty} text-anchor="middle" font-family="'Baloo 2', 'Trebuchet MS', sans-serif" font-weight="800" font-size={size} fill="url(#tb-text)" stroke="#2f1b0c" stroke-width="3.400" stroke-linejoin="round" paint-order="stroke">{title}</text>
+        <text {...fit} x={tx} y={ty + 1.500} text-anchor="middle" font-family="'Lilita One', 'Trebuchet MS', sans-serif" font-weight="400" font-size={size} fill="#1f1006" opacity="0.4" stroke="#1f1006" stroke-width="3.400" stroke-linejoin="round">{title}</text>
+        <text {...fit} x={tx} y={ty} text-anchor="middle" font-family="'Lilita One', 'Trebuchet MS', sans-serif" font-weight="400" font-size={size} fill="url(#tb-text)" stroke="#2f1b0c" stroke-width="3.400" stroke-linejoin="round" paint-order="stroke">{title}</text>
         <path class="an-twinkle" style={{ transformOrigin: '20px 20px' }} d={spark(20, 20, 4)} fill="#fff" /><path class="an-twinkle an-late" style={{ transformOrigin: '196px 20px' }} d={spark(196, 20, 4)} fill="#fff" />
       </svg>
       {children}

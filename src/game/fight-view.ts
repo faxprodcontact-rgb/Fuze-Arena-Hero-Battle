@@ -18,7 +18,8 @@ import { HERO_X } from './scenes';
 import { battleLook, monsterArtId, type Look } from './look';
 
 export const W = 720;
-export const FONT = '"Baloo 2", "Trebuchet MS", "Segoe UI", Roboto, sans-serif';
+/** La police des combats (la même que les titres des menus) : une seule graisse, ne jamais demander « bold ». */
+export const FONT = '"Lilita One", "Trebuchet MS", "Segoe UI", Roboto, sans-serif';
 /** Couleurs de l'interface des combats : les mêmes que les menus (style.css). */
 export const C = { ink: 0x2a1c12, paper: 0x5c3a1e, paper2: 0xecd9a8, paper3: 0xdfc58c, sky: 0x6b8fb5, panel: 0xecd9a8, panelLight: 0xffffff, trim: 0xd9a63e, hudText: '#4a2a0e',
   green: 0x3fae5a, greenDark: 0x2a8442, red: 0xdc4f4f, redDark: 0xa83232, blue: 0x3f86e0, blueDark: 0x2a5fb5, energy: 0x4fc3ff, gold: 0xf0b530, goldDark: 0xc8860f };
@@ -217,7 +218,7 @@ export abstract class FightScene extends Phaser.Scene {
 
   protected text(x: number, y: number, value: string, size = 28, color = '#ffffff') {
     return this.add
-      .text(x, y, value, { fontFamily: FONT, fontSize: `${size}px`, color, fontStyle: 'bold', align: 'center' })
+      .text(x, y, value, { fontFamily: FONT, fontSize: `${size}px`, color, align: 'center' })
       .setOrigin(0.5)
       .setStroke('#1a1420', Math.max(3, Math.round(size * 0.13)))
       .setShadow(0, Math.max(2, Math.round(size * 0.07)), '#2f2244', 0, true, true);

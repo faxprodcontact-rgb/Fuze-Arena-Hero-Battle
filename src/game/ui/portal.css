@@ -16,7 +16,7 @@
   --p-ring-hi: #ffffff; --p-ring: #cfd9ea; --p-ring-lo: #8a97b3; --p-gem: #5fd0ff;
 }
 /* tout ce qui tourne ou bat le fait autour du centre du dessin */
-.pt-halo, .pt-wave, .pt-rays, .pt-swirl, .pt-core, .pt-runes, .pt-ring, .pt-orbit, .pt-spark { transform-box: view-box; transform-origin: 120px 120px; }
+.pt-halo, .pt-wave, .pt-rays, .pt-swirl, .pt-core, .pt-runes, .pt-ring, .pt-orbit, .pt-spark, .pt-tunnel, .pt-flare { transform-box: view-box; transform-origin: 120px 120px; }
 
 .pt-halo { animation: pt-breathe 3.2s ease-in-out infinite; }
 .pt-wave { animation: pt-wave 2.8s ease-out infinite; }
@@ -54,3 +54,10 @@
   background: radial-gradient(closest-side, #c9a8ff73 0, #a98aff33 45%, #a98aff00 72%); animation: pt-breathe 4.5s ease-in-out infinite; }
 .summon-scene::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 26%; background: radial-gradient(60% 100% at 50% 100%, #c9a8ff66, #ffffff00); }
 .summon-scene .portal { position: relative; z-index: 1; }
+
+/* le tunnel (anneaux aspirés vers le cœur), l'éclat du cœur qui tourne, les reflets des gemmes de l'anneau */
+.pt-tunnel { animation: pt-tunnel 2.4s ease-in infinite; }
+.pt-flare { animation: pt-flare 7s linear infinite; }
+.pt-gemglint { transform-box: fill-box; transform-origin: center; animation: an-twinkle 3.6s ease-in-out infinite; }
+@keyframes pt-tunnel { 0% { transform: scale(1); opacity: 0; } 20% { opacity: 0.55; } 100% { transform: scale(0.12); opacity: 0; } }
+@keyframes pt-flare { 0% { transform: rotate(0deg) scale(0.9); } 50% { transform: rotate(180deg) scale(1.1); } 100% { transform: rotate(360deg) scale(0.9); } }

@@ -16,6 +16,7 @@ import type { ChatMessage } from '../../state/types';
 import { Bar, Btn, Cur, Icon, Locked, Modal, Tabs } from '../kit';
 import { open, prepare } from '../nav';
 import { ShopTile } from './adventure';
+import { TitleBanner } from '../title-banner';
 import { TeamStrip } from './heroes';
 
 const MEMBER_NAMES = ['Kaïro', 'Lunaria', 'Vaelis', 'Tormund', 'Ishara', 'Mikaze', 'Orsolya', 'Bastien', 'Yuna', 'Ragnis', 'Selka', 'Noctis'];
@@ -51,15 +52,19 @@ export function GuildScreen() {
   const s = useGame();
   const [tab, setTab] = useState<'boss' | 'war' | 'members' | 'chat' | 'shop'>('boss');
   useEffect(() => markSeen('guild'), []);
+  // le bandeau de titre sur le panorama de la forteresse (comme les autres parties)
+  const banner = (title: string, icon: string) => (
+    <div class="adv-banner"><h1 class="sr-only">{title}</h1><TitleBanner title={title} ribbon={['#4f7ae0', '#2a4aa8', '#16285e']}><Icon name={icon} size={30} /></TitleBanner></div>
+  );
   if (!isUnlocked(s, 'guild')) {
-    return <div class="screen"><section class="card center"><Icon name="guild" size={64} /><h1>{t('nav.guild')}</h1><Locked stage={UNLOCKS.guild} /></section></div>;
+    return <div class="screen guild">{banner(t('nav.guild'), 'guild')}<section class="card center"><Locked stage={UNLOCKS.guild} /></section></div>;
   }
   if (!s.guild.joined) {
     return (
-      <div class="screen list">
-        <h1>{t('nav.guild')}</h1>
+      <div class="screen guild list">
+        {banner(t('nav.guild'), 'guild')}
         {BOT_GUILDS.map((g, i) => (
-          <div class="card row between center-y">
+          <div class="card guild-row row between center-y">
             <Icon name={emblem(g)} size={52} />
             <div class="grow">
               <strong>{g}</strong>
@@ -74,10 +79,11 @@ export function GuildScreen() {
   const total = Math.min(GUILD_BOSS_HP, botDamage() + s.guild.bossDamage);
   const left = GUILD_BOSS_ATTEMPTS - s.daily.guildAttempts;
   return (
-    <div class="screen">
-      <div class="card guild-head">
-        <h1 class="row gap-s center-y"><Icon name={emblem(s.guild.joined)} size={48} />{s.guild.joined}</h1>
-        <div class="row between"><span class="muted">{t('guild.level', { n: 7 })} · 22 / 30</span><Cur k="guildCoins" n={s.wallet.guildCoins} /></div>
+    <div class="screen guild">
+      {banner(s.guild.joined, emblem(s.guild.joined))}
+      <div class="guild-info">
+        <span>{t('guild.level', { n: 7 })} · <Icon name="friends" size={18} /> 22 / 30</span>
+        <Cur k="guildCoins" n={s.wallet.guildCoins} />
       </div>
       <Tabs value={tab} onChange={setTab} options={[
         ['boss', t('guild.boss'), left > 0], ['war', t('guild.war'), !!s.guildWar && (warAttacksLeft(s.guildWar) > 0 || !!s.guildWar.pending || (warPhase() === 'results' && !s.guildWar.claimed))], ['members', t('guild.members')], ['chat', t('guild.chat')], ['shop', t('guild.shop')],

@@ -4,11 +4,21 @@ import type { Slot } from '../core/battle/types';
 
 type Stop = () => void;
 
+/** La police des combats est-elle arrivée ? (Phaser écrit ses textes une fois pour toutes : il faut l'attendre, 1,5 s au plus.) */
+let font: Promise<unknown> | undefined;
+function fontReady(): Promise<unknown> {
+  font ??= Promise.race([
+    document.fonts?.load('20px "Lilita One"').catch(() => undefined) ?? Promise.resolve(),
+    new Promise((ok) => setTimeout(ok, 1500)),
+  ]);
+  return font;
+}
+
 /** Lance une scène dès que son code est arrivé ; si on l'a arrêtée entre-temps, elle ne démarre pas. */
 function defer(load: () => Promise<() => Stop>): Stop {
   let stop: Stop | undefined;
   let cancelled = false;
-  void load().then((run) => { if (!cancelled) stop = run(); });
+  void Promise.all([load(), fontReady()]).then(([run]) => { if (!cancelled) stop = run(); });
   return () => { cancelled = true; stop?.(); };
 }
 

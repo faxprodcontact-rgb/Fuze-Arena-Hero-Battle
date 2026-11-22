@@ -54,7 +54,7 @@ export class DefenseScene extends Phaser.Scene {
   }
 
   private text(x: number, y: number, value: string, size = 28, color = '#ffffff') {
-    return this.add.text(x, y, value, { fontFamily: FONT, fontSize: `${size}px`, color, fontStyle: 'bold', align: 'center' })
+    return this.add.text(x, y, value, { fontFamily: FONT, fontSize: `${size}px`, color, align: 'center' })
       .setOrigin(0.5).setShadow(0, 2, '#000000', 3, false, true);
   }
 

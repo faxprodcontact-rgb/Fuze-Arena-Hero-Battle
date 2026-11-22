@@ -4,6 +4,7 @@ import { getState } from './state/store';
 
 const FR = {
   'nav.campaign': 'Campagne', 'nav.heroes': 'Héros', 'nav.summon': 'Invoquer', 'nav.adventure': 'Aventure', 'nav.guild': 'Guilde',
+  'edge.fold': 'Replier', 'edge.unfold': 'Déplier',
   'side.quests': 'Quêtes', 'side.shop': 'Boutique', 'side.pass': 'Passe', 'side.ranking': 'Classement', 'side.chat': 'Tchat', 'side.settings': 'Réglages',
 
   'cur.dust': 'Poussière de forge', 'forge.title': 'Forge', 'fusion.title': 'Fusion', cancel: 'Annuler', 'fusion.choose': 'Choisir', 'reset.none': 'Aucun héros', 'fusion.none': 'Aucun héros disponible',
@@ -148,6 +149,7 @@ type Key = keyof typeof FR;
 
 const EN: Record<Key, string> = {
   'nav.campaign': 'Campaign', 'nav.heroes': 'Heroes', 'nav.summon': 'Summon', 'nav.adventure': 'Adventure', 'nav.guild': 'Guild',
+  'edge.fold': 'Fold', 'edge.unfold': 'Unfold',
   'side.quests': 'Quests', 'side.shop': 'Shop', 'side.pass': 'Pass', 'side.ranking': 'Ranking', 'side.chat': 'Chat', 'side.settings': 'Settings',
 
   'cur.dust': 'Forge dust', 'forge.title': 'Forge', 'fusion.title': 'Fusion', cancel: 'Cancel', 'fusion.choose': 'Choose', 'reset.none': 'No hero', 'fusion.none': 'No hero available',

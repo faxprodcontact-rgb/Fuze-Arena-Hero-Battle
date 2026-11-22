@@ -1,7 +1,8 @@
 // Accueil : la section se bat en continu (c'est elle qui remplit le butin).
 // Sur les bords : quêtes, passe, offres, classement, tchat. En bas : coffre, Combattre, butin rapide.
 import { loginCalendar, mailWaiting } from '../../state/actions';
-import { useEffect, useRef } from 'preact/hooks';
+import type { ComponentChildren } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { stagePower } from '../../../core/data/campaign';
 import { CAMPAIGN_STAGES, OFFLINE_CAP_HOURS, STAGES_PER_CHAPTER } from '../../../core/data/economy';
 import { chapterElement, chapterOf, isBossStage, stageInChapter } from '../../../core/stages';
@@ -18,6 +19,7 @@ import { dots } from '../dots';
 import { Art, Btn, Cur, Icon, Modal, RedDot } from '../kit';
 import { close, open, prepare } from '../nav';
 import { Chest, Hourglass } from '../anim';
+import { BarArt, ChapterPlaque, Chevron, FightButtonArt, Medallion } from '../chrome';
 
 function IdleStage({ running }: { running: boolean }) {
   const s = useGame();
@@ -34,10 +36,32 @@ function IdleStage({ running }: { running: boolean }) {
 function EdgeButton({ icon, label, dot, onClick }: { icon: string; label: string; dot?: boolean; onClick: () => void }) {
   return (
     <button class="edge-btn" onClick={onClick}>
-      <span class="edge-icon"><Icon name={icon} size={28} /></span>
+      <Medallion size={50}><Icon name={icon} size={30} /></Medallion>
       <span class="edge-label">{label}</span>
       {dot && <RedDot />}
     </button>
+  );
+}
+
+/**
+ * Une colonne de boutons ronds, repliable pour dégager le combat : repliée (par défaut), il ne reste que sa languette,
+ * avec un point rouge si un des boutons en a un. Le choix est gardé sur le téléphone.
+ */
+function EdgeColumn({ side, dot, children }: { side: 'left' | 'right'; dot: boolean; children: ComponentChildren }) {
+  const key = `fuze-edge-${side}`;
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem(key) === '1'; } catch { return false; } });
+  const toggle = () => {
+    setOpen(!open);
+    try { localStorage.setItem(key, open ? '0' : '1'); } catch { /* sans mémoire, la colonne se replie au prochain lancement */ }
+  };
+  return (
+    <div class={`edge edge-${side}${open ? ' open' : ''}`}>
+      <button class="edge-toggle" aria-expanded={open} aria-label={t(open ? 'edge.fold' : 'edge.unfold')} onClick={toggle}>
+        <Medallion size={38}><Chevron up={open} /></Medallion>
+        {!open && dot && <RedDot />}
+      </button>
+      <div class="edge-list" aria-hidden={!open}>{children}</div>
+    </div>
   );
 }
 
@@ -52,39 +76,41 @@ export function CampaignScreen({ running }: { running: boolean }) {
   const loot = idlePreview(s);
   const h = Math.floor(loot.hours);
   const m = Math.floor((loot.hours - h) * 60);
+  const leftDots = [!loginCalendar(s).claimed, dots.quests(s), dots.pass(s), !s.shop.bought.starter];
+  const rightDots = [mailWaiting(s) > 0, s.friends.inbox.length > 0];
 
   return (
     <div class="home" style={{ '--el': ELEMENT_COLOR[chapterElement(chapter)] } as never}>
       <div class="stage">
         <IdleStage running={running} />
-        <div class="stage-title">
-          <button class="stage-chapter" onClick={() => open({ type: 'worldMap' })}><Icon name="campaign" size={20} /> {t('chapter')} {chapter}</button>
-          <span class="stage-progress"><span style={{ width: `${((pos - 1) / STAGES_PER_CHAPTER) * 100}%` }} /></span>
-        </div>
-        <div class="edge edge-left">
-          <EdgeButton icon="calendar" label={t('login.title')} dot={!loginCalendar(s).claimed} onClick={() => open({ type: 'login' })} />
-          <EdgeButton icon="quests" label={t('side.quests')} dot={dots.quests(s)} onClick={() => open({ type: 'quests' })} />
-          <EdgeButton icon="pass" label={t('side.pass')} dot={dots.pass(s)} onClick={() => open({ type: 'shop', tab: 'pass' })} />
-          <EdgeButton icon="shop" label={t('shop.offers')} dot={!s.shop.bought.starter} onClick={() => open({ type: 'shop' })} />
-        </div>
-        <div class="edge edge-right">
+        <button class="stage-title" aria-label={`${t('chapter')} ${chapter}`} onClick={() => open({ type: 'worldMap' })}>
+          <ChapterPlaque title={`${t('chapter')} ${chapter}`} progress={(pos - 1) / STAGES_PER_CHAPTER} />
+        </button>
+        <EdgeColumn side="left" dot={leftDots.some(Boolean)}>
+          <EdgeButton icon="calendar" label={t('login.title')} dot={leftDots[0]} onClick={() => open({ type: 'login' })} />
+          <EdgeButton icon="quests" label={t('side.quests')} dot={leftDots[1]} onClick={() => open({ type: 'quests' })} />
+          <EdgeButton icon="pass" label={t('side.pass')} dot={leftDots[2]} onClick={() => open({ type: 'shop', tab: 'pass' })} />
+          <EdgeButton icon="shop" label={t('shop.offers')} dot={leftDots[3]} onClick={() => open({ type: 'shop' })} />
+        </EdgeColumn>
+        <EdgeColumn side="right" dot={rightDots.some(Boolean)}>
           <EdgeButton icon="ranking" label={t('side.ranking')} onClick={() => open({ type: 'ranking' })} />
           <EdgeButton icon="chat" label={t('side.chat')} onClick={() => open({ type: 'chat' })} />
-          <EdgeButton icon="mail" label={t('mail.title')} dot={mailWaiting(s) > 0} onClick={() => open({ type: 'mail' })} />
-          <EdgeButton icon="friends" label={t('friends.title')} dot={s.friends.inbox.length > 0} onClick={() => open({ type: 'friends' })} />
-        </div>
+          <EdgeButton icon="mail" label={t('mail.title')} dot={rightDots[0]} onClick={() => open({ type: 'mail' })} />
+          <EdgeButton icon="friends" label={t('friends.title')} dot={rightDots[1]} onClick={() => open({ type: 'friends' })} />
+        </EdgeColumn>
       </div>
 
       <div class="dock">
         <button class={`dock-chest${loot.hours >= 2 ? ' ready' : ''}${loot.full ? ' full' : ''}`}
           onClick={() => open({ type: 'gain', title: t('camp.loot'), gain: collectIdle() })}>
-          <Chest class="chest" size={66} state={loot.full ? 'full' : loot.hours >= 2 ? 'ready' : 'closed'} />
+          <Chest class="chest" size={70} state={loot.full ? 'full' : loot.hours >= 2 ? 'ready' : 'closed'} />
           <span class="dock-time">{h} h {String(m).padStart(2, '0')}</span>
           <span class="dock-bar"><span style={{ width: `${(loot.hours / OFFLINE_CAP_HOURS) * 100}%` }} /></span>
           {loot.hours >= 2 && <RedDot />}
         </button>
 
         <button class={`dock-fight${s.campaign.cleared === 0 ? ' point' : ''}`} disabled={done} onClick={() => prepare(campaignPlan())}>
+          <FightButtonArt off={done} />
           <span class="dock-fight-label">{done ? t('camp.done') : t('fight')}</span>
           {!done && (
             <span class="dock-fight-stage">
@@ -99,10 +125,11 @@ export function CampaignScreen({ running }: { running: boolean }) {
         </button>
 
         <button class="dock-fast" onClick={() => open({ type: 'fastLoot' })}>
-          <Hourglass size={58} />
+          <Hourglass size={62} />
           <span class="dock-time">{t('camp.fast')}</span>
           {fastLootCost(s) === 0 && <RedDot />}
         </button>
+        <BarArt kind="dock" />
       </div>
     </div>
   );

@@ -1,10 +1,11 @@
-// Le décor de l'onglet Invocation : un sanctuaire, la nuit. Tout en haut la lune et son cercle de signes, la voûte
-// étoilée, une aurore qui ondule, une étoile filante ; au loin des pics noirs et des îles de roche qui flottent, coiffées
-// de cristaux ; au sol, un plateau de pierre sombre fendu de lueurs, des pierres levées gravées, des gerbes de cristaux
-// au premier plan. La lumière vient du centre (le portail, posé par-dessus par summon-stage.tsx) : chaque pierre a sa face
-// claire tournée vers lui. Quatre dessins superposés, comme pour l'Aventure : le ciel ; ce qui bouge derrière (étoiles,
-// lune, aurore) ; les reliefs ; ce qui bouge devant (signes qui s'allument, lucioles, brume).
-import { GLYPHS } from './backdrop-adventure';
+// Le décor de l'onglet Invocation : un sanctuaire, la nuit. Tout en haut la lune, la voûte étoilée, une aurore qui
+// ondule, une étoile filante ; au loin des pics (trois chaînes) et deux îles de roche qui flottent dans les coins du ciel ;
+// au sol, un plateau de pierre sombre où le portail se reflète. La lumière vient du centre (le portail, posé par-dessus
+// par summon-stage.tsx) : les pics les plus proches sont ourlés de sa lueur. Tout ce qui se tient debout près du portail
+// (obélisques, estrade, cristaux du premier plan) est dans summon-stage.tsx, dans un seul dessin rangé du fond vers
+// l'avant : rien ici ne doit croiser la scène (une pierre du fond devant un obélisque, un cercle au sol qui passe devant
+// une pierre…). Quatre dessins superposés : le ciel ; ce qui bouge derrière (étoiles, lune, aurore) ; les reliefs ; ce
+// qui bouge devant (lucioles, brume).
 import { spark } from './portal';
 
 const W = 390, H = 844;
@@ -27,6 +28,18 @@ function crags(seed: number, base: number, hMin: number, hMax: number, wMin: num
     x += w;
   }
   return `${d} L${W + 14} ${GROUND + 30} Z`;
+}
+
+/** La ligne de crête d'une chaîne de `crags` (mêmes tirages), sans ses bords : pour l'ourler de lumière. */
+function crest(seed: number, base: number, hMin: number, hMax: number, wMin: number, wMax: number): string {
+  const r = rng(seed);
+  let x = -14, d = `M-14 ${base}`;
+  while (x < W + 14) {
+    const w = wMin + r() * (wMax - wMin), h = hMin + r() * (hMax - hMin), lean = (r() - 0.5) * w * 0.3;
+    d += ` L${f(x + w * 0.5 + lean)} ${f(base - h)} L${f(x + w)} ${f(base - h * 0.2 * r())}`;
+    x += w;
+  }
+  return d;
 }
 
 /** Une gerbe de cristaux : trois éclats, une face claire, une face sombre. */
@@ -52,26 +65,6 @@ function Island({ x, y, s, flip = false }: { x: number; y: number; s: number; fl
     </g>
   );
 }
-
-/** Une pierre levée : fût irrégulier, face claire tournée vers le portail (`side` = 1 si la pierre est à gauche de lui). */
-function Menhir({ x, y, w, h, side }: { x: number; y: number; w: number; h: number; side: number }) {
-  const t = w * 0.32;
-  return (
-    <g transform={`translate(${x} ${y}) scale(${side} 1)`}>
-      <ellipse cx="0" cy="1" rx={w * 0.9} ry={w * 0.22} fill="#0b0722" opacity="0.5" />
-      <path d={`M${-w / 2} 0 L${-w / 2 + t * 0.4} ${-h * 0.55} L${-w / 2 + t} ${-h * 0.92} L${-t * 0.2} ${-h} L${w / 2 - t * 0.5} ${-h * 0.9} L${w / 2 - t * 0.1} ${-h * 0.4} L${w / 2} 0 Z`} fill="#34267c" />
-      <path d={`M${-w / 2} 0 L${-w / 2 + t * 0.4} ${-h * 0.55} L${-w / 2 + t} ${-h * 0.92} L${-t * 0.2} ${-h} L${-t * 0.3} ${-h * 0.5} L${-w * 0.12} 0 Z`} fill="#1a1150" />
-      <path d={`M${w / 2 - t * 0.5} ${-h * 0.9} L${w / 2 - t * 0.1} ${-h * 0.4} L${w / 2} 0 H${w * 0.24} L${w * 0.2} ${-h * 0.45} Z`} fill="#6a55c8" />
-      <path d={`M${w / 2 - t * 0.5} ${-h * 0.9} L${w / 2 - t * 0.1} ${-h * 0.4} L${w / 2} 0`} fill="none" stroke="#b9a8ff" stroke-width="1" opacity="0.8" />
-    </g>
-  );
-}
-
-/** Les pierres levées : place, taille, et le signe gravé sur chacune. */
-const STONES: { x: number; y: number; w: number; h: number; g: number }[] = [
-  { x: 26, y: 446, w: 30, h: 96, g: 1 }, { x: 74, y: 424, w: 22, h: 70, g: 4 }, { x: 116, y: 410, w: 16, h: 50, g: 2 },
-  { x: 364, y: 446, w: 30, h: 96, g: 6 }, { x: 316, y: 424, w: 22, h: 70, g: 0 }, { x: 274, y: 410, w: 16, h: 50, g: 3 },
-];
 
 function Back() {
   return (
@@ -128,20 +121,18 @@ function Front() {
         <linearGradient id="sm-mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8a6ff" stop-opacity="0" /><stop offset="0.55" stop-color="#c8a6ff" stop-opacity="0.32" /><stop offset="1" stop-color="#c8a6ff" stop-opacity="0" /></linearGradient>
         <radialGradient id="sm-pool"><stop offset="0" stop-color="#b98aff" stop-opacity="0.75" /><stop offset="0.5" stop-color="#7a52e8" stop-opacity="0.3" /><stop offset="1" stop-color="#7a52e8" stop-opacity="0" /></radialGradient>
       </defs>
-      {/* les pics du fond : deux chaînes noires, la plus proche ourlée de lumière */}
+      {/* les pics : une chaîne lointaine pâle dans la brume, puis deux chaînes noires ; la plus proche est ourlée de la
+          lueur du portail (le trait suit sa crête, sans les bords) */}
+      <path d={crags(31, GROUND - 14, 30, 70, 34, 60)} fill="#4a3290" opacity="0.7" />
       <path d={crags(5, GROUND, 40, 96, 26, 52)} fill="#2a1c66" />
       <path d={crags(13, GROUND + 4, 18, 58, 18, 40)} fill="#1c1250" />
+      <path d={crest(13, GROUND + 4, 18, 58, 18, 40)} fill="none" stroke="#9a7aff" stroke-width="1.2" stroke-linejoin="round" opacity="0.45" />
       <rect y={GROUND - 46} width={W} height="70" fill="url(#sm-mist)" />
-      {/* les îles qui flottent */}
-      <Island x={112} y={112} s={0.46} /><Island x={372} y={156} s={0.56} flip /><Island x={292} y={300} s={0.36} flip /><Island x={96} y={318} s={0.32} />
-      {/* le plateau : deux anneaux gravés autour du centre, et le reflet du portail sur la pierre */}
-      <g fill="none" stroke="#5a48b4" opacity="0.55"><ellipse cx="195" cy="474" rx="170" ry="38" stroke-width="1.400" /><ellipse cx="195" cy="494" rx="250" ry="60" stroke-width="1.200" /></g>
+      {/* les îles qui flottent, loin, dans les coins du ciel (jamais près du portail) */}
+      <Island x={112} y={112} s={0.46} /><Island x={372} y={156} s={0.56} flip />
+      {/* le plateau : la lueur du portail sur la pierre, et son reflet qui descend vers nous */}
       <ellipse cx="195" cy="462" rx="190" ry="56" fill="url(#sm-pool)" />
-      {/* les pierres levées */}
-      {STONES.map((st) => <Menhir x={st.x} y={st.y} w={st.w} h={st.h} side={st.x < 195 ? 1 : -1} />)}
-      {/* au premier plan : des gerbes de cristaux sombres, de chaque côté */}
-      <Shards x={10} y={560} s={2.400} c="#2f2478" light="#6f5ae0" dark="#150e3c" /><Shards x={380} y={564} s={2.600} c="#2f2478" light="#6f5ae0" dark="#150e3c" />
-      <Shards x={44} y={566} s={1.300} c="#3fb6e6" light="#c8f6ff" dark="#1f6aa8" /><Shards x={346} y={570} s={1.400} c="#b06aff" light="#ecd6ff" dark="#6a2fc0" />
+      <ellipse cx="195" cy="520" rx="46" ry="110" fill="url(#sm-pool)" opacity="0.55" />
     </>
   );
 }
@@ -154,16 +145,8 @@ function Top() {
         <radialGradient id="sm-glow-c"><stop offset="0" stop-color="#8fe6ff" stop-opacity="0.8" /><stop offset="1" stop-color="#8fe6ff" stop-opacity="0" /></radialGradient>
         <radialGradient id="sm-glow-v"><stop offset="0" stop-color="#d09aff" stop-opacity="0.8" /><stop offset="1" stop-color="#d09aff" stop-opacity="0" /></radialGradient>
       </defs>
-      {/* les signes gravés sur les pierres s'allument tour à tour */}
-      {STONES.map((st, i) => (
-        <g class="sm-glyph" style={{ animationDelay: `${-i * 0.9}s` }}>
-          <circle cx={st.x} cy={st.y - st.h * 0.52} r={st.w * 0.6} fill="url(#sm-glow-c)" />
-          <path d={GLYPHS[st.g]} transform={`translate(${st.x} ${f(st.y - st.h * 0.52)}) scale(${f(st.w / 13)})`} fill="none" stroke="#c8f6ff" stroke-width="1.600" stroke-linecap="round" stroke-linejoin="round" />
-        </g>
-      ))}
-      {/* les cristaux des îles et du premier plan luisent */}
+      {/* les cristaux des îles luisent */}
       <circle class="an-glow" cx="110" cy="104" r="12" fill="url(#sm-glow-c)" /><circle class="an-glow an-late" cx="374" cy="146" r="14" fill="url(#sm-glow-v)" />
-      <circle class="an-glow an-late" cx="44" cy="536" r="34" fill="url(#sm-glow-c)" /><circle class="an-glow" cx="346" cy="538" r="36" fill="url(#sm-glow-v)" />
       {/* la brume du plateau glisse */}
       <rect class="sm-mist" x="-60" y={GROUND + 10} width={W + 120} height="60" fill="url(#sm-mist)" opacity="0.8" />
       {/* des lucioles montent du sol */}

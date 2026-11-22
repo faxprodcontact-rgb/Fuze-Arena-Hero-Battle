@@ -7,6 +7,7 @@ import './anim.css';
 import { AdventureBackdrop } from './backdrop-adventure';
 import { SummonBackdrop } from './backdrop-summon';
 import { HeroesBackdrop } from './backdrop-heroes';
+import { GuildBackdrop } from './backdrop-guild';
 import { RUNES, spark } from './portal';
 
 export type BackdropKind = 'heroes' | 'summon' | 'adventure' | 'guild' | 'page';
@@ -174,6 +175,7 @@ export function Backdrop({ kind }: { kind: BackdropKind }) {
   if (kind === 'adventure') return <div class="backdrop backdrop-adventure" aria-hidden="true"><AdventureBackdrop /></div>;
   if (kind === 'summon') return <div class="backdrop backdrop-summon" aria-hidden="true"><SummonBackdrop /></div>;
   if (kind === 'heroes') return <div class="backdrop backdrop-heroes" aria-hidden="true"><HeroesBackdrop /></div>;
+  if (kind === 'guild') return <div class="backdrop backdrop-guild" aria-hidden="true"><GuildBackdrop /></div>;
   return (
     <div class={`backdrop backdrop-${kind}`} aria-hidden="true">
       <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice">

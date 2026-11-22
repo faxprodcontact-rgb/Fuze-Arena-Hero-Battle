@@ -295,6 +295,27 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   montent et se perdent dans le noir (`Gloom`), bouches de pierre des chutes de lave, porte de l'arène à la place de l'arche
   du milieu, public aux arches, fanions de deux couleurs, lave qui luit dans tous les joints des dalles (`flagJoints`).
   Signes des frises : `RUNES` de `bg/kit.tsx` (aucun ne ressemble à une lettre ; les `GLYPHS` restent pour les menus).
+  **v0.39.0 (22/11/2026), l'interface dans le trait des décors** (demande du propriétaire : barres, ronds, coffre, sablier,
+  boutons, panneau des combats, police, encadrements, guilde, portail). Polices : **Lilita One** (titres, boutons, chiffres) et
+  **Fredoka** (textes) ; Lilita n'a qu'une graisse : `font-synthesis: none` sur html, et jamais `fontStyle: 'bold'` dans
+  Phaser (`FONT` de `fight-view.ts`) ; les scènes attendent la police (`fontReady` de `scenes.ts`, 1,5 s au plus).
+  `ui/chrome.tsx` = les pièces dessinées : `ChromeDefs` (dégradés communs `cx-…`, posés une fois par l'application, jamais
+  cachés), `Medallion`, `Chevron`, `Gem`, `BarArt` (barre du haut, des onglets, bas de l'accueil : bois et rail d'or, dessinés
+  à la mesure exacte par `useSize`), `TabSocket` (socle de l'onglet ouvert), `ChapterPlaque`, `FightButtonArt`, `LevelShield`.
+  **`BarArt` toujours en dernier enfant** de sa barre : le tutoriel vise les onglets par `nth-child`. Accueil : les boutons
+  ronds sont des médaillons rangés dans deux colonnes **repliables** (`EdgeColumn`, repliées par défaut, choix gardé dans
+  `fuze-edge-left/right`, point rouge sur la languette). Couronne du chef : sur le rebord avant gauche de sa dalle
+  (`.field-slot .crown`), plus sur la tête du héros. Tous les boutons (`.btn`, `.sum-btn`, `.x`, `.tabs`, titres des
+  fenêtres) : contour brun, cadre d'or, émail bombé, lettres cernées (`--bt`). Coffre et sablier redessinés (`anim.tsx` ;
+  coffre grand ouvert = couvercle rabattu dessiné à part et trésor). Combats : `hud-art.tsx` (planche, plateau cerclé d'or,
+  anneaux des portraits avec la rainure de l'énergie, disques par élément, rainure de vie, boutons), chargé dans `preload`
+  de `battle-scene.ts` ; portraits en buste coupés en rond. Guilde : `ui/backdrop-guild.tsx` (forteresse au coucher du
+  soleil, deux tours à bannières, rempart, braseros, un dragon qui passe), bandeau `TitleBanner` (ruban bleu) et plaque
+  `.guild-info` ; `TitleBanner` ajuste la taille d'un titre long (jamais coupé). Invocation : **rien de ce qui est posé au
+  sol n'est dans le fond** (pierres levées, îles proches, anneaux et cristaux retirés de `backdrop-summon.tsx` : ils se
+  mêlaient à la scène) ; cristaux du premier plan dans `summon-stage.tsx` ; portail : couronne, ailes (plumes partant d'un
+  même point : des ailes, pas des rayons), double anneau perlé, gemmes serties, tunnel aspiré, éclat du cœur. Captures :
+  `scratchpad/art5/tour2.cjs <pro|se>` (24 écrans), `ui1.cjs`, `ui-guild.cjs`, `ui-summon.cjs`, `ui-crown.cjs`, `tailles.cjs`.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

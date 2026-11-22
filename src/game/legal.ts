@@ -58,7 +58,7 @@ const FR: Record<LegalDoc, Block[]> = {
     { h: 'Outils libres' },
     { p: 'Phaser (licence MIT), Preact (licence MIT), Vite (licence MIT).' },
     { h: 'Polices' },
-    { p: 'Baloo 2 et Nunito (SIL Open Font License).' },
+    { p: 'Lilita One et Fredoka (SIL Open Font License).' },
   ],
 };
 
@@ -113,7 +113,7 @@ const EN: Record<LegalDoc, Block[]> = {
     { h: 'Open-source tools' },
     { p: 'Phaser (MIT licence), Preact (MIT licence), Vite (MIT licence).' },
     { h: 'Fonts' },
-    { p: 'Baloo 2 and Nunito (SIL Open Font License).' },
+    { p: 'Lilita One and Fredoka (SIL Open Font License).' },
   ],
 };
 

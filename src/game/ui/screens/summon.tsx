@@ -8,6 +8,7 @@ import { useState } from 'preact/hooks';
 import { fmt, t } from '../../i18n';
 import { SummonBackdrop } from '../backdrop-summon';
 import { SummonStage } from '../summon-stage';
+import { Medallion } from '../chrome';
 import { TitleBanner } from '../title-banner';
 import { adsLeft, claimFragments, newlyFound, summon, summonCost, watchAd } from '../../state/actions';
 import { useGame } from '../../state/store';
@@ -20,7 +21,7 @@ type Kind = 'normal' | 'basic';
 function Medal({ icon, label, on, dot, onClick }: { icon: string; label: string; on?: boolean; dot?: boolean; onClick: () => void }) {
   return (
     <button class={`sum-med${on ? ' on' : ''}`} onClick={onClick}>
-      <span class="sum-med-icon"><Icon name={icon} size={30} /></span>
+      <Medallion size={50} class="sum-med-icon"><Icon name={icon} size={30} /></Medallion>
       <span class="sum-med-label">{label}</span>
       {dot && <span class="dot" />}
     </button>

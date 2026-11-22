@@ -100,8 +100,11 @@ export function Portal({ kind = 'normal', size = 208, base = true, claws = false
           {[[84, 150, 5], [158, 92, 4], [150, 162, 3.5], [92, 100, 3], [128, 70, 3.5]].map(([x, y, r], i) => (
             <path class="pt-twinkle" d={spark(x!, y!, r!)} fill="#fff" style={{ animationDelay: `${-i * 0.55}s`, transformOrigin: `${x}px ${y}px` } as never} />
           ))}
+          {/* le tunnel : trois anneaux de lumière aspirés vers le cœur, l'un après l'autre */}
+          {[0, 1, 2].map((i) => <circle class="pt-tunnel" cx={C} cy={C} r="64" fill="none" stroke="#fff" stroke-width="3" style={{ animationDelay: `${-i * 0.8}s` }} />)}
           <circle class="pt-core" cx={C} cy={C} r="17" fill="#fff" />
           <circle class="pt-core pt-core-2" cx={C} cy={C} r="30" fill="var(--p-core)" opacity="0.55" />
+          <path class="pt-flare" d={spark(C, C, 30)} fill="#fff" opacity="0.85" />
           {/* reflet de verre en haut du tourbillon */}
           <path d="M62 96 Q84 58 126 54 Q96 66 78 104 Z" fill="#fff" opacity="0.28" />
           <circle cx={C} cy={C} r="72" fill={`url(#${id}-rim)`} />
@@ -112,43 +115,64 @@ export function Portal({ kind = 'normal', size = 208, base = true, claws = false
         <g class="pt-runes">
           <circle cx={C} cy={C} r="84" fill="none" stroke={INK} stroke-width="19" />
           <circle cx={C} cy={C} r="84" fill="none" stroke="var(--p-band)" stroke-width="14" />
+          <circle cx={C} cy={C} r="77.5" fill="none" stroke={`url(#${id}-gold)`} stroke-width="1.6" opacity="0.9" />
+          <circle cx={C} cy={C} r="90.5" fill="none" stroke={`url(#${id}-gold)`} stroke-width="1.6" opacity="0.9" />
           {RUNES.map((d, i) => {
             const a = (i * 360) / RUNES.length;
             return <path class="pt-rune" d={d} transform={`rotate(${a} ${C} ${C}) translate(${C} ${C - 84}) scale(0.72)`} fill="none" stroke="var(--p-rune)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" style={{ animationDelay: `${-i * 0.3}s` }} />;
           })}
         </g>
 
-        {/* l'anneau d'or et ses gemmes */}
-        <g class="pt-ring">
-          <circle cx={C} cy={C} r="99" fill="none" stroke={INK} stroke-width="15" />
-          <circle cx={C} cy={C} r="99" fill="none" stroke={`url(#${id}-gold)`} stroke-width="10" />
-          <circle cx={C} cy={C} r="95.5" fill="none" stroke="var(--p-ring-lo)" stroke-width="2" opacity="0.9" />
-          <circle cx={C} cy={C} r="101.5" fill="none" stroke="#fff" stroke-width="2.2" opacity="0.85" stroke-dasharray="70 110 34 60 16 400" stroke-linecap="round" />
-          {Array.from({ length: 6 }, (_, i) => {
-            const a = (i * Math.PI) / 3 - Math.PI / 2, x = C + Math.cos(a) * 99, y = C + Math.sin(a) * 99;
-            return (
-              <g transform={`translate(${x} ${y}) rotate(${(a * 180) / Math.PI + 90})`}>
-                <path d="M0 -10 L8 0 L0 10 L-8 0 Z" fill="var(--p-gem)" stroke={INK} stroke-width="2.6" stroke-linejoin="round" />
-                <path d="M0 -6 L4 -1 L0 1 L-4 -1 Z" fill="#fff" opacity="0.8" />
-              </g>
-            );
-          })}
-        </g>
-
-        {/* la couronne de pointes : huit lames d'or autour de l'anneau, longues aux quatre points cardinaux */}
+        {/* derrière l'anneau : la couronne de pointes et d'ailes d'or (rien vers le bas : le portail flotte au-dessus de l'estrade) */}
         {claws && (
           <g class="pt-claws">
-            {Array.from({ length: 8 }, (_, i) => {
-              const long = i % 4 === 0, h = long ? 34 : i % 2 === 0 ? 20 : 16, w = long ? 10 : 7;
+            {/* la grande flèche du haut, ses deux volutes, sa gemme */}
+            <path d={`M${C - 15} 24 Q${C - 13} 10 ${C - 6} 2 L${C} -30 L${C + 6} 2 Q${C + 13} 10 ${C + 15} 24 Z`} fill={`url(#${id}-gold)`} stroke={INK} stroke-width="3" stroke-linejoin="round" />
+            <path d={`M${C} -30 L${C + 6} 2 Q${C + 13} 10 ${C + 15} 24 H${C + 4} Q${C + 4} 8 ${C} -30 Z`} fill="#fff" opacity="0.3" />
+            <path d={`M${C - 15} 14 Q${C - 28} 12 ${C - 30} 2 Q${C - 22} 8 ${C - 13} 6 Z M${C + 15} 14 Q${C + 28} 12 ${C + 30} 2 Q${C + 22} 8 ${C + 13} 6 Z`} fill={`url(#${id}-gold)`} stroke={INK} stroke-width="2.4" stroke-linejoin="round" />
+            <path d={`M${C} -6 L${C + 7} 5 L${C} 16 L${C - 7} 5 Z`} fill="var(--p-gem)" stroke={INK} stroke-width="2.4" stroke-linejoin="round" />
+            <path d={`M${C} -3 L${C + 4} 4 H${C} Z`} fill="#fff" opacity="0.8" />
+            {/* les ailes d'or : de chaque côté, trois plumes qui partent d'un même point de l'anneau et montent en éventail
+                (elles se chevauchent, la plus longue au milieu) : des ailes, pas des rayons */}
+            {[1, -1].map((side) => {
+              const ra = (-20 * Math.PI) / 180, rx = C + side * Math.cos(ra) * 97, ry = C + Math.sin(ra) * 97;
               return (
-                <g transform={`rotate(${i * 45} ${C} ${C}) translate(${C} ${C})`}>
-                  <path d={`M${-w} -103 Q0 -110 ${w} -103 L${w * 0.35} ${-103 - h * 0.7} L0 ${-106 - h} L${-w * 0.35} ${-103 - h * 0.7} Z`} fill={`url(#${id}-gold)`} stroke={INK} stroke-width="3" stroke-linejoin="round" />
-                  <path d={`M0 -105 L${w * 0.3} ${-103 - h * 0.7} L0 ${-106 - h} Z`} fill="#fff" opacity="0.45" />
+                <g transform={`translate(${rx.toFixed(1)} ${ry.toFixed(1)}) scale(${side} 1)`}>
+                  {[[-62, 40, 11], [-18, 44, 12], [-40, 58, 15]].map(([deg, len, w]) => (
+                    <g transform={`rotate(${deg})`}>
+                      <path d={`M0 ${-w! / 2} Q${len! * 0.55} ${-w! * 1.05} ${len!} ${-w! * 0.12} Q${len! * 0.62} ${w! * 0.55} 0 ${w! / 2} Z`} fill={`url(#${id}-gold)`} stroke={INK} stroke-width="2.6" stroke-linejoin="round" />
+                      <path d={`M3 ${-w! * 0.12} Q${len! * 0.55} ${-w! * 0.5} ${len! * 0.9} ${-w! * 0.14}`} fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" opacity="0.6" />
+                    </g>
+                  ))}
+                  <circle r="7" fill={INK} /><circle r="5.4" fill={`url(#${id}-gold)`} /><path d="M0 -3.2 L2.6 0 L0 3.2 L-2.6 0 Z" fill="var(--p-gem)" />
                 </g>
               );
             })}
           </g>
         )}
+
+        {/* l'anneau d'or : double, perlé sur son bord, six gemmes serties dans des chatons d'or */}
+        <g class="pt-ring">
+          <circle cx={C} cy={C} r="100" fill="none" stroke={INK} stroke-width="17" />
+          <circle cx={C} cy={C} r="100" fill="none" stroke={`url(#${id}-gold)`} stroke-width="12" />
+          <circle cx={C} cy={C} r="95" fill="none" stroke="var(--p-ring-lo)" stroke-width="2" opacity="0.9" />
+          <circle cx={C} cy={C} r="102.5" fill="none" stroke="#fff" stroke-width="2.2" opacity="0.85" stroke-dasharray="70 110 34 60 16 400" stroke-linecap="round" />
+          {Array.from({ length: 30 }, (_, i) => {
+            const a = (i / 30) * Math.PI * 2, x = C + Math.cos(a) * 109.5, y = C + Math.sin(a) * 109.5;
+            return <g><circle cx={x} cy={y} r="2.9" fill={INK} /><circle cx={x} cy={y} r="2" fill="var(--p-ring-hi)" /></g>;
+          })}
+          {Array.from({ length: 6 }, (_, i) => {
+            const a = (i * Math.PI) / 3 - Math.PI / 2 + Math.PI / 6, x = C + Math.cos(a) * 100, y = C + Math.sin(a) * 100;
+            return (
+              <g transform={`translate(${x} ${y}) rotate(${(a * 180) / Math.PI + 90})`}>
+                <circle r="11.5" fill={INK} /><circle r="9.5" fill={`url(#${id}-gold)`} />
+                <path d="M0 -8.5 L6.5 0 L0 8.5 L-6.5 0 Z" fill="var(--p-gem)" stroke={INK} stroke-width="1.8" stroke-linejoin="round" />
+                <path d="M0 -6 L3.6 -0.5 L0 1 L-3.6 -0.5 Z" fill="#fff" opacity="0.85" />
+                <path class="pt-gemglint" d={spark(3, -6, 4)} fill="#fff" style={{ animationDelay: `${-i * 0.6}s` }} />
+              </g>
+            );
+          })}
+        </g>
 
         {/* les étincelles qui s'échappent du tourbillon */}
         {Array.from({ length: 8 }, (_, i) => {

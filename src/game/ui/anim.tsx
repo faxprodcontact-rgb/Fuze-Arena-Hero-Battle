@@ -4,89 +4,150 @@
 import './anim.css';
 import { RUNES, spark } from './portal';
 
-const INK = '#2f2244';
+/** Le contour des dessins : le même brun sombre que les pièces de l'interface (chrome.tsx). */
+const INK = '#2f1b0c';
 
-/** Le sablier du butin rapide : le sable descend, puis le sablier se retourne et recommence. */
+/**
+ * Le sablier du butin rapide : deux socles d'or ciselés (une gemme sur chacun), trois colonnes de bois tourné baguées d'or
+ * (celle du fond dans l'ombre), une ampoule de verre bleuté avec ses reflets ; le sable descend, puis le sablier se
+ * retourne et recommence (dessin symétrique : la boucle ne se voit pas).
+ */
 export function Hourglass({ size = 54, class: cls = '' }: { size?: number; class?: string }) {
   const glass = 'M31 19 H69 C69 38 54 44 54 50 C54 56 69 62 69 81 H31 C31 62 46 56 46 50 C46 44 31 38 31 19 Z';
+  // une colonne de bois tourné : renflée au milieu, une bague d'or en haut, au milieu et en bas
+  const pillar = (x: number, back = false) => (
+    <g opacity={back ? 0.9 : 1}>
+      <path d={`M${x - 3.2} 19 C${x - 4.6} 30 ${x - 2.4} 40 ${x - 3.6} 50 C${x - 2.4} 60 ${x - 4.6} 70 ${x - 3.2} 81 H${x + 3.2} C${x + 4.6} 70 ${x + 2.4} 60 ${x + 3.6} 50 C${x + 2.4} 40 ${x + 4.6} 30 ${x + 3.2} 19 Z`} fill={back ? '#3a2414' : 'url(#hg-wood)'} stroke={INK} stroke-width="2" stroke-linejoin="round" />
+      {!back && <path d={`M${x + 0.8} 22 C${x + 2} 32 ${x + 0.6} 42 ${x + 1.6} 50 C${x + 0.6} 58 ${x + 2} 68 ${x + 0.8} 78`} fill="none" stroke="#fff" stroke-width="1.1" opacity="0.45" stroke-linecap="round" />}
+      {[24, 50, 76].map((y) => <rect x={x - 4.6} y={y - 2} width="9.2" height="4" rx="1.6" fill="url(#hg-gold)" stroke={INK} stroke-width="1.4" />)}
+    </g>
+  );
+  // un socle : plateau d'or biseauté, sa tranche plus sombre, une gemme au milieu
+  const cap = (y: number, gem: string) => (
+    <g>
+      <rect x="16" y={y} width="68" height="11" rx="4" fill="url(#hg-gold)" stroke={INK} stroke-width="2.6" />
+      <rect x="18" y={y + 6.5} width="64" height="3" rx="1.5" fill="#9a5a06" opacity="0.55" />
+      <path d={`M21 ${y + 2.6} H79`} stroke="#fffbe0" stroke-width="1.6" stroke-linecap="round" opacity="0.85" />
+      <path d={`M50 ${y + 1.2} L54.5 ${y + 5.5} L50 ${y + 9.8} L45.5 ${y + 5.5} Z`} fill={gem} stroke={INK} stroke-width="1.4" />
+      <path d={`M50 ${y + 2.4} L52.6 ${y + 5.5} H50 Z`} fill="#fff" opacity="0.6" />
+      {[24, 76].map((x) => <circle cx={x} cy={y + 5.5} r="1.6" fill="#7a4406" />)}
+    </g>
+  );
   return (
     <span class={`anim hourglass-anim ${cls}`} style={{ width: `${size}px`, height: `${size}px` }}>
       <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
         <defs>
-          <linearGradient id="hg-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a8" /><stop offset="0.5" stop-color="#ffc531" /><stop offset="1" stop-color="#d98a0b" /></linearGradient>
-          <linearGradient id="hg-sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe58a" /><stop offset="1" stop-color="#f09a1e" /></linearGradient>
+          <linearGradient id="hg-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0" /><stop offset="0.45" stop-color="#ffc531" /><stop offset="1" stop-color="#b8720a" /></linearGradient>
+          <linearGradient id="hg-wood" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5a3418" /><stop offset="0.55" stop-color="#9a6234" /><stop offset="1" stop-color="#6e4020" /></linearGradient>
+          <linearGradient id="hg-glass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#bfe8ff" stop-opacity="0.75" /><stop offset="0.5" stop-color="#eaf8ff" stop-opacity="0.35" /><stop offset="1" stop-color="#9fd4f5" stop-opacity="0.7" /></linearGradient>
+          <linearGradient id="hg-sand" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe89a" /><stop offset="1" stop-color="#ee9420" /></linearGradient>
           <radialGradient id="hg-glow"><stop offset="0" stop-color="#ffe58a" stop-opacity="0.85" /><stop offset="1" stop-color="#ffe58a" stop-opacity="0" /></radialGradient>
           <clipPath id="hg-top"><path d="M31 19 H69 C69 38 54 44 54 50 H46 C46 44 31 38 31 19 Z" /></clipPath>
           <clipPath id="hg-bot"><path d="M46 50 H54 C54 56 69 62 69 81 H31 C31 62 46 56 46 50 Z" /></clipPath>
         </defs>
         <circle class="an-glow" cx="50" cy="50" r="48" fill="url(#hg-glow)" />
+        <ellipse cx="50" cy="97" rx="30" ry="3.5" fill="#000" opacity="0.28" />
         <g class="hg-turn">
-          <path d={glass} fill="#dff4ff" fill-opacity="0.62" />
-          <g clip-path="url(#hg-top)"><rect class="hg-sand-top" x="28" y="24" width="44" height="30" fill="url(#hg-sand)" /></g>
-          <g clip-path="url(#hg-bot)"><path class="hg-sand-bot" d="M28 84 V68 Q50 60 72 68 V84 Z" fill="url(#hg-sand)" /></g>
-          <rect class="hg-stream" x="49" y="50" width="2" height="28" rx="1" fill="#ffd45c" />
-          <path d={glass} fill="none" stroke={INK} stroke-width="3" stroke-linejoin="round" />
-          <path d="M36 24 C37 33 41 38 45 42" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.85" />
-          <path d="M36 76 C37 68 41 63 45 59" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.5" />
-          <rect x="24" y="17" width="5" height="66" rx="2" fill="#d98a0b" stroke={INK} stroke-width="2.5" />
-          <rect x="71" y="17" width="5" height="66" rx="2" fill="#d98a0b" stroke={INK} stroke-width="2.5" />
-          <rect x="19" y="7" width="62" height="12" rx="4.5" fill="url(#hg-gold)" stroke={INK} stroke-width="3" />
-          <rect x="19" y="81" width="62" height="12" rx="4.5" fill="url(#hg-gold)" stroke={INK} stroke-width="3" />
-          <path d="M24 11 H76" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.7" />
-          <path d="M24 85 H76" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity="0.7" />
-          <path d="M50 9.5 L53 13 L50 16.5 L47 13 Z" fill="#ff6fb5" stroke={INK} stroke-width="1.5" />
-          <path d="M50 83.5 L53 87 L50 90.5 L47 87 Z" fill="#6fe3ff" stroke={INK} stroke-width="1.5" />
+          {pillar(50, true)}
+          <path d={glass} fill="url(#hg-glass)" />
+          <g clip-path="url(#hg-top)"><rect class="hg-sand-top" x="28" y="24" width="44" height="30" fill="url(#hg-sand)" /><ellipse class="hg-sand-top" cx="50" cy="24" rx="20" ry="2.4" fill="#fff3c0" opacity="0.8" /></g>
+          <g clip-path="url(#hg-bot)"><path class="hg-sand-bot" d="M28 84 V70 Q38 63 50 61 Q62 63 72 70 V84 Z" fill="url(#hg-sand)" /></g>
+          <rect class="hg-stream" x="49.2" y="50" width="1.6" height="28" rx="0.8" fill="#ffd45c" />
+          <path d={glass} fill="none" stroke={INK} stroke-width="2.6" stroke-linejoin="round" />
+          <path d="M35 23 C36 32 40 38 44.5 42" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity="0.9" />
+          <path d="M35.5 77 C36.5 69 40 63.5 44.5 59.5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity="0.55" />
+          <path d="M64 26 C63.5 31 61.5 35 59 38" fill="none" stroke="#fff" stroke-width="1.3" stroke-linecap="round" opacity="0.5" />
+          {pillar(24)}{pillar(76)}
+          {cap(8, '#ff6fb5')}{cap(81, '#6fe3ff')}
         </g>
-        <path class="an-twinkle" style={{ transformOrigin: '14px 30px' }} d={spark(14, 30, 6)} fill="#fff" />
-        <path class="an-twinkle an-late" style={{ transformOrigin: '88px 62px' }} d={spark(88, 62, 5)} fill="#fff" />
+        <path class="an-twinkle" style={{ transformOrigin: '10px 30px' }} d={spark(10, 30, 6)} fill="#fff" />
+        <path class="an-twinkle an-late" style={{ transformOrigin: '91px 64px' }} d={spark(91, 64, 5)} fill="#fff" />
       </svg>
     </span>
   );
 }
 
-/** Le coffre de butin : `closed` (il respire), `ready` (le couvercle se soulève, une lueur s'échappe), `full` (ouvert, il déborde). */
+/**
+ * Le coffre de butin, en bois cerclé d'or : `closed` (il respire), `ready` (le couvercle se soulève, la lumière filtre
+ * dessous), `full` (grand ouvert, débordant de pièces et de gemmes). Planches de bois, deux bandes d'or rivetées, coins
+ * ferrés, serrure ciselée avec sa gemme ; couvercle bombé ; lumière venue de la droite.
+ */
 export function Chest({ size = 64, state = 'closed', class: cls = '' }: { size?: number; state?: 'closed' | 'ready' | 'full'; class?: string }) {
-  const open = state !== 'closed';
+  const lifted = state !== 'closed';
+  const band = (x: number) => (
+    <g>
+      <rect x={x} y="57" width="10" height="38" fill="url(#ch-gold)" stroke={INK} stroke-width="2.2" />
+      <path d={`M${x + 2} 59 V93`} stroke="#fffbe0" stroke-width="1.2" opacity="0.7" />
+      {[63, 87].map((y) => <g><circle cx={x + 5} cy={y} r="2" fill={INK} /><circle cx={x + 4.6} cy={y - 0.4} r="1.1" fill="#fff3b0" /></g>)}
+    </g>
+  );
+  const coin = (x: number, y: number, r: number) => (
+    <g><ellipse cx={x} cy={y} rx={r} ry={r * 0.82} fill="url(#ch-gold)" stroke={INK} stroke-width="1.6" /><ellipse cx={x} cy={y} rx={r * 0.58} ry={r * 0.45} fill="none" stroke="#b8720a" stroke-width="1" /><path d={`M${x - r * 0.4} ${y - r * 0.35} Q${x} ${y - r * 0.7} ${x + r * 0.4} ${y - r * 0.35}`} fill="none" stroke="#fff" stroke-width="1" opacity="0.8" /></g>
+  );
+  const gem = (x: number, y: number, r: number, c: [string, string]) => (
+    <g><path d={`M${x} ${y - r} L${x + r} ${y} L${x} ${y + r} L${x - r} ${y} Z`} fill={c[1]} stroke={INK} stroke-width="1.6" /><path d={`M${x} ${y - r} L${x + r} ${y} H${x} Z`} fill={c[0]} /><path d={`M${x - r * 0.35} ${y - r * 0.2} L${x} ${y - r * 0.6}`} stroke="#fff" stroke-width="1" opacity="0.9" /></g>
+  );
   return (
     <span class={`anim chest-anim chest-${state} ${cls}`} style={{ width: `${size}px`, height: `${size}px` }}>
-      <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
+      <svg viewBox="0 0 120 110" width={size} height={size} aria-hidden="true">
         <defs>
-          <linearGradient id="ch-wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c98a48" /><stop offset="1" stop-color="#8a5426" /></linearGradient>
-          <linearGradient id="ch-lid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0a35c" /><stop offset="1" stop-color="#a86a30" /></linearGradient>
-          <linearGradient id="ch-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a8" /><stop offset="0.5" stop-color="#ffc531" /><stop offset="1" stop-color="#d98a0b" /></linearGradient>
-          <radialGradient id="ch-glow"><stop offset="0" stop-color="#fff6c2" stop-opacity="0.95" /><stop offset="0.5" stop-color="#ffd45c" stop-opacity="0.5" /><stop offset="1" stop-color="#ffd45c" stop-opacity="0" /></radialGradient>
+          <linearGradient id="ch-wood" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7a4520" /><stop offset="0.5" stop-color="#b77838" /><stop offset="1" stop-color="#d09050" /></linearGradient>
+          <linearGradient id="ch-lid" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#dc9a58" /><stop offset="1" stop-color="#9a5e2a" /></linearGradient>
+          <linearGradient id="ch-in" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a3216" /><stop offset="1" stop-color="#2a160a" /></linearGradient>
+          <linearGradient id="ch-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0" /><stop offset="0.45" stop-color="#ffc531" /><stop offset="1" stop-color="#b8720a" /></linearGradient>
+          <radialGradient id="ch-glow"><stop offset="0" stop-color="#fff6c2" stop-opacity="0.95" /><stop offset="0.45" stop-color="#ffd45c" stop-opacity="0.5" /><stop offset="1" stop-color="#ffd45c" stop-opacity="0" /></radialGradient>
         </defs>
-        <ellipse cx="50" cy="90" rx="38" ry="6" fill="#000" opacity="0.28" />
-        {open && <ellipse class="an-glow" cx="50" cy="44" rx="48" ry="34" fill="url(#ch-glow)" />}
-        {/* l'intérieur, visible quand le couvercle se lève */}
-        <path d="M15 52 H85 V60 H15 Z" fill="#3a2414" stroke={INK} stroke-width="3" stroke-linejoin="round" />
-        {open && <path class="ch-light" d="M20 54 L10 18 H90 L80 54 Z" fill="url(#ch-glow)" />}
+        <ellipse cx="60" cy="101" rx="48" ry="6.5" fill="#000" opacity="0.3" />
+        {lifted && <ellipse class="an-glow" cx="60" cy="46" rx="60" ry="40" fill="url(#ch-glow)" />}
+        {/* grand ouvert : l'intérieur du couvercle rabattu en arrière, puis le trésor qui déborde */}
         {state === 'full' && (
-          <g stroke={INK} stroke-width="2">
-            <circle cx="34" cy="50" r="7" fill="url(#ch-gold)" /><circle cx="48" cy="46" r="8" fill="url(#ch-gold)" /><circle cx="63" cy="50" r="7" fill="url(#ch-gold)" />
-            <path d="M72 40 L78 47 L72 54 L66 47 Z" fill="#ff6fb5" /><path d="M26 39 L31 45 L26 51 L21 45 Z" fill="#6fe3ff" />
+          <g>
+            <path d="M15 58 L7 20 Q60 6 113 20 L105 58 Z" fill={INK} />
+            <path d="M17.5 56 L10.5 22.5 Q60 9.5 109.5 22.5 L102.5 56 Z" fill="url(#ch-in)" />
+            <path d="M10.5 22.5 Q60 9.5 109.5 22.5 L108.5 27 Q60 14.5 11.5 27 Z" fill="url(#ch-gold)" stroke={INK} stroke-width="1.6" />
+            {[28, 82].map((x) => <path d={`M${x} ${x < 60 ? 16.5 : 16.5} L${x + 9} ${x < 60 ? 14.6 : 14.6} L${x + 7.5} 56 H${x + 1.5} Z`} fill="url(#ch-gold)" stroke={INK} stroke-width="1.6" opacity="0.9" />)}
+            <ellipse class="ch-light" cx="60" cy="56" rx="44" ry="12" fill="url(#ch-glow)" />
+            {gem(31, 46, 6, ['#bfe0ff', '#3a78d8'])}{coin(44, 48, 7)}{coin(58, 42, 8)}{coin(73, 46, 7)}{gem(87, 45, 6.5, ['#ffc0e0', '#d83a8a'])}
+            {coin(36, 54, 6.5)}{coin(51, 52, 7)}{gem(62, 50, 5.5, ['#c8ffd8', '#2fae5a'])}{coin(68, 55, 6.5)}{coin(83, 54, 6.5)}
+            <path d="M40 40 Q48 34 56 37" fill="none" stroke="#fff6e0" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 4" />
           </g>
         )}
+        {/* fermé ou entrouvert : l'intérieur sombre sous le couvercle, la lumière qui filtre */}
+        {state !== 'full' && <path d="M16 56 H104 V62 H16 Z" fill="#2a160a" />}
+        {state === 'ready' && <ellipse class="ch-light" cx="60" cy="57" rx="40" ry="5" fill="url(#ch-glow)" />}
         {/* la caisse */}
         <g class="ch-body">
-          <path d="M13 56 H87 V82 Q87 88 81 88 H19 Q13 88 13 82 Z" fill="url(#ch-wood)" stroke={INK} stroke-width="3" stroke-linejoin="round" />
-          <path d="M13 68 H87" stroke="#6b3d18" stroke-width="2" opacity="0.6" /><path d="M13 78 H87" stroke="#6b3d18" stroke-width="2" opacity="0.6" />
-          <rect x="21" y="56" width="9" height="32" fill="url(#ch-gold)" stroke={INK} stroke-width="2.5" />
-          <rect x="70" y="56" width="9" height="32" fill="url(#ch-gold)" stroke={INK} stroke-width="2.5" />
-          <path d="M42 56 H58 V68 Q58 75 50 75 Q42 75 42 68 Z" fill="url(#ch-gold)" stroke={INK} stroke-width="2.5" stroke-linejoin="round" />
-          <circle cx="50" cy="63" r="2.6" fill={INK} /><path d="M50 64 V70" stroke={INK} stroke-width="2.4" stroke-linecap="round" />
+          <path d="M13 55 H107 V93 Q107 99 101 99 H19 Q13 99 13 93 Z" fill={INK} />
+          <path d="M15.5 57.5 H104.5 V92.5 Q104.5 96.5 100.5 96.5 H19.5 Q15.5 96.5 15.5 92.5 Z" fill="url(#ch-wood)" />
+          <path d="M15.5 71 H104.5 M15.5 84 H104.5" stroke="#4a2810" stroke-width="1.4" opacity="0.45" />
+          <path d="M15.5 72.4 H104.5 M15.5 85.4 H104.5" stroke="#ffe0b0" stroke-width="0.9" opacity="0.25" />
+          <rect x="15.5" y="57.5" width="14" height="39" fill="#000" opacity="0.14" />
+          {band(25)}{band(85)}
+          {/* coins ferrés */}
+          {[[13, 99, 1], [107, 99, -1]].map(([x, y, k]) => <path d={`M${x} ${y! - 13} V${y! - 6} Q${x} ${y} ${x! + k! * 6} ${y} H${x! + k! * 13} V${y! - 4} H${x! + k! * 6} Q${x! + k! * 4} ${y! - 4} ${x! + k! * 4} ${y! - 6} V${y! - 13} Z`} fill="url(#ch-gold)" stroke={INK} stroke-width="1.8" stroke-linejoin="round" />)}
+          {/* la serrure ciselée, sa gemme, le trou de la clé */}
+          <path d="M49 57 H71 V72 Q71 82 60 86 Q49 82 49 72 Z" fill="url(#ch-gold)" stroke={INK} stroke-width="2.4" stroke-linejoin="round" />
+          <path d="M52 60 H68 V71 Q68 79 60 82.4 Q52 79 52 71 Z" fill="none" stroke="#b8720a" stroke-width="1.2" />
+          <path d="M60 61 L64 65.5 L60 70 L56 65.5 Z" fill="#c8283a" stroke={INK} stroke-width="1.4" /><path d="M60 62.2 L62.6 65.5 H60 Z" fill="#ffb0b0" />
+          <circle cx="60" cy="74" r="2.6" fill={INK} /><path d="M58.8 75 L58 80 H62 L61.2 75 Z" fill={INK} />
         </g>
-        {/* le couvercle */}
-        <g class="ch-lid">
-          <path d="M11 56 V42 Q11 24 29 24 H71 Q89 24 89 42 V56 Z" fill="url(#ch-lid)" stroke={INK} stroke-width="3" stroke-linejoin="round" />
-          <path d="M18 34 Q22 28 30 28 H56" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity="0.55" />
-          <rect x="21" y="24" width="9" height="32" fill="url(#ch-gold)" stroke={INK} stroke-width="2.5" />
-          <rect x="70" y="24" width="9" height="32" fill="url(#ch-gold)" stroke={INK} stroke-width="2.5" />
-          <rect x="11" y="48" width="78" height="8" rx="2" fill="url(#ch-gold)" stroke={INK} stroke-width="2.5" />
-        </g>
-        {open && <path class="an-twinkle" style={{ transformOrigin: '20px 22px' }} d={spark(20, 22, 6)} fill="#fff" />}
-        {open && <path class="an-twinkle an-late" style={{ transformOrigin: '82px 16px' }} d={spark(82, 16, 5)} fill="#fff" />}
-        {state === 'full' && <path class="an-twinkle an-later" style={{ transformOrigin: '52px 12px' }} d={spark(52, 12, 7)} fill="#fff6c2" />}
+        {/* le couvercle bombé (fermé ou entrouvert) */}
+        {state !== 'full' && (
+          <g class="ch-lid">
+            <path d="M11 58 V45 Q11 23 36 23 H84 Q109 23 109 45 V58 Z" fill={INK} />
+            <path d="M13.5 55.5 V45 Q13.5 25.5 36 25.5 H84 Q106.5 25.5 106.5 45 V55.5 Z" fill="url(#ch-lid)" />
+            <path d="M14 42 Q60 34 106 42" fill="none" stroke="#6a3a16" stroke-width="1.3" opacity="0.5" />
+            <path d="M20 34 Q24 28 34 28 H66" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity="0.5" />
+            <path d="M25 25.5 H35 V56 H25 Z M85 25.5 H95 V56 H85 Z" fill="url(#ch-gold)" stroke={INK} stroke-width="2.2" />
+            <rect x="11" y="50" width="98" height="8" rx="2.5" fill="url(#ch-gold)" stroke={INK} stroke-width="2.2" />
+            <path d="M14 52 H106" stroke="#fffbe0" stroke-width="1.1" opacity="0.8" />
+            <path d="M55 53 H65 V62 Q60 65 55 62 Z" fill="url(#ch-gold)" stroke={INK} stroke-width="1.8" />
+          </g>
+        )}
+        {lifted && <path class="an-twinkle" style={{ transformOrigin: '18px 24px' }} d={spark(18, 24, 6)} fill="#fff" />}
+        {lifted && <path class="an-twinkle an-late" style={{ transformOrigin: '102px 16px' }} d={spark(102, 16, 5)} fill="#fff" />}
+        {state === 'full' && <path class="an-twinkle an-later" style={{ transformOrigin: '60px 8px' }} d={spark(60, 8, 7)} fill="#fff6c2" />}
+        {state === 'closed' && <path class="an-twinkle an-later" style={{ transformOrigin: '96px 62px' }} d={spark(96, 62, 4.5)} fill="#fff" />}
       </svg>
     </span>
   );

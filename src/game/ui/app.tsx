@@ -5,6 +5,7 @@ import { heroImage } from '../art';
 import { runBattle } from '../scenes';
 import { fmt, t } from '../i18n';
 import { Backdrop } from './backdrop';
+import { BarArt, ChromeDefs, LevelShield, Medallion, TabSocket } from './chrome';
 import { ensureDay, finishBattle, type BattleRequest } from '../state/actions';
 import { getState, useGame } from '../state/store';
 import { dots } from './dots';
@@ -51,8 +52,8 @@ function TopBar() {
   return (
     <header class="topbar">
       <button class="avatar" aria-label={t('side.settings')} onClick={() => open({ type: 'settings' })}>
-        {leader && <img src={heroImage(leader.defId)} alt="" />}
-        <span class="avatar-lv">{s.account.level}</span>
+        <Medallion size={54}>{leader && <img src={heroImage(leader.defId)} alt="" />}</Medallion>
+        <LevelShield level={s.account.level} />
         <span class="avatar-xp" style={{ width: `${(s.account.xp / accountXpForLevel(s.account.level)) * 100}%` }} />
       </button>
       <div class="who">
@@ -64,6 +65,8 @@ function TopBar() {
         <WalletPill k="essence" n={s.wallet.essence} />
         <WalletPill k="gems" n={s.wallet.gems} onPlus={() => open({ type: 'shop' })} />
       </div>
+      {/* le dessin de la barre en dernier : les autres enfants gardent leur rang (le tutoriel compte les onglets) */}
+      <BarArt kind="top" />
     </header>
   );
 }
@@ -74,11 +77,13 @@ function TabBar({ tab }: { tab: Tab }) {
     <nav class="tabbar">
       {TABS.map((x) => (
         <button class={`tabbar-btn${x === tab ? ' on' : ''}`} onClick={() => go(x)}>
+          {x === tab && <TabSocket />}
           <Icon name={x} size={28} />
           <span>{t(`nav.${x}`)}</span>
           {x !== tab && dots[x](s) && <RedDot />}
         </button>
       ))}
+      <BarArt kind="tabs" cols={TABS.length} />
     </nav>
   );
 }
@@ -148,9 +153,9 @@ export function App() {
   }, []);
   return (
     <div class="app">
-      {nav.tab === 'guild' && <Backdrop kind="guild" />}
+      <ChromeDefs />
       <TopBar />
-      <main class={`content${nav.tab === 'campaign' ? ' content-home' : ''}${nav.tab === 'adventure' || nav.tab === 'summon' || nav.tab === 'heroes' ? ' content-adv' : ''}`}>
+      <main class={`content${nav.tab === 'campaign' ? ' content-home' : ''}${nav.tab === 'adventure' || nav.tab === 'summon' || nav.tab === 'heroes' || nav.tab === 'guild' ? ' content-adv' : ''}`}>
         {nav.tab === 'campaign' && <CampaignScreen running={!nav.battle && !nav.modals.some((m) => m.type === 'prep')} />}
         {nav.tab === 'heroes' && <Backdrop kind="heroes" />}
         {nav.tab === 'heroes' && <div class="adv-scroll"><HeroesScreen /></div>}
@@ -158,7 +163,8 @@ export function App() {
         {nav.tab === 'summon' && <div class="adv-scroll"><SummonScreen /></div>}
         {nav.tab === 'adventure' && <Backdrop kind="adventure" />}
         {nav.tab === 'adventure' && <div class="adv-scroll"><AdventureScreen sub={nav.sub} /></div>}
-        {nav.tab === 'guild' && <GuildScreen />}
+        {nav.tab === 'guild' && <Backdrop kind="guild" />}
+        {nav.tab === 'guild' && <div class="adv-scroll"><GuildScreen /></div>}
       </main>
       <TabBar tab={nav.tab} />
       {nav.modals.map((m) => <ModalView modal={m} />)}

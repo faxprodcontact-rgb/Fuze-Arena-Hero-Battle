@@ -10,6 +10,19 @@ import { Portal, spark } from './portal';
 const f = (n: number) => n.toFixed(1);
 const CX = 180, CY = 162; // le centre du portail dans la scène (repère 360 × 400)
 
+/** Une gerbe de cristaux du premier plan : trois éclats, une face claire, une face sombre (pied en 0, 0). */
+function Shards({ x, y, s, c, light, dark }: { x: number; y: number; s: number; c: string; light: string; dark: string }) {
+  return (
+    <g transform={`translate(${x} ${y}) scale(${s})`}>
+      <ellipse cx="2" cy="4" rx="22" ry="4" fill="#0b0722" opacity="0.5" />
+      <path d="M-13 4 L-17 -14 L-11 -22 L-5 -12 L-3 4 Z" fill={c} /><path d="M-11 -22 L-5 -12 L-3 4 L-7 4 L-9 -10 Z" fill={light} />
+      <path d="M-3 4 L-4 -24 L3 -37 L9 -22 L8 4 Z" fill={c} /><path d="M3 -37 L9 -22 L8 4 L3 4 L4 -20 Z" fill={light} /><path d="M-3 4 L-4 -24 L3 -37 L1 -20 L0 4 Z" fill={dark} opacity="0.55" />
+      <path d="M8 4 L9 -11 L15 -17 L19 -8 L17 4 Z" fill={c} /><path d="M15 -17 L19 -8 L17 4 L13 4 L14 -8 Z" fill={light} />
+      <path d="M1 -30 L3 -35 L4.5 -28 Z" fill="#fff" opacity="0.9" />
+    </g>
+  );
+}
+
 /** Un obélisque : socle, fût effilé, pointe, trois signes qui s'allument de bas en haut. `side` = 1 à gauche du portail. */
 function Obelisk({ x, side }: { x: number; side: number }) {
   return (
@@ -115,6 +128,10 @@ export function SummonStage({ kind, casting }: { kind: 'normal' | 'basic'; casti
           const a = (i / 9) * Math.PI * 2 + 0.3, r = 150 + (i % 3) * 14;
           return <path class="ss-pull" style={{ '--dx': `${f(Math.cos(a) * r)}px`, '--dy': `${f(Math.sin(a) * r)}px`, animationDelay: `${-i * 0.33}s`, transformOrigin: `${CX}px ${CY}px` } as never} d={spark(CX, CY, i % 2 ? 5 : 7)} fill={i % 3 === 0 ? '#fff' : i % 3 === 1 ? c.a : c.b} />;
         })}
+        {/* au premier plan, devant le pied des obélisques : deux gerbes de cristaux qui luisent (les plus proches de nous) */}
+        <ellipse class="an-glow" cx="16" cy="380" rx="34" ry="30" fill="url(#ss-gl-a)" opacity="0.55" /><ellipse class="an-glow an-late" cx="344" cy="382" rx="34" ry="30" fill="url(#ss-gl-b)" opacity="0.55" />
+        <Shards x={14} y={398} s={1.25} c="#3fb6e6" light="#c8f6ff" dark="#1f6aa8" />
+        <g transform="translate(346 0) scale(-1 1)"><Shards x={0} y={400} s={1.35} c="#b06aff" light="#ecd6ff" dark="#6a2fc0" /></g>
         {/* l'éclat du cœur et l'anneau d'onde de l'invocation */}
         <circle class="ss-wave" cx={CX} cy={CY} r="70" fill="none" stroke="#fff" stroke-width="5" />
         <circle class="ss-flash" cx={CX} cy={CY} r="60" fill="url(#ss-white)" />
