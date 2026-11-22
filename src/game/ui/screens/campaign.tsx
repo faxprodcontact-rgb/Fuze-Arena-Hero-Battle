@@ -109,7 +109,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
           {loot.hours >= 2 && <RedDot />}
         </button>
 
-        <button class={`dock-fight${s.campaign.cleared === 0 ? ' point' : ''}`} disabled={done} onClick={() => prepare(campaignPlan())}>
+        <button class="dock-fight" disabled={done} onClick={() => prepare(campaignPlan())}>
           <FightButtonArt off={done} />
           <span class="dock-fight-label">{done ? t('camp.done') : t('fight')}</span>
           {!done && (

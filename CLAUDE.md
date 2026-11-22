@@ -329,6 +329,21 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   couleur de la rareté cachée). Le tutoriel attend OK à la fin du tirage (`.reveal-ok`, la main n'y va qu'une fois le bouton
   visible). Vérifier avec `scratchpad/art5/tirage.cjs <nom> <pro|se> <1|10> <pitié 0..39> [passer]` (filme le tirage ; 39 =
   Légendaire garanti), `tirage-planche.py`, `tirage-video.py` et `tuto-run.cjs` (tutoriel joué jusqu'à l'onglet Héros).
+  **v0.41.0 (22/11/2026), retours du propriétaire sur son iPhone** : (1) **le bois de l'interface est remplacé par un émail
+  bleu nuit cerclé d'or**, « plus actuel » (barres du haut et du bas, bas de l'accueil, titres des fenêtres et des pages,
+  plaque du chapitre, `TitleBanner`, plaque « Victoire ! », étiquettes des médaillons, plaque de la guilde, panneau et bouton
+  Quitter des combats) : variables de la direction `bois` (nom gardé, « Bleu nuit » dans les outils de test), `BAR_TONES` et
+  `cx-navy` de `chrome.tsx`, `tb-navy` de `title-banner.tsx`, `Panel` et `HUD_BUTTONS.navy` de `hud-art.tsx`. Les panneaux
+  restent en parchemin, leurs bords et textes passent au bleu nuit. (2) **Toutes les fenêtres s'ouvrent au milieu de l'écran**
+  (plus rien ne monte du bas : `.modal`, la fenêtre d'un emplacement `.hp-sheet`, les petits messages `.toast`, les pages
+  apparaissent sur place). (3) Plus de socle sous l'onglet ouvert de la barre du bas (le propriétaire n'aimait pas cette
+  « zone ») : le picto se soulève, lumière douce sans bord. (4) Combattre de l'accueil plus petit, lettres dans le cadre,
+  gemmes plus coupées (plus de `overflow: hidden` ni de second reflet). (5) Préparation : **plus d'aperçu des ennemis en
+  haut** ; leur puissance est à côté de la nôtre dans le titre (« 145 / 50 », vert ou rouge) ; le plateau reprend la place.
+  (6) Plus de couronne au-dessus du chef pendant le combat. (7) Page d'un héros : un emplacement vide reste vide (la
+  silhouette grise passait pour un vrai objet et l'iPhone ne la dessinait qu'au rebond) ; plus de rebond nulle part
+  (`overscroll-behavior: none`). Vérifier avec `scratchpad/art5/proprio.cjs <dossier>` (écrans touchés, à la taille de son
+  téléphone, encoche imitée), `tour2.cjs <pro|se>`, `tuto-run.cjs`.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

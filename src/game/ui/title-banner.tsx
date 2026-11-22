@@ -1,5 +1,5 @@
 // Le bandeau de titre d'une partie du jeu (ici « Aventure »), dessiné par le code dans le trait du décor :
-// un ruban cramoisi aux bouts repliés, une plaque de bois sculpté sertie dans un cadre d'or, un fleuron en haut,
+// un ruban cramoisi aux bouts repliés, une plaque d'émail bleu nuit sertie dans un cadre d'or, un fleuron en haut,
 // une gemme de chaque côté, le titre en lettres d'or. Un reflet passe sur la plaque, les gemmes scintillent.
 import type { ComponentChildren } from 'preact';
 import './anim.css';
@@ -25,7 +25,7 @@ export function TitleBanner({ title, children, ribbon = ['#e2574c', '#9c2a2e', '
       <svg viewBox="0 0 216 54" aria-hidden="true">
         <defs>
           <linearGradient id="tb-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0" /><stop offset="0.45" stop-color="#ffc531" /><stop offset="1" stop-color="#b8720a" /></linearGradient>
-          <linearGradient id="tb-wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a97848" /><stop offset="0.5" stop-color="#7c5230" /><stop offset="1" stop-color="#55361a" /></linearGradient>
+          <linearGradient id="tb-navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4253a3" /><stop offset="0.5" stop-color="#2a3678" /><stop offset="1" stop-color="#1a2354" /></linearGradient>
           <linearGradient id="tb-ribbon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e2574c" /><stop offset="1" stop-color="#9c2a2e" /></linearGradient>
           <linearGradient id="tb-text" x1="0" y1="0" x2="0" y2="1"><stop offset="0.15" stop-color="#fffbe0" /><stop offset="0.55" stop-color="#ffd24a" /><stop offset="1" stop-color="#e08a12" /></linearGradient>
           <clipPath id="tb-clip"><rect x="26" y="9.500" width="164" height="35" rx="6" /></clipPath>
@@ -40,12 +40,12 @@ export function TitleBanner({ title, children, ribbon = ['#e2574c', '#9c2a2e', '
             <path d="M24 21.200 H31.500 V40.800 H24 Z" fill="#000" opacity="0.2" />
           </g>
         ))}
-        {/* la plaque : bord sombre, cadre d'or, filet, bois sculpté */}
+        {/* la plaque : bord sombre, cadre d'or, filet, émail bleu nuit */}
         <rect x="20" y="3.500" width="176" height="47" rx="11" fill="#2f1b0c" />
         <rect x="21.800" y="5.300" width="172.400" height="43.400" rx="9.500" fill="url(#tb-gold)" />
         <path d="M24 12 Q24 7 30 6.800 H186 Q192 7 192 12" fill="none" stroke="#fffbe0" stroke-width="1" opacity="0.9" />
         <rect x="25" y="8.500" width="166" height="37" rx="7" fill="#2f1b0c" />
-        <rect x="26" y="9.500" width="164" height="35" rx="6" fill="url(#tb-wood)" />
+        <rect x="26" y="9.500" width="164" height="35" rx="6" fill="url(#tb-navy)" />
         <g clip-path="url(#tb-clip)">
           <rect x="26" y="9.500" width="164" height="13" fill="#fff" opacity="0.13" />
           <rect x="26" y="37" width="164" height="8" fill="#000" opacity="0.18" />
@@ -63,7 +63,7 @@ export function TitleBanner({ title, children, ribbon = ['#e2574c', '#9c2a2e', '
         {/* une gemme de chaque côté */}
         {gem(20)}{gem(196)}
         {/* le titre, en lettres d'or cernées de brun */}
-        <text {...fit} x={tx} y={ty + 1.500} text-anchor="middle" font-family="'Lilita One', 'Trebuchet MS', sans-serif" font-weight="400" font-size={size} fill="#1f1006" opacity="0.4" stroke="#1f1006" stroke-width="3.400" stroke-linejoin="round">{title}</text>
+        <text {...fit} x={tx} y={ty + 1.500} text-anchor="middle" font-family="'Lilita One', 'Trebuchet MS', sans-serif" font-weight="400" font-size={size} fill="#060918" opacity="0.4" stroke="#060918" stroke-width="3.400" stroke-linejoin="round">{title}</text>
         <text {...fit} x={tx} y={ty} text-anchor="middle" font-family="'Lilita One', 'Trebuchet MS', sans-serif" font-weight="400" font-size={size} fill="url(#tb-text)" stroke="#2f1b0c" stroke-width="3.400" stroke-linejoin="round" paint-order="stroke">{title}</text>
         <path class="an-twinkle" style={{ transformOrigin: '20px 20px' }} d={spark(20, 20, 4)} fill="#fff" /><path class="an-twinkle an-late" style={{ transformOrigin: '196px 20px' }} d={spark(196, 20, 4)} fill="#fff" />
       </svg>

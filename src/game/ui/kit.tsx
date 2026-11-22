@@ -176,7 +176,6 @@ export function ItemIcon(p: { item?: Item; level?: number; onClick?: () => void;
   if (!item) {
     return (
       <Tag class="item item-empty" onClick={p.onClick}>
-        {p.slot && <span class="item-ghost"><Icon name={p.slot} size={30} /></span>}
         {!!p.level && <span class="item-level">+{p.level}</span>}
       </Tag>
     );

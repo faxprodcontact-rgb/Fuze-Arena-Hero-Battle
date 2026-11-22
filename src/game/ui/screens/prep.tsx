@@ -4,8 +4,7 @@
 import { useState } from 'preact/hooks';
 import { LEADER_SLOT, type Slot } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
-import { ELEMENT_COLOR, heroImage, monsterImage } from '../../art';
-import { battleLook } from '../../look';
+import { ELEMENT_COLOR } from '../../art';
 import { FormationStage, Plate, STAGE_H, STAGE_POS, STAGE_W } from '../formation-stage';
 import { HeroFigure } from '../hero-figure';
 import { fmt, t } from '../../i18n';
@@ -69,32 +68,17 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
   const mine = tired.size
     ? formation.filter(([u]) => !tired.has(u)).reduce((sum, [u]) => sum + heroPower(s, heroByUid(s, u)!), 0)
     : teamPower(s, team);
-  const waves = plan?.waves ?? [];
-  const look = plan ? battleLook(plan.kind, plan.title, plan.dungeon) : undefined;
+  const need = plan?.need;
   return (
     <div class={`prep prep-hall${plan ? ' prep-plan' : ''}`}>
       <div class="backdrop prep-bg" aria-hidden="true" />
       <header class="prep-head">
         <button class="x" aria-label={t('close')} onClick={close}>‹</button>
         <h2>{plan ? `${t(`mode.${plan.kind}`)} ${plan.kind === 'dailyBoss' || plan.kind === 'guildBoss' ? t(`monster.${plan.title}`) : plan.title}` : team === 'defense' ? t('war.defense') : t('heroes.team')}</h2>
-        <span class="power-chip"><Icon name="power" size={18} />{fmt(mine)}</span>
+        <span class={`power-chip${need === undefined ? '' : mine >= need ? ' ok' : ' low'}`}>
+          <Icon name="power" size={18} />{fmt(mine)}{need !== undefined && <small> / {fmt(need)}</small>}
+        </span>
       </header>
-
-      {plan && (
-        <section class="prep-enemies">
-          <div class="row between">
-            <span class="muted small">{waves.length > 1 ? `${t('battle.wave')} ×${waves.length}` : ''}</span>
-            {plan.need !== undefined && (
-              <span class={`power-chip ${mine >= plan.need ? 'ok' : 'low'}`}><Icon name="power" size={16} />{fmt(plan.need)}</span>
-            )}
-          </div>
-          <div class="enemy-row">
-            {(waves[waves.length - 1] ?? []).map((u) => (
-              <img class={u.boss ? 'boss' : ''} src={u.side === 'enemy' && u.defId.includes('-') ? heroImage(u.defId) : monsterImage(u.defId, u.element, look)} alt="" />
-            ))}
-          </div>
-        </section>
-      )}
 
       <Board tired={tired} team={team} />
 

@@ -2,7 +2,7 @@
 // Le moteur (src/core/battle) calcule ; ces scènes animent ce qu'il raconte.
 import Phaser from 'phaser';
 import type { Battle } from '../core/battle/engine';
-import { ENERGY_MAX, LEADER_SLOT, TICK_MS, type BattleEvent, type Hit, type Slot, type Unit } from '../core/battle/types';
+import { ENERGY_MAX, TICK_MS, type BattleEvent, type Hit, type Slot, type Unit } from '../core/battle/types';
 import { HEROES } from '../core/data/heroes';
 import type { Element } from '../core/types';
 import { ELEMENT_COLOR, artUrl, cardUrl, hasArt, heroCanvas, monsterCanvas } from './art';
@@ -344,7 +344,6 @@ export abstract class FightScene extends Phaser.Scene {
     fig.setScale(hero ? 1 : -1, 1);
     const bars = this.add.graphics();
     body.add([shadow, fig, bars]);
-    if (hero && unit.slot === LEADER_SLOT && unit.talent) body.add(this.text(0, barY - 22, '♛', 26, '#ffe27a'));
     this.views.set(unit.id, { unit, body, sprite: fig, imgs, parts, bars, homeX: x, homeY: body.y, barY, barW, hp: unit.hp, sx: fig.scaleX, sy: 1, ph: Math.random() * 6.28 });
     if (enter) this.tweens.add({ targets: body, x, duration: 450 / speed, ease: 'Back.easeOut' });
   }

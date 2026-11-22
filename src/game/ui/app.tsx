@@ -5,7 +5,7 @@ import { heroImage } from '../art';
 import { runBattle } from '../scenes';
 import { fmt, t } from '../i18n';
 import { Backdrop } from './backdrop';
-import { BarArt, ChromeDefs, LevelShield, Medallion, TabSocket } from './chrome';
+import { BarArt, ChromeDefs, LevelShield, Medallion } from './chrome';
 import { ensureDay, finishBattle, type BattleRequest } from '../state/actions';
 import { getState, useGame } from '../state/store';
 import { dots } from './dots';
@@ -77,7 +77,6 @@ function TabBar({ tab }: { tab: Tab }) {
     <nav class="tabbar">
       {TABS.map((x) => (
         <button class={`tabbar-btn${x === tab ? ' on' : ''}`} onClick={() => go(x)}>
-          {x === tab && <TabSocket />}
           <Icon name={x} size={28} />
           <span>{t(`nav.${x}`)}</span>
           {x !== tab && dots[x](s) && <RedDot />}

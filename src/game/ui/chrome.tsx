@@ -1,5 +1,6 @@
 // Les pièces de l'interface dessinées par le code, dans le trait des décors (bandeau de titre, portail) : contour brun
-// sombre, or en dégradé (clair en haut, foncé en bas), bois sculpté, émail, gemmes ; un reflet en haut de chaque volume.
+// sombre, or en dégradé (clair en haut, foncé en bas), émail bleu nuit (à la place du bois depuis la v0.41.0), gemmes ;
+// un reflet en haut de chaque volume.
 // Les dégradés sont rangés une seule fois dans `ChromeDefs` (posé par l'application, jamais caché par display: none :
 // un dégradé caché ne peint plus rien) ; chaque pièce s'en sert par son nom (`url(#cx-…)`).
 import type { ComponentChildren } from 'preact';
@@ -22,21 +23,21 @@ export function useSize<T extends Element>() {
   return [ref, size] as const;
 }
 
-/** Les trois bois des barres : celle du haut, celle des onglets (plus sombre), le bas de l'accueil (plus chaud). */
-const BAR_WOOD = {
-  top: ['#8c5d33', '#6b4423', '#4a2d15'],
-  tabs: ['#6e4625', '#4e3018', '#33200e'],
-  dock: ['#9c6b3c', '#7a4f2a', '#583619'],
+/** Les trois émaux bleu nuit des barres : celle du haut, celle des onglets (plus sombre), le bas de l'accueil (plus clair). */
+const BAR_TONES = {
+  top: ['#34438c', '#25316c', '#18204b'],
+  tabs: ['#26326e', '#1b2453', '#121839'],
+  dock: ['#3a4994', '#2a3676', '#1d2758'],
 } as const;
 
 /**
- * Le fond d'une barre (en haut, en bas, sous le combat de l'accueil) : une planche de bois sculpté, un reflet doux, et
- * sur le bord qui touche l'écran un rail d'or entre deux filets sombres, avec ses clous et une gemme au milieu. Dessiné à
- * la taille exacte de la barre (rien n'est étiré). Les onglets ont leurs séparations creusées dans le bois.
+ * Le fond d'une barre (en haut, en bas, sous le combat de l'accueil) : un émail bleu nuit, un reflet doux, et sur le bord
+ * qui touche l'écran un rail d'or entre deux filets sombres, avec ses clous et une gemme au milieu. Dessiné à la taille
+ * exacte de la barre (rien n'est étiré). Les onglets ont leurs séparations creusées dans l'émail.
  */
 export function BarArt({ kind, cols = 0 }: { kind: 'top' | 'tabs' | 'dock'; cols?: number }) {
   const [ref, { w, h }] = useSize<HTMLSpanElement>();
-  const [c0, c1, c2] = BAR_WOOD[kind];
+  const [c0, c1, c2] = BAR_TONES[kind];
   const railTop = kind === 'top' ? h - 7 : 0; // le rail : en bas pour la barre du haut, en haut pour les autres
   const body = kind === 'top' ? [0, h - 7] : [7, h];
   const id = `cx-bar-${kind}`;
@@ -47,10 +48,10 @@ export function BarArt({ kind, cols = 0 }: { kind: 'top' | 'tabs' | 'dock'; cols
           <defs><linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color={c0} /><stop offset="0.55" stop-color={c1} /><stop offset="1" stop-color={c2} /></linearGradient></defs>
           <rect x="0" y={body[0]} width={w} height={body[1]! - body[0]!} fill={`url(#${id})`} />
           <rect x="0" y={body[0]} width={w} height={(body[1]! - body[0]!) * 0.42} fill="#fff" opacity="0.08" />
-          {/* les séparations des onglets, creusées dans le bois */}
+          {/* les séparations des onglets, creusées dans l'émail */}
           {cols > 1 && Array.from({ length: cols - 1 }, (_, i) => {
             const x = Math.round((w * (i + 1)) / cols);
-            return <g><path d={`M${x - 0.75} 16 V${h - 12}`} stroke="#1c1008" stroke-width="1.5" opacity="0.55" /><path d={`M${x + 0.9} 16 V${h - 12}`} stroke="#fff" stroke-width="1" opacity="0.1" /></g>;
+            return <g><path d={`M${x - 0.75} 16 V${h - 12}`} stroke="#060918" stroke-width="1.5" opacity="0.6" /><path d={`M${x + 0.9} 16 V${h - 12}`} stroke="#fff" stroke-width="1" opacity="0.1" /></g>;
           })}
           {/* le rail d'or */}
           <rect x="0" y={railTop} width={w} height="7" fill={INK} />
@@ -70,24 +71,8 @@ export function BarArt({ kind, cols = 0 }: { kind: 'top' | 'tabs' | 'dock'; cols
   );
 }
 
-/** Le socle de l'onglet ouvert : une arche cerclée d'or, émaillée de bleu, qui dépasse au-dessus de la barre ; une lueur. */
-export function TabSocket() {
-  return (
-    <svg class="tab-socket" viewBox="0 0 72 70" aria-hidden="true">
-      <ellipse class="an-glow" cx="36" cy="30" rx="36" ry="26" fill="url(#cx-glow)" />
-      <path d="M5 70 V32 Q5 6 36 4 Q67 6 67 32 V70 Z" fill={INK} />
-      <path d="M8 70 V32 Q8 9 36 7 Q64 9 64 32 V70 Z" fill="url(#cx-gold-ring)" />
-      <path d="M11 22 Q16 10 36 9" fill="none" stroke="#fffbe0" stroke-width="1.6" stroke-linecap="round" opacity="0.85" />
-      <path d="M12 70 V33 Q12 13 36 11.5 Q60 13 60 33 V70 Z" fill={INK} />
-      <path d="M13.5 70 V33 Q13.5 14.5 36 13 Q58.5 14.5 58.5 33 V70 Z" fill="url(#cx-enamel)" />
-      <path d="M16 34 Q18 17 36 16 Q54 17 56 34 Q48 26 36 26 Q24 26 16 34 Z" fill="#fff" opacity="0.16" />
-      <Gem x={36} y={7.5} r={3.4} tone="red" />
-    </svg>
-  );
-}
-
 /**
- * La plaque du chapitre, en haut de l'accueil : bois sculpté dans un cadre d'or, rubans cramoisis repliés derrière, le titre
+ * La plaque du chapitre, en haut de l'accueil : émail bleu nuit dans un cadre d'or, rubans cramoisis repliés derrière, le titre
  * en lettres d'or, et la progression du chapitre dans une rainure d'or. Un reflet passe sur la plaque.
  */
 export function ChapterPlaque({ title, progress }: { title: string; progress: number }) {
@@ -108,16 +93,16 @@ export function ChapterPlaque({ title, progress }: { title: string; progress: nu
       <rect x="21.8" y="5.3" width="192.4" height="51.4" rx="9.5" fill="url(#cx-gold)" />
       <path d="M24 12 Q24 7 30 6.8 H206 Q212 7 212 12" fill="none" stroke="#fffbe0" stroke-width="1" opacity="0.9" />
       <rect x="25.5" y="9" width="185" height="44" rx="7" fill={INK} />
-      <rect x="27" y="10.5" width="182" height="41" rx="6" fill="url(#cx-wood)" />
+      <rect x="27" y="10.5" width="182" height="41" rx="6" fill="url(#cx-navy)" />
       <g clip-path="url(#cp-clip)">
         <rect x="27" y="10.5" width="182" height="15" fill="#fff" opacity="0.13" />
         <path class="tb-sheen" d="M0 4 H16 L4 58 H-12 Z" fill="#fff" opacity="0.28" />
       </g>
-      <text x="118" y="33.5" text-anchor="middle" font-family="'Lilita One', 'Trebuchet MS', sans-serif" font-size={size} fill="#1f1006" opacity="0.45" stroke="#1f1006" stroke-width="3.4" stroke-linejoin="round">{title}</text>
+      <text x="118" y="33.5" text-anchor="middle" font-family="'Lilita One', 'Trebuchet MS', sans-serif" font-size={size} fill="#060918" opacity="0.45" stroke="#060918" stroke-width="3.4" stroke-linejoin="round">{title}</text>
       <text x="118" y="32" text-anchor="middle" font-family="'Lilita One', 'Trebuchet MS', sans-serif" font-size={size} fill="url(#cx-text-gold)" stroke={INK} stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">{title}</text>
       {/* la progression : une rainure sombre cerclée d'or, l'or qui la remplit */}
       <rect x="61" y="39" width="114" height="8.5" rx="4.25" fill={INK} />
-      <rect x="62.5" y="40.5" width="111" height="5.5" rx="2.75" fill="#1c1008" />
+      <rect x="62.5" y="40.5" width="111" height="5.5" rx="2.75" fill="#070a1e" />
       {p > 0 && <rect x="62.5" y="40.5" width={Math.max(5.5, 111 * p)} height="5.5" rx="2.75" fill="url(#cx-gold)" />}
       {p > 0 && <rect x="64" y="41.2" width={Math.max(2, 111 * p - 3)} height="1.4" rx="0.7" fill="#fff" opacity="0.6" />}
       {/* le fleuron du haut, une gemme à chaque bout, la goutte d'or du bas */}
@@ -159,7 +144,7 @@ export function FightButtonArt({ off = false }: { off?: boolean }) {
             {!off && <path class="fb-sheen" d={`M-40 0 H-18 L-48 ${h} H-70 Z`} fill="#fff" opacity="0.35" />}
           </g>
           <rect x="13" y="13" width={w - 26} height={h - 26} rx="7" fill="none" stroke="#ffe9a0" stroke-width="1.2" opacity="0.55" />
-          {[[6, h / 2 - 1.5], [w - 6, h / 2 - 1.5]].map(([x, y]) => <g><circle cx={x} cy={y} r="7.5" fill={INK} /><circle cx={x} cy={y} r="6" fill="url(#cx-gold-ring)" /><Gem x={x!} y={y!} r={3.6} tone="red" /></g>)}
+          {[[8.5, h / 2 - 1.5], [w - 8.5, h / 2 - 1.5]].map(([x, y]) => <g><circle cx={x} cy={y} r="7.5" fill={INK} /><circle cx={x} cy={y} r="6" fill="url(#cx-gold-ring)" /><Gem x={x!} y={y!} r={3.6} tone="red" /></g>)}
         </svg>
       )}
     </span>
@@ -192,9 +177,7 @@ export function ChromeDefs() {
         <linearGradient id="cx-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0" /><stop offset="0.45" stop-color="#ffc531" /><stop offset="1" stop-color="#b8720a" /></linearGradient>
         <linearGradient id="cx-gold-ring" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#fff6c4" /><stop offset="0.35" stop-color="#ffcf45" /><stop offset="0.7" stop-color="#e09a18" /><stop offset="1" stop-color="#9a5a06" /></linearGradient>
         <linearGradient id="cx-gold-soft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a0" /><stop offset="1" stop-color="#d08a14" /></linearGradient>
-        <linearGradient id="cx-wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a97848" /><stop offset="0.5" stop-color="#7c5230" /><stop offset="1" stop-color="#55361a" /></linearGradient>
-        <linearGradient id="cx-wood-dark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6e4a2a" /><stop offset="0.55" stop-color="#4e321b" /><stop offset="1" stop-color="#36210f" /></linearGradient>
-        <linearGradient id="cx-slot" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1008" /><stop offset="1" stop-color="#3a2414" /></linearGradient>
+        <linearGradient id="cx-navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4253a3" /><stop offset="0.5" stop-color="#2a3678" /><stop offset="1" stop-color="#1a2354" /></linearGradient>
         <radialGradient id="cx-enamel" cx="0.45" cy="0.3" r="0.75"><stop offset="0" stop-color="#5f7fe0" /><stop offset="0.55" stop-color="#2f3f98" /><stop offset="1" stop-color="#1a2160" /></radialGradient>
         <radialGradient id="cx-enamel-green" cx="0.45" cy="0.25" r="0.8"><stop offset="0" stop-color="#8ef0a0" /><stop offset="0.5" stop-color="#3fb85c" /><stop offset="1" stop-color="#1c6e33" /></radialGradient>
         <linearGradient id="cx-text-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0.15" stop-color="#fffbe0" /><stop offset="0.55" stop-color="#ffd24a" /><stop offset="1" stop-color="#e08a12" /></linearGradient>

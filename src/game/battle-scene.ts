@@ -100,9 +100,9 @@ export class BattleScene extends FightScene {
     this.hudY = arenaBottom + 26;
     this.groundTop = groundTop;
     this.drawArena(arenaBottom);
-    // le bas de l'écran : une planche de bois sombre et son plateau cerclé d'or (hud-art.tsx) ; un rail d'or à cheval sur
-    // le bas du terrain ; sous le panneau, le même bois jusqu'en bas (grand téléphone)
-    this.add.rectangle(W / 2, arenaBottom + (H - arenaBottom) / 2, W, H - arenaBottom, 0x2a190b).setDepth(-6);
+    // le bas de l'écran : un émail bleu nuit et son plateau cerclé d'or (hud-art.tsx) ; un rail d'or à cheval sur
+    // le bas du terrain ; sous le panneau, le même émail jusqu'en bas (grand téléphone)
+    this.add.rectangle(W / 2, arenaBottom + (H - arenaBottom) / 2, W, H - arenaBottom, 0x0f1533).setDepth(-6);
     this.add.image(0, arenaBottom, 'hud-panel').setOrigin(0, 0).setDepth(-5);
     this.add.image(0, arenaBottom - 9, 'hud-rail').setOrigin(0, 0).setDepth(1350);
 
@@ -110,7 +110,7 @@ export class BattleScene extends FightScene {
     this.waveLabel = this.text(W / 2, 104, '', 24, '#ffffff').setDepth(3000);
     this.updateWaveLabel();
     if (this.req.damageMode) this.damageLabel = this.text(W / 2, 160, '0', 44, '#ffe27a').setDepth(3000);
-    this.button(92, 60, 'wood', false, t('battle.quit'), () => this.finish());
+    this.button(92, 60, 'navy', false, t('battle.quit'), () => this.finish());
 
     for (const u of this.battle.heroes) this.addView(u);
     for (const u of this.battle.enemies) this.addView(u);
@@ -159,7 +159,7 @@ export class BattleScene extends FightScene {
 
   private drawAuto() {
     const on = getState().auto;
-    const b = this.button(190, this.hudY + 292, on ? 'green' : 'wood', true, t('battle.auto'), () => {
+    const b = this.button(190, this.hudY + 292, on ? 'green' : 'navy', true, t('battle.auto'), () => {
       setAuto(!on);
       this.battle.setAuto(!on);
       b.c.destroy();

@@ -1,5 +1,5 @@
 // Les pièces du panneau des héros en combat (battle-scene.ts), dessinées par le code dans le même trait que les menus
-// (chrome.tsx) : contour brun sombre, or en dégradé, bois sculpté, émail. Chaque dessin a ses propres dégradés (il devient
+// (chrome.tsx) : contour brun sombre, or en dégradé, émail bleu nuit. Chaque dessin a ses propres dégradés (il devient
 // une image à part pour Phaser) ; les adresses des images sont gardées d'un combat à l'autre.
 import type Phaser from 'phaser';
 import type { VNode } from 'preact';
@@ -21,14 +21,14 @@ function gem(x: number, y: number, r: number, light: string, mid: string, dark: 
   );
 }
 
-/** Le panneau (720 × 398) : planche de bois sombre ; le plateau creusé où se tiennent les portraits, cerclé d'or. */
+/** Le panneau (720 × 398) : émail bleu nuit ; le plateau creusé où se tiennent les portraits, cerclé d'or. */
 function Panel() {
   const w = 720, h = 398;
   return (
     <>
       <defs>
-        <linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6e4625" /><stop offset="0.5" stop-color="#4e3018" /><stop offset="1" stop-color="#2a190b" /></linearGradient>
-        <linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#170d06" /><stop offset="1" stop-color="#3a2414" /></linearGradient>
+        <linearGradient id="w" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2c3878" /><stop offset="0.5" stop-color="#1d2658" /><stop offset="1" stop-color="#0f1533" /></linearGradient>
+        <linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070a1e" /><stop offset="1" stop-color="#1a2250" /></linearGradient>
         <GOLD />
       </defs>
       <rect width={w} height={h} fill="url(#w)" />
@@ -78,7 +78,7 @@ function Ring() {
         <path d="M18 52 A54 54 0 0 1 88 19" fill="none" stroke="#fffbe0" stroke-width="2.4" stroke-linecap="round" opacity="0.85" />
         <path d="M122 88 A54 54 0 0 1 52 121" fill="none" stroke="#7a4406" stroke-width="2.4" stroke-linecap="round" opacity="0.5" />
         <circle cx="70" cy="70" r="60.5" fill={INK} />
-        <circle cx="70" cy="70" r="59" fill="#120a05" />
+        <circle cx="70" cy="70" r="59" fill="#070a1e" />
         <circle cx="70" cy="70" r="51.5" fill={INK} />
         <circle cx="70" cy="70" r="50" fill="#e8b84a" />
       </g>
@@ -104,7 +104,7 @@ function HpGroove() {
       <defs><GOLD /></defs>
       <rect x="0.5" y="0.5" width="119" height="21" rx="9" fill={INK} />
       <rect x="2.5" y="2.5" width="115" height="17" rx="7.5" fill="url(#g)" />
-      <rect x="4.5" y="4.5" width="111" height="13" rx="6" fill="#1a0f08" />
+      <rect x="4.5" y="4.5" width="111" height="13" rx="6" fill="#070a1e" />
     </>
   );
 }
@@ -139,7 +139,7 @@ function Button({ w, h, c }: { w: number; h: number; c: [string, string, string]
 export const HUD_BUTTONS = {
   green: { c: ['#9cf0a8', '#3fb35c', '#1f6e36'] as [string, string, string], ink: '#11461f' },
   blue: { c: ['#9fc8ff', '#3f86e0', '#23509e'] as [string, string, string], ink: '#16306a' },
-  wood: { c: ['#b48452', '#7c5230', '#4e3018'] as [string, string, string], ink: '#2f1b0c' },
+  navy: { c: ['#8a9cf0', '#3a4994', '#1d2758'] as [string, string, string], ink: '#0a0e26' },
 };
 
 /** Les disques des portraits, par élément. */
