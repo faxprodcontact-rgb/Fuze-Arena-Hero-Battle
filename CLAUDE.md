@@ -316,6 +316,19 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   mêlaient à la scène) ; cristaux du premier plan dans `summon-stage.tsx` ; portail : couronne, ailes (plumes partant d'un
   même point : des ailes, pas des rayons), double anneau perlé, gemmes serties, tunnel aspiré, éclat du cœur. Captures :
   `scratchpad/art5/tour2.cjs <pro|se>` (24 écrans), `ui1.cjs`, `ui-guild.cjs`, `ui-summon.cjs`, `ui-crown.cjs`, `tailles.cjs`.
+  **v0.40.0 (22/11/2026), le tirage des héros refait** (demande : « plus spectaculaire, des impacts de couleur selon la
+  rareté pour teaser le personnage, dos de carte refait de zéro »). `SummonResult` (`screens/summon.tsx`) : une boule de
+  magie (`TeaseOrb`) encaisse un impact par rareté gagnée, sa couleur monte (argent, bleu, violet, or : `TEASE`, variable CSS
+  `--tc`) jusqu'à la meilleure rareté du tirage ; chaque impact secoue l'écran et fait enfler la boule ; éclairs dès l'Épique,
+  colonne d'or pour le Légendaire. La boule tient la couleur atteinte (`HOLD_MS`), éclate, et les cartes en jaillissent (elles
+  partent du centre : `--dx`/`--dy` mesurés). Cartes de dos qui luisent de la couleur de leur rareté, puis retournement en 3D
+  de la moins rare à la plus rare ; la meilleure tremble, se fait attendre (`BEST_PAUSE`) et éclaire tout l'écran
+  (`.rv-final`). Toucher l'écran passe tout ; OK n'arrive qu'à la fin. Le rythme : constantes `FIRST_MS`…`FLIP_MS`.
+  **Dos de carte** : `ui/card-back.tsx` (`CardBack`, par le code : cadre d'or biseauté, clous sertis aux coins, étoiles et
+  constellations, cercle de signes en filigrane, le portail en miniature avec ailes et flèche ; cœur, gemmes et lueur de la
+  couleur de la rareté cachée). Le tutoriel attend OK à la fin du tirage (`.reveal-ok`, la main n'y va qu'une fois le bouton
+  visible). Vérifier avec `scratchpad/art5/tirage.cjs <nom> <pro|se> <1|10> <pitié 0..39> [passer]` (filme le tirage ; 39 =
+  Légendaire garanti), `tirage-planche.py`, `tirage-video.py` et `tuto-run.cjs` (tutoriel joué jusqu'à l'onglet Héros).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

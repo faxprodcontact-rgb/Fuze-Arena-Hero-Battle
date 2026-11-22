@@ -790,72 +790,147 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 /* pendant que l'invocation part, on ne touche plus à rien (sans griser les boutons) */
 .sum-casting .sum-panel, .sum-casting .sum-side { pointer-events: none; }
 
-/* la révélation : la nuit du sanctuaire, les héros les plus rares d'abord et mis en valeur, un héros seul montré en grand */
-.reveal-screen { position: absolute; inset: 0; z-index: 60 !important; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: max(22px, env(safe-area-inset-top, 0px)) 12px max(22px, env(safe-area-inset-bottom, 0px)); overflow: hidden; animation: fade 0.3s; }
-.reveal-screen::after { content: ''; position: absolute; inset: 0; background: #fff; pointer-events: none; animation: reveal-white 0.7s ease-out forwards; }
+/* le tirage (SummonResult) : la boule de magie encaisse des impacts dont la couleur monte (argent, bleu, violet, or) jusqu'à
+   la meilleure rareté obtenue ; puis les cartes arrivent de dos, luisent de la couleur de leur rareté et se retournent de la
+   moins rare à la plus rare. --tc = la couleur atteinte (elle glisse d'une couleur à l'autre grâce à @property). */
+@property --tc { syntax: '<color>'; inherits: true; initial-value: #dfe6f5; }
+.reveal-screen { position: absolute; inset: 0; z-index: 60 !important; display: flex; flex-direction: column; align-items: center; gap: 14px; padding: max(22px, env(safe-area-inset-top, 0px)) 12px max(22px, env(safe-area-inset-bottom, 0px)); overflow: hidden; animation: fade 0.3s; transition: --tc 0.12s ease-out; }
+.reveal-screen::after { content: ''; position: absolute; inset: 0; background: #fff; pointer-events: none; animation: reveal-white 0.55s ease-out forwards; }
 @keyframes reveal-white { from { opacity: 1; } to { opacity: 0; } }
 .reveal-decor { position: absolute; inset: 0; }
 .reveal-decor svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.reveal-sky { position: absolute; inset: 0; background: radial-gradient(80% 46% at 50% 44%, color-mix(in srgb, var(--best) 46%, #2a1a66cc) 0, #170f44e0 52%, #07051af5 100%); }
+.reveal-sky { position: absolute; inset: 0; background: radial-gradient(80% 46% at 50% 44%, color-mix(in srgb, var(--tc) 50%, #2a1a66cc) 0, #170f44e0 52%, #07051af5 100%); }
 .reveal-stage { position: relative; z-index: 1; flex: 1; min-height: 0; width: 100%; display: grid; place-items: center; }
+/* la boule de magie */
+.tease { position: relative; width: 290px; height: 290px; display: grid; place-items: center; }
+.tease-orb { width: 290px; height: 290px; overflow: visible; animation: to-in 0.5s cubic-bezier(.2,1.4,.4,1) backwards; }
+@keyframes to-in { from { transform: scale(0.2); opacity: 0; } }
+.to-breathe { transform-box: fill-box; transform-origin: center; animation: an-breathe 1.2s ease-in-out infinite; }
+.to-ring, .to-swirl, .to-orbit, .to-beads, .to-p { transform-box: view-box; transform-origin: 100px 100px; }
+.to-ring { animation: an-spin 9s linear infinite; }
+.to-beads { animation: an-spin 14s linear infinite reverse; }
+.to-swirl { animation: an-spin 1.6s linear infinite; }
+.to-orbit { animation: an-spin 2.4s linear infinite reverse; }
+/* la lumière aspirée : chaque grain part du bord et file vers la sphère, de plus en plus vite à chaque rareté */
+.to-p { fill: color-mix(in srgb, var(--tc) 55%, #fff); animation: to-suck 1.3s cubic-bezier(.5,0,.9,.6) infinite; }
+@keyframes to-suck { 0% { transform: rotate(var(--a)) translateX(96px); opacity: 0; } 25% { opacity: 1; } 100% { transform: rotate(var(--a)) translateX(36px) scale(0.4); opacity: 0; } }
+.tease.s1 .to-p { animation-duration: 1.05s; }
+.tease.s2 .to-p { animation-duration: 0.85s; }
+.tease.s3 .to-p { animation-duration: 0.7s; }
+/* les éclairs : seulement à partir de l'Épique, ils crépitent */
+.to-arcs { display: none; filter: drop-shadow(0 0 2px var(--tc)); }
+.tease.s2 .to-arcs, .tease.s3 .to-arcs { display: inline; }
+.to-arc { opacity: 0; animation: to-arc 0.52s steps(1, end) infinite; }
+@keyframes to-arc { 0% { opacity: 1; } 18% { opacity: 0; } 46% { opacity: 0.8; } 58% { opacity: 0; } }
+/* un impact : éclair de la couleur atteinte, cœur blanc, deux ondes, des étincelles ; le légendaire a sa colonne d'or */
+.tease-hit { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
+.tease-hit > span { position: absolute; left: 0; top: 0; }
+.th-flash { width: 900px; height: 900px; margin: -450px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--tc) 80%, #fff), color-mix(in srgb, var(--tc) 40%, transparent) 40%, transparent 70%); animation: th-flash 0.55s ease-out forwards; }
+@keyframes th-flash { from { opacity: 0.95; transform: scale(0.5); } to { opacity: 0; transform: scale(1.1); } }
+.th-core { width: 90px; height: 90px; margin: -45px; border-radius: 50%; background: radial-gradient(closest-side, #fff, color-mix(in srgb, var(--tc) 70%, #fff) 55%, transparent); animation: th-core 0.4s ease-out forwards; }
+@keyframes th-core { from { transform: scale(0.6); opacity: 1; } to { transform: scale(1.7); opacity: 0; } }
+.th-ring { width: 120px; height: 120px; margin: -60px; border-radius: 50%; border: 5px solid var(--tc); box-shadow: 0 0 14px 4px var(--tc), inset 0 0 12px 2px var(--tc); animation: th-ring 0.75s cubic-bezier(.1,.7,.3,1) forwards; }
+.th-ring-2 { border-width: 2.5px; opacity: 0; animation-delay: 0.09s; animation-duration: 0.9s; }
+@keyframes th-ring { 0% { transform: scale(0.25); opacity: 1; } 100% { transform: scale(3.6); opacity: 0; } }
+.th-spark { width: 8px; height: 8px; margin: -4px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 3px var(--tc); animation: th-spark 0.8s ease-out forwards; }
+@keyframes th-spark { from { transform: rotate(var(--a)) translateY(-28px) scale(1.1); opacity: 1; } to { transform: rotate(var(--a)) translateY(calc(var(--r) * -1)) scale(0.2); opacity: 0; } }
+.th-pillar { width: 130px; height: 1400px; margin: -700px -65px; background: linear-gradient(90deg, transparent, #ffc94a66 30%, #fff6c4 50%, #ffc94a66 70%, transparent); animation: th-pillar 1.1s ease-out forwards; }
+@keyframes th-pillar { 0% { transform: scaleX(0.1); opacity: 0; } 20% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(0.6); opacity: 0; } }
+.th-2 .th-ring { border-width: 6px; }
+.th-3 .th-ring { border-width: 7px; animation-duration: 0.9s; }
+.th-3 .th-core { width: 130px; height: 130px; margin: -65px; }
+/* la boule éclate et les cartes en jaillissent : un éclair doux, une onde floue, des étincelles */
+.rv-burst { position: absolute; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; z-index: 2; }
+.rv-burst > span { position: absolute; left: 0; top: 0; }
+.rb-flash { width: 760px; height: 760px; margin: -380px; border-radius: 50%; background: radial-gradient(closest-side, #fff, color-mix(in srgb, var(--tc) 75%, #fff) 22%, color-mix(in srgb, var(--tc) 35%, transparent) 50%, transparent 72%); animation: rb-flash 0.7s ease-out forwards; }
+@keyframes rb-flash { from { opacity: 1; transform: scale(0.35); } to { opacity: 0; transform: scale(1.15); } }
+.rb-ring { width: 160px; height: 160px; margin: -80px; border-radius: 50%; box-shadow: 0 0 0 3px #fff, 0 0 18px 8px var(--tc), inset 0 0 18px 8px var(--tc); animation: rb-ring 0.75s cubic-bezier(.1,.7,.3,1) forwards; }
+@keyframes rb-ring { from { transform: scale(0.3); opacity: 1; } to { transform: scale(3.4); opacity: 0; } }
+.rb-spark { width: 10px; height: 10px; margin: -5px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px 4px var(--tc); animation: th-spark 0.9s ease-out forwards; }
+.rv-halo-wrap { position: absolute; left: 50%; top: 46%; translate: -50% -50%; pointer-events: none; opacity: 0; animation: rv-in 0.6s calc(var(--total) - 450ms) forwards; }
+@keyframes rv-in { to { opacity: 1; } }
+/* les cartes */
 .reveal { position: relative; display: flex; flex-wrap: wrap; gap: 16px 10px; justify-content: center; }
-.reveal-many .reveal { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px 9px; width: 100%; max-width: 420px; }
+.reveal-many .reveal { gap: 22px 9px; width: 100%; max-width: 420px; }
 .reveal-many .reveal-card { width: calc((100% - 27px) / 4); }
 .reveal-many .hcard-small { width: 100%; }
 @media (max-height: 700px) { .reveal-many .reveal { gap: 14px 9px; max-width: 350px; } }
-.reveal-card { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; animation: pop 0.4s backwards cubic-bezier(.2,1.6,.4,1); }
-.reveal-flip { width: 100%; display: flex; justify-content: center; }
-/* la lueur derrière chaque héros : douce, sans bord, de la couleur de sa rareté */
+.reveal-card { --dx: 0px; --dy: 40px; position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; perspective: 900px; animation: rv-deal 0.58s var(--deal) cubic-bezier(.2,1.25,.45,1) backwards; }
+@keyframes rv-deal { 0% { transform: translate(var(--dx), var(--dy)) scale(0.15) rotate(-24deg); opacity: 0; } 18% { opacity: 1; } }
+/* la carte se retourne : son dos (card-back.tsx) d'un côté, le héros de l'autre */
+.rv-inner { position: relative; width: 100%; transform-style: preserve-3d; animation: rv-flip 0.62s var(--flip) cubic-bezier(.3,1.25,.5,1) both; }
+@keyframes rv-flip { 0% { transform: rotateY(0deg) scale(1); } 45% { transform: rotateY(95deg) scale(1.16); } 100% { transform: rotateY(180deg) scale(1); } }
+.rv-face { -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.rv-back { position: absolute; inset: 0; z-index: 1; border-radius: 9px; box-shadow: 0 0 14px 4px var(--tint);
+  animation: rv-tease 0.9s ease-in-out infinite alternate, rv-wobble 0.65s calc(var(--flip) - 0.65s) ease-in-out backwards; }
+.is-best:not(.r-rare) .rv-back { animation-duration: 0.42s, 0.65s; }
+.r-common .rv-back { box-shadow: none; animation: none; }
+@keyframes rv-tease { from { box-shadow: 0 0 8px 2px var(--tint); } to { box-shadow: 0 0 24px 8px var(--tint), 0 0 5px 2px #fff; } }
+/* juste avant de se retourner, la meilleure carte tremble */
+@keyframes rv-wobble { 0%, 100% { rotate: 0deg; } 15% { rotate: -4deg; } 30% { rotate: 4deg; } 45% { rotate: -5deg; } 60% { rotate: 5deg; } 75% { rotate: -3deg; } 90% { rotate: 2deg; } }
+.reveal-card:not(.is-best) .rv-back { animation-name: rv-tease, none; }
+.rv-front { position: relative; transform: rotateY(180deg); display: flex; justify-content: center; }
+.card-back { display: block; width: 100%; height: 100%; overflow: visible; }
+.cb-sheen { animation: cb-sheen 2.6s ease-in-out infinite; }
+@keyframes cb-sheen { 0%, 40% { transform: translateX(0); } 100% { transform: translateX(260px); } }
+.cb-glow { transform-box: fill-box; transform-origin: center; animation: an-breathe 1.4s ease-in-out infinite; }
+.cb-spin { transform-box: view-box; animation: an-spin 12s linear infinite; }
+/* le retournement frappe : deux ondes de sa couleur, un éclat blanc sur le héros */
+.rv-hit { position: absolute; left: 50%; top: 42%; width: 0; height: 0; pointer-events: none; z-index: 2; }
+.rv-hit i { position: absolute; left: 0; top: 0; width: 80px; height: 80px; margin: -40px; border-radius: 50%; border: 3px solid var(--tint); box-shadow: 0 0 10px 2px var(--tint); opacity: 0; animation: rv-hit 0.6s calc(var(--flip) + 0.24s) ease-out forwards; }
+.rv-hit i + i { border-width: 1.5px; animation-delay: calc(var(--flip) + 0.32s); }
+@keyframes rv-hit { from { transform: scale(0.3); opacity: 1; } to { transform: scale(2.2); opacity: 0; } }
+.r-common .rv-hit { display: none; }
+.r-common .rv-front::after { animation-name: rv-glare-soft; }
+@keyframes rv-glare-soft { from { opacity: 0.35; } to { opacity: 0; } }
+.r-epic .rv-hit i, .r-legendary .rv-hit i { width: 110px; height: 110px; margin: -55px; border-width: 4px; }
+.r-legendary .rv-hit i { animation-duration: 0.85s; }
+.reveal-one .rv-hit i { width: 180px; height: 180px; margin: -90px; border-width: 5px; }
+.rv-front::after { content: ''; position: absolute; inset: 0; border-radius: 10px; opacity: 0; pointer-events: none;
+  background: radial-gradient(70% 60% at 50% 45%, #fff, color-mix(in srgb, var(--tint) 50%, #fff0) 70%, #fff0); animation: rv-glare 0.5s calc(var(--flip) + 0.3s) ease-out; }
+@keyframes rv-glare { from { opacity: 0.75; } to { opacity: 0; } }
+/* la meilleure carte (Épique, Légendaire) éclaire tout l'écran en se retournant */
+.rv-final { position: absolute; inset: -40%; pointer-events: none; z-index: 3; opacity: 0;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--tc) 70%, #fff) 0, color-mix(in srgb, var(--tc) 30%, transparent) 45%, transparent 75%);
+  animation: rv-final 0.8s calc(var(--last) + 0.28s) ease-out; }
+@keyframes rv-final { from { opacity: 0.9; } to { opacity: 0; } }
+.rv-skip .rv-hit, .rv-skip .rv-front::after { display: none; }
+/* la lueur derrière chaque héros retourné : douce, sans bord, de la couleur de sa rareté */
 .reveal-beam { position: absolute; left: 50%; bottom: 4px; width: 150%; height: 190%; translate: -50% 0; z-index: -1; pointer-events: none; border-radius: 50%;
-  background: radial-gradient(50% 50% at 50% 58%, color-mix(in srgb, var(--rar) 80%, #fff) 0, transparent 100%); opacity: 0; animation: beam-in 0.6s ease-out forwards; animation-delay: var(--d); }
+  background: radial-gradient(50% 50% at 50% 58%, color-mix(in srgb, var(--rar) 80%, #fff) 0, transparent 100%); opacity: 0; animation: beam-in 0.6s ease-out calc(var(--flip) + 0.3s) forwards; }
 @keyframes beam-in { from { opacity: 0; scale: 0.4; } to { opacity: 0.6; scale: 1; } }
 .r-common .reveal-beam { display: none; }
 .r-common .hcard { filter: brightness(0.72) saturate(0.7); }
-/* les héros de la meilleure rareté du tirage : un peu plus grands, cerclés de lumière, une lueur qui bat */
 .reveal-many .is-best { scale: 1.07; z-index: 1; }
 .is-best .hcard { box-shadow: inset 0 0 0 1.5px #ffffffd9, 0 0 0 1.5px var(--rar), 0 0 16px 4px var(--rar) !important; }
-.is-best .reveal-beam { animation: beam-in 0.6s ease-out forwards, glow-pulse 1.8s ease-in-out 1s infinite; animation-delay: var(--d), calc(var(--d) + 0.6s); }
-.reveal-name { font-size: 10.5px; font-weight: 800; color: #fff; background: color-mix(in srgb, var(--rar) 55%, #15101c); border: 1px solid color-mix(in srgb, var(--rar) 60%, #000); border-radius: 7px; padding: 0 5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.reveal-many .reveal-back { width: 86%; height: auto; aspect-ratio: 1; top: 12%; }
+.is-best .reveal-beam { animation: beam-in 0.6s ease-out calc(var(--flip) + 0.3s) forwards, glow-pulse 1.8s ease-in-out calc(var(--flip) + 0.9s) infinite; }
+.reveal-card.r-legendary::before { content: ''; position: absolute; left: 50%; top: 42%; width: 190%; aspect-ratio: 1; translate: -50% -50%; z-index: -1; opacity: 0;
+  background: radial-gradient(closest-side, #ffc531a6, #ffc53133 55%, #ffc53100 75%); animation: rv-in 0.5s calc(var(--flip) + 0.3s) forwards, glow-pulse 1.8s ease-in-out infinite; }
+@keyframes glow-pulse { 50% { scale: 1.12; opacity: 0.7; } }
+@keyframes spin { to { transform: rotate(360deg); } }
+.reveal-name { font-size: 10.5px; font-weight: 700; color: #fff; background: color-mix(in srgb, var(--rar) 55%, #15101c); border: 1px solid color-mix(in srgb, var(--rar) 60%, #000); border-radius: 7px; padding: 0 5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.reveal-name, .reveal-card .new-ribbon { animation: rv-after 0.3s calc(var(--flip) + 0.45s) both; }
+@keyframes rv-after { from { opacity: 0; translate: 0 4px; } }
 .reveal-screen .new-ribbon { top: -10px; left: auto; right: -5px; translate: none; transform: rotate(5deg); font-size: 8.5px; padding: 0 4px; }
-/* un héros seul : une grande carte au double cadre d'or, l'étoile de lumière qui tourne derrière, une onde, des étincelles */
-.reveal-one .reveal-flip { width: 204px; }
-.reveal-one .hcard { box-shadow: 0 0 0 2px color-mix(in srgb, var(--rar) 55%, #fff), 0 0 0 3.5px #17100a, 0 0 30px 8px var(--rar) !important; filter: none !important; }
-.reveal-one .hcard-frame { padding: 6px; }
 .reveal-screen .hcard-lv { display: none; }
-.reveal-one .hcard { aspect-ratio: 5 / 6; }
+/* un héros seul : une grande carte au double cadre d'or, son halo de signes derrière (Épique et Légendaire) */
+.reveal-one .reveal-card { width: 204px; }
+.reveal-one .hcard { aspect-ratio: 5 / 6; box-shadow: 0 0 0 2px color-mix(in srgb, var(--rar) 55%, #fff), 0 0 0 3.5px #17100a, 0 0 30px 8px var(--rar) !important; filter: none !important; }
+.reveal-one .hcard-frame { padding: 6px; }
 .reveal-one .hcard .stars { font-size: 22px; letter-spacing: 0; }
-.reveal-one .hcard-lv { font-size: 16px; line-height: 24px; min-width: 30px; }
 .reveal-one .hcard-el { width: 30px; height: 30px; }
 .reveal-one .hcard-pow { font-size: 15px; }
 .reveal-one .reveal-name { font-size: 17px; padding: 2px 14px; border-radius: 10px; margin-top: 4px; }
-.reveal-one .reveal-back { width: 184px; height: 184px; top: 34px; }
 .reveal-one .new-ribbon { top: -13px; right: -10px; font-size: 12px; padding: 0 8px; }
-.reveal-one .reveal-beam { opacity: 0 !important; animation: none; }
-.reveal-burst { position: absolute; left: 50%; top: 50%; width: 520px; height: 520px; translate: -50% -54%; pointer-events: none; opacity: 0.85; animation: fade 0.6s 0.4s backwards; }
-.rv-spin { transform-origin: 0 0; animation: an-spin 34s linear infinite; }
-.rv-wave { transform-origin: 0 0; opacity: 0; animation: rv-wave 1.1s ease-out 0.5s; }
-@keyframes rv-wave { from { transform: scale(0.6); opacity: 0.9; } to { transform: scale(4.2); opacity: 0; } }
-.rv-spark { position: absolute; left: 50%; top: 46%; width: 7px; height: 7px; margin: -3.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 8px 3px var(--best); opacity: 0; animation: rv-spark 0.95s ease-out forwards; }
-@keyframes rv-spark { from { transform: rotate(var(--a)) translateY(-30px); opacity: 1; } to { transform: rotate(var(--a)) translateY(calc(var(--r) * -1)) scale(0.3); opacity: 0; } }
-.reveal-ok { position: relative; z-index: 1; flex: none; width: min(250px, 72%); min-height: 52px; }
+.reveal-one .reveal-beam { display: none; }
+/* OK n'arrive qu'une fois toutes les cartes retournées (toucher l'écran avant les retourne toutes d'un coup) */
+.reveal-ok { position: relative; z-index: 1; flex: none; width: min(250px, 72%); min-height: 52px; animation: rv-ok 0.35s var(--total) backwards; }
+@keyframes rv-ok { from { opacity: 0; visibility: hidden; transform: translateY(10px); } }
 .frag-img { width: 56px; border-radius: 10px; background: radial-gradient(circle at 50% 30%, #6fa8dc, #2f5a94 75%); border: 1.5px solid var(--edge); }
 .frag-list { display: flex; gap: 6px; overflow-x: auto; }
 .frag-row { padding: 4px 0; }
 .frag-pick { flex: none; width: 52px; height: 52px; border-radius: 10px; }
 .frag-pick.on { border-color: var(--trim); box-shadow: inset 0 0 0 1.5px var(--trim); }
-.reveal { display: flex; flex-wrap: wrap; gap: 14px 10px; justify-content: center; padding: 12px 0 6px; }
-@keyframes pop { from { transform: scale(0.3) rotateY(90deg); opacity: 0; } }
-.reveal-card.r-epic .hcard { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--rar) 55%, #fff), 0 0 14px 3px #a66bff; }
-.reveal-card.r-legendary .hcard { box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--rar) 55%, #fff), 0 0 18px 5px #ffc531; }
-.reveal-card.r-legendary::before { content: ''; position: absolute; left: 50%; top: 42%; width: 190%; aspect-ratio: 1; translate: -50% -50%; z-index: -1;
-  background: radial-gradient(closest-side, #ffc531a6, #ffc53133 55%, #ffc53100 75%); animation: glow-pulse 1.8s ease-in-out infinite; }
-@keyframes glow-pulse { 50% { scale: 1.12; opacity: 0.7; } }
-@keyframes spin { to { transform: rotate(360deg); } }
-.reveal-flip { animation: card-front .25s backwards ease-out; animation-delay: calc(var(--d) + 250ms); }
-.reveal-back { position: absolute; left: 50%; top: 4px; width: 78px; height: 78px; translate: -50% 0; pointer-events: none; animation: card-back .25s forwards ease-in; animation-delay: var(--d); }
-@keyframes card-back { to { transform: scaleX(0); } }
-@keyframes card-front { from { transform: scaleX(0); } }
 .new-tag { margin-top: -10px; z-index: 3; background: linear-gradient(180deg, var(--red-hi), var(--red-dark)); color: #fff; border: 1px solid #5e1717; border-radius: 7px; padding: 0 6px; font: 800 11px var(--font-title); text-shadow: 0 1px 1px #0009; }
 .new-ribbon { position: absolute; top: -12px; left: 50%; margin: 0; translate: -50% 0; transform: rotate(-4deg); z-index: 4; font-size: 9.5px; padding: 0 5px; white-space: nowrap; }
 .odds { width: 100%; border-collapse: collapse; }
@@ -1065,6 +1140,8 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
 .result-title::before, .result-title::after { content: ''; position: absolute; top: 10px; bottom: 10px; width: 16px; background: linear-gradient(180deg, var(--trim), var(--gold-dark)); border: 1.5px solid var(--edge); filter: brightness(0.82); }
 .result-title::before { left: -15px; border-right: 0; clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 45% 50%); }
 .result-title::after { right: -15px; border-left: 0; clip-path: polygon(0 0, 100% 0, 55% 50%, 100% 100%, 0 100%); }
+/* (l'apparition des titres et dessins de fin de combat) */
+@keyframes pop { from { transform: scale(0.3) rotateY(90deg); opacity: 0; } }
 .result-title.win { color: var(--gold-hi); animation: pop 0.4s cubic-bezier(.2,1.6,.4,1); }
 .result-title.lose { color: #ffb0a8; }
 .result-art { display: block; width: 104px; height: 104px; margin: -4px auto 0; filter: drop-shadow(0 6px 5px #00000066); animation: pop .5s backwards cubic-bezier(.2,1.6,.4,1); }

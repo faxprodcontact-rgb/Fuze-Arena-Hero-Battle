@@ -14,7 +14,7 @@ export const TUTORIAL_STEPS: string[] = [
   '.modal .btn-green',
   '.tabbar-btn:nth-child(3)', // invoquer
   '.tuto-summon10',
-  '.modal .x',
+  '.reveal-ok', // fin du tirage
   '.tabbar-btn:nth-child(2)', // héros
   '.grid .hcard',
   '.tuto-levelup',
@@ -27,7 +27,8 @@ export const TUTORIAL_STEPS: string[] = [
 function visible(el: Element | null): el is HTMLElement {
   if (!el) return false;
   const r = el.getBoundingClientRect();
-  return r.width > 0 && r.height > 0;
+  // (un bouton encore caché par son animation d'arrivée, comme OK à la fin du tirage, n'est pas encore montré)
+  return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden';
 }
 
 export function TutorialHand() {
