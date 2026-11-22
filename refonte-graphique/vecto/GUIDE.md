@@ -83,7 +83,8 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Grandes mèches de cheveux | `demons-7.cjs` → `backLock`, morceaux `lockA-D` ; `mages-10.cjs` → `lock` |
 | Diadème qui suit le crâne | `mages-10.cjs` → `bandPt`, `BAND` |
 | Épée et traînée de lumière | `mages-10.cjs` → `bladeD`, `trailD`, `poseAt` |
-| Ruban, voile, tentacule | `abysses-3.cjs` → `strip`, `veil` |
+| Ruban, voile, tentacule | `abysses-3.cjs` → `strip`, `veil` ; tentacules à ventouses : `angels-4.cjs` → `TENTS`, `tentBody` |
+| Arme tenue à deux mains, qui pivote à l'épaule sans décoller le bras | `angels-4.cjs` → morceaux `staff`, `armL`, `handL` (pivot `staff` = l'épaule) |
 | Écailles | `demons-7.cjs` → `scales` ; grosses écailles en rangées décalées : `parade-2.cjs` → `scales` |
 | Plumes et ailes | `assassins-5.cjs` → `feather`, `quill`, `plume` (réutilisées par `<use>`, fichier léger) ; `glaces-4.cjs` → `feather`, `row`, `ruff` |
 | Ailes translucides | `assassins-12.cjs` → morceaux `wingU`, `wingD` |
@@ -104,9 +105,9 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Hampe tenue (trident, lance), flamme bleue sans contour | `myths-12.cjs` → morceaux `trident`, `handL`, `flame` (`flameBody`) |
 | Épaulière en écailles, bottes de fer | `myths-12.cjs` → morceaux `pauR`, `legL`, `legR` |
 
-## Faits (16)
+## Faits (17)
 
-Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
+Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Séraphin `angels-4`, Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
 Rook `assassins-5` · monstres : pétard `parade-1`, méduse `abysses-3`, feu follet `bayou-4`, chouette `glaces-4`,
 escargot de cristal `cuirasses-4`, épouvantail `epouvantails-2`, renard de feuilles `ronciers-1`, dino-voile `bayou-1`, lion de la parade `parade-2`.
 
@@ -115,8 +116,7 @@ escargot de cristal `cuirasses-4`, épouvantail `epouvantails-2`, renard de feui
 Ordre : d'abord les monstres que le joueur rencontre en premier (région 1 de la campagne : familles `parade`,
 `epouvantails`, `bayou`, `ronciers`), en intercalant un héros Légendaire (l'invocation les montre en grand).
 
-1. héros `angels-4` Séraphin 2. `epouvantails-1` 3. `ronciers-2`
-4. héros `mages-9` Nimue 5. `bayou-6` 6. `parade-3` 7. héros `assassins-2` Kael
+1. `epouvantails-1` 2. `ronciers-2` 3. héros `mages-9` Nimue 4. `bayou-6` 5. `parade-3` 6. héros `assassins-2` Kael
 Ensuite : le reste des familles de la région 1, puis `fauves` et `ruche` (région 2), `voliere` et `cuirasses`
 (régions 3-4)… et un Légendaire tous les deux monstres (liste : `npx tsx` sur `HEROES` de
 `src/core/data/heroes.ts`, rareté `legendary`), puis les Épiques.
