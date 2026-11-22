@@ -1,5 +1,6 @@
 // Social : guilde (boss commun, membres, tchat, boutique), tchat général, classements.
 // Dans le prototype, les autres joueurs sont des joueurs fictifs : le vrai social arrivera avec le serveur.
+import { sceneBg, useTerrainImage } from '../terrain-image';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { GUILD_BOSS_ATTEMPTS, GUILD_SHOP, GUILD_WAR, UNLOCKS } from '../../../core/data/modes';
 import { createRng } from '../../../core/rng';
@@ -46,6 +47,7 @@ function botDamage(): number {
 }
 
 export function GuildScreen() {
+  const lairImg = useTerrainImage('lair');
   const s = useGame();
   const [tab, setTab] = useState<'boss' | 'war' | 'members' | 'chat' | 'shop'>('boss');
   useEffect(() => markSeen('guild'), []);
@@ -82,7 +84,7 @@ export function GuildScreen() {
       ]} />
       {tab === 'boss' && (
         <section class="card center">
-          <div class="boss-scene" style={{ backgroundImage: 'url(art/t/lair.jpg)' }}><img class="boss-img" src={monsterImage('dragon', 'fire')} alt="" /></div>
+          <div class="boss-scene" style={sceneBg(lairImg)}><img class="boss-img" src={monsterImage('dragon', 'fire')} alt="" /></div>
           <h2>{t('monster.dragon')}</h2>
           <Bar value={GUILD_BOSS_HP - total} max={GUILD_BOSS_HP} color="#e5484d" label={`${fmt(GUILD_BOSS_HP - total)} / ${fmt(GUILD_BOSS_HP)}`} />
           <p class="muted">{t('guild.total')} : <b>{fmt(total)}</b></p>

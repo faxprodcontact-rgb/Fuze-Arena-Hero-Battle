@@ -259,6 +259,27 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   passifs s'appellent « Talent » dans le jeu. Plus d'onglets ni de panneau déployable. Vérifier avec `scratchpad/art5/her7.cjs`
   (et `her7.cjs se`). Essai abandonné le même jour à la demande du propriétaire : Ruka redessinée entièrement par le code
   (`refonte-graphique/vecto/`) ; on garde les dessins Hailuo.
+  **v0.38.0 (22/11/2026), décors de combat refaits par le code** (le propriétaire : les fonds peints « ne passent vraiment pas »,
+  il aime le style de l'Aventure). Les 14 terrains (`look.ts`) sont dessinés par le code dans `src/game/bg/` : `kit.tsx` (sommets,
+  nuages, collines `curve`/`bump`, forêts, arbres, rochers, ciel, `Platform`, `Flagstones`, `Overhang`, `FaceStones`), `props.tsx`
+  (troncs, champignons, fougères, braseros, torches, bannières, emblèmes inventés, colonnes, cristaux, eau, parois `RockWall`,
+  murs `Masonry`, flammes et lueurs animées), un fichier par décor (`meadow`, `forest` = bramble, `bayou`, `ash`, `tundra`,
+  `storm`, `temple`, `abyss`, `tower`, `cave` = mine + spring, `halls` = armory + lair + arena), liste dans `scenes.ts`.
+  `engine.ts` (avec Phaser) change chaque dessin en image au lancement du combat (`loadBackdrop` dans `preload`, `placeBackdrop`
+  dans `drawArena` de `fight-view.ts`), pour la taille exacte de l'écran (le ciel s'allonge sur un grand téléphone), et anime
+  les éléments d'après l'heure (dérive, balancement, rotation, flamme, lueur, courant, éclair) ; particules Phaser. Ordre
+  des calques à respecter : ciel (−30) < ce qui est derrière le paysage (−29…−21 : nuages, aurore, mousse et lianes qui
+  pendent DERRIÈRE le feuillage, fumée qui sort du cratère) < paysage et sol (−20) < ce qui bouge devant le paysage (−19…−11)
+  < voile des compétences (5) < combattants < premier plan (1300, coupé au bas du terrain, il s'efface pendant les
+  compétences). **Décidé par le propriétaire : plus jamais de rond au sol** ; chaque décor a une **plateforme rectangulaire
+  d'un bord à l'autre** (`Platform`, repères `p0`/`p1` de `Ctx` : 50 px derrière les pieds du rang du fond, 48 px devant ceux du
+  rang de devant), avec son chant devant et ce qui est dessous (herbe, eau, lave, vide…). Tout est posé : les maisons et
+  arbres des collines sont placés sur la crête par la même fonction que la colline (`curve`), les objets du fond se tiennent
+  juste derrière `p0`. Les menus (tour, donjons, boss du jour, Colisée) montrent la même scène en image fixe
+  (`bg/compose.ts` + `ui/terrain-image.ts`, sans Phaser). Outil de test : `#fond=<terrain>` dans l'adresse impose un décor.
+  Vérifier avec `scratchpad/art5/fonds.cjs <pro|se|grand> <terrains…>` (vrai combat + accueil), `zooms.py` (bande du paysage et
+  bas en pleine résolution), `menus-fonds.cjs`. Les anciens fonds peints (`public/art/t/`) ne servent plus (sauf `dungeon`,
+  terrain inutilisé).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

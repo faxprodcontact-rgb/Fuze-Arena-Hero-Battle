@@ -7,6 +7,7 @@ import { HEROES } from '../core/data/heroes';
 import type { Element } from '../core/types';
 import { ELEMENT_COLOR, artUrl, cardUrl, hasArt, heroCanvas, monsterCanvas } from './art';
 import { ART_META } from './art-meta';
+import { SCENES, loadBackdrop, placeBackdrop, type Ctx as BgCtx } from './bg';
 import { ICON_INDEX } from './icons-meta';
 
 /** Effets en combat qui ont leur picto (case st-<effet> de public/art/icons.webp). */
@@ -152,7 +153,7 @@ export abstract class FightScene extends Phaser.Scene {
   /** Bandeau de cinéma des compétences des héros (pas sur l'accueil ni dans l'aperçu de la fiche, trop petits). */
   protected cutInBand = true;
   /** Premier plan du terrain (rochers, piliers…) : il passe devant les combattants. */
-  private fg?: Phaser.GameObjects.Image;
+  private fg: Phaser.GameObjects.GameObject[] = [];
   /** Bas du terrain (pour l'assombrir en entier). */
   private arenaBottom = 0;
   /** Terrain et famille de monstres de ce combat. */
@@ -161,11 +162,28 @@ export abstract class FightScene extends Phaser.Scene {
   /** Les combattants à charger avant le combat (les autres arrivent plus tard, avec l'ancien dessin en attendant). */
   protected abstract preloadUnits(): { defId: string; element: string }[];
 
+  /** Le haut du sol et le bas du terrain : chaque écran les fixe (le décor est dessiné pour cette place). */
+  protected arenaBox(): { groundTop: number; bottom: number } {
+    return { groundTop: this.groundTop, bottom: this.scale.height };
+  }
+
+  /** Les repères du décor dessiné par le code : l'horizon, le bas, le milieu des pieds des deux équipes. */
+  private bgCtx(): BgCtx {
+    const { groundTop, bottom } = this.arenaBox();
+    const cy = groundTop + (ROW_DY[0] + ROW_DY[1]) / 2 + FEET;
+    // la plateforme déborde de 50 px derrière les pieds du rang du fond et de 48 px devant ceux du rang de devant
+    return { hz: groundTop + 50, bottom, cx: W / 2, cy, p0: groundTop + ROW_DY[0] + FEET - 50, p1: groundTop + ROW_DY[1] + FEET + 48 };
+  }
+
   preload() {
     const terrain = this.look.terrain;
-    if (!this.textures.exists(`t-${terrain}`)) this.load.image(`t-${terrain}`, `art/t/${terrain}.jpg`);
-    const tm = ART_META.terrains[terrain] as { fg?: number };
-    if (tm?.fg && !this.textures.exists(`t-${terrain}-fg`)) this.load.image(`t-${terrain}-fg`, `art/t/${terrain}-fg.webp`);
+    const scene = SCENES[terrain];
+    if (scene) loadBackdrop(this, terrain, scene, this.bgCtx());
+    else {
+      if (!this.textures.exists(`t-${terrain}`)) this.load.image(`t-${terrain}`, `art/t/${terrain}.jpg`);
+      const tm = ART_META.terrains[terrain] as { fg?: number };
+      if (tm?.fg && !this.textures.exists(`t-${terrain}-fg`)) this.load.image(`t-${terrain}-fg`, `art/t/${terrain}-fg.webp`);
+    }
     // Les images d'effets (1,2 Mo) et la planche de pictos n'empêchent plus la scène de démarrer : elles se chargent
     // en arrière-plan une fois le combat affiché (un effet pas encore arrivé est simplement sauté).
     this.events.once('create', () => {
@@ -218,6 +236,14 @@ export abstract class FightScene extends Phaser.Scene {
   /** Le terrain : l'image du décor, le centre de son arène au milieu des rangées de combattants. */
   protected drawArena(bottom: number) {
     this.arenaBottom = bottom;
+    const scene = SCENES[this.look.terrain];
+    if (scene) {
+      const placed = placeBackdrop(this, this.look.terrain, scene, this.bgCtx());
+      if (placed.ok) {
+        this.fg = placed.front;
+        return;
+      }
+    }
     const key = `t-${this.look.terrain}`;
     const m = ART_META.terrains[this.look.terrain];
     if (this.textures.exists(key) && m) {
@@ -234,8 +260,9 @@ export abstract class FightScene extends Phaser.Scene {
       const fgKey = `${key}-fg`;
       if (this.textures.exists(fgKey)) {
         // coupé au bas du terrain : rien ne déborde sur le panneau du bas
-        this.fg = this.add.image(x0, y0, fgKey).setOrigin(0).setScale(k).setDepth(1300);
-        this.fg.setCrop(0, 0, m.w, Math.max(0, (bottom - y0) / k));
+        const fg = this.add.image(x0, y0, fgKey).setOrigin(0).setScale(k).setDepth(1300);
+        fg.setCrop(0, 0, m.w, Math.max(0, (bottom - y0) / k));
+        this.fg = [fg];
       }
       return this.add.image(x0, y0, key).setOrigin(0).setScale(k).setDepth(-10);
     }
@@ -346,7 +373,8 @@ export abstract class FightScene extends Phaser.Scene {
 
   protected syncUnits() {
     // quand le décor s'assombrit (compétence), le premier plan s'efface : le décor assombri est déjà dessous
-    if (this.fg) this.fg.setAlpha(this.veil?.active ? 1 - Math.min(1, this.veil.fillAlpha * 2.2) : 1);
+    const fa = this.veil?.active ? 1 - Math.min(1, this.veil.fillAlpha * 2.2) : 1;
+    for (const o of this.fg) (o as unknown as Phaser.GameObjects.Components.Alpha).setAlpha(fa);
     for (const v of this.views.values()) {
       const u = v.unit;
       const g = v.bars;

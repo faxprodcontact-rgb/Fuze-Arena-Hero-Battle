@@ -42,6 +42,10 @@ export class IdleScene extends FightScene {
     return [...heroes, ...waves.flat()];
   }
 
+  protected arenaBox() {
+    return { groundTop: 560, bottom: IDLE_H };
+  }
+
   create() {
     this.drawArena(IDLE_H);
     this.startFight();

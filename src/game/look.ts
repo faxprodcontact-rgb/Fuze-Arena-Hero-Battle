@@ -66,8 +66,18 @@ export function campaignLook(chapter: number): Look {
 
 const DUNGEONS: DungeonKind[] = ['gold', 'essence', 'gear'];
 
+/** Outil de test : `#fond=<terrain>` dans l'adresse impose un décor à tous les combats (et à l'accueil). */
+function forced(look: Look): Look {
+  const m = typeof location === 'undefined' ? null : /(?:^#|&)fond=([a-z]+)/.exec(location.hash);
+  return m && m[1]! in ART_META.terrains ? { ...look, terrain: m[1] as Terrain } : look;
+}
+
 /** Le décor d'un combat, d'après son mode et son titre (« 3-12 » en campagne, l'étage de la tour…). */
 export function battleLook(kind: string, title: string, dungeon?: DungeonKind): Look {
+  return forced(lookOf(kind, title, dungeon));
+}
+
+function lookOf(kind: string, title: string, dungeon?: DungeonKind): Look {
   switch (kind) {
     case 'campaign':
       return campaignLook(Math.max(1, Number.parseInt(title, 10) || 1));
@@ -89,7 +99,7 @@ export function battleLook(kind: string, title: string, dungeon?: DungeonKind): 
 
 /** Le décor de l'accueil : celui du chapitre en cours. */
 export function idleLook(cleared: number): Look {
-  return campaignLook(chapterOf(Math.max(1, cleared)));
+  return forced(campaignLook(chapterOf(Math.max(1, cleared))));
 }
 
 /** Le dessin d'un monstre des règles (gobelin, loup…, ou boss) dans un décor donné. */

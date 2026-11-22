@@ -37,6 +37,10 @@ export class SkillScene extends FightScene {
     return [this.hero, ...['goblin', 'wolf', 'golem'].map((defId) => ({ defId, element: this.hero.element }))];
   }
 
+  protected arenaBox() {
+    return { groundTop: 130, bottom: SKILL_H };
+  }
+
   create() {
     this.drawArena(SKILL_H);
     this.cameras.main.setZoom(1.15).centerOn(375, 290);

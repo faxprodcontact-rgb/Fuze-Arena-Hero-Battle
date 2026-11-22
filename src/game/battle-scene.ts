@@ -91,14 +91,20 @@ export class BattleScene extends FightScene {
   /** Haut du panneau des héros (tout le bas de l'écran se place à partir de là). */
   private hudY = 908;
 
+  /** Les boutons et le panneau des héros sont ancrés en bas (372 px), le terrain prend tout le reste. */
+  protected arenaBox() {
+    const bottom = this.scale.height - 372 - 26;
+    return { groundTop: bottom - 430, bottom };
+  }
+
   create() {
     applyTheme();
     this.battle = new Battle({ heroes: this.req.heroes, waves: this.req.waves, seed: this.req.seed, auto: getState().auto });
     // disposition : les boutons et le panneau des héros sont ancrés en bas, le décor prend tout le reste
     const H = this.scale.height;
-    this.hudY = H - 372;
-    const arenaBottom = this.hudY - 26;
-    this.groundTop = arenaBottom - 430;
+    const { groundTop, bottom: arenaBottom } = this.arenaBox();
+    this.hudY = arenaBottom + 26;
+    this.groundTop = groundTop;
     this.drawArena(arenaBottom);
     // le bas de l'écran : du papier crème (comme le bas de l'accueil), bordé d'encre et d'or sous le terrain
     this.add.rectangle(W / 2, arenaBottom + (H - arenaBottom) / 2, W, H - arenaBottom, C.paper).setDepth(-5);
