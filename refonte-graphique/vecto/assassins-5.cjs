@@ -10,11 +10,18 @@ const W = 556, H = 515;
 // ---------- petits outils ----------
 /**
  * Courbe lisse qui passe par des points (Catmull-Rom → Bézier). Un point [x, y, 1] est un angle vif.
- * `q` = nombre de décimales (0 pour les grandes formes : le dessin reste léger) ; aux points lisses, la courbe s'écrit
- * avec « S » (le premier point de contrôle est le reflet du précédent), ce qui raccourcit le chemin d'un tiers.
+ * Écriture compacte, pour que le dessin reste léger : `q` décimales (0 pour les grandes formes), coordonnées relatives
+ * (« c », « s ») et, aux points lisses, « s » (le premier point de contrôle est le reflet du précédent).
  */
 function P(pts, closed = true, q = 0) {
-  const N = pts.length, f = (v) => +v.toFixed(q);
+  const N = pts.length, k = 10 ** q;
+  const R = (v) => Math.round(v * k);                       // en unités de 1/k, entières (pas de dérive)
+  const num = (v) => {
+    let t = (v / k).toFixed(q);
+    if (q) t = t.replace(/\.?0+$/, '').replace(/^(-?)0\./, '$1.');   // 2.50 → 2.5, 0.5 → .5 (seulement après la virgule)
+    return t === '-0' ? '0' : t;
+  };
+  const list = (vs) => vs.map((v, i) => (i && v >= 0 ? ' ' : '') + num(v)).join('');
   const at = (i) => (closed ? pts[(i + N) % N] : pts[Math.max(0, Math.min(N - 1, i))]);
   const sharp = (i) => !!at(i)[2] || (!closed && (i <= 0 || i >= N - 1));
   const tan = (i, dir) => {
@@ -23,12 +30,14 @@ function P(pts, closed = true, q = 0) {
     const a = at(i - 1), b = at(i + 1);
     return [(b[0] - a[0]) / 6, (b[1] - a[1]) / 6];
   };
-  let d = `M${f(pts[0][0])} ${f(pts[0][1])}`;
+  let X = R(pts[0][0]), Y = R(pts[0][1]);
+  let d = `M${list([X, Y])}`;
   const last = closed ? N : N - 1;
   for (let i = 0; i < last; i++) {
     const p = at(i), o = at(i + 1), t1 = tan(i, 1), t2 = tan(i + 1, -1);
-    const end = `${f(o[0] - t2[0])} ${f(o[1] - t2[1])} ${f(o[0])} ${f(o[1])}`;
-    d += i > 0 && !sharp(i) ? `S${end}` : `C${f(p[0] + t1[0])} ${f(p[1] + t1[1])} ${end}`;
+    const c2 = [R(o[0] - t2[0]) - X, R(o[1] - t2[1]) - Y], e = [R(o[0]) - X, R(o[1]) - Y];
+    d += i > 0 && !sharp(i) ? `s${list([...c2, ...e])}` : `c${list([R(p[0] + t1[0]) - X, R(p[1] + t1[1]) - Y, ...c2, ...e])}`;
+    X += e[0]; Y += e[1];
   }
   return closed ? d + 'Z' : d;
 }
@@ -49,24 +58,35 @@ function inside([x, y], poly) {
 }
 /**
  * La silhouette d'un groupe de plumes : seulement celles qui touchent le bord. Une plume entièrement recouverte par les
- * autres, marge du contour comprise (6 px), n'ajoute rien au contour : on ne la répète pas dans la silhouette.
+ * autres (son intérieur, et son bord élargi de la marge du contour, 4,8 px) n'ajoute rien au contour : on ne la répète
+ * pas dans la silhouette. Il faut tester l'intérieur aussi : les autres plumes peuvent laisser un trou en son milieu.
  */
 function silhouette(polys) {
-  const keep = polys.filter((A, i) => {
+  // les points qui doivent être couverts pour qu'une plume soit cachée : son centre, son intérieur, son bord élargi
+  const probes = (A) => {
     const cx = A.reduce((t, p) => t + p[0], 0) / A.length, cy = A.reduce((t, p) => t + p[1], 0) / A.length;
-    const others = polys.filter((_, j) => j !== i);
-    return !A.every((p, k) => {
+    const pts = [[cx, cy]];
+    A.forEach((p, k) => {
       const a = A[(k + A.length - 1) % A.length], b = A[(k + 1) % A.length];
       let nx = b[1] - a[1], ny = a[0] - b[0];
       const l = Math.hypot(nx, ny) || 1;
       nx /= l; ny /= l;
       if (nx * (p[0] - cx) + ny * (p[1] - cy) < 0) { nx = -nx; ny = -ny; }
-      const out = [p[0] + nx * 6, p[1] + ny * 6], mid = [(p[0] + b[0]) / 2 + nx * 6, (p[1] + b[1]) / 2 + ny * 6];
-      return others.some((B) => inside(out, B)) && others.some((B) => inside(mid, B));
+      const m = [(p[0] + b[0]) / 2, (p[1] + b[1]) / 2];
+      pts.push([p[0] + nx * 4.8, p[1] + ny * 4.8], [m[0] + nx * 4.8, m[1] + ny * 4.8]);
+      for (const f of [0.25, 0.5, 0.75]) pts.push([cx + (p[0] - cx) * f, cy + (p[1] - cy) * f], [cx + (m[0] - cx) * f, cy + (m[1] - cy) * f]);
     });
-  });
+    return pts;
+  };
+  const covered = (A, by) => probes(A).every((pt) => by.some((B) => inside(pt, B)));
+  // on retire les plumes une à une, chacune testée contre ce qui reste ; puis on vérifie que tout ce qui a été retiré
+  // est encore couvert par ce qui est gardé (sinon on le remet)
+  let keep = polys.slice();
+  for (const A of polys) { const rest = keep.filter((B) => B !== A); if (covered(A, rest)) keep = rest; }
+  for (const A of polys) if (!keep.includes(A) && !covered(A, keep)) keep.push(A);
   return keep.map((A) => L(A)).join('');
 }
+
 /**
  * Une plume : de sa base à sa pointe, bord d'attaque (`up`) puis bord de fuite (`lo`), chacun donné de la base vers la
  * pointe. La pointe est un angle vif.
@@ -190,8 +210,8 @@ const WL_ROOT = [[256, 320], [200, 314], [150, 290], [120, 240], [118, 180], [13
 
 // --- la traîne : six longues plumes qui partent de la hanche gauche, en éventail ---
 const TL = [
-  { pal: 'tail', b: [248, 446], ax: [160, 458], t: [92, 493], shaft: true, pts: [[244, 432], [200, 438], [162, 444], [146, 452], [126, 468], [106, 484], [92, 493, 1], [110, 492], [135, 482], [160, 472], [190, 465], [225, 460], [252, 456]] },
-  { pal: 'tail', b: [242, 401], ax: [140, 410], t: [57, 447], shaft: true, pts: [[240, 392], [192, 390], [150, 396], [116, 412], [90, 430], [70, 442], [57, 447, 1], [72, 451], [96, 446], [126, 436], [160, 422], [200, 413], [244, 410]] },
+  { pal: 'tail', b: [248, 446], ax: [160, 458], t: [92, 493], shaft: true, pts: [[246, 420], [204, 424], [168, 430], [148, 446], [126, 466], [106, 484], [92, 493, 1], [110, 492], [135, 482], [160, 472], [190, 465], [225, 460], [252, 456]] },
+  { pal: 'tail', b: [242, 401], ax: [140, 410], t: [57, 447], shaft: true, pts: [[240, 392], [192, 390], [150, 396], [116, 412], [90, 430], [70, 442], [57, 447, 1], [72, 451], [96, 446], [126, 438], [158, 428], [200, 420], [244, 416]] },
   { pal: 'dip', b: [190, 396], ax: [116, 398], t: [57, 419], shaft: true, pts: [[192, 384], [150, 386], [112, 392], [86, 400], [68, 410], [57, 419, 1], [74, 419], [96, 412], [124, 406], [156, 404], [194, 404]] },
   { pal: 'tail', b: [196, 368], ax: [134, 368], t: [83, 388], shaft: true, pts: [[198, 350], [156, 350], [128, 356], [110, 366], [96, 378], [83, 388, 1], [96, 393], [118, 391], [142, 387], [168, 386], [198, 384]],
     extra: shape('M156 356 C132 360 110 370 92 386 C112 376 132 368 158 364 Z', '#fff0a8', 0.55) },

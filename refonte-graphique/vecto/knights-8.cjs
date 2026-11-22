@@ -38,7 +38,7 @@ function rib(pts, k = 1, jag = false) {
     L.push([x - dy * h, y + dx * h]); R.push([x + dy * h, y - dx * h]);
   });
   R.reverse();
-  if (jag) return 'M' + [...L, ...R].map(([x, y]) => `${n(x)} ${n(y)}`).join('L') + 'Z';
+  if (jag) return 'M' + [...L, ...R].map(([x, y]) => `${Math.round(x)} ${Math.round(y)}`).join('L') + 'Z';
   return `M${n(L[0][0])} ${n(L[0][1])}${cr(L)}L${n(R[0][0])} ${n(R[0][1])}${cr(R)}Z`;
 }
 /** Brise une ligne en éclair : un point milieu par segment, décalé d'un côté ou de l'autre (irrégulier mais fixe). */
@@ -57,8 +57,10 @@ function bolt(pts, amp = 0.12) {
  * rouge sombre au cœur blanc-jaune.
  */
 const crack = (pts, k = 1) => {
-  const b = bolt(pts);
-  return `<g class="a-glow">${shape(rib(pts, 6.4 * k), LAVA.org, 0.12)}${shape(rib(pts, 3.6 * k), '#ff7424', 0.3)}</g>`
+  const b = bolt(pts), w = Math.max(...pts.map((p) => p[2])) * k;
+  const mid = `M${Math.round(pts[0][0])} ${Math.round(pts[0][1])}` + cr(pts.map(([x, y]) => [Math.round(x), Math.round(y)]));
+  const halo = (sw, c, o) => `<path d="${mid}" fill="none" stroke="${c}" stroke-width="${n(sw)}" opacity="${o}"/>`;
+  return `<g class="a-glow">${halo(w * 3.6, LAVA.org, 0.13)}${halo(w * 1.9, '#ff7424', 0.3)}</g>`
     + shape(rib(b, 1.7 * k, true), LAVA.deep, 0.95) + shape(rib(b, 1.3 * k, true), '#ff6f1c')
     + shape(rib(b, 0.92 * k, true), '#ffad2c') + shape(rib(b, 0.48 * k, true), '#fff3b0');
 };
@@ -88,7 +90,7 @@ function rough(P, a = 1.9, step = 5) {
       out.push([x + nx * o, y + ny * o]);
     }
   });
-  return 'M' + out.map(([x, y]) => `${n(x)} ${n(y)}`).join('L') + 'Z';
+  return 'M' + out.map(([x, y]) => `${Math.round(x)} ${Math.round(y)}`).join('L') + 'Z';
 }
 /** Lit une liste « x y x y … » en points. */
 const pts = (str) => str.trim().split(/[\s,]+/).map(Number).reduce((o, v, i) => (i % 2 ? o[o.length - 1].push(v) : o.push([v]), o), []);
@@ -122,7 +124,7 @@ const defs = [
   // la lueur de la poitrine sous le menton
   rad('g-under', 0.5, 0.5, 0.5, [[0.6, '#ff9a3a', 0.75], [0.7, '#ff7a28', 0.3], [0.8, '#f0641f', 0.05], [1, '#e85a20', 0]], false),
   // le creux autour de l'œil, éclairé par la lave de l'œil
-  rad('g-socket', 0.5, 0.5, 0.5, [[0.55, '#ff8a26', 0.9], [0.75, '#e9551c', 0.5], [1, '#b8380f', 0]], false),
+  rad('g-socket', 0.5, 0.5, 0.5, [[0.45, '#ff9a2a', 0.95], [0.68, '#f0641f', 0.6], [1, '#c0400f', 0]], false),
   lin('g-browSh', 0, 0, 0, 1, [[0, '#3a0d04', 0.85], [1, '#3a0d04', 0]], false),
   rad('g-lavaBed', 248, 244, 120, [[0, '#fffbe2'], [0.1, '#ffec8e'], [0.24, '#ffbe40'], [0.45, '#ff8a22'], [0.7, '#e2501a'], [1, '#9a2410']]),
   rad('g-plateLight', 248, 246, 150, [[0, '#ffb050', 0.5], [0.2, '#ff9a40', 0.32], [0.42, '#ff8030', 0.14], [0.7, '#f26a26', 0.04], [1, '#e85a20', 0]]),
@@ -158,11 +160,12 @@ const S = {
 };
 
 // ---------- la tête ----------
-const EYE_L = 'M215 96 L228 101 L258 113 C262 116 263 121 260 125 C254 130 244 132 234 131 C225 129 218 123 216 114 C215 108 214 101 215 96 Z';
-const EYE_R = 'M291 118 C300 113 312 107 324 103 L330 104 C333 110 333 118 330 125 C326 132 318 136 308 136 C299 135 293 130 291 124 Z';
+// les yeux : deux globes de lave en ovale incliné ; les sourcils en mordent le haut, côté nez
+const EYE_L = 'M215.8 107.8 A24 17 15 1 1 262.2 120.2 A24 17 15 1 1 215.8 107.8 Z';
+const EYE_R = 'M291.7 125.4 A21 15 -15 1 1 332.3 114.6 A21 15 -15 1 1 291.7 125.4 Z';
 // les sourcils : deux dalles épaisses ; leur bord du bas descend sur le haut des yeux (ils les surplombent)
-const BROW_L = 'M209 92 L217 75 C221 72 227 72 232 74 L270 91 C273 93 274 96 274 99 L273 117 C272 120 269 121 266 120 L212 103 C209 102 208 99 209 92 Z';
-const BROW_R = 'M287 101 C287 98 288 96 291 95 L329 82 C332 81 335 83 336 86 L339 103 C339 106 337 108 334 109 L292 122 C289 123 287 121 287 118 Z';
+const BROW_L = 'M207 85 L213 70 C217 67 223 67 228 69 L271 98 C274 100 276 103 275 106 L272 125 C271 128 268 129 265 128 L211 96 C208 95 206 92 207 85 Z';
+const BROW_R = 'M285 106 C285 103 287 101 289 100 L329 73 C332 71 335 73 336 76 L339 88 C339 91 338 93 335 94 L291 125 C288 126 285 124 285 121 Z';
 // la bouche : la ligne du milieu du zigzag ; l'épaisseur se compte à la verticale (les pointes restent nettes)
 const MOUTH = [[221, 166, 0.72], [238, 153, 1], [250.5, 166.5, 0.75], [272, 154.5, 0.95], [289.5, 165.8, 0.75], [303, 156.5, 0.9], [309, 166, 0.55]];
 const zig = (t, c, o = 1) => {
@@ -203,7 +206,6 @@ const headBody = use('head', 'url(#g-head)') + clip('head',
   + stone('206 34 232 28 236 50 232 80 210 84 206 60', '#4f4542', 1, 0.6)
   + stone('292 36 326 64 330 96 304 92 296 66', '#675a53', 1, 0.6)
   + fissure([[244, 26, 0], [250, 36, 1.2], [256, 46, 0]]) + fissure([[310, 52, 0], [318, 60, 1.3], [324, 70, 0]])
-  + chip(190, 26, 7, 10) + chip(266, 12, 6, 20) + chip(336, 66, 6, 70)
   // l'oreille de pierre, cerclée de lave
   + shape('M150 92 C146 104 147 118 152 128 C156 134 162 138 168 138 C170 124 170 108 164 96 C160 90 154 89 150 92 Z', '#2f272c')
   + edge([[151, 96, 0], [149, 108, 2.4], [152, 122, 2], [158, 132, 0]], '#4a4042')
@@ -230,20 +232,18 @@ const headBody = use('head', 'url(#g-head)') + clip('head',
   + crack([[316, 158, 0], [322, 166, 2], [320, 176, 0]], 0.8)
 )
   // les yeux de lave, enfoncés : le creux autour est rougi par leur lumière
-  + oval(240, 117, 30, 20, 'url(#g-socket)', 1, 22) + oval(311, 121, 26, 18, 'url(#g-socket)', 1, -18)
-  + shape(EYE_L, LAVA.red) + shape(EYE_R, LAVA.red)
+  + oval(239, 116, 33, 23, 'url(#g-socket)', 1, 22) + oval(311, 120, 29, 21, 'url(#g-socket)', 1, -20)
+  + `<path d="${EYE_L}" fill="${LAVA.red}" stroke="#f2621e" stroke-width="4.4"/><path d="${EYE_R}" fill="${LAVA.red}" stroke="#f2621e" stroke-width="4"/>`
   + `<g class="a-eyes">${eyeGlow(EYE_L, 'eL')}${eyeGlow(EYE_R, 'eR')}`
-  + oval(244, 115, 1.9, 4.8, '#6a1c08', 1, -10) + oval(306, 125, 1.6, 4.2, '#6a1c08', 0.9, -6) + '</g>'
+  + oval(243, 120, 1.9, 4.8, '#6a1c08', 1, -10) + oval(306, 125, 1.6, 4.2, '#6a1c08', 0.9, -6) + '</g>'
   // l'ombre des sourcils sur le haut des yeux
-  + `<g clip-path="url(#c-eL)"><path d="M208 96 L268 115 L268 127 L208 108 Z" fill="url(#g-browSh)"/></g>`
-  + `<g clip-path="url(#c-eR)"><path d="M288 117 L338 102 L338 114 L288 129 Z" fill="url(#g-browSh)"/></g>`
+  + `<g clip-path="url(#c-eL)"><path d="M206 92 L270 130 L270 140 L206 102 Z" fill="url(#g-browSh)"/></g>`
+  + `<g clip-path="url(#c-eR)"><path d="M284 124 L340 86 L340 96 L284 134 Z" fill="url(#g-browSh)"/></g>`
   // les sourcils : deux dalles épaisses ; le dessus éclairé, la face avant moyenne, le dessous dans l'ombre
-  + shape(BROW_L, '#665950') + stone('217 75 232 74 270 91 274 98 266 99 230 84 216 80', '#84756a', 1, 0.5)
-  + edge([[219, 76, 0], [246, 84, 1.6], [270, 93, 0]], EDGE, 0.75)
-  + stone('211 100 266 117 272 116 273 110 214 94', '#3a3135', 1, 0.5)
-  + shape(BROW_R, '#5c504a') + stone('291 95 329 82 335 85 336 91 296 103 289 100', '#7a6c62', 1, 0.5)
-  + edge([[294, 96, 0], [314, 89, 1.6], [333, 84, 0]], EDGE, 0.75)
-  + stone('291 119 334 106 338 104 338 99 292 112', '#3a3135', 1, 0.5)
+  + shape(BROW_L, '#665950') + stone('213 70 228 69 271 98 275 105 267 106 227 78 212 75', '#84756a', 1, 0.5)
+  + edge([[215, 71, 0], [244, 85, 1.6], [271, 100, 0]], EDGE, 0.75)
+  + shape(BROW_R, '#5c504a') + stone('289 100 329 73 335 75 336 81 296 107 287 104', '#7a6c62', 1, 0.5)
+  + edge([[292, 101, 0], [312, 88, 1.6], [333, 75, 0]], EDGE, 0.75)
   // le nez : un bloc taillé entre les yeux
   + shape('M271 104 L287 104 L288 122 L270 122 Z', '#4c4240')
   + edge([[283, 105, 0], [286, 113, 2], [287, 121, 0]], '#7a6d68', 0.8)
