@@ -27,6 +27,18 @@ function sm(pts, closed = true, k = 1) {
 }
 
 /** Une forme effilée (mèche, pli) : une lentille de (x0, y0) à (x1, y1), bombée vers (cx, cy), large de `w` au milieu. */
+/**
+ * Le poing droit : dessiné droit (dans l'axe du bras), puis pivoté de 45° vers la droite autour du poignet, caché sous
+ * la manche. Les silhouettes pivotées vont dans S (contour, ombres), les droites dans S0 : l'habillage du poing est
+ * dessiné droit et pivoté d'un bloc (voir HAND_ROT plus bas).
+ */
+const HAND_ROT = [45, 213, 397];
+const S0 = {};
+function handSil(key, pts) {
+  const [a, cx, cy] = HAND_ROT, c = Math.cos((a * Math.PI) / 180), sn = Math.sin((a * Math.PI) / 180);
+  S0[key] = sm(pts);
+  return sm(pts.map(([x, y, f]) => [cx + (x - cx) * c - (y - cy) * sn, cy + (x - cx) * sn + (y - cy) * c, f]));
+}
 /** Un doigt replié vers le haut (main ouverte qui tient la flamme) : de la base (cachée dans la paume) au bout arrondi. */
 const FING = { fing4: [577, 353, 584, 339, 10], fing3: [567, 357, 573, 338, 11.5], fing2: [557, 360, 561, 340, 12], fing1: [546, 362, 549, 344, 12] };
 function fingerPts(bx, by, tx, ty, w) {
@@ -146,15 +158,15 @@ const S = {
   belt: sm([[252, 411, 1], [290, 417], [322, 423], [362, 424], [400, 419], [430, 413], [446, 410, 1], [451, 419], [448, 430, 1], [430, 433], [400, 437], [362, 443], [322, 444], [290, 441], [254, 435, 1]]),
   knot: sm([[322, 430], [330, 420], [343, 416], [357, 419], [365, 428], [364, 441], [355, 449], [342, 451], [329, 447], [322, 439]]),
   // le bras gauche : la manche, puis le poing posé sur la hanche
-  sleeveL: sm([[212, 325], [252, 322], [266, 336], [262, 352], [252, 370], [246, 384], [246, 399, 1], [232, 400], [218, 402], [202, 406], [186, 411], [172, 409], [160, 404, 1], [164, 392], [170, 379], [173, 365], [179, 351], [194, 337]]),
-  fistL: sm([[190, 402], [206, 399], [224, 397], [240, 398], [249, 404], [251, 418], [249, 438], [242, 449], [224, 453], [205, 452], [192, 447], [184, 437], [182, 422], [184, 410]]),
+  sleeveL: sm([[212, 325], [252, 322], [266, 336], [262, 352], [252, 370], [248, 387], [252, 410, 1], [237, 406], [220, 403], [202, 406], [186, 411], [172, 409], [160, 404, 1], [164, 392], [170, 379], [173, 365], [179, 351], [194, 337]]),
+  fistL: handSil('fistL', [[190, 402], [206, 399], [224, 397], [240, 398], [249, 404], [251, 418], [249, 438], [242, 449], [224, 453], [205, 452], [192, 447], [184, 437], [182, 422], [184, 410]]),
   // les doigts repliés, du haut vers le bas, au bout du poing
-  fk1: sm([[220, 411], [236, 410], [248, 412], [253, 417], [251, 422], [238, 423], [221, 422]]),
-  fk2: sm([[221, 422], [237, 421], [249, 423], [254, 428], [252, 433], [239, 434], [222, 433]]),
-  fk3: sm([[221, 433], [236, 432], [247, 434], [252, 439], [250, 444], [238, 445], [222, 444]]),
-  fk4: sm([[220, 444], [232, 443], [241, 445], [245, 449], [242, 453], [232, 454], [221, 453]]),
+  fk1: handSil('fk1', [[220, 411], [236, 410], [248, 412], [253, 417], [251, 422], [238, 423], [221, 422]]),
+  fk2: handSil('fk2', [[221, 422], [237, 421], [249, 423], [254, 428], [252, 433], [239, 434], [222, 433]]),
+  fk3: handSil('fk3', [[221, 433], [236, 432], [247, 434], [252, 439], [250, 444], [238, 445], [222, 444]]),
+  fk4: handSil('fk4', [[220, 444], [232, 443], [241, 445], [245, 449], [242, 453], [232, 454], [221, 453]]),
   // le bras droit : la grande manche ouverte, la main paume en haut
-  thumbL: sm([[205, 404], [216, 400], [227, 402], [236, 407], [243, 413], [244, 420], [239, 424], [232, 421], [223, 415], [213, 410], [206, 409]]),
+  thumbL: handSil('thumbL', [[205, 404], [216, 400], [227, 402], [236, 407], [243, 413], [244, 420], [239, 424], [232, 421], [223, 415], [213, 410], [206, 409]]),
   sleeveR: sm([[404, 338], [440, 344], [466, 352], [492, 350], [499, 362], [503, 390], [508, 430], [494, 436], [474, 432], [458, 424], [446, 412], [434, 398], [418, 390], [404, 386], [398, 362]]),
   handR: sm([[492, 352], [500, 340], [505, 330], [512, 323], [520, 323], [526, 330], [528, 340], [533, 348], [544, 352], [558, 351], [570, 347], [579, 346], [583, 352], [580, 362], [572, 370], [560, 376], [536, 380], [510, 380], [494, 375]]),
   // le bout des doigts repliés, vus de face
@@ -345,19 +357,6 @@ const parts = [
       + line('M343 433 C346 430 350 433 348 437 C345 441 338 438 338 432 C338 425 347 422 353 427 C359 433 355 444 344 446 C334 447 326 441 327 431', ORA.shade, 1.8, 0.8)
       + oval(353, 423, 6, 3, ORA.hi, 0.85, 10) },
 
-  // --- le bras gauche : la manche (coude dehors, bas qui pend, poignet en biais), le poing serré sur la hanche ---
-  { id: 'sleeveL', cls: 'a-bob', d: S.sleeveL, rim: { on: ['torso'], color: CLOTH.line, w: 1.1, o: 0.6 },
-    shadow: [{ on: ['torso', 'belt'], dx: -2, dy: 5, color: SH.cloth, o: 0.4 }, { on: ['tail'], dx: -5, dy: 4, color: SH.fox, o: 0.3 }],
-    body: use('sleeveL', 'url(#g-cloth)') + clip('sleeveL',
-      // le dessous du bras et le bas de la manche qui pend sous le coude, dans l'ombre
-      shape('M168 366 C174 384 188 396 210 398 C226 396 240 390 248 380 L252 396 L186 418 L154 414 Z', CLOTH.shade, 0.5)
-      + shape('M156 384 C166 396 178 403 194 407 L186 416 L152 414 Z', CLOTH.deep, 0.45)
-      // le pli du coude
-      + shape(taper(192, 358, 214, 374, 240, 366, 4.5), CLOTH.shade, 0.8)
-      + shape(taper(236, 344, 216, 348, 200, 358, 3), CLOTH.shade, 0.6)
-      // le liseré rouge du poignet, en biais
-      + shape('M184 405 C196 402 210 398 222 394 C228 392 232 390 236 388 L241 397 C226 403 206 409 184 416 Z', RED.lite)
-      + shape('M184 411 C204 405 222 399 240 392 L241 397 C226 403 206 409 184 416 Z', RED.shade, 0.55)) },
   // le poing : le dos de la main, éclairé, et le talon de la main en bas à gauche
   { id: 'fistL', cls: 'a-bob', d: S.fistL, rim: { on: ['sleeveL', 'belt'], color: SKIN.line, w: 1.1, o: 0.7 },
     shadow: [{ on: ['tail', 'legL', 'belt'], dx: -3, dy: 5, color: SH.fox, o: 0.35 }],
@@ -383,6 +382,19 @@ const parts = [
       // l'ongle, au bout du pouce replié sur l'index
       + shape('M237 412 C241 412 244 415 244 419 C242 421 239 421 237 419 C235 417 235 414 237 412 Z', '#ffe9dc', 0.95) },
 
+  // --- le bras gauche : la manche (coude dehors, bas qui pend, poignet en biais), le poing serré sur la hanche ---
+  { id: 'sleeveL', cls: 'a-bob', d: S.sleeveL, rim: { on: ['torso'], color: CLOTH.line, w: 1.1, o: 0.6 },
+    shadow: [{ on: ['torso', 'belt', 'fistL', 'thumbL'], dx: -2, dy: 5, color: SH.cloth, o: 0.4 }, { on: ['tail'], dx: -5, dy: 4, color: SH.fox, o: 0.3 }],
+    body: use('sleeveL', 'url(#g-cloth)') + clip('sleeveL',
+      // le dessous du bras et le bas de la manche qui pend sous le coude, dans l'ombre
+      shape('M168 366 C174 384 188 396 210 398 C226 396 240 390 248 380 L252 396 L186 418 L154 414 Z', CLOTH.shade, 0.5)
+      + shape('M156 384 C166 396 178 403 194 407 L186 416 L152 414 Z', CLOTH.deep, 0.45)
+      // le pli du coude
+      + shape(taper(192, 358, 214, 374, 240, 366, 4.5), CLOTH.shade, 0.8)
+      + shape(taper(236, 344, 216, 348, 200, 358, 3), CLOTH.shade, 0.6)
+      // le liseré rouge du poignet, en biais
+      + shape('M180 404 C194 401 208 398 222 397 C234 397 244 400 252 403 L254 412 C244 408 232 405 220 404 C206 405 194 408 180 412 Z', RED.lite)
+      + shape('M180 409 C194 406 208 403 220 402 C234 402 244 405 254 409 L254 413 C244 409 232 406 220 405 C206 406 194 409 180 413 Z', RED.shade, 0.55)) },
   // --- le bras droit : la grande manche, la main ouverte ---
   { id: 'sleeveR', cls: 'a-arm', d: S.sleeveR, rim: { on: ['torso'], color: CLOTH.line, w: 1.1, o: 0.6 },
     shadow: [{ on: ['torso', 'belt', 'sashR'], dx: -3, dy: 5, color: SH.cloth, o: 0.38 }],
@@ -637,4 +649,11 @@ const style = [
   kf('roar', (i) => `scale(${[1, 1, 1.07, 1.05, 1][i]},${[1, 0.92, 1.28, 1.2, 1][i]})`),
 ].join('');
 
-module.exports = { id: 'knights-11', w: W, h: H, pad: 110, foot: [329, 566], svg: (anime = true) => figure({ w: W, h: H, pad: 110, defs, style, parts, anime }) };
+const HAND = ['fistL', 'fk1', 'fk2', 'fk3', 'fk4', 'thumbL'];
+for (const p of parts) {
+  if (!HAND.includes(p.id)) continue;
+  p.body = `<g transform="rotate(${HAND_ROT.join(' ')})">${p.body.split(`#s-${p.id}"`).join(`#s0-${p.id}"`).split(`#c-${p.id})`).join(`#c0-${p.id})`)}</g>`;
+}
+const handDefs = HAND.map((k) => `<path id="s0-${k}" d="${S0[k]}"/><clipPath id="c0-${k}"><use href="#s0-${k}"/></clipPath>`).join('');
+
+module.exports = { id: 'knights-11', w: W, h: H, pad: 110, foot: [329, 566], svg: (anime = true) => figure({ w: W, h: H, pad: 110, defs: defs + handDefs, style, parts, anime }) };
