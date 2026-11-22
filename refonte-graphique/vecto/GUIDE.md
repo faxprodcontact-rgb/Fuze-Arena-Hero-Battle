@@ -96,6 +96,8 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Mousse, herbe, champignons | `ronciers-2.cjs` → morceaux `moss` (bord en brins), `capS`/`capB` |
 | Gueule ouverte en coin vue de profil, crocs avec contour | `bayou-6.cjs` → `upAt`, `lowAt`, `toothD`, morceaux `teethT`, `teethB` |
 | Fusée (tube, bagues dorées, pointe), queue enroulée | `parade-3.cjs` → `rocketGeo`, `rocketBody`, morceau `tail` (`rib` en spirale) |
+| Grande épée sur un axe (lame, garde, poignée, pommeau), tranchants de feu | `assassins-2.cjs` → `SA`, `SB`, `sp`, `spa`, morceaux `blade`, `guard`, `grip` |
+| Crinière de flammes (langues courbes, pas de rayons) | `assassins-2.cjs` → `TONGUES`, `fireBody` |
 | Coquille en spirale, cristaux | `cuirasses-4.cjs` → `spiral`, `moss` |
 | Pattes et serres | `glaces-4.cjs` → `footD`, `nail` ; `assassins-5.cjs` → `toe`, `talon` |
 | Jupe de feuilles, notes de musique | `assassins-12.cjs` → `leafGeo`, `skirtBody`, `noteFx` |
@@ -110,20 +112,27 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Hampe tenue (trident, lance), flamme bleue sans contour | `myths-12.cjs` → morceaux `trident`, `handL`, `flame` (`flameBody`) |
 | Épaulière en écailles, bottes de fer | `myths-12.cjs` → morceaux `pauR`, `legL`, `legR` |
 
-## Faits (22)
+## Faits (23)
 
-Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Séraphin `angels-4`, Nimue `mages-9` (le dessin montre un dieu de l'orage doré), Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
-Rook `assassins-5` · monstres : pétard `parade-1`, méduse `abysses-3`, feu follet `bayou-4`, chouette `glaces-4`,
-escargot de cristal `cuirasses-4`, épouvantail `epouvantails-2`, renard de feuilles `ronciers-1`, dino-voile `bayou-1`, lion de la parade `parade-2`, coq-girouette `epouvantails-1`, blaireau moussu `ronciers-2`, croco cuirassé `bayou-6`, singe aux fusées `parade-3`.
+Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Séraphin `angels-4`, Nimue `mages-9` (le dessin montre un dieu de
+l'orage doré), Kael `assassins-2`, Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
+Rook `assassins-5` · monstres : pétard `parade-1`, lion de la parade `parade-2`, singe aux fusées `parade-3`, méduse
+`abysses-3`, dino-voile `bayou-1`, feu follet `bayou-4`, croco cuirassé `bayou-6`, chouette `glaces-4`, escargot de
+cristal `cuirasses-4`, coq-girouette `epouvantails-1`, épouvantail `epouvantails-2`, renard de feuilles `ronciers-1`,
+blaireau moussu `ronciers-2`.
 
 ## File d'attente (prendre le premier non fait)
 
 Ordre : d'abord les monstres que le joueur rencontre en premier (région 1 de la campagne : familles `parade`,
 `epouvantails`, `bayou`, `ronciers`), en intercalant un héros Légendaire (l'invocation les montre en grand).
 
-1. héros `assassins-2` Kael
-Ensuite : le reste des familles de la région 1, puis `fauves` et `ruche` (région 2), `voliere` et `cuirasses`
-(régions 3-4)… et un Légendaire tous les deux monstres (liste : `npx tsx` sur `HEROES` de
+1. `parade-4` 2. `epouvantails-3` 3. héros `myths-10` Thor 4. `bayou-2` 5. `ronciers-3` 6. héros `angels-2` Ilian
+7. `parade-5` 8. `epouvantails-4` 9. héros `mages-8` Eldra 10. `bayou-3` 11. `ronciers-4` 12. héros `assassins-3` Sable
+13. `parade-6` 14. `epouvantails-5` 15. héros `myths-8` Freyja 16. `bayou-5` 17. `ronciers-5` 18. héros `angels-3` Aube
+19. `epouvantails-6` 20. `ronciers-6` 21. héros `mages-11` Myrr
+Ensuite : `fauves` et `ruche` (région 2), `voliere` et `cuirasses` (régions 3-4)… et un Légendaire tous les deux
+monstres. Légendaires restants : `assassins-4` Vesper, `assassins-6` Isha, `mages-12` Faust, `angels-5` Lumen,
+`angels-6` Elyon, `myths-9` Isis, `myths-11` Atlas (liste complète : `npx tsx` sur `HEROES` de
 `src/core/data/heroes.ts`, rareté `legendary`), puis les Épiques.
 
 Quand la page dépassera ~60 personnages (limite de 16 Mo d'une page claude.ai), la couper en deux pages.
