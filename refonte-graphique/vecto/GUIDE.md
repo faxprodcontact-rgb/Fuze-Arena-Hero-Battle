@@ -99,10 +99,13 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Feuilles en tuiles, éventail de feuilles | `ronciers-1.cjs` → `leafPts`, `leafHalf`, `leaves` (manteau `MANTLE`, queue `TAIL`) |
 | Animal de profil : gueule ouverte, crocs, langue, mâchoire qui claque | `ronciers-1.cjs` → `tooth`, morceaux `mouth` et `jaw` (dents du bas dans `a-teeth`), `nest`, groupe `a-root` pour le bond |
 | Pattes de quadrupède, griffes | `ronciers-1.cjs` → `legBody` |
+| Couronne à pointes, barbe avec favoris, yeux à paupière lourde | `myths-12.cjs` → morceaux `crown`, `beard`, `stache`, `eye` |
+| Hampe tenue (trident, lance), flamme bleue sans contour | `myths-12.cjs` → morceaux `trident`, `handL`, `flame` (`flameBody`) |
+| Épaulière en écailles, bottes de fer | `myths-12.cjs` → morceaux `pauR`, `legL`, `legR` |
 
-## Faits (13)
+## Faits (14)
 
-Ruka `demons-7` (modèle) · héros : Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
+Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
 Rook `assassins-5` · monstres : pétard `parade-1`, méduse `abysses-3`, feu follet `bayou-4`, chouette `glaces-4`,
 escargot de cristal `cuirasses-4`, épouvantail `epouvantails-2`, renard de feuilles `ronciers-1`.
 
@@ -111,8 +114,8 @@ escargot de cristal `cuirasses-4`, épouvantail `epouvantails-2`, renard de feui
 Ordre : d'abord les monstres que le joueur rencontre en premier (région 1 de la campagne : familles `parade`,
 `epouvantails`, `bayou`, `ronciers`), en intercalant un héros Légendaire (l'invocation les montre en grand).
 
-1. héros `myths-12` Zeus 2. `bayou-1` 3. `parade-2` 4. héros `angels-4` Séraphin 5. `epouvantails-1`
-6. `ronciers-2` 7. héros `mages-9` Nimue 8. `bayou-6` 9. `parade-3` 10. héros `assassins-2` Kael
+1. `bayou-1` 2. `parade-2` 3. héros `angels-4` Séraphin 4. `epouvantails-1` 5. `ronciers-2`
+6. héros `mages-9` Nimue 7. `bayou-6` 8. `parade-3` 9. héros `assassins-2` Kael
 Ensuite : le reste des familles de la région 1, puis `fauves` et `ruche` (région 2), `voliere` et `cuirasses`
 (régions 3-4)… et un Légendaire tous les deux monstres (liste : `npx tsx` sur `HEROES` de
 `src/core/data/heroes.ts`, rareté `legendary`), puis les Épiques.
