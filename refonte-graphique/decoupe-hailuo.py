@@ -1,6 +1,7 @@
 # Découpe les personnages des planches rendues par Hailuo (refonte-graphique/hailuo-v1/*.jpg) :
 # fond blanc et ombre au sol retirés, lueurs gardées en transparence, un fichier par personnage.
-#   python3 refonte-graphique/decoupe-hailuo.py [dossier-de-controle]
+#   python3 refonte-graphique/decoupe-hailuo.py [dossier-de-controle] [--seulement=id,id] [--brut]
+# Chaque dessin est ensuite adouci (adoucir.py : trait teinté et affiné, détails fondus, bord doux), sauf avec --brut.
 # Sortie : public/art/p/<identifiant du jeu>.webp + public/apercu/hailuo.js (taille et place de chaque dessin,
 # calées sur la silhouette du dessin d'origine pour garder les mêmes tailles dans le jeu).
 import json, os, sys
@@ -10,6 +11,9 @@ from PIL import Image, ImageDraw
 ROOT = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(ROOT, 'hailuo-v1')
 OUT = os.path.join(ROOT, '..', 'public', 'apercu')
+sys.path.insert(0, ROOT)
+from adoucir import soften
+SOFT = '--brut' not in sys.argv
 ARGS = [a for a in sys.argv[1:] if not a.startswith('--')]
 CHECK = ARGS[0] if ARGS else None
 # --seulement=id,id : ne refait que ces personnages (les autres gardent leur image et leur place)
@@ -21,10 +25,93 @@ PLEIN = {'glaces-4': 4, 'angels-10': 12}  # identifiant : épaisseur ajoutée au
 #   'trous'  : ni la règle des grands trous blancs fermés, ni celle des petits (motif blanc sur un bouclier…)
 #   'petits' : seulement la règle des petites zones blanches (blanc d'un œil au bout d'une antenne, reflet…)
 BLANC_PEINT = {'assassins-7': 'trous', 'cuirasses-4': 'petits', 'bayou-4': 'petits'}
+# Retouches à la main, après contrôle sprite par sprite (coordonnées en pixels de l'image public/art/p/<id>.webp) :
+#   GARDER  : du blanc PEINT retiré à tort, à remettre. Un point (x, y) = toute la zone vide fermée qui le contient ;
+#             une liste de points = tout ce qui est vide dans ce polygone (zone ouverte sur le dehors).
+#   RETIRER : un reste à enlever. Un point = la zone blanche qui le contient ; une liste = tout ce qui est dans le polygone
+#             (miette d'ombre au sol, par exemple).
+GARDER = {}
+RETIRER = {}
+CADRES = {}   # dessins recadrés par recadre.py : décalage (dx, dy) entre l'image finale et celle fabriquée ici
+if os.path.isfile(os.path.join(ROOT, 'cadres.json')):
+    CADRES = json.load(open(os.path.join(ROOT, 'cadres.json'), encoding='utf-8'))
+RETOUCHES = os.path.join(ROOT, 'retouches-detourage.json')
+if os.path.isfile(RETOUCHES):
+    _r = json.load(open(RETOUCHES, encoding='utf-8'))
+    GARDER, RETIRER = _r.get('garder', {}), _r.get('retirer', {})
+
+def poly_mask(shape, pts):
+    im = Image.new('L', (shape[1], shape[0]), 0)
+    ImageDraw.Draw(im).polygon([(float(x), float(y)) for x, y in pts], fill=255)
+    return np.array(im) > 0
+
+def retouch(cid, a, col, orig, box, scale):
+    """Applique GARDER et RETIRER à un personnage. `a`, `col` : opacité et couleurs de la planche entière ; `orig` : la
+    planche d'origine ; `box` : le cadre du personnage dans la planche ; `scale` : pixels de l'image finale par pixel de planche."""
+    y0, x0, y1, x1 = box
+    H, W = y1 - y0, x1 - x0
+    sub_a, sub_c, sub_o = a[y0:y1, x0:x1], col[y0:y1, x0:x1], orig[y0:y1, x0:x1]
+    dx, dy = CADRES.get(cid, (0, 0))
+    to_local = lambda pt: ((pt[0] - dx) / scale, (pt[1] - dy) / scale)
+    empty = sub_a < 0.16
+    def pockets():
+        """Le vide du dehors qu'un disque de 5 pixels ne peut pas atteindre : des poches derrière un passage étroit."""
+        r = max(2, int(round(5 / scale)))
+        pad = np.pad(empty, r + 2, constant_values=True)
+        seeds = [(0, 0)]
+        reach = dilate(flood(~dilate(~pad, r), seeds), r) & pad
+        return (pad & ~reach)[r + 2:-(r + 2), r + 2:-(r + 2)], reach[r + 2:-(r + 2), r + 2:-(r + 2)]
+    pk = None
+    for item in GARDER.get(cid, []):
+        if isinstance(item[0], (list, tuple)):
+            m = poly_mask((H, W), [to_local(q) for q in item]) & (sub_a < 1)
+        else:
+            x, y = to_local(item)
+            x, y = min(W - 1, max(0, int(round(x)))), min(H - 1, max(0, int(round(y))))
+            if not empty[y, x]:   # le point tombe juste à côté (arrondi) : on prend le pixel vide le plus proche
+                ys, xs = np.nonzero(empty[max(0, y - 4):y + 5, max(0, x - 4):x + 5])
+                if not len(ys):
+                    print('GARDER', cid, item, ': rien à cet endroit'); continue
+                i = int(np.argmin((ys - min(4, y)) ** 2 + (xs - min(4, x)) ** 2))
+                y, x = max(0, y - 4) + int(ys[i]), max(0, x - 4) + int(xs[i])
+            m = flood(empty, [(y, x)])
+            if m[0].any() or m[-1].any() or m[:, 0].any() or m[:, -1].any():
+                # zone ouverte sur le dehors : on ne remet que la poche (derrière un passage étroit) qui contient le point
+                pk = pk or pockets()
+                if not pk[0][y, x]:
+                    print('GARDER', cid, item, ': zone ouverte sur le dehors et pas une poche, il faut un polygone'); continue
+                m = dilate(flood(pk[0], [(y, x)]), 3) & (sub_a < 1) & ~pk[1]
+            else:
+                m = dilate(m, 3) & (sub_a < 1)      # avec le liseré adouci autour du trou
+        sub_a[m] = 1.0
+        sub_c[m] = sub_o[m]
+    for item in RETIRER.get(cid, []):
+        if isinstance(item[0], (list, tuple)):
+            m = poly_mask((H, W), [to_local(q) for q in item])
+        else:
+            x, y = to_local(item)
+            x, y = min(W - 1, max(0, int(round(x)))), min(H - 1, max(0, int(round(y))))
+            isle = flood(dilate(sub_a > 0.08, 1), [(y, x)])
+            if isle.any() and isle.sum() < 0.02 * H * W:      # une miette détachée du personnage : on l'enlève en entier
+                sub_a[isle] = 0.0
+                continue
+            mn_, mx_ = sub_o.min(2), sub_o.max(2)
+            m = flood((mn_ > 205) & (mx_ - mn_ < 34) & (sub_a > 0.5), [(y, x)])
+            if not m.any():
+                print('RETIRER', cid, item, ': rien à cet endroit'); continue
+            ring = dilate(m, 2) & ~m & (sub_o.min(2) > 120)     # le liseré clair autour : il prend l'opacité de sa noirceur
+            sub_a[ring] = np.minimum(sub_a[ring], np.clip((255 - sub_o.min(2)[ring]) / 190, 0, 1))
+        sub_a[m] = 0.0
+
+# Personnages clairs dont un morceau était « mangé » par le bord (le fond entrait par un trou du contour) : le contour est
+# épaissi de N pixels pendant le remplissage, les autres règles restent.
+SCELLER = {'echiquier-2': 5, 'mages-11': 5}
 def variant(cid):
     """Réglages du détourage propres à ce personnage : (trous, épaisseur de contour, petites zones), ou None."""
     if cid in PLEIN:
         return (False, PLEIN[cid], False)
+    if cid in SCELLER:
+        return (True, SCELLER[cid], True)
     if cid in BLANC_PEINT:
         return (BLANC_PEINT[cid] == 'petits', 0, False)
     return None
@@ -240,6 +327,7 @@ def do_sheet(sheet):
     fname, cols, rows, ids = sheet
     part = {}
     col, alpha = cut(os.path.join(SRC, fname))
+    orig_rgb = np.array(Image.open(os.path.join(SRC, fname)).convert('RGB')).astype(np.float32)
     plain = {}
     H, W = alpha.shape
     cw, ch = W / cols, H / rows
@@ -286,21 +374,27 @@ def do_sheet(sheet):
         y0, x0, y1, x1 = bbox_alpha(a, 0.04)
         pad = 4
         y0, x0, y1, x1 = max(0, y0 - pad), max(0, x0 - pad), min(H, y1 + pad), min(W, x1 + pad)
-        rgba = np.dstack([col[y0:y1, x0:x1], a[y0:y1, x0:x1] * 255]).astype(np.uint8)
-        img = Image.fromarray(rgba, 'RGBA')
         # place dans le repère du jeu : la silhouette pleine recouvre celle du dessin d'origine (même hauteur, pieds au même endroit)
         sy0, sx0, sy1, sx1 = bbox_alpha(a[y0:y1, x0:x1], 0.5)
         X0, Y0, X1, Y1 = orig[cid]
         k = (Y1 - Y0) / (sy1 - sy0)                       # unités de dessin par pixel
         wx = (X0 + X1) / 2 - (sx0 + sx1) / 2 * k          # le centre de la silhouette sur le centre d'origine
         wy = Y1 - sy1 * k                                 # les pieds au même niveau
+        if cid in GARDER or cid in RETIRER:               # retouches à la main (elles ne changent pas le cadre)
+            a, col = a.copy(), col.copy()
+            retouch(cid, a, col, orig_rgb, (y0, x0, y1, x1), 2.4 * k)
+        rgba = np.dstack([col[y0:y1, x0:x1], a[y0:y1, x0:x1] * 255]).astype(np.uint8)
+        img = Image.fromarray(rgba, 'RGBA')
+        if CHECK:  # pour le contrôle : le dessin d'origine, au même cadre et à la même taille que l'image finale
+            src = Image.fromarray(orig_rgb[y0:y1, x0:x1].astype(np.uint8))
+            src.resize((max(1, round(src.width * 2.4 * k)), max(1, round(src.height * 2.4 * k))), Image.LANCZOS).save(os.path.join(CHECK, cid + '-src.jpg'), quality=92)
         # image du site : 2,4 pixels par unité de dessin (net sur téléphone), en WebP transparent
         scale = 2.4 * k
         out = img.resize((max(1, round(img.width * scale)), max(1, round(img.height * scale))), Image.LANCZOS)
+        if SOFT:  # adouci pour se fondre dans le jeu (refonte-graphique/adoucir.py) ; --brut pour s'en passer
+            out = soften(out)
         out.save(os.path.join(OUT, '..', 'art', 'p', cid + '.webp'), 'WEBP', quality=88, method=6)
         part[cid] = {'ox': round(wx, 2), 'oy': round(wy, 2), 'w': round(img.width * k, 2), 'h': round(img.height * k, 2)}
-        if CHECK:
-            img.save(os.path.join(CHECK, cid + '.png'))
     print(fname, 'ok', flush=True)
     return part
 

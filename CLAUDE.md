@@ -228,6 +228,18 @@ Google Play. Le propriétaire n'est pas développeur : lui répondre en françai
   pixel près, sinon les découpes animées se décalent), puis `rig.py tout` (14 min), puis `art-jeu.py --cartes`.
   Contrôle fait sur les 144 personnages, sur fond sombre, zone retirée par zone retirée. Les images sources sont des JPG :
   les PNG d'origine du propriétaire donneraient des bords encore plus nets, mais ne sont pas nécessaires.
+  v0.36.0 (retours du propriétaire : « ça fait dessin posé, trop sec » puis « il reste des trous, vérifie chaque sprite un par un ») :
+  **contrôle sprite par sprite et dessins adoucis.** (1) Revue des 144 sprites : chaque trou fermé (425) et chaque morceau
+  « mangé par le bord » (234 poches) regardé à côté du dessin d'origine. Résultat dans `refonte-graphique/retouches-detourage.json`
+  (lu par `decoupe-hailuo.py`, coordonnées en pixels de `public/art/p/<id>.webp`) : `garder` = blanc PEINT retiré à tort, à
+  remettre (dents, griffes, défenses, reflets d'yeux, peintures de visage, cheveux blancs… ; un point = la zone vide qui le
+  contient, trou fermé ou poche) ; `retirer` = miettes d'ombre à enlever. `SCELLER` (contour épaissi pendant le remplissage)
+  pour la tour d'échecs et l'ange, dont un morceau entier partait. `cadres.json` (écrit par `recadre.py`) : décalage des 3
+  dessins recadrés. (2) `refonte-graphique/adoucir.py` (`soften`, OpenCV : `pip install opencv-python-headless`) : trait
+  noir affiné et teinté de la couleur qu'il cerne, hachures et petits détails fondus, noirs moins durs, léger voile de
+  lumière, bord fondu sur un pixel. Appliqué par `decoupe-hailuo.py` à chaque dessin (`--brut` pour s'en passer). Ordre
+  complet : copie de `public/art/p/` → `decoupe-hailuo.py` → `recadre.py <copie>` → `rig.py` (en quatre lots) → `art-jeu.py --cartes`.
+  Si le propriétaire trouve l'adoucissement trop fort ou trop faible : paramètre `k` de `soften` (1 = réglage actuel).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

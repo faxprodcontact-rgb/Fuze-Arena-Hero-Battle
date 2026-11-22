@@ -12,6 +12,7 @@ P = os.path.join(ROOT, '..', 'public', 'art', 'p')
 OLD = sys.argv[1]
 R = 16  # décalage cherché, en pixels, dans chaque sens
 moved = 0
+frames = {}
 for f in sorted(os.listdir(P)):
     if not f.endswith('.webp') or not os.path.isfile(os.path.join(OLD, f)):
         continue
@@ -36,6 +37,10 @@ for f in sorted(os.listdir(P)):
         canvas.paste(new, (at[1], at[0]))
         canvas.save(os.path.join(P, f), 'WEBP', quality=90, method=6)
         moved += 1
+        if at != (0, 0):
+            frames[f[:-5]] = [int(at[1]), int(at[0])]
         print(f[:-5], 'recalé de', at, new.size, '→', old.size, 'recouvrement', round(best / max(1, b.sum()), 3))
+import json
+json.dump(frames, open(os.path.join(ROOT, 'cadres.json'), 'w'), indent=1)   # lu par decoupe-hailuo.py (retouches)
 shutil.copy(os.path.join(OLD, 'hailuo.js'), os.path.join(ROOT, '..', 'public', 'apercu', 'hailuo.js'))
 print(moved, 'dessins recalés ; mesures (hailuo.js) reprises de', OLD)
