@@ -144,23 +144,21 @@ function tooth([x1, y1], [x2, y2], [tx, ty]) {
 const TEETH_T = [[[368, 198], [378, 199], [374, 214]], [[384, 200], [396, 201], [392, 230]], [[404, 202], [412, 203], [409, 214]], [[418, 203], [430, 203], [426, 226]]];
 const TEETH_B = [[[372, 246], [380, 248], [377, 236]], [[388, 249], [398, 249], [394, 232]], [[402, 246], [410, 242], [407, 230]]];
 
-/** Le grand œil : l'anneau sombre, le bord orange, l'iris vert, la grosse pupille, deux reflets ; le sourcil rouge ourlé. */
-function bigEye() {
-  const x = 319, y = 162;
-  return oval(x, y, 34, 31, RED.deep) + oval(x, y, 32, 29.5, RED.base)
-    + `<clipPath id="c-eye"><ellipse cx="${x}" cy="${y}" rx="28" ry="26"/></clipPath>` + oval(x, y, 28, 26, 'url(#g-eyeO)')
-    + `<g clip-path="url(#c-eye)">` + dot(x + 5, y - 1, 19, '#1a2a20') + dot(x + 5, y - 1, 17, 'url(#g-iris)') + dot(x + 7, y - 1, 8.4, '#0c0808')
-    + `<rect x="${x - 32}" y="${y - 30}" width="64" height="28" fill="url(#g-lid)"/>`
-    + dot(x + 1, y - 8, 4.2, '#fff') + dot(x + 13, y + 7, 2, '#fff', 0.9) + '</g>'
-    + `<g class="a-blink" opacity="0">${oval(x, y, 29, 27, 'url(#g-gold)')}${line(`M${x - 28} ${y + 2} Q${x} ${y + 14} ${x + 28} ${y + 2}`, '#2a1008', 3)}</g>`
-    // le sourcil : un bourrelet rouge ourlé d'or qui plonge vers le nez (regard furieux)
-    + shape(sm('280,140 296,122 324,116 350,126 370,150 360,158 340,146 318,140 298,146'), '#3a1008', 0.4).replace('<path', '<path transform="translate(-2 4)"')
-    + shape(sm('280,140 296,122 324,116 350,126 370,150 360,158 340,146 318,140 298,146'), 'url(#g-red)')
-    + glint([[290, 132, 0], [320, 122, 3], [348, 130, 2.4], [364, 148, 0]], GOLD.hi, 0.85);
+/** Un œil de lion : anneau rouge, blanc orangé, iris vert, grosse pupille, reflets ; le sourcil rouge ourlé d'or.
+ *  Les deux yeux sont bâtis pareil ; celui du fond (k < 1) est un peu plus petit. */
+function lionEye(x, y, k, key) {
+  const brow = sm(`${n(x - 39 * k)},${n(y - 22 * k)} ${n(x - 23 * k)},${n(y - 40 * k)} ${n(x + 5 * k)},${n(y - 46 * k)} ${n(x + 31 * k)},${n(y - 36 * k)} ${n(x + 51 * k)},${n(y - 12 * k)} ${n(x + 41 * k)},${n(y - 4 * k)} ${n(x + 21 * k)},${n(y - 16 * k)} ${n(x - 1 * k)},${n(y - 22 * k)} ${n(x - 21 * k)},${n(y - 16 * k)}`);
+  return oval(x, y, 34 * k, 31 * k, RED.deep) + oval(x, y, 32 * k, 29.5 * k, RED.base)
+    + `<clipPath id="c-${key}"><ellipse cx="${x}" cy="${y}" rx="${n(28 * k)}" ry="${n(26 * k)}"/></clipPath>` + oval(x, y, 28 * k, 26 * k, 'url(#g-eyeO)')
+    + `<g clip-path="url(#c-${key})">` + dot(n(x + 5 * k), n(y - k), n(19 * k), '#1a2a20') + dot(n(x + 5 * k), n(y - k), n(17 * k), 'url(#g-iris)') + dot(n(x + 7 * k), n(y - k), n(8.4 * k), '#0c0808')
+    + `<rect x="${n(x - 32 * k)}" y="${n(y - 30 * k)}" width="${n(64 * k)}" height="${n(28 * k)}" fill="url(#g-lid)"/>`
+    + dot(n(x + k), n(y - 8 * k), n(4.2 * k), '#fff') + dot(n(x + 13 * k), n(y + 7 * k), n(2 * k), '#fff', 0.9) + '</g>'
+    + `<g class="a-blink" opacity="0">${oval(x, y, 29 * k, 27 * k, 'url(#g-gold)')}${line(`M${n(x - 28 * k)} ${n(y + 2 * k)} Q${x} ${n(y + 14 * k)} ${n(x + 28 * k)} ${n(y + 2 * k)}`, '#2a1008', 3)}</g>`
+    + `<path d="${brow}" transform="translate(-2 4)" fill="#3a1008" opacity="0.4"/>` + shape(brow, 'url(#g-red)')
+    + glint([[x - 29 * k, y - 30 * k, 0], [x + k, y - 40 * k, 3 * k], [x + 29 * k, y - 32 * k, 2.4 * k], [x + 45 * k, y - 14 * k, 0]], GOLD.hi, 0.85);
 }
-/** Le petit œil du fond, près du nez. */
-const smallEye = () => oval(414, 148, 10, 9, '#2a1008') + oval(414, 148, 8, 7, 'url(#g-eyeO)') + dot(416, 148, 4, '#0c0808') + dot(414, 145.6, 1.6, '#fff')
-  + shape(sm('398,140 410,132 424,134 432,142 426,144 412,140'), 'url(#g-red)');
+const bigEye = () => lionEye(319, 162, 1, 'eyeA');
+const smallEye = () => lionEye(404, 140, 0.72, 'eyeB');
 
 const headBody = use('head', 'url(#g-head)') + clip('head',
   // le dessous de la tête à l'ombre ; la joue en fourrure claire ; le front éclairé

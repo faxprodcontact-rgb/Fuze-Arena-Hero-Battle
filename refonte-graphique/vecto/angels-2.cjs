@@ -7,7 +7,8 @@
 // liseré clair en haut à droite) et quelques détails dessinés (mèches, plis, muscles), jamais les taches de l'original.
 // La lumière vient d'en haut à droite.
 const { figure, lin, rad, n, use, clip, line, shape, dot, oval } = require('./lib.cjs');
-const { sm, rib, glint, cel } = require('./formes.cjs');
+const { sm, rib, glint, cel, almond } = require('./formes.cjs');
+const EL = almond(250, 160, 46, 27, -1, 4.6), ER = almond(310, 160, 46, 27, 1, 4.6);
 
 const W = 560, H = 475, PAD = 44;
 const SIL = require('./silhouettes/angels-2.json');
@@ -158,8 +159,7 @@ const headPaint =
   + lock([[262, 104], [282, 100], [302, 104]], SKIN.sh, 0.6, 1.8) + lock([[266, 114], [282, 111], [298, 114]], SKIN.sh, 0.5, 1.6)
   + oval(326, 150, 8, 14, SKIN.hi, 0.6, 10)
   // les yeux bleu turquoise
-  + eye(240, 159, 11.5, 'M212 150 C222 143 246 142 262 150 C264 158 260 166 250 168 C236 170 220 166 214 160 Z', 'M206 146 C220 136 248 136 264 148 L262 154 C248 145 226 144 214 152 Z', [-4, -6])
-  + eye(309, 160, 10.5, 'M290 152 C300 146 318 145 327 150 C327 158 322 166 312 168 C300 168 292 162 290 156 Z', 'M286 154 C298 142 320 140 330 146 L328 152 C318 147 302 149 292 158 Z', [-4, -6])
+  + eye(252, 161, 12, EL.white, EL.lash, [-4, -5]) + eye(308, 161, 12, ER.white, ER.lash, [-4, -5])
   // les gros sourcils blancs froncés, leur ombre portée
   + `<path d="${P.browL}" transform="translate(-2 3)" fill="${SKIN.deep}" opacity="0.5"/><path d="${P.browR}" transform="translate(-2 3)" fill="${SKIN.deep}" opacity="0.5"/>`
   + piece(P.browL, WHITE, 3, 1.6) + piece(P.browR, WHITE, 3, 1.6)

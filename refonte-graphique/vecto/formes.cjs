@@ -120,4 +120,23 @@ function cel(d, c, w = 6, hw = 3) {
     + '</g>';
 }
 
-module.exports = { sm, P, cw, rib, glint, tooth, nest, rooted, shiftPath, cel };
+
+/**
+ * Un œil en amande, toujours bâti pareil (pour que les deux yeux d'un visage soient cohérents) : centre (cx, cy), largeur
+ * w, hauteur h ; s = -1 pour l'œil de gauche de l'image (coin extérieur à gauche), +1 pour celui de droite.
+ * Rend { white, lash, lower, shut } : le blanc, les cils du haut (un trait plein qui s'étire en petite aile vers
+ * l'extérieur), le trait du bas, et la courbe de l'œil fermé (clignement).
+ */
+function almond(cx, cy, w, h, s, lw = 4.4) {
+  const o = [cx + s * w / 2, cy - h * 0.12], i = [cx - s * w / 2, cy + h * 0.08];
+  const P2 = ([x, y]) => `${n(x)} ${n(y)}`;
+  const white = `M${P2(o)}C${P2([cx + s * w * 0.3, cy - h * 0.66])} ${P2([cx - s * w * 0.32, cy - h * 0.62])} ${P2(i)}`
+    + `C${P2([cx - s * w * 0.3, cy + h * 0.62])} ${P2([cx + s * w * 0.3, cy + h * 0.64])} ${P2(o)}Z`;
+  const lash = rib([[i[0] + s * 1, i[1] - 2, 0], [cx - s * w * 0.28, cy - h * 0.42, lw * 0.75], [cx + s * w * 0.06, cy - h * 0.5, lw],
+    [cx + s * w * 0.36, cy - h * 0.36, lw * 0.85], [o[0] + s * 1, o[1] - 1, lw * 0.6], [o[0] + s * w * 0.16, o[1] - h * 0.3, 0]]);
+  const lower = `M${P2([cx - s * w * 0.26, cy + h * 0.5])}Q${P2([cx, cy + h * 0.66])} ${P2([cx + s * w * 0.34, cy + h * 0.42])}`;
+  const shut = `M${P2(i)}Q${P2([cx, cy + h * 0.36])} ${P2(o)}`;
+  return { white, lash, lower, shut };
+}
+
+module.exports = { sm, P, cw, rib, glint, tooth, nest, rooted, shiftPath, cel, almond };

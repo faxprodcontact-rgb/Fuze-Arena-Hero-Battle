@@ -165,8 +165,9 @@ function eye(key, white, cx, cy, r, lash, lower, shut, hl) {
     + '</g>' + line(lower, '#5e6a92', 1.6, 0.85) + shape(lash, '#101018')
     + `<g class="a-blink" opacity="0"><path d="${white}" fill="${SKIN.base}" stroke="${SKIN.base}" stroke-width="3"/>${line(shut, '#101018', 3)}</g>`;
 }
-const EYE_L = 'M276 213 C288 208 306 207 320 209 C328 212 332 216 333 221 C322 226 306 227 292 224 C284 222 279 218 276 213 Z';
-const EYE_R = 'M366 218 C374 213 390 212 403 214 C404 219 400 225 393 227 C383 229 372 227 366 218 Z';
+const { almond } = require('./formes.cjs');
+const ZL = almond(305, 219, 52, 24, -1, 4.6), ZR = almond(383, 219, 52, 24, 1, 4.6);
+const EYE_L = ZL.white, EYE_R = ZR.white;
 const faceBody = use('face', 'url(#g-skin)') + clip('face',
   // l'ombre du côté gauche et sous les pommettes ; la lumière douce sur le front et la joue droite
   shape(sm('240,150 262,160 262,200 270,236 290,262 260,280 236,280'), SKIN.shade, 0.55)
@@ -180,10 +181,7 @@ const faceBody = use('face', 'url(#g-skin)') + clip('face',
   + shape(sm('358,202 362,192 384,182 410,178 418,184 416,192 392,195 370,200'), '#101018')
   + glint([[368, 190, 0], [390, 182, 2.4], [412, 180, 0]], '#4a4a66', 0.8)
   // les yeux
-  + eye('eL', EYE_L, 307, 220, 12, 'M267 212 C282 201 306 199 323 203 C332 206 337 213 338 220 L332 219 C326 213 316 211 304 211 C292 211 282 214 276 219 Z',
-    'M286 224 C298 229 316 229 330 222', 'M276 210 C292 220 316 221 332 217', [-0.38, -0.36, 0.42, 0.32])
-  + eye('eR', EYE_R, 388, 221, 9.5, 'M359 218 C369 208 390 205 408 211 L407 216 C392 213 377 213 368 220 Z',
-    'M370 222 C380 227 392 226 400 222', 'M366 214 C378 222 394 222 404 212', [-0.36, -0.36, 0.4, 0.34])
+  + eye('eL', EYE_L, 307, 220, 11, ZL.lash, ZL.lower, ZL.shut, [-0.38, -0.36, 0.42, 0.32]) + eye('eR', EYE_R, 381, 220, 11, ZR.lash, ZR.lower, ZR.shut, [-0.38, -0.36, 0.42, 0.32])
   // le nez : un bout rond éclairé, l'ombre dessous et sur le côté gauche
   + shape(sm('350,226 356,234 366,238 368,246 360,250 348,248 342,242 346,234'), SKIN.shade, 0.7)
   + oval(360, 237, 5, 4, SKIN.hi, 0.9) + oval(352, 246, 3, 1.6, SKIN.deep, 0.7) + oval(364, 247, 2.6, 1.5, SKIN.deep, 0.6)

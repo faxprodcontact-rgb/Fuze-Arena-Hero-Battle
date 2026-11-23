@@ -158,6 +158,8 @@ function eye(key, white, cx, cy, r, lash, lower, shut, hl) {
 // les deux yeux bâtis pareil (amande, trait d'eye-liner qui s'étire vers l'extérieur), le droit un peu plus petit (trois quarts)
 const EYE_L = 'M241 207 C250 195 276 191 292 202 C294 212 286 222 270 225 C256 227 245 219 241 207 Z';
 const EYE_R = 'M366 207 C358 196 338 193 329 203 C328 213 336 222 349 224 C360 224 366 216 366 207 Z';
+const { almond } = require('./formes.cjs');
+const TL = almond(266, 210, 52, 32, -1, 5.4), TR = almond(348, 210, 52, 32, 1, 5.4);
 const LASH_L = rib([[295, 206, 0], [283, 194.5, 5.8], [264, 191.5, 6.6], [248, 196, 6], [238, 203, 4.4], [229, 193, 0]]);
 const LASH_R = rib([[327, 205, 0], [337, 195.5, 5.2], [352, 193.5, 6], [364, 197.5, 5.2], [369, 203, 4], [377, 192, 0]]);
 const faceBody = use('face', 'url(#g-skin)') + clip('face',
@@ -171,8 +173,7 @@ const faceBody = use('face', 'url(#g-skin)') + clip('face',
   // les sourcils épais, arqués
   + shape(rib([[234, 187, 0], [250, 179.5, 6.6], [272, 177, 8], [295, 182, 5.4], [306, 189, 0]]), '#140a10')
   + shape(rib([[331, 187, 0], [342, 180.5, 5.8], [360, 178, 7], [376, 181.5, 5], [385, 188, 0]]), '#140a10')
-  + eye('eL', EYE_L, 267, 210, 14, LASH_L, 'M248 222 C258 228 276 228 288 220', 'M240 208 Q266 220 293 206', [-0.36, -0.4, 0.4, 0.3])
-  + eye('eR', EYE_R, 348, 211, 12.5, LASH_R, 'M334 220 C342 225 356 225 362 219', 'M329 206 Q348 218 366 207', [-0.36, -0.4, 0.4, 0.3])
+  + eye('eL', TL.white, 267, 211, 13, TL.lash, TL.lower, TL.shut, [-0.36, -0.4, 0.4, 0.3]) + eye('eR', TR.white, 347, 211, 13, TR.lash, TR.lower, TR.shut, [-0.36, -0.4, 0.4, 0.3])
   // le nez, petit et rond
   + oval(318, 240, 6, 4, SKIN.shade, 0.7) + oval(320, 237, 3, 2, SKIN.hi, 0.9)
   // le sourire malicieux : la bouche ouverte, les dents du haut, la langue ; le coin relevé

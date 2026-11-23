@@ -41,8 +41,8 @@ const ZIG = 'M89 250L114 363L146 237L172 377L208 226L233 392';
 const STUDS = [[100, 239], [141, 220], [189, 211], [262, 205], [97, 372], [135, 390], [185, 402], [257, 405]];
 // le visage : le rouge commence sous l'étoile et les sourcils
 const MASK = sm('256,240 262,230! 287,231 300,226 311,223! 329,193! 348,223! 362,230 375,234 390,232 404,236! 440,236! 440,440! 230,440! 230,240!');
-const BROW_L = sm('258,233 287,231 313,244 334,257 339,267 330,269 312,266 287,259 268,253 257,247');
-const BROW_R = sm('404,234 378,234 356,246 342,257 337,267 350,269 359,266 378,259 396,251 405,246');
+const BROW_L = sm('258,233 287,231 313,244 330,257 333,267 326,269 312,266 287,259 268,253 257,247');
+const BROW_R = sm('410,233 381,231 355,244 338,257 335,267 342,269 356,266 381,259 400,253 411,247'); // le même que le gauche, en miroir
 const NOSE = sm('333,266 344,262 351,268 356,286 364,298 363,308 354,312 346,309 338,312 328,309 325,299 333,286');
 const MOUTH = sm('270,330 300,334 330,336 360,333 388,327 389,345 385,362 377,381 363,398 340,410 313,411 296,403 287,393 280,373 273,350');
 
@@ -151,14 +151,14 @@ const parts = [
     // la joue droite et la gauche dans l'ombre le long de l'anneau
     + shape(sm('256,250 270,262 272,320 262,360 250,340'), FACE.shade, 0.6)
     // les creux des yeux, les yeux jaunes, les pupilles, les reflets
-    + oval(299, 279, 24, 19, FACE.deep, 0.95) + oval(369, 279, 21, 19, FACE.deep, 0.95)
-    + oval(299, 277, 20, 15, '#c06a16') + oval(299.6, 276.4, 18.4, 13.6, 'url(#g-eye)')
-    + oval(369, 278, 17, 15, '#c06a16') + oval(369.5, 277.5, 15.6, 13.6, 'url(#g-eye)')
-    + dot(303, 276, 7.6, '#1e0606') + dot(367, 278.5, 6.6, '#1e0606') + dot(306, 280, 1.8, '#ffffff', 0.9) + dot(364.5, 281.5, 1.6, '#ffffff', 0.9)
-    + `<g class="a-blink" opacity="0">${oval(299, 277, 21, 16, FACE.base)}${oval(369, 278, 18, 16, FACE.base)}${line('M280 282 Q299 290 319 281', FACE.deep, 2.4)}${line('M352 281 Q369 289 387 280', FACE.deep, 2.4)}</g>`
+    + oval(300, 279, 23, 19, FACE.deep, 0.95) + oval(368, 279, 23, 19, FACE.deep, 0.95)
+    + oval(300, 277, 19, 15, '#c06a16') + oval(300.6, 276.4, 17.4, 13.6, 'url(#g-eye)')
+    + oval(368, 277, 19, 15, '#c06a16') + oval(368.6, 276.4, 17.4, 13.6, 'url(#g-eye)')
+    + dot(304, 278, 7.2, '#1e0606') + dot(364, 278, 7.2, '#1e0606') + dot(301, 274.5, 2.2, '#ffffff', 0.95) + dot(361, 274.5, 2.2, '#ffffff', 0.95)
+    + `<g class="a-blink" opacity="0">${oval(300, 277, 20, 16, FACE.base)}${oval(368, 277, 20, 16, FACE.base)}${line('M280 282 Q299 290 319 281', FACE.deep, 2.4)}${line('M352 281 Q369 289 387 280', FACE.deep, 2.4)}</g>`
     // l'ombre sous les sourcils : elle mange le haut des yeux en biais (le regard furieux)
-    + shape(sm('274,262! 290,258 300,263 318,273 328,287! 336,280! 334,262 300,248 272,248!'), '#3a0a10')
-    + shape(sm('346,277! 368,267 386,259 394,262! 396,246! 362,254 342,266!'), '#3a0a10')
+    + shape(sm('276,264! 292,260 302,264 318,272 326,284! 334,280! 332,262 300,248 274,250!'), '#3a0a10')
+    + shape(sm('342,284! 350,272 366,264 376,260 392,264! 394,250! 368,248 336,262 334,280!'), '#3a0a10')
     // les gros sourcils froncés (ils coupent le haut des yeux)
     + `<path d="${BROW_L}" transform="translate(-1 4)" fill="${FACE.deep}" opacity="0.6"/><path d="${BROW_R}" transform="translate(-1 4)" fill="${FACE.deep}" opacity="0.6"/>`
     + cel(BROW_L, { hi: FACE.hi, base: FACE.lite, sh: FACE.shade, deep: FACE.deep }, 4, 2.4)

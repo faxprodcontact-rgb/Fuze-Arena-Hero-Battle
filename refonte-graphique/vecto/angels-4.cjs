@@ -177,8 +177,9 @@ function eye(key, white, cx, cy, r, lash, lower, shut) {
     + '</g>' + shape(lash, '#1a0c22') + line(lower, '#4e3c74', 1.6, 0.9)
     + `<g class="a-blink" opacity="0"><path d="${white}" fill="${SKIN.lite}" stroke="${SKIN.lite}" stroke-width="3"/>${line(shut, '#1a0c22', 3)}</g>`;
 }
-const EYE_L = 'M234 150 C244 142 264 140 282 146 C292 150 297 158 297 166 C294 176 282 182 266 182 C250 182 238 172 234 160 Z';
-const EYE_R = 'M318 156 C328 148 346 146 358 150 C362 158 360 170 352 177 C342 182 330 180 322 172 C318 168 316 162 318 156 Z';
+const { almond } = require('./formes.cjs');
+const AL = almond(266, 164, 54, 32, -1, 5), AR = almond(344, 164, 54, 32, 1, 5);
+const EYE_L = AL.white, EYE_R = AR.white;
 const faceBody = use('face', 'url(#g-skin)') + clip('face',
   // l'ombre sous la frange, la joue gauche et la mâchoire dans l'ombre ; la lumière sur la joue droite
   glint([[206, 120, 8], [260, 104, 10], [320, 104, 10], [372, 116, 8]], SKIN.shade, 0.55)
@@ -190,10 +191,7 @@ const faceBody = use('face', 'url(#g-skin)') + clip('face',
   // les sourcils, froncés (épais, qui plongent vers le nez)
   + shape(sm('244,126 262,124 284,134 298,146 296,152 280,144 260,136 246,134'), '#1a0c22')
   + shape(sm('324,148 338,136 356,130 364,134 356,140 340,148 328,154'), '#1a0c22')
-  + eye('eL', EYE_L, 264, 164, 14.5, 'M230 152 C242 138 266 136 286 142 C296 146 302 154 302 162 L296 160 C292 152 280 147 264 147 C250 147 240 152 236 160 Z',
-    'M244 178 C254 184 274 184 288 178', 'M234 160 C252 172 280 172 297 164')
-  + eye('eR', EYE_R, 340, 165, 12, 'M314 156 C326 144 346 141 362 146 L360 152 C346 148 330 151 322 160 Z',
-    'M326 176 C334 180 346 180 354 175', 'M318 162 C332 172 350 172 360 158')
+  + eye('eL', EYE_L, 268, 165, 13.5, AL.lash, AL.lower, AL.shut) + eye('eR', EYE_R, 342, 165, 13.5, AR.lash, AR.lower, AR.shut)
   // le nez : un bout rond éclairé, une ombre dessous
   + oval(313, 186, 7, 5, SKIN.shade, 0.7) + oval(315, 182, 4.4, 3, SKIN.hi, 0.9)
   // la bouche : un grand sourire ouvert, la lèvre du haut et deux petits crocs, la langue

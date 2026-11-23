@@ -153,28 +153,25 @@ function eye(key, white, cx, cy, r, lash, lower, shut, hl) {
     + '</g>' + line(lower, SKIN.line, 1.6, 0.85) + shape(lash, '#2a1408')
     + `<g class="a-blink" opacity="0"><path d="${white}" fill="${SKIN.lite}" stroke="${SKIN.lite}" stroke-width="3"/>${line(shut, '#2a1408', 3)}</g>`;
 }
-const EYE_L = 'M176 204 C186 194 206 192 222 197 C231 201 233 210 231 219 C224 230 208 234 194 231 C182 228 175 216 176 204 Z';
-const EYE_R = 'M244 205 C252 196 272 194 286 200 C291 209 289 221 280 227 C269 232 254 230 247 221 C243 216 243 210 244 205 Z';
+const { almond } = require('./formes.cjs');
+const NL = almond(204, 214, 50, 34, -1, 5), NR = almond(272, 214, 50, 34, 1, 5);
+const EYE_L = NL.white, EYE_R = NR.white;
 const faceBody = use('face', 'url(#g-skin)') + clip('face',
   // l'ombre de la couronne sur le front, le côté gauche et le bas du visage dans l'ombre, la lumière sur la joue droite
   glint([[148, 150, 8], [200, 140, 10], [260, 140, 10], [308, 156, 8]], SKIN.shade, 0.5)
   + shape(sm('146,170 160,206 180,236 210,256 196,270 146,270'), SKIN.base, 0.8)
   + oval(286, 176, 12, 18, SKIN.hi, 0.6, 10)
   + oval(178, 236, 13, 8, 'url(#g-blush)') + oval(290, 236, 9, 6, 'url(#g-blush)', 0.8)
-  + eye('eL', EYE_L, 206, 214, 13, 'M174 206 C186 192 208 190 224 196 C232 200 235 207 234 214 L228 212 C224 204 214 200 202 200 C190 200 182 204 178 210 Z',
-    'M188 228 C198 233 214 233 226 226', 'M178 210 C196 222 216 222 230 214', [-0.36, -0.36, 0.42, 0.32])
-  + eye('eR', EYE_R, 265, 213, 11.5, 'M242 208 C252 196 272 193 288 199 L287 204 C274 200 258 201 250 212 Z',
-    'M252 224 C262 228 274 228 282 222', 'M246 212 C260 222 276 222 286 210', [-0.34, -0.36, 0.4, 0.34])
+  + eye('eL', EYE_L, 207, 216, 13, NL.lash, NL.lower, NL.shut, [-0.36, -0.36, 0.42, 0.32]) + eye('eR', EYE_R, 270, 216, 13, NR.lash, NR.lower, NR.shut, [-0.36, -0.36, 0.42, 0.32])
   // les paupières du haut, lourdes et penchées vers le nez (elles coupent le haut de l'œil) : le regard en colère
-  + shape('M168 184 L242 184 L242 212 L236 212 C218 201 196 197 174 203 Z', SKIN.lite)
-  + shape('M240 184 L298 184 L296 199 C278 196 258 200 244 212 L238 212 Z', SKIN.lite)
-  + line('M172 204 C194 196 218 200 237 212', '#2a1408', 4.2) + line('M242 213 C258 201 278 196 297 199', '#2a1408', 4.2)
+  + shape('M172 186 L234 186 L234 208 C216 200 196 198 176 204 Z', SKIN.lite) + shape('M242 186 L304 186 L300 204 C280 198 260 200 242 208 Z', SKIN.lite)
+  + line('M176 204 C196 198 216 200 233 208', '#2a1408', 4.2) + line('M243 208 C260 200 280 198 300 204', '#2a1408', 4.2)
   // les sourcils : deux grosses mèches dorées très froncées (le bout près du nez bien plus bas), ombrées dessous
   + shape(sm('160,178 174,168 200,172 224,186 236,202 226,206 206,196 184,188 166,190'), SH.hair, 0.35).replace('<path', '<path transform="translate(-1 3)"')
   + shape(sm('160,178 174,168 200,172 224,186 236,202 226,206 206,196 184,188 166,190'), HAIR.shade)
   + shape(sm('166,175 176,171 198,174 214,180 198,178 178,176'), HAIR.lite, 0.85)
-  + shape(sm('242,204 252,190 274,180 296,180 300,190 290,192 270,194 252,206'), SH.hair, 0.35).replace('<path', '<path transform="translate(-1 3)"')
-  + shape(sm('242,204 252,190 274,180 296,180 300,190 290,192 270,194 252,206'), HAIR.shade)
+  + shape(sm('240,204 252,190 278,182 302,182 306,192 296,194 274,196 252,206'), SH.hair, 0.35).replace('<path', '<path transform="translate(-1 3)"')
+  + shape(sm('240,204 252,190 278,182 302,182 306,192 296,194 274,196 252,206'), HAIR.shade)
   + shape(sm('262,186 276,182 294,182 290,185 276,185'), HAIR.lite, 0.85)
 );
 
