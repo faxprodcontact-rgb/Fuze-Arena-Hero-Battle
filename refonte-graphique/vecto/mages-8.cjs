@@ -12,24 +12,21 @@ const { sm, rib, glint, cel } = require('./formes.cjs');
 
 const W = 580, H = 619, PAD = 44;
 const SIL = require('./silhouettes/mages-8.json');
-const MAT = require('./couleurs/mages-8.json');
-const SHD = require('./couleurs/mages-8-ombres.json');
 
-// ---------- chaque matière, peinte en aplats nets (ombre en bas à gauche, liseré clair en haut à droite) ----------
+// ---------- couleurs ----------
 const TONES = {
   fourrure: { hi: '#c89070', base: '#8e5a40', sh: '#6a3e2a', deep: '#4a2a1c' },
-  peau: { hi: '#fff0dc', base: '#ffdcb0', sh: '#eeb888', deep: '#d4956a' },
+  peau: { hi: '#fff4e4', base: '#ffdcb0', sh: '#eeb888', deep: '#d4956a' },
   rouge: { hi: '#f2766a', base: '#d2443a', sh: '#9a2a26', deep: '#661a18' },
+  cape: { hi: '#e86050', base: '#b8302a', sh: '#7e1c1c', deep: '#4e1012' },
   or: { hi: '#fff0a0', base: '#f2b440', sh: '#c07c22', deep: '#80501a' },
   sombre: { hi: '#5a4044', base: '#2e1e22', sh: '#1a1014', deep: '#0e080a' },
-  blanc: { hi: '#ffffff', base: '#e4e0ea', sh: '#b8b0c4', deep: '#8a8098' },
 };
-// les ombres et reflets de l'original, chacun gardé dans sa matière
-const SHADE = [['fourO', 'fourrure', '#5a3424', 0.85], ['peauO', 'peau', '#e8ac7e', 0.75], ['rougeO', 'rouge', '#7a2020', 0.85], ['orO', 'or', '#a8661e', 0.8],
-  ['lilas', 'fourrure', '#c8b4d8', 0.7]];
-const mclip = Object.keys(TONES).filter((k) => MAT[k]).map((k) => `<clipPath id="m-${k}"><path d="${MAT[k].d}" clip-rule="evenodd"/></clipPath>`).join('');
-const paint = ['fourrure', 'rouge', 'sombre', 'peau', 'or', 'blanc'].map((k) => (MAT[k] && MAT[k].d ? cel(MAT[k].d, TONES[k], 6, 3) : '')).join('')
-  + SHADE.map(([k, m, c, o]) => (SHD[k] && SHD[k].d ? `<g clip-path="url(#m-${m})"><path d="${SHD[k].d}" fill="${c}" opacity="${o}" fill-rule="evenodd"/></g>` : '')).join('');
+// une mèche, un pli : un long fuseau doux
+const lock = (pts, color, o, w = 4) => glint(pts.map(([x, y], i) => [x, y, i === 0 || i === pts.length - 1 ? 0 : w]), color, o);
+// le bord de fourrure : une rangée de petites mèches en pointe (pas toutes pareilles)
+const furEdge = (pts, color) => pts.slice(0, -1).map(([x, y], i) => { const [x2, y2] = pts[i + 1], mx = (x + x2) / 2, my = (y + y2) / 2 + (i % 2 ? 7 : 10);
+  return shape(`M${x} ${y}Q${n(mx - 2)} ${n(my - 4)} ${n(mx)} ${n(my)}Q${n(mx + 2)} ${n(my - 4)} ${x2} ${y2}Z`, color); }).join('');
 
 // ---------- les formes relevées sur l'original ----------
 const PLUMES = sm('31,138 32,142 37,142 48,133 82,113 114,101 151,95 188,97 221,105 249,120 275,144 292,168 265,178 299,178 300,200 372,200 373,178 396,178 371,168 373,150 368,115 362,98 344,66 320,41 310,33 273,14 242,7 208,6 183,9 163,16 160,22 164,26 188,23 216,23 240,26 263,33 295,52 318,77 333,105 340,131 340,165 335,163 325,164 314,144 299,124 283,108 267,96 253,88 229,78 188,71 155,71 133,74 92,87 74,96 53,111 37,127');
@@ -50,6 +47,15 @@ const FIST_R = sm('396,394 405,378 425,371 445,372 459,380 461,395 455,409 442,4
 const CHEST = sm('272,432 300,424 340,420 380,425 392,440 388,463 340,469 290,467 274,456');
 const BELT = sm('282,466 340,469 390,463 392,478 340,485 284,482');
 const SKIRT = [sm('230,488 284,483 290,524 252,521 229,506'), sm('286,483 336,485 338,527 292,525'), sm('338,485 392,479 412,491 404,512 380,525 340,527')];
+// relevées à la main sur le quadrillage
+const CAPE = sm('25,402 60,372 100,348 150,340 205,352 232,380 212,420 178,440 150,420 120,405 80,402');
+const ARM_L = sm('165,398 200,388 222,400 228,430 216,456 190,466 166,452 156,425');
+const COLLAR = sm('205,368 240,356 280,366 302,382 280,398 250,402 222,398 206,388');
+const LEG_L = sm('116,530 160,510 215,518 264,528 270,560 240,582 200,592 150,590 118,572');
+const LEG_R = sm('318,498 380,488 440,502 492,528 502,560 470,576 420,562 370,542 328,530');
+const BOOT_L = sm('90,568 120,556 170,556 202,566 206,596 196,612 140,614 96,608 86,590');
+const BOOT_R = sm('394,548 440,540 490,548 516,566 522,590 506,604 450,606 400,600 390,576');
+const MASK = sm('275,246 330,240 375,242 412,240 438,252 448,272 456,290 476,296 488,312 482,330 466,340 436,354 394,368 336,374 300,364 284,350 270,326 264,290');
 const BAND = sm('232,240 250,223 265,219 280,215 295,211 325,210 340,211 400,214 415,219 440,226 472,236! 472,250! 440,240 415,230 400,226 340,223 310,224 295,226 280,229 265,236 250,243 235,250!');
 
 // ---------- dégradés ----------
@@ -57,9 +63,7 @@ const defs = [
   lin('g-staff', 0, 0, 0, 1, [[0, '#fff2b0'], [0.3, '#f6c450'], [0.7, '#d89028'], [1, '#8a5418']], false),
   rad('g-iris', 0.45, 0.4, 0.75, [[0, '#f8c070'], [0.4, '#d07a28'], [0.8, '#8a3e12'], [1, '#4a1e08']], false),
   rad('g-medal', 0.62, 0.35, 0.8, [[0, '#fff6c0'], [0.4, '#f6c04a'], [1, '#a86a1c']], false),
-  mclip, `<g id="p-mat">${paint}</g>`,
 ].join('');
-const PAINT = '<use href="#p-mat"/>';
 
 // ---------- le visage, net par-dessus les aplats ----------
 function eye(cx, cy, r, white, lash, hl) {
@@ -86,7 +90,19 @@ const FACE = eye(323, 293, 12, 'M295 288 C304 278 330 275 343 283 C343 296 336 3
 // ---------- les morceaux ----------
 const sh = (on, dx, dy, color = '#1a0a0c', o = 0.4) => ({ on, dx, dy, color, o });
 const parts = [
-  { id: 'body', cls: 'a-body', d: BODY, body: use('body', TONES.fourrure.base) + clip('body', PAINT
+  { id: 'body', cls: 'a-body', d: BODY, body: use('body', TONES.rouge.base) + clip('body',
+    // le fond rouge (tunique, pantalon), la cape, les jambes et les bottes de fourrure, le bras gauche, le col de fourrure
+    `<rect x="0" y="0" width="${W}" height="${H}" fill="${TONES.rouge.sh}"/>`
+    + cel(CAPE, TONES.cape, 7, 3) + lock([[200, 358], [140, 360], [80, 380], [40, 398]], TONES.cape.hi, 0.6, 4) + lock([[200, 400], [160, 420]], TONES.cape.deep, 0.6, 4)
+    + cel(sm('200,360 290,372 380,380 400,420 390,480 300,486 210,480 196,420'), TONES.rouge, 6, 3)
+    + cel(LEG_L, TONES.rouge, 7, 3) + lock([[140, 540], [190, 548], [240, 560]], TONES.rouge.hi, 0.55, 4) + lock([[150, 576], [200, 580], [240, 572]], TONES.rouge.deep, 0.6, 4)
+    + cel(LEG_R, TONES.rouge, 7, 3) + lock([[340, 506], [400, 506], [460, 520]], TONES.rouge.hi, 0.6, 4) + lock([[380, 540], [430, 556], [480, 566]], TONES.rouge.deep, 0.6, 4)
+    + cel(BOOT_L, TONES.fourrure, 6, 3) + furEdge([[90, 570], [112, 560], [134, 558], [156, 558], [178, 560], [204, 568]], TONES.fourrure.hi)
+    + [[110, 606], [134, 608], [158, 608], [182, 606]].map(([x, y]) => shape(`M${x - 5} ${y - 4}L${x} ${y + 4}L${x + 5} ${y - 4}Z`, TONES.sombre.base)).join('')
+    + cel(BOOT_R, TONES.fourrure, 6, 3) + furEdge([[394, 552], [418, 544], [442, 542], [466, 544], [490, 550], [516, 568]], TONES.fourrure.hi)
+    + [[420, 600], [446, 602], [472, 600], [498, 596]].map(([x, y]) => shape(`M${x - 5} ${y - 4}L${x} ${y + 4}L${x + 5} ${y - 4}Z`, TONES.sombre.base)).join('')
+    + cel(ARM_L, TONES.fourrure, 6, 3) + lock([[172, 410], [190, 400], [214, 404]], TONES.fourrure.hi, 0.7, 3) + lock([[166, 440], [186, 456], [210, 458]], TONES.fourrure.deep, 0.6, 3)
+    + cel(COLLAR, TONES.fourrure, 5, 2.4) + furEdge([[206, 390], [222, 398], [240, 401], [258, 401], [278, 397], [300, 384]], TONES.fourrure.sh)
     + cel(CHEST, TONES.or, 5, 2.4) + [[290, 440], [320, 436], [352, 436], [378, 442]].map(([x, y]) => glint([[x - 10, y + 2, 0], [x, y - 2, 2.4], [x + 10, y + 2, 0]], '#fff6c8', 0.7)).join('')
     + SKIRT.map((d, i) => cel(d, { hi: '#fff0a0', base: ['#eaa83a', '#f4bc4c', '#e8a436'][i], sh: '#b87420', deep: '#80501a' }, 5, 2.4)).join('')
     + cel(BELT, TONES.sombre, 3, 1.6) + `<rect x="306" y="469" width="26" height="12" rx="3" fill="#9a9aa6"/>` + `<rect x="310" y="472" width="18" height="6" rx="2" fill="#3a3a44"/>`
@@ -96,7 +112,13 @@ const parts = [
     // le filet de lumière sur le dessus de chaque plume
     glint([[40, 132, 0], [90, 98, 3], [150, 82, 3.4], [220, 90, 3], [270, 124, 2.4], [300, 160, 0]], '#e8b090', 0.8)
     + glint([[176, 14, 0], [240, 14, 3], [300, 40, 3.4], [340, 84, 3], [360, 130, 2.4], [362, 168, 0]], '#e8b090', 0.8)) },
-  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['body', 'plumes'], -3, 6)], body: use('head', TONES.fourrure.base) + clip('head', PAINT
+  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['body', 'plumes'], -3, 6)], body: use('head', TONES.fourrure.base) + clip('head',
+    // la fourrure du crâne (une lumière en haut à droite), l'oreille ronde, le grand masque clair du visage
+    cel(HEAD, TONES.fourrure, 7, 3) + lock([[300, 182], [360, 172], [420, 190]], TONES.fourrure.hi, 0.7, 5)
+    + dot(196, 302, 37, TONES.fourrure.sh) + dot(198, 300, 34, TONES.fourrure.base) + dot(202, 306, 21, TONES.peau.sh) + dot(204, 304, 17, TONES.peau.base)
+    + lock([[186, 280], [180, 300], [186, 322]], TONES.fourrure.hi, 0.6, 3)
+    + `<path d="${MASK}" transform="translate(-3 4)" fill="${TONES.fourrure.deep}" opacity="0.5"/>` + cel(MASK, TONES.peau, 6, 3)
+    + oval(440, 296, 16, 12, TONES.peau.hi, 0.6, -10)
     // le bandeau d'or et son médaillon
     + cel(BAND, TONES.or, 4, 2) + glint([[256, 226, 0], [320, 213, 2], [400, 217, 2], [450, 230, 0]], '#fff6c8', 0.85)
     + dot(363, 215, 15.5, TONES.or.deep) + dot(363.6, 214.4, 13.5, 'url(#g-medal)')
