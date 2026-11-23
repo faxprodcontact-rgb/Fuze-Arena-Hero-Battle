@@ -19,6 +19,9 @@ Pas encore branché dans le jeu : la page d'exemple sert de vitrine.
    - **Pièces** : `python3 refonte-graphique/vecto/outils/zone.py <id> x,y [x,y…] --seuil 80 --boite x0,y0,x1,y1`
      donne les points de la zone entourée de trait noir qui contient le point (une plume, une fusée, un œil) ;
      `outils/contour.py` donne le bord extérieur d'une région.
+   - **Formes communes** : `formes.cjs` (`sm`, `rib`, `glint`, `tooth`, `nest`, `rooted`) — ne plus les recopier.
+   - **Région de la silhouette** : `python3 refonte-graphique/vecto/outils/decoupe.py <id> "x,y x,y …"` (la silhouette
+     coupée par un polygone, pour un corps, une tête, un fond) ; `outils/encre.py` montre les traits noirs seuls.
    - **Ce qui est difficile à découper** (ficelle, mousse, pattes qui se croisent, fond entre des fusées) : un morceau
      « fond » placé tout derrière, dont la forme est la silhouette coupée par une boîte (voir `parade-3`, `myths-10`,
      `angels-4` : `tailBase`, `legsBase`, `tentBase`), puis les morceaux dessinés par-dessus.
@@ -114,6 +117,7 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Nœuds de tissu, ficelle, pans de toile cousus | `epouvantails-3.cjs` → `bow`, `STR`, `kiteBody` |
 | Pattes d'araignée (grosses pattes courbes à genou haut) | `myths-10.cjs` → `legPts`, `legD`, `legBody`, `FAR`, `NEAR` |
 | Carapace à pics, pattes à griffes (le modèle de la méthode « décalque ») | `bayou-2.cjs` → `SHELL`, `LOWER`, `HEAD`, `spikeFace`, `claws` |
+| Piquants en rangs (pointes relevées sur la silhouette), guirlande de feuilles, baies | `ronciers-3.cjs` → `TIPS`, `QUILLS`, `INNER`, `quillBody`, `ARC`, `LEAVES`, `BERRIES` |
 | Coquille en spirale, cristaux | `cuirasses-4.cjs` → `spiral`, `moss` |
 | Pattes et serres | `glaces-4.cjs` → `footD`, `nail` ; `assassins-5.cjs` → `toe`, `talon` |
 | Jupe de feuilles, notes de musique | `assassins-12.cjs` → `leafGeo`, `skirtBody`, `noteFx` |
@@ -128,23 +132,23 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Hampe tenue (trident, lance), flamme bleue sans contour | `myths-12.cjs` → morceaux `trident`, `handL`, `flame` (`flameBody`) |
 | Épaulière en écailles, bottes de fer | `myths-12.cjs` → morceaux `pauR`, `legL`, `legR` |
 
-## Faits (27)
+## Faits (28)
 
 Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Séraphin `angels-4`, Nimue `mages-9` (le dessin montre un dieu de
 l'orage doré), Kael `assassins-2`, Thor `myths-10` (le dessin montre une femme-araignée), Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
 Rook `assassins-5` · monstres : pétard `parade-1`, lion de la parade `parade-2`, singe aux fusées `parade-3`, lanterne `parade-4`, méduse
 `abysses-3`, dino-voile `bayou-1`, tortue hargneuse `bayou-2`, feu follet `bayou-4`, croco cuirassé `bayou-6`, chouette `glaces-4`, escargot de
 cristal `cuirasses-4`, coq-girouette `epouvantails-1`, épouvantail `epouvantails-2`, cerf-volant `epouvantails-3`, renard de feuilles `ronciers-1`,
-blaireau moussu `ronciers-2`.
+blaireau moussu `ronciers-2`, porc-épic des ronces `ronciers-3`.
 
 ## File d'attente (prendre le premier non fait)
 
 Ordre : d'abord les monstres que le joueur rencontre en premier (région 1 de la campagne : familles `parade`,
 `epouvantails`, `bayou`, `ronciers`), en intercalant un héros Légendaire (l'invocation les montre en grand).
 
-1. `ronciers-3` 2. héros `angels-2` Ilian 3. `parade-5` 4. `epouvantails-4` 5. héros `mages-8` Eldra
-6. `bayou-3` 7. `ronciers-4` 8. héros `assassins-3` Sable 9. `parade-6` 10. `epouvantails-5` 11. héros `myths-8` Freyja
-12. `bayou-5` 13. `ronciers-5` 14. héros `angels-3` Aube 15. `epouvantails-6` 16. `ronciers-6` 17. héros `mages-11` Myrr
+1. héros `angels-2` Ilian 2. `parade-5` 3. `epouvantails-4` 4. héros `mages-8` Eldra
+5. `bayou-3` 6. `ronciers-4` 7. héros `assassins-3` Sable 8. `parade-6` 9. `epouvantails-5` 10. héros `myths-8` Freyja
+11. `bayou-5` 12. `ronciers-5` 13. héros `angels-3` Aube 14. `epouvantails-6` 15. `ronciers-6` 16. héros `mages-11` Myrr
 Ensuite : `fauves` et `ruche` (région 2), `voliere` et `cuirasses` (régions 3-4)… et un Légendaire tous les deux
 monstres. Légendaires restants : `assassins-4` Vesper, `assassins-6` Isha, `mages-12` Faust, `angels-5` Lumen,
 `angels-6` Elyon, `myths-9` Isis, `myths-11` Atlas (liste complète : `npx tsx` sur `HEROES` de
