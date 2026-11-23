@@ -26,11 +26,16 @@ const relief = (d, grad, pal, w = 7, hw = 3) => `<path d="${d}" fill="url(#${gra
 const ell = ellipse;
 
 // ---------- les formes ----------
-const SUN = [250, 96, 70];
 const MANE_D = sm('178,176 222,140 290,128 352,140 396,180 410,240 404,306 388,346! 356,334 320,342 280,344 240,340 204,334 176,346! 166,300 162,240');
 // la tête de lionne d'une seule forme (oreilles et museau compris), comme avant ; le museau clair est peint dedans
-const HEAD = sm('413,234 408,222 391,208 388,201 373,188 368,177 352,163 353,151 351,142 343,126 335,119 327,120 318,126 307,128 298,120 287,115 278,128 267,137 240,138 212,141 196,131 180,126 165,125 145,130 140,135 134,148 133,166 136,177 144,189 133,207 140,250 170,288 205,300 249,308 300,310 340,310 377,305 381,303 388,300 397,289 408,281 411,273 410,252 414,245');
-const MUZZLE = sm('318,250 344,240 374,244 402,254 410,270 396,286 362,292 332,288 316,272');
+const HEAD = sm('413,234 408,222 391,208 388,201 373,188 368,177 352,163 353,151 351,142 343,126 335,119 327,120 318,122 300,112 278,106 252,106 226,112 204,120 184,124 165,125 145,130 140,135 134,148 133,166 136,177 144,189 133,207 140,250 170,288 205,300 249,308 300,310 340,310 377,305 381,303 388,300 397,289 408,281 411,273 410,252 414,245');
+// relevés sur un gros plan quadrillé de l'original : le museau clair, la mâchoire, le nez, la coiffe sombre de chaque côté
+const MUZZLE = sm('300,264 316,252 338,246 360,252 372,262 388,256 404,262 410,280 402,298 378,306 344,310 312,304 298,286');
+const CHEEK_L = sm('200,248 232,240 266,248 294,262 300,288 290,306 256,314 224,308 204,290 196,268');
+const JAW = sm('318,300 344,304 378,302 398,296 392,312 364,320 334,318');
+const NOSE = sm('368,244 386,238 400,244 400,256 388,264 372,258');
+const MANE_L = sm('106,204 134,192 164,200 176,232 172,270 158,298 132,306 110,290 100,250');
+const MANE_R = sm('382,168 398,186 410,222 412,262 404,294 392,300 394,266 392,230 384,198');
 const COBRA = sm('294,132 302,118 312,124 316,144 310,164 302,170 294,160 290,146');
 const COLLAR = sm('196,318 240,312 300,316 360,312 404,320 410,340 384,362 340,376 300,380 258,376 216,362 192,340');
 const COLLAR_IN = sm('214,326 252,322 300,326 350,322 392,328 378,346 340,360 300,364 260,360 222,346');
@@ -69,7 +74,7 @@ const defs = [
 ].join('');
 
 // ---------- le visage : deux yeux pareils, fardés, de part et d'autre du nez ----------
-const EL = almond(262, 218, 48, 28, -1, 5.4), ER = almond(334, 218, 48, 28, 1, 5.4);
+const EL = almond(266, 220, 52, 30, -1, 5.8), ER = almond(358, 214, 46, 28, 1, 5.4);
 function eye(cx, cy, r, A) {
   const id = `c-se${cx}`;
   return `<clipPath id="${id}"><path d="${A.white}"/></clipPath><path d="${A.white}" fill="#fffaf0"/><g clip-path="url(#${id})">`
@@ -77,21 +82,23 @@ function eye(cx, cy, r, A) {
     + `<rect x="${cx - 32}" y="${cy - 24}" width="64" height="11" fill="#6a3a10" opacity="0.2"/></g>` + shape(A.lash, '#1a0c06') + line(A.lower, '#5a2c10', 2, 0.8)
     + `<g class="a-blink" opacity="0"><path d="${A.white}" fill="${FUR.base}" stroke="${FUR.base}" stroke-width="3"/>${line(A.shut, '#1a0c06', 3)}</g>`;
 }
-const FACE = eye(265, 220, 12, EL) + eye(337, 220, 12, ER)
-  // les sourcils sombres, le même de chaque côté, froncés vers le nez
-  + cel(rib([[236, 192, 0], [252, 184, 5], [274, 186, 5], [288, 196, 0]]), MANE, 2.4, 1.4)
-  + cel(rib([[312, 196, 0], [326, 186, 5], [348, 184, 5], [364, 192, 0]]), MANE, 2.4, 1.4)
-  // le museau clair, le nez de lionne, la bouche, les points des moustaches
-  + `<path d="${MUZZLE}" fill="url(#g-light)"/>` + cel(MUZZLE, { ...LIGHT, base: 'none' }, 4, 2)
-  + cel(sm('374,230 390,227 402,233 401,244 390,249 378,245'), { hi: '#c8906a', base: '#8a4a24', sh: '#5a2c12' }, 2.4, 1.4)
-  + line('M390 249 L390 262', '#5a2c12', 2.2) + line('M352 276 Q372 282 390 262 Q398 274 408 270', '#5a2c12', 2.4)
-  + [[342, 258], [350, 264], [338, 268]].map(([x, y]) => dot(x, y, 1.8, '#8a5a30', 0.8)).join('');
+const FACE = eye(269, 222, 12.5, EL) + eye(360, 216, 11.5, ER)
+  // les gros sourcils sombres (relevés), froncés vers le nez
+  + cel(rib([[226, 198, 0], [244, 187, 6.5], [270, 185, 7], [294, 194, 5], [304, 203, 0]]), MANE, 2.4, 1.4)
+  + cel(rib([[336, 198, 0], [348, 189, 5], [370, 188, 5], [386, 194, 0]]), MANE, 2.4, 1.4)
+  // la joue plus claire sous l'œil, l'arête du nez éclairée (le chanfrein de la lionne)
+  + `<path d="${CHEEK_L}" fill="${FUR.hi}" opacity="0.55"/>` + lock([[316, 214], [342, 230], [370, 244]], FUR.hi, 0.85, 6)
+  + lock([[306, 236], [330, 250], [352, 252]], FUR.sh, 0.45, 4)
+  // le museau clair et la mâchoire, le nez sombre, la bouche, les points des moustaches
+  + `<path d="${MUZZLE}" transform="translate(-2 4)" fill="${FUR.deep}" opacity="0.35"/>` + `<path d="${MUZZLE}" fill="url(#g-light)"/>` + cel(MUZZLE, { ...LIGHT, base: 'none' }, 4, 2)
+  + cel(JAW, { hi: LIGHT.base, base: LIGHT.sh, sh: LIGHT.deep }, 3, 1.4)
+  + cel(NOSE, { hi: '#8a5a44', base: '#3a2018', sh: '#1e0e08' }, 2.4, 1.4) + oval(390, 244, 4, 2, '#ffffff', 0.6, -10)
+  + line('M386 264 L386 282', '#3a2018', 2.4) + line('M312 290 Q350 298 386 282 Q398 292 408 288', '#3a2018', 2.6)
+  + [[322, 266], [332, 272], [318, 278], [340, 264]].map(([x, y]) => dot(x, y, 2, '#8a5a30', 0.85)).join('');
 
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx = -4, dy = 6, o = 0.42) => ({ on, dx, dy, color: SH, o });
 const parts = [
-  { id: 'sun', cls: 'a-sun', d: ell(SUN[0], SUN[1], SUN[2], SUN[2]), body: dot(SUN[0], SUN[1], SUN[2], '#f2c040') + dot(SUN[0], SUN[1], SUN[2] - 5, 'url(#g-sun)')
-    + `<circle cx="${SUN[0]}" cy="${SUN[1]}" r="${SUN[2] - 12}" fill="none" stroke="#fff4b0" stroke-width="3" opacity="0.5"/>` + lock([[204, 52], [250, 34], [296, 52]], '#ffffff', 0.7, 4) },
   { id: 'cape', cls: 'a-cape', d: CAPE_D, body: relief(CAPE_D, 'g-cape', CAPE, 7, 3) + lock([[208, 352], [150, 400], [96, 456]], CAPE.hi, 0.5, 4) + lock([[218, 400], [170, 450], [130, 490]], CAPE.deep, 0.5, 4) },
   { id: 'tail', cls: 'a-tail', d: TAIL_D + ell(86, 470, 12, 14), shadow: [sh(['cape'])], body: relief(TAIL_D, 'g-fur', FUR, 4, 2) + relief(ell(86, 470, 12, 14), 'g-mane', MANE, 3, 1.6) },
   { id: 'legs', cls: 'a-body', d: LEG_L + LEG_R + PAW_L + PAW_R, shadow: [sh(['cape', 'tail'])], body: relief(LEG_L, 'g-fur', FUR, 5, 2.4) + relief(LEG_R, 'g-fur', FUR, 5, 2.4)
@@ -115,14 +122,14 @@ const parts = [
     + relief(rib([[172, 398, 0], [190, 398, 9], [208, 400, 0]]), 'g-gold', GOLD, 2.4, 1.2) },
   { id: 'fistB', cls: 'a-body', d: FIST_B, shadow: [sh(['armB', 'torso', 'skirt'], -3, 5)], body: relief(FIST_B, 'g-fur', FUR, 5, 2.4)
     + [180, 192, 204].map((x) => lock([[x, 414], [x + 0.5, 428], [x, 442]], FUR.deep, 0.8, 2)).join('') },
-  { id: 'mane', cls: 'a-head', d: MANE_D, shadow: [sh(['sun', 'torso', 'collar', 'cape'], -4, 7)], body: relief(MANE_D, 'g-mane', MANE, 7, 3)
+  { id: 'mane', cls: 'a-head', d: MANE_D, shadow: [sh(['torso', 'collar', 'cape'], -4, 7)], body: relief(MANE_D, 'g-mane', MANE, 7, 3)
     + lock([[184, 220], [178, 280], [190, 330]], MANE.hi, 0.6, 4) + lock([[398, 220], [402, 280], [392, 330]], MANE.hi, 0.5, 4) },
-  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['mane', 'sun', 'collar'], -4, 6)], body: `<path d="${HEAD}" fill="url(#g-fur)"/>` + cel(HEAD, { ...FUR, base: 'none' }, 8, 3) + clip('head',
-    // l'intérieur des oreilles, la coiffe sombre derrière la joue et sous la mâchoire, le front éclairé
-    dot(167, 160, 20, MANE.base) + dot(169, 163, 13, MANE.sh) + dot(340, 142, 10, MANE.base)
-    + cel(sm('100,200 132,188 160,200 172,236 168,280 150,304 126,304 104,288 96,250 98,220'), MANE, 5, 2.4)
-    + cel(sm('370,196 392,206 408,234 414,264 404,290 384,284 378,252 370,222'), MANE, 4, 2)
-    + lock([[230, 148], [280, 136], [330, 140]], FUR.hi, 0.7, 5) + lock([[180, 236], [196, 276], [226, 300]], FUR.sh, 0.5, 6)
+  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['mane', 'collar'], -4, 6)], body: `<path d="${HEAD}" fill="url(#g-fur)"/>` + cel(HEAD, { ...FUR, base: 'none' }, 8, 3) + clip('head',
+    // l'intérieur des oreilles, la coiffe sombre de chaque côté du visage (relevée), le front éclairé
+    dot(162, 160, 22, MANE.base) + dot(164, 163, 15, MANE.sh) + oval(368, 138, 9, 11, MANE.base)
+    + cel(MANE_L, MANE, 5, 2.4) + lock([[120, 216], [118, 256], [130, 292]], MANE.hi, 0.6, 4)
+    + cel(MANE_R, MANE, 4, 2) + lock([[396, 200], [402, 240], [398, 280]], MANE.hi, 0.5, 3)
+    + lock([[226, 140], [280, 126], [330, 136]], FUR.hi, 0.7, 6) + lock([[186, 236], [200, 276], [236, 300]], FUR.sh, 0.5, 6)
     // le cobra d'or au front, sa gemme rouge
     + `<path d="${COBRA}" transform="translate(-2 3)" fill="${FUR.deep}" opacity="0.5"/>` + relief(COBRA, 'g-gold', GOLD, 3, 1.6) + dot(303, 152, 3.6, '#c02818') + dot(304, 150.6, 1.2, '#ffd0c0')
     + FACE) },
@@ -142,7 +149,6 @@ const parts = [
 const PIV = { body: [300, 560], sun: [250, 96], head: [300, 330], arm: [386, 350], cape: [214, 340], tail: [226, 500] };
 const IDLE = {
   'a-body': ['body', 'body 2s ease-in-out infinite alternate'],
-  'a-sun': ['sun', 'sun 2.4s ease-in-out infinite alternate'],
   'a-head': ['head', 'head 2.6s ease-in-out infinite alternate'],
   'a-arm': ['arm', 'arm 1.8s ease-in-out infinite alternate'],
   'a-cape': ['cape', 'cape 2.2s ease-in-out infinite alternate'],
