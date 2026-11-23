@@ -46,19 +46,14 @@ ROSTER = [
     ('arachne', 'myths-10', 'Arachné', 'terre', 'assassin', 'légendaire', 'femme-araignée'),
     ('isis', 'myths-9', 'Isis', 'terre', 'tireur', 'légendaire', 'chasseur au crâne de cerf'),
 ]
-VALIDES = {'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'nerith', 'arachne', 'auriel'}
+VALIDES = {'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'nerith', 'arachne', 'auriel',
+           'kesha', 'velith', 'lilou', 'celia', 'cyclope', 'solenn'}
 # héros dessinés dont les retours du propriétaire sont en train d'être faits : le retour demandé
 RETOUCHES = {
-    'zaroth': "Encore un peu moins large ; jambes moins écartées, dans la lignée du corps.",
-    'kesha': "Refaire correctement la ceinture.",
-    'velith': "Tête un peu moins aplatie.",
-    'lilou': "Carapace remise dans le bon sens.",
-    'celia': "Bouche replacée.",
-    'cyclope': "S'appelle maintenant Astérion. Enlever la petite zone sous le menton qui cache le torse.",
-    'solenn': "Visage bien droit : il part en zigzag au niveau de la barbe.",
+    'zaroth': "Jambes trop écartées : ça lui donne une posture de papy. Une vraie garde de samouraï.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'zaroth', 'celia', 'solenn', 'kesha', 'velith', 'cyclope', 'lilou'}
+FAITES = set()
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
