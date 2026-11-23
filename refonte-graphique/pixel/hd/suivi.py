@@ -58,7 +58,7 @@ RETOUCHES = {
     'solenn': "Visage bien droit : il part en zigzag au niveau de la barbe.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = set()
+FAITES = {'zaroth'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
