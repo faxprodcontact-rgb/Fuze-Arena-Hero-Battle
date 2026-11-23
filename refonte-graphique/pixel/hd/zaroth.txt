@@ -1,29 +1,33 @@
 # Zaroth (demons-8, élément eau, protecteur, épique) : le samouraï masqué, un mur d'armure rouge.
 #
-# Corps : à lui seul, trapu et blindé. Grosse tête casquée, épaules très larges élargies par deux grandes épaulières
-#   carrées (sode), buste en tonneau dans la cuirasse, jupe de plaques (kusazuri) qui s'évase, hakama bleu nuit bouffant,
-#   jambes courtes et solides. Silhouette en noir : croissant d'or au-dessus du casque, protège-nuque en paliers, grandes
-#   épaulières carrées, sabre qui monte en avant, fourreau qui dépasse derrière la hanche : on le reconnaît.
-# Pose : trois quarts vers la droite, garde de protecteur, appui moyen-large et bas : jambe proche (droite) en arrière,
-#   jambe lointaine (gauche) en avant, pieds à plat. Le sabre est tenu à deux mains devant le ventre, la lame monte en
-#   avant vers l'ennemi (rien devant le visage) : main droite (proche) sous la garde, main gauche (lointaine) au pommeau ;
-#   les doigts passent devant la poignée, le pouce par-dessus, la poignée ressort des deux côtés.
-# Tête : casque laqué rouge (bol arrondi, visière qui avance et fait de l'ombre sur les yeux), grand croissant d'or (deux
-#   cornes, la proche plus grande), ailerons retournés (fukigaeshi) à liseré d'or et blason de vague, protège-nuque de
-#   trois plaques qui s'évasent. Masque rouge (menpo) sur le bas du visage : nez qui dépasse à droite, pommettes, fente de
-#   la bouche avec quatre crocs ivoire (gorge rouge sombre, pas de noir), grosse moustache gris-blanc en crochet ; seuls
-#   les yeux se voient, ambre, sous des sourcils froncés ; l'œil lointain, plus étroit, sur la même ligne. Gorgerin de
-#   plaques sous le menton.
-# Détails : laçages des plaques en petits nœuds bleu d'eau espacés (pas de rayures), liserés et rivets d'or, plastron
-#   lisse en haut avec un blason d'or, ceinture-écharpe bleue nouée, manches bleu nuit à plaquettes de fer, hakama à deux
-#   plis, jambières de fer, chaussettes claires et sandales de paille. Sabre : lame d'acier courbée (dos sombre, fil
-#   clair, ligne de trempe pâle, éclat), garde ronde d'or, poignée tressée bleu nuit à losanges clairs, pommeau d'or.
-#   Fourreau laqué bleu nuit à bout d'or qui dépasse derrière.
+# Corps : à lui seul, trapu et blindé, tout en largeur. Grosse tête casquée, épaules élargies par deux grandes
+#   épaulières carrées (sode), buste en tonneau dans la cuirasse, jupe de plaques (kusazuri) qui s'évase en cloche,
+#   hakama bleu nuit bouffant, jambes courtes et solides. Silhouette en noir : croissant d'or au-dessus du casque, visière
+#   et nez du masque qui dépassent à droite, protège-nuque en paliers, épaulières carrées, sabre qui monte en avant,
+#   fourreau qui dépasse derrière la hanche, jambes écartées : on le reconnaît.
+# Pose : trois quarts vers la droite, garde de protecteur bien plantée, écart moyen-large : jambe proche (droite) en
+#   arrière, jambe lointaine en avant, pieds à plat. Sabre tenu à deux mains devant le ventre, la lame monte en avant
+#   vers l'ennemi, loin du visage : main droite (proche) juste sous la garde, le pouce par-dessus ; main gauche
+#   (lointaine) en dessous, arrivée de la droite ; les doigts passent devant la poignée, qui se voit entre les deux
+#   mains et ressort en bas (pommeau d'or). Avant-bras : manches bleu nuit, plaque de fer, cubitière ronde, poignet d'or.
+# Tête : casque laqué rouge (bol arrondi avec un reflet, visière qui avance et met les yeux dans l'ombre), grand
+#   croissant d'or (corne proche plus grande, corne lointaine raccourcie) sur une monture à gemme bleue (l'eau), aileron
+#   retourné (fukigaeshi) à liseré et blason d'or en spirale de vague, protège-nuque de trois plaques en paliers.
+#   Masque rouge (menpo) sur le bas du visage : nez qui dépasse le contour, joue éclairée, bouche ouverte en rictus avec
+#   quatre crocs ivoire (gorge rouge sombre, pas de noir), grosse moustache gris-blanc tombante en crochet, petite
+#   barbiche blanche sous le menton. Seuls les yeux se voient : ambre, sous de gros sourcils blancs froncés ; l'œil
+#   lointain a la même forme, sur la même ligne, juste plus étroit. Gorgerin sombre sous le menton.
+# Détails : laçages en colonnes de petits cordons bleus (deux colonnes sur l'épaulière proche, une sur la lointaine et
+#   sur chaque panneau de la jupe : on lit le laçage sans rayures), liserés d'or en haut et en bas des plaques, plastron
+#   lisse au reflet laqué avec le même blason de vague, hakama à plis, jambières laquées à liseré et rivet d'or,
+#   chaussettes claires (tabi) et sandales de paille à lanières. Sabre : lame courbe (dos sombre, plat, fil clair,
+#   pointe qui remonte), collier d'or, garde d'or vue de biais, poignée tressée claire à losanges bleu nuit, pommeau
+#   d'or. Fourreau laqué bleu nuit, anneau de cordon bleu clair, bout d'or arrondi.
 # Couleurs (une seule lumière, en haut à droite) : laque rouge (ombres bordeaux-violet, lumières orangées, éclat
-#   pêche), or (ombres brun-rouge, lumière jaune pâle), bleu nuit (élément eau), peau ambrée autour des yeux, acier
-#   bleuté, ivoire et gris-lavande de la moustache, paille.
-# Calques : corps (respire), sabre (fixe, la lame ne se plie pas au souffle), mains (devant la poignée, sous la ligne
-#   du souffle). Clignement : les yeux deviennent des paupières.
+#   pêche), or (ombres brun-rouge, lumière jaune pâle), bleu nuit (élément eau) avec un bleu clair pour la gemme et le
+#   cordon, peau dans l'ombre de la visière, acier bleuté, blanc-lavande (sourcils, moustache, crocs, tabi), paille.
+# Calques : corps (respire), sabre (fixe : la lame ne se plie pas au souffle), mains (devant la poignée, sous la ligne
+#   du souffle, donc immobiles avec le sabre). Clignement : les yeux deviennent des paupières (peau).
 id: demons-8
 sol: 64 116
 tete: 44 21 87 54
@@ -47,7 +51,7 @@ n #1a1c40  bleu nuit, ombre
 o #283062  bleu nuit
 p #384a8e  bleu nuit, lumière
 q #5470bc  bleu nuit, reflet
-r #7cc0ec  laçage bleu d'eau
+r #7cc0ec  bleu d'eau clair (gemme, cordon)
 s #3c1824  peau, ombre profonde
 t #7a3a36  peau, ombre
 u #b86a4e  peau
@@ -62,7 +66,7 @@ C #3c4866  acier, ombre
 D #6c7e9e  acier
 E #aabcd2  acier, clair
 F #eef4fa  acier, éclat
-G #5a5476  moustache et chaussettes, ombre
+G #5a5476  poils blancs et chaussettes, ombre ; tresse de la poignée, ombre
 H #a49cbc  moustache, demi-teinte
 I #ece8f4  moustache, crocs, chaussettes, lumière
 J #5a3a22  paille, ombre
