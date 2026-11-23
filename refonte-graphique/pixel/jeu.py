@@ -14,6 +14,8 @@ import numpy as np
 from PIL import Image
 from pix import sheet, FRAME_W, FRAME_H, OX, OY
 import fond
+sys.path.insert(0, os.path.join(HERE, 'hd'))
+import hd
 
 ROOT = os.path.normpath(os.path.join(HERE, '..', '..'))
 OUT = os.path.join(ROOT, 'public', 'art', 'px')
@@ -46,15 +48,28 @@ UP = 3                       # la planche fait 8 × 132 × 3 = 3168 pixels de la
 FX, FY = GAP + OX + 48, GAP + OY + 94  # les pieds dans la case (milieu du repère, ligne 94)
 # La taille d'un pixel dans le combat (unités du jeu, écran de 720 de large) : les anciens héros mesuraient ~124 de haut,
 # les anciens monstres de ces familles ~86 ; un seul réglage par groupe, pour que les pixels gardent la même taille.
-SCALE = {'hero': 1.35, 'monster': 0.96, 'ink': 1.8}   # 'ink' : les héros « encrés » (gros pixels, ~64 de haut)
+SCALE = {'hero': 1.35, 'monster': 0.96, 'ink': 1.8,   # 'ink' : les héros « encrés » (gros pixels, ~65 de haut)
+         'hd': 1.22}                                    # 'hd' : les héros HD (hd/*.txt, ~96 de haut) : même taille à l'écran
+# Les héros HD (hd/<nom>.txt, champ « id ») remplacent l'ancien dessin du même personnage.
+HD = {}
+for _f in sorted(os.listdir(os.path.join(HERE, 'hd'))):
+    if _f.endswith('.txt') and not _f.startswith('_'):
+        _h = hd.load(os.path.join(HERE, 'hd', _f))
+        if _h['id'] and not hd.errors(_h):
+            HD[_h['id']] = _h['name']
 # La vignette (comme art-jeu.py) : 256 de côté, les héros debout pieds en bas (stature commune), les monstres remplissent
 # le carré ; enregistrée deux fois plus grande pour rester nette sur les téléphones.
 S, PAD, STATURE = 256, 10, 188
 CARD_X = 2
 
 
-def planche(pid):
-    strip = sheet(importlib.import_module(pid).draw)  # 8 × (FRAME_W × FRAME_H), contour compris
+def planche(pid, cid=None):
+    if cid in HD:
+        strip = Image.new('RGBA', (FRAME_W * FRAMES, FRAME_H), (0, 0, 0, 0))
+        for t, f in enumerate(hd.frames(HD[cid])):
+            strip.paste(f, (t * FRAME_W, 0))
+    else:
+        strip = sheet(importlib.import_module(pid).draw)  # 8 × (FRAME_W × FRAME_H), contour compris
     out = Image.new('RGBA', (CW * FRAMES, CH), (0, 0, 0, 0))
     for f in range(FRAMES):
         out.paste(strip.crop((f * FRAME_W, 0, (f + 1) * FRAME_W, FRAME_H)), (f * CW + GAP, GAP))
@@ -80,24 +95,33 @@ def carte(pid, frame, anchor, stature):
     return card
 
 
-def main():
+def main(only=None):
     os.makedirs(OUT, exist_ok=True)
     meta = {}
+    if only:   # garder les autres personnages tels qu'ils sont dans pixel-meta.ts
+        txt = open(META).read()
+        meta = json.loads(txt[txt.index('{'):txt.rindex('}') + 1])['chars']
     for pid, cid in CHARS.items():
-        strip, cells = planche(pid)
+        if only and cid not in only and pid not in only:
+            continue
+        strip, cells = planche(pid, cid)
         cells.resize((cells.width * UP, cells.height * UP), Image.NEAREST).save(os.path.join(OUT, f'{cid}.webp'), lossless=True, quality=100, method=6)
         mod = importlib.import_module(pid)
         ink = hasattr(mod, 'ORIGIN')
         ox, oy = getattr(mod, 'ORIGIN', (OX, OY))
         anchor = (ox + 40, oy + 71) if ink else (OX + 48, OY + 94)
-        carte(pid, strip.crop((0, 0, FRAME_W, FRAME_H)), anchor, 64 if ink else 80).save(os.path.join(OUT, f'c-{cid}.webp'), lossless=True, quality=100, method=6)
+        stature = 64 if ink else 80
+        if cid in HD:
+            anchor, stature = hd.FEET, 94     # le point « sol » d'un héros HD est en (64, 116) ; ~96 de haut
+        carte(pid, strip.crop((0, 0, FRAME_W, FRAME_H)), anchor, stature).save(os.path.join(OUT, f'c-{cid}.webp'), lossless=True, quality=100, method=6)
         # le haut du dessin (le plus haut des 8 images) et sa largeur, dans la case
         a = np.array(cells)[:, :, 3] > 0
         top = int(np.where(a.any(1))[0].min())
         # la largeur au sol (les 14 lignes du bas : les jambes en garde, sans l'arme ni les ailes), pour l'ombre
         f0 = a[FY - 14:FY + 1, :CW]
         xs = np.where(f0.any(0))[0]
-        meta[cid] = [top, int(xs.min()), int(xs.max()) + 1, SCALE['ink' if ink else 'hero' if pid in HEROES else 'monster']]
+        kind = 'hd' if cid in HD else 'ink' if ink else 'hero' if pid in HEROES else 'monster'
+        meta[cid] = [top, int(xs.min()), int(xs.max()) + 1, SCALE[kind]]
         print(cid, pid, meta[cid])
     with open(META, 'w') as fh:
         fh.write('// Généré par refonte-graphique/pixel/jeu.py : ne pas modifier à la main.\n')
@@ -111,4 +135,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    main(set(sys.argv[1:]) or None)   # python3 jeu.py [id ou nom …] : seulement ceux-là (sinon tous)
