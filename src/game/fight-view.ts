@@ -182,7 +182,10 @@ export abstract class FightScene extends Phaser.Scene {
   preload() {
     const terrain = this.look.terrain;
     const scene = SCENES[terrain];
-    if (scene) loadBackdrop(this, terrain, scene, this.bgCtx());
+    const pxBg = this.look.pixel;
+    if (pxBg) {
+      if (!this.textures.exists(`pxbg-${pxBg}`)) this.load.image(`pxbg-${pxBg}`, `art/px/fond-${pxBg}.webp`);
+    } else if (scene) loadBackdrop(this, terrain, scene, this.bgCtx());
     else {
       if (!this.textures.exists(`t-${terrain}`)) this.load.image(`t-${terrain}`, `art/t/${terrain}.jpg`);
       const tm = ART_META.terrains[terrain] as { fg?: number };
@@ -207,8 +210,7 @@ export abstract class FightScene extends Phaser.Scene {
       const id = this.charId(u);
       if (isPixel(id)) {
         // pixel art : une planche de 8 images (respiration, clignement), à la place du dessin découpé
-        const px = PIXEL.cell * PIXEL.up;
-        if (!this.textures.exists(`x-${id}`)) this.load.spritesheet(`x-${id}`, pixelUrl(id), { frameWidth: px, frameHeight: px });
+        if (!this.textures.exists(`x-${id}`)) this.load.spritesheet(`x-${id}`, pixelUrl(id), { frameWidth: PIXEL.cw * PIXEL.up, frameHeight: PIXEL.ch * PIXEL.up });
         if (HERO_IDS.has(u.defId) && !this.textures.exists(`c-${id}`)) this.load.image(`c-${id}`, cardUrl(id));
         continue;
       }
@@ -247,6 +249,12 @@ export abstract class FightScene extends Phaser.Scene {
   /** Le terrain : l'image du décor, le centre de son arène au milieu des rangées de combattants. */
   protected drawArena(bottom: number) {
     this.arenaBottom = bottom;
+    const pxBg = this.look.pixel;
+    if (pxBg && this.textures.exists(`pxbg-${pxBg}`)) {
+      // fond en pixel art (refonte-graphique/pixel/fond.py) : dessiné pour cet écran, son bas sur le bas du terrain
+      this.add.image(0, bottom, `pxbg-${pxBg}`).setOrigin(0, 1).setDepth(-30);
+      return;
+    }
     const scene = SCENES[this.look.terrain];
     if (scene) {
       const placed = placeBackdrop(this, this.look.terrain, scene, this.bgCtx());
@@ -317,12 +325,13 @@ export abstract class FightScene extends Phaser.Scene {
         this.anims.create({ key, frames: this.anims.generateFrameNumbers(key, { start: 0, end: PIXEL.frames - 1 }), frameRate: 7, repeat: -1 });
       }
       fig.setPosition(0, FEET);
-      const spr = this.add.sprite(0, 0, key, 0).setOrigin(PIXEL.fx / PIXEL.cell, PIXEL.fy / PIXEL.cell).setScale(k / PIXEL.up);
+      const spr = this.add.sprite(0, 0, key, 0).setOrigin(PIXEL.fx / PIXEL.cw, PIXEL.fy / PIXEL.ch).setScale(k / PIXEL.up);
       spr.play({ key, startFrame: Math.floor(Math.random() * PIXEL.frames) });
       fig.add(spr);
       imgs.push(spr);
       shadow = this.add.ellipse(0, FEET, Math.min(160, (right - left) * k * 0.55), 20, 0x000000, 0.3);
-      barY = FEET - (PIXEL.fy - top) * k - 6;
+      // la barre de vie au-dessus de la tête (les ailes, plumes et flammes qui montent plus haut ne comptent pas)
+      barY = FEET - Math.min(PIXEL.fy - top, 92) * k - 6;
     } else if (hasArt(id) && (this.textures.exists(`p-${id}`) || (rig && this.textures.exists(`r-${id}`)))) {
       // dessin Hailuo : les pieds (point 106, 228 du repère) sur la ligne de sol
       // norm : la même stature pour tous les héros (mesurée par art-jeu.py) ; les monstres gardent leur échelle
@@ -915,7 +924,7 @@ export abstract class FightScene extends Phaser.Scene {
     if (isPixel(cid) && this.textures.exists(px)) {
       // pixel art : la première image de sa planche, pieds en bas du bandeau, 200 de haut
       const top = PIXEL.chars[cid as keyof typeof PIXEL.chars][0];
-      const img = this.add.image(120, h / 2 + 8, px, 0).setOrigin(PIXEL.fx / PIXEL.cell, PIXEL.fy / PIXEL.cell);
+      const img = this.add.image(120, h / 2 + 8, px, 0).setOrigin(PIXEL.fx / PIXEL.cw, PIXEL.fy / PIXEL.ch);
       img.setScale(200 / ((PIXEL.fy - top) * PIXEL.up));
       band.add(img);
       this.tweens.add({ targets: img, x: 175, duration: 560 * t });

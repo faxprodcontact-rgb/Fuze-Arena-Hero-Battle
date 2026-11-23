@@ -1,6 +1,9 @@
 # Petit atelier de pixel art par le code (essai de style, 23/11/2026).
 #
-# Un personnage = une toile de 96 × 96 pixels. On y pose des MORCEAUX, du fond vers le devant : chaque morceau est une
+# Un personnage = une toile de 128 × 120 pixels (FRAME_W × FRAME_H). On dessine dans un repère de 96 × 96 (pieds vers
+# y = 93, milieu vers x = 48) placé avec une marge (OX, OY) : ce qui dépasse de ce carré (arme levée, ailes, flammes)
+# reste visible, jusqu'à x = -16 … 111 et y = -22 … 97.
+# On y pose des MORCEAUX, du fond vers le devant : chaque morceau est une
 # forme (ovale, polygone, membre) et une MATIÈRE (une gamme de 5 tons : profond, ombre, base, clair, éclat). L'ombrage est
 # automatique et toujours le même pour tout le jeu (la lumière vient d'en haut à droite) :
 #   - « bande » : une bande d'ombre le long du bord en bas à gauche, un liseré clair le long du bord en haut à droite ;
@@ -13,6 +16,7 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 OUT = (30, 20, 36)  # le contour de tous les personnages
+FRAME_W, FRAME_H, OX, OY = 128, 120, 16, 22
 
 
 def rgb(h):
@@ -38,12 +42,13 @@ def S(m, dx, dy):
 
 
 class Canvas:
-    def __init__(self, w=96, h=96):
-        self.w, self.h = w, h
+    def __init__(self, w=FRAME_W, h=FRAME_H, ox=OX, oy=OY):
+        self.w, self.h, self.ox, self.oy = w, h, ox, oy
         self.col = np.zeros((h, w, 4), np.uint8)
         self.pid = np.zeros((h, w), np.int32)
         self.n = 0
-        self.Y, self.X = np.mgrid[0:h, 0:w]
+        self.gy, self.gx = np.mgrid[0:h, 0:w]          # les pixels de la toile
+        self.Y, self.X = self.gy - oy, self.gx - ox      # le repère du dessin
 
     # ---------- les formes (des masques) ----------
     def ellipse(self, cx, cy, rx, ry):
@@ -51,7 +56,7 @@ class Canvas:
 
     def poly(self, pts):
         im = Image.new('L', (self.w, self.h), 0)
-        ImageDraw.Draw(im).polygon([(float(x), float(y)) for x, y in pts], fill=1)
+        ImageDraw.Draw(im).polygon([(float(x) + self.ox, float(y) + self.oy) for x, y in pts], fill=1)
         return np.array(im) > 0
 
     def limb(self, pts):
@@ -80,7 +85,7 @@ class Canvas:
             ys, xs = np.nonzero(m)
             cx, cy = (xs.min() + xs.max() + 1) / 2, (ys.min() + ys.max() + 1) / 2
             rx, ry = max(1, (xs.max() - xs.min() + 1) / 2), max(1, (ys.max() - ys.min() + 1) / 2)
-            d = ((self.X + 0.5 - cx) / rx) * 0.7 - ((self.Y + 0.5 - cy) / ry) * 0.7
+            d = ((self.gx + 0.5 - cx) / rx) * 0.7 - ((self.gy + 0.5 - cy) / ry) * 0.7
             c[d < -0.36] = ramp.shade
             c[d < -0.8] = ramp.deep
             if light:
@@ -104,7 +109,7 @@ class Canvas:
 
     # ---------- les détails ----------
     def px(self, x, y, color, only=None):
-        x, y = int(round(x)), int(round(y))
+        x, y = int(round(x)) + self.ox, int(round(y)) + self.oy
         if 0 <= x < self.w and 0 <= y < self.h and (only is None or only[y, x]):
             self.col[y, x, :3] = rgb(color) if isinstance(color, str) else color
             self.col[y, x, 3] = 255
@@ -142,7 +147,7 @@ class Canvas:
         return im.resize((self.w * scale, self.h * scale), Image.NEAREST) if scale > 1 else im
 
 
-def sheet(draw, frames=8, w=96, h=96):
+def sheet(draw, frames=8, w=FRAME_W, h=FRAME_H):
     """Une bande d'images (l'animation de repos) : draw(canvas, t) pour t = 0 … frames-1."""
     out = Image.new('RGBA', (w * frames, h), (0, 0, 0, 0))
     for t in range(frames):

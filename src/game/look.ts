@@ -48,6 +48,8 @@ export interface Look {
   family: (element: Element) => string;
   /** Les boss gardent leur dessin propre (boss du jour, de guilde) au lieu du boss de la famille. */
   namedBoss?: boolean;
+  /** Fond en pixel art à la place du décor (art/px/fond-<nom>.webp), pour l'essai du nouveau style. */
+  pixel?: string;
 }
 
 function regionOf(chapter: number) {
@@ -96,7 +98,7 @@ function lookOf(kind: string, title: string, dungeon?: DungeonKind): Look {
       return campaignLook(Math.max(1, Number.parseInt(title, 10) || 1));
     case 'demo':
       // outil de test : les familles des monstres redessinés en pixel art (voir pixelDemoBattle)
-      return { terrain: 'meadow', family: (e) => ({ earth: 'ronciers', water: 'bayou', fire: 'parade', wind: 'glaces' })[e] };
+      return { terrain: 'meadow', pixel: 'prairie', family: (e) => ({ earth: 'ronciers', water: 'bayou', fire: 'parade', wind: 'glaces' })[e] };
     case 'tower': {
       const floor = Number.parseInt(title, 10) || 1;
       return { terrain: 'tower', family: (e) => FAMILIES[e][Math.floor(floor / 4) % 3]! };

@@ -5,7 +5,7 @@ import sys, os, io, base64, importlib
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, 'persos'))
 from PIL import Image, ImageDraw
-from pix import sheet
+from pix import sheet, FRAME_W, FRAME_H, OX, OY
 import fond
 from scene import HEROES, MONSTERS, HERO_X, ENEMY_X, FEET
 
@@ -38,7 +38,8 @@ def main(out):
     units = sorted([(FEET[s], HERO_X[s], pid, False) for pid, s in HEROES] + [(FEET[s], ENEMY_X[s], pid, True) for pid, s in MONSTERS])
     sprites = ''
     for k, (feet, x, pid, flip) in enumerate(units):
-        left, top = (x - 48) / 240 * 100, (feet - 94) / 388 * 100
+        fx = OX + 48 if not flip else FRAME_W - OX - 48
+        left, top = (x - fx) / fond.W * 100, (feet - 94 - OY) / fond.H * 100
         sprites += (f'<div class="unit{" flip" if flip else ""}" style="left:{left:.3f}%;top:{top:.3f}%">'
                     f'<img src="{sheets[pid]}" alt="{NAMES[pid][0]}" style="animation-delay:-{(k * 0.37) % 1.12:.2f}s"></div>')
 
@@ -65,16 +66,16 @@ h2 {{ font-size: 24px; }}
 p {{ margin: 0; color: var(--muted); max-width: 65ch; line-height: 1.5; }}
 header {{ display: grid; gap: 10px; }}
 section {{ display: grid; gap: 16px; }}
-.stage {{ position: relative; width: min(480px, 100%); aspect-ratio: 240 / 388; margin: 0 auto; border: 3px solid var(--rim);
+.stage {{ position: relative; width: min(480px, 100%); aspect-ratio: 240 / 420; margin: 0 auto; border: 3px solid var(--rim);
   border-radius: 18px; overflow: hidden; box-shadow: 0 0 0 6px var(--enamel), 0 18px 40px rgba(0,0,0,.45);
   background: url({b64(bg)}) 0 0 / 100% 100%; image-rendering: pixelated; }}
-.unit {{ position: absolute; width: 40%; aspect-ratio: 1; overflow: hidden; }}
+.unit {{ position: absolute; width: {FRAME_W / 240 * 100:.3f}%; aspect-ratio: {FRAME_W} / {FRAME_H}; overflow: hidden; }}
 .unit.flip {{ transform: scaleX(-1); }}
 .unit img, .frame img {{ display: block; width: 800%; max-width: none; height: 100%; image-rendering: pixelated; animation: idle 1.12s steps(8) infinite; }}
 @keyframes idle {{ to {{ transform: translateX(-100%); }} }}
 .grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 14px; }}
 .card {{ margin: 0; background: var(--enamel); border: 2px solid var(--rim-soft); border-radius: 14px; padding: 10px; display: grid; gap: 8px; }}
-.frame {{ aspect-ratio: 1; overflow: hidden; border-radius: 8px; background: linear-gradient(#2f6f9a, #173f6b); }}
+.frame {{ aspect-ratio: {FRAME_W} / {FRAME_H}; overflow: hidden; border-radius: 8px; background: linear-gradient(#2f6f9a, #173f6b); }}
 figcaption {{ display: grid; gap: 2px; }}
 figcaption b {{ font-family: var(--display); font-weight: 400; font-size: 19px; }}
 figcaption span {{ color: var(--muted); font-size: 13px; letter-spacing: .04em; text-transform: uppercase; }}

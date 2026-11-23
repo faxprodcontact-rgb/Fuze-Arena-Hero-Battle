@@ -353,6 +353,14 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   **v0.42.1** : le propriétaire ne les voyait pas (ses héros et ses monstres n'en font pas partie) → bouton « Combat pixel
   art » dans les Outils de test : `pixelDemoBattle()` (`actions.ts`, combat `demo` sans récompense, ~30 s gagné par les
   héros), décor prairie et familles des monstres redessinés (`look.ts`, cas `demo`).
+  **v0.43.0 (23/11/2026)** : demande « héros plus poussés, position de combat, plus agressifs, corps et têtes plus
+  badass ; rien de coupé ; fond de combat en pixel art ». Les 5 héros redessinés en garde (Ilian : barbe dégagée, aucun
+  bras devant, mèches devant, couronne posée ; Kael en élan, épée traînée ; Sable lionne qui rugit ; Eldra bâton en lance ;
+  Rook ailes de feu en plumes, pas en rayons). Toile 128 × 120 avec une marge autour du repère 96 × 96 (`pix.py` :
+  `FRAME_W`, `OX`…), planches ×3 (3168 px de large, sous la limite de 4096 des téléphones), `pixel-meta.ts` : `cw`, `ch`.
+  Contrôle « rien de coupé » : aucun pixel opaque sur le bord de la toile, sur les 8 images (petit script dans la
+  conversation : `sheet()` puis bords de chaque case). Fond `fond.py` → `public/art/px/fond-prairie.webp` (240 × 420 ×3),
+  posé par `drawArena` quand le décor a `pixel` (`Look.pixel`, cas `demo`), son bas sur le bas du terrain.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

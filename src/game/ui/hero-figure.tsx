@@ -11,16 +11,16 @@ const BOX_PER_UNIT = 1 / 0.56;
 
 export function HeroFigure({ defId, class: cls = '' }: { defId: string; class?: string }) {
   if (isPixel(defId)) {
-    // la planche animée (8 images) dans une fenêtre carrée d'une case, pieds au même point que les autres héros
+    // la planche animée (8 images) dans une fenêtre d'une case, pieds au même point que les autres héros
     const scale = PIXEL.chars[defId as keyof typeof PIXEL.chars][3];
-    const cell = PIXEL.cell * scale * BOX_PER_UNIT; // la case, en unités de la boîte (200 × 240)
-    const left = 53 - ((PIXEL.fx * scale * BOX_PER_UNIT) / 200) * 100, top = 95 - ((PIXEL.fy * scale * BOX_PER_UNIT) / 240) * 100;
+    const u = scale * BOX_PER_UNIT; // un pixel du dessin, en unités de la boîte (200 × 240)
+    const left = 53 - ((PIXEL.fx * u) / 200) * 100, top = 95 - ((PIXEL.fy * u) / 240) * 100;
     // chacun respire à son rythme : un décalage tiré de son nom
     let h = 0;
     for (const ch of defId) h = (h * 31 + ch.charCodeAt(0)) % 997;
     return (
       <span class={`hfig hfig-px ${cls}`}>
-        <span class="px-win" style={{ left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%`, width: `${((cell / 200) * 100).toFixed(2)}%` }}>
+        <span class="px-win" style={{ left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%`, width: `${(((PIXEL.cw * u) / 200) * 100).toFixed(2)}%`, aspectRatio: `${PIXEL.cw} / ${PIXEL.ch}` }}>
           <img src={pixelUrl(defId)} alt="" draggable={false} style={{ animationDelay: `-${((h % 8) * 0.14).toFixed(2)}s` }} />
         </span>
       </span>

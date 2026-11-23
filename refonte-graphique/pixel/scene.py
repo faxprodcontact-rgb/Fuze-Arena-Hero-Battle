@@ -5,15 +5,16 @@ import sys, os, importlib
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, 'persos'))
 from PIL import Image
-from pix import Canvas
+from pix import Canvas, OX, OY
 import fond
 
 HEROES = [('kael', 0), ('sable', 1), ('eldra', 2), ('rook', 3), ('ilian', 4)]
 MONSTERS = [('renard', 0), ('dino', 1), ('follet', 2), ('petard', 3), ('chouette', 4)]
-# les places : x du milieu, y des pieds (le jeu : HERO_X, ENEMY_X, ROW_DY sous le haut du sol, pieds 47 plus bas, ÷ 3)
+# les places : x du milieu, y des pieds (le jeu : HERO_X, ENEMY_X, ROW_DY sous le haut du sol, pieds 47 plus bas, ÷ 3).
+# Les personnages sont posés à la taille de l'atelier (un pixel = un pixel du fond), plus grands que dans le jeu.
 HERO_X = {3: 27, 4: 27, 2: 54, 0: 82, 1: 82}
 ENEMY_X = {0: 158, 1: 158, 2: 186, 3: 213, 4: 213}
-FEET = {0: 290, 3: 290, 2: 320, 1: 350, 4: 350}
+FEET = {0: fond.ROWS[0], 3: fond.ROWS[0], 2: fond.ROWS[1], 1: fond.ROWS[2], 4: fond.ROWS[2]}
 
 
 def sprite(pid, t):
@@ -35,7 +36,7 @@ def compose(t=0):
         from PIL import ImageDraw
         ImageDraw.Draw(sh).ellipse((0, 0, 39, 7), fill=(20, 40, 16, 110))
         bg.alpha_composite(sh, (x - 20, feet - 5))
-        bg.alpha_composite(im, (x - 48, feet - 94))
+        bg.alpha_composite(im, (x - 48 - OX if not flip else x - (im.width - OX - 48), feet - 94 - OY))
     return bg
 
 
