@@ -6,7 +6,7 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.dirname(__file__))
-from pix import Ramp, BREATH, BLINK
+from pix import Ramp, BREATH, BLINK, S
 from tetes import KAEL, KAEL_C, KAEL_BLINK
 
 ORIGIN = (24, 45)
@@ -21,21 +21,36 @@ SCARF = Ramp('#2a0c14', '#46141e', '#6a2030', '#8a3040', '#a84050')
 LAVA, LAVA2 = '#ff8a1a', '#ffe070'
 
 
+def erode(m, n=1):
+    for _ in range(n):
+        m = m & S(m, 1, 0) & S(m, -1, 0) & S(m, 0, 1) & S(m, 0, -1)
+    return m
+
+
 def draw(c, t):
     b = BREATH[t]
     f = [0, 1, 2, 1, 0, -1, -2, -1][t]   # les flammes ondulent
     g = t % 2                            # la braise palpite
     # ---- l'écharpe en lambeaux qui file vers l'arrière ----
     c.part(c.poly([(47, 27 - b), (36, 26 - b), (22, 25 + f), (8, 28 + f), (16, 31 + f), (3, 35 + f), (20, 35), (34, 33 - b), (47, 33 - b)]), SCARF, 'ink')
-    # ---- la crinière de flammes : des langues ondulées vers l'arrière, la pointe qui remonte, le cœur jaune ----
-    for (x0, y0, x1, y1, r, ph) in [(50, 11, 16, -4, 5, 0), (48, 14, 10, 8, 4.6, 2), (47, 18, 12, 20, 3.8, 4), (52, 10, 28, -14, 4.2, 1), (55, 10, 42, -16, 3.4, 3)]:
+    # ---- la crinière de flammes : des langues larges et ondulées, réunies en une seule masse (un seul trait noir
+    # autour), le cœur orange puis jaune ; quelques braises qui s'envolent ----
+    m = None
+    for (x0, y0, x1, y1, r, ph) in [(50, 11, 18, -4, 7, 0), (48, 15, 10, 9, 6.4, 2), (47, 20, 14, 23, 5.2, 4),
+                                    (53, 10, 32, -15, 6, 1), (57, 10, 47, -14, 4.8, 3)]:
         pts = []
-        for k in range(6):
-            u = k / 5
-            w = [0, 1, 2, 1, 0, -1, -2, -1][(t + ph + k) % 8] * 0.7 * u
-            pts.append((x0 + (x1 + f - x0) * u, y0 + (y1 - y0) * u - 6 * u * u + w - b, r * (1 - u) ** 0.8 + 1.2))
-        c.part(c.limb(pts), FIRE, 'ink')
-        c.part(c.limb([(x, y + 0.5, max(0.6, rr * 0.4)) for (x, y, rr) in pts[:4]]), CORE, 'round', line=False)
+        for k in range(8):
+            u = k / 7
+            w = [0, 1, 2, 1, 0, -1, -2, -1][(t + ph + k) % 8] * 1.1 * u
+            pts.append((x0 + (x1 + f - x0) * u, y0 + (y1 - y0) * u - 5 * u * u + w - b, r * (1 - u) ** 0.75 + 1))
+        lm = c.limb(pts)
+        m = lm if m is None else (m | lm)
+    c.part(m, FIRE, 'ink')
+    c.fill(erode(m, 2), FIRE.light)
+    c.fill(erode(m, 4), CORE.base)
+    c.fill(erode(m, 6), CORE.light)
+    for (x, y) in [(24 + f, -12), (12 - f, 2), (40, -20)]:
+        c.px(x, y - b - (t % 4), FIRE.light), c.px(x + 1, y - b - (t % 4), CORE.base)
     # ---- l'épée qui traîne derrière : lame large, tranchant de braise, rainure ----
     hx, hy = 15, 50 - b
     dx, dy, nx, ny = -0.82, 0.57, 0.57, 0.82
@@ -75,8 +90,6 @@ def draw(c, t):
     # ---- la tête de pierre (dessinée pixel par pixel) posée sur le cou ----
     c.part(c.rect(44, 23 - b, 53, 30 - b), SKIN, 'ink')
     c.sprite(40, 9 - b, KAEL, KAEL_C, KAEL_BLINK if t == BLINK else None)
-    for (x0, y0, x1, y1, r) in [(51, 10, 42 + f, 2, 2.6), (56, 10, 52 + f, 0, 2.2)]:
-        c.part(c.limb([(x0, y0 - b, r), (x1, y1 - b, 1.2)]), FIRE, 'ink')
     # ---- l'épaulière de devant, à trois pointes ----
     for (x0, x1, y1) in [(25, 22, 22), (30, 30, 20), (35, 38, 22)]:
         c.part(c.poly([(x0 - 2.5, 29 - b), (x1, y1 - b), (x0 + 2.5, 29 - b)]), ARM, 'ink')

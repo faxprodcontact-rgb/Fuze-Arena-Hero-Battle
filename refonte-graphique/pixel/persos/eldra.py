@@ -39,8 +39,13 @@ def draw(c, t):
     # ---- la jambe d'appui (la droite, la plus proche) : cuisse, mollet, botte à revers de fourrure ----
     c.part(c.limb([(36, 55, 6), (35, 62, 5.4)]), PANTS, 'ink')
     c.part(c.limb([(35, 62, 5), (34, 67, 4.8)]), PANTS, 'ink')
-    c.part(c.poly([(26, 65), (41, 65), (45, 69), (45, 72), (25, 72)]), BOOT, 'ink')
-    c.part(c.limb([(27, 65, 2.4), (41, 65, 2.4)]), FUR, 'ink')
+    c.part(c.poly([(29, 65), (40, 65), (43, 69), (43, 72), (28, 72)]), BOOT, 'ink')
+    c.part(c.limb([(30, 65, 2), (40, 65, 2)]), FUR, 'ink')
+    # ---- la jambe gauche levée, genou en avant : elle sort de sous la jupe ; la botte qui pend ----
+    c.part(c.limb([(46, 56, 6), (57, 53, 5.4)]), PANTS, 'ink')
+    c.part(c.limb([(57, 53, 5), (56, 61, 4.6)]), PANTS, 'ink')
+    c.part(c.poly([(52, 60), (60, 60), (61, 65), (58, 68), (53, 66)]), BOOT, 'ink')
+    c.part(c.limb([(52, 60, 2), (60, 60, 2)]), FUR, 'ink')
     # ---- le cou, le torse : tunique rouge, plastron d'or, col de fourrure ----
     c.part(c.rect(37, 25 - b, 46, 31 - b), SKIN, 'ink')
     c.part(c.poly([(28, 30 - b), (50, 29 - b), (53, 35 - b), (51, 44), (49, 51), (32, 51), (30, 44), (27, 35 - b)]), RED, 'ink')
@@ -53,11 +58,6 @@ def draw(c, t):
         c.part(c.poly([(x0, 51), (x1, 51), (x1 + 1, y1), (x0 - 1, y1)]), GOLD, 'ink', band=1)
     c.part(c.rect(30, 48, 52, 53), DARK, 'ink')
     c.part(c.rect(37, 47, 44, 54), GOLD, 'ink', band=1)
-    # ---- la jambe gauche levée, genou en avant, la botte qui pend ----
-    c.part(c.limb([(46, 56, 6), (57, 52, 5.4)]), PANTS, 'ink')
-    c.part(c.limb([(57, 52, 5), (56, 61, 4.8)]), PANTS, 'ink')
-    c.part(c.poly([(50, 60), (62, 60), (64, 66), (61, 70), (52, 68)]), BOOT, 'ink')
-    c.part(c.limb([(51, 60, 2.4), (62, 60, 2.4)]), FUR, 'ink')
     # ---- la tête (dessinée pixel par pixel) ----
     c.sprite(30, 9 - b, ELDRA, ELDRA_C, ELDRA_BLINK if t == BLINK else None)
     # ---- le bras droit (le plus proche), poing sur la hanche ----

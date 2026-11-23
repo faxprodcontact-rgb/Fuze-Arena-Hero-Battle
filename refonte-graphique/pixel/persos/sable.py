@@ -34,8 +34,7 @@ def draw(c, t):
     c.part(c.poly([(46, 16 - b), (37, 20 - b), (32, 30 - b), (30, 44 - b), (36, 48 - b), (40, 40 - b), (43, 28 - b)]), MANE, 'ink')
     c.line(38, 22 - b, 33, 42 - b, MANE.light)
     # ---- le bras gauche (derrière le torse) tendu vers l'ennemi, les trois lames d'or en éventail ----
-    c.part(c.limb([(50, 38 - b, 4.2), (58, 44 - b, 3.8)]), FUR, 'ink')
-    c.part(c.limb([(58, 44 - b, 3.8), (65, 40 - b, 3.6)]), FUR, 'ink')
+    c.part(c.limb([(50, 38 - b, 4.4), (58, 44 - b, 4), (65, 40 - b, 3.8)]) | c.ellipse(67, 40 - b, 3.8, 3.8), FUR, 'ink')
     c.part(c.poly([(57, 39 - b), (63, 37 - b), (65, 43 - b), (59, 45 - b)]), GOLD, 'ink', band=1)
     hx, hy = 68, 40 - b
     for (x1, y1) in [(84, 27), (89, 40), (84, 53)]:
@@ -44,15 +43,12 @@ def draw(c, t):
         ln = (nxx * nxx + nyy * nyy) ** 0.5
         nxx, nyy = nxx / ln * 2.4, nyy / ln * 2.4
         c.part(c.poly([(hx - nxx * 0.6, hy - nyy * 0.6), (mx - nxx, my - nyy), (x1, y1 - b), (mx + nxx, my + nyy), (hx + nxx * 0.6, hy + nyy * 0.6)]), BLADE, 'ink', band=1)
-    c.part(c.ellipse(67, 40 - b, 3.8, 3.8), FUR, 'ink')
     # ---- la jupe de lin, le tablier d'or et sa pierre rouge ----
     c.part(c.poly([(29, 54), (53, 54), (57, 64), (49, 66), (41, 62), (33, 66), (25, 64)]), LINEN, 'ink')
     c.part(c.poly([(37, 55), (45, 55), (46, 64), (43, 67), (41, 64), (39, 67), (36, 64)]), GOLD, 'ink', band=1)
     c.part(c.ellipse(41, 59, 2, 2), RED, 'ink')
     # ---- la jambe gauche : le pied planté devant, le genou levé ----
-    c.part(c.limb([(46, 60, 6), (57, 57, 5.4)]), FUR, 'ink')
-    c.part(c.limb([(57, 57, 4.8), (59, 67, 4.4)]), FUR, 'ink')
-    c.part(c.ellipse(61, 69, 6.4, 3.4), FUR, 'ink')
+    c.part(c.limb([(46, 60, 6), (57, 57, 5.4), (59, 67, 4.6)]) | c.ellipse(61, 69, 6.4, 3.4), FUR, 'ink')
     for x in (59, 62, 65):
         c.px(x, 71, CREAM.hi)
     # ---- le torse de lin, le pli du tissu ----
@@ -62,9 +58,7 @@ def draw(c, t):
     c.part(c.rect(29, 51, 53, 56), GOLD, 'ink', band=1)
     c.part(c.rect(39, 50, 44, 57), TURQ, 'ink', band=1)
     # ---- la jambe droite (la plus proche) : le genou au sol, le pied derrière ----
-    c.part(c.limb([(36, 61, 6), (29, 69, 5.2)]), FUR, 'ink')
-    c.part(c.limb([(29, 69, 4.4), (15, 69, 3.8)]), FUR, 'ink')
-    c.part(c.ellipse(11, 70, 4.4, 2.6), FUR, 'ink')
+    c.part(c.limb([(36, 61, 6), (29, 69, 5.2), (15, 69, 3.8)]) | c.ellipse(11, 70, 4.4, 2.6), FUR, 'ink')
     # ---- la tête de lionne (dessinée pixel par pixel), le cobra ----
     tetes.sable(c, 36, 15 - b, t == BLINK)
     # ---- le large collier turquoise et or, ses perles ----
@@ -73,10 +67,8 @@ def draw(c, t):
     for x in (36, 40, 44, 48):
         c.px(x, 39 - b + (1 if 39 <= x <= 45 else 0), GOLD.hi)
     # ---- le bras droit (le plus proche) armé derrière elle, griffes sorties ----
-    c.part(c.limb([(30, 40 - b, 4.2), (22, 46 - b, 3.8)]), FUR, 'ink')
-    c.part(c.limb([(22, 46 - b, 3.8), (18, 38 - b, 3.6)]), FUR, 'ink')
+    c.part(c.limb([(30, 40 - b, 4.4), (22, 46 - b, 4), (18, 38 - b, 3.6)]) | c.ellipse(17, 35 - b, 4, 4), FUR, 'ink')
     c.part(c.poly([(17, 40 - b), (23, 40 - b), (23, 45 - b), (17, 45 - b)]), GOLD, 'ink', band=1)
-    c.part(c.ellipse(17, 35 - b, 4, 4), FUR, 'ink')
     for dx in (-3, 0, 3):
         c.line(17 + dx * 0.7, 31 - b, 17 + dx, 28 - b, CREAM.hi)
         c.px(17 + dx, 27 - b, '#1e1424')

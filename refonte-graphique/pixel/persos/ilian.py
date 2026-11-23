@@ -55,8 +55,8 @@ HEAD_C = {'K': '#1e1424', 'a': '#9a5236', 'b': '#c87a52', 'c': '#eaa47a', 'd': '
           's': '#22c8e8', 'S': '#d8ffff', 't': '#3a0e14', 'u': '#f4ece4'}
 HEAD_BLINK = {'s': 'a', 'S': 'a'}
 # le poing fermé sur le manche (les doigts par-dessus), la main ouverte tendue
-FIST = [".KKKKK.", "KcdcdcK", "KKKKKKK", "KbccccK", "KabbbbK", ".KKKKK."]
-HAND = [".KKK..", "KcddK.", "KcccKK", "KbccdK", "KbbcK.", ".KKK.."]
+FIST = [".KKKKKK.", "KcdcdcdK", "KKKKKKKK", "KbcccccK", "KbccccdK", "KabbbbcK", ".KKKKKK."]
+HAND = ["..KKK...", ".KcddK..", "KKccdKK.", "KbcccdcK", "KbcccccK", "KbbcccK.", ".KbbbK..", "..KKK..."]
 HAND_C = {'K': '#1e1424', 'a': '#9a5236', 'b': '#c87a52', 'c': '#eaa47a', 'd': '#ffd2aa'}
 
 
@@ -71,10 +71,11 @@ def draw(c, t):
                 [(29, 24, 3.8), (26, 31, 3.2), (25 + sw, 37, 2.2), (25 + sw, 41, 1)]]:
         c.part(c.limb([(x, y - b, r) for (x, y, r) in pts]), WHITE, 'ink')
     # ---- le bras gauche (derrière le torse), tendu vers l'ennemi ----
-    c.part(c.limb([(55, 33 - b, 4.4), (62, 38 - b, 4)]), SKIN, 'ink')                 # le bras
-    c.part(c.limb([(62, 38 - b, 3.8), (68, 35 - b, 3.6)]), SKIN, 'ink')               # l'avant-bras
-    c.part(c.poly([(61, 33 - b), (67, 31 - b), (69, 37 - b), (63, 40 - b)]), GOLD, 'ink', band=1)
-    c.part(c.ellipse(62, 38.5 - b, 2.6, 2.4), SKIN, 'ink')                            # le coude
+    c.part(c.limb([(55, 33 - b, 6), (64, 40 - b, 5.4)]), SKIN, 'ink')                 # le bras
+    c.part(c.limb([(64, 40 - b, 5.2), (72, 36 - b, 4.8)]), SKIN, 'ink')               # l'avant-bras
+    c.part(c.poly([(64, 33 - b), (71, 31 - b), (73, 39 - b), (66, 42 - b)]), GOLD, 'ink', band=1)
+    c.part(c.ellipse(64, 40.5 - b, 3.4, 3), SKIN, 'ink')                              # le coude
+    c.line(57, 31 - b, 62, 34 - b, SKIN.light)
     # ---- les jambes, épaisses, en garde : cuisse, genouillère d'or, jambière, sandale ----
     for (hip, knee, ank, sgn) in [((34, 57), (27, 63), (25, 68), -1), ((47, 57), (54, 63), (56, 68), 1)]:
         c.part(c.limb([(hip[0], hip[1], 6.2), (knee[0], knee[1], 5.2)]), SKIN, 'ink')
@@ -106,21 +107,22 @@ def draw(c, t):
     c.part(c.rect(36, 50, 45, 57), GOLD, 'ink')
     c.part(c.ellipse(40.5, 53.5, 2.2, 2), Ramp('#063a4a', '#0a6a82', '#16a8c4', '#5ee4f4', '#d0ffff'), 'ink')
     # ---- l'épaulière gauche, la tête (posée sur le cou), l'épaulière droite ----
-    c.part(c.ellipse(56, 30 - b, 6.6, 5), GOLD, 'ink')
-    c.line(52, 27 - b, 60, 28 - b, GOLD.hi)
+    c.part(c.ellipse(56, 30 - b, 7.6, 5.6), GOLD, 'ink')
+    c.line(51, 26 - b, 61, 27 - b, GOLD.hi)
     c.sprite(26, 3 - b, HEAD, HEAD_C, HEAD_BLINK if t == BLINK else None)
-    c.part(c.ellipse(22, 31 - b, 7.4, 5.4), GOLD, 'ink')
-    c.line(18, 28 - b, 26, 28 - b, GOLD.hi)
+    c.part(c.ellipse(22, 31 - b, 8.6, 6), GOLD, 'ink')
+    c.line(17, 27 - b, 27, 27 - b, GOLD.hi)
     # ---- le bras droit (le plus proche) qui descend tenir le trident ----
-    c.part(c.limb([(21, 35 - b, 4.6), (17, 43 - b, 4.2)]), SKIN, 'ink')                # le bras
-    c.part(c.limb([(17, 43 - b, 4), (15, 49 - b, 3.8)]), SKIN, 'ink')                 # l'avant-bras
-    c.part(c.ellipse(17.5, 43 - b, 2.8, 2.4), SKIN, 'ink')                            # le coude
-    c.part(c.poly([(11, 44 - b), (20, 44 - b), (20, 49 - b), (11, 49 - b)]), GOLD, 'ink', band=1)
+    c.part(c.limb([(21, 35 - b, 6.2), (17, 45 - b, 5.6)]), SKIN, 'ink')                # le bras
+    c.part(c.limb([(17, 45 - b, 5.4), (15, 52 - b, 5)]), SKIN, 'ink')                 # l'avant-bras
+    c.part(c.ellipse(17.5, 45 - b, 3.6, 3), SKIN, 'ink')                              # le coude
+    c.part(c.poly([(9, 46 - b), (21, 46 - b), (21, 52 - b), (9, 52 - b)]), GOLD, 'ink', band=1)
+    c.line(22, 36 - b, 21, 41 - b, SKIN.light)
     # ---- le trident d'or planté debout : le manche, la traverse, trois pointes ----
     c.part(c.rect(10, 7, 14, 73), GOLD, 'ink', band=1)
     c.part(c.poly([(3, 5), (21, 5), (20, 10), (4, 10)]), GOLD, 'ink', band=1)
     for (x, top) in ((5, 0), (12, -4), (19, 0)):
         c.part(c.poly([(x - 2, 6), (x, top), (x + 2.6, 6)]), GOLD, 'ink', band=1)
-    c.sprite(9, 48 - b, FIST, HAND_C)
+    c.sprite(8, 51 - b, FIST, HAND_C)
     # ---- la main gauche ouverte, tendue vers l'ennemi ----
-    c.sprite(68, 32 - b, HAND, HAND_C)
+    c.sprite(73, 31 - b, HAND, HAND_C)

@@ -375,6 +375,13 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   torse détaillé (pectoraux, abdominaux). Chaque héros encré donne son `ORIGIN` (repère : pieds en y = 71, milieu x = 40)
   et n'a pas de contour ajouté par `sheet()` ; au combat un pixel = 1,8 unité (`SCALE['ink']`). Mêmes poses qu'en v0.44.
   Ilian validé d'abord seul (essai), puis les quatre autres. Les monstres sont encore dans l'ancien style.
+  **v0.46.0 (23/11/2026)** : retours. Ilian : bras plus gros et plus longs, poings et main plus grands, épaulières plus
+  larges. Sable : chaque bras et chaque jambe **d'un seul morceau** (pas de trait noir aux articulations sur un corps de
+  fourrure). Kael : la crinière est **une seule masse de flammes** (langues réunies, un seul trait noir autour, cœur orange
+  puis jaune par érosion du masque, braises) au lieu de pics séparés. Eldra : bottes plus petites, la jambe levée dessinée
+  **derrière la jupe et la ceinture** (elle en sort). Rook refaite de zéro (consigne : « harpie / phénix sur le thème du
+  feu ») : ailes pleines à la place des bras (forme entière cerclée de noir, bord festonné, plumes de couverture dorées,
+  bouts jaunes), crête de flammes, tête pixel par pixel (yeux d'ambre cerclés de noir), queue en éventail, serres.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

@@ -1,2 +1,2 @@
 // Numéro de version affiché dans les réglages (à changer à chaque mise à jour publiée).
-export const APP_VERSION = '0.45.0';
+export const APP_VERSION = '0.46.0';
