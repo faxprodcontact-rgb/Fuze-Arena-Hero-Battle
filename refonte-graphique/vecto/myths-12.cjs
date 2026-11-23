@@ -103,6 +103,7 @@ const defs = [
   rad('g-blush', 0.5, 0.5, 0.5, [[0, '#ff8a9a', 0.45], [1, '#ff8a9a', 0]], false),
   rad('g-glow', 0.5, 0.5, 0.5, [[0, '#e8f8ff', 0.85], [0.42, '#6ab4ff', 0.45], [1, '#3a7aff', 0]], false),
   lin('g-flame', 0, 0, 0, 1, [[0, '#d8f6ff'], [0.35, '#7cc8ff'], [0.75, '#3a78ff'], [1, '#2a48d0']], false),
+  rad('g-flameR', 0.5, 0.78, 0.75, [[0, '#ffffff'], [0.3, '#b4ecff'], [0.65, '#5aa4ff'], [1, '#2a50d8']], false),
   lin('g-flameIn', 0, 0, 0, 1, [[0, '#ffffff'], [0.5, '#c8f0ff'], [1, '#7cc8ff']], false),
   rad('g-blueLight', 0.5, 0.5, 0.5, [[0, '#6ab4ff', 0.5], [1, '#6ab4ff', 0]], false),
 ].join('');
@@ -190,16 +191,38 @@ const faceBody = use('face', 'url(#g-skin)') + clip('face',
 );
 
 // ---------- la flamme bleue (sans contour : elle brille) ----------
-const FLAME = sm('446,458 426,446 414,420 420,396 412,372 426,350 422,326 438,312 436,290 452,300 458,276 470,256! 468,290 478,306 472,330 482,350 476,378 486,400 478,428 466,450');
-const FLAME_IN = sm('448,446 434,430 430,406 438,386 434,364 446,348 446,330 456,318 460,340 466,358 462,384 470,404 462,428');
-const FLAME_CORE = sm('450,434 442,416 446,396 452,380 458,396 460,418');
-const flameBody = `<g class="a-glow"><ellipse cx="450" cy="380" rx="64" ry="96" fill="url(#g-glow)"/></g>`
-  + `<g class="a-flame">${shape(FLAME, 'url(#g-flame)', 0.92)}${shape(FLAME_IN, 'url(#g-flameIn)', 0.9)}${shape(FLAME_CORE, '#ffffff', 0.95)}`
-  + glint([[430, 320, 0], [436, 306, 2.4], [438, 290, 0]], FIRE.lite, 0.8) + '</g>'
-  + [[418, 300, 0], [478, 270, 1], [404, 340, 2]].map(([x, y, i]) => `<g class="a-ember${i + 1}">${oval(x, y, 3, 4.4, FIRE.lite, 0.9)}${dot(x, y, 1.6, '#fff')}</g>`).join('');
+// ---------- la flamme bleue qui entoure le trident ----------
+// l'axe de la hampe (x selon la hauteur), une langue de feu (base, hauteur, largeur, penche), des anneaux de feu qui
+// passent devant la hampe ; une partie derrière le trident, une partie devant : la flamme l'enroule.
+const shaftX = (y) => 507 + Math.max(0, 450 - y) * 0.056;
+function tongue(bx, by, h, w, lean, k = 1) {
+  // une langue de feu : un ventre rond en bas, une pointe qui s'étire et se courbe ; le cœur blanc près du bas
+  const d = `M${n(bx - w / 2)} ${by}C${n(bx - w / 2)} ${n(by - h * 0.5)} ${n(bx + lean - w * 0.15)} ${n(by - h * 0.72)} ${n(bx + lean)} ${n(by - h)}`
+    + `C${n(bx + lean + w * 0.18)} ${n(by - h * 0.66)} ${n(bx + w * 0.62)} ${n(by - h * 0.45)} ${n(bx + w / 2)} ${n(by - h * 0.12)}`
+    + `C${n(bx + w * 0.45)} ${n(by + w * 0.4)} ${n(bx - w * 0.45)} ${n(by + w * 0.4)} ${n(bx - w / 2)} ${by}Z`;
+  const di = `M${n(bx - w * 0.22)} ${by}C${n(bx - w * 0.24)} ${n(by - h * 0.3)} ${n(bx + lean * 0.5)} ${n(by - h * 0.46)} ${n(bx + lean * 0.6)} ${n(by - h * 0.62)}`
+    + `C${n(bx + lean * 0.5 + w * 0.2)} ${n(by - h * 0.36)} ${n(bx + w * 0.26)} ${n(by - h * 0.18)} ${n(bx + w * 0.22)} ${by}C${n(bx + w * 0.1)} ${n(by + w * 0.18)} ${n(bx - w * 0.12)} ${n(by + w * 0.18)} ${n(bx - w * 0.22)} ${by}Z`;
+  return `<g class="a-flick" style="animation-delay:-${((k * 0.17) % 0.6).toFixed(2)}s">${shape(d, 'url(#g-flameR)', 0.9)}${shape(di, '#e8faff', 0.85)}</g>`;
+}
+const BACK_T = [[360, 120, 56, -1], [250, 130, 60, -1], [320, 116, 56, 1], [210, 120, 58, 1]];
+const flameBack = `<g class="a-glow"><ellipse cx="522" cy="230" rx="96" ry="190" fill="url(#g-glow)"/></g>`
+  + BACK_T.map(([y, h, w, side], i) => tongue(n(shaftX(y) + side * 22), y, h, w, side * 22, i)).join('')
+  + [[476, 22], [537, 18], [596, 22]].map(([x, y], i) => tongue(x, y + 14, 46, 24, (i - 1) * 6, i + 7)).join('');
+const RINGS_F = [470, 330, 262, 200];
+const flameFront = RINGS_F.map((y, i) => { const x = shaftX(y);
+    return `<g class="a-flick" style="animation-delay:-${i * 0.21}s">${shape(rib([[x - 34, y + 16, 0], [x - 10, y + 4, 13], [x + 12, y - 8, 13], [x + 36, y - 22, 0]]), 'url(#g-flameR)', 0.85)}`
+      + `${shape(rib([[x - 18, y + 9, 0], [x, y - 1, 2.6], [x + 20, y - 12, 0]]), '#ffffff', 0.9)}</g>`; }).join('')
+  + [[300, 0], [170, 1]].map(([y, i]) => tongue(n(shaftX(y) + (i % 2 ? 16 : -16)), y, 80, 38, (i % 2 ? 1 : -1) * 14, i + 11)).join('')
+  + [[470, 150, 0], [560, 120, 1], [480, 300, 2]].map(([x, y, i]) => `<g class="a-ember${i + 1}">${oval(x, y, 3, 4.4, FIRE.lite, 0.9)}${dot(x, y, 1.6, '#fff')}</g>`).join('');
 
 // ---------- les morceaux, du fond vers le devant ----------
 const ARMORS = ['torso', 'skirt', 'belt', 'armR', 'pauR', 'legL', 'legR'];
+// le plastron d'acier (dessiné : plaques de poitrine, arête, lames de ventre)
+const PLATE = sm('200,334 250,320 300,324 350,320 404,328 424,354 420,398 404,432 300,442 212,432 196,400 194,360');
+const PEC_L = sm('212,342 258,334 296,342 298,382 272,394 226,390 208,368');
+const PEC_R = sm('314,342 354,334 400,342 408,368 392,390 346,394 316,382');
+const ABS_1 = sm('214,398 260,404 300,408 344,404 404,396 400,414 344,420 300,424 260,420 218,414');
+const ABS_2 = sm('222,418 262,424 300,428 340,424 398,416 392,432 300,442 228,434');
 const parts = [
   { id: 'cape', cls: 'a-cape', d: S.cape, body: use('cape', 'url(#g-cape)') + clip('cape',
     // le dedans de la cape, plus clair, qui se retourne en bas à gauche ; deux grands plis
@@ -244,14 +267,14 @@ const parts = [
     + glint([[378, 506, 5], [414, 500, 5.4], [448, 492, 5]], SIL.base, 0.95) + glint([[382, 503, 0], [414, 497, 2], [444, 490, 0]], SIL.hi, 0.8)
     + glint([[314, 470, 0], [318, 490, 3], [316, 506, 0]], ARM.lite, 0.6)) },
   { id: 'torso', d: S.torso, shadow: [sh(['hairBack', 'cape'], -5, 4, SH.hair, 0.5), sh(['skirt'], -3, 5, SH.armor, 0.5)], body: use('torso', 'url(#g-armor)') + clip('torso',
-    // la poitrine nue (bleu pâle) entre les revers de la robe : un grand pectoral net, son ombre dessous, deux abdos
-    cel(sm('222,352 250,338 290,336 318,346 332,372 328,400 314,416 270,420 236,414 220,394'), { hi: '#ffffff', base: SKIN.base, sh: SKIN.shade, deep: SKIN.deep }, 6, 3)
-    + lock([[228, 388], [256, 398], [290, 398], [316, 388]], SKIN.deep, 0.7, 4) + lock([[284, 350], [306, 352], [322, 364]], '#ffffff', 0.85, 3)
-    + lock([[258, 404], [272, 408], [286, 407]], SKIN.shade, 0.7, 2.4) + lock([[292, 404], [304, 406], [314, 402]], SKIN.shade, 0.6, 2.2)
-    + cel(sm('372,350 392,346 402,368 398,394 384,404 370,386'), { hi: '#ffffff', base: SKIN.base, sh: SKIN.shade }, 4, 2)
-    // les revers de la robe, bordés d'argent
-    + lock([[212, 338], [220, 372], [216, 404], [212, 440]], SIL.base, 0.9, 3) + lock([[214, 340], [222, 372], [219, 404]], SIL.hi, 0.8, 1.2)
-    + lock([[364, 338], [370, 372], [368, 404], [366, 440]], SIL.base, 0.85, 3)
+    // le plastron d'acier : deux plaques de poitrine bombées de part et d'autre d'une arête, deux lames de ventre, un
+    // bord d'argent, une gemme bleue au milieu ; chaque plaque son ombre franche et son liseré clair
+    `<path d="${PLATE}" transform="translate(-3 5)" fill="${SH.armor}" opacity="0.5"/>` + cel(PLATE, { hi: '#9aa2bc', base: '#4a4e62', sh: '#2c2e3c', deep: '#1a1b24' }, 6, 3)
+    + [PEC_L, PEC_R].map((d) => `<path d="${d}" transform="translate(-2 4)" fill="${SH.armor}" opacity="0.45"/>` + cel(d, { hi: '#d4daec', base: '#7a8098', sh: '#4a4e62', deep: '#2c2e3c' }, 6, 3)).join('')
+    + glint([[226, 350, 0], [256, 342, 3], [286, 348, 0]], '#ffffff', 0.55) + glint([[328, 348, 0], [358, 340, 3], [390, 346, 0]], '#ffffff', 0.55)
+    + [ABS_1, ABS_2].map((d) => `<path d="${d}" transform="translate(-2 3)" fill="${SH.armor}" opacity="0.45"/>` + cel(d, { hi: '#b8bed4', base: '#5e6278', sh: '#3a3c4c' }, 4, 2)).join('')
+    + glint([[210, 330, 0], [300, 318, 3], [404, 330, 0]], SIL.base, 0.9) + glint([[212, 328, 0], [300, 316, 1.2], [400, 328, 0]], SIL.hi, 0.8)
+    + oval(305, 400, 9, 8, '#1a3a6e') + oval(305, 400, 7, 6, '#4aa8ff') + oval(307, 397.6, 2.2, 1.6, '#ffffff', 0.9)
     + oval(440, 380, 22, 50, 'url(#g-blueLight)')) },
   { id: 'belt', d: S.belt, shadow: [sh(['torso', 'skirt'], -2, 5, SH.armor, 0.55)], body: use('belt', 'url(#g-belt)') + clip('belt',
     glint([[224, 424, 0], [330, 420, 2.4], [440, 418, 0]], '#7a5a5a', 0.8)
@@ -308,6 +331,7 @@ const parts = [
     // la gemme bleue au milieu, dans sa monture, et la pointe d'argent qui descend sur le front
     + shape(sm('326,110 342,100 358,110 352,128 336,128'), 'url(#g-silver)') + shape(sm('332,112 342,106 352,112 348,124 338,124'), 'url(#g-gem)')
     + oval(345, 110, 2.6, 1.6, '#ffffff')) },
+  { id: 'flameB', cls: 'a-tri', d: 'M-900 -900', body: flameBack },
   { id: 'trident', cls: 'a-tri', d: S.trident, shadow: [sh(['hairBack', 'cape', 'torso'], -4, 6, SH.iron, 0.4)], body: use('trident', 'url(#g-ironV)') + clip('trident',
     // la hampe : une arête claire à droite, l'ombre à gauche ; le col doré ; les pointes : un filet de lumière
     glint([[527, 180, 0], [518, 330, 4], [510, 450, 3], [505, 580, 0]], '#a8aaba', 0.8)
@@ -327,7 +351,7 @@ const parts = [
     + shape(sm('486,370 506,364 522,368 516,378 494,380'), SKIN.hi, 0.75)
     + oval(476, 400, 12, 22, 'url(#g-blueLight)')) },
   // --- la flamme (sans silhouette : aucun contour, elle brille) ---
-  { id: 'flame', cls: 'a-fire', d: 'M-900 -900', body: flameBody },
+  { id: 'flame', cls: 'a-tri', d: 'M-900 -900', body: flameFront },
 ];
 
 // ---------- la vie au repos, puis l'attaque ----------
@@ -349,8 +373,8 @@ const atk = (cls, name) => (IDLE[cls]
   ? `.atk .${cls}{animation:${IDLE[cls][1]},${name} .75s ease-in-out;animation-composition:replace,add}`
   : `.atk .${cls}{animation:${name} .75s ease-in-out}`);
 const style = Object.entries(IDLE).map(([c, [k, a]]) => `.${c}{transform-origin:${PIV[k][0]}px ${PIV[k][1]}px;animation:${a}}`).join('') + `
-.a-glow{transform-origin:450px 380px;animation:glow 1.3s ease-in-out infinite alternate}
-.a-flame{transform-origin:450px 456px;animation:flame .62s ease-in-out infinite alternate}
+.a-glow{transform-origin:522px 230px;animation:glow 1.3s ease-in-out infinite alternate}
+.a-flick{transform-box:fill-box;transform-origin:50% 100%;animation:flame .5s ease-in-out infinite alternate}
 .a-ember1,.a-ember2,.a-ember3{opacity:0}
 .a-ember1{animation:ember 1.6s ease-out infinite}.a-ember2{animation:ember 1.9s ease-out -.7s infinite}.a-ember3{animation:ember 1.4s ease-out -1.1s infinite}
 .a-blink{animation:blink 4.6s linear infinite}
