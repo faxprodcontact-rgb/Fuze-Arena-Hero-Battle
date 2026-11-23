@@ -39,12 +39,12 @@ const STAFF_D = rib(STAFF);
 // la tête : un crâne rond, l'oreille à gauche, le museau qui avance à droite
 // la tête : un crâne de fourrure arrondi (le haut et l'arrière), l'oreille, et le grand visage clair qui forme tout le bas
 // de la tête (joues, menton, museau) : pas de fourrure sous le menton, le menton reste loin du bâton
-const SKULL = ellipse(336, 252, 110, 86);
-const EAR = ellipse(216, 290, 32, 34);
+const SKULL = ellipse(348, 250, 98, 84);
+const EAR = ellipse(240, 292, 26, 30);
 // le visage : une forme de visage humaine (joues rondes, petit menton), sans museau
 const FACE_D = sm('258,258 290,240 330,246 362,256 394,246 430,242 454,258 464,284 462,316 448,344 422,366 390,380 360,384 330,378 300,362 278,340 264,312 256,284');
 const HEAD = SKULL + EAR + FACE_D;
-const BAND = sm('236,232 262,214 300,204 340,200 380,202 416,210 440,222! 438,236! 412,226 376,218 340,216 302,220 266,230 242,246!');
+const BAND = sm('254,226 276,212 310,202 346,198 384,200 418,210 440,222! 438,236! 414,226 380,218 346,216 312,220 280,230 258,242!');
 // le corps
 const CAPE_D = sm('250,372 210,378 160,388 110,396 66,404 28,414! 50,428 40,446! 70,446 64,466! 96,460 104,476! 130,462 168,450 210,436 248,420');
 const TAIL_D = rib([[232, 488, 24], [170, 492, 22], [112, 482, 20], [72, 456, 17], [60, 424, 14], [76, 400, 11], [100, 400, 8], [108, 414, 0]]);
@@ -86,18 +86,18 @@ function eye(cx, cy, r, A) {
   const id = `c-ee${cx}`;
   return `<clipPath id="${id}"><path d="${A.white}"/></clipPath><path d="${A.white}" fill="#fffdf8"/><g clip-path="url(#${id})">`
     + dot(cx, cy, r, 'url(#g-iris)') + dot(cx + 1, cy + 1, r * 0.46, '#1a0806') + dot(cx - r * 0.35, cy - r * 0.4, r * 0.3, '#ffffff') + dot(cx + r * 0.4, cy + r * 0.35, r * 0.13, '#ffffff', 0.9)
-    + `<rect x="${cx - 32}" y="${cy - 26}" width="64" height="12" fill="#6a3a20" opacity="0.18"/></g>` + shape(A.lash, '#2a140c') + line(A.lower, PEACH.deep, 1.6, 0.8)
+    + `<path d="M${cx - 40} ${cy - 30}L${cx + 40} ${cy - 30}L${cx + 40} ${cy - 6 + A.tilt}L${cx - 40} ${cy - 6 - A.tilt}Z" fill="${PEACH.sh}"/></g>` + shape(A.lash, '#2a140c') + line(A.lower, PEACH.deep, 1.6, 0.8)
     + `<g class="a-blink" opacity="0"><path d="${A.white}" fill="${PEACH.base}" stroke="${PEACH.base}" stroke-width="3"/>${line(A.shut, '#2a140c', 3)}</g>`;
 }
-const FACE = eye(328, 294, 12.5, EL) + eye(402, 294, 12.5, ER)
+EL.tilt = 6; ER.tilt = -6; // la paupière penche vers le nez (regard dur)
+const FACE = eye(328, 296, 12.5, EL) + eye(402, 296, 12.5, ER)
   // les sourcils bruns, froncés vers le milieu, le même de chaque côté
-  + cel(rib([[296, 266, 0], [314, 258, 6], [338, 260, 6], [352, 270, 0]]), FUR, 2.4, 1.4)
-  + cel(rib([[372, 270, 0], [386, 260, 6], [410, 258, 6], [426, 266, 0]]), FUR, 2.4, 1.4)
+  + shape(rib([[294, 262, 0], [312, 260, 7], [334, 268, 8], [356, 282, 0]]), FUR.deep)
+  + shape(rib([[374, 282, 0], [396, 268, 8], [418, 260, 7], [436, 262, 0]]), FUR.deep)
   // le museau : un relief plus clair, les narines, le sourire en coin, les joues roses
   // un petit nez, un sourire en coin assuré, les joues roses
   + line('M362 318 Q368 326 376 322', '#c98c62', 2.6) + oval(371, 316, 3, 1.6, '#ffffff', 0.6)
-  + line('M346 348 Q366 358 392 346', '#4a2014', 2.8) + line('M392 346 Q397 343 399 338', '#4a2014', 2.4)
-  + oval(302, 330, 14, 7, '#f5a090', 0.45) + oval(432, 330, 12, 6, '#f5a090', 0.42);
+  + line('M350 352 Q370 355 390 349', '#4a2014', 2.8) + line('M390 349 Q397 346 400 339', '#4a2014', 2.6);
 
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx = -4, dy = 6, o = 0.42) => ({ on, dx, dy, color: SH, o });
@@ -136,8 +136,8 @@ const parts = [
     + [196, 210, 224].map((x) => lock([[x, 440], [x + 0.5, 456], [x, 472]], PEACH.deep, 0.8, 2) + lock([[x + 3, 442], [x + 3.5, 454], [x + 3, 466]], '#ffffff', 0.6, 1)).join('') },
   { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['torso', 'collar', 'plumes', 'armB', 'staff'], -4, 7)], body: ''
     // l'oreille (l'intérieur clair), le crâne de fourrure éclairé en haut à droite
-    + relief(EAR, 'g-fur', FUR, 5, 2.4) + dot(218, 292, 19, PEACH.sh) + dot(220, 290, 15, PEACH.base)
-    + relief(SKULL, 'g-fur', FUR, 8, 3) + lock([[290, 188], [346, 174], [404, 188]], FUR.hi, 0.7, 5)
+    + relief(EAR, 'g-fur', FUR, 5, 2.4) + dot(242, 294, 15, PEACH.sh) + dot(244, 292, 11.5, PEACH.base)
+    + relief(SKULL, 'g-fur', FUR, 8, 3) + lock([[300, 186], [352, 172], [408, 186]], FUR.hi, 0.7, 5)
     // le bandeau d'or et son médaillon, sur le front
     + `<path d="${BAND}" transform="translate(-2 4)" fill="${FUR.deep}" opacity="0.5"/>` + relief(BAND, 'g-gold', GOLD, 4, 2)
     + dot(352, 214, 16, GOLD.deep) + dot(352.6, 213.4, 14, 'url(#g-medal)') + line('M352 214 m-1 0 a3 3 0 1 1 4 3 a6 6 0 1 1 -8 -6 a8 8 0 0 1 10 2', '#8a5418', 2.4)
