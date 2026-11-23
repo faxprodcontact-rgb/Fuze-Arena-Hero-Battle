@@ -161,7 +161,7 @@ const S = {
   armL: sm('330,234 352,228 376,226 394,222 404,232 398,250 376,258 352,262 334,262'),
   handL: sm('384,214 398,208 414,210 428,220 432,234 426,246 412,250 396,248 386,238 382,226'),
   // le visage (et le cou)
-  face: sm('206,108 240,94 290,88 340,92 372,104 384,130 384,164 376,196 362,222 340,240 312,250 286,250 260,242 236,226 218,202 206,170 202,138'),
+  face: sm('206,108 240,94 290,88 340,92 372,104 384,130 384,164 378,190 366,210 348,224 322,233 294,235 266,229 242,216 222,198 208,172 202,138'),
   // la frange, par-dessus le front
   bangs: sm('204,112 214,84 238,62 270,50 306,50 340,58 366,74 380,94 386,118 376,126! 366,106 356,96 350,118! 338,98 320,84 300,92 288,104! 284,86 262,88 244,98 230,112 216,138!'),
 };
@@ -182,7 +182,7 @@ const EYE_R = 'M318 156 C328 148 346 146 358 150 C362 158 360 170 352 177 C342 1
 const faceBody = use('face', 'url(#g-skin)') + clip('face',
   // l'ombre sous la frange, la joue gauche et la mâchoire dans l'ombre ; la lumière sur la joue droite
   glint([[206, 120, 8], [260, 104, 10], [320, 104, 10], [372, 116, 8]], SKIN.shade, 0.55)
-  + shape(sm('200,150 216,180 236,214 266,236 300,244 330,240 312,260 250,260 200,230'), SKIN.base, 0.7)
+  + shape(sm('200,150 214,176 232,202 258,222 290,231 322,228 312,250 250,250 200,230'), SKIN.base, 0.6)
   + oval(352, 136, 12, 20, SKIN.hi, 0.6, 12)
   // les joues rosées, la marque au front
   + oval(232, 184, 14, 9, 'url(#g-blush)') + oval(356, 188, 9, 7, 'url(#g-blush)', 0.8)
@@ -197,11 +197,11 @@ const faceBody = use('face', 'url(#g-skin)') + clip('face',
   // le nez : un bout rond éclairé, une ombre dessous
   + oval(313, 186, 7, 5, SKIN.shade, 0.7) + oval(315, 182, 4.4, 3, SKIN.hi, 0.9)
   // la bouche : un grand sourire ouvert, la lèvre du haut et deux petits crocs, la langue
-  + `<path d="M280 198 C292 202 312 204 328 200 C326 210 316 218 302 218 C290 218 282 210 280 198 Z" fill="url(#g-mouth)"/>`
-  + shape('M284 200 C296 204 314 205 326 201 L325 205 C312 208 296 207 285 204 Z', '#ffffff')
-  + shape('M292 204 L295 211 L298 205 Z', '#ffffff') + shape('M314 205 L317 212 L320 205 Z', '#ffffff')
-  + oval(304, 214, 8, 3, '#e86a8a', 0.9)
-  + line('M278 197 L274 194', SKIN.line, 2) + line('M298 228 C304 230 312 230 318 228', SKIN.shade, 2, 0.8)
+  + `<path d="M272 197 C288 202 310 203 326 196 C324 208 314 216 298 216 C284 216 274 208 272 197 Z" fill="url(#g-mouth)"/>`
+  + shape('M276 199 C290 203 310 204 324 198 L323 202 C310 207 290 206 277 203 Z', '#ffffff')
+  + shape('M284 203 L287 210 L290 204 Z', '#ffffff') + shape('M310 204 L313 211 L316 203 Z', '#ffffff')
+  + oval(299, 212, 10, 3, '#e86a8a', 0.9)
+  + line('M278 197 L274 194', SKIN.line, 2) + line('M292 224 C298 226 306 226 312 224', SKIN.shade, 2, 0.7)
 );
 
 // ---------- les morceaux, du fond vers le devant ----------

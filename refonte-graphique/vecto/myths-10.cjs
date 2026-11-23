@@ -155,8 +155,11 @@ function eye(key, white, cx, cy, r, lash, lower, shut, hl) {
     + '</g>' + shape(lash, '#140a10') + line(lower, SKIN.line, 1.6, 0.85)
     + `<g class="a-blink" opacity="0"><path d="${white}" fill="${SKIN.lite}" stroke="${SKIN.lite}" stroke-width="3"/>${line(shut, '#140a10', 3)}</g>`;
 }
-const EYE_L = 'M234 202 C246 192 268 190 284 196 C292 202 294 212 292 222 C284 234 266 238 252 234 C240 230 232 216 234 202 Z';
-const EYE_R = 'M324 206 C334 196 354 194 368 200 C372 210 370 222 362 230 C352 236 336 234 328 226 C322 220 320 212 324 206 Z';
+// les deux yeux bâtis pareil (amande, trait d'eye-liner qui s'étire vers l'extérieur), le droit un peu plus petit (trois quarts)
+const EYE_L = 'M241 207 C250 195 276 191 292 202 C294 212 286 222 270 225 C256 227 245 219 241 207 Z';
+const EYE_R = 'M366 207 C358 196 338 193 329 203 C328 213 336 222 349 224 C360 224 366 216 366 207 Z';
+const LASH_L = rib([[295, 206, 0], [283, 194.5, 5.8], [264, 191.5, 6.6], [248, 196, 6], [238, 203, 4.4], [229, 193, 0]]);
+const LASH_R = rib([[327, 205, 0], [337, 195.5, 5.2], [352, 193.5, 6], [364, 197.5, 5.2], [369, 203, 4], [377, 192, 0]]);
 const faceBody = use('face', 'url(#g-skin)') + clip('face',
   // l'ombre de la frange sur le front, le côté gauche et le menton dans l'ombre, la lumière sur la joue droite
   glint([[186, 166, 8], [250, 150, 10], [320, 150, 10], [386, 168, 8]], SKIN.shade, 0.55)
@@ -166,12 +169,10 @@ const faceBody = use('face', 'url(#g-skin)') + clip('face',
   // la marque au front : une perle rouge et une petite goutte
   + oval(324, 162, 9, 8, 'url(#g-gem)') + oval(326, 159, 2.4, 1.6, '#fff', 0.9) + shape('M324 172 C326 176 326 180 324 184 C322 180 322 176 324 172 Z', '#4a0a14')
   // les sourcils épais, arqués
-  + shape(sm('226,186 240,174 266,170 292,176 300,186 290,188 266,182 242,186'), '#140a10')
-  + shape(sm('318,188 330,180 352,176 374,182 378,190 370,190 350,186 330,192'), '#140a10')
-  + eye('eL', EYE_L, 264, 214, 14, 'M230 200 C244 186 268 184 288 190 C296 194 300 202 300 210 L294 208 C290 200 280 196 266 196 C252 196 242 200 236 208 Z',
-    'M246 230 C258 236 274 236 288 228', 'M234 208 C252 222 278 222 293 212', [-0.36, -0.38, 0.42, 0.32])
-  + eye('eR', EYE_R, 348, 215, 12, 'M320 206 C332 192 354 190 372 196 L371 202 C356 198 338 200 328 210 Z',
-    'M332 228 C342 233 356 233 364 226', 'M324 212 C338 224 356 224 368 210', [-0.34, -0.38, 0.4, 0.34])
+  + shape(rib([[234, 187, 0], [250, 179.5, 6.6], [272, 177, 8], [295, 182, 5.4], [306, 189, 0]]), '#140a10')
+  + shape(rib([[331, 187, 0], [342, 180.5, 5.8], [360, 178, 7], [376, 181.5, 5], [385, 188, 0]]), '#140a10')
+  + eye('eL', EYE_L, 267, 210, 14, LASH_L, 'M248 222 C258 228 276 228 288 220', 'M240 208 Q266 220 293 206', [-0.36, -0.4, 0.4, 0.3])
+  + eye('eR', EYE_R, 348, 211, 12.5, LASH_R, 'M334 220 C342 225 356 225 362 219', 'M329 206 Q348 218 366 207', [-0.36, -0.4, 0.4, 0.3])
   // le nez, petit et rond
   + oval(318, 240, 6, 4, SKIN.shade, 0.7) + oval(320, 237, 3, 2, SKIN.hi, 0.9)
   // le sourire malicieux : la bouche ouverte, les dents du haut, la langue ; le coin relevé

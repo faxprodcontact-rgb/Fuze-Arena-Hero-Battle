@@ -95,6 +95,7 @@ const defs = [
   lin('g-vest', 340, 190, 220, 300, [[0, RED.lite], [0.5, RED.base], [1, RED.shade]]),
   lin('g-shirt', 0, 0, 0, 1, [[0, '#ffffff'], [0.6, '#eef0f6'], [1, '#c4c4d4']], false),
   lin('g-cream', 0, 0, 0, 1, [[0, CREAM.hi], [0.6, CREAM.base], [1, CREAM.shade]], false),
+  rad('g-eyeR', 0.5, 0.5, 0.65, [[0, '#fffbe0'], [0.4, '#ffd060'], [1, '#f07a1a']], false),
   rad('g-eye', 0.4, 0.4, 0.75, [[0, '#fffbd8'], [0.45, '#f8d23a'], [1, '#c08010']], false),
   rad('g-fire', 0.5, 0.5, 0.5, [[0, '#fff6c0', 0.9], [0.4, '#ffa040', 0.5], [1, '#ff6a20', 0]], false),
   lin('g-mouth', 0, 150, 0, 210, [[0, '#1a0406'], [0.6, '#3a0a10'], [1, '#6a1a20']]),
@@ -160,6 +161,14 @@ function tooth([x1, y1], [x2, y2], [tx, ty]) {
 const TEETH_T = [[[236, 162], [248, 160], [244, 182]], [[252, 159], [264, 158], [259, 176]], [[268, 158], [280, 159], [276, 184]], [[284, 160], [296, 161], [291, 178]], [[300, 162], [312, 164], [307, 184]]];
 const TEETH_B = [[[244, 200], [254, 202], [250, 190]], [[262, 204], [272, 205], [268, 192]], [[280, 205], [290, 204], [286, 192]], [[296, 201], [306, 198], [302, 188]]];
 
+// un œil furieux : amande, iris, pupille ronde, reflets, et la paupière (forme `lid`) qui en mange le haut
+function angryEye(cx, cy, rx, ry, iris, [px, py], lid, side) {
+  const id = `c-ae${cx}`;
+  return oval(cx, cy, rx + 2.6, ry + 2.6, '#1a0a06') + `<clipPath id="${id}"><ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/></clipPath>`
+    + `<g clip-path="url(#${id})">${oval(cx, cy, rx, ry, iris)}${dot(px, py, ry * 0.55, '#1a0806')}${dot(px - ry * 0.5, py - ry * 0.45, ry * 0.22, '#fff')}`
+    + `${dot(px + ry * 0.35, py + ry * 0.35, ry * 0.1, '#fff', 0.9)}${shape(lid, '#3a1a0c')}${shape(lid, '#000', 0.25)}</g>`
+    + `<g class="a-blink" opacity="0">${oval(cx, cy, rx + 1, ry + 1, CREAM.base)}${line(`M${cx - rx} ${cy + 2} Q${cx} ${cy + ry * 0.7} ${cx + rx} ${cy + 2 - side * 3}`, '#1a0a06', 2.6)}</g>`;
+}
 const headBody = use('head', 'url(#g-fur)') + clip('head',
   // le masque crème autour des yeux et du museau ; l'ombre à gauche ; la lueur orange autour de l'œil de droite
   shape(sm('214,120 232,104 258,98 286,106 304,118 320,124 334,136 330,156 316,160 290,156 262,156 236,158 220,150 212,134'), 'url(#g-cream)')
@@ -168,11 +177,13 @@ const headBody = use('head', 'url(#g-fur)') + clip('head',
   // le front brun froncé qui descend entre les yeux, la petite fleur rouge
   + shape(sm('256,96 282,98 300,112 296,128 284,124 276,134 268,124 256,118 246,114'), FUR.base)
   + oval(284, 104, 4, 3, RED.base) + oval(282, 102, 1.4, 1, '#ffb0a0')
-  // l'œil de gauche (jaune, furieux) et celui de droite qui brille
-  + oval(256, 130, 16, 12.5, '#1a0a06') + oval(256, 131, 13.5, 10.5, 'url(#g-eye)') + oval(259, 131, 3.4, 7.6, '#1a0806') + dot(251, 126, 2.8, '#fff')
-  + shape(sm('238,116 256,114 276,124 270,128 254,122 240,124'), FUR.deep)
-  + oval(314, 132, 11, 9, '#3a1408') + oval(314, 132, 9, 7, '#ffb040') + oval(315, 132, 4, 4.4, '#fff6c0')
-  + shape(sm('298,120 312,116 330,122 326,126 312,122 300,126'), FUR.deep)
+  // les deux yeux, bâtis pareil : amande jaune cerclée de sombre, pupille ronde qui regarde vers l'ennemi, reflet,
+  // puis la paupière lourde qui coupe le haut en biais (regard furieux) ; celui de droite brille d'orange
+  + angryEye(262, 131, 15, 11.5, 'url(#g-eye)', [267, 133], 'M244 122 L282 132 L282 110 L244 106 Z', 1)
+  + angryEye(318, 133, 13, 10.5, 'url(#g-eyeR)', [320, 135], 'M298 134 L334 125 L334 108 L298 114 Z', -1)
+  // les gros sourcils sombres en V, qui plongent vers le nez
+  + shape(rib([[238, 118, 0], [252, 118, 5], [268, 123, 5.6], [284, 132, 0]]), FUR.deep)
+  + shape(rib([[296, 134, 0], [310, 125, 5], [324, 120, 4.4], [337, 120, 0]]), FUR.deep)
   // le nez : deux narines
   + oval(282, 144, 2.4, 1.8, FUR.deep) + oval(292, 144, 2.4, 1.8, FUR.deep)
   // le dessus du crâne éclairé
@@ -251,6 +262,8 @@ const atk = (cls, name) => (IDLE[cls]
   : `.atk .${cls}{animation:${name} .75s ease-in-out}`);
 const style = Object.entries(IDLE).map(([c, [k, a]]) => `.${c}{transform-origin:${PIV[k][0]}px ${PIV[k][1]}px;animation:${a}}`).join('') + `
 .a-glow{transform-origin:316px 132px;animation:glow .8s ease-in-out infinite alternate}
+.a-blink{animation:blink 4.2s linear infinite}
+@keyframes blink{0%,92%{opacity:0}93.5%,96%{opacity:1}97.5%,100%{opacity:0}}
 @keyframes body{from{transform:none}to{transform:translate(0,-2.4px)}}
 @keyframes head{from{transform:none}to{transform:rotate(-2deg)}}
 @keyframes tail{from{transform:rotate(-2deg)}to{transform:rotate(3deg)}}
