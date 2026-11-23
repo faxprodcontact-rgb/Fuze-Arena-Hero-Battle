@@ -62,6 +62,11 @@ function rib(pts) {
 }
 const glint = (pts, color, o = 1) => shape(rib(pts), color, o);
 const sh = (on, dx, dy, color, o) => ({ on, dx, dy, color, o });
+const { cel } = require('./formes.cjs');
+// une mèche ou un creux : un long fuseau doux
+const lock = (pts, color, o, w = 4) => glint(pts.map(([x, y], i) => [x, y, i === 0 || i === pts.length - 1 ? 0 : w]), color, o);
+// les plis d'un poing : un creux sombre et une arête claire
+const crease = (pts) => lock(pts, '#6a7698', 0.85, 2.4) + lock(pts.map(([x, y]) => [x + 1.4, y - 2]), '#ffffff', 0.75, 1.2);
 
 // ---------- couleurs ----------
 const SKIN = { hi: '#f6faff', base: '#d8e3f4', shade: '#aebcd8', deep: '#8492b8', line: '#5e6a92' };
@@ -241,13 +246,14 @@ const parts = [
     + glint([[378, 506, 5], [414, 500, 5.4], [448, 492, 5]], SIL.base, 0.95) + glint([[382, 503, 0], [414, 497, 2], [444, 490, 0]], SIL.hi, 0.8)
     + glint([[314, 470, 0], [318, 490, 3], [316, 506, 0]], ARM.lite, 0.6)) },
   { id: 'torso', d: S.torso, shadow: [sh(['hairBack', 'cape'], -5, 4, SH.hair, 0.5), sh(['skirt'], -3, 5, SH.armor, 0.5)], body: use('torso', 'url(#g-armor)') + clip('torso',
-    // la poitrine nue (bleu pâle), entre les bords de la robe ; les muscles en grandes formes douces
-    shape(sm('206,366 240,352 290,356 334,370 350,398 340,422 292,428 240,424 206,412'), 'url(#g-skinB)')
-    + shape(sm('210,396 240,404 280,410 320,408 344,404 338,424 290,430 240,426 208,414'), SKIN.shade, 0.6)
-    + oval(300, 380, 20, 9, SKIN.hi, 0.6, 8) + glint([[248, 390, 0], [270, 398, 3], [292, 400, 0]], SKIN.shade, 0.7)
-    // les revers de la robe, bordés d'argent ; la lumière bleue de la flamme sur le flanc droit
-    + glint([[200, 360, 0], [214, 368, 5], [206, 412, 4], [200, 440, 0]], SIL.base, 0.85)
-    + glint([[352, 360, 0], [354, 398, 5], [344, 428, 0]], SIL.base, 0.8)
+    // la poitrine nue (bleu pâle) entre les revers de la robe : un grand pectoral net, son ombre dessous, deux abdos
+    cel(sm('222,352 250,338 290,336 318,346 332,372 328,400 314,416 270,420 236,414 220,394'), { hi: '#ffffff', base: SKIN.base, sh: SKIN.shade, deep: SKIN.deep }, 6, 3)
+    + lock([[228, 388], [256, 398], [290, 398], [316, 388]], SKIN.deep, 0.7, 4) + lock([[284, 350], [306, 352], [322, 364]], '#ffffff', 0.85, 3)
+    + lock([[258, 404], [272, 408], [286, 407]], SKIN.shade, 0.7, 2.4) + lock([[292, 404], [304, 406], [314, 402]], SKIN.shade, 0.6, 2.2)
+    + cel(sm('372,350 392,346 402,368 398,394 384,404 370,386'), { hi: '#ffffff', base: SKIN.base, sh: SKIN.shade }, 4, 2)
+    // les revers de la robe, bordés d'argent
+    + lock([[212, 338], [220, 372], [216, 404], [212, 440]], SIL.base, 0.9, 3) + lock([[214, 340], [222, 372], [219, 404]], SIL.hi, 0.8, 1.2)
+    + lock([[364, 338], [370, 372], [368, 404], [366, 440]], SIL.base, 0.85, 3)
     + oval(440, 380, 22, 50, 'url(#g-blueLight)')) },
   { id: 'belt', d: S.belt, shadow: [sh(['torso', 'skirt'], -2, 5, SH.armor, 0.55)], body: use('belt', 'url(#g-belt)') + clip('belt',
     glint([[224, 424, 0], [330, 420, 2.4], [440, 418, 0]], '#7a5a5a', 0.8)
@@ -265,33 +271,28 @@ const parts = [
     + glint([[140, 408, 4], [174, 410, 4.4], [208, 406, 4]], SIL.base, 0.95) + glint([[140, 436, 4], [172, 440, 4.4], [206, 436, 4]], SIL.base, 0.95)
     + glint([[144, 407, 0], [174, 408, 1.6], [204, 405, 0]], '#ffffff', 0.85)) },
   { id: 'fistR', cls: 'a-armR', d: S.fistR, shadow: [sh(['armR', 'cape'], -3, 5, SH.skin, 0.45)], body: use('fistR', 'url(#g-skinB)') + clip('fistR',
-    // les doigts repliés (des creux sombres entre eux, des bosses éclairées), le pouce par-dessus
-    shape(sm('118,456 140,462 160,470 186,462 186,488 118,488'), SKIN.shade, 0.75)
-    + [[132, 452, 134, 476], [146, 452, 148, 480], [160, 454, 162, 480]].map(([x1, y1, x2, y2]) => glint([[x1, y1, 0], [(x1 + x2) / 2, (y1 + y2) / 2, 2.4], [x2, y2, 0]], SKIN.deep, 0.7)
-      + glint([[x1 + 2.4, y1, 0], [(x1 + x2) / 2 + 2.4, (y1 + y2) / 2, 1.4], [x2 + 2.4, y2, 0]], SKIN.hi, 0.6)).join('')
-    + shape(sm('160,440 180,438 188,450 180,458 164,456'), SKIN.hi, 0.7)) },
+    // les doigts repliés (trois plis nets), le pouce par-dessus, l'ombre en bas à gauche
+    cel(S.fistR, { hi: '#ffffff', base: SKIN.base, sh: SKIN.shade, deep: SKIN.deep }, 6, 3)
+    + crease([[134, 452], [136, 466], [134, 478]]) + crease([[148, 452], [150, 468], [148, 482]]) + crease([[162, 454], [164, 468], [162, 480]])
+    + cel(sm('162,440 180,437 189,448 182,458 166,456'), { hi: '#ffffff', base: SKIN.base, sh: SKIN.shade }, 3, 1.6)) },
   { id: 'mantleL', cls: 'a-cape', d: S.mantleL, shadow: [sh(['torso', 'hairBack', 'cape'], -4, 5, SH.cape, 0.5)], body: use('mantleL', 'url(#g-cape)') + clip('mantleL',
     glint([[140, 284, 0], [180, 266, 5], [226, 284, 0]], CAPE.lite, 0.7) + glint([[136, 310, 0], [180, 316, 4], [230, 306, 0]], CAPE.deep, 0.6)) },
   { id: 'mantleR', cls: 'a-cape', d: S.mantleR, shadow: [sh(['torso', 'hairBack', 'cape'], -4, 5, SH.cape, 0.5)], body: use('mantleR', 'url(#g-cape)') + clip('mantleR',
     glint([[402, 276, 0], [428, 266, 4], [452, 284, 0]], CAPE.lite, 0.8)) },
   { id: 'pauR', cls: 'a-armR', d: S.pauR, shadow: [sh(['armR', 'torso', 'hairBack', 'cape', 'mantleL'], -3, 6, SH.armor, 0.5)], body: use('pauR', 'url(#g-plateM)') + clip('pauR',
-    // trois plaques en écailles, de haut en bas : chacune bombée (claire en haut à droite), son ombre sur la suivante
-    [[300, 0], [326, 1], [350, 2]].map(([y, i]) => {
-      const d = `M${148 + i * 2} ${y + 34} C${160 + i * 2} ${y + 8} 200 ${y - 4} ${246 - i * 4} ${y + 6} C${258 - i * 2} ${y + 14} ${258 - i * 2} ${y + 30} ${250 - i * 4} ${y + 40} C220 ${y + 30} 180 ${y + 28} ${148 + i * 2} ${y + 34} Z`;
-      return `<path d="${d}" transform="translate(-3 5)" fill="${SH.armor}" opacity="0.45"/><path d="${d}" fill="url(#g-plateM)"/>`
-        + glint([[160 + i * 2, y + 22, 0], [200, y + 4, 3], [240 - i * 4, y + 8, 0]], SIL.hi, 0.8);
-    }).join('')
+    // une grande plaque bombée (claire en haut à droite), son bord d'argent en bas, un rivet d'or
+    cel(S.pauR, { hi: '#c8ccdc', base: '#6a6e84', sh: '#3a3c4c', deep: '#22242e' }, 7, 3)
+    + lock([[160, 322], [196, 306], [240, 308]], '#e4e8f4', 0.8, 3.4)
+    + lock([[152, 352], [190, 362], [230, 362], [254, 346]], SIL.base, 0.95, 4) + lock([[156, 350], [192, 359], [232, 359]], SIL.hi, 0.8, 1.4)
     + shape(sm('212,336 220,330 228,336 220,342'), 'url(#g-gold)') + oval(221, 334, 2, 1.2, '#fff8d0')) },
   { id: 'ear', cls: 'a-head', d: S.ear, shadow: [sh(['hairBack'], -3, 4, SH.hair, 0.5)], body: use('ear', 'url(#g-skinB)') + clip('ear',
     shape(sm('212,206 224,202 228,222 222,240 214,236 216,220'), SKIN.shade, 0.8) + oval(226, 208, 3, 5, SKIN.hi, 0.8)) },
   { id: 'face', cls: 'a-head', d: S.face, shadow: [sh(['hairBack', 'ear'], -4, 4, SH.skin, 0.4)], body: faceBody },
   { id: 'beard', cls: 'a-head', d: S.beard, shadow: [sh(['torso', 'belt'], -4, 6, SH.hair, 0.5), sh(['face'], -3, 4, SH.skin, 0.35)], body: use('beard', 'url(#g-beard)') + clip('beard',
-    // de grandes mèches de barbe, plus claires vers la droite, qui finissent en pointe
-    shape(sm('290,272 312,280 330,300 334,330 328,352 316,330 300,306 286,284'), '#3a302a', 0.8)
-    + shape(sm('360,282 384,276 400,290 398,316 384,334 366,344 372,318 366,296'), '#4e4034', 0.8)
-    + glint([[340, 284, 0], [346, 316, 4], [350, 352, 0]], HAIR.warm, 0.6)
-    + glint([[396, 268, 0], [406, 288, 3], [402, 310, 0]], '#7a6450', 0.7)
-    + glint([[264, 262, 0], [276, 286, 4], [292, 306, 0]], '#0c0a0a', 0.6)) },
+    // de grosses mèches qui descendent vers la pointe : un creux noir, une arête brune éclairée (plus claire à droite)
+    [[[272, 262], [290, 296], [310, 326], [330, 352]], [[300, 276], [316, 306], [332, 336], [344, 360]], [[336, 286], [342, 316], [348, 346]],
+      [[372, 284], [368, 312], [358, 340]], [[400, 266], [394, 296], [380, 322]]].map((h, i) => lock(h, '#060406', 0.8, 4)
+      + lock(h.map(([x, y]) => [x + 5, y - 2]), i > 2 ? '#7a6452' : '#4e4038', 0.85, 2.4)).join('')) },
   { id: 'stache', cls: 'a-head', d: S.stache, shadow: [sh(['face'], -2, 4, SH.skin, 0.45)], body: use('stache', '#18141a') + clip('stache',
     glint([[316, 256, 0], [334, 252, 2.4], [350, 258, 0]], '#4a3c38', 0.8) + glint([[358, 256, 0], [374, 253, 2.4], [388, 259, 0]], '#5a4a44', 0.8)) },
   { id: 'crown', cls: 'a-head', d: S.crown, shadow: [sh(['face', 'hairBack'], -3, 6, SH.hair, 0.55)], body: use('crown', '#30323f') + clip('crown',
