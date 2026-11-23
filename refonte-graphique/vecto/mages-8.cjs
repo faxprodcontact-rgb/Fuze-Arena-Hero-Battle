@@ -1,149 +1,154 @@
-// Eldra (mages-8), héroïne Légendaire : redessinée par le code d'après le dessin d'origine, dans le même cadre (580 × 619,
-// mêmes proportions, même pose) : une guerrière singe en garde basse, tournée vers la droite ; deux longues plumes
-// brunes qui partent du crâne en arcs, bandeau d'or à médaillon, fourrure brune, grand visage clair au museau rond,
-// sourcils froncés, yeux bruns, petit sourire en coin ; cape et tenue rouges à garnitures d'or, ceinture sombre ;
-// elle tient en travers un long bâton d'or ; la queue s'enroule derrière elle, bottes sombres à revers de fourrure.
-// DÉCALQUÉE : silhouette exacte (master) ; les aplats de chaque matière, clairs et ombres, relevés sur l'original
-// (outils/couleurs.py → couleurs/mages-8.json et mages-8-ombres.json) ; plumes, tête et queue découpées dans la
-// silhouette (outils/decoupe.py) ; bâton mesuré colonne par colonne ; visage et poings lus sur gros plans quadrillés.
-// La lumière vient d'en haut à droite.
+// Eldra (mages-8), héroïne Légendaire : une guerrière singe en garde basse, tournée vers la droite ; deux longues plumes
+// brunes qui partent du crâne en arcs, bandeau d'or à médaillon, fourrure brune, grand masque clair au museau rond,
+// sourcils froncés, deux grands yeux bruns, petit sourire en coin ; cape rouge, tunique rouge à plastron d'or, ceinture
+// sombre, jupe d'or ; elle tient en travers un long bâton d'or à deux mains ; la queue s'enroule derrière elle ; bottes
+// à revers de fourrure.
+// DESSINÉE (et non plus décalquée, demande du propriétaire du 23/11) : chaque pièce est une forme simple et nette, avec
+// son propre relief (un dégradé, une ombre franche en bas à gauche, un liseré clair en haut à droite) et une ombre portée
+// sur les pièces de derrière, pour que corps, vêtements et accessoires se distinguent. La lumière vient d'en haut à droite.
 const { figure, lin, rad, n, use, clip, line, shape, dot, oval } = require('./lib.cjs');
-const { sm, rib, glint, cel } = require('./formes.cjs');
+const { sm, rib, glint, cel, almond } = require('./formes.cjs');
 
 const W = 580, H = 619, PAD = 44;
-const SIL = require('./silhouettes/mages-8.json');
 
 // ---------- couleurs ----------
-const TONES = {
-  fourrure: { hi: '#c89070', base: '#8e5a40', sh: '#6a3e2a', deep: '#4a2a1c' },
-  peau: { hi: '#fff4e4', base: '#ffdcb0', sh: '#eeb888', deep: '#d4956a' },
-  rouge: { hi: '#f2766a', base: '#d2443a', sh: '#9a2a26', deep: '#661a18' },
-  cape: { hi: '#e86050', base: '#b8302a', sh: '#7e1c1c', deep: '#4e1012' },
-  or: { hi: '#fff0a0', base: '#f2b440', sh: '#c07c22', deep: '#80501a' },
-  sombre: { hi: '#5a4044', base: '#2e1e22', sh: '#1a1014', deep: '#0e080a' },
-};
-// une mèche, un pli : un long fuseau doux
+const FUR = { hi: '#d6a07c', base: '#9a6446', sh: '#70442e', deep: '#4a2a1c' };
+const PEACH = { hi: '#fff6ea', base: '#ffdcb4', sh: '#eab486', deep: '#c98c62' };
+const RED = { hi: '#ff8a76', base: '#d8443a', sh: '#9e2826', deep: '#661818' };
+const CAPE = { hi: '#f0705e', base: '#b8302a', sh: '#7e1c1c', deep: '#4e1012' };
+const GOLD = { hi: '#fff4b8', base: '#f4b843', sh: '#c47c22', deep: '#80501a' };
+const DARK = { hi: '#6a5254', base: '#352628', sh: '#1e1416', deep: '#0e080a' };
+const SH = '#2a0e0a';
+
+// ---------- outils ----------
 const lock = (pts, color, o, w = 4) => glint(pts.map(([x, y], i) => [x, y, i === 0 || i === pts.length - 1 ? 0 : w]), color, o);
-// le bord de fourrure : une rangée de petites mèches en pointe (pas toutes pareilles)
-const furEdge = (pts, color) => pts.slice(0, -1).map(([x, y], i) => { const [x2, y2] = pts[i + 1], mx = (x + x2) / 2, my = (y + y2) / 2 + (i % 2 ? 7 : 10);
+// une pièce en relief : son dégradé, puis une ombre franche en bas à gauche et un liseré clair en haut à droite
+const relief = (d, grad, pal, w = 7, hw = 3) => `<path d="${d}" fill="url(#${grad})"/>` + cel(d, { ...pal, base: 'none' }, w, hw);
+// un bord de fourrure : des petites mèches en pointe vers le bas
+const furEdge = (pts, color) => pts.slice(0, -1).map(([x, y], i) => { const [x2, y2] = pts[i + 1], mx = (x + x2) / 2, my = (y + y2) / 2 + (i % 2 ? 8 : 11);
   return shape(`M${x} ${y}Q${n(mx - 2)} ${n(my - 4)} ${n(mx)} ${n(my)}Q${n(mx + 2)} ${n(my - 4)} ${x2} ${y2}Z`, color); }).join('');
 
-// ---------- les formes relevées sur l'original ----------
+// ---------- les formes ----------
 const PLUMES = sm('31,138 32,142 37,142 48,133 82,113 114,101 151,95 188,97 221,105 249,120 275,144 292,168 265,178 299,178 300,200 372,200 373,178 396,178 371,168 373,150 368,115 362,98 344,66 320,41 310,33 273,14 242,7 208,6 183,9 163,16 160,22 164,26 188,23 216,23 240,26 263,33 295,52 318,77 333,105 340,131 340,165 335,163 325,164 314,144 299,124 283,108 267,96 253,88 229,78 188,71 155,71 133,74 92,87 74,96 53,111 37,127');
-// le corps : la silhouette sans les plumes ni la queue (elles bougent seules)
-const BODY = sm('26,400 26,406 31,406 40,401 55,397 70,397 90,402 107,411 128,439 111,457 106,469 102,473 105,470 107,471 112,485 111,486 55,486 56,487 51,490 40,491 27,496 20,496 12,500 6,510 9,533 13,540 19,544 28,545 53,538 57,535 63,535 71,531 84,533 89,530 95,539 116,545 115,549 107,557 104,566 74,589 69,601 69,607 74,611 147,613 153,610 169,611 172,609 194,609 198,604 198,594 187,580 187,576 200,565 199,561 231,544 254,537 261,533 281,537 328,535 340,539 345,543 342,549 343,551 361,549 366,552 379,551 392,558 389,565 397,575 397,580 391,592 391,604 396,608 421,609 427,606 430,608 437,607 440,609 471,610 461,607 455,601 457,599 465,601 473,601 476,599 488,601 498,599 503,602 504,600 511,599 513,597 516,599 516,605 518,606 520,603 520,592 515,582 507,575 497,572 479,561 484,554 484,547 476,540 476,536 473,534 474,515 465,494 450,474 427,451 422,449 416,443 416,440 419,436 429,437 436,433 449,434 459,429 465,422 466,416 470,411 469,400 480,394 486,396 495,391 498,393 505,393 511,387 520,385 524,381 532,378 538,378 543,374 569,367 574,360 576,351 571,332 567,325 558,317 539,321 526,329 500,337 488,345 488,330 486,328 487,315 485,307 479,301 461,297 450,289 448,275 445,270 445,263 447,260 447,254 445,251 446,239 440,227 439,221 433,215 431,209 425,201 402,181 396,178 372,178 371,200 301,200 300,178 265,178 246,189 225,211 208,245 207,258 195,260 187,264 179,272 174,281 170,296 170,309 172,312 172,317 176,324 190,334 190,336 181,336 176,334 138,334 98,342 70,355 55,365 36,383');
-const HEAD = sm('170,296 170,309 174,321 179,327 191,335 216,345 252,363 282,383 324,397 371,394 412,379 478,363 519,341 521,330 500,337 489,345 487,330 486,328 487,315 485,307 479,301 461,297 450,289 448,275 445,263 447,254 445,251 446,239 438,219 431,209 425,201 405,183 390,175 366,167 291,165 284,170 256,182 246,189 225,211 208,245 207,258 195,260 187,264 179,272 172,286');
-const TAIL = sm('52,416 45,426 43,433 36,439 35,442 37,452 42,457 41,470 50,477 50,480 112,480 106,469 99,476 87,462 83,454 82,446 78,441 77,431 85,413 81,410 68,410 59,412');
-// le bâton : son axe mesuré colonne par colonne (il remonte plus raide derrière le poing droit) et sa largeur
 const STAFF = [[6, 516, 22], [40, 509, 22], [165, 476, 18], [290, 437, 17], [365, 415, 18], [405, 397, 19], [440, 379, 20], [470, 364, 21], [540, 346, 22], [577, 337, 24]];
 const RINGS = [24, 44, 236, 330, 506, 528, 556];
 const along = (x) => { for (let i = 1; i < STAFF.length; i++) { const [x0, y0, w0] = STAFF[i - 1], [x1, y1, w1] = STAFF[i]; if (x <= x1) { const f = (x - x0) / (x1 - x0); return [y0 + (y1 - y0) * f, w0 + (w1 - w0) * f, Math.atan2(y1 - y0, x1 - x0)]; } } return STAFF[STAFF.length - 1].slice(1).concat(0); };
 const STAFF_D = rib(STAFF);
-// les poings, relevés sur gros plan
-const FIST_L = sm('177,452 188,446 198,437 215,435 232,443 236,452 233,468 225,477 205,479 185,474 173,465');
-const FIST_R = sm('396,394 405,378 425,371 445,372 459,380 461,395 455,409 442,422 418,423 401,413');
-// le bandeau d'or (bord haut puis bord bas), le médaillon
-// le plastron d'or (sous le bâton), la ceinture sombre et sa boucle, la jupe d'or en trois pans
-const CHEST = sm('272,432 300,424 340,420 380,425 392,440 388,463 340,469 290,467 274,456');
-const BELT = sm('282,466 340,469 390,463 392,478 340,485 284,482');
-const SKIRT = [sm('230,488 284,483 290,524 252,521 229,506'), sm('286,483 336,485 338,527 292,525'), sm('338,485 392,479 412,491 404,512 380,525 340,527')];
-// relevées à la main sur le quadrillage
-const CAPE = sm('25,402 60,372 100,348 150,340 205,352 232,380 212,420 178,440 150,420 120,405 80,402');
-const ARM_L = sm('165,398 200,388 222,400 228,430 216,456 190,466 166,452 156,425');
-const COLLAR = sm('205,368 240,356 280,366 302,382 280,398 250,402 222,398 206,388');
-const LEG_L = sm('116,530 160,510 215,518 264,528 270,560 240,582 200,592 150,590 118,572');
-const LEG_R = sm('318,498 380,488 440,502 492,528 502,560 470,576 420,562 370,542 328,530');
-const BOOT_L = sm('90,568 120,556 170,556 202,566 206,596 196,612 140,614 96,608 86,590');
-const BOOT_R = sm('394,548 440,540 490,548 516,566 522,590 506,604 450,606 400,600 390,576');
-const MASK = sm('275,246 330,240 375,242 412,240 438,252 448,272 456,290 476,296 488,312 482,330 466,340 436,354 394,368 336,374 300,364 284,350 270,326 264,290');
-const BAND = sm('232,240 250,223 265,219 280,215 295,211 325,210 340,211 400,214 415,219 440,226 472,236! 472,250! 440,240 415,230 400,226 340,223 310,224 295,226 280,229 265,236 250,243 235,250!');
+// la tête : un crâne rond, l'oreille à gauche, le museau qui avance à droite
+const SKULL = 'M224 292a110 106 0 1 0 220 0a110 106 0 1 0 -220 0Z';
+const EAR = 'M168 302a36 38 0 1 0 72 0a36 38 0 1 0 -72 0Z';
+const MASK = sm('266,268 296,244 334,246 362,258 392,246 428,246 452,264 460,290 450,330 430,356 396,370 352,374 308,368 280,348 266,318');
+const MUZZLE = sm('420,300 456,292 494,298 514,318 508,342 484,356 448,358 422,346 412,324');
+const BAND = sm('230,250 262,222 306,206 360,200 404,204 432,216! 438,232! 404,224 360,220 312,226 272,242 242,264!');
+// le corps
+const CAPE_D = sm('250,372 210,378 160,388 110,396 66,404 28,414! 50,428 40,446! 70,446 64,466! 96,460 104,476! 130,462 168,450 210,436 248,420');
+const TAIL_D = rib([[232, 488, 24], [170, 492, 22], [112, 482, 20], [72, 456, 17], [60, 424, 14], [76, 400, 11], [100, 400, 8], [108, 414, 0]]);
+const LEG_B = rib([[360, 488, 64], [420, 520, 56], [458, 548, 50]]);
+const LEG_F = rib([[262, 492, 66], [200, 528, 58], [164, 556, 50]]);
+const BOOT_B = sm('418,540 460,530 500,540 522,560 524,590 504,604 450,606 412,598 404,572');
+const BOOT_F = sm('110,560 150,548 196,552 210,572 208,598 192,612 136,614 98,606 92,584');
+const TORSO = sm('240,376 300,364 372,366 418,386 424,430 414,474 376,492 300,494 250,482 230,440 232,400');
+const CHEST = sm('270,404 310,394 366,396 400,410 398,446 360,456 306,456 272,444 264,424');
+const COLLAR = sm('234,372 268,358 310,352 356,354 398,362 428,378 420,396 394,388 356,382 310,382 270,388 242,396');
+const BELT = sm('246,462 300,468 366,468 414,456 416,476 366,488 300,490 248,482');
+const SKIRT = [sm('244,480 296,488 292,530 262,532 236,516'), sm('298,488 362,488 360,534 300,534'), sm('364,488 416,476 432,500 422,524 392,532 364,532')];
+// les bras : celui du fond (à gauche) descend vers le bâton, celui de devant (à droite) le tient haut
+const ARM_B = rib([[256, 392, 44], [226, 424, 38], [212, 448, 34]]);
+const ARM_F = rib([[398, 394, 44], [420, 398, 38], [430, 396, 34]]);
+const SLEEVE_B = rib([[258, 390, 52], [240, 410, 48], [232, 420, 0]]);
+const FIST_B = sm('180,450 190,438 206,430 224,432 238,444 240,462 230,476 210,482 190,478 178,466');
+const FIST_F = sm('402,392 410,376 428,368 448,370 462,382 464,400 456,416 438,424 418,422 404,410');
 
 // ---------- dégradés ----------
 const defs = [
+  lin('g-fur', 0, 0, 0, 1, [[0, '#a8704e'], [0.55, FUR.base], [1, FUR.sh]], false),
+  lin('g-peach', 0, 0, 0, 1, [[0, '#fff0de'], [1, PEACH.base]], false),
+  lin('g-red', 0, 0, 0, 1, [[0, '#ea5a4c'], [0.55, RED.base], [1, RED.sh]], false),
+  lin('g-cape', 1, 0, 0, 1, [[0, CAPE.hi], [0.4, CAPE.base], [1, CAPE.deep]], false),
+  lin('g-gold', 0, 0, 0, 1, [[0, '#ffe68a'], [0.5, GOLD.base], [1, '#d89030']], false),
+  lin('g-dark', 0, 0, 0, 1, [[0, DARK.hi], [1, DARK.base]], false),
   lin('g-staff', 0, 0, 0, 1, [[0, '#fff2b0'], [0.3, '#f6c450'], [0.7, '#d89028'], [1, '#8a5418']], false),
   rad('g-iris', 0.45, 0.4, 0.75, [[0, '#f8c070'], [0.4, '#d07a28'], [0.8, '#8a3e12'], [1, '#4a1e08']], false),
   rad('g-medal', 0.62, 0.35, 0.8, [[0, '#fff6c0'], [0.4, '#f6c04a'], [1, '#a86a1c']], false),
 ].join('');
 
-// ---------- le visage, net par-dessus les aplats ----------
-function eye(cx, cy, r, white, lash, hl) {
-  return shape(white, '#ffffff') + `<clipPath id="c-e${cx}"><path d="${white}"/></clipPath><g clip-path="url(#c-e${cx})">`
-    + dot(cx, cy, r, 'url(#g-iris)') + dot(cx + 0.5, cy + 0.5, r * 0.45, '#1a0806') + dot(cx + hl[0], cy + hl[1], r * 0.3, '#ffffff') + dot(cx - hl[0] * 0.7, cy + 4, r * 0.13, '#ffffff', 0.9)
-    + `<rect x="${cx - 30}" y="${cy - r - 8}" width="60" height="${r}" fill="#3a1a10" opacity="0.2"/></g>` + shape(lash, '#1a0c0a')
-    + `<g class="a-blink" opacity="0"><path d="${white}" fill="#ffdcb0" stroke="#ffdcb0" stroke-width="3"/>${line(`M${cx - r - 10} ${cy - 1} Q${cx} ${cy + 6} ${cx + r + 10} ${cy - 3}`, '#1a0c0a', 3)}</g>`;
+// ---------- le visage : deux yeux pareils, bien posés de part et d'autre du nez ----------
+const EL = almond(324, 296, 50, 36, -1, 5.4), ER = almond(398, 296, 50, 36, 1, 5.4);
+function eye(cx, cy, r, A) {
+  const id = `c-ee${cx}`;
+  return `<clipPath id="${id}"><path d="${A.white}"/></clipPath><path d="${A.white}" fill="#fffdf8"/><g clip-path="url(#${id})">`
+    + dot(cx, cy, r, 'url(#g-iris)') + dot(cx + 1, cy + 1, r * 0.46, '#1a0806') + dot(cx - r * 0.35, cy - r * 0.4, r * 0.3, '#ffffff') + dot(cx + r * 0.4, cy + r * 0.35, r * 0.13, '#ffffff', 0.9)
+    + `<rect x="${cx - 32}" y="${cy - 26}" width="64" height="12" fill="#6a3a20" opacity="0.18"/></g>` + shape(A.lash, '#2a140c') + line(A.lower, PEACH.deep, 1.6, 0.8)
+    + `<g class="a-blink" opacity="0"><path d="${A.white}" fill="${PEACH.base}" stroke="${PEACH.base}" stroke-width="3"/>${line(A.shut, '#2a140c', 3)}</g>`;
 }
-const FACE = eye(323, 293, 12, 'M295 288 C304 278 330 275 343 283 C343 296 336 308 322 309 C306 309 297 300 295 288 Z',
-    'M290 290 C302 274 332 270 346 282 L343 287 C330 278 306 280 296 294 Z', [-4, -5])
-  + eye(403, 291, 11, 'M385 286 C394 277 416 275 427 281 C427 294 420 304 406 305 C392 305 386 296 385 286 Z',
-    'M381 288 C392 272 418 269 431 279 L428 284 C416 276 396 278 387 292 Z', [-4, -5])
-  // les gros sourcils bruns froncés (plus bas vers le nez)
-  + cel(sm('282,254 300,249 318,250 340,256 357,263 358,272 336,267 318,264 300,264 285,266'), TONES.fourrure, 3, 2)
-  + cel(sm('380,262 396,256 412,256 428,262 432,272 414,268 398,270 383,276'), TONES.fourrure, 3, 2)
-  // la marque au front sous le médaillon, les petites rides du nez, les joues roses
-  + shape('M362 232 L376 232 L369 252 Z', '#8a4a2c', 0.8)
-  + glint([[408, 302, 0], [418, 306, 1.6], [428, 303, 0]], '#d88a70', 0.8) + oval(414, 309, 9, 4, '#f4a090', 0.45) + oval(300, 318, 12, 5, '#f4a090', 0.35)
-  // le museau : narines, taches sombres au bout
-  + oval(449, 323, 6, 3.4, '#3a1a12', 1, 10) + oval(467, 325, 3, 2, '#3a1a12') + dot(486, 318, 1.6, '#5a3020', 0.8) + dot(491, 324, 1.4, '#5a3020', 0.8)
-  // le sourire en coin
-  + line('M374 356 Q380 361 386 356 Q412 360 444 347', '#2a1410', 2.6) + line('M372 351 Q373 355 375 357', '#2a1410', 2.2);
+const FACE = eye(328, 298, 13.5, EL) + eye(402, 298, 13.5, ER)
+  // les sourcils bruns, froncés vers le milieu, le même de chaque côté
+  + cel(rib([[296, 270, 0], [314, 262, 6], [338, 264, 6], [352, 274, 0]]), FUR, 2.4, 1.4)
+  + cel(rib([[374, 274, 0], [388, 264, 6], [412, 262, 6], [428, 268, 0]]), FUR, 2.4, 1.4)
+  // le museau : un relief plus clair, les narines, le sourire en coin, les joues roses
+  + relief(MUZZLE, 'g-peach', PEACH, 4, 2) + oval(484, 314, 4.4, 3, '#5a2a18') + oval(500, 318, 3.6, 2.6, '#5a2a18')
+  + line('M430 338 Q456 350 486 340', '#4a2014', 2.8) + line('M486 340 Q492 336 494 330', '#4a2014', 2.4)
+  + oval(300, 336, 14, 7, '#f5a090', 0.45) + oval(440, 326, 10, 5, '#f5a090', 0.4);
 
-// ---------- les morceaux ----------
-const sh = (on, dx, dy, color = '#1a0a0c', o = 0.4) => ({ on, dx, dy, color, o });
+// ---------- les morceaux, du fond vers le devant ----------
+const sh = (on, dx = -4, dy = 6, o = 0.42) => ({ on, dx, dy, color: SH, o });
 const parts = [
-  { id: 'body', cls: 'a-body', d: BODY, body: use('body', TONES.rouge.base) + clip('body',
-    // le fond rouge (tunique, pantalon), la cape, les jambes et les bottes de fourrure, le bras gauche, le col de fourrure
-    `<rect x="0" y="0" width="${W}" height="${H}" fill="${TONES.rouge.sh}"/>`
-    + cel(CAPE, TONES.cape, 7, 3) + lock([[200, 358], [140, 360], [80, 380], [40, 398]], TONES.cape.hi, 0.6, 4) + lock([[200, 400], [160, 420]], TONES.cape.deep, 0.6, 4)
-    + cel(sm('200,360 290,372 380,380 400,420 390,480 300,486 210,480 196,420'), TONES.rouge, 6, 3)
-    + cel(LEG_L, TONES.rouge, 7, 3) + lock([[140, 540], [190, 548], [240, 560]], TONES.rouge.hi, 0.55, 4) + lock([[150, 576], [200, 580], [240, 572]], TONES.rouge.deep, 0.6, 4)
-    + cel(LEG_R, TONES.rouge, 7, 3) + lock([[340, 506], [400, 506], [460, 520]], TONES.rouge.hi, 0.6, 4) + lock([[380, 540], [430, 556], [480, 566]], TONES.rouge.deep, 0.6, 4)
-    + cel(BOOT_L, TONES.fourrure, 6, 3) + furEdge([[90, 570], [112, 560], [134, 558], [156, 558], [178, 560], [204, 568]], TONES.fourrure.hi)
-    + [[110, 606], [134, 608], [158, 608], [182, 606]].map(([x, y]) => shape(`M${x - 5} ${y - 4}L${x} ${y + 4}L${x + 5} ${y - 4}Z`, TONES.sombre.base)).join('')
-    + cel(BOOT_R, TONES.fourrure, 6, 3) + furEdge([[394, 552], [418, 544], [442, 542], [466, 544], [490, 550], [516, 568]], TONES.fourrure.hi)
-    + [[420, 600], [446, 602], [472, 600], [498, 596]].map(([x, y]) => shape(`M${x - 5} ${y - 4}L${x} ${y + 4}L${x + 5} ${y - 4}Z`, TONES.sombre.base)).join('')
-    + cel(ARM_L, TONES.fourrure, 6, 3) + lock([[172, 410], [190, 400], [214, 404]], TONES.fourrure.hi, 0.7, 3) + lock([[166, 440], [186, 456], [210, 458]], TONES.fourrure.deep, 0.6, 3)
-    + cel(COLLAR, TONES.fourrure, 5, 2.4) + furEdge([[206, 390], [222, 398], [240, 401], [258, 401], [278, 397], [300, 384]], TONES.fourrure.sh)
-    + cel(CHEST, TONES.or, 5, 2.4) + [[290, 440], [320, 436], [352, 436], [378, 442]].map(([x, y]) => glint([[x - 10, y + 2, 0], [x, y - 2, 2.4], [x + 10, y + 2, 0]], '#fff6c8', 0.7)).join('')
-    + SKIRT.map((d, i) => cel(d, { hi: '#fff0a0', base: ['#eaa83a', '#f4bc4c', '#e8a436'][i], sh: '#b87420', deep: '#80501a' }, 5, 2.4)).join('')
-    + cel(BELT, TONES.sombre, 3, 1.6) + `<rect x="306" y="469" width="26" height="12" rx="3" fill="#9a9aa6"/>` + `<rect x="310" y="472" width="18" height="6" rx="2" fill="#3a3a44"/>`
-    + glint([[300, 471, 0], [340, 472.5, 1.4], [384, 467, 0]], '#7a5a52', 0.8)) },
-  { id: 'tail', cls: 'a-tail', d: TAIL, shadow: [sh(['body'], -3, 5)], body: cel(TAIL, TONES.fourrure, 6, 3) + clip('tail', glint([[56, 414, 0], [76, 412, 2.4], [90, 418, 0]], '#e8b090', 0.7)) },
-  { id: 'plumes', cls: 'a-plume', d: PLUMES, shadow: [sh(['body'], -3, 5)], body: cel(PLUMES, TONES.fourrure, 6, 3) + clip('plumes',
-    // le filet de lumière sur le dessus de chaque plume
-    glint([[40, 132, 0], [90, 98, 3], [150, 82, 3.4], [220, 90, 3], [270, 124, 2.4], [300, 160, 0]], '#e8b090', 0.8)
-    + glint([[176, 14, 0], [240, 14, 3], [300, 40, 3.4], [340, 84, 3], [360, 130, 2.4], [362, 168, 0]], '#e8b090', 0.8)) },
-  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['body', 'plumes'], -3, 6)], body: use('head', TONES.fourrure.base) + clip('head',
-    // la fourrure du crâne (une lumière en haut à droite), l'oreille ronde, le grand masque clair du visage
-    cel(HEAD, TONES.fourrure, 7, 3) + lock([[300, 182], [360, 172], [420, 190]], TONES.fourrure.hi, 0.7, 5)
-    + dot(196, 302, 37, TONES.fourrure.sh) + dot(198, 300, 34, TONES.fourrure.base) + dot(202, 306, 21, TONES.peau.sh) + dot(204, 304, 17, TONES.peau.base)
-    + lock([[186, 280], [180, 300], [186, 322]], TONES.fourrure.hi, 0.6, 3)
-    + `<path d="${MASK}" transform="translate(-3 4)" fill="${TONES.fourrure.deep}" opacity="0.5"/>` + cel(MASK, TONES.peau, 6, 3)
-    + oval(440, 296, 16, 12, TONES.peau.hi, 0.6, -10)
-    // le bandeau d'or et son médaillon
-    + cel(BAND, TONES.or, 4, 2) + glint([[256, 226, 0], [320, 213, 2], [400, 217, 2], [450, 230, 0]], '#fff6c8', 0.85)
-    + dot(363, 215, 15.5, TONES.or.deep) + dot(363.6, 214.4, 13.5, 'url(#g-medal)')
-    + line('M363 215 m-1 0 a3 3 0 1 1 4 3 a6 6 0 1 1 -8 -6 a8 8 0 0 1 10 2', '#8a5418', 2.4)
-    + FACE) },
-  { id: 'staff', cls: 'a-body', d: STAFF_D, shadow: [sh(['body', 'head'], -3, 6)], body: `<path d="${STAFF_D}" fill="url(#g-staff)"/>` + clip('staff',
-    // les bagues sombres et les bouts, un long reflet en haut, l'ombre en bas
+  { id: 'cape', cls: 'a-cape', d: CAPE_D, body: relief(CAPE_D, 'g-cape', CAPE, 7, 3)
+    + lock([[230, 390], [160, 406], [90, 420], [44, 430]], CAPE.hi, 0.5, 4) + lock([[228, 418], [170, 436], [110, 452]], CAPE.deep, 0.5, 4) },
+  { id: 'plumes', cls: 'a-plume', d: PLUMES, body: relief(PLUMES, 'g-fur', FUR, 6, 3)
+    + clip('plumes', lock([[40, 132], [90, 98], [150, 82], [220, 90], [270, 124], [300, 160]], FUR.hi, 0.8, 3)
+      + lock([[176, 14], [240, 14], [300, 40], [340, 84], [360, 130], [362, 168]], FUR.hi, 0.8, 3)) },
+  { id: 'tail', cls: 'a-tail', d: TAIL_D, shadow: [sh(['cape'])], body: relief(TAIL_D, 'g-fur', FUR, 5, 2.4)
+    + clip('tail', lock([[200, 482], [130, 480], [84, 456], [70, 424]], FUR.hi, 0.7, 3)) },
+  { id: 'legB', cls: 'a-body', d: LEG_B, shadow: [sh(['tail', 'cape'])], body: relief(LEG_B, 'g-red', RED, 7, 3)
+    + clip('legB', lock([[352, 476], [410, 500], [450, 528]], RED.hi, 0.6, 4) + lock([[392, 528], [430, 548]], RED.deep, 0.5, 4)) },
+  { id: 'bootB', cls: 'a-body', d: BOOT_B, shadow: [sh(['legB'])], body: relief(BOOT_B, 'g-fur', FUR, 6, 3)
+    + furEdge([[406, 556], [428, 544], [452, 538], [476, 540], [500, 546], [522, 562]], FUR.hi)
+    + [[430, 598], [456, 600], [482, 598], [506, 594]].map(([x, y]) => shape(`M${x - 5} ${y - 4}L${x} ${y + 5}L${x + 5} ${y - 4}Z`, DARK.base)).join('') },
+  { id: 'legF', cls: 'a-body', d: LEG_F, shadow: [sh(['tail', 'cape', 'legB'])], body: relief(LEG_F, 'g-red', RED, 7, 3)
+    + clip('legF', lock([[266, 478], [214, 508], [176, 540]], RED.hi, 0.6, 4) + lock([[214, 552], [176, 572]], RED.deep, 0.5, 4)) },
+  { id: 'bootF', cls: 'a-body', d: BOOT_F, shadow: [sh(['legF'])], body: relief(BOOT_F, 'g-fur', FUR, 6, 3)
+    + furEdge([[94, 576], [118, 562], [142, 556], [166, 556], [190, 562], [210, 576]], FUR.hi)
+    + [[118, 606], [142, 608], [166, 608], [190, 604]].map(([x, y]) => shape(`M${x - 5} ${y - 4}L${x} ${y + 5}L${x + 5} ${y - 4}Z`, DARK.base)).join('') },
+  { id: 'torso', cls: 'a-body', d: TORSO, shadow: [sh(['cape', 'legB', 'legF', 'tail'])], body: relief(TORSO, 'g-red', RED, 8, 3)
+    + clip('torso', relief(CHEST, 'g-gold', GOLD, 5, 2.4) + lock([[284, 406], [330, 398], [384, 404]], GOLD.hi, 0.9, 2.6)
+      + [[290, 424], [330, 420], [372, 424]].map(([x, y]) => dot(x, y, 3.4, GOLD.deep) + dot(x + 0.8, y - 0.8, 1.2, GOLD.hi)).join('')) },
+  { id: 'skirt', cls: 'a-body', d: SKIRT.join(''), shadow: [sh(['legB', 'legF'])], body: SKIRT.map((d, i) => relief(d, 'g-gold', { ...GOLD, sh: ['#b8701c', '#c47c22', '#b06a1a'][i] }, 5, 2.4)).join('')
+    + SKIRT.map((_, i) => lock([[262 + i * 62, 498], [264 + i * 62, 514], [262 + i * 62, 528]], GOLD.sh, 0.6, 2.4)).join('') },
+  { id: 'belt', cls: 'a-body', d: BELT, shadow: [sh(['torso', 'skirt'], -2, 5)], body: relief(BELT, 'g-dark', DARK, 3, 1.6)
+    + `<rect x="316" y="468" width="30" height="16" rx="3" fill="${GOLD.sh}"/><rect x="319" y="470" width="24" height="11" rx="2" fill="url(#g-gold)"/>` + dot(331, 475.5, 2.6, DARK.base) },
+  { id: 'collar', cls: 'a-body', d: COLLAR, shadow: [sh(['torso'], -2, 5)], body: relief(COLLAR, 'g-fur', FUR, 4, 2)
+    + furEdge([[242, 396], [270, 388], [300, 384], [330, 382], [360, 383], [394, 388], [420, 396]], FUR.sh) },
+  { id: 'armB', cls: 'a-body', d: ARM_B, shadow: [sh(['torso', 'cape', 'skirt'])], body: relief(ARM_B, 'g-fur', FUR, 6, 3)
+    + clip('armB', relief(SLEEVE_B, 'g-red', RED, 5, 2.4)) },
+  { id: 'staff', cls: 'a-body', d: STAFF_D, shadow: [sh(['torso', 'skirt', 'legF', 'legB', 'armB', 'belt', 'cape'], -3, 7)], body: `<path d="${STAFF_D}" fill="url(#g-staff)"/>` + clip('staff',
     RINGS.map((x) => { const [y, w, a] = along(x); return oval(x, y, 3.2, w * 0.62, '#8a5418', 0.85, a * 180 / Math.PI) + oval(x + 4, y - 1, 1.4, w * 0.5, '#fff2b0', 0.8, a * 180 / Math.PI); }).join('')
     + glint(STAFF.map(([x, y, w], i) => [x + 1, y - w * 0.22, i === 0 || i === STAFF.length - 1 ? 0 : w * 0.16]), '#ffffff', 0.7)
     + glint(STAFF.map(([x, y, w], i) => [x - 1, y + w * 0.3, i === 0 || i === STAFF.length - 1 ? 0 : w * 0.2]), '#7a4a14', 0.5)) },
-  { id: 'fistL', cls: 'a-body', d: FIST_L, shadow: [sh(['staff', 'body'], -3, 5)], body: cel(FIST_L, TONES.peau, 5, 2.4) + clip('fistL',
-    glint([[198, 446, 0], [198.5, 458, 2], [198, 472, 0]], '#c88a60', 0.85) + glint([[215, 444, 0], [215.5, 458, 2], [215, 474, 0]], '#c88a60', 0.85)
-    + glint([[201, 446, 0], [201.5, 458, 1], [201, 468, 0]], '#fff6e8', 0.7) + glint([[218, 446, 0], [218.5, 456, 1], [218, 466, 0]], '#fff6e8', 0.7)) },
-  { id: 'fistR', cls: 'a-body', d: FIST_R, shadow: [sh(['staff', 'body', 'head'], -3, 5)], body: cel(FIST_R, TONES.fourrure, 5, 2.4) + clip('fistR',
-    [418, 432, 445].map((x) => glint([[x, 380, 0], [x + 0.5, 394, 2.2], [x - 1, 410, 0]], TONES.fourrure.deep, 0.85)
-      + glint([[x + 3, 381, 0], [x + 3.5, 392, 1.2], [x + 2, 402, 0]], '#c89070', 0.75)).join('')) },
+  { id: 'fistB', cls: 'a-body', d: FIST_B, shadow: [sh(['staff', 'armB', 'torso'], -3, 5)], body: relief(FIST_B, 'g-peach', PEACH, 5, 2.4)
+    + [196, 210, 224].map((x) => lock([[x, 440], [x + 0.5, 456], [x, 472]], PEACH.deep, 0.8, 2) + lock([[x + 3, 442], [x + 3.5, 454], [x + 3, 466]], '#ffffff', 0.6, 1)).join('') },
+  { id: 'head', cls: 'a-head', d: SKULL + EAR + MUZZLE, shadow: [sh(['torso', 'collar', 'plumes', 'armB', 'staff'], -4, 7)], body: (''
+    // l'oreille ronde (l'intérieur clair), le crâne en fourrure, le grand masque clair du visage
+    + relief(EAR, 'g-fur', FUR, 5, 2.4) + dot(206, 304, 22, PEACH.sh) + dot(208, 302, 18, PEACH.base)
+    + relief(SKULL, 'g-fur', FUR, 8, 3) + lock([[300, 196], [360, 186], [420, 204]], FUR.hi, 0.7, 5)
+    + `<path d="${MASK}" transform="translate(-3 5)" fill="${FUR.deep}" opacity="0.45"/>` + relief(MASK, 'g-peach', PEACH, 7, 3)
+    // le bandeau d'or et son médaillon
+    + `<path d="${BAND}" transform="translate(-2 4)" fill="${FUR.deep}" opacity="0.5"/>` + relief(BAND, 'g-gold', GOLD, 4, 2)
+    + dot(360, 212, 16, GOLD.deep) + dot(360.6, 211.4, 14, 'url(#g-medal)') + line('M360 212 m-1 0 a3 3 0 1 1 4 3 a6 6 0 1 1 -8 -6 a8 8 0 0 1 10 2', '#8a5418', 2.4)
+    + FACE) },
+  { id: 'armF', cls: 'a-body', d: ARM_F, shadow: [sh(['torso', 'collar', 'staff'])], body: relief(ARM_F, 'g-fur', FUR, 5, 2.4) },
+  { id: 'fistF', cls: 'a-body', d: FIST_F, shadow: [sh(['staff', 'armF', 'head', 'torso'], -3, 5)], body: relief(FIST_F, 'g-peach', PEACH, 5, 2.4)
+    + [420, 434, 448].map((x) => lock([[x, 378], [x + 0.5, 394], [x, 410]], PEACH.deep, 0.8, 2) + lock([[x + 3, 380], [x + 3.5, 392], [x + 3, 404]], '#ffffff', 0.6, 1)).join('') },
 ];
 
 // ---------- la vie au repos et l'attaque ----------
-// Repos : elle respire, la tête hoche, les plumes et la queue ondulent, elle cligne. Attaque (classe « atk », 0,75 s) :
-// elle se ramasse puis bondit en avant, bâton pointé ; les plumes et la queue fouettent l'air ; retour à la garde.
-const PIV = { plume: [330, 185], tail: [100, 450], body: [300, 600], head: [330, 360] };
+// Repos : elle respire, la tête hoche, les plumes, la queue et la cape ondulent, elle cligne. Attaque (classe « atk »,
+// 0,75 s) : elle se ramasse puis bondit en avant, bâton pointé ; plumes et queue fouettent l'air ; retour à la garde.
+const PIV = { plume: [330, 185], tail: [230, 488], body: [300, 600], head: [330, 380], cape: [250, 380] };
 const IDLE = {
   'a-plume': ['plume', 'plume 2.4s ease-in-out infinite alternate'],
   'a-tail': ['tail', 'tail 1.8s ease-in-out infinite alternate'],
+  'a-cape': ['cape', 'cape 2.2s ease-in-out infinite alternate'],
   'a-body': ['body', 'body 2s ease-in-out infinite alternate'],
   'a-head': ['head', 'head 2.6s ease-in-out infinite alternate'],
 };
@@ -155,6 +160,7 @@ const style = Object.entries(IDLE).map(([c, [k, a]]) => `.${c}{transform-origin:
 .a-blink{animation:blink 4.4s linear infinite}
 @keyframes plume{from{transform:rotate(-1.6deg)}to{transform:rotate(1.4deg)}}
 @keyframes tail{from{transform:rotate(-4deg)}to{transform:rotate(3deg)}}
+@keyframes cape{from{transform:rotate(0deg)}to{transform:rotate(2.4deg)}}
 @keyframes body{from{transform:none}to{transform:translate(0,-2px) scale(1.004,1.008)}}
 @keyframes head{from{transform:none}to{transform:rotate(-1.4deg) translate(0,-1px)}}
 @keyframes blink{0%,93%{opacity:0}94.5%,97%{opacity:1}98.5%,100%{opacity:0}}
@@ -166,10 +172,10 @@ ${atk('a-root', 'root-atk')}${atk('a-head', 'head-atk')}${atk('a-plume', 'plume-
 `.replace(/\n/g, '');
 
 function svg(anime = true) {
-  const s = figure({ master: SIL, w: W, h: H, pad: PAD, defs, style, parts, anime });
+  const s = figure({ w: W, h: H, pad: PAD, defs, style, parts, anime });
   if (!anime) return s;
   const i0 = s.indexOf('<g fill="#2a1430"');
   return s.slice(0, i0) + '<g class="a-root">' + s.slice(i0).replace(/<\/svg>$/, '</g></svg>');
 }
 
-module.exports = { id: 'mages-8', w: W, h: H, pad: PAD, foot: [300, 604], svg };
+module.exports = { id: 'mages-8', w: W, h: H, pad: PAD, foot: [300, 610], svg };
