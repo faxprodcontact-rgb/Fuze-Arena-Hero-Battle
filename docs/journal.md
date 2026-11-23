@@ -386,6 +386,14 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   l'épaule au poignet** (pas de coude ni d'avant-bras séparés), un brassard d'or en travers (`bracer()`), un poing dessiné
   pixel par pixel ; l'épaulière posée par-dessus le haut du bras. Sable : les jambes dessinées avant la jupe et le tablier
   (le bas des habits passe devant le haut des cuisses).
+  **v0.47.0 (23/11/2026), les 12 chevaliers** (knights-1 à 12) en gros pixels encrés, d'après l'idée de leurs anciens
+  dessins (`planche_faction.py` dans la conversation : les vignettes `art/c/` d'un groupe sur une planche). Nouveau :
+  `persos/kit.py`, la **boîte de pièces communes** (bras, jambes, bottes, torse, jupe, ceinture, épaulières, cape, armes,
+  boucliers, arc, flammes, poings ; squelettes de jambes `'large'`, `'moyen'`, `'droit'`, `'fente'`). Chaque héros garde
+  sa tête dessinée pixel par pixel. Retour du propriétaire pendant le travail (pas tous les jambes écartées ; haut des
+  bras devant le tee-shirt ; cou trop long ou devant ; coins de bouclier) → `arm()` avant le torse puis `arm_front()`
+  après (la racine du bras reste sous le vêtement), `neck()` avant le torse, règles ajoutées au guide (§ 3, § 6, § 9) ;
+  appliqué aussi à Eldra, Sable et Ilian. `controle.py` contrôle tous les héros de `jeu.CHARS`.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

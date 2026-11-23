@@ -8,6 +8,7 @@
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from pix import Ramp, BREATH, BLINK
+from kit import arm, arm_front
 
 ORIGIN = (24, 45)
 
@@ -97,6 +98,7 @@ def draw(c, t):
     # ---- la jupe bleue et son ourlet d'or ----
     c.part(c.poly([(27, 54), (54, 54), (58, 63), (49, 64), (41, 60), (33, 64), (23, 63)]), BLUE, 'ink')
     c.line(34, 57, 31, 62, BLUE.deep), c.line(48, 57, 51, 62, BLUE.deep)
+    arm(c, b, (21, 35), (17, 45), (14, 51), SKIN, r=(5.8, 5.2, 4.8))   # le bras droit, d'abord sous le torse
     # ---- le torse : trapèzes qui montent vers le cou, pectoraux, abdominaux, obliques ----
     c.part(c.rect(34, 20 - b, 45, 28 - b), SKIN, 'ink')                               # le cou
     c.part(c.poly([(20, 31 - b), (31, 25 - b), (47, 24 - b), (57, 30 - b), (58, 38 - b), (54, 47), (52, 53), (29, 53), (26, 47), (21, 38 - b)]), SKIN, 'ink')
@@ -121,7 +123,7 @@ def draw(c, t):
     c.line(51, 26 - b, 61, 27 - b, GOLD.hi)
     c.sprite(26, 3 - b, HEAD, HEAD_C, HEAD_BLINK if t == BLINK else None)
     # ---- le bras droit (le plus proche) qui descend tenir le trident : une seule forme de l'épaule au poignet ----
-    c.part(c.limb([(21, 35 - b, 5.8), (17, 45 - b, 5.2), (14, 51 - b, 4.8)]), SKIN, 'ink')
+    arm_front(c, b, (21, 35), (17, 45), (14, 51), SKIN, r=(5.8, 5.2, 4.8))
     c.line(24, 35 - b, 21, 43 - b, SKIN.light)
     bracer(c, (17, 45 - b), (14, 51 - b), 0.45, 5.4)
     # ---- l'épaulière droite, posée sur le haut du bras ----

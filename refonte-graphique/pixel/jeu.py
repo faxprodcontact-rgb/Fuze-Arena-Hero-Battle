@@ -21,8 +21,12 @@ META = os.path.join(ROOT, 'src', 'game', 'pixel-meta.ts')
 
 # le nom de l'atelier → le personnage du jeu
 CHARS = {'kael': 'assassins-2', 'sable': 'assassins-3', 'eldra': 'mages-8', 'rook': 'assassins-5', 'ilian': 'angels-2',
+         'berold': 'knights-1', 'maela': 'knights-2', 'aldric': 'knights-3', 'sorene': 'knights-4', 'tybalt': 'knights-5',
+         'cassian': 'knights-6', 'ysolde': 'knights-7', 'garvin': 'knights-8', 'lenore': 'knights-9', 'aurele': 'knights-10',
+         'valdis': 'knights-11', 'orlane': 'knights-12',
          'renard': 'ronciers-1', 'dino': 'bayou-1', 'follet': 'bayou-4', 'petard': 'parade-1', 'chouette': 'glaces-4'}
-HEROES = {'kael', 'sable', 'eldra', 'rook', 'ilian'}
+FACTIONS = ('knights', 'assassins', 'mages', 'demons', 'angels', 'myths')
+HEROES = {pid for pid, cid in CHARS.items() if cid.split('-')[0] in FACTIONS}
 FRAMES, GAP = 8, 2
 CW, CH = FRAME_W + 2 * GAP, FRAME_H + 2 * GAP
 UP = 3                       # la planche fait 8 × 132 × 3 = 3168 pixels de large (moins de 4096, la limite des téléphones)

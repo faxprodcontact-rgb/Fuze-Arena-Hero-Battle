@@ -9,6 +9,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.dirname(__file__))
 from pix import Ramp, BREATH, BLINK
 from tetes import ELDRA, ELDRA_C, ELDRA_BLINK
+from kit import arm, arm_front
 
 ORIGIN = (24, 45)
 FUR = Ramp('#3a2014', '#5e3622', '#8a5638', '#ad7652', '#cc9670')
@@ -32,9 +33,7 @@ def draw(c, t):
     c.part(c.limb([(43, 15 - b, 2.4), (36, 5 - b, 2.2), (26, -3 - b + sw, 2), (14, -7 - b + sw, 1.8), (4, -5 - b + sw, 1.5)]), PLUME, 'ink')
     c.part(c.limb([(46, 14 - b, 2.3), (42, 3 - b, 2.1), (34, -7 - b + sw, 1.9), (24, -13 - b + sw, 1.6), (14, -13 - b + sw, 1.4)]), PLUME, 'ink')
     # ---- le bras gauche levé (derrière le torse) qui brandit le bâton ----
-    c.part(c.limb([(50, 32 - b, 4.2), (60, 24 - b, 3.8)]), RED, 'ink')
-    c.part(c.limb([(60, 24 - b, 3.8), (59, 8 - b, 3.6)]), RED, 'ink')
-    c.part(c.ellipse(60, 24 - b, 2.8, 2.6), RED, 'ink')
+    c.part(c.limb([(50, 32 - b, 4.6), (60, 24 - b, 4.2), (59, 8 - b, 3.8)]), RED, 'ink')
     c.part(c.poly([(55, 10 - b), (63, 10 - b), (63, 17 - b), (55, 17 - b)]), GOLD, 'ink', band=1)
     # ---- la jambe d'appui (la droite, la plus proche) : cuisse, mollet, botte à revers de fourrure ----
     c.part(c.limb([(36, 55, 6), (35, 62, 5.4)]), PANTS, 'ink')
@@ -46,6 +45,8 @@ def draw(c, t):
     c.part(c.limb([(57, 53, 5), (56, 61, 4.6)]), PANTS, 'ink')
     c.part(c.poly([(52, 60), (60, 60), (61, 65), (58, 68), (53, 66)]), BOOT, 'ink')
     c.part(c.limb([(52, 60, 2), (60, 60, 2)]), FUR, 'ink')
+    # ---- le bras droit, posé AVANT le torse (sa racine restera sous la tunique) ----
+    arm(c, b, (28, 33), (19, 41), (27, 48), RED, r=(4.8, 4.4, 4))
     # ---- le cou, le torse : tunique rouge, plastron d'or, col de fourrure ----
     c.part(c.rect(37, 25 - b, 46, 31 - b), SKIN, 'ink')
     c.part(c.poly([(28, 30 - b), (50, 29 - b), (53, 35 - b), (51, 44), (49, 51), (32, 51), (30, 44), (27, 35 - b)]), RED, 'ink')
@@ -61,9 +62,7 @@ def draw(c, t):
     # ---- la tête (dessinée pixel par pixel) ----
     c.sprite(30, 9 - b, ELDRA, ELDRA_C, ELDRA_BLINK if t == BLINK else None)
     # ---- le bras droit (le plus proche), poing sur la hanche ----
-    c.part(c.limb([(28, 33 - b, 4.4), (19, 41 - b, 4)]), RED, 'ink')
-    c.part(c.limb([(19, 41 - b, 4), (27, 48 - b, 3.8)]), RED, 'ink')
-    c.part(c.ellipse(19, 41 - b, 2.8, 2.6), RED, 'ink')
+    arm_front(c, b, (28, 33), (19, 41), (27, 48), RED, r=(4.8, 4.4, 4))
     c.part(c.poly([(18, 42 - b), (24, 45 - b), (22, 49 - b), (16, 46 - b)]), GOLD, 'ink', band=1)
     c.part(c.ellipse(29, 48 - b, 3.8, 3.8), SKIN, 'ink')
     # ---- le bâton d'or, à l'horizontale au-dessus de la tête ; ses anneaux sombres ; le poing qui le tient ----

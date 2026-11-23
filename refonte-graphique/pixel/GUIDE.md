@@ -49,6 +49,7 @@ Les points de `_gabarit.py` (debout, garde large) ; pour une autre pose, on **d�
 | Épaules | vers y = 32 ; épaules larges (± 15 autour du milieu pour un costaud, ± 10 pour un fin) |
 | Ceinture | vers y = 49 à 55 ; hanches vers y = 56 |
 | Genoux / chevilles | vers y = 62 / 68 ; les pieds touchent y = 71 à 73 |
+| Écart des jambes | **garde moyenne (`'moyen'`) ou jambes droites (`'droit'`) pour la plupart** ; jambes très écartées (`'large'`) ou élan (`'fente'`) **seulement pour quelques-uns** (protecteurs, colosses, un assassin) |
 | Bras | rayon **5,6 → 4,6** (jamais plus fin que 4) ; de l'épaule au poignet ≈ 18 à 22 pixels ; **assez gros pour le torse** |
 | Jambes | cuisse **6 → 5,2**, mollet **4,8 → 4,4** (jamais plus fin) |
 | Mains | poings de **7 à 8 pixels** dessinés pixel par pixel (`FIST`, `PUNCH`) |
@@ -73,14 +74,21 @@ Les points de `_gabarit.py` (debout, garde large) ; pour une autre pose, on **d�
 
 ## 6. Premier plan, second plan : l'ordre de dessin (du fond vers le devant)
 
+**Le haut du bras ne passe jamais devant le vêtement** (le « tee-shirt ») : le bras de devant est posé **deux fois**,
+d'abord entier AVANT le torse (`arm()`), puis APRÈS le torse **sans sa racine** (`arm_front()` de `kit.py`, ou `in_front()`
+pour une pièce à part) : l'épaule reste sous le vêtement, le reste du bras (coude, avant-bras, poing) passe devant.
+
 1. Tout au fond : cape, queue, aile du fond, crinière ou flammes qui volent derrière.
-2. Le bras du fond (son bras gauche) et son brassard.
+2. Le bras du fond (son bras gauche) et son brassard ; **le bras de devant une première fois, entier** (`arm()`).
 3. **Les jambes, avant la jupe et la ceinture** : le bas des habits passe devant le haut des cuisses. Une jambe levée
    est aussi dessinée **derrière** la jupe et la ceinture (elle en sort, elle ne passe jamais devant).
 4. Le bas de la tunique ou la jupe, puis le torse, puis la ceinture (par-dessus).
-5. Le cou, puis **la tête** (le menton recouvre le cou ; la barbe recouvre la poitrine).
+5. **Le cou AVANT le torse** (`neck()` : le col en couvre le bas, le menton le haut ; il ne se voit que sur 2 ou 3
+   pixels, jamais long, jamais devant le torse), puis **la tête** (la barbe recouvre la poitrine).
 6. L'épaulière du fond.
-7. Le bras de devant (son bras droit), **puis son épaulière par-dessus** le haut du bras.
+   Un **bouclier ou un objet** tenu par le bras du fond se pose ici : devant le torse, mais **derrière** le bras de
+   devant, les épaulières et la tête (son coin du haut passe sous l'épaulière) ; regarder chaque coin.
+7. Le bras de devant **sans sa racine** (`arm_front()`), **puis son épaulière par-dessus** le haut du bras.
 8. L'arme tenue, **puis le poing par-dessus** (les doigts sur le manche).
 9. Ce qui est tout devant : l'aile de devant d'une créature ailée, les effets (boule de feu…).
 
@@ -112,6 +120,10 @@ Et toujours : **rien ne passe devant le visage ni la barbe** ; les bras restent 
    - [ ] les bras sont aussi épais que ceux des autres et se lisent (épaule → poing) ;
    - [ ] aucun trait noir au coude ni au genou sur la peau ou la fourrure ;
    - [ ] l'ordre du § 6 est respecté (jupe devant les cuisses, épaulière sur le bras, poing sur le manche) ;
+   - [ ] **le haut des bras passe sous le vêtement** (pas de rond d'épaule posé sur le torse) ;
+   - [ ] **le cou** : court, sous le menton, derrière le col (jamais long ni devant) ;
+   - [ ] chaque coin d'un bouclier ou d'un objet : devant ou derrière, comme dans la réalité ;
+   - [ ] les jambes : pas tous très écartés ;
    - [ ] rien devant le visage ; cheveux visibles devant ; couronne posée ;
    - [ ] les deux yeux pareils et lisibles ; regard dur, pas de sourire ;
    - [ ] la pose est différente de celles déjà prises ;
@@ -140,3 +152,5 @@ monstres de ces familles mesuraient ~86 unités contre ~124 pour les héros, soi
 - Cheveux de feu en pics → une masse de flammes ; ailes en rayons → une aile pleine.
 - Poses toutes pareilles → une pose par personnage ; pose accroupie illisible → silhouettes simples.
 - Barbe mal placée, bras qui passe devant la barbe, pas de cheveux devant, couronne à peine posée (Ilian, v0.43).
+- Jambes trop écartées chez tous ; haut des bras devant le tee-shirt ; cou trop long ou devant ; coins de bouclier
+  mal placés (v0.47, premiers chevaliers) → § 3 (écart des jambes) et § 6 (`arm_front`, `neck` avant le torse).

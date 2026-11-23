@@ -8,6 +8,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, os.path.dirname(__file__))
 from pix import Ramp, BREATH, BLINK
 import tetes
+from kit import in_front
 
 ORIGIN = (24, 45)
 FUR = Ramp('#7a4416', '#b8742e', '#e3a24e', '#f6c878', '#fff0c0')
@@ -19,6 +20,11 @@ TURQ = Ramp('#0e4a56', '#1a7888', '#2eb0bc', '#6ad8dc', '#c0ffff')
 CAPE = Ramp('#3a0a1c', '#5a1430', '#7e2648', '#a23e66', '#c05a84')
 BLADE = Ramp('#8a5a14', '#c8841e', '#f4c040', '#ffe486', '#fffbe0')
 RED = Ramp('#4a0808', '#8a1414', '#c8241c', '#f05a40', '#ffb0a0')
+
+
+def near_arm(c, b):
+    """Le bras droit (le plus proche), armé derrière elle, griffes sorties : une seule forme avec la patte."""
+    c.part(c.limb([(30, 40 - b, 4.4), (22, 46 - b, 4), (18, 38 - b, 3.6)]) | c.ellipse(17, 35 - b, 4, 4), FUR, 'ink')
 
 
 def draw(c, t):
@@ -53,6 +59,7 @@ def draw(c, t):
     c.part(c.poly([(29, 54), (53, 54), (57, 64), (49, 66), (41, 62), (33, 66), (25, 64)]), LINEN, 'ink')
     c.part(c.poly([(37, 55), (45, 55), (46, 64), (43, 67), (41, 64), (39, 67), (36, 64)]), GOLD, 'ink', band=1)
     c.part(c.ellipse(41, 59, 2, 2), RED, 'ink')
+    near_arm(c, b)   # posé AVANT le torse : sa racine reste sous le haut de lin
     # ---- le torse de lin, le pli du tissu ----
     c.part(c.poly([(30, 36 - b), (50, 34 - b), (54, 40 - b), (51, 48), (50, 55), (32, 55), (29, 47), (28, 40 - b)]), LINEN, 'ink')
     c.line(36, 44, 34, 53, LINEN.shade), c.line(46, 44, 47, 53, LINEN.shade)
@@ -67,7 +74,7 @@ def draw(c, t):
     for x in (36, 40, 44, 48):
         c.px(x, 39 - b + (1 if 39 <= x <= 45 else 0), GOLD.hi)
     # ---- le bras droit (le plus proche) armé derrière elle, griffes sorties ----
-    c.part(c.limb([(30, 40 - b, 4.4), (22, 46 - b, 4), (18, 38 - b, 3.6)]) | c.ellipse(17, 35 - b, 4, 4), FUR, 'ink')
+    in_front(c, lambda tc: near_arm(tc, b), (30, 40 - b), 6.6)
     c.part(c.poly([(17, 40 - b), (23, 40 - b), (23, 45 - b), (17, 45 - b)]), GOLD, 'ink', band=1)
     for dx in (-3, 0, 3):
         c.line(17 + dx * 0.7, 31 - b, 17 + dx, 28 - b, CREAM.hi)

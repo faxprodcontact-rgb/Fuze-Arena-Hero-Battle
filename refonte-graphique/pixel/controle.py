@@ -13,7 +13,8 @@ from PIL import Image, ImageDraw
 import pix
 from pix import Canvas, sheet, FRAME_W, FRAME_H, BLINK
 
-ENCRES = ['kael', 'sable', 'eldra', 'rook', 'ilian']
+import jeu
+ENCRES = [pid for pid in jeu.CHARS if pid in jeu.HEROES]
 SOL, MILIEU = 71, 40
 
 
