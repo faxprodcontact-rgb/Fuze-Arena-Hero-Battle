@@ -81,6 +81,22 @@ class Canvas:
         pid = self.n
         c = np.zeros((self.h, self.w, 3), np.uint8)
         c[:] = ramp.base
+        if style == 'ink':
+            # style « encré » (gros pixels) : un trait noir sur tout le bord du morceau, puis l'intérieur à plat, une
+            # bande d'ombre en bas à gauche, un liseré clair en haut à droite et un point d'éclat dans le coin
+            inner = m & S(m, 1, 0) & S(m, -1, 0) & S(m, 0, 1) & S(m, 0, -1)
+            sh = inner & ~S(inner, -band, band)
+            c[sh] = ramp.shade
+            c[inner & ~S(inner, -1, 1) & ~S(inner, 0, 1)] = ramp.deep
+            if light:
+                lt = inner & ~S(inner, 1, -1) & ~sh
+                c[lt] = ramp.light
+                c[lt & ~S(inner, 1, 0) & ~S(inner, 0, -1)] = ramp.hi
+            c[m & ~inner] = OUT
+            self.col[m, :3] = c[m]
+            self.col[m, 3] = 255
+            self.pid[m] = pid
+            return m
         if style == 'round':
             ys, xs = np.nonzero(m)
             cx, cy = (xs.min() + xs.max() + 1) / 2, (ys.min() + ys.max() + 1) / 2
