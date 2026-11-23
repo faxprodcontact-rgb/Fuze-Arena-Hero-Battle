@@ -34,9 +34,9 @@ A #2442a4  bande bleue
 B #4a7ce0  bande bleue, lumière
 C #a86a1c  or, ombre
 D #ffd860  or
-E #3a1e22  corde, ombre
-F #7a4632  corde
-G #b47a4c  corde, lumière
+E #2e1a22  corde, ombre
+F #6a3a2c  corde
+G #a86a42  corde, lumière
 H #ff8a24  oeil, iris
 I #b02218  oeil, iris sombre
 J #120a10  oeil, pupille
