@@ -340,6 +340,16 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   silhouette grise passait pour un vrai objet et l'iPhone ne la dessinait qu'au rebond) ; plus de rebond nulle part
   (`overscroll-behavior: none`). Vérifier avec `scratchpad/art5/proprio.cjs <dossier>` (écrans touchés, à la taille de son
   téléphone, encoche imitée), `tour2.cjs <pro|se>`, `tuto-run.cjs`.
+  **v0.42.0 (23/11/2026), essai du pixel art dans le vrai jeu** (demande : « de la même taille que dans le jeu, à chaque place
+  où les anciens persos étaient ») : les 10 personnages de l'essai (Kael `assassins-2`, Sable `assassins-3`, Eldra `mages-8`,
+  Rook `assassins-5`, Ilian `angels-2`, et les monstres `ronciers-1`, `bayou-1`, `bayou-4`, `parade-1`, `glaces-4`) remplacent
+  les anciens dessins partout. `python3 refonte-graphique/pixel/jeu.py` écrit `public/art/px/<id>.webp` (planche de 8 images,
+  cases de 100 × 100 avec 2 pixels d'air, agrandie ×4 sans flou), `public/art/px/c-<id>.webp` (vignette cadrée comme
+  `art-jeu.py`, 512 de côté) et `src/game/pixel-meta.ts`. Taille : un pixel = 1,35 unité de combat pour les héros (≈ 124 de
+  haut comme avant), 0,96 pour les monstres (≈ 86) : une seule taille de pixel par groupe. Code : `isPixel` / `pixelUrl` /
+  `cardUrl` (`art.ts`), au combat une planche animée à la place du dessin découpé, sans écrasement ni balancement en plus
+  (`View.px`), bandeau des compétences ; héros en pied (`hero-figure.tsx`, `.px-win`, `image-rendering: pixelated`). Les
+  anciens dessins restent dans `art/p`, `art/c`, `art/r` : enlever un nom de `CHARS` dans `jeu.py` le remet comme avant.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

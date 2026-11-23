@@ -5,7 +5,8 @@ import type { Battle } from '../core/battle/engine';
 import { ENERGY_MAX, TICK_MS, type BattleEvent, type Hit, type Slot, type Unit } from '../core/battle/types';
 import { HEROES } from '../core/data/heroes';
 import type { Element } from '../core/types';
-import { ELEMENT_COLOR, artUrl, cardUrl, hasArt, heroCanvas, monsterCanvas } from './art';
+import { ELEMENT_COLOR, artUrl, cardUrl, hasArt, heroCanvas, isPixel, monsterCanvas, pixelUrl } from './art';
+import { PIXEL } from './pixel-meta';
 import { ART_META } from './art-meta';
 import { SCENES, loadBackdrop, placeBackdrop, type Ctx as BgCtx } from './bg';
 import { ICON_INDEX } from './icons-meta';
@@ -82,6 +83,8 @@ export interface View {
   sx: number;
   sy: number;
   ph: number;
+  /** Pixel art : la planche respire et cligne déjà ; pas d'écrasement ni de balancement en plus. */
+  px?: boolean;
 }
 
 /**
@@ -202,6 +205,13 @@ export abstract class FightScene extends Phaser.Scene {
     });
     for (const u of this.preloadUnits()) {
       const id = this.charId(u);
+      if (isPixel(id)) {
+        // pixel art : une planche de 8 images (respiration, clignement), à la place du dessin découpé
+        const px = PIXEL.cell * PIXEL.up;
+        if (!this.textures.exists(`x-${id}`)) this.load.spritesheet(`x-${id}`, pixelUrl(id), { frameWidth: px, frameHeight: px });
+        if (HERO_IDS.has(u.defId) && !this.textures.exists(`c-${id}`)) this.load.image(`c-${id}`, cardUrl(id));
+        continue;
+      }
       const rig = RIGS[id];
       if (rig) {
         if (!this.textures.exists(`r-${id}`)) this.load.image(`r-${id}`, `art/r/${id}.webp`);
@@ -298,11 +308,26 @@ export abstract class FightScene extends Phaser.Scene {
     let barY: number;
     const barW = unit.boss ? 130 : 86;
     const rig = RIGS[id];
-    if (hasArt(id) && (this.textures.exists(`p-${id}`) || (rig && this.textures.exists(`r-${id}`)))) {
+    const boost = unit.boss ? (this.bigBoss ? 1.45 : 1.12) : 1;
+    if (isPixel(id) && this.textures.exists(`x-${id}`)) {
+      // pixel art : les pieds (fx, fy de la case) sur la ligne de sol ; un pixel mesure `scale` unités (la taille des anciens dessins)
+      const [top, left, right, scale] = PIXEL.chars[id as keyof typeof PIXEL.chars];
+      const k = scale * boost, key = `x-${id}`;
+      if (!this.anims.exists(key)) {
+        this.anims.create({ key, frames: this.anims.generateFrameNumbers(key, { start: 0, end: PIXEL.frames - 1 }), frameRate: 7, repeat: -1 });
+      }
+      fig.setPosition(0, FEET);
+      const spr = this.add.sprite(0, 0, key, 0).setOrigin(PIXEL.fx / PIXEL.cell, PIXEL.fy / PIXEL.cell).setScale(k / PIXEL.up);
+      spr.play({ key, startFrame: Math.floor(Math.random() * PIXEL.frames) });
+      fig.add(spr);
+      imgs.push(spr);
+      shadow = this.add.ellipse(0, FEET, Math.min(160, (right - left) * k * 0.55), 20, 0x000000, 0.3);
+      barY = FEET - (PIXEL.fy - top) * k - 6;
+    } else if (hasArt(id) && (this.textures.exists(`p-${id}`) || (rig && this.textures.exists(`r-${id}`)))) {
       // dessin Hailuo : les pieds (point 106, 228 du repère) sur la ligne de sol
       // norm : la même stature pour tous les héros (mesurée par art-jeu.py) ; les monstres gardent leur échelle
       const [ox, oy, w, h, sc, norm] = ART_META.chars[id as keyof typeof ART_META.chars];
-      const k = UNIT_PX * (norm || Math.max(0.85, Math.min(1.35, sc))) * (unit.boss ? (this.bigBoss ? 1.45 : 1.12) : 1);
+      const k = UNIT_PX * (norm || Math.max(0.85, Math.min(1.35, sc))) * boost;
       fig.setPosition(0, FEET);
       if (rig && this.textures.exists(`r-${id}`)) {
         // découpé en morceaux : le corps, puis chaque morceau posé sur son articulation (ceux « derrière » avant le corps).
@@ -344,7 +369,7 @@ export abstract class FightScene extends Phaser.Scene {
     fig.setScale(hero ? 1 : -1, 1);
     const bars = this.add.graphics();
     body.add([shadow, fig, bars]);
-    this.views.set(unit.id, { unit, body, sprite: fig, imgs, parts, bars, homeX: x, homeY: body.y, barY, barW, hp: unit.hp, sx: fig.scaleX, sy: 1, ph: Math.random() * 6.28 });
+    this.views.set(unit.id, { unit, body, sprite: fig, imgs, parts, bars, homeX: x, homeY: body.y, barY, barW, hp: unit.hp, sx: fig.scaleX, sy: 1, ph: Math.random() * 6.28, px: isPixel(id) && this.textures.exists(`x-${id}`) });
     if (enter) this.tweens.add({ targets: body, x, duration: 450 / speed, ease: 'Back.easeOut' });
   }
 
@@ -403,11 +428,11 @@ export abstract class FightScene extends Phaser.Scene {
       this.syncStatusIcons(v);
       // au repos, chacun respire (le haut du corps monte et descend, pivot aux pieds) et se balance un peu
       const now = this.time.now / 1000;
-      if (!this.tweens.isTweening(v.sprite)) {
+      if (!v.px && !this.tweens.isTweening(v.sprite)) {
         const b = Math.sin(now * (u.boss ? 1.5 : 2.3) + v.ph);
         v.sprite.setScale(v.sx * (1 - 0.014 * b), v.sy * (1 + 0.03 * b));
       }
-      const sway = Math.sin(now * 1.3 + v.ph * 2) * (u.side === 'enemy' ? 1.6 : 0.8);
+      const sway = v.px ? 0 : Math.sin(now * 1.3 + v.ph * 2) * (u.side === 'enemy' ? 1.6 : 0.8);
       v.sprite.setAngle(u.stun > 0 ? Math.sin(this.time.now / 60) * 8 : sway + this.animateParts(v, now));
     }
     this.syncGlows();
@@ -886,8 +911,15 @@ export abstract class FightScene extends Phaser.Scene {
     g.fillStyle(color, 0.35).fillPoints([{ x: -60, y: h / 2 + 2 }, { x: W + 60, y: h / 2 - 30 }, { x: W + 60, y: h / 2 - 16 }, { x: -60, y: h / 2 + 16 }], true);
     g.lineStyle(4, color, 1).lineBetween(-60, -h / 2 + 16, W + 60, -h / 2 - 16).lineBetween(-60, h / 2 + 16, W + 60, h / 2 - 16);
     band.add(g);
-    const key = `p-${this.charId(v.unit)}`;
-    if (this.textures.exists(key)) {
+    const cid = this.charId(v.unit), key = `p-${cid}`, px = `x-${cid}`;
+    if (isPixel(cid) && this.textures.exists(px)) {
+      // pixel art : la première image de sa planche, pieds en bas du bandeau, 200 de haut
+      const top = PIXEL.chars[cid as keyof typeof PIXEL.chars][0];
+      const img = this.add.image(120, h / 2 + 8, px, 0).setOrigin(PIXEL.fx / PIXEL.cell, PIXEL.fy / PIXEL.cell);
+      img.setScale(200 / ((PIXEL.fy - top) * PIXEL.up));
+      band.add(img);
+      this.tweens.add({ targets: img, x: 175, duration: 560 * t });
+    } else if (this.textures.exists(key)) {
       const img = this.add.image(120, h / 2 + 8, key).setOrigin(0.5, 1);
       img.setScale(Math.min(200 / img.height, 220 / img.width));
       band.add(img);

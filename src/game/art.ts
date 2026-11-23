@@ -4,6 +4,7 @@
 import { heroDef } from '../core/data/heroes';
 import type { Element, Faction, HeroDef, Rarity } from '../core/types';
 import { ART_META } from './art-meta';
+import { PIXEL } from './pixel-meta';
 import { DEFAULT_LOOK, monsterArtId, type Look } from './look';
 
 export const FACTION_COLOR: Record<Faction, string> = {
@@ -321,7 +322,14 @@ export function artUrl(id: string): string {
 }
 /** Vignette carrée d'un personnage, pour les menus. */
 export function cardUrl(id: string): string {
-  return `art/c/${id}.webp`;
+  return isPixel(id) ? `art/px/c-${id}.webp` : `art/c/${id}.webp`;
+}
+/** Personnage redessiné en pixel art (planche animée art/px/<id>.webp, voir pixel-meta.ts). */
+export function isPixel(id: string): boolean {
+  return id in PIXEL.chars;
+}
+export function pixelUrl(id: string): string {
+  return `art/px/${id}.webp`;
 }
 
 /** Image pour les menus (balise <img>). */
