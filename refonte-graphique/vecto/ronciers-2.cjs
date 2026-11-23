@@ -137,12 +137,12 @@ function tooth([x1, y1], [x2, y2], [tx, ty]) {
 const TEETH_T = [[[294, 185], [302, 186], [298, 196]], [[306, 186], [317, 187], [312, 203]], [[322, 188], [330, 189], [326, 198]], [[334, 190], [344, 192], [340, 203]]];
 const TEETH_B = [[[290, 222], [298, 224], [294, 213]], [[304, 226], [314, 226], [310, 211]], [[320, 224], [328, 222], [324, 213]]];
 
-const EYE = { x: 298, y: 158, r: 10 };
+const EYE = { x: 298.0, y: 158.0, r: 13.5 };
 function eye() {
   const { x, y, r } = EYE;
   return oval(x, y + 0.4, r + 2.6, r + 2.2, '#140a08')
     + `<clipPath id="c-eye"><circle cx="${x}" cy="${y}" r="${r}"/></clipPath>` + dot(x, y, r, 'url(#g-eye)')
-    + `<g clip-path="url(#c-eye)">` + oval(x + 2, y + 1, 4, 5.4, '#120806')
+    + `<g clip-path="url(#c-eye)">` + oval(x + 2, y + 1, r * 0.36, r * 0.5, '#120806')
     + `<rect x="${x - r - 4}" y="${y - r - 4}" width="${2 * r + 8}" height="${n(r * 1.05)}" fill="#140a08" opacity="0.55" transform="rotate(14 ${x} ${y})"/>`
     + dot(x - 2.5, y - 3, 2.2, '#fff') + dot(x + 5, y + 4, 1, '#fff', 0.9) + '</g>'
     + `<g class="a-blink" opacity="0"><circle cx="${x}" cy="${y}" r="${r + 1}" fill="${FUR.base}"/>${line(`M${x - r} ${y + 2} Q${x} ${y + 7} ${x + r} ${y + 1}`, '#140a08', 2.4)}</g>`;

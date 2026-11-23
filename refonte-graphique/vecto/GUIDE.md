@@ -80,6 +80,14 @@ entier (lire seulement la partie utile : `grep -n` puis `sed -n`), agents en par
 
 Leçons de la première série (corrections demandées par le propriétaire ou le relecteur) :
 - **Fidélité mesurée** : chaque personnage passe `outils/ecart.cjs` (≥ 95 %) avant d'être montré.
+- **Ne plus copier l'original (décision du propriétaire, 23/11)** : l'original ne sert plus qu'à savoir QUI est le
+  personnage (espèce, tenue, arme, pose générale). Le dessin s'organise librement pour être cohérent et lisible :
+  pièces distinctes en relief (`relief()` = dégradé + `cel()`, ombre portée sur les pièces de derrière), couleurs
+  franches par matière (fourrure, tissu, or, pierre), jamais un grand aplat d'une seule couleur. Sans `master` quand la
+  forme change (voir `mages-8`, `assassins-3`). Une pièce qui sort de l'ancienne silhouette prend `free: true`.
+- **Yeux** : les deux yeux d'un visage sont bâtis avec la même fonction (`almond()` de `formes.cjs`, ou un œil en
+  miroir), de **même taille**, à la même hauteur, de part et d'autre du nez, assez grands (style « chibi »). Vérifier
+  avec une planche des visages (tous les personnages côte à côte) avant d'envoyer.
 - **Fidèle ≠ recopié** : la fidélité porte sur la silhouette, les proportions et la place des pièces ; le rendu, lui,
   est toujours le style net du jeu. Une zone blanche ou une tache de l'original n'est pas à reprendre telle quelle.
 - **Forme fidèle** : la tête et les pattes doivent avoir la forme de l'original (renard refusé une première fois :
