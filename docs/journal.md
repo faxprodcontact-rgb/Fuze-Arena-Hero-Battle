@@ -412,6 +412,11 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   frondeur, Auriel le cyclope au rocher, Gabryel l'homme-scorpion, Céleste la dryade). Une queue en anneaux = une seule
   forme avec des traits aux jointures (des boules séparées font un chapelet). `ONE_EYE = True` dans un fichier de
   personnage : `controle.py` ne compare pas les deux yeux (cyclope).
+  **v0.52.0 : les 12 mythes, les 72 héros sont faits** (Faune le druide à la faucille, Satyre le guerrier au chignon,
+  Cyclope le minotaure à la hache, Méduse la gorgone au rayon, Dryade le dieu chacal, Minotaure la reine ailée, Anubis le
+  baron vaudou, Freyja le barbare à la massue, Isis le chasseur au crâne de cerf, Thor la femme-araignée, Atlas l'enfant
+  de la forêt, Zeus le roi noir). Les noms de fichiers suivent les noms du jeu, pas ce que montre le dessin. Une couleur
+  de clignement passe par une lettre de la légende (jamais une couleur directe dans `HEAD_BLINK`).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

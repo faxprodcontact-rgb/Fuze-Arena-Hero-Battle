@@ -38,9 +38,9 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
 - **Pixel art « gros pixels encrés »** (style retenu pour les héros) : `refonte-graphique/pixel/` — **lire
   `refonte-graphique/pixel/GUIDE.md` avant de dessiner** (DA, proportions, tête pixel par pixel, pas de trait aux
   articulations, ordre premier/second plan, refus passés). Mannequin à recopier : `persos/_gabarit.py` ; contrôle
-  obligatoire avant de montrer : `python3 refonte-graphique/pixel/controle.py <nom>`. 5 héros et 5 monstres (ancien style)
-  sont dans le jeu à la place des anciens : `python3 refonte-graphique/pixel/jeu.py` (`public/art/px/`, `pixel-meta.ts`),
-  combat d'essai dans les Outils de test.
+  obligatoire avant de montrer : `python3 refonte-graphique/pixel/controle.py <nom>`. **Les 72 héros** (v0.52.0) et 5 monstres
+  (ancien style) sont dans le jeu à la place des anciens : `python3 refonte-graphique/pixel/jeu.py` (`public/art/px/`,
+  `pixel-meta.ts`), combat d'essai dans les Outils de test. Prochaine étape : les monstres dans le style encré.
 - Décors de combat dessinés par le code : `src/game/bg/` (un fichier par décor, `scenes.ts`). Règles : une plateforme
   rectangulaire d'un bord à l'autre (**jamais de rond au sol**), tout est posé, ordre des calques fixé (voir journal
   v0.38.0). Outil de test : `#fond=<terrain>`.
