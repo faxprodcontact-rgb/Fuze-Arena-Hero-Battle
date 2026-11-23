@@ -47,16 +47,15 @@ ROSTER = [
     ('isis', 'myths-9', 'Isis', 'terre', 'tireur', 'légendaire', 'chasseur au crâne de cerf'),
 ]
 VALIDES = {'elyon', 'gabryel', 'meduse', 'barzul', 'nerith', 'arachne', 'auriel',
-           'kesha', 'velith', 'lilou', 'celia', 'cyclope', 'solenn', 'zaroth', 'anubis', 'isis'}
+           'kesha', 'velith', 'lilou', 'celia', 'cyclope', 'solenn', 'zaroth', 'anubis', 'isis', 'kael', 'rook'}
 # héros dessinés dont les retours du propriétaire sont en train d'être faits : le retour demandé
 RETOUCHES = {
     'ilian': "La cape doit passer derrière les jambes aussi.",
     'minotaure': "L'aile gauche (à notre droite) n'est pas complète.",
     'sable': "Khépesh plus long et plus tranchant ; bras droit baissé tenant un grand bouclier égyptien devant elle ; des dents bien placées.",
-    'rook': "Ailes encore plus garnies ; passage des hanches au corps d'oiseau aligné ; contour arrondi entre le visage et les plumes au-dessus de l'œil droit.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'rook'}
+FAITES = set()
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
