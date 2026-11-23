@@ -7,21 +7,22 @@
 #   les deux bras en « coupe » de chaque côté du crâne rond, le ventre, les jambes arquées : on le reconnaît.
 # Pose : trois quarts vers la droite, jambes bien écartées et fléchies (le poids au milieu, pieds à plat, orteils vers
 #   la droite). Il soulève à deux mains un gros rocher au-dessus de sa tête, prêt à le jeter : les deux mains sous le
-#   rocher, les doigts recourbés sur sa face de dessous (phalanges, pouce sur le côté). Le rocher est le haut de la
+#   rocher, les doigts recourbés sur sa face de dessous (phalanges, ongles, pouce glissé dessous). Le rocher est le haut de la
 #   silhouette ; la tête reste à environ 96 px du sol.
 # Tête : crâne chauve et rond (reflet sur le dôme), UN grand œil au milieu du visage (blanc d'œil, iris ambre détaillé
 #   en anneau, pupille, reflet), un seul gros sourcil épais froncé en V au-dessus, plis de colère sur le front et au
 #   coin de l'œil, nez épaté qui dépasse à droite, grande bouche ouverte en grimace (gorge rouge sombre, jamais noire),
 #   défenses tordues qui montent de la mâchoire du bas, dents de travers en haut, grosse mâchoire, grande oreille
-#   décollée côté proche (creux rose), une petite oreille lointaine. Cicatrice sur le crâne.
-# Détails : cicatrices pâles sur la poitrine et le ventre, pagne de fourrure en mèches (bord du bas déchiqueté),
-#   ceinture de corde tressée nouée avec un crâne de petite bête et des os qui pendent, brassards de cuir à plaques
-#   d'os liés par une lanière, ongles des pieds, chevilles. Rocher : bloc taillé en facettes, fissures, mousse verte
-#   sur le dessus (terre), quelques éclats.
+#   décollée côté proche (creux dans l'ombre), pommette éclairée. Cicatrice pâle en biais sur le crâne.
+# Détails : cicatrices pâles sur le pectoral proche et sur le ventre, nombril, pli du ventre qui déborde sur la corde,
+#   pagne de fourrure en grosses grappes de poils (pointes fendues, le pan de devant descend plus bas), ceinture de
+#   corde tressée (torsade) avec un nœud, un petit crâne de bête et un os qui pendent, brassards de cuir à plaques d'os,
+#   quatre orteils avec ongles, talons ronds. Rocher : grandes facettes (dessus clair, dessous sombre), fissures, creux,
+#   une encoche en haut, mousse verte sur le dessus (terre).
 # Couleurs (une seule lumière, en haut à droite) : peau hâlée (ombres violettes, lumières dorées), œil ambre, os
 #   ivoire, fourrure brune, corde paille, cuir brun-violet, pierre gris-bleu (ombres indigo), mousse verte. Pas de noir.
 # Souffle sous les pectoraux : le haut du corps, les bras et le rocher montent d'un pixel. Clignement : l'œil se ferme
-#   (paupière de peau, ligne de cils sombre en haut).
+#   (paupière de peau, ligne des cils sombre en bas, lettre w). Un seul calque.
 id: angels-10
 sol: 64 116
 tete: 43 22 85 55
