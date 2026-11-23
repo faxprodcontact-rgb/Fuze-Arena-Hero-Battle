@@ -22,6 +22,11 @@ Pas encore branché dans le jeu : la page d'exemple sert de vitrine.
    - **Formes communes** : `formes.cjs` (`sm`, `rib`, `glint`, `tooth`, `nest`, `rooted`) — ne plus les recopier.
    - **Région de la silhouette** : `python3 refonte-graphique/vecto/outils/decoupe.py <id> "x,y x,y …"` (la silhouette
      coupée par un polygone, pour un corps, une tête, un fond) ; `outils/encre.py` montre les traits noirs seuls.
+   - **Matières** (héros chargés : peau, or, tissu, cheveux) : `python3 refonte-graphique/vecto/outils/couleurs.py <id>
+     nom:h0-h1:s0-s1:v0-v1 …` relève les zones de chaque matière (`couleurs/<id>.json`) ; on les peint avec `cel()` de
+     `formes.cjs` (ombre franche en bas à gauche, liseré clair en haut à droite). Attention : la peau à l'ombre et l'or
+     ont la même teinte : torse, bras, poings se décalquent alors pièce par pièce (`zone.py` avec `--boite`, ou à la
+     main sur le quadrillage) et se peignent par-dessus. Voir `angels-2`.
    - **Ce qui est difficile à découper** (ficelle, mousse, pattes qui se croisent, fond entre des fusées) : un morceau
      « fond » placé tout derrière, dont la forme est la silhouette coupée par une boîte (voir `parade-3`, `myths-10`,
      `angels-4` : `tailBase`, `legsBase`, `tentBase`), puis les morceaux dessinés par-dessus.
@@ -118,6 +123,7 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Pattes d'araignée (grosses pattes courbes à genou haut) | `myths-10.cjs` → `legPts`, `legD`, `legBody`, `FAR`, `NEAR` |
 | Carapace à pics, pattes à griffes (le modèle de la méthode « décalque ») | `bayou-2.cjs` → `SHELL`, `LOWER`, `HEAD`, `spikeFace`, `claws` |
 | Piquants en rangs (pointes relevées sur la silhouette), guirlande de feuilles, baies | `ronciers-3.cjs` → `TIPS`, `QUILLS`, `INNER`, `quillBody`, `ARC`, `LEAVES`, `BERRIES` |
+| Héros peint par matières (relevées), couronne par sa couleur, manche en deux tronçons | `angels-2.cjs` → `TONES`, `paint`, `PIECE`, `middle`, `CROWN` |
 | Coquille en spirale, cristaux | `cuirasses-4.cjs` → `spiral`, `moss` |
 | Pattes et serres | `glaces-4.cjs` → `footD`, `nail` ; `assassins-5.cjs` → `toe`, `talon` |
 | Jupe de feuilles, notes de musique | `assassins-12.cjs` → `leafGeo`, `skirtBody`, `noteFx` |
@@ -132,10 +138,10 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Hampe tenue (trident, lance), flamme bleue sans contour | `myths-12.cjs` → morceaux `trident`, `handL`, `flame` (`flameBody`) |
 | Épaulière en écailles, bottes de fer | `myths-12.cjs` → morceaux `pauR`, `legL`, `legR` |
 
-## Faits (28)
+## Faits (29)
 
 Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Séraphin `angels-4`, Nimue `mages-9` (le dessin montre un dieu de
-l'orage doré), Kael `assassins-2`, Thor `myths-10` (le dessin montre une femme-araignée), Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
+l'orage doré), Kael `assassins-2`, Thor `myths-10` (le dessin montre une femme-araignée), Ilian `angels-2`, Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
 Rook `assassins-5` · monstres : pétard `parade-1`, lion de la parade `parade-2`, singe aux fusées `parade-3`, lanterne `parade-4`, méduse
 `abysses-3`, dino-voile `bayou-1`, tortue hargneuse `bayou-2`, feu follet `bayou-4`, croco cuirassé `bayou-6`, chouette `glaces-4`, escargot de
 cristal `cuirasses-4`, coq-girouette `epouvantails-1`, épouvantail `epouvantails-2`, cerf-volant `epouvantails-3`, renard de feuilles `ronciers-1`,
@@ -146,7 +152,7 @@ blaireau moussu `ronciers-2`, porc-épic des ronces `ronciers-3`.
 Ordre : d'abord les monstres que le joueur rencontre en premier (région 1 de la campagne : familles `parade`,
 `epouvantails`, `bayou`, `ronciers`), en intercalant un héros Légendaire (l'invocation les montre en grand).
 
-1. héros `angels-2` Ilian 2. `parade-5` 3. `epouvantails-4` 4. héros `mages-8` Eldra
+1. `parade-5` 3. `epouvantails-4` 4. héros `mages-8` Eldra
 5. `bayou-3` 6. `ronciers-4` 7. héros `assassins-3` Sable 8. `parade-6` 9. `epouvantails-5` 10. héros `myths-8` Freyja
 11. `bayou-5` 12. `ronciers-5` 13. héros `angels-3` Aube 14. `epouvantails-6` 15. `ronciers-6` 16. héros `mages-11` Myrr
 Ensuite : `fauves` et `ruche` (région 2), `voliere` et `cuirasses` (régions 3-4)… et un Légendaire tous les deux

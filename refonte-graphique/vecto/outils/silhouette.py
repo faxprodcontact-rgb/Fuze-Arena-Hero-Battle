@@ -21,7 +21,8 @@ im = cv2.imread(os.path.join(HERE, '..', 'originaux', f'{pid}.jpg'))
 H, W = im.shape[:2]
 b, g, r = [im[:, :, i].astype(int) for i in range(3)]
 mn = np.minimum(np.minimum(r, g), b); mx = np.maximum(np.maximum(r, g), b)
-bgish = ((mn > 200) & ((mx - mn) / np.maximum(mx, 1) < 0.1)).astype(np.uint8)
+# (l'ombre grise posée au sol est aussi du fond : elle touche le bord ou le fond, et le trait noir protège le personnage)
+bgish = ((mn > 140) & ((mx - mn) / np.maximum(mx, 1) < 0.18)).astype(np.uint8)
 # le fond relié au bord
 n, lab = cv2.connectedComponents(bgish, connectivity=4)
 border = set(np.unique(np.concatenate([lab[0], lab[-1], lab[:, 0], lab[:, -1]]))) - {0}

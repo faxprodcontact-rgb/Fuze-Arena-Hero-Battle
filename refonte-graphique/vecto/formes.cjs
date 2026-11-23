@@ -101,4 +101,23 @@ function nest(s, cls, outer) {
 /** Tout le personnage dans un groupe `a-root` (pour un bond, un vol). */
 const rooted = (s) => { const i0 = s.indexOf('<g fill="#2a1430"'); return s.slice(0, i0) + '<g class="a-root">' + s.slice(i0).replace(/<\/svg>$/, '</g></svg>'); };
 
-module.exports = { sm, P, cw, rib, glint, tooth, nest, rooted };
+/** Décale un chemin dont toutes les coordonnées sont absolues et vont par paires (sorties de sm() ou des outils). */
+const shiftPath = (d, dx, dy) => { let k = 0; return d.replace(/-?\d+(\.\d+)?/g, (v) => String(+(+v + (k++ % 2 ? dy : dx)).toFixed(1))); };
+let celN = 0;
+/**
+ * Peint une zone en aplats nets, dans le style des personnages : la base, une ombre franche le long du bord bas-gauche
+ * (largeur `w`), un liseré clair le long du bord haut-droit (largeur `hw`), et une ombre plus profonde au fond du creux.
+ * c = { hi, base, sh, deep } ; la zone peut avoir des trous (remplissage evenodd).
+ */
+function cel(d, c, w = 6, hw = 3) {
+  const id = `cel${celN++}`;
+  const xor = (dx, dy) => `<path d="${d} ${shiftPath(d, dx, dy)}" fill-rule="evenodd"`;
+  return `<clipPath id="${id}"><path d="${d}" clip-rule="evenodd"/></clipPath><g clip-path="url(#${id})">`
+    + `<path d="${d}" fill="${c.base}" fill-rule="evenodd"/>`
+    + `${xor(w, -w)} fill="${c.sh}"/>`
+    + (c.deep ? `${xor(w * 0.45, -w * 0.45)} fill="${c.deep}" opacity="0.7"/>` : '')
+    + `${xor(-hw, hw)} fill="${c.hi}"/>`
+    + '</g>';
+}
+
+module.exports = { sm, P, cw, rib, glint, tooth, nest, rooted, shiftPath, cel };
