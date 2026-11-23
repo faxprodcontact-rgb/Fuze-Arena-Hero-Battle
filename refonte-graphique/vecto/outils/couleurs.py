@@ -1,7 +1,7 @@
 # Relève sur le dessin d'origine les grandes zones de chaque MATIÈRE (cheveux blancs, peau, or, tissu bleu…), en formes
 # vectorielles lisses : les traits noirs intérieurs sont rendus à la matière voisine, les miettes enlevées.
 # python3 refonte-graphique/vecto/outils/couleurs.py <id> nom:h0-h1:s0-s1:v0-v1 [nom:…] [--lissage 1.0] [--min 80]
-#         [--apercu sortie.png]
+#         [--noyau 5] [--vote] [--apercu sortie.png]
 #   h = teinte 0-180, s = saturation 0-255, v = luminosité 0-255 (OpenCV). Un nom peut revenir (deux plages de teinte).
 #   L'ordre compte : un pixel prend la première matière qui lui va.
 # Écrit couleurs/<id>.json : { nom: { c: couleur moyenne sur l'original, d: chemin SVG } }. Dans le fichier du personnage : `const MAT = require('./couleurs/<id>.json')`,
@@ -16,6 +16,9 @@ def opt(name, default, cast=float):
         i = args.index(name); v = cast(args[i + 1]); del args[i:i + 2]; return v
     return default
 eps = opt('--lissage', 1.5); amin = opt('--min', 150); preview = opt('--apercu', None, str)
+ker = int(opt('--noyau', 5))  # taille du lissage des bords (plus grand = zones plus rondes, moins de miettes)
+vote = '--vote' in args
+if vote: args.remove('--vote')
 fname = opt('--fichier', None, str)  # autre nom de sortie (ex. <id>-ombres) ; une matière nommée « _ » n'est pas écrite
 pid = args[0]; specs = args[1:]
 im = cv2.imread(os.path.join(HERE, '..', 'originaux', f'{pid}.jpg'))
@@ -45,11 +48,18 @@ for _ in range(40):
         m = (labels == k).astype(np.uint8)
         grow = cv2.dilate(m, np.ones((3, 3), np.uint8)).astype(bool) & (labels < 0) & (fig > 0)
         labels[grow] = k
+# lissage par vote (--vote) : chaque pixel prend la matière la plus présente autour de lui → bords ronds, et jamais de trou
+# entre deux matières (le lissage matière par matière, lui, en laisse)
+if vote:
+    acc = np.stack([cv2.GaussianBlur((labels == k).astype(np.float32), (0, 0), ker / 3) for k in range(len(names))])
+    labels = np.where(fig > 0, acc.argmax(0), -1)
 out = {}
 for k, nm in enumerate(names):
     m = (labels == k).astype(np.uint8)
-    m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((5, 5), np.uint8))
-    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5)))
+    if vote: m = cv2.dilate(m, np.ones((3, 3), np.uint8)) & fig  # un léger recouvrement entre voisines : pas de jour
+    if not vote:
+        m = cv2.morphologyEx(m, cv2.MORPH_CLOSE, np.ones((ker, ker), np.uint8))
+        m = cv2.morphologyEx(m, cv2.MORPH_OPEN, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (ker, ker)))
     cs, _ = cv2.findContours(m, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
     d = ''
     for c in cs:
