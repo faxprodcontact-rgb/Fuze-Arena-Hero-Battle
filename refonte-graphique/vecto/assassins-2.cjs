@@ -143,31 +143,41 @@ const S = {
   pommel: sm(`${sp(-0.24, 14)} ${sp(-0.3, 0)} ${sp(-0.24, -14)} ${sp(-0.21, 0)}`),
   fist: sm('446,352 466,342 486,350 494,368 490,388 474,398 452,396 440,382 438,366'),
   // la tête : le visage sombre, ses joues, le menton
-  face: sm('258,170 300,150 360,148 410,158 436,180 440,220 432,262 418,290 392,310 352,320 314,314 284,298 262,274 250,240 250,200'),
+  face: sm('262,180 296,158 344,150 392,156 428,172 446,196 448,210! 462,226 466,240 458,250! 448,256 450,270 442,288 426,304 400,314 366,318 332,310 304,292 280,264 264,232 258,206'),
   // l'oreille pointue à gauche
-  ear: sm('234,190 254,186 262,210 258,240 244,252 232,236 226,212'),
+  ear: sm('276,206 254,186 226,170! 236,196 244,222 258,244 278,250'),
 };
 
 // ---------- le visage ----------
+// une fissure de lave : une ligne brisée qui rougeoit (un halo orange, un cœur jaune)
+const crack = (pts) => { const d = 'M' + pts.map(([x, y]) => `${x} ${y}`).join('L');
+  return `<path d="${d}" fill="none" stroke="${FIRE.deep}" stroke-width="4.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.8"/>`
+    + `<path d="${d}" fill="none" stroke="${FIRE.base}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`
+    + `<path d="${d}" fill="none" stroke="${FIRE.hi}" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round"/>`; };
+const { almond: almondK } = require('./formes.cjs');
+// les yeux : deux fentes de braise étroites sous l'arcade (l'œil du fond plus étroit, vu de trois quarts)
+const KE1 = almondK(374, 218, 40, 15, -1, 3.4), KE2 = almondK(428, 216, 26, 13, 1, 3);
+const slit = (A, cx, cy) => `<path d="${A.white}" fill="url(#g-eye)"/>` + oval(cx + 2, cy, 2.2, 5.4, '#3a0a04') + shape(A.lash, '#0c080e');
 const faceBody = use('face', 'url(#g-skin)') + clip('face',
-  // la lueur du feu sur le front et la joue gauche, l'ombre sur le bas du visage ; un reflet sur la pommette droite
-  glint([[256, 168, 6], [320, 156, 10], [400, 162, 8], [436, 182, 0]], FIRE.mid, 0.5) + shape(sm('248,250 270,290 310,316 360,320 420,300 420,330 248,330'), SKIN.deep, 0.6)
-  + oval(410, 220, 12, 22, SKIN.hi, 0.35, 10)
-  // le front plissé, les arcades lourdes qui plongent vers le nez
-  + shape(sm('254,186 280,170 318,178 346,204 336,214 306,198 276,198 258,202'), SKIN.deep)
-  + shape(sm('348,208 372,186 406,178 434,188 432,200 404,198 376,206 358,218'), SKIN.deep)
-  + glint([[262, 184, 0], [292, 176, 3], [326, 190, 0]], SKIN.hi, 0.5) + glint([[358, 198, 0], [388, 186, 3], [426, 190, 0]], SKIN.hi, 0.5)
-  // les yeux qui brûlent : une lueur, l'œil en amande blanc-jaune, une pupille fendue
-  + `<g class="a-eyes">${oval(296, 220, 34, 22, 'url(#g-glow)', 1, 10)}${oval(400, 226, 30, 20, 'url(#g-glow)', 1, -10)}</g>`
-  + shape('M264 212 C278 204 304 202 326 212 C324 228 308 238 290 238 C276 236 266 226 264 212 Z', 'url(#g-eye)') + oval(298, 222, 3.6, 8.4, '#3a0a04')
-  + shape('M372 222 C386 210 410 208 428 214 C426 230 412 240 396 240 C384 238 374 232 372 222 Z', 'url(#g-eye)') + oval(402, 226, 3.2, 7.6, '#3a0a04')
-  // le nez épaté, les narines
-  + shape(sm('330,236 346,230 360,236 364,250 352,256 338,256 328,248'), SKIN.shade, 0.9) + oval(338, 250, 3, 2, SKIN.deep) + oval(354, 250, 3, 2, SKIN.deep)
-  // le rictus : la bouche sombre et la rangée de dents serrées, deux petits crocs
-  + shape('M292 266 C320 262 370 262 398 266 L394 284 C366 290 322 290 296 284 Z', 'url(#g-mouth)')
-  + shape('M296 268 C324 264 368 264 394 268 L393 276 C366 274 324 274 297 276 Z', '#f4ece0')
-  + shape('M310 276 L314 286 L318 276 Z', '#f4ece0') + shape('M370 276 L374 286 L378 276 Z', '#f4ece0')
-  + line('M320 268 L320 275 M336 267 L336 274 M352 267 L352 274 M368 268 L368 275', '#8a7a70', 1.2, 0.8)
+  // la lueur du feu sur le haut du crâne, l'ombre de la mâchoire, la pommette éclairée
+  glint([[270, 176, 6], [320, 158, 9], [380, 156, 8], [430, 176, 0]], FIRE.mid, 0.55)
+  + shape(sm('264,232 284,270 314,298 350,314 400,314 430,302 446,280 446,330 260,330'), SKIN.deep, 0.75)
+  + glint([[330, 252, 0], [370, 246, 4], [410, 252, 0]], SKIN.hi, 0.5)
+  // la tempe et la joue de profil : un creux sous la pommette, une fissure de lave
+  + glint([[300, 214, 0], [314, 246, 4], [330, 270, 0]], SKIN.deep, 0.6)
+  + crack([[288, 186], [300, 200], [296, 214], [310, 226]]) + crack([[402, 282], [414, 292], [428, 288]])
+  // la lueur des yeux
+  + `<g class="a-eyes">${oval(376, 218, 30, 14, 'url(#g-glow)')}${oval(430, 216, 20, 12, 'url(#g-glow)')}</g>`
+  + slit(KE1, 376, 218) + slit(KE2, 430, 216)
+  // l'arcade lourde et basse, qui plonge vers le nez : elle mange le haut des yeux (regard dur, pas surpris)
+  + `<path d="${sm('334,190 372,192 410,198 446,206! 446,214! 420,208 404,212 380,206 352,206 336,204')}" transform="translate(-1 3)" fill="${SKIN.deep}" opacity="0.8"/>`
+  + shape(sm('334,190 372,192 410,198 446,206! 446,214! 420,208 404,212 380,206 352,206 336,204'), '#0e0a10')
+  + glint([[338, 190, 0], [380, 191, 2], [430, 202, 0]], SKIN.hi, 0.6)
+  // le nez qui avance : l'arête éclairée, la narine
+  + glint([[440, 214, 0], [452, 228, 2.4], [458, 240, 0]], SKIN.hi, 0.7) + oval(452, 246, 4, 2.4, SKIN.deep, 1, 20)
+  // la bouche : un rictus fermé sur le côté, deux crocs qui dépassent au coin
+  + line('M396 284 Q420 280 446 270', '#0e0a10', 3.2) + line('M392 280 Q394 285 398 287', '#0e0a10', 2.4)
+  + shape('M424 279 L428 291 L433 278 Z', '#f4ece0') + shape('M436 275 L439 285 L443 273 Z', '#f4ece0')
 );
 
 // ---------- le feu ----------
@@ -205,11 +215,6 @@ const embers = EMBERS.map(([x, y, r]) => `<g class="a-ember">${oval(x, y, r * 2.
 const sh = (on, dx, dy, color, o) => ({ on, dx, dy, color, o });
 /** Une plaque d'armure bombée : sa forme, l'arête claire en haut à droite, le bord sombre en bas à gauche. */
 const { cel } = require('./formes.cjs');
-// une fissure de lave : une ligne brisée qui rougeoit (un halo orange, un cœur jaune)
-const crack = (pts) => { const d = 'M' + pts.map(([x, y]) => `${x} ${y}`).join('L');
-  return `<path d="${d}" fill="none" stroke="${FIRE.deep}" stroke-width="4.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.8"/>`
-    + `<path d="${d}" fill="none" stroke="${FIRE.base}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`
-    + `<path d="${d}" fill="none" stroke="${FIRE.hi}" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round"/>`; };
 const plate = (d, hiPts, shPts) => `<path d="${d}" fill="${ARM.deep}" transform="translate(-2 3)" opacity="0.8"/>` + shape(d, 'url(#g-armor)') + (hiPts ? glint(hiPts, '#d4d0dc', 0.75) : '') + (shPts ? glint(shPts, ARM.deep, 0.8) : '');
 // ---------- les jambes (redessinées) ----------
 const { ellipse } = require('./formes.cjs');
@@ -259,7 +264,7 @@ const parts = [
     + shape('M168 262 L182 222 L196 258 Z', ARM.mid) + shape('M182 222 L196 258 L186 258 Z', ARM.lite, 0.8)
     + shape('M212 258 L232 226 L240 262 Z', ARM.mid) + shape('M232 226 L240 262 L232 262 Z', ARM.lite, 0.8)
     + crack([[150, 300], [170, 296], [178, 308], [200, 304]]) + crack([[210, 320], [226, 312], [236, 318]])
-    + oval(200, 246, 50, 16, FIRE.base, 0.3)) },
+    + glint([[150, 262, 0], [200, 244, 2.4], [262, 250, 0]], FIRE.base, 0.7)) },
   // les flammes le long des deux tranchants (sans contour : elles brûlent), derrière la lame
   // le feu le long des deux tranchants (sans contour : il brûle), derrière la lame : une bordure ondulée et irrégulière
   // (orange, puis jaune contre la lame), et quelques braises qui s'envolent au-dessus
@@ -302,8 +307,8 @@ const parts = [
   { id: 'fistLb', cls: 'a-body', d: S.fistLb, shadow: [sh(['armLb', 'torso', 'skirt'], -3, 5, SH.armor, 0.5)], body: use('fistLb', 'url(#g-armor)') + clip('fistLb',
     [[172, 372, 222, 368], [170, 386, 226, 384], [176, 400, 218, 398]].map(([x1, y1, x2, y2]) => glint([[x1, y1, 0], [(x1 + x2) / 2, (y1 + y2) / 2, 3], [x2, y2, 0]], ARM.deep, 0.75)
       + glint([[x1, y1 - 3, 0], [(x1 + x2) / 2, (y1 + y2) / 2 - 3, 1.6], [x2, y2 - 3, 0]], '#d4d0dc', 0.6)).join('')) },
-  { id: 'ear', cls: 'a-head', d: S.ear, shadow: [sh(['fire', 'pauL'], -3, 4, SH.fire, 0.4)], body: use('ear', 'url(#g-skin)') + clip('ear', shape(sm('238,196 250,196 254,220 248,240 238,230'), SKIN.deep, 0.7)) },
-  { id: 'face', cls: 'a-head', d: S.face, shadow: [sh(['fire', 'pauL', 'torso', 'ear', 'horn'], -4, 6, SH.armor, 0.45)], body: faceBody },
+  { id: 'ear', cls: 'a-head', free: true, d: S.ear, shadow: [sh(['fire', 'pauL'], -3, 4, SH.fire, 0.4)], body: use('ear', 'url(#g-skin)') + clip('ear', shape(sm('266,212 248,196 236,186 246,212 256,234 268,240'), SKIN.deep, 0.7)) },
+  { id: 'face', cls: 'a-head', free: true, d: S.face, shadow: [sh(['fire', 'pauL', 'torso', 'ear'], -4, 6, SH.armor, 0.45)], body: faceBody },
   // --- les braises et la lueur de l'épée (sans contour : elles brillent) ---
   { id: 'embers', d: 'M-900 -900', body: embers },
 ];
