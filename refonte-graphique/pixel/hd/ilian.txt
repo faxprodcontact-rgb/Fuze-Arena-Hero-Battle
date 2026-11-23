@@ -1,15 +1,17 @@
 # Ilian (angels-2, élément eau, guerrier, légendaire) : le roi des mers, un vieux roi guerrier massif et royal.
 #
 # Corps : un colosse âgé mais puissant, à lui seul. Épaules très larges sous deux épaulières d'or (la proche énorme,
-#   en coquille avec un rebord relevé et une lame dessous, la lointaine raccourcie), torse nu en tonneau (pectoraux
+#   en coquille avec un rebord relevé et une lame dessous, la lointaine plus petite, en dôme), torse nu en tonneau (pectoraux
 #   lourds, abdominaux, dentelé, obliques), bras épais (deltoïde, biceps, triceps, gros avant-bras) serrés par des
 #   brassards d'or, cuisses courtes et solides. Silhouette en noir : trident planté à gauche plus haut que lui,
-#   couronne à pointes, crinière qui coule dans le dos, cape des deux côtés, bras tendu et vagues en croissant à
-#   droite : on le reconnaît.
+#   couronne à pointes, crinière qui coule dans le dos, cape des deux côtés, gros bras qui tombe le long du corps à
+#   droite, poing fermé : on le reconnaît.
 # Pose : trois quarts vers la droite, jambes bien écartées, pieds à plat. Main droite (proche) serrée sur le trident
-#   planté debout, à hauteur de poitrine, coude bas ; bras gauche (lointain) jeté en avant vers l'ennemi, main ouverte,
-#   doigts écartés, paume vers l'ennemi, qui lance deux vagues en croissant (bord d'attaque écumeux, gouttes) : pas de
-#   boule. Le bras lointain part de derrière l'épaulière : il ne passe jamais devant la barbe.
+#   planté debout, à hauteur de poitrine, coude bas ; bras gauche (lointain) au repos le long du corps mais puissant :
+#   il sort de sous l'épaulière lointaine (agrandie en dôme pour coiffer l'épaule), derrière le bord du torse (le
+#   torse passe devant), deltoïde, biceps, triceps dans l'ombre, coude, avant-bras au long supinateur éclairé,
+#   brassard d'or serti d'une pierre de mer, poing fermé (pouce par-dessus, doigts repliés) à côté de la hanche.
+#   Rien devant la barbe. Retouche 24/11 (demande du propriétaire) : plus de vagues ni de sort sur l'illustration.
 # Tête : vieux roi en colère. Couronne d'or bien posée sur le crâne (le bandeau enfoncé dans les cheveux, le dessus
 #   des cheveux visible entre les pointes, pointes plus petites vers l'arrière, une pierre de mer sous chaque pointe),
 #   mèches blanches qui sortent du bandeau sur la tempe et le front, longue crinière blanche en mèches qui coule
@@ -23,11 +25,11 @@
 #   garde en croissant ornée d'une pierre de mer, hampe avec bagues et talon.
 # Couleurs (une seule lumière, en haut à droite) : peau hâlée (ombres brun violet, lumières pêche), blanc des cheveux
 #   (ombres indigo-lavande), or (ombres brun-rouge, lumières jaune pâle), jupe bleu roi (ombres indigo, lumières
-#   ciel), cape bleu nuit, eau turquoise (ombres bleu profond, écume blanche). Pas de noir à l'intérieur.
-# Grille de 132 de large (sol en x = 68) pour laisser la place aux vagues devant la main.
+#   ciel), cape bleu nuit, pierres de mer turquoise. Pas de noir à l'intérieur.
+# Grille de 128 de large (sol en x = 64), comme les autres héros (elle avait été élargie pour les vagues).
 # Souffle sous les pectoraux ; clignement : les yeux deviennent des paupières de peau.
 # Calques : cape (derrière), corps, trident (respire avec lui : la hampe est droite, rien ne se voit), mains (les doigts
-#   devant la hampe, les vagues devant la main).
+#   devant la hampe).
 id: angels-2
 sol: 64 116
 tete: 50 14 86 46
@@ -59,10 +61,10 @@ r #0a0a26  cape, creux
 s #131a42  cape, ombre
 t #1e2a64  cape
 u #2e428c  cape, lumière
-v #0e3a72  eau, ombre profonde ; pierre, ombre
-w #1a80c4  eau
-y #44cce8  eau, lumière
-z #c0f6ff  eau, écume
+v #0e3a72  pierre de mer, ombre profonde
+w #1a80c4  pierre de mer
+y #44cce8  pierre de mer, lumière
+z #c0f6ff  pierre de mer, éclat
 e #2cc0e4  oeil, iris
 f #0e2a4e  oeil, pupille
 F #e8eaf2  oeil, blanc
