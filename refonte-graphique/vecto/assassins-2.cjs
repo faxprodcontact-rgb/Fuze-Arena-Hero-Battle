@@ -137,8 +137,8 @@ const S = {
   pauR: sm('408,252 434,240 458,246 470,264 468,290 456,314 432,324 410,316 398,290'),
   armR: sm('420,312 452,304 470,330 476,362 470,388 448,398 428,384 420,350'),
   // l'épée : la lame (de la garde à la pointe), la garde dorée, la poignée et le pommeau
-  blade: sm(`${sp(-0.04, 42)}! ${sp(0.84, 50)}! ${sp(1.01, 8)}! ${sp(0.71, -46)}! ${sp(-0.04, -46)}!`),
-  guard: sm(`${sp(-0.03, 58)}! ${sp(0.01, 62)} ${sp(0.03, 50)} ${sp(0.02, 0)} ${sp(0.03, -54)} ${sp(0.01, -64)} ${sp(-0.03, -58)}! ${sp(-0.06, -26)} ${sp(-0.07, 0)} ${sp(-0.06, 26)}`),
+  blade: sm(`${sp(-0.04, 42)}! ${sp(0.84, 50)}! ${sp(1.04, 6)}! ${sp(0.9, -30)}! ${sp(0.78, -48)}! ${sp(0.7, -66)}! ${sp(0.66, -48)}! ${sp(0.56, -64)}! ${sp(0.52, -48)}! ${sp(0.42, -62)}! ${sp(0.38, -48)}! ${sp(0.28, -60)}! ${sp(0.24, -48)}! ${sp(0.14, -56)}! ${sp(0.1, -46)}! ${sp(-0.04, -46)}!`),
+  guard: sm(`${sp(-0.04, 56)}! ${sp(0.1, 96)}! ${sp(0.03, 64)}! ${sp(0.04, 0)} ${sp(0.03, -66)}! ${sp(0.12, -104)}! ${sp(-0.04, -60)}! ${sp(-0.07, -26)} ${sp(-0.08, 0)} ${sp(-0.07, 26)}`),
   grip: sm(`${sp(-0.05, 10)}! ${sp(-0.24, 10)}! ${sp(-0.24, -10)}! ${sp(-0.05, -10)}!`),
   pommel: sm(`${sp(-0.24, 14)} ${sp(-0.3, 0)} ${sp(-0.24, -14)} ${sp(-0.21, 0)}`),
   fist: sm('446,352 466,342 486,350 494,368 490,388 474,398 452,396 440,382 438,366'),
@@ -173,12 +173,29 @@ const faceBody = use('face', 'url(#g-skin)') + clip('face',
 // ---------- le feu ----------
 /** Les langues de feu de la crinière : chacune un fuseau du plus foncé (racine) au plus clair (pointe). */
 // des langues de feu plus claires, courbes et de tailles différentes, qui montent depuis le crâne
-const TONGUES = ['300,150 286,110 288,70 300,30 304,8! 312,40 316,80 322,120 318,152', '252,170 232,140 214,104 206,74! 226,98 246,124 266,150',
-  '350,150 362,110 376,74 384,44! 384,82 376,118 368,150', '226,200 196,182 170,170 150,160! 182,164 210,172 236,184', '392,160 408,124 420,96! 420,128 410,156',
-  '270,160 258,120 252,84 262,52! 272,86 280,124 288,156'];
-const fireBody = use('fire', 'url(#g-fireR)') + clip('fire',
-  TONGUES.map((t, i) => shape(sm(t), i % 2 ? FIRE.lite : FIRE.hi, i % 2 ? 0.7 : 0.8)).join('')
-  + shape(sm('180,230 230,210 280,190 340,180 400,170 420,190 380,220 300,240 220,250'), FIRE.deep, 0.5));
+// une mèche de feu : de sa racine b (sur le crâne) à sa pointe t, large de w, qui se recourbe en crochet vers l'arrière
+function flameLock([bx, by], [tx, ty], w, hook = 0.7) {
+  const dx = tx - bx, dy = ty - by, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, nx = -uy, ny = ux; // n : vers la gauche de la mèche
+  const P2 = (x, y) => `${n(x)} ${n(y)}`;
+  const a = [bx - nx * w / 2, by - ny * w / 2], b = [bx + nx * w / 2, by + ny * w / 2];
+  return `M${P2(...a)}C${P2(bx + dx * 0.35 - nx * w * 0.65, by + dy * 0.35 - ny * w * 0.65)} ${P2(tx - dx * 0.3 - nx * w * (0.1 + hook), ty - dy * 0.3 - ny * w * (0.1 + hook))} ${P2(tx, ty)}`
+    + `C${P2(tx - dx * 0.4 + nx * w * 0.05, ty - dy * 0.4 + ny * w * 0.05)} ${P2(bx + dx * 0.4 + nx * w * 0.6, by + dy * 0.4 + ny * w * 0.6)} ${P2(...b)}Z`;
+}
+const LOCKS = [
+  // derrière : grandes mèches rouge sombre
+  [[[262, 214], [106, 120], 70], [[278, 190], [140, 34], 80], [[322, 172], [226, 2], 86], [[368, 162], [322, 4], 76], [[408, 168], [420, 30], 58], [[244, 248], [96, 196], 56]],
+  // au milieu : orange
+  [[[282, 194], [176, 70], 58], [[330, 174], [270, 26], 62], [[376, 164], [376, 40], 52], [[258, 226], [150, 158], 50], [[410, 176], [446, 84], 40]],
+  // devant : jaune, plus courtes
+  [[[300, 184], [240, 96], 40], [[350, 170], [326, 82], 40], [[272, 210], [204, 150], 34], [[396, 172], [408, 110], 30]],
+];
+const LOCK_COL = [['#9a2006', '#e8480c'], ['#e8600a', '#ffa82a'], ['#ffc030', '#fff4c0']];
+const fireLocks = LOCKS.map((layer, k) => layer.map(([b, t, w], i) => {
+  const d = flameLock(b, t, w), id = `g-lk${k}-${i}`;
+  return `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${b[0]}" y1="${b[1]}" x2="${t[0]}" y2="${t[1]}"><stop offset="0" stop-color="${LOCK_COL[k][0]}"/><stop offset="1" stop-color="${LOCK_COL[k][1]}"/></linearGradient>`
+    + (k ? `<path d="${d}" transform="translate(-3 4)" fill="${FIRE.deep}" opacity="0.45"/>` : '') + `<path d="${d}" fill="url(#${id})"/>`;
+}).join('')).join('');
+const FIRE_D = LOCKS[0].map(([b, t, w]) => flameLock(b, t, w)).join('') + LOCKS[1].map(([b, t, w]) => flameLock(b, t, w)).join('');
 
 // ---------- les braises de lave entre les plaques ----------
 const EMBERS = [[330, 340, 16], [196, 470, 14], [400, 468, 12], [300, 400, 8], [252, 330, 6]];
@@ -194,19 +211,36 @@ const crack = (pts) => { const d = 'M' + pts.map(([x, y]) => `${x} ${y}`).join('
     + `<path d="${d}" fill="none" stroke="${FIRE.base}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`
     + `<path d="${d}" fill="none" stroke="${FIRE.hi}" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round"/>`; };
 const plate = (d, hiPts, shPts) => `<path d="${d}" fill="${ARM.deep}" transform="translate(-2 3)" opacity="0.8"/>` + shape(d, 'url(#g-armor)') + (hiPts ? glint(hiPts, '#d4d0dc', 0.75) : '') + (shPts ? glint(shPts, ARM.deep, 0.8) : '');
+// ---------- les jambes (redessinées) ----------
+const { ellipse } = require('./formes.cjs');
+const legSet = (thigh, knee, boot, cracks, toe) => ({ thigh: rib(thigh), knee, boot, cracks, toe });
+const LEG = {
+  Lp: legSet([[178, 462, 64], [168, 500, 56], [160, 528, 50]], [162, 500, 24, 20], sm('118,508 194,506 202,528 208,560! 88,560! 84,546 96,530 116,524'), [[[134, 528], [146, 542], [162, 536], [174, 548]]], [90, 556, 24, 16]),
+  Rp: legSet([[404, 462, 64], [414, 498, 56], [420, 524, 50]], [418, 498, 24, 20], sm('382,506 456,506 462,524 494,532 520,546 524,560! 380,560! 376,540'), [[[420, 526], [436, 540], [452, 534], [470, 546]]], [474, 558, 24, 16]),
+};
+LEG.L = LEG.Lp.thigh + LEG.Lp.boot + ellipse(...LEG.Lp.knee);
+LEG.R = LEG.Rp.thigh + LEG.Rp.boot + ellipse(...LEG.Rp.knee);
+const ARMOR_PAL = { hi: '#8a8698', base: ARM.base, sh: ARM.shade, deep: ARM.deep };
+function legPaint(L) {
+  const [kx, ky, krx, kry] = L.knee, kd = ellipse(kx, ky, krx, kry);
+  return `<path d="${L.thigh}" fill="url(#g-armor)"/>` + cel(L.thigh, { ...ARMOR_PAL, base: 'none' }, 6, 3)
+    // la botte de fer : le bout bombé, une semelle sombre, la lumière sur le dessus
+    + `<path d="${L.boot}" fill="url(#g-armor)"/>` + cel(L.boot, { ...ARMOR_PAL, base: 'none' }, 6, 3)
+    + shape(`M${L.toe[0]} ${L.toe[1]}a${L.toe[2]} ${L.toe[3]} 0 0 1 ${2 * L.toe[2]} 0Z`, ARM.lite, 0.8) + glint([[L.toe[0] + 6, L.toe[1] - 4, 0], [L.toe[0] + L.toe[2], L.toe[1] - L.toe[3] + 3, 2.4], [L.toe[0] + 2 * L.toe[2] - 6, L.toe[1] - 4, 0]], ARM.hi, 0.8)
+    + L.cracks.map(crack).join('')
+    // la genouillère ronde et sa pointe
+    + `<path d="${kd}" transform="translate(-2 4)" fill="${ARM.deep}" opacity="0.7"/>` + cel(kd, { hi: ARM.hi, base: ARM.lite, sh: ARM.base, deep: ARM.shade }, 5, 2.4)
+    + shape(`M${kx - 7} ${ky - kry + 6}L${kx} ${ky - kry - 12}L${kx + 7} ${ky - kry + 6}Z`, ARM.mid) + shape(`M${kx} ${ky - kry - 12}L${kx + 7} ${ky - kry + 6}L${kx + 1} ${ky - kry + 6}Z`, ARM.hi, 0.7)
+    + dot(kx, ky, 5, FIRE.base) + dot(kx, ky, 2.4, FIRE.hi);
+}
+
 const parts = [
   { id: 'cape', cls: 'a-cape', d: S.cape, body: use('cape', 'url(#g-cape)') + clip('cape',
     glint([[140, 290, 0], [100, 360, 6], [60, 420, 6], [30, 460, 0]], ARM.lite, 0.4) + glint([[170, 300, 0], [150, 380, 6], [120, 450, 0]], ARM.deep, 0.6)
     + oval(130, 300, 40, 30, FIRE.mid, 0.25)) },
-  { id: 'fire', cls: 'a-fire', d: S.fire, body: fireBody },
-  { id: 'horn', cls: 'a-head', d: S.horn, shadow: [sh(['fire'], -3, 4, SH.fire, 0.4)], body: use('horn', 'url(#g-horn)') + clip('horn',
-    glint([[464, 70, 0], [482, 110, 3], [486, 150, 0]], '#a8a0b0', 0.7) + glint([[444, 150, 4], [466, 140, 5], [486, 140, 4]], '#14101a', 0.6)) },
-  { id: 'legL', d: S.legL, shadow: [sh(['cape'], -4, 4, SH.armor, 0.45)], body: use('legL', 'url(#g-armor)') + clip('legL',
-    plate(sm('104,510 150,500 210,506 214,546 104,550'), [[130, 506, 0], [170, 502, 3], [208, 510, 0]], [[104, 548, 4], [160, 552, 5], [210, 548, 4]])
-    + glint([[150, 474, 0], [180, 490, 3], [200, 500, 0]], ARM.hi, 0.4)) },
-  { id: 'legR', d: S.legR, shadow: [sh(['cape'], -4, 4, SH.armor, 0.45)], body: use('legR', 'url(#g-armor)') + clip('legR',
-    plate(sm('366,506 440,500 480,520 516,544 366,546'), [[380, 506, 0], [440, 502, 3], [490, 524, 0]], [[370, 544, 4], [440, 550, 5], [510, 546, 4]])
-    + glint([[400, 474, 0], [430, 488, 3], [448, 500, 0]], ARM.hi, 0.4)) },
+  { id: 'fire', cls: 'a-fire', free: true, d: FIRE_D, body: fireLocks },
+  { id: 'legL', free: true, d: LEG.L, shadow: [sh(['cape'], -4, 4, SH.armor, 0.45)], body: legPaint(LEG.Lp) },
+  { id: 'legR', free: true, d: LEG.R, shadow: [sh(['cape'], -4, 4, SH.armor, 0.45)], body: legPaint(LEG.Rp) },
   { id: 'skirt', d: S.skirt, shadow: [sh(['legL', 'legR', 'cape'], -4, 5, SH.armor, 0.5)], body: use('skirt', 'url(#g-armor)') + clip('skirt',
     // des pans d'armure qui se recouvrent, chacun son arête claire ; deux braises entre les plaques
     [[200, 420, 260, 500], [270, 420, 300, 500], [320, 420, 330, 480], [370, 420, 380, 480], [420, 420, 450, 480]].map(([x0, y0, x1, y1]) =>
@@ -238,7 +272,7 @@ const parts = [
     }).join('')
     + [[0.2, -70, 3], [0.33, -64, 2.4], [0.47, -76, 2], [0.58, -62, 2.6], [0.12, -58, 2], [0.66, -72, 1.8]].map(([f, off, r]) => { const p = spa(f, off); return oval(p[0], p[1], r * 1.6, r, FIRE.base, 0.9, -42) + dot(p[0], p[1], r * 0.5, FIRE.hi); }).join('')
     + '</g>' },
-  { id: 'blade', cls: 'a-sword', d: S.blade, shadow: [sh(['torso', 'pauR', 'skirt'], -4, 6, SH.armor, 0.4)], body: use('blade', 'url(#g-blade)') + clip('blade',
+  { id: 'blade', cls: 'a-sword', free: true, d: S.blade, shadow: [sh(['torso', 'pauR', 'skirt'], -4, 6, SH.armor, 0.4)], body: use('blade', 'url(#g-blade)') + clip('blade',
     // la lame noire : le tranchant du haut incandescent, une seule gorge de lave au milieu, l'arête claire du dos
     glint([spa(-0.02, -41).concat(4), spa(0.4, -41).concat(6), spa(0.7, -42).concat(4), spa(1, 6).concat(0)], FIRE.mid, 0.95)
     + glint([spa(-0.02, -43).concat(0), spa(0.4, -43).concat(2.4), spa(0.7, -44).concat(0)], FIRE.hi, 0.95)
@@ -248,9 +282,9 @@ const parts = [
     + glint([spa(0, 40).concat(0), spa(0.45, 44).concat(2.4), spa(0.85, 46).concat(0)], '#8a7e8c', 0.7)
     // la facette claire de la pointe (le chanfrein)
     + shape(`M${spa(0.71, -46).join(' ')} L${spa(1.01, 8).join(' ')} L${spa(0.86, -10).join(' ')} Z`, '#6a5a60', 0.8)) },
-  { id: 'grip', cls: 'a-sword', d: S.grip, body: use('grip', '#3a2420') + clip('grip', glint([spa(-0.06, 4).concat(0), spa(-0.15, 4).concat(3), spa(-0.24, 4).concat(0)], '#8a5a4a', 0.7)) },
-  { id: 'pommel', cls: 'a-sword', d: S.pommel, body: use('pommel', 'url(#g-gold)') },
-  { id: 'guard', cls: 'a-sword', d: S.guard, shadow: [sh(['blade', 'torso', 'grip'], -3, 5, SH.armor, 0.45)], body: use('guard', 'url(#g-gold)') + clip('guard',
+  { id: 'grip', cls: 'a-sword', free: true, d: S.grip, body: use('grip', '#3a2420') + clip('grip', glint([spa(-0.06, 4).concat(0), spa(-0.15, 4).concat(3), spa(-0.24, 4).concat(0)], '#8a5a4a', 0.7)) },
+  { id: 'pommel', cls: 'a-sword', free: true, d: S.pommel, body: use('pommel', 'url(#g-gold)') },
+  { id: 'guard', cls: 'a-sword', free: true, d: S.guard, shadow: [sh(['blade', 'torso', 'grip'], -3, 5, SH.armor, 0.45)], body: use('guard', 'url(#g-gold)') + clip('guard',
     glint([spa(0.02, 50).concat(0), spa(0.03, 20).concat(3), spa(0.03, -20).concat(3), spa(0.02, -50).concat(0)], GOLD.hi, 0.9)
     + glint([spa(-0.04, 40).concat(0), spa(-0.05, 0).concat(3), spa(-0.04, -40).concat(0)], GOLD.shade, 0.8)
     + oval(...spa(0, 0), 7, 6, '#c83a2a') + oval(...spa(0.004, -2), 2.4, 1.8, '#ffd0c0')) },
