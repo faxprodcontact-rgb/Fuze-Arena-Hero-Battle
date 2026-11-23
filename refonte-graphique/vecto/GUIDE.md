@@ -22,11 +22,14 @@ Pas encore branché dans le jeu : la page d'exemple sert de vitrine.
    - **Formes communes** : `formes.cjs` (`sm`, `rib`, `glint`, `tooth`, `nest`, `rooted`) — ne plus les recopier.
    - **Région de la silhouette** : `python3 refonte-graphique/vecto/outils/decoupe.py <id> "x,y x,y …"` (la silhouette
      coupée par un polygone, pour un corps, une tête, un fond) ; `outils/encre.py` montre les traits noirs seuls.
-   - **Matières** (héros chargés : peau, or, tissu, cheveux) : `python3 refonte-graphique/vecto/outils/couleurs.py <id>
-     nom:h0-h1:s0-s1:v0-v1 …` relève les zones de chaque matière (`couleurs/<id>.json`) ; on les peint avec `cel()` de
-     `formes.cjs` (ombre franche en bas à gauche, liseré clair en haut à droite). Attention : la peau à l'ombre et l'or
-     ont la même teinte : torse, bras, poings se décalquent alors pièce par pièce (`zone.py` avec `--boite`, ou à la
-     main sur le quadrillage) et se peignent par-dessus. Voir `angels-2`.
+   - **Décalquer le bord, ADAPTER l'intérieur** (refus du propriétaire, 23/11 : Ilian, Zeus, Eldra, Sable… « on dirait
+     de la peinture », « trop recopié, pas adapté ») : la silhouette (master) et la place des pièces viennent de
+     l'original, mais l'intérieur se **dessine** comme Rook (`assassins-5`) : chaque pièce (épaulière, poing, barbe,
+     jupe, couronne) est une forme nette relevée à la main sur un gros plan quadrillé, peinte avec `cel()` (une ombre
+     franche, un liseré clair), puis quelques détails dessinés (mèches en fuseaux, plis, muscles en creux doux).
+     **Jamais** les taches d'ombre ni les reflets de l'original recopiés (`couleurs.py` ne sert plus qu'à relever des
+     couleurs ou une grande zone simple, jamais à peindre). Les deux yeux d'un visage se bâtissent avec la même
+     fonction (même forme, même trait de cils), le plus loin un peu plus petit. Modèle refait : `angels-2` (Ilian).
    - **Ce qui est difficile à découper** (ficelle, mousse, pattes qui se croisent, fond entre des fusées) : un morceau
      « fond » placé tout derrière, dont la forme est la silhouette coupée par une boîte (voir `parade-3`, `myths-10`,
      `angels-4` : `tailBase`, `legsBase`, `tentBase`), puis les morceaux dessinés par-dessus.
@@ -77,6 +80,8 @@ entier (lire seulement la partie utile : `grep -n` puis `sed -n`), agents en par
 
 Leçons de la première série (corrections demandées par le propriétaire ou le relecteur) :
 - **Fidélité mesurée** : chaque personnage passe `outils/ecart.cjs` (≥ 95 %) avant d'être montré.
+- **Fidèle ≠ recopié** : la fidélité porte sur la silhouette, les proportions et la place des pièces ; le rendu, lui,
+  est toujours le style net du jeu. Une zone blanche ou une tache de l'original n'est pas à reprendre telle quelle.
 - **Forme fidèle** : la tête et les pattes doivent avoir la forme de l'original (renard refusé une première fois :
   museau trop long, œil trop petit, mâchoire mal placée). Toujours comparer en « calque » sur la tête et les pattes.
 - **Mains** : doigts courts et arrondis (jamais pointus, jamais des « orteils » en bosses), pouce bien distinct, la
@@ -128,7 +133,7 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Héros mixte : aplats automatiques pour la tête, mais le bas du corps redessiné pièce par pièce quand les aplats sont trop morcelés (cape, robe, tablier, collier, bras) ; disque derrière la tête (cercle ajusté) ; lames en feuilles | `assassins-3.cjs` → `lowerBody`, `CAPE`, `APRON`, `COLLAR`, `SUN`, `BLADES` |
 | Ailes qui battent (quatre morceaux, pivot à la racine), yeux d'ailes en anneaux, duvet en touffes inégales (`fuzz`), antennes en plume prises dans la silhouette | `ronciers-4.cjs` → `UL`, `UR`, `LL`, `LR`, `spot`, `veins`, `fuzz`, `ANT` |
 | Poisson : nageoires découpées dans la silhouette (chacune bat à son rythme), bandes par leur couleur, rayons doux, boule d'eau crachée à l'attaque | `bayou-3.cjs` → `TAIL`, `DORSAL`, `FINS`, `PECT`, `RAYS`, `rays`, `glow-atk` |
-| Héros peint par matières lissées « par vote » (`couleurs.py --vote --noyau 9` : zones rondes, sans trou), peinture partagée une fois (`<use href="#p-mat"/>`), plumes et queue retirées du corps (sinon fantôme quand elles bougent), bâton mesuré | `mages-8.cjs` → `PAINT`, `BODY`, `PLUMES`, `STAFF`, `along`, `CHEST`, `SKIRT`, `eye` |
+| (à refaire) Héros peint par matières lissées « par vote » (`couleurs.py --vote --noyau 9` : zones rondes, sans trou), peinture partagée une fois (`<use href="#p-mat"/>`), plumes et queue retirées du corps (sinon fantôme quand elles bougent), bâton mesuré | `mages-8.cjs` → `PAINT`, `BODY`, `PLUMES`, `STAFF`, `along`, `CHEST`, `SKIRT`, `eye` |
 | Héros peint par matières (relevées), couronne par sa couleur, manche en deux tronçons | `angels-2.cjs` → `TONES`, `paint`, `PIECE`, `middle`, `CROWN` |
 | Coquille en spirale, cristaux | `cuirasses-4.cjs` → `spiral`, `moss` |
 | Pattes et serres | `glaces-4.cjs` → `footD`, `nail` ; `assassins-5.cjs` → `toe`, `talon` |
