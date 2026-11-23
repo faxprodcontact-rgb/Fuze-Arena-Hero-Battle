@@ -157,8 +157,9 @@ function lionEye(x, y, k, key) {
     + `<path d="${brow}" transform="translate(-2 4)" fill="#3a1008" opacity="0.4"/>` + shape(brow, 'url(#g-red)')
     + glint([[x - 29 * k, y - 30 * k, 0], [x + k, y - 40 * k, 3 * k], [x + 29 * k, y - 32 * k, 2.4 * k], [x + 45 * k, y - 14 * k, 0]], GOLD.hi, 0.85);
 }
-const bigEye = () => lionEye(319, 162, 1, 'eyeA');
-const smallEye = () => lionEye(404, 140, 0.72, 'eyeB');
+// les deux yeux sur une même ligne, au-dessus du nez ; celui du fond un peu plus petit (trois quarts)
+const bigEye = () => lionEye(316, 152, 0.92, 'eyeA');
+const smallEye = () => lionEye(396, 136, 0.74, 'eyeB');
 
 const headBody = use('head', 'url(#g-head)') + clip('head',
   // le dessous de la tête à l'ombre ; la joue en fourrure claire ; le front éclairé
@@ -167,17 +168,17 @@ const headBody = use('head', 'url(#g-head)') + clip('head',
   + glint([[300, 86, 0], [350, 80, 5], [404, 92, 4], [432, 112, 0]], GOLD.hi, 0.7)
   // les ornements rouges du front, la gemme bleu-vert au milieu dans sa monture d'or
   + shape(sm('336,84 360,80 384,88 380,110 360,116 340,108'), 'url(#g-red)') + oval(360, 98, 12, 10, '#7a3a10') + oval(360, 98, 10, 8.4, 'url(#g-gem)') + oval(363, 94, 3, 2, '#ffffff', 0.9)
-  + shape(sm('384,104 404,98 426,108 432,122 418,118 400,116'), 'url(#g-red)', 0.9)
   // les touffes blanches sous la coiffe et sur la joue, les ornements rouges qui ourlent la joue
   + shape(sm('256,104 272,92! 278,104 292,86! 300,100 318,84! 326,98 346,86! 348,104 300,112 262,118'), 'url(#g-fur)')
   + shape(sm('270,210 286,226! 290,214 304,236! 308,222 324,244! 330,230 346,250! 352,236 352,262 300,262 268,240'), 'url(#g-fur)', 0.95)
   + glint([[276, 192, 3], [300, 206, 4], [330, 214, 4], [356, 208, 3]], RED.base, 0.85) + glint([[280, 190, 0], [306, 203, 1.6], [352, 205, 0]], GOLD.hi, 0.8)
-  // le gros nez rouge et ses narines
-  + `<path d="M386 162 C392 148 414 146 432 150 C446 154 454 166 452 180 C450 190 440 194 428 192 C414 190 398 188 390 180 C385 175 384 168 386 162 Z" fill="url(#g-nose)"/>`
-  + oval(420, 158, 10, 4, '#ffd2c0', 0.8, -8) + oval(406, 178, 5, 3.4, '#4a0a0a', 0.9, 20) + oval(436, 180, 4.6, 3.2, '#4a0a0a', 0.9, -10)
   // la lèvre du haut, rouge, au bord de la gueule
   + glint([[366, 196, 4], [400, 200, 5], [438, 202, 4]], RED.base, 0.9)
   + bigEye() + smallEye()
+  // le gros nez rouge et ses narines, devant les yeux
+  + `<path d="M392 164 C398 152 418 150 434 154 C446 158 454 168 452 180 C450 190 440 194 428 192 C414 190 400 188 394 180 C390 175 389 170 392 164 Z" transform="translate(-2 4)" fill="#6a1010" opacity="0.4"/>`
+  + `<path d="M392 164 C398 152 418 150 434 154 C446 158 454 168 452 180 C450 190 440 194 428 192 C414 190 400 188 394 180 C390 175 389 170 392 164 Z" fill="url(#g-nose)"/>`
+  + oval(422, 160, 10, 4, '#ffd2c0', 0.8, -8) + oval(408, 179, 5, 3.4, '#4a0a0a', 0.9, 20) + oval(436, 181, 4.6, 3.2, '#4a0a0a', 0.9, -10)
 );
 
 // ---------- les écailles du corps ----------

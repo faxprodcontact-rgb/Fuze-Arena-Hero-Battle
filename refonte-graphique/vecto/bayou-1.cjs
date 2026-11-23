@@ -182,7 +182,15 @@ const parts = [
     // le dessous crème de la queue, un reflet sur le dessus
     shape(sm('22,190 30,240 46,270 74,292 104,302 120,300 104,290 70,276 46,250 34,220'), 'url(#g-belly)')
     + glint([[24, 160, 0], [36, 186, 3], [56, 222, 4], [96, 244, 0]], GREEN.hi, 0.5)) },
-  { id: 'body', cls: 'a-body', d: S.body, shadow: [sh(['tail', 'fin', 'legF'], -4, 5, SH.green, 0.45)], body: use('body', 'url(#g-green)') + clip('body',
+  // la patte de derrière (à droite) : elle passe DERRIÈRE le ventre, un peu plus sombre (plus loin)
+  { id: 'legN', cls: 'a-legN', d: S.legN, shadow: [sh(['legF', 'tail'], -4, 5, SH.green, 0.45)], body: use('legN', 'url(#g-greenFar)') + clip('legN',
+    // la grosse cuisse éclairée en haut à droite, l'ombre derrière ; le pied : deux creux entre les orteils
+    glint([[214, 292, 0], [240, 286, 4], [260, 300, 3], [264, 318, 0]], GREEN.hi, 0.55)
+    + shape(sm('196,300 214,320 226,344 220,362 208,372 204,404 190,404'), GREEN.deep, 0.35)
+    + glint([[262, 380, 0], [270, 390, 2.6], [272, 400, 0]], GREEN.deep, 0.7) + glint([[284, 380, 0], [290, 390, 2.6], [292, 400, 0]], GREEN.deep, 0.6)
+    + glint([[272, 376, 0], [296, 378, 2.6], [310, 388, 0]], GREEN.hi, 0.6))
+    + claw(272, 396, 9, -40) + claw(294, 396, 9, -55) + claw(316, 394, 9, -75) },
+  { id: 'body', cls: 'a-body', d: S.body, shadow: [sh(['tail', 'fin', 'legF', 'legN'], -4, 5, SH.green, 0.45)], body: use('body', 'url(#g-green)') + clip('body',
     // le ventre crème (dessous), son ombre ; une lumière sur le dos
     shape(sm('150,300 190,306 230,304 268,290 290,262 300,262 290,330 140,340'), 'url(#g-belly)')
     + glint([[150, 316, 0], [200, 326, 5], [250, 320, 0]], CREAM.shade, 0.7)
@@ -198,13 +206,6 @@ const parts = [
     + shape(sm('272,280 290,284 300,282 306,288 272,290'), GREEN.shade, 0.6)
     + oval(312, 262, 3, 2, GREEN.hi, 0.8))
     + claw(306, 258, 6, 200) + claw(314, 260, 6, 215) + claw(320, 268, 6, 235) },
-  { id: 'legN', cls: 'a-legN', d: S.legN, rim: { on: ['body', 'tail'], color: GREEN.deep, w: 1.6, o: 0.9 }, shadow: [sh(['body', 'legF', 'tail'], -4, 5, SH.green, 0.45)], body: use('legN', 'url(#g-green)') + clip('legN',
-    // la grosse cuisse éclairée en haut à droite, l'ombre derrière ; le pied : deux creux entre les orteils
-    glint([[214, 292, 0], [240, 286, 4], [260, 300, 3], [264, 318, 0]], GREEN.hi, 0.55)
-    + shape(sm('196,300 214,320 226,344 220,362 208,372 204,404 190,404'), GREEN.deep, 0.35)
-    + glint([[262, 380, 0], [270, 390, 2.6], [272, 400, 0]], GREEN.deep, 0.7) + glint([[284, 380, 0], [290, 390, 2.6], [292, 400, 0]], GREEN.deep, 0.6)
-    + glint([[272, 376, 0], [296, 378, 2.6], [310, 388, 0]], GREEN.hi, 0.6))
-    + claw(272, 396, 9, -40) + claw(294, 396, 9, -55) + claw(316, 394, 9, -75) },
   { id: 'crest', cls: 'a-crest', d: S.crest, body: use('crest', 'url(#g-crest)') + clip('crest',
     // la crête en éventail : des côtes en fuseaux qui s'ouvrent depuis le crâne, un bord éclairé
     [[244, 104, 246, 50], [262, 104, 272, 30], [282, 100, 296, 18], [302, 98, 314, 22]].map(([x0, y0, x1, y1]) =>

@@ -10,7 +10,6 @@ const { sm, glint, cel } = require('./formes.cjs');
 
 const W = 374, H = 277, PAD = 40;
 const SIL = require('./silhouettes/bayou-3.json');
-const MAT = require('./couleurs/bayou-3.json');
 
 // ---------- chaque matière, en aplats nets ----------
 const TONES = {
@@ -21,8 +20,8 @@ const TONES = {
   sombre: { hi: '#4a4a40', base: '#24241e', sh: '#141410', deep: '#0a0a08' },
   rose: { hi: '#c88aa0', base: '#8a4a60', sh: '#5a2a3c', deep: '#3a1424' },
 };
-const PAINT_SRC = ['blanc', 'vert', 'or', 'violet', 'rose', 'sombre'].map((k) => (MAT[k] && MAT[k].d ? cel(MAT[k].d, TONES[k], 5, 2.4) : '')).join('');
-const PAINT = '<use href="#p-mat"/>';
+// les larges bandes vert sombre du corps : des formes nettes qui penchent vers l'avant (dessinées, pas relevées)
+const BANDS = [[142, 114, 18], [186, 158, 18], [226, 200, 15]].map(([t, b, w]) => sm(`${t - w / 2},20 ${t + w / 2},20 ${b + w / 2},240 ${b - w / 2},240`));
 
 // ---------- les formes relevées sur l'original ----------
 const DORSAL = sm('96,21 92,23 94,36 93,68 89,69 77,64 63,62 56,63 58,70 63,76 74,97 58,100 58,104 77,125 77,131 85,135 99,113 126,87 149,71 161,67 152,54 136,39 108,24');
@@ -47,7 +46,8 @@ const rays = (k) => RAYS[k].map(([[x0, y0], [x1, y1]]) => glint([[x0, y0, 0], [(
 const defs = [
   rad('g-eye', 0.4, 0.62, 0.7, [[0, '#fff0a0'], [0.4, '#f8b02a'], [0.8, '#e0701a'], [1, '#a83a10']], false),
   rad('g-glow', 0.5, 0.5, 0.5, [[0, '#ffffff'], [0.35, '#e8faff'], [0.6, '#7ad4ff', 0.75], [1, '#2a9ae8', 0]], false),
-  `<g id="p-mat">${PAINT_SRC}</g>`,
+  lin('g-fin', 0, 0, 1, 0, [[0, '#ffc85a'], [1, '#f08a1c']], false),
+  lin('g-belly', 0, 30, 0, 230, [[0, '#ffffff'], [0.6, TONES.blanc.base], [1, TONES.blanc.sh]]),
 ].join('');
 
 // ---------- la tête : œil, sourcil, gueule (nets, par-dessus les aplats) ----------
@@ -65,18 +65,21 @@ const HEAD = oval(261, 79, 23, 18.5, '#fbfaf0') + dot(263, 80, 17, '#8a3410') + 
 
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx, dy, color = '#14140e', o = 0.4) => ({ on, dx, dy, color, o });
-const fin = (id, cls, d, k) => ({ id, cls, d, body: use(id, TONES.or.base) + clip(id, PAINT + rays(k)) });
+// une nageoire : un orange uni en dégradé, une ombre franche, ses rayons doux (plus de taches grises)
+const fin = (id, cls, d, k) => ({ id, cls, d, body: use(id, 'url(#g-fin)') + cel(d, { ...TONES.or, base: 'none' }, 5, 2.4) + clip(id, rays(k)) });
 const parts = [
   fin('tail', 'a-tail', TAIL, 'tail'),
   fin('dorsal', 'a-dorsal', DORSAL, 'dorsal'),
   fin('fins', 'a-fins', FINS, 'fins'),
-  { id: 'body', cls: 'a-body', d: BODY, shadow: [sh(['tail', 'dorsal', 'fins'], -3, 5)], body: use('body', TONES.blanc.base) + clip('body', PAINT
+  { id: 'body', cls: 'a-body', d: BODY, shadow: [sh(['tail', 'dorsal', 'fins'], -3, 5)], body: use('body', 'url(#g-belly)') + cel(BODY, { ...TONES.blanc, base: 'none' }, 6, 3) + clip('body',
+    // les bandes : chacune un vert sombre, un liseré plus clair sur son bord droit (la lumière)
+    BANDS.map((d) => shape(d, TONES.vert.base) + `<path d="${d}" transform="translate(3 0)" fill="none" stroke="${TONES.vert.hi}" stroke-width="2" opacity="0.5"/>`).join('')
     // le ventre plus clair, le dos à l'ombre, un long reflet sur le haut du corps
     + glint([[120, 98, 0], [190, 66, 3], [260, 46, 3], [300, 40, 0]], '#ffffff', 0.6)
     + glint([[96, 190, 0], [150, 198, 4], [200, 194, 0]], '#8a8e78', 0.45)
     + HEAD) },
   { id: 'pect', cls: 'a-pect', d: PECT, shadow: [sh(['body'], -3, 5)], body: cel(PECT, TONES.or, 5, 2.4) + clip('pect', rays('pect')
-    + glint([[206, 202, 0], [214, 212, 2], [224, 222, 0]], TONES.violet.base, 0.7)) },
+) },
   // la boule d'eau qui brille (sans contour)
   { id: 'glow', free: true, d: 'M-900 -900h1v1z', body: `<g class="a-glow">${dot(GLOW[0], GLOW[1], 34, 'url(#g-glow)')}${dot(GLOW[0], GLOW[1], 11, '#ffffff', 0.95)}</g>` },
 ];
