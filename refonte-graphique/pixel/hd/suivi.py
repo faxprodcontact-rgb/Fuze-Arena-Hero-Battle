@@ -55,7 +55,7 @@ RETOUCHES = {
     'rook': "Ailes plus grandes en hauteur et plus garnies, mais pas plus longues.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = set()
+FAITES = {'rook'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
