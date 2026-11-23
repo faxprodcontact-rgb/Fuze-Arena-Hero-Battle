@@ -122,7 +122,7 @@ const bodyPaint =
   // la ceinture d'or et ses pierres bleues
   + piece(P.belt, GOLD, 4, 2) + [[188, 318], [218, 320], [250, 320], [282, 318]].map(([x, y]) => oval(x, y, 4.4, 4, '#2f8fd8') + dot(x + 1.2, y - 1.2, 1.4, '#ffffff', 0.9)).join('')
   // le manche du trident, en bas (sous le poing gauche)
-  + shaft(SHAFT_A)
+  // (plus de manche dans le poing droit : il ne tient le trident que de la main gauche)
   // les épaulières d'or : une bande claire sur le dessus, deux rivets
   + piece(P.pauL, GOLD, 7, 3) + lock([[110, 214], [140, 198], [176, 200]], '#fffbe0', 0.9, 4) + lock([[106, 236], [140, 240], [180, 232]], GOLD.sh, 0.7, 3)
   + dot(126, 222, 3, GOLD.deep) + dot(160, 222, 3, GOLD.deep)

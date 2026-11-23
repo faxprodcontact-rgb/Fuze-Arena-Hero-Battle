@@ -5,6 +5,7 @@
 // la flèche, posée sur un poteau et un socle rond.
 // La lumière vient d'en haut à droite : les ombres portées tombent en bas à gauche. Contour décalqué sur l'original
 // (outils/contour.py).
+const { cel } = require('./formes.cjs');
 const { figure, lin, rad, n, use, clip, line, shape, dot, oval } = require('./lib.cjs');
 
 const W = 361, H = 398, PAD = 44;
@@ -200,6 +201,17 @@ const headBody = use('head', 'url(#g-head)') + clip('head',
 
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx, dy, color, o) => ({ on, dx, dy, color, o });
+// les pattes (redessinées, bien visibles) : une cuisse emplumée sous le ventre, le tarse jaune écaillé, l'ergot, et
+// trois doigts qui serrent la flèche (le dessus du fût est à y = 289)
+const legShape = (x) => rib([[x, 238, 15], [x - 1, 262, 12], [x - 2, 284, 11]]) + sm(`${x - 22},292 ${x - 12},284 ${x + 8},284 ${x + 22},290 ${x + 24},298! ${x + 8},296 ${x - 6},298 ${x - 22},300!`);
+const LEGF = legShape(160), LEGN = legShape(210);
+const LEG_C = { hi: '#fff2a8', base: '#f0b83a', sh: '#b87a1c', deep: '#7a4a10' };
+function legPaint(d, x, o) {
+  return `<g opacity="${o}">${cel(d, LEG_C, 4, 2)}`
+    + [246, 258, 270].map((y) => glint([[x - 6, y, 0], [x - 1, y + 2, 1.4], [x + 4, y, 0]], LEG_C.sh, 0.8)).join('')
+    + shape(`M${x - 6} 266 L${x - 14} 272 L${x - 6} 272 Z`, LEG_C.sh)
+    + [[x - 20, 298], [x + 22, 298], [x - 2, 298]].map(([cx, cy]) => shape(`M${cx - 3} ${cy - 2}L${cx} ${cy + 5}L${cx + 3} ${cy - 2}Z`, '#4a3a2a')).join('') + '</g>';
+}
 const parts = [
   { id: 'base', d: S.base, body: use('base', 'url(#g-ironD)') + clip('base',
     // le socle : un disque, son dessus éclairé ; le poteau rond ; le raccord sous la flèche
@@ -212,8 +224,7 @@ const parts = [
   { id: 'coverts', cls: 'a-tail', free: true, d: S.coverts, shadow: [sh(['tail'], -3, 5, SH.cop, 0.45)], body: featherSet(COVERTS, 'g-c') },
   { id: 'under', cls: 'a-bird', free: true, d: S.under, shadow: [sh(['tail'], -3, 4, SH.cop, 0.4)], body: use('under', COP.shade) + clip('under',
     glint([[150, 222, 0], [120, 240, 3], [88, 248, 0]], COP.mid, 0.8)) },
-  { id: 'legF', cls: 'a-bird', d: S.legF, body: use('legF', 'url(#g-leg)') + clip('legF',
-    glint([[164, 252, 0], [162, 268, 2], [160, 282, 0]], '#5a3a18', 0.6) + glint([[156, 292, 0], [164, 296, 2.2], [174, 294, 0]], '#5a3a18', 0.7)) },
+  { id: 'legF', cls: 'a-bird', free: true, d: LEGF, body: legPaint(LEGF, 160, 0.85) },
   { id: 'arrow', cls: 'a-vane', d: S.arrow, shadow: [sh(['base'], -3, 5, SH.iron, 0.5)], body: use('arrow', 'url(#g-iron)') + clip('arrow',
     // la tige ronde (éclairée en haut), la pointe à deux faces, l'empennage en chevrons
     glint([[100, 292, 0], [190, 292, 2.6], [282, 292, 0]], IRON.hi, 0.9)
@@ -235,9 +246,7 @@ const parts = [
     + shape(sm('140,214 170,214 200,214 228,212 220,228 196,240 168,246 132,228'), COP.mid, 0.9)
     + [[166, 196], [186, 194], [206, 196], [224, 200]].map(([x, y]) => glint([[x - 9, y - 6, 0], [x, y - 2, 3], [x + 9, y - 6, 0]], COP.mid, 0.5)).join('')
     + [[150, 226, 136, 230], [172, 232, 158, 240], [196, 230, 178, 242]].map(([x0, y0, x1, y1]) => glint([[x0, y0, 0], [(x0 + x1) / 2, (y0 + y1) / 2, 3], [x1, y1, 0]], COP.shade, 0.7)).join('')) },
-  { id: 'legN', cls: 'a-bird', d: S.legN, shadow: [sh(['arrow', 'body'], -3, 4, SH.cop, 0.45)], body: use('legN', 'url(#g-leg)') + clip('legN',
-    glint([[204, 252, 0], [206, 268, 2], [210, 280, 0]], '#5a3a18', 0.6)
-    + glint([[204, 290, 0], [214, 296, 2.2], [224, 294, 0]], '#5a3a18', 0.7) + glint([[206, 284, 0], [216, 286, 1.6], [224, 288, 0]], '#fff0c0', 0.6)) },
+  { id: 'legN', cls: 'a-bird', free: true, d: LEGN, shadow: [sh(['arrow', 'body'], -3, 4, SH.cop, 0.45)], body: legPaint(LEGN, 210, 1) },
   { id: 'comb', cls: 'a-head', d: S.comb, body: use('comb', 'url(#g-comb)') + clip('comb',
     // trois lobes : chacun son côté éclairé à droite, un creux sombre entre eux
     shape(sm('248,80 252,60 256,44 264,40 274,46 282,56 284,90'), RED.shade, 0.6) + glint([[262, 46, 0], [270, 60, 3], [272, 80, 0]], RED.hi, 0.6) + glint([[308, 30, 0], [314, 54, 3.4], [312, 84, 0]], RED.hi, 0.7)

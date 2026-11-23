@@ -158,8 +158,8 @@ const S = {
   armR: sm('200,262 220,252 240,260 246,280 244,294 264,292 294,288 310,294 308,314 282,320 250,322 226,318 210,306 198,286'),
   handR: sm('292,276 312,270 332,276 342,290 340,306 326,316 306,316 292,306 288,292'),
   // le bras de droite (le sien gauche) qui monte vers le haut du bâton, et sa main
-  armL: sm('330,234 352,228 376,226 394,222 404,232 398,250 376,258 352,262 334,262'),
-  handL: sm('384,214 398,208 414,210 428,220 432,234 426,246 412,250 396,248 386,238 382,226'),
+  armL: sm('318,250 334,240 352,240 372,234 390,228 398,240 394,254 374,262 352,270 334,278 318,272 312,260'),
+  handL: sm('372,216 386,208 402,210 414,220 418,234 412,246 398,250 382,248 372,238 368,226'),
   // le visage (et le cou)
   face: sm('206,108 240,94 290,88 340,92 372,104 384,130 384,164 378,190 366,210 348,224 322,233 294,235 266,229 242,216 222,198 208,172 202,138'),
   // la frange, par-dessus le front
@@ -231,6 +231,9 @@ const parts = [
   { id: 'sash', cls: 'a-body', d: S.sash, shadow: [sh(['body', 't3', 't4', 't5', 't6'], -3, 5, SH.tent, 0.5)], body: use('sash', 'url(#g-sash)') + clip('sash',
     glint([[200, 328, 0], [270, 338, 2.4], [346, 330, 0]], '#ffe0c8', 0.8)
     + [[220, 340], [250, 344], [284, 345], [318, 342]].map(([x, y]) => oval(x, y, 4, 2.6, '#ffd0a0', 0.8)).join('')) },
+  // le bras gauche (à droite de l'image) : attaché à l'épaule, derrière le bâton
+  { id: 'armL', cls: 'a-staff', free: true, d: S.armL, shadow: [sh(['body', 'hair', 'sash'], -3, 5, SH.skin, 0.45)], body: use('armL', 'url(#g-skinB)') + clip('armL',
+    glint([[326, 248, 0], [356, 240, 3], [388, 232, 0]], SKIN.hi, 0.6) + glint([[322, 270, 0], [354, 262, 3], [388, 252, 0]], SKIN.deep, 0.5)) },
   { id: 'staff', cls: 'a-staff', d: S.staff, shadow: [sh(['body', 'sash', 'hair', 't5', 't6'], -4, 6, SH.wood, 0.4)], body: use('staff', 'url(#g-wood)') + clip('staff',
     // le bois : une arête claire, l'ombre ; les ficelles enroulées (paires sombre + claire)
     glint([[286, 334, 0], [380, 252, 2.6], [468, 128, 0]], WOOD.hi, 0.7)
@@ -243,13 +246,11 @@ const parts = [
     + glint([[418, 168, 0], [432, 162, 3], [446, 168, 0]], '#4a3c68', 0.7) + glint([[424, 132, 0], [434, 146, 2.4], [430, 160, 0]], '#4a3c68', 0.5)) },
   { id: 'hook', cls: 'a-staff', d: S.hook, shadow: [sh(['staff'], -3, 5, SH.wood, 0.4)], body: use('hook', 'url(#g-hook)') + clip('hook',
     glint([[470, 96, 0], [500, 80, 3], [532, 86, 3], [548, 108, 0]], '#ffffff', 0.9) + glint([[488, 112, 0], [506, 98, 3], [530, 106, 0]], '#5e6a80', 0.6)) },
-  { id: 'armL', cls: 'a-staff', d: S.armL, shadow: [sh(['body', 'hair', 'staff'], -3, 5, SH.skin, 0.45)], body: use('armL', 'url(#g-skinB)') + clip('armL',
-    glint([[340, 236, 0], [370, 230, 3], [396, 226, 0]], SKIN.hi, 0.6) + glint([[340, 258, 0], [370, 256, 3], [396, 248, 0]], SKIN.deep, 0.5)) },
-  { id: 'handL', cls: 'a-staff', d: S.handL, shadow: [sh(['staff', 'armL', 'hair'], -3, 5, SH.skin, 0.45)], body: use('handL', 'url(#g-skinB)') + clip('handL',
+  { id: 'handL', cls: 'a-staff', free: true, d: S.handL, shadow: [sh(['staff', 'armL', 'hair'], -3, 5, SH.skin, 0.45)], body: use('handL', 'url(#g-skinB)') + clip('handL',
     // les doigts qui serrent le bâton : des creux et des bosses éclairées, le pouce par-dessus
-    [[392, 220, 424, 224], [390, 232, 426, 236], [394, 243, 420, 246]].map(([x1, y1, x2, y2]) => glint([[x1, y1, 0], [(x1 + x2) / 2, (y1 + y2) / 2, 2.4], [x2, y2, 0]], SKIN.deep, 0.65)
+    [[380, 220, 410, 224], [378, 232, 412, 236], [382, 243, 406, 246]].map(([x1, y1, x2, y2]) => glint([[x1, y1, 0], [(x1 + x2) / 2, (y1 + y2) / 2, 2.4], [x2, y2, 0]], SKIN.deep, 0.65)
       + glint([[x1, y1 - 2.6, 0], [(x1 + x2) / 2, (y1 + y2) / 2 - 2.6, 1.4], [x2, y2 - 2.6, 0]], SKIN.hi, 0.6)).join('')
-    + oval(404, 212, 8, 3.4, SKIN.hi, 0.7, -8)) },
+    + oval(392, 212, 8, 3.4, SKIN.hi, 0.7, -8)) },
   { id: 'face', cls: 'a-head', d: S.face, shadow: [sh(['hair', 'body', 'fin'], -4, 5, SH.skin, 0.45)], body: faceBody },
   { id: 'lockL', cls: 'a-head', d: sm('214,104 228,120 224,160 216,196 206,216! 202,182 204,140 208,114'), shadow: [sh(['face'], -2, 4, SH.skin, 0.4)],
     body: use('lockL', 'url(#g-hair)') + clip('lockL', glint([[218, 118, 0], [218, 150, 2.4], [210, 190, 0]], HAIR.hi, 0.5)) },
