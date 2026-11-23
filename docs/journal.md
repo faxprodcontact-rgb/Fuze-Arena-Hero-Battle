@@ -398,6 +398,11 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   Isha la déesse au soleil, Corvin l'elfe au bouclier, Lysa le guerrier du nord, Jinn l'archer, Morrow le chevalier en
   armure complète, Zéphyre la ninja, Saïko la fée). Ajout au kit : `FACE` (le visage commun, lignes 6 à 19) et
   `face_legend()`, pour les têtes qui ne changent que les cheveux ou la coiffe.
+  **v0.49.0 : les 11 autres mages** (Pell le poète à la lyre, Mira la valkyrie, Orin le tengu, Tessa à tête d'aigle, Ilvar le
+  chacal aux faucilles, Sélène la danseuse au lotus, Arcan l'ogre au sac à vent, Nimue le vieux dieu de l'orage, Ozias le
+  vampire, Myrr l'ange à la trompette, Faust le dieu du tonnerre et ses tambours). Ajout au kit : `feather_wing()` (aile de
+  plumes pleine, bord festonné, couvertures ; même méthode que la harpie). Contrôle utile : une tête de moins de 16 lignes
+  n'est pas reconnue (tête trop petite, Tessa corrigée).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

@@ -266,3 +266,33 @@ FACE_BLINK = {'w': 'b', 'p': 'b'}
 
 def face_legend(skin, hair, eye='#2a1a10', mouth='#4a1010', brow='#2a160c'):
     return {'K': INK, 'h': hair, 'S': skin.light, 's': skin.base, 'H': skin.hi, 'b': brow, 'w': '#ffffff', 'p': eye, 'm': mouth}
+
+
+def feather_wing(c, b, root, sgn, ramp, cover=None, fl=0, size=1.0, tip=None):
+    """Une aile de plumes levée (ange, aigle, corbeau…) : une seule forme pleine, du bord d'attaque jusqu'au bout des
+    grandes plumes au bord festonné, cerclée de noir ; une rangée de plumes de couverture le long du bord ; le bout des
+    plumes plus clair (ou de la couleur tip)."""
+    rx, ry = root
+    s = size
+    edge = [(rx, ry), (rx + sgn * 8 * s, ry - 10 * s), (rx + sgn * 15 * s, ry - 19 * s), (rx + sgn * 24 * s, ry - 24 * s), (rx + sgn * 32 * s, ry - 26 * s)]
+    lengths = [10 * s, 13 * s, 16 * s, 18 * s, 17 * s]
+    d = [(sgn * 0.25, 1), (sgn * 0.3, 1), (sgn * 0.4, 1), (sgn * 0.5, 1), (sgn * 0.6, 1)]
+    tips = [(x + dx * L + sgn * fl * 0.4 * k / 4, y + dy * L + fl * k / 4) for k, ((x, y), (dx, dy), L) in enumerate(zip(edge, d, lengths))]
+    feathers = []
+    for k in range(len(tips)):
+        feathers.append(tips[k])
+        if k < len(tips) - 1:
+            feathers.append(((tips[k][0] + tips[k + 1][0]) / 2, (tips[k][1] + tips[k + 1][1]) / 2 + 2))
+    m = c.poly([(x, y - b) for (x, y) in edge] + [(x, y - b) for (x, y) in reversed(tips)])
+    for (x, y) in feathers:
+        m = m | c.ellipse(x, y - b, 3.2 * s, 3.6 * s)
+    c.part(m, ramp, 'ink')
+    for (x, y) in feathers:
+        c.fill(c.ellipse(x, y - 1 - b, 1.4, 1.6) & m, tip or ramp.hi)
+    for k in range(len(feathers) - 1):
+        (x0, y0), (x1, y1) = feathers[k], feathers[k + 1]
+        mx, my = (x0 + x1) / 2, (y0 + y1) / 2 - 1
+        ex, ey = edge[min(len(edge) - 1, (k + 1) // 2)]
+        c.line(mx, my - b, mx + (ex - mx) * 0.3, my + (ey - my) * 0.3 - b, ramp.deep)
+    cov = c.limb([(x + dx * 3, y + dy * 3 - b, (5.4 - 2.4 * k / 4) * s) for k, ((x, y), (dx, dy)) in enumerate(zip(edge, d))])
+    c.part(cov, cover or ramp, 'ink')
