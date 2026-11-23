@@ -175,9 +175,7 @@ const faceBody = use('face', 'url(#g-skin)') + clip('face',
   + glint([[338, 190, 0], [380, 191, 2], [430, 202, 0]], SKIN.hi, 0.6)
   // le nez qui avance : l'arête éclairée, la narine
   + glint([[440, 214, 0], [452, 228, 2.4], [458, 240, 0]], SKIN.hi, 0.7) + oval(452, 246, 4, 2.4, SKIN.deep, 1, 20)
-  // la bouche : un rictus fermé sur le côté, deux crocs qui dépassent au coin
-  + line('M396 284 Q420 280 446 270', '#0e0a10', 3.2) + line('M392 280 Q394 285 398 287', '#0e0a10', 2.4)
-  + shape('M424 279 L428 291 L433 278 Z', '#f4ece0') + shape('M436 275 L439 285 L443 273 Z', '#f4ece0')
+  // (pas de bouche ni de dents : le visage reste fermé et dur)
 );
 
 // ---------- le feu ----------
