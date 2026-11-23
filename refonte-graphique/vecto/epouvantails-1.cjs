@@ -109,42 +109,23 @@ function quillPts(r, c, t, w, side = 0) {
 const quill = (q) => sm(quillPts(q.r, q.c, q.t, q.w * 1.18));
 // [racine, contrôle, pointe, largeur], du fond vers le devant
 const TAIL = [
-  { r: [116, 118], c: [70, 104], t: [28, 70], w: 18, dark: true },
-  { r: [170, 150], c: [100, 120], t: [64, 28], w: 34 },
-  { r: [178, 150], c: [124, 96], t: [132, 8], w: 36 },
-  { r: [160, 168], c: [70, 150], t: [9, 114], w: 36 },
-  { r: [156, 186], c: [80, 190], t: [19, 188], w: 32 },
-  { r: [160, 206], c: [110, 226], t: [62, 231], w: 26 },
-  // les couvertures, plus courtes et rousses, posées sur la racine des grandes plumes
-  { r: [182, 152], c: [146, 124], t: [118, 104], w: 30, cov: true },
-  { r: [180, 172], c: [140, 158], t: [104, 150], w: 30, cov: true },
-  { r: [176, 192], c: [140, 194], t: [100, 200], w: 28, cov: true },
+  { r: [172, 160], c: [96, 96], t: [140, 12], w: 32 },
+  { r: [168, 166], c: [70, 120], t: [70, 26], w: 32 },
+  { r: [164, 176], c: [60, 160], t: [16, 104], w: 32 },
+  { r: [162, 190], c: [70, 206], t: [20, 180], w: 30 },
+  { r: [164, 206], c: [104, 242], t: [56, 228], w: 26 },
 ];
-// les plumes de la queue, DÉCALQUÉES sur l'original (outils/zone.py : la zone entourée de trait noir de chaque plume) ;
-// du fond vers le devant ; les deux premières sont des plumes sombres, à demi cachées
-const FEATHERS = [
-  '23,70 25,62 30,66 35,80 40,96 43,112 40,123 33,118 27,100',
-  '80,62 86,72 92,92 100,116 96,118 90,100 84,82',
-  '131,4 121,9 112,20 107,30 101,51 101,82 108,89 114,89 115,97 112,98 111,101 115,109 122,115 123,120 121,122 121,129 126,135 126,138 132,143 132,145 122,155 122,161 114,167 114,173 108,177 108,180 114,182 120,179 120,185 126,188 127,193 140,194 141,198 150,204 148,208 149,211 160,210 162,212 173,213 176,211 176,128 169,127 155,132 151,123 146,118 140,92 136,84 138,75 135,73 132,58 131,28 137,5',
-  '62,24 53,33 49,41 45,57 45,71 47,79 47,92 45,94 46,106 54,127 67,143 74,141 79,145 82,145 83,142 86,141 105,156 117,158 122,154 125,154 127,150 117,137 110,136 93,119 93,116 97,114 97,111 86,97 75,74 69,52 68,27 66,24',
-  '7,110 12,121 11,130 13,133 13,145 32,159 34,163 40,165 43,170 48,173 64,176 77,176 81,173 89,173 92,171 90,165 83,165 80,162 72,161 68,154 33,132 13,110',
-  '18,184 18,186 27,193 53,205 58,205 60,203 73,203 75,201 74,198 68,195 46,193 22,183',
-  '99,234 96,227 96,221 88,221 58,229 60,233 78,233 77,238 72,240 71,243 73,246 85,245'
-].map((t, i) => {
-  const pts = t.split(' ').map((q) => q.split(',').map(Number));
-  // la racine = le point le plus proche du corps, la pointe = le plus loin
-  const dd = (p) => Math.hypot(p[0] - 190, p[1] - 190);
-  const r = pts.reduce((a, p) => (dd(p) < dd(a) ? p : a)), tip = pts.reduce((a, p) => (dd(p) > dd(a) ? p : a));
-  return { d: sm(t), r, t: tip, dark: i < 2 };
-});
-function tailBody() {
-  return FEATHERS.map((f, i) => `<path d="${f.d}" transform="translate(-3 4)" fill="${SH.fea}" opacity="0.35"/>`
-    + shape(f.d, f.dark ? COP.deep : `url(#g-f${i})`)
-    // la nervure : un creux sombre et une arête claire, de la racine vers la pointe
-    + glint([[f.r[0], f.r[1], 0], [(f.r[0] + f.t[0]) / 2, (f.r[1] + f.t[1]) / 2, 2.4], [f.t[0], f.t[1], 0]], f.dark ? '#2a140a' : FEA.deep, 0.45)
-    + glint([[f.r[0] + 2, f.r[1] - 2, 0], [(f.r[0] + f.t[0]) / 2 + 2, (f.r[1] + f.t[1]) / 2 - 2, 1.6], [f.t[0], f.t[1], 0]], f.dark ? COP.shade : '#ffffff', 0.5)).join('');
+// les couvertures, plus courtes, posées sur la racine des grandes plumes
+const COVERTS = [{ r: [186, 160], c: [154, 136], t: [118, 118], w: 30 }, { r: [184, 178], c: [148, 170], t: [110, 164], w: 30 }, { r: [182, 196], c: [150, 204], t: [116, 210], w: 28 }];
+const quillTop = (q) => sm(quillPts(q.r, q.c, q.t, q.w * 1.18, 1));
+function featherSet(list, grad) {
+  return list.map((q, i) => { const d = quill(q);
+    return `<path d="${d}" transform="translate(-3 4)" fill="${SH.cop}" opacity="0.4"/>` + shape(d, `url(#${grad}${i})`)
+      + shape(quillTop(q), '#ffffff', 0.18)
+      // la nervure : une arête claire de la racine vers la pointe
+      + glint([[q.r[0], q.r[1], 0], [(q.r[0] + q.c[0]) / 2, (q.r[1] + q.c[1]) / 2, 1.8], [(q.c[0] + q.t[0]) / 2, (q.c[1] + q.t[1]) / 2, 1.2], [q.t[0], q.t[1], 0]], COP.hi, 0.55);
+  }).join('');
 }
-
 // ---------- dégradés ----------
 const defs = [
   lin('g-body', 250, 140, 130, 260, [[0, COP.lite], [0.45, COP.base], [1, COP.shade]]),
@@ -159,13 +140,15 @@ const defs = [
   lin('g-cov', 160, 120, 40, 220, [[0, COP.shade], [0.5, COP.mid], [1, '#8a5a40']]),
   lin('g-under', 0, 140, 0, 260, [[0, '#8a7a72'], [0.5, '#6a5a58'], [1, '#4a3a3a']]),
   lin('g-mouth', 0, 0, 0, 1, [[0, '#3a0a0a'], [1, '#8a2a2a']], false),
-  ...FEATHERS.map((f, i) => lin(`g-f${i}`, f.r[0], f.r[1], f.t[0], f.t[1], [[0, COP.shade], [0.28, '#c0703a'], [0.55, '#9a8478'], [0.82, FEA.lite], [1, FEA.hi]])),
+  ...TAIL.map((q, i) => lin(`g-t${i}`, q.r[0], q.r[1], q.t[0], q.t[1], [[0, COP.lite], [0.45, COP.base], [0.8, COP.mid], [1, COP.shade]])),
+  ...COVERTS.map((q, i) => lin(`g-c${i}`, q.r[0], q.r[1], q.t[0], q.t[1], [[0, COP.hi], [0.6, COP.lite], [1, COP.base]])),
   lin('g-wattle', 0, 0, 0, 1, [[0, '#6a2a1e'], [0.5, '#4a1c14'], [1, '#2a0e0a']], false),
 ].join('');
 
 // ---------- silhouettes (le bord extérieur suit le contour mesuré sur l'original) ----------
 const S = {
-  tail: FEATHERS.map((f) => f.d).join(''),
+  tail: TAIL.map(quill).join(''),
+  coverts: COVERTS.map(quill).join(''),
   // les plumes du bas du ventre, sombres, qui pendent sous la queue
   under: sm('160,226 140,240 116,252 96,252 79,246! 92,242 112,236 132,228 150,220'),
   // le socle, le poteau et le raccord en croix sous la flèche
@@ -224,23 +207,11 @@ const parts = [
     + shape(sm('145,382 170,386 196,386 221,380 221,392 145,392'), IRON.shade, 0.8)
     + glint([[186, 312, 0], [187, 340, 2.4], [186, 364, 0]], IRON.hi, 0.8)
     + shape(sm('171,304 196,304 192,314 175,314'), IRON.shade, 0.6)) },
-  // le dessous de la queue : des plumes gris-brun, à demi cachées (forme prise dans la silhouette de l'original)
-  { id: 'underTail', cls: 'a-tail', d: sm('7,140 8,145 14,153 16,159 27,172 37,180 52,187 58,188 66,193 71,192 76,196 72,197 69,195 48,194 20,182 15,184 21,200 37,214 49,220 64,223 83,222 86,220 89,221 79,226 61,228 57,231 57,233 64,240 77,242 74,244 69,244 69,248 78,251 83,255 89,257 93,256 97,259 110,257 119,258 134,250 137,250 137,256 142,262 155,262 158,259 170,260 175,214 150,150 67,144 81,158 79,159 50,143'), body: use('underTail', 'url(#g-under)') + clip('underTail',
-    [[30, 170, 80, 190], [40, 200, 110, 214], [70, 230, 130, 240], [20, 150, 70, 168]].map(([x0, y0, x1, y1]) => glint([[x0, y0, 0], [(x0 + x1) / 2, (y0 + y1) / 2, 5], [x1, y1, 0]], FEA.deep, 0.6)
-      + glint([[x0 + 2, y0 - 4, 0], [(x0 + x1) / 2 + 2, (y0 + y1) / 2 - 4, 2.4], [x1, y1 - 4, 0]], FEA.lite, 0.5)).join('')) },
-  { id: 'tail', cls: 'a-tail', d: S.tail, body: use('tail', COP.mid) + clip('tail', tailBody()) },
-  // la base rousse de la queue (les couvertures), relevée par sa couleur sur l'original, entre les plumes et le corps
-  { id: 'coverts', cls: 'a-tail', d: sm('57,102 58,109 70,120 75,134 83,137 88,143 87,150 94,158 103,160 119,157 120,164 115,170 101,167 83,167 78,161 66,157 50,146 39,142 40,152 43,155 43,161 47,165 48,172 57,171 60,175 66,177 66,181 70,186 80,185 81,191 86,192 97,190 105,178 111,178 112,183 119,183 128,187 131,198 127,205 146,206 148,202 140,198 141,193 157,196 166,191 171,191 171,132 156,136 151,135 151,130 144,122 135,95 119,97 119,103 115,108 117,113 115,129 117,132 125,134 130,144 129,150 124,150 116,139 108,137 96,126 85,111 85,101 82,97 65,96 64,102'), shadow: [sh(['tail', 'underTail'], -3, 5, SH.cop, 0.45)], body: use('coverts', 'url(#g-cov)') + clip('coverts',
-    // des couvertures en écailles de plume, de tailles différentes, pointes vers la queue : chacune son ombre portée sur
-    // celle d'avant, sa moitié du haut éclairée
-    [[58, 120, 16, -40], [80, 112, 18, -60], [104, 128, 18, -55], [70, 148, 16, -20], [96, 154, 18, -25], [122, 150, 18, -35], [140, 172, 16, -20],
-      [60, 176, 14, -5], [88, 182, 16, -10], [116, 186, 16, -10], [146, 200, 14, 5], [96, 210, 14, 10], [124, 216, 14, 15]].map(([x, y, L, a]) => {
-      const r = (a * Math.PI) / 180, ux = Math.cos(r + Math.PI), uy = Math.sin(r + Math.PI);
-      const d = `M${n(x + uy * L * 0.42)} ${n(y - ux * L * 0.42)} Q${n(x + ux * L * 0.7 + uy * L * 0.4)} ${n(y + uy * L * 0.7 - ux * L * 0.4)} ${n(x + ux * L)} ${n(y + uy * L)} Q${n(x + ux * L * 0.7 - uy * L * 0.4)} ${n(y + uy * L * 0.7 + ux * L * 0.4)} ${n(x - uy * L * 0.42)} ${n(y + ux * L * 0.42)} Z`;
-      return `<path d="${d}" transform="translate(-2 3)" fill="${SH.cop}" opacity="0.35"/>` + shape(d, COP.base) + shape(d, COP.lite, 0.35);
-    }).join('')) },
-  { id: 'under', cls: 'a-bird', d: S.under, shadow: [sh(['tail'], -3, 4, SH.fea, 0.4)], body: use('under', FEA.shade) + clip('under',
-    glint([[150, 222, 0], [120, 240, 3], [88, 248, 0]], FEA.lite, 0.6)) },
+  // la queue en faucilles, puis les couvertures sur leur racine (dessinées, en cuivre ; libres de l'ancienne silhouette)
+  { id: 'tail', cls: 'a-tail', free: true, d: S.tail, body: featherSet(TAIL, 'g-t') },
+  { id: 'coverts', cls: 'a-tail', free: true, d: S.coverts, shadow: [sh(['tail'], -3, 5, SH.cop, 0.45)], body: featherSet(COVERTS, 'g-c') },
+  { id: 'under', cls: 'a-bird', free: true, d: S.under, shadow: [sh(['tail'], -3, 4, SH.cop, 0.4)], body: use('under', COP.shade) + clip('under',
+    glint([[150, 222, 0], [120, 240, 3], [88, 248, 0]], COP.mid, 0.8)) },
   { id: 'legF', cls: 'a-bird', d: S.legF, body: use('legF', 'url(#g-leg)') + clip('legF',
     glint([[164, 252, 0], [162, 268, 2], [160, 282, 0]], '#5a3a18', 0.6) + glint([[156, 292, 0], [164, 296, 2.2], [174, 294, 0]], '#5a3a18', 0.7)) },
   { id: 'arrow', cls: 'a-vane', d: S.arrow, shadow: [sh(['base'], -3, 5, SH.iron, 0.5)], body: use('arrow', 'url(#g-iron)') + clip('arrow',
