@@ -394,6 +394,10 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   bras devant le tee-shirt ; cou trop long ou devant ; coins de bouclier) → `arm()` avant le torse puis `arm_front()`
   après (la racine du bras reste sous le vêtement), `neck()` avant le torse, règles ajoutées au guide (§ 3, § 6, § 9) ;
   appliqué aussi à Eldra, Sable et Ilian. `controle.py` contrôle tous les héros de `jeu.CHARS`.
+  **v0.48.0 : les 9 autres assassins** (Nyx le génie à la queue de fumée, Vesper le démon aux ailes de chauve-souris,
+  Isha la déesse au soleil, Corvin l'elfe au bouclier, Lysa le guerrier du nord, Jinn l'archer, Morrow le chevalier en
+  armure complète, Zéphyre la ninja, Saïko la fée). Ajout au kit : `FACE` (le visage commun, lignes 6 à 19) et
+  `face_legend()`, pour les têtes qui ne changent que les cheveux ou la coiffe.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

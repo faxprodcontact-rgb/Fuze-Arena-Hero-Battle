@@ -241,3 +241,28 @@ def check_head(rows):
     w = {len(r) for r in rows}
     assert len(w) == 1, [(i, len(r)) for i, r in enumerate(rows)]
     return rows
+
+
+# Le visage commun (lignes 6 à 19 d'une tête de 21 de large) : à mettre sous les lignes du haut (cheveux, coiffe).
+# h = les cheveux sur le côté, S/s/H = la peau, b = sourcils, w/p = l'œil (blanc, iris), m = la bouche.
+FACE = [
+    ".KhhKhhSShhSSShhhhK..",
+    ".KhhKSSSSSSSSSSSSHK..",
+    ".KhhKSbbSSSSSSSbbSK..",
+    ".KhhKSSbbbSSSbbbSSHK.",
+    ".KhhKSSwpKSSSKpwSSHK.",
+    ".KhhKSSsssSsSsssSSSSK",
+    ".KhhKSSSSSSssSSSSSSK.",
+    "..KhKSSSSSSSSSSSSSK..",
+    "..KhKSSSSmmmmmSSSK...",
+    "..KhKsSSSSSSSSSSSK...",
+    "...KKssSSSSSSSSSK....",
+    "....KKsSSSSSSSHK.....",
+    ".....KKKssssKKK......",
+    "........KKKK.........",
+]
+FACE_BLINK = {'w': 'b', 'p': 'b'}
+
+
+def face_legend(skin, hair, eye='#2a1a10', mouth='#4a1010', brow='#2a160c'):
+    return {'K': INK, 'h': hair, 'S': skin.light, 's': skin.base, 'H': skin.hi, 'b': brow, 'w': '#ffffff', 'p': eye, 'm': mouth}
