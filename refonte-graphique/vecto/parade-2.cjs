@@ -147,16 +147,16 @@ const TEETH_B = [[[372, 246], [380, 248], [377, 236]], [[388, 249], [398, 249], 
 /** Le grand œil : l'anneau sombre, le bord orange, l'iris vert, la grosse pupille, deux reflets ; le sourcil rouge ourlé. */
 function bigEye() {
   const x = 319, y = 162;
-  return oval(x, y, 31, 29, '#2a1008')
+  return oval(x, y, 34, 31, RED.deep) + oval(x, y, 32, 29.5, RED.base)
     + `<clipPath id="c-eye"><ellipse cx="${x}" cy="${y}" rx="28" ry="26"/></clipPath>` + oval(x, y, 28, 26, 'url(#g-eyeO)')
     + `<g clip-path="url(#c-eye)">` + dot(x + 5, y - 1, 19, '#1a2a20') + dot(x + 5, y - 1, 17, 'url(#g-iris)') + dot(x + 7, y - 1, 8.4, '#0c0808')
     + `<rect x="${x - 32}" y="${y - 30}" width="64" height="28" fill="url(#g-lid)"/>`
     + dot(x + 1, y - 8, 4.2, '#fff') + dot(x + 13, y + 7, 2, '#fff', 0.9) + '</g>'
     + `<g class="a-blink" opacity="0">${oval(x, y, 29, 27, 'url(#g-gold)')}${line(`M${x - 28} ${y + 2} Q${x} ${y + 14} ${x + 28} ${y + 2}`, '#2a1008', 3)}</g>`
     // le sourcil : un bourrelet rouge ourlé d'or qui plonge vers le nez (regard furieux)
-    + shape(sm('284,138 300,126 324,124 346,132 362,148 356,152 340,144 320,138 300,140'), '#3a1008', 0.4).replace('<path', '<path transform="translate(-2 4)"')
-    + shape(sm('284,138 300,126 324,124 346,132 362,148 356,152 340,144 320,138 300,140'), 'url(#g-red)')
-    + glint([[292, 132, 0], [320, 127, 2.6], [346, 134, 2], [358, 146, 0]], GOLD.hi, 0.85);
+    + shape(sm('280,140 296,122 324,116 350,126 370,150 360,158 340,146 318,140 298,146'), '#3a1008', 0.4).replace('<path', '<path transform="translate(-2 4)"')
+    + shape(sm('280,140 296,122 324,116 350,126 370,150 360,158 340,146 318,140 298,146'), 'url(#g-red)')
+    + glint([[290, 132, 0], [320, 122, 3], [348, 130, 2.4], [364, 148, 0]], GOLD.hi, 0.85);
 }
 /** Le petit œil du fond, près du nez. */
 const smallEye = () => oval(414, 148, 10, 9, '#2a1008') + oval(414, 148, 8, 7, 'url(#g-eyeO)') + dot(416, 148, 4, '#0c0808') + dot(414, 145.6, 1.6, '#fff')
@@ -191,17 +191,19 @@ const headBody = use('head', 'url(#g-head)') + clip('head',
 function scales(x0, x1, y0, y1, k = 36) {
   const rows = [];
   let y = y0, r = 0;
-  while (y < y1) { const s = Math.max(k * 0.62, k - r * 3); rows.push([y, s, r]); y += s * 0.58; r++; }
+  while (y < y1) { const sz = Math.max(k * 0.7, k - r * 2.4); rows.push([y, sz, r]); y += sz * 0.62; r++; }
   const nR = rows.length;
-  return rows.reverse().map(([yy, s, rr]) => {
+  return rows.reverse().map(([yy, sz, rr]) => {
     let out = '', i = 0;
-    for (let x = x0 + (rr % 2 ? s / 2 : 0); x < x1 + s / 2; x += s, i++) {
-      const j = ((i * 7 + rr * 3) % 5) - 2, cx = x + j, cy = yy + (((i + rr) % 3) - 1) * 1.5;
-      const d = `M${n(cx - s / 2)} ${n(cy)}C${n(cx - s / 2)} ${n(cy + s * 0.66)} ${n(cx + s / 2)} ${n(cy + s * 0.66)} ${n(cx + s / 2)} ${n(cy)}Z`;
-      const reddish = rr / nR > 0.55 || (i + rr) % 4 === 0;
-      out += `<path d="${d}" fill="${SH.gold}" opacity="0.35" transform="translate(-2 3)"/>` + shape(d, reddish ? 'url(#g-red)' : 'url(#g-scale)')
-        + `<path d="${d}" fill="none" stroke="${reddish ? RED.deep : RED.base}" stroke-width="3" opacity="0.8"/>`
-        + oval(n(cx + s * 0.1), n(cy + s * 0.2), n(s * 0.2), n(s * 0.1), reddish ? '#ffb090' : GOLD.hi, 0.7);
+    const warm = rr / nR > 0.5;   // vers le bas, les écailles virent au rouge-orangé (comme l'original), sans damier
+    for (let x = x0 + (rr % 2 ? sz / 2 : 0); x < x1 + sz / 2; x += sz, i++) {
+      const cx = x + (((i * 7 + rr * 3) % 5) - 2), cy = yy + (((i + rr) % 3) - 1);
+      const d = `M${n(cx - sz / 2)} ${n(cy)}C${n(cx - sz / 2)} ${n(cy + sz * 0.7)} ${n(cx + sz / 2)} ${n(cy + sz * 0.7)} ${n(cx + sz / 2)} ${n(cy)}Z`;
+      const lip = `M${n(cx - sz / 2 + 2)} ${n(cy + sz * 0.1)}C${n(cx - sz / 2 + 3)} ${n(cy + sz * 0.6)} ${n(cx + sz / 2 - 3)} ${n(cy + sz * 0.6)} ${n(cx + sz / 2 - 2)} ${n(cy + sz * 0.1)}`
+        + `C${n(cx + sz / 2 - 4)} ${n(cy + sz * 0.44)} ${n(cx - sz / 2 + 4)} ${n(cy + sz * 0.44)} ${n(cx - sz / 2 + 2)} ${n(cy + sz * 0.1)}Z`;
+      out += `<path d="${d}" fill="${warm ? RED.deep : GOLD.shade}" opacity="0.55" transform="translate(-2 4)"/>`
+        + shape(d, warm ? '#f08a3a' : GOLD.lite) + shape(lip, warm ? RED.base : GOLD.mid, 0.9)
+        + glint([[cx - sz * 0.05, cy + sz * 0.14, 0], [cx + sz * 0.16, cy + sz * 0.16, sz * 0.07], [cx + sz * 0.34, cy + sz * 0.1, 0]], warm ? '#ffd0a0' : GOLD.hi, 0.85);
     }
     return out;
   }).join('');
@@ -222,7 +224,7 @@ const parts = [
     // le plumet blanc en flammes (en haut), la queue en écailles (en bas)
     shape(sm('6,150 20,130 32,96 44,112 56,92 66,124 80,116 88,148 96,160 90,176 60,184 30,186 10,170'), 'url(#g-fur)')
     + glint([[30, 168, 0], [36, 140, 3], [34, 110, 0]], FUR.deep, 0.5) + glint([[60, 170, 0], [62, 140, 3], [58, 104, 0]], FUR.deep, 0.5)
-    + scales(30, 140, 184, 300, 28)) },
+    + scales(30, 140, 184, 300, 40)) },
   { id: 'leg1', cls: 'a-legB', d: S.leg1, body: legBody('leg1', 'url(#g-goldFar)', sm('40,352 64,340 100,346 102,372 60,378 40,368'), sm('46,376 100,372 100,400 46,400'),
     [[66, 382], [82, 382]], [[54, 392], [72, 393], [90, 393]]) },
   { id: 'leg2', cls: 'a-legB', d: S.leg2, body: legBody('leg2', 'url(#g-goldFar)', sm('146,350 160,346 176,350 172,374 150,376 140,366'), sm('100,372 176,374 176,400 100,400'),
@@ -230,9 +232,9 @@ const parts = [
   { id: 'leg4', cls: 'a-legF', d: S.leg4, body: legBody('leg4', 'url(#g-goldFar)', sm('356,334 372,340 404,352 410,372 372,372 340,370 330,354'), sm('336,372 414,374 416,400 336,400'),
     [[358, 378], [376, 378], [394, 378]], [[346, 391], [366, 393], [386, 393], [404, 391]]) },
   { id: 'body', cls: 'a-body', d: S.body, shadow: [sh(['tail', 'leg1', 'leg2', 'leg4'], -4, 5, SH.gold, 0.45)], body: use('body', 'url(#g-gold)') + clip('body',
-    scales(80, 356, 176, 340, 40) + shape(sm('90,320 140,340 200,348 270,348 330,330 340,360 90,360'), GOLD.shade, 0.5)) },
+    scales(80, 356, 176, 340, 54) + shape(sm('90,320 140,340 200,348 270,348 330,330 340,360 90,360'), GOLD.shade, 0.5)) },
   { id: 'leg3', cls: 'a-legF', d: S.leg3, shadow: [sh(['body', 'leg4'], -4, 5, SH.gold, 0.45)], body: use('leg3', 'url(#g-gold)') + clip('leg3',
-    scales(208, 270, 296, 340, 26)
+    scales(208, 270, 296, 340, 36)
     + shape(sm('202,352 214,340 240,344 266,346 270,374 238,378 204,376'), 'url(#g-fur)')
     + shape(sm('204,378 280,376 292,402 204,402'), FUR.base)
     + [[226, 382], [246, 382], [264, 382]].map(([x, y]) => glint([[x, y, 0], [x + 1, y + 8, 2.4], [x + 1, y + 16, 0]], FUR.deep, 0.75)).join('')
