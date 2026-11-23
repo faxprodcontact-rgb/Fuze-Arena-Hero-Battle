@@ -14,12 +14,12 @@ import { THEMES, getTheme, setTheme } from '../../theme';
 import { TERRAINS, forcedTerrain, setForcedTerrain } from '../../look';
 import {
   buyExchange, buyOffer, claimChest, claimPass, claimQuest, demoUnlockAll, giveTestResources, passLevel, questPoints,
-  chooseName, deleteAccount, playerId, randomName, rename, resetGame, setLang, setSetting, timeTravel,
+  chooseName, deleteAccount, pixelDemoBattle, playerId, randomName, rename, resetGame, setLang, setSetting, timeTravel,
 } from '../../state/actions';
 import { now, useGame } from '../../state/store';
 import type { Gain } from '../../state/types';
 import { Art, Bar, Btn, Cur, HeroCard, ItemIcon, Modal, Tabs } from '../kit';
-import { close, go, open, toast } from '../nav';
+import { close, go, open, startBattle, toast } from '../nav';
 import { Chest, Halo } from '../anim';
 import { ShopTile } from './adventure';
 
@@ -254,6 +254,8 @@ export function SettingsModal() {
           <Btn kind="purple" small onClick={() => { demoUnlockAll(); toast('✓'); }}>{t('settings.unlock')}</Btn>
           {/* Page à part (public/apercu) : les nouveaux personnages animés, pas encore dans le jeu. */}
           <Btn kind="blue" small onClick={() => { location.href = 'apercu/index.html'; }}>{t('settings.preview')}</Btn>
+          {/* Les 5 héros et les 5 monstres redessinés en pixel art, dans un vrai combat (sans récompense). */}
+          <Btn kind="gold" small onClick={() => { close(); startBattle(pixelDemoBattle()); }}>{t('settings.pixel')}</Btn>
           <Btn kind="red" small onClick={() => open({ type: 'confirm', text: t('settings.resetConfirm'), onYes: () => { resetGame(); close(); } })}>{t('settings.reset')}</Btn>
         </div>
         {/* Voir chaque décor de combat, l'un après l'autre : il remplace celui de l'accueil et des combats jusqu'à « Normal ». */}

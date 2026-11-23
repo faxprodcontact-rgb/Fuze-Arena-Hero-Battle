@@ -94,6 +94,9 @@ function lookOf(kind: string, title: string, dungeon?: DungeonKind): Look {
   switch (kind) {
     case 'campaign':
       return campaignLook(Math.max(1, Number.parseInt(title, 10) || 1));
+    case 'demo':
+      // outil de test : les familles des monstres redessinés en pixel art (voir pixelDemoBattle)
+      return { terrain: 'meadow', family: (e) => ({ earth: 'ronciers', water: 'bayou', fire: 'parade', wind: 'glaces' })[e] };
     case 'tower': {
       const floor = Number.parseInt(title, 10) || 1;
       return { terrain: 'tower', family: (e) => FAMILIES[e][Math.floor(floor / 4) % 3]! };

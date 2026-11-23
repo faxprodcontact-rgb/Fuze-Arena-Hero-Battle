@@ -1,7 +1,7 @@
 // Toutes les actions du joueur. C'est LA porte d'entrée : à l'étape serveur, ces fonctions
 // enverront la demande au serveur (qui utilisera les mêmes règles de src/core) au lieu de calculer ici.
 import { LEADER_SLOT, type BattleInput, type Slot, type UnitInit } from '../../core/battle/types';
-import { heroToUnit } from '../../core/battle/units';
+import { heroToUnit, monsterToUnit } from '../../core/battle/units';
 import { stagePower } from '../../core/data/campaign';
 import { incomePerHour, REWARDS, STAGE_REWARD_HOURS, STAGES_PER_CHAPTER } from '../../core/data/economy';
 import { HEROES, heroDef } from '../../core/data/heroes';
@@ -30,7 +30,7 @@ import { MAIL_KEEP_DAYS, MAILS, type MailDef } from '../../core/data/mail';
 import { BOSSES } from '../../core/data/monsters';
 import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '../../core/stages';
 import { summonBasic, summonOne } from '../../core/summon';
-import type { Hero } from '../../core/types';
+import type { Element, Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
 import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
 import type { TeamKind } from './selectors';
@@ -607,7 +607,7 @@ export function claimFragments(defId: string): Hero | null {
 
 // ---------- Combats ----------
 
-export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss' | 'friend' | 'guildWar';
+export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss' | 'friend' | 'guildWar' | 'demo';
 
 export interface BattleRequest {
   kind: BattleKind;
@@ -642,6 +642,22 @@ export function campaignBattle(): BattleRequest {
     waves: campaignWaves(s.campaign.cleared + 1),
     seed: seedFor(s),
   }));
+}
+
+/**
+ * Outil de test : un combat d'essai entre les 5 héros et les 5 monstres redessinés en pixel art, sans récompense.
+ * Le dessin d'un monstre vient de sa famille (élément → famille, `look.ts`, cas « demo ») et de son rang (goblin = 1, shaman = 4).
+ */
+export function pixelDemoBattle(): BattleRequest {
+  const heroes = ['assassins-2', 'assassins-3', 'mages-8', 'assassins-5', 'angels-2'].map((defId, i) =>
+    heroToUnit({ uid: 9000 + i, defId, stars: 5, level: 40 }, i as Slot));
+  const foes: [string, Element][] = [['goblin', 'earth'], ['goblin', 'water'], ['shaman', 'water'], ['goblin', 'fire'], ['shaman', 'wind']];
+  // des monstres solides mais qui frappent peu : ~30 s de combat, gagné par les héros (essayé sur 20 graines)
+  const waves = [foes.map(([m, e], i) => {
+    const u = monsterToUnit(m, i as Slot, e, 12, `demo-${i}`);
+    return { ...u, maxHp: u.maxHp * 6 };
+  })];
+  return { kind: 'demo', title: '', heroes, waves, seed: (Math.random() * 2 ** 31) >>> 0 };
 }
 
 export function towerBattle(): BattleRequest {
@@ -838,6 +854,7 @@ export function idleSetup(): { heroes: UnitInit[]; waves: UnitInit[][] } {
 
 /** Le résultat d'un combat : récompenses selon le mode. */
 export function finishBattle(req: BattleRequest, res: BattleResult): Gain {
+  if (req.kind === 'demo') return emptyGain();
   return update((s) => {
     const gain = emptyGain();
     const rng = nextRng(s);

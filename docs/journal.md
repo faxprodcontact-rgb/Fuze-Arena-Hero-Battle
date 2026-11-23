@@ -350,6 +350,9 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   `cardUrl` (`art.ts`), au combat une planche animée à la place du dessin découpé, sans écrasement ni balancement en plus
   (`View.px`), bandeau des compétences ; héros en pied (`hero-figure.tsx`, `.px-win`, `image-rendering: pixelated`). Les
   anciens dessins restent dans `art/p`, `art/c`, `art/r` : enlever un nom de `CHARS` dans `jeu.py` le remet comme avant.
+  **v0.42.1** : le propriétaire ne les voyait pas (ses héros et ses monstres n'en font pas partie) → bouton « Combat pixel
+  art » dans les Outils de test : `pixelDemoBattle()` (`actions.ts`, combat `demo` sans récompense, ~30 s gagné par les
+  héros), décor prairie et familles des monstres redessinés (`look.ts`, cas `demo`).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier
