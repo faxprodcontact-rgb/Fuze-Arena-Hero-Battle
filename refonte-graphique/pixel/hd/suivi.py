@@ -55,7 +55,7 @@ RETOUCHES = {
     'sable': "Khépesh plus long et plus tranchant ; bras droit baissé tenant un grand bouclier égyptien devant elle ; des dents bien placées.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = set()
+FAITES = {'sable', 'minotaure'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
