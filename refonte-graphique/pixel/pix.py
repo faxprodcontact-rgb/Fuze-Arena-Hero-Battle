@@ -173,13 +173,23 @@ class Canvas:
         return im.resize((self.w * scale, self.h * scale), Image.NEAREST) if scale > 1 else im
 
 
+def origin_of(draw):
+    """Le repère d'un personnage : (OX, OY) par défaut ; un personnage « encré » (gros pixels) donne son ORIGIN et
+    n'a pas de contour ajouté (chacun de ses morceaux a déjà son trait noir)."""
+    import sys
+    mod = sys.modules.get(getattr(draw, '__module__', ''), None)
+    return getattr(mod, 'ORIGIN', (OX, OY)), getattr(mod, 'ORIGIN', None) is None
+
+
 def sheet(draw, frames=8, w=FRAME_W, h=FRAME_H):
     """Une bande d'images (l'animation de repos) : draw(canvas, t) pour t = 0 … frames-1."""
+    (ox, oy), outline = origin_of(draw)
     out = Image.new('RGBA', (w * frames, h), (0, 0, 0, 0))
     for t in range(frames):
-        c = Canvas(w, h)
+        c = Canvas(w, h, ox, oy)
         draw(c, t)
-        c.outline()
+        if outline:
+            c.outline()
         out.paste(c.image(), (t * w, 0))
     return out
 

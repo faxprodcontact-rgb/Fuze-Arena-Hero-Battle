@@ -368,6 +368,13 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   terre (lames tendues), Eldra sur une jambe (bâton au-dessus de la tête), Rook debout ailes ouvertes (ailes du premier
   essai : une langue de feu de la racine vers chaque pointe), Ilian bien campé (trident planté, boule d'eau). Leçon : une
   pose accroupie « en boule » ne se lit pas en pixel art ; garder des silhouettes simples et différentes.
+  **v0.45.0 (23/11/2026), style « gros pixels encrés »** (référence du propriétaire : un chevalier en pixel art à gros
+  traits) : héros d'environ 64 pixels de haut (au lieu de 90), grosse tête dessinée pixel par pixel, **un trait noir autour
+  de chaque morceau** (style `'ink'` de `pix.part`), ombrage net. Corps faits par morceaux nets : cou et trapèzes sous la
+  tête (la tête ne flotte pas), épaulières, bras / coude / avant-bras et brassard / poing, cuisses épaisses, genouillères,
+  torse détaillé (pectoraux, abdominaux). Chaque héros encré donne son `ORIGIN` (repère : pieds en y = 71, milieu x = 40)
+  et n'a pas de contour ajouté par `sheet()` ; au combat un pixel = 1,8 unité (`SCALE['ink']`). Mêmes poses qu'en v0.44.
+  Ilian validé d'abord seul (essai), puis les quatre autres. Les monstres sont encore dans l'ancien style.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

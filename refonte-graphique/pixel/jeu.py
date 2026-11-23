@@ -29,7 +29,7 @@ UP = 3                       # la planche fait 8 × 132 × 3 = 3168 pixels de la
 FX, FY = GAP + OX + 48, GAP + OY + 94  # les pieds dans la case (milieu du repère, ligne 94)
 # La taille d'un pixel dans le combat (unités du jeu, écran de 720 de large) : les anciens héros mesuraient ~124 de haut,
 # les anciens monstres de ces familles ~86 ; un seul réglage par groupe, pour que les pixels gardent la même taille.
-SCALE = {'hero': 1.35, 'monster': 0.96}
+SCALE = {'hero': 1.35, 'monster': 0.96, 'ink': 1.8}   # 'ink' : les héros « encrés » (gros pixels, ~64 de haut)
 # La vignette (comme art-jeu.py) : 256 de côté, les héros debout pieds en bas (stature commune), les monstres remplissent
 # le carré ; enregistrée deux fois plus grande pour rester nette sur les téléphones.
 S, PAD, STATURE = 256, 10, 188
@@ -44,7 +44,7 @@ def planche(pid):
     return strip, out
 
 
-def carte(pid, frame):
+def carte(pid, frame, anchor, stature):
     a = np.array(frame)[:, :, 3] > 0
     ys, xs = np.where(a.any(1))[0], np.where(a.any(0))[0]
     top, bottom, left, right = ys.min(), ys.max(), xs.min(), xs.max()
@@ -52,9 +52,9 @@ def carte(pid, frame):
     card = Image.new('RGBA', (s, s), (0, 0, 0, 0))
     big = frame.resize((FRAME_W * 8, FRAME_H * 8), Image.NEAREST)  # agrandi sans flou, puis réduit proprement
     if pid in HEROES:
-        k = STATURE / 80 * CARD_X  # une même taille de pixel pour tous les héros (stature moyenne en garde ~80 pixels)
+        k = STATURE / stature * CARD_X  # une même taille de pixel pour tous les héros d'un même style
         im = big.resize((round(FRAME_W * k), round(FRAME_H * k)), Image.LANCZOS)
-        card.paste(im, (round(s / 2 - (OX + 52) * k), round(s - PAD * CARD_X - (OY + 94) * k)), im)
+        card.paste(im, (round(s / 2 - (anchor[0] + 4) * k), round(s - PAD * CARD_X - anchor[1] * k)), im)
     else:
         crop = big.crop((left * 8, top * 8, (right + 1) * 8, (bottom + 1) * 8))
         k = min((S - 2 * PAD) * CARD_X / crop.width, (S - 2 * PAD) * CARD_X / crop.height)
@@ -69,14 +69,18 @@ def main():
     for pid, cid in CHARS.items():
         strip, cells = planche(pid)
         cells.resize((cells.width * UP, cells.height * UP), Image.NEAREST).save(os.path.join(OUT, f'{cid}.webp'), lossless=True, quality=100, method=6)
-        carte(pid, strip.crop((0, 0, FRAME_W, FRAME_H))).save(os.path.join(OUT, f'c-{cid}.webp'), lossless=True, quality=100, method=6)
+        mod = importlib.import_module(pid)
+        ink = hasattr(mod, 'ORIGIN')
+        ox, oy = getattr(mod, 'ORIGIN', (OX, OY))
+        anchor = (ox + 40, oy + 71) if ink else (OX + 48, OY + 94)
+        carte(pid, strip.crop((0, 0, FRAME_W, FRAME_H)), anchor, 64 if ink else 80).save(os.path.join(OUT, f'c-{cid}.webp'), lossless=True, quality=100, method=6)
         # le haut du dessin (le plus haut des 8 images) et sa largeur, dans la case
         a = np.array(cells)[:, :, 3] > 0
         top = int(np.where(a.any(1))[0].min())
         # la largeur au sol (les 14 lignes du bas : les jambes en garde, sans l'arme ni les ailes), pour l'ombre
         f0 = a[FY - 14:FY + 1, :CW]
         xs = np.where(f0.any(0))[0]
-        meta[cid] = [top, int(xs.min()), int(xs.max()) + 1, SCALE['hero' if pid in HEROES else 'monster']]
+        meta[cid] = [top, int(xs.min()), int(xs.max()) + 1, SCALE['ink' if ink else 'hero' if pid in HEROES else 'monster']]
         print(cid, pid, meta[cid])
     with open(META, 'w') as fh:
         fh.write('// Généré par refonte-graphique/pixel/jeu.py : ne pas modifier à la main.\n')

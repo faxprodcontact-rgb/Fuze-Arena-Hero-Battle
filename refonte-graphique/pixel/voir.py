@@ -3,7 +3,7 @@ import sys, os, importlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'persos'))
 from PIL import Image
-from pix import Canvas, BLINK, FRAME_W, FRAME_H, OX, OY
+from pix import Canvas, BLINK, FRAME_W, FRAME_H, OX, OY, origin_of
 args = [a for a in sys.argv[1:] if a != '--une']
 x = 4
 if '--x' in args:
@@ -13,7 +13,10 @@ tiles = []
 for pid in ids:
     mod = importlib.import_module(pid)
     for t in ((0,) if '--une' in sys.argv else (0, 3)):
-        c = Canvas(); mod.draw(c, t); c.outline()
+        (ox, oy), outline = origin_of(mod.draw)
+        c = Canvas(FRAME_W, FRAME_H, ox, oy); mod.draw(c, t)
+        if outline:
+            c.outline()
         bg = Image.new('RGBA', (FRAME_W, FRAME_H), (47, 111, 154, 255))
         # le carré de 96 × 96 d'origine, en plus sombre : ce qui en sort reste visible dans le jeu
         bg.paste((40, 96, 136, 255), (OX, OY, OX + 96, OY + 96)); bg.alpha_composite(c.image())

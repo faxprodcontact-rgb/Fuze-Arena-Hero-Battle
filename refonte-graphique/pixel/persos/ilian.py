@@ -1,88 +1,126 @@
-# Ilian (angels-2) : le dieu des mers, bien campé, jambes écartées et genoux fléchis (garde basse), tourné vers la
-# droite. Sa main droite (la plus proche) tient son trident d'or planté debout à côté de lui ; sa main gauche, tendue
-# vers l'ennemi, lance une boule d'eau tourbillonnante. Tête dessinée pixel par pixel (tetes.py) : couronne d'or posée
-# sur les cheveux blancs, mèches devant, gros sourcils blancs froncés, yeux turquoise qui brillent, dents serrées,
-# grande barbe sur la poitrine (rien ne passe devant). Crinière blanche qui vole derrière ; torse nu, épaulières et
-# brassards d'or, cape bleu nuit, jupe bleue à ceinture d'or, jambières et sandales d'or.
+# Ilian (angels-2), style « gros pixels encrés » (validé par le propriétaire le 23/11/2026).
+# Un personnage d'environ 70 pixels de haut, grosse tête dessinée pixel par pixel, un trait noir autour de chaque
+# morceau, ombrage net (ombre en bas à gauche, liseré clair en haut à droite). Morphologie : cou et trapèzes sous la
+# tête, la barbe posée sur la poitrine ; larges épaules ; bras en morceaux nets (épaule, bras, coude, avant-bras et
+# brassard, poing) ; cuisses et mollets épais ; torse détaillé (pectoraux, abdominaux, obliques).
+# Pose : bien campé, jambes écartées, trident planté debout dans la main droite (la plus proche), la main gauche tendue
+# vers l'ennemi lance une boule d'eau. Repère : toile de 84 × 74, pieds sur y = 71.
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, os.path.dirname(__file__))
 from pix import Ramp, BREATH, BLINK
-import tetes
 
-SKIN = Ramp('#6a2e1e', '#a85a3c', '#d68a62', '#f0b48a', '#ffd8b8')
-WHITE = Ramp('#56648a', '#97a6c6', '#dfe7f4', '#ffffff', '#ffffff')
-GOLD = Ramp('#6a3e08', '#b07418', '#eab036', '#ffd870', '#fff4c0')
-BLUE = Ramp('#0c2650', '#164a86', '#2878be', '#4ea2e2', '#8cd0ff')
-CAPE = Ramp('#06142c', '#0c2650', '#173e72', '#245a98', '#3a76b4')
-WATER = Ramp('#0a3a6a', '#1468a8', '#2aa0dc', '#7ad8f4', '#e0faff')
-GEM = Ramp('#063a4a', '#0a6a82', '#16a8c4', '#5ee4f4', '#d0ffff')
+ORIGIN = (24, 45)
 
-HX, HY = 47, 10   # le coin de la tête
-TX = 28           # le manche du trident
+SKIN = Ramp('#7a3a26', '#b4683f', '#e0915f', '#f6b886', '#ffdcb6')
+WHITE = Ramp('#5e6a90', '#a2aed0', '#dfe6f4', '#ffffff', '#ffffff')
+GOLD = Ramp('#7a4a0c', '#c0841e', '#eab036', '#ffd870', '#fff4c0')
+BLUE = Ramp('#0e2c5c', '#1c4f92', '#2f7cc6', '#5ca8ea', '#9ad4ff')
+CAPE = Ramp('#060f22', '#0c2046', '#16346a', '#23508e', '#3468a8')
+LINE = '#8a4228'     # les creux des muscles
+SHINE = '#ffd0a4'    # le haut éclairé des muscles
+
+HEAD = [
+    "...........KK...........",
+    "..........KlkK..........",
+    "...KK..KKKKljKKKK..KK...",
+    "..KlkKKfggKljjKggfKKkjK.",
+    "..KkjjKfggKkjjjKgfKjjjK.",
+    "..KjjjjKKKjjzjjjKKjjjjK.",
+    "..KjzjjjjjjjjjjjjjjjzjK.",
+    "..KiiiiiiiiiiiiiiiiiiiK.",
+    ".KgggKbbccccccccccccdK..",
+    ".KfggKbbcccccccccccccK..",
+    ".KfggKbhhhcccccchhhcdK..",
+    ".KfggKbbchhhcchhhcccdK..",
+    ".KfggKbbcKsScbSsKcccdK..",
+    ".KfggKbbbaaacbaaaccccdK.",
+    ".KfgggggbbcaaabbbgggggK.",
+    ".KfgggghhhhhhhhhhhhgggK.",
+    ".KffgggggghKuuuuKhggggK.",
+    ".KffgggggggKttttKggggK..",
+    ".KfffggggggKKKKKKggggK..",
+    "..KffggggggggggggggggK..",
+    "...KfffgggggegggggghgK..",
+    ".....KffggggggeggggghK..",
+    "......KffgggggggegggK...",
+    ".......KffggggggggK.....",
+    "........KffgggggeK......",
+    ".........KffgggK........",
+    "..........KfggK.........",
+    "...........KKK..........",
+]
+HEAD_C = {'K': '#1e1424', 'a': '#9a5236', 'b': '#c87a52', 'c': '#eaa47a', 'd': '#ffd2aa',
+          'e': '#6e7aa0', 'f': '#a8b4d2', 'g': '#e2e9f6', 'h': '#ffffff',
+          'i': '#a06a14', 'j': '#e0a030', 'k': '#f8d060', 'l': '#fff0a0', 'z': '#22d0f0',
+          's': '#22c8e8', 'S': '#d8ffff', 't': '#3a0e14', 'u': '#f4ece4'}
+HEAD_BLINK = {'s': 'a', 'S': 'a'}
+# le poing fermé sur le manche (les doigts par-dessus), la main ouverte tendue
+FIST = [".KKKKK.", "KcdcdcK", "KKKKKKK", "KbccccK", "KabbbbK", ".KKKKK."]
+HAND = [".KKK..", "KcddK.", "KcccKK", "KbccdK", "KbbcK.", ".KKK.."]
+HAND_C = {'K': '#1e1424', 'a': '#9a5236', 'b': '#c87a52', 'c': '#eaa47a', 'd': '#ffd2aa'}
 
 
 def draw(c, t):
     b = BREATH[t]
     sw = [0, 1, 1, 0, 0, -1, -1, 0][t]
-    wv = [0, 1, 2, 3, 4, 5, 6, 7][t]
     # ---- la cape bleu nuit, derrière ----
-    c.part(c.poly([(46, 34 - b), (34, 38 - b), (22, 52), (12, 70 + sw), (6, 88 + sw), (20, 86), (28, 90), (36, 76), (44, 58), (50, 44 - b)]), CAPE)
-    # ---- la crinière : de grosses mèches blanches qui volent derrière la tête ----
-    for pts in [
-        [(52, 14, 4.6), (42, 20, 4.2), (34 + sw, 30, 3.4), (28 + sw, 40, 1.4)],
-        [(50, 20, 4.4), (42, 30, 4), (36 + sw, 42, 3), (32 + sw, 50, 1)],
-        [(49, 28, 4), (44, 38, 3.4), (42 + sw, 48, 2.4), (40 + sw, 54, 1)],
-    ]:
-        c.part(c.limb([(x, y - b, r) for (x, y, r) in pts]), WHITE)
-    # ---- le bras gauche (derrière le torse) tendu vers l'ennemi ----
-    c.part(c.limb([(74, 38 - b, 5), (86, 44 - b, 4.4), (93, 41 - b, 4)]), SKIN)
-    c.part(c.poly([(83, 40 - b), (89, 39 - b), (90, 46 - b), (84, 47 - b)]), GOLD)
-    # ---- les jambes en garde basse : genoux écartés, jambières et sandales d'or ----
-    for (hip, knee, ank, foot) in [((53, 64), (39, 74), (36, 87), [(27, 88), (40, 88), (44, 91), (44, 93), (26, 93)]),
-                                   ((66, 64), (80, 74), (83, 87), [(76, 88), (89, 88), (93, 91), (93, 93), (75, 93)])]:
-        c.part(c.limb([(hip[0], hip[1], 7), (knee[0], knee[1], 6)]), SKIN)
-        c.part(c.limb([(knee[0], knee[1], 5.4), (ank[0], ank[1], 4.6)]), SKIN)
-        c.part(c.poly(foot), SKIN)
-        c.line(foot[0][0] + 2, 91, foot[1][0] - 1, 90, GOLD.base)
-        gx = (knee[0] + ank[0]) / 2
-        c.part(c.poly([(gx - 5, knee[1] + 4), (gx + 4, knee[1] + 4), (gx + 4, ank[1]), (gx - 4, ank[1])]), GOLD)
-        c.px(gx + 2, knee[1] + 6, GOLD.hi)
-    # ---- la jupe bleue, la ceinture d'or et son coquillage ----
-    c.part(c.poly([(46, 60), (72, 60), (78, 72), (70, 74), (62, 68), (56, 68), (48, 74), (40, 72)]), BLUE)
-    c.line(53, 63, 50, 71, BLUE.shade), c.line(65, 63, 68, 71, BLUE.shade)
-    c.part(c.rect(45, 58, 74, 62), GOLD)
-    c.part(c.ellipse(59.5, 60, 3.5, 3), GEM, 'round')
-    # ---- le torse nu, large ; pectoraux et ventre sous la barbe ----
-    c.part(c.poly([(38, 34 - b), (76, 33 - b), (80, 40 - b), (75, 50), (71, 59), (48, 59), (43, 50), (36, 41 - b)]), SKIN)
-    c.line(46, 44 - b, 54, 46 - b, SKIN.shade), c.line(66, 46 - b, 73, 43 - b, SKIN.shade)
-    c.line(60, 46 - b, 60, 58, SKIN.shade)
-    c.line(55, 51, 58, 51, SKIN.shade), c.line(62, 51, 65, 51, SKIN.shade)
-    c.line(55, 55, 58, 55, SKIN.shade), c.line(62, 55, 65, 55, SKIN.shade)
-    # ---- les épaulières d'or ----
-    c.part(c.ellipse(75, 35 - b, 6.5, 5), GOLD, 'round')
-    # ---- la tête (dessinée pixel par pixel), la couronne ----
-    tetes.ilian(c, HX, HY - b, t == BLINK)
-    c.part(c.ellipse(40, 37 - b, 8, 6), GOLD, 'round')
-    # ---- le bras droit (le plus proche) qui tient le trident planté debout ----
-    c.part(c.limb([(40, 40 - b, 5), (33, 46 - b, 4.6), (TX + 1, 51 - b, 4.2)]), SKIN)
-    c.part(c.poly([(30, 42 - b), (37, 42 - b), (36, 49 - b), (29, 48 - b)]), GOLD)
-    # le trident : le manche, la traverse, trois pointes à crochets
-    c.part(c.limb([(TX, 92, 1.7), (TX, 6, 1.7)]), GOLD, line=False)
-    c.part(c.poly([(TX - 8, 4), (TX + 8, 4), (TX + 7, 8), (TX - 7, 8)]), GOLD)
-    for (dx, top) in ((-7, -6), (0, -10), (7, -6)):
-        c.part(c.poly([(TX + dx - 1.6, 5), (TX + dx, top), (TX + dx + 1.6, 5)]), GOLD, line=False)
-    for dx in (-7, 7):
-        side = 1 if dx > 0 else -1
-        c.part(c.poly([(TX + dx, -2), (TX + dx + side * 3, -5), (TX + dx + side * 1, 0)]), GOLD, line=False)
-    c.px(TX, 6, GEM.light)
-    c.part(c.ellipse(TX, 52 - b, 4.2, 4.2), SKIN, 'round')
-    c.px(TX - 1, 50 - b, SKIN.deep), c.px(TX + 1, 50 - b, SKIN.deep)
-    # ---- la main gauche ouverte et la boule d'eau qui tourbillonne ----
-    c.part(c.ellipse(95, 41 - b, 3.8, 4), SKIN, 'round')
-    c.part(c.ellipse(103, 40 - b, 6.5, 6.5), WATER, 'round', line=False)
-    for k in range(10):
-        import math
-        a = (k / 10) * 6.28 + wv * 0.8
-        r = 2 + k * 0.4
-        c.px(103 + math.cos(a) * r, 40 - b + math.sin(a) * r * 0.9, WATER.hi if k % 2 else WATER.light)
+    c.part(c.poly([(30, 27 - b), (22, 31 - b), (14, 42), (9, 55 + sw), (6, 70 + sw), (17, 69), (23, 71), (27, 60), (30, 45)]), CAPE, 'ink')
+    # ---- la crinière : trois grosses mèches blanches qui volent derrière la tête ----
+    for pts in [[(31, 9, 4.6), (23, 15, 4), (18 + sw, 24, 2.8), (16 + sw, 30, 1.4)],
+                [(29, 17, 4.4), (23, 24, 3.8), (20 + sw, 32, 2.6), (19 + sw, 37, 1.2)],
+                [(29, 24, 3.8), (26, 31, 3.2), (25 + sw, 37, 2.2), (25 + sw, 41, 1)]]:
+        c.part(c.limb([(x, y - b, r) for (x, y, r) in pts]), WHITE, 'ink')
+    # ---- le bras gauche (derrière le torse), tendu vers l'ennemi ----
+    c.part(c.limb([(55, 33 - b, 4.4), (62, 38 - b, 4)]), SKIN, 'ink')                 # le bras
+    c.part(c.limb([(62, 38 - b, 3.8), (68, 35 - b, 3.6)]), SKIN, 'ink')               # l'avant-bras
+    c.part(c.poly([(61, 33 - b), (67, 31 - b), (69, 37 - b), (63, 40 - b)]), GOLD, 'ink', band=1)
+    c.part(c.ellipse(62, 38.5 - b, 2.6, 2.4), SKIN, 'ink')                            # le coude
+    # ---- les jambes, épaisses, en garde : cuisse, genouillère d'or, jambière, sandale ----
+    for (hip, knee, ank, sgn) in [((34, 57), (27, 63), (25, 68), -1), ((47, 57), (54, 63), (56, 68), 1)]:
+        c.part(c.limb([(hip[0], hip[1], 6.2), (knee[0], knee[1], 5.2)]), SKIN, 'ink')
+        c.part(c.poly([(ank[0] - 7, 67), (ank[0] + 7, 67), (ank[0] + 7 + sgn * 2, 72), (ank[0] - 7 + sgn * 2, 72)]), SKIN, 'ink')
+        c.line(ank[0] - 5 + sgn, 69, ank[0] + 5 + sgn, 69, GOLD.base)
+        c.part(c.poly([(knee[0] - 5, 63), (knee[0] + 5, 63), (ank[0] + 5, 69), (ank[0] - 5, 69)]), GOLD, 'ink')
+        c.line(knee[0] + 2, 65, ank[0] + 2, 68, GOLD.hi)
+        c.part(c.ellipse(knee[0], knee[1], 4.4, 3.4), GOLD, 'ink')
+    # ---- la jupe bleue et son ourlet d'or ----
+    c.part(c.poly([(27, 54), (54, 54), (58, 63), (49, 64), (41, 60), (33, 64), (23, 63)]), BLUE, 'ink')
+    c.line(34, 57, 31, 62, BLUE.deep), c.line(48, 57, 51, 62, BLUE.deep)
+    # ---- le torse : trapèzes qui montent vers le cou, pectoraux, abdominaux, obliques ----
+    c.part(c.rect(34, 20 - b, 45, 28 - b), SKIN, 'ink')                               # le cou
+    c.part(c.poly([(20, 31 - b), (31, 25 - b), (47, 24 - b), (57, 30 - b), (58, 38 - b), (54, 47), (52, 53), (29, 53), (26, 47), (21, 38 - b)]), SKIN, 'ink')
+    # les pectoraux : le bas ombré, le haut éclairé
+    for (x0, x1, y0, y1) in [(26, 38, 41, 42), (41, 53, 41, 40)]:
+        c.line(x0, y0 - b, x1, y1 - b, LINE)
+        c.line(x0 + 1, y0 - 1 - b, x1 - 1, y1 - 1 - b, SKIN.shade)
+    c.line(39, 34 - b, 39, 52, LINE)
+    c.line(45, 33 - b, 51, 33 - b, SHINE), c.line(30, 35 - b, 36, 34 - b, SHINE)
+    # les abdominaux : trois rangées de deux carrés, un liseré clair en haut à droite de chacun
+    for (y0, y1) in [(43, 46), (46, 49), (49, 52)]:
+        for (x0, x1) in [(32, 38), (40, 46)]:
+            c.line(x0, y1, x1, y1, LINE)
+            c.line(x0 + 1, y0 + 1, x1 - 1, y0 + 1, SHINE)
+    c.line(29, 44, 31, 51, LINE), c.line(50, 44, 48, 51, LINE)
+    # ---- la grosse ceinture d'or et sa plaque à la pierre de mer ----
+    c.part(c.rect(27, 51, 55, 56), GOLD, 'ink')
+    c.part(c.rect(36, 50, 45, 57), GOLD, 'ink')
+    c.part(c.ellipse(40.5, 53.5, 2.2, 2), Ramp('#063a4a', '#0a6a82', '#16a8c4', '#5ee4f4', '#d0ffff'), 'ink')
+    # ---- l'épaulière gauche, la tête (posée sur le cou), l'épaulière droite ----
+    c.part(c.ellipse(56, 30 - b, 6.6, 5), GOLD, 'ink')
+    c.line(52, 27 - b, 60, 28 - b, GOLD.hi)
+    c.sprite(26, 3 - b, HEAD, HEAD_C, HEAD_BLINK if t == BLINK else None)
+    c.part(c.ellipse(22, 31 - b, 7.4, 5.4), GOLD, 'ink')
+    c.line(18, 28 - b, 26, 28 - b, GOLD.hi)
+    # ---- le bras droit (le plus proche) qui descend tenir le trident ----
+    c.part(c.limb([(21, 35 - b, 4.6), (17, 43 - b, 4.2)]), SKIN, 'ink')                # le bras
+    c.part(c.limb([(17, 43 - b, 4), (15, 49 - b, 3.8)]), SKIN, 'ink')                 # l'avant-bras
+    c.part(c.ellipse(17.5, 43 - b, 2.8, 2.4), SKIN, 'ink')                            # le coude
+    c.part(c.poly([(11, 44 - b), (20, 44 - b), (20, 49 - b), (11, 49 - b)]), GOLD, 'ink', band=1)
+    # ---- le trident d'or planté debout : le manche, la traverse, trois pointes ----
+    c.part(c.rect(10, 7, 14, 73), GOLD, 'ink', band=1)
+    c.part(c.poly([(3, 5), (21, 5), (20, 10), (4, 10)]), GOLD, 'ink', band=1)
+    for (x, top) in ((5, 0), (12, -4), (19, 0)):
+        c.part(c.poly([(x - 2, 6), (x, top), (x + 2.6, 6)]), GOLD, 'ink', band=1)
+    c.sprite(9, 48 - b, FIST, HAND_C)
+    # ---- la main gauche ouverte, tendue vers l'ennemi ----
+    c.sprite(68, 32 - b, HAND, HAND_C)

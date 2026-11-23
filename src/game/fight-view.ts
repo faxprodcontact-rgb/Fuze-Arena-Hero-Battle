@@ -331,7 +331,7 @@ export abstract class FightScene extends Phaser.Scene {
       imgs.push(spr);
       shadow = this.add.ellipse(0, FEET, Math.min(160, (right - left) * k * 0.55), 20, 0x000000, 0.3);
       // la barre de vie au-dessus de la tête (les ailes, plumes et flammes qui montent plus haut ne comptent pas)
-      barY = FEET - Math.min(PIXEL.fy - top, 92) * k - 6;
+      barY = FEET - Math.min((PIXEL.fy - top) * k, 126 * boost) - 6;
     } else if (hasArt(id) && (this.textures.exists(`p-${id}`) || (rig && this.textures.exists(`r-${id}`)))) {
       // dessin Hailuo : les pieds (point 106, 228 du repère) sur la ligne de sol
       // norm : la même stature pour tous les héros (mesurée par art-jeu.py) ; les monstres gardent leur échelle

@@ -15,6 +15,8 @@ bandeau posé sur la tête, des ailes en plumes (pas des rayons). `python3 jeu.p
   morceau passe devant un autre, un contour d'un pixel autour du personnage, des « tampons » en texte pour les yeux
   (le même pour les deux yeux d'un visage). `sheet()` fait la bande d'animation de repos (8 images : souffle + clignement).
 - `persos/<nom>.py` : un fichier par personnage, une fonction `draw(c, t)`.
+- Style retenu (v0.45.0) : **gros pixels encrés** — `c.part(..., 'ink')` met un trait noir autour de chaque morceau ;
+  un héros encré a un `ORIGIN` (pieds en y = 71, milieu x = 40) et ~64 pixels de haut. Voir le journal, v0.45.0.
 - `persos/tetes.py` : les têtes des héros dessinées pixel par pixel (plus précis que les formes) ; `c.sprite()` les pose.
   Chaque héros a une pose différente (voir le journal, v0.44.0).
 - `fond.py` : le fond « prairie » du combat d'essai (arène de terre battue d'un bord à l'autre, jamais de rond au sol, tout est posé).
