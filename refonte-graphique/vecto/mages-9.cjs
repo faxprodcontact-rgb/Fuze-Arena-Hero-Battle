@@ -183,8 +183,24 @@ const auraBody = `<g class="a-glow"><ellipse cx="452" cy="104" rx="132" ry="62" 
   + shape(rib([[396, 190, 0], [418, 152, 36], [446, 108, 50], [476, 62, 44], [500, 28, 26], [514, 10, 0]]), '#fff6c8', 0.8)
   + shape(rib([[400, 184, 0], [422, 148, 22], [450, 104, 30], [480, 58, 24], [508, 18, 0]]), '#fffdf0', 0.92)
   + shape(rib([[404, 176, 0], [430, 136, 10], [462, 86, 12], [500, 28, 0]]), '#ffffff', 0.95) + '</g>';
-const BOLT = 'M396 182 L428 136 L418 134 L458 86 L446 86 L500 30 L466 98 L478 98 L440 144 L450 146 L410 188 Z';
-const boltBody = `<g class="a-bolt">${shape(BOLT, 'url(#g-bolt)', 0.95)}${shape('M404 178 L432 140 L424 139 L460 94 L452 94 L490 46 L462 102 L470 102 L438 144 L444 146 Z', '#ffffff', 0.9)}</g>`
+// ---------- le marteau électrique (à la place de l'éclair) ----------
+const { ellipse, cel } = require('./formes.cjs');
+const ARM_PARTS = [ellipse(322, 286, 30, 28), rib([[318, 290, 46], [350, 272, 40], [372, 256, 34]]), rib([[370, 262, 34], [378, 228, 31], [382, 206, 28]])];
+const ARM_UP = ARM_PARTS.join('');
+const FIST_UP = sm('362,204 364,186 376,174 394,172 408,180 412,196 406,212 390,220 372,218');
+const HANDLE = rib([[390, 232, 10], [394, 160, 10], [398, 102, 10], [400, 90, 0]]);
+const HEAD_H = sm('344,72! 452,64! 456,116! 348,122!');
+const CAP_L = sm('336,68 354,66 358,126 340,128'), CAP_R = sm('444,62 462,60 466,112 448,114');
+const SPARKS = ['M344 72 L326 54 L336 52 L314 28', 'M460 64 L484 44 L474 42 L500 20', 'M458 114 L484 128 L476 134 L504 148', 'M340 122 L316 136 L324 140 L300 156', 'M400 64 L406 40 L398 38 L406 14'];
+const hammerHead = `<path d="${HEAD_H}" transform="translate(-3 5)" fill="${SH.hair}" opacity="0.45"/>`
+  + cel(HEAD_H, { hi: '#e8ecf6', base: '#9aa2b8', sh: '#5e6478', deep: '#3a3e4c' }, 7, 3)
+  + [CAP_L, CAP_R].map((d) => cel(d, { hi: '#fff2a8', base: GOLD.base, sh: GOLD.shade }, 4, 2)).join('')
+  + glint([[358, 76, 0], [400, 71, 3], [442, 70, 0]], '#ffffff', 0.8)
+  // le signe de l'orage gravé au milieu, qui luit
+  + shape('M398 76 L384 96 L396 96 L388 114 L410 90 L398 90 L406 76 Z', '#7ad8ff') + shape('M398 80 L388 95 L398 95 L392 108 L406 92 L396 92 L402 80 Z', '#ffffff', 0.9);
+const sparksBody = `<g class="a-glow"><ellipse cx="400" cy="94" rx="110" ry="80" fill="url(#g-aura)"/></g><g class="a-bolt">`
+  + SPARKS.map((d) => `<path d="${d}" fill="none" stroke="#ffe680" stroke-width="7" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>`
+    + `<path d="${d}" fill="none" stroke="#ffffff" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>`).join('') + '</g>';
   + [[504, 40, 0], [492, 100, 1], [420, 120, 2]].map(([x, y, i]) => `<g class="a-spark${i + 1}">${shape(`M${x} ${y - 7}L${x + 2} ${y - 2}L${x + 7} ${y}L${x + 2} ${y + 2}L${x} ${y + 7}L${x - 2} ${y + 2}L${x - 7} ${y}L${x - 2} ${y - 2}Z`, '#fffbe0')}</g>`).join('');
 
 /** Une feuille de laurier posée sur le bandeau, penchée de `a` degrés ; `half` = sa moitié à l'ombre. */
@@ -234,21 +250,19 @@ const parts = [
     + glint([[140, 306, 0], [200, 318, 4], [270, 360, 0]], TOGA.shade, 0.7)) },
   { id: 'belt', d: S.belt, shadow: [sh(['toga'], -2, 4, SH.toga, 0.45)], body: use('belt', 'url(#g-gold)') + clip('belt',
     glint([[152, 377, 0], [220, 381, 2], [298, 376, 0]], GOLD.hi, 0.9) + shape(sm('214,376 232,376 234,396 214,396'), GOLD.mid)) },
-  { id: 'aura', cls: 'a-fire', d: 'M-900 -900', body: auraBody },
-  { id: 'armL', cls: 'a-armL', free: true, d: S.armL, shadow: [sh(['toga', 'mane', 'cape'], -4, 5, SH.skin, 0.4)], body: use('armL', 'url(#g-skinB)') + clip('armL',
-    // le biceps bombé (lumière dessus), l'ombre sous le bras, le pli du coude, la lumière sur l'avant-bras
-    glint([[304, 282, 0], [330, 268, 5], [356, 268, 0]], SKIN.hi, 0.75) + glint([[304, 314, 0], [340, 322, 5], [378, 316, 0]], SKIN.deep, 0.55)
-    + glint([[358, 278, 0], [366, 290, 3], [372, 304, 0]], SKIN.deep, 0.5) + glint([[392, 252, 0], [395, 276, 3], [390, 300, 0]], SKIN.hi, 0.6)) },
-  { id: 'cuffL', cls: 'a-armL', free: true, d: S.cuffL, shadow: [sh(['armL'], -2, 4, SH.skin, 0.45)], body: use('cuffL', 'url(#g-goldX)') + clip('cuffL',
-    glint([[366, 240, 0], [382, 236, 2.4], [398, 240, 0]], GOLD.hi, 0.9) + glint([[366, 262, 0], [382, 266, 2.4], [398, 262, 0]], GOLD.shade, 0.7)) },
-  { id: 'fistL', cls: 'a-armL', free: true, d: S.fistL, shadow: [sh(['cuffL', 'armL', 'mane'], -3, 5, SH.skin, 0.45)], body: use('fistL', 'url(#g-skinB)') + clip('fistL',
-    // le poing serré vu de face : quatre doigts repliés (creux et bosses), le pouce par-dessus
-    // les quatre doigts repliés (une bosse claire, un creux entre chacun), le pouce posé en travers, l'ombre en bas
-    [370, 384, 398, 412].map((x) => oval(x, 192, 7, 6, SKIN.hi, 0.7)).join('')
-    + [377, 391, 405].map((x) => glint([[x, 186, 0], [x, 198, 2.2], [x, 210, 0]], SKIN.deep, 0.7)).join('')
-    + `<path d="${sm('362,214 380,208 398,210 408,218 400,226 380,226 364,224')}" transform="translate(-1 3)" fill="${SKIN.deep}" opacity="0.5"/>`
-    + shape(sm('362,214 380,208 398,210 408,218 400,226 380,226 364,224'), '#ffd9c0') + glint([[366, 214, 0], [384, 210, 1.8], [402, 214, 0]], '#ffffff', 0.7)
-    + glint([[360, 228, 0], [384, 240, 4], [412, 230, 0]], SKIN.deep, 0.5)) },
+  // le bras levé : l'épaule, le haut du bras, l'avant-bras plié vers le haut, le bracelet d'or ; il brandit le marteau
+  { id: 'armL', cls: 'a-armL', free: true, d: ARM_UP, shadow: [sh(['toga', 'mane', 'cape'], -4, 5, SH.skin, 0.4)], body: ( // pas de découpe : les trois pièces se recouvrent
+    ARM_PARTS.map((d) => `<path d="${d}" fill="url(#g-skinB)"/>`).join('') + cel(ellipse(322, 286, 30, 28), { hi: SKIN.hi, base: 'none', sh: SKIN.deep }, 6, 3)
+    + glint([[314, 276, 0], [342, 262, 5], [364, 250, 0]], SKIN.hi, 0.8) + glint([[318, 308, 0], [348, 292, 5], [374, 268, 0]], SKIN.deep, 0.55)
+    + glint([[386, 250, 0], [390, 228, 3], [390, 210, 0]], SKIN.hi, 0.6) + glint([[362, 254, 0], [368, 234, 3], [372, 214, 0]], SKIN.deep, 0.45)
+    + cel(rib([[362, 226, 0], [378, 222, 12], [396, 220, 0]]), { hi: '#fff2a8', base: GOLD.base, sh: GOLD.shade }, 3, 1.4)) },
+  { id: 'handle', cls: 'a-armL', free: true, d: HANDLE, shadow: [sh(['armL', 'mane', 'toga'], -3, 5, SH.hair, 0.4)], body: shape(HANDLE, '#7a4a24')
+    + glint([[392, 222, 0], [396, 160, 3], [400, 104, 0]], '#c88a52', 0.9) + [[392, 182], [396, 140]].map(([x, y]) => oval(x, y, 7, 3, GOLD.base, 1, -4)).join('') },
+  { id: 'hammer', cls: 'a-armL', free: true, d: HEAD_H + CAP_L + CAP_R, shadow: [sh(['handle', 'armL'], -3, 5, SH.hair, 0.4)], body: hammerHead },
+  { id: 'fistL', cls: 'a-armL', free: true, d: FIST_UP, shadow: [sh(['handle', 'armL', 'mane'], -3, 5, SH.skin, 0.45)], body: cel(FIST_UP, { hi: SKIN.hi, base: SKIN.base, sh: SKIN.shade, deep: SKIN.deep }, 5, 2.4)
+    // les doigts repliés autour du manche, le pouce par-dessus
+    + [374, 386, 398].map((x) => glint([[x, 178, 0], [x, 192, 2.2], [x, 208, 0]], SKIN.deep, 0.75)).join('')
+    + shape(sm('364,196 380,192 396,196 400,204 382,206 368,204'), '#ffd9c0') + glint([[368, 196, 0], [382, 193, 1.6], [396, 197, 0]], '#ffffff', 0.7) },
   { id: 'ear', cls: 'a-head', d: S.ear, shadow: [sh(['mane'], -3, 4, SH.hair, 0.4)], body: use('ear', 'url(#g-skinB)') + clip('ear',
     shape(sm('116,212 126,208 132,224 128,240 120,236 122,222'), SKIN.deep, 0.6) + oval(124, 206, 4, 3, SKIN.hi, 0.8)) },
   { id: 'face', cls: 'a-head', d: S.face, shadow: [sh(['mane'], -4, 4, SH.skin, 0.35)], body: faceBody },
@@ -280,14 +294,14 @@ const parts = [
   { id: 'fistR', cls: 'a-armR', d: S.fistR, shadow: [sh(['cuffR', 'toga', 'cape'], -3, 5, SH.skin, 0.45)], body: use('fistR', 'url(#g-skinB)') + clip('fistR',
     [[110, 392, 146, 392], [108, 404, 148, 406], [112, 416, 144, 418]].map(([x1, y1, x2, y2]) => glint([[x1, y1, 0], [(x1 + x2) / 2, (y1 + y2) / 2, 2.6], [x2, y2, 0]], SKIN.deep, 0.6)).join('')
     + oval(140, 384, 10, 5, SKIN.hi, 0.7, -10)) },
-  { id: 'bolt', cls: 'a-fire', d: 'M-900 -900', body: boltBody },
+  { id: 'sparks', cls: 'a-armL', d: 'M-900 -900', body: sparksBody },
 ];
 // ---------- la vie au repos et l'attaque ----------
 // Repos : il gronde. La tête (crinière, barbe, couronne) hoche, le poing levé crépite d'électricité (l'éclair et sa lueur
 // palpitent, des étincelles jaillissent), la cape ondule, le poing du bas se serre, il cligne.
 // Attaque (classe « atk » sur le <svg>, 0,75 s) : il arme le poing levé en arrière (élan), puis l'abat vers l'avant ;
 // l'éclair s'allonge et éclate, la cape se soulève ; tout revient à la pose de repos.
-const PIV = { head: [236, 300], cape: [120, 300], armL: [318, 300], armR: [100, 300], fire: [398, 190] };
+const PIV = { head: [236, 300], cape: [120, 300], armL: [322, 288], armR: [100, 300], fire: [398, 190] };
 const IDLE = {
   'a-head': ['head', 'head 2.8s ease-in-out infinite alternate'],
   'a-cape': ['cape', 'cape 3.6s ease-in-out infinite alternate'],
@@ -300,7 +314,7 @@ const atk = (cls, name) => (IDLE[cls]
 const style = Object.entries(IDLE).map(([c, [k, a]]) => `.${c}{transform-origin:${PIV[k][0]}px ${PIV[k][1]}px;animation:${a}}`).join('') + `
 .a-fire{transform-origin:${PIV.armL[0]}px ${PIV.armL[1]}px;animation:armL 2.2s ease-in-out infinite alternate}
 .a-glow{transform-origin:440px 120px;animation:glow 1.1s ease-in-out infinite alternate}
-.a-bolt{transform-origin:398px 186px;animation:bolt .5s steps(2) infinite}
+.a-bolt{transform-origin:400px 94px;animation:bolt .5s steps(2) infinite}
 .a-spark1,.a-spark2,.a-spark3{opacity:0}
 .a-spark1{animation:spark 1.2s ease-out infinite}.a-spark2{animation:spark 1.5s ease-out -.5s infinite}.a-spark3{animation:spark 1.1s ease-out -.8s infinite}
 .a-blink{animation:blink 4.4s linear infinite}
