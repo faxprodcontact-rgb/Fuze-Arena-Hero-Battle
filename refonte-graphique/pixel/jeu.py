@@ -31,6 +31,9 @@ CHARS = {'kael': 'assassins-2', 'sable': 'assassins-3', 'eldra': 'mages-8', 'roo
          'grizz': 'demons-1', 'vrak': 'demons-2', 'barzul': 'demons-3', 'lilou': 'demons-4', 'kesha': 'demons-5',
          'morgath': 'demons-6', 'ruka': 'demons-7', 'zaroth': 'demons-8', 'velith': 'demons-9', 'skarn': 'demons-10',
          'azgor': 'demons-11', 'nerith': 'demons-12',
+         'celia': 'angels-1', 'aube': 'angels-3', 'seraphin': 'angels-4', 'lumen': 'angels-5', 'elyon': 'angels-6',
+         'solenn': 'angels-7', 'ariel': 'angels-8', 'raphaelle': 'angels-9', 'auriel': 'angels-10', 'gabryel': 'angels-11',
+         'celeste': 'angels-12',
          'renard': 'ronciers-1', 'dino': 'bayou-1', 'follet': 'bayou-4', 'petard': 'parade-1', 'chouette': 'glaces-4'}
 FACTIONS = ('knights', 'assassins', 'mages', 'demons', 'angels', 'myths')
 HEROES = {pid for pid, cid in CHARS.items() if cid.split('-')[0] in FACTIONS}

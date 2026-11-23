@@ -407,6 +407,11 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   Lilou la tortue boxeuse, Kesha l'homme-requin à la scie, Morgath la nymphe à la jarre, Ruka la sirène, Zaroth le samouraï
   masqué, Velith le yéti à la hache de glace, Skarn le chasseur à l'arbalète, Azgor le spectre des marais, Nerith
   l'impératrice à la lanterne). Têtes trop petites (ratio < 27 %) : agrandies en doublant une ou deux lignes du visage.
+  **v0.51.0 : les 11 autres anges** (Célia la dame des neiges, Aube la chasseuse au loup blanc, Séraphin la sorcière
+  pieuvre, Lumen la prêtresse à la boule d'eau, Elyon le dragon à la perle, Solenn le nain, Ariel le faune, Raphaëlle le
+  frondeur, Auriel le cyclope au rocher, Gabryel l'homme-scorpion, Céleste la dryade). Une queue en anneaux = une seule
+  forme avec des traits aux jointures (des boules séparées font un chapelet). `ONE_EYE = True` dans un fichier de
+  personnage : `controle.py` ne compare pas les deux yeux (cyclope).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

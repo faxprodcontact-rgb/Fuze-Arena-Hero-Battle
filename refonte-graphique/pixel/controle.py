@@ -83,7 +83,10 @@ def controle(name):
                      f"tête = {ratio:.0%} de la hauteur (du haut de la tête au sol ; attendu 27 à 40 %)" + ('' if debout else ' — pose basse, non comptée')))
         cx = hx + hw / 2
         msgs.append(('OK' if 28 <= cx <= 56 else 'À REVOIR', f"tête au-dessus du corps (milieu x = {cx:.0f}, attendu 28 à 56)"))
-        if swap:
+        if swap and getattr(mod, 'ONE_EYE', False):   # un cyclope : un seul œil, rien à comparer
+            msgs.append(('OK', "un seul œil (cyclope)"))
+            msgs.append(('OK', "clignement présent"))
+        elif swap:
             same = yeux_pareils(rows, set(swap))
             msgs.append(('OK' if same else 'À REVOIR', "les deux yeux ont la même forme" if same else "les deux yeux n'ont pas la même forme"))
             msgs.append(('OK', "clignement présent"))
