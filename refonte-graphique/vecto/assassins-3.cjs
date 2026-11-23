@@ -6,7 +6,9 @@
 // relief (dégradé, ombre franche en bas à gauche, liseré clair en haut à droite) et porte son ombre sur les pièces de
 // derrière, pour que la fourrure, le lin, l'or et la turquoise se distinguent. La lumière vient d'en haut à droite.
 const { figure, lin, rad, n, use, clip, line, shape, dot, oval } = require('./lib.cjs');
-const { sm, rib, glint, cel, almond, ellipse } = require('./formes.cjs');
+const { sm, rib, glint, cel, almond, ellipse, shiftPath } = require('./formes.cjs');
+// la tête (et sa coiffe) posée plus en avant sur le corps
+const HD = [22, 4];
 
 const W = 532, H = 566, PAD = 44;
 
@@ -83,18 +85,21 @@ const defs = [
 ].join('');
 
 // ---------- le visage : deux yeux pareils, fardés, de part et d'autre du nez ----------
-const EL = almond(262, 220, 56, 32, -1, 6), ER = almond(351, 210, 34, 24, 1, 4.6);
+const EL = almond(262, 222, 56, 26, -1, 6), ER = almond(351, 212, 34, 20, 1, 4.6);
 function eye(cx, cy, r, A) {
   const id = `c-se${cx}`;
   return `<clipPath id="${id}"><path d="${A.white}"/></clipPath><path d="${A.white}" fill="#fffaf0"/><g clip-path="url(#${id})">`
     + dot(cx, cy, r, 'url(#g-iris)') + oval(cx + 1, cy, r * 0.3, r * 0.7, '#1a0a04') + dot(cx - r * 0.35, cy - r * 0.4, r * 0.28, '#ffffff') + dot(cx + r * 0.4, cy + r * 0.35, r * 0.12, '#ffffff', 0.9)
-    + `<rect x="${cx - 32}" y="${cy - 24}" width="64" height="11" fill="#6a3a10" opacity="0.2"/></g>` + shape(A.lash, '#1a0c06') + line(A.lower, '#5a2c10', 2, 0.8)
+    + `<path d="M${cx - 40} ${cy - 30}L${cx + 40} ${cy - 30}L${cx + 40} ${cy - 4 + A.tilt}L${cx - 40} ${cy - 4 - A.tilt}Z" fill="${FUR.sh}"/></g>` + shape(A.lash, '#1a0c06') + line(A.lower, '#5a2c10', 2, 0.8)
     + `<g class="a-blink" opacity="0"><path d="${A.white}" fill="${FUR.base}" stroke="${FUR.base}" stroke-width="3"/>${line(A.shut, '#1a0c06', 3)}</g>`;
 }
-const FACE = eye(268, 222, 13, EL) + eye(353, 211, 9, ER)
+EL.tilt = 7; ER.tilt = -5; // la paupière penche vers le nez (regard furieux)
+const FACE = eye(268, 224, 13, EL) + eye(353, 213, 9, ER)
   // les sourcils sombres et épais, relevés : le gauche arqué, le droit court au-dessus du petit œil
-  + shape(rib([[222, 190, 0], [240, 184, 8], [266, 189, 10], [288, 199, 9], [304, 211, 0]]), '#2a1610') + lock([[232, 186], [258, 184], [282, 192]], '#6a4a3a', 0.8, 1.6)
-  + shape(rib([[376, 186, 0], [362, 186, 7], [346, 193, 7], [332, 204, 0]]), '#2a1610')
+  + shape(rib([[222, 196, 0], [240, 190, 8], [266, 196, 10], [288, 206, 9], [306, 218, 0]]), '#2a1610') + lock([[232, 192], [258, 191], [282, 199]], '#6a4a3a', 0.8, 1.6)
+  + shape(rib([[378, 190, 0], [364, 192, 7], [348, 199, 7], [334, 210, 0]]), '#2a1610')
+  // les plis du nez froncé
+  + lock([[338, 226], [346, 232], [352, 240]], FUR.deep, 0.6, 1.6) + lock([[348, 222], [356, 228], [362, 236]], FUR.deep, 0.5, 1.4)
   // le bas du visage clair, l'arête claire du museau, la joue lointaine plus sombre
   + `<path d="${CHEEK}" fill="${FUR.hi}" opacity="0.35"/>`
   + `<path d="${BRIDGE}" fill="${FUR.hi}" opacity="0.7"/>` + `<path d="${RUFF}" fill="#9a6438"/>` + cel(RUFF, { hi: '#c88a52', base: 'none', sh: MANE.base }, 3, 1.6)
@@ -103,7 +108,8 @@ const FACE = eye(268, 222, 13, EL) + eye(353, 211, 9, ER)
   + `<path d="${JAW}" fill="${LIGHT.sh}"/>` + cel(JAW, { hi: LIGHT.base, base: 'none', sh: LIGHT.deep }, 4, 2)
   + `<path d="${MUZZLE}" transform="translate(-2 3)" fill="${FUR.deep}" opacity="0.3"/>` + `<path d="${MUZZLE}" fill="url(#g-light)"/>` + cel(MUZZLE, { ...LIGHT, base: 'none' }, 3, 1.6)
   + cel(NOSE, { hi: '#c87a5a', base: '#7a3a26', sh: '#3a1a10' }, 2.4, 1.4) + oval(372, 243, 6, 2, '#ffffff', 0.55, -6)
-  + line('M296 274 Q300 286 310 290 Q336 296 362 292 Q384 288 398 280', '#2a140a', 2.8) + line('M318 300 Q340 306 362 300', LIGHT.deep, 2, 0.7)
+  + line('M296 274 Q300 286 310 290 Q336 296 360 290 Q372 282 384 284 Q392 286 398 280', '#2a140a', 2.8)
+  + shape('M364 288 L370 302 L376 287 Z', '#fbf3e4') + shape('M364 288 L370 302 L368 288 Z', '#d8c6ae') + line('M318 300 Q340 306 362 300', LIGHT.deep, 2, 0.7)
   + [[318, 264], [328, 270], [338, 264], [322, 276], [334, 278]].map(([x, y]) => dot(x, y, 1.9, '#7a4a28', 0.85)).join('');
 
 // ---------- les morceaux, du fond vers le devant ----------
@@ -125,8 +131,8 @@ const parts = [
   { id: 'belt', cls: 'a-body', d: BELT, shadow: [sh(['torso', 'skirt'], -2, 5)], body: relief(BELT, 'g-gold', GOLD, 4, 2)
     + dot(300, 414, 9, GOLD.deep) + dot(300, 414, 7.4, TURQ.base) + dot(302.5, 411.5, 2.4, '#e0ffff', 0.9) },
   // la coiffe sombre, derrière la tête : sous la grande oreille, la nuque, et sous la mâchoire (le collier passe devant)
-  { id: 'mane', cls: 'a-head', d: MANE_L, shadow: [sh(['torso', 'cape'], -4, 6)], body: `<path d="${MANE_L}" fill="url(#g-mane)"/>` + cel(MANE_L, { ...MANE, base: 'none' }, 5, 2.4)
-    + [[[150, 204], [128, 240], [116, 286]], [[172, 210], [158, 252], [146, 300]], [[186, 290], [204, 302], [216, 314]]].map((h) => lock(h, MANE.hi, 0.55, 3.4)).join('') },
+  { id: 'mane', cls: 'a-head', d: shiftPath(MANE_L, ...HD), shadow: [sh(['torso', 'cape'], -4, 6)], body: `<g transform="translate(${HD})"><path d="${MANE_L}" fill="url(#g-mane)"/>` + cel(MANE_L, { ...MANE, base: 'none' }, 5, 2.4)
+    + [[[150, 204], [128, 240], [116, 286]], [[172, 210], [158, 252], [146, 300]], [[186, 290], [204, 302], [216, 314]]].map((h) => lock(h, MANE.hi, 0.55, 3.4)).join('') + '</g>' },
   { id: 'collar', cls: 'a-body', d: COLLAR, shadow: [sh(['torso', 'cape', 'mane'], -3, 6)], body: relief(COLLAR, 'g-gold', GOLD, 5, 2.4)
     + relief(COLLAR_IN, 'g-turq', TURQ, 4, 2)
     + lock([[222, 334], [262, 344], [300, 348], [340, 344], [380, 334]], GOLD.base, 1, 2.6)
@@ -135,15 +141,17 @@ const parts = [
     + relief(rib([[172, 398, 0], [190, 398, 9], [208, 400, 0]]), 'g-gold', GOLD, 2.4, 1.2) },
   { id: 'fistB', cls: 'a-body', d: FIST_B, shadow: [sh(['armB', 'torso', 'skirt'], -3, 5)], body: relief(FIST_B, 'g-fur', FUR, 5, 2.4)
     + [180, 192, 204].map((x) => lock([[x, 414], [x + 0.5, 428], [x, 442]], FUR.deep, 0.8, 2)).join('') },
-  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['mane', 'collar'], -4, 6)], body: `<path d="${HEAD}" fill="url(#g-fur)"/>` + cel(HEAD, { ...FUR, base: 'none' }, 7, 3) + clip('head',
+  { id: 'armF', cls: 'a-arm', d: ARM_F, shadow: [sh(['torso', 'collar', 'mane'])], body: relief(ARM_F, 'g-fur', FUR, 5, 2.4)
+    + relief(rib([[400, 350, 0], [408, 360, 8], [414, 372, 0]]), 'g-gold', GOLD, 2.4, 1.2) },
+  { id: 'head', cls: 'a-head', d: shiftPath(HEAD, ...HD), shadow: [sh(['mane', 'collar', 'armF'], -4, 7, 0.6)], body: `<g transform="translate(${HD})"><path d="${HEAD}" fill="url(#g-fur)"/>` + cel(HEAD, { ...FUR, base: 'none' }, 7, 3)
+    + `<clipPath id="c-headU"><path d="${HEAD}"/></clipPath><g clip-path="url(#c-headU)">` + (''
+    +
     // les oreilles : le bord doré, l'intérieur brun ; le front éclairé ; la joue gauche un peu plus claire
     `<path d="${EAR_L}" fill="${FUR.base}"/>` + cel(EAR_L, { ...FUR, base: 'none' }, 4, 2) + `<path d="${EAR_L_IN}" fill="#8e5a3e"/>` + cel(EAR_L_IN, { hi: '#c08058', base: 'none', sh: MANE.sh }, 4, 2)
     + `<path d="${EAR_R_IN}" fill="#8e5a3e"/>`
     + lock([[220, 132], [270, 116], [312, 124]], FUR.hi, 0.7, 6) + lock([[200, 236], [204, 268], [226, 290]], FUR.sh, 0.45, 6)
     + `<path d="${COBRA}" transform="translate(-2 3)" fill="${FUR.deep}" opacity="0.5"/>` + relief(COBRA, 'g-gold', GOLD, 3, 1.6) + dot(298, 148, 4, '#c02818') + dot(299, 146.6, 1.3, '#ffd0c0')
-    + FACE) },
-  { id: 'armF', cls: 'a-arm', d: ARM_F, shadow: [sh(['torso', 'collar', 'mane'])], body: relief(ARM_F, 'g-fur', FUR, 5, 2.4)
-    + relief(rib([[400, 350, 0], [408, 360, 8], [414, 372, 0]]), 'g-gold', GOLD, 2.4, 1.2) },
+    + FACE) + '</g></g>' },
   { id: 'blades', cls: 'a-arm', d: BLADES.map(rib).join('') + HILT, shadow: [sh(['armF', 'mane', 'head', 'torso'], -3, 5, 0.35)], body: relief(HILT, 'g-gold', GOLD, 2, 1)
     + BLADES.map((b) => shape(rib(b), 'url(#g-blade)') + shape(rib(b.map(([x, y, w]) => [x - w * 0.18, y + w * 0.22, w * 0.5])), GOLD.sh, 0.7)
       + glint(b.map(([x, y, w], i) => [x + w * 0.12, y - w * 0.15, i === 0 || i === b.length - 1 ? 0 : 1.6]), '#ffffff', 0.85)).join('') },
