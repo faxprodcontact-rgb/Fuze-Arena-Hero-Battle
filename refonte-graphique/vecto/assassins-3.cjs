@@ -6,7 +6,7 @@
 // relief (dégradé, ombre franche en bas à gauche, liseré clair en haut à droite) et porte son ombre sur les pièces de
 // derrière, pour que la fourrure, le lin, l'or et la turquoise se distinguent. La lumière vient d'en haut à droite.
 const { figure, lin, rad, n, use, clip, line, shape, dot, oval } = require('./lib.cjs');
-const { sm, rib, glint, cel, almond } = require('./formes.cjs');
+const { sm, rib, glint, cel, almond, ellipse } = require('./formes.cjs');
 
 const W = 532, H = 566, PAD = 44;
 
@@ -23,7 +23,7 @@ const SH = '#2a1008';
 // ---------- outils ----------
 const lock = (pts, color, o, w = 4) => glint(pts.map(([x, y], i) => [x, y, i === 0 || i === pts.length - 1 ? 0 : w]), color, o);
 const relief = (d, grad, pal, w = 7, hw = 3) => `<path d="${d}" fill="url(#${grad})"/>` + cel(d, { ...pal, base: 'none' }, w, hw);
-const ell = (cx, cy, rx, ry) => `M${n(cx - rx)} ${cy}a${rx} ${ry} 0 1 0 ${n(2 * rx)} 0a${rx} ${ry} 0 1 0 ${n(-2 * rx)} 0Z`;
+const ell = ellipse;
 
 // ---------- les formes ----------
 const SUN = [250, 96, 70];
@@ -91,7 +91,7 @@ const FACE = eye(265, 228, 12.5, EL) + eye(337, 228, 12.5, ER)
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx = -4, dy = 6, o = 0.42) => ({ on, dx, dy, color: SH, o });
 const parts = [
-  { id: 'sun', cls: 'a-sun', d: ell(...SUN), body: dot(SUN[0], SUN[1], SUN[2], '#f2c040') + dot(SUN[0], SUN[1], SUN[2] - 5, 'url(#g-sun)')
+  { id: 'sun', cls: 'a-sun', d: ell(SUN[0], SUN[1], SUN[2], SUN[2]), body: dot(SUN[0], SUN[1], SUN[2], '#f2c040') + dot(SUN[0], SUN[1], SUN[2] - 5, 'url(#g-sun)')
     + `<circle cx="${SUN[0]}" cy="${SUN[1]}" r="${SUN[2] - 12}" fill="none" stroke="#fff4b0" stroke-width="3" opacity="0.5"/>` + lock([[204, 52], [250, 34], [296, 52]], '#ffffff', 0.7, 4) },
   { id: 'cape', cls: 'a-cape', d: CAPE_D, body: relief(CAPE_D, 'g-cape', CAPE, 7, 3) + lock([[208, 352], [150, 400], [96, 456]], CAPE.hi, 0.5, 4) + lock([[218, 400], [170, 450], [130, 490]], CAPE.deep, 0.5, 4) },
   { id: 'tail', cls: 'a-tail', d: TAIL_D + ell(86, 470, 12, 14), shadow: [sh(['cape'])], body: relief(TAIL_D, 'g-fur', FUR, 4, 2) + relief(ell(86, 470, 12, 14), 'g-mane', MANE, 3, 1.6) },

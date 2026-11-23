@@ -139,4 +139,13 @@ function almond(cx, cy, w, h, s, lw = 4.4) {
   return { white, lash, lower, shut };
 }
 
-module.exports = { sm, P, cw, rib, glint, tooth, nest, rooted, shiftPath, cel, almond };
+/** Une ellipse en courbes absolues (sans arc « a ») : peut passer dans cel() et shiftPath(). */
+function ellipse(cx, cy, rx, ry) {
+  const k = 0.5523, P2 = (x, y) => `${n(x)} ${n(y)}`;
+  return `M${P2(cx - rx, cy)}C${P2(cx - rx, cy - ry * k)} ${P2(cx - rx * k, cy - ry)} ${P2(cx, cy - ry)}`
+    + `C${P2(cx + rx * k, cy - ry)} ${P2(cx + rx, cy - ry * k)} ${P2(cx + rx, cy)}`
+    + `C${P2(cx + rx, cy + ry * k)} ${P2(cx + rx * k, cy + ry)} ${P2(cx, cy + ry)}`
+    + `C${P2(cx - rx * k, cy + ry)} ${P2(cx - rx, cy + ry * k)} ${P2(cx - rx, cy)}Z`;
+}
+
+module.exports = { sm, P, cw, rib, glint, tooth, nest, rooted, shiftPath, cel, almond, ellipse };

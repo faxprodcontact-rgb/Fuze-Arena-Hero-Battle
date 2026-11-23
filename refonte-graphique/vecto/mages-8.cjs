@@ -7,7 +7,7 @@
 // son propre relief (un dégradé, une ombre franche en bas à gauche, un liseré clair en haut à droite) et une ombre portée
 // sur les pièces de derrière, pour que corps, vêtements et accessoires se distinguent. La lumière vient d'en haut à droite.
 const { figure, lin, rad, n, use, clip, line, shape, dot, oval } = require('./lib.cjs');
-const { sm, rib, glint, cel, almond } = require('./formes.cjs');
+const { sm, rib, glint, cel, almond, ellipse } = require('./formes.cjs');
 
 const W = 580, H = 619, PAD = 44;
 
@@ -35,8 +35,8 @@ const RINGS = [24, 44, 236, 330, 506, 528, 556];
 const along = (x) => { for (let i = 1; i < STAFF.length; i++) { const [x0, y0, w0] = STAFF[i - 1], [x1, y1, w1] = STAFF[i]; if (x <= x1) { const f = (x - x0) / (x1 - x0); return [y0 + (y1 - y0) * f, w0 + (w1 - w0) * f, Math.atan2(y1 - y0, x1 - x0)]; } } return STAFF[STAFF.length - 1].slice(1).concat(0); };
 const STAFF_D = rib(STAFF);
 // la tête : un crâne rond, l'oreille à gauche, le museau qui avance à droite
-const SKULL = 'M224 292a110 106 0 1 0 220 0a110 106 0 1 0 -220 0Z';
-const EAR = 'M168 302a36 38 0 1 0 72 0a36 38 0 1 0 -72 0Z';
+const SKULL = ellipse(334, 292, 110, 106);
+const EAR = ellipse(204, 302, 36, 38);
 const MASK = sm('266,268 296,244 334,246 362,258 392,246 428,246 452,264 460,290 450,330 430,356 396,370 352,374 308,368 280,348 266,318');
 const MUZZLE = sm('420,300 456,292 494,298 514,318 508,342 484,356 448,358 422,346 412,324');
 const BAND = sm('230,250 262,222 306,206 360,200 404,204 432,216! 438,232! 404,224 360,220 312,226 272,242 242,264!');
