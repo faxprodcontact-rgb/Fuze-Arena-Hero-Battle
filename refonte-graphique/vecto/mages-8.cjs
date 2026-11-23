@@ -41,7 +41,8 @@ const STAFF_D = rib(STAFF);
 // de la tête (joues, menton, museau) : pas de fourrure sous le menton, le menton reste loin du bâton
 const SKULL = ellipse(336, 252, 110, 86);
 const EAR = ellipse(216, 290, 32, 34);
-const FACE_D = sm('258,256 290,240 330,246 360,258 392,246 430,242 456,258 464,280 478,286 494,302 492,324 476,338 450,346 428,364 392,380 350,384 310,374 282,354 264,324 256,290');
+// le visage : une forme de visage humaine (joues rondes, petit menton), sans museau
+const FACE_D = sm('258,258 290,240 330,246 362,256 394,246 430,242 454,258 464,284 462,316 448,344 422,366 390,380 360,384 330,378 300,362 278,340 264,312 256,284');
 const HEAD = SKULL + EAR + FACE_D;
 const BAND = sm('236,232 262,214 300,204 340,200 380,202 416,210 440,222! 438,236! 412,226 376,218 340,216 302,220 266,230 242,246!');
 // le corps
@@ -93,9 +94,10 @@ const FACE = eye(328, 294, 12.5, EL) + eye(402, 294, 12.5, ER)
   + cel(rib([[296, 266, 0], [314, 258, 6], [338, 260, 6], [352, 270, 0]]), FUR, 2.4, 1.4)
   + cel(rib([[372, 270, 0], [386, 260, 6], [410, 258, 6], [426, 266, 0]]), FUR, 2.4, 1.4)
   // le museau : un relief plus clair, les narines, le sourire en coin, les joues roses
-  + oval(458, 312, 4.6, 3.2, '#5a2a18', 1, 10) + oval(472, 316, 3.6, 2.6, '#5a2a18') + glint([[448, 300, 0], [466, 298, 2], [482, 304, 0]], '#ffffff', 0.6)
-  + line('M380 350 Q386 355 392 350 Q416 352 442 338', '#4a2014', 2.8) + line('M378 347 Q379 351 381 353', '#4a2014', 2.2)
-  + oval(300, 330, 14, 7, '#f5a090', 0.45) + oval(428, 326, 10, 5, '#f5a090', 0.4);
+  // un petit nez, un sourire en coin assuré, les joues roses
+  + line('M362 318 Q368 326 376 322', '#c98c62', 2.6) + oval(371, 316, 3, 1.6, '#ffffff', 0.6)
+  + line('M346 348 Q366 358 392 346', '#4a2014', 2.8) + line('M392 346 Q397 343 399 338', '#4a2014', 2.4)
+  + oval(302, 330, 14, 7, '#f5a090', 0.45) + oval(432, 330, 12, 6, '#f5a090', 0.42);
 
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx = -4, dy = 6, o = 0.42) => ({ on, dx, dy, color: SH, o });
