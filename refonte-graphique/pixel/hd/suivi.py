@@ -63,7 +63,7 @@ RETOUCHES = {
     'auriel': "Plus de rocher, nouvelle posture ; corps refait avec un vrai torse ; ceinture ajustée.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'velith', 'gabryel', 'ilian', 'zaroth', 'meduse', 'arachne', 'lilou', 'barzul', 'celia', 'nerith'}
+FAITES = {'velith', 'gabryel', 'ilian', 'zaroth', 'meduse', 'arachne', 'lilou', 'barzul', 'celia', 'nerith', 'auriel'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
