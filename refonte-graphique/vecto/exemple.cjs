@@ -90,7 +90,7 @@ for (const m of fs.readFileSync(`${REPO}/src/core/data/heroes.ts`, 'utf8').match
 /** Les noms des monstres redessinés (les monstres n'ont pas de nom dans le jeu) : à compléter à chaque nouveau monstre. */
 const MONSTER_NAMES = {
   'parade-1': 'Pétard', 'abysses-3': 'Méduse des abysses', 'bayou-4': 'Feu follet', 'glaces-4': 'Chouette des neiges', 'cuirasses-4': 'Escargot de cristal',
-  'epouvantails-2': 'Épouvantail', 'ronciers-1': 'Renard de feuilles', 'bayou-1': 'Dino-voile', 'parade-2': 'Lion de la parade', 'epouvantails-1': 'Coq-girouette', 'ronciers-2': 'Blaireau moussu', 'bayou-6': 'Croco cuirassé', 'parade-3': 'Singe aux fusées', 'parade-4': 'Lanterne', 'epouvantails-3': 'Cerf-volant', 'bayou-2': 'Tortue hargneuse', 'ronciers-3': 'Porc-épic des ronces',
+  'epouvantails-2': 'Épouvantail', 'ronciers-1': 'Renard de feuilles', 'bayou-1': 'Dino-voile', 'parade-2': 'Lion de la parade', 'epouvantails-1': 'Coq-girouette', 'ronciers-2': 'Blaireau moussu', 'bayou-6': 'Croco cuirassé', 'parade-3': 'Singe aux fusées', 'parade-4': 'Lanterne', 'epouvantails-3': 'Cerf-volant', 'bayou-2': 'Tortue hargneuse', 'ronciers-3': 'Porc-épic des ronces', 'parade-5': 'Tambour grondeur',
 };
 const isHero = (id) => HERO_FAMILIES.includes(id.split('-')[0]);
 const done = fs.readdirSync(__dirname).filter((f) => /^[a-z]+-\d+\.cjs$/.test(f)).map((f) => f.slice(0, -4))
