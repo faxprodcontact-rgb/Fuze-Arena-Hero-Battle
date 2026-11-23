@@ -215,6 +215,10 @@ function leafPt(x, y, a, half = false) {
 
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx, dy, color, o) => ({ on, dx, dy, color, o });
+// son bras droit (redessiné) : l'épaule, le haut du bras, l'avant-bras, le bracelet, le poing
+const ARMR_PARTS = [ellipse(100, 302, 32, 30), rib([[98, 306, 54], [84, 334, 50], [76, 358, 44]]), rib([[76, 354, 44], [78, 378, 40], [82, 398, 36]])];
+const CUFF_R = sm('58,386 82,378 106,384 110,406 84,412 60,408');
+const FIST_R = sm('54,408 78,400 104,404 116,420 114,442 98,456 72,456 56,444 50,426');
 const parts = [
   { id: 'cape', cls: 'a-cape', d: S.cape, body: use('cape', 'url(#g-cape)') + clip('cape',
     // l'intérieur de la cape, plus clair, qui se retourne ; de grands plis en fuseaux
@@ -285,15 +289,18 @@ const parts = [
       shape(`M${bx - 10} ${by} L${tx} ${ty} L${bx + 10} ${by} Z`, 'url(#g-leaf)') + shape(`M${bx - 10} ${by} L${tx} ${ty} L${bx} ${by} Z`, GOLD.mid, 0.7)).join('')
     + [[132, 142], [150, 130], [170, 122], [192, 118], [214, 116], [238, 118], [260, 120], [280, 126], [298, 134]].map(([x, y], i) =>
       shape(leafPt(x, y, i % 2 ? -30 : 30), 'url(#g-leaf)') + shape(leafPt(x, y, i % 2 ? -30 : 30, true), GOLD.mid, 0.6)).join('')) },
-  { id: 'armR', cls: 'a-armR', d: S.armR, shadow: [sh(['toga', 'cape', 'mane'], -4, 5, SH.skin, 0.4)], body: use('armR', 'url(#g-skinB)') + clip('armR',
-    // le gros bras musclé : l'épaule ronde éclairée, le biceps, l'ombre dessous
-    oval(110, 300, 22, 14, SKIN.hi, 0.6, -20) + glint([[70, 310, 0], [96, 336, 5], [120, 358, 0]], SKIN.deep, 0.5)
-    + glint([[120, 300, 0], [132, 320, 3], [136, 340, 0]], SKIN.shade, 0.6)) },
-  { id: 'cuffR', cls: 'a-armR', d: S.cuffR, shadow: [sh(['armR', 'toga'], -2, 4, SH.skin, 0.45)], body: use('cuffR', 'url(#g-goldX)') + clip('cuffR',
-    glint([[104, 352, 0], [128, 342, 2.4], [156, 344, 0]], GOLD.hi, 0.9) + glint([[108, 372, 0], [132, 370, 2.4], [154, 372, 0]], GOLD.shade, 0.7)) },
-  { id: 'fistR', cls: 'a-armR', d: S.fistR, shadow: [sh(['cuffR', 'toga', 'cape'], -3, 5, SH.skin, 0.45)], body: use('fistR', 'url(#g-skinB)') + clip('fistR',
-    [[110, 392, 146, 392], [108, 404, 148, 406], [112, 416, 144, 418]].map(([x1, y1, x2, y2]) => glint([[x1, y1, 0], [(x1 + x2) / 2, (y1 + y2) / 2, 2.6], [x2, y2, 0]], SKIN.deep, 0.6)).join('')
-    + oval(140, 384, 10, 5, SKIN.hi, 0.7, -10)) },
+  // son bras droit (à gauche de l'image) : il pend le long du corps, un peu écarté, coude légèrement plié vers
+  // l'extérieur, le poing serré près de la hanche (plus de bras replié vers le ventre)
+  { id: 'armR', cls: 'a-armR', free: true, d: ARMR_PARTS.join(''), shadow: [sh(['toga', 'cape', 'mane'], -4, 5, SH.skin, 0.4)],
+    body: ARMR_PARTS.map((d) => `<path d="${d}" fill="url(#g-skinB)"/>`).join('') + cel(ARMR_PARTS[0], { hi: SKIN.hi, base: 'none', sh: SKIN.deep }, 6, 3)
+    + glint([[112, 290, 0], [118, 310, 4], [110, 330, 0]], SKIN.hi, 0.7) + glint([[78, 316, 0], [70, 340, 4], [66, 360, 0]], SKIN.deep, 0.5)
+    + glint([[90, 364, 0], [92, 380, 3], [92, 392, 0]], SKIN.hi, 0.55) + glint([[72, 362, 0], [68, 378, 3], [70, 392, 0]], SKIN.deep, 0.45) },
+  { id: 'cuffR', cls: 'a-armR', free: true, d: CUFF_R, shadow: [sh(['armR', 'toga', 'cape'], -2, 4, SH.skin, 0.45)], body: cel(CUFF_R, { hi: '#fff2a8', base: GOLD.base, sh: GOLD.shade }, 3, 1.6)
+    + glint([[66, 388, 0], [86, 383, 2], [104, 387, 0]], '#fffbe0', 0.9) },
+  { id: 'fistR', cls: 'a-armR', free: true, d: FIST_R, shadow: [sh(['cuffR', 'toga', 'cape'], -3, 5, SH.skin, 0.45)], body: cel(FIST_R, { hi: SKIN.hi, base: SKIN.base, sh: SKIN.shade, deep: SKIN.deep }, 5, 2.4)
+    // les doigts repliés vus de face (trois plis), le pouce en travers sur le dessus
+    + [72, 84, 96].map((x) => glint([[x, 420, 0], [x + 0.5, 432, 2.2], [x, 446, 0]], SKIN.deep, 0.75)).join('')
+    + shape(sm('64,412 82,408 100,412 104,420 84,422 66,420'), '#ffd9c0') + glint([[68, 412, 0], [84, 409, 1.6], [100, 413, 0]], '#ffffff', 0.7) },
   { id: 'sparks', cls: 'a-armL', d: 'M-900 -900', body: sparksBody },
 ];
 // ---------- la vie au repos et l'attaque ----------
