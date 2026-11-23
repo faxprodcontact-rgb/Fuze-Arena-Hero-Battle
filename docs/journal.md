@@ -403,6 +403,10 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   vampire, Myrr l'ange à la trompette, Faust le dieu du tonnerre et ses tambours). Ajout au kit : `feather_wing()` (aile de
   plumes pleine, bord festonné, couvertures ; même méthode que la harpie). Contrôle utile : une tête de moins de 16 lignes
   n'est pas reconnue (tête trop petite, Tessa corrigée).
+  **v0.50.0 : les 12 démons** (Grizz le roi des mers au bouclier de coquillage, Vrak le pêcheur au harpon, Barzul le pirate,
+  Lilou la tortue boxeuse, Kesha l'homme-requin à la scie, Morgath la nymphe à la jarre, Ruka la sirène, Zaroth le samouraï
+  masqué, Velith le yéti à la hache de glace, Skarn le chasseur à l'arbalète, Azgor le spectre des marais, Nerith
+  l'impératrice à la lanterne). Têtes trop petites (ratio < 27 %) : agrandies en doublant une ou deux lignes du visage.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier
