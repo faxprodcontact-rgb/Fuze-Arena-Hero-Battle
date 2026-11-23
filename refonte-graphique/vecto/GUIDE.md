@@ -125,6 +125,7 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Piquants en rangs (pointes relevées sur la silhouette), guirlande de feuilles, baies | `ronciers-3.cjs` → `TIPS`, `QUILLS`, `INNER`, `quillBody`, `ARC`, `LEAVES`, `BERRIES` |
 | Objet rond vu de biais (bandes mesurées colonne par colonne, zigzag, clous), visage sur une face, bras qui sortent de dessous sans dépasser | `parade-5.cjs` → `DRUM`, `BAND_T`, `BAND_B`, `ZIG`, `stud`, `RING`, `SKIN`, `MASK`, `stick`, `ball`, bras coupés sous le bord du tambour (`ARM_L`, `ARM_R`) |
 | Objet suspendu qui se balance (pivot au crochet), tubes d'argent qui oscillent chacun à son rythme, voile | `epouvantails-4.cjs` → `TUBES`, `tubeBody`, `PEND`, `SAIL`, `a-root` autour du crochet |
+| Héros mixte : aplats automatiques pour la tête, mais le bas du corps redessiné pièce par pièce quand les aplats sont trop morcelés (cape, robe, tablier, collier, bras) ; disque derrière la tête (cercle ajusté) ; lames en feuilles | `assassins-3.cjs` → `lowerBody`, `CAPE`, `APRON`, `COLLAR`, `SUN`, `BLADES` |
 | Ailes qui battent (quatre morceaux, pivot à la racine), yeux d'ailes en anneaux, duvet en touffes inégales (`fuzz`), antennes en plume prises dans la silhouette | `ronciers-4.cjs` → `UL`, `UR`, `LL`, `LR`, `spot`, `veins`, `fuzz`, `ANT` |
 | Poisson : nageoires découpées dans la silhouette (chacune bat à son rythme), bandes par leur couleur, rayons doux, boule d'eau crachée à l'attaque | `bayou-3.cjs` → `TAIL`, `DORSAL`, `FINS`, `PECT`, `RAYS`, `rays`, `glow-atk` |
 | Héros peint par matières lissées « par vote » (`couleurs.py --vote --noyau 9` : zones rondes, sans trou), peinture partagée une fois (`<use href="#p-mat"/>`), plumes et queue retirées du corps (sinon fantôme quand elles bougent), bâton mesuré | `mages-8.cjs` → `PAINT`, `BODY`, `PLUMES`, `STAFF`, `along`, `CHEST`, `SKIRT`, `eye` |
@@ -143,10 +144,10 @@ Leçons de la première série (corrections demandées par le propriétaire ou l
 | Hampe tenue (trident, lance), flamme bleue sans contour | `myths-12.cjs` → morceaux `trident`, `handL`, `flame` (`flameBody`) |
 | Épaulière en écailles, bottes de fer | `myths-12.cjs` → morceaux `pauR`, `legL`, `legR` |
 
-## Faits (34)
+## Faits (35)
 
 Ruka `demons-7` (modèle) · héros : Zeus `myths-12`, Séraphin `angels-4`, Nimue `mages-9` (le dessin montre un dieu de
-l'orage doré), Kael `assassins-2`, Thor `myths-10` (le dessin montre une femme-araignée), Ilian `angels-2`, Eldra `mages-8`, Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
+l'orage doré), Kael `assassins-2`, Thor `myths-10` (le dessin montre une femme-araignée), Ilian `angels-2`, Eldra `mages-8`, Sable `assassins-3`, Garvin `knights-8`, Ozias `mages-10`, Valdis `knights-11`, Saïko `assassins-12`,
 Rook `assassins-5` · monstres : pétard `parade-1`, lion de la parade `parade-2`, singe aux fusées `parade-3`, lanterne `parade-4`, méduse
 `abysses-3`, dino-voile `bayou-1`, tortue hargneuse `bayou-2`, feu follet `bayou-4`, croco cuirassé `bayou-6`, chouette `glaces-4`, escargot de
 cristal `cuirasses-4`, coq-girouette `epouvantails-1`, épouvantail `epouvantails-2`, cerf-volant `epouvantails-3`, renard de feuilles `ronciers-1`,
@@ -157,8 +158,8 @@ blaireau moussu `ronciers-2`, porc-épic des ronces `ronciers-3`, tambour gronde
 Ordre : d'abord les monstres que le joueur rencontre en premier (région 1 de la campagne : familles `parade`,
 `epouvantails`, `bayou`, `ronciers`), en intercalant un héros Légendaire (l'invocation les montre en grand).
 
-1. héros `assassins-3` Sable 2. `parade-6` 3. `epouvantails-5` 4. héros `myths-8` Freyja 5. `bayou-5` 6. `ronciers-5`
-7. héros `angels-3` Aube 8. `epouvantails-6` 9. `ronciers-6` 10. héros `mages-11` Myrr
+1. `parade-6` 2. `epouvantails-5` 3. héros `myths-8` Freyja 4. `bayou-5` 5. `ronciers-5` 6. héros `angels-3` Aube
+7. `epouvantails-6` 8. `ronciers-6` 9. héros `mages-11` Myrr
 Ensuite : `fauves` et `ruche` (région 2), `voliere` et `cuirasses` (régions 3-4)… et un Légendaire tous les deux
 monstres. Légendaires restants : `assassins-4` Vesper, `assassins-6` Isha, `mages-12` Faust, `angels-5` Lumen,
 `angels-6` Elyon, `myths-9` Isis, `myths-11` Atlas (liste complète : `npx tsx` sur `HEROES` de
