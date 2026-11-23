@@ -382,6 +382,10 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   **derrière la jupe et la ceinture** (elle en sort). Rook refaite de zéro (consigne : « harpie / phénix sur le thème du
   feu ») : ailes pleines à la place des bras (forme entière cerclée de noir, bord festonné, plumes de couverture dorées,
   bouts jaunes), crête de flammes, tête pixel par pixel (yeux d'ambre cerclés de noir), queue en éventail, serres.
+  **v0.46.1** : les bras d'Ilian refaits plus simples (demande : « trop brouillon ») : **une seule forme cerclée de noir de
+  l'épaule au poignet** (pas de coude ni d'avant-bras séparés), un brassard d'or en travers (`bracer()`), un poing dessiné
+  pixel par pixel ; l'épaulière posée par-dessus le haut du bras. Sable : les jambes dessinées avant la jupe et le tablier
+  (le bas des habits passe devant le haut des cuisses).
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier

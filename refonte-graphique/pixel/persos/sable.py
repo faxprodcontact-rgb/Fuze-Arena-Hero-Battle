@@ -43,22 +43,22 @@ def draw(c, t):
         ln = (nxx * nxx + nyy * nyy) ** 0.5
         nxx, nyy = nxx / ln * 2.4, nyy / ln * 2.4
         c.part(c.poly([(hx - nxx * 0.6, hy - nyy * 0.6), (mx - nxx, my - nyy), (x1, y1 - b), (mx + nxx, my + nyy), (hx + nxx * 0.6, hy + nyy * 0.6)]), BLADE, 'ink', band=1)
-    # ---- la jupe de lin, le tablier d'or et sa pierre rouge ----
-    c.part(c.poly([(29, 54), (53, 54), (57, 64), (49, 66), (41, 62), (33, 66), (25, 64)]), LINEN, 'ink')
-    c.part(c.poly([(37, 55), (45, 55), (46, 64), (43, 67), (41, 64), (39, 67), (36, 64)]), GOLD, 'ink', band=1)
-    c.part(c.ellipse(41, 59, 2, 2), RED, 'ink')
     # ---- la jambe gauche : le pied planté devant, le genou levé ----
     c.part(c.limb([(46, 60, 6), (57, 57, 5.4), (59, 67, 4.6)]) | c.ellipse(61, 69, 6.4, 3.4), FUR, 'ink')
     for x in (59, 62, 65):
         c.px(x, 71, CREAM.hi)
+    # ---- la jambe droite (la plus proche) : le genou au sol, le pied derrière ----
+    c.part(c.limb([(36, 61, 6), (29, 69, 5.2), (15, 69, 3.8)]) | c.ellipse(11, 70, 4.4, 2.6), FUR, 'ink')
+    # ---- la jupe de lin, le tablier d'or et sa pierre rouge ----
+    c.part(c.poly([(29, 54), (53, 54), (57, 64), (49, 66), (41, 62), (33, 66), (25, 64)]), LINEN, 'ink')
+    c.part(c.poly([(37, 55), (45, 55), (46, 64), (43, 67), (41, 64), (39, 67), (36, 64)]), GOLD, 'ink', band=1)
+    c.part(c.ellipse(41, 59, 2, 2), RED, 'ink')
     # ---- le torse de lin, le pli du tissu ----
     c.part(c.poly([(30, 36 - b), (50, 34 - b), (54, 40 - b), (51, 48), (50, 55), (32, 55), (29, 47), (28, 40 - b)]), LINEN, 'ink')
     c.line(36, 44, 34, 53, LINEN.shade), c.line(46, 44, 47, 53, LINEN.shade)
     # ---- la ceinture d'or et sa turquoise ----
     c.part(c.rect(29, 51, 53, 56), GOLD, 'ink', band=1)
     c.part(c.rect(39, 50, 44, 57), TURQ, 'ink', band=1)
-    # ---- la jambe droite (la plus proche) : le genou au sol, le pied derrière ----
-    c.part(c.limb([(36, 61, 6), (29, 69, 5.2), (15, 69, 3.8)]) | c.ellipse(11, 70, 4.4, 2.6), FUR, 'ink')
     # ---- la tête de lionne (dessinée pixel par pixel), le cobra ----
     tetes.sable(c, 36, 15 - b, t == BLINK)
     # ---- le large collier turquoise et or, ses perles ----
