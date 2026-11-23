@@ -52,10 +52,10 @@ VALIDES = {'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'nerith', 'arachne',
 RETOUCHES = {
     'minotaure': "L'aile gauche (à notre droite) n'est pas complète.",
     'sable': "Un sabre égyptien (khépesh) à la main.",
-    'rook': "Ailes plus grandes en hauteur et plus garnies, mais pas plus longues.",
+    'rook': "Ailes encore plus garnies ; passage des hanches au corps d'oiseau aligné ; contour arrondi entre le visage et les plumes au-dessus de l'œil droit.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'rook'}
+FAITES = set()
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
