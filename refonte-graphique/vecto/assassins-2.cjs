@@ -187,6 +187,12 @@ const embers = EMBERS.map(([x, y, r]) => `<g class="a-ember">${oval(x, y, r * 2.
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx, dy, color, o) => ({ on, dx, dy, color, o });
 /** Une plaque d'armure bombée : sa forme, l'arête claire en haut à droite, le bord sombre en bas à gauche. */
+const { cel } = require('./formes.cjs');
+// une fissure de lave : une ligne brisée qui rougeoit (un halo orange, un cœur jaune)
+const crack = (pts) => { const d = 'M' + pts.map(([x, y]) => `${x} ${y}`).join('L');
+  return `<path d="${d}" fill="none" stroke="${FIRE.deep}" stroke-width="4.4" stroke-linejoin="round" stroke-linecap="round" opacity="0.8"/>`
+    + `<path d="${d}" fill="none" stroke="${FIRE.base}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round"/>`
+    + `<path d="${d}" fill="none" stroke="${FIRE.hi}" stroke-width="0.9" stroke-linejoin="round" stroke-linecap="round"/>`; };
 const plate = (d, hiPts, shPts) => `<path d="${d}" fill="${ARM.deep}" transform="translate(-2 3)" opacity="0.8"/>` + shape(d, 'url(#g-armor)') + (hiPts ? glint(hiPts, '#d4d0dc', 0.75) : '') + (shPts ? glint(shPts, ARM.deep, 0.8) : '');
 const parts = [
   { id: 'cape', cls: 'a-cape', d: S.cape, body: use('cape', 'url(#g-cape)') + clip('cape',
@@ -211,11 +217,14 @@ const parts = [
     + plate(sm('340,316 380,304 426,310 436,352 410,370 350,364'), [[350, 312, 0], [390, 306, 3], [430, 318, 0]], [[352, 366, 3], [400, 372, 4], [432, 356, 3]])
     + shape(sm('210,388 330,392 440,386 440,406 330,412 214,408'), '#2a1c1c') + [[240, 398], [290, 400], [380, 398], [420, 396]].map(([x, y]) => dot(x, y, 3, ARM.hi)).join('')
     + oval(338, 344, 30, 22, 'url(#g-glow)')
+    + crack([[256, 330], [272, 338], [282, 330], [300, 340]]) + crack([[376, 326], [392, 336], [404, 330], [418, 342]])
     + shape('M316 304 L330 322 L326 334 L338 352 L350 334 L346 322 L360 304 L348 316 L338 306 L328 316 Z', FIRE.lite) + shape('M330 320 L338 338 L346 320 L338 328 Z', FIRE.core)) },
   { id: 'pauL', cls: 'a-body', d: S.pauL, shadow: [sh(['torso', 'cape', 'fire'], -4, 6, SH.armor, 0.5)], body: use('pauL', 'url(#g-armor)') + clip('pauL',
-    // trois plaques en écailles, de haut en bas, chacune bombée ; la lueur du feu sur le haut
-    [[244, 0], [276, 1], [306, 2]].map(([y, i]) => plate(sm(`${132 + i * 4},${y + 30} ${170},${y + 6} ${230 - i * 6},${y + 2} ${270 - i * 8},${y + 22} ${250 - i * 8},${y + 44} ${190},${y + 46} ${140 + i * 4},${y + 46}`),
-      [[150 + i * 4, y + 22, 0], [200, y + 8, 3.4], [258 - i * 8, y + 20, 0]], [[140 + i * 4, y + 44, 3], [196, y + 48, 4], [246 - i * 8, y + 42, 3]])).join('')
+    // une grosse plaque de roche bombée (claire en haut à droite), deux pointes, des fissures de lave qui rougeoient
+    cel(S.pauL, { hi: ARM.lite, base: ARM.base, sh: ARM.shade, deep: ARM.deep }, 8, 3)
+    + shape('M168 262 L182 222 L196 258 Z', ARM.mid) + shape('M182 222 L196 258 L186 258 Z', ARM.lite, 0.8)
+    + shape('M212 258 L232 226 L240 262 Z', ARM.mid) + shape('M232 226 L240 262 L232 262 Z', ARM.lite, 0.8)
+    + crack([[150, 300], [170, 296], [178, 308], [200, 304]]) + crack([[210, 320], [226, 312], [236, 318]])
     + oval(200, 246, 50, 16, FIRE.base, 0.3)) },
   // les flammes le long des deux tranchants (sans contour : elles brûlent), derrière la lame
   // le feu le long des deux tranchants (sans contour : il brûle), derrière la lame : une bordure ondulée et irrégulière
@@ -230,13 +239,13 @@ const parts = [
     + [[0.2, -70, 3], [0.33, -64, 2.4], [0.47, -76, 2], [0.58, -62, 2.6], [0.12, -58, 2], [0.66, -72, 1.8]].map(([f, off, r]) => { const p = spa(f, off); return oval(p[0], p[1], r * 1.6, r, FIRE.base, 0.9, -42) + dot(p[0], p[1], r * 0.5, FIRE.hi); }).join('')
     + '</g>' },
   { id: 'blade', cls: 'a-sword', d: S.blade, shadow: [sh(['torso', 'pauR', 'skirt'], -4, 6, SH.armor, 0.4)], body: use('blade', 'url(#g-blade)') + clip('blade',
-    // la lame noire, deux tranchants qui rougeoient (une bande orange et un filet jaune), deux traînées de feu dans la lame
-    glint([spa(-0.02, -40).concat(5), spa(0.4, -40).concat(7), spa(0.7, -41).concat(5), spa(1, 6).concat(0)], FIRE.mid, 0.9)
-    + glint([spa(-0.02, -43).concat(0), spa(0.4, -43).concat(2.6), spa(0.7, -44).concat(0)], FIRE.hi, 0.9)
-    + glint([spa(-0.02, 38).concat(5), spa(0.4, 41).concat(7), spa(0.83, 46).concat(5), spa(1, 8).concat(0)], FIRE.mid, 0.9)
-    + glint([spa(-0.02, 40).concat(0), spa(0.4, 43).concat(2.6), spa(0.83, 48).concat(0)], FIRE.hi, 0.9)
-    + glint([spa(0, -16).concat(0), spa(0.4, -10).concat(9), spa(0.78, -4).concat(0)], FIRE.base, 0.95) + glint([spa(0.02, -16).concat(0), spa(0.4, -10).concat(3), spa(0.76, -4).concat(0)], FIRE.core, 0.95)
-    + glint([spa(0, 22).concat(0), spa(0.42, 28).concat(9), spa(0.8, 34).concat(0)], FIRE.base, 0.95) + glint([spa(0.02, 22).concat(0), spa(0.42, 28).concat(3), spa(0.78, 34).concat(0)], FIRE.core, 0.95)
+    // la lame noire : le tranchant du haut incandescent, une seule gorge de lave au milieu, l'arête claire du dos
+    glint([spa(-0.02, -41).concat(4), spa(0.4, -41).concat(6), spa(0.7, -42).concat(4), spa(1, 6).concat(0)], FIRE.mid, 0.95)
+    + glint([spa(-0.02, -43).concat(0), spa(0.4, -43).concat(2.4), spa(0.7, -44).concat(0)], FIRE.hi, 0.95)
+    + glint([spa(0.04, 2).concat(0), spa(0.3, 4).concat(9), spa(0.62, 5).concat(8), spa(0.84, 4).concat(0)], FIRE.deep, 0.95)
+    + glint([spa(0.06, 2).concat(0), spa(0.3, 4).concat(5.4), spa(0.62, 5).concat(4.6), spa(0.82, 4).concat(0)], FIRE.base, 0.95)
+    + glint([spa(0.1, 2).concat(0), spa(0.3, 4).concat(1.8), spa(0.6, 5).concat(1.6), spa(0.78, 4).concat(0)], FIRE.core, 0.95)
+    + glint([spa(0, 40).concat(0), spa(0.45, 44).concat(2.4), spa(0.85, 46).concat(0)], '#8a7e8c', 0.7)
     // la facette claire de la pointe (le chanfrein)
     + shape(`M${spa(0.71, -46).join(' ')} L${spa(1.01, 8).join(' ')} L${spa(0.86, -10).join(' ')} Z`, '#6a5a60', 0.8)) },
   { id: 'grip', cls: 'a-sword', d: S.grip, body: use('grip', '#3a2420') + clip('grip', glint([spa(-0.06, 4).concat(0), spa(-0.15, 4).concat(3), spa(-0.24, 4).concat(0)], '#8a5a4a', 0.7)) },
