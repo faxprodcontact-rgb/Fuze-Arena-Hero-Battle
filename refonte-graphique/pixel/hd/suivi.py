@@ -50,11 +50,11 @@ VALIDES = {'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'nerith', 'arachne',
            'kesha', 'velith', 'lilou', 'celia', 'cyclope', 'solenn', 'zaroth', 'anubis', 'isis', 'kael', 'rook'}
 # héros dessinés dont les retours du propriétaire sont en train d'être faits : le retour demandé
 RETOUCHES = {
-    'minotaure': "Aile du fond : mêmes couleurs et même contraste que l'autre aile.",
-    'sable': "Bouclier plus gros.",
+    'minotaure': "Aile de droite : mêmes courbes que celle de gauche, sans traits trop sombres.",
+    'sable': "Enlever les petites griffes en haut à gauche du bouclier.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'sable', 'minotaure'}
+FAITES = set()
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
