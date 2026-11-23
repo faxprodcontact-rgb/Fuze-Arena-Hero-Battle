@@ -1,5 +1,8 @@
 # Essai de style : pixel art (23/11/2026)
 
+**Pour dessiner un personnage : lire `GUIDE.md`** (le guide à suivre), recopier `persos/_gabarit.py`, vérifier avec
+`controle.py`. Ce fichier-ci garde l'historique de l'essai.
+
 Demande du propriétaire : essayer un autre style que le dessin vectoriel, plus précis. Essai : 5 héros, 5 monstres,
 1 fond, en pixel art. Personnages dessinés dans un repère de **96 × 96** (pieds vers y = 93), sur une toile de
 **128 × 120** (marge `OX`, `OY` dans `pix.py`) : armes, ailes et flammes peuvent dépasser sans être coupées. Fond de

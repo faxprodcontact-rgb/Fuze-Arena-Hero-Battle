@@ -35,9 +35,12 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
 - **Personnages redessinés par le code** (en cours, un par un) : `refonte-graphique/vecto/` — **lire
   `refonte-graphique/vecto/GUIDE.md` avant d'y toucher** (méthode économe, outils, file d'attente). Page d'exemple :
   https://claude.ai/artifact/5qE3vDUzsMFMQVC4ywqLrK . Pas encore branchés dans le jeu.
-- **Essai de pixel art** (style envisagé pour tout le jeu) : `refonte-graphique/pixel/` (atelier `pix.py`, un fichier par
-  personnage dans `persos/`, `LISEZMOI.md`). Depuis v0.42.0, 10 personnages sont dans le jeu à la place des anciens :
-  `python3 refonte-graphique/pixel/jeu.py` (planches `public/art/px/`, `src/game/pixel-meta.ts`).
+- **Pixel art « gros pixels encrés »** (style retenu pour les héros) : `refonte-graphique/pixel/` — **lire
+  `refonte-graphique/pixel/GUIDE.md` avant de dessiner** (DA, proportions, tête pixel par pixel, pas de trait aux
+  articulations, ordre premier/second plan, refus passés). Mannequin à recopier : `persos/_gabarit.py` ; contrôle
+  obligatoire avant de montrer : `python3 refonte-graphique/pixel/controle.py <nom>`. 5 héros et 5 monstres (ancien style)
+  sont dans le jeu à la place des anciens : `python3 refonte-graphique/pixel/jeu.py` (`public/art/px/`, `pixel-meta.ts`),
+  combat d'essai dans les Outils de test.
 - Décors de combat dessinés par le code : `src/game/bg/` (un fichier par décor, `scenes.ts`). Règles : une plateforme
   rectangulaire d'un bord à l'autre (**jamais de rond au sol**), tout est posé, ordre des calques fixé (voir journal
   v0.38.0). Outil de test : `#fond=<terrain>`.
