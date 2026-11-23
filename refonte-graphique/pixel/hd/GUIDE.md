@@ -48,6 +48,17 @@ Outils (depuis `refonte-graphique/pixel/hd/`) :
 
 ## 2. La direction artistique
 
+- **Pas de sort sur l'illustration** (décision du propriétaire, 24/11/2026) : ni boule d'eau, ni rayon, ni vague lancée
+  par la main. Les sorts seront des effets du combat. Le héros tient son arme ou ses objets ; une main libre reste le
+  long du corps ou dans un geste naturel.
+- **Le nez** (reproché sur trois héroïnes) : en trois quarts, l'arête du nez se lit en une ligne claire côté lumière et
+  une ombre douce dessous, la narine en un ou deux pixels, le bout qui dépasse à peine du contour du visage. Pas de
+  tache, pas de pixels au hasard.
+- **Les yeux** : l'œil du fond est caché en partie DERRIÈRE l'arête du nez (de trois quarts, le nez passe devant lui),
+  même forme que l'œil proche, sur la même ligne.
+- **Le corps reste cohérent avec la pose** : une carapace, un abdomen, une queue suivent la rotation du corps de trois
+  quarts et sont attachés au bon endroit (pas d'espace vide entre deux morceaux qui se tiennent).
+
 - **Pixel art de jeu mobile haut de gamme**, gros pixels francs, couleurs saturées, très lisible à la taille du jeu.
 - **Une seule lumière, en haut à droite.** Les formes sont éclairées en haut à droite, ombrées en bas à gauche.
 - **Gammes de couleurs décalées en teinte** : les ombres tirent vers le violet / bleu froid, les lumières vers le jaune

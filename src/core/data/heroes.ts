@@ -185,7 +185,7 @@ const OLD_NAMES: Record<Faction, string[]> = {
   mages: ['Pell', 'Mira', 'Orin', 'Tessa', 'Ilvar', 'Sélène', 'Arcan', 'Eldra', 'Nimue', 'Ozias', 'Myrr', 'Faust'],
   demons: ['Grizz', 'Vrak', 'Barzul', 'Lilou', 'Kesha', 'Morgath', 'Ruka', 'Zaroth', 'Velith', 'Skarn', 'Azgor', 'Nerith'],
   angels: ['Célia', 'Ilian', 'Aube', 'Séraphin', 'Lumen', 'Elyon', 'Solenn', 'Ariel', 'Raphaëlle', 'Auriel', 'Gabryel', 'Céleste'],
-  myths: ['Faune', 'Satyre', 'Cyclope', 'Méduse', 'Dryade', 'Minotaure', 'Anubis', 'Freyja', 'Isis', 'Thor', 'Atlas', 'Zeus'],
+  myths: ['Faune', 'Satyre', 'Cyclope', 'Méduse', 'Dryade', 'Minotaure', 'Anubis', 'Freyja', 'Isis', 'Arachné', 'Atlas', 'Zeus'],
 };
 const SLOTS = FACTIONS.flatMap((f) => OLD_NAMES[f].map((name, i) => ({ id: `${f}-${i + 1}`, name, faction: f })));
 
