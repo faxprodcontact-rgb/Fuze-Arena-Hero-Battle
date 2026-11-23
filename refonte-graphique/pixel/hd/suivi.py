@@ -55,7 +55,7 @@ RETOUCHES = {
     'minotaure': "Nez refait plus doux (un peu brouillon).",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = set()
+FAITES = {'anubis', 'isis', 'minotaure'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
