@@ -28,11 +28,10 @@ const ell = ellipse;
 // ---------- les formes ----------
 const SUN = [250, 96, 70];
 const MANE_D = sm('178,176 222,140 290,128 352,140 396,180 410,240 404,306 388,346! 356,334 320,342 280,344 240,340 204,334 176,346! 166,300 162,240');
-const SKULL = ell(286, 224, 96, 88);
-const EAR_L = ell(198, 160, 28, 30), EAR_R = ell(354, 140, 24, 27);
-const MUZZLE = sm('330,236 372,222 410,230 428,252 424,276 400,292 362,296 334,284 322,262');
-const CHEEK = sm('214,262 246,250 284,256 320,262 344,286 330,306 290,316 246,312 220,294');
-const COBRA = sm('296,140 304,128 314,134 318,152 312,172 304,180 296,168 292,152');
+// la tête de lionne d'une seule forme (oreilles et museau compris), comme avant ; le museau clair est peint dedans
+const HEAD = sm('413,234 408,222 391,208 388,201 373,188 368,177 352,163 353,151 351,142 343,126 335,119 327,120 318,126 307,128 298,120 287,115 278,128 267,137 240,138 212,141 196,131 180,126 165,125 145,130 140,135 134,148 133,166 136,177 144,189 133,207 140,250 170,288 205,300 249,308 300,310 340,310 377,305 381,303 388,300 397,289 408,281 411,273 410,252 414,245');
+const MUZZLE = sm('318,250 344,240 374,244 402,254 410,270 396,286 362,292 332,288 316,272');
+const COBRA = sm('294,132 302,118 312,124 316,144 310,164 302,170 294,160 290,146');
 const COLLAR = sm('196,318 240,312 300,316 360,312 404,320 410,340 384,362 340,376 300,380 258,376 216,362 192,340');
 const COLLAR_IN = sm('214,326 252,322 300,326 350,322 392,328 378,346 340,360 300,364 260,360 222,346');
 const TORSO = sm('204,330 300,322 396,330 404,360 388,404 300,412 214,404 198,362');
@@ -70,7 +69,7 @@ const defs = [
 ].join('');
 
 // ---------- le visage : deux yeux pareils, fardés, de part et d'autre du nez ----------
-const EL = almond(262, 226, 50, 30, -1, 5.6), ER = almond(334, 226, 50, 30, 1, 5.6);
+const EL = almond(262, 218, 48, 28, -1, 5.4), ER = almond(334, 218, 48, 28, 1, 5.4);
 function eye(cx, cy, r, A) {
   const id = `c-se${cx}`;
   return `<clipPath id="${id}"><path d="${A.white}"/></clipPath><path d="${A.white}" fill="#fffaf0"/><g clip-path="url(#${id})">`
@@ -78,15 +77,15 @@ function eye(cx, cy, r, A) {
     + `<rect x="${cx - 32}" y="${cy - 24}" width="64" height="11" fill="#6a3a10" opacity="0.2"/></g>` + shape(A.lash, '#1a0c06') + line(A.lower, '#5a2c10', 2, 0.8)
     + `<g class="a-blink" opacity="0"><path d="${A.white}" fill="${FUR.base}" stroke="${FUR.base}" stroke-width="3"/>${line(A.shut, '#1a0c06', 3)}</g>`;
 }
-const FACE = eye(265, 228, 12.5, EL) + eye(337, 228, 12.5, ER)
+const FACE = eye(265, 220, 12, EL) + eye(337, 220, 12, ER)
   // les sourcils sombres, le même de chaque côté, froncés vers le nez
-  + cel(rib([[236, 200, 0], [252, 192, 5], [274, 194, 5], [288, 204, 0]]), MANE, 2.4, 1.4)
-  + cel(rib([[312, 204, 0], [326, 194, 5], [348, 192, 5], [364, 200, 0]]), MANE, 2.4, 1.4)
+  + cel(rib([[236, 192, 0], [252, 184, 5], [274, 186, 5], [288, 196, 0]]), MANE, 2.4, 1.4)
+  + cel(rib([[312, 196, 0], [326, 186, 5], [348, 184, 5], [364, 192, 0]]), MANE, 2.4, 1.4)
   // le museau clair, le nez de lionne, la bouche, les points des moustaches
-  + `<path d="${MUZZLE}" transform="translate(-2 4)" fill="${FUR.deep}" opacity="0.4"/>` + relief(MUZZLE, 'g-light', LIGHT, 4, 2)
-  + cel(sm('392,236 412,234 422,244 414,256 400,258 390,248'), { hi: '#c8906a', base: '#8a4a24', sh: '#5a2c12' }, 2.4, 1.4)
-  + line('M404 258 L404 268', '#5a2c12', 2.2) + line('M372 278 Q388 284 404 268 Q414 280 424 276', '#5a2c12', 2.4)
-  + [[356, 262], [364, 268], [352, 272]].map(([x, y]) => dot(x, y, 1.8, '#8a5a30', 0.8)).join('');
+  + `<path d="${MUZZLE}" fill="url(#g-light)"/>` + cel(MUZZLE, { ...LIGHT, base: 'none' }, 4, 2)
+  + cel(sm('374,230 390,227 402,233 401,244 390,249 378,245'), { hi: '#c8906a', base: '#8a4a24', sh: '#5a2c12' }, 2.4, 1.4)
+  + line('M390 249 L390 262', '#5a2c12', 2.2) + line('M352 276 Q372 282 390 262 Q398 274 408 270', '#5a2c12', 2.4)
+  + [[342, 258], [350, 264], [338, 268]].map(([x, y]) => dot(x, y, 1.8, '#8a5a30', 0.8)).join('');
 
 // ---------- les morceaux, du fond vers le devant ----------
 const sh = (on, dx = -4, dy = 6, o = 0.42) => ({ on, dx, dy, color: SH, o });
@@ -118,14 +117,15 @@ const parts = [
     + [180, 192, 204].map((x) => lock([[x, 414], [x + 0.5, 428], [x, 442]], FUR.deep, 0.8, 2)).join('') },
   { id: 'mane', cls: 'a-head', d: MANE_D, shadow: [sh(['sun', 'torso', 'collar', 'cape'], -4, 7)], body: relief(MANE_D, 'g-mane', MANE, 7, 3)
     + lock([[184, 220], [178, 280], [190, 330]], MANE.hi, 0.6, 4) + lock([[398, 220], [402, 280], [392, 330]], MANE.hi, 0.5, 4) },
-  { id: 'head', cls: 'a-head', d: SKULL + EAR_L + EAR_R + MUZZLE, shadow: [sh(['mane', 'sun'], -4, 6)], body: ''
-    // les oreilles rondes (l'intérieur sombre), la tête en fourrure, les joues claires
-    + relief(EAR_L, 'g-fur', FUR, 4, 2) + dot(200, 163, 16, MANE.base) + relief(EAR_R, 'g-fur', FUR, 4, 2) + dot(355, 143, 13, MANE.base)
-    + relief(SKULL, 'g-fur', FUR, 8, 3) + lock([[240, 150], [290, 140], [340, 150]], FUR.hi, 0.7, 5)
-    + `<path d="${CHEEK}" fill="${LIGHT.base}" opacity="0.9"/>`
+  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['mane', 'sun', 'collar'], -4, 6)], body: `<path d="${HEAD}" fill="url(#g-fur)"/>` + cel(HEAD, { ...FUR, base: 'none' }, 8, 3) + clip('head',
+    // l'intérieur des oreilles, la coiffe sombre derrière la joue et sous la mâchoire, le front éclairé
+    dot(167, 160, 20, MANE.base) + dot(169, 163, 13, MANE.sh) + dot(340, 142, 10, MANE.base)
+    + cel(sm('100,200 132,188 160,200 172,236 168,280 150,304 126,304 104,288 96,250 98,220'), MANE, 5, 2.4)
+    + cel(sm('370,196 392,206 408,234 414,264 404,290 384,284 378,252 370,222'), MANE, 4, 2)
+    + lock([[230, 148], [280, 136], [330, 140]], FUR.hi, 0.7, 5) + lock([[180, 236], [196, 276], [226, 300]], FUR.sh, 0.5, 6)
     // le cobra d'or au front, sa gemme rouge
-    + `<path d="${COBRA}" transform="translate(-2 3)" fill="${FUR.deep}" opacity="0.5"/>` + relief(COBRA, 'g-gold', GOLD, 3, 1.6) + dot(305, 160, 3.6, '#c02818') + dot(306, 158.6, 1.2, '#ffd0c0')
-    + FACE },
+    + `<path d="${COBRA}" transform="translate(-2 3)" fill="${FUR.deep}" opacity="0.5"/>` + relief(COBRA, 'g-gold', GOLD, 3, 1.6) + dot(303, 152, 3.6, '#c02818') + dot(304, 150.6, 1.2, '#ffd0c0')
+    + FACE) },
   { id: 'armF', cls: 'a-arm', d: ARM_F, shadow: [sh(['torso', 'collar', 'mane'])], body: relief(ARM_F, 'g-fur', FUR, 5, 2.4)
     + relief(rib([[400, 350, 0], [408, 360, 8], [414, 372, 0]]), 'g-gold', GOLD, 2.4, 1.2) },
   { id: 'blades', cls: 'a-arm', d: BLADES.map(rib).join('') + HILT, shadow: [sh(['armF', 'mane', 'head', 'torso'], -3, 5, 0.35)], body: relief(HILT, 'g-gold', GOLD, 2, 1)
