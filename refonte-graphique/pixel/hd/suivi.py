@@ -39,31 +39,26 @@ ROSTER = [
     ('solenn', 'angels-7', 'Solenn', 'terre', 'protecteur', 'commun', 'nain'),
     ('auriel', 'angels-10', 'Auriel', 'terre', 'protecteur', 'rare', 'cyclope'),
     ('gabryel', 'angels-11', 'Gabryel', 'terre', 'assassin', 'rare', 'homme-scorpion'),
-    ('cyclope', 'myths-3', 'Cyclope', 'terre', 'guerrier', 'épique', 'minotaure'),
+    ('cyclope', 'myths-3', 'Astérion', 'terre', 'guerrier', 'épique', 'minotaure'),
     ('meduse', 'myths-4', 'Méduse', 'terre', 'tireur', 'épique', 'gorgone'),
     ('anubis', 'myths-7', 'Anubis', 'terre', 'soutien', 'épique', 'baron vaudou'),
     ('minotaure', 'myths-6', 'Minotaure', 'terre', 'soigneur', 'épique', 'reine du Nil ailée'),
     ('arachne', 'myths-10', 'Arachné', 'terre', 'assassin', 'légendaire', 'femme-araignée'),
     ('isis', 'myths-9', 'Isis', 'terre', 'tireur', 'légendaire', 'chasseur au crâne de cerf'),
 ]
-VALIDES = {'kesha', 'elyon', 'cyclope'}
+VALIDES = {'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'nerith', 'arachne', 'auriel'}
 # héros dessinés dont les retours du propriétaire sont en train d'être faits : le retour demandé
 RETOUCHES = {
-    'velith': "Manche de la hache plus long, lame bien perpendiculaire au manche.",
-    'gabryel': "Enlever l'épaulette.",
-    'ilian': "Plus d'eau lancée par la main : le bras redescend le long du corps.",
-    'zaroth': "Un peu moins large.",
-    'meduse': "Plus d'énergie verte lancée.",
-    'barzul': "L'œil gauche, avec le cache-œil, replacé derrière le nez.",
-    'celia': "Nez et main droite refaits (on garde les cristaux).",
-    'nerith': "Nez refait, œil droit bien placé (on garde l'étincelle).",
-    'lilou': "Carapace vue de côté, cohérente avec le corps ; gants de boxe rouges ; bandana rouge de ninja.",
-    'arachne': "S'appelait Thor. Abdomen d'araignée rapproché des hanches ; nez refait.",
-    'solenn': "Barbe refaite entièrement ; tête recentrée au-dessus du corps.",
-    'auriel': "Plus de rocher, nouvelle posture ; corps refait avec un vrai torse ; ceinture ajustée.",
+    'zaroth': "Encore un peu moins large ; jambes moins écartées, dans la lignée du corps.",
+    'kesha': "Refaire correctement la ceinture.",
+    'velith': "Tête un peu moins aplatie.",
+    'lilou': "Carapace remise dans le bon sens.",
+    'celia': "Bouche replacée.",
+    'cyclope': "S'appelle maintenant Astérion. Enlever la petite zone sous le menton qui cache le torse.",
+    'solenn': "Visage bien droit : il part en zigzag au niveau de la barbe.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'velith', 'gabryel', 'ilian', 'zaroth', 'meduse', 'arachne', 'lilou', 'barzul', 'celia', 'nerith', 'auriel', 'solenn'}
+FAITES = set()
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
