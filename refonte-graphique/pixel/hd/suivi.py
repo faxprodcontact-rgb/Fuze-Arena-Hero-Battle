@@ -52,10 +52,10 @@ VALIDES = {'elyon', 'gabryel', 'meduse', 'barzul', 'nerith', 'arachne', 'auriel'
 RETOUCHES = {
     'ilian': "La cape doit passer derrière les jambes aussi.",
     'minotaure': "L'aile gauche (à notre droite) n'est pas complète.",
-    'sable': "Khépesh plus long et plus tranchant ; bras droit baissé tenant un grand bouclier égyptien devant elle ; des dents bien placées.",
+    'sable': "Bouclier plus gros.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'sable', 'minotaure', 'ilian'}
+FAITES = {'minotaure', 'ilian'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
