@@ -141,12 +141,12 @@ const kiteBody = use('kite', 'url(#g-teal)') + clip('kite',
   + shape('M332 262 L360 250 L370 276 L342 288 Z', TEAL.base, 0.95) + line('M334 264 L360 252 M342 286 L368 274', '#f6e0c0', 1.4, 0.7)
   // les yeux : l'œil furieux à gauche, l'autre à droite, sous des sourcils de toile froncés
   + `<g class="a-eyes">`
-  + oval(268, 176, 26, 22, '#2a0a06') + oval(268, 176, 23, 19, 'url(#g-eye)') + oval(278, 180, 7, 11, '#1a0806') + dot(262, 172, 4, '#fff')
-  + oval(358, 178, 22, 19, '#2a0a06') + oval(358, 178, 19.5, 16.5, 'url(#g-eye)') + oval(350, 182, 6, 10, '#1a0806') + dot(352, 174, 3.4, '#fff')
+  + oval(268, 176, 26, 22, '#2a0a06') + oval(268, 176, 23, 19, 'url(#g-eye)') + oval(275, 179, 7, 11, '#1a0806') + dot(270, 173, 3.6, '#fff')
+  + oval(356, 176, 26, 22, '#2a0a06') + oval(356, 176, 23, 19, 'url(#g-eye)') + oval(363, 179, 7, 11, '#1a0806') + dot(358, 173, 3.6, '#fff')
   // les paupières lourdes, penchées vers le milieu : elles coupent le haut des yeux (regard furieux)
   + shape('M238 152 L304 152 L304 180 C290 164 262 160 240 168 Z', RED.base) + line('M240 168 C262 160 290 164 304 180', '#2a0a06', 4)
-  + shape('M326 156 L384 156 L384 170 C364 164 340 166 324 182 Z', TEAL.base) + line('M324 182 C340 166 364 164 384 170', '#2a0a06', 4)
-  + `<g class="a-blink" opacity="0">${oval(268, 172, 25, 21, RED.base)}${oval(358, 174, 21, 18, TEAL.base)}</g>`
+  + shape('M386 152 L320 152 L320 180 C334 164 362 160 384 168 Z', TEAL.base) + line('M384 168 C362 160 334 164 320 180', '#2a0a06', 4)
+  + `<g class="a-blink" opacity="0">${oval(268, 172, 25, 21, RED.base)}${oval(356, 172, 25, 21, TEAL.base)}</g>`
   + '</g>'
   + shape('M232 150 C254 138 284 142 306 166 L298 172 C280 154 256 150 236 158 Z', RED.deep)
   + shape('M392 152 C372 142 346 146 322 170 L330 176 C350 156 372 152 390 160 Z', TEAL.deep)

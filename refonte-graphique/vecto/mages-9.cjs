@@ -123,9 +123,10 @@ const S = {
   cuffR: sm('100,348 148,336 162,364 152,378 114,384 100,370'),
   fistR: sm('100,376 122,372 148,374 158,388 156,412 146,424 126,428 106,422 96,406 96,388'),
   // le bras gauche, levé : l'épaule (sous la crinière), l'avant-bras, le bracelet, le poing serré
-  armL: sm('300,268 330,258 344,268 360,248 380,240 396,256 384,276 372,288 344,310 320,330 304,320 296,296'),
-  cuffL: sm('344,244 376,232 392,250 386,270 360,278 346,264'),
-  fistL: sm('352,206 362,186 384,176 408,178 422,190 424,210 418,228 400,240 380,244 362,238 350,224'),
+  // (redessiné : un bras plié net, le haut du bras à l'horizontale avec le biceps, l'avant-bras droit vers le haut)
+  armL: sm('296,280 318,268 340,260 356,264 364,272! 366,254 370,242 394,240 398,256 398,282 394,304 380,318 360,324 334,324 312,320 296,306'),
+  cuffL: sm('362,252 366,236 382,232 398,236 402,252 400,266 382,270 364,266'),
+  fistL: sm('358,206 362,190 376,182 394,180 410,184 420,196 420,214 414,230 400,240 380,242 364,236 356,222'),
   // la barbe, qui tombe sur la poitrine
   beard: sm('152,212 164,226 180,236 198,240 216,236 236,234 256,236 276,232 292,226 302,214 308,232 306,256 298,276 286,292 272,302! 266,316! 252,310 244,326! 234,312 222,318! 216,304 202,304! 196,290 182,288! 178,272 164,266! 162,250 150,238'),
   // la bouche ouverte, dans la barbe
@@ -234,14 +235,20 @@ const parts = [
   { id: 'belt', d: S.belt, shadow: [sh(['toga'], -2, 4, SH.toga, 0.45)], body: use('belt', 'url(#g-gold)') + clip('belt',
     glint([[152, 377, 0], [220, 381, 2], [298, 376, 0]], GOLD.hi, 0.9) + shape(sm('214,376 232,376 234,396 214,396'), GOLD.mid)) },
   { id: 'aura', cls: 'a-fire', d: 'M-900 -900', body: auraBody },
-  { id: 'armL', cls: 'a-armL', d: S.armL, shadow: [sh(['toga', 'mane', 'cape'], -4, 5, SH.skin, 0.4)], body: use('armL', 'url(#g-skinB)') + clip('armL',
-    glint([[306, 300, 0], [340, 290, 4], [376, 260, 0]], SKIN.hi, 0.6) + glint([[310, 322, 0], [344, 306, 4], [378, 282, 0]], SKIN.deep, 0.5)) },
-  { id: 'cuffL', cls: 'a-armL', d: S.cuffL, shadow: [sh(['armL'], -2, 4, SH.skin, 0.45)], body: use('cuffL', 'url(#g-goldX)') + clip('cuffL',
-    glint([[348, 252, 0], [364, 242, 2.4], [386, 244, 0]], GOLD.hi, 0.9) + glint([[350, 266, 0], [368, 262, 2.4], [384, 264, 0]], GOLD.shade, 0.7)) },
-  { id: 'fistL', cls: 'a-armL', d: S.fistL, shadow: [sh(['cuffL', 'armL', 'mane'], -3, 5, SH.skin, 0.45)], body: use('fistL', 'url(#g-skinB)') + clip('fistL',
+  { id: 'armL', cls: 'a-armL', free: true, d: S.armL, shadow: [sh(['toga', 'mane', 'cape'], -4, 5, SH.skin, 0.4)], body: use('armL', 'url(#g-skinB)') + clip('armL',
+    // le biceps bombé (lumière dessus), l'ombre sous le bras, le pli du coude, la lumière sur l'avant-bras
+    glint([[304, 282, 0], [330, 268, 5], [356, 268, 0]], SKIN.hi, 0.75) + glint([[304, 314, 0], [340, 322, 5], [378, 316, 0]], SKIN.deep, 0.55)
+    + glint([[358, 278, 0], [366, 290, 3], [372, 304, 0]], SKIN.deep, 0.5) + glint([[392, 252, 0], [395, 276, 3], [390, 300, 0]], SKIN.hi, 0.6)) },
+  { id: 'cuffL', cls: 'a-armL', free: true, d: S.cuffL, shadow: [sh(['armL'], -2, 4, SH.skin, 0.45)], body: use('cuffL', 'url(#g-goldX)') + clip('cuffL',
+    glint([[366, 240, 0], [382, 236, 2.4], [398, 240, 0]], GOLD.hi, 0.9) + glint([[366, 262, 0], [382, 266, 2.4], [398, 262, 0]], GOLD.shade, 0.7)) },
+  { id: 'fistL', cls: 'a-armL', free: true, d: S.fistL, shadow: [sh(['cuffL', 'armL', 'mane'], -3, 5, SH.skin, 0.45)], body: use('fistL', 'url(#g-skinB)') + clip('fistL',
     // le poing serré vu de face : quatre doigts repliés (creux et bosses), le pouce par-dessus
-    [[364, 196, 366, 230], [378, 190, 380, 232], [394, 190, 394, 232]].map(([x1, y1, x2, y2]) => glint([[x1, y1, 0], [(x1 + x2) / 2, (y1 + y2) / 2, 2.6], [x2, y2, 0]], SKIN.deep, 0.65)).join('')
-    + shape(sm('356,214 380,208 406,212 414,222 396,226 372,226'), SKIN.hi, 0.6) + oval(400, 186, 8, 4, SKIN.hi, 0.8, -12)) },
+    // les quatre doigts repliés (une bosse claire, un creux entre chacun), le pouce posé en travers, l'ombre en bas
+    [370, 384, 398, 412].map((x) => oval(x, 192, 7, 6, SKIN.hi, 0.7)).join('')
+    + [377, 391, 405].map((x) => glint([[x, 186, 0], [x, 198, 2.2], [x, 210, 0]], SKIN.deep, 0.7)).join('')
+    + `<path d="${sm('362,214 380,208 398,210 408,218 400,226 380,226 364,224')}" transform="translate(-1 3)" fill="${SKIN.deep}" opacity="0.5"/>`
+    + shape(sm('362,214 380,208 398,210 408,218 400,226 380,226 364,224'), '#ffd9c0') + glint([[366, 214, 0], [384, 210, 1.8], [402, 214, 0]], '#ffffff', 0.7)
+    + glint([[360, 228, 0], [384, 240, 4], [412, 230, 0]], SKIN.deep, 0.5)) },
   { id: 'ear', cls: 'a-head', d: S.ear, shadow: [sh(['mane'], -3, 4, SH.hair, 0.4)], body: use('ear', 'url(#g-skinB)') + clip('ear',
     shape(sm('116,212 126,208 132,224 128,240 120,236 122,222'), SKIN.deep, 0.6) + oval(124, 206, 4, 3, SKIN.hi, 0.8)) },
   { id: 'face', cls: 'a-head', d: S.face, shadow: [sh(['mane'], -4, 4, SH.skin, 0.35)], body: faceBody },
