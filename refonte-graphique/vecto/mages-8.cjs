@@ -37,10 +37,13 @@ const RINGS = [24, 44, 236, 330, 506, 528, 556];
 const along = (x) => { for (let i = 1; i < STAFF.length; i++) { const [x0, y0, w0] = STAFF[i - 1], [x1, y1, w1] = STAFF[i]; if (x <= x1) { const f = (x - x0) / (x1 - x0); return [y0 + (y1 - y0) * f, w0 + (w1 - w0) * f, Math.atan2(y1 - y0, x1 - x0)]; } } return STAFF[STAFF.length - 1].slice(1).concat(0); };
 const STAFF_D = rib(STAFF);
 // la tête : un crâne rond, l'oreille à gauche, le museau qui avance à droite
-// la tête de singe d'une seule forme (oreille et museau compris), comme avant ; le masque clair est peint dedans
-const HEAD = sm('170,296 170,309 174,321 179,327 191,335 216,345 252,363 282,383 324,397 371,394 412,379 478,363 519,341 521,330 500,337 489,345 487,330 486,328 487,315 485,307 479,301 461,297 450,289 448,275 445,263 447,254 445,251 446,239 438,219 431,209 425,201 405,183 390,175 366,167 291,165 284,170 256,182 246,189 225,211 208,245 207,258 195,260 187,264 179,272 172,286');
-const MASK = sm('275,246 330,240 375,242 412,240 438,252 448,272 456,290 476,296 488,312 482,330 466,340 436,354 394,368 336,374 300,364 284,350 270,326 264,290');
-const BAND = sm('232,240 250,223 265,219 280,215 295,211 325,210 340,211 400,214 415,219 440,226 456,232! 456,246! 440,240 415,230 400,226 340,223 310,224 295,226 280,229 265,236 250,243 235,250!');
+// la tête : un crâne de fourrure arrondi (le haut et l'arrière), l'oreille, et le grand visage clair qui forme tout le bas
+// de la tête (joues, menton, museau) : pas de fourrure sous le menton, le menton reste loin du bâton
+const SKULL = ellipse(336, 252, 110, 86);
+const EAR = ellipse(216, 290, 32, 34);
+const FACE_D = sm('258,256 290,240 330,246 360,258 392,246 430,242 456,258 464,280 478,286 494,302 492,324 476,338 450,346 428,364 392,380 350,384 310,374 282,354 264,324 256,290');
+const HEAD = SKULL + EAR + FACE_D;
+const BAND = sm('236,232 262,214 300,204 340,200 380,202 416,210 440,222! 438,236! 412,226 376,218 340,216 302,220 266,230 242,246!');
 // le corps
 const CAPE_D = sm('250,372 210,378 160,388 110,396 66,404 28,414! 50,428 40,446! 70,446 64,466! 96,460 104,476! 130,462 168,450 210,436 248,420');
 const TAIL_D = rib([[232, 488, 24], [170, 492, 22], [112, 482, 20], [72, 456, 17], [60, 424, 14], [76, 400, 11], [100, 400, 8], [108, 414, 0]]);
@@ -90,8 +93,8 @@ const FACE = eye(328, 294, 12.5, EL) + eye(402, 294, 12.5, ER)
   + cel(rib([[296, 266, 0], [314, 258, 6], [338, 260, 6], [352, 270, 0]]), FUR, 2.4, 1.4)
   + cel(rib([[372, 270, 0], [386, 260, 6], [410, 258, 6], [426, 266, 0]]), FUR, 2.4, 1.4)
   // le museau : un relief plus clair, les narines, le sourire en coin, les joues roses
-  + oval(462, 318, 5, 3.4, '#5a2a18', 1, 10) + oval(478, 322, 4, 2.8, '#5a2a18') + glint([[452, 306, 0], [470, 304, 2], [486, 310, 0]], '#ffffff', 0.6)
-  + line('M380 352 Q386 357 392 352 Q418 356 448 343', '#4a2014', 2.8) + line('M378 347 Q379 351 381 353', '#4a2014', 2.2)
+  + oval(458, 312, 4.6, 3.2, '#5a2a18', 1, 10) + oval(472, 316, 3.6, 2.6, '#5a2a18') + glint([[448, 300, 0], [466, 298, 2], [482, 304, 0]], '#ffffff', 0.6)
+  + line('M380 350 Q386 355 392 350 Q416 352 442 338', '#4a2014', 2.8) + line('M378 347 Q379 351 381 353', '#4a2014', 2.2)
   + oval(300, 330, 14, 7, '#f5a090', 0.45) + oval(428, 326, 10, 5, '#f5a090', 0.4);
 
 // ---------- les morceaux, du fond vers le devant ----------
@@ -129,14 +132,16 @@ const parts = [
     + glint(STAFF.map(([x, y, w], i) => [x - 1, y + w * 0.3, i === 0 || i === STAFF.length - 1 ? 0 : w * 0.2]), '#7a4a14', 0.5)) },
   { id: 'fistB', cls: 'a-body', d: FIST_B, shadow: [sh(['staff', 'armB', 'torso'], -3, 5)], body: relief(FIST_B, 'g-peach', PEACH, 5, 2.4)
     + [196, 210, 224].map((x) => lock([[x, 440], [x + 0.5, 456], [x, 472]], PEACH.deep, 0.8, 2) + lock([[x + 3, 442], [x + 3.5, 454], [x + 3, 466]], '#ffffff', 0.6, 1)).join('') },
-  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['torso', 'collar', 'plumes', 'armB', 'staff'], -4, 7)], body: `<path d="${HEAD}" fill="url(#g-fur)"/>` + cel(HEAD, { ...FUR, base: 'none' }, 8, 3) + clip('head',
-    // l'intérieur de l'oreille, le grand masque clair (museau compris) peint dans la tête, le front éclairé
-    dot(200, 304, 22, PEACH.sh) + dot(202, 302, 18, PEACH.base) + lock([[300, 196], [360, 186], [420, 204]], FUR.hi, 0.7, 5)
-    + `<path d="${MASK}" fill="url(#g-peach)"/>` + cel(MASK, { ...PEACH, base: 'none' }, 7, 3)
-    // le bandeau d'or et son médaillon
+  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['torso', 'collar', 'plumes', 'armB', 'staff'], -4, 7)], body: ''
+    // l'oreille (l'intérieur clair), le crâne de fourrure éclairé en haut à droite
+    + relief(EAR, 'g-fur', FUR, 5, 2.4) + dot(218, 292, 19, PEACH.sh) + dot(220, 290, 15, PEACH.base)
+    + relief(SKULL, 'g-fur', FUR, 8, 3) + lock([[290, 188], [346, 174], [404, 188]], FUR.hi, 0.7, 5)
+    // le bandeau d'or et son médaillon, sur le front
     + `<path d="${BAND}" transform="translate(-2 4)" fill="${FUR.deep}" opacity="0.5"/>` + relief(BAND, 'g-gold', GOLD, 4, 2)
-    + dot(360, 214, 16, GOLD.deep) + dot(360.6, 213.4, 14, 'url(#g-medal)') + line('M360 214 m-1 0 a3 3 0 1 1 4 3 a6 6 0 1 1 -8 -6 a8 8 0 0 1 10 2', '#8a5418', 2.4)
-    + FACE) },
+    + dot(352, 214, 16, GOLD.deep) + dot(352.6, 213.4, 14, 'url(#g-medal)') + line('M352 214 m-1 0 a3 3 0 1 1 4 3 a6 6 0 1 1 -8 -6 a8 8 0 0 1 10 2', '#8a5418', 2.4)
+    // le visage clair (son ombre douce sur la fourrure), puis les yeux, le nez, la bouche
+    + `<path d="${FACE_D}" transform="translate(-3 5)" fill="${FUR.deep}" opacity="0.45"/>` + relief(FACE_D, 'g-peach', PEACH, 7, 3)
+    + FACE },
   { id: 'armF', cls: 'a-body', d: ARM_F, shadow: [sh(['torso', 'collar', 'staff'])], body: relief(ARM_F, 'g-fur', FUR, 5, 2.4) },
   { id: 'fistF', cls: 'a-body', d: FIST_F, shadow: [sh(['staff', 'armF', 'head', 'torso'], -3, 5)], body: relief(FIST_F, 'g-peach', PEACH, 5, 2.4)
     + [420, 434, 448].map((x) => lock([[x, 378], [x + 0.5, 394], [x, 410]], PEACH.deep, 0.8, 2) + lock([[x + 3, 380], [x + 3.5, 392], [x + 3, 404]], '#ffffff', 0.6, 1)).join('') },
