@@ -51,7 +51,7 @@ VALIDES = {'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'nerith', 'arachne',
 # héros dessinés dont les retours du propriétaire sont en train d'être faits : le retour demandé
 RETOUCHES = {
     'minotaure': "L'aile gauche (à notre droite) n'est pas complète.",
-    'sable': "Un sabre égyptien (khépesh) à la main.",
+    'sable': "Khépesh plus long et plus tranchant ; bras droit baissé tenant un grand bouclier égyptien devant elle ; des dents bien placées.",
     'rook': "Ailes encore plus garnies ; passage des hanches au corps d'oiseau aligné ; contour arrondi entre le visage et les plumes au-dessus de l'œil droit.",
 }
 # retouches faites, en attente du regard du propriétaire
