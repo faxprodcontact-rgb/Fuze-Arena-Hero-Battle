@@ -169,31 +169,40 @@ function angryEye(cx, cy, rx, ry, iris, [px, py], lid, side) {
     + `${dot(px + ry * 0.35, py + ry * 0.35, ry * 0.1, '#fff', 0.9)}${shape(lid, '#3a1a0c')}${shape(lid, '#000', 0.25)}</g>`
     + `<g class="a-blink" opacity="0">${oval(cx, cy, rx + 1, ry + 1, CREAM.base)}${line(`M${cx - rx} ${cy + 2} Q${cx} ${cy + ry * 0.7} ${cx + rx} ${cy + 2 - side * 3}`, '#1a0a06', 2.6)}</g>`;
 }
+// le visage, recomposé : un masque crème en cœur (deux ronds autour des yeux, le museau dessous), le front brun qui
+// descend en pointe entre les yeux, un petit nez, et une gueule qui grogne DANS le museau : gencive rouge, deux gros
+// crocs et trois petites dents qui sortent de la gencive (la lèvre passe sur leur racine), deux crocs en bas.
+const MASK = sm('222,128 230,110 248,102 268,104 284,114 300,106 320,104 336,114 342,132 338,152 332,176 318,198 296,212 270,214 246,206 230,188 222,160');
+const MOUTH = sm('244,170 262,164 280,166 298,164 316,170 314,186 302,198 280,202 258,198 246,186');
+const UP = [[[250, 168], [260, 167], [256, 186]], [[300, 167], [310, 168], [304, 186]], [[266, 167], [274, 167], [270, 177]], [[276, 167], [284, 167], [280, 178]], [[286, 167], [294, 167], [290, 177]]];
+const DOWN = [[[256, 196], [264, 198], [262, 184]], [[296, 198], [304, 196], [298, 184]]];
+const fang = ([x1, y1], [x2, y2], [tx, ty]) => { const d = `M${x1} ${y1}Q${(x1 + tx) / 2 - 1} ${(y1 + ty) / 2} ${tx} ${ty}Q${(x2 + tx) / 2 + 1} ${(y2 + ty) / 2} ${x2} ${y2}Z`;
+  return shape(d, '#fbf3e4') + shape(`M${x1} ${y1}Q${(x1 + tx) / 2 - 1} ${(y1 + ty) / 2} ${tx} ${ty}L${(x1 + x2) / 2} ${(y1 + y2) / 2}Z`, '#d8c6ae', 0.9); };
 const headBody = use('head', 'url(#g-fur)') + clip('head',
-  // le masque crème autour des yeux et du museau ; l'ombre à gauche ; la lueur orange autour de l'œil de droite
-  shape(sm('214,120 232,104 258,98 286,106 304,118 320,124 334,136 330,156 316,160 290,156 262,156 236,158 220,150 212,134'), 'url(#g-cream)')
-  + shape(sm('204,110 218,126 224,160 236,190 214,190 204,160'), FUR.shade, 0.5)
-  + `<g class="a-glow">${oval(316, 132, 26, 22, 'url(#g-fire)')}</g>`
-  // le front brun froncé qui descend entre les yeux, la petite fleur rouge
-  + shape(sm('256,96 282,98 300,112 296,128 284,124 276,134 268,124 256,118 246,114'), FUR.base)
-  + oval(284, 104, 4, 3, RED.base) + oval(282, 102, 1.4, 1, '#ffb0a0')
-  // les deux yeux, bâtis pareil : amande jaune cerclée de sombre, pupille ronde qui regarde vers l'ennemi, reflet,
-  // puis la paupière lourde qui coupe le haut en biais (regard furieux) ; celui de droite brille d'orange
-  + angryEye(262, 131, 15, 11.5, 'url(#g-eye)', [267, 133], 'M244 122 L282 132 L282 110 L244 106 Z', 1)
-  + angryEye(318, 133, 13, 10.5, 'url(#g-eyeR)', [320, 135], 'M298 134 L334 125 L334 108 L298 114 Z', -1)
-  // les gros sourcils sombres en V, qui plongent vers le nez
-  + shape(rib([[238, 118, 0], [252, 118, 5], [268, 123, 5.6], [284, 132, 0]]), FUR.deep)
-  + shape(rib([[296, 134, 0], [310, 125, 5], [324, 120, 4.4], [337, 120, 0]]), FUR.deep)
-  // le nez : deux narines
-  + oval(282, 144, 2.4, 1.8, FUR.deep) + oval(292, 144, 2.4, 1.8, FUR.deep)
-  // le dessus du crâne éclairé
-  + glint([[228, 72, 0], [270, 64, 4], [310, 72, 0]], FUR.hi, 0.6)
-  // la grande gueule ouverte : le bord crème du museau, l'intérieur sombre, la langue et les dents du bas (qui claquent),
-  // les crocs du haut
-  + `<path d="${S.mouth}" fill="${CREAM.shade}" transform="translate(0 3)"/><path d="${S.mouth}" fill="url(#g-mouth)"/>`
-  + `<clipPath id="c-mouth"><path d="${S.mouth}"/></clipPath><g clip-path="url(#c-mouth)">`
-  + `<g class="a-jaw">${shape('M244 200 C254 186 274 182 292 188 C300 192 300 200 292 204 L244 206 Z', '#c84a5a') + TEETH_B.map((t) => tooth(...t)).join('')}</g>`
-  + TEETH_T.map((t) => tooth(...t)).join('') + '</g>'
+  // l'ombre à gauche du crâne, la lumière sur le dessus
+  shape(sm('204,110 218,126 224,160 236,190 214,190 204,160'), FUR.shade, 0.5) + glint([[228, 72, 0], [270, 64, 4], [310, 72, 0]], FUR.hi, 0.6)
+  // le masque crème, son ombre douce sur la fourrure
+  + `<path d="${MASK}" transform="translate(-2 4)" fill="${FUR.deep}" opacity="0.45"/>` + shape(MASK, 'url(#g-cream)')
+  + shape(sm('224,170 236,196 262,212 300,212 320,200 330,182 316,204 288,214 254,212 232,196'), CREAM.shade, 0.7)
+  + `<g class="a-glow">${oval(318, 132, 24, 20, 'url(#g-fire)')}</g>`
+  // le front brun qui descend en pointe entre les yeux, la petite fleur rouge
+  + shape(sm('246,100 270,92 296,96 312,104 296,112 288,126 284,136! 280,126 272,112'), FUR.base)
+  + oval(282, 100, 4, 3, RED.base) + oval(280, 98, 1.4, 1, '#ffb0a0')
+  // les deux yeux, bâtis pareil et de même taille ; celui de droite brille d'orange
+  + angryEye(260, 132, 14, 11, 'url(#g-eye)', [265, 134], 'M242 123 L280 133 L280 110 L242 106 Z', 1)
+  + angryEye(318, 132, 14, 11, 'url(#g-eyeR)', [323, 134], 'M298 133 L336 123 L336 106 L298 110 Z', -1)
+  + shape(rib([[238, 118, 0], [252, 118, 5], [268, 123, 5.6], [282, 132, 0]]), FUR.deep)
+  + shape(rib([[298, 132, 0], [312, 123, 5.6], [328, 118, 5], [342, 118, 0]]), FUR.deep)
+  // le petit nez : un cœur sombre, un reflet
+  + shape(sm('276,148 284,146 292,148 290,156 284,160 278,156'), FUR.mid) + oval(286, 149.5, 3, 1.4, '#ffffff', 0.6)
+  + glint([[272, 158, 0], [284, 163, 1.6], [296, 158, 0]], CREAM.shade, 0.9)
+  // la gueule : le fond sombre, la langue et les crocs du bas (qui claquent), la gencive, les dents du haut,
+  // puis la lèvre crème qui passe sur leur racine
+  + `<path d="${MOUTH}" fill="url(#g-mouth)"/>` + `<clipPath id="c-mouth"><path d="${MOUTH}"/></clipPath><g clip-path="url(#c-mouth)">`
+  + `<g class="a-jaw">${oval(280, 198, 20, 7, '#c84a5a')}${oval(284, 195, 8, 2.4, '#e88090', 0.8)}${DOWN.map((t) => fang(...t)).join('')}</g>`
+  + shape('M240 160 L320 160 L318 171 C300 167 262 167 242 171 Z', '#a8243a') + UP.map((t) => fang(...t)).join('') + '</g>'
+  + shape(rib([[242, 170, 0], [262, 165, 3.4], [280, 166.5, 3], [298, 165, 3.4], [318, 170, 0]]), CREAM.base)
+  + shape(rib([[248, 196, 0], [264, 201, 2.4], [280, 203, 2.6], [296, 201, 2.4], [312, 194, 0]]), CREAM.shade, 0.9)
 );
 
 // ---------- les morceaux, du fond vers le devant ----------
