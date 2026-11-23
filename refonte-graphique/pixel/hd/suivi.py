@@ -53,7 +53,7 @@ RETOUCHES = {
     'zaroth': "Jambes trop écartées : ça lui donne une posture de papy. Une vraie garde de samouraï.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = set()
+FAITES = {'zaroth'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
