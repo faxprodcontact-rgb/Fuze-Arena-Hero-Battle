@@ -55,7 +55,7 @@ RETOUCHES = {
     'rook': "Un peu plus agressif.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = set()
+FAITES = {'rook'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
