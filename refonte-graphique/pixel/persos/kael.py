@@ -5,7 +5,9 @@
 # l'arrière, armure noire à pointes, écharpe en lambeaux. Pas de bouche : une mâchoire de pierre.
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.dirname(__file__))
 from pix import Ramp, BREATH, BLINK
+from tetes import KAEL, KAEL_C, KAEL_BLINK
 
 SKIN = Ramp('#1a1216', '#33262a', '#4e3a3a', '#6e5450', '#94746a')
 ARM = Ramp('#0a0910', '#17161f', '#282733', '#4a4e66', '#8a94b4')
@@ -16,9 +18,6 @@ GOLD = Ramp('#5a3408', '#9a6012', '#e0a030', '#ffd468', '#fff4c0')
 SCARF = Ramp('#14060a', '#2a0c14', '#46141e', '#66202a', '#66202a')
 LAVA, LAVA2 = '#ff8a1a', '#ffe070'
 
-EYE = ['yyyy', 'wwwy']
-EYE_SHUT = ['yyyy']
-LEG = {'y': '#ffa418', 'w': '#fff6c0'}
 
 
 def draw(c, t):
@@ -86,22 +85,8 @@ def draw(c, t):
     c.part(c.ellipse(45, 44 - b, 9, 6.5), ARM, 'round')
     for (x0, x1, y1) in [(38, 36, 34), (43, 43, 32), (48, 50, 34)]:
         c.part(c.poly([(x0 - 2, 41 - b), (x1, y1 - b), (x0 + 2, 41 - b)]), ARM)
-    # ---- la tête de pierre, presque de profil, la mâchoire en avant ----
-    # le crâne, le front fuyant, l'arcade qui avance, le nez busqué, la mâchoire carrée (pas de bouche)
-    c.part(c.poly([(57, 19 - b), (63, 14 - b), (70, 14 - b), (74, 18 - b), (76, 22 - b), (75, 24 - b), (78, 29 - b), (75, 30 - b), (76, 33 - b),
-                   (74, 37 - b), (68, 39 - b), (62, 38 - b), (58, 34 - b), (55, 27 - b)]), SKIN, 'round')
-    c.part(c.poly([(57, 24 - b), (53, 19 - b), (59, 27 - b)]), SKIN)
-    # l'arcade lourde éclairée, l'ombre des orbites, l'arête du nez, la pommette, l'ombre sous la mâchoire
-    c.line(62, 21 - b, 75, 21 - b, SKIN.light), c.line(63, 22 - b, 75, 23 - b, SKIN.base)
-    c.line(62, 24 - b, 74, 24 - b, SKIN.deep)
-    c.line(75, 25 - b, 77, 28 - b, SKIN.hi)
-    c.line(65, 30 - b, 70, 29 - b, SKIN.light)
-    c.line(63, 34 - b, 73, 34 - b, SKIN.shade), c.line(62, 38 - b, 72, 37 - b, SKIN.deep)
-    c.line(74, 31 - b, 75, 32 - b, SKIN.deep)
-    c.px(60, 28 - b, LAVA), c.px(60, 29 - b, LAVA), c.px(61, 30 - b, LAVA2 if g else LAVA), c.px(61, 31 - b, LAVA), c.px(62, 32 - b, LAVA)
-    eye = EYE_SHUT if t == BLINK else EYE
-    c.stamp(63, 25 - b, eye, LEG)
-    c.stamp(69, 25 - b, eye, LEG)
+    # ---- la tête de pierre (dessinée pixel par pixel), presque de profil, sans bouche ----
+    c.sprite(58, 18 - b, KAEL, KAEL_C, KAEL_BLINK if t == BLINK else None)
     # des mèches de feu devant, sur le front
     for (x0, y0, x1, y1, r) in [(66, 16, 56 + f, 8, 3), (71, 17, 64 + f, 6, 2.6)]:
         c.part(c.limb([(x0, y0 - b, r), (x1, y1 - b, 0.7)]), FIRE, line=False)

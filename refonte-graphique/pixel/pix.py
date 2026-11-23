@@ -135,6 +135,16 @@ class Canvas:
                 if ch != '.' and ch in legend:
                     self.px(x + i, y + j, legend[ch])
 
+    def sprite(self, x, y, rows, legend, swap=None):
+        """Un dessin fait pixel par pixel (une tête, un objet) : une lettre = une couleur de la légende, '.' = rien.
+        swap = {lettre: lettre} pour une variante (les yeux fermés du clignement)."""
+        for j, row in enumerate(rows):
+            for i, ch in enumerate(row):
+                if swap and ch in swap:
+                    ch = swap[ch]
+                if ch != '.':
+                    self.px(x + i, y + j, legend[ch])
+
     # ---------- la fin ----------
     def outline(self, color=OUT):
         a = self.col[:, :, 3] > 0

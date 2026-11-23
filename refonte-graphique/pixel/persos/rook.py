@@ -1,96 +1,70 @@
-# Rook (assassins-5) : la fille-phénix qui lance le feu, tournée vers la droite. Jambes d'oiseau écartées (la gauche
-# fléchie devant), buste penché ; la main gauche projette vers l'ennemi une boule de feu, la droite (la plus proche) est
-# ramenée en arrière, poing serré dans les flammes. Deux grandes ailes de feu déployées vers l'arrière et le haut ;
-# chevelure rousse qui flotte comme une flamme, diadème d'or à la pierre rouge ; regard dur, bouche qui crie ;
-# robe courte de plumes blanches, ceinture d'or ; pattes d'oiseau dorées aux serres noires.
+# Rook (assassins-5) : la fille-phénix debout, jambes écartées, tournée vers la droite, ses deux grandes ailes de feu
+# déployées (les plumes en langues de flamme, comme dans le premier essai). Sa main gauche lève une boule de feu
+# au-dessus de l'épaule, prête à la lancer ; la droite (la plus proche) est tendue vers l'arrière, la paume en flammes.
+# Tête dessinée pixel par pixel (tetes.py) : chevelure rousse, diadème d'or à la pierre rouge, regard dur, bouche qui
+# crie ; la chevelure flotte derrière comme une flamme. Robe de plumes blanches, ceinture d'or, pattes d'oiseau dorées.
 import sys, os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.dirname(__file__))
 from pix import Ramp, BREATH, BLINK
+from tetes import ROOK, ROOK_C, ROOK_BLINK
 
 SKIN = Ramp('#a05242', '#e09480', '#f8ccb4', '#fff0e4', '#ffffff')
 HAIR = Ramp('#5a0e0e', '#9a2018', '#d23e1e', '#f05e28', '#ff9450')
-FEA = Ramp('#6a1408', '#b82e14', '#ec641a', '#ffa030', '#ffe070')
+FEA = Ramp('#7a1a10', '#c03418', '#f06a1c', '#ffa030', '#ffe070')
 CORE = Ramp('#ffa030', '#ffc040', '#ffe070', '#fff6c0', '#ffffff')
 WHITE = Ramp('#74668a', '#b4a4c8', '#ece4f2', '#ffffff', '#ffffff')
 GOLD = Ramp('#6a3e08', '#b07418', '#eab036', '#ffd870', '#fff4c0')
 CLAW = '#2a1a1e'
 
-EYE = ['kkkkk', 'kwipk', '.kkk.']
-EYE_SHUT = ['.....', 'kkkkk']
-LEG = {'k': '#3a120c', 'w': '#ffffff', 'i': '#e8901c', 'p': '#3a1404'}
+HX, HY = 50, 15   # le coin de la tête
 
 
-TIPS = Ramp('#4a0a06', '#8a1a0c', '#cc3412', '#f05a1a', '#ff8a30')
-
-
-def wing(c, edge, d, lengths, b, sway):
-    """Une aile de feu dépliée : le bord d'attaque (de l'épaule vers la pointe) clair, le milieu orange, et au bout de
-    chaque grande plume une langue de feu rouge (les plumes ne se séparent qu'au bout : pas de rayures)."""
-    dx, dy = d
-    n = len(edge)
-    tips = [(x + dx * L + sway * k / n, y + dy * L) for k, ((x, y), L) in enumerate(zip(edge, lengths))]
-    mids = [(x + (tx - x) * 0.55, y + (ty - y) * 0.55) for (x, y), (tx, ty) in zip(edge, tips)]
-    # les bouts de plumes : des langues de feu qui dépassent du bord de l'aile (le bord est découpé, pas droit)
-    for k, ((x, y), (tx, ty)) in enumerate(zip(edge, tips)):
-        sx, sy = x + (tx - x) * 0.4, y + (ty - y) * 0.4
-        cx = (sx + tx) / 2 + (1.5 if dx > 0 else -1.5)
-        c.part(c.limb([(sx, sy - b, 3.4), (cx, (sy + ty) / 2 - b, 2.4), (tx, ty - b, 0.7)]), TIPS)
-    c.part(c.poly([(x, y - b) for (x, y) in edge] + [(x, y - b) for (x, y) in reversed(mids)]), FEA)
-    c.part(c.limb([(x + dx * 3, y + dy * 3 - b, 5 - 2 * k / n) for k, (x, y) in enumerate(edge)]), FEA, line=False)
-    c.part(c.limb([(x, y - b, 2.6 - 1.2 * k / n) for k, (x, y) in enumerate(edge)]), CORE, line=False)
+def wing(c, root, tips, b):
+    """Une aile de feu (comme dans le premier essai) : une plume en langue de flamme de la racine vers chaque pointe."""
+    for k, (tx, ty) in enumerate(tips):
+        c.part(c.limb([(root[0], root[1] - b, 5), ((root[0] + tx) / 2, (root[1] + ty) / 2 - b, 4), (tx, ty - b, 1)]), FEA, line=k > 0)
 
 
 def draw(c, t):
     b = BREATH[t]
-    fl = [0, -1, -2, -1, 0, 1, 2, 1][t]   # les ailes battent
-    fr = [0, 1, 0, -1, 0, 1, 0, -1][t]    # le feu palpite
-    # ---- les deux ailes de feu, levées derrière elle en V ----
-    wing(c, [(62, 38), (68, 24), (76, 12), (85, 2), (93, -6)], (0.35, 1), [10, 13, 16, 18, 17], b, fl)
-    wing(c, [(50, 40), (42, 26), (33, 13), (22, 2), (11, -7), (1, -12)], (-0.4, 1), [10, 14, 18, 21, 23, 22], b, fl)
-    # ---- la chevelure rousse qui flotte vers l'arrière comme une flamme ----
-    c.part(c.poly([(62, 16 - b), (52, 18 - b), (44, 26 - b), (38 + fl, 36 - b), (30 + fl, 42 - b), (40, 44 - b), (36 + fl, 50 - b), (48, 48 - b), (56, 38 - b), (60, 28 - b)]), HAIR)
-    c.line(50, 22 - b, 40 + fl, 38 - b, HAIR.light)
-    # ---- les pattes d'oiseau dorées, en fente ; les serres ----
-    c.part(c.limb([(62, 70, 5), (72, 77, 3.4), (76, 87, 2.6)]), GOLD)
-    c.part(c.poly([(70, 93), (74, 87), (80, 87), (88, 93)]), GOLD)
-    c.part(c.limb([(50, 70, 5), (40, 80, 3.4), (30, 88, 2.6)]), GOLD)
-    c.part(c.poly([(22, 93), (27, 88), (33, 88), (38, 93)]), GOLD)
-    for x in (70, 79, 88, 22, 30, 38):
-        c.px(x, 93, CLAW), c.px(x + (1 if x in (88, 38) else -1 if x in (70, 22) else 0), 94, CLAW)
-    # ---- le bras gauche tendu vers l'avant, la boule de feu ----
-    c.part(c.limb([(68, 44 - b, 4), (78, 44 - b, 3.6), (86, 41 - b, 3.4)]), SKIN)
-    c.part(c.rect(78, 40 - b, 83, 47 - b), GOLD)
-    c.part(c.ellipse(87, 41 - b, 3.8, 3.8), SKIN, 'round')
-    for (dx, dy, r) in [(-10, 4, 3), (-16, 2, 2), (-8, -3, 2)]:
-        c.part(c.ellipse(97 + dx * 0.7, 38 - b + dy + fr, r, r), FEA, 'round', line=False)
-    c.part(c.ellipse(98, 38 - b + fr, 8, 7.5), FEA, 'round', line=False)
-    c.part(c.ellipse(99, 37 - b + fr, 5, 4.6), CORE, 'round', line=False)
-    c.px(101, 35 - b + fr, '#ffffff'), c.px(100, 35 - b + fr, '#ffffff')
-    # ---- la robe de plumes blanches à pointes, la ceinture d'or et sa pierre ----
-    c.part(c.poly([(48, 60), (68, 60), (74, 72), (70, 70), (66, 76), (62, 70), (58, 77), (54, 70), (50, 76), (46, 70), (42, 72)]), WHITE)
-    c.part(c.poly([(49, 42 - b), (68, 40 - b), (71, 47 - b), (68, 55), (67, 61), (50, 61), (47, 52)]), WHITE)
-    for (x, y) in [(54, 48), (60, 46), (57, 53), (63, 52)]:
+    fl = [0, 1, 2, 1, 0, 1, 2, 1][t]   # les ailes battent doucement
+    fr = [0, 1, 0, -1, 0, 1, 0, -1][t]  # le feu palpite
+    # ---- les deux ailes de feu, déployées ----
+    wing(c, (50, 44), [(14, 2 + fl), (9, 20 + fl), (12, 38 + fl), (21, 55), (33, 65)], b)
+    wing(c, (66, 42), [(100, 2 + fl), (106, 20 + fl), (103, 38 + fl), (94, 53)], b)
+    # ---- la chevelure rousse qui flotte derrière, comme une flamme ----
+    c.part(c.poly([(58, 15 - b), (50, 17 - b), (42, 22 - b), (34 - fl, 30 - b), (28 - fl, 40 - b), (36, 40 - b), (30 - fl, 50 - b), (42, 47 - b), (40, 56 - b), (50, 46 - b), (54, 34 - b)]), HAIR)
+    c.line(48, 20 - b, 36 - fl, 36 - b, HAIR.light)
+    # ---- les pattes d'oiseau dorées, écartées ; les serres ----
+    c.part(c.limb([(55, 70, 4.6), (48, 80, 3.2), (44, 88, 2.6)]), GOLD)
+    c.part(c.poly([(36, 93), (41, 88), (47, 88), (51, 93)]), GOLD)
+    c.part(c.limb([(64, 70, 4.6), (70, 80, 3.2), (74, 88, 2.6)]), GOLD)
+    c.part(c.poly([(67, 93), (71, 88), (77, 88), (82, 93)]), GOLD)
+    for x in (36, 43, 51, 67, 74, 82):
+        c.px(x, 93, CLAW), c.px(x + (1 if x in (51, 82) else -1 if x in (36, 67) else 0), 94, CLAW)
+    # ---- le bras gauche levé (derrière le torse), la boule de feu au-dessus de l'épaule ----
+    c.part(c.limb([(68, 42 - b, 4), (80, 34 - b, 3.6), (81, 22 - b, 3.4)]), SKIN)
+    c.part(c.rect(78, 25 - b, 84, 30 - b), GOLD)
+    c.part(c.ellipse(81, 19 - b, 3.8, 3.8), SKIN, 'round')
+    for (dx, dy, h) in [(-4, -6, 5), (3, -7, 6)]:
+        c.part(c.limb([(83 + dx, 6 + dy - b + fr, 2.2), (82 + dx - fr, 6 + dy - b - h, 0.7)]), FEA, line=False)
+    c.part(c.ellipse(83, 8 - b + fr, 9, 9), FEA, 'round', line=False)
+    c.part(c.ellipse(84, 7 - b + fr, 6, 6), CORE, 'round', line=False)
+    c.part(c.ellipse(85, 6 - b + fr, 3, 3), Ramp('#fff6c0', '#ffffff', '#ffffff', '#ffffff', '#ffffff'), 'round', line=False)
+    # ---- la robe de plumes blanches, la ceinture d'or et sa pierre ----
+    c.part(c.poly([(48, 61), (70, 61), (76, 74), (71, 72), (67, 78), (63, 72), (59, 79), (55, 72), (51, 78), (47, 72), (42, 74)]), WHITE)
+    c.part(c.rect(57, 31 - b, 64, 40 - b), SKIN)
+    c.part(c.poly([(49, 40 - b), (69, 38 - b), (71, 46 - b), (68, 55), (67, 62), (52, 62), (50, 54), (48, 46 - b)]), WHITE)
+    for (x, y) in [(55, 46), (61, 44), (58, 51), (64, 50)]:
         c.part(c.poly([(x - 2, y - b), (x, y + 3 - b), (x + 2, y - b)]), WHITE, line=False)
-    c.part(c.rect(48, 58, 70, 62), GOLD)
-    c.px(59, 59, '#d02818'), c.px(60, 59, '#f05a30'), c.px(59, 60, '#901010'), c.px(60, 60, '#d02818')
-    # ---- la tête : le visage, la frange et les mèches devant, le diadème ----
-    c.part(c.ellipse(63, 27 - b, 9, 10.5), SKIN, 'round')
-    c.line(57, 34 - b, 62, 37 - b, SKIN.shade)
-    c.part(c.poly([(53, 26 - b), (55, 17 - b), (63, 13 - b), (71, 15 - b), (74, 22 - b), (72, 26 - b), (69, 20 - b), (62, 20 - b), (57, 24 - b), (56, 32 - b), (53, 34 - b)]), HAIR, 'round')
-    c.part(c.limb([(72, 22 - b, 2), (74, 30 - b, 1.8), (73, 36 - b, 1.1)]), HAIR, line=False)
-    c.part(c.poly([(56, 19 - b), (60, 13 - b), (63, 17 - b), (66, 9 - b), (69, 17 - b), (72, 14 - b), (73, 20 - b), (56, 22 - b)]), GOLD, line=False)
-    c.px(66, 14 - b, '#d02818'), c.px(66, 15 - b, '#901010'), c.px(67, 14 - b, '#ff8060')
-    # les yeux plissés (le même tampon, retourné pour le droit), les sourcils froncés, le nez, la bouche qui crie
-    eye = EYE_SHUT if t == BLINK else EYE
-    c.stamp(58, 25 - b, eye, LEG)
-    c.stamp(66, 25 - b, eye, LEG, flip=True)
-    c.line(57, 23 - b, 62, 25 - b, HAIR.deep), c.line(72, 23 - b, 67, 25 - b, HAIR.deep)
-    c.line(64, 28 - b, 65, 31 - b, SKIN.shade)
-    c.part(c.poly([(62, 33 - b), (68, 33 - b), (67, 36 - b), (63, 36 - b)]), Ramp('#3a0a0e', '#5a1018', '#7a1e24', '#9a2e34', '#9a2e34'), line=False)
-    c.line(63, 33 - b, 67, 33 - b, '#ffffff')
-    # ---- le bras droit (le plus proche) ramené en arrière, le poing serré dans les flammes ----
-    c.part(c.limb([(48, 45 - b, 4.2), (40, 52 - b, 3.8), (36, 46 - b, 3.4)]), SKIN)
-    c.part(c.rect(37, 48 - b, 43, 53 - b), GOLD)
-    c.part(c.ellipse(35, 44 - b, 3.8, 3.8), SKIN, 'round')
-    for (dx, h) in [(-3, 7), (0, 10), (3, 6)]:
-        c.part(c.limb([(35 + dx, 42 - b, 1.8), (34 + dx - fr, 42 - b - h, 0.6)]), FEA, line=False)
+    c.part(c.rect(50, 59, 70, 63), GOLD)
+    c.px(59, 60, '#d02818'), c.px(60, 60, '#f05a30'), c.px(59, 61, '#901010'), c.px(60, 61, '#d02818')
+    # ---- la tête (dessinée pixel par pixel) ----
+    c.sprite(HX, HY - b, ROOK, ROOK_C, ROOK_BLINK if t == BLINK else None)
+    # ---- le bras droit (le plus proche) tendu vers l'arrière, la paume en flammes ----
+    c.part(c.limb([(50, 44 - b, 4), (40, 52 - b, 3.6), (32, 57 - b, 3.4)]), SKIN)
+    c.part(c.rect(37, 50 - b, 43, 55 - b), GOLD)
+    c.part(c.ellipse(30, 58 - b, 3.8, 3.8), SKIN, 'round')
+    for (dx, h) in [(-3, 6), (0, 9), (3, 6)]:
+        c.part(c.limb([(30 + dx, 56 - b, 1.8), (29 + dx - fr, 56 - b - h, 0.6)]), FEA, line=False)

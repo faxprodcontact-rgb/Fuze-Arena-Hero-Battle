@@ -361,6 +361,13 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   Contrôle « rien de coupé » : aucun pixel opaque sur le bord de la toile, sur les 8 images (petit script dans la
   conversation : `sheet()` puis bords de chaque case). Fond `fond.py` → `public/art/px/fond-prairie.webp` (240 × 420 ×3),
   posé par `drawArena` quand le décor a `pixel` (`Look.pixel`, cas `demo`), son bas sur le bas du terrain.
+  **v0.44.0 (23/11/2026)** : demande « des poses différentes, pas toutes les mêmes ; les ailes du phénix d'avant ; les têtes
+  brouillonnes, plus de précision ». Les **têtes sont dessinées pixel par pixel** (`refonte-graphique/pixel/persos/tetes.py` :
+  une grille de lettres par tête, une légende de couleurs, les yeux fermés par `*_BLINK` ; `python3 persos/tetes.py x.png`
+  les montre en grand), posées par `c.sprite()` (`pix.py`). Cinq poses : Kael en élan (épée traînée), Sable un genou à
+  terre (lames tendues), Eldra sur une jambe (bâton au-dessus de la tête), Rook debout ailes ouvertes (ailes du premier
+  essai : une langue de feu de la racine vers chaque pointe), Ilian bien campé (trident planté, boule d'eau). Leçon : une
+  pose accroupie « en boule » ne se lit pas en pixel art ; garder des silhouettes simples et différentes.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier
