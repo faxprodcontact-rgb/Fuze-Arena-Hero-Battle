@@ -54,7 +54,7 @@ RETOUCHES = {
     'sable': "Bouclier plus gros.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = set()
+FAITES = {'sable', 'minotaure'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
