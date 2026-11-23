@@ -11,7 +11,6 @@ const { sm, rib, glint, cel } = require('./formes.cjs');
 
 const W = 532, H = 566, PAD = 44;
 const SIL = require('./silhouettes/assassins-3.json');
-const MAT = require('./couleurs/assassins-3.json');
 
 // ---------- chaque matière, peinte en aplats nets (ombre en bas à gauche, liseré clair en haut à droite) ----------
 const TONES = {
@@ -23,9 +22,8 @@ const TONES = {
   pourpre: { hi: '#c84a5a', base: '#7e2434', sh: '#561624', deep: '#340c16' },
   sombre: { hi: '#4a3028', base: '#24140e', sh: '#140a06', deep: '#0a0402' },
 };
-const PAINT_SRC = ['criniere', 'pourpre', 'fauve', 'blanc', 'turquoise', 'or', 'sombre'].map((k) => (MAT[k] && MAT[k].d ? cel(MAT[k].d, TONES[k], 4, 1.4) : '')).join('');
-const PAINT = '<use href="#p-mat"/>';
-
+// une mèche, un pli : un long fuseau doux
+const lock = (pts, color, o, w = 4) => glint(pts.map(([x, y], i) => [x, y, i === 0 || i === pts.length - 1 ? 0 : w]), color, o);
 // ---------- les formes relevées sur l'original ----------
 const BODY = sm('263,19 258,19 255,17 236,17 229,19 222,27 203,35 185,55 177,71 174,91 176,109 185,127 179,128 172,125 156,125 145,130 140,135 134,148 133,166 136,177 144,191 128,217 119,228 119,231 109,242 109,248 103,261 103,280 112,299 114,300 115,298 125,309 105,320 100,325 88,332 80,340 81,344 85,342 88,344 81,348 76,355 32,398 18,417 10,435 5,456 6,473 9,479 12,478 17,465 27,450 44,445 53,445 61,449 63,456 72,463 80,466 95,466 97,468 97,470 93,473 81,474 75,473 67,469 59,461 57,462 59,469 59,486 63,493 75,506 84,510 74,502 71,498 72,497 78,499 103,499 96,511 93,513 87,527 77,538 74,544 73,556 76,558 81,558 84,560 95,559 101,562 111,560 122,562 130,559 135,561 147,561 152,557 162,557 165,553 164,540 160,535 163,531 162,528 180,505 187,504 189,505 189,511 179,535 180,541 224,546 240,546 244,544 269,541 270,549 274,552 299,552 302,554 331,558 334,556 347,558 351,556 362,556 369,553 369,545 365,536 361,532 348,528 337,521 334,506 335,489 332,484 332,473 320,449 308,434 293,420 288,412 288,398 285,393 288,387 295,382 321,400 341,402 348,360 341,359 337,356 331,357 321,343 325,339 316,326 319,325 326,329 336,330 357,326 367,320 381,303 388,300 397,289 408,281 411,275 410,252 414,245 414,239 408,222 391,208 388,201 373,188 368,177 352,163 353,151 351,142 343,126 335,119 327,120 318,125 315,123 320,109 321,88 318,73 309,54 295,38 279,30 272,23');
 const ARM = sm('514,271 508,272 503,276 472,291 450,308 431,326 430,322 456,270 459,255 462,250 462,244 454,248 430,274 418,293 400,330 396,332 387,356 385,358 375,357 366,364 363,362 354,363 348,360 341,402 347,402 349,404 342,411 348,427 354,423 362,422 364,415 367,412 375,413 378,411 383,411 397,403 400,396 405,392 408,384 412,381 420,384 429,379 438,379 446,375 458,374 464,371 472,372 481,366 486,366 491,361 528,338 527,336 521,336 516,338 500,339 493,342 483,343 478,346 470,345 458,352 448,354 439,359 437,358 441,355 441,351 446,345 451,343 457,336 471,329 471,325 488,309 494,300 504,290 513,276');
@@ -70,12 +68,24 @@ const lowerBody = cel(LOWER, TONES.fauve, 5, 2)
   + [[106, 410], [118, 408], [130, 410], [142, 412]].map(([x, y]) => glint([[x, y, 0], [x, y + 12, 1.8], [x - 1, y + 26, 0]], TONES.fauve.deep, 0.7)).join('')
   + glint([[112, 334, 0], [140, 340, 3], [150, 370, 0]], TONES.fauve.hi, 0.6);
 
+// le haut du corps : la coiffe sombre qui tombe derrière la tête sur l'épaule gauche, et l'épaule de fourrure
+const UPPER = `<rect x="0" y="0" width="${W}" height="300" fill="${TONES.fauve.base}"/>`
+  + cel(sm('108,196 132,188 166,204 182,240 186,280 176,312 158,322 128,320 104,302 96,262 98,224'), TONES.criniere, 6, 3)
+  + lock([[118, 214], [112, 256], [122, 300]], TONES.criniere.hi, 0.55, 4) + lock([[146, 220], [150, 262], [146, 304]], TONES.criniere.deep, 0.6, 4);
+// la tête : la fourrure fauve, les oreilles rondes, la crinière sombre derrière le museau, le front éclairé
+const HEAD_PAINT = cel(HEAD, TONES.fauve, 6, 3)
+  + dot(165, 161, 33, TONES.fauve.sh) + dot(167, 159, 30, TONES.fauve.base) + dot(165, 163, 20, TONES.criniere.base) + dot(167, 166, 13, TONES.criniere.sh)
+  + lock([[150, 140], [166, 133], [184, 140]], TONES.fauve.hi, 0.8, 3)
+  + cel(sm('368,190 390,200 406,230 412,262 402,288 382,282 376,250 368,220'), TONES.criniere, 4, 2)
+  + cel(sm('108,196 132,188 160,200 172,236 168,280 150,300 128,300 106,284 98,250 100,220'), TONES.criniere, 5, 2.4)
+  + lock([[250, 150], [300, 140], [340, 160]], TONES.fauve.hi, 0.6, 6) + lock([[176, 240], [190, 280], [220, 300]], TONES.fauve.sh, 0.55, 6)
+  + lock([[300, 296], [340, 302], [380, 296]], TONES.fauve.sh, 0.6, 5);
+
 // ---------- dégradés ----------
 const defs = [
   rad('g-sun', 0.6, 0.32, 0.8, [[0, '#fff0b0'], [0.3, '#ffb848'], [0.7, '#f27a22'], [1, '#c85414']], false),
   lin('g-blade', 0, 0, 1, 1, [[0, '#fff6c0'], [0.4, '#f8d050'], [1, '#c88a20']], false),
   rad('g-iris', 0.45, 0.4, 0.75, [[0, '#fff0a0'], [0.4, '#e8a030'], [1, '#8a4a10']], false),
-  `<g id="p-mat">${PAINT_SRC}</g>`,
 ].join('');
 
 // ---------- le visage, net par-dessus les aplats ----------
@@ -106,14 +116,16 @@ const FACE =
 // ---------- les morceaux ----------
 const sh = (on, dx, dy, color = '#1a0a0c', o = 0.4) => ({ on, dx, dy, color, o });
 const parts = [
-  { id: 'body', cls: 'a-body', d: BODY, body: use('body', TONES.fauve.base) + clip('body', PAINT + lowerBody) },
+  { id: 'body', cls: 'a-body', d: BODY, body: use('body', TONES.fauve.base) + clip('body', UPPER + lowerBody) },
   // le disque solaire, derrière la tête : rayonnement doux, cercle doré, liseré
   { id: 'sun', cls: 'a-sun', d: SUN_D, shadow: [sh(['body'], -3, 5)], body: `<circle cx="${SUN[0]}" cy="${SUN[1]}" r="${SUN[2] + 3}" fill="#f2c040"/>`
     + `<circle cx="${SUN[0]}" cy="${SUN[1]}" r="${SUN[2] - 3}" fill="url(#g-sun)"/>`
     + `<circle cx="${SUN[0]}" cy="${SUN[1]}" r="${SUN[2] - 10}" fill="none" stroke="#fff4b0" stroke-width="3" opacity="0.55"/>`
     + glint([[200, 40, 0], [246, 25, 4], [296, 40, 0]], '#ffffff', 0.7) },
-  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['body', 'sun'], -3, 6)], body: use('head', TONES.fauve.base) + clip('head', PAINT + FACE) },
-  { id: 'arm', cls: 'a-arm', d: ARM, shadow: [sh(['body', 'head'], -3, 5)], body: use('arm', TONES.or.base) + clip('arm', PAINT
+  { id: 'head', cls: 'a-head', d: HEAD, shadow: [sh(['body', 'sun'], -3, 6)], body: use('head', TONES.fauve.base) + clip('head', HEAD_PAINT + FACE) },
+  { id: 'arm', cls: 'a-arm', d: ARM, shadow: [sh(['body', 'head'], -3, 5)], body: use('arm', TONES.or.base) + clip('arm',
+    // l'avant-bras de fourrure et son bracelet d'or
+    cel(sm('340,372 362,360 384,358 392,376 380,400 352,414 340,404'), TONES.fauve, 4, 2) + cel(sm('344,384 360,376 368,394 356,404 346,400'), TONES.or, 2.4, 1.2)
     // les lames nettes : une feuille d'or, sa moitié à l'ombre, l'arête claire
     + BLADES.map((b) => `<path d="${rib(b)}" transform="translate(-2 3)" fill="#3a1c08" opacity="0.4"/>` + shape(rib(b), 'url(#g-blade)')
       + shape(rib(b.map(([x, y, w]) => [x - w * 0.18, y + w * 0.22, w * 0.5])), '#c08a20', 0.75)
