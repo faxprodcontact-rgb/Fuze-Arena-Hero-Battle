@@ -56,6 +56,9 @@ RETOUCHES = {
     'minotaure': "Petit trou à boucher.",
     'rook': "Transition du visage aux plumes moins sèche ; visage plus féminin et plus beau.",
     'ysolde': "Nez moins brouillon.",
+    'zephyre': "Nez moins marqué (le cache-cou monte comme un ninja) ; pans du bandana et de la ceinture qui tombent vers le bas.",
+    'corvin': "Rapprocher le bouclier du corps.",
+    'jinn': "Monter un peu l'arc.",
 }
 # retouches faites, en attente du regard du propriétaire
 FAITES = {'lenore', 'garvin', 'nerith', 'ysolde', 'rook', 'velith', 'minotaure'}
