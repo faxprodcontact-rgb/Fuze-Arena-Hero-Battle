@@ -59,17 +59,24 @@ body { background: var(--bg); color: var(--ink); font-family: var(--body); font-
 .pill.valide { background: var(--ok-bg); color: var(--ok); } .pill.retouche { background: var(--warn-bg); color: var(--warn); }
 .pill.aregarder { background: var(--look-bg); color: var(--look); } .pill.afaire { background: var(--todo-bg); color: var(--todo); }
 footer { color: var(--muted); font-size: 13px; }
+/* Héros animés : l'enchaînement respiration → attaque → attaque spéciale, sur le décor de combat, sur deux colonnes. */
+.card.anim .pic { aspect-ratio: auto; background: var(--navy); }
+.card.anim .pic img { height: auto; }
+@media (min-width: 540px) { .card.anim { grid-column: span 2; } }
+.stat.anim { background: var(--panel); color: var(--gold); border: 1px solid var(--line); }
+.tag { font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; color: var(--gold); }
 </style>
 <div class="wrap">
   <header class="top">
     <h1>Héros HD <span>{{DONE}} / {{TOTAL}}</span></h1>
-    <p>Les 36 héros choisis, redessinés en pixel art haute définition (environ 96 pixels de haut). Chaque carte montre le dernier dessin ; les héros pas encore commencés montrent l'ancien dessin, en gris. Mis à jour le {{DATE}}.</p>
+    <p>Les 36 héros choisis, redessinés en pixel art haute définition (environ 96 pixels de haut). Chaque carte montre le dernier dessin ; les héros pas encore commencés montrent l'ancien dessin, en gris. Les héros animés jouent en boucle leur respiration, leur attaque et leur attaque spéciale, sur le décor de combat. Mis à jour le {{DATE}}.</p>
     <div class="bar" role="img" aria-label="{{DONE}} héros dessinés sur {{TOTAL}}"><i></i></div>
     <div class="stats">
       <span class="stat valide"><b>{{VALIDE}}</b> validés</span>
       <span class="stat aregarder"><b>{{AREGARDER}}</b> à regarder</span>
       <span class="stat retouche"><b>{{RETOUCHE}}</b> en retouche</span>
       <span class="stat afaire"><b>{{AFAIRE}}</b> à faire</span>
+      <span class="stat anim"><b>{{ANIM}}</b> animés</span>
     </div>
   </header>
 {{SECTIONS}}

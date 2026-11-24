@@ -6,7 +6,9 @@
 
 - États de chaque héros : `../suivi.py` (`VALIDES`, `RETOUCHES` avec le retour du propriétaire, `FAITES` = retouche
   faite, en attente de son avis). Page de suivi : `python3 ../suivi.py`, puis republier `../sortie/suivi.html` sur
-  https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (outil Artifact, avec `url`).
+  https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (outil Artifact, avec `url`). Les héros animés y jouent leur
+  enchaînement : suivi.py écrit aussi `../sortie/anim/<nom>.gif` (depuis `pixel/sortie/anim-<nom>-jeu.gif`) ; les publier avec
+  la page (paramètre `files` : `{"anim/<nom>.gif": "refonte-graphique/pixel/hd/sortie/anim/<nom>.gif", ...}`).
 - Corvin, Jinn, Zéphyre, Eldra, Mira, Tessa, Orin : validés (24/11). Myrr et Arcan validés : les 36 héros sont dessinés (2 ou 3 agents
   en parallèle : même coût qu'un par un quand le propriétaire ne regarde pas entre deux).
 - Test d'animation (24/11) sur Eldra : respiration, attaque, attaque spéciale — sources `../anim/eldra/build.py`, GIF

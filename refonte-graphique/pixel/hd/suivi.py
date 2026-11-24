@@ -88,9 +88,43 @@ def state(pid):
 LABEL = {'valide': 'Validé', 'retouche': 'Retouche en cours', 'aregarder': 'À regarder', 'afaire': 'À faire'}
 
 
+ANIMDIR = os.path.join(HERE, 'sortie', 'anim')
+
+
+def clip(pid):
+    """L'enchaînement animé du héros (anim/<pid>/build.py → sortie/anim-<pid>-jeu.gif, ×2), ramené à ×1 pour la page :
+    sortie/anim/<pid>.gif, publié à côté de la page. None si le héros n'est pas encore animé."""
+    src = os.path.join(HERE, '..', 'sortie', f'anim-{pid}-jeu.gif')
+    if not os.path.exists(src):
+        return None
+    os.makedirs(ANIMDIR, exist_ok=True)
+    dst = os.path.join(ANIMDIR, pid + '.gif')
+    if not os.path.exists(dst) or os.path.getmtime(dst) < os.path.getmtime(src):
+        g = Image.open(src)
+        frames, durs = [], []
+        for i in range(g.n_frames):
+            g.seek(i)
+            f = g.convert('RGB')
+            frames.append(f.resize((f.width // 2, f.height // 2), Image.NEAREST).quantize(256, dither=Image.Dither.NONE))
+            durs.append(g.info.get('duration', 100))
+        frames[0].save(dst, save_all=True, append_images=frames[1:], duration=durs, loop=0, optimize=True)
+    w = Image.open(dst).width
+    return 'anim/' + pid + '.gif', w
+
+
 def card(r):
     pid, cid, name, el, role, rar, what = r
     st = state(pid)
+    c = clip(pid) if st != 'afaire' else None
+    if c:
+        c, w = c   # même échelle pour tous les héros animés (×1,4), sans dépasser la carte
+        return f'''<article class="card anim {st}">
+  <div class="pic"><img src="{c}" style="width: {round(w * 1.4)}px; max-width: 100%" loading="lazy" alt="{name} animé : respiration, attaque, attaque spéciale"></div>
+  <div class="txt">
+    <div class="row"><h3>{name}</h3><span class="pill {st}">{LABEL[st]}</span></div>
+    <p class="meta">{what} · {role} {rar} · <span class="tag">animé</span></p>
+  </div>
+</article>'''
     if st == 'afaire':
         img = f'<img class="old" src="{uri(old_frame(cid))}" alt="Ancien dessin de {name}">'
     else:
@@ -122,7 +156,8 @@ def main():
     html = (html.replace('{{DATE}}', today).replace('{{DONE}}', str(done)).replace('{{TOTAL}}', str(len(ROSTER)))
             .replace('{{VALIDE}}', str(counts['valide'])).replace('{{RETOUCHE}}', str(counts['retouche']))
             .replace('{{AREGARDER}}', str(counts['aregarder'])).replace('{{AFAIRE}}', str(counts['afaire']))
-            .replace('{{PCT}}', str(round(100 * done / len(ROSTER)))).replace('{{SECTIONS}}', '\n'.join(secs)))
+            .replace('{{PCT}}', str(round(100 * done / len(ROSTER)))).replace('{{SECTIONS}}', '\n'.join(secs))
+            .replace('{{ANIM}}', str(sum(1 for r in ROSTER if os.path.exists(os.path.join(HERE, 'sortie', 'anim', r[0] + '.gif'))))))
     os.makedirs(os.path.join(HERE, 'sortie'), exist_ok=True)
     out = os.path.join(HERE, 'sortie', 'suivi.html')
     open(out, 'w', encoding='utf-8').write(html)
