@@ -227,14 +227,14 @@ def compose(hero, fx_back=None, fx_front=None, flash=None):
 
 # ---------------------------------------------------------------- morceaux qui se balancent (suivi, inertie)
 def head_part(mane=0, beard=0):
-    """la tête : le bas de la crinière (dans le dos) et la pointe de la barbe se balancent de quelques pixels"""
+    """la tête : le bout des mèches de la crinière (sur l'épaulière) et la pointe de la barbe se balancent d'un pixel"""
     p = P['tete']
     if beard:
         p = shear_rows(p, lambda y: beard if y >= 59 else 0)
     if mane:
         left = np.where(XX <= 57, p, '.')
         right = np.where(XX <= 57, '.', p)
-        left = shear_rows(left, lambda y: mane if y >= 47 else (int(mane / 2) if y >= 42 else 0))
+        left = shear_rows(left, lambda y: mane if y >= 37 else 0)
         p = over(right, left)
     return p
 
@@ -559,21 +559,21 @@ def cast_shadow(cv, m, reach=((-1, 1), (-1, 2), (0, 2), (-2, 2))):
 # ---------------------------------------------------------------- les poings
 FIST_V = P['poing']                         # le poing du dessin : il serre la hampe debout
 WRIST_V = np.array([6.0, 1.5])              # où le poignet entre dans ce poing (depuis la prise)
-# le poing qui serre la hampe couchée (dessiné à la main) : les quatre doigts côte à côte, phalanges en haut,
-# le pouce replié devant ; la hampe ressort des deux côtés aux rangées 4 à 6. Origine de la grille : la prise - (5, 5).
+# le poing qui serre la hampe couchée (dessiné à la main) : le dos de la main en haut (lumière en haut à droite),
+# les quatre doigts repliés côte à côte devant la hampe, l'ombre dessous ; la hampe ressort des deux côtés.
+# Origine de la grille : la prise - (5, 4).
 FIST_H_ROWS = [
-    "...34455....",
-    "..3455555...",
-    ".345555554..",
-    "3445555555 4",
-    "3434545454 4",
-    "3434545454 3",
-    "2343434343 3",
-    "2343434343 .",
-    ".233333332..",
-    "..1222222...",
+    "...3455....",
+    "..345565...",
+    ".34555665..",
+    "2344555554.",
+    "2453545453.",
+    "2453545453.",
+    "2343434343.",
+    "1232323232.",
+    ".12121212..",
 ]
-FIST_H = [r.replace(' ', '.') for r in FIST_H_ROWS]
+FIST_H = FIST_H_ROWS
 WRIST_H = np.array([-6.0, 1.0])             # le poignet entre par la gauche (l'avant-bras vient de l'épaule)
 
 
@@ -652,7 +652,14 @@ def rig_frame(f):
             d = np.round(Hd - (GRIP0 + np.array([OX, OY]))).astype(int)
             blit(cv, FIST_V, *d)
         else:
-            put_rows(cv, FIST_H, int(round(Hd[0] - 0.5)) - 5, int(round(Hd[1] - 0.5)) - 5)
+            fx0, fy0 = int(round(Hd[0] - 0.5)) - 5, int(round(Hd[1] - 0.5)) - 4
+            fm = np.zeros((H, W), bool)
+            for j, r in enumerate(FIST_H):
+                for i, ch in enumerate(r):
+                    if ch != '.':
+                        fm[fy0 + j, fx0 + i] = True
+            cast_shadow(cv, fm, reach=((-1, 1), (0, 1), (-1, 2)))
+            put_rows(cv, FIST_H, fx0, fy0)
     for fx in f.get('fx_list', []):
         fx(cv, back, front, ctx)
     return cv, back, front, ctx
@@ -966,7 +973,7 @@ def fx_chop_hit(k):
             crescent(back, T + 12 * u, 15, fa, span=150, w=5.0, tones='XYZV')
             for (da, L, bd, w) in ((66, 30, -70, 4.4), (30, 36, -52, 4.6), (-6, 32, -34, 4.0), (-44, 22, -20, 3.2)):
                 gerbe(front, T + 4 * u, fa + da, L, bd, w, 'XYZV', tail=0.42)
-            cloud(front, T + 6 * u, 5.0, 'WXY', hollow=0.6, seed=4)
+            foam(front, T + 6 * u, 5.0, hollow=0.6, seed=4)
             for (vx, vy, sz) in ((1.6, -2.6, 3), (2.8, -1.4, 2), (0.4, -3.0, 2), (3.4, 0.0, 2), (2.0, 1.6, 1),
                                  (3.8, -2.4, 1), (-0.6, -2.2, 1)):
                 drop(front, T[0] + vx * 12, T[1] + vy * 9, sz, v=(vx, vy))
@@ -1132,7 +1139,7 @@ def wave(cv, xb, h, L, lip=0.0, cr=7.0, w0=None, turn=280, foam=(0.42, 0.97), sp
     m, sm = stroke_mask(pts, widths)
     fm = (sm >= foam[0]) & (sm <= foam[1])
     if foot:                                        # le pied de la vague : une bosse d'eau qui s'étale au sol
-        e = ellipse_mask((xb + 0.42 * L, GROUND + 2), 0.5 * L + 0.32 * h * foot, 0.2 * h * foot + 3)
+        e = ellipse_mask((xb + 0.5 * L, GROUND + 2), 0.45 * L + 0.24 * h * foot, 0.18 * h * foot + 3)
         m |= e
         fm &= ~e
     shade_mask(cv, m, 'XYZVU', foam=fm)
@@ -1146,30 +1153,40 @@ def wave(cv, xb, h, L, lip=0.0, cr=7.0, w0=None, turn=280, foam=(0.42, 0.97), sp
     return pts, n
 
 
+def stream(cv, p0, p1, p2, p3, w0, w1, curl_r=3.5, up=True, turn=280):
+    """un filet d'eau épais qui monte et finit en volute (modelé par la lumière)"""
+    pts, n = curl_path(p0, p1, p2, p3, curl_r, turn=turn, up=up, n=40, m=24)
+    N = len(pts)
+    widths = [w0 + (w1 - w0) * min(1.0, i / n) if i <= n else w1 * (1 - (i - n) / (N - n)) + 0.8 for i in range(N)]
+    lit_stroke(cv, pts, widths, 'XYZVU', foam=(0.5, 1.0))
+
+
 def whirl(level):
-    """le tourbillon qui naît aux pieds du roi et monte autour de lui (0 = il naît … 3 = il l'enveloppe)"""
+    """le tourbillon qui naît aux pieds du roi et monte autour de lui (0 = il naît … 3 = il l'enveloppe, 4 = il retombe)"""
     def f(cv, back, front, ctx):
         cx, gy = SOL[0] + 2, GROUND - 2
         rx = [30, 38, 44, 46, 44][level]
-        ry = [4, 5, 6, 6, 6][level]
-        wv = [2.4, 3.6, 4.6, 5.0, 3.4][level]
+        ry = [4, 5, 6, 6, 5][level]
+        wv = [3.0, 4.4, 5.4, 6.0, 3.6][level]
         ribbon(back, (cx, gy), rx, ry, 25, 160, wv * 0.8, tones='XYZV')
         ribbon(front, (cx, gy), rx, ry, 200, 340, wv, tones='WXYZ')
-        if level >= 1:
-            # des filets d'eau montent en spirale de part et d'autre et s'enroulent
-            hgt = [0, 26, 48, 64, 70][level]
-            gust(front, (cx + rx - 4, gy - 2), (cx + rx + 8, gy - hgt * 0.3), (cx + rx + 6, gy - hgt * 0.7),
-                 (cx + rx - 2, gy - hgt), 3.6, 'XYZV', curl_r=3.5, up=True)
-            gust(back, (cx - rx + 4, gy - 2), (cx - rx - 8, gy - hgt * 0.35), (cx - rx - 6, gy - hgt * 0.75),
-                 (cx - rx + 2, gy - hgt * 1.05), 3.2, 'XYZV', curl_r=3.2, up=False)
+        if 1 <= level <= 3:
+            # deux filets d'eau montent en spirale de part et d'autre et s'enroulent
+            hgt = [0, 30, 52, 70][level]
+            stream(front, (cx + rx - 8, gy), (cx + rx + 8, gy - hgt * 0.3), (cx + rx + 8, gy - hgt * 0.7),
+                   (cx + rx, gy - hgt), 6.0, 3.0, curl_r=4.0, up=True)
+            stream(back, (cx - rx + 8, gy), (cx - rx - 8, gy - hgt * 0.35), (cx - rx - 8, gy - hgt * 0.75),
+                   (cx - rx, gy - hgt * 1.05), 5.0, 2.6, curl_r=3.6, up=False)
             rng = np.random.RandomState(7 + level)
             for j in range(3 + level * 2):
                 x = cx + rng.uniform(-rx, rx)
-                y = gy - rng.uniform(4, 14 + hgt)
-                drop(back if j % 2 else front, x, y, int(rng.choice([1, 2, 2])), v=(0, -1.5))
-        if level >= 2:
-            ribbon(back, (cx, gy - 22), rx - 6, 5, 30, 150, 2.6, tones='XYZV')
-            ribbon(front, (cx, gy - 22), rx - 6, 5, 215, 330, 3.0, tones='XYZ')
+                y = gy - rng.uniform(6, 16 + hgt)
+                drop(back if j % 2 else front, x, y, int(rng.choice([1, 2, 2, 3])), v=(0, -1.5))
+        if level == 4:      # le tourbillon retombe : des gouttes
+            rng = np.random.RandomState(31)
+            for j in range(7):
+                drop(back if j % 2 else front, cx + rng.uniform(-44, 44), gy - rng.uniform(4, 40),
+                     int(rng.choice([1, 2, 2])), v=(0, 2))
     return f
 
 
@@ -1182,7 +1199,7 @@ def gem_glint(cv, back, front, ctx):
         put(front, x + dx, y + dy, ch)
 
 
-XW = SOL[0] + 74          # où la vague prend naissance (toile), devant le roi
+XW = SOL[0] + 86          # où la vague prend naissance (toile), devant le roi
 
 
 def sea(k):
@@ -1196,65 +1213,82 @@ def sea(k):
         elif k == 1:   # une bosse d'eau pousse du sol
             wave(back, XW + 4, 22, 18, lip=2, cr=4, turn=220, spray=2, seed=1)
         elif k == 2:   # elle grandit et commence à enrouler sa crête
-            wave(back, XW, 52, 30, lip=6, cr=6, turn=260, spray=3, seed=2)
+            wave(back, XW + 2, 60, 32, lip=6, cr=6.5, turn=270, spray=3, seed=2)
         elif k == 3:   # elle le dépasse : crête d'écume enroulée vers l'ennemi
-            wave(back, XW - 6, 92, 44, lip=10, cr=8.5, turn=290, spray=5, seed=3)
+            wave(back, XW - 4, 108, 48, lip=12, cr=9.5, turn=290, spray=6, seed=3, w0=58)
         elif k == 4:   # elle bascule en avant (le trident s'abat)
-            wave(back, XW - 2, 84, 70, lip=34, cr=9.5, turn=300, spray=6, seed=4)
+            wave(back, XW, 100, 72, lip=36, cr=10.0, turn=300, spray=7, seed=4, w0=58)
         elif k == 5:   # elle s'écrase sur l'ennemi : arrêt sur l'image
             px = XW + 96
-            wave(back, XW + 8, 60, 84, lip=52, cr=7.0, turn=230, w0=42, spray=0, foot=1.2)
-            # la couronne d'eau : deux nappes qui s'ouvrent en coupe, un bouillon d'écume au milieu
-            sheet(front, (px - 8, G - 2), 112, 40, 26, 9.0)
-            sheet(front, (px + 8, G - 2), 70, 46, -26, 10.0)
-            sheet(front, (px - 2, G - 4), 92, 30, -8, 6.0)
-            cloud(front, (px, G - 9), 13, 'WWXY', seed=5)
-            cloud(front, (px - 22, G - 5), 7, 'WXY', seed=6)
-            cloud(front, (px + 24, G - 5), 8, 'WXY', seed=7)
-            for (x, y, sz) in ((-30, -40, 2), (34, -50, 3), (8, -58, 2), (-14, -50, 1), (46, -24, 2), (-40, -18, 2)):
+            wave(back, XW + 6, 72, 88, lip=62, cr=7.0, turn=230, w0=50, spray=0, foot=1.2)
+            # la couronne d'eau : deux grandes nappes qui s'ouvrent en coupe, un bouillon d'écume au pied
+            sheet(front, (px - 4, G - 4), 108, 58, 34, 12.0)
+            sheet(front, (px + 6, G - 4), 66, 66, -34, 13.0)
+            foam(front, (px + 2, G - 10), 15, seed=5)
+            foam(front, (px - 26, G - 5), 8, seed=6)
+            foam(front, (px + 30, G - 5), 9, seed=7)
+            for (x, y, sz) in ((-38, -58, 3), (48, -66, 4), (8, -50, 2), (-16, -40, 2), (62, -30, 2), (-50, -26, 2),
+                               (28, -36, 1), (-30, -44, 1)):
                 drop(front, px + x, G + y, sz, v=(np.sign(x) * 1.0, -1.5))
         elif k == 6:   # les nappes montent haut, se cassent en gouttes ; la vague n'est plus qu'un bouillon d'écume
             px = XW + 96
-            wave(back, XW + 18, 30, 72, lip=26, cr=5.0, turn=200, w0=30, spray=0, foam=(0.2, 0.97), foot=1.3)
-            sheet(front, (px - 8, G - 2), 116, 54, 44, 7.0, tail=0.3)
-            sheet(front, (px + 8, G - 2), 66, 62, -44, 8.0, tail=0.3)
-            cloud(front, (px, G - 8), 12, 'WXYZ', hollow=0.4, seed=8)
-            cloud(front, (px - 28, G - 4), 7, 'WXY', hollow=0.3, seed=9)
-            cloud(front, (px + 30, G - 4), 7, 'WXY', hollow=0.3, seed=10)
-            for (x, y, sz) in ((-40, -60, 2), (44, -70, 3), (6, -78, 3), (-18, -70, 2), (60, -40, 2), (-54, -30, 2),
-                               (20, -50, 1), (-6, -44, 1)):
+            wave(back, XW + 18, 36, 76, lip=30, cr=5.0, turn=200, w0=34, spray=0, foam=(0.2, 0.97), foot=1.4)
+            sheet(front, (px - 4, G - 4), 112, 70, 54, 9.0, tail=0.35)
+            sheet(front, (px + 6, G - 4), 62, 80, -54, 10.0, tail=0.35)
+            foam(front, (px + 2, G - 9), 14, hollow=0.4, seed=8)
+            foam(front, (px - 32, G - 5), 9, hollow=0.3, seed=9)
+            foam(front, (px + 36, G - 5), 9, hollow=0.3, seed=10)
+            for (x, y, sz) in ((-50, -78, 3), (56, -90, 4), (4, -70, 3), (-22, -88, 2), (74, -52, 2), (-64, -40, 2),
+                               (24, -62, 2), (-8, -52, 1), (40, -102, 1)):
                 drop(front, px + x, G + y, sz, v=(np.sign(x) * 0.6, 1.0))
-        elif k == 7:   # l'eau retombe en gouttes et roule au sol en volutes d'écume vers l'ennemi
+        elif k == 7:   # l'eau retombe en gouttes et roule au sol en déferlante basse vers l'ennemi
             px = XW + 96
             rng = np.random.RandomState(11)
             for j in range(16):
                 a = math.radians(rng.uniform(20, 160))
-                d = rng.uniform(20, 62)
-                drop(front, px + d * math.cos(a) * 0.9, G - 10 - d * math.sin(a) * 0.75 + 12, int(rng.choice([1, 2, 2, 3])),
+                d = rng.uniform(24, 70)
+                drop(front, px + d * math.cos(a) * 0.9, G - d * math.sin(a) * 0.7 + 4, int(rng.choice([1, 2, 2, 3])),
                      v=(0, 2))
-            gust(front, (XW + 20, G - 3), (XW + 50, G - 2), (XW + 80, G - 6), (px + 30, G - 12), 7.0, 'WXYZV',
-                 curl_r=6.5, up=True)
-            gust(back, (XW + 10, G - 6), (XW + 40, G - 16), (XW + 70, G - 22), (px + 10, G - 20), 5.0, 'XYZV',
-                 curl_r=5.5, up=False)
-            cloud(back, (px, G - 6), 9, 'WXY', hollow=0.65, seed=12)
-        elif k == 8:   # elle se retire : volutes qui s'effacent, flaques
+            wave(back, XW + 30, 18, 70, lip=10, cr=5.0, turn=260, w0=18, foam=(0.1, 0.97), foot=1.6)
+            foam(front, (px + 8, G - 6), 10, hollow=0.55, seed=12)
+            curl(front, (px + 40, G - 14), 5.0, 250, turn=280, w=3.0, tones='WXY', cw=True)
+            curl(front, (px - 30, G - 10), 4.0, 290, turn=260, w=2.6, tones='XYZ')
+        elif k == 8:   # elle se retire : volutes d'écume qui se défont, flaques
             px = XW + 96
             rng = np.random.RandomState(13)
-            for j in range(9):
-                x = px + rng.uniform(-50, 50)
-                drop(front, x, G - rng.uniform(4, 30), int(rng.choice([1, 1, 2])), v=(0, 2))
-            gust(front, (XW + 40, G - 3), (XW + 66, G - 2), (XW + 92, G - 7), (px + 40, G - 14), 5.0, 'XYZV',
-                 curl_r=6.0, up=True, tail=0.5)
-            gust(back, (XW + 30, G - 8), (XW + 56, G - 18), (XW + 84, G - 22), (px + 22, G - 18), 3.6, 'YZV',
-                 curl_r=5.0, up=False, tail=0.5)
-            ribbon(back, (px, G - 1), 34, 3, 200, 340, 3.0, tones='XYZ')
+            for j in range(8):
+                x = px + rng.uniform(-50, 54)
+                drop(front, x, G - rng.uniform(3, 20), int(rng.choice([1, 1, 2])), v=(0, 2))
+            wave(back, XW + 56, 9, 56, lip=4, cr=3.5, turn=240, w0=10, foam=(0.0, 0.97), foot=1.6)
+            curl(front, (px + 50, G - 10), 4.4, 250, turn=280, w=2.4, tones='XYZ', cw=True)
+            curl(front, (px - 20, G - 7), 3.4, 290, turn=260, w=2.0, tones='YZV')
+            ribbon(back, (px - 10, G - 1), 44, 3, 200, 340, 3.0, tones='XYZ')
         elif k == 9:
             px = XW + 96
-            ribbon(back, (px + 6, G - 1), 30, 2, 205, 335, 2.2, tones='YZV')
-            curl(back, (px + 44, G - 14), 3.6, 260, turn=260, w=2.0, tones='XYZ', cw=True)
-            drop(front, px + 20, G - 6, 1)
-            drop(front, px - 16, G - 10, 2, v=(0, 2))
+            ribbon(back, (px + 6, G - 1), 36, 2, 205, 335, 2.4, tones='YZV')
+            curl(back, (px + 52, G - 9), 3.6, 260, turn=260, w=2.0, tones='XYZ', cw=True)
+            drop(front, px + 24, G - 5, 1)
+            drop(front, px - 18, G - 8, 2, v=(0, 2))
     return f
+
+
+def foam(cv, c, r, hollow=0.0, seed=0, tones='WWXYZ'):
+    """un bouillon d'écume en chou-fleur (une grosse bulle et des petites autour), modelé comme un seul volume ;
+    hollow (0..1) : il se défait (les bulles s'écartent, montent un peu et rapetissent)"""
+    rng = np.random.RandomState(seed)
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for i in range(5):
+        a = math.radians(170 - i * 40 + rng.uniform(-12, 12))
+        d = r * rng.uniform(0.6, 0.85)
+        lobes.append((d * math.cos(a), -d * math.sin(a) * 0.75, r * rng.uniform(0.45, 0.65)))
+    if hollow:
+        lobes = [(dx * (1 + hollow), dy * (1 + hollow) - hollow * r * 0.5, rr * (1 - 0.5 * hollow))
+                 for (dx, dy, rr) in lobes[1:]] + [(0, -hollow * r * 0.4, r * (1 - 0.65 * hollow))]
+    m = np.zeros((H, W), bool)
+    for (dx, dy, rr) in lobes:
+        m |= ellipse_mask((cx + dx, min(cy + dy, GROUND - rr * 0.5)), rr, rr)
+    shade_mask(cv, m, tones)
 
 
 def sheet(cv, P0, ang, length, bend, w, tail=0.0, blob=True, tones='XYZVU'):
@@ -1314,3 +1348,136 @@ def on_bg(img, bg=BG):
     im = Image.new('RGBA', (img.shape[1], img.shape[0]), bg + (255,))
     im.alpha_composite(Image.fromarray(img, 'RGBA'))
     return im
+
+
+# ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
+# RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du héros à partir de
+# (x, y) en coordonnées de la GRILLE du dessin (comme ilian.txt) ; '.' efface, ' ' laisse le pixel tel quel.
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+
+
+def retouch(cv, fixes):
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                X, Y = x + i + OX, y + OY
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = ch
+
+
+# ---------------------------------------------------------------- toutes les images
+def build_all():
+    anims = {}
+    fr = []
+    for i, f in enumerate(POSE):
+        cv = pose_frame(f)
+        retouch(cv, RETOUCHES['pose'].get(i, []))
+        fr.append((compose(cv), f['ms']))
+    anims['pose'] = fr
+    for name, specs in (('attaque', ATTAQUE), ('speciale', SPECIALE)):
+        fr = []
+        for i, spec in enumerate(specs):
+            cv, back, front, ctx = rig_frame(dict(spec))
+            retouch(cv, RETOUCHES[name].get(i, []))
+            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+        anims[name] = fr
+    return anims
+
+
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin), min(H, ys.max() + 1 + margin))
+
+
+GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet.paste(im, (0, i * H0))
+    ncol = len(sheet.getcolors(maxcolors=1 << 20) or [])
+    if ncol <= 256:
+        pal = sheet.quantize(colors=min(256, ncol), method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    boxes = {'pose': GAME_BOX}
+    # une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets
+    both = anims['attaque'] + anims['speciale'] + anims['pose']
+    bb = bbox(both, 6)
+    boxes['attaque'] = boxes['speciale'] = bb
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-ilian-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
+    k = 3
+    blocks = []
+    for name, per in (('pose', 10), ('attaque', 10), ('speciale', 7)):
+        box = GAME_BOX if name == 'pose' else bbox(anims[name] + anims['pose'], 3)
+        cells = [on_bg(img).crop(box) for img, _ in anims[name]]
+        blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + per - 1) // per) * (cells[0].height * k + 22) for _, per, cells, _ in blocks)
+    sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    y = 6
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE', 'speciale': 'ATTAQUE SPECIALE'}
+    for name, per, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % per == 0:
+                y += ch + 22
+            X = 6 + (i % per) * (cw + 6)
+            sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sheet.save(os.path.join(OUT, 'anim-ilian-planche.png'))
+    # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat, ×2
+    seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
+    box = bb
+    try:
+        fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
+        fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        # la scène d'Ilian est plus large que le fond : on le prolonge par son reflet (raccord sans couture)
+        big = Image.new('RGBA', (fond.width * 2, fond.height))
+        big.paste(fond, (0, 0))
+        big.paste(fond.transpose(Image.FLIP_LEFT_RIGHT), (fond.width, 0))
+        fond = big
+        bw, bh = box[2] - box[0], box[3] - box[1]
+        fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        base = fond.crop((0, fy, bw, fy + bh))
+        if base.width < bw:
+            raise ValueError
+    except Exception:
+        base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
+    ims = []
+    for img, _ in seq:
+        im = base.copy()
+        im.alpha_composite(Image.fromarray(img, 'RGBA').crop(box))
+        ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, 'anim-ilian-jeu.gif'), ims, [ms for _, ms in seq])
+    return boxes
+
+
+if __name__ == '__main__':
+    anims = build_all()
+    write_outputs(anims)
+    for n in ('pose', 'attaque', 'speciale'):
+        print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+    print('écrit dans', OUT)
