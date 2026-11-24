@@ -21,9 +21,10 @@
 #   - les gants sont ceux du dessin, au pixel près : le gant proche (vu de profil, poing vers l'avant) sert aux coups
 #     droits, le gant lointain (poing vers le haut, revers lacé) sert à l'uppercut ; les bras qui les portent sont
 #     retracés (peau verte modelée par la lumière, petites écailles) ;
-#   - rentrée dans sa carapace, Lilou devient un oeuf debout qui tourne sur sa pointe : la carapace est REDESSINÉE à
-#     chaque angle (écailles bombées, plastron jaune à coutures, rebord usé, balanes, trous des bras et des jambes ;
-#     les deux pans du bandeau rouge dépassent du trou de la tête et fouettent l'air) ;
+#   - rentrée dans sa carapace, Lilou tombe à plat et tourne comme une toupie : la carapace (un dôme d'écailles
+#     sur la lentille jaune du plastron) est REDESSINÉE à chaque angle (écailles bombées en polygones, rebord,
+#     balanes, trous de la tête, des bras, des jambes et de la queue qui passent en tournant ; ses yeux guettent
+#     par le trou de la tête et les deux pans du bandeau rouge en sortent et fouettent l'air) ;
 #   - les effets (eau, écume, gouttes) ont leur petite palette, sans contour noir, en formes courbes (aucun rayon
 #     droit, et les grosses gerbes ne font jamais une main ouverte : jets de longueurs et d'angles inégaux) ;
 #   - à la fin, chaque image peut recevoir des retouches pixel par pixel (RETOUCHES, plus bas).
@@ -144,16 +145,17 @@ def make_dessous():
             if y <= 60:
                 g[y, x] = 'c' if x < 50 else 'b'                 # haut du bras = épaule (recouverte ensuite)
                 continue
-            if x < 47:                                          # le flanc de la carapace, qui tourne sous le bras
-                g[y, x] = 'k' if y < 70 else 'j'
-                if x == 46 or (y > 76 and x >= 44):
-                    g[y, x] = 'i'
-                continue
-            if x < 57:                                          # l'aisselle verte dans l'ombre, puis le pont
-                if y < 77 - (x - 46) * 0.6:
-                    g[y, x] = 'b' if x in (47, 56) else 'c' if x < 53 else 'b'
-                else:
+            if x < 57:                                          # le flanc vert sous le bras, dans l'ombre
+                # (la peau du côté, entre la carapace et le plastron) ; un sillon sombre contre la carapace et
+                # contre le plastron, un peu de lumière en haut ; en bas, le pont de carapace dans l'ombre
+                if y >= 79 - (x - 40) * 0.35:
                     g[y, x] = 'h' if x in (47, 56) else 'i'
+                elif x <= 41 or x >= 55:
+                    g[y, x] = 'b'
+                elif y < 67 and 44 <= x <= 52:
+                    g[y, x] = 'd'
+                else:
+                    g[y, x] = 'c'
                 continue
             if y <= 62:                                         # le col de carapace au-dessus du plastron
                 g[y, x] = 'k' if x < 60 else 'l'
@@ -331,21 +333,27 @@ def close_holes(cv, x0=0, x1=W, y0=0, y1=H):
 # ---------------------------------------------------------------- ce qui se balance (suivi, inertie)
 def pans(a=0, b=0):
     """les pans du bandeau flottent : leurs bouts montent (a < 0) ou descendent (a > 0) d'au plus |a| pixels, et
-    s'allongent vers l'arrière (b < 0) ou se ramassent (b > 0) ; plus on s'éloigne du noeud (x = 61), plus ça bouge"""
+    s'allongent vers l'arrière (b < 0, le vent de la course) ou se ramassent (b > 0) d'au plus |b| pixels ; plus on
+    s'éloigne du noeud (x = 61), plus ça bouge. Quand ils s'allongent, les trous d'un pixel sont bouchés."""
     p = P['pans']
     if a:
-        p = shear_cols(p, lambda x: int(round(a * (max(0, 61 - x) / 21.0) ** 1.3)), 36, 61)
+        p = shear_cols(p, lambda x: int(round(a * (max(0, 61 - x) / 21.0) ** 1.3)), 30, 61)
     if b:
-        p = shear_rows(p, lambda y: 0, 0, 0)
         q = np.full_like(p, '.')
-        for x in range(36, 62):
-            k = (61 - x) / 25.0
-            d = int(round(b * k))
-            if 0 <= x + d < GW:
-                col = p[:, x]
-                m = col != '.'
-                q[m, x + d] = col[m]
-        p = np.where(q != '.', q, '.')
+        for x in range(GW - 1, -1, -1):
+            col = p[:, x]
+            m = col != '.'
+            if not m.any():
+                continue
+            nx = x + int(round(b * max(0, 61 - x) / 25.0))
+            if 0 <= nx < GW:
+                q[m, nx] = col[m]
+        for y in range(0, 42):
+            xs = np.nonzero(q[y] != '.')[0]
+            for x in range(1, GW - 1):
+                if q[y, x] == '.' and q[y, x + 1] != '.' and x > (xs.min() if len(xs) else GW):
+                    q[y, x] = q[y, x + 1]
+        p = q
     return p
 
 
@@ -752,7 +760,7 @@ L3 = np.array([0.5, -0.72, 0.48])
 L3 = L3 / np.linalg.norm(L3)
 TONES_C = 'hijklm'
 TONES_P = 'nopqr'
-HOLES = [(0.0, 15.0, 'tete'), (62.0, 10.0, 'bras'), (-62.0, 10.0, 'bras'), (128.0, 11.0, 'jambe'),
+HOLES = [(0.0, 19.0, 'tete'), (62.0, 10.0, 'bras'), (-62.0, 10.0, 'bras'), (128.0, 11.0, 'jambe'),
          (-128.0, 11.0, 'jambe'), (180.0, 7.0, 'queue')]
 
 
@@ -775,8 +783,9 @@ SCUTE_U = np.array([_unit(lo, e) for (lo, e) in SCUTES])
 def shell_cell(rel, h):
     """matière et numéro d'écaille d'un point du dôme : rel = longitude par rapport à la tête (degrés), h = hauteur
     sur le dôme (0 au bord … 1 au sommet)"""
-    for (c, wd, _) in HOLES:
-        if (wrap(rel - c) / wd) ** 2 + ((h + 0.02) / 0.2) ** 2 < 1:
+    for (c, wd, kind) in HOLES:
+        hh = 0.34 if kind == 'tete' else 0.2
+        if (wrap(rel - c) / wd) ** 2 + ((h + 0.02) / hh) ** 2 < 1:
             return 'trou', 0
     e = math.degrees(math.asin(min(1.0, h)))
     i = int(np.argmax(SCUTE_U @ _unit(rel, e)))
@@ -908,14 +917,18 @@ def draw_toupie(cv, base, spin, tilt=0.0, squash=0.0, eyes=True):
     lon_h = wrap(spin)
     hx = cx + a * math.sin(math.radians(lon_h))
     hy = cy + a * math.cos(math.radians(lon_h)) * sa - 2
-    if eyes and abs(lon_h) < 52:
-        for ex in (-3, 2):
-            x, y = int(round(hx + ex * math.cos(math.radians(lon_h)))), int(round(hy))
-            for yy in (y, y + 1, y - 1):
-                if out.get((x, yy)) == 'h' and out.get((x + 1, yy)) == 'h':
-                    out[(x, yy)] = 'H'
-                    out[(x + 1, yy)] = 'J'
-                    break
+    if eyes and abs(lon_h) < 56:
+        hole = [(x, y, v[3]) for (x, y), v in mat.items() if v[0] == 'trou' and abs(v[3]) < 20]
+        if hole:
+            rows = sorted(set(y for (_, y, _) in hole))
+            ey = rows[len(rows) // 2]
+            for er in (-8.0, 7.0):
+                cand = [(abs(r - er), x) for (x, y, r) in hole if y == ey]
+                if cand:
+                    x = min(cand)[1]
+                    for (dx, dy, ch) in ((0, 0, 'H'), (1, 0, 'K'), (0, 1, 'I'), (1, 1, 'H')):
+                        if out.get((x + dx, ey + dy)) == 'h':
+                            out[(x + dx, ey + dy)] = ch
     for (x, y), ch in out.items():
         if 0 <= x < W and 0 <= y < H:
             cv[y, x] = ch
@@ -925,7 +938,7 @@ def draw_toupie(cv, base, spin, tilt=0.0, squash=0.0, eyes=True):
 def toupie_pans(cv, hole, spin, phase=0.0, front=True):
     """les deux pans du bandeau sortent du trou de la tête et fouettent l'air en traînant derrière la rotation
     (vers l'extérieur), en ondulant ; front : ne dessine que ceux qui passent devant (True) ou derrière (False)"""
-    anchor = np.array(hole, float)
+    anchor = np.array(hole, float) + np.array([0.0, -3.0])     # du haut du trou
     for j, (dpsi, L, w0) in enumerate(((0.0, 30.0, 4.4), (26.0, 24.0, 3.8))):
         psi = math.radians(spin - 70 - dpsi)                # derrière le sens de rotation, et vers l'extérieur
         dx, dz = math.sin(psi), math.cos(psi)
@@ -937,7 +950,7 @@ def toupie_pans(cv, hole, spin, phase=0.0, front=True):
         for i in range(21):
             s = i / 20
             wob = math.sin(s * 6.0 + phase + j * 1.9) * 1.8 * s
-            x = anchor[0] + sgn * Lp * s
+            x = anchor[0] + sgn * (Lp * s + 6.0)              # il sort du bord du trou (les yeux restent visibles)
             y = anchor[1] - 4.0 * math.sin(s * math.pi * 0.6) - 3.0 * j * s + wob + dz * 3.0 * s
             pts.append((x, y))
             ws.append(w0 * (1 - 0.6 * s) + 0.4)
@@ -966,7 +979,7 @@ def rig_frame(f):
     ctx = Ctx()
     ctx.f = f
     if 'toupie' in f:
-        # rentrée dans sa carapace : l'oeuf qui tourne, posé sur sa pointe (base = point de contact, toile)
+        # rentrée dans sa carapace : la toupie (base = le bas du plastron, toile)
         tp = f['toupie']
         base = (SOL[0] + SLIDE[0] + tp.get('dx', -14), GROUND + DROP_Y[0] + tp.get('sink', 0))
         spin = tp['spin']
@@ -991,7 +1004,7 @@ def rig_frame(f):
         if far:
             S = g2c(SH_FAR, (cx, cy))
             Wr = g2c(far['w'], (cx, cy))
-            ctx.far_elbow = draw_arm(cv, S, Wr, ARM_FAR, far.get('bend', 1), r=(5.4, 4.8, 4.4, 3.9))
+            ctx.far_elbow = draw_arm(cv, S, Wr, ARM_FAR, far.get("bend", 1), r=(5.6, 5.0, 4.8, 4.3))
             ctx.far_wrist = Wr
             if far.get('back'):                    # le gant rentré derrière le plastron (il protège le ventre)
                 glove_at(cv, far.get('glove', 'V'), Wr)
@@ -1096,7 +1109,7 @@ def fx_jab(k):
             sheet(back, (X - 1, Y - 1), 58, 13, -40, 3.2, blob=True)
             sheet(back, (X, Y + 2), -18, 9, -30, 2.6, blob=True)
             spray(back, (X + 1, Y), 0.9, seeds, sizes=(2, 2, 1))
-            pop(front, (X + 2, Y), 4.0, facing=10, tones='WWXY')
+            pop(front, (X + 6, Y), 4.0, facing=10, tones='WWXY')
         else:
             foam(front, (X + 3, Y - 1), 2.8, hollow=0.5, seed=5)
             spray(front, (X + 1, Y), 2.2, seeds, sizes=(2, 2, 1))
@@ -1117,7 +1130,7 @@ def fx_cross(k):
             sheet(back, (X + 1, Y + 3), -26, 12, -34, 3.6, blob=True)         # un court, vers le bas
             sheet(back, (X - 4, Y - 3), 122, 9, 46, 2.6, blob=True)           # un petit, qui part en arrière
             spray(back, (X + 2, Y), 1.0, seeds)
-            pop(front, (X + 3, Y), 6.5, facing=12, tones='WWXY')
+            pop(front, (X + 8, Y), 6.5, facing=12, tones='WWXY')
         elif k == 1:
             sheet(back, (X - 1, Y - 1), 64, 28, -92, 5.8, tail=0.3, blob=True)
             sheet(back, (X + 1, Y + 3), -26, 13, -52, 3.8, tail=0.3, blob=True)
@@ -1161,26 +1174,28 @@ ATTAQUE = [
 
 
 # ---------------------------------------------------------------- 3) l'attaque spéciale : « Toupie de la marée »
-# Elle se ramasse et cogne ses gants l'un contre l'autre (tenu), saute et RENTRE dans sa carapace : l'oeuf retombe
-# sur une vague qui se lève et se met à tourner comme une toupie (les pans du bandeau fouettent l'air, les yeux
+# Elle se ramasse derrière sa garde (tenu), saute en rentrant la tête et RENTRE dans sa carapace : elle retombe à
+# plat sur une vague qui se lève et se met à tourner comme une toupie (les pans du bandeau fouettent l'air, les yeux
 # guettent par le trou de la tête). La toupie file sur la vague jusqu'à l'ennemi : un anneau d'eau tourbillonne
 # autour d'elle, la crête de la vague roule devant, un sillage d'écume et des volutes restent derrière. Arrivée sous
 # l'ennemi, la vague se brise ; elle JAILLIT de sa carapace, accroupie, le poing lointain armé bas (tenu)… et place
 # un UPPERCUT énorme : elle décolle, le poing monte au-dessus de sa tête et une trombe d'eau en spirale jaillit du
 # sol sous l'ennemi (arrêt sur l'image). La trombe se défait en pluie, elle retombe accroupie et revient en deux
 # bonds à sa place.
-TP_SPIN = [90, 150, 205, 265, 320, 15, 70, 110]          # l'angle de la toupie, image par image
 
 
 def fx_tuck(k):
-    """elle rentre dans sa carapace : quelques gouttes et une bouffée d'écume autour de l'oeuf (k = 0, 1)"""
+    """elle rentre dans sa carapace : quelques gouttes et des bouffées d'écume autour d'elle (k = 0, 1)"""
     def f(cv, back, front, ctx):
-        X, Y = ctx.center
+        X, Y = ctx.center if hasattr(ctx, 'center') else g2c((52, 76), ctx.chest)
         seeds = [(-3.0, -3.0), (3.5, -2.5), (-4.5, 0.5), (4.0, 1.0), (0.5, -4.5)]
-        spray(back, (X, Y), 1.0 + 1.4 * k, seeds, sizes=(2, 2, 1))
+        spray(back, (X, Y + (24 if k == 0 else 0)), 1.0 + 1.4 * k, seeds, sizes=(2, 2, 1))
         if k == 0:
-            foam(back, (X - 14, Y + 6), 4.0, hollow=0.2, seed=21)
-            foam(back, (X + 15, Y - 2), 3.4, hollow=0.3, seed=22)
+            foam(front, (X - 18, GROUND - 3), 3.6, hollow=0.2, seed=21)
+            foam(front, (X + 26, GROUND - 3), 3.0, hollow=0.3, seed=22)
+        else:
+            foam(back, (X - 30, Y + 2), 3.4, hollow=0.5, seed=23)
+            foam(back, (X + 32, Y - 6), 3.0, hollow=0.55, seed=24)
     return f
 
 
@@ -1225,7 +1240,7 @@ def wave_under(cv, back, front, bx, G, h, lead, k, crest=True, wake=1.0):
 
 def whirl(back, front, c, rx, ry, a0, span=230, w=3.4):
     """l'anneau d'eau qui tourbillonne autour de la toupie : un arc d'ellipse épais en tête, effilé en queue ;
-    la moitié de derrière passe derrière l'oeuf, celle de devant devant"""
+    la moitié de derrière passe derrière la carapace, celle de devant devant"""
     n = 60
     segs = {True: [], False: []}
     cur, side = [], None
@@ -1330,8 +1345,8 @@ def fx_uppercut():
     """l'éclat de l'uppercut au bout du poing : une bouffée d'écume blanche et quelques gouttes qui montent"""
     def f(cv, back, front, ctx):
         X, Y = ctx.far_fist
-        pop(back, (X + 4, Y - 9), 5.5, facing=75, tones='WWXY')
-        spray(back, (X, Y - 10), 1.0, [(2.0, -5.0), (-1.5, -5.5), (4.0, -3.0), (0.5, -6.5)], sizes=(2, 2, 1))
+        pop(front, (X + 5, Y - 10), 5.5, facing=75, tones='WWXY')
+        spray(front, (X, Y - 12), 1.0, [(2.0, -5.0), (-1.5, -5.5), (4.0, -3.0), (0.5, -6.5)], sizes=(2, 2, 1))
     return f
 
 
@@ -1405,8 +1420,8 @@ def fx_trombe(k):
             spray(back, (tx, top + 2), 1.0 + k, seeds[:5])
         elif k == 2:
             foam(back, (tx + 2, top + 6), 10.0, hollow=0.45, seed=84)
-            sheet(back, (tx - 12, top + 12), 160, 30, 74, 6.0, tail=0.2, blob=True)
-            sheet(back, (tx + 13, top + 10), 30, 16, -54, 3.6, tail=0.25, blob=True)
+            sheet(back, (tx - 12, top + 12), 160, 30, 74, 8.5, tail=0.15, blob=True)
+            sheet(back, (tx + 13, top + 10), 30, 16, -54, 5.0, tail=0.2, blob=True)
             spray(back, (tx, top + 6), 3.0, seeds)
         else:
             foam(back, (X - 2, top + 4), 6.0, hollow=0.7, seed=86)
@@ -1444,41 +1459,43 @@ XT = 136                                  # où elle jaillit de sa carapace (gli
 SPECIALE = [
     # 0 : en garde
     dict(ms=100),
-    # 1 : elle se ramasse et cogne ses gants (tenu)
+    # 1 : elle se ramasse derrière sa garde (tenu)
     dict(s=3, lean=1, head=(1, 2), cy=1, gl=(-3, 2), gp=(2, -2), pan=(1, 1), ms=170),
-    # 2 : elle saute et rentre dans sa carapace : la carapace en l'air, les yeux nous regardent par le trou
-    dict(x=4, y=-18, toupie=dict(spin=-10, squash=-0.06, ph=0.0, dx=0), fx=[fx_tuck(0)], ms=80),
-    # 3 : la carapace retombe à plat sur la vague qui se lève et se met à tourner
+    # 2 : elle saute en se ramassant : la tête rentre dans les épaules, les gants se collent au corps
+    dict(x=2, y=-9, s=4, lean=0, head=(0, 4), cy=-2, gl=(-3, 3), gp=(1, 2), pan=(-2, 1), fx=[fx_tuck(0)], ms=60),
+    # 3 : elle est rentrée dans sa carapace : la carapace en l'air, les yeux nous regardent par le trou
+    dict(x=4, y=-18, toupie=dict(spin=-10, squash=-0.06, ph=0.0, dx=0), fx=[fx_tuck(1)], ms=80),
+    # 4 : la carapace retombe à plat sur la vague qui se lève et se met à tourner
     dict(x=10, toupie=dict(spin=40, squash=0.14, sink=-4, ph=1.0, dx=0),
-         fx=[fx_tuck(1), fx_ride(0, h=9.0, lead=24, ring=False, wake=0.3)], ms=70),
-    # 4 à 8 : la toupie file sur la vague (anneau qui tourbillonne, crête, sillage d'écume)
+         fx=[fx_ride(0, h=9.0, lead=24, ring=False, wake=0.3)], ms=70),
+    # 5 à 9 : la toupie file sur la vague (anneau qui tourbillonne, crête, sillage d'écume)
     dict(x=32, toupie=dict(spin=85, tilt=3, sink=-8, ph=2.0, dx=0), fx=[fx_ride(1, wake=0.55)], ms=55),
     dict(x=60, toupie=dict(spin=130, tilt=3, sink=-8, ph=3.0, dx=0), fx=[fx_ride(2, wake=0.8)], ms=55),
     dict(x=88, toupie=dict(spin=175, tilt=3, sink=-9, ph=4.0, dx=0), fx=[fx_ride(3)], ms=55),
     dict(x=114, toupie=dict(spin=220, tilt=3, sink=-8, ph=5.0, dx=0), fx=[fx_ride(4)], ms=55),
     dict(x=136, toupie=dict(spin=265, tilt=3, sink=-8, ph=6.0, dx=0), fx=[fx_ride(5)], ms=60),
-    # 9 : arrivée sous l'ennemi : elle freine (la tête vers l'ennemi), la vague se brise en avant
+    # 10 : arrivée sous l'ennemi : elle freine (la tête vers l'ennemi), la vague se brise en avant
     dict(x=146, toupie=dict(spin=300, tilt=0, squash=0.1, sink=-3, ph=6.6, dx=0), fx=[fx_break(0)], ms=80),
-    # 10 : elle JAILLIT de sa carapace, accroupie, le poing lointain armé bas contre le genou (tenu)
+    # 11 : elle JAILLIT de sa carapace, accroupie, le poing lointain armé bas contre le genou (tenu)
     dict(x=XT, s=4, lean=1, head=(1, 2), cy=1, far=dict(w=(97, 94), glove='V', bend=1), gp=(1, -1), pan=(1, -3),
          fx=[fx_popout(0)], wfx=[fx_break(1)], ms=150),
-    # 11 : l'uppercut part : elle se détend, le poing remonte devant elle (traînée d'eau), la trombe jaillit
+    # 12 : l'uppercut part : elle se détend, le poing remonte devant elle (traînée d'eau), la trombe jaillit
     dict(x=XT + 2, y=-6, s=-2, lean=1, head=(1, -1), cy=2, far=dict(w=(104, 70), glove='V', bend=1), gp=(1, -1),
-         pan=(-1, 3), fx=[fx_swoosh(), fx_popout(1)], wfx=[fx_trombe(0)], ms=50),
-    # 12 : l'IMPACT (arrêt sur l'image) : en l'air, le coude devant, le poing levé plus haut que sa tête,
+         pan=(-1, 2), fx=[fx_swoosh(), fx_popout(1)], wfx=[fx_trombe(0)], ms=50),
+    # 13 : l'IMPACT (arrêt sur l'image) : en l'air, le coude devant, le poing levé plus haut que sa tête,
     # la trombe au plus haut
     dict(x=XT + 3, y=-22, s=-3, lean=-1, head=(0, -1), cy=3, far=dict(w=(111, 33), glove='V', bend=1), gp=(1, -2),
-         pan=(-2, 4), fx=[fx_uppercut()], wfx=[fx_trombe(1)], ms=240),
-    # 13 : le sommet de la trombe se défait ; elle commence à retomber
+         pan=(-2, 2), fx=[fx_uppercut()], wfx=[fx_trombe(1)], ms=240),
+    # 14 : le sommet de la trombe se défait ; elle commence à retomber
     dict(x=XT + 2, y=-14, s=-1, lean=0, head=(0, 0), cy=0, far=dict(w=(110, 37), glove='V', bend=1), gp=(1, -1),
-         pan=(0, 2), wfx=[fx_trombe(2)], ms=90),
-    # 14 : elle retombe accroupie, la trombe s'effondre en pluie
+         pan=(0, 1), wfx=[fx_trombe(2)], ms=90),
+    # 15 : elle retombe accroupie, la trombe s'effondre en pluie
     dict(x=XT, s=3, head=(0, 2), cy=-1, far=dict(w=(103, 66), glove='V', bend=1), gp=(0, 1), pan=(1, -1), fx=[fx_land(0), fx_drip(0)], wfx=[fx_trombe(3)], ms=90),
-    # 15 à 17 : deux bonds en arrière jusqu'à sa place, l'eau ruisselle
+    # 16 à 18 : deux bonds en arrière jusqu'à sa place, l'eau ruisselle
     dict(x=94, y=-12, s=-1, head=(0, 1), cy=2, gl=(1, -1), pan=(2, 0), fx=[fx_drip(1)], wfx=[fx_trombe(4)], ms=80),
     dict(x=48, y=-10, s=-1, head=(0, 1), cy=2, gl=(1, -1), pan=(2, 0), ms=80),
     dict(s=3, head=(0, 2), cy=-1, gp=(0, 1), pan=(1, -1), fx=[fx_land(0)], ms=90),
-    # 18, 19 : elle se redresse dans sa garde
+    # 19, 20 : elle se redresse dans sa garde
     dict(s=1, head=(0, 1), cy=0, pan=(0, 0), fx=[fx_land(1)], ms=100),
     dict(ms=130),
 ]
