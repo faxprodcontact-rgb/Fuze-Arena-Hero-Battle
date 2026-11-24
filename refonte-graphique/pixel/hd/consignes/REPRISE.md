@@ -9,6 +9,8 @@
   https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (outil Artifact, avec `url`).
 - Corvin, Jinn, Zéphyre, Eldra, Mira, Tessa, Orin : validés (24/11). Myrr validée. **Arcan** retouché (« moins gros, plus musclé »), en attente de son avis ;
   2 agents en parallèle (même coût qu'un par un quand le propriétaire ne regarde pas entre deux).
+- Test d'animation (24/11) sur Eldra : respiration, attaque, attaque spéciale — sources `../anim/eldra/build.py`, GIF
+  `../../sortie/anim-eldra-*.gif`. En attente de l'avis du propriétaire ; rien n'est branché dans le jeu.
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
 
 ## Méthode (validée par le propriétaire)
