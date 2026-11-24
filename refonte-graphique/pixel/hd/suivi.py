@@ -58,7 +58,7 @@ RETOUCHES = {
     'ysolde': "Nez moins brouillon.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'lenore', 'garvin', 'nerith', 'ysolde'}
+FAITES = {'lenore', 'garvin', 'nerith', 'ysolde', 'rook'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 

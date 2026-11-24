@@ -17,7 +17,7 @@
 #   l'aile proche.
 # Tête : visage de femme fin et dur, trois quarts : sourcils froncés, yeux d'ambre au trait épais qui s'étire vers la
 #   tempe ; l'œil lointain de même forme, plus étroit, son coin intérieur caché par l'arête du nez. Nez : arête claire,
-#   bout qui dépasse à peine, ombre douce dessous, une narine. Cri de guerre (voir la retouche). Chevelure de plumes rouges
+#   bout qui dépasse à peine, ombre douce dessous, une narine. Bouche : voir la retouche 5. Chevelure de plumes rouges
 #   couchée vers l'arrière, longues plumes dont la pointe remonte comme une flamme ; une mèche devant l'oreille ;
 #   mèches qui tombent sur la nuque. Diadème d'or à fleuron et rubis.
 # Détails : torque d'or et pendentif de rubis, plastron de plumes blanches (ombres lilas), ceinture d'or au médaillon,
@@ -39,6 +39,18 @@
 # Retouche 4 (« combler le trou entre le buste et l'aile proche ») : le vide entre l'aile proche et le flanc est
 #   rempli par de vraies plumes d'aisselle et de flanc (rangs qui se chevauchent, pointes vers la hanche dans le sens
 #   de l'aile, bord éclairé, ombre portée), cramoisies et un peu sombres car en retrait : plus aucun fond ne passe.
+# Retouche 5 (« transition du visage aux plumes moins sèche », « visage plus féminin et plus beau ») : le visage est
+#   redessiné en entier (il remplace le cri de guerre de la première retouche). Ovale adouci, mâchoire et menton
+#   ronds ; sourcils fins et arqués qui descendent vers le nez (elle reste fière et décidée) ; grands yeux en amande
+#   (3 rangs) à l'iris d'ambre doré, trait de cils étiré vers la tempe, l'œil lointain de même forme sur la même
+#   ligne, son coin caché par l'arête du nez ; nez fin : arête claire, bout qui dépasse à peine, ombre douce, une
+#   narine ; lèvres pleines à peine entrouvertes (intérieur rouge sombre, jamais noir), coin relevé ; peau lissée
+#   (ombre douce en coin le long des plumes et sous la mâchoire). Transition : la mèche droite et son liseré orange
+#   sont remplacés par une naissance des plumes arrondie sous le diadème, une tempe dégagée, une petite plume dont
+#   la pointe orangée vient sur la pommette et une plume longue qui suit la joue jusque sous la mâchoire (pointe
+#   jaune) ; bord des plumes rouge (même valeur que l'ombre de la peau), ombre portée douce sur la joue ; le trait
+#   noir entre la mèche et le cou a disparu (plumes de la nuque dans l'ombre derrière le cou).
+#   Clignement : les cils descendent (paupière fermée soulignée d'un trait).
 # Fabrication : ébauche des plumes par script (ailes, queue, jupe, crinière), puis visage, buste, pieds, épaule,
 #   chevelure retouchés pixel par pixel.
 id: assassins-5
@@ -76,9 +88,8 @@ W #fbefe0  oeil, blanc
 X #d8640e  oeil, iris d'ambre
 Z #2a0812  oeil, pupille
 Y #ffb43a  oeil, iris clair (regard perçant)
-h #f6eadc  dents, crocs
-i #5c1024  gorge, rouge sombre (jamais noir)
-f #861a36  lèvres, ombre ; gorge
+i #5c1024  bouche entrouverte, rouge sombre (jamais noir)
+f #861a36  lèvres, ombre (coin et bout de la lèvre du haut)
 g #cc3848  lèvres
 L #3c1024  oeil, trait des cils (lie de vin très sombre)
 o #d27a62  oeil, coin de la paupière (peau ; devient la ligne des cils au clignement)
