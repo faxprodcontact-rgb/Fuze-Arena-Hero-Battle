@@ -621,12 +621,40 @@ def rig_frame(f):
             d = np.round(G - g2c(G0)).astype(int)
             blit(cv, P['poing'], d[0], d[1])
 
+    fill_pinholes(cv)
     for fx in f.get('fx', []):
         fx(cv, back, front, ctx)
     SLIDE[0] = 0
     for fx in f.get('wfx', []):                # les effets posés dans le monde (sur l'ennemi), sans la charge
         fx(cv, back, front, ctx)
     return cv, back, front, ctx
+
+
+def fill_pinholes(cv, top=OY + 86, size=3):
+    """les petits trous fermés (1 à 3 pixels vides) dans le haut du corps — entre l'épaule soulevée et le col, entre
+    le bras retracé et la cape : ils prennent le ton le plus sombre de leurs voisins (sinon le contour y mettrait un
+    point noir). Les jours voulus du dessin (entre les jambes) sont plus bas et ne sont pas touchés."""
+    filled_ = cv != '.'
+    seen = np.zeros_like(filled_)
+    for y0, x0 in zip(*np.nonzero(~filled_[:top])):
+        if seen[y0, x0]:
+            continue
+        comp, st, ok = [], [(y0, x0)], True
+        seen[y0, x0] = True
+        while st:
+            y, x = st.pop()
+            comp.append((y, x))
+            if len(comp) > size or y == 0 or x == 0 or x == W - 1 or y >= top:
+                ok = False
+            for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                yy, xx = y + dy, x + dx
+                if 0 <= yy < H and 0 <= xx < W and not filled_[yy, xx] and not seen[yy, xx]:
+                    seen[yy, xx] = True
+                    st.append((yy, xx))
+        if ok:
+            for y, x in comp:
+                nb = [cv[y + dy, x + dx] for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)) if cv[y + dy, x + dx] != '.']
+                cv[y, x] = min(nb, key=lambda c: sum(ALLPAL[c]))
 
 
 def spear_redrawn(cv, f, ctx, body):
@@ -996,7 +1024,7 @@ def fx_shield_fire(level, seed=0, trail=0.0):
             F = rim_point(C, 0, 1.0)
             arc_trail(front, (F[0] - 16, F[1]), 21.0, -70, 140, 5.0 + 4 * trail, tones='ABCDHI', ccw=True,
                       inner=12.0)
-            fire_mass(front, (F[0] + 1, F[1] + 2), 5 + 3 * trail, seed=seed, tones='ABCDH')
+            fire_mass(front, (F[0] + 1, F[1] + 2), 3 + 2 * trail, seed=seed, tones='ABCD')
             for (a, hh, d, lay) in ((62, 13, 128, front), (40, 16, 150, front), (-40, 15, 196, front),
                                     (-62, 13, 206, back), (80, 10, 112, back)):
                 base = rim_point(C, a, 0.95)
@@ -1016,13 +1044,34 @@ def fx_shield_fire(level, seed=0, trail=0.0):
             d = 92 - 0.3 * a + rng.uniform(-5, 5)
             tongue(front, tuple(base), hh, max(3.0, hh * 0.48), direction=d,
                    bend=(0.7 if j % 2 else -0.6) * rng.uniform(0.7, 1.2), tones=FIRE, fork=hh > 13, heat=0.3)
-        if level >= 2:
-            # le coeur du brasier : une lueur ronde sur l'emblème
-            fire_mass(front, (C[0] + 9, C[1] - 6), 3.0 + level, seed=seed + 50, tones='ABCD')
         for j in range(2 + level):
             x = C[0] + rng.uniform(0, 18)
             y = C[1] - 24 - rng.uniform(0, 8 + 5 * level)
             ember(front, x, y, big=j == 0, tones='BCD' if level > 1 else 'CDH')
+    return f
+
+
+def fx_wake(k, reach):
+    """le sillage de feu que la charge laisse au sol, derrière ses pieds (posé dans le monde) : de petites langues
+    couchées vers l'arrière, plus hautes près de lui ; reach = jusqu'où il est allé (la charge de l'image), k = l'âge
+    du sillage (0 : il vient de passer … 3 : il s'éteint en braises et en fumée)"""
+    def f(cv, back, front, ctx):
+        x0 = OX + 44.0
+        x1 = OX + 44.0 + reach
+        n = int((x1 - x0) / 6)
+        for j in range(n + 1):
+            x = x0 + j * 6 + (j % 2)
+            age = (x1 - x) / max(reach, 1) + 0.6 * k            # 0 = tout frais (près de lui)
+            hh = 15 * (1 - age * 0.45)
+            if hh >= 3:
+                tongue(back, (x, GROUND - 1), hh, max(3.0, hh * 0.5), direction=104 + 6 * (j % 3), bend=-0.7,
+                       tones='BCDHIJ' if age < 0.6 else 'CDHIJ', fork=False)
+            elif k >= 2 and j % 2:
+                puff(back, (x, GROUND - 3 - 3 * k), 1.6 + 0.3 * k, 'KL', hollow=0.25 * (k - 1))
+            put(back, x, GROUND, 'U' if age < 0.7 else 'T')
+            put(back, x + 1, GROUND, 'T')
+            if age < 0.4:
+                ember(front, x - 2, GROUND - 6 - 3 * (j % 3), tones='BCD')
     return f
 
 
@@ -1145,20 +1194,20 @@ SPECIALE = [
     dict(s=3, lean=-2, hd=(0, 1), ct=1, cq=0, cp=(0, 1), sh=(-1, 0), shot=3, fx=[fx_shield_fire(3, 4)], ms=150),
     # 5, 6 : la charge, bouclier en avant (les flammes se couchent derrière lui)
     dict(x=12, s=2, lean=3, sy=-3, hd=(1, 0), ct=-2, cq=-1, cp=(-2, -1), sh=(3, 0), shot=3,
-         fx=[fx_shield_fire(3, 5, trail=0.6), fx_ram_dust(1, 1)], ms=60),
+         fx=[fx_shield_fire(3, 5, trail=0.6), fx_ram_dust(1, 1)], wfx=[fx_wake(0, 12)], ms=60),
     dict(x=28, s=2, lean=4, sy=-3, hd=(1, 0), ct=-2, cq=-2, cp=(-3, -2), sh=(4, 0), shot=3,
-         fx=[fx_shield_fire(3, 6, trail=1.0), fx_ram_dust(2, 2)], ms=50),
+         fx=[fx_shield_fire(3, 6, trail=1.0), fx_ram_dust(2, 2)], wfx=[fx_wake(0, 28)], ms=50),
     # 7 : LE CHOC (arrêt sur l'image, éclair) : la gerbe de feu jaillit du bouclier
     dict(x=36, s=2, lean=4, sy=-3, hd=(1, 0), ct=-1, cq=-2, cp=(-2, -2), sh=(4, 0), shot=3, flash=35,
-         fx=[fx_ram_hit(0), fx_ram_dust(3, 3)], ms=200),
+         fx=[fx_ram_hit(0), fx_ram_dust(3, 3)], wfx=[fx_wake(0, 36)], ms=200),
     # 8, 9 : la colonne de feu monte sur l'ennemi, il encaisse le recul
     dict(x=34, s=2, lean=2, sy=-3, hd=(0, 1), ct=1, cq=-1, cp=(-1, -1), sh=(2, 0), shot=3,
-         fx=[fx_ram_hit(1)], wfx=[fx_pillar(1)], ms=80),
+         fx=[fx_ram_hit(1)], wfx=[fx_pillar(1), fx_wake(1, 36)], ms=80),
     dict(x=32, s=1, lean=1, sy=-2, hd=(0, 0), ct=1, cq=0, cp=(0, 0), sh=(1, 0), shot=2,
-         fx=[fx_shield_fire(1, 9)], wfx=[fx_pillar(2)], ms=110),
+         fx=[fx_shield_fire(1, 9)], wfx=[fx_pillar(2), fx_wake(2, 36)], ms=110),
     # 10 à 12 : il recule à petits glissés vers sa garde ; la colonne tourbillonne puis retombe en fumée
     dict(x=22, s=1, lean=-1, sy=-2, hd=(0, 0), ct=0, cq=1, cp=(1, 1), shot=2,
-         fx=[fx_shield_fire(0, 10), fx_ram_dust(-1, 4)], wfx=[fx_pillar(3)], ms=100),
+         fx=[fx_shield_fire(0, 10), fx_ram_dust(-1, 4)], wfx=[fx_pillar(3), fx_wake(3, 36)], ms=100),
     dict(x=11, s=1, lean=-1, sy=-1, hd=(0, 1), ct=-1, cq=1, cp=(1, 1), shot=1,
          fx=[fx_shield_smoke(0), fx_ram_dust(-2, 5)], wfx=[fx_pillar(4)], ms=100),
     dict(x=3, s=1, hd=(0, 0), ct=0, cq=0, cp=(0, 1), fx=[fx_shield_smoke(1)], wfx=[fx_pillar(5)], ms=110),
