@@ -45,11 +45,11 @@ FXPAL = {
     'H': (232, 226, 236),   # soie
     'I': (178, 168, 198),   # soie, ombre (lavande)
     'J': (120, 108, 150),   # soie, creux
-    'K': (226, 202, 166),   # pierre, lumière (grès clair)
-    'N': (172, 136, 106),   # pierre, ton de base (grès brun)
-    'O': (122, 90, 78),     # pierre, ombre
-    'P': (82, 56, 62),      # pierre, creux (brun violacé)
-    'Q': (64, 38, 48),      # pierre, fond des fissures
+    'K': (214, 190, 168),   # pierre, lumière (roche claire, chaude)
+    'N': (146, 114, 104),   # pierre, ton de base (roche brune)
+    'O': (96, 72, 78),      # pierre, ombre
+    'P': (60, 42, 56),      # pierre, creux (brun violacé)
+    'Q': (40, 26, 38),      # pierre, fond des fissures
     'R': (255, 214, 196),   # cristal, éclat
     'S': (255, 128, 104),   # cristal, lumière (grenat clair)
     'T': (206, 50, 66),     # cristal (grenat, comme les anneaux de ses pattes)
@@ -200,6 +200,25 @@ _under = np.zeros((GH, GW), bool)
 for _n in ('L2', 'R1', 'R3'):
     _under |= (PARTS[_n] != '.') & BODYM
 PARTS['corps'] = fill_under(PARTS['corps'], _under, passes=8)
+
+
+def _fill_hidden_shin(name, a, b, r):
+    """repeint le bout de jambe caché derrière une autre patte (il se voit quand celle-ci se lève)"""
+    part = PARTS[name]
+    for y in range(GH):
+        for x in range(GW):
+            if part[y, x] != '.':
+                continue
+            p = np.array([x + 0.5, y + 0.5])
+            d, t = seg_dist(p, a, b)
+            if d <= r:
+                v = np.array(b, float) - np.array(a, float)
+                n = np.array([v[1], -v[0]]) / np.linalg.norm(v)
+                w = p - (np.array(a, float) + t * v)
+                k = (w @ LN) / r
+                part[y, x] = chit_tone(k, far=True)
+
+
 
 
 def label_image(path, k=6):
@@ -363,6 +382,14 @@ def chit_tone(k, far=False):
 
 
 def ring_tone(k):
+    return 'v' if k > 0.7 else 'u' if k > 0.2 else 't' if k > -0.3 else 's' if k > -0.7 else 'r'
+
+
+# la jambe de R2 passe derrière la cuisse de R3 : on repeint ce morceau caché (visible quand R3 se lève)
+_fill_hidden_shin('R2', (99.5, 71.0), (101.5, 86.0), 1.7)
+
+
+def _unused_ring_tone(k):
     return 'v' if k > 0.7 else 'u' if k > 0.2 else 't' if k > -0.3 else 's' if k > -0.7 else 'r'
 
 
@@ -1190,8 +1217,8 @@ def claw_leg(cv, base, knee, tip, w0=8.0, flash=False, cut=1.0, bulge=(2.0, 2.5)
 
 # les quatre pattes de pierre autour de l'ennemi : (base x, genou x, genou hauteur, pointe x, pointe hauteur,
 # épaisseur, devant ?) — x par rapport à l'ennemi, hauteurs au-dessus du sol
-CLAWS = [(-9, -31, 60, -4, 29, 9.0, False), (9, 30, 56, 4, 27, 9.0, False),
-         (-5, -23, 47, -1, 19, 8.0, True), (6, 22, 50, 2, 21, 8.0, True)]
+CLAWS = [(-11, -34, 68, -4, 32, 11.0, False), (11, 33, 63, 4, 30, 11.0, False),
+         (-6, -25, 53, -1, 20, 10.0, True), (7, 24, 56, 2, 22, 10.0, True)]
 
 
 def fx_claws(progress, close=0.0, flash=False, crumble=0.0):
@@ -1293,7 +1320,7 @@ SPECIALE = [
     dict(sp=(-4, -2), kf=0.6, lean=-4, head=(-1, 0), abd=1, armP=('orig', -2, -2), armL=(-1, -2, -2),
          legs={'R3': dict(new=[(90, 89), (107, 57), (122, 55), (130, 65)]), 'R4': dict(new=R4_HIGH),
                'L1': dict(k=(-1, -2)), 'L2': dict(k=(-1, -1))},
-         fx_list=[fx_silk(1.0, taut=0.35), fx_wrap(1)], ms=120),
+         fx_list=[fx_silk(1.0, taut=0.12), fx_wrap(1)], ms=120),
     # 6 : elle plante les deux pattes avant dans le sol ; les fils cassent
     dict(sp=(3, 2), lean=3, head=(1, 1), armP=('orig', 1, 1), armL=(2, 1, 2),
          legs={'R3': dict(new=R3_SLAM), 'R4': dict(new=R4_SLAM), 'L1': dict(k=(1, 0))},
