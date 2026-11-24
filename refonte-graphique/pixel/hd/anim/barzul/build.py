@@ -400,6 +400,20 @@ def blade_sway(part, s=0):
     return shear_rows(part, lambda y: round(s * max(0.0, (y - 93) / 12.0)), 94, 106) if s else part
 
 
+def shout(part):
+    """il crie (« Feu ! ») : la mâchoire descend d'un pixel sous les dents du haut ; l'ouverture est rouge sombre"""
+    g = part.copy()
+    zone_ = (slice(48, 53), slice(67, 78))
+    moved = part[zone_].copy()
+    g[zone_] = np.where(moved != '.', '.', g[zone_])
+    sub = g[49:54, 67:78]
+    g[49:54, 67:78] = np.where(moved != '.', moved, sub)
+    for x in range(69, 75):
+        g[48, x] = 'E'
+    return g
+
+
+P['tete_cri'] = shout(P['tete'])
 BLINK = dict(SRC['cligne'])
 SQUINT = {'x': '2', 'v': 'z'}            # il plisse l'oeil pour viser
 
@@ -448,20 +462,6 @@ def fired(part):
     return painted(g, CHIEN_ABATTU)
 
 
-def recoil(part, tilt=0, back=0, x0=80):
-    """le recul : l'avant-bras et le pistolet (colonnes x >= x0) se relèvent (la bouche du canon monte de tilt
-    pixels, colonnes décalées : jamais d'image tournée) et reculent de back pixels (la manche se tasse)"""
-    fore = np.where(XX >= x0, part, '.')
-    base = np.where(XX < x0, part, '.')
-    if tilt:
-        fore = shear_cols(fore, lambda x: -round(tilt * max(0, x - x0) / 43.0), x0, GW - 1)
-    if back:
-        fore = shear_rows(fore, lambda y: -back)
-    out = base.copy()
-    out[fore != '.'] = fore[fore != '.']
-    return out
-
-
 # ---------------------------------------------------------------- une image : le montage complet
 class Ctx:
     """ce qu'une image a calculé (positions sur la toile) : utile aux effets"""
@@ -489,14 +489,16 @@ def rig_frame(f):
     body.draw(cv, coat(P['corps'] if near == 'rest' else P['corps_nu'], f.get('cl', 0), f.get('cr', 0)))
     # 3) la plume puis la tête (avec son petit retard) ; si elle monte, la rangée du bas est doublée (pas de trou)
     blit(cv, plume(f.get('pl', 0)), cx + hx, cy + hy)
+    tete = P['tete_cri'] if f.get('cri') else P['tete']
     if hy < 0:
-        blit(cv, P['tete'], cx, cy, swap)
-    blit(cv, P['tete'], cx + hx, cy + hy, swap)
+        blit(cv, tete, cx, cy, swap)
+    blit(cv, tete, cx + hx, cy + hy, swap)
     # 4) le bras proche (sabre)
     if near == 'rest':
         blit(cv, blade_sway(P['brasP'], f.get('bl', 0)), cx, cy)
     else:
         draw_near_arm(cv, near, (cx, cy), ctx)
+    ctx.near = near
     # 5) le bras tendu et le pistolet
     lift, bk, tilt, spin = f.get('lift', 0), f.get('back', 0), f.get('tilt', 0), f.get('spin')
     blit(cv, far_arm(lift, bk, tilt, spin, f.get('fired', False)), cx, cy)
@@ -542,8 +544,76 @@ def far_arm(lift=0, back=0, tilt=0, spin=None, is_fired=False):
     return out
 
 
+# ---------------------------------------------------------------- le bras proche levé (la spéciale)
+# Le sabre levé : la lame, la garde et le poing du dessin, retournés rangée par rangée (la lame monte et penche vers
+# l'arrière, le fil clair reste à droite, du côté de la lumière) ; sous le poing, la dentelle puis la manchette d'or
+# dans son ordre d'origine (le haut clair, le bas dans l'ombre). Le bas de la manchette, au milieu, est l'ancre.
+_ROWS_UP = list(range(105, 84, -1)) + [84, 83] + list(range(82, 75, -1)) + [75] + list(range(69, 75))
+_X0, _X1 = 29, 50
+LEVE = np.full((len(_ROWS_UP), _X1 - _X0 + 1), '.', dtype='<U1')
+for _j, _r in enumerate(_ROWS_UP):
+    _row = P['brasP'][_r, _X0:_X1 + 1]
+    LEVE[_j] = np.where(isin(_row, COAT), '.', _row)
+LEVE_ANCHOR = (45.5 - _X0, len(_ROWS_UP) - 1)          # (x, rangée) du bas de la manchette dans la petite grille
+LEVE_TIP = (31 - _X0, 0)                                # la pointe de la lame
+
+
+def shade(k, kind):
+    """ton d'une forme ronde selon k = orientation vers la lumière (-1 ombre … 1 lumière)"""
+    if kind == 'manche':
+        return 'q' if k > 0.72 else 'p' if k > 0.3 else 'o' if k > -0.25 else 'n' if k > -0.7 else 'm'
+    if kind == 'or':
+        return 'k' if k > 0.6 else 'j' if k > 0.15 else 'i' if k > -0.35 else 'h' if k > -0.75 else 'g'
+    return 'o'
+
+
+DARKER = {'q': 'p', 'p': 'o', 'o': 'n', 'n': 'm', 'k': 'j', 'j': 'i', 'i': 'h', 'h': 'g'}
+
+
+def draw_limb(cv, P0, P1, r0, r1, kind='manche', lit=0.0, rim=True):
+    """un segment arrondi (capsule) de P0 à P1 (toile), rayon r0 -> r1, modelé par la lumière (en haut à droite)"""
+    P0, P1 = np.array(P0, float), np.array(P1, float)
+    v = P1 - P0
+    L2 = max(v @ v, 1e-6)
+    R = max(r0, r1) + 1
+    for y in range(max(0, int(min(P0[1], P1[1]) - R)), min(H, int(max(P0[1], P1[1]) + R + 1))):
+        for x in range(max(0, int(min(P0[0], P1[0]) - R)), min(W, int(max(P0[0], P1[0]) + R + 1))):
+            p = np.array([x + 0.5, y + 0.5])
+            t = float(np.clip((p - P0) @ v / L2, 0, 1))
+            c = P0 + t * v
+            r = r0 + (r1 - r0) * t
+            w = p - c
+            dist = math.hypot(*w)
+            if dist <= r:
+                k = (w @ LN) / r + lit
+                ch = shade(k, kind)
+                if rim and dist > r - 1.1 and k < -0.2:
+                    ch = DARKER.get(ch, ch)
+                cv[y, x] = ch
+
+
+# Les poses du bras levé (grille du dessin) : l'épaule, le coude, le bas de la manchette.
+SHOULDER = (47.0, 55.0)
+ARM_POSES = {
+    'mi': ((41.0, 65.0), (37.5, 56.0)),     # il tire le sabre vers le haut, devant la poitrine (la lame déjà debout)
+    'leve': ((32.5, 50.5), (32.0, 43.0)),   # le bras levé, le coude à hauteur d'épaule, le sabre dressé au ciel
+    'feu': ((32.5, 48.5), (32.5, 41.0)),    # « Feu ! » : le poing monte encore de deux pixels
+}
+
+
 def draw_near_arm(cv, mode, chest, ctx):
-    raise NotImplementedError
+    E, Cb = ARM_POSES[mode]
+    S = g2c(SHOULDER, chest)
+    Ec, Cc = g2c(E, chest), g2c(Cb, chest)
+    draw_limb(cv, S, Ec, 5.0, 4.6, 'manche')
+    draw_limb(cv, Ec, Cc + np.array([0.0, 1.0]), 4.6, 4.2, 'manche', lit=0.1)
+    x0 = int(round(Cc[0] - LEVE_ANCHOR[0] - 0.5))
+    y0 = int(round(Cc[1] - LEVE_ANCHOR[1] - 0.5))
+    ys, xs = np.nonzero(LEVE != '.')
+    ok = (ys + y0 >= 0) & (ys + y0 < H) & (xs + x0 >= 0) & (xs + x0 < W)
+    cv[ys[ok] + y0, xs[ok] + x0] = LEVE[ys[ok], xs[ok]]
+    ctx.tip = (x0 + LEVE_TIP[0] + 0.5, y0 + LEVE_TIP[1] + 0.5)
+    ctx.fist = (x0 + LEVE_ANCHOR[0], y0 + 26)
 
 
 # ---------------------------------------------------------------- 1) la pose (le crâneur qui tangue)
@@ -563,7 +633,7 @@ POSE = [
     dict(b=0, lean=-1, head=(0, 0), pl=-1, q=1, cl=0, cr=1, bl=0, ms=140),
     dict(b=0, lean=-1, head=(0, 0), pl=-1, q=1, cl=1, cr=1, bl=1, k=1, ms=110),
     dict(b=0, lean=-1, head=(0, 0), pl=-1, q=1, cl=1, cr=0, bl=1, ms=160),
-    dict(b=0, lean=0, head=(0, 0), pl=0, q=0, cl=0, cr=0, bl=0, ms=130),
+    dict(b=0, lean=0, head=(0, 0), pl=0, q=1, cl=0, cr=0, bl=0, ms=130),
 ]
 
 
@@ -853,9 +923,10 @@ def spray(cv, origin, t, seeds, g=0.9, sizes=(3, 2, 2, 1)):
 # et sort du cadre ; le recul relève le pistolet et ramène la main en arrière, le buste et la tête reculent d'un
 # pixel. Une grosse bouffée de fumée blanche sort du canon et reste là où le coup est parti : elle monte, s'enroule en
 # volutes et se défait. Le pistolet, relevé par le recul, continue sa course : il fait un tour complet autour de
-# l'index (canon en haut, en arrière, en bas — une traînée d'acier en arc), et il le rattrape en joue, en crâneur.
+# l'index (canon en haut, en arrière, en bas — une traînée d'acier en arc), et il le rattrape en joue, en crâneur ;
+# un filet de fumée monte encore du canon, le pouce réarme le chien.
 BALL = ['.ji', 'kjj', 'lk.']
-SHOT_AT = [None]                          # là où le coup est parti (toile) : la fumée y reste
+SHOT_AT = [None]                          # là où le coup est parti (toile) : la fumée y reste (calculé plus bas)
 
 
 def fx_spark(cv, back, front, ctx):
@@ -869,7 +940,6 @@ def fx_spark(cv, back, front, ctx):
 def fx_flash(cv, back, front, ctx):
     """le coup : l'éclair rond à la bouche du canon (coeur blanc, bord orange) et la balle qui part"""
     mx, my = ctx.muzzle
-    SHOT_AT[0] = (mx, my)
     pop(front, (mx + 5, my), 4.6, facing=0, tones='eefgh')
     pop(front, (mx + 3, my), 2.2, facing=0, tones='e')
     sprite(front, BALL, int(mx + 16), int(my - 1))
@@ -935,7 +1005,7 @@ def fx_spin_smear(a0, a1):
     """la traînée d'acier du pistolet qui tourne autour de l'index : un arc pâle, épais près du canon"""
     def f(cv, back, front, ctx):
         px, py = ctx.pivot
-        ribbon(back, (px + 0.5, py + 0.5), 21, 21, a0, a1, 4.0, head=0.82, tones='opq')
+        ribbon(back, (px + 0.5, py + 0.5), 21, 21, a0, a1, 4.6, head=0.82, tones='ppq')
     return f
 
 
@@ -944,7 +1014,7 @@ def fx_wisp(k):
     def f(cv, back, front, ctx):
         mx, my = ctx.muzzle
         pts = bezier((mx + 1, my - 1), (mx + 3, my - 5), (mx - 1, my - 8 - k), (mx + 2, my - 12 - k), 20)
-        stroke(back, pts, [1.4 - 0.6 * i / 20 for i in range(21)], 'tu')
+        stroke(back, pts, [2.2 - 1.2 * i / 20 for i in range(21)], 'tu')
         curl(back, (mx + 3.5, my - 13 - k), 2.2, 180, turn=240, w=1.3, tones='tu', cw=True)
     return f
 
@@ -972,10 +1042,238 @@ ATTAQUE = [
          fx=[fx_smoke(4), fx_spin_smear(275, 352)], ms=90),
     # 9-10 : en crâneur, menton levé ; un filet de fumée monte encore du canon
     dict(lean=0, b=1, head=(0, -1), fired=True, pl=-1, q=1, cl=1, fx=[fx_smoke(5), fx_wisp(0)], ms=170),
-    dict(lean=0, b=1, head=(0, 0), fired=True, pl=0, q=0, fx=[fx_smoke(6), fx_wisp(2)], ms=170),
+    dict(lean=0, b=1, head=(0, 0), pl=0, q=0, fx=[fx_smoke(6), fx_wisp(2)], ms=170),     # (le pouce a réarmé le chien)
 ]
 
-SPECIALE = [dict(POSE[0])]
+
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Bordée ! »
+# Le capitaine tire son sabre vers le haut et le dresse au ciel, la poitrine gonflée, le menton levé ; il tient la
+# pose et crie « Feu ! » (la bouche s'ouvre, le poing monte d'un coup, un éclat court sur la lame). Derrière lui, hors du cadre, les
+# canons de son navire tonnent l'un après l'autre : trois éclairs ronds au bord gauche, trois gros nuages de fumée
+# blanche. Trois boulets de fonte, enveloppés d'eau de mer (une traînée d'eau et d'écume qui s'enroule autour de leur
+# course, des gouttes qui s'en détachent), passent en arc au-dessus de sa tête et s'abattent sur l'ennemi : à chaque
+# coup, une gerbe d'eau en couronne jaillit du sol (nappes courbes qui s'ouvrent, grosses gouttes au bout), avec un
+# bouillon d'écume et de la fumée grise. Le troisième boulet, le plus gros coup : arrêt sur l'image. Les gerbes
+# retombent en pluie, l'écume s'étale au sol en volutes, la fumée se défait. Le capitaine rit (la tête sautille), puis
+# rabaisse son sabre et se remet en joue.
+BOOMS = [(14.0, 120.0), (30.0, 104.0), (8.0, 136.0)]          # les bouches des canons, au bord gauche (toile)
+BOOM_AT = [3, 4, 5]                                             # l'image où chaque canon tonne
+IMPACTS = [(ENEMY_X - 32.0, 0.95), (ENEMY_X + 32.0, 0.9), (ENEMY_X + 0.0, 1.6)]   # où tombe chaque boulet, taille
+FLIGHT = 5                                                      # images de vol de chaque boulet
+APEX = [104.0, 112.0, 118.0]                                    # la hauteur de l'arc au-dessus de la corde
+
+
+def ball_pos(j, t):
+    """la position du boulet j à l'instant t (0 = bouche du canon, 1 = au sol chez l'ennemi) : un arc en cloche"""
+    (x0, y0), (x1, _) = BOOMS[j], IMPACTS[j]
+    y1 = GROUND - 3.0
+    x = x0 + (x1 - x0) * t
+    y = y0 + (y1 - y0) * t - 4 * APEX[j] * t * (1 - t)
+    return x, y
+
+
+def cannonball(cv, c, r=4.0):
+    """un boulet de fonte : noir bleuté, un reflet en haut à droite (pas de contour : la fonte sombre suffit)"""
+    puff(cv, c, r, tones='ijkkkll')
+
+
+def fx_ball_flight(j, t):
+    """le boulet j en vol, avec sa traînée d'eau : un ruban d'eau modelé (épais près du boulet, effilé derrière), un
+    fil d'écume qui s'enroule autour, et des gouttes qui s'en détachent et retombent"""
+    def f(cv, back, front, ctx):
+        t0 = max(0.0, t - 0.22)
+        n = 26
+        pts = [ball_pos(j, t0 + (t - t0) * i / n) for i in range(n + 1)]
+        widths = [0.6 + 7.4 * (i / n) ** 1.4 for i in range(n + 1)]
+        lit_stroke(back, pts, widths, 'XYZAB', foam=(0.5, 1.0))
+        # le fil d'écume qui tourne autour de la traînée (une ondulation, jamais un trait droit)
+        fx_ = []
+        for i in range(n + 1):
+            (x, y), s_ = pts[i], i / n
+            if i < n:
+                dx, dy = pts[i + 1][0] - x, pts[i + 1][1] - y
+            l_ = math.hypot(dx, dy) or 1
+            nx, ny = -dy / l_, dx / l_
+            off = math.sin(s_ * 3 * math.pi + j) * (0.8 + 3.0 * s_)
+            fx_.append((x + nx * off, y + ny * off))
+        stroke(back, fx_, [0.6 + 1.8 * (i / n) for i in range(n + 1)], 'WX')
+        # gouttes détachées (elles tombent sous la traînée)
+        for m_ in range(3):
+            tt = t0 + (t - t0) * (0.25 + 0.25 * m_)
+            x, y = ball_pos(j, tt)
+            fall = (t - tt) * 60
+            drop(back, x - 1 + m_, y + 3 + fall, 2 if m_ else 1, v=(0.5, 1.5))
+        bx, by = ball_pos(j, t)
+        cannonball(back, (bx, by))
+    return f
+
+
+def fx_boom(j, k):
+    """le canon j tonne (k = images depuis le coup) : un éclair rond, puis un gros nuage de fumée qui gonfle, monte
+    lentement et finit par se défaire en volutes"""
+    def f(cv, back, front, ctx):
+        x, y = BOOMS[j]
+        if k == 0:
+            pop(back, (x + 2, y), 6.5, facing=25, tones='eefgh')
+            cloud(back, (x - 4, y + 2), 6.0, tones='sstuv', seed=10 + j, ground=False)
+            return
+        r = min(13.0, 7.0 + 2.2 * k)
+        hol = 0.0 if k < 6 else min(0.95, (k - 5) * 0.15)
+        cx_, cy_ = x + min(k, 5) * 1.5, y - 3 - 1.6 * k
+        cloud(back, (cx_, cy_), r, tones='sstuv' if hol < 0.5 else 'ssttu', hollow=hol, seed=10 + j, ground=False)
+        if k == 1:
+            pop(back, (x + 6, y - 1), 3.0, facing=25, tones='efg')
+        if k >= 4:
+            curl(back, (cx_ + r * 0.9, cy_ - r * 0.6), 3.0 + 0.2 * k, 300, turn=280, w=2.0, tones='stu')
+    return f
+
+
+# La gerbe en couronne, image par image : hauteur, ouverture des pétales, épaisseur, part du bas déjà vidée (les
+# pétales se détachent), chute des têtes (elles retombent en grosses gouttes).
+CROWN = [
+    dict(h=12, open_=0.35, w=7.0, cup=0.55, det=0, fall=0),
+    dict(h=26, open_=0.55, w=7.0, cup=0.5, det=0, fall=0),
+    dict(h=38, open_=0.75, w=6.6, cup=0.5, det=0, fall=0),
+    dict(h=42, open_=0.95, w=6.0, cup=0.45, det=0, fall=0),
+    dict(h=30, open_=1.25, w=5.6, cup=0.5, det=5, fall=-2),
+    dict(h=15, open_=1.5, w=5.0, cup=0.7, det=8, fall=10),
+]
+PETALS = [(-1.0, 0.70), (-0.5, 0.92), (0.0, 1.0), (0.5, 0.88), (1.0, 0.66)]     # (côté, hauteur relative)
+
+
+def crown(cv, X, G, k, big=1.0, seed=0):
+    """une gerbe d'eau en couronne : une coupe d'eau pleine qui monte du sol et s'ouvre en cinq pointes courbes, chacune
+    finie par une grosse tête ronde (qui se détache et retombe quand la gerbe s'effondre) ; le tout est UNE forme
+    pleine, modelée par la lumière (bord éclairé en écume)"""
+    c = CROWN[k]
+    m = np.zeros((H, W), bool)
+    foam_m = np.zeros((H, W), bool)
+    hh = c['h'] * big
+    # la coupe : le corps de la gerbe, posé au sol
+    rx = (9 + 7 * c['open_']) * big
+    m |= ellipse_mask((X, G + 1), rx, hh * c['cup'] + 2)
+    rng = np.random.RandomState(seed)
+    for (side, rel) in PETALS:
+        h_ = hh * rel * (1 + rng.uniform(-0.06, 0.06))
+        lean = side * c['open_'] * 0.55
+        P0 = np.array([X + side * 6 * big, G])
+        P3 = P0 + np.array([math.sin(lean) * h_ + side * 6 * big * c['open_'], -math.cos(lean) * h_])
+        P1 = P0 + np.array([0.0, -h_ * 0.45])
+        P2 = P3 + np.array([-side * 4 * big * c['open_'] - math.sin(lean) * h_ * 0.25, h_ * 0.25])
+        pts = bezier(P0, P1, P2, P3, 30)
+        n = len(pts) - 1
+        ws = [c['w'] * big * (1.5 - 0.8 * i / n) + 1 for i in range(n + 1)]
+        pm, sm = stroke_mask(pts, ws)
+        m |= pm
+        foam_m |= pm & (sm > 0.6)
+        u = np.array([math.sin(lean) + side * 0.3, -math.cos(lean)])
+        u /= np.linalg.norm(u)
+        head = P3 + u * (c['det'] * big + 1.5) + np.array([0.0, c['fall'] * big])
+        r = (3.8 - 0.4 * max(0, k - 3)) * big
+        hm = ellipse_mask(head, r, r * (1.15 if c['det'] else 1.0))
+        m |= hm
+        foam_m |= hm
+    shade_mask(cv, m, 'XYZAB', foam=foam_m)
+
+def fx_splash(j, k):
+    """la gerbe du boulet j (k = images depuis l'impact) : un éclat blanc, puis une couronne d'eau qui s'ouvre, monte,
+    se vide par le bas et retombe en grosses gouttes ; l'écume bouillonne puis s'étale au sol en volutes ; un peu de
+    fumée grise monte autour"""
+    def f(cv, back, front, ctx):
+        X, big = IMPACTS[j]
+        G = GROUND - 1
+        seeds = [(-3.4, -6.0), (3.6, -6.6), (-2.0, -8.0), (2.2, -8.6), (-4.8, -4.4), (5.0, -5.0), (0.6, -9.4)]
+        if k == 0:
+            cloud(back, (X - 9 * big, G - 4), 5.0 * big, tones='sstuv', seed=30 + j)
+            cloud(back, (X + 9 * big, G - 4), 4.4 * big, tones='sstuv', seed=31 + j)
+            crown(front, X, G, 0, big, seed=j)
+            pop(front, (X, G - 6 * big), 5.5 * big, facing=90, tones='WWX')
+            return
+        # la fumée grise du choc : derrière la gerbe, elle monte et se défait
+        if k <= 4:
+            hol = min(0.95, 0.2 * k)
+            cloud(back, (X - 13 * big, G - 5 - 3 * k), (5.0 + 0.5 * k) * big, tones='sttuv', hollow=hol,
+                  seed=30 + j, ground=False)
+            cloud(back, (X + 13 * big, G - 6 - 3 * k), (4.4 + 0.5 * k) * big, tones='sttuv', hollow=hol,
+                  seed=31 + j, ground=False)
+        if k <= 5:
+            crown(front, X, G, k, big, seed=j)
+        if k == 1 and big > 1.2:                         # le gros coup : l'éclat blanc dure encore (arrêt sur l'image)
+            pop(front, (X, G - 10 * big), 4.0 * big, facing=90, tones='WWX')
+        if 2 <= k <= 6:
+            spray(front, (X, G - 14 * big), k - 1.6, [(vx * big, vy * big) for (vx, vy) in seeds], g=1.0,
+                  sizes=(4, 3, 3, 2))
+        # l'écume au pied : elle bouillonne, puis s'étale et s'enroule au sol
+        if 3 <= k <= 6:
+            sp = (k - 2) * 5 * big
+            r = max(1.2, (4.6 - 0.7 * (k - 3)) * big)
+            foam(front, (X - sp - 4 * big, G - 1), r, hollow=min(0.9, 0.22 * (k - 3)), seed=41 + j)
+            foam(front, (X + sp + 4 * big, G - 1), r * 0.9, hollow=min(0.9, 0.22 * (k - 3)), seed=42 + j)
+            curl(front, (X - sp - 9 * big, G - 3), 2.6 * big, 90, turn=260, w=1.7, tones='WXY')
+            curl(front, (X + sp + 9 * big, G - 3), 2.6 * big, 90, turn=260, w=1.7, tones='WXY', cw=True)
+    return f
+
+
+def fx_glint(cv, back, front, ctx):
+    """« Feu ! » : un éclat rond court sur la lame levée"""
+    x, y = ctx.tip
+    pop(front, (x + 6, y + 6), 1.8, facing=45, tones='eo')
+
+
+def fx_raise_smear(a0, a1):
+    """la lame qui monte : un arc pâle derrière elle (autour de l'épaule)"""
+    def f(cv, back, front, ctx):
+        c = g2c(SHOULDER, ctx.chest)
+        ribbon(back, (c[0], c[1]), 46, 46, a0, a1, 5.5, head=0.88, tones='ppq')
+    return f
+
+
+def schedule(fr):
+    """tous les effets de la bordée à l'image fr de la spéciale (canons, boulets, gerbes)"""
+    out = []
+    for j in range(3):
+        k = fr - BOOM_AT[j]
+        if 0 <= k <= 13:
+            out.append(fx_boom(j, k))
+        if 0 <= k < FLIGHT:
+            out.append(fx_ball_flight(j, (k + 0.6) / FLIGHT))
+        ks = k - FLIGHT
+        if 0 <= ks <= 6:
+            out.append(fx_splash(j, ks))
+    return out
+
+
+SPECIALE = [
+    # 0-2 : il tire son sabre vers le haut, le dresse au ciel et crie « Feu ! » (pose tenue)
+    dict(near='mi', lean=-1, head=(0, 0), pl=1, q=-1, cl=-1, fx=[fx_raise_smear(240, 128)], ms=90),
+    dict(near='leve', b=1, s=-1, lean=-1, head=(0, -1), pl=2, q=-1, cl=-1, cr=1, ms=110),
+    dict(near='feu', b=1, s=-1, lean=-1, head=(0, -1), cri=1, pl=1, q=0, cl=0, cr=1, fx=[fx_glint], ms=260),
+    # 3-7 : les trois canons tonnent, les boulets passent en arc au-dessus de lui
+    dict(near='feu', b=1, s=-1, lean=-1, head=(0, -1), cri=1, pl=0, q=0, cr=0, ms=70),
+    dict(near='feu', b=1, s=-1, lean=-1, head=(0, -1), cri=1, pl=-1, q=1, cl=1, ms=70),
+    dict(near='feu', b=1, s=-1, lean=-1, head=(0, -1), pl=0, q=1, cl=1, ms=70),
+    dict(near='leve', b=1, s=-1, lean=0, head=(0, -1), pl=1, q=0, cl=0, ms=70),
+    dict(near='leve', b=1, s=-1, lean=0, head=(0, 0), pl=1, q=0, ms=70),
+    # 8-11 : les boulets s'abattent ; le troisième, le plus gros coup : arrêt sur l'image quand la gerbe jaillit
+    dict(near='leve', b=1, lean=0, head=(0, 0), pl=0, q=0, ms=60),
+    dict(near='leve', b=1, lean=1, head=(0, 0), pl=-1, q=1, cr=-1, ms=60),
+    dict(near='leve', b=1, lean=1, head=(0, 0), pl=-1, q=1, cl=1, cr=-1, ms=60),
+    dict(near='leve', b=1, lean=1, head=(0, -1), cri=1, pl=-1, q=1, cl=1, cr=-1, ms=250),
+    # 12-13 : il rit (la tête sautille) pendant que l'eau retombe
+    dict(near='leve', b=0, lean=0, head=(0, 0), pl=0, q=0, ms=90),
+    dict(near='leve', b=1, lean=0, head=(0, -1), cri=1, pl=1, q=-1, ms=90),
+    # 14-17 : il rabaisse le sabre et se remet en joue ; l'écume s'étale, la fumée se défait
+    dict(near='mi', b=0, lean=0, head=(0, 0), pl=1, q=-1, cl=-1, ms=100),
+    dict(b=0, lean=0, head=(0, 1), pl=0, q=0, cl=0, bl=-1, fx=[fx_raise_smear(124, 240)], ms=110),
+    dict(b=0, lean=0, head=(0, 0), pl=-1, q=1, cl=1, bl=1, ms=140),
+    dict(b=0, lean=0, head=(0, 0), pl=0, q=0, bl=0, ms=150),
+]
+for _i, _f in enumerate(SPECIALE):
+    _f['fx'] = _f.get('fx', []) + schedule(_i)
+# la bouche du canon à l'image du coup (image 3 de l'attaque) : la fumée reste là, quoi que fasse le pistolet ensuite
+_c = rig_frame(dict(ATTAQUE[3], fx=[]))[3]
+SHOT_AT[0] = (float(_c.muzzle[0]), float(_c.muzzle[1]))
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
