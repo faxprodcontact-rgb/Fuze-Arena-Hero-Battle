@@ -1013,11 +1013,11 @@ WING_STATES = {
     # à demi ouverte : le poignet se soulève, les rémiges pendent encore (le manteau s'entrouvre)
     'demi': dict(R=(44, 54), Wr=(28, 36), Tp=(12, 46), n=8, a0=266, a1=226, l0=36, l1=30, cw=17, fw=9.0),
     # grande ouverte, levée (le V du corbeau qui va frapper l'air)
-    'grande': dict(R=(44, 52), Wr=(26, 22), Tp=(10, 4), n=9, a0=252, a1=168, l0=40, l1=40, cw=19, fw=10.0),
+    'grande': dict(R=(44, 52), Wr=(26, 22), Tp=(14, 8), n=9, a0=252, a1=142, l0=40, l1=34, cw=19, fw=10.0),
     # le battement : les ailes s'abaissent d'un coup (il s'arrache du sol)
     'battue': dict(R=(44, 54), Wr=(22, 50), Tp=(8, 66), n=9, a0=270, a1=222, l0=30, l1=28, cw=17, fw=9.0),
     # en vol plané : grandes ouvertes à l'horizontale, les doigts du bout un peu relevés
-    'plane': dict(R=(44, 52), Wr=(20, 38), Tp=(-6, 34), n=9, a0=262, a1=184, l0=30, l1=36, cw=17, fw=9.0),
+    'plane': dict(R=(44, 52), Wr=(20, 38), Tp=(-2, 35), n=9, a0=262, a1=176, l0=30, l1=34, cw=17, fw=9.0),
 }
 
 
@@ -1296,11 +1296,16 @@ CROW_FEATHERS = [
     ['.k.', 'jk.', 'jjk', 'ijk', 'ij.', '.h.'],                                 # dressée (elle tourne)
     ['..kkk.....', 'kjjjjiihh.', '..jjiii...'],                              # couchée, retournée (elle tourne)
 ]
-BIG_CROW = ['.......jkk', '.....iijjk', '...iijjjk.', '..ijjjk...', '.iij......', 'hi........']
+BIG_CROW = [
+    ['.......kkkkk....', '...hiijjjjjjkkk.', 'hhhiiijjjjjjjjkk', '...iiiiijjjjj...', '......iiii......'],   # file à droite
+    ['hh............', '.hijkk........', '..iijjjkk.....', '...iiijjjjkk..', '.....iiijjjjk.', '.......iiijjk.',
+     '.........iij..', '...........i..'],                                                              # plonge
+    ['...........kk.', '........jjjjk.', '.....iijjjjk..', '...iiijjjk....', '.hiijjk.......', 'hh............'],  # monte
+]
 
 
 def crow_feather(cv, x, y, k=0, big=False):
-    rows = BIG_CROW if big else CROW_FEATHERS[k % len(CROW_FEATHERS)]
+    rows = BIG_CROW[k % 3] if big else CROW_FEATHERS[k % len(CROW_FEATHERS)]
     for j, r in enumerate(rows):
         for i, ch in enumerate(r):
             if ch != '.':
@@ -1420,15 +1425,16 @@ def fx_shadow(cv, back, front, ctx):
 
 
 # La volée de plumes : chacune a sa place dans la rafale (retard le long du trajet, écart de côté, dessin, grande ?)
-FLOCK = [(0.00, 0, 0, True), (0.06, -9, 1, False), (0.08, 8, 0, False), (0.13, -3, 2, True), (0.17, 12, 1, False),
-         (0.20, -14, 0, False), (0.25, 4, 1, True), (0.29, -8, 2, False), (0.33, 10, 0, False), (0.38, -2, 1, False),
-         (0.43, 14, 2, False), (0.47, -12, 0, False), (0.52, 5, 1, False)]
+FLOCK = [(0.00, 0, 0, True), (0.04, -10, 1, False), (0.06, 9, 0, True), (0.10, -4, 2, False), (0.13, 15, 1, True),
+         (0.16, -16, 0, True), (0.19, 3, 1, False), (0.22, -9, 2, True), (0.25, 12, 0, False), (0.28, -20, 1, False),
+         (0.31, 20, 2, True), (0.34, -2, 0, False), (0.37, 8, 1, True), (0.40, -13, 2, False), (0.44, 16, 0, False),
+         (0.48, -6, 1, True), (0.52, 4, 2, False), (0.56, -18, 0, False)]
 
 
 def storm_path(ctx):
     p0 = ctx.fan_tip + (2.0, 0.0)
     T = np.array([FOE[0] - 6.0, FOE[1] - 4.0])
-    return path_pts(p0, p0 + np.array([44.0, 4.0]), T + np.array([-50.0, -26.0]), T, n=120), T
+    return path_pts(p0, p0 + np.array([56.0, -26.0]), T + np.array([-34.0, -52.0]), T, n=120), T
 
 
 def fx_storm(k):
@@ -1440,21 +1446,21 @@ def fx_storm(k):
         if k == 0:
             B = ctx.fan_tip + (2.0, 0.0)
             pop(front, B + (3, 0), 7.0, facing=-10, tones='WWEFG')
-            moon(front, (B[0] + 10, B[1] + 1), 17, -12, 7.0, inner=1.15)
-            comet(back, pts, 0.0, 0.16, 14, 'WEFGH')
+            moon(front, (B[0] + 12, B[1] + 1), 21, -12, 8.5, inner=1.15)
+            comet(back, pts, 0.0, 0.16, 18, 'WEFGHI')
             gust(back, B + (-2, -4), B + (4, -14), B + (14, -18), B + (22, -15), 3.6, 'EFGHI', curl_r=3.2, up=True)
             gust(back, B + (-2, 4), B + (4, 14), B + (14, 18), B + (22, 16), 3.2, 'EFGHI', curl_r=3.0, up=False)
-            for (lag, side, kk, big) in FLOCK[:4]:
-                q = max(0.0, 0.14 - lag)
-                p = pts[int(q * n)] + np.array([0.0, side * 0.5])
-                crow_feather(front, p[0] - 2, p[1] - 2, kk, big)
+            for (lag, side, kk, big) in FLOCK[:6]:
+                q = max(0.0, 0.16 - lag)
+                p = pts[int(q * n)] + np.array([4.0 + lag * 30, side * 0.7])
+                crow_feather(front, p[0] - (8 if big else 4), p[1] - 2, 0 if abs(side) < 8 else (2 if side < 0 else 1), big)
             return
         if k <= 3:
             sf = [0, 0.45, 0.82, 1.0][k]                   # le front de la rafale
-            st = [0, 0.0, 0.18, 0.5][k]                    # l'arrière s'efface
-            comet(back, pts, st, sf, [0, 16, 18, 14][k], 'WEFGH')
-            braid(front, pts, st, sf, 8.0, 1.4, 0.0, 3.0, 'GHI')
-            braid(back, pts, st, sf, 8.0, 1.4, math.pi, 2.6, 'FGH')
+            st = [0, 0.0, 0.16, 0.48][k]                   # l'arrière s'efface
+            comet(back, pts, st, sf, [0, 24, 28, 20][k], 'WEFGHI')
+            braid(front, pts, st, sf, 11.0, 1.4, 0.0, 3.2, 'GHI')
+            braid(back, pts, st, sf, 11.0, 1.4, math.pi, 2.8, 'FGH')
             for (lag, side, kk, big) in FLOCK:
                 q = sf - lag * (0.9 if k < 3 else 0.5)
                 if q < st or q > 1.0:
@@ -1463,31 +1469,40 @@ def fx_storm(k):
                 v = pts[min(i + 2, n)] - pts[max(i - 2, 0)]
                 v = v / (np.linalg.norm(v) or 1)
                 nn = np.array([v[1], -v[0]])
-                p = pts[i] + side * nn
-                # la trace tranchante : un fil de vent derrière la plume
-                stroke(back, [tuple(p - v * (8 - j)) for j in range(8)], [0.8 + 0.25 * j for j in range(8)], 'EFG')
-                crow_feather(front, p[0] - 3, p[1] - 2, feather_by_dir(v), big)
+                p = pts[i] + side * (0.5 + 1.6 * q) * nn    # la volée s'ouvre en cône
+                kd = feather_by_dir(v)
+                if big:
+                    crow_feather(front, p[0] - 8, p[1] - 3, kd, True)
+                else:
+                    crow_feather(front, p[0] - 4, p[1] - 2, kd)
             if k <= 2:
                 pf = pts[int(sf * n)]
                 q = pts[int(sf * n)] - pts[max(int(sf * n) - 4, 0)]
                 fa = math.degrees(math.atan2(-q[1], q[0]))
-                moon(front, pf + 3 * q / (np.linalg.norm(q) or 1), 18, fa, 7.5, inner=1.15)
+                moon(front, pf + 3 * q / (np.linalg.norm(q) or 1), 22, fa, 9.0, inner=1.15)
+                gust(back, pf + (-30, -16), pf + (-20, -24), pf + (-8, -24), pf + (0, -17), 3.0, 'EFGHI', curl_r=3.4,
+                     up=False)
+                gust(back, pf + (-30, 16), pf + (-20, 24), pf + (-8, 24), pf + (0, 17), 2.8, 'EFGHI', curl_r=3.2,
+                     up=True)
             else:
-                pop(front, T + (2, 0), 12.0, facing=-20, tones='WWEFGH')
-                gust(front, T + (4, -8), T + (14, -18), T + (24, -18), T + (30, -27), 4.8, 'EFGHI', curl_r=4.6, up=True)
-                gust(back, T + (4, 8), T + (14, 16), T + (24, 15), T + (31, 21), 4.2, 'EFGHI', curl_r=4.2, up=False)
+                pop(front, T + (2, 0), 14.0, facing=-20, tones='WWEFGH')
+                moon(back, (T[0] - 6, T[1] - 2), 26, -30, 7.0, inner=1.15)
+                gust(front, T + (4, -8), T + (14, -20), T + (26, -20), T + (32, -30), 5.0, 'EFGHI', curl_r=5.0, up=True)
+                gust(back, T + (4, 8), T + (14, 17), T + (26, 16), T + (33, 23), 4.4, 'EFGHI', curl_r=4.4, up=False)
             return
         # autour de l'ennemi : les plumes tournoient (4, 5), puis retombent en se balançant (6, 7)
         j = k - 4
         if j <= 1:
-            ribbon(back, (T[0], T[1]), 22 + 4 * j, 9 + 2 * j, 20 + 40 * j, 200 + 40 * j, 3.4 - j, tones='FGHI')
-            ribbon(front, (T[0], T[1]), 22 + 4 * j, 9 + 2 * j, 210 + 40 * j, 380 + 40 * j, 4.2 - j, tones='EFGHI')
+            ribbon(back, (T[0], T[1] - 2), 28 + 4 * j, 13 + 2 * j, 20 + 40 * j, 200 + 40 * j, 3.6 - j, tones='FGHI')
+            ribbon(front, (T[0], T[1] - 2), 28 + 4 * j, 13 + 2 * j, 210 + 40 * j, 380 + 40 * j, 4.6 - j,
+                   tones='EFGHI')
+            ribbon(front, (T[0] + 2, T[1] + 10), 20 + 4 * j, 8, 230 + 50 * j, 340 + 50 * j, 3.0 - j, tones='FGHI')
             cloud(back, (T[0] + 2, T[1] + 2), 9.0 - 3 * j, 'WEFG', hollow=0.4 + 0.3 * j, seed=50 + j)
             for i, (lag, side, kk, big) in enumerate(FLOCK):
                 a = math.radians(i * 360 / len(FLOCK) + 50 * j)
-                r = 20 + 6 * j + (i % 3) * 4
+                r = 24 + 6 * j + (i % 3) * 5
                 crow_feather(front if math.sin(a) < 0 else back, T[0] + r * math.cos(a) - 3,
-                             T[1] - 0.45 * r * math.sin(a) - 2 + 4 * j, (i + j) % 5, big and j == 0)
+                             T[1] - 0.6 * r * math.sin(a) - 2 + 4 * j, (i + j) % 5)
         else:
             jj = j - 2
             if jj == 0:
@@ -1547,14 +1562,14 @@ SPECIALE = [
     dict(spread='grande', crouch=1, lift=30, fo=(-2, -3), e=-1, mw=-1, fx_pre=[fx_shadow], fx=[fx_takeoff(1)], ms=70),
     dict(spread='grande', crouch=2, lift=38, head=(-1, 0), fo=(-4, -3), lean=-1, e=0, fx_pre=[fx_shadow],
          fx=[fx_takeoff(2)], ms=170),
-    dict(spread='battue', crouch=2, lift=37, lean=2, head=(1, 0), fwd=FWD, fan_smear=fx_fan_smear, e=1,
+    dict(spread='battue', crouch=2, lift=37, lean=2, head=(1, 0), fwd=FWD, sw=SW_DOWN, fan_smear=fx_fan_smear, e=1,
          fx_pre=[fx_shadow], fx=[fx_store], ms=50),
-    dict(spread='battue', crouch=2, lift=37, lean=2, head=(1, 0), fwd=FWD, e=1, fx_pre=[fx_shadow],
+    dict(spread='battue', crouch=2, lift=37, lean=2, head=(1, 0), fwd=FWD, sw=SW_DOWN, e=1, fx_pre=[fx_shadow],
          fx=[fx_store, ST(0)], ms=170),
-    dict(spread='plane', crouch=2, lift=37, lean=2, head=(1, 0), fwd=FWD, e=0, fx_pre=[fx_shadow], fx=[ST(1)], ms=70),
-    dict(spread='plane', crouch=2, lift=36, lean=1, fwd=FWD, e=-1, fx_pre=[fx_shadow], fx=[ST(2)], ms=70),
-    dict(spread='plane', crouch=2, lift=35, lean=1, fwd=(74.0, 59.0), e=-1, fx_pre=[fx_shadow], fx=[ST(3)], ms=160),
-    dict(spread='plane', crouch=2, lift=32, fo=(3, 3), e=0, fx_pre=[fx_shadow], fx=[ST(4)], ms=90),
+    dict(spread='plane', crouch=2, lift=37, lean=2, head=(1, 0), fwd=FWD, sw=SW_DOWN, e=0, fx_pre=[fx_shadow], fx=[ST(1)], ms=70),
+    dict(spread='plane', crouch=2, lift=36, lean=1, fwd=FWD, sw=SW_DOWN, e=-1, fx_pre=[fx_shadow], fx=[ST(2)], ms=70),
+    dict(spread='plane', crouch=2, lift=35, lean=1, fwd=(73.0, 59.0), sw=SW_DOWN, e=-1, fx_pre=[fx_shadow], fx=[ST(3)], ms=160),
+    dict(spread='plane', crouch=2, lift=32, fo=(3, 3), sw=((100.0, 70.0), 20.0), e=0, fx_pre=[fx_shadow], fx=[ST(4)], ms=90),
     dict(spread='plane', crouch=1, lift=26, fo=(1, 1), e=1, mw=1, fx_pre=[fx_shadow], fx=[ST(5)], ms=90),
     dict(spread='plane', crouch=1, lift=17, e=1, mw=1, fx_pre=[fx_shadow], fx=[ST(6)], ms=90),
     dict(spread='demi', crouch=0, lift=7, e=0, fx_pre=[fx_shadow], fx=[ST(7)], ms=80),
