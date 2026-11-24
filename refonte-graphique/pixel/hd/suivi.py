@@ -61,7 +61,7 @@ RETOUCHES = {
     'jinn': "Monter un peu l'arc.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'corvin', 'lenore', 'garvin', 'nerith', 'ysolde', 'rook', 'velith', 'minotaure'}
+FAITES = {'zephyre', 'corvin', 'lenore', 'garvin', 'nerith', 'ysolde', 'rook', 'velith', 'minotaure'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
