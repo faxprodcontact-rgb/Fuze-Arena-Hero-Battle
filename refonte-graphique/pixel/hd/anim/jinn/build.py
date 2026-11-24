@@ -553,9 +553,9 @@ def draw_arm_rig(cv, chest, wrist, bend=1, elbow=None):
     S = np.array(g2c(SH_NEAR, chest))
     Wr = np.array(g2c(wrist, chest))
     E = np.array(g2c(elbow, chest)) if elbow is not None else ik(S, Wr, ARM_LEN[0], ARM_LEN[1], bend)
-    draw_limb(cv, S, E, 5.2, 4.6, 'feutre')
-    draw_limb(cv, E, Wr, 4.4, 3.4, 'feutre')
-    draw_limb(cv, E, Wr, 3.6, 3.4, 'galon', t0=0.78, t1=1.0)
+    draw_limb(cv, S, E, 4.8, 4.2, 'feutre')
+    draw_limb(cv, E, Wr, 4.0, 3.2, 'feutre')
+    draw_limb(cv, E, Wr, 3.4, 3.2, 'galon', t0=0.75, t1=1.0)
     return E
 
 
@@ -743,8 +743,21 @@ def cloud(cv, c, r, tones='QQRS', hollow=0.0, seed=0):
         puff(cv, (cx + dx, min(cy + dy, GROUND - rr * 0.6)), rr, tones)
 
 
+def densify(pts, widths, step=0.5):
+    """ajoute des points entre deux points trop éloignés (sinon le ruban serait en pointillés)"""
+    P, Wd = [pts[0]], [widths[0]]
+    for (a, wa), (b, wb) in zip(zip(pts, widths), zip(pts[1:], widths[1:])):
+        n = max(1, int(math.hypot(b[0] - a[0], b[1] - a[1]) / step))
+        for i in range(1, n + 1):
+            t = i / n
+            P.append((a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t))
+            Wd.append(wa + (wb - wa) * t)
+    return P, Wd
+
+
 def stroke(cv, pts, widths, tones, keep=None):
     """peint un ruban le long de points, avec une épaisseur par point (coeur clair -> bord sombre)"""
+    pts, widths = densify(list(pts), list(widths))
     best = {}
     for (px, py), wv in zip(pts, widths):
         R = wv / 2
@@ -830,10 +843,10 @@ def path_stroke(cv, f, t0, t1, w0, w1, tones, n=40, keep=None):
     stroke(cv, pts, ws, tones, keep)
 
 
-def arrow_at(cv, tip, ang, head=True, vanes=True):
+def arrow_at(cv, tip, ang, head=True, vanes=True, L=ARROW_LEN):
     """une flèche en vol posée par sa pointe (toile)"""
     u = unit(ang)
-    return draw_arrow(cv, np.array(tip, float) - u * ARROW_LEN, ang, vanes=vanes, head=head)
+    return draw_arrow(cv, np.array(tip, float) - u * L, ang, L=L, vanes=vanes, head=head)
 
 
 # ---------------------------------------------------------------- la fourrure du bonnet frémit
@@ -880,8 +893,347 @@ POSE = [
 for _f in POSE:
     _f['fx_head'] = _f.get('fx_head', [])
 
-ATTAQUE = []
-SPECIALE = []
+# ---------------------------------------------------------------- 2) l'attaque de base : tir en cloche, rechargement éclair
+# Un tir de cavalier des steppes, sec et rapide. Il lève l'arc d'un coup (le bras lointain monte, l'arc s'incline),
+# fléchit un peu, bande plus fort (tenue). Il lâche : la main s'ouvre et part en arrière, la corde claque et vibre,
+# l'arc saute vers l'ennemi ; la flèche ne file pas droit comme chez Isis ou Tessa : elle part en cloche, monte,
+# bascule et retombe sur l'ennemi, avec un fil de vent courbe derrière elle. Pendant qu'elle vole, la main file déjà
+# au carquois de hanche, arrache une flèche par l'encoche, la ramène d'un grand geste en arc (traînée de vent) et
+# l'encoche ; il rebande et retrouve sa garde. L'impact : une bouffée de vent qui s'ouvre en volutes.
+FLIGHT_L0 = (OX + 114, OY + 58)          # la pointe au lâcher (toile)
+FLIGHT_T = (ENEMY_X - 8, GROUND - 50)    # l'ennemi (poitrine)
+FLIGHT_H = 22                            # la flèche monte de tant au-dessus de la droite
+
+
+def flight(t):
+    x = FLIGHT_L0[0] + (FLIGHT_T[0] - FLIGHT_L0[0]) * t
+    y = FLIGHT_L0[1] + (FLIGHT_T[1] - FLIGHT_L0[1]) * t - 4 * FLIGHT_H * t * (1 - t)
+    return (x, y)
+
+
+def flight_ang(t):
+    e = 1e-3
+    a, b = flight(max(0, t - e)), flight(min(1, t + e))
+    return math.degrees(math.atan2(a[1] - b[1], b[0] - a[0]))
+
+
+def fx_flight(t, trail=0.3):
+    """la flèche en cloche (avec son contour) et son fil de vent courbe, qui s'élargit vers l'empennage"""
+    def f(cv, back, front, ctx):
+        tip = flight(t)
+        ang = flight_ang(t)
+        # le fil de vent suit la trajectoire, derrière l'empennage (la flèche fait 49 pixels de long)
+        L = ARROW_LEN / math.hypot(FLIGHT_T[0] - FLIGHT_L0[0], FLIGHT_T[1] - FLIGHT_L0[1])
+        tb = max(0.0, t - L * 1.02)
+        if trail > 0 and tb > 0:
+            path_stroke(back, flight, max(0.0, tb - trail), tb, 0.6, 3.8, 'MNO')
+            if tb - trail > 0.02:                   # le bout du fil s'enroule en volute
+                q = flight(max(0.0, tb - trail))
+                curl(back, (q[0] + 1, q[1] - 3), 3.2, 250, 290, 1.8, 'MNO')
+        arrow_at(cv, tip, ang)
+    return f
+
+
+def fx_hit(k):
+    """l'impact : la flèche plantée dans l'ennemi, une bouffée de vent qui s'ouvre en volutes, puis se défait"""
+    def f(cv, back, front, ctx):
+        tx, ty = FLIGHT_T
+        ang = flight_ang(1.0)
+        if k <= 2:
+            u = unit(ang)
+            arrow_at(cv, (tx + u[0] * 4, ty + u[1] * 4), ang, head=False)     # la pointe est entrée
+        if k == 0:
+            pop(front, (tx + 2, ty), 5.0, facing=ang, tones='KKLM')
+        elif k == 1:
+            pop(front, (tx + 3, ty - 1), 8.0, facing=ang, tones='KLMN', hollow=0.35)
+            curl(front, (tx + 12, ty - 9), 4.0, 200, 300, 2.2, 'LMN')
+            curl(front, (tx + 10, ty + 8), 3.6, 160, 280, 2.0, 'MNO', cw=True)
+        elif k == 2:
+            ribbon(front, (tx + 4, ty - 1), 11, 9, 120, -60, 2.4, tones='MNO')
+            curl(front, (tx + 15, ty - 12), 3.4, 220, 280, 1.8, 'MNO')
+            curl(front, (tx + 13, ty + 10), 3.0, 160, 260, 1.6, 'NO', cw=True)
+        elif k == 3:
+            curl(front, (tx + 17, ty - 14), 2.6, 240, 240, 1.4, 'NO')
+    return f
+
+
+def fx_tip_curl(r=3.6, a0=120):
+    """un petit tourbillon qui s'enroule devant la pointe (la visée)"""
+    def f(cv, back, front, ctx):
+        u = unit(ctx.ang)
+        tip = np.array(ctx.nock, float) + u * (ARROW_LEN + 3)
+        curl(front, (tip[0] + 1, tip[1] - 1), r, a0, 320, 2.0, 'LMN')
+    return f
+
+
+def fx_snap(k):
+    """le claquement de la corde : un petit souffle en croissant devant la poignée, qui s'ouvre puis se défait"""
+    def f(cv, back, front, ctx):
+        x = (ctx.top[0] + ctx.bot[0]) / 2 + 6
+        y = (ctx.top[1] + ctx.bot[1]) / 2 - 3
+        if k == 0:
+            ribbon(front, (x, y), 4, 9, 75, -75, 2.8, tones='KLMN')
+        else:
+            ribbon(front, (x + 4, y), 5, 11, 65, -65, 1.8, tones='MNO')
+    return f
+
+
+def fx_draw_smear(p_from, p_to, bulge=(0, 0), w=4.0):
+    """la traînée de vent du geste qui ramène la flèche du carquois à l'arc (un arc de cercle, effilé)"""
+    def f(cv, back, front, ctx):
+        cx, cy = ctx.chest
+        a = np.array(g2c(p_from, (cx, cy)))
+        b = np.array(g2c(p_to, (cx, cy)))
+        m = (a + b) / 2 + np.array(bulge, float)
+        pts = bezier(a, a + (m - a) * 1.2, b + (m - b) * 1.2, b, 30)
+        ws = [w * (i / 30) ** 1.2 for i in range(31)]
+        stroke(back, pts, ws, 'LMNO')
+    return f
+
+
+def fr(*bases, **kw):
+    """une image : des réglages communs, puis ceux de l'image (qui l'emportent)"""
+    out = {}
+    for b in bases:
+        out.update(b)
+    out.update(kw)
+    return out
+
+
+# réglages communs : visée en cloche (le bras lointain levé de 16°, la main qui tire un peu plus bas)
+AIM = dict(lift=16, hand_dy=2)
+FREE = dict(arrow=None, string='free')
+QUIVER_REACH = dict(wrist=(43, 63), elbow=(42, 55))            # la main au carquois (coude levé en arrière)
+SWING_REACH = dict(wrist=(57, 65), elbow=(46, 64), arrow=-24)          # la main ramène la flèche (grand geste en arc)
+
+ATTAQUE = [
+    dict(lift=8, hand_dx=-1, hand_dy=1, skirt=-1, natte=-1, ms=90),
+    fr(AIM, hand_dx=-3, relax=-1, s=1, lean=-1, natte=-1, skirt=-1, head=(0, 1), fx=[fx_tip_curl()], ms=230),
+    fr(AIM, FREE, hand='open', hand_dx=-7, bulge=3, relax=2, s=1, lean=-1, natte=-2, skirt=-2,
+         fx=[fx_flight(0.36, 0.3), fx_snap(0)], ms=50),
+    fr(AIM, FREE, hand='open', hand_dx=-8, hand_dy=1, bulge=-2, relax=1, natte=-2, skirt=-2,
+         fx=[fx_flight(0.68, 0.45), fx_snap(1)], ms=60),
+    fr(FREE, lift=8, hand='reach', reach=QUIVER_REACH, bulge=1, relax=1, s=1, natte=-1, skirt=-1,
+         fx=[fx_hit(0)], ms=70),
+    fr(FREE, lift=4, hand='reach', reach=SWING_REACH, s=1, natte=0, skirt=0,
+         fx=[fx_hit(1), fx_draw_smear((40, 66), (60, 66), (0, 9))], ms=90),
+    dict(hand_dx=6, relax=1, natte=1, skirt=1, fx=[fx_hit(2)], ms=80),
+    dict(hand_dx=2, natte=0, skirt=0, fx=[fx_hit(3)], ms=90),
+    dict(ms=120),
+]
+
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Averse des steppes »
+# Il s'accroupit, recule le buste, lève l'arc vers le ciel et bande à l'extrême : le vent des steppes se lève autour
+# de lui (deux rubans qui tournent autour des jambes et du buste, poussière soulevée), la natte et les pans du
+# manteau partent en arrière, une volute s'enroule à la pointe (tenue). Il lâche : la flèche monte dans une rafale
+# qui se courbe vers le ciel, éclate tout là-haut en bouffée de vent… et la volée retombe : une averse de flèches
+# poussée en biais par une grande rafale courbe, toutes d'angles et de longueurs différents, qui arrivent les unes
+# après les autres et se plantent autour de l'ennemi dans des bouffées de poussière. Au plus fort (arrêt sur image),
+# un tourbillon de vent et de poussière éclate sur l'ennemi. Pendant que la poussière retombe, il réarme comme au
+# tir de base (main au carquois, geste en arc, encoche) ; les flèches plantées se défont en volutes de vent.
+SKY_P = [(OX + 112, OY + 52), (OX + 146, OY + 30), (OX + 178, OY - 12), (OX + 190, 14)]   # la flèche qui monte
+
+
+def sky(t):
+    return bezier(*SKY_P, 1)[0] if t <= 0 else bezier(SKY_P[0], SKY_P[1], SKY_P[2], SKY_P[3], 60)[min(60, int(t * 60))]
+
+
+def sky_ang(t):
+    a, b = sky(max(0, t - 0.03)), sky(min(1, t + 0.03))
+    return math.degrees(math.atan2(a[1] - b[1], b[0] - a[0]))
+
+
+def fx_sky(t, trail=0.35):
+    """la flèche qui monte dans sa rafale (le fil de vent s'élargit derrière elle et se courbe)"""
+    def f(cv, back, front, ctx):
+        tip = sky(t)
+        ang = sky_ang(t)
+        tb = max(0.0, t - 0.36)
+        if tb > 0:
+            path_stroke(back, sky, max(0.0, tb - trail), tb, 0.8, 5.0, 'LMNOP')
+            q = sky(max(0.0, tb - trail))
+            curl(back, (q[0] - 2, q[1] + 2), 4.2, 300, 300, 2.2, 'MNO', cw=True)
+        arrow_at(cv, tip, ang)
+    return f
+
+
+BURST = (OX + 192, 18)                   # là où la flèche éclate en volée
+
+
+def fx_burst(k):
+    """la flèche éclate en bouffée de vent tout là-haut ; la bouffée s'ouvre et se défait en volutes"""
+    def f(cv, back, front, ctx):
+        x, y = BURST
+        if k == 0:
+            pop(front, (x, y), 7.0, facing=90, tones='KKLM')
+            path_stroke(back, sky, 0.45, 0.9, 1.0, 5.0, 'LMNO')
+        elif k == 1:
+            pop(front, (x + 2, y), 10.0, facing=60, tones='KLMN', hollow=0.45)
+            curl(front, (x - 12, y + 4), 4.6, 330, 300, 2.4, 'LMN', cw=True)
+            path_stroke(back, sky, 0.6, 0.85, 1.0, 3.0, 'MNO')
+        elif k == 2:
+            ribbon(front, (x + 3, y + 2), 13, 9, 160, 10, 2.6, tones='MNO')
+            curl(front, (x - 14, y + 6), 3.6, 330, 280, 1.8, 'MNO', cw=True)
+        elif k == 3:
+            curl(front, (x + 14, y + 1), 3.0, 120, 260, 1.6, 'NO')
+    return f
+
+
+# La volée : (point d'arrivée x sur la toile, angle de chute en degrés, longueur, image où elle apparaît en haut).
+# Angles et longueurs tous différents (pas de hachures régulières) ; une flèche met trois images à tomber.
+RAIN = [
+    (ENEMY_X - 2, -70, 40, 6), (ENEMY_X - 24, -58, 34, 6), (ENEMY_X + 15, -79, 30, 7), (ENEMY_X - 13, -64, 44, 7),
+    (ENEMY_X + 26, -71, 33, 7), (ENEMY_X + 5, -56, 37, 8), (ENEMY_X - 31, -76, 28, 8), (ENEMY_X - 7, -82, 31, 8),
+    (ENEMY_X + 20, -61, 42, 9), (ENEMY_X - 19, -73, 35, 9), (ENEMY_X + 11, -67, 26, 9),
+]
+RAIN_DEPTH = [3, 5, 2, 4, 3, 5, 2, 4, 3, 2, 3]     # de combien la pointe est entrée dans la terre
+RAIN_FALL = [3, 2, 3, 2, 3, 3, 2, 3, 2, 3, 2]      # combien d'images elle met à tomber (pas toutes au même pas)
+
+
+def rain_tip(i, frame):
+    """la pointe de la flèche i à l'image 'frame' de la spéciale (ou None si elle n'est pas encore là)"""
+    lx, ang, L, f0 = RAIN[i]
+    p = (frame - f0 + 1) / float(RAIN_FALL[i])
+    if p <= 0:
+        return None, ang, L, False
+    land = np.array([lx, GROUND + RAIN_DEPTH[i]], float)
+    u = unit(ang)
+    D = (land[1] - 4) / u[1]                        # elle part du haut de la toile
+    if p >= 1:
+        return land, ang, L, True
+    return land - u * D * (1 - p), ang, L, False
+
+
+def fx_rain(frame, fade=False):
+    """l'averse : les flèches qui tombent (avec un fil de vent court et courbe), celles qui sont plantées, et la
+    poussière qu'elles soulèvent en arrivant ; fade : les flèches plantées se défont en volutes de vent"""
+    def f(cv, back, front, ctx):
+        for i in range(len(RAIN)):
+            tip, ang, L, landed = rain_tip(i, frame)
+            if tip is None:
+                continue
+            u = unit(ang)
+            if landed:
+                just = rain_tip(i, frame - 1)[3] is False
+                if fade:
+                    c = tip - u * (L * 0.55)
+                    curl(front, (c[0] - 2, c[1] - 3), 3.2 + (i % 3) * 0.6, 90 + i * 37, 260, 1.8,
+                         'MNO' if i % 2 else 'LNO', cw=bool(i % 2))
+                    continue
+                arrow_at(cv, tip, ang, L=L)
+                if just:
+                    cloud(front, (tip[0] - 2, GROUND - 2), 3.4 + (i % 3) * 0.7, 'QQRS', seed=i)
+                elif frame - (RAIN[i][3] + RAIN_FALL[i] - 1) == 1:
+                    cloud(front, (tip[0] - 3, GROUND - 3), 4.0 + (i % 3) * 0.7, 'QRS', hollow=0.5, seed=i)
+            else:
+                tail = tip - u * L
+                # un fil de vent court, un peu courbé par la rafale (pas un trait droit)
+                m = tail - u * 7 + np.array([-u[1], u[0]]) * (2 + i % 3)
+                pts = bezier(tail - u * 14 + np.array([-u[1], u[0]]) * 3, m, m, tail, 14)
+                stroke(back, pts, [0.6 + 1.8 * k / 14 for k in range(15)], 'LMN')
+                arrow_at(cv, tip, ang, L=L)
+    return f
+
+
+def fx_gust(k):
+    """la grande rafale courbe qui porte la volée, du ciel vers l'ennemi, et s'enroule au sol"""
+    def f(cv, back, front, ctx):
+        x, y = BURST
+        if k == 0:
+            pts = bezier((x - 6, y + 6), (x + 40, y + 10), (ENEMY_X + 30, 70), (ENEMY_X + 14, 104), 40)
+            stroke(back, pts, [0.5 + 6.0 * math.sin(math.pi * i / 40) ** 0.8 for i in range(41)], 'LMNOP')
+        elif k == 1:
+            pts = bezier((x + 4, y + 14), (x + 46, y + 24), (ENEMY_X + 34, 96), (ENEMY_X + 12, 140), 40)
+            stroke(back, pts, [0.5 + 7.0 * math.sin(math.pi * i / 40) ** 0.8 for i in range(41)], 'LMNOP')
+            curl(back, (ENEMY_X + 8, 144), 6.0, 20, 300, 2.8, 'LMNO')
+        elif k == 2:
+            pts = bezier((x + 30, y + 40), (x + 60, y + 60), (ENEMY_X + 36, 130), (ENEMY_X + 18, GROUND - 14), 40)
+            stroke(back, pts, [0.5 + 4.0 * math.sin(math.pi * i / 40) ** 0.8 for i in range(41)], 'LMNO')
+    return f
+
+
+def fx_ground_hit(k):
+    """le coeur de l'averse : un tourbillon de vent et de poussière qui éclate sur l'ennemi (arrêt sur image)"""
+    def f(cv, back, front, ctx):
+        x, y = ENEMY_X, GROUND - 14
+        if k == 0:
+            pop(front, (x, y - 10), 11.0, facing=80, tones='KKLMN')
+            cloud(back, (x - 16, GROUND - 6), 8.0, 'QQRS', seed=3)
+            cloud(back, (x + 18, GROUND - 5), 7.0, 'QQRS', seed=4)
+            ribbon(front, (x, y - 4), 30, 9, 200, 340, 3.4, tones='KLMN')
+            ribbon(back, (x, y - 4), 30, 9, 20, 160, 2.6, tones='NOP')
+        elif k == 1:
+            pop(front, (x, y - 12), 14.0, facing=80, tones='LMNO', hollow=0.55)
+            cloud(back, (x - 19, GROUND - 8), 9.0, 'QRS', hollow=0.3, seed=3)
+            cloud(back, (x + 21, GROUND - 7), 8.0, 'QRS', hollow=0.3, seed=4)
+            curl(front, (x - 28, y - 18), 5.0, 330, 300, 2.4, 'LMN', cw=True)
+            curl(front, (x + 30, y - 20), 5.0, 210, 300, 2.4, 'LMN')
+        elif k == 2:
+            cloud(back, (x - 22, GROUND - 10), 8.0, 'QRS', hollow=0.65, seed=5)
+            cloud(back, (x + 24, GROUND - 9), 7.0, 'RS', hollow=0.65, seed=6)
+            curl(front, (x - 32, y - 26), 4.0, 330, 280, 2.0, 'MNO', cw=True)
+            curl(front, (x + 34, y - 28), 4.0, 210, 280, 2.0, 'MNO')
+        elif k == 3:
+            curl(front, (x + 36, y - 34), 2.8, 230, 240, 1.4, 'NO')
+            puff(back, (x - 26, GROUND - 12), 2.6, 'RS')
+    return f
+
+
+def fx_swirl(level, k=0):
+    """le vent se lève autour de lui : un ruban penché qui tourne autour du buste (moitié derrière, moitié devant),
+    un autre plus bas autour des bottes, des volutes qui montent, la poussière soulevée aux pieds ; level 1 à 3 (de
+    plus en plus fort), k fait tourner les rubans d'une image à l'autre"""
+    def f(cv, back, front, ctx):
+        cx = OX + 66 + ctx.chest[0]
+        rings = [(GROUND - 9, 27, 7, 2.4, 14, 'LMN', 'NOP')]
+        if level >= 2:
+            rings.append((GROUND - 46, 33, 12, 3.0, -16, 'KLMN', 'NOP'))
+        for (yy, rx, ry, w, tilt, t1, t2) in rings:
+            sp = 70 + 35 * level
+            a0 = 205 + (47 * k) % 50
+            ribbon(front, (cx, yy - level), rx + 2 * level, ry, a0, a0 + sp, w + 0.3 * level, head=0.65, tones=t1,
+                   tilt=tilt)
+            ribbon(back, (cx + 1, yy - level - 1), rx + 2 * level, ry, a0 - 180, a0 - 180 + sp * 0.7, w * 0.8,
+                   head=0.4, tones=t2, tilt=tilt)
+        for j in range(level + 1):
+            px = cx - 30 + j * 21 + 3 * k
+            puff(back, (px, GROUND - 2 - (j % 2) * 2), 2.0 + 0.6 * level - 0.4 * (j % 2), 'QRS')
+        if level >= 2:
+            curl(front, (cx - 38, GROUND - 26 - 7 * (k % 3)), 3.6, 300, 290, 1.8, 'MNO', cw=True)
+        if level >= 3:
+            curl(back, (cx + 34, GROUND - 60 - 5 * (k % 2)), 3.2, 120, 280, 1.6, 'MNO')
+    return f
+
+
+SKY_AIM = dict(lift=28, hand_dy=3, s=2, lean=-1)          # visée vers le ciel
+SPECIALE = [
+    dict(s=1, lift=8, hand_dx=-1, natte=-1, skirt=-1, fx_under=[fx_swirl(1, 0)], ms=90),
+    fr(SKY_AIM, lift=20, hand_dx=-2, natte=-2, skirt=-2, fx_head=[fx_fur(1)], fx_under=[fx_swirl(2, 1)], ms=100),
+    fr(SKY_AIM, hand_dx=-4, relax=-1.5, natte=-3, skirt=-2, fx_head=[fx_fur(2)], fx_under=[fx_swirl(3, 2)],
+       fx=[fx_tip_curl(4.0, 60)], ms=120),
+    fr(SKY_AIM, hand_dx=-4, relax=-1.5, natte=-2, skirt=-3, head=(0, 1), fx_head=[fx_fur(1)],
+       fx_under=[fx_swirl(3, 3)], fx=[fx_tip_curl(5.0, 200)], ms=240),
+    fr(SKY_AIM, FREE, hand='open', hand_dx=-10, hand_dy=3, bulge=4, relax=2.5, lean=-2, natte=-3, skirt=-2,
+       fx_head=[fx_fur(2)], fx_under=[fx_swirl(2, 4)], fx=[fx_sky(0.42), fx_snap(0)], ms=50),
+    fr(SKY_AIM, FREE, hand='open', hand_dx=-10, hand_dy=3, bulge=-2, relax=1, lift=24, natte=-2, skirt=-1,
+       fx_under=[fx_swirl(1, 5)], fx=[fx_sky(0.86, 0.45), fx_snap(1)], ms=60),
+    fr(FREE, hand='open', hand_dx=-9, hand_dy=2, bulge=1, relax=1, lift=18, s=1, natte=-1, skirt=0,
+       fx=[fx_burst(0), fx_rain(6)], ms=90),
+    fr(FREE, hand='open', hand_dx=-8, hand_dy=1, lift=12, s=1, natte=0, skirt=0, head=(0, -1),
+       fx=[fx_burst(1), fx_gust(0), fx_rain(7)], ms=70),
+    fr(FREE, hand='open', hand_dx=-8, hand_dy=1, lift=6, natte=0, skirt=1,
+       fx=[fx_burst(2), fx_gust(1), fx_rain(8)], ms=70),
+    fr(FREE, hand='open', hand_dx=-8, lift=3, natte=1, skirt=1,
+       fx=[fx_burst(3), fx_gust(2), fx_rain(9), fx_ground_hit(0)], ms=170),
+    fr(FREE, hand='open', hand_dx=-7, natte=0, skirt=0, fx=[fx_rain(10), fx_ground_hit(1)], ms=90),
+    fr(FREE, hand='reach', reach=QUIVER_REACH, s=1, natte=-1, fx=[fx_rain(11), fx_ground_hit(2)], ms=80),
+    fr(FREE, hand='reach', reach=SWING_REACH, s=1, natte=0,
+       fx=[fx_rain(12, fade=True), fx_ground_hit(3), fx_draw_smear((40, 66), (60, 66), (0, 9))], ms=80),
+    dict(hand_dx=6, relax=1, natte=1, skirt=1, ms=80),
+    dict(hand_dx=2, ms=90),
+    dict(ms=130),
+]
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
