@@ -1035,8 +1035,7 @@ def fx_impact(k):
         if k >= 2:
             # la fumée : des bouffées qui montent, grossissent puis se défont
             hol = [0, 0, 0.0, 0.35, 0.7][k]
-            cloud(back, (X - 4, Y - 14 - 5 * k), 7 + k, 'kklm', hollow=hol, seed=40 + k, ground=False)
-            cloud(back, (X + 7, Y - 24 - 7 * k), 5 + k, 'kkl', hollow=hol, seed=50 + k, ground=False)
+            cloud(back, (X - 2 + 2 * k, Y - 8 - 8 * k), 7 + 1.5 * k, 'kkklm', hollow=hol, seed=41, ground=False)
         # les braises : elles jaillissent puis retombent en cloche
         for (vx, vy) in ((-2.6, -5.0), (2.2, -6.0), (-1.0, -7.0), (3.4, -3.8), (-3.6, -3.0), (1.0, -6.6)):
             t = k
@@ -1079,7 +1078,7 @@ SPECIALE = [
     dict(ARMED, s=2, lean=-2, hot=2, head=(-1, 1), q=2, qu=2, ear=1,
          fx=[fx_blade_fire(2, 2), fx_heat(1, 2), fx_tuft_fire(0)], ms=240),
     # 2 : elle se dresse et RUGIT : la crinière de feu jaillit
-    dict(ARMED, s=-2, lean=1, hot=2, head=(1, -2), q=-1, qu=3, flash=18,
+    dict(ARMED, s=-2, lean=1, hot=2, head=(1, -2), q=-1, qu=3, flash=14,
          fx=[fx_mane(0.75, 3), fx_blade_fire(2, 3), fx_roar(0), fx_heat(1, 3), fx_tuft_fire(1)], ms=60),
     # 3 : arrêt sur l'image : crinière pleine, l'air brûlant sort de la gueule
     dict(ARMED, s=-2, lean=1, hot=2, head=(1, -2), q=-2, qu=3,
