@@ -46,7 +46,7 @@ ROSTER = [
     ('arachne', 'myths-10', 'Arachné', 'terre', 'assassin', 'légendaire', 'femme-araignée'),
     ('isis', 'myths-9', 'Isis', 'terre', 'tireur', 'légendaire', 'chasseur au crâne de cerf'),
 ]
-VALIDES = {'myrr', 'mira', 'tessa', 'orin', 'eldra', 'corvin', 'jinn', 'zephyre', 'berold', 'aldric', 'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'arachne', 'kesha', 'celia', 'solenn', 'anubis', 'isis', 'kael', 'sable', 'tybalt', 'auriel', 'cyclope', 'zaroth', 'lilou'}
+VALIDES = {'arcan', 'myrr', 'mira', 'tessa', 'orin', 'eldra', 'corvin', 'jinn', 'zephyre', 'berold', 'aldric', 'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'arachne', 'kesha', 'celia', 'solenn', 'anubis', 'isis', 'kael', 'sable', 'tybalt', 'auriel', 'cyclope', 'zaroth', 'lilou'}
 # héros dessinés dont les retours du propriétaire sont en train d'être faits : le retour demandé
 RETOUCHES = {
     'lenore': "Manche de la massue bien droit, dans la continuité de la massue, qui ressort de la main.",
@@ -56,10 +56,9 @@ RETOUCHES = {
     'minotaure': "Petit trou à boucher.",
     'rook': "Transition du visage aux plumes moins sèche ; visage plus féminin et plus beau.",
     'ysolde': "Nez moins brouillon.",
-    'arcan': "Moins gros, plus musclé.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'arcan', 'lenore', 'garvin', 'nerith', 'ysolde', 'rook', 'velith', 'minotaure'}
+FAITES = {'lenore', 'garvin', 'nerith', 'ysolde', 'rook', 'velith', 'minotaure'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
