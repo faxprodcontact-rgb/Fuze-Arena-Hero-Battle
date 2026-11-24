@@ -1259,16 +1259,20 @@ def write_outputs(anims):
     # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat (prairie), ×2
     seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
     box = bb
+    bw, bh = box[2] - box[0], box[3] - box[1]
     try:
         fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
         fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
-        bw, bh = box[2] - box[0], box[3] - box[1]
         fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
-        base = fond.crop((0, fy, bw, fy + bh))
-        if base.width < bw:
-            raise ValueError
+        strip = fond.crop((0, fy, fond.width, fy + bh))
+        base = Image.new('RGBA', (bw, bh))
+        x, flip = 0, False
+        while x < bw:                                   # la prairie est plus étroite que la scène : prolongée en miroir
+            base.paste(strip.transpose(Image.FLIP_LEFT_RIGHT) if flip else strip, (x, 0))
+            x += strip.width
+            flip = not flip
     except Exception:
-        base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
+        base = Image.new('RGBA', (bw, bh), (120, 170, 110, 255))
     ims = []
     for img, _ in seq:
         im = base.copy()
