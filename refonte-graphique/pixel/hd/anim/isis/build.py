@@ -159,9 +159,9 @@ RACCORDS = [
     (33, 50, '........mnHHIIuvmnnnnnnn'),
     (33, 51, '......mnnoHHIJnmnnnnnnnn'),
     (33, 52, '....mnnoonHHIttuuvvuuuvv'),
-    (33, 53, '...mnooonnnHtuuvvvuuuvvu'),
-    (33, 54, '..mnoonnnnmtuuuvvvuuvvuu'),
-    (33, 55, '..mnoonnnnnmstuuuvvuuuvt'),
+    (33, 53, '..mnnoooonnHtuuvvvuuuvvu'),
+    (40, 54, 'nnnmtuuuvvvuuvvuu'),
+    (44, 55, 'mstuuuvvuuuvt'),
     (48, 56, 'suuvuuut'),
     (48, 57, 'tuuttuu'),
 ]
@@ -388,7 +388,13 @@ def draw_string(cv, pts_list):
         for p in pts:
             x, y = p[0], p[1]
             if 0 <= x < W and 0 <= y < H:
-                cv[y, x] = p[2] if len(p) > 2 else string_color(under[y, x])
+                rule = string_color(under[y, x])
+                cv[y, x] = p[2] if len(p) > 3 and under[y, x] == p[3] else rule
+
+
+def under_rest(x, y):
+    """ce qu'il y a sous la corde du dessin, au repos (la tête, sinon le corps)"""
+    return P['tete'][y, x] if P['tete'][y, x] != '.' else P['corps'][y, x]
 
 
 def curve_px(p0, pm, p1, n=6):
@@ -547,8 +553,9 @@ def rig_frame(f):
             n_dn = (57 + OX + cx + ax, 55 + OY + cy + ay)
         if (arm[0] == 'orig' and (ax, ay) == (0, 0) and not relax and not tilt):
             # au repos : la corde du dessin, pixel pour pixel (avec ses couleurs, sauf si la tête a bougé)
-            same = (hx, hy) == (0, 0)
-            pts = [[(x + OX + cx, y + OY + cy) + ((ORIG[y, x],) if same else ()) for (x, y) in CORDE_HAUT + CORDE_BAS]]
+            # (chaque pixel garde la couleur du dessin tant que ce qu'il y a dessous n'a pas changé : pas de scintillement
+            # quand la tête bouge d'un pixel)
+            pts = [[(x + OX + cx, y + OY + cy, ORIG[y, x], under_rest(x, y)) for (x, y) in CORDE_HAUT + CORDE_BAS]]
         else:
             pts = [line_px(n_up, (int(round(top[0])), int(round(top[1])))),
                    line_px(n_dn, (int(round(bot[0])), int(round(bot[1]))))]
@@ -801,8 +808,7 @@ def fx_release(k):
         cx, cy = ctx.chest
         x, y = 109 + OX + cx, ARROW_Y + OY + cy + 0.5
         if k == 0:
-            ribbon(front, (x + 2, y), 5, 7, 60, -60, 2.2, tones='kl')
-            ribbon(back, (x - 3, y), 7, 10, 120, 240, 1.6, tones='kl')
+            pop(front, (x + 3, y), 3.2, facing=0, tones='kkl')
     return f
 
 
@@ -827,7 +833,7 @@ def held_arrow(cv, ctx):
 ATTAQUE = [
     dict(head=(0, 1), arm=('orig', -1, 0), relax=0, c=1, t=0, ms=100),
     dict(head=(0, 1), arm=('orig', -2, 0), relax=-1, lean=-1, c=1, t=-1, flare=True, ms=240),
-    dict(head=(0, 1), arm=('open', -5, -1), arrow=None, string='free', bulge=3, relax=2, tilt=1.5, push=1, lean=-1,
+    dict(head=(0, 1), arm=('open', -5, -1), arrow=None, string='free', bulge=3, relax=2, tilt=1.0, push=1, lean=-1,
          c=0, t=1, flare=True, fx=[arrow_flight(92, streak=80), fx_release(0)], ms=50),
     dict(head=(0, 0), arm=('open', -6, -1), arrow=None, string='free', bulge=-2, relax=2, tilt=1.0, push=1, lean=-1,
          c=-1, t=1, fx=[fx_far_trail(0.0)], ms=140),
@@ -1007,19 +1013,23 @@ def fx_gather(p, crack=2, dust=True):
     def f(cv, back, front, ctx):
         hp = head_pos(ctx)
         fissure(back, SOL[0] - 22 - 8 * p, SOL[0] + 26 + 40 * p, crack, seed=5)
-        for (sx, ang, r, sd) in PEBBLES:
+        def where(sx, ang, q):
             start = np.array([sx, GROUND - 1.0])
-            R = 20 * (1 - p) + 9
-            a = math.radians(ang + 140 * p)
+            R = 20 * (1 - q) + 9
+            a = math.radians(ang + 140 * q)
             end = hp + np.array([R * math.cos(a), -R * math.sin(a) * 0.7])
-            # en cloche : ils montent d'abord, puis filent vers la pointe
-            q = min(1.0, p * 1.15)
+            qq = min(1.0, q * 1.15)
             mid = np.array([sx + (end[0] - sx) * 0.25, GROUND - 30])
-            pos = (1 - q) ** 2 * start + 2 * (1 - q) * q * mid + q * q * end
+            return (1 - qq) ** 2 * start + 2 * (1 - qq) * qq * mid + qq * qq * end, a
+        for (sx, ang, r, sd) in PEBBLES:
+            pos, a = where(sx, ang, p)
             tgt = front if (math.sin(a) < 0) else back
-            rock(tgt, pos, r * (1 - 0.3 * p), seed=sd)
+            if p > 0:                                    # une fine traînée de poussière derrière le caillou
+                prev, _ = where(sx, ang, max(0.0, p - 0.14))
+                taper(back, pos, prev, 1.0, 0.3, 'kl')
+            rock(tgt, pos, r * 1.3 * (1 - 0.3 * p), seed=sd)
             if p == 0:                                   # au départ : le caillou se soulève, la poussière fuse
-                puff(back, (pos[0] - 1, GROUND - 1), 1.6, 'kl')
+                puff(back, (pos[0] - 1, GROUND - 1), 1.8, 'kl')
         if dust:
             cloud(back, (SOL[0] - 16, GROUND - 2), 3.0 + 2 * p, 'klr', seed=11)
             cloud(back, (SOL[0] + 18, GROUND - 2), 3.0 + 2 * p, 'klr', seed=12)
@@ -1047,7 +1057,7 @@ def fx_stone(stage, halo=0.0, orbit=0):
         ax = ctx.f.get('arm', ('orig', 0, 0))[1]
         hp = head_pos(ctx)
         if halo:
-            glow(back, hp + (2, 0), halo, 'ihj' if halo > 6 else 'ij')
+            glow(back, hp + (4, 0), halo, 'hij' if halo > 6 else 'ij')
         stone_head(cv, cx + ax, cy, stage)
         for i in range(orbit):
             a = math.radians(70 + i * 140 + 40 * stage)
@@ -1065,7 +1075,7 @@ def fx_bolt(dx, trail=True):
         y = ARROW_Y + OY + cy + 0.5
         xh = 112 + OX + cx + dx
         if trail:
-            taper(back, (xh - 4, y), (xh - 95, y + 1), 3.2, 0.5, 'hij')
+            taper(back, (xh - 4, y), (xh - 95, y + 1), 4.6, 0.5, 'hij')
             taper(back, (xh - 30, y - 1), (xh - 110, y - 2), 2.0, 0.4, 'kl')
             for (dxx, dyy, r, sd) in ((-48, -5, 3.0, 31), (-72, 4, 2.6, 32), (-96, -3, 2.2, 33)):
                 cloud(back, (xh + dxx, y + dyy), r, 'klr', seed=sd)
@@ -1140,9 +1150,9 @@ def fx_impact(k):
         cloud(back, (ex + 20, GROUND - rr * 0.5), rr * 0.7, 'klr', hollow=hol, seed=82)
         if k >= 2:
             cloud(front, (ex + 2, GROUND - 3), rr * 0.6, 'klr', hollow=hol, seed=83)
-        if k >= 3:       # la poussière qui monte s'enroule en deux grandes volutes
-            curl(back, (ex - 30, GROUND - 26 - 3 * k), 7.0, 200, turn=300, w=3.2, tones='klr', cw=True)
-            curl(back, (ex + 30, GROUND - 28 - 3 * k), 6.5, 340, turn=300, w=3.0, tones='klr')
+        if k >= 3:       # la poussière monte en bouffées qui se défont
+            cloud(back, (ex - 8, GROUND - 22 - 4 * k), 5.5 - 0.6 * k, 'klr', hollow=hol, seed=84)
+            cloud(back, (ex + 12, GROUND - 18 - 3 * k), 4.5 - 0.5 * k, 'klr', hollow=hol, seed=85)
     return f
 
 
@@ -1169,12 +1179,12 @@ SPECIALE = [
     dict(head=(0, 1), s=2, arm=('orig', -3, 0), relax=-1, lean=-1, c=0, t=-1, flare=True,
          fx=[fx_gather(0.62, crack=2), fx_stone(1, halo=4.5)], ms=110),
     dict(head=(0, 1), s=2, arm=('orig', -3, 0), relax=-2, lean=-1, c=0, t=-1, flare=True,
-         fx=[fx_gather(0.88, crack=3, dust=False), fx_stone(2, halo=6)], ms=110),
+         fx=[fx_gather(0.88, crack=3, dust=False), fx_stone(2, halo=8)], ms=110),
     # la tenue : pointe de pierre soudée, arc bandé à l'extrême
     dict(head=(0, 1), s=2, arm=('orig', -4, 0), relax=-2, lean=-1, c=-1, t=0, flare=True,
-         fx=[fx_crack(3), fx_motes(), fx_stone(3, halo=7.5, orbit=2)], ms=260),
+         fx=[fx_crack(3), fx_motes(), fx_stone(3, halo=10.5, orbit=2)], ms=260),
     # le lâcher (le recul le repousse), le carreau file
-    dict(REL, head=(0, 0), s=2, bulge=3, relax=2, tilt=2.0, push=2, lean=-2, c=1, t=1, flare=True,
+    dict(REL, head=(0, 0), s=2, bulge=3, relax=2, tilt=1.0, push=2, lean=-2, c=1, t=1, flare=True,
          fx=[fx_crack(2), fx_bolt(78), fx_kick(0)], ms=50),
     dict(REL, head=(0, 0), s=2, bulge=-2, relax=2, tilt=1.0, push=1, lean=-2, c=1, t=1, flare=True,
          fx=[fx_impact(0), fx_kick(1)], ms=60),
@@ -1190,3 +1200,146 @@ SPECIALE = [
     dict(ATTAQUE[7], c=0, t=0, ms=80),
     dict(head=(0, 1), c=0, t=0, ms=140),
 ]
+
+
+# ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
+# RETOUCHES[nom][numéro d'image] = [(x, y, 'TEXTE')] en coordonnées de la GRILLE du dessin (comme isis.txt), décalées
+# avec le buste de l'image ; '.' efface, ' ' laisse le pixel tel quel.
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+
+
+def retouch(cv, fixes, chest=(0, 0)):
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                X, Y = x + i + OX + chest[0], y + OY + chest[1]
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = ch
+
+
+# ---------------------------------------------------------------- toutes les images, et les fichiers
+def build_all():
+    anims = {}
+    for name, specs in (('pose', POSE), ('attaque', ATTAQUE), ('speciale', SPECIALE)):
+        fr = []
+        for i, spec in enumerate(specs):
+            cv, back, front, ctx = rig_frame(dict(spec))
+            retouch(cv, RETOUCHES[name].get(i, []), ctx.chest)
+            fr.append((compose(cv, back, front), spec['ms']))
+        anims[name] = fr
+    return anims
+
+
+def on_bg(img, bg=BG):
+    im = Image.new('RGBA', (img.shape[1], img.shape[0]), bg + (255,))
+    im.alpha_composite(Image.fromarray(img, 'RGBA'))
+    return im
+
+
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin),
+            min(H, ys.max() + 1 + margin))
+
+
+GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet.paste(im, (0, i * H0))
+    ncol = len(sheet.getcolors(maxcolors=1 << 20) or [])
+    if ncol <= 256:
+        pal = sheet.quantize(colors=min(256, ncol), method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    boxes = {'pose': GAME_BOX}
+    both = anims['attaque'] + anims['speciale'] + anims['pose']
+    bb = bbox(both, 6)
+    boxes['attaque'] = boxes['speciale'] = bb
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-isis-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
+    k = 3
+    blocks = []
+    for name, per in (('pose', 10), ('attaque', 5), ('speciale', 4)):
+        box = GAME_BOX if name == 'pose' else bb
+        cells = [on_bg(img).crop(box) for img, _ in anims[name]]
+        blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + per - 1) // per) * (cells[0].height * k + 22) for _, per, cells, _ in blocks)
+    sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    y = 6
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE (tir)',
+              'speciale': 'ATTAQUE SPECIALE (fleche de la faille)'}
+    for name, per, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % per == 0:
+                y += ch + 22
+            X = 6 + (i % per) * (cw + 6)
+            sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sheet.save(os.path.join(OUT, 'anim-isis-planche.png'))
+    # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat (prairie), ×2
+    seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
+    box = bb
+    try:
+        fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
+        fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        bw, bh = box[2] - box[0], box[3] - box[1]
+        fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        base = fond.crop((0, fy, bw, fy + bh))
+        if base.width < bw:
+            raise ValueError
+    except Exception:
+        base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
+    ims = []
+    for img, _ in seq:
+        im = base.copy()
+        im.alpha_composite(Image.fromarray(img, 'RGBA').crop(box))
+        ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, 'anim-isis-jeu.gif'), ims, [ms for _, ms in seq])
+    return boxes
+
+
+def zone(args):
+    """python3 build.py zone x0 y0 x1 y1 [morceau] : affiche un morceau de la découpe (grille du dessin)"""
+    x0, y0, x1, y1 = map(int, args[:4])
+    g = P[args[4]] if len(args) > 4 else P['corps']
+    print('     ' + ''.join(str(x // 10 % 10) if x % 10 == 0 else ' ' for x in range(x0, x1 + 1)))
+    print('     ' + ''.join(str(x % 10) for x in range(x0, x1 + 1)))
+    for y in range(y0, y1 + 1):
+        print(f'{y:4d} ' + ''.join(g[y, x0:x1 + 1]))
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'zone':
+        zone(sys.argv[2:])
+        sys.exit()
+    anims = build_all()
+    boxes = write_outputs(anims)
+    for n in ('pose', 'attaque', 'speciale'):
+        print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+    print('cadre des attaques :', boxes['attaque'])
+    print('écrit dans', OUT)
