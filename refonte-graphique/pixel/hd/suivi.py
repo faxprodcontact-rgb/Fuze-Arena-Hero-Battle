@@ -46,19 +46,19 @@ ROSTER = [
     ('arachne', 'myths-10', 'Arachné', 'terre', 'assassin', 'légendaire', 'femme-araignée'),
     ('isis', 'myths-9', 'Isis', 'terre', 'tireur', 'légendaire', 'chasseur au crâne de cerf'),
 ]
-VALIDES = {'ysolde', 'berold', 'aldric', 'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'nerith', 'arachne', 'kesha', 'velith', 'celia', 'solenn', 'anubis', 'isis', 'kael', 'rook', 'sable', 'tybalt'}
+VALIDES = {'berold', 'aldric', 'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'arachne', 'kesha', 'celia', 'solenn', 'anubis', 'isis', 'kael', 'sable', 'tybalt', 'auriel', 'cyclope', 'zaroth', 'lilou'}
 # héros dessinés dont les retours du propriétaire sont en train d'être faits : le retour demandé
 RETOUCHES = {
-    'lenore': "Le manche de la massue doit ressortir de l'autre côté de la main.",
-    'garvin': "Poings retravaillés, un peu plus de lave sur le corps, plus de détails sur la tête.",
-    'auriel': "Trou dans l'épaule à enlever ; des pics sur la massue.",
-    'zaroth': "Une ligne orange pour séparer le masque de la peau.",
-    'lilou': "Refaire la transition entre les bras et les gants.",
-    'cyclope': "Supprimer l'excroissance.",
-    'minotaure': "Enlever la barre d'or qui traîne dans l'aile ; refaire le motif de l'aile à cet endroit.",
+    'lenore': "Manche de la massue bien droit, dans la continuité de la massue, qui ressort de la main.",
+    'garvin': "Poings retravaillés (pouces repliés sous les doigts), un peu plus de lave, plus de détails sur la tête.",
+    'velith': "Coude trop près de la main (effet poignet cassé) : éloigner la pliure du coude.",
+    'nerith': "Refaire le nez.",
+    'minotaure': "Petit trou à boucher.",
+    'rook': "Transition du visage aux plumes moins sèche ; visage plus féminin et plus beau.",
+    'ysolde': "Nez moins brouillon.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'auriel', 'cyclope', 'minotaure', 'zaroth', 'lilou'}
+FAITES = set()
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 

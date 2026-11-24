@@ -56,6 +56,10 @@ Outils (depuis `refonte-graphique/pixel/hd/`) :
   tache, pas de pixels au hasard.
 - **Les yeux** : l'œil du fond est caché en partie DERRIÈRE l'arête du nez (de trois quarts, le nez passe devant lui),
   même forme que l'œil proche, sur la même ligne.
+- **Poings et bras** (retours du propriétaire) : poing fermé = le pouce replié SOUS les autres doigts (on ne le voit
+  pas en travers) ; le coude à bonne distance de la main (un vrai avant-bras, sinon effet « poignet cassé ») ; un
+  manche tenu ressort des deux côtés de la main, bien droit, dans l'axe de l'arme.
+- **Pas de trou** : aucun vide de fond entre deux morceaux qui se touchent (épaule, aile et corps, bouclier fermé).
 - **Le corps reste cohérent avec la pose** : une carapace, un abdomen, une queue suivent la rotation du corps de trois
   quarts et sont attachés au bon endroit (pas d'espace vide entre deux morceaux qui se tiennent).
 
