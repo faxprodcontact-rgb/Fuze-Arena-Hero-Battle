@@ -1154,8 +1154,8 @@ def fx_cry(k):
     def f(cv, back, front, ctx):
         beak = eagle_point((27, -2), APEX, CRI['rot'], CRI['s'])
         a = CRI['rot'] - 5
-        for i, r in enumerate((6 + 4 * k, 12 + 5 * k)):
-            ribbon(front, tuple(beak), r, r * 1.2, a + 60, a - 60, 3.0 - 0.6 * i - 0.5 * k, tones='abd' if i == 0 else 'bde')
+        for i, r in enumerate((8 + 4 * k, 15 + 5 * k)):
+            ribbon(front, tuple(beak), r, r * 1.15, a + 62, a - 62, 3.2 - 0.6 * i - 0.5 * k, tones='abde' if i == 0 else 'bde')
     return f
 
 
@@ -1404,6 +1404,11 @@ def write_outputs(anims):
     try:
         fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
         fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        # la scène est plus large que le fond : on le prolonge par son reflet (raccord sans couture), comme Orin
+        big = Image.new('RGBA', (fond.width * 2, fond.height))
+        big.paste(fond, (0, 0))
+        big.paste(fond.transpose(Image.FLIP_LEFT_RIGHT), (fond.width, 0))
+        fond = big
         bw, bh = box[2] - box[0], box[3] - box[1]
         fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
         base = fond.crop((0, fy, bw, fy + bh))
