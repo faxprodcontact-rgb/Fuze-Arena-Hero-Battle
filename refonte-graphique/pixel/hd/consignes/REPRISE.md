@@ -7,9 +7,8 @@
 - États de chaque héros : `../suivi.py` (`VALIDES`, `RETOUCHES` avec le retour du propriétaire, `FAITES` = retouche
   faite, en attente de son avis). Page de suivi : `python3 ../suivi.py`, puis republier `../sortie/suivi.html` sur
   https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (outil Artifact, avec `url`).
-- **Corvin, Jinn et Zéphyre** (vent) : dessins **commencés mais pas finis** (agents arrêtés en cours de route). Les
-  fichiers `../corvin.txt`, `../jinn.txt` et `../zephyre.txt` sont le point de départ : un agent les reprend (consigne
-  `nouveau-heros.md`, en lui disant que le fichier existe déjà et qu'il faut le terminer, pas le recommencer).
+- **Corvin, Jinn et Zéphyre** (vent) : terminés le 24/11/2026 (zéro FAUTE), en attente de l'avis du propriétaire
+  (images `../../sortie/hd-<nom>-premier-jet.png`).
 - Restent à dessiner (vent) : Mira, Tessa, Orin, Arcan, Eldra, Myrr (thèmes et ids dans `ROSTER` de `../suivi.py`).
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
 
@@ -21,7 +20,7 @@
    Pour une petite retouche, un agent neuf coûte moins cher que reprendre un ancien agent.
 2. Quand un agent a fini : `python3 ../hd.py controle <nom>` (zéro FAUTE), image avant/après
    `python3 avantapres.py <nom> <id>` (→ `../../sortie/hd-<nom>-premier-jet.png`), mettre à jour `../suivi.py`,
-   régénérer et republier la page, commit + envoi sur la branche, envoyer l'image au propriétaire avec un court
+   régénérer (`python3 ../suivi.py` écrit `../sortie/suivi.html`, dossier `hd/sortie/`) et republier la page, commit + envoi sur la branche, envoyer l'image au propriétaire avec un court
    résumé en français (ce qui a changé, ce qu'il doit regarder).
 3. Les héros que le propriétaire ne mentionne pas dans son retour sont considérés validés.
 4. Règles de dessin : `../GUIDE.md` (section 2 : règles ajoutées d'après ses retours).
