@@ -40,7 +40,7 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   articulations, ordre premier/second plan, refus passés). Mannequin à recopier : `persos/_gabarit.py` ; contrôle
   obligatoire avant de montrer : `python3 refonte-graphique/pixel/controle.py <nom>`. **Les 72 héros** (v0.52.0) et 5 monstres
   (ancien style) sont dans le jeu à la place des anciens : `python3 refonte-graphique/pixel/jeu.py` (`public/art/px/`,
-  `pixel-meta.ts`), combat d'essai dans les Outils de test. **Refonte HD en cours** (36 héros choisis, ~96 px, dessinés pixel par pixel par des agents) : `refonte-graphique/pixel/hd/` (lire `hd/GUIDE.md`), page de suivi pour le propriétaire https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (`python3 refonte-graphique/pixel/hd/suivi.py` puis republier `hd/sortie/suivi.html` à chaque changement ; états dans `VALIDES`, `RETOUCHES`, `FAITES`).
+  `pixel-meta.ts`), combat d'essai dans les Outils de test. **Refonte HD en cours** (36 héros choisis, ~96 px, dessinés pixel par pixel par des agents) : `refonte-graphique/pixel/hd/` (lire `hd/GUIDE.md`), page de suivi pour le propriétaire https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (`python3 refonte-graphique/pixel/hd/suivi.py` puis republier `hd/sortie/suivi.html` à chaque changement ; états dans `VALIDES`, `RETOUCHES`, `FAITES`). **Pour reprendre : lire `refonte-graphique/pixel/hd/consignes/REPRISE.md`** (consignes des agents, méthode, où on en est).
 - Décors de combat dessinés par le code : `src/game/bg/` (un fichier par décor, `scenes.ts`). Règles : une plateforme
   rectangulaire d'un bord à l'autre (**jamais de rond au sol**), tout est posé, ordre des calques fixé (voir journal
   v0.38.0). Outil de test : `#fond=<terrain>`.
