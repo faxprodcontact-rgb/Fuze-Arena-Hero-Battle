@@ -9,11 +9,11 @@
   https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (outil Artifact, avec `url`). Les héros animés y jouent leur
   enchaînement : suivi.py écrit aussi `../sortie/anim/<nom>.gif` (depuis `pixel/sortie/anim-<nom>-jeu.gif`) ; les publier avec
   la page (paramètre `files` : `{"anim/<nom>.gif": "refonte-graphique/pixel/hd/sortie/anim/<nom>.gif", ...}`).
-- Corvin, Jinn, Zéphyre, Eldra, Mira, Tessa, Orin : validés (24/11). Myrr et Arcan validés : les 36 héros sont dessinés (2 ou 3 agents
+- Les 36 héros HD sont dessinés et validés (24/11 ; Lenore, Garvin, Nerith, Ysolde, Rook, Velith, Minotaure validés sans remarque) (2 ou 3 agents
   en parallèle : même coût qu'un par un quand le propriétaire ne regarde pas entre deux).
 - Test d'animation (24/11) sur Eldra : respiration, attaque, attaque spéciale — sources `../anim/eldra/build.py`, GIF
   `../../sortie/anim-eldra-*.gif`. Validé (« Super, j'aime bien »). Puis Kael (feu), Isis (terre) et Ilian
-  (eau) faits et validés (« Super »), puis Sable, Elyon, Arachné validés, puis Myrr, Zaroth, Méduse validés, puis Astérion (cyclope), Célia, Tybalt validés, puis Kesha, Orin, Bérold validés, puis Zéphyre, Barzul, Aldric validés, puis Lilou, Gabryel, Mira validés, puis Tessa, Solenn, Anubis validés, puis Corvin, Jinn, Auriel faits (en attente de son avis) ; 3 agents, consigne `animation.md` (+ héros, élément et idée de spéciale). Rien n'est branché dans le jeu.
+  (eau) faits et validés (« Super »), puis Sable, Elyon, Arachné validés, puis Myrr, Zaroth, Méduse validés, puis Astérion (cyclope), Célia, Tybalt validés, puis Kesha, Orin, Bérold validés, puis Zéphyre, Barzul, Aldric validés, puis Lilou, Gabryel, Mira validés, puis Tessa, Solenn, Anubis validés, puis Corvin, Jinn, Auriel validés, puis Arcan, Rook, Nerith en cours (restent Lenore, Garvin, Velith, Ysolde, Minotaure) ; 3 agents, consigne `animation.md` (+ héros, élément et idée de spéciale). Rien n'est branché dans le jeu.
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
 
 ## Méthode (validée par le propriétaire)
