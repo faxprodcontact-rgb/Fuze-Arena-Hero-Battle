@@ -453,81 +453,6 @@ def bezier(p0, p1, p2, p3, n):
     return out
 
 
-def curl(cv, c, r0, a0, turn=300, w=2.4, tones='KL', cw=False):
-    """une volute : une spirale qui s'enroule (r décroît), épaisse au départ, effilée au coeur"""
-    cx, cy = c
-    n = int(turn / 4) + 8
-    pts, ws = [], []
-    for i in range(n + 1):
-        s = i / n
-        a = math.radians(a0 + (-turn if cw else turn) * s)
-        r = r0 * (1 - 0.72 * s)
-        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
-        ws.append(w * (1 - s) ** 0.7 + 0.4 * (1 - s))
-    stroke(cv, pts, ws, tones)
-
-
-def gust(cv, p0, p1, p2, p3, w, tones='KL', curl_r=5.0, up=True, tail=0.0):
-    """un long ruban courbe (Bézier) qui finit en volute enroulée ; tail : la part du début déjà effacée"""
-    pts = bezier(p0, p1, p2, p3, 60)
-    ex, ey = pts[-1]
-    tx, ty = pts[-1][0] - pts[-2][0], pts[-1][1] - pts[-2][1]
-    tl = math.hypot(tx, ty) or 1
-    tx, ty = tx / tl, ty / tl
-    nx, ny = (ty, -tx) if up else (-ty, tx)
-    ccx, ccy = ex + nx * curl_r, ey + ny * curl_r
-    a0 = math.atan2(-(ey - ccy), ex - ccx)
-    sgn = 1 if up else -1
-    for i in range(1, 41):
-        s = i / 40
-        a = a0 + sgn * math.radians(300) * s
-        r = curl_r * (1 - 0.75 * s)
-        pts.append((ccx + r * math.cos(a), ccy - r * math.sin(a)))
-    N = len(pts)
-    widths = []
-    for i in range(N):
-        s = i / (N - 1)
-        if s < tail:
-            widths.append(0)
-            continue
-        ss = (s - tail) / max(1 - tail, 1e-6)
-        prof = (ss / 0.35) ** 0.7 if ss < 0.35 else ((1 - ss) / 0.65) ** 0.8
-        widths.append(w * prof + 0.5)
-    stroke(cv, pts, widths, tones)
-
-
-def ribbon(cv, c, rx, ry, a0, a1, wmax, head=0.5, tones='ZK'):
-    """un arc d'ellipse épais au milieu, effilé aux deux bouts (un souffle en croissant)"""
-    cx, cy = c
-    n = max(12, int(abs(a1 - a0) / 360 * 2 * math.pi * max(rx, ry) * 2))
-    pts, ws = [], []
-    for i in range(n + 1):
-        s = i / n
-        a = math.radians(a0 + (a1 - a0) * s)
-        pts.append((cx + rx * math.cos(a), cy - ry * math.sin(a)))
-        ws.append(wmax * (s / head if s < head else (1 - s) / (1 - head)) ** 0.8)
-    stroke(cv, pts, ws, tones)
-
-
-def taper(cv, P0, P1, r0, r1, tones):
-    """une traînée effilée de P0 (rayon r0) à P1 (rayon r1) ; tons du coeur vers le bord"""
-    P0, P1 = np.array(P0, float), np.array(P1, float)
-    v = P1 - P0
-    L = max(np.linalg.norm(v), 1e-6)
-    u = v / L
-    n = np.array([u[1], -u[0]])
-    R = max(r0, r1) + 1
-    for y in range(int(min(P0[1], P1[1]) - R), int(max(P0[1], P1[1]) + R + 1)):
-        for x in range(int(min(P0[0], P1[0]) - R), int(max(P0[0], P1[0]) + R + 1)):
-            p = np.array([x + 0.5, y + 0.5]) - P0
-            t = p @ u
-            if 0 <= t <= L:
-                r = r0 + (r1 - r0) * t / L
-                d = abs(p @ n)
-                if d <= r and r > 0.3:
-                    put(cv, x, y, tones[min(len(tones) - 1, int(d / r * len(tones)))])
-
-
 def in_poly(x, y, pts):
     inside = False
     n = len(pts)
@@ -685,9 +610,9 @@ POSE = _pose()
 
 # ---------------------------------------------------------------- 2) l'attaque de base : « Feu follet »
 # Il lève le crâne au-dessus de sa tête comme pour lui parler (« hélas, pauvre Yorick »), se rejette en arrière, la
-# canne levée ; des volutes vertes s'enroulent autour du crâne, ses orbites s'allument (anticipation tenue). Puis il
-# frappe le sol de sa canne et tend le crâne vers l'ennemi d'un coup sec : un petit crâne follet vert jaillit de la
-# mâchoire et file en ondulant (pas une ligne droite), une flamme verte derrière lui qui perd des volutes de fumée
+# canne levée ; un halo vert entoure le crâne, des étincelles viennent à lui, ses orbites s'allument (anticipation
+# tenue). Puis il frappe le sol de sa canne et tend le crâne vers l'ennemi d'un coup sec : un petit crâne follet vert
+# jaillit de la mâchoire et file en courbe (pas une ligne droite), une flamme verte derrière lui qui perd des bouffées de fumée
 # violette ; il éclate sur l'ennemi en flamme verte et fumée violette. Retour en garde, nonchalant.
 SKULL_C = (94.5, 40.0)                       # le centre du crâne tenu (grille)
 SKULL_MOUTH = (98.5, 44.5)                   # sa mâchoire (grille)
@@ -742,20 +667,17 @@ def flame_trail(cv, pts, s0, s1, wmax, wob_phase=0.0):
 
 
 def fx_gather(level):
-    """des volutes vertes s'enroulent autour du crâne levé, ses orbites s'allument"""
+    """le crâne levé s'allume : un halo vert l'entoure, des étincelles vertes viennent à lui de tous côtés"""
     def f(cv, back, obj, front, ctx):
         c = g2c(SKULL_C, ctx.hand)
         if level == 0:
-            curl(back, (c[0] - 8, c[1] + 5), 6, 200, turn=250, w=2.8, tones='JUX', cw=True)
-            curl(back, (c[0] + 9, c[1] - 4), 5, 20, turn=250, w=2.6, tones='JUX', cw=True)
-            put(front, c[0] + 12, c[1] + 4, 'J')
+            glow(back, (c[0], c[1] - 1), 8.0, 'JJU')
+            for (dx, dy, bg) in ((-14, 6, False), (13, -8, True), (10, 11, False), (-6, -14, True)):
+                mote(front, c[0] + dx, c[1] + dy, bg)
         else:
-            glow(back, (c[0], c[1] - 1), 9.5, 'IJJU')
-            curl(back, (c[0] - 9, c[1] + 2), 7, 230, turn=320, w=3.2, tones='IJU', cw=True)
-            curl(back, (c[0] + 9, c[1] - 6), 6, 40, turn=320, w=3.0, tones='IJU', cw=True)
-            put(front, c[0] + 12, c[1] + 6, 'J')
-            put(front, c[0] - 12, c[1] - 7, 'I')
-            put(front, c[0] + 3, c[1] - 13, 'J')
+            glow(back, (c[0], c[1] - 1), 10.0, 'IJJU')
+            for (dx, dy, bg) in ((-10, 4, True), (10, -5, True), (8, 8, False), (-4, -11, False)):
+                mote(front, c[0] + dx, c[1] + dy, bg)
     return f
 
 
@@ -1074,21 +996,28 @@ def fx_dust(level, seed=5):
 
 
 def fx_smoke(level):
-    """les volutes de fumée violette qui montent de la terre refermée, s'ouvrent et se défont"""
+    """les volutes de fumée violette qui montent de la terre refermée, s'ouvrent et se défont
+    (level -1 : la fumée qui monte derrière les mains quand elles sortent)"""
     def f(cv, back, obj, front, ctx):
         x = ENEMY_X
-        h = level * 10
+        if level < 0:
+            cloud(back, (x - 8, GROUND - 22), 8, 'DDEF', seed=27)
+            cloud(back, (x + 9, GROUND - 30), 6.5, 'DDEF', seed=28)
+            return
+        h = level * 11
         hol = (0.0, 0.3, 0.6, 0.85)[level]
-        cloud(back, (x - 3, GROUND - 16 - h), 8 + level, 'DDEF', hollow=hol, seed=21)
-        cloud(back, (x - 18 - 2 * level, GROUND - 8 - h * 0.6), 5 + level * 0.5, 'DDEF', hollow=hol, seed=22)
-        cloud(back, (x + 17 + 2 * level, GROUND - 10 - h * 0.7), 5 + level * 0.5, 'DDEF', hollow=hol, seed=23)
+        cloud(back, (x - 2, GROUND - 20 - h), 11 + level, 'DDEF', hollow=hol, seed=21)
+        cloud(back, (x - 22 - 3 * level, GROUND - 10 - h * 0.6), 7 + level * 0.5, 'DDEF', hollow=hol, seed=22)
+        cloud(back, (x + 21 + 3 * level, GROUND - 12 - h * 0.7), 6.5 + level * 0.5, 'DDEF', hollow=hol, seed=23)
     return f
 
 
 def fx_clench(cv, back, obj, front, ctx):
     """les mains se referment : éclat vert au creux, fumée violette tout autour"""
     x, y = ENEMY_X, GROUND - 40
-    cloud(back, (x, y - 2), 11, 'DDEF', seed=24)
+    cloud(back, (x - 2, y - 8), 14, 'DDEF', seed=24)
+    cloud(back, (x - 26, y + 14), 7, 'DDEF', seed=25)
+    cloud(back, (x + 26, y + 12), 6.5, 'DDEF', seed=26)
     pop(front, (x, y), 7, facing=90, tones='HIJU')
     for (dx, dy, bg) in ((-26, -14, True), (25, -18, False), (2, -30, True), (-28, 4, False), (27, 2, True)):
         mote(front, x + dx, y + dy, bg)
@@ -1122,9 +1051,9 @@ SPECIALE = [
     dict(b=1, lean=0, head=(0, -1), arm=(2, -6), tl=0.6, pl=1, ch=1, sk=1, flare=True,
          fx=[fx_crack(1.0, 1), fx_hole(1), fx_hands(0.55, 0.25), fx_debris(0.25), fx_dust(0)], ms=70),
     dict(b=1, lean=-1, head=(0, -1), hat=(0, -1), arm=(1, -7), tl=0.0, pl=2, ch=1, sk=1, flare=True,
-         fx=[fx_crack(1.0, 2), fx_hole(1), fx_hands(1.0, 0.12), fx_debris(0.5), fx_dust(1)], ms=100),
+         fx=[fx_crack(1.0, 2), fx_smoke(-1), fx_hole(1), fx_hands(1.0, 0.12), fx_debris(0.5), fx_dust(1)], ms=100),
     dict(b=0, lean=0, head=(1, 0), arm=(3, -3), tl=-0.4, pl=0, ch=0, sk=1, flare=True,
-         fx=[fx_hole(1), fx_hands(1.0, 0.55), fx_debris(0.75), fx_dust(2)], ms=60),
+         fx=[fx_smoke(-1), fx_hole(1), fx_hands(1.0, 0.55), fx_debris(0.75), fx_dust(2)], ms=60),
     # il serre le poing sur le crâne vers le bas : elles se referment (arrêt sur l'image)
     dict(b=0, lean=2, head=(2, 1), tilt=2, tiltv=1, arm=(5, 1), tl=1.2, pl=-2, ch=-2, sk=2, flare=True,
          fx=[fx_hole(1), fx_hands(1.12, 0.85), fx_clench], ms=230),
