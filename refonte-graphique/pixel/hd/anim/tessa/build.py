@@ -736,19 +736,22 @@ def unit(deg):
 
 
 # Petites plumes qui volent (dessinées à la main) : plumes de vent (blanc, cyan, jade) et plumes d'aigle (brun, blanc)
-FEATHERS = {
-    'vent': [['..b', '.ac', 'cd.', 'd..'], ['.bbc', 'acd.'], ['d..', 'cb.', '.ab', '..c']],
-    'brun': [['..E', '.DE', 'CD.', 'C..'], ['.DEE', 'CDC.'], ['C..', 'DD.', '.DE', '..F']],
-    'blanc': [['..5', '.45', '34.', '3..'], ['.455', '344.'], ['3..', '44.', '.45', '..5']],
-}
+FEATHER_SHAPES = [
+    ['....12', '...123', '..123.', '.23...', '4.....'],
+    ['..1112.', '211223.', '3......'],
+    ['12....', '2321..', '.3321.', '....34'],
+]
+FEATHER_TONES = {'vent': 'acde', 'brun': 'EDCB', 'blanc': '5432'}
 
 
 def feather(cv, x, y, kind='vent', k=0):
-    rows = FEATHERS[kind][k % 3]
+    """une plume qui vole (dessinée à la main, trois attitudes) : 1 = lumière, 2 = ton, 3 = ombre, 4 = tuyau"""
+    rows = FEATHER_SHAPES[k % 3]
+    tones = FEATHER_TONES[kind]
     for j, r in enumerate(rows):
         for i, ch in enumerate(r):
             if ch != '.':
-                put(cv, int(round(x)) + i, int(round(y)) + j, ch)
+                put(cv, int(round(x)) + i, int(round(y)) + j, tones[int(ch) - 1])
 
 
 # ---------------------------------------------------------------- les flèches en biais (retracées)
@@ -761,7 +764,7 @@ def draw_arrow(cv, tip, ang, L=56, kind='hero'):
     if nrm[1] > 0:
         nrm = -nrm
     tip = np.array(tip, float)
-    shaft_c, hi, lo, dk, pt = ('F', 'p', 'o', 'n', 'w') if kind == 'hero' else ('c', 'a', 'b', 'd', 'a')
+    shaft_c, hi, lo, dk, pt = ('F', 'p', 'o', 'n', 'w') if kind == 'hero' else ('d', 'a', 'b', 'e', 'a')
     vane_hi, vane_lo, vane_dk = ('4', 'C', '3') if kind == 'hero' else ('b', 'd', 'e')
     # le fût
     a = tip - u * 5
@@ -939,7 +942,7 @@ def arrow_tip(ctx):
 
 APEX = (200.0, 58.0)                         # là-haut, à droite : l'aigle de vent s'y forme
 IMPACT = (ENEMY_X, GROUND - 7.0)             # où il frappe
-CRI = dict(rot=-14.0, s=1.15)                # l'aigle qui crie, là-haut
+CRI = dict(rot=-14.0, s=1.3)                # l'aigle qui crie, là-haut
 DIVE_AT = (222.0, 122.0)                     # l'aigle en plein piqué
 
 
@@ -988,7 +991,7 @@ def fx_volley(s_head, s_tail, amp=5.0, turns=1.6, merge=0.0):
                 for (q, z, t) in trail[:-3]:
                     if (z > 0) == want:
                         run.append(tuple(q))
-                        ws.append(0.6 + 2.6 * t ** 1.2)
+                        ws.append(0.6 + 3.4 * t ** 1.1)
                     elif run:
                         stroke(layer, run, ws, 'bde' if want else 'def')
                         run, ws = [], []
@@ -1054,7 +1057,7 @@ def wind_shape(cv, pts, tones='abcde', keep=None):
                 ch = core if k > 0.25 else low if k < -0.15 else mid
             else:
                 v = ((px - cxm) * LN[0] + (py - cym) * LN[1]) / max(1.0, (max(xs) - min(xs) + max(ys) - min(ys)) / 4)
-                ch = mid if v < -0.55 else core
+                ch = mid if v < -0.3 else core
             put(cv, x, y, ch, keep)
 
 
@@ -1151,8 +1154,8 @@ def fx_cry(k):
     def f(cv, back, front, ctx):
         beak = eagle_point((27, -2), APEX, CRI['rot'], CRI['s'])
         a = CRI['rot'] - 5
-        for i, r in enumerate((5 + 3 * k, 10 + 4 * k)):
-            ribbon(front, tuple(beak), r, r, a + 55, a - 55, 2.6 - 0.6 * i - 0.4 * k, tones='abd' if i == 0 else 'bde')
+        for i, r in enumerate((6 + 4 * k, 12 + 5 * k)):
+            ribbon(front, tuple(beak), r, r * 1.2, a + 60, a - 60, 3.0 - 0.6 * i - 0.5 * k, tones='abd' if i == 0 else 'bde')
     return f
 
 
@@ -1182,13 +1185,15 @@ def fx_gather(level):
     du sol et des ailes vers l'arc"""
     def f(cv, back, front, ctx):
         tp = arrow_tip(ctx) + (3, 0)
-        R = [0, 11, 8, 5][level]
-        for i in range(3):
-            a = 90 + i * 120 + level * 50
-            c = tp + unit(a) * R * np.array([1.0, 0.8])
-            curl(front if i != 1 else back, tuple(c), 3.6 - 0.4 * level, a + 90, 280, 2.2, 'bde')
-        if level == 3:
-            stroke(front, [tuple(tp)], [5.0], 'abd')
+        R = [0, 13, 9, 6][level]
+        if level < 3:
+            for i in range(3):
+                a = 90 + i * 120 + level * 50
+                c = tp + unit(a) * R * np.array([1.0, 0.8])
+                curl(front if i != 1 else back, tuple(c), 5.0 - 0.6 * level, a + 90, 290, 2.8, 'bde')
+        else:                                    # la tenue : les trois tourbillons n'en font plus qu'un, serré
+            curl(back, tuple(tp + (1, 0)), 7.0, 300, 320, 3.0, 'bde')
+            stroke(front, [tuple(tp + (1, 0))], [4.6], 'abd')
         # plumes de vent aspirées vers la pointe (de loin vers près)
         src = [(SOL[0] - 40, GROUND - 60), (SOL[0] - 30, GROUND - 14), (SOL[0] + 24, GROUND - 8)]
         for i, (sx, sy) in enumerate(src):
@@ -1222,42 +1227,43 @@ BURST_FEATHERS = [(-2.6, -6.5, 'vent', 0), (2.0, -7.5, 'vent', 1), (3.8, -4.8, '
 
 
 def fx_impact(k):
-    """k = 0 : les serres frappent (arrêt sur l'image) ; 1 à 4 : le vent éclate, s'enroule et se défait, les plumes
-    volent puis retombent en se balançant"""
+    """k = 0 : les serres frappent (arrêt sur l'image) ; 1 à 4 : l'aigle éclate : ses ailes s'ouvrent en deux grands
+    croissants au ras du sol qui s'enroulent en volutes, une onde d'air court sur le sol, les plumes volent puis
+    retombent en se balançant"""
     def f(cv, back, front, ctx):
         X, Y = IMPACT
         if k == 0:
-            wind_eagle(back, front, (X - 10, Y - 16), -50, 'pique', 1.0)
-            pop(front, (X + 2, Y - 2), 8, facing=90, tones='abcd')
-            ribbon(back, (X, Y - 1), 24, 9, 180, 100, 3.6, head=0.4, tones='bde')
-            ribbon(back, (X, Y - 1), 24, 9, 0, 80, 3.6, head=0.4, tones='bde')
-            cloud(back, (X - 18, GROUND - 3), 5.0, 'kklm', seed=81)
-            cloud(back, (X + 18, GROUND - 3), 4.5, 'kklm', seed=82)
+            pop(back, (X + 3, Y - 1), 7, facing=90, tones='aabc')
+            ribbon(back, (X, Y), 20, 7, 180, 105, 3.6, head=0.4, tones='bde')
+            ribbon(back, (X, Y), 20, 7, 0, 75, 3.6, head=0.4, tones='bde')
+            wind_eagle(back, front, (X - 12, Y - 17), -50, 'pique', 1.0)
+            cloud(back, (X - 20, GROUND - 3), 5.0, 'kklm', seed=81)
+            cloud(front, (X + 20, GROUND - 3), 4.5, 'kklm', seed=82)
             return
         hol = [0, 0.0, 0.45, 0.7, 0.9][k]
         if k == 1:
-            pop(back, (X, Y - 6), 12, facing=90, tones='abcde')
-        elif k == 2:
-            pop(back, (X, Y - 7), 12, facing=90, tones='bde', hollow=0.55)
-        # les ailes de l'aigle éclatent en deux grands croissants au ras du sol, qui s'enroulent en volutes
+            pop(back, (X, Y - 5), 9, facing=90, tones='aabcd', hollow=0.3)
         if k <= 3:
-            r = 26 + 7 * k
-            wv = [0, 4.2, 3.2, 2.0][k]
-            ribbon(back, (X, Y - 4 - 2 * k), r, 10 + 3 * k, 175, 95, wv, head=0.35, tones='bde')
-            ribbon(back, (X, Y - 4 - 2 * k), r, 10 + 3 * k, 5, 85, wv, head=0.35, tones='bde')
-            curl(front, (X - r + 4, Y - 6 - 3 * k), 5.0 - k, 160, 300, 2.6 - 0.5 * k, 'bde', cw=True)
-            curl(front, (X + r - 4, Y - 6 - 3 * k), 5.0 - k, 20, 300, 2.6 - 0.5 * k, 'bde')
+            # l'onde d'air au ras du sol (une ellipse couchée qui s'élargit)
+            ribbon(back, (X, GROUND - 2), 18 + 10 * k, 3 + k, 0, 360, [0, 2.6, 2.0, 1.2][k], head=0.5,
+                   tones='bde' if k < 3 else 'de')
+            # les deux ailes de l'aigle, en croissants qui montent et s'enroulent
+            r = 20 + 7 * k
+            wv = [0, 4.4, 3.2, 2.0][k]
+            ribbon(back, (X, Y - 2 - 3 * k), r, 12 + 4 * k, 178, 98, wv, head=0.3, tones='abde')
+            ribbon(back, (X, Y - 2 - 3 * k), r, 12 + 4 * k, 2, 82, wv, head=0.3, tones='abde')
+            curl(front, (X - r + 5, Y - 9 - 5 * k), 5.5 - k, 170, 300, 2.8 - 0.6 * k, 'bde', cw=True)
+            curl(front, (X + r - 5, Y - 9 - 5 * k), 5.5 - k, 10, 300, 2.8 - 0.6 * k, 'bde')
         # poussière
         rr = [0, 7, 8.5, 8, 6.5][k]
-        cloud(back, (X - 16, GROUND - rr * 0.5), rr * 0.8, 'kklm', hollow=hol, seed=81)
-        cloud(back, (X + 16, GROUND - rr * 0.5), rr * 0.7, 'kklm', hollow=hol, seed=82)
+        cloud(back, (X - 18, GROUND - rr * 0.5), rr * 0.8, 'kklm', hollow=hol, seed=81)
+        cloud(back, (X + 18, GROUND - rr * 0.5), rr * 0.7, 'kklm', hollow=hol, seed=82)
         # les plumes : elles montent, puis retombent en se balançant
-        t = k
         for i, (vx, vy, kind, sd) in enumerate(BURST_FEATHERS):
-            x = X + vx * t * 4 + 2 * math.sin(t * 1.7 + i)
-            y = Y - 8 + vy * t * 4 + 2.2 * t * t * 4 * 0.55
-            y = min(y, GROUND - 3)
-            feather(front if i % 2 else back, x, y, kind, sd + k)
+            t = k
+            x = X - 3 + vx * t * 2.8 + 2 * math.sin(t * 1.7 + i)
+            y = Y - 10 + vy * t * 4 + 2.4 * t * t * 2.2
+            feather(front if i % 2 else back, x, min(y, GROUND - 4), kind, sd + k)
     return f
 
 
@@ -1292,3 +1298,159 @@ SPECIALE = [
     dict(head=(0, 0), arm=('fist', 3), fx=[fx_impact(4), fx_new_arrow(1)], ms=100),
     dict(head=(1, 0), fix=True, ms=150),
 ]
+
+
+# ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
+# RETOUCHES[nom][numéro d'image] = [(x, y, 'TEXTE')] en coordonnées de la GRILLE du dessin (comme tessa.txt), décalées
+# avec le buste de l'image ; '.' efface, ' ' laisse le pixel tel quel.
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+
+
+def retouch(cv, fixes, chest=(0, 0)):
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                X, Y = x + i + OX + chest[0], y + OY + chest[1]
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = ch
+
+
+# ---------------------------------------------------------------- toutes les images, et les fichiers
+def build_all():
+    anims = {}
+    for name, specs in (('pose', POSE), ('attaque', ATTAQUE), ('speciale', SPECIALE)):
+        fr = []
+        for i, spec in enumerate(specs):
+            cv, back, front, ctx = rig_frame(dict(spec))
+            retouch(cv, RETOUCHES[name].get(i, []), ctx.chest)
+            fr.append((compose(cv, back, front), spec['ms']))
+        anims[name] = fr
+    return anims
+
+
+def on_bg(img, bg=BG):
+    im = Image.new('RGBA', (img.shape[1], img.shape[0]), bg + (255,))
+    im.alpha_composite(Image.fromarray(img, 'RGBA'))
+    return im
+
+
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin),
+            min(H, ys.max() + 1 + margin))
+
+
+GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet.paste(im, (0, i * H0))
+    ncol = len(sheet.getcolors(maxcolors=1 << 20) or [])
+    if ncol <= 256:
+        pal = sheet.quantize(colors=min(256, ncol), method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    boxes = {'pose': GAME_BOX}
+    bb = bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 6)
+    boxes['attaque'] = boxes['speciale'] = bb
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
+    k = 3
+    blocks = []
+    for name, per in (('pose', 10), ('attaque', 4), ('speciale', 4)):
+        box = GAME_BOX if name == 'pose' else bb
+        cells = [on_bg(img).crop(box) for img, _ in anims[name]]
+        blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + per - 1) // per) * (cells[0].height * k + 22) for _, per, cells, _ in blocks)
+    sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    y = 6
+    titles = {'pose': 'POSE (affut de rapace, en boucle)', 'attaque': 'ATTAQUE DE BASE (tir dans un tourbillon)',
+              'speciale': 'ATTAQUE SPECIALE (serres du ciel)'}
+    for name, per, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % per == 0:
+                y += ch + 22
+            X = 6 + (i % per) * (cw + 6)
+            sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sheet.save(os.path.join(OUT, f'anim-{NAME}-planche.png'))
+    # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat (prairie), ×2
+    seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
+    box = bb
+    try:
+        fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
+        fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        bw, bh = box[2] - box[0], box[3] - box[1]
+        fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        base = fond.crop((0, fy, bw, fy + bh))
+        if base.width < bw or fy < 0:
+            raise ValueError
+    except Exception:
+        base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
+    ims = []
+    for img, _ in seq:
+        im = base.copy()
+        im.alpha_composite(Image.fromarray(img, 'RGBA').crop(box))
+        ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), ims, [ms for _, ms in seq])
+    return boxes
+
+
+def zone(args):
+    """python3 build.py zone x0 y0 x1 y1 [morceau] : affiche un morceau de la découpe (grille du dessin)"""
+    x0, y0, x1, y1 = map(int, args[:4])
+    g = P[args[4]] if len(args) > 4 else P['corps']
+    print('     ' + ''.join(str(x // 10 % 10) if x % 10 == 0 else ' ' for x in range(x0, x1 + 1)))
+    print('     ' + ''.join(str(x % 10) for x in range(x0, x1 + 1)))
+    for y in range(y0, y1 + 1):
+        print(f'{y:4d} ' + ''.join(g[y, x0:x1 + 1]))
+
+
+def essai(folder):
+    """python3 build.py essai <dossier> : chaque image seule, ×8, pour se relire"""
+    os.makedirs(folder, exist_ok=True)
+    anims = build_all()
+    for name, fr in anims.items():
+        box = GAME_BOX if name == 'pose' else bbox(anims['attaque'] + anims['speciale'], 6)
+        for i, (img, ms) in enumerate(fr):
+            im = on_bg(img).crop(box)
+            im.resize((im.width * 8, im.height * 8), Image.NEAREST).save(os.path.join(folder, f'{name}-{i:02d}.png'))
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'zone':
+        zone(sys.argv[2:])
+        sys.exit()
+    if len(sys.argv) > 2 and sys.argv[1] == 'essai':
+        essai(sys.argv[2])
+        sys.exit()
+    anims = build_all()
+    boxes = write_outputs(anims)
+    for n in ('pose', 'attaque', 'speciale'):
+        print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+    print('cadre des attaques :', boxes['attaque'])
+    print('écrit dans', OUT)
