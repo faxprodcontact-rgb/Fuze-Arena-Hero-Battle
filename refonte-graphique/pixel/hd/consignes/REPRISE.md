@@ -7,7 +7,7 @@
 - États de chaque héros : `../suivi.py` (`VALIDES`, `RETOUCHES` avec le retour du propriétaire, `FAITES` = retouche
   faite, en attente de son avis). Page de suivi : `python3 ../suivi.py`, puis republier `../sortie/suivi.html` sur
   https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (outil Artifact, avec `url`).
-- Corvin, Jinn, Zéphyre, Eldra, Mira, Tessa, Orin : validés (24/11). Myrr validée. **Arcan** en retouche (« moins gros, plus musclé »),
+- Corvin, Jinn, Zéphyre, Eldra, Mira, Tessa, Orin : validés (24/11). Myrr validée. **Arcan** retouché (« moins gros, plus musclé »), en attente de son avis ;
   2 agents en parallèle (même coût qu'un par un quand le propriétaire ne regarde pas entre deux).
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
 
