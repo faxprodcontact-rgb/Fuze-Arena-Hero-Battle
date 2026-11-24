@@ -302,7 +302,6 @@ FLANC = [(46, 59, '2'), (46, 60, '2'), (45, 61, '23'), (45, 62, '23'), (44, 63, 
 for (_x, _y, _t) in FLANC:
     for _i, _ch in enumerate(_t):
         P['corps'][_y, _x + _i] = _ch if P['corps'][_y, _x + _i] == '.' else P['corps'][_y, _x + _i]
-P['corps_avec_bras'] = None
 
 
 # ---------------------------------------------------------------- le trident, retracé à n'importe quel angle
@@ -525,15 +524,19 @@ SH_NEAR = np.array([41.0, 60.0])        # l'épaule proche (sous l'épaulière),
 ARM = (16.0, 14.5)                      # bras, avant-bras jusqu'au poignet (mesurés sur le dessin)
 
 
-def draw_arm(cv, S, Wr, bend=1, cuff=0.62):
+def draw_arm(cv, S, Wr, bend=1, cuff=0.62, part='tout'):
     """épaule S -> coude -> poignet Wr (toile) : bras nu puissant, avant-bras serré par le brassard d'or.
-    Le bras est peint à part, puis posé : il porte une ombre douce sur ce qui est dessous (en bas à gauche)."""
+    Le bras est peint à part, puis posé : il porte une ombre douce sur ce qui est dessous (en bas à gauche).
+    part : 'tout', 'bras' (seulement le haut du bras) ou 'avant' (seulement l'avant-bras, posé devant l'épaulière
+    quand la main monte au-dessus de l'épaule)."""
     E = ik(S, Wr, ARM[0], ARM[1], bend)
     lay = empty()
     m = np.zeros((H, W), bool)
-    draw_limb(lay, S, E, 6.2, 5.4, 'peau', mask=m)
-    draw_limb(lay, E, Wr, 5.2, 4.3, 'peau', mask=m)
-    draw_limb(lay, E, Wr, 5.6, 5.0, 'or', t0=1 - cuff, t1=0.98, mask=m)
+    if part in ('tout', 'bras'):
+        draw_limb(lay, S, E, 6.2, 5.4, 'peau', mask=m)
+    if part in ('tout', 'avant'):
+        draw_limb(lay, E, Wr, 5.2, 4.3, 'peau', mask=m)
+        draw_limb(lay, E, Wr, 5.6, 5.0, 'or', t0=1 - cuff, t1=0.98, mask=m)
     cast_shadow(cv, m)
     cv[m] = lay[m]
     return E
@@ -640,8 +643,13 @@ def rig_frame(f):
             draw_trident(cv, Hd, ang, f.get('slide', 0.0))
         if f.get('smear'):
             f['smear'](cv, back, front, ctx)
-        ctx.elbow = draw_arm(cv, S, Wr, f.get('bend', 1))
-        blit(cv, P['epaule'], cx + ep[0], cy + ep[1])
+        if f.get('fore_front'):                         # main levée : l'avant-bras passe devant l'épaulière
+            ctx.elbow = draw_arm(cv, S, Wr, f.get('bend', 1), part='bras')
+            blit(cv, P['epaule'], cx + ep[0], cy + ep[1])
+            draw_arm(cv, S, Wr, f.get('bend', 1), part='avant')
+        else:
+            ctx.elbow = draw_arm(cv, S, Wr, f.get('bend', 1))
+            blit(cv, P['epaule'], cx + ep[0], cy + ep[1])
         if not tri_back:
             if ang == 90:
                 d = np.round(Hd - (GRIP0 + np.array([OX, OY]))).astype(int)
@@ -667,7 +675,7 @@ def rig_frame(f):
 
 
 
-# ---------------------------------------------------------------- les effets d'eau : formes courbes (repris d'Eldra, tons de l'eau)
+# ---------------------------------------------------------------- les effets d'eau : formes courbes (outils repris d'Eldra, tons de l'eau)
 def put(cv, x, y, ch, keep=None):
     x, y = int(x), int(y)
     if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
@@ -709,19 +717,6 @@ def ribbon(cv, c, rx, ry, a0, a1, wmax, head=0.7, tones='XYZV', tilt=0.0):
         put(cv, x, y, tones[min(m - 1, int(k * m))])
 
 
-def puff(cv, c, r, tones='WXY', hollow=0.0):
-    """une bouffée de poussière, ronde, éclairée en haut à droite ; hollow > 0 : elle se défait (trou au milieu)"""
-    cx, cy = c
-    for y in range(int(cy - r - 1), int(cy + r + 2)):
-        for x in range(int(cx - r - 1), int(cx + r + 2)):
-            w = np.array([x + 0.5 - cx, y + 0.5 - cy])
-            d = math.hypot(*w)
-            if d <= r and d >= hollow * r:
-                k = (w @ LN) / max(r, 1e-6)
-                ch = tones[min(len(tones) - 1, int((1 - k) / 2 * len(tones)))]
-                put(cv, x, y, ch)
-
-
 def sprite(cv, rows, x, y, flipx=False):
     for j, r in enumerate(rows):
         if flipx:
@@ -747,27 +742,6 @@ def drop(cv, x, y, size=2, v=(0.0, 0.0)):
             cx, cy = x + ux * (len(rows) / 2 + k - 0.5), y + uy * (len(rows) / 2 + k - 0.5)
             put(cv, math.floor(cx), math.floor(cy), 'Z' if k == 1 else 'V')
     sprite(cv, rows, x0, y0)
-
-
-def cloud(cv, c, r, tones='WXY', hollow=0.0, seed=0):
-    """un nuage de poussière en chou-fleur : une grosse bouffée et des petites autour (pas une bille ronde).
-    hollow (0..1) : le nuage se défait — les bouffées s'écartent, montent un peu, rapetissent et pâlissent."""
-    rng = np.random.RandomState(seed)
-    cx, cy = c
-    lobes = [(0, 0, r)]
-    for i in range(4):
-        a = math.radians(150 - i * 40 + rng.uniform(-12, 12))
-        d = r * rng.uniform(0.55, 0.8)
-        lobes.append((d * math.cos(a), -d * math.sin(a) * 0.7, r * rng.uniform(0.5, 0.7)))
-    if hollow:
-        out = []
-        for (dx, dy, rr) in lobes[1:]:
-            out.append((dx * (1 + hollow), dy * (1 + hollow) - hollow * r * 0.5, rr * (1 - 0.45 * hollow)))
-        out.append((0, -hollow * r * 0.4, r * (1 - 0.6 * hollow)))
-        lobes = out
-        tones = tones[:1] * 2 + tones[1:2] if hollow > 0.5 else tones
-    for (dx, dy, rr) in lobes:
-        puff(cv, (cx + dx, min(cy + dy, GROUND - rr * 0.6)), rr, tones)
 
 
 def curl(cv, c, r0, a0, turn=300, w=2.4, tones='XYZV', cw=False):
@@ -872,42 +846,7 @@ def stroke(cv, pts, widths, tones):
         put(cv, x, y, tones[min(m - 1, int(k * m))])
 
 
-def gust(cv, p0, p1, p2, p3, w, tones='XYZV', curl_r=5.0, up=True, tail=0.0):
-    """une rafale à la chinoise : un long ruban courbe (Bézier) qui finit en volute enroulée.
-    tail : la part du début déjà effacée (0..1) quand la rafale se défait."""
-    n = 60
-    pts = bezier(p0, p1, p2, p3, n)
-    # la volute : elle continue la courbe et s'enroule (vers le haut si up)
-    ex, ey = pts[-1]
-    tx, ty = pts[-1][0] - pts[-2][0], pts[-1][1] - pts[-2][1]
-    tl = math.hypot(tx, ty) or 1
-    tx, ty = tx / tl, ty / tl
-    nx, ny = (ty, -tx) if up else (-ty, tx)            # vers l'intérieur de la volute
-    cx, cy = ex + nx * curl_r, ey + ny * curl_r
-    a0 = math.atan2(-(ey - cy), ex - cx)
-    turn = math.radians(300)
-    m = 40
-    sgn = 1 if up else -1
-    for i in range(1, m + 1):
-        s = i / m
-        a = a0 + sgn * turn * s
-        r = curl_r * (1 - 0.75 * s)
-        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
-    N = len(pts)
-    widths = []
-    for i in range(N):
-        s = i / (N - 1)
-        if s < tail:
-            widths.append(0)
-            continue
-        ss = (s - tail) / max(1 - tail, 1e-6)
-        prof = (ss / 0.35) ** 0.7 if ss < 0.35 else ((1 - ss) / 0.65) ** 0.8
-        widths.append(w * prof + 0.5)
-    stroke(cv, pts, widths, tones)
-
-
-
-# ---------------------------------------------------------------- effets de l'attaque de base
+# ---------------------------------------------------------------- effets de l'attaque de base (gerbes, nappes, gouttes)
 def tip_of(ctx, extra=0.0):
     """le bout de la dent du milieu (toile)"""
     return ctx.G + (58.8 - ctx.f.get('slide', 0.0) + extra) * ctx.u
@@ -991,7 +930,7 @@ def fx_chop_hit(k):
 # jusqu'au talon : plus d'allonge), tient (anticipation), puis l'abat d'un seul bras devant lui, vers l'ennemi :
 # image étirée par la vitesse, impact tenu (gerbe d'eau au bout des dents), il revient en garde et replante le trident.
 ATTAQUE = [
-    dict(arm='rig', hand=(22, 50), ang=93, slide=-10, crouch=1, lean=-1, ep=(0, -1), m=1, c=1, ms=110),
+    dict(arm='rig', hand=(22, 50), ang=93, slide=-10, crouch=1, lean=-1, ep=(0, -1), m=1, c=1, bend=-1, ms=110),
     dict(arm='rig', hand=(30, 30), ang=110, slide=-38, crouch=2, lean=-3, head=(-1, 0), ep=(-1, -2), m=1, br=1,
          c=1, far=-1, ms=240),
     dict(arm='rig', hand=(72, 52), ang=28, slide=-38, crouch=1, lean=2, ep=(0, -1), m=-1, br=-1, c=-1, far=1,
@@ -1002,8 +941,8 @@ ATTAQUE = [
          fx_list=[fx_chop_hit(1)], ms=100),
     dict(arm='rig', hand=(58, 66), ang=8, slide=-30, crouch=2, lean=3, m=1, br=1, c=1, far=0,
          fx_list=[fx_chop_hit(2)], ms=100),
-    dict(arm='rig', hand=(28, 58), ang=75, slide=-20, crouch=1, lean=1, m=1, br=0, c=0, ms=100),
-    dict(arm='rig', hand=(20, 60), ang=86, slide=-2, crouch=1, m=0, ms=100),
+    dict(arm='rig', hand=(28, 58), ang=75, slide=-20, crouch=1, lean=1, m=1, br=0, c=0, bend=-1, ms=100),
+    dict(arm='rig', hand=(20, 60), ang=86, slide=-2, crouch=1, m=0, bend=-1, ms=100),
     dict(crouch=1, m=0, ms=120),
     dict(ms=150),
 ]
@@ -1222,9 +1161,11 @@ def sea(k):
             px = XW + 96
             wave(back, XW + 6, 72, 88, lip=62, cr=7.0, turn=230, w0=50, spray=0, foot=1.2)
             # la couronne d'eau : deux grandes nappes qui s'ouvrent en coupe, un bouillon d'écume au pied
-            sheet(front, (px - 4, G - 4), 108, 58, 34, 12.0)
-            sheet(front, (px + 6, G - 4), 66, 66, -34, 13.0)
-            foam(front, (px + 2, G - 10), 15, seed=5)
+            sheet(front, (px - 4, G - 4), 108, 64, 34, 13.0)
+            sheet(front, (px + 6, G - 4), 66, 72, -34, 14.0)
+            sheet(front, (px - 12, G - 3), 150, 30, 36, 7.0)
+            sheet(front, (px + 14, G - 3), 32, 34, -32, 7.5)
+            foam(front, (px + 2, G - 12), 18, seed=5)
             foam(front, (px - 26, G - 5), 8, seed=6)
             foam(front, (px + 30, G - 5), 9, seed=7)
             for (x, y, sz) in ((-38, -58, 3), (48, -66, 4), (8, -50, 2), (-16, -40, 2), (62, -30, 2), (-50, -26, 2),
@@ -1233,8 +1174,8 @@ def sea(k):
         elif k == 6:   # les nappes montent haut, se cassent en gouttes ; la vague n'est plus qu'un bouillon d'écume
             px = XW + 96
             wave(back, XW + 18, 36, 76, lip=30, cr=5.0, turn=200, w0=34, spray=0, foam=(0.2, 0.97), foot=1.4)
-            sheet(front, (px - 4, G - 4), 112, 70, 54, 9.0, tail=0.35)
-            sheet(front, (px + 6, G - 4), 62, 80, -54, 10.0, tail=0.35)
+            sheet(front, (px - 4, G - 4), 112, 78, 54, 10.0, tail=0.18)
+            sheet(front, (px + 6, G - 4), 62, 88, -54, 11.0, tail=0.18)
             foam(front, (px + 2, G - 9), 14, hollow=0.4, seed=8)
             foam(front, (px - 32, G - 5), 9, hollow=0.3, seed=9)
             foam(front, (px + 36, G - 5), 9, hollow=0.3, seed=10)
@@ -1318,8 +1259,9 @@ def fx_point_smear(a_from):
 
 
 SPECIALE = [
-    dict(arm='rig', hand=(20, 54), ang=90, crouch=1, lean=-1, ep=(0, -1), m=1, c=1, fx_list=[whirl(0)], ms=120),
-    dict(arm='rig', hand=(24, 42), ang=90, crouch=0, lean=-2, ep=(-1, -2), head=(0, -1), m=1, br=1, c=1,
+    dict(arm='rig', hand=(20, 54), ang=90, crouch=1, lean=-1, ep=(0, -1), m=1, c=1, bend=-1, fx_list=[whirl(0)],
+         ms=120),
+    dict(arm='rig', hand=(23, 44), ang=90, crouch=0, lean=-2, ep=(-1, -2), head=(0, -1), m=1, br=1, c=1, bend=-1,
          fx_list=[whirl(1), sea(0)], ms=140),
     dict(arm='rig', hand=(27, 30), ang=90, crouch=0, lean=-2, ep=(-1, -2), head=(0, -1), m=0, br=1, c=0,
          fx_list=[whirl(2), sea(1)], ms=220),
@@ -1337,8 +1279,8 @@ SPECIALE = [
          fx_list=[sea(7)], ms=110),
     dict(arm='rig', hand=(62, 64), ang=2, slide=-24, crouch=2, lean=3, m=-1, br=-1, c=0,
          fx_list=[sea(8)], ms=100),
-    dict(arm='rig', hand=(42, 66), ang=8, slide=-12, crouch=1, lean=1, m=0, br=0, c=1, fx_list=[sea(9)], ms=100),
-    dict(arm='rig', hand=(22, 60), ang=74, slide=-2, crouch=1, m=1, c=1, ms=100),
+    dict(arm='rig', hand=(40, 66), ang=-8, slide=-26, crouch=1, lean=1, m=0, br=0, c=1, fx_list=[sea(9)], ms=100),
+    dict(arm='rig', hand=(22, 60), ang=74, slide=-2, crouch=1, m=1, c=1, bend=-1, ms=100),
     dict(crouch=1, m=0, ms=120),
     dict(ms=160),
 ]
