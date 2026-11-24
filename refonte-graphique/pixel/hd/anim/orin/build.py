@@ -357,7 +357,7 @@ def sashes(s=0):
 def draw_head(cv, cx, cy, f, swap=None):
     """la tête : avec le buste, plus son retard ; si elle monte, elle est posée deux fois (pas de trou au cou)"""
     hx_, hy_ = f.get('head', (0, f.get('hy', 0)))
-    p = mane(P['tete'], f.get('mw', 0))
+    p = mane(P['tete_tendu'] if f.get('fwd') is not None else P['tete'], f.get('mw', 0))
     blit(cv, p, cx, cy, swap)
     if (hx_, hy_) != (0, 0):
         blit(cv, p, cx + hx_, cy + hy_, swap)
@@ -640,6 +640,9 @@ for _y in range(46, 75):
         d = _x - 44
         FLANK[_y, _x] = '6' if d == 0 else '7' if d <= 3 or _y >= 60 else '8'
 P['aileP_tendu'] = WING_BEHIND
+# la mèche la plus basse de la crinière reposait sur la manche : bras tendu, elle se range derrière la nuque
+P['tete_tendu'] = P['tete'].copy()
+P['tete_tendu'][44:48, :42] = '.'
 
 
 # ---------------------------------------------------------------- le bras proche tendu (éventail vers l'ennemi)
@@ -951,13 +954,12 @@ def rig_frame(f):
     else:
         wl, wg, wt = f.get('wl', 0), f.get('wg', 0), f.get('wt', 0)
         blit_split(cv, wing_far(wt), WING_SPLIT_FAR, cy + wl, cy + wg, cx)
-        near = P['aileP_tendu'] if fwd is not None else P['aileP']
+        near = P['aileP_tendu']                         # sous la manche, l'aile continue (le bras peut bouger)
         if wt:
             near = shear_rows(near, lambda y: wt if y >= 84 else 0)
         blit_split(cv, near, WING_SPLIT_NEAR, cy + wl, cy + wg, cx)
     body.draw(cv, P['corps'])
-    if fwd is not None:
-        body.draw(cv, FLANK)
+    body.draw(cv, FLANK)                                # sous la manche, le flanc de la veste
     blit(cv, sashes(f.get('e', 0)), hx, hy)
     # le sabre
     sw = f.get('sw')
@@ -1011,7 +1013,7 @@ FAR_TONES = dict(edge='k', cov='i', scal='h', scal2='j', fea='h', fea_lit='i', f
 # directions (degrés, 90 = vers le haut) ; l0, l1 : leurs longueurs ; cw : largeur des couvertures ; fw : des rémiges.
 WING_STATES = {
     # à demi ouverte : le poignet se soulève, les rémiges pendent encore (le manteau s'entrouvre)
-    'demi': dict(R=(44, 54), Wr=(28, 36), Tp=(12, 46), n=8, a0=266, a1=226, l0=36, l1=30, cw=17, fw=9.0),
+    'demi': dict(R=(44, 54), Wr=(28, 44), Tp=(12, 52), n=8, a0=268, a1=228, l0=34, l1=30, cw=16, fw=9.0),
     # grande ouverte, levée (le V du corbeau qui va frapper l'air)
     'grande': dict(R=(44, 52), Wr=(26, 22), Tp=(14, 8), n=9, a0=252, a1=142, l0=40, l1=34, cw=19, fw=10.0),
     # le battement : les ailes s'abaissent d'un coup (il s'arrache du sol)
@@ -1167,8 +1169,15 @@ def draw_wings_spread(cv, body, f, ctx):
     far = _mirror_state(st, 60.0, 0.8)
     far = dict(far, R=(far['R'][0] + 6, far['R'][1] - 4), l0=st['l0'] * 0.82, l1=st['l1'] * 0.82,
                cw=st['cw'] * 0.82, fw=st['fw'] * 0.9)
-    draw_wing(cv, far, FAR_TONES, off)
-    draw_wing(cv, st, NEAR_TONES, off)
+    tmp = empty()
+    draw_wing(tmp, far, FAR_TONES, off)
+    draw_wing(tmp, st, NEAR_TONES, off)
+    # nettoyage : un pixel seul au bout d'une rémige (aucun voisin) est retiré
+    f_ = tmp != '.'
+    nb = np.zeros(f_.shape, int)
+    nb[1:] += f_[:-1]; nb[:-1] += f_[1:]; nb[:, 1:] += f_[:, :-1]; nb[:, :-1] += f_[:, 1:]
+    tmp[f_ & (nb == 0)] = '.'
+    cv[tmp != '.'] = tmp[tmp != '.']
 
 
 # ---------------------------------------------------------------- 2) l'attaque de base : sabre, puis coup d'éventail
@@ -1416,7 +1425,7 @@ def shadow(cv, ctx, lift):
     for y in range(GROUND - 2, GROUND + 1):
         for x in range(int(cx - rx - 1), int(cx + rx + 2)):
             if ((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - (GROUND - 0.5)) / 1.8) ** 2 <= 1:
-                put(cv, x, y, 'M' if lift < 20 else 'L')
+                put(cv, x, y, 'N' if lift < 20 else 'M')
 
 
 def fx_shadow(cv, back, front, ctx):
