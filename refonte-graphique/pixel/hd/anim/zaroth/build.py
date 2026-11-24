@@ -622,6 +622,25 @@ WRIST_NEAR = (-4.6, -6.8)
 WRIST_FAR = (3.6, 5.8)
 
 
+def clean_lone(cv, rig, tip_at):
+    """le ménage : un pixel resté seul (au plus un voisin) dans ce qui est retracé, ou dans les jambes pliées
+    (une rangée retirée laisse parfois un pixel orphelin au bord), est effacé ; la pointe de la lame est gardée"""
+    m = cv != '.'
+    n = np.zeros(m.shape, int)
+    n[1:] += m[:-1]
+    n[:-1] += m[1:]
+    n[:, 1:] += m[:, :-1]
+    n[:, :-1] += m[:, 1:]
+    lone = m & (n <= 1)
+    legs = np.zeros_like(m)
+    legs[94 + OY:111 + OY] = True
+    ys, xs = np.nonzero(lone & (rig | legs))
+    for y, x in zip(ys, xs):
+        if math.hypot(x + 0.5 - tip_at[0], y + 0.5 - tip_at[1]) < 3.5:
+            continue
+        cv[y, x] = '.'
+
+
 class Ctx:
     """ce qu'une image a calculé (positions sur la toile) : utile aux effets"""
     pass
@@ -674,9 +693,10 @@ def rig_frame(f):
         E1 = ik(S1, W1, *ARM_NEAR, f.get('bn', 1))
         E2 = ik(S2, W2, *ARM_FAR, f.get('bf', -1))
         ctx.E1, ctx.E2, ctx.W1, ctx.W2 = E1, E2, W1, W2
+        RM = np.zeros((H, W), bool)                    # ce qui est retracé (bras, sabre, poings)
         if f.get('sw_back'):                            # le sabre passe derrière le corps
-            draw_sword(cv, O, ang, edge, L=f.get('L', BLADE[1]), clip=True)
-        draw_upper(cv, S2, E2)
+            draw_sword(cv, O, ang, edge, L=f.get('L', BLADE[1]), clip=True, mask=RM)
+        draw_upper(cv, S2, E2, mask=RM)
         body.draw(cv, skirt(DESSOUS, f.get('k', 0)))
         blit(cv, sode_far(f.get('sl', 0)), cx + lift[0], cy + lift[1])
         draw_head()
@@ -684,16 +704,17 @@ def rig_frame(f):
             f['smear'](cv, back, front, ctx)
         far_first = f.get('far_behind_sword', False)
         if far_first:
-            draw_fore(cv, E2, W2)
-        draw_upper(cv, S1, E1)
+            draw_fore(cv, E2, W2, mask=RM)
+        draw_upper(cv, S1, E1, mask=RM)
         blit(cv, sode_near(f.get('sp', 0)), cx + lift[0], cy + lift[1])
         if not far_first:
-            draw_fore(cv, E2, W2)
-        draw_fore(cv, E1, W1)
+            draw_fore(cv, E2, W2, mask=RM)
+        draw_fore(cv, E1, W1, mask=RM)
         if not f.get('sw_back'):
-            draw_sword(cv, O, ang, edge, L=f.get('L', BLADE[1]), clip=True)
-        draw_fist(cv, O, ang, edge, FIST_FAR, 'far')
-        draw_fist(cv, O, ang, edge, FIST_NEAR, 'near')
+            draw_sword(cv, O, ang, edge, L=f.get('L', BLADE[1]), clip=True, mask=RM)
+        draw_fist(cv, O, ang, edge, FIST_FAR, 'far', mask=RM)
+        draw_fist(cv, O, ang, edge, FIST_NEAR, 'near', mask=RM)
+        clean_lone(cv, RM, tip_at=O + f.get('L', BLADE[1]) * u)
     for fx in f.get('fx_list', []):
         fx(cv, back, front, ctx)
     return cv, back, front, ctx
@@ -1059,7 +1080,7 @@ def fx_cut_smear(a_from):
     return f
 
 
-def moon(cv, c, R, facing, d, inner=1.1, foam_w=1.6, tones='XYZVU', keep=None):
+def moon(cv, c, R, facing, d, inner=1.1, foam_w=1.6, tones='XYZVU', keep=None, part=None):
     """un croissant d'eau plein, bombé vers 'facing' (degrés) : un disque moins un disque un peu plus grand, reculé
     de d (épaisseur au milieu) ; cornes effilées. Modelé par la lumière ; le bord qui avance est d'écume blanche."""
     f = unit(facing)
@@ -1068,10 +1089,13 @@ def moon(cv, c, R, facing, d, inner=1.1, foam_w=1.6, tones='XYZVU', keep=None):
     px, py = xx + 0.5, yy + 0.5
     r_out = np.hypot(px - c[0], py - c[1])
     ci = c - d * f
-    m = (r_out <= R) & (np.hypot(px - ci[0], py - ci[1]) > R * inner - (inner - 1) * R + (inner - 1) * R * 0.0)
-    # (le disque intérieur a le même rayon multiplié par 'inner' et est centré pour que les cornes s'effilent)
+    # le disque intérieur, un peu plus grand ('inner') : les cornes s'effilent au lieu de se refermer
     m = (r_out <= R) & (np.hypot(px - ci[0], py - ci[1]) > R * inner - d * (inner - 1) * 2.2)
     m &= (yy <= GROUND)
+    if part == 'haut':                      # seulement la moitié du haut (le croissant fendu en deux)
+        m &= (py < c[1] - 1)
+    elif part == 'bas':
+        m &= (py > c[1] + 1)
     if not m.any():
         return m
     edge = m & (r_out > R - foam_w)
@@ -1097,14 +1121,13 @@ def fx_slash(k):
             drop(front, T[0] + 8, T[1] - 2, 2, v=(1, 0.3))
             drop(front, T[0] + 3, T[1] + 6, 1)
         elif k == 1:
-            slash(front, (T[0] + 30, T[1] - 18), 24, 5.0, facing=-12)
-            ribbon(back, (T[0] + 22, T[1] - 18), 24, 24, 40, -50, 2.0, head=0.5, tones='YZV')
+            slash(front, (T[0] + 30, T[1] - 18), 24, 6.0, facing=-12)
             drop(back, T[0] + 6, T[1] - 4, 1)
             drop(back, T[0] + 16, T[1] + 4, 2, v=(1, 0.5))
         elif k == 9:
-            slash(front, (T[0] + 76, T[1] - 22), 23, 4.6, facing=-10)
-            ribbon(back, (T[0] + 64, T[1] - 22), 23, 23, 40, -50, 1.8, head=0.5, tones='YZV')
-            drop(back, T[0] + 40, T[1] - 10, 1)
+            slash(front, (T[0] + 76, T[1] - 22), 23, 5.6, facing=-10)
+            drop(back, T[0] + 44, T[1] - 14, 1)
+            drop(back, T[0] + 52, T[1] + 2, 2, v=(1, 0))
         elif k == 2:
             X, Y = FOE
             slash(back, (X - 14, Y - 4), 22, 4.0, facing=-8)
@@ -1133,7 +1156,7 @@ def fx_chiburi(cv, back, front, ctx):
 ATTAQUE = [
     dict(arm='orig', crouch=1, ms=90),
     dict(O=(86, 62), ang=82, crouch=1, lean=-1, lift=(0, -1), bf=1, ms=70),
-    dict(O=(92, 50), ang=100, crouch=1, lean=-2, lift=(0, -1), head=(-1, 0), bf=1, ms=300),
+    dict(O=(95, 51), ang=100, crouch=1, lean=-2, lift=(0, -1), head=(-1, 0), bf=1, ms=300),
     dict(O=(106, 70), ang=20, crouch=2, lean=2, smear=fx_cut_smear(100), ms=50),
     dict(O=(104, 86), ang=-24, crouch=2, lean=3, head=(1, 1), fx_list=[fx_slash(0)], ms=190),
     dict(O=(104, 86), ang=-24, crouch=2, lean=3, head=(1, 1), fx_list=[fx_slash(1)], ms=60),
@@ -1199,7 +1222,7 @@ def dome(level, phase=0.0, cut=None, fall=0.0):
                         # devant lui, l'eau ne passe qu'en bas (sous les hanches) et sur les bords du dôme :
                         # son visage et son buste restent dégagés, le rideau se lit par ses côtés
                         h_i = hmax * i / nseg
-                        ok = ok and (h_i < 34 or abs(math.cos(math.radians(th0 + 300.0 * h_i / DOME_H))) > 0.86)
+                        ok = ok and (h_i < 15 or abs(math.cos(math.radians(th0 + 300.0 * h_i / DOME_H))) > 0.86)
                     if ok:
                         run.append(i)
                     if (not ok or i == nseg) and len(run) > 2:
@@ -1250,9 +1273,12 @@ def fx_plant(k):
         x = ctx.O[0]
         G = GROUND
         if k == 0:
+            # une couronne d'eau : deux nappes courbes qui s'ouvrent de chaque côté de la lame et s'enroulent
             pop(front, (x + 1, G - 3), 4.5, facing=90, tones='WWXYZ')
-            for (a, L, bd, w) in ((140, 16, 40, 3.4), (110, 20, 30, 3.8), (70, 20, -30, 3.8), (40, 16, -40, 3.4)):
-                gerbe(front, (x + 1, G - 2), a, L, bd, w, 'WXYZV')
+            sheet(front, (x - 2, G - 2), 118, 24, 76, 5.0, tones='WXYZV')
+            sheet(front, (x + 4, G - 2), 62, 24, -76, 5.0, tones='WXYZV')
+            for (dx, dy, sz) in ((-10, -16, 2), (13, -18, 2), (2, -20, 1)):
+                drop(front, x + dx, G + dy, sz, v=(np.sign(dx), -1.5))
             ribbon(back, (x, G - 1), 16, 3, 15, 165, 2.6, tones='XYZ')
         else:
             ribbon(back, (x, G - 1), 26, 4, 15, 165, 3.0, tones='XYZV')
@@ -1290,29 +1316,28 @@ def big_moon(k):
             ribbon(back, (X - 74, Y - 4), 43, 43, 50, -60, 2.6, head=0.5, tones='YZV')
             for (dx, dy, sz) in ((-100, -24, 2), (-90, 26, 1)):
                 drop(back, X + dx, Y + dy, sz, v=(1.5, 0))
-        elif k == 3:      # il fend l'ennemi : le croissant passe à travers, gerbe en coupe, bouillon d'écume
-            moon(back, (X - 16, Y - 2), 44, 0, 10, inner=1.1, foam_w=1.8)
-            pop(front, (X + 2, Y), 9.0, facing=0, tones='WWXYZ')
-            sheet(front, (X - 2, Y - 2), 105, 40, 34, 8.0)
-            sheet(front, (X + 6, Y - 2), 50, 46, -30, 9.0)
-            sheet(front, (X + 4, Y + 4), -10, 34, -24, 6.0)
-            for (x, y, sz) in ((-26, -40, 3), (34, -44, 3), (6, -48, 2), (-36, -14, 2), (44, -6, 2), (22, 24, 1)):
-                drop(front, X + x, Y + y, sz, v=(np.sign(x) * 1.0, -1.5))
-        elif k == 4:      # les nappes montent et se cassent ; deux moitiés du croissant s'en vont, l'une en haut, l'autre en bas
-            ribbon(back, (X + 6, Y - 22), 30, 30, 70, 10, 3.6, head=0.5, tones='XYZV')
-            ribbon(back, (X + 6, Y + 18), 30, 30, -10, -70, 3.6, head=0.5, tones='XYZV')
-            sheet(front, (X - 2, Y - 2), 110, 52, 54, 6.0, tail=0.25)
-            sheet(front, (X + 6, Y - 2), 46, 58, -50, 7.0, tail=0.25)
-            foam(front, (X + 4, Y + 2), 8, hollow=0.45, seed=21)
-            for (x, y, sz) in ((-34, -56, 3), (42, -60, 3), (8, -66, 2), (-44, -26, 2), (56, -18, 2), (26, 20, 1),
-                               (-14, 26, 1)):
-                drop(front, X + x, Y + y, sz, v=(np.sign(x) * 0.6, 1.0))
+        elif k == 3:      # il fend l'ennemi : le croissant passe à travers ; à l'endroit du coup, l'eau éclate
+            moon(front, (X - 30, Y), 44, 0, 12, inner=1.1, foam_w=2.0)
+            pop(front, (X + 13, Y), 7.5, facing=0, tones='WWXYZ')
+            gerbe(front, (X + 14, Y - 2), 60, 22, -40, 4.4, 'WXYZV')
+            gerbe(front, (X + 14, Y + 2), -40, 20, 30, 4.0, 'WXYZV')
+            gerbe(back, (X + 10, Y - 2), 120, 16, 50, 3.4, 'XYZV')
+            for (x, y, sz) in ((30, -20, 3), (36, 14, 2), (6, -26, 2), (44, -4, 2), (20, 24, 1), (-6, 20, 1)):
+                drop(front, X + x, Y + y, sz, v=(1.4, np.sign(y) * 0.8))
+        elif k == 4:      # fendu en deux : la moitié du haut monte, celle du bas descend, elles s'amincissent
+            moon(front, (X - 4, Y - 10), 42, 8, 11, inner=1.1, foam_w=1.8, part='haut')
+            moon(front, (X - 8, Y + 10), 42, -8, 11, inner=1.1, foam_w=1.8, part='bas')
+            foam(front, (X + 30, Y), 7, hollow=0.4, seed=21)
+            for (x, y, sz) in ((50, -34, 3), (58, 26, 2), (26, -44, 2), (68, -6, 2), (38, 40, 1), (12, -8, 1),
+                               (76, 14, 1)):
+                drop(front, X + x, Y + y, sz, v=(1.0, np.sign(y) * 0.6 + 0.6))
         elif k == 5:      # tout retombe : gouttes, flaque, volutes d'écume
             rng = np.random.RandomState(23)
             for j in range(12):
-                drop(front, X + rng.uniform(-50, 56), Y + rng.uniform(-40, 30), int(rng.choice([1, 2, 2, 3])), v=(0, 2))
-            curl(back, (X + 36, Y - 20), 4.4, 250, turn=270, w=2.6, tones='XYZ', cw=True)
-            curl(back, (X - 26, Y - 12), 3.6, 290, turn=260, w=2.2, tones='YZV')
+                drop(front, X + rng.uniform(-10, 80), Y + rng.uniform(-44, 40), int(rng.choice([1, 2, 2, 3])), v=(0, 2))
+            curl(front, (X + 52, Y - 34), 4.6, 250, turn=270, w=2.8, tones='XYZ', cw=True)
+            curl(front, (X + 48, Y + 30), 4.0, 110, turn=260, w=2.4, tones='YZV')
+            foam(front, (X + 34, Y + 2), 5, hollow=0.7, seed=22)
             ribbon(back, (X + 4, G - 1), 34, 3, 200, 340, 3.0, tones='XYZ')
         elif k == 6:
             for (x, y, sz) in ((-30, 26, 1), (20, 34, 2), (40, 20, 1)):
@@ -1336,7 +1361,7 @@ def rain(k):
     return f
 
 
-PLANT = dict(O=(100, 70), ang=-90, crouch=1, lean=1, shn=(0, 0), wn=(-5, 2), wf=(5, 2), bf=1)
+PLANT = dict(O=(96, 70), ang=-90, crouch=1, lean=1, shn=(0, 0), wn=(-5, 2), wf=(5, 2), bf=1)
 
 
 def planted(**kw):
@@ -1347,7 +1372,7 @@ def planted(**kw):
 
 SPECIALE = [
     dict(arm='orig', crouch=1, ms=100),
-    dict(O=(98, 52), ang=-84, crouch=0, lean=-1, lift=(0, -1), head=(0, -1), wn=(-5, 2), wf=(5, 2), bf=1, ms=200),
+    dict(O=(98, 57), ang=-84, crouch=0, lean=-1, lift=(0, -1), head=(0, -1), wn=(-5, 2), wf=(5, 2), bf=1, ms=200),
     planted(crouch=2, lean=1, head=(1, 1), fx_list=[fx_plant(0)], ms=70),
     planted(crouch=2, head=(1, 1), fx_list=[fx_plant(1), dome(0.0, 0)], ms=110),
     planted(fx_list=[dome(0.3, 20)], ms=90),
@@ -1370,7 +1395,6 @@ SPECIALE = [
 ]
 
 
-# ==================================================================== (les attaques s'insèrent au-dessus)
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
 # RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du héros à partir de
 # (x, y) en coordonnées de la GRILLE du dessin (comme zaroth.txt) ; '.' efface, ' ' laisse le pixel tel quel.
