@@ -13,11 +13,14 @@
 #   l'ouverture bordée d'or suit le bord gauche, avec la doublure sombre, un grand pli en diagonale.
 # Tête : visage de femme mûre, plus anguleux que celui de Célia : grand front dégagé, sourcils fins et durs qui
 #   descendent vers le nez (air sévère), paupières lourdes, trait de cils épais relevé au coin avec une touche de fard
-#   rouge, iris brun rouge (l'oeil lointain de même forme sur la même ligne, plus étroit), nez droit qui dépasse du
-#   profil (retouche 24/11 : l'oeil proche est ramené à 5 px, décollé de la tempe, sans poche sombre dessous, sur la
-#   même ligne que l'oeil lointain avec un écart de 3 px pour la racine du nez ; nez refait : arête claire qui part
-#   d'entre les yeux, passe devant le coin intérieur de l'oeil lointain et descend en biais jusqu'au bout qui dépasse
-#   à peine de la joue, petite encoche du profil au-dessus, ombre douce et narine sombre dessous), lèvres rouges pleines, menton pointu, mâchoire nette ; ornement rouge et or au milieu du front ; oreille
+#   rouge, iris brun rouge (l'oeil lointain de même forme sur la même ligne, plus étroit ; l'oeil proche fait 5 px,
+#   décollé de la tempe, sans poche sombre dessous, écart de 3 px pour la racine du nez), nez droit et fin, refait le
+#   24/11 (2e retouche, « refaire son nez ») : une seule ligne claire d'un pixel qui part d'entre les yeux, passe
+#   devant le coin intérieur de l'oeil lointain et descend en paliers réguliers (2-2-1-1) jusqu'au bout (2 px clairs) ;
+#   le bout ne dépasse la joue que d'un pixel, sur deux lignes ; dessous une ombre douce (aile du nez) et une seule
+#   narine d'un pixel ; plus de barre claire ni de tache sombre, plus de reflets épars sur la joue ; la lèvre du haut
+#   s'arrête au contour du visage (elle ne dépasse plus autant que le nez). Lèvres rouges pleines, menton pointu,
+#   mâchoire nette ; ornement rouge et or au milieu du front ; oreille
 #   avec une boucle d'or et une goutte de jade. Cheveux noirs (prune très sombre, reflet lavande), tirés en arrière
 #   vers un haut chignon caché dans la couronne. Couronne d'or : dôme à perle rouge, gemme de jade sur anneau d'or,
 #   bandeau à perles rouges, deux ailes de phénix en plaques d'or (l'aile lointaine raccourcie), une pampille rouge à
