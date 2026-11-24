@@ -659,10 +659,483 @@ def pose_frame(f):
     return cv, back, front
 
 
+
+
+# ---------------------------------------------------------------- les flancs sous les bras (RACCORDS)
+# Quand les bras quittent le corps, le dessin ne montre pas ce qu'ils cachaient : le flanc proche (dans l'ombre,
+# il tourne le dos à la lumière), le flanc lointain (éclairé), la ceinture et le pagne qui continuent. Une première
+# couche est posée par le code (rangée par rangée), puis retouchée à la main (RACCORDS_MAIN).
+def make_body_rig():
+    g = np.where(NEAR_ARM | FAR_ARM, '.', BODY_NOLEG.copy())
+    # flanc proche : bord du flanc (x) selon la rangée ; ombre sur le bord, muscles dentelés en petites bosses
+    for y in range(41, 93):
+        xl = 30 if y < 60 else 31 if y < 74 else 31
+        if y < 74:
+            for x in range(xl, 39):
+                if g[y, x] != '.':
+                    continue
+                d = x - xl
+                ch = '2' if d == 0 else '3'
+                if 2 <= d <= 4 and (y - 41) % 5 in (1, 2) and y > 52:
+                    ch = '4'
+                g[y, x] = ch
+        else:
+            # ceinture (74 à 79) et pagne (80 à 92) : on prolonge vers la gauche ce qui est en x = 37 / 38
+            ref = g[y, 38] if g[y, 38] != '.' else g[y, 39]
+            for x in range(xl, 39):
+                if g[y, x] == '.':
+                    g[y, x] = ref
+            g[y, xl] = {'t': 'q', 's': 'q', 'r': 'q', 'q': 'q', 'y': 'v', 'w': 'v', 'v': 'u', 'u': 'u'}.get(g[y, xl], g[y, xl])
+    # flanc lointain : éclairé (la lumière vient d'en haut à droite), arrondi vers la taille
+    for y in range(46, 80):
+        xr = 91 if y < 64 else 90 if y < 70 else 89
+        for x in range(81, xr + 1):
+            if g[y, x] != '.':
+                continue
+            if y >= 74:
+                ref = g[y, 80]
+                ch = ref if ref != '.' else 'r'
+                if x == xr:
+                    ch = 'q'
+            else:
+                ch = '6' if (x >= xr - 1 and y < 66) else '5'
+                if 58 <= y <= 60:
+                    ch = '4' if x < xr - 1 else '5'
+                if y >= 66 and x == xr:
+                    ch = '4'
+            g[y, x] = ch
+    return g
+
+
+RACCORDS_MAIN = []          # (x, y, texte) en coordonnées de la grille, posés sur le corps sans bras
+
+
+def body_rig():
+    g = make_body_rig()
+    for (x, y, text) in RACCORDS_MAIN:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                g[y, x + i] = '.' if ch == '_' else ch
+    return g
+
+
+BODY_RIG = body_rig()
+
+
+# ---------------------------------------------------------------- la hache, retracée à n'importe quel angle
+# Repère de la hache : O = le milieu de la douille ; u = le long du manche (du pommeau vers le fer) ; n = en travers
+# (côté de la lame « du haut » dans le dessin). Mesuré sur le dessin : O = (106, 79.5), le manche monte de 1 pixel
+# pour 6 (angle 9.3°). Les deux lames sont relevées sur le dessin (polygones) et retracées dans ce repère :
+# la lame du haut part en arrière (fil clair E), celle du bas part en avant (fil D, bord gauche sombre A).
+AX_O = np.array([106.5, 79.3])
+AX_ANG0 = 10.0
+
+
+def unit(deg):
+    a = math.radians(deg)
+    return np.array([math.cos(a), -math.sin(a)])
+
+
+def ax_frame(ang):
+    u = unit(ang)
+    n = np.array([u[1], -u[0]])
+    return u, n
+
+
+_U0, _N0 = ax_frame(AX_ANG0)
+
+
+def to_local(pts):
+    return [(float((np.array(p) + 0.5 - AX_O) @ _U0), float((np.array(p) + 0.5 - AX_O) @ _N0)) for p in pts]
+
+
+BLADE_TOP = to_local([(99, 75.5), (93.5, 67.5), (86.5, 65.8), (90, 61.5), (95, 59.5), (101, 57.2), (107, 56.6),
+                      (113, 57.4), (117, 59.4), (119.6, 61.2), (113.5, 65.5), (111.4, 70), (110.8, 75.5)])
+BLADE_BOT = to_local([(101, 83.5), (97, 92), (92.4, 96.6), (95, 98.4), (99, 99.8), (104, 100.6), (110, 100.2),
+                      (115, 98.4), (120, 95), (125.8, 91.2), (118, 88), (113, 85), (111, 83.5)])
+EDGE_TOP = (2, 10)          # indices des sommets du fil (de la pointe gauche à la pointe droite)
+EDGE_BOT = (2, 9)
+LOS_TOP = to_local([(104, 67)])[0]
+LOS_BOT = to_local([(107, 91)])[0]
+DOUILLE = (-9.6, 9.4, 4.6)          # s0, s1, demi-épaisseur
+RIVETS = [(-2.7, 2.0), (3.2, 2.0)]
+POMMEL_S = -99.5
+HAFT_R = 2.05
+
+
+def _dist_poly_edges(p, poly, i0, i1):
+    """distance du point p au fil (les côtés du polygone entre les sommets i0 et i1) et aux autres côtés"""
+    n = len(poly)
+    de, do = 9e9, 9e9
+    for i in range(n):
+        a, b = poly[i], poly[(i + 1) % n]
+        d = seg_dist(p[0], p[1], a, b)
+        if i0 <= i < i1:
+            de = min(de, d)
+        else:
+            do = min(do, d)
+    return de, do
+
+
+def blade_px(s, t, top):
+    poly = BLADE_TOP if top else BLADE_BOT
+    if not in_poly(s, t, poly):
+        return None
+    de, do = _dist_poly_edges((s, t), poly, *(EDGE_TOP if top else EDGE_BOT))
+    los = LOS_TOP if top else LOS_BOT
+    md = abs(round(s - los[0])) + abs(round(t - los[1]))
+    if md == 0:
+        return 'E'
+    if md == 1:
+        return 'C'
+    if md == 2:
+        return 'A'
+    if top:
+        if de < 1.3:
+            return 'E'
+        if de < 3.6:
+            return 'D'
+        if abs(t) < 10.5:
+            return 'B' if s < 4.5 else 'D' if do < 1.2 else 'C'
+        if do < 1.1:
+            return 'B' if s < 0 else 'D'
+        return 'C'
+    else:
+        if de < 1.4:
+            return 'D'
+        if de < 2.6 and s > -6:
+            return 'D'
+        if do < 1.1 and s < 0:
+            return 'A'
+        if abs(t) < 8.5:
+            return 'B'
+        if do < 1.1:
+            return 'D'
+        return 'C'
+
+
+def gold_tone(k):
+    return 'd' if k > 0.45 else 'c' if k > -0.15 else 'b' if k > -0.6 else 'a'
+
+
+def draw_axe(cv, O, ang, mask=None, parts='tout', haft_from=None):
+    """la hache, douille en O (toile), manche dans la direction ang (degrés, du pommeau vers le fer)"""
+    O = np.array(O, float)
+    u, n = ax_frame(ang)
+    lit_up = (n @ LN) >= 0                     # le côté « du haut » du manche est-il tourné vers la lumière ?
+    R = 104
+    x0, x1 = int(O[0] - R), int(O[0] + R + 1)
+    y0, y1 = int(O[1] - R), int(O[1] + R + 1)
+    s_min = POMMEL_S - 3 if haft_from is None else haft_from
+    for y in range(max(0, y0), min(H, y1)):
+        for x in range(max(0, x0), min(W, x1)):
+            p = np.array([x + 0.5, y + 0.5]) - O
+            s, t = float(p @ u), float(p @ n)
+            if s < s_min or s > 30 or abs(t) > 27:
+                continue
+            ch = None
+            if abs(t) > 4.2 and -22 < s < 30:
+                ch = blade_px(s, t, t > 0)
+            if ch is None and DOUILLE[0] <= s <= DOUILLE[1] and abs(t) <= DOUILLE[2]:
+                tt = t if lit_up else -t
+                ch = 'd' if tt > 3.0 else 'c' if tt > -2.4 else 'b'
+                if s < DOUILLE[0] + 1.2 or tt < -3.6:
+                    ch = 'b' if tt > -3.6 else 'a'
+                for (rs, rt) in RIVETS:
+                    if abs(s - rs) < 0.6 and abs(tt - rt) < 0.6:
+                        ch = 'l'
+            if ch is None and abs(t) <= HAFT_R and POMMEL_S + 1.5 < s < DOUILLE[0] + 0.5:
+                tt = t if lit_up else -t
+                ch = 'H' if tt > 0.95 else 'G' if tt > -1.05 else 'F'
+            if ch is None and abs(s - POMMEL_S) <= 2.7 and abs(t) <= 2.7:
+                d = math.hypot(s - POMMEL_S, t)
+                if d <= 2.75:
+                    w = np.array([x + 0.5, y + 0.5]) - (O + POMMEL_S * u)
+                    ch = gold_tone((w @ LN) / 2.75)
+            if ch:
+                cv[y, x] = ch
+                if mask is not None:
+                    mask[y, x] = True
+
+
+# ---------------------------------------------------------------- les bras, retracés (fourrure, brassards d'or)
+def fur_tone(k):
+    return '7' if k > 0.82 else '6' if k > 0.5 else '5' if k > 0.08 else '4' if k > -0.38 else '3' if k > -0.8 else '2'
+
+
+def draw_limb(cv, P0, P1, r0, r1, tone, t0=0.0, t1=1.0, mask=None, bulge=0.0, clump=0.0):
+    """un membre (tronc de cône), modelé par la lumière ; bulge : un muscle qui bombe au milieu ;
+    clump : la fourrure fait des mèches (le ton varie par paquets le long du membre)"""
+    P0, P1 = np.array(P0, float), np.array(P1, float)
+    v = P1 - P0
+    L2 = max(v @ v, 1e-6)
+    L = math.sqrt(L2)
+    R = max(r0, r1) + bulge + 1
+    x0, x1 = int(min(P0[0], P1[0]) - R), int(max(P0[0], P1[0]) + R + 1)
+    y0, y1 = int(min(P0[1], P1[1]) - R), int(max(P0[1], P1[1]) + R + 1)
+    for y in range(max(0, y0), min(H, y1)):
+        for x in range(max(0, x0), min(W, x1)):
+            p = np.array([x + 0.5, y + 0.5])
+            t = float(np.clip((p - P0) @ v / L2, 0, 1))
+            if t < t0 - 1e-9 or t > t1 + 1e-9:
+                continue
+            c = P0 + t * v
+            r = r0 + (r1 - r0) * t + bulge * math.sin(math.pi * min(1, max(0, (t - 0.1) / 0.75)))
+            w = p - c
+            d = math.hypot(*w)
+            if d <= r:
+                k = (w @ LN) / r
+                if clump:
+                    k += clump * math.sin(t * L * 0.75 + (w @ np.array([-v[1], v[0]]) / L) * 0.5)
+                cv[y, x] = tone(k, t)
+                if mask is not None:
+                    mask[y, x] = True
+
+
+def disc(cv, c, r, tone, mask=None):
+    draw_limb(cv, c, np.array(c) + 0.01, r, r, tone, mask=mask)
+
+
+def ik(S, T, L1, L2, bend):
+    S, T = np.array(S, float), np.array(T, float)
+    v = T - S
+    d = max(np.linalg.norm(v), 1e-6)
+    u = v / d
+    if d > L1 + L2:
+        k = d / (L1 + L2)
+        L1, L2 = L1 * k, L2 * k
+    a = (L1 * L1 - L2 * L2 + d * d) / (2 * d)
+    hh = math.sqrt(max(L1 * L1 - a * a, 0))
+    perp = np.array([-u[1], u[0]])
+    return S + a * u + bend * hh * perp
+
+
+DARKER = {'7': '5', '6': '4', '5': '3', '4': '3', '3': '2', '2': '1', '1': '1',
+          'd': 'b', 'c': 'b', 'b': 'a', 'a': 'a', 'l': 'c'}
+
+
+def layered(cv, draw, rim=True):
+    """dessine un morceau sur un calque à part, puis le pose ; là où il passe devant ce qui est déjà posé, son bord
+    prend un ton plus sombre de sa matière (séparation douce, pas un trait noir), et il porte une ombre douce
+    d'un pixel en bas à gauche"""
+    lay = empty()
+    out = draw(lay)
+    m = lay != '.'
+    under = cv != '.'
+    if rim:
+        edge = np.zeros_like(m)
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nb = np.roll(np.roll(m, dy, 0), dx, 1)
+            edge |= m & ~nb & np.roll(np.roll(under, dy, 0), dx, 1)
+        ys, xs = np.nonzero(edge)
+        for y, x in zip(ys, xs):
+            lay[y, x] = DARKER.get(lay[y, x], lay[y, x])
+        # ombre portée : un pixel en bas à gauche, sur ce qui est dessous
+        sh = np.roll(np.roll(m, 1, 0), -1, 1) & ~m & under
+        ys, xs = np.nonzero(sh)
+        for y, x in zip(ys, xs):
+            cv[y, x] = DARKER.get(cv[y, x], cv[y, x])
+    cv[m] = lay[m]
+    return out
+
+
+SH_NEAR = np.array([25.0, 53.0])      # l'épaule proche (sous le deltoïde)
+SH_FAR = np.array([93.0, 56.0])       # l'épaule lointaine (derrière la mâchoire)
+ARM_NEAR = (23.0, 22.0)               # bras, avant-bras (jusqu'au poignet)
+ARM_FAR = (21.0, 20.0)
+
+
+def draw_arm(cv, S, Wr, bend, sc=1.0, deltoid=True):
+    """épaule S -> coude -> poignet Wr : deltoïde rond, biceps qui bombe, avant-bras poilu, brassard d'or riveté"""
+    L = ARM_NEAR if sc >= 1 else ARM_FAR
+    E = ik(S, Wr, L[0], L[1], bend)
+    fur = lambda k, t: fur_tone(k)
+    draw_limb(cv, S, E, 8.6 * sc, 6.6 * sc, fur, bulge=1.6 * sc, clump=0.16)
+    draw_limb(cv, E, Wr, 6.4 * sc, 6.0 * sc, fur, t1=0.55, clump=0.2)
+
+    def bracer(k, t):
+        if t < 0.08:
+            return 'a' if k < 0.2 else 'b'
+        ch = gold_tone(k)
+        if 0.45 < t < 0.6 and k > -0.2 and k < 0.55:
+            return 'l'
+        return ch
+    draw_limb(cv, E + (Wr - E) * 0.5, Wr, 7.0 * sc, 7.0 * sc, bracer)
+    if deltoid:
+        disc(cv, S + np.array([1.0, -2.0]) * sc, 9.4 * sc, lambda k, t: fur_tone(k * 1.1 + 0.05))
+    return E
+
+
+# ---------------------------------------------------------------- les poings du dessin (au pixel près)
+# Deux poings sur le manche : le droit (proche) vers le pommeau, le gauche (lointain) vers le fer. Point d'accroche
+# = le milieu du manche sous le poing, dans la petite grille. Quand le manche se dresse, le poing est tourné d'un
+# quart de tour (au pixel près, sans lissage) ; on choisit le sens qui met le dos de la main du côté de l'épaule.
+FIST = {
+    'near': (MAINS[86:96, 21:41].copy(), (10.5, 6.5)),
+    'far': (MAINS[77:86, 77:92].copy(), (8.5, 6.0)),
+}
+
+
+def fist_choice(ang, toward):
+    """(grille, accroche, direction du poignet) du poing qui suit le manche (angle ang) et dont le dos regarde
+    vers 'toward' (un vecteur vers l'épaule)"""
+    k0 = int(round((ang - AX_ANG0) / 90.0)) % 4
+    best = None
+    for k in (k0, (k0 + 2) % 4):
+        wd = np.array([0.0, -1.0])                 # dans le dessin, le poignet est au-dessus du poing
+        for _ in range(k):
+            wd = np.array([wd[1], -wd[0]])          # quart de tour à gauche (comme np.rot90)
+        sc = wd @ toward
+        if best is None or sc > best[0]:
+            best = (sc, k, wd)
+    return best[1], best[2]
+
+
+def rot_grid(g, anchor, k):
+    ax, ay = anchor
+    h, w = g.shape
+    for _ in range(k):
+        g = np.rot90(g, 1)
+        ax, ay = ay, w - ax
+        h, w = g.shape
+    return g, (ax, ay)
+
+
+def draw_fist(cv, C, ang, which, toward, mask=None):
+    g, anchor = FIST[which]
+    k, wd = fist_choice(ang, toward)
+    g, (ax, ay) = rot_grid(g, anchor, k)
+    x0, y0 = int(round(C[0] - ax)), int(round(C[1] - ay))
+    m = np.zeros((H, W), bool)
+    ys, xs = np.nonzero(g != '.')
+    ok = (ys + y0 >= 0) & (ys + y0 < H) & (xs + x0 >= 0) & (xs + x0 < W)
+    m[ys[ok] + y0, xs[ok] + x0] = True
+    sh = np.roll(np.roll(m, 1, 0), -1, 1) & ~m & (cv != '.')
+    ys2, xs2 = np.nonzero(sh)
+    for y, x in zip(ys2, xs2):
+        cv[y, x] = DARKER.get(cv[y, x], cv[y, x])
+    cv[ys[ok] + y0, xs[ok] + x0] = g[ys[ok], xs[ok]]
+    if mask is not None:
+        mask |= m
+    return wd
+
+
+WRIST_D = {'near': 6.5, 'far': 5.0}
+
+
+
+
+def arc_trail(cv, c, R, a_from, a_to, w, tones, inner=0.0):
+    """traînée pleine en croissant (le fer qui balaie) : bord extérieur sur le cercle de rayon R, entre les angles
+    a_from (où était le fer) et a_to (où il est). Épaisse contre le fer, effilée vers a_from."""
+    cx, cy = c
+    m = len(tones)
+    span = a_to - a_from
+    for y in range(int(cy - R - 2), int(cy + R + 3)):
+        for x in range(int(cx - R - 2), int(cx + R + 3)):
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            r = math.hypot(dx, dy)
+            if r > R + 0.5 or r < inner:
+                continue
+            ang = math.degrees(math.atan2(-dy, dx))
+            if span >= 0:
+                da = (a_to - ang) % 360
+            else:
+                da = (ang - a_to) % 360
+            if da > abs(span):
+                continue
+            s = da / abs(span)
+            ww = w * (1 - s) ** 0.9 + (0.6 if s < 0.97 else 0)
+            if r < R - ww:
+                continue
+            k = min(1.0, max(0.0, (R - r) / max(ww, 1e-6)))
+            i = int((0.55 * s + 0.45 * k) * m)
+            put(cv, x, y, tones[min(m - 1, i)], below=4)
+
+
+# ---------------------------------------------------------------- une image « montée » (corps plié + bras et hache retracés)
+NEAR0 = np.array([31.5, 92.5])         # la main proche du dessin (milieu du manche sous le poing, grille)
+GRIP0 = (-76.2, -21.3)                 # où les deux mains tiennent le manche, dans le dessin (s)
+
+
+def rig_frame(f):
+    """f : réglages de l'image (voir ATTAQUE et SPECIALE). Renvoie (héros, effets derrière, effets devant, ctx)"""
+    body = Body(crouch=f.get('crouch', 0), breath=f.get('breath', 0), lean=f.get('lean', 0),
+                lift=f.get('lift', 0), shift=f.get('shift', 0))
+    cx, cy = body.follow(52)
+    hx, hy = body.follow(90)
+    head = f.get('head', (0, 0))
+    o = np.array([OX, OY], float)
+    cv, back, front = empty(), empty(), empty()
+    ctx = Ctx()
+    ctx.body, ctx.f = body, f
+    ctx.retouch_off = (f.get('shift', 0), 0)
+    swap = BLINK if f.get('blink') else None
+    if f.get('flare'):
+        swap = dict(swap or {})
+        swap.update({'f': 'e', 'e': 'x'})
+    ctx.head_off = (cx + head[0], cy + head[1])
+    legs = front_leg(*f.get('leg', (0, 0)))
+
+    def draw_head():
+        if head[1] < 0:
+            blit(cv, P['tete'], cx, cy, swap)
+        blit(cv, UNDER_MANE, cx + head[0] // 2, cy + head[1] // 2)
+        blit(cv, mane(f.get('ph', 0.0), amp=f.get('mamp', 1.0)), cx + head[0] // 2, cy + head[1] // 2)
+        blit(cv, P['tete'], cx + head[0], cy + head[1], swap)
+
+    if f.get('arms') == 'orig':
+        body.draw(cv, over(BODY_NOLEG, legs))
+        draw_head()
+        blit(cv, HACHE, hx, hy)
+        blit(cv, MAINS, hx, hy)
+        ctx.O = AX_O + o + np.array([hx, hy])
+        ctx.u, ctx.n = ax_frame(AX_ANG0)
+        ctx.ang = AX_ANG0
+    else:
+        bust = o + np.array([cx, cy])
+        ang = f['ang']
+        u, n = ax_frame(ang)
+        sn, sf = f.get('grip', GRIP0)
+        N = np.array(f['N'], float) + bust
+        O = N - sn * u
+        F = O + sf * u
+        ctx.O, ctx.u, ctx.n, ctx.ang, ctx.N, ctx.F = O, u, n, ang, N, F
+        S1 = SH_NEAR + bust + np.array(f.get('shn', (0, 0)))
+        S2 = SH_FAR + bust + np.array(f.get('shf', (0, 0)))
+        if f.get('ax_back'):
+            layered(cv, lambda lay: draw_axe(lay, O, ang), rim=False)
+        body.draw(cv, over(BODY_RIG, legs))
+        # le bras lointain : derrière la tête (il part de derrière la mâchoire)
+        _, wd2 = fist_choice(ang, S2 - F)
+        W2 = F + wd2 * WRIST_D['far']
+        ctx.E2 = layered(cv, lambda lay: draw_arm(lay, S2, W2, f.get('bf', 1), sc=0.88))
+        draw_head()
+        if f.get('smear'):
+            f['smear'](cv, back, front, ctx)
+        if not f.get('ax_back'):
+            layered(cv, lambda lay: draw_axe(lay, O, ang))
+        draw_fist(cv, F, ang, 'far', S2 - F)
+        _, wd1 = fist_choice(ang, S1 - N)
+        W1 = N + wd1 * WRIST_D['near']
+        ctx.E1 = layered(cv, lambda lay: draw_arm(lay, S1, W1, f.get('bn', -1), sc=1.0))
+        draw_fist(cv, N, ang, 'near', S1 - N)
+    for fx in f.get('fx_list', []):
+        fx(cv, back, front, ctx)
+    return cv, back, front, ctx
+
+
+ESSAI = [
+    dict(arms='orig', ms=200),
+    dict(N=tuple(NEAR0), ang=AX_ANG0, ms=200),
+    dict(N=tuple(NEAR0), ang=AX_ANG0, bn=1, bf=-1, ms=200),
+]
+
+
 # ==== FIN ATTAQUES ====
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
 # {animation: {image: [(x, y, texte), ...]}} en coordonnées de la grille du dessin ; ' ' = ne pas toucher.
-RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}, 'essai': {}}
 
 
 def retouch(cv, fixes, off=(0, 0)):
@@ -684,7 +1157,7 @@ def build_all(which=('pose', 'attaque', 'speciale')):
             retouch(cv, RETOUCHES['pose'].get(i, []))
             fr.append((compose(cv, back, front), f['ms']))
         anims['pose'] = fr
-    for name in ('attaque', 'speciale'):
+    for name in ('attaque', 'speciale', 'essai'):
         if name not in which:
             continue
         specs = globals().get(name.upper(), [])
@@ -807,7 +1280,7 @@ def brouillon_sheet(frames, path, box=None, scale=3, per=6):
 if __name__ == '__main__':
     os.makedirs(BROUILLON, exist_ok=True)
     arg = sys.argv[1] if len(sys.argv) > 1 else 'tout'
-    if arg in ('pose', 'attaque', 'speciale'):
+    if arg in ('pose', 'attaque', 'speciale', 'essai'):
         a = build_all((arg,))
         box = None if arg == 'pose' else bbox(a[arg], 4)
         sc = float(sys.argv[2]) if len(sys.argv) > 2 else 3
