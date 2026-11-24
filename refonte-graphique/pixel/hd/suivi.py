@@ -47,14 +47,13 @@ ROSTER = [
     ('isis', 'myths-9', 'Isis', 'terre', 'tireur', 'légendaire', 'chasseur au crâne de cerf'),
 ]
 VALIDES = {'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'nerith', 'arachne', 'auriel',
-           'kesha', 'velith', 'lilou', 'celia', 'cyclope', 'solenn', 'zaroth', 'anubis', 'isis', 'kael', 'rook'}
+           'kesha', 'velith', 'lilou', 'celia', 'cyclope', 'solenn', 'zaroth', 'anubis', 'isis', 'kael', 'rook',
+           'sable', 'minotaure', 'garvin', 'tybalt', 'lenore'}
 # héros dessinés dont les retours du propriétaire sont en train d'être faits : le retour demandé
 RETOUCHES = {
-    'minotaure': "Refaire tout le bras qui tient la croix de vie, bien droit.",
-    'sable': "Refermer le bouclier là où étaient les griffes.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = {'sable', 'minotaure'}
+FAITES = set()
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
