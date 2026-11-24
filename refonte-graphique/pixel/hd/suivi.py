@@ -58,7 +58,7 @@ RETOUCHES = {
     'minotaure': "Enlever la barre d'or qui traîne dans l'aile ; refaire le motif de l'aile à cet endroit.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = set()
+FAITES = {'auriel', 'cyclope'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 
