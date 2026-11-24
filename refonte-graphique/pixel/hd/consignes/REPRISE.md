@@ -7,9 +7,9 @@
 - États de chaque héros : `../suivi.py` (`VALIDES`, `RETOUCHES` avec le retour du propriétaire, `FAITES` = retouche
   faite, en attente de son avis). Page de suivi : `python3 ../suivi.py`, puis republier `../sortie/suivi.html` sur
   https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (outil Artifact, avec `url`).
-- **Corvin, Jinn et Zéphyre** (vent) : terminés le 24/11/2026 (zéro FAUTE), en attente de l'avis du propriétaire
-  (images `../../sortie/hd-<nom>-premier-jet.png`).
-- Restent à dessiner (vent) : Mira, Tessa, Orin, Arcan, Eldra, Myrr (thèmes et ids dans `ROSTER` de `../suivi.py`).
+- Corvin, Jinn, Zéphyre : retouchés puis validés (24/11). **Eldra** en cours (un agent à la fois, demande du
+  propriétaire : faire les héros un par un).
+- Restent à dessiner (vent) : Mira, Tessa, Orin, Arcan, Myrr (thèmes et ids dans `ROSTER` de `../suivi.py`).
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
 
 ## Méthode (validée par le propriétaire)
