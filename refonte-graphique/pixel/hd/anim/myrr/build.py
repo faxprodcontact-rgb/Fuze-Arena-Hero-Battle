@@ -977,10 +977,10 @@ GOLD_FEATHERS = [                                          # plumes de lumière 
 
 
 BIG_FEATHERS = [
-    ['......yz', '....xyyz', '..xyyyz.', '.xyyy...', 'wxx.....', 'w.......'],        # couchée, vers le haut à droite
-    ['zy......', 'zyyx....', '.zyyyx..', '...yyyx.', '.....xxw', '.......w'],        # l'autre sens
-    ['..z.', '.yz.', '.yyz', 'xyyz', 'xyy.', '.xy.', '.x..', 'w...'],               # dressée
-    ['.z..', '.zy.', 'zyy.', 'zyyx', '.yyx', '.yx.', '..x.', '...w'],               # dressée, l'autre sens
+    ['.......zz', '.....yyzz', '...xyyyz.', '..xyyyy..', '.xxyy....', 'wx.......', 'w........'],
+    ['zz.......', 'zzyy.....', '.zyyyx...', '..yyyyx..', '....yyxx.', '.......xw', '........w'],
+    ['..z.', '.yz.', '.yzz', 'xyyz', 'xyyz', 'xyy.', '.xy.', '.x..', 'w...'],
+    ['.z..', '.zy.', 'zzy.', 'zyyx', 'zyyx', '.yyx', '.yx.', '..x.', '...w'],
 ]
 
 
@@ -1187,6 +1187,15 @@ def helix_stroke(back, front, pts, wmax, tones, taper=(0.0, 1.0)):
     stroke(back, *segs[False], tones)
 
 
+def storm_cap(back, front, phase, grow=1.0):
+    """le tourbillon du ciel : un nuage de vent blanc en bouffées (dessous jade), qui tourne lentement"""
+    V = np.array(VORTEX)
+    lobes = [(0, 0, 11), (-20, 3, 8), (20, 2, 8.5), (-34, 6, 5.5), (33, 6, 6), (-9, -6, 8), (11, -5, 7.5)]
+    for i, (dx, dy, r) in enumerate(lobes):
+        a = math.radians(phase * 0.8 + i * 51)
+        puff(back, (V[0] + dx * grow + 2 * math.cos(a), V[1] + dy + 1.5 * math.sin(a)), r * grow, 'WXXYYV')
+
+
 def tornado(back, front, k, phase):
     """la tornade : trois spirales (blanche, jade, blanche bleutée) qui descendent du tourbillon jusqu'au sol, plus
     des plumes prises dedans ; k (0..1) = jusqu'où elle est descendue"""
@@ -1197,16 +1206,29 @@ def tornado(back, front, k, phase):
     y0, y1 = int(top[1]), int(bot_k[1])
     for y in range(y0, y1 + 1):
         s = (y - top[1]) / max(bot[1] - top[1], 1)
-        r = 5 + 23 * (1 - s) ** 1.25
-        r *= 0.78 + 0.1 * math.sin(y * 0.42 + phase / 40) + 0.06 * math.sin(y * 1.1 - phase / 25)
+        r = 5 + 26 * (1 - s) ** 1.25
+        r *= 0.8 + 0.1 * math.sin(y * 0.3 + phase / 40)
+        r *= min(1.0, 0.35 + (bot_k[1] - y) / 10.0) if k < 1 else 1.0      # le front qui descend s'arrondit
         xc = top[0] + (bot[0] - top[0]) * s + 4.0 * math.sin(phase / 60 + s * 5.0)
         for x in range(int(xc - r), int(xc + r) + 1):
             q = (x + 0.5 - xc) / r
             if abs(q) <= 1:
-                put(back, x, y, 'X' if q > 0.35 else 'Y' if q > -0.45 else 'V')
-    for j, (tones, wv, ph) in enumerate((('WXYVS', 6.5, 0), ('YVSR', 5.0, 150))):
-        pts = helix(top, bot_k, 30 - 4 * j, 7 + j, 1.5 * k + 0.4, phase + ph, 0.0, 1.0, wob=4.0, wph=phase / 60)
+                put(back, x, y, 'X' if q > 0.3 else 'Y' if q > -0.72 else 'V')
+    for j, (tones, wv, ph, tu) in enumerate((('WXYVS', 6.5, 0, 1.45), ('XYVSR', 4.4, 150, 1.05))):
+        pts = helix(top, bot_k, 34 - 6 * j, 7 + j, tu * k + 0.3, phase + ph, 0.0, 1.0, wob=4.0 + 2 * j,
+                    wph=phase / 60 + j)
         helix_stroke(back, front, pts, wv, tones)
+    storm_cap(back, front, phase)
+    # des volutes qui s'arrachent des flancs et s'enroulent vers l'extérieur
+    for i, (s_, side) in enumerate(((0.3, 1), (0.55, -1), (0.8, 1))):
+        if s_ > k:
+            continue
+        y = top[1] + (bot[1] - top[1]) * s_
+        r = 5 + 23 * (1 - s_) ** 1.25
+        xc = top[0] + (bot[0] - top[0]) * s_ + 4.0 * math.sin(phase / 60 + s_ * 5.0) + side * r * 0.8
+        lift = 4 * math.sin(phase / 50 + i)
+        gust(front if side > 0 else back, (xc, y), (xc + side * 6, y - 4 + lift), (xc + side * 12, y - 4 + lift),
+             (xc + side * 15, y - 9 + lift), 3.4, 'XYVSR', curl_r=3.2, up=side > 0)
 
 
 def fx_herald(k):
@@ -1226,9 +1248,9 @@ def fx_herald(k):
             comet(back, pts, 0.2, 1.0, 10, 'WXYVS')
             braid(front, pts, 0.2, 1.0, 6.0, 1.3, 0.0, 3.2, 'VSR')
             # le tourbillon : un grand nuage qui s'enroule (deux volutes emboîtées) et des plumes qui tournent
-            ribbon(back, V, 34, 9, 20, 330, 6.0, tones='WXYVS')
-            curl(front, (V[0] + 4, V[1] + 1), 20, 200, turn=330, w=5.0, tones='XYVSR')
-            curl(back, (V[0] - 6, V[1] - 2), 13, 20, turn=300, w=3.6, tones='YVSR', cw=True)
+            storm_cap(back, front, 0.0, grow=0.8)
+            curl(front, (V[0] + 26, V[1] + 8), 7, 200, turn=300, w=3.2, tones='XYVSR')
+            curl(front, (V[0] - 28, V[1] + 9), 6, 20, turn=300, w=3.0, tones='XYVSR', cw=True)
             for i in range(5):
                 a = math.radians(40 + i * 72)
                 feather(front if math.sin(a) < 0 else back, V[0] + 30 * math.cos(a) - 4, V[1] + 8 * math.sin(a) - 3, i,
@@ -1237,8 +1259,6 @@ def fx_herald(k):
         if k <= 5:
             depth = [0, 0, 0.5, 1.0, 1.0, 1.0][k]
             phase = 70.0 * k
-            ribbon(back, V, 34, 9, 20 + 40 * k, 300 + 40 * k, 5.0, tones='WXYVS')
-            curl(front, (V[0] + 4, V[1] + 1), 18, 200 + 50 * k, turn=300, w=4.4, tones='XYVSR')
             tornado(back, front, depth, phase)
             if k == 2:
                 comet(back, pts, 0.6, 1.0, 8, 'XYVS')
@@ -1318,8 +1338,8 @@ SPECIALE = [
     dict(lift=7, spread='demi', ang=40, mo=(3, 10), tg=15, rs=1, fx=[fx_herald(6), fx_heal(0)], ms=100),
     dict(lift=4, ang=46, mo=(6, 16), tg=15, wl=-2, wg=0, rs=1, fx=[fx_herald(7), fx_heal(1)], ms=110),
     dict(arms='orig', lift=1, wl=-1, wg=-1, wt=-1, rs=0, fx=[fx_heal(2)], ms=120),
-    dict(arms='orig', s=1, wl=0, wg=0, wt=-1, rs=-1, k=0, fx=[fx_heal(3)], ms=140),
-    dict(arms='orig', wl=0, wg=1, rs=0, ms=150),
+    dict(arms='orig', s=1, wl=0, wg=1, wt=-1, rs=-1, k=1, fx=[fx_heal(3)], ms=140),
+    dict(arms='orig', wl=0, wg=0, rs=0, ms=150),
 ]
 
 
@@ -1374,8 +1394,8 @@ def bbox(frames, margin=4):
             min(H, ys.max() + 1 + margin))
 
 
-GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
-GAME_BOX = (SOL[0] - hd.FEET[0], SOL[1] - hd.FEET[1], SOL[0] - hd.FEET[0] + hd.FRAME_W,
+GAME_BOX = (                                                # la case du jeu : 128 × 120, sol en (64, 116)
+    SOL[0] - hd.FEET[0], SOL[1] - hd.FEET[1], SOL[0] - hd.FEET[0] + hd.FRAME_W,
             SOL[1] - hd.FEET[1] + hd.FRAME_H)
 
 
@@ -1439,9 +1459,14 @@ def write_outputs(anims):
         fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
         fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
         bw, bh = box[2] - box[0], box[3] - box[1]
+        if fond.width < bw:                             # la tornade va plus loin que le décor : on le prolonge en miroir
+            wide = Image.new('RGBA', (fond.width * 2, fond.height))
+            wide.paste(fond, (0, 0))
+            wide.paste(fond.transpose(Image.FLIP_LEFT_RIGHT), (fond.width, 0))
+            fond = wide
         fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
         base = fond.crop((0, fy, bw, fy + bh))
-        if base.width < bw or fy < 0:
+        if fond.width < bw or fy < 0:
             raise ValueError
     except Exception:
         base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
