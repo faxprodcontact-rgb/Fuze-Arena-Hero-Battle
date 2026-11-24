@@ -52,8 +52,9 @@ Outils (depuis `refonte-graphique/pixel/hd/`) :
   par la main. Les sorts seront des effets du combat. Le héros tient son arme ou ses objets ; une main libre reste le
   long du corps ou dans un geste naturel.
 - **Le nez** (reproché sur trois héroïnes) : en trois quarts, l'arête du nez se lit en une ligne claire côté lumière et
-  une ombre douce dessous, la narine en un ou deux pixels, le bout qui dépasse à peine du contour du visage. Pas de
-  tache, pas de pixels au hasard.
+  une ombre douce dessous, la narine en un ou deux pixels. **Le bout du nez ne dépasse PAS du contour du visage** (il
+  affleure le profil, au plus) : le propriétaire trouve que nos nez « vont souvent un peu trop loin » (24/11, Mira).
+  Exception : vrais museaux, becs et nez de créature (tengu…). Pas de tache, pas de pixels au hasard.
 - **Les yeux** : l'œil du fond est caché en partie DERRIÈRE l'arête du nez (de trois quarts, le nez passe devant lui),
   même forme que l'œil proche, sur la même ligne.
 - **Poings et bras** (retours du propriétaire) : poing fermé = le pouce replié SOUS les autres doigts (on ne le voit
