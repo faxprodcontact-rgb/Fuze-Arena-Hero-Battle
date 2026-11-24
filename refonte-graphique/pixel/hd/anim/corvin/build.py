@@ -387,7 +387,7 @@ def ear(t=0):
 
 
 FRINGE_ROWS = (33, 34, 35)               # le bout des trois mèches de la frange (les sourcils, dessous, ne bougent pas)
-FRINGE_X = (62, 79)
+FRINGE_X = (63, 79)                      # sans la patte de cheveux le long de la joue (x 59 à 62)
 
 
 def fringe(head, s=0):
@@ -400,7 +400,7 @@ def fringe(head, s=0):
     for y in FRINGE_ROWS:
         row = head[y]
         for x in range(x0, x1 + 1):
-            src = row[x - s]
+            src = row[x - s] if x0 <= x - s <= x1 else '.'
             if src in HAIR and (row[x] in HAIR or row[x] in SKIN):
                 out[y, x] = src
             elif row[x] in HAIR:
@@ -523,7 +523,7 @@ def draw_near_arm(cv, S, Wr, bend=1):
     E = ik(S, Wr, ARM_NEAR[0], ARM_NEAR[1], bend)
     draw_limb(cv, S, E, 3.7, 3.3, green_tone)
     draw_limb(cv, E, Wr, 3.4, 2.9, leather_tone)
-    draw_limb(cv, E, Wr, 3.55, 3.4, gold_tone, t0=0.0, t1=0.13)                  # le bord d'or du brassard
+    draw_limb(cv, E, Wr, 3.5, 3.4, gold_tone, t0=0.03, t1=0.09)                  # le bord d'or du brassard
     draw_limb(cv, E, Wr, 3.3, 3.1, lambda k: 'D' if k > 0.6 else 'm', t0=0.5, t1=0.58)   # la sangle et sa boucle
     return E
 
@@ -967,10 +967,10 @@ for _i, _f in enumerate(POSE):
 def fx_bash_smear(cv, back, front, ctx):
     """la poussée : un croissant de vent qui roule devant le bouclier, quelques feuilles arrachées derrière lui"""
     C = ctx.shield
-    ribbon(back, (C[0] - 6, C[1]), 27, 30, -62, 58, 3.6, head=0.55, tones='wxyzl')
-    ribbon(back, (C[0] - 12, C[1] + 2), 28, 26, -40, 30, 2.0, head=0.6, tones='yzlL')
-    leaf(front, C[0] - 26, C[1] - 30, 1)
-    leaf(back, C[0] - 30, C[1] + 22, 2)
+    ribbon(back, (C[0] - 4, C[1]), 27, 31, -64, 60, 4.6, head=0.55, tones='wxyzl')
+    ribbon(back, (C[0] - 12, C[1] + 2), 29, 27, -44, 34, 2.4, head=0.6, tones='yzlL')
+    leaf(back, C[0] + 22, C[1] + 26, 2)
+    leaf(back, C[0] + 26, C[1] - 28, 1)
 
 
 BASH = [None]
@@ -979,14 +979,14 @@ BASH = [None]
 def fx_bash_hit(k):
     """le choc du bouclier : k = 0 un éclat de vent au bord du bouclier, des feuilles projetées ; k = 1 il se défait"""
     def f(cv, back, front, ctx):
-        if k == 0:
-            BASH[0] = ctx.shield + np.array([19.0, -2.0])
+        if k == 0 or BASH[0] is None:
+            BASH[0] = ctx.shield + np.array([19.0 + 6 * k, -2.0])
         F = BASH[0]
         if k == 0:
-            ribbon(back, (F[0] - 22, F[1]), 25, 28, -55, 55, 3.0, head=0.5, tones='xyzl')
-            pop(front, (F[0] + 2, F[1]), 4.5, facing=0, tones='wwxyz')
-            curl(front, (F[0] + 9, F[1] - 11), 4.5, 200, turn=290, w=2.2, tones='xyzl', cw=True)
-            curl(front, (F[0] + 8, F[1] + 11), 4.0, 160, turn=280, w=2.0, tones='yzlL')
+            ribbon(back, (F[0] - 22, F[1]), 27, 31, -60, 60, 4.4, head=0.5, tones='wxyzl')
+            pop(front, (F[0] + 3, F[1]), 6.0, facing=0, tones='wwxyz')
+            curl(front, (F[0] + 11, F[1] - 13), 5.5, 200, turn=290, w=2.8, tones='xyzl', cw=True)
+            curl(front, (F[0] + 10, F[1] + 13), 5.0, 160, turn=280, w=2.5, tones='yzlL')
             for i, (dx, dy) in enumerate(((14, -18), (17, 3), (8, 17))):
                 leaf(front, F[0] + dx, F[1] + dy, i + 1, gold=(i == 1))
             dust(back, ctx.shield[0] - 6, 0, seed=3, big=0.8)
@@ -1019,35 +1019,37 @@ def fx_whirl(k):
     """le tourbillon de feuilles autour de la pointe : k = 0 il s'enroule serré (éclat blanc au coeur), 1 il tourne
     plus large, 2 il s'ouvre en deux volutes, 3 et 4 les feuilles retombent en se balançant"""
     def f(cv, back, front, ctx):
-        if k == 0:
+        if k == 0 or TIP[0] is None:
             TIP[0] = np.array(ctx.tip, float) + np.array([2.0, 0.0])
         T = TIP[0]
-        R = [7.0, 11.0, 15.0, 0, 0][k]
+        R = [10.0, 14.0, 18.0, 0, 0][k]
         if k <= 1:
             ph = 35 * k
-            ribbon(back, (T[0], T[1]), R + 2, R * 0.8, 20 + ph, 175 + ph, 2.6, head=0.6, tones='yzlL', tilt=-15)
-            ribbon(front, (T[0], T[1]), R + 2, R * 0.8, 200 + ph, 350 + ph, 3.4, head=0.6, tones='wxyzl', tilt=-15)
+            ribbon(back, (T[0], T[1]), R + 2, R * 0.8, 20 + ph, 175 + ph, 3.4, head=0.6, tones='yzlL', tilt=-15)
+            ribbon(front, (T[0], T[1]), R + 2, R * 0.8, 200 + ph, 350 + ph, 4.6, head=0.6, tones='wxyzl', tilt=-15)
+            ribbon(back, (T[0] + 2, T[1] - 1), R * 0.55, R * 0.45, 120 + ph, 330 + ph, 2.4, head=0.7, tones='xyzl',
+                   tilt=-15)
             if k == 0:
-                pop(front, (T[0] - 1, T[1]), 3.4, facing=0, tones='wwxy')
+                pop(front, (T[0] - 1, T[1]), 4.6, facing=0, tones='wwxyz')
             else:
-                curl(front, (T[0] + 3, T[1] - 2), 4.0, 90, turn=300, w=2.0, tones='xyzl', cw=True)
+                curl(front, (T[0] + 3, T[1] - 2), 5.0, 90, turn=300, w=2.6, tones='xyzl', cw=True)
         elif k == 2:
-            curl(back, (T[0] + 4, T[1] - 12), 6.5, 300, turn=300, w=2.4, tones='xyzl', cw=True)
-            curl(back, (T[0] + 7, T[1] + 9), 5.0, 40, turn=280, w=2.0, tones='yzlL')
-            puff(back, (T[0], T[1]), 2.4, 'xyz', hollow=0.5)
+            curl(back, (T[0] + 4, T[1] - 13), 7.5, 300, turn=300, w=3.0, tones='xyzl', cw=True)
+            curl(back, (T[0] + 8, T[1] + 10), 6.0, 40, turn=280, w=2.6, tones='yzlL')
+            puff(back, (T[0], T[1]), 3.0, 'xyz', hollow=0.5)
         else:
-            curl(back, (T[0] + 8, T[1] - 18 - 4 * (k - 3)), 4.0, 300, turn=260, w=1.6, tones='yzl', cw=True)
+            curl(back, (T[0] + 8, T[1] - 20 - 4 * (k - 3)), 4.5, 300, turn=260, w=2.0, tones='yzl', cw=True)
         # les feuilles : sur le cercle du tourbillon, puis elles s'écartent et retombent en se balançant
-        for i in range(4):
-            a = math.radians(40 + 90 * i + 70 * k)
-            r = [8.0, 12.0, 16.0, 18.0, 19.0][k]
-            fall = [0, 0, 4, 14, 26][k] * (0.7 + 0.15 * i)
+        for i in range(5):
+            a = math.radians(40 + 72 * i + 70 * k)
+            r = [11.0, 15.0, 19.0, 21.0, 22.0][k]
+            fall = [0, 0, 4, 14, 26][k] * (0.7 + 0.12 * i)
             x = T[0] + r * math.cos(a) * (1.1 if k >= 2 else 1.0)
             y = T[1] - r * 0.75 * math.sin(a) + fall
             if y < GROUND - 3:
-                leaf(front if math.sin(a) < 0 else back, x - 2, y - 2, i + k, gold=(i == 2))
+                leaf(front if math.sin(a) < 0 else back, x - 2, y - 2, i + k, gold=(i in (2, 4)))
             else:
-                leaf(back, x - 2, GROUND - 2, 4, gold=(i == 2))
+                leaf(back, x - 2, GROUND - 2, 4, gold=(i in (2, 4)))
     return f
 
 
@@ -1075,3 +1077,386 @@ ATTAQUE = [
     dict(s=1, hd=(0, 1), cp=1, fx=[fx_whirl(3)], ms=100),
     dict(cp=0, fx=[fx_whirl(4)], ms=130),
 ]
+
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Rempart des feuilles »
+# Il se ramasse et lève son bouclier : la feuille d'or s'illumine peu à peu, de l'or au blanc doré ; le vent se lève
+# à ses pieds et des feuilles montent en spirale vers le bouclier (tenu). Puis il PLANTE le bouclier d'un coup dans le
+# sol devant lui, à genoux fléchis (poussière) : éclair et arrêt sur l'image, un mur de vent et de feuilles jaillit du
+# sol devant le bouclier, avec des racines de vent qui courent au ras du sol. Le mur se dresse plus haut que lui, ses
+# crêtes s'enroulent vers l'ennemi, puis il ROULE vers lui comme une vague et le fouette : des croissants de vent
+# tournent autour de lui, chargés de feuilles (arrêt sur l'image). Tout se défait en volutes ; les feuilles retombent
+# en se balançant. Il arrache le bouclier du sol et se remet en garde ; la feuille d'or s'éteint.
+def mote(cv, x, y, big=False):
+    """une étincelle de lumière dorée : un point blanc doré (et un petit losange d'or pâle s'il est gros)"""
+    put(cv, x, y, 'N')
+    if big:
+        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            put(cv, x + dx, y + dy, 'O')
+
+
+def fx_gather(level):
+    """level 0 : le vent se lève à ses pieds, des feuilles décollent ; 1 : elles montent en spirale autour du bouclier ;
+    2 : la spirale se resserre sur la feuille d'or, qui brille (étincelles)"""
+    def f(cv, back, front, ctx):
+        L = ctx.leaf
+        gx = SOL[0] + 4
+        if level == 0:
+            ribbon(back, (gx, GROUND - 3), 32, 5, 30, 160, 2.4, tones='yzlL')
+            ribbon(front, (gx, GROUND - 3), 32, 5, 205, 335, 3.2, tones='xyzl')
+            for i, (dx, dy, k) in enumerate(((34, -9, 1), (-36, -12, 2), (16, -5, 0), (-18, -20, 3))):
+                leaf(front if dx > 0 else back, gx + dx, GROUND + dy, k, gold=(i == 2))
+            mote(front, L[0] + 9, L[1] - 14, big=True)
+            return
+        R = 30 if level == 1 else 21
+        ribbon(back, (gx, GROUND - 4), 36, 6, 20, 165, 3.0, tones='yzlL')
+        ribbon(front, (gx, GROUND - 4), 36, 6, 200, 345, 4.0, tones='wxyzl')
+        # la spirale autour du bouclier : la moitié droite devant lui, la moitié gauche derrière le héros
+        ribbon(front, (L[0], L[1] - 2), R, R * 1.15, -70, 60, 3.6 if level == 1 else 4.4, head=0.7, tones='wxyzl')
+        ribbon(back, (L[0] - 6, L[1] + 2), R + 16, R * 1.25, 110, 235, 3.0, head=0.4, tones='xyzlL')
+        ribbon(front, (L[0] + 2, L[1] + 4), R * 0.7, R * 0.8, -120, -30, 2.6, head=0.8, tones='xyzl')
+        n = 7 if level == 1 else 8
+        for i in range(n):
+            a = math.radians(-60 + i * 52 + 25 * level)
+            r = R * (1.25 - 0.08 * i) if level == 1 else R * (0.95 - 0.06 * i) + 6
+            x = L[0] + r * math.cos(a)
+            y = L[1] - r * 1.1 * math.sin(a)
+            lay = front if math.cos(a) > 0.15 else back
+            leaf(lay, x - 2, y - 2, i + level, gold=(i % 3 == 1))
+        for (dx, dy, big) in ((10, -15, True), (-8, 12, False), (14, 9, level == 2), (3, -22, False)):
+            mote(front, L[0] + dx, L[1] + dy, big)
+        if level == 2:
+            for (dx, dy) in ((-12, -6), (18, -4), (6, 18)):
+                mote(front, L[0] + dx, L[1] + dy, True)
+    return f
+
+
+def fx_slam(cv, back, front, ctx):
+    """il plante le bouclier : deux traînées de vent courbes au-dessus du bouclier (il vient d'en haut), la poussière
+    jaillit sous la pointe, les feuilles de la spirale sont chassées vers l'extérieur"""
+    C, T = ctx.shield, ctx.shield_tip
+    for side, tn in ((-1, 'xyzl'), (1, 'wxyz')):
+        pts = bezier((C[0] + side * 14, C[1] - 40), (C[0] + side * 17, C[1] - 30), (C[0] + side * 18, C[1] - 18),
+                     (C[0] + side * 17, C[1] - 6), 30)
+        stroke(back, pts, [0.6 + 2.6 * math.sin(math.pi * i / 30) for i in range(31)], tn)
+    dust(back, T[0] - 9, 0, seed=11, big=1.0)
+    dust(back, T[0] + 9, 0, seed=12, big=1.0)
+    for i, (dx, dy, k) in enumerate(((-40, -30, 1), (34, -46, 3), (44, -12, 0), (-30, -8, 2))):
+        leaf(back, C[0] + dx, C[1] + dy, k, gold=(i == 1))
+
+
+WALL = [None]
+
+
+def fx_wall(k):
+    """le mur de feuilles : deux grands rubans de vent qui montent du sol en se tressant (des S qui se croisent, jamais
+    parallèles), des volutes qui s'enroulent tour à tour dans un sens et dans l'autre le long du mur, une crête qui
+    s'enroule vers l'ennemi, un pied de vent bouillonnant, et des feuilles prises dedans.
+    k = 0 il jaillit (bas, poussière, racines de vent au ras du sol), 1 il se dresse plus haut que lui, 2 il roule vers
+    l'ennemi en se penchant (filets de vent courbes qui le relient au bouclier)"""
+    def f(cv, back, front, ctx):
+        if WALL[0] is None or k == 0:
+            WALL[0] = ctx.shield_tip[0] + 14
+        X0 = WALL[0] + [0, 0, 30][k] if k <= 2 else ENEMY_X - [34, 26][k - 3]
+        hk = [0.42, 1.0, 0.9, 0.8, 0.5][k]
+        lean = [0.05, 0.12, 0.32, 0.62, 0.9][k]
+
+        def P(x, y):                                     # (x, hauteur) du mur -> toile : il grandit, il penche
+            hh = y * hk
+            return (X0 + x + hh * lean, GROUND - hh)
+        # quatre rubans tressés, de hauteurs et de courbures différentes (le plus sombre derrière, le plus clair
+        # au milieu), chacun finit en crête enroulée
+        sc = [0.8, 1.0, 1.0, 1.0, 0.75][k]
+        for (pts, w, tones, up) in ((((0, 0), (-8, 34), (14, 64), (4, 90)), 11.0, 'xyzlL', False),
+                                    (((44, 0), (52, 20), (36, 40), (48, 60)), 8.0, 'yzlL', True),
+                                    (((30, 0), (22, 26), (42, 54), (31, 80)), 10.0, 'xyzl', False),
+                                    (((14, 0), (27, 32), (2, 64), (18, 102)), 12.0, 'wxyzl', True)):
+            gust(back, *[P(*q) for q in pts], w * sc, tones, curl_r=(w * 0.55) * hk + 2, up=up, head=0.3)
+        # les volutes le long du mur, tour à tour dans un sens et dans l'autre
+        for j, (x, y, r, cw, a0) in enumerate(((22, 24, 8.0, True, 200), (-3, 48, 7.0, False, 20),
+                                               (38, 40, 6.0, True, 160), (21, 76, 7.0, True, 180))):
+            if y * hk < 12:
+                continue
+            curl(back, P(x, y), r * (0.7 + 0.3 * hk) * (1.3 if k == 4 else 1.0), a0 + 40 * k, turn=300, w=3.0,
+                 tones='wxyzl' if j % 2 == 0 else 'xyzlL', cw=cw)
+        # le pied du mur : du vent qui bouillonne au ras du sol
+        for (x, r, sd) in ((2, 8.5, 41), (30, 7.0, 42)):
+            rr = r * [0.75, 1.0, 1.0, 0.95, 0.75][k]
+            cloud(back, (P(x, 0)[0], GROUND - rr * 0.5), rr, 'wxyzl', hollow=0.45 if k == 4 else 0.0, seed=sd)
+        # les feuilles prises dans le mur (vertes et dorées), qui tournoient d'une image à l'autre
+        rng = np.random.RandomState(40)
+        for i in range(24):
+            y = rng.uniform(4, 98)
+            x = rng.uniform(-10, 50 - 0.3 * y)
+            if y * hk > 4:
+                px, py = P(x, y)
+                leaf(front if i % 3 else back, px - 2, py - 2, i + k, gold=(i % 4 == 1))
+        T = ctx.shield_tip
+        if k == 0:
+            dust(back, T[0] - 10, 1, seed=11, big=1.2)
+            dust(back, T[0] + 8, 0, seed=12, big=1.3)
+            pop(front, P(14, 10), 7.0, facing=60, tones='wwxyz')
+        if k <= 1:
+            # les racines de vent : elles courent au ras du sol depuis la pointe du bouclier et s'enroulent
+            for j, (reach, hh, wv) in enumerate(((40, 8, 3.0), (58, 16, 2.4), (24, 18, 2.0))):
+                sc = 0.7 if k == 0 else 1.0
+                gust(back, (T[0] + 2, GROUND - 1), (T[0] + 10 * sc, GROUND - 3), (T[0] + reach * 0.6 * sc, GROUND - hh),
+                     (T[0] + reach * sc, GROUND - hh * 0.7), wv, 'yzlL', curl_r=3.5, up=True)
+        elif k == 2:
+            # les filets de vent qui relient le bouclier au mur qui s'en va : courbes, de longueurs différentes
+            C = ctx.shield
+            gust(back, (C[0] + 14, C[1] - 26), (C[0] + 34, C[1] - 44), (X0 - 20, C[1] - 30), (X0 - 2, C[1] - 46),
+                 3.6, 'xyzl', curl_r=4.0, up=True, head=0.6, tail=0.15)
+            gust(back, (C[0] + 18, C[1] + 6), (C[0] + 30, C[1] + 16), (X0 - 26, C[1] + 2), (X0 - 8, C[1] + 12),
+                 3.0, 'yzlL', curl_r=3.5, up=False, head=0.6, tail=0.2)
+            for i, (dx, dy) in enumerate(((-30, -40), (-44, -8), (-18, -60))):
+                leaf(front, X0 + dx, C[1] + dy + 10, i + 2, gold=(i == 1))
+            dust(back, X0 - 6, 1, seed=13, big=1.1)
+            dust(back, X0 + 20, 0, seed=14, big=1.0)
+        else:
+            # il s'abat sur l'ennemi : éclat blanc au choc, deux fouets de vent qui claquent sur lui, des feuilles
+            # projetées vers l'arrière de l'ennemi (il est repoussé), poussière
+            E = (ENEMY_X, GROUND - 40)
+            if k == 3:
+                pop(front, (E[0] - 6, E[1] + 4), 8.5, facing=0, tones='wwxyz')
+                gust(front, (E[0] - 30, E[1] - 34), (E[0] - 6, E[1] - 46), (E[0] + 16, E[1] - 28), (E[0] + 12, E[1] - 6),
+                     4.2, 'wxyzl', curl_r=4.5, up=False, head=0.5)
+                gust(front, (E[0] - 26, E[1] + 30), (E[0] - 4, E[1] + 40), (E[0] + 20, E[1] + 26), (E[0] + 20, E[1] + 6),
+                     3.4, 'xyzlL', curl_r=4.0, up=True, head=0.5)
+            else:
+                curl(front, (E[0] + 26, E[1] - 30), 6.5, 250, turn=300, w=2.8, tones='xyzl', cw=True)
+                curl(front, (E[0] + 30, E[1] + 14), 5.5, 70, turn=300, w=2.4, tones='yzlL')
+            rng = np.random.RandomState(50)
+            for i in range(12):
+                a = math.radians(rng.uniform(-70, 80))
+                r = rng.uniform(14, 34) + 12 * (k - 3)
+                leaf(front, E[0] + r * math.cos(a) - 2, E[1] - r * 0.8 * math.sin(a) - 2, i + k, gold=(i % 4 == 1))
+            dust(back, E[0] - 18, k - 3, seed=31, big=1.3)
+            dust(back, E[0] + 16, k - 3, seed=32, big=1.1)
+    return f
+
+
+def fx_after(k):
+    """après le choc, sur l'ennemi : k = 0 les crêtes du mur se défont en volutes et en poussière, 1 à 3 les feuilles
+    projetées retombent en se balançant et se posent au sol"""
+    def f(cv, back, front, ctx):
+        E = (ENEMY_X, GROUND - 40)
+        if k == 0:
+            curl(back, (E[0] + 16, E[1] - 30), 8.0, 250, turn=300, w=3.0, tones='xyzl', cw=True)
+            curl(back, (E[0] - 18, E[1] - 20), 7.0, 300, turn=300, w=2.6, tones='yzlL', cw=True)
+            curl(back, (E[0] + 30, E[1] + 10), 6.0, 60, turn=280, w=2.4, tones='yzl')
+            cloud(back, (E[0], GROUND - 4), 5.0, 'FFG', hollow=0.5, seed=33)
+        elif k == 1:
+            curl(back, (E[0] + 12, E[1] - 42), 5.0, 250, turn=260, w=2.0, tones='yzl', cw=True)
+        rng = np.random.RandomState(50)
+        for i in range(12):
+            a = math.radians(rng.uniform(-70, 80))
+            r = rng.uniform(14, 34) + 24 + 4 * k
+            fall = [10, 26, 44, 70][k] * (0.6 + 0.08 * (i % 5))
+            x = E[0] + r * math.cos(a) + 3 * math.sin(i + 2 * k)
+            y = E[1] - r * 0.8 * math.sin(a) + fall
+            gold = i % 4 == 1
+            if y < GROUND - 3:
+                leaf(front if i % 2 else back, x - 2, y - 2, i + k, gold=gold)
+            else:
+                leaf(back, x - 2, GROUND - 2, 4, gold=gold)
+    return f
+
+
+PLANT = dict(s=3, lean=2, sh=(6, 8))                # le bouclier planté : sa pointe touche le sol (rangée 116)
+SPECIALE = [
+    # 0 : en garde
+    dict(ms=100),
+    # 1 : il se ramasse et lève le bouclier ; la feuille d'or s'éclaire, le vent se lève à ses pieds
+    dict(s=1, lean=-1, sh=(0, -3), glow=1, hd=(0, 1), er=1, fr=1, cp=1, fx=[fx_gather(0)], ms=120),
+    # 2, 3 : bouclier levé, la feuille brille ; les feuilles montent en spirale vers lui (tenu)
+    dict(s=2, lean=-1, sh=(1, -6), glow=2, hd=(0, 1), er=1, fr=1, cp=1, fx=[fx_gather(1)], ms=140),
+    dict(s=2, lean=-1, sh=(1, -7), glow=3, hd=(0, 1), er=0, fr=0, cp=0, fx=[fx_gather(2)], ms=170),
+    # 4 : il plante le bouclier d'un coup (traînées de vent, poussière)
+    dict(PLANT, glow=3, hd=(1, 0), cp=-1, fx=[fx_slam], ms=60),
+    # 5 : ÉCLAIR, arrêt sur l'image : le mur de vent et de feuilles jaillit, les racines de vent courent au sol
+    dict(PLANT, glow=3, hd=(1, 0), cp=-1, fr=1, flash=30, fx=[fx_wall(0)], ms=200),
+    # 6 : le mur se dresse plus haut que lui, crêtes enroulées vers l'ennemi
+    dict(PLANT, glow=3, hd=(1, 0), cp=0, fr=1, fx=[fx_wall(1)], ms=120),
+    # 7 : il roule vers l'ennemi
+    dict(PLANT, glow=2, hd=(1, 0), cp=0, fx=[fx_wall(2)], ms=90),
+    # 8 : il s'abat sur l'ennemi comme une vague et le fouette (arrêt sur l'image)
+    dict(PLANT, glow=2, hd=(0, 0), cp=1, fx=[fx_wall(3)], ms=170),
+    # 9 : le mur s'effondre vers l'avant, l'ennemi est repoussé dans une volée de feuilles
+    dict(PLANT, glow=1, hd=(0, 0), cp=1, fx=[fx_wall(4)], ms=100),
+    # 10 : les crêtes se défont en volutes ; il arrache le bouclier du sol
+    dict(s=2, lean=1, sh=(4, 4), glow=1, hd=(0, 1), cp=0, er=1, fx=[fx_after(0)], ms=100),
+    # 11 à 13 : en garde ; les feuilles retombent et se posent
+    dict(s=1, sh=(1, 1), hd=(0, 1), cp=-1, er=0, fx=[fx_after(1)], ms=110),
+    dict(hd=(0, 0), cp=0, fx=[fx_after(2)], ms=120),
+    dict(fx=[fx_after(3)], ms=140),
+]
+
+# ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
+# RETOUCHES[nom][numéro d'image] = [(x, y, 'TEXTE')] en coordonnées de la GRILLE du dessin (comme corvin.txt),
+# décalées avec le buste de l'image ; '.' efface, ' ' laisse le pixel tel quel.
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+
+
+def retouch(cv, fixes, chest=(0, 0)):
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                X, Y = x + i + OX + chest[0], y + OY + chest[1]
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = ch
+
+
+# ---------------------------------------------------------------- toutes les images, et les fichiers
+def build_all():
+    anims = {}
+    for name, specs in (('pose', POSE), ('attaque', ATTAQUE), ('speciale', SPECIALE)):
+        fr = []
+        for i, spec in enumerate(specs):
+            cv, back, front, ctx = rig_frame(dict(spec))
+            retouch(cv, RETOUCHES[name].get(i, []), ctx.chest)
+            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+        anims[name] = fr
+    return anims
+
+
+def on_bg(img, bg=BG):
+    im = Image.new('RGBA', (img.shape[1], img.shape[0]), bg + (255,))
+    im.alpha_composite(Image.fromarray(img, 'RGBA'))
+    return im
+
+
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin),
+            min(H, ys.max() + 1 + margin))
+
+
+GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet.paste(im, (0, i * H0))
+    ncol = len(sheet.getcolors(maxcolors=1 << 20) or [])
+    if ncol <= 256:
+        pal = sheet.quantize(colors=min(256, ncol), method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def attack_box(anims):
+    """une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets jusqu'à l'ennemi"""
+    bb = bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 6)
+    return (bb[0], bb[1], min(W, bb[2] + 4), bb[3])
+
+
+def planche(anims, path, box, k=3, per=None):
+    per = per or {'pose': 10, 'attaque': 4, 'speciale': 4}
+    blocks = []
+    for name in ('pose', 'attaque', 'speciale'):
+        bx = GAME_BOX if name == 'pose' else box
+        cells = [on_bg(img).crop(bx) for img, _ in anims[name]]
+        blocks.append((name, per[name], cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(p, len(cells)) * (cells[0].width * k + 6) for _, p, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + p - 1) // p) * (cells[0].height * k + 22) for _, p, cells, _ in blocks)
+    sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    y = 6
+    titles = {'pose': 'POSE (garde vigilante, en boucle)', 'attaque': 'ATTAQUE DE BASE (bouclier et dague)',
+              'speciale': 'ATTAQUE SPECIALE (rempart des feuilles)'}
+    for name, p, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % p == 0:
+                y += ch + 22
+            X = 6 + (i % p) * (cw + 6)
+            sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sheet.save(path)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    bb = attack_box(anims)
+    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    planche(anims, os.path.join(OUT, f'anim-{NAME}-planche.png'), bb)
+    # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat (prairie), ×2
+    seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
+    box = bb
+    bw, bh = box[2] - box[0], box[3] - box[1]
+    try:
+        fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
+        fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        strip = fond.crop((0, fy, fond.width, fy + bh))
+        base = Image.new('RGBA', (bw, bh))
+        x, flip = 0, False
+        while x < bw:                                   # la prairie est plus étroite que la scène : prolongée en miroir
+            base.paste(strip.transpose(Image.FLIP_LEFT_RIGHT) if flip else strip, (x, 0))
+            x += strip.width
+            flip = not flip
+    except Exception:
+        base = Image.new('RGBA', (bw, bh), (120, 170, 110, 255))
+    ims = []
+    for img, _ in seq:
+        im = base.copy()
+        im.alpha_composite(Image.fromarray(img, 'RGBA').crop(box))
+        ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), ims, [ms for _, ms in seq])
+    return boxes
+
+
+def zone(args):
+    """python3 build.py zone x0 y0 x1 y1 [morceau] : affiche un morceau de la découpe (grille du dessin)"""
+    x0, y0, x1, y1 = map(int, args[:4])
+    g = P[args[4]] if len(args) > 4 else P['corps']
+    print('     ' + ''.join(str(x // 10 % 10) if x % 10 == 0 else ' ' for x in range(x0, x1 + 1)))
+    print('     ' + ''.join(str(x % 10) for x in range(x0, x1 + 1)))
+    for y in range(y0, y1 + 1):
+        print(f'{y:4d} ' + ''.join(g[y, x0:x1 + 1]))
+
+
+def essai(folder):
+    """images de contrôle (dans un dossier de brouillon) : planche ×2 et chaque image seule"""
+    os.makedirs(folder, exist_ok=True)
+    anims = build_all()
+    bb = attack_box(anims)
+    planche(anims, os.path.join(folder, 'planche.png'), bb, k=2, per={'pose': 10, 'attaque': 5, 'speciale': 5})
+    for name in ('pose', 'attaque', 'speciale'):
+        box = GAME_BOX if name == 'pose' else bb
+        for i, (img, ms) in enumerate(anims[name]):
+            on_bg(img).crop(box).save(os.path.join(folder, f'{name}-{i:02d}.png'))
+    return anims
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'zone':
+        zone(sys.argv[2:])
+        sys.exit()
+    if len(sys.argv) > 2 and sys.argv[1] == 'essai':
+        essai(sys.argv[2])
+        sys.exit()
+    anims = build_all()
+    boxes = write_outputs(anims)
+    for n in ('pose', 'attaque', 'speciale'):
+        print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+    print('cadre des attaques :', boxes['attaque'])
+    print('écrit dans', OUT)
