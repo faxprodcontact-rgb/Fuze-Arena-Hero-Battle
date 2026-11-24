@@ -7,7 +7,7 @@
 - États de chaque héros : `../suivi.py` (`VALIDES`, `RETOUCHES` avec le retour du propriétaire, `FAITES` = retouche
   faite, en attente de son avis). Page de suivi : `python3 ../suivi.py`, puis republier `../sortie/suivi.html` sur
   https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (outil Artifact, avec `url`).
-- Corvin, Jinn, Zéphyre : retouchés puis validés (24/11). Eldra validée. **Mira, Tessa et Orin** en cours (3 agents en parallèle, accord du
+- Corvin, Jinn, Zéphyre : retouchés puis validés (24/11). Eldra validée. **Mira, Tessa et Orin** dessinés, en attente de son avis (3 agents en parallèle, accord du
   propriétaire : même coût qu'un par un quand il ne regarde pas entre deux).
 - Restent à dessiner (vent) : Arcan, Myrr (thèmes et ids dans `ROSTER` de `../suivi.py`).
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
