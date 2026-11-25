@@ -100,6 +100,10 @@ TOILE = 'ABCDE'
 SACK = FILLED & isin(CORPS, TOILE)
 FAR_ARM = FILLED & ~SACK & (YY >= 28) & (YY <= 76) & ((XX >= 101) | ((YY >= 56) & (XX >= 97)))
 HEAD = FILLED & ~SACK & ~FAR_ARM & (YY <= 53) & (XX >= 36) & ~((YY >= 42) & (XX <= 58)) & ~((YY >= 48) & (XX >= 90))
+# (retouche du 25/11/2026 : plus de corne, une crinière plus fournie) les pointes des mèches de derrière dépassent à
+# gauche de x = 36 : elles restent avec la tête (sinon elles suivraient le buste et se détacheraient de leur mèche).
+HAIR = 'ghij'
+HEAD |= FILLED & ~SACK & isin(CORPS, HAIR) & (YY <= 34) & (XX >= 26)
 
 
 def part(mask, src=CORPS):
@@ -107,6 +111,16 @@ def part(mask, src=CORPS):
 
 
 P = {'sac': part(SACK), 'tete': part(HEAD), 'brasL': part(FAR_ARM)}
+# Derrière la crinière, la toile du sac continue (cachée au repos) : quand le sac gonfle ou se dégonfle (rangées
+# décalées) ou que la tête bouge d'un pixel, ce qui apparaît au bord des mèches est de la toile, jamais un trou.
+_HIDDEN = HEAD & isin(CORPS, HAIR) & (YY <= 34)
+for _x in range(GW):
+    _last = None
+    for _y in range(GH):
+        if P['sac'][_y, _x] != '.':
+            _last = P['sac'][_y, _x]
+        elif _HIDDEN[_y, _x] and _last is not None:
+            P['sac'][_y, _x] = _last
 BODY_ORIG = np.where(SACK | HEAD | FAR_ARM, '.', CORPS)     # buste, bras proche, pagne, jambes
 BODY_NOFAR = BODY_ORIG.copy()                               # le même, quand le bras lointain est retracé
 PATCH = CORPS[17:23, 89:96].copy()                          # la pièce rapiécée (pour le sac redessiné)
@@ -257,12 +271,41 @@ def to_rgba(canvas, pal=ALLPAL):
     return img
 
 
+def close_specks(h, ytop=36, most=3):
+    """(25/11/2026) les mèches de la crinière, quand le sac bouge, peuvent laisser entre elles et le bord du sac un
+    point de fond enfermé (une fente en diagonale que le contour ne bouche pas) : dans la zone de la tête, ces points
+    (au plus 3 pixels) prennent la couleur du contour. Les vraies ouvertures (bras et sac qui font une boucle) restent."""
+    empty = h[:, :, 3] == 0
+    seen = np.zeros_like(empty)
+    seen[0, :] = seen[-1, :] = seen[:, 0] = seen[:, -1] = True
+    for y0, x0 in zip(*np.nonzero(empty & ~seen)):
+        if seen[y0, x0]:
+            continue
+        comp, stack, open_ = [], [(y0, x0)], False
+        seen[y0, x0] = True
+        while stack:
+            y, x = stack.pop()
+            comp.append((y, x))
+            for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                Y, X = y + dy, x + dx
+                if Y in (0, H - 1) or X in (0, W - 1):
+                    open_ = open_ or empty[Y, X]
+                if 0 < Y < H - 1 and 0 < X < W - 1 and empty[Y, X] and not seen[Y, X]:
+                    seen[Y, X] = True
+                    stack.append((Y, X))
+        if not open_ and len(comp) <= most and all(y - OY < ytop for y, _ in comp):
+            for (y, x) in comp:
+                h[y, x, :3] = INK
+                h[y, x, 3] = 255
+    return h
+
+
 def compose(hero, fx_back=None, fx_front=None, flash=None):
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
     if fx_back is not None:
         layers.append(to_rgba(fx_back))
-    h = hd.outline(to_rgba(hero))
+    h = close_specks(hd.outline(to_rgba(hero)))
     if flash:
         m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
         h[m, :3] = (h[m, :3].astype(int) + (255 - h[m, :3].astype(int)) * flash // 100).astype(np.uint8)
