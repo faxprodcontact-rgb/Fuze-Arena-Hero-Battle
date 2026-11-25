@@ -1,5 +1,8 @@
 # Nerith (demons-12, eau — soigneuse, épique) : l'impératrice des eaux — pose (respiration), attaque de base,
 # attaque spéciale.
+# Spéciale (sort d'équipe : grand soin sur l'allié le plus blessé + régénération à toute l'équipe) : « Grâce des
+# eaux », refaite le 25/11/2026 ; tout s'étend EN CERCLE autour d'elle, rien ne frappe l'ennemi.
+# MOMENT DE LANCEMENT = IMAGE 6 de la spéciale (numérotée depuis 0), 210 ms : l'anneau d'eau part d'elle.
 #
 # Lancer : python3 refonte-graphique/pixel/hd/anim/nerith/build.py
 # Écrit dans refonte-graphique/pixel/sortie/ : anim-nerith-pose.gif, anim-nerith-attaque.gif, anim-nerith-speciale.gif,
@@ -54,13 +57,14 @@ ALLPAL.update(FXPAL)
 
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. La pose seule se recadre ensuite en 128 × 120
-# (le format du jeu, sol en (64, 116)). Toile haute : dans la spéciale elle monte sur sa fontaine et l'eau passe
-# au-dessus de l'ennemi.
-W, H = 300, 176
-SOL = (76, 170)
+# (le format du jeu, sol en (64, 116)). Toile haute : dans la spéciale elle monte sur sa fontaine. (25/11 : la toile
+# s'élargit de 20 pixels à gauche et descend sous ses pieds pour l'anneau d'eau de la spéciale, posé au sol tout
+# autour d'elle ; tout le reste est décalé d'autant, la pose et l'attaque restent identiques au pixel.)
+W, H = 320, 188
+SOL = (96, 170)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
-FOE = (246, GROUND - 34)          # l'ennemi (milieu du corps)
+FOE = (SOL[0] + 170, GROUND - 34)  # l'ennemi (milieu du corps) : visé par l'attaque de base seulement
 
 
 def grid(rows):
@@ -291,14 +295,26 @@ def to_rgba(canvas, pal=ALLPAL):
     return img
 
 
-def compose(hero, fx_back=None, fx_front=None, solid=None):
+def compose(hero, fx_back=None, fx_front=None, solid=None, eclat=0.0):
     """du fond vers le devant : effets de fond, l'héroïne (avec son contour), objets solides (avec leur contour),
-    effets de devant ; renvoie une image RGBA"""
+    effets de devant ; renvoie une image RGBA. eclat (0..1) : sa silhouette s'éclaire vers le jade presque blanc
+    (le soin passe en elle ; le contour reste)"""
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
     if fx_back is not None:
         layers.append(to_rgba(fx_back))
-    layers.append(hd.outline(to_rgba(hero)))
+    hr = to_rgba(hero)
+    if eclat:
+        # le dessin prend un peu de lumière de jade ; au plus fort, son contour devient une lueur de jade
+        m = hr[:, :, 3] > 0
+        hr[m, :3] = np.round(hr[m, :3] * (1 - eclat) + np.array(FXPAL['G']) * eclat).astype(np.uint8)
+        ol = hd.outline(hr)
+        if eclat >= 0.1:
+            rimm = (ol[:, :, 3] > 0) & ~m
+            ol[rimm, :3] = FXPAL['H']
+        layers.append(ol)
+    else:
+        layers.append(hd.outline(hr))
     if solid is not None and (solid != '.').any():
         layers.append(hd.outline(to_rgba(solid)))
     if fx_front is not None:
@@ -499,9 +515,13 @@ LIGHT = np.array([0.6, -0.8])
 LN = LIGHT / np.linalg.norm(LIGHT)
 
 
+OLD_X, OLD_H = 20, 176   # l'ancienne toile (avant le 25/11) : sa place dans la nouvelle
+_FLOOR = [GROUND]   # sous cette ligne, rien n'est peint (l'anneau d'eau de la spéciale a le droit d'y descendre)
+
+
 def put(cv, x, y, ch, keep=None):
     x, y = int(math.floor(x)), int(math.floor(y))
-    if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
+    if 0 <= x < W and 0 <= y < H and y <= _FLOOR[0] and (keep is None or cv[y, x] in keep):
         cv[y, x] = ch
 
 
@@ -619,6 +639,12 @@ def ellipse_mask(c, rx, ry):
 def light_field(m):
     """pour une forme pleine (masque) : > 0 sur les bords tournés vers la lumière (en haut à droite), < 0 sur les
     bords dans l'ombre, ~0 au milieu (deux échelles : bord net + volume doux)"""
+    # (25/11) la toile s'est agrandie (20 pixels à gauche, 12 en bas) : une forme qui tient dans l'ancienne toile est
+    # calculée dans l'ancienne toile (le flou dépend des bords) — l'attaque validée reste identique au pixel
+    if m.shape == (H, W) and not m[OLD_H:].any() and not m[:, :OLD_X].any():
+        out = np.zeros(m.shape)
+        out[:OLD_H, OLD_X:] = light_field(m[:OLD_H, OLD_X:])
+        return out
     out = np.zeros(m.shape)
     for (sig, a, wgt) in ((1.6, 2.0, 0.55), (5.0, 6.0, 0.45)):
         im = Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig))
@@ -963,34 +989,35 @@ ATTAQUE = [
     dict(ms=160)]
 
 
-# ---------------------------------------------------------------- 3) l'attaque spéciale : « Sentence des eaux »
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Grâce des eaux »
+# Sort d'équipe (refait le 25/11/2026) : dans le jeu, elle soigne l'allié le plus blessé (grand soin) et donne une
+# régénération (soin qui dure 5 s) à toute l'équipe. L'équipe peut être devant, derrière, au-dessus ou en dessous
+# d'elle : rien ne vise une direction, tout naît sur elle et s'étend EN CERCLE tout autour d'elle ; rien ne frappe
+# l'ennemi (l'ancienne « Sentence des eaux » — jet, miroir, pluie de gouttes-lames, bulle sur l'ennemi — est retirée).
 # L'impératrice ne se déplace pas : c'est l'eau qui la sert. Menton haut, regard qui tombe de haut. L'eau sourd du sol
-# sous sa robe et monte en fontaine : un trône d'eau (une vasque bordée d'écume, des cascades qui retombent en
-# s'enroulant de chaque côté) l'élève, droite, sans un pli. Elle lève lentement la main, paume au ciel, et TIENT.
-# De sa paume, un long jet d'eau monte en arc et passe au-dessus de l'ennemi, où il s'étale en un miroir d'eau
-# suspendu. Le miroir se vide : une pluie de gouttes-lames tombe sur l'ennemi. L'eau tombée remonte autour de lui et
-# l'enferme dans une bulle (arrêt sur l'image) ; la bulle se tord… et éclate. Ce qu'elle retenait devient lumière de
-# soin : des gouttes de jade montent en arc et retombent sur elle (la lanterne s'embrase), la fontaine s'abaisse et
-# rentre dans le sol, quelques étincelles de jade restent sur elle.
+# sous sa robe et monte en fontaine : le trône d'eau (vasque bordée d'écume, cascades qui s'enroulent de chaque côté)
+# l'élève, droite, sans un pli. Elle lève lentement la main, paume au ciel — le geste impérieux — et TIENT : une perle
+# de lumière de jade se forme au-dessus de sa paume, la flamme de sa lanterne s'embrase de jade. Puis la vasque
+# DÉBORDE : la perle s'ouvre en éclat de jade, toute sa silhouette s'éclaire un instant, et l'eau claire qui
+# déborde de la fontaine tombe au sol en un anneau qui s'étend tout autour d'elle (une ellipse aplatie posée au sol :
+# sa moitié du fond passe derrière elle, sa moitié de devant devant la fontaine) — c'est le MOMENT DE LANCEMENT (arrêt
+# sur l'image). En même temps la fontaine lance vers le ciel des gouttes de lumière de jade, dans toutes les
+# directions : elles montent en cloche et retombent en pluie douce, en cercle autour d'elle (celles du fond plus
+# haut, celles de devant plus bas), et s'allument en petites étincelles là où elles touchent le sol. L'anneau
+# s'éloigne en s'amincissant, une seconde onde plus fine le suit, il se défait en arcs et s'éteint. La fontaine
+# s'abaisse et rentre dans le sol, la lanterne s'apaise, elle revient en pose.
+# MOMENT DE LANCEMENT (là où le jeu joue les effets reçus sur chaque allié : soin et régénération) : IMAGE 6 (numérotée
+# depuis 0, comme sur la planche), tenue 210 ms : l'anneau d'eau part d'elle, la perle s'ouvre, sa silhouette s'éclaire.
 THRONE_X = SOL[0] + 3                # le milieu de l'ourlet (toile)
+RING_C = (THRONE_X, GROUND - 1)      # le centre de l'anneau au sol (sous elle)
+RING_FLAT = 0.17                     # l'anneau est un cercle vu en biais : hauteur = 0,17 × largeur
 
 
-def teardrop(c, r, h):
-    """le masque d'une goutte qui tombe : ronde en bas (rayon r), effilée vers le haut (pointe à h pixels au-dessus
-    du centre)"""
-    yy, xx = np.mgrid[0:H, 0:W]
-    px, py = xx + 0.5 - c[0], yy + 0.5 - c[1]
-    m = px ** 2 + py ** 2 <= r * r
-    up = (py < 0) & (py > -h)
-    wd = r * np.clip(1 + py / h, 0, 1) ** 1.6
-    m |= up & (np.abs(px) <= wd)
-    return m
-
-
-def fountain(lift, phase, rise=1.0):
+def fountain(lift, phase, rise=1.0, spill=0.0):
     """le trône d'eau sous elle : une colonne d'eau qui ondule, une vasque dont la lèvre de devant passe devant
     l'ourlet, des cascades qui retombent en s'enroulant de chaque côté, la flaque au sol. rise (0..1) : la fontaine
-    pousse (0 : une flaque)"""
+    pousse (0 : une flaque) ; spill (0..1) : la vasque déborde (sa lèvre gonfle, un voile d'eau claire coule tout
+    autour de la colonne)"""
     def f(cv, back, front, solid, ctx):
         cx = THRONE_X
         top = GROUND - lift
@@ -998,15 +1025,21 @@ def fountain(lift, phase, rise=1.0):
         m = ellipse_mask((cx, GROUND - 0.5), 30 + 20 * rise, 1.6 + 1.2 * rise)
         shade_mask(back, m, 'XYZZV', foam=rim(m, 1))
         if lift >= 2:
-            # la colonne : large en haut, serrée au milieu, évasée au pied ; ses bords ondulent
+            # la colonne : large en haut, serrée au milieu, évasée au pied ; ses bords ondulent ; quand la vasque
+            # déborde, un voile d'eau claire l'élargit (elle ruisselle de partout)
             col = np.zeros((H, W), bool)
             for y in range(top, GROUND):
                 t = (y - top) / max(1.0, GROUND - top)
-                hw = 24 - 12 * math.sin(math.pi * min(1.0, t * 1.15)) + 10 * t * t
+                hw = 24 - 12 * math.sin(math.pi * min(1.0, t * 1.15)) * (1 - 0.55 * spill) + 10 * t * t
                 hw += 1.3 * math.sin(phase + y * 0.55)
                 off = 1.0 * math.sin(phase * 0.7 + y * 0.3)
                 col[y, max(0, int(cx - hw + off)):int(cx + hw + off) + 1] = True
-            shade_mask(back, col, 'XYZVU', foam=rim(col, 1))
+            shade_mask(back, col, 'XYZVU', foam=rim(col, 1 + int(spill > 0.5)))
+            # pas de pointillés : un pixel d'ombre seul entre deux pixels d'eau moyenne devient de l'eau moyenne
+            ys, xs = np.nonzero(col)
+            for y, x in zip(ys, xs):
+                if 0 < x < W - 1 and back[y, x] == 'V' and back[y, x - 1] == 'Z' and back[y, x + 1] == 'Z':
+                    back[y, x] = 'Z'
         if lift >= 4:
             # les accoudoirs du trône : de chaque côté, un bras d'eau monte de la lèvre et s'enroule vers dehors en
             # volute ; de la volute, une cascade retombe dans la flaque
@@ -1023,13 +1056,14 @@ def fountain(lift, phase, rise=1.0):
                 q = (cx + sgn * 40, top - h + 5)
                 fall = bezier(q, (q[0] + sgn * 3, q[1] + 4), (q[0] + sgn * 5, GROUND - lift * 0.4),
                               (q[0] + sgn * 4, GROUND - 3), 20)
-                fw = [2.8 - 1.2 * k / 20 + 0.4 * math.sin(phase + k * 0.9) for k in range(21)]
+                fw = [2.8 - 1.2 * k / 20 + 0.4 * math.sin(phase + k * 0.9) + 1.2 * spill for k in range(21)]
                 mm = stroke_mask(fall, fw)[0]
                 shade_mask(back, mm, 'XYZVU', foam=rim(mm, 1))
-                foam(back, (q[0] + sgn * 4, GROUND - 2), 3.0, seed=7 + sgn + int(phase))
+                foam(back, (q[0] + sgn * 4, GROUND - 2), 3.0 + 1.0 * spill, seed=7 + sgn + int(phase))
         if lift >= 2:
-            # la vasque : sa surface derrière l'ourlet, sa lèvre devant (elle cache le bas de la robe)
-            rx, ry = 22 + 12 * min(1.0, lift / 10), 3.5 + 1.5 * min(1.0, lift / 10)
+            # la vasque : sa surface derrière l'ourlet, sa lèvre devant (elle cache le bas de la robe) ; elle gonfle
+            # quand elle déborde
+            rx, ry = 22 + 12 * min(1.0, lift / 10) + 2 * spill, 3.5 + 1.5 * min(1.0, lift / 10) + 1.0 * spill
             sm = ellipse_mask((cx, top), rx, ry)
             shade_mask(back, sm, 'XYZVU', foam=rim(sm, 1))
             lip = sm & ~ellipse_mask((cx, top - 2.2), rx - 3, ry)
@@ -1040,6 +1074,15 @@ def fountain(lift, phase, rise=1.0):
                 curl(front, (cx + sgn * (rx - 6), top + ry - 1.5), 2.2, 90 + 90 * sgn, turn=260, w=1.6, tones='WXY',
                      cw=(sgn > 0))
             jade_spark(front, cx - 8 + 3 * math.sin(phase), top + 2, 1)
+            if spill > 0:
+                # l'eau passe par-dessus la lèvre : des filets clairs coulent devant la colonne, de part et d'autre
+                for (dx, ln) in ((-17, 0.55), (-8, 0.35), (9, 0.4), (18, 0.6)):
+                    y0 = top + ry
+                    y1 = y0 + (GROUND - y0) * ln * spill
+                    pts = bezier((cx + dx, y0), (cx + dx * 1.08, y0 + 3), (cx + dx * 1.15, y1 - 3),
+                                 (cx + dx * 1.18, y1), 12)
+                    mm = stroke_mask(pts, [2.4 - 1.2 * k / 12 for k in range(13)])[0]
+                    shade_mask(front, mm, 'WXYZV', foam=None)
     return f
 
 
@@ -1071,270 +1114,239 @@ def curl(cv, c, r0, a0, turn=300, w=2.4, tones='XYZV', cw=False):
         put(cv, x, y, tones[min(m - 1, int(k * m))])
 
 
-def palm_swirl(level):
-    """l'eau se rassemble au-dessus de la paume levée : une petite boule d'eau qui tourne (level 0, 1)"""
+def palm_pearl(level):
+    """la perle de lumière de jade au-dessus de la paume levée. level 0 : des grains de jade viennent s'y rassembler
+    (petite perle) ; 1 : la perle est pleine, elle palpite ; 2 : elle s'ouvre en éclat de jade (LANCEMENT) ; 3 : l'éclat
+    se défait en grains qui montent doucement"""
     def f(cv, back, front, solid, ctx):
         px, py = ctx.palm
-        c = (px + 1, py - 8 - level)
-        sphere(front, c, 2.5 + 1.5 * level)
-        for (a, r, sz) in ((40 + 70 * level, 7, 1), (200 + 70 * level, 6, 2)):
-            drop(front, c[0] + r * math.cos(math.radians(a)), c[1] - r * 0.6 * math.sin(math.radians(a)), sz)
-        ctx.ball = c
-    return f
-
-
-MIRROR = (FOE[0] - 2, FOE[1] - 58)  # le miroir d'eau suspendu au-dessus de l'ennemi
-
-
-def jet_path(ctx):
-    """la course du jet : de la paume levée, haut dans le ciel, jusqu'au-dessus de l'ennemi"""
-    px, py = ctx.palm
-    p0 = (px + 2, py - 9)
-    return (p0, (p0[0] + 10, p0[1] - 70), (MIRROR[0] - 60, MIRROR[1] - 50), (MIRROR[0] - 6, MIRROR[1] - 2))
-
-
-def jet(reach, thin=0.0):
-    """le jet d'eau qui monte en arc : reach (0..1) jusqu'où est arrivée sa tête, thin (0..1) : sa queue se détache
-    de la paume et le suit"""
-    def f(cv, back, front, solid, ctx):
-        p0, p1, p2, p3 = jet_path(ctx)
-        pts = bezier(p0, p1, p2, p3, 80)
-        n = max(2, int(80 * reach))
-        a = int(80 * thin)
-        seg = pts[a:n + 1]
-        if len(seg) < 2:
-            return
-        N = len(seg)
-        ww = [1.6 + 6.0 * math.sin(math.pi * (0.12 + 0.76 * i / (N - 1))) ** 0.8 for i in range(N)]
-        m = stroke_mask(seg, ww)[0]
-        shade_mask(front, m, 'XYZVU', foam=rim(m, 1))
-        hx, hy = seg[-1]
-        sphere(front, (hx, hy), 4.6)
-        for (k, sz) in ((0.3, 2), (0.6, 1)):
-            q = seg[int((N - 1) * k)]
-            drop(front, q[0] + 4, q[1] + 3, sz, v=(0, 1))
-    return f
-
-
-def mirror(size, drain=0.0):
-    """le miroir d'eau suspendu : une lentille d'eau, écume sur le dessus, des gouttes qui pendent dessous ; size
-    (0..1) : il s'étale ; drain (0..1) : il se vide (plus mince, plus court)"""
-    def f(cv, back, front, solid, ctx):
-        cx, cy = MIRROR
-        rx = 7 + 27 * size * (1 - 0.35 * drain)
-        ry = 2.5 + 4.5 * size * (1 - 0.6 * drain)
-        m = ellipse_mask((cx, cy), rx, ry)
-        # dessous : des gouttes qui pendent (elles vont tomber)
-        if size > 0.6:
-            for (dx, rr) in ((-19, 2.2), (-8, 2.8), (4, 2.4), (15, 2.6), (24, 1.8)):
-                if abs(dx) < rx - 3:
-                    m |= ellipse_mask((cx + dx, cy + ry * 0.8 + 1.0 - drain), rr * (1 - 0.3 * drain),
-                                      rr * (1.2 - 0.3 * drain))
-        shade_mask(front, m, 'XYZVU', foam=rim(m, 1) & (np.mgrid[0:H, 0:W][0] < cy))
-    return f
-
-
-# la pluie : chaque goutte-lame (dx par rapport au miroir, retard, taille) — en quinconce, jamais en rangée
-BLADES = [(-15, 0.00, 1.0), (5, 0.08, 1.2), (-5, 0.18, 0.9), (16, 0.26, 1.0), (-21, 0.34, 0.8), (10, 0.42, 1.1),
-          (-10, 0.52, 1.0), (21, 0.60, 0.8), (0, 0.68, 1.2), (-17, 0.78, 0.9), (13, 0.86, 1.0), (-3, 0.95, 0.8)]
-
-
-def rain(t):
-    """la pluie de gouttes-lames : chacune tombe du miroir sur l'ennemi (t = l'instant, 0..2) ; quand elle touche
-    (le haut de l'ennemi), une petite gerbe"""
-    def f(cv, back, front, solid, ctx):
-        cx, cy = MIRROR
-        top_hit = FOE[1] - 18
-        for (dx, delay, sz) in BLADES:
-            u = (t - delay) / 0.7
-            if u < 0:
-                continue
-            y = cy + 6 + (top_hit + 18 * abs(math.sin(dx)) - cy - 6) * min(1.0, u) ** 1.6
-            x = cx + dx * (1 + 0.15 * min(1.0, u))
-            if u <= 1.0:
-                m = teardrop((x, y), 3.2 * sz, 11 * sz)
-                shade_mask(front, m, 'WXYZV', foam=None)
-            elif u <= 1.5:
-                # la goutte touche : une petite couronne d'eau
-                yh = top_hit + 18 * abs(math.sin(dx))
-                k = (u - 1.0) / 0.5
-                for sgn in (-1, 1):
-                    drop(front, x + sgn * (2 + 4 * k), yh - 3 * k + 4 * k * k, 2 if k < 0.5 else 1,
-                         v=(sgn * 0.5, -0.4))
-                put(front, x, yh, 'W')
-    return f
-
-
-BUB_C = (FOE[0], FOE[1] - 2)        # le centre de la bulle
-
-
-def bubble_ring(cv, c, R, ry=None, grow=1.0, wob=0.0):
-    """la bulle-prison : un anneau d'eau épais (l'ennemi reste visible dedans), modelé par la lumière (bord éclairé en
-    haut à droite, ombre en bas à gauche), le bord intérieur du côté de l'ombre s'allume (l'eau laisse passer la
-    lumière), un reflet courbe en haut à droite ; grow (0..1) : l'eau monte du sol des deux côtés"""
-    ry = R if ry is None else ry
-    outer = ellipse_mask(c, R, ry)
-    inner = ellipse_mask((c[0] - 0.5, c[1] + 0.5), R - 4.2, ry - 4.2)
-    m = outer & ~inner
-    yy, xx = np.mgrid[0:H, 0:W]
-    if grow < 1.0:
-        ang = np.degrees(np.arctan2(xx + 0.5 - c[0], (yy + 0.5 - c[1])))   # 0 = en bas
-        m &= np.abs(ang) <= 180 * grow
-    shade_mask(cv, m, 'XYZVU', foam=rim(m, 1) & ~inner)
-    # le bord intérieur, du côté de l'ombre (en bas à gauche) : un filet clair
-    edge = m & (np.roll(inner, 1, 0) | np.roll(inner, -1, 1))
-    ys, xs = np.nonzero(edge)
-    for y, x in zip(ys, xs):
-        if (x + 0.5 - c[0]) * LN[0] + (y + 0.5 - c[1]) * LN[1] < -R * 0.35:
-            put(cv, x, y, 'Y')
-    if grow >= 1.0:
-        # le reflet : un arc blanc épais en haut à droite, un petit en bas à gauche
-        for a in range(24, 72, 3):
-            ar = math.radians(a + wob)
-            put(cv, c[0] + (R - 5.5) * math.cos(ar), c[1] - (ry - 5.5) * math.sin(ar), 'X')
-            if 32 <= a <= 62:
-                put(cv, c[0] + (R - 6.6) * math.cos(ar), c[1] - (ry - 6.6) * math.sin(ar), 'Y')
-            put(cv, c[0] + (R - 2.2) * math.cos(ar), c[1] - (ry - 2.2) * math.sin(ar), 'W')
-        for a in range(208, 236, 5):
-            ar = math.radians(a)
-            put(cv, c[0] + (R - 5.5) * math.cos(ar), c[1] - (ry - 5.5) * math.sin(ar), 'Y')
-
-
-def prison(k):
-    """k = 0 : l'eau tombée remonte autour de lui ; 1 : la bulle est pleine (arrêt) ; 2 : elle se tord ; 3 : elle
-    éclate ; 4 : les gouttes retombent"""
-    def f(cv, back, front, solid, ctx):
-        c = BUB_C
-        R = 21
-        if k == 0:
-            bubble_ring(front, c, R, grow=0.62)
-            for sgn in (-1, 1):
-                a = math.radians(90 - sgn * (90 - 0.62 * 180 + 90))
-                tip = (c[0] + sgn * R * math.sin(math.radians(0.62 * 180)) * 0.98,
-                       c[1] - R * math.cos(math.radians(0.62 * 180)) * -1)
-                curl(front, (tip[0] - sgn * 1.5, tip[1] - 2.5), 2.6, 0 if sgn > 0 else 180, turn=220, w=2.2,
-                     tones='WXYZ', cw=(sgn < 0))
-            foam(front, (c[0] - 14, GROUND - 3), 3.2, seed=21)
-            foam(front, (c[0] + 15, GROUND - 3), 3.0, seed=22)
-        elif k == 1:
-            bubble_ring(front, c, R)
-            for (dx, dy, sz) in ((-6, 10, 2), (5, 4, 1), (-1, -6, 2), (8, -11, 1)):
-                bubble(front, c[0] + dx, c[1] + dy, sz)
-        elif k == 2:
-            bubble_ring(front, (c[0], c[1] + 2), R + 2, ry=R - 3, wob=8)
-            for (dx, dy, sz) in ((-5, 6, 2), (4, -1, 1), (0, -10, 2)):
-                bubble(front, c[0] + dx, c[1] + dy, sz)
-        elif k == 3:
-            # l'éclatement : l'anneau se casse en gros morceaux d'eau qui partent vers dehors, de l'écume aux
-            # cassures, une lueur de jade au milieu
-            rng = np.random.RandomState(31)
-            for i in range(9):
-                a = math.radians(i * 40 + rng.uniform(-8, 8))
-                rr = R + 4 + rng.uniform(0, 3)
-                p = (c[0] + rr * math.cos(a), c[1] - rr * math.sin(a))
-                drop(front, p[0], p[1], int(rng.choice([3, 3, 4, 4])), v=(math.cos(a), -math.sin(a)))
-            for a in (60, 160, 250, 330):
+        c = (px + 1, py - 9)
+        if level == 0:
+            jade_orb(front, c, 2.0)
+            for (a, r, sz) in ((35, 8, 2), (150, 7, 1), (250, 8, 2), (320, 6, 1)):
+                jade_spark(front, c[0] + r * math.cos(math.radians(a)), c[1] - r * 0.8 * math.sin(math.radians(a)),
+                           sz)
+        elif level == 1:
+            jade_orb(front, c, 3.4)
+            for (a, r, sz) in ((60, 7, 1), (200, 7, 2)):
+                jade_spark(front, c[0] + r * math.cos(math.radians(a)), c[1] - r * 0.8 * math.sin(math.radians(a)),
+                           sz)
+        elif level == 2:
+            pop(front, c, 4.6, facing=90, tones='GGHvu')
+            for a in (20, 100, 175, 250, 320):
                 ar = math.radians(a)
-                pop(front, (c[0] + (R - 1) * math.cos(ar), c[1] - (R - 1) * math.sin(ar)), 4.2, facing=a,
-                    tones='WXYZ')
-            for a in (15, 110, 205, 290):
-                ar = math.radians(a)
-                curl(front, (c[0] + (R + 2) * math.cos(ar), c[1] - (R + 2) * math.sin(ar)), 3.0, a + 90, turn=220,
-                     w=2.0, tones='XYZ', cw=False)
-            jade_spark(front, c[0], c[1], 3)
-            jade_spark(front, c[0] - 7, c[1] + 5, 2)
-            jade_spark(front, c[0] + 6, c[1] - 6, 2)
+                jade_spark(front, c[0] + 9 * math.cos(ar), c[1] - 8 * math.sin(ar), 2)
         else:
-            rng = np.random.RandomState(32)
-            for i in range(9):
-                a = math.radians(i * 40 + rng.uniform(-8, 8))
-                rr = R + 12 + rng.uniform(0, 5)
-                p = (c[0] + rr * math.cos(a), min(GROUND - 2, c[1] - rr * math.sin(a) * 0.7 + 12))
-                drop(front, p[0], p[1], int(rng.choice([1, 2, 2, 3])), v=(math.cos(a) * 0.4, 1.0))
-            m = ellipse_mask((c[0], GROUND - 0.5), 20, 1.6)
-            shade_mask(back, m, 'XYZZV', foam=rim(m, 1))
+            for (dx, dy, sz) in ((-5, -6, 2), (4, -9, 2), (0, -3, 1), (7, -2, 1), (-8, 1, 1)):
+                jade_spark(front, c[0] + dx, c[1] + dy, sz)
     return f
 
 
-def heal_path(ctx):
-    """la course de la lumière de soin : de la bulle, en arc, jusqu'au-dessus de sa tête"""
-    hx, hy = ctx.body.to_canvas((76, 12), rows_of=40)
-    return (BUB_C, (BUB_C[0] - 10, BUB_C[1] - 70), (hx + 40, hy - 46), (hx, hy - 16))
-
-
-def heal(t, rain_=0.0, glow_on=False):
-    """les gouttes de jade : elles montent de la bulle en arc (t, 0..1) puis retombent sur elle (rain_, 0..1) et
-    s'allument sur elle (petites croix)"""
+def lantern_flare(level):
+    """la flamme de la lanterne s'embrase de jade : une couronne de lumière de jade autour de la cage (derrière elle :
+    la cage reste nette), des étincelles qui tournent autour. level 1 à 3 (petite, grande, la plus grande)"""
     def f(cv, back, front, solid, ctx):
-        if t > 0 and rain_ == 0:
-            p = bezier(*heal_path(ctx), 60)
-            for (lag, r) in ((0.0, 3.0), (0.09, 2.6), (0.17, 2.2), (0.24, 1.8), (0.31, 0.0), (0.37, 0.0)):
-                u = t - lag
-                if u <= 0:
-                    continue
-                q = p[int(59 * min(1.0, u))]
-                if r:
-                    jade_orb(front, q, r)
-                else:
-                    jade_spark(front, q[0], q[1], 2)
-        if rain_ > 0:
-            hx, hy = ctx.body.to_canvas((70, 12), rows_of=40)
-            for (dx, dy0, sz) in ((-18, -26, 3), (2, -34, 4), (16, -22, 3), (-8, -40, 2), (24, -38, 2),
-                                  (-26, -12, 2), (10, -14, 2)):
-                y = hy + dy0 + 44 * rain_
-                # au-dessus de la tête, la goutte s'éteint en touchant la couronne ; à côté, elle descend aux épaules
-                if y < (hy + 2 if -16 <= dx <= 16 else hy + 40):
-                    if sz >= 3:
-                        jade_orb(front, (hx + dx, y), 0.6 + 0.6 * sz)
-                    else:
-                        drop(front, hx + dx, y, sz + 1, v=(0, 1.0), tones=JADE_S)
-        if glow_on:
-            for (gx, gy, sz) in glow_on:
-                cxy = ctx.body.to_canvas((gx, gy), rows_of=40 if gy < 47 else 60)
-                jade_spark(front, cxy[0], cxy[1], sz)
+        fx, fy = ctx.flame
+        r = {1: 3.6, 2: 6.0, 3: 7.4}[level]
+        pop(back, (fx, fy), r, facing=90, tones='GHHvu')
+        for i, a in enumerate((70, 200, 330)[:level]):
+            ar = math.radians(a + 25 * level)
+            jade_spark(front, fx + (r + 5) * math.cos(ar), fy - (r + 4) * math.sin(ar), 2 if i == 0 else 1)
     return f
 
 
-_SP = dict(sp=3)
+def ring_band(back, front, rx, w, tones_f='WXYZV', tones_b='XYZV', gaps=(), c=None):
+    """l'anneau d'eau posé au sol : une ellipse aplatie (largeur rx, hauteur rx × RING_FLAT) peinte comme un ruban
+    d'épaisseur w (plus épais devant, plus mince au fond : la perspective). La moitié du fond va derrière elle, celle
+    de devant devant elle. gaps : arcs (degrés) où l'anneau est déjà défait"""
+    cx, cy = c or RING_C
+    ry = rx * RING_FLAT
+    n = int(2 * math.pi * rx * 2.2) + 24
+    best = {}
+    for i in range(n):
+        a = 360.0 * i / n
+        if any(g0 <= a <= g1 for (g0, g1) in gaps):
+            continue
+        ar = math.radians(a)
+        sa = math.sin(ar)
+        px, py = cx + rx * math.cos(ar), cy - ry * sa
+        # les bouts d'un arc (près d'une cassure) s'effilent
+        taper = 1.0
+        for (g0, g1) in gaps:
+            for e in (g0, g1):
+                d = min(abs(a - e), 360 - abs(a - e))
+                taper = min(taper, 0.35 + 0.65 * min(1.0, d / 14.0))
+        R = w * (0.72 - 0.28 * sa) * taper / 2
+        if R < 0.4:
+            continue
+        side = 'b' if sa > 0 else 'f'
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1.1 else 0.8
+                    # côté lumière (en haut à droite de chaque point du ruban) un peu plus clair
+                    k -= 0.18 * ((x + 0.5 - px) * LN[0] + (y + 0.5 - py) * LN[1]) / max(R, 1.0)
+                    key = (x, y)
+                    if k < best.get(key, (9, ''))[0]:
+                        best[key] = (k, side)
+    _FLOOR[0] = H - 1
+    for (x, y), (k, side) in best.items():
+        tones = tones_b if side == 'b' else tones_f
+        put(back if side == 'b' else front, x, y, tones[min(len(tones) - 1, max(0, int(k * len(tones))))])
+    _FLOOR[0] = GROUND
+
+
+def ring_glints(front, back, rx, angles, sz=2):
+    """des éclats de jade posés sur l'anneau (la lumière de soin qu'il emporte)"""
+    cx, cy = RING_C
+    _FLOOR[0] = H - 1
+    for a in angles:
+        ar = math.radians(a)
+        x, y = cx + rx * math.cos(ar), cy - rx * RING_FLAT * math.sin(ar) - 1
+        jade_spark(back if math.sin(ar) > 0 else front, x, y, sz)
+    _FLOOR[0] = GROUND
+
+
+# (rayon, épaisseur, cassures, éclats de jade) pour chaque étape de l'anneau
+RING_STEPS = {
+    0: (33, 5.0, (), (40, 215, 320)),
+    1: (45, 6.0, (), (25, 150, 250, 335)),
+    2: (57, 4.8, (), (60, 190, 290)),
+    3: (66, 3.6, ((118, 134),), (20, 165, 265)),
+    4: (73, 2.6, ((40, 62), (118, 140), (205, 222), (300, 318)), (95, 250)),
+    5: (78, 1.6, ((10, 58), (100, 150), (178, 236), (262, 300), (330, 352)), (80,)),
+}
+
+
+def ring(step):
+    """l'anneau d'eau claire qui déborde de la fontaine et s'étend tout autour d'elle (step 0 : il tombe de la vasque,
+    1 : LANCEMENT, 2-3 : il s'éloigne, une seconde onde plus fine le suit, 4-5 : il se défait en arcs et s'éteint)"""
+    def f(cv, back, front, solid, ctx):
+        rx, w, gaps, glints = RING_STEPS[step]
+        ring_band(back, front, rx, w, gaps=gaps,
+                  tones_f='WXYZV' if step < 4 else 'XYZ', tones_b='XYZV' if step < 4 else 'YZ')
+        if 2 <= step <= 4:
+            ring_band(back, front, rx - 19, [2.6, 2.2, 1.5][step - 2], tones_f='XYZ', tones_b='YZ',
+                      gaps=((80, 100), (250, 275)) if step == 4 else ())
+        if step <= 1:
+            # l'écume qui roule sur le bord de devant : deux petites volutes (signes inventés), vers dehors
+            cx, cy = RING_C
+            _FLOOR[0] = H - 1
+            for sgn in (-1, 1):
+                a = math.radians(270 + sgn * 38)
+                curl(front, (cx + rx * math.cos(a), cy - rx * RING_FLAT * math.sin(a) - 1.5), 2.3,
+                     90 + 90 * -sgn, turn=240, w=1.7, tones='WXY', cw=(sgn > 0))
+            _FLOOR[0] = GROUND
+        ring_glints(front, back, rx, glints, 2 if step < 4 else 1)
+    return f
+
+
+# la pluie de jade : chaque goutte (angle autour d'elle en degrés — 0 = à droite, 90 = au fond, 270 = devant —,
+# distance où elle retombe, hauteur de sa cloche, retard, taille). Rien en plein devant ni en plein fond (elle
+# traverserait son corps) : elles retombent de tous les côtés, du fond (plus haut) jusque devant (plus bas).
+SPRAY = [(8, 64, 70, 0.00, 4), (30, 50, 84, 0.06, 3), (52, 70, 64, 0.12, 4), (122, 62, 78, 0.03, 3),
+         (144, 74, 66, 0.10, 4), (166, 54, 88, 0.07, 3), (188, 68, 72, 0.02, 4), (208, 52, 80, 0.13, 3),
+         (228, 66, 62, 0.05, 4), (312, 66, 76, 0.09, 3), (330, 54, 86, 0.01, 4), (350, 72, 68, 0.11, 3),
+         (20, 40, 96, 0.15, 2), (160, 42, 98, 0.16, 2), (200, 38, 94, 0.04, 2), (338, 40, 92, 0.08, 2)]
+
+
+def jade_drop(cv, x, y, sz, v):
+    """une goutte de lumière de jade : une petite boule lumineuse (coeur presque blanc en haut à droite, bord de jade
+    sombre en bas à gauche : elle se lit sur tous les fonds), et sa traîne courte derrière elle"""
+    sp = math.hypot(*v)
+    r = {2: 1.3, 3: 2.0, 4: 2.6}[sz]
+    if sp > 0.3:
+        ux, uy = -v[0] / sp, -v[1] / sp
+        for k, ch in ((1, 'v'), (2, 'u'), (3, 't'))[:sz - 1]:
+            put(cv, x + ux * (r + k - 0.5), y + uy * (r + k - 0.5), ch)
+    if sz == 2:
+        sprite(cv, JADE_S[2], int(round(x - 1)), int(round(y - 1)))
+    else:
+        jade_orb(cv, (x, y), r)
+
+
+def spray_at(a, r1, hp, u, lift):
+    """où est une goutte à l'instant u (0 : elle quitte la vasque ; 1 : elle touche le sol) : elle s'éloigne d'elle
+    en cercle (vue en biais) et monte en cloche"""
+    r = 24 + (r1 - 24) * u
+    h = lift * (1 - u) + hp * 4 * u * (1 - u)
+    ar = math.radians(a)
+    return (RING_C[0] + r * math.cos(ar), RING_C[1] - r * RING_FLAT * math.sin(ar) - h), r
+
+
+def jade_rain(t, lift=21):
+    """les gouttes de lumière de jade lancées par la fontaine (t : le temps depuis le LANCEMENT, 0..1,4) : elles
+    montent en cloche dans toutes les directions et retombent en pluie douce en cercle autour d'elle ; là où elles
+    touchent le sol, une petite étincelle de jade qui s'éteint"""
+    def f(cv, back, front, solid, ctx):
+        _FLOOR[0] = H - 1
+        for (a, r1, hp, delay, sz) in SPRAY:
+            u = (t - delay) / 0.95
+            if u <= 0:
+                continue
+            front_side = math.sin(math.radians(a)) < 0
+            if u < 1.0:
+                (x, y), r = spray_at(a, r1, hp, u, lift)
+                (x2, y2), _ = spray_at(a, r1, hp, min(1.0, u + 0.05), lift)
+                tgt = front if (front_side and r > 34) else back
+                jade_drop(tgt, x, y, sz if u > 0.12 else 2, (x2 - x, y2 - y))
+            elif u < 1.45:
+                (x, y), r = spray_at(a, r1, hp, 1.0, lift)
+                tgt = front if front_side else back
+                k = (u - 1.0) / 0.45
+                jade_spark(tgt, x, y - 1, 3 if (k < 0.35 and sz == 3) else 2 if k < 0.7 else 1)
+        _FLOOR[0] = GROUND
+    return f
+
+
+def glimmer(spots):
+    """quelques étincelles de jade qui restent sur elle (grille du dessin : x, y, taille)"""
+    def f(cv, back, front, solid, ctx):
+        for (gx, gy, sz) in spots:
+            cxy = ctx.body.to_canvas((gx, gy), rows_of=40 if gy < 47 else 60)
+            jade_spark(front, cxy[0], cxy[1], sz)
+    return f
+
+
+# Le montage. ec : de combien sa silhouette s'éclaire (vers le jade presque blanc) ; ms : durée de l'image.
 SPECIALE = [
+    # 0-3 : l'eau sourd sous sa robe, la fontaine monte et l'élève ; la main se lève lentement, paume au ciel
     dict(head=(0, -1), mep=1, glow=1, tl=-1, fx=[fountain(0, 0.0, rise=0.3)], ms=130),
     dict(lift=3, head=(0, -1), mep=1, glow=1, arm=(0, -3), tl=1, tc=1, mp=1, la=-3.0, pa=-3.0,
          fx=[fountain(3, 0.8, rise=0.6)], ms=100),
     dict(lift=9, head=(0, -1), mep=1, glow=1, arm=(0, -8), tl=1, tc=1, mp=1, la=-4.0, pa=-6.0, sp=3,
          fx=[fountain(9, 1.6, rise=0.9)], ms=90),
-    dict(lift=16, head=(0, 0), mep=1, glow=2, arm=(-1, -12), tl=1, tc=1, mp=1, la=-2.0, pa=-4.0, sp=3,
-         fx=[fountain(16, 2.4)], ms=90),
+    dict(lift=16, head=(0, 0), mep=1, glow=2, arm=(-1, -12), tl=1, tc=1, mp=1, la=-2.0, pa=-4.0, sp=0,
+         fx=[fountain(16, 2.4), palm_pearl(0), lantern_flare(1)], ms=90),
+    # 4 : le geste impérieux, TENU : la perle de jade est pleine, la lanterne s'embrase
     dict(lift=21, b=1, head=(0, -1), mep=1, glow=2, arm=(-1, -14), tl=0, tc=0, mp=0, la=1.0, pa=2.0, sp=0,
-         fx=[fountain(21, 3.6), palm_swirl(1)], ms=300),
-    dict(lift=20, b=1, head=(1, -1), mep=1, glow=2, arm=(-1, -15), tl=-1, tc=-1, la=0.0, pa=1.0, sp=0,
-         fx=[fountain(20, 4.8), jet(0.55)], ms=70),
-    dict(lift=20, b=1, head=(1, -1), mep=1, glow=1, arm=(-1, -15), tl=-1, tc=-1, la=-1.0, pa=-1.0, sp=2,
-         fx=[fountain(20, 5.6), jet(1.0, thin=0.35), mirror(0.4)], ms=70),
-    dict(lift=20, head=(1, -1), mep=1, glow=1, arm=(-1, -14), tl=0, tc=0, sp=2,
-         fx=[fountain(20, 6.4), jet(1.0, thin=0.85), mirror(1.0)], ms=110),
-    dict(lift=20, head=(1, 0), mep=1, glow=1, arm=(-1, -14), sp=2, fx=[fountain(20, 7.2), mirror(1.0, 0.25),
-                                                                         rain(0.30)], ms=70),
-    dict(lift=20, head=(1, 0), mep=1, glow=1, arm=(-1, -14), sp=2, fx=[fountain(20, 8.0), mirror(1.0, 0.55),
-                                                                         rain(0.65)], ms=70),
-    dict(lift=20, head=(1, 0), mep=1, glow=1, arm=(-1, -14), sp=2, fx=[fountain(20, 8.8), mirror(1.0, 0.85),
-                                                                         rain(1.00)], ms=70),
-    dict(lift=20, head=(1, 0), mep=1, glow=1, arm=(-1, -14), sp=2, fx=[fountain(20, 9.6), rain(1.45), prison(0)],
-         ms=90),
-    dict(lift=20, b=1, head=(1, 0), mep=1, glow=2, arm=(-1, -15), sp=3, fx=[fountain(20, 10.4), prison(1)], ms=300),
-    dict(lift=20, b=1, head=(1, 0), mep=1, glow=2, arm=(-1, -15), sp=3, fx=[fountain(20, 11.2), prison(2)], ms=90),
-    dict(lift=20, head=(1, -1), glow=2, arm=(-1, -14), sp=2, fx=[fountain(20, 12.0), prison(3), heal(0.2)],
-         ms=90),
-    dict(lift=18, head=(0, -1), glow=2, arm=(-1, -12), sp=2, la=-2.0, fx=[fountain(18, 12.8), prison(4),
-                                                                          heal(0.65)], ms=90),
-    dict(lift=12, head=(0, -1), glow=2, arm=(0, -9), sp=3, la=-3.0, pa=-3.0, tl=-1, tc=-1, mp=-1,
-         fx=[fountain(12, 13.6, rise=0.9), heal(1.0, rain_=0.35)], ms=90),
-    dict(lift=5, head=(0, 0), glow=2, arm=(0, -5), sp=3, la=2.0, pa=-2.0, tl=-1, tc=-1, mp=-1,
-         fx=[fountain(5, 14.4, rise=0.6), heal(1.0, rain_=0.8,
-                                              glow_on=[(66, 20, 2), (94, 50, 2), (52, 60, 1)])], ms=100),
+         fx=[fountain(21, 3.6), palm_pearl(1), lantern_flare(2)], ms=240),
+    # 5 : la vasque déborde, l'eau claire tombe au sol tout autour d'elle
+    dict(lift=21, b=1, head=(0, -1), mep=1, glow=2, arm=(-1, -15), tl=-1, tc=-1, la=0.0, pa=1.0, sp=0,
+         fx=[fountain(21, 4.4, spill=0.6), palm_pearl(1), lantern_flare(2), ring(0)], ms=70),
+    # 6 : LANCEMENT (arrêt sur l'image) : l'anneau part d'elle, la perle s'ouvre, sa silhouette s'éclaire
+    dict(lift=21, b=1, head=(1, -1), glow=2, arm=(-1, -15), tl=-1, tc=-1, la=-1.0, pa=-1.0, sp=0, ec=0.14,
+         fx=[fountain(21, 5.2, spill=1.0), palm_pearl(2), lantern_flare(3), ring(1), jade_rain(0.07)], ms=210),
+    # 7-11 : l'anneau s'éloigne et se défait ; la pluie de jade monte en cloche et retombe en cercle autour d'elle
+    dict(lift=21, head=(1, -1), glow=2, arm=(-1, -14), tl=0, tc=0, sp=0, ec=0.08,
+         fx=[fountain(21, 6.0, spill=0.7), palm_pearl(3), lantern_flare(2), ring(2), jade_rain(0.26)], ms=90),
+    dict(lift=21, head=(1, 0), glow=2, arm=(-1, -14), tl=1, tc=0, sp=2,
+         fx=[fountain(21, 6.8, spill=0.4), lantern_flare(2), ring(3), jade_rain(0.50)], ms=90),
+    dict(lift=20, head=(1, 0), glow=2, arm=(-1, -13), tl=1, tc=1, sp=3,
+         fx=[fountain(20, 7.6, spill=0.2), lantern_flare(1), ring(4), jade_rain(0.72)], ms=90),
+    dict(lift=18, head=(0, 0), glow=2, arm=(-1, -12), tl=0, tc=1, sp=3, la=-2.0,
+         fx=[fountain(18, 8.4), lantern_flare(1), ring(5), jade_rain(0.92)], ms=90),
+    dict(lift=15, head=(0, -1), glow=1, arm=(-1, -11), tl=-1, tc=0, sp=3, la=-3.0, pa=-2.0,
+         fx=[fountain(15, 9.0), jade_rain(1.12)], ms=90),
+    # 12-15 : la fontaine s'abaisse et rentre dans le sol, la lanterne s'apaise, retour à la pose
+    dict(lift=10, head=(0, -1), glow=1, arm=(0, -8), sp=3, la=-2.0, pa=-3.0, tl=-1, tc=-1, mp=-1,
+         fx=[fountain(10, 9.6, rise=0.9), jade_rain(1.34), glimmer([(66, 20, 2), (94, 50, 1)])], ms=90),
+    dict(lift=5, head=(0, 0), glow=1, arm=(0, -5), sp=3, la=2.0, pa=-2.0, tl=-1, tc=-1, mp=-1,
+         fx=[fountain(5, 10.0, rise=0.6), glimmer([(66, 20, 3), (94, 50, 2), (52, 60, 1)])], ms=100),
     dict(lift=1, s=1, head=(0, 1), glow=1, arm=(0, -2), sp=3, la=3.0, pa=4.0, tl=1, tc=1, mp=1,
-         fx=[fountain(0, 15.2, rise=0.4), heal(0.0, glow_on=[(66, 20, 3), (94, 50, 2), (40, 80, 2), (82, 72, 1)])],
-         ms=110),
-    dict(la=-1.0, pa=2.0, fx=[heal(0.0, glow_on=[(82, 72, 1)])], ms=170),
+         fx=[fountain(0, 10.8, rise=0.4), glimmer([(66, 20, 2), (40, 80, 2), (82, 72, 1)])], ms=110),
+    dict(la=-1.0, pa=2.0, fx=[glimmer([(82, 72, 1)])], ms=170),
 ]
 
 
@@ -1365,7 +1377,7 @@ def build_all(only=None):
         for i, spec in enumerate(specs):
             cv, back, front, solid, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []))
-            fr.append((compose(cv, back, front, solid), spec['ms']))
+            fr.append((compose(cv, back, front, solid, spec.get('ec', 0.0)), spec['ms']))
         anims[name] = fr
     return anims
 
@@ -1390,6 +1402,9 @@ GAME_BOX = (SOL[0] - hd.FEET[0], SOL[1] - hd.FEET[1], SOL[0] - hd.FEET[0] + hd.F
             SOL[1] - hd.FEET[1] + hd.FRAME_H)
 
 
+ATTAQUE_BOX = (SOL[0] - 53, 19, SOL[0] + 211, 176)   # la case de l'attaque (inchangée depuis sa validation)
+
+
 def save_gif(path, images, durations):
     """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
     rgb = [im.convert('RGB') for im in images]
@@ -1409,9 +1424,12 @@ def save_gif(path, images, durations):
 def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
     boxes = {'pose': GAME_BOX}
-    # une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets
-    bb = bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 6)
-    boxes['attaque'] = boxes['speciale'] = bb
+    # l'attaque garde sa case d'origine (validée, celle qu'elle partageait avec l'ancienne spéciale) ; la spéciale
+    # (sort d'équipe, en cercle autour d'elle) a la sienne ; l'enchaînement prend la réunion des deux
+    boxes['attaque'] = ATTAQUE_BOX
+    bs = boxes['speciale'] = bbox(anims['speciale'] + anims['pose'], 6)
+    bb = (min(ATTAQUE_BOX[0], bs[0]), min(ATTAQUE_BOX[1], bs[1]), max(ATTAQUE_BOX[2], bs[2]),
+          max(ATTAQUE_BOX[3], bs[3]))
     for name in ('pose', 'attaque', 'speciale'):
         box = boxes[name]
         ims = [on_bg(img).crop(box) for img, _ in anims[name]]
@@ -1421,7 +1439,7 @@ def write_outputs(anims):
     k = 3
     blocks = []
     for name, per in (('pose', 12), ('attaque', 5), ('speciale', 5)):
-        box = GAME_BOX if name == 'pose' else bb
+        box = boxes[name]
         cells = [on_bg(img).crop(box) for img, _ in anims[name]]
         blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
     Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6

@@ -1,5 +1,5 @@
 # Minotaure (myths-6, terre, soigneuse, épique) : la reine ailée du Nil — pose (respiration), « Scarabée d'or »,
-# « Pyramide des sables ».
+# « Pyramide des sables » (sort d'équipe : grand soin et régénération, en cercle autour d'elle).
 #
 # Lancer : python3 refonte-graphique/pixel/hd/anim/minotaure/build.py
 # Écrit dans refonte-graphique/pixel/sortie/ : anim-minotaure-pose.gif, anim-minotaure-attaque.gif,
@@ -25,7 +25,12 @@
 #   - ce qui tourne est REDESSINÉ : la croix de vie inclinée est retracée à chaque angle avec les ors du dessin
 #     (boucle, bras évasés, hampe évasée, clair à droite, ombre à gauche) ; à l'angle 0 on garde les pixels du dessin ;
 #   - les effets (sable doré, or, poussière) ont leur petite palette, sans contour noir, en volutes, bouffées et grains
-#     (aucun rayon droit) ; les objets (le scarabée d'or, la pyramide de sable) ont leur contour comme le héros.
+#     (aucun rayon droit) ; le scarabée d'or (objet lancé) a son contour comme le héros ; la pyramide de lumière de la
+#     spéciale est translucide (un calque de verre : arêtes d'or, faces à peine teintées), sans contour noir ;
+#   - la spéciale est un SORT D'ÉQUIPE (grand soin + régénération) qui s'étend EN CERCLE autour d'elle (règle de
+#     placement du 25/11 : l'équipe peut être de tous côtés) ; rien ne vise l'ennemi.
+#   - MOMENT DE LANCEMENT de la spéciale (pour le jeu) : IMAGE 7 (à partir de 0) = le grand soin et la régénération
+#     partent vers l'équipe (la pyramide s'illumine, l'anneau d'or naît au sol, arrêt sur image 210 ms).
 import sys, os, math
 import numpy as np
 from PIL import Image, ImageDraw
@@ -511,13 +516,25 @@ def to_rgba(canvas, pal=ALLPAL):
 GOLD_LIGHT = np.array([255, 238, 176])
 
 
-def compose(hero_cv, fx_back=None, obj=None, fx_front=None, flash=None, tint=None, halo=0):
+def over(dst, src):
+    """pose un calque translucide (src) sur dst (mélange par l'opacité, au pixel)"""
+    sa = src[:, :, 3:4].astype(float) / 255
+    da = dst[:, :, 3:4].astype(float) / 255
+    oa = sa + da * (1 - sa)
+    rgb = (src[:, :, :3] * sa + dst[:, :, :3] * da * (1 - sa)) / np.maximum(oa, 1e-6)
+    return np.round(np.concatenate([rgb, oa * 255], axis=2)).astype(np.uint8)
+
+
+def compose(hero_cv, fx_back=None, obj=None, fx_front=None, flash=None, tint=None, halo=0, glass=None):
     """le héros (avec son contour) entre les effets de fond et ceux de devant ; obj : un objet avec son propre contour
-    (le scarabée, la pyramide) ; flash : le héros blanchit ; tint : une lueur d'or le baigne (le soin)"""
+    (le scarabée) ; flash : le héros blanchit ; tint : une lueur d'or le baigne (le soin) ; glass : deux calques de
+    lumières translucides (derrière le héros : la pyramide de lumière ; devant : les lueurs sous les grains)"""
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
     if fx_back is not None:
         layers.append(to_rgba(fx_back))
+    if glass is not None and glass[0] is not None and glass[0][:, :, 3].any():
+        layers.append(('verre', glass[0]))
     h = hd.outline(to_rgba(hero_cv))
     m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
     if flash:
@@ -538,9 +555,14 @@ def compose(hero_cv, fx_back=None, obj=None, fx_front=None, flash=None, tint=Non
     layers.append(h)
     if obj is not None and (obj != '.').any():
         layers.append(hd.outline(to_rgba(obj)))
+    if glass is not None and glass[1] is not None and glass[1][:, :, 3].any():
+        layers.append(('verre', glass[1]))
     if fx_front is not None:
         layers.append(to_rgba(fx_front))
     for L in layers:
+        if isinstance(L, tuple):
+            out = over(out, L[1])
+            continue
         mm = L[:, :, 3] > 0
         out[mm] = L[mm]
     return out
@@ -732,7 +754,7 @@ def scarab(cv, cx, cy, flap=1, k=1.0):
                 put(cv, x, y, ch)
 
 
-# ---------------------------------------------------------------- la pyramide de sable (objet, avec son contour)
+# ---------------------------------------------------------------- les signes inventés
 def _hash(x, y, s=0):
     """un nombre « au hasard » entre 0 et 1, toujours le même pour un pixel donné (grains semés, jamais en rang)"""
     v = (x * 374761393 + y * 668265263 + s * 2246822519) & 0xffffffff
@@ -748,104 +770,6 @@ def invented_sign(cv, cx, cy, tones='HI'):
     for (dx, dy) in ((0, -1), (-1, 0), (0, 0), (1, 0), (0, 1)):
         put(cv, cx + dx, cy + dy, tones[0] if (dx, dy) == (0, 0) else tones[1])
     put(cv, cx, cy + 3, tones[1])
-
-
-def pyramid(cv, cx, base, hw, h, form=1.0, sign=0, seed=1, fringe=None):
-    """une pyramide de sable vue de trois quarts : la face de gauche à l'ombre, celle de droite dans la lumière (en
-    haut à droite), une arête claire entre les deux, la pointe en or. form < 1 : seul le haut est formé (le bas est
-    une frange de sable irrégulière, elle se construit de la pointe vers la base)"""
-    ax, ay = cx + hw * 0.18, base - h                  # la pointe
-    fx = cx + hw * 0.30                                # le pied de l'arête de devant
-    cap = 0.24                                         # la pointe d'or : le quart du haut
-    for y in range(int(ay), int(base) + 1):
-        t = (y + 0.5 - ay) / h                          # 0 en haut, 1 à la base
-        if t < 0:
-            continue
-        if t > 1.0:
-            continue
-        if form < 1 and t > form:
-            # la frange du bas pendant la formation : irrégulière
-            if t > form + 0.06 + 0.08 * _hash(y, 7, seed):
-                continue
-        xl = ax + (cx - hw - ax) * t
-        xr = ax + (cx + hw - ax) * t
-        xe = ax + (fx - ax) * t                         # l'arête
-        for x in range(int(math.floor(xl)), int(math.ceil(xr)) + 1):
-            px = x + 0.5
-            if px < xl or px > xr:
-                continue
-            if form < 1 and t > form and _hash(x, y, seed) < 0.45:
-                continue
-            lit = px > xe
-            gold = t < cap
-            if gold:
-                ch = ('o' if px - xe < 1.2 else 'n') if lit else ('m' if xe - px < 1.0 else 'l')
-                if not lit and px - xl < 1.0:
-                    ch = 'k'
-            else:
-                if lit:
-                    ch = 'Q' if px - xe < 1.0 else 'K' if t < 0.55 else 'L'
-                    if xr - px < 1.0:
-                        ch = 'L'
-                    r = _hash(x, y, seed + 3)
-                    if r < 0.025:
-                        ch = 'M'
-                    elif r > 0.975:
-                        ch = 'Q'
-                else:
-                    ch = 'M' if t < 0.7 else 'N' if px - xl < 2.0 else 'M'
-                    if px - xl < 1.0:
-                        ch = 'N'
-                    r = _hash(x, y, seed + 5)
-                    if r < 0.025:
-                        ch = 'L'
-                    elif r > 0.975:
-                        ch = 'N'
-            put(fringe if (fringe is not None and form < 1 and t > form) else cv, x, y, ch, below=0)
-    if sign and form >= 1.0:
-        t = 0.62
-        sy = int(round(ay + h * t))
-        xe_s, xr_s = ax + (fx - ax) * t, ax + (cx + hw - ax) * t
-        sx = int(round((xe_s + xr_s) / 2))
-        invented_sign(cv, sx, sy, 'HJ' if sign > 1 else 'IJ')
-
-
-def mound(cv, cx, base, hw, h, c, seed=1, cap=0.0):
-    """la pyramide qui s'effondre (c de 0 à 1) en dune : le profil passe du triangle à une bosse douce, plus large et
-    plus basse ; la pente qui regarde la droite est dans la lumière, l'autre à l'ombre ; cap : ce qui reste de la
-    pointe d'or (elle s'enfonce)"""
-    ax = cx + hw * 0.18 * (1 - c)
-    for x in range(int(cx - hw - 2), int(cx + hw + 3)):
-        px = x + 0.5
-        u = (px - ax) / hw if px >= ax else (px - ax) / (ax - (cx - hw))
-        u = max(-1.0, min(1.0, u))
-        tri = 1 - abs(u)
-        dune = math.cos(abs(u) * math.pi / 2) ** 1.6 if abs(u) < 1 else 0.0
-        prof = (1 - c) * tri + c * dune
-        top = base - h * prof
-        if top > base - 0.5:
-            continue
-        # la pente (pour la lumière)
-        u2 = u + 0.03
-        tri2 = 1 - abs(u2)
-        dune2 = math.cos(min(1.0, abs(u2)) * math.pi / 2) ** 1.6
-        slope = ((1 - c) * tri2 + c * dune2) - prof          # > 0 : la pente monte vers la droite (face à l'ombre)
-        for y in range(int(math.floor(top)), int(base) + 1):
-            d = y + 0.5 - top
-            if d < 0:
-                continue
-            if slope > 0.002:
-                ch = 'M' if d > 1.0 else 'L'
-                if y > base - 2 and slope > 0.01:
-                    ch = 'N'
-            else:
-                ch = 'K' if d < 1.0 else 'L'
-            if cap > 0 and abs(u) < 0.16 * cap and d < 3.0 * cap + 1:
-                ch = 'n' if u > 0 else 'l'
-            r = _hash(x, y, seed)
-            if r < 0.025:
-                ch = 'M' if ch in 'KL' else 'L'
-            put(cv, x, y, ch, below=0)
 
 
 # ---------------------------------------------------------------- les animations
@@ -994,241 +918,399 @@ ATTAQUE = [
 ]
 
 
-# 3) LA SPÉCIALE « Pyramide des sables » : elle ouvre ses ailes et lève la croix ; le sable d'or monte en volutes autour
-# d'elle et s'enroule dans la boucle ; d'un geste vers l'ennemi, une coulée de sable tressée part de la croix et monte
-# au-dessus de lui, s'y enroule et bâtit une pyramide de sable à pointe d'or, de la pointe vers la base ; la pyramide
-# tient un instant en l'air (un signe inventé s'allume), puis tombe et écrase l'ennemi (arrêt sur l'impact, poussière
-# des deux côtés) ; elle s'effondre en dune qui s'étale et se disperse. Pendant ce temps, une lueur d'or et des grains
-# d'or retombent sur la reine (elle soigne), ses ailes se replient.
-GP = np.array([FOE_X + 2.0, GROUND - 86.0])        # là où le sable s'enroule, au-dessus de l'ennemi
-PYR = dict(hw=31, h=60)
-SPE_CAST = dict(theta=30, ext=3, raise_=1)
+# 3) LA SPÉCIALE « Pyramide des sables » (sort d'équipe). Le sort en combat : elle soigne l'allié le plus blessé (grand
+# soin) et donne une régénération (un soin qui dure 5 s) à toute l'équipe. Règle de placement (propriétaire, 25/11) :
+# l'équipe l'entoure (losange de 5 cases : devant, derrière, au-dessus, en dessous) ; le sort ne vise donc aucune
+# direction : tout naît sur elle et s'étend EN CERCLE autour d'elle (aplati, comme posé au sol, devant et derrière elle),
+# puis s'éteint. Rien ne part vers l'ennemi ; ce que reçoit chaque allié (lueur de soin, régénération) est joué par le
+# jeu sur leurs cases avec les effets communs (../effets/), pas dessiné ici.
+# Elle ouvre grand ses ailes et lève la croix de vie ; le sable d'or se soulève à ses pieds, tout autour d'elle, et
+# monte en spirale (deux rubans, sable clair et or, qui passent derrière elle puis devant) en se resserrant jusqu'au-
+# dessus de sa tête ; là, une pyramide de lumière dorée TRANSLUCIDE se forme, de la pointe vers la base (arêtes d'or
+# lumineuses, faces à peine teintées), un signe inventé s'allume sur sa face éclairée (temps de pose). Lancement : la
+# pyramide s'illumine, la reine s'éclaire (liseré d'or tout autour d'elle), un anneau d'or naît au sol sous ses pieds et
+# s'élargit tout autour d'elle (arrêt sur l'image) ; la pyramide se dissout en une pluie de grains et de pétales d'or
+# qui s'ouvre en ombrelle et retombe en cercle tout autour d'elle (ceux du côté lointain passent derrière elle) ;
+# chaque grain se pose au sol d'une petite lueur. Les ailes se replient, retour à la pose.
+#
+# MOMENT DE LANCEMENT (pour le jeu, numéro d'image de la spéciale, à partir de 0) :
+#   - image 7 : le GRAND SOIN (allié le plus blessé) et la RÉGÉNÉRATION (toute l'équipe) partent vers l'équipe (la
+#     pyramide s'illumine, l'anneau d'or naît au sol, arrêt sur image 210 ms).
+SPE_C = (SOL[0] + 2, GROUND - 4)          # le centre du cercle au sol (sous elle)
+RING_K = 0.18                            # l'aplatissement du cercle au sol (ry = 0,18 × rx)
+PYR_X, APEX_Y, BASE_Y, PYR_HW = 90, 16, 64, 30      # la pyramide de lumière, au-dessus d'elle
+PYR_APEX = (PYR_X + PYR_HW * 0.18, APEX_Y)
+BELOW = 12                               # le devant du cercle passe sous la ligne des pieds (le sol vient vers nous)
 
 
-def fx_rise(level):
-    """les volutes de sable qui montent autour d'elle (le sable du Nil répond), et les grains qui s'élèvent"""
+def gput(g, x, y, ch, a):
+    """un pixel translucide (calque de verre) : on garde le plus opaque"""
+    x, y = int(x), int(y)
+    a = int(max(0, min(255, a)))
+    if 0 <= x < W and 0 <= y < H and a > g[y, x, 3]:
+        g[y, x, :3] = ALLPAL[ch]
+        g[y, x, 3] = a
+
+
+def split_paint(back, front, pts, tones, back_tones=None):
+    """peint des disques (x, y, largeur, côté) : côté 0 = derrière elle (calque du fond), 1 = devant ; coeur clair ->
+    bord sombre ; le côté lointain prend des tons un cran plus doux ; ce qui est devant passe sous la ligne des pieds"""
+    best = ({}, {})
+    for (px, py, wv, side) in pts:
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    kk = d / R if R >= 1 else 1.0
+                    if R < 0.8:
+                        kk = max(kk, 0.75)
+                    if kk < best[side].get((x, y), 9):
+                        best[side][(x, y)] = kk
+    for side, cvs, tn in ((0, back, back_tones or tones), (1, front, tones)):
+        m = len(tn)
+        for (x, y), kk in best[side].items():
+            if side == 0 and (x, y) in best[1]:
+                continue
+            put(cvs, x, y, tn[min(m - 1, int(kk * m))], below=BELOW)
+
+
+def ring_pt(a, rx, c=SPE_C):
+    """un point du cercle au sol, à l'angle a (degrés ; 0..180 : le côté lointain, derrière elle)"""
+    r = math.radians(a)
+    return c[0] + rx * math.cos(r), c[1] - RING_K * rx * math.sin(r), (0 if math.sin(r) > 0 else 1)
+
+
+def grain_b(cv, x, y, big=False, tones='IJ'):
+    """un grain d'or (comme grain()), qui peut se poser devant elle, sous la ligne des pieds"""
+    x, y = int(round(x)), int(round(y))
+    put(cv, x, y, tones[0], below=BELOW)
+    if big:
+        put(cv, x - 1, y, tones[1], below=BELOW)
+        put(cv, x, y + 1, tones[1], below=BELOW)
+        put(cv, x + 1, y, tones[0], below=BELOW)
+        put(cv, x, y - 1, 'H', below=BELOW)
+
+
+def soft_halo(gl, x, y, r, k=1.0, tones='JIIH', alphas=(34, 52, 72, 92)):
+    """une petite lueur ronde translucide, en quatre paliers d'opacité (coeur plus clair)"""
+    if gl is None:
+        return
+    for yy in range(int(y - r - 1), int(y + r + 2)):
+        for xx in range(int(x - r - 1), int(x + r + 2)):
+            d = math.hypot(xx + 0.5 - x, yy + 0.5 - y) / r
+            if d < 1:
+                i = min(3, int((1 - d) * 4))
+                gput(gl, xx, yy, tones[i], alphas[i] * k)
+
+
+# les pétales d'or (mêmes formes que les pétales du soin de terre, ../effets/) : 0 = blanc, 1..3 = ors
+PETALS = [['.10', '221', '32.'], ['01.', '122', '.23']]
+PETAL_T = {'0': 'Z', '1': 'H', '2': 'I', '3': 'J'}
+
+
+def petal(cv, x, y, flip=0):
+    rows = PETALS[flip % 2]
+    for j, r in enumerate(rows):
+        for i, ch in enumerate(r):
+            if ch != '.':
+                put(cv, int(round(x)) - 1 + i, int(round(y)) - 1 + j, PETAL_T[ch], below=BELOW)
+
+
+def landing(cv, x, y, k=1.0):
+    """un grain qui se pose : une petite lueur aplatie (comme posée au sol)"""
+    x, y = int(round(x)), int(round(y))
+    put(cv, x, y, 'Z' if k > 0.5 else 'H', below=BELOW)
+    for dx in (-1, 1):
+        put(cv, x + dx, y, 'H' if k > 0.5 else 'I', below=BELOW)
+    if k > 0.5:
+        for dx in (-2, 2):
+            put(cv, x + dx, y, 'J', below=BELOW)
+
+
+# ---- le sable se soulève à ses pieds, tout autour d'elle : des bouffées posées sur le cercle et de petites volutes
+STIR = [20, 75, 130, 170, 215, 255, 295, 335]          # les angles des bouffées autour d'elle
+
+
+def fx_stir(level):
     def fx(ctx):
-        front, back = ctx['front'], ctx['back']
-        sx = SOL[0]
-        rng = np.random.RandomState(5)
-        # au sol, deux volutes de part et d'autre de la robe, qui montent à chaque image
-        for side, x0, a0 in ((-1, sx - 34, 200), (1, sx + 30, -20)):
-            hgt = 5 + 22 * level
-            curl(front, (x0 + side * 4 * level, GROUND - hgt), 5 + 3 * level, a0 + 50 * level, turn=240,
-                 w=2.6 + level * 0.8, tones='KLM', cw=side > 0)
-            curl(front, (x0 - side * 7, GROUND - 4), 4 + level, a0 + 120, turn=210, w=2.0, tones='LM', cw=side < 0)
-            if level > 0.3:
-                curl(front, (x0 + side * 8 * level, GROUND - hgt - 22 * level), 3 + 3 * level, a0 + 160,
-                     turn=220, w=2.0, tones='IJ', cw=side > 0)
-        for i in range(int(6 + 10 * level)):
-            x = sx + rng.uniform(-46, 48)
-            y = GROUND - rng.uniform(2, 20 + 60 * level)
-            grain(front, x, y, i % 4 == 0)
-        puff(back, (sx - 30, GROUND - 2), 3 + level * 1.5, 'QPM')
-        puff(back, (sx + 30, GROUND - 2), 3 + level * 1.5, 'QPM')
-        # un anneau de sable doré qui tourne autour d'elle et monte (on voit sa moitié de devant, effilée aux bouts)
-        cy = GROUND - 6 - 40 * level
-        rx, ry = 42 + 8 * level, 12 + 4 * level
-        ph = 50 * level
-        ph = 25 * level
-        for tones, wmax, a0, a1 in (('KLM', 4.6, 160 + ph, 228 + ph), ('KLM', 4.2, 318 + ph, 386 + ph),
-                                    ('IJ', 2.2, 172 + ph, 215 + ph), ('IJ', 2.0, 330 + ph, 372 + ph)):
-            pts, ws = [], []
-            for i in range(41):
-                t = i / 40
-                a = math.radians(a0 + (a1 - a0) * t)
-                pts.append((sx + 2 + rx * math.cos(a), cy - ry * math.sin(a)))
-                ws.append(wmax * math.sin(math.pi * t) ** 0.7)
-            stroke(front, pts, ws, tones)
+        back, front = ctx['back'], ctx['front']
+        rx = 34 + 10 * level
+        for j, a in enumerate(STIR):
+            x, y, side = ring_pt(a, rx)
+            lay = back if side == 0 else front
+            r = 2.8 + 1.0 * level + (0.8 if j % 2 else 0)
+            puff(lay, (x, min(y, GROUND + BELOW - r) - r * 0.6), r, 'QKL')
+            if j % 2 == level % 2:
+                curl(lay, (x, y - 6 - 2 * level), 3.5, a + 90, turn=240, w=2.0, tones='KL', cw=math.cos(
+                    math.radians(a)) > 0)
+        rng = np.random.RandomState(5 + level)
+        for i in range(6 + 4 * level):
+            a = rng.uniform(0, 360)
+            x, y, side = ring_pt(a, rx * rng.uniform(0.7, 1.15))
+            grain_b(back if side == 0 else front, x, y - rng.uniform(2, 8 + 10 * level), i % 3 == 0, 'IJ')
+    return fx
+
+
+# ---- la spirale de sable d'or : deux rubans qui montent autour d'elle en se resserrant (un cône), jusqu'à la pointe
+#      de la future pyramide. head : où en est la tête des rubans (0 = au sol, 1 = la pointe) ; tail : leur longueur.
+SPI_R0, SPI_TURNS = 60, 1.2
+# les trois rubans partent du sol à ces angles : ainsi, devant elle, ils ne passent jamais sur son visage
+SPI_PH = (165, 220, 275)
+
+
+def spiral_pt(s, phase):
+    th = phase + 2 * math.pi * SPI_TURNS * s
+    R = SPI_R0 * (1 - s) ** 1.15
+    cx = SPE_C[0] + (PYR_APEX[0] - SPE_C[0]) * s
+    cy = (GROUND - 6) + (PYR_APEX[1] - (GROUND - 6)) * s
+    return cx + R * math.cos(th), cy - 0.3 * R * math.sin(th), (0 if math.sin(th) > 0 else 1)
+
+
+def fx_spiral(head, tail):
+    def fx(ctx):
+        back, front = ctx['back'], ctx['front']
+        s0 = max(0.0, head - tail)
+        for (ph, tones, btones, wmax) in ((SPI_PH[0], 'KKLM', 'LMN', 6.0), (SPI_PH[1], 'ZHIJ', 'IJ', 3.8),
+                                          (SPI_PH[2], 'QKLM', 'LM', 4.6)):
+            ph = math.radians(ph)
+            pts = []
+            n = 90
+            for i in range(n + 1):
+                s = s0 + (head - s0) * i / n
+                x, y, side = spiral_pt(s, ph)
+                k = (s - s0) / max(head - s0, 1e-6)        # 0 au bout de la queue, 1 à la tête
+                w = wmax * min(1.0, k / 0.35) ** 0.8 * (1 - 0.55 * s) * min(1.0, (1 - k) / 0.08 + 0.35)
+                pts.append((x, y, w + 0.2, side))
+            split_paint(back, front, pts, tones, btones)
+            # des grains entraînés par la spirale
+            rng = np.random.RandomState(int(head * 100) + int(ph))
+            for i in range(8):
+                s = rng.uniform(s0, head)
+                x, y, side = spiral_pt(s, ph + rng.uniform(-0.3, 0.3))
+                grain_b(back if side == 0 else front, x + rng.uniform(-3, 3), y + rng.uniform(-3, 2), i % 3 == 0)
+                if side == 1:
+                    soft_halo(ctx['gfront'], x, y, 3.0, 0.7)
     return fx
 
 
 def fx_loop(r):
+    """la lueur d'or dans la boucle de la croix levée, et quelques grains qui tournent autour"""
     def fx(ctx):
         loop_glow(ctx['cv'], ctx['f'], r)
         c = loop_pos(ctx['f'])
         if r > 2.5:
-            # quelques grains d'or tournent autour de la boucle
             for i in range(6):
                 a = math.radians(i * 60 + 25)
                 grain(ctx['front'], c[0] + (r + 4) * math.cos(a), c[1] + (r + 4) * math.sin(a), i % 3 == 0)
     return fx
 
 
-def stream_pts():
-    p0 = loop_pos(SPE_CAST)
-    return bezier(p0, p0 + np.array([22.0, -46.0]), GP + np.array([-70.0, -28.0]), GP + np.array([-6.0, 0.0]), 90)
-
-
-def fx_stream(s0, s1):
-    """la coulée de sable : deux rubans tressés (sable clair et or) le long d'une courbe, effilés aux bouts"""
+def fx_seed(r):
+    """le sable arrive à la pointe : une petite lueur d'or y naît"""
     def fx(ctx):
-        front = ctx['front']
-        pts = stream_pts()
-        n = len(pts)
-        i0, i1 = int(s0 * (n - 1)), int(s1 * (n - 1))
-        if i1 - i0 < 3:
-            return
-        seg = pts[i0:i1 + 1]
-        for strand, (ph, tones, wmax) in enumerate(((0.0, 'KLM', 4.4), (math.pi, 'IJ', 2.8))):
-            out, ws = [], []
-            m = len(seg)
-            for j, (x, y) in enumerate(seg):
-                k = j + 1 < m and j + 1 or j - 1
-                tx, ty = seg[k][0] - x, seg[k][1] - y
-                tl = math.hypot(tx, ty) or 1
-                nx, ny = -ty / tl, tx / tl
-                a = 2.2 * math.sin((i0 + j) * 0.16 + ph)
-                out.append((x + nx * a, y + ny * a))
-                u = j / max(m - 1, 1)
-                ws.append(wmax * min(1.0, u / 0.25, (1 - u) / 0.15 + 0.3))
-            stroke(front, out, ws, tones)
-        grains_along(front, seg, 10, int(s1 * 50), 4.0)
+        glow(ctx['front'], PYR_APEX, r, 'ZHIJ')
     return fx
 
 
-def fx_swirl(level, phase):
-    """le sable s'enroule au-dessus de l'ennemi (trois volutes qui tournent) avant de devenir pyramide"""
-    def fx(ctx):
-        front = ctx['front']
-        for i in range(3):
-            a0 = phase + i * 120
-            r = 13 + 7 * level
-            c = (GP[0] + 8 * math.cos(math.radians(a0)), GP[1] - 4 * math.sin(math.radians(a0)))
-            curl(front, c, r, a0, turn=230, w=3.0, tones='KLM' if i else 'IJM')
-        rng = np.random.RandomState(int(phase))
+# ---- la pyramide de lumière dorée (translucide : arêtes d'or lumineuses, faces à peine teintées, aucun quadrillage)
+def _seg(px, py, a, b):
+    ax, ay = a
+    bx, by = b
+    dx, dy = bx - ax, by - ay
+    t = max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy)))
+    return math.hypot(px - ax - t * dx, py - ay - t * dy)
+
+
+def light_pyramid(gl, front, form=1.0, k=1.0, flash=False, ghost=0.0, sign=0):
+    """form < 1 : seul le haut est formé (elle naît de la pointe) ; flash : elle s'illumine ; ghost : elle se défait
+    (des pixels manquent, de plus en plus) ; sign : le signe inventé s'allume sur la face éclairée"""
+    cx, ay, base, hw = PYR_X, APEX_Y, BASE_Y, PYR_HW
+    h = base - ay
+    A, L, R, F = PYR_APEX, (cx - hw, base), (cx + hw, base), (cx + hw * 0.30, base)
+    ybot = ay + h * form
+    for y in range(int(ay) - 3, int(base) + 4):
+        for x in range(int(cx - hw) - 3, int(cx + hw) + 4):
+            px, py = x + 0.5, y + 0.5
+            t = (py - ay) / h
+            if form < 1 and py > ybot + 2.5 * _hash(x, 3, 9):
+                continue
+            if ghost and _hash(x, y, 5) < ghost:
+                continue
+            xl = A[0] + (L[0] - A[0]) * t
+            xr = A[0] + (R[0] - A[0]) * t
+            xe = A[0] + (F[0] - A[0]) * t
+            inside = 0 <= t <= 1 and xl <= px <= xr
+            d_lit = min(_seg(px, py, A, R), _seg(px, py, A, F))
+            d_sh = _seg(px, py, A, L)
+            if form >= 1:
+                d_sh = min(d_sh, _seg(px, py, L, R))
+            d = min(d_lit, d_sh)
+            lit_edge = d_lit <= d_sh
+            if d < 0.72:
+                ch, a = ('Z' if flash else 'H' if lit_edge else 'I'), 255
+            elif d < 1.25 and inside:
+                ch, a = ('H' if flash else 'I' if lit_edge else 'J'), 210
+            elif not inside and d < 2.6:
+                ch, a = ('H' if flash else 'I'), (120 if flash else 64)
+            elif inside:
+                if px > xe:                                  # la face de droite, dans la lumière
+                    ch, a = ('Z' if flash else 'H'), (120 if flash else 66) - 20 * t
+                else:                                        # la face de gauche, à l'ombre (un ambre léger)
+                    ch, a = ('H' if flash else 'I'), (110 if flash else 60) - 16 * t
+            else:
+                continue
+            gput(gl, x, y, ch, a * k)
+    if form < 1:
+        # le bas, encore en train de se former : des grains d'or qui arrivent
+        rng = np.random.RandomState(int(form * 100))
+        t = form
         for i in range(10):
-            a = rng.uniform(0, 2 * math.pi)
-            d = rng.uniform(12, 20 + 6 * level)
-            grain(front, GP[0] + d * math.cos(a), GP[1] + 0.6 * d * math.sin(a), i % 3 == 0)
-    return fx
+            x = A[0] + ((L[0] - A[0]) + ((R[0] - L[0]) * rng.uniform(0, 1))) * t
+            grain(front, x, ybot + rng.uniform(1, 7), i % 3 == 0, 'IJ')
+    else:
+        glow(front, (A[0], A[1] + 1), 1.7 if flash else 1.3, 'ZH' if flash else 'HI')     # la pointe d'or
+    if sign and form >= 1 and not ghost:
+        t = 0.66
+        sx = int(round((A[0] + (F[0] - A[0]) * t + A[0] + (R[0] - A[0]) * t) / 2))
+        invented_sign(front, sx, int(round(ay + h * t)), 'ZH' if sign > 1 else 'HI')
 
 
-def fx_pyramid(base, form=1.0, sign=0, smear=0.0, falling=False):
+def fx_pyr(form=1.0, k=1.0, flash=False, ghost=0.0, sign=0):
     def fx(ctx):
-        obj, front = ctx['obj'], ctx['front']
-        h = PYR['h'] * (1 + smear)
-        hw = PYR['hw'] * (1 - smear * 0.25)
-        pyramid(obj, FOE_X, base, hw, h, form, sign, fringe=front)
-        rng = np.random.RandomState(int(base))
-        if form < 1:
-            # le sable qui pleut encore de la frange du bas
-            yb = base - h + h * form
-            for i in range(9):
-                grain(front, FOE_X + rng.uniform(-hw * form, hw * form), yb + rng.uniform(2, 12), i % 3 == 0, 'LM')
-        if falling:
-            # la chute : du sable reste en l'air au-dessus et derrière (grains et deux petites volutes)
-            for i in range(12):
-                grain(front, FOE_X + rng.uniform(-hw, hw), base - h - rng.uniform(4, 34), i % 3 == 0, 'KL')
-            curl(front, (FOE_X - hw * 0.6, base - h * 0.75), 5, 120, turn=200, w=1.8, tones='KL', cw=True)
-            curl(front, (FOE_X + hw * 0.6, base - h * 0.75), 5, 60, turn=200, w=1.8, tones='KL')
-        elif form >= 1 and base < GROUND:
-            # en l'air : un fin rideau de grains tombe de la base, et son ombre douce au sol
-            for i in range(6):
-                grain(front, FOE_X + rng.uniform(-hw + 4, hw - 4), base + rng.uniform(3, 30), False, 'LM')
+        light_pyramid(ctx['gback'], ctx['front'], form, k, flash, ghost, sign)
+        if flash:
+            # l'éclat doux du lancement autour de la pyramide (une lueur, aucun rayon)
+            # une lueur qui épouse la pyramide : à moins de 7 pixels de ses bords, plus claire tout près
+            A, L, R = PYR_APEX, (PYR_X - PYR_HW, BASE_Y), (PYR_X + PYR_HW, BASE_Y)
+            for y in range(APEX_Y - 9, BASE_Y + 9):
+                for x in range(PYR_X - PYR_HW - 9, PYR_X + PYR_HW + 10):
+                    d = min(_seg(x + 0.5, y + 0.5, A, L), _seg(x + 0.5, y + 0.5, A, R), _seg(x + 0.5, y + 0.5, L, R))
+                    if d < 7.5:
+                        i = 0 if d > 5.5 else 1 if d > 3.5 else 2
+                        gput(ctx['gback'], x, y, 'IIH'[i], (30, 52, 80)[i])
     return fx
 
 
-def fx_crash(stage):
-    """l'impact : poussière et sable jaillissent des deux côtés de la base, éclats d'or, la terre tremble"""
+YC, XC = np.mgrid[0:H, 0:W]
+
+
+# ---- des grains d'or qui tournent autour de la pyramide formée (un cercle aplati, derrière puis devant)
+def fx_orbit(ph):
     def fx(ctx):
-        front, back = ctx['front'], ctx['back']
-        hw = PYR['hw']
-        rng = np.random.RandomState(21 + stage)
-        if stage == 0:
-            for side in (-1, 1):
-                pop(front, (FOE_X + side * (hw + 2), GROUND - 4), 6, 90 - side * 70, 'ZHIJ')
-                cloud(back, (FOE_X + side * (hw + 10), GROUND - 6), 9, 'QQPM', seed=3 + side)
-            for i in range(14):
-                side = -1 if i % 2 else 1
-                x = FOE_X + side * (hw + rng.uniform(4, 26))
-                grain(front, x, GROUND - rng.uniform(6, 30), i % 3 == 0, 'KL')
-        else:
-            for side in (-1, 1):
-                cloud(back, (FOE_X + side * (hw + 16), GROUND - 8), 10, 'QQPM', hollow=0.35 + 0.3 * (stage - 1),
-                      seed=3 + side)
-            for i in range(10):
-                side = -1 if i % 2 else 1
-                x = FOE_X + side * (hw + rng.uniform(10, 34))
-                grain(front, x, GROUND - rng.uniform(0, 16) + 4 * stage, i % 4 == 0, 'LM')
+        front, gl = ctx['front'], ctx['gback']
+        for j in range(6):
+            a = math.radians(ph + j * 60 + 15)
+            x = PYR_X + (PYR_HW + 7) * math.cos(a)
+            y = BASE_Y - 5 - 5 * math.sin(a)
+            if math.sin(a) > 0:
+                gput(gl, x, y, 'J', 200)                   # derrière la pyramide : à peine visible
+            else:
+                grain(front, x, y, j % 2 == 0, 'HI')
     return fx
 
 
-def fx_dune(c, h, hw, cap=0.0, slide=True):
-    def fx(ctx):
-        obj, front = ctx['obj'], ctx['front']
-        mound(obj, FOE_X, GROUND, hw, h, c, cap=cap)
-        if slide:
-            # des coulées de sable glissent sur les deux pentes
-            rng = np.random.RandomState(int(c * 100))
-            for i in range(10):
-                u = rng.uniform(0.25, 0.95) * (-1 if i % 2 else 1)
-                x = FOE_X + u * hw
-                y = GROUND - h * max(0.0, 1 - abs(u)) - 1
-                grain(front, x + (2 if u > 0 else -2), y, i % 3 == 0, 'KL')
-    return fx
+# ---- l'anneau d'or au sol : il naît sous ses pieds et s'élargit tout autour d'elle (rx, épaisseur, trous)
+GRING = {0: (26, 4.8, 0), 1: (44, 4.2, 10), 2: (58, 3.4, 24), 3: (67, 2.6, 40), 4: (72, 1.6, 58)}
 
 
-def fx_dust_out(level):
+def fx_ring(k):
     def fx(ctx):
         back, front = ctx['back'], ctx['front']
-        rng = np.random.RandomState(31)
-        for i in range(5):
-            x = FOE_X + rng.uniform(-40, 40)
-            puff(back, (x, GROUND - 3 - 4 * level), 3.5 - 2 * level, 'QP', hollow=0.3 + 0.5 * level)
-        for i in range(8):
-            grain(front, FOE_X + rng.uniform(-44, 44), GROUND - rng.uniform(0, 3), i % 4 == 0, 'LM')
+        rx, w, gap = GRING[k]
+        rot = 30 + 25 * k
+        for j in range(3):
+            a0 = rot + j * 120
+            a1 = a0 + 120 - gap if gap else a0 + 120
+            n = max(16, int(rx * 2))
+            pts = []
+            for i in range(n + 1):
+                s = i / n
+                x, y, side = ring_pt(a0 + (a1 - a0) * s, rx)
+                taper = math.sin(math.pi * s) ** 0.5 if gap else 1.0
+                ww = w * (0.6 + 0.4 * (side == 1)) * taper + 0.3
+                pts.append((x, y, ww, side))
+            split_paint(back, front, pts, 'ZHIJ' if k < 2 else 'HIJ', 'HIJ' if k < 2 else 'IJ')
     return fx
 
 
-def fx_heal(level, phase):
-    """le soin : des grains d'or et de petites lueurs retombent doucement sur elle, de plus en plus bas"""
+# ---- la pluie d'or : la pyramide se défait en grains et pétales qui s'ouvrent en ombrelle et retombent en cercle
+#      tout autour d'elle (angles répartis sur tout le tour) ; chacun se pose au sol d'une petite lueur.
+def _rain_grains():
+    rng = np.random.RandomState(7)
+    out = []
+    n = 56
+    h = BASE_Y - APEX_Y
+    for i in range(n):
+        a = 360.0 * i / n + rng.uniform(-3, 3)
+        R = 30 + 46 * math.sqrt(rng.uniform(0, 1))      # plutôt loin d'elle : la pluie s'ouvre au-delà des ailes
+        v = rng.uniform(0.35, 1.0)                         # où il part, dans la pyramide (0 = pointe, 1 = base)
+        u = rng.uniform(-0.85, 0.85)
+        ox = PYR_APEX[0] + u * PYR_HW * v
+        oy = APEX_Y + v * h
+        tx, ty, side = ring_pt(a, R)
+        delay = rng.uniform(0.0, 1.5)
+        dur = rng.uniform(3.0, 4.3)
+        kind = 2 if i % 4 == 0 else 1 if i % 3 == 0 else 0     # 2 : pétale, 1 : gros grain, 0 : grain
+        out.append((ox, oy, tx, ty, side, delay, dur, kind, i % 2))
+    return out
+
+
+RAIN = _rain_grains()
+
+
+def fx_rain(k):
     def fx(ctx):
-        front = ctx['front']
-        rng = np.random.RandomState(41)
-        sx = SOL[0]
-        for i in range(34):
-            x = sx + rng.uniform(-50, 52)
-            y0 = rng.uniform(GROUND - 170, GROUND - 70)
-            y = y0 + phase * 24 + rng.uniform(0, 5)
-            if y > GROUND - 1 or rng.uniform() > level + 0.1:
+        back, front = ctx['back'], ctx['front']
+        for (ox, oy, tx, ty, side, delay, dur, kind, flip) in RAIN:
+            tau = (k - delay) / dur
+            if tau <= 0:
                 continue
-            if i % 3 == 0:
-                # une petite lueur : un losange d'or au coeur blanc doré
-                put(front, x, y, 'H')
-                put(front, x - 1, y, 'I')
-                put(front, x + 1, y, 'I')
-                put(front, x, y - 1, 'I')
-                put(front, x, y + 1, 'J')
+            lay = back if side == 0 else front
+            if tau >= 1:
+                age = k - (delay + dur)                    # depuis combien d'images il est posé
+                if age < 1.0:
+                    landing(lay, tx, ty, 1.0 - age)
+                    soft_halo(ctx['gback'] if lay is back else ctx['gfront'], tx, ty, 3.0, 1.0 - age)
+                continue
+            e = 1 - (1 - tau) ** 2                          # il s'écarte vite, puis de moins en moins
+            x = ox + (tx - ox) * e
+            y = oy + (ty - oy) * tau ** 1.35 - 9 * math.sin(math.pi * min(1.0, tau * 1.6)) * (1 - tau)
+            if y < oy and tau < 0.2:
+                lay = front
+            soft_halo(ctx['gback'] if lay is back else ctx['gfront'], x, y, 3.2 if kind else 2.4, 1.0 - 0.4 * tau)
+            if kind == 2:
+                petal(lay, x, y, flip + int(k))
             else:
-                grain(front, x, y, i % 3 == 1)
+                grain_b(lay, x, y, kind == 1, 'HI' if tau < 0.5 else 'IJ')
     return fx
 
 
 SPECIALE = [
-    dict(ms=150, wl=7, ws=2, raise_=1, hb=0, fx=[fx_rise(0.0)]),
-    dict(ms=150, wl=16, ws=6, raise_=2, theta=-6, hem=1, fx=[fx_rise(0.5), fx_loop(1.8)]),
-    dict(ms=240, wl=25, ws=9, raise_=3, theta=0, hem=1, hx=-1, fx=[fx_rise(1.0), fx_loop(3.0)],
+    dict(ms=140, wl=7, ws=2, raise_=1, hb=0, fx=[fx_stir(0)]),
+    dict(ms=140, wl=16, ws=6, raise_=2, theta=-4, hem=1, fx=[fx_stir(1), fx_spiral(0.30, 0.30), fx_loop(1.8)]),
+    dict(ms=150, wl=25, ws=9, raise_=3, hem=1, hx=-1, fx=[fx_spiral(0.62, 0.45), fx_loop(3.0)],
          glints=[('cobra', True), ('collier', True)]),
-    dict(ms=80, wl=23, ws=9, theta=30, ext=3, raise_=1, lean=1, hem=-1, fx=[fx_stream(0.0, 0.5), fx_loop(2.2)]),
-    dict(ms=90, wl=22, ws=8, theta=30, ext=3, raise_=1, lean=1, hx=1, fx=[fx_stream(0.12, 1.0), fx_swirl(0.0, 0)]),
-    dict(ms=110, wl=22, ws=8, theta=30, ext=3, raise_=1, lean=1, hx=1,
-         fx=[fx_stream(0.62, 1.0), fx_swirl(0.6, 70), fx_pyramid(GROUND - 50, form=0.45)]),
-    dict(ms=200, wl=22, ws=8, theta=30, ext=3, raise_=1, lean=1, hx=1, b=1,
-         fx=[fx_pyramid(GROUND - 50, sign=2)]),
-    dict(ms=60, wl=22, ws=8, theta=30, ext=3, raise_=1, lean=1, hx=1, b=1,
-         fx=[fx_pyramid(GROUND - 14, smear=0.12, falling=True)]),
-    dict(ms=240, wl=22, ws=8, theta=30, ext=3, raise_=1, lean=1, hx=1, b=0, shake=1,
-         fx=[fx_pyramid(GROUND, sign=1), fx_crash(0)]),
-    dict(ms=110, wl=18, ws=7, theta=20, ext=2, lean=1, fx=[fx_dune(0.3, 52, 34, cap=1.0), fx_crash(1)]),
-    dict(ms=110, wl=13, ws=5, theta=10, ext=1, fx=[fx_dune(0.7, 34, 40, cap=0.5), fx_crash(2)]),
-    dict(ms=130, wl=9, ws=3, theta=0, halo=1, tint=6, fx=[fx_dune(1.0, 18, 46), fx_heal(0.6, 0)]),
-    dict(ms=150, wl=5, ws=2, b=1, halo=2, tint=8, fx=[fx_dune(1.0, 9, 50, slide=False), fx_dust_out(0.0),
-                                                       fx_heal(1.0, 1)], glints=[('collier', True)]),
-    dict(ms=140, wl=2, ws=1, b=1, halo=1, tint=6, fx=[fx_dust_out(0.6), fx_heal(0.7, 2)], glints=[('cobra', True)]),
-    dict(ms=150, wl=1, b=0, fx=[fx_heal(0.35, 3)], glints=[('ankh', True)]),
+    dict(ms=110, wl=25, ws=9, raise_=3, hx=-1, b=1, fx=[fx_spiral(0.94, 0.5), fx_loop(3.0), fx_seed(2.2)]),
+    dict(ms=90, wl=24, ws=9, raise_=3, b=1, fx=[fx_spiral(1.0, 0.32), fx_loop(2.6), fx_pyr(form=0.42)]),
+    dict(ms=90, wl=24, ws=9, raise_=3, b=1, fx=[fx_spiral(1.0, 0.12), fx_loop(2.6), fx_pyr(form=0.8)]),
+    dict(ms=170, wl=25, ws=9, raise_=3, b=1, tint=5, fx=[fx_pyr(sign=1), fx_loop(3.0), fx_orbit(0)],
+         glints=[('collier', True)]),
+    # 7 : LANCEMENT du grand soin et de la régénération (la pyramide s'illumine, l'anneau d'or naît au sol)
+    dict(ms=210, wl=25, ws=9, raise_=3, b=0, halo=2, tint=8, fx=[fx_pyr(flash=True, sign=2), fx_loop(3.4),
+                                                                  fx_ring(0), fx_rain(0)]),
+    dict(ms=100, wl=23, ws=8, raise_=2, halo=2, tint=8, fx=[fx_pyr(k=0.7, ghost=0.5), fx_ring(1), fx_rain(1)]),
+    dict(ms=100, wl=20, ws=7, raise_=2, halo=1, tint=6, fx=[fx_pyr(k=0.35, ghost=0.82), fx_ring(2), fx_rain(2)]),
+    dict(ms=110, wl=16, ws=5, raise_=1, halo=1, tint=3, fx=[fx_ring(3), fx_rain(3)]),
+    dict(ms=110, wl=12, ws=4, raise_=1, fx=[fx_ring(4), fx_rain(4)]),
+    dict(ms=120, wl=8, ws=2, b=1, fx=[fx_rain(5)], glints=[('collier', True)]),
+    dict(ms=130, wl=4, ws=1, b=1, fx=[fx_rain(6)], glints=[('cobra', True)]),
+    dict(ms=140, wl=1, b=0, fx=[fx_rain(7)], glints=[('ankh', True)]),
     dict(ms=170, b=0, glints=[('ankh', False)]),
 ]
+LANCEMENT = 7
 
 
 # ---------------------------------------------------------------- une image complète
@@ -1237,10 +1319,14 @@ def rig_frame(spec):
     if 'raise_' in f:
         f['raise'] = f.pop('raise_')
     cv = hero(f)
-    ctx = dict(f=f, cv=cv, back=empty(), obj=empty(), front=empty())
+    ctx = dict(f=f, cv=cv, back=empty(), obj=empty(), front=empty(), gback=None, gfront=None)
+    if f.get('fx'):
+        # les calques de verre (lumières translucides) : derrière elle, et devant elle (sous les grains de devant)
+        ctx['gback'] = np.zeros((H, W, 4), np.uint8)
+        ctx['gfront'] = np.zeros((H, W, 4), np.uint8)
     for fx in f.get('fx', []):
         fx(ctx)
-    return cv, ctx['back'], ctx['obj'], ctx['front']
+    return cv, ctx['back'], ctx['obj'], ctx['front'], (ctx['gback'], ctx['gfront'])
 
 
 RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
@@ -1260,9 +1346,9 @@ def build_all():
     for name, specs in (('pose', POSE), ('attaque', ATTAQUE), ('speciale', SPECIALE)):
         fr = []
         for i, spec in enumerate(specs):
-            cv, back, obj, front = rig_frame(spec)
+            cv, back, obj, front, gback = rig_frame(spec)
             retouch(cv, RETOUCHES[name].get(i, []))
-            img = compose(cv, back, obj, front, spec.get('flash'), spec.get('tint'), spec.get('halo', 0))
+            img = compose(cv, back, obj, front, spec.get('flash'), spec.get('tint'), spec.get('halo', 0), gback)
             if spec.get('shake'):
                 # l'impact : toute l'image tremble d'un pixel vers le bas (le sol a reçu la pyramide)
                 img = np.concatenate([np.zeros((spec['shake'], W, 4), np.uint8), img[:-spec['shake']]], axis=0)
@@ -1286,6 +1372,7 @@ def bbox(frames, margin=4):
             min(H, ys.max() + 1 + margin))
 
 
+ATTAQUE_BOX = (5, 12, 316, 191)             # la case de l'attaque (inchangée depuis sa validation)
 GAME_BOX = (SOL[0] - hd.FEET[0], SOL[1] - hd.FEET[1], SOL[0] - hd.FEET[0] + hd.FRAME_W,
             SOL[1] - hd.FEET[1] + hd.FRAME_H)
 
@@ -1309,9 +1396,12 @@ def save_gif(path, images, durations):
 def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
     boxes = {'pose': GAME_BOX}
-    both = anims['attaque'] + anims['speciale'] + anims['pose']
-    bb = bbox(both, 6)
-    boxes['attaque'] = boxes['speciale'] = bb
+    # l'attaque garde sa case d'origine (validée, celle qu'elle partageait avec l'ancienne spéciale) ; la spéciale
+    # (sort d'équipe, en cercle autour d'elle) a la sienne ; l'enchaînement prend la réunion des deux
+    boxes['attaque'] = ATTAQUE_BOX
+    bs = boxes['speciale'] = bbox(anims['speciale'] + anims['pose'], 6)
+    bb = (min(ATTAQUE_BOX[0], bs[0]), min(ATTAQUE_BOX[1], bs[1]), max(ATTAQUE_BOX[2], bs[2]),
+          max(ATTAQUE_BOX[3], bs[3]))
     for name in ('pose', 'attaque', 'speciale'):
         box = boxes[name]
         ims = [on_bg(img).crop(box) for img, _ in anims[name]]
@@ -1320,8 +1410,8 @@ def write_outputs(anims):
     # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
     k = 3
     blocks = []
-    for name, per in (('pose', 10), ('attaque', 5), ('speciale', 4)):
-        box = GAME_BOX if name == 'pose' else bb
+    for name, per in (('pose', 10), ('attaque', 5), ('speciale', 5)):
+        box = boxes[name]
         cells = [on_bg(img).crop(box) for img, _ in anims[name]]
         blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
     Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
@@ -1330,7 +1420,7 @@ def write_outputs(anims):
     d = ImageDraw.Draw(sheet)
     y = 6
     titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': "ATTAQUE DE BASE : Scarabee d'or",
-              'speciale': 'ATTAQUE SPECIALE : Pyramide des sables'}
+              'speciale': "ATTAQUE SPECIALE : Pyramide des sables (soin d'equipe, lancement : image 7)"}
     for name, per, cells, mss in blocks:
         cw, ch = cells[0].width * k, cells[0].height * k
         d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
@@ -1414,5 +1504,5 @@ if __name__ == '__main__':
     boxes = write_outputs(anims)
     for n in ('pose', 'attaque', 'speciale'):
         print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
-    print('cadre des attaques :', boxes['attaque'])
+    print('cadre de la spéciale :', boxes['speciale'], ' moment de lancement : image', LANCEMENT)
     print('écrit dans', OUT)
