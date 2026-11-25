@@ -436,7 +436,9 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   `art-meta.ts`, `pixel-meta.ts`, dessins provisoires d'`art.ts`, et leurs chaînes (`art-jeu.py`, `decoupe-hailuo.py`,
   `decoupe-decors.py`, `rig*.py`, `rig/`, `rig-out/`, `recadre.py`, `adoucir.py`, `pixel/jeu.py`, `fond.py`, `page.py`).
   Vérifié dans le vrai jeu (Playwright, 390 × 844 et 360 × 640) : `refonte-graphique/pixel/sortie/jeu-propre/`.
-  Note : Chromium sans carte graphique tourne à ~9 images/s, les combats y paraissent lents (pas sur un téléphone).
+  Les 4 grands boss (dragon, léviathan, titan, oiseau-tempête) sont branchés. Test `clans.test.ts` (chaque monstre des
+  règles a son dessin HD dans tous les modes). Note : Chromium sans carte graphique tourne à ~9 images/s, les combats y
+  paraissent lents (pas sur un téléphone).
   **v0.55.0 : 8 fonds de combat pixel art HD animés, un par clan** (Eldra, Arachné, Méduse, Kael, Orin, Barzul, Lenore,
   Kesha) : dessinés par `refonte-graphique/pixel/fonds/<clan>/build.py` (outillage `fondlib.py`, LISEZMOI.md), mis au jeu par
   `fonds/jeu.py` → `public/art/px/fonds/`, `src/game/fond-meta.ts`, `src/game/bg/fond-px.ts`. Un fond par région de la campagne

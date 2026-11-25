@@ -116,8 +116,19 @@
 - En cours dans une copie de travail séparée (worktree) par un agent : héros, monstres/boss par clan, 8 fonds partout,
   combat HD partout, portraits HD, outils de test retirés, vieux fichiers supprimés, captures `pixel/sortie/jeu-propre/`.
   À la fin : fusionner sa branche, régénérer hd-meta.ts si les boss ont été exportés entre-temps, publier v0.56.0.
+- 25/11 : titan VALIDÉ → animation lancée (anim/titan/). Oiseau : plumes (pas écailles) sur l'aile en cours.
+- 25/11 : oiseau VALIDÉ → animation lancée (anim/oiseau-tempete/). Dragon : attaque de base refaite sur place (coup de patte, griffure sur la cible) ; règle pour les boss : l'attaque de base ne se déplace pas.
+- 25/11 : animations du dragon (avec coup de patte sur place) et du léviathan VALIDÉES (« Super »). Planches boss ≈ 4074 px : à alléger au branchement si besoin (up=1 pour les boss).
+- 25/11 : animation du titan VALIDÉE (« Super »).
+
+## Nouveaux noms de héros (VALIDÉS par le propriétaire le 25/11 : « Parfait les noms on garde »)
+À appliquer APRÈS la fusion de la mise au propre HD (src/core/data/heroes.ts OLD_NAMES, i18n, pages de suivi, consignes,
+noms des clans) ; les identifiants (myths-6, fichiers .txt, mon-<clan>-*) ne changent pas.
+Minotaure → Néfira ; Astérion → Taurok ; Méduse → Ophira ; Arachné → Soyane ; Anubis → Malgrave ; Isis → Sylvar ;
+Gabryel → Dardane ; Elyon → Elvyn ; Auriel → Aurelle ; Jinn → Jarek.
+- 25/11 : oiseau-tempête animé VALIDÉ (« Super »). Les 4 grands boss sont faits. Retouche de Tessa (héroïne aigle) : jonction tête / corps en cours.
 - 25/11 : FAIT dans la copie de travail (journal v0.56.0, brouillon) : 36 héros, monstres et généraux par clan, grands
-  boss (boss du jour, de guilde, fins de région ; le général en attendant leur export), 8 décors partout, combats HD
+  boss (boss du jour, de guilde, fins de région : les 4 sont branchés), 8 décors partout, combats HD
   partout, visages et héros en pied dans les menus (`hd/anim/vignettes.py`, à relancer après chaque export), outils de
-  test et vieux fichiers supprimés. Après la fusion : si `hd-meta.ts` a changé (grands boss exportés), relancer
-  `vignettes.py`, puis `npx tsc --noEmit`, `npm test`, `npm run build`, et publier v0.56.0.
+  test et vieux fichiers supprimés. Reste : fusionner la branche (si `hd-meta.ts` a encore changé, relancer
+  `vignettes.py`), `npx tsc --noEmit`, `npm test`, `npm run build`, publier v0.56.0, puis les nouveaux noms ci-dessus.
