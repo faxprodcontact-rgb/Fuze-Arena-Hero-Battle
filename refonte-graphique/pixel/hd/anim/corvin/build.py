@@ -1,7 +1,13 @@
 # Corvin (assassins-7, vent, protecteur, commun) : animations — pose (garde vigilante derrière le bouclier), attaque
 # de base « Bouclier et dague » (poussée du bouclier puis estocade de la dague, petit tourbillon de feuilles), attaque
-# spéciale « Rempart des feuilles » (la feuille d'or s'illumine, il plante son bouclier, un mur de vent et de feuilles
-# se dresse devant lui, roule vers l'ennemi et le fouette, puis retombe en feuilles).
+# spéciale « Rempart des feuilles », refaite le 25/11 en SORT D'ÉQUIPE (effet en jeu : bouclier de 12 % de vie sur toute
+# l'équipe, puis provocation 3 s) : la feuille d'or s'illumine, un tourbillon de vent jade et de feuilles monte autour de
+# lui et se referme en dôme translucide quand il plante son bouclier, le dôme s'abaisse en un anneau de vent qui
+# s'étend au sol TOUT AUTOUR de lui (règle de placement du 25/11 : rien ne vise une direction, rien ne frappe
+# l'ennemi), les feuilles retombent en cercle ; puis le défi : il arrache le bouclier, pointe sa dague vers l'ennemi,
+# une lueur rouge douce pulse sur lui et la marque de provocation bat au-dessus de sa capuche (détails partie 3).
+# MOMENT DE LANCEMENT de la spéciale (pour le jeu, images numérotées depuis 0) : IMAGE 6 = le bouclier part vers l'équipe
+# (le dôme plein, tenu à l'image 5 pendant 200 ms, s'abaisse en anneau au sol) ; la provocation commence à l'image 11.
 #
 # Lancer : python3 refonte-graphique/pixel/hd/anim/corvin/build.py
 # Écrit dans refonte-graphique/pixel/sortie/ : anim-corvin-pose.gif, anim-corvin-attaque.gif,
@@ -22,10 +28,11 @@
 #     brassard de cuir bordé d'or), le poing qui serre la dague à l'horizontale est dessiné à la main, la dague est
 #     retracée à chaque angle (lame d'acier claire du côté de la lumière, garde et pommeau d'or, fusée de cuir) ;
 #     ce que cachaient le bras et le bouclier (cape, tunique, cuisse lointaine) est repeint à la main (DESSOUS) ;
-#   - les effets (vent, feuilles, poussière, lueur) ont leur petite palette, sans contour noir, en formes courbes.
+#   - les effets (vent, feuilles, poussière, lueur) ont leur petite palette, sans contour noir, en formes courbes ;
+#     le dôme et la lueur rouge sont translucides (lettres de ALPHA) ; mêmes rouges que Zaroth et l'effet commun.
 import sys, os, math
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HD = os.path.abspath(os.path.join(HERE, '..', '..'))
@@ -56,14 +63,33 @@ FXPAL = {
     'M': (112, 84, 86),     # poussière, creux / mottes
     'N': (255, 250, 222),   # lueur de la feuille d'or (blanc doré)
     'O': (255, 232, 140),   # lueur, or pâle
+    # le dôme de vent de la spéciale (translucide : voir ALPHA)
+    'T': (120, 214, 190),   # voile de jade, derrière lui
+    'U': (176, 236, 240),   # voile, contre le bord en haut à droite (l'épaisseur de la bulle)
+    '~': (176, 236, 240),   # voile très léger devant lui
+    # la provocation : la marque et la lueur rouges (les rouges de Zaroth et de l'effet commun)
+    'V': (255, 226, 200),   # coeur brûlant (presque blanc, chaud)
+    'Y': (255, 96, 84),     # rouge vif
+    'Z': (222, 40, 64),     # rouge
+    '#': (150, 20, 58),     # rouge sombre (ombre, tire vers le violet)
+    '%': (92, 14, 52),      # rouge très sombre
+    '7': (255, 96, 84),     # la lueur rouge, du plus fort au plus pâle (translucide)
+    '8': (255, 80, 76),
+    '9': (240, 60, 70),
+    '0': (230, 46, 66),
+    '!': (222, 40, 64),
+    '?': (222, 40, 64),
 }
+# opacité des lettres translucides (les autres sont pleines)
+ALPHA = {'T': 44, 'U': 92, '~': 16, '7': 200, '8': 160, '9': 120, '0': 85, '!': 55, '?': 28}
+TINT_RED = (255, 70, 60)                 # le reflet rouge du défi sur le héros
 ALLPAL = dict(PAL)
 ALLPAL.update(FXPAL)
 WIND = 'wxyzlL'
 
 # ---------------------------------------------------------------- la scène
-# Toile des animations : le point « sol » du héros est posé en SOL. De la place à droite (le mur de feuilles roule
-# jusqu'à l'ennemi) et en haut (le mur se dresse plus haut que lui). La pose seule se recadre en 128 × 120 (le
+# Toile des animations : le point « sol » du héros est posé en SOL. De la place à droite (gardée pour l'attaque, dont
+# la case ne change pas) et à gauche (l'anneau de la spéciale s'étend tout autour de lui). La pose seule se recadre en 128 × 120 (le
 # format du jeu, sol en (64, 116)).
 W, H = 300, 184
 SOL = (84, 174)
@@ -329,17 +355,22 @@ def to_rgba(canvas, pal=ALLPAL):
         m = canvas == ch
         if m.any():
             img[m, :3] = rgb
-            img[m, 3] = 255
+            img[m, 3] = ALPHA.get(ch, 255)
     return img
 
 
-def compose(hero, fx_back=None, fx_front=None, flash=None):
+def compose(hero, fx_back=None, fx_front=None, flash=None, tint=None):
     """le héros (avec son contour) entre les effets de fond et ceux de devant. Renvoie une image RGBA."""
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
     if fx_back is not None:
         layers.append(to_rgba(fx_back))
     h = hd.outline(to_rgba(hero))
+    if tint:
+        # le reflet rouge du défi : les couleurs du héros tirent vers le rouge (tint %), le contour reste
+        m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
+        c = h[m, :3].astype(int)
+        h[m, :3] = (c + (np.array(TINT_RED) - c) * tint // 100).astype(np.uint8)
     if flash:
         # éclair du grand moment : le héros pâlit d'un coup (les couleurs vont vers le blanc, le contour reste)
         m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
@@ -348,8 +379,16 @@ def compose(hero, fx_back=None, fx_front=None, flash=None):
     if fx_front is not None:
         layers.append(to_rgba(fx_front))
     for L in layers:
-        m = L[:, :, 3] > 0
+        m = L[:, :, 3] == 255
         out[m] = L[m]
+        t = (L[:, :, 3] > 0) & ~m                        # translucide : posé par-dessus ce qui est déjà là
+        if t.any():
+            a = L[t, 3:4].astype(int)
+            b = out[t].astype(int)
+            ab = b[:, 3:4]
+            ao = a + ab * (255 - a) // 255
+            rgb = (L[t, :3].astype(int) * a + b[:, :3] * ab * (255 - a) // 255) // np.maximum(ao, 1)
+            out[t] = np.concatenate([rgb, ao], 1).astype(np.uint8)
     return out
 
 
@@ -702,9 +741,9 @@ def rig_frame(f):
 
 
 # ---------------------------------------------------------------- les effets : formes courbes (outils d'Eldra et de Zéphyre)
-def put(cv, x, y, ch, keep=None):
+def put(cv, x, y, ch, keep=None, floor=None):
     x, y = int(math.floor(x)), int(math.floor(y))
-    if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
+    if 0 <= x < W and 0 <= y < H and y <= (GROUND if floor is None else floor) and (keep is None or cv[y, x] in keep):
         cv[y, x] = ch
 
 
@@ -717,7 +756,7 @@ def bezier(p0, p1, p2, p3, n):
     return out
 
 
-def stroke(cv, pts, widths, tones, keep=None):
+def stroke(cv, pts, widths, tones, keep=None, floor=None):
     """peint un ruban le long de points, avec une épaisseur par point (coeur clair -> bord sombre)"""
     best = {}
     for (px, py), wv in zip(pts, widths):
@@ -733,7 +772,7 @@ def stroke(cv, pts, widths, tones, keep=None):
                         best[(x, y)] = k
     m = len(tones)
     for (x, y), k in best.items():
-        put(cv, x, y, tones[min(m - 1, int(k * m))], keep)
+        put(cv, x, y, tones[min(m - 1, int(k * m))], keep, floor)
 
 
 def ribbon(cv, c, rx, ry, a0, a1, wmax, head=0.7, tones='wyzl', tilt=0.0):
@@ -1080,13 +1119,24 @@ ATTAQUE = [
 
 
 # ---------------------------------------------------------------- 3) l'attaque spéciale : « Rempart des feuilles »
-# Il se ramasse et lève son bouclier : la feuille d'or s'illumine peu à peu, de l'or au blanc doré ; le vent se lève
-# à ses pieds et des feuilles montent en spirale vers le bouclier (tenu). Puis il PLANTE le bouclier d'un coup dans le
-# sol devant lui, à genoux fléchis (poussière) : éclair et arrêt sur l'image, un mur de vent et de feuilles jaillit du
-# sol devant le bouclier, avec des racines de vent qui courent au ras du sol. Le mur se dresse plus haut que lui, ses
-# crêtes s'enroulent vers l'ennemi, puis il ROULE vers lui comme une vague et le fouette : des croissants de vent
-# tournent autour de lui, chargés de feuilles (arrêt sur l'image). Tout se défait en volutes ; les feuilles retombent
-# en se balançant. Il arrache le bouclier du sol et se remet en garde ; la feuille d'or s'éteint.
+# SORT D'ÉQUIPE (effet en jeu : un bouclier de 12 % de vie sur toute l'équipe, puis il provoque : il attire les coups
+# ennemis sur lui pendant 3 s). Règle de placement du 25/11 : l'équipe peut être de tous côtés, donc tout naît sur lui
+# et s'étend EN CERCLE autour de lui ; rien ne roule ni ne frappe vers l'ennemi.
+# Il se ramasse et lève son bouclier : la feuille d'or s'illumine peu à peu, de l'or au blanc doré ; le vent se lève à
+# ses pieds (un anneau de vent au ras du sol, tout autour) et les feuilles décollent. Des rubans de vent jade montent
+# en spirale autour de lui en emportant les feuilles (un tourbillon), jusqu'au-dessus de sa capuche. Il PLANTE le
+# bouclier d'un coup : le tourbillon se referme en un DÔME translucide (bord lumineux, plus clair en haut à droite,
+# intérieur à peine teinté de jade, des rubans qui tournent à sa surface, des feuilles prises dedans) : éclair et
+# arrêt sur l'image. Puis le dôme s'abaisse et s'élargit en un ANNEAU de vent posé au sol, tout autour de lui (une
+# ellipse aplatie : derrière lui et devant ses pieds, des deux côtés), qui s'éloigne dans toutes les directions, se
+# défait en arcs et en volutes ; les feuilles retombent doucement en cercle autour de lui et s'effacent au sol.
+# Enfin le défi : il arrache son bouclier du sol, pointe sa dague vers l'ennemi (arrêt) ; une lueur rouge douce pulse
+# autour de lui (sans trait ni anneau : elle gonfle puis s'éteint), un reflet rouge passe sur lui et une marque
+# inventée (l'œil en amande de la provocation, le même que Zaroth et que l'effet commun) bat au-dessus de sa capuche.
+# Il revient en garde.
+# MOMENT DE LANCEMENT (là où le jeu joue le « bouclier » reçu par chaque allié) : IMAGE 6 (numérotée depuis 0, comme
+# sur la planche), juste après l'arrêt sur le dôme plein, quand l'anneau de vent part de lui. La provocation (sur lui)
+# commence à l'image 11.
 def mote(cv, x, y, big=False):
     """une étincelle de lumière dorée : un point blanc doré (et un petit losange d'or pâle s'il est gros)"""
     put(cv, x, y, 'N')
@@ -1095,34 +1145,149 @@ def mote(cv, x, y, big=False):
             put(cv, x + dx, y + dy, 'O')
 
 
+DOME_C = (SOL[0] + 1, GROUND)            # le pied du dôme (toile), centré sur lui et son bouclier planté
+DOME_RX, DOME_H = 52, 110                # demi-largeur au sol, hauteur (le haut passe au-dessus de la capuche)
+FLAT = 0.16                              # l'aplatissement du sol vu de côté (un cercle au sol -> une ellipse)
+LOW = GROUND + 8                         # l'anneau au sol peut passer devant ses pieds (plus bas que la ligne du sol)
+
+
+def dome_pt(theta, h, rx=DOME_RX, hd_=DOME_H, c=DOME_C):
+    """un point de la surface du dôme : theta = le tour (degrés, 90 = devant nous, 270 = derrière lui), h = hauteur"""
+    r = rx * math.sqrt(max(0.0, 1 - (h / hd_) ** 2))
+    a = math.radians(theta)
+    return (c[0] + r * math.cos(a), c[1] - h + FLAT * r * math.sin(a)), math.sin(a)
+
+
+FACE = (64, 74, 106, 110)                # sa tête sur la toile : les rubans de devant n'y passent pas (son visage reste net)
+
+
+def in_face(p):
+    return FACE[0] <= p[0] <= FACE[2] and FACE[1] <= p[1] <= FACE[3]
+
+
+def strand(back, front, th0, th1, h0, h1, w, rx=DOME_RX, hd_=DOME_H, c=DOME_C, floor=None, head=0.55):
+    """un ruban de vent qui tourne à la surface du dôme (une hélice) : la partie devant lui (vers nous) sur le calque
+    de devant, plus claire et plus épaisse ; la partie derrière lui sur le calque du fond, plus sombre"""
+    n = max(16, int(abs(th1 - th0) / 3))
+    runs, cur, side = [], [], None
+    for i in range(n + 1):
+        s = i / n
+        p, sn = dome_pt(th0 + (th1 - th0) * s, h0 + (h1 - h0) * s, rx, hd_, c)
+        prof = (s / head) ** 0.7 if s < head else ((1 - s) / (1 - head)) ** 0.8
+        wi = w * prof * (1.0 + 0.25 * sn) + 0.4
+        sd = sn > 0 and not in_face(p)
+        if side is not None and sd != side:
+            runs.append((side, cur))
+            cur = [cur[-1]]
+        cur.append((p, wi))
+        side = sd
+    runs.append((side, cur))
+    for sd, pts in runs:
+        if len(pts) > 1:
+            stroke(front if sd else back, [q for q, _ in pts], [wv for _, wv in pts], 'wxyzl' if sd else 'xyzlL',
+                   floor=floor)
+
+
+def ground_ring(back, front, rx, w, arcs, c=None, tones_f='wxyzl', tones_b='yzlL'):
+    """un anneau de vent posé au sol autour de lui (ellipse aplatie) : arcs = [(angle de début, de fin)] en degrés
+    (90 = devant nous) ; chaque arc gonfle puis s'effile, plus épais devant ; l'arc de derrière passe derrière lui"""
+    cx, cy = c or (DOME_C[0], GROUND - 1)
+    ry = FLAT * rx * 0.62 + 1.5
+    for (a0, a1) in arcs:
+        n = max(12, int(abs(a1 - a0) * rx / 40))
+        cur, side = [], None
+        for i in range(n + 1):
+            s = i / n
+            a = math.radians(a0 + (a1 - a0) * s)
+            sn = math.sin(a)
+            prof = math.sin(math.pi * s) ** 0.6
+            p = (cx + rx * math.cos(a), cy + ry * sn)
+            wi = w * prof * (0.7 + 0.45 * max(0.0, sn)) + 0.3
+            sd = sn > -0.05
+            if side is not None and sd != side:
+                stroke(front if side else back, [q for q, _ in cur], [v for _, v in cur],
+                       tones_f if side else tones_b, floor=LOW)
+                cur = [cur[-1]]
+            cur.append((p, wi))
+            side = sd
+        stroke(front if side else back, [q for q, _ in cur], [v for _, v in cur], tones_f if side else tones_b,
+               floor=LOW)
+
+
+def fill_dome(back, front, rx, hd_, c=DOME_C, inner=True):
+    """l'intérieur du dôme, à peine teinté (calque translucide) : derrière lui un voile de jade, devant lui un voile
+    encore plus léger ; contre le bord, une bande un peu plus claire (l'épaisseur de la bulle), surtout en haut à
+    droite. Aucun quadrillage, aucune alvéole."""
+    cx, gy = c
+    for y in range(int(gy - hd_) - 1, GROUND + 1):
+        h = gy - y
+        if h < 0 or h > hd_:
+            continue
+        r = rx * math.sqrt(max(0.0, 1 - (h / hd_) ** 2))
+        for x in range(int(cx - r), int(cx + r) + 1):
+            d = math.hypot((x + 0.5 - cx) / rx, h / hd_)
+            if d > 1:
+                continue
+            k = (x + 0.5 - cx) / rx * 0.6 + h / hd_ * 0.8          # vers la lumière (en haut à droite)
+            if d > 0.9 and k > 0.15:
+                ch_b, ch_f = 'U', '~'
+            else:
+                ch_b, ch_f = 'T', '~' if inner else None
+            if back[y, x] == '.':
+                back[y, x] = ch_b
+            if ch_f and front[y, x] == '.':
+                front[y, x] = ch_f
+
+
+def dome_rim(front, rx, hd_, w, c=DOME_C, a0=0, a1=180, tones='wxyz'):
+    """le bord du dôme vu de côté (une demi-ellipse), plus épais et plus clair en haut à droite (la lumière)"""
+    cx, gy = c
+    n = int(abs(a1 - a0) * 1.4) + 8
+    pts, ws = [], []
+    for i in range(n + 1):
+        a = math.radians(a0 + (a1 - a0) * i / n)
+        pts.append((cx + rx * math.cos(a), gy - hd_ * math.sin(a)))
+        k = max(0.0, math.cos(a - math.radians(50)))
+        ws.append(w * (0.55 + 0.7 * k ** 2))
+    stroke(front, pts, ws, tones)
+
+
+# les feuilles de la spéciale : (tour de départ en degrés, rayon au sol en fraction du dôme, retard, dorée ?)
+LEAVES = [(i * 360 / 14 + (17 if i % 2 else 0), 0.55 + 0.3 * ((i * 5) % 7) / 6, (i * 3) % 5, i % 4 == 1)
+          for i in range(14)]
+
+
+def whirl_leaves(back, front, level, phase):
+    """les feuilles prises dans le tourbillon : elles tournent autour de lui en montant (level 0..1 : jusqu'où)"""
+    for i, (th, rr, lag, gold) in enumerate(LEAVES):
+        h = DOME_H * min(0.95, level * (0.25 + 0.75 * ((i * 7) % 13) / 12))
+        p, sn = dome_pt(th + phase + 30 * lag, h, DOME_RX * (0.75 + 0.25 * rr))
+        if h < 6 and sn < 0:
+            continue
+        leaf(front if sn > 0 else back, p[0] - 2, p[1] - 2, i + int(phase / 40), gold=gold)
+
+
 def fx_gather(level):
-    """level 0 : le vent se lève à ses pieds, des feuilles décollent ; 1 : elles montent en spirale autour du bouclier ;
-    2 : la spirale se resserre sur la feuille d'or, qui brille (étincelles)"""
+    """level 0 : le vent se lève à ses pieds (un anneau au ras du sol, tout autour), les feuilles décollent ;
+    1 : deux rubans montent en spirale autour de lui en emportant les feuilles ; 2 : le tourbillon passe au-dessus de
+    sa capuche, la feuille d'or brille (étincelles)"""
     def f(cv, back, front, ctx):
         L = ctx.leaf
-        gx = SOL[0] + 4
         if level == 0:
-            ribbon(back, (gx, GROUND - 3), 32, 5, 30, 160, 2.4, tones='yzlL')
-            ribbon(front, (gx, GROUND - 3), 32, 5, 205, 335, 3.2, tones='xyzl')
-            for i, (dx, dy, k) in enumerate(((34, -9, 1), (-36, -12, 2), (16, -5, 0), (-18, -20, 3))):
-                leaf(front if dx > 0 else back, gx + dx, GROUND + dy, k, gold=(i == 2))
+            ground_ring(back, front, 30, 3.0, [(-10, 160), (175, 345)])
+            for i, (th, rr, lag, gold) in enumerate(LEAVES[::2]):
+                p, sn = dome_pt(th, 4 + 5 * (i % 3), 26 + 10 * rr)
+                leaf(front if sn > 0 else back, p[0] - 2, p[1] - 2, i, gold=gold)
             mote(front, L[0] + 9, L[1] - 14, big=True)
             return
-        R = 30 if level == 1 else 21
-        ribbon(back, (gx, GROUND - 4), 36, 6, 20, 165, 3.0, tones='yzlL')
-        ribbon(front, (gx, GROUND - 4), 36, 6, 200, 345, 4.0, tones='wxyzl')
-        # la spirale autour du bouclier : la moitié droite devant lui, la moitié gauche derrière le héros
-        ribbon(front, (L[0], L[1] - 2), R, R * 1.15, -70, 60, 3.6 if level == 1 else 4.4, head=0.7, tones='wxyzl')
-        ribbon(back, (L[0] - 6, L[1] + 2), R + 16, R * 1.25, 110, 235, 3.0, head=0.4, tones='xyzlL')
-        ribbon(front, (L[0] + 2, L[1] + 4), R * 0.7, R * 0.8, -120, -30, 2.6, head=0.8, tones='xyzl')
-        n = 7 if level == 1 else 8
-        for i in range(n):
-            a = math.radians(-60 + i * 52 + 25 * level)
-            r = R * (1.25 - 0.08 * i) if level == 1 else R * (0.95 - 0.06 * i) + 6
-            x = L[0] + r * math.cos(a)
-            y = L[1] - r * 1.1 * math.sin(a)
-            lay = front if math.cos(a) > 0.15 else back
-            leaf(lay, x - 2, y - 2, i + level, gold=(i % 3 == 1))
+        ground_ring(back, front, 36, 3.6, [(0, 170), (185, 350)])
+        top = 0.55 if level == 1 else 0.8
+        ph = 60 * level
+        strand(back, front, 200 + ph, 200 + ph + 400, 4, DOME_H * top, 4.2, DOME_RX * 0.9, DOME_H * 1.05)
+        strand(back, front, 20 + ph, 20 + ph + 360, 2, DOME_H * top * 0.8, 3.4, DOME_RX * 0.82, DOME_H * 1.05)
+        if level == 2:
+            strand(back, front, 110 + ph, 110 + ph + 260, DOME_H * 0.3, DOME_H * 0.78, 2.8, DOME_RX * 0.95, DOME_H)
+        whirl_leaves(back, front, top, ph * 2)
         for (dx, dy, big) in ((10, -15, True), (-8, 12, False), (14, 9, level == 2), (3, -22, False)):
             mote(front, L[0] + dx, L[1] + dy, big)
         if level == 2:
@@ -1131,165 +1296,202 @@ def fx_gather(level):
     return f
 
 
-def fx_slam(cv, back, front, ctx):
-    """il plante le bouclier : deux traînées de vent courbes au-dessus du bouclier (il vient d'en haut), la poussière
-    jaillit sous la pointe, les feuilles de la spirale sont chassées vers l'extérieur"""
-    C, T = ctx.shield, ctx.shield_tip
-    for side, tn in ((-1, 'xyzl'), (1, 'wxyz')):
-        pts = bezier((C[0] + side * 14, C[1] - 40), (C[0] + side * 17, C[1] - 30), (C[0] + side * 18, C[1] - 18),
-                     (C[0] + side * 17, C[1] - 6), 30)
-        stroke(back, pts, [0.6 + 2.6 * math.sin(math.pi * i / 30) for i in range(31)], tn)
+def fx_plant(cv, back, front, ctx):
+    """il plante le bouclier : poussière des deux côtés de la pointe, le vent rabattu au sol tout autour"""
+    T = ctx.shield_tip
     dust(back, T[0] - 9, 0, seed=11, big=1.0)
     dust(back, T[0] + 9, 0, seed=12, big=1.0)
-    for i, (dx, dy, k) in enumerate(((-40, -30, 1), (34, -46, 3), (44, -12, 0), (-30, -8, 2))):
-        leaf(back, C[0] + dx, C[1] + dy, k, gold=(i == 1))
 
 
-WALL = [None]
-
-
-def fx_wall(k):
-    """le mur de feuilles : deux grands rubans de vent qui montent du sol en se tressant (des S qui se croisent, jamais
-    parallèles), des volutes qui s'enroulent tour à tour dans un sens et dans l'autre le long du mur, une crête qui
-    s'enroule vers l'ennemi, un pied de vent bouillonnant, et des feuilles prises dedans.
-    k = 0 il jaillit (bas, poussière, racines de vent au ras du sol), 1 il se dresse plus haut que lui, 2 il roule vers
-    l'ennemi en se penchant (filets de vent courbes qui le relient au bouclier)"""
+def fx_dome(k):
+    """le dôme de vent : k = 0 il se referme (un éclat en haut), 1 plein (arrêt sur l'image), puis il s'abaisse"""
     def f(cv, back, front, ctx):
-        if WALL[0] is None or k == 0:
-            WALL[0] = ctx.shield_tip[0] + 14
-        X0 = WALL[0] + [0, 0, 30][k] if k <= 2 else ENEMY_X - [34, 26][k - 3]
-        hk = [0.42, 1.0, 0.9, 0.8, 0.5][k]
-        lean = [0.05, 0.12, 0.32, 0.62, 0.9][k]
-
-        def P(x, y):                                     # (x, hauteur) du mur -> toile : il grandit, il penche
-            hh = y * hk
-            return (X0 + x + hh * lean, GROUND - hh)
-        # quatre rubans tressés, de hauteurs et de courbures différentes (le plus sombre derrière, le plus clair
-        # au milieu), chacun finit en crête enroulée
-        sc = [0.8, 1.0, 1.0, 1.0, 0.75][k]
-        for (pts, w, tones, up) in ((((0, 0), (-8, 34), (14, 64), (4, 90)), 11.0, 'xyzlL', False),
-                                    (((44, 0), (52, 20), (36, 40), (48, 60)), 8.0, 'yzlL', True),
-                                    (((30, 0), (22, 26), (42, 54), (31, 80)), 10.0, 'xyzl', False),
-                                    (((14, 0), (27, 32), (2, 64), (18, 102)), 12.0, 'wxyzl', True)):
-            gust(back, *[P(*q) for q in pts], w * sc, tones, curl_r=(w * 0.55) * hk + 2, up=up, head=0.3)
-        # les volutes le long du mur, tour à tour dans un sens et dans l'autre
-        for j, (x, y, r, cw, a0) in enumerate(((22, 24, 8.0, True, 200), (-3, 48, 7.0, False, 20),
-                                               (38, 40, 6.0, True, 160), (21, 76, 7.0, True, 180))):
-            if y * hk < 12:
-                continue
-            curl(back, P(x, y), r * (0.7 + 0.3 * hk) * (1.3 if k == 4 else 1.0), a0 + 40 * k, turn=300, w=3.0,
-                 tones='wxyzl' if j % 2 == 0 else 'xyzlL', cw=cw)
-        # le pied du mur : du vent qui bouillonne au ras du sol
-        for (x, r, sd) in ((2, 8.5, 41), (30, 7.0, 42)):
-            rr = r * [0.75, 1.0, 1.0, 0.95, 0.75][k]
-            cloud(back, (P(x, 0)[0], GROUND - rr * 0.5), rr, 'wxyzl', hollow=0.45 if k == 4 else 0.0, seed=sd)
-        # les feuilles prises dans le mur (vertes et dorées), qui tournoient d'une image à l'autre
-        rng = np.random.RandomState(40)
-        for i in range(24):
-            y = rng.uniform(4, 98)
-            x = rng.uniform(-10, 50 - 0.3 * y)
-            if y * hk > 4:
-                px, py = P(x, y)
-                leaf(front if i % 3 else back, px - 2, py - 2, i + k, gold=(i % 4 == 1))
-        T = ctx.shield_tip
+        ph = 180 + 50 * k
+        fill_dome(back, front, DOME_RX, DOME_H)
+        dome_rim(front, DOME_RX, DOME_H, 2.6 if k == 0 else 2.2)
+        # trois rubans qui tournent à sa surface (des hélices qui ne sont jamais parallèles)
+        strand(back, front, ph, ph + 330, 6, DOME_H * 0.86, 3.6)
+        strand(back, front, ph + 160, ph + 160 + 280, DOME_H * 0.15, DOME_H * 0.7, 3.0, DOME_RX * 0.98)
+        strand(back, front, ph + 60, ph + 60 + 200, DOME_H * 0.55, DOME_H * 0.97, 2.4)
+        ground_ring(back, front, DOME_RX - 2, 3.4, [(-5, 185), (185, 355)])
+        whirl_leaves(back, front, 1.0, ph * 1.5)
         if k == 0:
-            dust(back, T[0] - 10, 1, seed=11, big=1.2)
-            dust(back, T[0] + 8, 0, seed=12, big=1.3)
-            pop(front, P(14, 10), 7.0, facing=60, tones='wwxyz')
-        if k <= 1:
-            # les racines de vent : elles courent au ras du sol depuis la pointe du bouclier et s'enroulent
-            for j, (reach, hh, wv) in enumerate(((40, 8, 3.0), (58, 16, 2.4), (24, 18, 2.0))):
-                sc = 0.7 if k == 0 else 1.0
-                gust(back, (T[0] + 2, GROUND - 1), (T[0] + 10 * sc, GROUND - 3), (T[0] + reach * 0.6 * sc, GROUND - hh),
-                     (T[0] + reach * sc, GROUND - hh * 0.7), wv, 'yzlL', curl_r=3.5, up=True)
-        elif k == 2:
-            # les filets de vent qui relient le bouclier au mur qui s'en va : courbes, de longueurs différentes
-            C = ctx.shield
-            gust(back, (C[0] + 14, C[1] - 26), (C[0] + 34, C[1] - 44), (X0 - 20, C[1] - 30), (X0 - 2, C[1] - 46),
-                 3.6, 'xyzl', curl_r=4.0, up=True, head=0.6, tail=0.15)
-            gust(back, (C[0] + 18, C[1] + 6), (C[0] + 30, C[1] + 16), (X0 - 26, C[1] + 2), (X0 - 8, C[1] + 12),
-                 3.0, 'yzlL', curl_r=3.5, up=False, head=0.6, tail=0.2)
-            for i, (dx, dy) in enumerate(((-30, -40), (-44, -8), (-18, -60))):
-                leaf(front, X0 + dx, C[1] + dy + 10, i + 2, gold=(i == 1))
-            dust(back, X0 - 6, 1, seed=13, big=1.1)
-            dust(back, X0 + 20, 0, seed=14, big=1.0)
+            pop(front, (DOME_C[0], GROUND - DOME_H + 1), 4.4, facing=90, tones='wwxy')
+            dust(back, ctx.shield_tip[0] - 10, 1, seed=11, big=1.1)
+            dust(back, ctx.shield_tip[0] + 9, 1, seed=12, big=1.1)
         else:
-            # il s'abat sur l'ennemi : éclat blanc au choc, deux fouets de vent qui claquent sur lui, des feuilles
-            # projetées vers l'arrière de l'ennemi (il est repoussé), poussière
-            E = (ENEMY_X, GROUND - 40)
-            if k == 3:
-                pop(front, (E[0] - 6, E[1] + 4), 8.5, facing=0, tones='wwxyz')
-                gust(front, (E[0] - 30, E[1] - 34), (E[0] - 6, E[1] - 46), (E[0] + 16, E[1] - 28), (E[0] + 12, E[1] - 6),
-                     4.2, 'wxyzl', curl_r=4.5, up=False, head=0.5)
-                gust(front, (E[0] - 26, E[1] + 30), (E[0] - 4, E[1] + 40), (E[0] + 20, E[1] + 26), (E[0] + 20, E[1] + 6),
-                     3.4, 'xyzlL', curl_r=4.0, up=True, head=0.5)
-            else:
-                curl(front, (E[0] + 26, E[1] - 30), 6.5, 250, turn=300, w=2.8, tones='xyzl', cw=True)
-                curl(front, (E[0] + 30, E[1] + 14), 5.5, 70, turn=300, w=2.4, tones='yzlL')
-            rng = np.random.RandomState(50)
-            for i in range(12):
-                a = math.radians(rng.uniform(-70, 80))
-                r = rng.uniform(14, 34) + 12 * (k - 3)
-                leaf(front, E[0] + r * math.cos(a) - 2, E[1] - r * 0.8 * math.sin(a) - 2, i + k, gold=(i % 4 == 1))
-            dust(back, E[0] - 18, k - 3, seed=31, big=1.3)
-            dust(back, E[0] + 16, k - 3, seed=32, big=1.1)
+            # des étincelles qui brillent sur le bord, en haut à droite
+            for a in (62, 35):
+                x = DOME_C[0] + DOME_RX * math.cos(math.radians(a))
+                y = GROUND - DOME_H * math.sin(math.radians(a))
+                mote(front, x - 1, y, big=True)
     return f
 
 
-def fx_after(k):
-    """après le choc, sur l'ennemi : k = 0 les crêtes du mur se défont en volutes et en poussière, 1 à 3 les feuilles
-    projetées retombent en se balançant et se posent au sol"""
+# l'anneau qui s'en va : (rayon au sol, épaisseur, arcs restants)
+RING = [(58, 4.6, [(-8, 188), (182, 352)]),
+        (66, 4.0, [(-14, 70), (84, 196), (204, 300), (312, 340)]),
+        (72, 3.0, [(-20, 40), (62, 130), (150, 205), (228, 280), (300, 330)]),
+        (76, 1.8, [(10, 40), (100, 140), (200, 225), (300, 322)])]
+
+
+def fx_ring(k):
+    """LANCEMENT : le dôme s'abaisse et s'élargit en un anneau de vent posé au sol tout autour de lui (k = 0), qui
+    s'éloigne dans toutes les directions, s'amincit et se défait en arcs (k = 1, 2), puis en volutes (k = 3)"""
     def f(cv, back, front, ctx):
-        E = (ENEMY_X, GROUND - 40)
+        rx, w, arcs = RING[k]
         if k == 0:
-            curl(back, (E[0] + 16, E[1] - 30), 8.0, 250, turn=300, w=3.0, tones='xyzl', cw=True)
-            curl(back, (E[0] - 18, E[1] - 20), 7.0, 300, turn=300, w=2.6, tones='yzlL', cw=True)
-            curl(back, (E[0] + 30, E[1] + 10), 6.0, 60, turn=280, w=2.4, tones='yzl')
-            cloud(back, (E[0], GROUND - 4), 5.0, 'FFG', hollow=0.5, seed=33)
-        elif k == 1:
-            curl(back, (E[0] + 12, E[1] - 42), 5.0, 250, turn=260, w=2.0, tones='yzl', cw=True)
-        rng = np.random.RandomState(50)
-        for i in range(12):
-            a = math.radians(rng.uniform(-70, 80))
-            r = rng.uniform(14, 34) + 24 + 4 * k
-            fall = [10, 26, 44, 70][k] * (0.6 + 0.08 * (i % 5))
-            x = E[0] + r * math.cos(a) + 3 * math.sin(i + 2 * k)
-            y = E[1] - r * 0.8 * math.sin(a) + fall
-            gold = i % 4 == 1
-            if y < GROUND - 3:
-                leaf(front if i % 2 else back, x - 2, y - 2, i + k, gold=gold)
+            hd_ = DOME_H * 0.42
+            fill_dome(back, front, DOME_RX + 8, hd_, inner=False)
+            dome_rim(front, DOME_RX + 8, hd_, 1.6, tones='xyz')
+            strand(back, front, 250, 250 + 260, 4, hd_ * 0.8, 2.6, DOME_RX + 8, hd_)
+        ground_ring(back, front, rx, w, arcs)
+        if k >= 1:
+            # au bout des arcs, le vent s'enroule (de petites volutes posées sur l'anneau, de tailles différentes)
+            ry = FLAT * rx * 0.62 + 1.5
+            for j, (a0, a1) in enumerate(arcs[:4]):
+                a = math.radians(a1)
+                x, y = DOME_C[0] + rx * math.cos(a), GROUND - 1 + ry * math.sin(a)
+                lay = front if math.sin(a) > 0 else back
+                curl(lay, (x, y - 3 - 2 * k), 3.2 + j % 2 - 0.4 * k, 200 + 70 * j, turn=280, w=1.8 - 0.3 * (k - 1),
+                     tones='xyzl' if lay is front else 'yzlL', cw=bool(j % 2))
+    return f
+
+
+def fx_leaves_fall(k):
+    """les feuilles projetées par l'anneau retombent doucement en cercle autour de lui, en se balançant, se posent au
+    sol (k = 0..5) et s'effacent"""
+    def f(cv, back, front, ctx):
+        for i, (th, rr, lag, gold) in enumerate(LEAVES):
+            if k >= 5 and i % 2:
+                continue                                        # la moitié s'est déjà effacée
+            R = DOME_RX * (0.95 + 0.4 * rr) + 6 * min(k, 3)
+            h0 = DOME_H * (0.35 + 0.4 * ((i * 7) % 13) / 12)
+            h = max(0.0, h0 * (1 - (k + 1 + 0.25 * lag) / 5.0))
+            a = math.radians(th + 18 * k)
+            x = DOME_C[0] + R * math.cos(a) + 3 * math.sin(i + 1.7 * k)
+            y = GROUND - 1 + FLAT * R * 0.62 * math.sin(a) - h
+            if x < 6 or x > W - 8:
+                continue
+            lay = front if math.sin(a) > 0 else back
+            if h > 1:
+                sw = math.cos(i + 1.7 * k)
+                leaf(lay, x - 2, y - 2, 0 if sw > 0.4 else 2 if sw < -0.4 else 1 + 2 * (i % 2), gold=gold)
             else:
-                leaf(back, x - 2, GROUND - 2, 4, gold=gold)
+                rows = ['.fe', 'dc.'] if not gold else ['.ED', 'CB.']
+                for j, r in enumerate(rows):
+                    for q, ch in enumerate(r):
+                        if ch != '.':
+                            put(lay, int(x) - 1 + q, int(y) - 1 + j, ch, floor=LOW)
+    return f
+
+
+# ---------------------------------------------------------------- la provocation : la lueur rouge et la marque
+# La lueur : un halo rouge, doux et translucide, qui épouse sa silhouette sans trait (un dégradé qui s'efface vers
+# l'extérieur, plus large vers le haut, comme une chaleur) ; il gonfle puis s'éteint (trois pulsations : serré, large,
+# pâle). Aucune ligne, aucun anneau. La marque : l'œil en amande de la provocation (deux arcs qui se rejoignent en
+# pointe, une pupille ronde, un reflet en haut à droite), signe inventé, au-dessus de la capuche ; il bat comme un
+# cœur (grand, plus grand, petit). Mêmes rouges que Zaroth et que l'effet commun (../effets).
+MARK = {
+    0: ['.....YYYYYYV.....',
+        '...YYYYZZZYYVV...',
+        '..ZZ##Z%%%ZZZYV..',
+        '.ZZ###%YVV%ZZZYV.',
+        '#Z####%YVV%ZZZZYV',
+        '.#Z###%YYY%ZZZYY.',
+        '..#####%%%#ZZZZ..',
+        '...#######ZZZZ...',
+        '.....#####ZZ.....'],
+    1: ['.......YYYYYYV.......',
+        '....YYYYYYYYYYYVV....',
+        '...ZYYZZZ%%%ZZZYVV...',
+        '..ZZ####%%V%%ZZZZVV..',
+        '.ZZ####%%YVV%%ZZZZYV.',
+        '#Z#####%YYVVV%ZZZZZYV',
+        '.#Z####%%YYY%%ZZZZYY.',
+        '..######%%Y%%ZZZZZZ..',
+        '...######%%%###ZZZ...',
+        '....########ZZZZZ....',
+        '.......#####ZZ.......'],
+    2: ['....YYYYV....',
+        '..YYYZ%ZYYV..',
+        '.ZZ##%V%ZZYV.',
+        '####%YVV%ZZZV',
+        '.#Z##%Y%ZZYY.',
+        '..####%#ZZZ..',
+        '....####Z....'],
+}
+# la lueur : (flou du halo, opacité au plus fort, montée vers le haut en pixels) pour chaque pulsation
+LUEUR = {0: (3.0, 210, 1), 1: (5.0, 200, 2), 2: (6.5, 95, 3)}
+GLOW_TONES = '7890!?'                    # du plus fort au plus pâle (lettres translucides, voir ALPHA)
+
+
+def red_glow(cv, back, k):
+    """le halo rouge autour de la silhouette (derrière le héros : on ne le voit qu'autour de lui)"""
+    sig, amax, rise = LUEUR[k]
+    m = cv != '.'
+    src = np.roll(m, -rise, 0)                       # un halo qui monte un peu (la chaleur)
+    B = np.asarray(Image.fromarray((src * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig)), float) / 255
+    a = np.clip(B * 2.4, 0, 1) * amax
+    yy = np.arange(H)[:, None]
+    a = np.where(yy <= GROUND + 1, a, 0)            # posé au sol : rien sous ses pieds
+    for c in GLOW_TONES:
+        sel = (a >= ALPHA[c] * 0.85) & (back == '.')
+        back[sel] = c
+
+
+def provoke(k):
+    """k = 0 : première pulsation (halo serré, marque) ; 1 : le halo gonfle, la marque grossit ;
+    2 : il pâlit et s'éteint, la marque rapetisse"""
+    def f(cv, back, front, ctx):
+        red_glow(cv, back, k)
+        rows = MARK[k]
+        x0 = int(round(ctx.head[0])) - 4 - len(rows[0]) // 2
+        y0 = int(round(ctx.head[1])) - 19 - 5 - len(rows)
+        sprite(front, rows, x0, y0)
     return f
 
 
 PLANT = dict(s=3, lean=2, sh=(6, 8))                # le bouclier planté : sa pointe touche le sol (rangée 116)
+# le défi : le bouclier arraché du sol, ramené haut contre lui ; la dague pointée vers l'ennemi, un peu vers le haut
+DEFI = dict(s=1, lean=2, sh=(3, -2), arm=dict(grip=(80, 61), ang=10.0), hd=(1, -1), er=1, fr=1, cp=-1)
+
+
+def defi(**kw):
+    d = dict(DEFI)
+    d.update(kw)
+    return d
+
+
 SPECIALE = [
     # 0 : en garde
     dict(ms=100),
-    # 1 : il se ramasse et lève le bouclier ; la feuille d'or s'éclaire, le vent se lève à ses pieds
+    # 1 : il se ramasse et lève le bouclier ; la feuille d'or s'éclaire, le vent se lève en anneau à ses pieds
     dict(s=1, lean=-1, sh=(0, -3), glow=1, hd=(0, 1), er=1, fr=1, cp=1, fx=[fx_gather(0)], ms=120),
-    # 2, 3 : bouclier levé, la feuille brille ; les feuilles montent en spirale vers lui (tenu)
-    dict(s=2, lean=-1, sh=(1, -6), glow=2, hd=(0, 1), er=1, fr=1, cp=1, fx=[fx_gather(1)], ms=140),
-    dict(s=2, lean=-1, sh=(1, -7), glow=3, hd=(0, 1), er=0, fr=0, cp=0, fx=[fx_gather(2)], ms=170),
-    # 4 : il plante le bouclier d'un coup (traînées de vent, poussière)
-    dict(PLANT, glow=3, hd=(1, 0), cp=-1, fx=[fx_slam], ms=60),
-    # 5 : ÉCLAIR, arrêt sur l'image : le mur de vent et de feuilles jaillit, les racines de vent courent au sol
-    dict(PLANT, glow=3, hd=(1, 0), cp=-1, fr=1, flash=30, fx=[fx_wall(0)], ms=200),
-    # 6 : le mur se dresse plus haut que lui, crêtes enroulées vers l'ennemi
-    dict(PLANT, glow=3, hd=(1, 0), cp=0, fr=1, fx=[fx_wall(1)], ms=120),
-    # 7 : il roule vers l'ennemi
-    dict(PLANT, glow=2, hd=(1, 0), cp=0, fx=[fx_wall(2)], ms=90),
-    # 8 : il s'abat sur l'ennemi comme une vague et le fouette (arrêt sur l'image)
-    dict(PLANT, glow=2, hd=(0, 0), cp=1, fx=[fx_wall(3)], ms=170),
-    # 9 : le mur s'effondre vers l'avant, l'ennemi est repoussé dans une volée de feuilles
-    dict(PLANT, glow=1, hd=(0, 0), cp=1, fx=[fx_wall(4)], ms=100),
-    # 10 : les crêtes se défont en volutes ; il arrache le bouclier du sol
-    dict(s=2, lean=1, sh=(4, 4), glow=1, hd=(0, 1), cp=0, er=1, fx=[fx_after(0)], ms=100),
-    # 11 à 13 : en garde ; les feuilles retombent et se posent
-    dict(s=1, sh=(1, 1), hd=(0, 1), cp=-1, er=0, fx=[fx_after(1)], ms=110),
-    dict(hd=(0, 0), cp=0, fx=[fx_after(2)], ms=120),
-    dict(fx=[fx_after(3)], ms=140),
+    # 2, 3 : bouclier levé, la feuille brille ; le tourbillon de vent et de feuilles monte autour de lui (tenu)
+    dict(s=2, lean=-1, sh=(1, -6), glow=2, hd=(0, 1), er=1, fr=1, cp=1, fx=[fx_gather(1)], ms=130),
+    dict(s=2, lean=-1, sh=(1, -7), glow=3, hd=(0, 1), er=0, fr=0, cp=0, fx=[fx_gather(2)], ms=150),
+    # 4 : il plante le bouclier d'un coup : le tourbillon se referme en dôme (éclat en haut, poussière)
+    dict(PLANT, glow=3, hd=(1, 0), cp=-1, fx=[fx_plant, fx_dome(0)], ms=70),
+    # 5 : ÉCLAIR, arrêt sur l'image : le dôme de vent plein autour de lui
+    dict(PLANT, glow=3, hd=(1, 0), cp=-1, fr=1, flash=26, fx=[fx_dome(1)], ms=200),
+    # 6 : LANCEMENT : le dôme s'abaisse et s'élargit en anneau de vent au sol, tout autour de lui
+    dict(PLANT, glow=3, hd=(1, 0), cp=0, fr=1, fx=[fx_ring(0), fx_leaves_fall(0)], ms=90),
+    # 7 à 9 : l'anneau s'éloigne dans toutes les directions et se défait ; les feuilles retombent en cercle
+    dict(PLANT, glow=2, hd=(1, 0), cp=0, fx=[fx_ring(1), fx_leaves_fall(1)], ms=90),
+    dict(PLANT, glow=2, hd=(0, 0), cp=1, fx=[fx_ring(2), fx_leaves_fall(2)], ms=100),
+    dict(PLANT, glow=1, hd=(0, 0), cp=1, fx=[fx_ring(3), fx_leaves_fall(3)], ms=100),
+    # 10 : il arrache le bouclier du sol ; les feuilles se posent
+    dict(s=2, lean=1, sh=(4, 4), glow=1, hd=(0, 1), cp=0, er=1, fx=[fx_leaves_fall(4)], ms=90),
+    # 11 : le DÉFI (arrêt) : dague pointée vers l'ennemi, la lueur rouge pulse, la marque bat
+    defi(fx=[provoke(0), fx_leaves_fall(5)], tint=18, ms=220),
+    # 12, 13 : la lueur gonfle puis s'éteint
+    defi(fx=[provoke(1)], tint=8, ms=120),
+    defi(er=0, fr=0, fx=[provoke(2)], ms=110),
+    # 14 : il ramène la dague ; 15, 16 : en garde
+    dict(s=1, lean=1, sh=(1, 0), arm=dict(grip=(64, 72), ang=14.0), hd=(0, 0), cp=1, ms=80),
+    dict(s=1, hd=(0, 1), cp=0, ms=100),
+    dict(ms=140),
 ]
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
@@ -1315,7 +1517,7 @@ def build_all():
         for i, spec in enumerate(specs):
             cv, back, front, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []), ctx.chest)
-            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+            fr.append((compose(cv, back, front, flash=spec.get('flash'), tint=spec.get('tint')), spec['ms']))
         anims[name] = fr
     return anims
 
@@ -1354,17 +1556,22 @@ def save_gif(path, images, durations):
     ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
 
 
+ATT_BOX = (28, 51, 296, 182)     # la case de l'attaque (celle des animations validées, calculée avec l'ancienne spéciale)
+
+
 def attack_box(anims):
-    """une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets jusqu'à l'ennemi"""
-    bb = bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 6)
-    return (bb[0], bb[1], min(W, bb[2] + 4), bb[3])
+    """l'attaque garde sa case d'origine (validée) ; la spéciale (sort d'équipe, en cercle autour de lui) a la sienne ;
+    l'enchaînement prend la réunion des deux. Renvoie (case de l'attaque, case de la spéciale, réunion)"""
+    bs = bbox(anims['speciale'] + anims['pose'], 6)
+    bb = (min(ATT_BOX[0], bs[0]), min(ATT_BOX[1], bs[1]), max(ATT_BOX[2], bs[2]), max(ATT_BOX[3], bs[3]))
+    return ATT_BOX, bs, bb
 
 
-def planche(anims, path, box, k=3, per=None):
+def planche(anims, path, boxes, k=3, per=None):
     per = per or {'pose': 10, 'attaque': 4, 'speciale': 4}
     blocks = []
     for name in ('pose', 'attaque', 'speciale'):
-        bx = GAME_BOX if name == 'pose' else box
+        bx = boxes[name]
         cells = [on_bg(img).crop(bx) for img, _ in anims[name]]
         blocks.append((name, per[name], cells, [ms for _, ms in anims[name]]))
     Wt = max(min(p, len(cells)) * (cells[0].width * k + 6) for _, p, cells, _ in blocks) + 6
@@ -1373,7 +1580,7 @@ def planche(anims, path, box, k=3, per=None):
     d = ImageDraw.Draw(sheet)
     y = 6
     titles = {'pose': 'POSE (garde vigilante, en boucle)', 'attaque': 'ATTAQUE DE BASE (bouclier et dague)',
-              'speciale': 'ATTAQUE SPECIALE (rempart des feuilles)'}
+              'speciale': "ATTAQUE SPECIALE (rempart des feuilles, sort d'equipe : bouclier + provocation ; lancement : image 6)"}
     for name, p, cells, mss in blocks:
         cw, ch = cells[0].width * k, cells[0].height * k
         d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
@@ -1390,14 +1597,14 @@ def planche(anims, path, box, k=3, per=None):
 
 def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
-    bb = attack_box(anims)
-    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    ba, bs, bb = attack_box(anims)
+    boxes = {'pose': GAME_BOX, 'attaque': ba, 'speciale': bs}
     for name in ('pose', 'attaque', 'speciale'):
         box = boxes[name]
         ims = [on_bg(img).crop(box) for img, _ in anims[name]]
         ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
         save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
-    planche(anims, os.path.join(OUT, f'anim-{NAME}-planche.png'), bb)
+    planche(anims, os.path.join(OUT, f'anim-{NAME}-planche.png'), boxes)
     # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat (prairie), ×2
     seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
     box = bb
@@ -1438,10 +1645,11 @@ def essai(folder):
     """images de contrôle (dans un dossier de brouillon) : planche ×2 et chaque image seule"""
     os.makedirs(folder, exist_ok=True)
     anims = build_all()
-    bb = attack_box(anims)
-    planche(anims, os.path.join(folder, 'planche.png'), bb, k=2, per={'pose': 10, 'attaque': 5, 'speciale': 5})
+    ba, bs, bb = attack_box(anims)
+    boxes = {'pose': GAME_BOX, 'attaque': ba, 'speciale': bs}
+    planche(anims, os.path.join(folder, 'planche.png'), boxes, k=2, per={'pose': 10, 'attaque': 5, 'speciale': 5})
     for name in ('pose', 'attaque', 'speciale'):
-        box = GAME_BOX if name == 'pose' else bb
+        box = boxes[name]
         for i, (img, ms) in enumerate(anims[name]):
             on_bg(img).crop(box).save(os.path.join(folder, f'{name}-{i:02d}.png'))
     return anims
