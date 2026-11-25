@@ -1,11 +1,33 @@
-# Méduse éclair (clan de Kesha, élément eau) : lanceur de sorts, second rang.
+# Méduse éclair (clan de Kesha, élément eau) : lanceur de sorts, second rang (éclairs d'eau, effets en combat).
+#
+# Créature : une grande méduse des abysses qui flotte, pas un humain déguisé. Silhouette à elle seule dans le clan :
+#   un dôme large et penché en haut, des voiles et de longs filaments qui pendent en dessous (l'homme-poisson est
+#   petit et nerveux, le crabe géant est large et bas : on les distingue en noir).
+# Pose : l'ombrelle penche vers l'ennemi (le sommet vers la droite), comme si elle glissait vers lui ; tout ce qui
+#   pend traîne un peu en arrière (vers la gauche) en ondulant. Elle flotte : deux longs filaments traînent sur le sol
+#   (le point sol est sous elle), les autres s'arrêtent plus haut, à des longueurs différentes.
+# Tête : l'ombrelle et le corps sous elle. Ombrelle translucide bleu-violet : on voit à travers la gelée la cavité
+#   intérieure (plus sombre, décalée vers l'ombre : la gelée est épaisse côté lumière) et le coeur lumineux (cyan
+#   pâle, centre blanc, quatre lobes doux) qui éclaire la cavité autour de lui. Un seul reflet en arc, en retrait du
+#   bord, en haut à droite. Bord du bas en lobes irréguliers, creux entre eux. Sous le bord, dans son ombre, un corps
+#   violet sombre où brillent deux petits yeux jaunes (le jaune de Kesha) en colère : le bord de l'ombrelle fait le
+#   sourcil, l'oeil lointain plus petit et un peu plus bas (l'ombrelle penche).
+# Bras et filaments : trois bras buccaux en rubans fripés (la bande de lumière serpente, quelques volants sur le
+#   bord), qui s'affinent au bout ; sept filaments fins, ceux du fond plus sombres, ceux de devant éclairés à leur
+#   départ, avec quelques perles luisantes posées au hasard. Pas de rangée régulière, pas d'éclair sur le dessin.
+# Signes du clan : anneau de laiton planté dans un lobe avec une dent de requin d'ivoire qui pend (les dents de la
+#   ceinture de Kesha), encoche d'une vieille morsure dans l'ombrelle en haut à gauche (comme sa nageoire dorsale).
+# Couleurs : une lumière en haut à droite. Ombrelle en bleu des abysses tirant au violet (ombres violettes,
+#   lumières vers le cyan), coeur cyan-blanc, bras violet-bleu (ombres violet nuit, lumières lilas), filaments bleus,
+#   yeux jaune-orangé, laiton et ivoire de Kesha. Le contour noir est ajouté tout seul.
+# Souffle (ligne 67) : l'ombrelle et le corps montent d'un pixel (elle « pulse ») ; clignement : les yeux deviennent
+#   une paupière violet sombre.
 id: mon-kesha-sorts
 sol: 64 116
 tete: 28 29 89 64
 souffle: 67
 cligne: y=s z=s v=s
 palette:
-A #1c2346  ombrelle, creux (violet nuit) ; dessous de l'ombrelle
 B #29306a  ombrelle, ombre
 C #384596  ombrelle, ton de base
 D #4e63b8  ombrelle, lumière
@@ -16,14 +38,12 @@ H #3c64c4  gelée éclairée par le coeur
 I #6aaee8  gelée éclairée par le coeur, clair
 c #aaf0ee  coeur, lueur
 w #f4fff6  coeur, centre
-r #4a3c9e  bras vus à travers la gelée
-R #7a6cd2  bras vus à travers la gelée, clair
-m #2a1446  bras buccaux, creux
-n #4a2272  bras buccaux, ombre
-o #74369c  bras buccaux, ton de base
-p #a258c2  bras buccaux, lumière
-q #d896de  bras buccaux, reflet rosé
-f #2d4064  filaments du fond
+m #261a4c  bras buccaux, creux
+n #40287a  bras buccaux, ombre
+o #603ca2  bras buccaux, ton de base
+p #8e5cc6  bras buccaux, lumière
+q #c89ce2  bras buccaux, reflet rosé
+f #34508a  filaments du fond
 g #4a6cb4  filaments, ton de base
 h #8cb6dc  filaments, lumière
 k #c8f6f2  filaments, perles luisantes
@@ -98,8 +118,8 @@ calque: meduse
 .................................gh...GJJM...f..mnmmnmmDFmmDFFDFFFFFFFFFFFFFFFFFFFFFFFFFD.......................................
 .................................g....GJM....f.mnopnnnmmmmnmDFmmFFFFFmFFFFFFFFFFFFFFFFFFD.......................................
 .................................g....GJ.....f.mnoopnnnmmnnmmmmmmFFFmmFFFFFFFFFFFFFFFFFFD.......................................
-.................................gg..........f.mmnoopnnnnnnnmmnnmmzyvnmFFmFFFFFmFFFFFFFDD.......................................
-.................................gg..........f..mmnoopnnnnnnnnnnnmzyyyzmmmmFFFmmmFFFmFFDgh......................................
+.................................gg..........f.mmnoopnnnnnnnmmnnmmzyyvmFFmFFFFFmFFFFFFFDD.......................................
+.................................gg..........f..mmnoopnnnnnnnnnnnzyyyyzmmmmFFFmmmFFFmFFDgh......................................
 .................................g..........ff..mmnoop..ngnnnnnnnnnnzyzmmnmmvymnmpppf.F.gh......................................
 .................................g..........f..mmnoop....ghnnnnnnnnnnnnnnnzyyznpp...f...gh......................................
 .................................g..........f.nnnoopp...ghnnnnnnnnnnnnnnnnnznpgh....f...gh......................................

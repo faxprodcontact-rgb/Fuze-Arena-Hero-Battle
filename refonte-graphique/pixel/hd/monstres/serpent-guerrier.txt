@@ -1,4 +1,28 @@
-# brouillon
+# Serpent guerrier (clan de Méduse, élément terre) : le « rapide » du clan, premier rang.
+#
+# Créature : un homme-cobra agile. Buste d'athlète sec en V (épaules nettes, taille fine), peau d'écailles émeraude,
+#   ventre jaune en plaques (pectoraux verts, six plaques claires sur le ventre), qui sort d'une queue de serpent à la
+#   place des jambes. La queue est ramassée en S comme un ressort prêt à se détendre : elle descend de la ceinture,
+#   se creuse vers l'arrière (gauche), file vers l'avant posée à plat sur le sol (le ventre jaune dessous) et finit
+#   en petit crochet relevé à droite. Taille : environ 75 px du haut de la tête au sol (rôle rapide, 55 à 80 px).
+#   Silhouette en noir : le grand capuchon de cobra ouvert, les deux lames en croissant (une haute derrière, une basse
+#   devant) et la spirale de la queue ; rien à voir avec Méduse (pas de cheveux-serpents, pas de visage humain), ni
+#   avec le naga au bouclier (massif) ou la prêtresse (droite, en robe).
+# Pose : trois quarts vers la droite, le buste penché vers l'ennemi. Bras droit (proche) armé en arrière, coude bas,
+#   poing levé à hauteur d'épaule : la lame part vers l'arrière et monte en croissant. Bras gauche (lointain) avancé,
+#   poing bas devant le corps : la lame part vers l'ennemi et plonge en croissant. Les deux lames restent près du corps.
+# Tête : vraie tête de cobra, crâne large et plat, museau court et arrondi, arcade lourde qui descend vers le museau
+#   (regard dur), oeil d'or à pupille fendue (l'oeil lointain de même forme, plus étroit, sur la même ligne, derrière
+#   l'arête du museau), narine discrète, lèvres claires, gueule entrouverte (gorge rouge sombre, pas de noir), un
+#   crochet d'ivoire, langue fourchue rouge. Capuchon ouvert derrière la tête : bord d'écailles vertes, face avant
+#   jaune clair (ombrée vers le bas à gauche, ombre portée de la tête), plaques de la gorge sous la mâchoire, un
+#   ocelle (oeil de cobra inventé : anneau d'or, coeur violet) sur l'aile proche.
+# Détails : épaulière d'or (une coque à pierre violette et une lame), brassards d'or, ceinture d'or à boucle violette,
+#   pagne violet qui tombe droit (un pli, ourlet d'or), poings griffus (quatre doigts repliés sur la poignée, griffes
+#   d'ivoire), gardes et pommeau d'or. Lames de bronze en croissant (khopesh) : dos sombre, reflet au milieu, fil clair.
+# Couleurs : la famille de Méduse (écailles émeraude, ventre jaune, or, violet) ; à lui : le bronze des lames et l'oeil
+#   d'or orangé. Une seule lumière, en haut à droite. Ombres vers le bleu, lumières vers le jaune.
+# Souffle au-dessus de la ceinture (buste, tête, bras). Clignement : les yeux deviennent des paupières d'écailles.
 id: mon-meduse-rapide
 sol: 64 116
 tete: 76 40 99 54
