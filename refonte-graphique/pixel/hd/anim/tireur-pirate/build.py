@@ -584,15 +584,21 @@ def ik(S, T, L1, L2, bend):
     return S + a * u + bend * hh * perp
 
 
-def draw_arm(cv, S, Wr, lengths, bend, r=(4.2, 3.8, 3.4), lit=0.0, cuff=True):
-    """épaule S -> coude -> poignet Wr (toile) : la manche bleue, puis le grand revers d'or au bout de l'avant-bras"""
+def draw_arm(cv, S, Wr, lengths, bend, r=(4.2, 3.8, 3.4), lit=0.0, cuff=True, parts=('haut', 'bas'), jabot=False):
+    """épaule S -> coude -> poignet Wr (toile) : la manche bleue, puis le grand revers d'or au bout de l'avant-bras
+    (et le jabot blanc qui en sort). parts : le bras ('haut'), l'avant-bras ('bas'), ou les deux."""
     E = ik(S, Wr, lengths[0], lengths[1], bend)
-    draw_limb(cv, S, E, r[0], r[1], 'manche', lit)
-    v = np.array(Wr, float) - E
-    draw_limb(cv, E, Wr, r[1], r[2], 'manche', lit + 0.05)
-    if cuff:
-        C0 = E + 0.55 * v
-        draw_limb(cv, C0, np.array(Wr, float) - 0.08 * v, r[2] + 0.3, r[2] + 0.7, 'or', lit * 0.5, rim=True)
+    Wr = np.array(Wr, float)
+    v = Wr - E
+    if 'haut' in parts:
+        draw_limb(cv, S, E, r[0], r[1], 'manche', lit)
+    if 'bas' in parts:
+        draw_limb(cv, E, Wr, r[1], r[2], 'manche', lit + 0.05)
+        if cuff:
+            draw_limb(cv, E + 0.6 * v, Wr - 0.1 * v, r[2] + 0.2, r[2] + 0.5, 'or', lit * 0.5, rim=True)
+        if jabot:
+            u = v / max(np.linalg.norm(v), 1e-6)
+            draw_limb(cv, Wr - 0.2 * u, Wr + 1.6 * u, 1.9, 1.5, 'jabot', 0.1, rim=False)
     return E
 
 
@@ -687,16 +693,19 @@ def draw_shoulder(cv, f, body, ctx):
     ang = f.get('ang', 0.0)
     O = g2c(f.get('butt', BUTT_AIM), (cx, cy))
     tn, tf = f.get('tn', 16.0), f.get('tf', 52.0)
+    gn = musket_at(O, ang, tn - 1.0, 3.0)
+    Sn = g2c(SH_NEAR, (cx, cy))
+    wn, bn, rn = wrist_for(gn, Sn, 3.0), f.get('bend_near', 1), (4.2, 3.6, 2.9)
+    draw_arm(cv, Sn, wn, ARM_NEAR, bn, r=rn, parts=('haut',))
     # le bras lointain (derrière l'arme)
     gf = musket_at(O, ang, tf, 1.5)
     Sf = g2c(SH_FAR, (cx, cy))
     draw_arm(cv, Sf, wrist_for(gf, Sf, 3.5), ARM_FAR, f.get('bend', 1), r=(3.4, 3.0, 2.7), lit=-0.55)
     draw_musket(cv, O, ang, fired=f.get('fired', False))
     fist_on(cv, FAR_FIST, O, ang, tf)
-    # le bras proche (devant l'arme : l'avant-bras remonte vers le poing)
-    gn = musket_at(O, ang, tn - 1.0, 3.0)
-    Sn = g2c(SH_NEAR, (cx, cy))
-    ctx.elbow = draw_arm(cv, Sn, wrist_for(gn, Sn, 3.0), ARM_NEAR, f.get('bend_near', 1), r=(4.2, 3.7, 3.2), lit=0.0)
+    # le bras proche : le haut du bras pend derrière la crosse (la crosse est calée contre l'épaule), l'avant-bras
+    # remonte devant vers le poing
+    ctx.elbow = draw_arm(cv, Sn, wn, ARM_NEAR, bn, r=rn, parts=('bas',), jabot=True)
     fist_on(cv, NEAR_FIST, O, ang, tn)
     ctx.O, ctx.ang = O, ang
     ctx.muzzle = musket_at(O, ang, MUSKET_L + 0.5, 1.5)

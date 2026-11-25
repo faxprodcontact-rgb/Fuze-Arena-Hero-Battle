@@ -79,8 +79,8 @@ DUST = 'yzD'
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du monstre est posé en SOL. De la place à gauche (la massue armée derrière
 # lui), au-dessus (la massue levée tout droit) et à droite (la faille de lave qui court jusqu'au premier rang ennemi).
-W, H = 380, 220
-SOL = (138, 206)
+W, H = 380, 240
+SOL = (138, 226)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
 
