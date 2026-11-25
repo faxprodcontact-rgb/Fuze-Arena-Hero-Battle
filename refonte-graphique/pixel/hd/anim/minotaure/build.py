@@ -983,6 +983,13 @@ def ring_pt(a, rx, c=SPE_C):
     return c[0] + rx * math.cos(r), c[1] - RING_K * rx * math.sin(r), (0 if math.sin(r) > 0 else 1)
 
 
+FACE_BOX = (72, 80, 114, 120)            # son visage sur la toile : aucun grain de devant ne s'y pose
+
+
+def on_face(x, y):
+    return FACE_BOX[0] <= x <= FACE_BOX[2] and FACE_BOX[1] <= y <= FACE_BOX[3]
+
+
 def grain_b(cv, x, y, big=False, tones='IJ'):
     """un grain d'or (comme grain()), qui peut se poser devant elle, sous la ligne des pieds"""
     x, y = int(round(x)), int(round(y))
@@ -1057,15 +1064,19 @@ def fx_stir(level):
 # ---- la spirale de sable d'or : deux rubans qui montent autour d'elle en se resserrant (un cône), jusqu'à la pointe
 #      de la future pyramide. head : où en est la tête des rubans (0 = au sol, 1 = la pointe) ; tail : leur longueur.
 SPI_R0, SPI_TURNS = 60, 1.2
-# les trois rubans partent du sol à ces angles : ainsi, devant elle, ils ne passent jamais sur son visage
-SPI_PH = (165, 220, 275)
+SPI_PH = (160, 280)     # les angles de départ au sol des deux rubans : ainsi, devant elle, ils ne passent jamais sur
+                        # son visage
 
 
-def spiral_pt(s, phase):
+def spiral_pt(s, phase, twist=0.0):
+    """un point de la spirale ; twist : le brin s'écarte un peu du chemin et y revient (les deux brins se tressent,
+    jamais deux bandes parallèles)"""
     th = phase + 2 * math.pi * SPI_TURNS * s
     R = SPI_R0 * (1 - s) ** 1.15
+    tw = math.sin(5 * math.pi * s + twist)
+    R *= 1 + 0.07 * tw
     cx = SPE_C[0] + (PYR_APEX[0] - SPE_C[0]) * s
-    cy = (GROUND - 6) + (PYR_APEX[1] - (GROUND - 6)) * s
+    cy = (GROUND - 6) + (PYR_APEX[1] - (GROUND - 6)) * s + 2.6 * tw * (1 - s)
     return cx + R * math.cos(th), cy - 0.3 * R * math.sin(th), (0 if math.sin(th) > 0 else 1)
 
 
@@ -1073,26 +1084,30 @@ def fx_spiral(head, tail):
     def fx(ctx):
         back, front = ctx['back'], ctx['front']
         s0 = max(0.0, head - tail)
-        for (ph, tones, btones, wmax) in ((SPI_PH[0], 'KKLM', 'LMN', 6.0), (SPI_PH[1], 'ZHIJ', 'IJ', 3.8),
-                                          (SPI_PH[2], 'QKLM', 'LM', 4.6)):
+        # deux rubans de sable (larges), chacun avec un brin d'or (fin) qui s'enroule autour de lui
+        for (ph, twist, tones, btones, wmax) in ((SPI_PH[0], 0.0, 'KKLM', 'LMN', 6.2), (SPI_PH[0], math.pi, 'ZHIJ', 'IJ', 3.2),
+                                                (SPI_PH[1], 1.0, 'QKLM', 'LM', 5.0), (SPI_PH[1], 1.0 + math.pi, 'ZHIJ', 'IJ', 2.8)):
             ph = math.radians(ph)
             pts = []
             n = 90
             for i in range(n + 1):
                 s = s0 + (head - s0) * i / n
-                x, y, side = spiral_pt(s, ph)
+                x, y, side = spiral_pt(s, ph, twist)
                 k = (s - s0) / max(head - s0, 1e-6)        # 0 au bout de la queue, 1 à la tête
                 w = wmax * min(1.0, k / 0.35) ** 0.8 * (1 - 0.55 * s) * min(1.0, (1 - k) / 0.08 + 0.35)
                 pts.append((x, y, w + 0.2, side))
             split_paint(back, front, pts, tones, btones)
-            # des grains entraînés par la spirale
-            rng = np.random.RandomState(int(head * 100) + int(ph))
-            for i in range(8):
-                s = rng.uniform(s0, head)
-                x, y, side = spiral_pt(s, ph + rng.uniform(-0.3, 0.3))
-                grain_b(back if side == 0 else front, x + rng.uniform(-3, 3), y + rng.uniform(-3, 2), i % 3 == 0)
-                if side == 1:
-                    soft_halo(ctx['gfront'], x, y, 3.0, 0.7)
+        # des grains entraînés par la spirale
+        rng = np.random.RandomState(int(head * 100))
+        for i in range(14):
+            s = rng.uniform(s0, head)
+            x, y, side = spiral_pt(s, math.radians(SPI_PH[i % 2]) + rng.uniform(-0.35, 0.35))
+            x, y = x + rng.uniform(-4, 4), y + rng.uniform(-4, 3)
+            if side == 1 and on_face(x, y):
+                continue
+            grain_b(back if side == 0 else front, x, y, i % 3 == 0)
+            if side == 1:
+                soft_halo(ctx['gfront'], x, y, 3.0, 0.7)
     return fx
 
 
@@ -1143,26 +1158,35 @@ def light_pyramid(gl, front, form=1.0, k=1.0, flash=False, ghost=0.0, sign=0):
             xr = A[0] + (R[0] - A[0]) * t
             xe = A[0] + (F[0] - A[0]) * t
             inside = 0 <= t <= 1 and xl <= px <= xr
-            d_lit = min(_seg(px, py, A, R), _seg(px, py, A, F))
-            d_sh = _seg(px, py, A, L)
-            if form >= 1:
-                d_sh = min(d_sh, _seg(px, py, L, R))
-            d = min(d_lit, d_sh)
-            lit_edge = d_lit <= d_sh
-            if d < 0.72:
-                ch, a = ('Z' if flash else 'H' if lit_edge else 'I'), 255
-            elif d < 1.25 and inside:
-                ch, a = ('H' if flash else 'I' if lit_edge else 'J'), 210
-            elif not inside and d < 2.6:
-                ch, a = ('H' if flash else 'I'), (120 if flash else 64)
-            elif inside:
+            if inside:
                 if px > xe:                                  # la face de droite, dans la lumière
-                    ch, a = ('Z' if flash else 'H'), (120 if flash else 66) - 20 * t
+                    ch, a = ('Z' if flash else 'K'), (120 if flash else 64) - 18 * t
                 else:                                        # la face de gauche, à l'ombre (un ambre léger)
-                    ch, a = ('H' if flash else 'I'), (110 if flash else 60) - 16 * t
+                    ch, a = ('H' if flash else 'I'), (110 if flash else 54) - 14 * t
             else:
-                continue
+                # une lueur douce juste autour des bords
+                d = min(_seg(px, py, A, R), _seg(px, py, A, L), _seg(px, py, L, R) if form >= 1 else 9)
+                if d > 2.4:
+                    continue
+                ch, a = ('H' if flash else 'I'), (120 if flash else 64)
             gput(gl, x, y, ch, a * k)
+    # les arêtes : des lignes d'un pixel, tracées pixel par pixel (or clair dans la lumière, or plus chaud à l'ombre),
+    # doublées vers l'intérieur d'un pixel plus doux (jamais de pointillés)
+    Ai, Li, Ri, Fi = (rnd(A[0]), A[1]), (L[0], L[1]), (R[0], R[1]), (rnd(F[0]), F[1])
+    edges = [(Ai, Ri, 'H', 'I', (-1, 0)), (Ai, Fi, 'H', 'I', (1, 0)), (Ai, Li, 'I', 'J', (1, 0))]
+    if form >= 1:
+        edges.append((Li, Ri, 'I', 'J', (0, -1)))
+    for (p0, p1, c0, c1, inn) in edges:
+        n = max(abs(p1[0] - p0[0]), abs(p1[1] - p0[1]))
+        for i in range(n + 1):
+            x = rnd(p0[0] + (p1[0] - p0[0]) * i / n)
+            y = rnd(p0[1] + (p1[1] - p0[1]) * i / n)
+            if form < 1 and y + 0.5 > ybot + 2.5 * _hash(x, 3, 9):
+                continue
+            if ghost and _hash(x, y, 5) < ghost:
+                continue
+            gput(gl, x, y, 'Z' if flash else c0, 255 * k)
+            gput(gl, x + inn[0], y + inn[1], 'I' if flash else c1, 190 * k)
     if form < 1:
         # le bas, encore en train de se former : des grains d'or qui arrivent
         rng = np.random.RandomState(int(form * 100))
@@ -1175,7 +1199,7 @@ def light_pyramid(gl, front, form=1.0, k=1.0, flash=False, ghost=0.0, sign=0):
     if sign and form >= 1 and not ghost:
         t = 0.66
         sx = int(round((A[0] + (F[0] - A[0]) * t + A[0] + (R[0] - A[0]) * t) / 2))
-        invented_sign(front, sx, int(round(ay + h * t)), 'ZH' if sign > 1 else 'HI')
+        invented_sign(front, sx, int(round(ay + h * t)), 'HI' if sign > 1 else 'IJ')
 
 
 def fx_pyr(form=1.0, k=1.0, flash=False, ghost=0.0, sign=0):
@@ -1280,6 +1304,8 @@ def fx_rain(k):
             y = oy + (ty - oy) * tau ** 1.35 - 9 * math.sin(math.pi * min(1.0, tau * 1.6)) * (1 - tau)
             if y < oy and tau < 0.2:
                 lay = front
+            if lay is front and on_face(x, y):
+                continue
             soft_halo(ctx['gback'] if lay is back else ctx['gfront'], x, y, 3.6 if kind else 2.6, 1.2 - 0.4 * tau)
             if kind == 2:
                 petal(lay, x, y, flip + int(k))
