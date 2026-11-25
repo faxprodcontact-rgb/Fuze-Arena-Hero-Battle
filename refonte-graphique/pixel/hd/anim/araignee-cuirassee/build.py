@@ -788,7 +788,7 @@ def fx_smear(names, frm, bend=(-10, -6)):
             c1 = p0 + (p3 - p0) * 0.35 + np.array([4, -9])
             c2 = p0 + (p3 - p0) * 0.75 + np.array([6, -4])
             pts = bezier(p0, c1, c2, p3, 60)
-            wd = [0.3 + 5.5 * (i / 60) ** 1.6 * (1 - 0.35 * (i / 60) ** 8) for i in range(61)]
+            wd = [0.3 + 7.0 * (i / 60) ** 1.4 * (1 - 0.35 * (i / 60) ** 8) for i in range(61)]
             stroke(back, pts, wd, 'jkl')
     return f
 

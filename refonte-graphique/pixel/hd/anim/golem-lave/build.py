@@ -1132,13 +1132,13 @@ def geyser(back, front, X, st, seed=0):
         cloud(back, (X + 22, gy - 6), 6.5, 'EFFK', hollow=0.3, seed=seed + 6)
     elif st == 3:
         tongue(back, (X - 2, gy - 1), 8, 5.0, bend=0.7, tones='uutsr', lean=0.2)
-        smoke_column(back, (X - 3, gy - 10), 20, 6.0, hollow=0.0, seed=seed + 7)
+        smoke_column(back, (X - 3, gy - 11), 24, 8.0, hollow=0.0, seed=seed + 7)
         for (dx, dy) in ((-16, -36), (10, -46), (20, -28)):
             ember(front, X + dx, gy + dy)
         for x in range(int(X - 10), int(X + 11)):
             put(back, x, gy, 'u' if abs(x - X) < 4 else 't' if abs(x - X) < 8 else 's')
     elif st == 4:
-        smoke_column(back, (X - 2, gy - 16), 24, 5.0, hollow=0.45, seed=seed + 7)
+        smoke_column(back, (X - 2, gy - 18), 30, 7.0, hollow=0.45, seed=seed + 7)
         for x in range(int(X - 8), int(X + 9)):
             put(back, x, gy, 's' if abs(x - X) < 4 else 'r')
         ember(front, X + 6, gy - 50)

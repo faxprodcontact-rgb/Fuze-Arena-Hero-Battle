@@ -1155,8 +1155,11 @@ EMBERS_HIT = [(3.0, -4.6, 1), (5.0, -2.6, 0), (-2.4, -3.8, 0), (1.6, -6.2, 0), (
 
 
 def contact(ctx):
-    """là où la tête de la massue touche le sol (toile)"""
-    tip = club_tip(ctx.G, ctx.ang, S_HEAD[1] - 4.0)
+    """là où la tête de la massue a touché le sol (toile) : le point de l'image du choc, qui ne bouge plus ensuite"""
+    b = Body(crouch=3, lean=4)
+    cx, cy = b.follow(50)
+    G = np.array(SMASH['G'], float) + np.array([OX + cx, OY + cy])
+    tip = club_tip(G, SMASH['ang'], S_HEAD[1] - 4.0)
     return np.array([tip[0], GROUND], float)
 
 
@@ -1248,7 +1251,7 @@ ATTAQUE = [
          fx_list=[fx_snort(2)], ms=340),
     # tout tombe : la massue passe au-dessus de lui (image floue)
     dict(G=(62, 30), ang=48, wr=(-6.0, 2.0), crouch=1, lean=1, head=(1, 0), ml=0, mu=-1, pg=0,
-         smear=fx_smear_down(128, w=20.0), fx_list=[fx_snort(3)], ms=55),
+         smear=fx_smear_down(104, w=18.0), fx_list=[fx_snort(3)], ms=55),
     # le choc : impact tenu, le sol tremble
     dict(**SMASH, crouch=3, lean=4, head=(1, 1), ml=-1, mu=-1, pg=-1, far=(-1, 0), shake=1,
          fx_list=[fx_smash(0)], ms=200),
@@ -1360,7 +1363,7 @@ def geyser(back, front, x, age, seed=0, big=1.0):
     elif age == 2:
         tongue(back, (x - 1, g), 38 * big, 13 * big, bend=-0.4, lean=0.1, tones="vutsr")
         tongue(front, (x + 5, g), 14 * big, 7 * big, bend=0.5, lean=0.2, tones='utsr', fork=False)
-        cloud(back, (x + 3, g - 50 * big), 9.0 * big, 'ffgh', seed=seed, ground=False)
+        cloud(back, (x + 3, g - 52 * big), 12.0 * big, 'ffgh', seed=seed, ground=False)
         for i in range(5):
             a = math.radians(rng.uniform(50, 130))
             d = rng.uniform(22, 40) * big
@@ -1373,11 +1376,11 @@ def geyser(back, front, x, age, seed=0, big=1.0):
                 put(front, lx + 1, g, 'r')
     elif age == 3:
         tongue(front, (x + 1, g), 11 * big, 6 * big, bend=0.4, tones='utsr', fork=False)
-        cloud(back, (x + 6, g - 56 * big), 9.0 * big, 'ffgh', hollow=0.3, seed=seed, ground=False)
+        cloud(back, (x + 6, g - 58 * big), 12.5 * big, 'ffgh', hollow=0.3, seed=seed, ground=False)
         curl(back, (x - 5, g - 26 * big), 4.4, 200, turn=280, w=3.0, tones='fgh')
     elif age == 4:
         tongue(front, (x + 2, g), 6, 4, bend=0.4, tones='tsr', fork=False)
-        cloud(back, (x + 9, g - 62 * big), 7.0 * big, 'ffg', hollow=0.6, seed=seed, ground=False)
+        cloud(back, (x + 9, g - 64 * big), 10.0 * big, 'ffg', hollow=0.6, seed=seed, ground=False)
         curl(back, (x - 1, g - 34 * big), 3.8, 340, turn=280, w=2.4, tones='fgh', cw=True)
     elif age == 5:
         puff(back, (x + 11, g - 68 * big), 2.8, 'fg', hollow=0.5)
@@ -1502,7 +1505,7 @@ SPECIALE = [
          hot=IRON_HOT[2], eyes=EYES_FIRE, fx_list=[fx_club_fire(2, 0.0, 2), fx_roar(1)], flash=10, ms=200),
     # il l'abat (traînée de feu)
     dict(G=(62, 30), ang=48, wr=(-6.0, 2.0), crouch=1, lean=2, head=(1, 0), jaw=1, ml=0, mu=-1, pg=0,
-         hot=IRON_HOT[2], eyes=EYES_FIRE, smear=fx_fire_arc(110), ms=55),
+         hot=IRON_HOT[2], eyes=EYES_FIRE, smear=fx_fire_arc(100), ms=55),
     # le choc : arrêt sur l'image, éclair, le sol tremble
     dict(**SMASH_S, crouch=4, lean=5, head=(1, 2), jaw=2, ml=-1, mu=-1, pg=-1, far=(-1, 0), hot=IRON_HOT[2],
          eyes=EYES_FIRE, flash=45, shake=1, fx_list=[fx_quake(0)], ms=210),

@@ -174,14 +174,14 @@ RACCORD = [
     (50, 75, 'EFFFFFF'),
     (50, 76, 'EEFFFFF'),
     (51, 77, 'EFFFFF'),
-    (51, 78, 'mnnnnnnn'),
-    (51, 79, 'mnnnnnnnn'),
-    (51, 80, 'mnnnnnnnnoo'),
-    (51, 81, 'mmnnnnnnnoo'),
-    (51, 82, 'mmnnnnnnnooo'),
-    (51, 83, 'mmmnnnnnnoooo'),
-    (51, 84, 'ghhhhhhhhiiii'),
-    (58, 85, 'CDDD'),
+    (51, 78, 'mnnnnnnnnnooo'),
+    (51, 79, 'mnnnnnnnnnooo'),
+    (51, 80, 'mnnnnnnnnnnoo'),
+    (51, 81, 'mmnnnnnnnnnoo'),
+    (51, 82, 'mmnnnnnnnnnoo'),
+    (51, 83, 'mmmnnnnnnnooo'),
+    (51, 84, 'ghhhhhhhhhiii'),
+    (58, 85, 'CDDDh'),
 ]
 P['corps_nu'] = painted(np.where(_arm, '.', P['corps']), RACCORD)
 
