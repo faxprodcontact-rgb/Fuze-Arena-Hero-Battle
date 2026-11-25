@@ -11,10 +11,17 @@ pixel-identical (do not touch their code paths), keep the same file outputs, re-
 - Read first: refonte-graphique/pixel/hd/consignes/animation.md (quality bar, owner's taste, outputs, self-review),
   refonte-graphique/pixel/hd/GUIDE.md, your hero's build.py and current GIFs (refonte-graphique/pixel/sortie/anim-<name>-*).
   Keep a copy of the current build.py and GIFs in <BROUILLON>/anim-<name>-equipe/avant/ before editing.
-- In combat the hero's TEAM stands BEHIND him, i.e. to the LEFT of the image (enemies are to the right). Never draw
-  allies (no invented characters). Show the team effect by: an effect born on the hero, a wave / ring / gust / rain of
-  particles that spreads around him and runs off to the LEFT (behind him, toward his allies), plus the effect visible
-  on the hero himself. Nothing has to hit the enemy (except where the effect says so).
+- **RÈGLE DE PLACEMENT (décision du propriétaire, 25/11, remplace l'ancienne règle « vers la gauche »)** : l'équipe est
+  en losange de 5 cases (2 devant côté ennemi, 1 au milieu, 2 derrière) ; le lanceur peut être à n'importe quelle case
+  et ses alliés peuvent être devant, derrière, au-dessus ou en dessous de lui. Donc la spéciale du LANCEUR ne vise
+  aucune direction : l'effet naît sur lui et s'étend EN CERCLE tout autour de lui (onde, anneau, souffle, pluie de
+  particules dans toutes les directions, un peu aplati comme posé au sol), puis se referme ou s'éteint sur lui. Rien
+  ne part spécialement vers la gauche ni vers la droite, rien ne frappe l'ennemi (sauf « affaiblit / ralentit les
+  ennemis » : là, l'effet part vers la droite). Ne dessine jamais d'alliés.
+- Ce que reçoit chaque allié (lueur de soin, bulle de bouclier, armure, aura d'attaque, orbe d'énergie…) n'est PAS
+  ton travail : ce sont des effets génériques communs (dossier `anim/effets/`), joués par le jeu sur chaque case
+  occupée au bon moment. Ta spéciale doit donc avoir un « moment de lancement » net (le temps fort tenu) : indique
+  dans tes notes (commentaire en tête de build.py) le numéro de l'image où l'effet part vers l'équipe.
 - Visual language (same for every hero, in the hero's element and colours):
   * soin : lumière douce qui monte, gouttes / pétales / plumes / grains lumineux qui retombent, la silhouette du héros
     s'éclaire un instant ; « purifie » = des petites taches sombres qui se détachent et s'évaporent ; « ressuscite » =
