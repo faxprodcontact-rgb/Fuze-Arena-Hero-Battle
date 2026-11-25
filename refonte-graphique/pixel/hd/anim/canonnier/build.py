@@ -849,6 +849,9 @@ def fx_smoke(key, t, sc=1.4, sr=1.7):
         if a > 0 and k + 1 < len(SMOKE) and len(SMOKE[k + 1]) == len(A):
             B = SMOKE[k + 1]
             A = [tuple(p * (1 - a) + q * a for p, q in zip(la, lb)) for la, lb in zip(A, B)]
+        A = list(A)
+        if t < 5.5:                                     # une grosse bouffée qui gonfle juste devant la bouche
+            A.append((6.0, -1.0 - 2.0 * t, (3.8 + 0.7 * min(t, 4)) * (1 - 0.35 * max(0.0, t - 4))))
         layer = front if t < 1.5 else back
         tones = 'sstuv' if t < 4 else 'ssttu' if t < 6 else 'sttuu'
         smoke(layer, [(mx + x * sc, my + y * sc, r * sr) for (x, y, r) in A], tones)

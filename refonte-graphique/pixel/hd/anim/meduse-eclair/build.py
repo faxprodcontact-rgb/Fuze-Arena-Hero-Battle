@@ -1,9 +1,10 @@
 # Méduse éclair (monstre du clan de Kesha, eau, sorts) : pose (elle flotte et pulse), attaque de base « Bulle
 # d'éclair » (elle se gonfle, une bulle d'eau chargée d'éclairs se forme devant elle, elle se contracte d'un coup et
 # la bulle file vers l'ennemi où elle éclate), attaque spéciale « Orage des abysses » (elle s'élève, ses filaments
-# s'allument, une grosse sphère d'eau électrique se forme et grossit devant elle ; une poussée de toute l'ombrelle la
-# lance, elle éclate sur l'ennemi en un dôme d'écume parcouru de décharges courbes, qui roulent au sol sur le premier
-# rang ; pluie de gouttes et de bulles, puis elle redescend, le coeur éteint un instant).
+# s'allument et chargent une grosse sphère d'eau électrique qui grossit devant elle ; une poussée de toute l'ombrelle
+# la lance ; elle enferme l'ennemi dans un grand dôme de bulle posé au sol, parcouru de décharges courbes, qui crève
+# par le haut : gerbe d'écume, deux vagues qui roulent au sol sur tout le premier rang, pluie de gouttes et de bulles ;
+# puis elle redescend, le coeur éteint un instant).
 #
 # Lancer : python3 refonte-graphique/pixel/hd/anim/meduse-eclair/build.py
 # Écrit dans refonte-graphique/pixel/sortie/ : anim-meduse-eclair-pose.gif, -attaque.gif, -speciale.gif, -jeu.gif
@@ -718,12 +719,13 @@ for _i, _f in enumerate(ATTAQUE):
 
 
 # ---------------------------------------------------------------- 3) l'attaque spéciale : « Orage des abysses »
-# Elle se tasse, puis deux grandes contractions la font s'élever (les filaments quittent le sol) ; ses filaments
-# s'allument, des décharges courbes courent le long de ses bras ; l'eau tourne en volutes devant elle et se ramasse en
-# une grosse sphère chargée qui grossit (tenue) ; une poussée de toute l'ombrelle (éclair blanc) la lance ; la sphère
-# s'écrase sur l'ennemi : dôme d'écume, longues décharges courbes qui fouettent, et deux vagues d'écume parcourues
-# d'étincelles qui roulent au sol sur tout le premier rang (temps suspendu) ; pluie de gouttes et de bulles. Elle
-# redescend, le coeur éteint un instant, puis se rallume.
+# Elle se tasse, puis deux grandes contractions la font s'élever d'une vingtaine de pixels (les filaments quittent le
+# sol) ; ses filaments s'allument, des décharges courbes courent le long de ses bras et vont de leurs bouts jusqu'à
+# l'eau qui tourne en volutes devant elle et se ramasse en une grosse sphère chargée qui grossit (tenue) ; une poussée
+# de toute l'ombrelle (éclair blanc) la lance ; la sphère frappe l'ennemi et devient un grand dôme de bulle posé au
+# sol autour de lui, parcouru de décharges qui suivent sa paroi (temps suspendu) ; le dôme crève par le haut : gerbe
+# d'écume, deux vagues qui roulent au sol sur tout le premier rang ; pluie de gouttes et de bulles. Elle redescend, le
+# coeur éteint un instant, puis se rallume.
 SPHERE = (110, 64)               # où se forme la grosse sphère (grille du dessin, devant la méduse)
 SPH_R = [4.0, 7.0, 10.0, 12.0]   # sa taille pendant qu'elle grossit
 TIPS = [(76, 96), (66, 101), (84, 88), (88, 80)]   # bouts des filaments de devant (d'où partent les décharges)

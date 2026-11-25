@@ -635,10 +635,91 @@ def draw_shoulder(cv, f, body, ctx):
     raise NotImplementedError
 
 
+# ---------------------------------------------------------------- l'ara : ailes ouvertes, bec ouvert (dessinés à la main)
+# Grilles en coordonnées du dessin : (x0, y0) = le coin haut gauche. Couvertures d'or (g h i j k), rémiges bleues
+# (a b c d), plumes rouges du corps (E F G H) ; la lumière vient d'en haut à droite.
+# Le corps sans l'aile repliée (quand l'aile s'ouvre, le dos rouge apparaît, la queue y reste attachée)
+ARA_NU = (43, 51, [
+    '..FGGGHH.',
+    '..FGGGGH.',
+    '..EFGGGH.',
+    '..EFGGGG.',
+    '..EFFGGG.',
+    '..EEFGGG.',
+    '.EFFGGFF.',
+    'EFFGGFF..',
+    'EFGGFTST.',
+    '.EFG..TTS'])
+# l'aile à demi ouverte (étendue vers l'arrière, à l'horizontale)
+ARA_AILE_MI = (32, 47, [
+    '.........jj.....',
+    '......bcdijjk...',
+    '...abccdchiijj..',
+    '.abbccbcbhhiijj.',
+    'abbcbbccbbhhiij.',
+    '.aabab.abbbghhi.',
+    '...a....aab.gh..'])
+# l'aile levée (dressée vers le haut et l'arrière, les grandes plumes en éventail)
+ARA_AILE_HAUT = (31, 36, [
+    '..b.............',
+    '.abc.b..........',
+    '.abcdbc.........',
+    'abbcdcd.........',
+    '.abbcddjj.......',
+    '..abbccijk......',
+    '.aabbcchijj.....',
+    '..aabbbchij.....',
+    '....abbbchij....',
+    '.....aabbhiij...',
+    '.......abhhij...',
+    '........aghiij..',
+    '.........ghhij..',
+    '..........ghii..',
+    '...........ghh..'])
+# le bec ouvert (il crie) : la mandibule du bas tombe, la bouche rouge sombre apparaît
+ARA_BEC = (52, 42, [
+    'uw...',
+    'uwwu.',
+    'tuuuw',
+    'EttuwE'[:5],
+    'EE.tu',
+    'CE..t',
+    'CC...',
+    '.C...'])
+
+
+def grid_part(spec):
+    """une grille à la main -> un morceau de la taille du dessin"""
+    x0, y0, rows = spec
+    out = np.full((GH, GW), '.', dtype='<U1')
+    for j, r in enumerate(rows):
+        for i, ch in enumerate(r):
+            if ch != '.':
+                out[y0 + j, x0 + i] = ch
+    return out
+
+
+P['ara_nu'] = grid_part(ARA_NU)
+P['ara_aile_mi'] = grid_part(ARA_AILE_MI)
+P['ara_aile_haut'] = grid_part(ARA_AILE_HAUT)
+# la tête au bec ouvert : le bec du dessin est retiré (cheveux dessous), le bec ouvert posé à sa place
+_bec = (XX >= 52) & (YY >= 42) & (YY <= 49)
+P['ara_tete_cri'] = np.where(_bec, '.', P['ara_tete'])
+P['ara_tete_cri'] = over(P['ara_tete_cri'], grid_part(ARA_BEC))
+
+
 def draw_ara(cv, f, chest):
+    """l'ara : corps (aile repliée, ou dos nu et aile ouverte), puis la tête (hochement : ah), bec ouvert (cri)"""
     cx, cy = chest
     ax, ay = f.get('ah', (0, 0))
-    blit(cv, P['ara_corps'], cx, cy)
-    if ay < 0:
-        blit(cv, P['ara_tete'], cx + ax, cy)
-    blit(cv, P['ara_tete'], cx + ax, cy + ay)
+    wing = f.get('aile')
+    by = f.get('ab', 0)                            # le corps de l'oiseau se ramasse / se soulève
+    if wing:
+        blit(cv, P['ara_nu'], cx, cy + by)
+        blit(cv, P['ara_aile_' + wing], cx, cy + by)
+    else:
+        blit(cv, P['ara_corps'], cx, cy + by)
+    tete = P['ara_tete_cri'] if f.get('cri') else P['ara_tete']
+    if ay + by < 0:
+        blit(cv, tete, cx + ax, cy)
+    blit(cv, tete, cx + ax, cy + ay + by)
