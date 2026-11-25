@@ -127,6 +127,16 @@ def coeur(cx, cy, s):
     return m
 
 
+def spirale(cx, cy, r0, r1, tours=1.6, w=2, a0=0.0):
+    pts = []
+    for i in range(60):
+        t = i / 59
+        a = a0 + t * tours * 2 * np.pi
+        r = r0 + (r1 - r0) * t
+        pts.append((cx + r * np.cos(a), cy + r * np.sin(a)))
+    return ligne(pts, w)
+
+
 def decale(m, dx, dy):
     o = np.zeros_like(m)
     ys, yd = (slice(0, N - dy), slice(dy, N)) if dy >= 0 else (slice(-dy, N), slice(0, N + dy))
@@ -388,7 +398,7 @@ def lance():
     want = [a for a in sys.argv[1:] if not a.startswith('-')]
     faits = []
     for nom, f in REGISTRE.items():
-        if want and nom not in want:
+        if f.__module__ != '__main__' or (want and nom not in want):   # seulement la famille lancée
             continue
         p = Picto()
         f(p)

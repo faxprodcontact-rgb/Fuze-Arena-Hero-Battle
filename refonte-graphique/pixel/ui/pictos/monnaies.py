@@ -25,20 +25,20 @@ def gold(p):
     p.etincelle(23, 8)
 
 
+def taillee(p, g, x0=4, y0=5, w=24, h=23, ombre=True):
+    """Une pierre taillée (couronne + pointe), facettes à plat, la lumière en haut à droite. Case (x0, y0, w, h)."""
+    def P(u, v):
+        return (x0 + u * w / 24, y0 + v * h / 23)
+    p.part(poly([P(0, 7), P(5, 0), P(19, 0), P(24, 7), P(12, 23)]), g, mode='plat', ombre=ombre)
+    for pts, t in (([P(0, 7), P(5, 0), P(8, 7)], 2), ([P(5, 0), P(12, 0), P(8, 7)], 3), ([P(8, 7), P(12, 0), P(16, 7)], 4),
+                   ([P(12, 0), P(19, 0), P(16, 7)], 3), ([P(19, 0), P(24, 7), P(16, 7)], 4), ([P(0, 7), P(8, 7), P(12, 23)], 1),
+                   ([P(8, 8), P(16, 8), P(12, 23)], 2), ([P(16, 7), P(24, 7), P(12, 23)], 3)):
+        p.plat(poly(pts), g, t)
+
+
 @picto('gems')
 def gems(p):
-    g = 'rose'
-    # pierre taillée : couronne (trapèze) + pavillon (pointe en bas)
-    p.part(poly([(4, 12), (9, 5), (23, 5), (28, 12), (16, 28)]), g, mode='plat')
-    # facettes (tons à plat, la lumière en haut à droite)
-    p.plat(poly([(4, 12), (9, 5), (12, 12)]), g, 2)
-    p.plat(poly([(9, 5), (16, 5), (12, 12)]), g, 3)
-    p.plat(poly([(12, 12), (16, 5), (20, 12)]), g, 4)
-    p.plat(poly([(16, 5), (23, 5), (20, 12)]), g, 3)
-    p.plat(poly([(23, 5), (28, 12), (20, 12)]), g, 4)
-    p.plat(poly([(4, 12), (12, 12), (16, 28)]), g, 1)
-    p.plat(poly([(12, 13), (20, 13), (16, 28)]), g, 2)
-    p.plat(poly([(20, 12), (28, 12), (16, 28)]), g, 3)
+    taillee(p, 'rose')
     p.eclat(21, 7); p.eclat(22, 7); p.eclat(22, 8)
     p.etincelle(26, 4)
 

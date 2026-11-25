@@ -3,16 +3,6 @@
 from pictolib import *
 
 
-def spirale(cx, cy, r0, r1, tours=1.6, w=2, a0=0.0):
-    pts = []
-    for i in range(60):
-        t = i / 59
-        a = a0 + t * tours * 2 * np.pi
-        r = r0 + (r1 - r0) * t
-        pts.append((cx + r * np.cos(a), cy + r * np.sin(a)))
-    return ligne(pts, w)
-
-
 # ---------- la barre du bas ----------
 
 @picto('campaign')
@@ -106,14 +96,14 @@ def quests(p):
 @picto('missions')
 def missions(p):
     """Missions : une boussole."""
-    p.part(cercle(15.5, 16, 13), 'or', R=2.5, lo=1, hi=4)
-    cad = cercle(15.5, 16, 10)
+    p.part(cercle(15.5, 16.5, 12.5), 'or', R=2.5, lo=1, hi=4)
+    cad = cercle(15.5, 16.5, 9.5)
     p.part(cad, 'creme', mode='plat', lo=3, hi=4, ombre=False)
     p.creuse(cad & ~decale(cad, -1, 1), 1)
     p.part(poly([(21.5, 9.5), (17, 17.5), (14, 14.5)]), 'rouge', mode='plat', lo=3, hi=3)
     p.part(poly([(9.5, 22.5), (14, 14.5), (17, 17.5)]), 'bleu', mode='plat', lo=2, hi=2)
     p.plat(cercle(15.5, 16, 1), 'or', 4)
-    p.part(rect(14, 1, 17, 3), 'or', lo=2, hi=4)
+    p.part(rect(14, 2, 17, 3), 'or', lo=2, hi=4)
 
 
 @picto('shop')
@@ -167,7 +157,7 @@ def ranking(p):
     p.part(rect(3, 18, 11, 28), 'argent', R=2, lo=1, hi=4)
     p.part(rect(20, 21, 28, 28), 'bronze', R=2, lo=1, hi=4)
     p.part(rect(11, 13, 20, 28), 'or', R=2, lo=1, hi=4)
-    p.part(etoile(15.5, 7.5, 6, 2.6), 'or', R=2, lo=2, hi=4)
+    p.part(etoile(15.5, 8, 5.5, 2.4), 'or', R=2, lo=2, hi=4)
     p.etincelle(26, 10)
 
 
@@ -339,9 +329,9 @@ def badge(p):
 
 @picto('avatarFrame')
 def avatar_frame(p):
-    p.part(anneau(15.5, 16.5, 13, 9.5), 'or', R=2, lo=1, hi=4)
-    p.part(cercle(15.5, 4, 3), 'rouge', R=2, lo=1, hi=4)
-    p.part(cercle(4, 22, 2) | cercle(27, 22, 2), 'bleu', R=1.5, lo=1, hi=4)
+    p.part(anneau(15.5, 17, 12, 8.5), 'or', R=2, lo=1, hi=4)
+    p.part(cercle(15.5, 5, 2.5), 'rouge', R=2, lo=1, hi=4)
+    p.part(cercle(5, 22, 2) | cercle(26, 22, 2), 'bleu', R=1.5, lo=1, hi=4)
 
 
 @picto('cardBack')
@@ -355,7 +345,7 @@ def card_back(p):
 @picto('defeat')
 def defeat(p):
     """Défaite : un bouclier fendu en deux."""
-    ecu = poly([(4, 4), (27, 4), (27, 14), (22, 23), (15.5, 29), (9, 23), (4, 14)])
+    ecu = poly([(5, 3), (27, 3), (27, 13), (22, 22), (15.5, 28), (9, 22), (5, 13)])
     fente = ligne([(17, 3), (14, 10), (18, 15), (13, 21), (16, 30)], 2)
     gauche = ecu & ~fente & ((X - 15.5) < -(np.interp(Y, [3, 10, 15, 21, 30], [17, 14, 18, 13, 16]) - 15.5) * -1)
     droite = ecu & ~fente & ~gauche

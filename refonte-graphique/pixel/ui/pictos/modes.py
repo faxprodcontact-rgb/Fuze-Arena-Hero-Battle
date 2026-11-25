@@ -1,7 +1,6 @@
 # Les modes de l'Aventure, les missions, les ligues de l'arène, les bâtiments :
 #   python3 refonte-graphique/pixel/ui/pictos/modes.py [noms…]
 from pictolib import *
-from menus import spirale
 
 
 def epee(p, a, b, lame='argent', garde='or', w=3):
@@ -55,7 +54,7 @@ def dungeons(p):
 def daily_boss(p):
     """Boss du jour : un crâne cornu aux yeux de braise."""
     for s in (1, -1):
-        corne = poly([(15.5 + s * 6, 9), (15.5 + s * 12, 7), (15.5 + s * 13.5, 1.5), (15.5 + s * 15, 10), (15.5 + s * 9, 13)])
+        corne = poly([(15.5 + s * 6, 9), (15.5 + s * 11, 7), (15.5 + s * 12.5, 3), (15.5 + s * 13.5, 10), (15.5 + s * 9, 13)])
         p.part(corne, 'bois', R=2, lo=1, hi=4)
     crane = ellipse(15.5, 14, 10, 9.5) | rrect(9, 18, 22, 28, 3)
     p.part(crane, 'creme', R=4, lo=1, hi=4)
@@ -77,19 +76,18 @@ def arena(p):
 
 
 def colisee(p):
-    """Le Colisée : un amphithéâtre de pierre claire, deux étages d'arches, des fanions."""
-    p.part(ellipse(15.5, 9, 13, 4) & (Y >= 6), 'pierre', R=2, lo=1, hi=4)
-    corps = ellipse(15.5, 9, 13, 4) | rect(2.5, 9, 28.5, 26) | ellipse(15.5, 26, 13, 3.5)
-    p.part(corps, 'creme', R=3, lo=1, hi=4)
-    p.plat(ellipse(15.5, 8.5, 11, 2.5), 'pierre', 1)
-    for row, (y0, y1) in enumerate(((12, 17), (20, 26))):
-        for i, x in enumerate(range(4, 28, 5)):
-            a = rrect(x, y0, x + 2, y1 + (row == 1 and 0), 1)
-            p.plat(a & corps, 'nuit', 2 if x > 15 else 1)
-    p.creuse(rect(3, 18, 28, 18), 1)
+    """Le Colisée : un amphithéâtre de pierre claire, deux étages de grandes arches, des fanions."""
+    corps = ellipse(15.5, 10, 13, 4) | rect(2.5, 10, 28.5, 25) | ellipse(15.5, 25, 13, 3.5)
+    p.part(corps, 'creme', R=4, lo=1, hi=4)
+    p.plat(ellipse(15.5, 9.5, 11, 2.4), 'pierre', 1)                  # l'intérieur, ouvert vers le ciel
+    p.creuse(rect(3, 17, 28, 17), 1)                                     # la corniche entre les deux étages
+    for x in (5, 11, 17, 23):
+        h = rrect(x, 12, x + 3, 16, 1) & (Y <= 15)
+        b = rrect(x, 19, x + 3, 27, 1) & (Y <= 26)
+        p.plat((h | b) & corps, 'nuit', 2 if x > 15 else 1)
     for x in (6, 15, 25):
-        p.part(ligne([(x, 1), (x, 6)], 1), 'bois', lo=2, hi=3)
-        p.part(poly([(x + 1, 1), (x + 5, 2.5), (x + 1, 4)]), 'rouge', lo=2, hi=4, ombre=False)
+        p.part(ligne([(x, 2), (x, 7)], 1), 'bois', lo=2, hi=3)
+        p.part(poly([(x + 1, 2), (x + 4, 3.5), (x + 1, 5)]), 'rouge', lo=2, hi=4, ombre=False)
 
 
 @picto('colisee')
@@ -155,8 +153,8 @@ def m_hunt(p):
     arc = anneau(9, 16, 13, 11) & (X >= 9) & rect(9, 3, 23, 29)
     p.part(arc, 'bois', R=1.5, lo=1, hi=4)
     p.part(ligne([(11, 5), (11, 27)], 1), 'blanc', mode='plat', lo=3, hi=3)
-    p.part(ligne([(6, 16), (27, 16)], 1), 'bois', mode='plat', lo=3, hi=3)
-    p.part(poly([(26, 13), (30, 16), (26, 19)]), 'argent', R=1, lo=2, hi=4)
+    p.part(ligne([(6, 16), (26, 16)], 1), 'bois', mode='plat', lo=3, hi=3)
+    p.part(poly([(25, 13), (29, 16), (25, 19)]), 'argent', R=1, lo=2, hi=4)
     p.part(poly([(3, 13), (8, 15), (8, 17), (3, 19), (5, 16)]), 'rouge', R=1, lo=2, hi=4)
 
 
@@ -190,9 +188,9 @@ def m_siege(p):
 def ligue(p, gamme, ailes=False, gemme='rouge', etoiles=0):
     if ailes:
         for s in (1, -1):
-            aile = poly([(15.5 + s * 7, 8), (15.5 + s * 14, 5), (15.5 + s * 13, 12), (15.5 + s * 14.5, 13), (15.5 + s * 12, 19), (15.5 + s * 8, 20)])
+            aile = poly([(15.5 + s * 7, 8), (15.5 + s * 13, 5), (15.5 + s * 12, 12), (15.5 + s * 13.5, 13), (15.5 + s * 11, 19), (15.5 + s * 8, 20)])
             p.part(aile, 'blanc' if gamme != 'blanc' else 'ciel', R=2, lo=1, hi=4)
-            p.creuse(ligne([(15.5 + s * 9, 13), (15.5 + s * 13, 12)]) | ligne([(15.5 + s * 9, 17), (15.5 + s * 12, 17)]), 1)
+            p.creuse(ligne([(15.5 + s * 9, 13), (15.5 + s * 12, 12)]) | ligne([(15.5 + s * 9, 17), (15.5 + s * 12, 17)]), 1)
     ecu = poly([(8, 5), (23, 5), (23, 17), (15.5, 28), (8, 17)])
     p.part(ecu, gamme, R=3, lo=1, hi=4)
     p.creuse(ecu & ~ronge(ecu, 2) & ~decale(ecu, -1, 1), 0)
@@ -202,7 +200,7 @@ def ligue(p, gamme, ailes=False, gemme='rouge', etoiles=0):
     p.eclat(16, 12)
     for i in range(etoiles):
         x = 15.5 + (i - (etoiles - 1) / 2) * 5
-        p.part(etoile(x, 3.5, 2.8, 1.2), 'or', R=1, lo=2, hi=4)
+        p.part(etoile(x, 5, 2.5, 1.1), 'or', R=1, lo=2, hi=4)
 
 
 @picto('league-bronze')
@@ -228,7 +226,7 @@ def l_platinum(p):
 @picto('league-diamond')
 def l_diamond(p):
     ligue(p, 'bleu', ailes=True, gemme='rose', etoiles=3)
-    p.etincelle(26, 24)
+    p.etincelle(25, 24)
 
 
 # ---------- les bâtiments ----------
@@ -263,6 +261,18 @@ def essence_spring(p):
     p.part(rect(12, 24, 19, 26) | rrect(8, 26, 23, 29, 1), 'pierre', R=2, lo=1, hi=4)
 
 
+@picto('armory')
+def armory(p):
+    """Armurerie : un râtelier de bois, une épée et un bouclier posés dessus."""
+    p.part(rect(4, 4, 6, 28) | rect(25, 4, 27, 28), 'bois', R=1.5, lo=1, hi=4)
+    p.part(rect(3, 8, 28, 10), 'bois', R=1.5, lo=1, hi=4)
+    p.part(rect(3, 25, 28, 27), 'bois', R=1.5, lo=1, hi=4)
+    epee(p, (12, 25), (12, 4))
+    ecu = poly([(15, 12), (25, 12), (25, 19), (20, 25), (15, 19)])
+    p.part(ecu, 'rouge', R=2.5, lo=1, hi=4)
+    p.part(poly([(20, 14), (23, 17.5), (20, 21), (17, 17.5)]), 'or', R=1.5, lo=2, hi=4)
+
+
 @picto('summonAltar')
 def summon_altar(p):
     """Autel d'invocation : un cristal violet qui flotte au-dessus d'un autel de pierre."""
@@ -281,14 +291,14 @@ def summon_altar(p):
 @picto('summonPortal')
 def summon_portal(p):
     """Portail d'invocation : une arche de pierre où tourne la magie."""
-    arc = rrect(3, 2, 28, 29, 12)
+    arc = rrect(3, 3, 28, 28, 12)
     p.part(arc, 'pierre', R=3, lo=1, hi=4)
-    dedans = rrect(7, 6, 24, 29, 8)
+    dedans = rrect(7, 7, 24, 28, 8)
     p.part(dedans, 'violet', mode='boule', R=12, centre=(18, 14), lo=0, hi=3, ombre=False)
     p.eclaire(spirale(15.5, 16, 1, 8, 1.4, 2, 0.5) & dedans, 1)
     p.plat(cercle(15.5, 16, 2), 'mauve', 4)
-    p.part(cercle(15.5, 3, 2.2), 'cyan', R=1.5, lo=2, hi=4)
-    p.part(rect(2, 27, 29, 29), 'pierre', R=1.5, lo=1, hi=3)
+    p.part(cercle(15.5, 4, 2), 'cyan', R=1.5, lo=2, hi=4)
+    p.part(rect(2, 26, 29, 28), 'pierre', R=1.5, lo=1, hi=3)
 
 
 if __name__ == '__main__':

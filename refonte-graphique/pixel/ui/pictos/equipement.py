@@ -151,6 +151,14 @@ def trait_var(pts, e0, e1):
     return _ss(f)
 
 
+def ovale(cx, cy, rx, ry, angle):
+    """Une ellipse tournée (angle en degrés, 0 = grand axe horizontal, positif = vers le haut)."""
+    a = np.radians(angle)
+    t = np.linspace(0, 2 * np.pi, 48, endpoint=False)
+    return poly(*[(cx + rx * np.cos(q) * np.cos(a) + ry * np.sin(q) * np.sin(a),
+                   cy - rx * np.cos(q) * np.sin(a) + ry * np.sin(q) * np.cos(a)) for q in t])
+
+
 def rect(x0, y0, x1, y1):
     """Rectangle de pixels, bornes comprises."""
     m = np.zeros((N, N), bool)
@@ -648,21 +656,22 @@ def _wind():
 def _warrior():
     """Le guerrier : une hache à deux tranchants."""
     p = Picto()
-    u, d = diag(1, 16, 15)
-    manche = (u >= -24) & (u <= 16) & (np.abs(d) <= 1)
+    u, d = diag(1, 14, 17)
+    manche = (u >= -21) & (u <= 17) & (np.abs(d) <= 1)
     p.pose(manche, 'bois', np.where(d < 0, 4, np.where(d == 0, 3, 2)), ombre=False)
-    bout = (u >= -26) & (u <= -23) & (np.abs(d) <= 2) & ((u + 24.5) ** 2 + d ** 2 <= 5)
+    bout = ((u + 22) ** 2 + d ** 2 <= 5)
     p.pose(bout, 'fer', relief(bout, 3, 1.2), ombre=True)
-    c = 7                                                    # le milieu du fer, le long du manche
-    w = 2.4 + 0.42 * np.abs(d)                               # le fer s'évase vers le tranchant
-    fer = (np.abs(d) >= 1.5) & (np.abs(d) <= 11) & (np.abs(u - c) <= w) & (np.abs(d) <= 12.4 - ((u - c) / 3.4) ** 2)
-    douille = (np.abs(u - c) <= 3) & (np.abs(d) <= 2.5)
-    rf = np.where(d < 0, 4, 2) - (np.abs(d) <= 4).astype(int)
-    tranchant = fer & ~((np.abs(d) <= 11) & (np.abs(d) <= 12.4 - ((u - c) / 3.4) ** 2 - 1.6))
+    c = 9                                                    # le milieu du fer, le long du manche
+    ad = np.abs(d)
+    lim = 14.6 - 0.085 * (u - c) ** 2                       # le tranchant, bien courbe
+    fer = (ad >= 1.5) & (ad <= lim) & (np.abs(u - c) <= 2.2 + 0.62 * ad)
+    tranchant = fer & (ad > lim - 2.2)
+    rf = np.where(d < 0, 4, 2) - (ad <= 4).astype(int)
     p.pose(fer, 'acier', rf, ombre=True)
     p.pose(tranchant, 'acier', np.where(d < 0, 5, 3), ombre=False)
+    douille = (np.abs(u - c) <= 3) & (ad <= 2.5)
     p.pose(douille, 'bronze', relief(douille, 3, 1.2), ombre=True)
-    pique = (u > c + 3) & (u <= c + 8) & (np.abs(d) <= (c + 8 - u) * 0.45)
+    pique = (u > c + 3) & (u <= c + 9) & (ad <= (c + 9 - u) * 0.4 + 0.5)
     p.pose(pique, 'acier', np.where(d < 0, 4, 3), ombre=True)
     return p
 
@@ -686,15 +695,14 @@ def _protector():
 
 def dague(p, sens, ax, ay, lg=12, poignee='violet'):
     u, d = diag(sens, ax, ay)
-    lame = (u >= 0) & (u <= lg) & (np.abs(d) <= np.minimum(2.2, (lg + 1 - u) * 0.5))
-    lame &= ~((d > 0) & (u > lg - 5) & (d > (lg - u) * 0.3))           # le fil se recourbe un peu
+    lame = (u >= 0) & (u <= lg) & (np.abs(d) <= np.minimum(3.6, (lg + 1 - u) * 0.4))
     p.pose(lame, 'acier', np.where(d < 0, 4, np.where(d == 0, 5, 2)), ombre=True)
-    garde = (u >= -2) & (u <= -1) & (np.abs(d) <= 4)
+    garde = (u >= -3) & (u <= -1) & (np.abs(d) <= 5) & ~((np.abs(d) == 5) & (u != -2))
     p.pose(garde, 'or', relief(garde, 3, 1.0), ombre=True)
-    man = (u >= -8) & (u <= -3) & (np.abs(d) <= 1)
+    man = (u >= -8) & (u <= -4) & (np.abs(d) <= 1.5)
     p.pose(man, poignee, np.where(d < 0, 3, 2), ombre=True)
-    pom = (u >= -10) & (u <= -8) & (np.abs(d) <= 1) & ((u + 9) ** 2 + d ** 2 <= 2)
-    p.pose(pom, 'or', 3, ombre=True)
+    pom = ((u + 10) ** 2 + d ** 2 <= 5)
+    p.pose(pom, 'or', relief(pom, 3, 1.2), ombre=True)
     return lame | garde | man | pom
 
 
@@ -702,8 +710,8 @@ def dague(p, sens, ax, ay, lg=12, poignee='violet'):
 def _assassin():
     """L'assassin : deux dagues croisées, poignées violettes."""
     p = Picto()
-    dague(p, -1, 20, 20, 15)
-    m = dague(p, 1, 11, 20, 15)
+    dague(p, -1, 23, 23, 30)
+    m = dague(p, 1, 8, 23, 30)
     decoupe(p, m)
     return p
 
@@ -752,17 +760,17 @@ def _healer():
 def _support():
     """Le soutien : un bâton de mage, une orbe claire tenue par des griffes d'or."""
     p = Picto()
-    u, d = diag(1, 12, 20)
+    u, d = diag(1, 11, 21)
     baton = (u >= -18) & (u <= 8) & (np.abs(d) <= 1)
     p.pose(baton, 'bois', np.where(d < 0, 4, np.where(d == 0, 3, 2)), ombre=False)
     bague = (u >= -4) & (u <= -3) & (np.abs(d) <= 2)
     p.pose(bague, 'or', np.where(d < 0, 4, 3), ombre=True)
-    griffes = (u >= 6) & (u <= 13) & (np.abs(d) >= 3) & (np.abs(d) <= 5) & (np.abs(d) <= 3 + (u - 6) * 0.6)
+    griffes = (u >= 6) & (u <= 15) & (np.abs(d) >= 3) & (np.abs(d) <= 6) & (np.abs(d) <= 3 + (u - 6) * 0.7)
     griffes |= (u >= 5) & (u <= 7) & (np.abs(d) <= 4)
     p.pose(griffes, 'or', np.where(d < 0, 4, 2), ombre=True)
-    orbe = ellipse(22.2, 9.4, 5.6, 5.6)
+    orbe = ellipse(22.4, 9.6, 6.6, 6.6)
     p.pose(orbe, 'eau', relief(orbe, 3, 1.5), ombre=True)
-    refl = ellipse(24, 7.4, 1.6, 1.4)
+    refl = ellipse(24.6, 7.0, 1.8, 1.5)
     p.pose(refl & orbe, 'eau', 5, ombre=False)
     return p
 
@@ -809,17 +817,33 @@ def ecu(p, k=1.0, dx=0.0, dy=0.0, champ='acier', bord='acier'):
     return tout
 
 
+def rondache(p, k=1.0, dx=0.0, dy=0.0):
+    """Un bouclier rond (la défense) : bord d'acier, champ bleu, bosse au milieu."""
+    cx, cy = 15.5 + dx, 15.5 + dy
+    tout = ellipse(cx, cy, 14.2 * k, 14.2 * k)
+    p.pose(tout, 'acier', relief(tout, 3, 1.3), ombre=False)
+    champ = ellipse(cx, cy, 11.0 * k, 11.0 * k)
+    p.pose(champ, 'bleu', relief(champ, 3, 1.3, cx=cx, cy=cy), ombre=True)
+    for (x, y) in ((0, -12.6), (12.6, 0), (0, 12.6), (-12.6, 0)):          # quatre rivets sur le bord
+        m = ellipse(cx + x * k, cy + y * k, 1.1, 1.1)
+        p.pose(m, 'acier', 5 if x > 0 or y < 0 else 3, ombre=False)
+    bosse = ellipse(cx, cy, 4.6 * k, 4.6 * k)
+    p.pose(bosse, 'acier', relief(bosse, 3, 1.6), ombre=True)
+    eclat(p, int(cx + 1.6 * k), int(cy - 2.0 * k), rang=5)
+    return tout
+
+
 @picto('def')
 def _def():
     p = Picto()
-    ecu(p, champ='acier', bord='bleu')
+    rondache(p)
     return p
 
 
 def coeur(p, k=1.0, dx=0.0, dy=0.0):
     def P(*pts):
         return poly(*[(15.5 + (x - 15.5) * k + dx, y * k + dy) for x, y in pts])
-    c = P((15.5, 29.0), (4.0, 17.6), (2.2, 11.4)) | ellipse(15.5 + (9.0 - 15.5) * k + dx, 10.0 * k + dy, 7.2 * k, 7.0 * k)
+    c = P((2.4, 12.0), (4.2, 18.0), (15.5, 29.4), (15.5, 10.0)) | ellipse(15.5 + (9.0 - 15.5) * k + dx, 10.6 * k + dy, 7.0 * k, 7.0 * k)
     c = miroir(c, 15.5 + dx)
     p.pose(c, 'coeur', relief(c, 3, 1.2, cy=14 * k + dy), ombre=False)
     refl = ellipse(15.5 + 6.6 * k + dx, 7.6 * k + dy, 2.0 * k, 1.5 * k)
@@ -835,17 +859,20 @@ def _hp():
 
 
 def aile(p, k=1.0, dx=0.0, dy=0.0, mat='vent'):
-    """Une aile ouverte vers le haut à droite : trois rangs de plumes (la vitesse)."""
-    def P(*pts):
-        return poly(*[(x * k + dx, y * k + dy) for x, y in pts])
-    grandes = P((3.0, 26.6), (8.0, 18.0), (14.6, 10.2), (21.0, 4.4), (29.4, 1.6), (26.4, 7.8), (30.0, 8.6), (25.4, 13.4), (28.4, 14.6), (22.6, 18.8), (24.6, 20.2), (16.0, 23.8), (9.0, 26.4))
-    moyennes = P((3.0, 26.6), (7.8, 19.4), (13.6, 13.6), (19.0, 10.6), (17.4, 15.0), (20.2, 15.6), (14.6, 20.0), (8.6, 25.0))
-    p.pose(grandes, mat, relief(grandes, 3, 1.0), ombre=False)
-    # les séparations des grandes plumes : un cran plus sombre, en suivant leur pente (pas de rayure régulière)
-    for (x0, y0, x1, y1) in ((26.4, 7.8, 19.0, 10.6), (25.4, 13.4, 18.0, 15.2), (22.6, 18.8, 16.0, 20.4)):
-        p.cran(trait([(x0 * k + dx, y0 * k + dy), (x1 * k + dx, y1 * k + dy)], 1.0) & grandes, -1)
-    p.pose(moyennes, 'blanc', relief(moyennes, 3, 1.0), ombre=True)
-    return grandes | moyennes
+    """Une aile ouverte vers le haut à droite (la vitesse) : le bord d'attaque bien courbe, quatre plumes au bout."""
+    def T(*pts):
+        return [(x * k + dx, y * k + dy) for x, y in pts]
+    tout = poly(*T((2.6, 27.0), (3.2, 19.6), (6.4, 12.6), (11.6, 7.2), (18.4, 3.4), (29.4, 1.4), (25.6, 6.4), (29.0, 8.4),
+                   (22.8, 11.8), (26.4, 14.6), (18.8, 16.8), (21.8, 20.2), (14.0, 21.8), (16.0, 25.6), (8.2, 26.4)))
+    p.pose(tout, mat, relief(tout, 3, 1.0), ombre=False)
+    # les séparations des plumes : un cran plus sombre, de chaque encoche vers l'épaule
+    for (x0, y0) in ((25.6, 6.4), (22.8, 11.8), (18.8, 16.8), (14.0, 21.8)):
+        p.cran(trait(T((x0, y0), (x0 - (x0 - 6) * 0.42, y0 + (24 - y0) * 0.42)), 1.0) & tout, -1)
+    # le haut de l'aile (les petites plumes), plus clair, le long du bord d'attaque
+    haut = poly(*T((2.6, 27.0), (3.2, 19.6), (6.4, 12.6), (11.6, 7.2), (18.4, 3.4), (24.0, 2.4), (19.2, 7.6), (13.4, 12.0),
+                   (9.4, 17.4), (7.4, 24.0)))
+    p.pose(haut & tout, 'blanc', relief(haut, 3, 1.0), ombre=True)
+    return tout
 
 
 @picto('speed')
@@ -904,15 +931,15 @@ def _critdmg():
 def _dodge():
     """L'esquive : une plume légère, en diagonale."""
     p = Picto()
-    u, d = diag(1, 16, 16)
-    w = np.where(u < -8, 0, np.minimum(4.6, (u + 9) * 0.55)) * np.clip((19 - u) / 9, 0, 1) ** 0.6
-    plume = (u >= -9) & (u <= 19) & (np.abs(d) <= w)
+    u, d = diag(1, 15, 17)
+    w = np.where(u < -14, 0, np.minimum(6.4, (u + 15) * 0.6)) * np.clip((25 - u) / 12, 0, 1) ** 0.6
+    plume = (u >= -15) & (u <= 25) & (np.abs(d) <= w)
     # deux encoches dans les barbes, comme une vraie plume
-    plume &= ~((d < 0) & (np.abs(u - 4) <= 0.6) & (d < -1.5))
-    plume &= ~((d > 0) & (np.abs(u - 9) <= 0.6) & (d > 1.5))
+    plume &= ~((d < 0) & (np.abs(u - 3) <= 0.6) & (d < -2.5))
+    plume &= ~((d > 0) & (np.abs(u - 10) <= 0.6) & (d > 2.5))
     p.pose(plume, 'eau', np.where(d < 0, 4, 2) + (np.abs(d) >= w - 0.8).astype(int) * 0, ombre=False)
-    rachis = (u >= -15) & (u <= 17) & (d == 0)
-    p.pose(rachis, 'blanc', np.where(u < -9, 2, 4), ombre=False)
+    rachis = (u >= -22) & (u <= 23) & (np.abs(d) <= 0.5)
+    p.pose(rachis, 'blanc', np.where(u < -15, 2, 4), ombre=False)
     return p
 
 
@@ -932,6 +959,221 @@ def _tenacity():
     for sens in (-1, 1):
         pointe = poly(*[(15.5 + sens * (15.5 - x), y) for x, y in ((1.0, 19.6), (3.6, 13.6), (7.4, 18.4))])
         p.pose(pointe, met, 4 if sens > 0 else 3, ombre=True)
+    return p
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Les statuts de combat (au-dessus des barres de vie, ~27 px, et en chiffres volants, ~40 px)
+# ---------------------------------------------------------------------------------------------------------------
+def fleche(p, haut=True):
+    """La flèche de hausse (verte, vers le haut) ou de baisse (rouge, vers le bas), en bas à droite, avec son contour."""
+    pts = [(24.5, 15.6), (31.4, 22.6), (27.6, 22.6), (27.6, 30.6), (21.4, 30.6), (21.4, 22.6), (17.6, 22.6)]
+    if not haut:
+        pts = [(x, 46.2 - y) for x, y in pts]
+    m = poly(*pts)
+    decoupe(p, m)
+    mat = 'herbe' if haut else 'sang'
+    p.pose(m, mat, relief(m, 3, 1.2) + (1 if not haut else 0), ombre=False)
+    return m
+
+
+def statut_hausse(dessin, haut):
+    def f():
+        p = Picto()
+        dessin(p)
+        fleche(p, haut)
+        return p
+    return f
+
+
+PICTOS['st-atkUp'] = statut_hausse(lambda p: epee_droite(p, 0.92, -4.5, 0), True)
+PICTOS['st-atkDown'] = statut_hausse(lambda p: epee_droite(p, 0.92, -4.5, 0), False)
+PICTOS['st-defUp'] = statut_hausse(lambda p: rondache(p, 0.86, -3, -3), True)
+PICTOS['st-defDown'] = statut_hausse(lambda p: rondache(p, 0.86, -3, -3), False)
+PICTOS['st-critUp'] = statut_hausse(lambda p: cible(p, 0.86, -3, -3), True)
+PICTOS['st-speedUp'] = statut_hausse(lambda p: aile(p, 0.9, -1, -1), True)
+
+
+@picto('st-burn')
+def _burn():
+    p = Picto()
+    flamme(p, 0, 0, 1.0, 'braise')
+    return p
+
+
+@picto('st-poison')
+def _poison():
+    p = Picto()
+    goutte(p, 13.5, 19.5, 10, 'poison')
+    for (x, y, r) in ((25.4, 9.0, 3.6), (27.0, 17.4, 2.2), (22.8, 3.0, 1.8)):
+        b = ellipse(x, y, r, r)
+        decoupe(p, b)
+        p.pose(b, 'poison', relief(b, 3, 1.4), ombre=False)
+        eclat(p, int(x + r * 0.35), int(y - r * 0.45), rang=5)
+    return p
+
+
+@picto('st-bleed')
+def _bleed():
+    p = Picto()
+    goutte(p, 18.5, 17.5, 10.5, 'sang')
+    m = goutte(p, 6.6, 25.2, 4.4, 'sang')
+    decoupe(p, m)
+    p.pose(m, 'sang', relief(m, 3, 1.3), ombre=False)
+    return p
+
+
+@picto('st-regen')
+def _regen():
+    p = Picto()
+    # une feuille en diagonale, sa nervure claire ; une petite croix de soin en bas à droite
+    feuille = ovale(13.6, 14.4, 12.6, 6.8, 45)
+    p.pose(feuille, 'herbe', relief(feuille, 3, 1.3), ombre=False)
+    u, d = diag(1, 13.6, 14.4)
+    nerv = feuille & (d == 0) & (u > -14) & (u < 14)
+    p.cran(nerv, 2)
+    tige = trait([(4.0, 27.6), (6.8, 23.2)], 1.6)
+    p.pose(tige, 'herbe', 2, ombre=True)
+    croix = rect(23, 17, 26, 30) | rect(18, 22, 31, 25)
+    decoupe(p, croix)
+    p.pose(croix, 'blanc', 4 + (croix & (~S(croix, 0, -1) | ~S(croix, 1, 0))).astype(int) - (croix & (~S(croix, 0, 1) | ~S(croix, -1, 0))).astype(int), ombre=False)
+    return p
+
+
+@picto('st-silence')
+def _silence():
+    p = Picto()
+    bulle = ellipse(15.5, 13.6, 13.4, 10.6) | poly((6.6, 19.6), (4.2, 28.8), (13.4, 22.0))
+    p.pose(bulle, 'blanc', relief(bulle, 3, 1.0, cy=13), ombre=False)
+    # trois points dans la bulle : ce que l'on ne peut plus dire
+    for x in (7, 22):
+        m = rect(x, 12, x + 2, 14)
+        p.pose(m, 'gris', np.where(p.Y == 12, 2, 1), ombre=False)
+    # la barre rouge qui l'interdit
+    barre = trait([(5.0, 27.0), (27.0, 4.0)], 4.0)
+    decoupe(p, barre)
+    p.pose(barre, 'sang', 3 + (barre & ~S(barre, 0, -1)).astype(int) - (barre & ~S(barre, 0, 1)).astype(int), ombre=False)
+    return p
+
+
+@picto('st-slow')
+def _slow():
+    p = Picto()
+    # un escargot : le corps clair, la coquille enroulée
+    corps = poly((1.8, 28.8), (4.2, 24.6), (22.0, 24.2), (26.2, 21.2), (27.6, 15.6), (30.2, 16.8), (30.4, 22.6), (27.6, 27.0), (22.0, 29.2))
+    p.pose(corps, 'creme', relief(corps, 3, 1.0) - (p.Y >= 28).astype(int), ombre=False)
+    for (x0, y0, x1, y1) in ((27.6, 16.6, 26.4, 9.8), (29.6, 17.0, 31.0, 10.6)):
+        cor = trait([(x0, y0), (x1, y1)], 1.2)
+        p.pose(cor, 'creme', 3, ombre=False)
+        oeil = ellipse(x1, y1, 1.3, 1.3)
+        p.pose(oeil, 'nuit', 1, ombre=False)
+    coq = ellipse(13.0, 15.0, 10.2, 10.2) & (p.Y <= 25)
+    decoupe(p, coq)
+    p.pose(coq, 'escargot', relief(coq, 3, 1.2), ombre=False)
+    t = np.linspace(0, 1, 40)
+    a = np.pi * 0.2 + t * np.pi * 2.6
+    r = 8.2 - t * 6.4
+    spir = trait_var([(13.0 + r[i] * np.cos(a[i]), 15.2 + r[i] * np.sin(a[i])) for i in range(len(t))], 1.4, 1.0) & coq
+    p.cran(spir, -2)
+    return p
+
+
+def etoile(cx, cy, r, ang=0.0):
+    pts = []
+    for i in range(10):
+        a = -np.pi / 2 + i * np.pi / 5 + np.radians(ang)
+        rr = r if i % 2 == 0 else r * 0.46
+        pts.append((cx + rr * np.cos(a), cy + rr * np.sin(a)))
+    return poly(*pts)
+
+
+@picto('st-stun')
+def _stun():
+    p = Picto()
+    # des étoiles qui tournent sur un anneau penché
+    anneau_ = ellipse(15.5, 18.0, 14.4, 6.6) & ~ellipse(15.5, 18.0, 11.8, 4.4)
+    p.pose(anneau_, 'blanc', np.where(p.Y < 18, 3, 2) + (p.X > 20).astype(int), ombre=False)
+    for (x, y, r, ang) in ((8.2, 11.8, 6.8, -8), (24.0, 21.0, 6.2, 12), (24.4, 6.4, 4.2, 0)):
+        e = etoile(x, y, r, ang)
+        decoupe(p, e)
+        p.pose(e, 'or', relief(e, 3, 1.3), ombre=False)
+    return p
+
+
+@picto('st-taunt')
+def _taunt():
+    p = Picto()
+    # le signe de la colère : quatre crochets rouges, le coin tourné vers le milieu, les bouts effilés
+    for sx in (0, 1):
+        for sy in (0, 1):
+            def Q(x, y):
+                return (31 - x if sx else x, 31 - y if sy else y)
+            a = trait_var([Q(2.2, 12.6), Q(6.6, 11.6), Q(10.4, 10.4)], 3.4, 4.6)
+            b = trait_var([Q(10.4, 10.4), Q(11.6, 6.6), Q(12.6, 2.2)], 4.6, 3.4)
+            m = a | b
+            p.pose(m, 'sang', relief(m, 3, 1.0) + 1, ombre=True)
+    return p
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Les panoplies : un médaillon (émail à la couleur de la panoplie, cerclé d'or) et son signe
+# ---------------------------------------------------------------------------------------------------------------
+def medaillon(p, email, bord='or'):
+    tout = ellipse(15.5, 15.5, 14.6, 14.6)
+    p.pose(tout, bord, relief(tout, 3, 1.3), ombre=False)
+    champ = ellipse(15.5, 15.5, 11.6, 11.6)
+    p.pose(champ, email, relief(champ, 2, 1.0, cx=15.5, cy=15.5), ombre=True)
+    return champ
+
+
+@picto('set-fury')
+def _fury():
+    p = Picto()
+    medaillon(p, 'rouge')
+    flamme(p, 0, -6.4, 0.66, 'braise')
+    return p
+
+
+@picto('set-guard')
+def _guard():
+    p = Picto()
+    medaillon(p, 'vert')
+    sh = miroir(poly((8.4, 7.6), (15.5, 5.6), (15.5, 25.8), (10.6, 22.4), (8.6, 16.8)))
+    p.pose(sh, 'blanc', np.where(p.X >= 16, 4, 3) - (p.Y > 19).astype(int), ombre=True)
+    return p
+
+
+@picto('set-rampart')
+def _rampart():
+    p = Picto()
+    medaillon(p, 'bronze')
+    tour = rect(10, 11, 21, 24) | rect(9, 7, 11, 10) | rect(14, 7, 17, 10) | rect(20, 7, 22, 10)
+    p.pose(tour, 'creme', np.where(p.X >= 16, 5, 3) - (p.Y > 21).astype(int), ombre=True)
+    porte = rect(14, 18, 17, 24) & ~rect(14, 18, 14, 18) & ~rect(17, 18, 17, 18)
+    p.pose(porte, 'nuit', 2, ombre=False)
+    return p
+
+
+@picto('set-storm')
+def _storm():
+    p = Picto()
+    medaillon(p, 'bleu')
+    eclair = poly((18.6, 4.6), (9.4, 17.4), (14.8, 17.4), (12.2, 27.2), (22.4, 13.2), (16.8, 13.2), (20.6, 4.6))
+    p.pose(eclair, 'or', np.where(p.X - p.Y > -2, 5, 4), ombre=True)
+    return p
+
+
+@picto('set-vampire')
+def _vampire():
+    p = Picto()
+    medaillon(p, 'violet')
+    aile_ = poly((14.0, 12.6), (11.0, 9.4), (7.0, 8.6), (2.8, 10.6), (5.6, 13.6), (7.4, 12.6), (8.8, 16.0), (10.6, 14.4),
+                 (12.4, 18.0), (14.0, 16.0))
+    corps = ellipse(15.5, 15.0, 2.6, 4.2) | poly((13.4, 12.4), (13.6, 8.2), (15.0, 10.8)) | poly((17.6, 12.4), (17.4, 8.2), (16.0, 10.8))
+    chauve = miroir(aile_) | corps
+    p.pose(chauve, 'creme', np.where(p.X >= 16, 5, 3) - (p.Y > 16).astype(int), ombre=True)
+    for x in (14, 17):
+        p.pose(rect(x, 13, x, 13), 'rouge', 3, ombre=False)
     return p
 
 
@@ -980,8 +1222,11 @@ def main(args):
         return
     os.makedirs(PNG, exist_ok=True)
     for n in PICTOS:
+        if n.startswith('st-') and '--statuts' not in args:
+            continue        # les statuts de combat sont dessinés par statuts.py (l'autre atelier) : les miens = une proposition
         sauve(rendu(n), os.path.join(PNG, n + '.png'))
-    sauve(planche(list(PICTOS), k=3), os.path.join(SORTIE, 'equipement-planche.png'))
+    sauve(planche([n for n in PICTOS if not n.startswith('st-')], k=3), os.path.join(SORTIE, 'equipement-planche.png'))
+    sauve(planche([n for n in PICTOS if n.startswith('st-')], k=3), os.path.join(SORTIE, 'equipement-statuts-proposition.png'))
     print(len(PICTOS), 'pictos →', PNG)
 
 

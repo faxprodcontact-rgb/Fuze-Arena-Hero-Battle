@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Le LOGO du jeu en HD (vectoriel, net à toutes les tailles) — demande du propriétaire du 25/11 : « le logo pas en pixel,
 en HD, beau ». Même disposition que l'ancien logo peint : « FUZE / ARENA » en grosses lettres d'or, le ruban rouge
-« HERO BATTLE » bordé d'or, deux épées croisées derrière.
+« HERO BATTLE » bordé d'or, deux épées croisées derrière (plus d'étoile : demande du propriétaire, 25/11).
 
 Les lettres sont les vrais contours de la police des titres du jeu (Lilita One, lilita-one.woff2) convertis en tracés :
 le logo ne dépend d'aucune police chargée. Or : dégradé métallique (haut clair, « ligne d'horizon » au milieu, bas orangé),
@@ -159,7 +159,6 @@ def svg():
   <path d="{ligne_b}" fill="none" stroke="#c98a24" stroke-width="4" stroke-linecap="round"/>
   <path d="{hero}" fill="#2a1030" stroke="#2a1030" stroke-width="9" stroke-linejoin="round" transform="translate(0,3)"/>
   <path d="{hero}" fill="#fff3d6" stroke="#5e1418" stroke-width="5" stroke-linejoin="round" paint-order="stroke"/>
-  <path d="M503,12 l6,16 l16,6 l-16,6 l-6,16 l-6,-16 l-16,-6 l16,-6 Z" fill="#fffbe6"/>
 </svg>'''
 
 

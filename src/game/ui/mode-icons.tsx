@@ -10,6 +10,7 @@
 // Mouvements dans anim.css (classes mi-*).
 import type { ComponentChildren } from 'preact';
 import './anim.css';
+import { Art, hasArt } from './kit';
 import { spark } from './portal';
 
 const f = (n: number) => n.toFixed(1);
@@ -388,6 +389,8 @@ export function hasModeIcon(kind: string): boolean {
 
 /** Le picto animé d'un mode. `class` s'ajoute à `icon mode-icon` (les tuiles règlent la taille par le style). */
 export function ModeIcon({ kind, size = 86, class: cls = '' }: { kind: string; size?: number; class?: string }) {
+  // nouvelle DA : le picto pixel art de la planche (refonte-graphique/pixel/ui/pictos/modes.py) remplace le dessin SVG
+  if (hasArt(kind)) return <Art name={kind} size={size} class={`icon mode-icon mode-icon-${kind} ${cls}`} />;
   const Draw = ICONS[kind];
   if (!Draw) return null;
   return (
