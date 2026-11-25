@@ -25,8 +25,14 @@
 #
 # Ce qui le distingue de Kael (l'autre héros de lave) : Kael est un escrimeur (taille à l'épée, crinière de flammes,
 # mur de feu qui roule au sol). Garvin ne fait pas de flammes : il frappe la terre du poing (le sol se fend, la roche
-# saute) et sa spéciale est un BOUCLIER : des plaques de basalte arrachées au sol se soudent en dôme autour de lui,
-# chauffent à blanc, et il les projette d'un coup de poing sur l'ennemi comme une volée de rochers en fusion.
+# saute) et sa spéciale est un REMPART : des plaques de basalte arrachées au sol forment un dôme autour de lui.
+#
+# Spéciale (sort d'équipe, refaite le 25/11/2026 : défense de l'équipe +30 %, soin de soi, provocation) :
+#   MOMENT DE LANCEMENT = IMAGE 7 (le dôme s'ouvre : les plaques s'écartent de lui dans toutes les directions et une
+#   onde de chaleur court au sol en cercle autour de lui ; c'est là que le jeu pose l'effet commun « défense » sur
+#   l'équipe). Le soin (sur lui seul) se voit aux images 9 à 11 ; le défi (provocation) à l'IMAGE 14 (les deux poings
+#   l'un contre l'autre, lueur rouge douce) : l'effet commun « provocation » (anim/effets) pose la marque au-dessus de
+#   sa tête, elle n'est donc pas dessinée ici. Rien ne part vers l'ennemi.
 import sys, os, math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -1035,14 +1041,16 @@ ATTAQUE = [
     dict(ms=160),
 ]
 # ---------------------------------------------------------------- 3) l'attaque spéciale : « Rempart en fusion »
-# Le protecteur se fait rempart, puis le lance. Il se ramasse (genoux pliés, tête rentrée, le poing levé redescend
+# Sort d'équipe (rien ne part vers l'ennemi). Il se ramasse (genoux pliés, tête rentrée, le poing levé redescend
 # devant la poitrine) et sa lave monte : le sol rougeoie sous ses pieds, huit plaques de basalte s'arrachent du sol de
-# part et d'autre et montent en arc autour de lui jusqu'à former un dôme (les plaques de derrière passent derrière
-# lui, aucune devant son visage). Les joints du dôme se remplissent de lave, les plaques chauffent au rouge puis à
-# blanc (longue attente). Un coup de poing droit devant lui : arrêt sur l'image (éclair), le dôme éclate et TOUTES
-# les plaques volent vers l'ennemi en cloche (celles de derrière passent au-dessus de sa tête), en laissant des
-# traînées de braise courbes et de la fumée. Elles s'écrasent sur l'ennemi : gerbe de lave, éclats incandescents,
-# fumée en volutes, flaque de lave au sol qui refroidit. Il ramène lentement le poing en garde.
+# part et d'autre et montent en arc autour de lui jusqu'à former un dôme. Les joints du dôme se remplissent de lave,
+# les plaques chauffent au rouge puis à blanc (longue attente). LANCEMENT (image 7) : il se redresse d'un coup, le
+# poing levé, et le dôme s'ouvre : les plaques s'écartent de lui dans toutes les directions et se posent debout en
+# anneau autour de ses pieds (devant et derrière lui), une onde de chaleur court au sol en cercle ; elles luisent puis
+# se rassoient dans le sol en laissant des fentes de lave qui refroidissent. Pendant ce temps ses fissures se
+# referment et luisent doucement, une chaleur d'or monte autour de lui (le soin). Enfin le défi : il écarte les bras
+# et frappe ses deux poings l'un contre l'autre devant sa poitrine, face à l'ennemi (arrêt sur l'image, étincelles),
+# une lueur rouge douce l'entoure, gonfle et s'éteint ; il laisse retomber les bras en garde.
 SHELL_C = (64.0, 66.0)               # le centre du dôme (grille)
 SHELL_R = (78.0, 70.0)               # ses rayons (largeur, hauteur)
 # les plaques : angle sur le dôme (degrés), longueur, épaisseur, graine de forme, envol (bosse, écart à l'arrivée)
