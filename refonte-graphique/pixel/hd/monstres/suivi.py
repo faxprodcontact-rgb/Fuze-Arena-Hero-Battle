@@ -40,8 +40,10 @@ CHEFS = {'arachne': 'Arachné', 'meduse': 'Méduse', 'kesha': 'Kesha', 'barzul':
 VALIDES = set()
 RETOUCHES = {}
 FAITES = set()
+# dessins finis par leur artiste (les autres fichiers sont encore en cours de dessin)
+FINIS = {'araignee-bondissante', 'araignee-cuirassee', 'araignee-tisseuse'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
-LABEL = {'valide': 'Validé', 'retouche': 'Retouche en cours', 'aregarder': 'À regarder', 'afaire': 'À faire'}
+LABEL = {'valide': 'Validé', 'retouche': 'Retouche en cours', 'aregarder': 'À regarder', 'encours': 'En cours', 'afaire': 'À faire'}
 ANIMDIR = os.path.join(HD, 'sortie', 'anim-monstres')
 
 
@@ -62,7 +64,9 @@ def state(nom):
         return 'aregarder'
     if nom in RETOUCHES:
         return 'retouche'
-    return 'aregarder' if os.path.exists(path(nom)) else 'afaire'
+    if nom in FINIS:
+        return 'aregarder'
+    return 'encours' if os.path.exists(path(nom)) else 'afaire'
 
 
 def clip(nom):
@@ -87,12 +91,12 @@ def clip(nom):
 def card(m):
     nom, name, role, what = m
     st = state(nom)
-    c = clip(nom) if st != 'afaire' else None
+    c = clip(nom) if st not in ('afaire', 'encours') else None
     if c:
         pic = f'<img src="{c}" loading="lazy" alt="{name} animé">'
         cls = 'card anim ' + st
-    elif st == 'afaire':
-        pic, cls = '<div class="empty">À dessiner</div>', 'card afaire'
+    elif st in ('afaire', 'encours'):
+        pic, cls = '<div class="empty">' + ('En cours de dessin' if st == 'encours' else 'À dessiner') + '</div>', 'card afaire'
     else:
         pic, cls = f'<img src="{uri(hd.frames(path(nom))[0])}" alt="{name}">', 'card ' + st
     note = f'<p class="note">{RETOUCHES[nom]}</p>' if nom in RETOUCHES and st == 'retouche' else ''
@@ -108,7 +112,7 @@ def card(m):
 def main():
     allm = [m for _, _, ms in ROSTER for m in ms]
     counts = {k: sum(1 for m in allm if state(m[0]) == k) for k in LABEL}
-    done = len(allm) - counts['afaire']
+    done = len(allm) - counts['afaire'] - counts['encours']
     secs = []
     for key, title in ELEMENTS:
         clans = [r for r in ROSTER if r[1] == key]
@@ -117,14 +121,14 @@ def main():
             face = hd.frames(chef)[0]
             body += (f'<div class="clan"><h3><img src="{uri(face)}" alt="">Clan de {CHEFS[chef]} <small>chef : {CHEFS[chef]} (boss)</small></h3>'
                      f'<div class="trio">{"".join(card(m) for m in ms)}</div></div>')
-        n = sum(1 for _, _, ms in clans for m in ms if state(m[0]) != 'afaire')
+        n = sum(1 for _, _, ms in clans for m in ms if state(m[0]) not in ('afaire', 'encours'))
         secs.append(f'<section class="el {key}"><header><h2>{title}</h2><span class="count">{n} / {3 * len(clans)} dessinés</span></header>'
                     f'<div class="clans">{body}</div></section>')
     html = open(os.path.join(HERE, 'suivi-modele.html'), encoding='utf-8').read()
     html = (html.replace('{{DATE}}', datetime.date.today().strftime('%d/%m/%Y')).replace('{{DONE}}', str(done))
             .replace('{{TOTAL}}', str(len(allm))).replace('{{VALIDE}}', str(counts['valide']))
             .replace('{{RETOUCHE}}', str(counts['retouche'])).replace('{{AREGARDER}}', str(counts['aregarder']))
-            .replace('{{AFAIRE}}', str(counts['afaire'])).replace('{{PCT}}', str(round(100 * done / len(allm))))
+            .replace('{{AFAIRE}}', str(counts['afaire'] + counts['encours'])).replace('{{PCT}}', str(round(100 * done / len(allm))))
             .replace('{{SECTIONS}}', '\n'.join(secs)))
     out = os.path.join(HD, 'sortie', 'suivi-monstres.html')
     open(out, 'w', encoding='utf-8').write(html)
