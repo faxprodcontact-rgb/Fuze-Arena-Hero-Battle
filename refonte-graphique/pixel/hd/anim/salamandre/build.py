@@ -124,7 +124,8 @@ SWAY = [0, -1, 0, 1]                 # le balancement d'une langue au fil des ph
 def crest(g, phase=0, flare=0.0, lean=0):
     """la crête : chaque langue se balance d'un pixel selon sa phase ; flare > 0 : elles grandissent (étirées vers le
     haut, colonne par colonne, au pixel près) ; lean : le haut des langues part en arrière (vers la gauche) quand la
-    bête se jette en avant."""
+    bête se jette en avant. Renvoie (le dessin sans la crête, la crête seule) : la crête est posée à part sur le dos
+    plié (chaque colonne de flamme suit le point du dos où elle est plantée), pour qu'elle ne se casse jamais."""
     out = g.copy()
     out[CREST] = '.'
     src = np.where(CREST, g, '.')
@@ -151,9 +152,7 @@ def crest(g, phase=0, flare=0.0, lean=0):
                 if 1 <= hs <= hmax and top - h >= 0:
                     st[top - h, x] = moved[top - hs, x]
         moved = st
-    m = moved != '.'
-    out[m & (out == '.')] = moved[m & (out == '.')]
-    return out
+    return out, moved
 
 
 # ---------------------------------------------------------------- la gueule qui s'ouvre
@@ -253,11 +252,24 @@ def body(spec):
     g = glow(g, THROAT, spec.get('gt', 0))
     g = glow(g, CREST, spec.get('gc', 0))
     g = glow(g, MOUTH, spec.get('gm', spec.get('gt', 0)))
-    g = crest(g, spec.get('f', 0), spec.get('flare', 0.0), spec.get('lean', 0))
+    g, flames = crest(g, spec.get('f', 0), spec.get('flare', 0.0), spec.get('lean', 0))
     g = open_jaw(g, spec.get('jaw', 0), spec.get('fire', 0))
     if spec.get('k'):
         g = blink(g)
-    return bend(g, spec.get('h', (0, 0)), spec.get('c', (0, 0)), spec.get('t', (0, 0)))
+    hv, cv_, tv = spec.get('h', (0, 0)), spec.get('c', (0, 0)), spec.get('t', (0, 0))
+    cv = bend(g, hv, cv_, tv)
+    # la crête, posée derrière le dos plié : chaque colonne suit le point du dos où elle est plantée
+    for x in range(GW):
+        ys = np.nonzero(flames[:, x] != '.')[0]
+        if not len(ys):
+            continue
+        dx, dy = field(float(x), float(SKIN_TOP[x]), hv, cv_, tv)
+        dx, dy = int(math.floor(dx + 0.5)), int(math.floor(dy + 0.5))
+        for y in ys:
+            X, Y = x + dx + OX, y + dy + OY
+            if 0 <= X < W and 0 <= Y < H and cv[Y, X] == '.':
+                cv[Y, X] = flames[y, x]
+    return cv
 
 
 def mouth_pos(spec):
@@ -543,19 +555,18 @@ POSE = [
 
 
 def fx_nostril_smoke(spec):
-    """un petit filet de fumée sort des narines et monte en s'enroulant (k = 0..3)"""
+    """une petite bouffée de fumée sort des narines à l'expiration, monte et se défait (k = 0..3)"""
     k = spec['smoke']
     front = empty()
-    nx, ny = 122 + OX, 53 + OY + spec['h'][1] + spec['c'][1]
+    nx, ny = 123 + OX, 52 + OY + spec['h'][1] + spec['c'][1]
     if k == 0:
-        put(front, nx + 1, ny - 1, 'i')
-        put(front, nx + 2, ny - 2, 'h')
+        puff(front, (nx + 1.5, ny - 0.5), 1.2, 'hi')
     elif k == 1:
-        wisp(front, (nx + 1, ny - 1), 5, 1.4, sway=0.6, tones='hij')
+        puff(front, (nx + 2.5, ny - 2.5), 1.9, 'hij')
     elif k == 2:
-        wisp(front, (nx + 2, ny - 2), 8, 1.6, sway=0.8, tones='hij', tail=0.35)
+        puff(front, (nx + 3.5, ny - 5), 2.3, 'hij', hollow=0.35)
     else:
-        wisp(front, (nx + 3, ny - 5), 8, 1.4, sway=0.8, tones='hi', tail=0.7)
+        puff(front, (nx + 4.5, ny - 8), 2.2, 'hi', hollow=0.65)
     return front
 
 
@@ -569,38 +580,28 @@ FB_PATH = [(146, 87), (176, 90), (216, 94), (258, 98), (300, 101), (340, 104)]  
 
 
 def fireball(cv, c, r, phase=0.0, tail=22, embers=True):
-    """la boule de feu qui file vers la droite : boule blanc chaud (le devant plus clair), queue de flammes qui ondule
-    et se recourbe vers le haut, deux petites langues qui s'en détachent, des braises derrière"""
+    """la boule de feu qui file vers la droite : une boule ronde blanc chaud (le devant plus clair) suivie de trois ou
+    quatre bouffées de feu espacées, de plus en plus petites et rouges, qui ondulent et montent un peu (le feu monte),
+    une langue couchée vers l'arrière au-dessus, des braises derrière"""
     bx, by = c
-    # la queue : une flamme couchée qui ondule (elle monte un peu : le feu monte)
-    pts, ws, cool = [], [], []
-    n = 26
-    for i in range(n + 1):
-        s = i / n
+    items = []
+    for j, (s, k) in enumerate(((0.3, 0.88), (0.55, 0.7), (0.78, 0.52), (1.0, 0.36))):
         x = bx - s * tail
-        y = by - 2.2 * s * s * (tail / 22) + 1.6 * math.sin(phase + s * 5.0) * s
-        pts.append((x, y))
-        ws.append(2 * r * (1 - s) ** 0.75 + 0.4)
-        cool.append(min(0.9, 0.15 + 0.85 * s))
-    stroke(cv, pts, ws, 'wvutsr', cool=cool)
-    # deux petites langues qui s'arrachent du haut de la queue (recourbées vers l'arrière)
-    for s0, hh in ((0.35, 0.55), (0.62, 0.4)):
-        i0 = int(s0 * n)
-        x, y = pts[i0]
-        lp = bezier((x, y - ws[i0] * 0.3), (x - 3, y - 3 - 2 * math.sin(phase)), (x - 6, y - 4),
-                    (x - 9 * hh * 2, y - 5 * hh * 2 + math.sin(phase + s0 * 6)), 14)
-        lw = [max(0.4, 2.2 * hh * 2 * (1 - j / 14) ** 0.8) for j in range(15)]
-        stroke(cv, lp, lw, 'utsr', cool=[min(0.9, 0.3 + 0.6 * j / 14) for j in range(15)])
-    # la boule : coeur blanc un peu en avant (vers où elle va), bords orangés
-    for y in range(int(by - r - 2), int(by + r + 3)):
-        for x in range(int(bx - r - 2), int(bx + r + 3)):
+        y = by - 2.0 * s + (1.8 if (j + int(phase)) % 2 else -1.4) * s
+        items.append((x, y, r * k, 0.5 - 0.3 * s))
+    billows(cv, items)
+    # la langue : elle part du haut de la boule et se couche en arrière en montant
+    tongue(cv, (bx - r * 0.3, by - r * 0.5), 7 + 1.5 * math.sin(phase * 1.7), 5.0, bend=-1.3, lean=-1.1,
+           tones='vuuts', fork=False)
+    # la boule
+    for y in range(int(by - r - 1), int(by + r + 2)):
+        for x in range(int(bx - r - 1), int(bx + r + 2)):
             d = math.hypot(x + 0.5 - bx, y + 0.5 - by)
-            if d <= r + 0.3:
-                dc = math.hypot(x + 0.5 - (bx + r * 0.25), y + 0.5 - (by - r * 0.15))
-                k = dc / (r * 1.15)
-                put(cv, x, y, 'wwvvut'[min(5, int(k * 6))])
+            if d <= r:
+                dc = math.hypot(x + 0.5 - (bx + r * 0.3), y + 0.5 - (by - r * 0.25))
+                put(cv, x, y, 'wwvvuuts'[min(7, int(dc / (r * 1.25) * 8))])
     if embers:
-        for j, (ex, ey) in enumerate(((-tail - 3, -1), (-tail * 0.7, 4), (-tail - 7, 2.5), (-tail * 0.45, -5))):
+        for j, (ex, ey) in enumerate(((-tail - 5, -3), (-tail * 0.7, 5.5), (-tail - 10, 2.5), (-tail * 0.45, -7))):
             ember(cv, bx + ex + 2 * math.sin(phase + j), by + ey, big=(j == 0))
 
 
@@ -621,7 +622,7 @@ def fx_fb(spec):
                         (mx + 4, my - 5, 2.5, 0.6), (mx + 10, my + 1, 3.0, 0.9)])
     elif isinstance(st, int):
         x, y = FB_PATH[st]
-        fireball(front, (x, y), 4.2 if st < 3 else 4.0, phase=st * 1.7, tail=20 + 4 * min(st, 2))
+        fireball(front, (x, y), 6.0 if st < 3 else 5.5, phase=st * 1.7, tail=16 + 4 * min(st, 2))
     p = spec.get('puff')
     if p is not None:
         # ce qui reste devant la gueule : flammèches qui retombent en fumée, qui monte et s'enroule
@@ -631,13 +632,12 @@ def fx_fb(spec):
             billows(front, [(mx + 4, my - 2, 3.5, 0.3), (mx + 8, my - 4, 2.6, 0.12), (mx + 2, my - 4, 2.2, 0.1)])
             ember(front, mx + 10, my + 3)
         elif p == 2:
-            cloud(front, (mx + 6, my - 6), 3.2, 'hhij', seed=3, ground=False)
+            cloud(front, (mx + 6, my - 5), 4.2, 'hhij', seed=3, ground=False)
             ember(front, mx + 12, my + 6)
         elif p == 3:
-            cloud(front, (mx + 7, my - 10), 2.8, 'hhij', hollow=0.5, seed=3, ground=False)
-            wisp(front, (mx + 5, my - 4), 6, 1.3, sway=0.7, tones='hi', tail=0.4)
+            cloud(front, (mx + 7, my - 9), 4.4, 'hhij', hollow=0.4, seed=3, ground=False)
         elif p == 4:
-            wisp(front, (mx + 7, my - 9), 7, 1.2, sway=0.7, tones='hi', tail=0.7)
+            cloud(front, (mx + 8, my - 13), 3.8, 'hij', hollow=0.75, seed=3, ground=False)
     return back, front
 
 

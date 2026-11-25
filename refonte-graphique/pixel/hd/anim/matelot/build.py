@@ -853,11 +853,11 @@ def fx_cut(k):
         R = float(np.linalg.norm(tip - ctx.fist_c))
         seeds = [(3.0, -3.6), (4.4, -2.0), (2.0, -4.8), (5.2, -0.6), (1.2, -2.8)]
         if k == 0:
-            water_arc(back, ctx.fist_c, R - 1, ctx.a + 4, 64, 6.0)
-            pop(front, tip + np.array([2.0, 0.0]), 4.5, facing=-20, tones='WWXY')
+            water_arc(back, ctx.fist_c, R - 1, ctx.a + 4, 80, 7.5)
+            pop(front, tip + np.array([2.0, 0.0]), 5.5, facing=-20, tones='WWXY')
             spray(front, tip + np.array([2.0, -1.0]), 0.8, seeds, g=0.8)
         elif k == 1:
-            water_arc(back, ctx.fist_c, R - 1, ctx.a + 4, 64, 4.6, tail=0.45)
+            water_arc(back, ctx.fist_c, R - 1, ctx.a + 4, 80, 5.6, tail=0.45)
             curl(front, tip + np.array([5.0, -4.0]), 3.0, 200, turn=260, w=1.8, tones='WXY', cw=True)
             spray(front, tip + np.array([2.0, -1.0]), 2.2, seeds, g=0.8)
         else:
@@ -886,7 +886,7 @@ def fx_dust(k, x0=None, back_only=False):
 # rebondit en arrière et retombe à sa place, genoux pliés, en garde.
 ATTAQUE = [
     dict(crouch=1, lean=-2, fist=(-5, -9), a=100, bend=1, head=(0, 0), pl=1, na=2, ms=90),
-    dict(crouch=3, lean=-4, fist=(-8, -13), a=128, bend=1, blade_behind=True, head=(-1, 1), pl=2, na=3, ms=210),
+    dict(crouch=3, lean=-4, fist=(-6, -14), a=128, bend=1, blade_behind=True, head=(-1, 1), pl=2, na=3, ms=210),
     dict(tx=20, lift=5, crouch=-2, lean=5, fist=(5, -10), a=62, bend=1, head=(0, 0), pl=-2, na=-3,
          smear=fx_swing(128, 'oWXYZ', 6.0), fx_list=[fx_dust(0, x0=SOL[0], back_only=True)], ms=50),
     dict(tx=34, lift=1, crouch=1, lean=6, fist=(12, -1), a=-22, bend=1, head=(0, 0), pl=-2, na=-3,
@@ -899,3 +899,316 @@ ATTAQUE = [
     dict(crouch=1, pl=1, na=1, fx_list=[fx_dust(2)], ms=100),
     dict(ms=120),
 ]
+
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Vague d'abordage »
+# Il se ramasse, sabre levé : l'eau sourd en flaque à ses pieds et une vague se lève derrière lui. Elle le soulève, il
+# bondit de sa crête (genoux repliés, sabre haut derrière la tête, la vague roule sous lui en écumant) ; au sommet du
+# bond il se tend (temps suspendu), puis plonge sur l'ennemi en taillant de toute sa hauteur : un grand croissant
+# d'eau suit la lame. Impact (éclair, arrêt sur l'image) : la vague s'écrase avec lui en une gerbe d'eau en couronne
+# sur l'ennemi, l'écume roule au sol ; les gouttes retombent pendant qu'il rebondit en arrière à sa place.
+def wave_mask(X, G, h, brk=0.0):
+    """la forme d'une vague (masque) : dos en pente douce à gauche, crête en X à h pixels du sol, lèvre qui s'enroule
+    vers l'avant (brk = 0 dressée … 1 elle plonge), creux sous la lèvre, pied qui s'étale vers l'avant.
+    Renvoie (masque, pointe de la lèvre, crête)"""
+    C = (X, G - h)
+    back = bezier((X - 1.15 * h, G), (X - 0.6 * h, G), (X - 0.4 * h, G - h), C, 24)
+    T = (X + (0.42 + 0.4 * brk) * h, G - (0.62 - 0.5 * brk) * h)
+    lip = bezier(C, (X + 0.32 * h, G - 1.04 * h), (X + (0.55 + 0.3 * brk) * h, G - (0.9 - 0.4 * brk) * h), T, 16)
+    I = (X + (0.2 + 0.12 * brk) * h, G - (0.52 - 0.18 * brk) * h)
+    inner = bezier(T, (T[0] - 0.08 * h, T[1] + 0.06 * h), (I[0] + 0.1 * h, I[1] + 0.02 * h), I, 8)
+    face = bezier(I, (X + 0.12 * h, G - 0.28 * h), (X + 0.32 * h, G), (X + (0.62 + 0.3 * brk) * h, G), 16)
+    poly = back + lip[1:] + inner[1:] + face[1:]
+    im = Image.new('L', (W, H), 0)
+    ImageDraw.Draw(im).polygon([(float(x), float(y)) for (x, y) in poly], fill=255)
+    m = np.asarray(im) > 0
+    m[GROUND + 1:] = False
+    return m, np.array(T), np.array(C)
+
+
+def wave(cv, X, h, brk=0.0, foam_cv=None, seed=0):
+    """une vague modelée par la lumière : dos et creux en bleus, crête et lèvre en écume, un bouillon au pied"""
+    G = GROUND
+    m, T, C = wave_mask(X, G, h, brk)
+    yy, xx = np.mgrid[0:H, 0:W]
+    top = (yy < G - 0.72 * h + (xx - X) * 0.25) & (xx > X - 0.5 * h)
+    shade_mask(cv, m, 'XYZAB', foam=top)
+    fc = foam_cv if foam_cv is not None else cv
+    # l'écume qui roule sur la lèvre (une volute), le bouillon au pied de la vague
+    curl(fc, (T[0] - 1, T[1] - 2), max(2.2, 0.09 * h), 250, turn=280, w=max(1.6, 0.06 * h), tones='WXY', cw=True)
+    foam(fc, (X + 0.55 * h, G - 2), max(2.0, 0.12 * h), seed=seed)
+    foam(fc, (X - 0.7 * h, G - 1), max(1.6, 0.08 * h), seed=seed + 1)
+    return T, C
+
+
+def fx_gather(k):
+    """l'eau qui sourd : k = 0 une flaque en anneau et des gouttes qui montent ; 1 la vague se lève derrière lui"""
+    def f(cv, back, front, ctx):
+        cx, gy = SOL[0] + 2, GROUND - 2
+        if k == 0:
+            ribbon(back, (cx, gy), 30, 4, 25, 155, 2.6, tones='YZA')
+            ribbon(front, (cx, gy), 30, 4, 205, 335, 3.2, tones='XYZA')
+            for (x, y, s) in ((cx - 26, gy - 6, 2), (cx + 30, gy - 8, 2), (cx - 8, gy - 4, 1), (cx + 14, gy - 5, 1)):
+                drop(front, x, y, s, v=(0, -2))
+        else:
+            ribbon(front, (cx, gy), 34, 5, 205, 335, 3.4, tones='XYZA')
+            wave(back, SOL[0] - 30, 22, 0.0, seed=3)
+            for (x, y, s) in ((cx - 4, gy - 30, 2), (cx - 40, gy - 26, 2), (cx + 32, gy - 14, 2)):
+                drop(front, x, y, s, v=(0, -3))
+    return f
+
+
+def fx_ride(h, dx, brk=0.0):
+    """la vague qui le porte : sa crête est dx pixels derrière ses pieds (toile) ; des gouttes volent de la lèvre"""
+    def f(cv, back, front, ctx):
+        X = SOL[0] + ctx.body.tx + dx
+        T, C = wave(back, X, h, brk, foam_cv=back, seed=5)
+        seeds = [(2.6, -3.0), (3.8, -1.6), (1.4, -4.2), (4.6, -0.4)]
+        spray(front, (T[0] + 2, T[1] - 2), 1.2, seeds, g=0.6)
+    return f
+
+
+def fx_crash(k):
+    """l'impact : k = 0 éclair blanc, la vague s'écrase en écume et la gerbe en couronne jaillit sur l'ennemi ;
+    1 à 5 la couronne monte, s'ouvre et retombe, l'écume roule au sol et se défait ; 6 et 7 les dernières gouttes"""
+    def f(cv, back, front, ctx):
+        X = ENEMY_X
+        G = GROUND - 1
+        seeds = [(-3.4, -6.0), (3.6, -6.6), (-2.0, -8.0), (2.2, -8.6), (-4.8, -4.4), (5.0, -5.0), (0.6, -9.4)]
+        tip = ctx.tip
+        if k == 0:
+            pop(front, (tip[0] + 2, tip[1] - 2), 6.0, facing=-10, tones='WWXY')
+            crown(front, X, G, 0, 1.3, seed=2)
+            pop(front, (X, G - 8), 7.0, facing=90, tones='WWX')
+            # la vague écrasée : un gros bouillon d'écume qui roule de lui jusqu'à l'ennemi
+            foam(back, (X - 52, G - 3), 7.0, seed=21)
+            foam(back, (X - 28, G - 4), 8.5, seed=22)
+            foam(back, (X - 74, G - 2), 5.0, seed=23)
+            return
+        if k <= 5:
+            crown(front, X, G, k, 1.3, seed=2)
+        if k == 1:
+            pop(front, (X, G - 13), 5.0, facing=90, tones='WWX')
+        if 2 <= k <= 7:
+            spray(front, (X, G - 18), k - 1.6, [(vx * 1.3, vy * 1.3) for (vx, vy) in seeds], g=1.0,
+                  sizes=(4, 3, 3, 2))
+        # l'écume au sol : elle bouillonne, s'étale et s'enroule, puis se défait
+        if k <= 5:
+            hol = min(0.92, 0.2 * k)
+            foam(back, (X - 52 - 3 * k, G - 3), max(2.0, 7.0 - 0.6 * k), hollow=hol, seed=21)
+            foam(back, (X - 28 + 2 * k, G - 4), max(2.0, 8.5 - 0.8 * k), hollow=hol, seed=22)
+            if k <= 3:
+                foam(back, (X - 74 - 4 * k, G - 2), 5.0 - 0.6 * k, hollow=hol, seed=23)
+            if 2 <= k:
+                sp = (k - 1) * 6
+                curl(front, (X - 24 - sp, G - 3), 3.0, 90, turn=260, w=1.8, tones='WXY')
+                curl(front, (X + 26 + sp, G - 3), 3.0, 90, turn=260, w=1.8, tones='WXY', cw=True)
+    return f
+
+
+def fx_big_cut(k):
+    """le grand croissant d'eau de la taille plongeante (il reste un instant à l'impact, puis se défait)"""
+    def f(cv, back, front, ctx):
+        R = float(np.linalg.norm(ctx.tip - ctx.fist_c))
+        if k == 0:
+            water_arc(back, ctx.fist_c, R - 1, ctx.a + 4, 120, 8.0)
+        elif k == 1:
+            water_arc(back, ctx.fist_c, R - 1, ctx.a + 4, 120, 6.0, tail=0.5)
+    return f
+
+
+SPECIALE = [
+    dict(crouch=2, lean=-2, fist=(-5, -9), a=100, head=(0, 0), pl=1, na=2, fx_list=[fx_gather(0)], ms=100),
+    dict(crouch=4, lean=-4, fist=(-6, -14), a=128, blade_behind=True, head=(-1, 1), pl=2, na=3,
+         fx_list=[fx_gather(1)], ms=190),
+    dict(tx=10, lift=12, crouch=-2, lean=2, fist=(-7, -15), a=132, blade_behind=True, pl=-1, na=-2,
+         fx_list=[fx_ride(16, -14)], ms=70),
+    dict(tx=28, lift=30, crouch=4, lean=2, fist=(-4, -17), a=150, blade_behind=True, pl=-2, na=-3,
+         fx_list=[fx_ride(34, -16, 0.15)], ms=80),
+    dict(tx=44, lift=36, crouch=5, lean=3, fist=(-3, -18), a=164, blade_behind=True, head=(0, -1), pl=-2, na=-3,
+         fx_list=[fx_ride(38, -28, 0.4)], ms=110),
+    dict(tx=58, lift=14, crouch=0, lean=6, fist=(12, -2), a=-8, pl=2, na=-3,
+         smear=fx_swing(164, 'oWXYZA', 9.0), fx_list=[fx_ride(30, -40, 0.8)], ms=50),
+    dict(tx=62, crouch=4, lean=6, fist=(12, 4), a=-38, head=(0, 1), pl=1, na=-3,
+         fx_list=[fx_big_cut(0), fx_crash(0)], ms=170),
+    dict(tx=62, crouch=4, lean=6, fist=(12, 4), a=-38, head=(0, 1), pl=-1, na=-3,
+         fx_list=[fx_big_cut(1), fx_crash(1)], ms=110),
+    dict(tx=62, crouch=4, lean=6, fist=(12, 4), a=-38, pl=-2, na=-2, fx_list=[fx_crash(2)], ms=90),
+    dict(tx=62, crouch=3, lean=5, fist=(11, 3), a=-34, pl=-1, na=-2, fx_list=[fx_crash(3)], ms=90),
+    dict(tx=62, crouch=3, lean=4, fist=(10, 2), a=-30, pl=0, na=-1, fx_list=[fx_crash(4)], ms=90),
+    dict(tx=36, lift=10, crouch=-1, lean=-2, fist=(4, -4), a=20, pl=2, na=0, fx_list=[fx_crash(5)], ms=60),
+    dict(tx=12, lift=4, crouch=0, lean=-1, fist=(2, -2), a=34, pl=2, na=1, fx_list=[fx_crash(6)], ms=70),
+    dict(crouch=3, lean=-1, fist=(1, 0), a=42, head=(0, 1), pl=1, na=1, fx_list=[fx_crash(7), fx_dust(0)], ms=90),
+    dict(crouch=1, pl=0, na=1, fx_list=[fx_dust(2)], ms=100),
+    dict(ms=130),
+]
+
+
+# ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
+# RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du monstre à partir de
+# (x, y) en coordonnées de la GRILLE du dessin, relatives au buste de l'image ; '.' efface, ' ' laisse le pixel.
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+
+
+def retouch(cv, fixes, o):
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                X, Y = int(x + i + o[0]), int(y + o[1])
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = ch
+
+
+# ---------------------------------------------------------------- toutes les images, et les fichiers
+def build_all():
+    anims = {}
+    for name, specs in (('pose', POSE), ('attaque', ATTAQUE), ('speciale', SPECIALE)):
+        fr = []
+        for i, spec in enumerate(specs):
+            cv, back, front, ctx = rig_frame(dict(spec))
+            retouch(cv, RETOUCHES[name].get(i, []), ctx.o)
+            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+        anims[name] = fr
+    return anims
+
+
+def on_bg(img, bg=BG):
+    im = Image.new('RGBA', (img.shape[1], img.shape[0]), bg + (255,))
+    im.alpha_composite(Image.fromarray(img, 'RGBA'))
+    return im
+
+
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin),
+            min(H, ys.max() + 1 + margin))
+
+
+GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet_ = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet_.paste(im, (0, i * H0))
+    ncol = len(sheet_.getcolors(maxcolors=1 << 20) or [])
+    if ncol <= 256:
+        pal = sheet_.quantize(colors=min(256, ncol), method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet_.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def attack_box(anims):
+    """une seule case pour les deux attaques (même sol, même place) : on voit jusqu'où il bondit et la portée des
+    effets"""
+    return bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 6)
+
+
+def planche(anims, path, box, k=3, per=None):
+    per = per or {'pose': 8, 'attaque': 5, 'speciale': 4}
+    blocks = []
+    for name in ('pose', 'attaque', 'speciale'):
+        bx = GAME_BOX if name == 'pose' else box
+        cells = [on_bg(img).crop(bx) for img, _ in anims[name]]
+        blocks.append((name, per[name], cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(p, len(cells)) * (cells[0].width * k + 6) for _, p, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + p - 1) // p) * (cells[0].height * k + 22) for _, p, cells, _ in blocks)
+    sh = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sh)
+    y = 6
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': "ATTAQUE DE BASE (coup d'abordage)",
+              'speciale': "ATTAQUE SPECIALE (vague d'abordage)"}
+    for name, p, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % p == 0:
+                y += ch + 22
+            X = 6 + (i % p) * (cw + 6)
+            sh.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sh.save(path)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    bb = attack_box(anims)
+    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    planche(anims, os.path.join(OUT, f'anim-{NAME}-planche.png'), bb)
+    # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat (prairie), ×2
+    seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
+    box = bb
+    bw, bh = box[2] - box[0], box[3] - box[1]
+    try:
+        fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
+        fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        strip = fond.crop((0, fy, fond.width, fy + bh))
+        base = Image.new('RGBA', (bw, bh))
+        x, flip = 0, False
+        while x < bw:                                   # la prairie est plus étroite que la scène : prolongée en miroir
+            base.paste(strip.transpose(Image.FLIP_LEFT_RIGHT) if flip else strip, (x, 0))
+            x += strip.width
+            flip = not flip
+    except Exception:
+        base = Image.new('RGBA', (bw, bh), (120, 170, 110, 255))
+    ims = []
+    for img, _ in seq:
+        im = base.copy()
+        im.alpha_composite(Image.fromarray(img, 'RGBA').crop(box))
+        ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), ims, [ms for _, ms in seq])
+    return boxes
+
+
+def essai(folder, only=None):
+    """images de contrôle (dans un dossier de brouillon) : planche ×2 et chaque image seule"""
+    os.makedirs(folder, exist_ok=True)
+    anims = build_all()
+    bb = attack_box(anims)
+    planche(anims, os.path.join(folder, 'planche.png'), bb, k=2, per={'pose': 8, 'attaque': 5, 'speciale': 4})
+    for name in ('pose', 'attaque', 'speciale'):
+        box = GAME_BOX if name == 'pose' else bb
+        for i, (img, ms) in enumerate(anims[name]):
+            on_bg(img).crop(box).save(os.path.join(folder, f'{name}-{i:02d}.png'))
+    return anims
+
+
+def zone(args):
+    """python3 build.py zone x0 y0 x1 y1 [morceau] : affiche un morceau de la découpe (grille du dessin)"""
+    x0, y0, x1, y1 = map(int, args[:4])
+    g = P[args[4]] if len(args) > 4 else P['corps']
+    print('     ' + ''.join(str(x // 10 % 10) if x % 10 == 0 else ' ' for x in range(x0, x1 + 1)))
+    print('     ' + ''.join(str(x % 10) for x in range(x0, x1 + 1)))
+    for y in range(y0, y1 + 1):
+        print(f'{y:4d} ' + ''.join(g[y, x0:x1 + 1]))
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'zone':
+        zone(sys.argv[2:])
+        sys.exit()
+    if len(sys.argv) > 2 and sys.argv[1] == 'essai':
+        essai(sys.argv[2])
+        sys.exit()
+    anims = build_all()
+    boxes = write_outputs(anims)
+    for n in ('pose', 'attaque', 'speciale'):
+        print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+    print('cadre des attaques :', boxes['attaque'])
+    print('écrit dans', OUT)

@@ -946,8 +946,8 @@ def fx_smear(a_from, fire=False):
             arc_trail(back, S, R + 1, a_from, a_to, 11.0, 'wvutsr')
             arc_trail(back, S, R * 0.6, a_from + 15, a_to, 4.0, 'vuts')
         else:
-            arc_trail(back, S, R, a_from, a_to, 8.0, 'mlkj', taper=0.6)
-            arc_trail(back, S, R + 1.2, a_from + (a_to - a_from) * 0.4, a_to, 1.8, 'ut')
+            arc_trail(back, S, R, a_from, a_to, 10.0, 'mmlk', taper=0.6)
+            arc_trail(back, S, R + 1.2, a_from + (a_to - a_from) * 0.4, a_to, 2.0, 'ut')
     return f
 
 
@@ -969,8 +969,8 @@ def fx_hit(k):
     def f(cv, back, front, ctx):
         c = ctx.hit if hasattr(ctx, 'hit') else club_tip(ctx.G, ctx.ang, S_HEAD[1] + 1.5)
         if k == 0:
-            pop(back, c + np.array([1.5, -1.0]), 4.6, facing=30, tones='wvuts')
-            tongue(back, (c[0] + 3, c[1] + 1), 8, 3.4, bend=0.8, lean=0.5, fork=False)
+            pop(back, c + np.array([2.0, -1.5]), 5.4, facing=30, tones='wwvuts')
+            tongue(back, (c[0] + 4, c[1] + 1), 10, 3.8, bend=0.8, lean=0.5, fork=False)
             embers_at(front, c, 1.0, EMBERS_HIT)
         elif k == 1:
             pop(back, c + np.array([3.0, -2.0]), 2.8, facing=30, tones='vuts')
@@ -1012,7 +1012,7 @@ ATTAQUE = [
     dict(G=(52, 74), ang=152, bend=-1, lift=12, shift=20, crouch=0, lean=1, head=(1, 0), q=(-2, 2), en=1, pg=1,
          fh=(-1, -1), ms=70),
     # il l'abat en retombant (traînée)
-    dict(G=(71, 86), ang=6, bend=-1, lift=4, shift=29, crouch=0, lean=2, head=(1, 1), q=(-1, 1), en=1, pg=0,
+    dict(G=(72, 90), ang=-16, bend=-1, lift=4, shift=29, crouch=0, lean=2, head=(1, 1), q=(-1, 1), en=1, pg=0,
          smear=fx_smear(152), ms=40),
     # le choc (tenu)
     dict(**HIT_A, fx_list=[at(HIT_A_C, fx_hit(0))], ms=150),
@@ -1029,7 +1029,197 @@ ATTAQUE = [
 ]
 
 
-SPECIALE = []
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Braises en rafale »
+# Il se ramasse, ricane, et sa massue s'embrase (le fer chauffe au rouge, des langues de flamme la lèchent, ses yeux
+# s'allument, sa peau rougeoit) — temps de pose. Puis il FILE vers l'ennemi au ras du sol (des flammes restent
+# couchées derrière lui) et enchaîne deux coups très rapides : un revers par en dessous qui remonte, puis un coup
+# qui retombe (deux croissants de feu, deux éclats). Il rebondit en l'air, la massue brandie, et retombe en
+# l'abattant de tout son petit poids : arrêt sur l'image, éclair, et une gerbe de feu jaillit du point d'impact (des
+# langues de flamme qui montent, une boule qui se change en fumée enroulée, des braises qui retombent en cloche ; il
+# reste une tache de sol brûlé). Il revient d'un bond en arrière, la massue fume encore.
+SKIN_HOT = [None,
+            {'6': '7', '7': '8'},
+            {'3': '4', '4': '5', '6': '7', '7': '8', 'J': 'v', 'K': 'u'}]
+IRON_HOT = [None,
+            {'i': 'r', 'j': 'e', 'k': 's'},
+            {'i': 'r', 'j': 's', 'k': 't', 'l': 't', 'm': 'u'}]
+
+
+def fx_club_fire(level, trail=0.0):
+    """la massue en feu : des langues de flamme sur la tête de fer (couchées à l'opposé du mouvement : trail)"""
+    def f(cv, back, front, ctx):
+        u = ctx.u
+        nn = np.array([-u[1], u[0]])
+        for i, s_ in enumerate((9.0, 14.0)):
+            for side in (-1, 1):
+                if level == 1 and side < 0:
+                    continue
+                p0 = ctx.G + s_ * u + side * (head_hw(s_) - 0.8) * nn
+                wob = math.sin(i * 1.7 + side + level)
+                h = (5 + 2 * wob) * (0.6 + 0.4 * level)
+                tongue(back, (p0[0], p0[1]), h, 3.0, bend=0.6 * side, lean=trail, fork=False)
+        tip = club_tip(ctx.G, ctx.ang, S_HEAD[1] + 0.5)
+        tongue(back, (tip[0], tip[1]), 6 + 3 * level, 4.2, bend=0.5, lean=trail, fork=level >= 2)
+    return f
+
+
+def fx_heat(level, phase=0):
+    """la chaleur qui monte : des braises qui s'élèvent autour de lui (et, au plus fort, une lueur sous ses pieds)"""
+    def f(cv, back, front, ctx):
+        b = ctx.bust
+        rng = np.random.RandomState(11 + phase)
+        for i in range(3 + 3 * level):
+            ex = b[0] + rng.uniform(36, 96)
+            ey = b[1] + rng.uniform(52, 100) - phase * 3
+            ember(back if i % 2 else front, ex, ey, big=i % 3 == 0)
+        if level >= 2:
+            fx0 = ctx.body.follow(116)[0] + OX
+            for dx in range(44, 92):
+                q = abs(dx - 68) / 24
+                if q < 1:
+                    put(back, fx0 + dx, GROUND, 'g' if q < 0.4 else 'u' if q < 0.75 else 't', below=2)
+    return f
+
+
+DASH_X = OX + 40          # d'où il part (toile) : les flammes couchées restent derrière lui
+
+
+def fx_dash(k):
+    """les flammes couchées qu'il laisse au sol en filant : 0 elles naissent, 1 et 2 elles se couchent et
+    s'éteignent en petites fumées"""
+    def f(cv, back, front, ctx):
+        x1 = ctx.bust[0] + 52
+        n = 5
+        for i in range(n):
+            x = DASH_X + (x1 - DASH_X) * (i + 0.5) / n
+            h = (4 + 2.5 * i) * [1.0, 0.7, 0.35][k]
+            if h >= 3:
+                tongue(back, (x, GROUND), h, 2.8 + 0.3 * i, bend=-0.9, lean=-0.7, fork=False, below=1)
+            elif i % 2:
+                puff(back, (x, GROUND - 3), 1.6, 'abc', hollow=0.3)
+            put(back, x - 2, GROUND, 'u' if k == 0 else 's', below=2)
+            put(back, x + 1, GROUND, 't' if k == 0 else 'r', below=2)
+    return f
+
+
+def fx_spark_hit(k, big=False):
+    """l'éclat d'un des deux coups rapides, au bout de la massue (0 l'éclat, 1 il retombe en braises)"""
+    def f(cv, back, front, ctx):
+        c = ctx.hit if hasattr(ctx, 'hit') else club_tip(ctx.G, ctx.ang, S_HEAD[1] + 1)
+        if k == 0:
+            pop(front, c + np.array([1.5, -0.5]), 4.2 if not big else 5.0, facing=20, tones='wwvut')
+            embers_at(front, c, 1.0, EMBERS_HIT[:5])
+        else:
+            pop(back, c + np.array([3.0, -2.0]), 2.4, facing=20, tones='vuts')
+            embers_at(front, c, 2.0, EMBERS_HIT[:5])
+    return f
+
+
+def fx_burst(k):
+    """la gerbe de feu du grand coup : 0 l'éclair du choc ; 1 à 3 les langues de flamme montent, la boule de feu se
+    change en fumée qui s'enroule, les braises partent en cloche ; 4 à 6 la fumée se défait, le sol reste brûlé"""
+    def f(cv, back, front, ctx):
+        cx = ctx.hit[0]
+        g = GROUND
+        if k == 0:
+            pop(front, (cx + 2, g - 7), 9.0, facing=70, tones='wwvuts')
+            tongue(back, (cx - 4, g), 14, 6, bend=-0.6, lean=-0.2)
+            tongue(back, (cx + 7, g), 17, 7, bend=0.7, lean=0.35)
+            return
+        if k == 1:
+            for (dx, h, w, b) in ((-5, 18, 7, -0.6), (3, 34, 10, 0.4), (12, 26, 8, 0.9), (20, 13, 5, 0.6)):
+                tongue(front if dx > 6 else back, (cx + dx, g), h, w, bend=b, lean=0.15 + 0.06 * dx / 4, below=1)
+            pop(front, (cx + 4, g - 14), 6.5, facing=90, tones='wvuts')
+        elif k == 2:
+            for (dx, h, w, b) in ((-3, 14, 6, -0.7), (5, 28, 9, 0.4), (14, 20, 7, 0.9)):
+                tongue(front if dx > 6 else back, (cx + dx, g), h, w, bend=b, lean=0.2, below=1)
+            cloud(back, (cx + 8, g - 34), 6.5, 'aabc', seed=5, ground=False)
+            pop(front, (cx + 7, g - 24), 4.5, facing=90, tones='vuts')
+        elif k == 3:
+            for (dx, h, w, b) in ((2, 11, 5, -0.7), (11, 14, 6, 0.8)):
+                tongue(front, (cx + dx, g), h, w, bend=b, tones='vutsr', lean=0.2, below=1)
+            cloud(back, (cx + 9, g - 32), 6.5, 'aabcd', seed=5, ground=False)
+            cloud(back, (cx + 6, g - 20), 4.2, 'abcd', seed=6, ground=False)
+        elif k == 4:
+            tongue(front, (cx + 7, g), 7, 4, bend=0.5, tones='utsr', below=1)
+            cloud(back, (cx + 11, g - 36), 6.0, 'aabc', hollow=0.3, seed=5, ground=False)
+            curl(back, (cx + 2, g - 22), 3.2, 340, turn=280, w=2.0, tones='abc', cw=True)
+        elif k == 5:
+            cloud(back, (cx + 13, g - 40), 5.0, 'aab', hollow=0.6, seed=5, ground=False)
+            curl(back, (cx + 20, g - 30), 2.8, 200, turn=280, w=1.8, tones='abc')
+        else:
+            puff(back, (cx + 15, g - 45), 2.4, 'ab', hollow=0.5)
+            curl(back, (cx + 4, g - 28), 2.4, 340, turn=260, w=1.6, tones='ab', cw=True)
+        # le sol brûlé : une tache sombre, des braises qui rougeoient dedans
+        sr = [0, 10, 14, 15, 15, 15, 15][k]
+        for x in range(int(cx - sr), int(cx + sr) + 1):
+            q = abs(x - cx) / sr
+            if q < 1:
+                put(front, x, g, 'e' if q < 0.55 else 'o', below=2)
+                if q < 0.4:
+                    put(front, x, g + 1, 'o', below=2)
+        for dx in (-8, -2, 5, 10):
+            if abs(dx) < sr:
+                put(front, cx + dx, g, 'g' if k < 4 else 'u' if k < 6 else 's', below=2)
+        # les braises projetées : elles montent en cloche et retombent
+        T = k * 1.5
+        for (vx, vy, big) in ((1.8, -4.2, 1), (3.0, -2.8, 0), (-1.6, -3.8, 1), (-2.8, -2.2, 0), (0.8, -5.0, 0),
+                              (4.0, -1.6, 1), (-0.8, -4.6, 0)):
+            x = cx + vx * T
+            y = g - 6 + vy * T + 0.36 * T * T
+            if y < g - 1:
+                ember(front, x, y, big=bool(big), hot=k < 4)
+    return f
+
+
+HIT_S = dict(G=(73, 93), ang=-45, bend=-1, shift=36, crouch=3, lean=2, head=(1, 1), q=(-1, 1), en=1, pg=1,
+             skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2])
+HIT_S_C = fixed_hit(HIT_S)
+HIT_1 = dict(G=(69, 80), ang=48, bend=-1, shift=27, crouch=1, lean=2, head=(1, -1), q=(-1, 1), en=1, pg=1,
+             skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2])
+HIT_1_C = fixed_hit(HIT_1) + np.array([0.0, 0.0])
+HIT_2 = dict(G=(72, 92), ang=-38, bend=-1, shift=30, crouch=2, lean=2, head=(1, 1), q=(0, 0), en=0, pg=-1,
+             skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2])
+HIT_2_C = fixed_hit(HIT_2)
+SPECIALE = [
+    # il se ramasse et ricane : la massue chauffe
+    dict(G=(50, 87), ang=196, bend=-1, crouch=2, lean=-1, head=(0, 1), q=(1, -1), en=-1, pg=-1, skin=SKIN_HOT[1],
+         hot=IRON_HOT[1], fx_pre=[fx_heat(1, 0)], fx_list=[fx_club_fire(1, -0.2)], ms=110),
+    dict(G=(49, 88), ang=200, bend=-1, crouch=3, lean=-2, head=(-1, 1), q=(2, -2), en=-1, ef=-1, pg=-1,
+         fh=(0, 1), skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], fx_pre=[fx_heat(2, 1)],
+         fx_list=[fx_club_fire(2, -0.3)], flash=10, ms=240),
+    # il file au ras du sol (les flammes restent couchées derrière lui)
+    dict(G=(50, 90), ang=188, bend=-1, shift=14, lift=2, crouch=-1, lean=3, head=(1, 1), q=(-2, 2), en=1, pg=1,
+         skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], fx_pre=[fx_dash(0)], fx_list=[fx_club_fire(2, -0.8)], ms=50),
+    # premier coup : un revers par en dessous qui remonte
+    dict(**HIT_1, smear=fx_smear(196 - 360, fire=True), fx_pre=[fx_dash(1)], fx_list=[fx_spark_hit(0)], ms=70),
+    dict(**dict(HIT_1, head=(1, 0)), fx_pre=[fx_dash(2)], fx_list=[fx_club_fire(2, -0.4), at(HIT_1_C, fx_spark_hit(1))],
+         ms=60),
+    # deuxième coup : il retombe
+    dict(**HIT_2, smear=fx_smear(60, fire=True), fx_list=[fx_spark_hit(0, big=True)], ms=80),
+    # il rebondit en l'air, la massue brandie au-dessus de lui
+    dict(G=(54, 75), ang=128, bend=-1, lift=12, shift=26, crouch=-2, lean=0, head=(0, -1), q=(-2, 2), en=1, pg=1,
+         skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], fx_list=[fx_club_fire(2, -0.3), at(HIT_2_C, fx_spark_hit(1))],
+         ms=60),
+    dict(G=(55, 72), ang=110, bend=-1, lift=20, shift=30, crouch=0, lean=1, head=(1, 0), q=(-1, 2), en=1, ef=-1,
+         pg=1, fh=(-1, -1), skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], fx_list=[fx_club_fire(2, 0.2)], ms=110),
+    # il l'abat (grand croissant de feu)
+    dict(G=(73, 88), ang=-20, bend=-1, lift=6, shift=34, crouch=0, lean=2, head=(1, 1), q=(-1, 1), en=1, pg=0,
+         skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], smear=fx_smear(110, fire=True), ms=40),
+    # le choc : arrêt sur l'image, éclair, puis la gerbe de feu
+    dict(**HIT_S, flash=45, fx_list=[at(HIT_S_C, fx_burst(0))], ms=200),
+    dict(**HIT_S, fx_list=[at(HIT_S_C, fx_burst(1))], ms=100),
+    dict(**dict(HIT_S, crouch=2, head=(1, 0), hot=IRON_HOT[1]), fx_list=[at(HIT_S_C, fx_burst(2))], ms=100),
+    # il revient d'un bond en arrière, la massue fume encore
+    dict(G=(54, 78), ang=140, bend=-1, lift=9, shift=20, crouch=-1, lean=-1, head=(0, -1), q=(2, 1), en=-1, pg=-1,
+         skin=SKIN_HOT[1], hot=IRON_HOT[1], fx_list=[at(HIT_S_C, fx_burst(3))], ms=80),
+    dict(G=(51, 83), ang=160, bend=-1, lift=4, shift=7, crouch=0, lean=0, head=(0, 0), q=(1, 0), en=0, pg=-1,
+         hot=IRON_HOT[1], fx_list=[at(HIT_S_C, fx_burst(4))], ms=80),
+    dict(arms='orig', crouch=2, head=(0, 1), q=(0, -1), en=-1, pg=1, hot=IRON_HOT[1],
+         fx_list=[at(HIT_S_C, fx_burst(5))], ms=100),
+    dict(arms='orig', crouch=1, head=(0, 0), q=(-1, 0), en=0, pg=0, fx_list=[at(HIT_S_C, fx_burst(6))], ms=130),
+]
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
 # RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du monstre à partir

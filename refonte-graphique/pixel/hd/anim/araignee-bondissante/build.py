@@ -105,7 +105,8 @@ LEGS = {
                r=[6, 5, 5, 4]),
     'N1': dict(layer='near', sk=[(13, 82.5), (13.5, 92), (15.5, 102), (18.5, 115.5)], pin=0, r=[4.2, 4.2, 3.6]),
     'N2': dict(layer='near', sk=[(46, 100), (43.5, 108), (42.5, 115.5)], pin=0, r=[3.4, 3.2]),
-    'N3': dict(layer='near', sk=[(60, 101.5), (69, 104.5), (75, 109), (79.5, 115.5)], pin=0, r=[3.6, 3.6, 3.0]),
+    'N3': dict(layer='near', sk=[(50, 99.5), (60, 102.5), (69, 104.5), (75, 109), (79.5, 115.5)], pin=0,
+               r=[4.2, 3.8, 3.6, 3.0]),
     'N4': dict(layer='near', sk=[(56, 65), (56, 61.5), (63, 54), (70.5, 48.5), (78, 51.5), (87, 56.5)], pin=0,
                r=[4.8, 4.6, 4.6, 4.2, 3.8]),
 }
@@ -157,6 +158,9 @@ for _layer, _g in (('far', FAR), ('near', NEAR)):
         LABEL[_layer][y, x] = who
 # les épines sous la jambe de la patte avant dressée et le bord intérieur de son coude : à cette patte
 LABEL['near'][(NEAR != '.') & ((YY <= 58) | ((YY <= 60) & (XX <= 66)))] = 'N4'
+# sous le corps (rangées 103 et plus), tout pixel resté au corps va à la patte proche la plus proche
+for y, x in zip(*np.nonzero((NEAR != '.') & ((YY >= 103) | (XX <= 16)) & (LABEL['near'] == 'corps'))):
+    LABEL['near'][y, x] = min(('N1', 'N2', 'N3'), key=lambda n: sk_locate(LEGS[n]['sk'], np.array([x + .5, y + .5]))[0])
 
 PARTS = {}
 for name, L in LEGS.items():
@@ -296,7 +300,7 @@ def leg_disp(L, sp, k=(0, 0), t=(0, 0), j=None, mid=None):
     return np.array(out)
 
 
-def draw_leg_pixels(cv, name, disp):
+def draw_leg_pixels(cv, name, disp, smax=99.0):
     """pose la patte « name » du dessin, pliée : chaque pixel de la toile va chercher son pixel source (on recule du
     déplacement du point le plus proche du squelette déformé) ; jamais de trou, jamais de pixel inventé."""
     L = LEGS[name]
@@ -327,15 +331,111 @@ def draw_leg_pixels(cv, name, disp):
     ok = (sx >= 0) & (sx < GW) & (sy >= 0) & (sy < GH) & (best <= 8)
     sx, sy, qxi, qyi = sx[ok], sy[ok], QX.ravel()[ok], QY.ravel()[ok]
     vals = part[sy, sx]
-    good = (vals != '.') & (np.abs(ABSC[name][sy, sx] - sabs[ok]) <= 0.75)
+    good = (vals != '.') & (np.abs(ABSC[name][sy, sx] - sabs[ok]) <= 0.75) & (ABSC[name][sy, sx] <= smax)
     cx, cy = qxi[good] + OX, qyi[good] + OY
     inb = (cx >= 0) & (cx < W) & (cy >= 0) & (cy < H) & (cy <= GROUND)
     cv[cy[inb], cx[inb]] = vals[good][inb]
 
 
-# ---------------------------------------------------------------- rendu
+# ---------------------------------------------------------------- une patte redessinée (en plein saut)
+# En l'air, les pattes se tendent (les arrière poussent puis traînent, les avant visent la proie) : ce qui tourne
+# autant est REDESSINÉ, tronçon par tronçon, avec les tons de chitine du dessin (lumière en haut à droite), les
+# anneaux rouges aux articulations et un bout émoussé ; le haut de la patte (accroché au corps) reste celui du dessin.
 LIGHT = np.array([0.6, -0.8])
 LN = LIGHT / np.linalg.norm(LIGHT)
+
+
+def chit_tone(k, far=False):
+    if far:                                   # pattes lointaines : plus sombres (comme le calque « pattes-loin »)
+        return 'C' if k > 0.55 else 'B' if k > -0.45 else 'A'
+    return 'E' if k > 0.72 else 'D' if k > 0.3 else 'C' if k > -0.15 else 'B' if k > -0.6 else 'A'
+
+
+def ring_tone(k, far=False):
+    if far:
+        return 't' if k > 0.4 else 's' if k > -0.3 else 'r'
+    return 'u' if k > 0.45 else 't' if k > -0.2 else 's' if k > -0.65 else 'r'
+
+
+def capsule(cv, P0, P1, r0, r1, tone, t0=0.0, t1=1.0, keep=None):
+    """un segment arrondi de P0 à P1 (toile), rayon r0 -> r1, modelé par la lumière : tone(k, t) donne la lettre"""
+    P0, P1 = np.array(P0, float), np.array(P1, float)
+    v = P1 - P0
+    L2 = max(v @ v, 1e-6)
+    R = max(r0, r1) + 1
+    x0, x1 = int(min(P0[0], P1[0]) - R), int(max(P0[0], P1[0]) + R + 1)
+    y0, y1 = int(min(P0[1], P1[1]) - R), int(max(P0[1], P1[1]) + R + 1)
+    for y in range(max(0, y0), min(H, y1)):
+        for x in range(max(0, x0), min(W, x1)):
+            p = np.array([x + 0.5, y + 0.5])
+            t = float(np.clip((p - P0) @ v / L2, 0, 1))
+            if t < t0 - 1e-9 or t > t1 + 1e-9:
+                continue
+            c = P0 + t * v
+            r = r0 + (r1 - r0) * t
+            w = p - c
+            d = math.hypot(*w)
+            if d <= r and (keep is None or keep(x, y)):
+                k = (w @ LN) / max(r, 1e-6)
+                ch = tone(k, t)
+                if ch:
+                    cv[y, x] = ch
+
+
+# épaisseurs (rayons) des pattes redessinées : (cuisse au départ, genou, cheville, bout) ; anneaux rouges
+LEG_LOOK = {
+    'N1': dict(r=(3.4, 3.2, 2.6, 1.0), rings=[(0, 0.10, 0.22), (1, 0.0, 0.12)]),
+    'N2': dict(r=(2.4, 2.2, 1.9, 0.9), rings=[(1, 0.0, 0.14)]),
+    'N3': dict(r=(3.4, 3.0, 2.4, 1.0), rings=[(1, 0.0, 0.16)]),
+    'F1': dict(r=(2.4, 2.3, 2.0, 0.9), rings=[]),
+    'F2': dict(r=(2.4, 2.2, 1.9, 0.9), rings=[]),
+    'F3': dict(r=(2.6, 2.4, 2.0, 0.9), rings=[(0, 0.0, 0.14)]),
+}
+
+
+def draw_leg_new(cv, name, pts):
+    """une patte redessinée (toile) : pts = [attache, genou, cheville, pointe] ; trois tronçons qui s'effilent,
+    une petite bosse claire au genou, les anneaux rouges de LEG_LOOK"""
+    far = LEGS[name]['layer'] == 'far'
+    look = LEG_LOOK[name]
+    P = [np.array(p, float) for p in pts]
+    r = look['r']
+    ct = lambda k, t: chit_tone(k, far)
+    for i in range(3):
+        capsule(cv, P[i], P[i + 1], r[i], r[i + 1], ct)
+    v1 = (P[1] - P[0]) / max(np.linalg.norm(P[1] - P[0]), 1e-6)
+    v2 = (P[2] - P[1]) / max(np.linalg.norm(P[2] - P[1]), 1e-6)
+    bis = v1 - v2
+    if np.linalg.norm(bis) > 0.3:             # le genou pointu : une petite bosse claire au-dessus de l'articulation
+        bis = bis / np.linalg.norm(bis)
+        capsule(cv, P[1], P[1] + 1.2 * bis, r[1] * 0.8, 0.8, lambda k, t: chit_tone(k + 0.25, far))
+    for (seg, c0, c1) in look['rings']:
+        rr = r[seg + 1] if seg else r[1]
+        capsule(cv, P[seg + 1], P[seg + 2], rr, rr, lambda k, t: ring_tone(k, far), t0=c0, t1=c1)
+
+
+def layered(cv, draw, rim):
+    """dessine un morceau sur un calque à part, puis le pose sur la toile ; là où il passe devant ce qui est déjà
+    peint, son bord prend un ton plus sombre de sa matière (une séparation douce, pas un trait noir)"""
+    lay = empty()
+    draw(lay)
+    m = lay != '.'
+    under = cv != '.'
+    edge = np.zeros_like(m)
+    for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        nb = np.roll(np.roll(m, dy, 0), dx, 1)
+        edge |= m & ~nb & np.roll(np.roll(under, dy, 0), dx, 1)
+    ys, xs = np.nonzero(edge)
+    for y, x in zip(ys, xs):
+        lay[y, x] = rim(lay[y, x])
+    cv[m] = lay[m]
+
+
+def rim_chit(ch):
+    return {'E': 'C', 'D': 'B', 'C': 'A', 'B': 'A', 'v': 't', 'u': 's', 't': 'r', 's': 'r'}.get(ch, ch)
+
+
+# ---------------------------------------------------------------- rendu
 
 
 def to_rgba(canvas, pal=ALLPAL):
@@ -398,6 +498,18 @@ def rig_frame(f):
 
     def leg(name):
         spec = legs.get(name, {})
+        if 'new' in spec:
+            # patte redessinée : points de la grille [attache, genou, cheville, pointe] ; l'attache et le genou
+            # suivent le corps, la cheville et la pointe aussi en l'air (au sol, la pointe reste où on l'a mise)
+            pts = [np.array(g2c(*LEGS[name]['sk'][LEGS[name]['pin']]), float) + sp]
+            for i, q in enumerate(spec['new']):
+                follow = air or i < 2
+                pts.append(np.array(g2c(*q), float) + (sp if follow else 0))
+            ctx.tips[name] = pts[-1]
+            if LEGS[name]['pin']:                  # le haut de la patte (accroché au corps) : celui du dessin
+                draw_leg_pixels(cv, name, leg_disp(LEGS[name], sp), smax=LEGS[name]['pin'] + 0.2)
+            layered(cv, lambda lay: draw_leg_new(lay, name, pts), rim_chit)
+            return
         t = np.array(spec.get('t', (0, 0)), float)
         if not air and name not in RAISED:
             t = t - sp                              # la pointe reste à sa place au sol
@@ -603,13 +715,11 @@ def dev_sheet(name, frames, k=3, per=10, box=None, path=None):
 
 # ---------------------------------------------------------------- essais (brouillon)
 ESSAI = [
-    dict(sp=(0, 3), legs={'N4': dict(t=(-2, -3), k=(-1, -2), j=3), 'F4': dict(t=(-2, -2), k=(-1, -1), j=2)}, ms=100),
-    dict(sp=(30, -22), air=True, legs={'N1': dict(t=(-10, -6)), 'N2': dict(t=(-9, -8)), 'F1': dict(t=(-8, -8)),
-                                       'F2': dict(t=(-6, -9)), 'N3': dict(t=(4, -8)), 'F3': dict(t=(2, -9)),
-                                       'N4': dict(t=(5, 6), k=(2, 2), j=3), 'F4': dict(t=(4, 8), k=(2, 3), j=2)}, ms=100),
-    dict(sp=(30, -22), air=True, legs={'N1': dict(t=(-4, -12), k=(0, 0)), 'N2': dict(t=(-3, -12)), 'F1': dict(t=(-3, -12)),
-                                       'F2': dict(t=(-2, -12)), 'N3': dict(t=(-2, -10)), 'F3': dict(t=(-2, -12)),
-                                       'N4': dict(t=(8, -2), k=(3, -1), j=3), 'F4': dict(t=(8, 0), k=(3, 0), j=2)}, ms=100),
+    dict(sp=(30, -22), air=True, legs={
+        'N1': dict(new=[(4, 95), (-3, 104), (-8, 111)]), 'N2': dict(new=[(38, 106), (31, 111), (26, 114)]),
+        'F1': dict(new=[(28, 92), (21, 101), (16, 107)]), 'F2': dict(new=[(52, 99), (46, 106), (41, 111)]),
+        'N3': dict(new=[(64, 106), (76, 110), (86, 111)]), 'F3': dict(new=[(108, 96), (115, 102), (120, 105)]),
+        'N4': dict(t=(5, 6), k=(2, 2), j=3), 'F4': dict(t=(4, 8), k=(2, 3), j=2)}, ms=100),
 ]
 
 

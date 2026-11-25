@@ -461,7 +461,8 @@ def arc_pts(p0, p1, bend=0.25, wob=1.2, waves=1.0, phase=0.0, n=None):
 
 def zap(cv, pts, w=1.0, halo=True, edge=True, fade=(0.0, 1.0), taper=True):
     """peint une décharge le long de points : un trait de coeur blanc continu (pixel par pixel), entouré d'un halo
-    cyan d'un pixel, puis d'un bord bleu-violet là où elle est épaisse ; effilée aux deux bouts (le halo et le bord
+    cyan d'un pixel, puis d'un bord bleu-violet là où elle est épaisse (edge) ; sans edge, la décharge fine a
+    directement le bord bleu-violet (elle se lit sur un fond clair comme sur l'herbe) ; effilée aux deux bouts (le halo et le bord
     s'arrêtent avant le bout) ; fade = la partie encore visible (de, à), pour qu'elle naisse et s'éteigne"""
     N = len(pts)
     P = [pts[i] for i in range(N) if fade[0] <= i / (N - 1) <= fade[1]]
@@ -501,10 +502,23 @@ def zap(cv, pts, w=1.0, halo=True, edge=True, fade=(0.0, 1.0), taper=True):
                         out.add((x + dx, y + dy))
         return out
     pad = int(round(w / 2))
-    for (x, y) in grow(ring2, pad + 2) - grow(ring2, pad + 1) if edge else ():
-        put(cv, x, y, 'O', keep='.OTYXZAE')
-    for (x, y) in grow(ring1, pad + 1) if halo else ():
-        put(cv, x, y, 'T', keep='.OTYXZAE')
+    if edge:
+        for (x, y) in grow(ring2, pad + 2) - grow(ring2, pad + 1):
+            put(cv, x, y, 'O', keep='.OTYXZAE')
+    if halo:
+        # le halo est modelé par la lumière : cyan du côté éclairé (en haut à droite), bleu-violet du côté de
+        # l'ombre (sauf les grosses décharges, cyan tout autour et bordées de bleu-violet)
+        for (x, y) in grow(ring1, pad + 1) - core:
+            ch = 'T'
+            if not edge:
+                best = None
+                for (dx, dy) in ((0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)):
+                    if (x - dx, y - dy) in core:
+                        best = (dx, dy)
+                        break
+                if best is not None and best[0] * LN[0] + best[1] * LN[1] <= 0:
+                    ch = 'O'
+            put(cv, x, y, ch, keep='.OTYXZAE')
     for (x, y) in core:
         put(cv, x, y, 'W')
 
@@ -526,13 +540,17 @@ def orb(cv, c, r, phase=0.0, arcs=2, inner=True):
     yy, xx = np.mgrid[0:H, 0:W]
     d = np.hypot(xx + 0.5 - cx, yy + 0.5 - cy) / r
     ys, xs = np.nonzero(m)
+    rim = 1 - 1.25 / r                     # l'anneau d'eau : un bon pixel, sombre côté ombre
+    band = 1 - 2.4 / r                     # puis une bande d'eau claire
     for y, x in zip(ys, xs):
         k = v[y, x]
-        if d[y, x] > 0.72 or r < 3:
-            ch = 'Y' if k > 0.25 else 'Z' if k > -0.05 else 'A' if k > -0.3 else 'E'
-        elif inner and d[y, x] < 0.32:
+        if d[y, x] > rim or r < 2.5:
+            ch = 'Z' if k > 0.2 else 'A' if k > -0.15 else 'E'
+        elif d[y, x] > band:
+            ch = 'Y' if k < 0.25 else 'X'
+        elif inner and d[y, x] < 0.24:
             ch = 'W'
-        elif inner and d[y, x] < 0.5:
+        elif inner and d[y, x] < 0.44:
             ch = 'T'
         else:
             ch = 'X'
@@ -540,13 +558,13 @@ def orb(cv, c, r, phase=0.0, arcs=2, inner=True):
     # le reflet : un petit arc blanc en haut à droite, en retrait du bord
     if r >= 4:
         for a in range(30, 75, 6):
-            put(cv, cx + 0.62 * r * math.cos(math.radians(a)), cy - 0.62 * r * math.sin(math.radians(a)), 'W')
+            put(cv, cx + (1 - 1.9 / r) * r * math.cos(math.radians(a)), cy - (1 - 1.9 / r) * r * math.sin(math.radians(a)), 'W')
     # les décharges dans la bulle : du coeur vers le bord, courbes
     for i in range(arcs):
         a = phase + i * 2 * math.pi / max(arcs, 1)
         p1 = (cx + 0.86 * r * math.cos(a), cy - 0.86 * r * math.sin(a))
         pts = arc_pts((cx, cy), p1, bend=0.3 * (1 if i % 2 else -1), wob=0.6, waves=0.8, phase=a)
-        zap(cv, pts, w=0.9 if r >= 6 else 0.6, edge=False, halo=r >= 7)
+        zap(cv, pts, w=0.9 if r >= 8 else 0.5, edge=False, halo=False)
         spark(cv, p1[0], p1[1], big=r >= 8)
 
 
@@ -592,80 +610,97 @@ def fx_charge(ctx, r, ph):
     back, front = empty(), empty()
     c = ctx.at(*BIRTH)
     orb(front, c, r, phase=ph, arcs=1 if r < 4 else 2)
-    # deux petites décharges courbes qui vont des filaments de devant à la bulle
+    # deux petites décharges courbes qui vont des filaments de devant à la bulle (l'eau se charge)
     if r >= 3:
-        for j, (gx, gy) in enumerate(((84, 66), (88, 74))):
+        for j, (gx, gy) in enumerate(((84, 64), (87, 76))):
             p0 = ctx.at(gx, gy)
-            pts = arc_pts(p0, (c[0] - r * 0.7, c[1] + (j - 0.5) * r * 0.6), bend=0.35 * (1 if j else -1), wob=0.5,
+            pts = arc_pts(p0, (c[0] - r * 0.8, c[1] + (j - 0.5) * r * 0.7), bend=0.35 * (1 if j else -1), wob=0.6,
                           phase=ph + j)
-            zap(front, pts, w=0.5, edge=False)
+            zap(back, pts, w=0.5, edge=False)
+    # de toutes petites bulles aspirées vers elle
+    for j, (dx, dy) in enumerate(((7, -9), (11, 5), (4, 10))):
+        f = 1.0 - 0.12 * r
+        bubble(back, c[0] + dx * f * 1.6, c[1] + dy * f * 1.6, 2 if j else 3)
     return back, front
 
 
 SHOT = {}
 
 
-def fx_flight(ctx, t, ph, stretch=1.0):
-    """la bulle en vol (t de 0 à 1), étirée par la vitesse, des bulles dans son sillage et une traîne courbe"""
+def wake(cv, pts, wmax, tones='XYZA'):
+    """le sillage d'eau d'un sort : un ruban qui s'élargit vers le sort, modelé comme un volume"""
+    n = len(pts)
+    stroke(cv, pts, [0.6 + wmax * (i / (n - 1)) ** 1.3 for i in range(n)], tones)
+
+
+def shell(cv, c, R, ph, span=150):
+    """une décharge courbe qui crépite autour d'une bulle, sur son arrière (elle ondule le long du cercle)"""
+    pts = []
+    for i in range(41):
+        a = math.radians(180 - span / 2 + span * i / 40)
+        rr = R + 1.0 * math.sin(ph * 3 + i * 0.45)
+        pts.append((c[0] + rr * math.cos(a), c[1] - rr * math.sin(a)))
+    zap(cv, pts, w=0.5, edge=False)
+    spark(cv, pts[0][0], pts[0][1])
+    spark(cv, pts[-1][0], pts[-1][1])
+
+
+def fx_flight(ctx, t, ph, r=6.5):
+    """la bulle en vol (t de 0 à 1) : un sillage d'eau, une décharge courbe qui s'enroule autour, des bulles semées"""
     back, front = empty(), empty()
     p0 = SHOT.setdefault('p0', ctx.at(*BIRTH))
     p1 = (ENEMY_X - 8, HIT_Y)
     x, y = bolt_path(t, p0, p1)
-    # la traîne : une décharge courbe qui suit la course (les 30 derniers pour cent) et s'effile
-    tt = [max(0.0, t - 0.32 + 0.32 * i / 20) for i in range(21)]
-    pts = [bolt_path(s, p0, p1) for s in tt]
-    pts = [(px, py + 1.3 * math.sin(ph + i * 0.7) * (i / 20)) for i, (px, py) in enumerate(pts)]
-    solid(back, pts, [0.6 + 2.2 * (i / 20) for i in range(21)], 'O')
-    solid(back, pts, [0.3 + 1.3 * (i / 20) for i in range(21)], 'T')
-    # des bulles semées derrière
-    for j, s in enumerate((0.1, 0.2, 0.28)):
+    s0 = max(0.0, t - 0.3)
+    pts = [bolt_path(s0 + (t - s0) * i / 24, p0, p1) for i in range(25)]
+    wake(back, pts[10:], r * 0.9)
+    shell(front, (x, y), r + 2.0, ph)
+    for j, s in enumerate((0.07, 0.16, 0.24)):
         if t - s > 0:
             bx, by = bolt_path(t - s, p0, p1)
-            bubble(back, bx, by + (2 if j % 2 else -2) - 2 * s * 10 * 0.2, 3 if j == 0 else 2)
-    # la bulle : un peu allongée dans le sens de la course (deux bulles collées), le coeur devant
-    orb(front, (x - 2 * stretch, y), 4.2, phase=ph, arcs=1)
-    orb(front, (x, y), 5.0, phase=ph + 1.0, arcs=2)
+            bubble(back, bx - 1, by + (r + 1 if j % 2 else -r - 1), 3 if j == 0 else 2)
+    orb(front, (x, y), r, phase=ph, arcs=2)
     return back, front
 
 
 def fx_burst(k, ph):
-    """la bulle éclate sur l'ennemi : k = 0 (éclat), 1, 2, 3 (elle se défait)"""
+    """la bulle éclate sur l'ennemi : k = 0 (éclat), 1, 2, 3 (elle se défait). Pas d'étoile : une gerbe ronde,
+    deux décharges qui se recourbent comme des fouets, des gouttes en cloche."""
     back, front = empty(), empty()
     c = (ENEMY_X - 6, HIT_Y)
+    seeds = [(-3.5, -3), (-2.5, -4.5), (-4.5, -1.5), (-1.5, -5), (1.5, -4), (-3, 0.5), (0.5, 2)]
     if k == 0:
-        pop(front, c, 6.5, facing=180, tones='WXYT')
-        for j, a in enumerate((150, 210, 100, 260, 30)):
-            ra = math.radians(a)
-            p1 = (c[0] + 15 * math.cos(ra), c[1] - 13 * math.sin(ra))
-            zap(front, arc_pts(c, p1, bend=0.28 * (1 if j % 2 else -1), wob=0.8, phase=ph + j), w=0.9)
-            spark(front, p1[0], p1[1], big=True)
-        spray(back, c, 1.0, [(-3.5, -3), (-2.5, -4.5), (-4.5, -1.5), (-1.5, -5), (1.5, -4), (-3, 0.5)])
+        pop(back, c, 9, facing=170, tones='WXYZ')
+        pop(front, (c[0] + 1, c[1] - 1), 4.5, facing=170, tones='WWT')
+        zap(front, arc_pts((c[0] - 4, c[1] - 5), (c[0] - 14, c[1] - 16), bend=0.3, wob=0.6, phase=ph), w=0.6, edge=False)
+        zap(front, arc_pts((c[0] - 3, c[1] + 6), (c[0] - 17, c[1] + 9), bend=-0.28, wob=0.6, phase=ph + 2), w=0.6, edge=False)
+        spark(front, c[0] - 14, c[1] - 16, big=True)
+        spark(front, c[0] - 17, c[1] + 9, big=True)
+        spray(back, c, 1.0, seeds)
     elif k == 1:
-        foam(front, c, 5.5, hollow=0.3, seed=3, tones='WXXYZ')
-        for j, a in enumerate((165, 120, 230)):
-            ra = math.radians(a)
-            p0 = (c[0] + 6 * math.cos(ra), c[1] - 6 * math.sin(ra))
-            p1 = (c[0] + 18 * math.cos(ra), c[1] - 15 * math.sin(ra))
-            zap(front, arc_pts(p0, p1, bend=0.3 * (1 if j % 2 else -1), wob=0.7, phase=ph + j), w=0.6, edge=False)
-        spray(back, c, 2.0, [(-3.5, -3), (-2.5, -4.5), (-4.5, -1.5), (-1.5, -5), (1.5, -4), (-3, 0.5)])
+        foam(back, c, 7, hollow=0.3, seed=3)
+        zap(front, arc_pts((c[0] - 8, c[1] - 8), (c[0] - 19, c[1] - 15), bend=0.5, wob=0.6, phase=ph), w=0.6,
+            edge=False)
+        spark(front, c[0] - 19, c[1] - 15)
+        spray(back, c, 2.0, seeds)
     elif k == 2:
-        foam(front, (c[0], c[1] - 2), 4.5, hollow=0.7, seed=3, tones='XXYZA')
-        spray(back, c, 3.0, [(-3.5, -3), (-2.5, -4.5), (-4.5, -1.5), (-1.5, -5), (1.5, -4), (-3, 0.5)])
-        spark(front, c[0] - 12, c[1] - 9)
-        spark(front, c[0] - 3, c[1] + 10)
+        foam(back, (c[0], c[1] - 2), 6, hollow=0.65, seed=3, tones='XXYZA')
+        spray(back, c, 3.0, seeds)
+        spark(front, c[0] - 16, c[1] - 12)
+        bubble(front, c[0] - 3, c[1] - 9, 3)
     else:
-        spray(back, c, 4.0, [(-3.5, -3), (-2.5, -4.5), (-1.5, -5), (1.5, -4)], sizes=(2, 1))
-        bubble(front, c[0] - 4, c[1] - 12, 3)
-        bubble(front, c[0] + 3, c[1] - 7, 2)
+        spray(back, c, 4.0, seeds[:5], sizes=(2, 1))
+        bubble(front, c[0] - 4, c[1] - 14, 3)
+        bubble(front, c[0] + 4, c[1] - 9, 2)
     return back, front
 
 
 ATTAQUE = [
     # k largeur, t hauteur, u montée, x recul, a/ph onde, d dent, glow coeur ; fx = effet ; ms = durée
-    dict(k=1, t=-1, u=-1, x=0, d=0, glow=1, fx=('charge', 2.2), ms=120),
-    dict(k=1, t=-1, u=-2, x=1, d=1, glow=1, fx=('charge', 3.6), ms=140),
-    dict(k=1, t=-1, u=-2, x=1, d=1, glow=1, fx=('charge', 4.6), ms=220),          # anticipation tenue
-    dict(k=-1, t=1, u=2, x=-3, xb=0, d=-1, glow=0, fx=('vol', 0.18), flash=25, ms=60),
+    dict(k=1, t=-1, u=-1, x=0, d=0, glow=1, fx=('charge', 3.0), ms=120),
+    dict(k=1, t=-1, u=-2, x=1, d=1, glow=1, fx=('charge', 5.0), ms=140),
+    dict(k=1, t=-1, u=-2, x=1, d=1, glow=1, fx=('charge', 6.0), ms=220),          # anticipation tenue
+    dict(k=-1, t=1, u=2, x=-3, xb=0, d=-1, glow=0, fx=('vol', 0.16), flash=25, ms=60),
     dict(k=-1, t=1, u=3, x=-3, xb=-1, d=-1, glow=0, fx=('vol', 0.55), ms=60),
     dict(k=0, t=0, u=3, x=-2, xb=-1, d=0, glow=0, fx=('vol', 0.88), ms=60),
     dict(k=1, t=-1, u=2, x=-2, xb=-1, d=1, glow=0, fx=('eclat', 0), ms=180),        # l'impact, tenu

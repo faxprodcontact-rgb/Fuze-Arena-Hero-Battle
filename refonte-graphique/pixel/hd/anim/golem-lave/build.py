@@ -421,6 +421,481 @@ def retouch(cv, fixes):
                     cv[Y, X] = ch
 
 
+
+# ---------------------------------------------------------------- le bras-massue, retracé à n'importe quel angle
+# Mesuré sur le dessin (grille) : l'épaule sous le rocher d'épaule en S0, le coude qui ressort vers l'arrière en E0,
+# le poignet (le haut de la massue) en W0. La massue est décrite autour du poignet, massue pendante (axe vers le bas) :
+# quatre bosses qui se fondent, la base aplatie (elle se pose à plat). Les plaques sont des cellules autour de points
+# fixés dans le repère du morceau : elles tournent avec lui ; leur modelé est recalculé à chaque image avec la lumière
+# en haut à droite.
+LIGHT = np.array([0.6, -0.8])
+LN = LIGHT / np.linalg.norm(LIGHT)
+S0 = np.array([28.0, 40.0])
+E0 = np.array([16.0, 64.0])
+W0 = np.array([22.0, 88.0])
+L_UP = float(np.linalg.norm(E0 - S0))          # le bras
+L_FORE = float(np.linalg.norm(W0 - E0))        # l'avant-bras
+R_UP = (10.5, 9.5)                             # rayons : épaule, coude
+R_FORE = (9.5, 11.0)                           # coude, poignet (il s'élargit vers la massue)
+LUMPS = [(-9.5, 15.0, 13.0), (11.5, 9.0, 10.5), (13.5, 19.5, 9.0), (2.0, 16.0, 11.5), (-2.0, 5.0, 10.0)]
+CLUB_BASE = 28.0                               # la base plate de la massue (repère de la massue, y vers le bas)
+CLUB_SEEDS = [(-15, 8), (-8, 4), (-14, 20), (-5, 14), (-4, 24), (4, 6), (6, 18), (12, 4), (15, 13), (12, 24),
+              (20, 19), (-18, 14), (4, 26), (0, -1)]
+# la lave de la massue : des fissures en étoile qui partent du poignet (repère de la massue)
+CLUB_LAVA = [[(-1, 0), (-3, 6), (-9, 11), (-15, 15), (-19, 16)],
+             [(-3, 6), (-2, 13), (-6, 20), (-8, 27)],
+             [(-2, 13), (5, 17), (9, 24)],
+             [(-9, 11), (-12, 19), (-17, 23)]]
+LIMB_LAVA_FORE = [(0.0, 0.05), (0.3, 0.1), (0.55, -0.05), (0.8, 0.1), (1.02, 0.0)]   # (t le long, s en travers)
+LIMB_LAVA_UP = [(0.0, 0.55), (0.35, 0.6), (0.7, 0.5), (0.85, 0.55)]
+
+
+def unit(deg):
+    a = math.radians(deg)
+    return np.array([math.cos(a), -math.sin(a)])
+
+
+def ang_of(v):
+    return math.degrees(math.atan2(-v[1], v[0]))
+
+
+A_UP0 = ang_of(E0 - S0)
+A_FORE0 = ang_of(W0 - E0)
+PHI0 = -90.0                                   # l'axe de la massue au repos : vers le bas
+
+
+def rot(v, deg):
+    """tourne un vecteur (coordonnées de l'écran, y vers le bas) de deg degrés dans le sens inverse des aiguilles"""
+    a = math.radians(deg)
+    c, s_ = math.cos(a), math.sin(a)
+    return np.array([v[0] * c + v[1] * s_, -v[0] * s_ + v[1] * c])
+
+
+def light_field(m):
+    """pour une forme pleine (masque) : > 0 sur les bords tournés vers la lumière (en haut à droite), < 0 sur les
+    bords dans l'ombre, ~0 au milieu. Deux échelles (bord net + volume doux). (de Garvin / Lilou)"""
+    out = np.zeros(m.shape)
+    for (sig, a, wgt) in ((1.2, 1.6, 0.6), (3.5, 4.0, 0.4)):
+        im = Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig))
+        Bm = np.asarray(im, float) / 255
+        dx, dy = int(round(LN[0] * a)), int(round(LN[1] * a))
+        ahead = np.roll(np.roll(Bm, -dy, 0), -dx, 1)
+        behind = np.roll(np.roll(Bm, dy, 0), dx, 1)
+        out += wgt * (behind - ahead)
+    return out
+
+
+def seg_frame(P0, P1):
+    v = P1 - P0
+    L = max(float(np.linalg.norm(v)), 1e-6)
+    u = v / L
+    return u, np.array([u[1], -u[0]]), L
+
+
+def arm_geometry(S, a_up, a_fore, phi, stretch=1.0):
+    E = S + L_UP * stretch * unit(a_up)
+    Wr = E + L_FORE * stretch * unit(a_fore)
+    return E, Wr
+
+
+def draw_club_arm(S, a_up, a_fore, phi, heat=0, stretch=1.0, smear_from=None):
+    """le bras-massue posé sur une toile à part : épaule S (toile), angles du bras, de l'avant-bras et de l'axe de la
+    massue (degrés). Renvoie (calque, masque, E, Wr, centre de la massue)."""
+    E, Wr = arm_geometry(S, a_up, a_fore, phi, stretch)
+    turn = phi - PHI0
+    x0, x1 = int(min(S[0], E[0], Wr[0]) - 40), int(max(S[0], E[0], Wr[0]) + 40)
+    y0, y1 = int(min(S[1], E[1], Wr[1]) - 40), int(max(S[1], E[1], Wr[1]) + 40)
+    x0, y0, x1, y1 = max(0, x0), max(0, y0), min(W, x1), min(H, y1)
+    lab = np.full((H, W), -1, int)
+    part = np.zeros((H, W), int)           # 1 bras, 2 avant-bras, 3 massue
+    segs = [(1, S, E, R_UP), (2, E, Wr, R_FORE)]
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            p = np.array([x + 0.5, y + 0.5])
+            # la massue (devant l'avant-bras)
+            q = rot(p - Wr, -turn)
+            inside = q[1] <= CLUB_BASE and any((q[0] - lx) ** 2 + (q[1] - ly) ** 2 <= r * r for lx, ly, r in LUMPS)
+            if inside:
+                best = min(range(len(CLUB_SEEDS)),
+                           key=lambda i: (q[0] - CLUB_SEEDS[i][0]) ** 2 + (q[1] - CLUB_SEEDS[i][1]) ** 2)
+                lab[y, x] = 100 + best
+                part[y, x] = 3
+                continue
+            for (k, A, B, (ra, rb)) in segs[::-1]:
+                u, n, L = seg_frame(A, B)
+                t = float((p - A) @ u) / L
+                tc = min(1.0, max(0.0, t))
+                r = ra + (rb - ra) * tc
+                d = float((p - A) @ n)
+                over_end = (-t * L) if t < 0 else ((t - 1) * L if t > 1 else 0.0)
+                if over_end > 0 and math.hypot(over_end, d) > r:
+                    continue
+                if abs(d) > r:
+                    continue
+                # plaques : des bandes en biais le long du membre (comme le dessin), décalées d'un côté à l'autre
+                band = int(math.floor(t * L / 8.0 + 0.35 * d / r + (0.5 if k == 2 else 0.0)))
+                side = 0 if d < -0.25 * r else 1
+                lab[y, x] = k * 30 + band * 2 + side
+                part[y, x] = k
+                break
+    m = lab >= 0
+    lf = light_field(m)
+    lay = np.full((H, W), '.', dtype='<U1')
+    ys, xs = np.nonzero(m)
+    # le modelé moyen de chaque plaque (une plaque est un plan : un seul ton, plus son bord éclairé)
+    sums = {}
+    for y, x in zip(ys, xs):
+        a = sums.setdefault(lab[y, x], [0.0, 0])
+        a[0] += lf[y, x]
+        a[1] += 1
+    mean = {k: v[0] / v[1] for k, v in sums.items()}
+    for y, x in zip(ys, xs):
+        L0 = lab[y, x]
+        right = lab[y, x + 1] if x + 1 < W else -1
+        down = lab[y + 1, x] if y + 1 < H else -1
+        crack = (right >= 0 and right != L0) or (down >= 0 and down != L0)
+        if crack:
+            # fêlure : sombre ; sur la massue, plus on descend (vers le sol), plus elle rougeoit
+            ch = '1'
+            if part[y, x] == 3:
+                q = rot(np.array([x + 0.5, y + 0.5]) - Wr, -turn)
+                if q[1] > 17 and (x + y) % 3:
+                    ch = 'r'
+            lay[y, x] = ch
+            continue
+        v = 0.55 * mean[L0] * 2.2 + 0.45 * lf[y, x] * 1.4
+        up_ = lab[y - 1, x] if y > 0 else -1
+        ur = lab[y - 1, x + 1] if (y > 0 and x + 1 < W) else -1
+        left = lab[y, x - 1] if x > 0 else -1
+        if up_ != L0 or ur != L0 or right != L0:
+            v += 0.42                         # le bord de la plaque tourné vers la lumière
+        elif left != L0 or down != L0:
+            v -= 0.18
+        if part[y, x] != 3:
+            v += 0.12                         # le bras est plus clair que la massue (comme sur le dessin)
+        ch = '7' if v > 0.62 else '6' if v > 0.3 else '5' if v > 0.06 else '4' if v > -0.22 else '3' if v > -0.5 else '2'
+        lay[y, x] = ch
+    # la lave : la coulée du bras, la fêlure de l'avant-bras, les fissures en étoile de la massue
+    def lava_line(pts, wide=1.6):
+        for (a, b) in zip(pts[:-1], pts[1:]):
+            n_ = max(2, int(np.linalg.norm(b - a) * 2))
+            for i in range(n_ + 1):
+                c = a + (b - a) * i / n_
+                for yy in range(int(c[1] - 2), int(c[1] + 3)):
+                    for xx in range(int(c[0] - 2), int(c[0] + 3)):
+                        if not (0 <= xx < W and 0 <= yy < H) or not m[yy, xx]:
+                            continue
+                        dd = math.hypot(xx + 0.5 - c[0], yy + 0.5 - c[1])
+                        if dd <= wide * 0.5:
+                            if lay[yy, xx] not in 'vu':
+                                lay[yy, xx] = 'u' if dd < 0.4 else 't'
+                        elif dd <= wide * 0.5 + 0.8 and lay[yy, xx] not in 'vuts':
+                            lay[yy, xx] = 'h' if lay[yy, xx] not in 'r' else 'r'
+    def limb_pts(A, B, spec, R):
+        u, n, L = seg_frame(A, B)
+        return [A + t * L * u + s_ * R * n for (t, s_) in spec]
+    lava_line(limb_pts(S, E, LIMB_LAVA_UP, R_UP[0]), 1.4)
+    lava_line(limb_pts(E, Wr, LIMB_LAVA_FORE, R_FORE[0]), 1.6)
+    for br in CLUB_LAVA:
+        lava_line([Wr + rot(np.array(pt, float), turn) for pt in br], 1.7)
+    # un éclat au coeur de l'étoile
+    c = Wr + rot(np.array([-3.0, 6.0]), turn)
+    if m[int(c[1]), int(c[0])]:
+        lay[int(c[1]), int(c[0])] = 'v'
+    if heat:
+        lay = glow(lay, heat)
+    ctx_c = Wr + rot(np.array([2.0, 14.0]), turn)
+    return lay, m, E, Wr, ctx_c
+
+
+def pose_layer(cv, lay, rim=True):
+    """pose le bras sur la toile ; là où il passe devant le corps, son bord prend le ton le plus sombre de la roche
+    (une séparation douce, pas un trait noir)"""
+    m = lay != '.'
+    if rim:
+        under = cv != '.'
+        edge = np.zeros_like(m)
+        for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+            nb = np.roll(np.roll(m, dy, 0), dx, 1)
+            edge |= m & ~nb & np.roll(np.roll(under, dy, 0), dx, 1)
+        lay = lay.copy()
+        lay[edge & np.isin(lay, list('234567'))] = '1'
+    cv[m] = lay[m]
+
+
+def club_bottom(S, a_up, a_fore, phi, stretch=1.0):
+    """le point le plus bas de la massue (toile), calculé sur la forme (sans dessiner)"""
+    E, Wr = arm_geometry(S, a_up, a_fore, phi, stretch)
+    turn = phi - PHI0
+    best = -1e9
+    for (lx, ly, r) in LUMPS:
+        for k in range(48):
+            a = 2 * math.pi * k / 48
+            q = np.array([lx + r * math.cos(a), min(CLUB_BASE, ly + r * math.sin(a))])
+            best = max(best, (Wr + rot(q, turn))[1])
+    return best
+
+
+def plant_stretch(S, a_up, a_fore, phi):
+    """l'allongement du bras (tricherie d'animateur, ±15 %) qui pose la massue juste sur le sol"""
+    lo, hi = 0.85, 1.15
+    for _ in range(18):
+        mid = (lo + hi) / 2
+        if club_bottom(S, a_up, a_fore, phi, mid) > GROUND + 0.5:
+            hi = mid
+        else:
+            lo = mid
+    return lo
+
+
+# le rocher d'épaule : il passe DEVANT la racine du bras (le bras sort de dessous, quel que soit son angle)
+_ep = Image.new('L', (GW, GH), 0)
+ImageDraw.Draw(_ep).polygon([(30, 17), (45, 16), (45, 23), (38, 29), (37, 44), (29, 47), (18, 46), (16, 38), (21, 29)],
+                            fill=255)
+P['epaule'] = np.where(np.asarray(_ep) > 0, CORPS, '.')
+
+
+# ---------------------------------------------------------------- les effets : formes courbes, sans contour (de Kael)
+def bezier(p0, p1, p2, p3, n):
+    out = []
+    for i in range(n + 1):
+        t = i / n
+        a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+        out.append((a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]))
+    return out
+
+
+def stroke(cv, pts, widths, tones, keep=None, cool=None):
+    """un ruban le long de points, une épaisseur par point (coeur = premier ton -> bord = dernier)"""
+    best = {}
+    for i, ((px, py), wv) in enumerate(zip(pts, widths)):
+        c0 = cool[i] if cool else 0.0
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1.2 else 0.85
+                    if cool:
+                        k = min(0.999, c0 + (1 - c0) * k)
+                    if k < best.get((x, y), 9):
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in best.items():
+        put(cv, x, y, tones[min(m - 1, int(k * m))], keep)
+
+
+def tongue(cv, base, h, w, bend=0.0, tones='wvutsr', lean=0.0, fork=None):
+    """une langue de flamme / un jet de lave : ventru en bas, effilé et recourbé à la pointe (de Kael)"""
+    bx, by = base
+    p0 = (bx, by)
+    p1 = (bx + lean * 0.3 * h, by - h * 0.35)
+    p2 = (bx + lean * 0.7 * h - bend * 0.25 * h, by - h * 0.7)
+    p3 = (bx + lean * h + bend * 0.35 * h, by - h)
+    pts = bezier(p0, p1, p2, p3, max(12, int(h * 1.6)))
+    n = len(pts)
+    widths, cool = [], []
+    for i in range(n):
+        s_ = i / (n - 1)
+        prof = (0.7 + 0.3 * math.sin(min(1.0, s_ / 0.25) * math.pi / 2)) * (1 - s_) ** 0.6
+        widths.append(w * prof + 0.3)
+        cool.append(min(0.8, max(0.0, (s_ - 0.15) * 0.75)))
+    if fork is None:
+        fork = h >= 18
+    if fork:
+        i0 = int(0.4 * (n - 1))
+        fx_, fy_ = pts[i0]
+        side = -1 if bend >= 0 else 1
+        tongue(cv, (fx_ + side * widths[i0] * 0.3, fy_ + 1), h * 0.38, w * 0.42, bend=side * 1.1,
+               tones=tones[1:] or tones, lean=lean + side * 0.35, fork=False)
+    stroke(cv, pts, widths, tones, cool=cool)
+
+
+def puff(cv, c, r, tones='ABC', hollow=0.0):
+    cx, cy = c
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            w_ = np.array([x + 0.5 - cx, y + 0.5 - cy])
+            d = math.hypot(*w_)
+            if d <= r and d >= hollow * r:
+                k = (w_ @ LN) / max(r, 1e-6)
+                put(cv, x, y, tones[min(len(tones) - 1, int((1 - k) / 2 * len(tones)))])
+
+
+def cloud(cv, c, r, tones='AABC', hollow=0.0, seed=0, ground=True):
+    """un nuage (fumée, poussière) en chou-fleur ; hollow (0..1) : il se défait"""
+    rng = np.random.RandomState(seed)
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for i in range(4):
+        a = math.radians(150 - i * 40 + rng.uniform(-12, 12))
+        d = r * rng.uniform(0.55, 0.8)
+        lobes.append((d * math.cos(a), -d * math.sin(a) * 0.7, r * rng.uniform(0.5, 0.7)))
+    if hollow:
+        out = []
+        for (dx, dy, rr) in lobes[1:]:
+            out.append((dx * (1 + hollow), dy * (1 + hollow) - hollow * r * 0.5, rr * (1 - 0.45 * hollow)))
+        out.append((0, -hollow * r * 0.4, r * (1 - 0.6 * hollow)))
+        lobes = out
+    for (dx, dy, rr) in lobes:
+        yy = min(cy + dy, GROUND - rr * 0.6) if ground else cy + dy
+        puff(cv, (cx + dx, yy), rr, tones)
+
+
+def curl(cv, c, r0, a0, turn=300, w=2.4, tones='ABC', cw=False):
+    cx, cy = c
+    n = int(turn / 4) + 8
+    pts, ws = [], []
+    for i in range(n + 1):
+        s_ = i / n
+        a = math.radians(a0 + (-turn if cw else turn) * s_)
+        r = r0 * (1 - 0.72 * s_)
+        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
+        ws.append(w * (1 - s_) ** 0.7 + 0.4 * (1 - s_))
+    stroke(cv, pts, ws, tones)
+
+
+def smoke_column(cv, base, h, r, hollow=0.0, seed=0, lean=1.0):
+    bx, by = base
+    n = 4
+    for i in range(n):
+        s_ = i / (n - 1)
+        x = bx + lean * 3 * math.sin(s_ * 2.6 + seed)
+        y = by - s_ * h
+        cloud(cv, (x, y), r * (1 - 0.45 * s_), 'AABCD' if i == 0 else 'AABC', hollow=hollow, seed=seed + i,
+              ground=False)
+    curl(cv, (bx + lean * 3 * math.sin(2.6 + seed) + 2, by - h - r * 0.4), r * 0.7, 270, turn=250,
+         w=max(1.6, r * 0.45), tones='AAB', cw=lean < 0)
+
+
+def drop(cv, x, y, vx, vy, size=1):
+    """une goutte de lave : une perle claire et sa traîne courte, orientée par sa vitesse"""
+    L = math.hypot(vx, vy) or 1
+    ux, uy = vx / L, vy / L
+    if size >= 2:
+        put(cv, x, y, 'v')
+        put(cv, x + 1, y, 'u')
+        put(cv, x, y + 1, 'u')
+        put(cv, x + 1, y + 1, 't')
+        put(cv, x - ux * 2, y - uy * 2, 't')
+        put(cv, x - ux * 3, y - uy * 3, 's')
+    else:
+        put(cv, x, y, 'u')
+        put(cv, x - ux * 1.5, y - uy * 1.5, 't')
+        put(cv, x - ux * 2.5, y - uy * 2.5, 's')
+
+
+def ember(cv, x, y, big=False):
+    put(cv, x, y, 'v')
+    if big:
+        put(cv, x + 1, y, 'u')
+        put(cv, x, y + 1, 't')
+
+
+# éclats de roche dessinés à la main (bord sombre 1, lumière en haut à droite, une fêlure de lave) — ceux de Kael,
+# dans la roche du golem
+CHUNKS = [
+    ['.1111.', '136761', '12346r', '.1221.'],
+    ['.111', '1461', '1241', '.11.'],
+    ['11.', '161', '.21'],
+    ['.111.', '13561', '1s321', '.111.'],
+]
+
+
+def chunk(cv, x, y, k=0, flip=False):
+    rows = CHUNKS[k % len(CHUNKS)]
+    for j, r in enumerate(rows):
+        if flip:
+            r = r[::-1].replace('6', '4').replace('7', '5')
+        for i, ch in enumerate(r):
+            if ch != '.':
+                put(cv, x + i, y + j, ch)
+
+
+def arc_trail(cv, c, R, a_from, a_to, w, tones, inner=0.0):
+    """traînée pleine en croissant entre les angles a_from (où était la massue) et a_to (où elle est) : épaisse
+    contre la massue, effilée vers a_from (de Kael)"""
+    cx, cy = c
+    m = len(tones)
+    span = a_to - a_from
+    for y in range(int(cy - R - 2), int(cy + R + 3)):
+        for x in range(int(cx - R - 2), int(cx + R + 3)):
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            r = math.hypot(dx, dy)
+            if r > R + 0.5 or r < inner:
+                continue
+            ang = math.degrees(math.atan2(-dy, dx))
+            da = (a_to - ang) % 360 if span >= 0 else (ang - a_to) % 360
+            if da > abs(span):
+                continue
+            s_ = da / abs(span)
+            ww = w * (1 - s_) ** 0.9 + (0.6 if s_ < 0.97 else 0)
+            if r < R - ww:
+                continue
+            k = min(1.0, max(0.0, (R - r) / max(ww, 1e-6)))
+            put(cv, x, y, tones[min(m - 1, int((0.55 * s_ + 0.45 * k) * m))])
+
+
+# ---------------------------------------------------------------- une image « montée » (corps plié + bras retracé)
+class Ctx:
+    pass
+
+
+def rig_frame(f):
+    body = Body(crouch=f.get('crouch', 0), breath=f.get('breath', 0), lean=f.get('lean', 0), tilt=f.get('tilt', 0))
+    cv, back, front = empty(), empty(), empty()
+    ctx = Ctx()
+    ctx.body, ctx.f = body, f
+    swap = BLINK if f.get('blink') else None
+    gl = f.get('glow', 0)
+    head = f.get('head', (0, 0))
+    orig = f.get('arms') == 'orig'
+    body.draw(cv, glow(P['corps'] if orig else P['corps_nu'], gl))
+    vx, vy = body.follow(50)
+    vis = glow(P['visage'], gl)
+    blit(cv, vis, vx, vy, swap)
+    if head != (0, 0):
+        blit(cv, vis, vx + head[0], vy + head[1], swap)
+    ax, ay = body.follow(70)
+    pa = f.get('pa', (0, 0))
+    blit(cv, glow(small_arm(f.get('sw', 0)), gl), ax + pa[0], ay + pa[1])
+    blit(cv, P['goutte'], ax + pa[0] + f.get('sw', 0), ay + pa[1])
+    ctx.crater = body.point(60, 13)
+    if not orig:
+        S = body.point(*S0)
+        a_up, a_fore, phi = f['arm']
+        st = plant_stretch(S, a_up, a_fore, phi) if f.get('plant') else f.get('stretch', 1.0)
+        lay, m, E, Wr, cc = draw_club_arm(S, a_up, a_fore, phi, heat=f.get('heat', 0), stretch=st)
+        ctx.S, ctx.E, ctx.Wr, ctx.club = S, E, Wr, cc
+        ctx.club_bottom = club_bottom(S, a_up, a_fore, phi, st)
+        if f.get('smear'):
+            f['smear'](cv, back, front, ctx)
+        pose_layer(cv, lay)
+        body.draw(cv, glow(P['epaule'], gl))
+    for fx in f.get('fx_list', []):
+        fx(cv, back, front, ctx)
+    return cv, back, front, ctx
+
+
+def club_angle(ctx):
+    return ang_of(ctx.club - ctx.S)
+
+
+def fx_club_smear(prev_club, tones='65432', lava='uts', w=16):
+    """la massue floue : un croissant de roche entre l'ancienne place de la massue et la nouvelle, bordé d'une
+    traînée de braise ; prev_club = centre de la massue à l'image d'avant (grille, comme les réglages)"""
+    def f(cv, back, front, ctx):
+        a_to = club_angle(ctx)
+        a_from = ang_of(np.array(prev_club, float) + np.array([OX, OY]) - ctx.S)
+        span = ((a_to - a_from + 180) % 360) - 180
+        R = float(np.linalg.norm(ctx.club - ctx.S)) + 13
+        arc_trail(back, ctx.S, R - 3, a_to - span, a_to, w, tones)
+        if lava:
+            arc_trail(back, ctx.S, R - 1, a_to - span * 0.8, a_to, 3.2, lava)
+    return f
+
 # ---------------------------------------------------------------- toutes les images
 def build_one(name):
     fr = []
