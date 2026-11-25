@@ -20,8 +20,10 @@
 #   - ce qui tourne est REDESSINÉ : les cristaux couchés (aiguilles de glace) sont retracés à chaque angle avec les tons
 #     de glace du dessin (facette éclairée claire, arête blanche, facettes ombrées à gauche et dessous) ;
 #   - effets : les tons de glace du dessin (r s t u j) et la petite palette d'eau d'Ilian, d'Elyon et de Zaroth, plus
-#     trois tons de givre lavande (brume, souffle) ; les objets solides (aiguilles, bloc de glace, éclats) ont leur
-#     contour comme les cristaux du dessin, la brume et la neige n'en ont pas ;
+#     trois tons de givre lavande (brume, souffle) ; les objets solides (aiguilles, éclats) ont leur
+#     contour comme les cristaux du dessin, la brume et la neige n'en ont pas ; dans la spéciale d'équipe, les trois
+#     cristaux qui tournent autour d'elle sont les morceaux du dessin posés au pixel près (éclaircis d'un ou deux tons
+#     quand ils s'embrasent), les éclats d'énergie sont tout de lumière (blanc, givre, cyan), sans contour ;
 #   - à la fin, chaque image peut recevoir des retouches pixel par pixel (RETOUCHES, plus bas).
 import sys, os, math
 import numpy as np
@@ -1180,14 +1182,14 @@ def fx_aura(level, ph, fade=0.0):
 # rapport au milieu de ses pieds, longueur, derrière elle ?). Ceux de derrière sont plus petits (plus loin) ; ceux de
 # devant retombent au sol de part et d'autre de ses pieds ; un monte droit au ciel. Symétriques : rien ne vise un côté.
 SHARDS = [(0.00, (3, -210), 7, False),            # vers le ciel
-          (0.04, (-98, -190), 7, False),          # en haut à gauche
-          (0.08, (100, -186), 7, False),          # en haut à droite
-          (0.13, (-128, -100), 7, False),         # à gauche
-          (0.16, (126, -96), 7, False),           # à droite
-          (0.21, (-70, -58), 5, True),            # derrière elle, à gauche
-          (0.24, (72, -62), 5, True),             # derrière elle, à droite
-          (0.30, (-60, -3), 8, False),            # devant elle, à gauche (retombe au sol)
-          (0.34, (64, -3), 8, False)]             # devant elle, à droite (retombe au sol)
+          (0.02, (-98, -190), 7, False),          # en haut à gauche
+          (0.03, (100, -186), 7, False),          # en haut à droite
+          (0.05, (-128, -100), 7, False),         # à gauche
+          (0.06, (126, -96), 7, False),           # à droite
+          (0.08, (-70, -58), 5, True),            # derrière elle, à gauche
+          (0.09, (72, -62), 5, True),             # derrière elle, à droite
+          (0.10, (-60, -3), 8, False),            # devant elle, à gauche (retombe au sol)
+          (0.12, (64, -3), 8, False)]             # devant elle, à droite (retombe au sol)
 SHARD_FROM = [1, 1, 0, 1, 0, 1, 0, 2, 2]          # de quel cristal part chaque éclat (0 : derrière à droite, 1 : derrière
 #                                                 à gauche, 2 : devant elle, à gauche)
 SHARD_LIT = {'u': 'W', 'j': 'W', 't': 'X', 's': 'Y', 'r': 'Z'}
@@ -1264,7 +1266,7 @@ SPECIALE = [
     dict(arm=(-4, -4), s=-1, b=1, lean=-1, head=(0, -1), ph=2.0, ha=2.1, hl=1.6, mp=1, ml=0, **_EYE,
          fx=[gather_snow(0), orbit_crystals(-120, 48, 20, lit=1, halo=3.0)], ms=210),
     dict(arm=(-4, -4), s=-1, b=1, lean=-1, head=(0, -1), ph=2.4, ha=2.1, hl=1.8, mp=1, ml=0, **_EYE,
-         fx=[gather_snow(1), orbit_crystals(-55, 48, 20, lit=1, halo=3.5)], ms=80),
+         fx=[gather_snow(1), orbit_crystals(-75, 48, 20, lit=1, halo=3.5)], ms=80),
     # 5 : MOMENT DE LANCEMENT (arrêt sur l'image) : elle souffle ; les cristaux s'embrasent, le tourbillon de flocons
     # sort de ses lèvres et descend autour d'elle, l'aura givrée monte, les éclats jaillissent, elle s'éclaire
     dict(arm=(-3, -4), lean=1, head=(1, 0), ph=3.0, ha=2.6, hl=2.0, mp=-1, ml=-1, o=1, **_EYE,
@@ -1282,10 +1284,10 @@ SPECIALE = [
              shards_fly(0.9)], ms=120),
     # 9-10 : l'anneau se défait en neige, l'aura s'éteint par le bas, les cristaux ralentissent
     dict(arm=(-2, -2), lean=0, head=(0, 0), ph=5.8, ha=2.0, hl=0.5, mp=1, ml=0, **_EYE,
-         fx=[fx_aura(1, 6.2, fade=0.45), ice_ring(74, 300, thin=0.75, k=2), orbit_crystals(-195, 46, 17, lit=1),
+         fx=[fx_aura(1, 6.2, fade=0.45), ice_ring(74, 300, thin=0.75, k=2), orbit_crystals(-150, 46, 17, lit=1),
              shards_fly(1.15), flurry(0)], ms=130),
     dict(arm=(-1, -2), ph=6.5, ha=1.8, mp=1, ml=1, **_EYE,
-         fx=[orbit_crystals(-170, 40, 16), flurry(1, 8)], ms=140),
+         fx=[orbit_crystals(-130, 40, 16), flurry(1, 8)], ms=140),
     # 11-13 : ils redescendent se poser au-dessus de sa paume ; ses yeux s'éteignent
     dict(arm=(-1, -1), ph=7.2, ha=1.7, mp=0, ml=1, sp=NOSP,
          cr=[(-2, -9), (0, -11), (2, -9)], fx=[flurry(2, 5)], ms=120),
