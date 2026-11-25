@@ -11,7 +11,7 @@ import { legalDoc, type LegalDoc } from '../../legal';
 import { APP_VERSION } from '../../version';
 import { t } from '../../i18n';
 import { THEMES, getTheme, setTheme } from '../../theme';
-import { TERRAINS, forcedTerrain, setForcedTerrain } from '../../look';
+import { FOND_CHOICES, forcedTerrain, setForcedTerrain } from '../../look';
 import {
   buyExchange, buyOffer, claimChest, claimPass, claimQuest, demoUnlockAll, giveTestResources, passLevel, questPoints,
   chooseName, deleteAccount, pixelDemoBattle, playerId, randomName, rename, resetGame, setLang, setSetting, timeTravel,
@@ -263,7 +263,7 @@ export function SettingsModal() {
         {/* Voir chaque décor de combat, l'un après l'autre : il remplace celui de l'accueil et des combats jusqu'à « Normal ». */}
         <h3>{t('settings.fond')}</h3>
         <div class="row gap-s wrap">
-          {[null, ...TERRAINS].map((ter) => (
+          {[null, ...FOND_CHOICES].map((ter) => (
             <Btn kind={forcedTerrain() === ter ? 'gold' : 'ghost'} small onClick={() => {
               setForcedTerrain(ter);
               close();

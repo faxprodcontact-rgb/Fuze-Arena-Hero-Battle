@@ -8,7 +8,7 @@ import type { Element } from '../core/types';
 import { ELEMENT_COLOR, artUrl, cardUrl, hasArt, heroCanvas, isPixel, monsterCanvas, pixelUrl } from './art';
 import { PIXEL } from './pixel-meta';
 import { ART_META } from './art-meta';
-import { SCENES, loadBackdrop, placeBackdrop, type Ctx as BgCtx } from './bg';
+import { SCENES, loadBackdrop, loadPxFond, placeBackdrop, placePxFond, type Ctx as BgCtx } from './bg';
 import { ICON_INDEX } from './icons-meta';
 
 /** Effets en combat qui ont leur picto (case st-<effet> de public/art/icons.webp). */
@@ -194,7 +194,8 @@ export abstract class FightScene extends Phaser.Scene {
     const terrain = this.look.terrain;
     const scene = SCENES[terrain];
     const pxBg = this.look.pixel;
-    if (pxBg) {
+    if (this.look.fond) loadPxFond(this, this.look.fond);
+    else if (pxBg) {
       if (!this.textures.exists(`pxbg-${pxBg}`)) this.load.image(`pxbg-${pxBg}`, `art/px/fond-${pxBg}.webp`);
     } else if (scene) loadBackdrop(this, terrain, scene, this.bgCtx());
     else {
@@ -265,6 +266,15 @@ export abstract class FightScene extends Phaser.Scene {
   /** Le terrain : l'image du décor, le centre de son arène au milieu des rangées de combattants. */
   protected drawArena(bottom: number) {
     this.arenaBottom = bottom;
+    if (this.look.fond) {
+      // fond HD animé (refonte-graphique/pixel/fonds/) : son bas 430 unités sous le haut du sol, comme ses mesures
+      // (= le bas du terrain du combat ; l'accueil, un peu plus court, en coupe le bas)
+      const placed = placePxFond(this, this.look.fond, this.arenaBox().groundTop + 430);
+      if (placed.ok) {
+        this.fg = placed.front;
+        return;
+      }
+    }
     const pxBg = this.look.pixel;
     if (pxBg && this.textures.exists(`pxbg-${pxBg}`)) {
       // fond en pixel art (refonte-graphique/pixel/fond.py) : dessiné pour cet écran, son bas sur le bas du terrain

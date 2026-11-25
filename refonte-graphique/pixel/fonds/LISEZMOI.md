@@ -110,10 +110,23 @@ boucle pour une grande surface qui coule.
     {"id", "genre": "particules", "plan", "prof", "cases": [[sx, sy, w, h], …], "zone": [x0, y0, x1, y1],
      "nombre", "vie": [min, max], "vx": [min, max], "vy": [min, max], "ondule": [amp, période], "images": "vie"|"boucle"} ] }
 ```
-Branchement dans le jeu (plus tard, en une fois, par un autre) : l'image fixe posée en (0, bas du terrain), origine
-(0, 1), échelle 720 / (590 × 2) ; chaque boucle = une image de la planche (cases × up) posée en (x, y) × 720/590 qui
-change toutes les `ms` ; un défilé = un TileSprite dont on avance `tilePositionX` **au pixel près** ; des particules =
-un émetteur Phaser ; le premier plan coupé au bas du terrain et effacé pendant les compétences (comme les décors actuels).
+**Branchement dans le jeu (fait)** — après avoir refait un fond avec son `build.py`, relancer
+`python3 refonte-graphique/pixel/fonds/jeu.py` : il écrit `public/art/px/fonds/<clan>.webp` (l'image fixe **×1**,
+590 × 1100), `public/art/px/fonds/<clan>-anim.webp` (la planche ×1, toutes sous 2048 px) et `src/game/fond-meta.ts`
+(les calques des 8 fonds, ~26 Ko, dans le code des combats seulement). Le jeu (`src/game/bg/fond-px.ts`) agrandit
+lui-même sans flou (plus proche voisin) : 720 / 590 unités par pixel, le bas de l'image 430 unités sous le haut du sol
+(= le bas du terrain du combat ; l'accueil en coupe 10 unités). Chaque fond est chargé seulement quand on le voit.
+- boucle = une image de la planche posée en (x, y) × 720/590, qui change toutes les `ms` (heure réelle : ×2 et ×3
+  n'accélèrent pas le décor) ; défilé = un TileSprite dont `tilePositionX/Y` avance d'un pixel entier à la fois ;
+  particules = des images posées sur la grille des pixels du fond, avec exactement la règle de `particules_a` (chaque
+  place renaît au même endroit à chaque période) ; profondeurs = `prof` ; au-delà de 1290 (premier plan), le calque
+  s'efface pendant les compétences comme le premier plan des décors dessinés par le code.
+- Où on les voit : les 8 régions de la campagne (`REGIONS` dans `src/game/look.ts` : prairie → eldra, ronciers →
+  arachne, bayou → meduse, cendres → kael, toundra → orin, orage → barzul, temple → lenore, abysses → kesha) et donc
+  l'accueil ; le combat d'essai HD (le clan le plus nombreux chez les ennemis, sinon un général en face, sinon au
+  hasard) ; l'outil de test « Décor des combats » des réglages (ou `#fond=<clan>` dans l'adresse) impose un des 8.
+  Les autres modes (tour, donjons, boss, arène) gardent leurs décors dessinés par le code.
+- Les images ×2 de `public/art/px/fond-<clan>.webp` restent l'entrée de `jeu.py` (le jeu ne les lit plus).
 
 ## 5. La méthode (chaque fond)
 

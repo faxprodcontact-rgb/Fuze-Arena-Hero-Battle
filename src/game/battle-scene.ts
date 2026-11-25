@@ -8,7 +8,7 @@ import { HUD_BUTTONS, loadHudArt } from './hud-art';
 import { t } from './i18n';
 import { hdChar, hasHd } from './hd-fight';
 import { hdTrialScript } from './hd-trial';
-import { battleLook } from './look';
+import { battleLook, trialFond } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
 import { getState } from './state/store';
 
@@ -57,11 +57,18 @@ export class BattleScene extends FightScene {
     this.acc = 0;
     this.ended = false;
     this.bigBoss = !!data.request.damageMode;
-    this.look = battleLook(data.request.kind, data.request.title, data.request.dungeon?.kind);
     this.hdMode = data.request.kind === 'hdDemo';
+    this.look = battleLook(data.request.kind, data.request.title, data.request.dungeon?.kind, this.hdMode ? this.trialFond() : undefined);
     this.script = undefined;
     this.hdRound = 0;
     this.portraitObjs = [];
+  }
+
+  /** Combat d'essai HD : le fond du clan des ennemis de la première manche (les monstres `mon-<clan>-…`, sinon les généraux). */
+  private trialFond() {
+    const foes = this.req.waves[0] ?? [];
+    const mons = foes.map((u) => (u.id && this.req.hdArt?.[u.id]) || '').filter((a) => a.startsWith('mon-')).map((a) => a.split('-')[1]!);
+    return trialFond(mons.length ? mons : foes.map((u) => (hasHd(u.defId) ? hdChar(u.defId).name : '')));
   }
 
   /** Combat d'essai HD : certains monstres prennent leur dessin HD (voir hdTrialBattle). */

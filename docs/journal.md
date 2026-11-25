@@ -417,6 +417,11 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   baron vaudou, Freyja le barbare à la massue, Isis le chasseur au crâne de cerf, Thor la femme-araignée, Atlas l'enfant
   de la forêt, Zeus le roi noir). Les noms de fichiers suivent les noms du jeu, pas ce que montre le dessin. Une couleur
   de clignement passe par une lettre de la légende (jamais une couleur directe dans `HEAD_BLINK`).
+  **v0.55.0 : 8 fonds de combat pixel art HD animés, un par clan** (Eldra, Arachné, Méduse, Kael, Orin, Barzul, Lenore,
+  Kesha) : dessinés par `refonte-graphique/pixel/fonds/<clan>/build.py` (outillage `fondlib.py`, LISEZMOI.md), mis au jeu par
+  `fonds/jeu.py` → `public/art/px/fonds/`, `src/game/fond-meta.ts`, `src/game/bg/fond-px.ts`. Un fond par région de la campagne
+  (et l'accueil), combat HD d'essai = clan des ennemis, Outils de test → « Décor des combats ». Tour, donjons, boss, arène :
+  anciens décors pour l'instant.
   **v0.54.0 : les 60 personnages HD dans le combat d'essai** : fenêtre de choix (5 héros, 5 monstres, « Au hasard »,
   « Les 60 à la suite » en 6 manches), `src/game/hd-roster.ts`, `ui/screens/hd-pick.tsx`. Export corrigé (`jeu_export.py` garde
   l'image rendue par compose ; vitesse/pente mesurées ; clés `retour`, `rase`, `avant`, `visage`). 8 fonds pixel HD animés

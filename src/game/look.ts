@@ -7,6 +7,14 @@ import { ART_META } from './art-meta';
 
 export type Terrain = keyof typeof ART_META.terrains;
 
+/**
+ * Les 8 fonds de combat HD animés en pixel art, un par clan de monstres (refonte-graphique/pixel/fonds/, chargés par
+ * src/game/bg/fond-px.ts), dans l'ordre des régions de la campagne.
+ */
+export const FONDS = ['eldra', 'arachne', 'meduse', 'kael', 'orin', 'barzul', 'lenore', 'kesha'] as const;
+export type Fond = (typeof FONDS)[number];
+const isFond = (v: string): v is Fond => (FONDS as readonly string[]).includes(v);
+
 /** Les 12 familles de monstres, 3 par élément. Dessins : `<famille>-1` à `-6` (rapide, costaud, tireur, sorts, élite, boss). */
 const FAMILIES: Record<Element, readonly [string, string, string]> = {
   fire: ['fauves', 'idoles', 'parade'],
@@ -19,15 +27,15 @@ const FAMILIES: Record<Element, readonly [string, string, string]> = {
  * La campagne traverse 8 régions (30 chapitres), puis recommence. L'élément des monstres change à chaque chapitre
  * (règles du jeu) : chaque région a donc une famille par élément, choisie pour aller avec son décor.
  */
-const REGIONS: { chapters: number; terrain: Terrain; families: Record<Element, string> }[] = [
-  { chapters: 4, terrain: 'meadow', families: { fire: 'parade', wind: 'epouvantails', water: 'bayou', earth: 'ronciers' } },
-  { chapters: 4, terrain: 'bramble', families: { fire: 'fauves', wind: 'ruche', water: 'bayou', earth: 'ronciers' } },
-  { chapters: 4, terrain: 'bayou', families: { fire: 'fauves', wind: 'voliere', water: 'bayou', earth: 'cuirasses' } },
-  { chapters: 4, terrain: 'ash', families: { fire: 'fauves', wind: 'voliere', water: 'bayou', earth: 'cuirasses' } },
-  { chapters: 4, terrain: 'tundra', families: { fire: 'fauves', wind: 'voliere', water: 'glaces', earth: 'cuirasses' } },
-  { chapters: 4, terrain: 'storm', families: { fire: 'idoles', wind: 'voliere', water: 'glaces', earth: 'echiquier' } },
-  { chapters: 3, terrain: 'temple', families: { fire: 'idoles', wind: 'ruche', water: 'abysses', earth: 'echiquier' } },
-  { chapters: 3, terrain: 'abyss', families: { fire: 'parade', wind: 'voliere', water: 'abysses', earth: 'cuirasses' } },
+const REGIONS: { chapters: number; terrain: Terrain; fond: Fond; families: Record<Element, string> }[] = [
+  { chapters: 4, terrain: 'meadow', fond: 'eldra', families: { fire: 'parade', wind: 'epouvantails', water: 'bayou', earth: 'ronciers' } },
+  { chapters: 4, terrain: 'bramble', fond: 'arachne', families: { fire: 'fauves', wind: 'ruche', water: 'bayou', earth: 'ronciers' } },
+  { chapters: 4, terrain: 'bayou', fond: 'meduse', families: { fire: 'fauves', wind: 'voliere', water: 'bayou', earth: 'cuirasses' } },
+  { chapters: 4, terrain: 'ash', fond: 'kael', families: { fire: 'fauves', wind: 'voliere', water: 'bayou', earth: 'cuirasses' } },
+  { chapters: 4, terrain: 'tundra', fond: 'orin', families: { fire: 'fauves', wind: 'voliere', water: 'glaces', earth: 'cuirasses' } },
+  { chapters: 4, terrain: 'storm', fond: 'barzul', families: { fire: 'idoles', wind: 'voliere', water: 'glaces', earth: 'echiquier' } },
+  { chapters: 3, terrain: 'temple', fond: 'lenore', families: { fire: 'idoles', wind: 'ruche', water: 'abysses', earth: 'echiquier' } },
+  { chapters: 3, terrain: 'abyss', fond: 'kesha', families: { fire: 'parade', wind: 'voliere', water: 'abysses', earth: 'cuirasses' } },
 ];
 const LOOP = REGIONS.reduce((n, r) => n + r.chapters, 0);
 
@@ -50,6 +58,8 @@ export interface Look {
   namedBoss?: boolean;
   /** Fond en pixel art à la place du décor (art/px/fond-<nom>.webp), pour l'essai du nouveau style. */
   pixel?: string;
+  /** Fond HD animé du clan, à la place du décor dessiné par le code (`terrain` reste celui de la région). */
+  fond?: Fond;
 }
 
 function regionOf(chapter: number) {
@@ -63,7 +73,7 @@ function regionOf(chapter: number) {
 
 export function campaignLook(chapter: number): Look {
   const r = regionOf(chapter);
-  return { terrain: r.terrain, family: (e) => r.families[e] };
+  return { terrain: r.terrain, fond: r.fond, family: (e) => r.families[e] };
 }
 
 const DUNGEONS: DungeonKind[] = ['gold', 'essence', 'gear'];
@@ -71,33 +81,50 @@ const DUNGEONS: DungeonKind[] = ['gold', 'essence', 'gear'];
 /** Les 14 décors dessinés, dans l'ordre de la campagne puis des modes (pour l'outil de test des réglages). */
 export const TERRAINS: Terrain[] = ['meadow', 'bramble', 'bayou', 'ash', 'tundra', 'storm', 'temple', 'abyss', 'tower', 'mine', 'spring', 'armory', 'lair', 'arena'];
 
+/** Ce que l'outil de test peut imposer : un fond HD animé (les 8 clans) ou un des décors dessinés par le code. */
+export const FOND_CHOICES: (Fond | Terrain)[] = [...FONDS, ...TERRAINS];
+
 const FOND_KEY = 'fuze-fond';
-/** Outil de test : le décor imposé à tous les combats et à l'accueil (réglages, ou `#fond=<terrain>` dans l'adresse). */
-export function forcedTerrain(): Terrain | null {
+/** Outil de test : le décor imposé à tous les combats et à l'accueil (réglages, ou `#fond=<clan ou terrain>` dans l'adresse). */
+export function forcedTerrain(): Fond | Terrain | null {
   const m = typeof location === 'undefined' ? null : /(?:^#|&)fond=([a-z]+)/.exec(location.hash);
   let v: string | null = m?.[1] ?? null;
   if (!v) try { v = localStorage.getItem(FOND_KEY); } catch { v = null; }
-  return v && v in ART_META.terrains ? (v as Terrain) : null;
+  return v && (isFond(v) || v in ART_META.terrains) ? (v as Fond | Terrain) : null;
 }
-export function setForcedTerrain(t: Terrain | null) {
+export function setForcedTerrain(t: Fond | Terrain | null) {
   try { if (t) localStorage.setItem(FOND_KEY, t); else localStorage.removeItem(FOND_KEY); } catch { /* rien */ }
 }
 function forced(look: Look): Look {
   const t = forcedTerrain();
-  return t ? { ...look, terrain: t } : look;
+  if (!t) return look;
+  return isFond(t) ? { ...look, fond: t, pixel: undefined } : { ...look, terrain: t, fond: undefined, pixel: undefined };
 }
 
-/** Le décor d'un combat, d'après son mode et son titre (« 3-12 » en campagne, l'étage de la tour…). */
-export function battleLook(kind: string, title: string, dungeon?: DungeonKind): Look {
-  return forced(lookOf(kind, title, dungeon));
+/**
+ * Le fond du combat d'essai HD : celui du clan le plus nombreux chez les ennemis (à égalité, le premier venu) ;
+ * `clans` = le clan de chaque ennemi (les monstres `mon-<clan>-…`, sinon un général de clan). Aucun : un clan au hasard.
+ */
+export function trialFond(clans: string[]): Fond {
+  const own = clans.filter(isFond);
+  if (!own.length) return FONDS[Math.floor(Math.random() * FONDS.length)]!;
+  const count = (c: Fond) => own.filter((o) => o === c).length;
+  return own.reduce((best, c) => (count(c) > count(best) ? c : best), own[0]!);
 }
 
-function lookOf(kind: string, title: string, dungeon?: DungeonKind): Look {
+/** Le décor d'un combat, d'après son mode et son titre (« 3-12 » en campagne, l'étage de la tour…) ; `fond` : l'essai HD. */
+export function battleLook(kind: string, title: string, dungeon?: DungeonKind, fond?: Fond): Look {
+  return forced(lookOf(kind, title, dungeon, fond));
+}
+
+function lookOf(kind: string, title: string, dungeon?: DungeonKind, fond?: Fond): Look {
   switch (kind) {
     case 'campaign':
       return campaignLook(Math.max(1, Number.parseInt(title, 10) || 1));
-    case 'demo':
     case 'hdDemo':
+      // outil de test : le fond HD du clan des ennemis (les familles ne servent qu'aux monstres sans dessin HD)
+      return { terrain: 'meadow', fond: fond ?? trialFond([]), family: (e) => ({ earth: 'ronciers', water: 'bayou', fire: 'parade', wind: 'glaces' })[e] };
+    case 'demo':
       // outil de test : les familles des monstres redessinés en pixel art (voir pixelDemoBattle)
       return { terrain: 'meadow', pixel: 'prairie', family: (e) => ({ earth: 'ronciers', water: 'bayou', fire: 'parade', wind: 'glaces' })[e] };
     case 'tower': {

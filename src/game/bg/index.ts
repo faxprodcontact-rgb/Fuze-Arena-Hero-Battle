@@ -2,3 +2,4 @@
 export { SCENES } from './scenes';
 export { loadBackdrop, placeBackdrop } from './engine';
 export type { Ctx } from './core';
+export { loadPxFond, placePxFond, type PxFond } from './fond-px';
