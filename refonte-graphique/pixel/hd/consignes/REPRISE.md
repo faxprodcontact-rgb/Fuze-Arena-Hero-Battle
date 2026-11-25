@@ -19,7 +19,7 @@
   Liste et effet en jeu (`src/core/data/heroes.ts`, skillFor) : Rook, Myrr (soin de tous + purifie + ressuscite) ;
   Nerith, Minotaure (soin du plus blessé + régénération) ; Bérold, Corvin, Solenn (bouclier d'équipe + provocation) ;
   Garvin, Mira, Zaroth (défense d'équipe + se soigne + provocation) ; Arcan, Célia, Anubis (attaque d'équipe + énergie).
-  En cours : Myrr, Zaroth, Arcan. Elyon (affaiblit/ralentit les ennemis), Lilou, Auriel, Ysolde : déjà cohérents.
+  Faits (en attente de son avis sur le style) : Myrr, Zaroth, Arcan. Elyon (affaiblit/ralentit les ennemis), Lilou, Auriel, Ysolde : déjà cohérents.
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
 
 ## Méthode (validée par le propriétaire)
