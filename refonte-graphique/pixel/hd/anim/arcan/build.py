@@ -1,6 +1,7 @@
 # Arcan (mages-7, vent, soutien, épique) : l'ogre au sac à vent — pose (respiration), attaque de base « Coup de col »,
-# attaque spéciale « Fronde d'Éole » (refaite le 25/11/2026 en sort d'ÉQUIPE : il ouvre le sac vers ses alliés, derrière
-# lui ; voir « la spéciale d'équipe » plus bas).
+# attaque spéciale « Fronde d'Éole » (refaite le 25/11/2026 en sort d'ÉQUIPE : il brandit le sac au-dessus de sa tête et
+# l'ouvre vers le ciel ; le vent chaud et les orbes partent en gerbe TOUT AUTOUR de lui ; voir « la spéciale d'équipe »
+# plus bas). MOMENT DE LANCEMENT (l'effet part vers l'équipe) : image 8 de la spéciale (comptée depuis 0), 210 ms.
 #
 # Lancer : python3 refonte-graphique/pixel/hd/anim/arcan/build.py
 # Écrit dans refonte-graphique/pixel/sortie/ : anim-arcan-pose.gif, anim-arcan-attaque.gif, anim-arcan-speciale.gif,
@@ -76,12 +77,12 @@ LN = LIGHT / np.linalg.norm(LIGHT)
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. De la place au-dessus (le sac tourne au-dessus de
 # sa tête), à droite (la rafale de l'attaque qui file jusqu'à l'ennemi) et, depuis la spéciale d'équipe (25/11/2026),
-# à gauche (le vent porteur et les orbes qui filent vers son équipe, derrière lui). La toile a été élargie de 64 px à
+# à gauche (la gerbe de vent et d'orbes qui part aussi de ce côté). La toile a été élargie de 64 px à
 # gauche : tout est décalé d'autant, la pose et l'attaque restent identiques au pixel près (même cadrage, ATK_BOX).
 # (25/11/2026, la gerbe vers le ciel) la toile a aussi été rehaussée de 44 px (DYT) pour le geyser et les orbes qui
 # montent au-dessus du sac brandi ; même règle : tout est décalé d'autant, ATK_BOX aussi.
 DXL = 64
-DYT = 44
+DYT = int(os.environ.get("ARCAN_DYT", 44))     # (0 : la toile d'avant, voir build_all)
 W, H = 384 + DXL, 214 + DYT
 SOL = (104 + DXL, 200 + DYT)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
@@ -1519,6 +1520,9 @@ def _mouth(ctx):
     return np.array(M, float) + ue * 3
 
 
+_LAST_M = [None]
+
+
 def fx_team(stage):
     """stage 0 : il brandit le sac au-dessus de sa tête (l'aura s'allume) ; 1 : le col s'ouvre vers le ciel, arrêt sur
     l'image (le MOMENT DE LANCEMENT) ; 2-4 : le geyser retombe des deux côtés, le tourbillon s'élargit, les orbes
@@ -1529,6 +1533,8 @@ def fx_team(stage):
             embers(front, back, cv, 0, n=5)
             return
         M = _mouth(ctx) if hasattr(ctx, 'bag') else None
+        if 1 <= stage <= 4:
+            _LAST_M[0] = M                               # la bouche du sac brandi (les orbes qui atterrissent après)
         if stage == 1:
             aura(back, cv, 3, 1.0)
             embers(front, back, cv, 1)
@@ -1564,6 +1570,8 @@ def fx_team(stage):
             aura(back, cv, 1, 6.2, fade=0.45)
             embers(front, back, cv, 5, fade=0.3)
             dust_ring(back, 1.2, hollow=0.85)
+            if stage == 5 and _LAST_M[0] is not None and ctx.f.get('G') == (118, 22):
+                orbs(front, back, _LAST_M[0], 1.2)       # les derniers orbes se posent au sol, devant et derrière lui
         else:
             aura(back, cv, 0, 7.4, fade=0.8)
             embers(front, back, cv, 6, n=5, fade=0.5)
@@ -1635,6 +1643,27 @@ SPECIALE = [
 # ---------------------------------------------------------------- toutes les images
 def build_all(which=('pose', 'attaque', 'speciale')):
     anims = {}
+    if DYT and ('pose' in which or 'attaque' in which):
+        # la pose et l'attaque sont calculées sur la toile d'AVANT le rehaussement (DYT = 0), puis posées sur la grande
+        # toile : décaler tous les calculs de 44 px change un arrondi (5 pixels de l'avant-bras, attaque image 8).
+        # Ainsi elles restent identiques au pixel près aux animations validées.
+        import importlib.util
+        old = os.environ.get('ARCAN_DYT')
+        os.environ['ARCAN_DYT'] = '0'
+        try:
+            spec = importlib.util.spec_from_file_location('arcan_toile_avant', os.path.abspath(__file__))
+            m = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(m)
+        finally:
+            if old is None:
+                del os.environ['ARCAN_DYT']
+            else:
+                os.environ['ARCAN_DYT'] = old
+        sub = m.build_all(tuple(n for n in which if n != 'speciale'))
+        pad = np.zeros((DYT, W, 4), np.uint8)
+        for n, fr in sub.items():
+            anims[n] = [(np.concatenate([pad, img]), ms) for img, ms in fr]
+        which = tuple(n for n in which if n == 'speciale')
     if 'pose' in which:
         fr = []
         for i, f in enumerate(POSE):
