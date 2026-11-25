@@ -479,3 +479,300 @@ def compose(hero, fx_back=None, fx_front=None, flash=None, shake=0):
         # toile du personnage)
         out = np.roll(out, shake, axis=1)
     return out
+
+
+# ---------------------------------------------------------------- les effets : formes courbes, sans contour (de Kael)
+def put(cv, x, y, ch, keep=None):
+    x, y = int(math.floor(x)), int(math.floor(y))
+    if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
+        cv[y, x] = ch
+
+
+def bezier(p0, p1, p2, p3, n):
+    out = []
+    for i in range(n + 1):
+        t = i / n
+        a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+        out.append((a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]))
+    return out
+
+
+def stroke(cv, pts, widths, tones, keep=None, cool=None):
+    """peint un ruban le long de points, avec une épaisseur par point (coeur = premier ton -> bord = dernier).
+    cool : pour chaque point, combien le ton refroidit (0 = coeur clair … 1 = déjà au ton du bord)"""
+    best = {}
+    for i, ((px, py), wv) in enumerate(zip(pts, widths)):
+        c0 = cool[i] if cool else 0.0
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1.2 else 0.85
+                    if cool:
+                        k = min(0.999, c0 + (1 - c0) * k)
+                    if k < best.get((x, y), 9):
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in sorted(best.items()):
+        put(cv, x, y, tones[min(m - 1, int(k * m))], keep)
+
+
+def tongue(cv, base, h, w, bend=0.0, tones='wvutsr', lean=0.0, fork=None):
+    """une langue de flamme : large et ventrue en bas, effilée et recourbée à la pointe (bend > 0 : la pointe part à
+    droite). lean : la flamme penche. Coeur clair en bas, bord et pointe rouges ; une petite langue sur le flanc."""
+    bx, by = base
+    p0 = (bx, by)
+    p1 = (bx + lean * 0.3 * h, by - h * 0.35)
+    p2 = (bx + lean * 0.7 * h - bend * 0.25 * h, by - h * 0.7)
+    p3 = (bx + lean * h + bend * 0.35 * h, by - h)
+    pts = bezier(p0, p1, p2, p3, max(12, int(h * 1.6)))
+    n = len(pts)
+    widths, cool = [], []
+    for i in range(n):
+        s = i / (n - 1)
+        prof = (0.7 + 0.3 * math.sin(min(1.0, s / 0.25) * math.pi / 2)) * (1 - s) ** 0.6
+        widths.append(w * prof + 0.3)
+        cool.append(min(0.8, max(0.0, (s - 0.15) * 0.75)))
+    if fork is None:
+        fork = h >= 18
+    if fork:
+        i0 = int(0.4 * (n - 1))
+        fx, fy = pts[i0]
+        side = -1 if bend >= 0 else 1
+        tongue(cv, (fx + side * widths[i0] * 0.3, fy + 1), h * 0.38, w * 0.42, bend=side * 1.1, tones=tones[1:] or tones,
+               lean=lean + side * 0.35, fork=False)
+    stroke(cv, pts, widths, tones, cool=cool)
+
+
+def puff(cv, c, r, tones='ijl', hollow=0.0):
+    cx, cy = c
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            v = np.array([x + 0.5 - cx, y + 0.5 - cy])
+            d = math.hypot(*v)
+            if d <= r and d >= hollow * r:
+                k = (v @ LN) / max(r, 1e-6)
+                ch = tones[min(len(tones) - 1, int((1 - k) / 2 * len(tones)))]
+                put(cv, x, y, ch)
+
+
+def cloud(cv, c, r, tones='iijl', hollow=0.0, seed=0, ground=True):
+    """un nuage (fumée, poussière) en chou-fleur ; hollow (0..1) : il se défait"""
+    rng = np.random.RandomState(seed)
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for i in range(4):
+        a = math.radians(150 - i * 40 + rng.uniform(-12, 12))
+        d = r * rng.uniform(0.55, 0.8)
+        lobes.append((d * math.cos(a), -d * math.sin(a) * 0.7, r * rng.uniform(0.5, 0.7)))
+    if hollow:
+        out = []
+        for (dx, dy, rr) in lobes[1:]:
+            out.append((dx * (1 + hollow), dy * (1 + hollow) - hollow * r * 0.5, rr * (1 - 0.45 * hollow)))
+        out.append((0, -hollow * r * 0.4, r * (1 - 0.6 * hollow)))
+        lobes = out
+    for (dx, dy, rr) in lobes:
+        yy = min(cy + dy, GROUND - rr * 0.6) if ground else cy + dy
+        puff(cv, (cx + dx, yy), rr, tones)
+
+
+def curl(cv, c, r0, a0, turn=300, w=2.4, tones='ijl', cw=False):
+    """une volute (fumée) : une spirale qui s'enroule, épaisse au départ, effilée au coeur"""
+    cx, cy = c
+    n = int(turn / 4) + 8
+    pts, ws = [], []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (-turn if cw else turn) * s)
+        r = r0 * (1 - 0.72 * s)
+        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
+        ws.append(w * (1 - s) ** 0.7 + 0.4 * (1 - s))
+    stroke(cv, pts, ws, tones)
+
+
+def smoke_plume(cv, base, h, w, sway=1.0, tones='ijlm', curl_r=3.0, cw=False, tail=0.0):
+    """un panache de fumée qui monte en S et finit en volute ; tail : le bas déjà dissipé (0..1)"""
+    bx, by = base
+    pts = bezier((bx, by), (bx + sway * w, by - h * 0.35), (bx - sway * w, by - h * 0.65), (bx + sway * w * 0.5, by - h), 40)
+    ex, ey = pts[-1]
+    tx, ty = pts[-1][0] - pts[-2][0], pts[-1][1] - pts[-2][1]
+    tl = math.hypot(tx, ty) or 1
+    tx, ty = tx / tl, ty / tl
+    nx, ny = (-ty, tx) if cw else (ty, -tx)
+    ccx, ccy = ex + nx * curl_r, ey + ny * curl_r
+    a0 = math.atan2(-(ey - ccy), ex - ccx)
+    sgn = -1 if cw else 1
+    for i in range(1, 31):
+        s = i / 30
+        a = a0 + sgn * math.radians(280) * s
+        r = curl_r * (1 - 0.7 * s)
+        pts.append((ccx + r * math.cos(a), ccy - r * math.sin(a)))
+    N = len(pts)
+    ws = []
+    for i in range(N):
+        s = i / (N - 1)
+        if s < tail:
+            ws.append(0)
+            continue
+        ss = (s - tail) / max(1 - tail, 1e-6)
+        ws.append(w * (0.5 + 0.5 * math.sin(min(1, ss / 0.4) * math.pi / 2)) * (1 - ss) ** 0.6 + 0.5)
+    stroke(cv, pts, ws, tones)
+
+
+def drop(cv, x, y, vx, vy, size=1):
+    """une goutte de lave : une perle claire et sa traîne courte, orientée par sa vitesse"""
+    L = math.hypot(vx, vy) or 1
+    ux, uy = vx / L, vy / L
+    if size >= 2:
+        put(cv, x, y, 'v')
+        put(cv, x + 1, y, 'u')
+        put(cv, x, y + 1, 'u')
+        put(cv, x + 1, y + 1, 't')
+        put(cv, x - ux * 2, y - uy * 2, 't')
+        put(cv, x - ux * 3, y - uy * 3, 's')
+    else:
+        put(cv, x, y, 'u')
+        put(cv, x - ux * 1.5, y - uy * 1.5, 't')
+        put(cv, x - ux * 2.5, y - uy * 2.5, 's')
+
+
+def ember(cv, x, y, big=False):
+    put(cv, x, y, 'v')
+    if big:
+        put(cv, x + 1, y, 'u')
+        put(cv, x, y + 1, 't')
+
+
+# éclats de roche dessinés à la main (bord sombre 1 tout autour, lumière en haut à droite, une fêlure de lave)
+CHUNKS = [
+    ['.1111.', '134551', '12345r', '.1221.'],
+    ['.111', '1351', '1241', '.11.'],
+    ['11.', '151', '.21'],
+    ['.111.', '13451', '1s321', '.111.'],
+]
+
+
+def chunk(cv, x, y, k=0, flip=False):
+    rows = CHUNKS[k % len(CHUNKS)]
+    for j, r in enumerate(rows):
+        if flip:
+            r = r[::-1].replace('5', '4')
+        for i, ch in enumerate(r):
+            if ch != '.':
+                put(cv, x + i, y + j, ch)
+
+
+def c2(gx, gy, f=None):
+    """un point de la grille du dessin -> toile, en suivant la tête si f (pour la narine, la gueule)"""
+    hx, hy = (f.get('head', (0, 0)) if f else (0, 0))
+    return gx + OX + hx, gy + OY + hy
+
+
+# ---------------------------------------------------------------- l'image « montée »
+# f : réglages du corps (voir base_field), jaw (ouverture de la gueule), heat (0..4, la lave du four), blink,
+#     lagN / lagF (le bout des ailes repliées traîne : dx, dy), wings (ailes redessinées, spéciale), fx (effets).
+SHOULDER_N = (136, 118)
+SHOULDER_F = (160, 100)
+_D_SN = np.hypot(GX - SHOULDER_N[0], GY - SHOULDER_N[1])
+_D_SF = np.hypot(GX - SHOULDER_F[0], GY - SHOULDER_F[1])
+W_TIP_N = smooth((_D_SN - 20) / 90.0)
+W_TIP_F = smooth((_D_SF - 15) / 70.0)
+
+
+def heated(cv_src, level, mask_src):
+    if not level:
+        return cv_src
+    lv = int(math.floor(level))
+    return swapped(cv_src, HEAT[min(lv, len(HEAT) - 1)], mask_src)
+
+
+_FURN_CV = heat_mask(1)
+_EYE_CV = to_canvas(np.where(isin(CORPS, 'xyzq'), 'x', '.')) == 'x'
+EYE_HOT = {'z': 'y', 'y': 'x'}
+
+
+def body_layers(f):
+    """les morceaux du dragon posés pour l'image f : (aile lointaine, corps, aile proche, tête, mâchoire)"""
+    base = base_field(f)
+    bdx, bdy = body_field(f)
+    lv = f.get('heat', 0)
+    body_src = heated(BODY_CV, lv, _FURN_CV)
+    head_src = heated(HEAD_CV, min(lv, 2), _FURN_CV)
+    if f.get('blink'):
+        head_src = swapped(head_src, BLINK, _EYE_CV)
+    elif lv >= 3:
+        head_src = swapped(head_src, EYE_HOT, _EYE_CV)
+    body = warp(body_src, bdx, bdy)
+    lnx, lny = f.get('lagN', (0, 0))
+    lfx, lfy = f.get('lagF', (0, 0))
+    wings = f.get('wings')
+    if wings is None:
+        far = warp(WING_F_CV, base[0] + lfx * W_TIP_F, base[1] + lfy * W_TIP_F)
+        near = warp(WING_N_CV, base[0] + lnx * W_TIP_N, base[1] + lny * W_TIP_N)
+    else:
+        far, near = draw_wings(f, base)
+    hx, hy = f.get('head', (0, 0))
+    head = shift(head_src, hx, hy)
+    jaw = shift(jaw_cv(f.get('jaw', 0)), hx, hy)
+    return far, body, near, head, jaw
+
+
+def assemble(f):
+    far, body, near, head, jaw = body_layers(f)
+    cv = far
+    for L in (body, near, head, jaw):
+        cv = over(cv, L)
+    return cv
+
+
+def draw_wings(f, base):
+    raise NotImplementedError
+
+
+# ---------------------------------------------------------------- 1) la pose (respiration)
+# 12 images, lente et lourde. L'inspiration soulève le haut du corps de deux pixels (épaules, dos, cou), le poitrail se
+# gonfle et sa lave s'avive au plus haut ; la tête suit avec une image de retard ; le bout des ailes repliées traîne de
+# deux images (inertie) et l'aile proche s'écarte d'un pixel quand le poitrail se gonfle ; la queue se balance d'un
+# pixel et son bout se soulève à peine ; à l'expiration, un filet de fumée sort de la narine et monte en volute ; un
+# clignement (paupière de roche).
+BR = [0, 0, 1, 1, 2, 2, 2, 1, 1, 0, 0, 0]
+POSE = []
+for _i in range(12):
+    _f = dict(br=BR[_i], head=(0, -BR[_i - 1]), lagN=(0, BR[_i] - BR[_i - 2]), lagF=(0, BR[_i] - BR[_i - 2]),
+              tail=((0, 0, -1, -1, -1, -1, 0, 0, 1, 1, 1, 0)[_i], (0, 0, 0, 0, -1, -1, -1, 0, 0, 0, 0, 0)[_i]),
+              heat=(0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0)[_i], blink=_i == 8, wisp=(4, 5, -1, -1, -1, -1, -1, -1, 0, 1, 2, 3)[_i],
+              ms=(200, 170, 160, 160, 170, 240, 180, 160, 130, 150, 170, 190)[_i])
+    if _i in (4, 5, 6):
+        _f['lagN'] = (-1, _f['lagN'][1])          # l'aile proche s'écarte d'un pixel quand le poitrail se gonfle
+    if _i == 10:
+        _f['sq'] = 1                               # l'expiration : tout le poids retombe d'un pixel
+    POSE.append(_f)
+
+
+def fx_wisp(cv, f, k):
+    """le filet de fumée de la narine (k = 0 … 5 : il sort, monte, s'enroule, se détache, se défait)"""
+    if k < 0:
+        return
+    x, y = c2(NOSTRIL[0], NOSTRIL[1], f)
+    if k == 0:
+        puff(cv, (x + 1, y - 1), 1.3, 'ij')
+    elif k == 1:
+        smoke_plume(cv, (x + 1, y - 1), 7, 1.6, sway=0.6, tones='ijl', curl_r=1.6, cw=True)
+    elif k == 2:
+        smoke_plume(cv, (x + 1, y - 2), 12, 2.0, sway=0.8, tones='ijl', curl_r=2.2, cw=True, tail=0.1)
+    elif k == 3:
+        smoke_plume(cv, (x, y - 4), 15, 2.0, sway=0.9, tones='ijl', curl_r=2.6, cw=True, tail=0.35)
+    elif k == 4:
+        smoke_plume(cv, (x - 1, y - 8), 14, 1.8, sway=1.0, tones='ijl', curl_r=2.8, cw=True, tail=0.6)
+    elif k == 5:
+        curl(cv, (x - 1, y - 21), 2.4, 200, turn=220, w=1.4, tones='ij', cw=True)
+
+
+def pose_frame(f):
+    cv = assemble(f)
+    front = empty()
+    fx_wisp(front, f, f.get('wisp', -1))
+    return cv, None, front
