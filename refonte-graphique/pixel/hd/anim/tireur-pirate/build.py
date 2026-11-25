@@ -546,7 +546,7 @@ def draw_arm(cv, S, Wr, lengths, bend, r=(4.2, 3.8, 3.4), lit=0.0, cuff=True):
     draw_limb(cv, E, Wr, r[1], r[2], 'manche', lit + 0.05)
     if cuff:
         C0 = E + 0.55 * v
-        draw_limb(cv, C0, np.array(Wr, float) - 0.08 * v, r[2] + 0.6, r[2] + 1.1, 'or', lit * 0.5, rim=True)
+        draw_limb(cv, C0, np.array(Wr, float) - 0.08 * v, r[2] + 0.3, r[2] + 0.7, 'or', lit * 0.5, rim=True)
     return E
 
 
@@ -622,7 +622,7 @@ def draw_hip(cv, f, body, ctx):
     tf = f.get('tf', 57.0)                         # où la main lointaine tient le fût
     grip = musket_at(O, ang, tf, 1.5)
     S = g2c(SH_FAR, (fx_, fy_))
-    draw_arm(cv, S, wrist_for(grip, S, 3.5), ARM_FAR, f.get('bend', -1), r=(4.0, 3.6, 3.2), lit=-0.35)
+    draw_arm(cv, S, wrist_for(grip, S, 3.5), ARM_FAR, f.get('bend', 1), r=(3.4, 3.0, 2.7), lit=-0.55)
     draw_musket(cv, O, ang, fired=f.get('fired', False))
     fist_on(cv, FAR_FIST, O, ang, tf)
     blit(cv, NEAR_HAND, nx, ny)
