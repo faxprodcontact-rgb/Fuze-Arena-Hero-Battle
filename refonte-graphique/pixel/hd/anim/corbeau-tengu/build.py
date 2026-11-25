@@ -55,11 +55,11 @@ ALLPAL.update(FXPAL)
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du dessin est posé en SOL. La pose seule se recadre ensuite en 128 × 120
 # (le format du jeu, sol en (64, 116)). Large : il bondit jusqu'à l'ennemi, à droite ; haute : il saute pour plonger.
-W, H = 262, 190
+W, H = 276, 190
 SOL = (84, 180)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
-FOE = (SOL[0] + 100, GROUND - 38)                           # l'ennemi (milieu du corps), là où frappe le sabre
+FOE = (SOL[0] + 122, GROUND - 38)                           # l'ennemi (milieu du corps), là où frappe le sabre
 
 
 def rnd(v):
@@ -997,24 +997,24 @@ def fx_land(level):
 # montante éclair (traînée de vent en croissant sous la lame), le coup porte (éclat, marque de la coupe, plumes
 # noires) et il reste un instant lame levée ; puis un saut en arrière, ailes levées puis rabattues, et il retombe en
 # garde, accroupi, en rebondissant sur ses genoux.
-T1 = (FOE[0] - 14, FOE[1] - 8)          # là où porte la coupe montante
-T2 = (FOE[0] - 12, FOE[1] + 8)          # là où porte la coupe descendante (spéciale)
+T1 = (FOE[0] - 24, FOE[1] - 8)          # là où porte la coupe montante
+T2 = (FOE[0] - 22, FOE[1] + 8)          # là où porte la coupe descendante (spéciale)
 SH = [fx_shadow]
 
 ATTAQUE = [
     dict(ms=80),
     dict(crouch=2, lean=-2, head=(-1, 0), wu=12, ws=3, q=1, sw=((60.0, 80.0), -20.0), ms=170),
-    dict(X=22, lift=5, crouch=-1, lean=3, head=(1, 0), wu=-14, ws=-3, q=-2, sw=((62.0, 80.0), -24.0), fx_pre=SH,
+    dict(X=30, lift=5, crouch=-1, lean=3, head=(1, 0), wu=-14, ws=-3, q=-2, sw=((62.0, 80.0), -24.0), fx_pre=SH,
          fx=[fx_dash(0)], ms=50),
-    dict(X=40, lift=3, crouch=0, lean=4, head=(1, 0), wu=-7, ws=-1, q=-1, sw=((72.0, 70.0), 62.0),
+    dict(X=54, lift=3, crouch=0, lean=4, head=(1, 0), wu=-7, ws=-1, q=-1, sw=((72.0, 70.0), 62.0),
          smear=fx_slash(-24, False), fx_pre=SH, fx=[fx_dash(1)], ms=45),
-    dict(X=40, lift=2, crouch=1, lean=3, head=(1, 1), wu=4, q=1, sw=((75.0, 67.0), 86.0), fx_pre=SH,
+    dict(X=54, lift=2, crouch=1, lean=3, head=(1, 1), wu=4, q=1, sw=((75.0, 67.0), 86.0), fx_pre=SH,
          fx=[fx_hit(0, T1, 60), fx_dash(2)], ms=140),
-    dict(X=37, lift=4, crouch=0, lean=1, head=(0, 0), wu=10, ws=2, q=1, sw=((71.0, 70.0), 72.0), fx_pre=SH,
+    dict(X=50, lift=4, crouch=0, lean=1, head=(0, 0), wu=10, ws=2, q=1, sw=((71.0, 70.0), 72.0), fx_pre=SH,
          fx=[fx_hit(1, T1, 60)], ms=60),
-    dict(X=20, lift=9, crouch=-1, lean=-2, head=(-1, 0), wu=-10, ws=-2, q=-1, sw=((66.0, 75.0), 45.0), fx_pre=SH,
+    dict(X=28, lift=9, crouch=-1, lean=-2, head=(-1, 0), wu=-10, ws=-2, q=-1, sw=((66.0, 75.0), 45.0), fx_pre=SH,
          fx=[fx_hit(2, T1, 60)], ms=70),
-    dict(X=6, lift=4, crouch=0, lean=-1, head=(0, -1), wu=5, ws=1, q=0, sw=((64.0, 77.0), 32.0), fx_pre=SH, ms=60),
+    dict(X=8, lift=4, crouch=0, lean=-1, head=(0, -1), wu=5, ws=1, q=0, sw=((64.0, 77.0), 32.0), fx_pre=SH, ms=60),
     dict(crouch=2, head=(0, 1), wu=-3, q=1, fx=[fx_land(0)], ms=90),
     dict(crouch=1, head=(0, 0), wu=1, wf=1, q=-1, fx=[fx_land(1)], ms=90),
     dict(ms=110),
@@ -1101,11 +1101,11 @@ def fx_vortex(k):
             return
         if k <= 2:
             ph = [0, 0.0, 1.3][k]
-            H_, r1 = 76, 24
+            H_, r1 = 80, 26
             ribbon(back, (VX, GROUND - 3), 30, 5, 10, 170, 3.2, tones='FGHI')
             ribbon(front, (VX, GROUND - 3), 30, 5, 190, 350, 4.2, tones='EFGHI')
-            helix(back, front, base, H_, 9, r1, 1.6, ph, 5.0, 'WEFGHI')
-            helix(back, front, base, H_ * 0.9, 7, r1 - 4, 1.6, ph + math.pi, 3.6, 'EFGHI')
+            helix(back, front, base, H_, 9, r1, 1.8, ph, 6.5, 'WEFGHI')
+            helix(back, front, base, H_ * 0.9, 7, r1 - 4, 1.8, ph + math.pi, 4.6, 'EFGHI')
             cloud(back, (VX - 22, GROUND - 3), 4.5, 'KKLM', seed=71 + k)
             cloud(back, (VX + 24, GROUND - 3), 4.0, 'KKLM', seed=73 + k)
             for i in range(9):
@@ -1152,42 +1152,43 @@ def fx_vortex(k):
 
 
 def fx_dive(cv, back, front, ctx):
-    """le plongeon : un fuseau de vent derrière lui, du sommet du bond jusqu'à la lame"""
-    p0 = np.array([SOL[0] + 30.0, GROUND - 124.0])
-    p3 = ctx.C + (-8.0, -6.0)
-    pts = path_pts(p0, p0 + (8, 14), p3 + (-22, -12), p3, n=60)
-    comet(back, pts, 0.15, 1.0, 13, 'WEFGHI')
-    crow_feather(back, p0[0] + 2, p0[1] + 10, 1)
-    crow_feather(back, p0[0] + 16, p0[1] + 30, 1)
+    """le plongeon : un fuseau de vent derrière lui, depuis le haut du bond jusqu'à son corps, qui s'enroule un peu"""
+    c = ctx.o + (60.0, 80.0)                         # le milieu du corps (toile)
+    p0 = c + (-30.0, -50.0)
+    pts = path_pts(p0, p0 + (2.0, 18.0), c + (-24.0, -16.0), c, n=70)
+    comet(back, pts, 0.0, 1.0, 28, 'WEFGHI')
+    braid(back, pts, 0.05, 0.95, 9.0, 1.1, 0.0, 2.8, 'FGHI')
+    crow_feather(back, p0[0] - 6, p0[1] + 4, 1)
+    crow_feather(back, p0[0] + 6, p0[1] - 8, 3)
 
 
 SPECIALE = [
     dict(ms=80),
     dict(crouch=2, lean=-1, head=(0, 1), wu=8, ws=3, q=1, sw=((60.0, 80.0), -20.0), fx=[fx_gather(0)], ms=110),
     dict(crouch=3, lean=-2, head=(-1, 1), wu=18, ws=5, q=-1, sw=((59.0, 81.0), -22.0), fx=[fx_gather(1)], ms=210),
-    dict(X=24, lift=6, crouch=-2, lean=4, head=(1, 0), wu=-14, ws=-3, q=-2, sw=((62.0, 80.0), -25.0), fx_pre=SH,
+    dict(X=32, lift=6, crouch=-2, lean=4, head=(1, 0), wu=-14, ws=-3, q=-2, sw=((62.0, 80.0), -25.0), fx_pre=SH,
          fx=[fx_dash(0)], ms=45),
-    dict(X=40, lift=4, crouch=0, lean=4, head=(1, 0), wu=-6, ws=-1, q=-1, sw=((72.0, 70.0), 64.0),
+    dict(X=54, lift=4, crouch=0, lean=4, head=(1, 0), wu=-6, ws=-1, q=-1, sw=((72.0, 70.0), 64.0),
          smear=fx_slash(-25, False), fx_pre=SH, fx=[fx_dash(1)], ms=40),
-    dict(X=40, lift=5, crouch=1, lean=3, head=(1, 1), wu=6, q=1, sw=((75.0, 67.0), 88.0), fx_pre=SH,
+    dict(X=54, lift=5, crouch=1, lean=3, head=(1, 1), wu=6, q=1, sw=((75.0, 67.0), 88.0), fx_pre=SH,
          fx=[fx_hit(0, T1, 60), fx_dash(2)], ms=70),
-    dict(X=42, lift=7, crouch=1, lean=5, head=(1, 0), wu=14, ws=2, q=1, sw=((74.0, 77.0), -34.0),
+    dict(X=56, lift=7, crouch=1, lean=5, head=(1, 0), wu=14, ws=2, q=1, sw=((74.0, 77.0), -34.0),
          smear=fx_slash(88, True), fx_pre=SH, fx=[fx_hit(1, T1, 60)], ms=40),
-    dict(X=42, lift=6, crouch=2, lean=4, head=(1, 1), wu=-4, q=-1, sw=((74.0, 78.0), -40.0), fx_pre=SH,
+    dict(X=56, lift=6, crouch=2, lean=4, head=(1, 1), wu=-4, q=-1, sw=((74.0, 78.0), -40.0), fx_pre=SH,
          fx=[fx_hit(0, T2, -60, 3), fx_hit(2, T1, 60)], ms=70),
-    dict(X=34, lift=26, crouch=-2, lean=-1, head=(0, 1), wu=-16, ws=-4, q=-2, sw=((60.0, 75.0), -36.0), fx_pre=SH,
+    dict(X=46, lift=26, crouch=-2, lean=-1, head=(0, 1), wu=-16, ws=-4, q=-2, sw=((60.0, 75.0), -36.0), fx_pre=SH,
          fx=[fx_hit(1, T2, -60, 3)], ms=70),
-    dict(X=40, lift=40, crouch=3, lean=-2, head=(-1, 0), wu=18, ws=5, q=1, sw=((58.0, 72.0), -40.0), fx_pre=SH,
+    dict(X=52, lift=40, crouch=3, lean=-2, head=(-1, 0), wu=18, ws=5, q=1, sw=((58.0, 72.0), -40.0), fx_pre=SH,
          fx=[fx_vortex(0), fx_hit(2, T2, -60, 3)], ms=150),
-    dict(X=58, lift=14, crouch=2, lean=5, head=(1, 0), wu=12, ws=-4, q=-1, sw=((77.0, 78.0), -38.0), fx_pre=SH,
+    dict(X=64, lift=14, crouch=2, lean=5, head=(1, 0), wu=12, ws=-4, q=-1, sw=((77.0, 78.0), -38.0), fx_pre=SH,
          fx=[fx_dive, fx_vortex(0)], ms=40),
-    dict(X=60, lift=8, crouch=2, lean=5, head=(1, 1), wu=-12, ws=1, q=1, sw=((79.0, 80.0), -40.0), fx_pre=SH,
-         fx=[fx_vortex(1)], flash=35, ms=230),
-    dict(X=60, lift=8, crouch=2, lean=5, head=(1, 0), wu=-8, ws=1, q=1, sw=((79.0, 80.0), -40.0), fx_pre=SH,
+    dict(X=66, lift=8, crouch=2, lean=5, head=(1, 1), wu=-12, ws=1, q=1, sw=((79.0, 80.0), -40.0), fx_pre=SH,
+         fx=[fx_vortex(1)], ms=230),
+    dict(X=66, lift=8, crouch=2, lean=5, head=(1, 0), wu=-8, ws=1, q=1, sw=((79.0, 80.0), -40.0), fx_pre=SH,
          fx=[fx_vortex(2)], ms=90),
-    dict(X=34, lift=16, crouch=-1, lean=-2, head=(-1, 0), wu=14, ws=3, q=-1, sw=((66.0, 75.0), 18.0), fx_pre=SH,
+    dict(X=44, lift=16, crouch=-1, lean=-2, head=(-1, 0), wu=14, ws=3, q=-1, sw=((66.0, 75.0), 18.0), fx_pre=SH,
          fx=[fx_vortex(3)], ms=70),
-    dict(X=12, lift=7, crouch=0, lean=-1, head=(0, -1), wu=-8, ws=-1, q=0, sw=((64.0, 77.0), 30.0), fx_pre=SH,
+    dict(X=16, lift=7, crouch=0, lean=-1, head=(0, -1), wu=-8, ws=-1, q=0, sw=((64.0, 77.0), 30.0), fx_pre=SH,
          fx=[fx_vortex(4)], ms=70),
     dict(crouch=2, head=(0, 1), wu=3, q=1, fx=[fx_land(0), fx_vortex(5)], ms=90),
     dict(crouch=1, head=(0, 0), wu=-1, wf=1, q=-1, fx=[fx_land(1), fx_vortex(6)], ms=100),

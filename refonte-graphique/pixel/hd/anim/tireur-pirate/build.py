@@ -154,6 +154,7 @@ def painted(part, fixes):
 
 
 _arm = ((XX <= 56) & (YY >= 61) & (YY <= 77) & isin(ORIG, COAT + GOLD)) | \
+       ((XX <= 57) & (YY >= 74) & (YY <= 77) & isin(ORIG, GOLD)) | \
        ((XX >= 50) & (XX <= 63) & (YY >= 78) & (YY <= 85) & isin(ORIG, SKIN + SHIRT + COAT + 'D' + GOLD))
 RACCORD = [
     (49, 60, '..   '),
