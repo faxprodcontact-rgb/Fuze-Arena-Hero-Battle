@@ -106,6 +106,7 @@ HEAD = FILLED & (YY <= 58) & (XX >= 50) & ~NEAR
 BODY = FILLED & ~GROUND_TAIL & ~FAR_BLADE & ~FAR_ARM & ~NEAR & ~HEAD
 
 TONGUE = FILLED & (ORIG == 'O')
+NECK_TOP, NECK_BOT = 55, 58                  # le cou, sous la mâchoire (il se plie quand la tête bouge)
 
 
 # ---------------------------------------------------------------- outils de pose (au pixel, jamais lissé)
@@ -393,11 +394,17 @@ def rig_frame(f):
     blit_wide(cv, gt, gb)
     # 2) le corps : buste, ceinture, pagne, queue qui descend
     body.draw(cv, part(BODY))
-    # 3) la tête ; si elle monte, le bas du capuchon est doublé (pas de trou au cou)
+    # 3) la tête ; le cou (rangées 55 à 58 : gorge crème, bas du capuchon) se plie : il suit la tête de moins en
+    #    moins en descendant vers les épaules (retouche du 25/11 : la bande crème file du menton au ventre, elle ne
+    #    doit pas faire de cran) ; si la tête monte, le cou est doublé (pas de trou)
     hi = head_img(f.get('tg', 1))
-    if hy < 0:
-        blit(cv, np.where(YY >= 55, hi, '.'), cx + hx, cy, swap)
-    blit(cv, hi, cx + hx, cy + hy, swap)
+    for r in range(NECK_TOP, NECK_BOT + 1):
+        row = np.where(YY == r, hi, '.')
+        ndx = int(math.floor(hx * (NECK_BOT + 1 - r) / 5 + 0.5))
+        blit(cv, row, cx + ndx, cy, swap)
+        if hy < 0:
+            blit(cv, row, cx + ndx, cy + hy, swap)
+    blit(cv, np.where(YY < NECK_TOP, hi, '.'), cx + hx, cy + hy, swap)
     # 4) le bras lointain et la lame de devant
     n, lift = f.get('arm', 0), f.get('lift', 0)
     phi = f.get('phi')

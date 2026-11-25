@@ -159,7 +159,7 @@ M_WING_N = comps_in(_obs_lab, 20, 20, 143, 140, 200) | comps_in(_mem_lab, 20, 40
 # le long du bord droit de l'os)
 M_WING_F = comps_in(_mem_lab, 120, 40, 150, 100, 200)
 _far_obs = comps_in(_obs_lab, 139, 25, 230, 101, 1000)
-_bone_right = piecewise(GYY, [(20, 160), (36, 152), (40, 147), (57, 151), (70, 155), (90, 159), (95, 166), (101, 168)])
+_bone_right = piecewise(GYY, [(20, 175), (56, 175), (57, 151), (60, 152), (70, 155), (90, 159), (95, 166), (101, 168)])
 M_WING_F |= _far_obs & (GXX <= _bone_right) & (GYY <= 101)
 # la tête : crâne, mâchoires, oeil, crocs, corne du museau ; les deux grandes cornes et la couronne (le reste de la
 # pièce d'obsidienne soudée), les deux échardes en collerette derrière la joue
@@ -780,10 +780,11 @@ def wing_skeleton(name, u, flap=0.0, lift=0.0, off=(0, 0), hoff=None):
     return dict(B=B, E=E, Wr=Wr, tips=tips, H=Hp)
 
 
-def finger_curve(Wr, tip, bow, n=40):
+def finger_curve(Wr, tip, bow, n=None):
     """un doigt : légèrement arqué (bow : écart au milieu, pixels, vers le haut de l'aile)"""
     d = tip - Wr
     L = np.linalg.norm(d) or 1
+    n = n or int(L * 2.5)
     nrm = np.array([d[1], -d[0]]) / L            # à gauche de la direction (vers le haut pour un doigt qui part à gauche)
     pts = []
     for i in range(n + 1):
@@ -866,7 +867,7 @@ def thin_bone(cv, pts, lit, dark, core=None, thick_until=0.0):
                 done.add((X, Y, 'l' if ch == lit else 'd'))
 
 
-def claw(cv, base, direction, L, tones=('B', 'D', 'E', 'G'), curl=0.35):
+def claw(cv, base, direction, L, tones=('B', 'D', 'E', 'G'), curl=0.35, rad=2.2):
     """une griffe d'obsidienne recourbée : épaisse à la base, pointue, la pointe tourne (curl)"""
     d = np.array(direction, float)
     d /= np.linalg.norm(d) or 1
@@ -875,7 +876,7 @@ def claw(cv, base, direction, L, tones=('B', 'D', 'E', 'G'), curl=0.35):
     for i in range(int(L * 2) + 1):
         t = i / (L * 2)
         p = np.array(base, float) + d * L * t + nrm * curl * L * t * t
-        pts.append((p, 2.2 * (1 - t) + 0.5))
+        pts.append((p, rad * (1 - t) + 0.45))
     for p, r in pts:
         for y in range(int(p[1] - r - 1), int(p[1] + r + 2)):
             for x in range(int(p[0] - r - 1), int(p[0] + r + 2)):
@@ -927,12 +928,19 @@ def draw_wing(cv, name, sk):
     a_lo = angs[-1]
     a_hi = math.atan2(-(E[1] - Wr[1]), E[0] - Wr[0])
     fill_poly(cv, poly, lambda x, y: panel_tone(a_lo, a_hi, x, y, None))
-    # le bord libre, rougi par la braise : un pixel le long des festons
+    # le bord libre, rougi par la braise : le pixel de bord de la membrane le long des festons
+    mem = cv != '.'
+    near_edge = np.zeros((H, W), bool)
     for edge in edges:
-        for p in edge:
+        for p in edge[2:-2]:
             x, y = int(math.floor(p[0])), int(math.floor(p[1]))
-            if 0 <= x < W and 0 <= y < H and cv[y, x] != '.':
-                cv[y, x] = V_
+            near_edge[max(0, y - 2):y + 3, max(0, x - 2):x + 3] = True
+    out = np.zeros_like(mem)
+    out[1:, :] |= ~mem[:-1, :]
+    out[:-1, :] |= ~mem[1:, :]
+    out[:, 1:] |= ~mem[:, :-1]
+    out[:, :-1] |= ~mem[:, 1:]
+    cv[mem & out & near_edge] = V_
     # les os : le bras (sort du dos), l'avant-bras, les doigts, le poignet et la griffe du pouce
     bt = sp['bone']
     tube(cv, Bp, E, 4.4, 3.6, bt[0:6])
@@ -942,7 +950,8 @@ def draw_wing(cv, name, sk):
         thin_bone(cv, fpts, bt[4], bt[1], core=bt[3], thick_until=0.18)
         tip = fpts[-1]
         dirv = fpts[-1] - fpts[-4]
-        claw(cv, tip, dirv, 4.0, tones=(bt[1], bt[3], bt[4], bt[6]), curl=0.4 if name == 'near' else -0.4)
+        claw(cv, tip - dirv / (np.linalg.norm(dirv) or 1), dirv, 5.0, tones=(bt[1], bt[3], bt[4], bt[6]),
+             curl=0.5 if name == 'near' else -0.5, rad=1.3)
     knob(cv, Wr, 3.2, bt[1:7])
     fwd = (Wr - E) / (np.linalg.norm(Wr - E) or 1)
     claw(cv, Wr + fwd * 2, fwd * 0.6 + np.array([0.7, -0.5]) * (1 if name == 'near' else 0.4), 8.0,
