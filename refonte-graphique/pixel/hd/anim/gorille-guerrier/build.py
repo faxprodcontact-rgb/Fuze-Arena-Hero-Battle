@@ -1232,6 +1232,19 @@ def write_outputs(anims):
     return boxes
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : il bondit jusqu'à l'ennemi (images 0-1), arme (tenu), cogne : l'ennemi se tient juste devant le poing tendu.
+# Spéciale : sur place ; l'onde au ras du sol est un jet étiré jusqu'à la cible (images 10-12), puis se défait sur elle.
+FOE_X = g2c(*KNUCKLE)[0] + 18           # l'ennemi imaginé (ses pieds), là où le poing tendu le touche
+WAVE_X = 258                            # l'ennemi de la spéciale : le front de l'onde l'atteint à l'image 12
+JEU = {
+    'attaque': dict(genre='melee', coup=4, elan=(0, 2), cible=(FOE_X, g2c(*KNUCKLE)[1]),
+                    coupe=[None] * 4 + [144] * 4 + [None] * 2),
+    'speciale': dict(genre='rayon', rayon=(10, 13), depuis=166, coup=12, cible=(WAVE_X, GROUND - 23),
+                     coupe=[None] * 13 + [166] * 2 + [None] * 2, charge=(2, 7)),
+}
+
+
 if __name__ == '__main__' and sys.argv[1:2] == ['decoupe']:
     debug_decoupe()
 if __name__ == '__main__' and sys.argv[1:2] == ['essai']:
