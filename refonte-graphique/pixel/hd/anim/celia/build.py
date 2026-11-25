@@ -1,5 +1,9 @@
 # Célia (angels-1, eau — côté glace, soutien, épique) : la dame des neiges — pose (respiration), attaque de base,
-# attaque spéciale.
+# attaque spéciale « Voile de neige » (refaite le 25/11/2026 en sort d'ÉQUIPE : l'attaque de toute l'équipe monte et
+# chaque allié reçoit de l'énergie ; ses cristaux tournent autour d'elle, son souffle s'ouvre en anneau de flocons au
+# sol TOUT AUTOUR d'elle, une aura givrée monte sur elle, des éclats de cristal partent en gerbe dans toutes les
+# directions ; voir « la spéciale d'équipe » plus bas).
+# MOMENT DE LANCEMENT (l'effet part vers l'équipe) : IMAGE 5 de la spéciale (numérotée depuis 0), tenue 220 ms.
 #
 # Lancer : python3 refonte-graphique/pixel/hd/anim/celia/build.py
 # Écrit dans refonte-graphique/pixel/sortie/ : anim-celia-pose.gif, anim-celia-attaque.gif, anim-celia-speciale.gif,
@@ -266,16 +270,22 @@ def to_rgba(canvas, pal=ALLPAL):
     return img
 
 
-def compose(hero, fx_back=None, solid=None, fx_front=None, solid_back=None):
+def compose(hero, fx_back=None, solid=None, fx_front=None, solid_back=None, flash=None):
     """du fond vers le devant : effets de fond, objets de glace derrière elle (avec contour), l'héroïne (avec son
-    contour), objets de glace devant (avec leur contour), effets de devant ; renvoie une image RGBA"""
+    contour), objets de glace devant (avec leur contour), effets de devant ; renvoie une image RGBA.
+    flash = (pourcentage, couleur) : la silhouette s'éclaire un instant (spéciale d'équipe, au lancement)"""
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
     if fx_back is not None:
         layers.append(to_rgba(fx_back))
     if solid_back is not None and (solid_back != '.').any():
         layers.append(hd.outline(to_rgba(solid_back)))
-    layers.append(hd.outline(to_rgba(hero)))
+    hl = to_rgba(hero)
+    if flash:
+        p, col = flash[0] / 100.0, np.array(flash[1], float)
+        m = hl[:, :, 3] > 0
+        hl[m, :3] = np.round(hl[m, :3] * (1 - p) + col * p).astype(np.uint8)
+    layers.append(hd.outline(hl))
     if solid is not None and (solid != '.').any():
         layers.append(hd.outline(to_rgba(solid)))
     if fx_front is not None:
@@ -910,284 +920,379 @@ ATTAQUE = [
 ]
 
 
-# ---------------------------------------------------------------- 3) l'attaque spéciale : « Linceul de neige »
-# Le souffle de la dame des neiges (la légende de la yuki-onna) : elle porte la paume près des lèvres, ses trois
-# cristaux fondent en neige qui tourne au-dessus de la main ; ses yeux s'allument d'un blanc de glace, elle inspire
-# (elle se grandit, les mèches se soulèvent) et TIENT. Elle souffle : un long souffle de givre emporte la neige de sa
-# paume, file vers l'ennemi en ondulant et s'enroule autour de lui en blizzard. Dans le tourbillon, la glace monte du
-# sol et l'enferme dans un bloc de cristaux (arrêt sur l'image) ; le bloc se fissure, tremble et éclate en gros éclats
-# et en brume ; la neige retombe. Ses yeux s'éteignent, trois cristaux renaissent sur sa paume.
-# Pas de vague (Ilian), pas de dragon (Elyon), pas de dôme (Zaroth) : un souffle, un blizzard, un cercueil de glace.
-def snow_swirl(k):
-    """les cristaux fondent en neige qui tourne au-dessus de la paume (k = 0 : ils se défont, 1 et 2 : le tourbillon)"""
+# ---------------------------------------------------------------- 3) la spéciale d'équipe : « Voile de neige »
+# Refaite le 25/11/2026 en sort d'ÉQUIPE (effet réel : l'attaque de toute l'équipe monte pendant 6 s et chaque allié
+# reçoit de l'énergie). L'ancien « Linceul de neige » (souffle de blizzard qui enfermait l'ennemi dans un bloc de glace)
+# est tourné vers l'équipe, qui l'entoure en losange (devant, derrière, au-dessus, en dessous) : rien ne vise une
+# direction, rien ne touche l'ennemi.
+# Ses trois cristaux quittent sa paume, s'élèvent et se mettent à tourner autour d'elle (la moitié de derrière passe
+# derrière ses cheveux, celle de devant devant sa robe) ; ses yeux s'allument d'un blanc de glace ; elle inspire (elle
+# se grandit, les mèches se soulèvent, la neige de l'air converge vers elle) et TIENT. Puis elle souffle : les cristaux
+# s'embrasent d'une lumière glacée, son souffle devient un tourbillon de flocons scintillants qui descend en spirale
+# autour d'elle et s'ouvre en ANNEAU posé au sol (aplati, devant et derrière elle) qui s'élargit ; une aura givrée
+# ascendante (bleu glacé et blanc, des langues douces qui montent de sa silhouette : l'attaque en hausse, version glace)
+# monte sur elle, et des éclats de cristal lumineux partent en gerbe dans TOUTES les directions (vers le ciel, des deux
+# côtés, derrière elle, et devant elle jusqu'au sol : l'énergie). L'anneau se défait en neige, l'aura s'éteint par le
+# bas, les cristaux ralentissent et redescendent se poser au-dessus de sa paume ; ses yeux s'éteignent.
+# MOMENT DE LANCEMENT (l'effet part vers l'équipe) : IMAGE 5 de la spéciale (numérotée depuis 0, comme sur la
+# planche ; la 6e), tenue 220 ms.
+LANCEMENT = 5
+HC = (79.0, GROUND - 76.0)                       # le centre de la ronde des cristaux (à hauteur d'épaules)
+FEET_X = 79.0                                    # le milieu de ses pieds : le centre de l'anneau et du cadre
+ICE_FLASH = (228, 250, 255)                      # la teinte glacée posée un instant sur elle (le lancement)
+# les cristaux s'embrasent : leurs tons s'éclaircissent d'un cran (1) ou de deux (2), l'arête reste blanche
+LIT = [None, {'r': 's', 's': 't'}, {'r': 's', 's': 't', 't': 'u'}]
+
+
+def _shift(m, dx, dy):
+    """le masque m décalé de (dx, dy) : out[y + dy, x + dx] = m[y, x] (ce qui sort est perdu)"""
+    out = np.zeros_like(m)
+    h, w = m.shape
+    out[max(0, dy):h + min(0, dy), max(0, dx):w + min(0, dx)] = m[max(0, -dy):h + min(0, -dy), max(0, -dx):w + min(0, -dx)]
+    return out
+
+
+def orbit_pos(a, rx, ry, c=HC):
+    """une place sur la ronde (ellipse aplatie autour d'elle) ; derrière elle quand sin(a) > 0 (le haut de l'ellipse)"""
+    r = math.radians(a)
+    return (c[0] + rx * math.cos(r), c[1] - ry * math.sin(r)), math.sin(r) > 0.0
+
+
+def glow(lay, c, r, avoid=None, tones='XXY'):
+    """la lumière glacée autour d'un cristal : un petit nuage clair (sans contour) qui l'entoure, sans recouvrir le
+    cristal ni son contour (avoid : le calque où il est posé)"""
+    tmp = empty()
+    pop(tmp, c, r, facing=60, tones=tones)
+    m = tmp != '.'
+    if avoid is not None:
+        s = avoid != '.'
+        s = s | _shift(s, 1, 0) | _shift(s, -1, 0) | _shift(s, 0, 1) | _shift(s, 0, -1)
+        m &= ~s
+    lay[m] = tmp[m]
+
+
+def orbit_crystals(a0, rx, ry, lit=0, halo=0.0, c=HC, mix=None):
+    """les trois cristaux du dessin (morceaux posés au pixel près, jamais redessinés) tournent autour d'elle, à 120°
+    l'un de l'autre ; ceux de derrière sur la glace de derrière, ceux de devant sur la glace de devant ; lit : ils
+    s'embrasent ; halo : rayon de leur lumière ; mix (0..1) : ils glissent encore entre leur place sur la paume et la
+    ronde (0 = sur la paume)"""
     def f(cv, back, solid, front, ctx, sback):
-        px, py = ctx.palm
-        c = (px + 1, py - 13)
-        if k == 0:
-            for (dx, dy, a, L) in ((-9, 4, 100, 8), (1, -3, 90, 14), (11, 2, 80, 8)):
-                crystal(cv, (c[0] + dx, c[1] + dy), L, 4 if L < 10 else 5, a)
-            for (dx, dy, sz) in ((-12, -6, 2), (14, -8, 2), (-4, 10, 1), (7, -14, 1)):
-                flake(cv, c[0] + dx, c[1] + dy, sz)
-            return
-        rot = [0, 40, 120][k]
-        for j in range(2):
-            a0 = rot + 180 * j
-            pts, wd = [], []
-            for i in range(21):
-                t = i / 20
-                a = math.radians(a0 + 150 * t)
-                r = 12 * (1 - 0.4 * t)
-                pts.append((c[0] + r * math.cos(a), c[1] - 0.6 * r * math.sin(a)))
-                wd.append(3.4 * math.sin(math.pi * t) ** 0.8 + 0.3)
-            cloud_ribbon(back, pts, wd, 'XGGHI')
-        # les cristaux devenus flocons (les petites croix du dessin, avec leur contour) tournent dans la brume
-        for j in range(6):
-            a = math.radians(rot * 1.4 + j * 60 + 17 * (j % 2))
-            r = [11, 7, 12, 8, 10, 6][j] * (1 - 0.15 * (k - 1))
-            flake(solid, c[0] + r * math.cos(a), c[1] - 0.6 * r * math.sin(a), 2 if j % 3 != 2 else 1)
-    return f
-
-
-def breath_path(ctx):
-    """la route du souffle : des lèvres, au ras de la paume, puis vers l'ennemi en une longue ondulation"""
-    mx, my = ctx.mouth
-    pts = bezier((mx + 4, my + 1), (mx + 40, my - 2), (FOE[0] - 70, FOE[1] - 26), (FOE[0] - 14, FOE[1] - 6), 60)
-    return pts
-
-
-def blizzard_breath(reach, thin=0.0, seed=0):
-    """le souffle de givre : un ruban de brume qui ondule et s'épaissit en avançant (reach : la part de la route
-    parcourue, 0..1 ; thin : il s'amincit et se défait de la bouche vers l'avant) ; la neige roule dedans, de petites
-    volutes s'en détachent"""
-    def f(cv, back, solid, front, ctx, sback):
-        route = breath_path(ctx)
-        n = max(2, int(len(route) * reach))
-        pts, wd = [], []
-        for i in range(n):
-            t = i / (len(route) - 1)
-            if t < thin:
-                continue
-            x, y = route[i]
-            pts.append((x, y + 2.2 * math.sin(t * 9.0 + seed)))
-            head = ramp(reach - t, 0.0, 0.12)
-            lump = 0.78 + 0.22 * math.sin(t * 31.0 + seed * 1.7)
-            wd.append((2.5 + 9.0 * t) * lump * (0.35 + 0.65 * head) *
-                      (1 - 0.7 * ramp(t, thin, thin + 0.25) * (thin > 0)))
-        if len(pts) >= 2:
-            cloud_ribbon(back, pts, wd)
-            if reach < 1.0:                          # la tête du souffle : une bouffée qui roule
-                x, y = pts[-1]
-                mist(back, (x - 2, y), 3.0 + 3 * reach, seed=seed)
-        rng = np.random.RandomState(50 + seed)
-        for j in range(int(14 * reach)):
-            t = rng.uniform(max(thin, 0.08), reach)
-            x, y = route[min(len(route) - 1, int(t * (len(route) - 1)))]
-            w0 = (2.0 + 9.0 * t) * 0.6
-            snow(front, x + rng.uniform(-3, 3), y + rng.uniform(-w0, w0), int(rng.choice([1, 2, 2, 3])))
-        for (t, a0) in ((0.42, 120), (0.7, 200)):
-            if thin < t < reach - 0.08:
-                x, y = route[int(t * (len(route) - 1))]
-                curl(back, (x - 2, y - 7 - 6 * t), 3.0 + 3 * t, a0, turn=260, w=1.8 + t, tones='XGH')
-    return f
-
-
-def vortex_snow(k, tight=1.0):
-    """le blizzard autour de l'ennemi : deux rubans de neige qui montent en spirale du sol (la moitié de derrière passe
-    derrière le bloc de glace, celle de devant devant), épais au milieu, effilés aux bouts ; des flocons pris dedans"""
-    def f(cv, back, solid, front, ctx, sback):
-        cx = FOE[0]
-        rot = 75 * k
-        for (ph, y0, turns, wmax) in ((0, -4, 1.6, 6.5), (180, -16, 1.3, 5.0)):
-            pts = []
-            for i in range(97):
-                t = i / 96
-                a = math.radians(rot + ph + 360 * turns * t)
-                r = (36 - 12 * t) * tight
-                q = (cx + r * math.cos(a), GROUND + y0 - 70 * t * tight - 0.22 * r * math.sin(a))
-                pts.append((q, wmax * math.sin(math.pi * t) ** 0.7 + 0.4, math.sin(a) > 0, i))
-            for side, cvx in ((True, back), (False, front)):
-                run = []
-                for (q, ww, bk, i) in pts + [(None, 0, None, -9)]:
-                    if q is None or bk != side:
-                        if len(run) >= 2:
-                            cloud_ribbon(cvx, [r[0] for r in run], [r[1] for r in run])
-                        run = []
-                        continue
-                    run.append((q, ww))
-        rng = np.random.RandomState(60 + k)
-        for j in range(14):
-            a = math.radians(rng.uniform(0, 360) + rot)
-            r = rng.uniform(12, 34) * tight
-            y = GROUND - rng.uniform(6, 66) * tight
-            snow(front if math.sin(a) < 0 else back, cx + r * math.cos(a), y, int(rng.choice([2, 2, 3, 3, 4])))
-    return f
-
-
-# le bloc de glace : des prismes taillés plantés dans le sol (pied x, largeur, hauteur, penché en degrés)
-PRISMS = [(-6, 11, 24, -8), (10, 10, 20, 9), (-21, 16, 46, -15), (19, 15, 40, 14), (1, 26, 72, 0)]
-
-
-def prism_mask(bx, w, h, tilt, grow=1.0):
-    """un prisme de glace debout (base au sol en bx, toit pointu) ; renvoie le masque et, pour chaque pixel, sa place
-    en travers (-1 à gauche … 1 à droite) et en hauteur (0 au pied … 1 en haut)"""
-    h = h * grow
-    yy, xx = np.mgrid[0:H, 0:W]
-    v = GROUND + 0.5 - (yy + 0.5)                       # hauteur au-dessus du sol
-    sl = math.tan(math.radians(tilt))
-    u = (xx + 0.5 - bx) - v * sl                        # en travers, le prisme penche
-    roof = h - (w * 0.55) * (np.abs(u) / (w / 2))       # le toit en pointe
-    m = (np.abs(u) <= w / 2) & (v >= 0) & (v <= roof)
-    top = v > h - w * 0.55
-    return m, u / (w / 2), v / max(h, 1), top
-
-
-def ice_block(grow=1.0, shake=0, cracks=0, glint=False):
-    """le cercueil de glace autour de l'ennemi : chaque prisme a sa face gauche dans l'ombre (r, s), sa face avant
-    (t), sa face droite éclairée (u) et son arête blanche (j) ; le toit éclairé à droite. Un peu de neige au pied.
-    cracks : 1 ou 2, les fissures se propagent (traits clairs bordés d'ombre, en zigzag)"""
-    def f(cv, back, solid, front, ctx, sback):
-        cx = FOE[0] + shake
-        allm = np.zeros((H, W), bool)
-        # la masse du bloc (derrière les prismes) : un gros glaçon arrondi qui enferme l'ennemi
-        mass = ellipse_mask((cx, GROUND - 22 * grow), 27, 26 * grow) & (np.mgrid[0:H, 0:W][0] <= GROUND)
-        order = PRISMS[:2] + PRISMS[2:]
-        for pi, (bx, w, h, tilt) in enumerate(order):
-            m, u, v, top = prism_mask(cx + bx, w, h, tilt, grow)
-            ridge = 'u' if pi < 2 else 'j'
-            m &= ~allm                                   # les prismes de devant (posés avant) cachent ceux de derrière
-            ys, xs = np.nonzero(m)
-            for y, x in zip(ys, xs):
-                uu = u[y, x]
-                if top[y, x]:
-                    ch = 'j' if uu > 0.25 else 'u' if uu > -0.1 else 't' if uu > -0.6 else 's'
+        for i, part in enumerate(CRYST):
+            (x, y), behind = orbit_pos(a0 + 120 * i, rx, ry, c)
+            if mix is not None:
+                px = CRYST_C[i][0] + ctx.hand[0] + OX
+                py = CRYST_C[i][1] + ctx.hand[1] + OY
+                x, y = px + (x - px) * mix, py + (y - py) * mix
+                behind = behind and mix > 0.5
+            dx = rnd(x - CRYST_C[i][0] - OX)
+            dy = rnd(y - CRYST_C[i][1] - OY)
+            lay = sback if behind else solid
+            blit(lay, part, dx, dy, LIT[lit])
+            if halo:
+                cc = (CRYST_C[i][0] + dx + OX, CRYST_C[i][1] + dy + OY)
+                rr = halo * (1.25 if i == 1 else 0.9)
+                if behind:
+                    glow(back, cc, rr)
                 else:
-                    ch = 'r' if uu < -0.82 else 's' if uu < -0.42 else 't' if uu < 0.38 else ridge if uu < 0.55 \
-                        else 'u'
-                solid[y, x] = ch
-            allm |= m
-        mass &= ~allm
-        v = light_field(mass | allm)
-        for y, x in zip(*np.nonzero(mass)):
-            k = v[y, x]
-            solid[y, x] = 'u' if k > 0.25 else 't' if k > -0.05 else 's' if k > -0.3 else 'r'
-        allm |= mass
-        # un reflet doux sur la face avant du grand prisme (une tache claire, pas un trait)
-        if grow >= 1.0:
-            for (dx, dy) in ((4, -58), (4, -57), (5, -57), (4, -56), (5, -55)):
-                if solid[GROUND + dy, cx + dx] == 't':
-                    solid[GROUND + dy, cx + dx] = 'u'
-        # la neige tassée au pied
-        if grow >= 0.5:
-            g = min(1.0, grow)
-            mm = ellipse_mask((cx - 4, GROUND + 1), 34 * g, 5) | ellipse_mask((cx - 22 * g, GROUND + 1), 12 * g, 6) \
-                | ellipse_mask((cx + 20 * g, GROUND + 1), 13 * g, 5)
-            mm &= ~allm
-            mm[GROUND + 1:, :] = False                   # posée sur le sol, rien dessous
-            v = light_field(mm)
-            for y, x in zip(*np.nonzero(mm)):
-                k = v[y, x]
-                solid[y, x] = 'W' if k > 0.15 else 'X' if k > -0.05 else 'G' if k > -0.25 else 'H'
-        if cracks:
-            draw_cracks(solid, cx, cracks)
-        if glint:
-            for (dx, dy, ch) in ((7, -64, 'W'), (7, -65, 'W'), (7, -63, 'W'), (6, -64, 'W'), (8, -64, 'W'),
-                                 (7, -67, 'X'), (7, -61, 'X'), (4, -64, 'X'), (10, -64, 'X')):
-                put(front, cx + dx, GROUND + dy, ch)
+                    glow(front, cc, rr, avoid=solid)
     return f
 
 
-CRACKS = [
-    [(1, -36), (-3, -43), (-2, -49), (-6, -56), (-5, -62)],
-    [(1, -36), (5, -30), (4, -24), (8, -18), (7, -12)],
-    [(1, -36), (-5, -33), (-10, -34), (-15, -28), (-21, -26), (-25, -21)],
-    [(1, -36), (6, -40), (10, -38), (15, -43), (20, -41), (24, -36)],
-    [(-3, -43), (-9, -46), (-13, -44), (-18, -48)],
-    [(5, -30), (11, -28), (14, -24), (19, -22)],
-    [(-15, -28), (-17, -20), (-21, -14)],
-]
-
-
-def draw_cracks(solid, cx, level):
-    """les fissures : un trait clair (j) qui suit un zigzag, avec un pixel d'ombre (r) dessous à gauche"""
-    for path in CRACKS[:[0, 2, 7][level]]:
-        for (a, b) in zip(path[:-1], path[1:]):
-            n = max(abs(b[0] - a[0]), abs(b[1] - a[1]))
-            for i in range(n + 1):
-                x = int(round(cx + a[0] + (b[0] - a[0]) * i / n))
-                y = int(round(GROUND + a[1] + (b[1] - a[1]) * i / n))
-                if solid[y, x] in 'rstuj':
-                    solid[y, x] = 'W' if solid[y, x] in 'uj' else 'j'
-                    if solid[y + 1, x - 1] in 'tuj':
-                        solid[y + 1, x - 1] = 's'
-
-
-def shatter(k):
-    """le bloc éclate : k = 0 gros éclats qui partent en étoile, brume ; 1 ils retombent en tournant ; 2 ils sont au
-    sol, petits, la brume se défait et la neige tombe"""
+def gather_snow(k):
+    """l'inspiration : de petits flocons arrivent de tous les côtés en spirale et convergent vers elle"""
     def f(cv, back, solid, front, ctx, sback):
-        c = (FOE[0], GROUND - 30)
-        if k == 0:
-            mist(back, (c[0], c[1] + 4), 18.0, seed=30)
-            for (q, L, Wd, a) in shards(c, 22, 12, 21, size=(10, 17), spread=(0, 360)):
-                crystal(solid, q, L, Wd, a, tip=0.35, tail=0.4)
-            for (q, L, Wd, a) in shards(c, 36, 8, 22, size=(6, 9), spread=(0, 360)):
-                crystal(solid, q, L, Wd, a, tip=0.4, tail=0.4)
-        elif k == 1:
-            foam(back, (c[0], c[1] + 6), 16.0, hollow=0.5, seed=31, tones='WXGHI')
-            for (q, L, Wd, a) in shards(c, 34, 12, 21, fall=14, size=(9, 14), spread=(0, 360)):
-                crystal(solid, q, L, Wd, a, tip=0.35, tail=0.4)
-            for (q, L, Wd, a) in shards(c, 50, 8, 22, fall=18, size=(5, 8), spread=(0, 360)):
-                crystal(solid, q, L, Wd, a, tip=0.4, tail=0.4)
-        else:
-            mist(back, (c[0] - 2, GROUND - 5), 9.0, seed=32, tones='XGGHI')     # la brume retombée, au ras du sol
-            mist(back, (c[0] + 14, GROUND - 3), 5.0, seed=33, tones='XGGHI')
-            # quelques éclats restés au sol : couchés ou plantés de biais, de tailles différentes
-            for (dx, L, a) in ((-31, 7, 160), (-17, 10, 75), (-4, 6, 15), (9, 9, 115), (24, 6, 190), (33, 8, 60)):
-                rad = math.radians(a)
-                up = abs(math.sin(rad)) * L * 0.45
-                crystal(solid, (c[0] + dx, GROUND - 1.5 - up), L, 4, a, tip=0.4, tail=0.4)
-        rng = np.random.RandomState(40 + k)
-        for j in range([10, 12, 10][k]):
-            x = c[0] + rng.uniform(-50, 50)
-            y = c[1] - 40 + rng.uniform(0, 60) + 10 * k
-            if y < GROUND - 3:
-                snow(front, x, y, int(rng.choice([1, 2, 2, 3])))
+        for j in range(10):
+            a = math.radians(j * 36 + 25 + 40 * k)
+            r = (58 - 18 * k) * (0.8 + 0.25 * (j % 3) / 2)
+            x, y = HC[0] + 4 + r * math.cos(a), HC[1] + 14 - 0.6 * r * math.sin(a)
+            if j % 2:
+                snow(back if math.sin(a) > 0 else front, x, y, 4)
+            else:
+                flake(sback if math.sin(a) > 0 else solid, x, y, 2)
     return f
 
 
+def puff(cv, back, solid, front, ctx, sback):
+    """le souffle qui part : une petite bouffée de givre aux lèvres"""
+    mx, my = ctx.mouth
+    curl(front, (mx + 6, my + 1), 3.0, 140, turn=260, w=2.2, tones='WXG', cw=True)
+
+
+def helix_pts(t0, t1):
+    """la route du tourbillon de flocons : il sort des lèvres, passe devant sa robe, descend en spirale autour d'elle
+    (passe derrière, revient devant) et finit au sol (t = 0 : la bouche, 1 : le sol) ; renvoie [(x, y, derrière ?, t)]"""
+    out = []
+    n = 120
+    for i in range(n + 1):
+        t = i / n
+        if t < t0 or t > t1:
+            continue
+        a = math.radians(-22 - 470 * t)
+        r = 14 + 26 * min(1.0, t / 0.3) ** 0.8
+        yc = 86 + (GROUND - 9 - 86) * t
+        out.append((FEET_X + r * math.cos(a), yc - 0.3 * r * math.sin(a), math.sin(a) > 0.05, t))
+    return out
+
+
+def snow_helix(t0, t1, wmax=4.2, seed=0):
+    """le tourbillon de flocons : un ruban de givre (blanc au coeur, bord cyan, sans contour) sur la portion
+    t0..t1 de la spirale, épais au milieu, effilé aux bouts ; la moitié de derrière passe derrière elle ; des flocons
+    et des étincelles de glace y tournent"""
+    def f(cv, back, solid, front, ctx, sback):
+        pts = helix_pts(t0, t1)
+        if len(pts) < 3:
+            return
+        L = len(pts)
+        for side, lay in ((True, back), (False, front)):
+            run = []
+            for j, (x, y, bk, t) in enumerate(pts + [(0, 0, None, 0)]):
+                if bk != side:
+                    if len(run) >= 2:
+                        stroke(lay, [(p[0], p[1]) for p in run], [p[2] for p in run], 'WXYZ')
+                    run = []
+                    continue
+                s = j / max(L - 1, 1)
+                run.append((x, y, wmax * math.sin(math.pi * s) ** 0.7 + 0.6))
+        rng = np.random.RandomState(70 + seed)
+        for j in range(9):
+            x, y, bk, t = pts[int(rng.uniform(0, L))]
+            ox, oy = rng.uniform(-3, 3), rng.uniform(-4, 3)
+            if j % 3 == 0:
+                flake(sback if bk else solid, x + ox, y + oy, 2)
+            else:
+                snow(back if bk else front, x + ox, y + oy, int(rng.choice([2, 3])))
+    return f
+
+
+def ring_arc(back, front, c, rx, ry, a0, a1, w, tones, head=0.55, cloud=False):
+    """un ruban de l'anneau : un arc d'ellipse aplatie autour d'elle (sens de la marche a0 -> a1), épais au milieu,
+    effilé aux bouts ; la partie de derrière (le haut de l'ellipse) passe DERRIÈRE elle, celle de devant devant"""
+    n = max(16, int(abs(a1 - a0) / 360 * 2 * math.pi * max(rx, ry) * 2))
+    pts, ws, lays = [], [], []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (a1 - a0) * s)
+        pts.append((c[0] + rx * math.cos(a), c[1] - ry * math.sin(a)))
+        ws.append(max(0.0, w * (s / head if s < head else (1 - s) / (1 - head)) ** 0.8))
+        lays.append(math.sin(a) > -0.05)
+    for lay, want in ((back, True), (front, False)):
+        if cloud:
+            run_p, run_w = [], []
+            for p, wv, l in list(zip(pts, ws, lays)) + [(None, 0, None)]:
+                if l != want or wv < 0.8:
+                    if len(run_p) >= 2:
+                        cloud_ribbon(lay, run_p, run_w, tones)
+                    run_p, run_w = [], []
+                    continue
+                run_p.append(p)
+                run_w.append(wv)
+        else:
+            stroke(lay, pts, [wv if l == want else 0.0 for wv, l in zip(ws, lays)], tones)
+
+
+def ice_ring(rx, spin, thin=0.0, k=0):
+    """l'anneau de flocons posé au sol tout autour d'elle (rx : son rayon, il s'élargit) : un ruban de brume givrée et
+    un ruban de glace qui tournent, des flocons scintillants pris dedans ; thin (0..1) : il se défait en neige"""
+    def f(cv, back, solid, front, ctx, sback):
+        ry = 0.22 * rx
+        c = (FEET_X, GROUND - 1 - ry)
+        L = 230 * (1 - 0.6 * thin)
+        if thin < 0.95:
+            ring_arc(back, front, c, rx, ry, spin - L, spin, 5.0 * (1 - 0.6 * thin), 'WXGHI', cloud=True)
+            ring_arc(back, front, c, rx, ry, spin + 180 - L * 0.8, spin + 180, 3.4 * (1 - 0.6 * thin), 'WXYZ')
+        # les flocons scintillants : ils clignent d'une image à l'autre (taille qui change)
+        for j in range(12):
+            a = j * 30 + spin * 0.6 + 11 * (j % 2)
+            (x, y), bk = orbit_pos(a, rx * (0.92 + 0.12 * (j % 3) / 2), ry, c)
+            y -= 2 + 3 * ((j * 7) % 4) + 6 * thin * (1 + j % 2)
+            size = (j + k) % 3
+            if thin and j % 2 == k % 2:
+                continue
+            if size == 2:
+                flake(sback if bk else solid, x, y, 2)
+            else:
+                snow(back if bk else front, x, y, 3 if size else 2)
+    return f
+
+
+def aura(back, cv, level, ph, fade=0.0):
+    """l'aura givrée ascendante (l'attaque en hausse, version glace ; outil d'Arcan) : des langues douces qui montent
+    de toute sa silhouette, blanc bleuté contre elle, cyan au milieu, bleu glacé au bord. Une « distance » qui compte
+    peu vers le haut (elles montent), beaucoup vers le bas ; le seuil ondule le long de la silhouette (deux ondes de
+    longueurs différentes) : des langues inégales, jamais un peigne régulier. fade (0..1) : elle s'éteint par le bas."""
+    m = cv != '.'
+    ys, xs = np.nonzero(m)
+    if not len(ys):
+        return
+    base = (1.8, 3.0, 4.3, 3.7)[level]
+    y0, y1 = max(0, ys.min() - 34), min(H, ys.max() + 8)
+    x0, x1 = max(0, xs.min() - 12), min(W, xs.max() + 13)
+    sub = m[y0:y1, x0:x1]
+    D = np.full(sub.shape, 99.0)
+    UP = np.zeros(sub.shape, bool)
+    for dy in range(-32, 5):
+        for dx in range(-8, 9):
+            c = math.hypot(dx * 1.35, dy * (0.28 if dy < 0 else 2.0))
+            if c > 9.5 or (dx == 0 and dy == 0):
+                continue
+            s = _shift(sub, dx, dy) & (D > c)
+            D[s] = c
+            UP[s] = dy <= -2
+    Y, X = np.mgrid[y0:y1, x0:x1].astype(float)
+    xw = X + 2.4 * np.sin(Y * 0.21 + ph)
+    wav = 0.55 * np.sin(xw * 0.62 + ph * 0.7) + 0.45 * np.sin(xw * 0.27 - ph * 0.45 + 1.3)
+    T = np.maximum(base * (0.62 + 0.62 * wav), 1.5)
+    k = D / T
+    cut = (k <= 1.0) & ~sub
+    tones = 'XYYZ'
+    if fade:
+        cut &= UP & (wav > -0.3 + 0.8 * fade)
+        tones = 'YZZ'
+    # pas de miettes : les bouts isolés (moins de 4 pixels) sont retirés
+    seen = np.zeros_like(cut)
+    for (sy, sx) in zip(*np.nonzero(cut)):
+        if seen[sy, sx]:
+            continue
+        comp, stack = [], [(sy, sx)]
+        seen[sy, sx] = True
+        while stack:
+            cy_, cx_ = stack.pop()
+            comp.append((cy_, cx_))
+            for ddy, ddx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                ny_, nx_ = cy_ + ddy, cx_ + ddx
+                if 0 <= ny_ < cut.shape[0] and 0 <= nx_ < cut.shape[1] and cut[ny_, nx_] and not seen[ny_, nx_]:
+                    seen[ny_, nx_] = True
+                    stack.append((ny_, nx_))
+        if len(comp) < 4:
+            for (cy_, cx_) in comp:
+                cut[cy_, cx_] = False
+    for (yy, xx) in zip(*np.nonzero(cut)):
+        put(back, xx + x0, yy + y0, tones[min(len(tones) - 1, int(k[yy, xx] * len(tones)))])
+
+
+def fx_aura(level, ph, fade=0.0):
+    def f(cv, back, solid, front, ctx, sback):
+        aura(back, cv, level, ph, fade)
+    return f
+
+
+# les éclats de cristal lumineux (l'énergie), en gerbe dans toutes les directions : (départ en temps, arrivée par
+# rapport au milieu de ses pieds, longueur, derrière elle ?). Ceux de derrière sont plus petits (plus loin) ; ceux de
+# devant retombent au sol de part et d'autre de ses pieds ; un monte droit au ciel. Symétriques : rien ne vise un côté.
+SHARDS = [(0.00, (3, -210), 7, False),            # vers le ciel
+          (0.04, (-98, -190), 7, False),          # en haut à gauche
+          (0.08, (100, -186), 7, False),          # en haut à droite
+          (0.13, (-128, -100), 7, False),         # à gauche
+          (0.16, (126, -96), 7, False),           # à droite
+          (0.21, (-70, -58), 5, True),            # derrière elle, à gauche
+          (0.24, (72, -62), 5, True),             # derrière elle, à droite
+          (0.30, (-60, -3), 8, False),            # devant elle, à gauche (retombe au sol)
+          (0.34, (64, -3), 8, False)]             # devant elle, à droite (retombe au sol)
+SHARD_FROM = [1, 1, 0, 1, 0, 1, 0, 2, 2]          # de quel cristal part chaque éclat (0 : derrière à droite, 1 : derrière
+#                                                 à gauche, 2 : devant elle, à gauche)
+SHARD_LIT = {'u': 'W', 'j': 'W', 't': 'X', 's': 'Y', 'r': 'Z'}
+
+
+LAUNCH_ORBIT = (10, 50, 20)                     # la place des cristaux au lancement (les éclats en jaillissent)
+
+
+def shard_path(T, i):
+    """une courbe de fontaine : l'éclat jaillit vers le haut d'un des trois cristaux embrasés, s'écarte, puis file
+    vers T"""
+    a0, rx, ry = LAUNCH_ORBIT
+    (mx, my), _ = orbit_pos(a0 + 120 * (i % 3), rx, ry)
+    M = np.array([mx, my - 4.0])
+    d = T - M
+    p1 = M + np.array([0.12 * d[0], -40.0])
+    p2 = M + np.array([0.78 * d[0], min(-34.0, d[1] * 0.55 - 26.0)])
+    return bezier(M, p1, p2, T, 200)
+
+
+def shards_fly(t):
+    """les éclats partent en gerbe (t : le temps depuis le lancement, 0..1,2) : chacun sur sa courbe, pointe en avant,
+    tout de lumière (blanc, givre, cyan, sans contour), avec une petite traîne courbe qui s'effile"""
+    def f(cv, back, solid, front, ctx, sback):
+        for n, (t0, (tx, ty), L, behind) in enumerate(SHARDS):
+            s = (t - t0) / 0.85
+            if s <= 0.0 or s > 1.15:
+                continue
+            pts = shard_path(np.array([FEET_X + tx, GROUND + ty], float), SHARD_FROM[n])
+            i = min(len(pts) - 1, int((s ** 0.8) * (len(pts) - 1)))
+            lay = back if behind else front
+            j0 = max(0, i - 12)
+            tail = pts[j0:i - 2]
+            if len(tail) > 2:
+                stroke(lay, tail, [0.6 + 1.1 * (q / (len(tail) - 1)) for q in range(len(tail))], 'XY')
+            glow(lay, pts[i], 2.6 if not behind else 2.0, tones='XY')
+            a = pts[i] if i else pts[1]
+            b = pts[max(0, i - 3)]
+            ang = math.degrees(math.atan2(-(a[1] - b[1]), a[0] - b[0])) if i > 2 else 90
+            tmp = empty()
+            ll = L * min(1.0, 0.5 + s * 1.5)
+            crystal(tmp, pts[i], ll, max(3, ll * 0.6), ang, tip=0.4, tail=0.45)
+            m = tmp != '.'
+            lay[m] = [SHARD_LIT.get(ch, ch) for ch in tmp[m]]
+    return f
+
+
+def flurry(k, n=12):
+    """la neige qui retombe autour d'elle quand l'anneau se défait (k : le temps)"""
+    def f(cv, back, solid, front, ctx, sback):
+        rng = np.random.RandomState(90)
+        for j in range(n):
+            a = rng.uniform(0, 2 * math.pi)
+            r = rng.uniform(30, 74)
+            x = FEET_X + r * math.cos(a) + 3 * math.sin(k * 1.3 + j)
+            y = GROUND - rng.uniform(20, 70) + 9 * k
+            if y < GROUND - 2:
+                snow(back if math.sin(a) > 0 else front, x, y, int(rng.choice([1, 2, 2, 3])))
+    return f
+
+
+NOSP = {i: None for i in range(5)}
+_EYE = dict(eyes=1, sp=NOSP, cr=NONE3)
 SPECIALE = [
-    dict(arm=(-2, -2), lean=-1, head=(0, 1), ph=0.5, ha=1.7, mp=1, ml=1, cr=NONE3, sp={i: None for i in range(5)},
-         fx=[snow_swirl(0)], ms=130),
-    dict(arm=(-4, -4), lean=-1, head=(0, 1), ph=1.0, ha=1.9, hl=0.5, mp=1, ml=1, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, fx=[snow_swirl(1)], ms=150),
-    dict(arm=(-4, -4), s=-1, b=1, lean=-1, head=(0, -1), ph=1.5, ha=2.0, hl=1.5, mp=1, ml=1, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, fx=[snow_swirl(2)], ms=260),
-    dict(arm=(-3, -4), s=0, lean=1, head=(1, 0), ph=2.2, ha=2.6, hl=2.0, mp=-1, ml=-1, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, o=1, fx=[blizzard_breath(0.35, seed=0)], ms=70),
-    dict(arm=(-3, -4), lean=1, head=(1, 0), ph=2.9, ha=2.6, hl=2.0, mp=-1, ml=-1, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, o=1, fx=[blizzard_breath(0.75, seed=1)], ms=70),
-    dict(arm=(-3, -4), lean=1, head=(1, 0), ph=3.6, ha=2.6, hl=2.0, mp=-1, ml=-1, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, o=1, fx=[blizzard_breath(1.0, seed=2), vortex_snow(0, 1.2)], ms=90),
-    dict(arm=(-3, -4), lean=1, head=(1, 0), ph=4.3, ha=2.4, hl=1.5, mp=0, ml=-1, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, o=1, fx=[blizzard_breath(1.0, thin=0.3, seed=3), vortex_snow(1, 1.0)],
-         ms=110),
-    dict(arm=(-3, -3), lean=1, head=(1, 0), ph=5.0, ha=2.2, hl=1.0, mp=0, ml=0, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, o=1,
-         fx=[blizzard_breath(1.0, thin=0.65, seed=4), vortex_snow(2, 0.9), ice_block(0.55)], ms=90),
-    dict(arm=(-2, -3), lean=1, head=(1, 0), ph=5.7, ha=2.0, hl=0.5, mp=1, ml=0, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, fx=[ice_block(1.0, glint=True)], ms=300),
-    dict(arm=(-2, -3), lean=1, head=(1, 0), ph=6.4, ha=1.8, mp=1, ml=1, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, fx=[ice_block(1.0, cracks=1)], ms=150),
-    dict(arm=(-2, -3), lean=1, head=(1, 0), ph=7.1, ha=1.8, mp=0, ml=1, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, fx=[ice_block(1.0, shake=1, cracks=2)], ms=90),
-    dict(arm=(-1, -2), lean=1, head=(1, 0), ph=7.8, ha=1.8, mp=-1, ml=0, cr=NONE3,
-         sp={i: None for i in range(5)}, eyes=1, fx=[shatter(0)], ms=90),
-    dict(arm=(-1, -1), lean=0, ph=8.5, ha=1.7, mp=-1, ml=-1, cr=NONE3, sp={i: None for i in range(5)},
-         fx=[shatter(1)], ms=110),
-    dict(arm=(0, -1), ph=9.2, ha=1.7, mp=0, ml=-1, cr=NONE3, sp={i: None for i in range(5)},
-         fx=[shatter(2), regrow(0)], ms=120),
-    dict(arm=(0, 0), ph=9.9, ha=1.7, mp=1, ml=0, cr=NONE3, sp={1: None, 4: None}, fx=[regrow(1)], ms=130),
-    dict(ph=10.6, ha=1.7, mp=0, ml=0, ms=170),
+    # 0-1 : les cristaux s'élèvent de sa paume ; ses yeux s'allument
+    dict(arm=(-2, -2), lean=-1, head=(0, 1), ph=0.5, ha=1.7, mp=1, ml=1, cr=[(0, -3), (0, -4), (0, -3)],
+         sp={i: (0, -3) for i in range(5)}, ms=120),
+    dict(arm=(-3, -3), lean=-1, head=(0, 1), ph=1.0, ha=1.9, hl=0.5, mp=1, ml=1, eyes=1, sp=NOSP,
+         cr=[(-3, -10), (0, -13), (3, -10)], ms=130),
+    # 2 : ils se mettent à tourner autour d'elle
+    dict(arm=(-4, -4), lean=-1, head=(0, 0), ph=1.5, ha=2.0, hl=1.0, mp=1, ml=0, **_EYE,
+         fx=[orbit_crystals(-230, 44, 17)], ms=110),
+    # 3 : elle inspire, se grandit et TIENT ; la neige de l'air converge vers elle, les cristaux brillent
+    dict(arm=(-4, -4), s=-1, b=1, lean=-1, head=(0, -1), ph=2.0, ha=2.1, hl=1.6, mp=1, ml=0, **_EYE,
+         fx=[gather_snow(0), orbit_crystals(-120, 48, 20, lit=1, halo=3.0)], ms=210),
+    dict(arm=(-4, -4), s=-1, b=1, lean=-1, head=(0, -1), ph=2.4, ha=2.1, hl=1.8, mp=1, ml=0, **_EYE,
+         fx=[gather_snow(1), orbit_crystals(-55, 48, 20, lit=1, halo=3.5)], ms=80),
+    # 5 : MOMENT DE LANCEMENT (arrêt sur l'image) : elle souffle ; les cristaux s'embrasent, le tourbillon de flocons
+    # sort de ses lèvres et descend autour d'elle, l'aura givrée monte, les éclats jaillissent, elle s'éclaire
+    dict(arm=(-3, -4), lean=1, head=(1, 0), ph=3.0, ha=2.6, hl=2.0, mp=-1, ml=-1, o=1, **_EYE,
+         fx=[fx_aura(3, 1.0), puff, snow_helix(0.0, 0.5, seed=0),
+             orbit_crystals(*LAUNCH_ORBIT, lit=2, halo=5.5), shards_fly(0.08)], flash=(12, ICE_FLASH), ms=220),
+    # 6-8 : le tourbillon s'ouvre en anneau qui s'élargit au sol, les éclats partent en gerbe tout autour
+    dict(arm=(-3, -4), lean=1, head=(1, 0), ph=3.7, ha=2.6, hl=2.0, mp=-1, ml=-1, o=1, **_EYE,
+         fx=[fx_aura(3, 2.3), snow_helix(0.2, 1.0, seed=1), ice_ring(40, 110),
+             orbit_crystals(60, 50, 20, lit=2, halo=4.5), shards_fly(0.34)], flash=(6, ICE_FLASH), ms=100),
+    dict(arm=(-3, -3), lean=1, head=(1, 0), ph=4.4, ha=2.4, hl=1.5, mp=0, ml=-1, **_EYE,
+         fx=[fx_aura(2, 3.6), snow_helix(0.6, 1.0, wmax=3.4, seed=2), ice_ring(56, 180),
+             orbit_crystals(100, 50, 20, lit=2, halo=3.5), shards_fly(0.62)], ms=110),
+    dict(arm=(-2, -3), lean=1, head=(1, 0), ph=5.1, ha=2.2, hl=1.0, mp=0, ml=0, **_EYE,
+         fx=[fx_aura(2, 4.9), ice_ring(68, 245, thin=0.3, k=1), orbit_crystals(135, 49, 20, lit=1, halo=2.5),
+             shards_fly(0.9)], ms=120),
+    # 9-10 : l'anneau se défait en neige, l'aura s'éteint par le bas, les cristaux ralentissent
+    dict(arm=(-2, -2), lean=0, head=(0, 0), ph=5.8, ha=2.0, hl=0.5, mp=1, ml=0, **_EYE,
+         fx=[fx_aura(1, 6.2, fade=0.45), ice_ring(74, 300, thin=0.75, k=2), orbit_crystals(-195, 46, 17, lit=1),
+             shards_fly(1.15), flurry(0)], ms=130),
+    dict(arm=(-1, -2), ph=6.5, ha=1.8, mp=1, ml=1, **_EYE,
+         fx=[orbit_crystals(-170, 40, 16), flurry(1, 8)], ms=140),
+    # 11-13 : ils redescendent se poser au-dessus de sa paume ; ses yeux s'éteignent
+    dict(arm=(-1, -1), ph=7.2, ha=1.7, mp=0, ml=1, sp=NOSP,
+         cr=[(-2, -9), (0, -11), (2, -9)], fx=[flurry(2, 5)], ms=120),
+    dict(arm=(0, -1), ph=7.9, ha=1.7, mp=-1, ml=0, cr=[(0, -4), (0, -5), (0, -4)], sp={1: None, 4: None}, ms=120),
+    dict(arm=(0, 0), ph=8.6, ha=1.7, mp=-1, ml=0, cr=[(0, -1), (0, -2), (0, -1)], ms=140),
+    # 14 : retour exact à la pose (la première image de la respiration)
+    dict(POSE[0], ms=170),
 ]
 
 
@@ -1214,7 +1319,7 @@ def build_all():
         for i, spec in enumerate(specs):
             cv, back, solid, front, ctx, sback = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []))
-            fr.append((compose(cv, back, solid, front, sback), spec['ms']))
+            fr.append((compose(cv, back, solid, front, sback, spec.get('flash')), spec['ms']))
         anims[name] = fr
     return anims
 
@@ -1234,6 +1339,8 @@ def bbox(frames, margin=4):
             min(H, ys.max() + 1 + margin))
 
 
+# le cadre des GIF de l'attaque (celui, validé, d'avant la spéciale d'équipe : l'attaque reste identique)
+ATK_BOX = (15, 48, 298, 168)
 # la case du jeu : 128 × 120, sol en (64, 116)
 GAME_BOX = (SOL[0] - hd.FEET[0], SOL[1] - hd.FEET[1], SOL[0] - hd.FEET[0] + hd.FRAME_W,
             SOL[1] - hd.FEET[1] + hd.FRAME_H)
@@ -1257,10 +1364,14 @@ def save_gif(path, images, durations):
 
 def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
-    boxes = {'pose': GAME_BOX}
-    # une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets
-    bb = bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 6)
-    boxes['attaque'] = boxes['speciale'] = bb
+    # l'attaque garde son cadre validé (celui d'avant la spéciale d'équipe) ; la spéciale a son propre cadre, centré
+    # sur ses pieds (l'effet s'étend autant à gauche qu'à droite : rien ne vise un côté)
+    sb = bbox(anims['speciale'] + anims['pose'], 6)
+    half = int(max(FEET_X - sb[0], sb[2] - FEET_X, 64))
+    half = min(half, int(FEET_X))
+    SPE_BOX = (int(FEET_X) - half, sb[1], int(FEET_X) + half, sb[3])
+    boxes = {'pose': GAME_BOX, 'attaque': ATK_BOX, 'speciale': SPE_BOX}
+    bb = (min(ATK_BOX[0], SPE_BOX[0]), min(ATK_BOX[1], SPE_BOX[1]), max(ATK_BOX[2], SPE_BOX[2]), 168)
     for name in ('pose', 'attaque', 'speciale'):
         box = boxes[name]
         ims = [on_bg(img).crop(box) for img, _ in anims[name]]
@@ -1270,7 +1381,7 @@ def write_outputs(anims):
     k = 3
     blocks = []
     for name, per in (('pose', 12), ('attaque', 9), ('speciale', 6)):
-        box = GAME_BOX if name == 'pose' else bbox(anims[name] + anims['pose'], 3)
+        box = GAME_BOX if name == 'pose' else SPE_BOX if name == 'speciale' else bbox(anims[name] + anims['pose'], 3)
         cells = [on_bg(img).crop(box) for img, _ in anims[name]]
         blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
     Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
@@ -1323,4 +1434,5 @@ if __name__ == '__main__':
     write_outputs(anims)
     for n in ('pose', 'attaque', 'speciale'):
         print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+    print('moment de lancement de la spéciale : image', LANCEMENT)
     print('écrit dans', OUT)

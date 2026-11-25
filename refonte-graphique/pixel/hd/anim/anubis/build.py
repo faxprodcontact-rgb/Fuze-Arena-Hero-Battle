@@ -1,4 +1,8 @@
-# Anubis (myths-7, terre, soutien, épique) : le baron vaudou — pose (respiration), « Feu follet », « Les Mains du Baron ».
+# Anubis (myths-7, terre, soutien, épique) : le baron vaudou — pose (respiration), « Feu follet », « La Ronde du Baron »
+# (refaite le 25/11/2026 en sort d'ÉQUIPE : attaque de toute l'équipe en hausse et énergie pour tous ; salut au
+# chapeau, trois coups de canne qui allument un cercle de flammes vertes TOUT AUTOUR de lui, ronde de feux follets qui
+# s'envole en gerbe dans toutes les directions, aura de danse vaudou ; voir « 3) l'attaque spéciale » plus bas).
+# MOMENT DE LANCEMENT (l'effet part vers l'équipe) : image 11 de la spéciale (comptée depuis 0), 210 ms.
 #
 # Lancer : python3 refonte-graphique/pixel/hd/anim/anubis/build.py
 # Écrit dans refonte-graphique/pixel/sortie/ : anim-anubis-pose.gif, anim-anubis-attaque.gif, anim-anubis-speciale.gif,
@@ -18,9 +22,8 @@
 #     les pans de l'habit ondulent (des pixels doublés ou ôtés au milieu de chaque rangée : le bord accroché aux jambes
 #     ne bouge pas), la manche proche se raccourcit (rangées ôtées) quand il lève la canne, l'avant-bras lointain
 #     s'allonge (rangées doublées) et se cisaille quand il lève ou tend le crâne ;
-#   - les effets (feu follet vert, fumée violette, terre, mains squelettiques de terre) ont leur petite palette, en
-#     formes courbes (aucun rayon droit) ; les objets lancés ou sortis du sol (le crâne follet, les mains) ont leur
-#     contour comme le héros.
+#   - les effets (feu follet vert, fumée violette, terre) ont leur petite palette, en formes courbes (aucun rayon
+#     droit) ; le crâne follet lancé (l'attaque) a son contour comme le héros.
 import sys, os, math
 import numpy as np
 from PIL import Image, ImageDraw
@@ -65,12 +68,16 @@ LN = LIGHT / np.linalg.norm(LIGHT)
 
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. De la place à droite : le feu follet file vers
-# l'ennemi (ENEMY_X), les mains de terre sortent du sol sous lui. La pose seule se recadre en 128 × 120 (format du jeu).
-W, H = 276, 164
-SOL = (70, 150)
+# l'ennemi (ENEMY_X). La pose seule se recadre en 128 × 120 (format du jeu).
+# Spéciale d'équipe (25/11/2026) : la toile est agrandie à gauche (DXL), en haut (DYT) et en bas, pour que le cercle
+# de flammes et la gerbe de feux follets tiennent TOUT AUTOUR de lui ; tout est décalé d'autant (pose et attaque
+# restent identiques au pixel près, leur cadrage aussi : ATK_BOX plus bas).
+DXL, DYT = 40, 24
+W, H = 276 + DXL, 164 + DYT + 6
+SOL = (70 + DXL, 150 + DYT)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
-ENEMY_X = 214
+ENEMY_X = 214 + DXL
 
 
 def grid(rows):
@@ -393,7 +400,7 @@ def put(cv, x, y, ch, keep=None, below=0):
         cv[y, x] = ch
 
 
-def puff(cv, c, r, tones='KLP', hollow=0.0):
+def puff(cv, c, r, tones='KLP', hollow=0.0, below=0):
     """une bouffée ronde, éclairée en haut à droite ; hollow > 0 : elle se défait (trou au milieu)"""
     cx, cy = c
     for y in range(int(cy - r - 1), int(cy + r + 2)):
@@ -402,7 +409,7 @@ def puff(cv, c, r, tones='KLP', hollow=0.0):
             d = math.hypot(*w)
             if d <= r and d >= hollow * r:
                 k = (w @ LN) / max(r, 1e-6)
-                put(cv, x, y, tones[min(len(tones) - 1, int((1 - k) / 2 * len(tones)))])
+                put(cv, x, y, tones[min(len(tones) - 1, int((1 - k) / 2 * len(tones)))], below=below)
 
 
 def cloud(cv, c, r, tones='KKLP', hollow=0.0, seed=0):
@@ -425,7 +432,7 @@ def cloud(cv, c, r, tones='KKLP', hollow=0.0, seed=0):
         puff(cv, (cx + dx, min(cy + dy, GROUND - rr * 0.6)), rr, tones)
 
 
-def stroke(cv, pts, widths, tones):
+def stroke(cv, pts, widths, tones, below=0):
     """peint un ruban le long de points, avec une épaisseur par point (coeur clair -> bord sombre)"""
     best = {}
     for (px, py), wv in zip(pts, widths):
@@ -441,7 +448,7 @@ def stroke(cv, pts, widths, tones):
                         best[(x, y)] = k
     m = len(tones)
     for (x, y), k in best.items():
-        put(cv, x, y, tones[min(m - 1, int(k * m))])
+        put(cv, x, y, tones[min(m - 1, int(k * m))], below=below)
 
 
 def bezier(p0, p1, p2, p3, n):
@@ -762,44 +769,34 @@ ATTAQUE = [
 ]
 
 
-# ---------------------------------------------------------------- 3) l'attaque spéciale : « Les Mains du Baron »
-# Il salue : il se penche, la tête basse, le haut-de-forme basculé vers l'avant, le crâne présenté de côté (tenu).
-# Il se redresse avec son sourire peint, et frappe trois coups de canne : à chaque coup une onde verte court sur le sol
-# au pied de la canne ; au troisième (plus haut, plus fort : arrêt sur l'image), une fissure verte serpente sur le sol
-# jusqu'à l'ennemi. Le sol s'ouvre sous lui : deux grandes mains squelettiques de terre en jaillissent dans une gerbe de
-# mottes, s'ouvrent, puis se referment sur l'ennemi (arrêt sur l'image, éclat vert et fumée violette) et l'entraînent
-# sous terre ; il ne reste que la poussière et les volutes de fumée violette qui montent et se défont.
-CANE_C = (CANE_FOOT[0] + OX, GROUND)         # le pied de la canne (toile)
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « La Ronde du Baron »
+# Sort d'ÉQUIPE (refait le 25/11/2026). Effet réel en combat : l'attaque de toute l'équipe monte (pendant 6 s) et tous
+# les alliés reçoivent de l'énergie. Son équipe est en losange autour de lui (devant, derrière, au-dessus, en dessous) :
+# le sort ne vise AUCUNE direction et ne touche pas l'ennemi ; tout naît sur lui et s'étend en cercle autour de lui.
+# Ce que reçoit chaque allié (aura d'attaque, orbes d'énergie) est joué par le jeu (effets communs, ../effets/).
+#   - Le salut (gardé de l'ancienne spéciale) : il se penche, la tête basse, le haut-de-forme basculé vers l'avant.
+#   - Les trois coups de canne théâtraux : à chaque coup, un CERCLE de flammes vertes et de fumée violette s'allume au
+#     sol tout autour de lui (un anneau un peu aplati, la moitié de derrière passe derrière lui), plus large à chaque
+#     coup.
+#   - Au troisième coup, il lève le crâne : de petits feux follets verts sortent des flammes du cercle et dansent une
+#     ronde autour de lui ; il danse (il se balance, les pans de l'habit volent) et une aura de danse vaudou, des
+#     langues vertes et violettes, monte sur lui.
+#   - MOMENT DE LANCEMENT : image 11 (numérotée à partir de 0 ; la 12e), tenue 210 ms : le crâne levé au plus haut,
+#     ses orbites et son regard s'allument, la ronde de feux follets s'envole en gerbe DANS TOUTES LES DIRECTIONS.
+#   - Les feux follets s'éloignent et s'éteignent, l'aura retombe, le cercle de flammes s'éteint en volutes de fumée
+#     violette ; retour exact à la pose.
+RC = np.array([SOL[0] + 2.0, GROUND - 1.0])     # le centre du cercle au sol : le milieu de ses pieds (toile)
+FLAT = 0.27                                      # l'aplatissement des cercles posés au sol (ry = FLAT × rx)
+BELOW = 18                                       # la moitié de devant du cercle passe sous la ligne de ses pieds
+CANE_C = (CANE_FOOT[0] + OX, GROUND)             # le pied de la canne (toile)
 
 
-def fx_ripple(level):
-    """le coup de canne : des flammes vertes jaillissent du sol autour du pied de la canne, une lueur posée au sol,
-    deux bouffées de fumée violette, des grains de terre (level 0 : retombée ; 1, 2 : premier et deuxième coup ;
-    3 : le troisième, le plus fort)"""
-    def f(cv, back, obj, front, ctx):
-        x, y = CANE_C
-        k = (0.6, 1.1, 1.3, 1.9)[level]
-        glow(back, (x + 1, y), 3 + 3 * k, 'HIJU' if level == 3 else 'IJU')
-        for (dx, h, ln) in ((-6, 8, -3.0), (7, 9, 3.0), (-1, 5, 1.0)):
-            flame(back, x + dx * k, y, h * k, lean=ln * k)
-        if level >= 1:
-            puff(back, (x - 13 * k, y - 4), 1.8 + 1.4 * k, 'DEF', hollow=0.0 if level != 0 else 0.4)
-            puff(back, (x + 14 * k, y - 5), 1.6 + 1.4 * k, 'DEF')
-        if level == 3:
-            pop(front, (x + 1, y - 3), 5, facing=90, tones='HIJU')
-            mote(front, x - 16, y - 14, True)
-            mote(front, x + 18, y - 12, True)
-        for (dx, c) in ((-3, '7'), (3, '7'), (-2, '6')):
-            put(front, x + dx * (1 + level * 0.6), y - 1 - level // 2, c)
-    return f
-
-
-def flame(cv, x, y, h, lean=0.0, tones='HIJU'):
+def flame(cv, x, y, h, lean=0.0, tones='HIJU', below=0):
     """une flamme verte (feu follet) posée sur le sol : une goutte ronde en bas, une pointe qui se courbe en haut ;
     coeur pâle dans la goutte, bord vert sombre"""
     if h < 2:
         return
-    wmax = min(8.0, 2.6 + h * 0.42)
+    wmax = min(7.0, 2.4 + h * 0.4)
     m = len(tones)
     yb = y - wmax * 0.25                        # la goutte est posée : son bas touche le sol
     for r in range(-int(wmax), int(h) + 1):
@@ -816,211 +813,253 @@ def flame(cv, x, y, h, lean=0.0, tones='HIJU'):
             d = abs(px + 0.5 - cx - 0.3) / max(hw, 0.5)
             if d <= 1.0:
                 q = 0.6 * d + 0.55 * max(0.0, s)
-                put(cv, px, yb - r, tones[min(m - 1, int(q * m))])
+                put(cv, px, yb - r, tones[min(m - 1, int(q * m))], below=below)
 
 
-def crack_pts(s):
-    """la fissure : du pied de la canne à l'ennemi, en serpentant sur le sol (s : la part déjà ouverte)"""
-    x0, x1 = CANE_C[0] + 4, ENEMY_X
-    pts = []
-    n = int((x1 - x0) * s)
-    for i in range(n + 1):
-        x = x0 + i
-        t = i / max(x1 - x0, 1)
-        yv = GROUND - 1 + 0.9 * math.sin(t * 17.0) * (0.6 + 0.4 * math.sin(t * 5.0))
-        pts.append((x + 0.5, yv))
-    return pts
+def ell(rx, a, cy=None):
+    """le point d'angle a (degrés) sur l'anneau au sol de demi-largeur rx (0° : à droite, 90° : au fond)"""
+    t = math.radians(a)
+    return RC[0] + rx * math.cos(t), (RC[1] if cy is None else cy) - FLAT * rx * math.sin(t)
 
 
-def fx_crack(s, fade=0):
-    """la fissure verte sur le sol (fade : elle s'éteint) ; de petites flammes vertes en sortent, plus hautes près de
-    sa tête, et une lueur court devant"""
+def fx_ring(rx, k, ph=0.0, lit=False, smoke=True):
+    """le cercle de flammes vertes et de fumée violette au sol, tout autour de lui (rx : sa demi-largeur ; k : la
+    force des flammes, 0..1.3 ; lit : il vient de s'allumer, le trait au sol est blanc-vert)"""
     def f(cv, back, obj, front, ctx):
-        pts = crack_pts(s)
-        if len(pts) < 2:
-            return
-        tones = ('IJU', 'JUX', 'UX')[fade]
-        n = len(pts)
-        stroke(back, pts, [2.0 + 1.0 * (i / n) for i in range(n)], tones)
-        if fade == 2:
-            return
-        for k in range(6, n, 17):
-            age = (n - k) / 45.0                     # 0 à la tête de la fissure, grandit derrière
-            h = max(4.0, 18 - 10 * age) * (0.8 + 0.25 * math.sin(k * 1.7)) * (0.55 if fade else 1)
-            x, y = pts[k]
-            flame(back, x, GROUND, h, lean=1.8 * math.sin(k * 0.9), tones='HIJU' if not fade else 'JUX')
-        if fade == 0:
-            hx, hy = pts[-1]
-            glow(back, (hx, GROUND), 6.0, 'HIJU')
-            mote(front, hx - 6, GROUND - 9, True)
-            mote(front, hx - 17, GROUND - 7)
+        # le trait lumineux posé au sol (une ellipse : la moitié du fond derrière lui, celle de devant devant)
+        n = int(rx * 7) if k >= 0.4 else 0          # presque éteint : le trait au sol a disparu
+        for lay, want in (((back, True), (front, False)) if n else ()):
+            pts, ws = [], []
+            for i in range(n + 1):
+                a = 360.0 * i / n
+                pts.append(ell(rx, a))
+                ws.append((0.9 + 1.4 * min(k, 1.0)) if (math.sin(math.radians(a)) > -0.02) == want else 0.0)
+            stroke(lay, pts, ws, ('HIJ' if lit else 'IJU') if k > 0.5 else 'JUX', below=BELOW)
+        # les flammes (de taille inégale) et, entre elles, des bouffées de fumée violette ; du fond vers l'avant
+        nf = max(7, int(rx / 4.2))
+        items = []
+        for j in range(nf):
+            a = (360.0 * j / nf + 9 * math.sin(j * 2.3) + 90) % 360
+            x, y = ell(rx, a)
+            h = k * (10.5 + 4.0 * math.sin(j * 1.9 + ph) + 2.5 * math.sin(j * 0.7 - ph * 1.3))
+            items.append((y, 'f', x, h, 1.3 * math.sin(j * 1.1 + ph * 1.7), a))
+            if smoke and j % 2 == 0:
+                a2 = a + 180.0 / nf
+                x2, y2 = ell(rx, a2)
+                items.append((y2 - 0.1, 's', x2, 2.2 + 1.6 * min(k, 1.0), 0, a2))
+        for (y, kind, x, h, ln, a) in sorted(items):
+            lay = back if math.sin(math.radians(a)) > 0.05 else front
+            if kind == 'f':
+                flame(lay, x, y, h, lean=ln, tones='HIJU' if lit else 'IJUX', below=BELOW)
+            else:
+                puff(lay, (x, y - h * 0.7), h, 'DEF', below=BELOW)
     return f
 
 
-# ---------------------------------------------------------------- les mains squelettiques de terre
-# Chaque os est un segment arrondi, modelé par la lumière (en haut à droite) avec les tons de la terre ; les jointures
-# sont des noeuds un peu plus gros ; la main entière reçoit UN contour (c'est un objet, comme le héros). Les doigts se
-# replient phalange par phalange vers l'ennemi (grip). La main sort du sol (rise) : ce qui est sous le sol n'est pas
-# peint.
-def shade_bone(k):
-    return '6' if k > 0.45 else '7' if k > -0.15 else '8' if k > -0.65 else '9'
+def fx_strike(level):
+    """le coup de canne : un éclat vert au pied de la canne, des grains de terre qui sautent (level 0..2)"""
+    def f(cv, back, obj, front, ctx):
+        x, y = CANE_C
+        r = (3.5, 4.5, 6.0)[level]
+        pop(back, (x + 1, y - 2), r, facing=90, tones='HIJU')
+        for (dx, dy, c) in ((-4, -1, '7'), (4, -1, '7'), (-3, -2, '6'), (5, -3, '6')):
+            put(front, x + dx * (1 + 0.4 * level), y + dy - level, c)
+    return f
 
 
-def bone(cv, P0, P1, r0, r1):
-    P0, P1 = np.array(P0, float), np.array(P1, float)
-    v = P1 - P0
-    L2 = max(v @ v, 1e-6)
-    R = max(r0, r1) + 1
-    for y in range(int(min(P0[1], P1[1]) - R), int(max(P0[1], P1[1]) + R + 1)):
-        for x in range(int(min(P0[0], P1[0]) - R), int(max(P0[0], P1[0]) + R + 1)):
-            if not (0 <= x < W and 0 <= y <= GROUND):
+# ---------------------------------------------------------------- l'aura de danse vaudou (verte et violette)
+def _shift(m, dx, dy):
+    """le masque m décalé de (dx, dy) : out[y + dy, x + dx] = m[y, x] (ce qui sort est perdu)"""
+    out = np.zeros_like(m)
+    h, w = m.shape
+    out[max(0, dy):h + min(0, dy), max(0, dx):w + min(0, dx)] = m[max(0, -dy):h + min(0, -dy), max(0, -dx):w + min(0, -dx)]
+    return out
+
+
+def body_mask(cv, ctx):
+    """le baron lui-même (sans sa canne) : l'aura monte sur LUI"""
+    m = cv != '.'
+
+    def on_canvas(g):
+        out = np.zeros_like(m)
+        ys, xs = np.nonzero(g != '.')
+        Y, X = ys + OY - ctx.lift, xs + OX
+        ok = (Y >= 0) & (Y < H) & (X >= 0) & (X < W)
+        out[Y[ok], X[ok]] = True
+        return out
+    return m & ~(on_canvas(CANE) & ~on_canvas(FIST))
+
+
+def fx_aura(level, ph, fade=0.0):
+    """l'aura ascendante (méthode d'Arcan) : des langues de feu qui montent de toute sa silhouette ; une langue sur
+    deux est verte (la fiole de sa canne), l'autre violette (son habit) : la danse vaudou. Une « distance » qui compte
+    peu vers le haut (les langues montent), beaucoup vers le bas ; le seuil ondule le long de la silhouette (deux ondes
+    de longueurs différentes) : des langues inégales, jamais un peigne régulier. fade (0..1) : elle s'éteint par le
+    bas, il ne reste que le haut des langues."""
+    def f(cv, back, obj, front, ctx):
+        m = body_mask(cv, ctx)
+        ys, xs = np.nonzero(m)
+        base = (1.8, 3.0, 4.2, 4.6)[level]
+        y0, y1 = max(0, ys.min() - 34), min(H, ys.max() + 6)
+        x0, x1 = max(0, xs.min() - 12), min(W, xs.max() + 13)
+        sub = m[y0:y1, x0:x1]
+        D = np.full(sub.shape, 99.0)
+        UP = np.zeros(sub.shape, bool)
+        for dy in range(-30, 5):
+            for dx in range(-8, 9):
+                c = math.hypot(dx * 1.35, dy * (0.28 if dy < 0 else 2.0))
+                if c > 9.5 or (dx == 0 and dy == 0):
+                    continue
+                s = _shift(sub, dx, dy) & (D > c)
+                D[s] = c
+                UP[s] = dy <= -2
+        Y, X = np.mgrid[y0:y1, x0:x1].astype(float)
+        xw = X + 2.4 * np.sin(Y * 0.21 + ph)
+        wav = 0.55 * np.sin(xw * 0.62 + ph * 0.7) + 0.45 * np.sin(xw * 0.27 - ph * 0.45 + 1.3)
+        green = np.sin(xw * 0.31 + ph * 0.9 + 0.6) > -0.1          # langue verte, ou violette
+        T = np.maximum(base * (0.62 + 0.62 * wav), 1.5)
+        k = D / T
+        cut = (k <= 1.0) & ~sub
+        if fade:
+            cut &= UP & (wav > -0.3 + 0.8 * fade)
+        # pas de miettes : les petits bouts isolés (moins de 4 pixels) sont retirés
+        seen = np.zeros_like(cut)
+        for (sy, sx) in zip(*np.nonzero(cut)):
+            if seen[sy, sx]:
                 continue
-            p = np.array([x + 0.5, y + 0.5])
-            t = float(np.clip((p - P0) @ v / L2, 0, 1))
-            c = P0 + t * v
-            r = r0 + (r1 - r0) * t
-            w = p - c
-            d = math.hypot(*w)
+            comp, stack = [], [(sy, sx)]
+            seen[sy, sx] = True
+            while stack:
+                cy_, cx_ = stack.pop()
+                comp.append((cy_, cx_))
+                for ddy, ddx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    ny_, nx_ = cy_ + ddy, cx_ + ddx
+                    if 0 <= ny_ < cut.shape[0] and 0 <= nx_ < cut.shape[1] and cut[ny_, nx_] and not seen[ny_, nx_]:
+                        seen[ny_, nx_] = True
+                        stack.append((ny_, nx_))
+            if len(comp) < 4:
+                for (cy_, cx_) in comp:
+                    cut[cy_, cx_] = False
+        for (yy, xx) in zip(*np.nonzero(cut)):
+            tones = ('JJU' if not fade else 'JUU') if green[yy, xx] else ('EEF' if not fade else 'EFF')
+            ch = tones[min(len(tones) - 1, int(k[yy, xx] * len(tones)))]
+            put(back, xx + x0, yy + y0, ch, below=4)
+    return f
+
+
+# ---------------------------------------------------------------- la ronde des feux follets, puis la gerbe
+# Chaque feu follet a un état continu dans le temps u (en images de la spéciale) : sur la ronde, il tourne sur un
+# anneau aplati autour de lui (demi-largeur R, à la hauteur h au-dessus du sol, angle de départ + spin) ; au lancement
+# (u = 11), la ronde s'ouvre : chaque follet file en tournant encore un peu, s'éloigne et s'élève (le fond) ou
+# descend vers le sol (le devant), l'anneau devient de plus en plus rond : une gerbe dans toutes les directions.
+NW = 7
+LAUNCH_U = 11.0
+# (u, R, h, spin) : sortis des flammes du cercle (coup 3), ils montent et resserrent la ronde autour de lui
+RONDE = [(7.6, 54.0, 0.0, 0.0), (8.0, 52.0, 8.0, 14.0), (9.0, 46.0, 28.0, 56.0), (10.0, 41.0, 42.0, 104.0),
+         (11.0, 40.0, 46.0, 150.0)]
+
+
+def _ronde_state(u):
+    if u <= RONDE[0][0]:
+        return RONDE[0][1:]
+    for (ua, *A), (ub, *B) in zip(RONDE, RONDE[1:]):
+        if u <= ub:
+            t = (u - ua) / (ub - ua)
+            return tuple(a + (b - a) * t for a, b in zip(A, B))
+    return RONDE[-1][1:]
+
+
+def wisp_pos(i, u):
+    """(x, y, devant ?, taille) du feu follet i au temps u ; None s'il n'est pas encore né ou s'est éteint"""
+    a0 = 360.0 * i / NW + 11 * math.sin(i * 2.1)
+    if u < LAUNCH_U:
+        R, h, spin = _ronde_state(u)
+        a = a0 + spin
+        ry = FLAT * R
+        cy = RC[1] - h
+        size = 1.0
+    else:
+        R0, h0, spin0 = RONDE[-1][1:]
+        s = (u - LAUNCH_U) / 3.3
+        if s > 1.0:
+            return None
+        a = a0 + spin0 + 105 * (1 - (1 - s) ** 2) + 8 * math.sin(i * 1.3) * s
+        R = R0 + (60 + 10 * math.sin(i * 2.7)) * s ** 0.85
+        ry = R * (FLAT + 0.42 * s ** 0.9)
+        cy = RC[1] - h0 - 16 * s
+        size = 1.0 - 0.4 * s
+    t = math.radians(a)
+    x, y = RC[0] + R * math.cos(t), cy - ry * math.sin(t)
+    if y > GROUND + 12:
+        return None
+    return x, y, math.sin(t) <= 0.05, size
+
+
+def ball(cv, c, r, tones, below=0):
+    """la tête d'un feu follet : une boule de lumière, coeur clair décalé vers la lumière (en haut à droite)"""
+    cx, cy = c
+    m = len(tones)
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            d = math.hypot(x + 0.5 - cx, y + 0.5 - cy)
             if d <= r:
-                cv[y, x] = shade_bone((w @ LN) / r)
+                dl = math.hypot(x + 0.5 - cx - 0.35 * r * LN[0], y + 0.5 - cy - 0.35 * r * LN[1])
+                q = min(0.99, 0.7 * dl / r + 0.3 * (d / r) ** 3)
+                put(cv, x, y, tones[min(m - 1, int(q * m))], below=below)
 
 
-def knob(cv, c, r):
-    bone(cv, c, (c[0] + 0.01, c[1]), r, r)
-
-
-def dirn(theta):
-    """une direction : theta = 0 vers le haut, positif vers la droite (degrés)"""
-    a = math.radians(theta)
-    return np.array([math.sin(a), -math.cos(a)])
-
-
-def skeletal_hand(cv, bx, s, rise, grip, size=1.0):
-    """une main de terre sortie du sol en bx ; s = +1 : main de gauche (les doigts se replient vers la droite),
-    -1 : main de droite (en miroir). Os fins et noeuds plus gros aux jointures : on voit le jour entre les doigts."""
-    sink = (1 - rise) * 44 * size
-    Wr = np.array([bx + s * 1.0, GROUND - 13 * size + sink])          # le poignet
-    tilt = s * (10 + 16 * grip)                                       # la main se penche vers l'ennemi
-    u = dirn(tilt)
-    nrm = np.array([-u[1], u[0]]) * -s                                # en travers de la paume, vers le pouce
-    # l'avant-bras : deux os qui plongent dans le sol, écartés
-    bone(cv, Wr + (-s * 1.8, 1.5), (bx - s * 4.5, GROUND + 8 + sink), 1.25 * size, 1.5 * size)
-    bone(cv, Wr + (s * 1.6, 1.5), (bx + s * 2.5, GROUND + 8 + sink), 1.0 * size, 1.3 * size)
-    knob(cv, Wr, 2.2 * size)
-    # le pouce, côté ennemi, bas sur la paume ; il se replie vers les doigts
-    p = Wr + u * 2.0 * size + nrm * 2.6 * size
-    a = tilt + s * (62 - 30 * grip)
-    for j, L in enumerate((4.6, 3.6)):
-        a += -s * grip * 30 if j else 0
-        q = p + dirn(a) * L * size
-        bone(cv, p, q, 0.95 * size, 0.8 * size)
-        knob(cv, q, 1.05 * size)
-        p = q
-    # les quatre doigts : métacarpe (dans la paume), puis trois phalanges qui se replient vers l'ennemi
-    spread = [24, 8, -8, -22]
-    longs = [0.84, 1.0, 0.95, 0.78]
-    for i in range(4):
-        side = (1.5 - i) * 3.1 * size                                 # i = 0 : l'index, côté pouce
-        base = Wr + u * 1.2 * size + nrm * side * 0.3
-        K = Wr + u * 8.5 * size * (0.94 + 0.06 * longs[i]) + nrm * side
-        bone(cv, base, K, 0.75 * size, 0.85 * size)
-        knob(cv, K, 1.25 * size)
-        a = tilt + s * spread[i] * (1 - 0.6 * grip) * -1
-        p = K
-        for j, L in enumerate((5.2, 4.2, 3.4)):
-            a += s * grip * (44 + 12 * j)
-            q = p + dirn(a) * L * longs[i] * size
-            bone(cv, p, q, (0.95, 0.85, 0.75)[j] * size, (0.85, 0.75, 0.55)[j] * size)
-            if j < 2:
-                knob(cv, q, (1.15, 1.0)[j] * size)
-            p = q
-    # la motte de terre soulevée d'où sort l'avant-bras
-    if rise > 0.15:
-        rock(cv, (bx - s * 1.0, GROUND - 1.5 * size), 4.2 * size * min(1.0, rise + 0.3), seed=11 + s, tones='6789',
-             squash=0.55)
-    # la lueur verte au creux de la paume (deux ou trois pixels)
-    c = Wr + u * 4.5 * size
-    for (dx, dy, ch) in ((0, 0, 'J'), (s, -1, 'I'), (-s, 1, 'U')):
-        x, y = int(c[0] + dx), int(c[1] + dy)
-        if 0 <= y <= GROUND and cv[y, x] != '.':
-            cv[y, x] = ch
-
-
-L_HAND, R_HAND = ENEMY_X - 21, ENEMY_X + 21
-
-
-def fx_hands(rise, grip):
+def fx_wisps(u, tail=0.7):
+    """les feux follets au temps u : chacun une boule verte au coeur pâle et une petite traîne de flamme courbe qui
+    s'effile derrière lui (le chemin qu'il vient de faire) ; ceux du fond passent derrière lui"""
     def f(cv, back, obj, front, ctx):
-        skeletal_hand(obj, R_HAND, -1, rise, grip, 1.75)      # celle de derrière d'abord
-        skeletal_hand(obj, L_HAND, 1, rise, grip, 1.85)
+        for i in range(NW):
+            p = wisp_pos(i, u)
+            if p is None:
+                continue
+            x, y, near, size = p
+            lay = front if near else back
+            r = (3.3 if near else 2.6) * size + 0.5
+            pts = []
+            for j in range(13):
+                q = wisp_pos(i, u - tail * (1 - j / 12))
+                if q is not None:
+                    pts.append(q[:2])
+            if len(pts) > 2:
+                ws = [1.4 + 1.5 * r * (k / (len(pts) - 1)) ** 1.2 for k in range(len(pts))]   # jamais en pointillés
+                stroke(lay, pts, ws, 'IJJU', below=BELOW)
+            ball(lay, (x, y), r, 'HIJU' if size > 0.6 else 'IJU', below=BELOW)
     return f
 
 
-def fx_hole(level):
-    """le sol qui s'ouvre sous l'ennemi : des flammes vertes basses entre les mains, des mottes soulevées"""
+def fx_launch(cv, back, obj, front, ctx):
+    """le crâne levé au plus haut s'allume : une lueur verte l'entoure, deux bouffées violettes s'ouvrent de part et
+    d'autre"""
+    c = g2c(SKULL_C, ctx.hand)
+    pop(back, (c[0], c[1] - 1), 9, facing=90, tones='HIJU')
+    puff(back, (c[0] - 11, c[1] + 3), 3.2, 'DEF')
+    puff(back, (c[0] + 11, c[1] + 2), 3.0, 'DEF')
+
+
+def fx_glow_skull(cv, back, obj, front, ctx):
+    """le crâne levé luit doucement (la ronde tourne)"""
+    c = g2c(SKULL_C, ctx.hand)
+    glow(back, (c[0], c[1] - 1), 7.5, 'IJU')
+
+
+def fx_smoke_ring(level):
+    """le cercle s'éteint : des volutes de fumée violette montent de l'anneau, s'ouvrent et se défont"""
     def f(cv, back, obj, front, ctx):
-        x = ENEMY_X
-        k = (0.7, 1.0, 0.6)[level]
-        for (dx, h, ln) in ((-9, 9, -2.5), (1, 12, 1.0), (10, 8, 2.5)):
-            flame(back, x + dx, GROUND, h * k, lean=ln)
-        for (dx, r, sd) in ((-33, 3.0, 1), (-26, 2.4, 2), (27, 2.6, 3), (34, 3.2, 4)):
-            rock(front, (x + dx, GROUND - r * 0.5), r, seed=sd, tones='6789')
+        hol = (0.0, 0.3, 0.6)[level]                 # elles se défont : plus petites, plus pâles (jamais d'anneau)
+        for j, a in enumerate((20, 75, 130, 200, 250, 320)):
+            x, y = ell(54, a)
+            lay = back if math.sin(math.radians(a)) > 0.05 else front
+            r = (4.0 + 0.6 * level + (j % 2)) * (1 - 0.5 * hol)
+            cx, cy = x + level * (2 if j % 2 else -2), y - 4 - 7 * level - r * 0.5
+            # une volute : une grosse bouffée et une petite qui monte en haut à droite (ou à gauche)
+            tones = ('DDEF', 'DDE', 'DD')[level]
+            puff(lay, (cx, cy), r, tones, below=BELOW)
+            puff(lay, (cx + (0.7 if j % 2 else -0.7) * r, cy - 0.9 * r), r * 0.6, tones[:3], below=BELOW)
     return f
-
-
-def fx_debris(t, seed=7):
-    """les mottes de terre projetées quand les mains sortent : elles montent puis retombent (t : le temps)"""
-    def f(cv, back, obj, front, ctx):
-        rng = np.random.RandomState(seed)
-        for i in range(9):
-            vx = rng.uniform(-1.2, 1.2) * 18
-            vy = rng.uniform(0.7, 1.15) * 46
-            x0 = ENEMY_X + rng.uniform(-20, 20)
-            x = x0 + vx * t
-            y = GROUND - 4 - vy * t + 60 * t * t
-            if y < GROUND - 1:
-                rock(front, (x, y), rng.uniform(1.0, 2.6), seed=i, tones='6789')
-    return f
-
-
-def fx_dust(level, seed=5):
-    """la poussière soulevée au pied des mains : de petites bouffées qui s'ouvrent et se défont"""
-    def f(cv, back, obj, front, ctx):
-        x = ENEMY_X
-        r = (4.5, 5.5, 6.0, 5.5, 4.5)[level]
-        hol = (0.0, 0.15, 0.4, 0.65, 0.85)[level]
-        for k, (dx, sd) in enumerate(((-30 - level, 0), (30 + level, 1), (-8, 2), (9, 3))):
-            rr = r * (1.0 if k < 2 else 0.8)
-            cloud(back if k >= 2 else front, (x + dx, GROUND - 2 - level), rr, '667', hollow=hol, seed=seed + sd)
-    return f
-
-
-def fx_smoke(level):
-    """les volutes de fumée violette qui montent de la terre refermée, s'ouvrent et se défont
-    (level -1 : la fumée qui monte derrière les mains quand elles sortent)"""
-    def f(cv, back, obj, front, ctx):
-        x = ENEMY_X
-        if level < 0:
-            cloud(back, (x - 8, GROUND - 22), 8, 'DDEF', seed=27)
-            cloud(back, (x + 9, GROUND - 30), 6.5, 'DDEF', seed=28)
-            return
-        h = level * 11
-        hol = (0.0, 0.3, 0.6, 0.85)[level]
-        cloud(back, (x - 2, GROUND - 20 - h), 11 + level, 'DDEF', hollow=hol, seed=21)
-        cloud(back, (x - 22 - 3 * level, GROUND - 10 - h * 0.6), 7 + level * 0.5, 'DDEF', hollow=hol, seed=22)
-        cloud(back, (x + 21 + 3 * level, GROUND - 12 - h * 0.7), 6.5 + level * 0.5, 'DDEF', hollow=hol, seed=23)
-    return f
-
-
-def fx_clench(cv, back, obj, front, ctx):
-    """les mains se referment : éclat vert au creux, fumée violette tout autour"""
-    x, y = ENEMY_X, GROUND - 40
-    cloud(back, (x - 2, y - 8), 14, 'DDEF', seed=24)
-    cloud(back, (x - 26, y + 14), 7, 'DDEF', seed=25)
-    cloud(back, (x + 26, y + 12), 6.5, 'DDEF', seed=26)
-    pop(front, (x, y), 7, facing=90, tones='HIJU')
-    for (dx, dy, bg) in ((-26, -14, True), (25, -18, False), (2, -30, True), (-28, 4, False), (27, 2, True)):
-        mote(front, x + dx, y + dy, bg)
 
 
 _N = dict(b=0, lean=0, head=(0, 0), arm=(0, 0))
@@ -1031,43 +1070,41 @@ SPECIALE = [
     dict(b=0, lean=3, head=(2, 4), tilt=5, tiltv=3, arm=(4, 4), tl=1.4, pl=-2, ch=-2, k=True, ms=240),
     # il se redresse, sourire et regard allumés, le chapeau saute sur sa tête, la canne levée
     dict(b=1, lean=-1, head=(-1, -1), hat=(0, -1), arm=(-1, -3), cane=5, tl=-0.6, pl=2, ch=2, flare=True, ms=100),
-    # premier coup (il plonge sur la canne), deuxième coup
-    dict(b=0, lean=1, head=(1, 1), arm=(1, 0), cane=0, tl=0.6, pl=0, ch=1, flare=True, fx=[fx_ripple(1)], ms=80),
+    # premier coup : le cercle de flammes s'allume tout autour de lui ; il relève la canne, le cercle baisse
+    dict(b=0, lean=1, head=(1, 1), arm=(1, 0), cane=0, tl=0.6, pl=0, ch=1, flare=True,
+         fx=[fx_ring(34, 1.0, 0.0, lit=True), fx_strike(0)], ms=80),
     dict(b=1, lean=-1, head=(-1, 0), hat=(0, -1), arm=(-1, -3), cane=5, tl=-0.8, pl=2, ch=1, flare=True,
-         fx=[fx_ripple(0)], ms=80),
+         fx=[fx_ring(34, 0.55, 1.3)], ms=80),
+    # deuxième coup : le cercle se rallume, plus large
     dict(b=0, lean=1, head=(1, 1), arm=(1, 0), cane=0, tl=0.8, pl=-1, ch=-1, flare=True, sk=1,
-         fx=[fx_ripple(2), fx_crack(0.12)], ms=80),
+         fx=[fx_ring(44, 1.1, 2.1, lit=True), fx_strike(1)], ms=80),
     # le troisième, plus haut : il se rejette en arrière, le crâne levé
     dict(b=1, lean=-2, head=(-1, -1), hat=(0, -2), arm=(-4, -7), cane=7, tl=-1.6, pl=2, ch=2, flare=True, sk=1,
-         fx=[fx_ripple(0), fx_crack(0.16, 1)], ms=120),
-    dict(b=0, lean=2, head=(2, 1), tilt=1, arm=(5, 1), cane=0, tl=1.8, pl=-2, ch=-2, flare=True, sk=2,
-         fx=[fx_ripple(3), fx_crack(0.45)], ms=230),
-    # la fissure court jusqu'à l'ennemi, le sol s'ouvre
-    dict(b=0, lean=1, head=(1, 0), arm=(5, 0), tl=1.8, pl=-1, ch=-1, flare=True, sk=2,
-         fx=[fx_ripple(0), fx_crack(0.8)], ms=70),
-    dict(b=0, lean=1, head=(1, 0), arm=(4, -1), tl=1.2, pl=0, ch=0, flare=True, sk=1,
-         fx=[fx_crack(1.0), fx_hole(0)], ms=70),
-    # il lève le crâne comme un chef d'orchestre : les mains jaillissent dans une gerbe de terre, s'ouvrent
-    dict(b=1, lean=0, head=(0, -1), arm=(2, -6), tl=0.6, pl=1, ch=1, sk=1, flare=True,
-         fx=[fx_crack(1.0, 1), fx_hole(1), fx_hands(0.55, 0.25), fx_debris(0.25), fx_dust(0)], ms=70),
-    dict(b=1, lean=-1, head=(0, -1), hat=(0, -1), arm=(1, -7), tl=0.0, pl=2, ch=1, sk=1, flare=True,
-         fx=[fx_crack(1.0, 2), fx_smoke(-1), fx_hole(1), fx_hands(1.0, 0.12), fx_debris(0.5), fx_dust(1)], ms=100),
-    dict(b=0, lean=0, head=(1, 0), arm=(3, -3), tl=-0.4, pl=0, ch=0, sk=1, flare=True,
-         fx=[fx_smoke(-1), fx_hole(1), fx_hands(1.0, 0.55), fx_debris(0.75), fx_dust(2)], ms=60),
-    # il serre le poing sur le crâne vers le bas : elles se referment (arrêt sur l'image)
-    dict(b=0, lean=2, head=(2, 1), tilt=2, tiltv=1, arm=(5, 1), tl=1.2, pl=-2, ch=-2, sk=2, flare=True,
-         fx=[fx_hole(1), fx_hands(1.12, 0.85), fx_clench], ms=230),
-    # et l'entraînent sous terre (il tire le crâne vers le bas)
-    dict(b=0, lean=1, head=(1, 1), tilt=1, arm=(4, 3), tl=1.4, pl=-1, ch=-2, sk=1,
-         fx=[fx_hole(2), fx_hands(0.7, 0.9), fx_dust(1), fx_smoke(0)], ms=80),
-    dict(b=0, lean=1, head=(1, 1), arm=(3, 3), tl=0.8, pl=0, ch=-1,
-         fx=[fx_hands(0.32, 0.95), fx_dust(2), fx_smoke(1)], ms=90),
+         fx=[fx_ring(44, 0.6, 3.0)], ms=120),
+    # le troisième coup (arrêt bref) : le grand cercle flambe, les feux follets sortent des flammes, l'aura s'allume
+    dict(b=0, lean=1, head=(1, 0), arm=(1, -8), cane=0, tl=1.6, pl=-2, ch=-2, flare=True, sk=1,
+         fx=[fx_aura(0, 0.0), fx_ring(54, 1.3, 4.0, lit=True), fx_strike(2), fx_wisps(8.0), fx_glow_skull], ms=160),
+    # la ronde : il danse (il se balance d'un côté, de l'autre), les feux follets tournent autour de lui
+    dict(b=1, lean=-1, head=(-1, -1), hat=(0, -1), arm=(0, -9), cane=2, tl=-1.6, pl=2, ch=2, flare=True, sk=1,
+         fx=[fx_aura(1, 1.2), fx_ring(54, 0.95, 5.1), fx_wisps(9.0), fx_glow_skull], ms=90),
+    dict(b=0, lean=1, head=(1, 0), arm=(2, -9), cane=0, tl=1.8, pl=-2, ch=-2, flare=True, sk=1,
+         fx=[fx_aura(2, 2.4), fx_ring(54, 1.0, 6.3), fx_wisps(10.0), fx_glow_skull], ms=90),
+    # MOMENT DE LANCEMENT (image 11) : le crâne au plus haut, ses orbites s'allument ; la ronde s'envole en gerbe
+    dict(b=1, lean=-1, head=(-1, -1), hat=(0, -2), arm=(0, -10), cane=0, tl=-1.2, pl=2, ch=2, flare=True, sk=2,
+         flash=10, fx=[fx_aura(3, 3.6), fx_ring(54, 1.15, 7.4, lit=True), fx_launch, fx_wisps(11.35, 0.9)], ms=210),
+    # les feux follets s'éloignent tout autour de lui et s'éteignent ; l'aura flambe puis retombe
+    dict(b=1, lean=0, head=(0, -1), hat=(0, -1), arm=(1, -8), tl=-0.4, pl=1, ch=1, flare=True, sk=1,
+         fx=[fx_aura(3, 4.8), fx_ring(54, 0.8, 8.5), fx_wisps(12.2, 1.0), fx_glow_skull], ms=90),
+    dict(b=0, lean=0, head=(0, 0), arm=(1, -5), tl=0.6, pl=0, ch=0, sk=1,
+         fx=[fx_aura(2, 6.0), fx_ring(54, 0.55, 9.6, smoke=False), fx_smoke_ring(0), fx_wisps(13.1, 1.0)], ms=90),
+    dict(b=0, lean=0, head=(0, 0), arm=(1, -2), tl=0.3, pl=0, ch=0,
+         fx=[fx_aura(1, 7.2, fade=0.45), fx_smoke_ring(1), fx_wisps(14.1, 0.55)], ms=100),
     # retour en garde, la fumée se défait
-    dict(b=0, lean=0, head=(0, 0), arm=(1, 1), tl=0.0, pl=1, ch=1, fx=[fx_dust(3), fx_smoke(2)], ms=110),
-    dict(b=0, lean=0, head=(0, 0), arm=(0, 0), tl=-0.3, pl=0, ch=0, fx=[fx_dust(4), fx_smoke(3)], ms=120),
+    dict(b=0, lean=0, head=(0, 0), arm=(1, 1), tl=0.0, pl=1, ch=1, fx=[fx_aura(0, 8.4, fade=0.8), fx_smoke_ring(2)],
+         ms=110),
+    dict(b=0, lean=0, head=(0, 0), arm=(0, 0), tl=-0.3, pl=0, ch=0, ms=120),
     dict(_N, ms=140),
 ]
-
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
@@ -1115,6 +1152,8 @@ def bbox(frames, margin=4):
 
 
 GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+# le cadrage de l'attaque, gardé tel qu'il était avant la spéciale d'équipe (le GIF de l'attaque ne change pas)
+ATK_BOX = (6 + DXL, 29 + DYT, 261 + DXL, 158 + DYT)
 
 
 def save_gif(path, images, durations):
@@ -1135,10 +1174,13 @@ def save_gif(path, images, durations):
 
 def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
-    boxes = {'pose': GAME_BOX}
-    both = anims['attaque'] + anims['speciale'] + anims['pose']
-    bb = bbox(both, 6)
-    boxes['attaque'] = boxes['speciale'] = bb
+    # la spéciale : cadrée sur LUI (centrée sur ses pieds, la même place à gauche et à droite : le sort tourne autour
+    # de lui) ; le rythme en jeu : ce cadre et celui de l'attaque réunis
+    sp = bbox(anims['speciale'], 6)
+    half = max(SOL[0] - sp[0], sp[2] - SOL[0])
+    sp = (max(0, SOL[0] - half), sp[1], min(W, SOL[0] + half), sp[3])
+    boxes = {'pose': GAME_BOX, 'attaque': ATK_BOX, 'speciale': sp}
+    bb = (min(sp[0], ATK_BOX[0]), min(sp[1], ATK_BOX[1]), max(sp[2], ATK_BOX[2]), max(sp[3], ATK_BOX[3]))
     for name in ('pose', 'attaque', 'speciale'):
         box = boxes[name]
         ims = [on_bg(img).crop(box) for img, _ in anims[name]]
@@ -1148,7 +1190,7 @@ def write_outputs(anims):
     k = 3
     blocks = []
     for name, per in (('pose', 10), ('attaque', 5), ('speciale', 4)):
-        box = GAME_BOX if name == 'pose' else bb
+        box = boxes[name]
         cells = [on_bg(img).crop(box) for img, _ in anims[name]]
         blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
     Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
@@ -1157,7 +1199,7 @@ def write_outputs(anims):
     d = ImageDraw.Draw(sheet)
     y = 6
     titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE (feu follet)',
-              'speciale': 'ATTAQUE SPECIALE (les mains du Baron)'}
+              'speciale': 'ATTAQUE SPECIALE (la ronde du Baron, sort d equipe)'}
     for name, per, cells, mss in blocks:
         cw, ch = cells[0].width * k, cells[0].height * k
         d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))

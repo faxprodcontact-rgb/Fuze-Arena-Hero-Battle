@@ -1,8 +1,14 @@
 # Mira (mages-2, vent, protectrice, épique) : la valkyrie, gardienne du ciel — animations : pose (garde fière
 # derrière le bouclier), attaque de base « Fauche du ciel » (la lance monte derrière la tête et s'abat en grand arc
-# sur l'ennemi, un croissant de vent suit le fer), attaque spéciale « Piqué de la valkyrie » (la lance sonne sur le
-# bouclier, de grandes ailes de vent se déploient dans son dos, elle s'élève, plonge en piqué lance en avant dans une
-# colonne de vent, l'air éclate sur l'ennemi, puis elle revient d'un bond à sa place).
+# sur l'ennemi, un croissant de vent suit le fer), attaque spéciale « Envol de la valkyrie », un sort
+# d'équipe (défense de toute l'équipe, soin d'elle-même, provocation : la lance sonne sur le bouclier, de grandes ailes
+# de vent se déploient dans son dos, elle s'élève ; les ailes s'enroulent en un anneau de plumes de vent tout autour
+# d'elle, des plumes se posent sur elle en armure, l'anneau s'élargit jusqu'au sol dans toutes les directions ; un
+# souffle doux la soigne pendant qu'elle redescend ; puis elle lance son défi, bouclier levé, lance pointée, lueur
+# rouge douce).
+#
+# Spéciale (sort d'équipe) : MOMENT DE LANCEMENT = IMAGE 9 (l'anneau de plumes de vent part d'elle, en cercle tout
+# autour, juste après l'arrêt sur l'anneau plein à l'image 8) ; la provocation tient à l'image 14.
 #
 # Lancer : python3 refonte-graphique/pixel/hd/anim/mira/build.py
 # Écrit dans refonte-graphique/pixel/sortie/ : anim-mira-pose.gif, anim-mira-attaque.gif, anim-mira-speciale.gif,
@@ -27,7 +33,7 @@
 #   - à la fin, chaque image peut recevoir des retouches pixel par pixel (RETOUCHES, plus bas).
 import sys, os, math
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HD = os.path.abspath(os.path.join(HERE, '..', '..'))
@@ -58,7 +64,16 @@ FXPAL = {
     'T': (255, 248, 210),   # étincelle (blanc doré) : la lance qui sonne sur le bouclier
     'U': (255, 214, 120),   # étincelle, or
     'L': (214, 226, 246),   # traînée de l'acier, pâle
+    # la lueur rouge de la provocation (translucide : voir ALPHA), du plus fort au plus pâle (les rouges de Zaroth)
+    '6': (255, 96, 84),
+    '7': (240, 60, 70),
+    '8': (230, 46, 66),
+    '9': (222, 40, 64),
 }
+# opacité des lettres translucides (les autres sont pleines)
+ALPHA = {'6': 180, '7': 125, '8': 80, '9': 40}
+# les reflets que prend le héros (« tint » d'une image : couleur, en %) : l'air de l'armure, le rouge du défi
+TINTS = {'vent': (176, 236, 240), 'rouge': (255, 70, 60)}
 WIND = 'WXYVSR'
 ALLPAL = dict(PAL)
 ALLPAL.update(FXPAL)
@@ -162,6 +177,11 @@ P['bouclier'] = BOUCLIER.copy()
 P['lance'] = LANCE.copy()
 P['poing'] = MAINS.copy()
 BLINK = dict(SRC['cligne'])
+# la tête qui crie (le défi de la spéciale) : la bouche s'ouvre d'une rangée de plus, la lèvre du bas descend
+HEAD_CRI = P['tete'].copy()
+for _x, _y, _txt in ((79, 48, '2MMMM'), (80, 49, 'NNNN')):
+    for _i, _ch in enumerate(_txt):
+        HEAD_CRI[_y, _x + _i] = _ch
 
 
 # ---------------------------------------------------------------- outils de pose (au pixel, jamais lissé)
@@ -275,11 +295,11 @@ def to_rgba(canvas, pal=ALLPAL):
         m = canvas == ch
         if m.any():
             img[m, :3] = rgb
-            img[m, 3] = 255
+            img[m, 3] = ALPHA.get(ch, 255)
     return img
 
 
-def compose(hero, fx_back=None, fx_front=None, flash=None):
+def compose(hero, fx_back=None, fx_front=None, flash=None, tint=None):
     """le héros (avec son contour) entre les effets de fond et ceux de devant. Renvoie une image RGBA."""
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
@@ -290,12 +310,25 @@ def compose(hero, fx_back=None, fx_front=None, flash=None):
         # éclair de l'impact : le héros pâlit d'un coup (les couleurs vont vers le blanc, le contour reste)
         m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
         h[m, :3] = (h[m, :3].astype(int) + (255 - h[m, :3].astype(int)) * flash // 100).astype(np.uint8)
+    if tint:
+        # un reflet coloré sur le héros (l'air de l'armure, le rouge du défi) ; le contour reste noir
+        col, pct = TINTS[tint[0]], tint[1]
+        m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
+        h[m, :3] = (h[m, :3].astype(int) + (np.array(col) - h[m, :3].astype(int)) * pct // 100).astype(np.uint8)
     layers.append(h)
     if fx_front is not None:
         layers.append(to_rgba(fx_front))
     for L in layers:
-        m = L[:, :, 3] > 0
+        m = L[:, :, 3] == 255
         out[m] = L[m]
+        t = (L[:, :, 3] > 0) & ~m                      # les pixels translucides (lueurs) : mélangés à ce qui est dessous
+        if t.any():
+            a = L[t, 3:4].astype(float) / 255
+            b = out[t, 3:4].astype(float) / 255
+            ao = a + b * (1 - a)
+            rgb = (L[t, :3] * a + out[t, :3] * b * (1 - a)) / np.maximum(ao, 1e-6)
+            out[t, :3] = np.round(rgb).astype(np.uint8)
+            out[t, 3] = np.round(ao[:, 0] * 255).astype(np.uint8)
     return out
 
 
@@ -647,7 +680,7 @@ def rig_frame(f):
     blit(cv, wf, cx + hx, cy + hy)
     if hy < 0 or hx:
         blit(cv, P['tete'], cx, cy, swap)
-    blit(cv, P['tete'], cx + hx, cy + hy, swap)
+    blit(cv, HEAD_CRI if f.get('cri') else P['tete'], cx + hx, cy + hy, swap)
     blit(cv, wn, cx + hx, cy + hy)
     ctx.head = g2c((72.0, 36.0), (cx + hx, cy + hy))
     # 4) le bouclier (contre le flanc lointain)
@@ -691,9 +724,9 @@ def rig_frame(f):
 
 
 # ---------------------------------------------------------------- les effets : formes courbes (outils d'Eldra, Myrr, Bérold)
-def put(cv, x, y, ch, keep=None):
+def put(cv, x, y, ch, keep=None, floor=None):
     x, y = int(math.floor(x)), int(math.floor(y))
-    if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
+    if 0 <= x < W and 0 <= y < H and y <= (GROUND if floor is None else floor) and (keep is None or cv[y, x] in keep):
         cv[y, x] = ch
 
 
@@ -706,7 +739,7 @@ def bezier(p0, p1, p2, p3, n):
     return out
 
 
-def stroke(cv, pts, widths, tones, keep=None):
+def stroke(cv, pts, widths, tones, keep=None, floor=None):
     """peint un ruban le long de points, avec une épaisseur par point (coeur = premier ton -> bord = dernier)"""
     best = {}
     for (px, py), wv in zip(pts, widths):
@@ -722,7 +755,7 @@ def stroke(cv, pts, widths, tones, keep=None):
                         best[(x, y)] = k
     m = len(tones)
     for (x, y), k in best.items():
-        put(cv, x, y, tones[min(m - 1, int(k * m))], keep)
+        put(cv, x, y, tones[min(m - 1, int(k * m))], keep, floor)
 
 
 def ribbon(cv, c, rx, ry, a0, a1, wmax, head=0.7, tones='WYVS', tilt=0.0):
@@ -989,7 +1022,24 @@ ATTAQUE = [
     dict(s=1, hd=(0, 0), w=(0, 0), tr=0, cp=-1, ms=110),
     dict(ms=130),
 ]
-# ---------------------------------------------------------------- 3) l'attaque spéciale : « Piqué de la valkyrie »
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Envol de la valkyrie » (sort d'équipe)
+# Ce que fait le sort en combat : la défense de toute l'équipe monte (+30 % pendant 5 s), elle se soigne (15 % de sa vie)
+# et elle provoque (les ennemis la visent pendant 3 s). Rien ne frappe l'ennemi.
+# Comme avant, la lance sonne sur le bord du bouclier, de grandes ailes de vent naissent dans son dos, elle bat des
+# ailes et s'élève. Mais plus de piqué : au plus haut, les ailes se défont et s'enroulent tout autour d'elle en un
+# anneau de plumes de vent (une ellipse couchée, à plat : sa moitié du fond passe derrière elle, sa moitié de devant
+# passe devant ses jambes). Arrêt sur l'anneau plein (le temps fort) : des plumes de vent se posent sur elle comme une
+# armure (épaule, poitrine, hanche, cape) et un liseré d'air l'entoure. Puis l'anneau s'élargit dans toutes les
+# directions en descendant jusqu'au sol (vers toute l'équipe, où qu'elle soit), se défait en arcs et s'éteint en
+# quelques plumes. Pendant qu'elle redescend, un souffle doux monte en spirale autour d'elle (des grains de lumière
+# montent, des plumes d'air retombent) : sa silhouette s'éclaire un instant (le soin). Elle se pose, puis lance son
+# défi : bouclier levé, lance pointée vers l'ennemi, elle crie ; une lueur rouge douce pulse autour d'elle (elle gonfle
+# puis s'éteint, sans aucun trait ni anneau ; la marque au-dessus de la tête est ajoutée par l'effet commun
+# « provocation », pas ici). Elle reprend sa garde.
+# MOMENT DE LANCEMENT (là où le jeu joue la « défense » reçue par chaque allié) : IMAGE 9 (numérotée depuis 0, comme sur
+# la planche), juste après l'arrêt sur l'anneau plein (image 8), quand l'anneau part d'elle en s'élargissant ; la
+# provocation tient à l'image 14.
+#
 # Les grandes ailes de vent : construites comme les ailes de Myrr (bord d'attaque lisse, couvertures en écailles
 # arrondies, longues rémiges au bout taillé en biais), mais faites d'AIR : blanc, cyan pâle et jade, sans contour
 # noir — leur bord s'éclaire d'un liseré jade (elles se détachent du ciel). L'aile lointaine : la même, plus petite,
@@ -1004,10 +1054,8 @@ WING_STATES = {
     'nait': dict(R=(52, 56), Wr=(38, 34), Tp=(26, 20), n=5, a0=262, a1=205, l0=21, l1=21, cw=13, fw=11.0),
     # grande ouverte, levée (la valkyrie)
     'grande': dict(R=(52, 55), Wr=(30, 27), Tp=(8, 6), n=7, a0=256, a1=172, l0=30, l1=34, cw=17, fw=12.0),
-    # le battement : elles s'abattent d'un coup (elle décolle)
+    # le battement : elles s'abattent d'un coup (elle décolle ; puis elles s'enroulent autour d'elle)
     'battue': dict(R=(52, 56), Wr=(28, 50), Tp=(4, 64), n=7, a0=272, a1=224, l0=25, l1=25, cw=15, fw=11.0),
-    # couchées en arrière pour le piqué
-    'repli': dict(R=(52, 56), Wr=(30, 44), Tp=(-2, 40), n=6, a0=224, a1=188, l0=24, l1=30, cw=13, fw=10.0),
 }
 
 
@@ -1133,7 +1181,7 @@ def draw_wing(cv, st, T, off):
 
 
 def rim(lay, T):
-    """le liseré jade autour d'une aile d'air (à la place du contour noir)"""
+    """le liseré jade autour d'une forme d'air (à la place du contour noir)"""
     m = lay != '.'
     inner = np.zeros_like(m)
     inner[1:-1, 1:-1] = m[1:-1, 1:-1] & m[:-2, 1:-1] & m[2:, 1:-1] & m[1:-1, :-2] & m[1:-1, 2:]
@@ -1192,32 +1240,9 @@ def fx_wings(state, lift=0, fade=0, far=True):
     return f
 
 
-GHOST = {}
-for _ch in PAL:
-    _v = sum(PAL[_ch]) / 3
-    GHOST[_ch] = 'X' if _v > 150 else 'Y' if _v > 70 else 'V'
-
-
-def fx_ghosts(steps):
-    """des images rémanentes d'elle le long du piqué (en arrière sur sa trajectoire) : steps = [(dx, dy, mode)],
-    mode 'plein' : sa silhouette en tons d'air ; 'pale' : presque effacée (blanc bleuté, bord cyan)"""
-    def f(cv, back, front, ctx):
-        m = cv != '.'
-        ys, xs = np.nonzero(m)
-        inner = np.zeros_like(m)
-        inner[1:-1, 1:-1] = m[1:-1, 1:-1] & m[:-2, 1:-1] & m[2:, 1:-1] & m[1:-1, :-2] & m[1:-1, 2:]
-        for (dx, dy, full) in steps:
-            for y, x in zip(ys, xs):
-                X, Y = x + dx, y + dy
-                if 0 <= X < W and 0 <= Y < H:
-                    g = GHOST.get(cv[y, x], 'Y')
-                    back[Y, X] = g if full == 'plein' else ('Y' if not inner[y, x] else 'X')
-    return f
-
-
 def fx_clang(k):
-    """la lance sonne sur le bord du bouclier : k = 0 l'onde (deux anneaux d'air clair autour du point de choc,
-    étincelles d'or), 1 les anneaux s'ouvrent et pâlissent"""
+    """la lance sonne sur le bord du bouclier : k = 0 l'onde (deux arcs d'air clair autour du point de choc,
+    étincelles d'or), 1 les arcs s'ouvrent et pâlissent"""
     def f(cv, back, front, ctx):
         C = ctx.rim + np.array([3.0, 1.0])
         if k == 0:
@@ -1257,9 +1282,15 @@ def fx_gather(level):
 
 def fx_takeoff(k):
     """là où elle a décollé (posé dans le monde) : une couronne d'air couchée au sol qui s'ouvre, de la poussière
-    soufflée de chaque côté ; k = 0 le souffle, 1 il s'étale, 2 il se défait"""
+    soufflée de chaque côté ; k = 0 le souffle, 1 il s'étale, 2 il se défait (3 : elle se pose, une petite couronne)"""
     def f(cv, back, front, ctx):
         cx = SOL[0] + 2
+        if k == 3:
+            ribbon(back, (cx, GROUND - 2), 22, 3, 175, 5, 2.4, head=0.5, tones='XYVS')
+            ribbon(front, (cx, GROUND - 1), 25, 3, 185, 355, 2.0, head=0.5, tones='XYVS')
+            for side in (-1, 1):
+                dust(back, cx + side * 24, 0, seed=17 + side, big=0.8)
+            return
         rx = [24, 32, 38][k]
         ribbon(back, (cx, GROUND - 3), rx, 4 + k, 175, 5, [4.0, 3.0, 2.0][k], head=0.5, tones='WXYVS')
         ribbon(front, (cx, GROUND - 1), rx + 3, 3 + k, 185, 355, [3.2, 2.4, 1.6][k], head=0.5, tones='XYVS')
@@ -1270,101 +1301,8 @@ def fx_takeoff(k):
     return f
 
 
-def helix(cv, pts, s0, s1, amp, turns, phase, wmax, tones):
-    """un ruban qui s'enroule autour de la trajectoire pts (de s0 à s1, fractions) ; épais près du front (s1)"""
-    n = len(pts) - 1
-    i0, i1 = int(s0 * n), int(s1 * n)
-    if i1 - i0 < 3:
-        return
-    seg, widths = [], []
-    for i in range(i0, i1 + 1):
-        p = np.array(pts[i])
-        q = np.array(pts[min(i + 1, n)]) - np.array(pts[max(i - 1, 0)])
-        q = q / (np.linalg.norm(q) or 1)
-        nn = np.array([q[1], -q[0]])
-        s_ = i / n
-        off = amp * math.sin(2 * math.pi * turns * s_ + phase)
-        seg.append(tuple(p + off * nn))
-        loc = (i - i0) / max(i1 - i0, 1)
-        widths.append(wmax * (loc ** 0.8) * (1 if loc < 0.85 else (1 - loc) / 0.15 * 0.7 + 0.3) + 1.5)
-    stroke(cv, seg, widths, tones)
-
-
-DIVE = [None]
-
-
-def fx_dive(k):
-    """la colonne de vent du piqué, du haut de son envol jusqu'à elle : un sillage pâle en fuseau et deux rubans qui
-    s'enroulent autour (k = 0 : elle plonge ; 1 : à l'impact, le sillage se défait par le haut)"""
-    def f(cv, back, front, ctx):
-        me = np.array(ctx.chest_c, float)
-        if k == 0:
-            DIVE[0] = me
-        end = me if k == 0 else DIVE[0]
-        top = end - np.array([70.0, 66.0])
-        pts = bezier(top, top + (end - top) * 0.3 + np.array([-6, 4]), top + (end - top) * 0.7, end, 160)
-        ws = [2 + 16 * (i / 160) ** 1.2 for i in range(161)]
-        if k == 0:
-            stroke(back, pts, ws, 'XXYV')
-            helix(back, pts, 0.05, 1.0, 14, 1.4, 0.0, 4.4, 'WXYVS')
-            helix(back, pts, 0.15, 0.95, 17, 1.4, math.pi, 3.8, 'WXYVS')
-        else:
-            helix(back, pts, 0.45, 1.0, 13, 1.6, 0.6, 2.4, 'XYVS')
-            helix(back, pts, 0.6, 0.95, 15, 1.6, math.pi + 0.6, 2.0, 'YVS')
-    return f
-
-
-def fx_storm(k):
-    """l'air éclate sur l'ennemi (posé dans le monde, au bout du fer) : k = 0 le choc (gros éclat blanc, couronne
-    d'air couchée au sol, virgules d'air qui partent en courbes, plumes d'air), 1 il s'ouvre, 2 il se défait en
-    volutes et en plumes qui retombent, 3 il ne reste que quelques plumes"""
-    def f(cv, back, front, ctx):
-        if k == 0:
-            HIT[0] = np.array(ctx.tip, float)
-        T = HIT[0]
-        X = T[0] + 2
-        if k == 0:
-            pop(front, (T[0] + 2, T[1]), 11.0, facing=20, tones='WWWXYV')
-            ribbon(back, (X, GROUND - 4), 30, 6, 178, 2, 5.0, head=0.5, tones='WXYVS')
-            ribbon(front, (X, GROUND - 2), 33, 5, 182, 358, 4.0, head=0.5, tones='WXYVS')
-            for (p1, p2, p3, up) in (((14, -22), (24, -28), (30, -24), True), ((16, 10), (28, 14), (34, 8), False),
-                                     ((-6, -26), (-10, -36), (-4, -42), True), ((4, -30), (14, -42), (22, -44), True)):
-                gust(front, (T[0] + p1[0] * 0.3, T[1] + p1[1] * 0.3), (T[0] + p1[0], T[1] + p1[1]),
-                     (T[0] + p2[0], T[1] + p2[1]), (T[0] + p3[0], T[1] + p3[1]), 4.6, 'WXYVS', curl_r=3.6, up=up)
-            dust(back, X - 30, 0, seed=31, big=1.2)
-            dust(back, X + 30, 0, seed=32, big=1.2)
-            for (dx, dy, kk) in ((24, -36, 0), (-14, -30, 2), (36, -10, 1), (8, -46, 3)):
-                feather(front, T[0] + dx, T[1] + dy, kk)
-        elif k == 1:
-            puff(back, (T[0] + 4, T[1] - 2), 12.0, 'XXYV', hollow=0.45)
-            pop(back, (T[0] + 6, T[1] - 2), 6.0, facing=40, tones='XYV')
-            ribbon(back, (X, GROUND - 5), 40, 8, 176, 4, 3.6, head=0.5, tones='XYVS')
-            ribbon(front, (X, GROUND - 2), 43, 6, 184, 356, 3.0, head=0.5, tones='XYVS')
-            for (c, r0, a0, cw_) in (((22, -34), 4.4, 200, False), ((-16, -40), 4.0, 340, True),
-                                      ((38, 6), 3.8, 160, True), ((6, -52), 3.6, 250, False)):
-                curl(front, (T[0] + c[0], T[1] + c[1]), r0, a0, turn=300, w=2.2, tones='XYVS', cw=cw_)
-            dust(back, X - 38, 1, seed=31, big=1.2)
-            dust(back, X + 38, 1, seed=32, big=1.2)
-            for (dx, dy, kk) in ((30, -42, 0), (-20, -36, 2), (44, -16, 1), (10, -56, 3), (-4, -22, 1)):
-                feather(front, T[0] + dx, T[1] + dy, kk)
-        elif k == 2:
-            puff(back, (T[0] + 6, T[1] - 6), 9.0, 'XY', hollow=0.75)
-            ribbon(back, (X, GROUND - 6), 46, 9, 174, 6, 2.0, head=0.5, tones='YVS')
-            for (c, r0, a0, cw_) in (((26, -40), 3.4, 220, False), ((-20, -46), 3.0, 0, True),
-                                      ((42, 2), 2.8, 180, True)):
-                curl(back, (T[0] + c[0], T[1] + c[1]), r0, a0, turn=280, w=1.6, tones='YVS', cw=cw_)
-            dust(back, X - 42, 2, seed=31, big=1.1)
-            dust(back, X + 42, 2, seed=32, big=1.1)
-            for (dx, dy, kk) in ((32, -30, 2), (-22, -24, 0), (46, -4, 3), (12, -42, 1), (-6, -10, 0)):
-                feather(front, T[0] + dx, T[1] + dy, kk)
-        else:
-            for (dx, dy, kk) in ((33, -18, 1), (-23, -12, 2), (47, 6, 0), (13, -28, 3)):
-                feather(front, T[0] + dx, min(T[1] + dy, GROUND - 6), kk)
-    return f
-
-
-def fx_fall_feathers(k, where='moi'):
-    """des plumes d'air qui retombent autour d'elle quand les ailes se défont (k = 0, 1, 2 : elles descendent)"""
+def fx_fall_feathers(k):
+    """des plumes d'air qui retombent autour d'elle (k = 0, 1, 2 : elles descendent)"""
     def f(cv, back, front, ctx):
         cx, cy = ctx.chest_c
         for j, (dx, dy) in enumerate(((-30, -40), (26, -50), (38, -24))):
@@ -1374,45 +1312,313 @@ def fx_fall_feathers(k, where='moi'):
     return f
 
 
+# ---------------------------------------------------------------- l'anneau de plumes de vent, tout autour d'elle
+# Une ellipse couchée (vue de biais, comme posée à plat) : un ruban d'air et, dessus, des plumes de vent couchées dans
+# le sens où l'anneau tourne. La moitié du fond (au-dessus du centre) est derrière elle, d'un cran plus sombre ; la
+# moitié de devant passe devant ses jambes, plus claire et plus fine (on la lit, on la voit encore à travers).
+RING = {}                                   # le centre de l'anneau à l'image du temps fort (il part de là)
+
+
+def feather_ring(back, front, c, rx, ry, phase, n, L, fw, rw, part=1.0, broken=0.0, outline=True):
+    """c : centre (toile) ; rx, ry : demi-axes ; phase : rotation (degrés) ; n plumes de longueur L, largeur fw ;
+    rw : épaisseur du ruban ; part (0..1) : la part de l'anneau déjà formée (il s'enroule depuis le dos) ;
+    broken (0..1) : il se défait en arcs"""
+    cx, cy = c
+    for half, tgt, Tn, tones, wmul in ((0, back, WING_FAR, 'XYVS', 1.0), (1, front, WING_NEAR, 'WXYV', 0.7)):
+        lay = empty()
+        # le ruban, par morceaux (coupé là où l'anneau n'est pas encore formé, ou se défait)
+        N = int(2 * math.pi * rx * 1.4)
+        run = []
+        for i in range(N + 1):
+            th = math.pi * i / N + half * math.pi           # 0..180° : le fond ; 180..360° : devant
+            # l'anneau s'enroule depuis son dos (th = 90°) dans les deux sens à la fois
+            dth = abs(((math.degrees(th) - 90 + 180) % 360) - 180) / 180.0
+            ok = dth <= part and (math.sin(2 * th + 0.4) + 0.5 * math.sin(5 * th + 1.3)) < 1.5 - 2.2 * broken
+            if ok:
+                run.append((cx + rx * math.cos(th), cy - ry * math.sin(th)))
+            if (not ok or i == N) and len(run) > 2:
+                m_ = len(run)
+                ws = [rw * wmul * min(1.0, (q + 1) / 6, (m_ - q) / 6) + 0.5 for q in range(m_)]
+                stroke(lay, run, ws, tones, floor=H - 1)
+                run = []
+            elif not ok:
+                run = []
+        # les plumes, couchées le long de l'anneau (leur base en avant, leur bout en arrière : il tourne)
+        for i in range(n):
+            th = math.radians(phase + i * 360.0 / n)
+            if (math.sin(th) >= 0) != (half == 0):
+                continue
+            dth = abs(((math.degrees(th) - 90 + 180) % 360) - 180) / 180.0
+            if dth > part or (math.sin(2 * th + 0.4) + 0.5 * math.sin(5 * th + 1.3)) >= 1.5 - 2.2 * broken:
+                continue
+            B = np.array([cx + rx * math.cos(th), cy - ry * math.sin(th) - 1.0])
+            ang = math.degrees(math.atan2(ry * math.cos(th), -rx * math.sin(th)))   # la tangente (sens de rotation)
+            ang = ang + 180 + (14 if half == 0 else -14)                            # le bout en arrière, un peu levé
+            draw_feather_blade(lay, B, ang, L * (1.0 if half == 0 else 0.9), fw * (1.0 if half == 0 else 0.8), Tn)
+        if outline:
+            rim(lay, Tn)
+        m = lay != '.'
+        tgt[m] = lay[m]
+
+
+def ring_center(ctx):
+    """le centre de l'anneau autour d'elle : à hauteur de ses hanches (il suit son envol)"""
+    return (ctx.chest_c[0] - 4, ctx.chest_c[1] + 14)
+
+
+def fx_ring_form(part):
+    """les ailes s'enroulent : l'anneau se forme depuis son dos (part = la part de l'anneau déjà formée)"""
+    def f(cv, back, front, ctx):
+        c = ring_center(ctx)
+        feather_ring(back, front, c, 54, 12, 70, 14, 16, 7.0, 4.4, part=part)
+        # au bout des deux bras de l'anneau qui avancent : une volute (l'air s'enroule)
+        for sgn in (-1, 1):
+            th = math.radians(90 + sgn * 180 * part)
+            p = (c[0] + 54 * math.cos(th), c[1] - 12 * math.sin(th))
+            curl(front if math.sin(th) < 0 else back, p, 3.6, 90 - sgn * 90, turn=300, w=2.0, tones='WXYV',
+                 cw=sgn > 0)
+    return f
+
+
+def fx_ring_full(cv, back, front, ctx):
+    """l'anneau plein, au temps fort (deux plumes de plus, bien serré autour d'elle)"""
+    c = ring_center(ctx)
+    RING['c'] = c
+    feather_ring(back, front, c, 56, 13, 95, 16, 18, 7.6, 5.2)
+
+
+# l'anneau part d'elle : il s'élargit dans toutes les directions et descend jusqu'au sol (où se tient l'équipe) ;
+# pour chaque image : (descente 0..1, demi-largeur, demi-profondeur, plumes, longueur, largeur, ruban, il se défait)
+# (la toile s'arrête 14 pixels sous ses pieds : l'anneau posé au sol garde son centre 5 pixels au-dessus du sol)
+RING_OUT = [(0.45, 74, 14, 18, 15, 6.6, 4.4, 0.0), (0.85, 92, 16, 18, 12, 5.0, 3.0, 0.35),
+            (1.0, 104, 18, 14, 9, 4.0, 2.0, 0.75)]
+
+
+def fx_ring_out(k):
+    """k = 0..2 : l'anneau s'élargit en descendant jusqu'au sol, se défait en arcs ; k = 3 : il reste des plumes"""
+    def f(cv, back, front, ctx):
+        c0 = RING['c']
+        c1 = (SOL[0] + 2, GROUND - 5)
+        if k == 3:
+            rng = np.random.RandomState(41)
+            for j in range(9):
+                a = rng.uniform(0, 2 * math.pi)
+                x, y = c1[0] + 110 * math.cos(a), c1[1] - 19 * math.sin(a) - rng.uniform(2, 8)
+                if j % 2:
+                    feather(front if math.sin(a) < 0 else back, x, y, j)
+                else:
+                    put(back, x, y, 'X', floor=H - 1)
+                    put(back, x + 1, y, 'Y', floor=H - 1)
+            return
+        dn, rx, ry, n, L, fw, rw, br = RING_OUT[k]
+        c = (c0[0] + (c1[0] - c0[0]) * dn, c0[1] + (c1[1] - c0[1]) * dn)
+        feather_ring(back, front, c, rx, ry, 120 + 25 * k, n, L, fw, rw, broken=br, outline=k < 2)
+        # des plumes arrachées, projetées vers l'extérieur, tout autour
+        rng = np.random.RandomState(50 + k)
+        for j in range(6):
+            th = rng.uniform(0, 2 * math.pi)
+            r = 1.08 + rng.uniform(0.0, 0.1)
+            x, y = c[0] + rx * r * math.cos(th), c[1] - ry * r * math.sin(th) - rng.uniform(2, 7)
+            feather(front if math.sin(th) < 0 else back, x, y, j + k)
+    return f
+
+
+# ---------------------------------------------------------------- l'armure de plumes de vent (sur elle)
+def dilate(m, r=1):
+    """grossit une forme de r pixels (voisins en croix puis en carré, à tour de rôle : un contour bien rond)"""
+    out = m.copy()
+    for i in range(r):
+        a = out.copy()
+        a[1:] |= out[:-1]
+        a[:-1] |= out[1:]
+        a[:, 1:] |= out[:, :-1]
+        a[:, :-1] |= out[:, 1:]
+        if i % 2:
+            a[1:, 1:] |= out[:-1, :-1]
+            a[1:, :-1] |= out[:-1, 1:]
+            a[:-1, 1:] |= out[1:, :-1]
+            a[:-1, :-1] |= out[1:, 1:]
+        out = a
+    return out
+
+
+# Les plaques : des plumes de vent courtes et larges, posées sur elle comme des écailles d'armure (bout clair vers la
+# lumière, en haut à droite ; ombre jade en bas à gauche ; un tuyau jade sombre). 'vif' : à l'instant où elles se
+# posent, elles brillent (d'un cran plus claires).
+PLATE = ['.....SS',
+         '...SXWS',
+         '..SXWXS',
+         '.SYXXYS',
+         'SYXXYVS',
+         'SYXYVS.',
+         'SVYVS..',
+         'RSSS...',
+         'R......']
+PLATE_VIF = {'Y': 'X', 'X': 'W', 'V': 'Y'}
+PLATE_PALE = {'W': 'X', 'X': 'Y', 'Y': 'V', 'V': 'S', 'S': 'R'}
+# où elles se posent (grille du dessin) : l'épaulière, le haut du bras, la poitrine (à gauche du bouclier), la hanche,
+# le pan de cape, la cuisse
+PLATES = [(50, 47), (40, 64), (70, 58), (58, 82), (36, 92), (66, 96)]
+GLINT = ['.X.', 'XWX', '.X.']
+
+
+def fx_armor(k):
+    """k = 0 : les plumes se posent (vives) et le liseré d'air l'entoure ; 1, 2 : l'armure tient (un reflet glisse
+    le long du liseré, de haut en bas) ; 3 : elle pâlit ; 4 : il en reste quelques éclats"""
+    def f(cv, back, front, ctx):
+        m = cv != '.'
+        ys, xs = np.nonzero(m)
+        if not len(ys):
+            return
+        if k <= 3:
+            mc = np.array([xs.mean(), ys.mean()])
+            shell = dilate(m, 2) & ~dilate(m, 1)
+            sweep = ys.min() + [0, 30, 62, 999][k]
+            for y, x in zip(*np.nonzero(shell)):
+                d = np.array([x - mc[0], y - mc[1]], float)
+                q = (d / (np.linalg.norm(d) + 1e-6)) @ LN
+                ch = 'X' if q > 0.55 else 'Y' if q > 0.1 else 'V' if q > -0.45 else 'S'
+                if k == 3:
+                    ch = PLATE_PALE.get(ch, ch)
+                elif sweep <= y < sweep + 9:
+                    ch = 'W'
+                put(back, x, y, ch)
+        bx, by = ctx.body.follow(60)
+        for j, (gx, gy) in enumerate(PLATES):
+            p = g2c((gx, gy), ctx.body.follow(gy))
+            x0, y0 = int(p[0]) - 3, int(p[1]) - 4
+            if k == 4:
+                if j % 2 == 0:
+                    sprite(front, GLINT, x0 + 1, y0 + 1)
+                continue
+            sw = PLATE_VIF if k == 0 else PLATE_PALE if k == 3 else {}
+            rows = [''.join(sw.get(ch, ch) for ch in r) for r in PLATE]
+            sprite(front, rows, x0, y0)
+            if k in (1, 2) and j % 3 == k - 1:                  # un éclat qui court d'une plume à l'autre
+                sprite(front, GLINT, x0 + 3, y0 - 1)
+    return f
+
+
+# ---------------------------------------------------------------- le soin : un souffle doux qui monte autour d'elle
+SPARK = {1: ['W'], 2: ['.X.', 'XWX', '.X.'], 3: ['..X..', '.XWX.', 'XWWWX', '.XWX.', '..X..']}
+
+
+def fx_heal(k):
+    """k = 0 : le souffle naît à ses pieds et monte en spirale (deux rubans d'air clair, ouverts) ; 1 : il l'enveloppe
+    jusqu'aux épaules, des grains de lumière montent, des plumes d'air retombent ; 2 : il s'efface par le haut"""
+    def f(cv, back, front, ctx):
+        cx, cy = ctx.chest_c
+        foot = cy + 50
+        levels = [((foot - 6, 30, 'WXYV', 3.0), (foot - 26, 26, 'XYV', 2.2)),
+                  ((foot - 24, 30, 'WXYV', 2.8), (foot - 50, 26, 'WXYV', 2.6), (foot - 76, 20, 'XYV', 2.0)),
+                  ((foot - 64, 24, 'XYV', 1.6), (foot - 92, 16, 'YV', 1.2))][k]
+        for j, (yy, rx, tones, w) in enumerate(levels):
+            ribbon(back, (cx - 2, yy), rx, 6, 150 + 20 * j, 20 + 20 * j, w, head=0.6, tones=tones)
+            ribbon(front, (cx - 2, yy + 1), rx + 1, 6, 200 + 15 * j, 330 + 10 * j, w * 0.8, head=0.5, tones=tones)
+        rng = np.random.RandomState(70 + k)
+        for j in range([4, 8, 5][k]):
+            x = cx + rng.uniform(-34, 34)
+            y = foot - rng.uniform(10, 96) - 10 * k
+            if not (0 <= int(y) < H and 0 <= int(x) < W) or cv[int(y), int(x)] != '.':
+                continue
+            sz = int(rng.choice([1, 2, 2, 3])) if k == 1 else int(rng.choice([1, 2]))
+            rows = SPARK[sz]
+            sprite(front, rows, int(x) - len(rows[0]) // 2, int(y) - len(rows) // 2)
+        if k >= 1:
+            for j, (dx, dy) in enumerate(((-34, -60), (30, -72), (40, -30), (-26, -18))[:3 if k == 1 else 4]):
+                feather(back if j % 2 else front, cx + dx, cy + dy + 10 * k, j + k)
+    return f
+
+
+# ---------------------------------------------------------------- la provocation : une lueur rouge douce, rien d'autre
+# Un halo rouge, doux et translucide, qui épouse sa silhouette sans trait (un dégradé qui s'efface vers l'extérieur,
+# un peu plus large vers le haut, comme une chaleur) ; il gonfle puis s'éteint (serré, large, pâle). Aucune ligne,
+# aucun anneau, aucune marque (la marque au-dessus de la tête vient de l'effet commun « provocation »).
+LUEUR = {0: (3.0, 200, 1), 1: (4.5, 175, 2), 2: (6.0, 85, 3)}     # (flou, opacité au plus fort, montée)
+GLOW_TONES = '6789'
+
+
+def fx_provoke(k):
+    def f(cv, back, front, ctx):
+        sig, amax, rise = LUEUR[k]
+        m = cv != '.'
+        src = np.roll(m, -rise, 0)
+        B = np.asarray(Image.fromarray((src * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig)),
+                       float) / 255
+        a = np.clip(B * 2.4, 0, 1) * amax
+        a = np.where(np.arange(H)[:, None] <= GROUND + 1, a, 0)      # posé au sol : rien sous ses pieds
+        for c in GLOW_TONES:
+            sel = (a >= ALPHA[c] * 0.85) & (back == '.')
+            back[sel] = c
+    return f
+
+
+# ---------------------------------------------------------------- les poses du défi
+# bouclier levé (devant la poitrine), lance pointée vers l'ennemi, un peu vers le haut, bras tendu
+DEFI = dict(s=1, lean=1, arm=dict(grip=(80.5, 58.5), bend=1), ang=8.0, couch=True, sh=(2, -6), hd=(1, 0), w=(-1, 0),
+            tr=-1, cp=-1, cri=1)
+
+
+def defi(**kw):
+    d = dict(DEFI)
+    d.update(kw)
+    return d
+
+
+AIR = 44                                    # la hauteur de son envol (pixels)
+
 SPECIALE = [
     # 0 : en garde
-    dict(ms=100),
+    dict(ms=90),
     # 1 : elle lève la lance avec le bras
-    dict(s=1, ad=(0, -7), hd=(0, 1), w=(1, 0), tr=1, cp=1, ms=100),
+    dict(s=1, ad=(0, -7), hd=(0, 1), w=(1, 0), tr=1, cp=1, ms=90),
     # 2 : la lance sonne sur le bord du bouclier (tenu) : l'umbo s'éclaire, l'onde part
-    dict(s=1, ad=(0, 1), hd=(0, 0), w=(-1, -1), tr=0, cp=0, glow=2, fx=[fx_clang(0)], ms=160),
+    dict(s=1, ad=(0, 1), hd=(0, 0), w=(-1, -1), tr=0, cp=0, glow=2, fx=[fx_clang(0)], ms=150),
     # 3 : le vent se lève, les ailes de vent naissent dans son dos ; la cape se soulève
     dict(s=1, b=1, hd=(0, -1), w=(1, 1), tr=-1, cp=-1, cl=2, glow=1, pre=[fx_wings('nait')],
-         fx=[fx_clang(1), fx_gather(0)], ms=110),
+         fx=[fx_clang(1), fx_gather(0)], ms=100),
     # 4 : les ailes s'ouvrent en grand, elle se ramasse (tenu)
     dict(s=3, b=1, lean=-1, hd=(0, 1), w=(1, 0), tr=1, cp=1, cl=3, pre=[fx_wings('grande')],
-         fx=[fx_gather(1)], ms=200),
+         fx=[fx_gather(1)], ms=150),
     # 5 : elle décolle : les ailes s'abattent, l'air chasse la poussière
-    dict(lift=30, s=-2, hd=(0, 1), w=(1, 1), tr=2, cp=1, ad=(0, -2), pre=[fx_wings('battue')],
+    dict(lift=28, s=-2, hd=(0, 1), w=(1, 1), tr=2, cp=1, ad=(0, -2), pre=[fx_wings('battue')],
          wfx=[fx_takeoff(0)], ms=70),
-    # 6 : au plus haut (tenu) : ailes levées, elle retourne la lance, fer vers l'ennemi
-    dict(lift=58, x=-6, s=1, lean=-1, hd=(0, 0), w=(-1, 0), tr=1, cp=0, arm=dict(grip=(60.5, 62.5), bend=1),
-         ang=-34.0, couch=True, pre=[fx_wings('grande')], wfx=[fx_takeoff(1)], ms=190),
-    # 7 : LE PIQUÉ : elle plonge dans une colonne de vent (images rémanentes), ailes couchées en arrière
-    dict(lift=34, x=18, s=3, lean=3, hd=(1, 0), w=(-1, -1), tr=-2, cp=-2, arm=dict(grip=(74.5, 65.5), bend=1),
-         ang=-32.0, couch=True, pre=[fx_wings('repli', far=False)], fx=[fx_ghosts([(-34, -32, 'pale'), (-17, -16, 'plein')])],
-         wfx=[fx_dive(0), fx_takeoff(2)], ms=60),
-    # 8 : L'IMPACT (arrêt sur l'image, éclair) : le fer dans l'ennemi, l'air éclate
-    dict(lift=14, x=38, s=3, lean=3, hd=(1, 0), w=(-1, -1), tr=-2, cp=-2, arm=dict(grip=(76.5, 66.5), bend=1),
-         ang=-28.0, couch=True, flash=35, pre=[fx_wings('repli', far=False)], wfx=[fx_dive(1), fx_storm(0)], ms=200),
-    # 9 : l'air s'ouvre ; elle se pose, les ailes se défont
-    dict(lift=4, x=38, s=3, lean=2, hd=(1, 1), w=(0, -1), tr=-1, cp=-1, arm=dict(grip=(75.5, 66.5), bend=1),
-         ang=-22.0, couch=True, pre=[fx_wings('repli', fade=1, far=False)], wfx=[fx_storm(1)], ms=110),
-    # 10 : elle revient d'un bond (en arrière, en l'air)
-    dict(lift=24, x=19, s=-1, lean=-1, hd=(0, 1), w=(1, 1), tr=2, cp=2, ad=(0, -3),
-         fx=[fx_fall_feathers(0)], wfx=[fx_storm(2)], ms=90),
-    # 11 : elle se pose à sa place, genoux pliés
-    dict(lift=0, x=3, s=3, hd=(0, 1), w=(1, 0), tr=1, cp=1, ad=(0, -1), fx=[fx_fall_feathers(1)],
-         wfx=[fx_storm(3), fx_takeoff(2)], ms=110),
-    # 12, 13 : elle se redresse, en garde ; les dernières plumes d'air tombent
-    dict(s=1, hd=(0, 0), w=(0, 1), tr=0, cp=0, fx=[fx_fall_feathers(2)], ms=120),
-    dict(s=0, hd=(0, 0), w=(0, 0), tr=-1, cp=-1, ms=130),
-    dict(ms=140),
+    # 6 : au plus haut : les ailes se relèvent, grandes ouvertes
+    dict(lift=AIR, s=0, b=1, hd=(0, 0), w=(-1, 0), tr=1, cp=0, cl=2, ad=(0, -1), pre=[fx_wings('grande')],
+         wfx=[fx_takeoff(1)], ms=100),
+    # 7 : les ailes se défont et s'enroulent tout autour d'elle : l'anneau se forme depuis son dos
+    dict(lift=AIR, s=0, b=1, hd=(0, 0), w=(0, 1), tr=0, cp=-1, cl=2, ad=(0, -1), pre=[fx_wings('battue')],
+         fx=[fx_ring_form(0.5)], wfx=[fx_takeoff(2)], ms=80),
+    # 8 : LE TEMPS FORT (arrêt sur l'image) : l'anneau de plumes de vent plein autour d'elle, les plumes se posent sur
+    #     elle en armure (elle s'éclaire d'un reflet d'air)
+    dict(lift=AIR, s=0, b=1, hd=(0, -1), w=(1, 0), tr=-1, cp=-1, cl=2, ad=(0, -1), tint=('vent', 10),
+         fx=[fx_ring_full, fx_armor(0)], ms=200),
+    # 9 : LANCEMENT : l'anneau part d'elle, il s'élargit dans toutes les directions en descendant vers le sol
+    dict(lift=AIR - 4, s=0, hd=(0, 0), w=(0, 1), tr=0, cp=0, cl=1, ad=(0, -1), tint=('vent', 5),
+         fx=[fx_armor(1)], wfx=[fx_ring_out(0)], ms=80),
+    # 10 : l'anneau touche le sol et s'étale ; elle redescend, un souffle doux monte en spirale autour d'elle (le soin)
+    dict(lift=AIR - 12, s=0, hd=(0, 0), w=(-1, 0), tr=1, cp=1, cl=1, ad=(0, -1), flash=14,
+         fx=[fx_armor(2), fx_heal(0)], wfx=[fx_ring_out(1)], ms=90),
+    # 11 : le souffle l'enveloppe, sa silhouette s'éclaire ; l'anneau se défait en arcs
+    dict(lift=AIR - 28, s=-1, hd=(0, 1), w=(0, 1), tr=2, cp=2, ad=(0, -2), flash=22,
+         fx=[fx_armor(3), fx_heal(1)], wfx=[fx_ring_out(2)], ms=110),
+    # 12 : elle se pose, genoux pliés ; le souffle s'efface, il reste quelques plumes
+    dict(lift=0, s=3, hd=(0, 1), w=(1, 0), tr=1, cp=1, ad=(0, -1), flash=10,
+         fx=[fx_armor(4), fx_heal(2)], wfx=[fx_ring_out(3), fx_takeoff(3)], ms=90),
+    # 13 : elle lève le bouclier et ramène la lance devant elle
+    dict(s=2, lean=0, arm=dict(grip=(70.5, 64.5), bend=1), ang=22.0, couch=True, sh=(1, -3), hd=(0, 1), w=(0, 0),
+         tr=0, cp=0, fx=[fx_fall_feathers(2)], ms=70),
+    # 14 : LE DÉFI (arrêt sur l'image) : bouclier levé, lance pointée vers l'ennemi, elle crie ; la lueur rouge s'allume
+    defi(tint=('rouge', 14), fx=[fx_provoke(0)], ms=220),
+    # 15 : la lueur gonfle
+    defi(w=(0, -1), tr=-2, tint=('rouge', 8), fx=[fx_provoke(1)], ms=110),
+    # 16 : elle pâlit et s'éteint ; la bouche se referme
+    defi(cri=0, w=(1, 0), tr=-1, cp=0, fx=[fx_provoke(2)], ms=100),
+    # 17 : elle ramène la lance (bras et poing du dessin, encore un peu levés), le bouclier redescend
+    dict(s=1, ad=(0, -2), sh=(0, -1), hd=(0, 1), w=(0, 1), tr=0, cp=0, ms=90),
+    # 18, 19 : en garde
+    dict(s=1, hd=(0, 0), w=(0, 0), tr=0, cp=-1, ms=100),
+    dict(ms=120),
 ]
 
 
@@ -1440,7 +1646,7 @@ def build_all():
             cv, back, front, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []),
                     (ctx.chest[0] + spec.get('x', 0), ctx.chest[1] - spec.get('lift', 0)))
-            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+            fr.append((compose(cv, back, front, flash=spec.get('flash'), tint=spec.get('tint')), spec['ms']))
         anims[name] = fr
     return anims
 
@@ -1485,7 +1691,7 @@ def attack_box(anims):
 
 
 TITLES = {'pose': 'POSE (garde fiere, en boucle)', 'attaque': 'ATTAQUE DE BASE (fauche du ciel)',
-          'speciale': 'ATTAQUE SPECIALE (pique de la valkyrie)'}
+          'speciale': 'ATTAQUE SPECIALE (envol de la valkyrie, sort d equipe : lancement image 9)'}
 
 
 def planche(anims, path, box, k=3, per=None):

@@ -56,7 +56,20 @@ FXPAL = {
     'H': (146, 112, 94),    # poussière, ombre
     'G': (255, 214, 120),   # lueur de la lave sur le sol
     'O': (122, 40, 30),     # lave refroidie, sol brûlé
+    # la lueur rouge du défi (provocation), translucide (voir ALPHA), du plus fort au plus pâle : les rouges de Zaroth
+    # et des effets d'équipe (anim/effets), pour que tous les « défis » aient la même couleur
+    'J': (255, 96, 84),
+    'K': (255, 80, 76),
+    'L': (240, 60, 70),
+    'M': (230, 46, 66),
+    'N': (222, 40, 64),
+    'P': (222, 40, 64),
+    # la chaleur douce du soin (translucide) autour de lui : l'or pâle de sa lave
+    'Q': (255, 214, 120),
+    'R': (255, 180, 90),
 }
+# opacité des lettres translucides (les autres sont pleines)
+ALPHA = {'J': 200, 'K': 160, 'L': 120, 'M': 85, 'N': 55, 'P': 28, 'Q': 70, 'R': 36}
 ALLPAL = dict(PAL)
 ALLPAL.update(FXPAL)
 LAVA = 'rstuvw'
@@ -213,12 +226,13 @@ def to_rgba(canvas, pal=ALLPAL):
         m = canvas == ch
         if m.any():
             img[m, :3] = rgb
-            img[m, 3] = 255
+            img[m, 3] = ALPHA.get(ch, 255)
     return img
 
 
-def compose(hero, fx_back=None, fx_front=None, flash=None):
-    """le héros (avec son contour) entre les effets de fond et ceux de devant ; renvoie une image RGBA"""
+def compose(hero, fx_back=None, fx_front=None, flash=None, tint=None):
+    """le héros (avec son contour) entre les effets de fond et ceux de devant ; renvoie une image RGBA.
+    flash : le héros blanchit (en %) ; tint = (couleur, %) : il prend un reflet de cette couleur (la spéciale)"""
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
     if fx_back is not None:
@@ -227,12 +241,25 @@ def compose(hero, fx_back=None, fx_front=None, flash=None):
     if flash:
         m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
         h[m, :3] = (h[m, :3].astype(int) + (255 - h[m, :3].astype(int)) * flash // 100).astype(np.uint8)
+    if tint:
+        col, pct = tint
+        m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
+        h[m, :3] = (h[m, :3].astype(int) + (np.array(col) - h[m, :3].astype(int)) * pct // 100).astype(np.uint8)
     layers.append(h)
     if fx_front is not None:
         layers.append(to_rgba(fx_front))
     for L in layers:
-        m = L[:, :, 3] > 0
+        m = L[:, :, 3] == 255
         out[m] = L[m]
+        # les pixels translucides (lueurs de la spéciale) se mélangent à ce qui est dessous
+        t = (L[:, :, 3] > 0) & ~m
+        if t.any():
+            a = L[t, 3:4].astype(float) / 255
+            da = out[t, 3:4].astype(float) / 255
+            oa = a + da * (1 - a)
+            rgb = (L[t, :3] * a + out[t, :3] * da * (1 - a)) / np.maximum(oa, 1e-6)
+            out[t, :3] = np.clip(rgb + 0.5, 0, 255).astype(np.uint8)
+            out[t, 3] = np.clip(oa[:, 0] * 255 + 0.5, 0, 255).astype(np.uint8)
     return out
 
 
@@ -257,9 +284,15 @@ LIGHT = np.array([0.6, -0.8])                # la lumière vient d'en haut à dr
 LN = LIGHT / np.linalg.norm(LIGHT)
 
 
+# FLOOR[0] : la ligne la plus basse où un effet peut peindre (None = le sol). La spéciale l'abaisse le temps de
+# peindre l'anneau de plaques, dont la moitié de devant est posée au sol DEVANT lui (plus bas que ses pieds à l'image).
+FLOOR = [None]
+
+
 def put(cv, x, y, ch, keep=None):
     x, y = int(math.floor(x)), int(math.floor(y))
-    if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
+    fl = GROUND if FLOOR[0] is None else FLOOR[0]
+    if 0 <= x < W and 0 <= y < H and y <= fl and (keep is None or cv[y, x] in keep):
         cv[y, x] = ch
 
 
