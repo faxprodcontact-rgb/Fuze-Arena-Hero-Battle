@@ -66,7 +66,7 @@ FXPAL = {
     'W': (255, 255, 255),   # éclat blanc (traînée de l'estoc)
     'X': (214, 226, 246),   # traînée de l'estoc, acier pâle
     # --- la spéciale (sort d'équipe) : le voile de feu doré, l'anneau, la lueur rouge du défi (translucides : ALPHA)
-    '7': (255, 196, 92),    # voile de feu doré, intérieur (à peine teinté)
+    '7': (255, 168, 56),    # voile de feu doré, intérieur (à peine teinté)
     '8': (255, 226, 130),   # voile, contre le bord (l'épaisseur de la bulle) et lueur autour du bord
     '9': (255, 252, 236),   # voile, reflet du bord en haut à droite
     'V': (255, 202, 70),    # anneau de feu : le mur (pied)
@@ -85,7 +85,7 @@ FXPAL = {
     '+': (92, 14, 52),      # rouge très sombre
 }
 # opacité des lettres translucides (toutes les autres sont pleines)
-ALPHA = {'7': 40, '8': 90, '9': 150, 'V': 64, 'Y': 104,
+ALPHA = {'7': 52, '8': 90, '9': 150, 'V': 64, 'Y': 104,
          '!': 200, '@': 160, '#': 120, '$': 85, '%': 55, '&': 28}
 TINT_RED = (255, 70, 60)                 # le reflet rouge du défi sur le héros
 FIRE = 'ABCDHIJ'
@@ -1123,7 +1123,7 @@ def draw_far_arm(cv, f, cx, cy):
 
 # la tête qui crie : la bouche s'ouvre dans la barbe (gorge rouge sombre, lèvres)
 P['tete_cri'] = P['tete'].copy()
-for (_x, _y, _t) in ((72, 42, 'NMMMMN'), (72, 43, 'xNMMNx'), (73, 44, 'yNNy')):
+for (_x, _y, _t) in ((72, 41, 'xNEEEN'), (72, 42, 'NMMMMN'), (72, 43, 'xNMMNx'), (73, 44, 'yNNy')):
     for _i, _c in enumerate(_t):
         P['tete_cri'][_y, _x + _i] = _c
 
@@ -1196,6 +1196,9 @@ def fx_veil(grow, phase=0):
         tone_core = np.where(lit > 0.55, 'A', np.where(lit > 0.0, 'B', np.where(lit > -0.55, 'C', 'D')))
         tone_edge = np.where(lit > 0.55, 'B', np.where(lit > 0.0, 'C', np.where(lit > -0.55, 'D', 'H')))
         front[rim] = np.where(core[rim], tone_core[rim], tone_edge[rim])
+        # là où le bord passe devant lui (la bulle qui grandit), il devient un voile : on le voit à travers
+        over = rim & (cv != '.')
+        front[over] = np.where(lit[over] > 0.0, '9', '8')
         # la lueur du bord, au-dehors (un pixel, deux du côté de la lumière) : un contour qui brille, pas un trait
         halo = (e >= wloc - 1.5) & (e < wloc - 0.5 + np.clip(lit, 0, 1)) & ground & (front == '.')
         front[halo] = '8'
@@ -1211,19 +1214,14 @@ def fx_veil(grow, phase=0):
                 if by > GROUND - 3:
                     continue
                 dirn = 90 + (a - 90) * 0.45
-                hh = rng.uniform(6, 11) * (0.6 + 0.4 * grow)
-                tongue(front, (bx, by), hh, max(3.0, hh * 0.5), direction=dirn,
-                       bend=rng.choice([-0.8, 0.7]), tones='ABCDH', fork=False, heat=0.3)
+                hh = rng.uniform(7, 12) * (0.6 + 0.4 * grow)
+                tongue(front, (bx, by), hh, max(3.5, hh * 0.62), direction=dirn,
+                       bend=rng.choice([-0.6, 0.5]), tones='ABCDH', fork=False, heat=0.45)
             for j in range(5):
                 a = math.radians(rng.uniform(10, 170))
                 rr = 1 + rng.uniform(0.06, 0.2)
                 ember(front, cx + rx * rr * math.cos(a), cy - ry * rr * math.sin(a), big=j % 2 == 0,
                       tones='BCD' if j % 2 else 'CDH')
-        # au pied, là où la bulle touche le sol : une flaque de lumière d'or
-        if grow >= 0.99:
-            for i in range(-int(rx * 0.9), int(rx * 0.9) + 1):
-                if abs(i) > rx * 0.55:
-                    put(back, cx + i, GROUND, 'U' if (i + phase) % 5 else 'C')
     return f
 
 
@@ -1233,7 +1231,7 @@ def fx_veil(grow, phase=0):
 # directions à la fois, en s'abaissant, de petites langues de feu dansent sur sa crête ; puis il se défait en arcs et
 # s'éteint en braises et en fumée. Pour chaque image : (demi-largeur, demi-profondeur au sol, hauteur du mur, épaisseur
 # de la crête)
-ANNEAU = [(64, 13, 34, 3.6), (78, 16, 20, 3.2), (88, 19, 10, 2.6), (93, 21, 4, 2.0)]
+ANNEAU = [(64, 16, 34, 3.6), (78, 18, 20, 3.2), (88, 20, 10, 2.6), (93, 22, 4, 2.0)]
 RING_C = (DOME_C[0], GROUND - 1)
 RING_FLOOR = H - 2
 
@@ -1277,6 +1275,7 @@ def fx_ring(k):
         rng = np.random.RandomState(30 + k)
         for half, tgt, tones, wm in ((0, back, tb, 1.0), (1, front, tf, 0.8)):
             crest = []
+            cut0 = False                                            # le morceau commence-t-il à une cassure ?
             for i in range(n + 1):
                 th = math.pi * i / n + half * math.pi               # 0..180° : derrière ; 180..360° : devant
                 ok = not broken(th)
@@ -1284,10 +1283,15 @@ def fx_ring(k):
                 yg = cy - ry * math.sin(th)
                 hh = hw * (1 + 0.12 * math.sin(2 * th + 0.7 + k) + 0.07 * math.sin(5 * th + 2.1))
                 if ok:
+                    if not crest:
+                        cut0 = i > 0
                     crest.append((x, yg - hh))
                 if (not ok or i == n) and len(crest) > 2:
                     m_ = len(crest)
-                    wd = [w * wm * min(1.0, (q + 1) / 6, (m_ - q) / 6) + 0.4 for q in range(m_)]
+                    # les bouts ne s'effilent qu'aux cassures : aux deux côtés de l'anneau, les deux moitiés se
+                    # rejoignent sans pointe (sinon une pointe semblerait viser à gauche ou à droite)
+                    wd = [w * wm * min(1.0, (q + 1) / 6 if cut0 else 1.0, (m_ - q) / 6 if not ok else 1.0) + 0.4
+                          for q in range(m_)]
                     stroke(tgt, crest, wd, tones, floor=RING_FLOOR)
                     # le reflet clair : sur la crête du fond, du côté de la lumière (en haut à droite)
                     if half == 0 and k <= 1:
@@ -1409,8 +1413,8 @@ def fx_provoke(k, mark=True):
 
 # les poses du bouclier levé : (décalage du bouclier) ; le bras lointain apparaît dessous
 SH_HALF, SH_HIGH = (9, -11), (17, -22)
-# la lance armée à l'horizontale (comme l'estoc), puis la frappe sur le bouclier
-ARMED = dict(arm=dict(grip=(38.5, 52.5), bend=-1), ang=-2.0)
+# la lance levée en travers derrière sa tête (le fer en haut à droite), puis abattue à plat sur le bouclier
+ARMED = dict(arm=dict(grip=(36.5, 47.5), bend=-1), ang=32.0, behind=True)
 STRIKE = dict(arm=dict(grip=(62.5, 62.5), bend=-1), ang=-6.0)
 
 SPECIALE = [
@@ -1436,14 +1440,14 @@ SPECIALE = [
     dict(s=1, ad=(0, -4), hd=(0, 1), ct=0, cq=0, cp=(1, 1), sh=SH_HALF, farm=1, shot=2, fx=[fx_ring(2)], ms=70),
     dict(s=1, lean=-1, arm=dict(grip=(35.5, 47.5), bend=-1), ang=38.0, behind=True, hd=(0, 1), ct=1, cq=1, cp=(1, 0),
          shot=1, fx=[fx_ring(3)], ms=60),
-    # 11 : armé (tenu) : la lance à l'horizontale au-dessus du bouclier
+    # 11 : armé (tenu) : la lance levée en travers, derrière sa tête
     dict(s=1, lean=-2, hd=(-1, 1), ct=-1, cq=1, cp=(1, 1), shot=1, fx=[fx_ring(4)], ms=120, **ARMED),
     # 12 : PREMIER COUP sur le bouclier (cri) ; la lueur rouge s'allume
     dict(s=2, lean=1, hd=(1, 0), ct=-2, cq=-1, cp=(-1, -1), sh=(-1, 0), shot=2, cri=1, tint=14,
          fx=[fx_clang(0), fx_provoke(0, mark=False)], ms=90, **STRIKE),
     # 13 : il relève la lance
     dict(s=1, lean=-1, hd=(0, 1), ct=0, cq=0, cp=(0, 0), shot=1, fx=[fx_clang(1)], ms=70,
-         arm=dict(grip=(44.5, 54.5), bend=-1), ang=-1.0),
+         arm=dict(grip=(38.5, 49.5), bend=-1), ang=24.0, behind=True),
     # 14 : SECOND COUP, il crie son défi (arrêt sur l'image) : la lueur rouge au plus fort, la marque bat
     dict(s=2, lean=1, hd=(1, -1), ct=-2, cq=-2, cp=(-1, -1), sh=(-1, 0), shot=2, cri=1, tint=20,
          fx=[fx_clang(0), fx_provoke(1)], ms=200, **STRIKE),
