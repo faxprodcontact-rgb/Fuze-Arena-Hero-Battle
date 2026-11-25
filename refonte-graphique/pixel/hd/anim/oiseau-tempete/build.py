@@ -175,7 +175,7 @@ BACK = [(80, 186), (90, 172), (98, 156), (106, 140), (114, 124), (121, 110), (12
 def complete_back():
     b = part(M_BODY)
     xb = piecewise(GYY, sorted((y, x) for x, y in BACK))
-    reg = poly_mask(WING_POLY) & (GXX >= xb) & (b == '.') & (GYY >= 92) & (GYY <= 186)
+    reg = poly_mask(WING_POLY) & (GXX >= xb) & (b == '.') & filled & (GYY >= 92) & (GYY <= 186)
     rng = np.random.RandomState(7)
     for y, x in zip(*np.nonzero(reg)):
         d = x - xb[y, x]                                # distance au dos (0 = la ligne du dos)
@@ -514,7 +514,7 @@ def body_layers(f):
 
 # la gorge, sous le bec : là où la tête (bloc rigide) et le cou (plié) se rejoignent, un pixel vide pris entre trois ou
 # quatre pixels pleins est bouché avec la couleur la plus fréquente autour (à égalité : gauche, haut, droite, bas)
-M_THROAT = (GX >= 150) & (GX <= 215) & (GY >= 96) & (GY <= 150)
+M_THROAT = (GX >= 150) & (GX <= 236) & (GY >= 96) & (GY <= 150)
 
 
 def fill_holes(cv, region, passes=2):
@@ -522,7 +522,7 @@ def fill_holes(cv, region, passes=2):
         e = cv == '.'
         nb = [np.roll(cv, 1, 1), np.roll(cv, 1, 0), np.roll(cv, -1, 1), np.roll(cv, -1, 0)]
         cnt = sum((n != '.').astype(int) for n in nb)
-        ys, xs = np.nonzero(e & region & (cnt >= 3))
+        ys, xs = np.nonzero(e & region & ((cnt >= 3) & ((GX < 200) | (GY >= 112)) | (cnt >= 4)))
         if not len(ys):
             break
         out = cv.copy()

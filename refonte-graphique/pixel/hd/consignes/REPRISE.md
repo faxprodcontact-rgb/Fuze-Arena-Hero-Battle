@@ -120,3 +120,9 @@
 - 25/11 : oiseau VALIDÉ → animation lancée (anim/oiseau-tempete/). Dragon : attaque de base refaite sur place (coup de patte, griffure sur la cible) ; règle pour les boss : l'attaque de base ne se déplace pas.
 - 25/11 : animations du dragon (avec coup de patte sur place) et du léviathan VALIDÉES (« Super »). Planches boss ≈ 4074 px : à alléger au branchement si besoin (up=1 pour les boss).
 - 25/11 : animation du titan VALIDÉE (« Super »).
+
+## Nouveaux noms de héros (VALIDÉS par le propriétaire le 25/11 : « Parfait les noms on garde »)
+À appliquer APRÈS la fusion de la mise au propre HD (src/core/data/heroes.ts OLD_NAMES, i18n, pages de suivi, consignes,
+noms des clans) ; les identifiants (myths-6, fichiers .txt, mon-<clan>-*) ne changent pas.
+Minotaure → Néfira ; Astérion → Taurok ; Méduse → Ophira ; Arachné → Soyane ; Anubis → Malgrave ; Isis → Sylvar ;
+Gabryel → Dardane ; Elyon → Elvyn ; Auriel → Aurelle ; Jinn → Jarek.
