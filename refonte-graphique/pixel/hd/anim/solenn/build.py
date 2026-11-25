@@ -1,5 +1,11 @@
 # Solenn (angels-7, terre, protecteur, commun) : le nain guerrier — pose (respiration), attaque de base
-# « Coup de masse », attaque spéciale « Rempart du nain » (un rempart de rochers jaillit, puis croule en avalanche).
+# « Coup de masse », attaque spéciale « Rempart du nain » (sort d'équipe, refait le 25/11/2026 : un anneau de dalles
+# de pierre dorée jaillit TOUT AUTOUR de lui, scintille et se rassoit ; puis il frappe son bouclier en défi).
+# Effet réel en combat : bouclier sur toute l'équipe (12 % de vie) et provocation (il attire les coups 3 s).
+# MOMENTS DE LANCEMENT de la spéciale (pour le jeu, images numérotées depuis 0 comme sur la planche) :
+#   IMAGE 6 = le bouclier part vers l'équipe (l'anneau de pierre dorée dressé tout autour de lui, arrêt 210 ms) ;
+#   IMAGE 10 = la provocation (la masse frappe le bouclier, la lueur rouge s'allume sur lui, arrêt 170 ms).
+# Rien ne vise l'ennemi, rien ne part à gauche ni à droite : tout naît sur lui et s'étend en cercle autour de lui.
 #
 # Lancer : python3 refonte-graphique/pixel/hd/anim/solenn/build.py
 # Écrit dans refonte-graphique/pixel/sortie/ : anim-solenn-pose.gif, anim-solenn-attaque.gif,
@@ -25,7 +31,7 @@
 #   - à la fin, chaque image peut recevoir des retouches pixel par pixel (RETOUCHES, plus bas).
 import sys, os, math
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 HD = os.path.abspath(os.path.join(HERE, '..', '..'))
@@ -57,7 +63,23 @@ FXPAL = {
     'S': (246, 244, 250),   # souffle, lumière
     'T': (206, 200, 216),   # souffle
     'U': (160, 150, 174),   # souffle, ombre (le bas des bouffées)
+    # la provocation (spéciale) : la lueur rouge douce, translucide (voir ALPHA), les rouges de Zaroth et des effets
+    # d'équipe (anim/effets, « provocation »), du plus fort au plus pâle
+    '1': (255, 96, 84),
+    '2': (255, 80, 76),
+    '3': (240, 60, 70),
+    '4': (230, 46, 66),
+    '5': (222, 40, 64),
+    '6': (222, 40, 64),
+    # la lueur d'or du rempart (spéciale), translucide : posée au sol dans l'anneau, sur les pierres au temps fort
+    '7': (255, 212, 92),
+    '8': (255, 226, 140),
+    '9': (255, 246, 206),
 }
+# opacité des lettres translucides (toutes les autres sont pleines)
+ALPHA = {'1': 200, '2': 160, '3': 120, '4': 85, '5': 55, '6': 28, '7': 46, '8': 84, '9': 130}
+TINT_RED = (255, 70, 60)        # le reflet rouge du défi sur le héros (« tint » d'une image)
+TINT_GOLD = (255, 220, 120)     # le reflet d'or au temps fort du rempart
 assert not set(FXPAL) & set(PAL)
 ALLPAL = dict(PAL)
 ALLPAL.update(FXPAL)
@@ -66,9 +88,10 @@ LN = LIGHT / np.linalg.norm(LIGHT)
 
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. De la place au-dessus (la masse levée), à gauche
-# (la masse armée derrière la tête) et beaucoup à droite (l'avalanche jusqu'à l'ennemi). La pose se recadre en
-# 128 × 120 (format du jeu).
-W, H = 336, 206
+# (la masse armée derrière la tête) et à droite (la portée de l'attaque). La pose se recadre en 128 × 120 (format du
+# jeu). La toile descend un peu sous le sol (l'anneau de pierres de la spéciale passe aussi devant ses pieds) : ça ne
+# change rien à la pose ni à l'attaque (même case qu'avant, ATT_BOX).
+W, H = 336, 214
 SOL = (100, 190)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
@@ -256,16 +279,22 @@ def to_rgba(canvas, pal=ALLPAL):
         m = canvas == ch
         if m.any():
             img[m, :3] = rgb
-            img[m, 3] = 255
+            img[m, 3] = ALPHA.get(ch, 255)
     return img
 
 
-def compose(hero, fx_back=None, fx_front=None, flash=None):
+def compose(hero, fx_back=None, fx_front=None, flash=None, tint=None):
+    """tint = (couleur, %) : un reflet sur tout le héros (rouge au défi, or au temps fort du rempart)"""
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
     if fx_back is not None:
         layers.append(to_rgba(fx_back))
     h = hd.outline(to_rgba(hero))
+    if tint:
+        col, pct = tint
+        m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
+        c = h[m, :3].astype(int)
+        h[m, :3] = (c + (np.array(col) - c) * pct // 100).astype(np.uint8)
     if flash:
         m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
         h[m, :3] = (h[m, :3].astype(int) + (255 - h[m, :3].astype(int)) * flash // 100).astype(np.uint8)
@@ -273,8 +302,16 @@ def compose(hero, fx_back=None, fx_front=None, flash=None):
     if fx_front is not None:
         layers.append(to_rgba(fx_front))
     for L in layers:
-        m = L[:, :, 3] > 0
+        m = L[:, :, 3] == 255
         out[m] = L[m]
+        t = (L[:, :, 3] > 0) & ~m                        # translucide : posé par-dessus ce qui est déjà là
+        if t.any():
+            a = L[t, 3:4].astype(int)
+            b = out[t].astype(int)
+            ab = b[:, 3:4]
+            ao = a + ab * (255 - a) // 255
+            rgb = (L[t, :3].astype(int) * a + b[:, :3] * ab * (255 - a) // 255) // np.maximum(ao, 1)
+            out[t] = np.concatenate([rgb, ao], 1).astype(np.uint8)
     return out
 
 
@@ -1122,123 +1159,26 @@ ATTAQUE = [
 
 
 # ---------------------------------------------------------------- 3) l'attaque spéciale : « Rempart du nain »
+# SORT D'ÉQUIPE (refait le 25/11/2026) : bouclier sur toute l'équipe + provocation. L'équipe peut être de tous côtés
+# (losange de 5 cases) : rien ne vise une direction, tout naît sur lui et s'étend EN CERCLE autour de lui.
 # Le protecteur appelle la montagne. Il lève la masse droit au ciel, monte le genou (l'emblème du bouclier — le pic de
-# montagne — s'allume d'or, la poussière tourne à ses pieds, des cailloux se soulèvent) : tenu. Il TAPE DU PIED : le
-# sol se fend d'une veine d'or qui court devant lui, et un rempart de rochers jaillit entre lui et l'ennemi, plus haut
-# que lui (arrêt sur l'image). Il arme la masse derrière la tête et frappe le rempart de toutes ses forces (éclair,
-# étincelles, arrêt sur l'image) : le mur se fend d'or, bascule vers l'ennemi et croule en AVALANCHE — les blocs
-# roulent et bondissent en arc jusqu'à lui et s'écrasent dessus (éclair, arrêt sur l'image), la poussière monte en
-# nuages, les éclats retombent, les volutes se défont. Il revient en garde et lâche un souffle bourru, satisfait.
-WALL_X = OX + 121                     # le pied gauche du rempart (toile), juste devant le bouclier
-WALL = [  # les blocs du rempart : polygones (x, hauteur au-dessus du sol), du fond vers le devant
-    [(0, 0), (1, 22), (8, 30), (17, 26), (19, 0)],                    # trois gros blocs au pied
-    [(17, 0), (18, 26), (27, 33), (35, 28), (36, 0)],
-    [(34, 0), (35, 24), (44, 29), (52, 20), (53, 0)],
-    [(3, 27), (5, 46), (15, 52), (24, 45), (22, 30), (12, 28)],     # le rang du milieu (là où frappe la masse)
-    [(22, 30), (24, 47), (34, 53), (44, 46), (43, 28), (33, 30)],
-    [(8, 50), (11, 66), (22, 72), (30, 63), (27, 50), (17, 51)],    # le rang du haut
-    [(29, 50), (31, 62), (39, 66), (46, 57), (43, 47), (36, 49)],
-    [(15, 70), (18, 84), (24, 88), (29, 78), (27, 70)],             # la pointe
-]
-# où va chaque bloc dans l'avalanche : (arrivée par rapport à l'ennemi, hauteur de l'arc, rotation en degrés)
-FLIGHT = [(-20, 22, 140), (-2, 28, 180), (18, 24, 200), (-12, 42, 220), (10, 46, 260), (-4, 58, 280),
-          (14, 56, 300), (2, 70, 340)]
-
-
-# les fêlures d'or quand la masse frappe (coordonnées du mur) : elles partent du coup (le rang du milieu, à gauche)
-# et se ramifient dans les blocs voisins, chacune dans sa direction (pas de bandes parallèles)
-CRACKS = {
-    0: [[(2, 24), (7, 18), (6, 11), (10, 4)]],
-    1: [[(19, 21), (24, 15), (23, 8)]],
-    3: [[(4, 40), (10, 42), (14, 37), (19, 39), (22, 34)], [(10, 42), (12, 48)]],
-    4: [[(24, 41), (30, 37), (33, 43)]],
-    5: [[(12, 55), (15, 61), (20, 60)]],
-    7: [[(20, 74), (22, 80)]],
-}
-
-
-def wall_veins(i):
-    out = []
-    for line in CRACKS.get(i, []):
-        out += list(zip(line[:-1], line[1:]))
-    return out
-
-
-def rot_about(pts, px, py, deg):
-    a = math.radians(deg)
-    return [(px + (x - px) * math.cos(a) - (y - py) * math.sin(a),
-             py + (x - px) * math.sin(a) + (y - py) * math.cos(a)) for (x, y) in pts]
-
-
-def wall_poly(i, rise=1.0, t=None, tilt=0.0):
-    """le bloc i sur la toile. rise : il sort du sol (0..1+) ; tilt : le mur bascule vers l'ennemi (degrés, autour du
-    coin bas à droite) ; t : en vol vers l'ennemi (0..1)"""
-    return wall_place([(x, y) for (x, y) in WALL[i]], i, rise, t, tilt)
-
-
-def wall_place(local, i, rise=1.0, t=None, tilt=0.0):
-    """des points du mur (coordonnées du mur) posés sur la toile comme le bloc i"""
-    pts = [(WALL_X + x, GROUND + 1 - y * rise) for (x, y) in local]
-    blk = [(WALL_X + x, GROUND + 1 - y * rise) for (x, y) in WALL[i]]
-    if tilt:
-        pts = rot_about(pts, WALL_X + 53, GROUND, tilt)
-        blk = rot_about(blk, WALL_X + 53, GROUND, tilt)
-    if t is not None:
-        cx = sum(p[0] for p in blk) / len(blk)
-        cy = sum(p[1] for p in blk) / len(blk)
-        ex, hh, spin = FLIGHT[i]
-        r = max(math.hypot(x - cx, y - cy) for (x, y) in blk)
-        tx, ty = ENEMY_X + ex, GROUND - r * 0.75
-        nx = cx + (tx - cx) * t
-        ny = cy + (ty - cy) * t - hh * 4 * t * (1 - t)
-        pts = [(nx + x - cx, ny + y - cy) for (x, y) in rot_about(pts, cx, cy, spin * t)]
-    return pts
-
-
-def fx_wall(rise=1.0, veins=0, tilt=0.0, t=None, dust=0):
-    """le rempart : rise (sortie du sol), veins (0 rien, 1 lueur du sol, 2 le mur se fend d'or), tilt (bascule),
-    t (les blocs en vol, l'avalanche) ; dust : la poussière à son pied (1 jaillit, 2 roule, 3 se défait)"""
-    def f(cv, back, front, ctx):
-        g = GROUND
-        if dust == 1:
-            cloud(back, (WALL_X + 2, g - 5), 7.0, 'KKLP', seed=51)
-            cloud(back, (WALL_X + 50, g - 5), 8.6, 'KKLP', seed=52)
-        elif dust == 2:
-            cloud(back, (WALL_X - 4, g - 6), 7.4, 'KKL', seed=51)
-            cloud(back, (WALL_X + 56, g - 6), 9.0, 'KKL', seed=52)
-        elif dust == 3:
-            cloud(back, (WALL_X - 8, g - 7), 6.4, 'KKL', hollow=0.6, seed=51)
-            cloud(back, (WALL_X + 60, g - 7), 8.0, 'KKL', hollow=0.6, seed=52)
-        for i in range(len(WALL)):
-            pts = wall_poly(i, rise, t, tilt)
-            vv = None
-            if veins >= 2:
-                vv = [tuple((int(math.floor(q[0])), int(math.floor(q[1]))) for q in wall_place([a_, b_], i, rise, t, tilt))
-                      for (a_, b_) in wall_veins(i)]
-            facets(back if t is None else front, pts, 'LPQR', core='P', veins=vv, below=1, bevel=2.6,
-                   round_core=True)
-        if veins and t is None:
-            # la veine d'or au ras du sol, sous le mur
-            for x in range(WALL_X - 2, WALL_X + 55):
-                put(back, x, g, 'N' if veins >= 2 else 'J', below=2)
-    return f
-
-
-def fx_rift(k):
-    """la veine d'or qui court du pied jusqu'au rempart : 1 elle part, 2 elle arrive (la terre s'ouvre), 3 elle
-    refroidit"""
-    def f(cv, back, front, ctx):
-        x0 = 50 + OX + ctx.body.shift
-        x1 = WALL_X + 26 if k >= 2 else x0 + (WALL_X - x0) * 0.55
-        rng = np.random.RandomState(9)
-        y = 0
-        for x in range(int(x0), int(x1)):
-            if rng.rand() < 0.3:
-                y = max(-1, min(0, y + (1 if rng.rand() < 0.5 else -1)))
-            hot = k < 3
-            put(front, x, GROUND + y, ('M' if (x1 - x) < 4 else 'N') if hot else 'R', below=2)
-            put(front, x, GROUND + y + (1 if y == 0 else -1), 'J' if hot else 'Q', below=2)
-    return f
+# montagne — s'allume d'or, la poussière tourne à ses pieds, des cailloux se soulèvent) : tenu. Il TAPE DU PIED : une
+# veine d'or court au sol en anneau autour de lui (une ellipse aplatie : derrière lui, devant ses pieds, des deux
+# côtés) et un anneau de dalles de pierre dorée en jaillit tout autour de lui — le rempart circulaire (elles dépassent
+# un peu, puis se posent). TEMPS FORT (image 6, 210 ms) : le rempart dressé s'illumine d'or (faces éclairées dorées,
+# lueur d'or au sol dans l'anneau, reflet d'or sur lui), de petites étincelles rondes scintillent au sommet des
+# pierres, des grains d'or montent. Puis les dalles se rassoient dans le sol, la poussière roule et se défait.
+# Le défi : il arme la masse au-dessus de la tête et l'abat sur la face de son bouclier, tourné vers l'ennemi (clang :
+# éclat et gerbe d'étincelles de fer, le bouclier tremble, arrêt sur l'image), lâche un souffle bourru, et une lueur
+# rouge douce pulse sur lui (un halo sans trait qui épouse sa silhouette : il gonfle puis s'éteint ; pas d'anneaux).
+# Il revient en garde. MOMENTS DE LANCEMENT : image 6 (bouclier vers l'équipe), image 10 (provocation).
+RING_C = (SOL[0], GROUND)             # le centre de l'anneau (toile) : sous lui
+RING_RX, RING_RY = 68, 12             # l'ellipse au sol (aplatie : vue de biais)
+# les dalles : (angle en degrés — 90 = devant lui, vers nous ; 270 = derrière lui —, hauteur, largeur, graine).
+# Celles de devant sont plus basses (on voit ses pieds), celles de derrière plus hautes (elles dépassent de lui).
+STONES = [(0, 25, 15, 1), (28, 19, 15, 2), (55, 14, 15, 3), (82, 12, 16, 4), (108, 13, 15, 5), (133, 16, 15, 6),
+          (157, 21, 15, 7), (182, 26, 16, 8), (208, 30, 15, 9), (234, 31, 14, 10), (259, 32, 15, 11),
+          (285, 31, 14, 12), (311, 30, 15, 13), (337, 28, 14, 14)]
 
 
 def fx_gather(level):
@@ -1265,92 +1205,220 @@ def fx_gather(level):
     return f
 
 
-def fx_crash(k):
-    """les blocs s'écrasent sur l'ennemi : 0 éclair, gerbe, dalles dressées (arrêt sur l'image) ; 1 la poussière monte
-    en nuages, les éclats volent ; 2 ils retombent, le tas s'affaisse ; 3 la poussière se défait"""
+def ring_pt(deg, s=1.0):
+    a = math.radians(deg)
+    return RING_C[0] + RING_RX * s * math.cos(a), RING_C[1] + RING_RY * s * math.sin(a)
+
+
+def stone(cv, deg, h, w, seed, rise=1.0, gold=0):
+    """une dalle de pierre qui sort du sol sur l'anneau (base à son point de l'ellipse, coupée net au ras du sol) ;
+    rise : 0 sous terre, 1 dressée (au-delà : elle dépasse un peu, étirée) ; gold : 1 veine d'or, 2 temps fort (faces
+    éclairées dorées)"""
+    if rise <= 0:
+        return
+    rng = np.random.RandomState(seed)
+    bx, by = ring_pt(deg)
+    c = math.cos(math.radians(deg))
+    lean = c * 2.2                                  # elles s'ouvrent un peu vers l'extérieur
+    dy = (1 - rise) * h if rise < 1 else 0.0
+    hh = h * max(rise, 1.0)
+    g = by + 1 + dy
+    top_l = g - hh * rng.uniform(0.74, 0.9)
+    top_r = g - hh * rng.uniform(0.6, 0.76)
+    pts = [(bx - w / 2, g + 1), (bx - w * 0.47 + lean * 0.8, top_l), (bx + lean - w * 0.08 + rng.uniform(-1, 1), g - hh),
+           (bx + w * 0.45 + lean, top_r), (bx + w / 2, g + 1)]
+    veins = None
+    if gold and hh > 9:
+        x0 = bx + rng.uniform(-2, 1)
+        veins = [((int(x0), int(by)), (int(x0 + lean * 0.3 + 1), int(g - hh * 0.38))),
+                 ((int(x0 + lean * 0.3 + 1), int(g - hh * 0.38)), (int(x0 + lean * 0.5), int(g - hh * 0.6)))]
+    tones, hi, core = ('NLPQ', 'M', 'L') if gold >= 2 else ('LPQR', 'K', 'P')
+    facets(cv, pts, tones, core=core, veins=veins, below=int(math.floor(by)) - GROUND, hi=hi, bevel=2.4,
+           round_core=True)
+
+
+def ring_vein(back, front, s, hot=2, gaps=True):
+    """la veine d'or au sol, en anneau (ellipse de taille s) : interrompue çà et là (une fêlure, pas un cercle tracé)"""
+    rng = np.random.RandomState(21)
+    n = int(2 * math.pi * RING_RX * s * 1.2)
+    skip = set()
+    if gaps:
+        for _ in range(7):
+            a0 = rng.randint(0, n)
+            for k in range(rng.randint(3, 7)):
+                skip.add((a0 + k) % n)
+    wob = 0
+    for i in range(n):
+        if rng.rand() < 0.25:
+            wob = max(-1, min(1, wob + (1 if rng.rand() < 0.5 else -1)))
+        if i in skip:
+            continue
+        deg = 360 * i / n
+        x, y = ring_pt(deg, s)
+        y += wob * 0.6
+        cv = front if y > GROUND + 0.5 else back
+        ch = 'M' if hot >= 2 and i % 9 == 0 else 'N' if hot >= 1 else 'R'
+        put(cv, x, y, ch, below=RING_RY + 2)
+        put(cv, x, y + 1, 'J' if hot else 'Q', below=RING_RY + 2)
+
+
+def ring_glow(back, front, level):
+    """la lueur d'or posée au sol dans l'anneau (translucide), plus forte près de ses pieds"""
+    for y in range(GROUND - RING_RY - 1, GROUND + RING_RY + 2):
+        for x in range(RING_C[0] - RING_RX - 1, RING_C[0] + RING_RX + 2):
+            d = math.hypot((x + 0.5 - RING_C[0]) / RING_RX, (y + 0.5 - RING_C[1]) / RING_RY)
+            if d >= 0.97:
+                continue
+            if d < 0.45 and level < 2:
+                continue
+            ch = '8' if (d > 0.78 and level >= 2) else '7'
+            cv = front if y > GROUND else back
+            if cv[y, x] == '.':
+                cv[y, x] = ch
+
+
+def fx_ring(rise, vein=0, glow_lv=0, dust=0, glints=None, motes=0, s=1.0):
+    """l'anneau de pierres : rise (une valeur, ou une par dalle), vein (0, 1 veine d'or, 2 brûlante), glow_lv (lueur au
+    sol), dust (1 jaillit, 2 roule, 3 se défait), glints (étincelles rondes au sommet de ces dalles), motes (grains
+    d'or qui montent : 1 partent, 2 plus haut), s : taille de l'anneau de la veine (elle court depuis ses pieds)"""
     def f(cv, back, front, ctx):
-        cx, g = ENEMY_X, GROUND
-        if k == 0:
-            cloud(back, (cx - 22, g - 8), 11.0, 'KKLP', seed=61)
-            cloud(back, (cx + 22, g - 8), 11.6, 'KKLP', seed=62)
-            slab(back, cx - 14, 26, 12, lean=-5.0, seed=63)
-            slab(back, cx + 13, 30, 13, lean=5.0, seed=64)
-            for i in range(len(WALL)):
-                facets(front, wall_poly(i, t=1.0), 'LPQR', core='P', below=1, bevel=2.6, round_core=True)
-            pop(front, (cx - 2, g - 22), 14.0, facing=90, tones='ZMNJ')
-            chunks_at(front, cx, 1.0, CRASH_CHUNKS, y0=g - 10)
-        elif k == 1:
-            cloud(back, (cx - 28, g - 10), 12.0, 'KKLP', seed=61)
-            cloud(back, (cx + 28, g - 10), 12.6, 'KKLP', seed=62)
-            cloud(back, (cx + 2, g - 30), 9.0, 'KKL', seed=65, ground=False)
-            for i in range(len(WALL)):       # le tas s'affaisse dans la poussière
-                pts = [(x, y + 4 + (i % 3)) for (x, y) in wall_poly(i, t=1.0)]
-                facets(front, pts, 'LPQR', core='P', below=0, bevel=2.6, round_core=True)
-            pop(back, (cx, g - 14), 6.0, facing=90, tones='MNJ')
-            chunks_at(front, cx, 2.0, CRASH_CHUNKS, y0=g - 10)
-        elif k == 2:
-            cloud(back, (cx - 32, g - 10), 10.0, 'KKL', hollow=0.35, seed=61)
-            cloud(back, (cx + 32, g - 10), 10.6, 'KKL', hollow=0.35, seed=62)
-            cloud(back, (cx + 4, g - 36), 8.0, 'KKL', hollow=0.4, seed=65, ground=False)
-            for (dx, r, sd) in ((-20, 6.4, 74), (-6, 8.0, 75), (9, 7.4, 76), (22, 5.6, 78), (2, 5.0, 77)):
-                rock(front, (cx + dx, g - r * 0.7 - (8 if sd == 77 else 0)), r, seed=sd, squash=0.8)
-            chunks_at(front, cx, 3.0, CRASH_CHUNKS, y0=g - 10)
-        else:
-            cloud(back, (cx - 35, g - 11), 8.6, 'KKL', hollow=0.72, seed=61)
-            cloud(back, (cx + 35, g - 11), 9.0, 'KKL', hollow=0.72, seed=62)
-            curl(back, (cx + 6, g - 40), 5.0, 200, turn=260, w=2.0, tones='KL')
-            for (dx, r, sd) in ((-20, 4.6, 74), (-6, 5.8, 75), (9, 5.4, 76), (22, 3.8, 78)):
-                rock(front, (cx + dx, g - r * 0.6), r, seed=sd, squash=0.7)
-            chunks_at(front, cx, 4.0, CRASH_CHUNKS, y0=g - 10)
+        g = GROUND
+        if glow_lv:
+            ring_glow(back, front, glow_lv)
+        if vein:
+            ring_vein(back, front, s, hot=vein)
+        # la poussière : aux deux bouts de l'anneau et sous les dalles de devant (elle reste posée au sol)
+        if dust:
+            r0, hol = {1: (6.0, 0.0), 2: (6.8, 0.0), 3: (6.0, 0.62)}[dust]
+            tones = 'KKLP' if dust == 1 else 'KKL'
+            spread = {1: 0, 2: 4, 3: 7}[dust]
+            cloud(back, (RING_C[0] - RING_RX - spread, g - 5), r0, tones, hollow=hol, seed=51)
+            cloud(back, (RING_C[0] + RING_RX + spread, g - 5), r0 * 0.95, tones, hollow=hol, seed=52)
+            for (deg, sd) in ((235, 53), (305, 54)):
+                x, y = ring_pt(deg)
+                cloud(back, (x, y - 3), r0 * 0.7, tones, hollow=hol, seed=sd)
+            for (deg, sd) in ((40, 55), (140, 56), (90, 57)):
+                x, y = ring_pt(deg)
+                if hol:                       # elle s'est posée : il reste un gravillon
+                    put(front, x - 2, y - 1, 'L', below=RING_RY + 2)
+                    put(front, x - 1, y - 1, 'K', below=RING_RY + 2)
+                    put(front, x - 2, y, 'P', below=RING_RY + 2)
+                    continue
+                for (dx, rr) in ((-6 - spread, 2.6), (6 + spread, 2.2)):
+                    puff(front, (x + dx, y - 1), rr, 'KLP', below=RING_RY + 2)
+        order = sorted(range(len(STONES)), key=lambda i: ring_pt(STONES[i][0])[1])
+        for i in order:
+            deg, h, w, sd = STONES[i]
+            rr = rise[i] if isinstance(rise, (list, tuple)) else rise
+            x, y = ring_pt(deg)
+            stone(front if y > GROUND + 0.5 else back, deg, h, w, sd, rr, gold=2 if glow_lv >= 2 else (1 if vein else 0))
+        # le temps fort : des étincelles rondes au sommet de quelques dalles (pas des croix), à des places qui changent
+        for i in (glints or []):
+            deg, h, w, sd = STONES[i]
+            x, y = ring_pt(deg)
+            lay = front if y > GROUND + 0.5 else back
+            c = math.cos(math.radians(deg))
+            puff(lay, (x + c * 2 + 1, y - h - 1), 1.7, 'ZMN', below=RING_RY + 2)
+        if motes:
+            for (deg, k) in ((15, 0), (70, 1), (125, 0), (170, 1), (215, 0), (330, 1), (262, 0)):
+                x, y = ring_pt(deg)
+                h = STONES[min(range(len(STONES)), key=lambda j: abs(STONES[j][0] - deg))][1]
+                up = h + 6 + 7 * motes + 3 * k
+                sx = math.sin(math.radians(deg * 3) + motes) * 2
+                lay = front if y > GROUND + 0.5 else back
+                put(lay, x + sx, y - up, 'M' if motes == 1 else 'N', below=RING_RY + 2)
+                put(lay, x + sx, y - up + 1, 'N' if motes == 1 else 'J', below=RING_RY + 2)
+                if motes == 1:
+                    put(lay, x + sx + 1, y - up, 'N', below=RING_RY + 2)
     return f
 
 
-CRASH_CHUNKS = [(-6.0, -9.0, 3.6, 1), (5.0, -11.0, 4.0, 2), (9.0, -7.0, 3.0, 3), (-10.0, -5.0, 2.6, 4),
-                (13.0, -4.0, 2.4, 5), (1.0, -13.0, 2.2, 6), (-3.0, -10.0, 1.2, 7), (7.0, -12.0, 1.2, 8),
-                (15.0, -8.0, 1.0, 9), (-13.0, -8.0, 1.0, 10)]
+# ---------------------------------------------------------------- le défi : la masse sur le bouclier, la lueur rouge
+# La lueur : un halo rouge, doux et translucide, qui épouse sa silhouette sans trait (un dégradé qui s'efface vers
+# l'extérieur, qui monte un peu comme une chaleur) ; il gonfle puis s'éteint (serré, large, pâle). Aucune ligne,
+# aucun anneau. (Même rouge que la provocation de Zaroth et que l'effet commun « provocation ».)
+LUEUR = {0: (3.0, 160, 1), 1: (5.0, 175, 2), 2: (6.5, 95, 3), 3: (7.5, 45, 4)}
+GLOW_TONES = '123456'
 
 
-def wall_hit(ctx):
-    return ctx.ball + np.array([9.0, -1.0])
+def red_glow(cv, back, k):
+    sig, amax, rise = LUEUR[k]
+    m = cv != '.'
+    src = np.roll(m, -rise, 0)
+    B = np.asarray(Image.fromarray((src * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig)), float) / 255
+    a = np.clip(B * 2.4, 0, 1) * amax
+    yy = np.arange(H)[:, None]
+    a = np.where(yy <= GROUND + 1, a, 0)            # posé au sol : rien sous ses pieds
+    for c in GLOW_TONES:
+        sel = (a >= ALPHA[c] * 0.85) & (back == '.')
+        back[sel] = c
 
 
-def fx_wall_hit(k):
+def fx_taunt(k):
     def f(cv, back, front, ctx):
-        c = wall_hit(ctx)
+        red_glow(cv, back, k)
+    return f
+
+
+def clang_point(ctx):
+    """là où la boule frappe la face du bouclier"""
+    return ctx.ball + np.array([3.0, 3.0])
+
+
+def fx_clang(k):
+    def f(cv, back, front, ctx):
+        c = clang_point(ctx)
         if k == 0:
-            pop(front, (c[0], c[1]), 9.0, facing=180, tones='ZMNJ')
-        fx_sparks(c, k, seed=13, scale=1.5)(cv, back, front, ctx)
+            pop(front, (c[0], c[1]), 5.0, facing=60, tones='ZMNJ')
+        elif k == 1:
+            pop(front, (c[0] + 1, c[1] - 1), 2.4, facing=60, tones='MNJ')
+        fx_sparks(c, k, seed=17, scale=1.0)(cv, back, front, ctx)
     return f
 
 
 RAISED = dict(G=(39, 27), ang=96, bend=1, wd=262, po=(0, -2))
+# la masse armée au-dessus de la tête, la boule en arrière (avant de frapper le bouclier)
+WIND = dict(G=(42, 36), ang=128, bend=1, crouch=1, lean=-1, sh=(1, -1), head=(0, 0), po=(0, -1))
+# la boule sur la face du bouclier (le bouclier en avant, tourné vers l'ennemi)
+CLANG = dict(G=(64, 74), ang=22, bend=1, crouch=2, lean=2, sh=(2, -1), head=(1, 1))
+N_ST = len(STONES)
+# l'ordre de sortie : celles de derrière et des côtés d'abord, celles de devant juste après (un anneau qui se dresse)
+RISE_A = [0.55 if (STONES[i][0] % 360) > 160 or STONES[i][0] < 20 else 0.3 for i in range(N_ST)]
+SINK_A = [0.6 if 40 < STONES[i][0] < 140 else 0.75 for i in range(N_ST)]
+SINK_B = [0.15 if 40 < STONES[i][0] < 140 else 0.3 for i in range(N_ST)]
 SPECIALE = [
-    dict(arms='orig', ms=100),
+    dict(arms='orig', ms=90),
     dict(G=(40, 33), ang=93, bend=1, wd=258, po=(0, -1), crouch=0, lean=-1, leg=(3, 0), glow=1, sh=(0, -1),
-         fx_list=[fx_gather(1)], ms=120),
+         fx_list=[fx_gather(1)], ms=110),
     dict(RAISED, crouch=-1, lean=-1, leg=(7, 1), glow=2, flare=1, head=(0, -1), sh=(1, -2), sw=1,
-         fx_list=[fx_gather(2)], ms=280),
+         fx_list=[fx_gather(2)], ms=240),
+    # il tape du pied : la veine d'or court en anneau, les dalles jaillissent
     dict(RAISED, crouch=3, lean=0, glow=3, flare=1, head=(0, 1), sh=(0, 0), sw=-1,
-         fx_list=[fx_stomp(0), fx_rift(1), fx_wall(rise=0.45, veins=1, dust=1)], ms=60),
+         fx_list=[fx_stomp(0), fx_ring(0, vein=2, s=0.55)], ms=60),
+    dict(RAISED, crouch=3, lean=0, glow=3, flare=1, head=(0, 1), sh=(0, 0),
+         fx_list=[fx_stomp(1), fx_ring(RISE_A, vein=2, dust=1)], ms=60),
     dict(RAISED, crouch=2, lean=0, glow=3, flare=1, head=(0, 1), sh=(0, 0),
-         fx_list=[fx_stomp(1), fx_rift(2), fx_wall(rise=1.05, veins=1, dust=1)], ms=220),
-    dict(G=(27, 44), ang=158, crouch=1, lean=-2, sh=(2, -3), head=(-1, 1), bend=1, glow=2, flare=1, sw=1,
-         fx_list=[fx_stomp(2), fx_rift(3), fx_wall(rise=1.0, veins=1, dust=2)], ms=170),
-    dict(G=(50, 38), ang=62, crouch=1, lean=1, sh=(0, -2), bend=1, glow=2, smear=fx_smear((27, 44), 158), sw=-1,
-         fx_list=[fx_wall(rise=1.0, dust=3)], ms=40),
-    dict(G=(80, 71), ang=-8, crouch=3, lean=5, sh=(-6, 2), head=(1, 2), bend=1, glow=3, sw=1,
-         fx_list=[fx_wall(rise=1.0, veins=2), fx_wall_hit(0), fx_stomp(0)], flash=20, ms=230),
-    dict(G=(80, 70), ang=-7, crouch=3, lean=5, sh=(-6, 2), head=(1, 1), bend=1, glow=2,
-         fx_list=[fx_wall(veins=2, tilt=12), fx_wall_hit(1), fx_stomp(1)], ms=90),
-    dict(G=(76, 62), ang=32, crouch=2, lean=3, sh=(-3, 0), head=(1, 1), bend=1, glow=1,
-         fx_list=[fx_wall(t=0.4, dust=2), fx_wall_hit(2), fx_stomp(2)], ms=80),
+         fx_list=[fx_stomp(2), fx_ring(1.12, vein=2, dust=1)], ms=70),
+    # LANCEMENT (image 6) : le rempart dressé s'illumine d'or tout autour de lui
+    dict(RAISED, crouch=1, lean=0, glow=3, flare=1, head=(0, 0), sh=(0, -1), sw=1, tint=(TINT_GOLD, 10),
+         fx_list=[fx_ring(1.0, vein=2, glow_lv=2, dust=2, glints=(0, 4, 8, 12), motes=1)], ms=210),
+    dict(RAISED, crouch=1, lean=0, glow=2, head=(0, 0), sh=(0, -1), tint=(TINT_GOLD, 5),
+         fx_list=[fx_ring(1.0, vein=1, glow_lv=1, dust=3, glints=(2, 6, 10, 13), motes=2)], ms=100),
+    # les dalles se rassoient dans le sol
+    dict(RAISED, crouch=1, lean=0, glow=1, head=(0, 0), sh=(0, -1),
+         fx_list=[fx_ring(SINK_A, dust=1)], ms=70),
+    dict(WIND, glow=1, fx_list=[fx_ring(SINK_B, dust=2)], ms=150),
+    # le défi : la masse s'abat sur la face du bouclier (clang), le halo rouge s'allume (PROVOCATION, image 10)
+    dict(CLANG, glow=2, flare=1, sw=1, smear=fx_smear((42, 36), 128, w=8), tint=(TINT_RED, 10),
+         fx_list=[fx_clang(0), fx_taunt(0), fx_ring(0, dust=3)], ms=170),
+    dict(CLANG, sh=(1, -1), glow=1, flare=1, head=(1, 0), tint=(TINT_RED, 5),
+         fx_list=[fx_clang(1), fx_taunt(1), fx_breath(1)], ms=120),
+    dict(CLANG, G=(62, 70), ang=34, sh=(1, -1), head=(1, 0),
+         fx_list=[fx_clang(2), fx_taunt(2), fx_breath(2)], ms=120),
     dict(G=(46, 56), ang=100, crouch=1, lean=1, sh=(-1, 0), head=(0, 1), bend=1, mace_back=1,
-         fx_list=[fx_wall(t=0.78, dust=3)], ms=70),
-    dict(arms='orig', crouch=1, fx_list=[fx_crash(0)], ms=210),
-    dict(arms='orig', crouch=1, fx_list=[fx_crash(1)], ms=110),
-    dict(arms='orig', crouch=0, fx_list=[fx_crash(2), fx_breath(1)], ms=120),
-    dict(arms='orig', crouch=0, head=(0, -1), fx_list=[fx_crash(3), fx_breath(2)], ms=140),
-    dict(arms='orig', crouch=0, fx_list=[fx_breath(3)], ms=160),
+         fx_list=[fx_taunt(3), fx_breath(3)], ms=100),
+    dict(arms='orig', crouch=1, ms=110),
+    dict(arms='orig', ms=140),
 ]
 
 
@@ -1386,7 +1454,7 @@ def build_all(which=('pose', 'attaque', 'speciale')):
         for i, spec in enumerate(specs):
             cv, back, front, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []), getattr(ctx, 'retouch_off', (0, 0)))
-            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+            fr.append((compose(cv, back, front, flash=spec.get('flash'), tint=spec.get('tint')), spec['ms']))
         anims[name] = fr
     return anims
 
@@ -1407,6 +1475,7 @@ def bbox(frames, margin=4):
 
 
 GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+ATT_BOX = (9, 50, 336, 198)              # la case de l'attaque validée (celle d'avant la nouvelle spéciale)
 
 
 def save_gif(path, images, durations):
@@ -1427,9 +1496,10 @@ def save_gif(path, images, durations):
 
 def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
-    both = anims['attaque'] + anims['speciale'] + anims['pose']
-    bb = bbox(both, 6)
-    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    # la case de l'attaque est celle des animations validées (ATT_BOX) ; la spéciale la reprend et l'agrandit au besoin
+    sp = bbox(anims['speciale'], 6)
+    bb = (min(ATT_BOX[0], sp[0]), min(ATT_BOX[1], sp[1]), max(ATT_BOX[2], sp[2]), max(ATT_BOX[3], sp[3]))
+    boxes = {'pose': GAME_BOX, 'attaque': ATT_BOX, 'speciale': bb}
     for name in ('pose', 'attaque', 'speciale'):
         box = boxes[name]
         ims = [on_bg(img).crop(box) for img, _ in anims[name]]
