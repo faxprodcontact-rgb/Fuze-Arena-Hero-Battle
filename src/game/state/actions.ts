@@ -1716,11 +1716,12 @@ export function claimLogin(): Gain | null {
 export function checkMail(): void {
   const s0 = getState();
   const t = now();
-  const fresh = MAILS.filter((m) => !(s0.mail?.got ?? {})[m.id] && (m.at === null || Date.parse(m.at) <= t));
+  const fresh = MAILS.filter((m) => !(s0.mail?.got ?? {})[m.id] && (m.at === null || Date.parse(m.at) <= t) && (!m.personal || s0.mail?.personal?.[m.id]));
   if (!fresh.length) return;
   update((s) => {
     const box = (s.mail ??= { got: {}, read: [], claimed: [] });
-    for (const m of fresh) box.got[m.id] = m.at === null ? s.createdAt : Math.max(Date.parse(m.at), s.createdAt);
+    // un cadeau personnel arrive maintenant (une vieille partie l'aurait sinon déjà « oublié »)
+    for (const m of fresh) box.got[m.id] = m.personal ? t : m.at === null ? s.createdAt : Math.max(Date.parse(m.at), s.createdAt);
   });
 }
 
@@ -1737,6 +1738,8 @@ export function mailbox(s: PlayerState = getState()): MailItem[] {
   if (!box) return [];
   const limit = now() - MAIL_KEEP_DAYS * 864e5;
   return MAILS.filter((m) => box.got[m.id] !== undefined && box.got[m.id]! >= limit)
+    // un cadeau personnel est rangé dans la sauvegarde
+    .map((m) => ({ ...m, reward: m.personal ? box.personal?.[m.id] : m.reward }))
     .map((def) => ({ def, at: box.got[def.id]!, read: box.read.includes(def.id), claimed: box.claimed.includes(def.id) }))
     .sort((a, b) => b.at - a.at);
 }

@@ -13,7 +13,7 @@ const team: [string, Slot][] = [
   [epic('water', 'warrior'), 1],
   [epic('wind', 'support'), 2],
   [epic('earth', 'healer'), 3],
-  [epic('fire', 'marksman'), 4],
+  [epic('earth', 'marksman'), 4],
 ];
 
 const setup = (seed: number, auto = true): BattleSetup => ({

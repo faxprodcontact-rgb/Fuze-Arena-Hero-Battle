@@ -4,17 +4,17 @@ import { Battle } from '../src/core/battle/engine';
 import { heroPowerWithGear, heroToUnit } from '../src/core/battle/units';
 import type { Slot } from '../src/core/battle/types';
 import { stagePower } from '../src/core/data/campaign';
-import { heroesOf } from '../src/core/data/heroes';
+import { STARTER_HERO } from '../src/core/data/heroes';
 import { BALANCE, campaignWaves, slotsAt } from '../src/core/stages';
 import type { Hero } from '../src/core/types';
 
 /** Une section équilibrée : protecteur devant, attaquants, soigneur et soutien derrière. */
 const LINEUP: [string, Slot][] = [
-  [heroesOf('knights', 'epic')[0]!.id, 0], // protecteur
-  [heroesOf('mages', 'epic')[1]!.id, 1], // attaquant
-  [heroesOf('demons', 'epic')[2]!.id, 3], // soutien
-  [heroesOf('angels', 'epic')[3]!.id, 4], // soigneur
-  [heroesOf('assassins', 'legendary')[0]!.id, 2], // attaquant
+  [STARTER_HERO, 0], // protecteur
+  ['mages-3', 1], // attaquant
+  ['angels-1', 3], // soutien
+  ['myths-6', 4], // soigneur
+  ['assassins-2', 2], // attaquant
 ];
 const ORDER: Slot[][] = [[2], [0, 3], [0, 2, 3], [0, 1, 2, 3], [0, 1, 2, 3, 4]];
 

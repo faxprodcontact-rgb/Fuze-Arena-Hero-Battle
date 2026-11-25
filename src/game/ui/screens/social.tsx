@@ -37,7 +37,7 @@ function members(guild: string) {
     name,
     power: Math.round(mine * (0.6 + rng() * 0.9)),
     role: i === 0 ? 'crown' : i < 3 ? 'star' : '',
-    defId: ['knights-10', 'mages-11', 'angels-12', 'demons-10', 'myths-10', 'assassins-11', 'knights-6', 'mages-7', 'angels-8'][i]!,
+    defId: ['knights-9', 'mages-11', 'angels-6', 'demons-9', 'myths-10', 'assassins-11', 'knights-7', 'mages-7', 'angels-10'][i]!,
   }));
 }
 

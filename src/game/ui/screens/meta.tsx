@@ -4,7 +4,7 @@ import {
   AD_SECONDS, ARENA_SHOP, DAILY_CHESTS, DAILY_QUESTS, GUILD_SHOP, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL,
   WEEKLY_CHESTS, WEEKLY_QUESTS, type Reward,
 } from '../../../core/data/modes';
-import { heroDef, heroesOf } from '../../../core/data/heroes';
+import { STARTER_HERO, heroDef } from '../../../core/data/heroes';
 import { RENAME_COST } from '../../../core/data/modes';
 import { heroImage } from '../../art';
 import { legalDoc, type LegalDoc } from '../../legal';
@@ -299,7 +299,7 @@ export function NameScreen() {
   return (
     <div class="name-screen" style={{ backgroundImage: 'linear-gradient(180deg, #2f224466, #2f224499), url(art/ui/loading.jpg)' }}>
       <div class="name-card">
-        <img src={heroImage(heroesOf('knights', 'epic')[0]!.id)} alt="" />
+        <img src={heroImage(STARTER_HERO)} alt="" />
         <h1>{t('name.title')}</h1>
         <NameField value={name} onInput={(v) => { setName(v); setError(null); }} error={error} />
         <Btn kind="green" wide onClick={() => setError(chooseName(name))}>{t('ok')}</Btn>

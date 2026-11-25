@@ -11,7 +11,7 @@ import {
   incomePerHour,
   levelCost,
 } from '../src/core/data/economy';
-import { heroDef, heroesOf, heroesOfElement } from '../src/core/data/heroes';
+import { STARTER_HERO as STARTER, heroDef, heroesOfElement } from '../src/core/data/heroes';
 import { FRAGMENTS_PER_COPY, MAX_YELLOW, MYTHIC_STARS, RARITY_RULES } from '../src/core/data/stars';
 import { GEAR_GAIN, LEVEL_GAIN, levelCap } from '../src/core/data/stats';
 import { applyFusion, canGainStar, planFusion } from '../src/core/fusion';
@@ -41,7 +41,7 @@ export interface Profile {
 /** Puissance demandée pour gagner un niveau de campagne. */
 export type Curve = (stage: number) => number;
 
-export const STARTER_HERO = heroesOf('knights', 'epic')[0]!.id;
+export const STARTER_HERO = STARTER;
 export const TUTORIAL_SUMMONS = 10;
 /** Un combat dure 20 à 40 s ; en vitesse ×2 avec l'écran de victoire, environ 20 s. */
 const FIGHT_MINUTES = 1 / 3;
@@ -161,7 +161,7 @@ export class PlayerSim {
     if (!fresh.some((h) => heroDef(h.defId).rarity === 'epic')) {
       const last = fresh[fresh.length - 1]!;
       this.roster = this.roster.filter((h) => h.uid !== last.uid);
-      this.addHero(heroesOf('mages', 'epic')[0]!.id);
+      this.addHero('mages-2');
     }
   }
 

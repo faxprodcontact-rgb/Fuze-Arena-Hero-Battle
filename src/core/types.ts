@@ -1,8 +1,6 @@
 // Types de base partagés par tout le jeu (téléphone, serveur, simulations).
 import type { Passive, SkillDef, Talent } from './battle/types';
 
-export const FACTIONS = ['knights', 'assassins', 'mages', 'demons', 'angels', 'myths'] as const;
-export type Faction = (typeof FACTIONS)[number];
 
 export const ELEMENTS = ['fire', 'wind', 'water', 'earth'] as const;
 export type Element = (typeof ELEMENTS)[number];
@@ -19,7 +17,6 @@ export type Rarity = (typeof RARITIES)[number];
 export interface HeroDef {
   id: string;
   name: string;
-  faction: Faction;
   element: Element;
   role: Role;
   rarity: Rarity;

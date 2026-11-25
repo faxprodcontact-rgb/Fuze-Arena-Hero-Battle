@@ -2,7 +2,9 @@
 // existent ; sinon, les anciens dessins provisoires faits par le code ci-dessous (tête de faction + accessoire de rôle).
 // Tous regardent vers la droite ; les monstres sont retournés au combat.
 import { heroDef } from '../core/data/heroes';
-import type { Element, Faction, HeroDef, Rarity } from '../core/types';
+import type { Element, HeroDef, Rarity } from '../core/types';
+type Faction = 'knights' | 'assassins' | 'mages' | 'demons' | 'angels' | 'myths';
+const fac = (d: HeroDef) => d.id.split('-')[0] as Faction;
 import { ART_META } from './art-meta';
 import { PIXEL } from './pixel-meta';
 import { DEFAULT_LOOK, monsterArtId, type Look } from './look';
@@ -64,8 +66,8 @@ function eyes(c: Ctx, color = '#1b1b2f', y = 44) {
 
 function drawHeroOn(c: Ctx, d: HeroDef, index: number) {
   const el = ELEMENT_COLOR[d.element];
-  const skin = d.faction === 'demons' ? '#e8a28c' : SKINS[index % SKINS.length]!;
-  const hair = d.faction === 'angels' ? '#ffe08a' : HAIRS[(index * 7) % HAIRS.length]!;
+  const skin = fac(d) === 'demons' ? '#e8a28c' : SKINS[index % SKINS.length]!;
+  const hair = fac(d) === 'angels' ? '#ffe08a' : HAIRS[(index * 7) % HAIRS.length]!;
 
   if (d.rarity === 'legendary') {
     const g = c.createRadialGradient(64, 64, 10, 64, 64, 64);
@@ -74,17 +76,17 @@ function drawHeroOn(c: Ctx, d: HeroDef, index: number) {
     c.fillStyle = g;
     circle(c, 64, 64, 64);
   }
-  if (d.faction === 'angels') {
+  if (fac(d) === 'angels') {
     fill(c, '#ffffff', 0.9);
     ellipse(c, 34, 74, 17, 25);
     ellipse(c, 28, 64, 13, 17);
   }
-  if (d.faction === 'demons') {
+  if (fac(d) === 'demons') {
     fill(c, '#7a1219');
     tri(c, 30, 104, 18, 84, 40, 96);
   }
   // Corps et ceinture couleur de l'élément.
-  fill(c, FACTION_COLOR[d.faction]);
+  fill(c, FACTION_COLOR[fac(d)]);
   rrect(c, 42, 62, 44, 50, 14);
   fill(c, el);
   c.fillRect(42, 88, 44, 7);
@@ -92,7 +94,7 @@ function drawHeroOn(c: Ctx, d: HeroDef, index: number) {
   fill(c, skin);
   circle(c, 66, 44, 22);
 
-  switch (d.faction) {
+  switch (fac(d)) {
     case 'knights':
       fill(c, '#9aa3b5');
       halfDome(c, 66, 44, 24);
@@ -164,7 +166,7 @@ function drawHeroOn(c: Ctx, d: HeroDef, index: number) {
     case 'warrior':
     case 'marksman':
     case 'assassin':
-      if (d.ranged && d.faction !== 'mages') {
+      if (d.ranged && fac(d) !== 'mages') {
         c.globalAlpha = 1;
         c.strokeStyle = '#9b6b3a';
         c.lineWidth = 4;

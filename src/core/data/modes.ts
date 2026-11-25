@@ -144,7 +144,7 @@ export const WEEKLY_QUESTS: QuestDef[] = [
   { id: 'w-guild', event: 'guildBoss', goal: 6, points: 20 },
 ];
 /** Coffres d'activité : à 20, 40, 60, 80 et 100 points. */
-export type Reward = Partial<Record<'gold' | 'essence' | 'gems' | 'scrolls' | 'basicScrolls' | 'crystals', number>>;
+export type Reward = Partial<Record<'gold' | 'essence' | 'gems' | 'scrolls' | 'basicScrolls' | 'crystals' | 'dust', number>>;
 export const DAILY_CHESTS: { points: number; reward: Reward }[] = [
   { points: 20, reward: { basicScrolls: 4 } },
   { points: 40, reward: { gems: 150 } },
