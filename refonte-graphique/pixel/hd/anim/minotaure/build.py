@@ -1241,7 +1241,7 @@ def fx_ring(k):
 def _rain_grains():
     rng = np.random.RandomState(7)
     out = []
-    n = 56
+    n = 72
     h = BASE_Y - APEX_Y
     for i in range(n):
         a = 360.0 * i / n + rng.uniform(-3, 3)
@@ -1253,7 +1253,7 @@ def _rain_grains():
         tx, ty, side = ring_pt(a, R)
         delay = rng.uniform(0.0, 1.5)
         dur = rng.uniform(3.0, 4.3)
-        kind = 2 if i % 4 == 0 else 1 if i % 3 == 0 else 0     # 2 : pétale, 1 : gros grain, 0 : grain
+        kind = 2 if i % 3 == 0 else 1 if i % 2 == 0 else 0     # 2 : pétale, 1 : gros grain, 0 : grain
         out.append((ox, oy, tx, ty, side, delay, dur, kind, i % 2))
     return out
 
@@ -1275,12 +1275,12 @@ def fx_rain(k):
                     landing(lay, tx, ty, 1.0 - age)
                     soft_halo(ctx['gback'] if lay is back else ctx['gfront'], tx, ty, 3.0, 1.0 - age)
                 continue
-            e = 1 - (1 - tau) ** 2                          # il s'écarte vite, puis de moins en moins
+            e = 1 - (1 - tau) ** 2.5                        # il s'écarte vite, puis de moins en moins
             x = ox + (tx - ox) * e
             y = oy + (ty - oy) * tau ** 1.35 - 9 * math.sin(math.pi * min(1.0, tau * 1.6)) * (1 - tau)
             if y < oy and tau < 0.2:
                 lay = front
-            soft_halo(ctx['gback'] if lay is back else ctx['gfront'], x, y, 3.2 if kind else 2.4, 1.0 - 0.4 * tau)
+            soft_halo(ctx['gback'] if lay is back else ctx['gfront'], x, y, 3.6 if kind else 2.6, 1.2 - 0.4 * tau)
             if kind == 2:
                 petal(lay, x, y, flip + int(k))
             else:
