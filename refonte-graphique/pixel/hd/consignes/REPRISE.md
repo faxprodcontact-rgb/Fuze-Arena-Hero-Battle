@@ -83,6 +83,11 @@
   dans le combat d'essai + mode « tous à la suite », corrections de jeu_export.py (arguments de compose, calques
   transparents, vitesse/pente des projectiles, tengu-eventail non déterministe), contrôle des 60 dans le jeu
   (sortie/combat-hd-tous.gif, -planche.png). Ensuite : publier (version, journal) et montrer au propriétaire.
+- 25/11 : FAIT. Réglages → Outils de test → « Combat HD (essai) » ouvre le choix des combattants
+  (`src/game/ui/screens/hd-pick.tsx`, `src/game/hd-roster.ts`) : 5 héros et 5 monstres au plus, « Au hasard », ou
+  « Les 60 à la suite » (6 manches de 5 contre 5 : 5 héros contre 4 monstres et 1 héros ; chacun son attaque puis sa
+  spéciale, cibles variées, fond en bas compris). Export : nouvelles clés `rase`, `retour`, `vitesse`, `pente`
+  (consigne export-jeu.md, partie 4). Contrôle : `pixel/sortie/combat-hd-tous.gif` et `combat-hd-tous-planche.png`.
 
 ## Fonds de combat pixel art HD animés (demande du 25/11/2026)
 - 8 fonds, un par clan / général (consigne `fond.md`), outillage commun `refonte-graphique/pixel/fonds/` (LISEZMOI.md).
