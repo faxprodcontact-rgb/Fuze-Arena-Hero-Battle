@@ -3,7 +3,7 @@ id: mon-eldra-rapide
 sol: 64 116
 tete: 74 55 104 82
 souffle: 90
-cligne: 1=I 2=H 3=I 4=I 7=G 8=G 9=G
+cligne: 1=I 2=I 3=I 4=I 7=H 8=H 9=H
 palette:
 A #2e1824  fourrure, creux le plus profond (brun violacé)
 B #4e2420  fourrure, ombre

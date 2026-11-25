@@ -1,7 +1,31 @@
-# brouillon
+# Lutin de magma (clan de Kael, élément feu) : rapide, premier rang.
+#
+# Créature : un petit lutin fait de roche volcanique noire craquelée (la roche violet sombre de Kael, dans ses tons
+#   les plus foncés), avec un coeur de lave qui brille à travers la poitrine. Petit et vif, rien d'un guerrier
+#   humain : grosse tête, dos voûté, très longs bras, griffes d'obsidienne (le verre volcanique bleu nuit de
+#   l'armure de Kael). Environ 70 px du sol au bout de la flamme (57 px sans la flamme).
+# Pose : trois quarts tournée vers la droite, accroupi, prêt à bondir : buste penché en avant, dos rond, genou
+#   proche replié en avant, pieds à plat (trois orteils, griffes posées au sol, un ergot au talon). Bras proche
+#   (devant) : l'avant-bras tendu bas vers l'avant, la main ouverte, trois doigts en éventail et le pouce, griffes
+#   crochues. Bras lointain : levé à côté de la tête, la main grande ouverte vers l'ennemi (pouce, index levé,
+#   majeur et annulaire écartés), griffes d'obsidienne.
+# Tête : grosse tête ronde de lutin, arcades lourdes froncées, deux yeux de braise (même forme, même ligne ; l'oeil
+#   lointain plus étroit, son coin intérieur caché par l'arête du nez), petit nez discret, une larme de lave sous
+#   l'oeil (comme Kael). Grande bouche lumineuse en rictus jusqu'à la joue : crocs de pierre ivoire en haut et en
+#   bas, la gorge de lave qui rougeoie (rouge sombre au bord, jaune et blanc au fond, jamais noir), menton éclairé.
+#   Oreille pointue couchée vers l'arrière, creux sombre avec une lueur de lave au fond.
+# Signes du clan : petite mèche de flamme sur le crâne (trois langues couchées vers l'arrière, comme la crinière de
+#   Kael : racine blanc-jaune, dessus orange, dessous rouge), yeux de braise, coeur de lave dans la poitrine,
+#   quelques fissures de lave qui serpentent (dos, cuisse, tibia, avant-bras, tempe), griffes d'obsidienne.
+# Couleurs (une seule lumière, en haut à droite) : palette de Kael — roche 1→5 (violet nuit → éclat chaud), lave
+#   r→w, yeux x/y/z, obsidienne A→G, crocs T/U.
+# Souffle au milieu du buste (y = 94 : tête, buste et bras levé montent) ; clignement : les yeux de braise
+#   s'éteignent (paupières de pierre).
+# Fabrication : volumes ébauchés par un petit script, puis visage, bouche, flamme, coeur, oreille, mains, pieds,
+#   griffes et fissures posés pixel par pixel.
 id: mon-kael-rapide
 sol: 64 116
-tete: 59 61 87 87
+tete: 57 60 88 87
 souffle: 94
 cligne: x=3 y=3 z=2
 palette:
