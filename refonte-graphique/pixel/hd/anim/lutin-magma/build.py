@@ -1009,14 +1009,14 @@ def fx_burst(k):
     def f(cv, back, front, ctx):
         C = to_canvas(BURST, DASH)
         gy = GROUND
-        if k <= 2:
+        if k <= 1:
             L = [28, 36, 38][k]
             w = [14.0, 10.0, 5.5][k]
             tones = ['wvvutsr', 'vuutsr', 'utsr'][k]
             spin = [0, 18, 30][k]                     # le moulinet tourne d'une image à l'autre
-            for i, a in enumerate((45, 135, 225, 315)):
+            for i, (a, ln) in enumerate(((45, 1.0), (140, 0.82), (228, 0.92), (318, 0.76))):   # branches inégales
                 ang = math.radians(a - spin)
-                end = C + L * np.array([math.cos(ang), -math.sin(ang)])
+                end = C + L * ln * np.array([math.cos(ang), -math.sin(ang)])
                 end[1] = min(end[1], gy - 2)
                 # la branche : fine au bout, épaisse au coeur ; le ventre de la courbe toujours du même côté
                 slash(back if i % 2 else front, end, C, -0.32 * L, w, tones=tones, tail=[0.0, 0.0, 0.35][k])

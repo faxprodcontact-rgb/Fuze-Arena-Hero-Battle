@@ -589,6 +589,21 @@ POSE = [
 HIT = (ENEMY_X, GROUND - 40)                 # où le feu follet touche l'ennemi (toile)
 
 
+def fx_blaze(level, phase=0):
+    """la lanterne embrasée : des langues de flamme lèchent son chapeau et se recourbent, des braises montent"""
+    def f(cv, back, front, ctx):
+        c = ctx.lantern
+        top = c[1] - 10
+        hs = ((8, 6), (12, 9), (15, 11))[level]
+        ph = phase % 2
+        tongue(back, (c[0] - 2, top + 3), hs[0] + 2 * ph, 5.0, bend=-0.8 + 0.5 * ph, lean=-0.1, tones='vuts', fork=False)
+        tongue(back, (c[0] + 3, top + 3), hs[1] + 2 * (1 - ph), 4.2, bend=0.9 - 0.4 * ph, lean=0.2, tones='vuts',
+               fork=False)
+        for k, (dx, dy) in enumerate(((-7, -20), (6, -24), (-1, -30), (9, -15))[:level + 2]):
+            ember(back, c[0] + dx + ph, c[1] + dy - 2 * (phase % 3), big=(k == 0))
+    return f
+
+
 def fx_gather(level):
     """la lanterne s'allume : des braises montent vers elle en spirale, une petite volute de feu s'enroule autour"""
     def f(cv, back, front, ctx):
@@ -753,21 +768,6 @@ def fx_tap(k):
         else:
             puff(back, (x - 8, y - 4), 2.2, 'ijl', hollow=0.4)
             puff(back, (x + 9, y - 4), 2.4, 'ijl', hollow=0.4)
-    return f
-
-
-def fx_blaze(level, phase=0):
-    """la lanterne embrasée : des langues de flamme lèchent son chapeau et se recourbent, des braises montent"""
-    def f(cv, back, front, ctx):
-        c = ctx.lantern
-        top = c[1] - 10
-        hs = ((8, 6), (12, 9), (15, 11))[level]
-        ph = phase % 2
-        tongue(back, (c[0] - 2, top + 3), hs[0] + 2 * ph, 5.0, bend=-0.8 + 0.5 * ph, lean=-0.1, tones='vuts', fork=False)
-        tongue(back, (c[0] + 3, top + 3), hs[1] + 2 * (1 - ph), 4.2, bend=0.9 - 0.4 * ph, lean=0.2, tones='vuts',
-               fork=False)
-        for k, (dx, dy) in enumerate(((-7, -20), (6, -24), (-1, -30), (9, -15))[:level + 2]):
-            ember(back, c[0] + dx + ph, c[1] + dy - 2 * (phase % 3), big=(k == 0))
     return f
 
 

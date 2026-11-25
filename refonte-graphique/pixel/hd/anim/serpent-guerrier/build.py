@@ -646,7 +646,7 @@ def tip_of(ctx):
     return blade_point(ctx.guard, ctx.phi if ctx.phi is not None else 0.0, SPINE[-1])
 
 
-def fx_smear(phi0, phi1, tones='xxDC', r0=12.0, r1=19.5):
+def fx_smear(phi0, phi1, tones='xxDDC', r0=9.0, r1=19.5):
     """la traînée de la lame entre deux angles (autour de la garde)"""
     def f(cv, back, front, ctx):
         # angle (écran) du bout de la lame pour un angle de poignée phi
@@ -655,7 +655,7 @@ def fx_smear(phi0, phi1, tones='xxDC', r0=12.0, r1=19.5):
         a0 = phi0 + (tip_local + bel_local) / 2
         a1 = phi1 + (tip_local + bel_local) / 2
         lo, hi = (a1, a0) if a1 < a0 else (a0, a1)
-        arc_band(back, ctx.guard, r0, r1, a0, a1, tones, fade=0.6)
+        arc_band(back, ctx.guard, r0, r1, a0, a1, tones, fade=0.45)
     return f
 
 

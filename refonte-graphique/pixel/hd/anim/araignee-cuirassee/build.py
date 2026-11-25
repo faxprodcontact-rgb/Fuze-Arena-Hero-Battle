@@ -742,8 +742,382 @@ POSE = [
 ]
 
 
-ATTAQUE = []
-SPECIALE = []
+# ---------------------------------------------------------------- outils des effets (courbes)
+def bezier(p0, p1, p2, p3, n):
+    out = []
+    for i in range(n + 1):
+        t = i / n
+        a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+        out.append((a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]))
+    return out
+
+
+def stroke(cv, pts, widths, tones, keep=None):
+    """peint un ruban le long de points, avec une épaisseur par point (coeur clair -> bord sombre)"""
+    best = {}
+    for (px, py), wv in zip(pts, widths):
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1.2 else 0.85
+                    if k < best.get((x, y), 9):
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in best.items():
+        put(cv, x, y, tones[min(m - 1, int(k * m))], keep)
+
+
+def leg_tip(spec, f):
+    """la pointe d'une patte redessinée (toile)"""
+    return np.array(g2c(*spec[3]), float)
+
+
+def fx_smear(names, frm, bend=(-10, -6)):
+    """la traînée d'une patte qui s'abat : un fuseau de poussière pâle qui suit l'arc de la pointe, depuis sa
+    position levée (frm[nom], grille + déplacement du corps) jusqu'à elle ; épais près de la patte, effilé derrière"""
+    def f(cv, back, front, ctx):
+        for n in names:
+            if n not in ctx.tips:
+                continue
+            p3 = ctx.tips[n]
+            p0 = np.array(frm[n], float)
+            c1 = p0 + (p3 - p0) * 0.35 + np.array([4, -9])
+            c2 = p0 + (p3 - p0) * 0.75 + np.array([6, -4])
+            pts = bezier(p0, c1, c2, p3, 60)
+            wd = [0.3 + 5.5 * (i / 60) ** 1.6 * (1 - 0.35 * (i / 60) ** 8) for i in range(61)]
+            stroke(back, pts, wd, 'jkl')
+    return f
+
+
+# ---------------------------------------------------------------- les cristaux du dessin (réutilisés dans les effets)
+def _crystals():
+    """les cristaux de grenat de la selle (composantes de lettres R-W au-dessus de la rangée 66) : des sprites"""
+    m = isin(SPIDER, GEMS) & (YY < 66)
+    seen = np.zeros_like(m)
+    out = []
+    for y0, x0 in zip(*np.nonzero(m)):
+        if seen[y0, x0]:
+            continue
+        stack, pts = [(y0, x0)], []
+        seen[y0, x0] = True
+        while stack:
+            y, x = stack.pop()
+            pts.append((y, x))
+            for dy, dx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                Y, X = y + dy, x + dx
+                if 0 <= Y < GH and 0 <= X < GW and m[Y, X] and not seen[Y, X]:
+                    seen[Y, X] = True
+                    stack.append((Y, X))
+        ys, xs = zip(*pts)
+        if max(ys) - min(ys) >= 7:
+            g = np.full((max(ys) - min(ys) + 1, max(xs) - min(xs) + 1), '.', dtype='<U1')
+            for y, x in pts:
+                g[y - min(ys), x - min(xs)] = SPIDER[y, x]
+            out.append(g)
+    out.sort(key=lambda g: -g.shape[0])
+    return out
+
+
+CRYSTALS = _crystals()
+
+
+def crystal(cv, c, x, sink, keep_below=True, swap=None):
+    """pose un cristal du dessin, le pied au sol en x (toile), enfoncé de sink pixels (il sort de terre)"""
+    g = CRYSTALS[c % len(CRYSTALS)]
+    h, w = g.shape
+    for j in range(h):
+        for i in range(w):
+            ch = g[j, i]
+            if ch != '.':
+                if swap:
+                    ch = swap.get(ch, ch)
+                put(cv, x - w // 2 + i, GROUND - h + 2 + j + sink, ch)
+
+
+def slab(cv, bx, w, h, lean, sink=0.0, cut=0.0):
+    """une dalle de pierre qui sort du sol, penchée (lean : décalage du haut par pixel de hauteur), arête du haut et
+    flanc droit éclairés, flanc gauche dans l'ombre ; cut (0..1) : son haut est brisé (il en reste 1 - cut)"""
+    G = GROUND + sink
+    top = G - h
+    poly = [(bx - w / 2, G + 1), (bx + w / 2, G + 1), (bx + w / 2 + lean * h - 0.5, top + 2.5),
+            (bx + lean * h, top), (bx - w / 2 + lean * h + 0.5, top + 1.5)]
+    ymin = top + cut * h
+    xs = [p[0] for p in poly]
+    for y in range(int(top) - 1, int(G) + 2):
+        for x in range(int(min(xs)) - 1, int(max(xs)) + 2):
+            px, py = x + 0.5, y + 0.5
+            if py < ymin or not in_poly(px, py, poly):
+                continue
+            # distance aux bords gauche / droit (le long de la rangée) et au haut
+            fr = (py - top) / max(G - top, 1)
+            xl = (bx - w / 2 + lean * h * (1 - fr))
+            xr = (bx + w / 2 + lean * h * (1 - fr))
+            if py < top + 2.2 or py < ymin + 1.2 or px > xr - 1.6:
+                ch = 'a'
+            elif px < xl + 1.4:
+                ch = 'c'
+            elif py > G - 2.5:
+                ch = 'c'
+            else:
+                ch = 'b'
+            put(cv, x, y, ch)
+    # une fêlure courbe dans la dalle
+    for t in np.linspace(0.25, 0.6, 9):
+        y = top + t * (G - top)
+        if y >= ymin + 1:
+            x = bx + lean * h * (1 - t) - w * 0.1 + 1.5 * math.sin(t * 9)
+            put(cv, x, y, 'c', keep='b')
+
+
+def mound(cv, cx, r, hgt):
+    """le sol se soulève : une bosse de terre, éclairée en haut à droite"""
+    if hgt <= 0:
+        return
+    for y in range(int(GROUND - hgt) - 1, GROUND + 1):
+        for x in range(int(cx - r) - 1, int(cx + r) + 2):
+            dx, dy = (x + 0.5 - cx) / r, (y + 0.5 - GROUND) / max(hgt, 0.5)
+            if dx * dx + dy * dy <= 1:
+                k = dx * LN[0] * 1.2 + dy * LN[1]
+                put(cv, x, y, 'a' if k > 0.55 else 'b' if k > -0.1 else 'c')
+
+
+# ---------------------------------------------------------------- 2) l'attaque de base : « Coup de massue »
+# Un coup lourd de costaud. Longue préparation : il recule, se cabre (l'arrière s'écrase, la tête monte), lève très
+# haut ses deux pattes avant (la proche « pilier » et la lointaine de devant), crochets écartés ; il tient, les
+# cristaux du dos s'allument. Puis tout s'abat d'un coup (une image de vitesse, traînées de poussière) : les deux
+# pattes frappent le sol devant lui comme deux massues, la tête plonge et les crochets se referment. Impact tenu :
+# éclat de pierre, cailloux projetés, fissure, poussière sous les pointes et sous ses huit pieds (le sol tremble).
+# Retour lent : les pattes se relèvent et se reposent l'une après l'autre.
+P_UP = [(84, 82), (97, 57), (106, 49), (114, 55)]
+F2_UP = [(104.5, 69), (121, 30), (133, 27), (140, 35)]
+P_UP2 = [(84, 82), (97, 55), (106, 46), (115, 51)]
+F2_UP2 = [(104.5, 69), (121, 28), (134, 25), (141, 32)]
+P_MID = [(84, 82), (104, 64), (120, 82), (127, 100)]
+F2_MID = [(104.5, 69), (127, 45), (142, 68), (146, 92)]
+P_HIT = [(84, 82), (103, 70), (121, 96), (128, 116)]
+F2_HIT = [(104.5, 69), (126, 52), (143, 88), (148, 116)]
+P_OFF = [(84, 82), (100, 66), (116, 86), (120, 103)]
+F2_OFF = [(104.5, 69), (124, 47), (138, 74), (140, 98)]
+P_BACK = [(84, 82), (94, 70), (100, 88), (99, 108)]
+F2_BACK = [(104.5, 69), (120, 42), (128, 76), (127, 106)]
+FEET_ALL = ['A', 'B', 'C', 'G1', 'G2', 'F1']
+
+
+def fx_hit(level):
+    """l'impact des deux massues : un éclat de pierre entre les deux pointes, des cailloux projetés, une fissure"""
+    def f(cv, back, front, ctx):
+        a, b = ctx.tips['P'], ctx.tips['F2']
+        c = (a + b) / 2 + np.array([1, -3])
+        if level == 0:
+            pop(front, c, 5.0, facing=60, tones='ojab')
+            for (dx, dy, k) in ((-9, -9, 0), (9, -11, 1), (14, -4, 2), (-4, -14, 3)):
+                chunk(front, c[0] + dx, c[1] + dy, k, flip=dx < 0)
+            for i, t in enumerate((a, b)):
+                cloud(front, (t[0] + (2 if i else -2), GROUND - 2), 4.2, 'jklm', seed=31 + i)
+            crack(front, int(a[0]) - 4, int(b[0]) + 9, seed=4)
+        elif level == 1:
+            pop(front, c + np.array([1, -2]), 3.4, facing=60, tones='jkl')
+            for (dx, dy, k) in ((-13, -11, 0), (13, -14, 1), (19, -3, 2), (-6, -17, 3)):
+                chunk(front, c[0] + dx, c[1] + dy, k, flip=dx < 0)
+            for i, t in enumerate((a, b)):
+                cloud(front, (t[0] + (3 if i else -3), GROUND - 3), 4.6, 'jklm', hollow=0.35, seed=31 + i)
+            crack(front, int(a[0]) - 4, int(b[0]) + 9, seed=4)
+        else:
+            for (dx, k) in ((-16, 0), (22, 2), (-8, 1)):
+                chunk(front, c[0] + dx, GROUND - 3, k, flip=dx < 0)
+            for i, t in enumerate((a, b)):
+                cloud(front, (t[0] + (4 if i else -4), GROUND - 4), 4.4, 'jklm', hollow=0.75, seed=31 + i)
+            crack(front, int(a[0]) - 4, int(b[0]) + 9, seed=4)
+    return f
+
+
+def _tip_up(spec, sp, tilt):
+    """position (toile) d'une pointe levée, pour partir la traînée"""
+    return np.array(g2c(*spec[3]), float)
+
+
+ATTAQUE = [
+    # 0 : il se ramasse (le poids descend, l'abdomen se gonfle)
+    dict(sp=(0, 1), abd=1, legs={'F2': dict(k=(0, -1))}, ms=140),
+    # 1 : il recule et se cabre, les deux pattes avant montent, crochets écartés
+    dict(sp=(-3, 0), tilt=(2, -6), kf=0.6, abd=1, croc=1, glow=1,
+         legs={'P': dict(new=P_UP), 'F2': dict(new=F2_UP), 'F1': dict(k=(0, -2)), 'A': dict(t=(0, 0))}, ms=170),
+    # 2 : tenue (la menace) : encore un peu plus haut, cristaux allumés, crochets grands ouverts
+    dict(sp=(-4, 0), tilt=(2, -7), kf=0.6, abd=2, croc=2, glow=2,
+         legs={'P': dict(new=P_UP2), 'F2': dict(new=F2_UP2), 'F1': dict(k=(0, -2))}, ms=300),
+    # 3 : tout s'abat (image de vitesse)
+    dict(sp=(2, 1), tilt=(0, 1), croc=1, glow=1,
+         legs={'P': dict(new=P_MID), 'F2': dict(new=F2_MID)},
+         fx_list=[fx_smear(['P', 'F2'], {'P': g2c(112, 47), 'F2': g2c(138, 26)})], ms=50),
+    # 4 : IMPACT (tenu) : les deux massues au sol, la tête plonge, crochets refermés
+    dict(sp=(6, 3), tilt=(-1, 3), kf=0.4,
+         legs={'P': dict(new=P_HIT), 'F2': dict(new=F2_HIT), 'A': dict(mid=(1, 0)), 'B': dict(mid=(1, 0))},
+         fx_list=[fx_hit(0), dust_feet(FEET_ALL, 0)], ms=210),
+    # 5 : l'onde de choc se défait, les cailloux retombent
+    dict(sp=(5, 2), tilt=(-1, 2), kf=0.4,
+         legs={'P': dict(new=P_HIT), 'F2': dict(new=F2_HIT)},
+         fx_list=[fx_hit(1), dust_feet(FEET_ALL, 1)], ms=110),
+    # 6 : il arrache ses pattes du sol
+    dict(sp=(4, 1), tilt=(0, 1),
+         legs={'P': dict(new=P_OFF), 'F2': dict(new=F2_OFF)}, fx_list=[fx_hit(2)], ms=120),
+    # 7 : il recule, les pattes reviennent
+    dict(sp=(2, 0), legs={'P': dict(new=P_BACK), 'F2': dict(new=F2_BACK)}, ms=120),
+    # 8 : la patte pilier se repose (la lointaine encore levée d'un rien)
+    dict(sp=(1, 0), legs={'P': dict(k=(0, -1), t=(2, -3)), 'F2': dict(k=(1, -2), t=(3, -4))}, ms=130),
+    # 9 : il se tasse de tout son poids
+    dict(sp=(0, 1), legs={'F2': dict(t=(1, -1))}, ms=150),
+    # 10 : en garde
+    dict(ms=170),
+]
+
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Séisme de grenat »
+# Il s'écrase sur ses genoux (l'abdomen gonflé), les cristaux de grenat de son dos s'allument et pétillent ; il se
+# cabre très haut, les deux pattes avant dressées, et tient ; puis il abat tout son corps de pierre sur le sol (arrêt
+# sur image). La terre se fend devant lui et une ONDE de pierre court vers la droite, sur toute la première ligne
+# ennemie : l'une après l'autre, des dalles de pierre et des cristaux de grenat (les mêmes que sur son dos) jaillissent
+# du sol puis s'effondrent en éclats et en poussière. Il se relève lourdement, patte après patte.
+P_HIGH = [(84, 82), (96, 52), (106, 42), (115, 47)]
+F2_HIGH = [(104.5, 69), (120, 24), (134, 20), (142, 27)]
+P_HIGH2 = [(84, 82), (96, 50), (106, 40), (116, 45)]
+F2_HIGH2 = [(104.5, 69), (120, 22), (135, 18), (143, 25)]
+P_SLAM = [(84, 82), (102, 72), (118, 96), (124, 116)]
+F2_SLAM = [(104.5, 69), (124, 54), (140, 88), (144, 116)]
+
+# l'onde : les grappes de dalles et de cristaux, le long du sol (x en grille), et leur moment (image où elles sont
+# au plus haut) ; chaque grappe : (x, image du sommet, cristal, taille)
+WAVE = [(152, 6, 1, 0.8), (176, 7, 0, 1.0), (200, 8, 2, 0.95), (224, 9, 0, 1.05), (248, 10, 1, 0.9)]
+
+
+def cluster(front, x, p, crumble, size, cr, seed):
+    """une grappe : la terre se soulève, deux dalles penchées et un cristal de grenat au milieu.
+    p (0..1) : elle sort de terre ; crumble (0..1) : elle s'effondre (éclats, poussière)"""
+    h1, h2 = 16 * size, 13 * size
+    hc = CRYSTALS[cr % len(CRYSTALS)].shape[0]
+    if crumble < 1:
+        mound(front, x, 9 * size, 4 * min(1, p * 1.5) * (1 - crumble))
+        slab(front, x - 6 * size, 7 * size, h1, -0.28, sink=(1 - p) * h1, cut=crumble)
+        if crumble < 0.5:
+            crystal(front, cr, x, int((1 - p) * hc + crumble * hc * 1.4), swap=GLOW[1] if p >= 1 else None)
+        slab(front, x + 6 * size, 7 * size, h2, 0.3, sink=(1 - p) * h2 + 2, cut=crumble)
+    if crumble > 0:
+        rng = np.random.RandomState(seed)
+        t = crumble
+        for i in range(7):
+            vx = rng.uniform(-1.4, 1.4) * 12
+            vy = rng.uniform(1.2, 2.0) * 16
+            px = x + rng.uniform(-6, 6) + vx * t
+            py = GROUND - 10 * size - vy * t + 34 * t * t
+            if py < GROUND - 1:
+                if i % 3 == 0:
+                    shard(front, px, py, i)
+                else:
+                    chunk(front, px, py, i, flip=vx < 0)
+        cloud(front, (x, GROUND - 3), 6.5 * size * min(1.0, 0.5 + t), 'jklm', hollow=max(0.0, t - 0.35) * 1.1,
+              seed=seed)
+
+
+def fx_wave(frame):
+    """l'onde de pierre à l'image « frame » de l'attaque spéciale"""
+    def f(cv, back, front, ctx):
+        x_first = WAVE[0][0]
+        for i, (x, peak, cr, size) in enumerate(WAVE):
+            X = x + OX
+            dt = frame - peak
+            if dt < -1:
+                continue
+            if dt == -1:
+                p, cr_ = 0.45, 0.0
+            elif dt == 0:
+                p, cr_ = 1.0, 0.0
+            else:
+                p, cr_ = 1.0, min(1.0, 0.45 * dt)
+            cluster(front, X, p, cr_, size, cr, seed=40 + i)
+        # la fissure court devant l'onde
+        reach = max([x for (x, peak, _, _) in WAVE if peak - 1 <= frame] + [x_first - 14])
+        crack(front, int(ctx.tips['P'][0]) - 2 if 'P' in ctx.tips else x_first + OX - 20, reach + OX + 10, seed=9)
+    return f
+
+
+def fx_slam(level):
+    """l'écrasement : un grand éclat de pierre et de grenat devant lui, des cailloux, la poussière sous les pointes"""
+    def f(cv, back, front, ctx):
+        a, b = ctx.tips['P'], ctx.tips['F2']
+        c = (a + b) / 2 + np.array([2, -4])
+        if level == 0:
+            pop(front, c, 6.0, facing=50, tones='ofgh')
+            for (dx, dy, k) in ((-10, -10, 0), (11, -13, 1), (16, -5, 2), (-3, -16, 3)):
+                chunk(front, c[0] + dx, c[1] + dy, k, flip=dx < 0)
+            shard(front, c[0] + 6, c[1] - 9, 0)
+            shard(front, c[0] - 7, c[1] - 6, 1, flip=True)
+        for i, t in enumerate((a, b)):
+            cloud(front, (t[0] + (2 if i else -3), GROUND - 2), 4.6 if level == 0 else 4.8, 'jklm',
+                  hollow=0.0 if level == 0 else 0.5, seed=51 + i)
+    return f
+
+
+def fx_sparkle(level, seed=3):
+    """les cristaux du dos pétillent : de petites lueurs rondes qui montent au-dessus des pointes"""
+    def f(cv, back, front, ctx):
+        rng = np.random.RandomState(seed)
+        sp = ctx.f.get('sp', (0, 0))
+        for (x, y) in ((35, 9), (18, 22), (50, 26), (80, 49), (75, 53)):
+            dy = body_dy(ctx.f, x) - ctx.f.get('abd', 0)
+            for j in range(level):
+                X = x + sp[0] + OX + rng.randint(-3, 4)
+                Y = y + dy + OY - 2 - rng.randint(0, 3 + 2 * level)
+                puff(front, (X + 0.5, Y + 0.5), 1.0 + 0.4 * (j == 0), 'fg')
+    return f
+
+
+SPECIALE = [
+    # 0 : tension
+    dict(sp=(0, 1), abd=1, glow=1, legs={'F2': dict(k=(0, -1))}, ms=120),
+    # 1 : il s'écrase sur ses genoux, les cristaux s'allument et pétillent
+    dict(sp=(-2, 4), tilt=(1, 0), kf=0.3, abd=2, glow=1, croc=1,
+         legs={'F1': dict(k=(0, -1)), 'F2': dict(k=(1, -1))}, fx_list=[fx_sparkle(1)], ms=190),
+    # 2 : il se cabre très haut, pattes avant dressées
+    dict(sp=(-3, -2), tilt=(2, -9), kf=0.6, abd=1, glow=2, croc=2,
+         legs={'P': dict(new=P_HIGH), 'F2': dict(new=F2_HIGH), 'F1': dict(k=(0, -3))},
+         fx_list=[fx_sparkle(2, 5)], ms=170),
+    # 3 : tenue au sommet
+    dict(sp=(-4, -3), tilt=(2, -10), kf=0.6, abd=2, glow=2, croc=2,
+         legs={'P': dict(new=P_HIGH2), 'F2': dict(new=F2_HIGH2), 'F1': dict(k=(0, -3))},
+         fx_list=[fx_sparkle(2, 8)], ms=300),
+    # 4 : il s'abat de tout son poids (image de vitesse)
+    dict(sp=(2, 1), tilt=(0, 1), glow=2, croc=1,
+         legs={'P': dict(new=P_MID), 'F2': dict(new=F2_MID)},
+         fx_list=[fx_smear(['P', 'F2'], {'P': g2c(112, 40), 'F2': g2c(139, 15)})], ms=50),
+    # 5 : ÉCRASEMENT (arrêt sur image) : le corps tombe, la terre se fend, la première grappe pointe
+    dict(sp=(5, 5), tilt=(-1, 3), kf=0.3, glow=1,
+         legs={'P': dict(new=P_SLAM), 'F2': dict(new=F2_SLAM), 'A': dict(mid=(1, 0)), 'B': dict(mid=(1, 0)),
+               'C': dict(mid=(1, 0))},
+         fx_list=[fx_slam(0), fx_wave(5), dust_feet(FEET_ALL, 0)], ms=240),
+    # 6 à 10 : l'onde court vers la droite
+    dict(sp=(5, 4), tilt=(-1, 3), kf=0.3, glow=1, legs={'P': dict(new=P_SLAM), 'F2': dict(new=F2_SLAM)},
+         fx_list=[fx_slam(1), fx_wave(6), dust_feet(FEET_ALL, 1)], ms=90),
+    dict(sp=(5, 4), tilt=(-1, 3), kf=0.3, legs={'P': dict(new=P_SLAM), 'F2': dict(new=F2_SLAM)},
+         fx_list=[fx_wave(7)], ms=90),
+    dict(sp=(5, 3), tilt=(-1, 2), kf=0.3, legs={'P': dict(new=P_SLAM), 'F2': dict(new=F2_SLAM)},
+         fx_list=[fx_wave(8)], ms=90),
+    dict(sp=(5, 3), tilt=(-1, 2), kf=0.3, legs={'P': dict(new=P_SLAM), 'F2': dict(new=F2_SLAM)},
+         fx_list=[fx_wave(9)], ms=90),
+    dict(sp=(4, 2), tilt=(0, 2), legs={'P': dict(new=P_SLAM), 'F2': dict(new=F2_SLAM)},
+         fx_list=[fx_wave(10)], ms=100),
+    # 11 : les dernières dalles s'effondrent ; il se redresse
+    dict(sp=(4, 2), tilt=(0, 1), legs={'P': dict(new=P_OFF), 'F2': dict(new=F2_OFF)},
+         fx_list=[fx_wave(11)], ms=110),
+    # 12 : la poussière retombe ; les pattes reviennent
+    dict(sp=(2, 1), legs={'P': dict(new=P_BACK), 'F2': dict(new=F2_BACK)}, fx_list=[fx_wave(12)], ms=120),
+    # 13 : la patte pilier se repose
+    dict(sp=(1, 0), legs={'P': dict(k=(0, -1), t=(2, -3)), 'F2': dict(k=(1, -2), t=(3, -4))}, ms=130),
+    # 14 : il se tasse, en garde
+    dict(sp=(0, 1), abd=1, legs={'F2': dict(t=(1, -1))}, ms=160),
+]
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
 # RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du monstre à partir de
