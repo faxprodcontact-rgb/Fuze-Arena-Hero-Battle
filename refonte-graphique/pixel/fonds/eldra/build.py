@@ -756,15 +756,15 @@ def premier_plan(t):
 
 # ------------------------------------------------------------------------------------------------ les particules
 def images_petale():
-    """Un pétale de pêcher qui tourne en volant (4 images jouées en boucle)."""
+    """Un pétale de pêcher qui tourne en volant (4 images jouées en boucle) : à plat, de biais, de profil, de biais."""
     ims = []
-    c = [rgb(ROSE[1]), rgb(ROSE[2]), rgb(ROSE[3]), rgb(ROSE[4])]
-    for rows in [['.ab', 'bc.', '...'], ['.b.', 'bc.', '.a.'], ['...', 'abc', '...'], ['a..', '.cb', '...']]:
-        im = Image.new('RGBA', (3, 3), (0, 0, 0, 0))
+    c = {'a': rgb(ROSE[1]), 'b': rgb(ROSE[2]), 'c': rgb(ROSE[3]), 'd': rgb(ROSE[4])}
+    for rows in [['.cd.', 'bcc.', '.b..'], ['..cd', '.bc.', 'b...'], ['....', 'bccd', '....'], ['b...', '.cc.', '..cd']]:
+        im = Image.new('RGBA', (4, 3), (0, 0, 0, 0))
         for j, r in enumerate(rows):
             for i, ch in enumerate(r):
                 if ch != '.':
-                    im.putpixel((i, j), c['abc'.index(ch)] + (255,))
+                    im.putpixel((i, j), c[ch] + (255,))
         ims.append(im)
     return ims
 
@@ -853,9 +853,9 @@ def construit():
         fd.boucle(f'banniere{k + 1}', 'paysage', bb, 12, 200,
                   lambda tl, ph, i, x=x, y=y, s=s: (mat(tl, x, y), banniere(tl, x, y, (ph + 0.37 * k) % 1, s)),
                   dessous=sous_bannieres, plein=True, prof=-16)
-    fd.particules('petales-haut', 'paysage', images_petale(), (10, 400, 150, 480), nombre=8, vie=(6000, 9000),
+    fd.particules('petales-haut', 'paysage', images_petale(), (10, 400, 150, 480), nombre=10, vie=(6000, 9000),
                   vx=(11, 20), vy=(5, 11), ondule=(4, 2600), images_ms=220, prof=-15.5, graine=2)
-    fd.particules('petales', 'devant', images_petale(), (0, 690, 330, 770), nombre=7, vie=(4500, 7500),
+    fd.particules('petales', 'devant', images_petale(), (0, 690, 330, 770), nombre=8, vie=(4500, 7500),
                   vx=(9, 17), vy=(2, 6), ondule=(3, 2200), images_ms=220, prof=-14, graine=3)
     fd.defile('ruisseau', 'devant', (0, 1060, W, H), (RUI_TUILE, H - 1060), lambda tl: ruisseau(tl),
               vx=RUI_TUILE * 1000 / fd.periode, prof=-13)

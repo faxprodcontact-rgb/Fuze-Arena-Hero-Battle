@@ -600,7 +600,8 @@ CRISTAUX = [dict(x=290, y=778, graine=111, n=5, h=30, penche=0.1),        # au p
 
 
 def cristal_boite(c, marge=14):
-    return (c['x'] - c['h'] - marge, c['y'] - c['h'] - marge - 6, c['x'] + c['h'] + marge, c['y'] + 6)
+    return (c['x'] - c['h'] - marge, c['y'] - c['h'] - marge - 6, c['x'] + c['h'] + marge,
+            c['y'] + int(c['h'] * 0.4) + 8)
 
 
 def cristal_lueur(t, c, phase, sous_cr=None):
@@ -675,36 +676,39 @@ def banniere(t, x, y, phase, sens):
     F.banniere(t, x, y, phase, sens, TISSU, CHITINE, MINI, MINI_LEG)
 
 
-def signe_grave(t, x, y):
+def signe_grave(t, x, y, k=1.6):
     """Le grand signe du clan gravé dans la paroi de gauche : les deux crochets et les yeux creusés dans la roche
     (le bord bas-gauche du creux accroche la lumière, le bord haut-droit est dans l'ombre), le losange incrusté de
-    grenat poli. (x, y) = le coin haut-gauche (28 × 27)."""
+    grenat poli. (x, y) = le coin haut-gauche (28 × 27 fois k)."""
+    def P(a, b):
+        return x + a * k, y + b * k
     g = np.zeros(t.X.shape, bool)
     for sx in (1, -1):
-        def X_(a):
-            return x + 14 + sx * (a - 14)
-        g |= t.limb([(X_(7), y + 4, 1.3), (X_(3), y + 9, 1.6), (X_(2.5), y + 15, 1.6), (X_(6), y + 21, 1.5),
-                     (X_(11.5), y + 25, 1.1)])
-        g |= t.ellipse(X_(9.5), y + 1.5, 1.5, 1.3)
-    los = t.poly([(x + 14, y + 6), (x + 21, y + 14), (x + 14, y + 22), (x + 7, y + 14)])
-    g |= los & ~t.poly([(x + 14, y + 8), (x + 19, y + 14), (x + 14, y + 20), (x + 9, y + 14)])
+        def Q(a, b, r):
+            px_, py_ = P(14 + sx * (a - 14), b)
+            return (px_, py_, r * k)
+        g |= t.limb([Q(7, 4, 1.2), Q(3, 9, 1.5), Q(2.5, 15, 1.5), Q(6, 21, 1.4), Q(11.5, 25, 1.0)])
+        ex, ey = P(14 + sx * (9.5 - 14), 1.5)
+        g |= t.ellipse(ex, ey, 1.5 * k, 1.3 * k)
+    inl = t.poly([P(14, 8), P(19, 14), P(14, 20), P(9, 14)])
+    g |= t.poly([P(14, 6), P(21, 14), P(14, 22), P(7, 14)]) & ~inl
     base = t.col[:, :, :3].copy()
-    t.fill(g, mix(VOUTE[0], PIERRE[1], 0.3))
+    t.fill(g, VOUTE[0])
     clair = g & ~S(g, -1, 1)
     sombre = g & ~S(g, 1, -1)
-    for (mm, cible, f) in ((clair, PIERRE[5], 0.55), (sombre, VOUTE[0], 0.7)):
+    for (mm, cible, f) in ((clair, PIERRE[6], 0.7), (sombre, VOUTE[0], 0.8)):
         ys, xs = np.nonzero(mm)
         for yy, xx in zip(ys, xs):
             t.col[yy, xx, :3] = mix(tuple(base[yy, xx]), cible, f)
     # le losange de grenat poli (gauche dans l'ombre, droite éclairée, un éclat)
-    inl = t.poly([(x + 14, y + 8), (x + 19, y + 14), (x + 14, y + 20), (x + 9, y + 14)])
-    halo(t, x + 14, y + 14, 16, 14, 0.18, '#7a1840', pas=2, graine=97, m=~inl & ~g)
+    cx, cy = P(14, 14)
+    halo(t, cx, cy, 15 * k, 13 * k, 0.18, '#7a1840', pas=2, graine=97, m=~inl & ~g)
     t.fill(inl, GRENAT[1])
-    t.fill(inl & (t.X >= x + 14), GRENAT[2])
-    t.fill(inl & (t.X >= x + 15) & (t.Y < y + 14), GRENAT[3])
+    t.fill(inl & (t.X >= cx), GRENAT[2])
+    t.fill(inl & (t.X >= cx + 1) & (t.Y < cy), GRENAT[3])
     t.fill(inl & ~S(inl, -1, 1), GRENAT[0])
-    t.px(x + 16, y + 11, GRENAT[4])
-    t.px(x + 15, y + 10, GRENAT[5])
+    t.fill(inl & ~S(inl, 1, -1) & (t.X >= cx), GRENAT[4])
+    t.px(cx + 2, cy - 4, GRENAT[5])
 
 
 def toile_coin(t, cx, cy, a0, a1, R, nr, tours, fond_lum, graine):
@@ -876,7 +880,7 @@ def construit():
     chauffe(t, dehors, 3, '#c89a86', 0.32, m=pg | pm | rg, pas=2)
     chauffe(t, dehors, 2, '#8a7088', 0.25, m=vm | pd | rd, pas=2)
     ombre_grotte(t, roc, dehors)
-    signe_grave(t, 44, 404)
+    signe_grave(t, 30, 410)
     sol_grotte(t)
     bl = blocs(t)
     # ---- la pierre levée, les cristaux ----

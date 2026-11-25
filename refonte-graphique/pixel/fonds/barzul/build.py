@@ -13,10 +13,12 @@
 #   - la mer jusqu'à l'horizon, claire au loin (elle reflète le ciel), bleu-vert profond tout près ; une île lointaine
 #     dans la brume au milieu ;
 #   - à gauche, un cap de grès doré coiffé d'herbe : deux palmiers, la bannière rouge du clan, un canon de la batterie
-#     des pirates pointé vers le large (et ses boulets) ; à son pied une petite plage où une chaloupe est tirée au sec ;
+#     des pirates pointé vers le large (et ses boulets) ; à son pied une petite plage (rochers ronds, une chaloupe tirée
+#     au sec, un tonneau) et une grotte où brille le trésor de l'équipage (un coffre, un tas de pièces d'or) ;
 #   - à droite, le NAVIRE de Barzul au mouillage : coque bleu nuit à liseré d'or (les couleurs du capitaine), sabords,
-#     château arrière aux fenêtres dorées, trois mâts, voiles serrées sauf la grand-voile qui porte le signe du clan
-#     en rouge, la hune, les haubans, le câble de l'ancre, le pavillon rouge au signe d'or tout en haut ;
+#     mantelets rouges, dunette aux fenêtres dorées et grand fanal, figure de proue d'or, trois mâts et leurs hunes,
+#     voiles serrées et trois voiles gonflées (la grand-voile porte le signe du clan en rouge), les haubans, le câble de
+#     l'ancre qui plonge, le pavillon rouge au signe d'or tout en haut ;
 #   - l'arène : le grand ponton de bois de la crique, d'un bord à l'autre de l'écran, calme (planches grises usées par
 #     le sel, joints à peine visibles) ; aux deux coins du fond, tonneaux et caisses ; devant, sa poutre de rive et ses
 #     pieux plantés dans l'eau, au bas de l'écran ;
@@ -24,7 +26,8 @@
 #     posée à droite).
 # Ce qui bouge : la mer (qui avance doucement), les reflets du soleil qui scintillent, le reflet de la coque qui
 #   ondule, l'écume qui va et vient sur la plage et au bord du ponton, l'eau du bas, le pavillon et la bannière, les
-#   palmes, deux mouettes qui tournent au-dessus du navire et une au-dessus du cap, la mouette posée qui tourne la tête.
+#   palmes, deux mouettes qui tournent au-dessus du navire et une au-dessus du cap, la mouette posée qui tourne la tête,
+#   une pièce du trésor qui brille de temps en temps au fond de la grotte.
 #
 # Le signe du clan de Barzul (inventé) : « l'œil des mers » — un œil en amande (le seul œil du capitaine, l'autre est
 # sous le bandeau) posé au-dessus de deux vagues.
@@ -461,8 +464,8 @@ def coque_masque(t):
 
 
 def voile(t, x, y0, y1, hw, g, graine):
-    """Une voile carrée établie sous sa vergue : elle se gonfle (les côtés et le bas en courbe), éclairée à droite,
-    deux grands plis doux qui partent des coins du haut."""
+    """Une voile carrée établie sous sa vergue : elle se gonfle (les côtés et le bas en courbe), éclairée à droite
+    (des limites de tons courbes, pas de plis en traits)."""
     X, Y = t.X, t.Y
     f = np.clip((Y - y0) / (y1 - y0), 0, 1)
     gonfle = np.sin(math.pi * np.clip(f * 0.9, 0, 1)) * hw * 0.09
@@ -471,11 +474,11 @@ def voile(t, x, y0, y1, hw, g, graine):
     bas = y1 - hw * 0.14 * np.sin(math.pi * np.clip((X - (x - hw)) / (2 * hw), 0, 1))
     m = (Y >= y0 + 2) & (Y < bas) & (X >= xl) & (X < xr)
     u = (X - xl) / np.maximum(xr - xl, 1)
-    v = 2.2 + (u - 0.45) * 2.4 - np.abs(u - 0.66) ** 2 * 3.5 - f * 0.5 + (bruit(X, Y, 20, graine, 2) - 0.5) * 0.4
-    for c in (0.22, 0.8):
-        pli = np.abs(u - (c + (0.5 - c) * 0.25 * f)) < 0.03 + 0.03 * f
-        v = np.where(pli & (f > 0.15), v - 0.8, v)
-    idx = np.clip(np.round(v), 0, 4).astype(int)
+    # la toile gonflée : ombre à gauche, lumière à droite, des limites qui se courbent avec le ventre de la voile
+    uc = u - 0.1 * np.sin(math.pi * f) + (bruit(X, Y, 14, graine, 2) - 0.5) * 0.08
+    v = np.where(uc < 0.16, 1, np.where(uc < 0.6, 2, 3))
+    v = np.where((uc > 0.68) & (uc < 0.84) & (f > 0.2) & (f < 0.75), 4, v)
+    idx = np.clip(v, 0, 4).astype(int)
     t.peint(m, idx, g[1:6])
     t.fill(m & ~S(m, 0, 1), g[1])
     t.fill(m & ~S(m, -1, 0), g[1])

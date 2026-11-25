@@ -157,7 +157,7 @@ def toit(t, cx, yr, hwr, ye, hwe, up=8, lip=2, cornes=True, gamme=TUILE, sous=LA
     m = (ax <= hwe) & (Y >= ytop) & (Y <= yb)
     m &= ~((ax > hwe - 1.5) & (Y > yb - 1))                        # une pointe un peu fine
     frac = np.clip((Y - yr) / max(1, ye - yr), 0, 1)
-    v = (X - cx) / hwe * 1.1 + frac * 1.0 + (bruit(t.X, t.Y * 1.5, 7, int(cx) + 3, 2) - 0.5) * 0.7
+    v = (X - cx) / hwe * 1.1 + frac * 1.0 + (bruit(t.X, t.Y * 1.5, 14, int(cx) + 3, 2) - 0.5) * 0.45
     n = len(gamme)
     idx = np.clip(np.round(v + 1.6).astype(int), 1, n - 2)
     t.peint(m, idx, gamme)
@@ -193,6 +193,12 @@ def toit(t, cx, yr, hwr, ye, hwe, up=8, lip=2, cornes=True, gamme=TUILE, sous=LA
     return m
 
 
+def fen_x(cx, hw, n):
+    """Les x des fenêtres d'un étage : réparties sur la face avant (à gauche de l'angle du bâtiment)."""
+    a, b = cx - hw + 6, cx + hw * 0.35 - 6
+    return [int(round(a + (b - a) * (k + 0.5) / n)) for k in range(n)]
+
+
 def etage(t, cx, y0, y1, hw, fenetres, voile=0.0, lueur=0.0):
     """Un étage : mur d'enduit crème entre deux poteaux de laque rouge, une poutre en haut et en bas, une rangée de
     fenêtres allumées (lueur = 0 … 1 : la lumière qui respire). Le haut du mur dans l'ombre du toit."""
@@ -204,7 +210,8 @@ def etage(t, cx, y0, y1, hw, fenetres, voile=0.0, lueur=0.0):
     t.fill(m & (t.Y < y0 + 4), en[1])                                # l'ombre du toit
     t.fill(m & (t.Y < y0 + 2), en[0])
     # poteaux et poutres de laque
-    for x in (cx - hw, cx + hw - 3):
+    xc = int(round(cx + hw * 0.35))                                # l'angle du bâtiment (le côté droit, éclairé)
+    for x in (cx - hw, xc - 1, cx + hw - 3):
         p = t.rect(x, y0, x + 3, y1)
         t.fill(p, la[2])
         t.fill(p & (t.X == x + 2), la[3])
@@ -213,9 +220,7 @@ def etage(t, cx, y0, y1, hw, fenetres, voile=0.0, lueur=0.0):
     t.fill(beam & (t.Y == y1 - 3), la[4] if not voile else la[3])
     # les fenêtres : des baies sombres, une lueur chaude dedans
     if fenetres:
-        span = 2 * hw - 14
-        for k in range(fenetres):
-            wx = int(round(cx - hw + 7 + span * (k + 0.5) / fenetres))
+        for wx in fen_x(cx, hw, fenetres):
             fy0 = (y0 + y1) // 2 - 4
             fy1 = fy0 + 9
             fm = t.rect(wx - 3, fy0, wx + 3, fy1)
@@ -736,9 +741,7 @@ def construit():
     def fen(tl, ph, i):
         a = (1 - math.cos(2 * math.pi * ph)) / 2
         for (y0, y1, hw, nf), _ in D_ETAGES:
-            span = 2 * hw - 14
-            for k in range(nf):
-                wx = int(round(DONJON - hw + 7 + span * (k + 0.5) / nf))
+            for wx in fen_x(DONJON, hw, nf):
                 fy0 = (y0 + y1) // 2 - 4
                 fy1 = fy0 + 9
                 inner = tl.rect(wx - 2, fy0 + 2, wx + 2, fy1)
