@@ -47,6 +47,9 @@ FXPAL = {
     'o': (112, 84, 86),     # poussière, creux
     'g': (255, 248, 210),   # étincelle (blanc doré)
     'h': (255, 230, 150),   # plume de lumière, or pâle (soin)
+    'p': (62, 40, 74),      # tache sombre (le mal que la spéciale chasse : purification)
+    'q': (120, 96, 130),    # tache qui se détache
+    'l': (184, 172, 196),   # tache qui s'évapore
 }
 ALLPAL = dict(PAL)
 ALLPAL.update(FXPAL)
@@ -1102,14 +1105,17 @@ ATTAQUE = [
 ]
 
 
-# ---------------------------------------------------------------- 3) l'attaque spéciale : « Trompette du Jugement »
-# Elle se ramasse (le vent se lève à ses pieds, quelques plumes frémissent), déploie grand ses ailes et s'élève : le
-# battement chasse l'air au sol. Suspendue, ailes levées en V, elle porte la trompette aux lèvres, pavillon vers le
-# ciel (temps de pose, l'auréole s'illumine) ; elle sonne : éclair, les ailes battent vers le bas, une rafale monte
-# vers le ciel au-dessus de l'ennemi où un tourbillon se forme (arrêt sur l'image). La tornade de vent blanc et jade,
-# pleine de plumes, s'abat sur l'ennemi, tourne, puis se défait en volutes ; elle redescend, replie ses ailes, et des
-# plumes de lumière retombent doucement sur elle (le soin).
-VORTEX = (FOE[0], 38.0)                 # le tourbillon dans le ciel, au-dessus de l'ennemi
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Trompette de Grâce »
+# Le sort en combat : elle soigne toute l'équipe, retire ses effets négatifs (purifie) et ressuscite un allié tombé.
+# L'équipe se tient DERRIÈRE elle, à gauche de l'image : rien ne part vers l'ennemi.
+# Elle se ramasse (le vent se lève à ses pieds), déploie grand ses ailes et s'élève. Suspendue, ailes levées en V, elle
+# porte la trompette aux lèvres, pavillon vers le ciel (temps de pose, l'auréole s'illumine). Elle sonne : éclair doux,
+# blanc et or ; sa silhouette s'éclaire, de petites taches sombres apparaissent sur elle (le mal qu'elle chasse) ;
+# l'onde du son monte, s'enroule au-dessus d'elle et redescend vers la gauche (arrêt sur l'image), un anneau de vent
+# doux l'entoure, des rafales basses filent vers la gauche. Des plumes de lumière retombent sur elle et dérivent vers
+# l'équipe ; les taches se détachent et s'évaporent. Au sommet du sort, une grande plume de lumière naît au-dessus de
+# sa tête, file vers la gauche et devient une colonne de lumière (la résurrection), qui se défait en lueurs qui montent.
+# Elle redescend, replie ses ailes et revient en pose.
 
 
 def fx_gather(level):
@@ -1159,164 +1165,259 @@ def fx_downdraft(level):
     return f
 
 
-def helix(c_top, c_bot, r_top, r_bot, turns, phase, s0, s1, tilt=0.24, wob=0.0, wph=0.0, n=220):
-    """points d'une spirale qui descend en entonnoir : [(x, y, profondeur, s)] ; profondeur > 0 = devant"""
-    out = []
-    for i in range(n + 1):
-        s = s0 + (s1 - s0) * i / n
-        y = c_top[1] + (c_bot[1] - c_top[1]) * s
-        r = r_bot + (r_top - r_bot) * (1 - s) ** 1.25
-        xc = c_top[0] + (c_bot[0] - c_top[0]) * s + wob * math.sin(wph + s * 5.0)
-        a = math.radians(phase + 360 * turns * s)
-        out.append((xc + r * math.cos(a), y + r * tilt * math.sin(a), math.sin(a), s))
-    return out
+# ---- l'onde de grâce : le son de la trompette monte, s'enroule au-dessus d'elle et redescend vers l'équipe (à gauche)
+def grace_path(ctx):
+    B = ctx.bell + 1.0 * ctx.u
+    return B, path_pts(B, B + np.array([16.0, -44.0]), np.array([SOL[0] - 24.0, GROUND - 200.0]),
+                       np.array([-34.0, GROUND - 118.0]))
 
 
-def helix_stroke(back, front, pts, wmax, tones, taper=(0.0, 1.0)):
-    """peint une spirale : les morceaux de derrière (profondeur < 0) sur back, ceux de devant sur front ; épaisseur
-    qui gonfle au milieu, s'effile aux deux bouts ; plus fine derrière (plus loin)"""
-    a, b = taper
-    segs = {True: ([], []), False: ([], [])}
-    for (x, y, dpt, s) in pts:
-        loc = (s - a) / max(b - a, 1e-6)
-        w = wmax * max(0.0, math.sin(math.pi * min(max(loc, 0.0), 1.0))) ** 0.6
-        w *= 1.0 if dpt >= 0 else 0.7
-        segs[dpt >= 0][0].append((x, y))
-        segs[dpt >= 0][1].append(w + 0.3)
-    stroke(front, *segs[True], tones)
-    stroke(back, *segs[False], tones)
-
-
-def storm_cap(back, front, phase, grow=1.0):
-    """le tourbillon du ciel : un nuage de vent blanc en bouffées (dessous jade), qui tourne lentement"""
-    V = np.array(VORTEX)
-    lobes = [(0, 0, 11), (-20, 3, 8), (20, 2, 8.5), (-34, 6, 5.5), (33, 6, 6), (-9, -6, 8), (11, -5, 7.5)]
-    for i, (dx, dy, r) in enumerate(lobes):
-        a = math.radians(phase * 0.8 + i * 51)
-        puff(back, (V[0] + dx * grow + 2 * math.cos(a), V[1] + dy + 1.5 * math.sin(a)), r * grow, 'WXXYYV')
-
-
-def tornado(back, front, k, phase):
-    """la tornade : trois spirales (blanche, jade, blanche bleutée) qui descendent du tourbillon jusqu'au sol, plus
-    des plumes prises dedans ; k (0..1) = jusqu'où elle est descendue"""
-    top = (VORTEX[0], VORTEX[1] + 4)
-    bot = (FOE[0] + 2, GROUND - 4)
-    bot_k = (top[0] + (bot[0] - top[0]) * k, top[1] + (bot[1] - top[1]) * k)
-    # le corps : un entonnoir de vent pâle aux bords en bouffées (pas un cône lisse), éclairé à droite
-    y0, y1 = int(top[1]), int(bot_k[1])
-    for y in range(y0, y1 + 1):
-        s = (y - top[1]) / max(bot[1] - top[1], 1)
-        r = 5 + 26 * (1 - s) ** 1.25
-        r *= 0.8 + 0.1 * math.sin(y * 0.3 + phase / 40)
-        r *= min(1.0, 0.35 + (bot_k[1] - y) / 10.0) if k < 1 else 1.0      # le front qui descend s'arrondit
-        xc = top[0] + (bot[0] - top[0]) * s + 4.0 * math.sin(phase / 60 + s * 5.0)
-        for x in range(int(xc - r), int(xc + r) + 1):
-            q = (x + 0.5 - xc) / r
-            if abs(q) <= 1:
-                put(back, x, y, 'X' if q > 0.3 else 'Y' if q > -0.72 else 'V')
-    for j, (tones, wv, ph, tu) in enumerate((('WXYVS', 6.5, 0, 1.45), ('XYVSR', 4.4, 150, 1.05))):
-        pts = helix(top, bot_k, 34 - 6 * j, 7 + j, tu * k + 0.3, phase + ph, 0.0, 1.0, wob=4.0 + 2 * j,
-                    wph=phase / 60 + j)
-        helix_stroke(back, front, pts, wv, tones)
-    storm_cap(back, front, phase)
-    # des volutes qui s'arrachent des flancs et s'enroulent vers l'extérieur
-    for i, (s_, side) in enumerate(((0.3, 1), (0.55, -1), (0.8, 1))):
-        if s_ > k:
+def wave_band(back, front, pts, s0, s1, wmax, tones='WWXYV', under='VSR'):
+    """l'onde douce : un fuseau plein (tête ronde au front s1, queue effilée en s0, jamais plus fin qu'un trait net :
+    pas de pointillés), doublé dessous, du côté de l'ombre, d'un fuseau de jade un peu décalé"""
+    n = len(pts) - 1
+    i0, i1 = int(s0 * n), int(s1 * n)
+    if i1 - i0 < 3:
+        return
+    seg, wid, low = [], [], []
+    for i in range(i0, i1 + 1):
+        loc = (i - i0) / (i1 - i0)
+        if loc < 0.06:
             continue
-        y = top[1] + (bot[1] - top[1]) * s_
-        r = 5 + 23 * (1 - s_) ** 1.25
-        xc = top[0] + (bot[0] - top[0]) * s_ + 4.0 * math.sin(phase / 60 + s_ * 5.0) + side * r * 0.8
-        lift = 4 * math.sin(phase / 50 + i)
-        gust(front if side > 0 else back, (xc, y), (xc + side * 6, y - 4 + lift), (xc + side * 12, y - 4 + lift),
-             (xc + side * 15, y - 9 + lift), 3.4, 'XYVSR', curl_r=3.2, up=side > 0)
+        q = pts[min(i + 1, n)] - pts[max(i - 1, 0)]
+        q = q / (np.linalg.norm(q) or 1)
+        nn = np.array([-q[1], q[0]])
+        if nn @ LN > 0:                                  # le côté de l'ombre : à l'opposé de la lumière
+            nn = -nn
+        w = max(1.6, wmax * loc ** 0.9 * (1 if loc < 0.9 else 0.55 + 0.45 * (1 - loc) / 0.1))
+        seg.append(tuple(pts[i]))
+        wid.append(w)
+        low.append(tuple(pts[i] + nn * (0.28 * w + 1.0)))
+    stroke(back, low, [w * 0.9 for w in wid], under)
+    stroke(front, seg, wid, tones)
 
 
-def fx_herald(k):
-    """k = 0 : l'éclat de la trompette et la rafale qui monte au ciel ; 1 : le tourbillon se forme (arrêt sur image) ;
-    2 à 5 : la tornade s'abat et tourne ; 6, 7 : elle se défait"""
+def fx_grace(k):
+    """k = 0 : l'éclat du pavillon ; 1 : l'onde monte et s'enroule, l'anneau de vent l'entoure (arrêt sur image) ;
+    2 : l'onde redescend vers la gauche, des rafales basses filent vers l'équipe ; 3, 4 : tout s'en va à gauche"""
     def f(cv, back, mid, front, ctx):
-        B = ctx.bell + 1.0 * ctx.u if hasattr(ctx, 'bell') else np.array(g2c(110, 40), float)
-        V = np.array(VORTEX)
-        pts = path_pts(B, B + np.array([26.0, -34.0]), V + np.array([-60.0, 6.0]), V + np.array([-24.0, 4.0]))
+        B, pts = grace_path(ctx)
+        cx = SOL[0] + 2
         if k == 0:
-            pop(front, B + 4 * ctx.u, 7.0, facing=30, tones='WWXYV')
-            crescent(front, B + 13 * ctx.u, 11, 30, span=150, w=6.0, tones='WXYVS')
-            comet(back, pts, 0.0, 0.45, 10, 'WXYVS')
-            braid(front, pts, 0.0, 0.45, 6.0, 1.3, 0.0, 3.2, 'VSR')
+            pop(front, B + 4 * ctx.u, 7.5, facing=30, tones='WWgghJ')
+            crescent(front, B + 12 * ctx.u, 10, 32, span=140, w=4.6, tones='WgYV')
+            crescent(back, B + 19 * ctx.u, 15, 32, span=110, w=3.0, tones='XYV')
             return
         if k == 1:
-            comet(back, pts, 0.2, 1.0, 10, 'WXYVS')
-            braid(front, pts, 0.2, 1.0, 6.0, 1.3, 0.0, 3.2, 'VSR')
-            # le tourbillon : un grand nuage qui s'enroule (deux volutes emboîtées) et des plumes qui tournent
-            storm_cap(back, front, 0.0, grow=0.8)
-            curl(front, (V[0] + 26, V[1] + 8), 7, 200, turn=300, w=3.2, tones='XYVSR')
-            curl(front, (V[0] - 28, V[1] + 9), 6, 20, turn=300, w=3.0, tones='XYVSR', cw=True)
-            for i in range(5):
-                a = math.radians(40 + i * 72)
-                feather(front if math.sin(a) < 0 else back, V[0] + 30 * math.cos(a) - 4, V[1] + 8 * math.sin(a) - 3, i,
-                        big=True)
+            wave_band(back, mid, pts, 0.03, 0.6, 14)
+            glints(front, pts, 0.1, 0.55, 0)
+            n = len(pts) - 1
+            q = pts[int(0.6 * n)] - pts[int(0.6 * n) - 3]
+            fa = math.degrees(math.atan2(-q[1], q[0]))
+            crescent(front, pts[int(0.6 * n)] + 2 * q / np.linalg.norm(q), 11, fa, span=140, w=5.0, tones='WgYV')
+            # l'écho du son au pavillon : deux arcs doux, l'un dans l'autre
+            crescent(front, B + 7 * ctx.u, 8, 32, span=120, w=3.2, tones='WYV')
+            crescent(back, B + 15 * ctx.u, 14, 32, span=110, w=3.0, tones='XYV')
+            # l'anneau de vent doux qui l'entoure, à hauteur de taille
+            ribbon(back, (cx, GROUND - 58), 32, 7, 20, 160, 3.0, tones='YVSR')
+            ribbon(front, (cx, GROUND - 58), 32, 7, 200, 340, 4.0, tones='WXYVS')
             return
-        if k <= 5:
-            depth = [0, 0, 0.5, 1.0, 1.0, 1.0][k]
-            phase = 70.0 * k
-            tornado(back, front, depth, phase)
-            if k == 2:
-                comet(back, pts, 0.6, 1.0, 8, 'XYVS')
-            # les plumes prises dans la tornade
-            for i in range(7):
-                s = (i + 0.5) / 7 * depth
-                a = math.radians(phase * 1.4 + i * 105)
-                y = VORTEX[1] + 4 + (GROUND - 4 - VORTEX[1] - 4) * s
-                r = 6 + 24 * (1 - s) ** 1.25 + 4
-                cv_ = front if math.sin(a) >= 0 else back
-                feather(cv_, VORTEX[0] + r * math.cos(a) - 4, y + r * 0.24 * math.sin(a) - 3, i + k, big=True)
-            if depth >= 1.0:
-                # au sol : l'éclat de l'impact, la poussière, l'anneau de vent qui s'écarte
-                gx = FOE[0] + 2
-                if k == 3:
-                    pop(front, (gx, GROUND - 10), 12.0, facing=90, tones='WWXYVS')
-                hol = [0, 0, 0, 0.0, 0.3, 0.55][k]
-                cloud(back, (gx - 20 - 2 * k, GROUND - 5), 7.0, 'kkkmn', hollow=hol, seed=50 + k)
-                cloud(back, (gx + 22 + 2 * k, GROUND - 5), 7.0, 'kkkmn', hollow=hol, seed=60 + k)
-                ribbon(back, (gx, GROUND - 3), 20 + 6 * k, 5, 25, 155, 3.0, tones='YVSR')
-                ribbon(front, (gx, GROUND - 3), 20 + 6 * k, 5, 205, 335, 4.0, tones='XYVSR')
+        if k == 2:
+            wave_band(back, mid, pts, 0.3, 0.9, 13)
+            glints(front, pts, 0.4, 0.85, 1)
+            n = len(pts) - 1
+            q = pts[int(0.9 * n)] - pts[int(0.9 * n) - 3]
+            fa = math.degrees(math.atan2(-q[1], q[0]))
+            crescent(front, pts[int(0.9 * n)] + 2 * q / np.linalg.norm(q), 12, fa, span=140, w=5.0, tones='WgYV')
+            ribbon(back, (cx - 4, GROUND - 64), 40, 8, 25, 155, 2.4, tones='YVS')
+            ribbon(front, (cx - 4, GROUND - 64), 40, 8, 205, 335, 3.0, tones='XYVS')
+            # les rafales basses, nées derrière elle, qui filent vers l'équipe
+            gust(back, (cx - 6, GROUND - 66), (cx - 40, GROUND - 78), (cx - 76, GROUND - 60), (14, GROUND - 72),
+                 6.0, 'WXYVS', curl_r=4.6, up=True)
+            gust(back, (cx - 4, GROUND - 18), (cx - 36, GROUND - 8), (cx - 70, GROUND - 10), (18, GROUND - 24),
+                 5.0, 'WXYVS', curl_r=4.0, up=True)
             return
-        # elle se défait : les spirales se coupent en volutes qui s'envolent, les plumes retombent en se balançant
-        j = k - 6
-        tornado_fade(back, front, j)
-        for i in range(6):
-            x = FOE[0] - 34 + i * 13 + (3 if (i + j) % 2 else -3)
-            y = GROUND - 70 + (i * 17) % 50 + 14 * j
-            feather(front if i % 2 else back, x, y, i + j, big=True)
+        if k == 3:
+            wave_band(back, mid, pts, 0.68, 1.0, 8, tones='WXYV', under='VS')
+            crescent(back, (cx - 46, GROUND - 66), 30, 180, span=90, w=4.0, tones='WXYVS')
+            gust(back, (cx - 20, GROUND - 70), (cx - 54, GROUND - 82), (cx - 90, GROUND - 62), (0, GROUND - 74),
+                 5.2, 'WXYVS', curl_r=5.0, up=True, tail=0.45)
+            gust(back, (cx - 18, GROUND - 16), (cx - 50, GROUND - 6), (cx - 84, GROUND - 10), (4, GROUND - 26),
+                 4.4, 'WXYVS', curl_r=4.4, up=True, tail=0.45)
+            return
+        # k == 4 : il ne reste que des volutes qui s'en vont, de plus en plus fines
+        curl(back, (12, GROUND - 92), 6, 250, turn=300, w=3.2, tones='XYVS')
+        curl(back, (-2, GROUND - 76), 5, 120, turn=300, w=3.0, tones='XYVS', cw=True)
+        curl(back, (6, GROUND - 30), 5, 200, turn=300, w=2.8, tones='XYVS')
     return f
 
 
-def tornado_fade(back, front, j):
-    """la tornade qui se défait (j = 0, 1) : des volutes éparses le long de l'ancienne colonne, de plus en plus fines"""
-    for i, (dx, dy, r, a0, cw_) in enumerate(((-14, 60, 7, 120, False), (16, 88, 6, 300, True), (-8, 118, 6, 200, False),
-                                               (20, 140, 5, 30, True), (2, 30, 9, 250, False))):
-        c = (VORTEX[0] + dx * (1 + 0.4 * j), VORTEX[1] + dy - 6 * j)
-        curl(front if i % 2 else back, c, r * (1 - 0.25 * j), a0 + 60 * j, turn=300, w=3.4 - 1.2 * j,
-             tones='XYVSR' if j == 0 else 'YVS', cw=cw_)
-    gx = FOE[0] + 2
-    cloud(back, (gx - 24, GROUND - 6 - 3 * j), 6.0 - j, 'kkkm', hollow=0.7 + 0.15 * j, seed=70 + j)
-    cloud(back, (gx + 26, GROUND - 6 - 3 * j), 6.0 - j, 'kkkm', hollow=0.7 + 0.15 * j, seed=72 + j)
+# ---- la pluie de plumes de lumière : elles naissent du son, retombent sur elle ou dérivent vers l'équipe
+#      (départ par rapport au sol et à elle, glissement à gauche et chute par image, première image)
+RAIN = [(-30, -150, -6, 9, 0), (-8, -160, -2, 10, 0), (16, -146, -1, 9, 0), (32, -136, -4, 10, 0),
+        (-52, -128, -8, 8, 0), (4, -132, -3, 11, 2), (-22, -172, -7, 10, 3), (22, -176, -2, 9, 4)]
 
 
-def fx_heal(k):
-    """les plumes de lumière retombent sur elle en se balançant (k = 0 … 3) ; à la fin, de petites lueurs rondes"""
+RAIN_BIG = [[r.translate(str.maketrans('zyxw', 'WgJI')) for r in rows] for rows in BIG_FEATHERS]
+RAIN_SMALL = [[r.translate(str.maketrans('WghJI', 'WgJJI')) for r in rows] for rows in GOLD_FEATHERS]
+
+
+def glints(cv, pts, s0, s1, seed):
+    """des grains et de petites plumes de lumière portés par l'onde"""
+    n = len(pts) - 1
+    for j in range(4):
+        s = s0 + (s1 - s0) * (j + 0.5) / 4
+        p = pts[int(s * n)]
+        off = 7 if (j + seed) % 2 else -7
+        if j % 2:
+            sprite(cv, RAIN_SMALL[(j + seed) % 4], int(p[0]) - 3, int(p[1] + off) - 2)
+        else:
+            burst(cv, (p[0] + 2, p[1] + off), 1.7, 'Wgh')
+
+
+def fx_rain(k):
     def f(cv, back, mid, front, ctx):
-        top = [GROUND - 150, GROUND - 120, GROUND - 92, GROUND - 66][k]
-        for i, (dx, dy, kind) in enumerate(((-26, 0, 0), (8, -14, 2), (30, 6, 1), (-6, 18, 3), (22, -30, 0))):
-            sway = 4 * math.sin(k * 1.3 + i * 2.0)
-            x = SOL[0] + dx + sway
-            y = top + dy
-            if k == 3 and i in (0, 3):
+        for i, (x0, y0, vx, vy, k0) in enumerate(RAIN):
+            t = k - k0
+            if t < 0:
                 continue
-            feather(front if i % 2 == 0 else back, x, y, kind + (k % 2) * 2, gold=True, big=True)
-        if k >= 2:
-            for (dx, dy) in ((-20, -60), (14, -44), (-4, -82), (28, -70)):
-                burst(front, (SOL[0] + dx, GROUND + dy + (k - 2) * 6), 1.6 if k == 2 else 1.1, 'Wgh')
+            x = SOL[0] + x0 + vx * t + 3 * math.sin(k * 1.3 + i * 2.0)
+            y = GROUND + y0 + vy * t
+            if abs(x - SOL[0]) < 22 and y > GROUND - 58:
+                # elle touche Myrr : une petite lueur, puis plus rien
+                if y - vy <= GROUND - 58:
+                    burst(front, (x + 4, y + 3), 1.7, 'Wgh')
+                continue
+            if y > GROUND - 8 or x < -8:
+                continue
+            rows = (RAIN_BIG if t > 0 else RAIN_SMALL)[(i % 2) + (k % 2) * 2]
+            sprite(front if i % 2 == 0 else back, rows, int(round(x)), int(round(y)))
+        # les petites lueurs qui restent posées sur elle
+        if k >= 5:
+            for j, (dx, dy) in enumerate(((-16, -64), (12, -48), (-2, -86), (24, -72), (-10, -30))):
+                if (j + k) % 3 == 0:
+                    continue
+                burst(front, (SOL[0] + dx, GROUND + dy - (k - 5) * 3), 1.5 if k < 8 else 1.0, 'Wgh')
+    return f
+
+
+# ---- la purification : de petites taches sombres apparaissent sur elle, se détachent, montent et s'évaporent
+SPECKS = [(61, 75), (75, 82), (66, 97), (79, 101), (57, 88)]          # sur la robe et le buste (grille)
+SPECK_SHAPES = [
+    [['pp', 'pq'], ['.pp', 'ppq']],                 # posées sur elle
+    [['pp', 'pq', '.q'], ['.pp', 'pq.', '.q.']],    # elles se décollent
+    [['.q', 'qp', 'q.', '.l'], ['q.', 'pq', '.q', 'l.']],
+    [['.l', 'll'], ['l.', 'll']],                   # presque évaporées
+    [['l'], ['l']],
+]
+SPECK_DY = [0, -3, -8, -13, -17]
+SPECK_DX = [0, 0, -1, -2, -3]
+
+
+def fx_specks(k):
+    def f(cv, back, mid, front, ctx):
+        for i, (gx, gy) in enumerate(SPECKS):
+            dx, dy = ctx.body.follow(gy)
+            x, y = gx + OX + dx, gy + OY + dy
+            if k == 0 and cv[y, x] == '.':
+                continue
+            if k == 4 and i % 2:
+                continue
+            sway = (1 if (i + k) % 2 else -1) if k >= 2 else 0
+            sprite(front, SPECK_SHAPES[k][i % 2], x + SPECK_DX[k] + sway, y + SPECK_DY[k])
+    return f
+
+
+# ---- la résurrection : une grande plume de lumière naît au-dessus d'elle, file vers la gauche et devient une colonne
+PLUME_A = np.array([SOL[0] + 2.0, GROUND - 150.0])          # où elle naît (au-dessus de l'auréole)
+COLUMN_X = 24.0                                             # où se dresse la colonne (vers l'équipe)
+
+
+def light_plume(cv, tip, ang, L, wmax):
+    """une grande plume de lumière : la pointe en tip, tournée vers ang (degrés) ; l'étendard s'élargit puis se
+    resserre sur le tuyau ; coeur blanc, bords d'or ; une tige d'or pâle au milieu"""
+    d = unit(ang)
+    nrm = np.array([-d[1], d[0]])
+    pts, widths = [], []
+    for i in range(41):
+        s = i / 40
+        p = np.array(tip, float) - s * L * d + 2.5 * math.sin(math.pi * s) * nrm
+        pts.append(tuple(p))
+        if s < 0.82:
+            widths.append(wmax * math.sin(math.pi * min(1.0, (s + 0.04) / 0.86)) ** 0.55 + 0.4)
+        else:
+            widths.append(1.2)
+    stroke(cv, pts, widths, 'WWghJ')
+    for (x, y) in pts[6:]:
+        X, Y = int(x), int(y)
+        if 0 <= X < W and 0 <= Y < H and cv[Y, X] in 'Wg':
+            put(cv, x, y, 'h')
+
+
+def column(cv, top, hw0, ph):
+    """la colonne de lumière, du sol jusqu'à top : évasée au pied, bords qui ondulent doucement (pas un tube raide),
+    sommet arrondi comme une flamme ; coeur blanc, or pâle, bord d'or du côté de l'ombre (à gauche), bord pâle du
+    côté de la lumière (à droite)"""
+    cap = hw0 * 1.8
+    for y in range(int(top), GROUND + 1):
+        t = (y - top) / (GROUND - top)
+        hw = hw0 * (0.72 + 0.45 * t) + 1.0 * math.sin(y * 0.13 + ph)
+        if y < top + cap:
+            hw *= math.sqrt(max(0.0, 1 - ((top + cap - y) / cap) ** 2))
+        xc = COLUMN_X + 1.4 * math.sin(y * 0.05 + ph * 0.5)
+        for x in range(int(xc - hw - 1), int(xc + hw + 2)):
+            q = (x + 0.5 - xc - 0.18 * hw) / max(hw, 0.6)
+            if abs(q) > 1.0:
+                continue
+            put(cv, x, y, 'W' if abs(q) < 0.3 else 'g' if abs(q) < 0.55 else 'h' if abs(q) < 0.78 else
+                'J' if q < 0 else 'Y')
+
+
+def fx_rez(k):
+    """k = 0 : la plume naît au-dessus d'elle (un second son, plus doux) ; 1 : elle file vers la gauche ;
+    2 : elle plonge vers le sol, là où se tient l'équipe ; 3 : la colonne de lumière jaillit (arrêt sur image) ;
+    4 : la colonne se défait en bouffées de lumière qui montent ; 5 : quelques lueurs"""
+    def f(cv, back, mid, front, ctx):
+        top = 20.0
+        land = np.array([COLUMN_X + 2.0, GROUND - 14.0])
+        trail = path_pts(PLUME_A, PLUME_A + np.array([-40.0, -26.0]), land + np.array([4.0, -130.0]), land)
+        n = len(trail) - 1
+        if k == 0:
+            pop(front, ctx.bell + 3 * ctx.u, 4.5, facing=30, tones='Wgh')
+            burst(back, PLUME_A, 10.0, 'WWghY')
+            light_plume(front, PLUME_A + np.array([-15.0, -5.0]), 160, 32, 9.0)
+            for (dx, dy) in ((-18, 12), (15, -7), (11, 13)):
+                burst(front, PLUME_A + np.array([dx, dy]), 1.7, 'Wgh')
+            return
+        if k in (1, 2):
+            sf = 0.5 if k == 1 else 0.86
+            wave_band(back, mid, trail, max(0.0, sf - 0.5), sf, 8, tones='WWghJ', under='YV')
+            p = trail[int(sf * n)]
+            q = trail[int(sf * n)] - trail[int(sf * n) - 3]
+            ang = math.degrees(math.atan2(-q[1], q[0]))
+            light_plume(front, p + 6 * q / np.linalg.norm(q), ang, 32, 9.0)
+            return
+        if k == 3:
+            column(back, top, 9.0, 0.0)
+            cloud(back, (COLUMN_X, GROUND - 5), 7.0, 'WghJ', seed=81)
+            ribbon(back, (COLUMN_X, GROUND - 3), 19, 4, 20, 160, 2.8, tones='ghJ')
+            ribbon(front, (COLUMN_X, GROUND - 3), 19, 4, 200, 340, 3.4, tones='WghJ')
+            for (dx, dy) in ((-15, -40), (15, -72), (-14, -112), (14, -146)):
+                burst(front, (COLUMN_X + dx, GROUND + dy), 1.7, 'Wgh')
+            sprite(front, RAIN_SMALL[1], COLUMN_X + 11, GROUND - 96)
+            sprite(front, RAIN_SMALL[0], COLUMN_X - 19, GROUND - 60)
+            return
+        if k == 4:
+            for i, (dy, r) in enumerate(((-40, 7.0), (-78, 6.5), (-116, 5.5), (-150, 4.5))):
+                cloud(back, (COLUMN_X + (2 if i % 2 else -2), GROUND + dy), r, 'Wghh', seed=90 + i)
+            ribbon(front, (COLUMN_X, GROUND - 3), 22, 5, 200, 340, 2.2, tones='gh')
+            for (dx, dy) in ((-12, -58), (13, -98), (-10, -134), (10, -170)):
+                burst(front, (COLUMN_X + dx, GROUND + dy), 1.4, 'Wgh')
+            sprite(front, RAIN_SMALL[3], COLUMN_X + 12, GROUND - 124)
+            return
+        for (dx, dy) in ((-8, -120), (10, -156), (-4, -180), (6, -94)):
+            burst(front, (COLUMN_X + dx, GROUND + dy), 1.1, 'gh')
+        sprite(front, RAIN_SMALL[1], COLUMN_X + 14, GROUND - 152)
     return f
 
 
@@ -1327,18 +1428,22 @@ SPECIALE = [
     dict(s=-1, lift=7, spread='grande', ang=48, mo=(4, 13), tg=15, rs=-1, ha=-1,
          fx=[fx_downdraft(0)], ms=70),
     dict(b=1, lift=9, spread='grande', ang=32, tg=16, rs=0, ha=-1, hy=1, glow=1, fx=[fx_downdraft(1)], ms=220),
-    dict(lift=8, lean=1, spread='battue', ang=30, mo=(1, 0), tg=16, rs=1, glow=1, flash=30, fx=[fx_herald(0)],
-         ms=60),
-    dict(lift=8, lean=1, spread='battue', ang=30, mo=(1, 0), tg=16, rs=1, glow=1, fx=[fx_herald(1), fx_downdraft(2)],
-         ms=170),
-    dict(lift=9, spread='demi', ang=31, tg=16, rs=0, glow=1, fx=[fx_herald(2)], ms=90),
-    dict(lift=9, spread='grande', ang=32, tg=16, rs=-1, ha=-1, glow=1, fx=[fx_herald(3)], ms=110),
-    dict(lift=9, spread='grande', ang=32, tg=16, rs=-1, ha=-1, fx=[fx_herald(4)], ms=90),
-    dict(lift=8, spread='grande', ang=32, tg=16, rs=0, ha=0, fx=[fx_herald(5)], ms=90),
-    dict(lift=7, spread='demi', ang=40, mo=(3, 10), tg=15, rs=1, fx=[fx_herald(6), fx_heal(0)], ms=100),
-    dict(lift=4, ang=46, mo=(6, 16), tg=15, wl=-2, wg=0, rs=1, fx=[fx_herald(7), fx_heal(1)], ms=110),
-    dict(arms='orig', lift=1, wl=-1, wg=-1, wt=-1, rs=0, fx=[fx_heal(2)], ms=120),
-    dict(arms='orig', s=1, wl=0, wg=1, wt=-1, rs=-1, k=1, fx=[fx_heal(3)], ms=140),
+    dict(lift=8, lean=1, spread='battue', ang=30, mo=(1, 0), tg=16, rs=1, glow=1, flash=42,
+         fx=[fx_grace(0), fx_specks(0)], ms=60),
+    dict(lift=8, lean=1, spread='battue', ang=30, mo=(1, 0), tg=16, rs=1, glow=1, flash=20,
+         fx=[fx_grace(1), fx_specks(1), fx_downdraft(2), fx_rain(0)], ms=200),
+    dict(lift=9, spread='demi', ang=31, tg=16, rs=0, glow=1, fx=[fx_grace(2), fx_specks(2), fx_rain(1)], ms=90),
+    dict(lift=9, spread='grande', ang=32, tg=16, rs=-1, ha=-1, glow=1, fx=[fx_grace(3), fx_specks(3), fx_rain(2)],
+         ms=90),
+    dict(lift=9, spread='grande', ang=32, tg=16, rs=-1, ha=-1, glow=1,
+         fx=[fx_grace(4), fx_specks(4), fx_rain(3), fx_rez(0)], ms=130),
+    dict(lift=9, spread='grande', ang=32, tg=16, rs=0, ha=0, glow=1, fx=[fx_rain(4), fx_rez(1)], ms=70),
+    dict(lift=9, spread='grande', ang=32, tg=16, rs=0, ha=0, glow=1, fx=[fx_rain(4), fx_rez(2)], ms=50),
+    dict(lift=8, spread='grande', ang=32, tg=16, rs=0, glow=1, flash=12, fx=[fx_rain(5), fx_rez(3)], ms=200),
+    dict(lift=7, spread='demi', ang=40, mo=(3, 10), tg=15, rs=1, fx=[fx_rain(6), fx_rez(4)], ms=100),
+    dict(lift=4, ang=46, mo=(6, 16), tg=15, wl=-2, wg=0, rs=1, fx=[fx_rain(7), fx_rez(5)], ms=110),
+    dict(arms='orig', lift=1, wl=-1, wg=-1, wt=-1, rs=0, fx=[fx_rain(8)], ms=120),
+    dict(arms='orig', s=1, wl=0, wg=1, wt=-1, rs=-1, k=1, fx=[fx_rain(9)], ms=140),
     dict(arms='orig', wl=0, wg=0, rs=0, ms=150),
 ]
 
@@ -1399,6 +1504,9 @@ GAME_BOX = (                                                # la case du jeu : 1
             SOL[1] - hd.FEET[1] + hd.FRAME_H)
 
 
+ATTAQUE_BOX = (9, 18, 348, 212)     # la case de l'attaque (inchangée depuis sa validation)
+
+
 def save_gif(path, images, durations):
     """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
     rgb = [im.convert('RGB') for im in images]
@@ -1418,10 +1526,13 @@ def save_gif(path, images, durations):
 def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
     boxes = {'pose': GAME_BOX}
-    # une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets
-    both = anims['attaque'] + anims['speciale'] + anims['pose']
-    bb = bbox(both, 6)
-    boxes['attaque'] = boxes['speciale'] = bb
+    # l'attaque garde sa case d'origine (validée, celle qu'elle partageait avec l'ancienne spéciale) ; la spéciale
+    # (sort d'équipe, tournée vers la gauche) a la sienne ; l'enchaînement prend la réunion des deux
+    boxes['attaque'] = ATTAQUE_BOX
+    boxes['speciale'] = bbox(anims['speciale'] + anims['pose'], 6)
+    bs = boxes['speciale']
+    bb = (min(ATTAQUE_BOX[0], bs[0]), min(ATTAQUE_BOX[1], bs[1]), max(ATTAQUE_BOX[2], bs[2]),
+          max(ATTAQUE_BOX[3], bs[3]))
     for name in ('pose', 'attaque', 'speciale'):
         box = boxes[name]
         ims = [on_bg(img).crop(box) for img, _ in anims[name]]

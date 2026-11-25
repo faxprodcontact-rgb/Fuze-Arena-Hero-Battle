@@ -58,6 +58,13 @@ FXPAL = {
     'P': (132, 186, 74),    # feuille, vert tendre
     'Q': (56, 116, 62),     # feuille, ombre
     'T': (255, 248, 210),   # étincelle (blanc doré)
+    # la spéciale d'équipe (25/11/2026) : le vent porteur chaud, l'aura d'attaque (flammes douces), les orbes d'énergie
+    'y': (255, 246, 206),   # crème chaude (coeur du vent porteur, braise vive)
+    '8': (255, 222, 118),   # or clair (l'aura contre lui, orbe d'or)
+    '9': (246, 172, 62),    # or orangé
+    'U': (230, 108, 50),    # orange-rouge (langues de l'aura)
+    'Z': (172, 54, 46),     # rouge braise (bord des flammes)
+    'x': (120, 172, 240),   # bleu ciel (bord des orbes d'énergie)
 }
 assert not set(FXPAL) & set(PAL)
 ALLPAL = dict(PAL)
@@ -67,9 +74,12 @@ LN = LIGHT / np.linalg.norm(LIGHT)
 
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. De la place au-dessus (le sac tourne au-dessus de
-# sa tête) et beaucoup à droite (la tempête qui file jusqu'à l'ennemi).
-W, H = 384, 214
-SOL = (104, 200)
+# sa tête), à droite (la rafale de l'attaque qui file jusqu'à l'ennemi) et, depuis la spéciale d'équipe (25/11/2026),
+# à gauche (le vent porteur et les orbes qui filent vers son équipe, derrière lui). La toile a été élargie de 64 px à
+# gauche : tout est décalé d'autant, la pose et l'attaque restent identiques au pixel près (même cadrage, ATK_BOX).
+DXL = 64
+W, H = 384 + DXL, 214
+SOL = (104 + DXL, 200)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
 ENEMY_X = SOL[0] + 168                                     # l'ennemi (milieu du corps, toile)
@@ -300,15 +310,19 @@ def close_specks(h, ytop=36, most=3):
     return h
 
 
-def compose(hero, fx_back=None, fx_front=None, flash=None):
+def compose(hero, fx_back=None, fx_front=None, flash=None, spare=None):
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
     if fx_back is not None:
         layers.append(to_rgba(fx_back))
     h = close_specks(hd.outline(to_rgba(hero)))
     if flash:
+        # flash = un pourcentage (vers le blanc) ou (pourcentage, couleur) : la teinte chaude du cri de guerre
+        pct, tint = flash if isinstance(flash, tuple) else (flash, (255, 255, 255))
         m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
-        h[m, :3] = (h[m, :3].astype(int) + (255 - h[m, :3].astype(int)) * flash // 100).astype(np.uint8)
+        if spare is not None:
+            m &= ~spare                                   # (la spéciale) la toile du sac garde sa couleur
+        h[m, :3] = (h[m, :3].astype(int) + (np.array(tint) - h[m, :3].astype(int)) * pct // 100).astype(np.uint8)
     layers.append(h)
     if fx_front is not None:
         layers.append(to_rgba(fx_front))
@@ -1236,112 +1250,274 @@ def fx_whirl(level, spin=0.0):
     return f
 
 
-# La tempête : elle sort de la bouche du sac (M) et file vers l'ennemi (T), en rafales enroulées.
-STORM_T = np.array([ENEMY_X + 0.0, ENEMY_Y - 2.0])
+# ---------------------------------------------------------------- la spéciale d'ÉQUIPE (25/11/2026)
+# L'effet réel en combat : l'attaque de toute l'équipe monte (pendant 6 s) et tous les alliés reçoivent de l'énergie.
+# Son équipe se tient DERRIÈRE lui (à gauche de l'image). La fronde reste (le sac tourne au-dessus de sa tête), mais au
+# lieu de le jeter sur l'ennemi, il le cale sur son épaule, la bouche tournée vers la gauche, et l'ouvre en poussant
+# un cri de guerre : un vent porteur CHAUD (crème, or, orangé, quelques rubans jade) jaillit vers ses alliés, des orbes
+# d'énergie (bleu-blanc et or) filent avec lui, et une aura de flammes douces rouge-orangé et or monte autour de lui.
+# Puis le sac se vide, pend tout flasque au bout de son poing, et se regonfle sur ses épaules (pof !).
+LEFT_T = np.array([10.0, GROUND - 46.0])                # là où file le vent porteur : le bord gauche de l'image
+WARM = (255, 176, 92)                                    # la teinte chaude posée un instant sur lui (le cri)
 
 
-def storm_gusts(cv, M, k, tail=0.0, wk=1.0):
-    """les rafales de la tempête : k = portée (0..1.4, 1 = l'ennemi), tail = leur départ déjà effacé"""
-    T = STORM_T
-    for (dy0, dy1, w, up, cr) in ((-5, -30, 7.0, True, 9), (0, 4, 8.0, False, 8), (5, 26, 6.5, False, 9),
-                                  (-2, -14, 5.0, True, 6)):
-        end = M + (T + np.array([12.0, dy1 * 0.8]) - M) * k
-        p1 = M + np.array([16.0, dy0 * 3.0])
-        p2 = end + np.array([-18.0, dy1 * 0.7])
-        gust(cv, M + np.array([0.0, dy0 * 0.5]), p1, p2, end, w * wk * min(1.0, 0.45 + k), tones='WXYVS',
-             curl_r=cr * min(1.0, 0.3 + k), up=up, tail=tail)
+def _shift(m, dx, dy):
+    """le masque m décalé de (dx, dy) : out[y + dy, x + dx] = m[y, x] (ce qui sort est perdu)"""
+    out = np.zeros_like(m)
+    h, w = m.shape
+    out[max(0, dy):h + min(0, dy), max(0, dx):w + min(0, dx)] = m[max(0, -dy):h + min(0, -dy), max(0, -dx):w + min(0, -dx)]
+    return out
 
 
-def wind_body(cv, M, k, hollow=0.0, seed=0):
-    """le gros du vent qui sort du sac : des bouffées pâles qui grossissent en s'éloignant de la bouche (un cône
-    de nuages, pas un rayon)"""
-    T = STORM_T
-    rng = np.random.RandomState(seed)
-    for i, s in enumerate((0.12, 0.32, 0.55, 0.8, 1.02)):
+def hero_mask(cv):
+    """le corps de l'ogre (sans la toile du sac ni ses cordons) : l'aura monte sur LUI"""
+    return (cv != '.') & ~np.isin(cv, list(TOILE + 'abcdl'))
+
+
+def aura(back, cv, level, ph, fade=0.0):
+    """l'aura ascendante : des flammes douces qui montent de toute sa silhouette (or contre lui, puis orangé, bord
+    rouge braise). Une « distance » qui compte peu vers le haut (les flammes montent), beaucoup vers le bas ; le seuil
+    ondule le long de la silhouette (deux ondes de longueurs différentes, qui serpentent en montant) : des langues de
+    feu inégales, jamais un peigne régulier. fade (0..1) : elle s'éteint par le bas et se défait en lambeaux."""
+    m = hero_mask(cv)
+    ys, xs = np.nonzero(m)
+    if not len(ys):
+        return
+    base = (1.8, 3.0, 4.3, 3.7)[level]
+    y0, y1 = max(0, ys.min() - 34), min(H, ys.max() + 8)
+    x0, x1 = max(0, xs.min() - 12), min(W, xs.max() + 13)
+    sub = m[y0:y1, x0:x1]
+    D = np.full(sub.shape, 99.0)
+    UP = np.zeros(sub.shape, bool)                       # le point le plus proche est en dessous : une langue qui monte
+    for dy in range(-32, 5):
+        for dx in range(-8, 9):
+            c = math.hypot(dx * 1.35, dy * (0.28 if dy < 0 else 2.0))
+            if c > 9.5 or (dx == 0 and dy == 0):
+                continue
+            s = _shift(sub, dx, dy) & (D > c)
+            D[s] = c
+            UP[s] = dy <= -2
+    Y, X = np.mgrid[y0:y1, x0:x1].astype(float)
+    xw = X + 2.4 * np.sin(Y * 0.21 + ph)
+    wav = 0.55 * np.sin(xw * 0.62 + ph * 0.7) + 0.45 * np.sin(xw * 0.27 - ph * 0.45 + 1.3)
+    T = base * (0.62 + 0.62 * wav)
+    T = np.maximum(T, 1.5)
+    k = D / T
+    cut = (k <= 1.0) & ~sub
+    tones = '899U'                                       # flammes douces : or contre lui, orangé au bord
+    if fade:
+        # elle s'éteint : il ne reste que le haut des langues qui montent (pas de lambeaux sur les côtés)
+        cut &= UP & (wav > -0.3 + 0.8 * fade)
+        tones = '9UU'
+    # pas de miettes : les petits bouts de flamme isolés (moins de 4 pixels) sont retirés
+    seen = np.zeros_like(cut)
+    for (sy, sx) in zip(*np.nonzero(cut)):
+        if seen[sy, sx]:
+            continue
+        comp, stack = [], [(sy, sx)]
+        seen[sy, sx] = True
+        while stack:
+            cy_, cx_ = stack.pop()
+            comp.append((cy_, cx_))
+            for ddy, ddx in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                ny_, nx_ = cy_ + ddy, cx_ + ddx
+                if 0 <= ny_ < cut.shape[0] and 0 <= nx_ < cut.shape[1] and cut[ny_, nx_] and not seen[ny_, nx_]:
+                    seen[ny_, nx_] = True
+                    stack.append((ny_, nx_))
+        if len(comp) < 4:
+            for (cy_, cx_) in comp:
+                cut[cy_, cx_] = False
+    for (yy, xx) in zip(*np.nonzero(cut)):
+        kk = k[yy, xx]
+        ch = tones[min(len(tones) - 1, int(kk * len(tones)))]
+        put(back, xx + x0, yy + y0, ch)
+
+
+def embers(front, back, cv, t, n=9, spread=46, fade=0.0):
+    """les braises : de petites étincelles qui montent en serpentant autour de lui (devant lui seulement là où il n'y
+    a pas son corps, sinon derrière). t = le temps (en images)"""
+    m = hero_mask(cv) | (cv != '.')
+    near = m | _shift(m, 1, 0) | _shift(m, -1, 0) | _shift(m, 0, 1) | _shift(m, 0, -1)
+    rng = np.random.RandomState(5)
+    for i in range(n):
+        x0 = FEET_C[0] + rng.uniform(-spread, spread * 0.7)
+        h = (t * 9.0 + rng.uniform(0, 100)) % 100
+        if fade and rng.uniform() < fade:
+            continue
+        y = GROUND - 8 - h
+        x = x0 + 3.0 * math.sin(h * 0.12 + i)
+        X, Y = int(x), int(y)
+        big = h < 60
+        for (px, py, ch) in ((X, Y, 'y' if big else '8'), (X, Y + 1, '9'), (X + (1 if i % 2 else -1), Y + 2, 'U')):
+            if not big and ch == 'U':
+                continue
+            if 0 <= px < W and 0 <= py < H:
+                put(front if not near[py, px] else back, px, py, ch)
+
+
+def orb(cv, c, r, gold=False):
+    """un orbe d'énergie : un coeur blanc décalé vers la lumière (en haut à droite), le corps bleu pâle (ou or), un
+    bord plus soutenu"""
+    tones = 'WyY8' if gold else 'WXYx'
+    if gold:
+        tones = 'Wy89'
+    cx, cy = c
+    best = {}
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            d = math.hypot(x + 0.5 - cx, y + 0.5 - cy)
+            if d <= r:
+                dl = math.hypot(x + 0.5 - cx - 0.3 * r * LN[0], y + 0.5 - cy - 0.3 * r * LN[1])
+                best[(x, y)] = min(0.99, 0.75 * dl / r + 0.25 * (d / r) ** 3)
+    _paint(cv, best, tones)
+
+
+# les orbes : (départ en temps, hauteur d'arrivée, bosse de la courbe, rayon, or ?)
+ORBS = [(0.00, -66, -26, 4.8, False), (0.12, -30, 22, 4.4, True), (0.24, -88, 18, 4.0, False),
+        (0.34, -48, -20, 4.6, True), (0.46, -18, 14, 3.8, False)]
+
+
+def orb_path(M, dest_y, bump):
+    """une courbe en S douce de la bouche du sac jusqu'au bord gauche (chaque orbe a la sienne)"""
+    p3 = np.array([LEFT_T[0] - 44.0, GROUND + dest_y])
+    pts = bezier(M, M + np.array([-34.0, bump]), p3 + np.array([60.0, -bump]), p3, 180)
+    out = []
+    for i, (x, y) in enumerate(pts):                     # il ondule en volant (une vague douce, de plus en plus ample)
+        s = i / (len(pts) - 1)
+        out.append((x, y + (2.0 + 7.0 * s) * math.sin(s * 9.0 + bump * 0.2) * math.sin(math.pi * min(1.0, s * 3))))
+    return out
+
+
+def orbs(front, back, M, t):
+    """les orbes jaillissent de la bouche du sac et filent vers la gauche (vers l'équipe), chacun sur sa courbe, avec
+    une petite traîne courbe qui s'effile derrière lui"""
+    for (t0, dy, bump, r, gold) in ORBS:
+        s = (t - t0) / 0.85
+        if s <= 0.0 or s > 1.15:
+            continue
+        pts = orb_path(M, dy, bump)
+        i = min(len(pts) - 1, int(s * (len(pts) - 1)))
+        j0 = max(0, i - 13)
+        tail = pts[j0:i + 1]
+        if len(tail) > 2:
+            ws = [1.1 + (r * 1.4) * (k / (len(tail) - 1)) ** 1.1 for k in range(len(tail))]
+            stroke(front, tail, ws, 'y89' if gold else 'XYx')
+        rr = r * min(1.0, 0.45 + s * 1.6)
+        orb(front, pts[i], rr, gold)
+
+
+def warm_gust(cv, p0, p1, p2, p3, w, tones, curl_r, up, tail=0.0, head=0.35):
+    """comme gust() (l'attaque), mais tracée plus serrée et jamais plus fine qu'un trait plein : quand la rafale
+    s'efface par le début, elle se raccourcit au lieu de s'émietter en pointillés"""
+    pts = bezier(p0, p1, p2, p3, 200)
+    ex, ey = pts[-1]
+    tx, ty = pts[-1][0] - pts[-2][0], pts[-1][1] - pts[-2][1]
+    tl = math.hypot(tx, ty) or 1
+    tx, ty = tx / tl, ty / tl
+    nx, ny = (ty, -tx) if up else (-ty, tx)
+    cx, cy = ex + nx * curl_r, ey + ny * curl_r
+    a0 = math.atan2(-(ey - cy), ex - cx)
+    sgn = 1 if up else -1
+    for i in range(1, 81):
+        s = i / 80
+        a = a0 + sgn * math.radians(300) * s
+        r = curl_r * (1 - 0.75 * s)
+        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
+    N = len(pts)
+    widths = []
+    for i in range(N):
+        s = i / (N - 1)
+        if s < tail:
+            widths.append(0)
+            continue
+        ss = (s - tail) / max(1 - tail, 1e-6)
+        prof = (ss / head) ** 0.7 if ss < head else ((1 - ss) / (1 - head)) ** 0.8
+        wv = w * prof + 0.5
+        widths.append(wv if wv >= 1.3 or s > 0.9 else 0)
+    stroke(cv, pts, widths, tones)
+
+
+def warm_gusts(cv, M, k, tail=0.0, wk=1.0):
+    """le vent porteur : des rafales courbes qui partent de la bouche du sac vers la gauche et finissent en volutes
+    (deux chaudes, crème-or-orangé, une jade, l'élément du vent). k = portée (0..1.4, 1 = le bord gauche)"""
+    for (dy0, dy1, w, up, cr, tones) in ((-4, -40, 6.5, False, 8, 'y89U'), (1, 6, 7.5, True, 9, 'Wy89'),
+                                         (5, 36, 6.0, True, 8, 'XYVS'), (-1, -16, 4.6, False, 6, 'y89U')):
+        end = M + (LEFT_T + np.array([-10.0, dy1]) - M) * k
+        p1 = M + np.array([-16.0, dy0 * 3.0])
+        p2 = end + np.array([18.0, dy1 * 0.6])
+        warm_gust(cv, M + np.array([0.0, dy0 * 0.5]), p1, p2, end, w * wk * min(1.0, 0.45 + k), tones,
+                  cr * min(1.0, 0.3 + k), up, tail=tail)
+
+
+def warm_body(cv, M, k, hollow=0.0):
+    """le gros du vent qui sort du sac : des bouffées chaudes qui grossissent en s'éloignant (un cône de nuages)"""
+    for i, s in enumerate((0.12, 0.32, 0.55, 0.8)):
         if s > k:
             continue
-        p = M + (T - M) * s + np.array([0.0, rng.uniform(-3, 3)])
-        r = 4.0 + 9.0 * s
-        if hollow:
-            r *= (1 - 0.35 * hollow)
-        pop(cv, p, r, facing=0, tones='WXXY' if hollow < 0.5 else 'XYY')
+        p = M + (LEFT_T - M) * s + np.array([0.0, (-2, 2, -3, 1)[i]])
+        r = (4.0 + 8.0 * s) * (1 - 0.35 * hollow)
+        pop(cv, p, r, facing=180, tones='Wyy8' if hollow < 0.5 else 'yy8')
 
 
-def cyclone(back, front, c, r, phase, w=5.0, tones='WXYVS'):
-    """la tempête qui enveloppe l'ennemi : deux grosses volutes qui s'enroulent l'une dans l'autre (devant et
-    derrière lui) et un ruban couché qui en fait le tour"""
-    curl(back, c + np.array([-2.0, -3.0]), r, phase, turn=380, w=w, tones=tones)
-    curl(front, c + np.array([3.0, 4.0]), r * 0.8, phase + 180, turn=340, w=w * 0.85, tones=tones)
-    ribbon(front, c + np.array([0.0, r * 0.55]), r * 1.15, r * 0.35, phase + 190, phase + 330, w * 0.9, head=0.6,
-           tones=tones)
-    ribbon(back, c + np.array([0.0, r * 0.55]), r * 1.15, r * 0.35, phase + 10, phase + 150, w * 0.7, head=0.6,
-           tones=tones)
-
-
-def storm_leaves(cv, M, k, n=12, seed=1):
-    rng = np.random.RandomState(seed)
-    T = STORM_T
-    for i in range(n):
-        s = (k * 0.9 + rng.uniform(0, 0.6))
-        p = M + (T + np.array([30.0, 0.0]) - M) * s
-        p = p + np.array([rng.uniform(-6, 6), rng.uniform(-26, 22) * min(1.0, s)])
-        leaf(cv, p[0], min(p[1], GROUND - 4), i, dry=(i % 3 == 0))
-
-
-def dust_stream(back, M, k, hollow=0.0):
-    """la poussière arrachée au sol sous la tempête : des nuages bas qui roulent vers l'ennemi"""
-    T = STORM_T
-    for i, s in enumerate((0.3, 0.55, 0.8, 1.05, 1.25)):
+def dust_left(back, M, k, hollow=0.0):
+    """la poussière soulevée sous le vent porteur : des nuages bas qui roulent vers la gauche"""
+    for i, s in enumerate((0.35, 0.6, 0.85, 1.1)):
         if s > k + 0.15:
             continue
-        x = M[0] + (T[0] + 16 - M[0]) * s
-        cloud(back, (x, GROUND - 4), 4.5 + 5.0 * min(s, 1.0), tones='kkpu', hollow=hollow, seed=i + 2)
+        x = M[0] + (LEFT_T[0] - M[0]) * s
+        cloud(back, (x, GROUND - 4), 4.0 + 4.5 * min(s, 1.0), tones='kkpu', hollow=hollow, seed=i + 2)
 
 
-def fx_open(cv, back, front, ctx):
-    """le col libre s'ouvre en grand : arrêt sur l'image, la tempête jaillit"""
+def _mouth(ctx):
     mid, M, ue = ctx.bag
-    wind_body(front, M + ue * 2, 0.35)
-    pop(front, M + ue * 6, 11, facing=0, tones='WWXY')
-    storm_gusts(front, M + ue * 4, 0.42)
-    curl(back, M + np.array([-6.0, -14.0]), 7, 200, turn=300, w=3.0, tones='XYVS')
-    curl(back, M + np.array([-6.0, 14.0]), 6, 160, turn=300, w=2.6, tones='XYVS', cw=True)
-    cloud(back, (M[0] + 6, GROUND - 4), 7, tones='kkpu', seed=1)
-    ground_ring(back, front, 40, 8, 40, 3.0, tones='XYVS')
+    return np.array(M, float) + ue * 3
 
 
-def fx_storm(stage):
+def fx_team(stage):
+    """stage 0 : il cale le sac (l'aura s'allume) ; 1 : le col s'ouvre, arrêt sur l'image ; 2-4 : le vent porteur et
+    les orbes filent vers la gauche ; 5-6 : il ne reste que des braises et la fin de l'aura"""
     def f(cv, back, front, ctx):
-        T = STORM_T
-        if hasattr(ctx, 'bag'):
-            mid, M, ue = ctx.bag
-            M = M + ue * 3
         if stage == 0:
-            wind_body(back, M, 1.05)
-            storm_gusts(front, M, 1.0)
-            cyclone(back, front, T, 18, 20, w=5.5)
-            pop(front, T + np.array([-4.0, 0.0]), 10, facing=0, tones='WXYV')
-            storm_leaves(front, M, 0.5, n=14)
-            dust_stream(back, M, 0.8)
-        elif stage == 1:
-            wind_body(back, M, 1.05, hollow=0.4, seed=2)
-            storm_gusts(front, M, 1.25, tail=0.3)
-            cyclone(back, front, T + np.array([5.0, -4.0]), 24, 110, w=6.5)
-            storm_leaves(front, M, 0.9, n=18)
-            dust_stream(back, M, 1.1)
+            aura(back, cv, 0, 0.0)
+            embers(front, back, cv, 0, n=5)
+            return
+        M = _mouth(ctx) if hasattr(ctx, 'bag') else None
+        if stage == 1:
+            aura(back, cv, 3, 1.0)
+            embers(front, back, cv, 1)
+            warm_body(front, M, 0.2)
+            pop(front, M + np.array([-5.0, 0.0]), 10, facing=180, tones='WWy8')
+            warm_gusts(front, M, 0.36)
+            curl(back, M + np.array([6.0, -14.0]), 7, 340, turn=300, w=3.0, tones='y89U', cw=True)
+            curl(back, M + np.array([6.0, 14.0]), 6, 20, turn=300, w=2.6, tones='XYVS')
+            orbs(front, back, M, 0.08)
         elif stage == 2:
-            storm_gusts(front, M, 1.45, tail=0.65, wk=0.8)
-            cyclone(back, front, T + np.array([12.0, -8.0]), 26, 200, w=4.0, tones='XYVS')
-            storm_leaves(front, M, 1.3, n=14)
-            dust_stream(back, M, 1.25, hollow=0.45)
+            aura(back, cv, 3, 2.3)
+            embers(front, back, cv, 2)
+            warm_body(back, M, 0.6)
+            warm_gusts(front, M, 0.75)
+            dust_left(back, M, 0.6)
+            orbs(front, back, M, 0.36)
         elif stage == 3:
-            curl(front, T + np.array([22.0, -18.0]), 12, 220, turn=240, w=2.6, tones='YVS')
-            curl(front, T + np.array([34.0, 8.0]), 9, 120, turn=240, w=2.2, tones='YVS', cw=True)
-            storm_leaves(front, M, 1.7, n=12, seed=4)
-            dust_stream(back, M, 1.25, hollow=0.85)
+            aura(back, cv, 2, 3.6)
+            embers(front, back, cv, 3)
+            warm_body(back, M, 1.0, hollow=0.4)
+            warm_gusts(front, M, 1.0, tail=0.4)
+            dust_left(back, M, 0.95)
+            orbs(front, back, M, 0.68)
+        elif stage == 4:
+            aura(back, cv, 1, 4.9)
+            embers(front, back, cv, 4)
+            warm_gusts(front, M, 1.08, tail=0.72, wk=0.8)
+            dust_left(back, M, 1.15, hollow=0.5)
+            orbs(front, back, M, 1.0)
+        elif stage == 5:
+            aura(back, cv, 1, 6.2, fade=0.45)
+            embers(front, back, cv, 5, fade=0.3)
+            dust_left(back, np.array([FEET_C[0] - 40.0, 0.0]), 1.15, hollow=0.85)
         else:
-            for (dx, dy, kk) in ((40, -10, 0), (46, 24, 1), (20, -16, 2), (30, 32, 3), (56, 4, 1), (12, 30, 0)):
-                leaf(front, T[0] + dx, min(T[1] + dy, GROUND - 3), kk, dry=kk == 2)
+            aura(back, cv, 0, 7.4, fade=0.8)
+            embers(front, back, cv, 6, n=5, fade=0.5)
     return f
 
 
@@ -1359,43 +1535,49 @@ def fx_pof(cv, back, front, ctx):
         pop(back, b + np.array([x, y]), r, tones='XYV')
 
 
+SHOULDER_G = (98, 13)                                   # le poing levé qui cale le sac sur l'épaule
+
+
+def shouldered(full=1.0, open_=0.0, wob=0.0, sway=0.0, L=72, d=192):
+    """le sac calé sur l'épaule, la bouche tournée vers la gauche (vers son équipe), derrière sa tête"""
+    return dict(dir=d, L=L, R=20, full=full, open=open_, depth='back', wob=wob, sway=sway)
+
+
 SPECIALE = [
     dict(mode='orig', ms=110),
     dict(mode='orig', crouch=1, sk=1, jaw=1, ms=150),
+    # la fronde : il attrape le sac par un col et le fait tourner au-dessus de sa tête
     dict(mode='bag', crouch=2, G=(104, 22), bend=1, jaw=2, theta=160, bag=orbit(160, 40, 22), ms=170),
     dict(mode='bag', crouch=2, G=WHIRL_G, bend=1, jaw=2, theta=250, bag=orbit(250, 44, 21), fx=[fx_whirl(0)], ms=80),
-    dict(mode='bag', crouch=2, G=WHIRL_G, bend=1, jaw=2, theta=340, bag=orbit(340, 46, 20), fx=[fx_whirl(0)], ms=70),
+    dict(mode='bag', crouch=2, G=WHIRL_G, bend=1, jaw=2, theta=340, bag=orbit(340, 46, 20), fx=[fx_whirl(0)], ms=65),
     dict(mode='bag', crouch=2, G=WHIRL_G, bend=1, jaw=2, theta=70, bag=orbit(70, 46, 20), head=(-1, 0),
-         fx=[fx_whirl(1, 40)], ms=60),
+         fx=[fx_whirl(1, 40)], ms=55),
     dict(mode='bag', crouch=2, G=WHIRL_G, bend=1, jaw=2, theta=160, bag=orbit(160, 48, 19), head=(-1, 0),
-         fx=[fx_whirl(1, 120)], ms=55),
-    dict(mode='bag', crouch=2, G=WHIRL_G, bend=1, jaw=2, theta=250, bag=orbit(250, 48, 19),
-         fx=[fx_whirl(2, 200)], ms=50),
-    dict(mode='bag', crouch=2, G=WHIRL_G, bend=1, jaw=2, theta=340, bag=orbit(340, 48, 19),
-         fx=[fx_whirl(2, 280)], ms=50),
-    # l'élan : il arme le sac derrière lui, accroupi, tout le vent tourne autour de lui (tenu)
-    dict(mode='bag', crouch=3, lean=-2, G=(100, 18), bend=1, jaw=2, head=(-1, 0), theta=150,
-         bag=orbit(150, 48, 19), fx=[fx_whirl(3, 360)], ms=230),
-    # il jette le sac vers l'ennemi, à bout de bras
-    dict(mode='bag', crouch=2, lean=2, G=(132, 36), bend=-1, jaw=2, head=(1, 0), theta=0,
-         bag=dict(dir=-3, L=50, R=17, depth='front'), fx=[fx_whirl(2, 420)], ms=60),
-    # le col s'ouvre : arrêt sur l'image, la tempête jaillit
-    dict(mode='bag', crouch=2, lean=2, G=(134, 37), bend=-1, jaw=2, head=(1, 0),
-         bag=dict(dir=-3, L=48, R=19, open=1.0, depth='front'), fx=[fx_open], flash=35, ms=180),
-    dict(mode='bag', crouch=2, lean=1, G=(132, 37), bend=-1, jaw=2,
-         bag=dict(dir=-2, L=46, R=19, full=0.6, open=1.0, depth='front', wob=0.5), fx=[fx_storm(0)], ms=110),
-    dict(mode='bag', crouch=2, lean=0, G=(130, 38), bend=-1, jaw=1,
-         bag=dict(dir=-2, L=44, R=19, full=0.3, open=1.0, depth='front', wob=0.9, sway=1.0), fx=[fx_storm(1)],
-         ms=140),
-    # le sac est vide : il pend, flasque, au bout de son poing
+         fx=[fx_whirl(2, 120)], ms=50),
+    # il freine le sac et le cale sur son épaule, la bouche vers ses alliés ; l'aura s'allume
+    dict(mode='bag', crouch=3, lean=-2, G=SHOULDER_G, bend=1, jaw=2, head=(-1, 0), bag=shouldered(d=186),
+         fx=[fx_team(0)], ms=150),
+    # il ouvre le col en poussant son cri de guerre : arrêt sur l'image, le vent porteur jaillit, l'aura flambe
+    dict(mode='bag', crouch=3, lean=-2, G=SHOULDER_G, bend=1, jaw=2, head=(-1, 0), bag=shouldered(open_=1.0),
+         fx=[fx_team(1)], flash=(24, WARM), ms=210),
+    dict(mode='bag', crouch=2, lean=-1, G=SHOULDER_G, bend=1, jaw=2, bag=shouldered(full=0.6, open_=1.0, wob=0.5),
+         fx=[fx_team(2)], flash=(12, WARM), ms=110),
+    dict(mode='bag', crouch=2, lean=-1, G=SHOULDER_G, bend=1, jaw=2,
+         bag=shouldered(full=0.3, open_=1.0, wob=0.9, sway=1.0, L=70), fx=[fx_team(3)], flash=(8, WARM), ms=130),
+    dict(mode='bag', crouch=2, lean=0, G=SHOULDER_G, bend=1, jaw=1,
+         bag=shouldered(full=0.08, open_=0.8, wob=1.0, sway=-1.0, L=66, d=196), fx=[fx_team(4)], ms=120),
+    # le sac est vide : il le ramène par-dessus sa tête (la toile vide claque au vent)…
+    dict(mode='bag', crouch=1, lean=0, G=(118, 22), bend=1, jaw=0,
+         bag=dict(dir=118, L=40, R=8, full=1.0, open=0.6, depth='back', wob=1.0, sway=1.0), fx=[fx_team(5)], ms=60),
+    # … et devant lui : il pend, tout flasque, au bout de son poing (il le regarde, il cligne)
     dict(mode='bag', crouch=1, lean=0, G=(127, 40), bend=-1, jaw=0,
          bag=dict(dir=-10, L=36, R=7, full=1.0, open=0.6, depth='front', limp=1.0, wob=0.8, sway=1.5),
-         fx=[fx_storm(2)], ms=170),
+         fx=[fx_team(5)], ms=170),
     dict(mode='bag', crouch=1, lean=0, G=(126, 41), bend=-1, jaw=0, blink=True,
          bag=dict(dir=-12, L=36, R=7, full=1.0, open=0.6, depth='front', limp=1.0, wob=0.8, sway=-1.0),
-         fx=[fx_storm(3)], ms=150),
+         fx=[fx_team(6)], ms=150),
     # il le remet sur ses épaules : l'air rentre, il se regonfle
-    dict(mode='cut', crouch=1, sk=-3, G=(115, 33), ang=50, bend=1, jaw=1, fx=[fx_refill, fx_storm(4)], ms=130),
+    dict(mode='cut', crouch=1, sk=-3, G=(115, 33), ang=50, bend=1, jaw=1, fx=[fx_refill], ms=130),
     dict(mode='orig', sk=2, jaw=1, fx=[fx_pof], ms=110),
     dict(mode='orig', sk=0, ms=160),
 ]
@@ -1418,7 +1600,8 @@ def build_all(which=('pose', 'attaque', 'speciale')):
         for i, spec in enumerate(specs):
             cv, back, front, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []))
-            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+            spare = np.isin(cv, list(TOILE)) if isinstance(spec.get('flash'), tuple) else None
+            fr.append((compose(cv, back, front, flash=spec.get('flash'), spare=spare), spec['ms']))
         anims[name] = fr
     return anims
 
@@ -1439,6 +1622,8 @@ def bbox(frames, margin=4):
 
 
 GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+# le cadrage de l'attaque, gardé tel qu'il était avant la spéciale d'équipe (le GIF de l'attaque ne change pas)
+ATK_BOX = (37 + DXL, 56, 384 + DXL, 208)
 
 
 def save_gif(path, images, durations):
@@ -1461,7 +1646,9 @@ def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
     both = anims['attaque'] + anims['speciale'] + anims['pose']
     bb = bbox(both, 6)
-    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    sb = bbox(anims['speciale'], 6)
+    sb = (min(sb[0], ATK_BOX[0]), min(sb[1], ATK_BOX[1]), max(sb[2], GAME_BOX[2] + 40), max(sb[3], ATK_BOX[3]))
+    boxes = {'pose': GAME_BOX, 'attaque': ATK_BOX, 'speciale': sb}
     for name in ('pose', 'attaque', 'speciale'):
         box = boxes[name]
         ims = [on_bg(img).crop(box) for img, _ in anims[name]]
