@@ -78,9 +78,12 @@ LN = LIGHT / np.linalg.norm(LIGHT)
 # sa tête), à droite (la rafale de l'attaque qui file jusqu'à l'ennemi) et, depuis la spéciale d'équipe (25/11/2026),
 # à gauche (le vent porteur et les orbes qui filent vers son équipe, derrière lui). La toile a été élargie de 64 px à
 # gauche : tout est décalé d'autant, la pose et l'attaque restent identiques au pixel près (même cadrage, ATK_BOX).
+# (25/11/2026, la gerbe vers le ciel) la toile a aussi été rehaussée de 44 px (DYT) pour le geyser et les orbes qui
+# montent au-dessus du sac brandi ; même règle : tout est décalé d'autant, ATK_BOX aussi.
 DXL = 64
-W, H = 384 + DXL, 214
-SOL = (104 + DXL, 200)
+DYT = 44
+W, H = 384 + DXL, 214 + DYT
+SOL = (104 + DXL, 200 + DYT)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
 ENEMY_X = SOL[0] + 168                                     # l'ennemi (milieu du corps, toile)
@@ -1253,12 +1256,16 @@ def fx_whirl(level, spin=0.0):
 
 # ---------------------------------------------------------------- la spéciale d'ÉQUIPE (25/11/2026)
 # L'effet réel en combat : l'attaque de toute l'équipe monte (pendant 6 s) et tous les alliés reçoivent de l'énergie.
-# Son équipe se tient DERRIÈRE lui (à gauche de l'image). La fronde reste (le sac tourne au-dessus de sa tête), mais au
-# lieu de le jeter sur l'ennemi, il le cale sur son épaule, la bouche tournée vers la gauche, et l'ouvre en poussant
-# un cri de guerre : un vent porteur CHAUD (crème, or, orangé, quelques rubans jade) jaillit vers ses alliés, des orbes
-# d'énergie (bleu-blanc et or) filent avec lui, et une aura de flammes douces rouge-orangé et or monte autour de lui.
-# Puis le sac se vide, pend tout flasque au bout de son poing, et se regonfle sur ses épaules (pof !).
-LEFT_T = np.array([10.0, GROUND - 46.0])                # là où file le vent porteur : le bord gauche de l'image
+# Son équipe est en losange autour de lui (devant, derrière, au-dessus, en dessous) : le sort ne vise AUCUNE direction.
+# La fronde reste (le sac tourne au-dessus de sa tête), mais au lieu de le jeter sur l'ennemi, il le brandit à bout de
+# bras AU-DESSUS DE SA TÊTE, la bouche tournée vers le ciel, et l'ouvre en poussant un cri de guerre : un geyser de vent
+# CHAUD (crème, or, orangé) jaillit vers le ciel et retombe des deux côtés en volutes, un tourbillon de rubans chauds
+# (et un de jade, l'élément du vent) l'entoure en s'élargissant (anneaux un peu aplatis, la moitié de derrière passe
+# derrière lui), des orbes d'énergie (bleu-blanc et or) partent en gerbe dans TOUTES les directions (vers le ciel, des
+# deux côtés, devant lui jusqu'au sol, derrière lui, plus petits), la poussière s'écarte en rond à ses pieds, et une
+# aura de flammes douces rouge-orangé et or monte sur lui. Puis le sac se vide, pend tout flasque au bout de son
+# poing, et se regonfle sur ses épaules (pof !).
+# MOMENT DE LANCEMENT (l'effet part vers l'équipe) : image 8 (numérotée à partir de 0 ; la 9e), tenue 210 ms.
 WARM = (255, 176, 92)                                    # la teinte chaude posée un instant sur lui (le cri)
 
 
@@ -1371,38 +1378,88 @@ def orb(cv, c, r, gold=False):
     _paint(cv, best, tones)
 
 
-# les orbes : (départ en temps, hauteur d'arrivée, bosse de la courbe, rayon, or ?)
-ORBS = [(0.00, -66, -26, 4.8, False), (0.12, -30, 22, 4.4, True), (0.24, -88, 18, 4.0, False),
-        (0.34, -48, -20, 4.6, True), (0.46, -18, 14, 3.8, False)]
+HC = np.array([SOL[0] + 2.0, GROUND - 52.0])           # le milieu de son corps (toile) : le centre du tourbillon
+# les orbes, en gerbe dans toutes les directions : (départ en temps, arrivée par rapport au milieu de ses pieds,
+# rayon, or ?, derrière lui ?). Ceux qui partent derrière lui sont plus petits (plus loin) ; ceux de devant, plus gros,
+# retombent au sol de part et d'autre de ses pieds ; un monte droit au ciel.
+ORBS = [(0.00, (12, -250), 4.4, False, False),          # vers le ciel
+        (0.05, (-150, -205), 4.0, True, False),         # en haut à gauche
+        (0.08, (165, -200), 4.0, False, False),         # en haut à droite
+        (0.12, (-200, -110), 4.6, False, False),        # à gauche
+        (0.15, (205, -104), 4.6, True, False),          # à droite
+        (0.20, (-128, -58), 3.3, True, True),           # derrière lui, à gauche
+        (0.23, (124, -62), 3.3, False, True),           # derrière lui, à droite
+        (0.27, (-98, -6), 5.2, True, False),            # devant lui, à gauche (retombe au sol)
+        (0.30, (104, -6), 5.2, False, False)]           # devant lui, à droite (retombe au sol)
 
 
-def orb_path(M, dest_y, bump):
-    """une courbe en S douce de la bouche du sac jusqu'au bord gauche (chaque orbe a la sienne)"""
-    p3 = np.array([LEFT_T[0] - 44.0, GROUND + dest_y])
-    pts = bezier(M, M + np.array([-34.0, bump]), p3 + np.array([60.0, -bump]), p3, 180)
-    out = []
-    for i, (x, y) in enumerate(pts):                     # il ondule en volant (une vague douce, de plus en plus ample)
-        s = i / (len(pts) - 1)
-        out.append((x, y + (2.0 + 7.0 * s) * math.sin(s * 9.0 + bump * 0.2) * math.sin(math.pi * min(1.0, s * 3))))
-    return out
+def orb_path(M, T):
+    """une courbe de fontaine : l'orbe jaillit vers le ciel par la bouche du sac, s'écarte, puis file vers T"""
+    d = T - M
+    p1 = M + np.array([0.12 * d[0], -46.0])
+    p2 = M + np.array([0.78 * d[0], min(-40.0, d[1] * 0.55 - 30.0)])
+    return bezier(M, p1, p2, T, 200)
 
 
 def orbs(front, back, M, t):
-    """les orbes jaillissent de la bouche du sac et filent vers la gauche (vers l'équipe), chacun sur sa courbe, avec
-    une petite traîne courbe qui s'effile derrière lui"""
-    for (t0, dy, bump, r, gold) in ORBS:
+    """les orbes jaillissent de la bouche du sac (vers le ciel) et partent en gerbe tout autour de lui, chacun sur sa
+    courbe, avec une petite traîne courbe qui s'effile ; ceux de derrière passent derrière lui"""
+    for (t0, (tx, ty), r, gold, behind) in ORBS:
         s = (t - t0) / 0.85
         if s <= 0.0 or s > 1.15:
             continue
-        pts = orb_path(M, dy, bump)
-        i = min(len(pts) - 1, int(s * (len(pts) - 1)))
-        j0 = max(0, i - 13)
+        pts = orb_path(M, np.array([FEET_C[0] + tx, GROUND + ty], float))
+        i = min(len(pts) - 1, int((s ** 0.8) * (len(pts) - 1)))
+        j0 = max(0, i - 16)
         tail = pts[j0:i + 1]
+        lay = back if behind else front
         if len(tail) > 2:
             ws = [1.1 + (r * 1.4) * (k / (len(tail) - 1)) ** 1.1 for k in range(len(tail))]
-            stroke(front, tail, ws, 'y89' if gold else 'XYx')
+            stroke(lay, tail, ws, 'y89' if gold else 'XYx')
         rr = r * min(1.0, 0.45 + s * 1.6)
-        orb(front, pts[i], rr, gold)
+        orb(lay, pts[i], rr, gold)
+
+
+def swirl(back, front, c, rx, ry, a0, a1, w, tones, head=0.6):
+    """un ruban du tourbillon : un arc d'ellipse un peu aplatie autour de lui (sens de la marche a0 -> a1), épais au
+    milieu, effilé aux bouts ; la partie de derrière (en haut de l'ellipse) passe DERRIÈRE lui, celle de devant
+    devant lui"""
+    n = max(16, int(abs(a1 - a0) / 360 * 2 * math.pi * max(rx, ry) * 2))
+    pts, ws, lays = [], [], []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (a1 - a0) * s)
+        pts.append((c[0] + rx * math.cos(a), c[1] - ry * math.sin(a)))
+        ws.append(max(0.0, w * (s / head if s < head else (1 - s) / (1 - head)) ** 0.8))
+        lays.append(math.sin(a) > -0.05)
+    for lay, want in ((back, True), (front, False)):
+        ws2 = [wv if l == want else 0.0 for wv, l in zip(ws, lays)]
+        stroke(lay, pts, ws2, tones)
+
+
+def whirlwind(back, front, k, spin, tail=0.0):
+    """le tourbillon de vent chaud autour de lui : trois rubans (aux pieds, à la taille, au-dessus de la tête) qui
+    tournent et s'élargissent (k = 0..1.2), les deux chauds et un de jade ; tail : ils s'effilent en s'éloignant"""
+    for (dy, rx0, ry0, ph, w, tones) in ((40, 34, 7, 0, 3.6, 'y89U'), (2, 44, 11, 130, 4.2, 'Wy89'),
+                                         (-84, 30, 7, 250, 3.4, 'XYVS')):
+        rx = rx0 + 78 * k
+        ry = ry0 + 12 * k
+        c = HC + np.array([0.0, dy - 6 * k])
+        if c[1] + ry > GROUND - 1:
+            c[1] = GROUND - 1 - ry
+        L = 230 * (1 - 0.55 * tail)
+        a1 = ph + spin
+        swirl(back, front, c, rx, ry, a1 - L, a1, w * (1 - 0.45 * tail), tones)
+
+
+def geyser(cv, M, k, hollow=0.0):
+    """le vent qui sort du sac vers le ciel : des bouffées chaudes qui montent en grossissant"""
+    for i, s in enumerate((0.15, 0.4, 0.7, 1.0)):
+        if s > k:
+            continue
+        p = M + np.array([(-1, 2, -2, 1)[i], -8.0 - 46.0 * s])
+        r = (4.5 + 6.5 * s) * (1 - 0.35 * hollow)
+        pop(cv, p, r, facing=90, tones='Wyy8' if hollow < 0.5 else 'yy8')
 
 
 def warm_gust(cv, p0, p1, p2, p3, w, tones, curl_r, up, tail=0.0, head=0.35):
@@ -1436,35 +1493,25 @@ def warm_gust(cv, p0, p1, p2, p3, w, tones, curl_r, up, tail=0.0, head=0.35):
     stroke(cv, pts, widths, tones)
 
 
-def warm_gusts(cv, M, k, tail=0.0, wk=1.0):
-    """le vent porteur : des rafales courbes qui partent de la bouche du sac vers la gauche et finissent en volutes
-    (deux chaudes, crème-or-orangé, une jade, l'élément du vent). k = portée (0..1.4, 1 = le bord gauche)"""
-    for (dy0, dy1, w, up, cr, tones) in ((-4, -40, 6.5, False, 8, 'y89U'), (1, 6, 7.5, True, 9, 'Wy89'),
-                                         (5, 36, 6.0, True, 8, 'XYVS'), (-1, -16, 4.6, False, 6, 'y89U')):
-        end = M + (LEFT_T + np.array([-10.0, dy1]) - M) * k
-        p1 = M + np.array([-16.0, dy0 * 3.0])
-        p2 = end + np.array([18.0, dy1 * 0.6])
-        warm_gust(cv, M + np.array([0.0, dy0 * 0.5]), p1, p2, end, w * wk * min(1.0, 0.45 + k), tones,
-                  cr * min(1.0, 0.3 + k), up, tail=tail)
+def fountain(cv, M, k, tail=0.0, wk=1.0):
+    """la gerbe de vent : des rafales courbes qui montent de la bouche du sac, s'ouvrent des DEUX côtés et retombent
+    en volutes (deux chaudes, crème-or-orangé, deux plus fines, dont une de jade). k = portée (0..1.2)"""
+    for (side, dx, dy, w, cr, tones, hop) in ((-1, 96, 92, 6.5, 8, 'y89U', 44), (1, 100, 86, 6.5, 8, 'Wy89', 48),
+                                              (-1, 60, 30, 4.4, 6, 'XYVS', 30), (1, 58, 34, 4.2, 6, 'y89U', 28)):
+        end = M + np.array([side * dx * k, -hop * min(1.0, k * 1.6) + dy * max(0.0, k - 0.35)])
+        p1 = M + np.array([side * 4.0, -hop * 0.9])
+        p2 = end + np.array([-side * 14.0, -hop * 0.7])
+        warm_gust(cv, M + np.array([side * 1.0, -2.0]), p1, p2, end, w * wk * min(1.0, 0.45 + k), tones,
+                  cr * min(1.0, 0.3 + k), side > 0, tail=tail)
 
 
-def warm_body(cv, M, k, hollow=0.0):
-    """le gros du vent qui sort du sac : des bouffées chaudes qui grossissent en s'éloignant (un cône de nuages)"""
-    for i, s in enumerate((0.12, 0.32, 0.55, 0.8)):
+def dust_ring(back, k, hollow=0.0):
+    """la poussière soulevée à ses pieds : des nuages bas qui s'écartent des deux côtés à la fois (en rond)"""
+    for i, (side, s) in enumerate(((-1, 0.0), (1, 0.05), (-1, 0.45), (1, 0.5))):
         if s > k:
             continue
-        p = M + (LEFT_T - M) * s + np.array([0.0, (-2, 2, -3, 1)[i]])
-        r = (4.0 + 8.0 * s) * (1 - 0.35 * hollow)
-        pop(cv, p, r, facing=180, tones='Wyy8' if hollow < 0.5 else 'yy8')
-
-
-def dust_left(back, M, k, hollow=0.0):
-    """la poussière soulevée sous le vent porteur : des nuages bas qui roulent vers la gauche"""
-    for i, s in enumerate((0.35, 0.6, 0.85, 1.1)):
-        if s > k + 0.15:
-            continue
-        x = M[0] + (LEFT_T[0] - M[0]) * s
-        cloud(back, (x, GROUND - 4), 4.0 + 4.5 * min(s, 1.0), tones='kkpu', hollow=hollow, seed=i + 2)
+        x = FEET_C[0] + side * (40 + 70 * (k - s))
+        cloud(back, (x, GROUND - 4), 3.5 + 4.0 * min(k - s + 0.3, 1.0), tones='kkpu', hollow=hollow, seed=i + 2)
 
 
 def _mouth(ctx):
@@ -1473,8 +1520,9 @@ def _mouth(ctx):
 
 
 def fx_team(stage):
-    """stage 0 : il cale le sac (l'aura s'allume) ; 1 : le col s'ouvre, arrêt sur l'image ; 2-4 : le vent porteur et
-    les orbes filent vers la gauche ; 5-6 : il ne reste que des braises et la fin de l'aura"""
+    """stage 0 : il brandit le sac au-dessus de sa tête (l'aura s'allume) ; 1 : le col s'ouvre vers le ciel, arrêt sur
+    l'image (le MOMENT DE LANCEMENT) ; 2-4 : le geyser retombe des deux côtés, le tourbillon s'élargit, les orbes
+    partent en gerbe tout autour ; 5-6 : il ne reste que des braises et la fin de l'aura"""
     def f(cv, back, front, ctx):
         if stage == 0:
             aura(back, cv, 0, 0.0)
@@ -1484,36 +1532,38 @@ def fx_team(stage):
         if stage == 1:
             aura(back, cv, 3, 1.0)
             embers(front, back, cv, 1)
-            warm_body(front, M, 0.2)
-            pop(front, M + np.array([-5.0, 0.0]), 10, facing=180, tones='WWy8')
-            warm_gusts(front, M, 0.36)
-            curl(back, M + np.array([6.0, -14.0]), 7, 340, turn=300, w=3.0, tones='y89U', cw=True)
-            curl(back, M + np.array([6.0, 14.0]), 6, 20, turn=300, w=2.6, tones='XYVS')
-            orbs(front, back, M, 0.08)
+            geyser(front, M, 0.45)
+            pop(front, M + np.array([0.0, -4.0]), 9, facing=90, tones='WWy8')
+            fountain(front, M, 0.3)
+            whirlwind(back, front, 0.0, 0)
+            orbs(front, back, M, 0.1)
         elif stage == 2:
             aura(back, cv, 3, 2.3)
             embers(front, back, cv, 2)
-            warm_body(back, M, 0.6)
-            warm_gusts(front, M, 0.75)
-            dust_left(back, M, 0.6)
-            orbs(front, back, M, 0.36)
+            geyser(back, M, 1.0)
+            fountain(front, M, 0.7)
+            whirlwind(back, front, 0.35, 70)
+            dust_ring(back, 0.3)
+            orbs(front, back, M, 0.38)
         elif stage == 3:
             aura(back, cv, 2, 3.6)
             embers(front, back, cv, 3)
-            warm_body(back, M, 1.0, hollow=0.4)
-            warm_gusts(front, M, 1.0, tail=0.4)
-            dust_left(back, M, 0.95)
-            orbs(front, back, M, 0.68)
+            geyser(back, M, 1.0, hollow=0.5)
+            fountain(front, M, 1.0, tail=0.4)
+            whirlwind(back, front, 0.75, 150, tail=0.3)
+            dust_ring(back, 0.7)
+            orbs(front, back, M, 0.7)
         elif stage == 4:
             aura(back, cv, 1, 4.9)
             embers(front, back, cv, 4)
-            warm_gusts(front, M, 1.08, tail=0.72, wk=0.8)
-            dust_left(back, M, 1.15, hollow=0.5)
+            fountain(front, M, 1.1, tail=0.72, wk=0.8)
+            whirlwind(back, front, 1.1, 230, tail=0.75)
+            dust_ring(back, 1.0, hollow=0.5)
             orbs(front, back, M, 1.0)
         elif stage == 5:
             aura(back, cv, 1, 6.2, fade=0.45)
             embers(front, back, cv, 5, fade=0.3)
-            dust_left(back, np.array([FEET_C[0] - 40.0, 0.0]), 1.15, hollow=0.85)
+            dust_ring(back, 1.2, hollow=0.85)
         else:
             aura(back, cv, 0, 7.4, fade=0.8)
             embers(front, back, cv, 6, n=5, fade=0.5)
@@ -1534,12 +1584,12 @@ def fx_pof(cv, back, front, ctx):
         pop(back, b + np.array([x, y]), r, tones='XYV')
 
 
-SHOULDER_G = (98, 13)                                   # le poing levé qui cale le sac sur l'épaule
+RAISE_G = (101, 16)                                     # le poing levé à bout de bras, au-dessus de la tête
 
 
-def shouldered(full=1.0, open_=0.0, wob=0.0, sway=0.0, L=72, d=192):
-    """le sac calé sur l'épaule, la bouche tournée vers la gauche (vers son équipe), derrière sa tête"""
-    return dict(dir=d, L=L, R=20, full=full, open=open_, depth='back', wob=wob, sway=sway)
+def raised(full=1.0, open_=0.0, wob=0.0, sway=0.0, L=50, d=108):
+    """le sac brandi au-dessus de sa tête, la bouche tournée vers le ciel (derrière sa crinière)"""
+    return dict(dir=d, L=L, R=19, full=full, open=open_, depth='back', wob=wob, sway=sway)
 
 
 SPECIALE = [
@@ -1553,18 +1603,18 @@ SPECIALE = [
          fx=[fx_whirl(1, 40)], ms=55),
     dict(mode='bag', crouch=2, G=WHIRL_G, bend=1, jaw=2, theta=160, bag=orbit(160, 48, 19), head=(-1, 0),
          fx=[fx_whirl(2, 120)], ms=50),
-    # il freine le sac et le cale sur son épaule, la bouche vers ses alliés ; l'aura s'allume
-    dict(mode='bag', crouch=3, lean=-2, G=SHOULDER_G, bend=1, jaw=2, head=(-1, 0), bag=shouldered(d=186),
-         fx=[fx_team(0)], ms=150),
-    # il ouvre le col en poussant son cri de guerre : arrêt sur l'image, le vent porteur jaillit, l'aura flambe
-    dict(mode='bag', crouch=3, lean=-2, G=SHOULDER_G, bend=1, jaw=2, head=(-1, 0), bag=shouldered(open_=1.0),
+    # il freine le sac et le brandit au-dessus de sa tête, la bouche vers le ciel ; l'aura s'allume
+    dict(mode='bag', crouch=3, G=RAISE_G, bend=1, jaw=2, head=(0, -1), bag=raised(d=104), fx=[fx_team(0)], ms=150),
+    # MOMENT DE LANCEMENT (image 8) : il ouvre le col en poussant son cri de guerre ; arrêt sur l'image, le vent chaud
+    # jaillit vers le ciel, le tourbillon naît autour de lui, les orbes sortent en gerbe, l'aura flambe
+    dict(mode='bag', crouch=3, G=RAISE_G, bend=1, jaw=2, head=(0, -1), bag=raised(open_=1.0),
          fx=[fx_team(1)], flash=(12, WARM), ms=210),
-    dict(mode='bag', crouch=2, lean=-1, G=SHOULDER_G, bend=1, jaw=2, bag=shouldered(full=0.6, open_=1.0, wob=0.5),
+    dict(mode='bag', crouch=2, G=RAISE_G, bend=1, jaw=2, bag=raised(full=0.6, open_=1.0, wob=0.5),
          fx=[fx_team(2)], flash=(6, WARM), ms=110),
-    dict(mode='bag', crouch=2, lean=-1, G=SHOULDER_G, bend=1, jaw=2,
-         bag=shouldered(full=0.3, open_=1.0, wob=0.9, sway=1.0, L=70), fx=[fx_team(3)], ms=130),
-    dict(mode='bag', crouch=2, lean=0, G=SHOULDER_G, bend=1, jaw=1,
-         bag=shouldered(full=0.08, open_=0.8, wob=1.0, sway=-1.0, L=66, d=196), fx=[fx_team(4)], ms=120),
+    dict(mode='bag', crouch=2, G=RAISE_G, bend=1, jaw=2, bag=raised(full=0.3, open_=1.0, wob=0.9, sway=1.0, L=48),
+         fx=[fx_team(3)], ms=130),
+    dict(mode='bag', crouch=2, G=RAISE_G, bend=1, jaw=1,
+         bag=raised(full=0.08, open_=0.8, wob=1.0, sway=-1.0, L=46, d=112), fx=[fx_team(4)], ms=120),
     # le sac est vide : il le ramène par-dessus sa tête (la toile vide claque au vent)…
     dict(mode='bag', crouch=1, lean=0, G=(118, 22), bend=1, jaw=0,
          bag=dict(dir=118, L=40, R=8, full=1.0, open=0.6, depth='back', wob=1.0, sway=1.0), fx=[fx_team(5)], ms=60),
@@ -1622,7 +1672,7 @@ def bbox(frames, margin=4):
 
 GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
 # le cadrage de l'attaque, gardé tel qu'il était avant la spéciale d'équipe (le GIF de l'attaque ne change pas)
-ATK_BOX = (37 + DXL, 56, 384 + DXL, 208)
+ATK_BOX = (37 + DXL, 56 + DYT, 384 + DXL, 208 + DYT)
 
 
 def save_gif(path, images, durations):

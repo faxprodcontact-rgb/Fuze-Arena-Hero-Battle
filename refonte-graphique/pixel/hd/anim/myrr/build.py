@@ -1110,15 +1110,22 @@ ATTAQUE = [
 
 # ---------------------------------------------------------------- 3) l'attaque spéciale : « Trompette de Grâce »
 # Le sort en combat : elle soigne toute l'équipe, retire ses effets négatifs (purifie) et ressuscite un allié tombé.
-# L'équipe se tient DERRIÈRE elle, à gauche de l'image : rien ne part vers l'ennemi.
+# Règle de placement (propriétaire, 25/11) : l'équipe l'entoure (losange de 5 cases : devant, derrière, au-dessus,
+# en dessous) ; le sort ne vise donc aucune direction : tout naît sur elle et s'étend EN CERCLE autour d'elle (aplati,
+# comme posé au sol, devant et derrière elle, des deux côtés), puis s'éteint sur elle. Rien ne frappe l'ennemi ; les
+# lueurs reçues par chaque allié sont des effets communs joués par le jeu sur leurs cases (pas dessinés ici).
 # Elle se ramasse (le vent se lève à ses pieds), déploie grand ses ailes et s'élève. Suspendue, ailes levées en V, elle
 # porte la trompette aux lèvres, pavillon vers le ciel (temps de pose, l'auréole s'illumine). Elle sonne : éclair doux,
-# blanc et or ; sa silhouette s'éclaire, de petites taches sombres apparaissent sur elle (le mal qu'elle chasse) ;
-# l'onde du son monte, s'enroule au-dessus d'elle et redescend vers la gauche (arrêt sur l'image), un anneau de vent
-# doux l'entoure, des rafales basses filent vers la gauche. Des plumes de lumière retombent sur elle et dérivent vers
-# l'équipe ; les taches se détachent et s'évaporent. Au sommet du sort, une grande plume de lumière naît au-dessus de
-# sa tête, file vers la gauche et devient une colonne de lumière (la résurrection), qui se défait en lueurs qui montent.
-# Elle redescend, replie ses ailes et revient en pose.
+# blanc et or ; sa silhouette s'éclaire, de petites taches sombres apparaissent sur elle (le mal qu'elle chasse).
+# L'onde du son devient un anneau de vent doux qui naît autour de sa taille et s'élargit tout autour d'elle (arrêt sur
+# l'image), puis se défait en volutes ; des plumes de lumière pleuvent en cercle autour d'elle et se posent au sol ;
+# les taches se détachent et s'évaporent. Seconde note, plus douce (la résurrection) : son auréole s'embrase, un grand
+# halo doré pulse une fois autour d'elle (arrêt sur l'image) avec un anneau d'or au sol, puis s'éteint en lueurs qui
+# montent. Elle redescend, replie ses ailes et revient en pose.
+#
+# MOMENTS DE LANCEMENT (pour le jeu, numéros d'image de la spéciale, à partir de 0) :
+#   - image 6 : le SOIN et la PURIFICATION partent vers l'équipe (l'anneau de vent naît, arrêt sur image 200 ms) ;
+#   - image 12 : la RÉSURRECTION (le grand halo doré au plus large, arrêt sur image 200 ms).
 
 
 def fx_gather(level):
@@ -1168,141 +1175,126 @@ def fx_downdraft(level):
     return f
 
 
-# ---- l'onde de grâce : le son de la trompette monte, s'enroule au-dessus d'elle et redescend vers l'équipe (à gauche)
-def grace_path(ctx):
-    B = ctx.bell + 1.0 * ctx.u
-    return B, path_pts(B, B + np.array([16.0, -44.0]), np.array([SOL[0] - 24.0, GROUND - 200.0]),
-                       np.array([-34.0, GROUND - 118.0]))
+# ---- outils des anneaux : un arc d'ellipse « posé » (aplati) dont la moitié lointaine passe derrière elle et la
+#      moitié proche devant elle
+CX = SOL[0] + 2.0                       # l'axe du sort : le milieu de son corps
 
 
-def dense(pts, f=5):
-    """la même courbe, f fois plus de points (un bord lisse, sans perles)"""
-    pts = np.asarray(pts, float)
-    t = np.linspace(0, len(pts) - 1, (len(pts) - 1) * f + 1)
-    return np.stack([np.interp(t, np.arange(len(pts)), pts[:, 0]), np.interp(t, np.arange(len(pts)), pts[:, 1])], 1)
-
-
-def wave_band(back, front, pts, s0, s1, wmax, tones='WWXYV', under='VSR'):
-    """l'onde douce : un fuseau plein (tête ronde au front s1, queue effilée en s0, jamais plus fin qu'un trait net :
-    pas de pointillés), doublé dessous, du côté de l'ombre, d'un fuseau de jade un peu décalé"""
-    pts = dense(pts)
-    n = len(pts) - 1
-    i0, i1 = int(s0 * n), int(s1 * n)
-    if i1 - i0 < 3:
-        return
-    seg, wid, low = [], [], []
-    for i in range(i0, i1 + 1):
-        loc = (i - i0) / (i1 - i0)
-        if loc < 0.06:
+def ring_arc(back, front, c, rx, ry, a0, a1, wmax, head=0.7, tones='WXYVS', back_tones=None, wob=0.0, ph=0.0):
+    """comme ribbon (épaisseur qui gonfle puis s'effile), mais chaque point va derrière elle (angle 0..180 : le côté
+    lointain, en haut de l'ellipse) ou devant elle (180..360). Le côté lointain prend des tons un cran plus doux.
+    wob : le rayon ondule un peu (un anneau de vent, pas un cerceau)"""
+    cx, cy = c
+    n = max(12, int(abs(a1 - a0) / 360 * 2 * math.pi * max(rx, ry) * 2))
+    best = ({}, {})
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (a1 - a0) * s)
+        k = 1 + wob * math.sin(3 * a + ph)
+        px, py = cx + rx * k * math.cos(a), cy - ry * k * math.sin(a)
+        wv = wmax * (s / head if s < head else (1 - s) / (1 - head)) ** 0.8
+        R = wv / 2
+        if R < 0.35:
             continue
-        q = pts[min(i + 1, n)] - pts[max(i - 1, 0)]
-        q = q / (np.linalg.norm(q) or 1)
-        nn = np.array([-q[1], q[0]])
-        if nn @ LN > 0:                                  # le côté de l'ombre : à l'opposé de la lumière
-            nn = -nn
-        w = max(1.6, wmax * loc ** 0.9 * (1 if loc < 0.9 else 0.55 + 0.45 * (1 - loc) / 0.1))
-        seg.append(tuple(pts[i]))
-        wid.append(w)
-        low.append(tuple(pts[i] + nn * (0.28 * w + 1.0)))
-    stroke(back, low, [w * 0.9 for w in wid], under)
-    stroke(front, seg, wid, tones)
+        side = 0 if math.sin(a) > 0 else 1
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    kk = d / R if R >= 1 else 1.0
+                    if R < 0.8:
+                        kk = max(kk, 0.75)
+                    if kk < best[side].get((x, y), 9):
+                        best[side][(x, y)] = kk
+    for side, cvs, tn in ((0, back, back_tones or tones[1:]), (1, front, tones)):
+        m = len(tn)
+        for (x, y), kk in best[side].items():
+            if side == 0 and (x, y) in best[1]:
+                continue
+            put(cvs, x, y, tn[min(m - 1, int(kk * m))])
+
+
+def ring_curl(back, front, c, rx, ry, a, r0, w, tones='XYVS', cw=False):
+    """une volute de vent posée sur l'anneau, à l'angle a (derrière elle ou devant selon le côté)"""
+    p = (c[0] + rx * math.cos(math.radians(a)), c[1] - ry * math.sin(math.radians(a)))
+    curl(back if math.sin(math.radians(a)) > 0 else front, p, r0, a + 90, turn=300, w=w, tones=tones, cw=cw)
+
+
+# ---- l'onde de grâce : le son de la trompette devient un anneau de vent doux qui s'élargit tout autour d'elle
+#      (rx, ry, épaisseur, hauteur du centre au-dessus du sol, rotation des rubans) pour k = 1, 2, 3
+GRACE_RING = {1: (46, 10, 5.0, 62, 0), 2: (66, 14, 4.2, 58, 34), 3: (84, 17, 2.8, 54, 62)}
 
 
 def fx_grace(k):
-    """k = 0 : l'éclat du pavillon ; 1 : l'onde monte et s'enroule, l'anneau de vent l'entoure (arrêt sur image) ;
-    2 : l'onde redescend vers la gauche, des rafales basses filent vers l'équipe ; 3, 4 : tout s'en va à gauche"""
+    """k = 0 : l'éclat du pavillon ; 1 : l'anneau de vent naît autour de sa taille (LANCEMENT, arrêt sur image) ;
+    2 : il s'élargit tout autour d'elle ; 3 : il s'ouvre en rubans plus fins ; 4 : il se défait en volutes"""
     def f(cv, back, mid, front, ctx):
-        B, pts = grace_path(ctx)
-        cx = SOL[0] + 2
+        B = ctx.bell
         if k == 0:
             pop(front, B + 4 * ctx.u, 7.5, facing=30, tones='WWgghJ')
             crescent(front, B + 12 * ctx.u, 10, 32, span=140, w=4.6, tones='WgYV')
             crescent(back, B + 19 * ctx.u, 15, 32, span=110, w=3.0, tones='XYV')
             return
-        if k == 1:
-            wave_band(back, mid, pts, 0.03, 0.6, 14)
-            glints(front, pts, 0.1, 0.55, 0)
-            n = len(pts) - 1
-            q = pts[int(0.6 * n)] - pts[int(0.6 * n) - 3]
-            fa = math.degrees(math.atan2(-q[1], q[0]))
-            crescent(front, pts[int(0.6 * n)] + 2 * q / np.linalg.norm(q), 11, fa, span=140, w=5.0, tones='WgYV')
-            # l'écho du son au pavillon : deux arcs doux, l'un dans l'autre
-            crescent(front, B + 7 * ctx.u, 8, 32, span=120, w=3.2, tones='WYV')
-            crescent(back, B + 15 * ctx.u, 14, 32, span=110, w=3.0, tones='XYV')
-            # l'anneau de vent doux qui l'entoure, à hauteur de taille
-            ribbon(back, (cx, GROUND - 58), 32, 7, 20, 160, 3.0, tones='YVSR')
-            ribbon(front, (cx, GROUND - 58), 32, 7, 200, 340, 4.0, tones='WXYVS')
+        if k in GRACE_RING:
+            rx, ry, w, hy, rot = GRACE_RING[k]
+            c = (CX, GROUND - hy)
+            # trois rubans qui se poursuivent autour d'elle (sens inverse des aiguilles vu d'en haut), et un plus
+            # fin, un peu plus bas, qui suit le premier
+            gap = [28, 40, 62][k - 1]
+            for j in range(3):
+                a0 = rot + j * 120
+                ring_arc(back, front, c, rx, ry, a0, a0 + 120 - gap, w, head=0.72,
+                         tones='WWXYVS', back_tones='XYVS', wob=0.05, ph=j + k)
+            ring_arc(back, front, (CX, GROUND - hy + 6 + 2 * k), rx * 0.86, ry * 0.86, rot + 200, rot + 300,
+                     w * 0.6, head=0.7, tones='XYVS', back_tones='YVS')
+            # grains de lumière portés par l'anneau
+            for j, a in enumerate((rot + 70, rot + 160, rot + 250, rot + 335)):
+                p = (CX + rx * math.cos(math.radians(a)), GROUND - hy - ry * math.sin(math.radians(a)) - 5)
+                burst(front if math.sin(math.radians(a)) < 0 else back, p, 1.7 if k < 3 else 1.3, 'Wgh')
+            if k == 1:
+                # l'écho du son au pavillon : deux arcs doux, l'un dans l'autre
+                crescent(front, B + 7 * ctx.u, 8, 32, span=120, w=3.2, tones='WYV')
+                crescent(back, B + 15 * ctx.u, 14, 32, span=110, w=3.0, tones='XYV')
             return
-        if k == 2:
-            wave_band(back, mid, pts, 0.3, 0.9, 13)
-            glints(front, pts, 0.4, 0.85, 1)
-            n = len(pts) - 1
-            q = pts[int(0.9 * n)] - pts[int(0.9 * n) - 3]
-            fa = math.degrees(math.atan2(-q[1], q[0]))
-            crescent(front, pts[int(0.9 * n)] + 2 * q / np.linalg.norm(q), 12, fa, span=140, w=5.0, tones='WgYV')
-            ribbon(back, (cx - 4, GROUND - 64), 40, 8, 25, 155, 2.4, tones='YVS')
-            ribbon(front, (cx - 4, GROUND - 64), 40, 8, 205, 335, 3.0, tones='XYVS')
-            # les rafales basses, nées derrière elle, qui filent vers l'équipe
-            gust(back, (cx - 6, GROUND - 66), (cx - 40, GROUND - 78), (cx - 76, GROUND - 60), (14, GROUND - 72),
-                 7.0, 'XYYVS', curl_r=4.6, up=True, n=240)
-            gust(back, (cx - 4, GROUND - 18), (cx - 36, GROUND - 8), (cx - 70, GROUND - 10), (18, GROUND - 24),
-                 6.0, 'XYYVS', curl_r=4.0, up=True, n=240)
-            return
-        if k == 3:
-            wave_band(back, mid, pts, 0.68, 1.0, 8, tones='WXYV', under='VS')
-            crescent(back, (cx - 46, GROUND - 66), 30, 180, span=90, w=4.0, tones='WXYVS')
-            gust(back, (cx - 20, GROUND - 70), (cx - 54, GROUND - 82), (cx - 90, GROUND - 62), (0, GROUND - 74),
-                 6.0, 'XYYVS', curl_r=5.0, up=True, tail=0.45, n=240)
-            gust(back, (cx - 18, GROUND - 16), (cx - 50, GROUND - 6), (cx - 84, GROUND - 10), (4, GROUND - 26),
-                 5.0, 'XYYVS', curl_r=4.4, up=True, tail=0.45, n=240)
-            return
-        # k == 4 : il ne reste que des volutes qui s'en vont, de plus en plus fines
-        curl(back, (12, GROUND - 92), 6, 250, turn=300, w=3.2, tones='XYVS')
-        curl(back, (-2, GROUND - 76), 5, 120, turn=300, w=3.0, tones='XYVS', cw=True)
-        curl(back, (6, GROUND - 30), 5, 200, turn=300, w=2.8, tones='XYVS')
+        # k == 4 : il ne reste que des volutes, tout autour, de plus en plus fines
+        c, rx, ry = (CX, GROUND - 50), 90, 18
+        for j, (a, cw) in enumerate(((20, False), (100, True), (165, False), (215, True), (290, False),
+                                     (340, True))):
+            ring_curl(back, front, c, rx, ry, a, 5.0 if j % 2 else 6.0, 2.8, 'XYVS', cw)
     return f
 
 
-# ---- la pluie de plumes de lumière : elles naissent du son, retombent sur elle ou dérivent vers l'équipe
-#      (départ par rapport au sol et à elle, glissement à gauche et chute par image, première image)
-RAIN = [(-30, -150, -6, 9, 0), (-8, -160, -2, 10, 0), (16, -146, -1, 9, 0), (32, -136, -4, 10, 0),
-        (-52, -128, -8, 8, 0), (4, -132, -3, 11, 2), (-22, -172, -7, 10, 3), (22, -176, -2, 9, 4)]
+# ---- la pluie de plumes de lumière : elles naissent au-dessus d'elle et pleuvent en cercle tout autour, en
+#      s'écartant, puis se posent au sol (une petite lueur) ; celles du côté lointain passent derrière elle.
+#      (angle autour d'elle, rayon de départ, hauteur de départ au-dessus du sol, première image)
+RAIN = [(200, 26, 150, 0), (250, 22, 162, 0), (300, 28, 148, 0), (340, 30, 140, 1), (20, 24, 156, 0),
+        (70, 20, 168, 1), (115, 26, 160, 0), (160, 30, 144, 1), (225, 34, 172, 2), (320, 36, 176, 3),
+        (140, 34, 180, 3), (275, 18, 186, 4)]
+RAIN_VR, RAIN_VY = 6.0, 12.0            # par image : elles s'écartent, elles tombent
 
 
 RAIN_BIG = [[r.translate(str.maketrans('zyxw', 'WgJI')) for r in rows] for rows in BIG_FEATHERS]
 RAIN_SMALL = [[r.translate(str.maketrans('WghJI', 'WgJJI')) for r in rows] for rows in GOLD_FEATHERS]
 
 
-def glints(cv, pts, s0, s1, seed):
-    """des grains et de petites plumes de lumière portés par l'onde"""
-    n = len(pts) - 1
-    for j in range(4):
-        s = s0 + (s1 - s0) * (j + 0.5) / 4
-        p = pts[int(s * n)]
-        off = 7 if (j + seed) % 2 else -7
-        if j % 2:
-            sprite(cv, RAIN_SMALL[(j + seed) % 4], int(p[0]) - 3, int(p[1] + off) - 2)
-        else:
-            burst(cv, (p[0] + 2, p[1] + off), 1.7, 'Wgh')
-
-
 def fx_rain(k):
     def f(cv, back, mid, front, ctx):
-        for i, (x0, y0, vx, vy, k0) in enumerate(RAIN):
+        for i, (a, r0, h0, k0) in enumerate(RAIN):
             t = k - k0
             if t < 0:
                 continue
-            x = SOL[0] + x0 + vx * t + 3 * math.sin(k * 1.3 + i * 2.0)
-            y = GROUND + y0 + vy * t
-            if abs(x - SOL[0]) < 22 and y > GROUND - 58:
-                # elle touche Myrr : une petite lueur, puis plus rien
-                if y - vy <= GROUND - 58:
-                    burst(front, (x + 4, y + 3), 1.7, 'Wgh')
-                continue
-            if y > GROUND - 8 or x < -8:
+            sa, ca = math.sin(math.radians(a)), math.cos(math.radians(a))
+            r = r0 + RAIN_VR * t
+            land = GROUND - 3 - 0.2 * r * sa              # leur point de chute sur l'ellipse du sol
+            y = land - h0 + RAIN_VY * t + 2 * abs(math.sin(k * 1.1 + i))
+            x = CX + r * ca + 2.5 * math.sin(k * 1.3 + i * 2.0)
+            lay = back if sa > 0 else front
+            if y >= land - 4:
+                if y - RAIN_VY < land - 4:                # elle se pose : une petite lueur, puis plus rien
+                    burst(lay, (x + 3, land - 2), 1.8, 'Wgh')
                 continue
             rows = (RAIN_BIG if t > 0 else RAIN_SMALL)[(i % 2) + (k % 2) * 2]
-            sprite(front if i % 2 == 0 else back, rows, int(round(x)), int(round(y)))
+            sprite(lay, rows, int(round(x)) - 4, int(round(y)) - 4)
         # les petites lueurs qui restent posées sur elle
         if k >= 5:
             for j, (dx, dy) in enumerate(((-16, -64), (12, -48), (-2, -86), (24, -72), (-10, -30))):
@@ -1339,115 +1331,105 @@ def fx_specks(k):
     return f
 
 
-# ---- la résurrection : une grande plume de lumière naît au-dessus d'elle, file vers la gauche et devient une colonne
-PLUME_A = np.array([SOL[0] + 2.0, GROUND - 150.0])          # où elle naît (au-dessus de l'auréole)
-COLUMN_X = 18.0                                             # où se dresse la colonne (vers l'équipe)
+# ---- la résurrection : une seconde note ; son auréole s'embrase et un grand halo doré pulse une fois autour d'elle
+HALO_C = (66.0, 10.0)                                       # le milieu de l'auréole (grille)
+HALO_FIRE = {'H': 'J', 'I': 'K', 'J': 'g', 'K': 'W'}        # l'auréole embrasée : ses ors passent au blanc doré
+AURA = {1: (30, 4.0), 2: (48, 5.0), 3: (62, 6.0), 4: (70, 3.0)}     # le grand halo : rayon, épaisseur
+GOLD_RING = {1: 28, 2: 46, 3: 64, 4: 80}                    # l'anneau d'or au sol : rayon
 
 
-def light_plume(cv, tip, ang, L, wmax):
-    """une grande plume de lumière : la pointe en tip, tournée vers ang (degrés) ; l'étendard s'élargit puis se
-    resserre sur le tuyau. Modelée selon la lumière (pas des bandes autour de la tige) : la moitié tournée vers la
-    lumière blanche au bord doré pâle, l'autre moitié d'or pâle au bord d'or ; une tige d'or pâle au milieu."""
-    d = unit(ang)
-    nrm = np.array([-d[1], d[0]])
-    if nrm @ LN < 0:                                     # nrm : vers la lumière (en haut à droite)
-        nrm = -nrm
-    pts, widths = [], []
-    for i in range(161):
-        s_ = i / 160
-        pts.append(np.array(tip, float) - s_ * L * d + 2.5 * math.sin(math.pi * s_) * nrm)
-        if s_ < 0.82:
-            widths.append(wmax * math.sin(math.pi * min(1.0, (s_ + 0.04) / 0.86)) ** 0.55 + 0.4)
-        else:
-            widths.append(1.2)
+def halo_center(ctx):
+    f = ctx.f
+    hx, hy = f.get('head', (0, f.get('hy', 0)))
+    return (HALO_C[0] + OX + ctx.chest[0] + hx + 0.5, HALO_C[1] + OY + ctx.chest[1] + hy + f.get('ha', 0) + 0.5)
+
+
+def flame(cv, base, h, lean, w):
+    """une petite langue de lumière : elle part de base, monte de h en se courbant (lean), s'effile en pointe"""
+    x0, y0 = base
+    pts = bezier((x0, y0), (x0, y0 - h * 0.45), (x0 + lean, y0 - h * 0.7), (x0 + lean * 0.6, y0 - h), 30)
+    widths = [w * (1 - i / 30) ** 0.8 + 0.5 for i in range(31)]
+    stroke(cv, pts, widths, 'WWgh')
+
+
+def aura(cv, c, r, w, gaps=None):
+    """le grand halo : un anneau doré presque rond derrière elle (le bord éclairé en haut à droite plus blanc) ;
+    gaps : il se défait (morceaux d'arc)"""
+    cx, cy = c
+    n = int(2 * math.pi * r * 2.2)
     best = {}
-    for p, wv in zip(pts, widths):
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        if gaps and any(g0 <= math.degrees(a) < g1 for g0, g1 in gaps):
+            continue
+        wv = w * (1 + 0.18 * math.sin(5 * a + 1.0))
+        px, py = cx + r * math.cos(a), cy - 0.94 * r * math.sin(a)
+        lit = math.cos(a - math.radians(45))                # vers la lumière (en haut à droite)
         R = wv / 2
-        for y in range(int(p[1] - R - 1), int(p[1] + R + 2)):
-            for x in range(int(p[0] - R - 1), int(p[0] + R + 2)):
-                v = np.array([x + 0.5, y + 0.5]) - p
-                dd = math.hypot(*v)
-                if dd <= R and dd / max(R, 0.6) < best.get((x, y), (9, 0))[0]:
-                    best[(x, y)] = (dd / max(R, 0.6), v @ nrm)
-    for (x, y), (k, o) in best.items():
-        if k > 0.72:
-            ch = 'g' if o > 0 else 'J'
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py) / max(R, 0.6)
+                if d <= 1 and d < best.get((x, y), (9, 0))[0]:
+                    best[(x, y)] = (d, lit)
+    for (x, y), (d, lit) in best.items():
+        if d < 0.4:
+            ch = 'W' if lit > -0.2 else 'g'
+        elif d < 0.75:
+            ch = 'g' if lit > -0.2 else 'h'
         else:
-            ch = 'W' if o > -0.6 else 'h'
+            ch = 'h' if lit > 0.3 else 'J'
         put(cv, x, y, ch)
-    for p in pts[24:150:2]:
-        X, Y = int(p[0]), int(p[1])
-        if 0 <= X < W and 0 <= Y < H and cv[Y, X] in 'Wh':
-            put(cv, X, Y, 'g')
 
 
-def column(cv, top, hw0, ph, bottom=None):
-    """la colonne de lumière, du sol jusqu'à top : évasée au pied, bords qui ondulent doucement (pas un tube raide),
-    sommet arrondi comme une flamme ; coeur blanc, or pâle, bord d'or du côté de l'ombre (à gauche), bord pâle du
-    côté de la lumière (à droite). bottom : elle ne descend plus jusqu'au sol (elle s'en va vers le haut, le bas
-    arrondi aussi)"""
-    cap = hw0 * 1.8
-    end = GROUND if bottom is None else int(bottom)
-    for y in range(int(top), end + 1):
-        t = (y - top) / (GROUND - top)
-        hw = hw0 * (0.72 + 0.45 * t) + 1.0 * math.sin(y * 0.13 + ph)
-        if y < top + cap:
-            hw *= math.sqrt(max(0.0, 1 - ((top + cap - y) / cap) ** 2))
-        if bottom is not None and y > end - cap * 1.5:
-            hw *= math.sqrt(max(0.0, 1 - ((y - end + cap * 1.5) / (cap * 1.5)) ** 2))
-        xc = COLUMN_X + 1.4 * math.sin(y * 0.05 + ph * 0.5)
-        for x in range(int(xc - hw - 1), int(xc + hw + 2)):
-            q = (x + 0.5 - xc - 0.18 * hw) / max(hw, 0.6)
-            if abs(q) > 1.0:
-                continue
-            put(cv, x, y, 'W' if abs(q) < 0.3 else 'g' if abs(q) < 0.55 else 'h' if abs(q) < 0.78 else
-                'J' if q < 0 else 'Y')
-
-
-def fx_rez(k):
-    """k = 0 : la plume naît au-dessus d'elle (un second son, plus doux) ; 1 : elle file vers la gauche ;
-    2 : elle plonge vers le sol, là où se tient l'équipe ; 3 : la colonne de lumière jaillit (arrêt sur image) ;
-    4 : la colonne se défait en bouffées de lumière qui montent ; 5 : quelques lueurs"""
+def fx_note(k):
+    """k = 0 : une seconde note, plus douce, l'auréole s'embrase ; 1, 2 : le grand halo s'ouvre autour d'elle, un
+    anneau d'or s'étend au sol ; 3 : le halo au plus large (RÉSURRECTION, arrêt sur image) ; 4 : il s'ouvre en
+    morceaux et pâlit ; 5 : quelques lueurs qui montent"""
     def f(cv, back, mid, front, ctx):
-        top = 20.0
-        land = np.array([COLUMN_X + 2.0, GROUND - 14.0])
-        trail = path_pts(PLUME_A, PLUME_A + np.array([-30.0, -50.0]), land + np.array([4.0, -150.0]), land)
-        n = len(trail) - 1
+        hc = halo_center(ctx)
+        c = (CX, GROUND - 82.0)                             # le milieu du grand halo : sa poitrine
+        if k <= 3:
+            # l'auréole embrasée (les ors de l'auréole déjà posée passent au blanc doré) et sa couronne de lumière
+            f_ = ctx.f
+            hx, hy = f_.get('head', (0, f_.get('hy', 0)))
+            ys, xs = np.nonzero(P['aureole'] != '.')
+            for gy, gx in zip(ys, xs):
+                o = P['aureole'][gy, gx]
+                X, Y = gx + OX + ctx.chest[0] + hx, gy + OY + ctx.chest[1] + hy + f_.get('ha', 0)
+                if cv[Y, X] == HALO_GLOW.get(o, o):         # seulement là où l'auréole se voit
+                    cv[Y, X] = HALO_FIRE[o]
+            ring_arc(back, front, (hc[0], hc[1] + 0.5), 14 + (k > 0), 4.5, 10, 350, 2.4 if k else 1.8, head=0.5,
+                     tones='Wgh', back_tones='gh')
+            hs = [5, 9, 8, 10][k]
+            for (dx, sc, ln) in ((-8, 0.7, -2), (-2, 1.0, 1), (5, 0.85, 2), (10, 0.6, 1)):
+                flame(back, (hc[0] + dx, hc[1] - 2), hs * sc, ln, 2.6 if k else 2.0)
         if k == 0:
             pop(front, ctx.bell + 3 * ctx.u, 4.5, facing=30, tones='Wgh')
-            burst(back, PLUME_A, 10.0, 'WWghY')
-            light_plume(front, PLUME_A + np.array([-15.0, -5.0]), 160, 32, 9.0)
-            for (dx, dy) in ((-18, 12), (15, -7), (11, 13)):
-                burst(front, PLUME_A + np.array([dx, dy]), 1.7, 'Wgh')
+            crescent(back, ctx.bell + 10 * ctx.u, 9, 32, span=120, w=2.6, tones='WgJ')
             return
-        if k in (1, 2):
-            sf = 0.5 if k == 1 else 0.86
-            wave_band(back, mid, trail, max(0.0, sf - 0.5), sf, 8, tones='WWghJ', under='YV')
-            p = trail[int(sf * n)]
-            q = trail[int(sf * n)] - trail[int(sf * n) - 3]
-            ang = math.degrees(math.atan2(-q[1], q[0]))
-            light_plume(front, p + 6 * q / np.linalg.norm(q), ang, 32, 9.0)
-            return
+        if k in AURA:
+            r, w = AURA[k]
+            gaps = [(25, 55), (120, 150), (205, 240), (300, 330)] if k == 4 else None
+            aura(back, c, r, w, gaps)
+            if k in (2, 3):
+                aura(back, c, r - w - 3, 1.4)               # un reflet intérieur, fin
+            R = GOLD_RING[k]
+            ring_arc(back, front, (CX, GROUND - 3), R, R * 0.2, 0, 360, [3.4, 4.2, 4.6, 2.4][k - 1], head=0.5,
+                     tones='WghJ', back_tones='ghJ')
         if k == 3:
-            column(back, top, 9.0, 0.0)
-            cloud(back, (COLUMN_X, GROUND - 5), 7.0, 'WghJ', seed=81)
-            ribbon(back, (COLUMN_X, GROUND - 3), 19, 4, 20, 160, 2.8, tones='ghJ')
-            ribbon(front, (COLUMN_X, GROUND - 3), 19, 4, 200, 340, 3.4, tones='WghJ')
-            for (dx, dy) in ((-15, -40), (15, -72), (-14, -112), (14, -146)):
-                burst(front, (COLUMN_X + dx, GROUND + dy), 1.7, 'Wgh')
-            sprite(front, RAIN_SMALL[1], COLUMN_X + 11, GROUND - 96)
-            sprite(front, RAIN_SMALL[0], COLUMN_X - 19, GROUND - 60)
-            return
-        if k == 4:
-            column(back, top - 4, 6.5, 2.0, bottom=GROUND - 80)
-            ribbon(front, (COLUMN_X, GROUND - 3), 22, 5, 200, 340, 2.2, tones='gh')
-            for (dx, dy) in ((-12, -58), (13, -98), (-10, -134), (10, -170)):
-                burst(front, (COLUMN_X + dx, GROUND + dy), 1.4, 'Wgh')
-            sprite(front, RAIN_SMALL[3], COLUMN_X + 12, GROUND - 124)
-            return
-        for (dx, dy) in ((-8, -120), (10, -156), (-4, -180), (6, -94)):
-            burst(front, (COLUMN_X + dx, GROUND + dy), 1.1, 'gh')
-        sprite(front, RAIN_SMALL[1], COLUMN_X + 14, GROUND - 152)
+            for (a, d) in ((70, 1.15), (160, 1.1), (250, 1.2), (330, 1.1), (20, 1.25), (200, 1.25)):
+                p = (c[0] + 62 * d * math.cos(math.radians(a)), c[1] - 58 * d * math.sin(math.radians(a)))
+                burst(front if 180 < a < 360 else back, p, 1.8, 'Wgh')
+        if k >= 4:
+            up = (k - 4) * 14
+            for j, (a, d) in enumerate(((60, 1.0), (150, 1.05), (235, 1.0), (315, 1.05), (100, 0.9), (20, 0.95))):
+                if k == 5 and j % 2:
+                    continue
+                p = (c[0] + 66 * d * math.cos(math.radians(a)), c[1] - 60 * d * math.sin(math.radians(a)) - up - 6)
+                burst(front if 180 < a < 360 else back, p, 1.6 if k == 4 else 1.1, 'Wgh' if k == 4 else 'gh')
+            if k == 4:
+                sprite(front, RAIN_SMALL[1], int(c[0] + 50), int(c[1] - 30))
+                sprite(back, RAIN_SMALL[2], int(c[0] - 60), int(c[1] - 36))
     return f
 
 
@@ -1460,20 +1442,22 @@ SPECIALE = [
     dict(b=1, lift=9, spread='grande', ang=32, tg=16, rs=0, ha=-1, hy=1, glow=1, fx=[fx_downdraft(1)], ms=220),
     dict(lift=8, lean=1, spread='battue', ang=30, mo=(1, 0), tg=16, rs=1, glow=1, flash=42,
          fx=[fx_grace(0), fx_specks(0)], ms=60),
+    # 6 : LANCEMENT du soin et de la purification (l'anneau de vent naît autour d'elle)
     dict(lift=8, lean=1, spread='battue', ang=30, mo=(1, 0), tg=16, rs=1, glow=1, flash=20,
          fx=[fx_grace(1), fx_specks(1), fx_downdraft(2), fx_rain(0)], ms=200),
     dict(lift=9, spread='demi', ang=31, tg=16, rs=0, glow=1, fx=[fx_grace(2), fx_specks(2), fx_rain(1)], ms=90),
     dict(lift=9, spread='grande', ang=32, tg=16, rs=-1, ha=-1, glow=1, fx=[fx_grace(3), fx_specks(3), fx_rain(2)],
          ms=90),
     dict(lift=9, spread='grande', ang=32, tg=16, rs=-1, ha=-1, glow=1,
-         fx=[fx_grace(4), fx_specks(4), fx_rain(3), fx_rez(0)], ms=130),
-    dict(lift=9, spread='grande', ang=32, tg=16, rs=0, ha=0, glow=1, fx=[fx_rain(4), fx_rez(1)], ms=70),
-    dict(lift=9, spread='grande', ang=32, tg=16, rs=0, ha=0, glow=1, fx=[fx_rain(4), fx_rez(2)], ms=50),
-    dict(lift=8, spread='grande', ang=32, tg=16, rs=0, glow=1, flash=12, fx=[fx_rain(5), fx_rez(3)], ms=200),
-    dict(lift=7, spread='demi', ang=40, mo=(3, 10), tg=15, rs=1, fx=[fx_rain(6), fx_rez(4)], ms=100),
-    dict(lift=4, ang=46, mo=(6, 16), tg=15, wl=-2, wg=0, rs=1, fx=[fx_rain(7), fx_rez(5)], ms=110),
-    dict(arms='orig', lift=1, wl=-1, wg=-1, wt=-1, rs=0, fx=[fx_rain(8)], ms=120),
-    dict(arms='orig', s=1, wl=0, wg=1, wt=-1, rs=-1, k=1, fx=[fx_rain(9)], ms=140),
+         fx=[fx_grace(4), fx_specks(4), fx_rain(3), fx_note(0)], ms=130),
+    dict(lift=9, spread='grande', ang=32, tg=16, rs=0, ha=0, glow=1, fx=[fx_rain(4), fx_note(1)], ms=70),
+    dict(lift=9, spread='grande', ang=32, tg=16, rs=0, ha=0, glow=1, fx=[fx_rain(5), fx_note(2)], ms=50),
+    # 12 : RÉSURRECTION (le grand halo doré au plus large)
+    dict(lift=8, spread='grande', ang=32, tg=16, rs=0, glow=1, flash=12, fx=[fx_rain(6), fx_note(3)], ms=200),
+    dict(lift=7, spread='demi', ang=40, mo=(3, 10), tg=15, rs=1, fx=[fx_rain(7), fx_note(4)], ms=100),
+    dict(lift=4, ang=46, mo=(6, 16), tg=15, wl=-2, wg=0, rs=1, fx=[fx_rain(8), fx_note(5)], ms=110),
+    dict(arms='orig', lift=1, wl=-1, wg=-1, wt=-1, rs=0, fx=[fx_rain(9)], ms=120),
+    dict(arms='orig', s=1, wl=0, wg=1, wt=-1, rs=-1, k=1, fx=[fx_rain(10)], ms=140),
     dict(arms='orig', wl=0, wg=0, rs=0, ms=150),
 ]
 
