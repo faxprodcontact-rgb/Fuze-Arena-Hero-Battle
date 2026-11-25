@@ -50,6 +50,8 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   `vecto/GUIDE.md`) ; pixel art « gros pixels encrés » `refonte-graphique/pixel/persos/` (lire `pixel/GUIDE.md`, contrôle
   `python3 refonte-graphique/pixel/controle.py <nom>`). Les anciens dessins (Hailuo, décors dessinés par le code, 72 héros
   pixel) et leurs chaînes de fabrication sont supprimés (v0.56.0) ; pictos : `icons.webp` (`decoupe-pictos.py`).
+- **Interface en nouvelle DA (pixel art HD), partie par partie** (demande du 25/11) : plan, inventaire et outils dans
+  `refonte-graphique/pixel/ui/` (lire `PLAN.md`) ; partie 1 faite en v0.57.0 (chargement, logo, icône d'application).
 - Interface (v0.39 à v0.41) : polices **Lilita One** (titres, chiffres) et **Fredoka** (textes), `font-synthesis: none`,
   jamais `fontStyle: 'bold'` dans Phaser. Couleurs : **émail bleu nuit cerclé d'or** (le bois brun est refusé),
   panneaux parchemin ; variables en tête de `src/game/ui/style.css`. Pièces dessinées : `ui/chrome.tsx` (`ChromeDefs`
