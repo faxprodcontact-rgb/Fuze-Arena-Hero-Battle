@@ -37,7 +37,7 @@
 #   rase    (facultatif, 'tir') : le projectile court au ras du sol (vague, pics de glace) : il glisse à plat jusqu'aux
 #           pieds de la cible, à la hauteur où il a quitté le personnage.
 #   vitesse, pente (facultatifs, 'tir') : imposent la vitesse (pixels/s) et l'angle du dessin du projectile (sinon mesurés).
-import sys, os, json, math, hashlib, importlib.util
+import sys, os, json, math, hashlib, importlib.util, inspect
 import numpy as np
 from PIL import Image, ImageDraw
 
@@ -72,11 +72,21 @@ def capture(mod):
     nommés : obj, solid, ghosts, veil, shake, tint…) et sa façon de poser les calques translucides. La découpe qui suit
     (personnage / sur la cible / projectile) se fait par colonnes : elle n'a pas besoin des calques séparés."""
     orig = mod.compose
-    calls = []
+    calls, heroes = [], {}
+    # `calques` (JEU) : on garde aussi l'image du personnage SEUL (compose sans ses effets fx_…), pour couper les
+    # effets sans jamais couper le personnage (voir split)
+    seul = any(d.get('calques') for d in getattr(mod, 'JEU', {}).values())
+    sig = inspect.signature(orig) if seul else None
 
     def spy(*args, **kw):
         out = orig(*args, **kw)
         calls.append(out)
+        if seul:
+            b = sig.bind(*args, **kw)
+            for k in list(b.arguments):
+                if k.startswith('fx'):
+                    b.arguments[k] = None
+            heroes[id(out)] = orig(*b.args, **b.kwargs)
         return out
 
     mod.compose = spy
@@ -94,7 +104,8 @@ def capture(mod):
             if k >= len(calls):
                 raise SystemExit(f'{mod.__name__} : une image de « {name} » ne vient pas de compose() '
                                  '(voir consignes/export-jeu.md, cas particuliers)')
-            fr.append((img.copy(), int(ms)))
+            hero = heroes.get(id(img))
+            fr.append((img.copy(), int(ms), None if hero is None else hero.copy()))
             k += 1
         res[name] = fr
     return res
@@ -162,6 +173,34 @@ def flight(heads, img0, ms):
     return run / max(1, ms[i0]) * 1000, math.atan2(h0[1] - ty, run)
 
 
+def take(L, hero, x0):
+    """(ce qui part, ce qui reste) : sans `hero`, tout ce qui est à droite de la colonne x0 part. Avec `hero` (l'image
+    du personnage seul, JEU `calques`) : seuls les EFFETS à droite de x0 partent, le personnage n'est jamais coupé
+    (là où un effet le couvrait, on retrouve le personnage)."""
+    if hero is None:
+        return cols(L, x0, None), cols(L, None, x0)
+    fx = alpha(L) & ~(alpha(hero) & np.all(L == hero, axis=2))
+    fx[:, :max(0, x0)] = False
+    gone = np.zeros_like(L)
+    gone[fx] = L[fx]
+    rest = L.copy()
+    rest[fx] = hero[fx]
+    return gone, rest
+
+
+def seams(left, right, x, run=8):
+    """la plus longue suite de rangées où une coupe à la colonne x tranche un morceau : `left` a un pixel en x − 1 ET
+    `right` en x (le même dessin coupé net, en ligne droite). 0 si rien n'est tranché."""
+    if x is None or x <= 0 or x >= left.shape[1]:
+        return 0
+    m = alpha(left)[:, x - 1] & alpha(right)[:, x]
+    best = cur = 0
+    for v in m:
+        cur = cur + 1 if v else 0
+        best = max(best, cur)
+    return best
+
+
 def split(mod, layers, name):
     """renvoie {'perso': [img…], 'cible': [img|None…], 'proj': [img|None…], 'ms': […], réglages…} pour une animation.
     Tous les calques (personnage compris : une flèche plantée dans l'ennemi est souvent dessinée avec lui) sont coupés
@@ -183,23 +222,36 @@ def split(mod, layers, name):
     if vol and depuis is None:
         raise SystemExit(f'{mod.__name__} {name} : `depuis` manque (la colonne où le projectile quitte le personnage)')
     retour = jeu.get('retour')
-    out = {'genre': genre, 'perso': [], 'cible': [], 'proj': [], 'retour': [], 'ms': [], 'jeu': jeu, 'sol': sol}
-    for i, (L, ms) in enumerate(layers):
+    out = {'genre': genre, 'perso': [], 'cible': [], 'proj': [], 'retour': [], 'ms': [], 'jeu': jeu, 'sol': sol,
+           'alertes': []}
+    calques = bool(jeu.get('calques'))
+    out['coupes'] = []
+    for i, (L, ms, hero) in enumerate(layers):
         dx = -int(round(avance[i]))
         flying = bool(vol) and vol[0] <= i < vol[1]
         back = bool(retour) and retour[0] <= i < retour[1]
         c = coupes[i]
         proj = tgt = ret = np.zeros_like(L)
+        hero = hero if calques else None
+        cuts = []
         if flying:
-            proj = cols(L, depuis, None)
-            L = cols(L, None, depuis)
+            proj, L = take(L, hero, depuis)
+            cuts.append(('proj', depuis))
         if back:
             # l'arme qui revient (boomerang) : le jeu la fait voler de la cible jusqu'à la main
-            ret = cols(L, depuis, None)
-            L = cols(L, None, depuis)
+            ret, L = take(L, hero, depuis)
         if c is not None:
-            tgt = cols(L, c, None)
-            L = cols(L, None, c)
+            tgt, L = take(L, hero, c)
+            cuts.append(('cible', c))
+        out['coupes'].append(cuts)
+        # contrôle : une coupe qui tranche un dessin en ligne droite se verra au combat (le morceau de gauche reste
+        # près du lanceur, celui de droite part sur la cible ou vole). Au corps à corps, le jeu recolle les morceaux.
+        if genre != 'melee':
+            for kind, x in cuts:
+                n_ = seams(L, proj if kind == 'proj' else tgt, x)
+                if n_ >= 8:
+                    out['alertes'].append(f'{name} {i} : coupe {"depuis" if kind == "proj" else "coupe"}={x} tranche '
+                                          f'un dessin sur {n_} rangées (bord droit visible)')
         perso = shift(L, dx)
         out['perso'].append(perso)
         out['cible'].append(tgt if alpha(tgt).any() else None)
@@ -263,6 +315,8 @@ def export(name, voir=None):
     for an in ANIMS:
         p = split(mod, layers[an], an)
         parts[an] = p
+        for msg in p['alertes']:
+            print(f'  ATTENTION {name} {msg} : voir consignes/export-jeu.md (`coupe` par image, `calques`)')
         sol = p['sol']
         jeu = p['jeu']
         a = {'genre': p['genre'], 'ms': p['ms'], 'f': [sheet.add(img, sol) for img in p['perso']]}
