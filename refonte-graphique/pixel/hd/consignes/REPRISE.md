@@ -86,5 +86,5 @@
 
 ## Fonds de combat pixel art HD animés (demande du 25/11/2026)
 - 8 fonds, un par clan / général (consigne `fond.md`), outillage commun `refonte-graphique/pixel/fonds/` (LISEZMOI.md).
-- Pilote en cours : Kael (volcan), qui crée aussi l'outillage. Ensuite les 7 autres (arachne, meduse, kesha, barzul,
+- Pilote Kael VALIDÉ (« C'est parfait », 25/11). Les 7 autres lancés le 25/11 (brief scratchpad brief-fond.md) (arachne, meduse, kesha, barzul,
   lenore, orin, eldra), puis le branchement dans le jeu (décor par clan à la place des décors dessinés par le code).
