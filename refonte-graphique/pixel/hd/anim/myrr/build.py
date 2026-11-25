@@ -56,12 +56,14 @@ ALLPAL.update(FXPAL)
 
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. La pose seule se recadre ensuite en 128 × 120
-# (le format du jeu, sol en (64, 116)). Toile large et haute : les ailes se déploient haut, la tornade tombe à droite.
-W, H = 354, 214
-SOL = (110, 204)
+# (le format du jeu, sol en (64, 116)). Toile large et haute : les ailes se déploient haut, l'onde de l'attaque part
+# à droite ; PAD : de la place à gauche pour la spéciale (le sort d'équipe file vers la gauche, derrière elle).
+PAD = 40
+W, H = 354 + PAD, 214
+SOL = (110 + PAD, 204)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
-FOE = (296, GROUND - 34)          # l'ennemi (milieu du corps), là où frappent l'onde et la tornade
+FOE = (296 + PAD, GROUND - 34)    # l'ennemi (milieu du corps), là où frappe l'onde de l'attaque
 
 
 def g2c(x, y):
@@ -699,10 +701,10 @@ def stroke(cv, pts, widths, tones):
         put(cv, x, y, tones[min(m - 1, int(k * m))])
 
 
-def gust(cv, p0, p1, p2, p3, w, tones='XYVS', curl_r=5.0, up=True, tail=0.0):
+def gust(cv, p0, p1, p2, p3, w, tones='XYVS', curl_r=5.0, up=True, tail=0.0, n=60):
     """une rafale à la chinoise : un long ruban courbe (Bézier) qui finit en volute enroulée.
-    tail : la part du début déjà effacée (0..1) quand la rafale se défait."""
-    n = 60
+    tail : la part du début déjà effacée (0..1) quand la rafale se défait. n : points le long de la courbe (plus pour
+    une longue rafale : sinon son bord fait des perles)."""
     pts = bezier(p0, p1, p2, p3, n)
     # la volute : elle continue la courbe et s'enroule (vers le haut si up)
     ex, ey = pts[-1]
@@ -1172,9 +1174,17 @@ def grace_path(ctx):
                        np.array([-34.0, GROUND - 118.0]))
 
 
+def dense(pts, f=5):
+    """la même courbe, f fois plus de points (un bord lisse, sans perles)"""
+    pts = np.asarray(pts, float)
+    t = np.linspace(0, len(pts) - 1, (len(pts) - 1) * f + 1)
+    return np.stack([np.interp(t, np.arange(len(pts)), pts[:, 0]), np.interp(t, np.arange(len(pts)), pts[:, 1])], 1)
+
+
 def wave_band(back, front, pts, s0, s1, wmax, tones='WWXYV', under='VSR'):
     """l'onde douce : un fuseau plein (tête ronde au front s1, queue effilée en s0, jamais plus fin qu'un trait net :
     pas de pointillés), doublé dessous, du côté de l'ombre, d'un fuseau de jade un peu décalé"""
+    pts = dense(pts)
     n = len(pts) - 1
     i0, i1 = int(s0 * n), int(s1 * n)
     if i1 - i0 < 3:
@@ -1233,17 +1243,17 @@ def fx_grace(k):
             ribbon(front, (cx - 4, GROUND - 64), 40, 8, 205, 335, 3.0, tones='XYVS')
             # les rafales basses, nées derrière elle, qui filent vers l'équipe
             gust(back, (cx - 6, GROUND - 66), (cx - 40, GROUND - 78), (cx - 76, GROUND - 60), (14, GROUND - 72),
-                 6.0, 'WXYVS', curl_r=4.6, up=True)
+                 7.0, 'XYYVS', curl_r=4.6, up=True, n=240)
             gust(back, (cx - 4, GROUND - 18), (cx - 36, GROUND - 8), (cx - 70, GROUND - 10), (18, GROUND - 24),
-                 5.0, 'WXYVS', curl_r=4.0, up=True)
+                 6.0, 'XYYVS', curl_r=4.0, up=True, n=240)
             return
         if k == 3:
             wave_band(back, mid, pts, 0.68, 1.0, 8, tones='WXYV', under='VS')
             crescent(back, (cx - 46, GROUND - 66), 30, 180, span=90, w=4.0, tones='WXYVS')
             gust(back, (cx - 20, GROUND - 70), (cx - 54, GROUND - 82), (cx - 90, GROUND - 62), (0, GROUND - 74),
-                 5.2, 'WXYVS', curl_r=5.0, up=True, tail=0.45)
+                 6.0, 'XYYVS', curl_r=5.0, up=True, tail=0.45, n=240)
             gust(back, (cx - 18, GROUND - 16), (cx - 50, GROUND - 6), (cx - 84, GROUND - 10), (4, GROUND - 26),
-                 4.4, 'WXYVS', curl_r=4.4, up=True, tail=0.45)
+                 5.0, 'XYYVS', curl_r=4.4, up=True, tail=0.45, n=240)
             return
         # k == 4 : il ne reste que des volutes qui s'en vont, de plus en plus fines
         curl(back, (12, GROUND - 92), 6, 250, turn=300, w=3.2, tones='XYVS')
@@ -1330,7 +1340,7 @@ def fx_specks(k):
 
 # ---- la résurrection : une grande plume de lumière naît au-dessus d'elle, file vers la gauche et devient une colonne
 PLUME_A = np.array([SOL[0] + 2.0, GROUND - 150.0])          # où elle naît (au-dessus de l'auréole)
-COLUMN_X = 24.0                                             # où se dresse la colonne (vers l'équipe)
+COLUMN_X = 18.0                                             # où se dresse la colonne (vers l'équipe)
 
 
 def light_plume(cv, tip, ang, L, wmax):
@@ -1380,7 +1390,7 @@ def fx_rez(k):
     def f(cv, back, mid, front, ctx):
         top = 20.0
         land = np.array([COLUMN_X + 2.0, GROUND - 14.0])
-        trail = path_pts(PLUME_A, PLUME_A + np.array([-40.0, -26.0]), land + np.array([4.0, -130.0]), land)
+        trail = path_pts(PLUME_A, PLUME_A + np.array([-30.0, -50.0]), land + np.array([4.0, -150.0]), land)
         n = len(trail) - 1
         if k == 0:
             pop(front, ctx.bell + 3 * ctx.u, 4.5, facing=30, tones='Wgh')
@@ -1408,8 +1418,8 @@ def fx_rez(k):
             sprite(front, RAIN_SMALL[0], COLUMN_X - 19, GROUND - 60)
             return
         if k == 4:
-            for i, (dy, r) in enumerate(((-40, 7.0), (-78, 6.5), (-116, 5.5), (-150, 4.5))):
-                cloud(back, (COLUMN_X + (2 if i % 2 else -2), GROUND + dy), r, 'Wghh', seed=90 + i)
+            for i, (dy, r) in enumerate(((-44, 5.0), (-82, 4.6), (-118, 4.0), (-150, 3.2))):
+                cloud(back, (COLUMN_X + (2 if i % 2 else -2), GROUND + dy), r, 'WWgh', seed=90 + i)
             ribbon(front, (COLUMN_X, GROUND - 3), 22, 5, 200, 340, 2.2, tones='gh')
             for (dx, dy) in ((-12, -58), (13, -98), (-10, -134), (10, -170)):
                 burst(front, (COLUMN_X + dx, GROUND + dy), 1.4, 'Wgh')
@@ -1504,7 +1514,7 @@ GAME_BOX = (                                                # la case du jeu : 1
             SOL[1] - hd.FEET[1] + hd.FRAME_H)
 
 
-ATTAQUE_BOX = (9, 18, 348, 212)     # la case de l'attaque (inchangée depuis sa validation)
+ATTAQUE_BOX = (9 + PAD, 18, 348 + PAD, 212)     # la case de l'attaque (inchangée depuis sa validation)
 
 
 def save_gif(path, images, durations):
