@@ -1019,32 +1019,35 @@ RC_LOW1 = [(81, 36), (101, 25), (110, 48), (110, 76)]      # la patte avant proc
 RC_LOW2 = [(81, 36), (102, 26), (108, 50), (104, 76)]      # (sa cuisse reste où elle était, la jambe plonge)
 RC_LOW3 = [(81, 36), (101, 25), (112, 48), (114, 76)]
 RC_HIGH = [(81, 37), (96, 16), (113, 18), (124, 30)]       # dressée (élan)
+RD_REST = [(93, 37), (102, 30), (114, 35), (121, 46)]      # la patte avant lointaine, redessinée en entier quand la
+RD_HIGH = [(93, 37), (102, 28), (114, 31), (121, 41)]      # proche ne la cache plus
+RD_FLING = [(93, 37), (104, 30), (117, 36), (124, 47)]
 RC_FLING = [(82, 37), (106, 30), (126, 38), (138, 52)]     # lancée vers l'ennemi
 SPECIALE = [
     # 0 : tension : les pattes levées frémissent, l'abdomen se gonfle
     dict(sw=1, legs={'RA': dict(t=(0, -1)), 'RB': dict(t=(0, -1))}, ms=100),
     # 1 : elle se cabre un peu, la patte avant proche descend devant les filières ; la soie sort
     dict(sp=(-1, -2), kf=0.5, ab=(1, 1), sw=1, c1=1, c2=-1,
-         legs={'RC': dict(new=RC_LOW1), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
+         legs={'RC': dict(new=RC_LOW1), 'RD': dict(new=RD_REST), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
          fx_list=[fx_weave_silk(0)], ms=130),
     # 2 : elle enroule : la pelote grossit (l'abdomen pompe)
     dict(sp=(-1, -2), kf=0.5, ab=(-1, 1), sw=2, c1=2,
-         legs={'RC': dict(new=RC_LOW2), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
+         legs={'RC': dict(new=RC_LOW2), 'RD': dict(new=RD_REST), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
          fx_list=[fx_weave_silk(1)], ms=110),
     # 3 : encore (deuxième pompe), des cailloux se prennent dans la soie
     dict(sp=(-1, -2), kf=0.5, ab=(1, 1), sw=1, c1=1,
-         legs={'RC': dict(new=RC_LOW3), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
+         legs={'RC': dict(new=RC_LOW3), 'RD': dict(new=RD_REST), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
          fx_list=[fx_weave_silk(2)], ms=110),
     dict(sp=(-1, -2), kf=0.5, ab=(-1, 1), sw=2, c1=0,
-         legs={'RC': dict(new=RC_LOW2), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
+         legs={'RC': dict(new=RC_LOW2), 'RD': dict(new=RD_REST), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
          fx_list=[fx_weave_silk(3)], ms=110),
     # 5 : la pelote est prête ; elle recule pour prendre son élan, la patte avant se dresse
     dict(sp=(-4, 0), kf=0.3, ab=(-2, 0), sw=1, c1=-1,
-         legs={'RC': dict(new=RC_HIGH), 'RA': dict(t=(1, -4)), 'RB': dict(t=(0, -3)), 'RD': dict(t=(-1, -2))},
+         legs={'RC': dict(new=RC_HIGH), 'RA': dict(t=(1, -4)), 'RB': dict(t=(0, -3)), 'RD': dict(new=RD_HIGH)},
          fx_list=[fx_ball_hold(6.0, 220, dx=-3)], ms=180),
     # 6 : LANCER : tout le corps se détend, l'abdomen se jette en avant, la patte avant fouette
     dict(sp=(3, -1), kf=0.6, ab=(3, -1), c1=-2,
-         legs={'RC': dict(new=RC_FLING), 'RA': dict(t=(-1, 0)), 'RB': dict(t=(-1, 0))},
+         legs={'RC': dict(new=RC_FLING), 'RA': dict(t=(-1, 0)), 'RB': dict(t=(-1, 0)), 'RD': dict(new=RD_FLING)},
          fx_list=[fx_shot(0.14, r=6.0, tail_len=0.14, pebbles=3, start=g2c(BALL_G[0] + 4, BALL_G[1] - 2), arc=30)],
          no_c2=True, ms=60),
     # 7 : la pelote vole en cloche ; recul

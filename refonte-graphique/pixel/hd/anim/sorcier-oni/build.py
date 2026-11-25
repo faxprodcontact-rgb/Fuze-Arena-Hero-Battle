@@ -722,9 +722,10 @@ def follet_pos(i, u):
     if u < b + 1:                                    # il sort de la lanterne et rejoint la ronde
         t = u - b
         (ox, oy), near = orbit_pt(A0)
-        x = lc[0] + (ox - lc[0]) * t
-        y = lc[1] + (oy - lc[1]) * t - 6 * math.sin(math.pi * t)
-        return x, y, True, 0.45 + 0.55 * t
+        sx, sy = lc[0] + 2, lc[1] - 14               # il jaillit par le chapeau de la lanterne
+        x = sx + (ox - sx) * t
+        y = sy + (oy - sy) * t - 6 * math.sin(math.pi * t)
+        return x, y, True, 0.7 + 0.3 * t
     if u < RELEASE:                                  # la ronde autour de la tête
         a = A0 + ORBIT_SPEED * (u - b - 1)
         (x, y), near = orbit_pt(a)

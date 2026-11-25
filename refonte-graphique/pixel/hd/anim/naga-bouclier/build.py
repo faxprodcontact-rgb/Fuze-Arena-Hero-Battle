@@ -731,8 +731,8 @@ def fx_smear(k):
     def f(cv, back, front, ctx):
         sx, sy = ctx.shield
         c = g2c((103.0, 76.0), (sx, sy))
-        ribbon(front, (c[0] - 4, c[1]), 26, 34, -58, 58, 3.4, head=0.5, tones='KLU')
-        ribbon(front, (c[0] - 12, c[1] + 1), 26, 30, -42, 42, 1.8, head=0.5, tones='KL')
+        ribbon(front, (c[0] - 4, c[1]), 26, 34, -60, 60, 5.0, head=0.5, tones='KKLU')
+        ribbon(front, (c[0] - 13, c[1] + 1), 26, 30, -44, 44, 2.6, head=0.5, tones='KL')
     return f
 
 
@@ -744,19 +744,19 @@ def fx_impact(stage):
         if stage == 0:
             pop(front, (x + 2, y), 9.0, facing=0, tones='ZZHKL')
             for (dx, dy, r, s) in ((10, -9, 2.2, 1), (12, 6, 1.8, 2), (7, -15, 1.4, 3)):
-                rock(front, (x + dx, y + dy), r, seed=s)
+                rock(front, (x + dx, y + dy), r * 1.5, seed=s)
         elif stage == 1:
             pop(front, (x + 4, y), 10.0, facing=0, tones='ZKKLU')
             for (dx, dy, r, s) in ((17, -14, 2.4, 1), (19, 9, 2.0, 2), (12, -22, 1.6, 3), (22, -3, 1.2, 4)):
-                rock(front, (x + dx, y + dy), r, seed=s)
+                rock(front, (x + dx, y + dy), r * 1.5, seed=s)
         elif stage == 2:
             cloud(front, (x + 7, y - 2), 8.0, tones='KKLU', hollow=0.35, seed=4)
             for (dx, dy, r, s) in ((23, -15, 2.4, 1), (25, 17, 2.0, 2), (16, -26, 1.6, 3), (30, 3, 1.2, 4)):
-                rock(front, (x + dx, y + dy), r, seed=s)
+                rock(front, (x + dx, y + dy), r * 1.5, seed=s)
         else:
             cloud(front, (x + 10, y - 6), 6.5, tones='KKL', hollow=0.75, seed=4)
             for (dx, dy, r, s) in ((27, -11, 2.2, 1), (29, 26, 1.8, 2), (19, -24, 1.4, 3)):
-                rock(front, (x + dx, y + dy), r, seed=s)
+                rock(front, (x + dx, y + dy), r * 1.5, seed=s)
     return f
 
 
@@ -764,17 +764,17 @@ def fx_quake(level):
     """le sol tremble : bouffées de poussière au pied des anneaux (devant et derrière), qui roulent et se défont"""
     def f(cv, back, front, ctx):
         g = GROUND
-        base = [(OX + 8, -1), (OX + 52, 0), (OX + 116, 1)]
+        base = [(OX + 8, -1), (OX + 54, 0), (OX + 118, 1)]
         for i, (x, side) in enumerate(base):
             if level == 0:
-                puff(front, (x, g - 1.5), 2.6, 'KLU')
-                puff(front, (x + 4 * side + 3, g - 1), 1.8, 'KL')
+                puff(front, (x, g - 2), 3.4, 'KLU')
+                puff(front, (x + 5 * side + 4, g - 1.5), 2.4, 'KL')
             elif level == 1:
-                cloud(front, (x + 2 * side, g - 3), 3.6, tones='KKLU', seed=i)
+                cloud(front, (x + 3 * side, g - 3.5), 4.6, tones='KKLU', seed=i)
             elif level == 2:
-                cloud(front, (x + 4 * side, g - 4), 3.4, tones='KKL', hollow=0.45, seed=i)
+                cloud(front, (x + 5 * side, g - 4.5), 4.4, tones='KKL', hollow=0.45, seed=i)
             else:
-                cloud(front, (x + 5 * side, g - 5), 2.8, tones='KK', hollow=0.85, seed=i)
+                cloud(front, (x + 7 * side, g - 5.5), 3.6, tones='KK', hollow=0.85, seed=i)
     return f
 
 
@@ -935,18 +935,6 @@ def fx_wave(t, fade=0.0):
                 k = age - 7
                 curl(front, (x + 1, GROUND - 8 - 3 * k), 5.0 - 1.4 * k, 200, turn=260, w=2.2 - 0.6 * k, tones='KL')
                 rock(front, (x + 4, GROUND - 1), 1.0, seed=seed)
-    return f
-
-
-def fx_eyes(level):
-    """les yeux qui brûlent de venin : une lueur verte qui déborde un peu devant le museau"""
-    def f(cv, back, front, ctx):
-        nx, ny = ctx.neck
-        hx, hy = ctx.f.get('head', (0, 0))
-        for (ex, ey, r) in ((86.0, 25.0, 1.4), (100.5, 25.0, 1.0)):
-            c = g2c((ex, ey), (nx + hx, ny + hy))
-            if level >= 2:
-                glow(back, (c[0], c[1]), r + 1.6, tones='34')
     return f
 
 

@@ -995,7 +995,7 @@ def fx_dash(k):
         if k == 3:
             for i in (0, 2, 4):
                 x = x0 - 6 + i / 4 * (DASH - 2)
-                curl(back, (x + 1, gy - 6), 2.6, 250, turn=260, w=1.6, tones='hij', cw=bool(i % 4))
+                cloud(back, (x + 1, gy - 4 - i), 2.4 + 0.3 * i, 'hhij', hollow=0.2, seed=80 + i, ground=False)
     return f
 
 

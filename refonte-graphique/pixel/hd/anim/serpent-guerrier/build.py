@@ -662,7 +662,7 @@ def fx_smear(phi0, phi1, tones='xDC', wmax=5.0):
                 q = i / n                                    # 0 : vieux bout, 1 : au bout de la lame
                 a = math.radians(a0 + (a1 - a0) * q)
                 pts.append((G[0] + r * math.cos(a), G[1] - r * math.sin(a)))
-                ws.append(w * q ** 0.8)
+                ws.append(w * min(1.0, q / 0.6) ** 0.9)
             stroke(back, pts, ws, tones)
     return f
 

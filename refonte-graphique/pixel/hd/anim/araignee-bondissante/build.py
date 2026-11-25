@@ -697,6 +697,8 @@ CHUNKS = [
     ['.K', 'NO'],
     ['KNN.', 'NOOP', '.OP.'],
     ['.KK.', 'KNNO', 'NNOP', '.OP.'],
+    ['..KK.', '.KNNK', 'KNNOO', 'NOOPP', '.OPP.'],
+    ['.KKN.', 'KNNOO', 'NNOOP', '.NOP.'],
 ]
 DROPS = [
     ['.H', 'IJ', 'JL'],          # goutte qui tombe (éclat en haut à droite)
@@ -871,8 +873,8 @@ def fx_drip(level):
 def fx_pebbles(level):
     """des cailloux se soulèvent du sol autour des pattes (la terre répond) ; level 1, 2 : plus haut"""
     def f(cv, back, front, ctx):
-        for i, (x, k) in enumerate(((22, 2), (48, 0), (70, 2), (96, 1), (118, 2))):
-            up = (2, 5, 9)[level] + (i % 2) * (1 + level)
+        for i, (x, k) in enumerate(((14, 0), (30, 2), (48, 4), (66, 1), (84, 2), (102, 0), (120, 2))):
+            up = (2, 6, 11)[level] + (i % 3) * (1 + level)
             chunk(back if i % 2 else front, x + OX + (i % 3) - 1, GROUND - 2 - up, k, flip=i % 2 == 1)
             if level:
                 put(back, x + OX + 1, GROUND, 'Y')
@@ -930,8 +932,8 @@ def broken_ground(cv, level=1.0):
 
 def venom_crown(cv, level):
     """la couronne de venin qui gicle : des jets courbes qui montent et retombent, une goutte au bout de chacun"""
-    c = HIT_S + np.array([0, 10])
-    for i, (ang, L) in enumerate(((150, 22), (118, 28), (88, 30), (62, 27), (32, 22))):
+    c = np.array([FOE[0] + 2, GROUND - 6], float)
+    for i, (ang, L) in enumerate(((158, 30), (128, 40), (100, 46), (74, 44), (46, 38), (20, 28))):
         a = math.radians(ang)
         tip = c + np.array([math.cos(a) * L, -math.sin(a) * L])
         ctrl = c + np.array([math.cos(a) * L * 0.5, -math.sin(a) * L * 0.9 - 6])
@@ -939,30 +941,30 @@ def venom_crown(cv, level):
         pts = bezier(c, ctrl, ctrl + (tip - ctrl) * 0.4, tip, 24)
         n = len(pts)
         pts = pts[int(s0 * n):int((0.8 if level == 0 else 1.0) * n)]
-        stroke(cv, pts, [0.6 + 2.4 * math.sin(math.pi * j / max(len(pts) - 1, 1)) for j in range(len(pts))], 'HIJL')
+        stroke(cv, pts, [0.8 + 3.4 * math.sin(math.pi * j / max(len(pts) - 1, 1)) for j in range(len(pts))], 'HIJL')
         if level >= 1:
-            drop(cv, tip[0] - 1, tip[1] + (4 if level == 2 else 0), 0 if i % 2 else 1, flip=ang > 90)
+            drop(cv, tip[0] - 1, tip[1] + (7 if level == 2 else 0), 3 if i % 2 else 0, flip=ang > 90)
 
 
 def puddle(cv, level, fume=0.0):
     """la flaque de venin sous l'ennemi, qui fume (bouffées vertes qui montent et se défont)"""
     cx = FOE[0] - 4
-    rx = 16 * level
+    rx = 22 * level
     for y in range(GROUND - 2, GROUND + 1):
         for x in range(int(cx - rx - 1), int(cx + rx + 2)):
             if ((x + 0.5 - cx) / max(rx, 0.5)) ** 2 + ((y + 0.5 - GROUND) / 2.5) ** 2 <= 1:
                 put(cv, x, y, 'I' if y == GROUND - 2 and x > cx else 'J' if y < GROUND else 'L')
     if fume:
-        for (dx, r, sd) in ((-9, 5.0, 61), (6, 4.2, 62), (0, 3.4, 63)):
-            cloud(cv, (cx + dx, GROUND - 6 - 10 * fume), r * (1 - 0.3 * fume), 'IJLM', hollow=min(1.0, fume),
-                  seed=sd, ground=False)
+        for (dx, r, sd, dh) in ((-12, 7.0, 61, 0), (9, 6.0, 62, 3), (-1, 5.0, 63, 10)):
+            cloud(cv, (cx + dx, GROUND - 7 - dh - 14 * fume), r * (1 - 0.25 * fume), 'IJLM',
+                  hollow=min(0.9, fume), seed=sd, ground=False)
 
 
 def fx_impact(stage):
     """l'impact du plongeon, étape par étape"""
     def f(cv, back, front, ctx):
         if stage == 0:                                  # arrêt sur image : éclat blanc-vert, le sol se fend
-            pop(front, HIT_S, 9.0, facing=20, tones='lHIJL')
+            pop(front, HIT_S, 11.0, facing=20, tones='llHIJL')
             broken_ground(back, 0.6)
             for (dx, r, sd) in ((-26, 6.0, 1), (22, 5.5, 2)):
                 cloud(back, (FOE[0] + dx, GROUND - 3), r, 'VWXY', seed=sd)
@@ -1012,13 +1014,14 @@ SPECIALE = [
                                                 'F4': dict(t=(-5, -4), k=(-2, -2), j=2)}, pD=(0, -1),
          fx=[fx_drip(2), fx_pebbles(1)], ms=110),
     # 3 : elle jaillit (les pattes arrière encore au sol) : nuage, cailloux projetés
-    dict(sp=(8, -26), air=True, glow=1, legs=push((8, -26)), fang=1, fx=[fx_blast(0)], ms=50),
+    dict(sp=(8, -20), air=True, glow=1, legs=push((8, -20)), fang=1, fx=[fx_blast(0)], ms=50),
     # 4 : elle monte, pattes qui se replient
     dict(sp=(26, -60), air=True, glow=1, legs=TUCK, fx=[fx_blast(1)], ms=60),
     # 5 : au sommet : figée un instant, pattes repliées
     dict(sp=(38, -72), air=True, glow=1, legs=TUCK, abd=1, fx=[fx_blast(2)], ms=130),
     # 6 : le plongeon, traînée de venin
-    dict(sp=(58, -36), air=True, glow=1, legs=DIVE, fang=2, fx=[fx_trail((88, 46), (128, 84))], ms=50),
+    dict(sp=(58, -36), air=True, glow=1, legs=DIVE, fang=2,
+         fx=[fx_trail((62, 4), (104, 60), bend=-10, w=6.0), fx_trail((86, -6), (122, 52), bend=-8, w=3.5)], ms=50),
     # 7 : IMPACT (arrêt sur image) : elle s'écrase sur l'ennemi, pâlit ; éclat, le sol se fend
     dict(sp=SP_HIT, air=True, glow=1, head=(1, 1), legs=SLAM, fang=2, flash=45, fx=[fx_impact(0)], ms=200),
     # 8 : la couronne de venin gicle, les blocs partent
