@@ -16,6 +16,10 @@
 # Ailes : vraies ailes de rapace. Aile proche : bord d'attaque de l'épaule au poignet (le point le plus haut), six
 #   rémiges primaires en doigts écartés (barbe extérieure plus claire), quatre secondaires qui pendent, trois rangées
 #   de couvertures qui se recouvrent. Aile lointaine plus sombre, raccourcie, derrière la tête et le cou.
+# Racine de l'aile proche (retouche du 25/11, demande du propriétaire) : l'aile sort du corps par une vraie épaule
+#   (épaule → poignet plié → rémiges) : le bord d'attaque se prolonge jusqu'à une bosse d'épaule posée sur le haut du
+#   dos, couverte de petites couvertures ; trois rangées de plumes scapulaires en partent et retombent par-dessus le
+#   flanc et la base de l'aile ; une ombre douce sous elles sur le flanc ; une seule lumière pour le dos et l'aile.
 # Tête (la zone forte) : tête de rapace couleur nuage, corniche du sourcil lourde et pâle qui descend vers le bec (regard
 #   froncé) et jette son ombre sur l'oeil ; masque d'orage qui traverse l'oeil et file vers la nuque ; oeil d'or à
 #   pupille ronde tournée vers l'ennemi, éclat en haut à droite. Bec d'or crochu, GRAND OUVERT : arête éclairée, cire
