@@ -449,9 +449,9 @@ def jaw_cv(k):
 HEAT = [
     {},
     {'t': 'u', 'u': 'v', 'h': 'k'},
-    {'r': 's', 's': 't', 't': 'u', 'u': 'v', 'v': 'w', 'h': 'k', 'k': 's'},
-    {'r': 't', 's': 'u', 't': 'v', 'u': 'w', 'v': 'w', 'h': 's', 'k': 't'},
-    {'r': 'u', 's': 'v', 't': 'w', 'u': 'w', 'v': 'w', 'h': 't', 'k': 'u', '6': 'k', '7': 'u'},
+    {'s': 't', 't': 'u', 'u': 'v', 'v': 'w', 'h': 'k', 'k': 's'},
+    {'r': 's', 's': 'u', 't': 'v', 'u': 'w', 'v': 'w', 'h': 's', 'k': 't'},
+    {'r': 't', 's': 'v', 't': 'w', 'u': 'w', 'v': 'w', 'h': 't', 'k': 'u'},
 ]
 BLINK = dict(SRC['cligne'])
 
@@ -756,7 +756,7 @@ WING_SPECS = {
                  tones=('P', 'Q', 'R', 'S', 'V'), bone=('A', 'B', 'C', 'D', 'E', 'F', 'G')),
     # l'aile lointaine (derrière la bosse) : elle monte derrière le cou, s'ouvre vers le haut et la droite
     'far': dict(B=(160, 102), E0=(165, 100), E1=(170, 76), arm=78, a0=101.0, a1=72.0,
-                fingers=[(70, 120, 18), (72, 135, -22), (66, 150, -58)], H0=(150, 104), H1=(188, 90),
+                fingers=[(70, 238, 378), (72, 248, 338), (66, 258, 302)], H0=(150, 104), H1=(188, 90),
                 tones=('P', 'P', 'Q', 'R', 'S'), bone=('A', 'A', 'B', 'C', 'D', 'E', 'F')),
 }
 
@@ -1214,13 +1214,13 @@ def fx_breath(k):
     def f(cv, back, front, ctx):
         mx, my = mouth_point(ctx)
         if k == 0:
-            fireball(front, mx + 26, my - 46, 12, (mx - 2, my + 2), spin=0)
+            fireball(front, mx + 24, my - 44, 15, (mx - 2, my + 2), spin=0)
             tongue(front, (mx, my + 6), 14, 6, bend=0.5, tones='wvuts', lean=0.9, fork=False)
         elif k == 1:
             # la colonne de feu qui suit la boule
             pts = bezier((mx - 1, my + 2), (mx + 12, my - 30), (mx + 30, my - 70), (mx + 52, my - 116), 40)
             stroke(front, pts, [2 + 7 * math.sin(math.pi * min(1, i / 40 * 1.1)) for i in range(41)], 'wvuutsr')
-            fireball(front, mx + 58, my - 128, 14, (mx + 40, my - 90), spin=40)
+            fireball(front, mx + 56, my - 118, 17, (mx + 40, my - 84), spin=40)
             cloud(back, (mx + 6, my - 24), 6, 'iijl', seed=70, ground=False)
         else:
             pts = bezier((mx + 14, my - 40), (mx + 26, my - 70), (mx + 40, my - 100), (mx + 54, my - 140), 40)
@@ -1273,7 +1273,7 @@ def meteor(cv, x, y, r, vx, vy, k=0):
 
 
 # la pluie de feu sur UNE cible (aux pieds de ENEMY_X) : trois blocs qui tombent en biais (venus du haut, côté dragon)
-ROCKS = [(0, 0, 6.5), (-22, -26, 4.2), (20, -14, 3.6)]       # décalage d'arrivée x, retard (pixels de chute), rayon
+ROCKS = [(0, 0, 8.5), (-24, -30, 5.4), (22, -16, 4.6)]       # décalage d'arrivée x, retard (pixels de chute), rayon
 FALL = (0.55, 1.0)                                         # direction de la chute (vers la droite, en bas)
 
 

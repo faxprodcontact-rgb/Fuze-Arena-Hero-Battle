@@ -872,17 +872,17 @@ def construit():
                       vie=(1200, 2000), vx=(-4, 3), vy=(-18, -10), ondule=(2, 1400), prof=-14, graine=3 + k)
     # les feuilles d'érable : celles qui se détachent de l'érable (à droite) et tombent en se balançant vers la cour,
     # celles que le vent du soir emporte à travers la cour (couchées, plus vite), et deux devant les combattants
-    fd.particules('feuilles', 'devant', feuille_vie(FEUILLE7, F_ROUGE, 3), (482, 628, 596, 700), nombre=6,
+    fd.particules('feuilles', 'devant', feuille_vie(FEUILLE7, F_ROUGE, 3), (482, 628, 596, 700), nombre=8,
                   vie=(6500, 9200), vx=(-12, -4), vy=(12, 19), ondule=(6, 2600), prof=-14.5, graine=5)
-    fd.particules('feuilles-grandes', 'devant', feuille_vie(FEUILLE9, F_ORANGE, 3), (488, 632, 596, 696), nombre=3,
+    fd.particules('feuilles-grandes', 'devant', feuille_vie(FEUILLE9, F_ORANGE, 3), (488, 632, 596, 696), nombre=4,
                   vie=(7000, 9600), vx=(-14, -6), vy=(13, 20), ondule=(7, 3000), prof=-14.48, graine=10)
-    fd.particules('feuilles-orange', 'devant', feuille_vie(FEUILLE5, F_ORANGE, 3), (470, 632, 592, 704), nombre=5,
+    fd.particules('feuilles-orange', 'devant', feuille_vie(FEUILLE5, F_ORANGE, 3), (470, 632, 592, 704), nombre=6,
                   vie=(6000, 9000), vx=(-16, -6), vy=(10, 16), ondule=(5, 2200), prof=-14.45, graine=6)
-    fd.particules('feuilles-vent', 'devant', feuille_vie(FEUILLE7, F_CRAMOISI, 3, couchee=True), (250, 560, 640, 760),
-                  nombre=5, vie=(7000, 9600), vx=(-34, -20), vy=(5, 12), ondule=(8, 3200), prof=-14.4, graine=7)
-    fd.particules('feuilles-vent2', 'devant', feuille_vie(FEUILLE5, F_ROUGE, 3, couchee=True), (120, 600, 620, 780),
-                  nombre=4, vie=(7000, 9600), vx=(-28, -16), vy=(6, 13), ondule=(6, 2800), prof=-14.35, graine=8)
-    fd.particules('feuilles-devant', 'premier', feuille_vie(FEUILLE9, F_ROUGE, 3), (300, 660, 640, 840), nombre=2,
+    fd.particules('feuilles-vent', 'devant', feuille_vie(FEUILLE7, F_CRAMOISI, 3, couchee=True), (250, 560, 640, 800),
+                  nombre=6, vie=(7000, 9600), vx=(-34, -20), vy=(5, 12), ondule=(8, 3200), prof=-14.4, graine=7)
+    fd.particules('feuilles-vent2', 'devant', feuille_vie(FEUILLE5, F_ROUGE, 3, couchee=True), (120, 600, 620, 860),
+                  nombre=6, vie=(7000, 9600), vx=(-28, -16), vy=(6, 13), ondule=(6, 2800), prof=-14.35, graine=8)
+    fd.particules('feuilles-devant', 'premier', feuille_vie(FEUILLE9, F_ROUGE, 3), (300, 660, 640, 840), nombre=3,
                   vie=(7000, 9600), vx=(-30, -18), vy=(14, 22), ondule=(8, 3000), graine=9)
     fd.defile('eau', 'devant', (0, EAU_Y - 3, W, H), (EAU_TUILE, H - EAU_Y + 3), lambda tl: eau_dessin(tl),
               vx=EAU_TUILE * 1000 / fd.periode, prof=-13)
