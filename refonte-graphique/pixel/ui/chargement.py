@@ -1,23 +1,26 @@
 #!/usr/bin/env python3
-"""L'ÉCRAN DE CHARGEMENT en pixel art HD (partie 1 du plan, PLAN.md).
+"""L'ÉCRAN DE CHARGEMENT en pixel art HD (partie 1 du plan, PLAN.md), refait le 25/11 à la demande du propriétaire :
+« pas une image tirée du jeu mais construite de 0, qui montre 3 personnages dans un paysage en position de combat ;
+le logo pas en pixel, en HD, beau ».
 
-Ce qu'on voit : le volcan de Kael (le fond de combat HD du clan du feu, sa lave, sa fumée, ses braises), trois héros HD
-à gauche (Myrr l'ange au fond, Bérold le spartiate et Kael devant) qui font face au grand dragon de feu à droite ; en haut le
-logo en pixel art (logo.py) ; en bas la barre de chargement en émail bleu nuit cerclé d'or.
-Ce qui bouge : tout ce qui bouge dans le fond de combat (cratère, coulées, rivière et bassin de lave, chute, fumée,
-braises), et les quatre personnages respirent (leurs images « pose » des menus, public/art/hd/pied/).
+Ce qu'on voit : le paysage dessiné pour lui (paysage.py : ciel du soir, soleil bas à droite, l'arène lointaine sur sa
+mesa, une mer de nuages, une arête rocheuse en trois paliers) et trois héros HD en pose de COMBAT (une image clé de
+leur attaque ou de leur spéciale), en groupe héroïque, tournés vers l'arène : Elvyn le mage (eau) en haut, l'eau qui
+tourne autour de sa main ; Sylvar l'archer (terre) au milieu, l'arc bandé ; Kael (feu) devant, l'épée levée.
+Ce qui bouge : nuages et brume qui glissent, feuilles dans le vent, lucioles d'or, l'eau d'Elvyn, les héros respirent.
+En haut, le logo HD (vectoriel, logo_hd.py) ; en bas la barre de chargement en émail bleu nuit cerclé d'or.
 
-Un pixel = un pixel des héros HD et des fonds. Le dessin fait 340 × 737 (la forme d'un grand téléphone, 19,5:9) ; il est
-peint dans un <canvas> à sa vraie taille par un petit script posé dans index.html (pas de Phaser : il s'affiche avant
-le code du jeu), puis agrandi sans flou pour couvrir l'écran (les petits téléphones coupent un peu de ciel).
+Un pixel = un pixel des héros HD. Le dessin fait 256 × 555 (la forme d'un grand téléphone, 19,5:9) ; il est peint dans
+un <canvas> à sa vraie taille par un petit script posé dans index.html (pas de Phaser : il s'affiche avant le code du
+jeu), puis agrandi sans flou pour couvrir l'écran (les petits téléphones coupent un peu de ciel).
 
-  python3 refonte-graphique/pixel/ui/chargement.py
-    → public/art/ui-px/chargement-fond.webp   le fond fixe recadré (+ les ombres des personnages)
-      public/art/ui-px/chargement-anim.webp   la planche : images des calques animés et des personnages
+  python3 refonte-graphique/pixel/ui/logo_hd.py && python3 refonte-graphique/pixel/ui/chargement.py [--gif]
+    → public/art/ui-px/chargement-fond.webp   le paysage fixe (+ les ombres des héros)
+      public/art/ui-px/chargement-anim.webp   la planche : images des calques animés et des héros
       public/art/ui-px/chargement.webp        l'image fixe complète (sans logo) : écran du nom au premier lancement
-      index.html                              le style, le dessin et le script entre les repères « chargement »
+      index.html                              style, dessin, logo et script entre les repères « chargement »
       refonte-graphique/pixel/sortie/ui/chargement.png (×2) / .gif (--gif)    aperçus
-À relancer si le fond de Kael, un des personnages ou le logo changent (lancer logo.py avant).
+À relancer si le paysage, un des héros ou le logo changent.
 """
 import os
 import sys
@@ -25,27 +28,28 @@ import json
 import math
 import base64
 import io
+import re
 import numpy as np
 from PIL import Image
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import uilib as U  # noqa: E402
+import paysage  # noqa: E402
 
-CLAN = 'kael'
-SW, SH = 340, 737                       # le dessin (pixels HD)
-CX0, CY0 = 165, 1100 - SH               # le coin haut-gauche du recadrage dans le fond (590 × 1100)
-ANCRE = 0.7                             # écran moins haut que le dessin : on coupe 70 % en haut, 30 % en bas
+SW, SH = paysage.SW, paysage.SH         # le dessin (pixels HD)
+ANCRE = 0.72                            # écran moins haut que le dessin : on coupe 72 % en haut, 28 % en bas
 
-# Les personnages : id, x et y des pieds dans le FOND, retourné (regarde à gauche).
-PERSOS = [
-    ('mages-11', 232, 936, False),      # Myrr l'ange, au fond
-    ('knights-1', 226, 1014, False),    # Bérold le spartiate, devant
-    ('assassins-2', 294, 980, False),   # Kael, l'épée en avant
-    ('boss-feu', 460, 958, True),       # le dragon, face aux héros, un peu en arrière
+# Les héros : id, images clés (numéros dans src/game/hd-meta.ts), durée d'une image (0 = une seule image qui respire),
+# palier de l'arête, x des pieds.
+HEROS = [
+    ('angels-6', [26, 27, 28, 27], 170, 'haut', 46),  # Elvyn, en haut, l'eau qui tourne autour de sa main (spéciale)
+    ('myths-9', [14], 0, 'milieu', 106),              # Sylvar, au milieu, l'arc bandé (attaque)
+    ('assassins-2', [11], 0, 'bas', 192),             # Kael, devant, l'épée levée (attaque)
 ]
+SOUFFLE_MS = 900                        # la respiration : le haut du corps monte d'un pixel, une image sur deux
 
 # La barre de chargement (pixels HD) : cadre d'or, émail bleu nuit ; la jauge d'or se remplit dedans.
-BW, BH = 150, 14
+BW, BH = 140, 14
 BI = 4                                  # marge intérieure de la jauge (cadre + creux)
 
 PRNG_JS = 'function R(a){return function(){a|=0;a=a+0x6D2B79F5|0;var t=Math.imul(a^a>>>15,1|a);' \
@@ -99,80 +103,64 @@ class Planche:
         self.pos = pos
 
 
-def inter(x, y, w, h):
-    """L'intersection d'un rectangle du dessin avec le dessin (x0, y0, x1, y1) ou None."""
-    x0, y0, x1, y1 = max(0, x), max(0, y), min(SW, x + w), min(SH, y + h)
-    return (x0, y0, x1, y1) if x0 < x1 and y0 < y1 else None
+def images_heros(meta, cid, idx, ms, top):
+    """Les images d'un héros, toutes dans une même case (pieds au même point) : [(image, ax, ay)], ms."""
+    ch = meta['chars'][cid]
+    sheet = Image.open(os.path.join(U.PUBLIC, 'art', 'hd', f'{cid}.webp')).convert('RGBA')
+    up = meta['up']
+    fr = [ch['frames'][i] for i in idx]
+    x0 = min(f[4] for f in fr)
+    y0 = min(f[5] for f in fr) - 1             # une ligne de plus en haut pour la respiration
+    x1 = max(f[4] + f[2] for f in fr)
+    y1 = max(f[5] + f[3] for f in fr)
+    ims = []
+    for sx, sy, fw, fh, ax, ay in fr:
+        cell = sheet.crop((sx * up, sy * up, (sx + fw) * up, (sy + fh) * up)).resize((fw, fh), Image.NEAREST)
+        im = Image.new('RGBA', (x1 - x0, y1 - y0), (0, 0, 0, 0))
+        im.alpha_composite(cell, (ax - x0, ay - y0))
+        ims.append(im)
+    if not ms:
+        # respiration : tout ce qui est au-dessus du milieu du torse monte d'un pixel (la ligne du dessous est doublée)
+        a = np.asarray(ims[0]).copy()
+        ys = int(-y0 - top * 0.5)
+        b = a.copy()
+        b[:ys - 1] = a[1:ys]
+        ims, ms = [ims[0], Image.fromarray(b, 'RGBA')], SOUFFLE_MS
+    return ims, x0, y0, ms
 
 
 def construit():
-    meta = U.ts_json(os.path.join(U.ROOT, 'src', 'game', 'fond-meta.ts'), 'FOND_META')[CLAN]
-    figs = U.ts_json(os.path.join(U.ROOT, 'src', 'game', 'hd-figures.ts'), 'HD_FIG')
-    fixe = Image.open(os.path.join(U.PUBLIC, 'art', 'px', 'fonds', f'{CLAN}.webp')).convert('RGBA')
-    anim = Image.open(os.path.join(U.PUBLIC, 'art', 'px', 'fonds', f'{CLAN}-anim.webp')).convert('RGBA')
-    P = meta['periode']
+    meta = U.ts_json(os.path.join(U.ROOT, 'src', 'game', 'hd-meta.ts'), 'HD_ANIM')
+    t, calques_p = paysage.dessine()
+    P = paysage.P
     pl = Planche()
-    calques = []                     # (z, genre, données avec des index de planche à remplacer)
-
-    # 1. les calques animés du fond, recadrés
-    for c in meta['calques']:
-        if c['g'] == 'b':
-            x, y = c['x'] - CX0, c['y'] - CY0
-            r = inter(x, y, c['w'], c['h'])
-            if not r:
-                continue
-            x0, y0, x1, y1 = r
-            ids = [pl.ajoute(anim.crop((sx + x0 - x, sy + y0 - y, sx + x1 - x, sy + y1 - y))) for sx, sy in c['f']]
-            calques.append((c['z'], 'b', [x0, y0, x1 - x0, y1 - y0, c['ms'] if len(ids) > 1 else 0], ids))
-        elif c['g'] == 'd':
-            x, y = c['x'] - CX0, c['y'] - CY0
-            if not inter(x, y, c['w'], c['h']):
-                continue
-            sx, sy, tw, th = c['f']
-            i = pl.ajoute(anim.crop((sx, sy, sx + tw, sy + th)))
-            calques.append((c['z'], 'd', [x, y, c['w'], c['h'], c['vx'], c['vy']], [i]))
-        else:
-            z = c['zone']
-            zone = [z[0] - CX0, z[1] - CY0, z[2] - CX0, z[3] - CY0]
-            if zone[2] < -20 or zone[0] > SW + 20 or zone[3] < -20 or zone[1] > SH + 20:
-                continue
-            ids = [pl.ajoute(anim.crop((sx, sy, sx + w, sy + h))) for sx, sy, w, h in c['f']]
-            calques.append((c['z'], 'p', zone + [c['n'], *c['vie'], *c['vx'], *c['vy'], *c['ondule'], c.get('ms', 0),
-                                              len(calques) * 7919 + 17], ids))
-
-    # 2. le fond fixe recadré, avec les ombres des personnages (ovales pleins, un ton plus sombre et plus violet)
-    fond = np.asarray(fixe.crop((CX0, CY0, CX0 + SW, CY0 + SH))).copy()
+    calques = []
+    for k, (z, g, d, ims) in enumerate(calques_p):
+        ids = [pl.ajoute(im) for im in ims]
+        if g == 'p':
+            d = d + [k * 7919 + 17]
+        calques.append((z, g, d, ids))
+    fond = t.col.copy()
     Y, X = np.mgrid[0:SH, 0:SW]
-    persos = []
-    for pid, fx, fy, flip in PERSOS:
-        w, h, ax, ay, n, ms, top = figs['chars'][pid]
-        strip = Image.open(os.path.join(U.PUBLIC, 'art', 'hd', 'pied', f'{pid}.webp')).convert('RGBA')
-        strip = strip.resize((strip.width // 2, strip.height // 2), Image.NEAREST)        # ×2 → ×1 (exact)
-        frames = [strip.crop((k * w, 0, (k + 1) * w, h)) for k in range(n)]
-        if flip:
-            frames = [f.transpose(Image.FLIP_LEFT_RIGHT) for f in frames]
-            ax = w - 1 - ax
-        x, y = fx - CX0 - ax, fy - CY0 - ay
-        r = inter(x, y, w, h)
-        x0, y0, x1, y1 = r
-        ids = [pl.ajoute(f.crop((x0 - x, y0 - y, x1 - x, y1 - y))) for f in frames]
-        calques.append((0 + fy / 10000, 'b', [x0, y0, x1 - x0, y1 - y0, ms], ids))
-        # l'ombre : la largeur des pieds (les 5 lignes du bas de la première image) × 1,15
-        a = np.asarray(frames[0])[:, :, 3] > 0
-        cols = np.nonzero(a[max(0, ay - 5):ay + 1].any(axis=0))[0]
-        rx = max(14, (cols.max() - cols.min() + 1) * 0.58)
-        ry = max(4, rx * 0.2)
+    for cid, idx, ms, palier, fx in HEROS:
+        fy = paysage.PALIERS[palier][2]
+        ims, ax, ay, ms = images_heros(meta, cid, idx, ms, meta['chars'][cid]['top'])
+        x, y = fx + ax, fy + ay
+        w, h = ims[0].size
+        ids = [pl.ajoute(im) for im in ims]
+        calques.append((fy / 10000, 'b', [x, y, w, h, ms], ids))
+        # l'ombre au sol : la largeur des pieds × 1,15, un ton plus sombre et plus violet
+        a = np.asarray(ims[0])[:, :, 3] > 0
+        cols = np.nonzero(a[max(0, -ay - 5):-ay + 1].any(axis=0))[0]
+        rx = max(12, (cols.max() - cols.min() + 1) * 0.58)
+        ry = max(3, rx * 0.18)
         cx = x + (cols.min() + cols.max()) / 2
-        cy = fy - CY0 + 1
-        m = ((X - cx) / rx) ** 2 + ((Y - cy) / ry) ** 2 <= 1
+        m = (((X - cx) / rx) ** 2 + ((Y - fy - 0.5) / ry) ** 2 <= 1) & (Y >= fy)
         cur = fond[m, :3].astype(float)
         fond[m, :3] = np.clip(cur * np.array([0.62, 0.58, 0.70]) + np.array([10, 4, 18]), 0, 255).astype(np.uint8)
-        persos.append(pid)
     fond = Image.fromarray(fond, 'RGBA').convert('RGB')
-
     pl.range()
     calques.sort(key=lambda c: c[0])
-    # la description compacte pour le script : par calque [genre, données…, [sx, sy, w, h] des images]
     L = []
     for z, g, d, ids in calques:
         cases = []
@@ -182,6 +170,7 @@ def construit():
             cases += [sx, sy] if g == 'b' else [sx, sy, w, h]
         L.append([g, *[round(v, 4) if isinstance(v, float) else v for v in d], cases])
     return {'w': SW, 'h': SH, 'P': P, 'L': L}, fond, pl.img
+
 
 
 # ------------------------------------------------------------------------------------------------ le rendu (comme le script)
@@ -284,8 +273,9 @@ def data_uri(im):
 
 def html(M):
     """Le style (head) et le dessin + script (body) de l'écran de chargement."""
-    logo = Image.open(os.path.join(U.OUT_DIR, 'logo.webp'))
-    LW, LH = logo.size
+    svg = open(os.path.join(U.PUBLIC, 'art', 'ui', 'logo.svg'), encoding='utf-8').read()
+    vw, vh = [float(v) for v in re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', svg).groups()]
+    svg = svg.replace('<svg ', '<svg class="logo" ', 1)
     bar = data_uri(barre())
     fw = BW - 2 * BI
     # la jauge avance pixel par pixel (steps), vite au début puis de plus en plus lentement, jusqu'à 92 %
@@ -304,10 +294,12 @@ def html(M):
       #splash .sp {{ position: absolute; top: 0; bottom: 0; left: 50%; width: min(100%, 480px); transform: translateX(-50%); overflow: hidden;
         --px: max(calc(min(100vw, 480px) / {SW}), calc(100vh / {SH})); background: #2a1424; }}
       @supports (height: 100dvh) {{ #splash .sp {{ --px: max(calc(min(100vw, 480px) / {SW}), calc(100dvh / {SH})); }} }}
-      #splash canvas, #splash img, #splash .load {{ position: absolute; image-rendering: pixelated; }}
+      #splash canvas, #splash .logo, #splash .load {{ position: absolute; }}
+      #splash canvas, #splash .load {{ image-rendering: pixelated; }}
       #splash canvas {{ width: calc(var(--px) * {SW}); height: calc(var(--px) * {SH}); left: calc(50% - var(--px) * {SW / 2}); top: calc((100% - var(--px) * {SH}) * {ANCRE}); }}
-      #splash img {{ left: 50%; top: calc(env(safe-area-inset-top, 0px) + var(--px) * 6); width: calc(var(--px) * {LW}); height: calc(var(--px) * {LH}); transform: translateX(-50%); }}
-      #splash .load {{ left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--px) * 16); width: calc(var(--px) * {BW}); height: calc(var(--px) * {BH}); transform: translateX(-50%);
+      /* le logo est vectoriel (net à toutes les tailles) : 86 % de la colonne, au plus 27 % de la hauteur */
+      #splash .logo {{ left: 50%; top: calc(env(safe-area-inset-top, 0px) + 8px); width: min(86%, 400px, calc(27vh * {vw / vh:.3f})); height: auto; aspect-ratio: {vw:.0f} / {vh:.0f}; transform: translateX(-50%); }}
+      #splash .load {{ left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--px) * 12); width: calc(var(--px) * {BW}); height: calc(var(--px) * {BH}); transform: translateX(-50%);
         background: url({bar}) 0 0 / 100% 100%; }}
       #splash .load i {{ position: absolute; left: calc(var(--px) * {BI}); top: calc(var(--px) * {BI}); height: calc(var(--px) * {BH - 2 * BI}); width: calc(var(--px) * {fw}); }}
       #splash .load b {{ display: block; height: 100%; width: 0; animation: splash-load 6s forwards;
@@ -339,7 +331,8 @@ def html(M):
         "requestAnimationFrame(f)}catch(e){}})()</script>"
     )
     body = (f'<div id="splash"><div class="sp"><canvas id="sp-c" width="{SW}" height="{SH}"></canvas>'
-            f'<img src="art/ui-px/logo.webp" alt="Fuze Arena – Hero Battle" /><div class="load"><i><b></b></i></div></div></div>\n    '
+            + svg + '<div class="load">'
+            f'<i><b></b></i></div></div></div>\n    '
             + script)
     pre = ('<link rel="preload" as="image" type="image/webp" href="art/ui-px/chargement-fond.webp" />\n    '
            '<link rel="preload" as="image" type="image/webp" href="art/ui-px/chargement-anim.webp" />')
@@ -368,28 +361,30 @@ def main():
     t = remplace(t, 'chargement', body)
     open(p, 'w', encoding='utf-8').write(t)
     print('index.html mis à jour', len(style) + len(body), 'caractères')
-    # aperçus (×1 et ×2) : l'écran tel qu'il est sur un iPhone 390 × 844 (le dessin entier, encoche de 47 px en haut,
-    # barre de geste de 34 px en bas, un pixel du dessin = 390 / 340 points), avec le logo et la barre qui se remplit
-    logo = Image.open(os.path.join(out, 'logo.webp'))
-    k = 390 / SW
-
-    def ecran(t, rempli):
-        im = rendu(M, fond, planche, t)
-        im.alpha_composite(logo, ((SW - logo.width) // 2, round(47 / k) + 6))
-        b = barre()
-        fw = int(rempli * (BW - 2 * BI))
-        if fw:
+    # aperçu : le dessin seul (×2) ; l'écran entier avec le logo (vectoriel) est filmé dans le navigateur
+    U.sauve(fixe.resize((SW * 2, SH * 2), Image.NEAREST), os.path.join(U.SORTIE, 'chargement.png'))
+    lg = os.path.join(U.SORTIE, 'logo-hd.png')            # le logo rendu par le navigateur (capture Playwright)
+    if '--gif' in sys.argv and os.path.exists(lg):
+        # 3 s comme sur un iPhone 390 × 844 : le dessin ×2, le logo lisse par-dessus, la jauge qui avance
+        logo = Image.open(lg).convert('RGBA')
+        k = 2 * SW / 390                                   # pixels de l'aperçu par point de l'écran
+        lw = round(min(390 * 0.86, 400, 844 * 0.27 * logo.width / logo.height) * k)
+        logo = logo.resize((lw, round(lw * logo.height / logo.width)), Image.LANCZOS)
+        ims = []
+        for i, t in enumerate(range(0, 3000, 150)):
+            im = rendu(M, fond, planche, t).resize((SW * 2, SH * 2), Image.NEAREST)
+            im.alpha_composite(logo, ((SW * 2 - lw) // 2, round((47 + 8) * k)))
+            b = barre()
+            fw = int(min(0.92, 0.2 + t / 3000 * 0.6) * (BW - 2 * BI))
             jauge = Image.new('RGBA', (fw, BH - 2 * BI))
             for y, c in enumerate(('#fff6c0', '#ffd84a', '#ffd84a', '#f5a524', '#f5a524', '#c0601a')):
                 jauge.paste(c, (0, y, fw, y + 1))
             b.alpha_composite(jauge, (BI, BI))
-        im.alpha_composite(b, ((SW - BW) // 2, SH - round(34 / k) - 16 - BH))
-        return im.convert('RGB')
-    U.sauve(ecran(0, 0.55).resize((SW * 2, SH * 2), Image.NEAREST), os.path.join(U.SORTIE, 'chargement.png'))
-    if '--gif' in sys.argv:
-        # 3,2 s : les personnages respirent deux fois, la lave coule, la jauge avance comme dans le jeu
-        ims = [ecran(t, min(0.92, 0.15 + t / 3200 * 0.6)) for t in range(0, 3200, 100)]
-        ims[0].save(os.path.join(U.SORTIE, 'chargement.gif'), save_all=True, append_images=ims[1:], duration=100, loop=0)
+            b = b.resize((BW * 2, BH * 2), Image.NEAREST)
+            im.alpha_composite(b, (SW - BW, SH * 2 - round(34 * k) - 2 * (12 + BH)))
+            ims.append(im.convert('RGB').quantize(255, method=Image.Quantize.MEDIANCUT))
+        ims[0].save(os.path.join(U.SORTIE, 'chargement.gif'), save_all=True, append_images=ims[1:], duration=150,
+                    loop=0)
 
 if __name__ == '__main__':
     main()

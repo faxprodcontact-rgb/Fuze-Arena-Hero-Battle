@@ -17,10 +17,11 @@ Ce qui ne change pas : les **textes** restent en Lilita One / Fredoka (lisibles,
 | Fichier | Rôle |
 |---|---|
 | `uilib.py` | l'atelier commun : toile numpy, masques, contour unique, texte Lilita sans lissage, lecture des `*-meta.ts` |
-| `logo.py` | le logo → `public/art/ui-px/logo.webp` |
+| `logo_hd.py` | le logo HD vectoriel → `public/art/ui/logo.svg` (posé dans `index.html` par `chargement.py`) |
+| `paysage.py` | le paysage de l'écran de chargement (dessiné pour lui) |
 | `chargement.py` | l'écran de chargement → `public/art/ui-px/chargement*.webp` + le bloc « chargement » d'`index.html` |
 | `icone.py` | l'icône de l'application → `public/art/ui-px/icone-180/192/512.png` |
-| `lilita-one.woff2` | la police des titres (licence OFL), pour le logo seulement |
+| `lilita-one.woff2` | la police des titres (licence OFL) : ses contours font les lettres du logo |
 
 Aperçus pour le propriétaire : `refonte-graphique/pixel/sortie/ui/`. Images du jeu : `public/art/ui-px/`.
 
@@ -29,7 +30,7 @@ Aperçus pour le propriétaire : `refonte-graphique/pixel/sortie/ui/`. Images du
 | Quoi | Où c'est fait | Où on le voit |
 |---|---|---|
 | ~~Écran de chargement~~ `public/art/ui/loading.jpg` (peint) | `index.html`, `main.tsx` | au lancement ; aussi l'écran du nom (`screens/meta.tsx`) — **fait (partie 1)** |
-| ~~Logo~~ `public/art/ui/logo.webp` (peint) | `index.html` | écran de chargement — **fait (partie 1)** |
+| ~~Logo~~ `public/art/ui/logo.webp` (peint) | `index.html` | écran de chargement — **fait (partie 1, en HD vectoriel)** |
 | ~~Icône de l'application~~ `public/art/ui/icon-180/192/512.png` | `index.html` | écran d'accueil du téléphone, onglet du navigateur — **fait (partie 1)** |
 | **Planche des pictos** `public/art/icons.webp` (162 pictos peints par Hailuo, 128 px, `src/game/icons-meta.ts`, chaîne `refonte-graphique/decoupe-pictos.py`) | `Art` / `Icon` de `ui/kit.tsx` ; statuts dans `fight-view.ts` (Phaser) | partout (voir le détail par partie) |
 | Pictos de secours en SVG (`ICONS` de `ui/kit.tsx`, ~38) | `Icon` quand la planche n'a pas le picto | quelques puces, boutons |
@@ -110,23 +111,34 @@ Déjà dans la nouvelle DA : héros, monstres, grands boss (`art/hd/`), visages 
 9. **Carte du monde de la campagne** (`map.jpg` → une carte pixel art des 8 régions, une par clan, avec l'eau qui
    bouge), branchée dans `screens/campaign.tsx` (les places des régions sont des fractions de l'image).
 
-## Partie 1 — faite (25/11/2026)
+## Partie 1 — faite (25/11/2026, refaite le même jour après le retour du propriétaire)
 
-- **Écran de chargement** (`chargement.py`) : le volcan de Kael (fond HD du clan du feu, recadré 340 × 737 = la forme
-  d'un grand téléphone), Myrr l'ange, Bérold le spartiate et Kael face au grand dragon de feu (retourné vers eux) ; ombres au
-  sol ; tout ce qui bouge dans le fond bouge (cratère, coulées, rivière et bassin de lave, chute, fumée, braises) et les
-  quatre personnages respirent. Peint à sa vraie taille dans un `<canvas>` par un script de ~2 Ko posé dans `index.html`
-  (pas de Phaser, il s'affiche avant le code du jeu), agrandi sans flou pour couvrir l'écran : `--px` = la taille d'un
-  pixel du dessin ; les petits téléphones coupent surtout du ciel (`ANCRE`). Logo en haut (sous l'encoche), barre en
-  bas (au-dessus de la barre de geste) : cadre d'or et émail bleu nuit en pixel art, jauge d'or qui avance pixel par
-  pixel. Poids : fond 15 Ko + planche 45 Ko + logo 3 Ko (l'ancien : 200 + 96 Ko). `main.tsx` le retire comme avant ; le
-  script s'arrête quand l'écran est retiré. Pas de phrase d'astuce (pas de texte évident ; et l'écran s'affiche avant
-  les traductions).
+Retour du propriétaire sur le premier essai (le volcan de Kael et le dragon, logo en pixels) : « pas une image tirée du
+jeu mais construite de 0, qui montre 3 personnages dans un paysage en position de combat ; le logo pas en pixel, en HD,
+beau ». Donc :
+- **Écran de chargement** (`chargement.py` + `paysage.py`) : un paysage dessiné pour lui, 256 × 555 pixels HD (la forme
+  d'un grand téléphone) : ciel du soir, soleil bas à droite (la seule lumière), l'arène lointaine sur sa mesa (deux tours
+  à fanions, signe inventé), une mer de nuages, une arête rocheuse en trois paliers au bord du vide. Trois héros en pose
+  de **combat** (une image clé de leur attaque ou spéciale, prise dans `hd-meta.ts`), en escalier, tournés vers l'arène :
+  Elvyn le mage (eau) en haut, l'eau qui tourne autour de sa main ; Sylvar l'archer (terre) au milieu, l'arc bandé ;
+  Kael (feu) devant, l'épée levée. Ombres au sol. Ce qui bouge : nuages hauts et brume qui glissent, feuilles dans le
+  vent, lucioles d'or qui montent du vide, l'eau d'Elvyn ; Sylvar et Kael respirent (le haut du corps monte d'un pixel).
+  Peint à sa vraie taille dans un `<canvas>` par un script de ~2 Ko posé dans `index.html` (pas de Phaser), agrandi sans
+  flou pour couvrir l'écran (`--px` = la taille d'un pixel du dessin ; les petits téléphones coupent surtout du ciel,
+  `ANCRE`). Barre en bas (au-dessus de la barre de geste) : cadre d'or et émail bleu nuit, jauge d'or pixel par pixel.
+  Poids : paysage 7 Ko + planche 11 Ko + logo dans la page (~19 Ko de texte) ; l'ancien : 200 + 96 Ko. `main.tsx` le
+  retire comme avant ; le script s'arrête quand l'écran est retiré. Pas de phrase d'astuce (pas de texte évident ; et
+  l'écran s'affiche avant les traductions).
+- **Logo HD** (`logo_hd.py` → `public/art/ui/logo.svg`, copié dans `index.html`) : vectoriel, net à toutes les tailles.
+  Les lettres sont les contours de Lilita One (aucune police à attendre), or métallique en dégradé (haut clair, ligne
+  d'horizon, bas orangé), liseré clair en haut à droite et bord sombre en bas à gauche, reflet doux, tranche brun rouge,
+  un contour sombre épais, ombre portée floue ; ruban cramoisi bordé d'or, cintré, lettres crème qui suivent la courbe ;
+  deux épées croisées (pointes en haut, poignées sous le ruban) ; une étoile à 4 branches. Aperçu haute définition :
+  `sortie/ui/logo-hd.png` (1280 × 900, fond transparent). Le premier logo en pixels est retiré.
 - **Écran du nom** (premier lancement) : l'image fixe complète `chargement.webp` en fond.
-- **Logo** (`logo.py`) : refait en pixel art (même disposition que l'ancien : « FUZE / ARENA » en or épais, ruban rouge
-  « HERO BATTLE », deux épées croisées), plus net et lisible à petite taille que l'ancien logo peint.
 - **Icône de l'application** (`icone.py`) : Bérold le spartiate en buste sur l'émail bleu nuit avec un halo clair ; 64 × 64
   agrandi ×8 (512), ×3 (192), 180 = 192 sans 6 pixels de bord.
 - Retirés : `public/art/ui/loading.jpg`, `logo.webp`, `icon-180/192/512.png` (et leur fabrication dans
   `decoupe-pictos.py`). `map.jpg` reste (partie 9).
-- À relancer si le fond de Kael, un des personnages ou le logo changent : `logo.py`, puis `chargement.py --gif`.
+- À relancer si le paysage, un des trois héros ou le logo changent : `logo_hd.py`, puis `chargement.py --gif` (l'aperçu
+  animé utilise `sortie/ui/logo-hd.png`, rendu par le navigateur).
