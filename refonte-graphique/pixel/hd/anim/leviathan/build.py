@@ -360,6 +360,8 @@ def base_field(f):
 
 
 def head_of(f):
+    if 'head' in f:                            # la tête donnée directement (pixels, par rapport au repos)
+        return f['head']
     dx, dy = base_field(f)
     x, y = int(HEAD_ANCHOR[0] + OX), int(HEAD_ANCHOR[1] + OY)
     rx, ry = f.get('hrel', (0, 0))
@@ -772,9 +774,10 @@ def pose_spec(i):
     a = 2 * math.pi * t
     f = dict(ms=150)
     f['wave'] = (1.6, a)
-    f['br'] = round(1.0 - math.cos(a - 0.6))                       # 0 .. 2
-    f['hrel'] = (round(-0.6 - 0.9 * math.sin(a - 1.9)), round(-1.0 * math.sin(a - 2.2)))
-    f['jaw'] = round(1.2 + 1.3 * math.sin(a - 1.2))
+    # le souffle soulève le haut du corps, la tête suit une ou deux images plus tard (pas d'un pixel à la fois)
+    f['br'] = [0, 0, 1, 1, 2, 2, 2, 1, 1, 0, 0, 0][i]
+    f['head'] = ([0, 0, 0, -1, -1, -1, -1, -1, 0, 0, 0, 0][i], [1, 1, 1, 0, 0, -1, -2, -2, -1, -1, 0, 1][i])
+    f['jaw'] = [0, 0, 1, 1, 2, 2, 2, 2, 1, 1, 0, 0][i]
     f['fin'] = (round(-1.0 * math.sin(a - 2.6)), round(0.8 * math.sin(a - 2.9)))
     f['tl'] = dict(bend=1.8 * math.sin(a + 0.4), cx=0.6 * math.sin(a - 0.6), cy=1.3 * math.sin(a - 0.3),
                    lift=0.8 * math.sin(a + 0.1))
