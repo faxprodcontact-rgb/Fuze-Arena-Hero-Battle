@@ -139,18 +139,26 @@ _obs_lab, _ = components(OBS)
 _mem_lab, _ = components(MEM)
 
 
-def comp_at(lab, x, y):
-    return lab == lab[y, x]
+def comps_in(lab, x0, y0, x1, y1, min_px=10):
+    """les pièces (composantes) dont la boîte tient dans (x0, y0, x1, y1)"""
+    m = np.zeros(lab.shape, bool)
+    for i in range(1, lab.max() + 1):
+        c = lab == i
+        n = int(c.sum())
+        if n < min_px:
+            continue
+        ys, xs = np.nonzero(c)
+        if xs.min() >= x0 and xs.max() <= x1 and ys.min() >= y0 and ys.max() <= y1:
+            m |= c
+    return m
 
 
 # l'aile proche : son bras et ses trois doigts (une seule pièce d'obsidienne) et ses trois pans de membrane
-M_WING_N = comp_at(_obs_lab, 101, 34)
-for (x, y) in ((100, 100), (60, 100), (80, 90)):
-    M_WING_N |= comp_at(_mem_lab, x, y)
+M_WING_N = comps_in(_obs_lab, 20, 20, 143, 140, 200) | comps_in(_mem_lab, 20, 40, 138, 150, 200)
 # l'aile lointaine : son pan de membrane et son os (la pièce d'obsidienne de l'os est soudée aux cornes : on la coupe
 # le long du bord droit de l'os)
-M_WING_F = comp_at(_mem_lab, 135, 70)
-_far_obs = comp_at(_obs_lab, 150, 50)
+M_WING_F = comps_in(_mem_lab, 120, 40, 150, 100, 200)
+_far_obs = comps_in(_obs_lab, 139, 25, 230, 101, 1000)
 _bone_right = piecewise(GYY, [(20, 148), (40, 147), (57, 151), (70, 155), (90, 159), (95, 166), (101, 168)])
 M_WING_F |= _far_obs & (GXX <= _bone_right) & (GYY <= 101)
 # la tête : crâne, mâchoires, oeil, crocs, corne du museau ; les deux grandes cornes et la couronne (le reste de la
@@ -158,8 +166,7 @@ M_WING_F |= _far_obs & (GXX <= _bone_right) & (GYY <= 101)
 HEAD_POLY = [(188, 70), (256, 70), (256, 150), (203, 150), (201, 132), (198, 118), (190, 104), (186, 96)]
 M_HEAD = poly_mask(HEAD_POLY) & filled & ~M_WING_F
 M_HEAD |= _far_obs & ~M_WING_F
-for (x, y) in ((180, 110), (180, 119)):
-    M_HEAD |= comp_at(_obs_lab, x, y)
+M_HEAD |= comps_in(_obs_lab, 168, 104, 192, 124, 30)
 M_HEAD &= ~M_WING_N
 # la mâchoire du bas : sous la gueule ouverte (colonne par colonne, ce qui est sous le premier trou de la gueule)
 HINGE = (207, 116)                          # la commissure : la mâchoire pivote autour
@@ -179,6 +186,20 @@ M_JAW &= M_HEAD
 M_HEAD &= ~M_JAW
 # le reste : corps, cou, pattes, queue
 M_BODY = filled & ~M_WING_N & ~M_WING_F & ~M_HEAD & ~M_JAW
+# les miettes (quelques pixels de membrane ou d'os coupés du reste) vont à la pièce voisine
+_lab, _n = label(M_BODY)
+for _i in range(1, _n + 1):
+    _c = _lab == _i
+    if _c.sum() >= 40:
+        continue
+    _ys, _xs = np.nonzero(_c)
+    if _xs.max() <= 143 and _ys.max() <= 150:
+        M_WING_N |= _c
+    elif _xs.max() <= 170 and _ys.max() <= 101:
+        M_WING_F |= _c
+    else:
+        M_HEAD |= _c
+    M_BODY &= ~_c
 
 
 def part(mask):
