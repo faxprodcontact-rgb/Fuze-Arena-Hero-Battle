@@ -417,6 +417,11 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   baron vaudou, Freyja le barbare à la massue, Isis le chasseur au crâne de cerf, Thor la femme-araignée, Atlas l'enfant
   de la forêt, Zeus le roi noir). Les noms de fichiers suivent les noms du jeu, pas ce que montre le dessin. Une couleur
   de clignement passe par une lettre de la légende (jamais une couleur directe dans `HEAD_BLINK`).
+  **v0.53.0 : combat HD d'essai** (Réglages → Outils de test → « Combat HD (essai) ») : Eldra, Myrr, Jinn contre matelot,
+  sorcier oni, salamandre, avec les animations HD. Corps à corps : le personnage va jusqu'à sa cible ; tirs : le projectile
+  va jusqu'à la vraie case ; spéciales : halo de charge doux. Export des animations : `refonte-graphique/pixel/hd/anim/jeu_export.py`
+  (dictionnaire `JEU` dans chaque build.py, consigne `hd/consignes/export-jeu.md`) → `public/art/hd/`, `src/game/hd-meta.ts` ;
+  jeu : `src/game/hd-fight.ts`, `hd-trial.ts`. Les autres modes gardent les anciens dessins.
   **Chargement (v0.30.1, le propriétaire le trouvait « très long »)** : Phaser et les scènes de combat ne sont plus dans le code
   de départ, ils arrivent à la demande (`src/game/scenes.ts` : `runIdle`, `runBattle`… en `import()` ; toujours passer par ce
   fichier depuis les menus, jamais importer `fight-view` ou une `*-scene` directement) ; Phaser a son propre fichier
