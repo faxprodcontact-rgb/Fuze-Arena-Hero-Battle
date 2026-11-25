@@ -2,7 +2,7 @@
 // 390×844 avec encoche imitée (47 px en haut, 34 en bas), 360×640 sans encoche.
 const { chromium } = require('playwright');
 const fs = require('fs');
-const OUT = process.argv[2]; // (avec refonte-graphique/pixel/ui/outils : npx vite preview --port 4391, puis NODE_PATH=$(npm root -g) node campagne-captures.cjs <dossier> 4391 [écrans])
+const OUT = process.argv[2]; // (npx vite preview --port 4391, puis NODE_PATH=$(npm root -g) node campagne-captures.cjs <dossier> 4391 [écrans : accueil bords reglages carte rapide butin divers onglets prep combat victoire])
 const PORT = process.argv[3] || '4391';
 const ONLY = process.argv.slice(4);
 fs.mkdirSync(OUT, { recursive: true });
@@ -77,6 +77,17 @@ const SIZES = (process.env.SIZES || '390x844n,360x640').split(',').map((x) => {
     if (want('carte')) { await page.click('.stage-title'); await page.waitForTimeout(700); await shot('carte'); await closeAll(); }
     if (want('rapide')) { await page.click('.dock-fast'); await page.waitForTimeout(500); await shot('rapide'); await closeAll(); }
     if (want('butin')) { await page.click('.dock-chest'); await page.waitForTimeout(800); await shot('butin'); await closeAll(); }
+    if (want('divers')) {
+      await page.click('.edge-left .edge-toggle'); await page.waitForTimeout(600);
+      await page.click('.edge-left .edge-btn:nth-child(2)'); await page.waitForTimeout(700); await shot('quetes'); await closeAll();
+      await page.click('.edge-left .edge-btn:nth-child(4)'); await page.waitForTimeout(700); await shot('boutique'); await closeAll();
+      await page.click('.edge-left .edge-btn:nth-child(1)'); await page.waitForTimeout(700); await shot('connexion'); await closeAll();
+      await page.click('.edge-left .edge-toggle'); await page.waitForTimeout(400);
+      await page.click('.tabbar-btn:nth-child(2)'); await page.waitForTimeout(1000);
+      await page.click('.grid .hcard'); await page.waitForTimeout(1200); await shot('fiche');
+      const b = await page.$('.hp-back'); if (b) await b.click(); await page.waitForTimeout(400);
+      await page.click('.tabbar-btn:nth-child(1)'); await page.waitForTimeout(1500);
+    }
     if (want('onglets')) {
       for (const [n, name] of [[2, 'heros'], [3, 'invoquer'], [4, 'aventure'], [5, 'guilde']]) {
         await page.click(`.tabbar-btn:nth-child(${n})`); await page.waitForTimeout(1200); await shot(`onglet-${name}`);
