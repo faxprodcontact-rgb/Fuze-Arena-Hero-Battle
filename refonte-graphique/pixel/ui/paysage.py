@@ -6,8 +6,9 @@ Ce qu'on voit (256 × 555 pixels HD, la forme d'un grand téléphone) : un ciel 
 (la seule lumière : tout est éclairé d'en haut à droite) ; au loin deux chaînes de montagnes dans la brume, et sur une
 mesa, dans la lueur du soleil, l'ARÈNE (le but des héros) avec deux tours à fanions ; une vallée brumeuse et des collines
 boisées ; devant, une arête rocheuse en trois paliers où se tiennent les trois héros, au bord du vide à droite.
-Ce qui bouge : les nuages et la brume de la vallée glissent, des feuilles passent dans le vent, des lucioles d'or montent
-du vide (les héros, eux, sont posés par chargement.py).
+Ce qui bouge : les nuages et la brume de la vallée glissent, une bannière aux couleurs de l'arène claque au vent au
+sommet de l'arête, des feuilles passent dans le vent, des lucioles d'or montent du vide. Pas de personnage (décision du
+propriétaire, 25/11 : « un beau décor animé »).
 Le signe de l'arène sur les fanions : un losange barré d'un chevron (inventé, pas une lettre).
 
 dessine() → (toile fixe, calques animés [(z, genre, données, images PIL)], paliers) ; utilisé par chargement.py.
@@ -41,6 +42,13 @@ BRUME = rampe('#9a82b2', '#b494bc', '#cfaac4')
 ROC = rampe('#2e2238', '#4a3646', '#6a4e56', '#8f6c66', '#c09a7c')
 HERBE = rampe('#2c4a3a', '#3e6a42', '#5e9048', '#94b85a', '#cfd878')
 FANION = '#c8303a'
+TISSU = rampe('#5e1418', '#9c2a2e', '#d6443e', '#f8806a')                     # la bannière de l'arête (4 tons)
+BOIS = rampe('#2e1e24', '#4a3030', '#6e4a3c', '#9a6e50', '#c49a6a')
+OR = rampe('#6e3a1c', '#b8701e', '#f0b530', '#ffd978', '#fff4c0')
+# le signe de l'arène (inventé : un losange barré d'un chevron), en petit, pour la bannière
+SIGNE = ['..o..', '.o.o.', 'o.w.o', '.o.o.', '..o..', '.ooo.', 'o...o']
+SIGNE_LEG = {'o': rgb('#ffd978'), 'w': rgb('#fff4c0')}
+BANNIERE = (40, 374)                          # le pied du mât, sur le palier du haut
 
 # les paliers de l'arête : (x0, x1, y du dessus) — les pieds des héros y sont posés
 PALIERS = {'haut': (6, 88, 374), 'milieu': (56, 172, 430), 'bas': (0, 236, 486)}
@@ -238,7 +246,21 @@ def dessine():
         mm = over[box[1]:box[3], box[0]:box[2]]
         sub[mm] = t.col[box[1]:box[3], box[0]:box[2]][mm]
         calques.append((-19, 'b', [box[0], box[1], box[2] - box[0], box[3] - box[1], 0], [Image.fromarray(sub, 'RGBA')]))
-    # 3. feuilles dans le vent (devant tout) et lucioles d'or qui montent du vide
+    # 3. la bannière plantée au sommet de l'arête : elle flotte vers la droite (le vent pousse les feuilles aussi)
+    bx, by = BANNIERE
+    box = (bx - 6, by - 50, bx + 22, by + 4)
+    sous = t.col.copy()
+    images = []
+    for i in range(16):
+        tl = F.Toile(box)
+        tl.col[:] = sous[box[1]:box[3], box[0]:box[2]]
+        F.mat(tl, bx, by, 46, BOIS, ROC, pointe=(OR[2], OR[4]))
+        F.banniere(tl, bx, by, i / 16, +1, TISSU, OR, SIGNE, SIGNE_LEG, h=46, bw=15, bh=27)
+        images.append(tl.image())
+        if i == 0:
+            t.colle(tl)
+    calques.append((-10, 'b', [box[0], box[1], box[2] - box[0], box[3] - box[1], 125], images))
+    # 4. feuilles dans le vent (devant tout) et lucioles d'or qui montent du vide
     calques.append((1300, 'p', [-10, 120, 0, 470, 5, 7000, 10000, 26, 40, -3, 6, 4, 1800, 160], images_feuille()))
     luc = F.images_braise(['#7a3a2a', '#b8642a', '#e8a038', '#ffd060', '#fff0a0', '#fffbe0'])
     calques.append((1299, 'p', [150, 470, 256, 555, 7, 3500, 5200, -4, 3, -16, -8, 3, 2200, 0], luc))

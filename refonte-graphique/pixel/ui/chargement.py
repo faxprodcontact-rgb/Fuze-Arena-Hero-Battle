@@ -3,11 +3,12 @@
 « pas une image tirée du jeu mais construite de 0, qui montre 3 personnages dans un paysage en position de combat ;
 le logo pas en pixel, en HD, beau ».
 
-Ce qu'on voit : le paysage dessiné pour lui (paysage.py : ciel du soir, soleil bas à droite, l'arène lointaine sur sa
-mesa, une mer de nuages, une arête rocheuse en trois paliers) et trois héros HD en pose de COMBAT (une image clé de
-leur attaque ou de leur spéciale), en groupe héroïque, tournés vers l'arène : Elvyn le mage (eau) en haut, l'eau qui
-tourne autour de sa main ; Sylvar l'archer (terre) au milieu, l'arc bandé ; Kael (feu) devant, l'épée levée.
-Ce qui bouge : nuages et brume qui glissent, feuilles dans le vent, lucioles d'or, l'eau d'Elvyn, les héros respirent.
+Puis (même jour) : « je ne veux pas de héros affichés dessus ; le premier plan, les nuages, c'est beau : un beau décor
+animé ». Ce qu'on voit : le paysage dessiné pour lui (paysage.py : ciel du soir, soleil bas à droite, l'arène lointaine
+sur sa mesa, une mer de nuages, une arête rocheuse en paliers au bord du vide, une bannière plantée au sommet).
+Ce qui bouge : nuages et brume qui glissent, la bannière qui claque au vent, feuilles dans le vent, lucioles d'or.
+Le mécanisme des héros (HEROS : images clés de combat prises dans hd-meta.ts, respiration, ombres) est gardé, la liste
+est vide.
 En haut, le logo HD (vectoriel, logo_hd.py) ; en bas la barre de chargement en émail bleu nuit cerclé d'or.
 
 Un pixel = un pixel des héros HD. Le dessin fait 256 × 555 (la forme d'un grand téléphone, 19,5:9) ; il est peint dans
@@ -270,7 +271,7 @@ def data_uri(im):
 def html(M):
     """Le style (head) et le dessin + script (body) de l'écran de chargement."""
     svg = open(os.path.join(U.PUBLIC, 'art', 'ui', 'logo.svg'), encoding='utf-8').read()
-    vw, vh = [float(v) for v in re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', svg).groups()]
+    vw, vh = [float(v) for v in re.search(r'viewBox="[\d.-]+ [\d.-]+ ([\d.]+) ([\d.]+)"', svg).groups()]
     svg = svg.replace('<svg ', '<svg class="logo" ', 1)
     bar = data_uri(barre())
     fw = BW - 2 * BI
@@ -293,8 +294,9 @@ def html(M):
       #splash canvas, #splash .logo, #splash .load {{ position: absolute; }}
       #splash canvas, #splash .load {{ image-rendering: pixelated; }}
       #splash canvas {{ width: calc(var(--px) * {SW}); height: calc(var(--px) * {SH}); left: calc(50% - var(--px) * {SW / 2}); top: calc((100% - var(--px) * {SH}) * {ANCRE}); }}
-      /* le logo est vectoriel (net à toutes les tailles) : 86 % de la colonne, au plus 27 % de la hauteur */
-      #splash .logo {{ left: 50%; top: calc(env(safe-area-inset-top, 0px) + 8px); width: min(86%, 400px, calc(27vh * {vw / vh:.3f})); height: auto; aspect-ratio: {vw:.0f} / {vh:.0f}; transform: translateX(-50%); }}
+      /* le logo est vectoriel (net à toutes les tailles) : 62 % de la colonne, 280 px et 19 % de la hauteur au plus,
+         sous l'encoche avec de l'air autour (demande du propriétaire : « affiché trop gros ») */
+      #splash .logo {{ left: 50%; top: calc(env(safe-area-inset-top, 0px) + 18px); width: min(62%, 280px, calc(19vh * {vw / vh:.3f})); height: auto; aspect-ratio: {vw:.0f} / {vh:.0f}; overflow: visible; transform: translateX(-50%); }}
       #splash .load {{ left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--px) * 12); width: calc(var(--px) * {BW}); height: calc(var(--px) * {BH}); transform: translateX(-50%);
         background: url({bar}) 0 0 / 100% 100%; }}
       #splash .load i {{ position: absolute; left: calc(var(--px) * {BI}); top: calc(var(--px) * {BI}); height: calc(var(--px) * {BH - 2 * BI}); width: calc(var(--px) * {fw}); }}
@@ -364,12 +366,12 @@ def main():
         # 3 s comme sur un iPhone 390 × 844 : le dessin ×2, le logo lisse par-dessus, la jauge qui avance
         logo = Image.open(lg).convert('RGBA')
         k = 2 * SW / 390                                   # pixels de l'aperçu par point de l'écran
-        lw = round(min(390 * 0.86, 400, 844 * 0.27 * logo.width / logo.height) * k)
+        lw = round(min(390 * 0.62, 280, 844 * 0.19 * logo.width / logo.height) * k)
         logo = logo.resize((lw, round(lw * logo.height / logo.width)), Image.LANCZOS)
         ims = []
         for i, t in enumerate(range(0, 3000, 150)):
             im = rendu(M, fond, planche, t).resize((SW * 2, SH * 2), Image.NEAREST)
-            im.alpha_composite(logo, ((SW * 2 - lw) // 2, round((47 + 8) * k)))
+            im.alpha_composite(logo, ((SW * 2 - lw) // 2, round((47 + 18) * k)))
             b = barre()
             fw = int(min(0.92, 0.2 + t / 3000 * 0.6) * (BW - 2 * BI))
             jauge = Image.new('RGBA', (fw, BH - 2 * BI))

@@ -118,27 +118,30 @@ jeu mais construite de 0, qui montre 3 personnages dans un paysage en position d
 beau ». Donc :
 - **Écran de chargement** (`chargement.py` + `paysage.py`) : un paysage dessiné pour lui, 256 × 555 pixels HD (la forme
   d'un grand téléphone) : ciel du soir, soleil bas à droite (la seule lumière), l'arène lointaine sur sa mesa (deux tours
-  à fanions, signe inventé), une mer de nuages, une arête rocheuse en trois paliers au bord du vide. Trois héros en pose
-  de **combat** (une image clé de leur attaque ou spéciale, prise dans `hd-meta.ts`), en escalier, tournés vers l'arène :
-  Elvyn le mage (eau) en haut, l'eau qui tourne autour de sa main ; Sylvar l'archer (terre) au milieu, l'arc bandé ;
-  Kael (feu) devant, l'épée levée. Ombres au sol. Ce qui bouge : nuages hauts et brume qui glissent, feuilles dans le
-  vent, lucioles d'or qui montent du vide, l'eau d'Elvyn ; Sylvar et Kael respirent (le haut du corps monte d'un pixel).
+  à fanions, signe inventé), une mer de nuages, une arête rocheuse en paliers au bord du vide avec une bannière aux
+  couleurs de l'arène plantée au sommet. **Pas de héros** (second retour du propriétaire : « je ne veux pas de héros
+  affichés dessus ; le premier plan, les nuages, c'est beau : un beau décor animé » ; le mécanisme reste dans
+  `chargement.py`, liste `HEROS` vide). Ce qui bouge : nuages hauts et brume qui glissent, la bannière qui claque au
+  vent, feuilles dans le vent, lucioles d'or qui montent du vide.
   Peint à sa vraie taille dans un `<canvas>` par un script de ~2 Ko posé dans `index.html` (pas de Phaser), agrandi sans
   flou pour couvrir l'écran (`--px` = la taille d'un pixel du dessin ; les petits téléphones coupent surtout du ciel,
   `ANCRE`). Barre en bas (au-dessus de la barre de geste) : cadre d'or et émail bleu nuit, jauge d'or pixel par pixel.
-  Poids : paysage 7 Ko + planche 11 Ko + logo dans la page (~19 Ko de texte) ; l'ancien : 200 + 96 Ko. `main.tsx` le
+  Poids : paysage 7 Ko + planche 3 Ko + logo dans la page (~19 Ko de texte) ; l'ancien : 200 + 96 Ko. `main.tsx` le
   retire comme avant ; le script s'arrête quand l'écran est retiré. Pas de phrase d'astuce (pas de texte évident ; et
   l'écran s'affiche avant les traductions).
 - **Logo HD** (`logo_hd.py` → `public/art/ui/logo.svg`, copié dans `index.html`) : vectoriel, net à toutes les tailles.
   Les lettres sont les contours de Lilita One (aucune police à attendre), or métallique en dégradé (haut clair, ligne
   d'horizon, bas orangé), liseré clair en haut à droite et bord sombre en bas à gauche, reflet doux, tranche brun rouge,
   un contour sombre épais, ombre portée floue ; ruban cramoisi bordé d'or, cintré, lettres crème qui suivent la courbe ;
-  deux épées croisées (pointes en haut, poignées sous le ruban) ; une étoile à 4 branches. Aperçu haute définition :
+  deux épées croisées (pointes en haut, poignées sous le ruban) ; une étoile à 4 branches. Troisième retour (« le logo
+  est coupé en bas, et il est affiché trop gros ») : la boîte du SVG englobe tout (pommeaux, queues du ruban, contour,
+  ombre : `viewBox="4 0 632 474"`), et il est plus petit : 62 % de la colonne, 280 px et 19 % de la hauteur au plus,
+  18 px sous l'encoche. Aperçu haute définition :
   `sortie/ui/logo-hd.png` (1280 × 900, fond transparent). Le premier logo en pixels est retiré.
 - **Écran du nom** (premier lancement) : l'image fixe complète `chargement.webp` en fond.
 - **Icône de l'application** (`icone.py`) : Bérold le spartiate en buste sur l'émail bleu nuit avec un halo clair ; 64 × 64
   agrandi ×8 (512), ×3 (192), 180 = 192 sans 6 pixels de bord.
 - Retirés : `public/art/ui/loading.jpg`, `logo.webp`, `icon-180/192/512.png` (et leur fabrication dans
   `decoupe-pictos.py`). `map.jpg` reste (partie 9).
-- À relancer si le paysage, un des trois héros ou le logo changent : `logo_hd.py`, puis `chargement.py --gif` (l'aperçu
+- À relancer si le paysage ou le logo changent : `logo_hd.py`, puis `chargement.py --gif` (l'aperçu
   animé utilise `sortie/ui/logo-hd.png`, rendu par le navigateur).

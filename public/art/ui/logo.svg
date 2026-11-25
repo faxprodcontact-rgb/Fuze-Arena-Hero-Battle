@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 450" role="img" aria-label="Fuze Arena – Hero Battle">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 0 632 474" role="img" aria-label="Fuze Arena – Hero Battle">
   <defs>
     <linearGradient id="lg-or" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="300">
       <stop offset="0" stop-color="#fffbe0"/><stop offset=".14" stop-color="#ffe886"/><stop offset=".3" stop-color="#ffc93a"/>
@@ -62,9 +62,9 @@
   <use href="#lg-l" transform="translate(0,11)" fill="url(#lg-tranche)"/>
   <use href="#lg-l" transform="translate(0,6)" fill="url(#lg-tranche)"/>
   <g clip-path="url(#lg-c0)">
-    <rect width="640" height="450" fill="#fffbe6"/>
+    <rect width="640" height="474" fill="#fffbe6"/>
     <g clip-path="url(#lg-c1)">
-      <rect width="640" height="450" fill="#c4581a"/>
+      <rect width="640" height="474" fill="#c4581a"/>
       <use href="#lg-l" transform="translate(3,-4)" fill="url(#lg-or)"/>
     </g>
     <ellipse cx="350" cy="78" rx="250" ry="66" fill="url(#lg-reflet)" opacity=".7"/>

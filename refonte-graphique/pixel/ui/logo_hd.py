@@ -22,7 +22,7 @@ from fontTools.pens.transformPen import TransformPen
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import uilib as U  # noqa: E402
 
-VW, VH = 640, 450
+VW, VH = 640, 474           # tout compris : pommeaux des épées, queues du ruban, contour épais, ombre floue
 FONT = TTFont(U.POLICE)
 GS = FONT.getGlyphSet()
 CMAP = FONT.getBestCmap()
@@ -102,7 +102,7 @@ def svg():
     queue_d = f'M508,{336 + yr:.0f} L576,{346 + yr:.0f} L554,{374 + yr:.0f} L582,{404 + yr:.0f} L500,{398 + yr:.0f} Z'
     pli_g = f'M120,{372 + yl:.0f} L140,{398 + yl:.0f} L140,{372 + yl:.0f} Z'
     pli_d = f'M520,{372 + yr:.0f} L500,{398 + yr:.0f} L500,{372 + yr:.0f} Z'
-    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {VW} {VH}" role="img" aria-label="Fuze Arena – Hero Battle">
+    return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 0 {VW - 8} {VH}" role="img" aria-label="Fuze Arena – Hero Battle">
   <defs>
     <linearGradient id="lg-or" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="300">
       <stop offset="0" stop-color="#fffbe0"/><stop offset=".14" stop-color="#ffe886"/><stop offset=".3" stop-color="#ffc93a"/>
