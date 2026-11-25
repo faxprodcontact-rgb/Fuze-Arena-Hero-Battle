@@ -800,3 +800,330 @@ def draw_ara(cv, f, chest):
     if ay + by < 0:
         blit(cv, tete, cx + ax, cy)
     blit(cv, tete, cx + ax, cy + ay + by)
+
+
+# ---------------------------------------------------------------- les effets : formes rondes et courbes
+# (outils de Barzul, le chef du clan, eux-mêmes repris d'Eldra, d'Isis et de Kesha : bouffées, volutes, rubans, gouttes,
+# écume, nappes d'eau modelées par la lumière)
+def put(cv, x, y, ch, keep=None):
+    x, y = int(math.floor(x)), int(math.floor(y))
+    if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
+        cv[y, x] = ch
+
+
+def sprite(cv, rows, x, y):
+    for j, r in enumerate(rows):
+        for i, ch in enumerate(r):
+            if ch != '.':
+                put(cv, x + i, y + j, ch)
+
+
+def puff(cv, c, r, tones='stuv', hollow=0.0):
+    """une bouffée ronde, éclairée en haut à droite ; hollow > 0 : elle se défait (trou au milieu)"""
+    cx, cy = c
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            w = np.array([x + 0.5 - cx, y + 0.5 - cy])
+            d = math.hypot(*w)
+            if d <= r and d >= hollow * r:
+                k = (w @ LN) / max(r, 1e-6)
+                put(cv, x, y, tones[min(len(tones) - 1, int((1 - k) / 2 * len(tones)))])
+
+
+def ellipse_mask(c, rx, ry):
+    yy, xx = np.mgrid[0:H, 0:W]
+    return ((xx + 0.5 - c[0]) / rx) ** 2 + ((yy + 0.5 - c[1]) / ry) ** 2 <= 1.0
+
+
+def light_field(m):
+    """pour une forme pleine (masque) : > 0 sur les bords tournés vers la lumière (en haut à droite), < 0 sur les
+    bords dans l'ombre, ~0 au milieu. Deux échelles (bord net + volume doux), limites de tons en courbes lisses."""
+    out = np.zeros(m.shape)
+    for (sig, a, wgt) in ((1.6, 2.0, 0.55), (5.0, 6.0, 0.45)):
+        im = Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig))
+        Bm = np.asarray(im, float) / 255
+        dx, dy = int(round(LN[0] * a)), int(round(LN[1] * a))
+        ahead = np.roll(np.roll(Bm, -dy, 0), -dx, 1)
+        behind = np.roll(np.roll(Bm, dy, 0), dx, 1)
+        out += wgt * (behind - ahead)
+    return out
+
+
+def shade_mask(cv, m, tones='XYZAB', foam=None, keep=None, only=None):
+    """peint une forme pleine selon la lumière : bord éclairé clair, bord dans l'ombre sombre, coeur moyen ;
+    foam (masque) : là, le bord le plus éclairé devient écume blanche ; only (masque) : ne peint que là"""
+    v = light_field(m)
+    mm = m if only is None else (m & only)
+    ys, xs = np.nonzero(mm)
+    for y, x in zip(ys, xs):
+        k = v[y, x]
+        if foam is not None and foam[y, x] and k > 0.16:
+            ch = 'W' if k > 0.3 else 'X'
+        else:
+            ch = tones[0] if k > 0.3 else tones[1] if k > 0.1 else tones[2] if k > -0.12 else \
+                tones[3] if k > -0.32 else tones[4]
+        put(cv, x, y, ch, keep)
+
+
+def cloud(cv, c, r, tones='sstuv', hollow=0.0, seed=0, ground=True):
+    """un nuage de fumée en chou-fleur (une grosse bouffée et des petites autour), modelé comme un seul volume ;
+    hollow (0..1) : il se défait (les bouffées s'écartent, montent un peu et rapetissent)"""
+    rng = np.random.RandomState(seed)
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for i in range(5):
+        a = math.radians(170 - i * 40 + rng.uniform(-12, 12))
+        d = r * rng.uniform(0.6, 0.85)
+        lobes.append((d * math.cos(a), -d * math.sin(a) * 0.75, r * rng.uniform(0.45, 0.65)))
+    if hollow:
+        lobes = [(dx * (1 + hollow), dy * (1 + hollow) - hollow * r * 0.5, rr * (1 - 0.5 * hollow))
+                 for (dx, dy, rr) in lobes[1:]] + [(0, -hollow * r * 0.4, r * (1 - 0.65 * hollow))]
+    m = np.zeros((H, W), bool)
+    for (dx, dy, rr) in lobes:
+        if rr < 0.8:
+            continue
+        yy = min(cy + dy, GROUND - rr * 0.5) if ground else cy + dy
+        m |= ellipse_mask((cx + dx, yy), rr, rr)
+    shade_mask(cv, m, tones)
+
+
+def foam(cv, c, r, hollow=0.0, seed=0):
+    """un bouillon d'écume (même forme que la fumée, en blanc et bleu pâle)"""
+    cloud(cv, c, r, tones='WWXYZ', hollow=hollow, seed=seed)
+
+
+def stroke(cv, pts, widths, tones):
+    """peint un ruban le long de points, avec une épaisseur par point (coeur clair -> bord sombre)"""
+    best = {}
+    for (px, py), wv in zip(pts, widths):
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1.2 else 0.85
+                    if k < best.get((x, y), 9):
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in best.items():
+        put(cv, x, y, tones[min(m - 1, int(k * m))])
+
+
+def bezier(p0, p1, p2, p3, n):
+    out = []
+    for i in range(n + 1):
+        t = i / n
+        a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+        out.append((a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]))
+    return out
+
+
+def curl(cv, c, r0, a0, turn=300, w=2.4, tones='stu', cw=False):
+    """une volute : une spirale qui s'enroule (r décroît), épaisse au départ, effilée au coeur"""
+    cx, cy = c
+    n = int(turn / 4) + 8
+    pts, ws = [], []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (-turn if cw else turn) * s)
+        r = r0 * (1 - 0.72 * s)
+        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
+        ws.append(w * (1 - s) ** 0.7 + 0.4 * (1 - s))
+    stroke(cv, pts, ws, tones)
+
+
+def ribbon(cv, c, rx, ry, a0, a1, wmax, head=0.5, tones='op'):
+    """un arc d'ellipse épais au milieu (ou au bout : head), effilé aux deux bouts (traînée d'un objet qui tourne)"""
+    cx, cy = c
+    n = max(12, int(abs(a1 - a0) / 360 * 2 * math.pi * max(rx, ry) * 2))
+    pts, ws = [], []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (a1 - a0) * s)
+        pts.append((cx + rx * math.cos(a), cy - ry * math.sin(a)))
+        ws.append(wmax * (s / head if s < head else (1 - s) / max(1 - head, 1e-6)) ** 0.8)
+    stroke(cv, pts, ws, tones)
+
+
+def pop(cv, c, r, facing=0.0, tones='efgh'):
+    """un éclat en forme de nuage (un coeur et des pétales arrondis, plus gros vers l'avant)"""
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for da in (-70, -25, 20, 65, 150, 210):
+        a = math.radians(facing + da)
+        big = 0.62 if abs(da) < 80 else 0.45
+        lobes.append((r * 0.95 * math.cos(a), -r * 0.95 * math.sin(a), r * big))
+    m = len(tones)
+    best = {}
+    for (dx, dy, rr) in lobes:
+        for y in range(int(cy + dy - rr - 1), int(cy + dy + rr + 2)):
+            for x in range(int(cx + dx - rr - 1), int(cx + dx + rr + 2)):
+                if math.hypot(x + 0.5 - cx - dx, y + 0.5 - cy - dy) <= rr:
+                    D = math.hypot(x + 0.5 - cx, y + 0.5 - cy) / (r * 1.5)
+                    if D < best.get((x, y), 9):
+                        best[(x, y)] = D
+    for (x, y), D in best.items():
+        put(cv, x, y, tones[min(m - 1, int(D * m))])
+
+
+def taper(cv, P0, P1, r0, r1, tones):
+    """une traînée effilée de P0 (rayon r0) à P1 (rayon r1) ; tons du coeur vers le bord"""
+    P0, P1 = np.array(P0, float), np.array(P1, float)
+    v = P1 - P0
+    L = max(np.linalg.norm(v), 1e-6)
+    u = v / L
+    n = np.array([u[1], -u[0]])
+    R = max(r0, r1) + 1
+    for y in range(int(min(P0[1], P1[1]) - R), int(max(P0[1], P1[1]) + R + 1)):
+        for x in range(int(min(P0[0], P1[0]) - R), int(max(P0[0], P1[0]) + R + 1)):
+            p = np.array([x + 0.5, y + 0.5]) - P0
+            t = p @ u
+            if 0 <= t <= L:
+                r = r0 + (r1 - r0) * t / L
+                d = abs(p @ n)
+                if d <= r and r > 0.3:
+                    put(cv, x, y, tones[min(len(tones) - 1, int(d / r * len(tones)))])
+
+
+# les gouttes : une petite bille ronde éclairée en haut à droite, et sa traîne derrière elle (dans le sens contraire
+# de sa course), comme une larme
+DROP_S = {1: ['Y'], 2: ['YX', 'AZ'], 3: ['.YX', 'ZYX', 'AZ.'], 4: ['.YX.', 'ZYYX', 'AZYZ', '.AZ.']}
+
+
+def drop(cv, x, y, size=2, v=(0.0, 0.0)):
+    """une goutte de taille 1 à 4 en (x, y) ; v = sa vitesse (la traîne part à l'opposé, 1 ou 2 pixels)"""
+    rows = DROP_S[size]
+    x0, y0 = int(round(x - len(rows[0]) / 2)), int(round(y - len(rows) / 2))
+    sp = math.hypot(*v)
+    if sp > 0.5 and size >= 2:
+        ux, uy = -v[0] / sp, -v[1] / sp
+        for k in range(1, 2 + (size >= 3)):
+            px, py = x + ux * (len(rows) / 2 + k - 0.5), y + uy * (len(rows) / 2 + k - 0.5)
+            put(cv, math.floor(px), math.floor(py), 'Z' if k == 1 else 'A')
+    sprite(cv, rows, x0, y0)
+
+
+def stroke_mask(pts, widths):
+    """la forme d'un ruban épais (points + épaisseurs) : masque, et pour chaque pixel sa place le long du ruban (0..1)"""
+    Pp = np.array(pts, float)
+    Rr = np.array(widths, float) / 2
+    N = len(Pp)
+    A, B = Pp[:-1], Pp[1:]
+    rA, rB = Rr[:-1], Rr[1:]
+    sA = np.arange(N - 1) / (N - 1)
+    pad = Rr.max() + 2
+    x0, x1 = int(Pp[:, 0].min() - pad), int(Pp[:, 0].max() + pad)
+    y0, y1 = int(Pp[:, 1].min() - pad), int(Pp[:, 1].max() + pad)
+    ys, xs = np.mgrid[y0:y1 + 1, x0:x1 + 1]
+    q = np.stack([xs.ravel() + 0.5, ys.ravel() + 0.5], 1)
+    v = B - A
+    L2 = np.maximum((v * v).sum(1), 1e-9)
+    best_q = np.full(len(q), 9.0)
+    best_s = np.zeros(len(q))
+    for j in range(N - 1):
+        t = np.clip(((q - A[j]) @ v[j]) / L2[j], 0, 1)
+        c = A[j] + t[:, None] * v[j]
+        w = q - c
+        d = np.hypot(w[:, 0], w[:, 1])
+        r = rA[j] + (rB[j] - rA[j]) * t
+        ok = r >= 0.4
+        qq = np.where(ok, d / np.maximum(r, 1e-6), 9.0)
+        m = qq < best_q
+        best_q[m] = qq[m]
+        best_s[m] = (sA[j] + t / (N - 1))[m]
+    inside = best_q <= 1.0
+    m = np.zeros((H, W), bool)
+    sm = np.zeros((H, W))
+    qi = np.floor(q[inside]).astype(int)
+    ok = (qi[:, 0] >= 0) & (qi[:, 0] < W) & (qi[:, 1] >= 0) & (qi[:, 1] < H)
+    m[qi[ok, 1], qi[ok, 0]] = True
+    sm[qi[ok, 1], qi[ok, 0]] = best_s[inside][ok]
+    return m, sm
+
+
+def lit_stroke(cv, pts, widths, tones='XYZAB', foam=None, keep=None):
+    """un ruban épais d'eau modelé par la lumière ; foam = (a, b) : sur cette partie, le bord éclairé est d'écume"""
+    m, sm = stroke_mask(pts, widths)
+    shade_mask(cv, m, tones, foam=None if not foam else (sm >= foam[0]) & (sm <= foam[1]), keep=keep)
+    return m
+
+
+def sheet(cv, P0, ang, length, bend, w, tail=0.0, blob=True, tones='XYZAB'):
+    """une nappe d'eau épaisse qui jaillit (pleine et modelée par la lumière), qui finit en grosse goutte"""
+    a0, a1 = math.radians(ang), math.radians(ang + bend)
+    d0 = np.array([math.cos(a0), -math.sin(a0)])
+    d1 = np.array([math.cos(a1), -math.sin(a1)])
+    P0 = np.array(P0, float)
+    P3 = P0 + length * (0.55 * d0 + 0.45 * d1)
+    pts = bezier(P0, P0 + length * 0.45 * d0, P3 - length * 0.3 * d1, P3, 40)
+    widths = []
+    for i in range(len(pts)):
+        t = i / (len(pts) - 1)
+        widths.append(0 if t < tail else w * (1.0 - 0.55 * t) + 0.8)
+    lit_stroke(cv, pts, widths, tones, foam=(0.55, 1.0))
+    if blob:
+        e = pts[-1]
+        drop(cv, e[0] + d1[0] * 3, e[1] + d1[1] * 3, 4 if w >= 5 else 3, v=tuple(d1))
+
+
+def spray(cv, origin, t, seeds, g=0.9, sizes=(3, 2, 2, 1)):
+    """une volée de gouttes lancées d'un point : seeds = [(vx, vy)] (pixels par image), t = le temps (en images) ;
+    elles retombent en cloche (pesanteur g) ; celles qui touchent le sol disparaissent"""
+    ox, oy = origin
+    for j, (vx, vy) in enumerate(seeds):
+        x = ox + vx * t
+        y = oy + vy * t + 0.5 * g * t * t
+        if y >= GROUND - 1:
+            continue
+        sz = sizes[j % len(sizes)]
+        if t > 2.5 and sz > 1:
+            sz -= 1
+        drop(cv, x, y, sz, v=(vx, vy + g * t))
+
+
+CROWN = [
+    dict(h=12, open_=0.35, w=7.0, cup=0.55, det=0, fall=0),
+    dict(h=26, open_=0.55, w=7.0, cup=0.5, det=0, fall=0),
+    dict(h=38, open_=0.75, w=6.6, cup=0.5, det=0, fall=0),
+    dict(h=42, open_=0.95, w=6.0, cup=0.45, det=0, fall=0),
+    dict(h=30, open_=1.25, w=5.6, cup=0.5, det=5, fall=-2),
+    dict(h=15, open_=1.5, w=5.0, cup=0.7, det=8, fall=10),
+]
+PETALS = [(-1.0, 0.70), (-0.5, 0.92), (0.0, 1.0), (0.5, 0.88), (1.0, 0.66)]     # (côté, hauteur relative)
+
+
+def crown(cv, X, G, k, big=1.0, seed=0):
+    """une gerbe d'eau en couronne : une coupe d'eau pleine qui monte du sol et s'ouvre en cinq pointes courbes, chacune
+    finie par une grosse tête ronde (qui se détache et retombe quand la gerbe s'effondre) ; le tout est UNE forme
+    pleine, modelée par la lumière (bord éclairé en écume)"""
+    c = CROWN[k]
+    m = np.zeros((H, W), bool)
+    foam_m = np.zeros((H, W), bool)
+    hh = c['h'] * big
+    # la coupe : le corps de la gerbe, posé au sol
+    rx = (9 + 7 * c['open_']) * big
+    m |= ellipse_mask((X, G + 1), rx, hh * c['cup'] + 2)
+    rng = np.random.RandomState(seed)
+    for (side, rel) in PETALS:
+        h_ = hh * rel * (1 + rng.uniform(-0.06, 0.06))
+        lean = side * c['open_'] * 0.55
+        P0 = np.array([X + side * 6 * big, G])
+        P3 = P0 + np.array([math.sin(lean) * h_ + side * 6 * big * c['open_'], -math.cos(lean) * h_])
+        P1 = P0 + np.array([0.0, -h_ * 0.45])
+        P2 = P3 + np.array([-side * 4 * big * c['open_'] - math.sin(lean) * h_ * 0.25, h_ * 0.25])
+        pts = bezier(P0, P1, P2, P3, 30)
+        n = len(pts) - 1
+        ws = [c['w'] * big * (1.5 - 0.8 * i / n) + 1 for i in range(n + 1)]
+        pm, sm = stroke_mask(pts, ws)
+        m |= pm
+        foam_m |= pm & (sm > 0.6)
+        u = np.array([math.sin(lean) + side * 0.3, -math.cos(lean)])
+        u /= np.linalg.norm(u)
+        head = P3 + u * (c['det'] * big + 1.5) + np.array([0.0, c['fall'] * big])
+        r = (3.8 - 0.4 * max(0, k - 3)) * big
+        hm = ellipse_mask(head, r, r * (1.15 if c['det'] else 1.0))
+        m |= hm
+        foam_m |= hm
+    shade_mask(cv, m, 'XYZAB', foam=foam_m)
