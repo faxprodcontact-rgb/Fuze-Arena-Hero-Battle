@@ -98,7 +98,7 @@ P = {'tete': part(HEADM), 'brasP': part(NARM), 'brasL': part(FARM)}
 # il bouche le vide (le cou s'allonge d'un pixel, sans trou)
 BODY = np.where((HEADM & (YY < 44)) | NARM | FARM, '.', CORPS)
 # sous le bras proche, le flanc de fourrure (le dessin ne le montre pas : il est complété ici, RACCORD)
-FLANK_POLY = [(29, 41), (38, 45), (46, 49), (51, 53), (51, 63), (47, 60), (43, 61), (39, 57), (34, 56), (30, 50)]
+FLANK_POLY = [(29, 41), (38, 44), (51, 44), (52, 53), (51, 63), (47, 60), (43, 61), (39, 57), (34, 56), (30, 50)]
 
 # ---------------------------------------------------------------- outils de pose (au pixel, jamais lissé)
 def empty():
@@ -760,7 +760,7 @@ def draw_claw(cv, Wr, ang, spread=1.0, curl=1.0):
     return [t for t, _ in tips]
 
 
-def draw_far_arm(cv, body, Wr, bend=1, hand='fist', ang=0.0, cap=False):
+def draw_far_arm(cv, body, Wr, bend=1, hand='fist', ang=0.0, cap=False, spread=1.0):
     """épaule -> coude -> poignet : peau bleue, brassard de fer sous le coude, puis le poing (ou la griffe ouverte) ;
     cap : le manchon de fourrure de l'épaule (quand le bras passe devant le corps)"""
     S = body.pt(*SH_F)
@@ -775,7 +775,7 @@ def draw_far_arm(cv, body, Wr, bend=1, hand='fist', ang=0.0, cap=False):
     if hand == 'fist':
         draw_fist(cv, Wr)
     else:
-        tips = draw_claw(cv, Wr, ang)
+        tips = draw_claw(cv, Wr, ang, spread)
     return E, tips
 
 
@@ -826,7 +826,8 @@ def rig_frame(f):
         dx, dy = far or (0, 0)
         draw_far_arm_exact(cv, body, dx, dy)
     if farc and not farc.get('front'):
-        E, tips = draw_far_arm(cv, body, farc['W'], farc.get('bend', 1), farc.get('hand', 'fist'), farc.get('ang', 0.0))
+        E, tips = draw_far_arm(cv, body, farc['W'], farc.get('bend', 1), farc.get('hand', 'fist'), farc.get('ang', 0.0),
+                               spread=farc.get('spread', 1.0))
         ctx['far'] = (farc['W'], E, tips)
     body.draw(cv, BODY)
     hx, hy = f.get('head', (0, 0))
@@ -848,7 +849,7 @@ def rig_frame(f):
     if farc and farc.get('front'):
         def _d(lay):
             return draw_far_arm(lay, body, farc['W'], farc.get('bend', 1), farc.get('hand', 'fist'),
-                                farc.get('ang', 0.0), cap=farc.get('cap', False))
+                                farc.get('ang', 0.0), cap=farc.get('cap', False), spread=farc.get('spread', 1.0))
         E, tips = layered(cv, _d)
         ctx['far'] = (farc['W'], E, tips)
     if f.get('fx'):
@@ -943,7 +944,7 @@ ATTAQUE = [
     # 1 : armé — penché en arrière, la griffe levée haut au-dessus de l'épaule (la hache aussi : les deux bras
     #     en l'air), il souffle par le nez
     _att(crouch=2, lean=-3, head=(-1, -1), near=(-1, -2), tuft=-1,
-         far=dict(w=(7.0, -36.0), bend=1, hand='claw', ang=96), fx=fx_snort(0), ms=260),
+         far=dict(w=(7.0, -36.0), bend=1, hand='claw', ang=96, spread=1.6), fx=fx_snort(0), ms=260),
     # 2 : il se jette en avant, la griffe s'abat (traînée)
     _att(crouch=1, lean=3, shift=2, head=(1, 0), near=(0, -1), tuft=1,
          far=dict(w=(31.0, -14.0), bend=1, hand='claw', ang=30), fx=fx_swipe(96, 25, w=12), ms=50),
@@ -1033,6 +1034,26 @@ def elbow_tufts(cv, S, E, Wr, r=7.6):
                     cv[y, x] = '3' if j < ln * 0.4 else '2' if j < ln * 0.8 else '1'
 
 
+def seal_gaps(cv, c, r):
+    """au raccord de l'épaule, bouche les petites fentes (1 à 2 pixels) entre le bras retracé et la bosse du dos :
+    sans ça, le contour noir se glisserait dedans"""
+    cx, cy = int(c[0]), int(c[1])
+    for _ in range(2):
+        add = []
+        for y in range(max(1, cy - r), min(H - 2, cy + r)):
+            for x in range(max(1, cx - r), min(W - 2, cx + r)):
+                if cv[y, x] != '.':
+                    continue
+                lr = (cv[y, x - 1] != '.' or cv[y, x - 2] != '.') and (cv[y, x + 1] != '.' or cv[y, x + 2] != '.')
+                ud = (cv[y - 1, x] != '.' or cv[y - 2, x] != '.') and (cv[y + 1, x] != '.' or cv[y + 2, x] != '.')
+                if lr and ud:
+                    nb = [cv[y, x - 1], cv[y, x + 1], cv[y - 1, x], cv[y + 1, x]]
+                    nb = [v for v in nb if v != '.']
+                    add.append((y, x, min(nb)))
+        for (y, x, v) in add:
+            cv[y, x] = v
+
+
 def draw_near_arm(cv, body, rel, bend=-1, extra_hand=(0, 0)):
     """épaule proche -> coude -> poignet (rel = poignet par rapport à l'épaule, en pixels de toile), puis la hache
     et la main du dessin, déplacées au pixel près pour que le poignet tombe juste"""
@@ -1051,6 +1072,7 @@ def draw_near_arm(cv, body, rel, bend=-1, extra_hand=(0, 0)):
         draw_limb(lay, E, Wr, 6.6, 6.2, bracer_tone, t0=0.62, t1=1.0)
         return E
     layered(cv, _arm, rim=True, shadow=True)
+    seal_gaps(cv, S, 16)
     hx, hy = int(Wr[0] - (HAND_AT[0] + OX)), int(Wr[1] - (HAND_AT[1] + OY))
     blit(cv, ARME, hx, hy)
     blit(cv, MAINS, hx, hy)
@@ -1093,11 +1115,11 @@ def far_on_ground(dx):
 # brisent en éclats et en bouffées de neige pendant qu'il se redresse.
 # Les pics : (écart depuis le poing, hauteur, largeur, penche, graine). Écarts, hauteurs et penchés inégaux.
 SPIKE_X0 = 10                         # le premier pic, à droite du poing qui frappe
-SPIKES = [(0, 10, 8, 1, 0), (8, 18, 10, 3, 1), (14, 8, 7, -2, 2), (24, 24, 12, 3, 3), (32, 13, 8, 1, 4),
-          (42, 30, 13, 4, 5), (50, 16, 9, -3, 6), (60, 36, 14, 4, 7), (68, 20, 10, 1, 8), (78, 44, 16, 5, 9),
-          (87, 25, 11, -3, 10), (101, 62, 19, 4, 11), (93, 40, 13, -7, 12), (110, 46, 15, 9, 13),
-          (118, 22, 10, 6, 14)]
-WAVE = 30.0                           # pixels parcourus par l'onde à chaque image
+SPIKES = [(0, 9, 8, 2, 0), (5, 15, 9, -1, 1), (17, 12, 9, 3, 2), (26, 22, 11, 1, 3), (31, 13, 8, 5, 4),
+          (36, 27, 12, -2, 5), (50, 18, 10, 2, 6), (57, 31, 12, 4, 7), (64, 19, 9, -4, 8), (76, 40, 14, 2, 9),
+          (83, 25, 10, 7, 10), (88, 16, 8, -3, 15), (93, 44, 14, -6, 12), (101, 62, 19, 4, 11), (110, 48, 15, 9, 13),
+          (118, 24, 10, 6, 14)]
+WAVE = 36.0                           # pixels parcourus par l'onde à chaque image
 
 
 def spike(cv, bx, h, w, lean, seed, grow=1.0):
@@ -1132,14 +1154,15 @@ def fx_spikes(k, fist_x):
     def fx(back, front, ctx):
         x0 = fist_x + SPIKE_X0
         reach = (k + 1) * WAVE
-        ground_crack(back, fist_x + 2, min(x0 + reach, x0 + 124), seed=2)
+        if k <= 7:                          # la fissure, tant que les pics sont là
+            ground_crack(back, fist_x + 2, min(x0 + reach, x0 + 124), seed=2)
         for (dx, h, w, lean, sd) in sorted(SPIKES, key=lambda s: -s[1]):
             t0 = dx / WAVE
             age = k - t0
             if age < -0.25:
                 continue
             bx = x0 + dx
-            brk = 4.0 + dx / 45.0          # quand il se brise
+            brk = 5.0 + dx / 80.0          # quand il se brise
             if k < brk:
                 grow = 0.5 if age < 0.75 else 1.12 if age < 1.75 else 1.0
                 spike(back, bx, h, w, lean, sd, grow)
@@ -1159,13 +1182,13 @@ def fx_spikes(k, fist_x):
                     for j, (ox, rr, aa) in enumerate(((-5, 0.26, 200), (4, 0.22, -70))):
                         shard(front, (bx + ox, GROUND - 2 - j * 2), max(1.0, h * rr * 0.35), aa + sd * 23,
                               seed=sd + j)
-        if 2.6 <= k < 3.6:                  # le gros bouquet frappe l'ennemi
+        if 3.6 <= k < 4.6:                  # le gros bouquet frappe l'ennemi
             c = (x0 + 104, GROUND - 58)
             pop(front, c, 8.0, facing=60, tones='ZZSTU')
             for i, (a, sp, r, sd) in enumerate(SHARDS[:6]):
                 shard(front, (c[0] + math.cos(math.radians(a + 50)) * (11 + 4 * sp),
                               c[1] - math.sin(math.radians(a + 50)) * (11 + 4 * sp)), r * 0.7, a + TUMBLE[i], seed=sd)
-        elif 3.6 <= k < 4.6:
+        elif 4.6 <= k < 5.6:
             c = (x0 + 106, GROUND - 60)
             cloud(front, c, 6.0, 'SSTU', seed=4, ground=False)
             for i, (a, sp, r, sd) in enumerate(SHARDS):
@@ -1293,33 +1316,36 @@ SPECIALE = [
     _sp(crouch=8, lean=-2, head=(0, 1), near=(0, 1), tuft=1, far=(0, 1), fx=fx_roar(1), ms=170),
     # 6 : il bondit, les deux bras montent
     _sp(crouch=-3, lift=12, head=(0, 0), near=near_redraw((-6.0, -36.0)),
-        far=dict(w=(4.0, -30.0), bend=1, hand='claw', ang=92), fx=fx_launch, ms=60),
+        far=dict(w=(4.0, -30.0), bend=1, hand='claw', ang=92, spread=1.5), fx=fx_launch, ms=60),
     # 7 : en haut du saut, jambes repliées, hache et griffe tout en haut
     _sp(crouch=0, lift=22, feet_up=5, head=(0, -1), near=near_redraw((-4.0, -40.0)),
-        far=dict(w=(6.0, -35.0), bend=1, hand='claw', ang=96), fx=fx_launch2, ms=120),
+        far=dict(w=(6.0, -35.0), bend=1, hand='claw', ang=96, spread=1.7), fx=fx_launch2, ms=120),
     # 8 : il retombe, les deux bras s'abattent
     _sp(crouch=0, lift=9, shift=3, feet_up=2, head=(1, 0), near=near_redraw((-30.0, 18.0)),
         far=dict(w=(22.0, 16.0), bend=1, hand='claw', ang=-40), fx=fx_dive, ms=50),
     # 9 : IMPACT — arrêt sur image : pommeau et poing dans le sol, éclair blanc
     _sp(crouch=8, shift=5, lean=1, head=(1, 1), near=near_redraw(near_on_ground(-24.0)),
         far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(0), flash=45, ms=230),
-    # 10-13 : l'onde court, les pics de glace jaillissent jusqu'à l'ennemi
+    # 10-14 : l'onde court, les pics de glace jaillissent jusqu'à l'ennemi ; le gros bouquet éclate sous lui
     _sp(crouch=8, shift=5, lean=1, head=(1, 1), near=near_redraw(near_on_ground(-24.0)),
         far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(1), ms=80),
-    _sp(crouch=7, shift=5, lean=1, head=(1, 0), near=near_redraw(near_on_ground(-24.0)),
+    _sp(crouch=8, shift=5, lean=1, head=(1, 1), near=near_redraw(near_on_ground(-24.0)),
         far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(2), ms=80),
+    _sp(crouch=7, shift=5, lean=1, head=(1, 0), near=near_redraw(near_on_ground(-24.0)),
+        far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(3), ms=80),
     _sp(crouch=7, shift=5, lean=1, head=(1, 0), jaw=1, near=near_redraw(near_on_ground(-24.0)),
-        far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(3), ms=90),
+        far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(4), ms=90),
     _sp(crouch=7, shift=5, lean=1, head=(1, -1), jaw=2, near=near_redraw(near_on_ground(-24.0)),
-        far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(4), ms=220),
-    # 14-16 : les pics se brisent, il se redresse
+        far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(5), ms=230),
+    # 15-18 : les pics se brisent, il se redresse
     _sp(crouch=5, shift=4, lean=1, head=(1, 0), jaw=1, near=near_redraw((-26.0, 30.0)),
-        far=dict(w=(15.0, 26.0), bend=1), fx=fx_impact(5), ms=110),
+        far=dict(w=(15.0, 26.0), bend=1), fx=fx_impact(6), ms=100),
     _sp(crouch=3, shift=2, head=(0, 0), near=near_redraw((-25.0, 8.0)),
-        far=dict(w=(10.0, 21.0), bend=1), fx=fx_impact(6), ms=120),
-    _sp(crouch=1, shift=1, near=near_redraw((-19.0, -9.0)), far=(1, 0), fx=fx_impact(7), ms=130),
-    # 17 : en garde
-    _sp(far=(0, 0), fx=fx_impact(8), ms=170),
+        far=dict(w=(10.0, 21.0), bend=1), fx=fx_impact(7), ms=110),
+    _sp(crouch=1, shift=1, near=near_redraw((-19.0, -9.0)), far=(1, 0), fx=fx_impact(8), ms=120),
+    _sp(far=(0, 0), fx=fx_impact(9), ms=140),
+    # 19 : en garde
+    _sp(far=(0, 0), fx=fx_impact(10), ms=150),
 ]
 
 
