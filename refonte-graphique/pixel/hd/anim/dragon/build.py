@@ -1006,17 +1006,19 @@ def fx_wisp(cv, f, k):
         return
     x, y = c2(NOSTRIL[0], NOSTRIL[1], f)
     if k == 0:
-        puff(cv, (x + 1, y - 1), 1.3, 'ij')
+        puff(cv, (x + 1, y - 1), 1.8, 'ijl')
     elif k == 1:
-        smoke_plume(cv, (x + 1, y - 1), 7, 1.6, sway=0.6, tones='ijl', curl_r=1.6, cw=True)
+        puff(cv, (x + 1, y - 2), 2.2, 'ijl')
+        smoke_plume(cv, (x, y - 3), 8, 2.6, sway=-0.7, tones='ijl', curl_r=1.8)
     elif k == 2:
-        smoke_plume(cv, (x + 1, y - 2), 12, 2.0, sway=0.8, tones='ijl', curl_r=2.2, cw=True, tail=0.1)
+        smoke_plume(cv, (x, y - 2), 14, 3.0, sway=-0.9, tones='ijl', curl_r=2.6, tail=0.1)
     elif k == 3:
-        smoke_plume(cv, (x, y - 4), 15, 2.0, sway=0.9, tones='ijl', curl_r=2.6, cw=True, tail=0.35)
+        smoke_plume(cv, (x - 1, y - 4), 17, 3.2, sway=-1.0, tones='ijl', curl_r=3.0, tail=0.35)
     elif k == 4:
-        smoke_plume(cv, (x - 1, y - 8), 14, 1.8, sway=1.0, tones='ijl', curl_r=2.8, cw=True, tail=0.6)
+        cloud(cv, (x - 4, y - 18), 3.0, 'iij', seed=3, ground=False, hollow=0.3)
+        curl(cv, (x - 7, y - 23), 2.6, 120, turn=240, w=1.8, tones='ij')
     elif k == 5:
-        curl(cv, (x - 1, y - 21), 2.4, 200, turn=220, w=1.4, tones='ij', cw=True)
+        cloud(cv, (x - 6, y - 24), 2.4, 'ij', seed=4, ground=False, hollow=0.6)
 
 
 def pose_frame(f):
