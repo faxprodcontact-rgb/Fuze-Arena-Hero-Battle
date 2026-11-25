@@ -1818,9 +1818,12 @@ def brouillon_sheet(frames, path, box=None, scale=3, per=6):
 
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 # Attaque : la rafale sort du col du sac (image 5, au-delà de la colonne 265) et vole jusqu'à la vraie cible, où elle
-# frappe. Spéciale : sort d'équipe (rien sur l'ennemi ; le jeu pose les effets reçus sur les alliés à l'image 8).
+# frappe. La cible est prise à y = 181 (au lieu de 206, le point d'impact) : la rafale de l'image 5 est dessinée presque à
+# l'horizontale, et l'export déduit son inclinaison de la droite « tête de la rafale → cible » (à 30 px seulement de
+# la cible, 206 la ferait pencher de 49° dans le jeu ; 181 la garde presque droite, elle finit juste au-dessus de
+# l'impact dessiné). Spéciale : sort d'équipe (rien sur l'ennemi ; le jeu pose les effets reçus sur les alliés à l'image 8).
 JEU = {
-    'attaque': dict(genre='tir', tir=(5, 6), depuis=265, coup=6, cible=(ENEMY_X, int(ATK_T[1]))),
+    'attaque': dict(genre='tir', tir=(5, 6), depuis=265, coup=6, cible=(ENEMY_X, 181)),
     'speciale': dict(genre='equipe', coup=8, charge=(3, 7)),
 }
 

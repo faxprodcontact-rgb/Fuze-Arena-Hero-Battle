@@ -1239,7 +1239,7 @@ FOE_X = g2c(*KNUCKLE)[0] + 18           # l'ennemi imaginé (ses pieds), là où
 WAVE_X = 258                            # l'ennemi de la spéciale : le front de l'onde l'atteint à l'image 12
 JEU = {
     'attaque': dict(genre='melee', coup=4, elan=(0, 2), cible=(FOE_X, g2c(*KNUCKLE)[1]),
-                    coupe=[None] * 4 + [144] * 4 + [None] * 2),
+                    coupe=[None] * 4 + [144, 155, 155, 148] + [None] * 2),
     'speciale': dict(genre='rayon', rayon=(10, 13), depuis=166, coup=12, cible=(WAVE_X, GROUND - 23),
                      coupe=[None] * 13 + [166] * 2 + [None] * 2, charge=(2, 7)),
 }

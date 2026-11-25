@@ -1645,12 +1645,13 @@ def decoupe():
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 # Attaque : corps à corps sans élan dessiné : le jeu l'amène devant l'ennemi (images 0-1), il arme (tenu) et abat la
 # hache ; l'ennemi imaginé se tient là où le fer touche le sol (pas à ENEMY_X, trop loin pour ce coup).
-# Spéciale : la ruée (élan cuit : shift) ; à l'impact (images 8-9) tout le sillon est posé avec la cible, puis la coupe
-# suit le bord avant du minotaure qui revient en bondissant.
+# Spéciale : la ruée (élan cuit : shift) ; après le coup, la coupe suit le bord avant du minotaure (il ne doit pas être
+# coupé : ce qui est posé sur la cible suit son recul).
 JEU = {
-    'attaque': dict(genre='melee', coup=5, elan=(0, 2), cible=(200, GROUND - 30), coupe=[None] * 2 + [168] * 8),
+    'attaque': dict(genre='melee', coup=5, elan=(0, 2), cible=(200, GROUND - 30),
+                    coupe=[None] * 2 + [168] * 4 + [198, 198, 180, 168]),
     'speciale': dict(genre='melee', coup=8, cible=(ENEMY_X, GROUND - 30),
-                     coupe=[None] * 8 + [140, 140, 237, 193, 167, 167, 167],
+                     coupe=[None] * 8 + [240, 273, 237, 193, 167, 167, 167],
                      avance=[f.get('shift', 0) for f in SPECIALE], charge=(1, 5)),
 }
 

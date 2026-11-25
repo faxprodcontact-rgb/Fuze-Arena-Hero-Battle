@@ -1676,7 +1676,8 @@ def essai(folder):
 # les dégâts), puis estocade. L'ennemi imaginé se tient juste devant le bord du bouclier (pas à ENEMY_X, trop loin).
 # Spéciale : sort d'équipe (bouclier puis provocation) : le bouclier part vers l'équipe à l'image 6.
 JEU = {
-    'attaque': dict(genre='melee', coup=3, elan=(0, 2), cible=(156, 134), coupe=[None] * 3 + [136] * 7),
+    'attaque': dict(genre='melee', coup=3, elan=(0, 2), cible=(156, 134),
+                    coupe=[None] * 3 + [136] + [138] * 3 + [136] * 3),
     'speciale': dict(genre='equipe', coup=6, charge=(1, 3)),
 }
 
