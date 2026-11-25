@@ -1294,7 +1294,7 @@ SPECIALE = [
          fx=[fx_storm(3)], ms=110),
     dict(hrel=(1, 0), jaw=1, wings=dict(N=('down', 'fold', 0.7), F=('down', 'fold', 0.7)), crest=(0, 0),
          fx=[fx_storm(4)], ms=120),
-    dict(hrel=(0, 0), jaw=0, lagN=(-2, 5), lagF=(1, 3), crest=(1, 0), ms=120),
+    dict(hrel=(0, 0), jaw=0, lagN=(0, 5), lagF=(1, 3), crest=(1, 0), ms=120),
     dict(sq=1, hrel=(0, 1), lagN=(0, -2), lagF=(0, -2), crest=(1, 1), ms=140),
     dict(lagN=(0, 1), lagF=(0, 1), crest=(0, 0), ms=170),
 ]
