@@ -4,7 +4,7 @@
 #   humain déguisé) : crâne rond couvert de fourrure fauve, grand masque de peau nue rose pêche (arcade marquée, nez plat
 #   à deux narines, museau qui avance), favoris plus clairs qui encadrent le visage, petite oreille ronde de singe
 #   (anneau d'or, comme Eldra), longs bras, mains et pieds préhensiles, LONGUE QUEUE EN POINT D'INTERROGATION.
-#   ≈ 61 px du sommet du crâne au sol : bien plus petit que le gorille costaud et que le singe chaman. On le reconnaît
+#   ≈ 60 px du sommet du crâne au sol : bien plus petit que le gorille costaud et que le singe chaman. On le reconnaît
 #   en noir à sa silhouette basse et horizontale : la crosse de la queue à gauche, la bosse du sac sur le dos, la tête
 #   en avant à droite et la courte lame qui pointe vers l'ennemi.
 # Rôle et pose : rapide, premier rang. Accroupi à quatre pattes, ramassé, prêt à bondir, trois quarts vers la droite :

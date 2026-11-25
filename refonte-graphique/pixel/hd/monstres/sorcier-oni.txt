@@ -1,7 +1,33 @@
-# Sorcier oni (clan de Lenore, élément feu) : lanceur de sorts, second rang.
+# Sorcier oni (clan de Lenore, élément feu) : LANCEUR DE SORTS, second rang. Un vieil oni sorcier, voûté et maigre,
+#   de la famille de Lenore (peau rouge, cornes d'ivoire, yeux jaunes, or, peau de tigre, indigo de la crinière) mais
+#   une autre créature : ni le colosse du chef, ni le petit diablotin, ni le gros oni bleu. ≈ 87 px du sol au haut
+#   du crochet du bâton (85 px au haut des cornes).
+# Pose : trois quarts vers la droite, dos rond en grosse bosse, tête avancée et basse, appuyé sur son bâton planté
+#   devant lui. Bras lointain (gauche) tendu vers le bâton : poing serré dessus (griffes d'ivoire qui dépassent du côté
+#   du bâton, le bâton ressort au-dessus et au-dessous du poing). Bras proche (droit) plié dans sa grande manche, coude
+#   en arrière, avant-bras vers l'avant : le poing (bracelet d'or) sort de la manche et tient un chapelet de grosses
+#   perles d'ivoire qui pend en boucle, gland d'or en bas. Jambes maigres, pieds nus d'oni à plat, griffes d'ivoire.
+# Tête : crâne chauve et rond, deux cornes d'ivoire recourbées vers l'arrière (la proche plus grosse, sa pointe
+#   redescend), gros sourcils blancs broussailleux froncés (une mèche du sourcil lointain dépasse du profil), petits
+#   yeux jaunes enfoncés, pupille vers l'ennemi (l'oeil lointain sur la même ligne, mangé par l'arête du nez), nez
+#   crochu discret (le bout affleure), pommette éclairée, joue creuse, moustache tombante, bouche rouge sombre avec
+#   un croc d'ivoire qui monte de la lèvre du bas, oreille pointue côté proche avec un anneau d'or, longs cheveux blancs
+#   qui pendent derrière sur la bosse. Longue barbe blanche en trois mèches de longueurs différentes, pointe en bas.
+# Robe de moine indigo de nuit (la couleur de la crinière de Lenore) : dessus de la bosse éclairé, dos dans l'ombre,
+#   quelques grands plis qui tombent, bas en lambeaux (pointes et déchirures), grande manche qui fait une poche sous
+#   l'avant-bras. Étole en peau de tigre (couleurs du pagne du chef, deux marques effilées seulement) autour du cou,
+#   un pan pend devant, bout effiloché.
+# Bâton : bois noueux sombre (trois noeuds), crochet en haut ; la lanterne de papier y pend à une cordelette :
+#   chapeaux de laque sombre, deux joncs, papier orangé éclairé du dedans par une petite flamme (un objet, pas un sort),
+#   petit gland rouille dessous. Aucun effet magique sur le dessin.
+# Couleurs (une seule lumière, en haut à droite) : peau rouge sombre de Lenore (ombres violettes), ivoire de Lenore,
+#   blanc de barbe aux ombres lavande, indigo, peau de tigre, or, bois, papier : 39 couleurs.
+# Souffle sous la poitrine (y = 72). Clignement : les yeux se ferment (J K L -> peau).
+# Fabrication : masses et modelé de la robe ébauchés par script (brouillon sorcier-oni/), tête, mains, pieds,
+#   chapelet, crochet, lanterne et retouches posés pixel par pixel.
 id: mon-lenore-sorts
 sol: 64 116
-tete: 66 30 94 62
+tete: 66 30 100 60
 souffle: 72
 cligne: J=4 K=4 L=4
 palette:
