@@ -175,6 +175,12 @@ def save_icon(im, name):
 
 
 def main():
+    # REMPLACÉ (25/11/2026) : la planche est refaite en pixel art par refonte-graphique/pixel/ui/pictos/assemble.py ;
+    # ce script écraserait icons.webp et icons-meta.ts avec les anciens pictos peints. Gardé pour mémoire.
+    import sys
+    if '--force' not in sys.argv:
+        print('Remplacé : lancer refonte-graphique/pixel/ui/pictos/assemble.py (ou --force pour l\'ancienne planche).')
+        return
     os.makedirs(OUT, exist_ok=True); os.makedirs(UI, exist_ok=True)
     names = []
     for fname, cols, rows, ids in SHEETS:
