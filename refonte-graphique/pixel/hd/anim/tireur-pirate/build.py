@@ -354,6 +354,24 @@ def ara_tail(q=0):
     return shear_rows(P['ara_queue'], lambda y: round(q * max(0.0, (y - 60) / 13.0) ** 1.2), 61, 73)
 
 
+def hair(part, hc=0):
+    """les deux mèches qui tombent sur la nuque : leur bout se balance d'un pixel vers l'arrière (hc = -1) ; dessous,
+    la nuque est déjà repeinte en noir des cheveux (pas de trou)"""
+    if not hc:
+        return part
+    g = part.copy()
+    for y in range(55, 61):
+        d = hc if y >= 57 else 0
+        if not d:
+            continue
+        xs = [x for x in range(50, 63) if part[y, x] in HAIR]
+        for x in xs:
+            g[y, x] = '.'
+        for x in xs:
+            g[y, x + d] = part[y, x]
+    return g
+
+
 BLINK = dict(SRC['cligne'])
 SQUINT = {'Y': '4'}                     # elle plisse l'oeil pour viser : la paupière du bas remonte
 
@@ -371,9 +389,9 @@ POSE = [
     dict(b=1, s=0, head=(0, 0), ah=(0, 0), aq=-1, e=1, ms=110),
     dict(b=1, s=0, head=(0, 0), ah=(1, 1), aq=0, e=1, ms=110),
     dict(b=0, s=0, head=(0, -1), ah=(0, 0), aq=1, e=0, ms=150),
-    dict(b=0, s=1, head=(0, 0), ah=(0, 0), aq=1, e=-1, ms=140),
-    dict(b=0, s=1, head=(0, 0), ah=(0, 0), aq=1, e=-1, k=1, ms=110),
-    dict(b=0, s=1, head=(0, 0), ah=(0, -1), aq=0, e=-1, ms=160),
+    dict(b=0, s=1, head=(0, 0), ah=(0, 0), aq=1, e=-1, hc=-1, ms=140),
+    dict(b=0, s=1, head=(0, 0), ah=(0, 0), aq=1, e=-1, hc=-1, k=1, ms=110),
+    dict(b=0, s=1, head=(0, 0), ah=(0, -1), aq=0, e=-1, hc=-1, ms=160),
     dict(b=0, s=0, head=(0, 0), ah=(0, 0), aq=0, e=0, ms=140),
 ]
 
@@ -645,9 +663,10 @@ def rig_frame(f):
     body.draw(cv, P['corps_nu'] if gun == 'epaule' else P['corps'])
     blit(cv, scarf(f.get('e', 0)), *body.follow(80))
     # 3) la tête (avec son petit retard) ; si elle monte, la rangée du bas est doublée (pas de trou)
+    tete = hair(P['tete'], f.get('hc', 0))
     if hy < 0:
-        blit(cv, P['tete'], cx, cy, swap)
-    blit(cv, P['tete'], cx + hx, cy + hy, swap)
+        blit(cv, tete, cx, cy, swap)
+    blit(cv, tete, cx + hx, cy + hy, swap)
     # 4) l'ara sur l'épaule proche
     draw_ara(cv, f, (cx, cy))
     # 5) les bras et le mousquet
@@ -663,9 +682,24 @@ def rig_frame(f):
         draw_hip(cv, f, body, ctx)
     elif gun == 'epaule':
         draw_shoulder(cv, f, body, ctx)
+    fill_holes(cv, (cx, cy + f.get('ab', 0)))
     for fx in f.get('fx', []):
         fx(cv, back, front, ctx)
     return cv, back, front, ctx
+
+
+def fill_holes(cv, chest):
+    """raccord automatique : un pixel vide entouré de dessin sur ses quatre côtés (deux morceaux qui ne se touchent
+    plus tout à fait après un décalage) prend la couleur de son voisin du dessus — sauf entre le ventre et les pattes
+    de l'ara, où le dessin a lui-même ce petit jour"""
+    m = cv != '.'
+    hole = np.zeros_like(m)
+    hole[1:-1, 1:-1] = ~m[1:-1, 1:-1] & m[:-2, 1:-1] & m[2:, 1:-1] & m[1:-1, :-2] & m[1:-1, 2:]
+    for y, x in np.argwhere(hole):
+        gx, gy = x - OX - chest[0], y - OY - chest[1]
+        if 43 <= gx <= 52 and 56 <= gy <= 61:
+            continue
+        cv[y, x] = cv[y - 1, x]
 
 
 def draw_hip(cv, f, body, ctx):
@@ -1262,9 +1296,9 @@ ATTAQUE = [
     # 0 : elle abaisse le canon (le mousquet tourne autour du poing proche), se cale
     dict(gun='hanche', ang=14.036, s=1, lean=-1, head=(0, 1), ah=(0, 0), aq=1, e=1, ms=90),
     # 1 : à l'horizontale, contre la hanche, buste en avant, l'oeil plissé ; elle tient
-    dict(HIP_0, ah=(1, 0), aq=1, e=0, ms=230),
+    dict(HIP_0, ah=(1, 0), aq=1, e=0, hc=-1, ms=230),
     # 2 : le chien s'abat — étincelle
-    dict(HIP_0, fired=True, ah=(1, 0), aq=0, e=-1, fx=[fx_spark], ms=60),
+    dict(HIP_0, fired=True, ah=(1, 0), aq=0, e=-1, hc=-1, fx=[fx_spark], ms=60),
     # 3 : le coup ! éclair, la balle part ; le recul cabre le canon et repousse le buste ; l'ara sursaute
     dict(gun='hanche', ang=7.125, s=1, lean=-1, head=(0, 0), fired=True, aile='mi', cri=1, ab=-1, aq=-1, e=-1,
          fx=[fx_flash, fx_kick(0)], ms=70),
@@ -1410,7 +1444,7 @@ def fx_shot(dx, L, phase, tail=0.0):
     def f(cv, back, front, ctx):
         mx, my = SPEC_AT[0]
         X = mx + dx
-        water_slug(back, front, X, my, L, r=5.6, phase=phase, tail=tail)
+        water_slug(front, front, X, my, L, r=6.8, phase=phase, tail=tail)
         for j, (fx_, fy_) in enumerate(((0.35, 4.5), (0.6, -5.0), (0.8, 6.5), (0.5, 8.0))):
             drop(back, X - L * fx_, my + fy_ + j % 2, 2 if j < 2 else 1, v=(1.0, 1.2))
     return f
@@ -1437,12 +1471,12 @@ IMPACT = [None]                           # le point où la balle d'eau éclate 
 
 # L'éclat, image par image : le bouillon d'écume (rayon, part déjà défaite) et les vagues qui s'enroulent autour (en
 # volutes, comme une vague qui se brise) : (x, y, rayon, angle de départ, tour, épaisseur, sens).
-BOUILLON = [None, (12.5, 0.0), (14.0, 0.35), (12.5, 0.7)]
+BOUILLON = [None, (15.0, 0.0), (16.5, 0.35), (14.5, 0.7)]
 VOLUTES = [
     None,
-    [(15, -11, 6.0, 200, 280, 4.4, True), (11, 13, 5.6, 160, 260, 4.0, False), (-13, -10, 4.8, 330, 260, 3.4, False)],
-    [(20, -16, 7.4, 200, 290, 4.0, True), (16, 17, 6.6, 160, 270, 3.6, False), (-17, -14, 5.8, 330, 270, 3.0, False)],
-    [(24, -19, 6.8, 200, 300, 2.8, True), (20, 21, 6.0, 160, 280, 2.6, False), (-21, -16, 5.0, 330, 280, 2.2, False)],
+    [(18, -13, 7.0, 200, 280, 5.0, True), (13, 16, 6.6, 160, 260, 4.6, False), (-16, -12, 5.6, 330, 260, 3.8, False)],
+    [(24, -19, 8.6, 200, 290, 4.6, True), (19, 21, 7.8, 160, 270, 4.2, False), (-21, -17, 6.8, 330, 270, 3.4, False)],
+    [(28, -23, 8.0, 200, 300, 3.2, True), (23, 25, 7.0, 160, 280, 3.0, False), (-25, -19, 6.0, 330, 280, 2.6, False)],
 ]
 GOUTTES = [(5.4, -4.4), (7.0, -1.0), (3.8, 1.6), (-4.6, -4.0), (-5.8, -0.4), (1.0, -5.6), (8.2, -3.2), (-2.4, 1.2),
            (3.0, -6.4), (-7.0, -2.4)]
@@ -1455,9 +1489,9 @@ def fx_impact(k):
         G = GROUND - 1
         if k == 0:
             # l'éclat : un gros nuage d'écume blanche et un anneau d'eau
-            ring(back, (X - 2, Y), 5.0, 17.0, 3.0, 90, 270, tones='XYZA')
-            pop(front, (X, Y), 11.0, facing=0, tones='WWWXY')
-            ring(front, (X - 2, Y), 5.0, 17.0, 3.4, -90, 90, tones='WXYZ')
+            ring(back, (X - 2, Y), 5.6, 20.0, 3.2, 90, 270, tones='XYZA')
+            pop(front, (X, Y), 13.0, facing=0, tones='WWWXY')
+            ring(front, (X - 2, Y), 5.6, 20.0, 3.6, -90, 90, tones='WXYZ')
             return
         # le bouillon d'écume qui gonfle puis se défait, et les vagues qui s'enroulent autour
         if k <= 3:
@@ -1501,9 +1535,9 @@ SPECIALE = [
          fx=[fx_fire], ms=60),
     # 5-6 : le recul la repousse, le canon se cabre ; la balle d'eau file vers l'ennemi
     dict(AIM, fired=True, ang=7.125, butt=(51.0, 62.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=-1,
-         e=1, fx=[fx_smoke(0, SPEC_AT, spark=False), fx_shot(48, 34, 1.2), fx_wake(0), fx_kick(0)], ms=60),
+         e=1, fx=[fx_smoke(0, SPEC_AT, spark=False), fx_shot(50, 44, 1.2), fx_wake(0), fx_kick(0)], ms=60),
     dict(AIM, fired=True, ang=7.125, butt=(51.0, 62.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=1,
-         e=1, fx=[fx_smoke(1, SPEC_AT), fx_shot(84, 40, 2.6, 0.2), fx_wake(1), fx_kick(1)], ms=60),
+         e=1, fx=[fx_smoke(1, SPEC_AT), fx_shot(84, 54, 2.6, 0.2), fx_wake(1), fx_kick(1)], ms=60),
     # 7 : la balle éclate sur l'ennemi — arrêt sur l'image
     dict(AIM, fired=True, ang=3.576, butt=(52.0, 62.0), lean=-2, s=0, head=(0, 2), cri=1, ab=-1, aq=1, e=0,
          fx=[fx_smoke(2, SPEC_AT), fx_wake(2), fx_impact(0), fx_kick(2)], ms=200),

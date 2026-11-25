@@ -707,7 +707,8 @@ def rig_frame(f):
         blit(cv, P['poing'], 0, cdy + f.get('slip', 0))
     else:
         S = SH + o + np.array([cdx, cdy], float)
-        ctx.elbow = draw_arm(cv, S, ctx.G, f.get('bend', -1.0))
+        elb = None if 'elb' not in f else ctx.G + np.array(f['elb'], float)   # coude posé à la main (bras levé)
+        ctx.elbow = draw_arm(cv, S, ctx.G, f.get('bend', -1.0), elbow=elb)
     for fx in f.get('fx', []):
         fx(cv, back, front, ctx)
     return cv, back, front
@@ -1064,12 +1065,12 @@ ATTAQUE = [
     dict(arm='rig', staff='libre', G=(32.0, 30.0), ang=118, sg=48, lean=-2, breath=2, wl=1, head=(-1, 0),
          swing=(0.5, 0.4), fx=[fx_gather(0)], ms=130),
     # la préparation, tenue : le bâton levé haut derrière la tête, tout le corps cambré, le vent s'enroule aux anneaux
-    dict(arm='rig', staff='libre', G=(38.0, 16.0), ang=132, sg=40, lean=-3, crouch=-1, breath=2, head=(-1, 0),
+    dict(arm='rig', staff='libre', G=(38.0, 16.0), ang=132, sg=30, lean=-3, crouch=-1, breath=2, head=(-1, 0),
          swing=(0.0, 0.0), p=-1, fx=[fx_gather(1)], ms=320),
     # le coup : le bâton passe par-dessus sa tête (traînées en croissant)
-    dict(arm='rig', staff='libre', G=(52.0, 12.0), ang=86, sg=36, lean=0, breath=1, wl=-1, head=(0, 0),
+    dict(arm='rig', staff='libre', G=(52.0, 12.0), ang=86, sg=31, lean=0, breath=1, wl=-1, head=(0, 0),
          swing=(-0.9, 0.6), smear=[fx_trail(70, 6.0)], ms=50),
-    dict(arm='rig', staff='libre', G=(66.0, 10.0), ang=12, sg=34, lean=2, crouch=1, wl=-1, head=(1, 0),
+    dict(arm='rig', staff='libre', G=(66.0, 10.0), ang=12, sg=31, lean=2, crouch=1, wl=-1, head=(1, 0),
          swing=(-0.6, -0.9), smear=[fx_trail(90, 7.0)], ms=50),
     # l'impact : la tête du shakujō frappe le sol devant lui ; arrêt, le sol tremble
     dict(arm='rig', staff='libre', G=(66.0, 60.0), ang=-36, sg=31, lean=3, crouch=3, wl=-1, head=(1, 1), p=1,
@@ -1128,22 +1129,50 @@ def fx_whirl(level):
 def fx_drop_smear(cv, back, front, ctx):
     """le bâton descend d'un coup : un seul sillage courbe derrière la boucle (pas de traits répétés)"""
     c = ctx.head
-    pts = bezier((c[0] - 1, c[1] - 26), (c[0] - 3, c[1] - 18), (c[0] - 2, c[1] - 8), (c[0], c[1] - 2), 30)
-    widths = [0.5 + 7.5 * (i / 30) ** 1.3 for i in range(31)]
-    stroke(back, pts, widths, 'WJFG')
+    pts = bezier((c[0] - 1, c[1] - 34), (c[0] - 4, c[1] - 24), (c[0] - 3, c[1] - 14), (c[0], c[1] - 6), 30)
+    widths = [2.5 + 11.5 * (i / 30) ** 1.1 for i in range(31)]
+    stroke(back, pts, widths, 'WJFGH')
+    crescent(back, (c[0], c[1] + 4), 11.0, 270, span=150, w=2.6, tones='JFG')
+
+
+def roller(cv, p0, p1, p2, p3, w, tones, curl_r, peak=0.5, tail=0.0):
+    """un ruban de vent qui grossit vers l'avant (le plus épais à 'peak' du trajet) puis s'enroule vers l'avant et
+    vers le bas, comme une vague qui déferle ; tail : la part de l'arrière déjà effacée"""
+    pts = bezier(p0, p1, p2, p3, 60)
+    ex, ey = pts[-1]
+    tx, ty = pts[-1][0] - pts[-2][0], pts[-1][1] - pts[-2][1]
+    tl = math.hypot(tx, ty) or 1
+    tx, ty = tx / tl, ty / tl
+    nx, ny = -ty, tx                                   # vers le bas de la crête : la volute déferle
+    cx, cy = ex + nx * curl_r, ey + ny * curl_r
+    a0 = math.atan2(-(ey - cy), ex - cx)
+    for i in range(1, 41):
+        s_ = i / 40
+        a = a0 - math.radians(280) * s_
+        r = curl_r * (1 - 0.7 * s_)
+        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
+    N = len(pts)
+    widths = []
+    for i in range(N):
+        s_ = i / (N - 1)
+        if s_ < tail:
+            widths.append(0)
+            continue
+        q = (s_ - tail) / max(1 - tail, 1e-6)
+        prof = (q / peak) ** 0.8 if q < peak else ((1 - q) / (1 - peak)) ** 0.8
+        widths.append(w * prof + 0.4)
+    stroke(cv, pts, widths, tones)
 
 
 def wave(front, back, x0, fx, hc, tail, w):
-    """la grande vague de vent qui roule au ras du sol : un ruban épais qui monte jusqu'à sa crête puis s'enroule
-    vers l'avant et vers le bas (comme une vague qui déferle) ; une seconde lame plus basse, une troisième derrière."""
-    gust(front, (x0, GROUND - 2), (x0 + (fx - x0) * 0.35, GROUND - 3), (fx - 26, GROUND - hc * 1.05),
-         (fx - 4, GROUND - hc), w, tones='WJFGH', curl_r=hc * 0.30, up=False, tail=tail)
-    gust(front, (x0 + 14, GROUND - 1), (x0 + (fx - x0) * 0.5, GROUND - 1), (fx - 22, GROUND - hc * 0.45),
-         (fx + 2, GROUND - hc * 0.42), w * 0.55, tones='JFGH', curl_r=hc * 0.16, up=False,
-         tail=min(0.95, tail + 0.1))
-    gust(back, (x0 + 6, GROUND - 8), (x0 + (fx - x0) * 0.4, GROUND - hc * 0.5), (fx - 40, GROUND - hc * 1.3),
-         (fx - 18, GROUND - hc * 1.25), w * 0.45, tones='FGHI', curl_r=hc * 0.18, up=False,
-         tail=min(0.95, tail + 0.2))
+    """la grande vague de vent qui roule au ras du sol : un ruban qui grossit et monte jusqu'à sa crête puis
+    déferle vers l'avant ; une seconde lame plus basse devant, une troisième, pâle, derrière le monstre."""
+    roller(front, (x0, GROUND - 2), (x0 + (fx - x0) * 0.45, GROUND - 2), (fx - 30, GROUND - hc * 0.9),
+           (fx - 6, GROUND - hc), w, 'WJFGH', curl_r=hc * 0.28, tail=tail)
+    roller(front, (x0 + 20, GROUND - 1), (x0 + (fx - x0) * 0.55, GROUND - 1), (fx - 20, GROUND - hc * 0.3),
+           (fx + 4, GROUND - hc * 0.38), w * 0.5, 'JFGH', curl_r=hc * 0.15, tail=min(0.95, tail + 0.1))
+    roller(back, (x0 + 4, GROUND - 6), (x0 + (fx - x0) * 0.4, GROUND - hc * 0.4), (fx - 44, GROUND - hc * 1.25),
+           (fx - 22, GROUND - hc * 1.2), w * 0.4, 'FGHI', curl_r=hc * 0.16, tail=min(0.95, tail + 0.2))
 
 
 def fx_slam(k):
@@ -1163,9 +1192,17 @@ def fx_slam(k):
             return
         # la vague de vent qui roule vers la droite : son front avance ; derrière, la poussière retombe
         front_x = fx0 + [0, 70, 132, 196, 240, 262][k]
-        hc = [0, 22, 32, 40, 40, 34][k]
-        tail = [0, 0.0, 0.2, 0.42, 0.68, 0.86][k]
-        wave(front, back, fx0 + 10, front_x, hc, tail, [0, 9, 10, 10, 8, 6][k])
+        hc = [0, 26, 38, 46, 44, 36][k]
+        tail = [0, 0.0, 0.12, 0.28, 0.55, 0.8][k]
+        wave(front, back, fx0 + 10, front_x, hc, tail, [0, 11, 13, 13, 10, 7][k])
+        # le long du chemin de la vague : une file de petites bouffées de poussière qui sautent du sol l'une après
+        # l'autre (le sol tremble jusqu'au premier rang), puis se défont
+        if k <= 5:
+            for px in range(int(fx0) + 34, int(front_x) - 14, 24):
+                age = (front_x - px) / 70.0
+                if age < 1.25:
+                    cloud(back, (px, GROUND - 3 - 4 * age), 3.0 + 2.5 * min(age, 0.8), tones='KLMN', seed=px % 17,
+                          hollow=min(0.9, 0.75 * age))
         # au front : la poussière soulevée, les feuilles et les plumes qui roulent dans la vague
         if 1 <= k <= 4:
             cloud(back, (front_x - 8, GROUND - 7), 6.0 + 1.5 * k, tones='KLMN', seed=10 + k, hollow=0.12 * (k - 1))
@@ -1177,9 +1214,12 @@ def fx_slam(k):
             pebble(front, front_x - 2, GROUND - 10 - 3 * k)
         # sur le premier rang : la bourrasque frappe (éclats ronds au niveau des jambes et du ventre)
         if k == 3:
-            pop(front, (FOE_X - 26, GROUND - 18), 6.5, facing=30, tones='WJFG')
-            pop(front, (FOE_X + 18, GROUND - 26), 5.5, facing=30, tones='WJFG')
-            pop(front, (FOE_X + 44, GROUND - 12), 4.5, facing=30, tones='WJFG')
+            # trois coups de vent sur le premier rang : un croissant blanc tourné vers la droite et une volute
+            for (dx, dy, r) in ((-22, -22, 11.0), (20, -30, 10.0), (50, -16, 8.0)):
+                crescent(front, (FOE_X + dx, GROUND + dy), r, 10, span=140, w=4.0, tones='WJFGH')
+                curl(front, (FOE_X + dx + r * 0.5, GROUND + dy - r * 1.0), r * 0.5, 200, turn=270, w=2.0,
+                     tones='JFGH')
+                leaf(front, FOE_X + dx - r, GROUND + dy - r * 0.8, int(r))
         if k >= 4:
             j = k - 4
             curl(front, (FOE_X - 14, GROUND - 40 - 8 * j), 8.0 - 2 * j, 200 + 60 * k, turn=290, w=2.6 - 0.7 * j,
@@ -1210,11 +1250,11 @@ SPECIALE = [
     dict(ms=120),
     # il inspire et commence à lever le bâton tout droit
     dict(arm='rig', lift=7, breath=2, wl=1, fx=[fx_whirl(0)], ms=130),
-    dict(arm='rig', lift=18, breath=2, crouch=-1, lean=-1, head=(0, -1), wl=1, j=1, fx=[fx_whirl(1)], ms=130),
+    dict(arm='rig', lift=18, breath=2, elb=(-4, 15), crouch=-1, lean=-1, head=(0, -1), wl=1, j=1, fx=[fx_whirl(1)], ms=130),
     # à bout de bras : le tourbillon autour des anneaux (préparation tenue)
-    dict(arm='rig', lift=27, breath=2, crouch=-2, lean=-1, head=(0, -1), j=2, fx=[fx_whirl(2)], ms=320),
+    dict(arm='rig', lift=27, breath=2, elb=(-5, 15), crouch=-2, lean=-1, head=(0, -1), j=2, fx=[fx_whirl(2)], ms=320),
     # il plante le bâton d'un coup
-    dict(arm='rig', lift=9, breath=1, crouch=2, lean=1, wl=-1, head=(0, 1), fx=[fx_drop_smear],
+    dict(arm='rig', lift=9, breath=1, elb=(-2, 16), crouch=2, lean=1, wl=-1, head=(0, 1), fx=[fx_drop_smear],
          ms=50),
     dict(arm='orig', crouch=4, lean=1, wl=-1, head=(1, 1), p=1, fx=[fx_slam(0)], flash=35, shake=1, ms=220),
     dict(arm='orig', crouch=4, lean=1, wl=0, head=(1, 1), p=1, j=1, fx=[fx_slam(1)], shake=-1, ms=90),

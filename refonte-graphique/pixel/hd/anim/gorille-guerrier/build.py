@@ -64,7 +64,7 @@ ALLPAL.update(FXPAL)
 
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du dessin est posé en SOL (de la place à droite pour l'onde de la spéciale).
-W, H = 300, 180
+W, H = 330, 180
 SOL = (88, 168)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
@@ -780,7 +780,11 @@ def arm(cv, side, a, body):
     fx, fy = body.follow(60)
     mode = a.get('mode', 'rig')
     if mode == 'rigid':        # le bras entier du dessin, déplacé d'un bloc (poing soulevé, recul…)
-        blit(cv, P[side], a.get('dx', 0) + fx, a.get('dy', 0) + fy)
+        if side == 'far':      # le haut de l'épaule lointaine reste sur le corps
+            blit(cv, np.where(P['far_sh'] != '.', '.', P['far']), a.get('dx', 0) + fx, a.get('dy', 0) + fy)
+            body.draw(cv, P['far_sh'])
+        else:
+            blit(cv, P[side], a.get('dx', 0) + fx, a.get('dy', 0) + fy)
         return None
     sx, sy = SHOULDER[side]
     sh = a.get('sh', (0, 0))
@@ -858,14 +862,14 @@ def show(frames, path, k=3):
 POSE = [
     dict(breath=0, crouch=0, cloth=0, ms=170),
     dict(breath=1, crouch=0, cloth=0, ms=150),
-    dict(breath=2, crouch=0, cloth=0, ms=170),
+    dict(breath=2, crouch=0, cloth=1, ms=170),
     dict(breath=2, crouch=0, cloth=1, ms=230),
     dict(breath=1, crouch=0, cloth=1, ms=150),
     dict(breath=0, crouch=0, cloth=0, ms=150),
-    dict(breath=0, crouch=1, cloth=-1, ms=170),
-    dict(breath=0, crouch=1, cloth=-1, blink=1, ms=110),
     dict(breath=0, crouch=1, cloth=0, ms=170),
-    dict(breath=0, crouch=0, cloth=0, ms=150),
+    dict(breath=0, crouch=1, cloth=-1, blink=1, ms=110),
+    dict(breath=0, crouch=1, cloth=-1, ms=170),
+    dict(breath=0, crouch=0, cloth=-1, ms=150),
 ]
 
 
@@ -1010,12 +1014,11 @@ def fx_raise(back, front, ctx):
 
 
 def fx_drop(back, front, ctx):
-    """les poings qui tombent : deux traînées courbes de vent, du haut jusqu'au sol"""
-    for (x0, y0, x1, y1) in ((36, 0, 80, 96), (102, -2, 124, 96)):
-        a, b = g2c(x0, y0), g2c(x1, y1)
-        pts = bezier(a, (a[0] + 4, a[1] + 30), (b[0] - 22, b[1] - 30), b, 50)
-        stroke(back, pts, [1 + 16 * (i / 50) ** 1.5 for i in range(51)], 'xyzv')
-        stroke(back, pts[20:], [1 + 8 * (i / 30) ** 1.5 for i in range(31)], 'wwx')
+    """les poings qui tombent : deux larges croissants de vent qui suivent leur chemin, du haut jusqu'au sol
+    (épais au bout, là où est le poing ; effilés derrière)"""
+    ribbon(back, g2c(42, 66), 42, 58, 100, -6, 14, head=0.86, tones='wxyzv')
+    ribbon(back, g2c(104, 64), 26, 54, 96, -14, 11, head=0.86, tones='wxyzv')
+    cloud(back, g2c(84, GROUND - OY - 2), 5.0, seed=80)
 
 
 SLAM = (98, 114)                       # là où les deux poings frappent le sol (grille, entre les deux poings)
@@ -1036,32 +1039,36 @@ def fx_wave(k):
     """l'onde au ras du sol : k = 0..4, elle avance vers la droite (≈ 40 pixels par image) et se défait"""
     def f(back, front, ctx):
         x0 = g2c(*SLAM)[0] + 26
-        head = x0 + 34 + k * 40                 # le front de l'onde (toile)
+        head = x0 + 34 + k * 38                 # le front de l'onde (toile)
         g = GROUND
         tail = min(0.8, 0.2 * k)
         if k <= 3:
-            # le rouleau de vent : un large ruban couché au ras du sol qui se dresse et s'enroule au front
-            gust(back, (x0 - 6, g - 3), (x0 + (head - x0) * 0.45, g - 1), (head - 14, g - 4), (head - 2, g - 26 - k * 2),
-                 11.0 - k, tones='wxyzvu', curl_r=10.0 + k, up=True, tail=tail)
-            gust(front, (x0 + 12, g - 12), (x0 + (head - x0) * 0.5, g - 18), (head - 30, g - 14),
-                 (head - 22, g - 38 - k * 2), 5.0, tones='wxyzv', curl_r=6.0 + k * 0.6, up=True,
-                 tail=min(0.9, tail + 0.15))
-            # la poussière qui roule devant, et celle qui retombe derrière
-            cloud(front, (head + 6, g - 4), 9.0 + k * 0.8, seed=40 + k)
-            cloud(back, (head - 22, g - 3), 8.0, seed=50 + k, hollow=0.3)
+            grow = 1 + 0.12 * k
+            # le rouleau de vent : une grande vague d'air en arche (du sol derrière, par-dessus, jusqu'au front),
+            # épaisse au sommet, et une arche plus petite devant ; une volute au sommet
+            ribbon(back, (head - 16, g), 24 * grow, 36 * grow, 172, 18, 13 - k, head=0.62, tones='wxyzvu')
+            ribbon(front, (head - 12, g), 14 * grow, 22 * grow, 165, 30, 6.5 - k * 0.5, head=0.6, tones='wxyz')
+            curl(front, (head + 2, g - 34 * grow), 7 + k, 250, turn=280, w=3.4, tones='wxyzv', cw=True)
+            # le souffle couché qui relie les poings à la vague
+            pts = [(x0 + (head - 36 - x0) * i / 40, g - 2 - 2 * math.sin(math.pi * i / 40)) for i in range(41)]
+            stroke(back, pts, [0 if i < 40 * tail else 1 + 7 * (i / 40) ** 0.8 for i in range(41)], 'xyzv')
+            # le banc de poussière qui roule devant, et celle qui retombe derrière
+            cloud(front, (head + 4, g - 5), 13.0 + k, seed=40 + k)
+            cloud(front, (head - 26, g - 4), 10.5, seed=45 + k)
+            cloud(back, (head - 50, g - 3), 9.5, seed=50 + k, hollow=0.35)
             if k >= 1:
-                cloud(back, (head - 56, g - 2), 7.0, seed=60 + k, hollow=0.6)
+                cloud(back, (head - 82, g - 2), 8.0, seed=60 + k, hollow=0.65)
             if k >= 2:
-                cloud(back, (head - 92, g - 2), 6.0, seed=65 + k, hollow=0.85)
-            pebble(front, head + 14, g - 20 - k * 3)
-            pebble(front, head - 8, g - 30 - k * 2)
-            leaf(front, head - 16, g - 46 - k * 4, k)
-            leaf(front, head + 18, g - 32 - k * 3, k + 1)
+                cloud(back, (head - 114, g - 2), 6.5, seed=65 + k, hollow=0.88)
+            pebble(front, head + 16, g - 22 - k * 3)
+            pebble(front, head - 10, g - 44 - k * 2)
+            leaf(front, head - 30, g - 50 - k * 4, k)
+            leaf(front, head + 20, g - 36 - k * 3, k + 1)
         else:
             curl(front, (head - 40, g - 30), 10, 200, turn=260, w=3.0, tones='xyzv')
             curl(back, (head - 6, g - 18), 8, 160, turn=260, w=2.4, tones='yzv', cw=True)
-            cloud(back, (head - 50, g - 3), 7.0, seed=70, hollow=0.85)
-            cloud(back, (head - 10, g - 4), 7.5, seed=71, hollow=0.7)
+            cloud(back, (head - 50, g - 3), 9.0, seed=70, hollow=0.85)
+            cloud(back, (head - 10, g - 4), 11.0, seed=71, hollow=0.7)
             leaf(front, head + 14, g - 50, 2)
             leaf(front, head - 70, g - 40, 0)
     return f
@@ -1206,8 +1213,13 @@ def write_outputs(anims):
         fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
         bw, bh = box[2] - box[0], box[3] - box[1]
         fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        if fond.width < bw:                             # la scène est plus large que le fond : on le répète
+            wide = Image.new('RGBA', (fond.width * 2, fond.height))
+            wide.paste(fond, (0, 0))
+            wide.paste(fond.transpose(Image.FLIP_LEFT_RIGHT), (fond.width, 0))
+            fond = wide
         base = fond.crop((0, fy, bw, fy + bh))
-        if base.width < bw:
+        if base.width < bw or fy < 0:
             raise ValueError
     except Exception:
         base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
