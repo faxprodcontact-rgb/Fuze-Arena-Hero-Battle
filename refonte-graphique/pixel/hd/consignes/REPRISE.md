@@ -150,3 +150,8 @@ Gabryel → Dardane ; Elyon → Elvyn ; Auriel → Aurelle ; Jinn → Jarek.
   essayer « un peu moins pixel mais cohérent, actuel » → essai de 2 habillages (A Moderne, B Hybride) dans un worktree,
   captures `pixel/sortie/ui/essai-style/`. Vague 2 (Héros, Invoquer, Aventure, Guilde) EN ATTENTE du choix du style.
   En parallèle : audit des pictos restants (`pixel/ui/AUDIT-PICTOS.md`).
+- 26/11 : le propriétaire CHOISIT le style « Moderne » (« J'adore le mode moderne, on part là-dessus »). Pictos à refaire
+  dans ce style (lisses, HD), puis les pages suivantes. Lancés en parallèle, chacun dans un worktree (brief scratchpad
+  brief-moderne.md) : Socle (style par défaut, pièces communes, HUD des combats, Campagne + fenêtres de l'accueil),
+  Héros (+ nouvelle fiche héros), Invoquer (+ animation d'ouverture du portail), Aventure, Guilde, Pictos modernes.
+  À la fin : fusionner les 6 branches (le Socle d'abord), régler les conflits, vérifier, publier v0.59.0.
