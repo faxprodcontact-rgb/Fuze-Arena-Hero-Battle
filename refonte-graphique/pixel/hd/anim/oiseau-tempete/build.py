@@ -379,6 +379,8 @@ SHOULDER_N = (130, 104)
 ROOT_F = (192, 54)
 ROOT_C = (186, 60)
 W_TIP_N = smooth((np.hypot(GX - SHOULDER_N[0], GY - SHOULDER_N[1]) - 20) / 100.0)
+# le bas de l'aile (les secondaires posées sur le flanc) ne bouge pas contre la découpe (x = 98) : pas de couture
+W_TIP_N = W_TIP_N * (1 - smooth((GY - 118) / 22.0) * (1 - smooth((98 - GX) / 26.0)))
 W_TIP_F = smooth((np.hypot(GX - ROOT_F[0], GY - ROOT_F[1]) - 8) / 44.0)
 W_TIP_C = smooth((np.hypot(GX - ROOT_C[0], GY - ROOT_C[1]) - 6) / 44.0)
 
@@ -1045,12 +1047,26 @@ def bolt_arc(cv, p0, p1, bend, w, tones='wwut', branches=(), seed=0):
 
 
 # ---------------------------------------------------------------- une image d'attaque : corps monté + effets
+def lone_out(cv):
+    """retire les pixels d'effet tout seuls (aucun voisin, même en diagonale) : le bout effilé d'un ruban"""
+    m = cv != '.'
+    nb = np.zeros(m.shape, int)
+    for dy in (-1, 0, 1):
+        for dx in (-1, 0, 1):
+            if dx or dy:
+                nb += np.roll(np.roll(m, dy, 0), dx, 1)
+    out = cv.copy()
+    out[m & (nb == 0)] = '.'
+    return out
+
+
 def rig(spec):
     f = dict(spec)
     cv = assemble(f)
     back, front = empty(), empty()
     for fx in f.get('fx', []):
         fx(cv, back, front, f)
+    back, front = lone_out(back), lone_out(front)
     kw = {}
     if f.get('flash'):
         kw['flash'] = f['flash']
