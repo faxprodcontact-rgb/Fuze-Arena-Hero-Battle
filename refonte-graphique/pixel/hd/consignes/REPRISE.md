@@ -24,7 +24,7 @@
   éléments), joués par le jeu sur chaque case occupée : dossier `../anim/effets/` (build.py ; `sortie/` = images du jeu + effets.json ;
   aperçu d'équipe : `python3 equipe.py --lanceur myrr --case 3 --effet soin,purification --equipe zaroth,eldra,kael,isis`),
   faits le 25/11 (en attente de son avis). Restent 11 spéciales d'équipe : Rook, Nerith, Minotaure, Bérold, Corvin,
-  Solenn, Garvin, Mira, Célia, Anubis — Rook, Nerith, Minotaure faits (+ vérifier la provocation de Bérold/Corvin/Solenn/Garvin/Mira). Elyon (affaiblit/ralentit les ennemis), Lilou, Auriel, Ysolde : déjà cohérents.
+  Solenn, Garvin, Mira, Célia, Anubis — Rook, Nerith, Minotaure faits ; Bérold, Corvin, Solenn en cours (+ vérifier la provocation de Bérold/Corvin/Solenn/Garvin/Mira). Elyon (affaiblit/ralentit les ennemis), Lilou, Auriel, Ysolde : déjà cohérents.
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
 
 ## Méthode (validée par le propriétaire)
