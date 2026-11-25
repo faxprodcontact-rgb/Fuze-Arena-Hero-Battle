@@ -76,3 +76,6 @@
   `src/game/hd-fight.ts`, scénario `src/game/hd-trial.ts`, Réglages → Outils de test → « Combat HD (essai) ». GIF
   `pixel/sortie/combat-hd-essai.gif`. Pour les autres : consigne `consignes/export-jeu.md` (un agent peut en faire
   plusieurs ; ajouter chacun au combat d'essai pour le voir).
+- 25/11 : le propriétaire valide l'essai (« ça me convient ») → export des 54 autres lancé en 6 lots de 9
+  (brief : scratchpad brief-export.md = consigne export-jeu.md + ne pas toucher actions.ts / hd-trial.ts).
+  Ensuite : ajouter au combat d'essai un choix des personnages pour les tester tous, vérifier, publier.
