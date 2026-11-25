@@ -1124,6 +1124,16 @@ def zoom(anim, i, k=8):
     print(p, box)
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=ENEMY, coupe=[None] * 4 + [147] * 4 + [None] * 2,
+                    avance=[f.get('base', 0) for f in ATTAQUE]),
+    'speciale': dict(genre='melee', coup=8, cible=ENEMY,
+                     coupe=[None] * 4 + [145, 145, 158, 158, 158, 158, 130, 130, None, None] + [130] * 7,
+                     avance=[f.get('base', 0) for f in SPECIALE], charge=(0, 2)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'decoupe':
         decoupe()

@@ -1377,7 +1377,8 @@ def build_all(only=None):
         for i, spec in enumerate(specs):
             cv, back, front, solid, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []))
-            fr.append((compose(cv, back, front, solid, spec.get('ec', 0.0)), spec['ms']))
+            # appel par mots-clés (même image) : l'export vers le jeu (../jeu_export.py) reconnaît ainsi chaque calque
+            fr.append((compose(cv, back, front, solid=solid, eclat=spec.get('ec', 0.0)), spec['ms']))
         anims[name] = fr
     return anims
 
@@ -1485,6 +1486,13 @@ def write_outputs(anims):
         ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
     save_gif(os.path.join(OUT, 'anim-nerith-jeu.gif'), ims, [ms for _, ms in seq])
     return boxes
+
+
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='tir', tir=(4, 6), depuis=170, coup=6, cible=FOE, coupe=230, arc=16),
+    'speciale': dict(genre='equipe', coup=6, charge=(1, 4)),
+}
 
 
 if __name__ == '__main__':

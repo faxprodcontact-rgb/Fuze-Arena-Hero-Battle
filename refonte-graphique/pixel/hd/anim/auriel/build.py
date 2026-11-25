@@ -1512,6 +1512,16 @@ def decoupe():
     im.save(os.path.join(BROUILLON, 'decoupe.png'))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : double coup de massue au contact (les dégâts au premier coup). Spéciale : il fait jaillir le rocher et le
+# frappe : le rocher vole en cloche jusqu'à la vraie cible (images 10 à 12) et s'y brise.
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(196, GROUND - 37), coupe=176),
+    'speciale': dict(genre='tir', tir=(10, 13), depuis=195, coup=13, cible=(281, GROUND - 40),
+                     coupe=[None] * 13 + [186] * 5, arc=20, charge=(0, 2)),
+}
+
+
 if __name__ == '__main__':
     os.makedirs(BROUILLON, exist_ok=True)
     arg = sys.argv[1] if len(sys.argv) > 1 else 'tout'

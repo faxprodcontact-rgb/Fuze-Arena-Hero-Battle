@@ -1659,6 +1659,18 @@ def essai(folder):
     return anims
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=6, cible=(190, 156), coupe=169,
+                    avance=[f.get('x', 0) for f in ATTAQUE]),
+    # image 16 : on garde l'élan de l'image 15 (elle reste sous l'ennemi pendant que la trombe s'effondre, le bond en
+    # arrière dessiné dans l'image 16 fait le reste) ; la pluie de l'image 16 reste sur la cible
+    'speciale': dict(genre='melee', coup=13, cible=(ENEMY_X, GROUND - 46),
+                     coupe=[None] * 16 + [235] + [None] * 4, charge=(0, 1),
+                     avance=[f.get('x', 0) for f in SPECIALE[:16]] + [XT] + [f.get('x', 0) for f in SPECIALE[17:]]),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

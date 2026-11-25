@@ -1565,9 +1565,12 @@ def build_all(names=('pose', 'attaque', 'speciale')):
         for i, spec in enumerate(specs):
             cv, back, front, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []), getattr(ctx, 'retouch_off', (0, 0)))
-            img = compose(cv, back, front, flash=spec.get('flash'))
             if spec.get('shake'):                      # le sol tremble : toute l'image descend d'un pixel
-                img = np.roll(img, spec['shake'], axis=0)
+                # (décalé AVANT compose, sur les grilles de lettres : même image, et l'export vers le jeu
+                # retrouve chaque calque — ../jeu_export.py)
+                cv, back, front = (None if g is None else np.roll(g, spec['shake'], axis=0)
+                                   for g in (cv, back, front))
+            img = compose(cv, back, front, flash=spec.get('flash'))
             fr.append((img, spec['ms']))
         anims[name] = fr
     return anims
@@ -1729,6 +1732,15 @@ def main():
     for n in ('pose', 'attaque', 'speciale'):
         print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
     print('écrit dans', OUT)
+
+
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : la massue s'abat au contact. Spéciale : il frappe le sol sur place ; la faille et ses geysers, au-delà du
+# deuxième geyser, sont posés sous chaque cible (les dégâts quand le geyser de la cible jaillit).
+JEU = {
+    'attaque': dict(genre='melee', coup=3, cible=(220, GROUND - 50), coupe=209),
+    'speciale': dict(genre='sort', coup=7, cible=(272, GROUND - 40), coupe=257, charge=(1, 3)),
+}
 
 
 if __name__ == '__main__':

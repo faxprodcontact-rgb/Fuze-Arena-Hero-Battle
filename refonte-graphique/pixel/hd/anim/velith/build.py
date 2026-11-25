@@ -1504,6 +1504,14 @@ def brouillon(which):
     return anims
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(206, GROUND - 30), coupe=[None] * 4 + [176] * 5),
+    'speciale': dict(genre='sort', coup=14, cible=(ENEMY_X, GROUND - 40), coupe=[None] * 10 + [233] * 10,
+                     charge=(0, 5)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'brouillon':
         brouillon(tuple(sys.argv[2:]) or ('pose', 'attaque', 'speciale'))

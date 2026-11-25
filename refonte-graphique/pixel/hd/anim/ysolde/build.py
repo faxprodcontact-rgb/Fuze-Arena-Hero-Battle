@@ -1383,6 +1383,13 @@ def essai(folder):
     return anims
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='tir', tir=(3, 6), depuis=139, coup=6, cible=(ENEMY_X, ENEMY_Y)),
+    'speciale': dict(genre='tir', tir=(8, 10), depuis=139, coup=10, cible=(ENEMY_X, GROUND - 85), charge=(1, 2)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

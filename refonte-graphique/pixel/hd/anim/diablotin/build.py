@@ -1422,5 +1422,17 @@ def main():
     print('écrit dans', OUT)
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : le bond (élan cuit dans `shift`) et le coup de massue. Spéciale : il file jusqu'à l'ennemi pendant
+# l'image 2 (`elan`), puis ses trois coups sont joués sur place devant lui, comme dans le GIF (les petits pas en avant
+# restent dans les images) ; les dégâts tombent sur le grand coup final.
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(172, GROUND - 12), coupe=[None] * 4 + [146] * 6,
+                    avance=[f.get('shift', 0) for f in ATTAQUE]),
+    'speciale': dict(genre='melee', coup=9, cible=(176, GROUND - 14), coupe=[None] * 9 + [146] * 7,
+                     elan=(2, 3), charge=(0, 1)),
+}
+
+
 if __name__ == '__main__':
     main()

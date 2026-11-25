@@ -1593,6 +1593,13 @@ def decoupe():
     im.save(os.path.join(BROUILLON, 'decoupe.png'))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=5, cible=(190, GROUND - 40), coupe=168),
+    'speciale': dict(genre='equipe', coup=6, charge=(1, 2)),
+}
+
+
 if __name__ == '__main__':
     os.makedirs(BROUILLON, exist_ok=True)
     arg = sys.argv[1] if len(sys.argv) > 1 else 'tout'

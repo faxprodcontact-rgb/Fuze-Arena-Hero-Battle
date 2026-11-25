@@ -1337,6 +1337,15 @@ def essai(folder):
     Image.fromarray(im).resize((GW * 6, GH * 6), Image.NEAREST).save(os.path.join(folder, 'decoupe.png'))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : la massue s'abat au contact. Spéciale : il fend le sol sur place ; le premier geyser éclate devant lui, la
+# faille et les geysers suivants (à partir du deuxième, GEYSERS[1]) sont posés sous chaque cible.
+JEU = {
+    'attaque': dict(genre='melee', coup=5, cible=(212, GROUND - 50), coupe=198),
+    'speciale': dict(genre='sort', coup=8, cible=(283, GROUND - 40), coupe=259, charge=(1, 4)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 2 and sys.argv[1] == 'essai':
         essai(sys.argv[2])

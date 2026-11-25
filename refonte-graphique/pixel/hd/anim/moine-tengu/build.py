@@ -1445,6 +1445,16 @@ def decoupe(k=6):
     img.save(os.path.join(BROUILLON, 'decoupe.png'))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : le bâton frappe le sol devant lui (la poussière reste avec lui), la rafale au ras du sol frappe l'ennemi.
+# Spéciale : la vague de vent roule au ras du sol (jet étiré jusqu'à la cible), puis frappe et se défait sur elle.
+JEU = {
+    'attaque': dict(genre='sort', coup=8, cible=(FOE_X, GROUND - 22), coupe=[None] * 8 + [213] + [222] * 3),
+    'speciale': dict(genre='rayon', rayon=(6, 8), depuis=163, coup=8, cible=(FOE_X, GROUND - 22),
+                     coupe=[None] * 8 + [163] * 6 + [None], charge=(1, 3)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'decoupe':
         decoupe()

@@ -1641,6 +1641,13 @@ def essai(folder):
     return anims
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(212, GROUND - 40), coupe=206, elan=(0, 3)),
+    'speciale': dict(genre='equipe', coup=7, charge=(1, 6)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 2 and sys.argv[1] == 'essai':
         essai(sys.argv[2])

@@ -1252,6 +1252,15 @@ def write_outputs(anims):
     return boxes
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : le coup d'épée au contact (l'éclat reste au bout de l'épée). Spéciale : la vague de feu court au ras du sol
+# jusqu'à la vraie cible (images 6 et 7), puis le geyser de feu éclate sous elle.
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(170, GROUND - 36), coupe=158),
+    'speciale': dict(genre='tir', tir=(6, 8), depuis=153, coup=8, cible=(228, GROUND - 15), coupe=175, charge=(0, 1)),
+}
+
+
 if __name__ == '__main__':
     anims = build_all()
     write_outputs(anims)

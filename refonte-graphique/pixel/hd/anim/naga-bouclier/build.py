@@ -1115,6 +1115,13 @@ def zone(args):
         print(f'{y:4d} ' + ''.join(ORIG[y, x0:x1 + 1]))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(158, GROUND - 40), coupe=[None] * 4 + [136] * 4 + [None] * 2),
+    'speciale': dict(genre='sort', coup=10, cible=(ENEMY_X, GROUND - 30), coupe=[None] * 5 + [133] * 14, charge=(0, 3)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'decoupe':
         decoupe()

@@ -1256,6 +1256,18 @@ def essai(folder):
     return anims
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : la pince s'abat au contact (corps à corps, les deux pas sont cuits dans les images ; `avance` reste au
+# maximum pendant l'écrasement). Spéciale : la vague qui roule à travers la première ligne ennemie est posée sur
+# chaque cible (à partir de la colonne 201, juste devant la pince) ; l'éclat du coup dans le sol reste avec lui.
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(228, 150), coupe=[None] * 4 + [205, 205, 200] + [None] * 3,
+                    avance=[0, 0, 0, 12, 26, 26, 16, 5, 0, 0]),
+    'speciale': dict(genre='sort', coup=11, cible=(ENEMY_X, GROUND - 40),
+                     coupe=[None] * 7 + [201] * 8 + [None] * 2, charge=(2, 4)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 2 and sys.argv[1] == 'essai':
         essai(sys.argv[2])

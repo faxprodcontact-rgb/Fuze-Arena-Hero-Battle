@@ -1314,6 +1314,13 @@ def zone(args):
         print(f'{y:4d} ' + ''.join(ORIG[y, x0:x1 + 1]))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='tir', tir=(3, 5), depuis=110, coup=5, cible=TARGET, coupe=150),
+    'speciale': dict(genre='rayon', rayon=(3, 5), depuis=110, coup=7, cible=TARGET, coupe=150, charge=(0, 2)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'decoupe':
         decoupe()

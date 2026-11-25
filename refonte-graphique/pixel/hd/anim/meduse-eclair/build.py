@@ -1142,6 +1142,15 @@ def essai(folder):
     return anims
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : la bulle d'éclair vole jusqu'à la vraie cible et y éclate. Spéciale : la grosse sphère vole jusqu'à elle,
+# puis le dôme, les vagues et la pluie sont posés sur la cible.
+JEU = {
+    'attaque': dict(genre='tir', tir=(3, 6), depuis=110, coup=6, cible=(ENEMY_X, HIT_Y), coupe=212),
+    'speciale': dict(genre='tir', tir=(7, 10), depuis=110, coup=10, cible=(ENEMY_X, HIT_Y), coupe=160, charge=(3, 6)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

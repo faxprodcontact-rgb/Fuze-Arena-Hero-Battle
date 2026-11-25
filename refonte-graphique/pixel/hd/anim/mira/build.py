@@ -1802,6 +1802,13 @@ def zone(args):
         print(f'{y:4d} ' + ''.join(g[y, x0:x1 + 1]))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=5, cible=(ENEMY_X, 172), coupe=204, elan=(0, 3)),
+    'speciale': dict(genre='equipe', coup=9, charge=(2, 4)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

@@ -1230,6 +1230,20 @@ def essai(folder):
     return anims
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : la lame-scie plonge au contact (corps à corps, l'élan est cuit dans les images). Spéciale : l'aileron file
+# jusqu'à l'ennemi (élan cuit), il jaillit sous lui et le mord ; de l'image 9 à 14, lui et la gerbe sont posés sur la
+# cible (la gerbe reste sous l'ennemi pendant qu'il y saute, mord et retombe). `avance` reste au maximum tant qu'il
+# est sur l'ennemi : le jeu le garde collé à sa cible, les petits écarts dessinés restent dans les images.
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(196, 107), coupe=[None] * 4 + [164, 170, 170, 170, None, None],
+                    avance=[0, 0, 11, 23, 25, 25, 12, 4, 0, 0]),
+    'speciale': dict(genre='melee', coup=12, cible=(ENEMY_X, 108),
+                     coupe=[None] * 9 + [144] * 6 + [150, 150] + [None] * 3,
+                     avance=[min(f.get('x', 0), XE + 2) for f in SPECIALE], charge=(0, 1)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

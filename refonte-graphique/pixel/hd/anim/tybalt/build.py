@@ -1305,6 +1305,15 @@ def essai(folder):
     return anims
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(184, GROUND - 66), coupe=[None] * 4 + [166] * 6,
+                    avance=[f.get('x', 0) for f in ATTAQUE]),
+    'speciale': dict(genre='rayon', rayon=(5, 11), depuis=147, coup=6, cible=TARGET,
+                     coupe=[None] * 11 + [190] * 4, charge=(2, 3)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

@@ -1349,6 +1349,16 @@ def write_outputs(anims):
     return boxes
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(FOE[0], FOE[1]), coupe=[176] * 5 + [181, 182] + [176] * 4,
+                    avance=[f.get('X', 0) for f in ATTAQUE]),
+    'speciale': dict(genre='melee', coup=11, cible=(FOE[0], FOE[1]),
+                     coupe=[176] * 9 + [180] + [176] * 3 + [171, 150, 140, 140, 140],
+                     avance=[f.get('X', 0) for f in SPECIALE], charge=(1, 2)),
+}
+
+
 if __name__ == '__main__':
     anims = build_all()
     write_outputs(anims)

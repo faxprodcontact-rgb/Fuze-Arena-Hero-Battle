@@ -1293,6 +1293,14 @@ def dev_sheet(name, frames, k=3, per=10, box=None, path=None):
     sheet.save(path or os.path.join(BROUILLON, f'dev-{name}.png'))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(170, GROUND - 28), coupe=[None] * 4 + [157, 157, 150] + [None] * 4),
+    'speciale': dict(genre='sort', coup=7, cible=(WAVE[2][0] + OX, GROUND - 24),
+                     coupe=[None] * 5 + [153] * 6 + [150, 139] + [None] * 2, charge=(1, 3)),
+}
+
+
 if __name__ == '__main__':
     os.makedirs(BROUILLON, exist_ok=True)
     if len(sys.argv) > 1 and sys.argv[1] == 'decoupe':

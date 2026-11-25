@@ -1252,6 +1252,19 @@ def essai(folder):
     return anims
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Corps à corps, l'élan est cuit dans les images. `avance` reste au maximum tant qu'il est sur l'ennemi (attaque : la
+# piqûre et le retrait ; spéciale : les trois coups, le bond et le plongeon) : le jeu le garde collé à sa cible et les
+# petits écarts dessinés (le retrait, le bond) restent dans les images, comme dans le GIF.
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(205, 131), coupe=[None] * 4 + [180] * 3 + [None] * 3,
+                    avance=[0, 0, 16, 32, 34, 34, 18, 7, 0, 0]),
+    'speciale': dict(genre='melee', coup=12, cible=(225, 100),
+                     coupe=[None] * 4 + [198] * 10 + [188] * 3 + [None] * 2,
+                     avance=[0, 0, 0, 26] + [XS] * 10 + [30, 12, 0, 0, 0], charge=(1, 2)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

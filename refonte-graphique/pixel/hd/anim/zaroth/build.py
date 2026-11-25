@@ -1783,6 +1783,13 @@ def write_outputs(anims):
     return boxes
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='tir', tir=(5, 7), depuis=243, coup=7, cible=FOE),
+    'speciale': dict(genre='equipe', coup=8, charge=(1, 2)),
+}
+
+
 if __name__ == '__main__':
     anims = build_all()
     write_outputs(anims)

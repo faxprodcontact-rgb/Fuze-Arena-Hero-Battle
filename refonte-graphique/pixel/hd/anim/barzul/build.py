@@ -1432,6 +1432,17 @@ def zone(args):
         print(f'{y:4d} ' + ''.join(g[y, x0:x1 + 1]))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : la balle vole jusqu'à la vraie cible (dans le GIF elle sort du cadre, sans impact dessiné : la cible est
+# donc placée un peu après sa sortie, x = 330, pour garder sa vitesse ; la fumée, avant la colonne 205, reste au
+# pistolet). Spéciale : les boulets qui passent au-dessus de lui restent avec lui ; leur chute et les gerbes (à partir
+# de la colonne 180) sont posées sur chaque cible.
+JEU = {
+    'attaque': dict(genre='tir', tir=(4, 6), depuis=205, coup=6, cible=(330, 124)),
+    'speciale': dict(genre='sort', coup=11, cible=(ENEMY_X, GROUND - 50), coupe=180, charge=(1, 2)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

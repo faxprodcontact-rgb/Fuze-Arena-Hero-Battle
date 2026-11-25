@@ -1374,7 +1374,9 @@ def build_all():
         for i, spec in enumerate(specs):
             cv, back, obj, front, gback = rig_frame(spec)
             retouch(cv, RETOUCHES[name].get(i, []))
-            img = compose(cv, back, obj, front, spec.get('flash'), spec.get('tint'), spec.get('halo', 0), gback)
+            # appel par mots-clés (même image) : l'export vers le jeu (../jeu_export.py) reconnaît ainsi chaque calque
+            img = compose(cv, back, obj=obj, fx_front=front, flash=spec.get('flash'), tint=spec.get('tint'),
+                          halo=spec.get('halo', 0), glass=gback)
             if spec.get('shake'):
                 # l'impact : toute l'image tremble d'un pixel vers le bas (le sol a reçu la pyramide)
                 img = np.concatenate([np.zeros((spec['shake'], W, 4), np.uint8), img[:-spec['shake']]], axis=0)
@@ -1517,6 +1519,13 @@ def zone(args):
     print('     ' + ''.join(str(x % 10) for x in range(x0, x1 + 1)))
     for y in range(y0, y1 + 1):
         print(f'{y:4d} ' + ''.join(ORIG[y, x0:x1 + 1]))
+
+
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='tir', tir=(3, 6), depuis=149, coup=6, cible=FOE, coupe=226),
+    'speciale': dict(genre='equipe', coup=7, charge=(1, 6)),
+}
 
 
 if __name__ == '__main__':
