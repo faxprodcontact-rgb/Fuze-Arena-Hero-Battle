@@ -71,5 +71,8 @@
   cible et frappe (impact + dégâts jolis) ; à distance = le projectile va jusqu'à la vraie cible (même au fond en bas
   à droite) ; spéciales qui chargent = petit effet de lumière reconnaissable, sans excès. Tester tous les héros et
   monstres.
-- En cours : un essai sur quelques personnages (format d'export « jeu » des animations, combat dans les Outils de
-  test, GIF `pixel/sortie/combat-hd-essai.gif`), puis consigne `consignes/export-jeu.md` pour faire tous les autres.
+- Essai fait (25/11) sur Eldra, Jinn, Myrr, matelot, salamandre, sorcier-oni : export `anim/jeu_export.py` (dictionnaire
+  `JEU` ajouté à chaque build.py → `public/art/hd/<id>.webp` + `src/game/hd-meta.ts`), mise en scène
+  `src/game/hd-fight.ts`, scénario `src/game/hd-trial.ts`, Réglages → Outils de test → « Combat HD (essai) ». GIF
+  `pixel/sortie/combat-hd-essai.gif`. Pour les autres : consigne `consignes/export-jeu.md` (un agent peut en faire
+  plusieurs ; ajouter chacun au combat d'essai pour le voir).

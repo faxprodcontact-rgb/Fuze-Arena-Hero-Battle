@@ -607,7 +607,7 @@ export function claimFragments(defId: string): Hero | null {
 
 // ---------- Combats ----------
 
-export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss' | 'friend' | 'guildWar' | 'demo';
+export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss' | 'friend' | 'guildWar' | 'demo' | 'hdDemo';
 
 export interface BattleRequest {
   kind: BattleKind;
@@ -619,6 +619,8 @@ export interface BattleRequest {
   damageMode?: boolean;
   dungeon?: { kind: DungeonKind; level: number };
   opponentId?: string;
+  /** Combat d'essai HD : le dessin HD de certains combattants (id du combattant → id de la planche HD). */
+  hdArt?: Record<string, string>;
 }
 
 export interface BattleResult {
@@ -658,6 +660,24 @@ export function pixelDemoBattle(): BattleRequest {
     return { ...u, maxHp: u.maxHp * 6 };
   })];
   return { kind: 'demo', title: '', heroes, waves, seed: (Math.random() * 2 ** 31) >>> 0 };
+}
+
+/**
+ * Outil de test : le combat d'essai des personnages HD animés (refonte-graphique/pixel/hd/anim/jeu_export.py).
+ * Trois héros (corps à corps, archer, soigneuse) contre trois monstres (corps à corps, cracheur de feu, sorcier) ;
+ * les coups suivent un scénario (src/game/hd-trial.ts) pour montrer chaque attaque, sans récompense.
+ */
+export function hdTrialBattle(): BattleRequest {
+  const heroes = ([['mages-8', 0], ['mages-11', 2], ['assassins-9', 4]] as const).map(([defId, slot], i) =>
+    heroToUnit({ uid: 9100 + i, defId, stars: 5, level: 40 }, slot));
+  const foes = [['goblin', 0, 'water', 'mon-barzul-rapide'], ['wraith', 2, 'fire', 'mon-lenore-sorts'], ['archer', 4, 'fire', 'mon-kael-tireur']] as const;
+  const hdArt: Record<string, string> = {};
+  const waves = [foes.map(([m, slot, e, art], i) => {
+    const u = monsterToUnit(m, slot, e, 12, `hd-${i}`);
+    hdArt[u.id] = art;
+    return { ...u, maxHp: u.maxHp * 6 };
+  })];
+  return { kind: 'hdDemo', title: '', heroes, waves, seed: 1, hdArt };
 }
 
 export function towerBattle(): BattleRequest {
@@ -854,7 +874,7 @@ export function idleSetup(): { heroes: UnitInit[]; waves: UnitInit[][] } {
 
 /** Le résultat d'un combat : récompenses selon le mode. */
 export function finishBattle(req: BattleRequest, res: BattleResult): Gain {
-  if (req.kind === 'demo') return emptyGain();
+  if (req.kind === 'demo' || req.kind === 'hdDemo') return emptyGain();
   return update((s) => {
     const gain = emptyGain();
     const rng = nextRng(s);

@@ -2,7 +2,7 @@
 // Le moteur (src/core/battle) calcule ; ces scènes animent ce qu'il raconte.
 import Phaser from 'phaser';
 import type { Battle } from '../core/battle/engine';
-import { ENERGY_MAX, TICK_MS, type BattleEvent, type Hit, type Slot, type Unit } from '../core/battle/types';
+import { ENERGY_MAX, TICK_MS, type BattleEvent, type Hit, type SkillDef, type Slot, type Unit } from '../core/battle/types';
 import { HEROES } from '../core/data/heroes';
 import type { Element } from '../core/types';
 import { ELEMENT_COLOR, artUrl, cardUrl, hasArt, heroCanvas, isPixel, monsterCanvas, pixelUrl } from './art';
@@ -17,6 +17,8 @@ import { t } from './i18n';
 import { themeColor } from './theme';
 import { HERO_X } from './scenes';
 import { battleLook, monsterArtId, type Look } from './look';
+import { HdActor, hasHd, hdChar, hdStrike, loadHd, type HdHost } from './hd-fight';
+import { HD_ANIM } from './hd-meta';
 
 export const W = 720;
 /** La police des combats (la même que les titres des menus) : une seule graisse, ne jamais demander « bold ». */
@@ -85,6 +87,8 @@ export interface View {
   ph: number;
   /** Pixel art : la planche respire et cligne déjà ; pas d'écrasement ni de balancement en plus. */
   px?: boolean;
+  /** Personnage HD animé (essai) : il joue ses propres animations (hd-fight.ts). */
+  hd?: HdActor;
 }
 
 /**
@@ -162,9 +166,16 @@ export abstract class FightScene extends Phaser.Scene {
   private arenaBottom = 0;
   /** Terrain et famille de monstres de ce combat. */
   protected look: Look = battleLook('arena', '');
+  /** Combat d'essai HD : les personnages qui ont une planche HD (hd-meta.ts) jouent leurs vraies animations. */
+  protected hdMode = false;
+  /** Combat joué d'après un scénario (essai HD) : la suite des coups vient de là, pas des règles. */
+  protected script?: () => BattleEvent[];
+  /** Durée du coup qui vient d'être lancé, quand elle n'est pas la durée habituelle (ms réelles). */
+  private turnMs?: number;
+  private lastNow = 0;
 
   /** Les combattants à charger avant le combat (les autres arrivent plus tard, avec l'ancien dessin en attendant). */
-  protected abstract preloadUnits(): { defId: string; element: string }[];
+  protected abstract preloadUnits(): { id?: string; defId: string; element: string }[];
 
   /** Le haut du sol et le bas du terrain : chaque écran les fixe (le décor est dessiné pour cette place). */
   protected arenaBox(): { groundTop: number; bottom: number } {
@@ -208,6 +219,11 @@ export abstract class FightScene extends Phaser.Scene {
     });
     for (const u of this.preloadUnits()) {
       const id = this.charId(u);
+      if (this.hdMode && hasHd(id)) {
+        loadHd(this, id, u.element as Element);
+        if (HERO_IDS.has(u.defId) && !this.textures.exists(`c-${id}`)) this.load.image(`c-${id}`, cardUrl(id));
+        continue;
+      }
       if (isPixel(id)) {
         // pixel art : une planche de 8 images (respiration, clignement), à la place du dessin découpé
         if (!this.textures.exists(`x-${id}`)) this.load.spritesheet(`x-${id}`, pixelUrl(id), { frameWidth: PIXEL.cw * PIXEL.up, frameHeight: PIXEL.ch * PIXEL.up });
@@ -224,7 +240,7 @@ export abstract class FightScene extends Phaser.Scene {
   }
 
   /** Le dessin d'un combattant : un héros, ou le monstre de la famille de ce décor. */
-  protected charId(u: { defId: string; element: string }): string {
+  protected charId(u: { id?: string; defId: string; element: string }): string {
     return HERO_IDS.has(u.defId) ? u.defId : monsterArtId(u.defId, u.element as Element, this.look);
   }
 
@@ -317,7 +333,16 @@ export abstract class FightScene extends Phaser.Scene {
     const barW = unit.boss ? 130 : 86;
     const rig = RIGS[id];
     const boost = unit.boss ? (this.bigBoss ? 1.45 : 1.12) : 1;
-    if (isPixel(id) && this.textures.exists(`x-${id}`)) {
+    let hd: HdActor | undefined;
+    if (this.hdMode && hasHd(id) && this.textures.exists(`hd-${id}`)) {
+      // personnage HD : un pixel du dessin = `scale` unités ; les pieds sur la ligne de sol
+      const ch = hdChar(id), k = HD_ANIM.scale * boost;
+      fig.setPosition(0, FEET);
+      hd = new HdActor(this, fig, id, k, unit.element);
+      imgs.push(hd.img);
+      shadow = this.add.ellipse(0, FEET, Math.min(160, (ch.sol[1]! - ch.sol[0]!) * k * 1.1), 20, 0x000000, 0.3);
+      barY = FEET - Math.min(ch.top * k, 126 * boost) - 6;
+    } else if (isPixel(id) && this.textures.exists(`x-${id}`)) {
       // pixel art : les pieds (fx, fy de la case) sur la ligne de sol ; un pixel mesure `scale` unités (la taille des anciens dessins)
       const [top, left, right, scale] = PIXEL.chars[id as keyof typeof PIXEL.chars];
       const k = scale * boost, key = `x-${id}`;
@@ -378,7 +403,7 @@ export abstract class FightScene extends Phaser.Scene {
     fig.setScale(hero ? 1 : -1, 1);
     const bars = this.add.graphics();
     body.add([shadow, fig, bars]);
-    this.views.set(unit.id, { unit, body, sprite: fig, imgs, parts, bars, homeX: x, homeY: body.y, barY, barW, hp: unit.hp, sx: fig.scaleX, sy: 1, ph: Math.random() * 6.28, px: isPixel(id) && this.textures.exists(`x-${id}`) });
+    this.views.set(unit.id, { unit, body, sprite: fig, imgs, parts, bars, homeX: x, homeY: body.y, barY, barW, hp: unit.hp, sx: fig.scaleX, sy: 1, ph: Math.random() * 6.28, px: !!hd || (isPixel(id) && this.textures.exists(`x-${id}`)), hd });
     if (enter) this.tweens.add({ targets: body, x, duration: 450 / speed, ease: 'Back.easeOut' });
   }
 
@@ -408,6 +433,9 @@ export abstract class FightScene extends Phaser.Scene {
   protected syncUnits() {
     // quand le décor s'assombrit (compétence), le premier plan s'efface : le décor assombri est déjà dessous
     const fa = this.veil?.active ? 1 - Math.min(1, this.veil.fillAlpha * 2.2) : 1;
+    const dt = this.lastNow ? Math.min(100, this.time.now - this.lastNow) : 0;
+    this.lastNow = this.time.now;
+    for (const v of this.views.values()) v.hd?.update(dt);
     for (const o of this.fg) (o as unknown as Phaser.GameObjects.Components.Alpha).setAlpha(fa);
     for (const v of this.views.values()) {
       const u = v.unit;
@@ -542,12 +570,21 @@ export abstract class FightScene extends Phaser.Scene {
     }
     while (this.queue.length) {
       const q = this.queue.shift()!;
+      this.turnMs = undefined;
       this.handle([q.e], q.speed);
       const ms = q.e.type === 'attack' ? TURN_MS.attack : q.e.type === 'skill' ? TURN_MS.skill : q.e.type === 'passive' ? TURN_MS.passive : q.e.type === 'wave' ? TURN_MS.wave : 0;
+      if (this.turnMs !== undefined) {
+        this.busy = this.turnMs;
+        return;
+      }
       if (ms) {
         this.busy = ms / q.speed;
         return;
       }
+    }
+    if (this.script) {
+      for (const e of this.script()) this.queue.push({ e, speed });
+      return;
     }
     // file vide : les barres de vie rattrapent les règles (brûlures, etc.), puis les règles avancent
     for (const v of this.views.values()) v.hp = v.unit.hp;
@@ -567,9 +604,11 @@ export abstract class FightScene extends Phaser.Scene {
     for (const e of events) {
       switch (e.type) {
         case 'attack':
+          if (this.hdStrike(e.source, 'attaque', [e.hit], speed)) break;
           this.animateAttack(e.source, e.hit, speed);
           break;
         case 'skill':
+          if (this.hdStrike(e.source, 'speciale', e.hits, speed, e.skill)) break;
           this.animateSkill(e.source, e.skill.id, e.hits, speed);
           break;
         case 'passive':
@@ -844,6 +883,36 @@ export abstract class FightScene extends Phaser.Scene {
     this.time.delayedCall(170 * t, () => this.sparks(to.x, to.y, color, 6, 30, t));
   }
 
+  /** Ce que la mise en scène HD emprunte à la scène (hd-fight.ts). */
+  private hdHost?: HdHost;
+  /**
+   * Coup d'un personnage HD (combat d'essai) : sa vraie animation, le déplacement jusqu'à la cible, le projectile
+   * jusqu'à la vraie case, l'impact sur la cible. Renvoie faux si ce combattant n'a pas d'animation HD.
+   */
+  private hdStrike(sourceId: string, which: 'attaque' | 'speciale', hits: Hit[], speed: number, skill?: SkillDef): boolean {
+    const src = this.views.get(sourceId);
+    if (!src?.hd) return false;
+    this.hdHost ??= {
+      view: (id) => this.views.get(id),
+      allies: (side) => [...this.views.values()].filter((v) => v.unit.side === side),
+      showHit: (h, big) => this.showHit(h, big),
+      recoil: (v, dir, px, t) => this.recoil(v as View, dir, px, t),
+      flash: (x, y, color, r, t) => this.flashAt(x, y, color, r, t),
+      feetY: FEET,
+    };
+    if (which === 'speciale') {
+      // le nom de la compétence au-dessus du lanceur, le décor s'assombrit un peu le temps du coup
+      const hero = src.unit.side === 'hero';
+      const name = this.text(src.body.x, src.body.y + src.barY - 34, this.skillName(skill?.id ?? ''), 28, hero ? '#ffe27a' : '#ff8a8a').setDepth(2000);
+      this.tweens.add({ targets: name, y: name.y - 30, alpha: 0, delay: 650 / speed, duration: 450 / speed, onComplete: () => name.destroy() });
+    }
+    src.act = undefined;
+    const ms = hdStrike(this, this.hdHost, src, which, hits, speed, skill);
+    if (which === 'speciale') this.dim(Math.max(300, ms - 300));
+    this.turnMs = ms + 260 / speed;
+    return true;
+  }
+
   private animateAttack(sourceId: string, hit: Hit, speed: number) {
     const src = this.views.get(sourceId);
     const dst = this.views.get(hit.target);
@@ -1061,6 +1130,14 @@ export abstract class FightScene extends Phaser.Scene {
     }
     if (hit.dot) color = hit.kind === 'heal' ? '#5dff9a' : STATUS_COLOR[hit.status ?? 'burn'] ?? color;
     const n = this.text(x, y, hit.crit ? `${label}!` : label, hit.dot ? 20 : (big ? 34 : 26) + (hit.crit ? 8 : 0), color).setDepth(2000);
+    if (this.hdMode && !hit.dot) {
+      // essai HD : le chiffre jaillit (gros, puis il se pose), tient un instant, puis monte et s'efface
+      const y0 = v.body.y + v.barY - 8;
+      n.setPosition(x, y0).setScale(hit.crit ? 2 : 1.7);
+      this.tweens.add({ targets: n, scale: 1, duration: 200, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: n, y: y0 - 46, alpha: 0, delay: 420, duration: 520, ease: 'Quad.easeIn', onComplete: () => n.destroy() });
+      return;
+    }
     this.tweens.add({ targets: n, y: y - 60, alpha: 0, duration: 750, ease: 'Quad.easeOut', onComplete: () => n.destroy() });
   }
 

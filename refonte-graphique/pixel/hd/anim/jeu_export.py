@@ -259,7 +259,7 @@ def export(name, voir=None):
             a['haut'] = int(round(sol[1] - cible[1]))         # hauteur du coup au-dessus du sol
             if any(c is not None for c in p['cible']):
                 a['cible'] = [sheet.add(img, foot) if img is not None else -1 for img in p['cible']]
-        if p['genre'] in ('melee', 'tir', 'sort'):
+        if p['genre'] != 'pose':
             a['coup'] = int(jeu.get('coup', 0))
         if jeu.get('charge'):
             a['charge'] = list(jeu['charge'])
@@ -424,14 +424,22 @@ def main(argv):
         i = argv.index('--voir')
         voir = argv[i + 1]
         argv = argv[:i] + argv[i + 2:]
-    m = read_meta()
+    fx = None
     if '--effets' in argv:
         argv = [a for a in argv if a != '--effets']
-        m['fx'] = export_effets()
-    for name in argv:
-        cid, meta = export(name, voir)
-        m['chars'][cid] = meta
-    write_meta(m)
+        fx = export_effets()
+    done = [export(name, voir) for name in argv]
+    # plusieurs agents peuvent exporter en même temps : on relit hd-meta.ts sous verrou juste avant de l'écrire
+    import fcntl
+    import tempfile
+    with open(os.path.join(tempfile.gettempdir(), 'fuze-hd-meta.lock'), 'w') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        m = read_meta()
+        if fx is not None:
+            m['fx'] = fx
+        for cid, meta in done:
+            m['chars'][cid] = meta
+        write_meta(m)
 
 
 if __name__ == '__main__':

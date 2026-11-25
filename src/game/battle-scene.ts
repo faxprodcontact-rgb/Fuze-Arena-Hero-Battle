@@ -6,6 +6,7 @@ import { ENERGY_MAX, TICK_MS, type Slot, type Unit } from '../core/battle/types'
 import { C, FONT, FightScene, W, applyTheme } from './fight-view';
 import { HUD_BUTTONS, loadHudArt } from './hud-art';
 import { t } from './i18n';
+import { hdTrialScript } from './hd-trial';
 import { battleLook } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
 import { getState } from './state/store';
@@ -52,6 +53,13 @@ export class BattleScene extends FightScene {
     this.ended = false;
     this.bigBoss = !!data.request.damageMode;
     this.look = battleLook(data.request.kind, data.request.title, data.request.dungeon?.kind);
+    this.hdMode = data.request.kind === 'hdDemo';
+    this.script = undefined;
+  }
+
+  /** Combat d'essai HD : certains monstres prennent leur dessin HD (voir hdTrialBattle). */
+  protected charId(u: { id?: string; defId: string; element: string }): string {
+    return (u.id && this.req.hdArt?.[u.id]) || super.charId(u);
   }
 
   protected preloadUnits() {
@@ -94,6 +102,7 @@ export class BattleScene extends FightScene {
   create() {
     applyTheme();
     this.battle = new Battle({ heroes: this.req.heroes, waves: this.req.waves, seed: this.req.seed, auto: getState().auto });
+    if (this.hdMode) this.script = hdTrialScript(this.battle);
     // disposition : les boutons et le panneau des héros sont ancrés en bas, le décor prend tout le reste
     const H = this.scale.height;
     const { groundTop, bottom: arenaBottom } = this.arenaBox();
