@@ -370,7 +370,7 @@ def leg_weight():
 W_LEG = leg_weight()
 W_NECK = 1 - smooth(DIST_HEAD / 64.0)          # 1 contre la tête, 0 à 64 pixels de la tête
 # le cou ne tire pas la poitrine trop bas, ni le dos : il agit surtout devant le garrot et au-dessus du poitrail
-W_NECK *= smooth((GX - 120) / 40.0) * (1 - smooth((GY - 122) / 26.0))
+W_NECK *= smooth((GX - 120) / 40.0) * (1 - smooth((GY - 118) / 24.0))
 W_TAIL = smooth((GY - 150) / 70.0) * (1 - smooth((GX - 40) / 22.0))
 
 
