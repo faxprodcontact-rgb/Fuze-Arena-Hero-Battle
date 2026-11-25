@@ -934,19 +934,24 @@ def broken_ground(cv, level=1.0):
 
 
 def venom_crown(cv, level):
-    """la couronne de venin qui gicle : des jets courbes qui montent et retombent, une goutte au bout de chacun"""
-    c = np.array([FOE[0] + 2, GROUND - 6], float)
-    for i, (ang, L) in enumerate(((158, 30), (128, 40), (100, 46), (74, 44), (46, 38), (20, 28))):
+    """la couronne de venin qui gicle : level 0 = un dôme de bouffées vertes (les pétales collés au coeur) ;
+    1 = les pétales s'envolent en grosses gouttes ; 2 = les gouttes retombent en s'étirant"""
+    c = np.array([FOE[0] + 2, GROUND - 8], float)
+    petals = (162, 134, 108, 82, 56, 26)
+    if level == 0:
+        puff(cv, c, 7.0, 'lHIJL')
+    for i, ang in enumerate(petals):
         a = math.radians(ang)
-        tip = c + np.array([math.cos(a) * L, -math.sin(a) * L])
-        ctrl = c + np.array([math.cos(a) * L * 0.5, -math.sin(a) * L * 0.9 - 6])
-        s0 = 0.25 if level >= 1 else 0.0
-        pts = bezier(c, ctrl, ctrl + (tip - ctrl) * 0.4, tip, 24)
-        n = len(pts)
-        pts = pts[int(s0 * n):int((0.8 if level == 0 else 1.0) * n)]
-        stroke(cv, pts, [0.8 + 3.4 * math.sin(math.pi * j / max(len(pts) - 1, 1)) for j in range(len(pts))], 'HIJL')
-        if level >= 1:
-            drop(cv, tip[0] - 1, tip[1] + (7 if level == 2 else 0), 3 if i % 2 else 0, flip=ang > 90)
+        u = np.array([math.cos(a), -math.sin(a)])
+        if level == 0:
+            puff(cv, c + u * 9, 3.6 - 0.3 * (i % 2), 'HIJL')
+        elif level == 1:
+            p = c + u * (19 + 4 * (i % 2)) + np.array([0, -3])
+            puff(cv, p, 2.8 - 0.4 * (i % 2), 'HIJL')
+            puff(cv, c + u * 11, 1.6, 'IJL')
+        else:
+            p = c + u * (25 + 4 * (i % 2)) + np.array([0, 7])
+            drop(cv, p[0] - 1, p[1] - 1, 3 if i % 2 else 0, flip=ang > 90)
 
 
 def puddle(cv, level, fume=0.0):

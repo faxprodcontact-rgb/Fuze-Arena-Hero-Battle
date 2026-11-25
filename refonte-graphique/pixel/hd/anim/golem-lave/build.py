@@ -559,10 +559,12 @@ def draw_club_arm(S, a_up, a_fore, phi, heat=0, stretch=1.0, smear_from=None):
         crack = (right >= 0 and right != L0) or (down >= 0 and down != L0)
         if crack:
             # fêlure : sombre ; sur la massue, plus on descend (vers le sol), plus elle rougeoit
+            # (une fêlure entière d'un ton : rouge sombre entre certaines plaques du bas de la massue)
             ch = '1'
             if part[y, x] == 3:
                 q = rot(np.array([x + 0.5, y + 0.5]) - Wr, -turn)
-                if q[1] > 17 and (x + y) % 3:
+                other = right if (right >= 0 and right != L0) else down
+                if q[1] > 15 and (L0 + other) % 3 == 0:
                     ch = 'r'
             lay[y, x] = ch
             continue

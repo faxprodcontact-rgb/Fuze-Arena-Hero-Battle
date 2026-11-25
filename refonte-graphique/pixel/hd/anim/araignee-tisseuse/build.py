@@ -974,23 +974,25 @@ def fx_net(stage, flash=False):
         cx, cy = FOE_C
         if stage == 0:
             blob(back, [(cx, cy, 11.0), (cx + 7, cy - 7, 5.5), (cx - 8, cy + 5, 5.0), (cx - 6, cy - 8, 4.0)], 'llj4')
-            for (p0, m, e) in (((cx + 5, cy - 4), (6, -6), (12, -4)), ((cx - 5, cy - 4), (-6, -6), (-12, -3)),
-                               ((cx + 5, cy + 4), (6, 3), (11, 9)), ((cx - 5, cy + 4), (-6, 3), (-10, 10))):
+            for (p0, m, e) in (((cx + 6, cy - 3), (7, -5), (13, -7)), ((cx - 6, cy - 5), (-5, -7), (-9, -11)),
+                               ((cx + 4, cy + 6), (5, 5), (8, 13)), ((cx - 7, cy + 3), (-7, 2), (-13, 7)),
+                               ((cx + 1, cy - 8), (2, -6), (6, -12))):
                 p0 = np.array(p0, float)
                 p3 = p0 + np.array(e, float)
                 string(front, bezier(p0, p0 + np.array(m, float), p3 + np.array([0, -2]), p3, 24), 2.4)
-            blob(front, [(cx, cy, 7.0), (cx + 4, cy - 4, 4.4), (cx - 4, cy + 4, 4.4), (cx + 4, cy + 4, 3.6),
-                         (cx - 4, cy - 4, 3.6)])
+                puff(front, p3, 1.4, '432')
+            blob(front, [(cx, cy, 7.5), (cx + 5, cy - 3, 4.6), (cx - 5, cy + 3, 4.8), (cx + 2, cy + 5, 4.0),
+                         (cx - 3, cy - 5, 4.2)])
             for k, (dx, dy) in enumerate(((-15, -12), (13, -14), (16, 6), (-16, 8))):
                 chunk(front, cx + dx, cy + dy, k)
             return
         hub = (cx, cy - (4 if stage == 1 else 0))
-        R, droop = {1: (34, 0.0), 2: (30, 0.6), 3: (30, 0.8), 4: (30, 1.0)}[stage]
+        R, droop = {1: (34, 0.0), 2: (30, 0.6), 3: (30, 0.8), 4: (28, 2.6)}[stage]
         rad, fest, ends = web(hub, R, droop)
         tone = 'l3' if flash else ('32' if stage == 4 else '42')
         if stage == 4:                                 # elle se défait : il n'en reste que des bouts
-            rad = [p[:len(p) // 2] for p in rad[::2]]
-            fest = fest[::3]
+            rad = [p[len(p) // 3:] for p in rad[1::2]]
+            fest = [p for i, p in enumerate(fest) if i % 8 in (1, 4, 6) and i < 24]
         for pts in fest:
             thread(front, pts, tone)
         for pts in rad:

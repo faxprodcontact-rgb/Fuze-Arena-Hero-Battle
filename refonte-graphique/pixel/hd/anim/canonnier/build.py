@@ -950,7 +950,7 @@ ATTAQUE = [
 # ---------------------------------------------------------------- 3) l'attaque spéciale : « Ricochet »
 # Il se ramasse davantage et abaisse son canon vers le sol, devant lui ; l'eau de mer monte du sol, tourne autour de la
 # bouche du canon en un anneau qui se resserre (des gouttes aspirées vers la bouche), la mèche grésille : il tient.
-# BOUM : énorme éclair, l'anneau d'eau éclate en gerbe, le monstre blanchit un instant ; le recul, plus fort, le
+# BOUM : énorme éclair, l'anneau d'eau éclate en gerbe ; le recul, plus fort, le
 # rejette loin sur sa jambe de bois (poussière aux deux pieds). Le boulet, enveloppé d'eau (une traîne d'eau et
 # d'écume qui ondule autour de sa course), rase le sol et RICOCHE trois fois vers la droite : à chaque rebond une gerbe
 # d'eau en couronne jaillit, de plus en plus grosse ; la troisième, sur le premier rang ennemi, est le gros coup
@@ -1154,8 +1154,8 @@ SPECIALE = [
     dict(s=1, lean=1, head=(0, 1), sq=1, tilt=-1, t=1, sh=1, fx=[fx_gather(0)], ms=110),
     dict(s=2, lean=2, head=(0, 0), sq=1, tilt=-2, t=1, sh=1, fx=[fx_gather(1)], ms=120),
     dict(s=2, lean=2, head=(0, 0), sq=1, tilt=-2, t=0, sh=0, fx=[fx_gather(2), fx_vent(2)], ms=240),
-    # 3 : BOUM ! l'anneau éclate, le monstre blanchit un instant, le recul commence
-    dict(s=1, lean=-3, head=(1, 0), sq=1, tilt=1, t=1, sh=1, flash=18, fx=[fx_burst(0)], ms=60),
+    # 3 : BOUM ! l'anneau éclate, le recul commence
+    dict(s=1, lean=-3, head=(1, 0), sq=1, tilt=1, t=1, sh=1, fx=[fx_burst(0)], ms=60),
     # 4-8 : le recul le rejette loin ; le boulet rase le sol et ricoche ; il revient lourdement
     dict(s=0, lean=-6, head=(0, 0), tilt=3, t=2, sh=2,
          fx=[fx_smoke('speciale', 0, 1.55, 1.85), fx_burst(1), fx_dust(0, 1.2)], ms=110),

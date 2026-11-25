@@ -851,16 +851,17 @@ def fx_spit(t):
         hx, hy = ctx.f.get('head', (0, 0))
         m = MOUTH + np.array([cx + hx + OX, cy + hy + OY])
         e = X_C + np.array([2.0, -4.0])
-        p = m + (e - m) * t + np.array([0, -14 * 4 * t * (1 - t)])
-        v = (e - m) + np.array([0, -14 * 4 * (1 - 2 * t)])
+        p = m + (e - m) * t + np.array([0, -16 * 4 * t * (1 - t)])
+        v = (e - m) + np.array([0, -16 * 4 * (1 - 2 * t)])
         if t <= 0.05:
-            pop(front, m + np.array([5, 0]), 3.0, facing=0, tones='1223')
+            pop(front, m + np.array([5, -1]), 3.6, facing=0, tones='11234')
+            drop(front, m + np.array([12, -3]), 2.0, (1, -0.4), tones='1234')
             return
-        drop(front, p, 3.2, v, tones='12234')
+        drop(front, p, 3.8, v, tones='12234')
         # deux gouttes qui suivent la boule
-        for k, r in ((0.10, 1.3), (0.18, 0.9)):
+        for k, r in ((0.09, 1.6), (0.17, 1.1)):
             tt = max(0.0, t - k)
-            q = m + (e - m) * tt + np.array([0, -14 * 4 * tt * (1 - tt)])
+            q = m + (e - m) * tt + np.array([0, -16 * 4 * tt * (1 - tt)])
             drop(front, q, r, v, tones='234')
     return f
 
@@ -947,21 +948,23 @@ SPECIALE = [
     dict(s=2, lean=7, wave=0.4, base=19, front=27, head=(1, -1), tg=2, arm=3, lift=3, phi=60,
          fx=[fx_xburst(1)], **_CO, ms=150),
     # il rebondit en arrière sur sa queue… et crache
-    dict(s=-2, lean=-2, wave=-1.4, base=9, front=12, head=(-1, 1), tg=0, near=(0, -1), arm=0, lift=1, phi=20,
-         hook=2, fx=[fx_xburst(2), fx_land_dust(0, at=-6)], **_CO, ms=70),
-    dict(s=0, lean=3, wave=0.6, base=8, front=10, head=(2, 0), tg=0, arm=1, phi=4, hook=1,
-         fx=[fx_xburst(3), fx_spit(0.0)], **_CO, ms=60),
-    dict(s=0, lean=3, wave=0.6, base=8, front=10, head=(2, 0), tg=0, arm=1, phi=0, hook=0,
-         fx=[fx_spit(0.45)], venom=True, ms=50),
-    dict(s=0, lean=2, wave=0.4, base=8, front=10, head=(1, 0), tg=1, arm=1, phi=-4,
-         fx=[fx_spit(0.92)], venom=True, ms=50),
-    dict(s=0, lean=1, wave=0.0, base=8, front=10, head=(1, 0), tg=1, arm=1, phi=-4,
+    dict(s=-2, lean=-3, wave=-1.4, base=5, front=7, head=(-1, 1), tg=0, near=(0, -1), arm=0, lift=1, phi=20,
+         hook=2, fx=[fx_xburst(2), fx_land_dust(0, at=-4)], **_CO, ms=70),
+    dict(s=-1, lean=-3, wave=-1.0, base=3, front=4, head=(-1, 1), tg=0, arm=0, phi=10, hook=2,
+         fx=[fx_xburst(3), fx_land_dust(1, at=-4)], **_CO, ms=70),
+    dict(s=1, lean=3, wave=0.8, base=3, front=4, head=(2, -1), tg=0, arm=1, phi=4, hook=1,
+         fx=[fx_spit(0.0)], **_CO, ms=60),
+    dict(s=1, lean=3, wave=0.6, base=3, front=4, head=(2, 0), tg=0, arm=1, phi=0, hook=0,
+         fx=[fx_spit(0.35)], venom=True, ms=50),
+    dict(s=0, lean=2, wave=0.4, base=3, front=4, head=(1, 0), tg=1, arm=1, phi=-4,
+         fx=[fx_spit(0.72)], venom=True, ms=50),
+    dict(s=0, lean=1, wave=0.0, base=3, front=4, head=(1, 0), tg=1, arm=1, phi=-4,
          fx=[fx_splash(0)], venom=True, ms=60),
-    dict(s=0, lean=1, wave=-0.3, base=8, front=10, tg=1, arm=1, phi=-4, fx=[fx_splash(1)], venom=True, ms=90),
-    dict(s=0, lean=0, wave=-0.6, base=4, front=4, tg=2, arm=0, phi=-2, hook=1, fx=[fx_splash(2)], ms=90),
+    dict(s=0, lean=1, wave=-0.3, base=2, front=3, tg=1, arm=1, phi=-4, fx=[fx_splash(1)], venom=True, ms=90),
+    dict(s=0, lean=0, wave=-0.6, base=1, front=1, tg=2, arm=0, phi=-2, hook=1, fx=[fx_splash(2)], ms=90),
     # retour à sa place
-    dict(s=-1, lean=-1, wave=-0.6, base=1, front=0, tg=1, hook=1, fx=[fx_splash(3), fx_land_dust(0)], ms=90),
-    dict(s=0, lean=0, wave=-0.2, tg=0, fx=[fx_splash(4), fx_land_dust(1)], ms=100),
+    dict(s=-1, lean=-1, wave=-0.6, tg=1, hook=1, fx=[fx_splash(3)], ms=90),
+    dict(s=0, lean=0, wave=-0.2, tg=0, fx=[fx_splash(4)], ms=100),
     dict(_P0, fx=[fx_splash(5)], ms=120),
 ]
 

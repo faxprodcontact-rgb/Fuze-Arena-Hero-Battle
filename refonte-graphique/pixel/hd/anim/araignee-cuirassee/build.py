@@ -990,7 +990,7 @@ F2_SLAM = [(104.5, 69), (124, 54), (140, 88), (144, 116)]
 
 # l'onde : les grappes de dalles et de cristaux, le long du sol (x en grille), et leur moment (image où elles sont
 # au plus haut) ; chaque grappe : (x, image du sommet, cristal, taille)
-WAVE = [(152, 6, 1, 0.8), (176, 7, 0, 1.0), (200, 8, 2, 0.95), (224, 9, 0, 1.05), (248, 10, 1, 0.9)]
+WAVE = [(150, 5, 1, 1.0), (176, 6, 0, 1.3), (204, 7, 2, 1.45), (232, 8, 0, 1.35), (260, 9, 1, 1.2)]
 
 
 def prism(cv, x, h, w, lean, sink=0.0, cut=0.0):
@@ -1068,7 +1068,7 @@ def fx_wave(frame):
             elif dt == 0:
                 p, cr_ = 1.0, 0.0
             else:
-                p, cr_ = 1.0, min(1.0, 0.45 * dt)
+                p, cr_ = 1.0, min(1.0, 0.3 * dt - 0.05)
             cluster(front, X, p, cr_, size, cr, seed=40 + i)
         # la fissure court devant l'onde
         reach = max([x for (x, peak, _, _) in WAVE if peak - 1 <= frame] + [x_first - 14])

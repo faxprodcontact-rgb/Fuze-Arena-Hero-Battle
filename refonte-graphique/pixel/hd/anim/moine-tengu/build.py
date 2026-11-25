@@ -117,9 +117,7 @@ P['poing'] = take(filled & isin(CORPS, SKIN) & (XX >= 16) & (XX <= 30) & (YY >= 
 # l'avant-bras nu (du poing au coude, qui descend vers la ceinture) et la manche retroussée (le gros bourrelet ivoire)
 P['avantbras'] = take(filled & isin(CORPS, SKIN) & (XX >= 24) & (XX <= 43) & (YY >= 54) & (YY <= 72)
                       & ~((YY >= 69) & (XX >= 41)))
-_sleeve_edge = 50
-P['manche'] = take(filled & isin(CORPS, '6789') & (XX >= 26) & (XX <= _sleeve_edge) & (YY >= 38) & (YY <= 68)
-                   & (XX + 0 * YY <= np.where(YY >= 61, 41 + (68 - YY) * 1, _sleeve_edge)))
+P['manche'] = take(filled & isin(CORPS, '6789') & (XX >= 26) & (XX <= 50) & (YY >= 38) & (YY <= 63))
 # les pans de la ceinture (deux bandes rouges qui pendent sur le hakama, x 44 à 50)
 P['pans'] = take(filled & isin(CORPS, SKIN) & (XX >= 44) & (XX <= 50) & (YY >= 73) & (YY <= 84))
 # les deux ailes repliées (noir corbeau) : la proche à gauche (derrière l'épaule et la hampe), la lointaine à droite
