@@ -984,11 +984,11 @@ def fx_beat(i):
     def f(back, front, ctx):
         cx, cy = g2c(*CHEST_HIT)
         side = -1 if i % 2 == 0 else 1          # le poing proche frappe par la gauche, le lointain par la droite
-        pop(front, (cx + side * 4, cy), 5 + i * 0.6, facing=0, tones='wxyz')
+        pop(front, (cx + side * 4, cy), 6 + i * 0.8, facing=0, tones='wxyz')
         for j in range(i + 1):                  # les croissants des coups précédents ont avancé
             age = i - j
-            r = 10 + age * 9
-            crescent(front, (cx + 8 + age * 16, cy), r, 0, span=100 - age * 12, w=max(1.4, 3.6 - age * 0.8),
+            r = 13 + age * 11
+            crescent(front, (cx + 10 + age * 20, cy), r, 0, span=104 - age * 12, w=max(2.2, 5.0 - age * 0.9),
                      tones='wxyz' if age == 0 else 'xyz' if age == 1 else 'yzv')
         if i >= 2:
             leaf(front, cx + 46 + i * 6, cy - 18 + i * 3, i)
@@ -999,10 +999,10 @@ def fx_raise(back, front, ctx):
     """les poings levés : le vent s'enroule autour, les feuilles montent, la poussière est aspirée"""
     for (fx_, fy_, cw) in ((36, 2, False), (102, 0, True)):
         cx, cy = g2c(fx_, fy_)
-        curl(back, (cx, cy + 4), 17, 230 if not cw else -50, turn=300, w=3.6, tones='wxyzv', cw=cw)
-        curl(front, (cx + (-10 if not cw else 10), cy + 26), 9, 90, turn=240, w=2.4, tones='xyzv', cw=not cw)
-    gust(back, g2c(10, 110), g2c(0, 80), g2c(10, 40), g2c(26, 14), 4.0, tones='xyzv', curl_r=6, up=False)
-    gust(back, g2c(130, 112), g2c(144, 80), g2c(132, 40), g2c(116, 14), 4.0, tones='xyzv', curl_r=6, up=True)
+        curl(back, (cx, cy + 4), 18, 230 if not cw else -50, turn=300, w=5.0, tones='wxyzv', cw=cw)
+        curl(front, (cx + (-12 if not cw else 12), cy + 28), 9, 90, turn=240, w=3.2, tones='xyzv', cw=not cw)
+    gust(back, g2c(12, 112), g2c(-4, 84), g2c(4, 44), g2c(22, 22), 8.0, tones='wxyzv', curl_r=7, up=False)
+    gust(back, g2c(128, 112), g2c(146, 84), g2c(138, 44), g2c(120, 22), 8.0, tones='wxyzv', curl_r=7, up=True)
     for (x, y, k) in ((14, 60, 0), (128, 54, 1), (60, 6, 2), (140, 92, 0), (2, 92, 1)):
         leaf(front, *g2c(x, y), k=k)
     for x in (30, 70, 108):
@@ -1023,42 +1023,47 @@ SLAM = (98, 114)                       # là où les deux poings frappent le sol
 
 def fx_slam(back, front, ctx):
     cx, cy = g2c(*SLAM)
-    pop(front, (cx + 30, GROUND - 6), 11, facing=0, tones='wwxyz')
-    pop(back, (cx - 4, GROUND - 8), 13, facing=90, tones='wxyz')
-    cloud(front, (cx - 40, GROUND - 3), 7.0, seed=31)
-    cloud(front, (cx + 44, GROUND - 3), 7.5, seed=32)
-    cloud(back, (cx, GROUND - 4), 9.0, seed=33)
+    pop(front, (cx + 34, GROUND - 7), 13, facing=0, tones='wwxyz')
+    pop(back, (cx - 4, GROUND - 10), 16, facing=90, tones='wxyz')
+    cloud(front, (cx - 44, GROUND - 4), 9.0, seed=31)
+    cloud(front, (cx + 50, GROUND - 4), 9.5, seed=32)
+    cloud(back, (cx, GROUND - 5), 11.0, seed=33)
     for (dx, dy) in ((-52, -16), (54, -20), (20, -26), (-26, -24)):
         pebble(front, cx + dx, GROUND + dy)
 
 
 def fx_wave(k):
-    """l'onde au ras du sol : k = 0..4, elle avance vers la droite et se défait"""
+    """l'onde au ras du sol : k = 0..4, elle avance vers la droite (≈ 40 pixels par image) et se défait"""
     def f(back, front, ctx):
-        x0 = g2c(*SLAM)[0] + 30
-        head = x0 + 34 + k * 38                 # le front de l'onde (toile)
-        g = GROUND - 1
-        tail = min(0.85, 0.18 * k)
+        x0 = g2c(*SLAM)[0] + 26
+        head = x0 + 34 + k * 40                 # le front de l'onde (toile)
+        g = GROUND
+        tail = min(0.8, 0.2 * k)
         if k <= 3:
-            # la rafale principale : un long ruban couché qui finit en volute dressée
-            gust(back, (x0, g - 3), (x0 + (head - x0) * 0.35, g - 1), (head - 22, g - 2), (head - 6, g - 14),
-                 6.0 - k * 0.4, tones='wxyzv', curl_r=7.0 + k, up=True, tail=tail)
-            gust(front, (x0 + 10, g - 10), (x0 + (head - x0) * 0.4, g - 16), (head - 30, g - 10),
-                 (head - 18, g - 24), 3.0, tones='xyzv', curl_r=4.0 + k * 0.6, up=True, tail=min(0.9, tail + 0.1))
-            # la poussière qui roule au front, et celle qui retombe derrière
-            cloud(front, (head + 2, g - 2), 7.5 + k * 0.5, seed=40 + k)
-            cloud(back, (head - 26, g - 2), 6.5, seed=50 + k, hollow=0.4)
+            # le rouleau de vent : un large ruban couché au ras du sol qui se dresse et s'enroule au front
+            gust(back, (x0 - 6, g - 3), (x0 + (head - x0) * 0.45, g - 1), (head - 14, g - 4), (head - 2, g - 26 - k * 2),
+                 11.0 - k, tones='wxyzvu', curl_r=10.0 + k, up=True, tail=tail)
+            gust(front, (x0 + 12, g - 12), (x0 + (head - x0) * 0.5, g - 18), (head - 30, g - 14),
+                 (head - 22, g - 38 - k * 2), 5.0, tones='wxyzv', curl_r=6.0 + k * 0.6, up=True,
+                 tail=min(0.9, tail + 0.15))
+            # la poussière qui roule devant, et celle qui retombe derrière
+            cloud(front, (head + 6, g - 4), 9.0 + k * 0.8, seed=40 + k)
+            cloud(back, (head - 22, g - 3), 8.0, seed=50 + k, hollow=0.3)
             if k >= 1:
-                cloud(back, (head - 64, g - 2), 5.5, seed=60 + k, hollow=0.75)
-            pebble(front, head + 10, g - 14 - k * 2)
-            leaf(front, head - 12, g - 30 - k * 4, k)
-            leaf(front, head + 16, g - 22 - k * 2, k + 1)
+                cloud(back, (head - 56, g - 2), 7.0, seed=60 + k, hollow=0.6)
+            if k >= 2:
+                cloud(back, (head - 92, g - 2), 6.0, seed=65 + k, hollow=0.85)
+            pebble(front, head + 14, g - 20 - k * 3)
+            pebble(front, head - 8, g - 30 - k * 2)
+            leaf(front, head - 16, g - 46 - k * 4, k)
+            leaf(front, head + 18, g - 32 - k * 3, k + 1)
         else:
-            curl(front, (head - 30, g - 22), 8, 200, turn=260, w=2.2, tones='yzv')
-            curl(back, (head - 4, g - 14), 6, 160, turn=260, w=1.8, tones='zv', cw=True)
-            cloud(back, (head - 40, g - 2), 6.0, seed=70, hollow=0.85)
-            cloud(back, (head - 6, g - 3), 6.0, seed=71, hollow=0.7)
-            leaf(front, head + 12, g - 40, 2)
+            curl(front, (head - 40, g - 30), 10, 200, turn=260, w=3.0, tones='xyzv')
+            curl(back, (head - 6, g - 18), 8, 160, turn=260, w=2.4, tones='yzv', cw=True)
+            cloud(back, (head - 50, g - 3), 7.0, seed=70, hollow=0.85)
+            cloud(back, (head - 10, g - 4), 7.5, seed=71, hollow=0.7)
+            leaf(front, head + 14, g - 50, 2)
+            leaf(front, head - 70, g - 40, 0)
     return f
 
 
@@ -1083,7 +1088,7 @@ SPECIALE = [
     dict(crouch=-8, lean=-3, chest=-4, breath=2, near=NEAR_UP, far=FAR_UP, fx=[fx_raise], ms=300),
     dict(crouch=0, lean=3, chest=2, near=dict(sh=(6, 2), elbow=(58, 62), fore='down', shear=0.25),
          far=dict(sh=(4, 0), elbow=(112, 60), fore='down', shear=0.2), fx=[fx_drop], ms=60),
-    dict(crouch=3, lean=6, chest=3, near=SLAM_NEAR, far=SLAM_FAR, fx=[fx_slam], flash=40, ms=130),
+    dict(crouch=3, lean=6, chest=3, near=SLAM_NEAR, far=SLAM_FAR, fx=[fx_slam], flash=30, ms=130),
     dict(crouch=3, lean=6, chest=3, near=SLAM_NEAR, far=SLAM_FAR, fx=[fx_wave(0)], ms=90),
     dict(crouch=3, lean=6, chest=3, near=SLAM_NEAR, far=SLAM_FAR, fx=[fx_wave(1)], ms=80),
     dict(crouch=2, lean=6, chest=3, near=SLAM_NEAR, far=SLAM_FAR, fx=[fx_wave(2)], ms=80),
