@@ -1,9 +1,12 @@
 // Social : guilde (boss commun, membres, tchat, boutique), tchat général, classements.
 // Dans le prototype, les autres joueurs sont des joueurs fictifs : le vrai social arrivera avec le serveur.
+// Style « moderne » de la guilde (26/11/2026) : sections/guilde.css (carte de la guilde à l'emblème, onglets en tuiles,
+// boss en grand, membres en lignes nettes). L'onglet tient dans l'écran : seules les listes défilent, à l'intérieur.
+import type { ComponentChildren } from 'preact';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { sceneBg } from '../fond-image';
 import { bossArt, bossClan } from '../../look';
 import { Figure } from '../hero-figure';
-import { useEffect, useRef, useState } from 'preact/hooks';
 import { GUILD_BOSS_ATTEMPTS, GUILD_SHOP, GUILD_WAR, UNLOCKS } from '../../../core/data/modes';
 import { createRng } from '../../../core/rng';
 import { heroImage } from '../../art';
@@ -15,16 +18,15 @@ import {
 import { isUnlocked, teamPower } from '../../state/selectors';
 import { getState, now, useGame } from '../../state/store';
 import type { ChatMessage } from '../../state/types';
-import { Bar, Btn, Cur, Icon, Locked, Modal, Tabs } from '../kit';
+import { Bar, Btn, Cur, Icon, Locked, Modal, RedDot, Tabs } from '../kit';
 import { open, prepare } from '../nav';
 import { ShopTile } from './adventure';
-import { TitleBanner } from '../title-banner';
 import { TeamStrip } from './heroes';
+import '../sections/guilde.css';
 
 const MEMBER_NAMES = ['Kaïro', 'Lunaria', 'Vaelis', 'Tormund', 'Ishara', 'Mikaze', 'Orsolya', 'Bastien', 'Yuna', 'Ragnis', 'Selka', 'Noctis'];
 const GUILD_BOSS_HP = 50_000_000;
 
-/** Membres fictifs de la guilde : leur force suit celle du joueur, leurs dégâts montent avec le temps. */
 /** Emblème d'une guilde (12 dessins) : choisi d'après son nom, toujours le même pour une guilde. */
 function emblem(guild: string): string {
   let h = 0;
@@ -32,15 +34,25 @@ function emblem(guild: string): string {
   return `emblem-${h % 12}`;
 }
 
-function members(guild: string) {
+type Role = 'leader' | 'officer' | '';
+interface Member { name: string; power: number; level: number; role: Role; defId: string; me?: boolean }
+
+/** Membres fictifs de la guilde (leur force suit celle du joueur), avec le joueur : le chef, les officiers, puis par puissance. */
+function members(guild: string): Member[] {
+  const s = getState();
   const rng = createRng(guild.length * 977);
-  const mine = Math.max(1000, teamPower(getState()));
-  return MEMBER_NAMES.slice(0, 9).map((name, i) => ({
+  const mine = Math.max(1000, teamPower(s));
+  const lv = s.account.level;
+  const bots: Member[] = MEMBER_NAMES.slice(0, 9).map((name, i) => ({
     name,
     power: Math.round(mine * (0.6 + rng() * 0.9)),
-    role: i === 0 ? 'crown' : i < 3 ? 'star' : '',
+    level: Math.max(5, Math.round(lv * (0.7 + rng() * 0.6))),
+    role: i === 0 ? 'leader' : i < 3 ? 'officer' : '',
     defId: ['knights-9', 'mages-11', 'angels-6', 'demons-9', 'myths-10', 'assassins-11', 'knights-7', 'mages-7', 'angels-10'][i]!,
   }));
+  const me: Member = { name: s.name, power: Math.round(teamPower(s)), level: lv, role: '', defId: s.heroes[0]?.defId ?? 'knights-1', me: true };
+  const rank = (m: Member) => (m.role === 'leader' ? 0 : m.role === 'officer' ? 1 : 2);
+  return [...bots, me].sort((a, b) => rank(a) - rank(b) || b.power - a.power);
 }
 
 function botDamage(): number {
@@ -49,77 +61,139 @@ function botDamage(): number {
   return Math.min(GUILD_BOSS_HP * 0.9, Math.round(hours * 180_000));
 }
 
+/** L'emblème posé sur sa tuile arrondie (dégradé, halo) : la pièce forte de la guilde. */
+function Crest({ name, size = 'm' }: { name: string; size?: 's' | 'm' | 'l' }) {
+  return <span class={`g-crest g-crest-${size}`}><Icon name={name} size={size === 'l' ? 60 : size === 'm' ? 44 : 40} /></span>;
+}
+
+/** La carte de la guilde, posée au pied du panorama de la forteresse : emblème, nom, niveau et membres, pièces de guilde. */
+function GuildHead({ title, crest, meta, side }: { title: string; crest: string; meta?: ComponentChildren; side?: ComponentChildren }) {
+  return (
+    <header class="g-head">
+      <Crest name={crest} size="l" />
+      <div class="g-id">
+        <h1 class="g-name">{title}</h1>
+        {meta && <div class="g-meta">{meta}</div>}
+      </div>
+      {side}
+    </header>
+  );
+}
+
+type GuildTab = 'boss' | 'war' | 'members' | 'chat' | 'shop';
+const TAB_ICONS: Record<GuildTab, string> = { boss: 'dailyBoss', war: 'arena', members: 'friends', chat: 'chat', shop: 'shop' };
+
+/** Les onglets de la guilde : une rangée de tuiles (picto + nom) ; l'onglet ouvert est une tuile azur soulevée. */
+function GuildTabs({ value, options, onChange }: { value: GuildTab; options: [GuildTab, string, boolean?][]; onChange: (v: GuildTab) => void }) {
+  return (
+    <nav class="g-tabs">
+      {options.map(([v, label, dot]) => (
+        <button class={`g-tab${v === value ? ' on' : ''}`} onClick={() => onChange(v)}>
+          <Icon name={TAB_ICONS[v]} size={26} />
+          <span class="g-tab-label">{label}</span>
+          {dot && <RedDot />}
+        </button>
+      ))}
+    </nav>
+  );
+}
+
 export function GuildScreen() {
   const s = useGame();
-  const [tab, setTab] = useState<'boss' | 'war' | 'members' | 'chat' | 'shop'>('boss');
+  const [tab, setTab] = useState<GuildTab>('boss');
   useEffect(() => markSeen('guild'), []);
-  // le bandeau de titre sur le panorama de la forteresse (comme les autres parties)
-  const banner = (title: string, icon: string) => (
-    <div class="adv-banner"><h1 class="sr-only">{title}</h1><TitleBanner title={title} ribbon={['#4f7ae0', '#2a4aa8', '#16285e']}><Icon name={icon} size={30} /></TitleBanner></div>
-  );
   if (!isUnlocked(s, 'guild')) {
-    return <div class="screen guild">{banner(t('nav.guild'), 'guild')}<section class="card center"><Locked stage={UNLOCKS.guild} /></section></div>;
-  }
-  if (!s.guild.joined) {
     return (
-      <div class="screen guild list">
-        {banner(t('nav.guild'), 'guild')}
-        {BOT_GUILDS.map((g, i) => (
-          <div class="card guild-row row between center-y">
-            <Icon name={emblem(g)} size={52} />
-            <div class="grow">
-              <strong>{g}</strong>
-              <div class="muted small">{t('guild.level', { n: 5 + i * 3 })} · {18 + i * 4} / 30</div>
-            </div>
-            <Btn kind="green" small onClick={() => joinGuild(g)}>{t('guild.join')}</Btn>
-          </div>
-        ))}
+      <div class="screen guild">
+        <GuildHead title={t('nav.guild')} crest="guild" />
+        <section class="g-panel g-locked"><Icon name="lock" size={48} /><Locked stage={UNLOCKS.guild} /></section>
       </div>
     );
   }
+  if (!s.guild.joined) {
+    return (
+      <div class="screen guild">
+        <GuildHead title={t('nav.guild')} crest="guild" />
+        <section class="g-scroll g-list">
+          {BOT_GUILDS.map((g, i) => {
+            const count = 18 + i * 4;
+            return (
+              <div class="g-row g-find">
+                <Crest name={emblem(g)} size="s" />
+                <div class="g-row-main">
+                  <strong class="g-row-name">{g}</strong>
+                  <span class="g-row-sub">
+                    <span class="g-lv">{t('guild.level', { n: 5 + i * 3 })}</span>
+                    <span class="g-fill"><Icon name="friends" size={16} />{count} / 30<i style={{ '--p': `${Math.round((count / 30) * 100)}%` } as never} /></span>
+                  </span>
+                </div>
+                <Btn kind="green" small onClick={() => joinGuild(g)}>{t('guild.join')}</Btn>
+              </div>
+            );
+          })}
+        </section>
+      </div>
+    );
+  }
+  const name = s.guild.joined;
   const total = Math.min(GUILD_BOSS_HP, botDamage() + s.guild.bossDamage);
   const left = GUILD_BOSS_ATTEMPTS - s.daily.guildAttempts;
+  const warDot = !!s.guildWar && (warAttacksLeft(s.guildWar) > 0 || !!s.guildWar.pending || (warPhase() === 'results' && !s.guildWar.claimed));
   return (
     <div class="screen guild">
-      {banner(s.guild.joined, emblem(s.guild.joined))}
-      <div class="guild-info">
-        <span>{t('guild.level', { n: 7 })} · <Icon name="friends" size={18} /> 22 / 30</span>
-        <Cur k="guildCoins" n={s.wallet.guildCoins} />
-      </div>
-      <Tabs value={tab} onChange={setTab} options={[
-        ['boss', t('guild.boss'), left > 0], ['war', t('guild.war'), !!s.guildWar && (warAttacksLeft(s.guildWar) > 0 || !!s.guildWar.pending || (warPhase() === 'results' && !s.guildWar.claimed))], ['members', t('guild.members')], ['chat', t('guild.chat')], ['shop', t('guild.shop')],
+      <GuildHead title={name} crest={emblem(name)}
+        meta={<><span class="g-lv">{t('guild.level', { n: 7 })}</span><span class="g-count"><Icon name="friends" size={18} />22 / 30</span></>}
+        side={<span class="g-coins"><Icon name="guildCoins" size={26} /><b>{fmt(s.wallet.guildCoins)}</b></span>} />
+      <GuildTabs value={tab} onChange={setTab} options={[
+        ['boss', t('guild.boss'), left > 0], ['war', t('guild.war'), warDot], ['members', t('guild.members')], ['chat', t('guild.chat')], ['shop', t('guild.shop')],
       ]} />
       {tab === 'boss' && (
-        <section class="card center">
-          <div class="boss-scene" style={sceneBg(bossClan('dragon'))}><Figure id={bossArt('dragon')} class="boss-img" /></div>
-          <h2>{t('monster.dragon')}</h2>
-          <Bar value={GUILD_BOSS_HP - total} max={GUILD_BOSS_HP} color="#e5484d" label={`${fmt(GUILD_BOSS_HP - total)} / ${fmt(GUILD_BOSS_HP)}`} />
-          <p class="muted">{t('guild.total')} : <b>{fmt(total)}</b></p>
-          <p class="muted">{t('boss.attempts', { n: left, m: GUILD_BOSS_ATTEMPTS })}</p>
-          <Btn kind="red" wide disabled={left <= 0} onClick={() => prepare(guildBossPlan())}>{t('boss.attack')}</Btn>
+        <section class="g-panel g-boss">
+          <div class="g-boss-stage" style={sceneBg(bossClan('dragon'))}>
+            <span class="g-boss-name"><Icon name="fire" size={22} />{t('monster.dragon')}</span>
+            <Figure id={bossArt('dragon')} class="g-boss-fig" />
+            <div class="g-boss-hp">
+              <Bar value={GUILD_BOSS_HP - total} max={GUILD_BOSS_HP} color="linear-gradient(90deg, #f03e58, #ff7a6a)" label={`${fmt(GUILD_BOSS_HP - total)} / ${fmt(GUILD_BOSS_HP)}`} />
+            </div>
+          </div>
+          <div class="g-stats">
+            <div class="g-stat"><Icon name="atk" size={30} /><span><b>{fmt(total)}</b><small>{t('guild.total')}</small></span></div>
+            <div class="g-stat mine"><Icon name="power" size={30} /><span><b>{fmt(s.guild.bossDamage)}</b><small>{t('guild.mine')}</small></span></div>
+          </div>
+          <Btn kind="red" wide class="g-attack" disabled={left <= 0} onClick={() => prepare(guildBossPlan())}>
+            <span>{t('boss.attack')}</span><span class="g-tries">{left} / {GUILD_BOSS_ATTEMPTS}</span>
+          </Btn>
         </section>
       )}
       {tab === 'members' && (
-        <section class="list">
-          <div class="card member me"><img src={heroImage(s.heroes[0]!.defId)} alt="" /><strong class="grow">{s.name}</strong><span class="power-chip"><Icon name="power" size={16} />{fmt(teamPower(s))}</span></div>
-          {members(s.guild.joined).map((m) => (
-            <div class="card member"><img src={heroImage(m.defId)} alt="" /><strong class="grow">{m.role && <Icon name={m.role} size={18} />} {m.name}</strong><span class="power-chip"><Icon name="power" size={16} />{fmt(m.power)}</span></div>
+        <section class="g-scroll g-list">
+          {members(name).map((m) => (
+            <div class={`g-row g-member${m.me ? ' me' : ''}`}>
+              <span class="g-face"><img src={heroImage(m.defId)} alt="" /><span class="g-face-lv">{m.level}</span></span>
+              <div class="g-row-main">
+                <strong class="g-row-name">{m.name}</strong>
+                {m.role && <span class={`g-role ${m.role}`}><Icon name={m.role === 'leader' ? 'crown' : 'star'} size={15} />{t(`guild.${m.role}`)}</span>}
+              </div>
+              <span class="g-power"><Icon name="power" size={18} />{fmt(m.power)}</span>
+            </div>
           ))}
-          <Btn kind="ghost" small onClick={() => open({ type: 'confirm', text: `${t('guild.leave')} ?`, onYes: leaveGuild })}>{t('guild.leave')}</Btn>
+          <button class="g-leave" onClick={() => open({ type: 'confirm', text: `${t('guild.leave')} ?`, onYes: leaveGuild })}>{t('guild.leave')}</button>
         </section>
       )}
-      {tab === 'war' && <GuildWar guild={s.guild.joined} />}
+      {tab === 'war' && <GuildWar guild={name} />}
       {tab === 'chat' && <Chat target="guild" />}
       {tab === 'shop' && (
-        <div class="shop-grid">
-          {GUILD_SHOP.map((x) => (
-            <ShopTile cost={<Cur k="guildCoins" n={x.cost} />} reward={x.reward} disabled={s.wallet.guildCoins < x.cost}
-              onBuy={() => {
-                const gain = buyExchange('guild', x.id);
-                if (gain) open({ type: 'gain', title: t('guild.shop'), gain });
-              }} />
-          ))}
-        </div>
+        <section class="g-scroll g-shop">
+          <div class="shop-grid">
+            {GUILD_SHOP.map((x) => (
+              <ShopTile cost={<Cur k="guildCoins" n={x.cost} />} reward={x.reward} disabled={s.wallet.guildCoins < x.cost}
+                onBuy={() => {
+                  const gain = buyExchange('guild', x.id);
+                  if (gain) open({ type: 'gain', title: t('guild.shop'), gain });
+                }} />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );
@@ -144,15 +218,15 @@ function GuildWar({ guild }: { guild: string }) {
   const result = showResult ? (sc.mine > sc.foe ? 'win' : sc.mine === sc.foe ? 'draw' : 'loss') : pending?.result;
 
   return (
-    <section class="list war">
-      <div class="card war-head">
-        <div class="war-side"><Icon name={emblem(guild)} size={44} /><strong>{guild}</strong><span class="war-score"><Icon name="star" size={18} /> {sc.mine}</span></div>
-        <span class="war-vs">VS</span>
-        <div class="war-side foe"><Icon name={emblem(w.foe)} size={44} /><strong>{w.foe}</strong><span class="war-score"><Icon name="star" size={18} /> {sc.foe}</span></div>
+    <section class="g-scroll g-war">
+      <div class="g-vs">
+        <div class="g-vs-side"><Crest name={emblem(guild)} size="m" /><strong>{guild}</strong><span class="g-vs-score"><Icon name="star" size={18} />{sc.mine}</span></div>
+        <span class="g-vs-badge">VS</span>
+        <div class="g-vs-side foe"><Crest name={emblem(w.foe)} size="m" /><strong>{w.foe}</strong><span class="g-vs-score"><Icon name="star" size={18} />{sc.foe}</span></div>
       </div>
 
       {(showResult || pending) && (
-        <div class={`card center war-result ${result}`}>
+        <div class={`g-war-result ${result}`}>
           <h2>{t(`war.${result}`)}</h2>
           <Btn kind="gold" wide onClick={() => {
             const gain = claimWar();
@@ -161,31 +235,35 @@ function GuildWar({ guild }: { guild: string }) {
         </div>
       )}
 
-      <div class="row between center-y">
-        <span class="tag">{t(`war.${phase}`)}{phase === 'battle' && ` · ${t('war.day', { n: Math.min(5, Math.floor((new Date(now()).getDay() + 6) % 7)) })}`}</span>
-        {phase === 'battle' && <span class={left ? 'gold-text' : 'muted'}>{t('war.attacks', { n: left, m: GUILD_WAR.attacksPerDay })}</span>}
+      <div class="g-war-phase">
+        <span class="g-pill">{t(`war.${phase}`)}{phase === 'battle' && ` · ${t('war.day', { n: Math.min(5, Math.floor((new Date(now()).getDay() + 6) % 7)) })}`}</span>
+        {phase === 'battle' && <span class={`g-pill${left ? ' gold' : ''}`}>{t('war.attacks', { n: left, m: GUILD_WAR.attacksPerDay })}</span>}
       </div>
 
       <TeamStrip />
       <TeamStrip team="defense" />
 
-      <div class="war-grid">
+      <div class="g-forts">
         {defenses.map((d, i) => {
           const leader = d.team.find((m) => m.slot === 2) ?? d.team[0]!;
           return (
-            <button class="card war-fort" disabled={!left} onClick={() => { const p = warPlan(i); if (p) prepare(p); }}>
-              <img src={heroImage(leader.defId)} alt="" />
+            <button class="g-fort" disabled={!left} onClick={() => { const p = warPlan(i); if (p) prepare(p); }}>
+              <span class="g-face"><img src={heroImage(leader.defId)} alt="" /></span>
               <strong>{d.name}</strong>
-              <span class={`power-chip ${mine >= d.power ? 'ok' : 'low'}`}><Icon name="power" size={14} />{fmt(d.power)}</span>
+              <span class={`g-power ${mine >= d.power ? 'ok' : 'low'}`}><Icon name="power" size={14} />{fmt(d.power)}</span>
             </button>
           );
         })}
       </div>
 
-      <h3>{t('war.ranking')}</h3>
-      <div class="card war-ranking">
+      <h3 class="g-sub">{t('war.ranking')}</h3>
+      <div class="g-ranking">
         {sc.members.map((m, i) => (
-          <div class={`row between${m.me ? ' me' : ''}`}><span>{i + 1}. {m.name}</span><span class="gold-text"><Icon name="star" size={16} /> {m.stars}</span></div>
+          <div class={`g-rank-row${m.me ? ' me' : ''}`}>
+            <span class={`g-rank r${i + 1}`}>{i + 1}</span>
+            <span class="g-rank-name">{m.name}</span>
+            <span class="g-stars"><Icon name="star" size={16} />{m.stars}</span>
+          </div>
         ))}
       </div>
     </section>
