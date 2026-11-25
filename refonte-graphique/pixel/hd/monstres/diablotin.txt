@@ -9,9 +9,9 @@ palette:
 2 #52142e  peau, ombre profonde
 3 #84202e  peau, ombre
 4 #b2322a  peau, ton moyen sombre
-5 #da4c28  peau rouge-orangé
-6 #f47434  peau, lumière
-7 #ffa658  peau, reflet chaud
+5 #d4462a  peau rouge-orangé
+6 #ee6c34  peau, lumière
+7 #ffa056  peau, reflet chaud
 8 #ffd690  peau, éclat
 A #1a1328  crinière, creux
 B #2a2040  crinière, ombre
