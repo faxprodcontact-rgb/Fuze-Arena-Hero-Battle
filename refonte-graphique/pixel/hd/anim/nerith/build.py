@@ -439,25 +439,23 @@ def rig_frame(f):
             body.put_pts(cv, pts_of(part), hk, swap={'u': ch, 'v': ch} if ch else None, rows_of=HOOK[1])
     # 2) la pampille longue (derrière la tête)
     body.put_pts(cv, tassel_pts(P['pampL'], 22, 33, f.get('tl', 0)), head, rows_of=30)
-    # 3) le corps (le bas de la manche se balance)
+    # 3) l'avant-bras proche quand elle lève la main : posé AVANT le corps, la manche cache son départ (il sort de
+    #    l'ouverture bordée d'or)
+    ax, ay = f.get('arm', (0, 0))
+    if ax or ay:
+        forearm(cv, body, (41.0, 63.0), (33.0 + ax, 64.5 + ay), 2.7, 2.3, (0, 0))
+    # 4) le corps (le bas de la manche se balance)
     body.put_pts(cv, pts_of(drape(P['corps'], f.get('mp', 0))))
-    # 4) la tête, avec son retard ; posée deux fois si elle bouge (pas de trou au cou)
+    # 5) la tête, avec son retard ; posée deux fois si elle bouge (pas de trou au cou)
     tp = P['tete_mep'] if f.get('mep') else P['tete']
     if head != (0, 0):
         body.put_pts(cv, pts_of(np.where(YY >= 42, tp, '.')), (0, 0), swap or None, rows_of=40)
     body.put_pts(cv, pts_of(tp), head, swap or None, rows_of=40)
-    # 5) la pampille courte (devant)
+    # 6) la pampille courte (devant)
     body.put_pts(cv, tassel_pts(P['pampC'], 19, 25, f.get('tc', 0)), head, rows_of=30)
-    # 6) la main lointaine sur la hampe
+    # 7) la main lointaine sur la hampe
     body.put_pts(cv, pts_of(P['mainL']), rows_of=GRIP[1])
-    # 7) la main proche : levée (l'avant-bras sort de la manche) ou au repos
-    ax, ay = f.get('arm', (0, 0))
-    if ax or ay:
-        forearm(cv, body, (40.0, 62.5), (33.0 + ax, 64.5 + ay), 2.6, 2.3, (0, 0))
-        # le bord d'or de la manche repasse devant le départ de l'avant-bras
-        trim = [(y, x, ch) for (y, x, ch) in pts_of(P['corps']) if 56 <= y <= 64 and 34 <= x <= 47
-                and ch in 'jnml']
-        body.put_pts(cv, trim, rows_of=60)
+    # 8) la main proche (levée ou au repos)
     body.put_pts(cv, pts_of(P['mainP']), (ax, ay), rows_of=60)
     ctx.palm = body.to_canvas((PALM[0] + ax, PALM[1] + ay), rows_of=60)
     # l'étincelle de soin au-dessus de la paume (sp : 0 = cachée, 1 = comme le dessin, 2 = petite, 3 = vive)
@@ -758,9 +756,10 @@ def jade_spark(cv, x, y, size=2):
 # 12 images, lentes et souveraines : elle ne bouge presque pas. Elle inspire (le haut monte d'un pixel avec la main,
 # le bâton et la lanterne), la tête suit avec une image de retard ; la lanterne se balance doucement au bout de la
 # crosse, son pompon avec retard ; les deux pampilles de la couronne aussi (la longue plus lente) ; le bas de la
-# grande manche se balance à peine ; la flamme de jade palpite dans la lanterne ; l'étincelle de soin palpite au-dessus de la paume, les
-# étincelles de la lanterne scintillent chacune son tour ; à l'expiration le regard se pose, méprisant (paupières
-# lourdes, deux images), puis un clignement.
+# grande manche se balance à peine ; la flamme de jade palpite dans la lanterne ; l'étincelle de soin palpite
+# au-dessus de la paume, les étincelles de la lanterne et les bijoux (couronne, ceinture, boucle d'oreille)
+# scintillent chacun son tour ; à l'expiration le regard se pose, méprisant (paupières lourdes, deux images), puis un
+# clignement.
 POSE = []
 for _i in range(12):
     _p = _i / 12.0
