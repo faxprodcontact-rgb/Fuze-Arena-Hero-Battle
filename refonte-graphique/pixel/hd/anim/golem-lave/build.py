@@ -1049,13 +1049,14 @@ def fx_club_fire(k):
         c = ctx.club
         if k == 0:
             tongue(back, (c[0] - 10, c[1] + 2), 14, 6.0, bend=-0.7, tones='vuts', lean=0.0)
-            tongue(back, (c[0] + 9, c[1] + 2), 12, 5.0, bend=0.7, tones='vuts', lean=0.1)
+            tongue(front, (c[0] + 9, c[1] - 4), 10, 4.4, bend=0.7, tones='vuts', lean=0.1)
             for (dx, dy, vx, vy) in ((-18, 8, -0.4, 1), (14, 14, 0.3, 1)):
                 drop(front, c[0] + dx, c[1] + dy, vx, vy, 2)
         else:
             tongue(back, (c[0] - 12, c[1] + 4), 22, 8.0, bend=-0.8, tones='wvuts', lean=-0.1)
             tongue(back, (c[0] + 2, c[1] - 2), 26, 9.0, bend=0.5, tones='wvuuts', lean=0.05)
-            tongue(back, (c[0] + 14, c[1] + 4), 16, 6.0, bend=0.9, tones='vuts', lean=0.2)
+            tongue(front, (c[0] + 14, c[1] - 2), 14, 5.4, bend=0.9, tones='vuts', lean=0.2)
+            tongue(front, (c[0] - 14, c[1] - 4), 10, 4.4, bend=-0.9, tones='vuts', lean=-0.1)
             for (dx, dy) in ((-20, -24), (6, -34), (22, -18), (-6, -40), (16, -30)):
                 ember(front, c[0] + dx, c[1] + dy, True)
             drop(front, c[0] - 20, c[1] + 18, -0.3, 1, 2)
@@ -1188,7 +1189,7 @@ SPECIALE = [
          fx_list=[fx_crater(4), fx_club_fire(1)], ms=200),
     dict(arm=ARM_SWING, heat=3, glow=3, lean=2, tilt=3, crouch=0, pa=(0, -1),
          smear=fx_club_smear(ARM_SKY, tones='vuutsr', lava='wv', w=22), fx_list=[fx_crater(5)], ms=50),
-    dict(arm=ARM_HIT, plant=True, heat=3, glow=3, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), flash=40,
+    dict(arm=ARM_HIT, plant=True, heat=3, glow=3, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), flash=25,
          shake=1, fx_list=[fx_rift(0)], ms=210),
     dict(arm=ARM_HIT, plant=True, heat=2, glow=2, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), shake=-1,
          fx_list=[fx_rift(1)], ms=90),
@@ -1235,3 +1236,107 @@ def bbox(frames, margin=4):
 
 
 GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+
+
+
+def build_all():
+    return {n: build_one(n) for n in ('pose', 'attaque', 'speciale')}
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet.paste(im, (0, i * H0))
+    ncol = len(sheet.getcolors(maxcolors=1 << 20) or [])
+    if ncol <= 256:
+        pal = sheet.quantize(colors=min(256, ncol), method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    # une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets
+    bb = bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 6)
+    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    for name in ('pose', 'attaque', 'speciale'):
+        ims = [on_bg(img).crop(boxes[name]) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
+    k = 3
+    blocks = []
+    for name, per in (('pose', 6), ('attaque', 4), ('speciale', 4)):
+        box = GAME_BOX if name == 'pose' else bbox(anims[name] + anims['pose'], 3)
+        cells = [on_bg(img).crop(box) for img, _ in anims[name]]
+        blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + per - 1) // per) * (cells[0].height * k + 22) for _, per, cells, _ in blocks)
+    sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    y = 6
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE', 'speciale': 'ATTAQUE SPECIALE'}
+    for name, per, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % per == 0:
+                y += ch + 22
+            X = 6 + (i % per) * (cw + 6)
+            sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sheet.save(os.path.join(OUT, f'anim-{NAME}-planche.png'))
+    # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat, ×2
+    seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
+    box = bb
+    try:
+        fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
+        fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        bw, bh = box[2] - box[0], box[3] - box[1]
+        fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        base = fond.crop((0, fy, bw, fy + bh))
+        if base.width < bw:
+            raise ValueError
+    except Exception:
+        base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
+    ims = []
+    for img, _ in seq:
+        im = base.copy()
+        im.alpha_composite(Image.fromarray(img, 'RGBA').crop(box))
+        ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), ims, [ms for _, ms in seq])
+
+
+def essai(folder):
+    """images de contrôle : chaque image seule (×6) et la découpe en couleurs"""
+    os.makedirs(folder, exist_ok=True)
+    anims = build_all()
+    for name, fr in anims.items():
+        box = GAME_BOX if name == 'pose' else bbox(fr, 3)
+        for i, (img, ms) in enumerate(fr):
+            im = on_bg(img).crop(box)
+            im.resize((im.width * 6, im.height * 6), Image.NEAREST).save(os.path.join(folder, f'{name}-{i:02d}.png'))
+    cols = {'corps_nu': (120, 120, 130), 'bras': (230, 120, 60), 'petit': (80, 160, 220), 'visage': (240, 220, 80),
+            'goutte': (255, 60, 60), 'epaule': (150, 230, 150)}
+    im = np.zeros((GH, GW, 3), np.uint8) + 255
+    for k_, c in cols.items():
+        im[P[k_] != '.'] = c
+    Image.fromarray(im).resize((GW * 6, GH * 6), Image.NEAREST).save(os.path.join(folder, 'decoupe.png'))
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 2 and sys.argv[1] == 'essai':
+        essai(sys.argv[2])
+        sys.exit()
+    anims = build_all()
+    write_outputs(anims)
+    for n in ('pose', 'attaque', 'speciale'):
+        print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+    print('écrit dans', OUT)

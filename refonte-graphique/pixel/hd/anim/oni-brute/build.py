@@ -1270,10 +1270,12 @@ def fx_club_fire(level, trail=0.0, phase=0):
                     continue
                 p0 = ctx.G + s_ * u + side * (head_hw(s_) - 1.0) * nn
                 wob = math.sin(i * 1.7 + side + phase * 1.3)
-                h = (9 + 3 * wob) * (0.6 + 0.4 * level)
-                tongue(back, (p0[0], p0[1]), h, 4.4, bend=0.6 * side, lean=trail, fork=False)
-        tip = club_tip(ctx.G, ctx.ang, S_HEAD[1] + 1)
-        tongue(back, (tip[0], tip[1]), 10 + 5 * level, 6.0, bend=0.5 * math.sin(phase), lean=trail, fork=True)
+                h = (13 + 4 * wob) * (0.55 + 0.45 * level)
+                po = p0 + side * 2.5 * nn
+                tongue(back, (po[0], po[1] + 3), h, 6.0, bend=0.7 * side, lean=trail + 0.25 * side * nn[0],
+                       fork=False)
+        tip = club_tip(ctx.G, ctx.ang, S_HEAD[1] - 1)
+        tongue(back, (tip[0], tip[1]), 14 + 8 * level, 9.0, bend=0.5 * math.sin(phase), lean=trail, fork=True)
         rng = np.random.RandomState(11 + phase)
         for i in range(3 + 3 * level):
             s_ = rng.uniform(36, 82)
@@ -1316,53 +1318,51 @@ def lava_drop(cv, x, y, r, hot=True):
 
 def geyser(back, front, x, age, seed=0, big=1.0):
     """un geyser de lave à l'endroit x du sol ; age = combien d'images depuis que la faille l'a ouvert
-    (0 il éclate, 1 il monte en grand, 2 il retombe, 3 fumée, 4 il n'en reste qu'une volute)"""
+    (0 il éclate, 1 il monte en grand, 2 il retombe, 3 fumée, 4 et 5 il n'en reste qu'une volute)"""
     g = GROUND
     rng = np.random.RandomState(seed)
     if age < 0:
         return
     if age == 0:
-        pop(front, (x, g - 4), 6.0 * big, facing=90, tones='wvut')
-        tongue(back, (x - 2, g), 16 * big, 7 * big, bend=0.4, lean=0.15)
-        chunk(front, (x + 5, g - 9), 2.0, ang=20)
-        chunk(front, (x - 6, g - 7), 1.6, ang=70)
+        pop(front, (x, g - 5), 7.5 * big, facing=90, tones='wvut')
+        tongue(back, (x - 2, g), 26 * big, 10 * big, bend=0.4, lean=0.1)
+        chunk(front, (x + 7, g - 12), 2.2, ang=20)
+        chunk(front, (x - 8, g - 9), 1.7, ang=70)
     elif age == 1:
-        tongue(back, (x - 3, g), 34 * big, 10 * big, bend=0.5, lean=0.1)
-        tongue(back, (x + 5, g), 24 * big, 8 * big, bend=-0.6, lean=0.2)
-        tongue(front, (x + 1, g), 14 * big, 7 * big, bend=0.3, lean=0.1, tones='vutsr', fork=False)
-        for i in range(4):
-            a = math.radians(rng.uniform(55, 125))
-            d = rng.uniform(16, 30) * big
-            lava_drop(front, x + d * math.cos(a), g - 8 - d * math.sin(a), rng.uniform(1.3, 2.0))
-        for i in range(3):
-            chunk(front, (x + rng.uniform(-12, 14), g - rng.uniform(14, 26) * big), rng.uniform(1.2, 2.0),
-                  ang=rng.uniform(0, 90))
+        tongue(back, (x - 2, g), 68 * big, 17 * big, bend=0.5, lean=0.08)
+        tongue(back, (x + 7, g), 42 * big, 11 * big, bend=-0.7, lean=0.25, fork=False)
+        tongue(back, (x - 9, g), 26 * big, 8 * big, bend=0.8, lean=-0.25, fork=False)
+        tongue(front, (x + 1, g), 18 * big, 10 * big, bend=0.3, lean=0.05, tones='wvuts', fork=False)
+        for i in range(5):
+            a = math.radians(rng.uniform(50, 130))
+            d = rng.uniform(22, 40) * big
+            lava_drop(front, x + d * math.cos(a), g - 12 - d * math.sin(a), rng.uniform(1.4, 2.3))
+        chunk(front, (x + rng.uniform(8, 14), g - rng.uniform(30, 40) * big), 2.0, ang=rng.uniform(0, 90))
     elif age == 2:
-        tongue(back, (x - 1, g), 20 * big, 9 * big, bend=-0.4, lean=0.1, tones='vutsr')
-        tongue(front, (x + 4, g), 10 * big, 6 * big, bend=0.5, lean=0.2, tones='utsr', fork=False)
-        cloud(back, (x + 2, g - 30 * big), 7.0 * big, 'fghi', seed=seed, ground=False)
-        for i in range(4):
-            a = math.radians(rng.uniform(60, 120))
-            d = rng.uniform(16, 30) * big
-            T = 1.6
-            lx = x + d * math.cos(a) * 1.3
-            ly = g - 8 - d * math.sin(a) * 0.6 + 6 * T
+        tongue(back, (x - 1, g), 38 * big, 13 * big, bend=-0.4, lean=0.1, tones="vutsr")
+        tongue(front, (x + 5, g), 14 * big, 7 * big, bend=0.5, lean=0.2, tones='utsr', fork=False)
+        cloud(back, (x + 3, g - 50 * big), 9.0 * big, 'ffgh', seed=seed, ground=False)
+        for i in range(5):
+            a = math.radians(rng.uniform(50, 130))
+            d = rng.uniform(22, 40) * big
+            lx = x + d * math.cos(a) * 1.5
+            ly = g - 12 - d * math.sin(a) * 0.5 + 14
             if ly < g - 1:
-                lava_drop(front, lx, ly, 1.4, hot=False)
+                lava_drop(front, lx, ly, 1.5, hot=False)
             else:
                 put(front, lx, g, 's')
-        for i in range(3):
-            cx_ = x + rng.uniform(-16, 18)
-            put(front, cx_, g, 'B')
+                put(front, lx + 1, g, 'r')
     elif age == 3:
-        tongue(front, (x + 1, g), 8 * big, 5 * big, bend=0.4, tones='utsr', fork=False)
-        cloud(back, (x + 4, g - 36 * big), 7.5 * big, 'fghi', hollow=0.3, seed=seed, ground=False)
-        curl(back, (x - 6, g - 18 * big), 3.6, 200, turn=280, w=2.4, tones='fgh')
+        tongue(front, (x + 1, g), 11 * big, 6 * big, bend=0.4, tones='utsr', fork=False)
+        cloud(back, (x + 6, g - 56 * big), 9.0 * big, 'ffgh', hollow=0.3, seed=seed, ground=False)
+        curl(back, (x - 5, g - 26 * big), 4.4, 200, turn=280, w=3.0, tones='fgh')
     elif age == 4:
-        cloud(back, (x + 6, g - 42 * big), 6.0 * big, 'fgh', hollow=0.6, seed=seed, ground=False)
-        curl(back, (x - 2, g - 24 * big), 3.2, 340, turn=280, w=2.0, tones='fgh', cw=True)
+        tongue(front, (x + 2, g), 6, 4, bend=0.4, tones='tsr', fork=False)
+        cloud(back, (x + 9, g - 62 * big), 7.0 * big, 'ffg', hollow=0.6, seed=seed, ground=False)
+        curl(back, (x - 1, g - 34 * big), 3.8, 340, turn=280, w=2.4, tones='fgh', cw=True)
     elif age == 5:
-        puff(back, (x + 8, g - 48 * big), 2.6, 'fg', hollow=0.5)
+        puff(back, (x + 11, g - 68 * big), 2.8, 'fg', hollow=0.5)
+        puff(back, (x + 2, g - 42 * big), 2.0, 'fg', hollow=0.5)
 
 
 def fault(front, x0, front_x, k, cool_from=0):
@@ -1405,10 +1405,10 @@ def fx_quake(k):
         cx = impact_x()
         g = GROUND
         if k == 0:
-            pop(back, (cx + 3, g - 10), 12.0, facing=80, tones='yyzD')
-            pop(front, (cx, g - 6), 9.0, facing=90, tones='wwvut')
-            tongue(back, (cx - 6, g), 20, 8, bend=-0.6, lean=-0.3)
-            tongue(back, (cx + 8, g), 26, 9, bend=0.7, lean=0.35)
+            pop(back, (cx + 3, g - 12), 14.0, facing=80, tones='yyzD')
+            pop(front, (cx, g - 7), 11.0, facing=90, tones='wwvut')
+            tongue(back, (cx - 7, g), 28, 10, bend=-0.6, lean=-0.3)
+            tongue(back, (cx + 9, g), 36, 12, bend=0.7, lean=0.35)
             cloud(front, (cx - 15, g - 3), 5.0, 'yzD', seed=2, flat=0.7)
             cloud(front, (cx + 18, g - 3), 5.5, 'yzD', seed=3, flat=0.7)
             for (vx, vy, rr) in CHUNKS_HIT[:6]:
@@ -1419,13 +1419,14 @@ def fx_quake(k):
         fault(front, cx - 6, min(front_x, W), k)
         # la boule de feu du point d'impact retombe en fumée
         if k == 1:
-            tongue(back, (cx + 2, g), 26, 10, bend=0.4, lean=0.2)
-            cloud(back, (cx + 6, g - 30), 8.0, 'fghi', seed=7, ground=False)
+            tongue(back, (cx + 2, g), 40, 13, bend=0.4, lean=0.2)
+            tongue(front, (cx - 4, g), 16, 8, bend=-0.4, tones='wvuts', fork=False)
+            cloud(back, (cx + 8, g - 42), 10.0, 'ffgh', seed=7, ground=False)
         elif k == 2:
-            tongue(back, (cx + 3, g), 14, 7, bend=-0.4, tones='vutsr')
-            cloud(back, (cx + 8, g - 38), 8.0, 'fghi', hollow=0.25, seed=7, ground=False)
+            tongue(back, (cx + 3, g), 22, 9, bend=-0.4, tones='vutsr')
+            cloud(back, (cx + 10, g - 50), 10.0, 'ffgh', hollow=0.25, seed=7, ground=False)
         elif k <= 4:
-            cloud(back, (cx + 10, g - 44), 7.0, 'fgh', hollow=0.5 + 0.2 * (k - 3), seed=7, ground=False)
+            cloud(back, (cx + 12, g - 56), 8.0, 'ffg', hollow=0.5 + 0.2 * (k - 3), seed=7, ground=False)
         # la poussière du coup roule au ras du sol
         if k <= 3:
             for (dx, sd) in ((-18 - 4 * k, 2), (20 + 6 * k, 3)):

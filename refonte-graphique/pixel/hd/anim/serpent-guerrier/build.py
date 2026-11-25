@@ -725,7 +725,7 @@ ATTAQUE = [
     dict(s=1, lean=4, wave=1.4, base=7, front=16, head=(1, 0), tg=2, near=(-1, 0), arm=2, lift=1, phi=20, hook=-1,
          fx=[fx_smear(60, 20), fx_launch_dust(0)], ms=50),
     dict(s=1, lean=8, wave=1.0, base=17, front=26, head=(1, 0), tg=2, arm=3, lift=-1, phi=-35, hook=-2,
-         fx=[fx_smear(30, -35), fx_launch_dust(1)], ms=50),
+         fx=[fx_smear(62, -35, wmax=6.0), fx_launch_dust(1)], ms=50),
     # impact : arrêt sur l'image
     dict(s=1, lean=8, wave=0.6, base=19, front=26, head=(1, 0), tg=2, arm=3, lift=-1, phi=-48, hook=-1,
          fx=[fx_cut(0), fx_launch_dust(2)], ms=130),
@@ -933,7 +933,7 @@ SPECIALE = [
     dict(s=1, lean=5, wave=1.4, base=8, front=18, head=(1, 0), tg=2, near=(-1, -1), arm=2, lift=1, phi=25,
          hook=-1, fx=[fx_smear(64, 25, tones='1234'), fx_launch_dust(0)], **_CO, ms=50),
     dict(s=1, lean=8, wave=1.0, base=18, front=27, head=(1, 0), tg=2, arm=3, lift=-1, phi=-45, hook=-2,
-         fx=[fx_smear(30, -45, tones='1234'), fx_slash1(0), fx_launch_dust(1)], **_CO, ms=60),
+         fx=[fx_smear(62, -45, tones='1234', wmax=6.0), fx_slash1(0), fx_launch_dust(1)], **_CO, ms=60),
     dict(s=1, lean=8, wave=0.6, base=19, front=27, head=(1, 0), tg=2, arm=3, lift=-1, phi=-52,
          fx=[fx_slash1(1), fx_launch_dust(2)], **_CO, ms=70),
     # le revers : de bas en haut

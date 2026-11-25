@@ -815,7 +815,7 @@ ATTAQUE = [
 # volutes. Il arrache le trident, le replante et revient en garde.
 SPIKES = [  # (x sur la toile, hauteur, largeur, penché, image où il jaillit) ; le plus gros sous l'ennemi
     (131, 14, 12, 1.5, 0), (148, 20, 14, 2.0, 1), (167, 26, 16, 1.0, 1), (188, 31, 18, 2.0, 2),
-    (ENEMY_X - 1, 46, 27, 1.5, 4), (239, 29, 17, -1.0, 4), (256, 19, 13, -1.5, 5)]
+    (ENEMY_X - 1, 46, 27, 1.5, 4), (237, 29, 17, -1.0, 4), (252, 19, 12, -1.5, 5)]
 BIG = 4                                    # l'éclat sous l'ennemi
 
 def fx_gather(level):

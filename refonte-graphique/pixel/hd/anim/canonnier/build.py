@@ -84,7 +84,7 @@ LN = LIGHT / np.linalg.norm(LIGHT)
 # Toile des animations : le point « sol » du monstre est posé en SOL. À droite, beaucoup de place : le boulet file, la
 # fumée s'étale, les gerbes du ricochet jaillissent jusque sur l'ennemi. La pose seule se recadre en 128 × 120 (le
 # format du jeu, sol en (64, 116)).
-W, H = 344, 200
+W, H = 384, 200
 SOL = (96, 190)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
@@ -1047,27 +1047,27 @@ def fx_wave(k):
     et une crête qui se recourbe vers l'avant en volute d'écume —, s'abaisse en avançant, puis se brise en écume"""
     def f(cv, back, front, ctx):
         G = GROUND
-        X = ENEMY_X + 24 + 12 * k
-        h = [0, 15.0, 13.5, 11.5, 9.0, 6.0][min(k, 5)]
+        X = ENEMY_X + 30 + 14 * k
+        h = [0, 17.0, 16.0, 14.0, 11.0, 7.0][min(k, 5)]
         if k <= 4:
-            back_ = bezier((X - 3.2 * h, G), (X - 2.0 * h, G - 0.2 * h), (X - 1.0 * h, G - 1.35 * h),
-                           (X - 0.1 * h, G - 1.35 * h), 16)
-            lip = bezier((X - 0.1 * h, G - 1.35 * h), (X + 0.6 * h, G - 1.35 * h), (X + 0.95 * h, G - 1.0 * h),
-                         (X + 0.7 * h, G - 0.62 * h), 12)
-            face = bezier((X + 0.7 * h, G - 0.62 * h), (X + 0.35 * h, G - 0.95 * h), (X + 0.05 * h, G - 0.6 * h),
-                          (X + 0.55 * h, G), 12)
-            m = poly_mask(back_ + lip[1:] + face[1:] + [(X - 3.2 * h, G)])
+            back_ = bezier((X - 2.2 * h, G), (X - 1.5 * h, G - 0.1 * h), (X - 1.1 * h, G - 1.2 * h),
+                           (X - 0.3 * h, G - 1.45 * h), 16)
+            lip = bezier((X - 0.3 * h, G - 1.45 * h), (X + 0.4 * h, G - 1.6 * h), (X + 1.0 * h, G - 1.15 * h),
+                         (X + 0.8 * h, G - 0.7 * h), 12)
+            face = bezier((X + 0.8 * h, G - 0.7 * h), (X + 0.45 * h, G - 0.85 * h), (X + 0.2 * h, G - 0.55 * h),
+                          (X + 0.6 * h, G), 12)
+            m = poly_mask(back_ + lip[1:] + face[1:] + [(X - 2.2 * h, G)])
             yy = np.mgrid[0:H, 0:W][0]
             m &= yy <= G - 1
-            crest = m & (yy <= G - 0.85 * h)
-            shade_mask(front, m, 'XYZAB', foam=crest)
-            curl(front, (X + 0.25 * h, G - 0.95 * h), h * 0.28, 40, turn=300, w=1.7, tones='WX', cw=True)
+            crest = m & (yy <= G - 1.0 * h)
+            shade_mask(front, m, 'XYZZA', foam=crest)
+            curl(front, (X + 0.42 * h, G - 0.92 * h), h * 0.22, 60, turn=300, w=1.6, tones='WX', cw=True)
             for i in range(3):
                 drop(front, X + h * 0.9 + 3 * i, G - h * 1.25 + 2 * i, 3 if i == 0 else 2, v=(1.2, 0.8))
             foam(front, (X + 0.45 * h, G - 1), max(1.5, h * 0.22), seed=71 + k)
         # derrière elle, l'écume qui reste au sol et s'enroule
         for i in range(min(k, 3)):
-            xx = X - 3.4 * h - 8 * i
+            xx = X - 2.4 * h - 8 * i
             foam(front, (xx, G - 1), max(1.2, 3.2 - 0.6 * i - 0.2 * k), hollow=min(0.85, 0.15 * (k + i)),
                  seed=60 + i)
         if k >= 5:
@@ -1093,21 +1093,21 @@ def fx_gather(n):
             a = math.radians(ang)
             P3 = (c[0] + rx * math.cos(a), c[1] - ry * math.sin(a))
             P0 = (c[0] + sx, G)
-            P1 = (P0[0] + side * 9, G - 16)
-            P2 = (P3[0] - side * 10 + 4 * math.cos(a), P3[1] + 9)
+            P1 = (P0[0] + side * 15, G - 14)
+            P2 = (P3[0] - side * 16 + 4 * math.cos(a), P3[1] + 12)
             pts = bezier(P0, P1, P2, P3, 40)
             m = int(round(40 * grow))
             pts = pts[:m + 1]
-            ws = [0 if j / 40 < cut else 3.6 - 1.6 * j / 40 for j in range(m + 1)]
+            ws = [0 if j / 40 < cut else 6.2 - 3.0 * j / 40 for j in range(m + 1)]
             lit_stroke(back if i == 0 else front, pts, ws, 'XYZAB', foam=(0.6, 1.0))
             if n < 2:                                   # là où la vrille quitte le sol : un petit bouillon d'écume
-                foam(front, (P0[0], G), 2.4 - 0.6 * n, hollow=0.3 * n, seed=90 + i)
+                foam(front, (P0[0], G), 3.4 - 0.8 * n, hollow=0.3 * n, seed=90 + i)
             else:
                 drop(front, P0[0] + side * 2, G - 4, 2, v=(0, 1.5))
         if n >= 1:
             a0 = n * 70
-            ribbon(back, c, rx, ry, a0 + 90, a0 + 250, 3.4, head=0.7, tones='YZA')
-            ribbon(front, c, rx, ry, a0 - 80, a0 + 70, 3.8, head=0.7, tones='XYZ')
+            ribbon(back, c, rx, ry, a0 + 90, a0 + 250, 4.4, head=0.7, tones='YZA')
+            ribbon(front, c, rx, ry, a0 - 80, a0 + 70, 4.8, head=0.7, tones='XYZ')
         if n >= 2:
             ribbon(front, c, rx + 2.5, ry + 3, 150, 300, 2.2, head=0.5, tones='XY')
             puff(front, (c[0] + 6, c[1] - 9), 1.4, tones='WX')

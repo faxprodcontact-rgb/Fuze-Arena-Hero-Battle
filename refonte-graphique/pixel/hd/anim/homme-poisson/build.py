@@ -121,7 +121,7 @@ for y, e in NEAR_EDGE.items():
 m[85:90, 62:68] = True
 M['brasP'] = filled & m & ~M['lance'] & ~M['mainP']
 # la tête : crête, crâne, yeux, gueule, mâchoire (le cou et la nageoire de joue restent au corps)
-M['tete'] = filled & ~isin(CORPS, '') & (((YY <= 48) & (XX >= 70)) | ((YY >= 49) & (YY <= 66) & (XX >= 82)))
+M['tete'] = filled & (((YY <= 48) & (XX >= 70)) | ((YY >= 49) & (YY <= 66) & (XX >= 82)))
 # le pagne bleu nuit
 M['pagne'] = filled & isin(CORPS, 'NOPQ') & (YY >= 90)
 taken = np.zeros_like(filled)
@@ -949,32 +949,40 @@ XS = 54                                   # sa place devant l'ennemi pendant les
 
 
 def fx_rise(k):
-    """la spirale d'eau qui monte avec lui quand il bondit : un ruban qui part du sol et s'enroule sous ses pieds"""
+    """le jet d'eau qui le lance en l'air : k = 0 une colonne d'eau courbe jaillit du sol jusque sous ses pieds
+    (large au pied, écume en haut), 1 elle retombe en nappes et en gouttes"""
     def f(cv, back, front, ctx):
         (x0, gy), (x1, _) = ctx.feet
         C = np.array([(x0 + x1) / 2, gy])
         G = float(GROUND)
         if k == 0:
-            pts = bezier((C[0] - 18, G), (C[0] - 30, G - 14), (C[0] - 6, gy + 14), (C[0] + 10, gy + 2), 40)
-            ws = [1.0 + 4.6 * math.sin(math.pi * i / 40) ** 0.8 for i in range(41)]
-            lit_stroke(back, pts, ws, 'XYZAB', foam=(0.6, 1.0))
-            water_band(front, C[0] - 34, C[0] + 18, lambda x: hump(x, C[0] - 14, 18, 3.5))
+            pts = bezier((C[0] - 12, G), (C[0] - 14, G - 12), (C[0] - 2, gy + 14), (C[0] + 2, gy + 3), 40)
+            ws = [10.0 - 6.0 * (i / 40) ** 0.8 for i in range(41)]
+            lit_stroke(back, pts, ws, 'XYZAB', foam=(0.75, 1.0))
+            foam(back, (C[0] + 1, gy + 3), 4.2, seed=31)
+            water_band(front, C[0] - 40, C[0] + 18, lambda x: hump(x, C[0] - 22, 14, 5) + hump(x, C[0] - 2, 12, 3.5))
+            sheet(back, (C[0] - 26, G - 3), 132, 16, 44, 4.0, blob=True)
+            sheet(back, (C[0] + 2, G - 3), 50, 14, -46, 3.6, blob=True)
         else:
-            curl(back, (C[0] - 2, gy + 10), 13, 200, turn=260, w=4.0, tones='XYZA')
-            water_band(front, C[0] - 40, C[0] + 6, lambda x: hump(x, C[0] - 22, 16, 1.8))
-            spray(back, (C[0] - 10, gy + 18), 1.6, [(-2.5, -2.0), (1.5, -3.5), (-4.0, 0.5)])
+            sheet(back, (C[0] - 16, G - 30), 120, 14, 110, 4.4, tail=0.4, blob=True)
+            sheet(back, (C[0] - 8, G - 30), 40, 14, -110, 4.0, tail=0.4, blob=True)
+            water_band(front, C[0] - 44, C[0] + 12, lambda x: hump(x, C[0] - 16, 26, 3.0))
+            spray(back, (C[0] - 10, G - 30), 1.8, [(-2.5, -2.0), (1.5, -3.5), (-4.0, 0.5), (3.0, -1.0)])
     return f
 
 
 def fx_vortex(k):
-    """au plus haut du bond : l'eau s'enroule en deux volutes autour de la pointe, avec des bulles"""
+    """au plus haut du bond : l'eau s'enroule en volutes devant la pointe (une grosse derrière, une plus petite
+    devant, de sens contraire), avec des bulles"""
     def f(cv, back, front, ctx):
         T = ctx.tip
-        curl(back, (T[0] - 6, T[1] - 2), 11 + 2 * k, 150, turn=300, w=4.2, tones='XYZA')
-        curl(front, (T[0] - 2, T[1] + 4), 8 + k, 330, turn=260, w=3.2, tones='WXYZ', cw=True)
-        bubble(front, T[0] - 18, T[1] - 10, 2)
-        bubble(back, T[0] - 24, T[1] + 6, 1)
-        bubble(front, T[0] + 4, T[1] - 13, 1)
+        C = T + np.array([9.0, -1.0])
+        curl(back, C, 15, 140, turn=320, w=5.0, tones='XYZAB')
+        curl(front, C + np.array([1.0, 3.0]), 10, 320, turn=280, w=3.6, tones='WXYZ', cw=True)
+        bubble(front, T[0] - 6, T[1] - 14, 2)
+        bubble(back, T[0] + 26, T[1] + 6, 2)
+        bubble(front, T[0] + 18, T[1] - 18, 1)
+        bubble(back, T[0] - 12, T[1] + 10, 1)
     return f
 
 
@@ -993,16 +1001,16 @@ def fx_burst(k):
         seeds = [(-3.5, -6.0), (3.0, -7.0), (-5.5, -3.0), (5.5, -4.0), (-1.5, -8.0), (1.5, -7.5), (-6.5, -1.0),
                  (7.0, -2.0), (4.0, 1.0), (-4.0, 0.5)]
         if k == 0:
-            for (ang, ln, bend, w) in ((96, 22, -40, 6.0), (40, 24, -56, 6.2), (-14, 20, -44, 5.4),
-                                       (150, 18, 46, 5.0), (210, 15, 40, 4.4)):
+            for (ang, ln, bend, w) in ((100, 30, -40, 7.0), (44, 32, -56, 7.2), (-10, 28, -44, 6.4),
+                                       (150, 24, 46, 6.0), (205, 20, 40, 5.0), (-62, 18, -30, 4.6)):
                 sheet(back, (X, Y), ang, ln, bend, w, blob=True)
             spray(back, (X, Y), 1.0, seeds)
-            pop(front, (X, Y), 8.5, facing=10, tones='WWWXY')
+            pop(front, (X, Y), 9.5, facing=10, tones='WWWXY')
             for (dx, dy, s) in ((-16, -12, 3), (14, -16, 2), (20, 8, 2), (-12, 12, 1), (4, -22, 1)):
                 bubble(front, X + dx, Y + dy, s)
         elif k == 1:
-            for (ang, ln, bend, w) in ((96, 28, -70, 6.2), (40, 30, -84, 6.4), (-14, 24, -64, 5.6),
-                                       (150, 22, 72, 5.2), (210, 18, 56, 4.6)):
+            for (ang, ln, bend, w) in ((100, 36, -70, 7.0), (44, 38, -84, 7.2), (-10, 32, -64, 6.4),
+                                       (150, 28, 72, 6.0), (205, 22, 56, 5.0), (-62, 20, -40, 4.6)):
                 sheet(back, (X, Y), ang, ln, bend, w, tail=0.3, blob=True)
             foam(front, (X + 2, Y - 1), 7.5, hollow=0.3, seed=21)
             spray(back, (X, Y), 2.2, seeds)
@@ -1062,7 +1070,7 @@ SPECIALE = [
     dict(x=XS + 6, y=-36, s=2, lean=2, head=(0, 0), d=-7, gape=3, cr=-1, fin=2, pan=-1,
          fx=[fx_vortex(0), fx_rise(1)], ms=80),
     # 12 : il PLONGE la lance dans l'ennemi (arrêt sur l'image) : explosion d'eau
-    dict(x=XS + 12, y=-22, s=1, lean=4, head=(1, 0), d=15, gape=4, cr=-2, sweep=1, pan=-2,
+    dict(x=XS + 12, y=-30, s=1, lean=4, head=(1, 0), d=15, gape=4, cr=-2, sweep=1, pan=-2,
          fx=[fx_burst(0)], ms=230),
     # 13 : il repart d'un bond en arrière, la couronne d'eau s'ouvre
     dict(x=XS - 4, y=-30, s=-1, lean=-2, head=(-1, 1), d=-2, gape=1, cr=1, fin=4, pan=1,

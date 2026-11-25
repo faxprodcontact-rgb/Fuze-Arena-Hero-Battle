@@ -917,101 +917,113 @@ def fx_ball_hold(r=6.0, spin=0, dx=0):
     return f
 
 
-def net_points(cx, R, Hh, lift=0.0, squash=1.0):
-    """le filet en dôme posé sur l'ennemi : des « méridiens » (courbes du sommet jusqu'au sol, chacune son arrondi),
-    et des « tours » (des arcs qui pendent en festons entre deux méridiens, comme une vraie toile) ; vu un peu d'en
-    haut : les tours sont des ellipses, jamais des droites. Renvoie (méridiens, tours, ancres) en points de la toile"""
-    elev = 0.32
-    lons = [-82, -52, -22, 8, 38, 66, 88]
-    top = (cx, GROUND - Hh * squash - lift)
+# les fils rayonnants de la toile : (angle en degrés, longueur relative, bombé) — irréguliers, comme une vraie toile
+RADIALS = [(98, 1.0, 1.2), (142, 0.92, -1.0), (182, 1.05, 1.4), (218, 1.0, -1.2), (262, 1.0, 0.8),
+           (316, 1.0, -1.0), (0, 1.02, 1.3), (48, 0.95, -1.1)]
 
-    def P(theta, lam, sag=0.0):
-        th, la = math.radians(theta), math.radians(lam)
-        X = R * math.cos(th) * math.sin(la)
-        Y = Hh * squash * math.sin(th)
-        Z = R * math.cos(th) * math.cos(la)
-        return (cx + X, GROUND - Y - lift * math.sin(th) + Z * elev * 0.35 + sag)
-    mer = []
-    for i, la in enumerate(lons):
-        wob = 6 * math.sin(i * 1.7)                  # chaque méridien a son arrondi
-        mer.append([P(th, la + wob * (1 - th / 90)) for th in np.arange(90, -1, -2)])
-    rings = []
-    for j, th in enumerate((22, 44, 66)):
+
+def web(hub, R, droop=0.0, rings=(0.28, 0.5, 0.72, 0.93)):
+    """une toile d'araignée jetée sur l'ennemi, vue de face : des fils rayonnants COURBES (bombés, qui ploient sous
+    leur poids) et une spirale en festons qui pendent entre deux fils (jamais de droites, jamais une grille).
+    Renvoie (fils rayonnants, festons, ancres au sol) en points de la toile."""
+    hx, hy = hub
+    rad, ends = [], []
+    for (ang, ln, bulge) in RADIALS:
+        u = np.array([math.cos(math.radians(ang)), -math.sin(math.radians(ang)) * 0.9])
+        nrm = np.array([u[1], -u[0]])
+        L = R * ln
         pts = []
-        for i in range(len(lons) - 1):
-            a, b = lons[i], lons[i + 1]
-            for s in np.linspace(0, 1, 18):
-                la = a + (b - a) * s
-                sag = (3.2 - j * 0.8) * math.sin(math.pi * s)    # le feston pend entre deux fils
-                pts.append(P(th, la, sag))
-        rings.append(pts)
-    anchors = [P(0, la) for la in lons]
-    return mer, rings, anchors, top
+        for i in range(61):
+            t = i / 60
+            p = np.array([hx, hy]) + u * L * t + nrm * bulge * 3.0 * math.sin(math.pi * t) + \
+                np.array([0, droop * 6 * t * t])
+            pts.append(p)
+        # un fil qui touche le sol s'y arrête (il est planté)
+        cut = next((i for i, p in enumerate(pts) if p[1] >= GROUND), None)
+        if cut is not None:
+            pts = pts[:cut + 1]
+            ends.append(pts[-1])
+        rad.append(pts)
+    festoons = []
+    order = sorted(range(len(rad)), key=lambda i: RADIALS[i][0])
+    for j, f in enumerate(rings):
+        for a_i in range(len(order)):
+            i1, i2 = order[a_i], order[(a_i + 1) % len(order)]
+            k1 = int(f * 60 * (1 + 0.06 * math.sin(j * 2.1 + a_i)))
+            k2 = int(f * 60 * (1 + 0.06 * math.sin(j * 2.1 + a_i + 1)))
+            if k1 >= len(rad[i1]) or k2 >= len(rad[i2]):
+                continue
+            p1, p2 = np.array(rad[i1][k1]), np.array(rad[i2][k2])
+            sag = 0.16 * np.linalg.norm(p2 - p1) + 0.6
+            mid = (p1 + p2) / 2
+            out = mid - np.array(hub)
+            out = out / max(np.linalg.norm(out), 1e-6)
+            ctrl = mid - out * sag * 0.8 + np.array([0, sag * 0.9])     # le feston se creuse vers le centre et pend
+            pts = [tuple((1 - t) ** 2 * p1 + 2 * (1 - t) * t * ctrl + t * t * p2) for t in np.linspace(0, 1, 30)]
+            pts = [p for p in pts if p[1] <= GROUND]
+            if pts:
+                festoons.append(pts)
+    return rad, festoons, ends
 
 
 def fx_net(stage, flash=False):
-    """le filet : stage 0 = la pelote éclate (soie en boule et premiers fils), 1 = le filet s'ouvre en grand (arrêt
-    sur image), 2 = il se resserre et se plante dans le sol, 3 = il colle (venin), 4 = il se défait"""
+    """la pelote sur l'ennemi : stage 0 = elle éclate (soie et cailloux), 1 = la toile s'ouvre en grand (arrêt sur
+    image, éclair), 2 = elle retombe et se plante dans le sol (pierre, poussière), 3 = elle colle (venin), 4 = elle
+    se défait"""
     def f(cv, back, front, ctx):
-        cx = FOE[0]
-        cy = FOE_C[1]
+        cx, cy = FOE_C
         if stage == 0:
-            puff(front, (cx - 3, cy - 2), 8.0, 'll43')
-            for i, a in enumerate((-160, -120, -70, -25, 20, 65, 110, 150)):
-                u = np.array([math.cos(math.radians(a)), -math.sin(math.radians(a))])
-                u2 = np.array([math.cos(math.radians(a + 35)), -math.sin(math.radians(a + 35))])
-                p0 = np.array([cx - 3, cy - 2]) + u * 6
-                pts = bezier(p0, p0 + u * 6, p0 + u * 11 + u2 * 3, p0 + u * 13 + u2 * 6, 30)
-                stroke(front, pts, [2.4 * (1 - j / 31) + 0.4 for j in range(31)], '432')
-            silk_ball(front, (cx - 3, cy - 2), 5.0, spin=40, pebbles=0, flash=True)
-            for k, (dx, dy) in enumerate(((-12, -9), (11, -11), (13, 6), (-13, 7))):
-                chunk(front, cx - 3 + dx, cy - 2 + dy, k)
+            blob(back, [(cx, cy, 11.0), (cx + 7, cy - 7, 5.5), (cx - 8, cy + 5, 5.0), (cx - 6, cy - 8, 4.0)], 'llj4')
+            for (p0, m, e) in (((cx + 5, cy - 4), (6, -6), (12, -4)), ((cx - 5, cy - 4), (-6, -6), (-12, -3)),
+                               ((cx + 5, cy + 4), (6, 3), (11, 9)), ((cx - 5, cy + 4), (-6, 3), (-10, 10))):
+                p0 = np.array(p0, float)
+                p3 = p0 + np.array(e, float)
+                string(front, bezier(p0, p0 + np.array(m, float), p3 + np.array([0, -2]), p3, 24), 2.4)
+            blob(front, [(cx, cy, 7.0), (cx + 4, cy - 4, 4.4), (cx - 4, cy + 4, 4.4), (cx + 4, cy + 4, 3.6),
+                         (cx - 4, cy - 4, 3.6)])
+            for k, (dx, dy) in enumerate(((-15, -12), (13, -14), (16, 6), (-16, 8))):
+                chunk(front, cx + dx, cy + dy, k)
             return
-        R, Hh, lift, squash = {1: (30, 36, 6, 1.0), 2: (27, 30, 0, 1.0), 3: (27, 28, 0, 1.0), 4: (28, 26, 0, 0.95)}[stage]
-        mer, rings, anchors, top = net_points(cx, R, Hh, lift, squash)
-        tone_f, tone_b = ('l3', '42') if flash else ('42', '21')
-        if stage == 4:
-            tone_f, tone_b = '32', '21'
-        # le dos du filet (derrière l'ennemi) : plus sombre, plus fin
-        for pts in mer[1:-1]:
-            back_pts = [(2 * cx - x, y - (y - GROUND) * 0.0 - 4) for (x, y) in pts]
-            if stage < 4:
-                thread(back, back_pts[:len(back_pts) * 2 // 3], '2' + '1')
-        cut = (lambda pts: pts) if stage < 4 else (lambda pts: pts[::2][:len(pts[::2]) // 2])
-        for pts in rings:
-            thread(front, cut(pts), tone_f)
-        for pts in mer:
-            thread(front, cut(pts), tone_f)
-        # le noeud au sommet
+        hub = (cx, cy - (4 if stage == 1 else 0))
+        R, droop = {1: (34, 0.0), 2: (30, 0.6), 3: (30, 0.8), 4: (30, 1.0)}[stage]
+        rad, fest, ends = web(hub, R, droop)
+        tone = 'l3' if flash else ('32' if stage == 4 else '42')
+        if stage == 4:                                 # elle se défait : il n'en reste que des bouts
+            rad = [p[:len(p) // 2] for p in rad[::2]]
+            fest = fest[::3]
+        for pts in fest:
+            thread(front, pts, tone)
+        for pts in rad:
+            thread(front, pts, tone)
+        # l'ennemi pris au centre : une galette de soie
         if stage < 4:
-            silk_ball(front, top, 2.6 if stage == 1 else 2.2, flash=flash)
-        # les ancres : les bords du filet se plantent dans la terre (éclats de pierre, poussière)
+            blob(front, [(hub[0], hub[1], 4.2 if stage == 1 else 3.6), (hub[0] + 2, hub[1] + 3, 2.6)], flash=flash)
         if stage == 1:
-            for i, (x, y) in enumerate(anchors):
-                chunk(front, x - 1, GROUND - 9 - 3 * (i % 2), i)
-        if stage == 2:
-            for i, (x, y) in enumerate(anchors):
-                if i % 2 == 0:
-                    cloud(back, (x, GROUND - 3), 4.2, 'VWXY', seed=i + 1)
-                chunk(front, x - 1 + (3 if x > cx else -3), GROUND - 7 - 2 * (i % 3), i)
-                put(front, x, GROUND, 'P')
-                put(front, x - 1, GROUND, 'O')
-            for (dx, dy, k) in ((-34, -16, 0), (33, -18, 1), (-20, -26, 3), (24, -27, 2)):
-                chunk(front, cx + dx, GROUND + dy, k, flip=dx < 0)
-        if stage == 3:
-            for i, (x, y) in enumerate(anchors):
-                if i % 2 == 0:
-                    cloud(back, (x + (2 if x > cx else -2), GROUND - 5), 3.6, 'VWXY', hollow=0.5, seed=i + 1)
-                put(front, x, GROUND, 'P')
-            for (dx, dy, k) in ((-40, -6, 0), (38, -8, 1)):
-                chunk(front, cx + dx, GROUND + dy, k, flip=dx < 0)
-        # le venin : des gouttes vertes prises dans les fils
+            for i, (ang, ln, _) in enumerate(RADIALS):     # les cailloux arrachés volent encore
+                if 200 < ang < 340:
+                    continue
+                u = np.array([math.cos(math.radians(ang)), -math.sin(math.radians(ang))])
+                chunk(front, hub[0] + u[0] * (R + 4) - 1, hub[1] + u[1] * (R * 0.7) - 1, i)
         if stage in (2, 3):
-            for k, (i, j) in enumerate(((0, 20), (1, 50), (2, 34), (0, 80), (1, 100))):
-                p = rings[i][min(j, len(rings[i]) - 1)]
-                drop(front, p[0] - 1, p[1] - (1 if stage == 2 else 0), (k % 2) * 2 if stage == 3 else 1)
+            for i, p in enumerate(ends):                   # les fils plantés : la terre éclate à leur pied
+                if stage == 2:
+                    cloud(back, (p[0], GROUND - 3), 4.6, 'VWXY', seed=i + 1)
+                    chunk(front, p[0] + (4 if p[0] > cx else -6), GROUND - 9 - 3 * (i % 2), i)
+                else:
+                    cloud(back, (p[0] + (2 if p[0] > cx else -2), GROUND - 5), 3.8, 'VWXY', hollow=0.55, seed=i + 1)
+                put(front, p[0], GROUND, 'P')
+                put(front, p[0] - 1, GROUND, 'O')
+                put(front, p[0] + 1, GROUND, 'O')
+            if stage == 2:
+                for (dx, dy, k) in ((-40, -14, 0), (38, -16, 1), (-28, -26, 3), (30, -28, 2)):
+                    chunk(front, cx + dx, GROUND + dy, k, flip=dx < 0)
+            # le venin : des gouttes vertes prises dans les festons
+            for k, i in enumerate((2, 7, 11, 17, 22)):
+                if i < len(fest):
+                    p = fest[i][len(fest[i]) // 2]
+                    drop(front, p[0] - 1, p[1] - (1 if stage == 2 else 0), 1 if stage == 2 else (k % 2) * 2)
         if flash:
-            puff(front, (cx, cy - 4), 5.0, 'll4')
+            blob(back, [(hub[0], hub[1], 9.0), (hub[0] + 5, hub[1] - 5, 5.0)], 'llj4')
     return f
 
 

@@ -233,7 +233,7 @@ LN = LIGHT / np.linalg.norm(LIGHT)
 def chit_tone(k, far=False):
     if far:
         return 'D' if k > 0.75 else 'C' if k > 0.2 else 'B' if k > -0.45 else 'A'
-    return 'E' if k > 0.7 else 'D' if k > 0.3 else 'C' if k > -0.25 else 'B' if k > -0.65 else 'A'
+    return 'E' if k > 0.68 else 'D' if k > 0.28 else 'C' if k > -0.45 else 'B' if k > -0.8 else 'A'
 
 
 def ring_tone(k):
@@ -548,8 +548,8 @@ def rig_frame(f):
             ctx.tips[name] = pts[3]
             big = name == 'P'
             layered(cv, lambda lay: draw_leg_new(lay, *pts, far=far, spines=True,
-                                                 rth=(4.2, 3.4) if big else (3.4, 2.8),
-                                                 rsh=(3.0, 2.5, 0.9) if big else (2.7, 2.2, 0.8)), rim_chit)
+                                                 rth=(4.4, 3.6) if big else (3.4, 2.8),
+                                                 rsh=(3.2, 2.6, 1.0) if big else (2.7, 2.2, 0.8)), rim_chit)
             return
         top = L['sk'][0]
         dH = body_disp(f, top[0])
@@ -892,9 +892,9 @@ def mound(cv, cx, r, hgt):
 # pattes frappent le sol devant lui comme deux massues, la tête plonge et les crochets se referment. Impact tenu :
 # éclat de pierre, cailloux projetés, fissure, poussière sous les pointes et sous ses huit pieds (le sol tremble).
 # Retour lent : les pattes se relèvent et se reposent l'une après l'autre.
-P_UP = [(84, 82), (97, 57), (106, 49), (114, 55)]
+P_UP = [(84, 82), (91, 54), (100, 45), (110, 46)]
 F2_UP = [(104.5, 69), (121, 30), (133, 27), (140, 35)]
-P_UP2 = [(84, 82), (97, 55), (106, 46), (115, 51)]
+P_UP2 = [(84, 82), (91, 52), (100, 42), (111, 43)]
 F2_UP2 = [(104.5, 69), (121, 28), (134, 25), (141, 32)]
 P_MID = [(84, 82), (104, 64), (120, 82), (127, 100)]
 F2_MID = [(104.5, 69), (127, 45), (142, 68), (146, 92)]
@@ -952,7 +952,7 @@ ATTAQUE = [
     # 3 : tout s'abat (image de vitesse)
     dict(sp=(2, 1), tilt=(0, 1), croc=1, glow=1,
          legs={'P': dict(new=P_MID), 'F2': dict(new=F2_MID)},
-         fx_list=[fx_smear(['P', 'F2'], {'P': g2c(112, 47), 'F2': g2c(138, 26)})], ms=50),
+         fx_list=[fx_smear(['P', 'F2'], {'P': g2c(108, 41), 'F2': g2c(138, 26)})], ms=50),
     # 4 : IMPACT (tenu) : les deux massues au sol, la tête plonge, crochets refermés
     dict(sp=(6, 3), tilt=(-1, 3), kf=0.4,
          legs={'P': dict(new=P_HIT), 'F2': dict(new=F2_HIT), 'A': dict(mid=(1, 0)), 'B': dict(mid=(1, 0))},
@@ -981,9 +981,9 @@ ATTAQUE = [
 # sur image). La terre se fend devant lui et une ONDE de pierre court vers la droite, sur toute la première ligne
 # ennemie : l'une après l'autre, des dalles de pierre et des cristaux de grenat (les mêmes que sur son dos) jaillissent
 # du sol puis s'effondrent en éclats et en poussière. Il se relève lourdement, patte après patte.
-P_HIGH = [(84, 82), (96, 52), (106, 42), (115, 47)]
+P_HIGH = [(84, 82), (90, 48), (99, 38), (110, 38)]
 F2_HIGH = [(104.5, 69), (120, 24), (134, 20), (142, 27)]
-P_HIGH2 = [(84, 82), (96, 50), (106, 40), (116, 45)]
+P_HIGH2 = [(84, 82), (90, 46), (99, 35), (111, 35)]
 F2_HIGH2 = [(104.5, 69), (120, 22), (135, 18), (143, 25)]
 P_SLAM = [(84, 82), (102, 72), (118, 96), (124, 116)]
 F2_SLAM = [(104.5, 69), (124, 54), (140, 88), (144, 116)]
@@ -993,31 +993,64 @@ F2_SLAM = [(104.5, 69), (124, 54), (140, 88), (144, 116)]
 WAVE = [(152, 6, 1, 0.8), (176, 7, 0, 1.0), (200, 8, 2, 0.95), (224, 9, 0, 1.05), (248, 10, 1, 0.9)]
 
 
+def prism(cv, x, h, w, lean, sink=0.0, cut=0.0):
+    """un grand cristal de grenat (prisme à six pans, pointu) qui sort du sol, comme ceux de son dos : pan gauche
+    sombre, pan du milieu, pan droit clair, arête claire et éclat près de la pointe ; cut : brisé (il en reste 1-cut)"""
+    G = GROUND + sink
+    top = G - h
+    ax = x + lean * h                                  # la pointe
+    sh = top + w * 0.9                                 # là où les pans commencent à se refermer
+    poly = [(x - w / 2, G + 1), (x + w / 2, G + 1), (x + w / 2 + lean * (G - sh), sh), (ax, top),
+            (x - w / 2 + lean * (G - sh), sh)]
+    ymin = top + cut * h
+    xs = [q[0] for q in poly]
+    for y in range(int(top) - 1, int(G) + 2):
+        for X in range(int(min(xs)) - 1, int(max(xs)) + 2):
+            px, py = X + 0.5, y + 0.5
+            if py < ymin or not in_poly(px, py, poly):
+                continue
+            c = x + lean * (G - py)                       # l'axe à cette hauteur
+            u = (px - c) / (w / 2)
+            if py < ymin + 1.2 and cut > 0:
+                ch = 'g'                                  # la cassure, claire
+            elif u < -0.45:
+                ch = 'i'
+            elif u < 0.2:
+                ch = 'h'
+            elif u < 0.75:
+                ch = 'g'
+            else:
+                ch = 'f' if py < top + h * 0.45 else 'g'
+            put(cv, X, y, ch)
+    if cut == 0:
+        put(cv, ax + 1.2, top + w * 0.9 + 1, 'o')         # l'éclat
+
+
 def cluster(front, x, p, crumble, size, cr, seed):
-    """une grappe : la terre se soulève, deux dalles penchées et un cristal de grenat au milieu.
+    """une grappe : la terre se soulève, deux dalles penchées et un grand cristal de grenat au milieu (et un petit).
     p (0..1) : elle sort de terre ; crumble (0..1) : elle s'effondre (éclats, poussière)"""
-    h1, h2 = 16 * size, 13 * size
-    hc = CRYSTALS[cr % len(CRYSTALS)].shape[0]
+    h1, h2, hc = 24 * size, 19 * size, 30 * size
     if crumble < 1:
-        mound(front, x, 9 * size, 4 * min(1, p * 1.5) * (1 - crumble))
-        slab(front, x - 6 * size, 7 * size, h1, -0.28, sink=(1 - p) * h1, cut=crumble)
-        if crumble < 0.5:
-            crystal(front, cr, x, int((1 - p) * hc + crumble * hc * 1.4), swap=GLOW[1] if p >= 1 else None)
-        slab(front, x + 6 * size, 7 * size, h2, 0.3, sink=(1 - p) * h2 + 2, cut=crumble)
+        mound(front, x, 13 * size, 5 * min(1, p * 1.5) * (1 - crumble))
+        slab(front, x - 8 * size, 10 * size, h1, -0.3, sink=(1 - p) * h1, cut=crumble)
+        if crumble < 0.7:
+            prism(front, x + 1, hc, 9 * size, 0.06 if cr % 2 else -0.05, sink=(1 - p) * hc, cut=min(1, crumble * 1.5))
+            prism(front, x + 9 * size, hc * 0.5, 6 * size, 0.32, sink=(1 - p) * hc * 0.5 + 1, cut=min(1, crumble * 1.5))
+        slab(front, x + 4 * size, 9 * size, h2, 0.22, sink=(1 - p) * h2 + 2, cut=crumble)
     if crumble > 0:
         rng = np.random.RandomState(seed)
         t = crumble
-        for i in range(7):
-            vx = rng.uniform(-1.4, 1.4) * 12
-            vy = rng.uniform(1.2, 2.0) * 16
-            px = x + rng.uniform(-6, 6) + vx * t
-            py = GROUND - 10 * size - vy * t + 34 * t * t
+        for i in range(8):
+            vx = rng.uniform(-1.4, 1.4) * 13
+            vy = rng.uniform(1.2, 2.0) * 18
+            px = x + rng.uniform(-7, 7) + vx * t
+            py = GROUND - 16 * size - vy * t + 40 * t * t
             if py < GROUND - 1:
                 if i % 3 == 0:
                     shard(front, px, py, i)
                 else:
                     chunk(front, px, py, i, flip=vx < 0)
-        cloud(front, (x, GROUND - 3), 6.5 * size * min(1.0, 0.5 + t), 'jklm', hollow=max(0.0, t - 0.35) * 1.1,
+        cloud(front, (x, GROUND - 3), 8 * size * min(1.0, 0.45 + t), 'jklm', hollow=max(0.0, t - 0.4) * 1.1,
               seed=seed)
 
 
@@ -1049,7 +1082,7 @@ def fx_slam(level):
         a, b = ctx.tips['P'], ctx.tips['F2']
         c = (a + b) / 2 + np.array([2, -4])
         if level == 0:
-            pop(front, c, 6.0, facing=50, tones='ofgh')
+            pop(front, c, 6.5, facing=50, tones='ojab')
             for (dx, dy, k) in ((-10, -10, 0), (11, -13, 1), (16, -5, 2), (-3, -16, 3)):
                 chunk(front, c[0] + dx, c[1] + dy, k, flip=dx < 0)
             shard(front, c[0] + 6, c[1] - 9, 0)
@@ -1091,7 +1124,7 @@ SPECIALE = [
     # 4 : il s'abat de tout son poids (image de vitesse)
     dict(sp=(2, 1), tilt=(0, 1), glow=2, croc=1,
          legs={'P': dict(new=P_MID), 'F2': dict(new=F2_MID)},
-         fx_list=[fx_smear(['P', 'F2'], {'P': g2c(112, 40), 'F2': g2c(139, 15)})], ms=50),
+         fx_list=[fx_smear(['P', 'F2'], {'P': g2c(108, 30), 'F2': g2c(139, 15)})], ms=50),
     # 5 : ÉCRASEMENT (arrêt sur image) : le corps tombe, la terre se fend, la première grappe pointe
     dict(sp=(5, 5), tilt=(-1, 3), kf=0.3, glow=1,
          legs={'P': dict(new=P_SLAM), 'F2': dict(new=F2_SLAM), 'A': dict(mid=(1, 0)), 'B': dict(mid=(1, 0)),

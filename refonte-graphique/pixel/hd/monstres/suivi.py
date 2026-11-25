@@ -70,7 +70,7 @@ def state(nom):
 
 
 # animations finies par leur animateur (les autres GIF sont encore en travail)
-ANIMES = {'matelot', 'pretresse-serpent', 'crabe-geant', 'diablotin', 'salamandre'}
+ANIMES = {'matelot', 'pretresse-serpent', 'crabe-geant', 'diablotin', 'salamandre', 'naga-bouclier'}
 
 
 def clip(nom):

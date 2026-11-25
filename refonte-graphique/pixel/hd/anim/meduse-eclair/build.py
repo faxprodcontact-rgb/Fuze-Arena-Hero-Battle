@@ -87,8 +87,11 @@ BLINK = dict(SRC['cligne'])
 
 # ---------------------------------------------------------------- la charpente de la méduse (mesurée sur le dessin)
 BELL_ROW = 35                 # rangée du haut de l'ombrelle doublée (plus haute) ou retirée (plus plate)
-SPLIT_L, SPLIT_R = 41, 77     # colonnes doublées (elle s'ouvre) ou retirées (elle se resserre)
-SPLIT_Y = 119                 # … sur toute la hauteur (les filaments s'écartent avec l'ombrelle : pas de cassure)
+# Colonnes doublées (elle s'ouvre) ou retirées (elle se resserre), choisies pour ne couper ni l'anneau, ni la dent,
+# ni les yeux, ni le coeur, ni un filament fin qui descend droit (il se casserait) :
+#   - à gauche, la colonne 48, sur toute la hauteur (ce qui pend à gauche s'écarte avec l'ombrelle) ;
+#   - à droite, la colonne 80, seulement dans l'ombrelle (rangées 0..59) : les filaments de droite restent accrochés.
+SPLITS = [(48, GH - 1), (80, 59)]
 BODY_Y = 64                   # au-dessus : ombrelle et corps (rigides) ; en dessous : ce qui pend
 HANG_STRETCH = [86, 76, 96, 71, 81, 91, 101, 74, 84, 94, 79, 89, 99, 69]   # rangées doublées quand elle s'élève
 HANG_SQUASH = [88, 78, 98, 73, 93, 83]                                     # rangées retirées quand elle se tasse
@@ -104,8 +107,8 @@ GLOW = {
 
 
 def dup_col(g, x, y1):
-    """ouvre l'ombrelle d'une colonne en x : la colonne est doublée, ce qui est à gauche (x < SPLIT_R) ou à droite
-    s'écarte d'un pixel (rangées 0..y1)"""
+    """ouvre l'ombrelle d'une colonne en x : la colonne est doublée, ce qui est à gauche (si x est dans la moitié
+    gauche) ou à droite s'écarte d'un pixel (rangées 0..y1)"""
     out = g.copy()
     if x < GW // 2:
         out[:y1 + 1, :x] = g[:y1 + 1, 1:x + 1]
@@ -190,8 +193,8 @@ def body(f):
     g = tooth_swing(g, f.get('d', 0))
     k = f.get('k', 0)
     for _ in range(abs(k)):
-        for sx in (SPLIT_L, SPLIT_R):
-            g = dup_col(g, sx, SPLIT_Y) if k > 0 else del_col(g, sx, SPLIT_Y)
+        for sx, sy in SPLITS:
+            g = dup_col(g, sx, sy) if k > 0 else del_col(g, sx, sy)
     rows = row_list(f.get('t', 0), f.get('u', 0))
     X = f.get('x', 0)
     Xb = f.get('xb', X / 5.0)

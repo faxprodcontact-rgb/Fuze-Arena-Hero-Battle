@@ -873,11 +873,13 @@ def fx_drip(level):
 def fx_pebbles(level):
     """des cailloux se soulèvent du sol autour des pattes (la terre répond) ; level 1, 2 : plus haut"""
     def f(cv, back, front, ctx):
-        for i, (x, k) in enumerate(((14, 0), (30, 2), (48, 4), (66, 1), (84, 2), (102, 0), (120, 2))):
-            up = (2, 6, 11)[level] + (i % 3) * (1 + level)
-            chunk(back if i % 2 else front, x + OX + (i % 3) - 1, GROUND - 2 - up, k, flip=i % 2 == 1)
+        # dans les vides entre les pattes (toile), là où on les voit
+        for i, (x, k) in enumerate(((4, 4), (25, 2), (45, 5), (66, 0), (88, 4), (112, 1), (132, 5))):
+            up = (1, 5, 10)[level] + (i % 3) * (1 + level)
+            chunk(front, x + OX - 20 + (i % 3) - 1, GROUND - 3 - up, k, flip=i % 2 == 1)
             if level:
-                put(back, x + OX + 1, GROUND, 'Y')
+                put(back, x + OX - 19, GROUND, 'P')
+                put(back, x + OX - 18, GROUND, 'O')
     return f
 
 
@@ -897,13 +899,14 @@ def fx_blast(level):
     return f
 
 
-def fx_trail(p_from, p_to, bend=-14, w=4.0):
-    """la traînée de venin du plongeon : un ruban courbe (pas un trait droit) qui s'effile vers l'arrière"""
+def fx_trail(p_from, p_to, bend=-14):
+    """le plongeon : des gouttes de venin semées derrière elle le long de sa courbe (de plus en plus petites)"""
     def f(cv, back, front, ctx):
         a, b = np.array(p_from, float) + (OX, OY), np.array(p_to, float) + (OX, OY)
-        m = (a + b) / 2 + np.array([0, bend])
-        pts = bezier(a, a + (m - a) * 0.9, m + (b - m) * 0.4, b, 30)
-        stroke(back, pts, [0.3 + w * (i / 30) ** 1.5 for i in range(31)], 'HIJL')
+        m = (a + b) / 2 + np.array([bend, 0])
+        pts = bezier(a, m, m, b, 10)
+        for i, r in ((1, 1.1), (3, 1.6), (5, 2.2), (7, 2.8), (9, 3.4)):
+            puff(back, pts[i], r, 'HIJL')
     return f
 
 
@@ -956,7 +959,7 @@ def puddle(cv, level, fume=0.0):
                 put(cv, x, y, 'I' if y == GROUND - 2 and x > cx else 'J' if y < GROUND else 'L')
     if fume:
         for (dx, r, sd, dh) in ((-12, 7.0, 61, 0), (9, 6.0, 62, 3), (-1, 5.0, 63, 10)):
-            cloud(cv, (cx + dx, GROUND - 7 - dh - 14 * fume), r * (1 - 0.25 * fume), 'IJLM',
+            cloud(cv, (cx + dx, GROUND - 7 - dh - 14 * fume), r * (1 - 0.25 * fume), 'HIJ',
                   hollow=min(0.9, fume), seed=sd, ground=False)
 
 
@@ -1021,7 +1024,7 @@ SPECIALE = [
     dict(sp=(38, -72), air=True, glow=1, legs=TUCK, abd=1, fx=[fx_blast(2)], ms=130),
     # 6 : le plongeon, traînée de venin
     dict(sp=(58, -36), air=True, glow=1, legs=DIVE, fang=2,
-         fx=[fx_trail((62, 4), (104, 60), bend=-10, w=6.0), fx_trail((86, -6), (122, 52), bend=-8, w=3.5)], ms=50),
+         fx=[fx_trail((70, 2), (98, 52), bend=-8)], ms=50),
     # 7 : IMPACT (arrêt sur image) : elle s'écrase sur l'ennemi, pâlit ; éclat, le sol se fend
     dict(sp=SP_HIT, air=True, glow=1, head=(1, 1), legs=SLAM, fang=2, flash=45, fx=[fx_impact(0)], ms=200),
     # 8 : la couronne de venin gicle, les blocs partent

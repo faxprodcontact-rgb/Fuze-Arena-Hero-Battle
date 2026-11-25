@@ -698,13 +698,13 @@ ATTAQUE = [
 # - Ils éclatent en une gerbe de flammes (arrêt bref) : de grandes langues de feu montent, se recourbent, puis
 #   s'éteignent en volutes de fumée et en braises ; il se renfonce dans sa bosse, la lanterne finit de se balancer.
 HIT2 = (ENEMY_X, GROUND - 34)
-ORBIT_C = (84.0, 31.0)               # le centre du cercle des feux follets (grille : autour de la tête)
-ORBIT_R = (37.0, 14.0)
+ORBIT_C = (84.0, 36.0)               # le centre du cercle des feux follets (grille : autour de la tête)
+ORBIT_R = (38.0, 20.0)
 ORBIT_SPEED = 62.0                   # degrés par image
 BORN = (2.0, 3.0, 4.0)               # l'image où chaque feu follet sort de la lanterne
 RELEASE, ARRIVE = 8.0, 11.0
-A0 = -12.0                           # l'angle où ils entrent dans la ronde (en bas à droite : près de la lanterne)
-CURVES = ((26, -44), (36, -18), (34, 12))   # le décalage du 1er point de contrôle de chaque courbe vers l'ennemi
+A0 = 90.0                            # l'angle où ils entrent dans la ronde (en haut : ils montent de la lanterne)
+CURVES = ((20, -40), (40, -12), (36, 24))   # le décalage du 1er point de contrôle de chaque courbe vers l'ennemi
 
 
 def orbit_pt(a):
