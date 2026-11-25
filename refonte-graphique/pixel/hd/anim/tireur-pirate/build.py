@@ -392,7 +392,7 @@ POSE = [
     dict(b=0, s=1, head=(0, 0), ah=(0, 0), aq=1, e=-1, hc=-1, ms=140),
     dict(b=0, s=1, head=(0, 0), ah=(0, 0), aq=1, e=-1, hc=-1, k=1, ms=110),
     dict(b=0, s=1, head=(0, 0), ah=(0, -1), aq=0, e=-1, hc=-1, ms=160),
-    dict(b=0, s=0, head=(0, 0), ah=(0, 0), aq=0, e=0, ms=140),
+    dict(b=0, s=0, head=(0, 1), ah=(0, 0), aq=-1, e=0, ms=140),
 ]
 
 

@@ -1215,9 +1215,9 @@ def fx_slam(k):
         # sur le premier rang : la bourrasque frappe (éclats ronds au niveau des jambes et du ventre)
         if k == 3:
             # trois coups de vent sur le premier rang : un croissant blanc tourné vers la droite et une volute
-            for (dx, dy, r) in ((-22, -22, 11.0), (20, -30, 10.0), (50, -16, 8.0)):
-                crescent(front, (FOE_X + dx, GROUND + dy), r, 10, span=140, w=4.0, tones='WJFGH')
-                curl(front, (FOE_X + dx + r * 0.5, GROUND + dy - r * 1.0), r * 0.5, 200, turn=270, w=2.0,
+            for (dx, dy, r) in ((-14, -26, 14.0), (26, -34, 12.0), (54, -18, 10.0)):
+                crescent(front, (FOE_X + dx, GROUND + dy), r, 10, span=150, w=6.0, tones='WJFGH')
+                curl(front, (FOE_X + dx + r * 0.35, GROUND + dy - r * 1.25), r * 0.4, 200, turn=270, w=1.8,
                      tones='JFGH')
                 leaf(front, FOE_X + dx - r, GROUND + dy - r * 0.8, int(r))
         if k >= 4:
