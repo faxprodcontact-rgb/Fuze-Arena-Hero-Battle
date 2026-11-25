@@ -763,7 +763,9 @@ def rig_frame(f):
     arm = f.get('arm', ('orig', 0, 0))
     ctx.S = SH_FAR + o
     # le bras lointain (derrière le buste)
-    if arm[0] == 'orig':
+    if f.get('clash'):
+        pass                                         # les bras du défi : voir clash_arms
+    elif arm[0] == 'orig':
         blit(cv, glow(P['brasL'], gl), cx + arm[1], cy + arm[2])
         ctx.fist = np.array([112.0 + arm[1], 40.0 + arm[2]]) + o
     elif arm[0] == 'hammer':
@@ -782,7 +784,6 @@ def rig_frame(f):
     if clash:
         clash_arms(cv, ctx, clash, gl, 'derriere')
         body.draw(cv, glow(CORPS_NU, gl))
-        clash_arms(cv, ctx, clash, gl, 'devant')
     else:
         body.draw(cv, glow(P['corps'], gl))
         nx, ny = f.get('near', (0, 0))
@@ -791,6 +792,8 @@ def rig_frame(f):
     blit(cv, glow(P['tete'], gl), cx, cy, swap)
     if (hdx, hdy) != (0, 0):
         blit(cv, glow(P['tete'], gl), cx + hdx, cy + hdy, swap)
+    if clash:
+        clash_arms(cv, ctx, clash, gl)
     if f.get('post'):                                # la spéciale : la lave du corps change (le soin)
         post = f['post']
         cv[:] = np.vectorize(lambda c: post.get(c, c), otypes=['<U1'])(cv)
@@ -1156,13 +1159,14 @@ def stand_plate(cv, base, w, h, seed, heat=3, sink=0.0):
     bx, by = base
     dy = sink * h
     j = lambda: rng.uniform(-0.06, 0.06)
-    pts = [(-0.5, 0.0), (0.5, 0.0), (0.46 + j(), -0.72), (0.16 + j(), -1.0), (-0.22 + j(), -0.94), (-0.5, -0.58 + j())]
+    pts = [(-0.5, 0.0), (0.5, 0.0), (0.5, -0.76 + j()), (0.26 + j(), -1.0), (-0.3 + j(), -0.95), (-0.5, -0.7 + j())]
     pts = [(bx + u * w, by + dy + v * h) for (u, v) in pts]
     m = poly_mask(pts)
     m[int(by) + 1:, :] = False                       # sous le sol : rien
     if not m.any():
         return
-    tones = {0: '76543', 1: '76543', 2: '6h5g4', 3: 'vuhgt'}[heat]
+    # debout, elles restent de la roche (sinon on dirait des flammes) : la chaleur est dans leurs bords et leur fêlure
+    tones = {0: '76543', 1: '76543', 2: '7h6g4', 3: 'uh6hg'}[heat]
     v = light_field(m)
     edge = m & ~(np.roll(m, 1, 0) & np.roll(m, -1, 0) & np.roll(m, 1, 1) & np.roll(m, -1, 1))
     ys, xs = np.nonzero(m)
@@ -1171,7 +1175,7 @@ def stand_plate(cv, base, w, h, seed, heat=3, sink=0.0):
         ch = tones[0] if k > 0.28 else tones[1] if k > 0.08 else tones[2] if k > -0.1 else \
             tones[3] if k > -0.3 else tones[4]
         if edge[y, x] and k < -0.1:
-            ch = {0: '2', 1: '2', 2: 's', 3: 'u'}[heat]
+            ch = {0: '2', 1: '2', 2: 's', 3: 't'}[heat]
         put(cv, x, y, ch)
     if heat >= 1:
         # une fêlure de lave en marches, du pied vers le haut
@@ -1188,6 +1192,7 @@ def stand_plate(cv, base, w, h, seed, heat=3, sink=0.0):
             put(cv, bx + i, by, 'v' if e < 0.4 else 'u' if e < 0.75 else 't')
             if e < 0.6:
                 put(cv, bx + i, by - 1, 'u' if e < 0.3 else 't')
+    return m
 
 
 def plate_dims(i, r=1.0):
@@ -1195,7 +1200,7 @@ def plate_dims(i, r=1.0):
     ang, L, T, seed, bump, off = PLATES[i]
     back = math.sin(math.radians(RING_A[i])) > 0
     k = 0.9 if back else 1.04
-    return T * 1.05 * k, L * 0.9 * k
+    return T * 1.15 * k, L * 0.92 * k
 
 
 def ground_ellipse(back, front, r, w, tones, seed=0, holes=0.6):
@@ -1235,19 +1240,10 @@ def fx_ring(stage):
                     p[1] -= 10 * math.sin(math.pi * e)
                     behind = math.sin(math.radians(RING_A[i])) > 0
                     tgt = back if behind else front
-                    # une traînée de braise courbe derrière une plaque sur deux, une bouffée de chaleur derrière
-                    # les autres
-                    if i % 2 == 0:
-                        pts = []
-                        for j in range(16):
-                            q = e * j / 15
-                            pp = P0 + (P1 - P0) * q
-                            pts.append((pp[0], pp[1] - 10 * math.sin(math.pi * q)))
-                        ws = [0.8 + 6.5 * (j / 15) ** 1.3 for j in range(16)]
-                        stroke(back, pts, ws, 'vutsr', cool=[0.6 * (1 - j / 15) for j in range(16)])
-                    else:
-                        b = P0 + (P1 - P0) * (e * 0.45)
-                        puff(back, (b[0], b[1] - 4), 3.4, 'vut', hollow=0.35)
+                    # derrière chacune, une bouffée de chaleur qui se défait (pas de traînée droite : elles partent
+                    # dans toutes les directions, ce serait une couronne de rayons)
+                    bq = P0 + (P1 - P0) * (e * 0.35)
+                    cloud(back, (bq[0], bq[1] - 4), 2.6 if i % 2 else 3.2, 'vuts', seed=70 + i, ground=False)
                     spin = (1 if i % 2 else -1) * 35
                     plate(tgt, p, ang + 90 + spin * 0.6 + (RING_A[i] - ang) * 0.3, L, T, seed, heat=3)
                 # la poussière soufflée tout autour, au ras du sol
@@ -1258,9 +1254,11 @@ def fx_ring(stage):
                 return
             r = {'pose': 0.86, 'luit': 1.0, 'rentre': 1.03, 'fente': 1.03, 'froid': 1.03}[stage]
             if stage in ('pose', 'luit'):
-                ground_ellipse(back, front, 0.78 if stage == 'pose' else 1.0, 2.4 if stage == 'pose' else 1.6,
-                               'vuts' if stage == 'pose' else 'uts', seed=2 if stage == 'pose' else 4, holes=0.6)
+                ground_ellipse(back, front, 0.78 if stage == 'pose' else 1.0, 2.4 if stage == 'pose' else 1.4,
+                               'vuts' if stage == 'pose' else 'ut', seed=2 if stage == 'pose' else 4,
+                               holes=0.6 if stage == 'pose' else 0.42)
             order = sorted(range(8), key=lambda i: -math.sin(math.radians(RING_A[i])))   # de derrière vers devant
+            lit = np.zeros((H, W), bool)
             for i in order:
                 ang, L, T, seed, bump, off = PLATES[i]
                 th = RING_A[i]
@@ -1275,9 +1273,7 @@ def fx_ring(stage):
                         cloud(tgt, (base[0] + s_ * (w * 0.6 + 2), base[1] - 2), 2.6, 'EFFH', seed=seed + s_,
                               ground=False)
                 elif stage == 'luit':
-                    stand_plate(tgt, base, w, h, seed, heat=3)
-                    # elles luisent : une lueur douce au pied, le sol rougeoie sous elles
-                    puff(back if behind else front, (base[0] + 1, base[1] - h - 2), 1.6, 'wv')
+                    lit |= stand_plate(tgt, base, w, h, seed, heat=3)
                 elif stage == 'rentre':
                     stand_plate(tgt, base, w, h, seed, heat=2, sink=0.55)
                     if i % 3 == 0:
@@ -1289,9 +1285,13 @@ def fx_ring(stage):
                         e = abs(k) / (w / 2)
                         ch = ('u' if e < 0.35 else 't' if e < 0.7 else 's') if hot else ('s' if e < 0.4 else 'r' if e < 0.8 else 'O')
                         put(tgt, base[0] + k, base[1], ch)
-                    if i % 2 == 1:
-                        wisp(back if behind else front, (base[0], base[1] - 1), 8 if hot else 12, 2.0,
-                             tail=0.0 if hot else 0.35, cw=i % 4 == 1)
+            if lit.any():
+                # elles luisent : une lueur d'or douce et translucide autour de chacune (aucun trait)
+                B = np.asarray(Image.fromarray((lit * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(2.6)),
+                               float) / 255
+                a_ = np.clip(B * 2.6, 0, 1) * 150
+                back[(a_ >= ALPHA['Q'] * 0.85) & (back == '.')] = 'Q'
+                back[(a_ >= ALPHA['R'] * 0.85) & (back == '.')] = 'R'
         finally:
             FLOOR[0] = None
     return f
@@ -1362,28 +1362,31 @@ CORPS_NU = P['corps'].copy()
 CORPS_NU[(XX == 49) & (YY >= 84) & (YY <= 92) & (CORPS_NU == '6')] = '3'
 
 
-def clash_arms(cv, ctx, c, gl, stage):
-    """stage 'derriere' : le haut du bras lointain (avant le buste) ; 'devant' : son avant-bras et son poing, puis le
-    bras proche et son poing (après le buste). c = dict(near=(dx, dy) du poing proche, far=poignet lointain (grille),
-    tip=bout du poing lointain (grille))"""
-    o = ctx.o
-    Sf = SH_FAR + o
-    Wf = np.array(c['far'], float) + o
-    Ef = ik(Sf, Wf, ARM_FAR[0], ARM_FAR[1], -1)
-    if stage == 'derriere':
-        layered(cv, lambda lay: draw_rock_limb(lay, Sf, Ef, 10.0, 9.5, seams=(0.6,), lava=gl), rim_rock)
-        return
-    Tf = np.array(c['tip'], float) + o
-    v = Tf - Wf
-    u = v / max(np.linalg.norm(v), 1e-6)
+FIST_UP = over(P['poingL'], P['poignetL'])      # le poing levé du dessin et son poignet de lave (sans l'avant-bras)
+ELBOW_FAR = np.array([109.0, 86.0])            # le coude lointain pendant le défi (grille, relatif au buste)
 
-    def far(lay):
-        draw_rock_limb(lay, Ef, Wf - 1.5 * u, 10.5, 9.5, seams=(0.08,), crack=(0.35, 0.68), lava=gl)
-        wrist_band(lay, Wf - 2.0 * u, Wf + 1.5 * u, 10.0, gl)
-        draw_rock_limb(lay, Wf + 1.5 * u, Tf, 11.0, 10.5, seams=(0.42, 0.7), lava=gl)
-    layered(cv, far, rim_rock)
+
+def clash_arms(cv, ctx, c, gl, stage='devant'):
+    """les deux bras du défi. stage 'derriere' : le haut du bras lointain (posé avant le buste) ; 'devant' : son
+    avant-bras et son poing, puis le bras proche et son poing (posés après le buste et la tête).
+    c = dict(near=(dx, dy) du poing proche, far=(dx, dy) du poing lointain), en pixels par rapport au dessin"""
+    bx, by = ctx.body.follow(50)
+    o = ctx.o
+    dxf, dyf = c['far']
+    Ef = ELBOW_FAR + o
+    if stage == 'derriere':
+        layered(cv, lambda lay: draw_rock_limb(lay, SH_FAR + o, Ef, 10.0, 10.0, seams=(0.6,), lava=gl), rim_rock)
+        return
+    # le bras lointain : le coude sort sur le côté, l'avant-bras remonte en biais vers le poing du dessin (au pixel
+    # près), ramené devant la poitrine
+    Wf = np.array([111.0 + dxf, 58.0 + dyf]) + o
+    vf = Wf - Ef
+    uf = vf / max(np.linalg.norm(vf), 1e-6)
+    layered(cv, lambda lay: draw_rock_limb(lay, Ef, Wf - 1.0 * uf, 11.0, 10.0, seams=(0.08,), crack=(0.35, 0.68),
+                                           lava=gl), rim_rock)
+    layered(cv, lambda lay: blit(lay, glow(FIST_UP, gl), bx + dxf, by + dyf), rim_rock)
     dxn, dyn = c['near']
-    Wn = NWRIST + np.array([dxn, dyn], float) + np.array([OX, OY], float) + np.array(ctx.body.follow(50), float)
+    Wn = NWRIST + np.array([dxn, dyn], float) + np.array([OX + bx, OY + by], float)
     Sn = SH_NEAR + o
     En = ik(Sn, Wn, ARM_NEAR[0], ARM_NEAR[1], 1)
     vn = Wn - En
@@ -1394,9 +1397,8 @@ def clash_arms(cv, ctx, c, gl, stage):
         draw_rock_limb(lay, En, Wn - 1.0 * un, 9.5, 8.5, seams=(0.06,), crack=(0.3, 0.7), lava=gl)
         wrist_band(lay, Wn - 2.5 * un, Wn + 0.5 * un, 8.0, gl)
     layered(cv, near, rim_rock)
-    bx, by = ctx.body.follow(50)
     layered(cv, lambda lay: blit(lay, glow(NFIST, gl), bx + dxn, by + dyn), rim_rock)
-    ctx.contact = np.array([49.0 + dxn, 84.0 + dyn]) + np.array([OX + bx, OY + by], float)
+    ctx.contact = np.array([49.0 + dxn, 86.0 + dyn]) + np.array([OX + bx, OY + by], float)
 
 
 def red_glow(cv, back, amax, sig=3.0, rise=1):
@@ -1427,8 +1429,8 @@ def fx_clash(k):
             for (dx, dy, r) in ((0, 0, 5.0), (-3, -6, 3.2), (2, 7, 3.0), (5, -3, 2.6)):
                 puff(front, (C[0] + dx, C[1] + dy), r, 'wwvu')
         elif k == 1:
-            for (dx, dy, r) in ((-4, -9, 3.4), (4, 9, 3.0), (6, -6, 2.8)):
-                puff(front, (C[0] + dx, C[1] + dy), r, 'vut', hollow=0.45)
+            for (dx, dy, r) in ((-3, -8, 2.2), (3, 8, 2.0), (6, -5, 1.8)):
+                puff(front, (C[0] + dx, C[1] + dy), r, 'vu')
         tau = [0.5, 1.2, 2.0][k]
         for j, (vx, vy, sz) in enumerate(CLASH_DROPS):
             x = C[0] + vx * tau
@@ -1448,7 +1450,7 @@ def heated(**kw):
 
 
 BRACE = (104, 60)                     # le bord gauche du poing levé, redescendu devant la poitrine (grille)
-CLASH = dict(near=(19, -9), far=(90, 72), tip=(66, 71))          # les poings l'un contre l'autre
+CLASH = dict(near=(30, -22), far=(-22, 24))       # les poings l'un contre l'autre, devant la poitrine
 SPECIALE = [
     dict(ms=100),
     # 1-6 : il se ramasse, sa lave monte, le dôme de plaques se forme autour de lui, chauffe au rouge puis à blanc
@@ -1460,7 +1462,7 @@ SPECIALE = [
     dict(crouch=3, arm=('punch', (103, 62)), head=(0, 2), gl=4, fx=[fx_shell_form(1.0, 3)], ms=120),
     # 7 : LANCEMENT (temps fort tenu) : il se redresse d'un coup, le poing levé, et le dôme s'ouvre : les plaques
     # s'écartent de lui dans toutes les directions, une onde de chaleur court au sol en cercle autour de lui
-    dict(crouch=-1, arm=('orig', 0, -5), head=(0, -1), gl=4, flash=30, fx=[fx_ring('vol')], ms=200),
+    dict(crouch=-1, arm=('orig', 0, -5), head=(0, -1), gl=4, flash=16, fx=[fx_ring('vol')], ms=200),
     # 8-11 : les plaques se posent debout en anneau autour de lui, luisent, puis rentrent dans le sol ;
     # ses fissures se referment et luisent doucement (le soin)
     heated(crouch=2, arm=('orig', 1, 4), head=(0, 1), gl=3, fx=[fx_ring('pose')], ms=90),
@@ -1470,13 +1472,12 @@ SPECIALE = [
            tint=((255, 200, 120), 8), ms=100),
     heated(crouch=1, arm=('orig', 0, 1), gl=0, fx=[fx_ring('fente'), fx_heal(2)], post=HEAL[3], ms=100),
     # 12-13 : le défi : il écarte les bras (le poing lointain vers l'ennemi, le proche en arrière) puis les abat
-    dict(crouch=0, lean=-1, arm=('punch', (110, 50)), near=(-2, 1), head=(0, -1), gl=1, fx=[fx_ring('froid')],
-         ms=110),
-    dict(crouch=1, lean=0, clash=dict(near=(11, -4), far=(100, 66), tip=(80, 64)), gl=2, ms=60),
+    dict(crouch=0, lean=-1, arm=('punch', (110, 50)), near=(-2, 1), head=(0, -1), gl=1, ms=110),
+    dict(crouch=1, lean=0, clash=dict(near=(16, -13), far=(-9, 12)), gl=2, ms=60),
     # 14-16 : les deux poings l'un contre l'autre : arrêt sur l'image, étincelles, la lueur rouge gonfle et s'éteint
     dict(crouch=2, lean=1, clash=CLASH, head=(0, 1), gl=3, fx=[fx_clash(0)], tint=((255, 70, 60), 16), ms=200),
     dict(crouch=2, lean=1, clash=CLASH, head=(0, 1), gl=2, fx=[fx_clash(1)], tint=((255, 70, 60), 8), ms=110),
-    dict(crouch=1, lean=1, clash=dict(near=(16, -7), far=(92, 70), tip=(70, 69)), gl=1, fx=[fx_clash(2)], ms=100),
+    dict(crouch=1, lean=1, clash=dict(near=(26, -19), far=(-17, 21)), gl=1, fx=[fx_clash(2)], ms=100),
     # 17-18 : il laisse retomber les bras en garde
     dict(crouch=1, arm=('punch', BRACE), near=(1, 0), ms=100),
     dict(arm=('orig', 0, 2), ms=110),
