@@ -488,6 +488,11 @@ def fur_tone(k):
     return '5' if k > 0.42 else '4' if k > 0.0 else '3' if k > -0.42 else '2' if k > -0.8 else '1'
 
 
+def fur_bright(k):
+    # la fourrure du yéti est surtout blanche : l'ombre ne prend que le dessous du membre
+    return '5' if k > -0.15 else '4' if k > -0.45 else '3' if k > -0.68 else '2' if k > -0.86 else '1'
+
+
 def skin_tone(k):
     return 'E' if k > 0.62 else 'D' if k > 0.2 else 'C' if k > -0.3 else 'B' if k > -0.75 else 'A'
 
@@ -601,10 +606,23 @@ for _f in range(10):
         ms=([200, 150, 140, 150, 170, 210, 160, 150, 160, 200])[_f]))
 
 
-def head_part(crest=0):
+JAW = (YY >= 46) & (XX >= 76)
+
+
+def head_part(crest=0, jaw=0):
+    """la tête ; crest : la crête du crâne frémit ; jaw : la mâchoire du bas descend (il rugit), la gorge rouge
+    sombre et la langue remplissent la gueule ouverte"""
     p = P['tete']
     if crest:
         p = shear_rows(p, lambda y: crest if y <= 18 else 0, 0, 22)
+    if jaw:
+        low = np.where(JAW, p, '.')
+        p = np.where(JAW, '.', p)
+        for y in range(46, 46 + jaw):
+            for x in range(77, 98):
+                if P['tete'][45, x] in 'MOGHN':
+                    p[y, x] = 'O' if 82 <= x <= 87 and y == 45 + jaw else 'M'
+        p = over(p, np.roll(low, jaw, axis=0))
     return p
 
 
@@ -802,7 +820,8 @@ def rig_frame(f):
     if isinstance(far, dict):
         S = body.pt(*SH_F)
         farc = dict(far)
-        farc['W'] = S + np.array(far['w'], float)
+        w = far['w'](body) if callable(far['w']) else far['w']
+        farc['W'] = S + np.array(w, float)
     elif far is None or isinstance(far, tuple):
         dx, dy = far or (0, 0)
         draw_far_arm_exact(cv, body, dx, dy)
@@ -811,7 +830,7 @@ def rig_frame(f):
         ctx['far'] = (farc['W'], E, tips)
     body.draw(cv, BODY)
     hx, hy = f.get('head', (0, 0))
-    hp = head_part(f.get('crest', 0))
+    hp = head_part(f.get('crest', 0), f.get('jaw', 0))
     sw = BLINK if f.get('blink') else None
     if hx:                                            # décalée de côté : posée deux fois, pas de fente au raccord
         body.draw(cv, hp, swap=sw, extra=(0, hy))
@@ -893,7 +912,7 @@ def fx_claw_hit(k, at=None):
             puff(front, c + np.array([12.0, 6.0]), 2.4, 'STU')
             for i, (a, sp, r, sd) in enumerate(SHARDS[:6]):
                 q = c + unit(a + 5) * (13 + 4 * sp)
-                shard(front, q, r * 0.8, a + TUMBLE[i] * 0.3, seed=sd)
+                shard(front, q, r * 0.8, a + TUMBLE[i] * 0.8, seed=sd)
         elif k == 1:
             cloud(front, c + np.array([5.0, -1.0]), 7.0, 'SSTU', seed=3, ground=False)
             puff(front, c + np.array([-4.0, 9.0]), 3.2, 'STU')
@@ -945,6 +964,126 @@ ATTAQUE = [
     # 8 : en garde
     _att(far=(0, 0), ms=150),
 ]
+# ---------------------------------------------------------------- le bras proche retracé (celui qui tient la hache)
+# La hache et la main restent celles du dessin, au pixel près : elles sont seulement déplacées (le manche reste
+# droit, lame en haut) ; le bras est retracé de l'épaule au poignet : manchon de fourrure à mèches, brassard de fer.
+SH_N = (40.0, 44.0)                   # l'épaule proche (grille du dessin)
+ARM_N = (30.0, 28.0)                  # bras, avant-bras (jusqu'au poignet)
+HAND_AT = (23.0, 31.0)                # le poignet, sous le poing qui tient le manche (grille du dessin)
+REST_N = np.array(HAND_AT) - np.array(SH_N)
+
+
+def wedge(cv, base, d, length, width, tones, keep=None):
+    """une mèche pointue : un triangle qui part de base (largeur width) et s'effile dans la direction d ;
+    tones[0] au coeur, tones[-1] vers la pointe ; keep : ne peint que sur ces lettres (mèche DANS la fourrure)"""
+    d = np.array(d, float)
+    d = d / max(np.linalg.norm(d), 1e-6)
+    n = np.array([-d[1], d[0]])
+    steps = int(length * 2) + 1
+    for i in range(steps + 1):
+        t = i / steps
+        c = np.array(base, float) + d * length * t
+        wv = width / 2 * (1 - t)
+        for j in np.arange(-wv, wv + 0.01, 0.5):
+            p = c + n * j
+            x, y = int(math.floor(p[0])), int(math.floor(p[1]))
+            if 0 <= y < H and 0 <= x < W and (keep is None or cv[y, x] in keep):
+                cv[y, x] = tones[min(len(tones) - 1, int(t * len(tones)))]
+
+
+def tufts(cv, P0, P1, r, n, t0=0.15, t1=0.9, L=4.5, seed=0):
+    """la fourrure d'un membre en grappes : des mèches d'ombre pointues dans la fourrure (dans le sens des poils, vers
+    le coude) et des pointes qui hérissent le dessous du membre (longueurs inégales)"""
+    rng = np.random.RandomState(seed)
+    P0, P1 = np.array(P0, float), np.array(P1, float)
+    v = P1 - P0
+    vl = max(np.linalg.norm(v), 1e-6)
+    u = v / vl
+    nv = np.array([-u[1], u[0]])
+    if nv @ LN > 0:
+        nv = -nv                      # nv : vers le côté à l'ombre (en bas à gauche)
+    flow = u + np.array([0.0, 0.5])   # les poils descendent vers le coude, un peu vers le bas
+    for i in range(n):
+        t = t0 + (t1 - t0) * (i + rng.uniform(0.2, 0.8)) / n
+        # pointe sur la silhouette, côté ombre
+        b = P0 + v * t + nv * (r - 1.5)
+        out = nv * 0.7 + flow / max(np.linalg.norm(flow), 1e-6) * 0.7
+        wedge(cv, b, out, L * rng.uniform(0.7, 1.3), 3.0, '321')
+        # mèche d'ombre dans la fourrure claire
+        b2 = P0 + v * (t - 0.08) + nv * r * rng.uniform(-0.15, 0.45)
+        wedge(cv, b2, flow, L * rng.uniform(0.8, 1.2), 2.2, '43', keep='5')
+
+
+def elbow_tufts(cv, S, E, Wr, r=7.6):
+    """le manchon qui retombe au coude : trois mèches pointues qui pendent sous le coude (longueurs inégales)"""
+    a, b = (S - E), (Wr - E)
+    a, b = a / max(np.linalg.norm(a), 1e-6), b / max(np.linalg.norm(b), 1e-6)
+    out = -(a + b)
+    if np.linalg.norm(out) < 0.3:
+        return
+    out = out / np.linalg.norm(out)
+    base = E + out * (r - 2.0)
+    for i, (ox, ln) in enumerate(((-3.0, 4.5), (0.0, 6.5), (3.0, 4.0))):
+        p = base + np.array([ox, 0.0])
+        for j in range(int(ln) + 1):
+            wv = 1.8 * (1 - j / (ln + 1))
+            for x in range(int(p[0] - wv), int(p[0] + wv) + 1):
+                y = int(p[1] + j)
+                if 0 <= y < H and 0 <= x < W:
+                    cv[y, x] = '3' if j < ln * 0.4 else '2' if j < ln * 0.8 else '1'
+
+
+def draw_near_arm(cv, body, rel, bend=-1, extra_hand=(0, 0)):
+    """épaule proche -> coude -> poignet (rel = poignet par rapport à l'épaule, en pixels de toile), puis la hache
+    et la main du dessin, déplacées au pixel près pour que le poignet tombe juste"""
+    S = body.pt(*SH_N)
+    Wr = S + np.array(rel, float)
+    Wr = np.round(Wr)
+    E = ik(S, Wr, ARM_N[0], ARM_N[1], bend)
+    fur = lambda k, t: fur_bright(k)
+
+    def _arm(lay):
+        draw_limb(lay, S, E, 8.6, 7.6, fur, bulge=1.0)
+        tufts(lay, S, E, 8.2, 4, seed=1)
+        draw_limb(lay, E, Wr, 7.8, 6.6, fur, t1=0.8)
+        tufts(lay, E, Wr, 7.4, 3, t1=0.7, seed=2)
+        elbow_tufts(lay, S, E, Wr)
+        draw_limb(lay, E, Wr, 6.6, 6.2, bracer_tone, t0=0.62, t1=1.0)
+        return E
+    layered(cv, _arm, rim=True, shadow=True)
+    hx, hy = int(Wr[0] - (HAND_AT[0] + OX)), int(Wr[1] - (HAND_AT[1] + OY))
+    blit(cv, ARME, hx, hy)
+    blit(cv, MAINS, hx, hy)
+    return Wr, E, (hx, hy)
+
+
+def near_redraw(rel, bend=-1):
+    """rel : le poignet par rapport à l'épaule, ou une fonction (corps) -> rel"""
+    def fn(cv, body, ctx):
+        ctx['near'] = draw_near_arm(cv, body, rel(body) if callable(rel) else rel, bend)
+    return fn
+
+
+POMMEL_DY = 45 - HAND_AT[1]           # le pommeau est 14 pixels sous le poignet
+FIST_DY = FIST.shape[0] - 1           # le bas du poing lointain, sous le poignet
+
+
+def near_on_ground(dx):
+    """le poignet proche placé pour que le pommeau de fer frappe le sol, à dx de l'épaule"""
+    def rel(body):
+        S = body.pt(*SH_N)
+        return (dx, GROUND - POMMEL_DY - S[1])
+    return rel
+
+
+def far_on_ground(dx):
+    """le poignet lointain placé pour que les jointures du poing frappent le sol, à dx de l'épaule"""
+    def rel(body):
+        S = body.pt(*SH_F)
+        return (dx, GROUND - FIST_DY - S[1])
+    return rel
+
+
 SPECIALE = []
 
 

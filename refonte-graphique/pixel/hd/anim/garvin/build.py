@@ -605,8 +605,8 @@ def draw_rock_limb(cv, P0, P1, r0, r1, seams=(), crack=None, lava=0):
             if crack and crack[0] <= t <= crack[1]:
                 # une fêlure en marches (pas une vague) : elle court sur la face éclairée, avec une petite branche
                 s_ = (t - crack[0]) / (crack[1] - crack[0])
-                zz = 0.5 if s_ < 0.3 else 0.36 if s_ < 0.62 else 0.47
-                br = 0.62 <= s_ <= 0.8 and abs(q - (0.36 + (s_ - 0.62) * 1.6)) < 0.07
+                zz = 0.5 if s_ < 0.45 else 0.38
+                br = False
                 if abs(q - zz) < 0.07 or br:
                     ch = 't' if (abs(q - zz) < 0.035 and 0.15 < s_ < 0.85) else 's'
             cv[y, x] = pl.get(ch, ch)
@@ -687,7 +687,7 @@ def far_arm_hammer(cv, S, Wr, bend=1, lava=0, swap=None):
 
     def arm(lay):
         draw_rock_limb(lay, S, E, 10.0, 9.5, seams=(0.6,), lava=lava)
-        draw_rock_limb(lay, E, Wb, 11.5, 10.5, seams=(0.07,), crack=(0.3, 0.75), lava=lava)
+        draw_rock_limb(lay, E, Wb, 11.5, 10.5, seams=(0.07,), crack=(0.35, 0.68), lava=lava)
         return E
     layered(cv, arm, rim_rock)
     hx = int(round(Wr[0] - HAMMER_WRIST[0]))
@@ -703,7 +703,7 @@ def far_arm_punch(cv, S, F, lava=0):
 
     def arm(lay):
         draw_rock_limb(lay, S, E, 10.0, 9.5, seams=(0.6,), lava=lava)
-        draw_rock_limb(lay, E, Wr - np.array([3.0, 0.0]), 11.5, 10.8, seams=(0.07,), crack=(0.3, 0.75), lava=lava)
+        draw_rock_limb(lay, E, Wr - np.array([3.0, 0.0]), 11.5, 10.8, seams=(0.07,), crack=(0.35, 0.68), lava=lava)
         wrist_band(lay, Wr - np.array([4.5, 0.0]), Wr - np.array([1.5, 0.0]), 10.5, lava)
         return E
     layered(cv, arm, rim_rock)
@@ -792,7 +792,7 @@ def slab(cv, bx, w, h, tilt=0.0, hot=0):
 # éclats de basalte dessinés à la main (bord sombre tout autour : ils n'ont pas de contour noir), lumière en haut à
 # droite ; les éclats chauffés ont un coeur de lave et un bord de roche chauffée
 CHUNKS = [
-    ['.1111.', '145671', '134551', '.1221.'],
+    ['..1111.', '.146771', '1345661', '1234551', '.11221.'],
     ['.111', '1561', '1341', '.11.'],
     ['1111', '1461', '.111'],
     ['..111.', '.14671', '13s561', '1t3451', '.1111.'],
@@ -894,9 +894,9 @@ def ground_pop(cv, X, r, tones='wvut', hollow=0.0):
 # pendant que les éclats retombent, que les dalles se rassoient et que la fente fume en refroidissant.
 HIT = [None]
 # éclats et gouttes de l'impact : vitesse (vx, vy), forme, chaud ou non
-SLAM_CHUNKS = [(6.0, -13.0, 0, False), (10.5, -9.5, 1, True), (-4.5, -11.5, 2, False), (13.5, -6.5, 3, False),
-               (2.5, -15.0, 1, False), (-8.0, -7.5, 1, True), (8.5, -12.5, 2, True)]
-SLAM_DROPS = [(4.5, -14.5, 2), (8.0, -11.0, 1), (-2.0, -13.0, 1), (12.0, -8.5, 2), (-6.0, -10.0, 1), (6.5, -16.0, 1)]
+SLAM_CHUNKS = [(7.5, -19.0, 0, False), (13.0, -14.0, 1, True), (-5.5, -17.0, 2, False), (16.0, -9.5, 3, False),
+               (3.0, -22.0, 1, False), (-10.0, -11.0, 0, True), (10.5, -18.0, 2, True)]
+SLAM_DROPS = [(5.5, -21.0, 2), (10.0, -16.0, 1), (-2.5, -19.0, 1), (15.0, -12.5, 2), (-7.5, -14.5, 1), (8.0, -23.0, 1)]
 
 
 def fx_hammer_smear(from_fist):
@@ -908,8 +908,9 @@ def fx_hammer_smear(from_fist):
         a0 = math.degrees(math.atan2(-(A[1] - S[1]), A[0] - S[0]))
         a1 = math.degrees(math.atan2(-(B[1] - S[1]), B[0] - S[0]))
         R = float(np.linalg.norm(B - S)) + 13
-        arc_trail(back, S, R, a0, a1, 26, '776554')
-        arc_trail(back, S, R + 1, a0 + (a1 - a0) * 0.35, a1, 3.5, 'uts')
+        a0 = a1 + (a0 - a1) * 0.6                      # le croissant ne garde que la fin du geste
+        arc_trail(back, S, R, a0, a1, 28, '776554')
+        arc_trail(back, S, R + 1, a0 + (a1 - a0) * 0.3, a1, 4.0, 'uts')
     return f
 
 
@@ -945,7 +946,7 @@ def fx_slam(k):
                     put(back, x, GROUND, 't' if k < 2 else 's')
                     put(back, x + 1, GROUND, 's')
                 else:
-                    drop(front, x, y, vx, vy + 6.8 * tau, sz)
+                    drop(front, x, y, vx * 1.1, vy + 6.8 * tau, sz)
         # la poussière de terre qui roule au ras du sol, puis la fumée qui monte de la fente
         if k == 0:
             cloud(back, (X - 12, GROUND - 3), 4.0, 'EFFH', seed=3)
@@ -988,7 +989,234 @@ ATTAQUE = [
     dict(crouch=1, arm=('orig', 1, 2), ms=160),
     dict(ms=160),
 ]
-SPECIALE = []
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Rempart en fusion »
+# Le protecteur se fait rempart, puis le lance. Il se ramasse (genoux pliés, tête rentrée, le poing levé redescend
+# devant la poitrine) et sa lave monte : le sol rougeoie sous ses pieds, huit plaques de basalte s'arrachent du sol de
+# part et d'autre et montent en arc autour de lui jusqu'à former un dôme (les plaques de derrière passent derrière
+# lui, aucune devant son visage). Les joints du dôme se remplissent de lave, les plaques chauffent au rouge puis à
+# blanc (longue attente). Un coup de poing droit devant lui : arrêt sur l'image (éclair), le dôme éclate et TOUTES
+# les plaques volent vers l'ennemi en cloche (celles de derrière passent au-dessus de sa tête), en laissant des
+# traînées de braise courbes et de la fumée. Elles s'écrasent sur l'ennemi : gerbe de lave, éclats incandescents,
+# fumée en volutes, flaque de lave au sol qui refroidit. Il ramène lentement le poing en garde.
+SHELL_C = (64.0, 66.0)               # le centre du dôme (grille)
+SHELL_R = (78.0, 70.0)               # ses rayons (largeur, hauteur)
+# les plaques : angle sur le dôme (degrés), longueur, épaisseur, graine de forme, envol (bosse, écart à l'arrivée)
+PLATES = [(204, 19, 12, 1, 64, (-10, 10)), (168, 22, 13, 2, 70, (-6, -8)), (134, 22, 13, 3, 60, (-14, -20)),
+          (100, 24, 13, 4, 50, (4, -26)), (66, 22, 13, 5, 34, (12, -14)), (34, 22, 13, 6, 22, (-2, -4)),
+          (4, 21, 13, 7, 14, (10, 6)), (-25, 19, 12, 8, 8, (-4, 14))]
+TARGET = (224.0, 80.0)               # l'ennemi (grille du dessin) : là où les plaques s'écrasent
+
+
+def shell_point(a):
+    r = math.radians(a)
+    return np.array([SHELL_C[0] + SHELL_R[0] * math.cos(r), SHELL_C[1] - SHELL_R[1] * math.sin(r)])
+
+
+def plate(cv, c, ang, L, T, seed, heat=0, keep=None):
+    """une plaque de basalte (toile, centre c), posée le long de l'angle ang (degrés) ; forme irrégulière à facettes ;
+    heat : 0 roche, 1 fêlure de lave, 2 rouge (bords de lave, roche chauffée), 3 blanche"""
+    rng = np.random.RandomState(seed)
+    a = math.radians(ang)
+    u = np.array([math.cos(a), -math.sin(a)])          # le long de la plaque
+    n = np.array([-u[1], u[0]])                        # à travers
+    pts = []
+    for (s_, t_) in ((-0.5, -0.35), (-0.2, -0.5), (0.25, -0.5), (0.5, -0.2), (0.45, 0.4), (0.0, 0.5), (-0.45, 0.4)):
+        j = rng.uniform(-0.08, 0.08)
+        p = np.array(c, float) + (s_ + j) * L * u + (t_ + rng.uniform(-0.1, 0.1)) * T * n
+        pts.append(tuple(p))
+    m = poly_mask(pts)
+    tones = {0: '76543', 1: '76543', 2: '6h5g4', 3: 'vuhgt'}[heat]
+    v = light_field(m)
+    ys, xs = np.nonzero(m)
+    edge = m & ~(np.roll(m, 1, 0) & np.roll(m, -1, 0) & np.roll(m, 1, 1) & np.roll(m, -1, 1))
+    for y, x in zip(ys, xs):
+        k = v[y, x]
+        ch = tones[0] if k > 0.28 else tones[1] if k > 0.08 else tones[2] if k > -0.1 else \
+            tones[3] if k > -0.3 else tones[4]
+        if edge[y, x] and k < -0.1:
+            ch = {0: '2', 1: '2', 2: 's', 3: 'u'}[heat]
+        put(cv, x, y, ch, keep)
+    if heat >= 1:
+        # une fêlure de lave en marches à travers la plaque
+        p0 = np.array(c, float) - 0.3 * L * u - 0.1 * T * n
+        for i in range(int(L * 0.6)):
+            q = p0 + i * u + (0.25 * T * n if i > L * 0.3 else 0)
+            put(cv, q[0], q[1], 'u' if heat >= 2 else 't', keep)
+    return m
+
+
+def shell_mortar(back, front, heat, pulse=0):
+    """les joints de lave du dôme : un ruban courbe qui suit l'arc, sous les plaques"""
+    pts, ws = [], []
+    a0, a1 = PLATES[0][0] + 4, PLATES[-1][0] - 4
+    N = 80
+    for i in range(N + 1):
+        a = a0 + (a1 - a0) * i / N
+        pts.append(tuple(shell_point(a) + np.array([OX, OY])))
+        ws.append([3.0, 5.0, 7.0, 8.5][heat] + 0.6 * math.sin(i * 0.5 + pulse))
+    tones = ['tsr', 'utsr', 'vutsr', 'wvuts'][heat]
+    stroke(back, pts, ws, tones)
+
+
+def fx_shell_form(p, heat=0):
+    """le dôme se forme : p = 0..1, les plaques montent du sol le long de l'arc ; heat : la lave des joints"""
+    def f(cv, back, front, ctx):
+        # le sol rougeoie sous lui, des deux côtés
+        hot = min(1.0, 0.4 + p)
+        ground_glow(back, SOL[0] - 70, SOL[0] - 40, hot * 0.7)
+        ground_glow(back, SOL[0] + 40, SOL[0] + 72, hot * 0.7)
+        if p >= 1.0:
+            shell_mortar(back, front, heat)
+        for (ang, L, T, seed, bump, off) in PLATES:
+            start = 214 if ang > 90 else -34
+            e = min(1.0, p * (1.25 if abs(ang - start) < 60 else 1.0))
+            e = 1 - (1 - e) ** 2
+            a = start + (ang - start) * e
+            c = shell_point(a) + np.array([OX, OY])
+            if c[1] > GROUND - 3:
+                continue
+            spin = (1 - e) * (60 if ang > 90 else -60)
+            layer = front if ang < 60 else back
+            plate(layer, c, a + 90 + spin, L, T, seed, heat=heat if p >= 1.0 else 0)
+            if p < 1.0:
+                # la roche arrachée laisse tomber du gravier et soulève la poussière
+                g = shell_point(start) + np.array([OX, OY])
+                cloud(back, (g[0] + (6 if ang < 90 else -6), GROUND - 3), 3.5 + 3 * p, 'EFFH', hollow=0.3 * p,
+                      seed=seed)
+                pebble(front, c[0] - 2, c[1] + T * 0.6 + 4, seed)
+                ember(front, c[0] + 3, c[1] + T * 0.5 + 7, 1)
+        if heat >= 2:
+            for i, (dx, dy) in enumerate(((-58, -40), (40, -66), (70, -20), (-30, -76), (10, -88))):
+                ember(front, SOL[0] + dx, GROUND + dy - 4 * heat, i % 3, big=i % 2 == 0)
+    return f
+
+
+def plate_path(i, s_):
+    """la place de la plaque i quand elle vole vers l'ennemi (s_ = 0 au dôme … 1 sur l'ennemi), toile"""
+    ang, L, T, seed, bump, off = PLATES[i]
+    P0 = shell_point(ang)
+    P1 = np.array(TARGET) + np.array(off, float)
+    e = s_ ** 1.3
+    p = P0 + (P1 - P0) * e
+    p[1] -= bump * math.sin(math.pi * min(1.0, e))
+    return p + np.array([OX, OY])
+
+
+def fx_burst(s_):
+    """le dôme éclate : s_ = où en sont les plaques sur leur trajet (0..1)"""
+    def f(cv, back, front, ctx):
+        if s_ < 0.15:
+            # le coup de poing fait éclater le dôme : un éclat blanc devant le poing, les joints se brisent en gouttes
+            F = ctx.fist + np.array([14.0, 0.0])
+            ground_pop(front, F[0], 9.0, 'wvvut') if False else None
+            for (dx, dy, r) in ((0, 0, 7.0), (6, -4, 4.5), (5, 5, 4.0)):
+                puff(front, (F[0] + dx, F[1] + dy), r, 'wvu')
+            for i, (ang, L, T, seed, bump, off) in enumerate(PLATES):
+                c = shell_point(ang) + np.array([OX, OY])
+                d = c - (np.array(SHELL_C) + np.array([OX, OY]))
+                c = c + 4 * d / np.linalg.norm(d)
+                drop(back, c[0] - 3, c[1] + 2, d[0], d[1], 2)
+                plate(front if ang < 60 else back, plate_path(i, s_) + (c - shell_point(ang) - [OX, OY]) * 0,
+                      ang + 90 + 20, L, T, seed, heat=3)
+            return
+        for i, (ang, L, T, seed, bump, off) in enumerate(PLATES):
+            c = plate_path(i, s_)
+            # la traînée : une courbe de braise derrière la plaque (une sur deux), de la fumée derrière les autres
+            behind = ang > 90 and c[0] < OX + 128          # celles de derrière passent derrière lui, au-dessus
+            if i in (2, 5) or (i == 7 and s_ < 0.8):
+                # une traînée de braise courbe (trois plaques seulement, de longueurs différentes)
+                ln = {2: 0.24, 5: 0.16, 7: 0.1}[i]
+                pts = [tuple(plate_path(i, max(0.0, s_ - ln * (1 - j / 20)))) for j in range(21)]
+                ws = [0.8 + 9.0 * (j / 20) ** 1.2 for j in range(21)]
+                stroke(back, pts, ws, 'vutsr', cool=[0.6 * (1 - j / 20) for j in range(21)])
+            else:
+                # derrière les autres, une petite volute de fumée qui s'enroule
+                b = plate_path(i, max(0.0, s_ - 0.1))
+                curl(back, (b[0], b[1]), 3.0 + 1.5 * s_, 90 + 50 * i, turn=280, w=2.2, tones='BCD', cw=i % 2 == 0)
+            spin = (s_ * 300 + seed * 40) * (1 if i % 2 else -1)
+            plate(back if behind else front, c, ang + 90 + spin, L, T, seed, heat=3 if s_ < 0.5 else 2)
+    return f
+
+
+IMPACT_BITS = [(-11.0, -24.0, 0), (8.0, -28.0, 1), (15.0, -18.0, 2), (-16.0, -15.0, 1), (3.0, -32.0, 0),
+               (19.0, -11.0, 2), (-6.0, -20.0, 2), (11.5, -23.0, 0)]
+
+
+def fx_crash(k):
+    """les plaques s'écrasent sur l'ennemi : k = 0 le choc (arrêt sur l'image), 1 la gerbe, 2 à 5 ça retombe et fume"""
+    def f(cv, back, front, ctx):
+        X = TARGET[0] + OX
+        Y = GROUND
+        # la flaque de lave qui s'étale et refroidit
+        hot = [1.0, 1.0, 0.85, 0.6, 0.4, 0.2][k]
+        w = [14, 22, 26, 28, 28, 28][k]
+        ground_glow(back, X, X + w, hot)
+        ground_glow(back, X, X - w, hot) if False else None
+        for x in range(int(X - w), int(X)):
+            put(back, x, GROUND, 'vutsrO'[min(5, int((X - x) / w * 6 * (1.4 - hot)))])
+        if k == 0:
+            ground_pop(front, X, 22.0, 'wwvvuts')
+            cloud(front, (X + 2, Y - 34), 12.0, 'wvvuts', seed=31, ground=False)
+            cloud(front, (X - 18, Y - 14), 8.0, 'vuuts', seed=32, ground=False)
+            cloud(front, (X + 22, Y - 16), 8.5, 'vuuts', seed=33, ground=False)
+        elif k == 1:
+            ground_pop(back, X, 24.0, 'vuutsr', hollow=0.45)
+            cloud(back, (X - 24, Y - 10), 11.0, 'ABBCD', seed=11)
+            cloud(back, (X + 26, Y - 10), 11.5, 'ABBCD', seed=12)
+            cloud(back, (X + 2, Y - 40), 10.0, 'ABCD', seed=13, ground=False)
+        else:
+            j = k - 2
+            smoke_column(back, (X - 12, Y - 14 - 5 * j), 30 + 8 * j, 10.0 - 1.2 * j, hollow=0.1 + 0.2 * j, seed=20)
+            smoke_column(back, (X + 16, Y - 10 - 4 * j), 22 + 8 * j, 8.0 - 1.0 * j, hollow=0.15 + 0.2 * j, seed=24,
+                         lean=-1.0)
+            if j < 2:
+                cloud(back, (X - 30, Y - 5), 8.0, 'ABCD', hollow=0.35 + 0.25 * j, seed=26)
+                cloud(back, (X + 34, Y - 5), 8.0, 'ABCD', hollow=0.35 + 0.25 * j, seed=27)
+        # éclats incandescents et gouttes de lave en cloche
+        tau = [0.6, 1.4, 2.3, 3.2, 4.2, 9.0][k]
+        for j, (vx, vy, kk) in enumerate(IMPACT_BITS):
+            x, y, landed = ballistic(X, Y - 10, vx, vy, tau, rest=3)
+            if landed and k >= 4 and j % 2:
+                continue
+            chunk(front, x, y, kk, flip=vx < 0, hot=(k < 3 and j % 3 != 1))
+        if k <= 3:
+            for j, (vx, vy, kk) in enumerate(IMPACT_BITS):
+                x, y, landed = ballistic(X + 2, Y - 12, vx * 1.3 + 2, vy * 1.1, tau * 0.9, rest=1)
+                if not landed:
+                    drop(front, x, y, vx, vy + 6.8 * tau, 2 if j % 3 == 0 else 1)
+                elif k >= 2:
+                    put(back, x, GROUND, 's')
+        if k >= 2:
+            for (dx, dy) in ((-16, -40), (6, -52), (22, -36)):
+                ember(front, X + dx + 2 * k, Y + dy - 5 * k, min(3, k - 2))
+    return f
+
+
+BRACE = (104, 60)                     # le bord gauche du poing levé, redescendu devant la poitrine (grille)
+SPECIALE = [
+    dict(ms=150),
+    # 1-5 : il se ramasse, sa lave monte, le dôme de plaques se forme autour de lui
+    dict(crouch=1, arm=('orig', 2, 8), head=(0, 1), gl=1, fx=[fx_shell_form(0.0)], ms=180),
+    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), near=(0, 0), gl=2, fx=[fx_shell_form(0.4)], ms=150),
+    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), gl=2, fx=[fx_shell_form(0.78)], ms=140),
+    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), gl=3, fx=[fx_shell_form(1.0, 1)], ms=200),
+    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), gl=4, fx=[fx_shell_form(1.0, 2)], ms=320),
+    # 6-7 : le coup de poing droit, arrêt sur l'image : le dôme éclate
+    dict(crouch=1, lean=3, arm=('punch', (126, 55)), near=(1, 0), gl=4, fx=[fx_shell_form(1.0, 3)], ms=60),
+    dict(crouch=1, lean=4, arm=('punch', (130, 55)), near=(1, 0), gl=4, flash=40, fx=[fx_burst(0.05)], ms=170),
+    # 8-9 : les plaques volent vers l'ennemi
+    dict(crouch=1, lean=4, arm=('punch', (130, 55)), near=(1, 0), gl=3, fx=[fx_burst(0.38)], ms=70),
+    dict(crouch=1, lean=3, arm=('punch', (129, 55)), gl=2, fx=[fx_burst(0.66)], ms=70),
+    dict(crouch=1, lean=3, arm=('punch', (129, 55)), gl=2, fx=[fx_burst(0.92)], ms=60),
+    # 10-15 : elles s'écrasent sur l'ennemi ; il ramène lentement le poing
+    dict(crouch=1, lean=3, arm=('punch', (128, 55)), gl=2, fx=[fx_crash(0)], ms=180),
+    dict(crouch=1, lean=2, arm=('punch', (122, 57)), gl=1, fx=[fx_crash(1)], ms=110),
+    dict(crouch=1, lean=1, arm=('orig', 4, 10), gl=1, fx=[fx_crash(2)], ms=120),
+    dict(crouch=1, arm=('orig', 2, 5), fx=[fx_crash(3)], ms=130),
+    dict(crouch=1, arm=('orig', 1, 2), fx=[fx_crash(4)], ms=140),
+    dict(arm=('orig', 0, 1), fx=[fx_crash(5)], ms=150),
+    dict(ms=160),
+]
 # ==== FIN ATTAQUES ====
 
 

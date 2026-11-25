@@ -1125,12 +1125,12 @@ ATTAQUE = [
     dict(G=(36, 80), ang=200, bend=1, lean=-1, crouch=1, head=(0, 1), ml=1, pg=1, ms=100),
     dict(**BACK, bend=1, shs=(-3, 1), lean=-3, crouch=2, head=(-1, 1), far=(2, -1), ml=1, mu=1, pg=1,
          fx_list=[fx_snort(2)], ms=280),
-    dict(G=(62, 76), ang=-38, length=0.62, wr=(-6, 1), bend=1, shs=(0, 0), lean=1, crouch=2, head=(0, 1),
-         far=(0, 0), ml=0, pg=0, smear=fx_flat_smear(176, 290, w=13.0), fx_list=[fx_snort(3)], ms=50),
+    dict(G=(62, 76), ang=-38, length=0.78, wr=(-6, 1), bend=1, shs=(0, 0), lean=1, crouch=2, head=(0, 1),
+         far=(0, 0), ml=0, pg=0, smear=fx_flat_smear(176, 290, w=30.0), fx_list=[fx_snort(3)], ms=50),
     dict(**HIT, bend=1, shs=(3, 1), lean=4, crouch=2, head=(1, 1), far=(-2, 0), ml=-1, mu=-1, pg=-1,
-         smear=fx_flat_smear(262, 358, w=7.0), fx_list=[fx_whack(0)], ms=170),
-    dict(G=(84, 70), ang=24, length=0.6, wr=(-6.5, -1.5), club_behind=True, bend=1, shs=(3, 0), lean=3, crouch=1,
-         head=(1, 0), far=(-2, 0), ml=-1, pg=-1, fx_list=[fx_whack(1)], ms=110),
+         smear=fx_flat_smear(296, 358, w=22.0), fx_list=[fx_whack(0)], ms=170),
+    dict(G=(77, 78), ang=-26, wr=(-6.5, 0.0), bend=1, shs=(3, 1), lean=3, crouch=2, head=(1, 1), far=(-2, 0),
+         ml=-1, pg=-1, fx_list=[fx_whack(1)], ms=110),
     dict(G=(68, 78), ang=-64, wr=(-6, 1), bend=1, shs=(1, 0), lean=2, crouch=1, head=(0, 0), far=(-1, 0), ml=1, pg=1,
          fx_list=[fx_whack(2)], ms=120),
     dict(G=(50, 86), ang=242, bend=1, lean=0, crouch=1, head=(0, 0), ml=1, pg=0, fx_list=[fx_whack(3)], ms=120),
@@ -1149,15 +1149,15 @@ ATTAQUE = [
 # (devant lui et derrière lui), s'élargit jusqu'à l'ennemi, puis se défait en langues, en fumée qui s'enroule et en
 # braises ; il reste une tache de sol brûlé. Il se relève, l'aura s'éteint, il revient en garde.
 SKIN_HOT = [None,
-            {'2': '3', '3': '4', '5': '6'},
-            {'1': '2', '2': '3', '3': '4', '4': '5', '5': '6', '6': '7', '7': '8', 'J': 'w', 'K': 'u'}]
+            {'6': '7', '7': '8', 'J': 'v'},
+            {'1': '2', '2': '3', '4': '5', '6': '7', '7': '8', 'J': 'w', 'K': 'u'}]
 IRON_HOT = [None,
             {'i': 'r', 'j': 'e', 'k': 's'},
             {'i': 'r', 'j': 's', 'k': 't', 'l': 'u', 'm': 'v', 'n': 'w'}]
 # les points d'où montent les flammes de l'aura (grille, relatifs au buste) : (x, y, hauteur, penche)
-AURA = [(47, 54, 14, -0.5), (52, 50, 18, -0.4), (46, 40, 16, -0.6), (48, 28, 20, -0.5), (56, 18, 22, -0.3),
-        (64, 12, 16, -0.1), (80, 18, 15, 0.1), (88, 26, 13, 0.25), (97, 54, 14, 0.35), (100, 66, 12, 0.4),
-        (42, 70, 13, -0.6), (44, 86, 11, -0.6), (99, 82, 10, 0.4)]
+AURA = [(46, 56, 18, -0.5), (53, 52, 22, -0.4), (46, 40, 20, -0.6), (49, 28, 24, -0.5), (57, 18, 26, -0.3),
+        (66, 14, 20, -0.1), (78, 20, 18, 0.05), (88, 28, 16, 0.25), (94, 52, 20, 0.3), (98, 58, 16, 0.4),
+        (101, 70, 14, 0.45), (42, 70, 16, -0.6), (43, 84, 13, -0.6), (100, 84, 12, 0.45), (74, 54, 10, 0.0)]
 
 
 def fx_aura(level, phase=0):
@@ -1221,16 +1221,16 @@ def fx_club_fire(level, trail=0.0):
     def f(cv, back, front, ctx):
         u = ctx.u
         nn = np.array([-u[1], u[0]])
-        for i, s_ in enumerate((16.0, 21.0, 26.0, 31.0)):
+        for i, s_ in enumerate((18.0, 27.0)):
             for side in (-1, 1):
                 if level == 1 and side < 0:
                     continue
-                p0 = ctx.G + s_ * u + side * (head_hw(s_) - 0.5) * nn
+                p0 = ctx.G + s_ * u + side * (head_hw(s_) - 1.0) * nn
                 wob = math.sin(i * 1.7 + side)
-                h = (7 + 3 * wob) * (0.6 + 0.4 * level)
-                tongue(back, (p0[0], p0[1]), h, 3.2, bend=0.6 * side, lean=trail, fork=False)
+                h = (9 + 3 * wob) * (0.6 + 0.4 * level)
+                tongue(back, (p0[0], p0[1]), h, 4.2, bend=0.6 * side, lean=trail, fork=False)
         tip = club_tip(ctx.G, ctx.ang, S_HEAD[1] + 1)
-        tongue(back, (tip[0], tip[1]), 8 + 3 * level, 4.4, bend=0.5, lean=trail, fork=True)
+        tongue(back, (tip[0], tip[1]), 10 + 4 * level, 5.4, bend=0.5, lean=trail, fork=True)
     return f
 
 
@@ -1247,12 +1247,12 @@ def fx_fire_arc(a_from):
     return f
 
 
-IMPACT = dict(G=(70, 84), ang=-55, wr=(-5.5, 3.5))
+IMPACT = dict(G=(74, 90), ang=-36, wr=(-5.5, 3.0), shs=(4, 4), shift=16)
 
 
 def impact_x():
     """où le kanabō frappe le sol (toile)"""
-    b = Body(crouch=6, lean=4)
+    b = Body(crouch=6, lean=4, shift=IMPACT['shift'])
     cx, cy = b.follow(50)
     return OX + cx + IMPACT['G'][0] + S_HEAD[1] * unit(IMPACT['ang'])[0] - 2
 
@@ -1268,7 +1268,10 @@ def ring_flames(back, front, cx, rx, hmax, n=16, phase=0, tail=0.0, seed=0, hero
     for i in range(int(rx * 7)):
         a = 2 * math.pi * i / int(rx * 7)
         x, y = cx + rx * math.cos(a), cy + ry * math.sin(a)
-        put(front if math.sin(a) > 0 else back, x, y, 'u' if tail < 0.5 else 's', below=3)
+        lay = front if math.sin(a) > 0 else back
+        put(lay, x, y, 'v' if tail < 0.3 else 'u' if tail < 0.6 else 's', below=3)
+        if tail < 0.7:
+            put(lay, x, y - 1, 't' if tail < 0.3 else 's', below=3)
     for i in range(n):
         a = 2 * math.pi * (i + 0.5 * (seed % 2)) / n + rng.uniform(-0.12, 0.12)
         ca, sa = math.cos(a), math.sin(a)
@@ -1279,10 +1282,12 @@ def ring_flames(back, front, cx, rx, hmax, n=16, phase=0, tail=0.0, seed=0, hero
         h = hmax * side * (0.75 + 0.35 * math.sin(phase * 2.3 + i * 1.9)) * (1 - 0.6 * tail)
         if tail and rng.rand() < tail * 0.6:
             continue
-        if h < 2.5:
-            continue
         lay = front if sa > 0.15 else back
-        tongue(lay, (x, y), h, max(2.2, h * 0.38), bend=0.7 * ca + 0.3 * math.sin(i), lean=0.45 * ca,
+        if h < 6:                                        # la flamme s'éteint : une bouffée de fumée
+            if tail:
+                puff(back, (x, y - 3), 2.2 + 0.2 * (i % 3), 'abc', hollow=0.3 if tail > 0.7 else 0.0)
+            continue
+        tongue(lay, (x, y), h, max(3.0, h * 0.5), bend=0.7 * ca + 0.3 * math.sin(i), lean=0.45 * ca,
                fork=h > 16, below=3)
 
 
@@ -1292,7 +1297,7 @@ def fx_blast(k):
     def f(cv, back, front, ctx):
         cx = impact_x()
         g = GROUND
-        hero = (OX + 30, OX + 100)
+        hero = (OX + 30 + IMPACT['shift'], OX + 100 + IMPACT['shift'])
         if k == 0:
             pop(front, (cx, g - 6), 10.0, facing=80, tones='wwvut')
             tongue(back, (cx - 6, g), 18, 7, bend=-0.6, lean=-0.3)
@@ -1300,34 +1305,35 @@ def fx_blast(k):
             ring_flames(back, front, cx, 10, 8, n=8, phase=0, seed=1)
             return
         rx = [0, 24, 42, 58, 70, 78, 82][k]
-        hm = [0, 16, 20, 18, 12, 7, 0][k]
-        tail = [0, 0, 0, 0.2, 0.55, 0.85, 1][k]
+        hm = [0, 18, 24, 22, 16, 9, 0][k]
+        tail = [0, 0, 0, 0.15, 0.45, 0.8, 1][k]
         if hm:
-            ring_flames(back, front, cx, rx, hm, n=10 + 2 * k, phase=k, tail=tail, seed=k, hero_gap=hero)
+            ring_flames(back, front, cx, rx, hm, n=9 + k, phase=k, tail=tail, seed=k, hero_gap=hero)
         # la boule de feu au point d'impact : elle monte, gonfle, puis devient un champignon de fumée
         if k == 1:
-            for (dx, h, w, b) in ((-8, 22, 8, -0.7), (0, 30, 10, 0.3), (8, 24, 8, 0.8), (-2, 16, 12, -0.2)):
-                tongue(back, (cx + dx, g), h, w, bend=b, lean=0.1 * dx / 8)
-            pop(front, (cx + 1, g - 8), 7.0, facing=90, tones='wvuts')
+            for (dx, h, w, b) in ((-6, 30, 10, -0.6), (4, 54, 15, 0.4), (15, 40, 12, 0.9), (2, 22, 16, -0.2)):
+                tongue(front, (cx + dx, g), h, w, bend=b, lean=0.15 + 0.1 * dx / 8)
+            pop(front, (cx + 2, g - 12), 11.0, facing=90, tones='wwvuts')
         elif k == 2:
-            for (dx, h, w, b) in ((-10, 20, 8, -0.8), (-2, 32, 11, 0.4), (9, 26, 9, 0.9)):
-                tongue(back, (cx + dx, g), h, w, bend=b, lean=0.12 * dx / 8)
-            cloud(back, (cx + 2, g - 36), 8.0, 'aabc', seed=5, ground=False)
+            for (dx, h, w, b) in ((-4, 28, 10, -0.7), (6, 50, 15, 0.4), (17, 36, 11, 0.9)):
+                tongue(front, (cx + dx, g), h, w, bend=b, lean=0.2 + 0.1 * dx / 8)
+            cloud(back, (cx + 14, g - 56), 10.0, 'aabc', seed=5, ground=False)
+            pop(front, (cx + 12, g - 40), 8.0, facing=90, tones='vuts')
         elif k == 3:
-            for (dx, h, w, b) in ((-7, 16, 7, -0.7), (5, 20, 8, 0.8)):
-                tongue(back, (cx + dx, g), h, w, bend=b, tones='vutsr')
-            cloud(back, (cx + 3, g - 40), 9.5, 'aabcd', seed=5, ground=False)
-            cloud(back, (cx - 1, g - 26), 6.0, 'abcd', seed=6, ground=False)
+            for (dx, h, w, b) in ((2, 16, 7, -0.7), (12, 20, 8, 0.8)):
+                tongue(front, (cx + dx, g), h, w, bend=b, tones='vutsr', lean=0.2)
+            cloud(back, (cx + 14, g - 44), 9.5, 'aabcd', seed=5, ground=False)
+            cloud(back, (cx + 10, g - 28), 6.0, 'abcd', seed=6, ground=False)
         elif k == 4:
-            tongue(back, (cx + 1, g), 10, 6, bend=0.5, tones='utsr')
-            cloud(back, (cx + 4, g - 44), 9.0, 'aabc', hollow=0.3, seed=5, ground=False)
-            cloud(back, (cx, g - 28), 6.0, 'abc', hollow=0.3, seed=6, ground=False)
-            curl(back, (cx + 14, g - 50), 4.0, 200, turn=280, w=2.6, tones='abc')
+            tongue(front, (cx + 8, g), 10, 6, bend=0.5, tones='utsr')
+            cloud(back, (cx + 16, g - 48), 9.0, 'aabc', hollow=0.3, seed=5, ground=False)
+            cloud(back, (cx + 11, g - 31), 6.0, 'abc', hollow=0.3, seed=6, ground=False)
+            curl(back, (cx + 28, g - 54), 4.0, 200, turn=280, w=2.6, tones='abc')
         elif k >= 5:
-            cloud(back, (cx + 6, g - 48), 7.5, 'aab', hollow=0.6 if k == 5 else 0.8, seed=5, ground=False)
-            curl(back, (cx - 8, g - 36), 3.6, 340, turn=280, w=2.2, tones='abc', cw=True)
+            cloud(back, (cx + 18, g - 52), 7.5, 'aab', hollow=0.6 if k == 5 else 0.8, seed=5, ground=False)
+            curl(back, (cx + 6, g - 38), 3.6, 340, turn=280, w=2.2, tones='abc', cw=True)
             if k == 5:
-                curl(back, (cx + 18, g - 54), 3.6, 200, turn=280, w=2.2, tones='ab')
+                curl(back, (cx + 30, g - 58), 3.6, 200, turn=280, w=2.2, tones='ab')
         # le sol brûlé : une tache sombre en ellipse, des braises qui rougeoient dedans
         if k >= 2:
             sr = min(rx, 30)
@@ -1364,29 +1370,29 @@ SPECIALE = [
     dict(G=(30, 66), ang=165, crouch=4, lean=-2, head=(0, 1), jaw=1, ml=1, mu=1, pg=1, skin=SKIN_HOT[2], glow=1,
          hot=IRON_HOT[1], fx_pre=[fx_aura(2, 2)], fx_list=[fx_club_fire(1, -0.3)], ms=130),
     # le bond : la massue levée au-dessus de lui
-    dict(G=(44, 38), ang=125, lift=14, crouch=-2, lean=0, head=(0, 0), jaw=1, ml=1, mu=1, pg=1, skin=SKIN_HOT[2],
+    dict(G=(44, 38), ang=125, lift=14, shift=4, crouch=-2, lean=0, head=(0, 0), jaw=1, ml=1, mu=1, pg=1, skin=SKIN_HOT[2],
          glow=1, hot=IRON_HOT[2], fx_pre=[fx_aura(2, 3)], fx_list=[fx_club_fire(2, 0.2)], ms=70),
-    dict(G=(50, 32), ang=100, lift=24, crouch=4, lean=1, head=(0, 0), jaw=2, ml=0, mu=0, pg=0, skin=SKIN_HOT[2],
+    dict(G=(50, 32), ang=100, lift=24, shift=9, crouch=4, lean=1, head=(0, 0), jaw=2, ml=0, mu=0, pg=0, skin=SKIN_HOT[2],
          glow=1, hot=IRON_HOT[2], fx_pre=[fx_aura(2, 4)], fx_list=[fx_club_fire(2, -0.2)], ms=110),
     # il l'abat (traînée de feu)
-    dict(G=(74, 62), ang=-25, lift=9, crouch=1, lean=3, head=(1, 0), jaw=1, ml=-1, mu=-1, pg=-1, skin=SKIN_HOT[2],
+    dict(G=(74, 62), ang=-25, lift=9, shift=13, crouch=1, lean=3, head=(1, 0), jaw=1, ml=-1, mu=-1, pg=-1, skin=SKIN_HOT[2],
          glow=1, hot=IRON_HOT[2], smear=fx_fire_arc(100), ms=45),
     # le choc : arrêt sur l'image, éclair
     dict(**IMPACT, crouch=6, lean=4, head=(1, 2), jaw=2, ml=-1, mu=-1, pg=-1, skin=SKIN_HOT[2], glow=1,
          hot=IRON_HOT[2], flash=45, fx_list=[fx_blast(0)], ms=190),
     # l'explosion et l'anneau de flammes
     dict(**IMPACT, crouch=6, lean=4, head=(1, 1), jaw=2, ml=1, mu=0, pg=1, skin=SKIN_HOT[2], glow=1,
-         hot=IRON_HOT[2], fx_list=[fx_blast(1)], ms=100),
+         hot=IRON_HOT[1], fx_list=[fx_blast(1)], ms=100),
     dict(**IMPACT, crouch=5, lean=4, head=(1, 1), jaw=1, ml=1, mu=1, pg=1, skin=SKIN_HOT[2], glow=1,
-         hot=IRON_HOT[2], fx_list=[fx_blast(2)], ms=100),
-    dict(**IMPACT, crouch=5, lean=4, head=(1, 1), jaw=1, ml=0, mu=0, pg=0, skin=SKIN_HOT[1], hot=IRON_HOT[2],
+         hot=IRON_HOT[1], fx_list=[fx_blast(2)], ms=100),
+    dict(**IMPACT, crouch=5, lean=4, head=(1, 1), jaw=1, ml=0, mu=0, pg=0, skin=SKIN_HOT[1], hot=IRON_HOT[1],
          fx_list=[fx_blast(3)], ms=100),
     dict(**IMPACT, crouch=5, lean=3, head=(1, 1), jaw=0, ml=0, mu=0, pg=0, skin=SKIN_HOT[1], hot=IRON_HOT[1],
          fx_list=[fx_blast(4)], ms=110),
     # il se relève, l'aura s'éteint
-    dict(G=(62, 80), ang=-80, wr=(-6, 2), crouch=3, lean=2, head=(0, 1), ml=-1, pg=-1, hot=IRON_HOT[1],
+    dict(G=(62, 80), ang=-80, wr=(-6, 2), shift=8, lift=2, crouch=3, lean=2, head=(0, 1), ml=-1, pg=-1, hot=IRON_HOT[1],
          fx_list=[fx_blast(5)], ms=120),
-    dict(G=(50, 86), ang=244, crouch=1, lean=0, head=(0, 0), ml=1, pg=1, fx_list=[fx_blast(6)], ms=130),
+    dict(G=(50, 86), ang=244, shift=3, crouch=1, lean=0, head=(0, 0), ml=1, pg=1, fx_list=[fx_blast(6)], ms=130),
     dict(arms='orig', crouch=1, ml=0, pg=0, ms=120),
     dict(arms='orig', ms=150),
 ]
