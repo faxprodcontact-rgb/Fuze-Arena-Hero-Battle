@@ -1194,39 +1194,75 @@ def fx_charge(level):
     return f
 
 
-def fireball(cv, x, y, r, trail_from, spin=0):
-    """la boule de feu : un coeur blanc, une enveloppe de flammes qui lèche vers l'arrière, une traînée courbe"""
-    tx, ty = trail_from
-    pts = bezier((tx, ty), (tx + (x - tx) * 0.15 - 10, ty + (y - ty) * 0.45), (x - (x - tx) * 0.3 + 6, y - (y - ty) * 0.1 + 8), (x, y), 30)
-    stroke(cv, pts, [0.5 + (r * 1.3) * (i / 30) ** 1.4 for i in range(31)], 'vuutsr')
-    # langues qui lèchent vers l'arrière (vers le bas à gauche), en tournant
+def fire_blob(cv, c, r, seed=0, hot=1.0, flicks=3, back_dir=(-0.3, 1.0)):
+    """une boule de feu en chou-fleur : des lobes de flamme éclairés en haut à droite (jaune) et rouges dans l'ombre,
+    un coeur plus chaud ; quelques langues recourbées qui s'échappent vers l'arrière et vers le haut (le feu monte).
+    hot : 1 = coeur blanc, 0 = déjà refroidi (orange, rouge)"""
+    rng = np.random.RandomState(seed)
+    cx, cy = c
+    tones = 'vuts' if hot >= 0.7 else 'utsr' if hot >= 0.35 else 'tsr'
+    bx_, by_ = back_dir
+    for j in range(flicks):
+        a = math.atan2(by_, bx_) + rng.uniform(-0.9, 0.9)
+        ox, oy = math.cos(a) * r * 0.6, math.sin(a) * r * 0.6
+        tongue(cv, (cx + ox, cy + oy + r * 0.3), r * rng.uniform(0.8, 1.25), r * 0.7, bend=rng.choice([-1, 1]) * 0.9,
+               tones=tones, lean=math.cos(a) * 1.4, fork=False)
+    lobes = [(0, 0, r)]
     for j in range(5):
-        a = math.radians(200 + j * 34 + spin)
-        bx, by = x + r * 0.7 * math.cos(a), y - r * 0.7 * math.sin(a)
-        tongue(cv, (bx, by + r * 0.2), r * 0.9, r * 0.55, bend=(1 if j % 2 else -1) * 0.8, tones='vutsr', lean=-0.9 + j * 0.2,
-               fork=False)
-    puff(cv, (x, y), r, 'wwwvvuut')
-    puff(cv, (x + 1, y - 1), r * 0.55, 'w')
+        a = rng.uniform(0, 2 * math.pi)
+        d = r * rng.uniform(0.45, 0.75)
+        lobes.append((d * math.cos(a), d * math.sin(a), r * rng.uniform(0.45, 0.65)))
+    for (dx, dy, rr) in lobes:
+        puff(cv, (cx + dx, cy + dy), rr, tones)
+    if hot >= 0.7:
+        puff(cv, (cx + 1, cy - 1), r * 0.5, 'wwv')
+    elif hot >= 0.35:
+        puff(cv, (cx + 1, cy - 1), r * 0.45, 'vu')
+
+
+def flame_jet(cv, pts, r0, r1, hot0=1.0, hot1=0.6, seed=0, step=0.45):
+    """un jet de flammes le long d'un chemin : des boules de feu qui grossissent et refroidissent en s'éloignant"""
+    n = len(pts)
+    t = 0.0
+    i = 0
+    k = 0
+    while i < n:
+        s_ = i / (n - 1)
+        r = r0 + (r1 - r0) * s_
+        fire_blob(cv, pts[i], r, seed=seed + k, hot=hot0 + (hot1 - hot0) * s_, flicks=1 if r > 4 else 0)
+        # le pas suivant : à peu près un rayon plus loin
+        dist = 0.0
+        while i < n - 1 and dist < r * step:
+            dist += math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1])
+            i += 1
+        if i >= n - 1:
+            break
+        k += 1
 
 
 def fx_breath(k):
-    """le jet de feu vers le ciel : k = 0 (la boule part), 1 (elle monte), 2 (partie : la traînée se défait)"""
+    """le jet de feu : il sort de la gueule vers l'avant, se relève et part vers le ciel avec la boule de feu ;
+    k = 0 (la boule sort), 1 (elle monte, la colonne de feu la suit), 2 (partie : la colonne se défait en fumée)"""
     def f(cv, back, front, ctx):
         mx, my = mouth_point(ctx)
         if k == 0:
-            fireball(front, mx + 24, my - 44, 15, (mx - 2, my + 2), spin=0)
-            tongue(front, (mx, my + 6), 14, 6, bend=0.5, tones='wvuts', lean=0.9, fork=False)
+            pts = bezier((mx - 2, my + 1), (mx + 10, my + 2), (mx + 20, my - 4), (mx + 26, my - 18), 30)
+            flame_jet(front, pts, 3.0, 7.0, 1.0, 0.9, seed=100)
+            fire_blob(front, (mx + 30, my - 30), 13, seed=110, hot=1.0, flicks=4)
         elif k == 1:
-            # la colonne de feu qui suit la boule
-            pts = bezier((mx - 1, my + 2), (mx + 12, my - 30), (mx + 30, my - 70), (mx + 52, my - 116), 40)
-            stroke(front, pts, [2 + 7 * math.sin(math.pi * min(1, i / 40 * 1.1)) for i in range(41)], 'wvuutsr')
-            fireball(front, mx + 56, my - 118, 17, (mx + 40, my - 84), spin=40)
-            cloud(back, (mx + 6, my - 24), 6, 'iijl', seed=70, ground=False)
+            pts = bezier((mx - 2, my + 1), (mx + 16, my + 2), (mx + 30, my - 34), (mx + 46, my - 100), 60)
+            flame_jet(front, pts, 3.5, 9.0, 1.0, 0.6, seed=120)
+            fire_blob(front, (mx + 50, my - 112), 17, seed=130, hot=1.0, flicks=5, back_dir=(-0.2, 1.0))
+            cloud(back, (mx + 4, my - 16), 7, 'iijl', seed=70, ground=False)
         else:
-            pts = bezier((mx + 14, my - 40), (mx + 26, my - 70), (mx + 40, my - 100), (mx + 54, my - 140), 40)
-            stroke(front, pts, [0 if i < 12 else 1 + 4 * math.sin(math.pi * (i - 12) / 28) for i in range(41)], 'vutsr')
-            smoke_column(back, (mx + 18, my - 30), 40, 8, hollow=0.25, seed=71, lean=1.2)
-            for (dx, dy) in ((30, -60), (44, -96), (20, -84), (52, -120)):
+            # la colonne s'est détachée de la gueule et monte en refroidissant : des boules de feu qui deviennent fumée
+            for j, (dx, dy, r, hot) in enumerate(((26, -40, 5.5, 0.3), (34, -68, 8.0, 0.4), (44, -104, 10.0, 0.5),
+                                                  (54, -140, 9.0, 0.45))):
+                fire_blob(front, (mx + dx + (j % 2) * 3, my + dy), r, seed=140 + j, hot=hot, flicks=1)
+            cloud(back, (mx + 12, my - 26), 8, 'iijl', seed=71, ground=False, hollow=0.2)
+            cloud(back, (mx + 18, my - 50), 7, 'iijl', seed=72, ground=False, hollow=0.3)
+            curl(back, (mx + 4, my - 40), 4, 90, turn=260, w=2.2, tones='ijl', cw=True)
+            for (dx, dy) in ((34, -60), (60, -96), (12, -84), (66, -124), (30, -132)):
                 ember(front, mx + dx, my + dy, big=dx > 40)
             puff(front, (mx + 2, my + 1), 2.6, 'vut')
     return f
@@ -1274,7 +1310,7 @@ def meteor(cv, x, y, r, vx, vy, k=0):
 
 # la pluie de feu sur UNE cible (aux pieds de ENEMY_X) : trois blocs qui tombent en biais (venus du haut, côté dragon)
 ROCKS = [(0, 0, 8.5), (-24, -30, 5.4), (22, -16, 4.6)]       # décalage d'arrivée x, retard (pixels de chute), rayon
-FALL = (0.55, 1.0)                                         # direction de la chute (vers la droite, en bas)
+FALL = (0.2, 1.0)                                         # direction de la chute (vers la droite, en bas)
 
 
 def fx_rain(k):
@@ -1283,7 +1319,7 @@ def fx_rain(k):
         ux, uy = FALL
         for i, (dx, delay, r) in enumerate(ROCKS):
             # la distance qui reste avant le sol
-            left = (200, 120, 46)[k] + delay * 1.6
+            left = (250, 150, 60)[k] + delay * 1.6
             X = ENEMY_X + dx - ux * left * 0.95
             Y = GROUND - 6 - uy * left
             if Y < -10 or X < ENEMY_X - 44:
@@ -1333,29 +1369,34 @@ def fx_impact(k):
                 tongue(back if abs(ox) < 22 else front, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='wvuutsr', lean=0.0)
             for (vx, vy, d) in ((-1, -0.6, 36), (1, -0.8, 38), (-0.5, -1, 46), (0.7, -1, 44), (0.2, -1, 56)):
                 drop(front, X + vx * d, gy - 16 + vy * d + d * 0.12, vx, vy + 0.2, 2 if d > 40 else 1)
-            for (ox, oy, kk) in ((-30, -38, 0), (28, -46, 1), (-6, -62, 2)):
+            for (ox, oy, kk) in ((-52, -64, 0), (48, -76, 1), (-14, -112, 2)):
                 chunk(front, X + ox, gy + oy, k=kk, flip=ox < 0)
             cloud(back, (X - 4, gy - 88), 11, 'iijl', seed=80, ground=False)
         elif k == 2:
             for (ox, hh, ww, bd) in ((0, 46, 18, -0.5), (-18, 30, 12, 0.8), (18, 34, 12, -0.8), (-30, 14, 7, -0.5),
                                      (30, 16, 7, 0.6)):
                 tongue(back if abs(ox) < 22 else front, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='vuutsr', lean=0.0)
-            smoke_column(back, (X - 2, gy - 76), 34, 13, seed=81, lean=1.0)
+            cloud(back, (X - 6, gy - 84), 12, 'iijl', seed=81, ground=False)
+            cloud(back, (X + 10, gy - 98), 8, 'iij', seed=84, ground=False)
             for (vx, vy, d) in ((-1, 0.2, 44), (1, 0.1, 46), (-0.4, -0.4, 52)):
                 drop(front, X + vx * d, gy - 12 + vy * d + 14, vx, 1)
-            for (ox, oy, kk) in ((-40, -16, 0), (38, -22, 1)):
+            for (ox, oy, kk) in ((-62, -30, 0), (58, -40, 1)):
                 chunk(front, X + ox, gy + oy, k=kk, flip=ox < 0)
         elif k == 3:
             for (ox, hh, ww, bd) in ((-2, 30, 14, 0.6), (-16, 20, 10, -0.7), (15, 22, 10, 0.7), (-28, 10, 6, -0.4),
                                      (28, 11, 6, 0.5)):
                 tongue(back, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='vutsr', lean=0.0, fork=hh > 25)
-            smoke_column(back, (X, gy - 58), 46, 15, hollow=0.15, seed=82, lean=-1.0)
+            cloud(back, (X - 4, gy - 98), 14, 'iijlm', seed=82, ground=False, hollow=0.15)
+            cloud(back, (X + 14, gy - 122), 9, 'iijl', seed=85, ground=False, hollow=0.2)
+            curl(back, (X + 22, gy - 136), 5, 250, turn=260, w=2.6, tones='iij')
             for (ox, oy) in ((-20, -50), (14, -62), (26, -40)):
                 ember(front, X + ox, gy + oy, big=ox > 0)
         elif k == 4:
             for (ox, hh, ww, bd) in ((-4, 18, 9, -0.6), (10, 14, 8, 0.7), (-18, 9, 5, 0.5), (22, 8, 5, -0.5)):
                 tongue(back, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='vutsr', lean=0.0, fork=False)
-            smoke_column(back, (X + 2, gy - 50), 52, 15, hollow=0.45, seed=83, lean=1.0)
+            cloud(back, (X, gy - 116), 15, 'iijl', seed=83, ground=False, hollow=0.45)
+            cloud(back, (X + 18, gy - 142), 9, 'ijl', seed=86, ground=False, hollow=0.55)
+            curl(back, (X - 12, gy - 80), 5, 60, turn=260, w=2.4, tones='ijl', cw=True)
             for (ox, oy) in ((-12, -40), (18, -56), (4, -70)):
                 ember(front, X + ox, gy + oy)
         elif k == 5:
