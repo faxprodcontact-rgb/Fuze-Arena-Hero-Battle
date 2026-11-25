@@ -135,6 +135,11 @@ P['brasL'] = take(filled & isin(ORIG, COAT + GOLD) & (((XX >= 81) & (YY >= 62) &
 # la tête : chapeau, visage, cheveux (les deux mèches qui tombent aux épaules), oreille et anneau
 P['tete'] = take(filled & ((YY <= 57) & (XX >= 52) | (YY <= 40) | ((YY <= 60) & (XX >= 52) & (XX <= 62) & isin(ORIG, HAIR))))
 P['corps'] = rest.copy()
+# sous les mèches (quand la tête bouge d'un pixel) : la nuque et le col continuent, jamais de trou
+for _y in range(54, 61):
+    for _x in range(52, 64):
+        if P['corps'][_y, _x] == '.' and ORIG[_y, _x] in HAIR + 'opn':
+            P['corps'][_y, _x] = 'B' if _y <= 59 else 'n'
 # sous le bec de l'ara (quand sa tête bouge) : les cheveux continuent
 for (_x, _y) in zip(*np.nonzero((P['ara_tete'] != '.') & (XX >= 52))[::-1]):
     P['tete'][_y, _x] = 'B'
@@ -500,14 +505,15 @@ FAR_FIST = (
      '1234443',
      '.12.332',
      '..1.21.'], (3, 2))          # (colonne, rangée) de la grille qui tombe sur l'arme en (t, 0)
-# La main proche serre le poignet de la crosse, l'index allongé vers la détente.
+# La main proche serre le poignet de la crosse par-dessous (le dessus du bois reste visible au-dessus des
+# phalanges), l'index allongé vers la détente.
 NEAR_FIST = (
-    ['.3455..',
-     '234554.',
+    ['.3455.',
+     '234554',
      '2345543',
-     '1234443',
-     '123333445',
-     '.122.1233'], (3, 1))
+     '12344434443',
+     '1233332.12',
+     '.1222..'], (3, 0))
 
 
 def put_grid(cv, rows, x0, y0):
@@ -584,7 +590,8 @@ def ik(S, T, L1, L2, bend):
     return S + a * u + bend * hh * perp
 
 
-def draw_arm(cv, S, Wr, lengths, bend, r=(4.2, 3.8, 3.4), lit=0.0, cuff=True, parts=('haut', 'bas'), jabot=False):
+def draw_arm(cv, S, Wr, lengths, bend, r=(4.2, 3.8, 3.4), lit=0.0, cuff=True, parts=('haut', 'bas'), jabot=False,
+             cuff_at=0.6):
     """épaule S -> coude -> poignet Wr (toile) : la manche bleue, puis le grand revers d'or au bout de l'avant-bras
     (et le jabot blanc qui en sort). parts : le bras ('haut'), l'avant-bras ('bas'), ou les deux."""
     E = ik(S, Wr, lengths[0], lengths[1], bend)
@@ -595,7 +602,7 @@ def draw_arm(cv, S, Wr, lengths, bend, r=(4.2, 3.8, 3.4), lit=0.0, cuff=True, pa
     if 'bas' in parts:
         draw_limb(cv, E, Wr, r[1], r[2], 'manche', lit + 0.05)
         if cuff:
-            draw_limb(cv, E + 0.6 * v, Wr - 0.1 * v, r[2] + 0.2, r[2] + 0.5, 'or', lit * 0.5, rim=True)
+            draw_limb(cv, E + cuff_at * v, Wr - 0.1 * v, r[2] + 0.2, r[2] + 0.5, 'or', lit * 0.5, rim=True)
         if jabot:
             u = v / max(np.linalg.norm(v), 1e-6)
             draw_limb(cv, Wr - 0.2 * u, Wr + 1.6 * u, 1.9, 1.5, 'jabot', 0.1, rim=False)
@@ -693,7 +700,7 @@ def draw_shoulder(cv, f, body, ctx):
     ang = f.get('ang', 0.0)
     O = g2c(f.get('butt', BUTT_AIM), (cx, cy))
     tn, tf = f.get('tn', 18.5), f.get('tf', 52.0)
-    gn = musket_at(O, ang, tn - 1.0, 3.0)
+    gn = musket_at(O, ang, tn - 1.0, 4.5)
     Sn = g2c(SH_NEAR, (cx, cy))
     wn, bn, rn = wrist_for(gn, Sn, 3.0), f.get('bend_near', 1), (4.2, 3.6, 2.9)
     draw_arm(cv, Sn, wn, ARM_NEAR, bn, r=rn, parts=('haut',))
@@ -705,7 +712,7 @@ def draw_shoulder(cv, f, body, ctx):
     fist_on(cv, FAR_FIST, O, ang, tf)
     # le bras proche : le haut du bras pend derrière la crosse (la crosse est calée contre l'épaule), l'avant-bras
     # remonte devant vers le poing
-    ctx.elbow = draw_arm(cv, Sn, wn, ARM_NEAR, bn, r=rn, parts=('bas',), jabot=True)
+    ctx.elbow = draw_arm(cv, Sn, wn, ARM_NEAR, bn, r=rn, parts=('bas',), jabot=True, cuff_at=0.7)
     fist_on(cv, NEAR_FIST, O, ang, tn)
     ctx.O, ctx.ang = O, ang
     ctx.muzzle = musket_at(O, ang, MUSKET_L + 0.5, 1.5)
