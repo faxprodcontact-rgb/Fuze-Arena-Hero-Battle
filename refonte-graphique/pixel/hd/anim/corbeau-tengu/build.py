@@ -1152,16 +1152,12 @@ def fx_vortex(k):
 
 
 def fx_dive(cv, back, front, ctx):
-    """le plongeon : un fuseau de vent derrière lui, depuis le haut du bond jusqu'à son corps, qui s'enroule un peu"""
+    """le plongeon : deux rafales filent derrière lui (vers le haut du bond, en haut à gauche) et s'y enroulent"""
     c = ctx.o + (60.0, 80.0)                         # le milieu du corps (toile)
-    p0 = c + (-30.0, -50.0)
-    pts = path_pts(p0, p0 + (2.0, 18.0), c + (-24.0, -16.0), c, n=70)
-    n = len(pts) - 1
-    stroke(back, [tuple(p) for p in pts], [24.0 * math.sin(math.pi * min(1.0, 0.15 + 0.85 * i / n)) ** 0.7 + 0.6
-                                           for i in range(n + 1)], 'WEFGHI')
-    braid(back, pts, 0.0, 0.8, 10.0, 1.1, 0.0, 2.8, 'FGHI')
-    crow_feather(back, p0[0] - 6, p0[1] + 4, 1)
-    crow_feather(back, p0[0] + 6, p0[1] - 8, 3)
+    gust(back, c + (-4, -42), c + (-16, -56), c + (-34, -64), c + (-50, -70), 4.6, 'WEFGHI', curl_r=4.4, up=False)
+    gust(back, c + (-30, -44), c + (-44, -54), c + (-60, -60), c + (-74, -62), 3.6, 'EFGHI', curl_r=3.6, up=False)
+    crow_feather(back, c[0] - 52, c[1] - 52, 1)
+    crow_feather(back, c[0] - 24, c[1] - 74, 1)
 
 
 SPECIALE = [

@@ -439,6 +439,7 @@ def pose_frame(f):
 
 # ---------------------------------------------------------------- les effets (vent, poussière, éclats) : formes courbes
 # (repris de ../eldra/build.py : mêmes rubans, bouffées, volutes que la reine du clan)
+def put(cv, x, y, ch, keep=None):
     x, y = int(x), int(y)
     if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
         cv[y, x] = ch

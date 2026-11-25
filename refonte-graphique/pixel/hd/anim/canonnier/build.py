@@ -1036,13 +1036,13 @@ def fx_crown(j, k):
         if 2 <= k <= 6:
             spray(front, (X, G - 14 * big), k - 1.6, [(vx * big, vy * big) for (vx, vy) in seeds], g=1.0,
                   sizes=(4, 3, 3, 2) if big > 1 else (3, 2, 2, 1))
-        if 3 <= k <= 7:
+        if 3 <= k <= 6:
             sp = (k - 2) * 5 * big
             r = max(1.2, (4.6 - 0.7 * (k - 3)) * big)
             hol = min(0.9, 0.2 * (k - 3))
             foam(front, (X - sp - 4 * big, G - 1), r, hollow=hol, seed=41 + j)
             foam(front, (X + sp + 4 * big, G - 1), r * 0.9, hollow=hol, seed=42 + j)
-            if k <= 6:
+            if k <= 5:
                 curl(front, (X - sp - 9 * big, G - 3), 2.6 * big, 90, turn=260, w=1.7, tones='WXY')
                 curl(front, (X + sp + 9 * big, G - 3), 2.6 * big, 90, turn=260, w=1.7, tones='WXY', cw=True)
     return f
@@ -1153,7 +1153,7 @@ def schedule(fr):
         out.append(fx_rico(path[fr]))
     for j, at in enumerate(SPLASH_AT):
         k = fr - at
-        if 0 <= k <= 7:
+        if 0 <= k <= 6:
             out.append(fx_crown(j, k))
     if 1 <= fr - SPLASH_AT[2] <= 6:
         out.append(fx_wave(fr - SPLASH_AT[2]))
