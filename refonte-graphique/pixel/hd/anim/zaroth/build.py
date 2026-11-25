@@ -41,15 +41,30 @@ FXPAL = {
     'V': (34, 118, 206),    # eau, ombre
     'U': (26, 70, 156),     # eau profonde
     'R': (20, 38, 104),     # creux de l'eau (indigo)
+    # le voile de la vague (translucide : voir ALPHA)
+    'S': (138, 226, 248),   # voile d'eau, à peine teinté
+    'T': (214, 246, 255),   # voile d'eau, contre la paroi (plus clair)
+    # la provocation : l'onde et la marque rouges
+    'M': (255, 226, 200),   # coeur brûlant (presque blanc, chaud)
+    'N': (255, 96, 84),     # rouge vif
+    'O': (222, 40, 64),     # rouge
+    'P': (150, 20, 58),     # rouge sombre (ombre, tire vers le violet)
+    'Q': (92, 14, 52),      # rouge très sombre
 }
+# opacité des lettres translucides (les autres sont pleines)
+ALPHA = {'S': 70, 'T': 120}
+# le reflet bleu de l'armure d'eau sur le héros (« tint » d'une image, en %)
+TINT = (110, 210, 250)
+TINT_RED = (255, 70, 60)
 ALLPAL = dict(PAL)
 ALLPAL.update(FXPAL)
 
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. La pose seule se recadre ensuite en 128 × 120
-# (le format du jeu, sol en (64, 116)). Grande toile : le sabre levé monte haut, le croissant d'eau file loin à droite.
-W, H = 380, 236
-SOL = (96, 220)
+# (le format du jeu, sol en (64, 116)). Grande toile : le sabre levé monte haut, le croissant d'eau de l'attaque file
+# loin à droite, la vague de la spéciale file à gauche (vers l'équipe).
+W, H = 440, 236
+SOL = (156, 220)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
 FOE = (SOL[0] + 196, GROUND - 40)                           # l'ennemi (milieu du corps), là où frappe le croissant
@@ -260,17 +275,22 @@ def to_rgba(canvas, pal=ALLPAL):
         m = canvas == ch
         if m.any():
             img[m, :3] = rgb
-            img[m, 3] = 255
+            img[m, 3] = ALPHA.get(ch, 255)
     return img
 
 
-def compose(hero, fx_back=None, fx_front=None, flash=None):
+def compose(hero, fx_back=None, fx_front=None, flash=None, tint=None):
     """le héros (avec son contour) entre les effets de fond et ceux de devant ; renvoie une image RGBA"""
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
     if fx_back is not None:
         layers.append(to_rgba(fx_back))
     h = hd.outline(to_rgba(hero))
+    if tint:                    # un reflet sur tout le héros : bleu (armure d'eau) ou, avec ('rouge', %), rouge (défi)
+        col, pct = (TINT, tint) if not isinstance(tint, tuple) else (TINT_RED, tint[1])
+        m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
+        c = h[m, :3].astype(int)
+        h[m, :3] = (c + (np.array(col) - c) * pct // 100).astype(np.uint8)
     if flash:
         m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
         h[m, :3] = (h[m, :3].astype(int) + (255 - h[m, :3].astype(int)) * flash // 100).astype(np.uint8)
@@ -278,8 +298,16 @@ def compose(hero, fx_back=None, fx_front=None, flash=None):
     if fx_front is not None:
         layers.append(to_rgba(fx_front))
     for L in layers:
-        m = L[:, :, 3] > 0
+        m = L[:, :, 3] == 255
         out[m] = L[m]
+        t = (L[:, :, 3] > 0) & ~m                        # translucide : posé par-dessus ce qui est déjà là
+        if t.any():
+            a = L[t, 3:4].astype(int)
+            b = out[t].astype(int)
+            ab = b[:, 3:4]
+            ao = a + ab * (255 - a) // 255
+            rgb = (L[t, :3].astype(int) * a + b[:, :3] * ab * (255 - a) // 255) // np.maximum(ao, 1)
+            out[t] = np.concatenate([rgb, ao], 1).astype(np.uint8)
     return out
 
 
@@ -1170,13 +1198,17 @@ ATTAQUE = [
 
 
 
-# ---------------------------------------------------------------- 3) l'attaque spéciale : « Rempart des marées »
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Rempart des marées » (sort d'équipe)
+# Ce que fait le sort en combat : +30 % de défense à toute l'équipe (5 s), il se soigne (15 % de sa vie) et il
+# provoque (les ennemis le frappent, lui, pendant 3 s). L'équipe est DERRIÈRE lui, à gauche de l'image.
 # Le protecteur plante son sabre devant lui, d'un coup sec (l'eau jaillit du sol autour de la lame) ; les deux mains sur
-# la poignée, immobile, il laisse l'eau monter en spirale autour de lui : un dôme d'eau qui tourne et l'enveloppe (il
-# protège). Arrêt sur le dôme plein. Puis il arrache le sabre et tranche de bas en haut à travers son propre dôme
-# (kiriage) : le dôme se fend, toute son eau suit la lame et part en un grand croissant qui file vers l'ennemi et le
-# fend (arrêt sur l'impact), éclate en nappes et en gouttes ; le reste du dôme retombe en pluie autour de lui. Il
-# remet la lame dans le bon sens et revient en garde. Pas de vague, pas de dragon : un mur d'eau, puis un seul coup.
+# la poignée, immobile, il laisse l'eau monter en spirale autour de lui : un dôme d'eau qui tourne et l'enveloppe.
+# Arrêt sur le dôme plein. Puis le dôme se gonfle vers l'arrière et part en une vague-voile (bord lumineux, intérieur
+# à peine teinté) qui file vers la gauche, vers l'équipe ; l'eau qui reste se plaque sur lui en une armure d'eau qui
+# scintille (le héros prend un reflet bleu, un liseré d'eau l'entoure, des éclats brillent sur ses plaques). Un peu
+# d'eau claire tombe sur lui et le soigne (il s'éclaire un instant, de petites bulles montent). Enfin il arrache le
+# sabre et le pointe vers l'ennemi, en défi (arrêt) : une onde rouge pulse autour de lui, trois fois, et une marque
+# inventée (un œil en amande) brille au-dessus de son casque. Il revient en garde. Rien ne frappe l'ennemi.
 DOME_C = (SOL[0] + 6, GROUND)          # le pied du dôme (toile), centré sur lui et son sabre planté
 DOME_RX, DOME_H = 62, 124
 
@@ -1288,76 +1320,231 @@ def fx_plant(k):
     return f
 
 
-def fx_rise_smear(a_from):
-    """le kiriage : la lame remonte et traîne un large ruban d'eau (le dôme qui suit la lame)"""
+# ---------------------------------------------------------------- la vague-voile qui part vers l'équipe (à gauche)
+def dilate(m, r=1):
+    """grossit une forme de r pixels (voisins en croix puis en carré, à tour de rôle : un contour bien rond)"""
+    out = m.copy()
+    for i in range(r):
+        a = out.copy()
+        a[1:] |= out[:-1]
+        a[:-1] |= out[1:]
+        a[:, 1:] |= out[:, :-1]
+        a[:, :-1] |= out[:, 1:]
+        if i % 2:
+            a[1:, 1:] |= out[:-1, :-1]
+            a[1:, :-1] |= out[:-1, 1:]
+            a[:-1, 1:] |= out[1:, :-1]
+            a[:-1, :-1] |= out[1:, 1:]
+        out = a
+    return out
+
+
+# la vague : la moitié gauche du dôme, qui grandit, s'abaisse et file vers la gauche. Pour chaque image :
+# (recul du centre, demi-largeur, hauteur, épaisseur du bord, épaisseur du voile)
+VAGUE = [(-6, 74, 120, 4.6, 16), (-30, 88, 104, 4.2, 14), (-62, 94, 80, 3.4, 12), (-96, 96, 56, 2.6, 9)]
+
+
+def wave(k):
+    """la vague-voile : un bord d'eau lumineux (le bord du dôme), en quart d'ellipse du sol jusqu'au-dessus de lui, qui
+    se recourbe vers l'avant en haut ; derrière le bord, un voile d'eau à peine teinté (pixels translucides S, T) ;
+    au pied, un rouleau d'écume qui avance au ras du sol et laisse une traînée"""
     def f(cv, back, front, ctx):
-        R = BLADE[1] + 2
-        arc_trail(front, ctx.O, R, ctx.ang - 3, ctx.ang - a_from, 15.0, 'WXYZV', ccw=False)
+        dcx, rx, h, w, band = VAGUE[k]
+        cx, gy = DOME_C[0] + dcx, GROUND
+        # le voile : entre le bord et une ellipse plus petite, du côté gauche seulement (rien sur le héros)
+        # (en coordonnées de l'ellipse : rho = 1 sur le bord, th = 90° au sommet, 180° au sol ; le voile s'amincit
+        # vers le sommet et disparaît avant lui : pas de bout coupé net)
+        yy, xx = np.mgrid[0:H, 0:W]
+        u, v = (xx + 0.5 - cx) / rx, (gy - 3 - yy - 0.5) / h
+        rho = np.hypot(u, v)
+        th = np.degrees(np.arctan2(v, u))
+        taper = np.clip((th - 96) / 44, 0, 1)
+        veil = (rho <= 1.0) & (rho > 1 - band / rx * taper) & (yy <= GROUND - 1)
+        inner = veil & (rho < 1 - 0.55 * band / rx * taper)          # contre la paroi intérieure : un peu plus clair
+        back[veil & (back == '.')] = 'T'
+        back[inner & (back == 'T')] = 'S'
+        # le bord : du sol (à gauche) jusqu'au sommet, puis il se recourbe un peu vers l'avant (vers lui)
+        pts, wd = [], []
+        n = 160
+        a_end = (66, 72, 100, 112)[k]                          # en partant, le haut de la vague se défait
+        for i in range(n + 1):
+            a = math.radians(180 - (180 - a_end) * i / n)
+            pts.append((cx + rx * math.cos(a), gy - 3 - h * math.sin(a)))
+            s = i / n
+            wd.append(w * min(1.0, (n - i) / 50.0) ** 0.8 * (1.0 - 0.25 * s) + 0.3)
+        stroke(back, pts, wd, 'XYZV')
+        # le haut du bord, tourné vers la lumière, s'éclaire (un seul reflet blanc, long et courbe)
+        hl = [p for i, p in enumerate(pts) if 0.45 < i / n < 0.8]
+        stroke(back, hl, [1.2] * len(hl), 'W')
+        # au pied : le rouleau d'écume qui file vers la gauche, et la traînée d'eau au sol jusqu'à lui
+        fx_ = cx - rx
+        foam(front, (fx_ + 3, gy - 4), 5.0 - 0.7 * k, hollow=0.15 * k, seed=31 + k)
+        curl(front, (fx_ + 2, gy - 12 + 2 * k), 3.6 - 0.4 * k, 20, turn=250, w=2.4, tones='XYZ')
+        ribbon(back, ((fx_ + DOME_C[0]) / 2, gy - 1), (DOME_C[0] - fx_) / 2, 2, 180, 0, 2.6 - 0.3 * k,
+               head=0.25, tones='XYZ')
+        # des gouttes arrachées à la crête, qui volent vers la gauche
+        rng = np.random.RandomState(50 + k)
+        for j in range(5):
+            a = math.radians(rng.uniform(110, 170))
+            r = 1.0 + rng.uniform(0.04, 0.14)
+            drop(back, cx + rx * r * math.cos(a), gy - 3 - h * r * math.sin(a), int(rng.choice([1, 2, 2, 3])),
+                 v=(-1.5, 0.3))
     return f
 
 
-def big_moon(k):
-    """le grand croissant : 0 il naît sur la lame ; 1, 2 il file ; 3 il fend l'ennemi ; 4, 5 il éclate et retombe"""
+def condense(k):
+    """le reste du dôme se resserre sur lui : deux rubans d'eau qui tournent tout près de son corps (ils deviennent
+    son armure). k = 0 : encore larges ; 1 : collés à lui"""
     def f(cv, back, front, ctx):
-        X, Y = FOE
-        G = GROUND
+        cx, cy = DOME_C[0] - 4, GROUND - 52
+        rx, ry = (40, 60) if k == 0 else (32, 52)
+        ribbon(back, (cx, cy), rx, ry, 20, 160, 4.0 - k, head=0.5, tones='YZV')
+        ribbon(front, (cx, cy + 4), rx, ry * 0.4, 200, 340, 3.6 - k, head=0.5, tones='WXYZ')
+        ribbon(back, (cx, cy - 18), rx * 0.8, ry * 0.3, 30, 170, 3.0 - k, head=0.5, tones='XYZ')
+    return f
+
+
+# ---------------------------------------------------------------- l'armure d'eau qui scintille (sur lui)
+# Un liseré d'eau à 2 pixels de sa silhouette (juste après le contour noir) : clair et blanc du côté de la lumière
+# (en haut à droite), cyan au milieu, bleu dans l'ombre. Le héros lui-même prend un reflet bleu (« tint » de
+# l'image, voir compose). Des éclats en losange s'allument sur ses plaques, à des places différentes à chaque image ;
+# un reflet blanc glisse le long du liseré, de haut en bas.
+SPARK_S = {1: ['XW', 'YX'], 2: ['.XW.', 'XWWX', '.YX.']}       # perles d'eau brillantes posées sur les plaques
+# les éclats : (x, y) en coordonnées de la GRILLE du dessin (casque, épaulières, cuirasse, jupe), taille
+SPARKS = [
+    [((44, 9), 2), ((79, 70), 1), ((24, 66), 1)],
+    [((58, 30), 1), ((23, 75), 2), ((86, 66), 1), ((60, 98), 1)],
+    [((72, 22), 1), ((45, 64), 2), ((30, 92), 1)],
+    [((40, 30), 1), ((80, 92), 1), ((20, 70), 1)],
+    [((64, 52), 1), ((36, 100), 1)],
+]
+
+
+def armor(k, glint=True):
+    def f(cv, back, front, ctx):
+        m = cv != '.'
+        shell = dilate(m, 2) & ~dilate(m, 1)
+        v = light_field(dilate(m, 2))
+        sweep = (GROUND - 118) + k * 24                    # le reflet qui glisse : une bande de 10 pixels
+        ys, xs = np.nonzero(shell)
+        for y, x in zip(ys, xs):
+            q = v[y, x]
+            ch = 'W' if q > 0.22 else 'X' if q > 0.06 else 'Y' if q > -0.14 else 'Z'
+            if glint and sweep <= y < sweep + 10 and ch in 'YZ':
+                ch = 'X'
+            put(back, x, y, ch)
+        # du côté de la lumière, le liseré s'épaissit d'un pixel (l'eau s'y amasse)
+        outer = dilate(m, 3) & ~dilate(m, 2)
+        ys, xs = np.nonzero(outer)
+        for y, x in zip(ys, xs):
+            if v[y, x] > 0.16:
+                put(back, x, y, 'Y')
+        bx, by = ctx.body.follow(60)
+        for (gx, gy_), sz in SPARKS[k % len(SPARKS)]:
+            rows = SPARK_S[sz]
+            sprite(front, rows, gx + OX + bx - len(rows[0]) // 2, gy_ + OY + by - len(rows) // 2)
+    return f
+
+
+# ---------------------------------------------------------------- le soin : de l'eau claire tombe sur lui
+CLEAR_S = {1: ['X'], 2: ['XW', 'ZY'], 3: ['.XW', 'XWY', 'ZY.'], 4: ['.XW.', 'XWWX', 'YXXY', '.ZY.']}
+
+
+def heal(k):
+    """k = 0 : des gouttes d'eau claire descendent au-dessus de lui ; 1 : elles le touchent, de petites bulles montent
+    le long de son corps ; 2 : les dernières bulles"""
+    def f(cv, back, front, ctx):
+        cx = DOME_C[0] - 6
+        top = GROUND - 112
+        drops = [(-22, 2, 3), (4, -6, 4), (26, 0, 3), (-8, -16, 2), (16, -18, 2), (-30, -10, 2), (34, -14, 1)]
         if k == 0:
-            T = ctx.O + 30 * ctx.u
-            moon(front, (ctx.O[0] + 22, ctx.O[1] + 26), 46, 14, 15, inner=1.1, foam_w=2.0)
-            for (dx, dy, sz) in ((30, -40, 3), (44, -16, 2), (22, -54, 2), (46, 10, 1)):
-                drop(front, T[0] + dx, T[1] + dy, sz, v=(1.5, -0.5))
-        elif k == 1:
-            moon(front, (X - 104, Y - 6), 46, 8, 14, inner=1.1, foam_w=2.0)
-            ribbon(back, (X - 124, Y - 6), 44, 44, 50, -60, 3.0, head=0.5, tones='YZV')
-            for (dx, dy, sz) in ((-150, -30, 2), (-136, 30, 2), (-160, 6, 1)):
-                drop(back, X + dx, Y + dy, sz, v=(1.5, 0))
-        elif k == 2:
-            moon(front, (X - 52, Y - 4), 45, 4, 13, inner=1.1, foam_w=2.0)
-            ribbon(back, (X - 74, Y - 4), 43, 43, 50, -60, 2.6, head=0.5, tones='YZV')
-            for (dx, dy, sz) in ((-100, -24, 2), (-90, 26, 1)):
-                drop(back, X + dx, Y + dy, sz, v=(1.5, 0))
-        elif k == 3:      # il fend l'ennemi : le croissant passe à travers ; à l'endroit du coup, l'eau éclate
-            moon(front, (X - 30, Y), 44, 0, 12, inner=1.1, foam_w=2.0)
-            pop(front, (X + 13, Y), 7.5, facing=0, tones='WWXYZ')
-            gerbe(front, (X + 14, Y - 2), 60, 22, -40, 4.4, 'WXYZV')
-            gerbe(front, (X + 14, Y + 2), -40, 20, 30, 4.0, 'WXYZV')
-            gerbe(back, (X + 10, Y - 2), 120, 16, 50, 3.4, 'XYZV')
-            for (x, y, sz) in ((30, -20, 3), (36, 14, 2), (6, -26, 2), (44, -4, 2), (20, 24, 1), (-6, 20, 1)):
-                drop(front, X + x, Y + y, sz, v=(1.4, np.sign(y) * 0.8))
-        elif k == 4:      # fendu en deux : la moitié du haut monte, celle du bas descend, elles s'amincissent
-            moon(front, (X - 4, Y - 10), 42, 8, 11, inner=1.1, foam_w=1.8, part='haut')
-            moon(front, (X - 8, Y + 10), 42, -8, 11, inner=1.1, foam_w=1.8, part='bas')
-            foam(front, (X + 30, Y), 7, hollow=0.4, seed=21)
-            for (x, y, sz) in ((50, -34, 3), (58, 26, 2), (26, -44, 2), (68, -6, 2), (38, 40, 1), (12, -8, 1),
-                               (76, 14, 1)):
-                drop(front, X + x, Y + y, sz, v=(1.0, np.sign(y) * 0.6 + 0.6))
-        elif k == 5:      # tout retombe : gouttes, flaque, volutes d'écume
-            rng = np.random.RandomState(23)
-            for j in range(12):
-                drop(front, X + rng.uniform(-10, 80), Y + rng.uniform(-44, 40), int(rng.choice([1, 2, 2, 3])), v=(0, 2))
-            curl(front, (X + 52, Y - 34), 4.6, 250, turn=270, w=2.8, tones='XYZ', cw=True)
-            curl(front, (X + 48, Y + 30), 4.0, 110, turn=260, w=2.4, tones='YZV')
-            foam(front, (X + 34, Y + 2), 5, hollow=0.7, seed=22)
-            ribbon(back, (X + 4, G - 1), 34, 3, 200, 340, 3.0, tones='XYZ')
-        elif k == 6:
-            for (x, y, sz) in ((-30, 26, 1), (20, 34, 2), (40, 20, 1)):
-                drop(front, X + x, Y + y, sz, v=(0, 2))
-            ribbon(back, (X + 6, G - 1), 30, 2, 205, 335, 2.2, tones='YZV')
-            curl(back, (X + 40, G - 10), 3.4, 260, turn=260, w=2.0, tones='XYZ', cw=True)
+            for (dx, dy, sz) in drops:
+                sprite(front, CLEAR_S[sz], cx + dx, top + dy)
+                for t in range(1, 1 + sz // 2 + 1):                    # la traîne, vers le haut
+                    put(front, cx + dx + sz // 2, top + dy - t, 'Y' if t == 1 else 'Z')
+        if k >= 1:
+            rng = np.random.RandomState(60 + k)
+            for j in range(9 if k == 1 else 5):
+                x = cx + rng.uniform(-40, 40)
+                y = GROUND - rng.uniform(10, 100) - (14 if k == 2 else 0)
+                r = rng.choice([1, 1, 2])
+                if cv[int(y), int(x)] != '.':
+                    continue
+                if r == 1:
+                    sprite(front, ['.X.', 'X.W', '.X.'], int(x) - 1, int(y) - 1)
+                else:
+                    sprite(front, ['.XX.', 'X..W', 'Y..X', '.YX.'], int(x) - 2, int(y) - 2)
+        if k == 1:
+            for (dx, sz) in ((-24, 2), (22, 2), (-6, 1)):                 # les gouttes qui éclatent sur ses épaules
+                pop(front, (cx + dx, GROUND - 92 + abs(dx) // 3), 2.6 if sz == 2 else 1.8, facing=90, tones='WWXY')
     return f
 
 
-def rain(k):
-    """le reste du dôme retombe en pluie autour de lui (k = 0, 1, 2)"""
+# ---------------------------------------------------------------- la provocation : l'onde rouge et la marque
+# L'onde : un liseré rouge qui épouse sa silhouette et s'en écarte en pâlissant (trois pulsations), et un anneau rouge
+# au sol, à ses pieds, qui s'élargit. La marque : un œil en amande (deux arcs qui se rejoignent en pointe, une pupille
+# ronde), signe inventé, au-dessus du casque ; il bat comme un cœur (grand, plus grand, petit).
+MARK = {
+    0: ['.....NNNNNNM.....',
+        '...NNNNOOONNMM...',
+        '..OOPPOQQQOOONM..',
+        '.OOPPPQNMMQOOONM.',
+        'POPPPPQNMMQOOOONM',
+        '.POPPPQNNNQOOONN.',
+        '..PPPPPQQQPOOOO..',
+        '...PPPPPPPOOOO...',
+        '.....PPPPPOO.....'],
+    1: ['.......NNNNNNM.......',
+        '....NNNNNNNNNNNMM....',
+        '...ONNOOOQQQOOONMM...',
+        '..OOPPPPQQMQQOOOOMM..',
+        '.OOPPPPQQNMMQQOOOONM.',
+        'POPPPPPQNNMMMQOOOOONM',
+        '.POPPPPQQNNNQQOOOONN.',
+        '..PPPPPPQQNQQOOOOOO..',
+        '...PPPPPPQQQPPPOOO...',
+        '....PPPPPPPPOOOOO....',
+        '.......PPPPPOO.......'],
+    2: ['....NNNNM....',
+        '..NNNOQONNM..',
+        '.OOPPQMQOONM.',
+        'PPPPQNMMQOOOM',
+        '.POPPQNQOONN.',
+        '..PPPPQPOOO..',
+        '....PPPPO....'],
+}
+# les ondes : des anneaux rouges autour de lui (derrière lui : on les voit autour de sa silhouette), qui s'élargissent
+# et s'assombrissent ; (demi-largeur, demi-hauteur, épaisseur, tons du coeur vers le bord)
+ONDES = {0: [(34, 50, 3.6, 'NNO')],
+         1: [(48, 66, 3.0, 'NOO'), (32, 46, 3.0, 'NNO')],
+         2: [(60, 80, 1.8, 'O'), (46, 62, 2.2, 'NO')]}
+
+
+def ring(cv, c, rx, ry, w, tones):
+    """un anneau en ellipse d'épaisseur régulière (coeur clair, bords sombres)"""
+    n = int(2 * math.pi * max(rx, ry) * 1.5)
+    pts = [(c[0] + rx * math.cos(2 * math.pi * i / n), c[1] - ry * math.sin(2 * math.pi * i / n)) for i in range(n + 1)]
+    stroke(cv, pts, [w] * len(pts), tones)
+
+
+def provoke(k):
+    """k = 0 : première pulsation (anneau serré, marque) ; 1 : elle s'écarte, une deuxième naît, la marque grossit ;
+    2 : elles s'effacent, la marque rapetisse"""
     def f(cv, back, front, ctx):
-        cx, gy = DOME_C
-        rng = np.random.RandomState(40 + k)
-        for j in range([14, 10, 5][k]):
-            x = cx + rng.uniform(-DOME_RX, DOME_RX)
-            y = gy - rng.uniform(6, [90, 50, 20][k])
-            drop(front if j % 3 == 0 else back, x, y, int(rng.choice([1, 2, 2, 3])), v=(0, 2))
-        ribbon(back, (cx, gy - 1), DOME_RX * 0.9, 5, 15, 165, [3.0, 2.4, 1.6][k], tones='YZV')
-        ribbon(front, (cx, gy), DOME_RX * 0.9, 5, 195, 345, [3.4, 2.6, 1.8][k], tones='XYZ')
+        cx = DOME_C[0] - 6
+        for (rx, ry, w, tones) in ONDES[k]:
+            ring(back, (cx, GROUND - 58), rx, ry, w, tones)
+        # l'anneau au sol, à ses pieds
+        rx = [30, 44, 58][k]
+        ribbon(back, (cx, GROUND - 1), rx, 4, 15, 165, [3.0, 2.6, 1.8][k], head=0.5, tones='NOP')
+        ribbon(front, (cx, GROUND), rx, 4, 195, 345, [3.4, 2.8, 2.0][k], head=0.5, tones='MNO')
+        # la marque, au-dessus du casque (elle suit la tête)
+        bx, by = ctx.body.follow(60)
+        hdx, hdy = ctx.f.get('head', (0, 0))
+        rows = MARK[k]
+        x0 = 76 + OX + bx + hdx - len(rows[0]) // 2
+        y0 = -12 + OY + by + hdy - len(rows) // 2
+        sprite(front, rows, x0, y0)
     return f
 
 
@@ -1370,28 +1557,38 @@ def planted(**kw):
     return d
 
 
+# le défi : le sabre arraché du sol, pointé droit vers l'ennemi, à hauteur de poitrine (garde seigan, bras tendus)
+DEFI = dict(O=(108, 66), ang=6, crouch=1, lean=2, head=(1, 0), bf=1)
+
+
+def defi(**kw):
+    d = dict(DEFI)
+    d.update(kw)
+    return d
+
+
 SPECIALE = [
     dict(arm='orig', crouch=1, ms=100),
-    dict(O=(98, 57), ang=-84, crouch=0, lean=-1, lift=(0, -1), head=(0, -1), wn=(-5, 2), wf=(5, 2), bf=1, ms=200),
+    dict(O=(98, 57), ang=-84, crouch=0, lean=-1, lift=(0, -1), head=(0, -1), wn=(-5, 2), wf=(5, 2), bf=1, ms=180),
     planted(crouch=2, lean=1, head=(1, 1), fx_list=[fx_plant(0)], ms=70),
-    planted(crouch=2, head=(1, 1), fx_list=[fx_plant(1), dome(0.0, 0)], ms=110),
-    planted(fx_list=[dome(0.3, 20)], ms=90),
-    planted(fx_list=[dome(0.62, 50)], ms=90),
-    planted(fx_list=[dome(1.0, 80)], ms=100),
-    planted(blink=False, fx_list=[dome(1.0, 112)], ms=300),
-    dict(O=(104, 66), ang=6, edge=-1, crouch=1, lean=2, smear=fx_rise_smear(-90),
-         fx_list=[dome(1.0, 140, cut=((SOL[0] + 40, GROUND - 60), 50))], ms=50),
-    dict(O=(104, 54), ang=40, edge=-1, crouch=1, lean=3, head=(1, -1), lift=(0, -1),
-         fx_list=[dome(1.0, 160, cut=((SOL[0] + 40, GROUND - 60), 50), fall=0.3), big_moon(0)], ms=220),
-    dict(O=(104, 54), ang=40, edge=-1, crouch=1, lean=3, head=(1, -1), lift=(0, -1),
-         fx_list=[dome(1.0, 180, cut=((SOL[0] + 40, GROUND - 60), 50), fall=0.65), big_moon(1)], ms=70),
-    dict(O=(104, 56), ang=38, edge=-1, crouch=1, lean=3, head=(1, 0),
-         fx_list=[rain(0), big_moon(2)], ms=70),
-    dict(O=(104, 56), ang=38, edge=-1, crouch=1, lean=3, head=(1, 0), fx_list=[rain(1), big_moon(3)], ms=200),
-    dict(O=(102, 58), ang=40, edge=-1, crouch=1, lean=2, fx_list=[rain(2), big_moon(4)], ms=110),
-    dict(O=(96, 64), ang=50, crouch=1, lean=1, fx_list=[big_moon(5)], ms=110),
-    dict(arm='orig', crouch=1, fx_list=[big_moon(6)], ms=110),
-    dict(arm='orig', ms=170),
+    planted(crouch=2, head=(1, 1), fx_list=[fx_plant(1), dome(0.0, 0)], ms=100),
+    planted(fx_list=[dome(0.3, 20)], ms=80),
+    planted(fx_list=[dome(0.62, 50)], ms=80),
+    planted(fx_list=[dome(1.0, 80)], ms=90),
+    planted(fx_list=[dome(1.0, 112)], ms=200),
+    # le dôme part en vague vers la gauche ; ce qui reste se resserre sur lui
+    planted(fx_list=[condense(0), wave(0)], tint=4, ms=80),
+    planted(fx_list=[condense(1), wave(1), armor(0)], tint=8, ms=80),
+    planted(fx_list=[wave(2), armor(1), heal(0)], tint=8, ms=90),
+    planted(fx_list=[wave(3), armor(2), heal(1)], tint=8, flash=14, ms=150),
+    # il arrache le sabre et le pointe vers l'ennemi : le défi (l'onde rouge pulse, la marque bat)
+    dict(O=(102, 62), ang=40, crouch=1, lean=1, bf=1, fx_list=[armor(3), heal(2)], tint=6, ms=60),
+    defi(fx_list=[provoke(0), armor(4, glint=False)], tint=('rouge', 18), ms=220),
+    defi(fx_list=[provoke(1), armor(0, glint=False)], tint=('rouge', 8), ms=110),
+    defi(fx_list=[provoke(2)], ms=110),
+    dict(O=(96, 64), ang=50, crouch=1, lean=1, ms=100),
+    dict(arm='orig', crouch=1, ms=100),
+    dict(arm='orig', ms=160),
 ]
 
 
@@ -1424,7 +1621,7 @@ def build_all():
         for i, spec in enumerate(specs):
             cv, back, front, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []))
-            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+            fr.append((compose(cv, back, front, flash=spec.get('flash'), tint=spec.get('tint')), spec['ms']))
         anims[name] = fr
     return anims
 
@@ -1444,6 +1641,7 @@ def bbox(frames, margin=4):
 
 
 GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+ATT_BOX = (SOL[0] - 74, 78, SOL[0] + 282, 228)               # la case de l'attaque (celle des animations validées)
 
 
 def save_gif(path, images, durations):
@@ -1465,10 +1663,12 @@ def save_gif(path, images, durations):
 def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
     boxes = {'pose': GAME_BOX}
-    # une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets
-    both = anims['attaque'] + anims['speciale'] + anims['pose']
-    bb = bbox(both, 6)
-    boxes['attaque'] = boxes['speciale'] = bb
+    # la case de l'attaque est celle des animations validées (on voit la portée du croissant, jusqu'à l'ennemi) ;
+    # la spéciale reprend cette case et l'agrandit vers la gauche (la vague qui part vers l'équipe)
+    att = ATT_BOX
+    sp = bbox(anims['speciale'], 6)
+    bb = (min(att[0], sp[0]), min(att[1], sp[1]), max(att[2], sp[2]), max(att[3], sp[3]))
+    boxes['attaque'], boxes['speciale'] = att, bb
     for name in ('pose', 'attaque', 'speciale'):
         box = boxes[name]
         ims = [on_bg(img).crop(box) for img, _ in anims[name]]
