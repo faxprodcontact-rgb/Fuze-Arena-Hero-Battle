@@ -2,7 +2,7 @@
 """L'ÉCRAN DE CHARGEMENT en pixel art HD (partie 1 du plan, PLAN.md).
 
 Ce qu'on voit : le volcan de Kael (le fond de combat HD du clan du feu, sa lave, sa fumée, ses braises), trois héros HD
-à gauche (Ilian l'ange au fond, le spartiate et Kael devant) qui font face au grand dragon de feu à droite ; en haut le
+à gauche (Myrr l'ange au fond, Bérold le spartiate et Kael devant) qui font face au grand dragon de feu à droite ; en haut le
 logo en pixel art (logo.py) ; en bas la barre de chargement en émail bleu nuit cerclé d'or.
 Ce qui bouge : tout ce qui bouge dans le fond de combat (cratère, coulées, rivière et bassin de lave, chute, fumée,
 braises), et les quatre personnages respirent (leurs images « pose » des menus, public/art/hd/pied/).
@@ -16,7 +16,7 @@ le code du jeu), puis agrandi sans flou pour couvrir l'écran (les petits télé
       public/art/ui-px/chargement-anim.webp   la planche : images des calques animés et des personnages
       public/art/ui-px/chargement.webp        l'image fixe complète (sans logo) : écran du nom au premier lancement
       index.html                              le style, le dessin et le script entre les repères « chargement »
-      refonte-graphique/pixel/sortie/ui/chargement.png / .gif    aperçus (×2)
+      refonte-graphique/pixel/sortie/ui/chargement.png (×2) / .gif (--gif)    aperçus
 À relancer si le fond de Kael, un des personnages ou le logo changent (lancer logo.py avant).
 """
 import os
@@ -38,8 +38,8 @@ ANCRE = 0.7                             # écran moins haut que le dessin : on c
 
 # Les personnages : id, x et y des pieds dans le FOND, retourné (regarde à gauche).
 PERSOS = [
-    ('mages-11', 232, 936, False),      # l'ange, au fond
-    ('knights-1', 226, 1014, False),    # le spartiate, devant
+    ('mages-11', 232, 936, False),      # Myrr l'ange, au fond
+    ('knights-1', 226, 1014, False),    # Bérold le spartiate, devant
     ('assassins-2', 294, 980, False),   # Kael, l'épée en avant
     ('boss-feu', 460, 958, True),       # le dragon, face aux héros, un peu en arrière
 ]
@@ -304,7 +304,7 @@ def html(M):
       #splash .sp {{ position: absolute; top: 0; bottom: 0; left: 50%; width: min(100%, 480px); transform: translateX(-50%); overflow: hidden;
         --px: max(calc(min(100vw, 480px) / {SW}), calc(100vh / {SH})); background: #2a1424; }}
       @supports (height: 100dvh) {{ #splash .sp {{ --px: max(calc(min(100vw, 480px) / {SW}), calc(100dvh / {SH})); }} }}
-      #splash canvas, #splash img, #splash .load {{ position: absolute; image-rendering: pixelated; image-rendering: crisp-edges; }}
+      #splash canvas, #splash img, #splash .load {{ position: absolute; image-rendering: pixelated; }}
       #splash canvas {{ width: calc(var(--px) * {SW}); height: calc(var(--px) * {SH}); left: calc(50% - var(--px) * {SW / 2}); top: calc((100% - var(--px) * {SH}) * {ANCRE}); }}
       #splash img {{ left: 50%; top: calc(env(safe-area-inset-top, 0px) + var(--px) * 6); width: calc(var(--px) * {LW}); height: calc(var(--px) * {LH}); transform: translateX(-50%); }}
       #splash .load {{ left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--px) * 16); width: calc(var(--px) * {BW}); height: calc(var(--px) * {BH}); transform: translateX(-50%);
@@ -368,17 +368,28 @@ def main():
     t = remplace(t, 'chargement', body)
     open(p, 'w', encoding='utf-8').write(t)
     print('index.html mis à jour', len(style) + len(body), 'caractères')
-    # aperçus : l'image fixe avec le logo et la barre, et une boucle de 2,4 s (le dessin seul, ×2)
+    # aperçus (×1 et ×2) : l'écran tel qu'il est sur un iPhone 390 × 844 (le dessin entier, encoche de 47 px en haut,
+    # barre de geste de 34 px en bas, un pixel du dessin = 390 / 340 points), avec le logo et la barre qui se remplit
     logo = Image.open(os.path.join(out, 'logo.webp'))
-    ap = fixe.convert('RGBA')
-    ap.alpha_composite(logo, ((SW - logo.width) // 2, 30))
-    ap.alpha_composite(barre(), ((SW - BW) // 2, SH - 40))
-    U.sauve(ap.resize((SW * 2, SH * 2), Image.NEAREST), os.path.join(U.SORTIE, 'chargement.png'))
-    if '--gif' in sys.argv:
-        ims = [rendu(M, fond, planche, t).convert('RGB').resize((SW, SH)) for t in range(0, 2400, 100)]
-        ims[0].save(os.path.join(U.SORTIE, 'chargement-dessin.gif'), save_all=True, append_images=ims[1:], duration=100,
-                    loop=0)
+    k = 390 / SW
 
+    def ecran(t, rempli):
+        im = rendu(M, fond, planche, t)
+        im.alpha_composite(logo, ((SW - logo.width) // 2, round(47 / k) + 6))
+        b = barre()
+        fw = int(rempli * (BW - 2 * BI))
+        if fw:
+            jauge = Image.new('RGBA', (fw, BH - 2 * BI))
+            for y, c in enumerate(('#fff6c0', '#ffd84a', '#ffd84a', '#f5a524', '#f5a524', '#c0601a')):
+                jauge.paste(c, (0, y, fw, y + 1))
+            b.alpha_composite(jauge, (BI, BI))
+        im.alpha_composite(b, ((SW - BW) // 2, SH - round(34 / k) - 16 - BH))
+        return im.convert('RGB')
+    U.sauve(ecran(0, 0.55).resize((SW * 2, SH * 2), Image.NEAREST), os.path.join(U.SORTIE, 'chargement.png'))
+    if '--gif' in sys.argv:
+        # 3,2 s : les personnages respirent deux fois, la lave coule, la jauge avance comme dans le jeu
+        ims = [ecran(t, min(0.92, 0.15 + t / 3200 * 0.6)) for t in range(0, 3200, 100)]
+        ims[0].save(os.path.join(U.SORTIE, 'chargement.gif'), save_all=True, append_images=ims[1:], duration=100, loop=0)
 
 if __name__ == '__main__':
     main()

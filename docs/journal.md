@@ -417,6 +417,10 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   baron vaudou, Freyja le barbare à la massue, Isis le chasseur au crâne de cerf, Thor la femme-araignée, Atlas l'enfant
   de la forêt, Zeus le roi noir). Les noms de fichiers suivent les noms du jeu, pas ce que montre le dessin. Une couleur
   de clignement passe par une lettre de la légende (jamais une couleur directe dans `HEAD_BLINK`).
+  **v0.57.0 : interface en nouvelle DA, partie 1** : page de chargement en pixel art HD (volcan de Kael animé, Myrr, Bérold,
+  Kael face au dragon, canvas léger sans Phaser écrit par `refonte-graphique/pixel/ui/chargement.py` dans `index.html`), logo
+  et icône d'application refaits (`public/art/ui-px/`), écran du nom. Plan des 9 parties : `refonte-graphique/pixel/ui/PLAN.md`.
+  Tessa retouchée (cou en plumes).
   **Nouveaux noms (v0.56.0, validés le 25/11)** : Néfira (ex-Minotaure), Taurok (ex-Astérion), Ophira (ex-Méduse), Soyane
   (ex-Arachné), Malgrave (ex-Anubis), Sylvar (ex-Isis), Dardane (ex-Gabryel), Elvyn (ex-Elyon), Aurelle (ex-Auriel), Jarek
   (ex-Jinn) ; identifiants et noms de fichiers inchangés. 4 grands boss animés (dragon, léviathan, titan, oiseau-tempête).

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""L'ICÔNE DE L'APPLICATION en pixel art HD : le spartiate (knights-1, l'ancien visage de l'icône) en buste, tel qu'il
+"""L'ICÔNE DE L'APPLICATION en pixel art HD : Bérold le spartiate (knights-1, déjà le visage de l'ancienne icône) en buste, tel qu'il
 est en combat (première image de sa pose), sur l'émail bleu nuit de l'interface avec un halo clair en paliers derrière
 la tête (la lumière vient d'en haut à droite). Le bleu fait ressortir l'or du casque et le rouge du cimier.
 

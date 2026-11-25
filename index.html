@@ -17,7 +17,7 @@
       #splash .sp { position: absolute; top: 0; bottom: 0; left: 50%; width: min(100%, 480px); transform: translateX(-50%); overflow: hidden;
         --px: max(calc(min(100vw, 480px) / 340), calc(100vh / 737)); background: #2a1424; }
       @supports (height: 100dvh) { #splash .sp { --px: max(calc(min(100vw, 480px) / 340), calc(100dvh / 737)); } }
-      #splash canvas, #splash img, #splash .load { position: absolute; image-rendering: pixelated; image-rendering: crisp-edges; }
+      #splash canvas, #splash img, #splash .load { position: absolute; image-rendering: pixelated; }
       #splash canvas { width: calc(var(--px) * 340); height: calc(var(--px) * 737); left: calc(50% - var(--px) * 170.0); top: calc((100% - var(--px) * 737) * 0.7); }
       #splash img { left: 50%; top: calc(env(safe-area-inset-top, 0px) + var(--px) * 6); width: calc(var(--px) * 236); height: calc(var(--px) * 156); transform: translateX(-50%); }
       #splash .load { left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--px) * 16); width: calc(var(--px) * 150); height: calc(var(--px) * 14); transform: translateX(-50%);
