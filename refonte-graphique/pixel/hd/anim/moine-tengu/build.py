@@ -352,3 +352,288 @@ def compose(hero, fx_back=None, fx_front=None, flash=None, shake=0):
     if shake:
         out = np.roll(out, shake, axis=1)
     return out
+
+
+# ---------------------------------------------------------------- morceaux qui traînent (suivi, inertie)
+def wings(wl=0):
+    """les deux ailes repliées ; wl : les pointes des rémiges traînent (+1 : restent en bas, -1 : restent en haut)"""
+    a, b = P['aileP'], P['aileL']
+    if wl:
+        a = shift_rows_down(a, lambda x: wl if x <= 40 else 0, 52, 62)
+        b = shift_rows_down(b, lambda x: wl if x >= 104 else 0, 50, 64)
+    return a, b
+
+
+def pans(p=0):
+    """les deux pans de la ceinture : le bas se balance de p pixels (le noeud reste)"""
+    if not p:
+        return P['pans']
+    return shear_rows(P['pans'], lambda y: p if y >= 79 else 0)
+
+
+# Les anneaux d'or de la boucle (dessin : deux de chaque côté). Pour qu'ils tintent dans la pose : un anneau glisse
+# d'un pixel sur la boucle et revient, un éclat doré s'allume à côté.
+RING_BOXES = {'hg': (12, 9, 15, 12), 'bg': (12, 13, 15, 16), 'hd': (29, 9, 32, 12), 'bd': (29, 13, 32, 16)}
+
+
+def staff_rest(jingle=0):
+    """le shakujō du dessin (hampe complète sous le poing) ; jingle : 1 l'anneau bas-droit glisse vers l'extérieur,
+    2 il revient en tintant (éclat)"""
+    st = STAFF_FULL.copy()
+    sparks = []
+    if jingle:
+        x0, y0, x1, y1 = RING_BOXES['bd']
+        ring = np.full((GH, GW), '.', dtype='<U1')
+        ring[y0:y1 + 1, x0:x1 + 1] = P['baton'][y0:y1 + 1, x0:x1 + 1]
+        # (on ne prend que l'or de l'anneau, pas le fer de la boucle)
+        ring[~isin(ring, GOLD)] = '.'
+        st[ring != '.'] = '.'
+        if jingle == 1:
+            st = over(st, np.roll(np.roll(ring, 1, axis=1), 1, axis=0))
+        else:
+            st = over(st, np.roll(ring, 1, axis=0))
+            sparks = [(34, 14, 'O'), (33, 17, 'O')]
+    return st, sparks
+
+
+# ---------------------------------------------------------------- 1) la pose (respiration)
+# 12 images, lentes (2 s) : un gros souffle de vieux colosse. Il inspire en deux temps (le ventre, puis la poitrine et
+# les épaules : deux pixels), la tête suit avec une image de retard, les pointes des ailes traînent puis se reposent ;
+# il expire, s'affaisse d'un pixel sur ses geta (les genoux plient), les pans de la ceinture se balancent ; le poing
+# glisse d'un pixel sur la hampe plantée (le bâton ne bouge pas) ; un anneau tinte ; un clignement.
+POSE = [
+    # souffle, tête (retard), pointes des ailes, pans, poing, tassement, anneau, clignement, durée
+    dict(b=0, hl=0, wl=0, p=0, fl=0, c=0, j=0, k=0, ms=200),
+    dict(b=1, hl=1, wl=1, p=0, fl=0, c=0, j=0, k=0, ms=160),
+    dict(b=2, hl=1, wl=1, p=0, fl=0, c=0, j=0, k=0, ms=170),
+    dict(b=2, hl=0, wl=0, p=1, fl=0, c=0, j=0, k=0, ms=220),
+    dict(b=2, hl=0, wl=0, p=1, fl=0, c=0, j=0, k=0, ms=200),
+    dict(b=1, hl=-1, wl=-1, p=0, fl=0, c=0, j=0, k=0, ms=160),
+    dict(b=0, hl=-1, wl=-1, p=-1, fl=0, c=0, j=1, k=0, ms=150),
+    dict(b=0, hl=0, wl=0, p=-1, fl=0, c=1, j=2, k=0, ms=170),
+    dict(b=0, hl=0, wl=1, p=0, fl=0, c=1, j=0, k=1, ms=120),
+    dict(b=0, hl=0, wl=0, p=0, fl=0, c=1, j=0, k=0, ms=170),
+    dict(b=0, hl=0, wl=0, p=0, fl=0, c=0, j=0, k=0, ms=180),
+    dict(b=0, hl=0, wl=0, p=0, fl=0, c=0, j=0, k=0, ms=200),
+]
+
+
+def draw_head(cv, body, hl=0, swap=None, extra=(0, 0)):
+    """la tête : à sa place sur le corps (dessous), puis décalée de hl (retard) ; les perles repassent devant"""
+    dx, dy = body.follow(30)
+    dx += extra[0]
+    dy += extra[1]
+    if hl or extra != (0, 0):
+        blit(cv, P['tete'], dx, dy + hl, swap)
+    elif swap:
+        blit(cv, P['tete'], dx, dy, swap)
+
+
+def pose_frame(f):
+    body = Body(crouch=f.get('c', 0), breath=f['b'])
+    cv, back, front = empty(), empty(), empty()
+    swap = BLINK if f.get('k') else None
+    wa, wb = wings(f['wl'])
+    body.draw(cv, wa)
+    body.draw(cv, wb)
+    body.draw(cv, P['corps'], swap)
+    draw_head(cv, body, f['hl'], swap)
+    body.draw(cv, P['perles'])
+    body.draw(cv, pans(f['p']))
+    body.draw(cv, P['manche'])
+    body.draw(cv, P['avantbras'])
+    st, sparks = staff_rest(f.get('j', 0))
+    blit(cv, st)
+    for (x, y, ch) in sparks:
+        front[y + OY, x + OX] = ch
+    # le poing : il serre la hampe ; il glisse d'un pixel vers le haut quand les épaules montent
+    blit(cv, P['poing'], 0, body.follow(50)[1] + f.get('fl', 0))
+    return cv, back, front
+
+
+# ================================================================ (attaques : plus bas, avant les retouches)
+# @@ATTAQUES@@
+
+
+# ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
+# RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du monstre à partir de
+# (x, y) en coordonnées de la GRILLE du dessin ; '.' efface, ' ' laisse le pixel tel quel.
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+
+
+def retouch(cv, fixes):
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                X, Y = x + i + OX, y + OY
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = ch
+
+
+# ---------------------------------------------------------------- toutes les images
+def build_one(name):
+    fr = []
+    if name == 'pose':
+        for i, f in enumerate(POSE):
+            cv, back, front = pose_frame(f)
+            retouch(cv, RETOUCHES['pose'].get(i, []))
+            fr.append((compose(cv, back, front), f['ms']))
+        return fr
+    specs = ATTAQUE if name == 'attaque' else SPECIALE
+    for i, spec in enumerate(specs):
+        cv, back, front = rig_frame(dict(spec))
+        retouch(cv, RETOUCHES[name].get(i, []))
+        fr.append((compose(cv, back, front, flash=spec.get('flash'), shake=spec.get('shake', 0)), spec['ms']))
+    return fr
+
+
+def build_all():
+    return {n: build_one(n) for n in ('pose', 'attaque', 'speciale')}
+
+
+def on_bg(img, bg=BG):
+    im = Image.new('RGBA', (img.shape[1], img.shape[0]), bg + (255,))
+    im.alpha_composite(Image.fromarray(img, 'RGBA'))
+    return im
+
+
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin),
+            min(H, ys.max() + 1 + margin))
+
+
+GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet.paste(im, (0, i * H0))
+    ncol = len(sheet.getcolors(maxcolors=1 << 20) or [])
+    if ncol <= 256:
+        pal = sheet.quantize(colors=min(256, ncol), method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    both = anims['attaque'] + anims['speciale'] + anims['pose']
+    bb = bbox(both, 6)
+    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
+    k = 3
+    blocks = []
+    for name, per in (('pose', 12), ('attaque', 6), ('speciale', 6)):
+        box = GAME_BOX if name == 'pose' else bbox(anims[name] + anims['pose'], 3)
+        cells = [on_bg(img).crop(box) for img, _ in anims[name]]
+        blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + per - 1) // per) * (cells[0].height * k + 22) for _, per, cells, _ in blocks)
+    sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    y = 6
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE', 'speciale': 'ATTAQUE SPECIALE'}
+    for name, per, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % per == 0:
+                y += ch + 22
+            X = 6 + (i % per) * (cw + 6)
+            sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sheet.save(os.path.join(OUT, f'anim-{NAME}-planche.png'))
+    # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de prairie, ×2
+    seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
+    box = bb
+    try:
+        fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
+        fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        bw, bh = box[2] - box[0], box[3] - box[1]
+        fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        base = fond.crop((0, fy, bw, fy + bh))
+        if base.width < bw:
+            raise ValueError
+    except Exception:
+        base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
+    ims = []
+    for img, _ in seq:
+        im = base.copy()
+        im.alpha_composite(Image.fromarray(img, 'RGBA').crop(box))
+        ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), ims, [ms for _, ms in seq])
+
+
+# ---------------------------------------------------------------- outils de contrôle (brouillon)
+def dev_sheet(name, k=4, per=6, box=None):
+    """chaque image d'une animation, ×k, côte à côte (contrôle de travail)"""
+    fr = build_one(name)
+    box = box or (GAME_BOX if name == 'pose' else bbox(fr, 3))
+    cells = [on_bg(img).crop(box) for img, _ in fr]
+    cw, ch = cells[0].width * k, cells[0].height * k
+    rows = (len(cells) + per - 1) // per
+    sheet = Image.new('RGB', (min(per, len(cells)) * (cw + 4) + 4, rows * (ch + 18) + 4), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    for i, c in enumerate(cells):
+        X, Y = 4 + (i % per) * (cw + 4), 4 + (i // per) * (ch + 18)
+        sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, Y + 14))
+        d.text((X + 2, Y), f'{i} ({fr[i][1]} ms)', fill=(30, 20, 36))
+    os.makedirs(BROUILLON, exist_ok=True)
+    path = os.path.join(BROUILLON, f'dev-{name}.png')
+    sheet.save(path)
+    return path
+
+
+def decoupe(k=6):
+    """la découpe en couleurs : chaque morceau d'une teinte, et les remplissages (flanc, aile) en clair"""
+    colors = {'baton': (90, 110, 200), 'poing': (220, 60, 60), 'avantbras': (240, 140, 60), 'manche': (240, 220, 80),
+              'pans': (200, 40, 160), 'aileP': (40, 40, 60), 'aileL': (80, 80, 120), 'tete': (60, 180, 90),
+              'corps': (200, 200, 200)}
+    img = Image.new('RGB', (GW * 2 * k + k, GH * k), (255, 255, 255))
+    d = ImageDraw.Draw(img)
+    for name in ('corps', 'tete', 'aileP', 'aileL', 'manche', 'avantbras', 'poing', 'pans', 'baton'):
+        ys, xs = np.nonzero(P[name] != '.')
+        for y, x in zip(ys, xs):
+            d.rectangle([x * k, y * k, x * k + k - 1, y * k + k - 1], fill=colors[name])
+    base = np.where(ARM_HOLE, '.', over(P['corps'], over(P['aileP'], P['aileP'])))
+    base = over(over(WING_FILL, base), FLANK)
+    base = over(base, STAFF_FULL)
+    for y in range(GH):
+        for x in range(GW):
+            ch = base[y, x]
+            if ch != '.':
+                rgb = hd.hexrgb(ALLPAL[ch]) if isinstance(ALLPAL[ch], str) else ALLPAL[ch]
+                X = GW * k + k + x * k
+                d.rectangle([X, y * k, X + k - 1, y * k + k - 1], fill=tuple(rgb))
+    os.makedirs(BROUILLON, exist_ok=True)
+    img.save(os.path.join(BROUILLON, 'decoupe.png'))
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'decoupe':
+        decoupe()
+    elif len(sys.argv) > 2 and sys.argv[1] == 'dev':
+        print(dev_sheet(sys.argv[2]))
+    else:
+        anims = build_all()
+        write_outputs(anims)
+        for n in ('pose', 'attaque', 'speciale'):
+            print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+        print('écrit dans', OUT)

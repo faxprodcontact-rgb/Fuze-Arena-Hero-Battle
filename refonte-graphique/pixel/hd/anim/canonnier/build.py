@@ -852,9 +852,12 @@ def fx_smoke(key, t, sc=1.4, sr=1.7):
         A = list(A)
         if t < 5.5:                                     # une grosse bouffée qui gonfle juste devant la bouche
             A.append((6.0, -1.0 - 2.0 * t, (3.8 + 0.7 * min(t, 4)) * (1 - 0.35 * max(0.0, t - 4))))
+        lobes = [(mx + x * sc, my + y * sc, r * sr) for (x, y, r) in A]
+        if t < 1.5:                                     # la fumée sort encore de la bouche, même reculée
+            lobes.append((ctx.muzzle[0] + 3, ctx.muzzle[1] - 0.5, 4.2 - 1.6 * t))
         layer = front if t < 1.5 else back
         tones = 'sstuv' if t < 4 else 'ssttu' if t < 6 else 'sttuu'
-        smoke(layer, [(mx + x * sc, my + y * sc, r * sr) for (x, y, r) in A], tones)
+        smoke(layer, lobes, tones)
         for (x, y, r, a0, cw) in CURLS[k]:
             curl(layer, (mx + x * sc, my + y * sc), r * sr, a0, turn=290, w=2.3 if t < 5 else 1.8, tones='stu', cw=cw)
     return f
@@ -874,7 +877,7 @@ def dust(cv, X, k, side, seed=0):
     """une bouffée de poussière soulevée au ras du sol, chassée vers side (-1 : à gauche) : elle gonfle, s'écarte,
     monte un peu et se défait"""
     r = 2.2 + 0.9 * k
-    hol = 0.0 if k < 2 else min(0.9, 0.28 * (k - 1))
+    hol = 0.0 if k < 2 else min(0.6, 0.22 * (k - 1))
     cloud(cv, (X + side * (2 + 2.2 * k), GROUND - 2 - 0.8 * k), r, tones='KKLMN', hollow=hol, seed=seed)
 
 
@@ -882,7 +885,7 @@ def fx_dust(k, big=1.0):
     """le recul tasse ses appuis : de la poussière jaillit derrière le pied de la jambe de bois et le talon de la
     botte (rejetée vers l'arrière), un peu devant la pointe de la botte"""
     def f(cv, back, front, ctx):
-        if k > 4:
+        if k > 3:
             return
         peg, heel, toe = 47 + OX, 75 + OX, 94 + OX          # (grille du dessin -> toile) jambe de bois, talon, pointe
         dust(back, peg - 4, k * big, -1, seed=3)
@@ -919,14 +922,21 @@ def fx_flash(key, big=1.0):
 
 
 def fx_shot(dx):
-    """le boulet file vers la droite, une traîne d'eau de mer derrière lui (gouttes qui s'en détachent)"""
+    """le boulet file vers la droite, une traîne d'eau de mer derrière lui : un ruban d'eau qui ondule (épais contre
+    le boulet, effilé derrière), une bulle d'écume, deux gouttes qui s'en détachent et tombent"""
     def f(cv, back, front, ctx):
         mx, my = SHOT_AT['attaque']
         x = mx + dx
-        taper(back, (x - 26, my), (x - 2, my), 0.3, 2.2, 'XYZA')
-        for m_ in range(3):
-            drop(back, x - 10 - 7 * m_, my + 3 + 2 * m_, 2 if m_ < 2 else 1, v=(-0.5, 1.5))
-        ball(front, (x, my))
+        L = min(40.0, dx - 4)
+        n = 24
+        ph = dx * 0.07
+        pts = [(x - L + L * i / n, my + (1.8 * (1 - i / n)) * math.sin(i / n * 2.2 * math.pi + ph))
+               for i in range(n + 1)]
+        lit_stroke(back, pts, [0.6 + 7.0 * (i / n) ** 1.2 for i in range(n + 1)], 'XYZAB', foam=(0.45, 1.0))
+        puff(back, (x - L * 0.35, my - 2.5), 1.2, tones='WX')
+        drop(back, x - L * 0.55, my + 5, 2, v=(0.4, 1.6))
+        drop(back, x - L * 0.85, my + 7, 1, v=(0.4, 1.6))
+        ball(front, (x, my), 3.6)
     return f
 
 
@@ -944,7 +954,7 @@ ATTAQUE = [
     dict(s=0, lean=-3, head=(-1, 0), tilt=2, t=1, sh=0, fx=[fx_smoke('attaque', 2), fx_dust(2)], ms=70),
     dict(s=0, lean=-1, head=(0, 0), tilt=1, t=0, sh=-1, fx=[fx_smoke('attaque', 3), fx_dust(3)], ms=90),
     # 8-10 : il se tasse en place, montre les dents ; un filet de fumée monte de la bouche du canon
-    dict(s=1, lean=0, head=(0, 1), tilt=0, t=-1, sh=-1, fx=[fx_smoke('attaque', 4), fx_dust(4), fx_wisp(0)], ms=120),
+    dict(s=1, lean=0, head=(0, 1), tilt=0, t=-1, sh=-1, fx=[fx_smoke('attaque', 4), fx_wisp(0)], ms=120),
     dict(b=1, lean=0, head=(0, -1), cri=1, t=-1, sh=0, fx=[fx_smoke('attaque', 5), fx_wisp(2)], ms=170),
     dict(b=0, lean=0, head=(0, 0), cri=1, t=0, sh=0, fx=[fx_smoke('attaque', 6), fx_wisp(4)], ms=170),
 ]
@@ -1168,7 +1178,7 @@ SPECIALE = [
          fx=[fx_smoke('speciale', 1.4, 1.55, 1.85), fx_burst(3), fx_dust(2, 1.2)], ms=70),
     dict(s=0, lean=-2, head=(0, 0), tilt=1, t=0, sh=-1, fx=[fx_smoke('speciale', 2.0, 1.55, 1.85), fx_dust(3, 1.2)],
          ms=70),
-    dict(s=1, lean=-1, head=(0, 1), tilt=0, t=-1, sh=-1, fx=[fx_smoke('speciale', 2.5, 1.55, 1.85), fx_dust(4, 1.2)],
+    dict(s=1, lean=-1, head=(0, 1), tilt=0, t=-1, sh=-1, fx=[fx_smoke('speciale', 2.5, 1.55, 1.85)],
          ms=70),
     # 9 : le troisième rebond, sur le premier rang : le gros coup, arrêt sur l'image ; il éclate de rire
     dict(b=1, lean=0, head=(0, 0), cri=1, t=-1, sh=0, fx=[fx_smoke('speciale', 3.0, 1.55, 1.85)], ms=260),

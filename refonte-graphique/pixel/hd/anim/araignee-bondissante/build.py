@@ -1068,7 +1068,7 @@ SPECIALE = [
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
 # RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du monstre à partir
 # de (x, y) en coordonnées de la GRILLE du dessin ; '.' efface, ' ' laisse le pixel tel quel.
-RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}, 'essai': {}}
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
 
 
 def retouch(cv, fixes, sp=(0, 0)):
@@ -1084,8 +1084,7 @@ def retouch(cv, fixes, sp=(0, 0)):
 def build_all(which=('pose', 'attaque', 'speciale')):
     anims = {}
     for name in which:
-        specs = {'pose': POSE, 'attaque': globals().get('ATTAQUE', []), 'speciale': globals().get('SPECIALE', []),
-                 'essai': globals().get('ESSAI', [])}[name]
+        specs = {'pose': POSE, 'attaque': ATTAQUE, 'speciale': SPECIALE}[name]
         fr = []
         for i, spec in enumerate(specs):
             cv, back, front, ctx = rig_frame(dict(spec))
@@ -1174,6 +1173,11 @@ def write_outputs(anims):
         fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
         fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
         bw, bh = box[2] - box[0], box[3] - box[1]
+        if fond.width < bw:                             # le bond porte loin : le décor est prolongé en miroir
+            wide = Image.new('RGBA', (fond.width * 2, fond.height))
+            wide.paste(fond, (0, 0))
+            wide.paste(fond.transpose(Image.FLIP_LEFT_RIGHT), (fond.width, 0))
+            fond = wide
         fy = 374 - (GROUND - box[1])                    # les pattes sur le chemin de terre
         base = fond.crop((0, fy, bw, fy + bh))
         if base.width < bw or fy < 0:
@@ -1203,16 +1207,6 @@ def dev_sheet(name, frames, k=3, per=10, box=None, path=None):
         d.text((X + 2, Y), f'{i} ({frames[i][1]})', fill=(30, 20, 36))
     sheet.save(path or os.path.join(BROUILLON, f'dev-{name}.png'))
 
-
-# ---------------------------------------------------------------- essais (brouillon)
-ESSAI = [
-    dict(sp=(16, -12), air=True, legs=push((16, -12)), ms=60),
-    dict(sp=(30, -22), air=True, legs={
-        'N1': dict(new=[(4, 95), (-3, 104), (-8, 111)]), 'N2': dict(new=[(38, 106), (31, 111), (26, 114)]),
-        'F1': dict(new=[(28, 92), (21, 101), (16, 107)]), 'F2': dict(new=[(52, 99), (46, 106), (41, 111)]),
-        'N3': dict(new=[(64, 106), (76, 110), (86, 111)]), 'F3': dict(new=[(108, 96), (115, 102), (120, 105)]),
-        'N4': dict(t=(5, 6), k=(2, 2), j=3), 'F4': dict(t=(4, 8), k=(2, 3), j=2)}, ms=100),
-]
 
 
 if __name__ == '__main__':

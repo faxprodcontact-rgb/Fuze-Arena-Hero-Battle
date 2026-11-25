@@ -519,6 +519,19 @@ class Ctx:
 BLINK = dict(SRC['cligne'])
 
 
+def plug(res, orig):
+    """bouche les trous qu'un morceau décalé laisse À L'INTÉRIEUR du dessin (un pixel vide entre deux pixels pleins,
+    en largeur ou en hauteur) avec ce qu'il y avait dessous ; les bords de la silhouette, eux, bougent vraiment"""
+    e = res == '.'
+    f = ~e
+    lr = np.roll(f, 1, 1) & np.roll(f, -1, 1)
+    ud = np.roll(f, 1, 0) & np.roll(f, -1, 0)
+    m = e & (orig != '.') & (lr | ud)
+    out = res.copy()
+    out[m] = orig[m]
+    return out
+
+
 def mane(p, low=0, up=0):
     """la crinière : les mèches du bas (qui retombent sur la bosse du dos) se balancent de 'low' pixels, le bout des
     mèches du haut (balayées vers l'arrière) monte ou descend de 'up' pixels ; le reste de la tête ne bouge pas"""
@@ -527,13 +540,13 @@ def mane(p, low=0, up=0):
         q = np.where(m, p, '.')
         rest = np.where(m, '.', p)
         q = shear_rows(q, lambda y: low if y >= 30 else 0)
-        p = over(rest, q)
+        p = plug(over(rest, q), p)
     if up:
         m = isin(p, MANE) & (XX <= 62) & (YY <= 31)
         q = np.where(m, p, '.')
         rest = np.where(m, '.', p)
         q = shear_cols(q, lambda x: up if x <= 60 else 0)
-        p = over(rest, q)
+        p = plug(over(rest, q), p)
     return p
 
 
@@ -558,7 +571,7 @@ def pagne(p, s=0):
     q = np.where(m, p, '.')
     rest = np.where(m, '.', p)
     q = shear_rows(q, lambda y: s if y >= 100 else 0)
-    return over(rest, q)
+    return plug(over(rest, q), p)
 
 
 def rope(p, s=0):
@@ -569,7 +582,7 @@ def rope(p, s=0):
     q = np.where(m, p, '.')
     rest = np.where(m, '.', p)
     q = shear_rows(q, lambda y: s if y >= 95 else 0)
-    return over(rest, q)
+    return plug(over(rest, q), p)
 
 
 # ---------------------------------------------------------------- 1) la pose (respiration)

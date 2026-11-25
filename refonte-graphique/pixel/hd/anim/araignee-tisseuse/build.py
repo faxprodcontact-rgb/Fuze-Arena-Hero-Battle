@@ -1041,18 +1041,18 @@ SPECIALE = [
     # 0 : tension : les pattes levées frémissent, l'abdomen se gonfle
     dict(sw=1, legs={'RA': dict(t=(0, -1)), 'RB': dict(t=(0, -1))}, ms=100),
     # 1 : elle se cabre un peu, la patte avant proche descend devant les filières ; la soie sort
-    dict(sp=(-1, -2), kf=0.5, ab=(1, 1), sw=1, c1=1, c2=-1,
+    dict(sp=(-2, -3), kf=0.5, ab=(1, 1), sw=1, c1=1, c2=-1,
          legs={'RC': dict(new=RC_LOW1), 'RD': dict(new=RD_REST), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
          fx_list=[fx_weave_silk(0)], ms=130),
     # 2 : elle enroule : la pelote grossit (l'abdomen pompe)
-    dict(sp=(-1, -2), kf=0.5, ab=(-1, 1), sw=2, c1=2,
+    dict(sp=(-2, -3), kf=0.5, ab=(-1, 1), sw=2, c1=2,
          legs={'RC': dict(new=RC_LOW2), 'RD': dict(new=RD_REST), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
          fx_list=[fx_weave_silk(1)], ms=110),
     # 3 : encore (deuxième pompe), des cailloux se prennent dans la soie
-    dict(sp=(-1, -2), kf=0.5, ab=(1, 1), sw=1, c1=1,
+    dict(sp=(-2, -3), kf=0.5, ab=(1, 1), sw=1, c1=1,
          legs={'RC': dict(new=RC_LOW3), 'RD': dict(new=RD_REST), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
          fx_list=[fx_weave_silk(2)], ms=110),
-    dict(sp=(-1, -2), kf=0.5, ab=(-1, 1), sw=2, c1=0,
+    dict(sp=(-2, -3), kf=0.5, ab=(-1, 1), sw=2, c1=0,
          legs={'RC': dict(new=RC_LOW2), 'RD': dict(new=RD_REST), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
          fx_list=[fx_weave_silk(3)], ms=110),
     # 5 : la pelote est prête ; elle recule pour prendre son élan, la patte avant se dresse
@@ -1063,20 +1063,21 @@ SPECIALE = [
     dict(sp=(3, -1), kf=0.6, ab=(3, -1), c1=-2,
          legs={'RC': dict(new=RC_FLING), 'RA': dict(t=(-1, 0)), 'RB': dict(t=(-1, 0)), 'RD': dict(new=RD_FLING)},
          fx_list=[fx_shot(0.14, r=6.0, tail_len=0.14, pebbles=3, start=g2c(BALL_G[0] + 4, BALL_G[1] - 2), arc=30)],
-         no_c2=True, ms=60),
+         c2=-3, ms=60),
     # 7 : la pelote vole en cloche ; recul
     dict(sp=(0, 0), kf=0.6, c1=1,
-         legs={'RC': dict(t=(2, 2)), 'RA': dict(t=(1, 1))},
+         legs={'RC': dict(new=[(81, 37), (100, 24), (116, 32), (124, 47)]), 'RD': dict(new=RD_REST),
+               'RA': dict(t=(1, 1))},
          fx_list=[fx_shot(0.55, r=6.0, tail_len=0.22, pebbles=3, start=g2c(BALL_G[0] + 4, BALL_G[1] - 2), arc=30)],
-         no_c2=True, ms=70),
+         c2=1, ms=70),
     # 8 : elle éclate sur l'ennemi
-    dict(c1=2, legs={'RC': dict(t=(1, 1))}, fx_list=[fx_net(0)], ms=60),
+    dict(c1=2, c2=2, legs={'RC': dict(t=(1, 1))}, fx_list=[fx_net(0)], ms=60),
     # 9 : LE FILET S'OUVRE (arrêt sur image, éclair)
-    dict(c1=1, legs={'RC': dict(t=(0, 1))}, fx_list=[fx_net(1, flash=True)], ms=220),
+    dict(c1=1, c2=1, legs={'RC': dict(t=(0, 1))}, fx_list=[fx_net(1, flash=True)], ms=220),
     # 10 : il retombe et se plante dans le sol : éclats de pierre, poussière
     dict(sp=(1, 0), c1=-1, legs={'RC': dict(t=(1, 0))}, fx_list=[fx_net(2)], ms=120),
     # 11 : il colle : le venin brille dans les fils
-    dict(sp=(1, 0), c1=-1, fx_list=[fx_net(3)], ms=150),
+    dict(sp=(1, 0), c1=-1, c2=-1, fx_list=[fx_net(3)], ms=150),
     # 12 : il se défait
     dict(c1=0, fx_list=[fx_net(4)], ms=110),
     # 13 : elle retisse son fil (le cocon des filières redescend)

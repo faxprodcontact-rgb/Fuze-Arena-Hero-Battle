@@ -416,6 +416,14 @@ def rig_frame(f):
     if (nx, ny) != (0, 0):
         blit(cv, np.where(YY >= 66, pn, '.'), ax, ay)
     blit(cv, pn, ax + nx, ay + ny)
+    # la lame redessinée touche le poing en biais : un pixel vide enfermé entre eux deviendrait un point noir (le
+    # contour) ; on le bouche avec la couleur de son voisin de gauche (le trou du dessin, à l'épaulière, est gardé)
+    m = cv != '.'
+    pm = np.pad(m, 1)
+    nb = pm[:-2, 1:-1].astype(int) + pm[2:, 1:-1] + pm[1:-1, :-2] + pm[1:-1, 2:]
+    for (y, x) in np.argwhere(~m & (nb == 4)):
+        if x >= OX + 84 + ax:
+            cv[y, x] = cv[y, x - 1]
     for fx in f.get('fx', []):
         fx(cv, back, front, ctx)
     return cv, back, front, ctx

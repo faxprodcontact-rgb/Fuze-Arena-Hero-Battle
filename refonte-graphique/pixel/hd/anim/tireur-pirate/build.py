@@ -651,14 +651,14 @@ ARA_NU = (43, 51, [
     'EFGGFTST.',
     '.EFG..TTS'])
 # l'aile à demi ouverte (étendue vers l'arrière, à l'horizontale)
-ARA_AILE_MI = (32, 47, [
-    '.........jj.....',
-    '......bcdijjk...',
-    '...abccdchiijj..',
-    '.abbccbcbhhiijj.',
-    'abbcbbccbbhhiij.',
-    '.aabab.abbbghhi.',
-    '...a....aab.gh..'])
+ARA_AILE_MI = (31, 47, [
+    '........ijjk....',
+    '....cddchiijjk..',
+    '..bccdcbhhiiijj.',
+    'abbcbcbbbghhiij.',
+    '.abbabbabbghhi..',
+    '..a.ab.abab.gh..',
+    '.....a..a.a.....'])
 # l'aile levée (dressée vers le haut et l'arrière, les grandes plumes en éventail)
 ARA_AILE_HAUT = (31, 36, [
     '..b.............',
@@ -680,12 +680,12 @@ ARA_AILE_HAUT = (31, 36, [
 ARA_BEC = (52, 42, [
     'uw...',
     'uwwu.',
-    'tuuuw',
-    'EttuwE'[:5],
-    'EE.tu',
-    'CE..t',
-    'CC...',
-    '.C...'])
+    'tuuww',
+    'EEtuw',
+    'EFE.t',
+    'sEE..',
+    'sst..',
+    '.s...'])
 
 
 def grid_part(spec):

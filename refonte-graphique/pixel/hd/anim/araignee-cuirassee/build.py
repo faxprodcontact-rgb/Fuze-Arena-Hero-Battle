@@ -908,30 +908,29 @@ FEET_ALL = ['A', 'B', 'C', 'G1', 'G2', 'F1']
 
 
 def fx_hit(level):
-    """l'impact des deux massues : un éclat de pierre entre les deux pointes, des cailloux projetés, une fissure"""
+    """l'impact des deux massues : un éclat de pierre entre les deux pointes, des cailloux projetés, une fissure,
+    deux gros nuages de poussière"""
     def f(cv, back, front, ctx):
         a, b = ctx.tips['P'], ctx.tips['F2']
-        c = (a + b) / 2 + np.array([1, -3])
+        c = (a + b) / 2 + np.array([1, -4])
         if level == 0:
-            pop(front, c, 5.0, facing=60, tones='ojab')
-            for (dx, dy, k) in ((-9, -9, 0), (9, -11, 1), (14, -4, 2), (-4, -14, 3)):
+            pop(front, c, 7.0, facing=60, tones='ojab')
+            for (dx, dy, k) in ((-11, -12, 0), (10, -15, 1), (17, -6, 2), (-4, -19, 3), (4, -10, 1)):
                 chunk(front, c[0] + dx, c[1] + dy, k, flip=dx < 0)
             for i, t in enumerate((a, b)):
-                cloud(front, (t[0] + (2 if i else -2), GROUND - 2), 4.2, 'jklm', seed=31 + i)
-            crack(front, int(a[0]) - 4, int(b[0]) + 9, seed=4)
+                cloud(front, (t[0] + (4 if i else -3), GROUND - 3), 5.6, 'jklm', seed=31 + i)
         elif level == 1:
-            pop(front, c + np.array([1, -2]), 3.4, facing=60, tones='jkl')
-            for (dx, dy, k) in ((-13, -11, 0), (13, -14, 1), (19, -3, 2), (-6, -17, 3)):
+            pop(front, c + np.array([1, -3]), 4.2, facing=60, tones='jkl')
+            for (dx, dy, k) in ((-15, -15, 0), (14, -19, 1), (22, -6, 2), (-7, -23, 3), (6, -14, 1)):
                 chunk(front, c[0] + dx, c[1] + dy, k, flip=dx < 0)
             for i, t in enumerate((a, b)):
-                cloud(front, (t[0] + (3 if i else -3), GROUND - 3), 4.6, 'jklm', hollow=0.35, seed=31 + i)
-            crack(front, int(a[0]) - 4, int(b[0]) + 9, seed=4)
+                cloud(front, (t[0] + (6 if i else -5), GROUND - 4), 6.2, 'jklm', hollow=0.35, seed=31 + i)
         else:
-            for (dx, k) in ((-16, 0), (22, 2), (-8, 1)):
+            for (dx, k) in ((-19, 0), (26, 2), (-9, 1), (12, 3)):
                 chunk(front, c[0] + dx, GROUND - 3, k, flip=dx < 0)
             for i, t in enumerate((a, b)):
-                cloud(front, (t[0] + (4 if i else -4), GROUND - 4), 4.4, 'jklm', hollow=0.75, seed=31 + i)
-            crack(front, int(a[0]) - 4, int(b[0]) + 9, seed=4)
+                cloud(front, (t[0] + (8 if i else -7), GROUND - 6), 6.0, 'jklm', hollow=0.75, seed=31 + i)
+        crack(front, int(a[0]) - 6, int(b[0]) + 12, seed=4)
     return f
 
 

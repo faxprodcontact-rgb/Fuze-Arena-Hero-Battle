@@ -338,6 +338,18 @@ def fins(phase=None, amp=1, sweep=0):
             sx = x + a                 # a = -1 : le bout part à gauche (on prend le pixel de droite)
             new[x] = row[sx] if 0 <= sx < GW else '.'
         out[y] = new
+    # un bout de nageoire ne doit jamais se détacher (un pixel seul, sans voisin) : sa rangée reste comme le dessin
+    for _ in range(3):
+        a = (out != '.') | _body | M['tete']
+        n = np.zeros(a.shape, int)
+        for dy in (-1, 0, 1):
+            for dx in (-1, 0, 1):
+                if dy or dx:
+                    n += np.roll(np.roll(a, dy, 0), dx, 1)
+        bad = np.unique(np.nonzero((out != '.') & (n <= 1))[0])
+        if not len(bad):
+            break
+        out[bad] = src[bad]
     return out
 
 

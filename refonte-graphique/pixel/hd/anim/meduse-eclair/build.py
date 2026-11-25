@@ -600,7 +600,7 @@ for _i, _f in enumerate(POSE):
 # grossit (anticipation tenue) ; contraction d'un coup : elle recule et monte, la bulle part (étirée par la vitesse,
 # des bulles dans son sillage), file en légère courbe vers l'ennemi et éclate (écume, gouttes, petites décharges
 # courbes) ; elle se remet en garde.
-BIRTH = (93, 60)                 # où naît la bulle (grille du dessin : devant le bord de l'ombrelle, sous l'oeil)
+BIRTH = (97, 62)                 # où naît la bulle (grille du dessin : devant le bord de l'ombrelle, sous l'oeil)
 
 
 def bolt_path(t, p0, p1, sag=-10):
@@ -704,7 +704,7 @@ ATTAQUE = [
     dict(k=1, t=-1, u=-1, x=0, d=0, glow=1, fx=('charge', 3.0), ms=120),
     dict(k=1, t=-1, u=-2, x=1, d=1, glow=1, fx=('charge', 5.0), ms=140),
     dict(k=1, t=-1, u=-2, x=1, d=1, glow=1, fx=('charge', 6.0), ms=220),          # anticipation tenue
-    dict(k=-1, t=1, u=2, x=-3, xb=0, d=-1, glow=0, fx=('vol', 0.16), flash=25, ms=60),
+    dict(k=-1, t=1, u=2, x=-3, xb=0, d=-1, glow=0, fx=("vol", 0.16), flash=20, ms=60),
     dict(k=-1, t=1, u=3, x=-3, xb=-1, d=-1, glow=0, fx=('vol', 0.55), ms=60),
     dict(k=0, t=0, u=3, x=-2, xb=-1, d=0, glow=0, fx=('vol', 0.88), ms=60),
     dict(k=1, t=-1, u=2, x=-2, xb=-1, d=1, glow=0, fx=('eclat', 0), ms=180),        # l'impact, tenu
@@ -762,7 +762,7 @@ def fx_gather(ctx, k, ph):
     for j, tip in enumerate(TIPS[:1 + k]):
         p0 = ctx.at(*tip)
         p1 = (c[0] - r * 0.9, c[1] + r * 0.2 * (j - 1))
-        zap(back, arc_pts(p0, p1, bend=0.28 * (1 if j % 2 else -1), wob=1.0, waves=1.0, phase=ph + j), w=0.5,
+        zap(front, arc_pts(p0, p1, bend=0.18 * (1 if j % 2 else -1), wob=0.8, waves=0.7, phase=ph + j), w=0.5,
             edge=False)
         spark(front, p0[0], p0[1], big=True)
     orb(front, c, r, phase=ph, arcs=2 if k < 2 else 3)
@@ -907,10 +907,11 @@ def fx_storm(k, ph):
         foam(back, (g0[0] - 24, GROUND - 2), 4.5, seed=2)
         foam(back, (g0[0] + 24, GROUND - 2), 4.5, seed=4)
     elif k == 2:
-        dome(back, front, g0, 29, 42, ph, arcs=2, crack=0.55)
-        foam(back, (top[0] - 2, top[1] - 2), 7, hollow=0.35, seed=5)
-        ground_wave(back, front, g0[0] - 18, g0[0] - 44, 16, ph)
-        ground_wave(back, front, g0[0] + 18, g0[0] + 38, 14, ph + 1)
+        # le dôme s'est effondré : son eau retombe en deux vagues qui partent de sa base, l'écume gicle en haut
+        foam(back, (top[0] - 2, top[1] + 2), 7, hollow=0.35, seed=5)
+        foam(back, (g0[0], GROUND - 3), 7, seed=9)
+        ground_wave(back, front, g0[0] - 6, g0[0] - 40, 17, ph)
+        ground_wave(back, front, g0[0] + 6, g0[0] + 36, 15, ph + 1)
         spray(back, (top[0], top[1] - 2), 1.0, seeds)
     elif k == 3:
         foam(back, (top[0], top[1] - 10), 8, hollow=0.5, seed=5, tones='WXXYZ')
@@ -946,7 +947,7 @@ SPECIALE = [
     dict(k=-1, t=1, u=6, lift=10, x=0, d=0, glow=2, fx=('amas', 1), ms=80),           # 2e contraction
     dict(k=0, t=0, u=6, lift=12, x=0, d=-1, glow=2, fx=('amas', 2), ms=110),
     dict(k=1, t=-1, u=6, lift=12, x=1, d=1, glow=2, fx=('amas', 3), ms=260),          # la sphère est prête (tenue)
-    dict(k=-1, t=1, u=6, lift=12, x=-5, xb=1, d=-1, glow=0, fx=('lance', 0.18), flash=45, ms=70),   # la poussée
+    dict(k=-1, t=1, u=6, lift=12, x=-5, xb=1, d=-1, glow=0, fx=('lance', 0.18), flash=35, ms=70),   # la poussée
     dict(k=-1, t=1, u=6, lift=12, x=-5, xb=-1, d=-1, glow=0, fx=('lance', 0.6), ms=60),
     dict(k=0, t=0, u=6, lift=12, x=-4, xb=-2, d=0, glow=0, fx=('lance', 0.9), ms=60),
     dict(k=1, t=-1, u=6, lift=11, x=-4, xb=-2, d=1, glow=0, fx=('orage', 0), ms=240),  # l'éclat : temps suspendu

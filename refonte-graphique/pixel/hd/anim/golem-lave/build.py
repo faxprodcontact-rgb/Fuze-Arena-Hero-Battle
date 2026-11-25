@@ -100,7 +100,7 @@ P = {}
 # la goutte de lave qui pend au bout de la griffe du milieu (elle grossit, tombe et renaît pendant la respiration)
 P['goutte'] = take(filled & (XX >= 111) & (XX <= 115) & (YY >= 97) & (YY <= 101))
 # le petit bras griffu (lointain) : il pend à droite, détaché du corps sous l'épaule
-P['petit'] = take(filled & (XX >= 105) & (YY >= 64))
+P['petit'] = take(filled & (XX >= 105) & (YY >= 64) & (YY <= 103))
 # le bras-massue (proche), de sous l'épaule-rocher jusqu'au sol (pour les attaques ; la pose le garde dans le corps)
 _arm_edge = np.where(YY <= 62, 32, np.where(YY <= 85, 30, 44))
 _arm = filled & (YY >= 44) & (XX <= _arm_edge)
@@ -271,8 +271,10 @@ def compose(hero, fx_back=None, fx_front=None, flash=None, shake=0):
         layers.append(to_rgba(fx_back))
     h = hd.outline(to_rgba(hero))
     if flash:
+        # l'éclair de l'impact : il s'éclaire d'un coup, d'une lumière chaude de lave (le contour reste)
         m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
-        h[m, :3] = (h[m, :3].astype(int) + (255 - h[m, :3].astype(int)) * flash // 100).astype(np.uint8)
+        warm = np.array([255, 214, 150])
+        h[m, :3] = (h[m, :3].astype(int) + (warm - h[m, :3].astype(int)) * flash // 100).astype(np.uint8)
     layers.append(h)
     if fx_front is not None:
         layers.append(to_rgba(fx_front))
@@ -1003,7 +1005,7 @@ ATTAQUE = [
 # cloche. Les geysers retombent en fumée, la faille refroidit (rouge, puis brun brûlé). Il traîne la massue et se
 # redresse, la lave de son corps se calme.
 ARM_SKY = (98.0, 96.0, 100.0)          # la massue tout droit au-dessus de l'épaule, près du cratère
-GEYSERS = [72, 122, 172]               # où le sol éclate : distance (toile) depuis le centre de la massue posée
+GEYSERS = [88, 136, 184]               # où le sol éclate : distance (toile) depuis le centre de la massue posée
 HIT_X = [None]                         # le centre de la massue posée (toile), mémorisé à l'impact
 
 
@@ -1193,7 +1195,7 @@ SPECIALE = [
          fx_list=[fx_crater(4), fx_club_fire(1)], ms=200),
     dict(arm=ARM_SWING, heat=3, glow=3, lean=2, tilt=3, crouch=0, pa=(0, -1),
          smear=fx_club_smear(ARM_SKY, tones='vuutsr', lava='wv', w=22), fx_list=[fx_crater(5)], ms=50),
-    dict(arm=ARM_HIT, plant=True, heat=3, glow=3, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), flash=25,
+    dict(arm=ARM_HIT, plant=True, heat=3, glow=3, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), flash=22,
          shake=1, fx_list=[fx_rift(0)], ms=210),
     dict(arm=ARM_HIT, plant=True, heat=2, glow=2, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), shake=-1,
          fx_list=[fx_rift(1)], ms=90),
