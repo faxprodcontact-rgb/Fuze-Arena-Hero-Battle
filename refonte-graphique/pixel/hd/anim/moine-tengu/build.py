@@ -703,7 +703,7 @@ def rig_frame(f):
         blit(cv, P['poing'], 0, cdy + f.get('slip', 0))
     else:
         S = SH + o + np.array([cdx, cdy], float)
-        ctx.elbow = draw_arm(cv, S, ctx.G, f.get('bend', 1.0))
+        ctx.elbow = draw_arm(cv, S, ctx.G, f.get('bend', -1.0))
     for fx in f.get('fx', []):
         fx(cv, back, front, ctx)
     return cv, back, front
@@ -1191,14 +1191,14 @@ SPECIALE = [
     # à bout de bras : le tourbillon autour des anneaux (préparation tenue)
     dict(arm='rig', lift=27, breath=2, crouch=-2, lean=-1, head=(0, -1), j=2, fx=[fx_whirl(2)], ms=320),
     # il plante le bâton d'un coup
-    dict(arm='rig', lift=9, breath=1, crouch=2, lean=1, wl=-1, head=(0, 1), smear=True, fx=[fx_drop_smear],
+    dict(arm='rig', lift=9, breath=1, crouch=2, lean=1, wl=-1, head=(0, 1), fx=[fx_drop_smear],
          ms=50),
-    dict(arm='orig', crouch=4, lean=1, wl=-1, head=(1, 1), p=1, slip=1, fx=[fx_slam(0)], flash=35, shake=1, ms=220),
-    dict(arm='orig', crouch=4, lean=1, wl=0, head=(1, 1), p=1, slip=1, j=1, fx=[fx_slam(1)], shake=-1, ms=90),
-    dict(arm='orig', crouch=3, lean=1, wl=1, head=(1, 0), p=0, slip=1, j=2, fx=[fx_slam(2)], ms=90),
-    dict(arm='orig', crouch=3, lean=1, head=(1, 0), p=-1, slip=1, fx=[fx_slam(3)], shake=1, ms=120),
-    dict(arm='orig', crouch=3, lean=1, head=(1, 0), p=-1, slip=1, fx=[fx_slam(4)], ms=110),
-    dict(arm='orig', crouch=2, lean=1, p=0, slip=1, fx=[fx_slam(5)], ms=110),
+    dict(arm='orig', crouch=4, lean=1, wl=-1, head=(1, 1), p=1, fx=[fx_slam(0)], flash=35, shake=1, ms=220),
+    dict(arm='orig', crouch=4, lean=1, wl=0, head=(1, 1), p=1, j=1, fx=[fx_slam(1)], shake=-1, ms=90),
+    dict(arm='orig', crouch=3, lean=1, wl=1, head=(1, 0), p=0, j=2, fx=[fx_slam(2)], ms=90),
+    dict(arm='orig', crouch=3, lean=1, head=(1, 0), p=-1, fx=[fx_slam(3)], shake=1, ms=120),
+    dict(arm='orig', crouch=3, lean=1, head=(1, 0), p=-1, fx=[fx_slam(4)], ms=110),
+    dict(arm='orig', crouch=2, lean=1, p=0, fx=[fx_slam(5)], ms=110),
     # il souffle et se relève, lentement
     dict(arm='orig', crouch=2, breath=1, p=1, fx=[fx_settle(0)], ms=150),
     dict(arm='orig', crouch=1, breath=2, p=0, fx=[fx_settle(1)], ms=150),

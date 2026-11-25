@@ -111,6 +111,8 @@ for y in range(GH):
         near[y, :e] |= row[:e] != '.'
     if 67 <= y <= 77:
         e = row_cut(y, 44, {'A', '.'} | SKIN)
+        if y >= 75:
+            e = min(e, 47)
         near[y, :e] |= row[:e] != '.'
     if 77 <= y <= 96:
         e = row_cut(y, 40, FUR | {'.'})
@@ -135,7 +137,7 @@ for y in range(GH):
             s += 1
         far[y, s:] |= row[s:] != '.'
     if 78 <= y < GH:
-        s = 85
+        s = 85 if y < 109 else 91
         while s < GW and row[s] != '.':
             s += 1
         far_fore[y, s:] = row[s:] != '.'

@@ -1277,3 +1277,232 @@ ATTAQUE = [
 # la bouche du canon à l'image du coup : la fumée et la balle partent de là, quoi que fasse le mousquet ensuite
 _c = rig_frame(dict(ATTAQUE[2], fx=[]))[3]
 SHOT_AT[0] = (float(_c.muzzle[0]), float(_c.muzzle[1]))
+
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Lame de fond »
+# Elle épaule (la crosse monte contre l'épaule, la joue se pose sur le bois), se cale et vise longuement, l'oeil
+# plissé. L'eau de mer répond : des filets d'eau s'enroulent en tourbillon autour de la bouche du canon et s'y
+# engouffrent, un anneau d'eau tourne autour du canon, une boule d'eau gonfle au bout ; l'ara s'agite, ouvre les ailes
+# et crie. Le coup part : éclair, gerbe d'écume, un anneau d'eau jaillit de la bouche ; une grosse balle d'eau, tête
+# ronde et longue traîne enroulée d'un fil d'écume, file à l'horizontale vers l'ennemi en semant des gouttes et des
+# anneaux. Le recul la repousse (le buste part en arrière, le canon se cabre, la poussière roule sous les talons).
+# La balle éclate sur l'ennemi : arrêt sur l'image sur l'éclat blanc ; l'eau s'ouvre en grandes nappes courbes qui
+# se brisent en grosses gouttes et retombent ; au sol, une gerbe en couronne et de l'écume qui s'étale en volutes.
+# La fumée du coup monte et se défait. Elle redescend l'arme en garde.
+SPEC_AT = [None]                          # la bouche du canon épaulé, au moment du coup (toile)
+
+
+def spiral_arm(cv, M, R0, a0, turn, w, tones='XYZA', squash=0.45, reach=12.0, cw=False):
+    """un filet d'eau qui tourne en spirale vers la bouche du canon M (vu de côté : un entonnoir couché)"""
+    pts, ws = [], []
+    n = 40
+    for i in range(n + 1):
+        s_ = i / n
+        r = R0 * (1 - 0.85 * s_)
+        a = math.radians(a0 + (-turn if cw else turn) * s_)
+        pts.append((M[0] + 3 + reach * (1 - s_) + r * math.cos(a) * squash, M[1] - r * math.sin(a)))
+        ws.append(w * (0.35 + 0.65 * math.sin(math.pi * min(1.0, s_ * 1.15)) ** 0.7))
+    stroke(cv, pts, ws, tones)
+
+
+def bubble(cv, x, y, r=1.5):
+    """une bulle : un petit rond d'eau pâle au reflet blanc"""
+    if r < 1.2:
+        put(cv, x, y, 'X')
+        return
+    puff(cv, (x, y), r, tones='WXYZ')
+
+
+def fx_gather(k):
+    """l'eau se rassemble au bout du canon (k = 0, 1, 2 : de plus en plus fort)"""
+    def f(cv, back, front, ctx):
+        M = ctx.muzzle
+        if k == 0:
+            spiral_arm(back, M, 14, 80, 260, 2.2, tones='YZA')
+            spiral_arm(front, M, 13, 260, 250, 2.4, tones='XYZ')
+            for (dx, dy, sz) in ((22, -9, 2), (26, 6, 2), (16, -13, 1), (30, -2, 1)):
+                drop(front, M[0] + dx, M[1] + dy, sz, v=(-1.0, -dy * 0.1))
+            bubble(back, M[0] + 12, M[1] - 6, 1.0)
+            return
+        if k == 1:
+            ring(back, (M[0] + 4, M[1]), 2.6, 8.0, 1.8, 90, 270, tones='YZA')
+            spiral_arm(back, M, 17, 60, 300, 2.8, tones='YZAB', reach=10)
+            spiral_arm(front, M, 16, 240, 300, 3.0, tones='XYZA', reach=10)
+            ring(front, (M[0] + 4, M[1]), 2.6, 8.0, 2.2, -90, 90, tones='WXYZ')
+            puff(front, (M[0] + 3.5, M[1]), 2.4, tones='WXYZ')
+            for (dx, dy, sz) in ((18, -12, 2), (22, 9, 2), (28, -4, 1), (12, 13, 1)):
+                drop(front, M[0] + dx, M[1] + dy, sz, v=(-1.5, -dy * 0.12))
+            bubble(back, M[0] + 9, M[1] - 9, 1.6)
+            bubble(front, M[0] + 14, M[1] + 8, 1.0)
+            return
+        # k == 2 : la boule d'eau gonfle au bout du canon, l'anneau tourne vite, les filets s'y engouffrent
+        ring(back, (M[0] + 5, M[1]), 3.4, 11.0, 2.0, 90, 270, tones='YZA')
+        spiral_arm(back, M, 20, 30, 330, 3.0, tones='YZAB', reach=8)
+        spiral_arm(front, M, 19, 210, 330, 3.2, tones='XYZA', reach=8)
+        m = ellipse_mask((M[0] + 5, M[1]), 4.6, 4.6)
+        shade_mask(front, m, 'XYZAB', foam=m)
+        ring(front, (M[0] + 5, M[1]), 3.4, 11.0, 2.4, -90, 90, tones='WXYZ')
+        for (dx, dy, sz) in ((16, -14, 2), (19, 12, 2), (25, -6, 1), (24, 5, 1)):
+            drop(front, M[0] + dx, M[1] + dy, sz, v=(-2.0, -dy * 0.15))
+        bubble(back, M[0] + 13, M[1] - 12, 1.8)
+        bubble(front, M[0] + 16, M[1] + 11, 1.4)
+        bubble(back, M[0] - 2, M[1] - 10, 1.0)
+    return f
+
+
+def water_slug(cv_back, cv_front, X, Y, L, r=5.0, phase=0.0, tail=0.0):
+    """la balle d'eau : une tête ronde (écume sur le bord éclairé) et une longue traîne effilée vers l'arrière, autour de
+    laquelle s'enroule un fil d'écume (on ne le voit que quand il passe devant)"""
+    n = 30
+    pts = [(X - L * i / n, Y) for i in range(n + 1)][::-1]          # de la queue vers la tête
+    ws = []
+    for i in range(n + 1):
+        s_ = i / n                                                   # 0 = la queue, 1 = la tête
+        ws.append(0 if s_ < tail else 0.8 + (2 * r - 0.8) * s_ ** 1.6)
+    lit_stroke(cv_back, pts, ws, 'XYZAB', foam=(0.85, 1.0))
+    m = ellipse_mask((X, Y), r + 0.6, r)
+    shade_mask(cv_back, m, 'XYZAB', foam=m)
+    # le fil d'écume en hélice : une onde qui tourne autour de la traîne, de plus en plus serrée vers la tête
+    seg = []
+    for i in range(61):
+        s_ = i / 60
+        if s_ < tail:
+            continue
+        x = X - L * (1 - s_) - 1
+        amp = 0.6 + (r + 0.4) * s_ ** 1.2
+        a = 2 * math.pi * (2.2 * s_) + phase
+        y = Y + amp * math.sin(a)
+        if math.cos(a) > -0.15:
+            seg.append((x, y))
+        elif len(seg) > 2:
+            stroke(cv_front, seg, [1.0 + 0.8 * s_] * len(seg), 'WX')
+            seg = []
+        else:
+            seg = []
+    if len(seg) > 2:
+        stroke(cv_front, seg, [1.8] * len(seg), 'WX')
+
+
+def fx_fire(cv, back, front, ctx):
+    """le coup : l'éclair de la poudre, une gerbe d'écume ronde et un anneau d'eau qui jaillit de la bouche ; la tête de
+    la balle d'eau sort déjà"""
+    M = ctx.muzzle
+    ring(back, (M[0] + 9, M[1]), 3.6, 13.0, 2.6, 90, 270, tones='XYZA')
+    pop(front, (M[0] + 6, M[1]), 7.5, facing=0, tones='WWXYZ')
+    pop(front, (M[0] + 3, M[1]), 4.0, facing=0, tones='eefg')
+    ring(front, (M[0] + 9, M[1]), 3.6, 13.0, 3.0, -90, 90, tones='WWXY')
+    water_slug(back, front, M[0] + 22, M[1], 14, r=4.6, phase=0.0)
+
+
+SHOT_X = [None]                           # où passe la tête de la balle d'eau à chaque image (calculé plus bas)
+
+
+def fx_shot(dx, L, phase, tail=0.0):
+    """la balle d'eau en vol, dx pixels après la bouche du canon, traîne de longueur L ; des gouttes s'en détachent"""
+    def f(cv, back, front, ctx):
+        mx, my = SPEC_AT[0]
+        X = mx + dx
+        water_slug(back, front, X, my, L, r=5.2, phase=phase, tail=tail)
+        for j, (fx_, fy_) in enumerate(((0.35, 4.5), (0.6, -5.0), (0.8, 6.5), (0.5, 8.0))):
+            drop(back, X - L * fx_, my + fy_ + j % 2, 2 if j < 2 else 1, v=(1.0, 1.2))
+    return f
+
+
+def fx_wake(k):
+    """les anneaux d'eau laissés sur le trajet : ils s'élargissent et pâlissent, puis se défont"""
+    def f(cv, back, front, ctx):
+        mx, my = SPEC_AT[0]
+        for j, x0 in enumerate((14.0, 46.0)):
+            kk = k - j
+            if kk < 0 or kk > 3:
+                continue
+            ry = 9.0 + 2.5 * kk
+            tones = ['XYZA', 'XYZ', 'YZ', 'Z'][kk]
+            w = [2.4, 2.0, 1.5, 1.0][kk]
+            ring(back, (mx + x0 + 3 * kk, my), 2.6 + 0.6 * kk, ry, w, 90, 270, tones=tones)
+            ring(front, (mx + x0 + 3 * kk, my), 2.6 + 0.6 * kk, ry, w, -90, 90, tones=tones)
+    return f
+
+
+IMPACT = [None]                           # le point où la balle d'eau éclate (toile)
+
+
+def fx_impact(k):
+    """la balle éclate sur l'ennemi (k = images depuis le choc)"""
+    def f(cv, back, front, ctx):
+        X, Y = IMPACT[0]
+        G = GROUND - 1
+        if k == 0:
+            # l'éclat : un gros nuage d'écume blanche, un anneau d'eau, les premières nappes
+            ring(back, (X - 2, Y), 5.0, 17.0, 3.0, 90, 270, tones='XYZA')
+            pop(front, (X, Y), 11.0, facing=0, tones='WWWXY')
+            ring(front, (X - 2, Y), 5.0, 17.0, 3.4, -90, 90, tones='WXYZ')
+            for a in (50, 0, -45, 140, -150):
+                sheet(back, (X + 2, Y), a, 14, 25 if a > 0 else -25, 5.0, blob=True)
+            return
+        # les grandes nappes courbes qui s'ouvrent (vers l'avant, vers le haut, vers le bas, un peu en arrière), se
+        # vident par le bas (tail) et finissent en grosses gouttes
+        if k <= 3:
+            ln = [0, 26, 34, 36][k]
+            tl = [0, 0.0, 0.35, 0.7][k]
+            wv = [0, 7.0, 6.0, 4.6][k]
+            for (a, bend) in ((62, 30), (18, -30), (-30, -34), (128, 34), (-140, -28), (95, 20)):
+                sheet(back if a in (128, 95) else front, (X, Y), a, ln * (0.8 if a in (128, -140) else 1.0),
+                      bend, wv, tail=tl, blob=True)
+            if k == 1:
+                pop(front, (X, Y), 7.0, facing=0, tones='WWXY')            # l'éclat dure (arrêt sur l'image)
+            else:
+                foam(front, (X + 1, Y), 5.0 - k, hollow=0.3 * (k - 1), seed=80 + k)
+        # les gouttes retombent en pluie
+        if 2 <= k <= 7:
+            seeds = [(-4.0, -6.0), (4.6, -7.0), (-2.0, -8.4), (2.4, -9.0), (6.0, -4.2), (-5.4, -3.6), (0.8, -10.0),
+                     (7.4, -6.0), (-6.6, -6.2), (3.4, -2.6)]
+            spray(front, (X, Y - 4), k - 1.2, seeds, g=1.25, sizes=(4, 3, 3, 2, 2))
+        # au sol : l'eau qui retombe jaillit en couronne, puis l'écume s'étale en volutes
+        kc = k - 3
+        if 0 <= kc <= 5:
+            crown(front, X + 4, G, kc, 0.75, seed=7)
+        if 6 <= k <= 9:
+            sp = (k - 5) * 6
+            r = max(1.2, 4.4 - 0.8 * (k - 6))
+            hol = min(0.9, 0.25 * (k - 6))
+            foam(front, (X - sp, G - 1), r, hollow=hol, seed=91 + k)
+            foam(front, (X + 8 + sp, G - 1), r * 0.9, hollow=hol, seed=92 + k)
+            curl(front, (X - sp - 6, G - 3), 2.6, 90, turn=260, w=1.7, tones='WXY')
+            curl(front, (X + sp + 14, G - 3), 2.6, 90, turn=260, w=1.7, tones='WXY', cw=True)
+    return f
+
+
+AIM = dict(gun='epaule', ang=0.0, s=1, lean=0, head=(1, 2), sq=1)
+RAISE = dict(gun='epaule', ang=14.036, butt=(46.0, 73.0), tn=18.0)
+SPECIALE = [
+    # 0 : elle épaule (la crosse monte vers l'épaule)
+    dict(RAISE, s=1, lean=-1, head=(0, 1), aq=1, e=1, ms=90),
+    # 1-3 : elle vise, la joue sur la crosse ; l'eau s'enroule autour de la bouche du canon et s'y engouffre ;
+    #       l'ara s'agite, ouvre les ailes, crie
+    dict(AIM, ah=(1, 1), aq=1, e=0, fx=[fx_gather(0)], ms=140),
+    dict(AIM, b=1, ah=(1, 0), aile='mi', ab=-1, aq=0, e=-1, fx=[fx_gather(1)], ms=130),
+    dict(AIM, b=1, ah=(1, 0), aile='haut', cri=1, ab=-2, aq=-1, e=-1, fx=[fx_gather(2)], ms=240),
+    # 4 : le coup ! (éclair : la tireuse pâlit d'un coup)
+    dict(AIM, fired=True, lean=-1, head=(0, 2), aile='haut', cri=1, ab=-2, aq=-2, e=0, flash=30,
+         fx=[fx_fire], ms=60),
+    # 5-6 : le recul la repousse, le canon se cabre ; la balle d'eau file vers l'ennemi
+    dict(AIM, fired=True, ang=7.125, butt=(51.0, 61.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=-1,
+         e=1, fx=[fx_smoke(0, SPEC_AT), fx_shot(48, 34, 1.2), fx_wake(0), fx_kick(0)], ms=60),
+    dict(AIM, fired=True, ang=7.125, butt=(51.0, 61.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=1,
+         e=1, fx=[fx_smoke(1, SPEC_AT), fx_shot(84, 40, 2.6, 0.2), fx_wake(1), fx_kick(1)], ms=60),
+    # 7 : la balle éclate sur l'ennemi — arrêt sur l'image
+    dict(AIM, fired=True, ang=3.576, butt=(52.0, 61.0), lean=-2, s=0, head=(0, 2), cri=1, ab=-1, aq=1, e=0,
+         fx=[fx_smoke(2, SPEC_AT), fx_wake(2), fx_impact(0), fx_kick(2)], ms=200),
+    # 8-11 : les nappes d'eau s'ouvrent et retombent en pluie ; elle se redresse, l'arme encore épaulée
+    dict(AIM, fired=True, lean=-1, head=(1, 2), ah=(0, 1), aq=0, e=-1,
+         fx=[fx_smoke(3, SPEC_AT), fx_wake(3), fx_impact(1), fx_kick(3)], ms=90),
+    dict(AIM, lean=0, head=(1, 2), ah=(1, 1), sq=0, aq=-1, e=0, fx=[fx_smoke(4, SPEC_AT), fx_impact(2)], ms=90),
+    dict(AIM, lean=0, head=(1, 1), ah=(0, 0), sq=0, aq=0, e=1, fx=[fx_smoke(5, SPEC_AT), fx_impact(3)], ms=90),
+    dict(AIM, lean=0, head=(1, 1), ah=(0, 0), sq=0, aq=0, e=1, fx=[fx_smoke(6, SPEC_AT), fx_impact(4)], ms=90),
+    # 12-15 : elle redescend l'arme en garde ; l'écume s'étale au sol et se défait
+    dict(RAISE, s=1, lean=0, head=(0, 1), aq=1, e=0, fx=[fx_impact(5)], ms=90),
+    dict(gun='orig', s=1, lean=0, head=(0, 0), ah=(1, 1), aq=1, e=-1, fx=[fx_impact(6)], ms=100),
+    dict(gun='orig', s=0, lean=0, head=(0, 0), ah=(0, 0), aq=0, e=0, fx=[fx_impact(7), fx_impact_late(8)], ms=110),
+    dict(gun='orig', s=0, lean=0, head=(0, 0), ah=(0, 0), aq=0, e=0, fx=[fx_impact_late(9)], ms=140),
+]

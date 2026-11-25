@@ -839,6 +839,187 @@ ATTAQUE = [
 ]
 
 
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Rafale du chapardeur »
+# Il se ramasse, le vent se lève en anneau à ses pattes et soulève des feuilles ; il file comme une rafale jusqu'à
+# l'ennemi, tranche de bas en haut puis de haut en bas (deux coups rapides), bondit, plonge et frappe d'estoc : une
+# tornade jaillit sous l'ennemi (éclair, arrêt sur l'image). Une pièce d'or s'en échappe : pendant qu'il revient à sa
+# place d'un saut en arrière, elle vole en cloche et retombe pile dans son sac. Il se redresse, content de lui.
+X_HIT = SOL[0] + 108          # où se tient l'ennemi (toile) : la tornade y monte
+
+
+def fx_gather(level):
+    """le vent qui se lève : un anneau ras du sol autour des pattes, des volutes, des feuilles qui montent"""
+    def f(cv, back, front, ctx):
+        cx, gy = SOL[0] + 4, GROUND - 3
+        if level == 0:
+            ribbon(back, (cx, gy), 40, 5, 30, 155, 2.6, tones='yzvu')
+            ribbon(front, (cx, gy), 40, 5, 205, 335, 3.2, tones='xyzvu')
+            leaf(front, cx + 50, GROUND - 4, 0)
+            leaf(back, cx - 48, GROUND - 3, 2)
+        else:
+            ribbon(back, (cx, gy - 2), 46, 7, 20, 165, 3.4, tones='yzvu')
+            ribbon(front, (cx, gy - 1), 46, 7, 200, 345, 4.4, tones='xyzvu')
+            gust(front, (cx + 40, gy - 4), (cx + 52, gy - 12), (cx + 52, gy - 24), (cx + 46, gy - 30), 3.2, 'yzvu',
+                 curl_r=3.5, up=True)
+            gust(back, (cx - 42, gy - 6), (cx - 54, gy - 16), (cx - 54, gy - 30), (cx - 46, gy - 36), 2.8, 'yzvu',
+                 curl_r=3.0, up=False)
+            leaf(front, cx + 40, GROUND - 22, 1)
+            leaf(back, cx - 40, GROUND - 30, 0)
+            leaf(front, cx + 56, GROUND - 10, 2)
+            cloud(back, (cx - 30, GROUND - 2), 3.5, 'kkkm', seed=31)
+            cloud(back, (cx + 34, GROUND - 2), 3.5, 'kkkm', seed=32)
+    return f
+
+
+def fx_streak(level):
+    """la course éclair : de longues rafales derrière lui, au ras du sol, et les feuilles emportées"""
+    def f(cv, back, front, ctx):
+        tx = ctx.f['T'][0]
+        x0, x1 = SOL[0] - 30, SOL[0] + tx - 10
+        tail = [0.0, 0.45, 0.8][level]
+        gust(back, (x0, GROUND - 10), (x0 + (x1 - x0) * 0.4, GROUND - 4), (x0 + (x1 - x0) * 0.75, GROUND - 8),
+             (x1 + 10, GROUND - 22), 5.0, 'xyzvu', curl_r=0.1, up=True, tail=tail)
+        gust(back, (x0 + 10, GROUND - 40), (x0 + (x1 - x0) * 0.45, GROUND - 46), (x0 + (x1 - x0) * 0.8, GROUND - 42),
+             (x1 - 6, GROUND - 52), 3.6, 'yzvu', curl_r=0.1, up=False, tail=tail)
+        if level == 0:
+            cloud(back, (SOL[0] - 6, GROUND - 3), 5.0, 'kkkkm', seed=21)
+            curl(back, (x0 - 2, GROUND - 16), 4.5, 270, turn=280, w=2.4, tones='yzv', cw=True)
+            for (lx, ly, kk) in ((x0 + 30, GROUND - 26, 0), (x0 + 56, GROUND - 14, 1), (x0 + 12, GROUND - 34, 2)):
+                leaf(front, lx, ly, kk)
+        elif level == 1:
+            for (lx, ly, kk) in ((x0 + 36, GROUND - 32, 1), (x0 + 66, GROUND - 22, 2), (x0 + 20, GROUND - 44, 0)):
+                leaf(back, lx, ly, kk)
+    return f
+
+
+def tornado(back, front, x, h, phase=0, top_w=22, fade=0.0, tones='xyzvu'):
+    """une tornade : des anneaux en ellipse empilés, étroits en bas, larges en haut ; la moitié arrière derrière,
+    la moitié avant devant ; chaque anneau est ouvert (une bande qui tourne), décalé selon 'phase'.
+    fade : la tornade se défait (le bas disparaît d'abord, les bandes s'amincissent)"""
+    n = max(2, int(h / 9))
+    for i in range(n):
+        s = i / max(n - 1, 1)
+        if s < fade:
+            continue
+        y = GROUND - 4 - s * h
+        rx = 5 + (top_w - 5) * s ** 0.8
+        ry = 1.6 + 2.2 * s
+        a0 = (phase * 70 + i * 47) % 360
+        wv = (2.0 + 2.4 * s) * (1 - 0.5 * fade)
+        cx = x + 3 * math.sin(s * 3.0 + phase)                      # la tornade ondule un peu
+        ribbon(back, (cx, y), rx, ry, a0, a0 + 150, wv * 0.8, tones=tones[1:])
+        ribbon(front, (cx, y), rx, ry, a0 + 190, a0 + 330, wv, tones=tones)
+
+
+def fx_tornado(k):
+    """k = 0 : le choc de l'estoc (éclair et poussière) ; 1 à 5 : la tornade monte, emporte des feuilles, se défait"""
+    def f(cv, back, front, ctx):
+        x = X_HIT
+        if k == 0:
+            pop(front, ctx.tip + 3 * ctx.u, 7.0, facing=-30, tones='wwxyz')
+            ribbon(back, (x, GROUND - 3), 26, 4, 20, 160, 3.0, tones='yzvu')
+            ribbon(front, (x, GROUND - 3), 26, 4, 200, 340, 4.0, tones='xyzvu')
+            cloud(back, (x - 16, GROUND - 4), 6, 'kkkmn', seed=1)
+            cloud(back, (x + 16, GROUND - 4), 6, 'kkkmn', seed=2)
+            return
+        h = [0, 46, 70, 80, 78, 70][k]
+        fade = [0, 0.0, 0.0, 0.2, 0.5, 0.75][k]
+        tornado(back, front, x, h, phase=k, top_w=[0, 16, 22, 24, 24, 22][k], fade=fade)
+        # des feuilles emportées en spirale autour de la tornade
+        for j in range(5):
+            a = math.radians(k * 75 + j * 72)
+            yy = GROUND - 10 - ((j * 14 + k * 9) % 70)
+            xx = x + (8 + 0.25 * (GROUND - yy)) * math.cos(a)
+            (front if math.sin(a) < 0 else back)
+            leaf(front if math.sin(a) < 0 else back, xx, yy, j + k)
+        if k <= 2:
+            cloud(back, (x - 18 - 3 * k, GROUND - 4), 5.5 - k, 'kkkmn', hollow=0.3 * k, seed=3 + k)
+            cloud(back, (x + 18 + 3 * k, GROUND - 4), 5.5 - k, 'kkkmn', hollow=0.3 * k, seed=6 + k)
+    return f
+
+
+def fx_dive_trail(cv, back, front, ctx):
+    """le plongeon : une rafale courbe qui le suit depuis le haut du bond"""
+    t = ctx.tip
+    gust(back, (t[0] - 70, t[1] - 52), (t[0] - 52, t[1] - 52), (t[0] - 34, t[1] - 38), (t[0] - 18, t[1] - 22), 5.0,
+         'xyzvu', curl_r=0.1, up=False)
+    gust(back, (t[0] - 92, t[1] - 30), (t[0] - 76, t[1] - 34), (t[0] - 60, t[1] - 22), (t[0] - 48, t[1] - 8), 3.4,
+         'yzvu', curl_r=0.1, up=False)
+
+
+def fx_whirl(cv, back, front, ctx):
+    """au sommet du bond, le vent s'enroule autour de lui (deux volutes et un anneau penché)"""
+    c = np.array(follow(66, 88, ctx.f)[0])
+    ribbon(back, c, 48, 14, 20, 170, 3.0, tones='yzvu', tilt=-12)
+    ribbon(front, c, 48, 14, 200, 330, 3.8, tones='xyzvu', tilt=-12)
+    curl(front, c + np.array([52, -8]), 4.0, 200, turn=260, w=2.0, tones='yzv', cw=True)
+    curl(back, c + np.array([-52, 10]), 3.6, 20, turn=260, w=1.8, tones='zv')
+
+
+# la pièce d'or : elle jaillit de la tornade et retombe dans le sac (parabole), en tournant
+COIN_FROM = np.array([X_HIT + 2, GROUND - 46], float)
+SACK_MOUTH = (61, 61)          # la bouche du sac (grille)
+
+
+def fx_coin(t, face):
+    def f(cv, back, front, ctx):
+        to = np.array(follow(*SACK_MOUTH, ctx.f)[0]) + np.array([0, -1])
+        p = COIN_FROM + (to - COIN_FROM) * t
+        p[1] -= 70 * 4 * t * (1 - t)                            # la cloche
+        coin(cv, p[0], p[1], face)
+        if t < 0.2:
+            sparkle(front, p[0] + 5, p[1] - 4)
+    return f
+
+
+def fx_pocket(k):
+    """la pièce tombe dans le sac : petits éclats dorés à la bouche du sac"""
+    def f(cv, back, front, ctx):
+        m = np.array(follow(*SACK_MOUTH, ctx.f)[0])
+        if k == 0:
+            sparkle(front, m[0] - 6, m[1] - 5, big=True)
+            sparkle(front, m[0] + 6, m[1] - 8)
+        else:
+            sparkle(front, m[0] - 8, m[1] - 9)
+    return f
+
+
+SPECIALE = [
+    dict(dos=(-2, 3), tete=(-1, 1), sac=(0, -1), queue=(-2, 1), e=1,
+         arm=dict(wrist=(5, 10), ang=-55), fx=[fx_gather(0)], ms=90),
+    dict(dos=(-3, 5), tete=(-1, 1), sac=(0, 0), queue=(-3, 2), e=1,
+         arm=dict(wrist=(4, 10), ang=-75), fx=[fx_gather(1)], ms=170),
+    dict(T=(38, -3), bascule=-2, arr=(-9, 4), av=(8, -1), tete=(1, 0), sac=(-2, 2), queue=(-3, 3), e=-1,
+         arm=dict(wrist=(4, 11), ang=-100), fx=[fx_streak(0)], ms=50),
+    dict(T=(50, 0), dos=(1, 2), tete=(1, 1), sac=(-1, 1), queue=(-1, 1), e=1,
+         arm=dict(wrist=(18, 3), ang=18), fx=[fx_slash(-100, 18), fx_streak(1)], ms=50),
+    dict(T=(50, 0), dos=(1, 2), tete=(1, 1), sac=(0, -1), queue=(1, 0), e=1,
+         arm=dict(wrist=(18, 2), ang=22), fx=[fx_hit(0, 15, 0.8), fx_streak(2)], ms=80),
+    dict(T=(52, 0), dos=(2, 3), tete=(1, 2), sac=(0, -2), queue=(2, -1), e=0,
+         arm=dict(wrist=(15, 12), ang=-62), fx=[fx_slash(22, -62)], ms=50),
+    dict(T=(52, 0), dos=(2, 3), tete=(1, 2), sac=(0, 0), queue=(1, -1), e=-1,
+         arm=dict(wrist=(15, 12), ang=-58), fx=[fx_hit(0, -40, 0.8)], ms=90),
+    dict(T=(34, -28), bascule=-3, arr=(4, -7), av=(-1, -6), tete=(0, 0), sac=(0, 3), queue=(-2, 3), e=1,
+         arm=dict(wrist=(6, 9), ang=-15), fx=[fx_whirl, fx_hit(1, -40, 0.8)], ms=80),
+    dict(T=(46, -10), bascule=6, arr=(-6, -2), av=(6, 2), tete=(1, 1), sac=(0, 3), queue=(0, 2), e=-1,
+         arm=dict(wrist=(19, 7), ang=-35), fx=[fx_dive_trail], ms=50),
+    dict(T=(50, 0), dos=(2, 4), tete=(1, 1), sac=(0, -2), queue=(2, -2), e=1, flash=35,
+         arm=dict(wrist=(19, 9), ang=-32), fx=[fx_tornado(0)], ms=170),
+    dict(T=(40, -12), bascule=-3, arr=(3, -5), av=(-3, -4), tete=(-1, 0), sac=(0, 2), queue=(2, 2), e=-1,
+         arm=dict(wrist=(8, 8), ang=10), fx=[fx_tornado(1), fx_coin(0.12, 0)], ms=70),
+    dict(T=(22, -18), bascule=-2, arr=(3, -6), av=(-2, -5), tete=(0, 0), sac=(0, 2), queue=(1, 2), e=0,
+         arm=dict(wrist=(7, 9), ang=0), fx=[fx_tornado(2), fx_coin(0.38, 1)], ms=70),
+    dict(T=(8, -6), bascule=2, arr=(-2, -2), av=(4, 2), tete=(0, 0), sac=(0, 1), queue=(0, 1), e=1,
+         fx=[fx_tornado(3), fx_coin(0.62, 2)], ms=70),
+    dict(T=(0, 0), dos=(0, 3), tete=(0, 1), sac=(0, -1), queue=(1, 1), e=1,
+         fx=[fx_tornado(4), fx_coin(0.84, 1), fx_dust(0, 0.9, 7)], ms=80),
+    dict(dos=(0, 2), tete=(1, 0), sac=(0, 1), queue=(0, 1), e=0,
+         fx=[fx_tornado(5), fx_pocket(0), fx_dust(0, 0.8, 7, hollow=0.6)], ms=110),
+    dict(dos=(0, -1), tete=(1, -1), sac=(0, -1), queue=(-1, 0), e=-1, d=(0, -1), fx=[fx_pocket(1)], ms=130),
+    dict(dos=(0, 0), tete=(0, 0), sac=(0, 0), queue=(0, 0), e=0, ms=120),
+]
+
+
 # ---------------------------------------------------------------- toutes les images
 RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
 
