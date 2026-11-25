@@ -41,6 +41,21 @@ const ROW_DY: Record<Slot, number> = { 0: 90, 3: 90, 2: 180, 1: 270, 4: 270 };
 const FEET = 47;
 /** Un grand boss est seul en face : au milieu du côté ennemi, un peu plus loin du bord pour que sa queue tienne. */
 const BIG_BOSS_X = 548;
+/**
+ * Place des combattants (essai demandé le 25/11) : `dx` / `dy` écartent les combattants d'une équipe autour du centre
+ * de leur formation, `size` règle la taille des dessins. Variante 0 = la place actuelle (celle du jeu) ; les autres ne
+ * servent qu'au test, par l'adresse (`?layout=1|2|3`). Pour en garder une : la mettre en première ligne.
+ */
+const LAYOUTS = [
+  { dx: 1, dy: 1, size: 1 },
+  { dx: 1.15, dy: 1.15, size: 0.9 },
+  { dx: 1.25, dy: 1.2, size: 0.85 },
+  { dx: 1.3, dy: 1.2, size: 0.8 },
+] as const;
+const BATTLE_LAYOUT = LAYOUTS[Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('layout')) || 0] ?? LAYOUTS[0];
+/** Centre de chaque formation (en X) et rang du milieu (en Y) : l'espacement s'écarte autour d'eux. */
+const TEAM_CX = { hero: (HERO_X[3] + HERO_X[0]) / 2, enemy: (ENEMY_X[0] + ENEMY_X[3]) / 2 };
+const ROW_MID = ROW_DY[2];
 
 /** Les effets et la planche de pictos ont déjà été téléchargés une fois (le navigateur les a gardés). */
 let laterFetched = false;
@@ -162,8 +177,10 @@ export abstract class FightScene extends Phaser.Scene {
 
   protected slotPos(unit: Unit): { x: number; y: number } {
     const hero = unit.side === 'hero';
-    const x = hero ? HERO_X[unit.slot] : ENEMY_X[unit.slot];
-    return { x: W / 2 + (x - W / 2) * this.xSquash, y: this.groundTop + ROW_DY[unit.slot] };
+    const cx = TEAM_CX[hero ? 'hero' : 'enemy'];
+    const x = cx + ((hero ? HERO_X[unit.slot] : ENEMY_X[unit.slot]) - cx) * BATTLE_LAYOUT.dx;
+    const dy = ROW_MID + (ROW_DY[unit.slot] - ROW_MID) * BATTLE_LAYOUT.dy;
+    return { x: W / 2 + (x - W / 2) * this.xSquash, y: this.groundTop + dy };
   }
 
   protected addView(unit: Unit, enter = false, speed = 1) {
@@ -178,7 +195,7 @@ export abstract class FightScene extends Phaser.Scene {
     let shadow: Phaser.GameObjects.Ellipse;
     let barY: number;
     // un grand boss est dessiné à sa taille (deux fois un héros) ; un général de clan qui joue un boss est agrandi
-    const boost = big ? 1 : unit.boss ? (this.bigBoss ? 1.45 : 1.2) : 1;
+    const boost = (big ? 1 : unit.boss ? (this.bigBoss ? 1.45 : 1.2) : 1) * BATTLE_LAYOUT.size;
     const barW = big ? 170 : unit.boss ? 130 : 86;
     let hd: HdActor | undefined;
     if (hasHd(id) && this.textures.exists(`hd-${id}`)) {
