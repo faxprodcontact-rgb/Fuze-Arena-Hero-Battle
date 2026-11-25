@@ -15,6 +15,8 @@
 #   - sous les bras, le dessin ne montre pas le bas de la cuirasse : il est complété à la main (DESSOUS, plus bas) ;
 #   - les effets d'eau ont la même petite palette qu'Ilian et Elyon (les autres héros d'eau), sans contour noir ;
 #   - à la fin, chaque image peut recevoir des retouches pixel par pixel (RETOUCHES, plus bas).
+#
+# Spéciale (sort d'équipe) : MOMENT DE LANCEMENT = IMAGE 8 (l'anneau d'eau part de lui, en cercle tout autour).
 import sys, os, math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
@@ -50,9 +52,16 @@ FXPAL = {
     'O': (222, 40, 64),     # rouge
     'P': (150, 20, 58),     # rouge sombre (ombre, tire vers le violet)
     'Q': (92, 14, 52),      # rouge très sombre
+    # la lueur rouge de la provocation (translucide : voir ALPHA), du plus fort au plus pâle
+    '1': (255, 96, 84),
+    '2': (255, 80, 76),
+    '3': (240, 60, 70),
+    '4': (230, 46, 66),
+    '5': (222, 40, 64),
+    '6': (222, 40, 64),
 }
 # opacité des lettres translucides (les autres sont pleines)
-ALPHA = {'S': 70, 'T': 120}
+ALPHA = {'S': 70, 'T': 120, '1': 200, '2': 160, '3': 120, '4': 85, '5': 55, '6': 28}
 # le reflet bleu de l'armure d'eau sur le héros (« tint » d'une image, en %)
 TINT = (110, 210, 250)
 TINT_RED = (255, 70, 60)
@@ -62,8 +71,9 @@ ALLPAL.update(FXPAL)
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. La pose seule se recadre ensuite en 128 × 120
 # (le format du jeu, sol en (64, 116)). Grande toile : le sabre levé monte haut, le croissant d'eau de l'attaque file
-# loin à droite, la vague de la spéciale file à gauche (vers l'équipe).
-W, H = 440, 236
+# loin à droite, l'anneau d'eau de la spéciale s'étend tout autour de lui (sa moitié devant lui passe sous la ligne
+# du sol : la toile descend 16 pixels plus bas qu'avant, ce qui ne change rien à la pose ni à l'attaque).
+W, H = 440, 252
 SOL = (156, 220)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
@@ -751,9 +761,9 @@ def rig_frame(f):
 
 
 # ---------------------------------------------------------------- les effets d'eau : formes courbes (outils repris d'Ilian, mêmes tons)
-def put(cv, x, y, ch, keep=None):
+def put(cv, x, y, ch, keep=None, floor=None):
     x, y = int(x), int(y)
-    if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
+    if 0 <= x < W and 0 <= y < H and y <= (GROUND if floor is None else floor) and (keep is None or cv[y, x] in keep):
         cv[y, x] = ch
 
 
@@ -792,13 +802,13 @@ def ribbon(cv, c, rx, ry, a0, a1, wmax, head=0.7, tones='XYZV', tilt=0.0):
         put(cv, x, y, tones[min(m - 1, int(k * m))])
 
 
-def sprite(cv, rows, x, y, flipx=False):
+def sprite(cv, rows, x, y, flipx=False, floor=None):
     for j, r in enumerate(rows):
         if flipx:
             r = r[::-1]
         for i, ch in enumerate(r):
             if ch != '.':
-                put(cv, x + i, y + j, ch)
+                put(cv, x + i, y + j, ch, floor=floor)
 
 
 # les gouttes : une petite bille ronde éclairée en haut à droite, et sa traîne derrière elle (dans le sens contraire
@@ -806,7 +816,7 @@ def sprite(cv, rows, x, y, flipx=False):
 DROP_S = {1: ['Y'], 2: ['YX', 'VZ'], 3: ['.YX', 'ZYX', 'VZ.'], 4: ['.YX.', 'ZYYX', 'VZYZ', '.VZ.']}
 
 
-def drop(cv, x, y, size=2, v=(0.0, 0.0)):
+def drop(cv, x, y, size=2, v=(0.0, 0.0), floor=None):
     """une goutte de taille 1 à 4 en (x, y) ; v = sa vitesse (la traîne part à l'opposé, 1 ou 2 pixels)"""
     rows = DROP_S[size]
     x0, y0 = int(round(x - len(rows[0]) / 2)), int(round(y - len(rows) / 2))
@@ -815,8 +825,8 @@ def drop(cv, x, y, size=2, v=(0.0, 0.0)):
         ux, uy = -v[0] / sp, -v[1] / sp
         for k in range(1, 2 + (size >= 3)):
             cx, cy = x + ux * (len(rows) / 2 + k - 0.5), y + uy * (len(rows) / 2 + k - 0.5)
-            put(cv, math.floor(cx), math.floor(cy), 'Z' if k == 1 else 'V')
-    sprite(cv, rows, x0, y0)
+            put(cv, math.floor(cx), math.floor(cy), 'Z' if k == 1 else 'V', floor=floor)
+    sprite(cv, rows, x0, y0, floor=floor)
 
 
 def curl(cv, c, r0, a0, turn=300, w=2.4, tones='XYZV', cw=False):
@@ -902,7 +912,7 @@ def bezier(p0, p1, p2, p3, n):
     return out
 
 
-def stroke(cv, pts, widths, tones):
+def stroke(cv, pts, widths, tones, floor=None):
     """peint un ruban le long de points, avec une épaisseur par point (coeur clair -> bord sombre)"""
     best = {}
     for (px, py), wv in zip(pts, widths):
@@ -918,7 +928,7 @@ def stroke(cv, pts, widths, tones):
                         best[(x, y)] = k
     m = len(tones)
     for (x, y), k in best.items():
-        put(cv, x, y, tones[min(m - 1, int(k * m))])
+        put(cv, x, y, tones[min(m - 1, int(k * m))], floor=floor)
 
 
 def crescent(cv, c, r, facing, span=110, w=3.0, tones='WXY'):
@@ -1200,15 +1210,20 @@ ATTAQUE = [
 
 # ---------------------------------------------------------------- 3) l'attaque spéciale : « Rempart des marées » (sort d'équipe)
 # Ce que fait le sort en combat : +30 % de défense à toute l'équipe (5 s), il se soigne (15 % de sa vie) et il
-# provoque (les ennemis le frappent, lui, pendant 3 s). L'équipe est DERRIÈRE lui, à gauche de l'image.
+# provoque (les ennemis le frappent, lui, pendant 3 s). L'équipe est en losange autour de lui (devant, derrière,
+# au-dessus, en dessous) : le sort ne vise aucune direction, il s'étend EN CERCLE tout autour de lui.
 # Le protecteur plante son sabre devant lui, d'un coup sec (l'eau jaillit du sol autour de la lame) ; les deux mains sur
 # la poignée, immobile, il laisse l'eau monter en spirale autour de lui : un dôme d'eau qui tourne et l'enveloppe.
-# Arrêt sur le dôme plein. Puis le dôme se gonfle vers l'arrière et part en une vague-voile (bord lumineux, intérieur
-# à peine teinté) qui file vers la gauche, vers l'équipe ; l'eau qui reste se plaque sur lui en une armure d'eau qui
-# scintille (le héros prend un reflet bleu, un liseré d'eau l'entoure, des éclats brillent sur ses plaques). Un peu
+# Arrêt sur le dôme plein (image 7, 200 ms, le temps fort). Puis le dôme s'abaisse et s'élargit en un anneau d'eau
+# protecteur posé au sol, tout autour de lui (ellipse aplatie : derrière lui et devant ses jambes, des deux côtés),
+# qui s'éloigne dans toutes les directions en s'abaissant, se défait en arcs et s'éteint en quelques éclats. L'eau qui
+# reste se plaque sur lui en une armure d'eau qui scintille (reflet bleu, liseré d'eau, éclats sur les plaques). Un peu
 # d'eau claire tombe sur lui et le soigne (il s'éclaire un instant, de petites bulles montent). Enfin il arrache le
-# sabre et le pointe vers l'ennemi, en défi (arrêt) : une onde rouge pulse autour de lui, trois fois, et une marque
-# inventée (un œil en amande) brille au-dessus de son casque. Il revient en garde. Rien ne frappe l'ennemi.
+# sabre et le pointe vers l'ennemi, en défi (arrêt) : une lueur rouge douce pulse autour de son corps (elle gonfle puis
+# s'éteint, sans aucun trait) et une marque inventée (un œil en amande) bat au-dessus de son casque. Il revient en
+# garde. Rien ne frappe l'ennemi.
+# MOMENT DE LANCEMENT (là où le jeu joue les effets reçus sur chaque allié) : IMAGE 8 (numérotée depuis 0, comme sur la
+# planche), juste après l'arrêt sur le dôme plein, quand l'anneau d'eau part de lui ; la provocation tient à l'image 13.
 DOME_C = (SOL[0] + 6, GROUND)          # le pied du dôme (toile), centré sur lui et son sabre planté
 DOME_RX, DOME_H = 62, 124
 
@@ -1320,7 +1335,7 @@ def fx_plant(k):
     return f
 
 
-# ---------------------------------------------------------------- la vague-voile qui part vers l'équipe (à gauche)
+# ---------------------------------------------------------------- l'anneau d'eau qui s'élargit tout autour de lui
 def dilate(m, r=1):
     """grossit une forme de r pixels (voisins en croix puis en carré, à tour de rôle : un contour bien rond)"""
     out = m.copy()
@@ -1339,56 +1354,94 @@ def dilate(m, r=1):
     return out
 
 
-# la vague : la moitié gauche du dôme, qui grandit, s'abaisse et file vers la gauche. Pour chaque image :
-# (recul du centre, demi-largeur, hauteur, épaisseur du bord, épaisseur du voile)
-VAGUE = [(-6, 74, 120, 4.6, 16), (-30, 88, 104, 4.2, 14), (-62, 94, 80, 3.4, 12), (-96, 96, 56, 2.6, 9)]
+# l'anneau : le dôme s'abaisse et s'élargit en un mur d'eau circulaire posé au sol, tout autour de lui (une ellipse
+# aplatie : la moitié derrière lui passe derrière son corps, la moitié devant lui passe devant ses jambes, en voile
+# translucide). Il s'éloigne de lui dans TOUTES les directions à la fois (l'équipe peut être devant, derrière, au-dessus
+# ou en dessous de lui), en s'abaissant, puis se défait en arcs et s'éteint en quelques éclats. Pour chaque image :
+# (demi-largeur, demi-profondeur au sol, hauteur du mur, épaisseur de la crête)
+ANNEAU = [(76, 15, 46, 4.4), (96, 19, 27, 3.8), (112, 22, 13, 3.0), (124, 25, 4, 2.2)]
+RING_C = (DOME_C[0], GROUND - 1)       # le centre de l'anneau : à ses pieds
 
 
-def wave(k):
-    """la vague-voile : un bord d'eau lumineux (le bord du dôme), en quart d'ellipse du sol jusqu'au-dessus de lui, qui
-    se recourbe vers l'avant en haut ; derrière le bord, un voile d'eau à peine teinté (pixels translucides S, T) ;
-    au pied, un rouleau d'écume qui avance au ras du sol et laisse une traînée"""
+def ring_out(k):
+    """k = 0..3 : l'anneau d'eau qui s'élargit et s'abaisse ; k = 4 : il s'est éteint, il reste quelques éclats"""
     def f(cv, back, front, ctx):
-        dcx, rx, h, w, band = VAGUE[k]
-        cx, gy = DOME_C[0] + dcx, GROUND
-        # le voile : entre le bord et une ellipse plus petite, du côté gauche seulement (rien sur le héros)
-        # (en coordonnées de l'ellipse : rho = 1 sur le bord, th = 90° au sommet, 180° au sol ; le voile s'amincit
-        # vers le sommet et disparaît avant lui : pas de bout coupé net)
+        cx, cy = RING_C
+        if k == 4:
+            rng = np.random.RandomState(77)
+            for j in range(11):
+                a = rng.uniform(0, 2 * math.pi)
+                x, y = cx + 130 * math.cos(a), cy + 26 * math.sin(a) - rng.uniform(0, 5)
+                tgt = front if math.sin(a) > 0 else back
+                if j % 3 == 0:
+                    sprite(tgt, ['.X.', 'XWY', '.Y.'], int(x) - 1, int(y) - 1, floor=H)
+                else:
+                    put(tgt, x, y, 'X' if j % 2 else 'Y', floor=H)
+            return
+        rx, ry, hw, w = ANNEAU[k]
+
+        def crest_h(th):                      # la crête ondule doucement (jamais une ligne régulière)
+            return hw * (1 + 0.10 * math.sin(2 * th + 0.7 + k) + 0.06 * math.sin(5 * th + 2.1))
+
+        def broken(th):                       # en s'éteignant, l'anneau se défait en arcs
+            return k == 3 and (math.sin(2 * th + 0.4) + 0.5 * math.sin(5 * th + 1.3)) > 0.75
+
+        # le mur : un voile d'eau à peine teinté (pixels translucides), plus clair vers la crête
         yy, xx = np.mgrid[0:H, 0:W]
-        u, v = (xx + 0.5 - cx) / rx, (gy - 3 - yy - 0.5) / h
-        rho = np.hypot(u, v)
-        th = np.degrees(np.arctan2(v, u))
-        taper = np.clip((th - 96) / 44, 0, 1)
-        veil = (rho <= 1.0) & (rho > 1 - band / rx * taper) & (yy <= GROUND - 1)
-        inner = veil & (rho < 1 - 0.55 * band / rx * taper)          # contre la paroi intérieure : un peu plus clair
-        back[veil & (back == '.')] = 'T'
-        back[inner & (back == 'T')] = 'S'
-        # le bord : du sol (à gauche) jusqu'au sommet, puis il se recourbe un peu vers l'avant (vers lui)
-        pts, wd = [], []
-        n = 160
-        a_end = (66, 72, 100, 112)[k]                          # en partant, le haut de la vague se défait
-        for i in range(n + 1):
-            a = math.radians(180 - (180 - a_end) * i / n)
-            pts.append((cx + rx * math.cos(a), gy - 3 - h * math.sin(a)))
-            s = i / n
-            wd.append(w * min(1.0, (n - i) / 50.0) ** 0.8 * (1.0 - 0.25 * s) + 0.3)
-        stroke(back, pts, wd, 'XYZV')
-        # le haut du bord, tourné vers la lumière, s'éclaire (un seul reflet blanc, long et courbe)
-        hl = [p for i, p in enumerate(pts) if 0.45 < i / n < 0.8]
-        stroke(back, hl, [1.2] * len(hl), 'W')
-        # au pied : le rouleau d'écume qui file vers la gauche, et la traînée d'eau au sol jusqu'à lui
-        fx_ = cx - rx
-        foam(front, (fx_ + 3, gy - 4), 5.0 - 0.7 * k, hollow=0.15 * k, seed=31 + k)
-        curl(front, (fx_ + 2, gy - 12 + 2 * k), 3.6 - 0.4 * k, 20, turn=250, w=2.4, tones='XYZ')
-        ribbon(back, ((fx_ + DOME_C[0]) / 2, gy - 1), (DOME_C[0] - fx_) / 2, 2, 180, 0, 2.6 - 0.3 * k,
-               head=0.25, tones='XYZ')
-        # des gouttes arrachées à la crête, qui volent vers la gauche
-        rng = np.random.RandomState(50 + k)
-        for j in range(5):
-            a = math.radians(rng.uniform(110, 170))
-            r = 1.0 + rng.uniform(0.04, 0.14)
-            drop(back, cx + rx * r * math.cos(a), gy - 3 - h * r * math.sin(a), int(rng.choice([1, 2, 2, 3])),
-                 v=(-1.5, 0.3))
+        u = (xx + 0.5 - cx) / rx
+        inside = np.abs(u) < 1
+        sq = np.sqrt(np.clip(1 - u * u, 0, 1))
+        th_b = np.arctan2(sq, u)                                   # angle (0 à droite, 90° au fond)
+        hcol = hw * (1 + 0.10 * np.sin(2 * th_b + 0.7 + k) + 0.06 * np.sin(5 * th_b + 2.1))
+        for sgn, tgt in ((-1, back), (1, front)):
+            yg = cy + sgn * ry * sq                                # le pied du mur au sol
+            hc = hcol if sgn < 0 else hw * (1 + 0.10 * np.sin(-2 * th_b + 0.7 + k) + 0.06 * np.sin(-5 * th_b + 2.1))
+            wall = inside & (yy <= yg) & (yy >= yg - hc)
+            if k == 3:
+                wall &= ~((np.sin(2 * sgn * th_b + 0.4) + 0.5 * np.sin(5 * sgn * th_b + 1.3)) > 0.75)
+            top = wall & (yy < yg - hc * 0.55)
+            tgt[wall & (tgt == '.')] = 'S'
+            tgt[top & (tgt == 'S')] = 'T'
+        # la crête et le pied du mur, en morceaux (coupés là où l'anneau se défait)
+        n = int(2 * math.pi * rx * 1.6)
+        # (quand le mur est bas, la crête presque à plat perd son ton le plus pâle : sinon elle paraît en pointillés)
+        tb, tf = ('XYZV', 'WXYZ') if k <= 1 else ('YZV', 'XYZ')
+        for half, tgt, tones, wm in ((0, back, tb, 1.0), (1, front, tf, 0.75)):
+            crest, base = [], []
+            for i in range(n + 1):
+                th = math.pi * i / n + half * math.pi               # 0..180° : derrière ; 180..360° : devant
+                ok = not broken(th)
+                x = cx + rx * math.cos(th)
+                yg = cy - ry * math.sin(th)
+                if ok:
+                    crest.append((x, yg - crest_h(th)))
+                    base.append((x, yg))
+                if (not ok or i == n) and len(crest) > 2:
+                    m_ = len(crest)
+                    wd = [w * wm * min(1.0, (q + 1) / 6, (m_ - q) / 6) + 0.4 for q in range(m_)]
+                    stroke(tgt, crest, wd, tones, floor=H)
+                    if k <= 1:            # le pied du mur (quand le mur est bas, la crête suffit : pas de double trait)
+                        stroke(tgt, base, [x_ * 0.6 for x_ in wd], 'YZV' if half == 0 else 'XYZ', floor=H)
+                    # le reflet blanc : sur la crête du fond, du côté de la lumière (en haut à droite)
+                    if half == 0 and k <= 1:
+                        hl = [p for p in crest if p[0] > cx + rx * 0.25]
+                        if len(hl) > 2:
+                            stroke(tgt, hl, [1.2] * len(hl), 'W', floor=H)
+                if not ok:
+                    crest, base = [], []
+        # aux deux bouts, là où l'on voit le mur par la tranche : un bouillon d'écume
+        if k <= 2:
+            for sx in (-1, 1):
+                foam(front, (cx + sx * (rx - 1), cy - 3), 4.6 - 1.0 * k, hollow=0.2 * k, seed=40 + k + sx)
+        # des gouttes arrachées à la crête, projetées vers l'extérieur, tout autour
+        rng = np.random.RandomState(90 + k)
+        for j in range(12 - 2 * k):
+            th = rng.uniform(0, 2 * math.pi)
+            r = 1.0 + rng.uniform(0.03, 0.12)
+            x = cx + rx * r * math.cos(th)
+            y = cy - ry * r * math.sin(th) - crest_h(th) - rng.uniform(1, 6)
+            tgt = back if math.sin(th) > 0 else front
+            drop(tgt, x, y, int(rng.choice([1, 2, 2, 3])), v=(1.6 * math.cos(th), -0.6), floor=H)
     return f
 
 
@@ -1480,9 +1533,10 @@ def heal(k):
     return f
 
 
-# ---------------------------------------------------------------- la provocation : l'onde rouge et la marque
-# L'onde : un liseré rouge qui épouse sa silhouette et s'en écarte en pâlissant (trois pulsations), et un anneau rouge
-# au sol, à ses pieds, qui s'élargit. La marque : un œil en amande (deux arcs qui se rejoignent en pointe, une pupille
+# ---------------------------------------------------------------- la provocation : la lueur rouge et la marque
+# La lueur : un halo rouge, doux et translucide, qui épouse sa silhouette sans trait (un dégradé qui s'efface vers
+# l'extérieur, plus large vers le haut, comme une chaleur) ; il gonfle puis s'éteint (trois pulsations : serré, large,
+# pâle). Aucune ligne, aucun anneau. La marque : un œil en amande (deux arcs qui se rejoignent en pointe, une pupille
 # ronde), signe inventé, au-dessus du casque ; il bat comme un cœur (grand, plus grand, petit).
 MARK = {
     0: ['.....NNNNNNM.....',
@@ -1513,31 +1567,33 @@ MARK = {
         '..PPPPQPOOO..',
         '....PPPPO....'],
 }
-# les ondes : des anneaux rouges autour de lui (derrière lui : on les voit autour de sa silhouette), qui s'élargissent
-# et s'assombrissent ; (demi-largeur, demi-hauteur, épaisseur, tons du coeur vers le bord)
-ONDES = {0: [(34, 50, 3.6, 'NNO')],
-         1: [(48, 66, 3.0, 'NOO'), (32, 46, 3.0, 'NNO')],
-         2: [(60, 80, 1.8, 'O'), (46, 62, 2.2, 'NO')]}
+# la lueur : (flou du halo, opacité au plus fort, montée vers le haut en pixels) pour chaque pulsation
+LUEUR = {0: (3.0, 210, 1), 1: (5.0, 200, 2), 2: (6.5, 95, 3)}
+# les tons de la lueur, du plus fort au plus pâle (lettres translucides, voir ALPHA)
+GLOW_TONES = '123456'
 
 
-def ring(cv, c, rx, ry, w, tones):
-    """un anneau en ellipse d'épaisseur régulière (coeur clair, bords sombres)"""
-    n = int(2 * math.pi * max(rx, ry) * 1.5)
-    pts = [(c[0] + rx * math.cos(2 * math.pi * i / n), c[1] - ry * math.sin(2 * math.pi * i / n)) for i in range(n + 1)]
-    stroke(cv, pts, [w] * len(pts), tones)
+def glow(cv, back, k):
+    """le halo rouge autour de la silhouette (derrière le héros : on ne le voit qu'autour de lui)"""
+    sig, amax, rise = LUEUR[k]
+    m = cv != '.'
+    src = np.roll(m, -rise, 0)                       # un halo qui monte un peu (la chaleur)
+    B = np.asarray(Image.fromarray((src * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig)), float) / 255
+    a = np.clip(B * 2.4, 0, 1) * amax
+    yy = np.arange(H)[:, None]
+    a = np.where(yy <= GROUND + 1, a, 0)            # posé au sol : rien sous ses pieds
+    cut = [ALPHA[c] for c in GLOW_TONES]
+    for c, lo in zip(GLOW_TONES, cut):
+        sel = (a >= lo * 0.85) & (back == '.')
+        back[sel] = c
+    return back
 
 
 def provoke(k):
-    """k = 0 : première pulsation (anneau serré, marque) ; 1 : elle s'écarte, une deuxième naît, la marque grossit ;
-    2 : elles s'effacent, la marque rapetisse"""
+    """k = 0 : première pulsation (halo serré, marque) ; 1 : le halo gonfle, la marque grossit ;
+    2 : il pâlit et s'éteint, la marque rapetisse"""
     def f(cv, back, front, ctx):
-        cx = DOME_C[0] - 6
-        for (rx, ry, w, tones) in ONDES[k]:
-            ring(back, (cx, GROUND - 58), rx, ry, w, tones)
-        # l'anneau au sol, à ses pieds
-        rx = [30, 44, 58][k]
-        ribbon(back, (cx, GROUND - 1), rx, 4, 15, 165, [3.0, 2.6, 1.8][k], head=0.5, tones='NOP')
-        ribbon(front, (cx, GROUND), rx, 4, 195, 345, [3.4, 2.8, 2.0][k], head=0.5, tones='MNO')
+        glow(cv, back, k)
         # la marque, au-dessus du casque (elle suit la tête)
         bx, by = ctx.body.follow(60)
         hdx, hdy = ctx.f.get('head', (0, 0))
@@ -1576,13 +1632,14 @@ SPECIALE = [
     planted(fx_list=[dome(0.62, 50)], ms=80),
     planted(fx_list=[dome(1.0, 80)], ms=90),
     planted(fx_list=[dome(1.0, 112)], ms=200),
-    # le dôme part en vague vers la gauche ; ce qui reste se resserre sur lui
-    planted(fx_list=[condense(0), wave(0)], tint=4, ms=80),
-    planted(fx_list=[condense(1), wave(1), armor(0)], tint=8, ms=80),
-    planted(fx_list=[wave(2), armor(1), heal(0)], tint=8, ms=90),
-    planted(fx_list=[wave(3), armor(2), heal(1)], tint=8, flash=14, ms=150),
+    # LANCEMENT (image 8) : le dôme s'abaisse et s'élargit en anneau d'eau tout autour de lui, qui s'éloigne dans toutes
+    # les directions et s'éteint ; ce qui reste se resserre sur lui (son armure d'eau)
+    planted(fx_list=[condense(0), ring_out(0)], tint=4, ms=80),
+    planted(fx_list=[condense(1), ring_out(1), armor(0)], tint=8, ms=80),
+    planted(fx_list=[ring_out(2), armor(1), heal(0)], tint=8, ms=90),
+    planted(fx_list=[ring_out(3), armor(2), heal(1)], tint=8, flash=14, ms=150),
     # il arrache le sabre et le pointe vers l'ennemi : le défi (l'onde rouge pulse, la marque bat)
-    dict(O=(102, 62), ang=40, crouch=1, lean=1, bf=1, fx_list=[armor(3), heal(2)], tint=6, ms=60),
+    dict(O=(102, 62), ang=40, crouch=1, lean=1, bf=1, fx_list=[ring_out(4), armor(3), heal(2)], tint=6, ms=60),
     defi(fx_list=[provoke(0), armor(4, glint=False)], tint=('rouge', 18), ms=220),
     defi(fx_list=[provoke(1), armor(0, glint=False)], tint=('rouge', 8), ms=110),
     defi(fx_list=[provoke(2)], ms=110),
@@ -1664,7 +1721,7 @@ def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
     boxes = {'pose': GAME_BOX}
     # la case de l'attaque est celle des animations validées (on voit la portée du croissant, jusqu'à l'ennemi) ;
-    # la spéciale reprend cette case et l'agrandit vers la gauche (la vague qui part vers l'équipe)
+    # la spéciale reprend cette case et l'agrandit (l'anneau d'eau qui s'étend tout autour de lui)
     att = ATT_BOX
     sp = bbox(anims['speciale'], 6)
     bb = (min(att[0], sp[0]), min(att[1], sp[1]), max(att[2], sp[2]), max(att[3], sp[3]))
