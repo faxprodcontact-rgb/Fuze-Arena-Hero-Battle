@@ -66,8 +66,8 @@ FXPAL = {
     'W': (255, 255, 255),   # éclat blanc (traînée de l'estoc)
     'X': (214, 226, 246),   # traînée de l'estoc, acier pâle
     # --- la spéciale (sort d'équipe) : le voile de feu doré, l'anneau, la lueur rouge du défi (translucides : ALPHA)
-    '7': (255, 214, 120),   # voile de feu doré, intérieur (à peine teinté)
-    '8': (255, 238, 150),   # voile, contre le bord (l'épaisseur de la bulle)
+    '7': (255, 196, 92),    # voile de feu doré, intérieur (à peine teinté)
+    '8': (255, 226, 130),   # voile, contre le bord (l'épaisseur de la bulle) et lueur autour du bord
     '9': (255, 252, 236),   # voile, reflet du bord en haut à droite
     'V': (255, 202, 70),    # anneau de feu : le mur (pied)
     'Y': (255, 238, 150),   # anneau de feu : le mur (haut, plus clair)
@@ -85,7 +85,7 @@ FXPAL = {
     '+': (92, 14, 52),      # rouge très sombre
 }
 # opacité des lettres translucides (toutes les autres sont pleines)
-ALPHA = {'7': 44, '8': 96, '9': 150, 'V': 64, 'Y': 104,
+ALPHA = {'7': 40, '8': 90, '9': 150, 'V': 64, 'Y': 104,
          '!': 200, '@': 160, '#': 120, '$': 85, '%': 55, '&': 28}
 TINT_RED = (255, 70, 60)                 # le reflet rouge du défi sur le héros
 FIRE = 'ABCDHIJ'
@@ -308,7 +308,7 @@ def compose(hero, fx_back=None, fx_front=None, flash=None, tint=None):
             ab = b[:, 3:4]
             ao = a + ab * (255 - a) // 255
             rgb = (L[t, :3].astype(int) * a + b[:, :3] * ab * (255 - a) // 255) // np.maximum(ao, 1)
-            out[t] = np.concatenate([rgb, ao], 1).astype(np.uint8)
+            out[t] = np.clip(np.concatenate([rgb, ao], 1), 0, 255).astype(np.uint8)
     return out
 
 
@@ -1196,6 +1196,9 @@ def fx_veil(grow, phase=0):
         tone_core = np.where(lit > 0.55, 'A', np.where(lit > 0.0, 'B', np.where(lit > -0.55, 'C', 'D')))
         tone_edge = np.where(lit > 0.55, 'B', np.where(lit > 0.0, 'C', np.where(lit > -0.55, 'D', 'H')))
         front[rim] = np.where(core[rim], tone_core[rim], tone_edge[rim])
+        # la lueur du bord, au-dehors (un pixel, deux du côté de la lumière) : un contour qui brille, pas un trait
+        halo = (e >= wloc - 1.5) & (e < wloc - 0.5 + np.clip(lit, 0, 1)) & ground & (front == '.')
+        front[halo] = '8'
         # les petites langues de feu qui dansent sur le bord (places irrégulières, elles changent d'une image à l'autre)
         if grow >= 0.5:
             rng = np.random.RandomState(50 + phase)
@@ -1208,7 +1211,7 @@ def fx_veil(grow, phase=0):
                 if by > GROUND - 3:
                     continue
                 dirn = 90 + (a - 90) * 0.45
-                hh = rng.uniform(5, 9) * (0.6 + 0.4 * grow)
+                hh = rng.uniform(6, 11) * (0.6 + 0.4 * grow)
                 tongue(front, (bx, by), hh, max(3.0, hh * 0.5), direction=dirn,
                        bend=rng.choice([-0.8, 0.7]), tones='ABCDH', fork=False, heat=0.3)
             for j in range(5):
