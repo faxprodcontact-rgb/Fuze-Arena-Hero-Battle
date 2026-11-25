@@ -59,7 +59,7 @@ LN = LIGHT / np.linalg.norm(LIGHT)
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. De la place au-dessus (le saut, la hache levée)
 # et beaucoup à droite (la rangée de pics de glace jusqu'à l'ennemi). La pose se recadre en 128 × 120.
-W, H = 300, 184
+W, H = 312, 184
 SOL = (96, 168)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
@@ -1084,7 +1084,242 @@ def far_on_ground(dx):
     return rel
 
 
-SPECIALE = []
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Rugissement du glacier »
+# Il se frappe la poitrine deux fois du poing (des bouffées de neige sautent de la fourrure), rugit gueule grande
+# ouverte (une bourrasque de buée glacée en volutes), se ramasse, bondit les deux bras levés (la hache en haut,
+# la griffe ouverte), et retombe en frappant le sol des deux bras : le pommeau de fer d'un côté, le poing de l'autre.
+# Arrêt sur l'impact (éclair blanc). L'onde court dans le sol gelé vers l'ennemi : une rangée IRRÉGULIÈRE de pics de
+# glace taillés jaillit, de plus en plus hauts, jusqu'à un gros bouquet de cristaux sous l'ennemi ; puis les pics se
+# brisent en éclats et en bouffées de neige pendant qu'il se redresse.
+# Les pics : (écart depuis le poing, hauteur, largeur, penche, graine). Écarts, hauteurs et penchés inégaux.
+SPIKE_X0 = 10                         # le premier pic, à droite du poing qui frappe
+SPIKES = [(0, 10, 8, 1, 0), (8, 18, 10, 3, 1), (14, 8, 7, -2, 2), (24, 24, 12, 3, 3), (32, 13, 8, 1, 4),
+          (42, 30, 13, 4, 5), (50, 16, 9, -3, 6), (60, 36, 14, 4, 7), (68, 20, 10, 1, 8), (78, 44, 16, 5, 9),
+          (87, 25, 11, -3, 10), (101, 62, 19, 4, 11), (93, 40, 13, -7, 12), (110, 46, 15, 9, 13),
+          (118, 22, 10, 6, 14)]
+WAVE = 30.0                           # pixels parcourus par l'onde à chaque image
+
+
+def spike(cv, bx, h, w, lean, seed, grow=1.0):
+    """un pic de glace taillé qui sort du sol : base large, pointe penchée, deux faces séparées par une arête
+    (face claire à droite, vers la lumière), éclat très clair sur l'arête"""
+    rng = np.random.RandomState(seed)
+    g = GROUND + 1
+    hh = max(2.0, h * grow)
+    tip = (bx + lean * grow, g - hh)
+    pts = [(bx - w / 2, g), (bx - w * 0.44 + lean * 0.25, g - hh * rng.uniform(0.35, 0.5)), tip,
+           (bx + w * 0.4 + lean * 0.45, g - hh * rng.uniform(0.48, 0.66)), (bx + w / 2, g)]
+    foot = (bx + w * rng.uniform(-0.05, 0.12), g)
+    facets(cv, pts, 'lkji', core='k', below=1, hi='m', ridge=(tip, foot))
+
+
+def ground_crack(cv, x0, x1, seed=0):
+    """la fissure de l'onde dans le sol gelé : une ligne brisée (pas droite), bleu nuit, bord clair"""
+    rng = np.random.RandomState(seed)
+    x, y = x0, GROUND + 1
+    while x < x1:
+        nx = x + rng.randint(3, 7)
+        ny = GROUND + rng.choice([0, 1, 1, 2])
+        for (px, py) in line_px((x, y), (min(nx, x1), ny)):
+            put(cv, px, py, 'R', below=3)
+            put(cv, px, py - 1, 'U', keep='.', below=3)
+        x, y = nx, ny
+
+
+def fx_spikes(k, fist_x):
+    """k : images depuis l'impact (0 = l'onde part). Chaque pic sort quand l'onde l'atteint (à moitié, puis un peu trop
+    haut, puis à sa taille), puis se brise (éclats, bouffée de neige) dans l'ordre où il est sorti."""
+    def fx(back, front, ctx):
+        x0 = fist_x + SPIKE_X0
+        reach = (k + 1) * WAVE
+        ground_crack(back, fist_x + 2, min(x0 + reach, x0 + 124), seed=2)
+        for (dx, h, w, lean, sd) in sorted(SPIKES, key=lambda s: -s[1]):
+            t0 = dx / WAVE
+            age = k - t0
+            if age < -0.25:
+                continue
+            bx = x0 + dx
+            brk = 4.0 + dx / 45.0          # quand il se brise
+            if k < brk:
+                grow = 0.5 if age < 0.75 else 1.12 if age < 1.75 else 1.0
+                spike(back, bx, h, w, lean, sd, grow)
+                if age < 0.75:
+                    cloud(front, (bx - 1, GROUND - 2), 2.0 + w * 0.25, 'STU', seed=sd)
+            else:
+                b = k - brk                 # 0 : il éclate ; 1 : les morceaux tombent ; 2 : il ne reste rien
+                if b < 0.75:
+                    spike(back, bx, h, w, lean, sd, 0.45)
+                    cloud(front, (bx, GROUND - h * 0.3), 2.2 + w * 0.3, 'SSTU', seed=sd, ground=True)
+                    for j, (ox, oy, rr, aa) in enumerate(((-3, -0.7, 0.32, 60), (3, -0.85, 0.28, -40),
+                                                          (1, -1.0, 0.22, 130))):
+                        shard(front, (bx + ox + lean * 0.5, GROUND - h * -oy * 0.9), max(1.0, h * rr * 0.4),
+                              aa + sd * 17, seed=sd + j)
+                elif b < 1.75:
+                    cloud(front, (bx + 1, GROUND - 3), 1.6 + w * 0.25, 'STU', hollow=0.55, seed=sd)
+                    for j, (ox, rr, aa) in enumerate(((-5, 0.26, 200), (4, 0.22, -70))):
+                        shard(front, (bx + ox, GROUND - 2 - j * 2), max(1.0, h * rr * 0.35), aa + sd * 23,
+                              seed=sd + j)
+        if 2.6 <= k < 3.6:                  # le gros bouquet frappe l'ennemi
+            c = (x0 + 104, GROUND - 58)
+            pop(front, c, 8.0, facing=60, tones='ZZSTU')
+            for i, (a, sp, r, sd) in enumerate(SHARDS[:6]):
+                shard(front, (c[0] + math.cos(math.radians(a + 50)) * (11 + 4 * sp),
+                              c[1] - math.sin(math.radians(a + 50)) * (11 + 4 * sp)), r * 0.7, a + TUMBLE[i], seed=sd)
+        elif 3.6 <= k < 4.6:
+            c = (x0 + 106, GROUND - 60)
+            cloud(front, c, 6.0, 'SSTU', seed=4, ground=False)
+            for i, (a, sp, r, sd) in enumerate(SHARDS):
+                shard(front, (c[0] + math.cos(math.radians(a + 50)) * (19 + 9 * sp),
+                              c[1] - math.sin(math.radians(a + 50)) * (19 + 9 * sp) + 3 * sp), r * 0.6,
+                      a + TUMBLE[i] * 1.5, seed=sd)
+    return fx
+
+
+def fx_chest(k):
+    """les coups sur la poitrine : une bouffée de neige saute de la fourrure du col, deux flocons"""
+    def fx(back, front, ctx):
+        body = ctx['body']
+        c = body.pt(86, 57)
+        cloud(front, (c[0] + 3, c[1] - 2), 3.0, 'SSTU', seed=k, ground=False)
+        puff(front, (c[0] + 9, c[1] - 7), 1.8, 'STU')
+        flake(front, c[0] - 6, c[1] - 9, 1)
+        flake(front, c[0] + 13, c[1] + 2, 0)
+    return fx
+
+
+def fx_roar(k):
+    """le rugissement : une bourrasque de buée glacée sort de la gueule, en volutes et en bouffées (aucun rayon)"""
+    def fx(back, front, ctx):
+        body = ctx['body']
+        m = body.pt(*MOUTH) + np.array([0.0, -2.0])
+        if k == 0:
+            wisp(front, m, m + (8, -2), m + (16, -8), m + (22, -14), 4.2, 'abc', curl_r=3.0)
+            wisp(front, m + (1, 2), m + (9, 4), m + (17, 3), m + (24, -2), 3.4, 'abc', curl_r=2.5, cw=True)
+            cloud(front, m + (13, -3), 4.2, 'aabc', seed=1, ground=False)
+            puff(front, m + (25, -9), 3.0, 'abc')
+            for (dx, dy) in ((18, -16), (28, 2), (10, 8)):
+                flake(front, m[0] + dx, m[1] + dy, 1)
+        elif k == 1:
+            curl(front, m + (24, -14), 4.0, 200, turn=280, w=2.6, tones='bc')
+            cloud(front, m + (20, -5), 4.6, 'abc', hollow=0.5, seed=2, ground=False)
+            puff(front, m + (31, -11), 2.4, 'bc', hollow=0.4)
+            for (dx, dy) in ((24, -20), (33, 0), (14, 6)):
+                flake(front, m[0] + dx, m[1] + dy + 3, 0)
+    return fx
+
+
+def fx_launch(back, front, ctx):
+    """le bond : la neige gicle sous les pieds"""
+    for (x, r, sd) in ((SOL[0] - 24, 4.5, 1), (SOL[0] + 18, 4.0, 2), (SOL[0] - 4, 3.0, 3)):
+        cloud(front, (x, GROUND - 2), r, 'SSTU', seed=sd)
+
+
+def fx_launch2(back, front, ctx):
+    for (x, r, sd) in ((SOL[0] - 30, 3.4, 1), (SOL[0] + 24, 3.0, 2)):
+        cloud(front, (x, GROUND - 3), r, 'STU', hollow=0.5, seed=sd)
+
+
+def fx_dive(back, front, ctx):
+    """la chute : les deux bras s'abattent (deux traînées de neige en croissant)"""
+    body = ctx['body']
+    Sf = body.pt(*SH_F)
+    Sn = body.pt(*SH_N)
+    arc_trail(back, Sf, 36, 92, -55, 10, 'ZSSTU')
+    arc_trail(back, Sn, 40, 98, 200, 10, 'ZSSTU')
+
+
+STATE_SP = {}
+
+
+def fx_impact(k):
+    """l'impact au sol : neige qui jaillit sous le poing et sous le pommeau, mottes qui roulent de chaque côté"""
+    def fx(back, front, ctx):
+        body = ctx['body']
+        if k == 0:
+            Wr, E, tips = ctx['far']
+            STATE_SP['fist_x'] = Wr[0]
+            STATE_SP['pommel_x'] = ctx['near'][0][0] + 6
+        fx_ = STATE_SP['fist_x']
+        px = STATE_SP['pommel_x']
+        if k == 0:
+            pop(front, (fx_ + 4, GROUND - 4), 7.5, facing=30, tones='ZZSTU')
+            pop(front, (px, GROUND - 3), 5.0, facing=150, tones='ZSTU')
+            cloud(front, (fx_ - 12, GROUND - 3), 4.0, 'SSTU', seed=7)
+            cloud(front, (px - 10, GROUND - 2), 3.4, 'SSTU', seed=8)
+        elif k == 1:
+            cloud(front, (fx_ + 6, GROUND - 4), 5.5, 'SSTU', seed=9)
+            cloud(front, (px - 4, GROUND - 3), 4.2, 'SSTU', seed=10)
+            cloud(front, (fx_ - 16, GROUND - 2), 3.0, 'STU', hollow=0.3, seed=11)
+        elif k == 2:
+            cloud(front, (fx_ + 8, GROUND - 5), 5.0, 'STU', hollow=0.5, seed=9)
+            cloud(front, (px - 8, GROUND - 3), 3.6, 'STU', hollow=0.5, seed=10)
+        elif k == 3:
+            cloud(front, (px - 12, GROUND - 3), 2.6, 'TU', hollow=0.7, seed=10)
+        if k >= 1:
+            fx_spikes(k - 1, fx_)(back, front, ctx)
+    return fx
+
+
+def both(*fns):
+    def fx(back, front, ctx):
+        for fn in fns:
+            if fn:
+                fn(back, front, ctx)
+    return fx
+
+
+def _sp(**kw):
+    return kw
+
+
+SPECIALE = [
+    # 0 : il inspire, gonfle le torse, le poing se lève vers la poitrine
+    _sp(crouch=1, breath=2, head=(0, -1), near=(0, -1), far=dict(w=(6.0, 9.0), bend=1, front=True, cap=True), ms=170),
+    # 1 : premier coup sur la poitrine
+    _sp(crouch=1, breath=2, shift=-1, head=(0, 0), near=(0, -1),
+        far=dict(w=(-12.0, 2.0), bend=1, front=True, cap=True), fx=fx_chest(0), ms=90),
+    # 2 : le poing repart
+    _sp(crouch=1, breath=2, head=(0, -1), near=(0, -3),
+        far=dict(w=(5.0, 7.0), bend=1, front=True, cap=True), ms=80),
+    # 3 : deuxième coup
+    _sp(crouch=1, breath=2, shift=-1, head=(0, 0), near=(0, -2),
+        far=dict(w=(-12.0, 2.0), bend=1, front=True, cap=True), fx=fx_chest(1), ms=90),
+    # 4 : IL RUGIT — tête en arrière, gueule grande ouverte, la hache brandie, bourrasque de buée glacée
+    _sp(crouch=0, breath=2, head=(1, -2), jaw=2, near=(-1, -4), tuft=-1, far=dict(w=(9.0, 15.0), bend=1),
+        fx=fx_roar(0), ms=320),
+    # 5 : il se ramasse (genoux pliés, tout le haut descend), la buée se défait
+    _sp(crouch=8, lean=-2, head=(0, 1), near=(0, 1), tuft=1, far=(0, 1), fx=fx_roar(1), ms=170),
+    # 6 : il bondit, les deux bras montent
+    _sp(crouch=-3, lift=12, head=(0, 0), near=near_redraw((-6.0, -36.0)),
+        far=dict(w=(4.0, -30.0), bend=1, hand='claw', ang=92), fx=fx_launch, ms=60),
+    # 7 : en haut du saut, jambes repliées, hache et griffe tout en haut
+    _sp(crouch=0, lift=22, feet_up=5, head=(0, -1), near=near_redraw((-4.0, -40.0)),
+        far=dict(w=(6.0, -35.0), bend=1, hand='claw', ang=96), fx=fx_launch2, ms=120),
+    # 8 : il retombe, les deux bras s'abattent
+    _sp(crouch=0, lift=9, shift=3, feet_up=2, head=(1, 0), near=near_redraw((-30.0, 18.0)),
+        far=dict(w=(22.0, 16.0), bend=1, hand='claw', ang=-40), fx=fx_dive, ms=50),
+    # 9 : IMPACT — arrêt sur image : pommeau et poing dans le sol, éclair blanc
+    _sp(crouch=8, shift=5, lean=1, head=(1, 1), near=near_redraw(near_on_ground(-24.0)),
+        far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(0), flash=45, ms=230),
+    # 10-13 : l'onde court, les pics de glace jaillissent jusqu'à l'ennemi
+    _sp(crouch=8, shift=5, lean=1, head=(1, 1), near=near_redraw(near_on_ground(-24.0)),
+        far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(1), ms=80),
+    _sp(crouch=7, shift=5, lean=1, head=(1, 0), near=near_redraw(near_on_ground(-24.0)),
+        far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(2), ms=80),
+    _sp(crouch=7, shift=5, lean=1, head=(1, 0), jaw=1, near=near_redraw(near_on_ground(-24.0)),
+        far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(3), ms=90),
+    _sp(crouch=7, shift=5, lean=1, head=(1, -1), jaw=2, near=near_redraw(near_on_ground(-24.0)),
+        far=dict(w=far_on_ground(17.0), bend=1), fx=fx_impact(4), ms=220),
+    # 14-16 : les pics se brisent, il se redresse
+    _sp(crouch=5, shift=4, lean=1, head=(1, 0), jaw=1, near=near_redraw((-26.0, 30.0)),
+        far=dict(w=(15.0, 26.0), bend=1), fx=fx_impact(5), ms=110),
+    _sp(crouch=3, shift=2, head=(0, 0), near=near_redraw((-25.0, 8.0)),
+        far=dict(w=(10.0, 21.0), bend=1), fx=fx_impact(6), ms=120),
+    _sp(crouch=1, shift=1, near=near_redraw((-19.0, -9.0)), far=(1, 0), fx=fx_impact(7), ms=130),
+    # 17 : en garde
+    _sp(far=(0, 0), fx=fx_impact(8), ms=170),
+]
+
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)

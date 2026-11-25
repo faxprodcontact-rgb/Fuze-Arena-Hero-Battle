@@ -386,12 +386,12 @@ def wisp(cv, base, h, w, tail=0.0, cw=False, tones='ABC'):
     sw = -1.0 if cw else 1.0
     pts = bezier((bx, by), (bx + sw * 2.5, by - h * 0.35), (bx - sw * 2.5, by - h * 0.7), (bx + sw * 1.5, by - h), 30)
     ex, ey = pts[-1]
-    r = 1.2 + w * 0.6
+    r = 0.8 + w * 0.4
     ccx, ccy = ex + sw * r, ey
     a0 = math.atan2(-(ey - ccy), ex - ccx)
     for j in range(1, 21):
         q = j / 20
-        a = a0 - sw * math.radians(250) * q
+        a = a0 - sw * math.radians(150) * q
         rr = r * (1 - 0.6 * q)
         pts.append((ccx + rr * math.cos(a), ccy - rr * math.sin(a)))
     N = len(pts)
@@ -484,7 +484,7 @@ def idle_fx(i, back, front, follow):
         a = ((i + ph) % NPOSE) / NPOSE            # 0 … 1 : le filet naît, monte en S, s'enroule et se défait par le bas
         x = p[0] + OX + fx
         y = p[1] + OY + fy - 1
-        wisp(back, (x, y), 7 + 9 * a, 1.2 + 1.4 * a, tail=max(0.0, a * 1.5 - 0.7), cw=(ph % 2 == 1))
+        wisp(back, (x, y), 6 + 9 * a, 2.4 + 1.4 * a, tail=max(0.0, a * 1.5 - 0.7), cw=(ph % 2 == 1))
     for (p, born, k) in PEBBLES:
         t = (i - born) % NPOSE
         d = GROUND - 2 - (p[1] + OY)                  # sa hauteur au-dessus du sol
@@ -1130,9 +1130,9 @@ def fx_burst(s_):
                 ws = [0.8 + 9.0 * (j / 20) ** 1.2 for j in range(21)]
                 stroke(back, pts, ws, 'vutsr', cool=[0.6 * (1 - j / 20) for j in range(21)])
             else:
-                # derrière les autres, une petite volute de fumée qui s'enroule
-                b = plate_path(i, max(0.0, s_ - 0.1))
-                curl(back, (b[0], b[1]), 3.0 + 1.5 * s_, 90 + 50 * i, turn=280, w=2.2, tones='BCD', cw=i % 2 == 0)
+                # derrière les autres, une bouffée de fumée en chou-fleur qui se défait
+                b = plate_path(i, max(0.0, s_ - 0.12))
+                cloud(back, (b[0], b[1]), 3.0 + 1.5 * s_, 'ABCD', hollow=0.2 * s_, seed=i, ground=False)
             spin = (s_ * 300 + seed * 40) * (1 if i % 2 else -1)
             plate(back if behind else front, c, ang + 90 + spin, L, T, seed, heat=3 if s_ < 0.5 else 2)
     return f
@@ -1323,9 +1323,14 @@ def write_outputs(anims):
         fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
         bw, bh = box[2] - box[0], box[3] - box[1]
         fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
-        base = fond.crop((0, fy, bw, fy + bh))
-        if base.width < bw:
-            raise ValueError
+        # le fond est moins large que la scène (la spéciale porte loin) : on le pose plusieurs fois, en miroir
+        strip_ = fond.crop((0, fy, fond.width, fy + bh))
+        base = Image.new('RGBA', (bw, bh))
+        x_, flip = 0, False
+        while x_ < bw:
+            base.paste(strip_.transpose(Image.FLIP_LEFT_RIGHT) if flip else strip_, (x_, 0))
+            x_ += strip_.width
+            flip = not flip
     except Exception:
         base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
     ims = []
