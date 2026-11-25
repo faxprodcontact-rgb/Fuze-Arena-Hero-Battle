@@ -828,19 +828,20 @@ def flanc(t):
 
 
 # ------------------------------------------------------------------------------------------------ le premier plan
-def rochers_devant(t):
-    out = []
-    for (pts, g) in [([(-6, 1100), (-6, 1056), (12, 1046), (30, 1050), (44, 1066), (56, 1084), (62, 1100)], 171),
-                     ([(596, 1100), (596, 1050), (580, 1042), (560, 1050), (542, 1070), (534, 1100)], 172)]:
-        m = t.poly(pts)
-        relief(t, m, ROCHE[0:4], g, arrondi=4, rugosite=0.4, grain=10, facettes=0.5, taille_facette=12, decale=-0.25)
-        out.append(m)
+def rochers_devant_g(t):
+    m = t.poly([(-6, 1100), (-6, 1056), (12, 1046), (30, 1050), (44, 1066), (56, 1084), (62, 1100)])
+    relief(t, m, ROCHE[0:4], 171, arrondi=4, rugosite=0.4, grain=10, facettes=0.5, taille_facette=12, decale=-0.25)
     br = t.limb([(20, 1052, 1.6), (34, 1042, 1.2), (44, 1038, 0.9)])
     t.fill(br, ECORCE[1])
     t.fill(br & ~S(br, 1, -1), ECORCE[3])
     pm = coussin(t, 40, 1036, 13, 5, 175) | coussin(t, 24, 1042, 9, 4, 176)
-    out[0] = out[0] | br | pm
-    return out
+    return m | br | pm
+
+
+def rochers_devant_d(t):
+    m = t.poly([(596, 1100), (596, 1050), (580, 1042), (560, 1050), (542, 1070), (534, 1100)])
+    relief(t, m, ROCHE[0:4], 172, arrondi=4, rugosite=0.4, grain=10, facettes=0.5, taille_facette=12, decale=-0.25)
+    return m
 
 
 # ------------------------------------------------------------------------------------------------ les particules
@@ -991,22 +992,6 @@ def construit():
     n = fd.regroupe(7)
     print(f'  {n} couleurs après regroupement')
     return fd
-
-
-def rochers_devant_g(t):
-    m = t.poly([(-6, 1100), (-6, 1056), (12, 1046), (30, 1050), (44, 1066), (56, 1084), (62, 1100)])
-    relief(t, m, ROCHE[0:4], 171, arrondi=4, rugosite=0.4, grain=10, facettes=0.5, taille_facette=12, decale=-0.25)
-    br = t.limb([(20, 1052, 1.6), (34, 1042, 1.2), (44, 1038, 0.9)])
-    t.fill(br, ECORCE[1])
-    t.fill(br & ~S(br, 1, -1), ECORCE[3])
-    pm = coussin(t, 40, 1036, 13, 5, 175) | coussin(t, 24, 1042, 9, 4, 176)
-    return m | br | pm
-
-
-def rochers_devant_d(t):
-    m = t.poly([(596, 1100), (596, 1050), (580, 1042), (560, 1050), (542, 1070), (534, 1100)])
-    relief(t, m, ROCHE[0:4], 172, arrondi=4, rugosite=0.4, grain=10, facettes=0.5, taille_facette=12, decale=-0.25)
-    return m
 
 
 PERSOS = [('zephyre', 'heros', 0), ('orin', 'heros', 2), ('jinn', 'heros', 4),
