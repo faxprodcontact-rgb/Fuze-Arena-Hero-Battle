@@ -23,8 +23,8 @@
   (soin, régénération, purification, résurrection, bouclier, défense, attaque, énergie, provocation, débuffs ennemis × 4
   éléments), joués par le jeu sur chaque case occupée : dossier `../anim/effets/` (build.py ; `sortie/` = images du jeu + effets.json ;
   aperçu d'équipe : `python3 equipe.py --lanceur myrr --case 3 --effet soin,purification --equipe zaroth,eldra,kael,isis`),
-  faits le 25/11 (en attente de son avis). Restent 11 spéciales d'équipe : Rook, Nerith, Minotaure, Bérold, Corvin,
-  Solenn, Garvin, Mira, Célia, Anubis — Rook, Nerith, Minotaure faits ; Bérold, Corvin, Solenn faits ; Garvin, Mira, Célia, Anubis en cours (+ vérifier la provocation de Bérold/Corvin/Solenn/Garvin/Mira). Elyon (affaiblit/ralentit les ennemis), Lilou, Auriel, Ysolde : déjà cohérents.
+  faits le 25/11. Spéciales refaites (25/11) : Rook, Nerith, Minotaure, Bérold, Corvin,
+  Solenn, Garvin, Mira, Célia, Anubis — Rook, Nerith, Minotaure faits ; Bérold, Corvin, Solenn, Garvin, Mira, Célia, Anubis faits : **les 14 spéciales d'équipe sont refaites** (25/11) (+ vérifier la provocation de Bérold/Corvin/Solenn/Garvin/Mira). Elyon (affaiblit/ralentit les ennemis), Lilou, Auriel, Ysolde : déjà cohérents.
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
 
 ## Méthode (validée par le propriétaire)
@@ -39,3 +39,7 @@
    résumé en français (ce qui a changé, ce qu'il doit regarder).
 3. Les héros que le propriétaire ne mentionne pas dans son retour sont considérés validés.
 4. Règles de dessin : `../GUIDE.md` (section 2 : règles ajoutées d'après ses retours).
+
+- Œil rouge de provocation : dessiné dans les spéciales de Zaroth, Corvin et Bérold, ET ajouté par l'effet générique
+  « provocation » → en double en jeu. Garvin et Mira ne le dessinent plus. À retirer chez Zaroth/Corvin/Bérold si le
+  propriétaire est d'accord (proposé le 25/11).
