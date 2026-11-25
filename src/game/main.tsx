@@ -2,10 +2,14 @@
 import { render } from 'preact';
 import { App } from './ui/app';
 import './ui/style.css';
+import './ui/skin.css';
 import { installPx } from './ui/px';
+import { installSkin } from './ui/skin';
 import { watchUpdates } from './updater';
 
-// les pièces dessinées de l'interface (px.ts) : posées dans le CSS avant le premier dessin
+// l'habillage de l'interface (essai : pixel, moderne ou hybride, skin.ts), puis les pièces dessinées (px.ts) : posés
+// dans le CSS avant le premier dessin
+installSkin();
 installPx();
 render(<App />, document.getElementById('game')!);
 watchUpdates();
