@@ -1,7 +1,31 @@
-# brouillon
+# Homme-poisson (mon-kesha-rapide) : clan de Kesha (élément eau), le « rapide » du premier rang.
+#
+# Créature : un homme-poisson des abysses, sec et nerveux, plus petit que Kesha (77 px du sommet de la crête au sol).
+#   Ce n'est pas un requin : grosse tête ronde de poisson des profondeurs, mâchoire du bas qui avance (prognathe),
+#   grands yeux ronds, nageoires partout (crête, joue, dos, avant-bras, mollets). Silhouette en noir : la crête à
+#   trois lobes, la nageoire dorsale dentelée le long du dos penché, la longue lance tenue à l'horizontale, les
+#   jambes pliées en fente basse ; très différente du crabe géant (large, bas) et de la méduse (flottante).
+# Pose : trois quarts vers la droite, ramassé, prêt à bondir : buste penché en avant, jambe gauche (lointaine)
+#   pliée devant, genou au-dessus du pied, jambe droite (proche) loin derrière ; les deux pieds palmés à plat.
+#   Les deux mains serrent la hampe près du corps (main droite à la hanche, main gauche devant la poitrine) :
+#   les doigts passent devant la hampe, qui ressort des deux côtés de chaque main ; la pointe vise l'ennemi.
+# Tête : crâne en dôme éclairé en haut à droite, crête de trois lobes rabattus vers l'arrière ; grand oeil rond
+#   jaune à grosse pupille de poisson des profondeurs, tournée vers l'avant, coupé en haut par une arcade en
+#   colère ; l'oeil lointain, sur la même ligne, à moitié caché derrière l'arête du museau ; gueule entrouverte au
+#   coin tombant, gorge rouge sombre (pas de noir), petites dents fines de tailles différentes, deux crocs au
+#   bout de la mâchoire du bas ; opercule (couvercle des branchies) derrière la joue, nageoire de joue en éventail
+#   avec un anneau de bronze ; narine discrète.
+# Signes du clan (comme Kesha) : peau gris-bleu des abysses à écailles discrètes (petits arcs en quinconce), ventre
+#   blanc à reflets violets, iris jaune-orangé, pagne bleu nuit au bord déchiré, ceinture de cuir, bracelets de
+#   bronze aux poignets. Arme : lance-harpon d'os, hampe à ligatures de cuir et rotule au bout, bague de bronze,
+#   pointe d'os en feuille à deux barbillons tournés vers l'arrière.
+# Couleurs : une seule lumière en haut à droite ; peau (ombres bleu violet, lumières vers le cyan pâle), nageoires
+#   d'un bleu plus vif et plus clair (sombres à la racine, claires au bord), ventre, pagne, cuir, bronze, os.
+# Souffle (ligne 95) sous la hampe : toute la lance monte avec le buste ; clignement : la membrane du poisson
+#   (paupière nictitante) passe sur les yeux.
 id: mon-kesha-rapide
 sol: 64 116
-tete: 62 38 102 71
+tete: 64 40 108 71
 souffle: 95
 cligne: y=d z=c x=c v=e
 palette:
@@ -131,7 +155,7 @@ calque: corps
 ....................................................H....aabbcccddulecdddccccdcpqJJJIGGGGbaabbffg...............................
 ....................................................hhH...aabbccccljbcdeeediiJJJIGGGG....ffffffggh..............................
 ....................................................ghhhhgfaabbbccljbcddeEeedGGGGqq....fggghhH..................................
-......................................................gghhhgfaabbbjcbcdbdbddGsqqq.....ghH.......................................
+......................................................gghhhgfaabbbjcbcdbdbddGstti.....ghH.......................................
 .........................................................gghhgfaaJJJabcbcbccOPPq................................................
 .........................................................bbcgJJJIGGGGaGOGPGQPQQde...............................................
 ......................................................IJbiiiIGGGGedPPONOPPPQPQQddee.............................................
