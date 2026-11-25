@@ -510,12 +510,34 @@ def body_layers(f):
     return [far, body, near, scap, crest, head, jaw]
 
 
+# la gorge, sous le bec : là où la tête (bloc rigide) et le cou (plié) se rejoignent, un pixel vide pris entre trois ou
+# quatre pixels pleins est bouché avec la couleur la plus fréquente autour (à égalité : gauche, haut, droite, bas)
+M_THROAT = (GX >= 150) & (GX <= 215) & (GY >= 96) & (GY <= 150)
+
+
+def fill_holes(cv, region, passes=2):
+    for _ in range(passes):
+        e = cv == '.'
+        nb = [np.roll(cv, 1, 1), np.roll(cv, 1, 0), np.roll(cv, -1, 1), np.roll(cv, -1, 0)]
+        cnt = sum((n != '.').astype(int) for n in nb)
+        ys, xs = np.nonzero(e & region & (cnt >= 3))
+        if not len(ys):
+            break
+        out = cv.copy()
+        for y, x in zip(ys, xs):
+            cols = [n[y, x] for n in nb if n[y, x] != '.']
+            best = max(cols, key=lambda c: (cols.count(c), -cols.index(c)))
+            out[y, x] = best
+        cv = out
+    return cv
+
+
 def assemble(f):
     layers = body_layers(f)
     cv = layers[0]
     for L in layers[1:]:
         cv = over(cv, L)
-    return cv
+    return fill_holes(cv, M_THROAT)
 
 
 # ---------------------------------------------------------------- les ailes déployées, redessinées
@@ -793,6 +815,12 @@ def draw_wings(f, field):
         S = np.array([root[0] + OX + dx, root[1] + OY + dy])
         cv = empty()
         draw_wing(cv, st, S, T, blaze=blaze, motif=mot)
+        # nettoyage : les miettes (moins de 6 pixels détachés de l'aile) sont retirées
+        lab, n = label(cv != '.')
+        if n > 1:
+            sizes = np.bincount(lab.ravel())
+            small = np.isin(lab, [i for i in range(1, n + 1) if sizes[i] < 6])
+            cv[small] = '.'
         out.append(cv)
     return out[0], out[1]
 
@@ -1147,7 +1175,7 @@ def fx_charge(level):
             puff(front, (bx - 60, GROUND - 3), 3 + level, 'nop')
             puff(front, (bx + 50, GROUND - 3), 3 + level, 'nop')
         if level >= 1:
-            ribbon(back, (bx - 4, by - 30), 88, 32, 160, 20, 5.0, head=0.65, tones='wxyzv', tilt=8)
+            ribbon(back, (bx - 4, by - 30), 88, 32, 200, 96, 5.0, head=0.65, tones='wxyzv', tilt=8)
             curl(back, (bx + 70, by - 70), 10, 0, turn=300, w=3.2, tones='wyz', cw=True)
             feather_fx(front, bx - 96, by - 10 - 8 * level, 2)
             feather_fx(front, bx + 64, by + 40 - 10 * level, 0)
@@ -1171,9 +1199,8 @@ def fx_gust(k):
     def fn(cv, back, front, f):
         x0 = SOL[0] - 40
         if k == 0:
-            for (y, L, w, up) in ((GROUND - 18, 190, 10.0, True), (GROUND - 58, 170, 8.5, False),
-                                  (GROUND - 100, 140, 7.0, True), (GROUND - 140, 110, 5.5, False)):
-                xs = x0 if y > GROUND - 60 else x0 + 100
+            for (y, xs, L, w, up) in ((GROUND - 16, SOL[0] - 30, 200, 10.0, True), (GROUND - 52, SOL[0] + 40, 170, 8.5, False),
+                                      (GROUND - 100, SOL[0] + 92, 130, 7.0, True), (GROUND - 150, SOL[0] + 138, 96, 5.5, False)):
                 gust(front, (xs, y + 10), (xs + L * 0.3, y + 22 * (1 if up else -1)), (xs + L * 0.65, y - 14 * (1 if up else -1)),
                      (xs + L, y), w, tones='wxyzv', curl_r=7, up=up)
             cloud(front, (SOL[0] - 70, GROUND - 6), 8, 'nop', seed=3)
@@ -1339,3 +1366,179 @@ def save_gif(path, images, durations):
         pal = sheet.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
     ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+# ---------------------------------------------------------------- la scène du jeu : le fond du clan du vent, les héros en face
+# Comme au combat (fonds/fondlib.py), mais vu dans le sens de l'animation (l'oiseau à gauche, tourné vers la droite) :
+# l'oiseau au milieu du côté ennemi (rang du milieu), les cinq héros à leurs places, retournés vers lui.
+FOND_W = 590
+SCENE_HEROES = [('kael', 0), ('eldra', 1), ('aldric', 2), ('mira', 3), ('tessa', 4)]
+
+
+def scene_layout():
+    sys.path.insert(0, os.path.join(HD, '..', 'fonds'))
+    import fondlib as F
+    boss_x = FOND_W - (F.place('ennemis', 0)[0] + F.place('ennemis', 3)[0]) // 2
+    boss = (boss_x, F.RANGS[1])
+    heroes = []
+    for name, slot in SCENE_HEROES:
+        x, y = F.place('heros', slot)
+        heroes.append((name, FOND_W - x, y))
+    return F, boss, heroes
+
+
+def hero_sprite(name):
+    h = hd.load(os.path.join(HD, name + '.txt'))
+    im = Image.fromarray(hd.frame(h, 0), 'RGBA').transpose(Image.FLIP_LEFT_RIGHT)
+    cw, ch, (sx, sy) = hd.case(h)
+    return im, (cw - 1 - sx, sy)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    both = anims['attaque'] + anims['speciale'] + anims['pose']
+    bb = bbox(both, 6)
+    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
+    k = 3
+    blocks = []
+    for name, per in (('pose', 6), ('attaque', 5), ('speciale', 4)):
+        box = GAME_BOX if name == 'pose' else bb
+        cells = [on_bg(img).crop(box) for img, _ in anims[name]]
+        blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + per - 1) // per) * (cells[0].height * k + 22) for _, per, cells, _ in blocks)
+    sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    y = 6
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE (bec-tempete)',
+              'speciale': 'ATTAQUE SPECIALE (ouragan)'}
+    for name, per, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % per == 0:
+                y += ch + 22
+            X = 6 + (i % per) * (cw + 6)
+            sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sheet.save(os.path.join(OUT, f'anim-{NAME}-planche.png'))
+    write_scene(anims)
+    return boxes
+
+
+def write_scene(anims):
+    """anim-oiseau-tempete-jeu.gif : pose ×2, attaque, pose, spéciale, pose, sur le fond du clan du vent (retourné),
+    avec les cinq héros en face, à la taille du jeu (1 pixel du dessin = 1 pixel du fond), ×2. Comme le fera le jeu :
+    l'oiseau reste à sa place ; la lame de vent vole jusqu'au héros du rang du milieu et y frappe ; l'ouragan tombe sur
+    CHAQUE héros (la partie « sur la cible » de la spéciale, posée à ses pieds, un peu décalée de l'un à l'autre)."""
+    F, boss, heroes = scene_layout()
+    fond = Image.open(os.path.join(ROOT, 'public', 'art', 'px', 'fonds', 'orin.webp')).convert('RGBA')
+    fond = fond.transpose(Image.FLIP_LEFT_RIGHT)
+    top = F.RANGS[0] - 300
+    bot = F.RANGS[2] + 30
+    fond = fond.crop((0, top, FOND_W, bot))
+    bx, by = boss[0], boss[1] - top
+    sprites = [(hero_sprite(n), x, y - top) for n, x, y in heroes]
+    near = sprites[[slot for _, slot in SCENE_HEROES].index(2)]     # le héros visé par la lame
+    jeu_a, jeu_s = JEU['attaque'], JEU['speciale']
+    # où la cible imaginée du GIF tombe dans la scène, et où est le vrai héros visé : la lame est poussée vers lui
+    tdx = near[1] - (bx + ENEMY_X - SOL[0])
+    tdy = near[2] - (by + GROUND - SOL[1])
+    seq = []
+    for img, ms in anims['pose'] * 2:
+        seq.append((img, ms, None))
+    i0, coup = jeu_a['tir'][0], jeu_a['coup']
+    for i, (img, ms) in enumerate(anims['attaque']):
+        seq.append((img, ms, ('a', i)))
+    for img, ms in anims['pose']:
+        seq.append((img, ms, None))
+    cut = jeu_s['coupe']
+    for i, (img, ms) in enumerate(anims['speciale']):
+        seq.append((img, ms, ('s', i)))
+    for img, ms in anims['pose']:
+        seq.append((img, ms, None))
+    frames = []
+    spec_imgs = [img for img, _ in anims['speciale']]
+    for img, ms, tgt in seq:
+        im = fond.copy()
+        a = img.copy()
+        extra = []                                   # (image, décalage) posés après les héros
+        if tgt is not None and tgt[0] == 'a':
+            i = tgt[1]
+            if i0 <= i < coup:
+                t = (i - i0 + 1) / (coup - i0 + 1)
+                pr = a.copy()
+                pr[:, :jeu_a['depuis']] = 0
+                a[:, jeu_a['depuis']:] = 0
+                extra.append((pr, (bx - SOL[0] + int(round(tdx * t)), by - SOL[1] + int(round(tdy * t)))))
+            elif i >= coup:
+                c = jeu_a['coupe']
+                hit = a.copy()
+                hit[:, :c] = 0
+                a[:, c:] = 0
+                extra.append((hit, (near[1] - ENEMY_X, near[2] - GROUND)))
+        if tgt is not None and tgt[0] == 's' and cut[tgt[1]] is not None:
+            a[:, cut[tgt[1]]:] = 0                   # ce qui tombe sur la cible est posé sur chaque héros, plus bas
+        bird = Image.fromarray(a, 'RGBA')
+        layers = [(by, bird, (bx - SOL[0], by - SOL[1]))]
+        for (spr, (ax, ay)), x, y in sprites:
+            layers.append((y, spr, (x - ax, y - ay)))
+        layers.sort(key=lambda L: L[0])
+        for _, s_im, xy in layers:
+            im.alpha_composite(s_im, xy)
+        for pr, xy in extra:
+            im.alpha_composite(Image.fromarray(pr, 'RGBA'), xy)
+        if tgt is not None and tgt[0] == 's':
+            i = tgt[1]
+            for n, ((spr, _), x, y) in enumerate(sorted(sprites, key=lambda s_: s_[1])):
+                j = i - (n % 2)                     # un petit décalage d'un héros à l'autre
+                if j < 0 or cut[j] is None:
+                    continue
+                part_ = spec_imgs[j].copy()
+                part_[:, :cut[j]] = 0
+                im.alpha_composite(Image.fromarray(part_, 'RGBA'), (x - ENEMY_X, y - GROUND))
+        frames.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), frames, [ms for _, ms, _ in seq])
+
+
+def essai(folder):
+    """images de contrôle : chaque image seule ×3 (zone utile)"""
+    os.makedirs(folder, exist_ok=True)
+    anims = build_all()
+    bb = bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 4)
+    for name, fr in anims.items():
+        for i, (img, ms) in enumerate(fr):
+            im = on_bg(img).crop(GAME_BOX if name == 'pose' else bb)
+            im.resize((im.width * 3, im.height * 3), Image.NEAREST).save(os.path.join(folder, f'{name}-{i:02d}.png'))
+
+
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    # le bec-tempête : l'oiseau reste à sa place ; la lame de vent quitte le bec (images 3 et 4 : elle vole, tout ce
+    # qui est à droite de la colonne 322 pendant le vol est la lame) et frappe la poitrine de la cible (images 5 à 8)
+    'attaque': dict(genre='tir', tir=(3, 5), coup=5, depuis=322, cible=(ENEMY_X, GROUND - 52), coupe=ENEMY_X - 50),
+    # l'ouragan : la charge (ailes qui s'ouvrent, éclairs qui s'embrasent), le battement et la rafale restent avec
+    # l'oiseau (images 0 à 6) ; le nuage, le vent qui tourne, les éclairs et les plumes (images 7 à 11) sont posés aux
+    # pieds de CHAQUE héros
+    'speciale': dict(genre='sort', coup=8, cible=(ENEMY_X, GROUND - 46),
+                     coupe=[None] * 7 + [ENEMY_X - 58] * 5 + [None] * 3, charge=(1, 4)),
+}
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 2 and sys.argv[1] == 'essai':
+        essai(sys.argv[2])
+    else:
+        anims = build_all()
+        write_outputs(anims)
+        for n in ('pose', 'attaque', 'speciale'):
+            print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+        print('écrit dans', OUT)

@@ -420,24 +420,25 @@ def cloud(cv, c, r, tones='jjkl', hollow=0.0, seed=0, ground=True):
         puff(cv, (cx + dx, yy), rr, tones)
 
 
-def pop(cv, c, r, facing=-90.0, tones='fjjkl'):
-    """l'éclat d'un choc, en nuage : un coeur clair et des pétales arrondis (plus gros vers « facing », en degrés)"""
-    cx, cy = c
-    lobes = [(0, 0, r)]
-    for da in (-70, -25, 20, 65, 150, 210):
-        a = math.radians(facing + da)
-        lobes.append((r * 0.95 * math.cos(a), -r * 0.95 * math.sin(a), r * (0.62 if abs(da) < 80 else 0.45)))
-    m = len(tones)
-    best = {}
-    for (dx, dy, rr) in lobes:
-        for y in range(int(cy + dy - rr - 1), int(cy + dy + rr + 2)):
-            for x in range(int(cx + dx - rr - 1), int(cx + dx + rr + 2)):
-                if math.hypot(x + 0.5 - cx - dx, y + 0.5 - cy - dy) <= rr:
-                    D = math.hypot(x + 0.5 - cx, y + 0.5 - cy) / (r * 1.5)
-                    if D < best.get((x, y), 9):
-                        best[(x, y)] = D
-    for (x, y), D in best.items():
-        put(cv, x, y, tones[min(m - 1, int(D * m))])
+def burst(cv, cx, w, h, seed=0):
+    """l'éclair d'un choc au sol : un dôme bas et large (coeur blanc doré, puis poussière claire) bordé de bouffées
+    rondes ; posé sur le sol, jamais une boule ni des rayons"""
+    rng = np.random.RandomState(seed)
+    for y in range(int(GROUND - h) - 1, GROUND + 1):
+        for x in range(int(cx - w / 2) - 1, int(cx + w / 2) + 2):
+            d = math.hypot((x + 0.5 - cx) / (w / 2), (y + 0.5 - GROUND) / h)
+            if d <= 1:
+                put(cv, x, y, 'f' if d < 0.45 else 'j' if d < 0.78 else 'k')
+    for i in range(5):
+        a = math.radians(160 - i * 35 + rng.uniform(-8, 8))
+        px, py = cx + math.cos(a) * w * 0.5, GROUND - math.sin(a) * h * 0.95
+        puff(cv, (px, min(py, GROUND - 2)), max(1.6, h * 0.38 * rng.uniform(0.8, 1.15)), 'jkl')
+
+
+def swoosh(cv, pts, wmax, tones='jjkl'):
+    """la traînée d'un geste rapide : un croissant de poussière, fin aux deux bouts, épais au milieu"""
+    n = len(pts) - 1
+    stroke(cv, pts, [0.6 + wmax * math.sin(math.pi * i / n) ** 0.8 for i in range(n + 1)], tones)
 
 
 # un caillou qui se détache (pose)
@@ -714,7 +715,7 @@ def eruption_small(cv, back, k):
         spike(back, X - 1, 56 * grow, 17, lean=1, seed=3, sink=sink)
         spike(cv, X + 31, 16 * grow, 10, lean=7, seed=4, sink=sink)
     if k == 0:
-        pop(cv, (X, GROUND - 8), 9, facing=90)
+        burst(cv, X, 30, 9, seed=1)
     if k <= 5:
         throw(cv, (X - 2, GROUND - 20), TARGET_BITS, k + 1)
     if 1 <= k <= 4:
@@ -747,18 +748,15 @@ def fx_attack(f):
                     rock(front, (FIST_F_C + fx + dx + 14, GROUND - 2), 1.6, seed=20 + i)
     elif kind == 'smear':
         # la traînée du poing qui s'abat : deux rubans de poussière courbes, du haut du geste vers le poing
-        pts = bezier((FIST_F_C - 22, GROUND - 92), (FIST_F_C - 4, GROUND - 104), (FIST_F_R + 14, GROUND - 76),
-                     (FIST_F_R + 10, GROUND - 36), 50)
-        stroke(back, pts, [1 + 15 * (i / 50) ** 1.4 for i in range(51)], 'jjkl')
-        pts = bezier((FIST_F_C - 10, GROUND - 70), (FIST_F_C + 2, GROUND - 80), (FIST_F_R + 18, GROUND - 60),
-                     (FIST_F_R + 16, GROUND - 32), 40)
-        stroke(back, pts, [1 + 6 * (i / 40) ** 1.4 for i in range(41)], 'jkl')
+        pts = bezier((FIST_F_R - 14, GROUND - 92), (FIST_F_R + 6, GROUND - 90), (FIST_F_R + 16, GROUND - 66),
+                     (FIST_F_R + 12, GROUND - 24), 50)
+        swoosh(back, pts, 13)
     elif kind == 'hit':
         o = (FIST_F_R + 4, GROUND - 8)
         if k == 0:
             cloud(back, (FIST_F_C - 18, GROUND - 2), 13, 'jjkl', seed=1)
             cloud(front, (FIST_F_R + 24, GROUND - 2), 13, 'jjkl', seed=2)
-            pop(front, (FIST_F_R + 8, GROUND - 9), 15, facing=60)
+            burst(front, FIST_F_R + 6, 40, 12, seed=2)
             crack(back, FIST_F_R + 8, FIST_F_R + 40, seed=2)
         elif k <= 4:
             h = min(0.85, 0.2 * k)
@@ -855,12 +853,12 @@ def fx_special(f):
             crack(back, FIST_F_C - 20, FIST_F_R + 20, seed=14)
     elif kind == 'smear':
         # le poing de devant : la traînée passe derrière lui ; le poing proche (devant le corps) : elle longe son flanc
-        pts = bezier((FIST_F_C - 20, GROUND - 100), (FIST_F_C - 10, GROUND - 110), (FIST_F_R + 20, GROUND - 80),
-                     (FIST_F_R + 14, GROUND - 36), 50)
-        stroke(back, pts, [1 + 15 * (i / 50) ** 1.4 for i in range(51)], 'jjkl')
-        pts = bezier((FIST_N_C - 20, GROUND - 130), (FIST_N_C - 44, GROUND - 120), (FIST_N_C - 50, GROUND - 80),
-                     (FIST_N_C - 42, GROUND - 40), 50)
-        stroke(front, pts, [1 + 11 * (i / 50) ** 1.4 for i in range(51)], 'jjkl')
+        pts = bezier((FIST_F_R - 14, GROUND - 100), (FIST_F_R + 8, GROUND - 98), (FIST_F_R + 18, GROUND - 70),
+                     (FIST_F_R + 14, GROUND - 24), 50)
+        swoosh(back, pts, 14)
+        pts = bezier((FIST_N_C - 14, GROUND - 120), (FIST_N_C - 38, GROUND - 116), (FIST_N_C - 46, GROUND - 80),
+                     (FIST_N_C - 40, GROUND - 30), 50)
+        swoosh(back, pts, 12)
         for i, (ox, lag, size) in enumerate(LEVITATE):
             rock(front, (FIST_N_C + ox, GROUND - 3), size * 0.8, seed=40 + i, ang=40)
     else:
@@ -892,8 +890,8 @@ def slam(back, front, k):
         cloud(back, (FIST_F_C - 16, GROUND - 2), r - 2, 'jjkl', hollow=h, seed=23)
         cloud(back, (FIST_F_R + 20 + 4 * k, GROUND - 2), r, 'jjkl', hollow=h, seed=24)
     if k == 0:
-        pop(front, (FIST_N_C + 30, GROUND - 8), 11, facing=110)
-        pop(front, (FIST_F_R + 8, GROUND - 8), 12, facing=60)
+        burst(front, FIST_N_C + 32, 34, 10, seed=3)
+        burst(front, FIST_F_R + 8, 44, 13, seed=4)
     if k <= 8:
         crack(back, FIST_N_C - 52, FIST_N_C - 22, seed=3)
         crack(back, FIST_F_R + 6, FIST_F_R + 30 + 26 * min(k, 2), seed=4)
@@ -926,7 +924,7 @@ def big(front, back, k):
         for i, (dx, hh, w, lean, kind, plan) in enumerate(BIG):
             spike(front if plan else back, X + dx, hh * grow, w, lean, kind, seed=10 + i, sink=sink)
     if k == 0:
-        pop(front, (X - 2, GROUND - 9), 10, facing=90)
+        burst(front, X - 2, 40, 12, seed=5)
     if k <= 5:
         throw(front, (X, GROUND - 26), BIG_BITS, k + 1)
     if 1 <= k <= 5:
