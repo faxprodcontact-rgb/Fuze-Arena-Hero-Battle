@@ -683,7 +683,7 @@ def draw_hip(cv, f, body, ctx):
     ctx.pan = musket_at(O, ang, 27.5, -1.5)
 
 
-BUTT_AIM = (53.0, 61.0)                 # épaulé : le haut de la plaque de couche contre l'épaule (grille)
+BUTT_AIM = (53.0, 62.0)                 # épaulé : le haut de la plaque de couche contre l'épaule (grille)
 
 
 def draw_shoulder(cv, f, body, ctx):
@@ -1493,12 +1493,12 @@ SPECIALE = [
     dict(AIM, fired=True, lean=-1, head=(0, 2), aile='haut', cri=1, ab=-2, aq=-2, e=0, flash=22,
          fx=[fx_fire], ms=60),
     # 5-6 : le recul la repousse, le canon se cabre ; la balle d'eau file vers l'ennemi
-    dict(AIM, fired=True, ang=7.125, butt=(51.0, 61.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=-1,
+    dict(AIM, fired=True, ang=7.125, butt=(51.0, 62.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=-1,
          e=1, fx=[fx_smoke(0, SPEC_AT, spark=False), fx_shot(48, 34, 1.2), fx_wake(0), fx_kick(0)], ms=60),
-    dict(AIM, fired=True, ang=7.125, butt=(51.0, 61.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=1,
+    dict(AIM, fired=True, ang=7.125, butt=(51.0, 62.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=1,
          e=1, fx=[fx_smoke(1, SPEC_AT), fx_shot(84, 40, 2.6, 0.2), fx_wake(1), fx_kick(1)], ms=60),
     # 7 : la balle éclate sur l'ennemi — arrêt sur l'image
-    dict(AIM, fired=True, ang=3.576, butt=(52.0, 61.0), lean=-2, s=0, head=(0, 2), cri=1, ab=-1, aq=1, e=0,
+    dict(AIM, fired=True, ang=3.576, butt=(52.0, 62.0), lean=-2, s=0, head=(0, 2), cri=1, ab=-1, aq=1, e=0,
          fx=[fx_smoke(2, SPEC_AT), fx_wake(2), fx_impact(0), fx_kick(2)], ms=200),
     # 8-11 : les nappes d'eau s'ouvrent et retombent en pluie ; elle se redresse, l'arme encore épaulée
     dict(AIM, fired=True, lean=-1, head=(1, 2), ah=(0, 1), aq=0, e=-1,

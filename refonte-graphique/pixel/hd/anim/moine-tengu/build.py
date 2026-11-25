@@ -647,10 +647,10 @@ def draw_arm(cv, S, G, bend=1.0, elbow=None):
     E = np.array(elbow, float) if elbow is not None else ik(S, Wr, L_UP, L_FORE, bend)
     v = E - S
     Q = S + 0.42 * v
-    capsule(cv, S, Q, 10.6, 9.2, shade_cloth, rim=True)
+    capsule(cv, S, Q, 10.6, 9.2, shade_cloth, kbias=0.32, rim=True)
     # le bourrelet (le bord roulé de la manche, côté coude) : un anneau d'ombre sous la boule
     R = S + 0.56 * v
-    capsule(cv, Q, R, 8.4, 7.2, shade_cloth, kbias=-0.35)
+    capsule(cv, Q, R, 8.4, 7.2, shade_cloth, kbias=-0.15, rim=True)
     capsule(cv, R - 0.08 * v, E, 4.6, 4.3, shade_skin)
     capsule(cv, E, Wr, 4.3, 3.7, shade_skin)
     dn = np.round(np.array(G, float) - (G0 + np.array([OX, OY]))).astype(int)
