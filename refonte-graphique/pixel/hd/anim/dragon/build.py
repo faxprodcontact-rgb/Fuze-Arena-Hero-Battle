@@ -770,12 +770,13 @@ def wing_skeleton(name, u, flap=0.0, lift=0.0, off=(0, 0), hoff=None):
     ox, oy = off
     B = np.array(sp['B'], float) + (ox, oy)
     E = np.array([lerp(sp['E0'][0], sp['E1'][0], u), lerp(sp['E0'][1], sp['E1'][1], u)]) + (ox, oy)
-    a = math.radians(lerp(sp['a0'], sp['a1'], u) + lift - flap * (1 if name == 'near' else -1) * 0.4)
+    sg = 1 if name == 'near' else -1             # aile proche : les doigts partent à gauche ; lointaine : à droite
+    a = math.radians(lerp(sp['a0'], sp['a1'], u) + sg * (0.4 * flap - lift))
     Wr = E + sp['arm'] * np.array([math.cos(a), -math.sin(a)])
     tips = []
     for (L, f0, f1) in sp['fingers']:
         # en se repliant, les doigts raccourcissent un peu à l'oeil (ils se couchent vers nous) : pas en s'ouvrant
-        aa = math.radians(lerp(f0, f1, u) + flap * (1 if name == 'near' else -1))
+        aa = math.radians(lerp(f0, f1, u) + sg * flap)
         tips.append(Wr + L * np.array([math.cos(aa), -math.sin(aa)]))
     hx, hy = hoff if hoff is not None else (ox, oy)
     Hp = np.array([lerp(sp['H0'][0], sp['H1'][0], u), lerp(sp['H0'][1], sp['H1'][1], u)]) + (hx, hy)
@@ -1144,7 +1145,249 @@ ATTAQUE = [
     dict(sq=1, hrel=(0, 1), lagN=(0, -1), lagF=(0, -1), ms=160),
     dict(ms=180),
 ]
-SPECIALE = [dict(ms=100, wings=dict(u=0.0)), dict(ms=100, wings=dict(u=0.5)), dict(ms=100, wings=dict(u=1.0)), dict(ms=100, pitch=-10, hrel=(-4,-14), wings=dict(u=1.0, flap=-10))]
+SPECIALE = []
+
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Tempête de feu »
+# Il se ramasse, puis se cabre sur ses pattes de devant tendues : les ailes se DÉPLOIENT (redessinées : le bras sort du
+# dos, le poignet monte, les doigts s'ouvrent en éventail), la tête se relève, le four du poitrail chauffe jusqu'au
+# blanc (la charge), des braises montent, la fumée sort des naseaux, des flammes lèchent la gueule. Il tient la pose
+# (les ailes vont encore un peu plus haut : suivi). Puis il jette la tête vers le ciel et crache une boule de feu qui
+# monte en tournant au-dessus des héros (coup d'ailes vers le bas). Elle éclate hors de l'image : une pluie de blocs de
+# lave enflammés tombe en biais sur CHAQUE héros (dans le jeu : la partie « sur la cible » est posée sur chacun) ;
+# l'impact est tenu (arrêt sur l'image) : gerbe de flammes courbes, lave et roche projetées, puis le feu continue de
+# brûler (la brûlure) et se défait en volutes de fumée. Le dragon replie ses ailes et se repose lourdement.
+MOUTH = (240, 117)                          # le fond de la gueule (grille), d'où sort le feu
+
+
+def mouth_point(f):
+    return c2(MOUTH[0], MOUTH[1], f)
+
+
+def fx_charge(level):
+    """la charge : braises qui montent autour du poitrail et sous la gueule, flammes qui lèchent la gueule,
+    fumée chaude aux naseaux ; level 0 … 3"""
+    def f(cv, back, front, ctx):
+        mx, my = mouth_point(ctx)
+        cx, cy = c2(186, 160, None)
+        bx, by = at(base_field(ctx), 186, 160)
+        cx, cy = cx + bx, cy + by
+        rng = np.random.RandomState(40 + level)
+        for i in range(5 + 3 * level):
+            a = rng.uniform(0, 2 * math.pi)
+            r = rng.uniform(26, 60)
+            x = cx + r * math.cos(a) * 1.1
+            y = cy - abs(r * math.sin(a)) - level * 6 - rng.uniform(0, 14)
+            if x > ENEMY_X - 60:
+                continue
+            ember(front if i % 2 else back, x, y, big=i % 3 == 0)
+        if level >= 1:
+            # des flammes sortent de la gueule (le feu monte dans la gorge)
+            tongue(front, (mx - 2, my + 4), 6 + 3 * level, 3 + level * 0.8, bend=0.6, tones='wvuts', lean=0.5)
+            if level >= 2:
+                tongue(front, (mx + 3, my + 6), 4 + 2 * level, 2.6, bend=-0.6, tones='vuts', lean=0.8)
+        nx, ny = c2(NOSTRIL[0], NOSTRIL[1], ctx)
+        if level >= 2:
+            smoke_plume(front, (nx + 1, ny - 1), 8 + 3 * level, 2.0, sway=0.7, tones='ijl', curl_r=2.2, cw=True)
+        elif level == 1:
+            puff(front, (nx + 2, ny - 2), 1.8, 'ijl')
+    return f
+
+
+def fireball(cv, x, y, r, trail_from, spin=0):
+    """la boule de feu : un coeur blanc, une enveloppe de flammes qui lèche vers l'arrière, une traînée courbe"""
+    tx, ty = trail_from
+    pts = bezier((tx, ty), (tx + (x - tx) * 0.15 - 10, ty + (y - ty) * 0.45), (x - (x - tx) * 0.3 + 6, y - (y - ty) * 0.1 + 8), (x, y), 30)
+    stroke(cv, pts, [0.5 + (r * 1.3) * (i / 30) ** 1.4 for i in range(31)], 'vuutsr')
+    # langues qui lèchent vers l'arrière (vers le bas à gauche), en tournant
+    for j in range(5):
+        a = math.radians(200 + j * 34 + spin)
+        bx, by = x + r * 0.7 * math.cos(a), y - r * 0.7 * math.sin(a)
+        tongue(cv, (bx, by + r * 0.2), r * 0.9, r * 0.55, bend=(1 if j % 2 else -1) * 0.8, tones='vutsr', lean=-0.9 + j * 0.2,
+               fork=False)
+    puff(cv, (x, y), r, 'wwwvvuut')
+    puff(cv, (x + 1, y - 1), r * 0.55, 'w')
+
+
+def fx_breath(k):
+    """le jet de feu vers le ciel : k = 0 (la boule part), 1 (elle monte), 2 (partie : la traînée se défait)"""
+    def f(cv, back, front, ctx):
+        mx, my = mouth_point(ctx)
+        if k == 0:
+            fireball(front, mx + 26, my - 46, 12, (mx - 2, my + 2), spin=0)
+            tongue(front, (mx, my + 6), 14, 6, bend=0.5, tones='wvuts', lean=0.9, fork=False)
+        elif k == 1:
+            # la colonne de feu qui suit la boule
+            pts = bezier((mx - 1, my + 2), (mx + 12, my - 30), (mx + 30, my - 70), (mx + 52, my - 116), 40)
+            stroke(front, pts, [2 + 7 * math.sin(math.pi * min(1, i / 40 * 1.1)) for i in range(41)], 'wvuutsr')
+            fireball(front, mx + 58, my - 128, 14, (mx + 40, my - 90), spin=40)
+            cloud(back, (mx + 6, my - 24), 6, 'iijl', seed=70, ground=False)
+        else:
+            pts = bezier((mx + 14, my - 40), (mx + 26, my - 70), (mx + 40, my - 100), (mx + 54, my - 140), 40)
+            stroke(front, pts, [0 if i < 12 else 1 + 4 * math.sin(math.pi * (i - 12) / 28) for i in range(41)], 'vutsr')
+            smoke_column(back, (mx + 18, my - 30), 40, 8, hollow=0.25, seed=71, lean=1.2)
+            for (dx, dy) in ((30, -60), (44, -96), (20, -84), (52, -120)):
+                ember(front, mx + dx, my + dy, big=dx > 40)
+            puff(front, (mx + 2, my + 1), 2.6, 'vut')
+    return f
+
+
+def smoke_column(cv, base, h, r, hollow=0.0, seed=0, lean=1.0):
+    """une colonne de fumée : des bouffées de plus en plus petites qui montent en ondulant, une volute au sommet"""
+    bx, by = base
+    n = 4
+    for i in range(n):
+        s_ = i / (n - 1)
+        x = bx + lean * 3 * math.sin(s_ * 2.6 + seed)
+        y = by - s_ * h
+        cloud(cv, (x, y), r * (1 - 0.45 * s_), 'iijlm' if i == 0 else 'iijl', hollow=hollow, seed=seed + i, ground=False)
+    curl(cv, (bx + lean * 3 * math.sin(2.6 + seed) + 2, by - h - r * 0.4), r * 0.7, 270, turn=250,
+         w=max(1.6, r * 0.45), tones='iij', cw=lean < 0)
+
+
+def meteor(cv, x, y, r, vx, vy, k=0):
+    """un bloc de lave enflammé qui tombe : traînée de feu courbe derrière lui, roche sombre fendue de lave, le bord
+    avant chauffé à blanc"""
+    L = math.hypot(vx, vy)
+    ux, uy = vx / L, vy / L
+    nx, ny = -uy, ux
+    tail = r * 6
+    pts = bezier((x - ux * tail + nx * r * 1.2, y - uy * tail + ny * r * 1.2), (x - ux * tail * 0.6 + nx * r * 0.8, y - uy * tail * 0.6 + ny * r * 0.8),
+                 (x - ux * tail * 0.25, y - uy * tail * 0.25), (x, y), 30)
+    stroke(cv, pts, [0.4 + r * 2.4 * (i / 30) ** 1.2 for i in range(31)], 'vuutsr')
+    tongue(cv, (x - ux * r * 0.6, y - uy * r * 0.6), r * 3.2, r * 1.3, bend=0.6, tones='vutsr', lean=-ux * 1.6, fork=False)
+    # la roche (lumière en haut à droite, bord avant chauffé)
+    for yy in range(int(y - r - 1), int(y + r + 2)):
+        for xx in range(int(x - r - 1), int(x + r + 2)):
+            v = np.array([xx + 0.5 - x, yy + 0.5 - y])
+            d = np.linalg.norm(v)
+            if d <= r:
+                lit = float(v @ LN) / r
+                front_ = float(v @ np.array([ux, uy])) / r
+                ch = '2' if lit < -0.4 else '3' if lit < 0.1 else '4' if lit < 0.6 else '5'
+                if front_ > 0.55:
+                    ch = 'v' if front_ > 0.8 else 'u'
+                elif abs(v[0] * 0.8 - v[1] * 0.5 + (k % 3) - 1) < 0.6 and d < r * 0.8:
+                    ch = 't'                                     # une fêlure de lave
+                put(cv, xx, yy, ch)
+
+
+# la pluie de feu sur UNE cible (aux pieds de ENEMY_X) : trois blocs qui tombent en biais (venus du haut, côté dragon)
+ROCKS = [(0, 0, 6.5), (-22, -26, 4.2), (20, -14, 3.6)]       # décalage d'arrivée x, retard (pixels de chute), rayon
+FALL = (0.55, 1.0)                                         # direction de la chute (vers la droite, en bas)
+
+
+def fx_rain(k):
+    """k = 0 : les blocs apparaissent en haut ; 1 : ils tombent ; 2 : ils touchent presque"""
+    def f(cv, back, front, ctx):
+        ux, uy = FALL
+        for i, (dx, delay, r) in enumerate(ROCKS):
+            # la distance qui reste avant le sol
+            left = (200, 120, 46)[k] + delay * 1.6
+            X = ENEMY_X + dx - ux * left * 0.95
+            Y = GROUND - 6 - uy * left
+            if Y < -10 or X < ENEMY_X - 44:
+                continue
+            meteor(front if i == 0 else back, X, Y, r, ux, uy, k=i)
+    return f
+
+
+def fx_impact(k):
+    """l'impact sur la cible : k = 0 (l'impact, tenu), 1 (la gerbe monte), 2 … 5 (le feu brûle, la fumée monte et
+    se défait), 6 (les dernières braises)"""
+    def f(cv, back, front, ctx):
+        X, gy = ENEMY_X, GROUND
+        # le sol : une flaque de lave et la roche brûlée (de plus en plus refroidie)
+        hot = max(0, 4 - k)
+        for x in range(X - 34, X + 35):
+            d = abs(x - X) / 34
+            if d > 1:
+                continue
+            if hot >= 3:
+                ch = 'w' if d < 0.25 else 'v' if d < 0.5 else 'u' if d < 0.75 else 't'
+            elif hot >= 1:
+                ch = 'v' if d < 0.2 else 'u' if d < 0.45 else 't' if d < 0.7 else 's'
+            else:
+                ch = 't' if d < 0.15 else 's' if d < 0.4 else 'b'
+            put(back, x, gy, ch)
+            if d < 0.6 and k < 5:
+                put(back, x, gy - 1, 'g' if hot >= 2 else 's')
+        if k == 0:
+            # le dôme blanc de l'impact et les premières langues, très ventrues
+            for (ox, rr) in ((0, 13), (-12, 8), (12, 9)):
+                for yy in range(int(gy - rr), gy + 1):
+                    for xx in range(int(X + ox - rr), int(X + ox + rr + 1)):
+                        d = math.hypot(xx + 0.5 - X - ox, (yy + 0.5 - gy) * 1.2) / rr
+                        if d <= 1:
+                            put(front, xx, yy, 'w' if d < 0.55 else 'v' if d < 0.8 else 'u')
+            for (ox, hh, ww, bd) in ((0, 34, 16, 0.3), (-16, 22, 10, -0.9), (17, 24, 10, 0.9)):
+                tongue(back, (X + ox, gy - 2), hh, ww, bend=bd, tones='wvuuts', lean=0.0)
+            for (vx, vy, d) in ((-1, -1, 22), (1, -1.1, 24), (-0.4, -1, 30), (0.6, -1, 32), (1, -0.5, 26), (-1, -0.4, 24)):
+                drop(front, X + vx * d, gy - 10 + vy * d, vx, vy, 2)
+        elif k == 1:
+            for (ox, hh, ww, bd) in ((0, 58, 22, 0.4), (-20, 38, 14, -0.9), (20, 42, 15, 0.9), (-32, 18, 8, -0.6),
+                                     (33, 20, 8, 0.7)):
+                tongue(back if abs(ox) < 25 else front, (X + ox, gy - 1), hh, ww, bend=bd, tones='wvuutsr', lean=0.0)
+            for (vx, vy, d) in ((-1, -0.6, 36), (1, -0.8, 38), (-0.5, -1, 46), (0.7, -1, 44), (0.2, -1, 56)):
+                drop(front, X + vx * d, gy - 16 + vy * d + d * 0.12, vx, vy + 0.2, 2 if d > 40 else 1)
+            for (ox, oy, kk) in ((-30, -38, 0), (28, -46, 1), (-6, -62, 2)):
+                chunk(front, X + ox, gy + oy, k=kk, flip=ox < 0)
+            cloud(back, (X - 4, gy - 60), 9, 'iijl', seed=80, ground=False)
+        elif k == 2:
+            for (ox, hh, ww, bd) in ((0, 46, 18, -0.5), (-18, 30, 12, 0.8), (18, 34, 12, -0.8), (-30, 14, 7, -0.5),
+                                     (30, 16, 7, 0.6)):
+                tongue(back if abs(ox) < 25 else front, (X + ox, gy - 1), hh, ww, bend=bd, tones='vuutsr', lean=0.0)
+            smoke_column(back, (X - 2, gy - 52), 30, 10, seed=81, lean=1.0)
+            for (vx, vy, d) in ((-1, 0.2, 44), (1, 0.1, 46), (-0.4, -0.4, 52)):
+                drop(front, X + vx * d, gy - 12 + vy * d + 14, vx, 1)
+            for (ox, oy, kk) in ((-40, -16, 0), (38, -22, 1)):
+                chunk(front, X + ox, gy + oy, k=kk, flip=ox < 0)
+        elif k == 3:
+            for (ox, hh, ww, bd) in ((-2, 30, 14, 0.6), (-16, 20, 10, -0.7), (15, 22, 10, 0.7), (-28, 10, 6, -0.4),
+                                     (28, 11, 6, 0.5)):
+                tongue(back, (X + ox, gy - 1), hh, ww, bend=bd, tones='vutsr', lean=0.0, fork=hh > 25)
+            smoke_column(back, (X, gy - 40), 40, 12, hollow=0.15, seed=82, lean=-1.0)
+            for (ox, oy) in ((-20, -50), (14, -62), (26, -40)):
+                ember(front, X + ox, gy + oy, big=ox > 0)
+        elif k == 4:
+            for (ox, hh, ww, bd) in ((-4, 18, 9, -0.6), (10, 14, 8, 0.7), (-18, 9, 5, 0.5), (22, 8, 5, -0.5)):
+                tongue(back, (X + ox, gy - 1), hh, ww, bend=bd, tones='vutsr', lean=0.0, fork=False)
+            smoke_column(back, (X + 2, gy - 34), 46, 12, hollow=0.45, seed=83, lean=1.0)
+            for (ox, oy) in ((-12, -40), (18, -56), (4, -70)):
+                ember(front, X + ox, gy + oy)
+        elif k == 5:
+            for (ox, hh, ww, bd) in ((-2, 10, 6, 0.6), (12, 7, 5, -0.6), (-14, 6, 4, -0.5)):
+                tongue(back, (X + ox, gy - 1), hh, ww, bend=bd, tones='uts', lean=0.0, fork=False)
+            smoke_plume(back, (X - 2, gy - 12), 40, 4, sway=1.2, tones='ijlm', curl_r=4, tail=0.35)
+            smoke_plume(back, (X + 12, gy - 6), 26, 3, sway=-1.0, tones='ijl', curl_r=3, tail=0.4, cw=True)
+        else:
+            tongue(back, (X + 2, gy - 1), 5, 4, bend=0.5, tones='uts', fork=False)
+            smoke_plume(back, (X + 4, gy - 30), 30, 3, sway=1.0, tones='ijl', curl_r=4, tail=0.7)
+            ember(front, X - 6, gy - 22)
+    return f
+
+
+WING_OPEN = dict(u=1.0, lift=10, flap=-6)
+SPECIALE = [
+    dict(sq=3, pitch=3, hrel=(2, 4), jaw=1, lagN=(0, -2), lagF=(0, -2), heat=1, ms=150),
+    dict(sq=1, pitch=-4, hrel=(-2, -6), jaw=2, wings=dict(u=0.4, uF=0.3, lift=4), heat=2, fx=[fx_charge(0)], ms=110),
+    dict(pitch=-9, hrel=(-5, -14), jaw=3, wings=dict(u=0.75, uF=0.7, lift=8, flap=-4), heat=2, fx=[fx_charge(1)], ms=110),
+    dict(by=-2, pitch=-12, hrel=(-8, -20), jaw=5, wings=dict(WING_OPEN), heat=3, fx=[fx_charge(2)], ms=200),
+    dict(by=-2, pitch=-13, hrel=(-9, -22), jaw=6, wings=dict(u=1.0, lift=13, flap=-11), heat=4, fx=[fx_charge(3)], ms=260),
+    dict(by=-2, pitch=-12, hrel=(2, -28), jaw=9, wings=dict(u=1.0, lift=8, flap=6), heat=4, fx=[fx_breath(0)], ms=80),
+    dict(by=-1, pitch=-11, hrel=(4, -26), jaw=8, wings=dict(u=1.0, lift=2, flap=20), heat=3, fx=[fx_breath(1)], ms=90),
+    dict(pitch=-8, hrel=(3, -20), jaw=6, wings=dict(u=1.0, lift=-2, flap=28), heat=2, fx=[fx_breath(2)], ms=100),
+    dict(pitch=-7, hrel=(4, -18), jaw=6, wings=dict(u=1.0, lift=2, flap=16), heat=2, fx=[fx_rain(0)], ms=90),
+    dict(pitch=-7, hrel=(4, -18), jaw=5, wings=dict(u=1.0, lift=4, flap=10), heat=2, fx=[fx_rain(1)], ms=80),
+    dict(pitch=-7, hrel=(4, -17), jaw=5, wings=dict(u=1.0, lift=4, flap=8), heat=2, fx=[fx_rain(2)], ms=70),
+    dict(pitch=-6, hrel=(4, -16), jaw=4, wings=dict(u=1.0, lift=4, flap=6), heat=2, fx=[fx_impact(0)], ms=220),
+    dict(pitch=-5, hrel=(3, -14), jaw=3, wings=dict(u=1.0, lift=2, flap=4), heat=1, fx=[fx_impact(1)], ms=110),
+    dict(pitch=-4, hrel=(2, -10), jaw=2, wings=dict(u=0.8, uF=0.85, lift=0, flap=2), heat=1, fx=[fx_impact(2)], ms=110),
+    dict(pitch=-2, hrel=(1, -6), jaw=1, wings=dict(u=0.55, uF=0.6), heat=1, fx=[fx_impact(3)], ms=120),
+    dict(pitch=-1, hrel=(0, -2), jaw=0, wings=dict(u=0.3, uF=0.3), fx=[fx_impact(4)], ms=120),
+    dict(sq=1, hrel=(0, 1), lagN=(0, -2), lagF=(0, -2), fx=[fx_impact(5)], ms=140),
+    dict(lagN=(0, 1), lagF=(0, 1), fx=[fx_impact(6)], ms=170),
+]
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
@@ -1357,7 +1600,8 @@ def essai(folder):
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
     'attaque': dict(genre='melee', coup=4, cible=(316, GROUND - 80), coupe=[None] * 4 + [312] * 3 + [None] * 3),
-    'speciale': dict(genre='sort', coup=0, cible=(ENEMY_X, GROUND - 44), coupe=[None]),
+    'speciale': dict(genre='sort', coup=11, cible=(ENEMY_X, GROUND - 44), coupe=[None] * 8 + [ENEMY_X - 48] * 10,
+                     charge=(1, 4)),
 }
 
 
