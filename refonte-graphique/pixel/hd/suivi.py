@@ -46,9 +46,10 @@ ROSTER = [
     ('arachne', 'myths-10', 'Arachné', 'terre', 'assassin', 'légendaire', 'femme-araignée'),
     ('isis', 'myths-9', 'Isis', 'terre', 'tireur', 'légendaire', 'chasseur au crâne de cerf'),
 ]
-VALIDES = {'lenore', 'garvin', 'nerith', 'ysolde', 'rook', 'velith', 'minotaure', 'arcan', 'myrr', 'mira', 'tessa', 'orin', 'eldra', 'corvin', 'jinn', 'zephyre', 'berold', 'aldric', 'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'arachne', 'kesha', 'celia', 'solenn', 'anubis', 'isis', 'kael', 'sable', 'tybalt', 'auriel', 'cyclope', 'zaroth', 'lilou'}
+VALIDES = {'lenore', 'garvin', 'nerith', 'ysolde', 'rook', 'velith', 'minotaure', 'myrr', 'mira', 'tessa', 'orin', 'eldra', 'corvin', 'jinn', 'zephyre', 'berold', 'aldric', 'elyon', 'ilian', 'gabryel', 'meduse', 'barzul', 'arachne', 'kesha', 'celia', 'solenn', 'anubis', 'isis', 'kael', 'sable', 'tybalt', 'auriel', 'cyclope', 'zaroth', 'lilou'}
 # héros dessinés dont les retours du propriétaire sont en train d'être faits : le retour demandé
 RETOUCHES = {
+    'arcan': "Plus de cheveux ; enlever la corne et la remplacer par des cheveux.",
 }
 # retouches faites, en attente du regard du propriétaire
 FAITES = set()
