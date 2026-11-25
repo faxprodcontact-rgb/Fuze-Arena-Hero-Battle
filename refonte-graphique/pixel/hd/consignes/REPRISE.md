@@ -43,3 +43,17 @@
 - Œil rouge de provocation : dessiné dans les spéciales de Zaroth, Corvin et Bérold, ET ajouté par l'effet générique
   « provocation » → en double en jeu. Garvin et Mira ne le dessinent plus. À retirer chez Zaroth/Corvin/Bérold si le
   propriétaire est d'accord (proposé le 25/11).
+
+## Monstres HD (décision du 25/11/2026)
+
+- Les 72 anciens dessins de monstres sont remplacés par **8 clans** (2 par élément) : chaque clan a pour chef un héros HD
+  (il joue le boss, affiché plus grand, sans nouveau dessin) et **3 monstres nouveaux** à son image (rapide, costaud,
+  tireur ou lanceur de sorts) = 24 monstres à dessiner puis animer. Plus loin dans la campagne : des équipes de héros
+  ennemis. Peut-être plus tard : quelques grands boss sans héros.
+- Fichiers : `../monstres/<nom>.txt` (même format que les héros, `id: mon-<clan>-<rôle>`), outils hd.py avec le chemin
+  (`python3 hd.py voir monstres/<nom>.txt`). Consigne des agents : `nouveau-monstre.md`.
+- Page de suivi : `python3 ../monstres/suivi.py` → `../sortie/suivi-monstres.html`, publiée sur
+  https://claude.ai/artifact/K6sefe6A2HDRodc9ci84W6 (ROSTER, VALIDES, RETOUCHES, FAITES dans suivi.py ; les monstres
+  animés : `sortie/anim-monstres/<nom>.gif` à publier avec `files`).
+- Le jeu choisit aujourd'hui les dessins de monstres par famille (`src/game/look.ts`) : à changer au branchement.
+- En cours : clan d'Arachné en test (araignée bondissante, cuirassée, tisseuse).

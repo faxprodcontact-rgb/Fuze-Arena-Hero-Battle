@@ -1,0 +1,99 @@
+<title>Monstres HD Fuze Arena</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@400;500;600&display=swap">
+<style>
+/* Mise en page : un bandeau d'avancement, puis une planche par élément (eau, terre, feu, vent), cartes de héros en grille. */
+:root {
+  --bg: #edf0f6; --panel: #ffffff; --stage: #dde3ee; --ink: #1a2034; --muted: #5a6378; --line: #d3d9e5;
+  --gold: #a8781e; --navy: #16233f;
+  --ok: #2f8a4e; --ok-bg: #e3f3e8; --warn: #a86812; --warn-bg: #fbefd9; --look: #2a62b0; --look-bg: #e2ecfa;
+  --todo: #6b7285; --todo-bg: #eceef3;
+  --eau: #2f7cc6; --terre: #8c6a2a; --feu: #cf4e28; --vent: #23a088;
+  --display: "Lilita One", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Fredoka", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0e1424; --panel: #172038; --stage: #222c48; --ink: #eef1f8; --muted: #a2abc2; --line: #2a3553;
+  --gold: #e3b75c; --navy: #0b1120;
+  --ok: #6fd39a; --ok-bg: #173628; --warn: #f0b45a; --warn-bg: #3a2a12; --look: #8db8f5; --look-bg: #182c4c;
+  --todo: #a2a9bb; --todo-bg: #232c44; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #0e1424; --panel: #172038; --stage: #222c48; --ink: #eef1f8; --muted: #a2abc2; --line: #2a3553;
+  --gold: #e3b75c; --navy: #0b1120;
+  --ok: #6fd39a; --ok-bg: #173628; --warn: #f0b45a; --warn-bg: #3a2a12; --look: #8db8f5; --look-bg: #182c4c;
+  --todo: #a2a9bb; --todo-bg: #232c44; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.45; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+.top { display: grid; gap: 14px; }
+.top h1 { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 5vw, 40px); margin: 0; letter-spacing: .5px; text-wrap: balance; }
+.top h1 span { color: var(--gold); }
+.top p { margin: 0; color: var(--muted); max-width: 66ch; }
+.bar { height: 12px; border-radius: 6px; background: var(--todo-bg); overflow: hidden; border: 1px solid var(--line); }
+.bar i { display: block; height: 100%; width: {{PCT}}%; background: linear-gradient(90deg, var(--gold), #e8c46a); }
+.stats { display: flex; flex-wrap: wrap; gap: 8px; }
+.stat { display: flex; gap: 8px; align-items: baseline; padding: 6px 12px; border-radius: 999px; font-variant-numeric: tabular-nums; }
+.stat b { font-family: var(--display); font-weight: 400; font-size: 20px; }
+.stat.valide { background: var(--ok-bg); color: var(--ok); } .stat.retouche { background: var(--warn-bg); color: var(--warn); }
+.stat.aregarder { background: var(--look-bg); color: var(--look); } .stat.afaire { background: var(--todo-bg); color: var(--todo); }
+.el > header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding-bottom: 8px;
+  border-bottom: 3px solid var(--accent); margin-bottom: 14px; }
+.el h2 { font-family: var(--display); font-weight: 400; font-size: 26px; margin: 0; color: var(--accent); }
+.el .count { color: var(--muted); font-variant-numeric: tabular-nums; }
+.eau { --accent: var(--eau); } .terre { --accent: var(--terre); } .feu { --accent: var(--feu); } .vent { --accent: var(--vent); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; display: grid; grid-template-rows: auto 1fr; }
+.pic { background: var(--stage); aspect-ratio: 128 / 120; display: grid; place-items: center; }
+.pic img { width: 100%; height: 100%; image-rendering: pixelated; object-fit: contain; }
+.card.afaire .pic img { width: 72%; height: auto; opacity: .55; filter: grayscale(.4); }
+.txt { padding: 10px 12px 12px; display: grid; gap: 4px; align-content: start; min-width: 0; }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.txt h3 { font-family: var(--display); font-weight: 400; font-size: 20px; margin: 0; letter-spacing: .3px; }
+.meta { margin: 0; color: var(--muted); font-size: 13px; }
+.note { margin: 4px 0 0; font-size: 13px; padding: 6px 8px; border-radius: 8px; background: var(--warn-bg); color: var(--ink); }
+.note.done { background: var(--look-bg); }
+.pill { font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; white-space: nowrap; }
+.pill.valide { background: var(--ok-bg); color: var(--ok); } .pill.retouche { background: var(--warn-bg); color: var(--warn); }
+.pill.aregarder { background: var(--look-bg); color: var(--look); } .pill.afaire { background: var(--todo-bg); color: var(--todo); }
+footer { color: var(--muted); font-size: 13px; }
+/* Héros animés : l'enchaînement respiration → attaque → attaque spéciale, sur le décor de combat, sur deux colonnes. */
+.card.anim .pic { aspect-ratio: auto; background: var(--navy); }
+.card.anim .pic img { height: auto; }
+@media (min-width: 540px) { .card.anim { grid-column: span 2; } }
+.stat.anim { background: var(--panel); color: var(--gold); border: 1px solid var(--line); }
+.tag { font-size: 11px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase; color: var(--gold); }
+.clan { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: grid; gap: 10px; }
+.clan > h3 { display: flex; align-items: center; gap: 10px; margin: 0; font-family: var(--display); font-weight: 400; font-size: 22px; }
+.clan > h3 img { width: 56px; height: 52px; image-rendering: pixelated; background: var(--stage); border-radius: 8px; }
+.clan > h3 small { font-family: var(--body); font-size: 13px; color: var(--muted); }
+.clans { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 520px), 1fr)); gap: 14px; }
+.trio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.trio .card { grid-template-rows: auto 1fr; }
+.trio .txt h3 { font-size: 16px; }
+.trio .pill { font-size: 10px; padding: 2px 6px; }
+.trio .card { min-width: 0; }
+.trio .row { flex-wrap: wrap; justify-content: flex-start; gap: 4px; }
+.trio .meta { font-size: 12px; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .clan { padding: 8px; } .trio { gap: 6px; } .trio .txt { padding: 8px; } .trio .txt h3 { font-size: 14px; } }
+.empty { font-family: var(--display); color: var(--todo); font-size: 15px; text-align: center; padding: 8px; }
+.card.anim .pic { aspect-ratio: auto; background: var(--navy); }
+.card.anim .pic img { height: auto; }
+</style>
+<div class="wrap">
+  <header class="top">
+    <h1>Monstres HD <span>{{DONE}} / {{TOTAL}}</span></h1>
+    <p>8 clans, 2 par élément. Chaque clan a pour chef un héros (il joue le boss) et 3 monstres à son image : un rapide et un costaud au premier rang, un tireur ou lanceur de sorts au second rang. Mis à jour le {{DATE}}.</p>
+    <div class="bar" role="img" aria-label="{{DONE}} monstres dessinés sur {{TOTAL}}"><i></i></div>
+    <div class="stats">
+      <span class="stat valide"><b>{{VALIDE}}</b> validés</span>
+      <span class="stat aregarder"><b>{{AREGARDER}}</b> à regarder</span>
+      <span class="stat retouche"><b>{{RETOUCHE}}</b> en retouche</span>
+      <span class="stat afaire"><b>{{AFAIRE}}</b> à faire</span>
+    </div>
+  </header>
+{{SECTIONS}}
+  <footer>« Validé » : accepté tel quel. « À regarder » : dessiné, en attente de vos retours. « En retouche » : vos retours sont en train d'être faits.</footer>
+</div>
