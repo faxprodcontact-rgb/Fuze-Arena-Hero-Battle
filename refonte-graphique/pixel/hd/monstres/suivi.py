@@ -41,7 +41,7 @@ VALIDES = set()
 RETOUCHES = {}
 FAITES = set()
 # dessins finis par leur artiste (les autres fichiers sont encore en cours de dessin)
-FINIS = {'araignee-bondissante', 'araignee-cuirassee', 'araignee-tisseuse', 'crabe-geant', 'serpent-guerrier', 'salamandre', 'meduse-eclair', 'matelot', 'golem-lave', 'tireur-pirate', 'oni-brute', 'homme-poisson', 'diablotin', 'corbeau-tengu'}
+FINIS = {'araignee-bondissante', 'araignee-cuirassee', 'araignee-tisseuse', 'crabe-geant', 'serpent-guerrier', 'salamandre', 'meduse-eclair', 'matelot', 'golem-lave', 'tireur-pirate', 'oni-brute', 'homme-poisson', 'diablotin', 'corbeau-tengu', 'pretresse-serpent'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 LABEL = {'valide': 'Validé', 'retouche': 'Retouche en cours', 'aregarder': 'À regarder', 'encours': 'En cours', 'afaire': 'À faire'}
 ANIMDIR = os.path.join(HD, 'sortie', 'anim-monstres')
