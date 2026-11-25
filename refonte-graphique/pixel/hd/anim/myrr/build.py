@@ -14,8 +14,9 @@
 #     poings qui tiennent la trompette à l'horizontale ou levée sont dessinés à la main (grilles plus bas) ; les ailes
 #     déployées de la spéciale sont retracées plume par plume (mêmes tons, mêmes rangées d'écailles, mêmes rémiges) ;
 #   - les effets de vent reprennent les formes et la palette d'Eldra (l'autre héroïne du vent, validée) : rubans,
-#     volutes, bouffées, éclats ronds ; nouveaux ici : la vague du souffle de trompette, la tornade de plumes et les
-#     plumes de lumière qui retombent (soin) ;
+#     volutes, bouffées, éclats ronds ; nouveaux ici : la vague du souffle de trompette (attaque) et, pour la spéciale
+#     (sort d'équipe : soin, purification, résurrection, tourné vers la gauche où se tient l'équipe), l'onde de grâce,
+#     les plumes de lumière qui retombent, les taches sombres qui s'évaporent et la colonne de lumière ;
 #   - à la fin, chaque image peut recevoir des retouches pixel par pixel (RETOUCHES, plus bas).
 import sys, os, math
 import numpy as np
@@ -1314,13 +1315,13 @@ def fx_rain(k):
 # ---- la purification : de petites taches sombres apparaissent sur elle, se détachent, montent et s'évaporent
 SPECKS = [(61, 75), (75, 82), (66, 97), (79, 101), (57, 88)]          # sur la robe et le buste (grille)
 SPECK_SHAPES = [
-    [['pp', 'pq'], ['.pp', 'ppq']],                 # posées sur elle
-    [['pp', 'pq', '.q'], ['.pp', 'pq.', '.q.']],    # elles se décollent
-    [['.q', 'qp', 'q.', '.l'], ['q.', 'pq', '.q', 'l.']],
-    [['.l', 'll'], ['l.', 'll']],                   # presque évaporées
-    [['l'], ['l']],
+    [['ppq', 'pq.'], ['.pp', 'ppq']],                                   # posées sur elle
+    [['ppq', 'pq.', '.q.'], ['.pp', 'ppq', '.q.']],                     # elles se décollent (une traîne dessous)
+    [['qq', 'pq', 'q.', '.l'], ['qq', 'qp', '.q', 'l.']],               # fumée qui monte
+    [['.l', 'll', 'l.'], ['l.', 'll', '.l']],                           # presque évaporées
+    [['l.', '.l'], ['.l', 'l.']],
 ]
-SPECK_DY = [0, -3, -8, -13, -17]
+SPECK_DY = [0, -4, -11, -18, -24]
 SPECK_DX = [0, 0, -1, -2, -3]
 
 
@@ -1345,35 +1346,55 @@ COLUMN_X = 18.0                                             # où se dresse la c
 
 def light_plume(cv, tip, ang, L, wmax):
     """une grande plume de lumière : la pointe en tip, tournée vers ang (degrés) ; l'étendard s'élargit puis se
-    resserre sur le tuyau ; coeur blanc, bords d'or ; une tige d'or pâle au milieu"""
+    resserre sur le tuyau. Modelée selon la lumière (pas des bandes autour de la tige) : la moitié tournée vers la
+    lumière blanche au bord doré pâle, l'autre moitié d'or pâle au bord d'or ; une tige d'or pâle au milieu."""
     d = unit(ang)
     nrm = np.array([-d[1], d[0]])
+    if nrm @ LN < 0:                                     # nrm : vers la lumière (en haut à droite)
+        nrm = -nrm
     pts, widths = [], []
-    for i in range(41):
-        s = i / 40
-        p = np.array(tip, float) - s * L * d + 2.5 * math.sin(math.pi * s) * nrm
-        pts.append(tuple(p))
-        if s < 0.82:
-            widths.append(wmax * math.sin(math.pi * min(1.0, (s + 0.04) / 0.86)) ** 0.55 + 0.4)
+    for i in range(161):
+        s_ = i / 160
+        pts.append(np.array(tip, float) - s_ * L * d + 2.5 * math.sin(math.pi * s_) * nrm)
+        if s_ < 0.82:
+            widths.append(wmax * math.sin(math.pi * min(1.0, (s_ + 0.04) / 0.86)) ** 0.55 + 0.4)
         else:
             widths.append(1.2)
-    stroke(cv, pts, widths, 'WWghJ')
-    for (x, y) in pts[6:]:
-        X, Y = int(x), int(y)
-        if 0 <= X < W and 0 <= Y < H and cv[Y, X] in 'Wg':
-            put(cv, x, y, 'h')
+    best = {}
+    for p, wv in zip(pts, widths):
+        R = wv / 2
+        for y in range(int(p[1] - R - 1), int(p[1] + R + 2)):
+            for x in range(int(p[0] - R - 1), int(p[0] + R + 2)):
+                v = np.array([x + 0.5, y + 0.5]) - p
+                dd = math.hypot(*v)
+                if dd <= R and dd / max(R, 0.6) < best.get((x, y), (9, 0))[0]:
+                    best[(x, y)] = (dd / max(R, 0.6), v @ nrm)
+    for (x, y), (k, o) in best.items():
+        if k > 0.72:
+            ch = 'g' if o > 0 else 'J'
+        else:
+            ch = 'W' if o > -0.6 else 'h'
+        put(cv, x, y, ch)
+    for p in pts[24:150:2]:
+        X, Y = int(p[0]), int(p[1])
+        if 0 <= X < W and 0 <= Y < H and cv[Y, X] in 'Wh':
+            put(cv, X, Y, 'g')
 
 
-def column(cv, top, hw0, ph):
+def column(cv, top, hw0, ph, bottom=None):
     """la colonne de lumière, du sol jusqu'à top : évasée au pied, bords qui ondulent doucement (pas un tube raide),
     sommet arrondi comme une flamme ; coeur blanc, or pâle, bord d'or du côté de l'ombre (à gauche), bord pâle du
-    côté de la lumière (à droite)"""
+    côté de la lumière (à droite). bottom : elle ne descend plus jusqu'au sol (elle s'en va vers le haut, le bas
+    arrondi aussi)"""
     cap = hw0 * 1.8
-    for y in range(int(top), GROUND + 1):
+    end = GROUND if bottom is None else int(bottom)
+    for y in range(int(top), end + 1):
         t = (y - top) / (GROUND - top)
         hw = hw0 * (0.72 + 0.45 * t) + 1.0 * math.sin(y * 0.13 + ph)
         if y < top + cap:
             hw *= math.sqrt(max(0.0, 1 - ((top + cap - y) / cap) ** 2))
+        if bottom is not None and y > end - cap * 1.5:
+            hw *= math.sqrt(max(0.0, 1 - ((y - end + cap * 1.5) / (cap * 1.5)) ** 2))
         xc = COLUMN_X + 1.4 * math.sin(y * 0.05 + ph * 0.5)
         for x in range(int(xc - hw - 1), int(xc + hw + 2)):
             q = (x + 0.5 - xc - 0.18 * hw) / max(hw, 0.6)
@@ -1418,8 +1439,7 @@ def fx_rez(k):
             sprite(front, RAIN_SMALL[0], COLUMN_X - 19, GROUND - 60)
             return
         if k == 4:
-            for i, (dy, r) in enumerate(((-44, 5.0), (-82, 4.6), (-118, 4.0), (-150, 3.2))):
-                cloud(back, (COLUMN_X + (2 if i % 2 else -2), GROUND + dy), r, 'WWgh', seed=90 + i)
+            column(back, top - 4, 6.5, 2.0, bottom=GROUND - 80)
             ribbon(front, (COLUMN_X, GROUND - 3), 22, 5, 200, 340, 2.2, tones='gh')
             for (dx, dy) in ((-12, -58), (13, -98), (-10, -134), (10, -170)):
                 burst(front, (COLUMN_X + dx, GROUND + dy), 1.4, 'Wgh')
