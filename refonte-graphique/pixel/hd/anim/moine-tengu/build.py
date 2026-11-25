@@ -537,14 +537,13 @@ def draw_staff(cv, G, ang, sg, swing=(0.0, 0.0), rings=True, glint=None):
                 a = np.array(LOOP_PTS[i]); b = np.array(LOOP_PTS[i + 1])
                 dd, _ = seg_dist(np.array([t, s]), a, b)
                 best = min(best, dd)
-            if best <= 1.15 and s >= S_COLLAR[1] - 0.4:
+            if best <= 1.0 and s >= S_COLLAR[1] - 0.4:
                 o = np.array([t, s]) - LOOP_C
                 o = o / max(np.linalg.norm(o), 1e-6)
                 wn = o[0] * n + o[1] * u
                 ch = iron(float(wn @ LN))
             # l'axe d'or et le joyau, au milieu de la boucle
-            if 99.5 <= s <= 107.5 and abs(t) <= 0.5:
-                ch = 'r' if s < 102 else 's' if s > 106 else ch
+            # (l'axe fin du dessin n'est pas retracé : de biais, il boucherait l'intérieur de la boucle)
             o = np.array([t, s - 104.0])
             if abs(o[0]) <= 1.5 and abs(o[1]) <= 1.5:
                 ow = o[0] * n + o[1] * u
@@ -1383,9 +1382,14 @@ def write_outputs(anims):
         fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
         bw, bh = box[2] - box[0], box[3] - box[1]
         fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
-        base = fond.crop((0, fy, bw, fy + bh))
-        if base.width < bw:
-            raise ValueError
+        strip = fond.crop((0, fy, fond.width, fy + bh))
+        # la bourrasque va loin à droite : le fond est prolongé par son reflet (raccord sans couture)
+        base = Image.new('RGBA', (bw, bh))
+        x, flip = 0, False
+        while x < bw:
+            base.paste(strip.transpose(Image.FLIP_LEFT_RIGHT) if flip else strip, (x, 0))
+            x += strip.width
+            flip = not flip
     except Exception:
         base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
     ims = []

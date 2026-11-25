@@ -155,7 +155,9 @@ def head_point(img):
 
 
 def split(mod, layers, name):
-    """renvoie {'perso': [img…], 'cible': [img|None…], 'proj': [img…], 'ms': […], réglages…} pour une animation"""
+    """renvoie {'perso': [img…], 'cible': [img|None…], 'proj': [img|None…], 'ms': […], réglages…} pour une animation.
+    Tous les calques (personnage compris : une flèche plantée dans l'ennemi est souvent dessinée avec lui) sont coupés
+    à la colonne `coupe` ; pendant le vol (`tir`) ou le jet (`rayon`), ce qui est à droite de `depuis` part avec le projectile."""
     sol = tuple(mod.SOL)
     jeu = dict(getattr(mod, 'JEU', {}).get(name, {}))
     genre = jeu.get('genre', 'pose' if name == 'pose' else 'sort')
@@ -166,29 +168,26 @@ def split(mod, layers, name):
     coupe = jeu.get('coupe', (cible[0] - 36) if cible else None)
     if genre in ('pose', 'equipe'):
         coupe = None
-    tir = jeu.get('tir')
-    # le bord avant du personnage au repos (pour reconnaître le projectile qui le quitte)
-    depuis = jeu.get('depuis')
+    coupes = list(coupe) if isinstance(coupe, (list, tuple)) else [coupe] * n
+    assert len(coupes) == n, f'{name} : coupe a {len(coupes)} valeurs pour {n} images'
+    vol = jeu.get('tir') or jeu.get('rayon')
+    depuis = jeu.get('depuis', None)
+    if vol and depuis is None:
+        raise SystemExit(f'{mod.__name__} {name} : `depuis` manque (la colonne où le projectile quitte le personnage)')
     out = {'genre': genre, 'perso': [], 'cible': [], 'proj': [], 'ms': [], 'jeu': jeu, 'sol': sol}
     for i, (h, b, f, ms) in enumerate(layers):
         dx = -int(round(avance[i]))
-        perso = np.zeros_like(h)
-        tgt = np.zeros_like(h)
-        proj = np.zeros_like(h)
-        for L in (b, None, f):
-            if L is None:
-                over(perso, shift(h, dx))
-                continue
-            near = L if coupe is None else cols(L, None, coupe)
-            far = None if coupe is None else cols(L, coupe, None)
-            if tir and tir[0] <= i < tir[1]:
-                x0 = depuis if depuis is not None else coupe
-                over(proj, cols(L, x0, None))
-                near = cols(L, None, x0)
-                far = None
-            over(perso, shift(near, dx))
-            if far is not None:
-                over(tgt, far)
+        flying = bool(vol) and vol[0] <= i < vol[1]
+        c = coupes[i]
+        perso, tgt, proj = (np.zeros_like(h) for _ in range(3))
+        for L in (b, h, f):
+            if flying:
+                over(proj, cols(L, depuis, None))
+                L = cols(L, None, depuis)
+            if c is not None:
+                over(tgt, cols(L, c, None))
+                L = cols(L, None, c)
+            over(perso, shift(L, dx))
         out['perso'].append(perso)
         out['cible'].append(tgt if alpha(tgt).any() else None)
         out['proj'].append(proj if alpha(proj).any() else None)
@@ -278,8 +277,24 @@ def export(name, voir=None):
             t_fly = sum(p['ms'][i0:tir[1]])
             dist = max(8.0, cible[0] - h0[0]) if cible else 100.0
             a['vitesse'] = int(round(dist / max(1, t_fly) * 1000))
+            # l'angle du vol dans le GIF (le dessin du projectile est penché ainsi) : le jeu tourne de la différence
+            a['pente'] = round(math.atan2((cible[1] if cible else h0[1]) - h0[1], dist), 3)
             if jeu.get('arc'):
                 a['arc'] = int(jeu['arc'])
+        ray = jeu.get('rayon')
+        if ray:
+            # un jet continu (souffle de feu, rayon) : chaque image part de la bouche ; le jeu l'étire jusqu'à la cible
+            idx = [i for i, img in enumerate(p['proj']) if img is not None]
+            first = p['proj'][idx[0]]
+            band = alpha(first)[:, jeu['depuis']:jeu['depuis'] + 4]
+            ys = np.nonzero(band.any(1))[0]
+            mouth = (float(jeu['depuis']), float(ys.mean() + 0.5) if len(ys) else float(cible[1]))
+            a['rayon'] = [sheet.add(p['proj'][i], mouth) if p['proj'][i] is not None else -1
+                          for i in range(len(p['ms']))]
+            a['bouche'] = [int(round(mouth[0] - sol[0])), int(round(mouth[1] - sol[1]))]
+            a['longueur'] = int(round(cible[0] - mouth[0]))   # de la bouche à la cible, dans le GIF
+        if jeu.get('elan'):
+            a['elan'] = list(jeu['elan'])
         if p['genre'] == 'melee':
             av = list(jeu.get('avance', [0] * len(p['ms'])))
             if max(av) > 3:
@@ -396,7 +411,7 @@ def write_meta(m):
         fh.write('// dessin, (ax, ay) = coin haut-gauche par rapport au repère (pieds du personnage, pieds de la cible, bout du\n')
         fh.write('// projectile). Une animation : f (images du personnage, en place), ms, genre, coup, cible (images posées aux\n')
         fh.write('// pieds de la cible, -1 = rien), proj/projMs/depart/bouche/vitesse (le projectile), charge [i0, i1], portee, haut.\n')
-        body = json.dumps({'up': UP, 'scale': SCALE, 'chars': m['chars'], 'fx': m['fx']}, separators=(',', ':'))
+        body = json.dumps({'up': UP, 'scale': SCALE, 'chars': m['chars'], 'fx': m['fx']}, separators=(',', ':'), default=int)
         fh.write('export const HD_ANIM = ' + body + ' as const;\n')
     print(META)
 

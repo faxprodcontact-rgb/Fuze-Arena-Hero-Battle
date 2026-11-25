@@ -70,7 +70,7 @@ def state(nom):
 
 
 # animations finies par leur animateur (les autres GIF sont encore en travail)
-ANIMES = {'matelot', 'pretresse-serpent', 'crabe-geant', 'diablotin', 'salamandre', 'naga-bouclier', 'sorcier-oni', 'lutin-magma', 'serpent-guerrier', 'araignee-tisseuse', 'araignee-bondissante', 'homme-poisson', 'meduse-eclair', 'araignee-cuirassee', 'golem-lave', 'canonnier', 'oni-brute', 'corbeau-tengu', 'singe-voleur', 'singe-chaman', 'tengu-eventail', 'gorille-guerrier', 'tireur-pirate'}
+ANIMES = {'matelot', 'pretresse-serpent', 'crabe-geant', 'diablotin', 'salamandre', 'naga-bouclier', 'sorcier-oni', 'lutin-magma', 'serpent-guerrier', 'araignee-tisseuse', 'araignee-bondissante', 'homme-poisson', 'meduse-eclair', 'araignee-cuirassee', 'golem-lave', 'canonnier', 'oni-brute', 'corbeau-tengu', 'singe-voleur', 'singe-chaman', 'tengu-eventail', 'gorille-guerrier', 'tireur-pirate', 'moine-tengu'}
 
 
 def clip(nom):
