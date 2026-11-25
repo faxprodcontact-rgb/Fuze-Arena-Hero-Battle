@@ -77,16 +77,18 @@ ROUGE ce qui sera posé sur la cible, en BLEU le projectile, en VERT l'arme qui 
 - en bleu (vol) : le projectile entier sur au moins une image, rien du personnage ;
 - `COUP` sur la bonne image, `charge` sur la préparation de la spéciale.
 
-Puis regarder le combat dans le jeu (les vrais déplacements) : `npm run dev`, Réglages → Outils de test → « Combat HD
-(essai) » : choisir jusqu'à 5 héros et 5 monstres (ou « Les 60 à la suite »), puis Combattre. Chaque personnage exporté
-y apparaît tout seul (`src/game/hd-roster.ts` lit `hd-meta.ts` ; scénario : `src/game/hd-trial.ts`, chacun son attaque
-puis sa spéciale sur des cases variées). Le jeu ne prend un personnage HD que dans ce combat d'essai pour l'instant (les
-autres modes gardent les anciens dessins).
+L'export écrit aussi `visage` (le carré de la tête au repos). Après chaque export, relancer
+`python3 refonte-graphique/pixel/hd/anim/vignettes.py` : il refait les images des menus (visage `public/art/hd/v/<id>.webp`,
+respiration en pied `public/art/hd/pied/<id>.webp`) et `src/game/hd-figures.ts` (le jeu s'en sert aussi pour savoir
+qu'un grand boss est exporté).
 
-L'export écrit aussi `visage` (le carré de la tête au repos, pour le portrait du choix des combattants).
+Puis regarder le combat dans le jeu (les vrais déplacements) : `npm run dev`, puis un combat où le personnage joue
+(depuis la v0.56.0, tout le jeu est en HD et il n'y a plus de combat d'essai) : un héros dans la section ; un monstre
+dans un combat de son clan (`src/game/look.ts` : campagne, tour, donjons) ; un grand boss au boss de guilde (feu) ou au
+boss du jour de son élément.
 
 Ne rien publier, ne rien envoyer : dire à l'orchestrateur quels fichiers ont changé (`build.py` du personnage,
-`public/art/hd/<id>.webp`, `src/game/hd-meta.ts`).
+`public/art/hd/<id>.webp`, `src/game/hd-meta.ts`, et ce qu'a refait `vignettes.py`).
 
 ## 4. Changements de l'export (25/11/2026)
 

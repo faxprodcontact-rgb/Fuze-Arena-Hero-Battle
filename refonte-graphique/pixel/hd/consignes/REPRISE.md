@@ -116,3 +116,8 @@
 - En cours dans une copie de travail séparée (worktree) par un agent : héros, monstres/boss par clan, 8 fonds partout,
   combat HD partout, portraits HD, outils de test retirés, vieux fichiers supprimés, captures `pixel/sortie/jeu-propre/`.
   À la fin : fusionner sa branche, régénérer hd-meta.ts si les boss ont été exportés entre-temps, publier v0.56.0.
+- 25/11 : FAIT dans la copie de travail (journal v0.56.0, brouillon) : 36 héros, monstres et généraux par clan, grands
+  boss (boss du jour, de guilde, fins de région ; le général en attendant leur export), 8 décors partout, combats HD
+  partout, visages et héros en pied dans les menus (`hd/anim/vignettes.py`, à relancer après chaque export), outils de
+  test et vieux fichiers supprimés. Après la fusion : si `hd-meta.ts` a changé (grands boss exportés), relancer
+  `vignettes.py`, puis `npx tsc --noEmit`, `npm test`, `npm run build`, et publier v0.56.0.

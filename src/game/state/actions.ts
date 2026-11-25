@@ -1170,7 +1170,7 @@ export function buyExchange(shop: 'arena' | 'guild', id: string): Gain | null {
   });
 }
 
-// ---------- Réglages et outils de test ----------
+// ---------- Réglages ----------
 
 export function setLang(lang: 'fr' | 'en'): void {
   update((s) => void (s.lang = lang));

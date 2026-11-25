@@ -71,7 +71,7 @@ export interface PlayerState {
   nameChanges: number;
   settings: { sound: boolean; music: boolean; notifications: boolean };
   createdAt: number;
-  /** Décalage du temps pour les tests (avancer de quelques heures). */
+  /** Décalage de l'horloge du jeu (simulations : le joueur automatique fait passer le temps). */
   timeShift: number;
   lang: 'fr' | 'en';
   speed: 1 | 2 | 3;

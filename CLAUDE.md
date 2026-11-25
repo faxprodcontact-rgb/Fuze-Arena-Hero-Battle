@@ -22,28 +22,34 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   `docs/journal.md`, commit, envoi, copie claude.ai.
 - Disposition (inspirée d'AFK Arena / Idle Heroes) : accueil = combat permanent (`idle-scene.ts`) avec médaillons sur
   les bords (colonnes repliables), coffre / Combattre / butin rapide en bas ; écran de préparation (`screens/prep.tsx`)
-  avant chaque combat ; réglages par l'avatar. Outils de test à retirer avant la bêta : `TEST_OPEN_ALL_MODES`
-  (`src/core/data/modes.ts`) et les « Outils de test » des réglages.
-- Décidé : plus de camps ; la fusion demande des héros du **même élément**. Le mode Défense est retiré, remplacé par le
+  avant chaque combat ; réglages par l'avatar (plus aucun outil de test dans le jeu depuis la v0.56.0 : les modes
+  s'ouvrent avec la campagne, `UNLOCKS` de `src/core/data/modes.ts`).
+- Décidé : plus de camps ; la fusion demande des héros du **même élément**. Le mode Défense est supprimé, remplacé par le
   **Colisée** (duel 1 contre 1, équipes de 3) dont **les règles restent à construire** (tuile « Bientôt », clé `defense`).
-- Héros : 72 gabarits dans `src/core/data/heroes.ts` (noms provisoires), effets dans `src/core/battle/`, textes par
-  `src/game/describe.ts`, équipements dans `src/core/data/items.ts`. Courrier : `src/core/data/mail.ts` (un `id` unique,
-  jamais réutilisé). Tutoriel : `src/game/ui/tutorial.tsx` (il vise les éléments par sélecteurs CSS).
-- Dessins du jeu : 144 personnages peints par Hailuo, découpés et animés morceau par morceau (`public/art/p/`, `r/`,
-  `c/`, `art-meta.ts` ; chaîne de découpe et contrôles : voir le journal, v0.35.4 à v0.36.1). Pictos : `icons.webp`.
-  `src/game/look.ts` choisit décor et famille de monstres selon le mode et le chapitre.
-- **Personnages redessinés par le code** (en cours, un par un) : `refonte-graphique/vecto/` — **lire
-  `refonte-graphique/vecto/GUIDE.md` avant d'y toucher** (méthode économe, outils, file d'attente). Page d'exemple :
-  https://claude.ai/artifact/5qE3vDUzsMFMQVC4ywqLrK . Pas encore branchés dans le jeu.
-- **Pixel art « gros pixels encrés »** (style retenu pour les héros) : `refonte-graphique/pixel/` — **lire
-  `refonte-graphique/pixel/GUIDE.md` avant de dessiner** (DA, proportions, tête pixel par pixel, pas de trait aux
-  articulations, ordre premier/second plan, refus passés). Mannequin à recopier : `persos/_gabarit.py` ; contrôle
-  obligatoire avant de montrer : `python3 refonte-graphique/pixel/controle.py <nom>`. **Les 72 héros** (v0.52.0) et 5 monstres
-  (ancien style) sont dans le jeu à la place des anciens : `python3 refonte-graphique/pixel/jeu.py` (`public/art/px/`,
-  `pixel-meta.ts`), combat d'essai dans les Outils de test. **Refonte HD en cours** (36 héros choisis, ~96 px, dessinés pixel par pixel par des agents) : `refonte-graphique/pixel/hd/` (lire `hd/GUIDE.md`), page de suivi pour le propriétaire https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj (`python3 refonte-graphique/pixel/hd/suivi.py` puis republier `hd/sortie/suivi.html` à chaque changement ; états dans `VALIDES`, `RETOUCHES`, `FAITES`). **Pour reprendre : lire `refonte-graphique/pixel/hd/consignes/REPRISE.md`** (consignes des agents, méthode, où on en est).
-- Décors de combat dessinés par le code : `src/game/bg/` (un fichier par décor, `scenes.ts`). Règles : une plateforme
-  rectangulaire d'un bord à l'autre (**jamais de rond au sol**), tout est posé, ordre des calques fixé (voir journal
-  v0.38.0). Outil de test : `#fond=<terrain>`.
+- Héros : **36 héros**, tous dessinés et animés en pixel art HD (`HERO_IDS` de `src/core/data/heroes.ts` ; les 36 autres
+  gabarits sont retirés, une vieille sauvegarde reçoit un dédommagement par courrier : `src/game/state/migrate.ts`).
+  Effets dans `src/core/battle/`, textes par `src/game/describe.ts`, équipements dans `src/core/data/items.ts`. Courrier :
+  `src/core/data/mail.ts` (un `id` unique, jamais réutilisé ; `personal` = cadeau rangé dans la sauvegarde). Tutoriel :
+  `src/game/ui/tutorial.tsx` (il vise les éléments par sélecteurs CSS).
+- **Tout le jeu est en pixel art HD** (v0.56.0) : `refonte-graphique/pixel/hd/` (lire `hd/GUIDE.md` ; pour reprendre :
+  `hd/consignes/REPRISE.md` ; suivi du propriétaire : https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj, `hd/suivi.py`).
+  Chaîne : dessin `.txt` → animation `hd/anim/<nom>/build.py` → `hd/anim/jeu_export.py`
+  (`public/art/hd/<id>.webp`, `src/game/hd-meta.ts`, consigne `hd/consignes/export-jeu.md`) → **`python3
+  refonte-graphique/pixel/hd/anim/vignettes.py`** (visages `art/hd/v/`, respiration en pied `art/hd/pied/`,
+  `src/game/hd-figures.ts` pour les menus). Au combat : `src/game/hd-fight.ts` (corps à corps jusqu'à la cible,
+  projectile jusqu'à la vraie case, lumière de charge, sorts d'équipe et effets reçus `art/hd/fx/`).
+- **8 clans** (2 par élément : Arachné et Méduse = terre, Kesha et Barzul = eau, Lenore et Kael = feu, Orin et Eldra =
+  vent) : un général (héros HD, joue les boss, dessiné plus grand), 3 monstres `mon-<clan>-<rôle>` et un décor animé
+  (`refonte-graphique/pixel/fonds/`, `public/art/px/fonds/`, `src/game/fond-meta.ts`, `src/game/bg/fond-px.ts`).
+  `src/game/look.ts` choisit le clan et son décor selon le mode (campagne : région + élément du chapitre ; tour ; donjons ;
+  boss ; arène). **Grands boss** (un par élément, `hd/boss/`, ids `boss-feu`, `boss-eau`, `boss-terre`, `boss-vent`) :
+  boss du jour, de guilde et fin de chaque région (seul, au milieu) dès qu'ils sont exportés, sinon le général du clan.
+  Décors : une plateforme rectangulaire d'un bord à l'autre (**jamais de rond au sol**), tout est posé.
+- Anciens essais graphiques (pas dans le jeu) : personnages redessinés par le code `refonte-graphique/vecto/` (page
+  https://claude.ai/artifact/5qE3vDUzsMFMQVC4ywqLrK, lire
+  `vecto/GUIDE.md`) ; pixel art « gros pixels encrés » `refonte-graphique/pixel/persos/` (lire `pixel/GUIDE.md`, contrôle
+  `python3 refonte-graphique/pixel/controle.py <nom>`). Les anciens dessins (Hailuo, décors dessinés par le code, 72 héros
+  pixel) et leurs chaînes de fabrication sont supprimés (v0.56.0) ; pictos : `icons.webp` (`decoupe-pictos.py`).
 - Interface (v0.39 à v0.41) : polices **Lilita One** (titres, chiffres) et **Fredoka** (textes), `font-synthesis: none`,
   jamais `fontStyle: 'bold'` dans Phaser. Couleurs : **émail bleu nuit cerclé d'or** (le bois brun est refusé),
   panneaux parchemin ; variables en tête de `src/game/ui/style.css`. Pièces dessinées : `ui/chrome.tsx` (`ChromeDefs`
@@ -77,8 +83,9 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
 | `src/game/fight-view.ts` | Base commune des scènes de combat (personnages, coups, chiffres) |
 | `src/game/battle-scene.ts` | Écran de combat (Phaser), utilisé par tous les modes |
 | `src/game/idle-scene.ts` | Combat permanent de l'accueil (image du butin hors ligne) |
-| `src/core/defense/engine.ts` + `src/game/defense-scene.ts` | Mode Défense (tower defense) : règles déterministes, puis l'affichage ; réglages dans `src/core/data/defense.ts` |
-| `src/game/art.ts` | Dessins provisoires faits par le code (héros et monstres) |
+| `src/game/hd-fight.ts` + `hd-meta.ts` | Personnages HD au combat : leurs planches (générées par `jeu_export.py`) et leur mise en scène |
+| `src/game/look.ts` | Clan des monstres, général, grand boss et décor animé de chaque combat (`bg/fond-px.ts`, `fond-meta.ts`) |
+| `src/game/art.ts` + `hd-figures.ts` | Couleurs, visages et héros en pied des menus (générés par `vignettes.py`) |
 | `src/game/i18n.ts` | Tous les textes, français et anglais |
 | `simulations/` | Joueurs virtuels qui jouent des mois en accéléré pour vérifier le rythme |
 | `tests/` | Tests automatiques des règles |
@@ -88,8 +95,7 @@ Commandes : `npm run dev` (jeu en local), `npm run build` (construit `dist/`), `
 `npm run verifier` (vérification du code), `npm run simuler` (rapport de progression),
 `npm run simuler -- --calibrer` (recalcule la difficulté de la campagne, à recopier dans `src/core/data/campaign.ts`),
 `npm run combat` (force des monstres à puissance égale), `npx tsx simulations/premiers-jours.ts` (première semaine du
-vrai jeu jouée par un joueur automatique). Réglages → « Outils de test » dans le jeu : avancer le temps, ressources,
-tout débloquer.
+vrai jeu jouée par un joueur automatique).
 
 ## Règles de travail
 

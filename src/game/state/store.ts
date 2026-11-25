@@ -90,7 +90,7 @@ export function getState(): PlayerState {
   return state;
 }
 
-/** Heure du jeu (avec le décalage des outils de test). */
+/** Heure du jeu (`timeShift` : décalage de l'horloge, utilisé par les simulations). */
 export function now(): number {
   return Date.now() + state.timeShift;
 }

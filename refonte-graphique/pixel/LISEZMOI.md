@@ -1,5 +1,9 @@
 # Essai de style : pixel art (23/11/2026)
 
+> **Depuis la v0.56.0, ce style n'est plus dans le jeu** : le jeu est entièrement en pixel art HD (`hd/`, lire `hd/GUIDE.md`).
+> `jeu.py`, `fond.py` et `page.py` (qui mettaient ces 72 héros et le fond « prairie » dans le jeu) sont supprimés ; les
+> dessins `persos/` et les outils de contrôle restent pour mémoire.
+
 **Pour dessiner un personnage : lire `GUIDE.md`** (le guide à suivre), recopier `persos/_gabarit.py`, vérifier avec
 `controle.py`. Ce fichier-ci garde l'historique de l'essai.
 

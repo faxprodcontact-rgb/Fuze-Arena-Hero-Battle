@@ -1,4 +1,4 @@
-// Personnages HD animés au combat (essai) : les planches de refonte-graphique/pixel/hd/anim/jeu_export.py
+// Personnages HD animés au combat : les planches de refonte-graphique/pixel/hd/anim/jeu_export.py
 // (public/art/hd/, hd-meta.ts) et leur chorégraphie. Le personnage est dessiné « en place » : c'est le jeu qui le
 // déplace (corps à corps), fait voler le projectile jusqu'à la vraie cible (tir) et pose l'impact sur la cible.
 import Phaser from 'phaser';
