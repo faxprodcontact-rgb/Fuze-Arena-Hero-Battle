@@ -1,7 +1,31 @@
-# (notes à écrire)
+# Singe voleur (mon-eldra-rapide) — clan d'Eldra, élément vent, monstre « rapide » (premier rang).
+#
+# Créature : un petit macaque voleur, espiègle et vif, qui sert la reine des singes. VRAIE ANATOMIE DE MACAQUE (pas un
+#   humain déguisé) : crâne rond couvert de fourrure fauve, grand masque de peau nue rose pêche (arcade marquée, nez plat
+#   à deux narines, museau qui avance), favoris plus clairs qui encadrent le visage, petite oreille ronde de singe
+#   (anneau d'or, comme Eldra), longs bras, mains et pieds préhensiles, LONGUE QUEUE EN POINT D'INTERROGATION.
+#   ≈ 61 px du sommet du crâne au sol : bien plus petit que le gorille costaud et que le singe chaman. On le reconnaît
+#   en noir à sa silhouette basse et horizontale : la crosse de la queue à gauche, la bosse du sac sur le dos, la tête
+#   en avant à droite et la courte lame qui pointe vers l'ennemi.
+# Rôle et pose : rapide, premier rang. Accroupi à quatre pattes, ramassé, prêt à bondir, trois quarts vers la droite :
+#   cuisse proche repliée (genou en avant, talon sous la hanche), pied proche à plat (talon, voûte levée, longs orteils
+#   qui agrippent le sol), main proche posée à plat devant (longs doigts écartés), bras lointain levé à demi qui tient
+#   la dague tout contre le corps, lame vers l'avant. La tête un peu basse, regard fixé sur l'ennemi.
+# Tête : yeux dorés (pupille tournée vers l'ennemi), l'oeil lointain plus étroit, même ligne ; sourcil proche qui
+#   plonge vers le nez (air rusé) ; sourire en coin qui montre les dents et un croc (gorge rouge sombre, jamais de noir).
+# Signes du clan d'Eldra : même fourrure fauve, même peau rose pêche, même rouge, même or, même jade. Petit gilet rouge
+#   ouvert, ourlet et devant liserés d'or ; foulard de soie jade (l'élément vent) noué sous le menton, les deux pans
+#   pendent DROIT ; anneau d'or à l'oreille. À lui : le SAC DE BUTIN sur le dos (toile prune, bouche froncée en corolle,
+#   une pièce d'or qui dépasse, cordon d'or noué avec une perle de jade), sangle qui suit le corps en travers du gilet ;
+#   la dague courte (pommeau de jade, garde d'or, lame d'acier légèrement relevée).
+# Couleurs (une seule lumière, en haut à droite) : gammes d'Eldra reprises telles quelles (fourrure, peau, rouge, or,
+#   jade, yeux) ; toile du sac prune (ombres violettes), acier bleuté (ombres indigo). Ombres portées douces : le sac sur
+#   le gilet, le tibia sur la cuisse, le bras proche sur le flanc.
+# Souffle au milieu du torse (y 90) ; clignement : le rang haut des yeux devient peau, le rang bas une paupière ombrée.
+# Ébauche des masses par un petit script, puis tête, mains, pieds, sac, foulard et dague posés pixel par pixel.
 id: mon-eldra-rapide
 sol: 64 116
-tete: 74 55 104 82
+tete: 74 57 104 81
 souffle: 90
 cligne: 1=I 2=I 3=I 4=I 7=H 8=H 9=H
 palette:
