@@ -84,7 +84,7 @@ def colisee(p):
     for x in (5, 11, 17, 23):
         h = rrect(x, 12, x + 3, 16, 1) & (Y <= 15)
         b = rrect(x, 19, x + 3, 27, 1) & (Y <= 26)
-        p.plat((h | b) & corps, 'nuit', 2 if x > 15 else 1)
+        p.plat((h | b) & corps, 'pierre', 1 if x > 15 else 0)
     for x in (6, 15, 25):
         p.part(ligne([(x, 2), (x, 7)], 1), 'bois', lo=2, hi=3)
         p.part(poly([(x + 1, 2), (x + 4, 3.5), (x + 1, 5)]), 'rouge', lo=2, hi=4, ombre=False)

@@ -74,6 +74,7 @@ class Picto:
         self.mat = np.full((n, n), '', dtype=object)
         self.rang = np.zeros((n, n), int)
         self.Y, self.X = np.mgrid[0:n, 0:n]
+        self.voulu = np.zeros((n, n), bool)          # les reflets voulus : jamais nettoyés
 
     def plein(self):
         return self.mat != ''
@@ -84,18 +85,37 @@ class Picto:
         m = m.astype(bool)
         if ombre:
             sous = S(m, 1, -1) & self.plein() & ~m          # le voisin haut-droit est le nouveau morceau
-            self.rang[sous] -= 1
+            self.rang[sous] = np.maximum(0, self.rang[sous] - 1)
         r = np.broadcast_to(np.asarray(rang), m.shape)
         self.mat[m] = mat
-        self.rang[m] = r[m]
+        self.rang[m] = np.clip(r[m], 0, 5)
 
     def cran(self, m, d):
         """Éclaircit (d > 0) ou assombrit (d < 0) ce qui est déjà peint sous le masque."""
         m = m.astype(bool) & self.plein()
-        self.rang[m] += d
+        self.rang[m] = np.clip(self.rang[m] + d, 0, 5)
+
+    def nettoie(self):
+        """Un pixel dont aucun des 8 voisins n'a le même ton (même matière, même rang) prend le ton le plus
+        fréquent de ses voisins de la même matière : pas de pixel perdu, des grappes de couleur nettes."""
+        n = self.n
+        for _ in range(2):
+            ton = {}
+            for (y, x) in zip(*np.nonzero(self.plein() & ~self.voulu)):
+                mat, r = self.mat[y, x], self.rang[y, x]
+                vois = [(self.mat[j, i], self.rang[j, i]) for j in range(max(0, y - 1), min(n, y + 2))
+                        for i in range(max(0, x - 1), min(n, x + 2)) if (j, i) != (y, x) and self.mat[j, i] != '']
+                if any(v == (mat, r) for v in vois):
+                    continue
+                meme = [v[1] for v in vois if v[0] == mat]
+                if len(meme) >= 3:
+                    ton[(y, x)] = max(set(meme), key=meme.count)
+            for (y, x), r in ton.items():
+                self.rang[y, x] = r
 
     def image(self, contour=True):
         n = self.n
+        self.nettoie()
         out = np.zeros((n, n, 4), np.uint8)
         for (y, x) in zip(*np.nonzero(self.plein())):
             g = M[self.mat[y, x]]
@@ -247,6 +267,7 @@ def eclat(p, x, y, mat=None, rang=5):
     m = np.zeros((N, N), bool)
     m[y, x] = True
     p.pose(m, mat or p.mat[y, x], rang, ombre=False)
+    p.voulu[y, x] = True
 
 
 # ---------------------------------------------------------------------------------------------------------------
