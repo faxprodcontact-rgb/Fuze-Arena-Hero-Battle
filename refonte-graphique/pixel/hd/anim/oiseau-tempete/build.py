@@ -184,7 +184,7 @@ def complete_back():
         if lo > 0.55 or (lo > 0.4 and d > 14):
             ch = 'i'
         if lo > 0.8 and d > 6:
-            ch = 'h' if (x + y) % 7 else 'i'
+            ch = 'h'
         if d < 1.5 and lo < 0.7:
             ch = 'k'                                    # le fil de lumière du dos
         b[y, x] = ch
@@ -497,7 +497,7 @@ def body_layers(f):
     cdx, cdy = f.get('crest', (0, 0))
     crest = warp(CREST_CV, hx + cdx * W_TIP_C, hy + cdy * W_TIP_C)
     if wings is None:
-        body = warp(bolts(BODYF_CV, BOLT_T_CV, ORD_T, f.get('glintT'), blaze), bdx, bdy)
+        body = warp(bolts(BODY_CV, BOLT_T_CV, ORD_T, f.get('glintT'), blaze), bdx, bdy)
         lnx, lny = f.get('lagN', (0, 0))
         lfx, lfy = f.get('lagF', (0, 0))
         far = warp(WING_F_CV, bdx + lfx * W_TIP_F, bdy + lfy * W_TIP_F)
@@ -763,15 +763,15 @@ def draw_wing(cv, st, S, T, blaze=0, motif=True):
 # états des ailes (angles en degrés, comptés vers le haut ; longueurs en pixels)
 # FOLD : à peu près l'aile du dessin (levée à demi) ; SPREAD : grande ouverte, levée ; DOWN : rabattue vers le bas.
 NEAR_SPECS = {
-    'fold': dict(a=136, La=92, Lh=20, hand=30, bulge=6, p0=196, p1=232, s0=242, s1=258, lp0=60, lp1=54,
-                 ls0=52, ls1=44, wp=12, ws=12, np=6, ns=6, side=1),
+    'fold': dict(a=136, La=92, Lh=20, hand=30, bulge=6, p0=190, p1=234, s0=238, s1=252, lp0=64, lp1=66,
+                 ls0=72, ls1=60, wp=13, ws=13, np=6, ns=6, side=1),
     'spread': dict(a=100, La=92, Lh=26, hand=14, bulge=8, p0=112, p1=176, s0=188, s1=204, lp0=68, lp1=60,
                    ls0=58, ls1=50, wp=12, ws=12, np=6, ns=6, side=1),
     'down': dict(a=206, La=88, Lh=22, hand=18, bulge=5, p0=236, p1=268, s0=280, s1=292, lp0=62, lp1=52,
                  ls0=50, ls1=42, wp=12, ws=12, np=6, ns=6, side=1),
 }
 FAR_SPECS = {
-    'fold': dict(a=60, La=50, Lh=14, hand=-30, bulge=4, p0=30, p1=8, s0=-6, s1=-20, lp0=50, lp1=42,
+    'fold': dict(a=42, La=44, Lh=14, hand=-22, bulge=4, p0=24, p1=6, s0=-8, s1=-20, lp0=50, lp1=42,
                  ls0=34, ls1=28, wp=10, ws=10, np=5, ns=4, side=-1),
     'spread': dict(a=70, La=58, Lh=18, hand=-12, bulge=5, p0=74, p1=22, s0=6, s1=-10, lp0=62, lp1=50,
                    ls0=44, ls1=36, wp=11, ws=11, np=6, ns=5, side=-1),
@@ -1294,7 +1294,7 @@ SPECIALE = [
          fx=[fx_storm(3)], ms=110),
     dict(hrel=(1, 0), jaw=1, wings=dict(N=('down', 'fold', 0.7), F=('down', 'fold', 0.7)), crest=(0, 0),
          fx=[fx_storm(4)], ms=120),
-    dict(hrel=(0, 0), jaw=0, wings=dict(N='fold', F='fold'), crest=(1, 0), ms=120),
+    dict(hrel=(0, 0), jaw=0, lagN=(-2, 5), lagF=(1, 3), crest=(1, 0), ms=120),
     dict(sq=1, hrel=(0, 1), lagN=(0, -2), lagF=(0, -2), crest=(1, 1), ms=140),
     dict(lagN=(0, 1), lagF=(0, 1), crest=(0, 0), ms=170),
 ]
