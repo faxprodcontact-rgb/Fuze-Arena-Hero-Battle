@@ -1,4 +1,28 @@
-# brouillon
+# Naga au bouclier (clan de Méduse, élément terre) : le « costaud » du clan, premier rang, un vrai mur.
+#
+# Créature : un grand naga massif. Buste puissant d'homme-serpent (épaules énormes, cou épais), qui sort d'un gros
+#   corps de serpent enroulé au sol : une large boucle posée à plat devant, une seconde boucle qui remonte derrière le
+#   buste, la pointe de la queue qui ressort à droite sous le bouclier et se relève en crochet. Plus large et plus lourd
+#   que le serpent guerrier (rapide, cobra à lames) et la prêtresse (fine, en robe).
+# Pose : trois quarts vers la droite, en garde derrière le bouclier. Bras gauche (lointain) caché derrière le grand
+#   bouclier tenu devant le flanc (on voit l'épaisseur du bord à gauche, l'épaulière lointaine dépasse en haut).
+#   Bras droit (proche) : épaulière de bronze, coude bas, avant-bras relevé avec brassard ; le poing serre la hampe du
+#   trident planté au sol (doigts devant la hampe, pouce par-dessus, la hampe ressort en haut et en bas).
+# Tête : vraie tête de vipère, large derrière (bosse du muscle de la mâchoire), dessus du crâne en grandes plaques
+#   éclairées, sourcils lourds qui coupent le haut des yeux (regard dur), yeux verts brûlants à pupille fendue (même
+#   lueur que Méduse ; l'oeil lointain pareil, plus étroit, derrière l'arête du museau), narine discrète, lèvre d'écailles
+#   pâles, gueule ouverte qui siffle : gorge rouge sombre (pas de noir), deux crochets, langue fourchue rouge.
+#   Crête : membrane violette tendue sur trois piquants d'or penchés vers l'arrière, qui descend sur la nuque.
+# Détails : cuirasse de bronze musclée (pectoraux, abdominaux), col d'or, ceinture d'or à boucle d'émeraude,
+#   lambrequins de bronze rivetés d'or, pagne violet qui tombe droit, ourlé d'or, petit signe d'or ; épaulière en dôme et
+#   deux lames bordées d'or. Bouclier ovale de pierre (gris vert, piqûres et fissures), bord de bronze à rivets d'or,
+#   signe inventé : un oeil de serpent d'émeraude dans un anneau de bronze, une écaille pointue au-dessus et trois
+#   écailles d'or qui se chevauchent dessous (aucune lettre). Trident d'or (douille à émeraude), hampe de bois brun.
+#   Queue : écailles en petits croissants, grandes plaques jaunes du ventre.
+# Couleurs : celles de Méduse (écailles émeraude, ventre jaune, or, violet, yeux verts, gorge rouge sombre), plus le
+#   bronze (comme le serpent guerrier) et la pierre du bouclier. Une seule lumière, en haut à droite. Pas de noir dedans.
+# Calques : corps (respire), trident fixe (planté au sol), main (le poing glisse d'un pixel le long de la hampe).
+# Souffle sous la poitrine ; clignement : les yeux deviennent des paupières d'écailles.
 id: mon-meduse-costaud
 sol: 64 116
 tete: 60 14 98 44
