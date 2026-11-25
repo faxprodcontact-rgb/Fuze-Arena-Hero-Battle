@@ -116,17 +116,21 @@ BODY = np.where(CLOUD | STICK | GOURD | ARMF | ROSARY | TAIL | HEAD | BEARD, '.'
 # bâton penche ou que la main glisse.
 for _y in range(73, 81):
     P['baton'][_y, 102:105] = list('wxy')
-# Sous la barbe : la robe continue (couleur de la robe à gauche de la barbe, rangée par rangée, puis la ceinture).
+# Sous la barbe : la robe continue (moitié gauche : la couleur à gauche de la barbe ; moitié droite : celle de la
+# manche à droite), rangée par rangée.
 for _y in range(62, 100):
     xs = np.nonzero(BEARD[_y])[0]
     if not len(xs):
         continue
+    mid = (xs[0] + xs[-1]) / 2
     for x in range(xs[0], xs[-1] + 1):
         if BODY[_y, x] == '.' and BEARD[_y, x]:
-            k = xs[0] - 1
-            while k > 0 and BODY[_y, k] == '.':
-                k -= 1
-            BODY[_y, x] = BODY[_y, k] if BODY[_y, k] in JADE + 'mno' else 'P'
+            step = -1 if x <= mid else 1
+            k = x
+            while 0 < k < GW - 1 and BODY[_y, k] == '.':
+                k += step
+            c = BODY[_y, k]
+            BODY[_y, x] = c if c in JADE + 'mno' else 'P'
 # Sous le chapelet : la robe (le jade du pan de manche voisin).
 for _y in range(73, 83):
     for x in (72, 73):
@@ -652,9 +656,10 @@ def boule(cv, c, r, spin=0.0, trail=0.0, tones=CLOUDT):
     une traînée ondulée derrière (trail = longueur)"""
     cx, cy = c
     if trail:
-        pts = bezier((cx - 2, cy), (cx - trail * 0.35, cy - 5), (cx - trail * 0.65, cy + 4), (cx - trail, cy - 1), 40)
-        widths = [r * 1.1 * (1 - i / 40) ** 0.9 + 0.3 for i in range(41)]
-        stroke(cv, pts, widths, 'bcde')
+        # la traînée : un ruban qui ondule (une vague, pas un trait droit), épais contre la boule, qui finit en
+        # petite volute derrière
+        gust(cv, (cx - 2, cy), (cx - trail * 0.35, cy - 7), (cx - trail * 0.7, cy + 7), (cx - trail, cy - 1),
+             r * 1.3, 'bcde', curl_r=2.5, up=False)
     cloud(cv, (cx, cy), r, tones, seed=7)
     curl(cv, (cx + 0.5, cy), r + 1.5, 200 + spin, turn=320, w=2.0, tones='abcd', cw=True)
 
@@ -1037,6 +1042,12 @@ def write_outputs(anims):
         fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
         fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
         bw, bh = box[2] - box[0], box[3] - box[1]
+        if fond.width < bw:
+            # la scène est plus large que le fond (le sort va loin) : on prolonge le fond par son reflet
+            wide = Image.new('RGBA', (fond.width * 2, fond.height))
+            wide.paste(fond, (0, 0))
+            wide.paste(fond.transpose(Image.FLIP_LEFT_RIGHT), (fond.width, 0))
+            fond = wide
         fy = 374 - (GROUND - box[1])
         base = fond.crop((0, fy, bw, fy + bh))
         if base.width < bw:

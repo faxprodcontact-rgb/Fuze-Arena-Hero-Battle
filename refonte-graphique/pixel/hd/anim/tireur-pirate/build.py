@@ -692,7 +692,7 @@ def draw_shoulder(cv, f, body, ctx):
     cx, cy = body.follow(64)
     ang = f.get('ang', 0.0)
     O = g2c(f.get('butt', BUTT_AIM), (cx, cy))
-    tn, tf = f.get('tn', 16.0), f.get('tf', 52.0)
+    tn, tf = f.get('tn', 18.5), f.get('tf', 52.0)
     gn = musket_at(O, ang, tn - 1.0, 3.0)
     Sn = g2c(SH_NEAR, (cx, cy))
     wn, bn, rn = wrist_for(gn, Sn, 3.0), f.get('bend_near', 1), (4.2, 3.6, 2.9)
@@ -1213,7 +1213,7 @@ CURLS = [
 ]
 
 
-def fx_smoke(k, at=None, tint=None):
+def fx_smoke(k, at=None, tint=None, spark=True):
     """la fumée du coup, là où il est parti (at : un autre point de départ, pour la spéciale)"""
     def f(cv, back, front, ctx):
         mx, my = at[0] if at else SHOT_AT[0]
@@ -1222,7 +1222,7 @@ def fx_smoke(k, at=None, tint=None):
         if tint:
             tones = tint[min(k, len(tint) - 1)]
         smoke(layer, [(mx + x, my + y, r) for (x, y, r) in SMOKE[k]], tones)
-        if k == 0:
+        if k == 0 and spark:
             pop(layer, (mx + 4, my), 2.0, facing=0, tones='ef')
         for (x, y, r, a0, cw) in CURLS[k]:
             curl(layer, (mx + x, my + y), r, a0, turn=290, w=1.9 if k < 5 else 1.5, tones='stu', cw=cw)
@@ -1292,8 +1292,9 @@ SHOT_AT[0] = (float(_c.muzzle[0]), float(_c.muzzle[1]))
 SPEC_AT = [None]                          # la bouche du canon épaulé, au moment du coup (toile)
 
 
-def spiral_arm(cv, M, R0, a0, turn, w, tones='XYZA', squash=0.45, reach=12.0, cw=False):
-    """un filet d'eau qui tourne en spirale vers la bouche du canon M (vu de côté : un entonnoir couché)"""
+def spiral_arm(cv, M, R0, a0, turn, w, squash=0.45, reach=12.0, cw=False):
+    """un filet d'eau qui tourne en spirale vers la bouche du canon M (vu de côté : un entonnoir couché) ; un ruban
+    plein modelé par la lumière, effilé à la queue, écume sur sa tête (qui plonge dans le canon)"""
     pts, ws = [], []
     n = 40
     for i in range(n + 1):
@@ -1301,8 +1302,8 @@ def spiral_arm(cv, M, R0, a0, turn, w, tones='XYZA', squash=0.45, reach=12.0, cw
         r = R0 * (1 - 0.85 * s_)
         a = math.radians(a0 + (-turn if cw else turn) * s_)
         pts.append((M[0] + 3 + reach * (1 - s_) + r * math.cos(a) * squash, M[1] - r * math.sin(a)))
-        ws.append(w * (0.35 + 0.65 * math.sin(math.pi * min(1.0, s_ * 1.15)) ** 0.7))
-    stroke(cv, pts, ws, tones)
+        ws.append(0.6 + w * min(1.0, s_ * 1.6) ** 0.8 * (1 - 0.35 * s_))
+    lit_stroke(cv, pts, ws, 'XYZAB', foam=(0.0, 0.6))
 
 
 def bubble(cv, x, y, r=1.5):
@@ -1318,16 +1319,16 @@ def fx_gather(k):
     def f(cv, back, front, ctx):
         M = ctx.muzzle
         if k == 0:
-            spiral_arm(back, M, 14, 80, 260, 2.2, tones='YZA')
-            spiral_arm(front, M, 13, 260, 250, 2.4, tones='XYZ')
+            spiral_arm(back, M, 14, 80, 260, 3.0)
+            spiral_arm(front, M, 13, 260, 250, 3.4)
             for (dx, dy, sz) in ((22, -9, 2), (26, 6, 2), (16, -13, 1), (30, -2, 1)):
                 drop(front, M[0] + dx, M[1] + dy, sz, v=(-1.0, -dy * 0.1))
             bubble(back, M[0] + 12, M[1] - 6, 1.0)
             return
         if k == 1:
             ring(back, (M[0] + 4, M[1]), 2.6, 8.0, 1.8, 90, 270, tones='YZA')
-            spiral_arm(back, M, 17, 60, 300, 2.8, tones='YZAB', reach=10)
-            spiral_arm(front, M, 16, 240, 300, 3.0, tones='XYZA', reach=10)
+            spiral_arm(back, M, 17, 60, 300, 3.6, reach=10)
+            spiral_arm(front, M, 16, 240, 300, 4.0, reach=10)
             ring(front, (M[0] + 4, M[1]), 2.6, 8.0, 2.2, -90, 90, tones='WXYZ')
             puff(front, (M[0] + 3.5, M[1]), 2.4, tones='WXYZ')
             for (dx, dy, sz) in ((18, -12, 2), (22, 9, 2), (28, -4, 1), (12, 13, 1)):
@@ -1337,8 +1338,8 @@ def fx_gather(k):
             return
         # k == 2 : la boule d'eau gonfle au bout du canon, l'anneau tourne vite, les filets s'y engouffrent
         ring(back, (M[0] + 5, M[1]), 3.4, 11.0, 2.0, 90, 270, tones='YZA')
-        spiral_arm(back, M, 20, 30, 330, 3.0, tones='YZAB', reach=8)
-        spiral_arm(front, M, 19, 210, 330, 3.2, tones='XYZA', reach=8)
+        spiral_arm(back, M, 20, 30, 330, 4.0, reach=8)
+        spiral_arm(front, M, 19, 210, 330, 4.6, reach=8)
         m = ellipse_mask((M[0] + 5, M[1]), 4.6, 4.6)
         shade_mask(front, m, 'XYZAB', foam=m)
         ring(front, (M[0] + 5, M[1]), 3.4, 11.0, 2.4, -90, 90, tones='WXYZ')
@@ -1493,7 +1494,7 @@ SPECIALE = [
          fx=[fx_fire], ms=60),
     # 5-6 : le recul la repousse, le canon se cabre ; la balle d'eau file vers l'ennemi
     dict(AIM, fired=True, ang=7.125, butt=(51.0, 61.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=-1,
-         e=1, fx=[fx_smoke(0, SPEC_AT), fx_shot(48, 34, 1.2), fx_wake(0), fx_kick(0)], ms=60),
+         e=1, fx=[fx_smoke(0, SPEC_AT, spark=False), fx_shot(48, 34, 1.2), fx_wake(0), fx_kick(0)], ms=60),
     dict(AIM, fired=True, ang=7.125, butt=(51.0, 61.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=1,
          e=1, fx=[fx_smoke(1, SPEC_AT), fx_shot(84, 40, 2.6, 0.2), fx_wake(1), fx_kick(1)], ms=60),
     # 7 : la balle éclate sur l'ennemi — arrêt sur l'image

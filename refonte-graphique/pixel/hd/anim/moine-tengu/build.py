@@ -67,7 +67,7 @@ ALLPAL.update(FXPAL)
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du monstre est posé en SOL. La pose seule se recadre ensuite en 128 × 120
 # (le format du jeu, sol en (64, 116)). Toile haute : il lève le bâton ; large : la bourrasque file à droite.
-W, H = 372, 220
+W, H = 420, 220
 SOL = (108, 204)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
@@ -1078,8 +1078,8 @@ ATTAQUE = [
          swing=(-0.4, 0.1), glint=(1, 3), fx=[fx_hit(1)], shake=-1, ms=110),
     dict(arm='rig', staff='libre', G=(65.0, 59.0), ang=-34, sg=31, lean=3, crouch=2, head=(1, 0), p=0,
          swing=(0.2, 0.0), fx=[fx_hit(2)], ms=120),
-    # le retour, lent : il ramène le bâton bas devant lui, puis le redresse et le replante
-    dict(arm='rig', staff='libre', G=(50.0, 56.0), ang=-8, sg=44, lean=1, crouch=1, p=-1, swing=(0.5, 0.3),
+    # le retour, lent : il ramène le bâton en le traînant, puis le redresse et le replante
+    dict(arm='rig', staff='libre', G=(56.0, 57.0), ang=-18, sg=40, lean=2, crouch=2, p=-1, swing=(0.5, 0.3),
          fx=[fx_hit(3)], ms=150),
     dict(arm='rig', staff='libre', G=(25.0, 48.0), ang=77, sg=63, lean=0, breath=1, p=0, swing=(0.4, 0.2),
          fx=[fx_hit(4)], ms=150),
@@ -1097,26 +1097,31 @@ ATTAQUE = [
 def fx_whirl(level):
     def f(cv, back, front, ctx):
         c = ctx.head
-        rx, ry = 9 + 4 * level, 4 + 1.5 * level
-        ph = 70 * level
-        # le tourbillon : deux rubans qui tournent autour de la boucle (l'un derrière, l'autre devant)
-        ribbon(back, (c[0], c[1] + 1), rx, ry, 30 + ph, 200 + ph, 2.4 + 0.6 * level, head=0.6, tones='JFGH')
-        ribbon(front, (c[0], c[1] + 2), rx + 2, ry + 1, 210 + ph, 330 + ph, 2.0 + 0.6 * level, head=0.6,
+        rx, ry = 10 + 5 * level, 4 + 2 * level
+        ph = 80 * level
+        # le tourbillon : des rubans qui tournent autour de la boucle (la moitié derrière, la moitié devant)
+        ribbon(back, (c[0], c[1] + 1), rx, ry, 20 + ph, 200 + ph, 2.6 + 0.8 * level, head=0.6, tones='JFGH')
+        ribbon(front, (c[0], c[1] + 2), rx + 2, ry + 1, 200 + ph, 340 + ph, 2.2 + 0.8 * level, head=0.6,
                tones='WJFG')
         if level >= 1:
-            curl(front, (c[0] + rx + 3, c[1] - 6), 4.0, 120 + ph, turn=260, w=1.6, tones='JFG')
-            leaf(front, c[0] - rx - 6, c[1] + 6 - 3 * level, level)
-            feather(back, c[0] + rx - 2, c[1] + 10 + 2 * level, 2)
+            ribbon(back, (c[0], c[1] - 2), rx + 7, ry + 3, 110 + ph, 250 + ph, 2.0 + 0.4 * level, head=0.7,
+                   tones='FGH')
+            curl(front, (c[0] + rx + 4, c[1] - 6), 4.5, 120 + ph, turn=260, w=1.8, tones='JFG')
+            leaf(front, c[0] - rx - 7, c[1] + 8 - 4 * level, level)
+            feather(back, c[0] + rx - 1, c[1] + 12 + 2 * level, 2)
+            leaf(back, c[0] + 9, c[1] + 26 - 6 * level, 2)
         if level >= 2:
-            curl(back, (c[0] - rx - 2, c[1] - 8), 4.5, 300 + ph, turn=260, w=1.6, tones='FGH', cw=True)
-            feather(front, c[0] - 20, c[1] + 18, 1)
-            leaf(front, c[0] + 18, c[1] + 14, 3)
-            for (dx, dy) in ((-4, -7), (6, 5)):
+            curl(back, (c[0] - rx - 3, c[1] - 9), 5.0, 300 + ph, turn=260, w=1.8, tones='FGH', cw=True)
+            ribbon(front, (c[0], c[1] + 4), rx + 10, ry + 5, 230 + ph, 320 + ph, 2.4, head=0.5, tones='JFGH')
+            feather(front, c[0] - 24, c[1] + 20, 1)
+            feather(back, c[0] + 22, c[1] - 14, 4)
+            leaf(front, c[0] + 20, c[1] + 15, 3)
+            for (dx, dy) in ((-4, -8), (7, 5), (-9, 4)):
                 put(front, c[0] + dx, c[1] + dy, 'O')
-        # au sol : la poussière se lève vers le bâton
+        # au sol : la poussière se lève et file vers le bâton
         if level >= 1:
-            puff(back, (SOL[0] - 26, GROUND - 3), 2.5 + level, tones='KLM')
-            puff(back, (SOL[0] + 8, GROUND - 2), 2.0 + level, tones='KLM')
+            cloud(back, (SOL[0] - 30, GROUND - 3), 3.0 + 1.5 * level, tones='KLM', seed=5 + level)
+            cloud(back, (SOL[0] + 6, GROUND - 3), 2.5 + 1.5 * level, tones='KLM', seed=7 + level)
     return f
 
 
@@ -1128,53 +1133,67 @@ def fx_drop_smear(cv, back, front, ctx):
     stroke(back, pts, widths, 'WJFG')
 
 
+def wave(front, back, x0, fx, hc, tail, w):
+    """la grande vague de vent qui roule au ras du sol : un ruban épais qui monte jusqu'à sa crête puis s'enroule
+    vers l'avant et vers le bas (comme une vague qui déferle) ; une seconde lame plus basse, une troisième derrière."""
+    gust(front, (x0, GROUND - 2), (x0 + (fx - x0) * 0.35, GROUND - 3), (fx - 26, GROUND - hc * 1.05),
+         (fx - 4, GROUND - hc), w, tones='WJFGH', curl_r=hc * 0.30, up=False, tail=tail)
+    gust(front, (x0 + 14, GROUND - 1), (x0 + (fx - x0) * 0.5, GROUND - 1), (fx - 22, GROUND - hc * 0.45),
+         (fx + 2, GROUND - hc * 0.42), w * 0.55, tones='JFGH', curl_r=hc * 0.16, up=False,
+         tail=min(0.95, tail + 0.1))
+    gust(back, (x0 + 6, GROUND - 8), (x0 + (fx - x0) * 0.4, GROUND - hc * 0.5), (fx - 40, GROUND - hc * 1.3),
+         (fx - 18, GROUND - hc * 1.25), w * 0.45, tones='FGHI', curl_r=hc * 0.18, up=False,
+         tail=min(0.95, tail + 0.2))
+
+
 def fx_slam(k):
     def f(cv, back, front, ctx):
         fx0 = ctx.foot[0]
         if k == 0:
             # le souffle jaillit au pied du bâton : un dôme de vent, la poussière qui gicle des deux côtés
-            pop(front, (fx0 + 1, GROUND - 6), 7.0, facing=90, tones='WJFG')
-            ribbon(back, (fx0, GROUND - 2), 22, 6, 175, 5, 3.0, head=0.5, tones='JFGH')
-            cloud(back, (fx0 - 14, GROUND - 4), 6.0, tones='KLMN', seed=3)
-            cloud(back, (fx0 + 18, GROUND - 4), 6.5, tones='KLMN', seed=4)
-            for (dx, dy) in ((-10, -16), (12, -19), (22, -10)):
+            pop(front, (fx0 + 1, GROUND - 8), 9.0, facing=90, tones='WJFG')
+            ribbon(back, (fx0 + 4, GROUND - 2), 30, 8, 178, 2, 3.4, head=0.5, tones='JFGH')
+            ribbon(front, (fx0 + 4, GROUND - 1), 34, 6, 200, 340, 3.0, head=0.5, tones='WJFG')
+            cloud(back, (fx0 - 18, GROUND - 5), 7.5, tones='KLMN', seed=3)
+            cloud(back, (fx0 + 24, GROUND - 5), 8.0, tones='KLMN', seed=4)
+            for (dx, dy) in ((-12, -20), (14, -24), (28, -12), (-24, -10)):
                 pebble(front, fx0 + dx, GROUND + dy)
+            for (dx, dy) in ((-6, -30), (9, -34)):
+                put(front, fx0 + dx, GROUND + dy, 'O')
             return
         # la vague de vent qui roule vers la droite : son front avance ; derrière, la poussière retombe
-        front_x = fx0 + [0, 62, 118, 176, 214, 232][k]
-        hgt = [0, 16, 20, 24, 26, 26][k]
-        tail = [0, 0.0, 0.25, 0.45, 0.7, 0.85][k]
-        if k <= 4:
-            gust(front, (fx0 + 8, GROUND - 3), (fx0 + 40, GROUND - 2), (front_x - 30, GROUND - 2),
-                 (front_x - 6, GROUND - hgt * 0.55), 6.5, tones='WJFGH', curl_r=hgt * 0.32, up=True, tail=tail)
-            gust(back, (fx0 + 20, GROUND - 10), (fx0 + 55, GROUND - 14), (front_x - 40, GROUND - 10),
-                 (front_x - 20, GROUND - hgt * 0.8), 3.5, tones='JFGH', curl_r=hgt * 0.22, up=True,
-                 tail=min(0.9, tail + 0.15))
-        # au front : la poussière soulevée, les feuilles et les plumes qui roulent
+        front_x = fx0 + [0, 70, 132, 196, 240, 262][k]
+        hc = [0, 22, 32, 40, 40, 34][k]
+        tail = [0, 0.0, 0.2, 0.42, 0.68, 0.86][k]
+        wave(front, back, fx0 + 10, front_x, hc, tail, [0, 9, 10, 10, 8, 6][k])
+        # au front : la poussière soulevée, les feuilles et les plumes qui roulent dans la vague
         if 1 <= k <= 4:
-            cloud(back, (front_x - 4, GROUND - 6), 5.5 + k, tones='KLMN', seed=10 + k, hollow=0.1 * (k - 1))
-            leaf(front, front_x - 10, GROUND - hgt - 4, k)
-            feather(front, front_x - 24, GROUND - hgt + 2, [0, 2, 3, 4][k - 1])
-            leaf(front, front_x + 2, GROUND - hgt * 0.6, k + 1)
+            cloud(back, (front_x - 8, GROUND - 7), 6.0 + 1.5 * k, tones='KLMN', seed=10 + k, hollow=0.12 * (k - 1))
+            cloud(back, (front_x - 34, GROUND - 6), 5.0 + k, tones='KLMN', seed=14 + k, hollow=0.2 + 0.15 * k)
+            leaf(front, front_x - 12, GROUND - hc - 3, k)
+            feather(front, front_x - 30, GROUND - hc * 0.7, [0, 2, 3, 4][k - 1])
+            leaf(front, front_x + 6, GROUND - hc * 0.55, k + 1)
+            feather(back, front_x - 46, GROUND - hc * 0.9, [2, 3, 4, 1][k - 1])
+            pebble(front, front_x - 2, GROUND - 10 - 3 * k)
         # sur le premier rang : la bourrasque frappe (éclats ronds au niveau des jambes et du ventre)
         if k == 3:
-            pop(front, (FOE_X - 18, GROUND - 16), 5.5, facing=30, tones='WJFG')
-            pop(front, (FOE_X + 22, GROUND - 12), 4.5, facing=30, tones='WJFG')
+            pop(front, (FOE_X - 26, GROUND - 18), 6.5, facing=30, tones='WJFG')
+            pop(front, (FOE_X + 18, GROUND - 26), 5.5, facing=30, tones='WJFG')
+            pop(front, (FOE_X + 44, GROUND - 12), 4.5, facing=30, tones='WJFG')
         if k >= 4:
-            r = 1.0 if k == 4 else 0.0
-            curl(front, (FOE_X - 8, GROUND - 34 - 6 * (k - 4)), 7.0 - 2 * (k - 4), 200 + 60 * k, turn=280,
-                 w=2.2 - 0.6 * (k - 4), tones='JFGH')
-            curl(front, (FOE_X + 28, GROUND - 26 - 6 * (k - 4)), 5.5 - 1.5 * (k - 4), 250 + 60 * k, turn=260,
-                 w=1.8 - 0.4 * (k - 4), tones='FGH', cw=True)
-            cloud(back, (FOE_X - 14, GROUND - 10), 7.0, tones='KLM', seed=21, hollow=0.45 + 0.35 * (k - 4))
-            cloud(back, (FOE_X + 26, GROUND - 8), 6.0, tones='KLM', seed=22, hollow=0.5 + 0.35 * (k - 4))
-            feather(front, FOE_X - 30 + 6 * (k - 4), GROUND - 46 + 8 * (k - 4), 3 + (k - 4))
-            leaf(front, FOE_X + 8, GROUND - 44 + 10 * (k - 4), k)
-            if r:
-                leaf(front, FOE_X + 40, GROUND - 30, 2)
+            j = k - 4
+            curl(front, (FOE_X - 14, GROUND - 40 - 8 * j), 8.0 - 2 * j, 200 + 60 * k, turn=290, w=2.6 - 0.7 * j,
+                 tones='JFGH')
+            curl(front, (FOE_X + 26, GROUND - 32 - 8 * j), 6.5 - 1.5 * j, 250 + 60 * k, turn=270, w=2.2 - 0.5 * j,
+                 tones='FGH', cw=True)
+            cloud(back, (FOE_X - 20, GROUND - 10), 8.0, tones='KLM', seed=21, hollow=0.45 + 0.35 * j)
+            cloud(back, (FOE_X + 24, GROUND - 9), 7.0, tones='KLM', seed=22, hollow=0.5 + 0.35 * j)
+            feather(front, FOE_X - 34 + 6 * j, GROUND - 54 + 10 * j, 3 + j)
+            leaf(front, FOE_X + 6, GROUND - 52 + 10 * j, k)
+            leaf(front, FOE_X + 44, GROUND - 38 + 8 * j, 2 + j)
         # derrière la vague : la poussière du pied du bâton retombe
-        cloud(back, (fx0 + 20, GROUND - 6), 6.0, tones='KLM', seed=4, hollow=min(0.95, 0.25 * k))
-        cloud(back, (fx0 - 14, GROUND - 6), 5.0, tones='KLM', seed=3, hollow=min(0.95, 0.3 * k))
+        cloud(back, (fx0 + 24, GROUND - 6), 7.0, tones='KLM', seed=4, hollow=min(0.95, 0.22 * k))
+        cloud(back, (fx0 - 18, GROUND - 6), 6.0, tones='KLM', seed=3, hollow=min(0.95, 0.28 * k))
     return f
 
 

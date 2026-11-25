@@ -776,9 +776,61 @@ def rig_frame(f):
     ctx.head = g2c(80, 38) + np.array([hx + hdx, hy + hdy])
     ctx.body = body
     ctx.sh = (sx, sy)
+    clean(cv)
     for fx in f.get('fx', []):
         fx(cv, back, front, ctx)
     return cv, back, front, ctx
+
+
+def _components(m):
+    """les morceaux connexes (4 voisins) d'un masque : liste de listes de (y, x)"""
+    Hm, Wm = m.shape
+    seen = np.zeros(m.shape, bool)
+    comps = []
+    for y, x in zip(*np.nonzero(m)):
+        if seen[y, x]:
+            continue
+        stack, c = [(y, x)], []
+        seen[y, x] = True
+        while stack:
+            a, b = stack.pop()
+            c.append((a, b))
+            for u, v in ((a + 1, b), (a - 1, b), (a, b + 1), (a, b - 1)):
+                if 0 <= u < Hm and 0 <= v < Wm and m[u, v] and not seen[u, v]:
+                    seen[u, v] = True
+                    stack.append((u, v))
+        comps.append(c)
+    return comps
+
+
+def clean(cv, hole_max=8, crumb_max=3):
+    """le nettoyage au pixel : quand les ailes plient ou qu'un morceau bouge, de petits jours peuvent s'ouvrir entre
+    les plumes (le dessin n'en a aucun) : ils sont bouchés avec la couleur voisine la plus fréquente ; les miettes
+    isolées (un ou deux pixels détachés) sont effacées."""
+    m = cv != '.'
+    ys, xs = np.nonzero(m)
+    y0, y1, x0, x1 = ys.min() - 1, ys.max() + 2, xs.min() - 1, xs.max() + 2
+    sub = cv[y0:y1, x0:x1]
+    ms = sub != '.'
+    for c in _components(~ms):
+        if len(c) > hole_max or any(a in (0, ms.shape[0] - 1) or b in (0, ms.shape[1] - 1) for a, b in c):
+            continue
+        todo = list(c)
+        while todo:
+            rest = []
+            for (a, b) in todo:
+                nb = [sub[u, v] for u, v in ((a + 1, b), (a - 1, b), (a, b + 1), (a, b - 1)) if sub[u, v] != '.']
+                if nb:
+                    sub[a, b] = max(set(nb), key=nb.count)
+                else:
+                    rest.append((a, b))
+            if len(rest) == len(todo):
+                break
+            todo = rest
+    for c in _components(sub != '.'):
+        if len(c) <= crumb_max:
+            for a, b in c:
+                sub[a, b] = '.'
 
 
 # ---------------------------------------------------------------- 1) la pose (respiration)
@@ -798,6 +850,10 @@ POSE = [
     dict(b=0, wn=(-1, 0, -1), wf=(-1, 0, -1), fl=0, po=0, pa=0, ro=0, ms=160),
     dict(b=0, wn=(0, 0, -1), wf=(0, 0, -1), fl=0, po=0, pa=0, ro=0, ms=140),
 ]
+
+# l'aile lointaine (derrière la tête) suit la proche avec une image de retard : le mouvement ondule d'une aile à l'autre
+for _i, _f in enumerate(POSE):
+    _f['wf'] = POSE[_i - 1]['wn']
 
 
 # ---------------------------------------------------------------- 2) l'attaque de base : « Volute »
@@ -899,8 +955,9 @@ ATTAQUE = [
          fx=[fx_volute(1)], ms=60),
     dict(lean=2, head=(1, 0), wn=(-2, 0, 0), wf=(-2, 0, 0), fan='flat', arm=(1, 0), po=0, pa=1, ro=-1,
          fx=[fx_volute(2)], ms=60),
-    dict(lean=1, head=(1, 0), wn=(-1, 0, 1), wf=(-1, 0, 1), fan='a45', arm=(0, 0), po=1, pa=0, ro=0,
-         fx=[fx_volute(3)], ms=140),
+    dict(lean=1, head=(1, 0), wn=(-1, 0, 1), wf=(-1, 0, 1), fan='a40', arm=(0, 0), po=1, pa=0, ro=0,
+         fx=[fx_volute(3)], ms=100),
+    dict(lean=1, wn=(0, 0, 1), wf=(0, 0, 1), fan=5, po=1, pa=0, ro=0, fx=[fx_volute(3)], ms=60),
     dict(lean=0, wn=(1, 0, 1), wf=(1, 0, 1), fan=2, fl=1, po=1, pa=-1, ro=1, fx=[fx_volute(4)], ms=100),
     dict(wn=(1, 0, 0), wf=(1, 0, 0), fan=0, fl=-1, po=0, pa=0, ro=0, fx=[fx_volute(5)], ms=110),
     dict(ms=140),
@@ -1204,6 +1261,11 @@ def write_outputs(anims):
         fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
         fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
         bw, bh = box[2] - box[0], box[3] - box[1]
+        if fond.width < bw:                             # la toile est plus large que le fond : on le prolonge en miroir
+            wide = Image.new('RGBA', (fond.width * 2, fond.height))
+            wide.paste(fond, (0, 0))
+            wide.paste(fond.transpose(Image.FLIP_LEFT_RIGHT), (fond.width, 0))
+            fond = wide
         fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
         base = fond.crop((0, fy, bw, fy + bh))
         if base.width < bw or fy < 0:

@@ -790,10 +790,13 @@ def arm(cv, side, a, body):
     spr = FORE[side].turned(how).sheared(a.get('shear', 0), how)
     if a.get('draw', 'all') in ('all', 'upper'):
         draw_upper(cv, S, E, *ARM_R[side], dark=0.15 if side == 'far' else 0.0)
-    if a.get('draw', 'all') in ('all', 'fore'):
+    top = a.get('fore_top', False)      # poing levé : l'avant-bras passe devant l'épaulière
+    if a.get('draw', 'all') in ('all', 'fore') and not top:
         spr.put(cv, E[0], E[1])
     if side == 'near' and a.get('draw', 'all') in ('all', 'upper'):
         PAD.put(cv, S[0] + 1, S[1] - 5 + a.get('pady', 0))
+    if a.get('draw', 'all') in ('all', 'fore') and top:
+        spr.put(cv, E[0], E[1])
     return E
 
 
@@ -838,7 +841,7 @@ def show(frames, path, k=3):
     ims = []
     for spec in frames:
         cv, back, front, ctx = rig_frame(dict(spec))
-        ims.append(big(compose(cv, back, front, flash=spec.get('flash')), k, (0, 30, 230, 176)))
+        ims.append(big(compose(cv, back, front, flash=spec.get('flash')), k, (0, 0, W, H)))
     w, h = ims[0].size
     per = 4
     sheet = Image.new('RGB', (w * min(per, len(ims)), h * ((len(ims) + per - 1) // per)), (250, 250, 252))
@@ -871,8 +874,8 @@ POSE = [
 # arrache le poing du sol en l'armant en arrière (le vent s'enroule autour du gantelet) ; puis il bascule en avant,
 # le bras se déplie d'un coup (image étirée), le poing frappe : éclat de vent, croissants d'air, la poussière saute
 # sous ses pieds ; impact tenu ; il ramène le bras et repose lourdement le poing.
-COCK_ELBOW = (40, 70)                  # le bras proche armé en arrière : coude bas, poing remonté derrière l'épaule
-COCK_FIST = (2, 52)                    # où tombe alors le poing (grille, à peu près)
+COCK_ELBOW = (40, 76)                  # le bras proche armé : tiré en arrière à hauteur de hanche, poing derrière le dos
+COCK_FIST = (2, 64)                    # où tombe alors le poing (grille, à peu près)
 
 
 def fx_gather(level):
@@ -929,7 +932,7 @@ def fx_hit(k):
         for i, x in enumerate(gx):
             if k <= 2:
                 cloud(back if i == 1 else front, (x + (k * 3 if i == 2 else -k * 3), GROUND - 2),
-                      (4.6 if k == 0 else 5.4 if k == 1 else 4.4), seed=10 + i, hollow=0.35 * k)
+                      (5.6 if k == 0 else 6.6 if k == 1 else 5.6), seed=10 + i, hollow=0.35 * k)
         if k == 0:
             pebble(front, gx[2] + 12, GROUND - 7)
             pebble(front, gx[0] - 11, GROUND - 6)
@@ -947,13 +950,12 @@ def fx_land(back, front, ctx):
 
 ATTAQUE = [
     dict(lean=-1, breath=1, near=None, ms=130),
-    dict(lean=-3, breath=2, chest=-2, near=dict(sh=(-3, -2), elbow=(30, 78), fore='back', shear=0.35),
+    dict(lean=-3, breath=2, chest=-2, near=dict(sh=(-3, -2), elbow=(34, 80), fore='back', shear=0.15),
          fx=[fx_gather(1)], ms=150),
-    dict(lean=-5, breath=2, chest=-4, near=dict(sh=(-5, -3), elbow=COCK_ELBOW, fore='back', shear=0.55),
+    dict(lean=-5, breath=2, chest=-4, near=dict(sh=(-5, -3), elbow=COCK_ELBOW, fore='back', shear=0.3),
          fx=[fx_gather(2)], ms=320),
     dict(lean=4, chest=3, near=dict(sh=(8, 4), elbow=(70, 72), fore='fwd', shear=0.1), fx=[fx_smear], ms=60),
-    dict(lean=7, crouch=1, chest=4, near=dict(sh=(14, 6), elbow=(88, 70), fore='fwd'), fx=[fx_hit(0)], flash=30,
-         ms=90),
+    dict(lean=7, crouch=1, chest=4, near=dict(sh=(14, 6), elbow=(88, 70), fore='fwd'), fx=[fx_hit(0)], ms=90),
     dict(lean=7, crouch=1, chest=4, near=dict(sh=(14, 6), elbow=(88, 70), fore='fwd'), fx=[fx_hit(1)], ms=160),
     dict(lean=5, crouch=1, chest=2, near=dict(sh=(10, 5), elbow=(74, 73), fore='fwd', shear=0.1), fx=[fx_hit(2)],
          ms=120),
@@ -962,10 +964,261 @@ ATTAQUE = [
     dict(lean=0, near=None, ms=170)]
 
 
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Tambour de tempête »
+# Il se dresse sur ses jambes arquées en arrachant les deux poings du sol, se frappe la poitrine (quatre coups, les
+# poings en alternance : chaque coup chasse un croissant d'air vers l'ennemi), lève les deux poings au-dessus de sa
+# tête (le vent s'y enroule, les feuilles montent : longue attente), puis les abat sur le sol devant lui. Arrêt sur
+# l'impact (il pâlit d'un coup), et une onde de vent et de poussière file au ras du sol vers la droite, roule sous
+# tout le premier rang et se défait en volutes. Il repose les poings et reprend son souffle.
+CHEST_HIT = (76, 62)                   # où les poings frappent la poitrine (grille)
+
+
+def fx_lift(back, front, ctx):
+    for x in (30, 108):
+        cloud(back, g2c(x, GROUND - OY - 2), 4.6, seed=x, hollow=0.2)
+
+
+def fx_beat(i):
+    """i : numéro du coup (0..3). Un éclat au point d'impact et des croissants d'air qui partent vers la droite"""
+    def f(back, front, ctx):
+        cx, cy = g2c(*CHEST_HIT)
+        side = -1 if i % 2 == 0 else 1          # le poing proche frappe par la gauche, le lointain par la droite
+        pop(front, (cx + side * 4, cy), 5 + i * 0.6, facing=0, tones='wxyz')
+        for j in range(i + 1):                  # les croissants des coups précédents ont avancé
+            age = i - j
+            r = 10 + age * 9
+            crescent(front, (cx + 8 + age * 16, cy), r, 0, span=100 - age * 12, w=max(1.4, 3.6 - age * 0.8),
+                     tones='wxyz' if age == 0 else 'xyz' if age == 1 else 'yzv')
+        if i >= 2:
+            leaf(front, cx + 46 + i * 6, cy - 18 + i * 3, i)
+    return f
+
+
+def fx_raise(back, front, ctx):
+    """les poings levés : le vent s'enroule autour, les feuilles montent, la poussière est aspirée"""
+    for (fx_, fy_, cw) in ((36, 2, False), (102, 0, True)):
+        cx, cy = g2c(fx_, fy_)
+        curl(back, (cx, cy + 4), 17, 230 if not cw else -50, turn=300, w=3.6, tones='wxyzv', cw=cw)
+        curl(front, (cx + (-10 if not cw else 10), cy + 26), 9, 90, turn=240, w=2.4, tones='xyzv', cw=not cw)
+    gust(back, g2c(10, 110), g2c(0, 80), g2c(10, 40), g2c(26, 14), 4.0, tones='xyzv', curl_r=6, up=False)
+    gust(back, g2c(130, 112), g2c(144, 80), g2c(132, 40), g2c(116, 14), 4.0, tones='xyzv', curl_r=6, up=True)
+    for (x, y, k) in ((14, 60, 0), (128, 54, 1), (60, 6, 2), (140, 92, 0), (2, 92, 1)):
+        leaf(front, *g2c(x, y), k=k)
+    for x in (30, 70, 108):
+        cloud(back, g2c(x, GROUND - OY - 2), 3.4, seed=x + 1, hollow=0.4)
+
+
+def fx_drop(back, front, ctx):
+    """les poings qui tombent : deux traînées courbes de vent, du haut jusqu'au sol"""
+    for (x0, y0, x1, y1) in ((36, 0, 80, 96), (102, -2, 124, 96)):
+        a, b = g2c(x0, y0), g2c(x1, y1)
+        pts = bezier(a, (a[0] + 4, a[1] + 30), (b[0] - 22, b[1] - 30), b, 50)
+        stroke(back, pts, [1 + 16 * (i / 50) ** 1.5 for i in range(51)], 'xyzv')
+        stroke(back, pts[20:], [1 + 8 * (i / 30) ** 1.5 for i in range(31)], 'wwx')
+
+
+SLAM = (98, 114)                       # là où les deux poings frappent le sol (grille, entre les deux poings)
+
+
+def fx_slam(back, front, ctx):
+    cx, cy = g2c(*SLAM)
+    pop(front, (cx + 30, GROUND - 6), 11, facing=0, tones='wwxyz')
+    pop(back, (cx - 4, GROUND - 8), 13, facing=90, tones='wxyz')
+    cloud(front, (cx - 40, GROUND - 3), 7.0, seed=31)
+    cloud(front, (cx + 44, GROUND - 3), 7.5, seed=32)
+    cloud(back, (cx, GROUND - 4), 9.0, seed=33)
+    for (dx, dy) in ((-52, -16), (54, -20), (20, -26), (-26, -24)):
+        pebble(front, cx + dx, GROUND + dy)
+
+
+def fx_wave(k):
+    """l'onde au ras du sol : k = 0..4, elle avance vers la droite et se défait"""
+    def f(back, front, ctx):
+        x0 = g2c(*SLAM)[0] + 30
+        head = x0 + 34 + k * 38                 # le front de l'onde (toile)
+        g = GROUND - 1
+        tail = min(0.85, 0.18 * k)
+        if k <= 3:
+            # la rafale principale : un long ruban couché qui finit en volute dressée
+            gust(back, (x0, g - 3), (x0 + (head - x0) * 0.35, g - 1), (head - 22, g - 2), (head - 6, g - 14),
+                 6.0 - k * 0.4, tones='wxyzv', curl_r=7.0 + k, up=True, tail=tail)
+            gust(front, (x0 + 10, g - 10), (x0 + (head - x0) * 0.4, g - 16), (head - 30, g - 10),
+                 (head - 18, g - 24), 3.0, tones='xyzv', curl_r=4.0 + k * 0.6, up=True, tail=min(0.9, tail + 0.1))
+            # la poussière qui roule au front, et celle qui retombe derrière
+            cloud(front, (head + 2, g - 2), 7.5 + k * 0.5, seed=40 + k)
+            cloud(back, (head - 26, g - 2), 6.5, seed=50 + k, hollow=0.4)
+            if k >= 1:
+                cloud(back, (head - 64, g - 2), 5.5, seed=60 + k, hollow=0.75)
+            pebble(front, head + 10, g - 14 - k * 2)
+            leaf(front, head - 12, g - 30 - k * 4, k)
+            leaf(front, head + 16, g - 22 - k * 2, k + 1)
+        else:
+            curl(front, (head - 30, g - 22), 8, 200, turn=260, w=2.2, tones='yzv')
+            curl(back, (head - 4, g - 14), 6, 160, turn=260, w=1.8, tones='zv', cw=True)
+            cloud(back, (head - 40, g - 2), 6.0, seed=70, hollow=0.85)
+            cloud(back, (head - 6, g - 3), 6.0, seed=71, hollow=0.7)
+            leaf(front, head + 12, g - 40, 2)
+    return f
+
+
+NEAR_UP = dict(sh=(0, -6), elbow=(30, 30), fore='up', shear=-0.08, fore_top=True, pady=-3)
+FAR_UP = dict(sh=(0, -4), elbow=(106, 32), fore='up', shear=0.06)
+SLAM_NEAR = dict(sh=(10, 6), elbow=(74, 76), fore='down')
+SLAM_FAR = dict(sh=(6, 4), elbow=(120, 76), fore='down')
+SPECIALE = [
+    dict(crouch=1, lean=-1, breath=1, ms=150),
+    dict(crouch=-3, lean=-2, chest=-2, near=dict(mode='rigid', dx=-2, dy=-8), far=dict(mode='rigid', dx=2, dy=-8),
+         fx=[fx_lift], ms=150),
+    dict(crouch=-6, lean=-2, chest=-3, breath=1, near=dict(elbow=(22, 62), fore='fwd'),
+         far=dict(elbow=(128, 64), fore='back', front=True), ms=120),
+    dict(crouch=-6, lean=-2, chest=-3, breath=2, near=dict(elbow=(34, 62), fore='fwd'),
+         far=dict(elbow=(130, 64), fore='back', front=True), fx=[fx_beat(0)], ms=100),
+    dict(crouch=-6, lean=-2, chest=-3, breath=1, near=dict(elbow=(22, 62), fore='fwd'),
+         far=dict(elbow=(118, 64), fore='back', front=True), fx=[fx_beat(1)], ms=100),
+    dict(crouch=-6, lean=-2, chest=-3, breath=2, near=dict(elbow=(34, 62), fore='fwd'),
+         far=dict(elbow=(130, 64), fore='back', front=True), fx=[fx_beat(2)], ms=100),
+    dict(crouch=-6, lean=-2, chest=-3, breath=1, near=dict(elbow=(22, 62), fore='fwd'),
+         far=dict(elbow=(118, 64), fore='back', front=True), fx=[fx_beat(3)], ms=110),
+    dict(crouch=-8, lean=-3, chest=-4, breath=2, near=NEAR_UP, far=FAR_UP, fx=[fx_raise], ms=300),
+    dict(crouch=0, lean=3, chest=2, near=dict(sh=(6, 2), elbow=(58, 62), fore='down', shear=0.25),
+         far=dict(sh=(4, 0), elbow=(112, 60), fore='down', shear=0.2), fx=[fx_drop], ms=60),
+    dict(crouch=3, lean=6, chest=3, near=SLAM_NEAR, far=SLAM_FAR, fx=[fx_slam], flash=40, ms=130),
+    dict(crouch=3, lean=6, chest=3, near=SLAM_NEAR, far=SLAM_FAR, fx=[fx_wave(0)], ms=90),
+    dict(crouch=3, lean=6, chest=3, near=SLAM_NEAR, far=SLAM_FAR, fx=[fx_wave(1)], ms=80),
+    dict(crouch=2, lean=6, chest=3, near=SLAM_NEAR, far=SLAM_FAR, fx=[fx_wave(2)], ms=80),
+    dict(crouch=2, lean=5, chest=2, near=SLAM_NEAR, far=SLAM_FAR, fx=[fx_wave(3)], ms=100),
+    dict(crouch=1, lean=3, chest=1, near=dict(sh=(5, 3), elbow=(52, 76), fore='down'),
+         far=dict(sh=(3, 2), elbow=(110, 76), fore='down'), fx=[fx_wave(4)], ms=120),
+    dict(crouch=1, lean=1, breath=1, ms=140),
+    dict(breath=0, ms=170),
+]
+
+
+# ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
+# RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du héros à partir de
+# (x, y) en coordonnées de la GRILLE du dessin (comme gorille-guerrier.txt) ; '.' efface, ' ' laisse le pixel tel quel.
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+
+
+def retouch(cv, fixes):
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                X, Y = x + i + OX, y + OY
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = ch
+
+
+# ---------------------------------------------------------------- toutes les images
+def build_all():
+    anims = {}
+    fr = []
+    for i, f in enumerate(POSE):
+        cv, back, front, ctx = rig_frame(dict(f))
+        retouch(cv, RETOUCHES['pose'].get(i, []))
+        fr.append((compose(cv), f['ms']))
+    anims['pose'] = fr
+    for name, specs in (('attaque', ATTAQUE), ('speciale', SPECIALE)):
+        fr = []
+        for i, spec in enumerate(specs):
+            cv, back, front, ctx = rig_frame(dict(spec))
+            retouch(cv, RETOUCHES[name].get(i, []))
+            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+        anims[name] = fr
+    return anims
+
+
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin), min(H, ys.max() + 1 + margin))
+
+
+GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet.paste(im, (0, i * H0))
+    ncol = len(sheet.getcolors(maxcolors=1 << 20) or [])
+    if ncol <= 256:
+        pal = sheet.quantize(colors=min(256, ncol), method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    boxes = {'pose': GAME_BOX}
+    # une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets
+    both = anims['attaque'] + anims['speciale'] + anims['pose']
+    bb = bbox(both, 6)
+    boxes['attaque'] = boxes['speciale'] = bb
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
+    k = 3
+    blocks = []
+    for name, per in (('pose', 10), ('attaque', 5), ('speciale', 5)):
+        box = GAME_BOX if name == 'pose' else bbox(anims[name] + anims['pose'], 3)
+        cells = [on_bg(img).crop(box) for img, _ in anims[name]]
+        blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + per - 1) // per) * (cells[0].height * k + 22) for _, per, cells, _ in blocks)
+    sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    y = 6
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE', 'speciale': 'ATTAQUE SPECIALE'}
+    for name, per, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % per == 0:
+                y += ch + 22
+            X = 6 + (i % per) * (cw + 6)
+            sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sheet.save(os.path.join(OUT, 'anim-' + NAME + '-planche.png'))
+    # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat, ×2
+    seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
+    box = bb
+    try:
+        fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
+        fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        bw, bh = box[2] - box[0], box[3] - box[1]
+        fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        base = fond.crop((0, fy, bw, fy + bh))
+        if base.width < bw:
+            raise ValueError
+    except Exception:
+        base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
+    ims = []
+    for img, _ in seq:
+        im = base.copy()
+        im.alpha_composite(Image.fromarray(img, 'RGBA').crop(box))
+        ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, 'anim-' + NAME + '-jeu.gif'), ims, [ms for _, ms in seq])
+    return boxes
+
+
 if __name__ == '__main__' and sys.argv[1:2] == ['decoupe']:
     debug_decoupe()
 if __name__ == '__main__' and sys.argv[1:2] == ['essai']:
-    show(ATTAQUE, os.path.join(SCRATCH, 'essai.png'), 2)
+    show(globals()[sys.argv[2].upper()] if len(sys.argv) > 2 else ATTAQUE, os.path.join(SCRATCH, 'essai.png'), 2)
 if __name__ == '__main__' and sys.argv[1:2] == ['voir']:
     anim = {'pose': POSE, 'attaque': ATTAQUE, 'speciale': globals().get('SPECIALE', [])}[sys.argv[2]]
     idx = [int(v) for v in sys.argv[3].split(',')]
@@ -976,7 +1229,7 @@ if __name__ == '__main__' and sys.argv[1:2] == ['voir']:
         if sys.argv[2] == 'pose':
             spec = dict(breath=spec['breath'], crouch=spec['crouch'], cloth=spec['cloth'], blink=spec.get('blink'))
         cv, back, front, ctx = rig_frame(spec)
-        ims.append(big(compose(cv, back, front, flash=spec.get('flash')), k, (20, 50, 220, 172)))
+        ims.append(big(compose(cv, back, front, flash=spec.get('flash')), k, (10, 10, 240, 172)))
     w, h = ims[0].size
     sheet = Image.new('RGB', (w * len(ims), h), (250, 250, 252))
     for i, im in enumerate(ims):
@@ -984,3 +1237,9 @@ if __name__ == '__main__' and sys.argv[1:2] == ['voir']:
     p = os.path.join(SCRATCH, 'voir.png')
     sheet.save(p)
     print('écrit', p)
+if __name__ == '__main__' and not sys.argv[1:]:
+    anims = build_all()
+    write_outputs(anims)
+    for n in ('pose', 'attaque', 'speciale'):
+        print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+    print('écrit dans', OUT)
