@@ -1816,6 +1816,15 @@ def brouillon_sheet(frames, path, box=None, scale=3, per=6):
     sheet.save(path)
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : la rafale sort du col du sac (image 5, au-delà de la colonne 265) et vole jusqu'à la vraie cible, où elle
+# frappe. Spéciale : sort d'équipe (rien sur l'ennemi ; le jeu pose les effets reçus sur les alliés à l'image 8).
+JEU = {
+    'attaque': dict(genre='tir', tir=(5, 6), depuis=265, coup=6, cible=(ENEMY_X, int(ATK_T[1]))),
+    'speciale': dict(genre='equipe', coup=8, charge=(3, 7)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 2 and sys.argv[1] == 'voir':
         name = sys.argv[2]

@@ -359,8 +359,9 @@ def to_rgba(canvas, pal=ALLPAL):
     return img
 
 
-def compose(hero, fx_back=None, fx_front=None, flash=None, tint=None):
-    """le héros (avec son contour) entre les effets de fond et ceux de devant. Renvoie une image RGBA."""
+def compose(hero, fx_back=None, fx_front=None, flash=None, tint=None, veil=None):
+    """le héros (avec son contour) entre les effets de fond et ceux de devant. Renvoie une image RGBA.
+    veil : les lettres translucides de devant (le voile du dôme), posées en dernier (voir split_veil)."""
     out = np.zeros((H, W, 4), np.uint8)
     layers = []
     if fx_back is not None:
@@ -378,6 +379,8 @@ def compose(hero, fx_back=None, fx_front=None, flash=None, tint=None):
     layers.append(h)
     if fx_front is not None:
         layers.append(to_rgba(fx_front))
+    if veil is not None:
+        layers.append(to_rgba(veil))
     for L in layers:
         m = L[:, :, 3] == 255
         out[m] = L[m]
@@ -1510,6 +1513,17 @@ def retouch(cv, fixes, chest=(0, 0)):
 
 
 # ---------------------------------------------------------------- toutes les images, et les fichiers
+def split_veil(front):
+    """sépare les effets de devant en (pleins, translucides). Même rendu (les deux parts n'ont aucun pixel commun) ;
+    pour l'export du jeu (../jeu_export.py), le voile translucide est posé avec le héros, fondu sur lui, au lieu de le
+    remplacer (l'export pose les calques d'effets sans fondu)."""
+    m = np.isin(front, [k for k, a in ALPHA.items() if a < 255])
+    if not m.any():
+        return front, None
+    veil = np.where(m, front, '.')
+    return np.where(m, '.', front), veil
+
+
 def build_all():
     anims = {}
     for name, specs in (('pose', POSE), ('attaque', ATTAQUE), ('speciale', SPECIALE)):
@@ -1517,7 +1531,9 @@ def build_all():
         for i, spec in enumerate(specs):
             cv, back, front, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []), ctx.chest)
-            fr.append((compose(cv, back, front, flash=spec.get('flash'), tint=spec.get('tint')), spec['ms']))
+            front, veil = split_veil(front)
+            fr.append((compose(cv, back, front, flash=spec.get('flash'), tint=spec.get('tint'), veil=veil),
+                       spec['ms']))
         anims[name] = fr
     return anims
 
