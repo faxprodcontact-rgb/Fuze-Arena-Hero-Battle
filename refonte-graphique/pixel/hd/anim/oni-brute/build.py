@@ -1255,7 +1255,7 @@ ATTAQUE = [
     dict(**SMASH, crouch=3, lean=4, head=(1, 2), ml=-1, mu=0, pg=-1, far=(-1, 0), fx_list=[fx_smash(1)], ms=120),
     dict(**SMASH, crouch=2, lean=4, head=(1, 1), ml=1, mu=1, pg=1, fx_list=[fx_smash(2)], ms=130),
     # il la relève lentement
-    dict(G=(46, 80), ang=22, wr=(-7.0, -2.0), club_behind=True, crouch=1, lean=2, head=(0, 1), ml=1, pg=1, fx_list=[fx_smash(3)],
+    dict(G=(46, 80), ang=10, wr=(-7.0, -2.0), club_behind=True, crouch=1, lean=2, head=(0, 1), ml=1, pg=1, fx_list=[fx_smash(3)],
          ms=150),
     dict(G=(22, 85), ang=101, wr=(9.0, 5.0), club_behind=True, crouch=1, lean=1, head=(0, 0), ml=0, pg=0,
          fx_list=[fx_smash(4)], ms=140),
@@ -1273,7 +1273,7 @@ ATTAQUE = [
 # retombent en cloche, mottes de roche), puis chaque geyser retombe en fumée qui s'enroule ; derrière, la faille
 # refroidit (jaune, orange, rouge, puis croûte sombre). Il relève la massue encore rouge, qui fume, et revient en garde.
 IRON_HOT = [None,
-            {'j': 'r', 'k': 's'},
+            {'j': 'r', 'k': 's', 'l': 's', 'm': 't', 'n': 'u'},
             {'j': 's', 'k': 't', 'l': 'u', 'm': 'v', 'n': 'w'}]
 EYES_FIRE = {'J': 'w', 'K': 'u'}
 
@@ -1520,10 +1520,10 @@ SPECIALE = [
     dict(**SMASH_S, crouch=2, lean=4, head=(1, 1), jaw=0, ml=0, mu=0, pg=-1, hot=IRON_HOT[1], fx_list=[fx_quake(6)],
          ms=110),
     # il relève la massue encore rouge, qui fume
-    dict(G=(46, 80), ang=22, wr=(-7.0, -2.0), club_behind=True, crouch=1, lean=2, head=(0, 1), ml=1, pg=1,
+    dict(G=(46, 80), ang=10, wr=(-7.0, -2.0), club_behind=True, crouch=1, lean=2, head=(0, 1), ml=1, pg=1,
          hot=IRON_HOT[1], fx_list=[fx_quake(7), fx_club_smoke(0)], ms=130),
     dict(G=(22, 85), ang=101, wr=(9.0, 5.0), club_behind=True, crouch=1, lean=1, head=(0, 0), ml=0, pg=0,
-         hot=IRON_HOT[1], fx_list=[fx_quake(8), fx_club_smoke(1)], ms=140),
+         fx_list=[fx_quake(8), fx_club_smoke(1)], ms=140),
     dict(arms='orig', crouch=1, ml=0, pg=-1, fx_list=[fx_quake(9), fx_club_smoke(2)], ms=130),
     dict(arms='orig', fx_list=[fx_club_smoke(3)], ms=160),
 ]
