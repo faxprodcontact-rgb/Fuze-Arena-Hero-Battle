@@ -1067,9 +1067,9 @@ ATTAQUE = [
     dict(arm='rig', staff='libre', G=(38.0, 16.0), ang=132, sg=40, lean=-3, crouch=-1, breath=2, head=(-1, 0),
          swing=(0.0, 0.0), p=-1, fx=[fx_gather(1)], ms=320),
     # le coup : le bâton passe par-dessus sa tête (traînées en croissant)
-    dict(arm='rig', staff='libre', G=(47.0, 30.0), ang=84, sg=36, lean=0, breath=1, wl=-1, head=(0, 0),
+    dict(arm='rig', staff='libre', G=(52.0, 12.0), ang=86, sg=36, lean=0, breath=1, wl=-1, head=(0, 0),
          swing=(-0.9, 0.6), smear=[fx_trail(70, 6.0)], ms=50),
-    dict(arm='rig', staff='libre', G=(59.0, 44.0), ang=18, sg=34, lean=2, crouch=1, wl=-1, head=(1, 0),
+    dict(arm='rig', staff='libre', G=(66.0, 10.0), ang=12, sg=34, lean=2, crouch=1, wl=-1, head=(1, 0),
          swing=(-0.6, -0.9), smear=[fx_trail(90, 7.0)], ms=50),
     # l'impact : la tête du shakujō frappe le sol devant lui ; arrêt, le sol tremble
     dict(arm='rig', staff='libre', G=(66.0, 60.0), ang=-36, sg=31, lean=3, crouch=3, wl=-1, head=(1, 1), p=1,

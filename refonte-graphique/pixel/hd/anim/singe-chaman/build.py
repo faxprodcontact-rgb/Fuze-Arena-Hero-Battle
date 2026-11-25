@@ -518,7 +518,7 @@ def ribbon(cv, c, rx, ry, a0, a1, wmax, head=0.7, tones='bcdef'):
     stroke(cv, pts, widths, tones)
 
 
-def puff(cv, c, r, tones=CLOUDT[:4], hollow=0.0):
+def puff(cv, c, r, tones=CLOUDT, hollow=0.0):
     """une bouffée ronde, éclairée en haut à droite ; hollow > 0 : elle se défait (trou au milieu)"""
     cx, cy = c
     for y in range(int(cy - r - 1), int(cy + r + 2)):
@@ -531,7 +531,7 @@ def puff(cv, c, r, tones=CLOUDT[:4], hollow=0.0):
                 put(cv, x, y, ch)
 
 
-def cloud(cv, c, r, tones=CLOUDT[:4], hollow=0.0, seed=0, ground=False):
+def cloud(cv, c, r, tones=CLOUDT, hollow=0.0, seed=0, ground=False):
     """un nuage en chou-fleur : une grosse bouffée et des petites autour. hollow (0..1) : il se défait"""
     rng = np.random.RandomState(seed)
     cx, cy = c
@@ -647,7 +647,7 @@ POSE = _pose()
 # Il se recule et ramène le bâton contre lui (la gourde s'éclaire, de petites volutes s'y enroulent), puis pousse le
 # bâton vers l'ennemi d'un coup sec : la gourde lâche une bouffée de nuage enroulée de vent, qui file en ondulant vers
 # la droite et éclate sur l'ennemi en volutes et en feuilles. Il revient en garde.
-def boule(cv, c, r, spin=0.0, trail=0.0, tones=CLOUDT[:4]):
+def boule(cv, c, r, spin=0.0, trail=0.0, tones=CLOUDT):
     """la bouffée du sort : une petite boule de nuage, un ruban de vent enroulé autour (qui tourne : spin, degrés),
     une traînée ondulée derrière (trail = longueur)"""
     cx, cy = c
@@ -692,7 +692,7 @@ def shot_pos(s):
 def fx_shot(s, spin):
     def f(cv, back, front, ctx):
         x, y = shot_pos(s)
-        boule(front, (x, y), 4.0, spin=spin, trail=22)
+        boule(front, (x, y), 5.5, spin=spin, trail=28)
     return f
 
 
@@ -706,14 +706,14 @@ def fx_hit_small(stage):
             leaf(front, cx - 12, cy - 10, 0)
             leaf(front, cx + 12, cy + 4, 1)
         elif stage == 1:
-            cloud(front, (cx + 1, cy - 1), 6, CLOUDT[:4], hollow=0.3, seed=12)
+            cloud(front, (cx + 1, cy - 1), 6, CLOUDT, hollow=0.3, seed=12)
             curl(front, (cx + 12, cy - 11), 6, 90, turn=300, w=2.2, tones='bcde')
             curl(back, (cx - 9, cy + 9), 5, 260, turn=300, w=2.0, tones='cde', cw=True)
             leaf(front, cx - 16, cy - 16, 1)
             leaf(front, cx + 16, cy + 8, 2)
             leaf(front, cx + 4, cy - 18, 0)
         else:
-            cloud(front, (cx + 3, cy - 5), 4.5, 'WVU', hollow=0.7, seed=13)
+            cloud(front, (cx + 3, cy - 5), 4.5, 'WWVVU', hollow=0.7, seed=13)
             curl(front, (cx + 14, cy - 16), 4, 60, turn=280, w=1.6, tones='cde')
             leaf(front, cx - 18, cy - 12, 2)
             leaf(front, cx + 19, cy + 14, 0)
@@ -791,7 +791,7 @@ def fx_blast(cv, back, front, ctx):
     g = ctx.gourd
     gx, gy = g[0] + 10, g[1] + 2
     pop(back, (gx + 2, gy - 1), 10, facing=0, tones='aabcd')
-    cloud(front, (gx + 10, gy + 1), 8, CLOUDT[:4], seed=51)
+    cloud(front, (gx + 10, gy + 1), 8, CLOUDT, seed=51)
     curl(front, (gx + 11, gy + 1), 10, 220, turn=330, w=2.8, tones='abcd', cw=True)
     gust(back, (gx - 4, gy + 8), (gx + 10, gy + 18), (gx + 28, gy + 18), (gx + 40, gy + 8), 4.0, 'bcdef',
          curl_r=4, up=True)
@@ -809,7 +809,7 @@ def big_ball(cv, back, c, r, spin, trail):
          r * 0.7, 'bcdef', curl_r=0.1, up=True)
     gust(back, (cx - trail * 0.9, cy - 6), (cx - trail * 0.55, cy - 14), (cx - trail * 0.25, cy - 12),
          (cx - 3, cy - 7), r * 0.55, 'bcdef', curl_r=0.1, up=False)
-    cloud(cv, (cx, cy), r, CLOUDT[:4], seed=61)
+    cloud(cv, (cx, cy), r, CLOUDT, seed=61)
     curl(cv, (cx + 1, cy), r + 2.5, 210 + spin, turn=330, w=3.0, tones='abcd', cw=True)
 
 
@@ -869,16 +869,16 @@ def fx_storm(k):
         cx, base = ENEMY_X, GROUND
         if k == 0:
             pop(front, (cx, base - 40), 15, facing=180, tones='aabcd')
-            cloud(back, (cx - 6, base - 46), 10, CLOUDT[:4], seed=71)
-            cloud(back, (cx + 12, base - 30), 9, CLOUDT[:4], seed=72)
+            cloud(back, (cx - 6, base - 46), 10, CLOUDT, seed=71)
+            cloud(back, (cx + 12, base - 30), 9, CLOUDT, seed=72)
             tornado(front, back, cx, base, 50, 16, 0, fade=0.3)
             for (dx, dy, kk) in ((-20, -20, 0), (18, -54, 1), (24, -12, 2), (-14, -60, 1)):
                 leaf(front, cx + dx, base + dy, kk)
             return
         if k <= 3:
             tornado(front, back, cx, base, 54 + 4 * k, 18 + 2 * k, 40 * k)
-            cloud(back, (cx - 18, base - 5), 7 + k, CLOUDT[:4], seed=73 + k, ground=True)
-            cloud(back, (cx + 20, base - 5), 6 + k, CLOUDT[:4], seed=76 + k, ground=True)
+            cloud(back, (cx - 18, base - 5), 7 + k, CLOUDT, seed=73 + k, ground=True)
+            cloud(back, (cx + 20, base - 5), 6 + k, CLOUDT, seed=76 + k, ground=True)
             # feuilles qui montent en tournant autour du tourbillon
             for i, (a0, h0) in enumerate(((0, 10), (120, 24), (240, 38), (60, 50), (180, 62))):
                 a = math.radians(a0 + 70 * k)
@@ -891,8 +891,8 @@ def fx_storm(k):
             return
         fade = 0.45 if k == 4 else 0.85
         tornado(front, back, cx, base, 60, 22, 40 * k, fade=fade)
-        cloud(back, (cx - 20, base - 8 - 4 * (k - 3)), 9, 'WVU', hollow=0.4 * (k - 3), seed=79 + k, ground=True)
-        cloud(back, (cx + 22, base - 10 - 4 * (k - 3)), 7, 'WVU', hollow=0.4 * (k - 3), seed=81 + k, ground=True)
+        cloud(back, (cx - 20, base - 8 - 4 * (k - 3)), 9, 'WWVVU', hollow=0.4 * (k - 3), seed=79 + k, ground=True)
+        cloud(back, (cx + 22, base - 10 - 4 * (k - 3)), 7, 'WWVVU', hollow=0.4 * (k - 3), seed=81 + k, ground=True)
         curl(front, (cx + 22, base - 70 - 4 * (k - 3)), 6, 60, turn=300, w=2.0, tones='cde')
         curl(front, (cx - 24, base - 60 - 4 * (k - 3)), 5, 120, turn=300, w=1.8, tones='cde', cw=True)
         for i, (dx, dy) in enumerate(((-26, -74), (30, -50), (8, -86))):

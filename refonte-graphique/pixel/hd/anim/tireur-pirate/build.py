@@ -633,7 +633,7 @@ def rig_frame(f):
     ax, ay = f.get('ah', (0, 0))
 
     # 1) la queue de l'ara (derrière tout)
-    blit(cv, ara_tail(f.get('aq', 0)), cx, cy)
+    blit(cv, ara_tail(f.get('aq', 0)), cx, cy + f.get('ab', 0))
     # 2) le corps (sans le bras proche quand il épaule : le flanc repeint)
     body.draw(cv, P['corps_nu'] if gun == 'epaule' else P['corps'])
     blit(cv, scarf(f.get('e', 0)), *body.follow(80))
@@ -1243,7 +1243,7 @@ def fx_kick(k):
     """le recul : la poussière soulevée sous les talons (deux petites bouffées qui roulent vers l'arrière)"""
     def f(cv, back, front, ctx):
         x0 = SOL[0] - 16 - 2 * k
-        r = [2.6, 3.4, 3.2, 2.4][k]
+        r = [3.2, 4.4, 4.2, 3.2][k]
         hol = [0.0, 0.0, 0.4, 0.7][k]
         cloud(back, (x0 - 3 * k, GROUND - 2), r, tones='mmnoo', hollow=hol, seed=60 + k)
         cloud(back, (x0 + 26 - 2 * k, GROUND - 2), r * 0.8, tones='mmnoo', hollow=hol, seed=70 + k)
