@@ -237,7 +237,7 @@ def complete_body():
             b[y0 + 1, x] = '4'
     # sous les cornes, la tête et l'os de l'aile lointaine : rempli quand le corps est des deux côtés (rangée ou
     # colonne, à moins de 14 pixels), puis gagné de proche en proche
-    cover = (M_HEAD | M_JAW | M_WING_F) & (b == '.')
+    cover = (M_HEAD | M_JAW | M_WING_F) & (b == '.') & (GXX < 196)
     for _ in range(3):
         add = {}
         for y, x in zip(*np.nonzero(cover & (b == '.'))):
@@ -368,7 +368,7 @@ def leg_weight():
 W_LEG = leg_weight()
 W_NECK = 1 - smooth(DIST_HEAD / 64.0)          # 1 contre la tête, 0 à 64 pixels de la tête
 # le cou ne tire pas la poitrine trop bas, ni le dos : il agit surtout devant le garrot et au-dessus du poitrail
-W_NECK *= smooth((GX - 120) / 40.0) * (1 - 0.55 * smooth((GY - 140) / 30.0))
+W_NECK *= smooth((GX - 120) / 40.0) * (1 - smooth((GY - 122) / 26.0))
 W_TAIL = smooth((GY - 150) / 70.0) * (1 - smooth((GX - 40) / 22.0))
 
 
@@ -741,8 +741,228 @@ def assemble(f):
     return cv
 
 
+# ---------------------------------------------------------------- les ailes déployées, redessinées
+# Un squelette d'aile (coordonnées de la grille) : l'emboîture dans le dos B, le coude E (le bras sort du dos), le
+# poignet Wr au bout de l'avant-bras, trois doigts qui partent du poignet en éventail, et le point H où le bord de fuite
+# rejoint le flanc. u = 0 : comme l'aile repliée du dessin ; u = 1 : grande ouverte. « flap » abaisse tout (battement
+# vers le bas, en degrés), « lift » relève l'avant-bras.
+# Mesures de l'aile proche du dessin : coude (138, 120), poignet (101, 32), avant-bras 95 pixels ; doigts de 111, 114
+# et 113 pixels, à 226°, 239° et 252° (angles comptés vers le haut) ; le bas de la membrane pend jusqu'en (100, 148).
+WING_SPECS = {
+    'near': dict(B=(142, 124), E0=(138, 120), E1=(130, 88), arm=95, a0=112.8, a1=128.0,
+                 fingers=[(111, 226, 168), (114, 239, 204), (113, 252, 238)], H0=(100, 148), H1=(52, 126),
+                 tones=('P', 'Q', 'R', 'S', 'V'), bone=('A', 'B', 'C', 'D', 'E', 'F', 'G')),
+    # l'aile lointaine (derrière la bosse) : elle monte derrière le cou, s'ouvre vers le haut et la droite
+    'far': dict(B=(160, 102), E0=(165, 100), E1=(170, 76), arm=78, a0=101.0, a1=72.0,
+                fingers=[(70, 120, 18), (72, 135, -22), (66, 150, -58)], H0=(150, 104), H1=(188, 90),
+                tones=('P', 'P', 'Q', 'R', 'S'), bone=('A', 'A', 'B', 'C', 'D', 'E', 'F')),
+}
+
+
+def lerp(a, b, t):
+    return a + (b - a) * t
+
+
+def wing_skeleton(name, u, flap=0.0, lift=0.0, off=(0, 0), hoff=None):
+    sp = WING_SPECS[name]
+    ox, oy = off
+    B = np.array(sp['B'], float) + (ox, oy)
+    E = np.array([lerp(sp['E0'][0], sp['E1'][0], u), lerp(sp['E0'][1], sp['E1'][1], u)]) + (ox, oy)
+    a = math.radians(lerp(sp['a0'], sp['a1'], u) + lift - flap * (1 if name == 'near' else -1) * 0.4)
+    Wr = E + sp['arm'] * np.array([math.cos(a), -math.sin(a)])
+    tips = []
+    for (L, f0, f1) in sp['fingers']:
+        # en se repliant, les doigts raccourcissent un peu à l'oeil (ils se couchent vers nous) : pas en s'ouvrant
+        aa = math.radians(lerp(f0, f1, u) + flap * (1 if name == 'near' else -1))
+        tips.append(Wr + L * np.array([math.cos(aa), -math.sin(aa)]))
+    hx, hy = hoff if hoff is not None else (ox, oy)
+    Hp = np.array([lerp(sp['H0'][0], sp['H1'][0], u), lerp(sp['H0'][1], sp['H1'][1], u)]) + (hx, hy)
+    return dict(B=B, E=E, Wr=Wr, tips=tips, H=Hp)
+
+
+def finger_curve(Wr, tip, bow, n=40):
+    """un doigt : légèrement arqué (bow : écart au milieu, pixels, vers le haut de l'aile)"""
+    d = tip - Wr
+    L = np.linalg.norm(d) or 1
+    nrm = np.array([d[1], -d[0]]) / L            # à gauche de la direction (vers le haut pour un doigt qui part à gauche)
+    pts = []
+    for i in range(n + 1):
+        t = i / n
+        p = Wr + d * t + nrm * bow * 4 * t * (1 - t)
+        pts.append(p)
+    return pts
+
+
+def quad(p0, p1, p2, n=30):
+    return [(1 - t) ** 2 * p0 + 2 * (1 - t) * t * p1 + t * t * p2 for t in (i / n for i in range(n + 1))]
+
+
+def fill_poly(cv, pts, ch_fn, mask=None):
+    """remplit un polygone (coordonnées de la toile) ; ch_fn(x, y) -> lettre"""
+    im = Image.new('L', (W, H), 0)
+    ImageDraw.Draw(im).polygon([(float(p[0]), float(p[1])) for p in pts], fill=1)
+    m = np.array(im) > 0
+    ys, xs = np.nonzero(m)
+    for y, x in zip(ys, xs):
+        ch = ch_fn(x, y)
+        if ch:
+            cv[y, x] = ch
+    return m
+
+
+def tube(cv, P0, P1, r0, r1, tones):
+    """un os en tube : éclairé du côté de la lumière (en haut à droite), sombre de l'autre ; tones du creux au reflet"""
+    P0, P1 = np.array(P0, float), np.array(P1, float)
+    d = P1 - P0
+    L = np.linalg.norm(d) or 1
+    u = d / L
+    nrm = np.array([-u[1], u[0]])
+    if nrm @ LN < 0:
+        nrm = -nrm                               # la normale qui regarde la lumière
+    x0, x1 = int(min(P0[0], P1[0]) - max(r0, r1) - 2), int(max(P0[0], P1[0]) + max(r0, r1) + 2)
+    y0, y1 = int(min(P0[1], P1[1]) - max(r0, r1) - 2), int(max(P0[1], P1[1]) + max(r0, r1) + 2)
+    m = len(tones)
+    for y in range(max(0, y0), min(H, y1 + 1)):
+        for x in range(max(0, x0), min(W, x1 + 1)):
+            v = np.array([x + 0.5, y + 0.5]) - P0
+            t = float(np.clip(v @ u / L, 0, 1))
+            c = P0 + d * t
+            w = np.array([x + 0.5, y + 0.5]) - c
+            r = lerp(r0, r1, t)
+            dist = np.linalg.norm(w)
+            if dist <= r:
+                k = float(w @ nrm) / max(r, 0.5)        # -1 (ombre) … +1 (lumière)
+                i = int((k + 1) / 2 * (m - 0.01))
+                if dist > r - 0.8 and k > 0.55:
+                    i = m - 1                            # le fil de lumière sur le bord éclairé
+                cv[y, x] = tones[max(0, min(m - 1, i))]
+
+
+def knob(cv, c, r, tones):
+    cx, cy = c
+    m = len(tones)
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            v = np.array([x + 0.5 - cx, y + 0.5 - cy])
+            if 0 <= x < W and 0 <= y < H and np.linalg.norm(v) <= r:
+                k = float(v @ LN) / r
+                cv[y, x] = tones[max(0, min(m - 1, int((k + 1) / 2 * (m - 0.01))))]
+
+
+def thin_bone(cv, pts, lit, dark, core=None, thick_until=0.0):
+    """un doigt d'aile : une ligne nette de deux pixels (le pixel éclairé en haut, l'ombre dessous) ; près du poignet,
+    trois pixels avec un coeur"""
+    n = len(pts)
+    done = set()
+    for i, p in enumerate(pts):
+        x, y = int(math.floor(p[0])), int(math.floor(p[1]))
+        t = i / (n - 1)
+        for (dx, dy, ch) in (((0, 0, lit), (0, 1, dark)) if t >= thick_until else ((0, -1, lit), (0, 0, core or lit), (0, 1, dark))):
+            X, Y = x + dx, y + dy
+            if (X, Y, 'l') in done and ch == dark:
+                continue
+            if 0 <= X < W and 0 <= Y < H:
+                cv[Y, X] = ch
+                done.add((X, Y, 'l' if ch == lit else 'd'))
+
+
+def claw(cv, base, direction, L, tones=('B', 'D', 'E', 'G'), curl=0.35):
+    """une griffe d'obsidienne recourbée : épaisse à la base, pointue, la pointe tourne (curl)"""
+    d = np.array(direction, float)
+    d /= np.linalg.norm(d) or 1
+    nrm = np.array([-d[1], d[0]])
+    pts = []
+    for i in range(int(L * 2) + 1):
+        t = i / (L * 2)
+        p = np.array(base, float) + d * L * t + nrm * curl * L * t * t
+        pts.append((p, 2.2 * (1 - t) + 0.5))
+    for p, r in pts:
+        for y in range(int(p[1] - r - 1), int(p[1] + r + 2)):
+            for x in range(int(p[0] - r - 1), int(p[0] + r + 2)):
+                v = np.array([x + 0.5, y + 0.5]) - p
+                if 0 <= x < W and 0 <= y < H and np.linalg.norm(v) <= r:
+                    k = float(v @ LN) / max(r, 0.6)
+                    cv[y, x] = tones[max(0, min(len(tones) - 1, int((k + 1) / 2 * (len(tones) - 0.01))))]
+
+
+def draw_wing(cv, name, sk):
+    """dessine une aile ouverte (sur une toile vide) d'après son squelette (coordonnées de la TOILE)"""
+    sp = WING_SPECS[name]
+    P_, Q_, R_, S_, V_ = sp['tones']
+    Wr, E, Bp, Hp = sk['Wr'], sk['E'], sk['B'], sk['H']
+    tips = sk['tips']
+    bows = [3.0, 2.0, 1.0] if name == 'near' else [-2.5, -1.5, -1.0]
+    fingers = [finger_curve(Wr, t, b) for t, b in zip(tips, bows)]
+    # les pans de membrane : entre deux doigts, puis entre le dernier doigt, le flanc et le bras
+    angs = [math.atan2(-(t[1] - Wr[1]), t[0] - Wr[0]) for t in tips]
+    edges = []
+
+    def panel_tone(a_lo, a_hi, x, y, edge_pts):
+        a = math.atan2(-(y + 0.5 - Wr[1]), x + 0.5 - Wr[0])
+        span = (a_hi - a_lo)
+        t = ((a - a_lo + math.pi) % (2 * math.pi) - math.pi) / span if span else 0.5
+        t = min(1.0, max(0.0, t))
+        r = math.hypot(x + 0.5 - Wr[0], y + 0.5 - Wr[1])
+        ch = Q_ if t < 0.2 else R_ if t < 0.62 else S_
+        if r < 12:
+            ch = {S_: R_, R_: Q_, Q_: P_}[ch]
+        return ch
+
+    for i in range(len(tips) - 1):
+        a, b = tips[i], tips[i + 1]
+        mid = (a + b) / 2
+        sag = mid + (Wr - mid) * 0.16
+        edge = quad(a, sag, b)
+        edges.append(edge)
+        poly = [Wr] + fingers[i] + edge + fingers[i + 1][::-1]
+        a_lo, a_hi = angs[i], angs[i + 1]
+        fill_poly(cv, poly, lambda x, y, a_lo=a_lo, a_hi=a_hi: panel_tone(a_lo, a_hi, x, y, None))
+    # le dernier pan : du dernier doigt au flanc (bord de fuite), le long du dos jusqu'au coude, puis le bras
+    a = tips[-1]
+    mid = (a + Hp) / 2
+    sag = mid + (Wr - mid) * 0.12
+    edge = quad(a, sag, Hp)
+    edges.append(edge)
+    poly = [Wr] + fingers[-1] + edge + [Hp, E + (E - Wr) * 0.0, E]
+    a_lo = angs[-1]
+    a_hi = math.atan2(-(E[1] - Wr[1]), E[0] - Wr[0])
+    fill_poly(cv, poly, lambda x, y: panel_tone(a_lo, a_hi, x, y, None))
+    # le bord libre, rougi par la braise : un pixel le long des festons
+    for edge in edges:
+        for p in edge:
+            x, y = int(math.floor(p[0])), int(math.floor(p[1]))
+            if 0 <= x < W and 0 <= y < H and cv[y, x] != '.':
+                cv[y, x] = V_
+    # les os : le bras (sort du dos), l'avant-bras, les doigts, le poignet et la griffe du pouce
+    bt = sp['bone']
+    tube(cv, Bp, E, 4.4, 3.6, bt[0:6])
+    knob(cv, E, 3.9, bt[1:7])
+    tube(cv, E, Wr, 3.4, 2.4, bt[0:6])
+    for i, fpts in enumerate(fingers):
+        thin_bone(cv, fpts, bt[4], bt[1], core=bt[3], thick_until=0.18)
+        tip = fpts[-1]
+        dirv = fpts[-1] - fpts[-4]
+        claw(cv, tip, dirv, 4.0, tones=(bt[1], bt[3], bt[4], bt[6]), curl=0.4 if name == 'near' else -0.4)
+    knob(cv, Wr, 3.2, bt[1:7])
+    fwd = (Wr - E) / (np.linalg.norm(Wr - E) or 1)
+    claw(cv, Wr + fwd * 2, fwd * 0.6 + np.array([0.7, -0.5]) * (1 if name == 'near' else 0.4), 8.0,
+         tones=(bt[1], bt[3], bt[4], bt[6]), curl=-0.45)
+
+
 def draw_wings(f, base):
-    raise NotImplementedError
+    """les deux ailes redessinées pour l'image f : (aile lointaine, aile proche) sur la toile"""
+    wg = f['wings']
+    out = []
+    for name, key in (('far', 'F'), ('near', 'N')):
+        sp = WING_SPECS[name]
+        bxy = at(base, sp['B'][0], sp['B'][1])
+        hxy = at(base, sp['H1'][0], sp['H1'][1])
+        u, flap, lift = wg.get('u' + key, wg.get('u', 1.0)), wg.get('flap', 0.0), wg.get('lift', 0.0)
+        sk = wing_skeleton(name, u, flap, lift, off=(bxy[0] + OX, bxy[1] + OY), hoff=(hxy[0] + OX, hxy[1] + OY))
+        cv = empty()
+        draw_wing(cv, name, sk)
+        out.append(cv)
+    return out[0], out[1]
 
 
 # ---------------------------------------------------------------- 1) la pose (respiration)
@@ -833,11 +1053,14 @@ def fx_snort(k):
 
 
 def fx_bite_smear(cv, back, front, ctx):
-    """l'image étirée : une traînée de braise courbe derrière le museau et la mâchoire (l'arc que fait la tête)"""
+    """l'image étirée : deux traînées de braise courbes, au-dessus du museau et sous la mâchoire, qui viennent d'en
+    haut à gauche (l'arc que fait la tête qui s'abat) ; elles passent derrière la tête"""
     x1, y1 = bite_point(ctx)
-    for (dy, w, tones) in ((-14, 4.0, 'utsr'), (-2, 5.0, 'vutsr'), (9, 3.4, 'tsr')):
-        pts = bezier((x1 - 46, y1 + dy - 30), (x1 - 30, y1 + dy - 26), (x1 - 14, y1 + dy - 12), (x1 - 4, y1 + dy), 24)
-        ws = [w * (i / 24) ** 1.3 + 0.2 for i in range(25)]
+    arcs = (((x1 - 52, y1 - 58), (x1 - 30, y1 - 52), (x1 - 12, y1 - 36), (x1 - 2, y1 - 20), 4.6, 'vutsr'),
+            ((x1 - 60, y1 - 10), (x1 - 40, y1 + 16), (x1 - 20, y1 + 26), (x1 - 4, y1 + 22), 3.8, 'utsr'))
+    for p0, p1, p2, p3, w, tones in arcs:
+        pts = bezier(p0, p1, p2, p3, 24)
+        ws = [w * (i / 24) ** 0.8 + 0.7 if i > 3 else 0 for i in range(25)]
         stroke(back, pts, ws, tones)
 
 
@@ -848,10 +1071,12 @@ def fx_bite_hit(k):
         x, y = bite_point(ctx)
         x += 2
         if k == 0:
-            puff(front, (x + 2, y), 5.5, 'wwvu')
-            for a0, r in ((60, 12), (-40, 11), (170, 9)):
-                pts = [(x + 2 + r * math.cos(math.radians(a0 + t)), y - r * math.sin(math.radians(a0 + t))) for t in range(0, 70, 5)]
-                stroke(front, pts, [3.6 * (1 - i / len(pts)) + 0.4 for i in range(len(pts))], 'vuts')
+            # le coeur : une petite étoile de feu à quatre lobes (pas un disque), des croissants qui s'ouvrent
+            for (ox, oy, r) in ((0, 0, 2.6), (4, -3, 2.2), (4, 3, 2.0), (-3, -2, 1.8), (-2, 3, 1.6)):
+                puff(front, (x + 2 + ox, y + oy), r, 'wwv')
+            for a0, r, w in ((20, 13, 4.4), (-95, 12, 4.0), (60, 9, 2.6), (-60, 9, 2.4)):
+                pts = [(x + 2 + r * math.cos(math.radians(a0 + t)), y - r * math.sin(math.radians(a0 + t))) for t in range(0, 75, 5)]
+                stroke(front, pts, [w * (1 - i / len(pts)) ** 0.8 + 0.4 for i in range(len(pts))], 'wvuts')
             for (vx, vy, d) in ((1, -1, 14), (1, 0.3, 16), (0.4, -1, 15), (1, 0.9, 12), (-0.3, -1, 12)):
                 drop(front, x + vx * d, y + vy * d, vx, vy, 2 if d > 13 else 1)
         elif k == 1:
@@ -879,16 +1104,16 @@ def fx_stomp(k):
         for j, (gx, s) in enumerate(FEET_FX):
             x = gx + OX
             if k == 0:
-                cloud(back, (x - 9 * s, GROUND - 2), 4.0 * s + 1, 'noop', seed=20 + j)
-                cloud(front, (x + 9 * s, GROUND - 2), 3.4 * s + 1, 'noop', seed=30 + j)
+                cloud(back, (x - 11 * s, GROUND - 2), 6.0 * s + 1.5, 'noop', seed=20 + j)
+                cloud(front, (x + 11 * s, GROUND - 2), 5.0 * s + 1.5, 'noop', seed=30 + j)
             elif k == 1:
-                cloud(back, (x - 14 * s, GROUND - 3), 5.2 * s + 1, 'noop', seed=20 + j, hollow=0.2)
-                cloud(front, (x + 14 * s, GROUND - 3), 4.4 * s + 1, 'nop', seed=30 + j, hollow=0.25)
-                put(front, x + 24 * s, GROUND - 7, 'o')
-                put(front, x - 22 * s, GROUND - 8, 'p')
+                cloud(back, (x - 17 * s, GROUND - 4), 7.4 * s + 1.5, 'noop', seed=20 + j, hollow=0.2)
+                cloud(front, (x + 17 * s, GROUND - 4), 6.2 * s + 1.5, 'nop', seed=30 + j, hollow=0.25)
+                chunk(front, x + 26 * s, GROUND - 12 * s, k=2)
+                put(front, x - 26 * s, GROUND - 10, 'p')
             else:
-                cloud(back, (x - 18 * s, GROUND - 5), 4.6 * s + 1, 'nop', seed=20 + j, hollow=0.6)
-                cloud(front, (x + 18 * s, GROUND - 5), 3.6 * s + 1, 'no', seed=30 + j, hollow=0.7)
+                cloud(back, (x - 22 * s, GROUND - 7), 6.6 * s + 1.5, 'nop', seed=20 + j, hollow=0.6)
+                cloud(front, (x + 22 * s, GROUND - 7), 5.2 * s + 1.5, 'no', seed=30 + j, hollow=0.7)
     return f
 
 
@@ -908,7 +1133,7 @@ ATTAQUE = [
     dict(sq=1, hrel=(0, 1), lagN=(0, -1), lagF=(0, -1), ms=160),
     dict(ms=180),
 ]
-SPECIALE = [dict(ms=100)]
+SPECIALE = [dict(ms=100, wings=dict(u=0.0)), dict(ms=100, wings=dict(u=0.5)), dict(ms=100, wings=dict(u=1.0)), dict(ms=100, pitch=-10, hrel=(-4,-14), wings=dict(u=1.0, flap=-10))]
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
