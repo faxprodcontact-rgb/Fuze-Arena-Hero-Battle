@@ -159,7 +159,7 @@ M_WING_N = comps_in(_obs_lab, 20, 20, 143, 140, 200) | comps_in(_mem_lab, 20, 40
 # le long du bord droit de l'os)
 M_WING_F = comps_in(_mem_lab, 120, 40, 150, 100, 200)
 _far_obs = comps_in(_obs_lab, 139, 25, 230, 101, 1000)
-_bone_right = piecewise(GYY, [(20, 148), (40, 147), (57, 151), (70, 155), (90, 159), (95, 166), (101, 168)])
+_bone_right = piecewise(GYY, [(20, 160), (36, 152), (40, 147), (57, 151), (70, 155), (90, 159), (95, 166), (101, 168)])
 M_WING_F |= _far_obs & (GXX <= _bone_right) & (GYY <= 101)
 # la tête : crâne, mâchoires, oeil, crocs, corne du museau ; les deux grandes cornes et la couronne (le reste de la
 # pièce d'obsidienne soudée), les deux échardes en collerette derrière la joue
@@ -806,10 +806,331 @@ def rig(spec):
     return cv, back, front, kw
 
 
+# ---------------------------------------------------------------- 2) l'attaque de base : « Morsure du colosse »
+# Le dragon se ramasse, recule le poitrail et relève la tête en ouvrant grand la gueule (longue préparation, la gorge
+# rougeoie, la fumée sort des naseaux) ; puis tout l'avant du corps s'abat d'un coup (image étirée : traînée de braise
+# derrière le museau) et la gueule CLAQUE sur l'ennemi (arrêt sur l'image, gerbe d'étincelles courbes à la morsure,
+# le sol tremble : bouffées de poussière sous les pattes de devant). Il secoue la tête, puis se relève lourdement.
+JAW_TIP = (247, 121)                          # le bout de la gueule (grille), là où la morsure se referme
+
+
+def bite_point(f):
+    x, y = c2(JAW_TIP[0], JAW_TIP[1], f)
+    return x + 3, y
+
+
+def fx_snort(k):
+    """deux bouffées de fumée chaude des naseaux (le dragon gronde)"""
+    def f(cv, back, front, ctx):
+        x, y = c2(NOSTRIL[0], NOSTRIL[1], ctx)
+        if k == 0:
+            puff(front, (x + 2, y - 1), 1.8, 'ijl')
+            puff(front, (x + 4, y - 3), 1.4, 'ij')
+        else:
+            cloud(front, (x + 4, y - 4), 2.6, 'iijl', seed=5, ground=False)
+            curl(front, (x + 7, y - 9), 2.2, 120, turn=240, w=1.5, tones='ij')
+    return f
+
+
+def fx_bite_smear(cv, back, front, ctx):
+    """l'image étirée : une traînée de braise courbe derrière le museau et la mâchoire (l'arc que fait la tête)"""
+    x1, y1 = bite_point(ctx)
+    for (dy, w, tones) in ((-14, 4.0, 'utsr'), (-2, 5.0, 'vutsr'), (9, 3.4, 'tsr')):
+        pts = bezier((x1 - 46, y1 + dy - 30), (x1 - 30, y1 + dy - 26), (x1 - 14, y1 + dy - 12), (x1 - 4, y1 + dy), 24)
+        ws = [w * (i / 24) ** 1.3 + 0.2 for i in range(25)]
+        stroke(back, pts, ws, tones)
+
+
+def fx_bite_hit(k):
+    """la morsure : gerbe d'étincelles et de lave en croissants courbes autour du point de morsure, un coeur blanc,
+    des gouttes qui partent en cloche ; k = 0 (l'impact) … 2 (les dernières braises)"""
+    def f(cv, back, front, ctx):
+        x, y = bite_point(ctx)
+        x += 2
+        if k == 0:
+            puff(front, (x + 2, y), 5.5, 'wwvu')
+            for a0, r in ((60, 12), (-40, 11), (170, 9)):
+                pts = [(x + 2 + r * math.cos(math.radians(a0 + t)), y - r * math.sin(math.radians(a0 + t))) for t in range(0, 70, 5)]
+                stroke(front, pts, [3.6 * (1 - i / len(pts)) + 0.4 for i in range(len(pts))], 'vuts')
+            for (vx, vy, d) in ((1, -1, 14), (1, 0.3, 16), (0.4, -1, 15), (1, 0.9, 12), (-0.3, -1, 12)):
+                drop(front, x + vx * d, y + vy * d, vx, vy, 2 if d > 13 else 1)
+        elif k == 1:
+            puff(front, (x + 3, y - 1), 3.2, 'vut')
+            for a0, r in ((70, 15), (-30, 14)):
+                pts = [(x + 2 + r * math.cos(math.radians(a0 + t)), y - r * math.sin(math.radians(a0 + t))) for t in range(0, 60, 5)]
+                stroke(front, pts, [2.4 * (1 - i / len(pts)) + 0.3 for i in range(len(pts))], 'uts')
+            for (vx, vy, d) in ((1, -0.6, 20), (0.5, -1, 19), (1, 1.2, 15), (-0.2, -1, 17)):
+                drop(front, x + vx * d, y + vy * d + d * 0.15, vx, vy + 0.4)
+            cloud(front, (x + 8, y - 10), 3.0, 'iijl', seed=9, ground=False)
+        else:
+            for (dx, dy) in ((22, -6), (14, -20), (20, 14), (6, -24)):
+                ember(front, x + dx, y + dy + 4, big=dx == 14)
+            smoke_plume(front, (x + 6, y - 8), 14, 2.4, sway=0.8, tones='ijl', curl_r=2.6, tail=0.3)
+    return f
+
+
+# les pieds de devant (grille) : le proche, le lointain ; et l'arrière proche
+FEET_FX = [(186, 1.0), (240, 0.8), (90, 0.55)]
+
+
+def fx_stomp(k):
+    """le sol tremble sous le poids : bouffées de poussière courbes au ras du sol sous les pieds (k = 0, 1, 2)"""
+    def f(cv, back, front, ctx):
+        for j, (gx, s) in enumerate(FEET_FX):
+            x = gx + OX
+            if k == 0:
+                cloud(back, (x - 9 * s, GROUND - 2), 4.0 * s + 1, 'noop', seed=20 + j)
+                cloud(front, (x + 9 * s, GROUND - 2), 3.4 * s + 1, 'noop', seed=30 + j)
+            elif k == 1:
+                cloud(back, (x - 14 * s, GROUND - 3), 5.2 * s + 1, 'noop', seed=20 + j, hollow=0.2)
+                cloud(front, (x + 14 * s, GROUND - 3), 4.4 * s + 1, 'nop', seed=30 + j, hollow=0.25)
+                put(front, x + 24 * s, GROUND - 7, 'o')
+                put(front, x - 22 * s, GROUND - 8, 'p')
+            else:
+                cloud(back, (x - 18 * s, GROUND - 5), 4.6 * s + 1, 'nop', seed=20 + j, hollow=0.6)
+                cloud(front, (x + 18 * s, GROUND - 5), 3.6 * s + 1, 'no', seed=30 + j, hollow=0.7)
+    return f
+
+
 ATTAQUE = [
-    dict(ms=100),
-    dict(bx=-6, pitch=-6, hrel=(-6, -8), jaw=3, lagN=(2, 2), ms=160),
-    dict(bx=12, pitch=10, hrel=(10, 6), jaw=4, lagN=(-3, -3), ms=160),
-    dict(bx=14, pitch=12, sq=2, hrel=(12, 8), jaw=-9, lagN=(-3, -4), ms=160),
+    dict(sq=1, hrel=(0, 2), lagN=(0, -1), lagF=(0, -1), ms=120),
+    dict(bx=-6, pitch=-6, hrel=(-6, -8), jaw=3, lagN=(2, 3), lagF=(1, 3), tail=(2, 0), ms=170),
+    dict(bx=-8, pitch=-8, hrel=(-8, -10), jaw=5, lagN=(1, 2), lagF=(1, 2), tail=(3, -1), heat=1,
+         fx=[fx_snort(0)], ms=260),
+    dict(bx=10, pitch=9, hrel=(8, 4), jaw=5, lagN=(5, 5), lagF=(4, 5), tail=(0, -1), fx=[fx_bite_smear, fx_snort(1)], ms=60),
+    dict(bx=14, pitch=12, sq=2, hrel=(12, 8), jaw=-9, lagN=(-3, -4), lagF=(-2, -3), tail=(-2, 0),
+         fx=[fx_bite_hit(0), fx_stomp(0)], shake=2, ms=240),
+    dict(bx=14, pitch=12, sq=2, hrel=(11, 10), jaw=-9, lagN=(-2, -2), lagF=(-1, -2), tail=(-2, 0),
+         fx=[fx_bite_hit(1), fx_stomp(1)], ms=130),
+    dict(bx=8, pitch=6, sq=1, hrel=(6, 4), jaw=-2, lagN=(0, 1), lagF=(0, 1), tail=(-1, 0), fx=[fx_bite_hit(2), fx_stomp(2)],
+         ms=130),
+    dict(bx=3, pitch=2, hrel=(2, 1), jaw=1, lagN=(1, 1), lagF=(1, 1), ms=140),
+    dict(sq=1, hrel=(0, 1), lagN=(0, -1), lagF=(0, -1), ms=160),
+    dict(ms=180),
 ]
 SPECIALE = [dict(ms=100)]
+
+
+# ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
+# RETOUCHES[nom][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du dragon à partir de (x, y) en
+# coordonnées de la TOILE ; '.' efface, ' ' laisse le pixel tel quel.
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+
+
+def retouch(cv, fixes):
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ' and 0 <= x + i < W and 0 <= y < H:
+                cv[y, x + i] = ch
+
+
+# ---------------------------------------------------------------- toutes les images
+def build_one(name):
+    fr = []
+    if name == 'pose':
+        for i, f in enumerate(POSE):
+            cv, back, front = pose_frame(f)
+            retouch(cv, RETOUCHES['pose'].get(i, []))
+            fr.append((compose(cv, back, front), f['ms']))
+        return fr
+    for i, spec in enumerate(ATTAQUE if name == 'attaque' else SPECIALE):
+        cv, back, front, kw = rig(spec)
+        retouch(cv, RETOUCHES[name].get(i, []))
+        fr.append((compose(cv, back, front, **kw), spec['ms']))
+    return fr
+
+
+def build_all():
+    return {n: build_one(n) for n in ('pose', 'attaque', 'speciale')}
+
+
+def on_bg(img, bg=BG):
+    im = Image.new('RGBA', (img.shape[1], img.shape[0]), bg + (255,))
+    im.alpha_composite(Image.fromarray(img, 'RGBA'))
+    return im
+
+
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin),
+            min(H, ys.max() + 1 + margin))
+
+
+# la case du jeu : 256 × 240, sol en (128, 236)
+GAME_BOX = (SOL[0] - CASE_SOL[0], SOL[1] - CASE_SOL[1], SOL[0] - CASE_SOL[0] + CASE_W, SOL[1] - CASE_SOL[1] + CASE_H)
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet.paste(im, (0, i * H0))
+    ncol = len(sheet.getcolors(maxcolors=1 << 22) or [])
+    if 0 < ncol <= 256:
+        pal = sheet.quantize(colors=ncol, method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+# ---------------------------------------------------------------- la scène du jeu : le fond de volcan, les héros en face
+# Comme au combat (fonds/fondlib.py), mais vu dans le sens de l'animation (le dragon à gauche, tourné vers la droite) :
+# le dragon au milieu du côté ennemi (rang du milieu), les cinq héros à leurs places, retournés vers lui.
+FOND_W = 590
+SCENE_HEROES = [('kael', 0), ('eldra', 1), ('aldric', 2), ('mira', 3), ('tessa', 4)]
+
+
+def scene_layout():
+    sys.path.insert(0, os.path.join(HD, '..', 'fonds'))
+    import fondlib as F
+    boss_x = FOND_W - (F.place('ennemis', 0)[0] + F.place('ennemis', 3)[0]) // 2
+    boss = (boss_x, F.RANGS[1])
+    heroes = []
+    for name, slot in SCENE_HEROES:
+        x, y = F.place('heros', slot)
+        heroes.append((name, FOND_W - x, y))
+    return F, boss, heroes
+
+
+def hero_sprite(name):
+    h = hd.load(os.path.join(HD, name + '.txt'))
+    im = Image.fromarray(hd.frame(h, 0), 'RGBA').transpose(Image.FLIP_LEFT_RIGHT)
+    cw, ch, (sx, sy) = hd.case(h)
+    return im, (cw - 1 - sx, sy)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    both = anims['attaque'] + anims['speciale'] + anims['pose']
+    bb = bbox(both, 6)
+    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
+    k = 3
+    blocks = []
+    for name, per in (('pose', 6), ('attaque', 5), ('speciale', 4)):
+        box = GAME_BOX if name == 'pose' else bb
+        cells = [on_bg(img).crop(box) for img, _ in anims[name]]
+        blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + per - 1) // per) * (cells[0].height * k + 22) for _, per, cells, _ in blocks)
+    sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    y = 6
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE (morsure)',
+              'speciale': 'ATTAQUE SPECIALE (tempete de feu)'}
+    for name, per, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % per == 0:
+                y += ch + 22
+            X = 6 + (i % per) * (cw + 6)
+            sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sheet.save(os.path.join(OUT, f'anim-{NAME}-planche.png'))
+    write_scene(anims)
+    return boxes
+
+
+def write_scene(anims):
+    """anim-dragon-jeu.gif : pose ×2, attaque, pose, spéciale, pose, sur le fond de volcan (retourné), avec les cinq
+    héros en face, à la taille du jeu (1 pixel du dessin = 1 pixel du fond), ×2. Comme le fera le jeu : pour la
+    morsure, le dragon va jusqu'au héros le plus proche et revient ; la tempête tombe sur CHAQUE héros (la partie
+    « sur la cible » de la spéciale, posée à ses pieds, un peu décalée de l'un à l'autre)."""
+    F, boss, heroes = scene_layout()
+    fond = Image.open(os.path.join(ROOT, 'public', 'art', 'px', 'fonds', 'kael.webp')).convert('RGBA')
+    fond = fond.transpose(Image.FLIP_LEFT_RIGHT)
+    top = F.RANGS[0] - 300
+    bot = F.RANGS[2] + 30
+    fond = fond.crop((0, top, FOND_W, bot))
+    bx, by = boss[0], boss[1] - top
+    sprites = [(hero_sprite(n), x, y - top) for n, x, y in heroes]
+    # la cible imaginée du GIF : le héros le plus proche (premier rang)
+    near = min(sprites, key=lambda s: s[1])
+    jeu_a, jeu_s = JEU['attaque'], JEU['speciale']
+    reach = jeu_a['cible'][0] - SOL[0]
+    seq = []
+    for img, ms in anims['pose'] * 2:
+        seq.append((img, ms, 0, None))
+    na = len(anims['attaque'])
+    coup = jeu_a['coup']
+    for i, (img, ms) in enumerate(anims['attaque']):
+        # il va jusqu'au héros pendant la préparation, revient après
+        dist = near[1] - reach - bx
+        t = min(1.0, i / max(1, coup - 1)) if i < coup else max(0.0, 1 - (i - coup - 1) / max(1, na - coup - 2))
+        seq.append((img, ms, int(round(dist * (t * t * (3 - 2 * t)))), None))
+    for img, ms in anims['pose']:
+        seq.append((img, ms, 0, None))
+    cut = jeu_s['coupe']
+    for i, (img, ms) in enumerate(anims['speciale']):
+        seq.append((img, ms, 0, ('s', i, cut[i])))
+    for img, ms in anims['pose']:
+        seq.append((img, ms, 0, None))
+    frames = []
+    spec_imgs = [img for img, _ in anims['speciale']]
+    for img, ms, dx, tgt in seq:
+        im = fond.copy()
+        a = img.copy()
+        if tgt is not None and tgt[2] is not None:
+            a[:, tgt[2]:] = 0                       # ce qui tombe sur la cible est posé sur chaque héros, plus bas
+        # le dragon et ses effets (sol du GIF -> sol de la scène)
+        dragon = Image.fromarray(a, 'RGBA')
+        layers = [(by, dragon, (bx + dx - SOL[0], by - SOL[1]))]
+        for (spr, (ax, ay)), x, y in sprites:
+            layers.append((y, spr, (x - ax, y - ay)))
+        layers.sort(key=lambda L: L[0])
+        for _, s_im, xy in layers:
+            im.alpha_composite(s_im, xy)
+        if tgt is not None:
+            _, i, c = tgt
+            for n, ((spr, _), x, y) in enumerate(sorted(sprites, key=lambda s: s[1])):
+                j = i - (n % 2)                     # un petit décalage d'un héros à l'autre
+                if j < 0 or cut[j] is None:
+                    continue
+                part = spec_imgs[j].copy()
+                part[:, :cut[j]] = 0
+                im.alpha_composite(Image.fromarray(part, 'RGBA'), (x - ENEMY_X, y - GROUND))
+        frames.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), frames, [ms for _, ms, _, _ in seq])
+
+
+def essai(folder):
+    """images de contrôle : chaque image seule ×4 (zone utile)"""
+    os.makedirs(folder, exist_ok=True)
+    anims = build_all()
+    bb = bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 4)
+    for name, fr in anims.items():
+        for i, (img, ms) in enumerate(fr):
+            im = on_bg(img).crop(GAME_BOX if name == 'pose' else bb)
+            im.resize((im.width * 3, im.height * 3), Image.NEAREST).save(os.path.join(folder, f'{name}-{i:02d}.png'))
+
+
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(316, GROUND - 80), coupe=[None] * 4 + [312] * 3 + [None] * 3),
+    'speciale': dict(genre='sort', coup=0, cible=(ENEMY_X, GROUND - 44), coupe=[None]),
+}
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 2 and sys.argv[1] == 'essai':
+        essai(sys.argv[2])
+    else:
+        anims = build_all()
+        write_outputs(anims)
+        for n in ('pose', 'attaque', 'speciale'):
+            print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+        print('écrit dans', OUT)

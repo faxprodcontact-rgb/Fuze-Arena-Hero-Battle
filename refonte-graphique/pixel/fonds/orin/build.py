@@ -524,35 +524,54 @@ def corbeaux(t, phase, i=0, cache=None):
 
 
 # ------------------------------------------------------------------------------------------------ le pont de cordes
-PONT_A, PONT_B = (178, 608), (316, 566)
+# Les deux bouts sont ANCRÉS sur la roche (retouche du 25/11 : le bout gauche pendait dans le vide) : à gauche sur le
+# dessus du piton du pin (avant que son bord ne plonge), à droite sur le plateau du temple. Le pied de chaque poteau
+# est calculé sur le profil de la roche (+2 : enfoncé), un hauban le retient à un piquet planté derrière lui.
+PONT_XA, PONT_XB = 146, 322
+PONT_A = (PONT_XA, int(round(float(gauche_ligne(float(PONT_XA))))) + 2)
+PONT_B = (PONT_XB, 569)            # le dessus du plateau du temple vaut ~567 en x = 322 (voir piton_temple)
+PONT_BOITE = (128, 540, 344, 640)
 
 
 def pont(t):
     """Un pont de cordes et de planches entre le piton de gauche et le temple : il pend (une chaînette)."""
     (ax, ay), (bx, by) = PONT_A, PONT_B
-    n = 240
+    n = 360
     xs = np.linspace(ax, bx, n)
     f = (xs - ax) / (bx - ax)
-    deck = ay + (by - ay) * f + 22 * np.sin(np.pi * f)
+    deck = ay + (by - ay) * f + 26 * np.sin(np.pi * f)
     rail = deck - 7
+    # les mains courantes (derrière les planches)
+    for x, y in zip(xs, rail):
+        t.px(int(round(x)), int(round(y)), BOIS[3])
+    # les suspentes entre main courante et planches
+    rng = np.random.default_rng(94)
+    x = ax + 7
+    while x < bx - 5:
+        k = int((x - ax) / (bx - ax) * (n - 1))
+        t.line(int(round(xs[k])), int(round(rail[k])) + 1, int(round(xs[k])), int(round(deck[k])) - 1, BOIS[1])
+        x += rng.uniform(9, 13)
+    # le tablier : planches (quelques jours entre elles), dessous plus sombre
     for x, y in zip(xs, deck):
         xi, yi = int(round(x)), int(round(y))
         gap = F._hash(np.array(xi), np.array(7), 93) < 0.14
         t.px(xi, yi, BOIS[2] if not gap else BOIS[1])
         t.px(xi, yi + 1, BOIS[1] if not gap else BOIS[0])
-    for x, y in zip(xs, rail):
-        t.px(int(round(x)), int(round(y)), BOIS[3])
-    rng = np.random.default_rng(94)
-    x = ax + 8
-    while x < bx - 6:
-        k = int((x - ax) / (bx - ax) * (n - 1))
-        t.line(int(round(xs[k])), int(round(rail[k])) + 1, int(round(xs[k])), int(round(deck[k])) - 1, BOIS[1])
-        x += rng.uniform(9, 13)
-    for (px, py) in (PONT_A, PONT_B):
-        p = t.rect(px - 1, py - 10, px + 2, py + 2)
+    # les poteaux plantés dans la roche, un hauban vers un piquet derrière chacun
+    for (px, py), sens, sy in ((PONT_A, -1, int(round(float(gauche_ligne(PONT_XA - 8.0))))), (PONT_B, 1, 565)):
+        sx = px + sens * 8              # sy : le dessus de la roche au pied du piquet
+        t.line(px + (1 if sens > 0 else 0), py - 10, sx, sy - 2, BOIS[1])
+        st = t.rect(min(sx, sx + sens), sy - 4, max(sx, sx + sens) + 1, sy + 2)
+        t.fill(st, BOIS[1])
+        t.px(sx + (1 if sens > 0 else 0), sy - 4, BOIS[2])
+        p = t.rect(px - 1, py - 11, px + 2, py + 1)
         t.fill(p, BOIS[1])
         t.fill(p & (t.X == px + 1), BOIS[3])
-        t.px(px, py - 11, BOIS[2])
+        t.px(px, py - 12, BOIS[2])
+        t.px(px + 1, py - 12, BOIS[2])
+        # le pied : une petite ombre sur la roche
+        t.px(px - 2, py, BOIS[0])
+        t.px(px + 2, py, BOIS[0])
 
 
 # ------------------------------------------------------------------------------------------------ le pin tordu
@@ -914,7 +933,7 @@ def construit():
     sous_corbeaux = t.col.copy()
     corbeaux(t, 0.0, cache=temple_m)
     sur(t, (0, 570, 240, 702), piton_gauche)
-    sur(t, (170, 550, 330, 640), pont)
+    sur(t, PONT_BOITE, pont)
     sous_pin = t.col.copy()
     sur(t, PIN_BOITE, pin, 0.0)
     sur(t, (440, 590, W, 702), eperon)
