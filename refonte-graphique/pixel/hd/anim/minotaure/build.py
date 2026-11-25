@@ -474,6 +474,10 @@ def hero(f):
     hx, hy = lean + f.get('hx', 0), -hb + f.get('hy', 0)
     blit(cv, P['cou'], lean, -b)
     blit(cv, P['cou'], hx, hy)
+    if hy < -b:
+        # la tête est plus haute que le buste (elle suit avec retard) : le bas du carré descend d'un pixel de plus
+        # pour ne pas laisser de jour entre les cheveux et le collier
+        blit(cv, np.where(YY >= 40, P['tete'], '.'), hx, hy + 1)
     blit(cv, P['tete'], hx, hy, BLINK if f.get('blink') else None)
     blit(cv, P['brasP'], lean + f.get('px', 0), -b + f.get('py', 0))
     draw_far_arm(cv, (lean, -b), f.get('ext', 0), f.get('raise', 0), f.get('theta', 0.0), f.get('ankh', True))
@@ -757,7 +761,9 @@ def pyramid(cv, cx, base, hw, h, form=1.0, sign=0, seed=1, fringe=None):
         t = (y + 0.5 - ay) / h                          # 0 en haut, 1 à la base
         if t < 0:
             continue
-        if t > form:
+        if t > 1.0:
+            continue
+        if form < 1 and t > form:
             # la frange du bas pendant la formation : irrégulière
             if t > form + 0.06 + 0.08 * _hash(y, 7, seed):
                 continue
@@ -768,7 +774,7 @@ def pyramid(cv, cx, base, hw, h, form=1.0, sign=0, seed=1, fringe=None):
             px = x + 0.5
             if px < xl or px > xr:
                 continue
-            if t > form and _hash(x, y, seed) < 0.45:
+            if form < 1 and t > form and _hash(x, y, seed) < 0.45:
                 continue
             lit = px > xe
             gold = t < cap
@@ -795,7 +801,7 @@ def pyramid(cv, cx, base, hw, h, form=1.0, sign=0, seed=1, fringe=None):
                         ch = 'L'
                     elif r > 0.975:
                         ch = 'N'
-            put(fringe if (fringe is not None and t > form) else cv, x, y, ch, below=0)
+            put(fringe if (fringe is not None and form < 1 and t > form) else cv, x, y, ch, below=0)
     if sign and form >= 1.0:
         t = 0.62
         sy = int(round(ay + h * t))
@@ -866,19 +872,30 @@ POSE = [
 # 2) L'ATTAQUE « Scarabée d'or » : elle ramène la croix en arrière (le sable d'or s'enroule dans la boucle), puis la
 # pointe vers l'ennemi d'un geste sec et royal : un scarabée d'or s'envole de la boucle, file en ondulant avec sa
 # traîne de sable, éclate sur l'ennemi en bouffée d'or ; la croix revient droite.
+def behind_ankh(ctx, c, r=14):
+    """les effets autour de la boucle passent derrière la croix : on les efface là où l'or de la croix est dessiné"""
+    cv, front = ctx['cv'], ctx['front']
+    x0, x1 = int(c[0] - r), int(c[0] + r)
+    y0, y1 = int(c[1] - r), int(c[1] + r)
+    sub = cv[y0:y1, x0:x1]
+    fr = front[y0:y1, x0:x1]
+    fr[np.isin(sub, list('klmno'))] = '.'
+
+
 def fx_attack_gather(level):
     def fx(ctx):
         f, front = ctx['f'], ctx['front']
         c = loop_pos(f)
-        # deux volutes de sable doré qui s'enroulent vers la boucle, et des grains qui y tombent
-        curl(front, (c[0] - 2, c[1] + 2), 9 - 2 * level, 210 + 50 * level, turn=200 + 50 * level, w=2.4,
-             tones='KLM')
-        curl(front, (c[0] + 2, c[1] - 1), 8 - 2 * level, 30 + 50 * level, turn=180 + 50 * level, w=2.0, tones='IJ')
+        # deux volutes de sable doré s'enroulent dans la boucle par la droite et par le haut (jamais sur le visage),
+        # des grains y tombent ; elles passent derrière l'or de la croix
+        curl(front, (c[0] + 1, c[1]), 8 - 2 * level, -60 + 70 * level, turn=210, w=2.2, tones='KLM')
+        curl(front, (c[0], c[1] - 1), 7 - 2 * level, 70 + 70 * level, turn=190, w=1.8, tones='IJ')
         rng = np.random.RandomState(3 + int(level * 10))
-        for i in range(7):
-            a = rng.uniform(0, 2 * math.pi)
-            r = (13 - 5 * level) + rng.uniform(0, 3)
+        for i in range(6):
+            a = rng.uniform(-1.6, 1.2)
+            r = (12 - 4 * level) + rng.uniform(0, 3)
             grain(front, c[0] + r * math.cos(a), c[1] + r * math.sin(a), i % 3 == 0)
+        behind_ankh(ctx, c)
         loop_glow(ctx['cv'], f, 1.6 + 1.4 * level)
     return fx
 
@@ -924,12 +941,13 @@ def fx_scarab(s, flap, trail0=0.0, smear=False):
             # le geste : un croissant de sable doré suit la boucle, de l'arrière vers l'avant
             g = g2c(GRIP, (ATT_STRIKE['lean'] + 3, 0))
             pts, ws = [], []
-            for i in range(25):
-                t = i / 24
-                th = math.radians(-12 + 34 * t)
-                pts.append((g[0] + 21 * math.sin(th), g[1] - 21 * math.cos(th)))
-                ws.append(0.5 + 3.0 * t ** 1.5)
+            for i in range(31):
+                t = i / 30
+                th = math.radians(-34 + 52 * t)
+                pts.append((g[0] + 22 * math.sin(th), g[1] - 22 * math.cos(th)))
+                ws.append(0.5 + 3.4 * t ** 1.4)
             stroke(front, pts, ws, 'KLM')
+            behind_ankh(ctx, loop_pos(ctx['f']), 16)
         scarab(obj, p[0], p[1], flap, 0.85 if smear else 1.0)
     return fx
 
@@ -965,7 +983,7 @@ ATT_STRIKE = dict(theta=32, ext=4, lean=1)
 ATTAQUE = [
     dict(ms=150, theta=-6, ext=-1, lean=-1, wl=1, hb=0, fx=[fx_attack_gather(0.0)]),
     dict(ms=190, theta=-10, ext=-2, lean=-1, wl=2, hx=-1, fx=[fx_attack_gather(1.0)], glints=[('cobra', True)]),
-    dict(ms=60, theta=26, ext=3, lean=1, wl=1, hx=0, fx=[fx_scarab(0.0, 1, smear=True)]),
+    dict(ms=60, theta=26, ext=3, lean=1, wl=1, hx=0, fx=[fx_scarab(0.06, 1, smear=True)]),
     dict(ms=70, theta=32, ext=4, lean=1, wl=0, hx=1, fx=[fx_scarab(0.22, -1, 0.0)]),
     dict(ms=70, theta=32, ext=4, lean=1, wl=0, hx=1, fx=[fx_scarab(0.52, 1, 0.1)]),
     dict(ms=60, theta=32, ext=4, lean=1, wl=0, hx=1, fx=[fx_scarab(0.84, -1, 0.4)]),
