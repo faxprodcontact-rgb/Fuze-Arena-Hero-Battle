@@ -1717,6 +1717,18 @@ def zone(args):
         print(f'{y:4d} ' + ''.join(g[y, x0:x1 + 1]))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : la balle vole jusqu'à la vraie cible (dans le GIF elle sort du cadre sans impact dessiné : la cible est
+# donc placée au bord droit, x = ENEMY_X + 120, pour garder sa vitesse ; la fumée, avant la colonne 210, reste au
+# mousquet). Spéciale : la balle d'eau vole jusqu'à la cible (l'image 6, où elle a dépassé la fumée et les anneaux,
+# colonne 218, sert pour tout le vol), puis l'éclat, la pluie et l'écume au sol sont posés sur la cible.
+JEU = {
+    'attaque': dict(genre='tir', tir=(4, 6), depuis=210, coup=6, cible=(ENEMY_X + 120, 156)),
+    'speciale': dict(genre='tir', tir=(6, 7), depuis=218, coup=7, cible=(ENEMY_X, round(SPEC_AT[0][1])),
+                     coupe=[None] * 7 + [226] * 5 + [200] * 6, charge=(1, 3)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

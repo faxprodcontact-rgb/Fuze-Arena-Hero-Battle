@@ -1659,10 +1659,27 @@ def build_all(which=('pose', 'attaque', 'speciale')):
                 del os.environ['ARCAN_DYT']
             else:
                 os.environ['ARCAN_DYT'] = old
-        sub = m.build_all(tuple(n for n in which if n != 'speciale'))
-        pad = np.zeros((DYT, W, 4), np.uint8)
-        for n, fr in sub.items():
-            anims[n] = [(np.concatenate([pad, img]), ms) for img, ms in fr]
+        # (25/11/2026, export vers le jeu) les grilles calculées sur l'ancienne toile sont rehaussées AVANT compose
+        # (et non plus l'image finie après) : jeu_export.py demande que chaque image vienne de compose ; même rendu.
+        def pad(g):
+            return None if g is None else np.concatenate([np.full((DYT,) + g.shape[1:], '.' if g.dtype.kind == 'U'
+                                                                  else False, dtype=g.dtype), g])
+        if 'pose' in which:
+            fr = []
+            for i, f in enumerate(m.POSE):
+                cv = m.pose_frame(f)
+                m.retouch(cv, m.RETOUCHES['pose'].get(i, []))
+                fr.append((compose(pad(cv)), f['ms']))
+            anims['pose'] = fr
+        if 'attaque' in which:
+            fr = []
+            for i, spec in enumerate(m.ATTAQUE):
+                cv, back, front, ctx = m.rig_frame(dict(spec))
+                m.retouch(cv, m.RETOUCHES['attaque'].get(i, []))
+                spare = np.isin(cv, list(TOILE)) if isinstance(spec.get('flash'), tuple) else None
+                fr.append((compose(pad(cv), pad(back), pad(front), flash=spec.get('flash'), spare=pad(spare)),
+                           spec['ms']))
+            anims['attaque'] = fr
         which = tuple(n for n in which if n == 'speciale')
     if 'pose' in which:
         fr = []

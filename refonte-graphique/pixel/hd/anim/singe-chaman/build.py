@@ -1091,6 +1091,16 @@ def control_frames(name, idx, k=6, box=None):
     print(p)
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : la bouffée naît à la gourde (elle reste avec lui), file (images 4-5) et éclate sur l'ennemi.
+# Spéciale : le grand nuage roulé file (images 6-7), puis le tourbillon tourne sur l'ennemi.
+JEU = {
+    'attaque': dict(genre='tir', tir=(4, 6), depuis=135, coup=6, cible=(ENEMY_X, GROUND - 40), coupe=190),
+    'speciale': dict(genre='tir', tir=(6, 8), depuis=135, coup=8, cible=(ENEMY_X, GROUND - 40), coupe=190,
+                     charge=(1, 4)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'decoupe':
         control_cut()

@@ -1655,6 +1655,16 @@ def essai(folder):
     return anims
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : corps à corps sans élan dessiné : le jeu l'amène devant l'ennemi (images 0-1), coup de bouclier (image 3,
+# les dégâts), puis estocade. L'ennemi imaginé se tient juste devant le bord du bouclier (pas à ENEMY_X, trop loin).
+# Spéciale : sort d'équipe (bouclier puis provocation) : le bouclier part vers l'équipe à l'image 6.
+JEU = {
+    'attaque': dict(genre='melee', coup=3, elan=(0, 2), cible=(156, 134), coupe=[None] * 3 + [136] * 7),
+    'speciale': dict(genre='equipe', coup=6, charge=(1, 3)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

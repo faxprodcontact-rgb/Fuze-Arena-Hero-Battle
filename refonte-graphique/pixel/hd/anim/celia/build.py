@@ -1433,6 +1433,15 @@ def write_outputs(anims):
     return boxes
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : les aiguilles de glace volent de sa main jusqu'à la vraie cible (images 2 et 3), puis éclatent sur elle.
+# Spéciale : sort d'équipe, l'effet part vers l'équipe à l'image LANCEMENT ; ses cristaux se chargent avant.
+JEU = {
+    'attaque': dict(genre='tir', tir=(2, 4), depuis=131, coup=4, cible=FOE, coupe=[None] * 4 + [190] * 5),
+    'speciale': dict(genre='equipe', coup=LANCEMENT, charge=(1, 4)),
+}
+
+
 if __name__ == '__main__':
     anims = build_all()
     write_outputs(anims)

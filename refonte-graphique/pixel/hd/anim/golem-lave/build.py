@@ -1222,7 +1222,11 @@ def build_one(name):
     for i, spec in enumerate(specs):
         cv, back, front, ctx = rig_frame(dict(spec))
         retouch(cv, RETOUCHES[name].get(i, []))
-        fr.append((compose(cv, back, front, flash=spec.get('flash'), shake=spec.get('shake', 0)), spec['ms']))
+        if spec.get('shake'):
+            # le tremblement (un pixel de côté) est fait AVANT compose, sur les grilles de lettres : même image, et
+            # l'export vers le jeu (../jeu_export.py) décale aussi les effets (compose(shake=…) ne décalait que le héros)
+            cv, back, front = (None if g is None else np.roll(g, spec['shake'], axis=1) for g in (cv, back, front))
+        fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
     return fr
 
 

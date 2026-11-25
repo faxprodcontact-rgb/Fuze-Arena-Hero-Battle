@@ -1131,7 +1131,7 @@ def build_all():
         for i, spec in enumerate(specs):
             cv, back, obj, front, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []), ctx.head)
-            fr.append((compose(cv, back, obj, front, spec.get('flash')), spec['ms']))
+            fr.append((compose(cv, fx_back=back, obj=obj, fx_front=front, flash=spec.get('flash')), spec['ms']))
         anims[name] = fr
     return anims
 
@@ -1265,6 +1265,15 @@ def zone(args):
 if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'decoupe':
     decoupe()
     sys.exit()
+
+
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Attaque : le feu follet vole jusqu'à la vraie cible et y éclate. Spéciale : sort d'équipe (rien sur l'ennemi : le
+# cercle de flammes, la ronde et l'aura restent sur lui ; le jeu pose les effets reçus sur les alliés à l'image 11).
+JEU = {
+    'attaque': dict(genre='tir', tir=(4, 6), depuis=157, coup=6, cible=HIT),
+    'speciale': dict(genre='equipe', coup=11, charge=(3, 7)),
+}
 
 
 if __name__ == '__main__':
