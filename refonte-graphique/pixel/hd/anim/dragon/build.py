@@ -163,7 +163,7 @@ _bone_right = piecewise(GYY, [(20, 175), (56, 175), (57, 151), (60, 152), (62, 1
 M_WING_F |= _far_obs & (GXX <= _bone_right) & (GYY <= 101)
 # la tête : crâne, mâchoires, oeil, crocs, corne du museau ; les deux grandes cornes et la couronne (le reste de la
 # pièce d'obsidienne soudée), les deux échardes en collerette derrière la joue
-HEAD_POLY = [(188, 70), (256, 70), (256, 150), (203, 150), (201, 132), (198, 118), (190, 104), (186, 96)]
+HEAD_POLY = [(188, 70), (256, 70), (256, 150), (204, 150), (204, 141), (203, 131), (198, 118), (190, 104), (186, 96)]
 M_HEAD = poly_mask(HEAD_POLY) & filled & ~M_WING_F
 M_HEAD |= _far_obs & ~M_WING_F
 M_HEAD |= comps_in(_obs_lab, 168, 104, 192, 124, 30)
@@ -1085,18 +1085,18 @@ def fx_bite_hit(k):
         x += 2
         if k == 0:
             # le coeur : une petite étoile de feu à quatre lobes (pas un disque), des croissants qui s'ouvrent
-            for (ox, oy, r) in ((0, 0, 2.6), (4, -3, 2.2), (4, 3, 2.0), (-3, -2, 1.8), (-2, 3, 1.6)):
+            for (ox, oy, r) in ((0, 0, 3.6), (5, -4, 3.0), (5, 4, 2.8), (-4, -3, 2.4), (-3, 4, 2.2)):
                 puff(front, (x + 2 + ox, y + oy), r, 'wwv')
-            for a0, r, w in ((20, 13, 4.4), (-95, 12, 4.0), (60, 9, 2.6), (-60, 9, 2.4)):
+            for a0, r, w in ((20, 18, 5.6), (-95, 17, 5.0), (60, 12, 3.4), (-60, 12, 3.2)):
                 pts = [(x + 2 + r * math.cos(math.radians(a0 + t)), y - r * math.sin(math.radians(a0 + t))) for t in range(0, 75, 5)]
                 stroke(front, pts, [w * (1 - i / len(pts)) ** 0.8 + 0.4 for i in range(len(pts))], 'wvuts')
             for (vx, vy, d) in ((1, -1, 14), (1, 0.3, 16), (0.4, -1, 15), (1, 0.9, 12), (-0.3, -1, 12)):
                 drop(front, x + vx * d, y + vy * d, vx, vy, 2 if d > 13 else 1)
         elif k == 1:
-            puff(front, (x + 3, y - 1), 3.2, 'vut')
-            for a0, r in ((70, 15), (-30, 14)):
+            puff(front, (x + 3, y - 1), 4.2, 'vut')
+            for a0, r in ((70, 21), (-30, 20)):
                 pts = [(x + 2 + r * math.cos(math.radians(a0 + t)), y - r * math.sin(math.radians(a0 + t))) for t in range(0, 60, 5)]
-                stroke(front, pts, [2.4 * (1 - i / len(pts)) + 0.3 for i in range(len(pts))], 'uts')
+                stroke(front, pts, [3.2 * (1 - i / len(pts)) + 0.3 for i in range(len(pts))], 'uts')
             for (vx, vy, d) in ((1, -0.6, 20), (0.5, -1, 19), (1, 1.2, 15), (-0.2, -1, 17)):
                 drop(front, x + vx * d, y + vy * d + d * 0.15, vx, vy + 0.4)
             cloud(front, (x + 8, y - 10), 3.0, 'iijl', seed=9, ground=False)
@@ -1583,7 +1583,7 @@ def write_scene(anims):
     bx, by = boss[0], boss[1] - top
     sprites = [(hero_sprite(n), x, y - top) for n, x, y in heroes]
     # la cible imaginée du GIF : le héros le plus proche (premier rang)
-    near = min(sprites, key=lambda s: s[1])
+    near = sprites[[slot for _, slot in SCENE_HEROES].index(2)]     # le héros du rang du milieu (celui du dragon)
     jeu_a, jeu_s = JEU['attaque'], JEU['speciale']
     reach = jeu_a['cible'][0] - SOL[0]
     seq = []
@@ -1644,7 +1644,11 @@ def essai(folder):
 
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
-    'attaque': dict(genre='melee', coup=4, cible=(316, GROUND - 80), coupe=[None] * 4 + [312] * 3 + [None] * 3),
+    # la morsure : le bout de la gueule arrive en x = 318 (91 pixels au-dessus du sol) ; seule la gerbe d'étincelles,
+    # devant la gueule, est posée sur la cible
+    'attaque': dict(genre='melee', coup=4, cible=(316, GROUND - 80), coupe=[None] * 4 + [322, 321, 310] + [None] * 3),
+    # la tempête : la boule de feu reste avec le dragon (images 0 à 7) ; la pluie de blocs de lave, l'impact et le feu
+    # qui brûle (images 8 à 17) sont posés aux pieds de CHAQUE héros
     'speciale': dict(genre='sort', coup=11, cible=(ENEMY_X, GROUND - 44), coupe=[None] * 8 + [ENEMY_X - 48] * 10,
                      charge=(1, 4)),
 }
