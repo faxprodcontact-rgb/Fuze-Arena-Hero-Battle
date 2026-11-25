@@ -96,3 +96,10 @@
 - 25/11 : les 8 fonds sont dessinés (aperçus pixel/sortie/fond-<clan>.gif). v0.54.0 publiée (60 personnages dans le combat
   d'essai, choix + « les 60 à la suite »). En cours : branchement des 8 fonds dans le jeu (régions de la campagne,
   accueil, combat d'essai, outil « fond imposé »), capture pixel/sortie/fonds-en-jeu.png/.gif, puis publier.
+- 25/11 : v0.55.0 publiée (8 fonds branchés : régions de la campagne, accueil, essai HD, outil « Décor des combats »).
+
+## Grands boss (« big boss », demande du 25/11/2026)
+- 4 grands boss, un par élément, ≈ 2× la hauteur d'un héros, seuls côté ennemi (consigne `grand-boss.md`).
+- Pilote en cours : dragon de lave (feu), `boss/dragon.txt`, + case agrandie dans hd.py (`cadre:`), aperçu
+  `pixel/sortie/boss-dragon-echelle.png`. Ensuite : léviathan (eau), titan de pierre (terre), oiseau-tempête (vent),
+  puis animations et branchement (boss du jour, de guilde, fins de région).
