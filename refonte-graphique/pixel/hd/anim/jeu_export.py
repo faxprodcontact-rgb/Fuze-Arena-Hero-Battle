@@ -349,6 +349,16 @@ def export(name, voir=None):
     side = min(side, r0[2])                                  # dans l'image (rien des voisines de la planche)
     x = int(np.clip(round(r0[0] + cx - bb[0] - side / 2), r0[0], r0[0] + r0[2] - side))
     meta['visage'] = [x, int(r0[1]), side]
+    if src.get('cadre') and src.get('tete'):
+        # grand boss (case « cadre: », voir hd.case) : le haut de la silhouette est le bout des ailes, pas la tête ; le
+        # carré du visage est pris sur la boîte « tete » du dessin (grille -> toile du build.py -> planche)
+        tx0, ty0, tx1, ty1 = src['tete']
+        ox, oy = sol[0] - src['sol'][0], sol[1] - src['sol'][1]
+        side = int(min(r0[2], r0[3], max(tx1 - tx0, ty1 - ty0) + 1))
+        hx, hy = (tx0 + tx1) / 2 + ox - bb[0], (ty0 + ty1) / 2 + oy - bb[1]
+        x = int(np.clip(round(r0[0] + hx - side / 2), r0[0], r0[0] + r0[2] - side))
+        y = int(np.clip(round(r0[1] + hy - side / 2), r0[1], r0[1] + r0[3] - side))
+        meta['visage'] = [x, y, side]
     meta['frames'] = sheet.rects
     meta['size'] = [img.width * UP, img.height * UP]
     print(f'{name} ({cid}) : {len(sheet.rects)} images, planche {img.width * UP} × {img.height * UP}')

@@ -776,7 +776,10 @@ def wing_skeleton(name, u, flap=0.0, lift=0.0, off=(0, 0), hoff=None):
     tips = []
     for (L, f0, f1) in sp['fingers']:
         # en se repliant, les doigts raccourcissent un peu à l'oeil (ils se couchent vers nous) : pas en s'ouvrant
-        aa = math.radians(lerp(f0, f1, u) + sg * flap)
+        # l'aile lointaine garde ses doigts pliés (membrane pendue à gauche de l'os, comme le dessin) tant que le bras
+        # se lève, puis les ouvre vers la droite
+        uf = u * u if name == 'far' else u
+        aa = math.radians(lerp(f0, f1, uf) + sg * flap)
         tips.append(Wr + L * np.array([math.cos(aa), -math.sin(aa)]))
     hx, hy = hoff if hoff is not None else (ox, oy)
     Hp = np.array([lerp(sp['H0'][0], sp['H1'][0], u), lerp(sp['H0'][1], sp['H1'][1], u)]) + (hx, hy)

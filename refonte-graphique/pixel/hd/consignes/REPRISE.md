@@ -108,3 +108,11 @@
   Retouche du dragon en cours ; léviathan, titan, oiseau-tempête lancés (brief scratchpad brief-boss.md).
 - 25/11 : dragon retouché et VALIDÉ (« Super ») → animation du dragon lancée (anim/dragon/build.py + JEU, jeu_export adapté à la grande case si besoin).
 - 25/11 : léviathan VALIDÉ (« Parfait ») → animation lancée (anim/leviathan/). Titan et oiseau retouchés (oiseau : jonction aile / corps en cours). 24 monstres validés.
+
+## Jeu propre, tout en HD (demande du 25/11/2026)
+- Le propriétaire : supprimer anciens fonds et anciens personnages, tout brancher en HD dans tous les modes, retirer
+  TOUS les outils de test (menu de l'avatar), supprimer jusqu'au bout. Décidé : le jeu ne garde que les 36 héros HD
+  (les 36 autres sont retirés, compensation par courrier dans les vieilles sauvegardes).
+- En cours dans une copie de travail séparée (worktree) par un agent : héros, monstres/boss par clan, 8 fonds partout,
+  combat HD partout, portraits HD, outils de test retirés, vieux fichiers supprimés, captures `pixel/sortie/jeu-propre/`.
+  À la fin : fusionner sa branche, régénérer hd-meta.ts si les boss ont été exportés entre-temps, publier v0.56.0.
