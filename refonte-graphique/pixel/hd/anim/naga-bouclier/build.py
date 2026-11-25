@@ -106,7 +106,8 @@ def _shield():
 
 SHIELD = _shield()
 XLA = np.array([XL.get(y, GW) for y in range(GH)])       # bord gauche du bouclier (GW = pas de bouclier)
-HEAD = FILLED & (YY <= 41) & (XX >= 53)                   # la tête (crête, crâne, gueule, langue), coupée sous la mâchoire
+HEAD = FILLED & (YY <= 41) & (XX >= 53) & ~((YY == 41) & (XX <= 54))  # la tête (crête, crâne, gueule, langue), coupée
+# sous la mâchoire ; en bas à gauche (rangée 41, x <= 54), le haut de l'épaulière (rapprochée du corps, 25/11) reste au buste
 ARM = FILLED & (YY >= 62) & (YY <= 74) & (XX <= 48)      # l'avant-bras proche (poignet, brassard, avant-bras)
 # le buste : de l'épaulière proche au bord du bouclier ; en bas, la grande boucle de derrière commence à gauche
 _TL = {y: 33 for y in range(41, 62)}
