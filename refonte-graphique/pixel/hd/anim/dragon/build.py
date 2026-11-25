@@ -72,8 +72,8 @@ LAVA = 'rstuvw'
 # Toile des animations : le point « sol » du dragon est posé en SOL. La pose seule se recadre ensuite dans la case du
 # jeu (256 × 240, sol en (128, 236)). Les héros sont à droite : le premier à ENEMY_X (même écart qu'au combat entre le
 # boss, au milieu du côté ennemi, et le premier rang des héros).
-W, H = 520, 300
-SOL = (170, 292)
+W, H = 520, 340
+SOL = (170, 332)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
 ENEMY_X = SOL[0] + 255
@@ -751,8 +751,8 @@ def assemble(f):
 # Mesures de l'aile proche du dessin : coude (138, 120), poignet (101, 32), avant-bras 95 pixels ; doigts de 111, 114
 # et 113 pixels, à 226°, 239° et 252° (angles comptés vers le haut) ; le bas de la membrane pend jusqu'en (100, 148).
 WING_SPECS = {
-    'near': dict(B=(142, 124), E0=(138, 120), E1=(130, 88), arm=95, a0=112.8, a1=128.0,
-                 fingers=[(111, 226, 168), (114, 239, 204), (113, 252, 238)], H0=(100, 148), H1=(52, 126),
+    'near': dict(B=(142, 124), E0=(138, 120), E1=(130, 88), arm=95, a0=112.8, a1=116.0,
+                 fingers=[(111, 226, 150), (114, 239, 186), (113, 252, 224)], H0=(100, 148), H1=(52, 126),
                  tones=('P', 'Q', 'R', 'S', 'V'), bone=('A', 'B', 'C', 'D', 'E', 'F', 'G')),
     # l'aile lointaine (derrière la bosse) : elle monte derrière le cou, s'ouvre vers le haut et la droite
     'far': dict(B=(160, 102), E0=(165, 100), E1=(170, 76), arm=78, a0=101.0, a1=72.0,
@@ -1292,6 +1292,9 @@ def fx_rain(k):
     return f
 
 
+SC, SCW = 1.55, 1.3                        # la taille du feu sur la cible (un héros fait ~96 pixels)
+
+
 def fx_impact(k):
     """l'impact sur la cible : k = 0 (l'impact, tenu), 1 (la gerbe monte), 2 … 5 (le feu brûle, la fumée monte et
     se défait), 6 (les dernières braises)"""
@@ -1299,8 +1302,8 @@ def fx_impact(k):
         X, gy = ENEMY_X, GROUND
         # le sol : une flaque de lave et la roche brûlée (de plus en plus refroidie)
         hot = max(0, 4 - k)
-        for x in range(X - 34, X + 35):
-            d = abs(x - X) / 34
+        for x in range(X - 44, X + 45):
+            d = abs(x - X) / 44
             if d > 1:
                 continue
             if hot >= 3:
@@ -1314,30 +1317,30 @@ def fx_impact(k):
                 put(back, x, gy - 1, 'g' if hot >= 2 else 's')
         if k == 0:
             # le dôme blanc de l'impact et les premières langues, très ventrues
-            for (ox, rr) in ((0, 13), (-12, 8), (12, 9)):
+            for (ox, rr) in ((0, 18), (-16, 11), (16, 12)):
                 for yy in range(int(gy - rr), gy + 1):
                     for xx in range(int(X + ox - rr), int(X + ox + rr + 1)):
                         d = math.hypot(xx + 0.5 - X - ox, (yy + 0.5 - gy) * 1.2) / rr
                         if d <= 1:
                             put(front, xx, yy, 'w' if d < 0.55 else 'v' if d < 0.8 else 'u')
             for (ox, hh, ww, bd) in ((0, 34, 16, 0.3), (-16, 22, 10, -0.9), (17, 24, 10, 0.9)):
-                tongue(back, (X + ox, gy - 2), hh, ww, bend=bd, tones='wvuuts', lean=0.0)
+                tongue(back, (X + ox * SCW, gy - 2), hh * SC, ww * SCW, bend=bd, tones='wvuuts', lean=0.0)
             for (vx, vy, d) in ((-1, -1, 22), (1, -1.1, 24), (-0.4, -1, 30), (0.6, -1, 32), (1, -0.5, 26), (-1, -0.4, 24)):
                 drop(front, X + vx * d, gy - 10 + vy * d, vx, vy, 2)
         elif k == 1:
             for (ox, hh, ww, bd) in ((0, 58, 22, 0.4), (-20, 38, 14, -0.9), (20, 42, 15, 0.9), (-32, 18, 8, -0.6),
                                      (33, 20, 8, 0.7)):
-                tongue(back if abs(ox) < 25 else front, (X + ox, gy - 1), hh, ww, bend=bd, tones='wvuutsr', lean=0.0)
+                tongue(back if abs(ox) < 22 else front, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='wvuutsr', lean=0.0)
             for (vx, vy, d) in ((-1, -0.6, 36), (1, -0.8, 38), (-0.5, -1, 46), (0.7, -1, 44), (0.2, -1, 56)):
                 drop(front, X + vx * d, gy - 16 + vy * d + d * 0.12, vx, vy + 0.2, 2 if d > 40 else 1)
             for (ox, oy, kk) in ((-30, -38, 0), (28, -46, 1), (-6, -62, 2)):
                 chunk(front, X + ox, gy + oy, k=kk, flip=ox < 0)
-            cloud(back, (X - 4, gy - 60), 9, 'iijl', seed=80, ground=False)
+            cloud(back, (X - 4, gy - 88), 11, 'iijl', seed=80, ground=False)
         elif k == 2:
             for (ox, hh, ww, bd) in ((0, 46, 18, -0.5), (-18, 30, 12, 0.8), (18, 34, 12, -0.8), (-30, 14, 7, -0.5),
                                      (30, 16, 7, 0.6)):
-                tongue(back if abs(ox) < 25 else front, (X + ox, gy - 1), hh, ww, bend=bd, tones='vuutsr', lean=0.0)
-            smoke_column(back, (X - 2, gy - 52), 30, 10, seed=81, lean=1.0)
+                tongue(back if abs(ox) < 22 else front, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='vuutsr', lean=0.0)
+            smoke_column(back, (X - 2, gy - 76), 34, 13, seed=81, lean=1.0)
             for (vx, vy, d) in ((-1, 0.2, 44), (1, 0.1, 46), (-0.4, -0.4, 52)):
                 drop(front, X + vx * d, gy - 12 + vy * d + 14, vx, 1)
             for (ox, oy, kk) in ((-40, -16, 0), (38, -22, 1)):
@@ -1345,21 +1348,21 @@ def fx_impact(k):
         elif k == 3:
             for (ox, hh, ww, bd) in ((-2, 30, 14, 0.6), (-16, 20, 10, -0.7), (15, 22, 10, 0.7), (-28, 10, 6, -0.4),
                                      (28, 11, 6, 0.5)):
-                tongue(back, (X + ox, gy - 1), hh, ww, bend=bd, tones='vutsr', lean=0.0, fork=hh > 25)
-            smoke_column(back, (X, gy - 40), 40, 12, hollow=0.15, seed=82, lean=-1.0)
+                tongue(back, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='vutsr', lean=0.0, fork=hh > 25)
+            smoke_column(back, (X, gy - 58), 46, 15, hollow=0.15, seed=82, lean=-1.0)
             for (ox, oy) in ((-20, -50), (14, -62), (26, -40)):
                 ember(front, X + ox, gy + oy, big=ox > 0)
         elif k == 4:
             for (ox, hh, ww, bd) in ((-4, 18, 9, -0.6), (10, 14, 8, 0.7), (-18, 9, 5, 0.5), (22, 8, 5, -0.5)):
-                tongue(back, (X + ox, gy - 1), hh, ww, bend=bd, tones='vutsr', lean=0.0, fork=False)
-            smoke_column(back, (X + 2, gy - 34), 46, 12, hollow=0.45, seed=83, lean=1.0)
+                tongue(back, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='vutsr', lean=0.0, fork=False)
+            smoke_column(back, (X + 2, gy - 50), 52, 15, hollow=0.45, seed=83, lean=1.0)
             for (ox, oy) in ((-12, -40), (18, -56), (4, -70)):
                 ember(front, X + ox, gy + oy)
         elif k == 5:
             for (ox, hh, ww, bd) in ((-2, 10, 6, 0.6), (12, 7, 5, -0.6), (-14, 6, 4, -0.5)):
-                tongue(back, (X + ox, gy - 1), hh, ww, bend=bd, tones='uts', lean=0.0, fork=False)
-            smoke_plume(back, (X - 2, gy - 12), 40, 4, sway=1.2, tones='ijlm', curl_r=4, tail=0.35)
-            smoke_plume(back, (X + 12, gy - 6), 26, 3, sway=-1.0, tones='ijl', curl_r=3, tail=0.4, cw=True)
+                tongue(back, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='uts', lean=0.0, fork=False)
+            smoke_plume(back, (X - 2, gy - 16), 52, 5, sway=1.2, tones='ijlm', curl_r=4, tail=0.35)
+            smoke_plume(back, (X + 16, gy - 8), 34, 4, sway=-1.0, tones='ijl', curl_r=3, tail=0.4, cw=True)
         else:
             tongue(back, (X + 2, gy - 1), 5, 4, bend=0.5, tones='uts', fork=False)
             smoke_plume(back, (X + 4, gy - 30), 30, 3, sway=1.0, tones='ijl', curl_r=4, tail=0.7)
