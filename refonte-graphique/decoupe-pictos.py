@@ -189,25 +189,7 @@ def main():
             if name not in names:
                 names.append(name)
         print(fname, 'ok', flush=True)
-    # logo et icône de l'application (planche fin-logo.jpg : icône | logo | écran de chargement)
-    logo = Image.open(os.path.join(SRC, 'fin-logo.jpg')).convert('RGB')
-    W, H = logo.size
-    app = logo.crop((int(W * 0.02), int(H * 0.2), int(W * 0.31), int(H * 0.72)))
-    app = cutout(app); app = app.crop(app.getchannel('A').point(lambda v: 255 if v > 20 else 0).getbbox())
-    side = min(app.size); app = app.crop(((app.width - side) // 2, (app.height - side) // 2, (app.width + side) // 2, (app.height + side) // 2))
-    i = int(side * 0.07); app = app.crop((i, i, side - i, side - i))  # sans les coins arrondis : le téléphone arrondit lui-même
-    for s in (512, 192, 180):
-        app.convert('RGB').resize((s, s), Image.LANCZOS).save(os.path.join(UI, f'icon-{s}.png'))
-    lg = keep_main(cutout(logo.crop((int(W * 0.31), int(H * 0.15), int(W * 0.67), int(H * 0.78)))))
-    lg = lg.crop(lg.getchannel('A').point(lambda v: 255 if v > 20 else 0).getbbox())
-    lg.resize((720, round(lg.height * 720 / lg.width)), Image.LANCZOS).save(os.path.join(UI, 'logo.webp'), 'WEBP', quality=90, method=6)
-    # écran de chargement : le plus récent rendu (fin-chargement*.jpg), panneau vertical au milieu de la planche
-    ch = sorted(f for f in os.listdir(SRC) if f.startswith('fin-chargement'))[-1]
-    ld = Image.open(os.path.join(SRC, ch)).convert('RGB')
-    a = np.asarray(ld).astype(int).min(2)
-    cols_ = np.nonzero((a < 235).mean(0) > 0.5)[0]; rows_ = np.nonzero((a < 235).mean(1) > 0.3)[0]
-    pane = ld.crop((cols_.min() + 12, rows_.min() + 12, cols_.max() - 12, rows_.max() - 12))
-    pane.resize((720, round(pane.height * 720 / pane.width)), Image.LANCZOS).save(os.path.join(UI, 'loading.jpg'), quality=85, optimize=True, progressive=True)
+    # logo, icône de l'application et écran de chargement : refaits en pixel art HD (refonte-graphique/pixel/ui/)
     # carte des régions
     mp = Image.open(os.path.join(SRC, 'fin-monde.jpg')).convert('RGB')
     mp.resize((1600, round(mp.height * 1600 / mp.width)), Image.LANCZOS).save(os.path.join(UI, 'map.jpg'), quality=84, optimize=True, progressive=True)

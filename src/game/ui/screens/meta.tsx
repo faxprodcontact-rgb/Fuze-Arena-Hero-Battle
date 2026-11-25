@@ -261,7 +261,7 @@ export function NameScreen() {
   const [name, setName] = useState(randomName());
   const [error, setError] = useState<string | null>(null);
   return (
-    <div class="name-screen" style={{ backgroundImage: 'linear-gradient(180deg, #2f224466, #2f224499), url(art/ui/loading.jpg)' }}>
+    <div class="name-screen" style={{ backgroundImage: 'linear-gradient(180deg, #1a0e2a55, #1a0e2a99), url(art/ui-px/chargement.webp)' }}>
       <div class="name-card">
         <img src={heroImage(STARTER_HERO)} alt="" />
         <h1>{t('name.title')}</h1>
