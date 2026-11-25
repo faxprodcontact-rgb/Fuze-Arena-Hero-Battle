@@ -1336,7 +1336,8 @@ def zone(args):
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
     'attaque': dict(genre='tir', tir=(2, 3), depuis=128, coup=3, cible=(ENEMY_X, 88), coupe=182),
-    'speciale': dict(genre='tir', tir=(5, 7), depuis=136, coup=7, cible=(ENEMY_X, GROUND - 50),
+    # la flèche file à l'horizontale (la traînée au sol fausse la mesure)
+    'speciale': dict(genre='tir', tir=(5, 7), depuis=136, coup=7, cible=(ENEMY_X, GROUND - 50), vitesse=900, pente=0,
                      coupe=[None] * 7 + [180] * 5 + [None] * 4, charge=(1, 4)),
 }
 

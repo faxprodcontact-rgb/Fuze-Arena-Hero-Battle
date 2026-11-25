@@ -58,10 +58,10 @@ export function HdPick() {
         <Grid ids={HD_HEROES} chosen={heroes} set={setHeroes} />
         <h3>{t('hdpick.monsters')} <span class="hd-count">{monsters.length}/{MAX}</span></h3>
         <Grid ids={HD_MONSTERS} chosen={monsters} set={setMonsters} />
-        <div class="row gap-s hd-pick-btns">
+        <div class="hd-pick-btns">
           <Btn kind="ghost" small onClick={() => { setHeroes(random(HD_HEROES)); setMonsters(random(HD_MONSTERS)); }}>{t('hdpick.random')}</Btn>
           <Btn kind="purple" small onClick={() => go(hdTrialAll())}>{t('hdpick.all', { n: HD_HEROES.length + HD_MONSTERS.length })}</Btn>
-          <Btn kind="gold" small disabled={!heroes.length || !monsters.length} onClick={() => go(hdTrialBattle(heroes, monsters))}>{t('fight')}</Btn>
+          <Btn kind="gold" disabled={!heroes.length || !monsters.length} onClick={() => go(hdTrialBattle(heroes, monsters))}>{t('fight')}</Btn>
         </div>
       </div>
     </Modal>

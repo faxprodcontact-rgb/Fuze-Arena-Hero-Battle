@@ -1507,8 +1507,9 @@ def brouillon(which):
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
     'attaque': dict(genre='melee', coup=4, cible=(206, GROUND - 30), coupe=[None] * 4 + [176] * 5),
-    'speciale': dict(genre='sort', coup=14, cible=(ENEMY_X, GROUND - 40), coupe=[None] * 10 + [233] * 10,
-                     charge=(0, 5)),
+    # les pics de glace courent au ras du sol du poing à la cible (projectile), puis le grand pic jaillit sous elle
+    'speciale': dict(genre='tir', tir=(10, 14), depuis=170, rase=True, coup=14, cible=(ENEMY_X, GROUND - 40),
+                     coupe=[None] * 14 + [170] * 6, charge=(0, 5)),
 }
 
 

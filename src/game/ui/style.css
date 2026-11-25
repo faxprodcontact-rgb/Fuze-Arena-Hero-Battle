@@ -1308,4 +1308,6 @@ button.setting-row:active { filter: brightness(0.92); }
 .hd-face.on { background: radial-gradient(circle at 50% 30%, #8a9ef0, #2c3a86 72%); box-shadow: inset 0 0 0 2px var(--gold-hi), 0 0 7px 1px var(--gold); }
 .hd-face.on .hd-face-art { opacity: 1; }
 .hd-face-n { position: absolute; right: 1px; bottom: 0; font: 400 12px/1 var(--font-title); color: var(--gold-hi); text-shadow: 0 1px 0 #0a0e26, 1px 0 0 #0a0e26, -1px 0 0 #0a0e26, 0 -1px 0 #0a0e26; }
-.hd-pick-btns { justify-content: center; margin-top: 6px; }
+.hd-pick-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
+.hd-pick-btns .btn { min-width: 0; }
+.hd-pick-btns .btn-gold { grid-column: 1 / -1; }

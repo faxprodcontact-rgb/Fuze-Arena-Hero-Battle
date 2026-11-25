@@ -1366,7 +1366,7 @@ def essai(folder):
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
     'attaque': dict(genre='tir', tir=(3, 4), depuis=158, coup=4, cible=(EX, EY),
-                    coupe=[None] * 4 + [160] * 2 + [None] * 3),
+                    coupe=[None] * 4 + [160] * 2 + [None] * 3, retour=(6, 7)),
     'speciale': dict(genre='sort', coup=7, cible=(EX, EY), coupe=[None] * 4 + [60] + [130] * 4 + [100] + [None] * 6,
                      charge=(0, 1)),
 }

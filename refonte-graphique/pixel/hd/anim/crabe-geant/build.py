@@ -1263,8 +1263,9 @@ def essai(folder):
 JEU = {
     'attaque': dict(genre='melee', coup=4, cible=(228, 150), coupe=[None] * 4 + [205, 205, 200] + [None] * 3,
                     avance=[0, 0, 0, 12, 26, 26, 16, 5, 0, 0]),
-    'speciale': dict(genre='sort', coup=11, cible=(ENEMY_X, GROUND - 40),
-                     coupe=[None] * 7 + [201] * 8 + [None] * 2, charge=(2, 4)),
+    # la vague court au ras du sol de la pince à la cible (projectile), puis jaillit sur elle
+    'speciale': dict(genre='tir', tir=(7, 11), depuis=200, rase=True, coup=11, cible=(ENEMY_X, GROUND - 40),
+                     coupe=[None] * 11 + [200] * 4 + [None] * 2, charge=(2, 4)),
 }
 
 

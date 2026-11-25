@@ -1273,7 +1273,7 @@ def write_outputs(anims):
 
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
-    'attaque': dict(genre='tir', tir=(5, 6), depuis=156, coup=6, cible=(FOE[0], GROUND - 50), coupe=165),
+    'attaque': dict(genre='tir', tir=(5, 6), depuis=156, coup=6, cible=(FOE[0], GROUND - 50), coupe=165, vitesse=700),
     'speciale': dict(genre='melee', coup=10, cible=(FOE[0], GROUND - 50),
                      coupe=[None] * 8 + [190] + [150] * 5 + [None] * 5, charge=(0, 1),
                      avance=[0] * 5 + [36, 76, 120, 140, 158, 158, 158, 158] + [0] * 6),

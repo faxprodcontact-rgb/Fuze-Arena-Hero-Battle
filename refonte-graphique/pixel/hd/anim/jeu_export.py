@@ -32,6 +32,11 @@
 #           Les effets à droite de `depuis` (défaut : le bord avant du personnage au repos) forment le projectile.
 #   charge  (i0, i1) : images de la charge (incluses) : le jeu y pose une petite lumière douce de l'élément.
 #   arc     (facultatif, 'tir') : hauteur de la cloche du vol, en pixels (0 = tout droit).
+#   retour  (facultatif, 'tir') (i0, i1) : images où l'arme lancée revient (boomerang) : ce qui est à droite de
+#           `depuis` vole de la cible jusqu'à la main.
+#   rase    (facultatif, 'tir') : le projectile court au ras du sol (vague, pics de glace) : il glisse à plat jusqu'aux
+#           pieds de la cible, à la hauteur où il a quitté le personnage.
+#   vitesse, pente (facultatifs, 'tir') : imposent la vitesse (pixels/s) et l'angle du dessin du projectile (sinon mesurés).
 import sys, os, json, math, hashlib, importlib.util
 import numpy as np
 from PIL import Image, ImageDraw
@@ -141,7 +146,7 @@ def flight(heads, img0, ms):
     (x, y) du bout)…] pendant le vol. Le bout avance d'une image à l'autre : on prend du premier au dernier bout qui a
     vraiment avancé (un bout coincé au bord de la toile ou déjà sur la cible ne compte pas)."""
     start = lambda i: sum(ms[:i])
-    moves = [(a, b) for a, b in zip(heads, heads[1:]) if b[1][0] - a[1][0] >= 2]
+    moves = [(a, b) for a, b in zip(heads, heads[1:]) if b[1][0] - a[1][0] >= 8]
     if moves:
         (i0, h0), (i1, h1) = moves[0][0], moves[-1][1]
         dx, dy = h1[0] - h0[0], h1[1] - h0[1]
@@ -177,14 +182,20 @@ def split(mod, layers, name):
     depuis = jeu.get('depuis', None)
     if vol and depuis is None:
         raise SystemExit(f'{mod.__name__} {name} : `depuis` manque (la colonne où le projectile quitte le personnage)')
-    out = {'genre': genre, 'perso': [], 'cible': [], 'proj': [], 'ms': [], 'jeu': jeu, 'sol': sol}
+    retour = jeu.get('retour')
+    out = {'genre': genre, 'perso': [], 'cible': [], 'proj': [], 'retour': [], 'ms': [], 'jeu': jeu, 'sol': sol}
     for i, (L, ms) in enumerate(layers):
         dx = -int(round(avance[i]))
         flying = bool(vol) and vol[0] <= i < vol[1]
+        back = bool(retour) and retour[0] <= i < retour[1]
         c = coupes[i]
-        proj = tgt = np.zeros_like(L)
+        proj = tgt = ret = np.zeros_like(L)
         if flying:
             proj = cols(L, depuis, None)
+            L = cols(L, None, depuis)
+        if back:
+            # l'arme qui revient (boomerang) : le jeu la fait voler de la cible jusqu'à la main
+            ret = cols(L, depuis, None)
             L = cols(L, None, depuis)
         if c is not None:
             tgt = cols(L, c, None)
@@ -193,6 +204,7 @@ def split(mod, layers, name):
         out['perso'].append(perso)
         out['cible'].append(tgt if alpha(tgt).any() else None)
         out['proj'].append(proj if alpha(proj).any() else None)
+        out['retour'].append(ret if alpha(ret).any() else None)
         out['ms'].append(ms)
     return out
 
@@ -283,6 +295,15 @@ def export(name, voir=None):
             a['pente'] = round(float(jeu.get('pente', pente)), 3)
             if jeu.get('arc'):
                 a['arc'] = int(jeu['arc'])
+            if jeu.get('retour'):
+                # le retour : chaque image repérée par son milieu, que le jeu amène de la cible à la main
+                r0, r1 = jeu['retour']
+                mid = lambda img: ((bbox(img)[0] + bbox(img)[2]) / 2, (bbox(img)[1] + bbox(img)[3]) / 2)
+                a['retour'] = [sheet.add(p['retour'][i], mid(p['retour'][i])) if p['retour'][i] is not None else -1
+                               for i in range(r0, r1)]
+                a['retourDe'] = int(r0)
+            if jeu.get('rase'):
+                a['rase'] = 1                                  # il court au ras du sol (vague, pics) : à plat, à sa hauteur
         ray = jeu.get('rayon')
         if ray:
             # un jet continu (souffle de feu, rayon) : chaque image part de la bouche ; le jeu l'étire jusqu'à la cible
@@ -314,6 +335,10 @@ def export(name, voir=None):
     low = a[max(0, sol[1] - 14):sol[1] + 1]
     xs = np.nonzero(low.any(0))[0]
     meta['top'] = int(sol[1] - bb[1])
+    # l'avant du corps (vers l'ennemi) : 3 rangées sur 4 s'arrêtent avant cette colonne (par rapport aux pieds). Un
+    # gros (crabe, araignée) est attaqué de plus loin au corps à corps (hd-fight.ts)
+    rights = [np.nonzero(r)[0].max() + 1 for r in a if r.any()]
+    meta['avant'] = int(np.percentile(rights, 75) - sol[0])
     meta['sol'] = [int(xs.min() - sol[0]), int(xs.max() + 1 - sol[0])]
     # le visage (portrait du choix des combattants) : un carré en haut de la silhouette au repos, centré sur la tête ;
     # [x, y, côté] dans la planche (pixels du dessin)
@@ -360,10 +385,11 @@ def controle(name, parts, folder):
                 t = p['cible'][i].copy()
                 t[alpha(t), :3] = (t[alpha(t), :3] * 0.5 + np.array([255, 60, 60]) * 0.5).astype(np.uint8)
                 cell.alpha_composite(Image.fromarray(t))
-            if p['proj'][i] is not None:
-                t = p['proj'][i].copy()
-                t[alpha(t), :3] = (t[alpha(t), :3] * 0.5 + np.array([40, 80, 255]) * 0.5).astype(np.uint8)
-                cell.alpha_composite(Image.fromarray(t))
+            for lay, col in (('proj', (40, 80, 255)), ('retour', (40, 200, 80))):
+                if p[lay][i] is not None:
+                    t = p[lay][i].copy()
+                    t[alpha(t), :3] = (t[alpha(t), :3] * 0.5 + np.array(col) * 0.5).astype(np.uint8)
+                    cell.alpha_composite(Image.fromarray(t))
             d = ImageDraw.Draw(cell)
             tag = f'{an} {i} {p["ms"][i]}ms'
             if jeu.get('coup') == i:

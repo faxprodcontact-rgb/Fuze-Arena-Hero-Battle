@@ -10,9 +10,10 @@ identiques), les dossiers des personnages qu'un autre agent est en train d'anime
 
 ## 1. Le principe (rien à réécrire)
 
-`refonte-graphique/pixel/hd/anim/jeu_export.py` importe le `build.py`, remplace un instant sa fonction
-`compose(hero, fx_back, fx_front, …)` pour garder les calques à part, et appelle son `build_all()`. Il découpe ensuite
-chaque image en trois : **le personnage en place** (avec ses effets « sur lui »), **ce qui est sur la cible** (posé aux
+`refonte-graphique/pixel/hd/anim/jeu_export.py` importe le `build.py`, remplace un instant sa fonction `compose(...)`
+pour garder l'image qu'elle rend (exactement celle du GIF : quels que soient ses arguments, positionnels ou nommés,
+`obj`, `solid`, `ghosts`, `veil`, `shake`, `tint`…, et avec ses calques translucides déjà mélangés), et appelle son
+`build_all()`. Il découpe ensuite chaque image, par colonnes, en trois : **le personnage en place** (avec ses effets « sur lui »), **ce qui est sur la cible** (posé aux
 pieds de la vraie cible par le jeu), **le projectile** (que le jeu fait voler). Il écrit la planche
 `public/art/hd/<id>.webp` (images rognées, ×2 sans flou) et la met dans `src/game/hd-meta.ts` (généré, ne pas modifier
 à la main).
@@ -52,6 +53,9 @@ build.py (celle où `SOL` est posé), pas de la grille du dessin.
 | `depuis` | (`tir`, `rayon`) la colonne où le projectile quitte le personnage : tout ce qui est à droite pendant le vol devient le projectile. Prendre le bout de l'arme / la bouche au repos + 2 ou 3 pixels. |
 | `charge` | `(i0, i1)` (incluses) : les images où il se concentre avant la spéciale. Le jeu y ajoute une lumière douce de l'élément (halo rond qui pulse, flaque de lumière au sol, le dessin s'éclaire un peu). Ne pas la dessiner en plus. |
 | `arc` | (`tir`, facultatif) hauteur de la cloche du vol, en pixels (0 = droit). |
+| `retour` | (`tir`, facultatif) `(i0, i1)` : images où l'arme lancée revient à la main (boomerang, khopesh) : ce qui est à droite de `depuis` vole de la cible jusqu'à la main (sinon elle réapparaît d'un coup à mi-chemin). |
+| `rase` | (`tir`, facultatif) `True` : le projectile court au ras du sol (vague, pics de glace) : il glisse à plat jusqu'aux pieds de la cible au lieu de monter vers sa poitrine. |
+| `vitesse`, `pente` | (`tir`, facultatifs) la vitesse du projectile (pixels du dessin par seconde) et l'angle de son dessin (radians, positif = il descend). Mesurés tout seuls sur le mouvement du bout du projectile d'une image de vol à l'autre (avec une seule image de vol : de sa queue au bord `depuis` à son bout, sur cette image). À donner seulement si la mesure est fausse (projectile qui grossit, qui tourne…). |
 
 Choisir le genre d'après le GIF : un coup porté au contact → `melee` (même si l'arme est longue) ; un objet qui part de
 l'arme et traverse la toile → `tir` ; un effet qui tombe ou jaillit sur l'ennemi sans traverser → `sort` ; un jet
@@ -65,7 +69,7 @@ python3 refonte-graphique/pixel/hd/anim/jeu_export.py --voir <BROUILLON>/export 
 
 (depuis la racine du dépôt ; 10 à 30 s par personnage ; plusieurs noms possibles ; `--effets` réécrit aussi les effets
 reçus). La planche de contrôle `<BROUILLON>/export/export-<nom>.png` montre chaque image : le personnage en place, en
-ROUGE ce qui sera posé sur la cible, en BLEU le projectile, la ligne rouge pâle = `coupe`, le rond rouge = `cible`,
+ROUGE ce qui sera posé sur la cible, en BLEU le projectile, en VERT l'arme qui revient (`retour`), la ligne rouge pâle = `coupe`, le rond rouge = `cible`,
 « COUP » et « charge » sur les images clés. Vérifier :
 
 - le personnage reste à sa place sur toutes les images (pieds sur la ligne verte), sans morceau coupé ;
@@ -73,10 +77,28 @@ ROUGE ce qui sera posé sur la cible, en BLEU le projectile, la ligne rouge pâl
 - en bleu (vol) : le projectile entier sur au moins une image, rien du personnage ;
 - `COUP` sur la bonne image, `charge` sur la préparation de la spéciale.
 
-Puis regarder le combat dans le jeu (les vrais déplacements) : ajouter le personnage au combat d'essai
-(`src/game/state/actions.ts`, `hdTrialBattle` : un héros par son id, un monstre par `hdArt` ; `src/game/hd-trial.ts` :
-la suite des coups), `npm run dev`, Réglages → Outils de test → « Combat HD (essai) ». Le jeu ne prend un personnage HD
-que dans ce combat d'essai pour l'instant (les autres modes gardent les anciens dessins).
+Puis regarder le combat dans le jeu (les vrais déplacements) : `npm run dev`, Réglages → Outils de test → « Combat HD
+(essai) » : choisir jusqu'à 5 héros et 5 monstres (ou « Les 60 à la suite »), puis Combattre. Chaque personnage exporté
+y apparaît tout seul (`src/game/hd-roster.ts` lit `hd-meta.ts` ; scénario : `src/game/hd-trial.ts`, chacun son attaque
+puis sa spéciale sur des cases variées). Le jeu ne prend un personnage HD que dans ce combat d'essai pour l'instant (les
+autres modes gardent les anciens dessins).
+
+L'export écrit aussi `visage` (le carré de la tête au repos, pour le portrait du choix des combattants).
 
 Ne rien publier, ne rien envoyer : dire à l'orchestrateur quels fichiers ont changé (`build.py` du personnage,
 `public/art/hd/<id>.webp`, `src/game/hd-meta.ts`).
+
+## 4. Changements de l'export (25/11/2026)
+
+- `compose` : l'export garde l'image finale rendue par `compose` (plus de calques reconstruits). Avant, un argument
+  positionnel en plus (`obj`, `solid` d'Anubis, Célia, Minotaure) était mal lu, et `shake`, `tint`, `flash`… ne
+  touchaient que le personnage ; un effet translucide de devant remplaçait le personnage au lieu de se mélanger (Bérold,
+  spéciale 4 à 9). Le voile de Corvin (`veil`) n'est plus nécessaire pour l'export, mais il est sans effet sur le GIF :
+  on le laisse.
+- `vitesse` et `pente` des projectiles : mesurées sur le mouvement du bout du projectile (voir le tableau), réglables
+  dans `JEU`.
+- Un `build.py` doit rendre la même image à chaque lancement : jamais `max(set(...), key=...)` (l'ordre d'un `set`
+  change d'un lancement à l'autre) ; à égalité, un ordre fixe (exemple : `majority` de `anim/tengu-eventail/build.py`).
+  Encore à reprendre de la même façon (leur GIF peut changer d'un pixel caché d'un lancement à l'autre) : `arachne`,
+  `araignee-cuirassee`, `araignee-tisseuse`, `gabryel` (`fill_under` / bouchage des trous).
+

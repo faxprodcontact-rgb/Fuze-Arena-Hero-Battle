@@ -1370,7 +1370,7 @@ def main():
 # ras du sol (projectile) et avale l'ennemi ; les plumes noires arrachées restent près de lui.
 JEU = {
     'attaque': dict(genre='tir', tir=(5, 7), depuis=144, coup=7, cible=(ENEMY_X, int(HIT[1])), coupe=228),
-    'speciale': dict(genre='tir', tir=(8, 10), depuis=162, coup=10, cible=(ENEMY_X, GROUND - 42), coupe=200,
+    'speciale': dict(genre='tir', tir=(8, 10), depuis=162, rase=True, coup=10, cible=(ENEMY_X, GROUND - 42), coupe=200,
                      charge=(1, 5)),
 }
 

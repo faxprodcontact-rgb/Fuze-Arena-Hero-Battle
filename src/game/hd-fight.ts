@@ -26,12 +26,16 @@ interface Anim {
   vitesse?: number;
   pente?: number;
   arc?: number;
+  rase?: number;
+  retour?: readonly number[];
+  retourDe?: number;
   rayon?: readonly number[];
   longueur?: number;
 }
 interface Char {
   name: string;
   top: number;
+  avant?: number;
   sol: readonly number[];
   frames: readonly Rect[];
   anims: { pose: Anim; attaque: Anim; speciale: Anim };
@@ -43,6 +47,8 @@ interface Fx {
   frames: readonly Rect[];
   eclat: readonly [string, Record<string, number>];
 }
+/** L'avant du corps d'un ennemi « ordinaire » (pixels du dessin) : celui que les animateurs ont imaginé en face. */
+const AVANT = 40;
 const CHARS = HD_ANIM.chars as unknown as Record<string, Char>;
 const FXS = HD_ANIM.fx as unknown as Record<string, Fx>;
 const UP = HD_ANIM.up;
@@ -282,7 +288,9 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
   if (a.genre === 'melee' && foes.length) {
     const dst = foes[0]!.v;
     const av = a.avance;
-    const reach = Math.max(56, ((a.portee ?? 100) - (av ? av[coup]! : 0)) * k);
+    // la distance de l'animation, plus la carrure de la cible quand elle est plus large qu'un homme (crabe, araignée…)
+    const bulk = Math.max(0, (dst.hd?.ch.avant ?? AVANT) - AVANT) * (dst.hd?.k ?? k);
+    const reach = Math.max(56, ((a.portee ?? 100) - (av ? av[coup]! : 0)) * k + bulk);
     const home = { x: src.homeX, y: src.homeY };
     const strike = { x: dst.homeX - dir * reach, y: dst.homeY };
     const dist = Math.hypot(strike.x - home.x, strike.y - home.y);
@@ -341,38 +349,52 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
   }
 
   if (a.genre === 'tir' && a.proj && foes.length) {
+    const dep = a.depart ?? 0;
+    // il tire de sa place : le départ et l'arrivée se calculent tout de suite (la cible peut reculer d'un pas, pas plus)
+    const p0 = { x: src.homeX + dir * a.bouche![0]! * k, y: src.homeY + host.feetY + a.bouche![1]! * k };
+    const path = (tg: { v: HdView }) => {
+      // au ras du sol (vague, pics) : il garde sa hauteur au-dessus du sol jusqu'aux pieds de la cible
+      const p1 = { x: tg.v.homeX - dir * 8, y: tg.v.homeY + host.feetY + (a.rase ? a.bouche![1]! * k : -(a.haut ?? 40) * k) };
+      const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+      return { p1, fly: Phaser.Math.Clamp((dist / Math.max(60, (a.vitesse ?? 400) * k)) * 1000, 140, 650) / sp };
+    };
+    // le personnage suit son projectile : les images du vol durent le temps du vol jusqu'à la première cible (le
+    // coup tombe quand il arrive) ; l'arme qui revient (boomerang) met le même temps pour revenir
+    const first = path(foes[0]!);
+    const retime = (i0: number, i1: number, dur: number) => {
+      const was = ms.slice(i0, i1).reduce((s, m) => s + m, 0);
+      if (was > 0) for (let i = i0; i < i1; i++) ms[i] = Math.max(16, (ms[i]! * dur) / was);
+    };
+    retime(dep, coup, first.fly);
+    const ret = a.retour, r0 = a.retourDe ?? 0;
+    if (ret) retime(r0, r0 + ret.length, first.fly);
+    total = T(ms.length);
     actor.start(which, ms, false, {});
-    const tDep = T(a.depart ?? 0);
+    const tDep = T(dep);
     foes.forEach((tg, n) => {
       const delay = tDep + n * 70 / sp;
-      // il tire de sa place : le départ et l'arrivée se calculent tout de suite (la cible peut reculer d'un pas, pas plus)
-      const p0 = { x: src.homeX + dir * a.bouche![0]! * k, y: src.homeY + host.feetY + a.bouche![1]! * k };
-      const p1 = { x: tg.v.homeX - dir * 8, y: tg.v.homeY + host.feetY - (a.haut ?? 40) * k };
-      const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-      const fly = Phaser.Math.Clamp((dist / Math.max(60, (a.vitesse ?? 400) * k)) * 1000, 140, 650) / sp;
+      const { p1, fly } = n ? path(tg) : first;
       const after = a.cible ? ms.slice(coup).reduce((s, m) => s + m, 0) : 220 / sp;
       total = Math.max(total, delay + fly + after);
       scene.time.delayedCall(delay, () => {
         const c = scene.add.container(p0.x, p0.y).setDepth(Math.max(src.body.depth, tg.v.body.depth) + 3);
         const img = scene.add.image(0, 0, actor.key, '0');
         c.add(img);
-        const ang = Math.atan2(p1.y - p0.y, Math.abs(p1.x - p0.x)) - (a.pente ?? 0);
+        const ang = a.rase ? 0 : Math.atan2(p1.y - p0.y, Math.abs(p1.x - p0.x)) - (a.pente ?? 0);
         c.setScale(dir, 1).setRotation(dir * ang);
         const pm = (a.projMs ?? []).map((m) => m / sp);
         const loop = a.proj!.length > 1 ? a.proj!.slice(1) : a.proj!;
         const lms = a.proj!.length > 1 ? pm.slice(1) : pm;
-        let t = 0;
         setCell(img, actor.key, actor.ch.frames, a.proj![0]!, k);
-        const arc = (a.arc ?? 0) * k;
+        const arc = a.rase ? 0 : (a.arc ?? 0) * k;
         scene.tweens.addCounter({
           from: 0, to: 1, duration: fly, ease: 'Linear',
           onUpdate: (tw) => {
             const u = tw.getValue() ?? 0;
             const el = tw.elapsed;
             if (el >= (pm[0] ?? 0)) {
-              t = el - (pm[0] ?? 0);
               const per = lms.reduce((s, m) => s + m, 0) || 1;
-              let r = t % per, j = 0;
+              let r = (el - (pm[0] ?? 0)) % per, j = 0;
               while (r >= lms[j]! && j < lms.length - 1) r -= lms[j++]!;
               setCell(img, actor.key, actor.ch.frames, loop[j]!, k);
             }
@@ -386,6 +408,27 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
         });
       });
     });
+    if (ret) {
+      // l'arme revient de la première cible jusqu'à la main, en jouant ses images du retour
+      const tg = foes[0]!.v;
+      const q0 = { x: tg.homeX - dir * 8, y: tg.homeY + host.feetY - (a.haut ?? 40) * k };
+      const t0 = T(r0), dur = T(r0 + ret.length) - t0;
+      const c = scene.add.container(q0.x, q0.y).setScale(dir, 1).setVisible(false);
+      const img = scene.add.image(0, 0, actor.key, '0');
+      c.add(img);
+      scene.time.delayedCall(t0, () => {
+        c.setDepth(Math.max(src.body.depth, tg.body.depth) + 3).setVisible(true);
+        scene.tweens.addCounter({
+          from: 0, to: 1, duration: dur, ease: 'Sine.easeIn',
+          onUpdate: (tw) => {
+            const u = tw.getValue() ?? 0;
+            setCell(img, actor.key, actor.ch.frames, ret[Math.min(ret.length - 1, Math.floor((tw.elapsed / Math.max(1, dur)) * ret.length))]!, k);
+            c.setPosition(q0.x + (p0.x - q0.x) * u, q0.y + (p0.y - q0.y) * u);
+          },
+          onComplete: () => c.destroy(),
+        });
+      });
+    }
     return total + 100 / sp;
   }
 
@@ -430,8 +473,9 @@ function beam(scene: Phaser.Scene, host: HdHost, src: HdView, dst: HdView, a: An
       const p0 = { x: src.body.x + dir * a.bouche![0]! * k, y: src.body.y + host.feetY + a.bouche![1]! * k };
       const p1 = { x: dst.body.x, y: dst.body.y + host.feetY - (a.haut ?? 40) * k };
       const len = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+      // étiré jusqu'à la cible ; un peu plus épais quand il va loin (étiré seulement en long, il paraîtrait écrasé)
       const stretch = Phaser.Math.Clamp(len / Math.max(20, (a.longueur ?? 100) * k), 0.5, 3);
-      c.setPosition(p0.x, p0.y).setScale(dir * stretch, 1).setRotation(dir * Math.atan2(p1.y - p0.y, Math.abs(p1.x - p0.x)))
+      c.setPosition(p0.x, p0.y).setScale(dir * stretch, Phaser.Math.Clamp(Math.sqrt(stretch), 0.85, 1.35)).setRotation(dir * Math.atan2(p1.y - p0.y, Math.abs(p1.x - p0.x)))
         .setDepth(Math.max(src.body.depth, dst.body.depth) + 3).setVisible(true);
       setCell(img, actor.key, actor.ch.frames, cell, k);
     });
