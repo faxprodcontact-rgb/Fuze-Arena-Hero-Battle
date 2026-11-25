@@ -1353,12 +1353,12 @@ def fx_impact(k):
                 put(back, x, gy - 1, 'g' if hot >= 2 else 's')
         if k == 0:
             # le dôme blanc de l'impact et les premières langues, très ventrues
-            for (ox, rr) in ((0, 18), (-16, 11), (16, 12)):
-                for yy in range(int(gy - rr), gy + 1):
-                    for xx in range(int(X + ox - rr), int(X + ox + rr + 1)):
-                        d = math.hypot(xx + 0.5 - X - ox, (yy + 0.5 - gy) * 1.2) / rr
-                        if d <= 1:
-                            put(front, xx, yy, 'w' if d < 0.55 else 'v' if d < 0.8 else 'u')
+            # un seul dôme blanc aplati, posé au sol
+            for yy in range(gy - 18, gy + 1):
+                for xx in range(X - 26, X + 27):
+                    d = math.hypot((xx + 0.5 - X) / 26, (yy + 0.5 - gy) / 17)
+                    if d <= 1:
+                        put(front, xx, yy, 'w' if d < 0.6 else 'v' if d < 0.85 else 'u')
             for (ox, hh, ww, bd) in ((0, 34, 16, 0.3), (-16, 22, 10, -0.9), (17, 24, 10, 0.9)):
                 tongue(back, (X + ox * SCW, gy - 2), hh * SC, ww * SCW, bend=bd, tones='wvuuts', lean=0.0)
             for (vx, vy, d) in ((-1, -1, 22), (1, -1.1, 24), (-0.4, -1, 30), (0.6, -1, 32), (1, -0.5, 26), (-1, -0.4, 24)):
@@ -1369,7 +1369,7 @@ def fx_impact(k):
                 tongue(back if abs(ox) < 22 else front, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='wvuutsr', lean=0.0)
             for (vx, vy, d) in ((-1, -0.6, 36), (1, -0.8, 38), (-0.5, -1, 46), (0.7, -1, 44), (0.2, -1, 56)):
                 drop(front, X + vx * d, gy - 16 + vy * d + d * 0.12, vx, vy + 0.2, 2 if d > 40 else 1)
-            for (ox, oy, kk) in ((-52, -64, 0), (48, -76, 1), (-14, -112, 2)):
+            for (ox, oy, kk) in ((-52, -64, 0), (48, -76, 3), (-14, -112, 0)):
                 chunk(front, X + ox, gy + oy, k=kk, flip=ox < 0)
             cloud(back, (X - 4, gy - 88), 11, 'iijl', seed=80, ground=False)
         elif k == 2:
@@ -1380,7 +1380,7 @@ def fx_impact(k):
             cloud(back, (X + 10, gy - 98), 8, 'iij', seed=84, ground=False)
             for (vx, vy, d) in ((-1, 0.2, 44), (1, 0.1, 46), (-0.4, -0.4, 52)):
                 drop(front, X + vx * d, gy - 12 + vy * d + 14, vx, 1)
-            for (ox, oy, kk) in ((-62, -30, 0), (58, -40, 1)):
+            for (ox, oy, kk) in ((-62, -30, 0), (58, -40, 3)):
                 chunk(front, X + ox, gy + oy, k=kk, flip=ox < 0)
         elif k == 3:
             for (ox, hh, ww, bd) in ((-2, 30, 14, 0.6), (-16, 20, 10, -0.7), (15, 22, 10, 0.7), (-28, 10, 6, -0.4),
