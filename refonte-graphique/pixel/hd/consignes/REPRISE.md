@@ -146,3 +146,7 @@ Gabryel → Dardane ; Elyon → Elvyn ; Auriel → Aurelle ; Jinn → Jarek.
 - Vague 2 (après validation du style) : sections Héros (avec la nouvelle fiche héros : héros en grand sur fond sobre
   et classe, niveau bien visible, caractéristiques et attaques en pictos, épuré), Invoquer (avec l'animation
   d'ouverture du portail), Aventure, Guilde.
+- 26/11 : v0.58.0 publiée (vague 1). Le propriétaire trouve l'interface un peu « ancienne » (agencement, couleurs) et veut
+  essayer « un peu moins pixel mais cohérent, actuel » → essai de 2 habillages (A Moderne, B Hybride) dans un worktree,
+  captures `pixel/sortie/ui/essai-style/`. Vague 2 (Héros, Invoquer, Aventure, Guilde) EN ATTENTE du choix du style.
+  En parallèle : audit des pictos restants (`pixel/ui/AUDIT-PICTOS.md`).
