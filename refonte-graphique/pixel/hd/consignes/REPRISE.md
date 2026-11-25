@@ -106,3 +106,4 @@
 - 25/11 : dragon VALIDÉ (taille, tête) avec 2 retouches demandées : pattes plus cohérentes, intérieur de la bouche
   TRANSPARENT (on voit le fond entre les mâchoires ; vaut pour tous les boss, remplace « gorge rouge sombre »).
   Retouche du dragon en cours ; léviathan, titan, oiseau-tempête lancés (brief scratchpad brief-boss.md).
+- 25/11 : dragon retouché et VALIDÉ (« Super ») → animation du dragon lancée (anim/dragon/build.py + JEU, jeu_export adapté à la grande case si besoin).
