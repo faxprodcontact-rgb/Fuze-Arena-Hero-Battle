@@ -17,8 +17,12 @@
 #   - ce qui tourne (les ailes qui battent) est tourné par trois cisaillements successifs d'un pixel entier : chaque
 #     pixel du dessin est DÉPLACÉ, aucun n'est inventé, mélangé ni lissé (pas de nouvelle couleur) ; les marches qui
 #     restent sont reprises à la main (RETOUCHES) ;
-#   - les effets (flammes, plumes de feu, braises, fumée, cendres, oiseau de feu) ont leur petite palette, sans
-#     contour noir, en formes courbes (langues de flamme, volutes, bouffées), jamais de rayons droits répétés ;
+#   - les effets (flammes, plumes de feu, braises, fumée, lumière d'or, phénix de lumière) ont leur petite palette,
+#     sans contour noir, en formes courbes (langues de flamme, volutes, bouffées), jamais de rayons droits répétés ;
+#   - la spéciale « Renaissance du phénix » est un SORT D'ÉQUIPE (soin, purification, résurrection) : tout naît sur
+#     elle et s'étend EN CERCLE autour d'elle, rien ne vise une direction, rien ne frappe l'ennemi (détails partie 3) ;
+#   - MOMENTS DE LANCEMENT de la spéciale (pour le jeu, numérotés depuis 0) : image 5 = soin et purification (l'anneau
+#     de flammes d'or naît, 200 ms) ; image 11 = résurrection (le phénix de lumière dorée déployé, 220 ms) ;
 #   - à la fin, chaque image peut recevoir des retouches pixel par pixel (RETOUCHES, plus bas).
 import sys, os, math
 import numpy as np
@@ -975,11 +979,9 @@ ATTAQUE = [
 
 
 
-# ---------------------------------------------------------------- 3) l'oiseau de feu (le phénix), dessiné par le code
-# Un grand oiseau fait de flammes qui vole vers la droite : un corps en goutte au coeur blanc, une tête ronde au bec
-# court et à la huppe de trois petites flammes, deux ailes faites de longues langues de flamme qui partent du bord de
-# l'aile et traînent vers l'arrière (la pointe se recourbe), une queue de longs rubans de feu qui ondulent et finissent
-# en volutes. L'aile lointaine (derrière le corps) est plus sombre. Tout est en courbes : pas un trait droit.
+# ---------------------------------------------------------------- 3) outils des masses de lumière (le phénix)
+# Des langues de flamme couchées, peintes comme une masse de feu : chaque pixel prend le ton de sa profondeur dans
+# la masse (bord sombre, coeur clair), une plume posée sur une autre lui fait une ombre douce (pas de trait).
 def blade_pts(base, ang, L, w, bend=0.0):
     """la ligne médiane et les épaisseurs d'une langue de flamme couchée : part de base vers ang (degrés), se recourbe
     (bend > 0 : la pointe tourne vers le haut de la direction), ventrue près de la base, effilée au bout"""
@@ -1059,136 +1061,94 @@ def wing_parts(S0, bone_ang, bone_len, hang_ang, n, feather_len, w, curl=1.0):
     return parts
 
 
-# les poses des ailes du phénix : (direction du bord de l'aile proche, de l'aile lointaine, ouverture de l'éventail)
-WING_POSES = {
-    'V': (115, 65, 70),          # levées en V (comme Rook)
-    'haut': (105, 80, 60),       # tout en haut du battement
-    'mi': (150, 35, 50),         # à mi-battement, ouvertes
-    'bas': (190, 0, 35),         # baissées (la poussée)
-    'repli': (165, 140, 25),     # repliées vers l'arrière (le piqué, la traversée)
-}
-
-
-def phoenix(back, front, c, S=1.0, wing='V', phase=0.0, grow=1.0, far=True, cool=0, tilt=0.0):
-    """le phénix centré en c (le poitrail), échelle S ; wing : une pose de WING_POSES (ou un triplet) ;
-    phase : l'ondulation de la queue ; grow (0..1) : il se forme (tout est plus court) ; cool (0, 1, 2) : il
-    refroidit (la rampe perd ses tons les plus clairs) ; tilt : il pique (> 0, la tête plus bas)"""
-    cx, cy = c
-    g = S * (0.35 + 0.65 * grow)
-    ty = tilt * 8 * g
-    R_NEAR = ['4', '5', '6', '7', '7', '8', '8', '9', '9'][:9 - 2 * cool]
-    R_BODY = ['5', '6', '7', '8', '8', '9', '9', 'h'][:8 - 2 * cool]
-    R_FAR = ['3', '4', '5', '6', '6', '7', '7'][:7 - 2 * cool]
-    R_TAIL = ['4', '5', '6', '7', '8', '8', '9'][:7 - 2 * cool]
-    # la queue : trois longs rubans qui ondulent vers l'arrière et vers le bas, finis en volute
-    T0 = (cx - 14 * g, cy + 4 * g - ty)
-    tail_parts = []
-    for i, (dy, L, amp, w) in enumerate(((8, 58, 4, 9.0), (20, 72, 5, 11.0), (30, 52, 4, 8.0))):
-        L *= g
-        pts = []
-        for k in range(60):
-            t = k / 59
-            pts.append((T0[0] - L * t, T0[1] + dy * g * t ** 1.3 + amp * g * math.sin(phase + t * 5.0 + i * 1.3) * t
-                        - ty * t))
-        ex, ey = pts[-1]
-        r0 = 4.0 * g
-        sgn = 1 if i % 2 == 0 else -1
-        for k in range(1, 26):
-            s_ = k / 25
-            a = math.radians(270 * s_)
-            r = r0 * (1 - 0.6 * s_)
-            pts.append((ex - r * math.sin(a), ey + sgn * (r0 - r * math.cos(a))))
-        n = len(pts)
-        tail_parts.append(stroke_mask(pts, [w * g * (1 - k / n) ** 0.8 + 0.6 for k in range(n)]))
-    paint_glow(back, tail_parts, R_TAIL)
-    near_bone, far_bone, spread = WING_POSES[wing] if isinstance(wing, str) else wing
-    S0 = (cx + 1 * g, cy - 6 * g + ty * 0.3)
-    # l'aile lointaine (derrière le corps, plus sombre, raccourcie par la perspective)
-    if far:
-        paint_glow(back, wing_parts((S0[0] + 7 * g, S0[1] - 2 * g), far_bone, 24 * g, far_bone + spread, 7, 28 * g,
-                                    9.0 * g, 0.8),
-                   R_FAR)
-    # le corps : une goutte (de la queue à la tête) et la tête ronde ; le coeur est blanc
-    pts = bezier((cx - 18 * g, cy + 4 * g - ty), (cx - 6 * g, cy + 3 * g - ty * 0.5), (cx + 8 * g, cy + 1 * g),
-                 (cx + 15 * g, cy - 9 * g + ty), 40)
-    ws = [g * (6 + 12 * math.sin(math.pi * min(1.0, (k / 40) / 0.85)) ** 0.9) * (1 - 0.35 * k / 40) for k in range(41)]
-    hx, hy = cx + 17 * g, cy - 11 * g + ty
-    body = stroke_mask(pts, ws) | mask_of(lambda cv: puff(cv, (hx, hy), 5.2 * g, 'h'))
-    crest = []
-    for (dx, dy, L, bend) in ((-5, 2, 11, 0.5), (-4, -1, 15, 0.7), (-2, -3, 12, 0.9)):
-        cp, cw = blade_pts((hx + dx * g, hy + dy * g), 155 - dy * 6, L * g, 3.6 * g, bend)
-        crest.append(stroke_mask(cp, cw))
-    beak = stroke_mask(bezier((hx + 3 * g, hy), (hx + 5 * g, hy + 0.5 * g), (hx + 7 * g, hy + 1.2 * g),
-                              (hx + 9.5 * g, hy + 2.6 * g), 10), [3.0 * g * (1 - k / 10) + 0.5 for k in range(11)])
-    core = stroke_mask(pts[4:34], [w * 0.45 for w in ws[4:34]])
-    paint_glow(front, crest + [body], R_BODY, core=core)
-    paint_glow(front, [beak], ['6', '8', '9'])
-    put(front, hx + 1.5 * g, hy - 1.2 * g, '4')                 # l'oeil (rouge sombre, jamais noir)
-    # l'aile proche (devant)
-    paint_glow(front, wing_parts(S0, near_bone, 30 * g, near_bone + spread, 8, 36 * g, 11.0 * g), R_NEAR)
-
 
 # ---------------------------------------------------------------- 3) l'attaque spéciale : « Renaissance du phénix »
-# Elle s'embrase tout entière (ses couleurs montent vers la flamme, de grandes langues de feu montent autour d'elle,
-# le sol chauffe), se ramasse, s'élève d'un battement d'ailes, devient blanche de feu... et éclate : à sa place, un
-# grand oiseau de feu se forme, ailes levées en V comme les siennes (temps de pose). Il bat des ailes, pique et
-# traverse l'ennemi en une vague de flammes (éclair et arrêt sur l'image), puis se défait en braises au-delà. Là où
-# elle s'est envolée, il ne reste qu'un petit tas de cendres rougeoyantes : une colonne de feu en jaillit, elle y
-# renaît, blanche de feu, et refroidit jusqu'à ses couleurs ; des plumes d'or retombent doucement sur elle (le soin).
-FLOOR_X = SOL[0]                     # le milieu entre ses pieds (toile)
-PHX_HOME = (126, 100)                 # là où le phénix se forme (son poitrail)
+# Sort d'équipe (le vrai effet en combat) : elle SOIGNE toute l'équipe, la PURIFIE (retire les effets négatifs) et
+# RESSUSCITE un allié tombé. L'équipe peut être tout autour d'elle (losange de 5 cases) : rien ne vise ni la gauche ni
+# la droite, rien ne frappe l'ennemi ; tout naît sur elle et s'étend EN CERCLE autour d'elle, aplati comme posé au sol
+# (le côté lointain passe derrière elle, le côté proche devant). Ce que reçoit chaque allié est joué par le jeu
+# (effets communs, ../effets/).
+#
+# Elle s'embrase d'un feu DORÉ bienfaisant (ses plumes montent d'un cran vers la flamme, sa silhouette s'éclaire, un
+# liseré et de petites langues d'or dansent sur ses bords ; une flaque de lumière d'or au sol) ; de petites taches
+# sombres apparaissent sur son plumage. Elle se ramasse, puis s'élève d'un grand battement (la flamme d'or roule au sol
+# des deux côtés) et OUVRE GRAND SES AILES : un anneau de flammes douces et dorées naît autour de sa taille et
+# s'étend tout autour d'elle en descendant se poser au sol, de plus en plus large, puis s'éteint en petites langues ;
+# des plumes de feu doré pleuvent en cercle tout autour d'elle ; les taches sombres se détachent et s'évaporent.
+# Second temps fort (la résurrection) : elle relève les ailes, une lueur se rassemble au-dessus de sa tête et un
+# PHÉNIX DE LUMIÈRE DORÉE s'y déploie, de face, ailes grandes ouvertes des deux côtés, la queue tombant derrière elle
+# (un anneau d'or pulse au sol) ; puis il se défait en lueurs qui montent et s'écartent. Elle redescend, se pose, replie
+# ses ailes et revient en pose.
+#
+# MOMENTS DE LANCEMENT (pour le jeu, numéros d'image de la spéciale, à partir de 0) :
+#   - image 5 : le SOIN et la PURIFICATION partent vers l'équipe (ailes grandes ouvertes, l'anneau de flammes d'or
+#     naît autour d'elle, arrêt sur image 200 ms) ;
+#   - image 11 : la RÉSURRECTION (le phénix de lumière dorée déployé au-dessus d'elle, arrêt sur image 220 ms).
+#
+# Palette des effets : l'or bienfaisant = h (coeur blanc), n (or pâle), 9 (éclat), 8 (jaune), m (or, lumière),
+# 7 (jaune orangé), l (or, le bord le plus sombre) ; les taches sombres = E (cendre, creux), D (fumée, creux), puis
+# C, B (fumée qui s'évapore).
+GOLD = 'hn98m7'          # flamme d'or : coeur -> bord
+CX = SOL[0] + 6          # l'axe du sort : le milieu de son corps (toile)
 
 
-def fx_floor(level):
-    """le sol sous elle : 1, 2 il chauffe (une flaque de lueur aplatie) ; -1 une brûlure de cendres"""
+def gold_spark(cv, x, y, big=False):
+    """une étincelle d'or (elle monte) : un point blanc doré et sa lueur dessous ; grosse : 2 × 2"""
+    if big:
+        put(cv, x, y, 'h')
+        put(cv, x + 1, y, 'n')
+        put(cv, x, y + 1, '9')
+        put(cv, x + 1, y + 1, 'm')
+    else:
+        put(cv, x, y, 'n')
+        put(cv, x, y + 1, 'm')
+
+
+def glow(cv, c, r, tones='hn9'):
+    """une petite lueur ronde (éclairée en haut à droite)"""
+    puff(cv, c, r, tones)
+
+
+def fx_glow_floor(level):
+    """le sol sous elle s'éclaire d'or : une flaque de lumière aplatie (1, 2), plus large en 2"""
     def f(cv, back, front, ctx):
-        y = GROUND
-        if level > 0:
-            rx = 26 + 8 * level
-            for x in range(int(FLOOR_X - rx), int(FLOOR_X + rx) + 1):
-                d = abs(x - FLOOR_X) / rx
-                put(back, x, y, '8' if d < 0.35 * level else '7' if d < 0.7 else '5')
-                if d < 0.6:
-                    put(back, x, y - 1, '6' if d > 0.3 else '7')
-        else:
-            for x in range(FLOOR_X - 24, FLOOR_X + 25):
-                d = abs(x - FLOOR_X) / 24
-                put(back, x, y, 'E' if d > 0.5 else 'F')
+        rx = 22 + 10 * level
+        for x in range(int(CX - rx), int(CX + rx) + 1):
+            d = abs(x - CX) / rx
+            put(back, x, GROUND, 'n' if d < 0.3 * level else '9' if d < 0.6 else 'm' if d < 0.85 else '7')
+            if d < 0.7:
+                put(back, x, GROUND - 1, '9' if d < 0.35 else 'm')
+            if level == 2 and d < 0.4:
+                put(back, x, GROUND - 2, 'm')
     return f
 
 
-def fx_blaze(level, seed=0):
-    """le feu qui monte du sol autour d'elle quand elle s'embrase (level 1, 2) : un tapis de flammes à ses pieds,
-    des langues qui se chevauchent et penchent (plus hautes derrière elle), des braises qui montent"""
+def fx_kindle_gold(level, seed=0):
+    """le feu doré monte doucement autour d'elle : de petites langues d'or à ses pieds, des deux côtés, et des
+    étincelles qui montent tout autour"""
     def f(cv, back, front, ctx):
         dx, dy = ctx['body'].follow(52)
-        rng = np.random.RandomState(seed)
-        for (gx, h, bend) in ((10, 26, -0.9), (24, 40, -0.6), (40, 34, -0.3), (88, 38, 0.4), (104, 42, 0.7),
-                              (118, 24, 0.9)):
+        for (gx, h, bend) in ((14, 16, -0.9), (30, 24, -0.5), (98, 22, 0.5), (114, 15, 0.9)):
             x, y = g2c(gx, 117)
-            tongue(back, (x + rng.randint(-2, 3), y), h * (0.45 + 0.3 * level), 9 + 3 * level, bend=bend,
-                   tones='h98765', lean=0.25 * bend)
-        pts = [(FLOOR_X + t, GROUND - 1) for t in range(-46, 47, 2)]
-        stroke(front, pts, [2.5 + level * 0.8 + 1.2 * math.sin(i * 0.9 + seed) for i in range(len(pts))], 'h987')
-        for (gx, h, bend) in ((30, 9, -0.9), (50, 12, 0.5), (66, 10, -0.5), (84, 13, 0.8), (100, 8, 0.9)):
-            x, y = g2c(gx, 116)
-            tongue(front, (x, y), h * (0.5 + 0.35 * level), 5 + level, bend=bend, tones='h9876', lean=0.2 * bend,
+            tongue(back, (x, y), h * (0.55 + 0.3 * level), 6 + 2 * level, bend=bend, tones=GOLD, lean=0.2 * bend,
                    fork=False)
-        for (ex, ey, big) in ((8, 20, True), (120, 30, False), (36, -6, False), (100, -2, True), (70, -12, False),
-                              (2, 60, False), (126, 70, True)):
+        for (gx, h, bend) in ((40, 8, -0.7), (62, 10, 0.5), (86, 9, 0.8)):
+            x, y = g2c(gx, 116)
+            tongue(front, (x, y), h * (0.5 + 0.3 * level), 4 + level, bend=bend, tones=GOLD[:5], lean=0.2 * bend,
+                   fork=False)
+        for (ex, ey, big) in ((6, 30, True), (122, 36, False), (34, -4, False), (98, -6, True), (66, -14, False),
+                              (0, 70, False), (128, 76, True)):
             x, y = g2c(ex + dx, ey + dy - 8 * level)
-            ember(front, x, y, big)
+            gold_spark(front, x, y, big)
     return f
 
 
-def fx_aura(level, phase=0.0):
-    """elle brûle tout entière : une frange de feu épouse sa silhouette (un liseré clair tout autour) et, au-dessus
-    de chaque bord tourné vers le ciel (ailes, crinière, épaules), des langues de flamme montent ; leur hauteur
-    ondule le long de la silhouette (une vague qui court avec phase). Posé derrière elle (après le montage)."""
+def fx_aura_gold(level, phase=0.0):
+    """elle brûle d'un feu doré : un liseré d'or épouse sa silhouette et, au-dessus de chaque bord tourné vers le ciel
+    (bouts des ailes, crinière, épaules), une petite langue d'or monte ; leur hauteur ondule (phase). Derrière elle."""
     def f(cv, back, front, ctx):
         m = cv != '.'
         out = np.full((H, W), 99)
-        # le liseré : un ou deux pixels tout autour
         cur = m.copy()
         for d in range(1, 2 + (level >= 2)):
             p = np.pad(cur, 1)
@@ -1196,8 +1156,6 @@ def fx_aura(level, phase=0.0):
             ring = nb & ~cur
             out[ring & (out == 99)] = d
             cur = cur | nb
-        # les langues : sur chaque sommet de la silhouette (bouts des ailes, crinière, épaules), une langue de flamme
-        # qui monte ; leur hauteur ondule d'une image à l'autre (phase)
         cols = np.nonzero(m.any(axis=0))[0]
         top = {x: int(np.argmax(m[:, x])) for x in cols}
         peaks = []
@@ -1206,13 +1164,11 @@ def fx_aura(level, phase=0.0):
             if top[x] <= min(win) and all(abs(x - p_) >= 7 for p_ in peaks):
                 peaks.append(x)
         for i, x in enumerate(peaks):
-            h = (8 + 6 * level) * (0.65 + 0.35 * math.sin(x * 0.53 + phase))
+            h = (6 + 4 * level) * (0.65 + 0.35 * math.sin(x * 0.53 + phase))
             bend = 0.9 if i % 2 else -0.9
-            tongue(back, (x + 0.5, top[x] + 4), h, 3.5 + level, bend=bend, tones='h98765'[(1 if level < 3 else 0):],
-                   lean=0.12 * bend, fork=False)
-        tones = {1: '9', 2: '8', 3: '7', 4: '6'}
-        if level >= 3:
-            tones = {1: 'h', 2: '9', 3: '8', 4: '7'}
+            tongue(back, (x + 0.5, top[x] + 4), h, 3.0 + 0.8 * level, bend=bend, tones=GOLD, lean=0.12 * bend,
+                   fork=False)
+        tones = {1: 'n', 2: '9', 3: 'm'} if level >= 3 else {1: '9', 2: 'm', 3: '7'}
         ys, xs_ = np.nonzero(out < 99)
         for y, x in zip(ys, xs_):
             if y <= GROUND:
@@ -1220,242 +1176,362 @@ def fx_aura(level, phase=0.0):
     return f
 
 
-def fx_takeoff():
-    """l'envol : le battement chasse la flamme au sol en deux vagues courbes qui roulent de part et d'autre"""
+def fx_beat_gold(wn0, wn1, wf0, wf1, w=20.0):
+    """le grand battement : deux croissants de lumière d'or derrière le bout des ailes"""
+    def f(cv, back, front, ctx):
+        dx, dy = ctx['body'].follow(52)
+        cn = g2c(SHOULDER_N[0] + dx, SHOULDER_N[1] + dy)
+        cf = g2c(SHOULDER_F[0] + dx, SHOULDER_F[1] + dy)
+        arc_trail(back, cn, 68, wing_tip_angle(wn0), wing_tip_angle(wn1), w, 'hn98m7')
+        arc_trail(back, cf, 56, wing_tip_angle(wf0, False), wing_tip_angle(wf1, False), w * 0.85, 'n98m7')
+    return f
+
+
+def fx_takeoff_gold():
+    """l'envol : le battement chasse la flamme d'or au sol en deux vagues courbes qui roulent des deux côtés"""
     def f(cv, back, front, ctx):
         for side in (-1, 1):
-            pts = [(FLOOR_X + side * (8 + 34 * t), GROUND - 2 - 8 * math.sin(t * math.pi) * (1 - 0.3 * t))
+            pts = [(CX + side * (8 + 34 * t), GROUND - 2 - 8 * math.sin(t * math.pi) * (1 - 0.3 * t))
                    for t in np.linspace(0, 1, 40)]
-            stroke(back, pts, [2 + 6 * math.sin(t * math.pi) for t in np.linspace(0, 1, 40)], '98765')
-            curl(back, (FLOOR_X + side * 44, GROUND - 6), 4.5, 90 if side > 0 else 90, turn=260, w=3.0,
-                 tones='9876', cw=side < 0)
-        cloud(back, (FLOOR_X - 30, GROUND - 4), 5, 'AABC', seed=1)
-        cloud(back, (FLOOR_X + 32, GROUND - 4), 5, 'AABC', seed=2)
+            stroke(back, pts, [2 + 6 * math.sin(t * math.pi) for t in np.linspace(0, 1, 40)], 'n98m7')
+            curl(back, (CX + side * 44, GROUND - 6), 4.5, 90, turn=260, w=3.0, tones='n98m', cw=side < 0)
+        for (ex, ey, big) in ((-30, -14, True), (28, -18, False), (-46, -22, False), (44, -10, True)):
+            gold_spark(front, CX + ex, GROUND + ey, big)
     return f
 
 
-def fx_rise_trail(k):
-    """sous elle qui s'élève : des flammes qui traînent vers le bas, en rubans qui ondulent"""
+def fx_rise_gold(k):
+    """sous elle qui s'élève : des rubans de lumière d'or qui traînent vers le bas en ondulant"""
     def f(cv, back, front, ctx):
         lift = ctx['f'].get('lift', 0)
-        for (gx, L, ph) in ((44, 22, 0.0), (64, 30, 1.7), (84, 20, 3.1)):
+        for (gx, L, ph) in ((46, 18, 0.0), (66, 24, 1.7), (86, 16, 3.1)):
             x0, y0 = g2c(gx, 100 - lift)
             pts = [(x0 + 3 * math.sin(ph + t * 5 + k), y0 + L * t) for t in np.linspace(0, 1, 30)]
-            stroke(back, pts, [7 * (1 - t) ** 0.8 + 0.5 for t in np.linspace(0, 1, 30)], 'h98765',
+            stroke(back, pts, [6 * (1 - t) ** 0.8 + 0.5 for t in np.linspace(0, 1, 30)], GOLD,
                    cool=[min(0.9, 0.1 + 0.8 * t) for t in np.linspace(0, 1, 30)])
-        for (ex, ey) in ((30, 118), (96, 124), (60, 132)):
+        for (ex, ey) in ((32, 118), (96, 122), (62, 130)):
             x, y = g2c(ex, ey - lift)
-            ember(front, x, y + 6 * k, False)
+            gold_spark(front, x, y + 5 * k, False)
     return f
 
 
-def fx_burst(r):
-    """l'éclat de la transformation : une couronne de langues de feu courbes qui s'ouvrent, des braises"""
-    def f(cv, back, front, ctx):
-        cx, cy = PHX_HOME
-        for k in range(7):
-            a = 90 + (k - 3) * 40
-            ca, sa = math.cos(math.radians(a)), math.sin(math.radians(a))
-            tongue(back, (cx - ca * r * 0.2, cy + r * 0.3), r * (1.1 - 0.12 * abs(k - 3)), r * 0.5,
-                   bend=0.6 if k < 3 else -0.6 if k > 3 else 0.0, tones='h98765', lean=ca * 1.3, fork=False)
-        for (ex, ey, big) in ((-30, -20, True), (34, -26, False), (-40, 10, False), (38, 8, True), (0, -44, True),
-                              (-18, 30, False), (22, 34, False)):
-            ember(front, cx + ex, cy + ey, big)
-    return f
-
-
-def fx_phoenix(c, wing, grow=1.0, cool=0, tilt=0.0, phase=0.0, far=True):
-    def f(cv, back, front, ctx):
-        phoenix(back, front, c, S=1.35, wing=wing, phase=phase, grow=grow, far=far, cool=cool, tilt=tilt)
-    return f
-
-
-# le trajet du phénix : de sa place (en haut) à travers l'ennemi
-def phx_path():
-    return bezier(PHX_HOME, (184, 80), (236, 156), (FOE[0] + 30, FOE[1] - 12), 120)
-
-
-def fx_wake(t, cool=0.0):
-    """la traînée de feu derrière le phénix : un large ruban qui ondule sur son trajet et refroidit vers l'arrière"""
-    def f(cv, back, front, ctx):
-        pts = phx_path()
-        i1 = int(t * 120)
-        i0 = max(0, i1 - 70)
-        seg = pts[i0:i1 + 1]
-        if len(seg) > 3 and not cool:
-            flame_trail(back, seg, 14, tones='98765', amp=3.0, wl=26.0, phase=t * 6)
-        elif cool:
-            for j in range(i0 + 6, i1 - 10, 16):           # la traînée refroidie : des bouffées de fumée
-                x, y = pts[j]
-                puff(back, (x, y - 4 - (i1 - j) * 0.08), 2.2 + (j - i0) / 40, 'ABC', hollow=0.3 * cool)
-        for j in range(i0, i1, 9):
-            x, y = pts[j]
-            ember(front, x + 4 * math.sin(j), y - 6 - (i1 - j) * 0.25, j % 2 == 0, hot=cool < 0.5)
-    return f
-
-
-def fx_wave(k):
-    """la vague de flammes sur l'ennemi : k = 0 elle déferle (grandes langues penchées vers l'avant, coeur blanc),
-    1 elle monte encore, 2 elle retombe en fumée, 3 il reste des volutes et des braises"""
-    def f(cv, back, front, ctx):
-        cx, cy = FOE
-        gy = GROUND
-        if k == 0:
-            puff(back, (cx, cy - 2), 16, 'hh9988')
-            for (dx, h, w, bend, lean) in ((-30, 38, 12, -0.8, 0.5), (-12, 66, 18, 0.4, 0.45), (8, 82, 20, 0.8, 0.4),
-                                           (28, 60, 16, 1.0, 0.6), (44, 32, 10, 1.0, 0.9)):
-                tongue(back, (cx + dx, gy - 2), h, w, bend=bend, tones='h98765', lean=lean)
-            for (dx, h, bend) in ((-16, 18, -0.9), (4, 22, 0.6), (22, 16, 1.0)):
-                tongue(front, (cx + dx, gy), h, 7, bend=bend, tones='h9876', lean=0.6, fork=False)
-            for (ex, ey, big) in ((-40, -50, True), (36, -70, False), (52, -30, True), (-48, -20, False),
-                                  (12, -84, True), (-20, -72, False), (60, -54, False)):
-                ember(front, cx + ex, cy + ey, big)
-        elif k == 1:
-            for (dx, h, w, bend, lean) in ((-20, 26, 9, -0.8, 0.3), (-4, 44, 13, 0.5, 0.3), (14, 50, 14, 0.9, 0.35),
-                                           (32, 30, 10, 1.0, 0.6)):
-                tongue(back, (cx + dx, gy - 1), h, w, bend=bend, tones='98765', lean=lean)
-            tongue(front, (cx + 6, gy), 14, 6, bend=0.7, tones='9876', lean=0.4, fork=False)
-            cloud(back, (cx + 8, cy - 40), 9, 'AABC', seed=5, ground=False)
-            for (ex, ey, big) in ((-44, -60, False), (40, -80, True), (58, -40, False), (16, -96, False)):
-                ember(front, cx + ex, cy + ey, big)
-        elif k == 2:
-            cloud(back, (cx + 10, cy - 50), 11, 'AABC', hollow=0.15, seed=5, ground=False)
-            cloud(back, (cx - 6, cy - 24), 8, 'ABBC', seed=6, ground=False)
-            curl(back, (cx - 18, cy - 62), 6, 200, turn=260, w=3.0, tones='ABC', cw=True)
-            for (dx, h, bend) in ((-8, 16, -0.6), (10, 20, 0.8)):
-                tongue(back, (cx + dx, gy), h, 7, bend=bend, tones='8765', lean=0.2, fork=False)
-            for (ex, ey) in ((-40, -76), (44, -92), (60, -52)):
-                ember(front, cx + ex, cy + ey, False, hot=False)
-        else:
-            cloud(back, (cx + 14, cy - 62), 10, 'AABC', hollow=0.5, seed=5, ground=False)
-            curl(back, (cx - 20, cy - 76), 5, 200, turn=240, w=2.4, tones='AB', cw=True)
-            cloud(back, (cx - 2, cy - 30), 5, 'ABC', hollow=0.4, seed=6, ground=False)
-            tongue(back, (cx + 4, gy), 8, 4, bend=0.6, tones='765', fork=False)
-    return f
-
-
-def fx_dissolve(k):
-    """au-delà de l'ennemi, le phénix se défait : ses plumes de feu se dispersent en braises qui montent"""
-    def f(cv, back, front, ctx):
-        cx, cy = FOE[0] + 44 + 4 * k, FOE[1] - 26 - 10 * k
-        for j in range(12):
-            a = j * 2.4
-            r = 8 + 2.6 * j * (0.6 + 0.4 * k)
-            x, y = cx + r * math.cos(a) * 0.8, cy + r * math.sin(a) * 0.5 - j * k
-            ember(front if j % 2 else back, x, y, j % 3 == 0, hot=k == 0 or j % 2 == 0)
-        if k == 0:
-            for (dx, dy, L, ang) in ((-6, 0, 18, 150), (0, -8, 16, 130), (-4, 8, 14, 175)):
-                pts, ws = blade_pts((cx + dx, cy + dy), ang, L, 6, 0.8)
-                stroke(back, pts, ws, '98765', cool=[min(0.9, 0.2 + i / len(pts)) for i in range(len(pts))])
-    return f
-
-
-def fx_ashes(level):
-    """le tas de cendres là où elle s'est envolée : level 0 il rougeoie, 1 une flamme y renaît, 2 il s'éparpille"""
-    def f(cv, back, front, ctx):
-        x0 = FLOOR_X
-        rows = ['......EFFE......', '...EFF7FFEFE....', '.EEF6FFE79FFEE..', 'EEFFEFF6FFEFFEEE']
-        if level == 2:
-            rows = ['................', '................', '..E.F..E...F.E..', 'E.EF.EF.FE.EF.E.']
-        for j, r in enumerate(rows):
-            for i, ch in enumerate(r):
-                if ch != '.':
-                    put(front, x0 - 8 + i, GROUND - 3 + j, ch)
-        if level == 0:
-            tongue(back, (x0 + 1, GROUND - 2), 8, 4, bend=0.6, tones='9876', fork=False)
-            for (ex, ey) in ((-6, -12), (5, -18), (1, -26)):
-                ember(front, x0 + ex, GROUND + ey, False)
-            puff(back, (x0 + 3, GROUND - 14), 3.2, 'ABC')
-            puff(back, (x0 - 1, GROUND - 22), 2.4, 'AB')
-    return f
-
-
-def fx_rebirth(k):
-    """la colonne de feu de la renaissance : k = 0 elle jaillit (haute, coeur blanc), 1 elle s'ouvre et retombe autour
-    d'elle, 2 il ne reste que quelques langues à ses pieds"""
-    def f(cv, back, front, ctx):
-        x0 = FLOOR_X
-        if k == 0:
-            tongue(back, (x0 - 4, GROUND), 112, 44, bend=0.3, tones='h98765', lean=0.04)
-            tongue(back, (x0 - 34, GROUND), 46, 16, bend=-0.9, tones='h98765', lean=-0.2)
-            tongue(back, (x0 + 30, GROUND), 52, 16, bend=0.9, tones='h98765', lean=0.2)
-            for (dx, h, bend) in ((-18, 20, -0.8), (2, 26, 0.4), (22, 18, 0.9)):
-                tongue(front, (x0 + dx, GROUND), h, 9, bend=bend, tones='h9876', fork=False)
-        elif k == 1:
-            for (dx, h, w, bend) in ((-44, 40, 14, -1.0), (-24, 60, 16, -0.6), (26, 62, 16, 0.6), (46, 42, 14, 1.0)):
-                tongue(back, (x0 + dx, GROUND), h, w, bend=bend, tones='h98765', lean=0.012 * dx)
-            for (dx, h, bend) in ((-26, 14, -0.8), (-4, 12, 0.5), (18, 14, 0.9)):
-                tongue(front, (x0 + dx, GROUND), h, 7, bend=bend, tones='9876', fork=False)
-        else:
-            for (dx, h, bend) in ((-40, 22, -1.0), (38, 26, 1.0), (-14, 12, -0.6), (20, 10, 0.6)):
-                tongue(back, (x0 + dx, GROUND), h, 8, bend=bend, tones='98765', lean=0.01 * dx, fork=False)
-        for (ex, ey, big) in ((-36, -60, True), (32, -80, False), (-12, -110, True), (40, -40, False),
-                              (8, -124, False)):
-            ember(front, x0 + ex, GROUND + ey + 14 * k, big)
-    return f
-
-
-def fx_heal(k):
-    """les plumes d'or retombent sur elle en se balançant (k = 0 … 3) ; en se posant, de petites lueurs rondes"""
-    def f(cv, back, front, ctx):
-        top = [GROUND - 168, GROUND - 140, GROUND - 112, GROUND - 86][k]
-        for i, (dx, dy, kind) in enumerate(((-40, 0, 0), (6, -16, 2), (34, 6, 1), (-14, 22, 3), (26, -34, 0),
-                                            (-30, -30, 2))):
-            sway = 4 * math.sin(k * 1.3 + i * 2.0)
-            x, y = SOL[0] + dx + sway, top + dy
-            if k == 3 and i in (0, 3, 5):
+# ---- outil des anneaux : une ellipse « posée » (aplatie) dont la moitié lointaine passe derrière elle et la moitié
+#      proche devant elle (comme l'anneau de Myrr)
+def ring_band(back, front, c, rx, ry, w, tones='hn98m', back_tones='n98m7', gaps=None, wob=0.0, ph=0.0):
+    """un anneau de lumière : épaisseur w qui ondule un peu (pas un cerceau) ; gaps : des morceaux d'arc manquent
+    (degrés) ; le côté lointain prend des tons un cran plus doux"""
+    cx, cy = c
+    n = max(24, int(2 * math.pi * max(rx, ry) * 2.2))
+    best = ({}, {})
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        ad = math.degrees(a)
+        if gaps and any(g0 <= ad < g1 for g0, g1 in gaps):
+            continue
+        k = 1 + wob * math.sin(3 * a + ph)
+        px, py = cx + rx * k * math.cos(a), cy - ry * k * math.sin(a)
+        wv = w * (1 + 0.25 * math.sin(5 * a + ph))
+        if gaps:                                     # les bouts d'un morceau s'effilent
+            dmin = min(min(abs(ad - g0), abs(ad - g1), 360 - abs(ad - g0), 360 - abs(ad - g1)) for g0, g1 in gaps)
+            wv *= min(1.0, dmin / 18)
+        R = wv / 2
+        if R < 0.4:
+            continue
+        side = 0 if math.sin(a) > 0 else 1
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    kk = d / R if R >= 1 else 0.8
+                    if kk < best[side].get((x, y), 9):
+                        best[side][(x, y)] = kk
+    for side, cvs, tn in ((0, back, back_tones), (1, front, tones)):
+        m = len(tn)
+        for (x, y), kk in best[side].items():
+            if side == 0 and (x, y) in best[1]:
                 continue
-            sprite(front if i % 2 == 0 else back, GOLD_FEATHERS[(kind + k) % 4], int(round(x)), int(round(y)))
+            put(cvs, x, y, tn[min(m - 1, int(kk * m))])
+
+
+# ---- l'anneau de flammes d'or : il naît autour de sa taille (elle plane) et s'étend tout autour d'elle en
+#      descendant se poser au sol. k : (rayon, hauteur du centre au-dessus du sol, épaisseur, hauteur des langues)
+RING = {0: (40, 40, 6.5, 12), 1: (55, 22, 6.0, 18), 2: (69, 10, 5.0, 20), 3: (81, 0, 4.0, 14), 4: (88, 0, 2.8, 7)}
+
+
+def fx_ring(k):
+    def f(cv, back, front, ctx):
+        rx, hy, w, th = RING[k]
+        ry = rx * 0.22
+        c = (CX, GROUND - 1 - ry - hy)
+        gaps = None
+        if k == 4:
+            gaps = [(20, 52), (110, 140), (196, 226), (290, 318)]
+        ring_band(back, front, c, rx, ry, w, gaps=gaps, wob=0.04, ph=k)
+        # des langues de flammes douces, debout sur l'anneau, qui penchent un peu vers l'extérieur
+        N = 16
+        for j in range(N):
+            a = math.radians(j * 360 / N + 9 * k + 6)
+            if gaps and any(g0 <= math.degrees(a) % 360 < g1 for g0, g1 in gaps):
+                continue
+            ca, sa = math.cos(a), math.sin(a)
+            base = (c[0] + rx * ca, c[1] - ry * sa + 1)
+            h = th * (0.7 + 0.3 * math.sin(j * 2.1 + k * 1.3)) * (0.75 if sa > 0 else 1.0)
+            bend = 0.8 if (j + k) % 2 else -0.8
+            tongue(back if sa > 0 else front, base, h, 3.0 + h * 0.3, bend=bend,
+                   tones=GOLD if sa <= 0 else GOLD[1:], lean=0.35 * ca, fork=False)
+        if k == 0:
+            # l'éclat de la naissance : une lueur sur elle
+            dx, dy = ctx['body'].follow(70)
+            x, y = g2c(70 + dx, 70 + dy)
+            glow(front, (x + 2, y - 2), 3.2, 'hhn9')
+            for (ex, ey, big) in ((-26, -30, True), (30, -36, False), (-38, 6, False), (40, 2, True)):
+                gold_spark(front, x + ex, y + ey, big)
         if k >= 2:
-            for (dx, dy) in ((-34, -58), (18, -46), (-6, -86), (30, -76), (-22, -34)):
-                puff(front, (SOL[0] + dx, GROUND + dy + (k - 2) * 8), 1.8 if k == 2 else 1.2, 'nn9')
+            for (a, big) in ((30, True), (150, False), (215, True), (320, False)):
+                p = (c[0] + (rx + 6) * math.cos(math.radians(a)), c[1] - (ry + 2) * math.sin(math.radians(a)) - 10 - 4 * k)
+                gold_spark(back if 0 < a < 180 else front, p[0], p[1], big)
+    return f
+
+
+# ---- la pluie de plumes de feu doré : elles naissent au-dessus d'elle et pleuvent en cercle tout autour, en
+#      s'écartant, puis se posent au sol (une petite lueur) ; celles du côté lointain passent derrière elle.
+#      (angle autour d'elle, rayon de départ, hauteur de départ au-dessus du sol, première image)
+RAIN = [(200, 40, 150, 0), (250, 36, 156, 0), (295, 42, 146, 0), (340, 46, 140, 1), (20, 40, 152, 0),
+        (70, 36, 144, 1), (115, 40, 154, 0), (160, 46, 140, 1), (225, 48, 128, 2), (320, 50, 126, 2),
+        (140, 48, 130, 2), (270, 44, 116, 3), (185, 52, 112, 3), (355, 54, 116, 3), (45, 50, 112, 3),
+        (240, 56, 104, 4), (100, 54, 108, 4), (5, 58, 100, 5)]
+RAIN_VR, RAIN_VY = 4.0, 13.0            # par image : elles s'écartent, elles tombent
+
+
+def fx_rain(k):
+    def f(cv, back, front, ctx):
+        for i, (a, r0, h0, k0) in enumerate(RAIN):
+            t = k - k0
+            if t < 0:
+                continue
+            sa, ca = math.sin(math.radians(a)), math.cos(math.radians(a))
+            r = r0 + RAIN_VR * t
+            land = GROUND - 3 - 0.2 * r * sa              # leur point de chute sur l'ellipse du sol
+            y = land - h0 + RAIN_VY * t + 2 * abs(math.sin(k * 1.1 + i))
+            x = CX + r * ca + 3 * math.sin(k * 1.3 + i * 2.0)
+            lay = back if sa > 0 else front
+            if y >= land - 4:
+                if y - RAIN_VY < land - 4:                # elle se pose : une petite lueur, puis plus rien
+                    glow(lay, (x + 3, land - 2), 1.8)
+                continue
+            sprite(lay, GOLD_FEATHERS[(i + k) % 4], int(round(x)) - 4, int(round(y)) - 4)
+    return f
+
+
+# ---- la purification : de petites taches sombres apparaissent sur son plumage, se détachent, montent et
+#      s'évaporent (comme celles de Myrr, dans les tons de cendre et de fumée de Rook)
+SPECKS = [(66, 62), (77, 66), (70, 69), (62, 77), (80, 80), (72, 85)]       # sur le buste et la jupe (grille)
+SPECK_SHAPES = [
+    [['DDE', 'DE.'], ['.DD', 'DDE']],                                   # posées sur elle
+    [['DDE', 'DE.', '.E.'], ['.DD', 'DDE', '.E.']],                     # elles se décollent (une traîne dessous)
+    [['CC', 'DC', 'C.', '.B'], ['CC', 'CD', '.C', 'B.']],               # fumée qui monte
+    [['.B', 'BB', 'B.'], ['B.', 'BB', '.B']],                           # presque évaporées
+    [['B.', '.A'], ['.B', 'A.']],
+]
+SPECK_DY = [0, -4, -11, -18, -24]
+SPECK_DX = [0, 0, -1, -2, -3]
+
+
+def fx_specks(k):
+    def f(cv, back, front, ctx):
+        for i, (gx, gy) in enumerate(SPECKS):
+            dx, dy = ctx['body'].follow(gy)
+            x, y = gx + OX + dx, gy + OY + dy
+            if k == 0 and cv[y, x] == '.':
+                continue
+            if k == 4 and i % 2:
+                continue
+            sway = (1 if (i + k) % 2 else -1) if k >= 2 else 0
+            sprite(front, SPECK_SHAPES[k][i % 2], x + SPECK_DX[k] + sway, y + SPECK_DY[k])
+    return f
+
+
+# ---- le phénix de lumière dorée (la résurrection), DE FACE au-dessus d'elle : un corps en goutte au coeur blanc,
+#      une tête ronde (le bec et l'oeil tournés de trois quarts vers la droite, comme elle), une huppe de trois
+#      petites flammes, deux ailes faites de longues plumes-flammes grandes ouvertes des deux côtés, une queue de cinq
+#      rubans qui tombent en éventail et finissent en volutes. Tout en courbes, rien de droit.
+R_PWING = ['l', 'm', '8', '8', '9', '9', 'n', 'h']
+R_PBODY = ['m', '8', '9', 'n', 'n', 'h', 'h']
+R_PTAIL = ['7', 'm', '8', '9', 'n', 'h']
+
+
+def phoenix_front(back, c, g=1.0, open_=1.0, phase=0.0, fade=0):
+    """le phénix de lumière, centré en c (le poitrail), échelle g ; open_ (0..1) : les ailes s'ouvrent (0 = levées en
+    V serré, 1 = grandes ouvertes) ; fade (0, 1, 2) : il pâlit (la rampe perd ses tons les plus sombres et se fond)"""
+    cx, cy = c
+    cut = fade
+    rw, rb, rt = R_PWING[2 * cut:], R_PBODY[cut:], R_PTAIL[2 * cut:]
+    # la queue : cinq rubans qui tombent en éventail, ondulent et finissent en volutes
+    T0 = (cx, cy + 12 * g)
+    tail_parts = []
+    for i, (spread, L, w) in enumerate(((-30, 26, 6.0), (-15, 32, 7.5), (0, 36, 8.5), (15, 32, 7.5), (30, 26, 6.0))):
+        L *= g
+        pts = []
+        for k in range(50):
+            t = k / 49
+            pts.append((T0[0] + spread * g * t ** 1.1 + 2.5 * g * math.sin(phase + t * 4.5 + i * 1.4) * t,
+                        T0[1] + L * t))
+        ex, ey = pts[-1]
+        r0 = 3.2 * g
+        sgn = 1 if spread >= 0 else -1
+        for k in range(1, 22):
+            s_ = k / 21
+            a = math.radians(260 * s_)
+            r = r0 * (1 - 0.6 * s_)
+            pts.append((ex + sgn * (r0 - r * math.cos(a)), ey + r * math.sin(a)))
+        n = len(pts)
+        tail_parts.append(stroke_mask(pts, [w * g * (1 - k / n) ** 0.8 + 0.6 for k in range(n)]))
+    if fade < 2:                           # en se fondant, la queue s'éteint la première
+        paint_glow(back, tail_parts, rt)
+    # les deux ailes (de face, symétriques) : le bord monte puis s'ouvre vers l'extérieur, les plumes pendent
+    lb = 112 + 43 * open_                  # le bord de l'aile gauche (degrés) ; la droite en miroir
+    for side in (-1, 1):
+        S0 = (cx + side * 4 * g, cy - 8 * g)
+        bone = lb if side < 0 else 180 - lb
+        hang = 240 if side < 0 else 300
+        u = np.array([math.cos(math.radians(bone)), -math.sin(math.radians(bone))])
+        # les rémiges (longues plumes-flammes), puis les couvertures (plus courtes, posées dessus : la masse de l'aile)
+        wing = wing_parts(S0, bone, 32 * g, hang, 9, 30 * g, 11.0 * g)
+        wing += wing_parts(tuple(np.array(S0) + u * 2 * g), bone, 26 * g, hang - side * 25, 6, 15 * g, 11.0 * g, 0.6)
+        paint_glow(back, wing, rw)
+    # le corps : une goutte (de la queue au cou) et la tête ronde ; la huppe ; le coeur est blanc
+    pts = bezier((cx, cy + 16 * g), (cx - 1 * g, cy + 6 * g), (cx + 1 * g, cy - 6 * g), (cx + 1 * g, cy - 14 * g), 40)
+    ws = [g * (5 + 9 * math.sin(math.pi * min(1.0, (1 - k / 40) / 0.8)) ** 0.9) for k in range(41)]
+    hx, hy = cx + 1.5 * g, cy - 19 * g
+    body = stroke_mask(pts, ws) | mask_of(lambda cv: puff(cv, (hx, hy), 4.8 * g, 'h'))
+    crest = []
+    for (dx, ang, L, bend) in ((-2, 112, 10, -0.6), (0, 90, 14, 0.5), (2, 68, 10, 0.7)):
+        cp, cw = blade_pts((hx + dx * g, hy - 3 * g), ang, L * g, 3.4 * g, bend)
+        crest.append(stroke_mask(cp, cw))
+    core = stroke_mask(pts[6:34], [w * 0.45 for w in ws[6:34]])
+    paint_glow(back, crest + [body], rb, core=core)
+    beak = stroke_mask(bezier((hx + 2.5 * g, hy + 0.5 * g), (hx + 4 * g, hy + 1.2 * g), (hx + 5.5 * g, hy + 2 * g),
+                              (hx + 6.5 * g, hy + 3.4 * g), 10), [2.6 * g * (1 - k / 10) + 0.5 for k in range(11)])
+    paint_glow(back, [beak], ['7', '8', '9'])
+    if fade < 2:
+        put(back, hx + 1.4 * g, hy - 0.6 * g, 'k')                 # l'oeil (or sombre, jamais noir)
+
+
+PHX_C = (CX + 1, 48)          # le poitrail du phénix (toile) : au-dessus de sa tête
+
+
+def fx_phx(k):
+    """k = 0 : une lueur se rassemble au-dessus de sa tête ; 1 : le phénix se forme (petit, ailes levées) ;
+    2 : il se déploie, ailes grandes ouvertes (RÉSURRECTION, arrêt sur image), un anneau d'or pulse au sol ;
+    3 : il pâlit et se défait en morceaux de lumière ; 4 : il ne reste que des lueurs qui montent et s'écartent"""
+    def f(cv, back, front, ctx):
+        cx, cy = PHX_C
+        if k == 0:
+            glow(back, (cx, cy + 6), 6.5, 'hhnn98m')
+            for (a, d) in ((20, 16), (100, 18), (160, 15), (250, 14), (320, 17)):
+                gold_spark(back, cx + d * math.cos(math.radians(a)), cy + 6 - 0.8 * d * math.sin(math.radians(a)),
+                           a % 40 == 0)
+            return
+        if k == 1:
+            phoenix_front(back, (cx, cy + 8), g=0.62, open_=0.0, phase=0.6)
+            glow(back, (cx, cy + 4), 3.0, 'hh')
+            return
+        if k == 2:
+            phoenix_front(back, (cx, cy), g=1.1, open_=1.0, phase=1.4)
+            R = 70
+            ring_band(back, front, (CX, GROUND - 1 - R * 0.2), R, R * 0.2, 4.4, tones='hn98', back_tones='n98m',
+                      wob=0.03, ph=2.0)
+            for (a, d) in ((15, 1.0), (60, 1.05), (120, 1.05), (165, 1.0), (210, 0.9), (330, 0.9)):
+                p = (cx + 70 * d * math.cos(math.radians(a)), cy - 30 * d * math.sin(math.radians(a)))
+                glow(back, p, 1.8, 'hn9')
+            return
+        if k == 3:
+            # il pâlit et se fond : on peint le phénix à part (plus pâle, un peu plus haut), on le ronge de deux pixels
+            # sur tout son bord (les pointes des plumes disparaissent, il ne reste que le coeur des masses), et des
+            # lueurs s'en échappent
+            tmp = empty()
+            phoenix_front(tmp, (cx, cy - 4), g=1.1, open_=1.0, phase=2.2, fade=2)
+            m = tmp != '.'
+            for _ in range(2):
+                p = np.pad(m, 1)
+                m = m & p[:-2, 1:-1] & p[2:, 1:-1] & p[1:-1, :-2] & p[1:-1, 2:]
+            p = np.pad(m, 1)
+            n8 = sum(np.roll(np.roll(p, dy_, 0), dx_, 1) for dy_ in (-1, 0, 1) for dx_ in (-1, 0, 1)
+                     if dy_ or dx_)[1:-1, 1:-1]
+            m &= n8 >= 3
+            back[m] = tmp[m]
+            for (a, d, big) in ((10, 62, True), (55, 52, False), (125, 54, True), (170, 64, False), (95, 40, False),
+                                (200, 50, True), (340, 52, False)):
+                gold_spark(back, cx + d * math.cos(math.radians(a)), cy - 8 - 0.6 * d * math.sin(math.radians(a)), big)
+            return
+        # k == 4 : des lueurs qui montent et s'écartent
+        for j, (a, d) in enumerate(((15, 70), (60, 58), (120, 60), (165, 72), (95, 44), (200, 56), (340, 58),
+                                    (250, 30))):
+            p = (cx + d * math.cos(math.radians(a)), cy - 16 - 0.6 * d * math.sin(math.radians(a)))
+            if j % 3 == 2:
+                gold_spark(back, p[0], p[1], True)
+            else:
+                glow(back, p, 1.5, 'n9')
+    return f
+
+
+def fx_land():
+    """elle se pose : une petite bouffée d'or au sol, des deux côtés"""
+    def f(cv, back, front, ctx):
+        for side in (-1, 1):
+            curl(back, (CX + side * 26, GROUND - 4), 3.5, 90, turn=240, w=2.6, tones='n98m', cw=side < 0)
+        glow(back, (CX - 34, GROUND - 3), 1.6, 'n9')
+        glow(back, (CX + 36, GROUND - 3), 1.6, 'n9')
     return f
 
 
 SPECIALE = [
     # 0 elle se prépare : les ailes s'ouvrent un peu, les braises montent
-    dict(s=1, wn=-4, wf=4, ph=0.0, fx=[fx_embers(0)], ms=110),
-    # 1-2 elle s'embrase : ses couleurs montent vers la flamme, le feu monte autour d'elle, le sol chauffe ; elle se
-    # ramasse, ailes levées (temps de préparation)
-    dict(s=1, wn=-9, wf=9, ph=0.9, fire=1, hy=-1, fx=[fx_floor(1), fx_blaze(1, 1)], fx_after=[fx_aura(1, 0.0)],
-         ms=150),
-    dict(s=3, lean=-1, wn=-16, wf=15, wy=-1, ph=1.8, fire=2, hy=-1, fx=[fx_floor(2), fx_blaze(2, 2)],
-         fx_after=[fx_aura(2, 1.4)], ms=190),
-    # 3 l'envol : un grand battement vers le bas, elle quitte le sol, la flamme roule au sol
-    dict(s=-3, lift=16, wn=30, wf=-30, ph=2.6, amp=0, fire=3, fx=[fx_floor(-1), fx_takeoff(),
-         fx_beat_smear(-16, 30, 15, -30, 20.0), fx_rise_trail(0)], fx_after=[fx_aura(3, 2.8)], ms=80),
-    # 4 elle monte, ailes relevées, blanche de feu
-    dict(s=-3, lift=34, wn=-14, wf=14, ph=3.4, fire=3, flash=35, fx=[fx_floor(-1), fx_rise_trail(1)],
-         fx_after=[fx_aura(3, 4.2)], ms=90),
-    # 5 elle éclate : le phénix se forme à sa place
-    dict(hide=True, fx=[fx_floor(-1), fx_burst(48), fx_phoenix(PHX_HOME, "V", grow=0.45)], ms=70),
-    # 6 le phénix, ailes levées en V comme les siennes (temps de pose)
-    dict(hide=True, fx=[fx_floor(-1), fx_phoenix(PHX_HOME, 'V', phase=0.5)], ms=220),
-    # 7 il bat des ailes et prend son élan vers l'ennemi
-    dict(hide=True, fx=[fx_floor(-1), fx_wake(0.32), fx_phoenix(phx_path()[38], 'mi', phase=1.5, tilt=0.4)], ms=70),
-    # 8 il pique, ailes repliées
-    dict(hide=True, fx=[fx_floor(-1), fx_wake(0.68), fx_phoenix(phx_path()[82], 'repli', phase=2.5, tilt=0.6)],
-         ms=60),
-    # 9 il traverse l'ennemi : la vague de flammes déferle (éclair, arrêt sur l'image)
-    dict(hide=True, fx=[fx_floor(-1), fx_wake(1.0), fx_wave(0), fx_phoenix(phx_path()[120], 'repli', phase=3.3,
-         cool=1, tilt=0.3)], ms=230),
-    # 10 au-delà, il se défait en braises ; la vague monte encore
-    dict(hide=True, fx=[fx_floor(-1), fx_wake(1.0, 0.8), fx_wave(1), fx_dissolve(0), fx_ashes(0)], ms=100),
-    # 11 la vague retombe en fumée ; à sa place, le tas de cendres rougeoie
-    dict(hide=True, fx=[fx_wave(2), fx_dissolve(1), fx_ashes(0)], ms=150),
-    # 12 une colonne de feu jaillit des cendres
-    dict(hide=True, fx=[fx_wave(3), fx_ashes(1), fx_rebirth(0)], ms=110),
-    # 13 la colonne s'ouvre : elle y renaît, blanche de feu, ailes levées
-    dict(s=2, wn=-14, wf=14, ph=0.4, fire=3, flash=25, fx=[fx_ashes(2), fx_rebirth(1)], fx_after=[fx_aura(3, 0.5)],
-         ms=130),
-    # 14 le feu retombe autour d'elle ; elle refroidit
-    dict(s=1, wn=-10, wf=10, ph=1.2, fire=2, fx=[fx_rebirth(2)], fx_after=[fx_aura(2, 1.9)], ms=110),
-    # 15-18 elle retrouve ses couleurs ; les plumes d'or retombent sur elle (le soin)
-    dict(s=0, wn=-6, wf=6, ph=2.0, fire=1, hy=1, fx=[fx_heal(0)], fx_after=[fx_aura(1, 3.3)], ms=120),
-    dict(s=0, wn=-3, wf=3, ph=2.8, fx=[fx_heal(1)], ms=130),
-    dict(s=0, wn=-1, wf=1, ph=3.6, fx=[fx_heal(2)], ms=140),
-    dict(s=0, wn=0, wf=0, ph=4.4, fx=[fx_heal(3)], ms=150),
+    dict(s=1, wn=-4, wf=4, ph=0.0, fx=[fx_embers(0)], ms=100),
+    # 1-2 elle s'embrase d'or : ses plumes montent vers la flamme, sa silhouette s'éclaire, le sol s'éclaire d'or ;
+    # des taches sombres apparaissent sur son plumage ; elle se ramasse, ailes levées (temps de préparation)
+    dict(s=1, wn=-9, wf=9, ph=0.9, fire=1, hy=-1, flash=12, fx=[fx_glow_floor(1), fx_kindle_gold(1, 1)],
+         fx_after=[fx_aura_gold(1, 0.0)], ms=140),
+    dict(s=3, lean=-1, wn=-16, wf=15, wy=-1, ph=1.8, fire=1, flash=24, hy=-1, fx=[fx_glow_floor(2),
+         fx_kindle_gold(2, 2)], fx_after=[fx_aura_gold(2, 1.4), fx_specks(0)], ms=180),
+    # 3 l'envol : un grand battement vers le bas, elle quitte le sol, la flamme d'or roule au sol des deux côtés
+    dict(s=-3, lift=12, wn=30, wf=-30, ph=2.6, amp=0, fire=1, flash=18, fx=[fx_takeoff_gold(),
+         fx_beat_gold(-16, 30, 15, -30), fx_rise_gold(0)], fx_after=[fx_aura_gold(2, 2.8), fx_specks(0)], ms=80),
+    # 4 elle monte, ailes relevées
+    dict(s=-2, lift=22, wn=-12, wf=12, ph=3.4, fire=1, flash=22, fx=[fx_rise_gold(1)],
+         fx_after=[fx_aura_gold(2, 4.2), fx_specks(1)], ms=90),
+    # 5 LANCEMENT du soin et de la purification : elle ouvre grand ses ailes, l'anneau de flammes d'or naît autour
+    # de sa taille, les plumes de feu doré commencent à pleuvoir, les taches s'envolent (arrêt sur image)
+    dict(s=-1, lift=22, wn=12, wf=-12, ph=4.0, fire=1, flash=28, hy=-1, fx=[fx_ring(0), fx_rain(0)],
+         fx_after=[fx_aura_gold(3, 5.0), fx_specks(2)], ms=200),
+    # 6-8 l'anneau s'étend tout autour d'elle en descendant se poser au sol ; la pluie de plumes en cercle
+    dict(lift=22, wn=10, wf=-10, ph=4.8, fire=1, flash=16, fx=[fx_ring(1), fx_rain(1)],
+         fx_after=[fx_aura_gold(2, 5.8), fx_specks(3)], ms=90),
+    dict(lift=21, wn=7, wf=-7, ph=5.6, fire=1, fx=[fx_ring(2), fx_rain(2)], fx_after=[fx_aura_gold(1, 6.6),
+         fx_specks(4)], ms=90),
+    dict(lift=20, wn=2, wf=-2, ph=6.4, fx=[fx_ring(3), fx_rain(3)], ms=90),
+    # 9 second temps : elle relève les ailes, l'anneau s'éteint en petites langues, une lueur se rassemble au-dessus
+    # de sa tête
+    dict(lift=20, wn=-12, wf=12, ph=7.2, fire=1, flash=12, hy=-1, fx=[fx_ring(4), fx_rain(4), fx_phx(0)],
+         fx_after=[fx_aura_gold(1, 7.4)], ms=110),
+    # 10 le phénix de lumière se forme au-dessus d'elle
+    dict(lift=19, wn=-16, wf=15, ph=8.0, fire=1, flash=22, hy=-1, fx=[fx_rain(5), fx_phx(1)],
+         fx_after=[fx_aura_gold(2, 8.2)], ms=80),
+    # 11 LANCEMENT de la résurrection : le phénix de lumière dorée se déploie, ailes grandes ouvertes ; un anneau
+    # d'or pulse au sol (arrêt sur image)
+    dict(lift=18, wn=-16, wf=15, ph=8.8, fire=1, flash=34, hy=-1, fx=[fx_rain(6), fx_phx(2)],
+         fx_after=[fx_aura_gold(3, 9.0)], ms=220),
+    # 12-13 il pâlit et se fond en lueurs qui montent ; elle redescend
+    dict(lift=15, wn=-10, wf=10, ph=9.6, fire=1, flash=12, fx=[fx_rain(7), fx_phx(3)],
+         fx_after=[fx_aura_gold(1, 9.8)], ms=100),
+    dict(lift=8, wn=-5, wf=5, ph=10.4, fx=[fx_rain(8), fx_phx(4)], ms=90),
+    # 14 elle se pose (elle se tasse), les ailes retombent
+    dict(s=2, wn=3, wf=-3, ph=11.2, hy=1, fx=[fx_rain(9), fx_land()], ms=100),
+    # 15-16 elle se relève et revient en pose (la dernière image mène à la première de la respiration)
+    dict(s=1, wn=1, wf=-1, ph=5.0, hy=1, wy=1, fx=[fx_rain(10)], ms=120),
+    dict(b=0, s=0, hy=1, wn=0, wf=0, wy=1, q=0, ph=9 * 2 * math.pi / 10, fx=[fx_embers(9)], ms=140),
 ]
+
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
 # RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du héros à partir de
@@ -1502,6 +1578,7 @@ def bbox(frames, margin=4):
 
 
 GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+ATT_BOX = (0, 0, 390, 212)       # le cadre du GIF de l'attaque (calculé avec l'ancienne spéciale ; gardé tel quel)
 
 
 def save_gif(path, images, durations):
@@ -1547,7 +1624,8 @@ def write_outputs(anims):
     # une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets
     both = anims['attaque'] + anims['speciale'] + anims['pose']
     bb = bbox(both, 6)
-    boxes['attaque'] = boxes['speciale'] = bb
+    boxes['speciale'] = bb
+    boxes['attaque'] = ATT_BOX                          # le cadre d'origine : le GIF de l'attaque ne change pas
     for name in ('pose', 'attaque', 'speciale'):
         box = boxes[name]
         ims = [on_bg(img).crop(box) for img, _ in anims[name]]
@@ -1566,7 +1644,7 @@ def write_outputs(anims):
     d = ImageDraw.Draw(sheet)
     y = 6
     titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE : gerbe de plumes de feu',
-              'speciale': 'ATTAQUE SPECIALE : renaissance du phenix'}
+              'speciale': 'ATTAQUE SPECIALE : renaissance du phenix (soin, purification, resurrection)'}
     for name, per, cells, mss in blocks:
         cw, ch = cells[0].width * k, cells[0].height * k
         d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
