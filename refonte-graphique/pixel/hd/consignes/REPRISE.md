@@ -65,3 +65,11 @@
 - Lancées le 25/11 : les 3 araignées, les 3 du clan de Méduse, de Kesha, de Lenore, de Kael, matelot et canonnier (17).
 - Lancées ensuite : tireur-pirate, corbeau-tengu, moine-tengu, singe-voleur. tengu-eventail, gorille-guerrier, singe-chaman : les 24 sont lancées.
 - Une animation finie : ajouter le nom à ANIMES dans `monstres/suivi.py`, puis publier la page avec `files` {"anim-monstres/<nom>.gif": ...}.
+
+## Combat test HD (demande du 25/11/2026)
+- Le propriétaire veut un combat d'essai avec les nouvelles animations : corps à corps = le personnage va jusqu'à sa
+  cible et frappe (impact + dégâts jolis) ; à distance = le projectile va jusqu'à la vraie cible (même au fond en bas
+  à droite) ; spéciales qui chargent = petit effet de lumière reconnaissable, sans excès. Tester tous les héros et
+  monstres.
+- En cours : un essai sur quelques personnages (format d'export « jeu » des animations, combat dans les Outils de
+  test, GIF `pixel/sortie/combat-hd-essai.gif`), puis consigne `consignes/export-jeu.md` pour faire tous les autres.

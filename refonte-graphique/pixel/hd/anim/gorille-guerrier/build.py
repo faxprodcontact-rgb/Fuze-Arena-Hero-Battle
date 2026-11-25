@@ -109,7 +109,7 @@ for y in range(GH):
     if 52 <= y <= 66:
         e = row_cut(y, 44, SKIN | {'A'})
         near[y, :e] |= row[:e] != '.'
-    if 67 <= y <= 77:
+    if 67 <= y <= 78:
         e = row_cut(y, 44, {'A', '.'} | SKIN)
         if y >= 75:
             e = min(e, 47)
@@ -143,6 +143,7 @@ for y in range(GH):
         far_fore[y, s:] = row[s:] != '.'
 near |= near_fore
 far |= far_fore
+far_sh = far & (YY <= 57) & ~far_fore     # le haut de l'épaule lointaine (trapèze) : il reste avec le corps
 
 CLOTH = (XX >= 63) & (XX <= 80) & (YY >= 88) & (YY <= 105) & isin(ORIG, RED)   # le pan de tissu rouge
 
@@ -157,7 +158,8 @@ P['near_pad'] = part(near_pad)
 P['near_fur'] = part(near & ~near_pad & ~near_fore)
 P['near_fore'] = part(near_fore)
 P['far'] = part(far)
-P['far_fur'] = part(far & ~far_fore)
+P['far_fur'] = part(far & ~far_fore & ~far_sh)
+P['far_sh'] = part(far_sh)
 P['far_fore'] = part(far_fore)
 P['cloth'] = part(CLOTH)
 BODY = np.where(near | far | CLOTH, '.', ORIG)
@@ -369,5 +371,493 @@ def debug_decoupe():
     print('écrit', os.path.join(SCRATCH, 'decoupe.png'))
 
 
+
+
+# ---------------------------------------------------------------- les avant-bras : morceaux du dessin, tournés au pixel
+class Sprite:
+    """un morceau recadré + son point d'attache au coude (ax, ay) en coordonnées du morceau"""
+
+    def __init__(self, g, anchor):
+        self.g, self.a = g, anchor
+
+    def turned(self, how):
+        """how : 'down' (tel quel, poing en bas), 'fwd' (quart de tour, poing vers la droite), 'up' (retourné, poing en
+        haut), 'back' (poing vers la gauche). Rotation exacte au pixel : rien n'est rééchantillonné."""
+        h, w = self.g.shape
+        x, y = self.a
+        g, (x, y) = {'down': (self.g, (x, y)), 'fwd': (np.rot90(self.g), (y, w - 1 - x)),
+                     'up': (np.flipud(self.g), (x, h - 1 - y)),
+                     'back': (np.fliplr(np.rot90(self.g)), (h - 1 - y, w - 1 - x))}[how]
+        return Sprite(g.copy(), (int(x), int(y)))
+
+    def sheared(self, s, how):
+        """penche l'avant-bras : s pixels de décalage par pixel de distance au coude (le coude ne bouge pas)"""
+        if not s:
+            return self
+        ax, ay = self.a
+        pad = int(abs(s) * max(self.g.shape) + 2)
+        h, w = self.g.shape
+        if how in ('down', 'up'):
+            g = np.full((h, w + 2 * pad), '.', dtype='<U1')
+            g[:, pad:pad + w] = self.g
+            g = shear_rows(g, lambda y: round(s * (y - ay)))
+        else:
+            g = np.full((h + 2 * pad, w), '.', dtype='<U1')
+            g[pad:pad + h, :] = self.g
+            ay += pad
+            g = shear_cols(g, lambda x: round(s * (x - ax)))
+            return Sprite(g, (ax, ay))
+        return Sprite(g, (ax + pad, ay))
+
+    def put(self, cv, ex, ey, swap=None):
+        """pose le morceau pour que son coude tombe en (ex, ey) (coordonnées de la grille du dessin)"""
+        ys, xs = np.nonzero(self.g != '.')
+        cy = ys - self.a[1] + int(round(ey)) + OY
+        cx = xs - self.a[0] + int(round(ex)) + OX
+        ok = (cy >= 0) & (cy < H) & (cx >= 0) & (cx < W)
+        vals = self.g[ys[ok], xs[ok]]
+        if swap:
+            vals = np.array([swap.get(v, v) for v in vals])
+        cv[cy[ok], cx[ok]] = vals
+
+
+def crop(g, anchor):
+    ys, xs = np.nonzero(g != '.')
+    y0, x0 = ys.min(), xs.min()
+    return Sprite(g[y0:ys.max() + 1, x0:xs.max() + 1].copy(), (anchor[0] - x0, anchor[1] - y0))
+
+
+# coudes mesurés sur le dessin : le milieu du haut du brassard
+NEAR_ELBOW = (27, 76)
+FAR_ELBOW = (101, 77)
+FORE = {'near': crop(P['near_fore'], NEAR_ELBOW), 'far': crop(P['far_fore'], FAR_ELBOW)}
+PAD = crop(P['near_pad'], (35, 52))          # l'épaulière, attachée au haut du bras proche
+# épaules (centre de l'articulation, coordonnées de la grille) et rayons du haut du bras (épaule, coude)
+SHOULDER = {'near': (34, 57), 'far': (102, 58)}
+ARM_R = {'near': (13.0, 11.5), 'far': (10.0, 9.5)}
+
+# ---------------------------------------------------------------- le haut du bras, redessiné (fourrure modelée)
+LIGHT = np.array([0.6, -0.8])
+LN = LIGHT / np.linalg.norm(LIGHT)
+
+
+def fur_tone(k, n):
+    """ton de fourrure selon k (-1 ombre … 1 lumière) et n (petite irrégularité : mèches)"""
+    k = k + n
+    return 'F' if k > 0.9 else 'E' if k > 0.3 else 'D' if k > -0.2 else 'C' if k > -0.58 else 'B' if k > -0.9 else 'A'
+
+
+def hash01(a, b):
+    v = math.sin(a * 12.9898 + b * 78.233) * 43758.5453
+    return v - math.floor(v)
+
+
+def draw_upper(cv, P0, P1, r0, r1, dark=0.0):
+    """le haut du bras : capsule de l'épaule P0 au coude P1 (coordonnées de la grille), rayons r0 -> r1.
+    La fourrure a des mèches : de petites irrégularités de ton, allongées dans le sens du bras (jamais des rayures).
+    dark > 0 : le bras lointain, un peu plus dans l'ombre."""
+    P0, P1 = np.array(P0, float), np.array(P1, float)
+    v = P1 - P0
+    L2 = max(v @ v, 1e-6)
+    L = math.sqrt(L2)
+    u = v / L
+    R = max(r0, r1) + 1
+    for y in range(int(min(P0[1], P1[1]) - R), int(max(P0[1], P1[1]) + R + 1)):
+        for x in range(int(min(P0[0], P1[0]) - R), int(max(P0[0], P1[0]) + R + 1)):
+            p = np.array([x + 0.5, y + 0.5])
+            t = float(np.clip((p - P0) @ v / L2, 0, 1))
+            c = P0 + t * v
+            r = r0 + (r1 - r0) * t
+            w = p - c
+            d = math.hypot(*w)
+            along = (p - P0) @ u
+            across = (p - P0) @ np.array([-u[1], u[0]])
+            # bord en mèches : le rayon varie d'un pixel par touffes (le long du bras, par pas de 3)
+            side = 1 if across > 0 else 0
+            rr = r + (hash01(math.floor(along / 3.0), side * 7 + 3) - 0.45) * 1.8
+            if d <= rr:
+                k = (w @ LN) / r
+                # mèches : de petites taches de ton allongées dans le sens du bras (par pas de 5 le long, 2 en travers)
+                n = (hash01(math.floor(along / 5.0 + 0.5 * math.floor(across / 2.0)), math.floor(across / 2.0)) - 0.5) * 0.42
+                X, Y = x + OX, y + OY
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = fur_tone(k - dark, n)
+
+
+# ---------------------------------------------------------------- les effets (vent, poussière, éclats) : formes courbes
+# (outils recopiés de ../eldra/build.py ; tons de poussière : p q r s)
+def put(cv, x, y, ch, keep=None):
+    x, y = int(x), int(y)
+    if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
+        cv[y, x] = ch
+
+
+def ribbon(cv, c, rx, ry, a0, a1, wmax, head=0.7, tones='wyzv', tilt=0.0):
+    """un ruban de vent : arc d'ellipse (centre c, rayons rx, ry) de l'angle a0 à a1 (degrés, sens de la marche),
+    épaisseur qui gonfle puis s'effile (le plus épais à 'head' du parcours). tones : coeur -> bord."""
+    cx, cy = c
+    n = max(12, int(abs(a1 - a0) / 360 * 2 * math.pi * max(rx, ry) * 2))
+    pts = []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (a1 - a0) * s)
+        px, py = rx * math.cos(a), -ry * math.sin(a)
+        if tilt:
+            ct, st = math.cos(math.radians(tilt)), math.sin(math.radians(tilt))
+            px, py = px * ct + py * st, -px * st + py * ct
+        wv = wmax * (s / head if s < head else (1 - s) / (1 - head)) ** 0.8
+        pts.append((cx + px, cy + py, max(wv, 0.0)))
+    best = {}
+    for (px, py, wv) in pts:
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1 else 1.0
+                    if R < 0.8:
+                        k = max(k, 0.75)
+                    old = best.get((x, y), 9)
+                    if k < old:
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in best.items():
+        put(cv, x, y, tones[min(m - 1, int(k * m))])
+
+
+def puff(cv, c, r, tones='pqr', hollow=0.0):
+    """une bouffée de poussière, ronde, éclairée en haut à droite ; hollow > 0 : elle se défait (trou au milieu)"""
+    cx, cy = c
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            w = np.array([x + 0.5 - cx, y + 0.5 - cy])
+            d = math.hypot(*w)
+            if d <= r and d >= hollow * r:
+                k = (w @ LN) / max(r, 1e-6)
+                ch = tones[min(len(tones) - 1, int((1 - k) / 2 * len(tones)))]
+                put(cv, x, y, ch)
+
+
+def sprite(cv, rows, x, y, flipx=False):
+    for j, r in enumerate(rows):
+        if flipx:
+            r = r[::-1]
+        for i, ch in enumerate(r):
+            if ch != '.':
+                put(cv, x + i, y + j, ch)
+
+
+LEAVES = [
+    ['.zv', 'vu.'],             # feuille couchée
+    ['.z', 'zv', 'vu'],         # feuille dressée
+    ['zv.', '.vu'],             # feuille couchée, l'autre sens
+]
+PEBBLE = ['qr', 'rs']
+
+
+def leaf(cv, x, y, k=0):
+    sprite(cv, LEAVES[k % 3], int(x), int(y))
+
+
+def pebble(cv, x, y):
+    sprite(cv, PEBBLE, int(x), int(y))
+
+
+def burst(cv, c, r, tones='wxyz'):
+    """éclat rond (coeur blanc, bord jade pâle)"""
+    cx, cy = c
+    m = len(tones)
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            d = math.hypot(x + 0.5 - cx, y + 0.5 - cy)
+            if d <= r:
+                put(cv, x, y, tones[min(m - 1, int(d / r * m))])
+
+
+def crescent(cv, c, r, facing, span=110, w=3.0, tones='wyz'):
+    """un croissant d'impact (une virgule de souffle) tourné vers 'facing' (degrés)"""
+    ribbon(cv, c, r, r, facing + span / 2, facing - span / 2, w, head=0.5, tones=tones)
+
+
+def streak(cv, P0, P1, r0, r1, tones='UTS'):
+    """une traînée effilée (le bâton étiré par la vitesse) de P0 (rayon r0) à P1 (rayon r1), tons clair -> sombre"""
+    P0, P1 = np.array(P0, float), np.array(P1, float)
+    v = P1 - P0
+    L = max(np.linalg.norm(v), 1e-6)
+    u = v / L
+    n = np.array([u[1], -u[0]])
+    if n @ LIGHT < 0:
+        n = -n
+    R = max(r0, r1) + 1
+    for y in range(int(min(P0[1], P1[1]) - R), int(max(P0[1], P1[1]) + R + 1)):
+        for x in range(int(min(P0[0], P1[0]) - R), int(max(P0[0], P1[0]) + R + 1)):
+            p = np.array([x + 0.5, y + 0.5]) - P0
+            t = p @ u
+            if 0 <= t <= L:
+                r = r0 + (r1 - r0) * t / L
+                d = p @ n
+                if abs(d) <= r and r > 0.3:
+                    k = (d / r + 1) / 2                 # 0 côté ombre … 1 côté lumière
+                    i = min(len(tones) - 1, int((1 - k) * len(tones)))
+                    put(cv, x, y, tones[i])
+
+
+# ---------------------------------------------------------------- effets, deuxième main : nuages, volutes, onde
+def cloud(cv, c, r, tones='pqr', hollow=0.0, seed=0):
+    """un nuage de poussière en chou-fleur : une grosse bouffée et des petites autour (pas une bille ronde).
+    hollow (0..1) : le nuage se défait — les bouffées s'écartent, montent un peu, rapetissent et pâlissent."""
+    rng = np.random.RandomState(seed)
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for i in range(4):
+        a = math.radians(150 - i * 40 + rng.uniform(-12, 12))
+        d = r * rng.uniform(0.55, 0.8)
+        lobes.append((d * math.cos(a), -d * math.sin(a) * 0.7, r * rng.uniform(0.5, 0.7)))
+    if hollow:
+        out = []
+        for (dx, dy, rr) in lobes[1:]:
+            out.append((dx * (1 + hollow), dy * (1 + hollow) - hollow * r * 0.5, rr * (1 - 0.45 * hollow)))
+        out.append((0, -hollow * r * 0.4, r * (1 - 0.6 * hollow)))
+        lobes = out
+        tones = tones[:1] * 2 + tones[1:2] if hollow > 0.5 else tones
+    for (dx, dy, rr) in lobes:
+        puff(cv, (cx + dx, min(cy + dy, GROUND - rr * 0.6)), rr, tones)
+
+
+def curl(cv, c, r0, a0, turn=300, w=2.4, tones='xyzv', cw=False):
+    """une volute de vent : une spirale qui s'enroule (r décroît), épaisse au départ, effilée au coeur"""
+    cx, cy = c
+    n = int(turn / 4) + 8
+    pts = []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (-turn if cw else turn) * s)
+        r = r0 * (1 - 0.72 * s)
+        pts.append((cx + r * math.cos(a), cy - r * math.sin(a), w * (1 - s) ** 0.7 + 0.4 * (1 - s)))
+    best = {}
+    for (px, py, wv) in pts:
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1 else 0.8
+                    if k < best.get((x, y), 9):
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in best.items():
+        put(cv, x, y, tones[min(m - 1, int(k * m))])
+
+
+def pop(cv, c, r, facing=0.0, tones='wxyz'):
+    """un éclat d'impact en forme de nuage (un coeur et des pétales arrondis, plus gros vers l'avant)"""
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for i, da in enumerate((-70, -25, 20, 65, 150, 210)):
+        a = math.radians(facing + da)
+        big = 0.62 if abs(da) < 80 else 0.45
+        lobes.append((r * 0.95 * math.cos(a), -r * 0.95 * math.sin(a), r * big))
+    m = len(tones)
+    best = {}
+    for (dx, dy, rr) in lobes:
+        for y in range(int(cy + dy - rr - 1), int(cy + dy + rr + 2)):
+            for x in range(int(cx + dx - rr - 1), int(cx + dx + rr + 2)):
+                d = math.hypot(x + 0.5 - cx - dx, y + 0.5 - cy - dy)
+                if d <= rr:
+                    D = math.hypot(x + 0.5 - cx, y + 0.5 - cy) / (r * 1.5)
+                    if D < best.get((x, y), 9):
+                        best[(x, y)] = D
+    for (x, y), D in best.items():
+        put(cv, x, y, tones[min(m - 1, int(D * m))])
+
+
+def arc_trail(cv, c, R, a_staff, length, w, tones='gwxyz', ccw=True):
+    """traînée pleine en croissant derrière ce qui tourne (le bout du bâton) : bord extérieur sur le cercle de rayon R,
+    épaisse (w) contre le bâton, effilée au bout de la traînée ; dégradé du clair (contre le bâton) au jade (au bout),
+    les limites de tons suivent la courbe (jamais des rayons droits)."""
+    cx, cy = c
+    m = len(tones)
+    for y in range(int(cy - R - 2), int(cy + R + 3)):
+        for x in range(int(cx - R - 2), int(cx + R + 3)):
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            r = math.hypot(dx, dy)
+            if r > R + 0.5:
+                continue
+            ang = math.degrees(math.atan2(-dy, dx))
+            da = ((ang - a_staff) % 360) if ccw else ((a_staff - ang) % 360)
+            if da > length:
+                continue
+            s = da / length
+            ww = w * (1 - s) ** 0.9 + (0.6 if s < 0.97 else 0)
+            if r < R - ww:
+                continue
+            k = min(1.0, max(0.0, (R - r) / max(ww, 1e-6)))   # 0 au bord extérieur, 1 au bord intérieur
+            i = int((0.62 * s + 0.38 * k) * m)
+            put(cv, x, y, tones[min(m - 1, i)])
+
+
+def bezier(p0, p1, p2, p3, n):
+    out = []
+    for i in range(n + 1):
+        t = i / n
+        a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+        out.append((a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]))
+    return out
+
+
+def stroke(cv, pts, widths, tones):
+    """peint un ruban le long de points, avec une épaisseur par point (coeur clair -> bord sombre)"""
+    best = {}
+    for (px, py), wv in zip(pts, widths):
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1.2 else 0.85
+                    if k < best.get((x, y), 9):
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in best.items():
+        put(cv, x, y, tones[min(m - 1, int(k * m))])
+
+
+def gust(cv, p0, p1, p2, p3, w, tones='xyzv', curl_r=5.0, up=True, tail=0.0):
+    """une rafale à la chinoise : un long ruban courbe (Bézier) qui finit en volute enroulée.
+    tail : la part du début déjà effacée (0..1) quand la rafale se défait."""
+    n = 60
+    pts = bezier(p0, p1, p2, p3, n)
+    # la volute : elle continue la courbe et s'enroule (vers le haut si up)
+    ex, ey = pts[-1]
+    tx, ty = pts[-1][0] - pts[-2][0], pts[-1][1] - pts[-2][1]
+    tl = math.hypot(tx, ty) or 1
+    tx, ty = tx / tl, ty / tl
+    nx, ny = (ty, -tx) if up else (-ty, tx)            # vers l'intérieur de la volute
+    cx, cy = ex + nx * curl_r, ey + ny * curl_r
+    a0 = math.atan2(-(ey - cy), ex - cx)
+    turn = math.radians(300)
+    m = 40
+    sgn = 1 if up else -1
+    for i in range(1, m + 1):
+        s = i / m
+        a = a0 + sgn * turn * s
+        r = curl_r * (1 - 0.75 * s)
+        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
+    N = len(pts)
+    widths = []
+    for i in range(N):
+        s = i / (N - 1)
+        if s < tail:
+            widths.append(0)
+            continue
+        ss = (s - tail) / max(1 - tail, 1e-6)
+        prof = (ss / 0.35) ** 0.7 if ss < 0.35 else ((1 - ss) / 0.65) ** 0.8
+        widths.append(w * prof + 0.5)
+    stroke(cv, pts, widths, tones)
+
+
+def g2c(x, y):
+    """coordonnées de la grille du dessin -> toile"""
+    return x + OX, y + OY
+
+
+# ---------------------------------------------------------------- une image « montée » (corps plié + bras)
+BLINK = dict(SRC['cligne'])
+
+
+class Ctx:
+    pass
+
+
+def arm(cv, side, a, body):
+    """dessine le bras 'side' selon le réglage a (dict). Renvoie le point du poing (coordonnées de la grille)"""
+    fx, fy = body.follow(60)
+    mode = a.get('mode', 'rig')
+    if mode == 'rigid':        # le bras entier du dessin, déplacé d'un bloc (poing soulevé, recul…)
+        blit(cv, P[side], a.get('dx', 0) + fx, a.get('dy', 0) + fy)
+        return None
+    sx, sy = SHOULDER[side]
+    sh = a.get('sh', (0, 0))
+    S = (sx + sh[0] + fx, sy + sh[1] + fy)
+    E = a['elbow']
+    how = a.get('fore', 'down')
+    spr = FORE[side].turned(how).sheared(a.get('shear', 0), how)
+    if a.get('draw', 'all') in ('all', 'upper'):
+        draw_upper(cv, S, E, *ARM_R[side], dark=0.15 if side == 'far' else 0.0)
+    if a.get('draw', 'all') in ('all', 'fore'):
+        spr.put(cv, E[0], E[1])
+    if side == 'near' and a.get('draw', 'all') in ('all', 'upper'):
+        PAD.put(cv, S[0] + 1, S[1] - 5 + a.get('pady', 0))
+    return E
+
+
+def rig_frame(f):
+    """f : réglages de l'image. Renvoie (monstre, effets derrière, effets devant, ctx)"""
+    body = Body(crouch=f.get('crouch', 0), breath=f.get('breath', 0), lean=f.get('lean', 0), chest=f.get('chest', 0))
+    cv = empty()
+    swap = BLINK if f.get('blink') else None
+    near_a, far_a = f.get('near'), f.get('far')
+    # 1) le bras lointain, derrière le corps (sauf l'avant-bras quand il frappe la poitrine)
+    if far_a is None:
+        body.draw(cv, P['far'])
+    elif far_a.get('front'):
+        arm(cv, 'far', dict(far_a, draw='upper'), body)
+    else:
+        arm(cv, 'far', far_a, body)
+    if far_a is not None and far_a.get('mode', 'rig') == 'rig':
+        body.draw(cv, P['far_sh'])          # le haut de l'épaule couvre la naissance du bras
+    # 2) le corps (le flanc peint là où le bras proche n'est plus)
+    body.draw(cv, BODY_FILLED if near_a is not None else BODY, swap)
+    cl = f.get('cloth', 0)
+    cloth = shear_rows(P['cloth'], lambda y: cl if y >= 97 else (int(cl / 2) if y >= 93 else 0)) if cl else P['cloth']
+    body.draw(cv, cloth)
+    if far_a is not None and far_a.get('front'):
+        arm(cv, 'far', dict(far_a, draw='fore'), body)
+    # 3) le bras proche, devant
+    if near_a is None:
+        body.draw(cv, P['near'])
+    else:
+        arm(cv, 'near', near_a, body)
+    back, front = empty(), empty()
+    ctx = Ctx()
+    ctx.body = body
+    for fn in f.get('fx', []):
+        fn(back, front, ctx)
+    return cv, back, front, ctx
+
+
+def show(frames, path, k=3):
+    """planche de contrôle (dans le brouillon)"""
+    os.makedirs(SCRATCH, exist_ok=True)
+    ims = []
+    for spec in frames:
+        cv, back, front, ctx = rig_frame(dict(spec))
+        ims.append(big(compose(cv, back, front, flash=spec.get('flash')), k, (0, 30, 230, 176)))
+    w, h = ims[0].size
+    per = 4
+    sheet = Image.new('RGB', (w * min(per, len(ims)), h * ((len(ims) + per - 1) // per)), (250, 250, 252))
+    for i, im in enumerate(ims):
+        sheet.paste(im, ((i % per) * w, (i // per) * h))
+    sheet.save(path)
+    print('écrit', path)
+
+
 if __name__ == '__main__' and sys.argv[1:2] == ['decoupe']:
     debug_decoupe()
+if __name__ == '__main__' and sys.argv[1:2] == ['essai']:
+    show([
+        dict(),
+        dict(lean=4, near=dict(sh=(10, 4), elbow=(66, 72), fore='fwd')),
+        dict(near=dict(sh=(4, 0), elbow=(30, 70), fore='fwd'), far=dict(elbow=(122, 70), fore='back', front=True)),
+        dict(crouch=-6, lean=-2, near=dict(sh=(0, -4), elbow=(36, 26), fore='up'),
+             far=dict(sh=(0, -4), elbow=(106, 26), fore='up')),
+        dict(crouch=3, lean=6, near=dict(sh=(10, 4), elbow=(76, 80), fore='down'),
+             far=dict(sh=(6, 2), elbow=(118, 80), fore='down')),
+        dict(lean=-3, near=dict(mode='rigid', dx=-5, dy=-10)),
+    ], os.path.join(SCRATCH, 'essai.png'), 2)

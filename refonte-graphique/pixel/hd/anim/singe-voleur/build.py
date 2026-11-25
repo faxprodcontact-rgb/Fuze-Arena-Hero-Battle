@@ -718,15 +718,15 @@ def gust(cv, p0, p1, p2, p3, w, tones='xyzv', curl_r=5.0, up=True, tail=0.0):
 
 # ---------------------------------------------------------------- petits objets : feuilles, pièce d'or
 def coin(cv, x, y, face=0):
-    """la pièce d'or volée (posée sur la toile du singe : elle a son contour) ; face 0 = de face, 1 = de biais,
-    2 = sur la tranche (elle tourne en vol)"""
-    rows = [['.TT.', 'TUTS', 'TTSR', '.SR.'],
-            ['TT', 'US', 'TS', 'SR'],
-            ['T', 'U', 'S', 'R']][face % 3]
+    """la pièce d'or volée, percée d'un petit trou carré (posée sur la toile du singe : elle a son contour) ;
+    face 0 = de face, 1 = de biais, 2 = sur la tranche (elle tourne en vol)"""
+    rows = [['.TTT.', 'TUUTS', 'TU.SR', 'TTSSR', '.SRR.'],
+            ['.TT.', 'TUTS', 'TU.R', 'TTSR', '.SR.'],
+            ['TS', 'US', 'TS', 'TR', 'SR']][face % 3]
     for j, r in enumerate(rows):
         for i, ch in enumerate(r):
             X, Y = int(x) + i - len(r) // 2, int(y) + j - 2
-            if ch != '.' and 0 <= X < W and 0 <= Y < H:
+            if 0 <= X < W and 0 <= Y < H:
                 cv[Y, X] = ch
 
 
@@ -892,27 +892,47 @@ def fx_streak(level):
     return f
 
 
-def tornado(back, front, x, h, phase=0, top_w=22, fade=0.0, tones='xyzvu'):
-    """une tornade : des anneaux en ellipse empilés, étroits en bas, larges en haut ; la moitié arrière derrière,
-    la moitié avant devant ; chaque anneau est ouvert (une bande qui tourne), décalé selon 'phase'.
-    fade : la tornade se défait (le bas disparaît d'abord, les bandes s'amincissent)"""
-    n = max(2, int(h / 9))
-    for i in range(n):
-        s = i / max(n - 1, 1)
-        if s < fade:
-            continue
-        y = GROUND - 4 - s * h
-        rx = 5 + (top_w - 5) * s ** 0.8
-        ry = 1.6 + 2.2 * s
-        a0 = (phase * 70 + i * 47) % 360
-        wv = (2.0 + 2.4 * s) * (1 - 0.5 * fade)
-        cx = x + 3 * math.sin(s * 3.0 + phase)                      # la tornade ondule un peu
-        ribbon(back, (cx, y), rx, ry, a0, a0 + 150, wv * 0.8, tones=tones[1:])
-        ribbon(front, (cx, y), rx, ry, a0 + 190, a0 + 330, wv, tones=tones)
+def helix(back, front, x, h, turns, phase, r0, r1, w, tones, tail=0.0, head=0.0):
+    """un ruban de vent qui monte en s'enroulant (une spirale vue de côté) : la partie qui passe devant est peinte
+    devant l'ennemi, l'autre derrière ; épais au milieu, effilé aux deux bouts. tail / head : parts déjà effacées
+    (en bas / en haut) quand elle se défait ou n'est pas encore montée."""
+    n = 140
+    pts, wf, wb = [], [], []
+    for i in range(n + 1):
+        s = i / n
+        th = phase + turns * 2 * math.pi * s
+        r = r0 + (r1 - r0) * s ** 0.9
+        px = x + r * math.sin(th) + 2.0 * math.sin(s * 4 + phase)
+        py = GROUND - 3 - h * s
+        prof = (s / 0.3) ** 0.7 if s < 0.3 else ((1 - s) / 0.7) ** 0.6
+        ww = (w * prof + 0.6) * (0.7 + 0.3 * abs(math.cos(th)))       # plus mince quand il tourne de profil
+        if s < tail or s > 1 - head:
+            ww = 0
+        pts.append((px, py))
+        front_side = math.cos(th) > 0
+        wf.append(ww if front_side else 0)
+        wb.append(0 if front_side else ww * 0.85)
+    stroke(front, pts, wf, tones)
+    stroke(back, pts, wb, tones[1:] if len(tones) > 3 else tones)
+
+
+def trombe(back, front, x, h, k, tail=0.0, head=0.0):
+    """la trombe de vent : deux rubans qui montent en spirale autour de l'ennemi, étroite en bas, large en haut,
+    une volute qui s'échappe au sommet, un anneau de poussière et de vent à la base"""
+    ph = k * 1.9
+    tn = 'wxyzv' if tail < 0.3 else 'xyzvu'
+    helix(back, front, x, h, 1.6, ph, 4, 25, 6.5 * (1 - 0.4 * tail), tn, tail, head)
+    helix(back, front, x, h * 0.86, 1.4, ph + math.pi, 3, 20, 4.6 * (1 - 0.4 * tail), 'xyzvu', tail, head)
+    if head == 0 and tail < 0.6:
+        curl(front, (x + 20, GROUND - h - 2), 5.0, 180, turn=280, w=2.6, tones='xyzv', cw=True)
+        curl(back, (x - 18, GROUND - h * 0.86 + 2), 4.0, 0, turn=260, w=2.0, tones='yzv')
+    if tail < 0.3:
+        ribbon(back, (x, GROUND - 4), 20, 4, 20, 160, 2.8, tones='yzvu')
+        ribbon(front, (x, GROUND - 4), 20, 4, 200, 340, 3.6, tones='xyzvu')
 
 
 def fx_tornado(k):
-    """k = 0 : le choc de l'estoc (éclair et poussière) ; 1 à 5 : la tornade monte, emporte des feuilles, se défait"""
+    """k = 0 : le choc de l'estoc (éclair et poussière) ; 1 à 5 : la trombe monte, emporte des feuilles, se défait"""
     def f(cv, back, front, ctx):
         x = X_HIT
         if k == 0:
@@ -922,19 +942,19 @@ def fx_tornado(k):
             cloud(back, (x - 16, GROUND - 4), 6, 'kkkmn', seed=1)
             cloud(back, (x + 16, GROUND - 4), 6, 'kkkmn', seed=2)
             return
-        h = [0, 46, 70, 80, 78, 70][k]
-        fade = [0, 0.0, 0.0, 0.2, 0.5, 0.75][k]
-        tornado(back, front, x, h, phase=k, top_w=[0, 16, 22, 24, 24, 22][k], fade=fade)
-        # des feuilles emportées en spirale autour de la tornade
-        for j in range(5):
-            a = math.radians(k * 75 + j * 72)
-            yy = GROUND - 10 - ((j * 14 + k * 9) % 70)
-            xx = x + (8 + 0.25 * (GROUND - yy)) * math.cos(a)
-            (front if math.sin(a) < 0 else back)
+        h = [0, 50, 70, 76, 76, 74][k]
+        tail = [0, 0.0, 0.0, 0.15, 0.45, 0.72][k]
+        head = [0, 0.35, 0.0, 0.0, 0.0, 0.0][k]
+        trombe(back, front, x, h, k, tail, head)
+        # des feuilles emportées en spirale autour de la trombe
+        for j in range(4):
+            a = math.radians(k * 75 + j * 90)
+            yy = GROUND - 12 - ((j * 17 + k * 11) % min(h, 64))
+            xx = x + (10 + 0.2 * (GROUND - yy)) * math.cos(a)
             leaf(front if math.sin(a) < 0 else back, xx, yy, j + k)
-        if k <= 2:
-            cloud(back, (x - 18 - 3 * k, GROUND - 4), 5.5 - k, 'kkkmn', hollow=0.3 * k, seed=3 + k)
-            cloud(back, (x + 18 + 3 * k, GROUND - 4), 5.5 - k, 'kkkmn', hollow=0.3 * k, seed=6 + k)
+        if k <= 3:
+            cloud(back, (x - 18 - 3 * k, GROUND - 4), 6 - k, 'kkkmn', hollow=0.25 * k, seed=3 + k)
+            cloud(back, (x + 18 + 3 * k, GROUND - 4), 6 - k, 'kkkmn', hollow=0.25 * k, seed=6 + k)
     return f
 
 
@@ -1000,10 +1020,10 @@ SPECIALE = [
     dict(T=(52, 0), dos=(2, 3), tete=(1, 2), sac=(0, 0), queue=(1, -1), e=-1,
          arm=dict(wrist=(15, 12), ang=-58), fx=[fx_hit(0, -40, 0.8)], ms=90),
     dict(T=(34, -28), bascule=-3, arr=(4, -7), av=(-1, -6), tete=(0, 0), sac=(0, 3), queue=(-2, 3), e=1,
-         arm=dict(wrist=(6, 9), ang=-15), fx=[fx_whirl, fx_hit(1, -40, 0.8)], ms=80),
+         arm=dict(wrist=(6, 9), ang=-15), fx=[fx_whirl], ms=80),
     dict(T=(46, -10), bascule=6, arr=(-6, -2), av=(6, 2), tete=(1, 1), sac=(0, 3), queue=(0, 2), e=-1,
          arm=dict(wrist=(19, 7), ang=-35), fx=[fx_dive_trail], ms=50),
-    dict(T=(50, 0), dos=(2, 4), tete=(1, 1), sac=(0, -2), queue=(2, -2), e=1, flash=35,
+    dict(T=(50, 0), dos=(2, 4), tete=(1, 1), sac=(0, -2), queue=(2, -2), e=1, flash=20,
          arm=dict(wrist=(19, 9), ang=-32), fx=[fx_tornado(0)], ms=170),
     dict(T=(40, -12), bascule=-3, arr=(3, -5), av=(-3, -4), tete=(-1, 0), sac=(0, 2), queue=(2, 2), e=-1,
          arm=dict(wrist=(8, 8), ang=10), fx=[fx_tornado(1), fx_coin(0.12, 0)], ms=70),
@@ -1055,3 +1075,97 @@ def on_bg(img, bg=BG):
     im = Image.new('RGBA', (img.shape[1], img.shape[0]), bg + (255,))
     im.alpha_composite(Image.fromarray(img, 'RGBA'))
     return im
+
+
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin), min(H, ys.max() + 1 + margin))
+
+
+GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet.paste(im, (0, i * H0))
+    ncol = len(sheet.getcolors(maxcolors=1 << 20) or [])
+    if ncol <= 256:
+        pal = sheet.quantize(colors=min(256, ncol), method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    boxes = {'pose': GAME_BOX}
+    # une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets
+    both = anims['attaque'] + anims['speciale'] + anims['pose']
+    bb = bbox(both, 6)
+    boxes['attaque'] = boxes['speciale'] = bb
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f"anim-{NAME}-{name}.gif"), ims, [ms for _, ms in anims[name]])
+    # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
+    k = 3
+    blocks = []
+    for name, per in (('pose', 10), ('attaque', 11), ('speciale', 9)):
+        box = GAME_BOX if name == 'pose' else bbox(anims[name] + anims['pose'], 3)
+        cells = [on_bg(img).crop(box) for img, _ in anims[name]]
+        blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + per - 1) // per) * (cells[0].height * k + 22) for _, per, cells, _ in blocks)
+    sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sheet)
+    y = 6
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE', 'speciale': 'ATTAQUE SPECIALE'}
+    for name, per, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % per == 0:
+                y += ch + 22
+            X = 6 + (i % per) * (cw + 6)
+            sheet.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sheet.save(os.path.join(OUT, f'anim-{NAME}-planche.png'))
+    # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat, ×2
+    seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
+    box = bb
+    try:
+        fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
+        fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        bw, bh = box[2] - box[0], box[3] - box[1]
+        fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        base = fond.crop((0, fy, bw, fy + bh))
+        if base.width < bw:
+            raise ValueError
+    except Exception:
+        base = Image.new('RGBA', (box[2] - box[0], box[3] - box[1]), (120, 170, 110, 255))
+    ims = []
+    for img, _ in seq:
+        im = base.copy()
+        im.alpha_composite(Image.fromarray(img, 'RGBA').crop(box))
+        ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), ims, [ms for _, ms in seq])
+    return boxes
+
+
+if __name__ == '__main__':
+    anims = build_all()
+    write_outputs(anims)
+    for n in ('pose', 'attaque', 'speciale'):
+        print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+    print('écrit dans', OUT)

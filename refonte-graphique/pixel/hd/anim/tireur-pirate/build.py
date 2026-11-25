@@ -1369,13 +1369,13 @@ def water_slug(cv_back, cv_front, X, Y, L, r=5.0, phase=0.0, tail=0.0):
         if s_ < tail:
             continue
         x = X - L * (1 - s_) - 1
-        amp = 0.6 + (r + 0.4) * s_ ** 1.2
+        amp = 1.0 + (r + 1.6) * s_ ** 1.1
         a = 2 * math.pi * (2.2 * s_) + phase
         y = Y + amp * math.sin(a)
         if math.cos(a) > -0.15:
             seg.append((x, y))
         elif len(seg) > 2:
-            stroke(cv_front, seg, [1.0 + 0.8 * s_] * len(seg), 'WX')
+            stroke(cv_front, seg, [1.2 + 0.8 * s_] * len(seg), 'WX')
             seg = []
         else:
             seg = []
@@ -1402,7 +1402,7 @@ def fx_shot(dx, L, phase, tail=0.0):
     def f(cv, back, front, ctx):
         mx, my = SPEC_AT[0]
         X = mx + dx
-        water_slug(back, front, X, my, L, r=5.2, phase=phase, tail=tail)
+        water_slug(back, front, X, my, L, r=5.6, phase=phase, tail=tail)
         for j, (fx_, fy_) in enumerate(((0.35, 4.5), (0.6, -5.0), (0.8, 6.5), (0.5, 8.0))):
             drop(back, X - L * fx_, my + fy_ + j % 2, 2 if j < 2 else 1, v=(1.0, 1.2))
     return f
@@ -1427,45 +1427,49 @@ def fx_wake(k):
 IMPACT = [None]                           # le point où la balle d'eau éclate (toile)
 
 
+# L'éclat, image par image : le bouillon d'écume (rayon, part déjà défaite) et les vagues qui s'enroulent autour (en
+# volutes, comme une vague qui se brise) : (x, y, rayon, angle de départ, tour, épaisseur, sens).
+BOUILLON = [None, (12.5, 0.0), (14.0, 0.35), (12.5, 0.7)]
+VOLUTES = [
+    None,
+    [(15, -11, 6.0, 200, 280, 4.4, True), (11, 13, 5.6, 160, 260, 4.0, False), (-13, -10, 4.8, 330, 260, 3.4, False)],
+    [(20, -16, 7.4, 200, 290, 4.0, True), (16, 17, 6.6, 160, 270, 3.6, False), (-17, -14, 5.8, 330, 270, 3.0, False)],
+    [(24, -19, 6.8, 200, 300, 2.8, True), (20, 21, 6.0, 160, 280, 2.6, False), (-21, -16, 5.0, 330, 280, 2.2, False)],
+]
+GOUTTES = [(5.2, -4.6), (6.4, 0.6), (3.6, 3.8), (-4.6, -4.8), (-5.6, 1.4), (0.6, -6.8), (7.2, -3.0), (-2.6, 4.4)]
+
+
 def fx_impact(k):
     """la balle éclate sur l'ennemi (k = images depuis le choc)"""
     def f(cv, back, front, ctx):
         X, Y = IMPACT[0]
         G = GROUND - 1
         if k == 0:
-            # l'éclat : un gros nuage d'écume blanche, un anneau d'eau, les premières nappes
+            # l'éclat : un gros nuage d'écume blanche et un anneau d'eau
             ring(back, (X - 2, Y), 5.0, 17.0, 3.0, 90, 270, tones='XYZA')
             pop(front, (X, Y), 11.0, facing=0, tones='WWWXY')
             ring(front, (X - 2, Y), 5.0, 17.0, 3.4, -90, 90, tones='WXYZ')
-            for a in (50, 0, -45, 140, -150):
-                sheet(back, (X + 2, Y), a, 14, 25 if a > 0 else -25, 5.0, blob=True)
             return
-        # les grandes nappes courbes qui s'ouvrent (vers l'avant, vers le haut, vers le bas, un peu en arrière), se
-        # vident par le bas (tail) et finissent en grosses gouttes
+        # le bouillon d'écume qui gonfle puis se défait, et les vagues qui s'enroulent autour
         if k <= 3:
-            ln = [0, 26, 34, 36][k]
-            tl = [0, 0.0, 0.35, 0.7][k]
-            wv = [0, 7.0, 6.0, 4.6][k]
-            for (a, bend) in ((62, 30), (18, -30), (-30, -34), (128, 34), (-140, -28), (95, 20)):
-                sheet(back if a in (128, 95) else front, (X, Y), a, ln * (0.8 if a in (128, -140) else 1.0),
-                      bend, wv, tail=tl, blob=True)
+            r, hol = BOUILLON[k]
+            foam(front, (X, Y), r, hollow=hol, seed=81)
+            for (dx, dy, rr, a0, turn, w, cw) in VOLUTES[k]:
+                curl(back if dx < 0 else front, (X + dx, Y + dy), rr, a0, turn=turn, w=w,
+                     tones='XYZA' if k < 3 else 'YZA', cw=cw)
             if k == 1:
-                pop(front, (X, Y), 7.0, facing=0, tones='WWXY')            # l'éclat dure (arrêt sur l'image)
-            else:
-                foam(front, (X + 1, Y), 5.0 - k, hollow=0.3 * (k - 1), seed=80 + k)
-        # les gouttes retombent en pluie
-        if 2 <= k <= 7:
-            seeds = [(-4.0, -6.0), (4.6, -7.0), (-2.0, -8.4), (2.4, -9.0), (6.0, -4.2), (-5.4, -3.6), (0.8, -10.0),
-                     (7.4, -6.0), (-6.6, -6.2), (3.4, -2.6)]
-            spray(front, (X, Y - 4), k - 1.2, seeds, g=1.25, sizes=(4, 3, 3, 2, 2))
+                pop(front, (X + 1, Y - 1), 4.6, facing=0, tones='WWX')     # l'éclat dure (arrêt sur l'image)
+        # les grosses gouttes lancées tout autour : elles retombent en cloche
+        if 1 <= k <= 7:
+            spray(front, (X, Y), k - 0.3, GOUTTES, g=1.2, sizes=(4, 4, 3, 3, 2))
         # au sol : l'eau qui retombe jaillit en couronne, puis l'écume s'étale en volutes
-        kc = k - 3
+        kc = k - 4
         if 0 <= kc <= 5:
             crown(front, X + 4, G, kc, 0.75, seed=7)
-        if 6 <= k <= 9:
-            sp = (k - 5) * 6
-            r = max(1.2, 4.4 - 0.8 * (k - 6))
-            hol = min(0.9, 0.25 * (k - 6))
+        if 7 <= k <= 10:
+            sp = (k - 6) * 6
+            r = max(1.2, 4.4 - 0.8 * (k - 7))
+            hol = min(0.9, 0.25 * (k - 7))
             foam(front, (X - sp, G - 1), r, hollow=hol, seed=91 + k)
             foam(front, (X + 8 + sp, G - 1), r * 0.9, hollow=hol, seed=92 + k)
             curl(front, (X - sp - 6, G - 3), 2.6, 90, turn=260, w=1.7, tones='WXY')
@@ -1484,7 +1488,7 @@ SPECIALE = [
     dict(AIM, b=1, ah=(1, 0), aile='mi', ab=-1, aq=0, e=-1, fx=[fx_gather(1)], ms=130),
     dict(AIM, b=1, ah=(1, 0), aile='haut', cri=1, ab=-2, aq=-1, e=-1, fx=[fx_gather(2)], ms=240),
     # 4 : le coup ! (éclair : la tireuse pâlit d'un coup)
-    dict(AIM, fired=True, lean=-1, head=(0, 2), aile='haut', cri=1, ab=-2, aq=-2, e=0, flash=30,
+    dict(AIM, fired=True, lean=-1, head=(0, 2), aile='haut', cri=1, ab=-2, aq=-2, e=0, flash=22,
          fx=[fx_fire], ms=60),
     # 5-6 : le recul la repousse, le canon se cabre ; la balle d'eau file vers l'ennemi
     dict(AIM, fired=True, ang=7.125, butt=(51.0, 61.0), lean=-3, s=0, head=(-1, 1), aile='mi', cri=1, ab=-1, aq=-1,
@@ -1503,6 +1507,183 @@ SPECIALE = [
     # 12-15 : elle redescend l'arme en garde ; l'écume s'étale au sol et se défait
     dict(RAISE, s=1, lean=0, head=(0, 1), aq=1, e=0, fx=[fx_impact(5)], ms=90),
     dict(gun='orig', s=1, lean=0, head=(0, 0), ah=(1, 1), aq=1, e=-1, fx=[fx_impact(6)], ms=100),
-    dict(gun='orig', s=0, lean=0, head=(0, 0), ah=(0, 0), aq=0, e=0, fx=[fx_impact(7), fx_impact_late(8)], ms=110),
-    dict(gun='orig', s=0, lean=0, head=(0, 0), ah=(0, 0), aq=0, e=0, fx=[fx_impact_late(9)], ms=140),
+    dict(gun='orig', s=0, lean=0, head=(0, 0), ah=(0, 0), aq=0, e=0, fx=[fx_impact(7)], ms=110),
+    dict(gun='orig', s=0, lean=0, head=(0, 0), ah=(0, 0), aq=0, e=0, fx=[fx_impact(8)], ms=120),
+    dict(gun='orig', s=0, lean=0, head=(0, 0), ah=(0, 0), aq=0, e=0, fx=[fx_impact(9)], ms=130),
+    dict(gun='orig', s=0, lean=0, head=(0, 0), ah=(0, 0), aq=0, e=0, fx=[fx_impact(10)], ms=150),
 ]
+# la bouche du canon épaulé au moment du coup : la balle d'eau et la fumée partent de là ; l'éclat chez l'ennemi
+_c = rig_frame(dict(SPECIALE[4], fx=[]))[3]
+SPEC_AT[0] = (float(_c.muzzle[0]), float(_c.muzzle[1]))
+IMPACT[0] = (ENEMY_X - 8.0, SPEC_AT[0][1])
+
+
+# ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
+# RETOUCHES[nom][numéro d'image] = [(x, y, 'TEXTE')] en coordonnées de la GRILLE du dessin (comme tireur-pirate.txt),
+# décalées avec le buste de l'image ; '.' efface, ' ' laisse le pixel tel quel.
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+
+
+def retouch(cv, fixes, chest=(0, 0)):
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                X, Y = x + i + OX + chest[0], y + OY + chest[1]
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = ch
+
+
+# ---------------------------------------------------------------- toutes les images, et les fichiers
+def build_all():
+    anims = {}
+    for name, specs in (('pose', POSE), ('attaque', ATTAQUE), ('speciale', SPECIALE)):
+        fr = []
+        for i, spec in enumerate(specs):
+            cv, back, front, ctx = rig_frame(dict(spec))
+            retouch(cv, RETOUCHES[name].get(i, []), ctx.chest)
+            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+        anims[name] = fr
+    return anims
+
+
+def on_bg(img, bg=BG):
+    im = Image.new('RGBA', (img.shape[1], img.shape[0]), bg + (255,))
+    im.alpha_composite(Image.fromarray(img, 'RGBA'))
+    return im
+
+
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin),
+            min(H, ys.max() + 1 + margin))
+
+
+GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet_ = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet_.paste(im, (0, i * H0))
+    ncol = len(sheet_.getcolors(maxcolors=1 << 20) or [])
+    if ncol <= 256:
+        pal = sheet_.quantize(colors=min(256, ncol), method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet_.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def attack_box(anims):
+    """une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets ; elle va jusqu'au
+    bord droit de la toile (la balle sort du cadre, la balle d'eau éclate loin à droite)"""
+    bb = bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 6)
+    return (bb[0], bb[1], W, bb[3])
+
+
+def planche(anims, path, box, k=3, per=None):
+    per = per or {'pose': 10, 'attaque': 4, 'speciale': 4}
+    blocks = []
+    for name in ('pose', 'attaque', 'speciale'):
+        bx = GAME_BOX if name == 'pose' else box
+        cells = [on_bg(img).crop(bx) for img, _ in anims[name]]
+        blocks.append((name, per[name], cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(p, len(cells)) * (cells[0].width * k + 6) for _, p, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + p - 1) // p) * (cells[0].height * k + 22) for _, p, cells, _ in blocks)
+    sh = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sh)
+    y = 6
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE (coup de hanche)',
+              'speciale': 'ATTAQUE SPECIALE (lame de fond)'}
+    for name, p, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % p == 0:
+                y += ch + 22
+            X = 6 + (i % p) * (cw + 6)
+            sh.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sh.save(path)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    bb = attack_box(anims)
+    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    planche(anims, os.path.join(OUT, f'anim-{NAME}-planche.png'), bb)
+    # le rythme en jeu : pose ×2, attaque, pose, spéciale, pose — sur le fond de combat (prairie), ×2
+    seq = anims['pose'] * 2 + anims['attaque'] + anims['pose'] + anims['speciale'] + anims['pose']
+    box = bb
+    bw, bh = box[2] - box[0], box[3] - box[1]
+    try:
+        fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
+        fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
+        fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
+        strip = fond.crop((0, fy, fond.width, fy + bh))
+        base = Image.new('RGBA', (bw, bh))
+        x, flip = 0, False
+        while x < bw:                                   # la prairie est plus étroite que la scène : prolongée en miroir
+            base.paste(strip.transpose(Image.FLIP_LEFT_RIGHT) if flip else strip, (x, 0))
+            x += strip.width
+            flip = not flip
+    except Exception:
+        base = Image.new('RGBA', (bw, bh), (120, 170, 110, 255))
+    ims = []
+    for img, _ in seq:
+        im = base.copy()
+        im.alpha_composite(Image.fromarray(img, 'RGBA').crop(box))
+        ims.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), ims, [ms for _, ms in seq])
+    return boxes
+
+
+def essai(folder, only=None):
+    """images de contrôle (dans un dossier de brouillon) : planche ×2 et chaque image seule"""
+    os.makedirs(folder, exist_ok=True)
+    anims = build_all()
+    bb = attack_box(anims)
+    planche(anims, os.path.join(folder, 'planche.png'), bb, k=2, per={'pose': 10, 'attaque': 6, 'speciale': 6})
+    for name in ('pose', 'attaque', 'speciale'):
+        box = GAME_BOX if name == 'pose' else bb
+        for i, (img, ms) in enumerate(anims[name]):
+            on_bg(img).crop(box).save(os.path.join(folder, f'{name}-{i:02d}.png'))
+    return anims
+
+
+def zone(args):
+    """python3 build.py zone x0 y0 x1 y1 [morceau] : affiche un morceau de la découpe (grille du dessin)"""
+    x0, y0, x1, y1 = map(int, args[:4])
+    g = P[args[4]] if len(args) > 4 else P['corps']
+    print('     ' + ''.join(str(x // 10 % 10) if x % 10 == 0 else ' ' for x in range(x0, x1 + 1)))
+    print('     ' + ''.join(str(x % 10) for x in range(x0, x1 + 1)))
+    for y in range(y0, y1 + 1):
+        print(f'{y:4d} ' + ''.join(g[y, x0:x1 + 1]))
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'zone':
+        zone(sys.argv[2:])
+        sys.exit()
+    if len(sys.argv) > 2 and sys.argv[1] == 'essai':
+        essai(sys.argv[2])
+        sys.exit()
+    anims = build_all()
+    boxes = write_outputs(anims)
+    for n in ('pose', 'attaque', 'speciale'):
+        print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+    print('cadre des attaques :', boxes['attaque'])
+    print('écrit dans', OUT)

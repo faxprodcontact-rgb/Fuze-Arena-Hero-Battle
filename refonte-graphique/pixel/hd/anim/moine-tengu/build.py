@@ -111,7 +111,7 @@ P = {}
 # le shakujō : la tête (boucle, anneaux, joyau, pointe) au-dessus de y = 21 ; la hampe (colonnes 21 à 23) plus bas,
 # virole et pointe comprises ; pas le poing (qui la serre) ni les plumes de l'aile qui passent derrière
 _shaft = (XX >= 21) & (XX <= 23) & (YY >= 21) & isin(CORPS, IRON + GOLD)
-P['baton'] = take(filled & (((YY <= 20) & (XX <= 34)) | _shaft))
+P['baton'] = take(filled & (((YY <= 21) & (XX <= 34)) | _shaft))
 # le poing proche (il serre la hampe à hauteur de poitrine)
 P['poing'] = take(filled & isin(CORPS, SKIN) & (XX >= 16) & (XX <= 30) & (YY >= 43) & (YY <= 55))
 # l'avant-bras nu (du poing au coude, qui descend vers la ceinture) et la manche retroussée (le gros bourrelet ivoire)
@@ -452,23 +452,24 @@ def pose_frame(f):
 
 
 # ---------------------------------------------------------------- le shakujō, retracé à n'importe quel angle
-# Mesuré sur le dessin (bâton droit) : s = distance le long de la hampe depuis le bout du pied (s = 115,5 - y),
+# Mesuré sur le dessin (bâton droit) : s = distance le long de la hampe depuis le bout du pied (s = 116 - y au milieu
+# d'un pixel),
 # t = écart en travers (t = x - 22 ; t > 0 : à droite, côté lumière au repos). Hampe de 3 pixels (E, w, x) ; pointe de
 # fer et virole d'or au pied ; collier d'or sous la boucle ; boucle en ogive (fer, 2 pixels) ; axe et joyau d'or au
 # milieu ; pointe d'or au sommet ; quatre anneaux d'or accrochés aux flancs de la boucle. Chaque ton est choisi par
 # l'orientation de la surface vers la lumière (en haut à droite) : la lumière reste au même endroit quand il tourne.
 LIGHT = np.array([0.6, -0.8])
 LN = LIGHT / np.linalg.norm(LIGHT)
-S_TOP = 115.5 - 1.0                     # le sommet de la pointe d'or
-S_COLLAR = (95.0, 97.6)                 # le collier d'or (y 19-20)
-LOOP_C = np.array([0.0, 104.5])         # le centre de la boucle (t, s)
-_LOOP_LEFT = [(-1.0, 97.5), (-3.0, 98.5), (-4.6, 100.0), (-5.6, 102.0), (-5.8, 104.5), (-5.2, 107.0), (-3.8, 108.8),
-              (-1.8, 110.0), (0.0, 110.4)]
+S_TOP = 113.5                           # le sommet de la pointe d'or (y = 3)
+S_COLLAR = (94.5, 96.5)                 # le collier d'or (y = 20 et 21)
+LOOP_C = np.array([0.0, 103.5])         # le centre de la boucle (t, s)
+_LOOP_LEFT = [(0.0, 97.2), (-1.8, 97.4), (-3.2, 98.2), (-4.3, 99.3), (-4.9, 100.6), (-5.4, 102.0), (-5.5, 104.0),
+              (-5.2, 105.8), (-4.3, 107.3), (-3.0, 108.3), (-1.6, 109.2), (0.0, 109.8)]
 LOOP_PTS = _LOOP_LEFT + [(-t, s) for (t, s) in reversed(_LOOP_LEFT[:-1])]
 # les anneaux : point d'accroche sur la boucle (t, s) ; au repos ils pendent sur les flancs, centre à 3 pixels dehors
-RINGS = [(-5.8, 104.5), (-5.0, 100.8), (5.8, 104.5), (5.0, 100.8)]
-G0 = np.array([22.5, 49.5])             # le point de prise du poing du dessin (milieu de la hampe dans le poing)
-SG0 = 115.5 - 49.0                      # où le poing serre la hampe (s)
+RINGS = [(-5.7, 104.0), (-5.1, 100.2), (5.7, 104.0), (5.1, 100.2)]
+G0 = np.array([22.5, 50.0])             # le point de prise du poing du dessin (milieu de la hampe dans le poing)
+SG0 = 116.5 - 50.0                      # où le poing serre la hampe (s)
 
 
 def unit(deg):
@@ -522,11 +523,9 @@ def draw_staff(cv, G, ang, sg, swing=(0.0, 0.0), rings=True, glint=None):
             k = t * sgn
             ch = None
             if 0 <= s <= S_COLLAR[1] and abs(t) <= 1.5:
-                if s < 1.6:
+                if s < 2.5:
                     ch = 'E' if k < -0.5 else 'v' if k < 0.5 else 'w'          # la pointe de fer
-                elif s < 3.0:
-                    ch = iron(k / 1.5)
-                elif s < 5.0:
+                elif s < 4.5:
                     ch = gold(k / 1.5 - 0.15)                                 # la virole d'or
                 else:
                     ch = iron(k / 1.5)
@@ -544,17 +543,17 @@ def draw_staff(cv, G, ang, sg, swing=(0.0, 0.0), rings=True, glint=None):
                 wn = o[0] * n + o[1] * u
                 ch = iron(float(wn @ LN))
             # l'axe d'or et le joyau, au milieu de la boucle
-            if 98.0 <= s <= 110.0 and abs(t) <= 0.5:
-                ch = 'r' if s < 103 or s > 106 else ch
-            o = np.array([t, s - 104.5])
+            if 99.5 <= s <= 107.5 and abs(t) <= 0.5:
+                ch = 'r' if s < 102 else 's' if s > 106 else ch
+            o = np.array([t, s - 104.0])
             if abs(o[0]) <= 1.5 and abs(o[1]) <= 1.5:
                 ow = o[0] * n + o[1] * u
                 ch = gold(float(ow @ LN) / 1.4 + 0.1)
             # la pointe d'or du sommet
-            if 110.0 <= s <= S_TOP:
-                r = 1.5 if s < 112.8 else 0.55
+            if 109.6 <= s <= S_TOP:
+                r = 1.5 if s < 112.5 else 0.55
                 if abs(t) <= r:
-                    ch = gold(k / 1.5 + (0.35 if s > 112.8 else -0.1))
+                    ch = gold(k / 1.5 + (0.35 if s > 111.5 else -0.15))
             if ch:
                 cv[y, x] = ch
     if rings:
@@ -604,7 +603,8 @@ def shade_cloth(k):
     return '9' if k > 0.38 else '8' if k > -0.12 else '7' if k > -0.6 else '6'
 
 
-def capsule(cv, P0, P1, r0, r1, shade, kbias=0.0, keep=None):
+def capsule(cv, P0, P1, r0, r1, shade, kbias=0.0, keep=None, rim=False):
+    """un morceau rond (capsule) modelé par la lumière ; rim : un liseré d'ombre au bord (la manche se détache du buste)"""
     P0, P1 = np.array(P0, float), np.array(P1, float)
     v = P1 - P0
     L2 = max(v @ v, 1e-6)
@@ -618,7 +618,11 @@ def capsule(cv, P0, P1, r0, r1, shade, kbias=0.0, keep=None):
             w = p - c
             dist = math.hypot(*w)
             if dist <= r and (keep is None or keep(p, t, dist / r)):
-                cv[y, x] = shade(float(w @ LN) / r + kbias)
+                k = float(w @ LN) / r + kbias
+                if rim and dist / r > 0.86:
+                    cv[y, x] = '7' if k > 0.25 else '6'
+                else:
+                    cv[y, x] = shade(k)
 
 
 def ik(S, T, L1, L2, bend):
@@ -643,7 +647,7 @@ def draw_arm(cv, S, G, bend=1.0, elbow=None):
     E = np.array(elbow, float) if elbow is not None else ik(S, Wr, L_UP, L_FORE, bend)
     v = E - S
     Q = S + 0.42 * v
-    capsule(cv, S, Q, 10.6, 9.2, shade_cloth)
+    capsule(cv, S, Q, 10.6, 9.2, shade_cloth, rim=True)
     # le bourrelet (le bord roulé de la manche, côté coude) : un anneau d'ombre sous la boule
     R = S + 0.56 * v
     capsule(cv, Q, R, 8.4, 7.2, shade_cloth, kbias=-0.35)
@@ -1057,10 +1061,10 @@ ATTAQUE = [
     # il arrache le bâton du sol (la main glisse un peu vers le bas de la hampe), le buste se cambre
     dict(arm='rig', staff='libre', G=(25.0, 46.0), ang=100, sg=60, lean=-1, breath=1, wl=1, swing=(0.3, 0.2),
          ms=130),
-    dict(arm='rig', staff='libre', G=(31.0, 32.0), ang=126, sg=48, lean=-2, breath=2, wl=1, head=(-1, 0),
+    dict(arm='rig', staff='libre', G=(32.0, 30.0), ang=118, sg=48, lean=-2, breath=2, wl=1, head=(-1, 0),
          swing=(0.5, 0.4), fx=[fx_gather(0)], ms=130),
-    # la préparation, tenue : le bâton loin derrière l'épaule, tout le corps tendu, le vent s'enroule aux anneaux
-    dict(arm='rig', staff='libre', G=(35.0, 24.0), ang=152, sg=40, lean=-3, crouch=-1, breath=2, head=(-1, 0),
+    # la préparation, tenue : le bâton levé haut derrière la tête, tout le corps cambré, le vent s'enroule aux anneaux
+    dict(arm='rig', staff='libre', G=(38.0, 16.0), ang=132, sg=40, lean=-3, crouch=-1, breath=2, head=(-1, 0),
          swing=(0.0, 0.0), p=-1, fx=[fx_gather(1)], ms=320),
     # le coup : le bâton passe par-dessus sa tête (traînées en croissant)
     dict(arm='rig', staff='libre', G=(47.0, 30.0), ang=84, sg=36, lean=0, breath=1, wl=-1, head=(0, 0),
@@ -1074,10 +1078,10 @@ ATTAQUE = [
          swing=(-0.4, 0.1), glint=(1, 3), fx=[fx_hit(1)], shake=-1, ms=110),
     dict(arm='rig', staff='libre', G=(65.0, 59.0), ang=-34, sg=31, lean=3, crouch=2, head=(1, 0), p=0,
          swing=(0.2, 0.0), fx=[fx_hit(2)], ms=120),
-    # le retour, lent : il relève le bâton
-    dict(arm='rig', staff='libre', G=(52.0, 50.0), ang=28, sg=42, lean=1, crouch=1, p=-1, swing=(0.5, 0.3),
+    # le retour, lent : il ramène le bâton bas devant lui, puis le redresse et le replante
+    dict(arm='rig', staff='libre', G=(50.0, 56.0), ang=-8, sg=44, lean=1, crouch=1, p=-1, swing=(0.5, 0.3),
          fx=[fx_hit(3)], ms=150),
-    dict(arm='rig', staff='libre', G=(33.0, 47.0), ang=72, sg=58, lean=0, breath=1, p=0, swing=(0.4, 0.2),
+    dict(arm='rig', staff='libre', G=(27.0, 48.0), ang=62, sg=62, lean=0, breath=1, p=0, swing=(0.4, 0.2),
          fx=[fx_hit(4)], ms=150),
     dict(j=2, fx=[fx_hit(5)], ms=170),
 ]

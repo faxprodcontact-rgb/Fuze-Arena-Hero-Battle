@@ -60,14 +60,14 @@ FXPAL = {
 ALLPAL = dict(PAL)
 ALLPAL.update(FXPAL)
 WIND = 'abcdef'
-CLOUDT = 'WVUTS'                     # nuage des sorts : lumière -> creux lilas
+CLOUDT = 'WWVVUT'                    # nuage des sorts : lumière -> ombre lilas (surtout crème)
 LIGHT = np.array([0.6, -0.8])        # la lumière vient d'en haut à droite
 LN = LIGHT / np.linalg.norm(LIGHT)
 
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du monstre (le milieu du nuage, x = 70) est posé en SOL ; l'ennemi est loin
 # à droite (ENEMY_X). La pose seule se recadre en 128 × 120 (le format du jeu, sol en (64, 116)).
-W, H = 256, 160
+W, H = 288, 160
 SOL = (76, 150)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
@@ -100,7 +100,7 @@ GOURD = FILLED & (YY <= 42) & (XX >= 97)                                 # la go
 ARMF = FILLED & ~STICK & (XX >= 96) & (YY >= 72) & (YY <= 81)            # main lointaine, poignet d'or, bout de manche
 ROSARY = FILLED & (XX >= 72) & (XX <= 73) & (YY >= 73) & (YY <= 82) & isin(CORPS, 'mnoptursQR')
 TAIL = FILLED & (XX <= 45) & (YY >= 74) & (YY <= 99) & isin(CORPS, 'ABCDEF')
-HEAD = FILLED & (YY <= 61) & (XX < 98) & ~isin(CORPS, JADE)
+HEAD = FILLED & (YY <= 61) & (XX < 98) & ~(isin(CORPS, JADE) & (YY >= 55))      # (le jade du bandeau reste)
 BEARD = FILLED & isin(CORPS, 'ghijk') & (YY >= 62) & (XX >= 77)
 
 
@@ -327,7 +327,11 @@ def draw_staff(cv, t, mx, my, gglow=0):
         g = np.vectorize(lambda c: GOURD_GLOW[gglow].get(c, c))(g)
     gx = staff_dx(t, GOURD_BASE) + mx
     gy = staff_drop(t, GOURD_BASE) + my
+    # la gourde penche avec le bois : ses rangées sont décalées comme celles du bâton (une à la fois)
+    if t:
+        g = shear_rows(g, lambda y: staff_dx(t, y) - staff_dx(t, GOURD_BASE) if y <= GOURD_BASE else 0)
     blit(cv, g, gx, gy)
+    gx += rnd((staff_dx(t, 34) - staff_dx(t, GOURD_BASE)))
     return g2c(104, 34) + np.array([gx, gy])        # le coeur de la gourde (toile)
 
 
@@ -613,7 +617,7 @@ def _pose():
             L=Ls[i], b=bs[i],
             hd=(0, lift_now - lift_prev),                         # la tête arrive une image plus tard
             qy=Ls[i] - Ls[p],                                     # la crosse traîne : en retard d'une image
-            qx=[0, 0, 0, 1, 1, 1, 0, 0, -1, -1][i] if False else [0, 0, 1, 1, 1, 0, 0, 0, 0, 0][i],
+            qx=[0, 0, 1, 1, 1, 0, 0, 0, 0, 0][i],
             bs=[0, 0, 0, 1, 1, 1, 0, 0, -1, -1][i],
             ro=[0, 0, 0, 0, 1, 1, 1, 0, 0, 0][i],
             cp=i / 10.0,
@@ -733,8 +737,8 @@ def fx_swirl_up(level):
         gy = GROUND - 8 - ctx.L
         g = ctx.gourd
         if level >= 0:
-            ribbon(back, (cx, gy), 46, 7, 25, 160, 2.6 + level * 0.6, tones='cdef')
-            ribbon(front, (cx, gy), 46, 7, 205, 330, 3.0 + level * 0.6, tones='bcdef')
+            ribbon(back, (cx, gy - 6), 48, 11, 20, 165, 2.4 + level * 0.6, tones='cdef')
+            ribbon(front, (cx, gy - 6), 48, 11, 200, 335, 3.0 + level * 0.7, tones='bcdef')
         if level >= 1:
             gust(back, (cx - 44, gy - 2), (cx - 54, gy - 18), (cx - 46, gy - 38), (cx - 30, gy - 48), 3.2, 'bcdef',
                  curl_r=3.5, up=False)
@@ -801,24 +805,49 @@ def fx_travel(s, spin):
     return f
 
 
-def tornado(cv_front, cv_back, cx, base, hgt, wid, phase, tones='abcdef', fade=0.0):
-    """le tourbillon : des rubans en ellipse empilés (plus larges en haut), dont la moitié de devant passe devant
-    l'ennemi et la moitié de derrière derrière ; phase (degrés) : ils tournent. fade : il se défait (rubans plus
-    courts et plus pâles)"""
-    n = 5
-    for i in range(n):
-        s = i / (n - 1)
-        y = base - 4 - s * hgt
-        rx = wid * (0.45 + 0.75 * s)
-        ry = 2.2 + 2.6 * s
-        xo = cx + 4 * math.sin(math.radians(phase * 0.5 + 70 * i))
-        a = phase + 47 * i
-        span = 150 * (1 - fade)
-        w = (2.6 + 1.6 * s) * (1 - 0.5 * fade)
-        tn = tones if fade < 0.5 else tones[2:]
-        # la moitié de devant (angles 180..360) et celle de derrière (0..180), en morceaux décalés qui tournent
-        ribbon(cv_front, (xo, y), rx, ry, 200 + (a % 120), 200 + (a % 120) + span * 0.8, w, tones=tn)
-        ribbon(cv_back, (xo, y), rx, ry, 20 + (a % 120), 20 + (a % 120) + span * 0.7, w * 0.8, tones=tn[1:])
+def tornado(cv_front, cv_back, cx, base, hgt, wid, phase, fade=0.0):
+    """le tourbillon : deux larges rubans de vent enroulés en hélice autour d'un entonnoir (étroit en bas, large en haut),
+    coiffé d'un nuage ; les morceaux qui passent devant l'ennemi sont clairs et devant, ceux de derrière plus sombres
+    et derrière. phase (degrés) : l'hélice tourne. fade (0..1) : il se défait par le bas, les rubans s'amincissent."""
+    for j in range(2):
+        th0 = phase + 180 * j
+        n = 90
+        segs = []                                   # morceaux contigus (devant / derrière)
+        cur, side = [], None
+        for i in range(n + 1):
+            s = i / n
+            y = base - 2 - s * hgt
+            r = wid * (0.3 + 0.7 * s ** 0.85)
+            th = math.radians(th0 + 420 * s)
+            x = cx + r * math.cos(th) + 2.5 * math.sin(math.radians(phase * 0.7) + s * 3)
+            front = math.sin(th) < 0
+            w = (2.6 + 5.0 * s) * (1 - 0.5 * fade)
+            # effilé aux deux bouts du ruban ; le bas disparaît quand il se défait
+            w *= min(1.0, (s - fade * 0.8) / 0.15) if s > fade * 0.8 else 0.0
+            w *= min(1.0, (1 - s) / 0.12)
+            if side is None or front == side:
+                cur.append((x, y, w))
+            else:
+                segs.append((side, cur))
+                cur = [cur[-1], (x, y, w)]
+            side = front
+        segs.append((side, cur))
+        for fr, pts in segs:
+            tn = ('abccde' if fade < 0.5 else 'bcde') if fr else ('cdef' if fade < 0.5 else 'def')
+            stroke(cv_front if fr else cv_back, [(x, y) for x, y, _ in pts],
+                   [w if fr else w * 0.75 for _, _, w in pts], tn)
+    # le pied du tourbillon : un ruban qui tourne au ras du sol (moitié derrière, moitié devant)
+    if fade < 0.6:
+        a = phase % 90
+        ribbon(cv_back, (cx, base - 4), wid * 0.85, 3.5, 20 + a, 150 + a, 2.6, tones='cdef')
+        ribbon(cv_front, (cx, base - 4), wid * 0.85, 3.5, 200 + a, 330 + a, 3.2, tones='bcdef')
+    # le nuage qui coiffe le tourbillon (il tourne avec lui, puis se défait)
+    top = base - hgt - 3
+    if fade < 0.9:
+        cloud(cv_back, (cx + 3 * math.cos(math.radians(phase)), top), wid * 0.42 * (1 - 0.4 * fade), CLOUDT,
+              hollow=fade * 0.6, seed=90 + int(phase) % 7)
+        cloud(cv_back, (cx - wid * 0.6, top + 3), wid * 0.3 * (1 - 0.4 * fade), CLOUDT, hollow=fade * 0.6, seed=97)
+        cloud(cv_back, (cx + wid * 0.65, top + 2), wid * 0.32 * (1 - 0.4 * fade), CLOUDT, hollow=fade * 0.6, seed=98)
 
 
 def fx_storm(k):
@@ -829,7 +858,7 @@ def fx_storm(k):
             pop(front, (cx, base - 40), 15, facing=180, tones='aabcd')
             cloud(back, (cx - 6, base - 46), 10, CLOUDT[:4], seed=71)
             cloud(back, (cx + 12, base - 30), 9, CLOUDT[:4], seed=72)
-            tornado(front, back, cx, base, 50, 16, 0)
+            tornado(front, back, cx, base, 50, 16, 0, fade=0.3)
             for (dx, dy, kk) in ((-20, -20, 0), (18, -54, 1), (24, -12, 2), (-14, -60, 1)):
                 leaf(front, cx + dx, base + dy, kk)
             return
