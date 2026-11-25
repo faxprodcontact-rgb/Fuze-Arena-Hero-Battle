@@ -1005,20 +1005,16 @@ def fx_wisp(cv, f, k):
     if k < 0:
         return
     x, y = c2(NOSTRIL[0], NOSTRIL[1], f)
-    if k == 0:
-        puff(cv, (x + 1, y - 1), 1.8, 'ijl')
-    elif k == 1:
-        puff(cv, (x + 1, y - 2), 2.2, 'ijl')
-        smoke_plume(cv, (x, y - 3), 8, 2.6, sway=-0.7, tones='ijl', curl_r=1.8)
-    elif k == 2:
-        smoke_plume(cv, (x, y - 2), 14, 3.0, sway=-0.9, tones='ijl', curl_r=2.6, tail=0.1)
-    elif k == 3:
-        smoke_plume(cv, (x - 1, y - 4), 17, 3.2, sway=-1.0, tones='ijl', curl_r=3.0, tail=0.35)
-    elif k == 4:
-        cloud(cv, (x - 4, y - 18), 3.0, 'iij', seed=3, ground=False, hollow=0.3)
-        curl(cv, (x - 7, y - 23), 2.6, 120, turn=240, w=1.8, tones='ij')
-    elif k == 5:
-        cloud(cv, (x - 6, y - 24), 2.4, 'ij', seed=4, ground=False, hollow=0.6)
+    stages = [
+        [(1, -1, 1.6, 0)],
+        [(0, -3, 1.9, 0), (-1, -6, 1.4, 0)],
+        [(-1, -5, 2.2, 0), (-3, -9, 1.9, 0), (-4, -13, 1.3, 0)],
+        [(-3, -10, 2.5, 0), (-5, -15, 2.0, 0), (-5, -19, 1.4, 0)],
+        [(-5, -16, 2.5, 0.35), (-7, -21, 1.8, 0.3)],
+        [(-7, -24, 2.0, 0.55)],
+    ]
+    for (dx, dy, r, hol) in stages[k]:
+        puff(cv, (x + dx, y + dy), r, 'iijl' if r > 2 else 'ijl', hollow=hol)
 
 
 def pose_frame(f):
