@@ -842,7 +842,7 @@ def target_tentacle(e=0, bend=0.0, drop_=0.0, cx=0.0):
     cv = shift(_RIGHT_ABOVE, EX - (TR_BASE[0] + OX), base_y - (TR_BASE[1] + OY) + e)
     s = np.clip((base_y + e - YY) / 70.0, 0, 1.3)
     tip = smooth((s - 0.7) / 0.3)
-    cv = warp(cv, bend * s ** 1.8 + cx * tip, drop_ * s ** 2.2)
+    cv = warp(cv, bend * s ** 2.6 + cx * tip, drop_ * s ** 2.4)
     cv[YY > base_y] = '.'
     return cv
 
@@ -894,52 +894,48 @@ def pond_splash(back, front, k, X=None, Y=None):
 
 
 def burst(back, front, X, k):
-    """l'eau qui jaillit de la flaque quand le tentacule sort (k = 0) et retombe autour de lui (k = 1)"""
+    """l'eau qui jaillit de la flaque quand le tentacule sort (k = 0 : une couronne de deux nappes courbes, une bosse
+    d'eau coiffée d'écume au pied) puis retombe autour de lui (k = 1 : il ne reste que la bosse et l'écume)"""
     G = GROUND
     if k == 0:
-        sheet(back, (X - 12, G - 3), 116, 40, 34, 7.5, blob=True)
-        sheet(back, (X + 12, G - 3), 66, 42, -34, 7.5, blob=True)
-        water_band(front, X - 30, X + 28, lambda x: hump(x, X - 12, 16, 7) + hump(x, X + 12, 16, 8) + 1.0)
-        foam(front, (X - 13, G - 7), 4.6, seed=40)
-        foam(front, (X + 12, G - 8), 5.0, seed=41)
-        spray(back, (X, G - 30), 1.0, [(-4.0, -6.0), (4.0, -6.5), (-6.0, -3.0), (6.5, -3.5), (-1.5, -8.0)])
+        sheet(back, (X - 10, G - 4), 128, 26, 46, 7.0, blob=True)
+        sheet(front, (X + 13, G - 4), 58, 24, -50, 6.5, blob=True)
+        water_band(front, X - 30, X + 30, lambda x: hump(x, X - 13, 15, 8) + hump(x, X + 13, 15, 9) + 1.0)
+        foam(front, (X - 14, G - 8), 4.8, seed=40)
+        foam(front, (X + 13, G - 9), 5.2, seed=41)
+        spray(back, (X, G - 24), 1.0, [(-4.0, -6.0), (4.0, -6.5), (-6.0, -3.0), (6.5, -3.5), (-1.5, -8.0)])
     else:
-        sheet(back, (X - 14, G - 2), 124, 42, 96, 6.0, tail=0.45, blob=True)
-        sheet(back, (X + 14, G - 2), 58, 44, -100, 6.4, tail=0.45, blob=True)
-        water_band(front, X - 30, X + 30, lambda x: hump(x, X, 26, 5) + 0.8)
-        foam(front, (X - 10, G - 4), 3.6, hollow=0.2, seed=42)
-        foam(front, (X + 11, G - 5), 4.0, hollow=0.2, seed=43)
-        spray(back, (X, G - 30), 2.6, [(-4.0, -6.0), (4.0, -6.5), (-6.0, -3.0), (6.5, -3.5), (-1.5, -8.0)])
+        water_band(front, X - 30, X + 30, lambda x: hump(x, X, 26, 6) + 0.8)
+        foam(front, (X - 11, G - 5), 3.8, hollow=0.15, seed=42)
+        foam(front, (X + 12, G - 6), 4.2, hollow=0.15, seed=43)
+        spray(back, (X, G - 24), 2.4, [(-4.0, -6.0), (4.0, -6.5), (-6.0, -3.0), (6.5, -3.5), (-1.5, -8.0)])
 
 
 HIT_A = (ENEMY_X - 6, GROUND - 56)            # là où le bout du tentacule frappe le héros (toile)
 
 
 def lash_splash(back, front, k):
-    """l'eau qui éclate sur le héros quand le tentacule s'abat : k = 0 le choc (un gros bouillon d'écume, une
-    couronne de nappes épaisses qui finissent en gouttes), 1 il s'ouvre et gicle, 2 l'écume retombe"""
+    """l'eau qui éclate sur le héros quand le tentacule s'abat : k = 0 le choc (une gerbe d'écume en chou-fleur,
+    une nappe courbe rejetée vers le haut, des gouttes), 1 elle s'ouvre et gicle, 2 elle retombe en gouttes et
+    l'écume coule à ses pieds"""
     X, Y = HIT_A
     seeds = [(-3.5, -5.0), (4.0, -6.0), (6.5, -2.5), (-6.0, -2.0), (1.5, -7.0), (7.5, -4.5), (-2.0, -7.5),
-             (5.0, 1.0), (8.0, -1.0)]
+             (5.0, 1.0), (8.0, -1.0), (-5.0, -6.0)]
     if k == 0:
-        sheet(back, (X + 2, Y - 6), 64, 22, -46, 7.0, blob=True)
-        sheet(back, (X - 3, Y - 6), 112, 18, 54, 6.0, blob=True)
-        sheet(back, (X + 8, Y + 2), 14, 20, -58, 6.0, blob=True)
-        foam(front, (X - 1, Y), 8.5, seed=50, ground=False)
-        foam(front, (X + 9, Y + 8), 5.0, seed=51, ground=False)
-        foam(front, (X - 9, Y + 6), 4.0, seed=52, ground=False)
+        sheet(back, (X + 4, Y - 6), 70, 20, -60, 7.5, blob=True)
+        for j, (dx, dy, r) in enumerate(((0, 0, 8.0), (9, 7, 5.0), (-8, 7, 4.4), (5, -8, 4.0), (-5, -6, 3.4))):
+            foam(front, (X + dx, Y + dy), r, seed=50 + j, ground=False)
         spray(back, (X, Y - 2), 0.9, seeds, front=front)
     elif k == 1:
-        sheet(back, (X + 2, Y - 8), 62, 30, -78, 6.0, tail=0.3, blob=True)
-        sheet(back, (X - 3, Y - 8), 118, 26, 84, 5.0, tail=0.3, blob=True)
-        sheet(back, (X + 9, Y), 10, 24, -80, 5.0, tail=0.3, blob=True)
-        foam(front, (X, Y - 1), 9.0, hollow=0.3, seed=50, ground=False)
-        foam(front, (X + 10, Y + 10), 4.4, hollow=0.3, seed=51, ground=False)
+        sheet(back, (X + 4, Y - 8), 66, 28, -96, 6.4, tail=0.35, blob=True)
+        sheet(back, (X - 4, Y - 6), 124, 20, 70, 5.0, tail=0.3, blob=True)
+        for j, (dx, dy, r) in enumerate(((1, 1, 8.4), (11, 9, 4.6), (-9, 9, 4.0), (6, -9, 3.4))):
+            foam(front, (X + dx, Y + dy), r, hollow=0.3, seed=50 + j, ground=False)
         spray(back, (X, Y - 2), 2.0, seeds, front=front)
     else:
-        foam(front, (X + 2, Y + 8), 6.0, hollow=0.6, seed=50, ground=False)
-        foam(front, (X - 6, Y + 14), 3.4, hollow=0.5, seed=53, ground=False)
         spray(back, (X, Y - 2), 3.2, seeds)
+        for j, (dx, r) in enumerate(((-8, 3.0), (2, 4.0), (11, 3.2))):
+            foam(front, (X + dx, GROUND - 3), r, hollow=0.2, seed=56 + j)
 
 
 def fx_attack(k):
@@ -958,15 +954,15 @@ def fx_attack(k):
             burst(back, front, EX, 0)
         elif k == 5:                                   # le fouet part (image de passage)
             puddle(back, front, EX, 26, 1)
-            over_into(cv, target_tentacle(e=2, bend=8, drop_=3))
+            over_into(cv, target_tentacle(e=2, bend=10, drop_=4))
             burst(back, front, EX, 1)
         elif k == 6:                                   # COUP
             puddle(back, front, EX, 26, 1)
-            over_into(cv, target_tentacle(e=0, bend=17, drop_=15, cx=2))
+            over_into(cv, target_tentacle(e=0, bend=21, drop_=16, cx=2))
             lash_splash(back, front, 0)
         elif k == 7:
             puddle(back, front, EX, 26, 1)
-            over_into(cv, target_tentacle(e=1, bend=15, drop_=17, cx=1))
+            over_into(cv, target_tentacle(e=1, bend=19, drop_=18, cx=1))
             lash_splash(back, front, 1)
         elif k == 8:                                   # il replonge
             puddle(back, front, EX, 25, 1)
