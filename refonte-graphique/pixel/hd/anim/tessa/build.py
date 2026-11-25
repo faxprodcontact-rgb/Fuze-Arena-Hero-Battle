@@ -20,7 +20,8 @@
 #   - ce qui se déplace sans tourner est décalé au pixel près, ou plié par rangées ou par colonnes (jamais d'image
 #     lissée) : la tête bouge par à-coups comme un oiseau (elle reste fixe dans l'espace quand le corps respire, puis
 #     se recale d'un coup) ; les ailes « respirent » (le bout des plumes monte d'un pixel) et se hérissent pour la
-#     spéciale ; les plumes du cou frémissent (pointes qui s'allongent ou se rentrent, posées à la main) ;
+#     spéciale ; les plumes du cou frémissent (pointes qui s'allongent ou se rentrent, posées à la main ; refaites le
+#     25/11/2026 pour le nouveau cou : longues plumes blanches emboîtées dans un col brun qui reste avec le corps) ;
 #   - la corde est retracée à chaque image : toujours un fil d'un pixel, deux traits des bouts de l'arc à la main
 #     (ou un seul trait droit qui vibre quand elle vient de lâcher) ; l'arc se bande ou se détend par rangées ;
 #   - la main ouverte après le lâcher est dessinée à la main (grille MAIN_OUVERTE) ; les flèches qui montent en biais
@@ -168,8 +169,9 @@ for y in range(0, 80):
             ailP[y, x] = row[x]
 work[ailP != '.'] = '.'
 
-# la tête : plumes blanches, bec, yeux (les pointes du cou retombent sur la cuirasse)
-_m = isin(work, '12345LMNOxyzw') & (YY >= 14) & (YY <= 57) & (XX >= 48) & (XX <= 96)
+# la tête : plumes blanches, bec, yeux, et les longues plumes blanches du cou (pointes tièdes 6 et 7) qui
+# s'emboîtent dans le col de plumes brunes (le col, lui, reste avec le corps)
+_m = isin(work, '1234567LMNOxyzw') & (YY >= 14) & (YY <= 57) & (XX >= 48) & (XX <= 96)
 tete = np.where(_m, work, '.')
 work[_m] = '#'
 
@@ -367,13 +369,14 @@ def wing_far(lift=0):
 # ---------------------------------------------------------------- la tête et les plumes du cou
 EYE_BLINK = dict(SRC['cligne'])          # clignement : la paupière de plumes blanches
 EYE_FIX = {'w': 'x'}                     # regard fixé : le reflet s'efface (l'oeil se fixe, plus dur)
-# Les six pointes de plumes blanches qui retombent sur la cuirasse frémissent : quelques pointes s'allongent d'un
-# pixel, d'autres se rentrent (ce qui est derrière, la cuirasse d'or, reparaît). (x, y, lettre) dans la grille.
+# Les longues plumes blanches du cou (pointes tièdes, emboîtées dans le col brun) frémissent : quelques pointes
+# s'allongent d'un pixel sur le col, d'autres se rentrent (le brun du col reparaît). (x, y, lettre) dans la grille.
+# Pointes au repos : (55, 52) sur l'épaulière, (60, 55), (65, 57), (71, 57), (75-76, 55), (78, 54).
 RUFF = {
     0: [],
-    1: [(63, 56, '2'), (73, 55, '3'), (68, 55, '.'), (58, 54, '.')],
-    2: [(58, 55, '1'), (68, 56, '3'), (78, 54, '4'), (63, 55, '.'), (73, 54, '.')],
-    3: [(58, 55, '1'), (63, 56, '2'), (68, 56, '3'), (73, 55, '3'), (78, 54, '4')],      # hérissées (spéciale)
+    1: [(60, 56, '7'), (75, 56, '6'), (65, 57, '.'), (78, 54, '.')],
+    2: [(55, 53, '7'), (65, 58, '7'), (71, 58, '6'), (60, 55, '.'), (76, 55, '.')],
+    3: [(55, 53, '7'), (60, 56, '7'), (65, 58, '7'), (71, 58, '6'), (75, 56, '6')],      # hérissées (spéciale)
 }
 
 
