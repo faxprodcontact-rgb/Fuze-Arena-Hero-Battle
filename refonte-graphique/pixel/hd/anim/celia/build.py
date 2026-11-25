@@ -1321,7 +1321,9 @@ def build_all():
         for i, spec in enumerate(specs):
             cv, back, solid, front, ctx, sback = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []))
-            fr.append((compose(cv, back, solid, front, sback, spec.get('flash')), spec['ms']))
+            # appel par mots-clés (même image) : l'export vers le jeu (../jeu_export.py) retrouve ainsi chaque calque
+            fr.append((compose(cv, fx_back=back, solid=solid, fx_front=front, solid_back=sback, flash=spec.get('flash')),
+                       spec['ms']))
         anims[name] = fr
     return anims
 
