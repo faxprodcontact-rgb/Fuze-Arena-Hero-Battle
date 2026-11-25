@@ -58,3 +58,10 @@
 - Le jeu choisit aujourd'hui les dessins de monstres par famille (`src/game/look.ts`) : à changer au branchement.
 - En cours (25/11) : les 24 monstres lancés en même temps (20 agents au plus à la fois) ; tengu-eventail, singe-voleur,
   gorille-guerrier, singe-chaman à lancer dès qu'une place se libère.
+
+### Animation des monstres (demande du 25/11/2026)
+- Consigne : `animation-monstre.md` (s'appuie sur `animation.md`). Sorties comme les héros : `anim/<nom>/build.py`,
+  `pixel/sortie/anim-<nom>-*.gif` ; la page des monstres montre le GIF dès qu'il existe.
+- Lancées le 25/11 : les 3 araignées, les 3 du clan de Méduse, de Kesha, de Lenore, de Kael, matelot et canonnier (17).
+- À lancer dès qu'une place se libère : tireur-pirate, corbeau-tengu, moine-tengu, singe-voleur, puis tengu-eventail,
+  gorille-guerrier, singe-chaman quand leur dessin sera fini.
