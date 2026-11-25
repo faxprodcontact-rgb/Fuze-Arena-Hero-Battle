@@ -41,11 +41,7 @@ ANCRE = 0.72                            # écran moins haut que le dessin : on c
 
 # Les héros : id, images clés (numéros dans src/game/hd-meta.ts), durée d'une image (0 = une seule image qui respire),
 # palier de l'arête, x des pieds.
-HEROS = [
-    ('angels-6', [26, 27, 28, 27], 170, 'haut', 46),  # Elvyn, en haut, l'eau qui tourne autour de sa main (spéciale)
-    ('myths-9', [14], 0, 'milieu', 106),              # Sylvar, au milieu, l'arc bandé (attaque)
-    ('assassins-2', [11], 0, 'bas', 192),             # Kael, devant, l'épée levée (attaque)
-]
+HEROS = []                              # décision du propriétaire (25/11) : pas de héros sur l'écran de chargement
 SOUFFLE_MS = 900                        # la respiration : le haut du corps monte d'un pixel, une image sur deux
 
 # La barre de chargement (pixels HD) : cadre d'or, émail bleu nuit ; la jauge d'or se remplit dedans.
