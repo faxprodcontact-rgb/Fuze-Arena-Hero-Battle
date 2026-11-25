@@ -119,11 +119,17 @@ beau ». Donc :
 - **Écran de chargement** (`chargement.py` + `paysage.py`) : un décor dessiné pour lui, 256 × 555 pixels HD (la forme
   d'un grand téléphone), **sans héros**. Retours successifs du propriétaire : « pas de héros, un beau décor animé » ;
   « enlève carrément la montagne au premier plan, remplace-la par les beaux nuages, et place le logo au milieu ; refais
-  bien le colisée sur sa montagne derrière ; que tout soit cohérent ». Ce qu'on voit : le ciel du soir en paliers, le
+  bien le colisée sur sa montagne derrière ; que tout soit cohérent » ; « retravaille bien l'arène : le fond en gris uni
+  ne passe pas trop bien » (avant / après : `sortie/ui/colisee-retouche.png`). Ce qu'on voit : le ciel du soir en paliers, le
   soleil en haut à droite (la seule lumière), des nuages hauts et des oiseaux au loin ; deux chaînes de montagnes pâles
   et bleutées avec de la brume ; le **colisée** (sujet du décor, sous le logo) : arène ovale vue un peu d'en haut, gradins
   et sable à l'intérieur, trois étages d'arcades qui rétrécissent vers les bords, attique à petites fenêtres, corniches,
-  pierre usée, une brèche à gauche avec ses éboulis, cinq fanions rouges qui flottent ; posé sur le plateau d'un piton
+  pierre usée, une brèche à gauche avec ses éboulis, cinq fanions rouges qui flottent. Pierre chaude décalée en teinte
+  (`PIERRE7` : lilas à l'ombre à gauche → ocre, sable, pêche au soleil à droite), blocs aux joints irréguliers visibles
+  seulement au soleil (le ton varie un peu d'un bloc à l'autre : pas de bandes verticales), taches d'usure, mousse à
+  l'ombre, baies avec jambage éclairé, creux sombre et mur du couloir au fond, clés de voûte, pilastres, corniches
+  (dessus clair, ombre dessous), grande porte de bois ferrée et deux torches éteintes, une fissure, gradins en rangées
+  qui suivent l'ovale (marches claires, moitié gauche au soleil), sable de l'arène et son podium, ombre douce au pied ; posé sur le plateau d'un piton
   rocheux (bosquets aux flancs) qui sort des nuages ; devant, la **mer de nuages** en trois rangées (loin : petite et pâle ;
   près : grosse et chaude), chacune glisse à sa vitesse, et une brume passe entre le piton et les nuages. Tout boucle en
   32 s sans couture (les rangées de nuages sont dessinées sur trois largeurs pour que leurs bords se raccordent).
@@ -137,7 +143,7 @@ beau ». Donc :
   Les lettres sont les contours de Lilita One (aucune police à attendre), or métallique en dégradé (haut clair, ligne
   d'horizon, bas orangé), liseré clair en haut à droite et bord sombre en bas à gauche, reflet doux, tranche brun rouge,
   un contour sombre épais, ombre portée floue ; ruban cramoisi bordé d'or, cintré, lettres crème qui suivent la courbe ;
-  deux épées croisées (pointes en haut, poignées sous le ruban) ; une étoile à 4 branches. Troisième retour (« le logo
+  deux épées croisées (pointes en haut, poignées sous le ruban) ; plus d'étoile (retirée à la demande du propriétaire). Troisième retour (« le logo
   est coupé en bas, et il est affiché trop gros ») : la boîte du SVG englobe tout (pommeaux, queues du ruban, contour,
   ombre : `viewBox="4 0 632 474"`), et il est plus petit : 62 % de la colonne, 280 px et 19 % de la hauteur au plus. Aperçu haute définition :
   `sortie/ui/logo-hd.png` (1280 × 900, fond transparent). Le premier logo en pixels est retiré.
