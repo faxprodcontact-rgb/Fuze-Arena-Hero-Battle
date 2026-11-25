@@ -21,8 +21,10 @@
   Garvin, Mira, Zaroth (défense d'équipe + se soigne + provocation) ; Arcan, Célia, Anubis (attaque d'équipe + énergie).
   Myrr, Zaroth, Arcan faits puis repris (effet en cercle autour du lanceur, règle du 25/11). Effets REÇUS par les alliés : génériques
   (soin, régénération, purification, résurrection, bouclier, défense, attaque, énergie, provocation, débuffs ennemis × 4
-  éléments), joués par le jeu sur chaque case occupée : dossier `../anim/effets/` (build.py + aperçu d'équipe equipe.py),
-  en cours. Elyon (affaiblit/ralentit les ennemis), Lilou, Auriel, Ysolde : déjà cohérents.
+  éléments), joués par le jeu sur chaque case occupée : dossier `../anim/effets/` (build.py ; `sortie/` = images du jeu + effets.json ;
+  aperçu d'équipe : `python3 equipe.py --lanceur myrr --case 3 --effet soin,purification --equipe zaroth,eldra,kael,isis`),
+  faits le 25/11 (en attente de son avis). Restent 11 spéciales d'équipe : Rook, Nerith, Minotaure, Bérold, Corvin,
+  Solenn, Garvin, Mira, Célia, Anubis (+ vérifier la provocation de Bérold/Corvin/Solenn/Garvin/Mira). Elyon (affaiblit/ralentit les ennemis), Lilou, Auriel, Ysolde : déjà cohérents.
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
 
 ## Méthode (validée par le propriétaire)
