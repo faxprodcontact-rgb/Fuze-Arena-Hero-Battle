@@ -4,10 +4,24 @@
 // tourbillonnant, étoile d'or). Le cœur du portail, ses gemmes et la lueur du centre ont la couleur de la rareté du héros
 // caché dessous : c'est le dos qui « annonce » la carte avant qu'elle se retourne.
 // Un reflet passe sur la carte, la lueur respire, le cœur tourne. `h` = 200 (carte 3 : 4) ou 180 (5 : 6, la grande carte seule).
-import { RUNES } from '../bg/kit';
 import { spark } from './portal';
 
 const INK = '#2f1b0c';
+
+/**
+ * Les signes des cercles en filigrane (dos des cartes, tirage) : inventés, et aucun ne ressemble à une lettre ou à un
+ * chiffre (pas de « II », de « Λ » ni de « O », qu'on lirait en grand). Tracés au trait, bouts ronds ; un `h0.01` = un point.
+ */
+export const RUNES = [
+  'M0 -4 L3 0 L0 4 L-3 0 Z M0 0 h0.01',
+  'M0 -4 L3.5 3 H-3.5 Z M0 1 h0.01',
+  'M-3 2 Q0 -5 3 2 M0 3.6 h0.01',
+  'M-3 -2 Q0 2 3 -2 M-3 2 Q0 6 3 2',
+  'M-4 0 Q0 -4 4 0 Q0 4 -4 0 Z M0 0 h0.01',
+  'M0 -4 L2.5 -1.5 L0 1 L-2.5 -1.5 Z M0 1 V4',
+  'M-3 -0.5 L0 -3.5 L3 -0.5 M-3 3 L0 0 L3 3',
+  'M-3.5 1 Q0 -4 3.5 1 M-2 3.4 H2',
+];
 
 /** Quelques étoiles du ciel de la carte (x, y en fraction, rayon). */
 const STARS: [number, number, number][] = [

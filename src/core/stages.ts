@@ -40,6 +40,29 @@ export function isBossStage(stage: number): boolean {
   return stageInChapter(stage) === STAGES_PER_CHAPTER;
 }
 
+/**
+ * Les 8 régions de la carte (chapitres par région), puis la campagne recommence. Chaque région a son clan de
+ * monstres et son décor (src/game/look.ts) ; le dernier niveau de la région est un grand boss, seul.
+ */
+export const REGION_CHAPTERS = [4, 4, 4, 4, 4, 4, 3, 3] as const;
+const LOOP = REGION_CHAPTERS.reduce((n, c) => n + c, 0);
+
+/** La région d'un chapitre (0 à 7) et sa place dans la région (le premier chapitre vaut 0). */
+export function regionOf(chapter: number): { index: number; at: number; last: boolean } {
+  let c = (chapter - 1) % LOOP;
+  for (let i = 0; i < REGION_CHAPTERS.length; i++) {
+    const n = REGION_CHAPTERS[i]!;
+    if (c < n) return { index: i, at: c, last: c === n - 1 };
+    c -= n;
+  }
+  return { index: 0, at: 0, last: false };
+}
+
+/** Le dernier niveau d'une région : le grand boss, sans monstres autour. */
+export function isRegionFinale(stage: number): boolean {
+  return isBossStage(stage) && regionOf(chapterOf(stage)).last;
+}
+
 export interface WaveOptions {
   /** Puissance totale de section que ce combat demande. */
   power: number;
@@ -49,6 +72,8 @@ export interface WaveOptions {
   element: Element;
   seed: number;
   boss?: string;
+  /** Le boss est seul (grand boss d'une fin de région) : il prend la force des monstres qui l'auraient accompagné. */
+  soloBoss?: boolean;
 }
 
 const FRONT_SLOTS: Slot[] = [0, 1, 2];
@@ -62,9 +87,10 @@ export function buildWaves(o: WaveOptions): UnitInit[][] {
     const last = w === o.waves - 1;
     const units: UnitInit[] = [];
     if (last && o.boss) {
-      units.push(monsterToUnit(o.boss, 2, o.element, perMonster * Math.max(1, o.count * BALANCE.bossFactor), `e-${w}-boss`));
       const adds = Math.min(2, o.count - 1);
-      for (let i = 0; i < adds; i++) units.push(monsterToUnit(pick(rng, FRONT_MONSTERS), i as Slot, o.element, perMonster * 0.6, `e-${w}-${i}`));
+      const mult = perMonster * Math.max(1, o.count * BALANCE.bossFactor) + (o.soloBoss ? adds * perMonster * 0.6 : 0);
+      units.push(monsterToUnit(o.boss, 2, o.element, mult, `e-${w}-boss`));
+      if (!o.soloBoss) for (let i = 0; i < adds; i++) units.push(monsterToUnit(pick(rng, FRONT_MONSTERS), i as Slot, o.element, perMonster * 0.6, `e-${w}-${i}`));
     } else {
       const front = Math.min(3, Math.max(1, Math.ceil(o.count * 0.6)));
       for (let i = 0; i < o.count; i++) {
@@ -89,5 +115,6 @@ export function campaignWaves(stage: number): UnitInit[][] {
     element: chapterElement(chapter),
     seed: stage * 7919,
     boss: isBossStage(stage) ? BOSSES[(chapter - 1) % BOSSES.length] : undefined,
+    soloBoss: isRegionFinale(stage),
   });
 }

@@ -1,40 +1,47 @@
-// Un héros en pied (le dessin entier, pas la vignette), posé dans une boîte 200 × 240 : ses pieds sont toujours au même
-// endroit (53 % de la largeur, 95 % de la hauteur), quelle que soit la taille du dessin (arme levée, ailes, queue…),
-// et tous les héros y ont la même stature (`norm`, mesurée par refonte-graphique/art-jeu.py).
+// Un héros en pied (pas seulement son visage), posé dans une boîte 200 × 240 : ses pieds sont toujours au même endroit
+// (53 % de la largeur, 95 % de la hauteur) et tous ont la même échelle qu'au combat (un grand reste plus grand).
+// Il respire : sa bande d'images (art/hd/pied/<id>.webp, refonte-graphique/pixel/hd/anim/vignettes.py) défile par le CSS.
 // Sert à l'estrade de l'onglet Héros, au choix de la section et à la page d'un héros.
-import { ART_META } from '../art-meta';
-import { PIXEL } from '../pixel-meta';
-import { artUrl, heroImage, isPixel, pixelUrl } from '../art';
+import { figureUrl, heroImage } from '../art';
+import { HD_FIG } from '../hd-figures';
 
-// Pixel art : un pixel mesure `scale` unités au combat ; une unité du combat vaut 1 / 0,56 unité de la boîte (UNIT_PX).
-const BOX_PER_UNIT = 1 / 0.56;
+/** Un pixel du dessin, en unités de la boîte (200 × 240) : un héros de 115 pixels mesure 200 unités. */
+const BOX_PER_PX = 1.75;
+
+/** Les mesures de la bande d'un personnage HD (voir hd-figures.ts). */
+function fig(id: string): [number, number, number, number, number, number] | undefined {
+  return (HD_FIG.chars as Record<string, readonly number[] | undefined>)[id] as [number, number, number, number, number, number] | undefined;
+}
+
+/** La bande qui défile (steps CSS) : chacun respire à son rythme, un décalage tiré de son nom. */
+function Strip({ id, n, ms }: { id: string; n: number; ms: number }) {
+  let hash = 0;
+  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) % 997;
+  return (
+    <img src={figureUrl(id)} alt="" draggable={false} style={{
+      width: `${n * 100}%`, animation: `px-idle ${((n * ms) / 1000).toFixed(2)}s steps(${n}) infinite`, animationDelay: `-${(((hash % n) * ms) / 1000).toFixed(2)}s`,
+    }} />
+  );
+}
+
+/** N'importe quel personnage HD (monstre, boss) qui respire, à la largeur de son cadre (regard tourné par le CSS). */
+export function Figure({ id, class: cls = '' }: { id: string; class?: string }) {
+  const m = fig(id);
+  if (!m) return <img class={cls} src={heroImage(id)} alt="" />;
+  const [w, h, , , n, ms] = m;
+  return <span class={`px-fit ${cls}`} style={{ aspectRatio: `${w} / ${h}` }}><Strip id={id} n={n} ms={ms} /></span>;
+}
 
 export function HeroFigure({ defId, class: cls = '' }: { defId: string; class?: string }) {
-  if (isPixel(defId)) {
-    // la planche animée (8 images) dans une fenêtre d'une case, pieds au même point que les autres héros
-    const scale = PIXEL.chars[defId as keyof typeof PIXEL.chars][3];
-    const u = scale * BOX_PER_UNIT; // un pixel du dessin, en unités de la boîte (200 × 240)
-    const left = 53 - ((PIXEL.fx * u) / 200) * 100, top = 95 - ((PIXEL.fy * u) / 240) * 100;
-    // chacun respire à son rythme : un décalage tiré de son nom
-    let h = 0;
-    for (const ch of defId) h = (h * 31 + ch.charCodeAt(0)) % 997;
-    return (
-      <span class={`hfig hfig-px ${cls}`}>
-        <span class="px-win" style={{ left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%`, width: `${(((PIXEL.cw * u) / 200) * 100).toFixed(2)}%`, aspectRatio: `${PIXEL.cw} / ${PIXEL.ch}` }}>
-          <img src={pixelUrl(defId)} alt="" draggable={false} style={{ animationDelay: `-${((h % 8) * 0.14).toFixed(2)}s` }} />
-        </span>
-      </span>
-    );
-  }
-  const m = (ART_META.chars as unknown as Record<string, number[] | undefined>)[defId];
+  const m = fig(defId);
   if (!m) return <span class={`hfig ${cls}`}><img class="hfig-flat" src={heroImage(defId)} alt="" /></span>;
-  const [ox, oy, w] = m as [number, number, number];
-  const k = m[5] || 1;
-  // le dessin est agrandi ou réduit autour du point des pieds (106, 228 dans son repère)
-  const left = 53 + ((ox - 106) / 2) * k, top = 95 + ((oy - 228) / 2.4) * k;
+  const [w, h, fx, fy, n, ms] = m;
+  const left = 53 - ((fx * BOX_PER_PX) / 200) * 100, top = 95 - ((fy * BOX_PER_PX) / 240) * 100;
   return (
-    <span class={`hfig ${cls}`}>
-      <img src={artUrl(defId)} alt="" draggable={false} style={{ left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%`, width: `${((w / 2) * k).toFixed(2)}%` }} />
+    <span class={`hfig hfig-px ${cls}`}>
+      <span class="px-win" style={{ left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%`, width: `${(((w * BOX_PER_PX) / 200) * 100).toFixed(2)}%`, aspectRatio: `${w} / ${h}` }}>
+        <Strip id={defId} n={n} ms={ms} />
+      </span>
     </span>
   );
 }

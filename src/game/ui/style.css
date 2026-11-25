@@ -1,9 +1,9 @@
 /* Interface du jeu (deuxième refonte, 22/11/2026) : tons moyens tirés des décors du jeu, traits fins, relief.
    Le fond de l'application est un décor du jeu, flouté et teinté. Les panneaux ont un double filet (bord sombre fin +
-   filet doré), des rivets aux coins, une ombre douce. Trois directions au choix (attribut data-theme sur <html>) :
-   « bois » (bois sombre et parchemin), « royal » (bleu roi et or), « crepuscule » (prune et or). Tout se règle ici. */
+   filet doré), des rivets aux coins, une ombre douce. Couleurs : émail bleu nuit cerclé d'or, panneaux de parchemin.
+   Tout se règle ici. */
 :root {
-  /* couleurs franches, communes aux trois directions (un peu plus profondes que les pictos, pour les laisser briller) */
+  /* couleurs franches, communes à tout le jeu (un peu plus profondes que les pictos, pour les laisser briller) */
   --gold: #f0b530; --gold-hi: #ffd978; --gold-dark: #c8860f; --gold-deep: #7a4c05;
   --green: #3fae5a; --green-hi: #74d889; --green-dark: #2a8442;
   --blue: #3f86e0; --blue-hi: #7fb3f5; --blue-dark: #2a5fb5;
@@ -15,9 +15,9 @@
   --font-title: 'Lilita One', 'Trebuchet MS', system-ui, sans-serif;
   --font: 'Fredoka', 'Segoe UI', Roboto, system-ui, sans-serif;
 }
-/* --- direction « bois » (nom gardé) : depuis la v0.41.0, cadres en émail bleu nuit cerclé d'or (le bois brun faisait
+/* --- les couleurs de l'interface : depuis la v0.41.0, cadres en émail bleu nuit cerclé d'or (le bois brun faisait
    daté, demande du propriétaire), panneaux de parchemin aux bords et aux textes bleu nuit --- */
-:root, :root[data-theme='bois'] {
+:root {
   --tint: linear-gradient(180deg, #18204b94 0%, #2a356f59 42%, #10163ab3 100%);
   --bar: linear-gradient(180deg, #3a4994 0%, #2a3676 55%, #1d2758 100%);
   --bar-text: #fff3d6; --bar-muted: #c9d2f0;
@@ -31,38 +31,6 @@
   --chip: #fff6dc;
   --hud-panel: #e6d09e; --hud-edge: #1a2150; --hud-under: #1d2758; --hud-text: #1f2a66;
   color-scheme: light;
-}
-/* --- direction « royal » : bleu roi et or (la bannière de guilde, les boucliers) --- */
-:root[data-theme='royal'] {
-  --tint: linear-gradient(180deg, #16254d94 0%, #2a458559 42%, #121d3fb8 100%);
-  --bar: linear-gradient(180deg, #34508f 0%, #263c72 55%, #1b2b56 100%);
-  --bar-text: #f6f1e2; --bar-muted: #b9c6e6;
-  --panel: linear-gradient(180deg, #43609f 0%, #354d88 60%, #2c4177 100%);
-  --panel-flat: #3a5490; --groove: #16234a;
-  --edge: #121c3a; --frame: #22335f; --trim: #e3b548; --trim-soft: #ffffff3d;
-  --inset: #0a14332e; --inset-line: #0a143357; --field: #101b3f99;
-  --text: #f4f0e4; --muted: #b9c6e6; --title: #ffe6a8; --accent-text: #ffd978;
-  --head: linear-gradient(180deg, #2c4580 0%, #1b2b56 100%); --head-text: #ffe6a8;
-  --ghost-1: #ffffff2e; --ghost-2: #ffffff14; --ghost-edge: #0e1733; --ghost-text: #f4f0e4;
-  --chip: #ffffff1f;
-  --hud-panel: #354d88; --hud-edge: #121c3a; --hud-under: #1b2b56; --hud-text: #f4f0e4;
-  color-scheme: dark;
-}
-/* --- direction « crepuscule » : prune et or (le ciel de l'écran de chargement, les donjons, le portail) --- */
-:root[data-theme='crepuscule'] {
-  --tint: linear-gradient(180deg, #2c1a4494 0%, #5a357059 42%, #23143ab8 100%);
-  --bar: linear-gradient(180deg, #6a4a8f 0%, #4f3570 55%, #3a2556 100%);
-  --bar-text: #fbf1e0; --bar-muted: #d2c0e8;
-  --panel: linear-gradient(180deg, #765799 0%, #5f4482 60%, #523974 100%);
-  --panel-flat: #66498a; --groove: #2a1a44;
-  --edge: #23143a; --frame: #3f2a5e; --trim: #f0c060; --trim-soft: #ffffff3d;
-  --inset: #1a0c2e33; --inset-line: #1a0c2e5c; --field: #1f113899;
-  --text: #f8f0e2; --muted: #d2c0e8; --title: #ffe1a0; --accent-text: #ffd684;
-  --head: linear-gradient(180deg, #5a3d7e 0%, #3a2556 100%); --head-text: #ffe1a0;
-  --ghost-1: #ffffff2e; --ghost-2: #ffffff14; --ghost-edge: #1c0f30; --ghost-text: #f8f0e2;
-  --chip: #ffffff1f;
-  --hud-panel: #5f4482; --hud-edge: #23143a; --hud-under: #3a2556; --hud-text: #f8f0e2;
-  color-scheme: dark;
 }
 
 * { box-sizing: border-box; overscroll-behavior: none; }
@@ -215,8 +183,6 @@ p { margin: 6px 0; }
 .power-line { display: flex; align-items: center; justify-content: center; gap: 6px; font: 800 19px var(--font-title); }
 .power-line.ok strong, .power-chip.ok, .needs li.ok, .dungeon-tries { color: #2f9a4c; }
 .power-line.low strong, .power-chip.low, .needs, .error, .setting-row.danger { color: #c93a3a; }
-:root[data-theme='royal'] :is(.power-line.ok strong, .power-chip.ok, .needs li.ok, .dungeon-tries), :root[data-theme='crepuscule'] :is(.power-line.ok strong, .power-chip.ok, .needs li.ok, .dungeon-tries) { color: #7dea96; }
-:root[data-theme='royal'] :is(.power-line.low strong, .power-chip.low, .needs, .error, .setting-row.danger), :root[data-theme='crepuscule'] :is(.power-line.low strong, .power-chip.low, .needs, .error, .setting-row.danger) { color: #ff9d94; }
 .stars { color: var(--gold-hi); font-size: 12px; letter-spacing: -1px; text-shadow: 0 1px 0 #3a2405, 1px 0 0 #3a2405, -1px 0 0 #3a2405, 0 -1px 0 #3a2405, 0 0 3px #000c; }
 .stars.red { color: #ff8f86; text-shadow: 0 1px 0 #4a0c0c, 1px 0 0 #4a0c0c, -1px 0 0 #4a0c0c, 0 -1px 0 #4a0c0c, 0 0 3px #000c; }
 .stars.mythic { color: #fff; background: var(--red); border: 1px solid #5e1717; border-radius: 6px; padding: 0 5px; font: 800 10px var(--font); letter-spacing: 0; text-shadow: none; }
@@ -580,8 +546,11 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 .hp-fig .hfig img { filter: drop-shadow(0 3px 3px #000000a6); }
 .hp-fig.hp-up .hfig img { animation: hp-bright 0.6s ease-out; }
 /* pixel art : une fenêtre carrée d'une case, où défile la planche de 8 images (elle respire et cligne déjà : pas de souffle en plus) */
-.hfig .px-win { position: absolute; aspect-ratio: 1; overflow: hidden; filter: drop-shadow(0 2px 2px #00000080); }
-.hfig .px-win img { position: static; display: block; width: 800%; height: 100%; filter: none; image-rendering: pixelated; animation: px-idle 1.12s steps(8) infinite; }
+.hfig .px-win { position: absolute; overflow: hidden; filter: drop-shadow(0 2px 2px #00000080); }
+.hfig .px-win img, .px-fit img { position: static; display: block; height: 100%; max-width: none; filter: none; image-rendering: pixelated; }
+.px-fit { display: block; overflow: hidden; }
+/* les visages HD (art/hd/v/) : pixel art agrandi sans flou */
+img[src^="art/hd/"] { image-rendering: pixelated; }
 @keyframes px-idle { to { transform: translateX(-100%); } }
 .field-hero .hfig-px, .hall-hero .hfig-px, .hp-fig .hfig-px { animation: none; }
 .hall-back .hfig-px .px-win { filter: drop-shadow(0 2px 2px #00000080) brightness(0.84) saturate(0.92); }
@@ -986,14 +955,14 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 .tile-tower { --tile: #7d54c7; } .tile-missions { --tile: #2a9d8a; } .tile-dungeons { --tile: #a86a3c; }
 .tile-dailyBoss { --tile: #c24545; } .tile-arena { --tile: #3a78c9; } .tile-defense { --tile: #cf9f2e; }
 /* le Colisée */
-.colisee-scene { background-position: center 70% !important; background-size: cover !important; place-items: center !important; height: 170px; }
+.colisee-scene { background-position: center 86% !important; background-size: cover !important; place-items: center !important; height: 170px; }
 .colisee-art { width: 128px; height: 128px; filter: drop-shadow(0 8px 6px #0009); animation: float 3.4s ease-in-out infinite; }
 .colisee-duel { display: flex; align-items: center; justify-content: center; gap: 18px; }
 .colisee-duel .team-faces { padding-right: 8px; }
 .team-face.unknown { display: grid; place-items: center; background: radial-gradient(circle at 50% 30%, #8a6a6a, #4a2f36 75%); font: 800 22px var(--font-title); color: #ffffffb3; }
 /* une scène peinte pour chaque mode */
 .tower-art, .boss-scene, .wmap { border: 1.5px solid var(--edge); border-radius: 14px; overflow: hidden; box-shadow: inset 0 0 0 1.5px var(--trim), inset 0 0 0 3px #00000059, inset 0 0 30px #00000059, var(--shadow); }
-.tower-art { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; padding: 14px 0; background: #6b8fb5 center 30% / cover; }
+.tower-art { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; padding: 14px 0; background: #6b8fb5 center 80% / cover; image-rendering: pixelated; }
 .tower-floor { width: 62%; padding: 8px; border-radius: 8px; background: linear-gradient(180deg, #d9d3e3, #b3abc4); border: 1.5px solid #3b3350; font: 800 15px var(--font-title); color: #3b3350; text-align: center; box-shadow: inset 0 1px 0 #ffffff99, inset 0 -3px 0 #0000002e, 0 3px 5px #00000073; }
 .tower-floor.current { width: 74%; background: linear-gradient(180deg, var(--purple-hi), var(--purple) 50%, var(--purple-dark)); border-color: #3a1f70; color: #fff; text-shadow: 0 1px 2px #000a; box-shadow: inset 0 1px 0 #ffffff80, 0 0 0 2px var(--gold-hi), 0 4px 8px #00000080; }
 .tower-floor.done { opacity: 0.6; }
@@ -1002,10 +971,9 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 .mission-art { display: flex; justify-content: center; margin: 4px 0 8px; }
 .mini-team { display: flex; }
 .mini-team img { width: 34px; margin-right: -6px; }
-.boss-scene { position: relative; align-self: stretch; height: 190px; display: grid; place-items: end center; background: #5a2a2a center 78% / 135% auto; }
+.boss-scene { position: relative; align-self: stretch; height: 190px; display: grid; place-items: end center; background: #5a2a2a center 90% / 100% auto; image-rendering: pixelated; }
 .boss-img { width: 150px; transform: scaleX(-1); }
-.boss-scene .boss-img { width: 170px; margin-bottom: 4px; filter: drop-shadow(0 8px 6px #0009); animation: boss-breathe 3s ease-in-out infinite; transform-origin: 50% 100%; }
-@keyframes boss-breathe { 50% { transform: scaleX(-1) scaleY(1.035); } }
+.boss-scene .boss-img { width: 190px; margin-bottom: 2px; filter: drop-shadow(0 8px 6px #0009); }
 .boss-tiers { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
 .boss-tiers span { display: flex; flex-direction: column; align-items: center; border-radius: 10px; padding: 4px 6px; }
 .boss-track { position: relative; width: calc(100% - 28px); margin: 34px auto 4px; }
@@ -1030,7 +998,7 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 /* ---------- Donjons ---------- */
 button.dungeon { position: relative; display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 12px; text-align: left; width: 100%; overflow: hidden; min-height: 88px; color: var(--text); }
 button.dungeon .grow { display: flex; flex-direction: column; gap: 2px; }
-button.dungeon::before, .dungeon-head::before { content: ''; position: absolute; inset: 0 0 0 50%; background-image: var(--scene); background-position: center 62%; background-size: cover; -webkit-mask-image: linear-gradient(90deg, #0000, #000 70%); mask-image: linear-gradient(90deg, #0000, #000 70%); opacity: 0.92; }
+button.dungeon::before, .dungeon-head::before { content: ''; position: absolute; inset: 0 0 0 50%; background-image: var(--scene); background-position: center 86%; background-size: cover; image-rendering: pixelated; -webkit-mask-image: linear-gradient(90deg, #0000, #000 70%); mask-image: linear-gradient(90deg, #0000, #000 70%); opacity: 0.92; }
 button.dungeon > *:not(.dot), .dungeon-head > * { position: relative; }
 button.dungeon > .dot { top: -4px; right: -4px; z-index: 2; }
 button.dungeon { overflow: visible; }
@@ -1049,19 +1017,6 @@ button.dungeon .dungeon-tries, .dungeon-head .dungeon-tries { background: #fff6d
 .dungeon-step.next { border-color: var(--trim); box-shadow: inset 0 0 0 1px var(--trim), 0 2px 5px #00000040; }
 .dungeon-step.last { border-color: var(--trim); }
 .dungeon-step.old { opacity: 0.7; }
-
-/* ---------- Défense ---------- */
-.def-map { width: 100%; max-width: 230px; margin: 0 auto; aspect-ratio: 720 / 1100; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--edge); }
-.def-map.big { max-width: none; width: auto; height: 46vh; flex-shrink: 0; }
-.def-map svg { display: block; width: 100%; height: 100%; }
-.def-pad { cursor: pointer; }
-.def-level { font: 800 22px var(--font-title); }
-.def-stars { color: var(--gold-hi); letter-spacing: 1px; text-shadow: 0 1px 0 #7a4c05; }
-.def-stars .off { color: #00000040; text-shadow: none; }
-.def-rewards { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px 14px; }
-.star-chest { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 4px 10px; width: 100%; }
-.star-chest .muted { grid-column: 2; text-align: center; }
-.star-chest-gift { display: flex; align-items: center; gap: 6px; }
 
 /* ---------- Social ---------- */
 .member { flex-direction: row; align-items: center; padding: 8px 12px; }
@@ -1103,8 +1058,7 @@ button.dungeon .dungeon-tries, .dungeon-head .dungeon-tries { background: #fff6d
 .war-side strong { font-size: 13px; }
 .war-side .icon { filter: drop-shadow(0 3px 3px #00000059); }
 .war-score { font: 800 18px var(--font-title); color: var(--accent-text); }
-.war-side.foe .war-score { color: var(--red-hi); }
-:root[data-theme='bois'] .war-side.foe .war-score, :root:not([data-theme]) .war-side.foe .war-score { color: var(--red-dark); }
+.war-side.foe .war-score { color: var(--red-dark); }
 .war-vs { font: 800 26px var(--font-title); color: var(--red); text-shadow: 0 1px 2px #0006; }
 .war-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .war-fort { align-items: center; gap: 2px; padding: 8px 4px 10px; text-align: center; color: var(--text); }
@@ -1134,7 +1088,6 @@ button.war-fort:disabled { opacity: 0.6; }
 .pass-cell.done { opacity: 0.4; }
 .pass-cell.locked { filter: grayscale(0.8); }
 label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800; }
-.tests-title { margin-top: 10px; color: var(--muted); }
 .gain { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 .result-title { position: relative; align-self: center; text-align: center; font: 800 34px/1.25 var(--font-title); color: #fff; text-shadow: 0 2px 2px #000000a6; padding: 0 30px 3px;
   background: var(--head); border: 1.5px solid var(--edge); border-radius: 10px; box-shadow: inset 0 0 0 1.5px var(--trim), inset 0 0 0 3px #00000059, 0 4px 9px #00000066; }
@@ -1154,7 +1107,6 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
 /* ---------- Réglages, nom, pages d'information ---------- */
 .settings-group { display: flex; flex-direction: column; gap: 5px; }
 .settings-group h3 { color: var(--muted); font-size: 14px; margin: 4px 0 2px; }
-.settings-group.tests { border-top: 1.5px dashed var(--inset-line); padding-top: 10px; }
 .setting-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 50px; padding: 6px 12px; font-weight: 800; text-align: left; color: var(--text); }
 button.setting-row:active { filter: brightness(0.92); }
 .mono { font-family: var(--font-title); letter-spacing: 0.12em; }
@@ -1296,18 +1248,3 @@ button.setting-row:active { filter: brightness(0.92); }
 .fuse-big.result { position: relative; filter: none; }
 .fuse-big.result .hcard { position: relative; }
 .chest-btn .chest-mini { display: block; }
-
-/* ---------- Outil de test : choix des combattants du combat d'essai HD (screens/hd-pick.tsx) ---------- */
-.hd-pick { display: flex; flex-direction: column; gap: 6px; }
-.hd-pick h3 { margin: 2px 0 0; display: flex; justify-content: space-between; align-items: baseline; font: 400 15px var(--font-title); color: #fff3d6; text-shadow: 0 1px 0 #0a0e26; }
-.hd-count { font: 400 13px var(--font-title); color: var(--gold-hi); }
-.hd-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; }
-.hd-face { position: relative; aspect-ratio: 1; padding: 0; border-radius: 7px; overflow: hidden; border: 1.5px solid #070a1c;
-  background: radial-gradient(circle at 50% 30%, #46539a, #161c46 72%); box-shadow: inset 0 0 0 1px #7f8fd066, 0 1px 3px #0009; }
-.hd-face-art { position: absolute; inset: 2px; background-repeat: no-repeat; image-rendering: pixelated; opacity: 0.8; }
-.hd-face.on { background: radial-gradient(circle at 50% 30%, #8a9ef0, #2c3a86 72%); box-shadow: inset 0 0 0 2px var(--gold-hi), 0 0 7px 1px var(--gold); }
-.hd-face.on .hd-face-art { opacity: 1; }
-.hd-face-n { position: absolute; right: 1px; bottom: 0; font: 400 12px/1 var(--font-title); color: var(--gold-hi); text-shadow: 0 1px 0 #0a0e26, 1px 0 0 #0a0e26, -1px 0 0 #0a0e26, 0 -1px 0 #0a0e26; }
-.hd-pick-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 6px; }
-.hd-pick-btns .btn { min-width: 0; }
-.hd-pick-btns .btn-gold { grid-column: 1 / -1; }

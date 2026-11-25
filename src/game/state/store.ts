@@ -38,7 +38,6 @@ export function fresh(now = Date.now()): PlayerState {
     summon: { pity: 0, total: 0 },
     tower: { floor: 0 },
     dungeons: { gold: 0, essence: 0, gear: 0 },
-    defense: { level: 0, stars: {}, placement: [] },
     friends: { list: [], day: '', sent: [], inbox: [] },
     arena: { points: 1000, opponents: [] },
     guild: { joined: null, bossDamage: 0, chat: [], lastBotAt: now },

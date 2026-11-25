@@ -96,10 +96,8 @@ export interface PlayerState {
   summon: { pity: number; total: number };
   tower: { floor: number };
   dungeons: Record<DungeonKind, number>;
-  /** Mode Défense : dernier niveau gagné, étoiles par niveau, et les héros posés (uid → emplacement). */
   /** Amis : la liste, les cadeaux envoyés aujourd'hui et ceux reçus à ouvrir (par id d'ami). */
   friends: { list: Friend[]; day: string; sent: string[]; inbox: string[] };
-  defense: { level: number; stars: Record<number, number>; placement: [number, number][]; chests?: number };
   arena: { points: number; opponents: ArenaOpponent[] };
   /** Étape du tutoriel des premières minutes (-1 = fini ou passé). */
   tutorial?: number;

@@ -4,10 +4,16 @@ import { Battle } from '../src/core/battle/engine';
 import { DAILY_CHESTS, DAILY_QUESTS, WEEKLY_CHESTS, WEEKLY_QUESTS } from '../src/core/data/modes';
 import {
   autoFormation, campaignBattle, claimChest, claimQuest, collectIdle, ensureDay, equipBest, finishBattle, fuse,
-  fuseAllSimple, levelUp, summon, timeTravel,
+  fuseAllSimple, levelUp, summon,
 } from '../src/game/state/actions';
 import { canLevelUp, teamPower } from '../src/game/state/selectors';
-import { getState } from '../src/game/state/store';
+import { getState, update } from '../src/game/state/store';
+
+/** Le temps passe (le joueur automatique attend) : décalage de l'horloge du jeu. */
+function timeTravel(hours: number) {
+  update((s) => void (s.timeShift += hours * 3.6e6));
+  ensureDay();
+}
 
 function play(minutes: number) {
   let left = minutes * 60;

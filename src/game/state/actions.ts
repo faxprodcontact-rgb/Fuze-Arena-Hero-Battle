@@ -1,7 +1,7 @@
 // Toutes les actions du joueur. C'est LA porte d'entrée : à l'étape serveur, ces fonctions
 // enverront la demande au serveur (qui utilisera les mêmes règles de src/core) au lieu de calculer ici.
 import { LEADER_SLOT, type BattleInput, type Slot, type UnitInit } from '../../core/battle/types';
-import { heroToUnit, monsterToUnit } from '../../core/battle/units';
+import { heroToUnit } from '../../core/battle/units';
 import { stagePower } from '../../core/data/campaign';
 import { incomePerHour, REWARDS, STAGE_REWARD_HOURS, STAGES_PER_CHAPTER } from '../../core/data/economy';
 import { HEROES, heroDef } from '../../core/data/heroes';
@@ -19,18 +19,14 @@ import {
   type Reward,
 } from '../../core/data/modes';
 import { FRAGMENTS_PER_COPY, LADDER, RARITY_RULES } from '../../core/data/stars';
-import type { DefenseSetup } from '../../core/defense/engine';
-import {
-  DEFENSE_HEROES, DEFENSE_LEVELS, DEFENSE_PADS, DEFENSE_REWARD, DEFENSE_STAGE_PER_LEVEL, defenseCrystals, defenseStars,
-} from '../../core/data/defense';
 import { applyFusion, canGainStar, isValidFusion, planFusion, type FusionPlan } from '../../core/fusion';
 import { levelRefund } from '../../core/power';
 import { createRng, pick, type Rng } from '../../core/rng';
 import { MAIL_KEEP_DAYS, MAILS, type MailDef } from '../../core/data/mail';
-import { BOSSES } from '../../core/data/monsters';
+import { BOSS_ELEMENT, BOSSES } from '../../core/data/monsters';
 import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '../../core/stages';
 import { summonBasic, summonOne } from '../../core/summon';
-import type { Element, Hero } from '../../core/types';
+import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
 import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
 import type { TeamKind } from './selectors';
@@ -607,7 +603,7 @@ export function claimFragments(defId: string): Hero | null {
 
 // ---------- Combats ----------
 
-export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss' | 'friend' | 'guildWar' | 'demo' | 'hdDemo';
+export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss' | 'friend' | 'guildWar';
 
 export interface BattleRequest {
   kind: BattleKind;
@@ -619,10 +615,6 @@ export interface BattleRequest {
   damageMode?: boolean;
   dungeon?: { kind: DungeonKind; level: number };
   opponentId?: string;
-  /** Combat d'essai HD : le dessin HD de certains combattants (id du combattant → id de la planche HD). */
-  hdArt?: Record<string, string>;
-  /** Combat d'essai HD « tous » : les manches qui se suivent (la première est `heroes` contre `waves[0]`). */
-  hdRounds?: { heroes: UnitInit[]; enemies: UnitInit[] }[];
 }
 
 export interface BattleResult {
@@ -646,22 +638,6 @@ export function campaignBattle(): BattleRequest {
     waves: campaignWaves(s.campaign.cleared + 1),
     seed: seedFor(s),
   }));
-}
-
-/**
- * Outil de test : un combat d'essai entre les 5 héros et les 5 monstres redessinés en pixel art, sans récompense.
- * Le dessin d'un monstre vient de sa famille (élément → famille, `look.ts`, cas « demo ») et de son rang (goblin = 1, shaman = 4).
- */
-export function pixelDemoBattle(): BattleRequest {
-  const heroes = ['assassins-2', 'assassins-3', 'mages-8', 'assassins-5', 'angels-2'].map((defId, i) =>
-    heroToUnit({ uid: 9000 + i, defId, stars: 5, level: 40 }, i as Slot));
-  const foes: [string, Element][] = [['goblin', 'earth'], ['goblin', 'water'], ['shaman', 'water'], ['goblin', 'fire'], ['shaman', 'wind']];
-  // des monstres solides mais qui frappent peu : ~30 s de combat, gagné par les héros (essayé sur 20 graines)
-  const waves = [foes.map(([m, e], i) => {
-    const u = monsterToUnit(m, i as Slot, e, 12, `demo-${i}`);
-    return { ...u, maxHp: u.maxHp * 6 };
-  })];
-  return { kind: 'demo', title: '', heroes, waves, seed: (Math.random() * 2 ** 31) >>> 0 };
 }
 
 export function towerBattle(): BattleRequest {
@@ -701,7 +677,7 @@ export function dailyBossId(): string {
 }
 
 function bossWave(s: PlayerState, bossId: string, hpFactor: number, seed: number): UnitInit[][] {
-  const waves = buildWaves({ power: referencePower(s), count: 1, waves: 1, element: 'fire', seed, boss: bossId });
+  const waves = buildWaves({ power: referencePower(s), count: 1, waves: 1, element: BOSS_ELEMENT[bossId] ?? 'fire', seed, boss: bossId });
   return waves.map((w) => w.map((u) => ({ ...u, maxHp: Math.round(u.maxHp * hpFactor) })));
 }
 
@@ -858,7 +834,6 @@ export function idleSetup(): { heroes: UnitInit[]; waves: UnitInit[][] } {
 
 /** Le résultat d'un combat : récompenses selon le mode. */
 export function finishBattle(req: BattleRequest, res: BattleResult): Gain {
-  if (req.kind === 'demo' || req.kind === 'hdDemo') return emptyGain();
   return update((s) => {
     const gain = emptyGain();
     const rng = nextRng(s);
@@ -1274,48 +1249,6 @@ export function markSeen(feature: string): void {
   if (!getState().seen.includes(feature)) update((s) => void s.seen.push(feature));
 }
 
-export function timeTravel(hours: number): void {
-  update((s) => void (s.timeShift += hours * 3.6e6));
-  ensureDay();
-}
-
-export function giveTestResources(): void {
-  update((s) => {
-    s.wallet.gems += 20000;
-    s.wallet.scrolls += 50;
-    s.wallet.basicScrolls += 100;
-    s.wallet.gold += 5_000_000;
-    s.wallet.essence += 2_500_000;
-    s.wallet.crystals += 1000;
-    s.wallet.arenaTokens += 2000;
-    s.wallet.guildCoins += 2000;
-    s.wallet.dust += 3000;
-  });
-}
-
-/** Démonstration : saute au chapitre 11 avec une section solide, pour voir tout le jeu débloqué. */
-export function demoUnlockAll(): void {
-  update((s) => {
-    s.tutorial = -1;
-    s.campaign.cleared = Math.max(s.campaign.cleared, 410);
-    const picks = ['knights-11', 'mages-10', 'angels-9', 'myths-12', 'assassins-10'];
-    const slots: Slot[] = [0, 1, 3, 4, 2];
-    s.formation = picks.map((defId, i) => {
-      const h = addHero(s, defId);
-      h.stars = defId.endsWith('-9') ? 5 : 7;
-      h.level = 135;
-      return [h.uid, slots[i]!];
-    });
-    const rng = nextRng(s);
-    for (const [uid] of s.formation) {
-      for (const slot of GEAR_SLOTS) s.items.push({ uid: s.nextUid++, slot, rarity: 4, tier: 9, heroUid: uid });
-    }
-    for (let i = 0; i < 25; i++) addHero(s, pick(rng, HEROES).id);
-    s.arena.opponents = makeOpponents(s);
-  });
-  giveTestResources();
-}
-
 export function resetGame(): void {
   replaceState(fresh());
   ensureDay();
@@ -1325,107 +1258,6 @@ export function resetGame(): void {
 /** Lance le combat préparé avec la section actuelle. */
 export function startBattleFromPlan(plan: BattlePlan): BattleRequest | null {
   return plan.build();
-}
-
-// ---------- Défense ----------
-
-/** Puissance demandée par un niveau de Défense. */
-export function defensePower(level: number): number {
-  return stagePower(Math.max(1, level * DEFENSE_STAGE_PER_LEVEL));
-}
-
-/** Les héros posés encore présents dans la collection (un héros sacrifié en fusion disparaît du plan). */
-export function defensePlacement(s: PlayerState = getState()): [number, number][] {
-  const owned = new Set(s.heroes.map((h) => h.uid));
-  return s.defense.placement.filter(([u, pad]) => owned.has(u) && pad < DEFENSE_PADS.length);
-}
-
-/** Poser un héros sur un emplacement (ou l'enlever s'il y est déjà). Un emplacement ne garde qu'un héros. */
-export function placeDefender(uid: number, pad: number): 'placed' | 'removed' | 'full' {
-  return update((s) => {
-    const list = defensePlacement(s);
-    const here = list.find(([u]) => u === uid);
-    if (here && here[1] === pad) {
-      s.defense.placement = list.filter(([u]) => u !== uid);
-      return 'removed';
-    }
-    const others = list.filter(([u, p]) => u !== uid && p !== pad);
-    if (!here && others.length >= DEFENSE_HEROES) return 'full';
-    s.defense.placement = [...others, [uid, pad]];
-    return 'placed';
-  });
-}
-
-export function removeDefender(uid: number): void {
-  update((s) => {
-    s.defense.placement = defensePlacement(s).filter(([u]) => u !== uid);
-  });
-}
-
-/** Échange deux emplacements (ou déplace un héros vers un emplacement vide). */
-export function swapPads(a: number, b: number): void {
-  update((s) => {
-    s.defense.placement = defensePlacement(s).map(([u, p]) => [u, p === a ? b : p === b ? a : p]);
-  });
-}
-
-/** Placement automatique : les 5 plus forts ; ceux à distance au milieu de la carte, ceux au corps à corps près des virages. */
-export function autoDefense(): void {
-  update((s) => {
-    const best = [...s.heroes].sort((a, b) => heroPower(s, b) - heroPower(s, a)).slice(0, DEFENSE_HEROES);
-    const rangedPads = [4, 1, 3, 7, 0, 6, 2, 5, 8];
-    const meleePads = [2, 5, 0, 7, 6, 4, 1, 3, 8];
-    const used = new Set<number>();
-    s.defense.placement = best.map((h) => {
-      const pads = heroDef(h.defId).ranged ? rangedPads : meleePads;
-      const pad = pads.find((p) => !used.has(p))!;
-      used.add(pad);
-      return [h.uid, pad];
-    });
-  });
-}
-
-export interface DefenseRequest {
-  level: number;
-  setup: DefenseSetup;
-}
-
-/** Prépare la partie du prochain niveau (ou d'un niveau déjà gagné, pour faire mieux). */
-export function defenseRequest(level: number): DefenseRequest | null {
-  return update((s) => {
-    const placement = defensePlacement(s);
-    if (!placement.length || level < 1 || level > Math.min(DEFENSE_LEVELS, s.defense.level + 1)) return null;
-    const towers = placement.map(([uid, pad]) => ({ unit: heroToUnit(heroByUid(s, uid)!, 0, gearStatsOf(s, uid)), pad }));
-    return { level, setup: { towers, power: defensePower(level), element: chapterElement(level), seed: seedFor(s) } };
-  });
-}
-
-/** Total des étoiles gagnées au Siège. */
-export function defenseStarTotal(s: PlayerState = getState()): number {
-  return Object.values(s.defense.stars).reduce((a, n) => a + n, 0);
-}
-
-/** Fin de partie : première victoire = or + cristaux ; les étoiles remplissent les coffres d'étoiles. */
-export function finishDefense(req: DefenseRequest, lives: number): Gain {
-  return update((s) => {
-    const gain = emptyGain();
-    const stars = defenseStars(lives);
-    if (stars <= 0) return gain;
-    if (req.level === s.defense.level + 1) {
-      s.defense.level = req.level;
-      addCurrency(s, gain, 'gold', incomePerHour(req.level * DEFENSE_STAGE_PER_LEVEL) * DEFENSE_REWARD.goldHours);
-      addCurrency(s, gain, 'crystals', defenseCrystals(req.level));
-    }
-    if (stars > (s.defense.stars[req.level] ?? 0)) s.defense.stars[req.level] = stars;
-    // Coffres d'étoiles : donnés d'office dès qu'un palier est franchi.
-    const earned = Math.floor(defenseStarTotal(s) / DEFENSE_REWARD.chestEvery);
-    for (let c = s.defense.chests ?? 0; c < earned; c++) {
-      addCurrency(s, gain, 'crystals', DEFENSE_REWARD.chest.crystals);
-      addCurrency(s, gain, 'scrolls', DEFENSE_REWARD.chest.scrolls);
-    }
-    s.defense.chests = Math.max(s.defense.chests ?? 0, earned);
-    return gain;
-  });
 }
 
 // ---------- Amis ----------
