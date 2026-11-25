@@ -10,49 +10,7 @@ import { fmt, t } from '../i18n';
 import { close } from './nav';
 import { ICON_COLS, ICON_INDEX, ICON_ROWS } from '../icons-meta';
 
-// ---------- Icônes (dessins vectoriels simples) ----------
-
-const ICONS: Record<string, ComponentChildren> = {
-  gold: <><circle cx="12" cy="12" r="9" fill="#ffc94a" stroke="#b8860b" stroke-width="2" /><path d="M9 9h5a2 2 0 0 1 0 4H9v3" stroke="#8a6200" stroke-width="2" fill="none" /></>,
-  essence: <><path d="M12 3c4 5 6 8 6 11a6 6 0 0 1-12 0c0-3 2-6 6-11z" fill="#7cf7c1" stroke="#2a9d8f" stroke-width="1.5" /></>,
-  gems: <><path d="M6 4h12l4 6-10 11L2 10z" fill="#ff5fa2" stroke="#b0246a" stroke-width="1.5" /><path d="M2 10h20M8 4l4 17 4-17" stroke="#ffd1e6" stroke-width="1" fill="none" /></>,
-  scrolls: <><rect x="5" y="4" width="14" height="16" rx="3" fill="#ffe8b0" stroke="#c9a227" stroke-width="2" /><path d="M8 9h8M8 13h8" stroke="#c9a227" stroke-width="1.6" /><circle cx="12" cy="17" r="2" fill="#a35cff" /></>,
-  basicScrolls: <><rect x="5" y="4" width="14" height="16" rx="3" fill="#dfe6f5" stroke="#7d8bb0" stroke-width="2" /><path d="M8 9h8M8 13h8" stroke="#7d8bb0" stroke-width="1.6" /></>,
-  arenaTokens: <><circle cx="12" cy="12" r="9" fill="#e5484d" stroke="#8a1c20" stroke-width="2" /><path d="M8 16l8-8M9 8h-1v1M16 15v1h-1" stroke="#fff" stroke-width="2" /></>,
-  guildCoins: <><circle cx="12" cy="12" r="9" fill="#4c8dff" stroke="#1d4fa8" stroke-width="2" /><path d="M8 7h8v6l-4 4-4-4z" fill="#dce8ff" /></>,
-  crystals: <><path d="M12 2l6 8-6 12-6-12z" fill="#b388ff" stroke="#6b3fa0" stroke-width="1.5" /></>,
-  fragments: <><path d="M4 14l6-10 4 6 6-2-4 12H6z" fill="#ffc94a" stroke="#b8860b" stroke-width="1.5" /></>,
-  campaign: <><path d="M5 21V4h11l-2 4 2 4H7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" /></>,
-  heroes: <><path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z" fill="none" stroke="currentColor" stroke-width="2.2" /></>,
-  summon: <><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2.2" /><path d="M12 6l1.8 4 4.2.4-3.2 2.8 1 4.2-3.8-2.3-3.8 2.3 1-4.2L6 10.4l4.2-.4z" fill="currentColor" /></>,
-  adventure: <><path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z M9 4v14 M15 6v14" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" /></>,
-  guild: <><path d="M6 3h12v12l-6 5-6-5z" fill="none" stroke="currentColor" stroke-width="2.2" /><path d="M9 8h6M9 11h6" stroke="currentColor" stroke-width="2" /></>,
-  calendar: <><rect x="3" y="5" width="18" height="16" rx="3" fill="#fff3d6" stroke="#c9a227" stroke-width="2" /><rect x="3" y="5" width="18" height="5" rx="2" fill="#e5484d" /><path d="M8 3v4M16 3v4" stroke="#8a6200" stroke-width="2" stroke-linecap="round" /><path d="M8.5 15l2.2 2.2 4.8-4.8" stroke="#35c873" stroke-width="2.4" fill="none" stroke-linecap="round" /></>,
-  mail: <><rect x="3" y="6" width="18" height="13" rx="2" fill="#dfe7ff" stroke="#4c8dff" stroke-width="2" /><path d="M4 7l8 6 8-6" stroke="#4c8dff" stroke-width="2" fill="none" /></>,
-  quests: <><rect x="5" y="3" width="14" height="18" rx="2" fill="#ffe8b0" stroke="#c9a227" stroke-width="2" /><path d="M8 9l2 2 4-4M8 15h8" stroke="#8a6200" stroke-width="2" fill="none" /></>,
-  shop: <><path d="M4 8h16l-1.5 12h-13z" fill="#ffc94a" stroke="#b8860b" stroke-width="2" /><path d="M8 8a4 4 0 0 1 8 0" fill="none" stroke="#b8860b" stroke-width="2" /></>,
-  pass: <><path d="M4 6h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4z" fill="#a35cff" stroke="#5b2a9f" stroke-width="2" /><path d="M12 9l1 2h2l-1.6 1.3.6 2.2-2-1.3-2 1.3.6-2.2L9 11h2z" fill="#fff" /></>,
-  ranking: <><path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="#ffc94a" stroke="#b8860b" stroke-width="2" /><path d="M12 14v4M8 20h8M7 6H4a3 3 0 0 0 3 4M17 6h3a3 3 0 0 1-3 4" stroke="#b8860b" stroke-width="2" fill="none" /></>,
-  friends: <><circle cx="9" cy="8" r="3.5" fill="currentColor" /><circle cx="16.5" cy="9" r="3" fill="currentColor" opacity="0.7" /><path d="M2 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5z" fill="currentColor" /><path d="M15 13.6c3.6-.4 7 1.6 7 5.4h-4.6" fill="currentColor" opacity="0.7" /></>,
-  gift: <><rect x="3" y="9" width="18" height="12" rx="2" fill="currentColor" /><rect x="2" y="6" width="20" height="4" rx="1.5" fill="currentColor" opacity="0.8" /><path d="M12 6v15" stroke="#0008" stroke-width="2" /><path d="M12 6c-2-4-7-4-6 0zm0 0c2-4 7-4 6 0z" fill="none" stroke="currentColor" stroke-width="2" /></>,
-  chat: <><path d="M4 5h16v11H9l-5 4z" fill="#4c8dff" stroke="#1d4fa8" stroke-width="2" stroke-linejoin="round" /><circle cx="9" cy="10.5" r="1.3" fill="#fff" /><circle cx="13" cy="10.5" r="1.3" fill="#fff" /><circle cx="17" cy="10.5" r="1.3" fill="#fff" /></>,
-  settings: <><circle cx="12" cy="12" r="3.5" fill="none" stroke="#c7cbe0" stroke-width="2" /><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l3 3M16 16l3 3M19 5l-3 3M8 16l-3 3" stroke="#c7cbe0" stroke-width="2" /></>,
-  weapon: <><path d="M19 3l2 2-11 11-3 1 1-3z" fill="#d7dce6" stroke="#7d8191" stroke-width="1.2" /><path d="M5 15l4 4M3 21l3-3" stroke="#c98a3a" stroke-width="2.4" stroke-linecap="round" /></>,
-  armor: <><path d="M7 3h10l3 4-2 3v11H6V10L4 7z" fill="#9aa3b5" stroke="#5c606d" stroke-width="1.4" stroke-linejoin="round" /><path d="M9 3l3 4 3-4" fill="none" stroke="#5c606d" stroke-width="1.4" /></>,
-  helmet: <><path d="M4 15a8 8 0 0 1 16 0v3H4z" fill="#9aa3b5" stroke="#5c606d" stroke-width="1.4" /><path d="M4 13h16M12 7v6" stroke="#5c606d" stroke-width="1.6" /></>,
-  boots: <><path d="M7 3h6v10l6 3v4H5V13z" fill="#a0703a" stroke="#5a3a10" stroke-width="1.4" stroke-linejoin="round" /><path d="M5 17h14" stroke="#5a3a10" stroke-width="1.4" /></>,
-  dust: <><circle cx="8" cy="15" r="3.5" fill="#7cf7e1" /><circle cx="15" cy="10" r="4.5" fill="#4fd1c5" /><circle cx="16" cy="18" r="2.5" fill="#b388ff" /><circle cx="9" cy="7" r="1.8" fill="#fff" /></>,
-  lock: <><rect x="5" y="10" width="14" height="11" rx="2" fill="currentColor" /><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2.2" /></>,
-  power: <><path d="M13 2L4 14h7l-1 8 9-12h-7z" fill="#ffc94a" stroke="#b8860b" stroke-width="1.2" /></>,
-  clock: <><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2" fill="none" /></>,
-  ad: <><rect x="3" y="5" width="18" height="14" rx="3" fill="#3ccf7a" /><path d="M10 9v6l5-3z" fill="#fff" /></>,
-  tower: <><path d="M7 21V8h10v13M9 8V4h6v4M5 21h14" fill="none" stroke="currentColor" stroke-width="2" /><path d="M11 13h2v3h-2z" fill="currentColor" /></>,
-  dungeons: <><path d="M4 21V11a8 8 0 0 1 16 0v10z" fill="none" stroke="currentColor" stroke-width="2" /><path d="M9 21v-6a3 3 0 0 1 6 0v6" fill="currentColor" /></>,
-  missions: <><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" /><path d="M15.5 8.5l-2 5-5 2 2-5z" fill="currentColor" /></>,
-  dailyBoss: <><path d="M5 10a7 7 0 0 1 14 0v4l-2 2v4H7v-4l-2-2z" fill="none" stroke="currentColor" stroke-width="2" /><circle cx="9.5" cy="11" r="1.6" fill="currentColor" /><circle cx="14.5" cy="11" r="1.6" fill="currentColor" /></>,
-  arena: <><path d="M5 19L19 5M15 5h4v4M9 19H5v-4M19 19L5 5M5 9V5h4M15 19h4v-4" fill="none" stroke="currentColor" stroke-width="2" /></>,
-  defense: <><path d="M3 20c4-6 6-2 9-8s5-6 9-8" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3" /><circle cx="7" cy="10" r="2.5" fill="currentColor" /><circle cx="16" cy="17" r="2.5" fill="currentColor" /></>,
-};
+// ---------- Pictos (pixel art, planche public/art/icons.webp : refonte-graphique/pixel/ui/pictos/) ----------
 
 /** Ce picto a-t-il son dessin (public/art/icons.webp) ? */
 export function hasArt(name: string): boolean {
@@ -72,13 +30,23 @@ export function Art({ name, size, class: cls }: { name: string; size?: number; c
   );
 }
 
+/** Les petits signes dessinés en pixels par px.ts (variables CSS --px-<signe>). */
+export type SignName = 'star' | 'star-red' | 'check' | 'cross' | 'up' | 'chev' | 'chev-s' | 'back-s' | 'play' | 'stop' | 'op-plus' | 'op-eq' | 'op-arrow';
+
+/** Un petit signe en pixels (coche, croix, étoile, chevron…), agrandi ×k sans flou (k = 2 par défaut : 1 pixel = 2 px). */
+export function Sign({ name, k, class: cls }: { name: SignName; k?: number; class?: string }) {
+  return <i class={`sign sign-${name} ${cls ?? ''}`} aria-hidden="true" style={k ? { '--k': k } : undefined} />;
+}
+
+/** Un texte traduit où « ★ » est remplacé par l'étoile dessinée (« 2 héros ★3+ », « Éveil ★10 »). */
+export function starText(text: string): ComponentChildren {
+  const parts = text.split('★');
+  return parts.map((p, i) => (i ? <><Sign name="star" class="sign-in-text" />{p}</> : p));
+}
+
+/** Un picto de la planche à la taille voulue (rien si le nom n'y est pas). */
 export function Icon({ name, size = 22 }: { name: string; size?: number }) {
-  if (hasArt(name)) return <Art name={name} size={size} class="icon icon-art" />;
-  return (
-    <svg class="icon" width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-      {ICONS[name] ?? null}
-    </svg>
-  );
+  return <Art name={name} size={size} class="icon icon-art" />;
 }
 
 // ---------- Boutons, montants, barres ----------
@@ -143,7 +111,8 @@ export function Stars({ stars }: { stars: number }) {
   if (stars >= MYTHIC_STARS) return <span class="stars mythic">{t('rarity.mythic')}</span>;
   const red = stars > MAX_YELLOW;
   const n = red ? stars - MAX_YELLOW : stars;
-  return <span class={`stars${red ? ' red' : ''}`}>{'★'.repeat(n)}</span>;
+  // des étoiles dessinées en pixels (--px-star de px.ts), à la taille du texte autour
+  return <span class={`stars${red ? ' red' : ''}`} role="img" aria-label={`${n}★`}>{Array.from({ length: n }, () => <i />)}</span>;
 }
 
 export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; selected?: boolean; dim?: boolean; badge?: string; small?: boolean }) {

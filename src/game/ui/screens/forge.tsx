@@ -7,7 +7,7 @@ import { t } from '../../i18n';
 import { forgeAll, forgeItem } from '../../state/actions';
 import { useGame } from '../../state/store';
 import type { PlayerState } from '../../state/types';
-import { Btn, Icon, ItemIcon, Page } from '../kit';
+import { Btn, Icon, ItemIcon, Page, Sign } from '../kit';
 import { toast } from '../nav';
 
 interface Group {
@@ -47,13 +47,13 @@ export function ForgePage() {
           <div class="forge-row">
             {Array.from({ length: FORGE_COUNT }, (_, i) => (
               <>
-                {i > 0 && <span class="fuse-plus">+</span>}
+                {i > 0 && <Sign name="op-plus" class="fuse-plus" />}
                 {used[i] ? <ItemIcon item={used[i]} /> : (
                   <span class="item item-empty missing" style={{ '--rar': ITEM_COLORS[g.rarity] } as never}><span class="item-ghost"><Icon name={g.slot} size={30} /></span></span>
                 )}
               </>
             ))}
-            <span class="fuse-op">=</span>
+            <Sign name="op-eq" class="fuse-op" />
             <span class="forge-result"><ItemIcon item={{ uid: 0, ...result }} /></span>
           </div>
           <p class="center muted small">{t(`stat.${SLOT_STAT[g.slot]}`)} +{itemMain(used[0]!)} % → <b class="gold-text">+{itemMain(result)} %</b></p>

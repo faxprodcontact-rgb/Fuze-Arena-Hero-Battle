@@ -14,7 +14,7 @@ import { equipItem, forgeItem, forgePartners, recycleItems, unequipItem, upgrade
 import { heroByUid, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import type { PlayerState } from '../../state/types';
-import { Btn, Cur, Icon, ItemIcon, Modal } from '../kit';
+import { Btn, Cur, Icon, ItemIcon, Modal, Sign } from '../kit';
 import { close, open, toast } from '../nav';
 
 function owner(s: PlayerState, item: Item) {
@@ -62,7 +62,7 @@ export function BagView() {
             {[0, 1, 2].map((r) => (
               <button class="chip" onClick={() => selectRarity(r)}><span class="chip-dot" style={{ background: ITEM_COLORS[r] }} />{t(`item.${r}`)}</button>
             ))}
-            <button class="chip" onClick={() => setPicked(new Set())}>✕</button>
+            <button class="chip" aria-label="✕" onClick={() => setPicked(new Set())}><Sign name="cross" /></button>
           </div>
           <div class="row gap-s">
             <Btn kind="ghost" small wide onClick={stop}>{t('cancel')}</Btn>
@@ -180,7 +180,7 @@ export function SlotPanel({ heroUid, slot }: { heroUid: number; slot: GearSlot }
     return (
       <span class="pickable">
         <ItemIcon item={it} level={level} hideLevel heroDefId={o?.defId} onClick={() => equipItem(it.uid, heroUid)} />
-        {itemBonus(it) > now && <span class="better">▲</span>}
+        {itemBonus(it) > now && <span class="better"><Sign name="up" /></span>}
       </span>
     );
   };

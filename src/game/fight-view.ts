@@ -417,11 +417,13 @@ export abstract class FightScene extends Phaser.Scene {
     else if (hit.kind === 'revive') v.hp = v.unit.hp;
     if (hit.kind === 'miss' || hit.kind === 'status' || hit.kind === 'revive') {
       if (hit.kind === 'revive') this.tweens.add({ targets: v.body, alpha: 1, y: v.homeY, angle: 0, duration: 400 });
-      const label = hit.kind === 'miss' ? t('fx.miss') : hit.kind === 'revive' ? '✚' : t(`st.${hit.status}`, { n: '' }).replace(/[+−-]\s*%/, '').trim();
+      const label = hit.kind === 'miss' ? t('fx.miss') : hit.kind === 'revive' ? '+' : t(`st.${hit.status}`, { n: '' }).replace(/[+−-]\s*%/, '').trim();
       const color = hit.kind === 'miss' ? '#c8d0ff' : hit.kind === 'revive' ? '#5dff9a' : STATUS_COLOR[hit.status ?? 'stun'] ?? '#ffe27a';
-      const icon = hit.kind === 'status' && `st-${hit.status}` in ICON_INDEX && this.textures.exists('icons');
+      // un effet ou un relevé : son picto (planche des pictos) ; à défaut (planche pas encore arrivée), son nom écrit
+      const pic = hit.kind === 'status' ? `st-${hit.status}` : hit.kind === 'revive' ? 'revive' : '';
+      const icon = pic in ICON_INDEX && this.textures.exists('icons');
       const y0 = v.body.y + v.barY - 30;
-      const n = icon ? this.add.image(v.body.x, y0, 'icons', ICON_INDEX[`st-${hit.status}`]).setDisplaySize(40, 40).setDepth(2000) : this.text(v.body.x, y0, label, 22, color).setDepth(2000);
+      const n = icon ? this.add.image(v.body.x, y0, 'icons', ICON_INDEX[pic]).setDisplaySize(40, 40).setDepth(2000) : this.text(v.body.x, y0, label, 22, color).setDepth(2000);
       this.tweens.add({ targets: n, y: n.y - 34, alpha: 0, duration: icon ? 1000 : 800, onComplete: () => n.destroy() });
       return;
     }
@@ -442,8 +444,12 @@ export abstract class FightScene extends Phaser.Scene {
       this.tint(v, 0xff9a9a);
       this.time.delayedCall(90, () => this.tint(v));
       if (hit.stun) {
-        const star = this.text(v.body.x + 30, v.body.y + v.barY + 10, '✦', 28, '#ffe27a').setDepth(2000);
-        this.tweens.add({ targets: star, angle: 360, alpha: 0, duration: 900, onComplete: () => star.destroy() });
+        // le coup étourdit : le picto de l'étourdissement saute au-dessus de la tête, puis s'efface
+        const y0 = v.body.y + v.barY + 10;
+        if (this.textures.exists('icons')) {
+          const star = this.add.image(v.body.x + 30, y0, 'icons', ICON_INDEX['st-stun']).setDisplaySize(32, 32).setDepth(2000);
+          this.tweens.add({ targets: star, y: y0 - 18, alpha: 0, duration: 900, ease: 'Quad.easeOut', onComplete: () => star.destroy() });
+        }
       }
     }
     if (hit.dot) {

@@ -10,7 +10,7 @@ import { t } from '../../i18n';
 import { autoPicks, fuse, fuseAllSimple, fusionNeeds, fusionPool, type FusionNeed, type FusionPicks, type NeedKind } from '../../state/actions';
 import { heroByUid, heroPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import { Btn, Cur, HeroCard, Page, Stars } from '../kit';
+import { Btn, Cur, HeroCard, Page, Sign, Stars } from '../kit';
 import { toast } from '../nav';
 import { Halo } from '../anim';
 
@@ -72,15 +72,15 @@ export function FusionPage({ uid }: { uid?: number }) {
         <section class="fuse-stage">
           <div class="fuse-main">
             <div class="fuse-big"><HeroCard hero={target} /></div>
-            <span class="fuse-op">=</span>
+            <Sign name="op-eq" class="fuse-op" />
             <div class="fuse-big result"><Halo size={190} /><HeroCard hero={{ ...target, stars: needs.newStars }} /></div>
           </div>
           <div class="fuse-needs">
             {needs.needs.map((n) => (
-              <><span class="fuse-plus">+</span><NeedSlot need={n} on={editing === n.kind} onClick={() => setEditing(editing === n.kind ? undefined : n.kind)} /></>
+              <><Sign name="op-plus" class="fuse-plus" /><NeedSlot need={n} on={editing === n.kind} onClick={() => setEditing(editing === n.kind ? undefined : n.kind)} /></>
             ))}
             {needs.crystals > 0 && (
-              <><span class="fuse-plus">+</span><span class={`fuse-crystals${s.wallet.crystals >= needs.crystals ? '' : ' missing'}`}><Cur k="crystals" n={needs.crystals} /></span></>
+              <><Sign name="op-plus" class="fuse-plus" /><span class={`fuse-crystals${s.wallet.crystals >= needs.crystals ? '' : ' missing'}`}><Cur k="crystals" n={needs.crystals} /></span></>
             )}
           </div>
           <Btn kind="purple" wide disabled={!needs.ready} onClick={() => {
@@ -106,7 +106,7 @@ export function FusionPage({ uid }: { uid?: number }) {
                 return (
                   <div class="hcard-wrap">
                     <HeroCard hero={h} small selected={inKind(editing).has(h.uid)} dim={other} onClick={() => !other && toggle(editing, h.uid)} />
-                    {inKind(editing).has(h.uid) && <span class="ready-tag">✓</span>}
+                    {inKind(editing).has(h.uid) && <span class="ready-tag"><Sign name="check" /></span>}
                   </div>
                 );
               })}
@@ -123,7 +123,7 @@ export function FusionPage({ uid }: { uid?: number }) {
             {ranked.map(({ h, p }) => (
               <div class="hcard-wrap">
                 <HeroCard hero={h} small selected={h.uid === picked} dim={p < 0} onClick={() => selectTarget(h.uid)} />
-                {p === 2 && <span class="ready-tag">★</span>}
+                {p === 2 && <span class="ready-tag"><Sign name="star" /></span>}
               </div>
             ))}
           </div>

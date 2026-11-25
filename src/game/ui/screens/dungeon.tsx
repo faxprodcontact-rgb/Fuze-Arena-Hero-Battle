@@ -44,7 +44,7 @@ export function DungeonPage({ kind }: { kind: DungeonKind }) {
           return (
             <div class={`dungeon-step ${state}`}>
               <div class="grow">
-                <strong>{state === 'locked' && '🔒 '}{t('dungeon.level', { n: level })}</strong>
+                <strong>{state === 'locked' && <Icon name="lock" size={16} />}{t('dungeon.level', { n: level })}</strong>
                 <div class="row gap-s center-y">
                   <span class={`power-chip ${mine >= need ? 'ok' : 'low'}`}><Icon name="power" size={14} />{fmt(need)}</span>
                   <Reward kind={kind} level={level} />

@@ -16,9 +16,9 @@ import {
 } from '../../state/actions';
 import { now, useGame } from '../../state/store';
 import type { Gain } from '../../state/types';
-import { Art, Bar, Btn, Cur, HeroCard, ItemIcon, Modal, Tabs } from '../kit';
+import { Art, Bar, Btn, Cur, HeroCard, Icon, ItemIcon, Modal, Sign, Tabs } from '../kit';
 import { close, open, toast } from '../nav';
-import { Chest, Halo } from '../anim';
+import { Halo } from '../anim';
 import { ShopTile } from './adventure';
 
 function RewardLine({ reward }: { reward: Reward }) {
@@ -48,7 +48,7 @@ export function QuestsModal() {
                   const gain = claimChest(i, kind);
                   if (gain) open({ type: 'gain', title: t('quests.activity'), gain });
                 }}>
-                <Chest class="chest-mini" size={36} state={done ? 'full' : ready ? 'ready' : 'closed'} />
+                <Art name={done ? 'chestOpen' : ready ? 'chestReady' : 'chestClosed'} size={36} class="chest-mini" />
                 <small>{c.points}</small>
               </button>
             );
@@ -185,7 +185,7 @@ function LinkRow({ label, onClick, danger }: { label: string; onClick: () => voi
   return (
     <button class={`setting-row${danger ? ' danger' : ''}`} onClick={onClick}>
       <span>{label}</span>
-      <span class="chev">›</span>
+      <Sign name="chev-s" class="chev" />
     </button>
   );
 }
@@ -249,7 +249,7 @@ function NameField({ value, onInput, error }: { value: string; onInput: (v: stri
       <div class="row gap-s">
         <input id="player-name" value={value} maxLength={16} autoComplete="off"
           onInput={(e) => onInput((e.target as HTMLInputElement).value)} />
-        <button class="dice" aria-label={t('name.random')} onClick={() => onInput(randomName())}>⚄</button>
+        <button class="dice pxf" aria-label={t('name.random')} onClick={() => onInput(randomName())}><Icon name="dice" size={40} /></button>
       </div>
       <span class={`muted small${error ? ' error' : ''}`}>{error ? t(error) : t('name.rule')}</span>
     </div>

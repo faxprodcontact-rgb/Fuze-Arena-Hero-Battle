@@ -192,13 +192,12 @@ function band(edge: 'top' | 'bottom'): Piece {
 // ---------- Petites pièces entières (non étirées) ----------
 
 /** Pastille rouge (quelque chose attend) : 7 × 7. */
-function badge(): Px[][] {
-  const g = PAL.red;
+function badge(g: Ramp = PAL.red): Px[][] {
   return paint(disc(7), [flat(INK)], (dx, dy) => (dx >= 3 && dy <= 1 ? g[4]! : dy >= 3 && dx <= 1 ? g[1]! : g[2]!));
 }
 
 /** Un signe dessiné sur un bouton carré : la croix (fermer), le chevron (retour), le plus (acheter). */
-function glyphButton(g: Ramp, size: number, glyph: 'x' | 'back' | 'plus'): Px[][] {
+function glyphButton(g: Ramp, size: number, glyph: 'x' | 'back' | 'next' | 'plus'): Px[][] {
   const b = button(g).px;
   // le bouton carré : on recompose la pièce 12 × 13 à la taille voulue
   const p = compose({ px: b, slice: [4, 4, 5, 4] }, size, size + 1);
@@ -208,7 +207,9 @@ function glyphButton(g: Ramp, size: number, glyph: 'x' | 'back' | 'plus'): Px[][
   const k = Math.max(2, Math.round(size / 5));
   if (glyph === 'x') for (let i = -k; i <= k; i++) dots.push([cx + i, cy + i], [cx + i - 1, cy + i], [cx - i, cy + i], [cx - i - 1, cy + i]);
   if (glyph === 'plus') for (let i = -k; i <= k; i++) dots.push([cx + i, cy], [cx + i, cy - 1], [cx, cy + i], [cx - 1, cy + i]);
-  if (glyph === 'back') for (let i = 0; i <= k + 1; i++) dots.push([cx - 2 + i, cy - i], [cx - 1 + i, cy - i], [cx - 2 + i, cy + i - 1], [cx - 1 + i, cy + i - 1]);
+  if (glyph === 'back' || glyph === 'next') for (let i = 0; i <= k + 1; i++) dots.push([cx - 2 + i, cy - i], [cx - 1 + i, cy - i], [cx - 2 + i, cy + i - 1], [cx - 1 + i, cy + i - 1]);
+  // « suivant » : le chevron du retour retourné (autour du milieu du bouton)
+  if (glyph === 'next') for (const d of dots) d[0] = size - 1 - d[0];
   // l'ombre du signe (un pixel plus bas), puis le signe
   for (const [x, y] of dots) if (p[y + 1]?.[x] && !dots.some(([a, b2]) => a === x && b2 === y + 1)) p[y + 1]![x] = shade;
   for (const [x, y] of dots) if (p[y]?.[x]) p[y]![x] = ink;
@@ -248,6 +249,30 @@ export function glyph(rows: string[], g: Ramp = PAL.gold): Px[][] {
 }
 
 const CHEVRON = ['XX.....XX', 'XXX...XXX', '.XXX.XXX.', '..XXXXX..', '...XXX...'];
+
+/** Les lignes d'un signe tournées d'un quart de tour (un chevron vers le bas devient un chevron vers la droite). */
+const transpose = (rows: string[]) => [...rows[0]!].map((_, x) => rows.map((r) => r[x]).join(''));
+
+/**
+ * Les petits signes de l'interface (dessinés en « X », contour et lumière ajoutés par `glyph`), posés dans le CSS par
+ * `installPx()` sous le nom `--px-<signe>` : étoile des héros, coche, croix, flèche « mieux », chevron, lecture, arrêt,
+ * plus / égal / flèche des écrans de fusion et de forge.
+ */
+const SIGNS: Record<string, [string[], Ramp]> = {
+  star: [['..X..', '.XXX.', 'XXXXX', '.XXX.', 'XX.XX'], PAL.gold],
+  'star-red': [['..X..', '.XXX.', 'XXXXX', '.XXX.', 'XX.XX'], PAL.red],
+  check: [['......XX', '.....XXX', 'XX..XXX.', 'XXXXXX..', '.XXXX...', '..XX....'], PAL.green],
+  cross: [['XX..XX', 'XXXXXX', '.XXXX.', '.XXXX.', 'XXXXXX', 'XX..XX'], PAL.red],
+  up: [['..X..', '.XXX.', 'XXXXX', '.XXX.', '.XXX.'], PAL.green],
+  chev: [transpose(CHEVRON), PAL.gold],
+  'chev-s': [['XX..', 'XXX.', '.XXX', 'XXX.', 'XX..'], PAL.navy],
+  'back-s': [['..XX', '.XXX', 'XXX.', '.XXX', '..XX'], PAL.gold],
+  play: [['X...', 'XX..', 'XXX.', 'XXXX', 'XXX.', 'XX..', 'X...'], PAL.cream],
+  stop: [['XXXXX', 'XXXXX', 'XXXXX', 'XXXXX', 'XXXXX'], PAL.cream],
+  'op-plus': [['..XX..', '..XX..', 'XXXXXX', 'XXXXXX', '..XX..', '..XX..'], PAL.gold],
+  'op-eq': [['XXXXXX', 'XXXXXX', '......', '......', '......', 'XXXXXX', 'XXXXXX'], PAL.gold],
+  'op-arrow': [['....X...', '....XX..', 'XXXXXXX.', 'XXXXXXXX', 'XXXXXXX.', '....XX..', '....X...'], PAL.gold],
+};
 /** Le chevron d'or d'une languette (vers le bas = déplier, vers le haut = replier). */
 export function chevronUrl(up: boolean): string {
   return toCanvas(glyph(up ? [...CHEVRON].reverse() : CHEVRON)).toDataURL('image/png');
@@ -357,8 +382,11 @@ export function installPx() {
   const root = document.documentElement.style;
   for (const [name, p] of Object.entries(pieces())) root.setProperty(`--px-${name}`, nineCss(p));
   root.setProperty('--px-badge', url(badge()));
+  root.setProperty('--px-badge-gold', url(badge(PAL.gold)));
+  for (const [name, [rows, g]] of Object.entries(SIGNS)) root.setProperty(`--px-${name}`, url(glyph(rows, g)));
   root.setProperty('--px-close', url(glyphButton(PAL.red, 15, 'x')));
   root.setProperty('--px-back', url(glyphButton(PAL.blue, 15, 'back')));
+  root.setProperty('--px-next', url(glyphButton(PAL.navy, 15, 'next')));
   root.setProperty('--px-plus', url(glyphButton(PAL.green, 9, 'plus')));
 }
 
@@ -440,4 +468,58 @@ export function nearestTone(hex: string): Tone {
   if (h < 195) return 'teal';
   if (h < 255) return 'blue';
   return 'purple';
+}
+
+// ---------- Le halo (derrière un trophée, un héros fusionné, un tirage rare, un Légendaire) ----------
+
+/** Deux signes inventés (jamais des lettres), posés en alternance sur l'anneau du halo. */
+const HALO_SIGNS = [['.X.', 'XXX', '.X.'], ['X.X', '.X.', 'X.X']];
+export const HALO_FRAMES = 16;
+const haloCache = new Map<string, string>();
+/**
+ * Le halo en pixel art : une lueur en paliers, un anneau, huit signes qui tournent lentement et quatre étincelles qui
+ * tournent dans l'autre sens en clignant. `d` = diamètre en pixels du dessin ; une bande de HALO_FRAMES images (la boucle
+ * ne se voit pas : les signes avancent de deux places, les étincelles d'une). Gardé en mémoire par taille et couleur.
+ */
+export function haloStrip(d: number, hex: string): string {
+  const key = `${d}${hex}`;
+  const hit = haloCache.get(key);
+  if (hit) return hit;
+  const g = rampFrom(hex);
+  const c = document.createElement('canvas');
+  c.width = d * HALO_FRAMES; c.height = d;
+  const ctx = c.getContext('2d')!;
+  const R = d / 2, put = (x: number, y: number, col: string) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x), Math.round(y), 1, 1); };
+  for (let f = 0; f < HALO_FRAMES; f++) {
+    const ox = f * d;
+    // la lueur, en deux paliers, et l'anneau
+    for (let y = 0; y < d; y++) for (let x = 0; x < d; x++) {
+      const r = Math.hypot(x + 0.5 - R, y + 0.5 - R) / R;
+      if (r > 0.98) continue;
+      if (Math.abs(r - 0.9) < 0.022 + 0.5 / R) put(ox + x, y, g[2]!);
+      else if (r < 0.58) put(ox + x, y, `${g[3]}30`);
+      else if (r < 0.86) put(ox + x, y, `${g[3]}18`);
+    }
+    // les huit signes : une ombre d'un pixel en bas à gauche, puis le signe clair
+    const turn = (f / HALO_FRAMES) * (Math.PI / 2);
+    for (let i = 0; i < 8; i++) {
+      const a = turn + (i * Math.PI) / 4, cx = R + Math.cos(a) * R * 0.74, cy = R + Math.sin(a) * R * 0.74;
+      const s = HALO_SIGNS[i % 2]!, k = d >= 120 ? 2 : 1;
+      for (const [dx, dy, col] of [[-1, 1, g[1]!], [0, 0, g[2]!], [1, -1, g[4]!]] as [number, number, string][])
+        s.forEach((row, sy) => [...row].forEach((ch, sx) => {
+          if (ch !== 'X') return;
+          for (let u = 0; u < k; u++) for (let v = 0; v < k; v++) put(ox + cx - 1.5 * k + sx * k + u + dx, cy - 1.5 * k + sy * k + v + dy, col);
+        }));
+    }
+    // les quatre étincelles (croix claires), plus grandes une image sur deux
+    for (let i = 0; i < 4; i++) {
+      const a = -(f / HALO_FRAMES) * (Math.PI / 2) + (i * Math.PI) / 2 + Math.PI / 4;
+      const cx = R + Math.cos(a) * R * 0.5, cy = R + Math.sin(a) * R * 0.5, arm = (f + i) % 4 < 2 ? 2 : 1;
+      put(ox + cx, cy, '#ffffff');
+      for (let t = 1; t <= arm; t++) for (const [dx, dy] of [[t, 0], [-t, 0], [0, t], [0, -t]]) put(ox + cx + dx!, cy + dy!, t === 1 ? '#fff6c8' : g[4]!);
+    }
+  }
+  const out = c.toDataURL('image/png');
+  haloCache.set(key, out);
+  return out;
 }

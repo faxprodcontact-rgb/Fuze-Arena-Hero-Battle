@@ -9,7 +9,7 @@ import { BarArt, ChromeDefs, LevelShield, Medallion } from './chrome';
 import { ensureDay, finishBattle, type BattleRequest } from '../state/actions';
 import { getState, useGame } from '../state/store';
 import { dots } from './dots';
-import { Icon, RedDot } from './kit';
+import { Icon, RedDot, Sign } from './kit';
 import { teamPower } from '../state/selectors';
 import { close, go, open, startBattle, useNav, type Modal, type Tab } from './nav';
 import { AdventureScreen } from './screens/adventure';
@@ -34,6 +34,9 @@ import { FragmentsModal, OddsModal, SummonResult, SummonScreen } from './screens
 const TABS: Tab[] = ['campaign', 'heroes', 'summon', 'adventure', 'guild'];
 
 /** Une monnaie du haut : l'icône déborde à gauche, le nombre est aligné à droite, un « + » s'il y a une boutique. */
+/** Un petit message fait d'un seul signe (« ✓ » : c'est fait, « ★ » : une étoile de plus) : le signe dessiné. */
+const TOAST_SIGNS: Record<string, preact.ComponentChildren> = { '✓': <Sign name="check" k={3} />, '★': <Sign name="star" k={4} /> };
+
 function WalletPill({ k, n, onPlus }: { k: string; n: number; onPlus?: () => void }) {
   const Tag = onPlus ? 'button' : 'span';
   return (
@@ -166,7 +169,7 @@ export function App() {
       <TabBar tab={nav.tab} />
       {nav.modals.map((m) => <ModalView modal={m} />)}
       {nav.battle && <BattleOverlay request={nav.battle} />}
-      {nav.toast && <div class="toast" onClick={close}>{nav.toast}</div>}
+      {nav.toast && <div class="toast" onClick={close}>{TOAST_SIGNS[nav.toast] ?? nav.toast}</div>}
       {!getState().named && <NameScreen />}
       <TutorialHand />
     </div>

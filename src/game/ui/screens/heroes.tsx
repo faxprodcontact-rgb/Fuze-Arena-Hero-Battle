@@ -10,7 +10,7 @@ import { fusionPreview } from '../../state/actions';
 import { canLevelUp, heroPower, teamHeroes, teamPower, type TeamKind } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import type { PlayerState } from '../../state/types';
-import { Art, HeroCard, Icon, RedDot } from '../kit';
+import { Art, HeroCard, Icon, RedDot, Sign } from '../kit';
 import { HeroFigure } from '../hero-figure';
 import { TitleBanner } from '../title-banner';
 import { open, prepare } from '../nav';
@@ -76,37 +76,11 @@ function Hall() {
       </div>
       <div class="sum-side sum-right">
         <button class="sum-med hall-med" onClick={() => open({ type: 'reset' })}>
-          <span class="sum-med-icon"><RebirthIcon /></span>
+          <span class="sum-med-icon"><Icon name="rebirth" size={30} /></span>
           <span class="sum-med-label">{t('detail.reset')}</span>
         </button>
       </div>
     </div>
-  );
-}
-
-/** Le picto de la Renaissance : deux flèches d'or qui tournent autour d'une étincelle. */
-function RebirthIcon() {
-  return (
-    <svg class="icon" width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
-      <g fill="none" stroke="#2f1b0c" stroke-width="5.4" stroke-linecap="round"><path d="M6 13 A9.500 9.500 0 0 1 22.500 8.500" /><path d="M24 17 A9.500 9.500 0 0 1 7.500 21.500" /></g>
-      <g fill="none" stroke="#ffd45c" stroke-width="3" stroke-linecap="round"><path d="M6 13 A9.500 9.500 0 0 1 22.500 8.500" /><path d="M24 17 A9.500 9.500 0 0 1 7.500 21.500" /></g>
-      <path d="M25.500 3.500 L24.200 11.500 L17.600 7 Z M4.500 26.500 L5.800 18.500 L12.400 23 Z" fill="#ffd45c" stroke="#2f1b0c" stroke-width="1.200" stroke-linejoin="round" />
-      <path d="M15 10.500 L16.300 13.700 L19.500 15 L16.300 16.300 L15 19.500 L13.700 16.300 L10.500 15 L13.700 13.700 Z" fill="#fff6c8" />
-    </svg>
-  );
-}
-
-/** Le médaillon « tous les éléments » : quatre gemmes en losange, une par élément. */
-function AllElements() {
-  const gem = (x: number, y: number, c: string, light: string) => (
-    <g transform={`translate(${x} ${y})`}>
-      <path d="M0 -6 L6 0 L0 6 L-6 0 Z" fill="#160d06" /><path d="M0 -4.600 L4.600 0 L0 4.600 L-4.600 0 Z" fill={c} /><path d="M0 -4.600 L4.600 0 H0 Z" fill={light} /><path d="M0 0 H4.600 L0 4.600 Z" fill="#000" opacity="0.2" />
-    </g>
-  );
-  return (
-    <svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true">
-      {gem(13, 6.500, '#ff6b3d', '#ffc0a0')}{gem(19.500, 13, '#5bd17a', '#c8f5d0')}{gem(13, 19.500, '#3da5ff', '#bfe0ff')}{gem(6.500, 13, '#c08a4a', '#f0d0a0')}
-    </svg>
   );
 }
 
@@ -124,7 +98,7 @@ export function TeamStrip({ team = 'main' }: { team?: TeamKind } = {}) {
         <strong>{team === 'defense' ? t('war.defense') : t('heroes.team')}</strong>
         <span class="power-chip"><Icon name="power" size={16} />{fmt(teamPower(s, team))}</span>
       </span>
-      <span class="chev">›</span>
+      <Sign name="chev-s" class="chev" />
     </button>
   );
 }
@@ -141,7 +115,7 @@ function HeroList() {
   return (
     <div class="screen heroes">
       <div class="hero-filters">
-        <button class={`el-pick${element === 'all' ? ' on' : ''}`} aria-label={t('all')} onClick={() => setElement('all')}><AllElements /></button>
+        <button class={`el-pick${element === 'all' ? ' on' : ''}`} aria-label={t('all')} onClick={() => setElement('all')}><Art name="allElements" size={24} /></button>
         {ELEMENTS.map((e) => (
           <button class={`el-pick${element === e ? ' on' : ''}`} aria-label={t(`element.${e}`)} onClick={() => setElement(e)}><Art name={e} size={24} /></button>
         ))}

@@ -9,7 +9,7 @@ import {
 import { teamPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import type { Friend } from '../../state/types';
-import { Btn, Cur, Icon, Page } from '../kit';
+import { Btn, Cur, Icon, Page, Sign } from '../kit';
 import { open, prepare, toast } from '../nav';
 
 function FriendRow({ f, mine, sent, waiting, onAdd }: { f: Friend; mine: number; sent?: boolean; waiting?: boolean; onAdd?: () => void }) {
@@ -33,7 +33,7 @@ function FriendRow({ f, mine, sent, waiting, onAdd }: { f: Friend; mine: number;
             <Icon name="gift" size={22} />
           </button>
           <Btn kind="red" small onClick={() => { const p = friendPlan(f.id); if (p) prepare(p); }}>{t('friends.challenge')}</Btn>
-          <button class="friend-x" onClick={() => open({ type: 'confirm', text: t('friends.remove'), onYes: () => removeFriend(f.id) })}>✕</button>
+          <button class="friend-x" onClick={() => open({ type: 'confirm', text: t('friends.remove'), onYes: () => removeFriend(f.id) })} aria-label="✕"><Sign name="cross" /></button>
         </>
       )}
     </div>
@@ -61,7 +61,7 @@ export function FriendsPage() {
           <button class="code-chip" onClick={() => {
             void navigator.clipboard?.writeText(me).catch(() => {});
             toast(t('friends.copied'));
-          }}>{me} ⧉</button>
+          }}>{me} <Icon name="copy" size={24} /></button>
         </div>
         <div class="row gap-s">
           <input class="input grow" maxLength={6} placeholder={t('friends.placeholder')} value={code}

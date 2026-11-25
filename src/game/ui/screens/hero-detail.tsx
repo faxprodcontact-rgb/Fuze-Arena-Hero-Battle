@@ -17,7 +17,7 @@ import { fmt, t } from '../../i18n';
 import { equipBest, levelUp, toggleInFormation, unequipAll } from '../../state/actions';
 import { canLevelUp, gearStatsOf, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import { Art, Bar, Btn, Cur, Icon, ItemIcon, Stars } from '../kit';
+import { Art, Bar, Btn, Cur, Icon, ItemIcon, Sign, Stars, starText } from '../kit';
 import { MYTHIC_STARS } from '../../../core/data/stars';
 import { Halo } from '../anim';
 import { HeroFigure } from '../hero-figure';
@@ -33,20 +33,9 @@ export function talentText(talent: Talent | undefined): string {
   return describeTalent(talent);
 }
 
-/** Le picto d'un attribut (cœur, épée, bouclier, aile, cible, éclat, plume, roc). */
+/** Le picto d'un attribut (cœur, épée, bouclier, aile, cible, éclat, plume, roc) : ceux de la planche. */
 function StatIcon({ k }: { k: string }) {
-  const o = '#160d06';
-  const art: Record<string, preact.ComponentChildren> = {
-    hp: <><path d="M10 17.500 C3.500 12.500 2 9.500 2 7 A4.200 4.200 0 0 1 10 5.200 A4.200 4.200 0 0 1 18 7 C18 9.500 16.500 12.500 10 17.500 Z" fill="#ff5a6a" stroke={o} stroke-width="1.400" stroke-linejoin="round" /><path d="M5 6.500 Q6 4.800 8 5.400" fill="none" stroke="#ffd0d4" stroke-width="1.400" stroke-linecap="round" /></>,
-    atk: <><path d="M16.500 2 L18 3.500 L8.500 13 L6 14 L7 11.500 Z" fill="#e6ecf5" stroke={o} stroke-width="1.300" stroke-linejoin="round" /><path d="M4.500 10.500 L9.500 15.500" stroke={o} stroke-width="3.600" stroke-linecap="round" /><path d="M4.500 10.500 L9.500 15.500" stroke="#ffc531" stroke-width="1.800" stroke-linecap="round" /><path d="M6 14 L3 17" stroke={o} stroke-width="3.400" stroke-linecap="round" /><path d="M6 14 L3 17" stroke="#b8720a" stroke-width="1.600" stroke-linecap="round" /></>,
-    def: <><path d="M10 2 L17 4.500 V9.500 C17 13.500 14 16.500 10 18 C6 16.500 3 13.500 3 9.500 V4.500 Z" fill="#4f8ae0" stroke={o} stroke-width="1.400" stroke-linejoin="round" /><path d="M10 4 L15 5.800 V9.500 C15 12.400 13 14.600 10 15.900 Z" fill="#9cc4ff" /></>,
-    speed: <><path d="M3 15 C5 9 9 5 17 3.500 C16 6 14.500 7.500 12.500 8.500 H15 C13.500 11 11.500 12.200 9 12.600 H11 C9 15 6 15.800 3 15 Z" fill="#5fe0a0" stroke={o} stroke-width="1.300" stroke-linejoin="round" /></>,
-    crit: <><circle cx="10" cy="10" r="6.200" fill="none" stroke={o} stroke-width="3.400" /><circle cx="10" cy="10" r="6.200" fill="none" stroke="#ffb02a" stroke-width="1.700" /><path d="M10 1.500 V5 M10 15 V18.500 M1.500 10 H5 M15 10 H18.500" stroke={o} stroke-width="3.200" stroke-linecap="round" /><path d="M10 1.500 V5 M10 15 V18.500 M1.500 10 H5 M15 10 H18.500" stroke="#ffb02a" stroke-width="1.500" stroke-linecap="round" /><circle cx="10" cy="10" r="1.800" fill="#fff3b0" stroke={o} stroke-width="0.800" /></>,
-    critDmg: <><path d="M10 1.500 L12 7 L17.500 5 L14 9.500 L18.500 12.500 L13 13 L13.500 18.500 L10 14.500 L6.500 18.500 L7 13 L1.500 12.500 L6 9.500 L2.500 5 L8 7 Z" fill="#ff7a3a" stroke={o} stroke-width="1.300" stroke-linejoin="round" /><path d="M10 6 L11 9 L14 10 L11 11 L10 14 L9 11 L6 10 L9 9 Z" fill="#fff3b0" /></>,
-    dodge: <><path d="M16.500 2.500 C9 3 4.500 7.500 4 15 L2.500 17.500 L5.500 16.500 C12 16 16 11.500 16.500 2.500 Z" fill="#7fd8f5" stroke={o} stroke-width="1.300" stroke-linejoin="round" /><path d="M5 16 L13.500 6" stroke={o} stroke-width="1.100" stroke-linecap="round" /></>,
-    tenacity: <><path d="M10 2 L16 5.500 L17.500 12 L13 17.500 H7 L2.500 12 L4 5.500 Z" fill="#a98aff" stroke={o} stroke-width="1.400" stroke-linejoin="round" /><path d="M10 2 L16 5.500 L12 9 Z" fill="#dccdff" /><path d="M12 9 L17.500 12 L13 17.500 Z" fill="#6a48d0" /></>,
-  };
-  return <svg class="stat-icon" width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">{art[k]}</svg>;
+  return <Art name={k} class="stat-icon" />;
 }
 
 /** Les 8 attributs du héros, avec ses passifs permanents déjà débloqués : les quatre principaux (à côté de sa case, en
@@ -79,24 +68,6 @@ const RIBBON: Record<string, [string, string, string]> = {
   common: ['#9aa6bc', '#5c677e', '#343c4e'], rare: ['#5a8cf0', '#2a4fb5', '#172c6e'], epic: ['#b06aff', '#6a2fc0', '#3a1470'], legendary: ['#ffb02a', '#c86a0a', '#7a3c05'],
 };
 
-function Chevron({ dir }: { dir: number }) {
-  return (
-    <svg width="22" height="34" viewBox="0 0 22 34" aria-hidden="true" style={dir < 0 ? { transform: 'scaleX(-1)' } : undefined}>
-      <path d="M6 5 L17 17 L6 29" fill="none" stroke="#2f1b0c" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round" />
-      <path d="M6 5 L17 17 L6 29" fill="none" stroke="#ffd45c" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-      <path d="M6 5 L17 17" fill="none" stroke="#fff6c8" stroke-width="1.5" stroke-linecap="round" />
-    </svg>
-  );
-}
-
-/** Le petit triangle « lecture » de l'aperçu de la compétence (un carré quand l'aperçu est ouvert). */
-function PlayIcon({ on }: { on: boolean }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true">
-      {on ? <rect x="3.5" y="3.5" width="9" height="9" rx="1.5" fill="currentColor" /> : <path d="M5 3 L13 8 L5 13 Z" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />}
-    </svg>
-  );
-}
 
 export function HeroDetail({ uid }: { uid: number }) {
   const s = useGame();
@@ -138,7 +109,7 @@ export function HeroDetail({ uid }: { uid: number }) {
           if (r === 'full') toast(t('heroes.full'));
         }}>
           <Icon name="heroes" size={24} />
-          <i>{inTeam ? '✓' : '+'}</i>
+          <i>{inTeam ? <Sign name="check" /> : <Sign name="op-plus" />}</i>
         </button>
       </header>
 
@@ -172,8 +143,8 @@ export function HeroDetail({ uid }: { uid: number }) {
             {d.talent && <span class="hp-card-lead"><Icon name="crown" size={18} /></span>}
             <span class="hp-card-stars"><Stars stars={hero.stars} /></span>
           </div>
-          {order.length > 1 && <button class="hp-arrow hp-arrow-l" aria-label="‹" onClick={() => step(-1)}><Chevron dir={-1} /></button>}
-          {order.length > 1 && <button class="hp-arrow hp-arrow-r" aria-label="›" onClick={() => step(1)}><Chevron dir={1} /></button>}
+          {order.length > 1 && <button class="hp-arrow hp-arrow-l" aria-label="‹" onClick={() => step(-1)}><Sign name="chev" class="flip" /></button>}
+          {order.length > 1 && <button class="hp-arrow hp-arrow-r" aria-label="›" onClick={() => step(1)}><Sign name="chev" /></button>}
         </div>
 
         {/* à côté : ce qu'il est, sa puissance, ses attributs */}
@@ -194,7 +165,7 @@ export function HeroDetail({ uid }: { uid: number }) {
           {GEAR_SLOTS.map((g) => (
             <div class={`hp-slot${gearSlot === g ? ' on' : ''}`}>
               <ItemIcon item={items[g]} slot={g} level={slotLevel(s, uid, g)} onClick={() => setGearSlot(g)} />
-              {betterInBag(s, uid, g) && <span class="better">▲</span>}
+              {betterInBag(s, uid, g) && <span class="better"><Sign name="up" /></span>}
             </div>
           ))}
           <Btn kind="blue" small class="hp-auto" onClick={() => equipBest(uid)}>{t('detail.autoEquip')}</Btn>
@@ -220,11 +191,11 @@ export function HeroDetail({ uid }: { uid: number }) {
           <div class="hp-skill-head">
             <span class="hp-medal"><Art name={d.element} size={26} /></span>
             <span class="hp-skill-name"><small>{t('detail.skill')}</small><b>{t(`skill.${d.skill.id}`)}</b></span>
-            <button class={`hp-play${preview ? ' on' : ''}`} aria-label={t('detail.preview')} onClick={() => setPreview(!preview)}><PlayIcon on={preview} /></button>
+            <button class={`hp-play${preview ? ' on' : ''}`} aria-label={t('detail.preview')} onClick={() => setPreview(!preview)}><Sign name={preview ? 'stop' : 'play'} /></button>
           </div>
           <p>{describeSkill(unit.skill)}</p>
           {d.rarity === 'legendary' && (
-            <p class={`small ${hero.stars >= AWAKEN_STARS ? 'gold-text' : 'muted'}`}>{t('detail.awaken', { n: AWAKEN_STARS, p: Math.round((AWAKEN_SKILL - 1) * 100) })}</p>
+            <p class={`small ${hero.stars >= AWAKEN_STARS ? 'gold-text' : 'muted'}`}>{starText(t('detail.awaken', { n: AWAKEN_STARS, p: Math.round((AWAKEN_SKILL - 1) * 100) }))}</p>
           )}
           {preview && <SkillPreview unit={unit} />}
         </section>
@@ -234,7 +205,7 @@ export function HeroDetail({ uid }: { uid: number }) {
           const locked = hero.stars < p.stars;
           return (
             <section class={`hp-talent${locked ? ' locked' : ''}`}>
-              <span class="hp-req">{locked ? <Icon name="lock" size={15} /> : null}★{p.stars}</span>
+              <span class="hp-req">{locked ? <Icon name="lock" size={15} /> : null}<Sign name="star" />{p.stars}</span>
               <div><h3>{t('detail.passive')} {i + 1}</h3><p>{describePassive(p.passive)}</p></div>
             </section>
           );

@@ -7,7 +7,7 @@ import { t } from '../../i18n';
 import { canReset, heroRefund, resetHero } from '../../state/actions';
 import { heroByUid, heroPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import { Btn, Cur, HeroCard, Icon, Page } from '../kit';
+import { Btn, Cur, HeroCard, Icon, Page, Sign } from '../kit';
 import { open, toast } from '../nav';
 
 export function ResetPage({ uid }: { uid?: number }) {
@@ -25,7 +25,7 @@ export function ResetPage({ uid }: { uid?: number }) {
         <section class="fuse-stage reset-stage">
           <div class="fuse-main">
             <div class="fuse-big"><HeroCard hero={target} /><span class="reset-lv">{t('lv')} {target.level}</span></div>
-            <span class="fuse-op">→</span>
+            <Sign name="op-arrow" class="fuse-op" />
             <div class="fuse-big"><HeroCard hero={{ ...target, level: 1 }} /><span class="reset-lv">{t('lv')} 1</span></div>
           </div>
           <div class="reset-back">

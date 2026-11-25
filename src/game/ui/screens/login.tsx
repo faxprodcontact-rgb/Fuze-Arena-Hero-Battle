@@ -2,7 +2,7 @@
 import { t } from '../../i18n';
 import { claimLogin, loginCalendar } from '../../state/actions';
 import { useGame } from '../../state/store';
-import { Btn, Cur, Icon, Modal } from '../kit';
+import { Btn, Cur, Icon, Modal, Sign } from '../kit';
 import { close, open } from '../nav';
 
 export function LoginModal() {
@@ -19,9 +19,9 @@ export function LoginModal() {
             <div class={`login-day${done ? ' done' : ''}${today ? ' today' : ''}${big ? ' big' : ''}`}>
               <span class="login-n">{i + 1}</span>
               <div class="login-reward">
-                {r.legendary ? <span class="login-legend">★</span> : Object.entries(r).map(([k, v]) => <Cur k={k} n={v ?? 0} />)}
+                {r.legendary ? <span class="login-legend"><Icon name="star" size={32} /></span> : Object.entries(r).map(([k, v]) => <Cur k={k} n={v ?? 0} />)}
               </div>
-              {done && <span class="login-check">✓</span>}
+              {done && <span class="login-check"><Sign name="check" k={3} /></span>}
             </div>
           );
         })}

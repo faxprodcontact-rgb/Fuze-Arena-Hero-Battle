@@ -64,12 +64,12 @@ export function TutorialHand() {
     <>
       {rect && (
         <div class="tuto-ring" style={{ left: `${rect.left - 6}px`, top: `${rect.top - 6}px`, width: `${rect.width + 12}px`, height: `${rect.height + 12}px` }}>
-          <span class="tuto-hand" style={{ left: `${rect.width / 2 + 6}px`, top: `${rect.height / 2 + 6}px` }}>👆</span>
+          <span class="tuto-hand" style={{ left: `${rect.width / 2 + 6}px`, top: `${rect.height / 2 + 6}px` }}><Art name="hand" size={56} /></span>
         </div>
       )}
       {/* le hibou guide : il montre l'endroit à toucher (il lève l'aile au premier pas) */}
       <Art class={`tuto-owl${rect && rect.left + rect.width / 2 < innerWidth / 2 ? ' tuto-owl-right' : ''}`} name={`owl-${step === 0 ? 'explain' : rect ? 'point' : 'happy'}`} />
-      <button class="tuto-skip" aria-label="skip" onClick={() => setTutorial(-1)}>»</button>
+      <button class="tuto-skip" aria-label="skip" onClick={() => setTutorial(-1)} />
     </>
   );
 }

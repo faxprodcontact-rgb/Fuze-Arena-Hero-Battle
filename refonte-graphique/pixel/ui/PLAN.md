@@ -33,11 +33,11 @@ Aperçus pour le propriétaire : `refonte-graphique/pixel/sortie/ui/`. Images du
 | ~~Logo~~ `public/art/ui/logo.webp` (peint) | `index.html` | écran de chargement — **fait (partie 1, en HD vectoriel)** |
 | ~~Icône de l'application~~ `public/art/ui/icon-180/192/512.png` | `index.html` | écran d'accueil du téléphone, onglet du navigateur — **fait (partie 1)** |
 | **Planche des pictos** `public/art/icons.webp` (162 pictos peints par Hailuo, 128 px, `src/game/icons-meta.ts`, chaîne `refonte-graphique/decoupe-pictos.py`) | `Art` / `Icon` de `ui/kit.tsx` ; statuts dans `fight-view.ts` (Phaser) | partout (voir le détail par partie) |
-| Pictos de secours en SVG (`ICONS` de `ui/kit.tsx`, ~38) | `Icon` quand la planche n'a pas le picto | quelques puces, boutons |
+| ~~Pictos de secours en SVG (`ICONS` de `ui/kit.tsx`, ~38)~~ | `Icon` | — **supprimés (audit du 25/11, `AUDIT-PICTOS.md`)** |
 | Barres, médaillons, plaques, bouton Combattre, bouclier de niveau, gemmes, chevrons, scintillements | `ui/chrome.tsx` (SVG) | barre du haut, barre des onglets, bas de l'accueil, chapitre |
 | Bandeau de titre (ruban) | `ui/title-banner.tsx` (SVG) | Héros, Invocation, Aventure, Guilde, fiche héros |
-| Sablier, coffre, halo | `ui/anim.tsx` (SVG animé) | accueil (butin), résultats, fusion, invocation |
-| Pictos animés des modes (tour, missions, donjons, boss du jour, arène, Colisée) | `ui/mode-icons.tsx` (SVG animé) | tuiles de l'Aventure, Colisée |
+| ~~Sablier, coffre, halo~~ | `ui/anim.tsx` | — **faits en pixel art (audit du 25/11)** |
+| ~~Pictos animés des modes~~ | ~~`ui/mode-icons.tsx`~~ | — **remplacés par la planche, fichier supprimé** |
 | Décors des tuiles de modes (tour, missions, donjons, boss, arène) | `ui/tile-scene.tsx` (SVG) | tuiles de l'Aventure |
 | Décors des onglets (Héros, Invocation, Aventure, Guilde, pages) | `ui/backdrop*.tsx` (SVG animé) | derrière chaque onglet |
 | Scène de la fiche d'un héros (par élément) + socle | `ui/hero-scene.tsx` (SVG) | fiche héros |

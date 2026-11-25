@@ -19,9 +19,8 @@ import { now, useGame } from '../../state/store';
 import { ADVENTURE_ORDER, dots, isNew } from '../dots';
 import { TeamStrip } from './heroes';
 import { TileScene } from '../tile-scene';
-import { ModeIcon } from '../mode-icons';
 import { TitleBanner } from '../title-banner';
-import { Art, Bar, Btn, Cur, Icon, Locked, duration } from '../kit';
+import { Art, Bar, Btn, Cur, Icon, Locked, Sign, duration, starText } from '../kit';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
 
 export function AdventureScreen({ sub }: { sub: Sub }) {
@@ -29,7 +28,7 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
   if (sub) {
     return (
       <div class="screen">
-        <button class="back" onClick={() => openSub(null)}>‹ {t('back')}</button>
+        <button class="back" onClick={() => openSub(null)}><Sign name="back-s" /> {t('back')}</button>
         {sub === 'tower' && <Tower />}
         {sub === 'missions' && <Missions />}
         {sub === 'dungeons' && <Dungeons />}
@@ -55,7 +54,7 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
               }}
             >
               <TileScene kind={f} />
-              <ModeIcon kind={f} />
+              <Art name={f} size={86} class={`icon mode-icon mode-icon-${f}`} />
               <span class="tile-name">
                 {t(`adv.${f}`)}
                 {/* l'information de la tuile est accrochée au bandeau du nom : elle ne recouvre jamais le picto */}
@@ -78,11 +77,11 @@ function Colisee() {
   return (
     <section class="card center">
       <h1>{t('adv.defense')}</h1>
-      <div class="boss-scene colisee-scene" style={sceneBg('lenore')}><ModeIcon kind="defense" size={132} class="colisee-art" /></div>
+      <div class="boss-scene colisee-scene" style={sceneBg('lenore')}><Art name="defense" size={132} class="icon mode-icon mode-icon-defense colisee-art" /></div>
       <div class="colisee-duel">
         <div class="team-faces">{mine.map((h) => <span class="team-face"><img src={heroImage(h!.defId)} alt="" /></span>)}</div>
         <span class="vs">VS</span>
-        <div class="team-faces">{[0, 1, 2].map(() => <span class="team-face unknown">?</span>)}</div>
+        <div class="team-faces">{[0, 1, 2].map(() => <span class="team-face unknown"><Icon name="unknownHero" size={40} /></span>)}</div>
       </div>
       <Btn kind="gold" wide disabled>{t('soon')}</Btn>
     </section>
@@ -139,7 +138,7 @@ function Missions() {
             <Icon name={`mission-${tpl.id}`} size={52} />
             <div class="grow">
               <strong>{t(`mission.${tpl.id}`)}</strong>
-              <div class="muted small"><Icon name="clock" size={14} /> {tpl.hours} h · {t('mission.need', { n: tpl.heroes, s: tpl.minStars })}</div>
+              <div class="muted small"><Icon name="clock" size={14} /> {tpl.hours} h · {starText(t('mission.need', { n: tpl.heroes, s: tpl.minStars }))}</div>
               <div class="row gap-s">
                 {tpl.reward.amount ? <Cur k={tpl.reward.kind} n={tpl.reward.amount} /> : <span class="cur"><Icon name={tpl.reward.kind} size={18} /> {tpl.reward.hours} h</span>}
               </div>

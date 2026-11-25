@@ -3,7 +3,7 @@ import { useState } from 'preact/hooks';
 import { t } from '../../i18n';
 import { claimMail, mailbox, readMail, type MailItem } from '../../state/actions';
 import { useGame } from '../../state/store';
-import { Btn, Cur, Icon, Page } from '../kit';
+import { Btn, Cur, Icon, Page, Sign } from '../kit';
 import { open } from '../nav';
 
 function Rewards({ m }: { m: MailItem }) {
@@ -30,7 +30,7 @@ export function MailPage() {
           <Btn kind="gold" small onClick={() => take()}>{t('mail.claimAll')}</Btn>
         </div>
       )}
-      {list.length === 0 && <p class="center muted">∅</p>}
+      {list.length === 0 && <p class="center mail-empty"><Icon name="mail" size={64} /></p>}
       <section class="list">
         {list.map((m) => {
           const isOpen = openId === m.def.id;
@@ -47,7 +47,7 @@ export function MailPage() {
               {m.def.reward && (
                 <div class="row between center-y">
                   <Rewards m={m} />
-                  {m.claimed ? <span class="muted small">✓</span> : isOpen && <Btn kind="gold" small onClick={() => take(m.def.id)}>{t('claim')}</Btn>}
+                  {m.claimed ? <Sign name="check" /> : isOpen && <Btn kind="gold" small onClick={() => take(m.def.id)}>{t('claim')}</Btn>}
                 </div>
               )}
             </div>

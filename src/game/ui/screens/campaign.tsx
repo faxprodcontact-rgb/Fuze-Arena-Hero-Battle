@@ -16,7 +16,7 @@ import {
 import { idlePreview, teamPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import { dots } from '../dots';
-import { Art, Btn, Cur, Icon, Modal, RedDot } from '../kit';
+import { Art, Btn, Cur, Icon, Modal, RedDot, Sign } from '../kit';
 import { close, open, prepare } from '../nav';
 import { BarArt, ChapterPlaque, Chevron, FightButtonArt, Medallion } from '../chrome';
 
@@ -102,7 +102,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
       <div class="dock">
         <button class={`dock-chest${loot.hours >= 2 ? ' ready' : ''}${loot.full ? ' full' : ''}`}
           onClick={() => open({ type: 'gain', title: t('camp.loot'), gain: collectIdle() })}>
-          <Icon name={loot.full ? 'chestOpen' : 'chestClosed'} size={58} />
+          <Icon name={loot.full ? 'chestOpen' : loot.hours >= 2 ? 'chestReady' : 'chestClosed'} size={58} />
           <span class="dock-time">{h} h {String(m).padStart(2, '0')}</span>
           <span class="dock-bar"><span style={{ width: `${(loot.hours / OFFLINE_CAP_HOURS) * 100}%` }} /></span>
           {loot.hours >= 2 && <RedDot />}
@@ -188,6 +188,8 @@ export function WorldMapModal() {
           const state = cur > r.to ? 'done' : cur >= r.from ? 'here' : 'locked';
           return (
             <span class={`wmap-pin ${state}`} style={{ left: `${x * 100}%`, top: `${y * 100}%` }}>
+              {state === 'locked' && <Icon name="lock" size={32} />}
+              {state === 'done' && <Sign name="check" />}
               <span class="wmap-tag">{r.from === r.to ? r.from : `${r.from}-${r.to}`}</span>
             </span>
           );

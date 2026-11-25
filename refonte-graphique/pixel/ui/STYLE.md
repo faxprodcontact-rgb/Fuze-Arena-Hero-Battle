@@ -89,8 +89,11 @@ Images entières (pas de 9 morceaux) : `medalUrl(taille, teinte)` (médaillon ro
    `<Page>` / `.prep-head` (bandeau bleu nuit, bouton retour bleu).
 6. **Chiffres et monnaies** : `<Cur>` dans un creux (`.cur-big`) ; compteur de la barre du haut : `.pill` (creux sombre, picto
    qui déborde à gauche).
-7. **Pictos** : toujours `<Icon name=…>` / `<Art>` (la planche `icons.webp` est redessinée en pixel art à part). Taille
-   ronde : 22, 28, 32, 58…
+7. **Pictos** : toujours `<Icon name=…>` / `<Art>` (la planche `icons.webp`, toute en pixel art : `pictos/`). Taille
+   ronde : 22, 28, 32, 58… **Petits signes** (étoile des héros, coche, croix, flèche « mieux », chevrons, lecture, plus / égal /
+   flèche) : `<Sign name=… k={2}>` (dessinés par `SIGNS` de `px.ts`, variables `--px-<signe>`, aussi utilisables dans un
+   `::before`) ; jamais un caractère (★ ✓ ✕ 🔒…) ni un SVG. Étoiles d'un héros : `<Stars>` ; « ★ » dans un texte traduit :
+   `starText(t(…))`. Halo derrière un trophée ou un héros : `<Halo size color>` (pixel art animé, `haloStrip` de `px.ts`).
 8. **Phaser** (combats) : `pxCanvas('btn-green', largeur, hauteur, 4)`, `radialCanvas(...)`, `medalCanvas` → `textures.addCanvas`
    puis filtre au plus proche (voir `hud-art.tsx`).
 9. **Mouvement** : peu, et en pixels : un picto qui saute (`translate` de quelques px), un coffre qui sautille, un sablier qui
@@ -114,9 +117,9 @@ plaques, bandeaux de titre) et refait **ses propres dessins** dans ce style :
 - **Aventure** : tuiles `.tile` (une plaque de la couleur du mode, son petit décor), `.plaque`, `tile-scene.tsx`,
   `mode-icons.tsx`, `.dungeon-head`, `backdrop-adventure.tsx`.
 - **Guilde** : `backdrop-guild.tsx`, `.guild-info`, guerre, tchat.
-- Restent en ancien style (SVG lisse), à refaire par la section qui s'en sert : `anim.tsx` (coffre, sablier, halo : l'accueil
-  utilise maintenant les pictos `chestClosed` / `chestOpen` / `hourglass`), `formation-stage.tsx` (dalles de la préparation),
-  la carte du monde (`map.jpg`, partie 9 du plan).
+- Restent en ancien style (SVG lisse), à refaire par la section qui s'en sert : `formation-stage.tsx` (dalles de la
+  préparation), la carte du monde (`map.jpg`, partie 9 du plan). Le coffre, le sablier et le halo de `anim.tsx` sont faits
+  (audit du 25/11 : `AUDIT-PICTOS.md`).
 
 Vérifier dans le vrai jeu : `refonte-graphique/pixel/ui/outils/campagne-captures.cjs` (captures des écrans, 390 × 844 avec
 encoche imitée et 360 × 640 ; à adapter aux écrans de la section), `campagne-gif.cjs` (petit film).
