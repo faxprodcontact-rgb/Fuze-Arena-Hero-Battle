@@ -419,6 +419,14 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   de clignement passe par une lettre de la légende (jamais une couleur directe dans `HEAD_BLINK`).
   **v0.57.4** : chargement : étoile du logo retirée, colisée entièrement retravaillé (pierre chaude, blocs, arcades en relief, gradins, sable, porte). Pictos armes / équipements / éléments / rôles / stats refaits (`pixel/ui/pictos/`).
   **v0.57.3** : chargement : plus de crête au premier plan, mer de nuages en 3 rangées, colisée refait sur son piton, logo au milieu, oiseaux au loin ; tests : `.claude/**` exclu (vite.config.ts).
+  **v0.58.0 : nouvelle DA de l'interface, vague 1 (26/11)** : fondation du style (`pixel/ui/STYLE.md`) — pièces en
+  pixel art dessinées par le code (`src/game/ui/px.ts` : palette `PAL`, `installPx()` pose les variables `--px-<pièce>`, fonds
+  en 9 morceaux sur un `::before`, ×2 sans flou ; `pxBg()` pour une couleur quelconque ; `pxCanvas`/`radialCanvas` pour
+  Phaser). Plus d'ornements (losanges, gemmes, clous, rubans, reflets). Boutons à lèvre (enfoncés : sans lèvre), fenêtres
+  cadre d'or + bandeau bleu nuit, croix et retour dessinés, plaques de titre par teinte (`TitleBanner tone`), médaillons
+  en pixels à la taille exacte, barres `BarArt` (fond CSS). Section Campagne : accueil (coffre et sablier = pictos
+  `chestClosed`/`chestOpen`/`hourglass`), préparation, panneau des combats (`hud-art.tsx` en pixels), fenêtres. Le combat
+  se dessine dans la zone sûre (`.battle-host` : il débordait de la hauteur de l'encoche). Captures : `pixel/sortie/ui/campagne/`.
   **v0.57.2** : chargement sans héros (décor animé seul, bannière qui claque sur la crête), logo plus petit et plus coupé (viewBox).
   **v0.57.1** : chargement refait à la demande du propriétaire : illustration construite exprès (`pixel/ui/paysage.py` : crête
   rocheuse, mer de nuages, arène au loin ; Elvyn, Sylvar, Kael en pose de combat) et logo VECTORIEL HD (`pixel/ui/logo_hd.py`

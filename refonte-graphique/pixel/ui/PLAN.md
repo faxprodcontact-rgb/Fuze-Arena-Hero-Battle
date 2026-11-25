@@ -105,9 +105,10 @@ Déjà dans la nouvelle DA : héros, monstres, grands boss (`art/hd/`), visages 
    Ensuite l'ancienne planche `icons.webp`, `icons-meta.ts`, `decoupe-pictos.py`, `refonte-graphique/pictos/` et les
    pictos SVG de secours de `kit.tsx` sont supprimés (et le préchargement d'`index.html` / l'attente de `main.tsx`
    passent à la nouvelle planche).
-8. **Cadres, boutons, bandeaux** (`chrome.tsx`, `title-banner.tsx`, `hud-art.tsx`, boutons et panneaux de `style.css`) :
-   à décider avec le propriétaire sur un essai de deux pièces (barre du haut + bouton Combattre) : cadres en pixel art
-   étirés sans flou (`border-image`), les textes restant en Lilita / Fredoka.
+8. **Cadres, boutons, bandeaux** (`chrome.tsx`, `title-banner.tsx`, `hud-art.tsx`, boutons et panneaux de `style.css`) —
+   **FAIT (26/11, nouvelle DA, vague 1)** : toutes les pièces sont dessinées en pixels par `src/game/ui/px.ts` (fonds en
+   9 morceaux dans des variables CSS, ×2 sans flou ; mêmes pièces pour Phaser). Règles et mode d'emploi : **`STYLE.md`**.
+   Section Campagne refaite avec (accueil, préparation, combat, fenêtres) : `../sortie/ui/campagne/`.
 9. **Carte du monde de la campagne** (`map.jpg` → une carte pixel art des 8 régions, une par clan, avec l'eau qui
    bouge), branchée dans `screens/campaign.tsx` (les places des régions sont des fractions de l'image).
 

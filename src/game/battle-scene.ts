@@ -108,9 +108,9 @@ export class BattleScene extends FightScene {
     this.drawArena(arenaBottom);
     // le bas de l'écran : un émail bleu nuit et son plateau cerclé d'or (hud-art.tsx) ; un rail d'or à cheval sur
     // le bas du terrain ; sous le panneau, le même émail jusqu'en bas (grand téléphone)
-    this.add.rectangle(W / 2, arenaBottom + (H - arenaBottom) / 2, W, H - arenaBottom, 0x0f1533).setDepth(-6);
+    this.add.rectangle(W / 2, arenaBottom + (H - arenaBottom) / 2, W, H - arenaBottom, 0x1c2457).setDepth(-6);
     this.add.image(0, arenaBottom, 'hud-panel').setOrigin(0, 0).setDepth(-5);
-    this.add.image(0, arenaBottom - 9, 'hud-rail').setOrigin(0, 0).setDepth(1350);
+    this.add.image(0, arenaBottom - 8, 'hud-rail').setOrigin(0, 0).setDepth(1350);
 
     this.text(W / 2, 60, `${t(`mode.${this.req.kind}`)} ${this.titleSuffix()}`, 32, '#ffe27a').setDepth(3000);
     this.waveLabel = this.text(W / 2, 104, '', 24, '#ffffff').setDepth(3000);
@@ -163,11 +163,11 @@ export class BattleScene extends FightScene {
       // le visage, un peu plus grand que le trou de l'anneau, coupé en rond juste sous l'or
       const img = keep(this.add.image(x, y + 4, `v-${unit.defId}`).setDisplaySize(112, 112));
       img.setMask(keep(this.make.graphics({}, false).fillCircle(x, y, 50)).createGeometryMask());
-      const frame = keep(this.add.image(x, y, 'hud-ring').setDisplaySize(140, 140));
-      keep(this.add.image(x, this.hudY + 190, 'hud-hp').setDisplaySize(120, 22));
+      const frame = keep(this.add.image(x, y, 'hud-ring'));
+      keep(this.add.image(x, this.hudY + 190, 'hud-hp'));
       const ring = keep(this.add.graphics());
       this.tweens.add({ targets: glow, scale: 1.12, alpha: 0.7, yoyo: true, repeat: -1, duration: 380 });
-      frame.setInteractive(new Phaser.Geom.Circle(70, 70, 68), Phaser.Geom.Circle.Contains).on('pointerdown', () => {
+      frame.setInteractive(new Phaser.Geom.Circle(72, 72, 70), Phaser.Geom.Circle.Contains).on('pointerdown', () => {
         if (this.battle.requestSkill(unit.id)) this.tweens.add({ targets: img, scale: img.scale * 0.9, yoyo: true, duration: 90 });
       });
       this.portraits.push({ unit, x, ring, glow, img });
@@ -209,14 +209,14 @@ export class BattleScene extends FightScene {
         p.ring.lineStyle(2, 0xffffff, ready ? 0.9 : 0.55);
         p.ring.beginPath().arc(p.x, y, 57, -Math.PI / 2, a1).strokePath();
       }
-      // la vie, dans sa rainure d'or
-      const wHp = 111 * (u.hp / u.maxHp);
-      if (wHp > 1) {
-        const hy = this.hudY + 190 - 6.5;
-        p.ring.fillStyle(wHp < 111 * 0.3 ? C.red : C.green);
-        p.ring.fillRoundedRect(p.x - 55.5, hy, wHp, 13, Math.min(6, wHp / 2));
+      // la vie, dans sa rainure (hud-art.tsx) : un aplat net, l'arête claire en haut (au pas des pixels du dessin : 4)
+      const wHp = Math.round((112 * (u.hp / u.maxHp)) / 4) * 4;
+      if (wHp > 0) {
+        const hy = this.hudY + 190 - 8;
+        p.ring.fillStyle(wHp < 112 * 0.3 ? C.red : C.green);
+        p.ring.fillRect(p.x - 56, hy, wHp, 16);
         p.ring.fillStyle(0xffffff, 0.4);
-        p.ring.fillRect(p.x - 53, hy + 2, Math.max(0, wHp - 5), 3);
+        p.ring.fillRect(p.x - 56, hy, wHp, 4);
       }
     }
   }

@@ -18,7 +18,6 @@ import { useGame } from '../../state/store';
 import { dots } from '../dots';
 import { Art, Btn, Cur, Icon, Modal, RedDot } from '../kit';
 import { close, open, prepare } from '../nav';
-import { Chest, Hourglass } from '../anim';
 import { BarArt, ChapterPlaque, Chevron, FightButtonArt, Medallion } from '../chrome';
 
 function IdleStage({ running }: { running: boolean }) {
@@ -103,7 +102,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
       <div class="dock">
         <button class={`dock-chest${loot.hours >= 2 ? ' ready' : ''}${loot.full ? ' full' : ''}`}
           onClick={() => open({ type: 'gain', title: t('camp.loot'), gain: collectIdle() })}>
-          <Chest class="chest" size={70} state={loot.full ? 'full' : loot.hours >= 2 ? 'ready' : 'closed'} />
+          <Icon name={loot.full ? 'chestOpen' : 'chestClosed'} size={58} />
           <span class="dock-time">{h} h {String(m).padStart(2, '0')}</span>
           <span class="dock-bar"><span style={{ width: `${(loot.hours / OFFLINE_CAP_HOURS) * 100}%` }} /></span>
           {loot.hours >= 2 && <RedDot />}
@@ -125,7 +124,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
         </button>
 
         <button class="dock-fast" onClick={() => open({ type: 'fastLoot' })}>
-          <Hourglass size={62} />
+          <Icon name="hourglass" size={58} />
           <span class="dock-time">{t('camp.fast')}</span>
           {fastLootCost(s) === 0 && <RedDot />}
         </button>
@@ -147,7 +146,7 @@ export function FastLootModal() {
   return (
     <Modal title={t('camp.fast')}>
       <div class="row gap center-y">
-        <Hourglass size={68} />
+        <Icon name="hourglass" size={64} />
         <div class="grow">
           <strong>2 h</strong>
           <div class="row gap-s wrap">

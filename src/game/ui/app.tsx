@@ -130,7 +130,8 @@ function BattleOverlay({ request }: { request: BattleRequest }) {
       else open({ type: 'gain', title, gain, win: result.win });
     });
   }, [request]);
-  return <div class="battle" ref={host} />;
+  // le combat se dessine dans la zone sûre (sous l'encoche, au-dessus de la barre de geste) : le cadre intérieur n'a pas de marge
+  return <div class="battle"><div class="battle-host" ref={host} /></div>;
 }
 
 export function App() {
