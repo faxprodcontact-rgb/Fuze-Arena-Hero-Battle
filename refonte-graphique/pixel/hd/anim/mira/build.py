@@ -1447,25 +1447,17 @@ def dilate(m, r=1):
     return out
 
 
-# Les plaques : de petites plumes de vent couchées vers le bas (tuyau en haut, bout arrondi en bas), posées en
-# écailles qui se chevauchent, par groupes (épaulière, pan de cape, jupe, poitrine) : bout clair du côté de la lumière
-# (en haut à droite), ombre jade à gauche, bord jade. 'vif' : à l'instant où elles se posent, elles brillent.
-PLATE = ['..R..',
-         '.SXS.',
-         'SYXWS',
-         'SYXWS',
-         'SVYXS',
-         'SVYXS',
-         '.SVS.']
-PLATE_VIF = {'Y': 'X', 'X': 'W', 'V': 'Y'}
-PLATE_PALE = {'W': 'X', 'X': 'Y', 'Y': 'V', 'V': 'S', 'S': 'R'}
-# où elles se posent (grille du dessin : le haut du tuyau), groupe par groupe, de gauche à droite (chaque écaille
-# recouvre un peu sa voisine de gauche)
-PLATES = [[(45, 51), (49, 52), (53, 51)],              # l'épaulière
-          [(33, 90), (37, 91)],                         # le pan de cape
-          [(55, 85), (59, 86), (63, 86), (67, 85)],     # la jupe
-          [(70, 57), (74, 58)]]                         # la poitrine (à gauche du bouclier)
+# Les plaques : les plumes des ailes de vent qui se posent sur elle, en éventails de trois (comme une épaulière et une
+# jupe de plumes) : les mêmes rémiges d'air que les ailes (bout taillé en biais, bord jade), plus courtes ; chaque
+# éventail s'ouvre vers le bas. Tons : 'vif' quand elles se posent (elles brillent), puis normaux, puis pâles.
+PLATE_T = {0: dict(fea='X', fea_dk='Y', tip='Y', rim='V'), 1: dict(fea='Y', fea_dk='V', tip='V', rim='S'),
+           3: dict(fea='V', fea_dk='S', tip='S', rim='R')}
+# (base sur la grille du dessin, directions des plumes (90 = vers le haut, 270 = vers le bas), longueur, largeur)
+PLATES = [((48, 50), (222, 248, 274), 12, 5.5),        # l'épaulière : l'éventail tombe sur le haut du bras
+          ((58, 82), (246, 268, 290), 14, 5.5),        # la jupe, côté proche
+          ((36, 86), (238, 262), 13, 5.5)]             # le pan de cape
 GLINT = ['.X.', 'XWX', '.X.']
+SHELL_PALE = {'W': 'X', 'X': 'Y', 'Y': 'V', 'V': 'S', 'S': 'R'}       # le liseré qui pâlit
 
 
 def fx_armor(k):
@@ -1485,22 +1477,26 @@ def fx_armor(k):
                 q = (d / (np.linalg.norm(d) + 1e-6)) @ LN
                 ch = 'X' if q > 0.55 else 'Y' if q > 0.1 else 'V' if q > -0.45 else 'S'
                 if k == 3:
-                    ch = PLATE_PALE.get(ch, ch)
+                    ch = SHELL_PALE.get(ch, ch)
                 elif sweep <= y < sweep + 9:
                     ch = 'W'
                 put(back, x, y, ch)
-        for j, group in enumerate(PLATES):
-            for i, (gx, gy) in enumerate(group):
-                p = g2c((gx, gy), ctx.body.follow(gy))
-                x0, y0 = int(p[0]) - 2, int(p[1])
-                if k == 4:
-                    if i == 0:
-                        sprite(front, GLINT, x0 + 2, y0 + 2)
-                    continue
-                sw = PLATE_VIF if k == 0 else PLATE_PALE if k == 3 else {}
-                sprite(front, [''.join(sw.get(ch, ch) for ch in r) for r in PLATE], x0, y0)
-                if k in (1, 2) and i == len(group) - 1 and j % 2 == k - 1:   # un éclat sur le bout d'un groupe
-                    sprite(front, GLINT, x0 + 2, y0 - 2)
+        T = PLATE_T[{0: 0, 1: 1, 2: 1, 3: 3}.get(k, 3)]
+        lay = empty()
+        for j, ((gx, gy), angs, L, fw) in enumerate(PLATES):
+            B = g2c((gx, gy), ctx.body.follow(gy))
+            if k == 4:
+                sprite(front, GLINT, int(B[0]) - 1, int(B[1] + L * 0.6) - 1)
+                continue
+            for a_ in angs:
+                draw_feather_blade(lay, B, a_, L, fw, T)
+            if k in (1, 2) and j % 2 == k - 1:                  # un éclat sur le bout d'un éventail
+                tip = B + (L - 2) * unit(angs[len(angs) // 2])
+                sprite(lay, GLINT, int(tip[0]) - 1, int(tip[1]) - 1)
+        if k <= 3:
+            rim(lay, T)
+            m = lay != '.'
+            front[m] = lay[m]
     return f
 
 
@@ -1535,7 +1531,7 @@ def fx_heal(k):
         rings = [((foot - 4, 26, 2.8),), ((foot - 30, 30, 2.6), (foot - 60, 27, 2.2)), ((foot - 82, 22, 1.6),)][k]
         for j, (yy, rx, w) in enumerate(rings):
             ribbon(back, (cx - 2, yy), rx, 6, 160 - 15 * j, 25 + 10 * j, w, head=0.55, tones='WXYV')
-            if yy > foot - 34:
+            if yy > foot - 14:
                 ribbon(front, (cx - 2, yy + 1), rx + 1, 6, 205, 335, w * 0.8, head=0.5, tones='XYV')
         # deux volutes qui montent de chaque côté
         for sgn in (-1, 1):
@@ -1624,18 +1620,21 @@ SPECIALE = [
          fx=[fx_armor(4), fx_heal(2)], wfx=[fx_ring_out(3), fx_takeoff(3)], ms=90),
     # 13 : elle lève le bouclier et ramène la lance devant elle
     dict(s=2, lean=0, arm=dict(grip=(70.5, 64.5), bend=1), ang=22.0, couch=True, sh=(1, -3), hd=(0, 1), w=(0, 0),
-         tr=0, cp=0, fx=[fx_fall_feathers(2)], ms=70),
+         tr=0, cp=0, fx=[fx_fall_feathers(2)], ms=60),
     # 14 : LE DÉFI (arrêt sur l'image) : bouclier levé, lance pointée vers l'ennemi, elle crie ; la lueur rouge s'allume
     defi(tint=('rouge', 14), fx=[fx_provoke(0)], ms=220),
     # 15 : la lueur gonfle
     defi(w=(0, -1), tr=-2, tint=('rouge', 8), fx=[fx_provoke(1)], ms=110),
     # 16 : elle pâlit et s'éteint ; la bouche se referme
     defi(cri=0, w=(1, 0), tr=-1, cp=0, fx=[fx_provoke(2)], ms=100),
-    # 17 : elle ramène la lance (bras et poing du dessin, encore un peu levés), le bouclier redescend
+    # 17 : elle ramène la lance contre elle, le bouclier redescend
+    dict(s=1, lean=1, arm=dict(grip=(70.5, 68.5), bend=1), ang=20.0, couch=True, sh=(1, -3), hd=(0, 0), w=(0, 1),
+         tr=0, cp=0, ms=70),
+    # 18 : la lance reprend sa place (bras et poing du dessin, encore un peu levés)
     dict(s=1, ad=(0, -2), sh=(0, -1), hd=(0, 1), w=(0, 1), tr=0, cp=0, ms=90),
-    # 18, 19 : en garde
+    # 19, 20 : en garde
     dict(s=1, hd=(0, 0), w=(0, 0), tr=0, cp=-1, ms=100),
-    dict(ms=120),
+    dict(ms=110),
 ]
 
 
