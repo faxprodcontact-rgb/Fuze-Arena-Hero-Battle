@@ -6,3 +6,4 @@ refonte-graphique/rig-out/*-grille.png
 __pycache__/
 /*.png
 refonte-graphique/*-vis*.png
+.claude/worktrees/
