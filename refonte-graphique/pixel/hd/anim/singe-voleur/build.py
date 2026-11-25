@@ -19,8 +19,8 @@
 #     (rubans, volutes, bouffées) : jamais de rayons droits ;
 #   - à la fin, chaque image peut recevoir des retouches pixel par pixel (RETOUCHES, plus bas).
 #
-# Pour le jeu : l'attaque de base touche à l'image 5, la spéciale aux images 6, 9 et 12 (le dernier coup, arrêt sur
-# l'image), numérotées depuis 0 comme sur la planche.
+# Pour le jeu : l'attaque de base touche à l'image 5 ; la spéciale touche aux images 4, 6 et 9 (le dernier coup,
+# éclair et arrêt sur l'image), numérotées depuis 0 comme sur la planche.
 import sys, os, math
 import numpy as np
 from PIL import Image, ImageDraw
@@ -755,7 +755,7 @@ def sparkle(cv, x, y, big=False):
     for (dx, dy, ch) in pts:
         X, Y = int(x) + dx, int(y) + dy
         if 0 <= X < W and 0 <= Y < H:
-            cv[Y, X] = 'g' if ch == 'g' else {'T': 'k', 'S': 'm'}[ch] if False else ch
+            cv[Y, X] = ch
 
 
 # ---------------------------------------------------------------- montage d'une image d'attaque
@@ -1038,18 +1038,18 @@ SPECIALE = [
          arm=dict(wrist=(15, 12), ang=-58), fx=[fx_hit(0, -40, 0.8)], ms=90),
     dict(T=(34, -28), bascule=-3, arr=(4, -7), av=(-1, -6), tete=(0, 0), sac=(0, 3), queue=(-2, 3), e=1,
          arm=dict(wrist=(6, 9), ang=-15), fx=[fx_whirl], ms=80),
-    dict(T=(46, -10), bascule=6, arr=(-6, -2), av=(6, 2), tete=(1, 1), sac=(0, 3), queue=(0, 2), e=-1,
+    dict(T=(46, -10), bascule=5, arr=(-4, -2), av=(5, 2), tete=(1, 1), sac=(0, 3), queue=(0, 2), e=-1,
          arm=dict(wrist=(19, 7), ang=-35), fx=[fx_dive_trail], ms=50),
     dict(T=(50, 0), dos=(2, 4), tete=(1, 1), sac=(0, -2), queue=(2, -2), e=1, flash=20,
          arm=dict(wrist=(19, 9), ang=-32), fx=[fx_tornado(0)], ms=170),
     dict(T=(40, -12), bascule=-3, arr=(3, -5), av=(-3, -4), tete=(-1, 0), sac=(0, 2), queue=(2, 2), e=-1,
          arm=dict(wrist=(8, 8), ang=10), fx=[fx_tornado(1), fx_coin(0.12, 0)], ms=70),
     dict(T=(22, -18), bascule=-2, arr=(3, -6), av=(-2, -5), tete=(0, 0), sac=(0, 2), queue=(1, 2), e=0,
-         arm=dict(wrist=(7, 9), ang=0), fx=[fx_tornado(2), fx_coin(0.38, 1)], ms=70),
+         arm=dict(wrist=(7, 9), ang=0), fx=[fx_tornado(2), fx_coin(0.42, 1)], ms=70),
     dict(T=(8, -6), bascule=2, arr=(-2, -2), av=(4, 2), tete=(0, 0), sac=(0, 1), queue=(0, 1), e=1,
-         fx=[fx_tornado(3), fx_coin(0.62, 2)], ms=70),
+         fx=[fx_tornado(3), fx_coin(0.7, 2)], ms=70),
     dict(T=(0, 0), dos=(0, 3), tete=(0, 1), sac=(0, -1), queue=(1, 1), e=1,
-         fx=[fx_tornado(4), fx_coin(0.84, 1), fx_dust(0, 0.9, 7)], ms=80),
+         fx=[fx_tornado(4), fx_coin(0.93, 0), fx_dust(0, 0.9, 7)], ms=80),
     dict(dos=(0, 2), tete=(1, 0), sac=(0, 1), queue=(0, 1), e=0,
          fx=[fx_tornado(5), fx_pocket(0), fx_dust(0, 0.8, 7, hollow=0.6)], ms=110),
     dict(dos=(0, -1), tete=(1, -1), sac=(0, -1), queue=(-1, 0), e=-1, d=(0, -1), fx=[fx_pocket(1)], ms=130),

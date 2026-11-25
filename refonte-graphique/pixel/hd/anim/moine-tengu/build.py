@@ -1081,7 +1081,7 @@ ATTAQUE = [
     # le retour, lent : il ramène le bâton bas devant lui, puis le redresse et le replante
     dict(arm='rig', staff='libre', G=(50.0, 56.0), ang=-8, sg=44, lean=1, crouch=1, p=-1, swing=(0.5, 0.3),
          fx=[fx_hit(3)], ms=150),
-    dict(arm='rig', staff='libre', G=(27.0, 48.0), ang=62, sg=62, lean=0, breath=1, p=0, swing=(0.4, 0.2),
+    dict(arm='rig', staff='libre', G=(25.0, 48.0), ang=77, sg=63, lean=0, breath=1, p=0, swing=(0.4, 0.2),
          fx=[fx_hit(4)], ms=150),
     dict(j=2, fx=[fx_hit(5)], ms=170),
 ]

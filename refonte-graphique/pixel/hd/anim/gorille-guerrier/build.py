@@ -871,98 +871,116 @@ POSE = [
 # arrache le poing du sol en l'armant en arrière (le vent s'enroule autour du gantelet) ; puis il bascule en avant,
 # le bras se déplie d'un coup (image étirée), le poing frappe : éclat de vent, croissants d'air, la poussière saute
 # sous ses pieds ; impact tenu ; il ramène le bras et repose lourdement le poing.
-COCK = (-7, -12)                       # le bras proche armé : déplacé d'un bloc (poing soulevé, ramené en arrière)
-NEAR_FIST = (30, 110)                  # milieu du poing proche posé (grille)
+COCK_ELBOW = (40, 70)                  # le bras proche armé en arrière : coude bas, poing remonté derrière l'épaule
+COCK_FIST = (2, 52)                    # où tombe alors le poing (grille, à peu près)
 
 
 def fx_gather(level):
     def f(back, front, ctx):
         dx, dy = ctx.body.follow(60)
-        cx, cy = g2c(NEAR_FIST[0] + COCK[0] + dx, NEAR_FIST[1] + COCK[1] + dy - 4)
-        if level >= 1:
-            curl(back, (cx - 4, cy - 2), 11, 200, turn=250, w=2.6, tones='xyzv')
-            leaf(front, cx + 14, cy - 16, 0)
-        if level >= 2:
-            curl(front, (cx + 2, cy + 6), 13, 20, turn=230, w=2.8, tones='wxyz', cw=True)
-            curl(back, (cx - 10, cy - 14), 7, 120, turn=260, w=2.0, tones='yzv')
-            leaf(front, cx - 16, cy - 4, 1)
-            puff(front, (cx + 16, GROUND - 2), 2.2)
-        # sous le poing soulevé, la poussière retombe
-        cloud(back, (cx + 2, GROUND - 2), 2.6, seed=3, hollow=0.3 * level)
+        cx, cy = g2c(COCK_FIST[0] + dx, COCK_FIST[1] + dy)
+        if level == 1:
+            curl(back, (cx + 2, cy + 2), 12, 250, turn=240, w=3.0, tones='xyzv')
+            cloud(back, g2c(30, GROUND - OY - 3), 4.0, seed=3)
+        if level == 2:
+            curl(back, (cx + 2, cy + 2), 16, 210, turn=270, w=3.6, tones='wxyzv')
+            curl(front, (cx - 2, cy + 18), 9, 30, turn=250, w=2.6, tones='xyzv', cw=True)
+            leaf(front, cx + 18, cy - 12, 0)
+            leaf(back, cx - 12, cy + 24, 1)
+            cloud(back, g2c(30, GROUND - OY - 3), 4.4, seed=3, hollow=0.5)
     return f
 
 
 def fx_smear(back, front, ctx):
     """le bras qui se déplie : une rafale pleine du poing armé au poing tendu (derrière l'avant-bras)"""
-    x0, y0 = g2c(16, 92)
-    x1, y1 = g2c(118, 70)
-    pts = bezier((x0, y0), (x0 + 30, y0 + 10), (x1 - 40, y1 + 6), (x1, y1), 50)
-    stroke(back, pts, [2 + 16 * (i / 50) ** 1.4 for i in range(51)], 'xyzv')
-    stroke(back, pts[10:], [1 + 8 * (i / 40) ** 1.5 for i in range(41)], 'wwx')
-    for (sx, sy, k) in ((x0 + 20, GROUND - 3, 2.4), (x0 + 44, GROUND - 2, 1.8)):
-        puff(back, (sx, sy), k)
+    x0, y0 = g2c(*COCK_FIST)
+    x1, y1 = g2c(116, 66)
+    pts = bezier((x0, y0), (x0 + 6, y0 + 30), (x1 - 50, y1 + 12), (x1, y1), 60)
+    stroke(back, pts, [1 + 22 * (i / 60) ** 1.6 for i in range(61)], 'xyzv')
+    stroke(back, pts[25:], [1 + 12 * (i / 35) ** 1.6 for i in range(36)], 'wwx')
+    cloud(back, g2c(30, GROUND - OY - 3), 3.6, seed=4, hollow=0.7)
 
 
-KNUCKLE = (126, 70)                    # le poing tendu (grille) : là où le coup porte
+KNUCKLE = (128, 66)                    # le poing tendu (grille) : là où le coup porte
 
 
 def fx_hit(k):
     def f(back, front, ctx):
         cx, cy = g2c(*KNUCKLE)
         if k == 0:
-            pop(front, (cx + 4, cy), 8, facing=0, tones='wwxyz')
-            crescent(front, (cx - 2, cy), 15, 0, span=120, w=3.4, tones='wxyz')
+            pop(front, (cx + 5, cy), 12, facing=0, tones='wwxyz')
+            crescent(front, (cx - 4, cy), 24, 0, span=120, w=5.0, tones='wxyz')
         elif k == 1:
-            pop(front, (cx + 6, cy), 6, facing=0, tones='wxyz')
-            crescent(front, (cx + 4, cy), 19, 0, span=110, w=3.0, tones='wxyz')
-            crescent(front, (cx + 14, cy - 2), 11, 10, span=100, w=2.2, tones='xyz')
-            curl(front, (cx + 22, cy - 14), 6, 200, turn=260, w=2.0, tones='xyzv')
-            curl(front, (cx + 20, cy + 12), 5, 160, turn=260, w=1.8, tones='yzv', cw=True)
+            pop(front, (cx + 8, cy), 9, facing=0, tones='wxyz')
+            crescent(front, (cx + 4, cy), 28, 0, span=115, w=4.4, tones='wxyz')
+            crescent(front, (cx + 20, cy - 2), 16, 8, span=100, w=3.0, tones='xyz')
+            curl(front, (cx + 30, cy - 22), 8, 200, turn=260, w=2.6, tones='xyzv')
+            curl(front, (cx + 28, cy + 20), 7, 160, turn=260, w=2.4, tones='yzv', cw=True)
         elif k == 2:
-            crescent(front, (cx + 14, cy), 20, 0, span=90, w=2.2, tones='xyz')
-            curl(front, (cx + 28, cy - 16), 5, 220, turn=280, w=1.6, tones='yzv')
-            curl(front, (cx + 26, cy + 14), 4, 140, turn=280, w=1.4, tones='zv', cw=True)
-            leaf(front, cx + 34, cy - 4, 2)
+            crescent(front, (cx + 22, cy), 28, 0, span=90, w=3.0, tones='xyz')
+            curl(front, (cx + 40, cy - 24), 7, 220, turn=280, w=2.2, tones='yzv')
+            curl(front, (cx + 38, cy + 22), 6, 140, turn=280, w=2.0, tones='zv', cw=True)
+            leaf(front, cx + 46, cy - 6, 2)
         elif k == 3:
-            curl(front, (cx + 34, cy - 18), 4, 240, turn=200, w=1.2, tones='zv')
-            leaf(front, cx + 42, cy + 2, 0)
+            curl(front, (cx + 48, cy - 28), 5, 240, turn=200, w=1.6, tones='zv')
+            leaf(front, cx + 56, cy + 4, 0)
         # le sol tremble : bouffées de poussière sous les pieds et le poing posé
-        gx = [g2c(52, 0)[0], g2c(82, 0)[0], g2c(108, 0)[0]]
+        gx = [g2c(46, 0)[0], g2c(84, 0)[0], g2c(120, 0)[0]]
         for i, x in enumerate(gx):
             if k <= 2:
-                cloud(back if i == 1 else front, (x + (k * 2 if i == 2 else -k * 2), GROUND - 2),
-                      (3.2 if k == 0 else 3.8 if k == 1 else 3.0), seed=10 + i, hollow=0.35 * k)
+                cloud(back if i == 1 else front, (x + (k * 3 if i == 2 else -k * 3), GROUND - 2),
+                      (4.6 if k == 0 else 5.4 if k == 1 else 4.4), seed=10 + i, hollow=0.35 * k)
         if k == 0:
-            pebble(front, gx[2] + 10, GROUND - 6)
-            pebble(front, gx[0] - 9, GROUND - 5)
+            pebble(front, gx[2] + 12, GROUND - 7)
+            pebble(front, gx[0] - 11, GROUND - 6)
         if k == 1:
-            pebble(front, gx[2] + 14, GROUND - 9)
-            pebble(front, gx[0] - 13, GROUND - 7)
+            pebble(front, gx[2] + 18, GROUND - 11)
+            pebble(front, gx[0] - 16, GROUND - 9)
     return f
 
 
 def fx_land(back, front, ctx):
-    x, _ = g2c(NEAR_FIST[0], 0)
-    cloud(front, (x - 15, GROUND - 2), 3.0, seed=21)
-    cloud(back, (x + 14, GROUND - 2), 2.6, seed=22)
+    x, _ = g2c(30, 0)
+    cloud(front, (x - 17, GROUND - 2), 4.2, seed=21)
+    cloud(back, (x + 16, GROUND - 2), 3.6, seed=22)
 
 
 ATTAQUE = [
     dict(lean=-1, breath=1, near=None, ms=130),
-    dict(lean=-3, breath=2, chest=-1, near=dict(mode='rigid', dx=-3, dy=-6), fx=[fx_gather(1)], ms=160),
-    dict(lean=-4, breath=2, chest=-2, near=dict(mode='rigid', dx=COCK[0], dy=COCK[1]), fx=[fx_gather(2)], ms=300),
-    dict(lean=4, chest=2, near=dict(sh=(8, 4), elbow=(70, 74), fore='fwd', shear=0.12), fx=[fx_smear], ms=60),
-    dict(lean=7, crouch=1, chest=3, near=dict(sh=(14, 6), elbow=(86, 72), fore='fwd'), fx=[fx_hit(0)], ms=90),
-    dict(lean=7, crouch=1, chest=3, near=dict(sh=(14, 6), elbow=(86, 72), fore='fwd'), fx=[fx_hit(1)], ms=150),
-    dict(lean=5, crouch=1, chest=2, near=dict(sh=(10, 5), elbow=(72, 74), fore='fwd', shear=0.1), fx=[fx_hit(2)],
-         ms=110),
+    dict(lean=-3, breath=2, chest=-2, near=dict(sh=(-3, -2), elbow=(30, 78), fore='back', shear=0.35),
+         fx=[fx_gather(1)], ms=150),
+    dict(lean=-5, breath=2, chest=-4, near=dict(sh=(-5, -3), elbow=COCK_ELBOW, fore='back', shear=0.55),
+         fx=[fx_gather(2)], ms=320),
+    dict(lean=4, chest=3, near=dict(sh=(8, 4), elbow=(70, 72), fore='fwd', shear=0.1), fx=[fx_smear], ms=60),
+    dict(lean=7, crouch=1, chest=4, near=dict(sh=(14, 6), elbow=(88, 70), fore='fwd'), fx=[fx_hit(0)], flash=30,
+         ms=90),
+    dict(lean=7, crouch=1, chest=4, near=dict(sh=(14, 6), elbow=(88, 70), fore='fwd'), fx=[fx_hit(1)], ms=160),
+    dict(lean=5, crouch=1, chest=2, near=dict(sh=(10, 5), elbow=(74, 73), fore='fwd', shear=0.1), fx=[fx_hit(2)],
+         ms=120),
     dict(lean=3, near=dict(mode='rigid', dx=5, dy=-6), fx=[fx_hit(3)], ms=110),
     dict(lean=1, crouch=1, near=None, fx=[fx_land], ms=130),
-    dict(lean=0, near=None, ms=170),
-]
+    dict(lean=0, near=None, ms=170)]
 
 
 if __name__ == '__main__' and sys.argv[1:2] == ['decoupe']:
     debug_decoupe()
 if __name__ == '__main__' and sys.argv[1:2] == ['essai']:
     show(ATTAQUE, os.path.join(SCRATCH, 'essai.png'), 2)
+if __name__ == '__main__' and sys.argv[1:2] == ['voir']:
+    anim = {'pose': POSE, 'attaque': ATTAQUE, 'speciale': globals().get('SPECIALE', [])}[sys.argv[2]]
+    idx = [int(v) for v in sys.argv[3].split(',')]
+    k = int(sys.argv[4]) if len(sys.argv) > 4 else 4
+    ims = []
+    for i in idx:
+        spec = dict(anim[i])
+        if sys.argv[2] == 'pose':
+            spec = dict(breath=spec['breath'], crouch=spec['crouch'], cloth=spec['cloth'], blink=spec.get('blink'))
+        cv, back, front, ctx = rig_frame(spec)
+        ims.append(big(compose(cv, back, front, flash=spec.get('flash')), k, (20, 50, 220, 172)))
+    w, h = ims[0].size
+    sheet = Image.new('RGB', (w * len(ims), h), (250, 250, 252))
+    for i, im in enumerate(ims):
+        sheet.paste(im, (i * w, 0))
+    p = os.path.join(SCRATCH, 'voir.png')
+    sheet.save(p)
+    print('écrit', p)

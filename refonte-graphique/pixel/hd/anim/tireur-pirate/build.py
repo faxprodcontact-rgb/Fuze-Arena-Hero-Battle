@@ -1436,7 +1436,8 @@ VOLUTES = [
     [(20, -16, 7.4, 200, 290, 4.0, True), (16, 17, 6.6, 160, 270, 3.6, False), (-17, -14, 5.8, 330, 270, 3.0, False)],
     [(24, -19, 6.8, 200, 300, 2.8, True), (20, 21, 6.0, 160, 280, 2.6, False), (-21, -16, 5.0, 330, 280, 2.2, False)],
 ]
-GOUTTES = [(5.2, -4.6), (6.4, 0.6), (3.6, 3.8), (-4.6, -4.8), (-5.6, 1.4), (0.6, -6.8), (7.2, -3.0), (-2.6, 4.4)]
+GOUTTES = [(5.4, -4.4), (7.0, -1.0), (3.8, 1.6), (-4.6, -4.0), (-5.8, -0.4), (1.0, -5.6), (8.2, -3.2), (-2.4, 1.2),
+           (3.0, -6.4), (-7.0, -2.4)]
 
 
 def fx_impact(k):
@@ -1461,7 +1462,7 @@ def fx_impact(k):
                 pop(front, (X + 1, Y - 1), 4.6, facing=0, tones='WWX')     # l'éclat dure (arrêt sur l'image)
         # les grosses gouttes lancées tout autour : elles retombent en cloche
         if 1 <= k <= 7:
-            spray(front, (X, Y), k - 0.3, GOUTTES, g=1.2, sizes=(4, 4, 3, 3, 2))
+            spray(front, (X, Y), k - 0.3, GOUTTES, g=2.4, sizes=(4, 4, 3, 3, 2))
         # au sol : l'eau qui retombe jaillit en couronne, puis l'écume s'étale en volutes
         kc = k - 4
         if 0 <= kc <= 5:

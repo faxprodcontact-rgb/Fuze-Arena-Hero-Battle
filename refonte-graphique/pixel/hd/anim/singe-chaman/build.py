@@ -750,8 +750,13 @@ def fx_swirl_up(level):
         gy = GROUND - 8 - ctx.L
         g = ctx.gourd
         if level >= 0:
-            ribbon(back, (cx, gy - 6), 48, 11, 20, 165, 2.4 + level * 0.6, tones='cdef')
-            ribbon(front, (cx, gy - 6), 48, 11, 200, 335, 3.0 + level * 0.7, tones='bcdef')
+            # un anneau de vent qui tourne autour de lui, à hauteur de la taille (et qui monte avec lui)
+            ry = 12 + 2 * level
+            ribbon(back, (cx - 2, gy - 22 - 3 * level), 50, ry, 30 + 15 * level, 160 + 15 * level, 2.4 + level * 0.5,
+                   tones='cdef')
+            # (la moitié de devant passe sous le nuage : seul son bout ressort, à droite, devant le nuage)
+            ribbon(front, (cx - 2, gy - 22 - 3 * level), 50, ry, 300 + 15 * level, 345 + 15 * level,
+                   3.0 + level * 0.6, head=0.4, tones='bcdef')
         if level >= 1:
             gust(back, (cx - 44, gy - 2), (cx - 54, gy - 18), (cx - 46, gy - 38), (cx - 30, gy - 48), 3.2, 'bcdef',
                  curl_r=3.5, up=False)
@@ -773,11 +778,11 @@ def fx_swirl_up(level):
 
 
 def fx_cloud_swell(k):
-    """le nuage du sage se gonfle : des bouffées crème naissent sous lui"""
+    """le nuage du sage se gonfle : des bouffées crème naissent à ses deux bouts (derrière lui, à sa hauteur)"""
     def f(cv, back, front, ctx):
-        y = GROUND - 4
-        for (dx, r, sd) in ((-30, 4 + k, 41), (-8, 3 + k, 42), (16, 3 + k, 43), (34, 4 + k, 44)):
-            cloud(back, (SOL[0] + dx, y - k), r, CLOUDT[:4], seed=sd)
+        y = GROUND - 9 - ctx.L
+        for (dx, dy, r, sd) in ((-41, 0, 4 + k, 41), (-34, 4, 3 + k, 42), (39, 1, 4 + k, 43), (33, 5, 3 + k, 44)):
+            cloud(back, (SOL[0] + dx, y + dy), r, CLOUDT, seed=sd)
     return f
 
 
@@ -793,7 +798,7 @@ def fx_blast(cv, back, front, ctx):
     gust(back, (gx - 4, gy - 8), (gx + 10, gy - 20), (gx + 26, gy - 22), (gx + 38, gy - 12), 3.4, 'bcdef',
          curl_r=3.5, up=False)
     # le recul du souffle : une petite bouffée derrière son nuage
-    cloud(back, (SOL[0] - 40, GROUND - 6), 5, CLOUDT[:4], seed=52)
+    cloud(back, (SOL[0] - 44, GROUND - 10 - ctx.L), 5, CLOUDT, seed=52)
 
 
 def big_ball(cv, back, c, r, spin, trail):

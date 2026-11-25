@@ -905,7 +905,196 @@ ATTAQUE = [
     dict(wn=(1, 0, 0), wf=(1, 0, 0), fan=0, fl=-1, po=0, pa=0, ro=0, fx=[fx_volute(5)], ms=110),
     dict(ms=140),
 ]
-SPECIALE = [dict(ms=100)]
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Le tourbillon des plumes »
+# Il ouvre grand les ailes et lève l'éventail au-dessus de l'épaule ; il touille l'air (l'éventail penche d'un côté,
+# de l'autre) et le vent se met à tourner autour de lui en spirale, de ses pieds jusqu'à sa poitrine, avec des
+# feuilles et des plumes jade qui tournent dedans (tenu, ailes levées au plus haut). D'un grand battement d'ailes vers
+# le bas et d'un coup d'éventail (arrêt sur image), il lâche le tourbillon : une vraie trombe (une spirale de vent qui
+# monte en s'évasant, poussière à sa base) file vers l'ennemi en grandissant, l'avale (arrêt sur image, éclat), le fait
+# tourner dans les feuilles et les plumes, puis se défait en volutes qui montent ; les feuilles et les plumes
+# retombent en se balançant. Le battement a arraché deux plumes noires à ses ailes, qui descendent doucement. Il
+# ramène l'éventail, les ailes se reposent.
+BODY_C = SOL[0] + 2                               # l'axe du tourbillon autour de lui (toile)
+
+
+def helix(back, front, cx, y0, h, r0, r1, turns, phase, w, tones_f='wxyz', tones_b='yzvu', sway=0.0, t0=0.0,
+          t1=1.0, flat=0.3):
+    """une spirale de vent qui monte en s'évasant (la trombe) : un seul ruban continu, de y0 (en bas) à y0 - h ;
+    rayon r0 -> r1 ; devant le sujet quand elle passe du côté du spectateur (couche de devant), derrière sinon.
+    t0..t1 : la partie dessinée (elle naît par le bas, se défait par le bas) ; l'épaisseur s'effile aux deux bouts."""
+    n = int(turns * 420) + 40
+    segs = {True: ([], []), False: ([], [])}
+    for i in range(n + 1):
+        t = t0 + (t1 - t0) * i / n
+        a = math.radians(phase + t * turns * 360.0)
+        r = r0 + (r1 - r0) * t ** 1.3
+        x = cx + r * math.cos(a) + sway * math.sin(t * 3.0)
+        y = y0 - t * h - flat * r * math.sin(a)
+        s = (t - t0) / max(t1 - t0, 1e-6)
+        ww = w * min(1.0, s / 0.12, (1 - s) / 0.18 + 0.15) * (0.75 + 0.5 * t)
+        is_front = math.sin(a) < 0
+        segs[is_front][0].append((x, y))
+        segs[is_front][1].append(max(0.0, ww))
+        segs[not is_front][0].append((x, y))
+        segs[not is_front][1].append(0.0)
+    stroke(front, segs[True][0], segs[True][1], tones_f)
+    stroke(back, segs[False][0], segs[False][1], tones_b)
+
+
+def helix_pt(cx, y0, h, r0, r1, turns, phase, t, flat=0.3, sway=0.0):
+    a = math.radians(phase + t * turns * 360.0)
+    r = r0 + (r1 - r0) * t ** 1.3
+    return (cx + r * math.cos(a) + sway * math.sin(t * 3.0), y0 - t * h - flat * r * math.sin(a)), math.sin(a) < 0
+
+
+def fx_vortex(level, phase):
+    """le vent qui tourne autour de lui (level 1 … 4 : il monte, s'élargit, se charge de feuilles et de plumes)"""
+    def f(cv, back, front, ctx):
+        h = [0, 18, 34, 50, 62][level]
+        r0, r1 = 26.0 + 2 * level, 34.0 + 5 * level
+        turns = 0.9 + 0.3 * level
+        helix(back, front, BODY_C, GROUND - 2, h, r0, r1, turns, phase, 2.2 + 0.7 * level, flat=0.36)
+        if level >= 3:
+            helix(back, front, BODY_C, GROUND - 6, h - 10, r0 + 4, r1 - 2, turns - 0.5, phase + 170, 1.6,
+                  tones_f='xyz', tones_b='zvu', t0=0.25)
+        # la poussière soulevée à ses pieds
+        for i, dx in enumerate((-30, 32)):
+            if level >= 1 + i:
+                cloud(back, (SOL[0] + dx, GROUND - 2), 2.5 + 0.7 * level, 'DEF', seed=3 + i + level)
+        # feuilles et plumes jade emportées
+        for i in range(level + 1):
+            t = 0.15 + 0.8 * (i + 0.5) / (level + 1)
+            (x, y), fr = helix_pt(BODY_C, GROUND - 2, h, r0, r1, turns, phase + 60 + 47 * i, t)
+            lay = front if fr else back
+            if i % 2:
+                jade_feather(lay, x - 3, y - 2, i + level)
+            else:
+                leaf(lay, x - 1, y - 1, i + level)
+    return f
+
+
+def fx_unwind(cv, back, front, ctx):
+    """le tourbillon lâché : il se défait autour de lui (le bas d'abord) pendant que le coup d'éventail le jette"""
+    helix(back, front, BODY_C, GROUND - 2, 62, 34.0, 54.0, 2.9, 300, 3.0, t0=0.55)
+    gust(front, ctx.fan_tip + (2, -4), ctx.fan_tip + (22, -10), ctx.fan_tip + (40, -2), ctx.fan_tip + (56, 6),
+         4.0, 'wxyz', curl_r=4.0, up=False)
+
+
+def fx_fan_smear_big(a_from):
+    def f(cv, back, front, ctx):
+        R = FB + FAN_R0 + 1.0
+        a_tip = 90.0 - ctx.fan_axis
+        arc_trail(back, ctx.pivot, R + 1, a_tip + 2, ctx.fan_axis - a_from, 16.0, 'pwwxyz')
+    return f
+
+
+def trombe(back, front, cx, k, grow, phase, t0=0.0, t1=1.0, lean=0.0):
+    """la trombe : deux spirales (une grosse, une fine décalée), poussière à la base, feuilles et plumes dedans"""
+    h = 30 + 46 * grow
+    r0, r1 = 4.0 + 6 * grow, 12.0 + 18 * grow
+    helix(back, front, cx, GROUND - 1, h, r0, r1, 3.2, phase, 2.2 + 2.0 * grow, sway=lean, t0=t0, t1=t1, flat=0.32)
+    helix(back, front, cx, GROUND - 3, h - 6, r0 + 1, r1 - 3, 2.4, phase + 180, 1.2 + 1.0 * grow,
+          tones_f='xyz', tones_b='zvu', sway=lean, t0=t0, t1=t1)
+    if t0 < 0.2:
+        for i, dx in enumerate((-r0 - 5, r0 + 4, 1)):
+            cloud(back, (cx + dx, GROUND - 1), 2.2 + 2.0 * grow - i * 0.6, 'DEF', seed=k * 5 + i)
+    for i in range(4):
+        t = max(t0, 0.12) + (min(t1, 1.0) - max(t0, 0.12)) * (i + 0.5) / 4
+        (x, y), fr = helix_pt(cx, GROUND - 1, h, r0, r1, 3.2, phase + 90 + 70 * i, t, sway=lean)
+        lay = front if fr else back
+        if i % 2:
+            leaf(lay, x - 1, y - 1, i + k)
+        else:
+            jade_feather(lay, x - 3, y - 2, i + k)
+
+
+TROMBE_X0 = SOL[0] + 62                           # la trombe naît devant lui …
+TROMBE_X1 = ENEMY_X                               # … et file jusqu'à l'ennemi
+
+
+def fx_trombe(k):
+    """k = 0 : elle naît ; 1, 2 : elle file en grandissant ; 3 : elle avale l'ennemi ; 4 : elle le fait tourner ;
+    5, 6 : elle se défait (par le bas), les volutes montent ; 7, 8 : feuilles et plumes retombent"""
+    def f(cv, back, front, ctx):
+        X = TROMBE_X1
+        T = np.array([X, GROUND - 42.0])
+        if k <= 2:
+            u = [0.0, 0.45, 0.85][k]
+            cx = TROMBE_X0 + (X - TROMBE_X0) * u
+            trombe(back, front, cx, k, [0.25, 0.55, 0.85][k], 40 + 130 * k, lean=-2 - k)
+            if k == 0:
+                burst(front, (ctx.fan_tip[0] + 2, ctx.fan_tip[1]), 3.5, 'wxy')
+        elif k in (3, 4):
+            trombe(back, front, X, k, 1.0, 40 + 130 * k, lean=-1 if k == 3 else 1)
+            if k == 3:
+                pop(front, T, 9.5, facing=0, tones='wwxyz')
+                pop(back, T + (-6, 16), 6.5, facing=200, tones='wxyz')
+        elif k in (5, 6):
+            j = k - 5
+            trombe(back, front, X, k, 1.0, 40 + 130 * k, t0=0.35 + 0.35 * j)
+            top = GROUND - 1 - (30 + 46)
+            curl(front, (X + 16, top + 4 - 6 * j), 6.0 + j, 200, turn=290, w=3.0 - j, tones='xyzv', cw=True)
+            curl(back, (X - 18, top + 8 - 6 * j), 5.0 + j, 330, turn=280, w=2.6 - j, tones='xyzv')
+            cloud(back, (X, GROUND - 4), 6.0 - 2 * j, 'DEF', hollow=0.4 + 0.3 * j, seed=60 + j)
+        # les feuilles et les plumes qui retombent en se balançant
+        if k >= 5:
+            j = k - 5
+            for i, (dx, dy0, kind) in enumerate(((-22, -70, 'l'), (14, -62, 'f'), (-6, -48, 'f'), (26, -40, 'l'),
+                                                 (-30, -34, 'f'))):
+                y = GROUND + dy0 + 9 * j + 2 * i
+                x = X + dx + 3 * math.sin(j * 1.7 + i)
+                if y > GROUND - 3:
+                    continue
+                if kind == 'l':
+                    leaf(front, x, y, i + j)
+                else:
+                    jade_feather(front, x, y, (i + j) % 4)
+    return f
+
+
+def fx_shed(k):
+    """deux plumes noires arrachées par le battement : elles descendent en se balançant de part et d'autre"""
+    def f(cv, back, front, ctx):
+        sx, sy = ctx.sh
+        for i, (gx, gy, side) in enumerate(((10, 40, -1), (108, 36, 1))):
+            x = OX + gx + sx + side * (2 * k) + 3 * math.sin(k * 1.3 + i * 2)
+            y = OY + gy + sy + 7 * k + 2 * i
+            if y < GROUND - 3:
+                crow_feather(back if i else front, x, y, (k + i) % 3)
+    return f
+
+
+V = lambda lv, ph: fx_vortex(lv, ph)
+SPECIALE = [
+    dict(ms=100),
+    dict(lean=-1, head=(0, -1), wn=(3, 2, 0), wf=(3, 2, 0), fan=-2, arm=(0, -1), po=1, pa=-1, fx=[V(1, 0)], ms=110),
+    dict(lean=-1, crouch=-1, head=(-1, -1), wn=(6, 3, 1), wf=(6, 3, 1), fan=-4, arm=(0, -3), po=1, pa=-1, ro=1,
+         fx=[V(2, 95)], ms=120),
+    dict(lean=0, crouch=-1, head=(0, -1), wn=(6, 3, -1), wf=(6, 3, -1), fan=4, fl=1, arm=(1, -3), po=-1, pa=1, ro=1,
+         fx=[V(3, 190)], ms=110),
+    dict(lean=-1, crouch=-1, head=(-1, -1), wn=(7, 3, 1), wf=(7, 3, 1), fan=-4, fl=-1, arm=(0, -3), po=1, pa=-1,
+         ro=-1, fx=[V(4, 285)], ms=110),
+    dict(lean=-1, crouch=-1, head=(-1, -1), wn=(8, 4, 1), wf=(8, 3, 1), fan=-6, arm=(-1, -3), po=1, pa=-1, ro=-1,
+         blink=False, fx=[V(4, 380)], ms=220),
+    dict(lean=1, crouch=1, head=(0, 0), wn=(-3, 1, -3), wf=(-3, 1, -3), fan='a48', arm=(0, -2), po=0, pa=1, ro=0,
+         fx=[fx_fan_smear_big(-18), V(4, 470)], ms=60),
+    dict(lean=2, crouch=2, head=(1, 1), wn=(-7, 0, -4), wf=(-7, 0, -4), fan='flat', arm=(1, -1), po=-1, pa=1, ro=1,
+         fx=[fx_unwind, fx_trombe(0), fx_shed(0)], ms=170),
+    dict(lean=2, crouch=2, head=(1, 1), wn=(-6, 0, -2), wf=(-6, 0, -2), fan='flat', arm=(1, -1), po=-1, pa=1, ro=1,
+         fx=[fx_trombe(1), fx_shed(1)], ms=70),
+    dict(lean=2, crouch=1, head=(1, 0), wn=(-4, 0, 0), wf=(-4, 0, 0), fan='flat', arm=(1, 0), po=0, pa=0, ro=-1,
+         fx=[fx_trombe(2), fx_shed(2)], ms=70),
+    dict(lean=2, crouch=1, head=(1, 0), wn=(-3, 0, 1), wf=(-3, 0, 1), fan='flat', arm=(1, 0), po=1, pa=-1, ro=-1,
+         fx=[fx_trombe(3), fx_shed(3)], ms=190),
+    dict(lean=1, head=(1, 0), wn=(-2, 0, 1), wf=(-2, 0, 1), fan='a45', po=1, pa=-1, ro=0,
+         fx=[fx_trombe(4), fx_shed(4)], ms=120),
+    dict(lean=0, wn=(0, 0, 1), wf=(0, 0, 1), fan=3, fl=1, po=0, pa=0, ro=1, fx=[fx_trombe(5), fx_shed(5)], ms=110),
+    dict(wn=(2, 0, 0), wf=(2, 0, 0), fan=1, fl=-1, po=-1, pa=1, ro=1, fx=[fx_trombe(6), fx_shed(6)], ms=110),
+    dict(wn=(1, 0, -1), wf=(1, 0, -1), fan=-1, po=-1, pa=1, ro=0, fx=[fx_trombe(7), fx_shed(7)], ms=120),
+    dict(wn=(0, 0, 0), wf=(0, 0, 0), fan=0, po=0, pa=0, ro=-1, fx=[fx_trombe(8), fx_shed(8)], ms=130),
+    dict(ms=150),
+]
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
