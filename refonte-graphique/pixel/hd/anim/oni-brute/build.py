@@ -639,19 +639,25 @@ def belly(p, b):
     return over(p, np.where((q != '.') & (XX >= 52) & (XX <= 100), q, '.'))
 
 
+def far_arm(cv, dx, dy):
+    for k in (3, 2, 1):
+        blit(cv, np.where(YY <= 74, P['brasL'], '.'), dx, dy - k)
+    blit(cv, P['brasL'], dx, dy)
+
+
 def pose_frame(f):
     body = Body(crouch=f['k'], breath=min(f['b'], 2))
     cv, back, front = empty(), empty(), empty()
     swap = BLINK if f['cl'] else None
     cx, cy = body.follow(50)                 # le buste
     hx, hy0 = body.follow(90)                # les hanches
+    # le bras lointain pend, derrière le ventre : il suit le buste à moitié (l'épaule monte, le poing reste presque en
+    # place) ; posé AVANT le corps, et doublé vers le haut, pour qu'aucun jour ne s'ouvre sous l'épaule
+    up = (cy - hy0) // 2 + (1 if f['rf'] else 0)
+    far_arm(cv, hx, hy0 - up)
     b = belly(BODY_ORIG, f['b'])
     b = pagne(rope(b, f['rp']), f['pg'])
     body.draw(cv, b)
-    # le bras lointain pend : il suit le buste à moitié (l'épaule monte, le poing reste presque en place)
-    fl = P['brasL']
-    up = (cy - hy0) // 2 + (1 if f['rf'] else 0)
-    blit(cv, fl, hx, hy0 - up)
     draw_head(cv, cx, cy, f['hy'], f['ml'], f['mu'], swap=swap)
     # le bras proche, le poing et la massue : un seul bloc qui suit les hanches (la massue lourde ne respire pas) ;
     # le gros deltoïde monte avec le souffle et quand l'épaule roule (étiré, pas de trou)
@@ -1039,11 +1045,11 @@ def rig_frame(f):
         b = BODY_ORIG
     else:
         b = BODY_RIG
+    fo = f.get('far', (0, 0))
+    far_arm(cv, hx + fo[0], hy + fo[1] - (cy - hy) // 2)
     b = belly(b, f.get('breath', 0))
     b = pagne(rope(b, f.get('rp', f.get('pg', 0))), f.get('pg', 0))
     body.draw(cv, b)
-    fo = f.get('far', (0, 0))
-    blit(cv, P['brasL'], hx + fo[0], hy + fo[1] - (cy - hy) // 2)
     draw_head(cv, cx, cy, head[1], f.get('ml', 0), f.get('mu', 0), f.get('jaw', 0), swap, hx=head[0],
               sw=f.get('eyes'))
     if f.get('arms') == 'orig':

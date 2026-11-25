@@ -934,38 +934,52 @@ def broken_ground(cv, level=1.0):
 
 
 def venom_crown(cv, level):
-    """la couronne de venin qui gicle : level 0 = un dôme de bouffées vertes (les pétales collés au coeur) ;
-    1 = les pétales s'envolent en grosses gouttes ; 2 = les gouttes retombent en s'étirant"""
-    c = np.array([FOE[0] + 2, GROUND - 8], float)
-    petals = (162, 134, 108, 82, 56, 26)
+    """la gerbe de venin qui gicle de la morsure : level 0 = un gros éclat vert entouré de pétales collés ;
+    1 = les pétales s'envolent en grosses gouttes ; 2 = les gouttes retombent ; 3 = dernières gouttes au sol"""
+    c = HIT_S + np.array([2, 4])
+    petals = (170, 140, 112, 84, 56, 28, -10, 200)
     if level == 0:
-        puff(cv, c, 7.0, 'lHIJL')
+        pop(cv, c, 7.5, facing=20, tones='lHIJL')
+    elif level == 1:
+        puff(cv, c, 4.2, 'HIJL', hollow=0.45)
     for i, ang in enumerate(petals):
         a = math.radians(ang)
         u = np.array([math.cos(a), -math.sin(a)])
+        big = 1.0 if i % 2 == 0 else 0.8
         if level == 0:
-            puff(cv, c + u * 9, 3.6 - 0.3 * (i % 2), 'HIJL')
+            puff(cv, c + u * 12, 3.8 * big, 'HIJL')
         elif level == 1:
-            p = c + u * (19 + 4 * (i % 2)) + np.array([0, -3])
-            puff(cv, p, 2.8 - 0.4 * (i % 2), 'HIJL')
-            puff(cv, c + u * 11, 1.6, 'IJL')
+            puff(cv, c + u * 21 * (1.1 - 0.15 * (i % 2)), 3.2 * big, 'HIJL')
+        elif level == 2:
+            p = c + u * 27 * (1.1 - 0.15 * (i % 2)) + np.array([0, 9])
+            puff(cv, p, 2.4 * big, 'HIJL')
+            puff(cv, p + np.array([-u[0], -3]), 1.2, 'IJ')
         else:
-            p = c + u * (25 + 4 * (i % 2)) + np.array([0, 7])
-            drop(cv, p[0] - 1, p[1] - 1, 3 if i % 2 else 0, flip=ang > 90)
+            p = c + u * 30 * (1.1 - 0.15 * (i % 2)) + np.array([0, 22])
+            if p[1] < GROUND - 2:
+                drop(cv, p[0], p[1], 0)
+
+
+def bubble(cv, c, r):
+    """une bulle de venin qui monte (un anneau vert pâle, un éclat en haut à droite)"""
+    puff(cv, c, r, 'HIJ', hollow=0.55)
+    put(cv, c[0] + r * 0.35, c[1] - r * 0.35, 'l')
 
 
 def puddle(cv, level, fume=0.0):
-    """la flaque de venin sous l'ennemi, qui fume (bouffées vertes qui montent et se défont)"""
-    cx = FOE[0] - 4
+    """la flaque de venin sous l'ennemi, d'où montent des bulles qui crèvent"""
+    cx = FOE[0] - 2
     rx = 22 * level
     for y in range(GROUND - 2, GROUND + 1):
         for x in range(int(cx - rx - 1), int(cx + rx + 2)):
             if ((x + 0.5 - cx) / max(rx, 0.5)) ** 2 + ((y + 0.5 - GROUND) / 2.5) ** 2 <= 1:
                 put(cv, x, y, 'I' if y == GROUND - 2 and x > cx else 'J' if y < GROUND else 'L')
     if fume:
-        for (dx, r, sd, dh) in ((-12, 7.0, 61, 0), (9, 6.0, 62, 3), (-1, 5.0, 63, 10)):
-            cloud(cv, (cx + dx, GROUND - 7 - dh - 14 * fume), r * (1 - 0.25 * fume), 'HIJ',
-                  hollow=min(0.9, fume), seed=sd, ground=False)
+        for (dx, r, dh, sp) in ((-12, 3.2, 0, 1.0), (8, 2.6, 4, 1.3), (-2, 2.2, 12, 0.8), (15, 1.8, 14, 1.1)):
+            h = GROUND - 6 - dh - 22 * fume * sp
+            rr = r * (1 + 0.3 * fume)
+            if fume * sp < 0.95:
+                bubble(cv, (cx + dx, h), rr)
 
 
 def fx_impact(stage):
@@ -977,7 +991,6 @@ def fx_impact(stage):
             for (dx, r, sd) in ((-26, 6.0, 1), (22, 5.5, 2)):
                 cloud(back, (FOE[0] + dx, GROUND - 3), r, 'VWXY', seed=sd)
         elif stage == 1:                                # la couronne de venin, les blocs partent
-            pop(front, HIT_S + np.array([1, 2]), 5.0, facing=20, tones='HIJL')
             venom_crown(front, 0)
             stone_burst(front, 0.25)
             broken_ground(back)
@@ -998,6 +1011,7 @@ def fx_impact(stage):
             for (dx, r, sd) in ((-42, 6.5, 1), (38, 6.0, 2)):
                 cloud(back, (FOE[0] + dx, GROUND - 6), r, 'VWXY', hollow=0.65, seed=sd)
         elif stage == 4:
+            venom_crown(front, 3)
             stone_burst(front, 1.0)
             broken_ground(back)
             puddle(back, 1.0, fume=0.2)

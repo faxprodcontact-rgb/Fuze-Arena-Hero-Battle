@@ -996,13 +996,13 @@ ATTAQUE = [
 
 # ---------------------------------------------------------------- 3) l'attaque spéciale : « Faille de magma »
 # Le volcan se réveille : le cratère de son dos bout, puis crache une fontaine de lave ; ses fêlures s'allument jusqu'au
-# blanc. Il lève la massue tout droit au-dessus du cratère : la lave retombe dessus et l'embrase (la massue devient
+# blanc. Il lève la massue tout droit au-dessus de l'épaule, près du cratère : la lave retombe dessus et l'embrase (la massue devient
 # incandescente, des flammes l'enveloppent). Longue attente. Puis il l'abat devant lui dans un croissant de feu : arrêt
 # sur l'image (éclair), la massue fend le sol. Une faille de lave court au ras du sol vers l'ennemi et, sur son chemin,
 # le sol éclate en trois geysers de lave l'un après l'autre (toute la première ligne) : roche arrachée, gouttes en
 # cloche. Les geysers retombent en fumée, la faille refroidit (rouge, puis brun brûlé). Il traîne la massue et se
 # redresse, la lave de son corps se calme.
-ARM_SKY = (98.0, 96.0, 100.0)          # la massue tout droit au-dessus du cratère
+ARM_SKY = (98.0, 96.0, 100.0)          # la massue tout droit au-dessus de l'épaule, près du cratère
 GEYSERS = [72, 122, 172]               # où le sol éclate : distance (toile) depuis le centre de la massue posée
 HIT_X = [None]                         # le centre de la massue posée (toile), mémorisé à l'impact
 
@@ -1037,32 +1037,34 @@ def fx_crater(level):
             for (dx, dy) in ((-20, -44), (12, -46), (24, -32), (-30, -30)):
                 ember(front, cx + dx, cy + dy, True)
         elif level == 4:
-            tongue(front, (cx, cy), 7, 4.4, bend=0.6, tones='vuts', lean=0.1)
-            smoke_column(back, (cx - 2, cy - 10), 12, 3.4, hollow=0.2, seed=8)
-            ember(front, cx + 9, cy - 20)
+            tongue(front, (cx, cy), 9, 5.0, bend=0.6, tones='vuuts', lean=0.1)
+            tongue(front, (cx - 6, cy), 5, 3.0, bend=-0.8, tones='uts', lean=-0.2)
+            for (dx, dy) in ((9, -20), (-14, -26), (2, -32)):
+                ember(front, cx + dx, cy + dy)
         elif level == 5:
             smoke_column(back, (cx - 1, cy - 14), 14, 3.0, hollow=0.5, seed=9)
     return f
 
 
 def fx_club_fire(k):
-    """la massue embrasée : des flammes qui l'enveloppent et montent, des braises (k = 0 elle prend, 1 elle flambe)"""
+    """la massue embrasée : des flammes qui montent de sa tête, des gouttes qui en tombent, des braises
+    (k = 0 elle prend, 1 elle flambe)"""
     def f(cv, back, front, ctx):
         c = ctx.club
+        top = c[1] - 8
         if k == 0:
-            tongue(back, (c[0] - 10, c[1] + 2), 14, 6.0, bend=-0.7, tones='vuts', lean=0.0)
-            tongue(front, (c[0] + 9, c[1] - 4), 10, 4.4, bend=0.7, tones='vuts', lean=0.1)
-            for (dx, dy, vx, vy) in ((-18, 8, -0.4, 1), (14, 14, 0.3, 1)):
+            tongue(front, (c[0] - 4, top), 12, 6.0, bend=-0.7, tones='vuuts', lean=-0.1)
+            tongue(front, (c[0] + 7, top + 2), 8, 4.4, bend=0.8, tones='vuts', lean=0.1)
+            for (dx, dy, vx, vy) in ((-16, 14, -0.3, 1), (12, 18, 0.3, 1)):
                 drop(front, c[0] + dx, c[1] + dy, vx, vy, 2)
         else:
-            tongue(back, (c[0] - 12, c[1] + 4), 22, 8.0, bend=-0.8, tones='wvuts', lean=-0.1)
-            tongue(back, (c[0] + 2, c[1] - 2), 26, 9.0, bend=0.5, tones='wvuuts', lean=0.05)
-            tongue(front, (c[0] + 14, c[1] - 2), 14, 5.4, bend=0.9, tones='vuts', lean=0.2)
-            tongue(front, (c[0] - 14, c[1] - 4), 10, 4.4, bend=-0.9, tones='vuts', lean=-0.1)
-            for (dx, dy) in ((-20, -24), (6, -34), (22, -18), (-6, -40), (16, -30)):
+            tongue(front, (c[0] - 2, top), 22, 9.0, bend=-0.6, tones='wvuuts', lean=-0.1)
+            tongue(front, (c[0] - 12, top + 4), 13, 5.4, bend=-1.0, tones='vuts', lean=-0.4)
+            tongue(front, (c[0] + 10, top + 3), 15, 6.0, bend=0.9, tones='vuuts', lean=0.2)
+            for (dx, dy) in ((-18, -26), (6, -36), (20, -22), (-8, -42)):
                 ember(front, c[0] + dx, c[1] + dy, True)
-            drop(front, c[0] - 20, c[1] + 18, -0.3, 1, 2)
-            drop(front, c[0] + 18, c[1] + 22, 0.3, 1, 1)
+            drop(front, c[0] - 17, c[1] + 18, -0.3, 1, 2)
+            drop(front, c[0] + 14, c[1] + 22, 0.3, 1, 1)
     return f
 
 
