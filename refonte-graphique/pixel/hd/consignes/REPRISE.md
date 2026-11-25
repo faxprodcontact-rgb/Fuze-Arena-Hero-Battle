@@ -132,3 +132,8 @@ Gabryel → Dardane ; Elyon → Elvyn ; Auriel → Aurelle ; Jinn → Jarek.
   partout, visages et héros en pied dans les menus (`hd/anim/vignettes.py`, à relancer après chaque export), outils de
   test et vieux fichiers supprimés. Reste : fusionner la branche (si `hd-meta.ts` a encore changé, relancer
   `vignettes.py`), `npx tsc --noEmit`, `npm test`, `npm run build`, publier v0.56.0, puis les nouveaux noms ci-dessus.
+- 25/11 : v0.56.0 publiée (jeu propre tout en HD, noms renouvelés). Worktree de l'agent fusionné et supprimé.
+
+## Interface dans la nouvelle DA (demande du 25/11/2026)
+- Tout repasser en pixel art HD, partie par partie, et brancher au jeu. Partie 1 en cours : inventaire + plan
+  (`refonte-graphique/pixel/ui/PLAN.md`), page de chargement, logo, icônes d'application. Ensuite les autres parties du plan.
