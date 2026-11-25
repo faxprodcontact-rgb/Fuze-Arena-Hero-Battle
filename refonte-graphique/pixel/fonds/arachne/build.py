@@ -933,7 +933,7 @@ def construit():
     fd.boucle('toile-g', 'paysage', tuple(int(round(v)) for v in tb), 6, 400,
               lambda tl, ph, i: toile(tl, TOILE_G, ph, fond_lum), dessous=sous_soie, plein=False, prof=-19.5)
     tb = toile_boite(TOILE_D)
-    fd.boucle('toile-d', 'paysage', tuple(int(round(v)) for v in tb), 8, 300,
+    fd.boucle('toile-d', 'paysage', tuple(int(round(v)) for v in tb), 6, 400,
               lambda tl, ph, i: toile(tl, TOILE_D, ph, fond_lum), dessous=sous_soie, plein=False, prof=-19.4)
     for k in range(len(COCONS)):
         fd.boucle(f'cocon{k + 1}', 'paysage', cocon_boite(k), 8, 600,
