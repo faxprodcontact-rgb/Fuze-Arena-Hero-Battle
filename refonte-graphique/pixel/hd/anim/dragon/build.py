@@ -1188,10 +1188,9 @@ def fx_charge(level):
             if level >= 2:
                 tongue(front, (mx + 3, my + 6), 4 + 2 * level, 2.6, bend=-0.6, tones='vuts', lean=0.8)
         nx, ny = c2(NOSTRIL[0], NOSTRIL[1], ctx)
-        if level >= 2:
-            smoke_plume(front, (nx + 1, ny - 1), 8 + 3 * level, 2.0, sway=0.7, tones='ijl', curl_r=2.2, cw=True)
-        elif level == 1:
-            puff(front, (nx + 2, ny - 2), 1.8, 'ijl')
+        # la fumée chaude des naseaux (les bouffées du filet de la pose, de plus en plus haut)
+        if level >= 1:
+            fx_wisp(front, ctx, min(3, level))
     return f
 
 
@@ -1416,12 +1415,12 @@ WING_OPEN = dict(u=1.0, lift=10, flap=-6)
 SPECIALE = [
     dict(sq=3, pitch=3, hrel=(2, 4), jaw=1, lagN=(0, -2), lagF=(0, -2), heat=1, ms=150),
     dict(sq=1, pitch=-4, hrel=(-2, -6), jaw=2, wings=dict(u=0.4, uF=0.3, lift=4), heat=2, fx=[fx_charge(0)], ms=110),
-    dict(pitch=-9, hrel=(-5, -14), jaw=3, wings=dict(u=0.75, uF=0.7, lift=8, flap=-4), heat=2, fx=[fx_charge(1)], ms=110),
-    dict(by=-2, pitch=-12, hrel=(-8, -20), jaw=5, wings=dict(WING_OPEN), heat=3, fx=[fx_charge(2)], ms=200),
-    dict(by=-2, pitch=-13, hrel=(-9, -22), jaw=6, wings=dict(u=1.0, lift=13, flap=-11), heat=4, fx=[fx_charge(3)], ms=260),
-    dict(by=-2, pitch=-12, hrel=(2, -28), jaw=9, wings=dict(u=1.0, lift=8, flap=6), heat=4, fx=[fx_breath(0)], ms=80),
-    dict(by=-1, pitch=-11, hrel=(4, -26), jaw=8, wings=dict(u=1.0, lift=2, flap=20), heat=3, fx=[fx_breath(1)], ms=90),
-    dict(pitch=-8, hrel=(3, -20), jaw=6, wings=dict(u=1.0, lift=-2, flap=28), heat=2, fx=[fx_breath(2)], ms=100),
+    dict(by=-2, pitch=-6, hrel=(-5, -14), jaw=3, wings=dict(u=0.75, uF=0.7, lift=8, flap=-4), heat=2, fx=[fx_charge(1)], ms=110),
+    dict(by=-4, pitch=-8, hrel=(-8, -20), jaw=5, wings=dict(WING_OPEN), heat=3, fx=[fx_charge(2)], ms=200),
+    dict(by=-4, pitch=-9, hrel=(-9, -22), jaw=6, wings=dict(u=1.0, lift=13, flap=-11), heat=4, fx=[fx_charge(3)], ms=260),
+    dict(by=-4, pitch=-8, hrel=(2, -28), jaw=9, wings=dict(u=1.0, lift=8, flap=6), heat=4, fx=[fx_breath(0)], ms=80),
+    dict(by=-3, pitch=-8, hrel=(4, -26), jaw=8, wings=dict(u=1.0, lift=2, flap=20), heat=3, fx=[fx_breath(1)], ms=90),
+    dict(by=-2, pitch=-6, hrel=(3, -20), jaw=6, wings=dict(u=1.0, lift=-2, flap=28), heat=2, fx=[fx_breath(2)], ms=100),
     dict(pitch=-7, hrel=(4, -18), jaw=6, wings=dict(u=1.0, lift=2, flap=16), heat=2, fx=[fx_rain(0)], ms=90),
     dict(pitch=-7, hrel=(4, -18), jaw=5, wings=dict(u=1.0, lift=4, flap=10), heat=2, fx=[fx_rain(1)], ms=80),
     dict(pitch=-7, hrel=(4, -17), jaw=5, wings=dict(u=1.0, lift=4, flap=8), heat=2, fx=[fx_rain(2)], ms=70),
