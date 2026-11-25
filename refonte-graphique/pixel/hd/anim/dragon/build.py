@@ -594,49 +594,6 @@ def cloud(cv, c, r, tones='iijl', hollow=0.0, seed=0, ground=True):
         puff(cv, (cx + dx, yy), rr, tones)
 
 
-def curl(cv, c, r0, a0, turn=300, w=2.4, tones='ijl', cw=False):
-    """une volute (fumée) : une spirale qui s'enroule, épaisse au départ, effilée au coeur"""
-    cx, cy = c
-    n = int(turn / 4) + 8
-    pts, ws = [], []
-    for i in range(n + 1):
-        s = i / n
-        a = math.radians(a0 + (-turn if cw else turn) * s)
-        r = r0 * (1 - 0.72 * s)
-        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
-        ws.append(w * (1 - s) ** 0.7 + 0.4 * (1 - s))
-    stroke(cv, pts, ws, tones)
-
-
-def smoke_plume(cv, base, h, w, sway=1.0, tones='ijlm', curl_r=3.0, cw=False, tail=0.0):
-    """un panache de fumée qui monte en S et finit en volute ; tail : le bas déjà dissipé (0..1)"""
-    bx, by = base
-    pts = bezier((bx, by), (bx + sway * w, by - h * 0.35), (bx - sway * w, by - h * 0.65), (bx + sway * w * 0.5, by - h), 40)
-    ex, ey = pts[-1]
-    tx, ty = pts[-1][0] - pts[-2][0], pts[-1][1] - pts[-2][1]
-    tl = math.hypot(tx, ty) or 1
-    tx, ty = tx / tl, ty / tl
-    nx, ny = (-ty, tx) if cw else (ty, -tx)
-    ccx, ccy = ex + nx * curl_r, ey + ny * curl_r
-    a0 = math.atan2(-(ey - ccy), ex - ccx)
-    sgn = -1 if cw else 1
-    for i in range(1, 31):
-        s = i / 30
-        a = a0 + sgn * math.radians(280) * s
-        r = curl_r * (1 - 0.7 * s)
-        pts.append((ccx + r * math.cos(a), ccy - r * math.sin(a)))
-    N = len(pts)
-    ws = []
-    for i in range(N):
-        s = i / (N - 1)
-        if s < tail:
-            ws.append(0)
-            continue
-        ss = (s - tail) / max(1 - tail, 1e-6)
-        ws.append(w * (0.5 + 0.5 * math.sin(min(1, ss / 0.4) * math.pi / 2)) * (1 - ss) ** 0.6 + 0.5)
-    stroke(cv, pts, ws, tones)
-
-
 def drop(cv, x, y, vx, vy, size=1):
     """une goutte de lave : une perle claire et sa traîne courte, orientée par sa vitesse"""
     L = math.hypot(vx, vy) or 1
@@ -1061,7 +1018,7 @@ def fx_snort(k):
             puff(front, (x + 4, y - 3), 1.4, 'ij')
         else:
             cloud(front, (x + 4, y - 4), 2.6, 'iijl', seed=5, ground=False)
-            curl(front, (x + 7, y - 9), 2.2, 120, turn=240, w=1.5, tones='ij')
+            puff(front, (x + 7, y - 9), 1.8, 'ij')
     return f
 
 
@@ -1103,7 +1060,8 @@ def fx_bite_hit(k):
         else:
             for (dx, dy) in ((22, -6), (14, -20), (20, 14), (6, -24)):
                 ember(front, x + dx, y + dy + 4, big=dx == 14)
-            smoke_plume(front, (x + 6, y - 8), 14, 2.4, sway=0.8, tones='ijl', curl_r=2.6, tail=0.3)
+            cloud(front, (x + 6, y - 12), 3.6, 'iijl', seed=12, ground=False, hollow=0.3)
+            puff(front, (x + 9, y - 19), 2.0, 'ij', hollow=0.4)
     return f
 
 
@@ -1261,24 +1219,11 @@ def fx_breath(k):
                 fire_blob(front, (mx + dx + (j % 2) * 3, my + dy), r, seed=140 + j, hot=hot, flicks=1)
             cloud(back, (mx + 12, my - 26), 8, 'iijl', seed=71, ground=False, hollow=0.2)
             cloud(back, (mx + 18, my - 50), 7, 'iijl', seed=72, ground=False, hollow=0.3)
-            curl(back, (mx + 4, my - 40), 4, 90, turn=260, w=2.2, tones='ijl', cw=True)
+            puff(back, (mx + 2, my - 42), 3.4, 'iij')
             for (dx, dy) in ((34, -60), (60, -96), (12, -84), (66, -124), (30, -132)):
                 ember(front, mx + dx, my + dy, big=dx > 40)
             puff(front, (mx + 2, my + 1), 2.6, 'vut')
     return f
-
-
-def smoke_column(cv, base, h, r, hollow=0.0, seed=0, lean=1.0):
-    """une colonne de fumée : des bouffées de plus en plus petites qui montent en ondulant, une volute au sommet"""
-    bx, by = base
-    n = 4
-    for i in range(n):
-        s_ = i / (n - 1)
-        x = bx + lean * 3 * math.sin(s_ * 2.6 + seed)
-        y = by - s_ * h
-        cloud(cv, (x, y), r * (1 - 0.45 * s_), 'iijlm' if i == 0 else 'iijl', hollow=hollow, seed=seed + i, ground=False)
-    curl(cv, (bx + lean * 3 * math.sin(2.6 + seed) + 2, by - h - r * 0.4), r * 0.7, 270, turn=250,
-         w=max(1.6, r * 0.45), tones='iij', cw=lean < 0)
 
 
 def meteor(cv, x, y, r, vx, vy, k=0):
@@ -1359,7 +1304,7 @@ def fx_impact(k):
                     d = math.hypot((xx + 0.5 - X) / 26, (yy + 0.5 - gy) / 17)
                     if d <= 1:
                         put(front, xx, yy, 'w' if d < 0.6 else 'v' if d < 0.85 else 'u')
-            for (ox, hh, ww, bd) in ((0, 34, 16, 0.3), (-16, 22, 10, -0.9), (17, 24, 10, 0.9)):
+            for (ox, hh, ww, bd) in ((0, 42, 18, 0.3), (-16, 28, 11, -0.9), (17, 30, 11, 0.9)):
                 tongue(back, (X + ox * SCW, gy - 2), hh * SC, ww * SCW, bend=bd, tones='wvuuts', lean=0.0)
             for (vx, vy, d) in ((-1, -1, 22), (1, -1.1, 24), (-0.4, -1, 30), (0.6, -1, 32), (1, -0.5, 26), (-1, -0.4, 24)):
                 drop(front, X + vx * d, gy - 10 + vy * d, vx, vy, 2)
@@ -1388,7 +1333,7 @@ def fx_impact(k):
                 tongue(back, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='vutsr', lean=0.0, fork=hh > 25)
             cloud(back, (X - 4, gy - 98), 14, 'iijlm', seed=82, ground=False, hollow=0.15)
             cloud(back, (X + 14, gy - 122), 9, 'iijl', seed=85, ground=False, hollow=0.2)
-            curl(back, (X + 22, gy - 136), 5, 250, turn=260, w=2.6, tones='iij')
+            puff(back, (X + 22, gy - 136), 4.5, 'iij')
             for (ox, oy) in ((-20, -50), (14, -62), (26, -40)):
                 ember(front, X + ox, gy + oy, big=ox > 0)
         elif k == 4:
@@ -1396,17 +1341,19 @@ def fx_impact(k):
                 tongue(back, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='vutsr', lean=0.0, fork=False)
             cloud(back, (X, gy - 116), 15, 'iijl', seed=83, ground=False, hollow=0.45)
             cloud(back, (X + 18, gy - 142), 9, 'ijl', seed=86, ground=False, hollow=0.55)
-            curl(back, (X - 12, gy - 80), 5, 60, turn=260, w=2.4, tones='ijl', cw=True)
+            puff(back, (X - 14, gy - 82), 4.0, 'ijl', hollow=0.3)
             for (ox, oy) in ((-12, -40), (18, -56), (4, -70)):
                 ember(front, X + ox, gy + oy)
         elif k == 5:
             for (ox, hh, ww, bd) in ((-2, 10, 6, 0.6), (12, 7, 5, -0.6), (-14, 6, 4, -0.5)):
                 tongue(back, (X + ox * SCW, gy - 1), hh * SC, ww * SCW, bend=bd, tones='uts', lean=0.0, fork=False)
-            smoke_plume(back, (X - 2, gy - 16), 52, 5, sway=1.2, tones='ijlm', curl_r=4, tail=0.35)
-            smoke_plume(back, (X + 16, gy - 8), 34, 4, sway=-1.0, tones='ijl', curl_r=3, tail=0.4, cw=True)
+            cloud(back, (X - 4, gy - 40), 8, 'iijl', seed=90, ground=False, hollow=0.2)
+            cloud(back, (X + 6, gy - 66), 7, 'iij', seed=91, ground=False, hollow=0.45)
+            puff(back, (X + 14, gy - 20), 3.5, 'ijl')
         else:
             tongue(back, (X + 2, gy - 1), 5, 4, bend=0.5, tones='uts', fork=False)
-            smoke_plume(back, (X + 4, gy - 30), 30, 3, sway=1.0, tones='ijl', curl_r=4, tail=0.7)
+            cloud(back, (X + 2, gy - 62), 6, 'ij', seed=92, ground=False, hollow=0.65)
+            puff(back, (X - 6, gy - 30), 2.6, 'ij', hollow=0.5)
             ember(front, X - 6, gy - 22)
     return f
 
