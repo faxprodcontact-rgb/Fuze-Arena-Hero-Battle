@@ -63,5 +63,5 @@
 - Consigne : `animation-monstre.md` (s'appuie sur `animation.md`). Sorties comme les héros : `anim/<nom>/build.py`,
   `pixel/sortie/anim-<nom>-*.gif` ; la page des monstres montre le GIF dès qu'il existe.
 - Lancées le 25/11 : les 3 araignées, les 3 du clan de Méduse, de Kesha, de Lenore, de Kael, matelot et canonnier (17).
-- À lancer dès qu'une place se libère : tireur-pirate, corbeau-tengu, moine-tengu, singe-voleur, puis tengu-eventail,
-  gorille-guerrier, singe-chaman quand leur dessin sera fini.
+- Lancées ensuite : tireur-pirate, corbeau-tengu, moine-tengu. À lancer : singe-voleur, tengu-eventail,
+  gorille-guerrier, singe-chaman (les 24 dessins sont finis).
