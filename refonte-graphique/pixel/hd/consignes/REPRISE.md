@@ -56,4 +56,5 @@
   https://claude.ai/artifact/K6sefe6A2HDRodc9ci84W6 (ROSTER, VALIDES, RETOUCHES, FAITES dans suivi.py ; les monstres
   animés : `sortie/anim-monstres/<nom>.gif` à publier avec `files`).
 - Le jeu choisit aujourd'hui les dessins de monstres par famille (`src/game/look.ts`) : à changer au branchement.
-- En cours : clan d'Arachné en test (araignée bondissante, cuirassée, tisseuse).
+- En cours (25/11) : les 24 monstres lancés en même temps (20 agents au plus à la fois) ; tengu-eventail, singe-voleur,
+  gorille-guerrier, singe-chaman à lancer dès qu'une place se libère.
