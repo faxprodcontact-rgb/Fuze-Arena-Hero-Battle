@@ -58,7 +58,7 @@ GOLDS = 'jklm'
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. La pose seule se recadre ensuite en 128 × 120
 # (le format du jeu, sol en (64, 116)). Toile haute (elle s'élève pendant la spéciale) et large (l'ennemi à droite).
-W, H = 384, 214
+W, H = 400, 214
 SOL = (96, 204)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
@@ -1136,7 +1136,7 @@ def phoenix(back, front, c, S=1.0, wing='V', phase=0.0, grow=1.0, far=True, cool
 # elle s'est envolée, il ne reste qu'un petit tas de cendres rougeoyantes : une colonne de feu en jaillit, elle y
 # renaît, blanche de feu, et refroidit jusqu'à ses couleurs ; des plumes d'or retombent doucement sur elle (le soin).
 FLOOR_X = SOL[0]                     # le milieu entre ses pieds (toile)
-PHX_HOME = (138, 104)                 # là où le phénix se forme (son poitrail)
+PHX_HOME = (126, 100)                 # là où le phénix se forme (son poitrail)
 
 
 def fx_floor(level):
@@ -1250,7 +1250,7 @@ def fx_rise_trail(k):
 
 
 def fx_burst(r):
-    """l'éclat de la transformation : une boule de feu au coeur blanc, des langues courbes qui s'ouvrent"""
+    """l'éclat de la transformation : une couronne de langues de feu courbes qui s'ouvrent, des braises"""
     def f(cv, back, front, ctx):
         cx, cy = PHX_HOME
         for k in range(7):
@@ -1258,7 +1258,6 @@ def fx_burst(r):
             ca, sa = math.cos(math.radians(a)), math.sin(math.radians(a))
             tongue(back, (cx - ca * r * 0.2, cy + r * 0.3), r * (1.1 - 0.12 * abs(k - 3)), r * 0.5,
                    bend=0.6 if k < 3 else -0.6 if k > 3 else 0.0, tones='h98765', lean=ca * 1.3, fork=False)
-        puff(back, (cx, cy), r * 0.45, 'hh98')
         for (ex, ey, big) in ((-30, -20, True), (34, -26, False), (-40, 10, False), (38, 8, True), (0, -44, True),
                               (-18, 30, False), (22, 34, False)):
             ember(front, cx + ex, cy + ey, big)
@@ -1273,7 +1272,7 @@ def fx_phoenix(c, wing, grow=1.0, cool=0, tilt=0.0, phase=0.0, far=True):
 
 # le trajet du phénix : de sa place (en haut) à travers l'ennemi
 def phx_path():
-    return bezier(PHX_HOME, (190, 84), (236, 156), (FOE[0] + 30, FOE[1] - 12), 120)
+    return bezier(PHX_HOME, (184, 80), (236, 156), (FOE[0] + 30, FOE[1] - 12), 120)
 
 
 def fx_wake(t, cool=0.0):
@@ -1338,10 +1337,10 @@ def fx_wave(k):
 def fx_dissolve(k):
     """au-delà de l'ennemi, le phénix se défait : ses plumes de feu se dispersent en braises qui montent"""
     def f(cv, back, front, ctx):
-        cx, cy = FOE[0] + 52 + 6 * k, FOE[1] - 26 - 10 * k
+        cx, cy = FOE[0] + 44 + 4 * k, FOE[1] - 26 - 10 * k
         for j in range(12):
             a = j * 2.4
-            r = 10 + 4 * j * (0.6 + 0.4 * k)
+            r = 8 + 2.6 * j * (0.6 + 0.4 * k)
             x, y = cx + r * math.cos(a) * 0.8, cy + r * math.sin(a) * 0.5 - j * k
             ember(front if j % 2 else back, x, y, j % 3 == 0, hot=k == 0 or j % 2 == 0)
         if k == 0:
@@ -1429,7 +1428,7 @@ SPECIALE = [
     dict(s=-3, lift=34, wn=-14, wf=14, ph=3.4, fire=3, flash=35, fx=[fx_floor(-1), fx_rise_trail(1)],
          fx_after=[fx_aura(3, 4.2)], ms=90),
     # 5 elle éclate : le phénix se forme à sa place
-    dict(hide=True, fx=[fx_floor(-1), fx_burst(30), fx_phoenix(PHX_HOME, 'V', grow=0.45)], ms=70),
+    dict(hide=True, fx=[fx_floor(-1), fx_burst(48), fx_phoenix(PHX_HOME, "V", grow=0.45)], ms=70),
     # 6 le phénix, ailes levées en V comme les siennes (temps de pose)
     dict(hide=True, fx=[fx_floor(-1), fx_phoenix(PHX_HOME, 'V', phase=0.5)], ms=220),
     # 7 il bat des ailes et prend son élan vers l'ennemi
