@@ -15,8 +15,11 @@
 #     déployées de la spéciale sont retracées plume par plume (mêmes tons, mêmes rangées d'écailles, mêmes rémiges) ;
 #   - les effets de vent reprennent les formes et la palette d'Eldra (l'autre héroïne du vent, validée) : rubans,
 #     volutes, bouffées, éclats ronds ; nouveaux ici : la vague du souffle de trompette (attaque) et, pour la spéciale
-#     (sort d'équipe : soin, purification, résurrection, tourné vers la gauche où se tient l'équipe), l'onde de grâce,
-#     les plumes de lumière qui retombent, les taches sombres qui s'évaporent et la colonne de lumière ;
+#     (sort d'équipe : soin, purification, résurrection, qui s'étend EN CERCLE autour d'elle, l'équipe pouvant être
+#     de tous côtés), l'anneau de vent du son, les plumes de lumière qui pleuvent en cercle, les taches sombres qui
+#     s'évaporent, l'auréole embrasée et le grand halo doré ;
+#   - MOMENTS DE LANCEMENT de la spéciale (pour le jeu) : image 6 = soin et purification (l'anneau de vent naît) ;
+#     image 12 = résurrection (le grand halo doré au plus large). Détails plus bas, partie 3 ;
 #   - à la fin, chaque image peut recevoir des retouches pixel par pixel (RETOUCHES, plus bas).
 import sys, os, math
 import numpy as np
@@ -58,7 +61,7 @@ ALLPAL.update(FXPAL)
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. La pose seule se recadre ensuite en 128 × 120
 # (le format du jeu, sol en (64, 116)). Toile large et haute : les ailes se déploient haut, l'onde de l'attaque part
-# à droite ; PAD : de la place à gauche pour la spéciale (le sort d'équipe file vers la gauche, derrière elle).
+# à droite ; PAD : une marge à gauche (gardée telle quelle : la pose et l'attaque restent identiques au pixel).
 PAD = 40
 W, H = 354 + PAD, 214
 SOL = (110 + PAD, 204)
@@ -1222,7 +1225,7 @@ def ring_curl(back, front, c, rx, ry, a, r0, w, tones='XYVS', cw=False):
 
 # ---- l'onde de grâce : le son de la trompette devient un anneau de vent doux qui s'élargit tout autour d'elle
 #      (rx, ry, épaisseur, hauteur du centre au-dessus du sol, rotation des rubans) pour k = 1, 2, 3
-GRACE_RING = {1: (46, 10, 5.0, 62, 0), 2: (66, 14, 4.2, 58, 34), 3: (84, 17, 2.8, 54, 62)}
+GRACE_RING = {1: (48, 10, 7.0, 60, 10), 2: (68, 14, 6.0, 56, 40), 3: (86, 17, 4.0, 52, 66)}
 
 
 def fx_grace(k):
@@ -1240,13 +1243,11 @@ def fx_grace(k):
             c = (CX, GROUND - hy)
             # trois rubans qui se poursuivent autour d'elle (sens inverse des aiguilles vu d'en haut), et un plus
             # fin, un peu plus bas, qui suit le premier
-            gap = [28, 40, 62][k - 1]
+            gap = [14, 34, 58][k - 1]
             for j in range(3):
                 a0 = rot + j * 120
-                ring_arc(back, front, c, rx, ry, a0, a0 + 120 - gap, w, head=0.72,
+                ring_arc(back, front, c, rx, ry, a0, a0 + 120 + 20 - gap, w, head=0.72,
                          tones='WWXYVS', back_tones='XYVS', wob=0.05, ph=j + k)
-            ring_arc(back, front, (CX, GROUND - hy + 6 + 2 * k), rx * 0.86, ry * 0.86, rot + 200, rot + 300,
-                     w * 0.6, head=0.7, tones='XYVS', back_tones='YVS')
             # grains de lumière portés par l'anneau
             for j, a in enumerate((rot + 70, rot + 160, rot + 250, rot + 335)):
                 p = (CX + rx * math.cos(math.radians(a)), GROUND - hy - ry * math.sin(math.radians(a)) - 5)
@@ -1267,10 +1268,11 @@ def fx_grace(k):
 # ---- la pluie de plumes de lumière : elles naissent au-dessus d'elle et pleuvent en cercle tout autour, en
 #      s'écartant, puis se posent au sol (une petite lueur) ; celles du côté lointain passent derrière elle.
 #      (angle autour d'elle, rayon de départ, hauteur de départ au-dessus du sol, première image)
-RAIN = [(200, 26, 150, 0), (250, 22, 162, 0), (300, 28, 148, 0), (340, 30, 140, 1), (20, 24, 156, 0),
-        (70, 20, 168, 1), (115, 26, 160, 0), (160, 30, 144, 1), (225, 34, 172, 2), (320, 36, 176, 3),
-        (140, 34, 180, 3), (275, 18, 186, 4)]
-RAIN_VR, RAIN_VY = 6.0, 12.0            # par image : elles s'écartent, elles tombent
+RAIN = [(200, 44, 128, 0), (250, 40, 134, 0), (295, 46, 122, 0), (340, 50, 116, 1), (20, 44, 130, 0),
+        (70, 40, 120, 1), (115, 44, 132, 0), (160, 50, 118, 1), (225, 52, 106, 2), (320, 54, 104, 2),
+        (140, 52, 108, 2), (270, 46, 92, 3), (185, 56, 90, 3), (355, 58, 94, 3), (45, 54, 90, 3),
+        (240, 60, 84, 3)]
+RAIN_VR, RAIN_VY = 5.0, 14.0            # par image : elles s'écartent, elles tombent
 
 
 RAIN_BIG = [[r.translate(str.maketrans('zyxw', 'WgJI')) for r in rows] for rows in BIG_FEATHERS]
@@ -1333,8 +1335,8 @@ def fx_specks(k):
 
 # ---- la résurrection : une seconde note ; son auréole s'embrase et un grand halo doré pulse une fois autour d'elle
 HALO_C = (66.0, 10.0)                                       # le milieu de l'auréole (grille)
-HALO_FIRE = {'H': 'J', 'I': 'K', 'J': 'g', 'K': 'W'}        # l'auréole embrasée : ses ors passent au blanc doré
-AURA = {1: (30, 4.0), 2: (48, 5.0), 3: (62, 6.0), 4: (70, 3.0)}     # le grand halo : rayon, épaisseur
+HALO_FIRE = {'H': 'J', 'I': 'K', 'J': 'K', 'K': 'W'}        # l'auréole embrasée : ses ors passent au blanc doré
+AURA = {1: (32, 5.0), 2: (50, 6.5), 3: (63, 8.0), 4: (70, 4.0)}     # le grand halo : rayon, épaisseur
 GOLD_RING = {1: 28, 2: 46, 3: 64, 4: 80}                    # l'anneau d'or au sol : rayon
 
 
@@ -1398,11 +1400,14 @@ def fx_note(k):
                 X, Y = gx + OX + ctx.chest[0] + hx, gy + OY + ctx.chest[1] + hy + f_.get('ha', 0)
                 if cv[Y, X] == HALO_GLOW.get(o, o):         # seulement là où l'auréole se voit
                     cv[Y, X] = HALO_FIRE[o]
-            ring_arc(back, front, (hc[0], hc[1] + 0.5), 14 + (k > 0), 4.5, 10, 350, 2.4 if k else 1.8, head=0.5,
+            glowr = [15, 17, 17, 18][k]
+            ring_arc(back, front, (hc[0], hc[1] + 0.5), glowr, 5.5, 10, 350, [3.0, 4.0, 3.6, 4.4][k], head=0.5,
                      tones='Wgh', back_tones='gh')
-            hs = [5, 9, 8, 10][k]
-            for (dx, sc, ln) in ((-8, 0.7, -2), (-2, 1.0, 1), (5, 0.85, 2), (10, 0.6, 1)):
-                flame(back, (hc[0] + dx, hc[1] - 2), hs * sc, ln, 2.6 if k else 2.0)
+            # trois langues de lumière douces, de tailles et de courbes différentes, qui ondulent d'une image à l'autre
+            hs = [7, 13, 11, 15][k]
+            sw = [0, 2, -1, 1][k]
+            for (dx, sc, ln) in ((-8, 0.6, -4 + sw), (0, 1.0, 3 + sw), (8, 0.72, 5 - sw)):
+                flame(back, (hc[0] + dx, hc[1] - 1), hs * sc, ln, 4.6 if k else 3.4)
         if k == 0:
             pop(front, ctx.bell + 3 * ctx.u, 4.5, facing=30, tones='Wgh')
             crescent(back, ctx.bell + 10 * ctx.u, 9, 32, span=120, w=2.6, tones='WgJ')
@@ -1411,10 +1416,8 @@ def fx_note(k):
             r, w = AURA[k]
             gaps = [(25, 55), (120, 150), (205, 240), (300, 330)] if k == 4 else None
             aura(back, c, r, w, gaps)
-            if k in (2, 3):
-                aura(back, c, r - w - 3, 1.4)               # un reflet intérieur, fin
             R = GOLD_RING[k]
-            ring_arc(back, front, (CX, GROUND - 3), R, R * 0.2, 0, 360, [3.4, 4.2, 4.6, 2.4][k - 1], head=0.5,
+            ring_arc(back, front, (CX, GROUND - 3), R, R * 0.2, 0, 360, [3.6, 4.8, 5.6, 3.0][k - 1], head=0.5,
                      tones='WghJ', back_tones='ghJ')
         if k == 3:
             for (a, d) in ((70, 1.15), (160, 1.1), (250, 1.2), (330, 1.1), (20, 1.25), (200, 1.25)):
@@ -1541,7 +1544,7 @@ def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
     boxes = {'pose': GAME_BOX}
     # l'attaque garde sa case d'origine (validée, celle qu'elle partageait avec l'ancienne spéciale) ; la spéciale
-    # (sort d'équipe, tournée vers la gauche) a la sienne ; l'enchaînement prend la réunion des deux
+    # (sort d'équipe, en cercle autour d'elle) a la sienne ; l'enchaînement prend la réunion des deux
     boxes['attaque'] = ATTAQUE_BOX
     boxes['speciale'] = bbox(anims['speciale'] + anims['pose'], 6)
     bs = boxes['speciale']
