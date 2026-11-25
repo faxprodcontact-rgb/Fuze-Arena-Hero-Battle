@@ -914,13 +914,13 @@ def fx_storm(k, ph):
         ground_wave(back, front, g0[0] + 6, g0[0] + 36, 15, ph + 1)
         spray(back, (top[0], top[1] - 2), 1.0, seeds)
     elif k == 3:
-        foam(back, (top[0], top[1] - 10), 8, hollow=0.5, seed=5, tones='WXXYZ')
+        foam(back, (top[0], top[1] + 9), 6.5, hollow=0.5, seed=5, tones='WXXYZ')
         ground_wave(back, front, g0[0] - 22, g0[0] - 62, 11, ph)
         ground_wave(back, front, g0[0] + 20, g0[0] + 46, 9, ph + 1, sparks=False)
         foam(back, (g0[0], GROUND - 3), 6, hollow=0.3, seed=9)
         spray(back, (top[0], top[1] - 2), 2.0, seeds)
     elif k == 4:
-        foam(back, (top[0], top[1] - 15), 6, hollow=0.8, seed=5, tones='XXYZA')
+        foam(back, (top[0], top[1] + 19), 5, hollow=0.8, seed=5, tones='XXYZA')
         ground_wave(back, front, g0[0] - 34, g0[0] - 74, 5, ph, sparks=False)
         foam(back, (g0[0] + 44, GROUND - 2), 3.5, hollow=0.5, seed=8, tones='XXYZA')
         foam(back, (g0[0] - 4, GROUND - 2), 4, hollow=0.6, seed=9, tones='XXYZA')

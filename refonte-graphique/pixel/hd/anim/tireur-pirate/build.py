@@ -138,7 +138,52 @@ P['corps'] = rest.copy()
 # sous le bec de l'ara (quand sa tête bouge) : les cheveux continuent
 for (_x, _y) in zip(*np.nonzero((P['ara_tete'] != '.') & (XX >= 52))[::-1]):
     P['tete'][_y, _x] = 'B'
-P['corps_nu'] = P['corps'].copy()
+
+
+# ---------------------------------------------------------------- raccords : ce que le bras proche cachait
+# Quand elle épaule, le bras proche est redessiné : on l'enlève du corps (manche, revers d'or, jabot, main) et on
+# repeint à la main ce qu'il cachait : le flanc de la veste dans l'ombre, le baudrier qui monte vers l'épaule, la
+# ceinture rouge, la basque et son galon d'or, le haut de la cuisse. (x, y, TEXTE) en coordonnées du dessin.
+def painted(part, fixes):
+    g = part.copy()
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                g[y, x + i] = ch
+    return g
+
+
+_arm = ((XX <= 56) & (YY >= 61) & (YY <= 77) & isin(ORIG, COAT + GOLD)) | \
+       ((XX >= 50) & (XX <= 63) & (YY >= 78) & (YY <= 85) & isin(ORIG, SKIN + SHIRT + COAT + 'D' + GOLD))
+RACCORD = [
+    (49, 60, '..   '),
+    (50, 61, 'mnnoMN'),
+    (49, 62, 'mnnooMNO'),
+    (49, 63, 'mnnooooMN'),
+    (49, 64, 'mnnoooon'),
+    (49, 65, 'mnnooooo'),
+    (49, 66, 'mnnooooo'),
+    (49, 67, 'mnnooooo'),
+    (49, 68, 'mnnnoooo'),
+    (49, 69, 'mnnnoooo'),
+    (49, 70, 'mmnnnooo'),
+    (50, 71, 'mnnnooo'),
+    (50, 72, 'mmnnnoo'),
+    (50, 73, 'EHHHHHH'),
+    (50, 74, 'EFFFFFF'),
+    (50, 75, 'EFFFFFF'),
+    (50, 76, 'EEFFFFF'),
+    (51, 77, 'EFFFFF'),
+    (51, 78, 'mnnnnnnn'),
+    (51, 79, 'mnnnnnnnn'),
+    (51, 80, 'mnnnnnnnnoo'),
+    (51, 81, 'mmnnnnnnnoo'),
+    (51, 82, 'mmnnnnnnnooo'),
+    (51, 83, 'mmmnnnnnnoooo'),
+    (51, 84, 'ghhhhhhhhiiii'),
+    (58, 85, 'CDDD'),
+]
+P['corps_nu'] = painted(np.where(_arm, '.', P['corps']), RACCORD)
 
 
 # ---------------------------------------------------------------- outils de pose (au pixel, jamais lissé)

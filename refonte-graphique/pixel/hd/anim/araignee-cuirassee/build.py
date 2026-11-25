@@ -1258,6 +1258,11 @@ def write_outputs(anims):
         fond = Image.open(os.path.join(HD, '..', '..', '..', 'public', 'art', 'px', 'fond-prairie.webp')).convert('RGBA')
         fond = fond.resize((fond.width // 3, fond.height // 3), Image.NEAREST)
         bw, bh = box[2] - box[0], box[3] - box[1]
+        if fond.width < bw:                             # l'onde va loin à droite : le fond est répété (en miroir)
+            wide = Image.new('RGBA', (fond.width * 2, fond.height))
+            wide.paste(fond, (0, 0))
+            wide.paste(fond.transpose(Image.FLIP_LEFT_RIGHT), (fond.width, 0))
+            fond = wide
         fy = 374 - (GROUND - box[1])                    # les pieds sur le chemin de terre
         base = fond.crop((0, fy, bw, fy + bh))
         if base.width < bw:
