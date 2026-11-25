@@ -1274,16 +1274,16 @@ def _sp(**kw):
 
 SPECIALE = [
     # 0 : il inspire, gonfle le torse, le poing se lève vers la poitrine
-    _sp(crouch=1, breath=2, head=(0, -1), near=(0, -1), far=dict(w=(6.0, 9.0), bend=1, front=True, cap=True), ms=170),
+    _sp(crouch=1, breath=2, head=(0, -1), near=(0, -1), far=dict(w=(9.0, 4.0), bend=-1, hand='claw', ang=150, front=True), ms=170),
     # 1 : premier coup sur la poitrine
     _sp(crouch=1, breath=2, shift=-1, head=(0, 0), near=(0, -1),
-        far=dict(w=(-12.0, 2.0), bend=1, front=True, cap=True), fx=fx_chest(0), ms=90),
+        far=dict(w=(-3.0, 8.0), bend=-1, hand='claw', ang=178, front=True), fx=fx_chest(0), ms=90),
     # 2 : le poing repart
     _sp(crouch=1, breath=2, head=(0, -1), near=(0, -3),
-        far=dict(w=(5.0, 7.0), bend=1, front=True, cap=True), ms=80),
+        far=dict(w=(10.0, 3.0), bend=-1, hand='claw', ang=145, front=True), ms=80),
     # 3 : deuxième coup
     _sp(crouch=1, breath=2, shift=-1, head=(0, 0), near=(0, -2),
-        far=dict(w=(-12.0, 2.0), bend=1, front=True, cap=True), fx=fx_chest(1), ms=90),
+        far=dict(w=(-3.0, 9.0), bend=-1, hand='claw', ang=182, front=True), fx=fx_chest(1), ms=90),
     # 4 : IL RUGIT — tête en arrière, gueule grande ouverte, la hache brandie, bourrasque de buée glacée
     _sp(crouch=0, breath=2, head=(1, -2), jaw=2, near=(-1, -4), tuft=-1, far=dict(w=(9.0, 15.0), bend=1),
         fx=fx_roar(0), ms=320),
