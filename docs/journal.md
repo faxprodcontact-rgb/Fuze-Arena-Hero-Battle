@@ -417,6 +417,10 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   baron vaudou, Freyja le barbare à la massue, Isis le chasseur au crâne de cerf, Thor la femme-araignée, Atlas l'enfant
   de la forêt, Zeus le roi noir). Les noms de fichiers suivent les noms du jeu, pas ce que montre le dessin. Une couleur
   de clignement passe par une lettre de la légende (jamais une couleur directe dans `HEAD_BLINK`).
+  **v0.54.0 : les 60 personnages HD dans le combat d'essai** : fenêtre de choix (5 héros, 5 monstres, « Au hasard »,
+  « Les 60 à la suite » en 6 manches), `src/game/hd-roster.ts`, `ui/screens/hd-pick.tsx`. Export corrigé (`jeu_export.py` garde
+  l'image rendue par compose ; vitesse/pente mesurées ; clés `retour`, `rase`, `avant`, `visage`). 8 fonds pixel HD animés
+  en préparation (`refonte-graphique/pixel/fonds/`, pas encore branchés).
   **v0.53.0 : combat HD d'essai** (Réglages → Outils de test → « Combat HD (essai) ») : Eldra, Myrr, Jinn contre matelot,
   sorcier oni, salamandre, avec les animations HD. Corps à corps : le personnage va jusqu'à sa cible ; tirs : le projectile
   va jusqu'à la vraie case ; spéciales : halo de charge doux. Export des animations : `refonte-graphique/pixel/hd/anim/jeu_export.py`
