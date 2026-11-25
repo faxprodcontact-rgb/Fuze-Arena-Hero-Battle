@@ -1,4 +1,33 @@
 # Moine tengu (mon-orin-costaud) — clan d'Orin, élément vent, monstre « costaud » (premier rang).
+#
+# Créature : un vieux grand tengu (daitengu) moine-guerrier, massif et trapu : de la même famille qu'Orin (visage
+#   rouge, long nez, ailes de corbeau, toile ivoire, hakama prune, ceinture de soie rouge, geta, or) mais plus vieux,
+#   plus large et plus lourd. Ce n'est pas une copie du chef : crâne chauve et luisant, chevelure GRISE en grosses
+#   mèches qui tombent dans le dos, barbe grise en pointe, sourcils broussailleux, ailes petites et repliées, bâton de
+#   fer au lieu du sabre et de l'éventail. Silhouette en noir : un tonneau (épaules et ventre énormes), le shakujō
+#   droit plus haut que lui à gauche, le long nez, les deux petites ailes qui dépassent des épaules, les hakama bouffants.
+#   Différent des deux autres monstres du clan (corbeau tengu accroupi à tête d'oiseau, tengu à l'éventail mince et
+#   grand, ailes ouvertes) : lui est large, lourd, planté, ailes fermées.
+# Rôle : costaud du premier rang (environ 108 px du sol au sommet du crâne, 114 avec le bâton ; large de 102 px).
+# Pose : trois quarts vers la droite, jambes écartées et bien plantées. Bras proche : la manche retroussée en gros
+#   bourrelet au-dessus du coude, l'avant-bras nu et musclé remonte vers le poing serré sur le bâton à hauteur de
+#   poitrine (le bâton ressort au-dessus et au-dessous du poing, tout près du corps, pointe d'or au sol). Bras
+#   lointain : manche retroussée derrière le torse, poing serré contre la hanche, phalanges vers l'ennemi. Aucun sort.
+# Tête : crâne chauve rouge avec un reflet de lumière, une ride au front ; sourcils gris énormes en V (colère) qui
+#   écrasent les yeux, la touffe du sourcil lointain dépasse du profil ; yeux d'ambre (même forme, même ligne, l'œil
+#   lointain derrière la racine du nez) ; LONG NEZ rouge du tengu, un peu tombant (vieux), bout arrondi, une narine ;
+#   grande oreille au long lobe ; moustache grise tombante, bouche qui grogne (dents du haut, deux petits crocs en bas,
+#   gorge rouge sombre, jamais noire) ; barbe grise en pointe à deux mèches.
+# Détails : gros chapelet de perles de bois (juzu) autour du cou, perle mère et houppe d'or sur la ceinture ; robe
+#   ivoire au col croisé bordé de noir (la poitrine rouge dans le V) ; ceinture de soie rouge nouée sur la hanche
+#   proche, deux pans qui pendent ; hakama prune bouffants, un pli chacun et des fronces au-dessus des liens noirs des
+#   mollets ; jambières et tabi ivoire, lanière rouge ; geta de bois à deux dents. Shakujō : boucle de fer en ogive,
+#   axe et joyau d'or au milieu, quatre anneaux d'or accrochés, pointe et collier d'or, virole d'or au pied.
+# Couleurs (une seule lumière, en haut à droite) : la palette d'Orin (peau rouge, toile ivoire, noir corbeau, hakama
+#   prune, or, bois, fer) + un gris de vieillard (ombres violettes, lumières chaudes). 41 couleurs. Pas de noir dedans.
+# Souffle sous la poitrine (y = 62). Clignement : les yeux (X, Y, Z) deviennent paupières rouges.
+# Fabrication : masses et modelé posés par un petit script (robe, hakama, ailes, bras), puis tête, mèches, barbe,
+#   mains, chapelet, bâton, pieds et nettoyage retouchés à la main. Un seul calque.
 id: mon-orin-costaud
 sol: 64 116
 tete: 56 9 103 55
