@@ -678,6 +678,15 @@ FEUILLE7 = ['...#...',
             '.#####.',
             '##.#.##',
             '...#...']
+FEUILLE9 = ['....#....',
+            '.#..#..#.',
+            '.##.#.##.',
+            '..#####..',
+            '#########',
+            '.#######.',
+            '..#####..',
+            '.#..#..#.',
+            '....#....']
 FEUILLE5 = ['..#..',
             '#.#.#',
             '#####',
@@ -685,7 +694,7 @@ FEUILLE5 = ['..#..',
             '..#..']
 F_ROUGE = (ERABLE[1], ERABLE[2], ERABLE[3], ERABLE[4], ERABLE[0])        # (ombre, base, clair, éclat, queue)
 F_ORANGE = ('#8a2a1a', ERABLE[3], ERABLE[4], '#f8a850', '#4a1a1a')
-F_CRAMOISI = (LAQUE[0], LAQUE[1], LAQUE[2], LAQUE[3], '#1e0818')
+F_CRAMOISI = ('#5a1430', '#8a1e34', '#b8303a', '#e0544a', '#2a0b24')
 
 
 def _feuille_face(m, g, queue, dos=False):
@@ -712,18 +721,31 @@ def _feuille_face(m, g, queue, dos=False):
     return out
 
 
-def _ecrase(px, w, h, s, miroir=False):
-    """La feuille qui tourne sur elle-même : sa largeur × s (plus proche voisin, centrée)."""
+def _ecrase(px, w, h, s, miroir=False, debout=True):
+    """La feuille qui tourne sur elle-même : sa largeur × s (debout=False : sa hauteur, pour une feuille couchée qui
+    tourne autour de son long axe), plus proche voisin, centrée. De profil (s < 0.5), les trous entre les lobes sont
+    bouchés : une fine feuille pleine, pas une file de points."""
+    if not debout:                                      # on travaille sur la feuille tournée d'un quart de tour
+        px = {(y, x): c for (x, y), c in px.items()}
+        w, h = h, w
     nw = max(1, int(round(w * s)))
-    im = Image.new('RGBA', (w, h), (0, 0, 0, 0))
     ox = (w - nw) // 2
+    out = {}
     for y in range(h):
         for i in range(nw):
             sx = int((i + 0.5) / nw * w)
             if miroir:
                 sx = w - 1 - sx
             if (sx, y) in px:
-                im.putpixel((ox + i, y), px[(sx, y)] + (255,))
+                out[(ox + i, y)] = px[(sx, y)]
+        if s < 0.5:
+            xs = [x for (x, yy) in out if yy == y]
+            if xs:
+                for x in range(min(xs), max(xs) + 1):
+                    out.setdefault((x, y), out[(min(xs), y)])
+    im = Image.new('RGBA', (w, h) if debout else (h, w), (0, 0, 0, 0))
+    for (x, y), c in out.items():
+        im.putpixel((x, y) if debout else (y, x), c + (255,))
     return im
 
 
@@ -753,10 +775,11 @@ def feuille_vie(rows, gamme, tours=3, couchee=False):
             if pf.get((w // 2, y)) == g[2]:
                 pf[(w // 2, y)] = g[1]
     pd = _feuille_face(m, g, q, dos=True)
-    tour = [_ecrase(pf, w, h, 1.0), _ecrase(pf, w, h, 0.72), _ecrase(pf, w, h, 0.36), _ecrase(pd, w, h, 0.72, True),
-            _ecrase(pd, w, h, 1.0, True), _ecrase(pd, w, h, 0.72, True), _ecrase(pf, w, h, 0.36),
-            _ecrase(pf, w, h, 0.72)]
-    gros = 5 if w > 5 else 3
+    d = not couchee
+    tour = [_ecrase(pf, w, h, 1.0, False, d), _ecrase(pf, w, h, 0.72, False, d), _ecrase(pf, w, h, 0.36, False, d),
+            _ecrase(pd, w, h, 0.72, True, d), _ecrase(pd, w, h, 1.0, True, d), _ecrase(pd, w, h, 0.72, True, d),
+            _ecrase(pf, w, h, 0.36, False, d), _ecrase(pf, w, h, 0.72, False, d)]
+    gros = 5 if w > 5 else 3                           # la fin : un petit amas, puis un point qui s'efface
     return ([_point(g[2], 1, w, h), _point(g[2], 3, w, h)] + tour * tours
             + [_point(g[1], gros, w, h), _point(g[1], 3, w, h), _point(g[0], 1, w, h)])
 
@@ -849,15 +872,17 @@ def construit():
                       vie=(1200, 2000), vx=(-4, 3), vy=(-18, -10), ondule=(2, 1400), prof=-14, graine=3 + k)
     # les feuilles d'érable : celles qui se détachent de l'érable (à droite) et tombent en se balançant vers la cour,
     # celles que le vent du soir emporte à travers la cour (couchées, plus vite), et deux devant les combattants
-    fd.particules('feuilles', 'devant', feuille_vie(FEUILLE7, F_ROUGE, 3), (482, 628, 596, 700), nombre=5,
+    fd.particules('feuilles', 'devant', feuille_vie(FEUILLE7, F_ROUGE, 3), (482, 628, 596, 700), nombre=6,
                   vie=(6500, 9200), vx=(-12, -4), vy=(12, 19), ondule=(6, 2600), prof=-14.5, graine=5)
-    fd.particules('feuilles-orange', 'devant', feuille_vie(FEUILLE5, F_ORANGE, 3), (470, 632, 592, 704), nombre=4,
+    fd.particules('feuilles-grandes', 'devant', feuille_vie(FEUILLE9, F_ORANGE, 3), (488, 632, 596, 696), nombre=3,
+                  vie=(7000, 9600), vx=(-14, -6), vy=(13, 20), ondule=(7, 3000), prof=-14.48, graine=10)
+    fd.particules('feuilles-orange', 'devant', feuille_vie(FEUILLE5, F_ORANGE, 3), (470, 632, 592, 704), nombre=5,
                   vie=(6000, 9000), vx=(-16, -6), vy=(10, 16), ondule=(5, 2200), prof=-14.45, graine=6)
     fd.particules('feuilles-vent', 'devant', feuille_vie(FEUILLE7, F_CRAMOISI, 3, couchee=True), (250, 560, 640, 760),
-                  nombre=4, vie=(7000, 9600), vx=(-34, -20), vy=(5, 12), ondule=(8, 3200), prof=-14.4, graine=7)
+                  nombre=5, vie=(7000, 9600), vx=(-34, -20), vy=(5, 12), ondule=(8, 3200), prof=-14.4, graine=7)
     fd.particules('feuilles-vent2', 'devant', feuille_vie(FEUILLE5, F_ROUGE, 3, couchee=True), (120, 600, 620, 780),
-                  nombre=3, vie=(7000, 9600), vx=(-28, -16), vy=(6, 13), ondule=(6, 2800), prof=-14.35, graine=8)
-    fd.particules('feuilles-devant', 'premier', feuille_vie(FEUILLE7, F_ORANGE, 3), (300, 660, 640, 840), nombre=2,
+                  nombre=4, vie=(7000, 9600), vx=(-28, -16), vy=(6, 13), ondule=(6, 2800), prof=-14.35, graine=8)
+    fd.particules('feuilles-devant', 'premier', feuille_vie(FEUILLE9, F_ROUGE, 3), (300, 660, 640, 840), nombre=2,
                   vie=(7000, 9600), vx=(-30, -18), vy=(14, 22), ondule=(8, 3000), graine=9)
     fd.defile('eau', 'devant', (0, EAU_Y - 3, W, H), (EAU_TUILE, H - EAU_Y + 3), lambda tl: eau_dessin(tl),
               vx=EAU_TUILE * 1000 / fd.periode, prof=-13)

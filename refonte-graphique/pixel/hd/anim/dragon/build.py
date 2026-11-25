@@ -159,7 +159,7 @@ M_WING_N = comps_in(_obs_lab, 20, 20, 143, 140, 200) | comps_in(_mem_lab, 20, 40
 # le long du bord droit de l'os)
 M_WING_F = comps_in(_mem_lab, 120, 40, 150, 100, 200)
 _far_obs = comps_in(_obs_lab, 139, 25, 230, 101, 1000)
-_bone_right = piecewise(GYY, [(20, 175), (56, 175), (57, 151), (60, 152), (70, 155), (90, 159), (95, 166), (101, 168)])
+_bone_right = piecewise(GYY, [(20, 175), (56, 175), (57, 151), (60, 152), (62, 154), (63, 157), (80, 161), (90, 162), (95, 166), (101, 168)])
 M_WING_F |= _far_obs & (GXX <= _bone_right) & (GYY <= 101)
 # la tête : crâne, mâchoires, oeil, crocs, corne du museau ; les deux grandes cornes et la couronne (le reste de la
 # pièce d'obsidienne soudée), les deux échardes en collerette derrière la joue
@@ -197,8 +197,10 @@ for _i in range(1, _n + 1):
         M_WING_N |= _c
     elif _xs.max() <= 170 and _ys.max() <= 101:
         M_WING_F |= _c
-    else:
+    elif _xs.min() >= 150 and _ys.max() <= 150:
         M_HEAD |= _c
+    else:
+        continue
     M_BODY &= ~_c
 
 
