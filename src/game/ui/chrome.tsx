@@ -1,11 +1,10 @@
-// Les pièces de l'interface dessinées par le code, dans le trait des décors (bandeau de titre, portail) : contour brun
-// sombre, or en dégradé (clair en haut, foncé en bas), émail bleu nuit (à la place du bois depuis la v0.41.0), gemmes ;
-// un reflet en haut de chaque volume.
-// Les dégradés sont rangés une seule fois dans `ChromeDefs` (posé par l'application, jamais caché par display: none :
-// un dégradé caché ne peint plus rien) ; chaque pièce s'en sert par son nom (`url(#cx-…)`).
+// Les pièces de l'interface, nouvelle DA (26/11/2026) : pixel art HD épuré (voir refonte-graphique/pixel/ui/STYLE.md).
+// Les dessins viennent de px.ts (pixel par pixel, une seule palette) ; ici, les composants qui les posent : barres,
+// plaque du chapitre, bouton Combattre, plaque du niveau, médaillons, chevrons. Plus aucun ornement : ni losange, ni
+// gemme, ni clou, ni ruban, ni reflet qui passe.
 import type { ComponentChildren } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
-import { spark } from './portal';
+import { chevronUrl, INK as PX_INK, medalUrl, type Tone } from './px';
 
 /** La taille réelle d'un élément (pour dessiner à sa mesure exacte, sans rien étirer). */
 export function useSize<T extends Element>() {
@@ -23,205 +22,65 @@ export function useSize<T extends Element>() {
   return [ref, size] as const;
 }
 
-/** Les trois émaux bleu nuit des barres : celle du haut, celle des onglets (plus sombre), le bas de l'accueil (plus clair). */
-const BAR_TONES = {
-  top: ['#34438c', '#25316c', '#18204b'],
-  tabs: ['#26326e', '#1b2453', '#121839'],
-  dock: ['#3a4994', '#2a3676', '#1d2758'],
-} as const;
-
 /**
- * Le fond d'une barre (en haut, en bas, sous le combat de l'accueil) : un émail bleu nuit, un reflet doux, et sur le bord
- * qui touche l'écran un rail d'or entre deux filets sombres, avec ses clous et une gemme au milieu. Dessiné à la taille
- * exacte de la barre (rien n'est étiré). Les onglets ont leurs séparations creusées dans l'émail.
+ * Le fond d'une barre (en haut, en bas, sous le combat de l'accueil) : émail bleu nuit, filet d'or et contour du côté du
+ * jeu (dessin `bar-top` / `bar-bottom` de px.ts). **Toujours le dernier enfant de sa barre** (le tutoriel compte les onglets).
  */
-export function BarArt({ kind, cols = 0 }: { kind: 'top' | 'tabs' | 'dock'; cols?: number }) {
-  const [ref, { w, h }] = useSize<HTMLSpanElement>();
-  const [c0, c1, c2] = BAR_TONES[kind];
-  const railTop = kind === 'top' ? h - 7 : 0; // le rail : en bas pour la barre du haut, en haut pour les autres
-  const body = kind === 'top' ? [0, h - 7] : [7, h];
-  const id = `cx-bar-${kind}`;
-  return (
-    <span class={`bar-art bar-art-${kind}`} ref={ref} aria-hidden="true">
-      {w > 0 && (
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
-          <defs><linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color={c0} /><stop offset="0.55" stop-color={c1} /><stop offset="1" stop-color={c2} /></linearGradient></defs>
-          <rect x="0" y={body[0]} width={w} height={body[1]! - body[0]!} fill={`url(#${id})`} />
-          <rect x="0" y={body[0]} width={w} height={(body[1]! - body[0]!) * 0.42} fill="#fff" opacity="0.08" />
-          {/* les séparations des onglets, creusées dans l'émail */}
-          {cols > 1 && Array.from({ length: cols - 1 }, (_, i) => {
-            const x = Math.round((w * (i + 1)) / cols);
-            return <g><path d={`M${x - 0.75} 16 V${h - 12}`} stroke="#060918" stroke-width="1.5" opacity="0.6" /><path d={`M${x + 0.9} 16 V${h - 12}`} stroke="#fff" stroke-width="1" opacity="0.1" /></g>;
-          })}
-          {/* le rail d'or */}
-          <rect x="0" y={railTop} width={w} height="7" fill={INK} />
-          <rect x="0" y={railTop + 1.5} width={w} height="4" fill="url(#cx-gold)" />
-          <path d={`M0 ${railTop + 2} H${w}`} stroke="#fffbe0" stroke-width="0.9" opacity="0.8" />
-          {[14, w - 14].map((x) => <g><circle cx={x} cy={railTop + 3.5} r="4.2" fill={INK} /><circle cx={x} cy={railTop + 3.5} r="3" fill="url(#cx-gold-ring)" /><circle cx={x - 0.8} cy={railTop + 2.7} r="1" fill="#fff" /></g>)}
-          {kind !== 'tabs' && (
-            <g>
-              <path d={`M${w / 2 - 16} ${railTop + 3.5} L${w / 2} ${railTop - 4} L${w / 2 + 16} ${railTop + 3.5} L${w / 2} ${railTop + 11} Z`} fill={INK} />
-              <path d={`M${w / 2 - 12.5} ${railTop + 3.5} L${w / 2} ${railTop - 1.5} L${w / 2 + 12.5} ${railTop + 3.5} L${w / 2} ${railTop + 8.5} Z`} fill="url(#cx-gold-ring)" />
-              <Gem x={w / 2} y={railTop + 3.5} r={3.6} tone="red" />
-            </g>
-          )}
-        </svg>
-      )}
-    </span>
-  );
+export function BarArt({ kind }: { kind: 'top' | 'tabs' | 'dock'; cols?: number }) {
+  return <span class={`bar-art bar-art-${kind}`} aria-hidden="true" />;
 }
 
-/**
- * La plaque du chapitre, en haut de l'accueil : émail bleu nuit dans un cadre d'or, rubans cramoisis repliés derrière, le titre
- * en lettres d'or, et la progression du chapitre dans une rainure d'or. Un reflet passe sur la plaque.
- */
+/** La plaque du chapitre, en haut de l'accueil : émail bleu nuit cerclé d'or, le titre, la progression du chapitre. */
 export function ChapterPlaque({ title, progress }: { title: string; progress: number }) {
   const p = Math.max(0, Math.min(1, progress));
-  const size = title.length > 13 ? 17 : 20;
   return (
-    <svg class="chapter-plaque" viewBox="0 0 236 66" aria-hidden="true">
-      <defs><clipPath id="cp-clip"><rect x="27" y="10.5" width="182" height="41" rx="6" /></clipPath></defs>
-      {[0, 1].map((i) => (
-        <g transform={i ? 'translate(236 0) scale(-1 1)' : undefined}>
-          <path d="M32 50 L22 57 V50 Z" fill="#5e1418" />
-          <path d="M1 20 H34 V51 H1 L10 35.5 Z" fill={INK} />
-          <path d="M3.8 21.5 H32.5 V49.5 H3.8 L11.8 35.5 Z" fill="#9c2a2e" /><path d="M3.8 21.5 H32.5 V35.5 H11.8 Z" fill="#e2574c" />
-          <path d="M3.8 21.5 H32.5 V24 H5.5 Z M5.5 47 H32.5 V49.5 H3.8 Z" fill="#ffd45c" />
-        </g>
-      ))}
-      <rect x="20" y="3.5" width="196" height="55" rx="11" fill={INK} />
-      <rect x="21.8" y="5.3" width="192.4" height="51.4" rx="9.5" fill="url(#cx-gold)" />
-      <path d="M24 12 Q24 7 30 6.8 H206 Q212 7 212 12" fill="none" stroke="#fffbe0" stroke-width="1" opacity="0.9" />
-      <rect x="25.5" y="9" width="185" height="44" rx="7" fill={INK} />
-      <rect x="27" y="10.5" width="182" height="41" rx="6" fill="url(#cx-navy)" />
-      <g clip-path="url(#cp-clip)">
-        <rect x="27" y="10.5" width="182" height="15" fill="#fff" opacity="0.13" />
-        <path class="tb-sheen" d="M0 4 H16 L4 58 H-12 Z" fill="#fff" opacity="0.28" />
-      </g>
-      <text x="118" y="33.5" text-anchor="middle" font-family="'Lilita One', 'Trebuchet MS', sans-serif" font-size={size} fill="#060918" opacity="0.45" stroke="#060918" stroke-width="3.4" stroke-linejoin="round">{title}</text>
-      <text x="118" y="32" text-anchor="middle" font-family="'Lilita One', 'Trebuchet MS', sans-serif" font-size={size} fill="url(#cx-text-gold)" stroke={INK} stroke-width="3.4" stroke-linejoin="round" paint-order="stroke">{title}</text>
-      {/* la progression : une rainure sombre cerclée d'or, l'or qui la remplit */}
-      <rect x="61" y="39" width="114" height="8.5" rx="4.25" fill={INK} />
-      <rect x="62.5" y="40.5" width="111" height="5.5" rx="2.75" fill="#070a1e" />
-      {p > 0 && <rect x="62.5" y="40.5" width={Math.max(5.5, 111 * p)} height="5.5" rx="2.75" fill="url(#cx-gold)" />}
-      {p > 0 && <rect x="64" y="41.2" width={Math.max(2, 111 * p - 3)} height="1.4" rx="0.7" fill="#fff" opacity="0.6" />}
-      {/* le fleuron du haut, une gemme à chaque bout, la goutte d'or du bas */}
-      <path d="M118 -3.5 L122.5 3 L132 3.5 L124 7.5 L118 12.5 L112 7.5 L104 3.5 L113.5 3 Z" fill={INK} />
-      <path d="M118 -1 L121.5 4.3 L128 4.8 L122.8 7.3 L118 10.8 L113.2 7.3 L108 4.8 L114.5 4.3 Z" fill="url(#cx-gold)" />
-      <circle cx="118" cy="5.3" r="2.3" fill="#b81f2e" /><circle cx="118.6" cy="4.7" r="0.9" fill="#ff9a8a" />
-      <Gem x={20} y={31} r={6.2} /><Gem x={216} y={31} r={6.2} />
-      <path d="M118 55 L122 59 L118 63.5 L114 59 Z" fill={INK} /><path d="M118 56.6 L120.5 59 L118 61.8 L115.5 59 Z" fill="url(#cx-gold)" />
-      <Twinkle x={20} y={24} r={4} /><Twinkle x={216} y={24} r={4} late />
-    </svg>
+    <span class="chapter-plaque pxf" aria-hidden="true">
+      <span class="chapter-title">{title}</span>
+      <span class="chapter-bar pxf"><span style={{ width: `${p * 100}%` }} /></span>
+    </span>
   );
 }
+
+/** Le fond du grand bouton Combattre : le bouton vert dessiné (gris quand il n'y a plus rien à combattre). */
+export function FightButtonArt({ off = false }: { off?: boolean }) {
+  return <span class={`fight-art${off ? ' off' : ''}`} aria-hidden="true" />;
+}
+
+/** Le niveau du joueur, sous son portrait : une petite plaque bleu nuit cerclée d'or. */
+export function LevelShield({ level }: { level: number }) {
+  return <span class="lv-shield"><span>{level}</span></span>;
+}
+
+/** Le contour de toutes les pièces (le même que les héros HD). */
+export const INK = PX_INK;
 
 /**
- * Le fond du grand bouton Combattre : cadre d'or et ses deux gemmes, émail vert bombé, double filet d'or, un reflet qui
- * passe de temps en temps. Dessiné à la taille exacte du bouton.
+ * Anciennement : les dégradés SVG communs. Les pièces sont maintenant des dessins en pixels (px.ts) ; le composant reste
+ * (posé une fois par l'application) pour les dessins SVG qui n'ont pas encore changé de style.
  */
-export function FightButtonArt({ off = false }: { off?: boolean }) {
-  const [ref, { w, h }] = useSize<HTMLSpanElement>();
-  return (
-    <span class="fight-art" ref={ref} aria-hidden="true">
-      {w > 0 && (
-        <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
-          <defs>
-            <linearGradient id="fb-enamel" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color={off ? '#b8b0a0' : '#8eeb9c'} /><stop offset="0.5" stop-color={off ? '#8a8272' : '#3fb35c'} /><stop offset="1" stop-color={off ? '#5e5648' : '#1f6e36'} />
-            </linearGradient>
-            <clipPath id="fb-clip"><rect x="9" y="9" width={w - 18} height={h - 18} rx="10" /></clipPath>
-          </defs>
-          <rect x="1" y="3" width={w - 2} height={h - 3} rx="17" fill="#000" opacity="0.3" />
-          <rect x="1" y="1" width={w - 2} height={h - 3} rx="17" fill={INK} />
-          <rect x="3.2" y="3.2" width={w - 6.4} height={h - 7.4} rx="15" fill="url(#cx-gold)" />
-          <path d={`M10 6.5 H${w - 10}`} stroke="#fffbe0" stroke-width="1.2" stroke-linecap="round" opacity="0.9" />
-          <rect x="7.5" y="7.5" width={w - 15} height={h - 15} rx="11.5" fill={INK} />
-          <rect x="9" y="9" width={w - 18} height={h - 18} rx="10" fill="url(#fb-enamel)" />
-          <g clip-path="url(#fb-clip)">
-            <ellipse cx={w / 2} cy={h * 0.18} rx={w * 0.46} ry={h * 0.32} fill="#fff" opacity="0.2" />
-            <rect x="9" y={h - 22} width={w - 18} height="13" fill="#000" opacity="0.14" />
-            {!off && <path class="fb-sheen" d={`M-40 0 H-18 L-48 ${h} H-70 Z`} fill="#fff" opacity="0.35" />}
-          </g>
-          <rect x="13" y="13" width={w - 26} height={h - 26} rx="7" fill="none" stroke="#ffe9a0" stroke-width="1.2" opacity="0.55" />
-          {[[8.5, h / 2 - 1.5], [w - 8.5, h / 2 - 1.5]].map(([x, y]) => <g><circle cx={x} cy={y} r="7.5" fill={INK} /><circle cx={x} cy={y} r="6" fill="url(#cx-gold-ring)" /><Gem x={x!} y={y!} r={3.6} tone="red" /></g>)}
-        </svg>
-      )}
-    </span>
-  );
-}
-
-/** Le blason du niveau du joueur, sous son portrait : un petit écu bleu cerclé d'or. */
-export function LevelShield({ level }: { level: number }) {
-  return (
-    <span class="lv-shield">
-      <svg viewBox="0 0 30 30" aria-hidden="true">
-        <path d="M2 3 H28 V14 Q28 25 15 29 Q2 25 2 14 Z" fill={INK} />
-        <path d="M4 5 H26 V14 Q26 23.5 15 27 Q4 23.5 4 14 Z" fill="url(#cx-gold-ring)" />
-        <path d="M6.5 7.5 H23.5 V14 Q23.5 21.5 15 24.5 Q6.5 21.5 6.5 14 Z" fill="url(#cx-enamel)" />
-        <path d="M7 8 H23 V12 Q15 10 7 13 Z" fill="#fff" opacity="0.2" />
-      </svg>
-      <span>{level}</span>
-    </span>
-  );
-}
-
-/** Le contour de toutes les pièces. */
-export const INK = '#2f1b0c';
-
-/** Les dégradés communs. `objectBoundingBox` : chacun s'étire sur la forme qui s'en sert. */
 export function ChromeDefs() {
   return (
     <svg class="chrome-defs" width="0" height="0" aria-hidden="true" focusable="false">
       <defs>
-        <linearGradient id="cx-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b0" /><stop offset="0.45" stop-color="#ffc531" /><stop offset="1" stop-color="#b8720a" /></linearGradient>
-        <linearGradient id="cx-gold-ring" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#fff6c4" /><stop offset="0.35" stop-color="#ffcf45" /><stop offset="0.7" stop-color="#e09a18" /><stop offset="1" stop-color="#9a5a06" /></linearGradient>
-        <linearGradient id="cx-gold-soft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe9a0" /><stop offset="1" stop-color="#d08a14" /></linearGradient>
-        <linearGradient id="cx-navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4253a3" /><stop offset="0.5" stop-color="#2a3678" /><stop offset="1" stop-color="#1a2354" /></linearGradient>
-        <radialGradient id="cx-enamel" cx="0.45" cy="0.3" r="0.75"><stop offset="0" stop-color="#5f7fe0" /><stop offset="0.55" stop-color="#2f3f98" /><stop offset="1" stop-color="#1a2160" /></radialGradient>
-        <radialGradient id="cx-enamel-green" cx="0.45" cy="0.25" r="0.8"><stop offset="0" stop-color="#8ef0a0" /><stop offset="0.5" stop-color="#3fb85c" /><stop offset="1" stop-color="#1c6e33" /></radialGradient>
-        <linearGradient id="cx-text-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0.15" stop-color="#fffbe0" /><stop offset="0.55" stop-color="#ffd24a" /><stop offset="1" stop-color="#e08a12" /></linearGradient>
-        <linearGradient id="cx-gem-blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#bfe0ff" /><stop offset="0.45" stop-color="#4f8ae0" /><stop offset="1" stop-color="#1f3f8f" /></linearGradient>
-        <linearGradient id="cx-gem-red" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffc0b8" /><stop offset="0.45" stop-color="#e0403a" /><stop offset="1" stop-color="#7a1418" /></linearGradient>
-        <radialGradient id="cx-glow"><stop offset="0" stop-color="#fff6c2" stop-opacity="0.9" /><stop offset="0.5" stop-color="#ffd45c" stop-opacity="0.35" /><stop offset="1" stop-color="#ffd45c" stop-opacity="0" /></radialGradient>
+        <linearGradient id="cx-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff4b0" /><stop offset="0.45" stop-color="#ffd650" /><stop offset="1" stop-color="#c76a1a" /></linearGradient>
+        <linearGradient id="cx-gold-ring" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#fff4b0" /><stop offset="0.5" stop-color="#f0a830" /><stop offset="1" stop-color="#8a3f16" /></linearGradient>
+        <linearGradient id="cx-gold-soft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd650" /><stop offset="1" stop-color="#c76a1a" /></linearGradient>
+        <linearGradient id="cx-navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#34489c" /><stop offset="1" stop-color="#1c2457" /></linearGradient>
+        <radialGradient id="cx-glow"><stop offset="0" stop-color="#fff6c2" stop-opacity="0.9" /><stop offset="0.5" stop-color="#ffd650" stop-opacity="0.35" /><stop offset="1" stop-color="#ffd650" stop-opacity="0" /></radialGradient>
       </defs>
     </svg>
   );
 }
 
-/** Une petite gemme taillée (losange), sertie d'or. */
-export function Gem({ x, y, r, tone = 'blue' }: { x: number; y: number; r: number; tone?: 'blue' | 'red' }) {
-  return (
-    <g>
-      <path d={`M${x} ${y - r * 1.25} L${x + r} ${y} L${x} ${y + r * 1.25} L${x - r} ${y} Z`} fill={INK} />
-      <path d={`M${x} ${y - r} L${x + r * 0.78} ${y} L${x} ${y + r} L${x - r * 0.78} ${y} Z`} fill={`url(#cx-gem-${tone})`} />
-      <path d={`M${x} ${y - r} L${x + r * 0.78} ${y} H${x} Z`} fill="#fff" opacity="0.45" />
-    </g>
-  );
-}
-
 /**
- * Un médaillon (bouton rond des bords de l'accueil) : anneau d'or biseauté et ses quatre clous, disque d'émail bleu nuit
- * avec son reflet ; le picto (`children`) est posé dessus. `size` en pixels.
+ * Un médaillon (bouton rond des bords de l'accueil, portrait du joueur) : anneau d'or et disque d'émail en pixels, éclairé
+ * en haut à droite ; le picto (`children`) est posé dessus. `size` en pixels CSS (de préférence pair : 2 px = 1 pixel du
+ * dessin). `tone` : la couleur de l'émail.
  */
-export function Medallion({ size, children, class: cls = '' }: { size: number; children?: ComponentChildren; class?: string }) {
+export function Medallion({ size, children, class: cls = '', tone = 'navy' }: { size: number; children?: ComponentChildren; class?: string; tone?: Tone }) {
   return (
     <span class={`medal ${cls}`} style={{ width: `${size}px`, height: `${size}px` }}>
-      <svg viewBox="0 0 100 100" width={size} height={size} aria-hidden="true">
-        <ellipse cx="50" cy="95" rx="34" ry="5" fill="#000" opacity="0.3" />
-        <circle cx="50" cy="50" r="48" fill={INK} />
-        <circle cx="50" cy="50" r="45" fill="url(#cx-gold-ring)" />
-        <path d="M14 38 A38 38 0 0 1 62 13" fill="none" stroke="#fffbe0" stroke-width="2.6" stroke-linecap="round" opacity="0.85" />
-        <path d="M86 62 A38 38 0 0 1 38 87" fill="none" stroke="#7a4406" stroke-width="2.6" stroke-linecap="round" opacity="0.55" />
-        {[45, 135, 225, 315].map((a) => {
-          const r = (a * Math.PI) / 180, x = 50 + Math.cos(r) * 41.5, y = 50 + Math.sin(r) * 41.5;
-          return <g><circle cx={x} cy={y} r="3.1" fill={INK} /><circle cx={x} cy={y} r="2.2" fill="#ffe9a0" /><circle cx={x - 0.6} cy={y - 0.6} r="0.9" fill="#fff" /></g>;
-        })}
-        <circle cx="50" cy="50" r="37.5" fill={INK} />
-        <circle cx="50" cy="50" r="35.5" fill="url(#cx-enamel)" />
-        <path d="M22 40 Q26 20 50 17 Q74 20 78 40 Q66 30 50 30 Q34 30 22 40 Z" fill="#fff" opacity="0.18" />
-        <circle cx="50" cy="50" r="35.5" fill="none" stroke="#9fb4ff" stroke-width="1" opacity="0.5" />
-      </svg>
+      <img class="medal-art" src={medalUrl(size, tone)} alt="" aria-hidden="true" />
       <span class="medal-in">{children}</span>
     </span>
   );
@@ -229,16 +88,5 @@ export function Medallion({ size, children, class: cls = '' }: { size: number; c
 
 /** Le chevron d'or d'une languette (vers le bas = déplier, vers le haut = replier). */
 export function Chevron({ up }: { up: boolean }) {
-  const d = up ? 'M36 58 L50 44 L64 58' : 'M36 44 L50 58 L64 44';
-  return (
-    <svg viewBox="0 0 100 100" class="chevron" aria-hidden="true">
-      <path d={d} fill="none" stroke={INK} stroke-width="15" stroke-linecap="round" stroke-linejoin="round" />
-      <path d={d} fill="none" stroke="url(#cx-gold-soft)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" />
-    </svg>
-  );
-}
-
-/** Une petite étincelle qui scintille (à poser dans un dessin). */
-export function Twinkle({ x, y, r, late = false }: { x: number; y: number; r: number; late?: boolean }) {
-  return <path class={`an-twinkle${late ? ' an-late' : ''}`} style={{ transformOrigin: `${x}px ${y}px` }} d={spark(x, y, r)} fill="#fff" />;
+  return <img class="chevron" src={chevronUrl(up)} alt="" aria-hidden="true" />;
 }

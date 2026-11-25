@@ -2,8 +2,11 @@
 import { render } from 'preact';
 import { App } from './ui/app';
 import './ui/style.css';
+import { installPx } from './ui/px';
 import { watchUpdates } from './updater';
 
+// les pièces dessinées de l'interface (px.ts) : posées dans le CSS avant le premier dessin
+installPx();
 render(<App />, document.getElementById('game')!);
 watchUpdates();
 

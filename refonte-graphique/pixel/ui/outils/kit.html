@@ -1,0 +1,75 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Lilita+One&display=block">
+<style>
+body { margin: 0; padding: 14px 16px 20px; background: #273479; font-family: 'Fredoka', sans-serif; width: 420px; color: #fff3da; }
+h3 { font: 400 15px 'Lilita One', sans-serif; margin: 14px 0 6px; color: #ffd650; text-shadow: 0 2px 0 #121636; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.p { position: relative; isolation: isolate; color: #fff; padding: 0 14px 6px; min-height: 40px; display: inline-flex; align-items: center; font: 400 16px 'Lilita One', sans-serif;
+  --o: #121636; text-shadow: 1.5px 0 0 var(--o), -1.5px 0 0 var(--o), 0 1.5px 0 var(--o), 0 -1.5px 0 var(--o), 1px 1px 0 var(--o), -1px 1px 0 var(--o), 1px -1px 0 var(--o), -1px -1px 0 var(--o), 0 2.5px 0 var(--o); }
+.p::before { content: ''; position: absolute; inset: 0; z-index: -1; image-rendering: pixelated; pointer-events: none; background: var(--pxf); }
+.sw { width: 26px; height: 26px; border: 2px solid #221022; }
+.lab { font-size: 11px; color: #c3cdf2; }
+img, .im { image-rendering: pixelated; }
+</style></head><body>
+<h3>Palette (sombre → clair)</h3>
+<div id="pal"></div>
+<h3>Boutons (normal, enfoncé)</h3>
+<div class="row">
+<div class="p" style="--pxf:var(--px-btn-green);--o:#145040">Combattre</div><div class="p" style="--pxf:var(--px-btn-green-down);--o:#145040;padding-top:4px;padding-bottom:2px">Combattre</div>
+<div class="p" style="--pxf:var(--px-btn-blue);--o:#1c2f7a">Bleu</div><div class="p" style="--pxf:var(--px-btn-gold);--o:#8a3f16">Or</div>
+<div class="p" style="--pxf:var(--px-btn-red);--o:#5c1438">Danger</div><div class="p" style="--pxf:var(--px-btn-purple);--o:#3a1c78">Gemmes</div>
+<div class="p" style="--pxf:var(--px-btn-cream);color:#23244a;text-shadow:none">Neutre</div><div class="p" style="--pxf:var(--px-btn-grey);--o:#4b4c62">Impossible</div>
+</div>
+<h3>Fenêtre, panneau, creux</h3>
+<div class="row" style="align-items:flex-start">
+<div class="p" style="--pxf:var(--px-frame);width:180px;height:110px;padding:6px;flex-direction:column;align-items:stretch;justify-content:flex-start">
+  <div style="background:linear-gradient(180deg,#34489c 0 2px,#273479 2px calc(100% - 6px),#ffd650 calc(100% - 6px) calc(100% - 4px),#c76a1a calc(100% - 4px) calc(100% - 2px),#221022 calc(100% - 2px));padding:4px 10px 10px;color:#fff3da">Titre</div>
+  <div class="p" style="--pxf:var(--px-inset);color:#23244a;text-shadow:none;font:500 14px Fredoka;margin:8px 4px 0;min-height:30px">ligne en creux</div>
+</div>
+<div class="p" style="--pxf:var(--px-panel);width:180px;height:110px;color:#23244a;text-shadow:none;align-items:flex-start;padding-top:10px">Panneau</div>
+</div>
+<h3>Plaques (titres) : bleu nuit, bleu, violet, rouge, vert, turquoise, or</h3>
+<div class="row">
+<div class="p" style="--pxf:var(--px-plaque-navy);color:#ffd650">Chapitre 3</div><div class="p" style="--pxf:var(--px-plaque-blue)">Héros</div><div class="p" style="--pxf:var(--px-plaque-purple)">Invocation</div>
+<div class="p" style="--pxf:var(--px-plaque-red)">Défaite</div><div class="p" style="--pxf:var(--px-plaque-green)">Vert</div><div class="p" style="--pxf:var(--px-plaque-teal)">Turquoise</div><div class="p" style="--pxf:var(--px-plaque-gold);--o:#8a3f16">Or</div>
+</div>
+<h3>Compteurs, jauges, étiquettes, interrupteur</h3>
+<div class="row">
+<div class="p" style="--pxf:var(--px-groove);min-height:26px;padding:0 10px 2px">125 k</div>
+<div class="p" style="--pxf:var(--px-groove-s);width:110px;min-height:14px;padding:2px"><span style="display:block;width:65%;height:10px;background:#f0a830;box-shadow:inset 0 2px 0 #fff4b0"></span></div>
+<div class="p" style="--pxf:var(--px-chip);min-height:18px;font-size:11px;padding:0 6px 2px">Quêtes</div>
+<div class="p" style="--pxf:var(--px-well-green);width:52px;min-height:30px;padding:0"><span class="p" style="--pxf:var(--px-btn-cream);position:absolute;left:26px;top:2px;width:24px;height:26px;min-height:0;padding:0"></span></div>
+</div>
+<h3>Barres (haut, bas)</h3>
+<div class="p" style="--pxf:var(--px-bar-top);width:388px;height:34px"></div>
+<div style="height:8px"></div>
+<div class="p" style="--pxf:var(--px-bar-bottom);width:388px;height:34px"></div>
+<h3>Médaillons, fermer, retour, acheter, pastille, chevrons</h3>
+<div class="row"><span id="meds" class="row"></span>
+<span class="im" style="width:30px;height:32px;display:inline-block;background:var(--px-close) 0 0/100% 100%"></span>
+<span class="im" style="width:30px;height:32px;display:inline-block;background:var(--px-back) 0 0/100% 100%"></span>
+<span class="im" style="width:18px;height:20px;display:inline-block;background:var(--px-plus) 0 0/100% 100%"></span>
+<span class="im" style="width:14px;height:14px;display:inline-block;background:var(--px-badge) 0 0/100% 100%"></span>
+<img id="c1" style="width:22px;height:14px"><img id="c2" style="width:22px;height:14px">
+</div>
+<h3>Une couleur quelconque (pxBg) : cadres de rareté</h3>
+<div class="row" id="rar"></div>
+<script src="px.js"></script>
+<script>
+PXK.installPx();
+const pal = document.getElementById('pal');
+for (const [k, g] of Object.entries(PXK.PAL)) {
+  const r = document.createElement('div'); r.className = 'row'; r.style.gap = '2px'; r.style.marginBottom = '3px';
+  r.innerHTML = g.map((c) => `<span class="sw" style="background:${c}"></span>`).join('') + `<span class="lab" style="margin-left:6px">${k}</span>`;
+  pal.appendChild(r);
+}
+const meds = document.getElementById('meds');
+for (const [s, t] of [[54, 'navy'], [50, 'navy'], [38, 'navy'], [50, 'purple']]) { const i = document.createElement('img'); i.src = PXK.medalUrl(s, t); i.style.width = s + 'px'; meds.appendChild(i); }
+document.getElementById('c1').src = PXK.chevronUrl(false); document.getElementById('c2').src = PXK.chevronUrl(true);
+const rar = document.getElementById('rar');
+for (const c of ['#8e97a8', '#3dbb4c', '#2f8be8', '#9459e8', '#f0a830', '#e5434d']) {
+  const d = document.createElement('div'); d.className = 'p'; d.style.cssText = `--pxf:${PXK.pxBg('rim', c)};width:52px;height:64px;background:${c}55`; rar.appendChild(d);
+}
+</script>
+</body></html>

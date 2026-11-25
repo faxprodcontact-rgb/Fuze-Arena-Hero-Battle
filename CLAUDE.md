@@ -52,6 +52,8 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   pixel) et leurs chaînes de fabrication sont supprimés (v0.56.0) ; pictos : `icons.webp` (`decoupe-pictos.py`).
 - **Interface en nouvelle DA (pixel art HD), partie par partie** (demande du 25/11) : plan, inventaire et outils dans
   `refonte-graphique/pixel/ui/` (lire `PLAN.md`) ; partie 1 faite en v0.57.0 (chargement, logo, icône d'application).
+  **Style commun (26/11) : lire `refonte-graphique/pixel/ui/STYLE.md`** (pièces en pixels de `src/game/ui/px.ts`, variables
+  `--px-…`, aucun ornement) ; section Campagne faite, vague 2 : Héros, Invoquer, Aventure, Guilde.
 - Interface (v0.39 à v0.41) : polices **Lilita One** (titres, chiffres) et **Fredoka** (textes), `font-synthesis: none`,
   jamais `fontStyle: 'bold'` dans Phaser. Couleurs : **émail bleu nuit cerclé d'or** (le bois brun est refusé),
   panneaux parchemin ; variables en tête de `src/game/ui/style.css`. Pièces dessinées : `ui/chrome.tsx` (`ChromeDefs`
