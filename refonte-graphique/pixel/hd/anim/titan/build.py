@@ -873,7 +873,7 @@ WAVE = [  # x (toile), hauteur, largeur, penché, sorte, image où il sort
     (FIST_F_R + 54, 36, 14, 4, 'roche', 2), (FIST_F_R + 66, 40, 11, 5, 'grenat', 2), (FIST_F_R + 78, 30, 13, 3, 'roche', 2),
 ]
 BIG = [  # sous chaque héros : x (par rapport à la cible), hauteur, largeur, penché, sorte, plan (0 derrière, 1 devant)
-    (-9, 52, 15, -4, 'grenat', 0), (9, 68, 17, 3, 'grenat', 0), (24, 30, 11, 8, 'grenat', 0),
+    (-9, 46, 15, -4, 'grenat', 0), (9, 60, 17, 3, 'grenat', 0), (24, 28, 11, 8, 'grenat', 0),
     (-24, 34, 15, -7, 'roche', 1), (20, 40, 16, 7, 'roche', 1), (36, 22, 11, 8, 'roche', 1), (-37, 18, 10, -7, 'roche', 1),
 ]
 BIG_BITS = [(-3.6, 19.0, 'r', 6.8, 40), (3.2, 23.0, 'r', 5.4, -35), (5.4, 17.0, 'g', 5.9, 50), (-4.6, 15.0, 'r', 4.6, 30),

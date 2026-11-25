@@ -976,9 +976,9 @@ def pop(cv, c, r, facing=0.0, tones='wxyz'):
 # une plume d'orage arrachée (petites grilles dessinées à la main, aux tons de l'oiseau : clair en haut à droite,
 # tige plus claire, pointe ronde), dans trois directions
 FEATHERS = [
-    ['..kkl.', '.kjkkl', 'jjjkk.', 'ijj...', 'i.....'],          # elle file vers le haut à droite
-    ['ii....', '.jjjk.', '..jkkl', '...kkl'],                    # vers le bas à droite
-    ['.ikkl.', 'ijjkkl', '.ijjk.', '..ij..', '...i..'],          # elle tombe en tournant
+    ['......kl', '....kkkl', '..jjkkk.', '.ijjkk..', 'ijjj....', 'ii......'],     # elle file vers le haut à droite
+    ['ii......', '.ijjj...', '..ijkkk.', '...jjkkl', '.....kkl'],                 # vers le bas à droite
+    ['..kl.', '.jkkl', 'ijkk.', 'ijkk.', '.ijk.', '..i..', '..i..'],               # elle tombe en tournant
 ]
 
 
@@ -1058,26 +1058,26 @@ def fx_inhale(k):
 def fx_snap(cv, back, front, f):
     """le claquement : un croissant de vent clair qui balaie devant le bec, du haut vers le bas"""
     hx, hy = c2(HEAD_C[0], HEAD_C[1], f)
-    ribbon(front, (hx + 6, hy + 6), 46, 40, 58, -38, 7.0, head=0.72, tones='wwxyz')
-    ribbon(front, (hx + 4, hy + 6), 36, 30, 40, -30, 3.0, head=0.7, tones='xyz')
+    ribbon(front, (hx + 6, hy + 6), 48, 42, 62, -40, 11.0, head=0.72, tones='wwxyzv')
+    ribbon(front, (hx + 4, hy + 6), 34, 28, 44, -30, 4.0, head=0.7, tones='xyz')
 
 
 def blade(cv, c, s=1.0, tilt=-28.0, tail=1.0):
     """la lame de vent : un croissant dont le bord bombé regarde la cible, et deux filets qui traînent derrière"""
     x, y = c
-    ribbon(cv, (x, y), 7 * s, 17 * s, 82, -82, 6.0 * s, head=0.5, tones='wwxyzv', tilt=tilt)
+    ribbon(cv, (x, y), 8 * s, 18 * s, 84, -84, 8.5 * s, head=0.5, tones='wwxyzv', tilt=tilt)
     if tail:
         for dy, L in ((-7, 26), (5, 20)):
             gust(cv, (x - L - 6, y + dy - 12 * 0.5), (x - L * 0.6, y + dy - 6), (x - L * 0.3, y + dy - 2),
-                 (x - 6, y + dy), 2.2 * tail, tones='xyz', curl_r=0.1, up=False, tail=0.15)
+                 (x - 6, y + dy), 3.0 * tail, tones='xyz', curl_r=0.1, up=False, tail=0.15)
 
 
 def fx_blade(k):
     def fn(cv, back, front, f):
         if k == 0:
-            blade(front, (330, 226), 0.8, tilt=-24, tail=0.6)
+            blade(front, (334, 226), 1.2, tilt=-24, tail=0.8)
         else:
-            blade(front, (392, 262), 1.0, tilt=-30)
+            blade(front, (394, 262), 1.5, tilt=-30, tail=1.3)
     return fn
 
 
@@ -1086,28 +1086,28 @@ def fx_hit(k):
     def fn(cv, back, front, f):
         x, y = HIT
         if k == 0:
-            pop(front, (x - 4, y), 10, facing=20, tones='wwxyz')
-            ribbon(front, (x - 14, y - 6), 26, 22, 70, -50, 4.5, head=0.6, tones='wxyz', tilt=-10)
-            bolt_arc(front, (x + 4, y - 20), (x + 18, y + 4), 4, 2.2, tones='wut')
+            pop(front, (x - 4, y), 14, facing=20, tones='wwxyz')
+            ribbon(front, (x - 16, y - 6), 32, 28, 74, -54, 7.0, head=0.6, tones='wwxyz', tilt=-10)
+            bolt_arc(front, (x + 6, y - 26), (x + 22, y + 6), 5, 3.2, tones='wut', branches=((0.5, 8, 1),))
             feather_fx(front, x + 16, y - 24, 0)
             feather_fx(front, x + 20, y + 8, 1)
             feather_fx(front, x - 20, y - 18, 2)
             puff(back, (x - 24, y + 6), 5, 'xyz')
         elif k == 1:
-            pop(front, (x - 2, y - 2), 9, facing=20, tones='xyz')
-            ribbon(front, (x - 8, y - 6), 28, 24, 30, -60, 3.0, head=0.5, tones='xyz', tilt=-10)
-            curl(front, (x + 18, y - 10), 6, 90, turn=280, w=2.2, tones='xyz')
+            pop(front, (x - 2, y - 2), 12, facing=20, tones='xyz')
+            ribbon(front, (x - 10, y - 6), 32, 28, 30, -64, 4.5, head=0.5, tones='xyz', tilt=-10)
+            curl(front, (x + 20, y - 12), 8, 90, turn=280, w=3.0, tones='xyz')
             feather_fx(front, x + 24, y - 34, 0)
             feather_fx(front, x + 28, y + 12, 1)
             feather_fx(front, x - 26, y - 26, 2)
         elif k == 2:
-            puff(front, (x + 2, y - 4), 6, 'xyz', hollow=0.45)
-            curl(front, (x + 22, y - 16), 5, 90, turn=260, w=1.6, tones='yz')
+            puff(front, (x + 2, y - 4), 9, 'xyz', hollow=0.45)
+            curl(front, (x + 24, y - 18), 7, 90, turn=260, w=2.2, tones='yz')
             feather_fx(front, x + 30, y - 40, 2)
             feather_fx(front, x + 32, y + 20, 1)
             feather_fx(front, x - 30, y - 22, 2)
         else:
-            puff(front, (x + 6, y - 8), 4, 'yz', hollow=0.6)
+            puff(front, (x + 6, y - 8), 6, 'yz', hollow=0.6)
             feather_fx(front, x + 32, y + 30, 2)
             feather_fx(front, x - 32, y - 12, 2)
     return fn
@@ -1117,13 +1117,13 @@ ATTAQUE = [
     dict(bx=-2, pitch=-3, hrel=(-5, -4), jaw=3, crest=(2, -1), lagN=(1, 1), lagF=(1, 1), fx=[fx_inhale(0)], ms=150),
     dict(bx=-4, pitch=-5, hrel=(-10, -9), nod=-1, jaw=5, crest=(3, -2), lagN=(2, 2), lagF=(1, 2), tail=(1, 0),
          fx=[fx_inhale(1)], ms=240),
-    dict(bx=3, pitch=3, hrel=(10, 6), nod=1, jaw=-2, crest=(-3, 2), lagN=(-2, -2), lagF=(-1, -1), tail=(-1, 0),
+    dict(bx=3, pitch=3, hrel=(10, 6), nod=1, jaw=-9, crest=(-3, 2), lagN=(-2, -2), lagF=(-1, -1), tail=(-1, 0),
          fx=[fx_snap], ms=60),
-    dict(bx=4, pitch=4, hrel=(13, 8), nod=1, jaw=-2, crest=(-2, 2), lagN=(-2, -3), lagF=(-1, -2), tail=(-1, 0),
+    dict(bx=4, pitch=4, hrel=(13, 8), nod=1, jaw=-9, crest=(-2, 2), lagN=(-2, -3), lagF=(-1, -2), tail=(-1, 0),
          fx=[fx_blade(0)], ms=60),
-    dict(bx=3, pitch=3, hrel=(12, 7), nod=1, jaw=-1, crest=(-1, 1), lagN=(-1, -2), lagF=(-1, -1),
+    dict(bx=3, pitch=3, hrel=(12, 7), nod=1, jaw=-6, crest=(-1, 1), lagN=(-1, -2), lagF=(-1, -1),
          fx=[fx_blade(1)], ms=60),
-    dict(bx=2, pitch=2, hrel=(9, 5), nod=1, jaw=0, crest=(1, 0), lagN=(0, -1), fx=[fx_hit(0)], ms=170),
+    dict(bx=2, pitch=2, hrel=(9, 5), nod=1, jaw=-3, crest=(1, 0), lagN=(0, -1), fx=[fx_hit(0)], ms=170),
     dict(bx=1, pitch=1, hrel=(6, 3), jaw=0, crest=(1, -1), lagN=(1, 0), fx=[fx_hit(1)], ms=110),
     dict(bx=1, pitch=1, hrel=(3, 1), jaw=1, crest=(0, 0), lagN=(1, 1), fx=[fx_hit(2)], ms=120),
     dict(sq=1, hrel=(1, 1), jaw=0, crest=(-1, 0), lagN=(0, 1), fx=[fx_hit(3)], ms=140),
@@ -1142,18 +1142,18 @@ def fx_charge(level):
     def fn(cv, back, front, f):
         bx, by = c2(150, 150, f)
         if level >= 0:
-            curl(back, (bx - 70, by + 50), 9 + 2 * level, 180, turn=280, w=2.4, tones='xyz')
-            ribbon(back, (bx - 10, by + 60), 70, 14, 200, 330, 3.0, head=0.6, tones='xyzv')
+            curl(back, (bx - 70, by + 50), 10 + 2 * level, 180, turn=280, w=3.4, tones='wyz')
+            ribbon(back, (bx - 10, by + 60), 74, 16, 200, 330, 4.5, head=0.6, tones='wxyzv')
             puff(front, (bx - 60, GROUND - 3), 3 + level, 'nop')
             puff(front, (bx + 50, GROUND - 3), 3 + level, 'nop')
         if level >= 1:
-            ribbon(back, (bx - 4, by - 30), 86, 30, 160, 20, 3.4, head=0.65, tones='wyzv', tilt=8)
-            curl(back, (bx + 70, by - 70), 8, 0, turn=300, w=2.2, tones='xyz', cw=True)
+            ribbon(back, (bx - 4, by - 30), 88, 32, 160, 20, 5.0, head=0.65, tones='wxyzv', tilt=8)
+            curl(back, (bx + 70, by - 70), 10, 0, turn=300, w=3.2, tones='wyz', cw=True)
             feather_fx(front, bx - 96, by - 10 - 8 * level, 2)
             feather_fx(front, bx + 64, by + 40 - 10 * level, 0)
         if level >= 2:
-            ribbon(back, (bx + 6, by - 80), 96, 26, 200, 40, 3.8, head=0.7, tones='wxyzv', tilt=-6)
-            curl(back, (bx - 92, by - 70), 9, 180, turn=300, w=2.6, tones='wyz')
+            ribbon(back, (bx + 6, by - 80), 98, 28, 200, 40, 5.5, head=0.7, tones='wxyzv', tilt=-6)
+            curl(back, (bx - 92, by - 70), 11, 180, turn=300, w=3.4, tones='wyz')
             feather_fx(front, bx - 40, by - 140, 0)
     return fn
 
@@ -1161,9 +1161,9 @@ def fx_charge(level):
 def fx_beat(cv, back, front, f):
     """la traînée du battement : deux croissants pâles qui suivent le bout des ailes (de haut en bas)"""
     sx, sy = c2(SHOULDER_NG[0], SHOULDER_NG[1])
-    ribbon(back, (sx, sy - 4), 150, 140, 112, 196, 9.0, head=0.8, tones='wxyzv')
+    ribbon(back, (sx, sy - 4), 150, 140, 108, 200, 14.0, head=0.8, tones='wwxyzv')
     fx_, fy_ = c2(SHOULDER_FG[0], SHOULDER_FG[1])
-    ribbon(back, (fx_ + 4, fy_ + 8), 104, 96, 74, -36, 7.0, head=0.8, tones='xyzv')
+    ribbon(back, (fx_ + 4, fy_ + 8), 104, 96, 78, -40, 11.0, head=0.8, tones='wxyzv')
 
 
 def fx_gust(k):
@@ -1171,22 +1171,23 @@ def fx_gust(k):
     def fn(cv, back, front, f):
         x0 = SOL[0] - 40
         if k == 0:
-            for (y, L, w, up) in ((GROUND - 18, 180, 6.0, True), (GROUND - 58, 160, 5.0, False),
-                                  (GROUND - 100, 130, 4.0, True), (GROUND - 140, 100, 3.0, False)):
-                gust(front if y > GROUND - 60 else back, (x0, y + 8), (x0 + L * 0.35, y + 12), (x0 + L * 0.7, y - 4),
-                     (x0 + L, y), w, tones='wxyzv', curl_r=6, up=up)
+            for (y, L, w, up) in ((GROUND - 18, 190, 10.0, True), (GROUND - 58, 170, 8.5, False),
+                                  (GROUND - 100, 140, 7.0, True), (GROUND - 140, 110, 5.5, False)):
+                xs = x0 if y > GROUND - 60 else x0 + 100
+                gust(front, (xs, y + 10), (xs + L * 0.3, y + 22 * (1 if up else -1)), (xs + L * 0.65, y - 14 * (1 if up else -1)),
+                     (xs + L, y), w, tones='wxyzv', curl_r=7, up=up)
             cloud(front, (SOL[0] - 70, GROUND - 6), 8, 'nop', seed=3)
             cloud(front, (SOL[0] + 70, GROUND - 6), 9, 'nop', seed=4)
         elif k == 1:
-            for (y, L, w, up) in ((GROUND - 18, 200, 5.0, True), (GROUND - 58, 180, 4.2, False),
-                                  (GROUND - 100, 150, 3.4, True)):
+            for (y, L, w, up) in ((GROUND - 18, 200, 8.0, True), (GROUND - 58, 180, 6.5, False),
+                                  (GROUND - 100, 150, 5.0, True)):
                 gust(back, (x0 + 20, y + 8), (x0 + 20 + L * 0.35, y + 12), (x0 + 20 + L * 0.7, y - 4),
                      (x0 + 20 + L, y), w, tones='xyzv', curl_r=6, up=up, tail=0.55)
             cloud(front, (SOL[0] - 80, GROUND - 8), 9, 'nop', seed=3, hollow=0.4)
             cloud(front, (SOL[0] + 82, GROUND - 8), 10, 'nop', seed=4, hollow=0.4)
         else:
             gust(back, (x0 + 60, GROUND - 10), (x0 + 120, GROUND - 6), (x0 + 160, GROUND - 20), (x0 + 200, GROUND - 16),
-                 3.0, tones='yzv', curl_r=5, up=True, tail=0.8)
+                 4.5, tones='yzv', curl_r=5, up=True, tail=0.8)
             cloud(front, (SOL[0] - 86, GROUND - 10), 8, 'op', seed=3, hollow=0.7)
             cloud(front, (SOL[0] + 90, GROUND - 10), 8, 'op', seed=4, hollow=0.7)
     return fn
@@ -1196,7 +1197,7 @@ def vortex(back, front, c, k, w=3.2, tones='wyzv'):
     """le vent qui tourne autour de la cible : trois anneaux de rubans penchés (devant : la moitié basse de chaque
     anneau, derrière : la haute) ; k fait tourner les rubans"""
     x, y = c
-    for j, (dy, rx, ry) in enumerate(((-6, 40, 9), (-46, 34, 8), (-86, 26, 7))):
+    for j, (dy, rx, ry) in enumerate(((-6, 48, 11), (-48, 42, 10), (-90, 34, 9))):
         a = 200 + 70 * k + 50 * j
         ribbon(front, (x, y + dy), rx, ry, a, a + 150, w * (1 - 0.15 * j), head=0.65, tones=tones, tilt=-8)
         ribbon(back, (x, y + dy), rx, ry, a + 180, a + 300, w * 0.7, head=0.5, tones=tones[1:] or tones, tilt=-8)
@@ -1207,35 +1208,35 @@ def fx_storm(k):
     les plumes volent), 3 (ça se défait), 4 (les dernières plumes)"""
     def fn(cv, back, front, f):
         X, gy = ENEMY_X, GROUND
-        top = (X - 2, gy - 150)
+        top = (X - 2, gy - 158)
         if k == 0:
-            storm_cloud(back, top, 13, seed=11)
-            vortex(back, front, (X, gy), 0, w=2.6, tones='xyzv')
-            curl(front, (X - 36, gy - 116), 6, 0, turn=280, w=2.0, tones='xyz')
+            storm_cloud(back, top, 18, seed=11)
+            vortex(back, front, (X, gy), 0, w=4.0, tones='xyzv')
+            curl(front, (X - 44, gy - 120), 8, 0, turn=280, w=3.0, tones='wyz')
         elif k == 1:
-            storm_cloud(back, top, 17, seed=11)
-            vortex(back, front, (X, gy), 1, w=3.6, tones='wxyzv')
-            bolt_arc(front, (X - 6, gy - 134), (X + 2, gy - 44), 9, 4.2, tones='wwut', branches=((0.45, 16, 1),))
-            bolt_arc(front, (X - 22, gy - 136), (X - 26, gy - 70), -7, 2.8, tones='wut', branches=((0.6, 10, -1),))
-            bolt_arc(front, (X + 16, gy - 132), (X + 28, gy - 84), 6, 2.6, tones='wut')
-            pop(front, (X + 1, gy - 46), 9, facing=90, tones='wwxy')
+            storm_cloud(back, top, 24, seed=11)
+            vortex(back, front, (X, gy), 1, w=5.5, tones='wxyzv')
+            bolt_arc(front, (X - 6, gy - 140), (X + 2, gy - 44), 11, 6.0, tones='wwwut', branches=((0.42, 20, 1),))
+            bolt_arc(front, (X - 30, gy - 142), (X - 34, gy - 66), -9, 4.0, tones='wwut', branches=((0.6, 12, -1),))
+            bolt_arc(front, (X + 24, gy - 140), (X + 36, gy - 80), 8, 3.6, tones='wwut')
+            pop(front, (X + 1, gy - 46), 14, facing=90, tones='wwxyz')
             for (dx, dy, kk) in ((-26, -60, 2), (24, -70, 0), (30, -30, 1)):
                 feather_fx(front, X + dx, gy + dy, kk)
         elif k == 2:
-            storm_cloud(back, top, 16, seed=11)
-            vortex(back, front, (X, gy), 2, w=3.2, tones='xyzv')
-            bolt_arc(front, (X - 6, gy - 134), (X + 2, gy - 50), 9, 2.0, tones='ut')
-            puff(front, (X + 1, gy - 46), 7, 'xyz', hollow=0.4)
+            storm_cloud(back, top, 23, seed=11)
+            vortex(back, front, (X, gy), 2, w=4.6, tones='wxyzv')
+            bolt_arc(front, (X - 6, gy - 140), (X + 2, gy - 50), 11, 3.0, tones='ut')
+            puff(front, (X + 1, gy - 46), 11, 'xyz', hollow=0.4)
             for (dx, dy, kk) in ((-36, -78, 2), (34, -90, 0), (42, -24, 1), (-40, -26, 2)):
                 feather_fx(front, X + dx, gy + dy, kk)
         elif k == 3:
-            storm_cloud(back, (top[0], top[1] - 4), 14, seed=11, hollow=0.5)
-            vortex(back, front, (X, gy - 4), 3, w=2.0, tones='yzv')
+            storm_cloud(back, (top[0], top[1] - 4), 20, seed=11, hollow=0.5)
+            vortex(back, front, (X, gy - 4), 3, w=3.0, tones='xyzv')
             for (dx, dy, kk) in ((-42, -70, 2), (40, -80, 2), (48, -14, 1), (-46, -10, 2)):
                 feather_fx(front, X + dx, gy + dy, kk)
         else:
-            storm_cloud(back, (top[0], top[1] - 8), 10, seed=11, hollow=0.85)
-            ribbon(front, (X, gy - 30), 34, 8, 220, 320, 1.6, head=0.5, tones='yz', tilt=-8)
+            storm_cloud(back, (top[0], top[1] - 8), 15, seed=11, hollow=0.85)
+            ribbon(front, (X, gy - 30), 40, 10, 220, 320, 2.4, head=0.5, tones='yz', tilt=-8)
             feather_fx(front, X - 44, gy - 40, 2)
             feather_fx(front, X + 44, gy - 50, 2)
     return fn
