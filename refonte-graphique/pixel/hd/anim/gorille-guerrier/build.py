@@ -848,16 +848,121 @@ def show(frames, path, k=3):
     print('écrit', path)
 
 
+# ---------------------------------------------------------------- 1) la pose (respiration lourde)
+# 10 images, lentes. Il inspire par le ventre (une rangée doublée), puis les épaules et la tête montent à leur tour
+# (inertie d'une image), il retient, expire en se tassant d'un pixel sur ses poings ; le pan de tissu se balance à
+# peine ; un clignement. Les poings et les pieds ne bougent pas.
+POSE = [
+    dict(breath=0, crouch=0, cloth=0, ms=170),
+    dict(breath=1, crouch=0, cloth=0, ms=150),
+    dict(breath=2, crouch=0, cloth=0, ms=170),
+    dict(breath=2, crouch=0, cloth=1, ms=230),
+    dict(breath=1, crouch=0, cloth=1, ms=150),
+    dict(breath=0, crouch=0, cloth=0, ms=150),
+    dict(breath=0, crouch=1, cloth=-1, ms=170),
+    dict(breath=0, crouch=1, cloth=-1, blink=1, ms=110),
+    dict(breath=0, crouch=1, cloth=0, ms=170),
+    dict(breath=0, crouch=0, cloth=0, ms=150),
+]
+
+
+# ---------------------------------------------------------------- 2) l'attaque de base : « Poing de bourrasque »
+# Un crochet du bras proche, de tout son poids. Anticipation longue : il recule le buste, gonfle la poitrine et
+# arrache le poing du sol en l'armant en arrière (le vent s'enroule autour du gantelet) ; puis il bascule en avant,
+# le bras se déplie d'un coup (image étirée), le poing frappe : éclat de vent, croissants d'air, la poussière saute
+# sous ses pieds ; impact tenu ; il ramène le bras et repose lourdement le poing.
+COCK = (-7, -12)                       # le bras proche armé : déplacé d'un bloc (poing soulevé, ramené en arrière)
+NEAR_FIST = (30, 110)                  # milieu du poing proche posé (grille)
+
+
+def fx_gather(level):
+    def f(back, front, ctx):
+        dx, dy = ctx.body.follow(60)
+        cx, cy = g2c(NEAR_FIST[0] + COCK[0] + dx, NEAR_FIST[1] + COCK[1] + dy - 4)
+        if level >= 1:
+            curl(back, (cx - 4, cy - 2), 11, 200, turn=250, w=2.6, tones='xyzv')
+            leaf(front, cx + 14, cy - 16, 0)
+        if level >= 2:
+            curl(front, (cx + 2, cy + 6), 13, 20, turn=230, w=2.8, tones='wxyz', cw=True)
+            curl(back, (cx - 10, cy - 14), 7, 120, turn=260, w=2.0, tones='yzv')
+            leaf(front, cx - 16, cy - 4, 1)
+            puff(front, (cx + 16, GROUND - 2), 2.2)
+        # sous le poing soulevé, la poussière retombe
+        cloud(back, (cx + 2, GROUND - 2), 2.6, seed=3, hollow=0.3 * level)
+    return f
+
+
+def fx_smear(back, front, ctx):
+    """le bras qui se déplie : une rafale pleine du poing armé au poing tendu (derrière l'avant-bras)"""
+    x0, y0 = g2c(16, 92)
+    x1, y1 = g2c(118, 70)
+    pts = bezier((x0, y0), (x0 + 30, y0 + 10), (x1 - 40, y1 + 6), (x1, y1), 50)
+    stroke(back, pts, [2 + 16 * (i / 50) ** 1.4 for i in range(51)], 'xyzv')
+    stroke(back, pts[10:], [1 + 8 * (i / 40) ** 1.5 for i in range(41)], 'wwx')
+    for (sx, sy, k) in ((x0 + 20, GROUND - 3, 2.4), (x0 + 44, GROUND - 2, 1.8)):
+        puff(back, (sx, sy), k)
+
+
+KNUCKLE = (126, 70)                    # le poing tendu (grille) : là où le coup porte
+
+
+def fx_hit(k):
+    def f(back, front, ctx):
+        cx, cy = g2c(*KNUCKLE)
+        if k == 0:
+            pop(front, (cx + 4, cy), 8, facing=0, tones='wwxyz')
+            crescent(front, (cx - 2, cy), 15, 0, span=120, w=3.4, tones='wxyz')
+        elif k == 1:
+            pop(front, (cx + 6, cy), 6, facing=0, tones='wxyz')
+            crescent(front, (cx + 4, cy), 19, 0, span=110, w=3.0, tones='wxyz')
+            crescent(front, (cx + 14, cy - 2), 11, 10, span=100, w=2.2, tones='xyz')
+            curl(front, (cx + 22, cy - 14), 6, 200, turn=260, w=2.0, tones='xyzv')
+            curl(front, (cx + 20, cy + 12), 5, 160, turn=260, w=1.8, tones='yzv', cw=True)
+        elif k == 2:
+            crescent(front, (cx + 14, cy), 20, 0, span=90, w=2.2, tones='xyz')
+            curl(front, (cx + 28, cy - 16), 5, 220, turn=280, w=1.6, tones='yzv')
+            curl(front, (cx + 26, cy + 14), 4, 140, turn=280, w=1.4, tones='zv', cw=True)
+            leaf(front, cx + 34, cy - 4, 2)
+        elif k == 3:
+            curl(front, (cx + 34, cy - 18), 4, 240, turn=200, w=1.2, tones='zv')
+            leaf(front, cx + 42, cy + 2, 0)
+        # le sol tremble : bouffées de poussière sous les pieds et le poing posé
+        gx = [g2c(52, 0)[0], g2c(82, 0)[0], g2c(108, 0)[0]]
+        for i, x in enumerate(gx):
+            if k <= 2:
+                cloud(back if i == 1 else front, (x + (k * 2 if i == 2 else -k * 2), GROUND - 2),
+                      (3.2 if k == 0 else 3.8 if k == 1 else 3.0), seed=10 + i, hollow=0.35 * k)
+        if k == 0:
+            pebble(front, gx[2] + 10, GROUND - 6)
+            pebble(front, gx[0] - 9, GROUND - 5)
+        if k == 1:
+            pebble(front, gx[2] + 14, GROUND - 9)
+            pebble(front, gx[0] - 13, GROUND - 7)
+    return f
+
+
+def fx_land(back, front, ctx):
+    x, _ = g2c(NEAR_FIST[0], 0)
+    cloud(front, (x - 15, GROUND - 2), 3.0, seed=21)
+    cloud(back, (x + 14, GROUND - 2), 2.6, seed=22)
+
+
+ATTAQUE = [
+    dict(lean=-1, breath=1, near=None, ms=130),
+    dict(lean=-3, breath=2, chest=-1, near=dict(mode='rigid', dx=-3, dy=-6), fx=[fx_gather(1)], ms=160),
+    dict(lean=-4, breath=2, chest=-2, near=dict(mode='rigid', dx=COCK[0], dy=COCK[1]), fx=[fx_gather(2)], ms=300),
+    dict(lean=4, chest=2, near=dict(sh=(8, 4), elbow=(70, 74), fore='fwd', shear=0.12), fx=[fx_smear], ms=60),
+    dict(lean=7, crouch=1, chest=3, near=dict(sh=(14, 6), elbow=(86, 72), fore='fwd'), fx=[fx_hit(0)], ms=90),
+    dict(lean=7, crouch=1, chest=3, near=dict(sh=(14, 6), elbow=(86, 72), fore='fwd'), fx=[fx_hit(1)], ms=150),
+    dict(lean=5, crouch=1, chest=2, near=dict(sh=(10, 5), elbow=(72, 74), fore='fwd', shear=0.1), fx=[fx_hit(2)],
+         ms=110),
+    dict(lean=3, near=dict(mode='rigid', dx=5, dy=-6), fx=[fx_hit(3)], ms=110),
+    dict(lean=1, crouch=1, near=None, fx=[fx_land], ms=130),
+    dict(lean=0, near=None, ms=170),
+]
+
+
 if __name__ == '__main__' and sys.argv[1:2] == ['decoupe']:
     debug_decoupe()
 if __name__ == '__main__' and sys.argv[1:2] == ['essai']:
-    show([
-        dict(),
-        dict(lean=4, near=dict(sh=(10, 4), elbow=(66, 72), fore='fwd')),
-        dict(near=dict(sh=(4, 0), elbow=(30, 70), fore='fwd'), far=dict(elbow=(122, 70), fore='back', front=True)),
-        dict(crouch=-6, lean=-2, near=dict(sh=(0, -4), elbow=(36, 26), fore='up'),
-             far=dict(sh=(0, -4), elbow=(106, 26), fore='up')),
-        dict(crouch=3, lean=6, near=dict(sh=(10, 4), elbow=(76, 80), fore='down'),
-             far=dict(sh=(6, 2), elbow=(118, 80), fore='down')),
-        dict(lean=-3, near=dict(mode='rigid', dx=-5, dy=-10)),
-    ], os.path.join(SCRATCH, 'essai.png'), 2)
+    show(ATTAQUE, os.path.join(SCRATCH, 'essai.png'), 2)

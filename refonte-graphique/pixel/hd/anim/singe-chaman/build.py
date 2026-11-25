@@ -546,11 +546,24 @@ def cloud(cv, c, r, tones=CLOUDT[:4], hollow=0.0, seed=0, ground=False):
             out.append((dx * (1 + hollow), dy * (1 + hollow) - hollow * r * 0.5, rr * (1 - 0.45 * hollow)))
         out.append((0, -hollow * r * 0.4, r * (1 - 0.6 * hollow)))
         lobes = out
+    # chaque pixel prend le ton le plus clair des bouffées qui le couvrent : un seul volume éclairé en haut à
+    # droite, le creux lilas seulement sur le bord du bas à gauche (pas de taches sombres au milieu)
+    best = {}
     for (dx, dy, rr) in lobes:
-        y = cy + dy
+        x0, y0 = cx + dx, cy + dy
         if ground:
-            y = min(y, GROUND - rr * 0.6)
-        puff(cv, (cx + dx, y), rr, tones)
+            y0 = min(y0, GROUND - rr * 0.6)
+        for y in range(int(y0 - rr - 1), int(y0 + rr + 2)):
+            for x in range(int(x0 - rr - 1), int(x0 + rr + 2)):
+                w = np.array([x + 0.5 - x0, y + 0.5 - y0])
+                d = math.hypot(*w)
+                if d <= rr:
+                    k = (w @ LN) / max(rr, 1e-6)
+                    i = min(len(tones) - 1, int((1 - k) / 2 * len(tones)))
+                    if i < best.get((x, y), 99):
+                        best[(x, y)] = i
+    for (x, y), i in best.items():
+        put(cv, x, y, tones[i])
 
 
 def pop(cv, c, r, facing=0.0, tones='aabcd'):
@@ -836,11 +849,6 @@ def tornado(cv_front, cv_back, cx, base, hgt, wid, phase, fade=0.0):
             tn = ('abccde' if fade < 0.5 else 'bcde') if fr else ('cdef' if fade < 0.5 else 'def')
             stroke(cv_front if fr else cv_back, [(x, y) for x, y, _ in pts],
                    [w if fr else w * 0.75 for _, _, w in pts], tn)
-    # le pied du tourbillon : un ruban qui tourne au ras du sol (moitié derrière, moitié devant)
-    if fade < 0.6:
-        a = phase % 90
-        ribbon(cv_back, (cx, base - 4), wid * 0.85, 3.5, 20 + a, 150 + a, 2.6, tones='cdef')
-        ribbon(cv_front, (cx, base - 4), wid * 0.85, 3.5, 200 + a, 330 + a, 3.2, tones='bcdef')
     # le nuage qui coiffe le tourbillon (il tourne avec lui, puis se défait)
     top = base - hgt - 3
     if fade < 0.9:

@@ -103,6 +103,23 @@ P['queue'] = take((rest != '.') & isin(rest, FUR) & (((XX <= 50) & (YY <= 86)) |
 P['corps'] = rest.copy()
 
 
+def fill_under(part, y0, y1):
+    """sous les pans du foulard, le dessin continue (fourrure du bras, du cou) : sinon un trou apparaît quand le
+    foulard se balance. Chaque pixel caché prend la fourrure la plus proche sur sa rangée (jamais le bord d'ombre)."""
+    for y in range(y0, y1 + 1):
+        for x in np.nonzero(P['foulard'][y] != '.')[0]:
+            if part[y, x] != '.':
+                continue
+            for d in (1, -1, 2, -2, 3, -3, 4, -4):
+                if 0 <= x + d < GW and part[y, x + d] in 'CDE':
+                    part[y, x] = part[y, x + d]
+                    break
+
+
+fill_under(P['dague'], 83, 95)
+fill_under(P['corps'], 80, 83)
+
+
 def smooth(t):
     t = np.clip(t, 0.0, 1.0)
     return t * t * (3 - 2 * t)
