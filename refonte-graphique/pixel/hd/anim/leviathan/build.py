@@ -188,7 +188,7 @@ JAW_TIP = (246, 128)                          # le bout de la mâchoire du bas (
 MOUTH = (226, 108)                            # le milieu de la gueule ouverte (grille)
 EYE = (205, 61)
 WATERLINE = 212                               # la colonne sort de l'eau à peu près à cette rangée (grille)
-TILE = (188, 212)                             # la bande de colonne répétée quand il se dresse (rangées de la grille)
+TILE = (184, 206)                             # la bande de colonne répétée quand il se dresse (rangées de la grille)
 
 
 def compose_part(mask, g=CORPS):
@@ -235,6 +235,20 @@ def _water_fill():
     return out
 
 
+def _edges():
+    """les bords gauche et droit de la colonne du corps, pour chaque rangée de la toile (prolongés plus bas que
+    la ligne d'eau par ceux de la rangée 210)"""
+    L = np.zeros(H, int)
+    R = np.zeros(H, int)
+    for y in range(H):
+        gy = min(max(y - OY, 0), 210)
+        xs = np.nonzero((CORPS[gy] != '.') & M_BODY[gy])[0]
+        if len(xs) and gy >= 120:
+            L[y], R[y] = xs.min() + OX, xs.max() + OX
+    return L, R
+
+
+EDGE_L, EDGE_R = _edges()
 BACK_T = _back_extended()
 LEFT_T = compose_part(M_TENT_L)
 RIGHT_T = compose_part(M_TENT_R)
@@ -277,7 +291,18 @@ def warp(cv, dx, dy, tile=None):
         y0, y1 = tile
         P = y1 - y0
         low = sy > y1
-        sy = np.where(low, sy - P * ((sy - y1 + P - 1) // P), sy)
+        sw = np.where(low, sy - P * ((sy - y1 + P - 1) // P), sy)
+        # la bande répétée est un peu plus étroite que le bas de la colonne (qui s'évase) : chaque rangée répétée est
+        # élargie à la largeur qu'aurait la colonne à cet endroit (colonnes doublées, au pixel, jamais lissé) ; les
+        # bords continuent donc sans marche
+        su = np.clip(sy, 0, H - 1)
+        swc = np.clip(sw, 0, H - 1)
+        Ls, Rs = EDGE_L[swc], EDGE_R[swc]
+        Ld, Rd = EDGE_L[su], EDGE_R[su]
+        ok_e = low & (Rd > Ld) & (Rs > Ls)
+        sxn = np.floor(Ls + (sx - Ld + 0.5) * (Rs - Ls + 1) / np.maximum(1, Rd - Ld + 1)).astype(int)
+        sx = np.where(ok_e, sxn, sx)
+        sy = sw
     ok = (sx >= 0) & (sx < W) & (sy >= 0) & (sy < H)
     out = empty()
     out[ok] = cv[sy[ok], sx[ok]]
@@ -762,7 +787,7 @@ def boil(cv, fx, t, n=12, amp=1.0, jump=True):
 
 # ---------------------------------------------------------------- 1) la pose (il ondule hors de l'eau)
 # 12 images, en boucle (environ 2 secondes : un colosse respire lentement). L'ondulation monte le long de la colonne
-# (une vague d'un ou deux pixels, du pied vers la tête), la tête suit avec retard (elle monte, recule un peu et
+# (une vague de deux pixels environ, du pied vers la tête), la tête suit avec retard (elle monte, recule un peu et
 # redescend), la gueule s'entrouvre en respirant ; les trois tentacules se plient et s'enroulent chacun à son rythme
 # (gauche lent, fond en décalé, droite deux fois plus vite et plus petit) ; l'eau bout au pied (bulles qui gonflent et
 # crèvent, gouttes) ; une vague de lumière monte le long des taches du flanc ; un clignement (image 8).
@@ -773,16 +798,16 @@ def pose_spec(i):
     t = i / NP
     a = 2 * math.pi * t
     f = dict(ms=150)
-    f['wave'] = (1.6, a)
+    f['wave'] = (2.4, a)
     # le souffle soulève le haut du corps, la tête suit une ou deux images plus tard (pas d'un pixel à la fois)
     f['br'] = [0, 0, 1, 1, 2, 2, 2, 1, 1, 0, 0, 0][i]
-    f['head'] = ([0, 0, 0, -1, -1, -1, -1, -1, 0, 0, 0, 0][i], [1, 1, 1, 0, 0, -1, -2, -2, -1, -1, 0, 1][i])
+    f['head'] = ([0, 0, -1, -1, -2, -2, -2, -1, -1, 0, 0, 0][i], [1, 1, 1, 0, 0, -1, -2, -2, -1, -1, 0, 1][i])
     f['jaw'] = [0, 0, 1, 1, 2, 2, 2, 2, 1, 1, 0, 0][i]
     f['fin'] = (round(-1.0 * math.sin(a - 2.6)), round(0.8 * math.sin(a - 2.9)))
-    f['tl'] = dict(bend=1.8 * math.sin(a + 0.4), cx=0.6 * math.sin(a - 0.6), cy=1.3 * math.sin(a - 0.3),
+    f['tl'] = dict(bend=2.6 * math.sin(a + 0.4), cx=0.8 * math.sin(a - 0.6), cy=1.6 * math.sin(a - 0.3),
                    lift=0.8 * math.sin(a + 0.1))
-    f['tb'] = dict(bend=2.2 * math.sin(a + 2.6), cy=1.2 * math.sin(a + 2.0), lift=1.0 * math.sin(a + 2.3))
-    f['tr'] = dict(bend=1.2 * math.sin(2 * a + 1.0), cy=1.0 * math.sin(2 * a + 0.3), cx=-0.6 * math.sin(2 * a + 0.6))
+    f['tb'] = dict(bend=3.0 * math.sin(a + 2.6), cy=1.5 * math.sin(a + 2.0), lift=1.2 * math.sin(a + 2.3))
+    f['tr'] = dict(bend=1.6 * math.sin(2 * a + 1.0), cy=1.2 * math.sin(2 * a + 0.3), cx=-0.8 * math.sin(2 * a + 0.6))
     f['pulse'] = t
     f['blink'] = i == 8
     f['boil'] = i
@@ -984,14 +1009,14 @@ def over_into(cv, part):
 
 
 def _ph(i, n=12):
-    return (1.6, 2 * math.pi * i / n)          # l'ondulation continue pendant l'attaque (même amplitude qu'au repos)
+    return (2.4, 2 * math.pi * i / n)          # l'ondulation continue pendant l'attaque (même amplitude qu'au repos)
 
 
 ATTAQUE = [
-    dict(ms=120, br=1, head=(-3, -4), jaw=4, lean=-1, fin=(1, 1), wave=_ph(0), glow=1,
-         tr=dict(lift=4, bend=-3, cy=2), tl=dict(bend=-1), tb=dict(bend=-1), boil=0),
-    dict(ms=280, br=2, head=(-5, -7), jaw=8, lean=-2, fin=(2, 2), wave=_ph(1), glow=2,
-         tr=dict(lift=9, bend=-6, cy=3, cx=-2), tl=dict(bend=-2, cy=1), tb=dict(bend=-2, cy=1), boil=1),
+    dict(ms=120, br=1, rise=1, head=(-3, -5), jaw=4, lean=-1, fin=(1, 1), wave=_ph(0), glow=1,
+         tr=dict(lift=3, bend=-3, cy=2), tl=dict(bend=-1), tb=dict(bend=-1), boil=0),
+    dict(ms=280, br=2, rise=3, head=(-5, -10), jaw=8, lean=-2, fin=(2, 2), wave=_ph(1), glow=2,
+         tr=dict(lift=5, bend=-4, cy=3, cx=-2), tl=dict(bend=-2, cy=1), tb=dict(bend=-2, cy=1), boil=1),
     dict(ms=70, br=1, head=(2, -1), jaw=2, lean=1, fin=(-2, -1), wave=_ph(2), glow=2,
          tr=dict(plunge=36, bend=2), tl=dict(bend=1), tb=dict(bend=1), boil=2, fx=[fx_attack(2)]),
     dict(ms=90, br=1, head=(2, 0), jaw=1, lean=1, fin=(-1, 0), wave=_ph(3), glow=1,
@@ -1014,7 +1039,245 @@ ATTAQUE = [
          tr=dict(bend=0.5), boil=11),
 ]
 
-SPECIALE = []
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Raz-de-marée des abysses »
+# Il se dresse très haut hors de son trou (la colonne sort de l'eau), les taches des abysses flambent, l'eau tourne
+# en tourbillon à son pied (la charge) ; il rugit et se jette en avant : une vague monte de son trou, file vers les
+# héros, se dresse au-dessus de chacun et s'écrase sur lui (arrêt sur image, secousse), puis l'écume retombe en
+# gouttes et l'eau s'écoule ; il redescend dans son trou.
+#   0      il se ramasse (s'enfonce un peu, la tête baisse, les taches s'éteignent : il aspire la lumière) ;
+#   1-3    la charge : il se dresse (jusqu'à 15 pixels hors de l'eau), tête en arrière, gueule ouverte, les taches
+#          flambent, tourbillon d'écume dans le trou (3 est tenue) ;
+#   4      il rugit et se jette en avant : la vague monte de son trou ;
+#   5      elle file vers les héros ;
+#   6      elle se dresse au-dessus de chaque héros (la lèvre recourbée au-dessus de sa tête) ;
+#   7-8    COUP : elle s'écrase (gerbe d'écume énorme, nappes, gouttes), arrêt sur image et secousse ;
+#   9-11   l'écume retombe, l'eau s'écoule à leurs pieds, dernières gouttes ;
+#   12-14  il redescend dans son trou, retour au repos.
+SPLIT_S = ENEMY_X - 104                        # à droite : ce qui tombe sur chaque héros (coupe de l'export)
+POND_C = (128 + OX, 222 + OY)                  # le milieu du trou d'eau (toile)
+
+
+def curl(cv, c, r0, a0, turn=300, w=2.4, tones=FOAM_T, cw=False):
+    """une volute : une spirale qui s'enroule (r décroît), épaisse au départ, effilée au coeur"""
+    cx, cy = c
+    n = int(turn / 4) + 8
+    pts, ws = [], []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (-turn if cw else turn) * s)
+        r = r0 * (1 - 0.72 * s)
+        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
+        ws.append(w * (1 - s) ** 0.7 + 0.4 * (1 - s))
+    lit_stroke(cv, pts, ws, tones)
+
+
+def whirl(cv, k, amp=1.0):
+    """le tourbillon d'écume à la surface du trou : trois arcs d'écume qui tournent autour de son corps (devant le
+    corps, sur l'eau) ; k : l'image (ils tournent de 40° par image)"""
+    cx, cy = POND_C
+    for j in range(3):
+        a0 = math.radians(200 + 120 * j - 40 * k)
+        pts, ws = [], []
+        n = 26
+        for i in range(n + 1):
+            t = i / n
+            a = a0 + math.radians(70) * t
+            rx, ry = (96 - 10 * t) * amp, (9.5 - 1.2 * t) * amp
+            x, y = cx + rx * math.cos(a), cy - ry * math.sin(a)
+            pts.append((x, y))
+            ws.append(0.6 + 2.6 * math.sin(math.pi * t))
+        m, sm = stroke_mask(pts, ws)
+        # seulement sur l'eau du trou, et devant le corps (la moitié de l'arc qui passe derrière est cachée)
+        ok = m & isin(cv, WATER_L) & (YY >= cy - 2)
+        for y, x in zip(*np.nonzero(ok)):
+            cv[y, x] = '7' if (sm[y, x] > 0.25 and sm[y, x] < 0.8) else '6'
+
+
+def wave(back, front, xb, xc, Hh, L, seed=0, glints=True, base=None, foamy=1.0):
+    """une vague qui déferle vers la droite : une masse d'eau pleine (dos bombé, plus sombre en bas), une crête, une
+    grosse lèvre qui part de la crête, file en avant et se recourbe vers le bas AU-DESSUS d'une face creuse (on voit
+    l'air sous la lèvre), bord éclairé en écume, écume en chou-fleur sur la crête et au pied, gouttes en avant,
+    quelques étincelles des abysses dans l'eau. xb : le pied du dos, xc : la crête, Hh : sa hauteur, L : la lèvre"""
+    G = GROUND if base is None else base
+    xf = xc + 0.72 * L
+
+    def hf(x):
+        if x <= xc:
+            u = (x - xb) / max(1.0, xc - xb)
+            return Hh * ((1 - math.cos(u * math.pi)) / 2) ** 0.62 if u > 0 else 0.0
+        v = (x - xc) / max(1.0, xf - xc)
+        return Hh * max(0.0, 1 - v) ** 1.25
+    m = np.zeros((H, W), bool)
+    topm = np.zeros((H, W), bool)
+    for x in range(int(xb), int(xf) + 1):
+        if not 0 <= x < W:
+            continue
+        h = hf(x)
+        if h < 0.6:
+            continue
+        y0 = int(round(G + 1 - h))
+        m[max(0, y0):G + 1, x] = True
+        if x < xc - L * 0.3:
+            topm[max(0, y0):max(0, y0) + 2, x] = True
+    # la lèvre : un ruban épais qui part du dos, monte, file en avant et se recourbe vers le bas ; dos et lèvre sont
+    # UNE seule masse d'eau, modelée d'un seul coup (pas de couture entre les deux)
+    top = G - Hh
+    P0 = (xc - L * 0.55, top + L * 0.45)
+    pts = bezier(P0, (xc - L * 0.05, top - L * 0.4), (xc + L * 0.95, top - L * 0.32), (xc + L * 1.12, top + L * 0.38), 48)
+    ws = []
+    for i in range(49):
+        t = i / 48
+        grow = min(1.0, 0.45 + t / 0.25 * 0.55)          # le départ se fond dans le dos de la vague
+        ws.append(max(2.2, L * 0.6 * grow * (1 - t) ** 0.75 + 1.6))
+    mr, sm = stroke_mask(pts, ws)
+    lip_foam = mr & (sm >= 0.12) & (sm <= 0.9)
+    allm = m | mr
+    bias = -0.36 * smooth((YY - (G - Hh * 0.6)) / (Hh * 0.6 + 1)) + 0.08
+    shade_mask(back, allm, WATER_T, foam=topm | lip_foam, bias=bias)
+    ex, ey = pts[-1]
+    curl(front, (ex - L * 0.1, ey - L * 0.04), L * 0.12, 10, turn=230, w=max(2.2, L * 0.08), tones='YX54' + '3',
+         cw=True)
+    # l'écume sur la crête et au pied de la face
+    rng = np.random.RandomState(seed)
+    for j, (t, k) in enumerate(((0.1, 0.8), (0.27, 1.25), (0.47, 0.95), (0.66, 0.7))):
+        px, py = pts[int(t * 48)]
+        foam(front, (px + rng.uniform(-1, 1), py - L * 0.13 * k), (2.2 + L * 0.075) * foamy * k, seed=seed + j,
+             ground=False)
+    for j, (dx, k) in enumerate(((-0.62, 0.75), (-0.05, 1.3), (0.55, 0.85))):
+        x = xc + (xf - xc) * dx
+        foam(front, (x, G - 2.5), (2.4 + Hh * 0.05) * foamy * k, seed=seed + 10 + j)
+    # des étincelles des abysses dans l'eau (la lueur du léviathan), quelques-unes, pas en rangée
+    if glints:
+        for j in range(6):
+            gx = xb + (xc - xb) * (0.35 + 0.11 * j) + rng.uniform(-3, 3)
+            gy = G - hf(gx) * rng.uniform(0.25, 0.7)
+            if 0 <= int(gy) < H and 0 <= int(gx) < W and m[int(gy), int(gx)]:
+                put(back, gx, gy, 'M')
+                put(back, gx + 1, gy, 'K')
+                put(back, gx, gy + 1, 'K')
+    # gouttes en avant de la lèvre
+    for j, (dx, dy, sz) in enumerate(((1.0, -0.42, 2), (1.3, -0.1, 1), (1.24, 0.6, 2), (0.7, -0.6, 1))):
+        drop(front, xc + L * dx + 4, top + L * dy, sz, v=(2.0, 0.5))
+    return m
+
+
+def flow(front, x0, x1, h0, h1, seed=0, foamy=True):
+    """l'eau qui coule au sol derrière la vague (de x0 à x1, sa hauteur va de h0 à h1), coiffée d'écume"""
+    def hf(x):
+        u = (x - x0) / max(1.0, x1 - x0)
+        e = min(1.0, (x1 - x) / 6.0)
+        return (h0 + (h1 - h0) * u + 1.2 * math.sin(x * 0.35 + seed)) * max(0.0, e)
+    water_band(front, x0, x1, hf)
+    if foamy:
+        for j in range(3):
+            x = x0 + (x1 - x0) * (0.2 + 0.3 * j)
+            foam(front, (x, GROUND - hf(x) + 1), 2.6, seed=seed + j, hollow=0.15)
+
+
+CRASH = (ENEMY_X, GROUND - 50)             # le coeur de la gerbe sur le héros (toile)
+
+
+def crash(back, front, k):
+    """la vague s'écrase sur le héros : k = 0 le choc (énorme gerbe d'écume, nappes qui montent, l'eau envahit le
+    sol), 1 la gerbe s'ouvre, 2 elle retombe (l'eau au sol, l'écume qui se défait), 3 l'eau s'écoule, 4 la flaque"""
+    X, Y = CRASH
+    G = GROUND
+    seeds = [(-3.0, -6.0), (3.5, -7.0), (6.5, -3.0), (-5.0, -3.5), (1.5, -8.5), (8.0, -5.0), (-1.5, -9.0),
+             (5.0, -1.0), (9.0, -2.0), (-4.0, -7.5), (2.5, -4.0), (7.0, -7.5), (-6.5, -5.5), (10.0, -4.0)]
+    if k == 0:
+        water_band(front, X - 66, X + 62, lambda x: hump(x, X, 56, 32) + hump(x, X - 42, 16, 8) + 2)
+        for j, (dx, dy, r) in enumerate(((0, -6, 17.0), (17, 12, 12.0), (-17, 12, 12.0), (8, -24, 10.0),
+                                         (-10, -22, 9.0), (30, 26, 8.0), (-30, 28, 8.0), (0, 24, 10.0))):
+            foam(front, (X + dx, Y + dy), r, seed=70 + j, ground=False)
+        spray(back, (X, Y - 22), 1.0, seeds, sizes=(4, 3, 3, 2), front=front)
+    elif k == 1:
+        water_band(front, X - 66, X + 64, lambda x: hump(x, X, 58, 26) + hump(x, X - 42, 16, 6) + 2)
+        for j, (dx, dy, r) in enumerate(((0, -4, 17.5), (18, 14, 12.0), (-18, 14, 12.0), (9, -24, 9.0),
+                                         (-11, -21, 8.0), (32, 28, 8.0), (-32, 30, 8.0), (0, 26, 10.0))):
+            foam(front, (X + dx, Y + dy), r, hollow=0.22, seed=70 + j, ground=False)
+        spray(back, (X, Y - 22), 2.0, seeds, sizes=(4, 3, 3, 2), front=front)
+    elif k == 2:
+        water_band(front, SPLIT_S + 6, X + 64, lambda x: hump(x, X, 60, 16) + 1.5)
+        for j, (dx, dy, r) in enumerate(((0, 18, 14.0), (20, 28, 9.0), (-20, 28, 9.0), (36, 34, 6.0))):
+            foam(front, (X + dx, Y + dy), r, hollow=0.45, seed=70 + j)
+        spray(back, (X, Y - 22), 3.0, seeds, sizes=(3, 3, 2, 2), front=front)
+    elif k == 3:
+        water_band(front, SPLIT_S + 8, X + 58, lambda x: hump(x, X, 54, 7) + 1.0)
+        for j, (dx, r) in enumerate(((-30, 4.0), (-8, 5.0), (14, 5.0), (36, 3.6))):
+            foam(front, (X + dx, G - 4), r, hollow=0.5, seed=80 + j)
+        spray(back, (X, Y - 10), 4.0, seeds[::2])
+    else:
+        water_band(front, X - 44, X + 50, lambda x: hump(x, X, 48, 3.0))
+        for j, (dx, r) in enumerate(((-20, 2.6), (6, 3.0), (28, 2.4))):
+            foam(front, (X + dx, G - 2), r, hollow=0.7, seed=90 + j)
+
+
+def fx_special(k):
+    def f(cv, back, front, ctx):
+        if k in (1, 2, 3):
+            whirl(cv, k, amp=[0, 0.85, 1.0, 1.0][k])
+            if k == 3:
+                # l'eau du trou se soulève à droite, là où la vague va naître
+                water_band(back, 196, 272, lambda x: hump(x, 238, 34, 14) + 1, base=GROUND - 8)
+                foam(front, (252, GROUND - 14), 4.0, seed=3, ground=False)
+                for j, (dx, dy) in enumerate(((-30, -26), (10, -34), (-6, -44), (24, -22))):
+                    drop(back, 238 + dx, GROUND + dy, 2 if j % 2 else 1, v=(0.0, -2.0))
+        elif k == 4:
+            whirl(cv, k, amp=0.9)
+            wave(front, front, 222, 258, 50, 28, seed=4)
+        elif k == 5:
+            wave(front, front, 206, 256, 76, 33, seed=5)
+            flow(front, 196, 232, 6, 12, seed=5)
+        elif k == 6:
+            flow(front, 236, SPLIT_S - 4, 10, 4, seed=6)
+            wave(back, front, SPLIT_S + 4, ENEMY_X - 26, 114, 58, seed=6)
+        elif k in (7, 8, 9, 10, 11):
+            if k <= 8:
+                flow(front, 250, SPLIT_S - 4, 6, 3, seed=k, foamy=k == 7)
+            crash(back, front, k - 7)
+    return f
+
+
+def _sp(ms, rise, head, jaw, **kw):
+    d = dict(ms=ms, rise=rise, head=head, jaw=jaw)
+    d.update(kw)
+    return d
+
+
+SPECIALE = [
+    _sp(120, -3, (2, 5), 1, lean=1, glow=0, wave=_ph(0), fin=(-1, 1),
+        tl=dict(lift=-3, cy=-2, bend=1), tb=dict(lift=-3, cy=-2), tr=dict(lift=-2, cy=-2), boil=0),
+    _sp(110, 6, (-2, -10), 5, lean=-1, glow=2, halo=1, wave=_ph(1), fin=(2, -1),
+        tl=dict(lift=4, bend=-2, cy=2), tb=dict(lift=4, bend=-2, cy=2), tr=dict(lift=3, bend=-3, cy=2),
+        boil=1, boil_amp=1.3, fx=[fx_special(1)]),
+    _sp(130, 14, (-4, -20), 10, lean=-2, glow=2, halo=2, wave=_ph(2), fin=(3, -2), eye={'z': 'y'},
+        tl=dict(lift=8, bend=-4, cy=3), tb=dict(lift=8, bend=-4, cy=3), tr=dict(lift=6, bend=-5, cy=3),
+        boil=2, boil_amp=1.6, fx=[fx_special(2)]),
+    _sp(260, 15, (-5, -21), 11, lean=-2, glow=2, halo=2, wave=_ph(2.5), fin=(3, -2), eye={'z': 'y'},
+        tl=dict(lift=9, bend=-5, cy=3), tb=dict(lift=9, bend=-5, cy=3), tr=dict(lift=7, bend=-6, cy=3),
+        boil=3, boil_amp=1.6, fx=[fx_special(3)]),
+    _sp(90, 12, (4, -13), 13, lean=3, glow=2, halo=1, wave=_ph(3.5), fin=(-3, 1),
+        tl=dict(lift=5, bend=9, cx=2), tb=dict(lift=5, bend=9, cx=2), tr=dict(lift=4, bend=10, cx=2),
+        boil=4, boil_amp=1.4, fx=[fx_special(4)]),
+    _sp(80, 10, (6, -9), 11, lean=4, glow=2, wave=_ph(4), fin=(-2, 1),
+        tl=dict(lift=3, bend=11, cx=1), tb=dict(lift=3, bend=10, cx=1), tr=dict(lift=2, bend=12, cx=1),
+        boil=5, fx=[fx_special(5)]),
+    _sp(90, 9, (6, -8), 9, lean=4, glow=2, wave=_ph(4.5), fin=(-1, 0),
+        tl=dict(lift=2, bend=8), tb=dict(lift=2, bend=8), tr=dict(lift=2, bend=9), boil=6, fx=[fx_special(6)]),
+    _sp(240, 8, (5, -7), 7, lean=3, glow=2, wave=_ph(5), tl=dict(bend=6), tb=dict(bend=6), tr=dict(bend=7),
+        boil=6, fx=[fx_special(7)], shake=3),
+    _sp(110, 7, (5, -6), 6, lean=3, glow=1, wave=_ph(5.5), tl=dict(bend=5), tb=dict(bend=5), tr=dict(bend=5),
+        boil=7, fx=[fx_special(8)], shake=-2),
+    _sp(100, 5, (4, -4), 4, lean=2, glow=1, wave=_ph(6.5), tl=dict(bend=3), tb=dict(bend=3), tr=dict(bend=3),
+        boil=8, fx=[fx_special(9)]),
+    _sp(100, 3, (2, -2), 3, lean=1, glow=1, wave=_ph(7.5), tl=dict(bend=1), tb=dict(bend=1), tr=dict(bend=1),
+        boil=9, fx=[fx_special(10)]),
+    _sp(110, 1, (1, 0), 2, glow=1, wave=_ph(8.5), tl=dict(bend=-1), tb=dict(bend=-1), tr=dict(bend=-1, cy=-1),
+        boil=10, fx=[fx_special(11)]),
+    _sp(120, 0, (0, 1), 1, glow=1, wave=_ph(9.5), tl=dict(bend=-0.5), tr=dict(bend=0.5), boil=11),
+    _sp(130, 0, (0, 1), 0, glow=1, wave=_ph(10.5), boil=0),
+    _sp(160, 0, (0, 1), 0, glow=1, wave=_ph(11.5), boil=1),
+]
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
@@ -1059,6 +1322,149 @@ def on_bg(img, bg=BG):
 GAME_BOX = (SOL[0] - CASE_SOL[0], SOL[1] - CASE_SOL[1], SOL[0] - CASE_SOL[0] + CASE_W, SOL[1] - CASE_SOL[1] + CASE_H)
 
 
+def bbox(frames, margin=4):
+    a = np.zeros((H, W), bool)
+    for img, _ in frames:
+        a |= img[:, :, 3] > 0
+    ys, xs = np.nonzero(a)
+    return (max(0, xs.min() - margin), max(0, ys.min() - margin), min(W, xs.max() + 1 + margin),
+            min(H, ys.max() + 1 + margin))
+
+
+def save_gif(path, images, durations):
+    """GIF en boucle, une palette commune, pas de tramage (les pixels restent nets)"""
+    rgb = [im.convert('RGB') for im in images]
+    W0, H0 = rgb[0].size
+    sheet_ = Image.new('RGB', (W0, H0 * len(rgb)))
+    for i, im in enumerate(rgb):
+        sheet_.paste(im, (0, i * H0))
+    ncol = len(sheet_.getcolors(maxcolors=1 << 22) or [])
+    if 0 < ncol <= 256:
+        pal = sheet_.quantize(colors=ncol, method=Image.Quantize.MAXCOVERAGE, dither=Image.Dither.NONE)
+    else:
+        pal = sheet_.quantize(colors=255, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
+    ps = [im.quantize(palette=pal, dither=Image.Dither.NONE) for im in rgb]
+    ps[0].save(path, save_all=True, append_images=ps[1:], duration=durations, loop=0, disposal=1, optimize=False)
+
+
+def write_outputs(anims):
+    os.makedirs(OUT, exist_ok=True)
+    bb = bbox(anims['attaque'] + anims['speciale'] + anims['pose'], 6)
+    boxes = {'pose': GAME_BOX, 'attaque': bb, 'speciale': bb}
+    for name in ('pose', 'attaque', 'speciale'):
+        box = boxes[name]
+        ims = [on_bg(img).crop(box) for img, _ in anims[name]]
+        ims = [im.resize((im.width * 4, im.height * 4), Image.NEAREST) for im in ims]
+        save_gif(os.path.join(OUT, f'anim-{NAME}-{name}.gif'), ims, [ms for _, ms in anims[name]])
+    # la planche : chaque animation sur ses rangées, ×3, numérotées (numéro et durée au-dessus de chaque image)
+    k = 3
+    blocks = []
+    for name, per in (('pose', 6), ('attaque', 4), ('speciale', 4)):
+        box = boxes[name]
+        cells = [on_bg(img).crop(box) for img, _ in anims[name]]
+        blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
+    Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
+    Ht = 6 + sum(26 + ((len(cells) + per - 1) // per) * (cells[0].height * k + 22) for _, per, cells, _ in blocks)
+    sh = Image.new('RGB', (Wt, Ht), (250, 250, 252))
+    d = ImageDraw.Draw(sh)
+    y = 6
+    titles = {'pose': 'POSE (il ondule hors de l eau, en boucle)', 'attaque': 'ATTAQUE DE BASE (tentacule des profondeurs)',
+              'speciale': 'ATTAQUE SPECIALE (raz-de-maree des abysses)'}
+    for name, per, cells, mss in blocks:
+        cw, ch = cells[0].width * k, cells[0].height * k
+        d.text((8, y + 8), f"{titles[name]} : {len(cells)} images, {sum(mss)} ms", fill=(30, 20, 36))
+        y += 26
+        for i, c in enumerate(cells):
+            if i and i % per == 0:
+                y += ch + 22
+            X = 6 + (i % per) * (cw + 6)
+            sh.paste(c.resize((cw, ch), Image.NEAREST), (X, y + 16))
+            d.text((X + 2, y + 2), f'{i}   ({mss[i]} ms)', fill=(30, 20, 36))
+        y += ch + 22
+    sh.save(os.path.join(OUT, f'anim-{NAME}-planche.png'))
+    write_scene(anims)
+
+
+# ---------------------------------------------------------------- la scène du jeu : le fond de Kesha, les héros en face
+# Comme au combat (fonds/fondlib.py), mais vu dans le sens de l'animation (le léviathan à gauche, tourné vers la
+# droite) : le léviathan au milieu du côté ennemi (rang du milieu), les cinq héros à leurs places, retournés vers lui.
+FOND_W = 590
+SCENE_HEROES = [('kesha', 0), ('eldra', 1), ('aldric', 2), ('mira', 3), ('kael', 4)]
+
+
+def scene_layout():
+    sys.path.insert(0, os.path.join(HD, '..', 'fonds'))
+    import fondlib as F
+    boss_x = FOND_W - (F.place('ennemis', 0)[0] + F.place('ennemis', 3)[0]) // 2
+    boss = (boss_x, F.RANGS[1])
+    heroes = []
+    for name, slot in SCENE_HEROES:
+        x, y = F.place('heros', slot)
+        heroes.append((name, FOND_W - x, y))
+    return F, boss, heroes
+
+
+def hero_sprite(name):
+    h = hd.load(os.path.join(HD, name + '.txt'))
+    im = Image.fromarray(hd.frame(h, 0), 'RGBA').transpose(Image.FLIP_LEFT_RIGHT)
+    cw, ch, (sx, sy) = hd.case(h)
+    return im, (cw - 1 - sx, sy)
+
+
+def write_scene(anims):
+    """anim-leviathan-jeu.gif : pose ×2, attaque, pose, spéciale, pose, sur le fond de Kesha (retourné), avec les
+    cinq héros en face, à la taille du jeu (1 pixel du dessin = 1 pixel du fond), ×2. Comme le fera le jeu : le
+    léviathan reste dans son trou ; ce qui tombe « sur la cible » (à droite de la coupe) est posé aux pieds du héros
+    visé (le plus proche pour l'attaque, CHAQUE héros pour la spéciale, un peu décalé de l'un à l'autre)."""
+    F, boss, heroes = scene_layout()
+    fond = Image.open(os.path.join(ROOT, 'public', 'art', 'px', 'fonds', 'kesha.webp')).convert('RGBA')
+    fond = fond.transpose(Image.FLIP_LEFT_RIGHT)
+    top = F.RANGS[0] - 300
+    bot = F.RANGS[2] + 30
+    fond = fond.crop((0, top, FOND_W, bot))
+    bx, by = boss[0], boss[1] - top
+    sprites = [(hero_sprite(n), x, y - top) for n, x, y in heroes]
+    order = sorted(sprites, key=lambda s: s[1])
+    seq = []
+    for img, ms in anims['pose'] * 2:
+        seq.append((img, ms, None))
+    for i, (img, ms) in enumerate(anims['attaque']):
+        seq.append((img, ms, ('attaque', i)))
+    for img, ms in anims['pose']:
+        seq.append((img, ms, None))
+    for i, (img, ms) in enumerate(anims['speciale']):
+        seq.append((img, ms, ('speciale', i)))
+    for img, ms in anims['pose']:
+        seq.append((img, ms, None))
+    imgs = {n: [im for im, _ in anims[n]] for n in ('attaque', 'speciale')}
+    cuts = {n: JEU[n]['coupe'] for n in ('attaque', 'speciale')}
+    frames = []
+    for img, ms, tgt in seq:
+        im = fond.copy()
+        a = img.copy()
+        if tgt is not None and cuts[tgt[0]][tgt[1]] is not None:
+            a[:, cuts[tgt[0]][tgt[1]]:] = 0
+        layers = [(by, Image.fromarray(a, 'RGBA'), (bx - SOL[0], by - SOL[1]))]
+        for (spr, (ax, ay)), x, y in sprites:
+            layers.append((y, spr, (x - ax, y - ay)))
+        layers.sort(key=lambda L: L[0])
+        for _, s_im, xy in layers:
+            im.alpha_composite(s_im, xy)
+        if tgt is not None:
+            name, i = tgt
+            targets = order[:1] if name == 'attaque' else order
+            for n, ((spr, _), x, y) in enumerate(targets):
+                j = i - (n % 2)
+                c = cuts[name][j] if j >= 0 else None
+                if c is None:
+                    continue
+                part = imgs[name][j].copy()
+                part[:, :c] = 0
+                im.alpha_composite(Image.fromarray(part, 'RGBA'), (x - ENEMY_X, y - GROUND))
+        frames.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), frames, [ms for _, ms, _ in seq])
+
+
 def essai(folder, which=('pose', 'attaque', 'speciale'), k=3):
     os.makedirs(folder, exist_ok=True)
     for name in which:
@@ -1068,6 +1474,24 @@ def essai(folder, which=('pose', 'attaque', 'speciale'), k=3):
             im.resize((im.width * k, im.height * k), Image.NEAREST).save(os.path.join(folder, f'{name}-{i:02d}.png'))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Les deux attaques sont des « sort » : le léviathan reste dans son trou d'eau. L'attaque : le tentacule ressort sous
+# le héros visé (flaque, tentacule, gerbe : tout est à droite de la coupe à partir de l'image 3). La spéciale : la
+# vague se dresse et s'écrase sur CHAQUE héros (images 6 à 11) ; charge = il se dresse, les taches flambent (1 à 3).
+JEU = {
+    'attaque': dict(genre='sort', coup=6, cible=(ENEMY_X, GROUND - 52),
+                    coupe=[None] * 3 + [EX - 36] * 8 + [None]),
+    'speciale': dict(genre='sort', coup=7, cible=(ENEMY_X, GROUND - 50),
+                     coupe=[None] * 6 + [SPLIT_S] * 6 + [None] * 3, charge=(1, 3)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 2 and sys.argv[1] == 'essai':
         essai(sys.argv[2], tuple(sys.argv[3:]) or ('pose', 'attaque', 'speciale'))
+    else:
+        anims = build_all()
+        write_outputs(anims)
+        for n in ('pose', 'attaque', 'speciale'):
+            print(f"{n} : {len(anims[n])} images, {sum(ms for _, ms in anims[n])} ms")
+        print('écrit dans', OUT)

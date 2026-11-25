@@ -694,10 +694,29 @@ def body_layers(f):
     return far, body, near, head, jaw
 
 
+# l'ombre douce que la patte levée pose sur le corps derrière elle (pas de contour entre les morceaux)
+SHADE = {'7': '5', '6': '4', '5': '3', '4': '2', '3': '2', '2': '1', 'k': 'h', 'h': '2', 'v': 't', 'u': 's', 't': 'r',
+         's': 'r', 'r': 'M', 'w': 'u', 'G': 'E', 'F': 'D', 'E': 'C', 'D': 'B', 'C': 'B', 'B': 'A',
+         'V': 'S', 'S': 'R', 'R': 'Q', 'Q': 'P'}
+
+
 def assemble(f):
     far, body, near, head, jaw = body_layers(f)
     cv = far
-    for L in (body, near) + ((draw_paw(f),) if f.get('paw') is not None else ()) + (head, jaw):
+    for L in (body, near):
+        cv = over(cv, L)
+    if f.get('paw') is not None:
+        paw = draw_paw(f)
+        pm = paw != '.'
+        # la lumière vient d'en haut à droite : l'ombre tombe d'un ou deux pixels en bas à gauche de la patte
+        sh = np.zeros_like(pm)
+        for dx, dy in ((-1, 1), (-2, 2), (-1, 2), (0, 2)):
+            sh |= np.roll(np.roll(pm, dy, axis=0), dx, axis=1)
+        sh &= ~pm & (cv != '.')
+        for y, x in zip(*np.nonzero(sh)):
+            cv[y, x] = SHADE.get(cv[y, x], cv[y, x])
+        cv = over(cv, paw)
+    for L in (head, jaw):
         cv = over(cv, L)
     return cv
 
@@ -999,97 +1018,172 @@ def rig(spec):
 
 
 # ---------------------------------------------------------------- 2) l'attaque de base : « Coup de griffe »
-# Demande du propriétaire (25/11) : il ne bouge pas de sa place et donne un coup de patte devant lui ; le coup se voit
-# SUR le héros visé (trois griffures de braise). Le dragon reporte son poids en arrière (la tête suit, gueule
-# entrouverte, la gorge rougeoie), lève la patte avant proche à hauteur du poitrail et la tient ; puis il la rabat
-# d'un coup en arc devant lui (une image étirée : un croissant courbe derrière les griffes), la patte reste tendue un
-# instant, griffes au sol, et revient à sa place. Sur la cible : trois entailles courbes de lave qui apparaissent,
-# brillent, puis refroidissent et s'éteignent, avec quelques étincelles.
-# La patte avant proche est REDESSINÉE pendant le coup (le dessin la garde au sol) : l'avant-bras pivote au coude
-# (l'éperon d'obsidienne reste en place), roche en tube éclairée en haut à droite avec sa veine de lave, poignet,
-# trois doigts et leurs griffes d'obsidienne recourbées.
-ELBOW = (146, 192)                            # le coude de la patte avant proche (grille)
-FOREARM = 30                                  # coude -> poignet (pixels)
+# Demande du propriétaire (25/11) : « il ne bougera pas et envoie juste un coup de griffe / coup de patte devant lui, et
+# ça tape le joueur visé avec une petite animation de griffe sur le personnage visé ».
+# Le dragon reste planté à sa place. Il reporte son poids en arrière (l'avant se relève un peu, la tête suit avec une
+# image de retard, gueule entrouverte, la gorge rougeoie) et lève la patte avant proche, haut devant le poitrail, la
+# plante tournée vers l'ennemi, griffes ouvertes ; il la tient (l'attente). Puis il la rabat d'un coup en arc, devant
+# lui, vers le bas (une image étirée : un croissant courbe derrière les griffes) ; la patte frappe le sol un peu en
+# avant de sa place (poussière), il tient, puis la ramène et se repose.
+# Sur le héros visé (dans le jeu : posé sur la vraie cible) : trois griffures courbes de lave qui se tracent, brillent
+# (étincelles), puis refroidissent et s'éteignent en braises.
+# La patte avant proche est REDESSINÉE pendant le coup (le dessin la garde au sol ; elle reprend celle du dessin au
+# repos) : l'avant-bras pivote au coude (l'éperon d'obsidienne reste en place) — roche en tube éclairée en haut à
+# droite, sa veine de lave, des fêlures — puis le poignet, le pied (roche, écailles claires sur le dessus) et ses
+# quatre griffes d'obsidienne recourbées vers la plante (trois devant, l'ergot au talon), comme sur le dessin.
+ELBOW = (147, 191)                            # le coude de la patte avant proche (grille)
+FOREARM = 36                                  # coude -> poignet (pixels)
+FOOT = 28                                     # poignet -> bout du pied (sans les griffes)
 # l'avant-bras et le pied de la patte avant proche, à enlever quand la patte se lève (le haut du bras reste)
 M_PAW = poly_mask([(140, 196), (148, 186), (160, 182), (172, 198), (186, 210), (200, 213), (209, 220), (209, 238),
                    (146, 238), (150, 224), (143, 212), (137, 202)]) & M_BODY
 _PAW_HOLE = to_canvas(np.where(M_PAW, 'x', '.')) == 'x'
-ROCK_TUBE = ('2', '3', '3', '4', '5', '6')
+ROCK_TUBE = ('1', '2', '3', '4', '4', '4', '5', '6')     # du creux (ombre) au fil de lumière, comme la jambe du dessin
+CLAW_TONES = ('B', 'C', 'C', 'E', 'F')
 
 
 def unitv(deg):
+    """le vecteur unité d'un angle en degrés (compté vers le haut, 0 = vers l'ennemi)"""
     a = math.radians(deg)
     return np.array([math.cos(a), -math.sin(a)])
 
 
 def paw_points(f):
-    """(coude, poignet, centre de la paume, direction de la paume) sur la toile pour l'image f"""
+    """(coude, poignet, bout du pied, direction du pied, côté de la plante) sur la toile pour l'image f"""
     ex, ey = at(base_field(f), ELBOW[0], ELBOW[1])
     E = np.array([ELBOW[0] + OX + ex, ELBOW[1] + OY + ey])
-    a = f['paw']
-    Wr = E + FOREARM * unitv(a)
-    d = a - f.get('wrist', 35)                  # le poignet plie : la paume part plus bas que l'avant-bras
-    P = Wr + 7 * unitv(d)
-    return E, Wr, P, d
+    Wr = E + FOREARM * unitv(f['paw'])
+    d = unitv(f['toe'])
+    sole = np.array([-d[1], d[0]])                # la plante : à droite de la direction du pied (dessous quand il est à plat)
+    return E, Wr, Wr + FOOT * d, d, sole
+
+
+def paw_edge(f, paw, toe):
+    """pour le croissant : le poignet et le bout de la griffe de devant si la patte était à (paw, toe)"""
+    g = dict(f, paw=paw, toe=toe)
+    E, Wr, T, d, sole = paw_points(g)
+    return Wr, T + d * 6 + sole * 6
+
+
+def foot_blob(cv, Wr, d, sole):
+    """le pied : un bloc de roche allongé du talon au bout des doigts, plus épais côté plante, éclairé comme un
+    galet (lumière en haut à droite), la plante dans l'ombre"""
+    x0, x1 = int(Wr[0] - 40), int(Wr[0] + 40)
+    y0, y1 = int(Wr[1] - 40), int(Wr[1] + 40)
+    m = len(ROCK_TUBE)
+    for y in range(max(0, y0), min(H, y1)):
+        for x in range(max(0, x0), min(W, x1)):
+            p = np.array([x + 0.5, y + 0.5]) - Wr
+            u, v = float(p @ d), float(p @ sole)
+            if u < -7 or u > FOOT + 3:
+                continue
+            t = (u + 7) / (FOOT + 10)                       # 0 au talon, 1 au bout
+            top = -10.0 + 4.5 * t                            # le dessus du pied descend vers les doigts
+            bot = 9.0 - 3.0 * t * t                         # la plante
+            uc, a = (FOOT - 4) / 2.0, (FOOT + 10) / 2.0
+            vc, b = (top + bot) / 2, (bot - top) / 2
+            nu, nv = (u - uc) / a, (v - vc) / b
+            if nu * nu + nv * nv > 1.0 or v < top or v > bot:
+                continue
+            n = d * nu * 0.7 + sole * nv
+            n = n / (np.linalg.norm(n) or 1)
+            k = float(n @ LN)
+            i = int((k + 1) / 2 * (m - 0.01))
+            if nu * nu + nv * nv > 0.8 and k > 0.5:
+                i = m - 1
+            cv[y, x] = ROCK_TUBE[max(0, min(m - 1, i))]
 
 
 def draw_paw(f):
-    """la patte avant proche levée : avant-bras, poignet, paume, trois doigts et leurs griffes (toile vide)"""
+    """la patte avant proche levée (toile vide) : avant-bras, poignet, pied et griffes"""
     cv = empty()
-    E, Wr, P, d = paw_points(f)
-    tube(cv, E, Wr, 7.0, 5.6, ROCK_TUBE)
-    # la veine de lave le long de l'avant-bras (comme sur le dessin), du côté de l'ombre
+    E, Wr, T, d, sole = paw_points(f)
+    # l'avant-bras : un tube de roche du coude au poignet, plus mince au poignet
+    tube(cv, E, Wr, 9.4, 8.0, ROCK_TUBE)
     u = (Wr - E) / np.linalg.norm(Wr - E)
     nrm = np.array([-u[1], u[0]])
     if nrm @ LN > 0:
-        nrm = -nrm
-    for t in np.linspace(0.2, 0.8, 30):
-        q = E + (Wr - E) * t + nrm * (2.0 + 0.8 * math.sin(t * 9))
-        put(cv, q[0], q[1], 't' if 0.3 < t < 0.7 else 's')
-    knob(cv, Wr, 5.4, ROCK_TUBE)
-    knob(cv, P, 6.0, ROCK_TUBE)
-    for k, da in enumerate((-28, 0, 26)):
-        dd = d + da
-        base = P + 4.5 * unitv(dd)
-        tip = base + 6.5 * unitv(dd)
-        tube(cv, base, tip, 2.6, 2.0, ROCK_TUBE[1:])
-        # la griffe recourbée vers le bas (le sens du coup)
-        claw(cv, tip + unitv(dd) * 0.5, unitv(dd - 25), 7.5, tones=('B', 'D', 'E', 'G'), curl=-0.5, rad=1.6)
-    # l'ergot, un peu en arrière du poignet
-    claw(cv, Wr + 3 * unitv(d + 150), unitv(d + 170), 4.5, tones=('B', 'D', 'E', 'G'), curl=0.4, rad=1.3)
+        nrm = -nrm                                  # le côté de l'ombre
+    # la veine de lave (comme sur le dessin) : une fente courbe du côté de l'ombre, chaude au milieu
+    for t in np.linspace(0.18, 0.78, 40):
+        q = E + (Wr - E) * t + nrm * (2.6 + 1.0 * math.sin(t * 7.5))
+        put(cv, q[0], q[1], 'u' if 0.38 < t < 0.55 else ('t' if 0.26 < t < 0.68 else 's'))
+        if 0.3 < t < 0.62:
+            put(cv, q[0] + nrm[0], q[1] + nrm[1], 's')
+    # deux fêlures sombres sur le côté éclairé (les plaques de la roche)
+    for t0, t1 in ((0.25, 0.42), (0.6, 0.8)):
+        for t in np.linspace(t0, t1, 12):
+            q = E + (Wr - E) * t - nrm * (2.0 + 3.0 * (t - t0) / (t1 - t0))
+            put(cv, q[0], q[1], '2')
+    foot_blob(cv, Wr, d, sole)
+    # les écailles claires sur le dessus du pied (des points, comme sur le dessin)
+    for uu, s in ((0.15, -4.0), (0.3, -2.0), (0.42, -4.5), (0.55, -2.6), (0.68, -4.0), (0.8, -1.8), (0.25, -6.0)):
+        q = Wr + d * FOOT * uu + sole * s
+        x, y = int(math.floor(q[0])), int(math.floor(q[1]))
+        if 0 <= x < W and 0 <= y < H and cv[y, x] in '34':
+            cv[y, x] = '5'
+    # les griffes d'obsidienne : sous les doigts, recourbées vers la plante (et l'ergot au talon)
+    for uu, L, rad in ((0.34, 7.5, 1.9), (0.68, 8.0, 2.0), (0.98, 9.5, 2.3)):
+        base = Wr + d * FOOT * uu + sole * (5.0 if uu < 0.9 else 1.5)
+        claw(cv, base, 0.95 * d + 0.3 * sole, L, tones=CLAW_TONES, curl=0.95, rad=rad)
+    claw(cv, Wr - d * 6 + sole * 5, -0.6 * d + 0.8 * sole, 6.0, tones=CLAW_TONES, curl=-0.8, rad=1.7)
+    cv[GROUND + 1:] = '.'                           # rien sous le sol
     return cv
 
 
-def fx_swipe_smear(a_from, a_to):
-    """l'image étirée : un croissant courbe le long de l'arc des griffes, épais contre la patte, effilé derrière
-    (roche et braise : la patte chauffée frotte l'air), sans rayons"""
+def fx_swipe_smear(frm, k=0):
+    """l'image étirée : un croissant courbe balayé par la patte, de sa position précédente frm = (paw, toe) à
+    celle de l'image ; brûlant au bord (le bout des griffes), plus sombre vers le poignet, effilé à l'arrière ;
+    k = 1 : ce qui en reste à l'image suivante (un mince filet qui s'éteint). Devant le corps, derrière la patte,
+    sans rayons."""
     def f(cv, back, front, ctx):
-        E, _, _, _ = paw_points(ctx)
-        R = FOREARM + 22
-        n = 40
-        pts, ws = [], []
+        a0, t0 = frm
+        a1, t1 = ctx['paw'], ctx['toe']
+        n = 24
+        outer, inner = [], []
         for i in range(n + 1):
             t = i / n
-            a = a_from + (a_to - a_from) * t
-            pts.append(E + R * unitv(a))
-            ws.append(0.5 + 9.0 * t ** 1.4)
-        stroke(back, pts, ws, 'vutsr')
-        pts2 = [E + (R - 9) * unitv(a_from + (a_to - a_from) * (i / n)) for i in range(n + 1)]
-        stroke(back, pts2, [0.3 + 4.0 * (i / n) ** 1.6 for i in range(n + 1)], 'uts')
+            Wr, tip = paw_edge(ctx, a0 + (a1 - a0) * t, t0 + (t1 - t0) * t)
+            outer.append(tip)
+            inner.append(Wr + (tip - Wr) * (0.55 + 0.3 * (1 - t) ** 2))     # le croissant s'effile vers l'arrière
+        lo = 0.12 if k == 0 else 0.72
+        i0 = int(n * lo)
+        if k == 1:
+            inner = [o + (q - o) * 0.4 for o, q in zip(outer, inner)]       # il n'en reste qu'un mince filet
+        poly = [tuple(p) for p in outer[i0:]] + [tuple(p) for p in inner[i0:][::-1]]
+        im = Image.new('L', (W, H), 0)
+        ImageDraw.Draw(im).polygon(poly, fill=1)
+        m = (np.array(im) > 0) & (draw_paw(ctx) == '.')     # devant le corps, mais derrière la patte
+        O = np.array(outer[i0:])
+        I = np.array(inner[i0:])
+        tones = 'vuuuts' if k == 0 else 'tsr'
+        for y, x in zip(*np.nonzero(m)):
+            p = np.array([x + 0.5, y + 0.5])
+            j = int(np.argmin(((O - p) ** 2).sum(1)))
+            wd = max(1.0, float(np.linalg.norm(O[j] - I[j])))
+            sv = min(1.0, float(np.linalg.norm(O[j] - p)) / wd)    # 0 au bord des griffes, 1 côté poignet
+            t = (i0 + j) / n                                        # 0 à l'arrière (effilé), 1 contre la patte
+            v = sv * 0.75 + (1 - t) * 0.55
+            put(front, x, y, tones[min(len(tones) - 1, int(v * len(tones)))])
     return f
 
 
 def fx_dust_paw(k):
-    """la patte frappe le sol devant lui : deux bouffées de poussière courbes"""
+    """la patte frappe le sol devant lui : deux bouffées de poussière courbes, devant et derrière le pied"""
     def f(cv, back, front, ctx):
-        _, _, P, d = paw_points(ctx)
-        x = P[0] + 10
+        E, Wr, T, d, sole = paw_points(ctx)
+        x0, x1 = Wr[0] - 6, T[0] + 8
         if k == 0:
-            cloud(front, (x + 6, GROUND - 3), 5.0, 'noop', seed=31)
-            cloud(back, (x - 10, GROUND - 3), 4.0, 'noop', seed=32)
+            cloud(front, (x1 + 4, GROUND - 3), 4.6, 'noop', seed=31)
+            cloud(back, (x0 - 6, GROUND - 3), 4.0, 'noop', seed=32)
+            put(front, x1 + 12, GROUND - 9, 'o')
+        elif k == 1:
+            cloud(front, (x1 + 9, GROUND - 5), 5.4, 'nop', seed=31, hollow=0.35)
+            cloud(back, (x0 - 11, GROUND - 5), 4.6, 'nop', seed=32, hollow=0.4)
+            chunk(front, x1 + 15, GROUND - 13, k=2)
         else:
-            cloud(front, (x + 11, GROUND - 5), 5.6, 'nop', seed=31, hollow=0.45)
-            cloud(back, (x - 15, GROUND - 5), 4.4, 'nop', seed=32, hollow=0.5)
+            cloud(front, (x1 + 13, GROUND - 7), 4.6, 'no', seed=31, hollow=0.7)
+            cloud(back, (x0 - 15, GROUND - 7), 3.8, 'no', seed=32, hollow=0.75)
     return f
 
 
@@ -1097,53 +1191,62 @@ CLAW_HIT = (ENEMY_X, GROUND - 52)              # où les griffures se posent sur
 
 
 def fx_claw_marks(k):
-    """les trois griffures sur la cible : k = 0 (elles se tracent), 1 (complètes, brillantes, étincelles),
-    2 (elles refroidissent), 3 (les dernières braises)"""
+    """les trois griffures sur la cible : k = 0 (elles se tracent, la tête de l'entaille la plus large), 1 (complètes,
+    brillantes, étincelles), 2 (elles refroidissent), 3 (il n'en reste qu'un fil rouge au milieu, et deux braises)"""
     def f(cv, back, front, ctx):
         cx, cy = CLAW_HIT
-        reach = (0.6, 1.0, 1.0, 1.0)[k]
-        tones = ('wvuts', 'wvuts', 'utsr', 'tsr')[k]
-        wmax = (4.2, 4.6, 3.0, 1.6)[k]
-        for j, off in enumerate((-9, 0, 9)):
+        reach = (0.62, 1.0, 1.0, 1.0)[k]
+        tones = ('wvuts', 'wvuts', 'utsr', 'sr')[k]
+        wmax = (4.4, 4.6, 3.2, 1.3)[k]
+        for j, off in enumerate((-12, 0, 12)):
             # une entaille courbe qui descend vers la droite (le sens du coup de patte), plus longue au milieu
-            L = (22, 28, 22)[j]
-            p0 = (cx + off - L * 0.45, cy - L * 0.55)
-            p3 = (cx + off + L * 0.45, cy + L * 0.55)
-            p1 = (p0[0] + L * 0.42, p0[1] + L * 0.1)
-            p2 = (p3[0] - L * 0.1, p3[1] - L * 0.42)
+            L = (24, 30, 24)[j]
+            ox, oy = off * 0.85, -off * 0.3 + abs(off) * 0.12       # côte à côte, en travers de l'entaille
+            p0 = (cx + ox - L * 0.42, cy + oy - L * 0.55)
+            p3 = (cx + ox + L * 0.42, cy + oy + L * 0.55)
+            p1 = (p0[0] + L * 0.45, p0[1] + L * 0.08)
+            p2 = (p3[0] - L * 0.08, p3[1] - L * 0.45)
             pts = bezier(p0, p1, p2, p3, 30)
             m = int(30 * reach)
             ws = [wmax * math.sin(math.pi * min(1.0, i / 30)) ** 0.8 + 0.3 for i in range(31)]
+            if k == 0:
+                ws = [w * (0.55 + 0.45 * i / max(1, m)) for i, w in enumerate(ws)]
             if k == 3:
-                ws = [w if (i // 5) % 2 == 0 else 0 for i, w in enumerate(ws)]     # elle se défait en braises
+                pts, ws = pts[9:22], ws[9:22]                 # le fil qui reste : le milieu de l'entaille
+                m = len(pts) - 1
             stroke(front, pts[:m + 1], ws[:m + 1], tones)
         if k == 1:
-            for (vx, vy, dd) in ((1, -0.7, 18), (1, 0.4, 20), (0.5, -1, 16), (-0.6, -1, 15), (1, 1, 14)):
-                drop(front, cx + 10 + vx * dd, cy + vy * dd, vx, vy, 2 if dd > 17 else 1)
-            puff(front, (cx + 2, cy), 3.0, 'wv')
+            for (vx, vy, dd) in ((1, -0.7, 19), (1, 0.4, 21), (0.5, -1, 17), (-0.6, -1, 16), (1, 1, 15)):
+                drop(front, cx + 12 + vx * dd, cy + vy * dd, vx, vy, 2 if dd > 18 else 1)
         elif k == 2:
-            for (dx, dy) in ((24, -14), (30, 6), (18, -24), (-14, -22)):
+            for (dx, dy) in ((28, -14), (33, 6), (21, -26), (-17, -22)):
                 ember(front, cx + dx, cy + dy, big=dx > 25)
         elif k == 3:
-            for (dx, dy) in ((28, -24), (-18, -30)):
+            for (dx, dy) in ((32, -26), (-20, -32)):
                 ember(front, cx + dx, cy + dy)
     return f
 
 
+# les images : la patte (paw = angle de l'avant-bras au coude, toe = direction du pied ; en degrés, 0 = vers l'ennemi,
+# 90 = en haut). Au repos (le dessin) : environ paw = -56, toe = -8.
+RAISE = (30, 78)                              # la patte levée devant lui, plante et griffes vers l'ennemi
+SWING = (4, -34)                               # au milieu du coup (l'image étirée)
+STRIKE = (-52, -6)                             # posée devant lui, griffes plantées
 ATTAQUE = [
-    dict(bx=-3, pitch=-2, hrel=(-2, -2), jaw=1, lagN=(1, 1), lagF=(1, 1), ms=130),
-    dict(bx=-5, pitch=-4, hrel=(-5, -5), jaw=3, lagN=(1, 2), lagF=(1, 2), tail=(1, 0), heat=1, paw=105, wrist=20,
-         ms=170),
-    dict(bx=-6, pitch=-5, hrel=(-6, -6), jaw=4, lagN=(1, 2), lagF=(1, 2), tail=(1, 0), heat=1, paw=122, wrist=30,
-         ms=240),
-    dict(bx=1, pitch=1, hrel=(1, 0), jaw=4, lagN=(2, 3), lagF=(2, 3), paw=20, wrist=50, fx=[fx_swipe_smear(122, 20)],
-         ms=60),
-    dict(bx=3, pitch=3, sq=1, hrel=(3, 3), jaw=2, lagN=(-1, -2), lagF=(-1, -2), tail=(-1, 0), paw=-38, wrist=45,
-         fx=[fx_swipe_smear(40, -38), fx_claw_marks(0)], shake=1, ms=70),
-    dict(bx=3, pitch=3, sq=1, hrel=(3, 4), jaw=1, lagN=(-1, -1), lagF=(-1, -1), tail=(-1, 0), paw=-44, wrist=40,
-         fx=[fx_dust_paw(0), fx_claw_marks(1)], ms=220),
-    dict(bx=2, pitch=2, hrel=(2, 2), jaw=1, lagN=(0, 1), lagF=(0, 1), paw=-58, wrist=25,
-         fx=[fx_dust_paw(1), fx_claw_marks(2)], ms=130),
+    dict(bx=-2, pitch=-2, hrel=(-1, -1), lagN=(1, 1), lagF=(1, 1), ms=110),
+    dict(bx=-3, pitch=-3, hrel=(-2, -2), jaw=1, lagN=(1, 2), lagF=(1, 2), tail=(1, 0), paw=-4, toe=-58, ms=100),
+    dict(bx=-5, pitch=-5, hrel=(-4, -5), jaw=3, lagN=(1, 2), lagF=(1, 2), tail=(1, 0), heat=1, paw=14, toe=30,
+         ms=90),
+    dict(bx=-6, pitch=-6, hrel=(-6, -7), jaw=4, lagN=(1, 2), lagF=(1, 2), tail=(1, 0), heat=1, paw=RAISE[0],
+         toe=RAISE[1], ms=260),
+    dict(bx=0, pitch=0, hrel=(-3, -3), jaw=4, lagN=(2, 3), lagF=(2, 3), heat=1, paw=SWING[0], toe=SWING[1],
+         fx=[fx_swipe_smear(RAISE)], ms=50),
+    dict(bx=3, pitch=3, sq=1, hrel=(2, 3), jaw=2, lagN=(-1, -2), lagF=(-1, -2), tail=(-1, 0), paw=STRIKE[0],
+         toe=STRIKE[1], fx=[fx_dust_paw(0), fx_claw_marks(0)], shake=1, ms=70),
+    dict(bx=3, pitch=3, sq=1, hrel=(3, 4), jaw=1, lagN=(-1, -1), lagF=(-1, -1), tail=(-1, 0), paw=STRIKE[0],
+         toe=STRIKE[1], fx=[fx_dust_paw(1), fx_claw_marks(1)], ms=220),
+    dict(bx=2, pitch=2, hrel=(2, 2), jaw=1, lagN=(0, 1), lagF=(0, 1), paw=-54, toe=-7,
+         fx=[fx_dust_paw(2), fx_claw_marks(2)], ms=140),
     dict(bx=1, sq=1, hrel=(1, 1), lagN=(0, -1), lagF=(0, -1), fx=[fx_claw_marks(3)], ms=140),
     dict(ms=170),
 ]
@@ -1539,7 +1642,7 @@ def write_outputs(anims):
     sheet = Image.new('RGB', (Wt, Ht), (250, 250, 252))
     d = ImageDraw.Draw(sheet)
     y = 6
-    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE (morsure)',
+    titles = {'pose': 'POSE (respiration, en boucle)', 'attaque': 'ATTAQUE DE BASE (coup de griffe)',
               'speciale': 'ATTAQUE SPECIALE (tempete de feu)'}
     for name, per, cells, mss in blocks:
         cw, ch = cells[0].width * k, cells[0].height * k
@@ -1559,9 +1662,9 @@ def write_outputs(anims):
 
 def write_scene(anims):
     """anim-dragon-jeu.gif : pose ×2, attaque, pose, spéciale, pose, sur le fond de volcan (retourné), avec les cinq
-    héros en face, à la taille du jeu (1 pixel du dessin = 1 pixel du fond), ×2. Comme le fera le jeu : pour la
-    morsure, le dragon va jusqu'au héros le plus proche et revient ; la tempête tombe sur CHAQUE héros (la partie
-    « sur la cible » de la spéciale, posée à ses pieds, un peu décalée de l'un à l'autre)."""
+    héros en face, à la taille du jeu (1 pixel du dessin = 1 pixel du fond), ×2. Comme le fera le jeu : pour le coup de
+    griffe, le dragon reste à sa place et les griffures (la partie « sur la cible ») sont posées sur le héros visé, celui
+    du rang du milieu ; la tempête tombe sur CHAQUE héros (posée à ses pieds, un peu décalée de l'un à l'autre)."""
     F, boss, heroes = scene_layout()
     fond = Image.open(os.path.join(ROOT, 'public', 'art', 'px', 'fonds', 'kael.webp')).convert('RGBA')
     fond = fond.transpose(Image.FLIP_LEFT_RIGHT)
@@ -1570,53 +1673,49 @@ def write_scene(anims):
     fond = fond.crop((0, top, FOND_W, bot))
     bx, by = boss[0], boss[1] - top
     sprites = [(hero_sprite(n), x, y - top) for n, x, y in heroes]
-    # la cible imaginée du GIF : le héros le plus proche (premier rang)
     near = sprites[[slot for _, slot in SCENE_HEROES].index(2)]     # le héros du rang du milieu (celui du dragon)
     jeu_a, jeu_s = JEU['attaque'], JEU['speciale']
-    reach = jeu_a['cible'][0] - SOL[0]
+    cuts = {}
+    for name, jeu in (('attaque', jeu_a), ('speciale', jeu_s)):
+        c = jeu['coupe']
+        cuts[name] = list(c) if isinstance(c, (list, tuple)) else [c] * len(anims[name])
     seq = []
     for img, ms in anims['pose'] * 2:
-        seq.append((img, ms, 0, None))
-    na = len(anims['attaque'])
-    coup = jeu_a['coup']
+        seq.append((img, ms, None))
     for i, (img, ms) in enumerate(anims['attaque']):
-        # il va jusqu'au héros pendant la préparation, revient après
-        dist = near[1] - reach - bx
-        t = min(1.0, i / max(1, coup - 1)) if i < coup else max(0.0, 1 - (i - coup - 1) / max(1, na - coup - 2))
-        seq.append((img, ms, int(round(dist * (t * t * (3 - 2 * t)))), None))
+        seq.append((img, ms, ('attaque', i, [near])))
     for img, ms in anims['pose']:
-        seq.append((img, ms, 0, None))
-    cut = jeu_s['coupe']
+        seq.append((img, ms, None))
     for i, (img, ms) in enumerate(anims['speciale']):
-        seq.append((img, ms, 0, ('s', i, cut[i])))
+        seq.append((img, ms, ('speciale', i, sorted(sprites, key=lambda s: s[1]))))
     for img, ms in anims['pose']:
-        seq.append((img, ms, 0, None))
+        seq.append((img, ms, None))
     frames = []
-    spec_imgs = [img for img, _ in anims['speciale']]
-    for img, ms, dx, tgt in seq:
+    for img, ms, tgt in seq:
         im = fond.copy()
         a = img.copy()
-        if tgt is not None and tgt[2] is not None:
-            a[:, tgt[2]:] = 0                       # ce qui tombe sur la cible est posé sur chaque héros, plus bas
+        if tgt is not None and cuts[tgt[0]][tgt[1]] is not None:
+            a[:, cuts[tgt[0]][tgt[1]]:] = 0         # ce qui tombe sur la cible est posé sur le(s) héros visé(s)
         # le dragon et ses effets (sol du GIF -> sol de la scène)
         dragon = Image.fromarray(a, 'RGBA')
-        layers = [(by, dragon, (bx + dx - SOL[0], by - SOL[1]))]
+        layers = [(by, dragon, (bx - SOL[0], by - SOL[1]))]
         for (spr, (ax, ay)), x, y in sprites:
             layers.append((y, spr, (x - ax, y - ay)))
         layers.sort(key=lambda L: L[0])
         for _, s_im, xy in layers:
             im.alpha_composite(s_im, xy)
         if tgt is not None:
-            _, i, c = tgt
-            for n, ((spr, _), x, y) in enumerate(sorted(sprites, key=lambda s: s[1])):
-                j = i - (n % 2)                     # un petit décalage d'un héros à l'autre
+            name, i, targets = tgt
+            imgs, cut = [im_ for im_, _ in anims[name]], cuts[name]
+            for n, ((spr, _), x, y) in enumerate(targets):
+                j = i - (n % 2) if name == 'speciale' else i     # la tempête : un petit décalage d'un héros à l'autre
                 if j < 0 or cut[j] is None:
                     continue
-                part = spec_imgs[j].copy()
+                part = imgs[j].copy()
                 part[:, :cut[j]] = 0
                 im.alpha_composite(Image.fromarray(part, 'RGBA'), (x - ENEMY_X, y - GROUND))
         frames.append(im.resize((im.width * 2, im.height * 2), Image.NEAREST))
-    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), frames, [ms for _, ms, _, _ in seq])
+    save_gif(os.path.join(OUT, f'anim-{NAME}-jeu.gif'), frames, [ms for _, ms, _ in seq])
 
 
 def essai(folder):
@@ -1632,9 +1731,9 @@ def essai(folder):
 
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
-    # la morsure : le bout de la gueule arrive en x = 318 (91 pixels au-dessus du sol) ; seule la gerbe d'étincelles,
-    # devant la gueule, est posée sur la cible
-    'attaque': dict(genre='melee', coup=4, cible=(316, GROUND - 80), coupe=[None] * 4 + [322, 321, 310] + [None] * 3),
+    # le coup de griffe : il ne bouge pas ; seules les trois griffures (et leurs étincelles) sont posées sur le héros
+    # visé, la patte reste avec le dragon (elle ne dépasse jamais x = 300)
+    'attaque': dict(genre='sort', coup=5, cible=CLAW_HIT, coupe=ENEMY_X - 40),
     # la tempête : la boule de feu reste avec le dragon (images 0 à 7) ; la pluie de blocs de lave, l'impact et le feu
     # qui brûle (images 8 à 17) sont posés aux pieds de CHAQUE héros
     'speciale': dict(genre='sort', coup=11, cible=(ENEMY_X, GROUND - 44), coupe=[None] * 8 + [ENEMY_X - 48] * 10,
