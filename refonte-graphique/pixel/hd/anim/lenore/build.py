@@ -429,7 +429,7 @@ def spark(cv, x, y, vx, vy):
     put(cv, x - ux * 2.4, y - uy * 2.4, 'u')
 
 
-def arc_trail(cv, c, R, a_from, a_to, w, tones, inner=0.0, squash=1.0):
+def arc_trail(cv, c, R, a_from, a_to, w, tones, inner=0.0, squash=1.0, taper=0.9):
     """traînée pleine en croissant (la tête de la massue qui balaie) : bord extérieur sur le cercle de rayon R, entre
     les angles a_from (où était la massue) et a_to (où elle est). Épaisse contre la massue, effilée vers a_from.
     squash < 1 : le cercle est aplati en ellipse (un coup qui tourne à plat, autour du corps)"""
@@ -447,7 +447,7 @@ def arc_trail(cv, c, R, a_from, a_to, w, tones, inner=0.0, squash=1.0):
             if da > abs(span):
                 continue
             s = da / abs(span)
-            ww = w * (1 - s) ** 0.9 + (0.6 if s < 0.97 else 0)
+            ww = w * (1 - s) ** taper + (0.6 if s < 0.97 else 0)
             if r < R - ww:
                 continue
             k = min(1.0, max(0.0, (R - r) / max(ww, 1e-6)))
@@ -1039,9 +1039,9 @@ def fx_flat_smear(a_from, a_to, R=44.0, squash=0.32, w=9.0):
         # la moitié arrière de la traînée passe derrière lui, celle de devant (sous le milieu de l'ellipse) devant
         a_mid = max(a_from, min(a_to, 228.0))
         if a_mid > a_from:
-            arc_trail(back, c, R, a_from, a_to, w, 'nmlk', squash=squash)
+            arc_trail(back, c, R, a_from, a_to, w, 'nmlkj', squash=squash, taper=0.45)
         lay = empty()
-        arc_trail(lay, c, R, a_from, a_to, w, 'nmlk', squash=squash)
+        arc_trail(lay, c, R, a_from, a_to, w, 'nmlkj', squash=squash, taper=0.45)
         arc_trail(lay, c, R + 1.5, a_from + (a_to - a_from) * 0.45, a_to, 2.2, 'ut', squash=squash)
         ys, xs = np.nonzero(lay != '.')
         for y, x in zip(ys, xs):
@@ -1126,9 +1126,9 @@ ATTAQUE = [
     dict(**BACK, bend=1, shs=(-3, 1), lean=-3, crouch=2, head=(-1, 1), far=(2, -1), ml=1, mu=1, pg=1,
          fx_list=[fx_snort(2)], ms=280),
     dict(G=(62, 76), ang=-38, length=0.78, wr=(-6, 1), bend=1, shs=(0, 0), lean=1, crouch=2, head=(0, 1),
-         far=(0, 0), ml=0, pg=0, smear=fx_flat_smear(176, 290, w=30.0), fx_list=[fx_snort(3)], ms=50),
+         far=(0, 0), ml=0, pg=0, smear=fx_flat_smear(172, 290, w=46.0), fx_list=[fx_snort(3)], ms=50),
     dict(**HIT, bend=1, shs=(3, 1), lean=4, crouch=2, head=(1, 1), far=(-2, 0), ml=-1, mu=-1, pg=-1,
-         smear=fx_flat_smear(296, 358, w=22.0), fx_list=[fx_whack(0)], ms=170),
+         fx_list=[fx_whack(0)], ms=170),
     dict(G=(77, 78), ang=-26, wr=(-6.5, 0.0), bend=1, shs=(3, 1), lean=3, crouch=2, head=(1, 1), far=(-2, 0),
          ml=-1, pg=-1, fx_list=[fx_whack(1)], ms=110),
     dict(G=(68, 78), ang=-64, wr=(-6, 1), bend=1, shs=(1, 0), lean=2, crouch=1, head=(0, 0), far=(-1, 0), ml=1, pg=1,
@@ -1153,7 +1153,7 @@ SKIN_HOT = [None,
             {'1': '2', '2': '3', '4': '5', '6': '7', '7': '8', 'J': 'w', 'K': 'u'}]
 IRON_HOT = [None,
             {'i': 'r', 'j': 'e', 'k': 's'},
-            {'i': 'r', 'j': 's', 'k': 't', 'l': 'u', 'm': 'v', 'n': 'w'}]
+            {'i': 'r', 'j': 's', 'k': 't', 'l': 't', 'm': 'u', 'n': 'v'}]
 # les points d'où montent les flammes de l'aura (grille, relatifs au buste) : (x, y, hauteur, penche)
 AURA = [(46, 56, 18, -0.5), (53, 52, 22, -0.4), (46, 40, 20, -0.6), (49, 28, 24, -0.5), (57, 18, 26, -0.3),
         (66, 14, 20, -0.1), (78, 20, 18, 0.05), (88, 28, 16, 0.25), (94, 52, 20, 0.3), (98, 58, 16, 0.4),
