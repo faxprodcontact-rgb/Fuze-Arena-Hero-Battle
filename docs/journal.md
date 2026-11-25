@@ -417,7 +417,10 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   baron vaudou, Freyja le barbare à la massue, Isis le chasseur au crâne de cerf, Thor la femme-araignée, Atlas l'enfant
   de la forêt, Zeus le roi noir). Les noms de fichiers suivent les noms du jeu, pas ce que montre le dessin. Une couleur
   de clignement passe par une lettre de la légende (jamais une couleur directe dans `HEAD_BLINK`).
-  **v0.56.0 (brouillon, version pas encore changée) : jeu propre, tout en HD** (demande du 25/11 : « supprimer les anciens
+  **Nouveaux noms (v0.56.0, validés le 25/11)** : Néfira (ex-Minotaure), Taurok (ex-Astérion), Ophira (ex-Méduse), Soyane
+  (ex-Arachné), Malgrave (ex-Anubis), Sylvar (ex-Isis), Dardane (ex-Gabryel), Elvyn (ex-Elyon), Aurelle (ex-Auriel), Jarek
+  (ex-Jinn) ; identifiants et noms de fichiers inchangés. 4 grands boss animés (dragon, léviathan, titan, oiseau-tempête).
+  **v0.56.0 : jeu propre, tout en HD** (demande du 25/11 : « supprimer les anciens
   fonds et personnages, tout brancher, retirer les boutons de test »). **36 héros** (`HERO_IDS`, les 36 dessinés en HD ;
   les 36 autres retirés : une vieille sauvegarde les échange contre parchemins selon rareté et étoiles, niveaux et
   emplacements rendus, objets au sac, courrier personnel `heros-retires-2611`, `state/migrate.ts`, test

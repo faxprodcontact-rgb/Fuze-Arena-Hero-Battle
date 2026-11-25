@@ -180,11 +180,11 @@ const ELEMENT_ROSTER: [Rarity, Role, number, boolean][] = [
 const GROUPS = ['knights', 'assassins', 'mages', 'demons', 'angels', 'myths'] as const;
 const OLD_NAMES: Record<(typeof GROUPS)[number], string[]> = {
   knights: ['Bérold', 'Maëla', 'Aldric', 'Sorène', 'Tybalt', 'Cassian', 'Ysolde', 'Garvin', 'Lenore', 'Aurèle', 'Valdis', 'Orlane'],
-  assassins: ['Nyx', 'Kael', 'Sable', 'Vesper', 'Rook', 'Isha', 'Corvin', 'Lysa', 'Jinn', 'Morrow', 'Zéphyre', 'Saïko'],
+  assassins: ['Nyx', 'Kael', 'Sable', 'Vesper', 'Rook', 'Isha', 'Corvin', 'Lysa', 'Jarek', 'Morrow', 'Zéphyre', 'Saïko'],
   mages: ['Pell', 'Mira', 'Orin', 'Tessa', 'Ilvar', 'Sélène', 'Arcan', 'Eldra', 'Nimue', 'Ozias', 'Myrr', 'Faust'],
   demons: ['Grizz', 'Vrak', 'Barzul', 'Lilou', 'Kesha', 'Morgath', 'Ruka', 'Zaroth', 'Velith', 'Skarn', 'Azgor', 'Nerith'],
-  angels: ['Célia', 'Ilian', 'Aube', 'Séraphin', 'Lumen', 'Elyon', 'Solenn', 'Ariel', 'Raphaëlle', 'Auriel', 'Gabryel', 'Céleste'],
-  myths: ['Faune', 'Satyre', 'Astérion', 'Méduse', 'Dryade', 'Minotaure', 'Anubis', 'Freyja', 'Isis', 'Arachné', 'Atlas', 'Zeus'],
+  angels: ['Célia', 'Ilian', 'Aube', 'Séraphin', 'Lumen', 'Elvyn', 'Solenn', 'Ariel', 'Raphaëlle', 'Aurelle', 'Dardane', 'Céleste'],
+  myths: ['Faune', 'Satyre', 'Taurok', 'Ophira', 'Dryade', 'Néfira', 'Malgrave', 'Freyja', 'Sylvar', 'Soyane', 'Atlas', 'Zeus'],
 };
 const SLOTS = GROUPS.flatMap((f) => OLD_NAMES[f].map((name, i) => ({ id: `${f}-${i + 1}`, name })));
 

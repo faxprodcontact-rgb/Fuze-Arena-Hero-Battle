@@ -5,7 +5,7 @@ import { heroesOfElement } from '../src/core/data/heroes';
 import type { Hero } from '../src/core/types';
 
 let uid = 1;
-/** Un Commun (Bérold, feu) et un Légendaire (Isis, terre). */
+/** Un Commun (Bérold, feu) et un Légendaire (Sylvar, terre). */
 const COMMON = 'knights-1', LEGENDARY = 'myths-9';
 const hero = (defId: string, stars: number, level = 1): Hero => ({ uid: uid++, defId, stars, level });
 const el = (element: Parameters<typeof heroesOfElement>[0], rarity: Parameters<typeof heroesOfElement>[1], n = 0) =>
