@@ -126,3 +126,4 @@
 noms des clans) ; les identifiants (myths-6, fichiers .txt, mon-<clan>-*) ne changent pas.
 Minotaure → Néfira ; Astérion → Taurok ; Méduse → Ophira ; Arachné → Soyane ; Anubis → Malgrave ; Isis → Sylvar ;
 Gabryel → Dardane ; Elyon → Elvyn ; Auriel → Aurelle ; Jinn → Jarek.
+- 25/11 : oiseau-tempête animé VALIDÉ (« Super »). Les 4 grands boss sont faits. Retouche de Tessa (héroïne aigle) : jonction tête / corps en cours.
