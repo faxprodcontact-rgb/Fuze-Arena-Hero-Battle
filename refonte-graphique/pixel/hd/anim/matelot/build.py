@@ -1199,6 +1199,17 @@ def zone(args):
         print(f'{y:4d} ' + ''.join(g[y, x0:x1 + 1]))
 
 
+# ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
+# Le genre de chaque attaque et ses moments clés (numéros d'image) : le jeu déplace le personnage, fait voler le
+# projectile jusqu'à la vraie cible et y pose l'impact. Ne change rien aux GIF.
+JEU = {
+    'attaque': dict(genre='melee', coup=4, cible=(ENEMY_X, GROUND - 44), coupe=182,
+                    avance=[f.get('tx', 0) for f in ATTAQUE]),
+    'speciale': dict(genre='melee', coup=6, cible=(ENEMY_X, GROUND - 44), coupe=182,
+                     avance=[f.get('tx', 0) for f in SPECIALE], charge=(0, 1)),
+}
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1 and sys.argv[1] == 'zone':
         zone(sys.argv[2:])

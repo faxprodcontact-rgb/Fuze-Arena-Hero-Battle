@@ -59,7 +59,7 @@
 - En cours (25/11) : les 24 monstres lancés en même temps (20 agents au plus à la fois) ; tengu-eventail, singe-voleur,
   gorille-guerrier, singe-chaman à lancer dès qu'une place se libère.
 
-### Animation des monstres (demande du 25/11/2026)
+### Animation des monstres (demande du 25/11/2026) — FAIT : les 24 monstres sont animés (25/11)
 - Consigne : `animation-monstre.md` (s'appuie sur `animation.md`). Sorties comme les héros : `anim/<nom>/build.py`,
   `pixel/sortie/anim-<nom>-*.gif` ; la page des monstres montre le GIF dès qu'il existe.
 - Lancées le 25/11 : les 3 araignées, les 3 du clan de Méduse, de Kesha, de Lenore, de Kael, matelot et canonnier (17).

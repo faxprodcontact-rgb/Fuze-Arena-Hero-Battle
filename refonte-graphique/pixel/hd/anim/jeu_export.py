@@ -341,7 +341,9 @@ def controle(name, parts, folder):
                 cx, cy = jeu['cible']
                 d.ellipse([cx - 3, cy - 3, cx + 3, cy + 3], outline=(220, 40, 40, 255))
                 c = jeu.get('coupe', cx - 36)
-                d.line([(c, 0), (c, H)], fill=(240, 150, 150, 255))
+                c = c[i] if isinstance(c, (list, tuple)) else c
+                if c is not None:
+                    d.line([(c, 0), (c, H)], fill=(240, 150, 150, 255))
             cell.alpha_composite(Image.fromarray(p['perso'][i]))
             if p['cible'][i] is not None:
                 t = p['cible'][i].copy()
