@@ -137,3 +137,12 @@ Gabryel → Dardane ; Elyon → Elvyn ; Auriel → Aurelle ; Jinn → Jarek.
 ## Interface dans la nouvelle DA (demande du 25/11/2026)
 - Tout repasser en pixel art HD, partie par partie, et brancher au jeu. Partie 1 en cours : inventaire + plan
   (`refonte-graphique/pixel/ui/PLAN.md`), page de chargement, logo, icônes d'application. Ensuite les autres parties du plan.
+
+## Nouvelle interface (demande du 26/11/2026) — brief : scratchpad brief-da-ui.md
+- Vague 1 (en cours, 4 agents) : fondation du style + section Campagne (worktree, STYLE.md à venir dans pixel/ui/) ;
+  pictos de l'interface (pipeline refonte-graphique/pixel/ui/pictos/, assemble.py → icons.webp + icons-meta.ts) ;
+  pictos armes / équipements / éléments / rôles / stats ; vitesse des attaques de base harmonisée (hd-fight.ts) +
+  bouche transparente de Kesha.
+- Vague 2 (après validation du style) : sections Héros (avec la nouvelle fiche héros : héros en grand sur fond sobre
+  et classe, niveau bien visible, caractéristiques et attaques en pictos, épuré), Invoquer (avec l'animation
+  d'ouverture du portail), Aventure, Guilde.
