@@ -26,11 +26,34 @@ aux fins de région.
   en grand, une « zone forte » (la tête) bien lisible.
 
 ## Outils
-`hd.py` travaille aujourd'hui sur une case de 128 × 120 (sol en 64, 116). Le pilote ajoute, SANS rien changer pour les
-60 personnages existants (vérifier : mêmes images `voir` / `jeu` qu'avant pour au moins 4 héros et 4 monstres, md5),
-la possibilité d'une case plus grande déclarée dans le fichier (par exemple une ligne `cadre: 256 240` et le `sol`
-correspondant), et les contrôles adaptés (taille, bords). Les contrôles propres aux héros (hauteur 88–104, part de la
-tête) ne s'appliquent pas aux boss.
+`hd.py` travaille sur une case de 128 × 120 (sol en 64, 116) pour les héros et monstres. **Pour un grand boss (fait le
+25/11 par le pilote, avec le dragon de feu)** : le fichier déclare sa case, sur une ligne avant `palette:` :
+
+    cadre: 256 240          ← largeur hauteur ; le point « sol » tombe en (128, 236) (milieu, 4 px au-dessus du bas)
+    sol: 128 236            ← les grilles font 256 × 240 : coordonnées de la grille = coordonnées de la case
+    tete: x0 y0 x1 y1       ← la boîte du crâne et des mâchoires (sans les cornes)
+
+(`cadre: 256 240 x y` place le sol ailleurs si besoin.) Sans `cadre:`, rien ne change : les 60 héros et monstres donnent
+exactement les mêmes images qu'avant (vérifié au md5 : les 8 images et le `controle` des 60, les sorties `voir` de 4
+héros et 4 monstres). Avec `cadre:`, `voir`, `zone`, `pose`, `planche` marchent pareil ; `controle` vérifie les bords de
+la grande case et les mesures du boss (hauteur du SOMMET au sol 170 à 215 px, largeur ≥ 150, tête ≥ 30 × 30) au lieu
+de celles des héros. Les « pixels isolés » se comptent sur ~32 000 pixels : au-delà de 40, les regarder (éclats voulus
+sur l'obsidienne, l'oeil, les crocs) mais ce n'est pas une faute. Pour un script d'animation : `hd.case(h)` donne
+(largeur, hauteur, (x, y) du sol).
+
+L'image d'échelle demandée : `python3 hd.py echelle boss/<nom>.txt <clan du fond> <héros> <monstre>`
+(ex. `python3 hd.py echelle boss/dragon.txt kael kael monstres/golem-lave`) → `pixel/sortie/boss-<nom>-echelle.png` :
+le boss seul au milieu du côté ennemi (rang du milieu, retourné comme dans le jeu), un héros et un monstre du côté des
+héros, sur `public/art/px/fonds/<clan>.webp`, 1 pixel du dessin = 1 pixel du fond, agrandi × 2.
+
+Méthode qui a marché pour le dragon (≈ 32 000 pixels : trop pour tout taper) : un petit script dans le brouillon pose
+les masses (ellipses, polygones, tubes), les éclaire (lumière en haut à droite, 3 à 7 tons par matière), pose les
+plaques (Voronoï à bords ondulés, fentes seulement dans la lumière), les plis, les veines ; puis la tête (la zone forte)
+est construite en PLANS à plat (dessus du museau éclairé, côté, lèvre, gueule, orbite) et ses détails posés au pixel
+(oeil, crocs triangulaires, narine, larme, goutte) ; les pieds sont faits doigt par doigt avec des griffes recourbées
+qui touchent le sol ; les doigts des ailes sont tracés rangée par rangée (une ligne nette, pas un tube) ; enfin un
+nettoyage des orphelins et un fil de lumière sur les bords haut et droit. Relire à chaque étape avec des zooms
+(`zone`, recadrages × 6) et l'image d'échelle, pas seulement `-net.png`.
 
 ## Fichiers
 - `refonte-graphique/pixel/hd/boss/<nom>.txt` (`id: boss-<element>`), notes en français en tête (créature, pose,

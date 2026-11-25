@@ -21,6 +21,16 @@
 #
 # Dans le jeu, chaque image fait 128 × 120 ; le point « sol » du dessin est posé en (64, 116).
 #
+# GRANDS BOSS (25/11/2026) : un fichier peut déclarer une case plus grande, sur une ligne à lui (avant palette:) :
+#   cadre: 256 240                                 ← largeur hauteur de l'image du jeu (le point « sol » tombe alors en
+#                                                    (largeur / 2, hauteur − 4), soit (128, 236), comme (64, 116) en 128 × 120)
+#   cadre: 256 240 120 236                         ← (facultatif) où tombe le point « sol » dans cette image
+#   Le pixel reste le même (c'est la TAILLE du dessin qui change, pas un agrandissement). Sans « cadre: », rien ne change
+#   (128 × 120, sol en 64, 116 : les 60 héros et monstres donnent exactement les mêmes images qu'avant). Avec « cadre: »,
+#   `controle` vérifie les bords de cette case et applique les mesures des boss (hauteur 170 à 215 px du sommet au sol,
+#   largeur, tête lisible) au lieu de celles des héros (88 à 104 px, tête 25 à 38 %). Pour un script qui a besoin de la
+#   case d'un dessin (animation, export) : hd.case(h) → (largeur, hauteur, (x, y) du sol dans l'image).
+#
 # Commandes (depuis n'importe où) :
 #   python3 hd.py voir <nom>                 → sortie/<nom>-grand.png (×8, règle tous les 8 px, coordonnées de la grille),
 #                                              sortie/<nom>-net.png (×6 sans règle), sortie/<nom>-jeu.png (taille du jeu),
@@ -29,6 +39,12 @@
 #   python3 hd.py pose <nom> x y TEXTE [calque]     → écrit TEXTE sur la ligne y à partir de x (calque : nom ou numéro)
 #   python3 hd.py controle <nom> [...]              → les contrôles automatiques (voir controle())
 #   python3 hd.py planche <sortie.png> <nom> [...]  → les héros côte à côte (image 0, ×3)
+#   python3 hd.py echelle <boss> <clan> <héros> <monstre>
+#                                            → pixel/sortie/boss-<nom>-echelle.png : le grand boss (image 0) seul au milieu
+#                                              du côté ennemi, retourné comme dans le jeu, un héros et un monstre du côté
+#                                              des héros, sur le fond de combat public/art/px/fonds/<clan>.webp, à la
+#                                              taille du jeu (1 pixel du dessin = 1 pixel du fond, voir fonds/LISEZMOI.md),
+#                                              agrandi ×2. Ex. : hd.py echelle boss/dragon.txt kael kael monstres/golem-lave
 import sys, os, re
 import numpy as np
 from PIL import Image, ImageDraw
@@ -41,6 +57,7 @@ INK = (30, 20, 36)                     # le contour ajouté autour de la silhoue
 BREATH = [0, 0, 1, 1, 1, 1, 0, 0]
 BLINK = 6
 TARGET_H = 96                          # hauteur visée : du haut de la tête au sol
+BOSS_H = (170, 215)                    # grands boss (case « cadre: ») : du sommet au sol, environ 2 fois un héros
 
 
 def hexrgb(h):
@@ -56,7 +73,7 @@ def load(name):
     """Lit un héros : renvoie un dict (id, sol, tete, souffle, cligne, palette, calques=[(nom, fixe, lignes)])."""
     p = path_of(name)
     h = {'name': os.path.basename(p)[:-4], 'path': p, 'id': None, 'sol': None, 'tete': None, 'souffle': None,
-         'cligne': {}, 'palette': {}, 'calques': [], 'notes': []}
+         'cligne': {}, 'palette': {}, 'calques': [], 'notes': [], 'cadre': None}
     mode = None
     for raw in open(p, encoding='utf-8').read().split('\n'):
         line = raw.rstrip()
@@ -91,12 +108,21 @@ def load(name):
             h['tete'] = tuple(int(v) for v in val.split())
         elif key == 'souffle':
             h['souffle'] = int(val)
+        elif key == 'cadre':
+            v = [int(x) for x in val.split()]
+            h['cadre'] = (v[0], v[1], (v[2], v[3]) if len(v) >= 4 else (v[0] // 2, v[1] - 4))
         elif key == 'cligne':
             for pair in val.split():
                 a, _, b = pair.partition('=')
                 h['cligne'][a] = b
-        mode = mode if mode == 'pal' and key not in ('id', 'sol', 'tete', 'souffle', 'cligne') else None
+        mode = mode if mode == 'pal' and key not in ('id', 'sol', 'tete', 'souffle', 'cligne', 'cadre') else None
     return h
+
+
+def case(h):
+    """La case du jeu d'un dessin : (largeur, hauteur, (x, y) où tombe le point « sol »). 128 × 120 et (64, 116) sauf
+    si le fichier déclare « cadre: » (grands boss)."""
+    return h['cadre'] if h.get('cadre') else (FRAME_W, FRAME_H, FEET)
 
 
 def errors(h):
@@ -110,6 +136,10 @@ def errors(h):
         err.append("pas de « tete: x0 y0 x1 y1 »")
     if h['souffle'] is None:
         err.append("pas de « souffle: y »")
+    if h.get('cadre'):
+        cw, ch, (fx, fy) = h['cadre']
+        if not (128 <= cw <= 512 and 120 <= ch <= 480 and 0 < fx < cw and 0 < fy < ch):
+            err.append(f'« cadre: » étrange : {cw} × {ch}, sol en ({fx}, {fy}) (attendu par exemple 256 240)')
     widths = {len(r) for (_, _, rows) in h['calques'] for r in rows}
     heights = {len(rows) for (_, _, rows) in h['calques']}
     if len(widths) > 1:
@@ -167,7 +197,8 @@ def outline(img):
 
 
 def frame(h, t=0):
-    """L'image t (0 à 7) du héros, 128 × 120, contour compris."""
+    """L'image t (0 à 7) du héros, 128 × 120 (ou la case « cadre: »), contour compris."""
+    FRAME_W, FRAME_H, FEET = case(h)
     ax, ay = h['sol']
     dx, dy = FEET[0] - ax, FEET[1] - ay
     b = BREATH[t]
@@ -219,6 +250,7 @@ def voir(name):
     os.makedirs(OUTDIR, exist_ok=True)
     fr = frames(h)
     f0 = fr[0]
+    FRAME_W, FRAME_H, FEET = case(h)
     # 1) grand, avec règle en coordonnées de la GRILLE (x de gauche à droite, y de haut en bas)
     ax, ay = h['sol']
     dx, dy = FEET[0] - ax, FEET[1] - ay
@@ -322,6 +354,8 @@ def controle(name):
         return [('FAUTE', e) for e in err]
     ax, ay = h['sol']
     x0, y0, x1, y1 = h['tete']
+    cw, chh, _ = case(h)
+    boss = bool(h.get('cadre'))
     full = np.zeros((len(h['calques'][0][2]), max(len(r) for r in h['calques'][0][2]), 4), np.uint8)
     for (_, _, rows) in h['calques']:
         lay = layer_rgba(h, rows)
@@ -334,7 +368,7 @@ def controle(name):
         f = frame(h, t)
         a = f[:, :, 3] > 0
         if a[0, :].any() or a[-1, :].any() or a[:, 0].any() or a[:, -1].any():
-            out.append(('FAUTE', f'image {t} : le dessin touche le bord de la case (128 × 120) : il serait coupé'))
+            out.append(('FAUTE', f'image {t} : le dessin touche le bord de la case ({cw} × {chh}) : il serait coupé'))
             break
     else:
         out.append(('OK', 'rien ne touche le bord de la case'))
@@ -347,13 +381,23 @@ def controle(name):
         g = np.where(op[ay])[0]
         out.append(('OK', f'au sol de x = {g.min()} à {g.max()} (milieu déclaré {ax})'))
     # 3) taille : du haut de la tête au sol
-    hh = ay - y0 + 1
-    out.append(('OK' if 88 <= hh <= 104 else 'À REVOIR', f'hauteur du haut de la tête au sol : {hh} px (visé ≈ {TARGET_H}, 88 à 104)'))
-    th = y1 - y0 + 1
-    ratio = th / hh
-    out.append(('OK' if 0.25 <= ratio <= 0.38 else 'À REVOIR', f'tête = {th} px = {ratio:.0%} de la hauteur (attendu 25 à 38 %)'))
-    tw = x1 - x0 + 1
-    out.append(('OK' if 20 <= tw <= 44 else 'À REVOIR', f'largeur de la tête {tw} px'))
+    if boss:
+        # grand boss : on mesure le sommet du dessin (cornes, ailes), la largeur, et une tête assez grande pour se lire
+        top = int(ys.min())
+        hh = ay - top + 1
+        out.append(('OK' if BOSS_H[0] <= hh <= BOSS_H[1] else 'À REVOIR', f'grand boss : hauteur du sommet au sol {hh} px (visé ≈ 2 héros, {BOSS_H[0]} à {BOSS_H[1]})'))
+        ww = int(xs.max() - xs.min() + 1)
+        out.append(('OK' if ww >= 150 else 'À REVOIR', f'grand boss : largeur {ww} px (il occupe tout le côté ennemi : au moins 150)'))
+        th, tw = y1 - y0 + 1, x1 - x0 + 1
+        out.append(('OK' if th >= 30 and tw >= 30 else 'À REVOIR', f'grand boss : tête {tw} × {th} px (zone forte : au moins 30 × 30 pour se lire en petit)'))
+    else:
+        hh = ay - y0 + 1
+        out.append(('OK' if 88 <= hh <= 104 else 'À REVOIR', f'hauteur du haut de la tête au sol : {hh} px (visé ≈ {TARGET_H}, 88 à 104)'))
+        th = y1 - y0 + 1
+        ratio = th / hh
+        out.append(('OK' if 0.25 <= ratio <= 0.38 else 'À REVOIR', f'tête = {th} px = {ratio:.0%} de la hauteur (attendu 25 à 38 %)'))
+        tw = x1 - x0 + 1
+        out.append(('OK' if 20 <= tw <= 44 else 'À REVOIR', f'largeur de la tête {tw} px'))
     if not op[y0:y1 + 1, x0:x1 + 1].any():
         out.append(('FAUTE', 'la boîte de la tête est vide'))
     # 4) le souffle passe sous la tête et au-dessus des jambes
@@ -390,14 +434,55 @@ def controle(name):
 
 def planche(out_path, names, k=3):
     ims = [frames(n)[0] for n in names]
-    W = FRAME_W * k
-    sheet = _bg((W * len(ims), FRAME_H * k + 16))
+    # des cases de tailles différentes (grand boss) : alignées sur la ligne du sol, à la même échelle
+    hs = [case(load(n)) for n in names]
+    up = max(c[2][1] for c in hs)
+    down = max(c[1] - c[2][1] for c in hs)
+    sheet = _bg((sum(c[0] for c in hs) * k, (up + down) * k + 16))
     d = ImageDraw.Draw(sheet)
-    for i, (n, im) in enumerate(zip(names, ims)):
-        sheet.alpha_composite(im.resize((W, FRAME_H * k), Image.NEAREST), (i * W, 16))
-        d.text((i * W + 4, 2), n, fill=(30, 20, 36, 255))
+    X = 0
+    for n, im, (cw, ch, (fx, fy)) in zip(names, ims, hs):
+        sheet.alpha_composite(im.resize((cw * k, ch * k), Image.NEAREST), (X, 16 + (up - fy) * k))
+        d.text((X + 4, 2), n, fill=(30, 20, 36, 255))
+        X += cw * k
     sheet.save(out_path)
     print(out_path)
+
+
+def echelle(boss, clan, hero, monster):
+    """Le grand boss à la taille du jeu, à côté d'un héros et d'un monstre, sur un fond de combat (pour juger l'échelle)."""
+    sys.path.insert(0, os.path.join(HERE, '..', 'fonds'))
+    import fondlib as F
+    bg = Image.open(os.path.join(F.ROOT, 'public', 'art', 'px', 'fonds', clan + '.webp')).convert('RGBA')
+    sh = Image.new('RGBA', bg.size, (0, 0, 0, 0))
+    d = ImageDraw.Draw(sh)
+    acts = []
+
+    def put(name, fx, fy, flip=False):
+        h = load(name)
+        cw, ch, (sx, sy) = case(h)
+        im = frames(h)[0]
+        a = np.array(im)[:, :, 3] > 0
+        xs = np.where(a[sy - 6:sy + 1].any(0))[0]               # l'ombre du jeu : un ovale sous les pieds
+        w = (xs.max() - xs.min()) * 0.8 if len(xs) else 40
+        d.ellipse((fx - w / 2, fy - 8, fx + w / 2, fy + 8), fill=(0, 0, 0, 77))
+        if flip:
+            im = im.transpose(Image.FLIP_LEFT_RIGHT)
+            sx = cw - 1 - sx
+        acts.append((fy, im, (int(fx - sx), int(fy - sy))))
+
+    put(hero, *F.place('heros', 2))
+    put(monster, *F.place('heros', 1))
+    ex = (F.place('ennemis', 0)[0] + F.place('ennemis', 3)[0]) // 2        # le milieu du côté ennemi
+    put(boss, ex, F.RANGS[1], flip=True)
+    bg.alpha_composite(sh)
+    for _, im, xy in sorted(acts, key=lambda a: a[0]):
+        bg.alpha_composite(im, xy)
+    scr = bg.crop((0, 560, F.W, F.H))
+    scr = scr.resize((scr.width * 2, scr.height * 2), Image.NEAREST)
+    out = os.path.join(HERE, '..', 'sortie', f"boss-{load(boss)['name']}-echelle.png")
+    scr.convert('RGB').save(out)
+    print('écrit :', os.path.normpath(out))
 
 
 if __name__ == '__main__':
@@ -423,3 +508,5 @@ if __name__ == '__main__':
         print('Résultat :', 'des points sont à regarder' if bad else "tout est OK (reste la relecture à l'œil, GUIDE.md)")
     elif a[0] == 'planche':
         planche(a[1], a[2:])
+    elif a[0] == 'echelle':
+        echelle(*a[1:5])
