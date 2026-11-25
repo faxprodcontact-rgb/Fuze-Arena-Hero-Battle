@@ -93,3 +93,6 @@
 - 8 fonds, un par clan / général (consigne `fond.md`), outillage commun `refonte-graphique/pixel/fonds/` (LISEZMOI.md).
 - Pilote Kael VALIDÉ (« C'est parfait », 25/11). Les 7 autres lancés le 25/11 (brief scratchpad brief-fond.md) (arachne, meduse, kesha, barzul,
   lenore, orin, eldra), puis le branchement dans le jeu (décor par clan à la place des décors dessinés par le code).
+- 25/11 : les 8 fonds sont dessinés (aperçus pixel/sortie/fond-<clan>.gif). v0.54.0 publiée (60 personnages dans le combat
+  d'essai, choix + « les 60 à la suite »). En cours : branchement des 8 fonds dans le jeu (régions de la campagne,
+  accueil, combat d'essai, outil « fond imposé »), capture pixel/sortie/fonds-en-jeu.png/.gif, puis publier.
