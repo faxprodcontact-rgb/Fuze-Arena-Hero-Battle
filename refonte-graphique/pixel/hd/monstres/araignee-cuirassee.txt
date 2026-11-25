@@ -1,8 +1,36 @@
-# brouillon
+# Araignée cuirassée (clan d'Arachné, élément terre) : le COSTAUD du clan, premier rang. Un vrai tank.
+#
+# Créature : une grosse araignée massive et lente, basse sur pattes, bien plus large que haute (de x = 3 à 125). Gros
+#   abdomen rond derrière (à gauche de l'image), céphalothorax large devant (à droite), huit pattes épaisses plantées
+#   tout autour. En noir, on la reconnaît : la boule de l'abdomen hérissée de cristaux, les genoux qui montent à
+#   droite, la tête basse aux deux chélicères. Différente de ses sœurs : la bondissante est petite et nerveuse, la
+#   tisseuse est un lanceur de sorts ; elle, c'est le rocher qui avance.
+# Pose : trois quarts vers la droite, campée, le poids bas. Pattes proches (devant, plus claires) : la première vient
+#   vers nous comme un pilier à côté des chélicères, les trois autres partent en éventail vers la gauche et passent
+#   devant l'abdomen. Pattes lointaines (derrière, plus sombres) : les deux de devant font une arche à droite (genou
+#   haut, pointe au sol), les deux de derrière ne montrent que le bas sous le corps. Toutes les pointes sur le sol.
+# Tête (le céphalothorax) : un gros bouclier de pierre en dalles ; à l'avant, un sourcil de pierre épais qui avance
+#   et fait de l'ombre sur les petits yeux braises (deux grands yeux de même forme sur la même ligne, le lointain un
+#   peu plus étroit, plus un petit œil de côté) ; une pierre de grenat sertie au milieu du front (comme la pierre
+#   d'Arachné). Dessous, deux grosses chélicères cuirassées de pierre (la lointaine derrière, plus sombre) et deux
+#   crochets de grenat recourbés l'un vers l'autre.
+# Signes du clan : chitine noire violacée laquée (mêmes couleurs qu'Arachné), anneaux rouges aux genoux, épines sur
+#   les jambes, et sur l'abdomen le même signe qu'elle : un losange rouge entre deux crochets.
+# Élément terre : une selle de dalles de pierre sur l'abdomen et le bouclier de la tête (joints de chitine sombre,
+#   chaque dalle a son épaisseur : bord bas-gauche sombre, arête haut-droite claire), des cristaux de grenat qui
+#   poussent entre les dalles (un grand au milieu du dos, deux de côté, deux petits sur la tête, des éclats dans les
+#   joints). Un reflet laqué net sur la chitine de l'abdomen.
+# Couleurs (une seule lumière, en haut à droite) : chitine (ombres violet nuit, reflets lavande) ; pierre brun-gris
+#   (ombres violacées, lumières ocre) ; grenat (creux lie-de-vin, lumières rose, éclat blanc) ; rouge des anneaux et du
+#   signe ; yeux braise (cœur jaune, éclat). Le contour noir est ajouté tout seul.
+# Calque : un seul (corps). Souffle à y = 94 : tout le haut (corps, cuisses, tête) monte d'un pixel, le bas des
+#   pattes reste planté. Clignement : les yeux deviennent de la chitine sombre.
+# (Ébauche des masses par un petit script, puis la tête, les chélicères, les crochets, le signe, les pierres
+#   serties, les reflets et les genoux retouchés à la main.)
 id: mon-arachne-costaud
 sol: 64 116
-tete: 88 52 120 80
-souffle: 84
+tete: 90 70 112 92
+souffle: 94
 cligne: x=A y=B z=B
 palette:
 A #201a32  chitine, creux (violet nuit)
@@ -81,10 +109,10 @@ calque: corps
 ........HHHHHHHIIIIIIHAAAIJJJJNNNAAAAIAAAAIIIIJKKKKKKKKKKKKKKKJN.................ABBBCCC........ABBBBBBBBAABBCCC.BBBBBBBDC......
 ........HHHHHHHIIIIINAAAIJJJJJKKNNNAAADDDDAAAIIIJKKKKKKKKKKKKJJNN................ABBBCCC........ABBBBBBB.AABBCCCABBBBBtttC......
 .........HHHHHHIIIIHHAAHJJJJJJJKKKNNIADDDDDDDAAIIIIKKKKKKKKKJJJJN................ABBBCCC.......ABBBBBBBB..ABBCCABBBrrssttt......
-.......H.AHHHHHHIIHAAHNJJJJJJJJJKKKNADDDDDDDDDDEAAIIIJJKKJJJJJJJNN...............ABVBCCC.......ABBBBBBBB..ABBCCBBBBrrssBCC......
-......HKKAAAHHHHIHAAAHIIJJJJJJJJKKKNADDDDDDDDDDDDEAAIIIIIJJJJJJJJN..............AATVVCCB......ABBBBBBBB...AABBBBBBBBBBBCCC......
-......HHKKAAAHHHHAAAHIIIJJJJJJJJJKKNACDDDDDDDDDDDDDEEAAAIIIIJJJJJN..............ATTVUCCB......ABBBBBBBB...AABBBBBBBBBBBCCC......
-......HHHKKKAAHHAAAHIIIIIJJJJJJJJJKNACCDDDDDsDDDDDDDsEEEAAAIIIIJJN..............STTVUCC......ABBBBBBBB.....ABBBBBBBBBBBCCC......
+.......H.AHHHHHHIIHAAHNJJJJJJJJJKKKNADDDDDDDDDDEAAIIIJJKKJEFJJJJNN...............ABVBCCC.......ABBBBBBBB..ABBCCBBBBrrssBCC......
+......HKKAAAHHHHIHAAAHIIJJJJJJJJKKKNADDDDDDDDDDDDEAAIIIIIEFEJJJJJN..............AATVVCCB......ABBBBBBBB...AABBBBBBBBBBBCCC......
+......HHKKAAAHHHHAAAHIIIJJJJJJJJJKKNACDDDDDDDDDDDDDEEAAAIEEIJJJJJN..............ATTVUCCB......ABBBBBBBB...AABBBBBBBBBBBCCC......
+......HHHKKKAAHHAAAHIIIIIJJJJJJJJJKNACCDDDDDsDDDDDDDsEEEAEAIIIIJJN..............STTVUCC......ABBBBBBBB.....ABBBBBBBBBBBCCC......
 ......HHHHHKKAAAAAHIIIIIIIJJJJJJJJJNACCCDDDtCDDDtDDDCuDDDDAAAAIIIHN.............SSTVUCC......ABBBBBBBB.....ABBBBBBBBBBBCCC......
 .....HHHHHHHKKKAAHIIIIIIIIJJJJJJJJJICCCCCCtCDDDsutDDDCuDDDDDDAAAAHH........HNNNNRRSWUNN.....ABBBBBBBB......BBBBBBBBBAABBCC......
 .....HHHHHHHIIKAAHIIIIIIIIIJJJJJJJNACCCCCCtCDDstvutDDCuDDDDDDDDDA.....HNN..VJJJJRSSUTKNNNN..ABBBBBBBB.....BBBBBBBBB.AABBCCC.....
