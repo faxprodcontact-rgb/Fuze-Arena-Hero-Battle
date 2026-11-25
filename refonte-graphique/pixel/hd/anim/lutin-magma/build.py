@@ -865,9 +865,9 @@ def fx_claw_hit(k, p_from, bulge=10):
             for (dx, dy, big) in ((12, -12, True), (16, 0, False), (6, -20, False), (14, 8, True), (-4, -16, False)):
                 ember(front, tip[0] + dx, tip[1] + dy, big)
         elif k == 1:
-            slash(back, p0, tip, bulge, 8.0, tones='vutsr', tail=0.5)
-            hot_puff(front, (tip[0] + 3, tip[1] - 6), 6.5, 'vuutsr', hollow=0.5)
-            cloud(back, (tip[0] + 6, tip[1] - 12), 3.2, 'hhij', seed=2, ground=False)
+            slash(back, p0, tip, bulge * 1.1, 5.0, tones='utsr')
+            tongue(front, (tip[0] + 3, tip[1] - 1), 8, 3.4, bend=1.0, tones='vutsr', lean=0.8, fork=False)
+            cloud(back, (tip[0] + 6, tip[1] - 10), 3.4, 'hhij', seed=2, ground=False)
             for (dx, dy, big) in ((16, -16, False), (21, -2, True), (9, -26, False), (19, 9, False), (-6, -20, False)):
                 ember(front, tip[0] + dx, tip[1] + dy, big)
         else:

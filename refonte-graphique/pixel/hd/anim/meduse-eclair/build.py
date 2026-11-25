@@ -88,7 +88,7 @@ BLINK = dict(SRC['cligne'])
 # ---------------------------------------------------------------- la charpente de la méduse (mesurée sur le dessin)
 BELL_ROW = 35                 # rangée du haut de l'ombrelle doublée (plus haute) ou retirée (plus plate)
 SPLIT_L, SPLIT_R = 41, 77     # colonnes doublées (elle s'ouvre) ou retirées (elle se resserre)
-SPLIT_Y = 100                 # … sur les rangées du haut jusque-là (en dessous, le bout des filaments ne bouge pas)
+SPLIT_Y = 119                 # … sur toute la hauteur (les filaments s'écartent avec l'ombrelle : pas de cassure)
 BODY_Y = 64                   # au-dessus : ombrelle et corps (rigides) ; en dessous : ce qui pend
 HANG_STRETCH = [86, 76, 96, 71, 81, 91, 101, 74, 84, 94, 79, 89, 99, 69]   # rangées doublées quand elle s'élève
 HANG_SQUASH = [88, 78, 98, 73, 93, 83]                                     # rangées retirées quand elle se tasse

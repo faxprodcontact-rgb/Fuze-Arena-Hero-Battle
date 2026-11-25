@@ -1244,8 +1244,269 @@ ATTAQUE = [
     dict(arms='orig', ms=150),
 ]
 
-#SPECIALE#
-SPECIALE = []
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Faille de lave »
+# Il ne bondit pas (Lenore bondit ; lui est trop lourd) : il ouvre la terre. Il soulève la massue, puis la dresse tout
+# droit au-dessus de sa tête, le ventre gonflé ; il RUGIT (la gueule s'ouvre en grand, les yeux deviennent blancs de
+# feu) et le fer chauffe au rouge, puis au blanc : des langues de flamme lèchent la tête de la massue, des braises
+# montent (temps de pose). Il l'abat de tout son poids (traînée de feu en croissant) : arrêt sur l'image, éclair, le sol
+# tremble. Le sol se fend sous le coup et la faille court au ras du sol vers la droite, à travers tout le premier rang
+# ennemi : sur son passage, la lave jaillit en geysers l'un après l'autre (langues de feu, gouttes de lave qui
+# retombent en cloche, mottes de roche), puis chaque geyser retombe en fumée qui s'enroule ; derrière, la faille
+# refroidit (jaune, orange, rouge, puis croûte sombre). Il relève la massue encore rouge, qui fume, et revient en garde.
+IRON_HOT = [None,
+            {'j': 'r', 'k': 's'},
+            {'j': 's', 'k': 't', 'l': 'u', 'm': 'v', 'n': 'w'}]
+EYES_FIRE = {'J': 'w', 'K': 'u'}
+
+
+def fx_club_fire(level, trail=0.0, phase=0):
+    """le kanabō en feu : des langues de flamme sur la tête de fer, qui se couchent à l'opposé du mouvement"""
+    def f(cv, back, front, ctx):
+        u = ctx.u
+        nn = np.array([-u[1], u[0]])
+        for i, s_ in enumerate((44.0, 56.0, 68.0)):
+            for side in (-1, 1):
+                if level == 1 and (side < 0 or i == 0):
+                    continue
+                p0 = ctx.G + s_ * u + side * (head_hw(s_) - 1.0) * nn
+                wob = math.sin(i * 1.7 + side + phase * 1.3)
+                h = (9 + 3 * wob) * (0.6 + 0.4 * level)
+                tongue(back, (p0[0], p0[1]), h, 4.4, bend=0.6 * side, lean=trail, fork=False)
+        tip = club_tip(ctx.G, ctx.ang, S_HEAD[1] + 1)
+        tongue(back, (tip[0], tip[1]), 10 + 5 * level, 6.0, bend=0.5 * math.sin(phase), lean=trail, fork=True)
+        rng = np.random.RandomState(11 + phase)
+        for i in range(3 + 3 * level):
+            s_ = rng.uniform(36, 82)
+            p = ctx.G + s_ * u + rng.uniform(-12, 12) * nn + np.array([rng.uniform(-3, 6), -rng.uniform(4, 14)])
+            ember(front if i % 2 else back, p[0], p[1], big=i % 3 == 0)
+    return f
+
+
+def fx_fire_arc(a_from):
+    """la massue en feu qui s'abat : une large traînée de feu en croissant autour de l'épaule"""
+    def f(cv, back, front, ctx):
+        S = ctx.S
+        tip = club_tip(ctx.G, ctx.ang, S_HEAD[1] + 2)
+        v = tip - S
+        R = float(np.linalg.norm(v)) + 2
+        a_to = math.degrees(math.atan2(-v[1], v[0]))
+        arc_trail(back, S, R, a_from, a_to, 22.0, 'wvutsr', taper=0.6)
+        arc_trail(back, S, R * 0.7, a_from + 12, a_to, 6.0, 'vuts')
+    return f
+
+
+def fx_roar(k):
+    """le rugissement : l'air brûlant sort de la gueule en croissants courbes qui s'écartent (pas des rayons)"""
+    def f(cv, back, front, ctx):
+        hx, hy = ctx.f.get('head', (0, 0))
+        m = ctx.bust + np.array([MOUTH[0] + hx + 3, MOUTH[1] + hy + ctx.f.get('jaw', 0)])
+        for i, r in enumerate((5 + 3 * k, 10 + 4 * k)):
+            arc_trail(front, m, r, 40 - 6 * i, -40 + 6 * i, 1.8 - 0.4 * i, 'vut' if i == 0 else 'ut')
+    return f
+
+
+GEYSER_STEP = 30          # écart entre deux geysers le long de la faille
+FAULT_SPEED = 34          # de combien la faille avance à chaque image
+
+
+def lava_drop(cv, x, y, r, hot=True):
+    """une goutte de lave : un rond clair au coeur, bord rouge (éclairée en haut à droite)"""
+    puff(cv, (x, y), r, 'vuts' if hot else 'utsr')
+
+
+def geyser(back, front, x, age, seed=0, big=1.0):
+    """un geyser de lave à l'endroit x du sol ; age = combien d'images depuis que la faille l'a ouvert
+    (0 il éclate, 1 il monte en grand, 2 il retombe, 3 fumée, 4 il n'en reste qu'une volute)"""
+    g = GROUND
+    rng = np.random.RandomState(seed)
+    if age < 0:
+        return
+    if age == 0:
+        pop(front, (x, g - 4), 6.0 * big, facing=90, tones='wvut')
+        tongue(back, (x - 2, g), 16 * big, 7 * big, bend=0.4, lean=0.15)
+        chunk(front, (x + 5, g - 9), 2.0, ang=20)
+        chunk(front, (x - 6, g - 7), 1.6, ang=70)
+    elif age == 1:
+        tongue(back, (x - 3, g), 34 * big, 10 * big, bend=0.5, lean=0.1)
+        tongue(back, (x + 5, g), 24 * big, 8 * big, bend=-0.6, lean=0.2)
+        tongue(front, (x + 1, g), 14 * big, 7 * big, bend=0.3, lean=0.1, tones='vutsr', fork=False)
+        for i in range(4):
+            a = math.radians(rng.uniform(55, 125))
+            d = rng.uniform(16, 30) * big
+            lava_drop(front, x + d * math.cos(a), g - 8 - d * math.sin(a), rng.uniform(1.3, 2.0))
+        for i in range(3):
+            chunk(front, (x + rng.uniform(-12, 14), g - rng.uniform(14, 26) * big), rng.uniform(1.2, 2.0),
+                  ang=rng.uniform(0, 90))
+    elif age == 2:
+        tongue(back, (x - 1, g), 20 * big, 9 * big, bend=-0.4, lean=0.1, tones='vutsr')
+        tongue(front, (x + 4, g), 10 * big, 6 * big, bend=0.5, lean=0.2, tones='utsr', fork=False)
+        cloud(back, (x + 2, g - 30 * big), 7.0 * big, 'fghi', seed=seed, ground=False)
+        for i in range(4):
+            a = math.radians(rng.uniform(60, 120))
+            d = rng.uniform(16, 30) * big
+            T = 1.6
+            lx = x + d * math.cos(a) * 1.3
+            ly = g - 8 - d * math.sin(a) * 0.6 + 6 * T
+            if ly < g - 1:
+                lava_drop(front, lx, ly, 1.4, hot=False)
+            else:
+                put(front, lx, g, 's')
+        for i in range(3):
+            cx_ = x + rng.uniform(-16, 18)
+            put(front, cx_, g, 'B')
+    elif age == 3:
+        tongue(front, (x + 1, g), 8 * big, 5 * big, bend=0.4, tones='utsr', fork=False)
+        cloud(back, (x + 4, g - 36 * big), 7.5 * big, 'fghi', hollow=0.3, seed=seed, ground=False)
+        curl(back, (x - 6, g - 18 * big), 3.6, 200, turn=280, w=2.4, tones='fgh')
+    elif age == 4:
+        cloud(back, (x + 6, g - 42 * big), 6.0 * big, 'fgh', hollow=0.6, seed=seed, ground=False)
+        curl(back, (x - 2, g - 24 * big), 3.2, 340, turn=280, w=2.0, tones='fgh', cw=True)
+    elif age == 5:
+        puff(back, (x + 8, g - 48 * big), 2.6, 'fg', hollow=0.5)
+
+
+def fault(front, x0, front_x, k, cool_from=0):
+    """la faille : une fente qui serpente au ras du sol de x0 jusqu'à front_x ; elle luit près du front et refroidit
+    derrière (jaune, orange, rouge, puis croûte sombre)"""
+    rng = np.random.RandomState(4)
+    y = GROUND + 1.0
+    x = x0
+    while x < front_x:
+        y += rng.uniform(-0.5, 0.5)
+        y = min(GROUND + 2.0, max(GROUND - 0.4, y))
+        age = (front_x - x) / FAULT_SPEED + cool_from
+        hot = 'w' if age < 0.5 else 'v' if age < 1.2 else 'u' if age < 2.2 else 't' if age < 3.2 else 's' \
+            if age < 4.2 else 'r' if age < 5.2 else 'p'
+        rim = 'r' if age < 3.2 else 'p'
+        put(front, x, y - 1, rim, below=3)
+        put(front, x, y, hot, below=3)
+        put(front, x, y + 1, 'p', below=3)
+        if age < 2.0:
+            put(front, x, y - 2, 'q' if rng.rand() < 0.5 else rim, below=3)
+        if rng.rand() < 0.09:
+            for kk in range(1, 3):
+                put(front, x + kk, y - kk * 0.8, rim, below=3)
+        x += 1
+
+
+def impact_x():
+    """où la massue frappe le sol pendant la spéciale (toile)"""
+    b = Body(crouch=4, lean=5)
+    cx, cy = b.follow(50)
+    G = np.array(SMASH['G'], float) + np.array([OX + cx, OY + cy])
+    return club_tip(G, SMASH['ang'], S_HEAD[1] - 4.0)[0]
+
+
+def fx_quake(k):
+    """le coup qui ouvre la terre : 0 l'éclair du choc (boule de feu, poussière, mottes) ; 1 à 7 la faille court vers
+    la droite, les geysers de lave éclatent l'un après l'autre puis retombent en fumée ; 8 et 9 il ne reste que la
+    faille qui refroidit et quelques volutes"""
+    def f(cv, back, front, ctx):
+        cx = impact_x()
+        g = GROUND
+        if k == 0:
+            pop(back, (cx + 3, g - 10), 12.0, facing=80, tones='yyzD')
+            pop(front, (cx, g - 6), 9.0, facing=90, tones='wwvut')
+            tongue(back, (cx - 6, g), 20, 8, bend=-0.6, lean=-0.3)
+            tongue(back, (cx + 8, g), 26, 9, bend=0.7, lean=0.35)
+            cloud(front, (cx - 15, g - 3), 5.0, 'yzD', seed=2, flat=0.7)
+            cloud(front, (cx + 18, g - 3), 5.5, 'yzD', seed=3, flat=0.7)
+            for (vx, vy, rr) in CHUNKS_HIT[:6]:
+                chunk(front, (cx + vx * 2.6, g - 6 + vy * 2.6), rr, ang=vx * 20)
+            fault(front, cx - 6, cx + 14, 0)
+            return
+        front_x = cx + 12 + FAULT_SPEED * k
+        fault(front, cx - 6, min(front_x, W), k)
+        # la boule de feu du point d'impact retombe en fumée
+        if k == 1:
+            tongue(back, (cx + 2, g), 26, 10, bend=0.4, lean=0.2)
+            cloud(back, (cx + 6, g - 30), 8.0, 'fghi', seed=7, ground=False)
+        elif k == 2:
+            tongue(back, (cx + 3, g), 14, 7, bend=-0.4, tones='vutsr')
+            cloud(back, (cx + 8, g - 38), 8.0, 'fghi', hollow=0.25, seed=7, ground=False)
+        elif k <= 4:
+            cloud(back, (cx + 10, g - 44), 7.0, 'fgh', hollow=0.5 + 0.2 * (k - 3), seed=7, ground=False)
+        # la poussière du coup roule au ras du sol
+        if k <= 3:
+            for (dx, sd) in ((-18 - 4 * k, 2), (20 + 6 * k, 3)):
+                cloud(front, (cx + dx, g - 3), 6.0 - k, 'yzD', hollow=0.2 * k, seed=sd, flat=0.7)
+        # les geysers, l'un après l'autre
+        for i in range(1, 9):
+            gx = cx + 12 + GEYSER_STEP * i
+            if gx > W - 6:
+                break
+            opened = (gx - cx - 12) / FAULT_SPEED            # l'image où la faille arrive là
+            age = int(math.floor(k - opened + 0.999))
+            geyser(back, front, gx, age, seed=i, big=1.0 if i % 2 else 0.85)
+        # les braises qui montent au-dessus de la faille
+        rng = np.random.RandomState(30 + k)
+        for i in range(6):
+            ex = cx + rng.uniform(10, min(front_x, W - 4) - cx + 1)
+            ey = g - rng.uniform(8, 40)
+            ember(front, ex, ey, big=i % 3 == 0, hot=k < 6)
+    return f
+
+
+RAISE = dict(G=(42, 12), ang=94, wr=(-4.0, -5.0))
+SMASH_S = dict(SMASH)
+
+
+def fx_club_smoke(stage):
+    """le fer encore rouge fume : deux filets qui montent de la tête de la massue et s'enroulent"""
+    def f(cv, back, front, ctx):
+        u = ctx.u
+        for j, s_ in enumerate((50.0, 70.0)):
+            p = ctx.G + s_ * u
+            x, y = p[0] + 2, p[1] - 4
+            if stage == 0:
+                wisp(back, (x, y), (x + 1, y - 4), (x - 2, y - 8), (x + 1, y - 12), 2.2, 'fgh', curl_r=1.8)
+            elif stage == 1:
+                wisp(back, (x, y), (x + 2, y - 5), (x - 2, y - 10), (x + 2, y - 15), 2.4, 'fgh', curl_r=2.4,
+                     tail=0.2)
+            elif stage == 2:
+                wisp(back, (x, y - 2), (x + 2, y - 7), (x - 2, y - 12), (x + 3, y - 18), 2.0, 'fg', curl_r=2.6,
+                     tail=0.5)
+            else:
+                puff(back, (x + 4, y - 21), 1.8, 'fg', hollow=0.4)
+    return f
+SPECIALE = [
+    # il soulève la massue
+    dict(G=(24, 74), ang=118, wr=(9.0, 5.0), club_behind=True, crouch=1, lean=-1, head=(0, 1), ml=1, pg=1, ms=130),
+    # il la dresse tout droit au-dessus de sa tête, le ventre gonflé ; le fer commence à rougir
+    dict(**RAISE, crouch=-1, lean=-1, breath=2, head=(0, -1), ml=1, mu=1, pg=1, far=(1, -1), hot=IRON_HOT[1],
+         fx_list=[fx_club_fire(1, 0.0, 0)], ms=150),
+    # il rugit : gueule grande ouverte, yeux de feu, le fer chauffe à blanc (temps de pose)
+    dict(**RAISE, crouch=-1, lean=-2, breath=2, head=(-1, -2), jaw=2, ml=-1, mu=-1, pg=-1, far=(1, -2),
+         hot=IRON_HOT[2], eyes=EYES_FIRE, fx_list=[fx_club_fire(2, 0.0, 1), fx_roar(0)], flash=10, ms=200),
+    dict(**RAISE, crouch=-1, lean=-2, breath=2, head=(-1, -2), jaw=2, ml=-1, mu=0, pg=-1, far=(1, -2),
+         hot=IRON_HOT[2], eyes=EYES_FIRE, fx_list=[fx_club_fire(2, 0.0, 2), fx_roar(1)], flash=10, ms=200),
+    # il l'abat (traînée de feu)
+    dict(G=(62, 30), ang=48, wr=(-6.0, 2.0), crouch=1, lean=2, head=(1, 0), jaw=1, ml=0, mu=-1, pg=0,
+         hot=IRON_HOT[2], eyes=EYES_FIRE, smear=fx_fire_arc(110), ms=55),
+    # le choc : arrêt sur l'image, éclair, le sol tremble
+    dict(**SMASH_S, crouch=4, lean=5, head=(1, 2), jaw=2, ml=-1, mu=-1, pg=-1, far=(-1, 0), hot=IRON_HOT[2],
+         eyes=EYES_FIRE, flash=45, shake=1, fx_list=[fx_quake(0)], ms=210),
+    # la faille court vers la droite, les geysers éclatent l'un après l'autre
+    dict(**SMASH_S, crouch=4, lean=5, head=(1, 1), jaw=2, ml=1, mu=0, pg=1, far=(-1, 0), hot=IRON_HOT[2],
+         eyes=EYES_FIRE, shake=-1, fx_list=[fx_quake(1)], ms=100),
+    dict(**SMASH_S, crouch=3, lean=5, head=(1, 1), jaw=1, ml=1, mu=1, pg=1, hot=IRON_HOT[2], eyes=EYES_FIRE,
+         fx_list=[fx_quake(2)], ms=100),
+    dict(**SMASH_S, crouch=3, lean=5, head=(1, 1), jaw=1, ml=0, mu=0, pg=0, hot=IRON_HOT[1], fx_list=[fx_quake(3)],
+         ms=100),
+    dict(**SMASH_S, crouch=3, lean=4, head=(1, 1), jaw=1, ml=0, mu=0, pg=0, hot=IRON_HOT[1], fx_list=[fx_quake(4)],
+         ms=100),
+    dict(**SMASH_S, crouch=3, lean=4, head=(1, 1), jaw=0, ml=0, mu=0, pg=0, hot=IRON_HOT[1], fx_list=[fx_quake(5)],
+         ms=110),
+    dict(**SMASH_S, crouch=2, lean=4, head=(1, 1), jaw=0, ml=0, mu=0, pg=-1, hot=IRON_HOT[1], fx_list=[fx_quake(6)],
+         ms=110),
+    # il relève la massue encore rouge, qui fume
+    dict(G=(46, 80), ang=22, wr=(-7.0, -2.0), club_behind=True, crouch=1, lean=2, head=(0, 1), ml=1, pg=1,
+         hot=IRON_HOT[1], fx_list=[fx_quake(7), fx_club_smoke(0)], ms=130),
+    dict(G=(22, 85), ang=101, wr=(9.0, 5.0), club_behind=True, crouch=1, lean=1, head=(0, 0), ml=0, pg=0,
+         hot=IRON_HOT[1], fx_list=[fx_quake(8), fx_club_smoke(1)], ms=140),
+    dict(arms='orig', crouch=1, ml=0, pg=-1, fx_list=[fx_quake(9), fx_club_smoke(2)], ms=130),
+    dict(arms='orig', fx_list=[fx_club_smoke(3)], ms=160),
+]
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)

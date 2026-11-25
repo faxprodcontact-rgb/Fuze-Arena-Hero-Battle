@@ -1035,36 +1035,46 @@ def fx_crown(j, k):
     return f
 
 
+def poly_mask(pts):
+    """la forme pleine délimitée par une suite de points (toile)"""
+    im = Image.new('L', (W, H), 0)
+    ImageDraw.Draw(im).polygon([(float(x), float(y)) for (x, y) in pts], fill=255)
+    return np.asarray(im) > 0
+
+
 def fx_wave(k):
-    """la vague lancée par le gros coup : elle roule au sol vers la droite (une bosse d'eau pleine dont la crête se
-    recourbe vers l'avant en volute d'écume), s'aplatit, puis se brise en écume"""
+    """la vague lancée par le gros coup : elle roule au sol vers la droite — un long dos d'eau, une face avant creuse
+    et une crête qui se recourbe vers l'avant en volute d'écume —, s'abaisse en avançant, puis se brise en écume"""
     def f(cv, back, front, ctx):
         G = GROUND
-        X = ENEMY_X + 16 + 11 * k
-        h = max(4.0, 14.5 - 1.5 * k)
+        X = ENEMY_X + 24 + 12 * k
+        h = [0, 15.0, 13.5, 11.5, 9.0, 6.0][min(k, 5)]
         if k <= 4:
-            m = ellipse_mask((X - h * 1.0, G + 1), h * 2.0, h * 0.95)
-            P0 = (X - h * 1.7, G - h * 0.55)
-            P1 = (X - h * 0.6, G - h * 1.35)
-            P2 = (X + h * 0.75, G - h * 1.25)
-            P3 = (X + h * 0.75, G - h * 0.35)
-            pts = bezier(P0, P1, P2, P3, 30)
-            ws = [h * 0.75 * (1 - 0.65 * i / 30) + 1.2 for i in range(31)]
-            pm, sm = stroke_mask(pts, ws)
-            m |= pm
-            m &= np.mgrid[0:H, 0:W][0] <= G - 1
-            shade_mask(front, m, 'XYZAB', foam=pm & (sm > 0.35))
-            curl(front, (X + h * 0.35, G - h * 0.85), h * 0.32, 20, turn=280, w=1.6, tones='WX', cw=True)
+            back_ = bezier((X - 3.2 * h, G), (X - 2.0 * h, G - 0.2 * h), (X - 1.0 * h, G - 1.35 * h),
+                           (X - 0.1 * h, G - 1.35 * h), 16)
+            lip = bezier((X - 0.1 * h, G - 1.35 * h), (X + 0.6 * h, G - 1.35 * h), (X + 0.95 * h, G - 1.0 * h),
+                         (X + 0.7 * h, G - 0.62 * h), 12)
+            face = bezier((X + 0.7 * h, G - 0.62 * h), (X + 0.35 * h, G - 0.95 * h), (X + 0.05 * h, G - 0.6 * h),
+                          (X + 0.55 * h, G), 12)
+            m = poly_mask(back_ + lip[1:] + face[1:] + [(X - 3.2 * h, G)])
+            yy = np.mgrid[0:H, 0:W][0]
+            m &= yy <= G - 1
+            crest = m & (yy <= G - 0.85 * h)
+            shade_mask(front, m, 'XYZAB', foam=crest)
+            curl(front, (X + 0.25 * h, G - 0.95 * h), h * 0.28, 40, turn=300, w=1.7, tones='WX', cw=True)
             for i in range(3):
-                drop(front, X + h * 0.9 + 3 * i, G - h * 1.3 - 2 * i + k, 2 if i else 3, v=(1.0, 0.6))
+                drop(front, X + h * 0.9 + 3 * i, G - h * 1.25 + 2 * i, 3 if i == 0 else 2, v=(1.2, 0.8))
+            foam(front, (X + 0.45 * h, G - 1), max(1.5, h * 0.22), seed=71 + k)
         # derrière elle, l'écume qui reste au sol et s'enroule
         for i in range(min(k, 3)):
-            xx = X - h * 2.2 - 9 * i
-            foam(front, (xx, G - 1), max(1.2, 3.4 - 0.6 * i - 0.25 * k), hollow=min(0.85, 0.15 * (k + i)),
+            xx = X - 3.4 * h - 8 * i
+            foam(front, (xx, G - 1), max(1.2, 3.2 - 0.6 * i - 0.2 * k), hollow=min(0.85, 0.15 * (k + i)),
                  seed=60 + i)
         if k >= 5:
-            foam(front, (X + 2, G - 1), 4.0, hollow=min(0.9, 0.25 * (k - 4)), seed=70)
-            curl(front, (X + 8, G - 3), 2.8, 90, turn=260, w=1.6, tones='WXY', cw=True)
+            foam(front, (X - 4, G - 1), 4.4, hollow=0.2, seed=70)
+            foam(front, (X + 4, G - 1), 3.2, hollow=0.4, seed=72)
+            curl(front, (X + 9, G - 3), 2.8, 90, turn=260, w=1.6, tones='WXY', cw=True)
+            curl(front, (X - 11, G - 3), 2.4, 90, turn=260, w=1.5, tones='WXY')
     return f
 
 

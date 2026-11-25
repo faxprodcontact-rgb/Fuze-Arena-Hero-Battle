@@ -62,8 +62,8 @@ LAVA = 'rstuvw'
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du monstre est posé en SOL. La pose seule se recadre ensuite en 128 × 120
 # (le format du jeu, sol en (64, 116)).
-W, H = 372, 214
-SOL = (112, 198)
+W, H = 392, 214
+SOL = (130, 198)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
 
@@ -990,7 +990,217 @@ ATTAQUE = [
     dict(arm=ARM_BACK, plant=True, lean=1, tilt=1, crouch=1, ms=150),
     dict(arms='orig', ms=160),
 ]
-SPECIALE = []
+
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Faille de magma »
+# Le volcan se réveille : le cratère de son dos bout, puis crache une fontaine de lave ; ses fêlures s'allument jusqu'au
+# blanc. Il lève la massue tout droit au-dessus du cratère : la lave retombe dessus et l'embrase (la massue devient
+# incandescente, des flammes l'enveloppent). Longue attente. Puis il l'abat devant lui dans un croissant de feu : arrêt
+# sur l'image (éclair), la massue fend le sol. Une faille de lave court au ras du sol vers l'ennemi et, sur son chemin,
+# le sol éclate en trois geysers de lave l'un après l'autre (toute la première ligne) : roche arrachée, gouttes en
+# cloche. Les geysers retombent en fumée, la faille refroidit (rouge, puis brun brûlé). Il traîne la massue et se
+# redresse, la lave de son corps se calme.
+ARM_SKY = (98.0, 96.0, 100.0)          # la massue tout droit au-dessus du cratère
+GEYSERS = [72, 122, 172]               # où le sol éclate : distance (toile) depuis le centre de la massue posée
+HIT_X = [None]                         # le centre de la massue posée (toile), mémorisé à l'impact
+
+
+def fx_crater(level):
+    """le cratère : 1 il bout, 2 il crache, 3 la fontaine (la lave retombe en arrière, vers la massue levée),
+    4 elle s'éteint (un filet de fumée)"""
+    def f(cv, back, front, ctx):
+        cx, cy = ctx.crater
+        if level == 1:
+            tongue(front, (cx - 2, cy), 6, 4.0, bend=-0.6, tones='wvuts', lean=-0.1)
+            tongue(front, (cx + 5, cy), 4, 3.0, bend=0.7, tones='vuts', lean=0.1)
+            ember(front, cx - 6, cy - 9)
+            ember(front, cx + 7, cy - 12, True)
+        elif level == 2:
+            tongue(front, (cx, cy), 16, 7.0, bend=-0.5, tones='wvuuts', lean=-0.15)
+            tongue(front, (cx - 7, cy), 8, 4.0, bend=-0.9, tones='vuts', lean=-0.5)
+            tongue(front, (cx + 7, cy), 9, 4.0, bend=0.9, tones='vuts', lean=0.4)
+            for (dx, dy, vx, vy, sz) in ((-12, -18, -1, -1, 2), (10, -22, 0.6, -1, 1), (-3, -27, 0, -1, 1),
+                                         (16, -12, 1, -0.3, 1)):
+                drop(front, cx + dx, cy + dy, vx, vy, sz)
+            for (dx, dy) in ((-18, -30), (8, -36), (20, -26)):
+                ember(front, cx + dx, cy + dy)
+        elif level == 3:
+            tongue(front, (cx, cy), 26, 9.0, bend=-0.8, tones='wwvuuts', lean=-0.35)
+            tongue(front, (cx - 8, cy), 12, 5.0, bend=-1.0, tones='vuuts', lean=-0.7)
+            tongue(front, (cx + 8, cy), 11, 4.4, bend=1.0, tones='vuts', lean=0.5)
+            # la lave retombe en arrière en gouttes lourdes (sur la massue levée)
+            for (dx, dy, vx, vy, sz) in ((-16, -26, -1, 0.4, 2), (-22, -16, -1, 0.8, 2), (-10, -34, -0.6, -0.4, 1),
+                                         (14, -20, 1, 0.3, 1), (6, -36, 0.3, -1, 1), (-28, -6, -0.6, 1, 1)):
+                drop(front, cx + dx, cy + dy, vx, vy, sz)
+            for (dx, dy) in ((-20, -44), (12, -46), (24, -32), (-30, -30)):
+                ember(front, cx + dx, cy + dy, True)
+        elif level == 4:
+            tongue(front, (cx, cy), 7, 4.4, bend=0.6, tones='vuts', lean=0.1)
+            smoke_column(back, (cx - 2, cy - 10), 12, 3.4, hollow=0.2, seed=8)
+            ember(front, cx + 9, cy - 20)
+        elif level == 5:
+            smoke_column(back, (cx - 1, cy - 14), 14, 3.0, hollow=0.5, seed=9)
+    return f
+
+
+def fx_club_fire(k):
+    """la massue embrasée : des flammes qui l'enveloppent et montent, des braises (k = 0 elle prend, 1 elle flambe)"""
+    def f(cv, back, front, ctx):
+        c = ctx.club
+        if k == 0:
+            tongue(back, (c[0] - 10, c[1] + 2), 14, 6.0, bend=-0.7, tones='vuts', lean=0.0)
+            tongue(back, (c[0] + 9, c[1] + 2), 12, 5.0, bend=0.7, tones='vuts', lean=0.1)
+            for (dx, dy, vx, vy) in ((-18, 8, -0.4, 1), (14, 14, 0.3, 1)):
+                drop(front, c[0] + dx, c[1] + dy, vx, vy, 2)
+        else:
+            tongue(back, (c[0] - 12, c[1] + 4), 22, 8.0, bend=-0.8, tones='wvuts', lean=-0.1)
+            tongue(back, (c[0] + 2, c[1] - 2), 26, 9.0, bend=0.5, tones='wvuuts', lean=0.05)
+            tongue(back, (c[0] + 14, c[1] + 4), 16, 6.0, bend=0.9, tones='vuts', lean=0.2)
+            for (dx, dy) in ((-20, -24), (6, -34), (22, -18), (-6, -40), (16, -30)):
+                ember(front, c[0] + dx, c[1] + dy, True)
+            drop(front, c[0] - 20, c[1] + 18, -0.3, 1, 2)
+            drop(front, c[0] + 18, c[1] + 22, 0.3, 1, 1)
+    return f
+
+
+def fissure(back, x0, x1, hot=1.0, seed=0):
+    """la faille de lave au ras du sol, de x0 à x1 : une ligne qui zigzague d'un pixel, des petites branches ; blanche
+    à la tête (x1), elle refroidit derrière (hot < 1 : tout refroidit)"""
+    rng = np.random.RandomState(seed)
+    gy = GROUND
+    xs = list(range(int(x0), int(x1) + 1))
+    wob = 0
+    for i, x in enumerate(xs):
+        d = (x1 - x) / max(x1 - x0, 1)
+        heat = (1 - d) * hot if hot >= 1 else hot * (1 - 0.5 * d)
+        ch = 'w' if heat > 0.93 else 'v' if heat > 0.8 else 'u' if heat > 0.6 else 't' if heat > 0.4 else \
+            's' if heat > 0.22 else 'r' if heat > 0.1 else 'O'
+        if i % 6 == 0:
+            wob = int(rng.randint(0, 2))
+        put(back, x, gy - wob, ch)
+        put(back, x, gy, ch if wob == 0 else ('O' if ch in 'rO' else 'r'))
+        if heat > 0.5 and i % 9 == 4:
+            put(back, x, gy - 1 - wob, 's')          # une petite branche qui monte
+            put(back, x + 1, gy - 2 - wob, 'r')
+
+
+def geyser(back, front, X, st, seed=0):
+    """un geyser de lave qui jaillit du sol en X : st = 0 le sol se soulève et crève, 1 il jaillit (le plus haut),
+    2 il retombe, 3 une colonne de fumée et une flaque, 4 la fumée se défait"""
+    gy = GROUND
+    rng = np.random.RandomState(seed)
+    sc = 0.9 + 0.2 * rng.rand()
+    if st == 0:
+        pts = bezier((X - 13, gy - 1), (X - 6, gy - 7), (X + 6, gy - 7), (X + 13, gy - 1), 20)
+        stroke(back, pts, [2 + 8 * math.sin(math.pi * i / 20) for i in range(21)], 'vuutsr')
+        tongue(front, (X, gy - 3), 14 * sc, 6.0, bend=0.4, tones='wvuts', lean=0.05)
+        for (dx, dy, kk, fl) in ((-12, -10, 1, False), (11, -12, 0, True), (2, -18, 2, False)):
+            chunk(front, X + dx, gy + dy, kk + seed, fl)
+        cloud(back, (X - 14, gy - 3), 4.0, 'EFK', seed=seed + 1)
+        cloud(back, (X + 15, gy - 3), 4.4, 'EFK', seed=seed + 2)
+    elif st == 1:
+        pts = bezier((X - 16, gy - 1), (X - 7, gy - 8), (X + 7, gy - 8), (X + 16, gy - 1), 24)
+        stroke(back, pts, [3 + 10 * math.sin(math.pi * i / 24) for i in range(25)], 'vuutsr')
+        for (dx, hh, ww, bd, ln) in ((0, 46, 14.0, 0.5, 0.05), (-11, 30, 9.0, -1.0, -0.45), (11, 32, 9.5, 1.0, 0.5),
+                                     (-20, 15, 5.0, -0.9, -0.9), (21, 17, 5.0, 0.9, 0.9)):
+            tongue(front if dx == 0 else back, (X + dx, gy - 1), hh * sc, ww, bend=bd, tones='wvuutsr', lean=ln)
+        for (dx, dy, vx, vy, big) in ((-20, -34, -1, -1.2, 2), (18, -40, 1, -1.2, 2), (-28, -18, -1, -0.4, 1),
+                                      (30, -22, 1, -0.5, 1), (-6, -54, -0.3, -1, 2), (8, -50, 0.4, -1, 1)):
+            drop(front, X + dx, gy + dy * sc, vx, vy, big)
+        for (dx, dy, kk) in ((-24, -28, 0), (24, -30, 1), (-12, -44, 3), (32, -12, 2)):
+            chunk(front, X + dx, gy + dy, kk + seed, dx > 0)
+        cloud(back, (X - 18, gy - 5), 6.0, 'EEFK', seed=seed + 3)
+        cloud(back, (X + 19, gy - 5), 6.0, 'EEFK', seed=seed + 4)
+    elif st == 2:
+        pts = bezier((X - 14, gy - 1), (X - 6, gy - 5), (X + 6, gy - 5), (X + 14, gy - 1), 20)
+        stroke(back, pts, [2 + 6 * math.sin(math.pi * i / 20) for i in range(21)], 'uutsr')
+        tongue(back, (X - 4, gy - 1), 22 * sc, 8.0, bend=0.8, tones='vuutsr', lean=0.2)
+        tongue(back, (X + 8, gy - 1), 13 * sc, 5.0, bend=-0.7, tones='uutsr', lean=0.4)
+        for (dx, dy, vx, vy, big) in ((-30, -14, -1, 1, 2), (32, -18, 1, 1, 1), (-10, -40, -0.3, 1, 1),
+                                      (14, -36, 0.4, 1, 2)):
+            drop(front, X + dx, gy + dy, vx, vy, big)
+        chunk(front, X + 30, gy - 6, 2 + seed, True)
+        chunk(front, X - 30, gy - 8, 1 + seed, False)
+        cloud(back, (X - 22, gy - 6), 6.5, 'EFFK', hollow=0.3, seed=seed + 5)
+        cloud(back, (X + 22, gy - 6), 6.5, 'EFFK', hollow=0.3, seed=seed + 6)
+    elif st == 3:
+        tongue(back, (X - 2, gy - 1), 8, 5.0, bend=0.7, tones='uutsr', lean=0.2)
+        smoke_column(back, (X - 3, gy - 10), 20, 6.0, hollow=0.0, seed=seed + 7)
+        for (dx, dy) in ((-16, -36), (10, -46), (20, -28)):
+            ember(front, X + dx, gy + dy)
+        for x in range(int(X - 10), int(X + 11)):
+            put(back, x, gy, 'u' if abs(x - X) < 4 else 't' if abs(x - X) < 8 else 's')
+    elif st == 4:
+        smoke_column(back, (X - 2, gy - 16), 24, 5.0, hollow=0.45, seed=seed + 7)
+        for x in range(int(X - 8), int(X + 9)):
+            put(back, x, gy, 's' if abs(x - X) < 4 else 'r')
+        ember(front, X + 6, gy - 50)
+
+
+def fx_rift(k):
+    """la faille et ses geysers : k = 0 l'impact (gerbe de lave sous la massue, la faille démarre), puis k = 1, 2, …
+    la faille avance d'un geyser à l'autre ; chaque geyser vit ses étapes l'un après l'autre"""
+    def f(cv, back, front, ctx):
+        gy = GROUND
+        if k == 0:
+            HIT_X[0] = ctx.club[0]
+        X0 = HIT_X[0]
+        start = X0 + 22
+        if k == 0:
+            # la massue fend le sol : une gerbe de lave en éventail des deux côtés, la faille naît
+            for (dx, hh, ww, bd, ln) in ((-26, 16, 7.0, -1.0, -0.6), (26, 20, 8.0, 1.0, 0.6), (34, 10, 5.0, 0.8, 1.0),
+                                         (-34, 9, 4.4, -0.8, -1.0)):
+                tongue(back if abs(dx) < 30 else front, (X0 + dx, gy - 1), hh, ww, bend=bd, tones='wvuutsr', lean=ln)
+            for (dx, dy, vx, vy, big) in ((-30, -20, -1, -1, 2), (32, -24, 1, -1, 2), (40, -10, 1, -0.4, 1),
+                                          (-40, -8, -1, -0.3, 1), (12, -30, 0.3, -1, 1)):
+                drop(front, X0 + dx, gy + dy, vx, vy, big)
+            for (dx, dy, kk, fl) in ((-36, -18, 0, False), (38, -22, 1, True), (24, -34, 2, True)):
+                chunk(front, X0 + dx, gy + dy, kk, fl)
+            fissure(back, start, start + 22, 1.0, seed=1)
+            cloud(back, (X0 - 30, gy - 4), 6.0, 'EEFK', seed=51)
+            cloud(back, (X0 + 34, gy - 4), 5.0, 'EEFK', seed=52)
+            return
+        # la tête de la faille : elle atteint le geyser k-1 à l'image k
+        n = len(GEYSERS)
+        head = X0 + GEYSERS[min(k - 1, n - 1)]
+        hot = 1.0 if k <= n else max(0.2, 1.0 - 0.28 * (k - n))
+        fissure(back, start, head, hot, seed=1)
+        for i, gx in enumerate(GEYSERS):
+            st = k - 1 - i
+            if 0 <= st <= 4:
+                geyser(back, front, X0 + gx, st, seed=3 * i)
+        if k == 1:
+            # la poussière de l'impact roule encore
+            cloud(back, (X0 - 34, gy - 6), 6.5, 'EFFK', hollow=0.3, seed=53)
+            cloud(back, (X0 + 30, gy - 6), 5.0, 'EFFK', hollow=0.3, seed=54)
+    return f
+
+
+SPECIALE = [
+    dict(arms='orig', glow=1, fx_list=[fx_crater(1)], ms=150),
+    dict(arm=ARM_LIFT, heat=1, glow=2, lean=-1, tilt=-2, crouch=1, head=(0, 1), pa=(-1, 0),
+         fx_list=[fx_lift_dust, fx_crater(2)], ms=150),
+    dict(arm=ARM_HIGH, stretch=0.93, heat=2, glow=2, lean=-2, tilt=-4, crouch=-1, head=(0, -1), pa=(-2, -1),
+         fx_list=[fx_crater(3)], ms=140),
+    dict(arm=ARM_SKY, stretch=0.92, heat=3, glow=3, lean=-2, tilt=-5, crouch=-2, head=(0, -1), pa=(-2, -2),
+         fx_list=[fx_crater(3), fx_club_fire(0)], ms=300),
+    dict(arm=ARM_SKY, stretch=0.92, heat=4, glow=3, lean=-2, tilt=-5, crouch=-2, head=(0, -1), pa=(-2, -2),
+         fx_list=[fx_crater(4), fx_club_fire(1)], ms=200),
+    dict(arm=ARM_SWING, heat=3, glow=3, lean=2, tilt=3, crouch=0, pa=(0, -1),
+         smear=fx_club_smear(ARM_SKY, tones='vuutsr', lava='wv', w=22), fx_list=[fx_crater(5)], ms=50),
+    dict(arm=ARM_HIT, plant=True, heat=3, glow=3, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), flash=40,
+         shake=1, fx_list=[fx_rift(0)], ms=210),
+    dict(arm=ARM_HIT, plant=True, heat=2, glow=2, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), shake=-1,
+         fx_list=[fx_rift(1)], ms=90),
+    dict(arm=ARM_HIT, plant=True, heat=2, glow=2, lean=4, tilt=8, crouch=3, pa=(1, 1), fx_list=[fx_rift(2)], ms=90),
+    dict(arm=ARM_HIT, plant=True, heat=1, glow=2, lean=4, tilt=7, crouch=3, pa=(1, 0), fx_list=[fx_rift(3)], ms=100),
+    dict(arm=ARM_HIT, plant=True, heat=1, glow=1, lean=4, tilt=7, crouch=3, pa=(1, 0), fx_list=[fx_rift(4)], ms=110),
+    dict(arm=ARM_HIT, plant=True, glow=1, lean=4, tilt=6, crouch=3, fx_list=[fx_rift(5)], ms=120),
+    dict(arm=ARM_DRAG, plant=True, glow=1, lean=3, tilt=4, crouch=2, fx_list=[fx_rift(6)], ms=130),
+    dict(arm=ARM_BACK, plant=True, lean=1, tilt=1, crouch=1, fx_list=[fx_rift(7)], ms=140),
+    dict(arms='orig', glow=1, fx_list=[fx_rift(8)], ms=150),
+    dict(arms='orig', ms=170),
+]
 
 # ---------------------------------------------------------------- toutes les images
 def build_one(name):

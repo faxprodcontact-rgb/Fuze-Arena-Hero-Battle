@@ -699,7 +699,7 @@ ATTAQUE = [
 #   s'éteignent en volutes de fumée et en braises ; il se renfonce dans sa bosse, la lanterne finit de se balancer.
 HIT2 = (ENEMY_X, GROUND - 34)
 ORBIT_C = (84.0, 31.0)               # le centre du cercle des feux follets (grille : autour de la tête)
-ORBIT_R = (37.0, 11.0)
+ORBIT_R = (37.0, 14.0)
 ORBIT_SPEED = 62.0                   # degrés par image
 BORN = (2.0, 3.0, 4.0)               # l'image où chaque feu follet sort de la lanterne
 RELEASE, ARRIVE = 8.0, 11.0
@@ -831,13 +831,11 @@ def fx_burst(stage):
                 ember(front, x + dx, y + dy, big)
         elif stage == 3:                            # la fumée l'emporte, des volutes montent
             cloud(back, (x + 2, y - 30), 14, 'ijjl', seed=5, ground=False)
-            curl(back, (x - 16, y - 36), 7, 200, turn=250, w=4.2, tones='ijl', cw=True)
             fire_cloud(front, (x + 3, y - 22), 8, tones='utsr', seed=4, licks=10)
             for (dx, dy) in ((-28, -46), (26, -54), (12, -70), (-7, -8), (17, 0)):
                 ember(front, x + dx, y + dy, hot=False)
         elif stage == 4:                            # la fumée se défait en montant
             cloud(back, (x + 5, y - 36), 12, 'ijj', hollow=0.5, seed=5, ground=False)
-            curl(back, (x - 18, y - 48), 6, 220, turn=240, w=3.6, tones='ijl', cw=True)
             ember(front, x + 22, y - 62, hot=False)
             ember(front, x - 20, y - 52, hot=False)
             ember(front, x + 3, y - 30, big=True, hot=False)

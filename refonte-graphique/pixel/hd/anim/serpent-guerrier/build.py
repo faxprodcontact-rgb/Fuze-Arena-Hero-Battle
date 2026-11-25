@@ -646,16 +646,24 @@ def tip_of(ctx):
     return blade_point(ctx.guard, ctx.phi if ctx.phi is not None else 0.0, SPINE[-1])
 
 
-def fx_smear(phi0, phi1, tones='xxDDC', r0=9.0, r1=19.5):
-    """la traînée de la lame entre deux angles (autour de la garde)"""
+def fx_smear(phi0, phi1, tones='xDC', wmax=5.0):
+    """la traînée de la lame : un croissant qui suit le chemin du bout de la lame, de l'ancien angle (phi0, mince)
+    jusqu'au bout de la lame (phi1, épais), plus un voile plus court sur le chemin du ventre du croissant"""
     def f(cv, back, front, ctx):
-        # angle (écran) du bout de la lame pour un angle de poignée phi
-        tip_local = math.degrees(math.atan2(-SPINE[-1][1], SPINE[-1][0]))   # vers le bas : négatif
-        bel_local = math.degrees(math.atan2(-SPINE[4][1], SPINE[4][0]))
-        a0 = phi0 + (tip_local + bel_local) / 2
-        a1 = phi1 + (tip_local + bel_local) / 2
-        lo, hi = (a1, a0) if a1 < a0 else (a0, a1)
-        arc_band(back, ctx.guard, r0, r1, a0, a1, tones, fade=0.45)
+        G = ctx.guard
+        for (st, w, frac) in ((SPINE[-1], wmax, 1.0), (SPINE[4], wmax * 0.7, 0.75)):
+            r = math.hypot(*st)
+            off = math.degrees(math.atan2(-st[1], st[0]))
+            a1 = phi1 + off
+            a0 = a1 + (phi0 - phi1) * frac
+            n = max(8, int(abs(a1 - a0) / 3))
+            pts, ws = [], []
+            for i in range(n + 1):
+                q = i / n                                    # 0 : vieux bout, 1 : au bout de la lame
+                a = math.radians(a0 + (a1 - a0) * q)
+                pts.append((G[0] + r * math.cos(a), G[1] - r * math.sin(a)))
+                ws.append(w * q ** 0.8)
+            stroke(back, pts, ws, tones)
     return f
 
 
