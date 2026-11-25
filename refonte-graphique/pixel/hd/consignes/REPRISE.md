@@ -79,3 +79,7 @@
 - 25/11 : le propriétaire valide l'essai (« ça me convient ») → export des 54 autres lancé en 6 lots de 9
   (brief : scratchpad brief-export.md = consigne export-jeu.md + ne pas toucher actions.ts / hd-trial.ts).
   Ensuite : ajouter au combat d'essai un choix des personnages pour les tester tous, vérifier, publier.
+- 25/11 : les 60 personnages sont exportés (public/art/hd/, src/game/hd-meta.ts). En cours : choix des personnages
+  dans le combat d'essai + mode « tous à la suite », corrections de jeu_export.py (arguments de compose, calques
+  transparents, vitesse/pente des projectiles, tengu-eventail non déterministe), contrôle des 60 dans le jeu
+  (sortie/combat-hd-tous.gif, -planche.png). Ensuite : publier (version, journal) et montrer au propriétaire.
