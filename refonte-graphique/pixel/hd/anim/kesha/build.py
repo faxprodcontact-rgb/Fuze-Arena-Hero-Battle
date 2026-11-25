@@ -267,8 +267,9 @@ def near_arm(a=0, b=0):
 
 
 def head_part(gape=0):
-    """la tête ; gape > 0 : la mâchoire du bas s'abaisse (de gape pixels au bout, 0 au coin de la bouche) et la gorge
-    sombre apparaît ; gape < 0 : la gueule claque (la mâchoire remonte, ses dents passent sous celles du haut)"""
+    """la tête ; gape > 0 : la mâchoire du bas s'abaisse (de gape pixels au bout, 0 au coin de la bouche) ; la gueule
+    reste VIDE (on voit le fond entre les mâchoires, le contour fait le tour : demande du 25/11, comme le dragon) ;
+    gape < 0 : la gueule claque (la mâchoire remonte, ses dents passent sous celles du haut)"""
     t = P['tete']
     if not gape:
         return t
@@ -278,16 +279,7 @@ def head_part(gape=0):
     d = lambda x: int(round(gape * (x - JAW_X0 + 1) / (JAW_X1 - JAW_X0 + 1))) if x <= JAW_X1 else gape
     jaw = shear_cols(jaw, d, JAW_X0, GW - 1)
     if gape > 0:
-        out = np.where(jaw != '.', jaw, top)
-        for x in range(JAW_X0, GW):
-            n = d(x)
-            if t[JAW_Y - 1, x] not in 'mnokw':
-                continue
-            for k in range(n):
-                y = JAW_Y + k
-                if out[y, x] == '.':
-                    out[y, x] = 'm' if (k == 0 or k == n - 1 or n <= 2) else 'k'
-        return out
+        return np.where(jaw != '.', jaw, top)
     out = top.copy()
     put_ok = (jaw != '.') & np.isin(top, ['.', 'm', 'k', 'n', 'o'])
     out[put_ok] = jaw[put_ok]

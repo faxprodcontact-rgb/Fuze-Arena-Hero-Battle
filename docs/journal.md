@@ -417,6 +417,7 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   baron vaudou, Freyja le barbare à la massue, Isis le chasseur au crâne de cerf, Thor la femme-araignée, Atlas l'enfant
   de la forêt, Zeus le roi noir). Les noms de fichiers suivent les noms du jeu, pas ce que montre le dessin. Une couleur
   de clignement passe par une lettre de la légende (jamais une couleur directe dans `HEAD_BLINK`).
+  **v0.57.3** : chargement : plus de crête au premier plan, mer de nuages en 3 rangées, colisée refait sur son piton, logo au milieu, oiseaux au loin ; tests : `.claude/**` exclu (vite.config.ts).
   **v0.57.2** : chargement sans héros (décor animé seul, bannière qui claque sur la crête), logo plus petit et plus coupé (viewBox).
   **v0.57.1** : chargement refait à la demande du propriétaire : illustration construite exprès (`pixel/ui/paysage.py` : crête
   rocheuse, mer de nuages, arène au loin ; Elvyn, Sylvar, Kael en pose de combat) et logo VECTORIEL HD (`pixel/ui/logo_hd.py`

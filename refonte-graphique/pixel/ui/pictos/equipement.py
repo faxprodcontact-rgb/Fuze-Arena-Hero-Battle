@@ -1,0 +1,695 @@
+# Pictos de l'ÉQUIPEMENT, des ÉLÉMENTS, des RÔLES, des CARACTÉRISTIQUES et des STATUTS de combat, en pixel art HD.
+#
+#   python3 refonte-graphique/pixel/ui/pictos/equipement.py            → png/<nom>.png (32 × 32) + la planche d'aperçu
+#   python3 refonte-graphique/pixel/ui/pictos/equipement.py weapon-3   → seulement ces pictos (aperçu ×10 dans sortie/ui/)
+#
+# Puis `python3 refonte-graphique/pixel/ui/pictos/assemble.py` range tous les pictos dans public/art/icons.webp.
+#
+# Méthode : chaque picto est construit pixel par pixel sur une case de 32 × 32. Les formes viennent de masques
+# (polygones, ellipses, traits, ou petites grilles de lettres pour les détails), chaque pixel reçoit une MATIÈRE
+# (une gamme de 5 à 6 teintes décalées : ombres vers le violet / bleu, lumières vers le jaune) et un rang dans la gamme.
+# Une seule lumière, en haut à droite : bord haut-droit éclairé, bord bas-gauche dans l'ombre, et chaque morceau posé
+# sur un autre y jette une ombre douce (un cran plus sombre) en bas à gauche. Un seul contour sombre autour du tout,
+# ajouté à la fin. Pas de noir pur à l'intérieur, pas de rayures, pas de lettres (des signes inventés).
+#
+# Les 6 raretés des objets (0 Gris, 1 Vert, 2 Bleu, 3 Violet, 4 Or, 5 Rouge) : la même famille d'objet, de plus en
+# plus riche (pierre, garde, ailes, cornes, flamme), et la couleur de la rareté qui domine pour se lire d'un coup d'œil.
+import os
+import sys
+
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+UI = os.path.dirname(HERE)
+sys.path.insert(0, UI)
+from uilib import CONTOUR, S, SORTIE, grossit, rgb, sauve  # noqa: E402
+
+PNG = os.path.join(HERE, 'png')
+N = 32          # la case commune des pictos (assemble.py)
+SS = 8          # sur-échantillonnage des formes (bords propres, puis seuil à la moitié)
+
+# ---------------------------------------------------------------------------------------------------------------
+# Les matières : du plus sombre au plus clair. Ombres vers le violet / bleu, lumières vers le jaune.
+# ---------------------------------------------------------------------------------------------------------------
+M = {
+    'acier':   ['#2c2c4a', '#47507a', '#6f7fa6', '#a2b3cf', '#d6e2ee', '#fbfdf2'],
+    'fer':     ['#2e2a3e', '#4a4659', '#6c6a7c', '#9493a0', '#bdbcc2', '#e4e2dc'],
+    'or':      ['#5a2422', '#9a4a26', '#d9862e', '#f6bd3c', '#ffe57a', '#fffbd0'],
+    'bronze':  ['#3e1f26', '#6e3a2c', '#a5623a', '#d18f4e', '#efbd78', '#fbe3ae'],
+    'cuir':    ['#2e1826', '#4e2a2c', '#7a4434', '#a6683e', '#cc9154', '#e8bd7c'],
+    'bois':    ['#33192a', '#5a2e2c', '#8a4e30', '#b8753a', '#dca252', '#f2cf7c'],
+    'gris':    ['#2a2838', '#43425a', '#626480', '#8a8ea8', '#b4bad0', '#e0e6f0'],
+    'vert':    ['#123232', '#1a5440', '#2a8a4a', '#4fbe55', '#94e266', '#d6f7a0'],
+    'bleu':    ['#181a52', '#1e3a8c', '#2766cc', '#3f97f2', '#7cc8ff', '#c8eeff'],
+    'violet':  ['#24124a', '#41208a', '#6a36c6', '#9a62ee', '#c696ff', '#ecd2ff'],
+    'rouge':   ['#360c28', '#6e1230', '#b42236', '#e8433a', '#ff8a5a', '#ffd09a'],
+    'braise':  ['#5e1028', '#b0202e', '#ee4a2a', '#ff9a2e', '#ffd84a', '#fff7c0'],
+    'nuit':    ['#1a0e22', '#2c1630', '#46223c', '#663046', '#8c4652', '#b46a62'],
+    'creme':   ['#5a4440', '#8a6a5a', '#b8957a', '#dcc29c', '#f2e2c0', '#fffbea'],
+    'eau':     ['#16206a', '#1c46b4', '#2482ea', '#46b8ff', '#9ae2ff', '#e4fbff'],
+    'roc':     ['#3a1e2e', '#64323a', '#9a5238', '#c8823e', '#eab454', '#fbe08a'],
+    'contour': [CONTOUR] * 6,
+    'herbe':   ['#11303a', '#145a48', '#1f8f4a', '#46c25a', '#8ee86a', '#d2fca0'],
+    'vent':    ['#123a52', '#156a72', '#20a682', '#4cd894', '#9cf4b4', '#e2fff0'],
+    'sang':    ['#3a0a2a', '#6e0e30', '#ae1834', '#e0303a', '#ff6a5a', '#ffb6a0'],
+    'poison':  ['#1c2240', '#28503c', '#3a8a34', '#6ec238', '#b4ec4a', '#ecffa0'],
+    'peau':    ['#4a2230', '#7a3a3a', '#b0603e', '#dc8e58', '#f4b878', '#ffe0a8'],
+    'blanc':   ['#5a5a7a', '#8a8eb0', '#b8c2dc', '#dce6f4', '#f4f8ff', '#ffffff'],
+    'coeur':   ['#3e0a2c', '#7e1238', '#c8203e', '#f04a4a', '#ff8a72', '#ffd0b4'],
+    'flamme':  ['#7a1a2a', '#d23a24', '#ff7424', '#ffb22c', '#ffe45a', '#fffcd0'],
+    'escargot': ['#3a2034', '#6a3a46', '#a8645a', '#d8946a', '#f4c48a', '#fff0c4'],
+}
+RAR = ['gris', 'vert', 'bleu', 'violet', 'or', 'rouge']         # la couleur de chaque rareté
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# L'atelier
+# ---------------------------------------------------------------------------------------------------------------
+class Picto:
+    """Une case de N × N : chaque pixel a une matière (ou rien) et un rang dans sa gamme."""
+
+    def __init__(self, n=N):
+        self.n = n
+        self.mat = np.full((n, n), '', dtype=object)
+        self.rang = np.zeros((n, n), int)
+        self.Y, self.X = np.mgrid[0:n, 0:n]
+
+    def plein(self):
+        return self.mat != ''
+
+    def pose(self, m, mat, rang, ombre=True):
+        """Peint le masque m dans la matière `mat` (rang : un nombre ou un tableau). Avec `ombre`, le morceau jette
+        une ombre douce (un cran plus sombre) sur ce qui est déjà peint, en bas à gauche de lui."""
+        m = m.astype(bool)
+        if ombre:
+            sous = S(m, 1, -1) & self.plein() & ~m          # le voisin haut-droit est le nouveau morceau
+            self.rang[sous] -= 1
+        r = np.broadcast_to(np.asarray(rang), m.shape)
+        self.mat[m] = mat
+        self.rang[m] = r[m]
+
+    def cran(self, m, d):
+        """Éclaircit (d > 0) ou assombrit (d < 0) ce qui est déjà peint sous le masque."""
+        m = m.astype(bool) & self.plein()
+        self.rang[m] += d
+
+    def image(self, contour=True):
+        n = self.n
+        out = np.zeros((n, n, 4), np.uint8)
+        for (y, x) in zip(*np.nonzero(self.plein())):
+            g = M[self.mat[y, x]]
+            out[y, x, :3] = rgb(g[int(np.clip(self.rang[y, x], 0, len(g) - 1))])
+            out[y, x, 3] = 255
+        if contour:
+            m = self.plein()
+            o = grossit(m, 1) & ~m
+            out[o, :3] = CONTOUR
+            out[o, 3] = 255
+        return Image.fromarray(out, 'RGBA')
+
+
+def _ss(dessine):
+    """Un masque N × N tracé en sur-échantillonné (coordonnées en pixels du picto), seuil à la moitié."""
+    im = Image.new('L', (N * SS, N * SS), 0)
+    dessine(ImageDraw.Draw(im), lambda p: [(x * SS, y * SS) for x, y in p])
+    a = np.asarray(im.resize((N, N), Image.BOX), float) / 255
+    return a >= 0.5
+
+
+def poly(*pts):
+    return _ss(lambda d, k: d.polygon(k(pts), fill=255))
+
+
+def ellipse(cx, cy, rx, ry):
+    return _ss(lambda d, k: d.ellipse(k([(cx - rx, cy - ry), (cx + rx, cy + ry)]), fill=255))
+
+
+def trait(pts, e):
+    """Un trait épais (largeur e) passant par les points, bouts ronds."""
+    def f(d, k):
+        q = k(pts)
+        d.line(q, fill=255, width=int(e * SS), joint='curve')
+        for x, y in q:
+            d.ellipse((x - e * SS / 2, y - e * SS / 2, x + e * SS / 2, y + e * SS / 2), fill=255)
+    return _ss(f)
+
+
+def trait_var(pts, e0, e1):
+    """Un trait dont l'épaisseur va de e0 (premier point) à e1 (dernier point) : une suite de disques serrés."""
+    def f(d, k):
+        q = k(pts)
+        tot = len(q) - 1
+        for i in range(tot):
+            (xa, ya), (xb, yb) = q[i], q[i + 1]
+            n = max(2, int(np.hypot(xb - xa, yb - ya) / 2))
+            for j in range(n + 1):
+                t = (i + j / n) / tot
+                x, y = xa + (xb - xa) * j / n, ya + (yb - ya) * j / n
+                rr = (e0 + (e1 - e0) * t) * SS / 2
+                d.ellipse((x - rr, y - rr, x + rr, y + rr), fill=255)
+    return _ss(f)
+
+
+def rect(x0, y0, x1, y1):
+    """Rectangle de pixels, bornes comprises."""
+    m = np.zeros((N, N), bool)
+    m[y0:y1 + 1, x0:x1 + 1] = True
+    return m
+
+
+def grille(texte, x0=0, y0=0):
+    """Une petite grille de lettres posée en (x0, y0) → {lettre: masque}. '.' et ' ' = vide."""
+    out = {}
+    for j, ligne in enumerate(texte.strip('\n').split('\n')):
+        for i, c in enumerate(ligne):
+            if c in '. ':
+                continue
+            y, x = y0 + j, x0 + i
+            if 0 <= x < N and 0 <= y < N:
+                out.setdefault(c, np.zeros((N, N), bool))[y, x] = True
+    return out
+
+
+def miroir(m, axe=15.5):
+    """Le masque complété par sa symétrie gauche-droite autour de x = axe."""
+    o = m.copy()
+    for x in range(N):
+        x2 = int(round(2 * axe - x))
+        if 0 <= x2 < N:
+            o[:, x2] |= m[:, x]
+    return o
+
+
+def relief(m, base, fort=1.0, bord=True, cx=None, cy=None):
+    """Le rang de chaque pixel d'un volume arrondi éclairé d'en haut à droite : base au centre, plus clair vers le
+    haut-droit, plus sombre vers le bas-gauche ; bord éclairé (+1) et bord dans l'ombre (−1)."""
+    ys, xs = np.nonzero(m)
+    if len(xs) == 0:
+        return np.zeros((N, N), int)
+    cx = xs.mean() if cx is None else cx
+    cy = ys.mean() if cy is None else cy
+    ray = max(2.0, max(xs.max() - xs.min(), ys.max() - ys.min()) / 2)
+    X, Y = np.mgrid[0:N, 0:N][::-1]
+    t = ((X - cx) - (Y - cy)) / (ray * 1.414)
+    r = base + np.round(t * 1.5 * fort).astype(int)
+    if bord:
+        lum = m & (~S(m, 1, 0) | ~S(m, 0, -1) | ~S(m, 1, -1))
+        omb = m & (~S(m, -1, 0) | ~S(m, 0, 1) | ~S(m, -1, 1))
+        r = r + lum.astype(int) - (omb & ~lum).astype(int)
+    return r
+
+
+def cylindre(m, base=3, fort=1.4, vertical=True):
+    """Le rang d'un cylindre debout (vertical) ou couché : plus clair vers la droite (ou le haut), ligne par ligne."""
+    r = np.zeros((N, N), int)
+    for i in range(N):
+        ligne = m[:, i] if not vertical else m[i, :]
+        idx = np.nonzero(ligne)[0]
+        if len(idx) == 0:
+            continue
+        c, w = (idx.min() + idx.max()) / 2, max(1.0, (idx.max() - idx.min()) / 2)
+        t = (idx - c) / w * (1 if vertical else -1)
+        val = base + np.round(t * fort).astype(int)
+        val = np.where(t > 0.55, val + 0, val)
+        if vertical:
+            r[i, idx] = val
+        else:
+            r[idx, i] = val
+    return r
+
+
+def diag(sens, ax, ay):
+    """Coordonnées d'un objet long en diagonale passant par (ax, ay) : u le long (vers la pointe, en haut), d en
+    travers (d < 0 : le côté tourné vers la lumière). sens = +1 : pointe en haut à droite ; −1 : en haut à gauche."""
+    X, Y = np.mgrid[0:N, 0:N][::-1]
+    if sens > 0:
+        return (X - Y) - (ax - ay), -((X + Y) - (ax + ay))
+    return (-X - Y) + (ax + ay), (Y - X) + (ax - ay)
+
+
+def decoupe(p, m):
+    """Un contour sombre autour d'un objet posé sur un autre (chaque objet a son contour)."""
+    o = grossit(m, 1) & ~m & p.plein()
+    p.pose(o, 'contour', 0, ombre=False)
+
+
+def eclat(p, x, y, mat=None, rang=5):
+    """Un point de lumière (reflet franc)."""
+    m = np.zeros((N, N), bool)
+    m[y, x] = True
+    p.pose(m, mat or p.mat[y, x], rang, ombre=False)
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Les dessins
+# ---------------------------------------------------------------------------------------------------------------
+PICTOS = {}
+
+
+def picto(nom):
+    def deco(f):
+        PICTOS[nom] = f
+        return f
+    return deco
+
+
+# ---------- L'arme : une épée en diagonale, pointe en haut à droite (axe x + y = 31) ----------
+U = None
+
+
+def _uv():
+    X, Y = np.mgrid[0:N, 0:N][::-1]
+    return X - Y, X + Y            # u : le long de la lame (vers la pointe), v : en travers (31 = l'axe)
+
+
+def epee(r):
+    """L'épée de rareté r (0..5), ou None = le picto neutre de l'emplacement."""
+    p = Picto()
+    u, v = _uv()
+    d = v - 31                     # < 0 : la moitié haute-gauche de la lame (face éclairée)
+    neutre = r is None
+    r = 2 if neutre else r
+    # --- la lame
+    large = [3, 3, 3, 4, 4, 4][r]
+    base_u = -9
+    long_ = [13, 14, 15, 15, 16, 14][r]                     # où commence l'effilement de la pointe
+    bout = [24, 25, 26, 26, 26, 26][r]
+    lar = np.where(u <= long_, large, large * (bout - u) / (bout - long_))
+    if r == 5:      # lame-flamme : bord haut ondulé
+        lar = lar + np.where((u > -7) & (u < long_ + 2), np.round(1.2 * np.sin((u + 1) * 0.55)), 0)
+    lame = (u >= base_u) & (u <= bout) & (np.abs(d) <= lar + 0.01)
+    mat_l = {0: 'fer', 1: 'acier', 2: 'acier', 3: 'acier', 4: 'acier', 5: 'braise'}[r]
+    haut = (u > 4).astype(int)                                 # vers la pointe, plus près de la lumière
+    rang = np.where(d < 0, 3 + haut, np.where(d == 0, 5, 2))
+    rang = np.where(d >= lar - 0.5, 3, rang)                   # le fil bas : un reflet
+    rang = np.where(d <= -lar + 0.5, 4, rang)
+    if r == 5:
+        rang = np.where(d < 0, 4, np.where(d == 0, 5, 2 + haut))
+        rang = np.where(d <= -lar + 0.5, 5, rang)
+    p.pose(lame, mat_l, rang, ombre=False)
+    if r in (2, 3, 4):                                         # la gouttière au milieu de la lame
+        g = lame & (np.abs(d) <= (0 if r == 2 else 1)) & (u >= base_u + 2) & (u <= long_ - 1)
+        p.pose(g, {2: 'bleu', 3: 'violet', 4: 'or'}[r], np.where(d < 0, 5, np.where(d == 0, 4, 3)), ombre=False)
+    # --- la garde (perpendiculaire à la lame)
+    gl = [6, 6, 7, 7, 8, 8][r]
+    mat_g = {0: 'fer', 1: 'bronze', 2: 'acier', 3: 'or', 4: 'or', 5: 'or'}[r]
+    if neutre:
+        mat_g = 'or'
+    gu = base_u - 1
+    garde = (u <= gu) & (u >= gu - 2) & (np.abs(d) <= gl) & ~((np.abs(d) == gl) & (u != gu - 1))
+    if r >= 2:   # les quillons recourbés vers la pointe
+        garde |= (u > gu) & (u <= gu + 2) & (np.abs(d) >= gl - 1) & (np.abs(d) <= gl)
+    if r == 4:   # des ailes
+        garde |= (u > gu) & (u <= gu + 5) & (np.abs(d) >= gl - 2) & (np.abs(d) <= gl + 1) & ((u - gu) <= np.abs(d) - gl + 5)
+    if r == 5:   # des cornes
+        k = u - gu
+        corne = (k >= 1) & (k <= 6) & (np.abs(d) <= gl + 1 - k * 0.5) & (np.abs(d) >= gl - 1 - k * 0.5)
+    p.pose(garde, mat_g, relief(garde, 3, 0.8), ombre=True)
+    if r == 5:
+        p.pose(corne, 'nuit', relief(corne, 4, 1.0), ombre=True)
+    # --- la poignée
+    gp_u0, gp_u1 = gu - 9, gu - 3
+    poignee = (u >= gp_u0) & (u <= gp_u1) & (np.abs(d) <= 2)
+    mat_p = {0: 'cuir', 1: 'vert', 2: 'bleu', 3: 'violet', 4: 'rouge', 5: 'rouge'}[r]
+    if neutre:
+        mat_p = 'cuir'
+    rp = np.where(d < 0, 3, np.where(d == 0, 2, 1))
+    p.pose(poignee, mat_p, rp, ombre=True)
+    # --- le pommeau
+    pu = gp_u0 - 3
+    pom = ((u - pu) ** 2 + d ** 2) <= (10 if r >= 2 else 8)
+    p.pose(pom, mat_g, relief(pom, 3, 1.2), ombre=True)
+    if r >= 1:   # une pierre au pommeau
+        pp = ((u - pu) ** 2 + d ** 2) <= 2
+        p.pose(pp, {1: 'vert', 2: 'bleu', 3: 'violet', 4: 'rouge', 5: 'braise'}[r], relief(pp, 3, 1.5), ombre=False)
+    # --- la pierre au centre de la garde
+    if r >= 1:
+        pierre = ((u - gu + 1) ** 2 + d ** 2) <= (4 if r < 3 else 8)
+        gem = {1: 'vert', 2: 'bleu', 3: 'violet', 4: 'rouge', 5: 'braise'}[r]
+        p.pose(pierre, gem, relief(pierre, 3, 1.6), ombre=False)
+    return p
+
+
+@picto('weapon')
+def _w():
+    return epee(None)
+
+
+for _r in range(6):
+    PICTOS[f'weapon-{_r}'] = (lambda r: lambda: epee(r))(_r)
+
+
+def anneau(m):
+    """Le bord intérieur d'un masque (1 pixel)."""
+    return m & ~(S(m, 1, 0) & S(m, -1, 0) & S(m, 0, 1) & S(m, 0, -1))
+
+
+# ---------- L'armure : un plastron de face ----------
+ARMURE = {   # rareté : (plaques, épaulières, garniture, ceinture, pierre)
+    None: ('acier', 'acier', 'or', 'cuir', None),
+    0: ('fer', 'fer', None, 'cuir', None),
+    1: ('vert', 'fer', 'bronze', 'cuir', None),
+    2: ('bleu', 'acier', 'acier', 'cuir', 'bleu'),
+    3: ('violet', 'violet', 'or', 'nuit', 'violet'),
+    4: ('or', 'or', 'blanc', 'rouge', 'bleu'),
+    5: ('rouge', 'nuit', 'or', 'nuit', 'braise'),
+}
+
+
+def armure(r):
+    p = Picto()
+    plaque, epaule, garni, ceint, pierre = ARMURE[r]
+    rr = 2 if r is None else r
+    tronc = miroir(poly((7, 7), (12, 5.5), (15.5, 8), (15.5, 22.5), (10.5, 22.5), (9.6, 18), (7.6, 14), (6.6, 10)))
+    p.pose(tronc, plaque, relief(tronc, 3, 1.1, cx=15.5, cy=11), ombre=False)
+    # l'arête du plastron (côté lumière un cran plus clair, côté ombre un cran plus sombre) et le dessous des pectoraux
+    p.cran(tronc & (p.X == 16) & (p.Y >= 9) & (p.Y <= 18), 1)
+    p.cran(tronc & (p.X == 15) & (p.Y >= 9) & (p.Y <= 18), -1)
+    pecs = miroir(ellipse(12.2, 11.5, 4.6, 3.6)) & tronc
+    p.cran(tronc & ~pecs & S(pecs, 0, -1) & (p.Y <= 17) & (p.Y >= 12), -1)
+    if garni:   # le liseré autour du plastron
+        lis = anneau(tronc) & (p.Y <= 18)
+        p.pose(lis, garni, relief(lis, 3, 0.8), ombre=False)
+    # le col (gorgerin)
+    col = miroir(poly((11, 4.2), (15.5, 3.2), (15.5, 7.5), (12, 6.8)))
+    p.pose(col, garni or plaque, relief(col, 3, 1.0), ombre=True)
+    # les tassettes (la jupe de plaques) sous la ceinture
+    jupe = miroir(poly((10.4, 21), (15.5, 21), (15.5, 27.5), (8.8, 27.5)))
+    jr = relief(jupe, 3, 1.0, cx=15.5, cy=24)
+    jr = jr - ((p.X == 15) & jupe).astype(int)          # la fente du milieu : un cran plus sombre, pas un trait
+    p.pose(jupe, plaque if rr != 1 else 'fer', jr, ombre=False)
+    if garni and rr >= 3:
+        bas = jupe & ~S(jupe, 0, 1)
+        p.pose(bas, garni, 3, ombre=False)
+    # la ceinture et sa boucle
+    ce = miroir(rect(10, 19, 15, 21))
+    p.pose(ce, ceint, np.where(p.Y == 19, 3, 2) + (p.X >= 16).astype(int), ombre=True)
+    bo = rect(14, 19, 17, 21)
+    p.pose(bo, 'or' if rr != 0 else 'fer', relief(bo, 3, 1.2), ombre=True)
+    # les épaulières : une coque et une lame dessous
+    for sens in (-1, 1):
+        def P(*pts):
+            return poly(*[(15.5 + sens * (15.5 - x), y) for x, y in pts])
+        lame = P((1.6, 12), (8.5, 12.5), (8, 15.6), (2.4, 15.2))
+        p.pose(lame, epaule, relief(lame, 3, 1.0), ombre=True)
+        coque = P((1, 12.5), (1.4, 8.6), (3.6, 5.6), (7.6, 4.4), (11.2, 5.4), (12.2, 8.4), (10.8, 11.6), (6, 13.4))
+        if rr == 5:   # une corne vers le haut et l'extérieur
+            coque |= P((3.0, 6.5), (0.6, 0.6), (6.6, 4.8))
+        p.pose(coque, epaule, relief(coque, 3, 1.3), ombre=True)
+        if garni and rr >= 2:
+            lis = coque & ~S(coque, 0, 1) & (p.Y >= 9)
+            p.pose(lis, garni, 3, ombre=False)
+        if rr == 4:   # une petite aile blanche sur l'épaulière
+            aile = P((2.5, 7.5), (-0.5, 1.2), (3.2, 2.4), (5.6, 1.0), (6.4, 4.8)) & ~coque
+            p.pose(aile, 'blanc', relief(aile, 3, 1.0), ombre=False)
+    # la pierre au milieu de la poitrine
+    if pierre:
+        g = ellipse(15.5, 13.2, 1.9 if rr < 4 else 2.4, 2.1 if rr < 4 else 2.6)
+        p.pose(g, pierre, relief(g, 3, 1.6), ombre=True)
+    return p
+
+
+@picto('armor')
+def _a():
+    return armure(None)
+
+
+for _r in range(6):
+    PICTOS[f'armor-{_r}'] = (lambda r: lambda: armure(r))(_r)
+
+
+# ---------- Le casque : de face ----------
+CASQUE = {   # rareté : (métal, garniture, panache, visière fermée, ornement)
+    None: ('acier', 'or', None, True, None),
+    0: ('fer', None, None, False, None),
+    1: ('fer', 'bronze', 'vert', False, None),
+    2: ('bleu', 'acier', 'blanc', True, None),
+    3: ('violet', 'or', None, True, 'crete'),
+    4: ('or', 'blanc', None, True, 'ailes'),
+    5: ('rouge', 'or', None, True, 'cornes'),
+}
+
+
+def casque(r):
+    p = Picto()
+    metal, garni, panache, ferme, orne = CASQUE[r]
+    rr = 2 if r is None else r
+    # le panache, derrière, qui part du sommet vers le haut à gauche
+    if panache:
+        pl = poly((16.8, 5.6), (16.2, 1.8), (13.4, 0.3), (9.2, 0.5), (5.4, 2.2), (2.6, 5.8), (2.4, 8.2), (5.2, 5.8), (8.6, 4.4), (11.8, 5.2), (13.4, 7.6))
+        p.pose(pl, panache, relief(pl, 3, 1.4), ombre=False)
+    if orne == 'crete':   # une crête de métal précieux sur le dessus
+        cr = miroir(poly((13.4, 2.0), (15.5, -0.4), (15.5, 9), (12.8, 9)))
+        p.pose(cr, garni, np.where(p.X >= 16, 4, 2), ombre=False)
+    if orne == 'cornes':
+        for sens in (-1, 1):
+            c = poly(*[(15.5 + sens * (15.5 - x), y) for x, y in ((9.4, 9.6), (5.2, 9.2), (2.4, 6.4), (1.4, 1.2), (4.4, 4.6), (7.6, 5.6), (10.4, 6.4))])
+            p.pose(c, 'creme', relief(c, 3, 1.3), ombre=False)
+    calotte = ellipse(15.5, 15, 9.6, 10.6) & (p.Y <= 24)
+    joues = miroir(poly((6.0, 14), (11, 14), (11.4, 26.4), (8.6, 28.2), (6.4, 25.4)))
+    tete = calotte | joues
+    p.pose(tete, metal, relief(tete, 3, 1.2, cx=15.5, cy=13), ombre=True)
+    # l'arête du dessus
+    p.cran(tete & (p.X == 16) & (p.Y <= 13), 1)
+    p.cran(tete & (p.X == 15) & (p.Y <= 13), -1)
+    if ferme:
+        face = miroir(poly((11, 14), (15.5, 14), (15.5, 27.6), (12, 27)))
+        p.pose(face, metal, relief(face, 3, 1.0, cx=15.5, cy=19) + (p.X >= 16).astype(int), ombre=True)
+        fente = rect(9, 16, 22, 17) & tete
+        p.pose(fente, 'nuit', np.where(p.Y == 16, 0, 1), ombre=False)
+        p.cran(S(fente, 0, -1) & ~fente & tete, 1)         # le rebord sous la fente prend la lumière
+        p.cran(face & (p.X == 16) & (p.Y >= 19), 1)       # l'arête du nez de la visière
+        p.cran(face & (p.X == 15) & (p.Y >= 19), -1)
+    else:
+        trou = miroir(poly((11.2, 14.5), (15.5, 14.5), (15.5, 26.6), (12, 26.2)))
+        p.pose(trou, 'nuit', np.where(p.Y <= 17, 0, 1), ombre=False)
+        nez = rect(15, 12, 16, 21)
+        p.pose(nez, metal, np.where(p.X == 16, 4, 2), ombre=True)
+    if garni:   # le bandeau du front et le bord
+        bandeau = tete & (p.Y >= 12) & (p.Y <= 13)
+        p.pose(bandeau, garni, relief(bandeau, 3, 0.9) + (p.Y == 12).astype(int), ombre=True)
+    if orne == 'ailes':
+        for sens in (-1, 1):
+            a = poly(*[(15.5 + sens * (15.5 - x), y) for x, y in ((6.6, 13), (2.6, 9.4), (0.4, 3.2), (3.4, 5.4), (3.6, 2.2), (6.2, 5.4), (7.2, 3.6), (8.6, 8.4))])
+            a &= ~tete
+            p.pose(a, garni, relief(a, 3, 1.2), ombre=False)
+    if rr >= 3:   # une pierre au front
+        g = ellipse(15.5, 11.2, 1.7, 1.9)
+        p.pose(g, {3: 'violet', 4: 'bleu', 5: 'braise'}[rr], relief(g, 3, 1.6), ombre=True)
+    return p
+
+
+@picto('helmet')
+def _h():
+    return casque(None)
+
+
+for _r in range(6):
+    PICTOS[f'helmet-{_r}'] = (lambda r: lambda: casque(r))(_r)
+
+
+# ---------- Les bottes : de profil, la pointe vers la droite ----------
+BOTTE = {   # rareté : (tige, pied, revers, garniture, ornement)
+    None: ('cuir', 'cuir', 'cuir', 'or', None),
+    0: ('cuir', 'cuir', 'cuir', None, None),
+    1: ('cuir', 'cuir', 'vert', 'bronze', None),
+    2: ('acier', 'acier', 'bleu', 'bleu', None),
+    3: ('violet', 'violet', 'or', 'or', None),
+    4: ('or', 'or', 'blanc', 'blanc', 'aile'),
+    5: ('rouge', 'rouge', 'or', 'or', 'pointes'),
+}
+
+
+def botte(r):
+    p = Picto()
+    tige, pied, revers, garni, orne = BOTTE[r]
+    rr = 2 if r is None else r
+    jambe = poly((9.6, 5), (19.6, 5), (19.6, 17.4), (8.8, 19.6))
+    chaus = poly((8.6, 17.6), (19.6, 16.4), (22.4, 18.4), (26.2, 20.2), (28.6, 22.0), (29.6, 24.6), (29.4, 26.8), (8.2, 26.8))
+    p.pose(jambe, tige, cylindre(jambe, 3, 1.5), ombre=False)
+    # le pied : le dessus prend la lumière, le côté plus sombre vers le talon et la semelle
+    dessus = chaus & ~S(chaus, 0, -1) | chaus & ~S(chaus, 0, -2)
+    rp = np.where(dessus, 4, 3) - (p.X <= 12).astype(int) - ((p.Y >= 23) & (p.X <= 22)).astype(int)
+    p.pose(chaus & ~jambe | chaus & (p.Y >= 19), pied, rp, ombre=False)
+    if rr >= 2 and r is not None:   # la coque de la pointe (en métal)
+        pointe = chaus & ellipse(27.6, 23.6, 3.8, 4.2) & (p.Y <= 25)
+        p.pose(pointe, garni if rr != 2 else 'acier', relief(pointe, 3, 1.3), ombre=True)
+    # la semelle et le talon
+    semelle = rect(8, 25, 29, 26) & (chaus | S(chaus, 0, -1))
+    talon = rect(8, 25, 13, 28)
+    p.pose(semelle | talon, 'bois' if rr < 4 else ('nuit' if rr == 5 else 'bronze'),
+           np.where(p.Y == 25, 3, 2), ombre=True)
+    # la sangle et sa boucle
+    if garni:
+        sangle = (jambe | chaus) & (p.Y >= 15) & (p.Y <= 16) & (p.X <= 20)
+        p.pose(sangle, garni if rr >= 2 else 'cuir', cylindre(sangle, 3, 1.0) + (p.Y == 15).astype(int), ombre=True)
+        bo = rect(15, 14, 17, 17)
+        p.pose(bo, 'or' if rr != 4 else 'blanc', relief(bo, 3, 1.2), ombre=True)
+    # le revers en haut de la tige
+    rev = poly((8.4, 2.8), (20.8, 2.4), (21, 7.6), (8.2, 8.0))
+    p.pose(rev, revers, cylindre(rev, 3, 1.4) + (p.Y <= 3).astype(int), ombre=True)
+    if rr >= 3 and revers != garni:
+        bord = rev & ~S(rev, 0, 1)
+        p.pose(bord, garni, 3, ombre=False)
+    if orne == 'aile':
+        a = poly((10.6, 12.6), (6.4, 7.4), (0.6, 5.6), (3.2, 9.0), (0.8, 9.4), (4.4, 12.2), (2.4, 13.4), (7.2, 15.6), (10.6, 15.8))
+        a &= ~(jambe | chaus)
+        p.pose(a, 'blanc', relief(a, 3, 1.2), ombre=False)
+    if orne == 'pointes':   # des pointes de métal sur le devant de la tige
+        for y in (8.5, 12.5):
+            pt = poly((19.4, y - 1.4), (23.6, y + 0.4), (19.4, y + 1.8))
+            p.pose(pt, 'nuit', relief(pt, 4, 1.0), ombre=True)
+    if rr >= 3:   # une pierre sur la boucle
+        g = ellipse(16.0, 15.5, 1.3, 1.3)
+        p.pose(g, {3: 'violet', 4: 'bleu', 5: 'braise'}[rr], relief(g, 3, 1.6), ombre=True)
+    return p
+
+
+@picto('boots')
+def _b():
+    return botte(None)
+
+
+for _r in range(6):
+    PICTOS[f'boots-{_r}'] = (lambda r: lambda: botte(r))(_r)
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Les éléments
+# ---------------------------------------------------------------------------------------------------------------
+def flamme(p, dx=0.0, dy=0.0, k=1.0, mat='flamme'):
+    """Une flamme à trois langues (la grande au milieu, penchée vers la lumière) ; le cœur clair en bas."""
+    def P(*pts):
+        return poly(*[(16 + (x - 16) * k + dx, 30 + (y - 30) * k + dy) for x, y in pts])
+    ext = P((17.4, 0.6), (21.2, 6.4), (22.4, 10.2), (24.4, 6.2), (27.2, 11.6), (28.0, 18.6), (26.0, 24.8), (21.4, 28.8),
+            (16, 29.8), (10.4, 28.8), (5.8, 25.2), (4.0, 19.2), (5.0, 13.0), (7.6, 8.8), (8.8, 13.6), (11.0, 9.4), (14.0, 5.6))
+    mil = P((17.0, 7.4), (20.4, 12.8), (21.6, 15.8), (23.4, 13.8), (24.6, 18.6), (23.0, 24.0), (19.6, 27.0), (16, 27.8),
+            (12.2, 27.0), (8.8, 24.0), (7.8, 19.6), (8.8, 15.6), (10.8, 17.6), (12.4, 13.4), (14.8, 10.6))
+    coeur = P((16.6, 14.8), (19.4, 18.8), (20.4, 22.4), (19.0, 25.6), (16, 26.6), (13.0, 25.6), (11.8, 22.6), (13.0, 19.6), (14.6, 18.0))
+    p.pose(ext, mat, relief(ext, 1, 0.8) + (S(ext, 0, -1) == 0).astype(int) * 0, ombre=False)
+    p.pose(mil, mat, relief(mil, 3, 0.6), ombre=False)
+    p.pose(coeur, mat, 4 + (relief(coeur, 0, 1.0, bord=False) > 0).astype(int), ombre=False)
+    return ext
+
+
+@picto('fire')
+def _fire():
+    p = Picto()
+    flamme(p)
+    return p
+
+
+def goutte(p, cx=16, cy=19.5, ry=10, mat='eau', base=3):
+    corps = ellipse(cx, cy, ry * 0.92, ry * 0.92) | poly((cx - ry * 0.74, cy - ry * 0.52), (cx, cy - ry * 1.85), (cx + ry * 0.74, cy - ry * 0.52))
+    r = relief(corps, base, 1.2, cx=cx, cy=cy)
+    # la lumière qui traverse : le bas-gauche s'éclaire un peu (eau transparente)
+    r = r + (corps & (p.X < cx - ry * 0.2) & (p.Y > cy + ry * 0.35) & ~(anneau(corps))).astype(int)
+    p.pose(corps, mat, r, ombre=False)
+    # le reflet en croissant en haut à droite
+    refl = ellipse(cx + ry * 0.38, cy - ry * 0.2, ry * 0.26, ry * 0.42) & ~ellipse(cx + ry * 0.2, cy - ry * 0.05, ry * 0.25, ry * 0.42)
+    p.pose(refl & corps, mat, 5, ombre=False)
+    return corps
+
+
+@picto('water')
+def _water():
+    p = Picto()
+    goutte(p)
+    eclat(p, 13, 23, rang=4)
+    return p
+
+
+@picto('earth')
+def _earth():
+    p = Picto()
+    # des rochers en pics, taillés à facettes nettes : faces tournées vers la droite dans la lumière
+    grand_g = poly((8.6, 28.6), (12.6, 12.0), (17.4, 3.0), (17.6, 28.6))
+    grand_d = poly((17.4, 3.0), (21.0, 10.0), (25.0, 17.4), (26.6, 28.6), (17.6, 28.6))
+    petit_g = poly((2.6, 28.6), (5.2, 19.6), (8.4, 14.2), (9.0, 28.6))
+    petit_d = poly((8.4, 14.2), (11.4, 20.6), (12.6, 28.6), (9.0, 28.6))
+    caillou = poly((22.0, 28.6), (24.2, 23.6), (27.6, 21.6), (30.0, 24.4), (30.4, 28.6))
+    p.pose(grand_g, 'roc', np.where(p.Y < 12, 2, 1), ombre=False)
+    p.pose(grand_d, 'roc', np.where(p.Y < 12, 4, 3), ombre=False)
+    p.pose(petit_g | petit_d, 'roc', np.where(petit_d, 2, 0), ombre=True)
+    p.pose(caillou, 'roc', relief(caillou, 3, 1.2), ombre=True)
+    # une veine d'or (le cœur de la terre) qui affleure sur la grande face
+    veine = poly((19.4, 15.6), (21.6, 18.4), (20.6, 21.6), (19.0, 19.2))
+    p.pose(veine, 'or', relief(veine, 3, 1.4), ombre=False)
+    # le sol : une bande d'herbe sous les rochers
+    sol = poly((1.6, 27.0), (30.6, 27.0), (30.6, 29.6), (1.6, 29.6))
+    p.pose(sol, 'herbe', np.where(p.Y == 27, 4, 2) + (p.X > 16).astype(int), ombre=True)
+    return p
+
+
+@picto('wind')
+def _wind():
+    p = Picto()
+    # deux souffles qui s'enroulent (un grand, un petit), épais, éclairés par le dessus
+    t = np.linspace(0, 1, 40)
+    def spirale(cx, cy, r0, r1, a0, a1):
+        a = a0 + (a1 - a0) * t
+        r = r0 + (r1 - r0) * t
+        return [(cx + r[i] * np.cos(a[i]), cy + r[i] * np.sin(a[i])) for i in range(len(t))]
+    g = [(2.2, 15.0), (8.0, 15.4), (14.0, 14.6)] + spirale(18.4, 10.0, 6.2, 2.4, np.pi * 0.72, np.pi * 2.3)
+    grand = trait_var(g, 4.6, 2.0)
+    pt = [(5.4, 25.0), (11.0, 25.0), (16.6, 25.4)] + spirale(21.6, 21.6, 6.0, 2.4, np.pi * 0.6, -np.pi * 0.85)
+    petit = trait_var(pt, 4.2, 2.0)
+    for m in (petit, grand):
+        r = 3 + (m & ~S(m, 0, -1)).astype(int) - (m & ~S(m, 0, 1) & S(m, 0, -1)).astype(int)
+        p.pose(m, 'vent', r, ombre=True)
+    return p
+
+
+# ---------------------------------------------------------------------------------------------------------------
+# Planche d'aperçu et sorties
+# ---------------------------------------------------------------------------------------------------------------
+def rendu(nom):
+    return PICTOS[nom]().image()
+
+
+def planche(noms, k=3, fond='#1b2147', titre=None):
+    """Les pictos à 1× (rangée du haut) et ×k, sur l'émail bleu nuit du jeu et sur le parchemin."""
+    ims = {n: rendu(n) for n in noms}
+    cols = min(12, len(noms))
+    rows = -(-len(noms) // cols)
+    cw = N * k + 8
+    W = cols * cw + 16
+    H1 = rows * (N + 6) + 10
+    H = H1 + rows * (cw + 14) * 2 + 30
+    out = Image.new('RGBA', (W, H), rgb(fond) + (255,))
+    d = ImageDraw.Draw(out)
+    try:
+        f = ImageFont.truetype('DejaVuSans.ttf', 10)
+    except OSError:
+        f = ImageFont.load_default()
+    for i, n in enumerate(noms):
+        x, y = 8 + (i % cols) * (N + 6), 6 + (i // cols) * (N + 6)
+        out.alpha_composite(ims[n], (x, y))
+    for b, bg in enumerate((rgb(fond), rgb('#ecd9ae'))):
+        y0 = H1 + 10 + b * rows * (cw + 14)
+        d.rectangle((0, y0 - 4, W, y0 + rows * (cw + 14)), fill=bg + (255,))
+        for i, n in enumerate(noms):
+            x, y = 8 + (i % cols) * cw, y0 + (i // cols) * (cw + 14)
+            out.alpha_composite(ims[n].resize((N * k, N * k), Image.NEAREST), (x, y))
+            d.text((x, y + N * k), n, fill=(200, 200, 220) if b == 0 else (90, 60, 40), font=f)
+    return out
+
+
+def main(args):
+    noms = [a for a in args if not a.startswith('-')]
+    if noms:        # un essai : rien dans png/, seulement l'aperçu agrandi
+        noms = [n for a in noms for n in PICTOS if n == a or (a.endswith('*') and n.startswith(a[:-1]))]
+        dest = os.environ.get('ESSAI', os.path.join(SORTIE, 'equipement-essai.png'))
+        sauve(planche(noms, k=int(os.environ.get('K', 8))), dest)
+        print(len(noms), 'pictos →', dest)
+        return
+    os.makedirs(PNG, exist_ok=True)
+    for n in PICTOS:
+        sauve(rendu(n), os.path.join(PNG, n + '.png'))
+    sauve(planche(list(PICTOS), k=3), os.path.join(SORTIE, 'equipement-planche.png'))
+    print(len(PICTOS), 'pictos →', PNG)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

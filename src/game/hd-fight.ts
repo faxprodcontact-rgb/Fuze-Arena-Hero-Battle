@@ -5,6 +5,7 @@ import Phaser from 'phaser';
 import type { Hit, SkillDef } from '../core/battle/types';
 import type { Element } from '../core/types';
 import { HD_ANIM } from './hd-meta';
+import { meleeTempo, plainTempo, tirTempo } from './hd-tempo';
 
 type Rect = readonly number[];
 /** Une animation exportée (voir l'en-tête de hd-meta.ts). */
@@ -236,7 +237,9 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
   const dir = src.unit.side === 'hero' ? 1 : -1;
   const k = actor.k;
   const sp = speed;
-  const ms = a.ms.map((m) => m / sp);
+  // attaque de base : tempo commun à tous (hd-tempo.ts) ; spéciale : les durées de l'animateur
+  const even = which === 'attaque';
+  let ms = plainTempo(a, sp, even);
   const coup = a.coup ?? 0;
   const color = CHARGE_COLOR[src.unit.element];
   // les cibles touchées (une seule fois chacune), dans l'ordre des règles
@@ -294,38 +297,37 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
     const home = { x: src.homeX, y: src.homeY };
     const strike = { x: dst.homeX - dir * reach, y: dst.homeY };
     const dist = Math.hypot(strike.x - home.x, strike.y - home.y);
+    // les durées : l'élan (dessiné ou non) a le temps de couvrir la vraie distance, au tempo commun pour une attaque de base
+    const tp = meleeTempo(a, dist, sp, even);
+    ms = tp.ms;
+    const { back, overlap, hop } = tp;
     let frac: (i: number, u: number) => number;
-    let back = 0;
-    if (av && Math.max(...av) > 3) {
+    if (!hop) {
       // le personnage avance au rythme que l'animateur a dessiné (l'élan cuit dans le GIF, ramené à la vraie distance)
-      const f = av.map((x) => Phaser.Math.Clamp(x / Math.max(1, av[coup]!), 0, 1));
-      // trop court pour la distance : on étire les images où il se déplace
-      const moving = ms.map((_, i) => Math.abs((f[i + 1] ?? 0) - f[i]!) > 0.01);
-      const go = ms.reduce((s, m, i) => s + (moving[i] && i < coup ? m : 0), 0);
-      const ret = ms.reduce((s, m, i) => s + (moving[i] && i >= coup ? m : 0), 0);
-      const needGo = dist / 1.6 / sp, needRet = dist / 1.3 / sp;
-      ms.forEach((m, i) => {
-        if (moving[i] && i < coup && go < needGo) ms[i] = (m * needGo) / go;
-        if (moving[i] && i >= coup && ret > 0 && ret < needRet) ms[i] = (m * needRet) / ret;
-      });
+      const f = av!.map((x) => Phaser.Math.Clamp(x / Math.max(1, av![coup]!), 0, 1));
       frac = (i, u) => f[i]! + ((f[i + 1] ?? 0) - f[i]!) * u;
     } else {
       // pas d'élan dessiné : il bondit jusqu'à la cible pendant la préparation du coup, puis revient en courant
-      const [e0, e1] = (a.elan ?? [a.charge ? a.charge[1]! + 1 : 0, coup]) as [number, number];
-      const go = ms.slice(e0, e1).reduce((s, m) => s + m, 0);
-      const need = Math.max(160, dist / 1.4) / sp;
-      if (go < need) for (let i = e0; i < e1; i++) ms[i] = (ms[i]! * need) / Math.max(1, go);
-      const t0 = ms.slice(0, e0).reduce((s, m) => s + m, 0), t1 = t0 + ms.slice(e0, e1).reduce((s, m) => s + m, 0);
+      const t0 = T(tp.e0), t1 = T(tp.e1);
       frac = (i, u) => {
-        const t = ms.slice(0, i).reduce((s, m) => s + m, 0) + u * ms[i]!;
+        const t = T(i) + u * ms[i]!;
         const x = Phaser.Math.Clamp((t - t0) / Math.max(1, t1 - t0), 0, 1);
         return x < 0.5 ? 2 * x * x : 1 - (-2 * x + 2) ** 2 / 2;
       };
-      back = Math.max(200, dist / 1.5) / sp;
     }
-    const hop = !av || Math.max(...av) <= 3;
+    // le retour en courant (sans élan dessiné) : après l'animation, ou pendant la fin de la récupération (attaque de base)
+    let returning = false;
+    const goBack = () => {
+      if (returning) return;
+      returning = true;
+      scene.tweens.add({ targets: src.body, x: home.x, y: home.y, duration: back, ease: 'Quad.easeInOut',
+        onUpdate: (tw) => { src.body.y -= Math.sin(Math.PI * tw.progress) * 10; },
+        onComplete: () => src.body.setDepth(home.y) });
+    };
+    if (back > 0 && overlap > 0) scene.time.delayedCall(T(ms.length) - overlap, goBack);
     actor.start(which, ms, false, {
       onTick: (i, u) => {
+        if (returning) return;
         const fr = frac(i, u);
         // sans élan dessiné, un petit bond pendant la course (les pieds quittent le sol)
         const lift = hop && i < coup ? Math.sin(Math.PI * fr) * 14 : 0;
@@ -336,15 +338,12 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
         if (i === coup) foes.forEach((t) => land(t, !!a.cible && a.cible[coup]! >= 0));
       },
       onEnd: () => {
-        if (back > 0) {
-          scene.tweens.add({ targets: src.body, x: home.x, y: home.y, duration: back, ease: 'Quad.easeInOut',
-            onUpdate: (tw) => { src.body.y -= Math.sin(Math.PI * tw.progress) * 10; },
-            onComplete: () => src.body.setDepth(home.y) });
-        } else src.body.setPosition(home.x, home.y).setDepth(home.y);
+        if (back > 0) goBack();
+        else src.body.setPosition(home.x, home.y).setDepth(home.y);
       },
     });
     foes.forEach((t, n) => onTarget(t.v, 0, n * 60 / sp));
-    total = T(ms.length) + back;
+    total = T(ms.length) + back - overlap;
     return total;
   }
 
@@ -361,13 +360,10 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
     // le personnage suit son projectile : les images du vol durent le temps du vol jusqu'à la première cible (le
     // coup tombe quand il arrive) ; l'arme qui revient (boomerang) met le même temps pour revenir
     const first = path(foes[0]!);
-    const retime = (i0: number, i1: number, dur: number) => {
-      const was = ms.slice(i0, i1).reduce((s, m) => s + m, 0);
-      if (was > 0) for (let i = i0; i < i1; i++) ms[i] = Math.max(16, (ms[i]! * dur) / was);
-    };
-    retime(dep, coup, first.fly);
+    const tp = tirTempo(a, first.fly, sp, even);
+    ms = tp.ms;
+    first.fly = tp.fly;
     const ret = a.retour, r0 = a.retourDe ?? 0;
-    if (ret) retime(r0, r0 + ret.length, first.fly);
     total = T(ms.length);
     actor.start(which, ms, false, {});
     const tDep = T(dep);

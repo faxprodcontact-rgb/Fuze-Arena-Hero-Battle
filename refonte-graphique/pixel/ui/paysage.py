@@ -1,17 +1,23 @@
 #!/usr/bin/env python3
-"""Le PAYSAGE de l'écran de chargement, dessiné pour lui (pas un fond de combat) — demande du propriétaire du 25/11 :
-« construite de 0, qui montre 3 personnages dans un paysage en position de combat ».
+"""Le DÉCOR de l'écran de chargement, dessiné pour lui (pas un fond de combat).
 
-Ce qu'on voit (256 × 555 pixels HD, la forme d'un grand téléphone) : un ciel de fin de journée, le soleil bas à droite
-(la seule lumière : tout est éclairé d'en haut à droite) ; au loin deux chaînes de montagnes dans la brume, et sur une
-mesa, dans la lueur du soleil, l'ARÈNE (le but des héros) avec deux tours à fanions ; une vallée brumeuse et des collines
-boisées ; devant, une arête rocheuse en trois paliers où se tiennent les trois héros, au bord du vide à droite.
-Ce qui bouge : les nuages et la brume de la vallée glissent, une bannière aux couleurs de l'arène claque au vent au
-sommet de l'arête, des feuilles passent dans le vent, des lucioles d'or montent du vide. Pas de personnage (décision du
-propriétaire, 25/11 : « un beau décor animé »).
-Le signe de l'arène sur les fanions : un losange barré d'un chevron (inventé, pas une lettre).
+Demandes du propriétaire (25/11) : « construite de 0 » ; « pas de héros, un beau décor animé » ; « enlève carrément la
+montagne au premier plan, remplace-la par les beaux nuages, et place le logo au milieu ; refais bien le colisée sur sa
+montagne derrière ; que tout soit cohérent : nuages, brume… ».
 
-dessine() → (toile fixe, calques animés [(z, genre, données, images PIL)], paliers) ; utilisé par chargement.py.
+Ce qu'on voit (256 × 555 pixels HD, la forme d'un grand téléphone ; le logo HD se pose au milieu de l'écran) :
+- le ciel du soir en paliers, le soleil en haut à droite (la SEULE lumière : tout est éclairé d'en haut à droite,
+  ombres vers le bas à gauche, ombres violettes, lumières chaudes) ; des nuages hauts qui glissent, des oiseaux au loin ;
+- deux chaînes de montagnes lointaines, pâles et bleutées (plus c'est loin, plus c'est clair et froid), de la brume ;
+- le COLISÉE, sujet du décor, sous le logo : une arène ovale vue un peu d'en haut, trois étages d'arcades qui
+  rétrécissent vers les bords (perspective), un attique à petites fenêtres, les gradins visibles à l'intérieur, une
+  brèche sur la gauche (pierre usée), des fanions rouges qui flottent ; posé sur le plateau d'un piton rocheux qui sort
+  des nuages (quelques bosquets accrochés à ses flancs) ;
+- devant, la MER DE NUAGES en trois rangées (loin : petite, pâle ; près : grosse, riche), chacune glisse à sa vitesse
+  (la profondeur se lit), avec une brume qui passe entre le piton et les nuages.
+Tout boucle sans couture en P ms. Le signe des fanions : aucun (de simples flammes de tissu).
+
+dessine() → (toile fixe, calques animés [(z, genre, données, images PIL)]) ; utilisé par chargement.py.
 """
 import os
 import sys
@@ -22,248 +28,307 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), 'fonds'))
 import fondlib as F  # noqa: E402
-from fondlib import rgb, mix, rampe, bruit, bruit1, relief, roche, lobes, bandes, halo, nettoie, flou  # noqa: E402,F401
+from fondlib import rgb, mix, rampe, bruit, bruit1, relief, roche, lobes, bandes, halo, nettoie  # noqa: E402
 
 SW, SH = 256, 555
 P = 32000                                    # la période commune des animations (ms) : tout boucle sans couture
-SOLEIL = (204, 214)
-HORIZON = 300
+SOLEIL = (206, 112)
+PALIERS = {}                                 # (plus de héros : gardé pour chargement.py)
 
-CIEL = rampe('#25296a', '#33367c', '#4a428c', '#6a4f98', '#93609c', '#c27096', '#e8868c', '#fba486', '#ffc48e', '#ffdea4')
-NUAGE = rampe('#7a5a8e', '#a8708e', '#d68e92', '#f8b49a', '#ffe0b8')
-LOIN1 = rampe('#9a6c9c', '#b07c9e', '#c98ea2', '#e2a6a6')            # la chaîne la plus lointaine
-LOIN2 = rampe('#6e5590', '#7f6098', '#9672a0', '#b888a6')
-MESA = rampe('#5a4a82', '#6e5690', '#8a6a9a', '#b6869e', '#e4a8a2')
-ARENE = rampe('#4e3e74', '#665088', '#8a6896', '#c08c9c', '#f2bca6')
-COLLINE = rampe('#2e2a5c', '#3a3468', '#4a3f76', '#5f4f84', '#7c6490')
-ARBRE = rampe('#1f2a4e', '#28375a', '#334668', '#466078', '#628086')
-MER = rampe('#4e4280', '#6c5898', '#9474ae', '#c496bc', '#f2c2c0')
-BRUME = rampe('#9a82b2', '#b494bc', '#cfaac4')
-ROC = rampe('#2e2238', '#4a3646', '#6a4e56', '#8f6c66', '#c09a7c')
-HERBE = rampe('#2c4a3a', '#3e6a42', '#5e9048', '#94b85a', '#cfd878')
-FANION = '#c8303a'
-TISSU = rampe('#5e1418', '#9c2a2e', '#d6443e', '#f8806a')                     # la bannière de l'arête (4 tons)
-BOIS = rampe('#2e1e24', '#4a3030', '#6e4a3c', '#9a6e50', '#c49a6a')
-OR = rampe('#6e3a1c', '#b8701e', '#f0b530', '#ffd978', '#fff4c0')
-# le signe de l'arène (inventé : un losange barré d'un chevron), en petit, pour la bannière
-SIGNE = ['..o..', '.o.o.', 'o.w.o', '.o.o.', '..o..', '.ooo.', 'o...o']
-SIGNE_LEG = {'o': rgb('#ffd978'), 'w': rgb('#fff4c0')}
-BANNIERE = (40, 374)                          # le pied du mât, sur le palier du haut
+CIEL = rampe('#25296a', '#2f3478', '#3e3f88', '#544a94', '#6e559c', '#8c5f9e', '#b06a9c', '#d47c98', '#ee9690',
+             '#fdb48e', '#ffd0a0')
+AIR = rgb('#a890c4')                         # la couleur de l'air lointain (brume)
+LOIN1 = rampe('#8c7cb4', '#9a88ba', '#ac96c0', '#c4a6c4')            # la chaîne la plus lointaine
+LOIN2 = rampe('#6a5c9c', '#7a68a6', '#9078ae', '#ae8cb4', '#d0a4b6')
+ROC = rampe('#3a2e52', '#4e3e62', '#6a5270', '#8e6c7c', '#bc9088')    # le piton (violet en ombre, chaud en lumière)
+PIERRE = rampe('#4a3a5e', '#6a5670', '#8e7480', '#b8968e', '#e2bea0', '#fadcb4')   # le colisée (pierre chaude)
+CREUX = rampe('#241c3a', '#30264a', '#3e3258')                      # l'intérieur des arcades
+GRADIN = rampe('#4e3e5e', '#62506c', '#7a6476', '#9a7c82')
+BOSQUET = rampe('#1e2c48', '#28405a', '#36566a', '#4e7476', '#6e9282')
+NUEE = rampe('#5a4886', '#7a5e9e', '#a07cb4', '#cc9cbe', '#f6c6c4', '#ffe4cc')   # la mer de nuages (6 tons)
+BRUME = rampe('#9c86ba', '#b69cc4', '#d0b2c8')
+TISSU = rampe('#5e1418', '#a02a30', '#d8463e', '#f88470')
+OISEAU = rgb('#3a2e5e')
 
-# les paliers de l'arête : (x0, x1, y du dessus) — les pieds des héros y sont posés
-PALIERS = {'haut': (6, 88, 374), 'milieu': (56, 172, 430), 'bas': (0, 236, 486)}
+# le colisée : centre, demi-axes de l'ovale, hauteur du mur ; le bas du mur au milieu = BASE + RY
+CX, BASE, RX, RY, HT = 128, 404, 70, 15, 44
 
 
 def ciel(t):
     X, Y = t.X, t.Y
-    lueur = np.hypot((X - SOLEIL[0]) * 0.8, (Y - SOLEIL[1]) * 1.4)
-    champ = Y / HORIZON + 0.06 * (bruit(X, Y, 30, 3, 2) - 0.5) - 0.42 * np.exp(-lueur / 90)
-    # bords des bandes ondulés (pas de lignes droites)
-    champ += 0.025 * np.sin(X / 13 + Y / 40)
-    seuils = [0.18, 0.34, 0.48, 0.6, 0.7, 0.79, 0.87, 0.93, 0.98]
+    lueur = np.hypot((X - SOLEIL[0]) * 0.9, (Y - SOLEIL[1]) * 1.3)
+    champ = Y / 430 + 0.08 * (bruit(X * 0.5, Y, 30, 3, 3) - 0.5) - 0.30 * np.exp(-lueur / 80)
+    seuils = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.69, 0.78, 0.86, 0.93]
     bandes(t, np.ones(X.shape, bool), champ, CIEL, seuils)
-    # le soleil : un disque et sa lueur en paliers
-    halo(t, SOLEIL[0], SOLEIL[1], 64, 52, 0.25, '#ffe2a8', pas=2, graine=5)
-    halo(t, SOLEIL[0], SOLEIL[1], 30, 26, 0.55, '#fff0c4', pas=2, graine=6)
-    t.fill(t.ellipse(SOLEIL[0], SOLEIL[1], 12, 12), rgb('#fff8dc'))
-    t.fill(t.ellipse(SOLEIL[0] + 2, SOLEIL[1] - 2, 8, 8), rgb('#fffdf2'))
-
-
-def nuages(t, boules_list, plat):
-    for boules in boules_list:
-        lobes(t, boules, NUAGE, plat=plat)
+    halo(t, SOLEIL[0], SOLEIL[1], 46, 40, 0.22, '#ffe2b0', pas=2, graine=5)
+    halo(t, SOLEIL[0], SOLEIL[1], 22, 20, 0.45, '#fff0c8', pas=2, graine=6)
+    t.fill(t.ellipse(SOLEIL[0], SOLEIL[1], 10, 10), rgb('#fff6d8'))
+    t.fill(t.ellipse(SOLEIL[0] + 2, SOLEIL[1] - 2, 6, 6), rgb('#fffdf2'))
 
 
 def montagnes(t):
+    """Deux chaînes lointaines (la plus loin la plus pâle), et la brume à leur pied."""
     X, Y = t.X, t.Y
-    # chaîne lointaine (brumeuse, claire)
-    p1 = np.array([F.profil(x, 262, 26, 38, 11) - 18 * math.exp(-((x - 60) / 30) ** 2) for x in range(SW)])
+    xs = np.arange(SW, dtype=float)
+    p1 = 372 + 26 * (bruit1(xs, 46, 11, 3) - 0.5) - 26 * np.exp(-((xs - 30) / 28) ** 2) - 20 * np.exp(-((xs - 232) / 24) ** 2)
     m1 = Y >= p1[np.clip(X, 0, SW - 1)]
-    relief(t, m1 & (Y < HORIZON + 30), LOIN1, graine=4, arrondi=5, rugosite=0.12, grain=24, decale=0.2)
-    # chaîne plus proche
-    p2 = np.array([F.profil(x, 284, 18, 30, 23) for x in range(SW)])
+    relief(t, m1, LOIN1, graine=4, arrondi=5, rugosite=0.1, grain=26, decale=0.25)
+    p2 = 398 + 18 * (bruit1(xs, 32, 23, 3) - 0.5) - 18 * np.exp(-((xs - 52) / 22) ** 2) - 14 * np.exp(-((xs - 214) / 20) ** 2)
     m2 = Y >= p2[np.clip(X, 0, SW - 1)]
-    relief(t, m2 & (Y < HORIZON + 40), LOIN2, graine=8, arrondi=5, rugosite=0.12, grain=20)
-    # la mesa de l'arène (à droite, dans la lueur)
-    pts = [(146, 330), (152, 286), (160, 270), (166, 262), (232, 260), (240, 268), (246, 286), (252, 330)]
-    mm = t.poly(pts)
-    mm &= ~((bruit(X, Y, 5, 31, 2) > 0.62) & ~t.poly([(156, 330), (160, 272), (238, 270), (246, 330)]))
-    roche(t, mm, MESA, graine=12, taille=26, etire=(1.0, 1.8), fentes=0.5, bas_sombre=0.7, contraste=0.6)
+    relief(t, m2, LOIN2, graine=8, arrondi=5, rugosite=0.1, grain=22)
+    # la brume au pied des montagnes (en paliers, bords ondulés)
+    v = (Y - 404) / 26 + 0.25 * (bruit(X, Y, 18, 12, 2) - 0.5)
+    bandes(t, (Y >= 396), v, [rgb(BRUME[0]), rgb(BRUME[1]), rgb(BRUME[2])], [0.35, 0.75])
 
 
-def arene(t):
-    """L'arène sur la mesa : un tambour de pierre (mur éclairé à droite, arches sombres), deux tours, deux fanions."""
+def piton(t):
+    """Le piton rocheux qui porte le colisée : un plateau sous l'ovale, des flancs en grands pans qui s'élargissent
+    vers le bas jusque dans les nuages ; des bosquets accrochés aux replats."""
     X, Y = t.X, t.Y
-    cx, top, bas, R = 199, 232, 262, 34
-    mur = t.ellipse(cx, bas - 2, R, 7) | ((np.abs(X + 0.5 - cx) <= R) & (Y >= top) & (Y <= bas - 2))
-    sh = (X - cx) / R
-    idx = np.clip(np.round(1.6 + sh * 1.6), 0, 4).astype(int)
-    t.peint(mur, idx, ARENE)
-    # le haut du mur (le rebord éclairé) et l'intérieur sombre vu par-dessus
-    t.fill(t.ellipse(cx, top, R, 6), rgb(ARENE[3]))
-    t.fill(t.ellipse(cx, top + 1, R - 4, 4), rgb(ARENE[0]))
-    t.fill(t.ellipse(cx, top + 1, R - 4, 4) & ~F.S(t.ellipse(cx, top + 1, R - 4, 4), 0, -1), rgb(ARENE[1]))
-    # deux rangées d'arches (des ouvertures sombres espacées irrégulièrement, qui suivent la courbe du mur)
-    for rang, (y0, h) in enumerate(((top + 7, 6), (top + 18, 7))):
-        for k, a in enumerate(np.linspace(-0.9, 0.9, 9)):
-            x = cx + R * math.sin(a)
-            w = 2 if abs(a) < 0.6 else 1
-            arche = (np.abs(X + 0.5 - x) <= w / 2 + 0.2) & (Y >= y0) & (Y < y0 + h)
-            t.fill(arche, rgb(ARENE[0] if a < 0.3 else ARENE[1]))
-    # tours
-    for tx, th in ((163, 30), (236, 26)):
-        tour = (np.abs(X + 0.5 - tx) <= 4) & (Y >= bas - th) & (Y <= bas)
-        t.peint(tour, np.where(X >= tx, 3, 1), ARENE)
-        t.fill((np.abs(X + 0.5 - tx) <= 5) & (Y >= bas - th - 2) & (Y < bas - th), rgb(ARENE[4] if tx > cx else ARENE[2]))
-        # le mât et le fanion (le signe : un losange clair)
-        t.fill((X == tx) & (Y >= bas - th - 10) & (Y < bas - th - 2), rgb(ARENE[0]))
-        f = (X > tx) & (X <= tx + 7) & (Y >= bas - th - 10) & (Y < bas - th - 5 + (X - tx) // 4)
-        t.fill(f, rgb(FANION))
-        t.fill((X == tx + 3) & (Y == bas - th - 8), rgb('#ffd8a0'))
-    halo(t, SOLEIL[0], SOLEIL[1] + 10, 70, 50, 0.18, '#ffd0a0', pas=2, graine=9,
-         m=t.poly([(140, 225), (256, 225), (256, 300), (140, 300)]))
-
-
-def mer_de_nuages(t):
-    """Sous l'arête et jusqu'aux montagnes : une mer de nuages (les héros sont au-dessus), en rangées de grosses
-    bosses de plus en plus proches ; le haut de chaque rangée éclairé par le soleil (à droite), le dessous dans l'ombre."""
-    X, Y = t.X, t.Y
-    t.fill(Y >= 330, rgb(MER[0]))
-    rng = np.random.default_rng(17)
-    for k, (base, r0) in enumerate(((338, 9), (372, 14), (420, 20), (486, 26))):
-        m = np.zeros(X.shape, bool)
-        x = rng.uniform(-r0, 0)
-        while x < SW + r0:
-            r = r0 * rng.uniform(0.7, 1.35)
-            m |= t.ellipse(x, base + rng.uniform(-0.35, 0.35) * r0, r * 1.25, r)
-            x += r0 * rng.uniform(0.9, 2.0)
-        m |= Y >= base + r0 * 0.6
-        gamme = [mix(c, MER[0], 0.12 * k) for c in MER]
-        relief(t, m, gamme, graine=30 + k, arrondi=5 + k, rugosite=0.0, decale=0.1)
-        nettoie(t, m)
-
-
-def arete(t):
-    """L'arête rocheuse du premier plan : trois paliers (dessus plats sous les pieds, bords bruités), le vide à droite."""
-    X, Y = t.X, t.Y
-    m = np.zeros(X.shape, bool)
-    for nom, (x0, x1, y) in PALIERS.items():
-        # le dessus du palier : légèrement bombé, bruité sur les bords (pas sous les pieds)
-        bord = 3 * (bruit1(X.astype(float), 9, hash(nom) % 97, 2) - 0.5)
-        dessus = y + np.where((X > x0 + 10) & (X < x1 - 10), 0, bord)
-        dy = np.clip(Y - y, 0, None)
-        larg = (X >= x0 - dy * 0.15 + 5 * (bruit1(Y.astype(float), 7, 3, 2) - 0.5)) & \
-               (X <= x1 + dy * 0.22 + 7 * (bruit1(Y.astype(float) + x1, 9, 5, 2) - 0.5))
-        m |= larg & (Y >= dessus)
-    # le bas du rocher s'élargit (il porte les paliers)
-    m |= (Y >= 500) & (X <= 236 + 6 * (bruit1(Y.astype(float), 6, 9, 2) - 0.5))
-    m |= t.poly([(0, 392), (8, 380), (8, 555), (0, 555)])
-    roche(t, m, ROC, graine=21, taille=30, etire=(1.0, 1.6), fentes=0.7, bas_sombre=0.9, contraste=1.0)
-    # mousse et herbe sur les dessus éclairés (touffes en boules plates)
-    dessus = m & ~F.S(m, 0, -1)
-    rng = np.random.default_rng(3)
-    ys, xs = np.nonzero(dessus)
-    for k in rng.choice(len(xs), 34, replace=False):
-        x, y = xs[k], ys[k]
-        if y > 540:
-            continue
-        r = rng.uniform(2.5, 5)
-        lobes(t, [(x + 0.5, y + 1.2, r)], HERBE, plat=y + 3, uni=False, eclat=False)
+    ys = Y.astype(float)
+    haut = BASE + RY - 6
+    demi = np.where(ys < haut, 0, (RX + 10) + (ys - haut) * 0.75 + 8 * (bruit1(ys, 12, 3, 2) - 0.5))
+    gauche = CX - demi - 5 * (bruit1(ys + 40, 9, 7, 2) - 0.5) - 6
+    droite = CX + demi + 5 * (bruit1(ys + 90, 9, 9, 2) - 0.5) + 4
+    m = (X >= gauche) & (X <= droite) & (Y >= haut)
+    m |= t.ellipse(CX + 1, BASE + 4, RX + 13, RY + 6)
+    roche(t, m, ROC, graine=31, taille=24, etire=(1.0, 1.5), fentes=0.6, bas_sombre=0.9, contraste=0.9)
+    # le dessus du plateau (où le colisée est posé) : la pierre éclairée
+    top = t.ellipse(CX + 1, BASE + 4, RX + 13, RY + 6) & (Y < BASE + RY + 6)
+    t.fill(top, rgb(ROC[3]))
+    t.fill(top & (X > CX + 20), rgb(ROC[4]))
+    t.fill(top & ~F.S(top, 0, 1) & ~F.S(top, 0, 2), rgb(ROC[1]))
+    # bosquets sur les flancs (feuillage en boules, ombrés comme des sphères)
+    rng = np.random.default_rng(5)
+    for (x, y) in ((CX - RX - 8, BASE + RY + 10), (CX - RX + 4, BASE + RY + 22), (CX + RX + 6, BASE + RY + 14),
+                   (CX + RX - 10, BASE + RY + 30), (CX - 30, BASE + RY + 40), (CX + 34, BASE + RY + 46)):
+        r = rng.uniform(4, 6)
+        lobes(t, [(x - r * 0.7, y + 1, r * 0.8), (x + r * 0.5, y - 1, r), (x, y + 2, r * 0.7)], BOSQUET,
+              uni=False, eclat=False)
     nettoie(t, m)
     return m
 
 
-def tuile_nuages(y0, y1, graine):
-    """Une bande de nuages qui se répète exactement sur SW pixels (pour le défilé)."""
-    t = F.Toile((0, y0, SW, y1))
+def colisee(t):
+    """L'arène ovale vue un peu d'en haut : les gradins dedans, le mur de devant (attique + 3 étages d'arcades qui
+    rétrécissent vers les bords), une brèche à gauche, la pierre usée par endroits. Renvoie la liste des fanions."""
+    X, Y = t.X, t.Y
+    u = (X + 0.5 - CX) / RX
+    dedans = np.abs(u) <= 1
+    s = np.sqrt(np.clip(1 - u * u, 0, 1))
+    yb = BASE + RY * s                     # le pied du mur de devant
+    yt = yb - HT                           # le haut du mur de devant
+    ytb = BASE - RY * s - HT               # le haut du mur du fond
+    # 1. le dessus : le rebord (épaisseur du mur) et les gradins vus d'en haut
+    dessus = dedans & (Y >= ytb) & (Y <= yt)
+    ui = (X + 0.5 - CX) / (RX - 4)
+    si = np.sqrt(np.clip(1 - ui * ui, 0, 1))
+    creux = (np.abs(ui) <= 1) & (Y >= BASE - (RY - 1.5) * si - HT) & (Y <= BASE + (RY - 1.5) * si - HT)
+    t.fill(dessus, rgb(PIERRE[4]))
+    t.fill(dessus & (u < -0.4), rgb(PIERRE[3]))
+    # gradins : du rebord du fond (haut, à l'ombre du rebord) vers le devant ; côté gauche éclairé (il regarde à droite)
+    tt = (Y - (BASE - (RY - 1.5) * si - HT)) / np.maximum(1, 2 * (RY - 1.5) * si)
+    idx = np.where(tt < 0.18, 0, np.where(tt < 0.5, 1, 2))
+    idx = idx + (ui < -0.35) - (ui > 0.45)
+    t.peint(creux, np.clip(idx, 0, 3), GRADIN)
+    # l'arène elle-même (le sable) se devine au fond, au milieu
+    sable = t.ellipse(CX + 2, BASE - HT + RY - 3, RX * 0.42, 3.2) & creux
+    t.fill(sable, rgb('#c8a080'))
+    t.fill(sable & (X > CX + 10), rgb('#e0b890'))
+    # 2. le mur de devant
+    mur = dedans & (Y > yt) & (Y <= yb)
+    dz = Y + 0.5 - yt                        # la profondeur sous le haut du mur (0 … HT)
+    ton = np.clip(np.round(2.2 + u * 1.7), 0, 5).astype(int)          # éclairé à droite, ombré à gauche
+    t.peint(mur, ton, PIERRE)
+    # pierre usée : des taches un ton plus sombre (grandes, pas du bruit)
+    tache = mur & (bruit(X, Y, 7, 41, 2) > 0.66)
+    t.peint(tache, np.clip(ton - 1, 0, 5), PIERRE)
+    # corniches : le dessus de chaque corniche prend la lumière, le dessous est dans l'ombre
+    for z in (8, 20, 32):
+        t.peint(mur & (dz >= z) & (dz < z + 1), np.clip(ton + 1, 0, 5), PIERRE)
+        t.peint(mur & (dz >= z + 1) & (dz < z + 2), np.clip(ton - 1, 0, 5), PIERRE)
+    t.peint(mur & (dz >= HT - 2), np.clip(ton - 1, 0, 5), PIERRE)       # le socle
+    # arcades : N baies sur le demi-ovale de devant, plus étroites vers les bords (elles tournent)
+    N = 20
+    for k, (z0, hh) in enumerate(((10, 9), (22, 9), (34, 8))):
+        for j in range(N):
+            th = (j + 0.5) * math.pi / N
+            xc = CX - RX * math.cos(th)
+            w = 2.4 * math.sin(th)
+            if w < 0.9:
+                continue
+            yc = BASE + RY * math.sin(th) - HT
+            for r in range(hh):
+                ww = w - (0.9 if r == 0 else 0)
+                if ww < 0.45:
+                    continue
+                y = int(round(yc + z0 + r))
+                xa, xb = int(round(xc - ww)), int(round(xc + ww)) - 1
+                if xb < xa:
+                    xb = xa
+                for x in range(xa, xb + 1):
+                    if 0 <= x < SW and mur[y, x]:
+                        c = CREUX[0] if r < hh - 1 else CREUX[1]
+                        if x == xa and xb > xa and math.cos(th) > -0.2:
+                            c = CREUX[2]             # le côté de la baie qui reçoit la lumière
+                        t.col[y, x, :3] = rgb(c)
+    # attique : de petites fenêtres carrées une baie sur deux
+    for j in range(1, N, 2):
+        th = (j + 0.5) * math.pi / N
+        if math.sin(th) < 0.35:
+            continue
+        xc = int(round(CX - RX * math.cos(th)))
+        yc = BASE + RY * math.sin(th) - HT
+        y = int(round(yc + 3))
+        t.fill((X == xc) & (Y >= y) & (Y < y + 2) & mur, rgb(CREUX[1]))
+    # 3. la brèche à gauche : le haut du mur s'est effondré (bord déchiqueté), on voit les voûtes dedans
+    xs = (X + 0.5 - CX) / RX
+    prof = np.where(xs < -0.42, 22 * np.clip((-0.42 - xs) / 0.32, 0, 1) ** 0.7, 0)
+    prof = prof + np.where(prof > 0, 4 * (bruit1(X.astype(float), 3, 17, 2) - 0.5), 0)
+    breche = mur & (dz < prof) & (xs > -0.97)
+    t.fill(breche, rgb(GRADIN[1]))
+    t.fill(breche & (dz > prof - 3), rgb(GRADIN[0]))                     # l'ombre sous le bord cassé
+    t.fill(mur & ~breche & F.S(breche, 0, -1), rgb(PIERRE[3]))          # le bord cassé prend un peu de lumière
+    t.fill((dessus) & (xs < -0.5) & (xs > -0.97), rgb(GRADIN[1]))
+    # éboulis au pied de la brèche
+    for (x, y, r) in ((CX - RX * 0.82, BASE + RY * 0.55 + 1, 2.2), (CX - RX * 0.7, BASE + RY * 0.7 + 1, 1.6),
+                      (CX - RX * 0.9, BASE + RY * 0.4 + 2, 1.4)):
+        b = t.ellipse(x, y, r * 1.3, r)
+        t.fill(b, rgb(PIERRE[2]))
+        t.fill(b & ~F.S(b, 1, -1), rgb(PIERRE[4]))
+    # les poteaux des fanions, sur le rebord (fond et côtés)
+    poteaux = []
+    for ang in (205, 240, 300, 335, 25, 155):
+        a = math.radians(ang)
+        x = int(round(CX + (RX - 1) * math.cos(a)))
+        y = int(round(BASE + RY * math.sin(a) - HT))
+        if ang == 205:
+            continue                       # (au-dessus de la brèche : pas de fanion)
+        poteaux.append((x, y))
+    return poteaux
+
+
+def fanion(tl, x, y, phase):
+    """Un mât de 8 px et un fanion de 6 px qui ondule vers la droite (le vent)."""
+    tl.fill((tl.X == x) & (tl.Y >= y - 8) & (tl.Y <= y), rgb(PIERRE[0]))  # le mât
+    for i in range(6):
+        off = math.sin(2 * math.pi * (phase - i / 7)) * 0.9 * (i + 1) / 6
+        h = 3 if i < 4 else 2
+        y0 = int(math.floor(y - 8 + off + 0.5))
+        c = TISSU[2]
+        if i > 0:
+            prev = math.sin(2 * math.pi * (phase - (i - 1) / 7)) * 0.9 * i / 6
+            c = TISSU[3] if off - prev < -0.15 else (TISSU[1] if off - prev > 0.15 else TISSU[2])
+        tl.fill((tl.X == x + 1 + i) & (tl.Y >= y0) & (tl.Y < y0 + h), rgb(c))
+
+
+def tuile_nuees(y0, y1, r0, graine, loin):
+    """Une rangée de la mer de nuages, qui se répète exactement sur SW pixels : grosses bosses (lumière en haut à droite,
+    croissant d'ombre en bas à gauche), le dessous plein jusqu'en bas du décor. loin = 0 (près) … 1 (loin, pâle)."""
+    t = F.Toile((-SW, y0, 2 * SW, SH))          # trois largeurs, on garde celle du milieu (bords sans couture)
     rng = np.random.default_rng(graine)
-    groupes = []
-    for k in range(4):
-        cx = k * SW / 4 + rng.uniform(-10, 10)
-        cy = rng.uniform(y0 + 22, y1 - 16)
-        w = rng.uniform(26, 40)
-        b = [(cx + dx, cy + dy, r) for dx, dy, r in
-             [(-w * 0.55, 4, 7), (-w * 0.2, -2, 10), (w * 0.15, -4, 12), (w * 0.5, 2, 8), (w * 0.05, 5, 9)]]
-        for s in (-SW, 0, SW):
-            groupes.append([(x + s, y, r) for x, y, r in b])
-    for g in groupes:
-        lobes(t, g, NUAGE, plat=max(y for _, y, _ in g) + 6)
+    gamme = [mix(c, AIR, 0.45 * loin) for c in NUEE]
+    t.fill(t.Y >= y1, gamme[2])
+    boules = []
+    x = 0.0
+    while x < SW:
+        r = r0 * rng.uniform(0.6, 1.45)
+        y = y1 - r * rng.uniform(0.1, 0.7)
+        boules.append((x, y, r))
+        if rng.uniform() < 0.6:          # une petite bosse posée sur la grosse, décalée vers la lumière ou l'ombre
+            boules.append((x + r * rng.uniform(-0.5, 0.5), y - r * rng.uniform(0.5, 0.8), r * rng.uniform(0.4, 0.65)))
+        x += r * rng.uniform(0.75, 1.25)
+    tout = []
+    for s in (-SW, 0, SW):
+        tout += [(bx + s, by, br) for bx, by, br in boules]
+    tout.sort(key=lambda b: b[1] - b[2])          # les plus hautes d'abord : les plus basses passent devant
+    lobes(t, tout, gamme[:5] if loin > 0.5 else gamme[1:6], plat=SH + 10)
+    return milieu(t, y0, SH)
+
+
+def milieu(big, y0, y1):
+    """La largeur du milieu d'une toile de trois largeurs (−SW … 2 SW)."""
+    t = F.Toile((0, y0, SW, y1))
+    t.col[:] = big.col[:, SW:2 * SW]
     return t
 
 
-def tuile_brume(y0, y1):
+def tuile_ciel(y0, y1, graine):
+    """Les nuages hauts (petits bancs étirés), qui se répètent sur SW pixels."""
+    t = F.Toile((-SW, y0, 2 * SW, y1))
+    rng = np.random.default_rng(graine)
+    g = [mix(c, rgb('#b88cb0'), 0.25) for c in NUEE[1:6]]
+    for k in range(3):
+        cx = k * SW / 3 + rng.uniform(-14, 14)
+        cy = rng.uniform(y0 + 14, y1 - 10)
+        w = rng.uniform(22, 34)
+        b = [(cx + dx, cy + dy, r) for dx, dy, r in
+             [(-w * 0.6, 3, 5), (-w * 0.25, -1, 7), (w * 0.1, -3, 8), (w * 0.45, 1, 6), (w * 0.75, 3, 4)]]
+        for s in (-SW, 0, SW):
+            lobes(t, [(x + s, y, r) for x, y, r in b], g, plat=cy + 5)
+    return milieu(t, y0, y1)
+
+
+def tuile_brume(y0, y1, graine):
     t = F.Toile((0, y0, SW, y1))
     X, Y = t.X, t.Y
-    n = bruit(X, Y * 2.2, 22, 41, 2, px=SW)
+    n = bruit(X, Y * 2.4, 24, graine, 2, px=SW)
     prof = np.clip((Y - y0) / (y1 - y0), 0, 1)
-    v = n * 0.9 + np.sin(prof * math.pi) * 0.55 - 0.6
-    m = v > 0
-    bandes(t, m, v, BRUME, [0.12, 0.26])
+    v = n * 0.9 + np.sin(prof * math.pi) * 0.6 - 0.62
+    bandes(t, v > 0, v, BRUME, [0.12, 0.28])
     return t
 
 
-def images_feuille():
-    """Une feuille qui tourne en tombant (4 images, en boucle)."""
-    vert = [rgb('#5e9048'), rgb('#94b85a'), rgb('#d8b84a')]
-    formes = [((0, 1), (1, 1), (2, 1)), ((0, 2), (1, 1), (2, 0)), ((1, 0), (1, 1), (1, 2)), ((0, 0), (1, 1), (2, 2))]
+def images_oiseau():
+    """Un oiseau lointain qui bat des ailes : ailes hautes, ailes à plat (5 × 3)."""
     ims = []
-    for f in formes:
-        im = Image.new('RGBA', (3, 3), (0, 0, 0, 0))
-        for i, p in enumerate(f):
-            im.putpixel(p, vert[min(2, i)] + (255,))
+    for rows in (['x...x', '.x.x.', '..x..'], ['.....', 'xx.xx', '..x..']):
+        im = Image.new('RGBA', (5, 3), (0, 0, 0, 0))
+        for j, row in enumerate(rows):
+            for i, ch in enumerate(row):
+                if ch == 'x':
+                    im.putpixel((i, j), OISEAU + (255,))
         ims.append(im)
     return ims
 
 
 def dessine():
     t = F.Toile((0, 0, SW, SH))
-    ciel(t)
-    # nuages fixes près de l'horizon (sous le soleil, éclairés par lui)
-    nuages(t, [[(30, 238, 9), (48, 232, 12), (68, 236, 10), (86, 240, 7)],
-               [(120, 250, 6), (134, 246, 8), (150, 249, 6)]], plat=246)
-    montagnes(t)
-    arene(t)
-    # la vallée (brume fixe, sous le défilé) et les collines
-    mer_de_nuages(t)
-    roc = arete(t)
     calques = []
-    # 1. les nuages hauts qui glissent (derrière le logo et au-dessus des montagnes)
-    y0, y1 = 120, 190
-    tn = tuile_nuages(y0, y1, 5)
-    calques.append((-29, 'd', [0, y0, SW, y1 - y0, round(SW * 1000 / P, 4), 0], [tn.image()]))
-    t.colle(tn)
-    # 2. la brume de la vallée (devant les collines lointaines, derrière l'arête)
-    y0, y1 = 318, 352
-    tb = tuile_brume(y0, y1)
-    calques.append((-20, 'd', [0, y0, SW, y1 - y0, -round(2 * SW * 1000 / P, 4), 0], [tb.image()]))
+    ciel(t)
+    # 1. nuages hauts qui glissent (lentement)
+    y0, y1 = 150, 214
+    tc = tuile_ciel(y0, y1, 5)
+    t.colle(tc)
+    calques.append((-29, 'd', [0, y0, SW, y1 - y0, round(SW * 1000 / P, 4), 0], [tc.image()]))
+    montagnes(t)
+    piton(t)
+    poteaux = colisee(t)
+    # 2. les fanions du colisée (4 images, en boucle)
+    for k, (x, y) in enumerate(poteaux):
+        box = (x - 1, y - 11, x + 9, y + 1)
+        sous = t.col.copy()
+        ims = []
+        for i in range(8):
+            tl = F.Toile(box)
+            tl.col[:] = sous[box[1]:box[3], box[0]:box[2]]
+            fanion(tl, x, y, (i / 8 + k * 0.23) % 1)
+            ims.append(tl.image())
+            if i == 0:
+                t.colle(tl)
+        calques.append((-20 + k * 0.01, 'b', [box[0], box[1], box[2] - box[0], box[3] - box[1], 150], ims))
+    # 3. la brume qui passe entre le piton et la mer de nuages
+    y0, y1 = 444, 476
+    tb = tuile_brume(y0, y1, 41)
     t.colle(tb)
-    # l'arête remise devant la brume (une boucle d'une image : le morceau du rocher qui chevauche la brume)
-    over = roc & (t.Y >= y0) & (t.Y < y1)
-    if over.any():
-        ys, xs = np.nonzero(over)
-        box = (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
-        sub = np.zeros((box[3] - box[1], box[2] - box[0], 4), np.uint8)
-        mm = over[box[1]:box[3], box[0]:box[2]]
-        sub[mm] = t.col[box[1]:box[3], box[0]:box[2]][mm]
-        calques.append((-19, 'b', [box[0], box[1], box[2] - box[0], box[3] - box[1], 0], [Image.fromarray(sub, 'RGBA')]))
-    # 3. la bannière plantée au sommet de l'arête : elle flotte vers la droite (le vent pousse les feuilles aussi)
-    bx, by = BANNIERE
-    box = (bx - 6, by - 50, bx + 22, by + 4)
-    sous = t.col.copy()
-    images = []
-    for i in range(16):
-        tl = F.Toile(box)
-        tl.col[:] = sous[box[1]:box[3], box[0]:box[2]]
-        F.mat(tl, bx, by, 46, BOIS, ROC, pointe=(OR[2], OR[4]))
-        F.banniere(tl, bx, by, i / 16, +1, TISSU, OR, SIGNE, SIGNE_LEG, h=46, bw=15, bh=27)
-        images.append(tl.image())
-        if i == 0:
-            t.colle(tl)
-    calques.append((-10, 'b', [box[0], box[1], box[2] - box[0], box[3] - box[1], 125], images))
-    # 4. feuilles dans le vent (devant tout) et lucioles d'or qui montent du vide
-    calques.append((1300, 'p', [-10, 120, 0, 470, 5, 7000, 10000, 26, 40, -3, 6, 4, 1800, 160], images_feuille()))
-    luc = F.images_braise(['#7a3a2a', '#b8642a', '#e8a038', '#ffd060', '#fff0a0', '#fffbe0'])
-    calques.append((1299, 'p', [150, 470, 256, 555, 7, 3500, 5200, -4, 3, -16, -8, 3, 2200, 0], luc))
+    calques.append((-18, 'd', [0, y0, SW, y1 - y0, -round(SW * 1000 / P, 4), 0], [tb.image()]))
+    # 4. la mer de nuages : trois rangées, la plus proche la plus grosse, la plus riche et la plus rapide
+    for k, (ya, yb, r0, loin, v) in enumerate(((452, 478, 9, 1.0, 1), (470, 504, 14, 0.5, 2), (494, 536, 21, 0.0, 3))):
+        tn = tuile_nuees(ya, yb, r0, 60 + k, loin)
+        t.colle(tn)
+        calques.append((-16 + k, 'd', [0, ya, SW, SH - ya, round(v * SW * 1000 / P, 4), 0], [tn.image()]))
+    # 5. des oiseaux au loin, dans le ciel
+    calques.append((-28, 'p', [-24, 70, -6, 250, 3, 24000, 30000, 9, 13, -1.5, 1.5, 2, 3000, 220], images_oiseau()))
     return t, calques
 
 

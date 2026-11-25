@@ -3,10 +3,11 @@
 « pas une image tirée du jeu mais construite de 0, qui montre 3 personnages dans un paysage en position de combat ;
 le logo pas en pixel, en HD, beau ».
 
-Puis (même jour) : « je ne veux pas de héros affichés dessus ; le premier plan, les nuages, c'est beau : un beau décor
-animé ». Ce qu'on voit : le paysage dessiné pour lui (paysage.py : ciel du soir, soleil bas à droite, l'arène lointaine
-sur sa mesa, une mer de nuages, une arête rocheuse en paliers au bord du vide, une bannière plantée au sommet).
-Ce qui bouge : nuages et brume qui glissent, la bannière qui claque au vent, feuilles dans le vent, lucioles d'or.
+Puis (même jour) : « pas de héros, un beau décor animé », puis « enlève la montagne au premier plan, remplace-la par
+les beaux nuages, place le logo au milieu, refais bien le colisée sur sa montagne derrière, que tout soit cohérent ».
+Ce qu'on voit (paysage.py) : le ciel du soir, le soleil en haut à droite, des nuages hauts et des oiseaux au loin, des
+montagnes pâles, le colisée sur son piton qui sort des nuages, la mer de nuages devant (trois rangées à trois vitesses)
+et une brume qui passe. Le logo HD est au milieu de l'écran (un peu au-dessus : le colisée est dessous).
 Le mécanisme des héros (HEROS : images clés de combat prises dans hd-meta.ts, respiration, ombres) est gardé, la liste
 est vide.
 En haut, le logo HD (vectoriel, logo_hd.py) ; en bas la barre de chargement en émail bleu nuit cerclé d'or.
@@ -294,9 +295,9 @@ def html(M):
       #splash canvas, #splash .logo, #splash .load {{ position: absolute; }}
       #splash canvas, #splash .load {{ image-rendering: pixelated; }}
       #splash canvas {{ width: calc(var(--px) * {SW}); height: calc(var(--px) * {SH}); left: calc(50% - var(--px) * {SW / 2}); top: calc((100% - var(--px) * {SH}) * {ANCRE}); }}
-      /* le logo est vectoriel (net à toutes les tailles) : 62 % de la colonne, 280 px et 19 % de la hauteur au plus,
-         sous l'encoche avec de l'air autour (demande du propriétaire : « affiché trop gros ») */
-      #splash .logo {{ left: 50%; top: calc(env(safe-area-inset-top, 0px) + 18px); width: min(62%, 280px, calc(19vh * {vw / vh:.3f})); height: auto; aspect-ratio: {vw:.0f} / {vh:.0f}; overflow: visible; transform: translateX(-50%); }}
+      /* le logo est vectoriel (net à toutes les tailles) : au milieu de l'écran (un peu au-dessus : le colisée est
+         dessous), 62 % de la colonne, 280 px et 19 % de la hauteur au plus */
+      #splash .logo {{ left: 50%; top: calc(45% + env(safe-area-inset-top, 0px) / 2); width: min(62%, 280px, calc(19vh * {vw / vh:.3f})); height: auto; aspect-ratio: {vw:.0f} / {vh:.0f}; overflow: visible; transform: translate(-50%, -50%); }}
       #splash .load {{ left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--px) * 12); width: calc(var(--px) * {BW}); height: calc(var(--px) * {BH}); transform: translateX(-50%);
         background: url({bar}) 0 0 / 100% 100%; }}
       #splash .load i {{ position: absolute; left: calc(var(--px) * {BI}); top: calc(var(--px) * {BI}); height: calc(var(--px) * {BH - 2 * BI}); width: calc(var(--px) * {fw}); }}
@@ -371,7 +372,7 @@ def main():
         ims = []
         for i, t in enumerate(range(0, 3000, 150)):
             im = rendu(M, fond, planche, t).resize((SW * 2, SH * 2), Image.NEAREST)
-            im.alpha_composite(logo, ((SW * 2 - lw) // 2, round((47 + 18) * k)))
+            im.alpha_composite(logo, ((SW * 2 - lw) // 2, round((844 * 0.45 + 47 / 2) * k - logo.height / 2)))
             b = barre()
             fw = int(min(0.92, 0.2 + t / 3000 * 0.6) * (BW - 2 * BI))
             jauge = Image.new('RGBA', (fw, BH - 2 * BI))

@@ -104,3 +104,26 @@ Ne rien publier, ne rien envoyer : dire à l'orchestrateur quels fichiers ont ch
   Encore à reprendre de la même façon (leur GIF peut changer d'un pixel caché d'un lancement à l'autre) : `arachne`,
   `araignee-cuirassee`, `araignee-tisseuse`, `gabryel` (`fill_under` / bouchage des trous).
 
+
+## 5. Même vitesse pour toutes les attaques de base (25/11/2026)
+
+Demande du propriétaire : « tous les héros tapent à peu près à la même vitesse sur l'attaque basique » (le golem de
+lave mettait 1,9 s, l'homme-poisson 0,8 s). Rien à refaire dans les `build.py` ni dans l'export : c'est le jeu qui
+règle le tempo au moment de jouer l'attaque (`src/game/hd-tempo.ts`, appelé par `hdStrike` de `src/game/hd-fight.ts`).
+Les règles du combat (`src/core/battle/`) ne changent pas : seul l'affichage est plus court ou plus long.
+
+- Le coup tombe vers 0,44 s et tout est fini vers 0,98 s (vitesse ×1, course, vol et retour compris ; réglages dans
+  `EVEN` en tête de `hd-tempo.ts`).
+- Les images gardent leur rythme : avant le coup, elles sont toutes raccourcies (ou allongées) dans la même proportion ;
+  après le coup, la récupération est raccourcie davantage que l'image du coup et celle de l'impact. Une image ne descend
+  jamais sous 45 ms (sauf si l'animateur l'a faite plus courte) ; une attaque rapide est allongée au plus de ×1,25 ;
+  une attaque lente est raccourcie au plus de ×0,45 avant le coup (l'élan reste lisible) et ×0,3 après.
+- Corps à corps : la course jusqu'à la cible garde le temps qu'il lui faut (les images de l'élan ne sont jamais plus
+  rapides que la course) ; sans élan dessiné, le retour en courant commence pendant la fin de la récupération.
+- Tir : le vol d'un projectile d'attaque de base dure entre 0,12 et 0,38 s (le projectile va un peu plus vite de loin).
+- Les spéciales gardent exactement les durées de l'animateur.
+
+Contrôle : `npx tsx refonte-graphique/pixel/hd/anim/vitesse-attaques.ts` (depuis la racine) réécrit
+`refonte-graphique/pixel/sortie/vitesse-attaques.md` : durée de l'attaque de base de chaque personnage avant / après.
+Un nouveau personnage exporté y passe tout seul ; si son attaque paraît trop pressée, ralentir son GIF ne sert à rien
+(le jeu la remet au tempo commun) : régler plutôt `EVEN`, pour tout le monde.

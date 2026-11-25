@@ -116,27 +116,30 @@ Déjà dans la nouvelle DA : héros, monstres, grands boss (`art/hd/`), visages 
 Retour du propriétaire sur le premier essai (le volcan de Kael et le dragon, logo en pixels) : « pas une image tirée du
 jeu mais construite de 0, qui montre 3 personnages dans un paysage en position de combat ; le logo pas en pixel, en HD,
 beau ». Donc :
-- **Écran de chargement** (`chargement.py` + `paysage.py`) : un paysage dessiné pour lui, 256 × 555 pixels HD (la forme
-  d'un grand téléphone) : ciel du soir, soleil bas à droite (la seule lumière), l'arène lointaine sur sa mesa (deux tours
-  à fanions, signe inventé), une mer de nuages, une arête rocheuse en paliers au bord du vide avec une bannière aux
-  couleurs de l'arène plantée au sommet. **Pas de héros** (second retour du propriétaire : « je ne veux pas de héros
-  affichés dessus ; le premier plan, les nuages, c'est beau : un beau décor animé » ; le mécanisme reste dans
-  `chargement.py`, liste `HEROS` vide). Ce qui bouge : nuages hauts et brume qui glissent, la bannière qui claque au
-  vent, feuilles dans le vent, lucioles d'or qui montent du vide.
+- **Écran de chargement** (`chargement.py` + `paysage.py`) : un décor dessiné pour lui, 256 × 555 pixels HD (la forme
+  d'un grand téléphone), **sans héros**. Retours successifs du propriétaire : « pas de héros, un beau décor animé » ;
+  « enlève carrément la montagne au premier plan, remplace-la par les beaux nuages, et place le logo au milieu ; refais
+  bien le colisée sur sa montagne derrière ; que tout soit cohérent ». Ce qu'on voit : le ciel du soir en paliers, le
+  soleil en haut à droite (la seule lumière), des nuages hauts et des oiseaux au loin ; deux chaînes de montagnes pâles
+  et bleutées avec de la brume ; le **colisée** (sujet du décor, sous le logo) : arène ovale vue un peu d'en haut, gradins
+  et sable à l'intérieur, trois étages d'arcades qui rétrécissent vers les bords, attique à petites fenêtres, corniches,
+  pierre usée, une brèche à gauche avec ses éboulis, cinq fanions rouges qui flottent ; posé sur le plateau d'un piton
+  rocheux (bosquets aux flancs) qui sort des nuages ; devant, la **mer de nuages** en trois rangées (loin : petite et pâle ;
+  près : grosse et chaude), chacune glisse à sa vitesse, et une brume passe entre le piton et les nuages. Tout boucle en
+  32 s sans couture (les rangées de nuages sont dessinées sur trois largeurs pour que leurs bords se raccordent).
   Peint à sa vraie taille dans un `<canvas>` par un script de ~2 Ko posé dans `index.html` (pas de Phaser), agrandi sans
   flou pour couvrir l'écran (`--px` = la taille d'un pixel du dessin ; les petits téléphones coupent surtout du ciel,
-  `ANCRE`). Barre en bas (au-dessus de la barre de geste) : cadre d'or et émail bleu nuit, jauge d'or pixel par pixel.
-  Poids : paysage 7 Ko + planche 3 Ko + logo dans la page (~19 Ko de texte) ; l'ancien : 200 + 96 Ko. `main.tsx` le
-  retire comme avant ; le script s'arrête quand l'écran est retiré. Pas de phrase d'astuce (pas de texte évident ; et
-  l'écran s'affiche avant les traductions).
+  `ANCRE`). Logo **au milieu** de l'écran (un peu au-dessus, `top: 45 %`). Barre en bas (au-dessus de la barre de
+  geste) : cadre d'or et émail bleu nuit, jauge d'or pixel par pixel. Poids : décor 6 Ko + planche 4 Ko + logo dans la
+  page (~19 Ko de texte) ; l'ancien : 200 + 96 Ko. `main.tsx` le retire comme avant ; le script s'arrête quand l'écran
+  est retiré. Pas de phrase d'astuce. Le mécanisme des héros reste dans `chargement.py` (liste `HEROS` vide).
 - **Logo HD** (`logo_hd.py` → `public/art/ui/logo.svg`, copié dans `index.html`) : vectoriel, net à toutes les tailles.
   Les lettres sont les contours de Lilita One (aucune police à attendre), or métallique en dégradé (haut clair, ligne
   d'horizon, bas orangé), liseré clair en haut à droite et bord sombre en bas à gauche, reflet doux, tranche brun rouge,
   un contour sombre épais, ombre portée floue ; ruban cramoisi bordé d'or, cintré, lettres crème qui suivent la courbe ;
   deux épées croisées (pointes en haut, poignées sous le ruban) ; une étoile à 4 branches. Troisième retour (« le logo
   est coupé en bas, et il est affiché trop gros ») : la boîte du SVG englobe tout (pommeaux, queues du ruban, contour,
-  ombre : `viewBox="4 0 632 474"`), et il est plus petit : 62 % de la colonne, 280 px et 19 % de la hauteur au plus,
-  18 px sous l'encoche. Aperçu haute définition :
+  ombre : `viewBox="4 0 632 474"`), et il est plus petit : 62 % de la colonne, 280 px et 19 % de la hauteur au plus. Aperçu haute définition :
   `sortie/ui/logo-hd.png` (1280 × 900, fond transparent). Le premier logo en pixels est retiré.
 - **Écran du nom** (premier lancement) : l'image fixe complète `chargement.webp` en fond.
 - **Icône de l'application** (`icone.py`) : Bérold le spartiate en buste sur l'émail bleu nuit avec un halo clair ; 64 × 64
