@@ -52,7 +52,7 @@ RETOUCHES = {
     'arcan': "Plus de cheveux ; enlever la corne et la remplacer par des cheveux.",
 }
 # retouches faites, en attente du regard du propriétaire
-FAITES = set()
+FAITES = {'arcan'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
 
 

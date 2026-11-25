@@ -1047,7 +1047,11 @@ def loose_cord(cv, c, u, sw=0):
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
 # RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du héros à partir de
 # (x, y) en coordonnées de la GRILLE du dessin (comme arcan.txt) ; '.' efface, ' ' laisse le pixel tel quel.
-RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {
+    # (25/11/2026) la crinière plus fournie cache le noeud du col lointain : il n'en restait qu'un filet d'or posé
+    # sur le bord d'une mèche, qu'on prenait pour un reflet ; on le remplace par la toile qui l'entoure.
+    2: [(56, 8, 'BB'), (58, 9, 'B')],
+}}
 
 
 def retouch(cv, fixes):
