@@ -366,9 +366,9 @@ def leg_weight():
 
 
 W_LEG = leg_weight()
-W_NECK = 1 - smooth(DIST_HEAD / 44.0)          # 1 contre la tête, 0 à 44 pixels de la tête
+W_NECK = 1 - smooth(DIST_HEAD / 64.0)          # 1 contre la tête, 0 à 64 pixels de la tête
 # le cou ne tire pas la poitrine trop bas, ni le dos : il agit surtout devant le garrot et au-dessus du poitrail
-W_NECK *= smooth((GX - 132) / 30.0) * (1 - 0.55 * smooth((GY - 140) / 30.0))
+W_NECK *= smooth((GX - 120) / 40.0) * (1 - 0.55 * smooth((GY - 140) / 30.0))
 W_TAIL = smooth((GY - 150) / 70.0) * (1 - smooth((GX - 40) / 22.0))
 
 
@@ -390,9 +390,22 @@ def base_field(f):
     return dx, dy
 
 
+HEAD_C = (222, 104)                      # le milieu de la tête (grille)
+
+
+def head_of(f):
+    """le déplacement de la tête : « head » (absolu) ou « hrel » (en plus de ce que fait le buste sous elle)"""
+    if 'hrel' in f:
+        dx, dy = base_field(f)
+        x, y = int(HEAD_C[0] + OX), int(HEAD_C[1] + OY)
+        rx, ry = f['hrel']
+        return int(round(dx[y, x] + rx)), int(round(dy[y, x] + ry))
+    return f.get('head', (0, 0))
+
+
 def body_field(f):
     dx, dy = base_field(f)
-    hx, hy = f.get('head', (0, 0))
+    hx, hy = head_of(f)
     # le cou : entre le buste et la tête, le déplacement passe doucement de celui du buste à celui de la tête
     dx = dx + W_NECK * (hx - dx)
     dy = dy + W_NECK * (hy - dy)
@@ -667,7 +680,7 @@ def chunk(cv, x, y, k=0, flip=False):
 
 def c2(gx, gy, f=None):
     """un point de la grille du dessin -> toile, en suivant la tête si f (pour la narine, la gueule)"""
-    hx, hy = (f.get('head', (0, 0)) if f else (0, 0))
+    hx, hy = head_of(f) if f else (0, 0)
     return gx + OX + hx, gy + OY + hy
 
 
@@ -710,11 +723,11 @@ def body_layers(f):
     lfx, lfy = f.get('lagF', (0, 0))
     wings = f.get('wings')
     if wings is None:
-        far = warp(WING_F_CV, base[0] + lfx * W_TIP_F, base[1] + lfy * W_TIP_F)
-        near = warp(WING_N_CV, base[0] + lnx * W_TIP_N, base[1] + lny * W_TIP_N)
+        far = warp(WING_F_CV, bdx + lfx * W_TIP_F, bdy + lfy * W_TIP_F)
+        near = warp(WING_N_CV, bdx + lnx * W_TIP_N, bdy + lny * W_TIP_N)
     else:
         far, near = draw_wings(f, base)
-    hx, hy = f.get('head', (0, 0))
+    hx, hy = head_of(f)
     head = shift(head_src, hx, hy)
     jaw = shift(jaw_cv(f.get('jaw', 0)), hx, hy)
     return far, body, near, head, jaw
@@ -795,8 +808,8 @@ def rig(spec):
 
 ATTAQUE = [
     dict(ms=100),
-    dict(bx=-6, pitch=-6, head=(-12, -14), jaw=3, lagN=(2, 2), ms=160),
-    dict(bx=12, pitch=8, head=(40, 30), jaw=4, lagN=(-3, -3), ms=160),
-    dict(bx=14, pitch=10, sq=2, head=(46, 38), jaw=-9, lagN=(-3, -4), ms=160),
+    dict(bx=-6, pitch=-6, hrel=(-6, -8), jaw=3, lagN=(2, 2), ms=160),
+    dict(bx=12, pitch=10, hrel=(10, 6), jaw=4, lagN=(-3, -3), ms=160),
+    dict(bx=14, pitch=12, sq=2, hrel=(12, 8), jaw=-9, lagN=(-3, -4), ms=160),
 ]
 SPECIALE = [dict(ms=100)]
