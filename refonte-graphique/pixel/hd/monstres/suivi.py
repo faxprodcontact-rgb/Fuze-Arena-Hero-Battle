@@ -40,7 +40,6 @@ CHEFS = {'arachne': 'Arachné', 'meduse': 'Méduse', 'kesha': 'Kesha', 'barzul':
 VALIDES = {m[0] for _, _, ms in ROSTER for m in ms} - {'serpent-guerrier', 'naga-bouclier', 'matelot'}  # 25/11 : les non cités sont validés
 RETOUCHES = {}
 FAITES = {'serpent-guerrier', 'naga-bouclier', 'matelot'}  # retouchés le 25/11, à regarder
-FAITES = set()
 # dessins finis par leur artiste (les autres fichiers sont encore en cours de dessin)
 FINIS = {'araignee-bondissante', 'araignee-cuirassee', 'araignee-tisseuse', 'crabe-geant', 'serpent-guerrier', 'salamandre', 'meduse-eclair', 'matelot', 'golem-lave', 'tireur-pirate', 'oni-brute', 'homme-poisson', 'diablotin', 'corbeau-tengu', 'pretresse-serpent', 'lutin-magma', 'moine-tengu', 'naga-bouclier', 'singe-voleur', 'sorcier-oni', 'canonnier', 'tengu-eventail', 'gorille-guerrier', 'singe-chaman'}
 ELEMENTS = [('eau', 'Eau'), ('terre', 'Terre'), ('feu', 'Feu'), ('vent', 'Vent')]
