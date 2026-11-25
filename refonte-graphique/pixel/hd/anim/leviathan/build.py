@@ -897,46 +897,49 @@ def burst(back, front, X, k):
     """l'eau qui jaillit de la flaque quand le tentacule sort (k = 0) et retombe autour de lui (k = 1)"""
     G = GROUND
     if k == 0:
-        sheet(back, (X - 12, G - 3), 116, 40, 34, 6.0, blob=True)
-        sheet(back, (X + 12, G - 3), 66, 42, -34, 6.0, blob=True)
+        sheet(back, (X - 12, G - 3), 116, 40, 34, 7.5, blob=True)
+        sheet(back, (X + 12, G - 3), 66, 42, -34, 7.5, blob=True)
         water_band(front, X - 30, X + 28, lambda x: hump(x, X - 12, 16, 7) + hump(x, X + 12, 16, 8) + 1.0)
         foam(front, (X - 13, G - 7), 4.6, seed=40)
         foam(front, (X + 12, G - 8), 5.0, seed=41)
         spray(back, (X, G - 30), 1.0, [(-4.0, -6.0), (4.0, -6.5), (-6.0, -3.0), (6.5, -3.5), (-1.5, -8.0)])
     else:
-        sheet(back, (X - 14, G - 2), 124, 42, 96, 4.6, tail=0.5, blob=True)
-        sheet(back, (X + 14, G - 2), 58, 44, -100, 5.0, tail=0.5, blob=True)
+        sheet(back, (X - 14, G - 2), 124, 42, 96, 6.0, tail=0.45, blob=True)
+        sheet(back, (X + 14, G - 2), 58, 44, -100, 6.4, tail=0.45, blob=True)
         water_band(front, X - 30, X + 30, lambda x: hump(x, X, 26, 5) + 0.8)
         foam(front, (X - 10, G - 4), 3.6, hollow=0.2, seed=42)
         foam(front, (X + 11, G - 5), 4.0, hollow=0.2, seed=43)
         spray(back, (X, G - 30), 2.6, [(-4.0, -6.0), (4.0, -6.5), (-6.0, -3.0), (6.5, -3.5), (-1.5, -8.0)])
 
 
-HIT_A = (ENEMY_X - 8, GROUND - 54)            # là où le bout du tentacule frappe le héros (toile)
+HIT_A = (ENEMY_X - 6, GROUND - 56)            # là où le bout du tentacule frappe le héros (toile)
 
 
 def lash_splash(back, front, k):
-    """l'eau qui éclate sur le héros quand le tentacule s'abat : k = 0 le choc (un gros bouillon, des nappes),
-    1 il s'ouvre et gicle, 2 il retombe"""
+    """l'eau qui éclate sur le héros quand le tentacule s'abat : k = 0 le choc (un gros bouillon d'écume, une
+    couronne de nappes épaisses qui finissent en gouttes), 1 il s'ouvre et gicle, 2 l'écume retombe"""
     X, Y = HIT_A
-    seeds = [(-3.5, -5.0), (4.0, -6.0), (6.0, -2.5), (-6.0, -2.0), (1.5, -7.0), (7.5, -4.5), (-2.0, -7.5),
-             (5.0, 1.0)]
+    seeds = [(-3.5, -5.0), (4.0, -6.0), (6.5, -2.5), (-6.0, -2.0), (1.5, -7.0), (7.5, -4.5), (-2.0, -7.5),
+             (5.0, 1.0), (8.0, -1.0)]
     if k == 0:
-        foam(front, (X, Y), 7.0, seed=50, ground=False)
-        foam(front, (X + 8, Y + 9), 4.6, seed=51, ground=False)
-        sheet(back, (X + 2, Y - 4), 70, 24, -40, 5.0, blob=True)
-        sheet(back, (X - 4, Y - 4), 118, 20, 50, 4.4, blob=True)
-        sheet(front, (X + 6, Y + 4), 18, 22, -60, 4.0, blob=True)
-        spray(back, (X, Y), 0.8, seeds, front=front)
+        sheet(back, (X + 2, Y - 6), 64, 22, -46, 7.0, blob=True)
+        sheet(back, (X - 3, Y - 6), 112, 18, 54, 6.0, blob=True)
+        sheet(back, (X + 8, Y + 2), 14, 20, -58, 6.0, blob=True)
+        foam(front, (X - 1, Y), 8.5, seed=50, ground=False)
+        foam(front, (X + 9, Y + 8), 5.0, seed=51, ground=False)
+        foam(front, (X - 9, Y + 6), 4.0, seed=52, ground=False)
+        spray(back, (X, Y - 2), 0.9, seeds, front=front)
     elif k == 1:
-        foam(front, (X + 1, Y - 2), 7.4, hollow=0.3, seed=50, ground=False)
-        foam(front, (X + 9, Y + 10), 4.0, hollow=0.3, seed=51, ground=False)
-        sheet(back, (X + 2, Y - 6), 66, 32, -70, 4.4, tail=0.35, blob=True)
-        sheet(back, (X - 4, Y - 6), 122, 28, 80, 3.8, tail=0.35, blob=True)
-        spray(back, (X, Y), 1.9, seeds, front=front)
+        sheet(back, (X + 2, Y - 8), 62, 30, -78, 6.0, tail=0.3, blob=True)
+        sheet(back, (X - 3, Y - 8), 118, 26, 84, 5.0, tail=0.3, blob=True)
+        sheet(back, (X + 9, Y), 10, 24, -80, 5.0, tail=0.3, blob=True)
+        foam(front, (X, Y - 1), 9.0, hollow=0.3, seed=50, ground=False)
+        foam(front, (X + 10, Y + 10), 4.4, hollow=0.3, seed=51, ground=False)
+        spray(back, (X, Y - 2), 2.0, seeds, front=front)
     else:
-        foam(front, (X + 2, Y - 4), 6.0, hollow=0.65, seed=50, ground=False)
-        spray(back, (X, Y), 3.0, seeds)
+        foam(front, (X + 2, Y + 8), 6.0, hollow=0.6, seed=50, ground=False)
+        foam(front, (X - 6, Y + 14), 3.4, hollow=0.5, seed=53, ground=False)
+        spray(back, (X, Y - 2), 3.2, seeds)
 
 
 def fx_attack(k):
@@ -948,30 +951,33 @@ def fx_attack(k):
             puddle(back, front, EX, 22, 0)
             for j, (dx, dy) in enumerate(((-10, -6), (4, -9), (14, -5))):
                 drop(back, EX + dx, GROUND + dy, 1 + j % 2, v=(0.0, -2.0))
-        elif k == 4:
+        elif k == 4:                                   # il jaillit, droit, penché en arrière (il arme son coup)
             pond_splash(back, front, 2)
             puddle(back, front, EX, 26, 1)
-            over_into(cv, target_tentacle(e=26, bend=-3, cx=-1))
+            over_into(cv, target_tentacle(e=8, bend=-5, cx=-1, drop_=-2))
             burst(back, front, EX, 0)
-        elif k == 5:
+        elif k == 5:                                   # le fouet part (image de passage)
             puddle(back, front, EX, 26, 1)
-            over_into(cv, target_tentacle(e=0, bend=17, drop_=13, cx=2))
+            over_into(cv, target_tentacle(e=2, bend=8, drop_=3))
             burst(back, front, EX, 1)
-            lash_splash(back, front, 0)
-        elif k == 6:
+        elif k == 6:                                   # COUP
             puddle(back, front, EX, 26, 1)
-            over_into(cv, target_tentacle(e=2, bend=14, drop_=15, cx=1))
-            lash_splash(back, front, 1)
+            over_into(cv, target_tentacle(e=0, bend=17, drop_=15, cx=2))
+            lash_splash(back, front, 0)
         elif k == 7:
+            puddle(back, front, EX, 26, 1)
+            over_into(cv, target_tentacle(e=1, bend=15, drop_=17, cx=1))
+            lash_splash(back, front, 1)
+        elif k == 8:                                   # il replonge
             puddle(back, front, EX, 25, 1)
-            over_into(cv, target_tentacle(e=36, bend=4, drop_=4))
+            over_into(cv, target_tentacle(e=38, bend=3, drop_=2))
             lash_splash(back, front, 2)
             foam(front, (EX - 4, GROUND - 6), 4.4, seed=60)
             foam(front, (EX + 9, GROUND - 5), 3.6, seed=61)
-        elif k == 8:
+        elif k == 9:
             puddle(back, front, EX, 20, 2)
             pond_splash(back, front, 2, Y=POND_SPLASH[1] - 1)
-        elif k == 9:
+        elif k == 10:
             puddle(back, front, EX, 12, 2, seed=3)
     return f
 
@@ -981,29 +987,35 @@ def over_into(cv, part):
     cv[m] = part[m]
 
 
+def _ph(i, n=12):
+    return (1.6, 2 * math.pi * i / n)          # l'ondulation continue pendant l'attaque (même amplitude qu'au repos)
+
+
 ATTAQUE = [
-    dict(ms=120, br=1, head=(-3, -4), jaw=4, lean=-1, fin=(1, 1), wave=(1.0, 0.0), glow=1,
+    dict(ms=120, br=1, head=(-3, -4), jaw=4, lean=-1, fin=(1, 1), wave=_ph(0), glow=1,
          tr=dict(lift=4, bend=-3, cy=2), tl=dict(bend=-1), tb=dict(bend=-1), boil=0),
-    dict(ms=280, br=2, head=(-5, -7), jaw=8, lean=-2, fin=(2, 2), wave=(1.0, 0.6), glow=2,
+    dict(ms=280, br=2, head=(-5, -7), jaw=8, lean=-2, fin=(2, 2), wave=_ph(1), glow=2,
          tr=dict(lift=9, bend=-6, cy=3, cx=-2), tl=dict(bend=-2, cy=1), tb=dict(bend=-2, cy=1), boil=1),
-    dict(ms=70, br=1, head=(2, -1), jaw=2, lean=1, fin=(-2, -1), wave=(1.0, 1.4), glow=2,
+    dict(ms=70, br=1, head=(2, -1), jaw=2, lean=1, fin=(-2, -1), wave=_ph(2), glow=2,
          tr=dict(plunge=36, bend=2), tl=dict(bend=1), tb=dict(bend=1), boil=2, fx=[fx_attack(2)]),
-    dict(ms=90, br=1, head=(2, 0), jaw=1, lean=1, fin=(-1, 0), wave=(1.0, 2.0), glow=1,
+    dict(ms=90, br=1, head=(2, 0), jaw=1, lean=1, fin=(-1, 0), wave=_ph(3), glow=1,
          tr=dict(gone=True), tl=dict(bend=1.5), tb=dict(bend=1.5), boil=3, fx=[fx_attack(3)]),
-    dict(ms=70, br=1, head=(2, 0), jaw=2, lean=1, wave=(1.0, 2.6), glow=1,
+    dict(ms=80, br=1, head=(2, 0), jaw=2, lean=1, wave=_ph(4), glow=1,
          tr=dict(gone=True), tl=dict(bend=1), tb=dict(bend=1), boil=4, fx=[fx_attack(4)]),
-    dict(ms=220, br=1, head=(3, 0), jaw=3, lean=1, wave=(1.0, 3.0), glow=2,
-         tr=dict(gone=True), tl=dict(bend=0.5), tb=dict(bend=0.5), boil=5, fx=[fx_attack(5)], shake=2),
-    dict(ms=110, br=1, head=(2, 0), jaw=2, lean=1, wave=(1.0, 3.4), glow=1,
-         tr=dict(gone=True), boil=6, fx=[fx_attack(6)], shake=-1),
-    dict(ms=90, br=0, head=(1, 0), jaw=1, wave=(1.0, 3.9), glow=1,
-         tr=dict(gone=True), tl=dict(bend=-0.5), boil=7, fx=[fx_attack(7)]),
-    dict(ms=100, br=0, head=(0, 1), jaw=0, wave=(1.0, 4.4), glow=1,
-         tr=dict(plunge=30, bend=-2), tl=dict(bend=-1), tb=dict(bend=-1), boil=8, fx=[fx_attack(8)]),
-    dict(ms=110, br=0, head=(0, 1), jaw=0, wave=(1.0, 5.0), glow=1,
-         tr=dict(plunge=6, lift=2, bend=1, cy=-1), boil=9, fx=[fx_attack(9)]),
-    dict(ms=150, br=0, head=(0, 1), jaw=0, wave=(1.0, 5.6), glow=1,
-         tr=dict(bend=0.5), boil=10),
+    dict(ms=50, br=1, head=(3, 0), jaw=3, lean=1, wave=_ph(5), glow=2,
+         tr=dict(gone=True), tl=dict(bend=0.5), tb=dict(bend=0.5), boil=5, fx=[fx_attack(5)]),
+    dict(ms=220, br=1, head=(3, 0), jaw=3, lean=1, wave=_ph(5.5), glow=2,
+         tr=dict(gone=True), tl=dict(bend=0.5), tb=dict(bend=0.5), boil=5, fx=[fx_attack(6)], shake=2),
+    dict(ms=110, br=1, head=(2, 0), jaw=2, lean=1, wave=_ph(6), glow=1,
+         tr=dict(gone=True), boil=6, fx=[fx_attack(7)], shake=-1),
+    dict(ms=90, br=0, head=(1, 0), jaw=1, wave=_ph(7), glow=1,
+         tr=dict(gone=True), tl=dict(bend=-0.5), boil=7, fx=[fx_attack(8)]),
+    dict(ms=100, br=0, head=(0, 1), jaw=0, wave=_ph(8), glow=1,
+         tr=dict(plunge=30, bend=-2), tl=dict(bend=-1), tb=dict(bend=-1), boil=8, fx=[fx_attack(9)]),
+    dict(ms=110, br=0, head=(0, 1), jaw=0, wave=_ph(10), glow=1,
+         tr=dict(plunge=6, lift=2, bend=1, cy=-1), boil=10, fx=[fx_attack(10)]),
+    dict(ms=150, br=0, head=(0, 1), jaw=0, wave=_ph(11), glow=1,
+         tr=dict(bend=0.5), boil=11),
 ]
 
 SPECIALE = []

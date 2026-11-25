@@ -117,3 +117,4 @@
   combat HD partout, portraits HD, outils de test retirés, vieux fichiers supprimés, captures `pixel/sortie/jeu-propre/`.
   À la fin : fusionner sa branche, régénérer hd-meta.ts si les boss ont été exportés entre-temps, publier v0.56.0.
 - 25/11 : titan VALIDÉ → animation lancée (anim/titan/). Oiseau : plumes (pas écailles) sur l'aile en cours.
+- 25/11 : oiseau VALIDÉ → animation lancée (anim/oiseau-tempete/). Dragon : attaque de base refaite sur place (coup de patte, griffure sur la cible) ; règle pour les boss : l'attaque de base ne se déplace pas.
