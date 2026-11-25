@@ -776,3 +776,27 @@ def pose_frame(f):
     front = empty()
     fx_wisp(front, f, f.get('wisp', -1))
     return cv, None, front
+
+
+# ---------------------------------------------------------------- une image d'attaque : corps monté + effets
+def rig(spec):
+    f = dict(spec)
+    cv = assemble(f)
+    back, front = empty(), empty()
+    for fx in f.get('fx', []):
+        fx(cv, back, front, f)
+    kw = {}
+    if f.get('flash'):
+        kw['flash'] = f['flash']
+    if f.get('shake'):
+        kw['shake'] = f['shake']
+    return cv, back, front, kw
+
+
+ATTAQUE = [
+    dict(ms=100),
+    dict(bx=-6, pitch=-6, head=(-12, -14), jaw=3, lagN=(2, 2), ms=160),
+    dict(bx=12, pitch=8, head=(40, 30), jaw=4, lagN=(-3, -3), ms=160),
+    dict(bx=14, pitch=10, sq=2, head=(46, 38), jaw=-9, lagN=(-3, -4), ms=160),
+]
+SPECIALE = [dict(ms=100)]
