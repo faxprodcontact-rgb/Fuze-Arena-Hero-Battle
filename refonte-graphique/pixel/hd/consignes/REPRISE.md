@@ -14,6 +14,12 @@
 - Test d'animation (24/11) sur Eldra : respiration, attaque, attaque spéciale — sources `../anim/eldra/build.py`, GIF
   `../../sortie/anim-eldra-*.gif`. Validé (« Super, j'aime bien »). Puis Kael (feu), Isis (terre) et Ilian
   (eau) faits et validés (« Super »), puis Sable, Elyon, Arachné validés, puis Myrr, Zaroth, Méduse validés, puis Astérion (cyclope), Célia, Tybalt validés, puis Kesha, Orin, Bérold validés, puis Zéphyre, Barzul, Aldric validés, puis Lilou, Gabryel, Mira validés, puis Tessa, Solenn, Anubis validés, puis Corvin, Jinn, Auriel validés, puis Rook, Nerith validés ; Arcan retouché (« plus de cheveux, enlever la corne, la remplacer par des cheveux », dessin et animation refaits) puis validé ; Lenore, Garvin, Velith validés ; Ysolde et Minotaure faits (25/11) : **les 36 héros sont animés** (Ysolde et Minotaure en attente de son avis) ; 3 agents, consigne `animation.md` (+ héros, élément et idée de spéciale). Rien n'est branché dans le jeu.
+- **Spéciales d'équipe** (décision du 25/11, option 1) : 14 héros ont un sort qui ne frappe pas (soin, bouclier,
+  défense, attaque/énergie) ; on refait leur spéciale pour montrer le vrai effet (consigne `speciale-equipe.md`).
+  Liste et effet en jeu (`src/core/data/heroes.ts`, skillFor) : Rook, Myrr (soin de tous + purifie + ressuscite) ;
+  Nerith, Minotaure (soin du plus blessé + régénération) ; Bérold, Corvin, Solenn (bouclier d'équipe + provocation) ;
+  Garvin, Mira, Zaroth (défense d'équipe + se soigne + provocation) ; Arcan, Célia, Anubis (attaque d'équipe + énergie).
+  En cours : Myrr, Zaroth, Arcan. Elyon (affaiblit/ralentit les ennemis), Lilou, Auriel, Ysolde : déjà cohérents.
 - Plus tard (pas encore demandé) : mettre les héros HD dans le jeu (`../../jeu.py` sait déjà les lire) et publier.
 
 ## Méthode (validée par le propriétaire)
