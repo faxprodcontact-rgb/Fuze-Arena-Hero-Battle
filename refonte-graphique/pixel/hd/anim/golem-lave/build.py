@@ -103,7 +103,10 @@ P['goutte'] = take(filled & (XX >= 111) & (XX <= 115) & (YY >= 97) & (YY <= 101)
 P['petit'] = take(filled & (XX >= 105) & (YY >= 64))
 # le bras-massue (proche), de sous l'épaule-rocher jusqu'au sol (pour les attaques ; la pose le garde dans le corps)
 _arm_edge = np.where(YY <= 62, 32, np.where(YY <= 85, 30, 44))
-P['bras'] = np.where(filled & (YY >= 44) & (XX <= _arm_edge), CORPS, '.')
+_arm = filled & (YY >= 44) & (XX <= _arm_edge)
+_arm |= filled & (YY >= 86) & (YY <= 108) & (XX >= 45) & (XX <= 47) & (isin(CORPS, '4567') | (YY >= 100))
+# (le bord droit de la massue, qui touche presque la jambe)
+P['bras'] = np.where(_arm, CORPS, '.')
 # le visage (sourcils, yeux, nez, gueule, mâchoire) : il suit le souffle avec une image de retard
 P['visage'] = np.where(filled & (XX >= 84) & (XX <= 110) & (YY >= 45) & (YY <= 62) & (P['petit'] == '.'), CORPS, '.')
 P['corps'] = rest.copy()                                   # tout le reste (bras-massue et visage compris)
@@ -911,11 +914,11 @@ def fx_club_smear(prev_arm, tones='65432', lava='uts', w=16):
 # tremble, des bouffées de poussière roulent au ras du sol, des éclats de roche et quelques gouttes de lave sautent.
 # Impact tenu ; puis il traîne la massue en arrière et se redresse lentement.
 ARM_REST = (A_UP0, A_FORE0, PHI0)
-ARM_LIFT = (-150.0, -140.0, -120.0)
-ARM_HIGH = (150.0, 115.0, 120.0)
-ARM_PEAK = (125.0, 95.0, 140.0)
+ARM_LIFT = (-150.0, -60.0, -100.0)
+ARM_HIGH = (170.0, 135.0, 150.0)
+ARM_PEAK = (105.0, 120.0, 150.0)
 ARM_SWING = (55.0, 15.0, -10.0)
-ARM_HIT = (-42.0, -66.0, -90.0)
+ARM_HIT = (-30.0, -58.0, -88.0)
 ARM_DRAG = (-75.0, -78.0, -92.0)
 ARM_BACK = (A_UP0 + 6, A_FORE0 + 4, PHI0)
 
@@ -975,12 +978,11 @@ ATTAQUE = [
     # head = retard du visage ; pa = le petit bras ; plant = la massue est posée juste sur le sol
     dict(arms='orig', ms=140),
     dict(arm=ARM_LIFT, lean=-1, tilt=-2, crouch=1, head=(0, 1), pa=(-1, 0), fx_list=[fx_lift_dust], ms=130),
-    dict(arm=ARM_HIGH, lean=-2, tilt=-4, crouch=-1, head=(0, -1), pa=(-2, -1), smear=fx_club_smear(ARM_LIFT, w=10,
-         lava=''), ms=110),
-    dict(arm=ARM_PEAK, lean=-2, tilt=-5, crouch=-2, head=(0, -1), pa=(-2, -2), glow=1, ms=360),
+    dict(arm=ARM_HIGH, stretch=0.93, lean=-2, tilt=-4, crouch=-1, head=(0, -1), pa=(-2, -1), ms=120),
+    dict(arm=ARM_PEAK, stretch=0.9, lean=-2, tilt=-5, crouch=-2, head=(0, -1), pa=(-2, -2), glow=1, ms=360),
     dict(arm=ARM_SWING, lean=2, tilt=3, crouch=0, pa=(0, -1), glow=1, smear=fx_club_smear(ARM_PEAK, w=20), ms=50),
     dict(arm=ARM_HIT, plant=True, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), glow=1, shake=1,
-         smear=fx_club_smear(ARM_SWING, w=14), fx_list=[fx_slam(0)], ms=200),
+         fx_list=[fx_slam(0)], ms=200),
     dict(arm=ARM_HIT, plant=True, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), shake=-1, fx_list=[fx_slam(1)],
          ms=110),
     dict(arm=ARM_HIT, plant=True, lean=4, tilt=7, crouch=3, pa=(1, 0), fx_list=[fx_slam(2)], ms=150),

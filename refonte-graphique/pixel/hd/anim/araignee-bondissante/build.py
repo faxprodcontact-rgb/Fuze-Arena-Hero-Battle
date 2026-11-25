@@ -390,6 +390,10 @@ LEG_LOOK = {
     'F1': dict(r=(2.4, 2.3, 2.0, 0.9), rings=[]),
     'F2': dict(r=(2.4, 2.2, 1.9, 0.9), rings=[]),
     'F3': dict(r=(2.6, 2.4, 2.0, 0.9), rings=[(0, 0.0, 0.14)]),
+    # les deux pattes avant (quand elles se tendent vers la proie) : épaisses, anneaux aux deux articulations,
+    # petites épines sous la jambe (comme sur le dessin)
+    'N4': dict(r=(3.8, 3.4, 2.8, 1.1), rings=[(0, 0.0, 0.12), (1, 0.0, 0.12)], spines=True),
+    'F4': dict(r=(3.0, 2.8, 2.3, 1.0), rings=[(0, 0.0, 0.12), (1, 0.0, 0.12)], spines=True),
 }
 
 
@@ -412,6 +416,16 @@ def draw_leg_new(cv, name, pts):
     for (seg, c0, c1) in look['rings']:
         rr = r[seg + 1] if seg else r[1]
         capsule(cv, P[seg + 1], P[seg + 2], rr, rr, lambda k, t: ring_tone(k, far), t0=c0, t1=c1)
+    if look.get('spines'):
+        # épines : un pixel sombre détaché sous la jambe (le contour noir en fait une petite pointe)
+        n = np.array([v2[1], -v2[0]])
+        if n @ LN > 0:
+            n = -n
+        for u in (0.3, 0.55, 0.8):
+            q = P[1] + u * (P[2] - P[1]) + n * (r[1] - (r[1] - r[2]) * u + 1.6)
+            x, y = int(q[0]), int(q[1])
+            if 0 <= x < W and 0 <= y < H:
+                cv[y, x] = 'A'
 
 
 def layered(cv, draw, rim):
@@ -707,7 +721,7 @@ TRAIL = {   # en plein vol : les pattes arrière traînent, tendues ; les pattes
     'N1': dict(new=[(4, 95), (-3, 104), (-8, 111)]), 'N2': dict(new=[(38, 106), (31, 111), (26, 114)]),
     'F1': dict(new=[(28, 92), (21, 101), (16, 107)]), 'F2': dict(new=[(52, 99), (46, 106), (41, 111)]),
     'N3': dict(new=[(64, 106), (76, 110), (86, 111)]), 'F3': dict(new=[(108, 96), (115, 102), (120, 105)]),
-    'N4': dict(t=(5, 6), k=(2, 2), j=3), 'F4': dict(t=(4, 8), k=(2, 3), j=2)}
+    'N4': dict(new=[(72, 50), (94, 58), (110, 66)]), 'F4': dict(new=[(104, 60), (121, 64), (133, 71)])}
 
 
 def push(sp):
@@ -721,8 +735,96 @@ def push(sp):
     return P
 
 
+# ---------------------------------------------------------------- 2) l'attaque de base : « Bond-morsure »
+# Une vraie araignée sauteuse : elle se ramasse (corps reculé et tassé entre les genoux, les pattes avant dressées
+# en arrière, tenue nerveuse), puis part d'un coup : les pattes arrière se détendent (encore plantées au sol, un
+# nuage de poussière), elle file en un bond plat, pattes arrière tendues derrière, pattes avant pointées ; elle
+# s'abat sur l'ennemi, les deux pattes avant plantées dans sa proie et les crocs qui mordent (éclat de venin vert,
+# tenu) ; deuxième coup de crocs ; puis elle rebondit en arrière et retombe à sa place, amortit et se remet en garde.
+REAR = [(18.5, 115.5), (31.5, 115.5), (42.5, 115.5), (53.5, 115.5)]       # pointes des pattes arrière au repos
+
+
+def fx_launch_dust(level, dx=0):
+    """la poussière soulevée par les pattes arrière au départ (ou à l'atterrissage) : level 0 = pleine, 1, 2 = se défait"""
+    def f(cv, back, front, ctx):
+        hollow = (0.0, 0.5, 0.85)[level]
+        for i, (x, y) in enumerate(REAR):
+            if i == 3 and level:
+                continue
+            c = (x + OX + dx - 2 - 3 * level, GROUND - 2)
+            cloud(back if i else front, c, (4.2, 3.6, 3.4, 3.0)[i] * (1 - 0.1 * level), 'VWXY', hollow=hollow, seed=20 + i)
+    return f
+
+
+def fx_venom_hit(level):
+    """la morsure : un éclat de venin vert à la pointe des pattes avant plantées dans l'ennemi, des gouttes giclent"""
+    def f(cv, back, front, ctx):
+        c = ctx.hit
+        if level == 0:
+            pop(front, c, 5.0, facing=15, tones='lHIJL')
+            for (dx, dy, k) in ((9, -9, 1), (12, 1, 2), (7, 8, 0), (-3, -9, 2)):
+                drop(front, c[0] + dx, c[1] + dy, k)
+        elif level == 1:
+            pop(front, c + np.array([2, -1]), 3.4, facing=20, tones='HIJL')
+            for (dx, dy, k) in ((14, -12, 1), (17, 2, 2), (10, 11, 0), (-4, -13, 2)):
+                drop(front, c[0] + dx, c[1] + dy, k)
+        elif level == 2:
+            pop(front, c, 3.8, facing=0, tones='lHIJ')
+            for (dx, dy, k) in ((8, -6, 2), (7, 6, 1)):
+                drop(front, c[0] + dx, c[1] + dy, k)
+        else:
+            for (dx, dy, k) in ((12, 9, 2), (16, 14, 1), (6, 16, 2)):
+                drop(front, c[0] + dx, c[1] + dy, k)
+    return f
+
+
+def set_hit(dx=0, dy=0):
+    """le point d'impact : entre les pointes des deux pattes avant (toile)"""
+    def f(cv, back, front, ctx):
+        ctx.hit = (ctx.tips['F4'] + ctx.tips['N4']) / 2 + np.array([dx, dy])
+    return f
+
+
+STAB = {   # les deux pattes avant plantées dans l'ennemi (redessinées, tendues vers l'avant et vers le bas)
+    'N4': dict(new=[(74, 50), (99, 58), (116, 74)]), 'F4': dict(new=[(105, 59), (124, 64), (131, 80)])}
+COCK = {   # les pattes avant dressées et reculées (la garde qui se charge)
+    'N4': dict(t=(-3, -3), k=(-1, -2), j=3), 'F4': dict(t=(-3, -2), k=(-1, -1), j=2)}
+LAND = dict(TRAIL)
+LAND.update({   # elle revient en arrière : les pattes se tendent vers le sol pour se poser
+    'N1': dict(new=[(6, 96), (4, 106), (6, 114)]), 'N2': dict(new=[(40, 106), (36, 111), (34, 115)]),
+    'F1': dict(new=[(30, 93), (26, 103), (24, 112)]), 'F2': dict(new=[(54, 100), (50, 107), (48, 113)]),
+    'N3': dict(new=[(62, 106), (70, 112), (74, 116)]), 'F3': dict(new=[(104, 96), (106, 106), (106, 113)]),
+    'N4': dict(t=(1, 2), k=(1, 1), j=3), 'F4': dict(t=(0, 3), k=(0, 1), j=2)})
+HIT_X = 62                                   # là où elle s'abat (pixels vers l'ennemi)
+
 ATTAQUE = [
-    dict(ms=60),
+    # 0 : tension : le corps se tasse d'un pixel, les pattes avant se reculent, un pédipalpe frémit
+    dict(sp=(0, 1), legs=COCK, pG=(0, -1), ms=80),
+    # 1 : elle se ramasse : corps reculé et tassé entre les genoux, l'abdomen se serre (tenu)
+    dict(sp=(-3, 3), head=(0, 1), abd=1, legs={**COCK, 'N4': dict(t=(-4, -4), k=(-2, -2), j=3),
+                                               'F4': dict(t=(-4, -3), k=(-2, -2), j=2)}, ms=170),
+    # 2 : frémissement (tout tremble d'un pixel)
+    dict(sp=(-4, 3), head=(0, 1), legs={**COCK, 'N4': dict(t=(-4, -5), k=(-2, -2), j=3),
+                                        'F4': dict(t=(-5, -3), k=(-2, -2), j=2)}, pD=(0, -1), ms=80),
+    # 3 : départ : les pattes arrière se détendent, encore au sol ; poussière
+    dict(sp=(16, -10), air=True, legs=push((16, -10)), fang=1, fx=[fx_launch_dust(0)], ms=50),
+    # 4 : le bond, à plat, pattes tendues
+    dict(sp=(42, -12), air=True, legs=TRAIL, fang=2, fx=[fx_launch_dust(1)], ms=50),
+    # 5 : impact (tenu) : pattes avant plantées, crocs ouverts dans la proie, éclat de venin
+    dict(sp=(HIT_X, 0), air=True, head=(1, 0), legs=STAB, fang=2,
+         fx=[set_hit(), fx_venom_hit(0), fx_launch_dust(2)], ms=160),
+    # 6 : les crocs se referment (deuxième morsure, la tête pique d'un pixel)
+    dict(sp=(HIT_X, 1), air=True, head=(2, 1), legs=STAB, fang=0, fx=[set_hit(), fx_venom_hit(2)], ms=90),
+    # 7 : elle se rejette en arrière
+    dict(sp=(40, -12), air=True, legs=LAND, fx=[set_hit(HIT_X - 40, 1), fx_venom_hit(1)], ms=60),
+    # 8 : en l'air, elle redescend vers sa place
+    dict(sp=(14, -8), air=True, legs=LAND, fx=[set_hit(HIT_X - 14, 1), fx_venom_hit(3)], ms=60),
+    # 9 : elle retombe à sa place et amortit (le corps s'écrase entre les genoux) ; poussière
+    dict(sp=(0, 3), head=(0, -1), abd=1, fx=[fx_launch_dust(1, 2)], ms=110),
+    # 10 : elle se redresse (la tête suit avec retard)
+    dict(sp=(0, 1), head=(0, 1), fx=[fx_launch_dust(2, 2)], ms=90),
+    # 11 : en garde
+    dict(pG=(0, -1), ms=110),
 ]
 
 

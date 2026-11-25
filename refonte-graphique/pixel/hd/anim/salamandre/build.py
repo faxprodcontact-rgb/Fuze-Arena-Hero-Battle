@@ -84,8 +84,8 @@ THROAT = IS_LAVA & ~CREST & ~MOUTH & (XX >= 90) & (YY >= 61) & (YY <= 78)   # la
 SPOTS = IS_LAVA & ~CREST & ~MOUTH & ~THROAT                       # les taches de braise (dos, pattes, queue, glande)
 
 
-def _components(mask):
-    """numérote les morceaux d'un masque (4-voisins) : une langue de flamme = un morceau"""
+def _components(mask, diag=False):
+    """numérote les morceaux d'un masque (4-voisins, ou 8 avec diag) : une langue de flamme = un morceau"""
     lab = np.zeros(mask.shape, int)
     n = 0
     for y0, x0 in zip(*np.nonzero(mask)):
@@ -96,7 +96,10 @@ def _components(mask):
         lab[y0, x0] = n
         while st:
             y, x = st.pop()
-            for yy, xx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
+            nbs = [(y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)]
+            if diag:
+                nbs += [(y + 1, x + 1), (y - 1, x - 1), (y + 1, x - 1), (y - 1, x + 1)]
+            for yy, xx in nbs:
                 if 0 <= yy < GH and 0 <= xx < GW and mask[yy, xx] and not lab[yy, xx]:
                     lab[yy, xx] = n
                     st.append((yy, xx))
@@ -107,14 +110,14 @@ HEIGHT = np.where(CREST, SKIN_TOP[None, :] - YY, 0)               # hauteur de c
 TIPS, NTIPS = _components(CREST & (HEIGHT >= 3))                  # le haut de chaque langue (ce qui se balance)
 
 
-def glow(g, mask, level):
-    """allume la lave du masque de 'level' tons (r -> s -> t -> u -> v -> w)"""
+def glow(g, mask, level, top=5):
+    """allume la lave du masque de 'level' tons (r -> s -> t -> u -> v -> w), sans dépasser le ton LAVA[top]"""
     if level <= 0:
         return g
     out = g.copy()
     for ch in reversed(LAVA[:-1]):
         m = mask & (g == ch)
-        out[m] = LAVA[min(5, LAVA.index(ch) + level)]
+        out[m] = LAVA[max(LAVA.index(ch), min(top, LAVA.index(ch) + level))]
     return out
 
 
@@ -136,7 +139,9 @@ def crest(g, phase=0, flare=0.0, lean=0):
         d = SWAY[(phase + k * 3) % 4]
         ys, xs = np.nonzero(m)
         tall = HEIGHT[ys, xs] >= 6
-        dd = np.where(tall, d + lean, d if abs(lean) < 2 else d + lean // 2)
+        top_d = d + lean                       # le haut de la langue
+        mid_d = int(top_d / 2)                 # le milieu suit à moitié : la langue se courbe sans se casser
+        dd = np.where(tall, top_d, mid_d)
         moved[ys, np.clip(xs + dd, 0, GW - 1)] = src[ys, xs]
     # 2) grandir : chaque colonne de flamme est étirée vers le haut à partir du dos
     if flare > 0:
@@ -152,6 +157,18 @@ def crest(g, phase=0, flare=0.0, lean=0):
                 if 1 <= hs <= hmax and top - h >= 0:
                     st[top - h, x] = moved[top - hs, x]
         moved = st
+    # pas de flammèche détachée : un morceau de crête qui ne touche plus le dos est retiré
+    body_ = np.pad(out != '.', 1)
+    near = np.zeros_like(body_)
+    for a in (-1, 0, 1):
+        for b in (-1, 0, 1):
+            near |= np.roll(np.roll(body_, a, 0), b, 1)
+    near = near[1:-1, 1:-1]
+    lab, n = _components(moved != '.', diag=True)
+    for k in range(1, n + 1):
+        m = lab == k
+        if not (m & near).any():
+            moved[m] = '.'
     return out, moved
 
 
@@ -248,7 +265,7 @@ def blink(g):
 def body(spec):
     """le dessin de la salamandre pour une image : lueurs, crête, gueule, clignement, puis le corps plié"""
     g = CORPS.copy()
-    g = glow(g, SPOTS, spec.get('gs', 0))
+    g = glow(g, SPOTS, spec.get('gs', 0), top=4)      # les taches restent jaune chaud, jamais blanches
     g = glow(g, THROAT, spec.get('gt', 0))
     g = glow(g, CREST, spec.get('gc', 0))
     g = glow(g, MOUTH, spec.get('gm', spec.get('gt', 0)))
@@ -715,23 +732,25 @@ def jet(cv, back, start, end, reach=1.0, cut=0.0, phase=0.0, heat=1.0, licks=Tru
     items = []
     n = 15
     for i in range(-1, n + 1):
-        s = (i + (phase % 1.0)) / n
+        s = max(0.0, (i + (phase % 1.0)) / n) ** 1.3          # plus serrées près de la gueule
         if s > reach or s < max(0.0, cut):
             continue
         x, y = at(s)
-        wob = math.sin(i * 2.3 + phase * 1.9) * (0.6 + 3.5 * s)
-        r = 4.0 + 10.5 * s ** 0.8 + 1.8 * math.sin(i * 1.9 + phase * 2.2)
+        wob = math.sin(i * 2.3 + phase * 1.9) * (0.6 + 4.0 * s)
+        r = 5.0 + 10.0 * s ** 0.8 + (0.8 + 2.2 * s) * math.sin(i * 1.9 + phase * 2.2)
         ht = heat * (1.0 - 0.5 * s)
         if reach < 1 and s > reach - 0.2:
             ht *= 0.8
         if cut > 0 and s < cut + 0.15:
             r *= 0.75 + 0.25 * (s - cut) / 0.15
             ht *= 0.7
+        if heat < 0.7:
+            r *= 0.5 + 0.5 * heat / 0.7          # il se défait : les bouffées rapetissent et se séparent
         items.append((x, y + wob - 6 * s * s, r, max(0.05, ht)))
     if reach > 0.2:
         # le bout : la grosse tête du torrent qui roule (une bouffée plus grosse, un peu au-dessus)
         x, y = at(reach)
-        items.append((x + 1, y - 5, 5.0 + 9.5 * reach, heat * 0.7))
+        items.append((x + 1, y - 5, (5.0 + 9.5 * reach) * (1 if heat >= 0.7 else 0.75), heat * 0.7))
     if licks:
         # des langues qui s'arrachent du haut du torrent, couchées vers l'arrière (il file à droite) ; leur base est
         # cachée dans le torrent, seule la pointe dépasse
@@ -739,7 +758,7 @@ def jet(cv, back, start, end, reach=1.0, cut=0.0, phase=0.0, heat=1.0, licks=Tru
             if s > reach - 0.08 or s < cut + 0.08:
                 continue
             x, y = at(s)
-            r = 4.0 + 10.5 * s ** 0.8
+            r = 5.0 + 10.0 * s ** 0.8
             hh = r * 0.8 + 6 + 2 * math.sin(phase * 1.3 + j * 2)
             tongue(cv, (x + 2, y - r * 0.3 - 6 * s * s), hh, 4.0 + 3.0 * s, bend=-0.9, lean=-0.6, tones='vuutsr',
                    fork=False)
@@ -752,35 +771,30 @@ def splash(back, front, k, x0=JET_END[0]):
     brûle encore un instant (k = 0 à 4)"""
     gy = GROUND
     if k == 0:
-        for (dx, h, w, b) in ((-14, 14, 5, 0.6), (-4, 22, 7, -0.5), (8, 16, 6, 0.7), (18, 10, 4, -0.6)):
+        for (dx, h, w, b) in ((-12, 16, 9, 0.6), (3, 24, 11, -0.5), (17, 13, 8, 0.7)):
             tongue(back, (x0 + dx, gy), h, w, bend=b, lean=0.1, fork=h >= 18)
-        for (dx, dy, vx, vy) in ((-20, -18, -2, -2), (14, -26, 2, -3), (26, -12, 3, -1), (-10, -30, -1, -3)):
+        for (dx, dy, vx, vy) in ((-20, -18, -2, -2), (14, -30, 2, -3), (26, -12, 3, -1), (-10, -32, -1, -3)):
             spark(front, x0 + dx, gy + dy, vx, vy)
     elif k == 1:
-        for (dx, h, w, b) in ((-16, 12, 5, 0.6), (-5, 19, 6, -0.6), (7, 18, 6, 0.6), (19, 12, 4, -0.5)):
+        for (dx, h, w, b) in ((-14, 14, 9, 0.6), (2, 21, 10, -0.6), (16, 17, 9, 0.6)):
             tongue(back, (x0 + dx, gy), h, w, bend=b, lean=0.15, fork=h >= 18)
-        for (dx, dy, vx, vy) in ((-24, -22, -2, -1), (18, -32, 2, -2), (30, -16, 3, 0), (-12, -36, -1, -2)):
+        for (dx, dy, vx, vy) in ((-24, -22, -2, -1), (18, -36, 2, -2), (30, -16, 3, 0), (-12, -40, -1, -2)):
             spark(front, x0 + dx, gy + dy, vx, vy)
     elif k == 2:
-        for (dx, h, w, b) in ((-14, 9, 4, 0.5), (-3, 14, 5, -0.7), (9, 12, 5, 0.6), (20, 7, 3, -0.5)):
+        for (dx, h, w, b) in ((-12, 10, 7, 0.5), (1, 15, 8, -0.7), (14, 11, 7, 0.6)):
             tongue(back, (x0 + dx, gy), h, w, bend=b, lean=0.1, tones='vutsr')
-        for (dx, dy) in ((-26, -18), (21, -30), (33, -12)):
+        for (dx, dy) in ((-26, -20), (21, -34), (33, -14)):
             ember(front, x0 + dx, gy + dy)
     elif k == 3:
-        for (dx, h, w, b) in ((-12, 6, 3, 0.5), (-2, 9, 4, -0.6), (10, 7, 3, 0.6)):
+        for (dx, h, w, b) in ((-9, 7, 5, 0.5), (4, 10, 6, -0.6)):
             tongue(back, (x0 + dx, gy), h, w, bend=b, tones='utsr')
         cloud(back, (x0 - 6, gy - 16), 4.5, 'hhij', seed=5, ground=False)
         cloud(back, (x0 + 9, gy - 19), 3.8, 'hhij', seed=6, ground=False)
-        ember(front, x0 + 23, gy - 6)
+        ember(front, x0 + 23, gy - 8)
     elif k == 4:
-        for (dx, h, w, b) in ((-2, 5, 3, -0.5), (9, 4, 2, 0.5)):
-            tongue(back, (x0 + dx, gy), h, w, bend=b, tones='tsr')
+        tongue(back, (x0 + 3, gy), 5, 4, bend=-0.5, tones='tsr')
         cloud(back, (x0 - 4, gy - 22), 4.0, 'hhij', hollow=0.4, seed=5, ground=False)
         cloud(back, (x0 + 11, gy - 26), 3.2, 'hij', hollow=0.5, seed=6, ground=False)
-    if k <= 2:
-        # le sol chauffé sous l'impact : une lueur de braise puis un sillon brûlé
-        for dx in range(-22, 26):
-            put(back, x0 + dx, gy, 'g' if abs(dx) < 14 - 4 * k else 'o')
 
 
 def fx_breath(spec):
@@ -799,30 +813,37 @@ def fx_breath(spec):
         put(front, mx - 4, my + 1, 'v')
     elif b == 'charge3':
         # la gueule s'entrouvre : le feu y bouillonne, une flammèche lèche la lèvre
-        billows(front, [(mx - 3, my + 1, 3.0, 0.9), (mx + 1, my, 2.2, 0.7)])
-        tongue(front, (mx - 1, my - 1), 6, 2.2, bend=-0.8, lean=-0.3, tones='vutsr', fork=False)
-        for (dx, dy) in ((5, 5), (8, -2)):
+        billows(front, [(mx - 3, my + 1, 3.0, 0.9), (mx, my, 2.2, 0.7)])
+        for (dx, dy) in ((5, 5), (8, -2), (3, -5)):
             put(front, mx + dx, my + dy, 'v')
     elif b is not None:
         reach, cut, ph = b
-        jet(front, back, (mx - 2, my), JET_END, reach=reach, cut=cut, phase=ph, heat=spec.get('heat', 1.0),
-            licks=spec.get('licks', True))
+        path = jet(front, back, (mx - 2, my), JET_END, reach=reach, cut=cut, phase=ph, heat=spec.get('heat', 1.0),
+                   licks=spec.get('licks', True))
+        if spec.get('heat', 1.0) < 0.7:
+            # la fumée naît au-dessus de ce qui brûle encore (derrière le feu)
+            for i, s in enumerate((cut - 0.12, cut + 0.1, 0.95)):
+                x, y = path[min(200, max(0, int(s * 200)))]
+                cloud(back, (x + 2, y - 9), 5.0 + i, 'hhij', seed=21 + i, ground=False)
     s = spec.get('splash')
     if s is not None:
         splash(back, front, s)
     sm = spec.get('smk')
     if sm is not None:
-        # ce qui reste : la fumée qui roule le long du chemin du feu, monte et se défait ; des braises qui retombent
-        xs = [(mx + 22, my + 2, 5.0), (mx + 52, my + 8, 6.5), (mx + 86, my + 14, 7.5), (mx + 118, my + 20, 7.0)]
-        for i, (x, y, r) in enumerate(xs):
-            cloud(front, (x + 3 * sm, y - 5 * sm), r * (1 + 0.12 * sm), 'hhij' if sm < 2 else 'hij',
-                  hollow=min(0.85, 0.25 * sm), seed=11 + i, ground=False)
-        for j, (x, y) in enumerate(((mx + 36, my + 16), (mx + 70, my + 24), (mx + 100, my + 30), (mx + 128, my + 26))):
+        # ce qui reste : trois bouffées de fumée le long du chemin du feu, qui montent, gonflent et se défont ; des
+        # braises qui retombent
+        if sm == 0:
+            # les dernières flammèches au bout du chemin, déjà presque éteintes
+            billows(front, [(JET_END[0] - 6, JET_END[1] - 12, 4.5, 0.3), (JET_END[0] + 2, JET_END[1] - 9, 3.5, 0.25)])
+        for i, (x, y, r) in enumerate(((mx + 66, my + 2, 7.0), (mx + 100, my + 8, 8.0), (mx + 134, my + 14, 7.5))):
+            cloud(front, (x + 3 * sm, y - 6 * sm), r * (1 + 0.12 * sm), 'hhhi' if sm < 2 else 'hhi',
+                  hollow=min(0.9, 0.28 * sm), seed=11 + i, ground=False)
+        for j, (x, y) in enumerate(((mx + 30, my + 16), (mx + 64, my + 24), (mx + 100, my + 30), (mx + 128, my + 30))):
             yy = y + 9 * sm
-            if yy < GROUND - 1:
+            if yy < GROUND - 1 and sm < 3:
                 ember(front, x + 2 * j, yy, big=(sm == 0))
         if sm <= 1:
-            wisp(front, (mx + 3, my - 2), 7 + 3 * sm, 1.5, sway=0.7, tones='hij', tail=0.3 * sm)
+            puff(front, (mx + 4 + 2 * sm, my - 3 - 4 * sm), 2.2 + 0.4 * sm, 'hij', hollow=0.3 * sm)
     return back, front
 
 
@@ -834,8 +855,8 @@ SPECIALE = [
     dict(h=(-5, -6), c=(-2, -3), f=3, gs=3, gt=3, gc=1, gm=3, flare=0.5, jaw=2, fire=2, t=(2, -1), br='charge3', ms=260),
     dict(h=(3, 2), c=(1, 0), f=0, gs=3, gt=3, gc=1, gm=3, flare=0.4, lean=-1, jaw=6, fire=3, t=(1, -1),
          br=(0.32, 0.0, 0.0), ms=60),
-    dict(h=(3, 3), c=(1, 1), f=1, gs=3, gt=3, gc=2, gm=3, flare=0.4, lean=-2, jaw=6, fire=3, t=(0, 0),
-         br=(1.0, 0.0, 0.3), splash=0, flash=30, ms=200),
+    dict(h=(3, 3), c=(1, 1), f=1, gs=3, gt=3, gc=1, gm=3, flare=0.4, lean=-2, jaw=6, fire=3, t=(0, 0),
+         br=(1.0, 0.0, 0.3), splash=0, flash=18, ms=200),
     dict(h=(3, 3), c=(1, 1), f=2, gs=2, gt=3, gc=1, gm=3, flare=0.35, lean=-1, jaw=6, fire=3, t=(-1, 0),
          br=(1.0, 0.0, 0.75), splash=1, ms=90),
     dict(h=(3, 2), c=(1, 1), f=3, gs=2, gt=2, gc=1, gm=2, flare=0.3, lean=-1, jaw=6, fire=3, t=(-1, 0),

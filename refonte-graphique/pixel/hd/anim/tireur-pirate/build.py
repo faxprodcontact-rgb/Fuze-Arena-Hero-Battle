@@ -285,3 +285,265 @@ def compose(hero, fx_back=None, fx_front=None, flash=None):
 def g2c(p, off=(0, 0)):
     """point de la grille du dessin -> toile (flottants)"""
     return np.array([p[0] + OX + off[0], p[1] + OY + off[1]], float)
+
+
+# ---------------------------------------------------------------- ce qui pend et se balance (suivi, inertie)
+def scarf(e=0):
+    """les deux pans de l'écharpe (noués sur la hanche) : le bas se balance de e pixels"""
+    if not e:
+        return P['echarpe']
+    return shear_rows(P['echarpe'], lambda y: round(e * max(0.0, (y - 79) / 8.0)), 80, 87)
+
+
+def ara_tail(q=0):
+    """la longue queue de l'ara, accrochée sous l'aile : le bout se balance de q pixels"""
+    if not q:
+        return P['ara_queue']
+    return shear_rows(P['ara_queue'], lambda y: round(q * max(0.0, (y - 60) / 13.0) ** 1.2), 61, 73)
+
+
+BLINK = dict(SRC['cligne'])
+SQUINT = {'Y': '4'}                     # elle plisse l'oeil pour viser : la paupière du bas remonte
+
+
+# ---------------------------------------------------------------- 1) la pose (la tireuse calme et son ara)
+# 10 images, en boucle. Le mousquet et les mains ne bougent pas (le calque fixe du dessin), le corps respire
+# derrière : le buste monte d'un pixel à l'inspiration, puis tout le corps se tasse d'un pixel sur les genoux. La
+# tête suit le buste avec une image de retard. L'ara hoche la tête deux fois, vite (comme un vrai ara), sa queue se
+# balance avec deux images de retard ; les pans de l'écharpe aussi. Un clignement.
+POSE = [
+    # souffle, tassé, tête, ara (tête), queue de l'ara, écharpe, clignement, durée (ms)
+    dict(b=0, s=0, head=(0, 0), ah=(0, 0), aq=0, e=0, ms=150),
+    dict(b=1, s=0, head=(0, 1), ah=(0, 0), aq=0, e=0, ms=130),
+    dict(b=1, s=0, head=(0, 0), ah=(1, 1), aq=-1, e=1, ms=110),
+    dict(b=1, s=0, head=(0, 0), ah=(0, 0), aq=-1, e=1, ms=110),
+    dict(b=1, s=0, head=(0, 0), ah=(1, 1), aq=0, e=1, ms=110),
+    dict(b=0, s=0, head=(0, -1), ah=(0, 0), aq=1, e=0, ms=150),
+    dict(b=0, s=1, head=(0, 0), ah=(0, 0), aq=1, e=-1, ms=140),
+    dict(b=0, s=1, head=(0, 0), ah=(0, 0), aq=1, e=-1, k=1, ms=110),
+    dict(b=0, s=1, head=(0, 0), ah=(0, -1), aq=0, e=-1, ms=160),
+    dict(b=0, s=0, head=(0, 0), ah=(0, 0), aq=0, e=0, ms=140),
+]
+
+
+# ---------------------------------------------------------------- le mousquet, redessiné à n'importe quel angle
+# Mesuré sur le dessin (pente 1 pour 2, ≈ 26,6°) : le dessus de l'arme est une seule ligne droite de la plaque de
+# couche à la bouche ; longueur 84. Le long de l'arme (t, depuis la plaque de couche) : crosse 0-22 (elle s'épaissit
+# vers l'arrière : 4 rangées au poignet, 8 à la plaque de couche), boîte à calepins en laiton vers 8, main proche
+# vers 20, pontet 23-30, platine 22-32 (chien et batterie au-dessus), canon d'acier de 27 au bout (2 rangées : lumière
+# U, acier T ; sous lui le fût de bois X / W jusqu'à la deuxième bague ; ensuite le canon nu, ombre S en dessous),
+# bagues d'or vers 50 et 65, main lointaine vers 58, guidon près de la bouche.
+# Le profil est écrit pour l'arme à plat (t le long de l'arme, s = rangée sous la ligne du dessus) ; pour un autre
+# angle, chaque pixel de la toile est ramené dans ce repère (une pente « propre » donne des marches régulières).
+MUSKET_L = 84.0
+RINGS = (49.0, 64.0)
+FORE_END = 64.0
+
+
+def musket_px(t, s, fired=False):
+    """la lettre du mousquet au point (t, s) du repère de l'arme, ou None"""
+    if t < 0 or t >= MUSKET_L:
+        return None
+    r = math.floor(s)
+    # le chien (armé : dressé en arrière ; abattu : couché vers l'avant, sur la batterie) et la batterie, au-dessus
+    if r == -2:
+        if not fired and 22.0 <= t < 24.0:
+            return 'T' if t < 23 else 'U'
+        if 27.0 <= t < 28.0 and not fired:
+            return 'T'
+        if fired and 28.0 <= t < 29.0:
+            return 'T'                                   # la batterie, ouverte par le choc
+        return None
+    if r == -1:
+        if not fired and 23.0 <= t < 26.0:
+            return 'S' if t < 24 else 'T'
+        if fired and 24.0 <= t < 27.0:
+            return 'S' if t < 25 else 'T' if t < 26 else 'U'
+        if 27.0 <= t < 29.0:
+            return 'U' if t >= 28 else 'T'
+        if MUSKET_L - 4.0 <= t < MUSKET_L - 3.0:
+            return 'T'                                   # le guidon
+        return None
+    if r < -2:
+        return None
+    # le pontet et la détente, sous le poignet
+    if r in (4, 5) and 23.0 <= t < 30.0:
+        if r == 4:
+            if t < 24.0 or t >= 29.0:
+                return 'i'
+            if 26.0 <= t < 27.0:
+                return 'S'                               # la détente
+            return None
+        return 'h' if (t < 24.5 or t >= 28.0) else 'i'
+    # la plaque de couche en laiton
+    bot = 4.0 + max(0.0, 22.0 - t) * 0.2 if t < 27.0 else (4.0 if t < FORE_END else 3.0)
+    if s >= bot or s < 0:
+        return None
+    if t < 1.6:
+        return 'j' if r <= 1 else 'h' if s >= bot - 1.5 else 'i'
+    # les bagues d'or
+    for c in RINGS:
+        if c <= t < c + 2.0 and r <= 3:
+            return 'h' if r == 3 else ('j' if t < c + 1.0 else 'i') if r >= 1 else 'k' if t < c + 1.0 else 'j'
+    if t >= 27.0:
+        # le canon d'acier (et le fût dessous)
+        if r == 0:
+            return 'U'
+        if r == 1:
+            return 'T'
+        if t >= FORE_END:
+            return 'S'
+        if t >= FORE_END - 1.5 and r == 3:
+            return None                                  # le bout du fût est arrondi
+        return 'X' if r == 2 else 'W'
+    # la platine (plaque d'acier sur le bois, sous le chien)
+    if 22.0 <= t < 27.0 and r in (1, 2):
+        return 'U' if (r == 1 and t >= 24.0) else 'T' if t >= 23.0 else 'S'
+    # la boîte à calepins (ovale de laiton sur la crosse)
+    if 6.0 <= t < 11.0 and r in (4, 5) and not (r == 5 and (t < 7.0 or t >= 10.0)):
+        return ('k' if t >= 9.0 else 'j') if r == 4 else 'h' if t < 8.0 else 'i'
+    # le bois de la crosse : lumière en haut, ombre en bas
+    if r == 0:
+        return 'Z'
+    if s >= bot - 1.0:
+        return 'V' if bot >= 5.0 else 'W'
+    if s >= bot - 2.0 and bot >= 5.5:
+        return 'W'
+    return 'X'
+
+
+def musket_frame(O, ang):
+    """le repère de l'arme : O = le haut de la plaque de couche (toile), ang = l'angle (degrés, + = la bouche monte)"""
+    a = math.radians(ang)
+    u = np.array([math.cos(a), -math.sin(a)])
+    n = np.array([math.sin(a), math.cos(a)])            # vers le bas de l'arme
+    return np.array(O, float), u, n
+
+
+def draw_musket(cv, O, ang, fired=False):
+    """trace le mousquet sur la toile : O = haut de la plaque de couche, ang en degrés"""
+    O, u, n = musket_frame(O, ang)
+    pts = [O + a * u + b * n for a in (0, MUSKET_L) for b in (-3, 7)]
+    x0, x1 = int(min(p[0] for p in pts)) - 2, int(max(p[0] for p in pts)) + 3
+    y0, y1 = int(min(p[1] for p in pts)) - 2, int(max(p[1] for p in pts)) + 3
+    for y in range(max(0, y0), min(H, y1)):
+        for x in range(max(0, x0), min(W, x1)):
+            p = np.array([x + 0.5, y + 0.5]) - O
+            ch = musket_px(float(p @ u), float(p @ n), fired)
+            if ch:
+                cv[y, x] = ch
+
+
+def musket_at(O, ang, t, s=0.0):
+    """un point de l'arme (t le long, s sous la ligne du dessus) sur la toile"""
+    O, u, n = musket_frame(O, ang)
+    return O + t * u + s * n
+
+
+# ---------------------------------------------------------------- les mains, dessinées à la main
+# Une main = une petite grille posée sur le mousquet à plat (ou presque) : (colonne 0, rangée 0) tombe sur le point de
+# l'arme (t, s=0) indiqué par l'ancre. Tons de la peau : 1 (creux) … 6 (reflet chaud) ; la lumière vient d'en haut à
+# droite. '.' = rien.
+# La main lointaine tient le fût par-dessus (elle est de l'autre côté de l'arme) : on voit le dos de la main au-dessus
+# et les doigts qui reviennent de notre côté, repliés sur le bois.
+FAR_FIST = (
+    ['..3445.',
+     '.234554',
+     '1234554',
+     '1234443',
+     '.12.332',
+     '..1.21.'], (3, 2))          # (colonne, rangée) de la grille qui tombe sur l'arme en (t, 0)
+# La main proche serre le poignet de la crosse, l'index allongé vers la détente.
+NEAR_FIST = (
+    ['.3455..',
+     '234554.',
+     '2345543',
+     '1234443',
+     '123333445',
+     '.122.1233'], (3, 1))
+
+
+def put_grid(cv, rows, x0, y0):
+    for j, r in enumerate(rows):
+        for i, ch in enumerate(r):
+            if ch != '.':
+                X, Y = x0 + i, y0 + j
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = ch
+
+
+def fist_on(cv, fist, O, ang, t):
+    """pose une main sur l'arme (O, ang) au point t (arrondi au pixel : la main ne se déforme pas)"""
+    rows, (ci, rj) = fist
+    p = musket_at(O, ang, t, 0.0)
+    put_grid(cv, rows, int(math.floor(p[0])) - ci, int(math.floor(p[1])) - rj + 1)
+
+
+# La main proche du dessin (calque du mousquet) : le poing et la dentelle du jabot (utilisée pour le coup de hanche,
+# la main ne bouge pas : le mousquet tourne autour d'elle)
+NEAR_HAND = np.where((XX <= 63) & (YY >= 79) & (YY <= 85) & isin(MUSK, SKIN + 'ntuw'), MUSK, '.')
+NEAR_PIVOT = (58.5, 81.5)               # le centre du poing proche (grille) ; l'arme y passe en t = 20, s = 2
+
+
+# ---------------------------------------------------------------- les bras, redessinés (épaule, coude, poignet)
+def shade(k, kind):
+    """ton d'une forme ronde selon k = orientation vers la lumière (-1 ombre … 1 lumière)"""
+    if kind == 'manche':
+        return 'q' if k > 0.72 else 'p' if k > 0.3 else 'o' if k > -0.25 else 'n' if k > -0.7 else 'm'
+    if kind == 'or':
+        return 'k' if k > 0.6 else 'j' if k > 0.15 else 'i' if k > -0.35 else 'h' if k > -0.75 else 'g'
+    if kind == 'jabot':
+        return 'w' if k > 0.5 else 'u' if k > -0.1 else 't' if k > -0.6 else 's'
+    return 'o'
+
+
+DARKER = {'q': 'p', 'p': 'o', 'o': 'n', 'n': 'm', 'k': 'j', 'j': 'i', 'i': 'h', 'h': 'g', 'w': 'u', 'u': 't', 't': 's'}
+
+
+def draw_limb(cv, P0, P1, r0, r1, kind='manche', lit=0.0, rim=True):
+    """un segment arrondi (capsule) de P0 à P1 (toile), rayon r0 -> r1, modelé par la lumière (en haut à droite)"""
+    P0, P1 = np.array(P0, float), np.array(P1, float)
+    v = P1 - P0
+    L2 = max(v @ v, 1e-6)
+    R = max(r0, r1) + 1
+    for y in range(max(0, int(min(P0[1], P1[1]) - R)), min(H, int(max(P0[1], P1[1]) + R + 1))):
+        for x in range(max(0, int(min(P0[0], P1[0]) - R)), min(W, int(max(P0[0], P1[0]) + R + 1))):
+            p = np.array([x + 0.5, y + 0.5])
+            t = float(np.clip((p - P0) @ v / L2, 0, 1))
+            c = P0 + t * v
+            r = r0 + (r1 - r0) * t
+            w = p - c
+            dist = math.hypot(*w)
+            if dist <= r:
+                k = (w @ LN) / r + lit
+                ch = shade(k, kind)
+                if rim and dist > r - 1.1 and k < -0.2:
+                    ch = DARKER.get(ch, ch)
+                cv[y, x] = ch
+
+
+def ik(S, T, L1, L2, bend):
+    """le coude, pour une épaule S et un poignet T (bend = +1 / -1 : de quel côté plie le coude)"""
+    S, T = np.array(S, float), np.array(T, float)
+    v = T - S
+    d = max(np.linalg.norm(v), 1e-6)
+    u = v / d
+    if d > L1 + L2:                         # trop loin : le bras s'allonge un peu (≤ 15 %)
+        k = d / (L1 + L2)
+        L1, L2 = L1 * k, L2 * k
+    a = (L1 * L1 - L2 * L2 + d * d) / (2 * d)
+    hh = math.sqrt(max(L1 * L1 - a * a, 0))
+    perp = np.array([-u[1], u[0]])
+    return S + a * u + bend * hh * perp
+
+
+def draw_arm(cv, S, Wr, lengths, bend, r=(4.2, 3.8, 3.4), lit=0.0, cuff=True):
+    """épaule S -> coude -> poignet Wr (toile) : la manche bleue, puis le grand revers d'or au bout de l'avant-bras"""
+    E = ik(S, Wr, lengths[0], lengths[1], bend)
+    draw_limb(cv, S, E, r[0], r[1], 'manche', lit)
+    v = np.array(Wr, float) - E
+    draw_limb(cv, E, Wr, r[1], r[2], 'manche', lit + 0.05)
+    if cuff:
+        C0 = E + 0.55 * v
+        draw_limb(cv, C0, np.array(Wr, float) - 0.08 * v, r[2] + 0.6, r[2] + 1.1, 'or', lit * 0.5, rim=True)
+    return E

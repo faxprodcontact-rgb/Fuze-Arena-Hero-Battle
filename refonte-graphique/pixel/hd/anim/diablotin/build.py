@@ -946,8 +946,7 @@ def fx_smear(a_from, fire=False):
             arc_trail(back, S, R + 2, a_from, a_to, 13.0, 'wvutsr')
             arc_trail(front, S, R + 2, a_to - math.copysign(15, a_to - a_from), a_to, 6.0, 'wvut')
         else:
-            arc_trail(back, S, R, a_from, a_to, 10.0, 'mmlk', taper=0.6)
-            arc_trail(back, S, R + 1.2, a_from + (a_to - a_from) * 0.4, a_to, 2.0, 'ut')
+            arc_trail(back, S, R, a_from, a_to, 11.0, 'mmllk', taper=0.5)
     return f
 
 
@@ -1039,10 +1038,10 @@ ATTAQUE = [
 # langues de flamme qui montent, une boule qui se change en fumée enroulée, des braises qui retombent en cloche ; il
 # reste une tache de sol brûlé). Il revient d'un bond en arrière, la massue fume encore.
 SKIN_HOT = [None,
-            {'6': '7', '7': '8'},
-            {'3': '4', '4': '5', '6': '7', '7': '8', 'J': 'v', 'K': 'u'}]
+            {'7': '8'},
+            {'6': '7', '7': '8', 'J': 'v', 'K': 'u'}]
 IRON_HOT = [None,
-            {'i': 'r', 'j': 'e', 'k': 's'},
+            {'i': 'e', 'j': 'r', 'k': 's', 'l': 's', 'm': 't'},
             {'i': 'r', 'j': 's', 'k': 't', 'l': 't', 'm': 'u'}]
 
 
@@ -1086,17 +1085,15 @@ DASH_X = OX + 40          # d'où il part (toile) : les flammes couchées resten
 
 
 def fx_dash(k):
-    """les flammes qu'il laisse au sol en filant : un ruban de feu couché au ras du sol, d'où montent trois langues
-    de tailles différentes, couchées vers l'arrière ; 1 et 2 : elles se couchent, s'éteignent en petites fumées"""
+    """les flammes qu'il laisse au sol en filant : trois langues de tailles différentes, couchées vers l'arrière, et
+    des braises qui traînent ; 1 et 2 : elles se couchent et s'éteignent en petites fumées"""
     def f(cv, back, front, ctx):
         x1 = ctx.bust[0] + 52
         L = x1 - DASH_X
         fade = [0.0, 0.45, 0.8][k]
-        # le ruban couché : épais près de lui, effilé vers son point de départ
-        pts = bezier((x1, GROUND - 1), (x1 - L * 0.3, GROUND - 2.5), (x1 - L * 0.65, GROUND - 1),
-                     (DASH_X + L * fade * 0.6, GROUND - 1.5), 40)
-        ws = [(3.6 * (1 - fade * 0.6)) * (1 - i / 40) ** 0.8 + 0.4 for i in range(41)]
-        stroke(back, pts, ws, 'vuts' if k == 0 else 'utsr', below=1)
+        rng = np.random.RandomState(3 + k)
+        for i in range(6 - 2 * k):                     # des braises qui traînent derrière lui
+            ember(back, x1 - L * rng.uniform(0.1, 0.9), GROUND - rng.uniform(2, 9) - 2 * k, big=i == 0, hot=k < 2)
         for (a, h, w, b) in ((0.15, 11, 4.0, -0.8), (0.45, 7, 3.2, -1.1), (0.78, 4.5, 2.4, -0.6)):
             hh = h * (1 - fade)
             x = x1 - L * a
@@ -1188,13 +1185,13 @@ HIT_2 = dict(G=(72, 92), ang=-38, bend=-1, shift=30, crouch=2, lean=2, head=(1, 
 HIT_2_C = fixed_hit(HIT_2)
 SPECIALE = [
     # il se ramasse et ricane : la massue chauffe
-    dict(G=(50, 87), ang=196, bend=-1, crouch=2, lean=-1, head=(0, 1), q=(1, -1), en=-1, pg=-1, skin=SKIN_HOT[1],
-         hot=IRON_HOT[1], fx_pre=[fx_heat(1, 0)], fx_list=[fx_club_fire(1, -0.2)], ms=110),
-    dict(G=(49, 88), ang=200, bend=-1, crouch=3, lean=-2, head=(-1, 1), q=(2, -2), en=-1, ef=-1, pg=-1,
+    dict(G=(52, 80), ang=148, bend=-1, crouch=2, lean=-1, head=(0, 1), q=(1, -1), en=-1, pg=-1, skin=SKIN_HOT[1],
+         hot=IRON_HOT[1], fx_pre=[fx_heat(1, 0)], fx_list=[fx_club_fire(1, 0.1)], ms=110),
+    dict(G=(51, 80), ang=156, bend=-1, crouch=3, lean=-2, head=(-1, 1), q=(2, -2), en=-1, ef=-1, pg=-1,
          fh=(0, 1), skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], fx_pre=[fx_heat(2, 1)],
-         fx_list=[fx_club_fire(2, -0.3)], flash=10, ms=240),
+         fx_list=[fx_club_fire(2, 0.1)], ms=240),
     # il file au ras du sol (les flammes restent couchées derrière lui)
-    dict(G=(50, 90), ang=188, bend=-1, shift=14, lift=2, crouch=-1, lean=3, head=(1, 1), q=(-2, 2), en=1, pg=1,
+    dict(G=(50, 86), ang=176, bend=-1, shift=14, lift=2, crouch=-1, lean=3, head=(1, 1), q=(-2, 2), en=1, pg=1,
          skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], fx_pre=[fx_dash(0)], fx_list=[fx_club_fire(2, -0.8)], ms=50),
     # premier coup : un revers par en dessous qui remonte
     dict(**HIT_1, smear=fx_smear(196 - 360, fire=True), fx_pre=[fx_dash(1)], fx_list=[fx_spark_hit(0)], ms=70),
@@ -1211,7 +1208,7 @@ SPECIALE = [
     # il l'abat (grand croissant de feu)
     dict(G=(73, 88), ang=-20, bend=-1, lift=6, shift=34, crouch=0, lean=2, head=(1, 1), q=(-1, 1), en=1, pg=0,
          skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], smear=fx_smear(110, fire=True),
-         fx_list=[fx_club_fire(2, -0.9)], ms=40),
+         fx_list=[fx_club_fire(3, -0.5)], ms=40),
     # le choc : arrêt sur l'image, éclair, puis la gerbe de feu
     dict(**HIT_S, flash=45, fx_list=[at(HIT_S_C, fx_burst(0))], ms=200),
     dict(**HIT_S, fx_list=[at(HIT_S_C, fx_burst(1))], ms=100),

@@ -735,11 +735,12 @@ POSE = [
     dict(abd=2, sp=(0, -1), glint=1, ms=240),
     dict(abd=1, sp=(0, -1), glint=2, croc=1, ms=170),
     dict(sp=(0, 0), tilt=(0, -1), glint=3, croc=1, ms=170),
-    dict(sp=(0, 1), tilt=(0, 0), legs={'F2': dict(k=(0, -1), t=(0, -1))}, ms=200),
+    dict(sp=(0, 1), tilt=(0, -1), legs={'F2': dict(k=(0, -1), t=(0, -1))}, ms=200),
     dict(sp=(0, 1), blink=1, legs={'F2': dict(k=(0, -1), t=(1, -1))}, ms=110),
     dict(sp=(0, 1), legs={'F2': dict(t=(1, 0))}, ms=190),
     dict(sp=(0, 0), tilt=(0, 1), ms=170),
 ]
+
 
 ATTAQUE = []
 SPECIALE = []

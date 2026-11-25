@@ -123,8 +123,8 @@ P = {}
 HEAD_MASK = filled & (
     ((YY <= 30) & (XX >= 43)) |
     ((YY >= 31) & (YY <= 34) & (XX >= 42) & (XX <= 45) & isin(ORIG, RED)) |
-    ((YY >= 31) & (YY <= 45) & (XX >= 58) & (XX <= 86) &
-     (isin(ORIG, BLACK + 'tuwE') | (isin(ORIG, SKIN) & (XX <= 80) & (YY <= 38)))) |
+    ((YY >= 31) & (YY <= 45) & (XX >= 55) & (XX <= 86) &
+     (isin(ORIG, BLACK + "tuwE") | (isin(ORIG, SKIN) & (XX >= 58) & (XX <= 80) & (YY <= 38)))) |
     ((YY >= 46) & (YY <= 58) & (XX >= 61) & (XX <= 80) & isin(ORIG, BLACK + GOLD)))
 P['tete'] = take(HEAD_MASK)
 # l'avant : le canon (fonte, bagues d'or, losange, tourillon, bouche et son âme) et la main lointaine posée sur le fût
@@ -181,6 +181,8 @@ def plug(part, holes, axis):
 
 # derrière la tête (rangées du cou et de la barbe) : on prolonge sur les côtés ; derrière le canon : de haut en bas
 P['corps'] = plug(P['corps'], HEAD_MASK & (YY >= 31), 'h')
+_under_beard = HEAD_MASK & (YY >= 31) & (YY <= 45) & ~isin(P['corps'], SKIN + '.')
+P['corps'][_under_beard] = '3'       # sous la barbe, c'est le cou : de la peau (pas le galon du gilet prolongé)
 P['corps'] = plug(P['corps'], AVANT_MASK, 'v')
 
 
@@ -836,7 +838,7 @@ def smoke(cv, lobes, tones='sstuv'):
     shade_mask(cv, m, tones)
 
 
-def fx_smoke(key, t, sc=1.35, sr=1.35):
+def fx_smoke(key, t, sc=1.4, sr=1.7):
     """la fumée du coup à l'étape t (0..6, entre deux étapes elle passe en douceur), là où il est parti ;
     sc / sr : l'échelle des places et des rondeurs"""
     def f(cv, back, front, ctx):
@@ -931,7 +933,7 @@ ATTAQUE = [
     dict(s=2, lean=1, head=(0, 0), sq=1, tilt=-1, t=1, sh=0, fx=[fx_vent(1)], ms=140),
     dict(s=2, lean=1, head=(0, 0), sq=1, tilt=-1, t=0, sh=0, fx=[fx_vent(2)], ms=220),
     # 3 : BOUM ! éclair, le boulet sort, le recul commence (la tête reste en avant)
-    dict(s=1, lean=-3, head=(1, 0), sq=1, tilt=2, t=1, sh=1, fx=[fx_flash('attaque'), fx_shot(18)], ms=60),
+    dict(s=1, lean=-3, head=(1, 0), sq=1, tilt=2, t=1, sh=1, fx=[fx_flash('attaque', 1.3), fx_shot(20)], ms=60),
     # 4-7 : le recul le rejette sur sa jambe de bois, le canon se cabre ; fumée, poussière ; il revient lourdement
     dict(s=0, lean=-5, head=(0, 0), tilt=4, t=2, sh=2,
          fx=[fx_smoke('attaque', 0), fx_shot(90), fx_dust(0)], ms=100),
@@ -955,7 +957,7 @@ ATTAQUE = [
 # (arrêt sur l'image) et lance une vague qui roule au sol vers la droite, se brise en écume et en volutes. Il éclate
 # de rire (la bouche ouverte, la tête et les épaules sautent), puis se tasse en place ; un filet de fumée monte du
 # canon.
-BOUNCES = [(198.0, 0.62), (236.0, 0.85), (float(ENEMY_X), 1.4)]   # les rebonds du boulet (x sur la toile, taille)
+BOUNCES = [(190.0, 0.62), (227.0, 0.85), (float(ENEMY_X), 1.4)]   # les rebonds du boulet (x sur la toile, taille)
 HOPS = [21.0, 16.0]                                               # la hauteur des bonds entre deux rebonds
 
 
@@ -1038,8 +1040,8 @@ def fx_wave(k):
     recourbe vers l'avant en volute d'écume), s'aplatit, puis se brise en écume"""
     def f(cv, back, front, ctx):
         G = GROUND
-        X = ENEMY_X + 14 + 11 * k
-        h = max(4.0, 15.0 - 2.0 * k)
+        X = ENEMY_X + 16 + 11 * k
+        h = max(4.0, 14.5 - 1.5 * k)
         if k <= 4:
             m = ellipse_mask((X - h * 1.0, G + 1), h * 2.0, h * 0.95)
             P0 = (X - h * 1.7, G - h * 0.55)
@@ -1067,28 +1069,40 @@ def fx_wave(k):
 
 
 def fx_gather(n):
-    """l'eau de mer se rassemble autour de la bouche du canon : des gouttes aspirées en spirale (n = 0, 1, 2), puis
-    un anneau d'eau qui tourne autour de la bouche (la moitié arrière passe derrière le canon)"""
+    """l'eau de mer obéit au canonnier (n = 0, 1, 2) : trois vrilles d'eau montent du sol devant lui en se courbant,
+    rejoignent la bouche du canon et s'y enroulent en un anneau qui tourne (la moitié arrière passe derrière le
+    canon) ; à la fin elles quittent le sol, des bulles d'écume tournent autour de la bouche"""
     def f(cv, back, front, ctx):
         mx, my = ctx.muzzle
-        c = (mx - 2.5, my + 0.5)
-        R = 20.0 - 6.5 * n
-        for i in range(6):
-            a = math.radians(i * 60 + n * 40 + 15)
-            x, y = c[0] + R * math.cos(a) * 0.9, c[1] - R * math.sin(a)
-            vx, vy = -math.cos(a + 0.9), math.sin(a + 0.9)
-            drop(front, x, y, 2 if i % 2 else 3, v=(vx * 2, vy * 2))
+        c = (mx - 2.0, my + 0.5)
+        G = GROUND - 1
+        rx, ry = 4.2, 11.5 - 1.0 * n
+        grow = [0.5, 0.88, 1.0][n]
+        cut = [0.0, 0.0, 0.45][n]                       # à la fin, le pied des vrilles a quitté le sol
+        for i, (sx, ang, side) in enumerate([(-20, 215, 1), (-3, 270, -1), (15, 325, -1)]):
+            a = math.radians(ang)
+            P3 = (c[0] + rx * math.cos(a), c[1] - ry * math.sin(a))
+            P0 = (c[0] + sx, G)
+            P1 = (P0[0] + side * 9, G - 16)
+            P2 = (P3[0] - side * 10 + 4 * math.cos(a), P3[1] + 9)
+            pts = bezier(P0, P1, P2, P3, 40)
+            m = int(round(40 * grow))
+            pts = pts[:m + 1]
+            ws = [0 if j / 40 < cut else 3.6 - 1.6 * j / 40 for j in range(m + 1)]
+            lit_stroke(back if i == 0 else front, pts, ws, 'XYZAB', foam=(0.6, 1.0))
+            if n < 2:                                   # là où la vrille quitte le sol : un petit bouillon d'écume
+                foam(front, (P0[0], G), 2.4 - 0.6 * n, hollow=0.3 * n, seed=90 + i)
+            else:
+                drop(front, P0[0] + side * 2, G - 4, 2, v=(0, 1.5))
         if n >= 1:
-            ry = 10.5 - 1.5 * n
-            rx = 3.6
             a0 = n * 70
-            ribbon(back, c, rx, ry, a0 + 90, a0 + 250, 3.2, head=0.7, tones='YZA')
-            ribbon(front, c, rx, ry, a0 - 80, a0 + 70, 3.6, head=0.7, tones='XYZ')
-            put(front, c[0] + rx + 2, c[1] - ry + 1, 'W')
-            put(front, c[0] - 2, c[1] + ry + 1, 'X')
+            ribbon(back, c, rx, ry, a0 + 90, a0 + 250, 3.4, head=0.7, tones='YZA')
+            ribbon(front, c, rx, ry, a0 - 80, a0 + 70, 3.8, head=0.7, tones='XYZ')
         if n >= 2:
-            puff(front, (c[0] + 5, c[1] - 7), 1.3, tones='WX')
-            puff(front, (c[0] + 6, c[1] + 6), 1.0, tones='WX')
+            ribbon(front, c, rx + 2.5, ry + 3, 150, 300, 2.2, head=0.5, tones='XY')
+            puff(front, (c[0] + 6, c[1] - 9), 1.4, tones='WX')
+            puff(front, (c[0] + 7, c[1] + 8), 1.1, tones='WX')
+            puff(front, (c[0] - 6, c[1] - 12), 1.0, tones='WX')
     return f
 
 
@@ -1131,30 +1145,30 @@ SPECIALE = [
     dict(s=2, lean=2, head=(0, 0), sq=1, tilt=-2, t=1, sh=1, fx=[fx_gather(1)], ms=120),
     dict(s=2, lean=2, head=(0, 0), sq=1, tilt=-2, t=0, sh=0, fx=[fx_gather(2), fx_vent(2)], ms=240),
     # 3 : BOUM ! l'anneau éclate, le monstre blanchit un instant, le recul commence
-    dict(s=1, lean=-3, head=(1, 0), sq=1, tilt=1, t=1, sh=1, flash=35, fx=[fx_burst(0)], ms=60),
+    dict(s=1, lean=-3, head=(1, 0), sq=1, tilt=1, t=1, sh=1, flash=18, fx=[fx_burst(0)], ms=60),
     # 4-8 : le recul le rejette loin ; le boulet rase le sol et ricoche ; il revient lourdement
     dict(s=0, lean=-6, head=(0, 0), tilt=3, t=2, sh=2,
-         fx=[fx_smoke('speciale', 0, 1.5, 1.5), fx_burst(1), fx_dust(0, 1.2)], ms=110),
+         fx=[fx_smoke('speciale', 0, 1.55, 1.85), fx_burst(1), fx_dust(0, 1.2)], ms=110),
     dict(s=0, lean=-5, head=(-1, 0), tilt=3, t=2, sh=1,
-         fx=[fx_smoke('speciale', 0.7, 1.5, 1.5), fx_burst(2), fx_dust(1, 1.2)], ms=70),
+         fx=[fx_smoke('speciale', 0.7, 1.55, 1.85), fx_burst(2), fx_dust(1, 1.2)], ms=70),
     dict(s=0, lean=-4, head=(-1, 0), tilt=2, t=1, sh=0,
-         fx=[fx_smoke('speciale', 1.4, 1.5, 1.5), fx_burst(3), fx_dust(2, 1.2)], ms=70),
-    dict(s=0, lean=-2, head=(0, 0), tilt=1, t=0, sh=-1, fx=[fx_smoke('speciale', 2.0, 1.5, 1.5), fx_dust(3, 1.2)],
+         fx=[fx_smoke('speciale', 1.4, 1.55, 1.85), fx_burst(3), fx_dust(2, 1.2)], ms=70),
+    dict(s=0, lean=-2, head=(0, 0), tilt=1, t=0, sh=-1, fx=[fx_smoke('speciale', 2.0, 1.55, 1.85), fx_dust(3, 1.2)],
          ms=70),
-    dict(s=1, lean=-1, head=(0, 1), tilt=0, t=-1, sh=-1, fx=[fx_smoke('speciale', 2.5, 1.5, 1.5), fx_dust(4, 1.2)],
+    dict(s=1, lean=-1, head=(0, 1), tilt=0, t=-1, sh=-1, fx=[fx_smoke('speciale', 2.5, 1.55, 1.85), fx_dust(4, 1.2)],
          ms=70),
     # 9 : le troisième rebond, sur le premier rang : le gros coup, arrêt sur l'image ; il éclate de rire
-    dict(b=1, lean=0, head=(0, 0), cri=1, t=-1, sh=0, fx=[fx_smoke('speciale', 3.0, 1.5, 1.5)], ms=260),
+    dict(b=1, lean=0, head=(0, 0), cri=1, t=-1, sh=0, fx=[fx_smoke('speciale', 3.0, 1.55, 1.85)], ms=260),
     # 10-13 : il rit (la tête et les épaules sautent) ; la vague roule vers la droite
-    dict(b=2, lean=0, head=(0, 1), cri=1, t=0, sh=0, fx=[fx_smoke('speciale', 3.3, 1.5, 1.5)], ms=90),
-    dict(b=1, lean=0, head=(0, -1), cri=1, t=1, sh=1, fx=[fx_smoke('speciale', 3.6, 1.5, 1.5)], ms=90),
-    dict(b=2, lean=0, head=(0, 1), cri=1, t=0, sh=1, fx=[fx_smoke('speciale', 3.9, 1.5, 1.5)], ms=90),
-    dict(b=1, lean=0, head=(0, 0), cri=1, t=-1, sh=0, fx=[fx_smoke('speciale', 4.2, 1.5, 1.5)], ms=100),
+    dict(b=2, lean=0, head=(0, 1), cri=1, t=0, sh=0, fx=[fx_smoke('speciale', 3.3, 1.55, 1.85)], ms=90),
+    dict(b=1, lean=0, head=(0, -1), cri=1, t=1, sh=1, fx=[fx_smoke('speciale', 3.6, 1.55, 1.85)], ms=90),
+    dict(b=2, lean=0, head=(0, 1), cri=1, t=0, sh=1, fx=[fx_smoke('speciale', 3.9, 1.55, 1.85)], ms=90),
+    dict(b=1, lean=0, head=(0, 0), cri=1, t=-1, sh=0, fx=[fx_smoke('speciale', 4.2, 1.55, 1.85)], ms=100),
     # 14-17 : il se tasse en place ; l'écume s'étale, la fumée se défait, un filet monte encore du canon
-    dict(b=0, lean=0, head=(0, 0), t=-1, sh=-1, fx=[fx_smoke('speciale', 4.6, 1.5, 1.5), fx_wisp(0)], ms=110),
-    dict(b=0, lean=0, head=(0, 0), t=0, sh=-1, fx=[fx_smoke('speciale', 5.0, 1.5, 1.5), fx_wisp(2)], ms=120),
-    dict(b=1, lean=0, head=(0, 1), t=0, sh=0, fx=[fx_smoke('speciale', 5.6, 1.5, 1.5), fx_wisp(4)], ms=140),
-    dict(b=0, lean=0, head=(0, 0), t=0, sh=0, fx=[fx_smoke('speciale', 6.0, 1.5, 1.5)], ms=150),
+    dict(b=0, lean=0, head=(0, 0), t=-1, sh=-1, fx=[fx_smoke('speciale', 4.6, 1.55, 1.85), fx_wisp(0)], ms=110),
+    dict(b=0, lean=0, head=(0, 0), t=0, sh=-1, fx=[fx_smoke('speciale', 5.0, 1.55, 1.85), fx_wisp(2)], ms=120),
+    dict(b=1, lean=0, head=(0, 1), t=0, sh=0, fx=[fx_smoke('speciale', 5.6, 1.55, 1.85), fx_wisp(4)], ms=140),
+    dict(b=0, lean=0, head=(0, 0), t=0, sh=0, fx=[fx_smoke('speciale', 6.0, 1.55, 1.85)], ms=150),
 ]
 for _i, _f in enumerate(SPECIALE):
     _f['fx'] = _f.get('fx', []) + schedule(_i)

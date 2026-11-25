@@ -827,8 +827,8 @@ _REF['thrust'] = None
 # enlace, devenu pierre lui aussi (arrêt sur l'image). Des veines vertes courent dans la pierre, puis le cocon
 # s'effondre sur lui-même en blocs qui roulent et en poussière qui se défait en volutes. Elle se repose.
 COC_H = 60                                   # hauteur du cocon
-_SEEDS = np.random.RandomState(9).uniform([-15, 0], [15, 62], size=(30, 2))
-_PLATE = np.random.RandomState(3).uniform(-0.3, 0.3, size=30)
+_SEEDS = np.random.RandomState(9).uniform([-14, 0], [14, 62], size=(17, 2))
+_PLATE = np.random.RandomState(3).uniform(-0.25, 0.25, size=17)
 
 
 def coc_w(h):
@@ -866,10 +866,10 @@ def cocoon(cv, level, cracks=0, top_cut=None):
             gap = d[o[1]] - d[o[0]]
             k = nx * LN[0] - ny * LN[1] + _PLATE[o[0]]
             ch = 'K' if k > 0.35 else 'L' if k > -0.2 else 'P'
-            if abs(u) > w - 1.0 and k < -0.1:
-                ch = 'Q'
-            if gap < 0.9 and abs(u) < w - 1.0:
+            if gap < 0.75 and abs(u) < w - 1.0:
                 ch = 'Q' if ch != 'P' else 'R'
+            if abs(u) > w - 1.0 or coc_w(h + 1.0) < abs(u):   # le liseré du bord (une seule ligne, pas de noir)
+                ch = 'P' if k > 0.2 else 'Q'
             if level < 1 and h > front_h - 2.4:
                 ch = 'S' if h > front_h - 1.0 else 'T'
             put(cv, x, y, ch)
@@ -1040,7 +1040,7 @@ def fx_bind(k):
         else:
             B, F = empty(), empty()
             stone = 'KLPQ'
-            coil(B, F, stone, 'LPQ', eye='T')
+            coil(B, F, stone, 'LPQ', w=4.2, eye='T')
             cocoon(B, 1.0, cracks=k - 2)
             if k >= 3:                               # les anneaux de pierre se fendent aussi
                 for (x, y, fr) in coil_pts()[20::23]:
@@ -1070,12 +1070,13 @@ def fx_collapse(k):
             fall = 3.2 * t * t + 2 * t
             h = h0 - fall
             x = ex + u + vx * t * 3.0
-            if h0 < stump + 2:
+            if h0 < stump + 2 or (k == 3 and abs(vx) > 1.0):    # à la fin, seul le tas du milieu reste
                 continue
             if h > r * 0.6:
                 rock(L, (x, GROUND - h), r, seed=sd)
             else:
-                rock(L, (x + vx * 2, GROUND - r * 0.45), r * 0.85, seed=sd, squash=0.6)
+                rr_ = r * (0.8 if k < 3 else 0.6)
+                rock(L, (x + vx * 2, GROUND - rr_ * 0.6), rr_, seed=sd, squash=0.8)
         hol = [0.0, 0.0, 0.4, 0.75][k]
         rr = [6, 9, 10, 9][k]
         if k >= 1:
@@ -1083,9 +1084,9 @@ def fx_collapse(k):
             cloud(L, (ex + 15, GROUND - rr * 0.5), rr * 0.7, 'KKLP', hollow=hol, seed=82)
         if k == 0:
             pop(L, (ex, GROUND - 40), 6.0, facing=90, tones='ZSTU')
-        if k >= 2:
-            curl(L, (ex - 7, GROUND - 22 - 4 * k), 5.0, 80, turn=280, w=2.0, tones='KL')
-            curl(L, (ex + 9, GROUND - 26 - 3 * k), 4.0, 100, turn=260, w=1.8, tones='KL', cw=True)
+        if k >= 2:                                   # la poussière monte en bouffées qui se défont
+            cloud(L, (ex - 6, GROUND - 20 - 4 * k), 5.0 - 0.8 * k, 'KKL', hollow=0.3 * k, seed=84)
+            cloud(L, (ex + 9, GROUND - 24 - 3 * k), 4.2 - 0.7 * k, 'KKL', hollow=0.3 * k, seed=85)
         front[L != '.'] = L[L != '.']
     return f
 

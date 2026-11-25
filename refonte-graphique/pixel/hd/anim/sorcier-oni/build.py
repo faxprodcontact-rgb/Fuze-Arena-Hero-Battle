@@ -494,7 +494,7 @@ def lantern_piece(tilt=0, glow=0, flick=0):
     if glow:
         up = [{'n': 'o', 'o': 'p', 'p': 'q'},
               {'n': 'o', 'o': 'p', 'p': 'q', 'q': 'v'},
-              {'n': 'p', 'o': 'q', 'p': 'v', 'q': 'w', 'H': 'w'}][min(glow, 3) - 1]
+              {'n': 'p', 'o': 'q', 'p': 'v', 'q': 'v', 'H': 'w'}][min(glow, 3) - 1]
         p = np.where(paper, np.vectorize(lambda c: up.get(c, c))(p), p)
     if tilt:
         p = shear_rows(p, lambda y: rnd(tilt * (y - LANT_TOP) / 22) if y > LANT_TOP else 0)
@@ -615,7 +615,7 @@ def fx_launch(cv, back, front, ctx):
     pop(back, (c[0] + 9, c[1] - 1), 5.5, facing=0, tones='wvut')
     puff(back, (c[0] + 3, c[1] - 11), 2.8, SMOKE)
     pts = attack_path()
-    follet(front, pts[0:6], 3.6)
+    follet(front, pts[0:6], 4.2)
 
 
 def fx_flight(s, tail):
@@ -623,12 +623,12 @@ def fx_flight(s, tail):
         pts = attack_path()
         n = len(pts) - 1
         i0, i1 = int(max(0.0, s - tail) * n), int(s * n)
-        follet(front, pts[i0:i1 + 1], 4.2, wob=s * 20)
+        follet(front, pts[i0:i1 + 1], 5.0, wob=s * 20)
         # la fumée qui se détache de la flamme : de petites bouffées qui se défont derrière elle
         for k, ds in enumerate((0.14, 0.26)):
             if s - ds > 0.04:
                 x, y = pts[int((s - ds) * n)]
-                puff(back, (x - 1, y - 5 - k), 2.8 - 0.5 * k, 'ijl', hollow=0.3 * k)
+                puff(back, (x - 1, y - 6 - 2 * k), 3.6 - 0.6 * k, 'ijl', hollow=0.3 * k)
     return f
 
 
@@ -638,7 +638,7 @@ def fx_impact(stage):
         if stage == 0:
             for (dx, dy, r) in ((-9, -6, 4.0), (8, -8, 3.6), (-7, 7, 3.2), (9, 6, 3.2)):
                 puff(back, (x + dx, y + dy), r, 'ijl')
-            pop(front, (x, y), 8, facing=180, tones='wvuts')
+            pop(front, (x, y), 10, facing=180, tones='wvuts')
         elif stage == 1:
             cloud(back, (x, y - 3), 9, 'ijjl', seed=3, ground=False)
             pop(front, (x - 1, y + 1), 4.5, facing=180, tones='vuts')
@@ -658,7 +658,7 @@ def fx_impact(stage):
 ATTAQUE = [
     # il ramène le bâton contre lui, se redresse un peu, lève la tête : la lanterne s'allume (anticipation, tenue)
     dict(b=1, lean=-1, head=(-1, -1), s=-2, L=1, tilt=1, glow=1, ro=-1, bs=1, fx=[fx_gather(0)], ms=110),
-    dict(b=1, lean=-2, head=(-1, -2), s=-4, L=1, tilt=0, glow=2, ro=-1, bs=2, eyes=True, fx=[fx_gather(1)], ms=180),
+    dict(b=1, lean=-2, head=(-1, -2), s=-4, L=1, tilt=0, glow=2, ro=-1, bs=2, eyes=True, fx=[fx_gather(1), fx_blaze(0, 1)], ms=180),
     # coup de reins : le bâton est poussé vers l'ennemi, la lanterne reste en arrière et crache le feu follet
     dict(b=0, lean=2, head=(2, 1), s=4, L=-1, tilt=-3, glow=3, ro=1, bs=-1, eyes=True, fx=[fx_launch], ms=70),
     dict(b=0, lean=2, head=(2, 1), s=4, L=1, tilt=1, glow=2, ro=1, bs=-1, fx=[fx_flight(0.38, 0.30)], ms=60),
@@ -779,28 +779,38 @@ def fx_release(cv, back, front, ctx):
     puff(back, (c[0] + 4, c[1] + 12), 2.6, SMOKE)
 
 
-def fire_ball(cv, c, r, crown, tones=FIRE, bend=0.0):
-    """une boule de feu couronnée de langues de flamme qui se recourbent (une à gauche, une haute, une à droite)"""
+def fire_cloud(cv, c, r, tones='wvutsr', seed=0, licks=0, bend=0.0):
+    """un nuage de feu qui roule : une grosse bouffée et des lobes autour, chauffés du DEDANS (coeur blanc, bord
+    rouge, chaque lobe a son petit coeur), avec des langues de flamme qui lèchent son sommet et se recourbent"""
     x, y = c
-    ball(cv, (x, y), r, tones[:5] if len(tones) > 5 else tones)
-    if crown > 0:
-        top = y - r * 0.55
-        tongue(cv, (x - r * 0.45, top), crown * 0.75, r * 0.9, bend=-1.1 + bend, lean=-0.25, tones=tones, fork=False)
-        tongue(cv, (x + r * 0.5, top), crown * 0.8, r * 0.85, bend=1.0 + bend, lean=0.25, tones=tones, fork=False)
-        tongue(cv, (x + 0.5, top - 1), crown, r * 1.1, bend=0.6 + bend, lean=0.05, tones=tones)
-
-
-def stem(cv, x, y_top, y_bot, w_top, w_bot, tones=FIRE, wob=0.0):
-    """la tige de flamme qui relie la boule de feu au sol (large en bas, effilée en haut, un peu ondulée)"""
-    pts = bezier((x, y_bot), (x - 3 + wob, y_bot - (y_bot - y_top) * 0.35), (x + 3 - wob, y_bot - (y_bot - y_top) * 0.7),
-                 (x, y_top), 40)
-    ws = [w_bot + (w_top - w_bot) * i / 40 for i in range(41)]
-    stroke(cv, pts, ws, tones, cool=[0.15 + 0.35 * i / 40 for i in range(41)])
+    if licks:
+        top = y - r * 0.4
+        lt = tones[1:] if len(tones) > 4 else tones
+        tongue(cv, (x - r * 0.45, top), licks * 0.75, r * 0.95, bend=-1.0 + bend, lean=-0.3, tones=lt, fork=False)
+        tongue(cv, (x + r * 0.5, top), licks * 0.8, r * 0.9, bend=0.9 + bend, lean=0.3, tones=lt, fork=False)
+        tongue(cv, (x + 1, top - 1), licks * 1.1, r * 1.2, bend=0.6 + bend, lean=0.05, tones=lt, fork=False)
+    rng = np.random.RandomState(seed)
+    lobes = [(0.0, 0.0, r)]
+    for i in range(6):
+        a = math.radians(i * 60 + rng.uniform(-18, 18))
+        d = r * rng.uniform(0.6, 0.8)
+        lobes.append((d * math.cos(a), -d * math.sin(a) * 0.8, r * rng.uniform(0.42, 0.58)))
+    m = len(tones)
+    for yy in range(int(y - 2 * r - 2), int(y + 2 * r + 3)):
+        for xx in range(int(x - 2 * r - 2), int(x + 2 * r + 3)):
+            px, py = xx + 0.5 - x, yy + 0.5 - y
+            kl = min(math.hypot(px - dx, py - dy) / rr for (dx, dy, rr) in lobes)
+            if kl > 1:
+                continue
+            # coeur un peu décalé vers la lumière (en haut à droite)
+            dm = math.hypot(px - 0.2 * r * LN[0], py - 0.2 * r * LN[1]) / (r * 1.5)
+            k = 0.45 * kl + 0.6 * dm
+            put(cv, xx, yy, tones[min(m - 1, int(k * m))])
 
 
 def fx_burst(stage):
-    """la gerbe de feu sur l'ennemi : l'éclat des trois feux follets, une boule de feu couronnée de flammes qui monte
-    au-dessus d'une tige de feu, puis s'éteint en fumée et en braises"""
+    """la gerbe de feu sur l'ennemi : l'éclat des trois feux follets, un nuage de feu qui roule et monte en léchant
+    l'air, des flammes au sol, puis tout s'éteint en fumée et en braises"""
     def f(cv, back, front, ctx):
         x, y = HIT2
         g = GROUND
@@ -810,39 +820,29 @@ def fx_burst(stage):
             pop(front, (x, y), 13, facing=180, tones='wwvuts')
             for (dx, dy, big) in ((-22, -4, True), (21, -14, False), (4, -26, True), (-14, 20, False)):
                 ember(front, x + dx, y + dy, big)
-        elif stage == 1:                            # la boule de feu se forme, couronnée de flammes
-            stem(back, x, y, g, 7, 14, wob=1)
-            tongue(back, (x - 10, g), 12, 7, bend=-1.1, lean=-0.3, fork=False)
-            tongue(back, (x + 10, g), 14, 7, bend=1.0, lean=0.3, fork=False)
-            fire_ball(front, (x, y - 4), 12, 22)
-            for (dx, dy, big) in ((-24, -20, True), (22, -28, False), (8, -44, True), (-12, -40, False), (26, 4, True)):
+        elif stage == 1:                            # le nuage de feu roule, des flammes prennent au sol
+            fire_cloud(front, (x, y - 6), 16, seed=2, licks=24)
+            for (dx, dy, big) in ((-26, -20, True), (24, -28, False), (8, -46, True), (-12, -42, False), (28, 4, True)):
                 ember(front, x + dx, y + dy, big)
-        elif stage == 2:                            # elle monte et grossit, la fumée s'ouvre au-dessus
-            cloud(back, (x + 2, y - 44), 10, 'ijjl', seed=5, ground=False)
-            stem(back, x, y - 12, g, 6, 12, wob=-1)
-            tongue(back, (x - 9, g), 9, 6, bend=-1.0, lean=-0.3, fork=False)
-            tongue(back, (x + 9, g), 10, 6, bend=1.0, lean=0.3, fork=False)
-            fire_ball(front, (x + 1, y - 16), 11, 20, bend=0.2)
-            for (dx, dy, big) in ((-26, -32, False), (24, -40, True), (10, -60, False), (-16, -56, True), (28, -8, False)):
+        elif stage == 2:                            # il monte ; le bas se change en fumée
+            cloud(back, (x - 4, y - 34), 11, 'ijjl', seed=7, ground=False)
+            fire_cloud(front, (x + 1, y - 14), 15, tones='vutssr', seed=3, licks=20, bend=0.2)
+            for (dx, dy, big) in ((-27, -32, False), (25, -42, True), (10, -62, False), (-17, -58, True), (29, -8, False)):
                 ember(front, x + dx, y + dy, big)
-        elif stage == 3:                            # elle s'éteint par le bas, les volutes de fumée montent
-            cloud(back, (x + 4, y - 50), 11, 'ijjl', hollow=0.25, seed=5, ground=False)
-            curl(back, (x - 15, y - 40), 6, 200, turn=280, w=3.2, tones='ijl', cw=True)
-            stem(back, x, y - 22, g, 3, 7, tones='utsr', wob=1)
-            fire_ball(front, (x + 2, y - 26), 8, 13, tones='vutsr', bend=0.3)
-            for (dx, dy) in ((-27, -46), (25, -54), (12, -70), (-6, -10), (16, -2)):
+        elif stage == 3:                            # la fumée l'emporte, des volutes montent
+            cloud(back, (x + 2, y - 30), 14, 'ijjl', seed=5, ground=False)
+            curl(back, (x - 16, y - 36), 7, 200, turn=250, w=4.2, tones='ijl', cw=True)
+            fire_cloud(front, (x + 3, y - 22), 8, tones='utsr', seed=4, licks=10)
+            for (dx, dy) in ((-28, -46), (26, -54), (12, -70), (-7, -8), (17, 0)):
                 ember(front, x + dx, y + dy, hot=False)
-        elif stage == 4:                            # une boule rouge qui se défait dans la fumée
-            cloud(back, (x + 6, y - 56), 10, 'ijj', hollow=0.55, seed=5, ground=False)
-            curl(back, (x - 17, y - 48), 5, 220, turn=260, w=2.6, tones='ijl', cw=True)
-            fire_ball(front, (x + 3, y - 34), 4.5, 6, tones='utsr')
-            tongue(front, (x - 2, g), 7, 5, bend=-0.6, fork=False, tones='uts')
-            tongue(front, (x + 5, g), 9, 5, bend=0.7, fork=False, tones='uts')
+        elif stage == 4:                            # la fumée se défait en montant
+            cloud(back, (x + 5, y - 36), 12, 'ijj', hollow=0.5, seed=5, ground=False)
+            curl(back, (x - 18, y - 48), 6, 220, turn=240, w=3.6, tones='ijl', cw=True)
             ember(front, x + 22, y - 62, hot=False)
             ember(front, x - 20, y - 52, hot=False)
+            ember(front, x + 3, y - 30, big=True, hot=False)
         elif stage == 5:
-            cloud(back, (x + 9, y - 62), 7, 'ij', hollow=0.85, seed=5, ground=False)
-            tongue(front, (x + 2, g), 5, 4, bend=0.6, fork=False, tones='uts')
+            cloud(back, (x + 8, y - 48), 8, 'ij', hollow=0.85, seed=5, ground=False)
             ember(front, x - 4, g - 2, hot=False)
             ember(front, x + 6, y - 44, hot=False)
     return f
@@ -869,8 +869,8 @@ SPECIALE = [
     # le grand moment (arrêt bref) : il pousse le bâton de tout son poids, éclair ; les feux follets partent
     dict(b=0, lean=2, head=(2, 1), s=6, L=-1, tilt=-3, glow=3, ro=2, bs=-1, eyes=True, flash=30,
          fx=[fx_release, fx_follets(8.0, 0.6)], ms=150),
-    dict(b=0, lean=2, head=(1, 0), s=6, L=0, tilt=-1, glow=2, ro=1, bs=-1, eyes=True, fx=[fx_follets(9.0)], ms=60),
-    dict(b=0, lean=2, head=(1, 0), s=5, L=2, tilt=2, glow=2, ro=0, bs=0, fx=[fx_follets(10.0)], ms=60),
+    dict(b=0, lean=2, head=(1, 0), s=6, L=0, tilt=-1, glow=2, ro=1, bs=-1, eyes=True, fx=[fx_follets(9.0, 0.45)], ms=60),
+    dict(b=0, lean=2, head=(1, 0), s=5, L=2, tilt=2, glow=2, ro=0, bs=0, fx=[fx_follets(10.0, 0.45)], ms=60),
     # la gerbe de flammes sur l'ennemi (arrêt bref)
     dict(b=0, lean=1, head=(1, 0), s=4, L=3, tilt=2, glow=1, ro=-1, bs=1, fx=[fx_burst(0)], ms=150),
     dict(b=0, lean=1, head=(0, 0), s=3, L=1, tilt=1, glow=1, ro=-1, bs=1, fx=[fx_burst(1)], ms=100),

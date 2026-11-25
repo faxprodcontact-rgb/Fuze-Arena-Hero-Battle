@@ -67,7 +67,8 @@ W, H = 236, 150
 SOL = (70, 144)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]
-ENEMY = (178, 104)                                          # le coeur de l'ennemi (toile), là où frappe le venin
+ENEMY = (164, 100)                                          # le coeur de l'ennemi (toile), là où frappe le venin
+HIT = (139, 101)                                            # centre du croissant des entailles (portée de la lame)
 
 
 def grid(rows):
@@ -258,13 +259,14 @@ GUARD = np.array([102.5, 76.3])              # la garde de la lame de devant (gr
 def far_arm(n=0, lift=0):
     p = part(FAR_ARM)
     if n < 0:
-        cols = [c for c in range(GW) if c not in ARM_CUT_ORDER[:-n]]
+        kept = [c for c in range(GW) if c not in ARM_CUT_ORDER[:-n]]
         out = np.full_like(p, '.')
-        for i, c in enumerate(cols):
+        right = [c for c in kept if c >= 89]
+        for c in kept:
             if c < 89:
                 out[:, c] = p[:, c]
-            else:
-                out[:, 89 + (i - cols.index(next(cc for cc in cols if cc >= 89)))] = p[:, c]
+        for i, c in enumerate(right):
+            out[:, 89 + i] = p[:, c]
         p = out
     elif n > 0:
         out = np.full_like(p, '.')
@@ -393,8 +395,8 @@ def rig_frame(f):
     body.draw(cv, part(BODY))
     # 3) la tête ; si elle monte, le bas du capuchon est doublé (pas de trou au cou)
     hi = head_img(f.get('tg', 1))
-    if hy < 0 or cy < 0:
-        blit(cv, np.where(YY >= 55, hi, '.'), cx + hx, cy - hy if hy < 0 else cy, swap)
+    if hy < 0:
+        blit(cv, np.where(YY >= 55, hi, '.'), cx + hx, cy, swap)
     blit(cv, hi, cx + hx, cy + hy, swap)
     # 4) le bras lointain et la lame de devant
     n, lift = f.get('arm', 0), f.get('lift', 0)
@@ -603,7 +605,7 @@ def arc_band(cv, c, r0, r1, a0, a1, tones, fade=0.35):
             if d < inner:
                 continue
             k = (r1 - d) / max(r1 - inner, 1e-6)            # 0 au bord extérieur, 1 au bord intérieur
-            idx = int((1 - s) * (m - 1) * 0.6 + k * (m - 1) * 0.6)
+            idx = int(((1 - s) * 0.7 + k * 0.5) * (m - 1) + 0.5)
             put(cv, x, y, tones[min(m - 1, idx)])
 
 
@@ -644,7 +646,7 @@ def tip_of(ctx):
     return blade_point(ctx.guard, ctx.phi if ctx.phi is not None else 0.0, SPINE[-1])
 
 
-def fx_smear(phi0, phi1, tones='wxDC', r0=8.0, r1=18.5):
+def fx_smear(phi0, phi1, tones='xxDC', r0=12.0, r1=19.5):
     """la traînée de la lame entre deux angles (autour de la garde)"""
     def f(cv, back, front, ctx):
         # angle (écran) du bout de la lame pour un angle de poignée phi
@@ -653,29 +655,29 @@ def fx_smear(phi0, phi1, tones='wxDC', r0=8.0, r1=18.5):
         a0 = phi0 + (tip_local + bel_local) / 2
         a1 = phi1 + (tip_local + bel_local) / 2
         lo, hi = (a1, a0) if a1 < a0 else (a0, a1)
-        arc_band(back, ctx.guard, r0, r1, a0, a1, tones)
+        arc_band(back, ctx.guard, r0, r1, a0, a1, tones, fade=0.6)
     return f
 
 
 def fx_cut(level, venom=False):
     """l'entaille sur l'ennemi : un croissant fin qui s'ouvre puis se défait ; des gouttes de venin giclent"""
     def f(cv, back, front, ctx):
-        c = np.array(ENEMY, float) + np.array([-6, -4])
-        tones = '1234' if venom else 'w1x3'
+        c = np.array(HIT, float)                      # le centre du croissant de l'entaille
         if level == 0:
-            arc_band(front, (c[0] - 10, c[1] - 14), 13, 17, -30, -110, 'w123', fade=0.2)
-            pop(front, (c[0] - 4, c[1] + 1), 3.2, facing=-30, tones='w123')
+            arc_band(front, c, 15, 19, 50, -55, '1234', fade=0.25)
+            pop(front, c + np.array([15, -2]), 3.4, facing=-20, tones='1234')
         elif level == 1:
-            arc_band(front, (c[0] - 10, c[1] - 14), 14, 17, -30, -115, tones, fade=0.5)
-            for (dx, dy, r, vx, vy) in ((6, -6, 1.6, 1, -1), (10, 0, 1.3, 1, 0.2), (2, 6, 1.1, 0.6, 1)):
-                drop(front, (c[0] + dx, c[1] + dy), r, (vx, vy))
+            arc_band(front, c, 16, 19, 45, -55, '1234', fade=0.55)
+            for (dx, dy, r, vx, vy) in ((22, -10, 1.6, 1, -1), (25, 1, 1.4, 1, 0.2), (18, 12, 1.2, 0.6, 1)):
+                drop(front, c + np.array([dx, dy]), r, (vx, vy))
         elif level == 2:
-            arc_band(front, (c[0] - 10, c[1] - 14), 15, 17, -45, -105, '234', fade=0.6)
-            for (dx, dy, r, vx, vy) in ((11, -9, 1.3, 1, -0.3), (15, 1, 1.0, 1, 0.6), (4, 11, 1.0, 0.3, 1)):
-                drop(front, (c[0] + dx, c[1] + dy), r, (vx, vy), tones='234')
+            arc_band(front, c, 17, 19, 25, -45, '234', fade=0.7)
+            for (dx, dy, r, vx, vy) in ((27, -12, 1.3, 1, -0.2), (30, 4, 1.1, 1, 0.7), (20, 17, 1.1, 0.3, 1)):
+                drop(front, c + np.array([dx, dy]), r, (vx, vy), tones='234')
         elif level == 3:
-            for (dx, dy) in ((14, -9), (18, 5), (5, 15)):
+            for (dx, dy) in ((30, -9), (32, 9), (21, 21)):
                 put(front, c[0] + dx, c[1] + dy, '3')
+                put(front, c[0] + dx, c[1] + dy + 1, '4')
     return f
 
 
@@ -714,12 +716,12 @@ ATTAQUE = [
     # détente : la queue file, le S se couche, la lame part
     dict(s=1, lean=4, wave=1.4, base=7, front=16, head=(1, 0), tg=2, near=(-1, 0), arm=2, lift=1, phi=20, hook=-1,
          fx=[fx_smear(60, 20), fx_launch_dust(0)], ms=50),
-    dict(s=1, lean=8, wave=1.0, base=15, front=24, head=(1, 0), tg=2, arm=5, lift=-1, phi=-35, hook=-2,
+    dict(s=1, lean=8, wave=1.0, base=17, front=26, head=(1, 0), tg=2, arm=3, lift=-1, phi=-35, hook=-2,
          fx=[fx_smear(30, -35), fx_launch_dust(1)], ms=50),
     # impact : arrêt sur l'image
-    dict(s=1, lean=8, wave=0.6, base=17, front=24, head=(1, 0), tg=2, arm=5, lift=-1, phi=-48, hook=-1,
+    dict(s=1, lean=8, wave=0.6, base=19, front=26, head=(1, 0), tg=2, arm=3, lift=-1, phi=-48, hook=-1,
          fx=[fx_cut(0), fx_launch_dust(2)], ms=130),
-    dict(s=0, lean=6, wave=0.2, base=16, front=21, tg=1, arm=4, phi=-40, fx=[fx_cut(1)], ms=80),
+    dict(s=0, lean=6, wave=0.2, base=18, front=23, tg=1, arm=3, phi=-40, fx=[fx_cut(1)], ms=80),
     # il revient en glissant
     dict(s=0, lean=2, wave=-0.8, base=10, front=11, head=(-1, 0), tg=1, arm=2, phi=-22, hook=1,
          fx=[fx_cut(2)], ms=70),
@@ -775,7 +777,7 @@ def fx_rise(level):
     return f
 
 
-X_C = np.array(ENEMY, float) + np.array([-6, -6])        # le coeur du X sur l'ennemi
+X_C = np.array(HIT, float) + np.array([14, 0])          # le coeur du X sur l'ennemi
 
 
 def fx_slash1(level):
@@ -783,11 +785,11 @@ def fx_slash1(level):
     def f(cv, back, front, ctx):
         c = X_C
         if level == 0:
-            arc_band(front, (c[0] - 12, c[1] - 6), 14, 19, 40, -40, '1234', fade=0.3)
+            arc_band(front, (c[0] - 12, c[1] - 12), 14, 18, 30, -75, '1234', fade=0.3)
         elif level == 1:
-            arc_band(front, (c[0] - 12, c[1] - 6), 15, 19, 30, -40, '1234', fade=0.5)
+            arc_band(front, (c[0] - 12, c[1] - 12), 15, 18, 25, -75, '1234', fade=0.55)
         elif level == 2:
-            arc_band(front, (c[0] - 12, c[1] - 6), 16, 19, 20, -35, '234', fade=0.7)
+            arc_band(front, (c[0] - 12, c[1] - 12), 16, 18, 15, -70, '234', fade=0.7)
     return f
 
 
@@ -796,9 +798,9 @@ def fx_slash2(level):
     def f(cv, back, front, ctx):
         c = X_C
         if level == 0:
-            arc_band(front, (c[0] - 10, c[1] + 8), 14, 19, -50, 35, '1234', fade=0.3)
+            arc_band(front, (c[0] - 12, c[1] + 12), 14, 18, -30, 75, '1234', fade=0.3)
         elif level == 1:
-            arc_band(front, (c[0] - 10, c[1] + 8), 15, 19, -40, 35, '1234', fade=0.5)
+            arc_band(front, (c[0] - 12, c[1] + 12), 15, 18, -25, 75, '1234', fade=0.55)
     return f
 
 
@@ -840,7 +842,7 @@ def fx_spit(t):
         cx, cy = ctx.neck
         hx, hy = ctx.f.get('head', (0, 0))
         m = MOUTH + np.array([cx + hx + OX, cy + hy + OY])
-        e = np.array(ENEMY, float) + np.array([-8, -8])
+        e = X_C + np.array([2.0, -4.0])
         p = m + (e - m) * t + np.array([0, -14 * 4 * t * (1 - t)])
         v = (e - m) + np.array([0, -14 * 4 * (1 - 2 * t)])
         if t <= 0.05:
@@ -858,8 +860,8 @@ def fx_spit(t):
 def fx_splash(level):
     """la boule s'écrase : éclaboussure ronde, bulles, gouttes qui retombent, flaque au sol qui fume"""
     def f(cv, back, front, ctx):
-        c = np.array(ENEMY, float) + np.array([-8, -8])
-        gx = ENEMY[0] - 6
+        c = X_C + np.array([2.0, -4.0])
+        gx = int(X_C[0]) + 2
         if level == 0:
             pop(front, c, 7.0, facing=180, tones='11234')
         elif level == 1:
@@ -922,19 +924,19 @@ SPECIALE = [
     # il fond sur l'ennemi : coup de haut en bas
     dict(s=1, lean=5, wave=1.4, base=8, front=18, head=(1, 0), tg=2, near=(-1, -1), arm=2, lift=1, phi=25,
          hook=-1, fx=[fx_smear(64, 25, tones='1234'), fx_launch_dust(0)], **_CO, ms=50),
-    dict(s=1, lean=8, wave=1.0, base=16, front=25, head=(1, 0), tg=2, arm=5, lift=-1, phi=-45, hook=-2,
+    dict(s=1, lean=8, wave=1.0, base=18, front=27, head=(1, 0), tg=2, arm=3, lift=-1, phi=-45, hook=-2,
          fx=[fx_smear(30, -45, tones='1234'), fx_slash1(0), fx_launch_dust(1)], **_CO, ms=60),
-    dict(s=1, lean=8, wave=0.6, base=17, front=25, head=(1, 0), tg=2, arm=5, lift=-1, phi=-52,
+    dict(s=1, lean=8, wave=0.6, base=19, front=27, head=(1, 0), tg=2, arm=3, lift=-1, phi=-52,
          fx=[fx_slash1(1), fx_launch_dust(2)], **_CO, ms=70),
     # le revers : de bas en haut
-    dict(s=2, lean=7, wave=0.8, base=17, front=25, head=(1, -1), tg=2, arm=4, lift=2, phi=10,
+    dict(s=2, lean=7, wave=0.8, base=19, front=27, head=(1, -1), tg=2, arm=3, lift=2, phi=10,
          fx=[fx_smear(-50, 10, tones='1234'), fx_slash1(2)], **_CO, ms=50),
-    dict(s=2, lean=7, wave=0.4, base=17, front=25, head=(1, -1), tg=2, arm=4, lift=3, phi=55,
+    dict(s=2, lean=7, wave=0.4, base=19, front=27, head=(1, -1), tg=2, arm=3, lift=3, phi=55,
          fx=[fx_smear(-10, 55, tones='1234'), fx_slash1(2), fx_slash2(0)], **_CO, ms=70),
     # le X éclate (arrêt sur l'image)
-    dict(s=2, lean=7, wave=0.4, base=17, front=25, head=(1, -1), tg=2, arm=4, lift=3, phi=60,
+    dict(s=2, lean=7, wave=0.4, base=19, front=27, head=(1, -1), tg=2, arm=3, lift=3, phi=60,
          fx=[fx_slash2(1), fx_xburst(0)], **_CO, flash=0, ms=90),
-    dict(s=2, lean=7, wave=0.4, base=17, front=25, head=(1, -1), tg=2, arm=4, lift=3, phi=60,
+    dict(s=2, lean=7, wave=0.4, base=19, front=27, head=(1, -1), tg=2, arm=3, lift=3, phi=60,
          fx=[fx_xburst(1)], **_CO, ms=150),
     # il rebondit en arrière sur sa queue… et crache
     dict(s=-2, lean=-2, wave=-1.4, base=9, front=12, head=(-1, 1), tg=0, near=(0, -1), arm=0, lift=1, phi=20,

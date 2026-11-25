@@ -721,10 +721,12 @@ for _i, _f in enumerate(ATTAQUE):
 # s'écrase sur l'ennemi : dôme d'écume, longues décharges courbes qui fouettent, et deux vagues d'écume parcourues
 # d'étincelles qui roulent au sol sur tout le premier rang (temps suspendu) ; pluie de gouttes et de bulles. Elle
 # redescend, le coeur éteint un instant, puis se rallume.
-SPHERE = (106, 70)               # où se forme la grosse sphère (grille du dessin, devant la méduse)
+SPHERE = (110, 64)               # où se forme la grosse sphère (grille du dessin, devant la méduse)
+SPH_R = [4.0, 7.0, 10.0, 12.0]   # sa taille pendant qu'elle grossit
+TIPS = [(76, 96), (66, 101), (84, 88), (88, 80)]   # bouts des filaments de devant (d'où partent les décharges)
 
 
-def fx_tentacle_zaps(ctx, ph, n=3, back=None, front=None):
+def fx_tentacle_zaps(ctx, ph, n=3, front=None):
     """des décharges courbes qui courent le long des bras et des filaments (de leur départ vers leur bout)"""
     tracks = [((48, 66), (36, 90)), ((62, 66), (52, 96)), ((76, 64), (70, 92)), ((84, 64), (82, 88)),
               ((40, 70), (28, 98))]
@@ -734,146 +736,221 @@ def fx_tentacle_zaps(ctx, ph, n=3, back=None, front=None):
         s0 = (ph * 0.37 + j * 0.31) % 0.6
         pts = arc_pts(p0, p1, bend=0.12 * (1 if j % 2 else -1), wob=1.0, waves=1.5, phase=ph + j)
         zap(front, pts, w=0.5, edge=False, fade=(s0, s0 + 0.4))
-        e = pts[int((s0 + 0.4) * (len(pts) - 1)) if s0 + 0.4 <= 1 else -1]
+        e = pts[min(len(pts) - 1, int((s0 + 0.4) * (len(pts) - 1)))]
         spark(front, e[0], e[1])
 
 
 def fx_gather(ctx, k, ph):
-    """l'eau se ramasse en volutes et la sphère grossit : k = 0, 1, 2, 3"""
+    """l'eau se ramasse en volutes, les filaments la chargent, la sphère grossit : k = 0, 1, 2, 3"""
     back, front = empty(), empty()
     c = ctx.at(*SPHERE)
-    r = [3.0, 5.5, 8.0, 9.5][k]
-    # volutes d'eau qui tournent autour et se resserrent
-    R = [18, 15, 13, 12][k]
+    r = SPH_R[k]
+    # des volutes d'eau qui tournent autour et se resserrent (trois, décalées)
+    R = [22, 19, 17, 16][k]
     for j in range(3):
-        a0 = ph * 50 + j * 120
-        curl(back, c, R, a0, turn=160, w=2.6, tones='YZAE')
-    # bulles qui montent vers la sphère
-    for j, (dx, dy) in enumerate(((-14, 12), (10, 14), (-6, 18), (16, 6))):
-        f = 1 - 0.22 * k
-        bubble(back, c[0] + dx * f, c[1] + dy * f, 3 if j % 2 else 2)
+        curl(back, c, R, ph * 60 + j * 120, turn=150, w=3.0, tones='YZAE')
+    # des bulles aspirées vers la sphère
+    for j, (dx, dy) in enumerate(((-16, 14), (12, 17), (-5, 22), (20, 8), (4, -20))):
+        f = 1 - 0.2 * k
+        bubble(back, c[0] + dx * f, c[1] + dy * f, 4 if j % 2 else 3)
+    # les filaments de devant chargent la sphère : décharges courbes de leur bout jusqu'à elle
+    for j, tip in enumerate(TIPS[:1 + k]):
+        p0 = ctx.at(*tip)
+        p1 = (c[0] - r * 0.9, c[1] + r * 0.2 * (j - 1))
+        zap(back, arc_pts(p0, p1, bend=0.28 * (1 if j % 2 else -1), wob=1.0, waves=1.0, phase=ph + j), w=0.5,
+            edge=False)
+        spark(front, p0[0], p0[1], big=True)
     orb(front, c, r, phase=ph, arcs=2 if k < 2 else 3)
-    fx_tentacle_zaps(ctx, ph, 2 + (k >= 2), back, front)
-    # une décharge du bout de l'ombrelle à la sphère
-    p0 = ctx.at(88, 62)
-    zap(front, arc_pts(p0, (c[0] - r * 0.8, c[1] - r * 0.3), bend=0.35, wob=0.6, phase=ph), w=0.7, edge=False)
+    fx_tentacle_zaps(ctx, ph, 2 + (k >= 2), front)
     return back, front
 
 
 def fx_launch(ctx, t, ph):
-    """la grosse sphère file vers l'ennemi (t de 0 à 1), un sillage d'écume et une longue décharge courbe"""
+    """la grosse sphère file vers l'ennemi (t de 0 à 1), un sillage d'eau et des bulles, une décharge qui crépite"""
     back, front = empty(), empty()
     p0 = SHOT.setdefault('s0', ctx.at(*SPHERE))
-    p1 = (ENEMY_X - 6, HIT_Y + 4)
-    x, y = bolt_path(t, p0, p1, sag=-6)
-    tt = [max(0.0, t - 0.45 + 0.45 * i / 24) for i in range(25)]
-    pts = [bolt_path(s, p0, p1, sag=-6) for s in tt]
-    pts = [(px, py + 2.0 * math.sin(ph + i * 0.55) * (i / 24)) for i, (px, py) in enumerate(pts)]
-    solid(back, pts, [1.0 + 6.0 * (i / 24) for i in range(25)], 'Z')
-    solid(back, pts, [0.6 + 4.0 * (i / 24) for i in range(25)], 'Y')
-    solid(back, pts, [0.3 + 2.0 * (i / 24) for i in range(25)], 'X')
-    for j, s in enumerate((0.08, 0.16, 0.26, 0.34)):
+    p1 = (ENEMY_X - 8, HIT_Y + 2)
+    x, y = bolt_path(t, p0, p1, sag=-8)
+    s0 = max(0.0, t - 0.32)
+    pts = [bolt_path(s0 + (t - s0) * i / 24, p0, p1, sag=-8) for i in range(25)]
+    wake(back, pts[8:], 6, tones='XYZ')
+    for j, s in enumerate((0.07, 0.15, 0.23, 0.3)):
         if t - s > 0:
-            bx, by = bolt_path(t - s, p0, p1, sag=-6)
-            bubble(back, bx - 1, by + (5 if j % 2 else -5), 4 if j < 2 else 3)
-    orb(front, (x - 3, y), 8.0, phase=ph, arcs=2)
-    orb(front, (x, y), 9.5, phase=ph + 0.8, arcs=3)
+            bx, by = bolt_path(t - s, p0, p1, sag=-8)
+            bubble(back, bx - 2, by + (9 if j % 2 else -9), 5 if j < 2 else 4)
+    orb(front, (x, y), 12.0, phase=ph, arcs=3)
+    shell(front, (x, y), 14.0, ph, span=170)
     return back, front
 
 
 def ground_wave(cv, front, x0, x1, h, ph, sparks=True):
-    """une vague d'écume qui roule au sol de x0 à x1 (le front en x1) : une bosse d'eau modelée, crête d'écume"""
-    m = np.zeros((H, W), bool)
-    lo, hi = min(x0, x1), max(x0, x1)
-    for x in range(int(lo), int(hi) + 1):
-        s = (x - x0) / (x1 - x0 + 1e-6)
-        hh = h * (0.25 + 0.75 * s ** 1.6) if s < 0.93 else h * (1 - (s - 0.93) / 0.07 * 0.6)
-        top = int(GROUND - hh)
-        m[top:GROUND + 1, x] = True
-    shade_mask(cv, m, 'XYZAE')
-    # la crête : écume roulée (une volute) au front
+    """une vague d'eau qui roule au sol de x0 vers x1 (son front) : une bosse qui monte vers le front, un front
+    raide, et sa crête d'écume qui s'enroule vers l'avant ; quelques décharges courbes sur son dos"""
     d = 1 if x1 > x0 else -1
-    curl(cv, (x1 - d * h * 0.35, GROUND - h * 0.85), h * 0.45, 90 if d > 0 else 90, turn=260, w=2.2, tones='WXY',
-         cw=d > 0)
+    L = abs(x1 - x0)
+    m = np.zeros((H, W), bool)
+    for i in range(int(L) + 1):
+        s = i / max(L, 1)
+        hh = h * s ** 1.3 if s < 0.78 else h * (0.72 + 0.28 * (1 - ((s - 0.78) / 0.22) ** 2) ** 0.5)
+        hh = max(hh, 1.5)
+        x = int(round(x0 + d * i))
+        if 0 <= x < W:
+            m[int(GROUND - hh):GROUND + 1, x] = True
+    shade_mask(cv, m, 'XYZAE')
+    # la crête : elle part du dos, passe par-dessus et retombe vers l'avant en s'enroulant
+    cx, cy = x1 - d * h * 0.25, GROUND - h * 0.82
+    curl(cv, (cx, cy), h * 0.5, 180 if d > 0 else 0, turn=250, w=2.6, tones='WXY', cw=d > 0)
+    for j in range(3):                                   # de l'écume semée sur le dos
+        fx = x0 + d * L * (0.4 + 0.15 * j)
+        hh = h * (0.4 + 0.15 * j) ** 1.3
+        put(cv, fx, GROUND - hh - 1, 'W')
+        put(cv, fx + d, GROUND - hh - 1, 'X')
     if sparks:
-        for j in range(3):
-            sx = x0 + (x1 - x0) * (0.35 + 0.22 * j)
-            pts = arc_pts((sx, GROUND - h * 0.4), (sx + d * 7, GROUND - h * 0.9 - 2), bend=0.4, wob=0.5, phase=ph + j)
+        for j in range(2):
+            sx = x0 + d * L * (0.35 + 0.3 * j)
+            hh = h * (0.35 + 0.3 * j) ** 1.3
+            pts = arc_pts((sx, GROUND - hh * 0.5), (sx + d * 8, GROUND - hh - 4), bend=0.35 * d, wob=0.5,
+                          phase=ph + j)
             zap(front, pts, w=0.5, edge=False)
-            spark(front, sx + d * 7, GROUND - h * 0.9 - 2)
+            spark(front, sx + d * 8, GROUND - hh - 4)
+
+
+def dome(cv, front, c0, rx, ry, ph, arcs=3, crack=0.0):
+    """la prison d'eau : un grand dôme de bulle posé au sol autour de l'ennemi (centre du sol c0). Bord d'eau modelé
+    par la lumière (deux pixels), intérieur vide (on voit l'ennemi à travers), un long reflet courbe en haut à droite,
+    des décharges qui courent le long de la paroi en suivant sa courbe (jamais en rayons). crack (0..1) : le haut se
+    déchire (le dôme s'ouvre par le sommet)"""
+    cx, cy = c0
+    yy, xx = np.mgrid[0:H, 0:W]
+    e = ((xx + 0.5 - cx) / rx) ** 2 + ((yy + 0.5 - cy) / ry) ** 2
+    shell_m = (e <= 1.0) & (yy <= GROUND)
+    inner = (((xx + 0.5 - cx) / (rx - 2.2)) ** 2 + ((yy + 0.5 - cy) / (ry - 2.2)) ** 2) <= 1.0
+    band = (((xx + 0.5 - cx) / (rx - 4.0)) ** 2 + ((yy + 0.5 - cy) / (ry - 4.0)) ** 2) <= 1.0
+    if crack:
+        # la déchirure : un sommet ouvert dont les bords se recourbent vers l'extérieur
+        ang = np.degrees(np.arctan2(-(yy + 0.5 - cy) / ry, (xx + 0.5 - cx) / rx))
+        hole = np.abs(ang - 90) < 70 * crack
+        shell_m &= ~hole
+    v = light_field(shell_m)
+    ys, xs = np.nonzero(shell_m & ~band)
+    for y, x in zip(ys, xs):
+        k = v[y, x]
+        if not inner[y, x]:
+            ch = 'Y' if k > 0.25 else 'Z' if k > -0.05 else 'A' if k > -0.3 else 'E'
+        else:
+            ch = 'X' if k > 0.1 else 'Y'
+        put(cv, x, y, ch)
+    # au fond du dôme, l'eau s'est amassée : une flaque bombée, sa ligne d'écume en haut
+    pool = band & (yy >= GROUND - 5) & (yy <= GROUND)
+    if not crack:
+        ys, xs = np.nonzero(pool)
+        for y, x in zip(ys, xs):
+            ch = 'X' if y == GROUND - 5 else 'Y' if y <= GROUND - 4 else 'Z' if y <= GROUND - 2 else 'A'
+            put(cv, x, y, ch)
+    # les reflets : un long arc blanc en haut à droite (deux pixels), un petit arc pâle en bas à gauche
+    if crack < 0.5:
+        for i in range(26):
+            a = math.radians(22 + 50 * i / 25)
+            for dr in (5.0, 6.0):
+                if 35 <= math.degrees(a) <= 60 or dr == 5.0:
+                    put(front, cx + (rx - dr) * math.cos(a), cy - (ry - dr) * math.sin(a), 'W')
+        for i in range(10):
+            a = math.radians(150 + 14 * i / 9)
+            put(front, cx + (rx - 5.5) * math.cos(a), cy - (ry - 5.5) * math.sin(a), 'X')
+    # les décharges qui courent sur la paroi : des morceaux d'ellipse qui ondulent
+    spans = [(150, 70), (60, 55), (100, 60), (175, 35)]
+    for j in range(arcs):
+        a0, sp = spans[j % len(spans)]
+        a0 = a0 + 25 * math.sin(ph + j * 2.1)
+        pts = []
+        for i in range(31):
+            a = math.radians(a0 - sp / 2 + sp * i / 30)
+            if crack and abs(math.degrees(a) - 90) < 70 * crack:
+                continue
+            f = 0.86 + 0.05 * math.sin(ph * 2 + i * 0.5 + j)
+            pts.append((cx + rx * f * math.cos(a), cy - ry * f * math.sin(a)))
+        if len(pts) > 4:
+            zap(front, pts, w=0.6, edge=False)
+            spark(front, pts[0][0], pts[0][1], big=j == 0)
+            spark(front, pts[-1][0], pts[-1][1])
 
 
 def fx_storm(k, ph):
-    """la sphère éclate sur l'ennemi : k = 0 (l'éclat, temps suspendu), 1, 2 (les vagues roulent), 3, 4, 5 (pluie)"""
+    """la sphère frappe l'ennemi et devient une prison d'eau : un grand dôme de bulle posé au sol autour de lui,
+    parcouru de décharges (k = 0, temps suspendu ; k = 1 elles crépitent encore), qui crève par le haut (k = 2) :
+    une gerbe d'écume, deux vagues qui roulent au sol sur tout le premier rang ; puis pluie de gouttes et de bulles"""
     back, front = empty(), empty()
-    c = (ENEMY_X - 6, HIT_Y + 4)
-    seeds = [(-4, -5), (-2.5, -6.5), (-5.5, -3), (-1, -7), (2, -6.5), (4, -5), (-3.5, -1.5), (3, -2.5), (0.5, -8)]
+    c = (ENEMY_X - 6, HIT_Y + 2)
+    g0 = (ENEMY_X - 6, GROUND + 1)
+    seeds = [(-4, -5), (-2.5, -6.5), (-5.5, -3), (-1, -7), (2, -6.5), (4, -5), (-3.5, -1.5), (3, -2.5), (0.5, -8),
+             (-6, -5), (5.5, -3.5)]
+    top = (c[0], GROUND - 40)
     if k == 0:
-        pop(back, c, 15, facing=90, tones='WXYZ')
-        pop(front, c, 8, facing=90, tones='WWXT')
-        for j, a in enumerate((160, 120, 75, 35, 205, 250, 0)):
-            ra = math.radians(a)
-            p1 = (c[0] + 30 * math.cos(ra), c[1] - 26 * math.sin(ra))
-            zap(front, arc_pts(c, p1, bend=0.3 * (1 if j % 2 else -1), wob=1.5, waves=1.2, phase=ph + j), w=1.3)
-            spark(front, p1[0], p1[1], big=True)
+        dome(back, front, g0, 27, 44, ph, arcs=3)
+        pop(front, c, 8, facing=180, tones='WWXT')            # l'impact de la sphère, sur sa poitrine
+        zap(front, arc_pts((c[0] - 5, c[1] - 3), (c[0] - 17, c[1] - 14), bend=0.3, wob=0.7, phase=ph), w=0.6,
+            edge=False)
+        zap(front, arc_pts((c[0] + 4, c[1] + 5), (c[0] + 15, c[1] + 16), bend=-0.3, wob=0.7, phase=ph), w=0.6,
+            edge=False)
+        foam(back, (g0[0] - 22, GROUND - 2), 4, seed=2)
+        foam(back, (g0[0] + 22, GROUND - 2), 4, seed=4)
     elif k == 1:
-        foam(back, (c[0], c[1] - 4), 13, hollow=0.15, seed=5)
-        for j, a in enumerate((140, 95, 50, 185)):
-            ra = math.radians(a)
-            p0 = (c[0] + 12 * math.cos(ra), c[1] - 12 * math.sin(ra))
-            p1 = (c[0] + 30 * math.cos(ra), c[1] - 28 * math.sin(ra))
-            zap(front, arc_pts(p0, p1, bend=0.35 * (1 if j % 2 else -1), wob=1.2, phase=ph + j), w=0.9)
+        dome(back, front, g0, 28, 45, ph + 1.3, arcs=3)
+        for j, (p0, p1) in enumerate((((c[0] - 12, c[1] + 8), (c[0] + 10, c[1] - 10)),)):
+            zap(front, arc_pts(p0, p1, bend=0.32 * (1 if j else -1), wob=1.0, phase=ph + j), w=0.5, edge=False)
             spark(front, p1[0], p1[1], big=True)
-        ground_wave(back, front, c[0] - 4, c[0] - 26, 9, ph)
-        ground_wave(back, front, c[0] + 4, c[0] + 24, 9, ph + 1)
-        spray(back, (c[0], c[1] - 6), 1.0, seeds)
+        foam(back, (g0[0] - 24, GROUND - 2), 4.5, seed=2)
+        foam(back, (g0[0] + 24, GROUND - 2), 4.5, seed=4)
     elif k == 2:
-        foam(back, (c[0], c[1] - 8), 11, hollow=0.45, seed=5, tones='WXXYZ')
-        ground_wave(back, front, c[0] - 6, c[0] - 42, 7, ph)
-        ground_wave(back, front, c[0] + 6, c[0] + 34, 7, ph + 1, sparks=False)
-        spray(back, (c[0], c[1] - 6), 2.0, seeds)
-        for j, a in enumerate((120, 60)):
-            ra = math.radians(a)
-            p0 = (c[0] + 14 * math.cos(ra), c[1] - 16 * math.sin(ra))
-            p1 = (c[0] + 26 * math.cos(ra), c[1] - 30 * math.sin(ra))
-            zap(front, arc_pts(p0, p1, bend=0.3 * (1 if j else -1), wob=0.8, phase=ph + j), w=0.6, edge=False)
+        dome(back, front, g0, 29, 42, ph, arcs=2, crack=0.55)
+        foam(back, (top[0] - 2, top[1] - 2), 7, hollow=0.35, seed=5)
+        ground_wave(back, front, g0[0] - 18, g0[0] - 44, 16, ph)
+        ground_wave(back, front, g0[0] + 18, g0[0] + 38, 14, ph + 1)
+        spray(back, (top[0], top[1] - 2), 1.0, seeds)
     elif k == 3:
-        foam(back, (c[0], c[1] - 12), 8, hollow=0.75, seed=5, tones='XXYZA')
-        ground_wave(back, front, c[0] - 10, c[0] - 52, 4, ph, sparks=False)
-        spray(back, (c[0], c[1] - 6), 3.0, seeds)
-        for (bx, by, s) in ((-8, -20, 4), (6, -16, 3), (-2, -28, 3), (10, -26, 2)):
-            bubble(front, c[0] + bx, c[1] + by, s)
-        spark(front, c[0] - 30, GROUND - 6)
+        foam(back, (top[0], top[1] - 10), 8, hollow=0.5, seed=5, tones='WXXYZ')
+        ground_wave(back, front, g0[0] - 22, g0[0] - 62, 11, ph)
+        ground_wave(back, front, g0[0] + 20, g0[0] + 46, 9, ph + 1, sparks=False)
+        foam(back, (g0[0], GROUND - 3), 6, hollow=0.3, seed=9)
+        spray(back, (top[0], top[1] - 2), 2.0, seeds)
     elif k == 4:
-        spray(back, (c[0], c[1] - 6), 4.0, seeds, sizes=(2, 2, 1))
-        for (bx, by, s) in ((-9, -24, 4), (6, -20, 3), (-2, -33, 2), (11, -31, 2)):
-            bubble(front, c[0] + bx, c[1] + by, s)
-        foam(back, (c[0] - 30, GROUND - 2), 3, hollow=0.6, seed=7, tones='XXYZA')
+        foam(back, (top[0], top[1] - 15), 6, hollow=0.8, seed=5, tones='XXYZA')
+        ground_wave(back, front, g0[0] - 34, g0[0] - 74, 5, ph, sparks=False)
+        foam(back, (g0[0] + 44, GROUND - 2), 3.5, hollow=0.5, seed=8, tones='XXYZA')
+        foam(back, (g0[0] - 4, GROUND - 2), 4, hollow=0.6, seed=9, tones='XXYZA')
+        spray(back, (top[0], top[1] - 2), 3.0, seeds)
+        for (bx, by, sz) in ((-10, 14, 5), (8, 20, 4), (-2, 4, 3), (13, 8, 3)):
+            bubble(front, c[0] + bx, c[1] + by, sz)
+        spark(front, g0[0] - 52, GROUND - 7, big=True)
+    elif k == 5:
+        spray(back, (top[0], top[1] - 2), 4.0, seeds, sizes=(2, 1))
+        foam(back, (g0[0] - 72, GROUND - 1), 2.5, hollow=0.6, seed=7, tones='XXYZA')
+        for (bx, by, sz) in ((-11, 6, 4), (8, 12, 3), (-3, -6, 3), (14, -2, 2)):
+            bubble(front, c[0] + bx, c[1] + by, sz)
     else:
-        spray(back, (c[0], c[1] - 6), 5.0, seeds[:5], sizes=(1,))
-        for (bx, by, s) in ((-10, -29, 3), (7, -25, 2)):
-            bubble(front, c[0] + bx, c[1] + by, s)
+        for (bx, by, sz) in ((-12, -2, 3), (9, 2, 2), (-4, -16, 2)):
+            bubble(front, c[0] + bx, c[1] + by, sz)
     return back, front
 
 
 SPECIALE = [
-    dict(k=1, t=-1, u=-2, x=1, d=1, glow=1, ms=150),                                  # elle se tasse (prend l'eau)
-    dict(k=-1, t=1, u=3, lift=1, x=0, d=-1, glow=1, ms=90),                           # 1re contraction
-    dict(k=0, t=0, u=4, lift=3, x=0, d=-1, glow=1, ms=100),
-    dict(k=1, t=-1, u=4, lift=4, x=1, d=1, glow=2, fx=('amas', 0), ms=110),           # elle s'ouvre, s'allume
-    dict(k=-1, t=1, u=5, lift=6, x=0, d=0, glow=2, fx=('amas', 1), ms=90),            # 2e contraction
-    dict(k=0, t=0, u=5, lift=7, x=0, d=-1, glow=2, fx=('amas', 2), ms=110),
-    dict(k=1, t=-1, u=5, lift=7, x=1, d=1, glow=2, fx=('amas', 3), ms=240),           # la sphère est prête (tenue)
-    dict(k=-1, t=1, u=6, lift=8, x=-4, xb=1, d=-1, glow=0, fx=('lance', 0.2), flash=45, ms=70),   # la poussée
-    dict(k=-1, t=1, u=6, lift=8, x=-4, xb=-1, d=-1, glow=0, fx=('lance', 0.62), ms=60),
-    dict(k=0, t=0, u=6, lift=8, x=-3, xb=-2, d=0, glow=0, fx=('lance', 0.92), ms=60),
-    dict(k=1, t=-1, u=5, lift=8, x=-3, xb=-2, d=1, glow=0, fx=('orage', 0), ms=220),  # l'éclat : temps suspendu
-    dict(k=1, t=-1, u=5, lift=7, x=-2, xb=-1, d=1, glow=0, fx=('orage', 1), ms=130),
-    dict(k=0, t=0, u=4, lift=6, x=-2, d=0, glow=0, fx=('orage', 2), ms=120),
-    dict(k=0, t=0, u=3, lift=4, x=-1, d=-1, glow=-1, fx=('orage', 3), ms=120),        # elle redescend, coeur éteint
-    dict(k=1, t=-1, u=2, lift=2, x=-1, d=0, glow=-1, fx=('orage', 4), ms=120),
+    dict(k=1, t=-1, u=-2, x=1, d=1, glow=1, ms=160),                                  # elle se tasse (prend l'eau)
+    dict(k=-1, t=1, u=3, lift=2, x=0, d=-1, glow=1, ms=80),                           # 1re contraction : elle monte
+    dict(k=0, t=0, u=5, lift=5, x=0, d=-1, glow=1, ms=90),
+    dict(k=1, t=-1, u=6, lift=7, x=1, d=1, glow=2, fx=('amas', 0), ms=110),           # elle s'ouvre, s'allume
+    dict(k=-1, t=1, u=6, lift=10, x=0, d=0, glow=2, fx=('amas', 1), ms=80),           # 2e contraction
+    dict(k=0, t=0, u=6, lift=12, x=0, d=-1, glow=2, fx=('amas', 2), ms=110),
+    dict(k=1, t=-1, u=6, lift=12, x=1, d=1, glow=2, fx=('amas', 3), ms=260),          # la sphère est prête (tenue)
+    dict(k=-1, t=1, u=6, lift=12, x=-5, xb=1, d=-1, glow=0, fx=('lance', 0.18), flash=45, ms=70),   # la poussée
+    dict(k=-1, t=1, u=6, lift=12, x=-5, xb=-1, d=-1, glow=0, fx=('lance', 0.6), ms=60),
+    dict(k=0, t=0, u=6, lift=12, x=-4, xb=-2, d=0, glow=0, fx=('lance', 0.9), ms=60),
+    dict(k=1, t=-1, u=6, lift=11, x=-4, xb=-2, d=1, glow=0, fx=('orage', 0), ms=240),  # l'éclat : temps suspendu
+    dict(k=1, t=-1, u=5, lift=10, x=-3, xb=-2, d=1, glow=0, fx=('orage', 1), ms=130),
+    dict(k=0, t=0, u=4, lift=8, x=-2, xb=-1, d=0, glow=0, fx=('orage', 2), ms=120),
+    dict(k=0, t=0, u=3, lift=6, x=-2, d=-1, glow=-1, fx=('orage', 3), ms=120),         # elle redescend, coeur éteint
+    dict(k=1, t=-1, u=2, lift=3, x=-1, d=0, glow=-1, fx=('orage', 4), ms=120),
     dict(k=1, t=-1, u=1, lift=1, x=0, d=1, glow=-1, fx=('orage', 5), ms=120),
-    dict(k=0, t=0, u=0, lift=0, x=0, d=0, glow=0, ms=130),
+    dict(k=0, t=0, u=0, lift=0, x=0, d=0, glow=0, fx=('orage', 6), ms=130),
     dict(k=0, t=0, u=-1, lift=0, x=0, d=0, glow=0, ms=150),
 ]
 for _i, _f in enumerate(SPECIALE):

@@ -800,15 +800,15 @@ def fx_bubbles(stage):
 
 POSE = [
     dict(by=0, ey=0, al=0, ms=170),
-    dict(by=-1, cbo=(0, 0), ey=0, al=0, pin=1, fx=[fx_bubbles(1)], ms=150),
-    dict(by=-1, cbo=(0, -1), ey=-1, al=-1, op=0.4, pin=1, fx=[fx_bubbles(2)], ms=150),
-    dict(by=-2, cbo=(0, 0), ey=-1, al=-1, op=0.6, fx=[fx_bubbles(3)], ms=180),
-    dict(by=-2, cbo=(0, -1), ey=-1, eo=(1, 0), al=-1, op=0.6, fx=[fx_bubbles(4)], ms=170),
-    dict(by=-1, cbo=(0, -1), ey=-1, eo=(1, 0), al=0, op=0.3, pin=1, fx=[fx_bubbles(5)], ms=150),
-    dict(by=-1, cbo=(0, 0), ey=0, eo=(1, 0), al=1, pin=1, fx=[fx_bubbles(6)], ms=140),
-    dict(by=0, cbo=(0, 0), ey=0, al=1, k=1, fx=[fx_bubbles(7)], ms=110),
-    dict(by=0, cbo=(0, 1), ey=0, al=1, ms=150),
-    dict(by=0, cbo=(0, 0), ey=0, al=0, ms=160),
+    dict(by=-1, cbo=(0, 1), ey=0, al=0, pin=1, fx=[fx_bubbles(1)], ms=150),
+    dict(by=-1, ey=-1, al=-1, op=0.3, pin=1, fx=[fx_bubbles(2)], ms=150),
+    dict(by=-2, cbo=(0, 1), ey=-1, al=-1, op=0.5, fx=[fx_bubbles(3)], ms=180),
+    dict(by=-2, ey=-1, eo=(1, 0), al=-1, op=0.6, fx=[fx_bubbles(4)], ms=170),
+    dict(by=-1, ey=-1, eo=(1, 0), al=0, op=0.3, pin=1, fx=[fx_bubbles(5)], ms=150),
+    dict(by=-1, ey=0, eo=(1, 0), al=1, pin=1, fx=[fx_bubbles(6)], ms=140),
+    dict(by=0, ey=0, al=1, k=1, fx=[fx_bubbles(7)], ms=110),
+    dict(by=0, ey=0, al=1, ms=150),
+    dict(by=0, ey=0, al=0, ms=160),
 ]
 
 
@@ -831,9 +831,9 @@ def fx_trail(a0, a1, w=6.0):
         for i in range(n + 1):
             t = i / n
             a = math.radians(base + a0 + (a1 - a0) * t)
-            rr = r - 4 * math.sin(math.pi * t)
+            rr = r - 5 - 3 * math.sin(math.pi * t)
             pts.append((piv[0] + rr * math.cos(a), piv[1] - rr * math.sin(a)))
-            ws.append(0.8 + w * t ** 1.3)
+            ws.append(0.8 + w * t ** 1.1)
         lit_stroke(back, pts, ws, 'XYZAQ', foam=(0.6, 1.0))
     return f
 
@@ -888,10 +888,10 @@ ATTAQUE = [
     dict(bx=-4, by=2, cb=16, op=1.0, cs=8, ey=3, al=2, pin=1, ms=300),
     # 3 : premier pas de côté (pattes A en l'air), la pince commence à s'abattre
     dict(x=12, bx=0, by=0, fa=(14, 3), fb=(2, 0), cb=-20, op=0.2, cs=0, ey=2, al=1,
-         fx=[fx_trail(16, -16, 8.0)], ms=60),
+         fx=[fx_trail(16, -16, 11.0)], ms=60),
     # 4 : IMPACT (arrêt sur l'image) : la pince fermée écrase l'ennemi ; le sol tremble
     dict(x=26, by=2, fa=(26, 0), fb=(26, 0), cb=-68, cbo=(1, 1), op=-1, cs=-6, pin=-1, ey=1, al=-1,
-         fx=[fx_trail(-30, -64, 9.0), fx_smash(0), fx_quake(0)], ms=200),
+         fx=[fx_trail(-30, -64, 12.0), fx_smash(0), fx_quake(0)], ms=200),
     # 5 : il reste appuyé, les nappes retombent
     dict(x=26, by=2, cb=-66, op=-1, cs=-4, pin=-1, ey=0, al=-2, fx=[fx_smash(1), fx_quake(1)], ms=110),
     # 6 : il relève la pince et recule d'un pas (pattes B en l'air)
@@ -912,33 +912,38 @@ ATTAQUE = [
 # grossit en roulant vers la droite, sa crête d'écume s'enroule, et elle DÉFERLE sur toute la première ligne
 # ennemie (arrêt sur l'image) ; puis elle retombe en écume et en flaques. Il relève la pince et revient en garde.
 def fx_coil(k):
-    """l'eau qui s'enroule autour de la grosse pince levée : deux rubans en volute qui montent du sol et tournent
-    autour d'elle (k = 0 naissance, 1 ils montent, 2 ils l'entourent), des gouttes en suspens"""
+    """l'eau monte du sol et s'enroule autour de la grosse pince levée : k = 0 le sol bouillonne devant lui (une
+    flaque, des bulles, des gouttes qui montent), 1 une trombe s'élève en tournant jusqu'à la pince, 2 elle l'entoure
+    (une volute derrière, une devant), des gouttes en suspens"""
     def f(cv, back, front, ctx):
         F = ctx.fist
         T = ctx.tip
+        G = GROUND
+        X = F[0] + 12
+        water_band(front, X - 16, X + 16, lambda x: hump(x, X, 15, [4, 6, 5][k]) + 0.6, foam_rows=1)
         if k == 0:
-            pts = bezier((F[0] - 14, GROUND - 2), (F[0] - 20, GROUND - 22), (F[0] - 4, F[1] + 26), (F[0] - 8, F[1] + 14), 40)
-            lit_stroke(back, pts, [1.0 + 5.0 * math.sin(math.pi * i / 40) for i in range(41)], foam=(0.7, 1.0))
-            for j in range(4):
-                drop(back, F[0] + 10 + 5 * j, GROUND - 6 - 7 * j, 2 if j % 2 else 1, v=(0, -2))
+            for j, (dx, dy, s_) in enumerate(((-6, -10, 2), (4, -16, 3), (10, -8, 2), (-2, -24, 2), (7, -30, 1))):
+                if j % 2:
+                    bubble(front, X + dx, G + dy, s_)
+                else:
+                    drop(front, X + dx, G + dy, s_, v=(0, -2))
             return
         if k == 1:
-            pts = bezier((F[0] - 16, GROUND - 4), (F[0] - 26, F[1] + 20), (F[0] - 18, F[1] - 6), (F[0] - 2, F[1] - 12), 40)
-            lit_stroke(back, pts, [1.0 + 6.0 * math.sin(math.pi * i / 40) ** 0.8 for i in range(41)], foam=(0.5, 1.0))
-            pts = bezier((F[0] + 16, GROUND - 6), (F[0] + 24, F[1] + 26), (F[0] + 18, F[1] + 4), (F[0] + 8, F[1] - 2), 40)
-            lit_stroke(back, pts, [1.0 + 5.0 * math.sin(math.pi * i / 40) ** 0.8 for i in range(41)], foam=(0.5, 1.0))
-            for j, (dx, dy) in enumerate(((-24, 4), (22, -6), (-12, -20), (14, -26))):
-                drop(back, F[0] + dx, F[1] + dy, 2, v=(0, -1.5))
+            pts = bezier((X - 4, G - 4), (X + 14, G - 24), (X - 6, F[1] + 30), (F[0] + 16, F[1] + 4), 40)
+            lit_stroke(front, pts, [9.5 - 4.5 * (i / 40) for i in range(41)], foam=(0.55, 1.0))
+            pts = bezier((X + 6, G - 4), (X - 10, G - 20), (X + 12, F[1] + 36), (F[0] + 6, F[1] + 18), 40)
+            lit_stroke(back, pts, [5.0 - 2.6 * (i / 40) for i in range(41)])
+            for j, (dx, dy) in enumerate(((22, -4), (-6, -24), (24, -30), (10, 16))):
+                drop(front, F[0] + dx, F[1] + dy, 2, v=(0, -1.5))
             return
-        # k = 2 : la volute entoure la pince (derrière à gauche, devant à droite), les gouttes tournent
-        pts = bezier((F[0] - 18, F[1] + 18), (F[0] - 30, F[1] - 6), (F[0] - 14, T[1] - 14), (F[0] + 4, T[1] - 10), 40)
-        lit_stroke(back, pts, [1.2 + 6.4 * math.sin(math.pi * i / 40) ** 0.7 for i in range(41)], foam=(0.45, 1.0))
-        pts = bezier((F[0] + 4, T[1] - 10), (F[0] + 22, T[1] - 6), (F[0] + 22, F[1] + 4), (F[0] + 10, F[1] + 14), 40)
-        lit_stroke(front, pts, [1.2 + 5.2 * math.sin(math.pi * i / 40) ** 0.7 for i in range(41)], foam=(0.0, 0.5))
-        pts = bezier((F[0] - 14, GROUND - 4), (F[0] - 22, F[1] + 40), (F[0] - 24, F[1] + 26), (F[0] - 18, F[1] + 18), 40)
-        lit_stroke(back, pts, [3.4 + 2.6 * (1 - i / 40) for i in range(41)])
-        for j, (dx, dy) in enumerate(((-28, -8), (26, -14), (-10, -30), (18, 10), (30, 2))):
+        # k = 2 : la trombe monte et fait le tour de la pince (derrière à gauche, devant à droite)
+        pts = bezier((X - 2, G - 4), (X + 16, G - 26), (X + 2, F[1] + 26), (F[0] + 12, F[1] + 8), 40)
+        lit_stroke(front, pts, [10.0 - 3.5 * (i / 40) for i in range(41)], foam=(0.6, 1.0))
+        pts = bezier((F[0] + 12, F[1] + 8), (F[0] + 26, F[1] - 10), (F[0] + 12, T[1] - 14), (F[0] - 4, T[1] - 10), 40)
+        lit_stroke(front, pts, [6.5 + 2.0 * math.sin(math.pi * i / 40) for i in range(41)], foam=(0.0, 0.6))
+        pts = bezier((F[0] - 4, T[1] - 10), (F[0] - 22, T[1] - 4), (F[0] - 26, F[1] + 6), (F[0] - 12, F[1] + 18), 40)
+        lit_stroke(back, pts, [7.0 - 4.0 * (i / 40) for i in range(41)], foam=(0.0, 0.3))
+        for j, (dx, dy) in enumerate(((-28, -8), (30, -14), (-10, -30), (28, 10), (34, -2))):
             drop(back if j % 2 else front, F[0] + dx, F[1] + dy, 2 if j % 3 else 3, v=(0.5, -1.5))
     return f
 
@@ -974,28 +979,39 @@ def wave(back, front, xf, h, curl_k, X0, seed=0, crash=0.0):
     """la vague qui roule sur le sol vers la droite : son front en xf, sa hauteur h (au-dessus du sol), sa crête qui
     s'enroule vers l'avant (curl_k 0..1) ; derrière elle l'eau s'abaisse jusqu'au point d'impact X0"""
     G = GROUND
-    L = max(10.0, xf - X0)
+    top_x = xf - 0.42 * h                                # le sommet du rouleau
+    back_len = 1.2 * h + 10
 
     def hf(x):
-        d = xf - x                                       # > 0 derrière le front
-        if d < -3:
+        d = top_x - x                                    # > 0 derrière le sommet
+        if x < X0 - 6 or x > xf:
             return 0.0
-        if d < 0:
-            return h * (1 + d / 3.0) ** 0.6
-        back_ = h * math.exp(-d / (0.22 * L + 6))       # la masse derrière le front s'abaisse
-        return max(back_, 1.6 * (1 - d / (L + 1)) + 0.6) if d <= L + 2 else 0.0
-    water_band(back, X0 - 6, xf + 4, hf, foam_rows=2)
-    # la crête qui s'enroule vers l'avant : une nappe épaisse qui part du haut du front et se recourbe vers le sol
-    if h > 6:
-        sheet(front, (xf - 2, G - h + 2), 70 - 20 * curl_k, 8 + h * 0.55, -110 * curl_k - 20, 3.6 + h * 0.16,
-              blob=curl_k > 0.4)
-        foam(front, (xf - 1, G - h + 1), 2.2 + h * 0.13, seed=seed)
-        foam(front, (xf - 8 - h * 0.25, G - h * 0.8), 1.8 + h * 0.1, seed=seed + 1)
+        if d < 0:                                        # la face avant, sous la lèvre : raide et creuse
+            u = -d / (xf - top_x)
+            return h * 0.8 * max(0.0, 1 - u * u) ** 0.8
+        e = d / back_len
+        return max(h * 0.86 * math.exp(-e * e * 1.4), 2.2 * max(0.0, 1 - d / (top_x - X0 + 1)) + 0.8)
+    water_band(back, X0 - 6, xf + 2, hf, foam_rows=1)
+    # la lèvre : un boudin d'eau épais qui monte du dos, passe le sommet et s'enroule vers l'avant et vers le sol
+    if h > 8:
+        c = curl_k
+        pts = bezier((top_x - 0.55 * h, G - 0.62 * h), (top_x - 0.1 * h, G - 1.08 * h),
+                     (top_x + 0.5 * h, G - 1.02 * h), (top_x + 0.48 * h, G - (0.78 - 0.34 * c) * h), 40)
+        if c > 0.2:                                      # le bout se recourbe vers l'arrière (le tube)
+            pts += bezier(pts[-1], (top_x + 0.46 * h, G - (0.3 - 0.1 * c) * h), (top_x + 0.3 * h, G - 0.3 * h),
+                          (top_x + (0.36 - 0.1 * c) * h, G - (0.42 - 0.04 * c) * h), 16)[1:int(4 + 12 * c)]
+        n = len(pts)
+        ws = [(0.15 + 0.85 * math.sin(math.pi * min(1.0, (i / (n - 1)) * 1.6) / 2 + 0.0)) * (0.3 * h + 2) *
+              (1 - 0.6 * max(0.0, i / (n - 1) - 0.5)) for i in range(n)]
+        lit_stroke(front, pts, ws, 'XYZAQ', foam=(0.15, 0.6))
+        foam(front, (top_x + 0.05 * h, G - 1.06 * h), 1.8 + h * 0.07, seed=seed)
+        if c > 0.2:
+            foam(front, (top_x + 0.5 * h, G - 3), 2.0 + h * 0.08, seed=seed + 2)   # là où la lèvre retombe
     # les gouttes arrachées à la crête, qui partent devant
-    for j, (dx, dy, s) in enumerate(((4, -h - 4, 2), (9, -h + 2, 1), (-6, -h - 8, 2), (12, -h * 0.5, 1),
-                                     (-16, -h * 0.6 - 4, 1))):
-        if h > 4:
-            drop(front if j % 2 else back, xf + dx + seed % 3, G + dy, s, v=(2.5, -1.0))
+    for j, (dx, dy, s_) in enumerate(((0.6, -1.18, 2), (0.75, -0.8, 1), (0.2, -1.3, 2), (0.85, -0.5, 1),
+                                      (-0.3, -1.15, 1))):
+        if h > 8:
+            drop(front if j % 2 else back, top_x + dx * h + seed % 3, G + dy * h, s_, v=(2.5, -1.0))
 
 
 def fx_wave(dxf, h, curl_k, seed=0):
@@ -1021,7 +1037,8 @@ def fx_crash(k):
             sheet(back, (X + 16, G - 32), 70, 54, -62, 9.5, blob=True)
             sheet(back, (X + 40, G - 10), 40, 30, -70, 6.0, blob=True)
             sheet(back, (X - 2, G - 40), 94, 30, -20, 7.0, blob=True)
-            pop(front, (X + 4, G - 34), 11.0, facing=40, tones='WWXY')
+            foam(front, (X + 2, G - 30), 8.0, seed=20)
+            foam(front, (X + 12, G - 22), 6.0, seed=28)
             foam(front, (X - 20, G - 12), 6.0, seed=21)
             foam(front, (X + 28, G - 9), 6.5, seed=22)
             spray(back, (X, G - 40), 1.0, seeds)
@@ -1071,9 +1088,9 @@ SPECIALE = [
     dict(bx=-3, by=-7, cb=20, op=1.0, cs=44, cso=(0, -2), ey=-1, eo=(1, 0), al=0, pin=-1,
          fx=[fx_mouth_foam(5), fx_coil(2)], ms=240),
     # 5 : il abat la pince de tout son poids
-    dict(x=4, by=-1, cb=-40, op=-0.5, cs=10, ey=2, al=-1, fx=[fx_trail(22, -36, 10.0)], ms=50),
+    dict(x=4, by=-1, cb=-40, op=-0.5, cs=10, ey=2, al=-1, fx=[fx_trail(22, -36, 13.0)], ms=50),
     # 6 : IMPACT dans le sol (arrêt sur l'image, éclair) : la vague naît
-    dict(x=8, by=4, cb=-96, cbo=(2, 2), op=-1, cs=-14, pin=-1, ey=3, al=-2, flash=20,
+    dict(x=8, by=4, cb=-96, cbo=(2, 2), op=-1, cs=-14, pin=-1, ey=3, al=-2,
          fx=[fx_slam(0), fx_quake(0, r=5.0)], ms=200),
     # 7 à 10 : la vague grossit et roule vers la droite, sa crête s'enroule ; il reste appuyé
     dict(x=8, by=4, cb=-94, cbo=(2, 2), op=-1, cs=-12, ey=3, al=-1,

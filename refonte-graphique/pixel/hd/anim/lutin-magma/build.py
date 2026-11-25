@@ -759,10 +759,19 @@ def slash(cv, p0, p1, bulge, w, tones='wvutsr', tail=0.0, head_cut=1.0):
     stroke(cv, pts, ws, tones, cool=cool)
 
 
-def fire_ball(cv, c, r, k=0, seed=0):
-    """une boule de feu en chou-fleur : blanche au coeur, rouge au bord ; k = 0 pleine, 1 et 2 elle s'ouvre"""
-    tones = ['wvvuts', 'vuutsr', 'utsr'][k]
-    cloud(cv, c, r, tones, hollow=[0.0, 0.35, 0.65][k], seed=seed, ground=True)
+def hot_puff(cv, c, r, tones='wvvuts', hollow=0.0):
+    """une bouffée de feu ronde : blanche au coeur (un peu vers la lumière, en haut à droite), rouge au bord ;
+    hollow (0..1) : le coeur s'est déjà éteint (un anneau qui se défait)"""
+    cx, cy = c
+    hx, hy = cx + r * 0.2, cy - r * 0.25
+    m = len(tones)
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            d = math.hypot(x + 0.5 - cx, y + 0.5 - cy)
+            if d > r or d < hollow * r:
+                continue
+            q = min(0.999, math.hypot(x + 0.5 - hx, y + 0.5 - hy) / (r * 1.2))
+            put(cv, x, y, tones[min(m - 1, int(q * m))])
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
@@ -849,13 +858,14 @@ def fx_claw_hit(k, p_from, bulge=10):
         p0, tip = HIT['p0'], HIT['tip']
         c = (p0 + tip) / 2 + np.array([8, -2])
         if k == 0:
-            slash(back, p0, tip, bulge, 8.0)
-            tongue(front, (c[0] + 4, c[1] + 8), 13, 5.5, bend=1.0, tones='wvutsr', lean=0.4)
+            slash(back, p0, tip, bulge, 10.0)
+            hot_puff(front, (tip[0] + 3, tip[1] - 5), 4.5)
+            tongue(front, (c[0] + 4, c[1] + 8), 14, 6.0, bend=1.0, tones='wvutsr', lean=0.4)
             tongue(back, (c[0] + 11, c[1] + 10), 8, 3.6, bend=-0.8, tones='vuts', lean=0.8)
             for (dx, dy, big) in ((16, -10, True), (21, 2, False), (10, -18, False), (19, 12, True), (-2, -14, False)):
                 ember(front, c[0] + dx, c[1] + dy, big)
         elif k == 1:
-            slash(back, p0, tip, bulge, 5.5, tones='vutsr', tail=0.45)
+            slash(back, p0, tip, bulge, 7.0, tones='vutsr', tail=0.45)
             tongue(front, (c[0] + 5, c[1] + 7), 9, 4.0, bend=1.2, tones='vutsr', lean=0.6)
             cloud(back, (c[0] + 8, c[1] - 6), 3.2, 'hhij', seed=2, ground=False)
             for (dx, dy, big) in ((20, -14, False), (26, 0, True), (14, -24, False), (25, 13, False), (-5, -18, False)):
@@ -874,19 +884,20 @@ ATTAQUE = [
     # x = bond vers l'ennemi ; lift = hauteur ; far / near = poignet du bras retracé (grille, relatif au buste),
     # la main ('haut' doigts en l'air, 'bas' griffes vers l'avant) et le sens du coude
     dict(crouch=1, lean=-1, head=(0, 1), ph=0.6, fh=(0, -1), mouth=1, ms=80),
-    dict(crouch=3, lean=-3, head=(-1, 1), ph=1.3, rise=1, flare=1, far=(85, 62, 'haut', -1), nh=(-2, 0), mouth=1,
+    dict(crouch=3, lean=-3, head=(-1, 1), ph=1.3, rise=1, flare=1, far=(88, 62, 'haut', -1), nh=(-2, 0), mouth=1,
          ear=-1, ms=210),
     dict(x=16, lift=8, crouch=-2, lean=4, ph=2.0, trail=3, far=(88, 63, 'haut', -1), nh=(1, -1),
          fx_list=[fx_takeoff(0)], ms=50),
     dict(x=38, lift=16, crouch=2, lean=2, ph=2.6, trail=3, far=(89, 64, 'haut', -1), nh=(1, -1), ear=1,
          fx_list=[fx_takeoff(1), fx_trail(SOL[0] - 4, SOL[0] + 26, 0.8)], ms=60),
-    dict(x=LUNGE - 2, lift=7, crouch=1, lean=3, head=(1, 0), ph=3.2, trail=2, far=(101, 96, 'bas', 1), nh=(1, 0), fx_list=[fx_claw_smear(SWIPE_FROM, 8, 6.5)], ms=50),
+    dict(x=LUNGE - 2, lift=7, crouch=1, lean=3, head=(1, 0), ph=3.2, trail=2, far=(101, 96, 'bas', 1), nh=(1, 0),
+         fx_list=[fx_claw_smear(SWIPE_FROM, 14, 9.0)], ms=50),
     dict(x=LUNGE, lift=0, crouch=4, lean=3, head=(1, 1), ph=3.8, trail=1, far=(103, 99, 'bas', 1), nh=(1, 0),
-         mouth=2, fx_list=[fx_claw_hit(0, SWIPE_FROM), fx_land(0, LUNGE)], ms=170),
+         mouth=2, fx_list=[fx_claw_hit(0, SWIPE_FROM, 14), fx_land(0, LUNGE)], ms=170),
     dict(x=LUNGE, lift=0, crouch=3, lean=2, head=(1, 0), ph=4.4, far=(102, 99, 'bas', 1), nh=(1, 0), mouth=1,
-         fx_list=[fx_claw_hit(1, SWIPE_FROM), fx_land(1, LUNGE)], ms=100),
+         fx_list=[fx_claw_hit(1, SWIPE_FROM, 14), fx_land(1, LUNGE)], ms=100),
     dict(x=30, lift=12, crouch=1, lean=-2, ph=5.0, trail=-2, fh=(0, -1), nh=(0, -1),
-         fx_list=[fx_claw_hit(2, SWIPE_FROM)], ms=70),
+         fx_list=[fx_claw_hit(2, SWIPE_FROM, 14)], ms=70),
     dict(x=0, lift=0, crouch=3, lean=-1, head=(0, 1), ph=5.6, fh=(0, 1), fx_list=[fx_land(0, 0)], ms=90),
     dict(x=0, crouch=1, ph=6.2, fx_list=[fx_land(1, 0)], ms=100),
     dict(x=0, ph=6.9, ms=110),
@@ -937,28 +948,28 @@ def fx_xmark(k):
         a0, a1, b1 = to_canvas(X1[0], DASH), to_canvas(X1[1], DASH), X1[2]
         c0, c1, b2 = to_canvas(X2[0], DASH), to_canvas(X2[1], DASH), X2[2]
         if k == 0:
-            slash(back, a0, a1, b1, 6.5, head_cut=0.85)
+            slash(back, a0, a1, b1, 9.0, head_cut=0.85)
         elif k == 1:
-            slash(back, a0, a1, b1, 8.0)
+            slash(back, a0, a1, b1, 12.0)
             for (dx, dy, big) in ((10, -6, True), (16, 6, False), (2, -14, False)):
                 ember(front, a1[0] + dx, a1[1] + dy, big)
         elif k == 2:
-            slash(back, a0, a1, b1, 6.0, tones='vutsr', tail=0.2)
-            slash(front, c0, c1, b2, 7.0, head_cut=0.9)
+            slash(back, a0, a1, b1, 9.0, tones='vutsr', tail=0.2)
+            slash(front, c0, c1, b2, 10.0, head_cut=0.9)
         elif k == 3:
-            slash(back, a0, a1, b1, 7.0, tones='vvutsr')
-            slash(front, c0, c1, b2, 8.0)
+            slash(back, a0, a1, b1, 10.0, tones='vvutsr')
+            slash(front, c0, c1, b2, 12.0)
             for (dx, dy, big) in ((8, -4, True), (14, 10, False), (-2, -12, False), (16, -14, True)):
                 ember(front, c1[0] + dx, c1[1] + dy, big)
         elif k in (4, 5):
             j = k - 4
-            slash(back, a0, a1, b1, [6.0, 5.0][j], tones='vutsr', tail=[0.1, 0.3][j])
-            slash(back, c0, c1, b2, [6.5, 5.5][j], tones='vutsr', tail=[0.1, 0.3][j])
+            slash(back, a0, a1, b1, [9.0, 8.0][j], tones='vutsr', tail=[0.1, 0.3][j])
+            slash(back, c0, c1, b2, [9.5, 8.5][j], tones='vutsr', tail=[0.1, 0.3][j])
             for (dx, dy) in ((14, -18), (24, -6), (6, -26)):
                 ember(front, c1[0] + dx - 4 * j, c1[1] + dy - 5 * j)
         else:
-            slash(back, a0, a1, b1, 4.0, tones='utsr', tail=0.5)
-            slash(back, c0, c1, b2, 4.4, tones='utsr', tail=0.5)
+            slash(back, a0, a1, b1, 6.0, tones='utsr', tail=0.5)
+            slash(back, c0, c1, b2, 6.5, tones='utsr', tail=0.5)
     return f
 
 
@@ -988,43 +999,58 @@ def fx_dash(k):
     return f
 
 
+BURST = (114, 81)                     # le croisement du X (grille, avant le décalage de la ruée)
+
+
 def fx_burst(k):
-    """l'éclatement du X : k = 0 la boule de feu jaillit (arrêt sur l'image), 1 elle enfle et s'ouvre, projetant
-    éclats de roche et gouttes de lave en cloche, 2 et 3 elle retombe en fumée, les gouttes retombent"""
+    """l'éclatement du X : ses quatre branches deviennent quatre langues de feu courbes qui tournent en moulinet
+    autour d'un coeur blanc ; k = 0 il éclate (arrêt sur l'image), 1 le moulinet s'ouvre et projette éclats de roche
+    et gouttes de lave en cloche, 2 et 3 le feu retombe en fumée, les gouttes retombent"""
     def f(cv, back, front, ctx):
-        cx_, cy_ = to_canvas((120, 84), DASH)
+        C = to_canvas(BURST, DASH)
         gy = GROUND
+        if k <= 2:
+            L = [28, 36, 38][k]
+            w = [14.0, 10.0, 5.5][k]
+            tones = ['wvvutsr', 'vuutsr', 'utsr'][k]
+            spin = [0, 18, 30][k]                     # le moulinet tourne d'une image à l'autre
+            for i, a in enumerate((45, 135, 225, 315)):
+                ang = math.radians(a - spin)
+                end = C + L * np.array([math.cos(ang), -math.sin(ang)])
+                end[1] = min(end[1], gy - 2)
+                # la branche : fine au bout, épaisse au coeur ; le ventre de la courbe toujours du même côté
+                slash(back if i % 2 else front, end, C, -0.32 * L, w, tones=tones, tail=[0.0, 0.0, 0.35][k])
+            hot_puff(front, C, [10.0, 8.5, 6.0][k], ['wwvvut', 'vvuuts', 'utsr'][k], hollow=[0.0, 0.45, 0.6][k])
         if k == 0:
-            fire_ball(back, (cx_ + 2, cy_ + 4), 13, 0, seed=7)
-            fire_ball(back, (cx_ + 12, gy - 8), 9, 0, seed=8)
-            tongue(front, (cx_ + 6, gy - 1), 30, 11.0, bend=0.6, tones='wvuutsr', lean=0.1)
-            tongue(back, (cx_ - 8, gy - 1), 18, 7.0, bend=-0.9, tones='vuutsr', lean=-0.4)
-            tongue(back, (cx_ + 20, gy - 1), 20, 7.0, bend=0.9, tones='vuutsr', lean=0.5)
-            # la couronne de lave au sol : une lentille claire au ras du sol
-            for x in range(int(cx_ - 22), int(cx_ + 32)):
-                d = abs(x + 0.5 - (cx_ + 5)) / 27
+            for x in range(int(C[0] - 22), int(C[0] + 24)):          # la lave éclabousse le sol sous l'ennemi
+                d = abs(x + 0.5 - C[0]) / 23
                 put(back, x, gy, 'w' if d < 0.3 else 'v' if d < 0.55 else 'u' if d < 0.8 else 't')
+            for (dx, dy, vx, vy, big) in ((-16, -20, -1, -1, 2), (18, -22, 1, -1, 2), (-22, 6, -1, 0.4, 1),
+                                          (24, 4, 1, 0.3, 1), (2, -26, 0.1, -1, 1)):
+                drop(front, C[0] + dx, C[1] + dy, vx, vy, big)
             return
         if k == 1:
-            fire_ball(back, (cx_ + 3, cy_ + 1), 16, 1, seed=7)
-            fire_ball(back, (cx_ + 16, gy - 9), 10, 1, seed=8)
-            tongue(back, (cx_ + 6, gy - 1), 20, 8.0, bend=0.8, tones='vuutsr', lean=0.2)
-            cloud(back, (cx_ - 12, gy - 6), 6, 'hhij', seed=40)
-            cloud(back, (cx_ + 28, gy - 6), 6, 'hhij', seed=41)
-        else:
+            cloud(back, (C[0] - 16, gy - 5), 6, 'hhij', seed=40)
+            cloud(back, (C[0] + 18, gy - 5), 6, 'hhij', seed=41)
+            for x in range(int(C[0] - 20), int(C[0] + 22)):
+                d = abs(x + 0.5 - C[0]) / 21
+                put(back, x, gy, 'u' if d < 0.4 else 't' if d < 0.75 else 's')
+        if k >= 2:
             j = k - 2
-            smoke_column(back, (cx_ + 2, cy_ + 6 - 6 * j), [20, 26][j], [7.0, 6.0][j], hollow=[0.0, 0.4][j], seed=50)
-            smoke_column(back, (cx_ + 22, gy - 8 - 4 * j), [14, 18][j], [5.0, 4.4][j], hollow=[0.1, 0.5][j], seed=54,
-                         lean=-1.0)
-            tongue(back, (cx_ + 4, gy - 1), [10, 5][j], [5.0, 3.0][j], bend=0.7, tones='utsr', lean=0.3, fork=False)
-            for (dx, dy) in ((-20, -40), (8, -52), (26, -36), (-30, -26)):
-                ember(front, cx_ + dx + 2 * j, gy + dy - 6 * j)
-        # éclats de roche et gouttes de lave projetés en cloche (ils montent puis retombent)
+            smoke_column(back, (C[0] + 2, C[1] + 4 - 6 * j), [16, 22][j], [6.5, 5.5][j], hollow=[0.0, 0.45][j],
+                         seed=50)
+            cloud(back, (C[0] - 14, gy - 4), [5.5, 5.0][j], 'hhij', hollow=[0.2, 0.6][j], seed=42)
+            cloud(back, (C[0] + 18, gy - 4), [5.0, 4.5][j], 'hhij', hollow=[0.25, 0.65][j], seed=43)
+            for x in range(int(C[0] - 18), int(C[0] + 20)):
+                put(back, x, gy, 's' if j == 0 and abs(x - C[0]) < 8 else 'o')
+            for (dx, dy) in ((-20, -40), (8, -50), (26, -34), (-30, -24)):
+                ember(front, C[0] + dx + 2 * j, gy + dy - 6 * j)
+        # éclats de roche et gouttes de lave projetés en cloche, depuis le bord du feu (ils montent puis retombent)
         t = k
-        for j, (vx, vy, kind) in enumerate(((-2.4, -5.0, 'c0'), (2.8, -4.6, 'd'), (0.6, -6.4, 'c2'),
-                                            (3.6, -3.0, 'c1'), (-3.4, -3.2, 'd'), (1.6, -5.6, 'd'), (-1.0, -6.0, 'c3'))):
-            x = cx_ + 4 + vx * t * 5
-            y = gy - 14 + vy * t * 5 + 0.9 * t * t * 6
+        for j, (vx, vy, kind) in enumerate(((-2.6, -4.6, 'c0'), (2.8, -4.4, 'd'), (0.8, -6.0, 'c2'),
+                                            (3.6, -2.8, 'c1'), (-3.4, -3.0, 'd'), (1.8, -5.4, 'd'), (-1.2, -5.8, 'c3'))):
+            x = C[0] + vx * (8 + t * 4)
+            y = C[1] + vy * (5 + t * 3) + 0.8 * t * t * 5
             if y < gy - 2:
                 if kind == 'd':
                     drop(front, x, y, vx, vy + 1.8 * t, 2 if j % 2 else 1)
@@ -1045,14 +1071,14 @@ SPECIALE = [
     dict(x=DASH, lift=0, crouch=2, lean=4, head=(1, 0), ph=3.4, trail=1, glow=2, glow_all=True, flare=1, mouth=2,
          far=(103, 99, 'bas', 1), nh=(0, 0), fx_list=[fx_dash(1), fx_xmark(1)], ms=60),
     dict(x=DASH, lift=1, crouch=1, lean=3, head=(1, -1), ph=4.0, glow=2, glow_all=True, flare=1, mouth=2,
-         far=(102, 99, 'bas', 1), near=(80, 92, 'haut', 1), fx_list=[fx_dash(2), fx_xmark(2)], ms=50),
+         far=(102, 99, 'bas', 1), near=(84, 94, 'haut', 1), fx_list=[fx_dash(2), fx_xmark(2)], ms=50),
     dict(x=DASH, lift=1, crouch=1, lean=3, head=(1, -1), ph=4.6, glow=2, glow_all=True, flare=1, mouth=2,
-         far=(101, 98, 'bas', 1), near=(83, 90, 'haut', 1), fx_list=[fx_dash(2), fx_xmark(3)], ms=110),
+         far=(101, 98, 'bas', 1), near=(86, 93, 'haut', 1), fx_list=[fx_dash(2), fx_xmark(3)], ms=110),
     dict(x=DASH - 6, lift=22, crouch=2, lean=-1, head=(0, -1), ph=5.2, trail=-2, rise=1, glow=3, glow_all=True,
-         flare=2, mouth=3, far=(87, 63, 'haut', -1), near=(82, 87, 'haut', 1), claw_fire=2,
+         flare=2, mouth=3, far=(87, 63, 'haut', -1), nh=(1, -1), claw_fire=2,
          fx_list=[fx_dash(3), fx_xmark(4)], ms=70),
     dict(x=DASH - 4, lift=30, crouch=2, lean=-1, head=(0, -1), ph=5.8, rise=1, glow=3, glow_all=True, flare=2,
-         mouth=3, far=(89, 63, 'haut', -1), near=(83, 86, 'haut', 1), claw_fire=2, flash=25,
+         mouth=3, far=(89, 63, 'haut', -1), nh=(1, -1), claw_fire=2,
          fx_list=[fx_dash(3), fx_xmark(5)], ms=200),
     dict(x=DASH, lift=10, crouch=0, lean=4, head=(1, 0), ph=6.4, trail=1, glow=3, glow_all=True, flare=2, mouth=3,
          far=(101, 97, 'bas', 1), near=(83, 101, 'bas', 1), fx_list=[fx_xmark(6)], ms=50),

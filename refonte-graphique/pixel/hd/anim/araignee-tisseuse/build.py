@@ -652,36 +652,52 @@ def drop(cv, x, y, k=0):
     sprite(cv, DROPS[k % len(DROPS)], int(x), int(y))
 
 
+def blob(cv, lobes, tones='4321', flash=False):
+    """une masse de soie faite de lobes ronds (x, y, r) réunis : éclairée en haut à droite, un liseré sombre en bas à
+    gauche (lisible sur le ciel clair comme sur l'herbe), jamais de contour noir"""
+    best = {}
+    for (cx, cy, r) in lobes:
+        for y in range(int(cy - r - 1), int(cy + r + 2)):
+            for x in range(int(cx - r - 1), int(cx + r + 2)):
+                w = np.array([x + 0.5 - cx, y + 0.5 - cy])
+                d = math.hypot(*w)
+                if d <= r:
+                    e = r - d                                  # distance au bord de ce lobe
+                    k = (w @ LN) / max(r, 1e-6)
+                    if (x, y) not in best or e > best[(x, y)][0]:
+                        best[(x, y)] = (e, k)
+    mask = set(best)
+    for (x, y), (e, k) in best.items():
+        rim = any((x + i, y + j) not in mask for i, j in ((1, 0), (-1, 0), (0, 1), (0, -1)))
+        if rim:
+            ch = tones[2] if k > 0.2 else tones[3]
+        else:
+            ch = tones[0] if k > 0.35 else tones[1] if k > -0.25 else tones[2]
+        if flash:
+            ch = {'4': 'l', '3': 'l', '2': '3', '1': '2'}.get(ch, ch)
+        put(cv, x, y, ch)
+
+
 def silk_ball(cv, c, r, spin=0.0, pebbles=0, tones='4321', flash=False):
-    """une boule de soie : un disque éclairé en haut à droite, avec des fils enroulés en biais (des bouts d'ellipses
-    inclinées qui tournent avec « spin ») ; pebbles : des cailloux pris dans la soie (la terre de la tisseuse)"""
+    """une boule de soie : éclairée en haut à droite, liseré sombre en bas à gauche, avec des fils enroulés en biais
+    (des bouts d'ellipses inclinées qui tournent avec « spin ») ; pebbles : des cailloux pris dans la soie (la terre)"""
     cx, cy = c
-    if flash:
-        tones = 'll43'
-    for y in range(int(cy - r - 1), int(cy + r + 2)):
-        for x in range(int(cx - r - 1), int(cx + r + 2)):
-            w = np.array([x + 0.5 - cx, y + 0.5 - cy])
-            d = math.hypot(*w)
-            if d <= r:
-                k = (w @ LN) / max(r, 1e-6) + 0.25 * (1 - d / r)
-                i = 0 if k > 0.45 else 1 if k > -0.05 else 2 if k > -0.55 else 3
-                put(cv, x, y, tones[i])
+    blob(cv, [(cx, cy, r)], tones, flash)
     if r < 3:
         return
-    # fils enroulés : des arcs d'ellipses inclinées, sur la face visible (jamais parallèles)
     for (tilt, sc, col) in ((25 + spin, 0.15, '2'), (-30 + spin * 0.7, -0.25, '2'), (70 + spin * 1.3, 0.05, '4')):
         t = math.radians(tilt)
         for a in np.arange(-80, 80, 3.0 / r):
             ex, ey = r * 0.98 * math.cos(math.radians(a)), r * 0.28 * math.sin(math.radians(a))
             X = cx + ex * math.cos(t) - (ey + sc * r) * math.sin(t)
             Y = cy + ex * math.sin(t) + (ey + sc * r) * math.cos(t)
-            if math.hypot(X - cx, Y - cy) <= r - 0.9:
+            if math.hypot(X - cx, Y - cy) <= r - 1.4:
                 put(cv, X, Y, col if not flash else '3')
     if pebbles:
         rng = np.random.RandomState(int(r * 10) + pebbles)
         for i in range(pebbles):
             a = math.radians(spin * 2 + i * 137)
-            d = r * (0.25 + 0.5 * rng.rand())
+            d = r * (0.2 + 0.4 * rng.rand())
             chunk(cv, cx + d * math.cos(a) - 1, cy - d * math.sin(a) - 1, i + 2)
 
 
@@ -749,8 +765,8 @@ def fx_shot(s, r=3.0, tail_len=0.2, wave=1.0, pebbles=0, start=None, arc=10.0):
             q = shot_path(ctx, min(1, u + 0.01), arc, start=st) - p
             q = q / max(np.linalg.norm(q), 1e-6)
             nrm = np.array([q[1], -q[0]])
-            amp = wave * 1.6 * (1 - i / 24)
-            pts.append(p + nrm * amp * math.sin(i / 24 * math.pi * 2.2 + s * 9))
+            amp = wave * 2.4 * (1 - i / 24) ** 0.7
+            pts.append(p + nrm * amp * math.sin(i / 24 * math.pi * 3.0 + s * 9))
         tail(front, pts, w0=r * 0.9)
         silk_ball(front, shot_path(ctx, s, arc, start=st), r, spin=s * 300, pebbles=pebbles)
     return f
@@ -769,47 +785,57 @@ def fx_muzzle(level):
     return f
 
 
-def splat(cv, c, level, big=1.0, seed=3):
-    """l'éclaboussure de soie sur l'ennemi : une galette de soie et des filaments courbes qui partent en éventail
-    (des crochets, pas des rayons droits) ; level 0 = l'impact, 1 = ça coule et retombe, 2 = ça se défait"""
+def string(cv, pts, w0=2.2):
+    """un filament de soie gluante qui pend (épais à l'attache, effilé au bout, une perle au bout)"""
+    n = len(pts)
+    stroke(cv, pts, [w0 * (1 - j / n) ** 0.7 + 0.6 for j in range(n)], '432')
+
+
+def wrap_arc(cv, c, rx, ry, tilt, a0, a1, tones='42'):
+    """un fil enroulé autour de la cible : un bout d'ellipse inclinée (courbe)"""
     cx, cy = c
-    rng = np.random.RandomState(seed)
+    t = math.radians(tilt)
+    pts = []
+    for a in np.arange(a0, a1, 1.0):
+        ex, ey = rx * math.cos(math.radians(a)), ry * math.sin(math.radians(a))
+        pts.append((cx + ex * math.cos(t) - ey * math.sin(t), cy + ex * math.sin(t) + ey * math.cos(t)))
+    thread(cv, pts, tones)
+
+
+def splat(cv, c, level, seed=3):
+    """la boule de soie s'écrase sur l'ennemi : une galette gluante en lobes, des fils qui s'enroulent autour de lui
+    (des arcs d'ellipses inclinées) et une ou deux coulures qui pendent (courbes, jamais une étoile de rayons) ;
+    level 0 = l'impact, 1 = ça coule, 2 = ça se défait"""
+    cx, cy = c
     if level == 0:
-        for y in range(int(cy - 7 * big), int(cy + 8 * big)):
-            for x in range(int(cx - 5 * big), int(cx + 5 * big)):
-                dx, dy = (x + 0.5 - cx) / (3.4 * big), (y + 0.5 - cy) / (5.6 * big)
-                d = dx * dx + dy * dy
-                if d <= 1:
-                    k = (np.array([dx, dy]) @ LN)
-                    put(cv, x, y, '4' if k > 0.3 else '3' if k > -0.3 else '2')
-    for i, a in enumerate((-150, -110, -60, -20, 30, 75, 120, 165)):
-        a2 = a + rng.uniform(-10, 10)
-        L = (9 + rng.uniform(0, 5)) * big * (1.0 if level == 0 else 1.25)
-        bend = (18 + rng.uniform(0, 14)) * (1 if i % 2 else -1)
-        droop = 0 if level == 0 else 5 * big
-        p0 = np.array([cx + 2.5 * big * math.cos(math.radians(a2)), cy - 4 * big * math.sin(math.radians(a2))])
-        u1 = np.array([math.cos(math.radians(a2)), -math.sin(math.radians(a2))])
-        u2 = np.array([math.cos(math.radians(a2 + bend)), -math.sin(math.radians(a2 + bend))])
-        p3 = p0 + L * u2 + np.array([0, droop])
-        pts = bezier(p0, p0 + L * 0.5 * u1, p3 - L * 0.3 * u2 + np.array([0, droop * 0.3]), p3, 30)
-        if level == 2:
-            pts = pts[12:26]
-        wd = [(2.4 * big if level < 2 else 1.4) * (1 - j / len(pts)) ** 0.8 + 0.3 for j in range(len(pts))]
-        stroke(cv, pts, wd, '432')
-        if level == 0 and i in (1, 5):
-            puff(cv, pts[-1], 1.3 * big, '43')
-    if level >= 1:                                   # des gouttes qui pendent sous la galette
-        for (dx, L) in ((-2, 5), (2, 8)):
-            pts = [(cx + dx * big, cy + 3 * big + j * 0.5) for j in range(int(L * big * 2))]
-            stroke(cv, pts, [1.5] * len(pts), '32')
-            puff(cv, pts[-1], 1.2, '43')
+        lobes = [(cx, cy, 6.0), (cx + 4, cy - 4, 4.0), (cx - 4, cy + 3, 4.4), (cx + 3, cy + 4, 3.4),
+                 (cx - 5, cy - 3, 3.0)]
+        arcs = [((cx, cy - 1), 12, 4, -18, 150, 350), ((cx, cy + 3), 11, 3.5, 14, -20, 170)]
+        hangs = [((cx - 2, cy + 7), (-1, 4), (-2, 7))]
+    elif level == 1:
+        lobes = [(cx, cy + 2, 5.4), (cx + 3, cy - 1, 3.6), (cx - 3, cy + 6, 3.8), (cx + 3, cy + 6, 3.0)]
+        arcs = [((cx, cy + 1), 11, 3.5, -14, 160, 340), ((cx, cy + 5), 10, 3, 10, -10, 175)]
+        hangs = [((cx - 2, cy + 9), (-1, 6), (-2, 13)), ((cx + 3, cy + 9), (1, 3), (2, 6))]
+    else:
+        lobes = [(cx - 1, cy + 5, 3.6), (cx + 3, cy + 7, 2.6)]
+        arcs = [((cx, cy + 5), 10, 3, 10, 0, 120)]
+        hangs = [((cx - 2, cy + 8), (-1, 5), (-2, 10))]
+    for (p0, m, e) in hangs:
+        p0 = np.array(p0, float)
+        p3 = p0 + np.array(e, float)
+        pts = bezier(p0, p0 + np.array(m, float) * 0.6, p3 + np.array([0, -3]), p3, 24)
+        string(cv, pts, 2.2 if level < 2 else 1.6)
+        puff(cv, p3 + np.array([0, 0.5]), 1.4, '432')
+    blob(cv, lobes)
+    for (cc, rx, ry, tilt, a0, a1) in arcs:
+        wrap_arc(cv, cc, rx, ry, tilt, a0, a1)
 
 
 def fx_splat(level):
     def f(cv, back, front, ctx):
         c = np.array(FOE_C, float) + np.array([-2, 0])
         if level == 0:
-            puff(front, c, 6.5, 'll4')                # l'éclair blanc de l'impact (un rond, pas d'étoile)
+            blob(back, [(c[0], c[1], 9.0), (c[0] + 5, c[1] - 6, 4.5), (c[0] - 6, c[1] + 5, 4.0)], 'llj4')
         splat(front, c, level)
         if level == 0:
             drop(front, c[0] + 7, c[1] - 9, 0)
@@ -824,25 +850,25 @@ ATTAQUE = [
     # 0 : elle se tasse, les pattes levées frémissent
     dict(sp=(0, 1), kf=0.3, legs={'RC': dict(t=(0, -1)), 'RA': dict(t=(0, -1))}, ms=90),
     # 1 : l'abdomen se replie en arrière et se gonfle ; le corps recule et se ramasse ; les pattes levées se dressent
-    dict(sp=(-2, 2), kf=0.3, ab=(-3, -1), sw=1, c1=1, c2=2,
+    dict(sp=(-2, 2), kf=0.3, ab=(-4, -2), sw=1, c1=1, c2=2,
          legs={'RC': dict(k=(0, -2), t=(-1, -4)), 'RA': dict(t=(1, -3)), 'RB': dict(t=(0, -2)), 'RD': dict(t=(0, -2))},
          ms=150),
     # 2 : tenue : l'abdomen gonflé à bloc, une goutte de soie perle aux filières
-    dict(sp=(-2, 2), kf=0.3, ab=(-4, -1), sw=2, c1=2, c2=3,
+    dict(sp=(-3, 2), kf=0.3, ab=(-5, -2), sw=2, c1=2, c2=3,
          legs={'RC': dict(k=(0, -2), t=(-1, -5)), 'RA': dict(t=(1, -3)), 'RB': dict(t=(0, -2)), 'RD': dict(t=(0, -2))},
          fx_list=[fx_bead(1.6)], ms=170),
     # 3 : DÉTENTE : l'abdomen se jette en avant, la boule de soie part (bouffée aux filières)
     dict(sp=(1, 0), kf=0.5, ab=(3, -1), c1=1, c2=-2,
          legs={'RC': dict(k=(1, -1), t=(2, -2)), 'RA': dict(t=(0, -1)), 'RB': dict(t=(1, -1))},
-         fx_list=[fx_muzzle(0), fx_shot(0.12, r=3.2, tail_len=0.12)], ms=50),
+         fx_list=[fx_muzzle(0), fx_shot(0.12, r=3.6, tail_len=0.12)], ms=50),
     # 4 : recul : le corps part en arrière, les pattes levées et les cocons suivent avec retard ; la boule file
     dict(sp=(-2, 0), kf=0.6, ab=(0, 0), c1=-1, c2=-3,
          legs={'RC': dict(t=(2, 1)), 'RA': dict(t=(1, 1)), 'RB': dict(t=(1, 1)), 'RD': dict(t=(1, 0))},
-         fx_list=[fx_muzzle(1), fx_shot(0.5, r=3.0, tail_len=0.25)], ms=60),
+         fx_list=[fx_muzzle(1), fx_shot(0.5, r=4.0, tail_len=0.25)], ms=60),
     # 5 : la boule arrive sur l'ennemi
     dict(sp=(-1, 0), kf=0.6, c1=-2, c2=-1,
          legs={'RC': dict(t=(1, 1)), 'RA': dict(t=(0, 1))},
-         fx_list=[fx_shot(0.9, r=3.0, tail_len=0.22)], ms=50),
+         fx_list=[fx_shot(0.9, r=4.0, tail_len=0.22)], ms=50),
     # 6 : IMPACT (tenu) : éclaboussure de soie et de venin
     dict(sp=(-1, 0), kf=0.6, c1=-1, c2=1, legs={'RC': dict(t=(0, 1))}, fx_list=[fx_splat(0)], ms=170),
     # 7 : la soie coule sur l'ennemi ; elle revient
@@ -864,27 +890,30 @@ ATTAQUE = [
 BALL_G = (95.0, 79.0)                    # où se forme la pelote (grille), devant les filières
 
 
+def weave(front, ctx, c, r, spin, pebbles):
+    """les fils qui vont des filières à la pelote (courbes tendues), puis la pelote"""
+    p0 = ctx.spin
+    for (dy0, dy1, bend) in ((-1, -r * 0.6, -3), (1, r * 0.5, 3)):
+        a = p0 + np.array([0, dy0 * 0.5])
+        b = c + np.array([-r * 0.7, dy1])
+        pts = bezier(a, a + (b - a) * 0.35 + np.array([0, bend]), a + (b - a) * 0.7 + np.array([0, bend * 0.6]), b, 30)
+        thread(front, pts, '42')
+    silk_ball(front, c, r, spin=spin, pebbles=pebbles)
+    ctx.ball = c
+
+
 def fx_weave_silk(level):
-    """les fils qui vont des filières à la pelote (courbes tendues), et la pelote qui grossit"""
+    """la pelote qui grossit devant les filières, reliée à elles par deux fils"""
     def f(cv, back, front, ctx):
         c = np.array(g2c(*BALL_G), float) + np.array(ctx.sp, float)
-        r = [2.0, 3.2, 4.4, 5.4, 6.0][level]
-        p0 = ctx.spin
-        for (dy0, dy1, bend) in ((-1, -r * 0.6, -3), (1, r * 0.5, 3)):
-            a = p0 + np.array([0, dy0 * 0.5])
-            b = c + np.array([-r * 0.7, dy1])
-            pts = bezier(a, a + (b - a) * 0.35 + np.array([0, bend]), a + (b - a) * 0.7 + np.array([0, bend * 0.6]), b, 30)
-            thread(front, pts, '42')
-        silk_ball(front, c, r, spin=level * 70, pebbles=min(level, 3))
-        ctx.ball = c
+        weave(front, ctx, c, [2.2, 3.4, 4.6, 5.6, 6.0][level], level * 70, min(level, 3))
     return f
 
 
 def fx_ball_hold(r=6.0, spin=0, dx=0):
     def f(cv, back, front, ctx):
         c = np.array(g2c(*BALL_G), float) + np.array(ctx.sp, float) + np.array([dx, 0])
-        silk_ball(front, c, r, spin=spin, pebbles=3)
-        ctx.ball = c
+        weave(front, ctx, c, r, spin, 3)
     return f
 
 
@@ -986,9 +1015,9 @@ def fx_net(stage, flash=False):
     return f
 
 
-RC_LOW1 = [(82, 37), (101, 27), (110, 52), (100, 70)]      # la patte avant proche descend vers la pelote
-RC_LOW2 = [(82, 37), (103, 30), (108, 56), (96, 72)]
-RC_LOW3 = [(82, 37), (100, 29), (111, 51), (104, 70)]
+RC_LOW1 = [(81, 36), (101, 25), (107, 50), (99, 72)]       # la patte avant proche descend vers la pelote
+RC_LOW2 = [(81, 36), (102, 26), (105, 52), (94, 71)]       # (sa cuisse reste où elle était, la jambe plonge)
+RC_LOW3 = [(81, 36), (101, 25), (109, 51), (102, 73)]
 RC_HIGH = [(81, 37), (96, 16), (113, 18), (124, 30)]       # dressée (élan)
 RC_FLING = [(82, 37), (106, 30), (126, 38), (138, 52)]     # lancée vers l'ennemi
 SPECIALE = [
@@ -997,22 +1026,22 @@ SPECIALE = [
     # 1 : elle se cabre un peu, la patte avant proche descend devant les filières ; la soie sort
     dict(sp=(-1, -2), kf=0.5, ab=(1, 1), sw=1, c1=1, c2=-1,
          legs={'RC': dict(new=RC_LOW1), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
-         fx_list=[fx_weave_silk(0)], no_c2=True, ms=130),
+         fx_list=[fx_weave_silk(0)], ms=130),
     # 2 : elle enroule : la pelote grossit (l'abdomen pompe)
     dict(sp=(-1, -2), kf=0.5, ab=(-1, 1), sw=2, c1=2,
          legs={'RC': dict(new=RC_LOW2), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
-         fx_list=[fx_weave_silk(1)], no_c2=True, ms=110),
+         fx_list=[fx_weave_silk(1)], ms=110),
     # 3 : encore (deuxième pompe), des cailloux se prennent dans la soie
     dict(sp=(-1, -2), kf=0.5, ab=(1, 1), sw=1, c1=1,
          legs={'RC': dict(new=RC_LOW3), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
-         fx_list=[fx_weave_silk(2)], no_c2=True, ms=110),
+         fx_list=[fx_weave_silk(2)], ms=110),
     dict(sp=(-1, -2), kf=0.5, ab=(-1, 1), sw=2, c1=0,
          legs={'RC': dict(new=RC_LOW2), 'RA': dict(t=(0, -2)), 'RB': dict(t=(0, -2))},
-         fx_list=[fx_weave_silk(3)], no_c2=True, ms=110),
+         fx_list=[fx_weave_silk(3)], ms=110),
     # 5 : la pelote est prête ; elle recule pour prendre son élan, la patte avant se dresse
     dict(sp=(-4, 0), kf=0.3, ab=(-2, 0), sw=1, c1=-1,
          legs={'RC': dict(new=RC_HIGH), 'RA': dict(t=(1, -4)), 'RB': dict(t=(0, -3)), 'RD': dict(t=(-1, -2))},
-         fx_list=[fx_ball_hold(6.0, 220, dx=-3)], no_c2=True, ms=180),
+         fx_list=[fx_ball_hold(6.0, 220, dx=-3)], ms=180),
     # 6 : LANCER : tout le corps se détend, l'abdomen se jette en avant, la patte avant fouette
     dict(sp=(3, -1), kf=0.6, ab=(3, -1), c1=-2,
          legs={'RC': dict(new=RC_FLING), 'RA': dict(t=(-1, 0)), 'RB': dict(t=(-1, 0))},
@@ -1024,15 +1053,15 @@ SPECIALE = [
          fx_list=[fx_shot(0.55, r=6.0, tail_len=0.22, pebbles=3, start=g2c(BALL_G[0] + 4, BALL_G[1] - 2), arc=30)],
          no_c2=True, ms=70),
     # 8 : elle éclate sur l'ennemi
-    dict(c1=2, legs={'RC': dict(t=(1, 1))}, fx_list=[fx_net(0)], no_c2=True, ms=60),
+    dict(c1=2, legs={'RC': dict(t=(1, 1))}, fx_list=[fx_net(0)], ms=60),
     # 9 : LE FILET S'OUVRE (arrêt sur image, éclair)
-    dict(c1=1, legs={'RC': dict(t=(0, 1))}, fx_list=[fx_net(1, flash=True)], no_c2=True, ms=220),
+    dict(c1=1, legs={'RC': dict(t=(0, 1))}, fx_list=[fx_net(1, flash=True)], ms=220),
     # 10 : il retombe et se plante dans le sol : éclats de pierre, poussière
-    dict(sp=(1, 0), c1=-1, legs={'RC': dict(t=(1, 0))}, fx_list=[fx_net(2)], no_c2=True, ms=120),
+    dict(sp=(1, 0), c1=-1, legs={'RC': dict(t=(1, 0))}, fx_list=[fx_net(2)], ms=120),
     # 11 : il colle : le venin brille dans les fils
-    dict(sp=(1, 0), c1=-1, fx_list=[fx_net(3)], no_c2=True, ms=150),
+    dict(sp=(1, 0), c1=-1, fx_list=[fx_net(3)], ms=150),
     # 12 : il se défait
-    dict(c1=0, fx_list=[fx_net(4)], no_c2=True, ms=110),
+    dict(c1=0, fx_list=[fx_net(4)], ms=110),
     # 13 : elle retisse son fil (le cocon des filières redescend)
     dict(sw=1, c1=1, c2=-1, ms=110),
     # 14 : en garde

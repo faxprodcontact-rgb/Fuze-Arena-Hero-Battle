@@ -732,11 +732,12 @@ def shield_front(ctx):
 
 
 def fx_smear(k):
-    """le croissant de poussière derrière le bouclier lancé (une image floue)"""
+    """l'image floue : deux croissants de poussière qui épousent le bord avant du bouclier lancé"""
     def f(cv, back, front, ctx):
-        x, y = shield_front(ctx)
-        ribbon(back, (x - 16, y + 2), 15, 24, 120, 235, 4.0, head=0.45, tones='KLU')
-        ribbon(back, (x - 22, y + 4), 12, 18, 130, 220, 2.2, head=0.5, tones='KL')
+        sx, sy = ctx.shield
+        c = g2c((103.0, 76.0), (sx, sy))
+        ribbon(front, (c[0] - 4, c[1]), 26, 34, -58, 58, 3.4, head=0.5, tones='KLU')
+        ribbon(front, (c[0] - 12, c[1] + 1), 26, 30, -42, 42, 1.8, head=0.5, tones='KL')
     return f
 
 
@@ -746,19 +747,19 @@ def fx_impact(stage):
         x, y = shield_front(ctx)
         x += 4
         if stage == 0:
-            pop(front, (x, y), 6.5, facing=0, tones='ZZHK')
+            pop(front, (x + 2, y), 9.0, facing=0, tones='ZZHKL')
             for (dx, dy, r, s) in ((10, -9, 2.2, 1), (12, 6, 1.8, 2), (7, -15, 1.4, 3)):
                 rock(front, (x + dx, y + dy), r, seed=s)
         elif stage == 1:
-            pop(front, (x + 2, y), 7.5, facing=0, tones='ZKKL')
+            pop(front, (x + 4, y), 10.0, facing=0, tones='ZKKLU')
             for (dx, dy, r, s) in ((17, -14, 2.4, 1), (19, 9, 2.0, 2), (12, -22, 1.6, 3), (22, -3, 1.2, 4)):
                 rock(front, (x + dx, y + dy), r, seed=s)
         elif stage == 2:
-            cloud(front, (x + 5, y - 2), 5.5, tones='KKLU', hollow=0.35, seed=4)
+            cloud(front, (x + 7, y - 2), 8.0, tones='KKLU', hollow=0.35, seed=4)
             for (dx, dy, r, s) in ((23, -15, 2.4, 1), (25, 17, 2.0, 2), (16, -26, 1.6, 3), (30, 3, 1.2, 4)):
                 rock(front, (x + dx, y + dy), r, seed=s)
         else:
-            cloud(front, (x + 7, y - 5), 4.5, tones='KKL', hollow=0.75, seed=4)
+            cloud(front, (x + 10, y - 6), 6.5, tones='KKL', hollow=0.75, seed=4)
             for (dx, dy, r, s) in ((27, -11, 2.2, 1), (29, 26, 1.8, 2), (19, -24, 1.4, 3)):
                 rock(front, (x + dx, y + dy), r, seed=s)
     return f
@@ -796,7 +797,7 @@ ATTAQUE = [
     # la détente : le buste plonge, le bouclier part (image floue)
     dict(s=0, lean=3, sh=(3, 0), head=(1, 0), cr=(-2, 1), c=0.0, up=1, tg=2, flare=True, fx=[fx_smear(0)], ms=50),
     # impact : arrêt sur l'image, éclair, le sol tremble
-    dict(s=-1, lean=4, sh=(5, 1), head=(1, 1), cr=(-2, 0), c=-1.6, tg=2, flare=True, flash=45, shake=1,
+    dict(s=-1, lean=4, sh=(5, 1), head=(1, 1), cr=(-2, 0), c=-1.6, tg=2, flare=True, flash=25, shake=1,
          fx=[fx_impact(0), fx_quake(0)], ms=70),
     dict(s=-1, lean=4, sh=(5, 1), head=(1, 0), cr=(1, 1), c=-1.6, tg=2, flare=True, shake=-1,
          fx=[fx_impact(1), fx_quake(1)], ms=170),
@@ -817,27 +818,41 @@ ATTAQUE = [
 # des éclats de roche jaillissent l'un après l'autre le long du sol jusqu'à l'ennemi et au-delà (toute la première
 # ligne) ; le plus gros éclate sous l'ennemi. Les éclats s'effritent en blocs qui retombent, la poussière roule en
 # volutes. Il arrache le trident, le replante et revient en garde.
-SPIKES = [  # (x sur la toile, hauteur, largeur, penché, image où il jaillit)
-    (128, 10, 8, 1.5, 0), (146, 15, 9, 2.0, 1), (164, 19, 11, 1.0, 2), (184, 23, 12, 2.0, 3),
-    (ENEMY_X - 2, 30, 15, 1.5, 4), (236, 21, 11, -1.0, 5), (254, 14, 9, -1.5, 6)]
-
+SPIKES = [  # (x sur la toile, hauteur, largeur, penché, image où il jaillit) ; le plus gros sous l'ennemi
+    (131, 14, 12, 1.5, 0), (148, 20, 14, 2.0, 1), (167, 26, 16, 1.0, 1), (188, 31, 18, 2.0, 2),
+    (ENEMY_X - 1, 46, 27, 1.5, 4), (239, 29, 17, -1.0, 4), (256, 19, 13, -1.5, 5)]
+BIG = 4                                    # l'éclat sous l'ennemi
 
 def fx_gather(level):
-    """anticipation : le venin s'enroule autour des pointes du trident, les cailloux se soulèvent"""
+    """anticipation : le venin s'enroule autour des pointes du trident (une volute verte qui grossit), les cailloux
+    se soulèvent du sol autour des anneaux"""
     def f(cv, back, front, ctx):
         tx, ty = ctx.trident
-        c = g2c((25.0, 19.0), (tx, ty))
+        c = g2c((25.0, 20.0), (tx, ty))
         if level >= 1:
-            curl(back, (c[0], c[1]), 5.0 + level, 40 + level * 70, turn=260, w=1.6 + 0.4 * level, tones='234')
+            curl(back, (c[0], c[1]), 5.0 + 1.5 * level, 30 + level * 80, turn=280, w=1.4 + 0.5 * level, tones='234')
         if level >= 2:
-            glow(front, (c[0] + 0.5, c[1] - 1), 1.6 + 0.5 * level, tones='123')
+            curl(front, (c[0] + 1, c[1] + 1), 4.0 + level, 210 + level * 60, turn=200, w=1.2 + 0.4 * level,
+                 tones='123')
+            glow(front, (c[0] + 0.5, c[1] - 1), 1.2 + 0.6 * level, tones='12')
         rng = np.random.RandomState(5)
-        for i in range(7):
-            x = OX + rng.uniform(-2, 128)
+        for i in range(8):
+            x = OX + rng.uniform(-2, 130)
             h0 = rng.uniform(2, 5)
             y = GROUND - 1 - level * h0
-            rock(back if i % 2 else front, (x, y), rng.uniform(0.8, 2.0), seed=i)
+            rock(back if i % 2 else front, (x, y), rng.uniform(0.8, 2.2), seed=i)
     return f
+
+
+def fx_drop(cv, back, front, ctx):
+    """il s'abat (image floue) : la volute de venin s'étire derrière les pointes du trident, les cailloux retombent"""
+    tx, ty = ctx.trident
+    c = g2c((25.0, 20.0), (tx, ty))
+    ribbon(back, (c[0] + 8, c[1] - 6), 9, 14, 120, 200, 3.0, head=0.6, tones='234')
+    rng = np.random.RandomState(5)
+    for i in range(8):
+        x = OX + rng.uniform(-2, 130)
+        rock(front, (x, GROUND - 2), rng.uniform(0.8, 1.6), seed=i)
 
 
 def fx_slam(stage):
@@ -865,51 +880,65 @@ def fx_slam(stage):
 
 def crack(cv, x0, x1, glow_k=1.0):
     """la fissure de venin au ras du sol, de x0 à x1 : un trait qui ondule d'un pixel (pas une ligne droite), fond sombre,
-    coeur vert ; glow_k : la lueur s'éteint (0..1)"""
-    if x1 <= x0:
+    coeur vert, et de petites lueurs qui en sortent par endroits ; glow_k : la lueur s'éteint (1 -> 0)"""
+    if x1 <= x0 or glow_k <= 0:
         return
     for x in range(int(x0), int(x1)):
         dy = int(round(0.9 * math.sin(x * 0.45) + 0.5 * math.sin(x * 0.17 + 1.0)))
         y = GROUND + 1 + dy
-        put(cv, x, y, 'W', below=3)
+        put(cv, x, y, 'W' if glow_k > 0.3 else 'V', below=3)
         if glow_k > 0.6:
             put(cv, x, y - 1, '2' if (x * 7) % 5 else '1', below=3)
-        elif glow_k > 0.25:
+        elif glow_k > 0.3:
             put(cv, x, y - 1, '3' if (x * 7) % 3 else '4', below=3)
+    if glow_k > 0.6:
+        for x in range(int(x0) + 5, int(x1) - 2, 13):
+            puff(cv, (x, GROUND - 0.5), 1.6, '123', below=2)
 
 
 def fx_wave(t, fade=0.0):
-    """la vague de roche : à l'image t, les éclats dont le tour est venu jaillissent ; ils montent, tiennent, puis
-    s'effritent en blocs qui volent et retombent ; la poussière roule à leur pied"""
+    """la vague de roche : à l'image t, les éclats dont le tour est venu jaillissent ; ils percent (lueur verte, gravier
+    qui saute), tiennent, puis s'effritent en blocs qui volent et retombent ; la poussière roule à leur pied et se
+    défait en volutes"""
     def f(cv, back, front, ctx):
-        front_x = 128 + (t + 1) * 19
-        crack(back, 122, min(front_x, W), glow_k=1.0 - fade)
+        front_x = 124 + (t + 1) * 24
+        crack(back, 118, min(front_x, W), glow_k=1.0 - fade)
         for i, (x, h, w, lean, t0) in enumerate(SPIKES):
             age = t - t0
             if age < 0:
                 continue
             seed = 20 + i
-            if age == 0:                                  # il perce : petit, éclair vert à la base
-                spike(front, x, h * 0.55, w * 0.8, lean * 0.5, seed=seed)
-                glow(front, (x, GROUND - 1), 2.6, tones='123')
-                puff(front, (x - w * 0.6, GROUND - 1.5), 2.2, 'KLU')
-            elif age <= 2:                                # il tient, la poussière roule
-                spike(front, x, h, w, lean, seed=seed)
-                cloud(front, (x - w * 0.7, GROUND - 2.5), 2.8 + age * 0.4, tones='KKLU', seed=seed)
-                cloud(front, (x + w * 0.7, GROUND - 2.0), 2.2 + age * 0.3, tones='KKL', seed=seed + 1)
-            elif age <= 5:                                # il s'effrite : il s'enfonce, des blocs volent
-                k = age - 2
-                spike(front, x, h, w, lean, seed=seed, sink=0.3 * k, crack=False)
+            big = i == BIG
+            if age == 0:                                  # il perce : à moitié sorti, éclair vert, gravier qui saute
+                spike(front, x, h * 0.6, w * 0.85, lean * 0.5, seed=seed)
+                pop(front, (x, GROUND - 2), 4.5 if big else 3.0, facing=90, tones='1233')
                 for j in range(3):
-                    a = math.radians(60 + j * 40 + i * 9)
-                    d = 4 + k * 5
-                    bx = x + d * math.cos(a) * (1 if j != 1 else 0.4)
-                    by = GROUND - h * 0.75 - d * math.sin(a) * 0.9 + k * k * 2.2
-                    rock(front, (bx, by), max(1.0, 2.4 - 0.35 * k), seed=seed + j)
-                cloud(front, (x - 2, GROUND - 3 - k), 3.0 - 0.3 * k, tones='KKL', hollow=0.3 * k, seed=seed)
-            elif age <= 7:                                # la poussière se défait en volute, un caillou au sol
-                k = age - 5
-                curl(front, (x + 1, GROUND - 7 - 2 * k), 3.6 - k, 200, turn=260, w=1.6 - 0.4 * k, tones='KL')
+                    rock(front, (x - 4 + j * 4, GROUND - h * 0.6 - 3 - j % 2 * 3), 1.0, seed=seed + j)
+            elif age <= 3:                                # il tient, la poussière roule à son pied
+                spike(front, x, h, w, lean, seed=seed)
+                for j in range(3):
+                    a = math.radians(70 + j * 25 - 10 * (i % 2))
+                    d = (h * 0.4 + age * 5) * (1.3 if big else 1.0)
+                    rock(front, (x + lean + d * math.cos(a) * 0.6, GROUND - h - 2 - d * math.sin(a) * 0.5
+                                 + age * age * 1.2), max(1.2, (3.0 if big else 2.3) - 0.3 * age), seed=seed + j)
+                rr = (5.0 if big else 3.6) + age * 0.6
+                cloud(front, (x - w * 0.65, GROUND - rr * 0.7), rr, tones='KKLU', hollow=0.25 * (age == 3), seed=seed)
+                cloud(front, (x + w * 0.6, GROUND - rr * 0.6), rr * 0.8, tones='KKL', seed=seed + 1)
+                if big and age <= 2:
+                    glow(front, (x - 1, GROUND - 1), 3.5 - age, tones='123')
+            elif age <= 6:                                # il s'effrite : il s'enfonce, des blocs volent et retombent
+                k = age - 3
+                spike(front, x, h, w, lean, seed=seed, sink=0.28 * k, crack=False)
+                for j in range(4 if big else 3):
+                    a = math.radians(40 + j * 35 + i * 9)
+                    d = w * 0.4 + k * 5
+                    bx = x + d * math.cos(a)
+                    by = GROUND - h * (1 - 0.28 * k) * 0.8 - d * math.sin(a) * 0.7 + k * k * 3.0
+                    rock(front, (bx, min(by, GROUND - 1)), max(1.2, (4.0 if big else 3.0) - 0.5 * k), seed=seed + j)
+                cloud(front, (x - 2, GROUND - 4 - k), (5.0 if big else 4.0) - 0.4 * k, tones='KKL', hollow=0.3 * k, seed=seed)
+            elif age <= 8:                                # la poussière se défait en volute, un caillou au sol
+                k = age - 7
+                curl(front, (x + 1, GROUND - 8 - 3 * k), 5.0 - 1.4 * k, 200, turn=260, w=2.2 - 0.6 * k, tones='KL')
                 rock(front, (x + 4, GROUND - 1), 1.0, seed=seed)
     return f
 
@@ -930,34 +959,35 @@ _TG = 2
 SPECIALE = [
     # il se dresse, arrache le trident, le bouclier se lève, la queue se dresse ; les yeux s'allument
     dict(s=1, lean=-1, sh=(0, -1), head=(0, 1), cr=(1, 1), ty=-3, c=0.6, up=1, tg=0, fx=[fx_gather(0)], ms=110),
-    dict(s=3, lean=-2, sh=(-1, -2), head=(0, 0), cr=(1, 2), ty=-7, c=1.4, up=3, tg=_TG, flare=True,
-         fx=[fx_gather(1), fx_eyes(1)], ms=110),
-    dict(s=5, lean=-2, sh=(-1, -3), head=(0, -1), cr=(1, 2), ty=-11, c=2.0, up=5, tg=_TG, flare=True,
-         fx=[fx_gather(2), fx_eyes(2)], ms=120),
-    dict(s=5, lean=-3, sh=(-1, -3), head=(-1, -1), cr=(0, 1), ty=-12, c=2.2, up=6, tg=_TG, flare=True,
-         fx=[fx_gather(3), fx_eyes(2)], ms=300),
+    dict(s=3, lean=-2, sh=(-1, -2), head=(0, 0), cr=(1, 2), ty=-8, c=1.4, up=3, tg=_TG, flare=True,
+         fx=[fx_gather(1)], ms=110),
+    dict(s=5, lean=-2, sh=(-1, -3), head=(0, -1), cr=(1, 2), ty=-13, c=2.0, up=5, tg=_TG, flare=True,
+         fx=[fx_gather(2)], ms=120),
+    dict(s=5, lean=-3, sh=(-1, -3), head=(-1, -1), cr=(0, 1), ty=-14, c=2.2, up=6, tg=_TG, flare=True,
+         fx=[fx_gather(3)], ms=320),
     # il s'abat de tout son poids (image floue), arrêt sur l'image à l'impact
-    dict(s=1, lean=1, sh=(1, 0), head=(0, 0), cr=(-1, -2), ty=-4, c=0.4, up=2, tg=_TG, flare=True,
-         fx=[fx_eyes(2)], ms=50),
-    dict(s=-2, lean=2, sh=(2, 2), head=(1, 1), cr=(0, -2), ty=3, c=-1.6, up=0, tg=_TG, flare=True, flash=55, shake=1,
+    dict(s=1, lean=1, sh=(1, 0), head=(0, 0), cr=(-1, -2), ty=-5, c=0.4, up=2, tg=_TG, flare=True,
+         fx=[fx_drop], ms=50),
+    dict(s=-2, lean=2, sh=(2, 2), head=(1, 1), cr=(0, -2), ty=3, c=-1.6, up=0, tg=_TG, flare=True, flash=30, shake=1,
          fx=[fx_slam(0), fx_wave(0)], ms=70),
     dict(s=-2, lean=2, sh=(2, 2), head=(1, 1), cr=(1, 1), ty=3, c=-1.6, tg=_TG, flare=True, shake=-1,
          fx=[fx_slam(1), fx_wave(1)], ms=150),
-    # la terre se fend vers la droite, les éclats jaillissent l'un après l'autre
+    # la terre se fend vers la droite, les éclats jaillissent l'un après l'autre jusqu'à l'ennemi et au-delà
     dict(s=-1, lean=2, sh=(2, 1), head=(1, 0), cr=(1, 0), ty=3, c=-1.0, tg=_TG, flare=True,
          fx=[fx_slam(2), fx_wave(2)], ms=80),
     dict(s=-1, lean=2, sh=(2, 1), head=(1, 0), cr=(0, 0), ty=3, c=-0.6, tg=_TG, flare=True,
          fx=[fx_slam(3), fx_wave(3)], ms=80),
-    dict(s=-1, lean=2, sh=(2, 1), head=(1, 0), ty=3, c=-0.4, tg=_TG, flare=True, shake=1, fx=[fx_wave(4)], ms=90),
-    dict(s=-1, lean=2, sh=(2, 1), head=(1, 0), ty=3, c=-0.4, tg=1, shake=-1, fx=[fx_wave(5)], ms=220),
-    dict(s=-1, lean=1, sh=(1, 1), head=(0, 0), ty=3, c=-0.2, tg=1, fx=[fx_wave(6)], ms=90),
-    dict(s=0, lean=1, sh=(1, 0), head=(0, 0), ty=2, c=0.0, tg=1, fx=[fx_wave(7, fade=0.4)], ms=90),
+    dict(s=-1, lean=2, sh=(2, 1), head=(1, 0), ty=3, c=-0.4, tg=_TG, flare=True, shake=1, fx=[fx_wave(4)], ms=80),
+    dict(s=-1, lean=2, sh=(2, 1), head=(1, 0), ty=3, c=-0.4, tg=1, shake=-1, fx=[fx_wave(5)], ms=240),
+    dict(s=-1, lean=1, sh=(1, 1), head=(0, 0), ty=3, c=-0.2, tg=1, fx=[fx_wave(6)], ms=100),
+    dict(s=0, lean=1, sh=(1, 0), head=(0, 0), ty=2, c=0.0, tg=1, fx=[fx_wave(7, fade=0.3)], ms=90),
     # les éclats s'effritent, il arrache le trident et le replante, retour en garde
-    dict(s=0, lean=0, sh=(0, 0), head=(0, -1), ty=-2, c=0.4, tg=1, fx=[fx_wave(8, fade=0.6)], ms=90),
-    dict(s=0, lean=0, sh=(0, 0), head=(0, 0), cr=(0, 1), ty=-1, c=0.6, tg=1, fx=[fx_wave(9, fade=0.8)], ms=100),
-    dict(s=0, lean=0, sh=(0, 0), head=(0, 0), ty=0, c=0.4, tg=1, fx=[fx_wave(10, fade=1.0)], ms=110),
+    dict(s=0, lean=0, sh=(0, 0), head=(0, -1), ty=-2, c=0.4, tg=1, fx=[fx_wave(8, fade=0.5)], ms=90),
+    dict(s=0, lean=0, sh=(0, 0), head=(0, 0), cr=(0, 1), ty=-1, c=0.6, tg=1, fx=[fx_wave(9, fade=0.7)], ms=100),
+    dict(s=0, lean=0, sh=(0, 0), head=(0, 0), ty=0, c=0.4, tg=1, fx=[fx_wave(10, fade=0.9)], ms=100),
     dict(s=0, lean=0, head=(0, 0), ty=0, c=0.2, tg=1, fx=[fx_wave(11, fade=1.0)], ms=110),
-    dict(_P0, fx=[fx_wave(12, fade=1.0)], ms=140),
+    dict(s=0, lean=0, head=(0, 0), ty=0, c=0.2, tg=1, fx=[fx_wave(12, fade=1.0)], ms=110),
+    dict(_P0, fx=[fx_wave(13, fade=1.0)], ms=140),
 ]
 
 
