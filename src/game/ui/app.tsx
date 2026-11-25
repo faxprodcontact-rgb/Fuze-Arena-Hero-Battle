@@ -1,5 +1,6 @@
 // L'application : barre du haut, raccourcis, onglets, fenêtres et combat.
 import { useEffect, useRef, useState } from 'preact/hooks';
+import type { FunctionComponent } from 'preact';
 import { accountXpForLevel } from '../../core/data/modes';
 import { heroImage } from '../art';
 import { runBattle } from '../scenes';
@@ -98,6 +99,7 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'chat': return <ChatModal />;
     case 'settings': return <SettingsModal />;
     case 'odds': return <OddsModal />;
+    case 'hdPick': return <HdPickLazy />;
     case 'fragments': return <FragmentsModal />;
     case 'confirm': return <ConfirmModal text={modal.text} onYes={modal.onYes} />;
     case 'ad': return <AdModal onDone={modal.onDone} />;
@@ -120,6 +122,15 @@ function ModalView({ modal }: { modal: Modal }) {
   }
 }
 
+/** Le choix des combattants HD (outil de test) : chargé à part, avec les planches HD (hd-meta.ts est lourd). */
+function HdPickLazy() {
+  const [Pick, setPick] = useState<FunctionComponent | null>(null);
+  useEffect(() => {
+    void import('./screens/hd-pick').then((m) => setPick(() => m.HdPick));
+  }, []);
+  return Pick ? <Pick /> : null;
+}
+
 function BattleOverlay({ request }: { request: BattleRequest }) {
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -127,6 +138,8 @@ function BattleOverlay({ request }: { request: BattleRequest }) {
     return runBattle(host.current, request, (result) => {
       const gain = finishBattle(request, result);
       startBattle(null);
+      // combat d'essai HD : on revient au choix des combattants
+      if (request.kind === 'hdDemo') return open({ type: 'hdPick' });
       const named = request.kind === 'campaign' || request.kind === 'tower' || request.kind === 'dungeon';
       const title = `${t(`mode.${request.kind}`)}${named ? ` ${request.title}` : ''}`;
       if (request.damageMode) open({ type: 'gain', title, gain, damage: result.damage });

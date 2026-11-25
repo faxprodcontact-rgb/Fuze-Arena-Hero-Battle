@@ -40,7 +40,7 @@
 3. Les héros que le propriétaire ne mentionne pas dans son retour sont considérés validés.
 4. Règles de dessin : `../GUIDE.md` (section 2 : règles ajoutées d'après ses retours).
 
-- Œil rouge de provocation : dessiné dans les spéciales de Zaroth, Corvin et Bérold, ET ajouté par l'effet générique
+- Œil rouge de provocation (DÉCIDÉ 25/11 : le propriétaire GARDE l'œil rouge, ne rien enlever) : dessiné dans les spéciales de Zaroth, Corvin et Bérold, ET ajouté par l'effet générique
   « provocation » → en double en jeu. Garvin et Mira ne le dessinent plus. À retirer chez Zaroth/Corvin/Bérold si le
   propriétaire est d'accord (proposé le 25/11).
 
@@ -83,3 +83,8 @@
   dans le combat d'essai + mode « tous à la suite », corrections de jeu_export.py (arguments de compose, calques
   transparents, vitesse/pente des projectiles, tengu-eventail non déterministe), contrôle des 60 dans le jeu
   (sortie/combat-hd-tous.gif, -planche.png). Ensuite : publier (version, journal) et montrer au propriétaire.
+
+## Fonds de combat pixel art HD animés (demande du 25/11/2026)
+- 8 fonds, un par clan / général (consigne `fond.md`), outillage commun `refonte-graphique/pixel/fonds/` (LISEZMOI.md).
+- Pilote en cours : Kael (volcan), qui crée aussi l'outillage. Ensuite les 7 autres (arachne, meduse, kesha, barzul,
+  lenore, orin, eldra), puis le branchement dans le jeu (décor par clan à la place des décors dessinés par le code).

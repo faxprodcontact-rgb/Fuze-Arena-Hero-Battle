@@ -20,6 +20,7 @@ export type Modal =
   | { type: 'chat' }
   | { type: 'settings' }
   | { type: 'odds' }
+  | { type: 'hdPick' }
   | { type: 'fragments' }
   | { type: 'confirm'; text: string; onYes: () => void }
   | { type: 'ad'; onDone: () => void }

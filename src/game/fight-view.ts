@@ -323,7 +323,7 @@ export abstract class FightScene extends Phaser.Scene {
   protected addView(unit: Unit, enter = false, speed = 1) {
     const hero = unit.side === 'hero';
     const { x, y } = this.slotPos(unit);
-    const body = this.add.container(enter ? x + 320 : x, unit.boss && this.bigBoss ? y - 30 : y).setDepth(y);
+    const body = this.add.container(enter ? x + (hero ? -320 : 320) : x, unit.boss && this.bigBoss ? y - 30 : y).setDepth(y);
     const id = this.charId(unit);
     const fig = this.add.container(0, 0);
     const imgs: Phaser.GameObjects.Image[] = [];

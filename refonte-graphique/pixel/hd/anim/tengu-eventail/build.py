@@ -803,6 +803,23 @@ def _components(m):
     return comps
 
 
+# À égalité de voisins, la couleur gardée suit cet ordre fixe. L'ancien max(set(nb), key=nb.count) dépendait de l'ordre
+# d'un set, donc du hasard de Python à chaque lancement ; cet ordre (et sa seule exception, K + L + h → K) redonne
+# exactement les GIF et la planche publiés.
+TIE_ORDER = 'i9dklLMKjhbtrs4n'
+TIE_FIX = {frozenset('KLh'): 'K'}
+
+
+def majority(nb):
+    best = max(nb.count(c) for c in nb)
+    tied = {str(c) for c in nb if nb.count(c) == best}
+    if len(tied) == 1:
+        return tied.pop()
+    if frozenset(tied) in TIE_FIX:
+        return TIE_FIX[frozenset(tied)]
+    return min(tied, key=lambda c: (TIE_ORDER.find(c) if c in TIE_ORDER else len(TIE_ORDER), c))
+
+
 def clean(cv, hole_max=8, crumb_max=3):
     """le nettoyage au pixel : quand les ailes plient ou qu'un morceau bouge, de petits jours peuvent s'ouvrir entre
     les plumes (le dessin n'en a aucun) : ils sont bouchés avec la couleur voisine la plus fréquente ; les miettes
@@ -821,7 +838,7 @@ def clean(cv, hole_max=8, crumb_max=3):
             for (a, b) in todo:
                 nb = [sub[u, v] for u, v in ((a + 1, b), (a - 1, b), (a, b + 1), (a, b - 1)) if sub[u, v] != '.']
                 if nb:
-                    sub[a, b] = max(set(nb), key=nb.count)
+                    sub[a, b] = majority(nb)
                 else:
                     rest.append((a, b))
             if len(rest) == len(todo):

@@ -6,6 +6,7 @@ import { ENERGY_MAX, TICK_MS, type Slot, type Unit } from '../core/battle/types'
 import { C, FONT, FightScene, W, applyTheme } from './fight-view';
 import { HUD_BUTTONS, loadHudArt } from './hud-art';
 import { t } from './i18n';
+import { hdChar, hasHd } from './hd-fight';
 import { hdTrialScript } from './hd-trial';
 import { battleLook } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
@@ -39,6 +40,10 @@ export class BattleScene extends FightScene {
   private ended = false;
   private waveLabel!: Phaser.GameObjects.Text;
   private damageLabel?: Phaser.GameObjects.Text;
+  /** Combat d'essai HD « tous » : la manche en cours. */
+  private hdRound = 0;
+  /** Les pièces des portraits (refaits quand les équipes changent, essai HD). */
+  private portraitObjs: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
     super('battle');
@@ -55,6 +60,8 @@ export class BattleScene extends FightScene {
     this.look = battleLook(data.request.kind, data.request.title, data.request.dungeon?.kind);
     this.hdMode = data.request.kind === 'hdDemo';
     this.script = undefined;
+    this.hdRound = 0;
+    this.portraitObjs = [];
   }
 
   /** Combat d'essai HD : certains monstres prennent leur dessin HD (voir hdTrialBattle). */
@@ -63,7 +70,20 @@ export class BattleScene extends FightScene {
   }
 
   protected preloadUnits() {
-    return [...this.req.heroes, ...this.req.waves.flat()];
+    return [...this.req.heroes, ...this.req.waves.flat(), ...(this.req.hdRounds ?? []).flatMap((r) => [...r.heroes, ...r.enemies])];
+  }
+
+  /** Essai HD « tous » : les équipes de la manche `r` entrent (les héros ici, les ennemis par l'évènement de vague). */
+  private hdNextRound(r: number): Unit[] {
+    const round = this.req.hdRounds![r]!;
+    const next = new Battle({ heroes: round.heroes, waves: [round.enemies], seed: 1, auto: true });
+    this.hdRound = r;
+    this.battle.heroes = next.heroes;
+    this.battle.enemies = next.enemies;
+    this.clearViews('hero');
+    for (const u of next.heroes) this.addView(u, true, getState().speed);
+    this.drawPortraits();
+    return next.enemies;
   }
 
   /** Un bouton dans le style des menus (hud-art.tsx) : cadre d'or, émail bombé, lettres cernées de la couleur du bouton. */
@@ -102,7 +122,17 @@ export class BattleScene extends FightScene {
   create() {
     applyTheme();
     this.battle = new Battle({ heroes: this.req.heroes, waves: this.req.waves, seed: this.req.seed, auto: getState().auto });
-    if (this.hdMode) this.script = hdTrialScript(this.battle);
+    if (this.hdMode) {
+      this.script = hdTrialScript({
+        battle: this.battle,
+        genre: (u, which) => {
+          const id = this.charId(u);
+          return hasHd(id) ? hdChar(id).anims[which].genre : undefined;
+        },
+        rounds: this.req.hdRounds?.length ?? 1,
+        nextRound: (r) => this.hdNextRound(r),
+      });
+    }
     // disposition : les boutons et le panneau des héros sont ancrés en bas, le décor prend tout le reste
     const H = this.scale.height;
     const { groundTop, bottom: arenaBottom } = this.arenaBox();
@@ -132,37 +162,51 @@ export class BattleScene extends FightScene {
   }
 
   private updateWaveLabel() {
-    this.waveLabel.setText(this.battle.waveCount > 1 ? `${t('battle.wave')} ${this.battle.wave + 1} / ${this.battle.waveCount}` : '');
+    const rounds = this.req.hdRounds?.length ?? 0;
+    if (rounds > 1) this.waveLabel.setText(`${t('battle.wave')} ${this.hdRound + 1} / ${rounds}`);
+    else this.waveLabel.setText(this.battle.waveCount > 1 ? `${t('battle.wave')} ${this.battle.wave + 1} / ${this.battle.waveCount}` : '');
   }
 
   private drawHud() {
+    this.drawPortraits();
+    this.drawAuto();
+    const speed = this.button(530, this.hudY + 292, 'blue', true, `×${getState().speed}`, () => {
+      const next = ((getState().speed % 3) + 1) as 1 | 2 | 3;
+      setSpeed(next);
+      speed.label.setText(`×${next}`);
+    });
+  }
+
+  private drawPortraits() {
+    this.tweens.killTweensOf(this.portraitObjs);
+    this.portraitObjs.forEach((o) => o.destroy());
+    this.portraitObjs = [];
+    this.portraits = [];
+    const keep = <T extends Phaser.GameObjects.GameObject>(o: T): T => {
+      this.portraitObjs.push(o);
+      return o;
+    };
     // les portraits : un disque d'émail de la couleur de l'élément, le visage, l'anneau d'or (avec la rainure de l'énergie)
     PORTRAIT_ORDER.forEach((slot, i) => {
       const unit = this.battle.heroes.find((h) => h.slot === slot);
       if (!unit) return;
       const x = 90 + i * 135;
       const y = this.hudY + 104;
-      const glow = this.add.circle(x, y, 70, C.energy, 0.4).setVisible(false);
+      const glow = keep(this.add.circle(x, y, 70, C.energy, 0.4).setVisible(false));
       const el = this.textures.exists(`hud-disc-${unit.element}`) ? unit.element : 'none';
-      this.add.image(x, y, `hud-disc-${el}`).setDisplaySize(100, 100);
+      keep(this.add.image(x, y, `hud-disc-${el}`).setDisplaySize(100, 100));
       const card = `c-${this.charId(unit)}`;
       // le portrait en buste : plus grand que le trou de l'anneau, coupé en rond juste sous l'or (le visage remplit le médaillon)
-      const img = this.textures.exists(card) ? this.add.image(x, y + 8, card).setDisplaySize(122, 122) : this.add.image(x, y + 10, this.texture(unit)).setScale(0.9);
-      img.setMask(this.make.graphics({}, false).fillCircle(x, y, 50).createGeometryMask());
-      const frame = this.add.image(x, y, 'hud-ring').setDisplaySize(140, 140);
-      this.add.image(x, this.hudY + 190, 'hud-hp').setDisplaySize(120, 22);
-      const ring = this.add.graphics();
+      const img = keep(this.textures.exists(card) ? this.add.image(x, y + 8, card).setDisplaySize(122, 122) : this.add.image(x, y + 10, this.texture(unit)).setScale(0.9));
+      img.setMask(keep(this.make.graphics({}, false).fillCircle(x, y, 50)).createGeometryMask());
+      const frame = keep(this.add.image(x, y, 'hud-ring').setDisplaySize(140, 140));
+      keep(this.add.image(x, this.hudY + 190, 'hud-hp').setDisplaySize(120, 22));
+      const ring = keep(this.add.graphics());
       this.tweens.add({ targets: glow, scale: 1.12, alpha: 0.7, yoyo: true, repeat: -1, duration: 380 });
       frame.setInteractive(new Phaser.Geom.Circle(70, 70, 68), Phaser.Geom.Circle.Contains).on('pointerdown', () => {
         if (this.battle.requestSkill(unit.id)) this.tweens.add({ targets: img, scale: img.scale * 0.9, yoyo: true, duration: 90 });
       });
       this.portraits.push({ unit, x, ring, glow, img });
-    });
-    this.drawAuto();
-    const speed = this.button(530, this.hudY + 292, 'blue', true, `×${getState().speed}`, () => {
-      const next = ((getState().speed % 3) + 1) as 1 | 2 | 3;
-      setSpeed(next);
-      speed.label.setText(`×${next}`);
     });
   }
 

@@ -1296,3 +1296,16 @@ button.setting-row:active { filter: brightness(0.92); }
 .fuse-big.result { position: relative; filter: none; }
 .fuse-big.result .hcard { position: relative; }
 .chest-btn .chest-mini { display: block; }
+
+/* ---------- Outil de test : choix des combattants du combat d'essai HD (screens/hd-pick.tsx) ---------- */
+.hd-pick { display: flex; flex-direction: column; gap: 6px; }
+.hd-pick h3 { margin: 2px 0 0; display: flex; justify-content: space-between; align-items: baseline; font: 400 15px var(--font-title); color: #fff3d6; text-shadow: 0 1px 0 #0a0e26; }
+.hd-count { font: 400 13px var(--font-title); color: var(--gold-hi); }
+.hd-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; }
+.hd-face { position: relative; aspect-ratio: 1; padding: 0; border-radius: 7px; overflow: hidden; border: 1.5px solid #070a1c;
+  background: radial-gradient(circle at 50% 30%, #46539a, #161c46 72%); box-shadow: inset 0 0 0 1px #7f8fd066, 0 1px 3px #0009; }
+.hd-face-art { position: absolute; inset: 2px; background-repeat: no-repeat; image-rendering: pixelated; opacity: 0.8; }
+.hd-face.on { background: radial-gradient(circle at 50% 30%, #8a9ef0, #2c3a86 72%); box-shadow: inset 0 0 0 2px var(--gold-hi), 0 0 7px 1px var(--gold); }
+.hd-face.on .hd-face-art { opacity: 1; }
+.hd-face-n { position: absolute; right: 1px; bottom: 0; font: 400 12px/1 var(--font-title); color: var(--gold-hi); text-shadow: 0 1px 0 #0a0e26, 1px 0 0 #0a0e26, -1px 0 0 #0a0e26, 0 -1px 0 #0a0e26; }
+.hd-pick-btns { justify-content: center; margin-top: 6px; }

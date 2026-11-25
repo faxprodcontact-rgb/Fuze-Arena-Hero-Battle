@@ -1,49 +1,89 @@
-// Combat d'essai HD : un scénario qui fait jouer à chacun ses deux attaques, sur des cibles choisies pour tout
-// montrer (corps à corps jusqu'au fond, tir sur la case du fond en bas à droite, charges, sort d'équipe).
-// Les règles ne tournent pas : les chiffres sont plausibles, personne ne tombe (la vie remonte à chaque tour).
+// Combat d'essai HD : un scénario qui fait jouer à chacun son attaque puis sa spéciale, sur des cases variées (le
+// fond en bas à droite compris), pour tout montrer : corps à corps jusqu'à la cible, tirs jusqu'à la vraie case,
+// charges, sorts d'équipe. Les règles ne tournent pas : les chiffres sont plausibles et personne ne tombe (la vie
+// remonte dès qu'elle est basse). Mode « tous » : à la fin d'une manche, les équipes suivantes entrent.
 import type { Battle } from '../core/battle/engine';
 import type { BattleEvent, Hit, Slot, Unit } from '../core/battle/types';
 
-type Step = [side: 'hero' | 'enemy', slot: Slot, kind: 'attaque' | 'speciale', targets: Slot[]];
+type Which = 'attaque' | 'speciale';
+type Step = { src: Unit; kind: Which; n: number };
 
-// héros : 0 Eldra (corps à corps), 2 Myrr (soigneuse), 4 Jinn (archer) ; ennemis : 0 matelot, 2 sorcier oni, 4 salamandre
-const STEPS: Step[] = [
-  ['hero', 0, 'attaque', [0]],          // Eldra frappe le matelot (devant)
-  ['enemy', 0, 'attaque', [0]],         // le matelot fond sur Eldra
-  ['hero', 4, 'attaque', [4]],          // Jinn tire sur la salamandre (au fond, en bas à droite)
-  ['enemy', 4, 'attaque', [4]],         // la salamandre crache sur Jinn (au fond, en bas à gauche)
-  ['hero', 2, 'attaque', [2]],          // Myrr souffle sur le sorcier (milieu)
-  ['enemy', 2, 'attaque', [2]],         // le sorcier lance son feu follet sur Myrr
-  ['hero', 0, 'attaque', [4]],          // Eldra va jusqu'au fond frapper la salamandre
-  ['hero', 0, 'speciale', [0]],         // spéciale d'Eldra (charge, bond, onde)
-  ['enemy', 2, 'speciale', [4]],        // spéciale du sorcier sur Jinn (charge, trois feux follets)
-  ['hero', 4, 'speciale', [0, 2, 4]],   // spéciale de Jinn : la volée retombe sur les trois
-  ['enemy', 0, 'speciale', [2]],        // spéciale du matelot sur Myrr (vague)
-  ['enemy', 4, 'speciale', [0]],        // spéciale de la salamandre : le souffle de feu jusqu'à Eldra
-  ['hero', 2, 'speciale', [0, 2, 4]],   // spéciale de Myrr : soin, purification et énergie sur toute l'équipe
-  ['hero', 4, 'attaque', [2]],          // Jinn tire sur le sorcier (milieu)
-];
+export interface HdTrialHost {
+  battle: Battle;
+  /** Le genre de l'animation HD d'un combattant (melee, tir, sort, rayon, equipe). */
+  genre(u: Unit, which: Which): string | undefined;
+  /** Nombre de manches (1 : on rejoue la même, avec d'autres cibles). */
+  rounds: number;
+  /** Fait entrer les équipes de la manche `r` (les héros tout de suite) ; renvoie les nouveaux ennemis. */
+  nextRound(r: number): Unit[];
+}
 
-export function hdTrialScript(b: Battle): () => BattleEvent[] {
-  let step = 0;
-  const find = (side: 'hero' | 'enemy', slot: Slot): Unit | undefined => (side === 'hero' ? b.heroes : b.enemies).find((u) => u.slot === slot);
+/** L'ordre des cibles : le fond en bas d'abord (le plus loin), puis devant, le fond en haut, le milieu, devant en bas. */
+const TARGET_ORDER: Slot[] = [4, 0, 3, 2, 1];
+
+/** Le journal des coups joués (heure, lanceur, coup, cibles) : lu par les outils de contrôle (captures du combat). */
+export const hdTrialLog: { t: number; src: string; kind: Which; targets: string[] }[] = [];
+
+const bySlot = (us: Unit[]) => us.slice().sort((a, b) => TARGET_ORDER.indexOf(a.slot) - TARGET_ORDER.indexOf(b.slot));
+
+export function hdTrialScript(host: HdTrialHost): () => BattleEvent[] {
+  let round = 0;
+  let loop = 0;
+  let steps: Step[] = [];
+  let k = 0;
+  const plan = () => {
+    // chacun son attaque (héros et ennemis en alternance), puis chacun sa spéciale
+    const b = host.battle;
+    const hs = bySlot(b.heroes), es = bySlot(b.enemies);
+    steps = [];
+    for (const kind of ['attaque', 'speciale'] as const) {
+      for (let n = 0; n < Math.max(hs.length, es.length); n++) {
+        if (hs[n]) steps.push({ src: hs[n]!, kind, n });
+        if (es[n]) steps.push({ src: es[n]!, kind, n });
+      }
+    }
+    k = 0;
+  };
+  plan();
   return () => {
-    const [side, slot, kind, slots] = STEPS[step % STEPS.length]!;
-    // au début de chaque tour du scénario, tout le monde reprend sa vie
-    if (step % STEPS.length === 0) for (const u of [...b.heroes, ...b.enemies]) u.hp = u.maxHp;
-    step += 1;
-    const src = find(side, slot);
-    if (!src) return [];
-    const team = kind === 'speciale' && src.skill.effects.every((e) => e.type !== 'damage');
-    const targets = slots.map((s) => find(team ? side : side === 'hero' ? 'enemy' : 'hero', s)).filter((u): u is Unit => !!u);
-    const hits: Hit[] = targets.map((t, i) => {
+    const b = host.battle;
+    if (k >= steps.length) {
+      loop += 1;
+      if (host.rounds > 1) {
+        round = (round + 1) % host.rounds;
+        const units = host.nextRound(round);
+        plan();
+        return [{ type: 'wave', index: round, units }];
+      }
+      plan();
+    }
+    const { src, kind, n } = steps[k++]!;
+    // personne ne tombe : la vie basse remonte avant le coup suivant
+    for (const u of [...b.heroes, ...b.enemies]) if (u.hp < u.maxHp * 0.35) u.hp = u.maxHp;
+    const genre = host.genre(src, kind);
+    const team = kind === 'speciale' && (genre === 'equipe' || src.skill.effects.every((e) => e.type !== 'damage'));
+    const allies = (src.side === 'hero' ? b.heroes : b.enemies).slice().sort((a, c) => a.slot - c.slot);
+    const foes = bySlot(src.side === 'hero' ? b.enemies : b.heroes);
+    let targets: Unit[];
+    if (team) targets = allies;
+    else if (!foes.length) return [];
+    else {
+      // une case différente pour chacun (et d'un tour à l'autre) ; la spéciale vise ailleurs que l'attaque
+      const i = (n + loop + (kind === 'speciale' ? 2 : 0)) % foes.length;
+      const main = foes[i]!;
+      if (kind === 'attaque' || genre === 'melee' || genre === 'rayon') targets = [main];
+      else if (genre === 'sort') targets = [main, ...foes.filter((f) => f !== main)];
+      else targets = [main, foes[(i + 1) % foes.length]!].filter((u, j, a) => a.indexOf(u) === j);
+    }
+    hdTrialLog.push({ t: Date.now(), src: src.id, kind, targets: targets.map((u) => u.id) });
+    const hits: Hit[] = targets.map((t, j) => {
       if (team) {
         const amount = Math.round(t.maxHp * 0.18);
         t.hp = Math.min(t.maxHp, t.hp + amount);
         return { target: t.id, amount, kind: 'heal' };
       }
-      const crit = (step + i) % 4 === 0;
-      const amount = Math.round(t.maxHp * (kind === 'speciale' ? 0.12 : 0.05) * (crit ? 1.6 : 1) * (0.9 + ((step * 7 + i * 3) % 5) * 0.05));
+      const crit = (k + j) % 4 === 0;
+      const amount = Math.round(t.maxHp * (kind === 'speciale' ? 0.12 : 0.05) * (crit ? 1.6 : 1) * (0.9 + ((k * 7 + j * 3) % 5) * 0.05));
       t.hp = Math.max(Math.round(t.maxHp * 0.2), t.hp - amount);
       return { target: t.id, amount, kind: 'damage', crit };
     });

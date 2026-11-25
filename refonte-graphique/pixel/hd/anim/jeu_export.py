@@ -62,27 +62,16 @@ def load_build(name):
 
 
 def capture(mod):
-    """appelle build_all() en gardant les calques de chaque compose() : {anim: [(perso, derrière, devant, ms)]}"""
+    """appelle build_all() en gardant l'image rendue par chaque appel à compose() : {anim: [(image, ms)…]}.
+    On garde l'image FINALE de compose (exactement celle du GIF), quels que soient ses arguments (positionnels ou
+    nommés : obj, solid, ghosts, veil, shake, tint…) et sa façon de poser les calques translucides. La découpe qui suit
+    (personnage / sur la cible / projectile) se fait par colonnes : elle n'a pas besoin des calques séparés."""
     orig = mod.compose
     calls = []
 
-    def spy(hero, *args, **kw):
-        out = orig(hero, *args, **kw)
-        blank = np.full_like(hero, '.')
-        keys = ['fx_back', 'fx_front']
-        fx = dict(zip(keys, args))
-        fx.update({k: v for k, v in kw.items() if k.startswith('fx_')})
-        rest = {k: v for k, v in kw.items() if not k.startswith('fx_')}
-        hero_img = orig(hero, **rest)
-        back = np.zeros_like(hero_img)
-        front = np.zeros_like(hero_img)
-        for k, v in fx.items():
-            if v is None:
-                continue
-            img = orig(blank, **{k: v})
-            m = img[:, :, 3] > 0
-            (front if k == 'fx_front' else back)[m] = img[m]
-        calls.append((out, hero_img, back, front))
+    def spy(*args, **kw):
+        out = orig(*args, **kw)
+        calls.append(out)
         return out
 
     mod.compose = spy
@@ -95,13 +84,12 @@ def capture(mod):
         fr = []
         for img, ms in anims[name]:
             # chaque image rendue doit être celle d'un appel à compose (dans l'ordre)
-            while k < len(calls) and calls[k][0] is not img:
+            while k < len(calls) and calls[k] is not img:
                 k += 1
             if k >= len(calls):
                 raise SystemExit(f'{mod.__name__} : une image de « {name} » ne vient pas de compose() '
                                  '(voir consignes/export-jeu.md, cas particuliers)')
-            _, h, b, f = calls[k]
-            fr.append((h, b, f, int(ms)))
+            fr.append((img.copy(), int(ms)))
             k += 1
         res[name] = fr
     return res
@@ -110,12 +98,6 @@ def capture(mod):
 # ---------------------------------------------------------------- 2) séparer : personnage / projectile / sur la cible
 def alpha(img):
     return img[:, :, 3] > 0
-
-
-def over(dst, src):
-    m = alpha(src)
-    dst[m] = src[m]
-    return dst
 
 
 def shift(img, dx, dy=0):
@@ -154,6 +136,27 @@ def head_point(img):
     return float(x1 + 1), float(ys.mean() + 0.5)
 
 
+def flight(heads, img0, ms):
+    """(vitesse en pixels du dessin par seconde, pente en radians) du vol d'un projectile dans le GIF. heads = [(image,
+    (x, y) du bout)…] pendant le vol. Le bout avance d'une image à l'autre : on prend du premier au dernier bout qui a
+    vraiment avancé (un bout coincé au bord de la toile ou déjà sur la cible ne compte pas)."""
+    start = lambda i: sum(ms[:i])
+    moves = [(a, b) for a, b in zip(heads, heads[1:]) if b[1][0] - a[1][0] >= 2]
+    if moves:
+        (i0, h0), (i1, h1) = moves[0][0], moves[-1][1]
+        dx, dy = h1[0] - h0[0], h1[1] - h0[1]
+        return dx / max(1, start(i1) - start(i0)) * 1000, math.atan2(dy, dx)
+    # une seule image de vol : le projectile a quitté l'arme (`depuis`) au début de cette image ; sa pente, de sa
+    # queue (au bord `depuis`) à son bout
+    i0, h0 = heads[0]
+    a = alpha(img0)
+    xs = np.nonzero(a.any(0))[0]
+    tail = a[:, xs.min():xs.min() + 4]
+    ty = float(np.nonzero(tail.any(1))[0].mean() + 0.5)
+    run = max(8.0, h0[0] - xs.min())
+    return run / max(1, ms[i0]) * 1000, math.atan2(h0[1] - ty, run)
+
+
 def split(mod, layers, name):
     """renvoie {'perso': [img…], 'cible': [img|None…], 'proj': [img|None…], 'ms': […], réglages…} pour une animation.
     Tous les calques (personnage compris : une flèche plantée dans l'ennemi est souvent dessinée avec lui) sont coupés
@@ -175,19 +178,18 @@ def split(mod, layers, name):
     if vol and depuis is None:
         raise SystemExit(f'{mod.__name__} {name} : `depuis` manque (la colonne où le projectile quitte le personnage)')
     out = {'genre': genre, 'perso': [], 'cible': [], 'proj': [], 'ms': [], 'jeu': jeu, 'sol': sol}
-    for i, (h, b, f, ms) in enumerate(layers):
+    for i, (L, ms) in enumerate(layers):
         dx = -int(round(avance[i]))
         flying = bool(vol) and vol[0] <= i < vol[1]
         c = coupes[i]
-        perso, tgt, proj = (np.zeros_like(h) for _ in range(3))
-        for L in (b, h, f):
-            if flying:
-                over(proj, cols(L, depuis, None))
-                L = cols(L, None, depuis)
-            if c is not None:
-                over(tgt, cols(L, c, None))
-                L = cols(L, None, c)
-            over(perso, shift(L, dx))
+        proj = tgt = np.zeros_like(L)
+        if flying:
+            proj = cols(L, depuis, None)
+            L = cols(L, None, depuis)
+        if c is not None:
+            tgt = cols(L, c, None)
+            L = cols(L, None, c)
+        perso = shift(L, dx)
         out['perso'].append(perso)
         out['cible'].append(tgt if alpha(tgt).any() else None)
         out['proj'].append(proj if alpha(proj).any() else None)
@@ -273,12 +275,12 @@ def export(name, voir=None):
             a['projMs'] = [p['ms'][i] for i, _ in heads]
             a['depart'] = i0                                   # l'image où le projectile part
             a['bouche'] = [int(round(h0[0] - sol[0])), int(round(h0[1] - sol[1]))]   # d'où il part (par rapport aux pieds)
-            # sa vitesse dans le GIF (pixels du dessin par seconde), pour garder le même élan dans le jeu
-            t_fly = sum(p['ms'][i0:tir[1]])
-            dist = max(8.0, cible[0] - h0[0]) if cible else 100.0
-            a['vitesse'] = int(round(dist / max(1, t_fly) * 1000))
-            # l'angle du vol dans le GIF (le dessin du projectile est penché ainsi) : le jeu tourne de la différence
-            a['pente'] = round(math.atan2((cible[1] if cible else h0[1]) - h0[1], dist), 3)
+            # sa vitesse (pixels du dessin par seconde) et l'angle de son vol dans le GIF (le dessin du projectile est
+            # penché ainsi : le jeu tourne de la différence) : mesurés sur le mouvement du bout du projectile d'une
+            # image de vol à l'autre ; avec une seule image de vol, du bout du projectile à `cible`. JEU peut les imposer.
+            vitesse, pente = flight(heads, p['proj'][heads[0][0]], p['ms'])
+            a['vitesse'] = int(round(jeu.get('vitesse', vitesse)))
+            a['pente'] = round(float(jeu.get('pente', pente)), 3)
             if jeu.get('arc'):
                 a['arc'] = int(jeu['arc'])
         ray = jeu.get('rayon')
@@ -313,6 +315,15 @@ def export(name, voir=None):
     xs = np.nonzero(low.any(0))[0]
     meta['top'] = int(sol[1] - bb[1])
     meta['sol'] = [int(xs.min() - sol[0]), int(xs.max() + 1 - sol[0])]
+    # le visage (portrait du choix des combattants) : un carré en haut de la silhouette au repos, centré sur la tête ;
+    # [x, y, côté] dans la planche (pixels du dessin)
+    side = int(min(56, max(28, round((sol[1] - bb[1]) * 0.45))))
+    head = a[bb[1]:bb[1] + side]
+    cx = float(np.nonzero(head)[1].mean())
+    r0 = sheet.rects[meta['anims']['pose']['f'][0]]
+    side = min(side, r0[2])                                  # dans l'image (rien des voisines de la planche)
+    x = int(np.clip(round(r0[0] + cx - bb[0] - side / 2), r0[0], r0[0] + r0[2] - side))
+    meta['visage'] = [x, int(r0[1]), side]
     meta['frames'] = sheet.rects
     meta['size'] = [img.width * UP, img.height * UP]
     print(f'{name} ({cid}) : {len(sheet.rects)} images, planche {img.width * UP} × {img.height * UP}')
