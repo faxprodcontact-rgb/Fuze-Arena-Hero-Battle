@@ -69,10 +69,14 @@ def state(nom):
     return 'encours' if os.path.exists(path(nom)) else 'afaire'
 
 
+# animations finies par leur animateur (les autres GIF sont encore en travail)
+ANIMES = {'matelot'}
+
+
 def clip(nom):
     """L'enchaînement animé (sortie/anim-<nom>-jeu.gif, ×2) ramené à ×1 : sortie/anim-monstres/<nom>.gif."""
     src = os.path.join(HD, '..', 'sortie', f'anim-{nom}-jeu.gif')
-    if not os.path.exists(src):
+    if nom not in ANIMES or not os.path.exists(src):
         return None
     os.makedirs(ANIMDIR, exist_ok=True)
     dst = os.path.join(ANIMDIR, nom + '.gif')

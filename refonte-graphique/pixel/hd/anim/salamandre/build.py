@@ -500,7 +500,7 @@ def billows(cv, items, cool_tones=None):
             if best <= 0:
                 continue
             if heat < 0.2:                                      # bouffée refroidie : fumée
-                tones = 'hhij' if best > 0.45 else 'ijk'
+                tones = 'hhij' if best > 0.45 else 'hij'
                 put(cv, x, y, tones[min(len(tones) - 1, int((1 - best) * len(tones)))])
                 continue
             v = best * (0.55 + 0.6 * heat)
@@ -665,13 +665,46 @@ ATTAQUE = [
 JET_END = (292, 116)            # où le souffle frappe (toile) : l'ennemi, à hauteur de poitrine
 
 
+def fire_mass(cv, items):
+    """une masse de feu faite de bouffées qui se FONDENT (leurs champs s'additionnent) : un coeur blanc chaud continu
+    là où elles se recouvrent, un bord bosselé rouge sombre. items : (cx, cy, r, chaleur 0..1)"""
+    if not items:
+        return
+    x0 = int(min(c[0] - c[2] for c in items)) - 2
+    x1 = int(max(c[0] + c[2] for c in items)) + 2
+    y0 = int(min(c[1] - c[2] for c in items)) - 2
+    y1 = int(max(c[1] + c[2] for c in items)) + 2
+    Y, X = np.mgrid[y0:y1 + 1, x0:x1 + 1].astype(float) + 0.5
+    F = np.zeros(X.shape)
+    HT = np.zeros(X.shape)
+    for (cx, cy, r, ht) in items:
+        d2 = ((X - cx) ** 2 + (Y - cy) ** 2) / (r * r)
+        f = np.clip(1 - d2, 0, None) ** 2
+        # la lumière en haut à droite : le côté éclairé un peu plus clair
+        f = f * (1 + 0.25 * ((X - cx) * LN[0] + (Y - cy) * LN[1]) / r)
+        F += f
+        HT += f * ht
+    HT = HT / np.maximum(F, 1e-6)
+    V = F * (0.45 + 0.75 * HT)
+    tones = [(0.95, 'w'), (0.62, 'v'), (0.4, 'u'), (0.22, 't'), (0.1, 's'), (0.035, 'r')]
+    for yy in range(Y.shape[0]):
+        for xx in range(X.shape[1]):
+            f = F[yy, xx]
+            if f < 0.035:
+                continue
+            for th, ch in tones:
+                if V[yy, xx] >= th or ch == 'r':
+                    put(cv, x0 + xx, y0 + yy, ch)
+                    break
+
+
 def jet(cv, back, start, end, reach=1.0, cut=0.0, phase=0.0, heat=1.0, licks=True):
     """le torrent de feu, de start (la gueule) vers end : des bouffées le long d'une courbe qui ploie un peu (le feu
-    retombe vers la cible), de plus en plus grosses et froides vers le bout ; reach : jusqu'où il est arrivé (0..1) ;
-    cut : le début déjà détaché de la gueule (0..1) ; phase : les bouffées roulent vers l'avant d'une image à l'autre."""
+    retombe vers la cible), de plus en plus grosses vers le bout, qui se fondent en une seule masse bosselée ;
+    reach : jusqu'où il est arrivé (0..1) ; cut : le début déjà détaché de la gueule (0..1) ; phase : les bouffées
+    roulent vers l'avant d'une image à l'autre ; heat : il refroidit (le coeur blanc rétrécit)."""
     sx, sy = start
     ex, ey = end
-    L = math.hypot(ex - sx, ey - sy)
     ctrl1 = (sx + (ex - sx) * 0.35, sy - 2)
     ctrl2 = (sx + (ex - sx) * 0.7, sy + (ey - sy) * 0.45)
     path = bezier((sx, sy), ctrl1, ctrl2, (ex, ey), 200)
@@ -680,32 +713,37 @@ def jet(cv, back, start, end, reach=1.0, cut=0.0, phase=0.0, heat=1.0, licks=Tru
         return path[min(200, max(0, int(s * 200)))]
 
     items = []
-    n = 22
-    for i in range(n + 1):
+    n = 15
+    for i in range(-1, n + 1):
         s = (i + (phase % 1.0)) / n
-        if s > reach or s < cut:
+        if s > reach or s < max(0.0, cut):
             continue
         x, y = at(s)
-        wob = math.sin(i * 2.1 + phase * 0.9) * (1.0 + 4.5 * s)
-        r = 3.2 + 12.0 * s ** 0.85 + 1.6 * math.sin(i * 1.7 + phase)
-        ht = heat * (1.0 - 0.55 * s) - (0.5 * (s - reach + 0.25) if s > reach - 0.25 and reach < 1 else 0)
-        if cut > 0:
-            ht -= 0.3 * max(0.0, 0.25 - (s - cut)) * 4
-        items.append((x, y + wob - 1.5 * s * s * 10, r * (0.9 if s < cut + 0.1 else 1.0), max(0.0, ht)))
-    # le bout : la grosse tête du torrent qui roule (une bouffée plus grosse, un peu au-dessus)
+        wob = math.sin(i * 2.3 + phase * 1.9) * (0.6 + 3.5 * s)
+        r = 4.0 + 10.5 * s ** 0.8 + 1.8 * math.sin(i * 1.9 + phase * 2.2)
+        ht = heat * (1.0 - 0.5 * s)
+        if reach < 1 and s > reach - 0.2:
+            ht *= 0.8
+        if cut > 0 and s < cut + 0.15:
+            r *= 0.75 + 0.25 * (s - cut) / 0.15
+            ht *= 0.7
+        items.append((x, y + wob - 6 * s * s, r, max(0.05, ht)))
     if reach > 0.2:
+        # le bout : la grosse tête du torrent qui roule (une bouffée plus grosse, un peu au-dessus)
         x, y = at(reach)
-        items.append((x + 2, y - 4, 4.5 + 10 * reach, heat * 0.75))
-    billows(cv, items)
+        items.append((x + 1, y - 5, 5.0 + 9.5 * reach, heat * 0.7))
     if licks:
-        # des langues qui s'arrachent du haut du torrent, couchées vers l'arrière (il file à droite)
-        for j, s in enumerate((0.22, 0.4, 0.58, 0.74)):
-            if s > reach - 0.05 or s < cut + 0.05:
+        # des langues qui s'arrachent du haut du torrent, couchées vers l'arrière (il file à droite) ; leur base est
+        # cachée dans le torrent, seule la pointe dépasse
+        for j, s in enumerate((0.25, 0.45, 0.63, 0.8)):
+            if s > reach - 0.08 or s < cut + 0.08:
                 continue
             x, y = at(s)
-            r = 3.2 + 12.0 * s ** 0.85
-            hh = 6 + 9 * s + 2 * math.sin(phase * 1.3 + j * 2)
-            tongue(cv, (x + 1, y - r * 0.55), hh, 3.0 + 2.5 * s, bend=-1.0, lean=-0.55, tones='vutsr', fork=False)
+            r = 4.0 + 10.5 * s ** 0.8
+            hh = r * 0.8 + 6 + 2 * math.sin(phase * 1.3 + j * 2)
+            tongue(cv, (x + 2, y - r * 0.3 - 6 * s * s), hh, 4.0 + 3.0 * s, bend=-0.9, lean=-0.6, tones='vuutsr',
+                   fork=False)
+    fire_mass(cv, items)
     return path
 
 

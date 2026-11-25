@@ -138,3 +138,150 @@ P['corps'] = rest.copy()
 # sous le bec de l'ara (quand sa tête bouge) : les cheveux continuent
 for (_x, _y) in zip(*np.nonzero((P['ara_tete'] != '.') & (XX >= 52))[::-1]):
     P['tete'][_y, _x] = 'B'
+
+
+# ---------------------------------------------------------------- outils de pose (au pixel, jamais lissé)
+def empty():
+    return np.full((H, W), '.', dtype='<U1')
+
+
+def blit(canvas, part, dx=0, dy=0, swap=None):
+    """pose un morceau (coordonnées de la grille) sur la toile, décalé de (dx, dy) pixels"""
+    ys, xs = np.nonzero(part != '.')
+    cy, cx = ys + dy + OY, xs + dx + OX
+    ok = (cy >= 0) & (cy < H) & (cx >= 0) & (cx < W)
+    vals = part[ys[ok], xs[ok]]
+    if swap:
+        vals = np.array([swap.get(v, v) for v in vals])
+    canvas[cy[ok], cx[ok]] = vals
+
+
+def shear_rows(part, f, y0=0, y1=GH - 1):
+    """décale chaque rangée y (y0..y1) de f(y) pixels vers la droite"""
+    out = part.copy()
+    for y in range(y0, y1 + 1):
+        d = int(f(y))
+        if d:
+            row = part[y]
+            out[y] = '.'
+            if d > 0:
+                out[y, d:] = row[:-d]
+            else:
+                out[y, :d] = row[-d:]
+    return out
+
+
+def shear_cols(part, f, x0=0, x1=GW - 1):
+    """décale chaque colonne x (x0..x1) de f(x) pixels vers le bas"""
+    out = part.copy()
+    for x in range(x0, x1 + 1):
+        d = int(f(x))
+        if d:
+            col = part[:, x]
+            out[:, x] = '.'
+            if d > 0:
+                out[d:, x] = col[:-d]
+            else:
+                out[:d, x] = col[-d:]
+    return out
+
+
+def over(a, b):
+    """b posé sur a (mêmes dimensions)"""
+    return np.where(b != '.', b, a)
+
+
+# Le corps : une rangée du dessin -> une rangée de la toile, avec un décalage horizontal.
+LEG_TOP, LEG_BOT = 85, 104          # la zone qui plie : les cuisses sous la basque, jusqu'aux revers des bottes
+CHEST = SRC['souffle']              # ligne du souffle (70, comme tireur-pirate.txt)
+CROUCH_ORDER = [94, 89, 99, 91, 97, 87]       # rangées retirées quand elle se ramasse (réparties dans les jambes)
+STRETCH_ORDER = [94, 89, 99]                  # rangées doublées quand elle se dresse
+
+
+def body_rows(crouch=0, breath=0, lean=0):
+    """liste [(rangée de la toile, rangée source, décalage x)] alignée par le bas : la dernière rangée reste au sol"""
+    src = list(range(GH))
+    if crouch > 0:
+        for r in CROUCH_ORDER[:crouch]:
+            src.remove(r)
+    elif crouch < 0:
+        for r in STRETCH_ORDER[:-crouch]:
+            src.insert(src.index(r), r)
+    for _ in range(breath):
+        src.insert(src.index(CHEST - 1), CHEST - 1)
+    zone_ = [i for i, s in enumerate(src) if LEG_TOP <= s <= LEG_BOT]
+    n = len(zone_)
+    out = []
+    for i, s in enumerate(src):
+        if s > LEG_BOT:
+            dx = 0
+        elif s >= LEG_TOP:
+            k = zone_[-1] - i + 1            # 1 en bas de la zone … n en haut
+            dx = int(math.floor(lean * k / (n + 1) + 0.5)) if lean >= 0 else -int(math.floor(-lean * k / (n + 1) + 0.5))
+        else:
+            dx = lean
+        out.append((s, dx))
+    off = len(out) - GH
+    return [(i - off, s, dx) for i, (s, dx) in enumerate(out)]
+
+
+class Body:
+    def __init__(self, crouch=0, breath=0, lean=0):
+        self.rows = body_rows(crouch, breath, lean)
+        self.map = {}
+        for (yo, s, dx) in self.rows:
+            if s not in self.map:
+                self.map[s] = (dx, yo - s)
+
+    def follow(self, y):
+        """le décalage (dx, dy) que subit la rangée y du dessin"""
+        return self.map.get(y, (0, 0))
+
+    def draw(self, canvas, part, swap=None):
+        for (yo, s, dx) in self.rows:
+            row = part[s]
+            xs = np.nonzero(row != '.')[0]
+            cy = yo + OY
+            if not 0 <= cy < H:
+                continue
+            cx = xs + dx + OX
+            ok = (cx >= 0) & (cx < W)
+            vals = row[xs[ok]]
+            if swap:
+                vals = np.array([swap.get(v, v) for v in vals])
+            canvas[cy, cx[ok]] = vals
+
+
+# ---------------------------------------------------------------- rendu
+def to_rgba(canvas, pal):
+    img = np.zeros((H, W, 4), np.uint8)
+    for ch, rgb in pal.items():
+        m = canvas == ch
+        if m.any():
+            img[m, :3] = rgb
+            img[m, 3] = 255
+    return img
+
+
+def compose(hero, fx_back=None, fx_front=None, flash=None):
+    """le monstre (avec son contour) entre les effets de fond et ceux de devant. Renvoie une image RGBA."""
+    out = np.zeros((H, W, 4), np.uint8)
+    layers = []
+    if fx_back is not None:
+        layers.append(to_rgba(fx_back, FXPAL))
+    h = hd.outline(to_rgba(hero, PAL))
+    if flash:
+        m = (h[:, :, 3] > 0) & ~np.all(h[:, :, :3] == INK, axis=2)
+        h[m, :3] = (h[m, :3].astype(int) + (255 - h[m, :3].astype(int)) * flash // 100).astype(np.uint8)
+    layers.append(h)
+    if fx_front is not None:
+        layers.append(to_rgba(fx_front, FXPAL))
+    for L in layers:
+        m = L[:, :, 3] > 0
+        out[m] = L[m]
+    return out
+
+
+def g2c(p, off=(0, 0)):
+    """point de la grille du dessin -> toile (flottants)"""
+    return np.array([p[0] + OX + off[0], p[1] + OY + off[1]], float)

@@ -503,7 +503,7 @@ def rig_frame(f):
             # suivent le corps, la cheville et la pointe aussi en l'air (au sol, la pointe reste où on l'a mise)
             pts = [np.array(g2c(*LEGS[name]['sk'][LEGS[name]['pin']]), float) + sp]
             for i, q in enumerate(spec['new']):
-                follow = air or i < 2
+                follow = (air and not spec.get('plant')) or i < 1
                 pts.append(np.array(g2c(*q), float) + (sp if follow else 0))
             ctx.tips[name] = pts[-1]
             if LEGS[name]['pin']:                  # le haut de la patte (accroché au corps) : celui du dessin
@@ -572,6 +572,132 @@ POSE = [
     dict(head=(0, 1), legs={'N2': dict(mid=(1, 0))}, ms=100),
     dict(abd=1, pG=(0, -1), pD=(0, -1), ms=110),
 ]
+
+
+
+# ---------------------------------------------------------------- les effets : formes courbes, sans contour
+def put(cv, x, y, ch, keep=None):
+    x, y = int(math.floor(x)), int(math.floor(y))
+    if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
+        cv[y, x] = ch
+
+
+def puff(cv, c, r, tones='VWX', hollow=0.0):
+    """une bouffée ronde, éclairée en haut à droite ; hollow > 0 : elle se défait (trou au milieu)"""
+    cx, cy = c
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            w = np.array([x + 0.5 - cx, y + 0.5 - cy])
+            d = math.hypot(*w)
+            if d <= r and d >= hollow * r:
+                k = (w @ LN) / max(r, 1e-6)
+                ch = tones[min(len(tones) - 1, int((1 - k) / 2 * len(tones)))]
+                put(cv, x, y, ch)
+
+
+def cloud(cv, c, r, tones='VWXY', hollow=0.0, seed=0, ground=True):
+    """un nuage en chou-fleur : une grosse bouffée et des petites autour (pas une bille ronde).
+    hollow (0..1) : le nuage se défait — les bouffées s'écartent, montent un peu, rapetissent et pâlissent."""
+    rng = np.random.RandomState(seed)
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for i in range(4):
+        a = math.radians(150 - i * 40 + rng.uniform(-12, 12))
+        d = r * rng.uniform(0.55, 0.8)
+        lobes.append((d * math.cos(a), -d * math.sin(a) * 0.7, r * rng.uniform(0.5, 0.7)))
+    if hollow:
+        out = []
+        for (dx, dy, rr) in lobes[1:]:
+            out.append((dx * (1 + hollow), dy * (1 + hollow) - hollow * r * 0.5, rr * (1 - 0.45 * hollow)))
+        out.append((0, -hollow * r * 0.4, r * (1 - 0.6 * hollow)))
+        lobes = out
+        tones = tones[:1] * 2 + tones[1:2] if hollow > 0.5 else tones
+    for (dx, dy, rr) in lobes:
+        y = min(cy + dy, GROUND - rr * 0.6) if ground else cy + dy
+        puff(cv, (cx + dx, y), rr, tones)
+
+
+def bezier(p0, p1, p2, p3, n):
+    out = []
+    for i in range(n + 1):
+        t = i / n
+        a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+        out.append((a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]))
+    return out
+
+
+def stroke(cv, pts, widths, tones, keep=None):
+    """peint un ruban le long de points, avec une épaisseur par point (coeur clair -> bord sombre)"""
+    best = {}
+    for (px, py), wv in zip(pts, widths):
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1.2 else 0.85
+                    if k < best.get((x, y), 9):
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in best.items():
+        put(cv, x, y, tones[min(m - 1, int(k * m))], keep)
+
+
+def pop(cv, c, r, facing=0.0, tones='lHIJ'):
+    """un éclat d'impact en forme de nuage (un coeur et des pétales arrondis, plus gros vers l'avant)"""
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for i, da in enumerate((-70, -25, 20, 65, 150, 210)):
+        a = math.radians(facing + da)
+        big = 0.62 if abs(da) < 80 else 0.45
+        lobes.append((r * 0.95 * math.cos(a), -r * 0.95 * math.sin(a), r * big))
+    m = len(tones)
+    best = {}
+    for (dx, dy, rr) in lobes:
+        for y in range(int(cy + dy - rr - 1), int(cy + dy + rr + 2)):
+            for x in range(int(cx + dx - rr - 1), int(cx + dx + rr + 2)):
+                d = math.hypot(x + 0.5 - cx - dx, y + 0.5 - cy - dy)
+                if d <= rr:
+                    D = math.hypot(x + 0.5 - cx, y + 0.5 - cy) / (r * 1.5)
+                    if D < best.get((x, y), 9):
+                        best[(x, y)] = D
+    for (x, y), D in best.items():
+        put(cv, x, y, tones[min(m - 1, int(D * m))])
+
+
+def sprite(cv, rows, x, y, flipx=False):
+    for j, r in enumerate(rows):
+        if flipx:
+            r = r[::-1]
+        for i, ch in enumerate(r):
+            if ch != '.':
+                put(cv, x + i, y + j, ch)
+
+
+# éclats de pierre (dessinés à la main, comme ceux d'Arachné), gouttes de venin
+CHUNKS = [
+    ['.KN', 'KNO', 'NOP'],
+    ['KN.', 'NOO', '.OP'],
+    ['.K', 'NO'],
+    ['KNN.', 'NOOP', '.OP.'],
+    ['.KK.', 'KNNO', 'NNOP', '.OP.'],
+]
+DROPS = [
+    ['.H', 'IJ', 'JL'],          # goutte qui tombe (éclat en haut à droite)
+    ['HI', 'JL'],
+    ['I', 'L'],
+    ['.HI.', 'IJJL', '.JL.'],    # grosse goutte écrasée
+]
+
+
+def chunk(cv, x, y, k=0, flip=False):
+    sprite(cv, CHUNKS[k % len(CHUNKS)], int(x), int(y), flip)
+
+
+def drop(cv, x, y, k=0, flip=False):
+    sprite(cv, DROPS[k % len(DROPS)], int(x), int(y), flip)
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)

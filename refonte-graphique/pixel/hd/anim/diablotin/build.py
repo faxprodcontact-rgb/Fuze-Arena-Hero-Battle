@@ -943,8 +943,8 @@ def fx_smear(a_from, fire=False):
         R = float(np.linalg.norm(v)) + 1
         a_to = math.degrees(math.atan2(-v[1], v[0]))
         if fire:
-            arc_trail(back, S, R + 1, a_from, a_to, 11.0, 'wvutsr')
-            arc_trail(back, S, R * 0.6, a_from + 15, a_to, 4.0, 'vuts')
+            arc_trail(back, S, R + 2, a_from, a_to, 13.0, 'wvutsr')
+            arc_trail(front, S, R + 2, a_to - math.copysign(40, a_to - a_from), a_to, 6.0, 'wvut')
         else:
             arc_trail(back, S, R, a_from, a_to, 10.0, 'mmlk', taper=0.6)
             arc_trail(back, S, R + 1.2, a_from + (a_to - a_from) * 0.4, a_to, 2.0, 'ut')
@@ -1086,20 +1086,24 @@ DASH_X = OX + 40          # d'où il part (toile) : les flammes couchées resten
 
 
 def fx_dash(k):
-    """les flammes couchées qu'il laisse au sol en filant : 0 elles naissent, 1 et 2 elles se couchent et
-    s'éteignent en petites fumées"""
+    """les flammes qu'il laisse au sol en filant : un ruban de feu couché au ras du sol, d'où montent trois langues
+    de tailles différentes, couchées vers l'arrière ; 1 et 2 : elles se couchent, s'éteignent en petites fumées"""
     def f(cv, back, front, ctx):
         x1 = ctx.bust[0] + 52
-        n = 5
-        for i in range(n):
-            x = DASH_X + (x1 - DASH_X) * (i + 0.5) / n
-            h = (4 + 2.5 * i) * [1.0, 0.7, 0.35][k]
-            if h >= 3:
-                tongue(back, (x, GROUND), h, 2.8 + 0.3 * i, bend=-0.9, lean=-0.7, fork=False, below=1)
-            elif i % 2:
-                puff(back, (x, GROUND - 3), 1.6, 'abc', hollow=0.3)
-            put(back, x - 2, GROUND, 'u' if k == 0 else 's', below=2)
-            put(back, x + 1, GROUND, 't' if k == 0 else 'r', below=2)
+        L = x1 - DASH_X
+        fade = [0.0, 0.45, 0.8][k]
+        # le ruban couché : épais près de lui, effilé vers son point de départ
+        pts = bezier((x1, GROUND - 1), (x1 - L * 0.3, GROUND - 2.5), (x1 - L * 0.65, GROUND - 1),
+                     (DASH_X + L * fade * 0.6, GROUND - 1.5), 40)
+        ws = [(3.6 * (1 - fade * 0.6)) * (1 - i / 40) ** 0.8 + 0.4 for i in range(41)]
+        stroke(back, pts, ws, 'vuts' if k == 0 else 'utsr', below=1)
+        for (a, h, w, b) in ((0.15, 11, 4.0, -0.8), (0.45, 7, 3.2, -1.1), (0.78, 4.5, 2.4, -0.6)):
+            hh = h * (1 - fade)
+            x = x1 - L * a
+            if hh >= 3:
+                tongue(back, (x, GROUND), hh, w, bend=b, lean=-0.6, fork=False, below=1)
+            elif k == 2 and a < 0.5:
+                puff(back, (x - 2, GROUND - 4), 1.8, 'abc', hollow=0.3)
     return f
 
 
@@ -1176,7 +1180,7 @@ def fx_burst(k):
 HIT_S = dict(G=(73, 93), ang=-45, bend=-1, shift=36, crouch=3, lean=2, head=(1, 1), q=(-1, 1), en=1, pg=1,
              skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2])
 HIT_S_C = fixed_hit(HIT_S)
-HIT_1 = dict(G=(69, 80), ang=48, bend=-1, shift=27, crouch=1, lean=2, head=(1, -1), q=(-1, 1), en=1, pg=1,
+HIT_1 = dict(G=(77, 90), ang=10, bend=-1, shift=27, crouch=1, lean=2, head=(1, -1), q=(-1, 1), en=1, pg=1,
              skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2])
 HIT_1_C = fixed_hit(HIT_1) + np.array([0.0, 0.0])
 HIT_2 = dict(G=(72, 92), ang=-38, bend=-1, shift=30, crouch=2, lean=2, head=(1, 1), q=(0, 0), en=0, pg=-1,

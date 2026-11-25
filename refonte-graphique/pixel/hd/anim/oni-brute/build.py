@@ -1121,7 +1121,129 @@ def check_club():
     sh.save(os.path.join(BROUILLON, 'massue.png'))
 
 
-#ATTAQUES#
+# ---------------------------------------------------------------- 2) l'attaque de base : « Écrase-crâne »
+# Un coup de haut en bas, de tout son poids. Il soulève la massue (elle bascule en arrière), puis l'arme loin derrière
+# sa tête, couchée au-dessus de la bosse du dos, le buste cambré en arrière, le ventre gonflé, le menton levé : temps
+# de pose. Puis tout tombe d'un coup : la massue passe au-dessus de lui (une image floue, traînée de fer en croissant)
+# et s'écrase au sol devant lui, à l'ennemi, le buste plongé en avant (impact tenu, le sol tremble : la scène descend
+# d'un pixel). Le sol explose en bouffées de poussière qui roulent des deux côtés, des mottes de terre volent en
+# cloche, quelques braises (le fer chauffé du clan du feu), une fente dans le sol. Il laisse la massue posée un
+# instant, souffle, puis la relève lentement et la ramène debout, en garde.
+CHUNKS_HIT = [  # (vx, vy, rayon) : les mottes de terre qui sautent du choc, plutôt vers l'avant, en cloche
+    (2.6, -5.0, 2.2), (4.4, -3.2, 1.6), (-2.2, -4.4, 1.8), (1.0, -6.4, 1.3), (5.6, -1.8, 1.2), (-3.6, -2.4, 1.3),
+    (3.4, -6.0, 1.0), (-1.0, -5.8, 1.0)]
+EMBERS_HIT = [(3.0, -4.6, 1), (5.0, -2.6, 0), (-2.4, -3.8, 0), (1.6, -6.2, 0), (6.0, -4.0, 0), (-0.6, -5.0, 1)]
+
+
+def contact(ctx):
+    """là où la tête de la massue touche le sol (toile)"""
+    tip = club_tip(ctx.G, ctx.ang, S_HEAD[1] - 4.0)
+    return np.array([tip[0], GROUND], float)
+
+
+def crack(cv, x0, x1, seed=0, tones='po', glow=None, below=2):
+    """une fente dans le sol : une ligne sombre qui serpente au ras du sol (une petite courbe, pas un trait droit),
+    avec des branches courtes ; glow : la lave qui luit au fond (une lettre de feu)"""
+    rng = np.random.RandomState(seed)
+    y = GROUND + 1.0
+    x = x0
+    step = 1 if x1 >= x0 else -1
+    while (x - x1) * step < 0:
+        y += rng.uniform(-0.45, 0.45)
+        y = min(GROUND + 2.2, max(GROUND - 0.6, y))
+        put(cv, x, y, tones[0], below=below)
+        put(cv, x, y + 1, tones[-1], below=below)
+        if glow and rng.rand() < 0.55:
+            put(cv, x, y, glow, below=below)
+        if rng.rand() < 0.12:
+            for k in range(1, 3):
+                put(cv, x + step * k, y - k * 0.7, tones[-1], below=below)
+        x += step
+
+
+def fx_smash(k):
+    """le choc au sol : 0 l'éclat (poussière qui gicle, petite flamme, mottes et braises) ; 1 à 4 la poussière roule
+    des deux côtés et se défait, les mottes retombent"""
+    def f(cv, back, front, ctx):
+        c = contact(ctx)
+        x, g = c[0], GROUND
+        if k == 0:
+            pop(back, (x + 2, g - 7), 8.0, facing=80, tones='yyzD')
+            pop(front, (x - 2, g - 4), 5.0, facing=120, tones='wvut')
+            cloud(front, (x - 11, g - 3), 4.0, 'yzD', seed=2, flat=0.7)
+            cloud(front, (x + 12, g - 3), 4.6, 'yzD', seed=3, flat=0.7)
+            crack(front, x - 8, x + 10, seed=1, glow='t')
+        else:
+            T = [0, 1.2, 2.4, 3.6, 4.8][k]
+            sp = [0, 9, 15, 19, 22][k]
+            hol = [0, 0.0, 0.25, 0.55, 0.8][k]
+            r = [0, 6.0, 6.5, 6.0, 5.0][k]
+            cloud(back, (x + 2 + k, g - 9 - 3 * k), r + 1.0, 'yyzD', hollow=hol, seed=5, ground=False)
+            cloud(front, (x - sp, g - 3), r * 0.8, 'yzD', hollow=hol, seed=2, flat=0.7)
+            cloud(front, (x + sp + 3, g - 3), r * 0.9, 'yzD', hollow=hol, seed=3, flat=0.7)
+            if k <= 2:
+                curl(back, (x + 14 + 2 * k, g - 14 - 2 * k), 3.0, 200, turn=260, w=2.0, tones='yzD')
+            crack(front, x - 8, x + 10, seed=1, glow='s' if k <= 2 else None)
+            for (vx, vy, rr) in CHUNKS_HIT:
+                cx_, cy_ = x + vx * T, g - 6 + vy * T + 0.62 * T * T
+                if cy_ < g - 1:
+                    chunk(front, (cx_, cy_), rr, ang=40 * T + vx * 20)
+                elif k >= 3:
+                    put(front, cx_, g, 'B')           # la motte retombée, posée au sol
+            for (vx, vy, big) in EMBERS_HIT:
+                ex, ey = x + vx * T, g - 8 + vy * T + 0.5 * T * T
+                if ey < g - 1 and k <= 3:
+                    ember(front, ex, ey, big=bool(big) and k < 2, hot=k < 2)
+    return f
+
+
+def fx_smear_down(a_from, R_extra=2.0, w=40.0):
+    """la traînée de la massue qui passe au-dessus de lui et retombe : un grand croissant de fer autour de l'épaule"""
+    def f(cv, back, front, ctx):
+        S = ctx.S
+        tip = club_tip(ctx.G, ctx.ang, S_HEAD[1])
+        v = tip - S
+        R = float(np.linalg.norm(v)) + R_extra
+        a_to = math.degrees(math.atan2(-v[1], v[0]))
+        arc_trail(back, S, R, a_from, a_to, w, 'nmlkj', taper=0.5)
+    return f
+
+
+def fx_snort(stage):
+    """il souffle fort par le naseau pendant qu'il arme le coup"""
+    def f(cv, back, front, ctx):
+        h = ctx.f.get('head', (0, 0))
+        fx_breath(stage, ctx.bust[0] - OX + h[0], ctx.bust[1] - OY + h[1])(front)
+    return f
+
+
+HOLD_UP = dict(G=(34, 22), ang=196, wr=(-2.0, -7.0), club_behind=True)
+SMASH = dict(G=(55, 78), ang=-26, wr=(-4.0, -5.0))
+ATTAQUE = [
+    # il soulève la massue, qui bascule en arrière
+    dict(G=(24, 74), ang=118, wr=(9.0, 5.0), club_behind=True, crouch=1, lean=-1, head=(0, 1), ml=1, pg=1, ms=130),
+    # il l'arme loin derrière sa tête : cambré, ventre gonflé, menton levé (temps de pose)
+    dict(**HOLD_UP, crouch=-1, lean=-3, breath=2, head=(-1, -1), ml=1, mu=1, pg=1, far=(1, -1),
+         fx_list=[fx_snort(2)], ms=340),
+    # tout tombe : la massue passe au-dessus de lui (image floue)
+    dict(G=(62, 30), ang=48, wr=(-6.0, 2.0), crouch=1, lean=1, head=(1, 0), ml=0, mu=-1, pg=0,
+         smear=fx_smear_down(196), fx_list=[fx_snort(3)], ms=55),
+    # le choc : impact tenu, le sol tremble
+    dict(**SMASH, crouch=3, lean=4, head=(1, 1), ml=-1, mu=-1, pg=-1, far=(-1, 0), shake=1,
+         fx_list=[fx_smash(0)], ms=200),
+    dict(**SMASH, crouch=3, lean=4, head=(1, 2), ml=-1, mu=0, pg=-1, far=(-1, 0), fx_list=[fx_smash(1)], ms=120),
+    dict(**SMASH, crouch=2, lean=4, head=(1, 1), ml=1, mu=1, pg=1, fx_list=[fx_smash(2)], ms=130),
+    # il la relève lentement
+    dict(G=(46, 80), ang=22, wr=(-4.0, -5.0), crouch=1, lean=2, head=(0, 1), ml=1, pg=1, fx_list=[fx_smash(3)],
+         ms=150),
+    dict(G=(28, 80), ang=74, wr=(8.0, 5.0), club_behind=True, crouch=1, lean=1, head=(0, 0), ml=0, pg=0,
+         fx_list=[fx_smash(4)], ms=140),
+    dict(arms='orig', crouch=1, ml=0, pg=-1, ms=130),
+    dict(arms='orig', ms=150),
+]
+
+#SPECIALE#
+SPECIALE = []
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
