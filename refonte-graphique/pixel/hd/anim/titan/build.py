@@ -420,7 +420,7 @@ def cloud(cv, c, r, tones='jjkl', hollow=0.0, seed=0, ground=True):
         puff(cv, (cx + dx, yy), rr, tones)
 
 
-def pop(cv, c, r, facing=-90.0, tones='fjkl'):
+def pop(cv, c, r, facing=-90.0, tones='fjjkl'):
     """l'éclat d'un choc, en nuage : un coeur clair et des pétales arrondis (plus gros vers « facing », en degrés)"""
     cx, cy = c
     lobes = [(0, 0, r)]
@@ -441,16 +441,16 @@ def pop(cv, c, r, facing=-90.0, tones='fjkl'):
 
 
 # un caillou qui se détache (pose)
-PEBBLE = ['56', '34']
+PEBBLE = ['78', '56']
 
 
 def fly(t, o, v, g=0.55):
     """position d'un éclat lancé de o à la vitesse v (pixels par pas), après t pas ; il s'arrête au sol"""
     x = o[0] + v[0] * t
-    y = o[1] - v[1] * t + g * t * t
+    y = o[1] - v[1] * t + 0.5 * g * t * t
     if y > GROUND - 2:
         # il est retombé : il reste posé où il a touché (le temps où y = sol)
-        a, b, c = g, -v[1], o[1] - (GROUND - 2)
+        a, b, c = 0.5 * g, -v[1], o[1] - (GROUND - 2)
         disc = max(0.0, b * b - 4 * a * c)
         tl = (-b + math.sqrt(disc)) / (2 * a)
         return o[0] + v[0] * tl, GROUND - 2, True
@@ -529,12 +529,12 @@ def spike(cv, bx, h, w, lean=0.0, kind='roche', seed=0, sink=0.0):
     else:
         pts = [(bx - w / 2, g), (bx - w * 0.42 + lean * 0.35, g - h * 0.55), (bx + lean, g - h),
                (bx + w * 0.38 + lean * 0.5, g - h * rng.uniform(0.5, 0.62)), (bx + w / 2, g)]
-        facets(cv, pts, '753', '5', '8', '2', below=1)
+        facets(cv, pts, '864', '6', '8', '2', below=1)
         if h > 10:
             # une fêlure courbe dans le pic
             for i in range(int(h * 0.2), int(h * 0.55)):
                 t = i / h
-                put(cv, bx + lean * t - w * 0.12 + 1.2 * math.sin(t * 8 + seed), g - i, '3', keep='5', below=1)
+                put(cv, bx + lean * t - w * 0.12 + 1.2 * math.sin(t * 8 + seed), g - i, '4', keep='6', below=1)
 
 
 def crack(cv, x0, x1, seed=1):
@@ -628,7 +628,7 @@ def _pose():
 
 
 POSE = _pose()
-PEB0 = c2(243, 165)                 # le caillou part du bout du col moussu, à droite
+PEB0 = c2(249, 163)                 # le caillou part de sous le cristal du coude, à droite du bras
 
 
 def fx_pose(f):
@@ -677,7 +677,7 @@ ATTAQUE = [
     dict(ms=170, bx=-5, by=-2, pitch=-15, head=(-2, -4), ff=(-4, -32), glow=1, fx=('lift', 2)),
     dict(ms=300, bx=-6, by=-3, pitch=-18, head=(-2, -5), ff=(-5, -40), glow=2, fx=('lift', 3)),
     dict(ms=60, bx=1, by=-1, pitch=-6, head=(0, -1), ff=(5, -14), glow=2, fx=('smear', 0)),
-    dict(ms=100, bx=4, by=3, pitch=3, head=(2, 3), ff=(9, 0), glow=3, fx=('hit', 0), flash=30, shake=3),
+    dict(ms=100, bx=4, by=3, pitch=3, head=(2, 3), ff=(9, 0), glow=3, fx=('hit', 0), flash=25, shake=3),
     dict(ms=130, bx=4, by=3, pitch=3, head=(2, 4), ff=(9, 0), glow=2, fx=('hit', 1), shake=-2),
     dict(ms=130, bx=3, by=2, pitch=2, head=(1, 3), ff=(9, 0), glow=1, fx=('hit', 2), shake=1),
     dict(ms=150, bx=2, by=1, pitch=1, head=(1, 2), ff=(6, -2), fx=('hit', 3)),
@@ -685,14 +685,15 @@ ATTAQUE = [
     dict(ms=200, fx=('hit', 5)),
 ]
 # les éclats projetés : (vitesse x, vitesse y, sorte 'r' roche / 'g' grenat, taille, rotation par pas)
-HIT_BITS = [(-3.4, 9.0, 'r', 4.5, 40), (-1.6, 12.0, 'r', 3.2, -50), (1.8, 11.0, 'r', 5.0, 30), (3.6, 8.0, 'r', 3.0, 60),
-            (5.0, 6.0, 'g', 4.0, 35), (-4.6, 6.0, 'r', 2.4, -30), (2.8, 13.0, 'g', 3.4, -45), (0.4, 14.0, 'r', 2.6, 50),
-            (6.0, 4.0, 'r', 2.2, 20)]
-TARGET_BITS = [(-2.2, 9.0, 'r', 3.6, 40), (1.8, 11.0, 'r', 4.4, -35), (3.4, 8.0, 'g', 3.4, 50), (-3.2, 6.6, 'r', 2.6, 30),
-               (0.6, 13.0, 'g', 3.0, -40), (4.4, 5.0, 'r', 2.4, 25)]
+# (en pixels par image : ils montent de 20 à 50 pixels et retombent en 5 à 9 images)
+HIT_BITS = [(-5.0, 17.0, 'r', 6.1, 40), (-2.2, 21.0, 'r', 4.3, -50), (2.6, 19.0, 'r', 6.8, 30), (5.4, 15.0, 'r', 4.1, 60),
+            (7.6, 12.0, 'g', 5.4, 35), (-6.8, 12.0, 'r', 3.2, -30), (4.0, 22.0, 'g', 4.6, -45), (0.6, 23.0, 'r', 3.5, 50),
+            (8.6, 9.0, 'r', 3.0, 20)]
+TARGET_BITS = [(-3.0, 17.0, 'r', 4.9, 40), (2.6, 20.0, 'r', 5.9, -35), (4.6, 15.0, 'g', 4.6, 50), (-4.4, 13.0, 'r', 3.5, 30),
+               (0.8, 22.0, 'g', 4.1, -40), (6.0, 10.0, 'r', 3.2, 25)]
 
 
-def throw(cv, origin, bits, t, g=0.75):
+def throw(cv, origin, bits, t, g=6.5):
     for i, (vx, vy, kind, size, spin) in enumerate(bits):
         x, y, landed = fly(t, origin, (vx, vy), g)
         a = i * 47 + (0 if landed else spin * t)
@@ -710,14 +711,14 @@ def eruption_small(cv, back, k):
     if sink < 1.0:
         spike(cv, X - 18, 26 * grow, 13, lean=-6, seed=1, sink=sink)
         spike(cv, X + 17, 32 * grow, 14, lean=6, seed=2, sink=sink)
-        spike(back, X - 1, 46 * grow, 16, lean=1, seed=3, sink=sink)
+        spike(back, X - 1, 56 * grow, 17, lean=1, seed=3, sink=sink)
         spike(cv, X + 31, 16 * grow, 10, lean=7, seed=4, sink=sink)
     if k == 0:
-        pop(cv, (X, GROUND - 10), 12, facing=90)
-    if k <= 4:
+        pop(cv, (X, GROUND - 8), 9, facing=90)
+    if k <= 5:
         throw(cv, (X - 2, GROUND - 20), TARGET_BITS, k + 1)
-    if k >= 1:
-        hol = min(0.85, 0.2 * (k - 1))
+    if 1 <= k <= 4:
+        hol = min(0.85, 0.22 * (k - 1))
         cloud(cv, (X - 24, GROUND - 2), 8 + k, 'jjkl', hollow=hol, seed=7)
         cloud(cv, (X + 32, GROUND - 2), 7 + k, 'jjkl', hollow=hol, seed=8)
     if 1 <= k <= 4:
@@ -755,11 +756,11 @@ def fx_attack(f):
     elif kind == 'hit':
         o = (FIST_F_R + 4, GROUND - 8)
         if k == 0:
-            pop(front, (FIST_F_R + 8, GROUND - 8), 15, facing=60)
             cloud(back, (FIST_F_C - 18, GROUND - 2), 13, 'jjkl', seed=1)
-            cloud(front, (FIST_F_R + 22, GROUND - 2), 14, 'jjkl', seed=2)
+            cloud(front, (FIST_F_R + 24, GROUND - 2), 13, 'jjkl', seed=2)
+            pop(front, (FIST_F_R + 8, GROUND - 9), 15, facing=60)
             crack(back, FIST_F_R + 8, FIST_F_R + 40, seed=2)
-        else:
+        elif k <= 4:
             h = min(0.85, 0.2 * k)
             cloud(back, (FIST_F_C - 24 - 4 * k, GROUND - 2), 14 + 1.5 * k, 'jjkl', hollow=h, seed=1)
             cloud(front, (FIST_F_R + 26 + 5 * k, GROUND - 2), 15 + 1.5 * k, 'jjkl', hollow=h, seed=2)
@@ -767,7 +768,7 @@ def fx_attack(f):
             if k <= 3:
                 # le sol roule : une vague de poussière court vers les héros
                 cloud(back, (FIST_F_R + 50 + 9 * k, GROUND - 1), 4 + 1.5 * k, 'jkl', hollow=0.25 * k, seed=9)
-        if k <= 4:
+        if k <= 5:
             throw(front, o, HIT_BITS, k + 1)
         # la cible : les pics sortent de terre à l'impact (posés par le jeu sous le héros visé)
         eruption_small(front, back, k)
@@ -788,7 +789,8 @@ SPECIALE = [
     dict(ms=170, bx=-3, by=-11, pitch=-15, head=(-3, -6), fn=(-2, -22), ff=(-4, -36), fx=('charge', 2), glow=3),
     dict(ms=400, bx=-4, by=-14, pitch=-20, head=(-4, -8), fn=(-2, -30), ff=(-5, -46), fx=('charge', 3), glow=4),
     dict(ms=60, bx=1, by=-3, pitch=-5, head=(0, -1), fn=(0, -10), ff=(4, -14), fx=('smear', 0), glow=4),
-    dict(ms=260, bx=3, by=5, pitch=3, head=(2, 5), ff=(7, 0), fx=('slam', 0), glow=4, flash=35, shake=3),
+    dict(ms=70, bx=3, by=5, pitch=3, head=(2, 5), ff=(7, 0), fx=('slam', 0), glow=4, flash=35, shake=3),
+    dict(ms=190, bx=3, by=5, pitch=3, head=(2, 5), ff=(7, 0), fx=('slam', 0), glow=4, shake=-3),
     dict(ms=90, bx=3, by=4, pitch=3, head=(2, 4), ff=(7, 0), fx=('slam', 1), glow=3, shake=-3),
     dict(ms=90, bx=3, by=3, pitch=2, head=(2, 3), ff=(7, 0), fx=('slam', 2), glow=3, shake=2),
     dict(ms=120, bx=2, by=3, pitch=2, head=(1, 3), ff=(7, 0), fx=('slam', 3), glow=3, shake=-1),
@@ -808,13 +810,13 @@ LEVITATE = [(-34, 0.0, 3.0), (-16, 1.0, 2.2), (26, 0.5, 3.4), (52, 1.3, 2.4), (9
 
 def spark_trail(cv, x, y, k, i, n=5):
     """une étincelle de grenat qui monte en volute : une tête claire, une traîne courbe qui pâlit"""
+    side = 1 if i % 2 else -1
     for j in range(n):
-        t = j / n
-        xx = x - 3 * math.sin(i * 1.3 + k * 0.9 + t * 2.4) * t * 2
-        yy = y + j * 2.2
-        put(cv, xx, yy, 'g' if j == 0 else 'V' if j < 2 else 'U' if j < 4 else 'T')
+        t = j / max(1, n - 1)
+        xx = x + side * 2.5 * math.sin(t * 2.2) * t
+        put(cv, xx, y + j, 'g' if j == 0 else 'V' if j < 2 else 'U' if j < n - 1 else 'T')
     put(cv, x + 1, y, 'V')
-    put(cv, x, y - 1, 'V')
+    put(cv, x + 1, y + 1, 'U')
 
 
 def fx_special(f):
@@ -852,9 +854,13 @@ def fx_special(f):
             crack(back, FIST_N_C - 30, FIST_N_C + 24, seed=13)
             crack(back, FIST_F_C - 20, FIST_F_R + 20, seed=14)
     elif kind == 'smear':
-        for c0, c1 in ((FIST_N_C - 14, FIST_N_C + 10), (FIST_F_C - 14, FIST_F_R + 8)):
-            pts = bezier((c0 - 6, GROUND - 100), (c0 + 4, GROUND - 110), (c1 + 12, GROUND - 80), (c1 + 6, GROUND - 36), 50)
-            stroke(back, pts, [1 + 15 * (i / 50) ** 1.4 for i in range(51)], 'jjkl')
+        # le poing de devant : la traînée passe derrière lui ; le poing proche (devant le corps) : elle longe son flanc
+        pts = bezier((FIST_F_C - 20, GROUND - 100), (FIST_F_C - 10, GROUND - 110), (FIST_F_R + 20, GROUND - 80),
+                     (FIST_F_R + 14, GROUND - 36), 50)
+        stroke(back, pts, [1 + 15 * (i / 50) ** 1.4 for i in range(51)], 'jjkl')
+        pts = bezier((FIST_N_C - 20, GROUND - 130), (FIST_N_C - 44, GROUND - 120), (FIST_N_C - 50, GROUND - 80),
+                     (FIST_N_C - 42, GROUND - 40), 50)
+        stroke(front, pts, [1 + 11 * (i / 50) ** 1.4 for i in range(51)], 'jjkl')
         for i, (ox, lag, size) in enumerate(LEVITATE):
             rock(front, (FIST_N_C + ox, GROUND - 3), size * 0.8, seed=40 + i, ang=40)
     else:
@@ -870,24 +876,24 @@ BIG = [  # sous chaque héros : x (par rapport à la cible), hauteur, largeur, p
     (-9, 52, 15, -4, 'grenat', 0), (9, 68, 17, 3, 'grenat', 0), (24, 30, 11, 8, 'grenat', 0),
     (-24, 34, 15, -7, 'roche', 1), (20, 40, 16, 7, 'roche', 1), (36, 22, 11, 8, 'roche', 1), (-37, 18, 10, -7, 'roche', 1),
 ]
-BIG_BITS = [(-2.6, 11.0, 'r', 5.0, 40), (2.4, 13.0, 'r', 4.0, -35), (4.0, 9.0, 'g', 4.4, 50), (-3.4, 8.0, 'r', 3.4, 30),
-            (0.8, 15.0, 'g', 3.6, -45), (1.6, 7.0, 'r', 3.0, 25), (-1.2, 14.0, 'r', 2.6, -60), (4.8, 10.0, 'r', 2.8, 45)]
+BIG_BITS = [(-3.6, 19.0, 'r', 6.8, 40), (3.2, 23.0, 'r', 5.4, -35), (5.4, 17.0, 'g', 5.9, 50), (-4.6, 15.0, 'r', 4.6, 30),
+            (1.0, 25.0, 'g', 4.9, -45), (2.2, 13.0, 'r', 4.1, 25), (-1.6, 24.0, 'r', 3.5, -60), (6.6, 18.0, 'r', 3.8, 45)]
 
 
 def slam(back, front, k):
     """k = 0 : le double coup (tenu) ; 1-2 : la vague de pics ; 3 : les pics jaillissent sous les héros ; 4-10 : ça
     s'effrite et retombe"""
     # près du titan : les deux poings dans la poussière qui s'étale, les fissures, les blocs projetés
-    if k == 0:
-        pop(front, (FIST_N_C + 30, GROUND - 8), 14, facing=110)
-        pop(front, (FIST_F_R + 8, GROUND - 8), 16, facing=60)
-    if k <= 9:
-        h = min(0.85, 0.11 * k)
+    if k <= 7:
+        h = min(0.85, 0.13 * k)
         r = 14 + 1.2 * min(k, 6)
         cloud(back, (FIST_N_C - 34 - 4 * k, GROUND - 2), r, 'jjkl', hollow=h, seed=21)
         cloud(front, (FIST_N_C + 36 + 3 * k, GROUND - 2), r - 3, 'jjkl', hollow=h, seed=22)
         cloud(back, (FIST_F_C - 16, GROUND - 2), r - 2, 'jjkl', hollow=h, seed=23)
-        cloud(front, (FIST_F_R + 20 + 4 * k, GROUND - 2), r, 'jjkl', hollow=h, seed=24)
+        cloud(back, (FIST_F_R + 20 + 4 * k, GROUND - 2), r, 'jjkl', hollow=h, seed=24)
+    if k == 0:
+        pop(front, (FIST_N_C + 30, GROUND - 8), 11, facing=110)
+        pop(front, (FIST_F_R + 8, GROUND - 8), 12, facing=60)
     if k <= 8:
         crack(back, FIST_N_C - 52, FIST_N_C - 22, seed=3)
         crack(back, FIST_F_R + 6, FIST_F_R + 30 + 26 * min(k, 2), seed=4)
@@ -920,16 +926,16 @@ def big(front, back, k):
         for i, (dx, hh, w, lean, kind, plan) in enumerate(BIG):
             spike(front if plan else back, X + dx, hh * grow, w, lean, kind, seed=10 + i, sink=sink)
     if k == 0:
-        pop(front, (X - 2, GROUND - 16), 14, facing=90)
-    if k <= 6:
+        pop(front, (X - 2, GROUND - 9), 10, facing=90)
+    if k <= 5:
         throw(front, (X, GROUND - 26), BIG_BITS, k + 1)
-    if k >= 1:
-        hol = min(0.85, 0.16 * (k - 1))
+    if 1 <= k <= 5:
+        hol = min(0.85, 0.2 * (k - 1))
         cloud(front, (X - 26, GROUND - 2), 8 + k, 'jjkl', hollow=hol, seed=41)
         cloud(front, (X + 36, GROUND - 2), 9 + k, 'jjkl', hollow=hol, seed=42)
     if 1 <= k <= 6:
         crack(back, X - 40, X + 44, seed=6)
-    if k >= 4:
+    if 4 <= k <= 6:
         # les gravats retombés au pied de la cible
         for i, dx in enumerate((-28, -12, 4, 18, 32)):
             if i % 2:
@@ -1155,9 +1161,9 @@ JEU = {
     # le poing de la montagne : il frappe le sol sur place (image 5) ; les pics qui sortent de terre, l'éclat et la
     # poussière sous la cible (images 5 à 10) sont posés aux pieds du héros visé
     'attaque': dict(genre='sort', coup=5, cible=(ENEMY_X, GROUND - 50), coupe=[None] * 5 + [ENEMY_X - 40] * 6),
-    # le réveil de la montagne : la charge (images 1 à 3), le double coup (5), la vague de pics reste avec le titan ; le
-    # grand jaillissement de roche et de grenat (images 8 à 15) est posé aux pieds de CHAQUE héros
-    'speciale': dict(genre='sort', coup=8, cible=(ENEMY_X, GROUND - 46), coupe=[None] * 8 + [ENEMY_X - 48] * 8,
+    # le réveil de la montagne : la charge (images 1 à 3), le double coup (5-6, tenu), la vague de pics reste avec le titan ; le
+    # grand jaillissement de roche et de grenat (images 9 à 16) est posé aux pieds de CHAQUE héros
+    'speciale': dict(genre='sort', coup=9, cible=(ENEMY_X, GROUND - 46), coupe=[None] * 9 + [ENEMY_X - 48] * 8,
                      charge=(1, 3)),
 }
 
