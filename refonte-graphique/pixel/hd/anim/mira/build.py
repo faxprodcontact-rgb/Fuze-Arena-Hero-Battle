@@ -69,9 +69,14 @@ FXPAL = {
     '7': (240, 60, 70),
     '8': (230, 46, 66),
     '9': (222, 40, 64),
+    # la lumière douce du soin (translucide aussi), du plus fort au plus pâle
+    'i': (246, 255, 252),
+    'j': (214, 250, 244),
+    'k': (176, 238, 232),
+    'l': (150, 226, 214),
 }
 # opacité des lettres translucides (les autres sont pleines)
-ALPHA = {'6': 180, '7': 125, '8': 80, '9': 40}
+ALPHA = {'6': 180, '7': 125, '8': 80, '9': 40, 'i': 170, 'j': 120, 'k': 75, 'l': 36}
 # les reflets que prend le héros (« tint » d'une image : couleur, en %) : l'air de l'armure, le rouge du défi
 TINTS = {'vent': (176, 236, 240), 'rouge': (255, 70, 60)}
 WIND = 'WXYVSR'
@@ -1442,23 +1447,24 @@ def dilate(m, r=1):
     return out
 
 
-# Les plaques : des plumes de vent courtes et larges, posées sur elle comme des écailles d'armure (bout clair vers la
-# lumière, en haut à droite ; ombre jade en bas à gauche ; un tuyau jade sombre). 'vif' : à l'instant où elles se
-# posent, elles brillent (d'un cran plus claires).
-PLATE = ['.....SS',
-         '...SXWS',
-         '..SXWXS',
-         '.SYXXYS',
-         'SYXXYVS',
-         'SYXYVS.',
-         'SVYVS..',
-         'RSSS...',
-         'R......']
+# Les plaques : de petites plumes de vent couchées vers le bas (tuyau en haut, bout arrondi en bas), posées en
+# écailles qui se chevauchent, par groupes (épaulière, pan de cape, jupe, poitrine) : bout clair du côté de la lumière
+# (en haut à droite), ombre jade à gauche, bord jade. 'vif' : à l'instant où elles se posent, elles brillent.
+PLATE = ['..R..',
+         '.SXS.',
+         'SYXWS',
+         'SYXWS',
+         'SVYXS',
+         'SVYXS',
+         '.SVS.']
 PLATE_VIF = {'Y': 'X', 'X': 'W', 'V': 'Y'}
 PLATE_PALE = {'W': 'X', 'X': 'Y', 'Y': 'V', 'V': 'S', 'S': 'R'}
-# où elles se posent (grille du dessin) : l'épaulière, le haut du bras, la poitrine (à gauche du bouclier), la hanche,
-# le pan de cape, la cuisse
-PLATES = [(50, 47), (40, 64), (70, 58), (58, 82), (36, 92), (66, 96)]
+# où elles se posent (grille du dessin : le haut du tuyau), groupe par groupe, de gauche à droite (chaque écaille
+# recouvre un peu sa voisine de gauche)
+PLATES = [[(45, 51), (49, 52), (53, 51)],              # l'épaulière
+          [(33, 90), (37, 91)],                         # le pan de cape
+          [(55, 85), (59, 86), (63, 86), (67, 85)],     # la jupe
+          [(70, 57), (74, 58)]]                         # la poitrine (à gauche du bouclier)
 GLINT = ['.X.', 'XWX', '.X.']
 
 
@@ -1483,38 +1489,58 @@ def fx_armor(k):
                 elif sweep <= y < sweep + 9:
                     ch = 'W'
                 put(back, x, y, ch)
-        bx, by = ctx.body.follow(60)
-        for j, (gx, gy) in enumerate(PLATES):
-            p = g2c((gx, gy), ctx.body.follow(gy))
-            x0, y0 = int(p[0]) - 3, int(p[1]) - 4
-            if k == 4:
-                if j % 2 == 0:
-                    sprite(front, GLINT, x0 + 1, y0 + 1)
-                continue
-            sw = PLATE_VIF if k == 0 else PLATE_PALE if k == 3 else {}
-            rows = [''.join(sw.get(ch, ch) for ch in r) for r in PLATE]
-            sprite(front, rows, x0, y0)
-            if k in (1, 2) and j % 3 == k - 1:                  # un éclat qui court d'une plume à l'autre
-                sprite(front, GLINT, x0 + 3, y0 - 1)
+        for j, group in enumerate(PLATES):
+            for i, (gx, gy) in enumerate(group):
+                p = g2c((gx, gy), ctx.body.follow(gy))
+                x0, y0 = int(p[0]) - 2, int(p[1])
+                if k == 4:
+                    if i == 0:
+                        sprite(front, GLINT, x0 + 2, y0 + 2)
+                    continue
+                sw = PLATE_VIF if k == 0 else PLATE_PALE if k == 3 else {}
+                sprite(front, [''.join(sw.get(ch, ch) for ch in r) for r in PLATE], x0, y0)
+                if k in (1, 2) and i == len(group) - 1 and j % 2 == k - 1:   # un éclat sur le bout d'un groupe
+                    sprite(front, GLINT, x0 + 2, y0 - 2)
     return f
 
 
 # ---------------------------------------------------------------- le soin : un souffle doux qui monte autour d'elle
+HEAL_TONES = 'ijkl'
 SPARK = {1: ['W'], 2: ['.X.', 'XWX', '.X.'], 3: ['..X..', '.XWX.', 'XWWWX', '.XWX.', '..X..']}
 
 
+def soft_glow(cv, back, sig, amax, rise, tones):
+    """une lueur douce et translucide qui épouse sa silhouette (derrière elle : on ne la voit qu'autour d'elle), un
+    dégradé sans trait qui s'efface vers l'extérieur ; tones : lettres translucides, de la plus forte à la plus pâle"""
+    m = cv != '.'
+    src = np.roll(m, -rise, 0)
+    B = np.asarray(Image.fromarray((src * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig)), float) / 255
+    a = np.clip(B * 2.4, 0, 1) * amax
+    a = np.where(np.arange(H)[:, None] <= GROUND + 1, a, 0)          # posé au sol : rien sous ses pieds
+    for c in tones:
+        sel = (a >= ALPHA[c] * 0.85) & (back == '.')
+        back[sel] = c
+
+
 def fx_heal(k):
-    """k = 0 : le souffle naît à ses pieds et monte en spirale (deux rubans d'air clair, ouverts) ; 1 : il l'enveloppe
-    jusqu'aux épaules, des grains de lumière montent, des plumes d'air retombent ; 2 : il s'efface par le haut"""
+    """k = 0 : le souffle naît sous elle, une lumière douce l'entoure ; 1 : il monte en volutes de chaque côté d'elle
+    (jamais devant son visage), des grains de lumière montent, des plumes d'air retombent, elle s'éclaire ;
+    2 : il s'efface par le haut"""
     def f(cv, back, front, ctx):
         cx, cy = ctx.chest_c
         foot = cy + 50
-        levels = [((foot - 6, 30, 'WXYV', 3.0), (foot - 26, 26, 'XYV', 2.2)),
-                  ((foot - 24, 30, 'WXYV', 2.8), (foot - 50, 26, 'WXYV', 2.6), (foot - 76, 20, 'XYV', 2.0)),
-                  ((foot - 64, 24, 'XYV', 1.6), (foot - 92, 16, 'YV', 1.2))][k]
-        for j, (yy, rx, tones, w) in enumerate(levels):
-            ribbon(back, (cx - 2, yy), rx, 6, 150 + 20 * j, 20 + 20 * j, w, head=0.6, tones=tones)
-            ribbon(front, (cx - 2, yy + 1), rx + 1, 6, 200 + 15 * j, 330 + 10 * j, w * 0.8, head=0.5, tones=tones)
+        soft_glow(cv, back, *[(2.5, 150, 1), (4.0, 175, 2), (5.0, 80, 4)][k], tones=HEAL_TONES)
+        # des rubans d'air clair qui montent en tournant : la moitié du fond derrière elle ; devant, seulement à
+        # hauteur des jambes
+        rings = [((foot - 4, 26, 2.8),), ((foot - 30, 30, 2.6), (foot - 60, 27, 2.2)), ((foot - 82, 22, 1.6),)][k]
+        for j, (yy, rx, w) in enumerate(rings):
+            ribbon(back, (cx - 2, yy), rx, 6, 160 - 15 * j, 25 + 10 * j, w, head=0.55, tones='WXYV')
+            if yy > foot - 34:
+                ribbon(front, (cx - 2, yy + 1), rx + 1, 6, 205, 335, w * 0.8, head=0.5, tones='XYV')
+        # deux volutes qui montent de chaque côté
+        for sgn in (-1, 1):
+            curl(back, (cx + sgn * (30 + 2 * k), foot - 22 - 28 * k), 4.0 - 0.8 * k, 90 - 90 * sgn, turn=300,
+                 w=2.2 - 0.4 * k, tones='WXYV', cw=sgn > 0)
         rng = np.random.RandomState(70 + k)
         for j in range([4, 8, 5][k]):
             x = cx + rng.uniform(-34, 34)
@@ -1540,16 +1566,7 @@ GLOW_TONES = '6789'
 
 def fx_provoke(k):
     def f(cv, back, front, ctx):
-        sig, amax, rise = LUEUR[k]
-        m = cv != '.'
-        src = np.roll(m, -rise, 0)
-        B = np.asarray(Image.fromarray((src * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig)),
-                       float) / 255
-        a = np.clip(B * 2.4, 0, 1) * amax
-        a = np.where(np.arange(H)[:, None] <= GROUND + 1, a, 0)      # posé au sol : rien sous ses pieds
-        for c in GLOW_TONES:
-            sel = (a >= ALPHA[c] * 0.85) & (back == '.')
-            back[sel] = c
+        soft_glow(cv, back, *LUEUR[k], tones=GLOW_TONES)
     return f
 
 
@@ -1588,7 +1605,7 @@ SPECIALE = [
          wfx=[fx_takeoff(1)], ms=100),
     # 7 : les ailes se défont et s'enroulent tout autour d'elle : l'anneau se forme depuis son dos
     dict(lift=AIR, s=0, b=1, hd=(0, 0), w=(0, 1), tr=0, cp=-1, cl=2, ad=(0, -1), pre=[fx_wings('battue')],
-         fx=[fx_ring_form(0.5)], wfx=[fx_takeoff(2)], ms=80),
+         fx=[fx_ring_form(0.7)], wfx=[fx_takeoff(2)], ms=80),
     # 8 : LE TEMPS FORT (arrêt sur l'image) : l'anneau de plumes de vent plein autour d'elle, les plumes se posent sur
     #     elle en armure (elle s'éclaire d'un reflet d'air)
     dict(lift=AIR, s=0, b=1, hd=(0, -1), w=(1, 0), tr=-1, cp=-1, cl=2, ad=(0, -1), tint=('vent', 10),

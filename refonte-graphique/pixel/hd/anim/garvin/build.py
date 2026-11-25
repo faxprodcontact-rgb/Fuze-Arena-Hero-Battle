@@ -78,7 +78,7 @@ ROCK = '12345678'
 # ---------------------------------------------------------------- la scène
 # Toile des animations : le point « sol » du héros est posé en SOL. La pose seule se recadre en 128 × 120 (le format du
 # jeu, sol en (64, 116)). Il faut de la place autour (le dôme de plaques) et loin à droite (l'ennemi).
-W, H = 330, 204
+W, H = 330, 222
 SOL = (104, 190)
 OX, OY = SOL[0] - SRC['sol'][0], SOL[1] - SRC['sol'][1]   # grille du dessin -> toile
 GROUND = SOL[1]                                            # ligne où les pieds touchent le sol (toile)
@@ -778,13 +778,22 @@ def rig_frame(f):
         ctx.fist = F + np.array([12.0, 0.0])
     if f.get('smear'):
         f['smear'](cv, back, front, ctx)
-    body.draw(cv, glow(P['corps'], gl))
-    nx, ny = f.get('near', (0, 0))
-    blit(cv, glow(P['brasP'], gl), cx + nx, cy + ny)
+    clash = f.get('clash')                           # la spéciale : les deux poings l'un contre l'autre
+    if clash:
+        clash_arms(cv, ctx, clash, gl, 'derriere')
+        body.draw(cv, glow(CORPS_NU, gl))
+        clash_arms(cv, ctx, clash, gl, 'devant')
+    else:
+        body.draw(cv, glow(P['corps'], gl))
+        nx, ny = f.get('near', (0, 0))
+        blit(cv, glow(P['brasP'], gl), cx + nx, cy + ny)
     hdx, hdy = f.get('head', (0, 0))
     blit(cv, glow(P['tete'], gl), cx, cy, swap)
     if (hdx, hdy) != (0, 0):
         blit(cv, glow(P['tete'], gl), cx + hdx, cy + hdy, swap)
+    if f.get('post'):                                # la spéciale : la lave du corps change (le soin)
+        post = f['post']
+        cv[:] = np.vectorize(lambda c: post.get(c, c), otypes=['<U1'])(cv)
     for fx in f.get('fx', []):
         fx(cv, back, front, ctx)
     return cv, back, front, ctx
@@ -1037,7 +1046,6 @@ SHELL_R = (78.0, 70.0)               # ses rayons (largeur, hauteur)
 PLATES = [(204, 19, 12, 1, 64, (-10, 10)), (168, 22, 13, 2, 70, (-6, -8)), (134, 22, 13, 3, 60, (-14, -20)),
           (100, 24, 13, 4, 50, (4, -26)), (66, 22, 13, 5, 34, (12, -14)), (34, 22, 13, 6, 22, (-2, -4)),
           (4, 21, 13, 7, 14, (10, 6)), (-25, 19, 12, 8, 8, (-4, 14))]
-TARGET = (224.0, 80.0)               # l'ennemi (grille du dessin) : là où les plaques s'écrasent
 
 
 def shell_point(a):
@@ -1124,131 +1132,355 @@ def fx_shell_form(p, heat=0):
     return f
 
 
-def plate_path(i, s_):
-    """la place de la plaque i quand elle vole vers l'ennemi (s_ = 0 au dôme … 1 sur l'ennemi), toile"""
-    ang, L, T, seed, bump, off = PLATES[i]
-    P0 = shell_point(ang)
-    P1 = np.array(TARGET) + np.array(off, float)
-    e = s_ ** 1.3
-    p = P0 + (P1 - P0) * e
-    p[1] -= bump * math.sin(math.pi * min(1.0, e))
-    return p + np.array([OX, OY])
+# ---------------------------------------------------------------- l'anneau de plaques (sort d'équipe)
+# Le dôme ne part plus vers l'ennemi : ses huit plaques s'écartent de lui dans TOUTES les directions et se posent
+# debout au sol, en anneau autour de ses pieds (une ellipse aplatie : la moitié de derrière passe derrière lui, la
+# moitié de devant est posée devant ses pieds). Elles luisent, puis se rassoient dans le sol en laissant une fente de
+# lave qui refroidit. Chaque plaque du dôme a sa place sur l'anneau (angle en degrés, 90 = derrière lui, 270 = devant),
+# choisie pour qu'elle descende sans croiser les autres : celles de gauche vont à gauche, celles de droite à droite.
+RING_C = (SOL[0], GROUND)            # le centre de l'anneau : à ses pieds (toile)
+RING_R = (84.0, 15.0)                # l'anneau posé : demi-largeur, demi-profondeur au sol
+RING_A = [247.5, 202.5, 157.5, 112.5, 67.5, 22.5, 337.5, 292.5]
 
 
-def fx_burst(s_):
-    """le dôme éclate : s_ = où en sont les plaques sur leur trajet (0..1)"""
-    def f(cv, back, front, ctx):
-        if s_ < 0.15:
-            # le coup de poing fait éclater le dôme : un éclat blanc devant le poing, les joints se brisent en gouttes
-            F = ctx.fist + np.array([14.0, 0.0])
-            ground_pop(front, F[0], 9.0, 'wvvut') if False else None
-            for (dx, dy, r) in ((0, 0, 7.0), (6, -4, 4.5), (5, 5, 4.0)):
-                puff(front, (F[0] + dx, F[1] + dy), r, 'wvu')
-            for i, (ang, L, T, seed, bump, off) in enumerate(PLATES):
-                c = shell_point(ang) + np.array([OX, OY])
-                d = c - (np.array(SHELL_C) + np.array([OX, OY]))
-                c = c + 4 * d / np.linalg.norm(d)
-                drop(back, c[0] - 3, c[1] + 2, d[0], d[1], 2)
-                plate(front if ang < 60 else back, plate_path(i, s_) + (c - shell_point(ang) - [OX, OY]) * 0,
-                      ang + 90 + 20, L, T, seed, heat=3)
-            return
-        for i, (ang, L, T, seed, bump, off) in enumerate(PLATES):
-            c = plate_path(i, s_)
-            # la traînée : une courbe de braise derrière la plaque (une sur deux), de la fumée derrière les autres
-            behind = ang > 90 and c[0] < OX + 128          # celles de derrière passent derrière lui, au-dessus
-            if i in (2, 5) or (i == 7 and s_ < 0.8):
-                # une traînée de braise courbe (trois plaques seulement, de longueurs différentes)
-                ln = {2: 0.24, 5: 0.16, 7: 0.1}[i]
-                pts = [tuple(plate_path(i, max(0.0, s_ - ln * (1 - j / 20)))) for j in range(21)]
-                ws = [0.8 + 9.0 * (j / 20) ** 1.2 for j in range(21)]
-                stroke(back, pts, ws, 'vutsr', cool=[0.6 * (1 - j / 20) for j in range(21)])
-            else:
-                # derrière les autres, une bouffée de fumée en chou-fleur qui se défait
-                b = plate_path(i, max(0.0, s_ - 0.12))
-                cloud(back, (b[0], b[1]), 3.0 + 1.5 * s_, 'ABCD', hollow=0.2 * s_, seed=i, ground=False)
-            spin = (s_ * 300 + seed * 40) * (1 if i % 2 else -1)
-            plate(back if behind else front, c, ang + 90 + spin, L, T, seed, heat=3 if s_ < 0.5 else 2)
-    return f
+def ring_point(th, r=1.0):
+    a = math.radians(th)
+    return np.array([RING_C[0] + r * RING_R[0] * math.cos(a), RING_C[1] - r * RING_R[1] * math.sin(a)])
 
 
-IMPACT_BITS = [(-11.0, -24.0, 0), (8.0, -28.0, 1), (15.0, -18.0, 2), (-16.0, -15.0, 1), (3.0, -32.0, 0),
-               (19.0, -11.0, 2), (-6.0, -20.0, 2), (11.5, -23.0, 0)]
-
-
-def fx_crash(k):
-    """les plaques s'écrasent sur l'ennemi : k = 0 le choc (arrêt sur l'image), 1 la gerbe, 2 à 5 ça retombe et fume"""
-    def f(cv, back, front, ctx):
-        X = TARGET[0] + OX
-        Y = GROUND
-        # la flaque de lave qui s'étale et refroidit
-        hot = [1.0, 1.0, 0.85, 0.6, 0.4, 0.2][k]
-        w = [14, 22, 26, 28, 28, 28][k]
-        ground_glow(back, X, X + w, hot)
-        ground_glow(back, X, X - w, hot) if False else None
-        for x in range(int(X - w), int(X)):
-            put(back, x, GROUND, 'vutsrO'[min(5, int((X - x) / w * 6 * (1.4 - hot)))])
-        if k == 0:
-            ground_pop(front, X, 22.0, 'wwvvuts')
-            cloud(front, (X + 2, Y - 34), 12.0, 'wvvuts', seed=31, ground=False)
-            cloud(front, (X - 18, Y - 14), 8.0, 'vuuts', seed=32, ground=False)
-            cloud(front, (X + 22, Y - 16), 8.5, 'vuuts', seed=33, ground=False)
-        elif k == 1:
-            ground_pop(back, X, 24.0, 'vuutsr', hollow=0.45)
-            cloud(back, (X - 24, Y - 10), 11.0, 'ABBCD', seed=11)
-            cloud(back, (X + 26, Y - 10), 11.5, 'ABBCD', seed=12)
-            cloud(back, (X + 2, Y - 40), 10.0, 'ABCD', seed=13, ground=False)
-        else:
-            j = k - 2
-            smoke_column(back, (X - 12, Y - 14 - 5 * j), 30 + 8 * j, 10.0 - 1.2 * j, hollow=0.1 + 0.2 * j, seed=20)
-            smoke_column(back, (X + 16, Y - 10 - 4 * j), 22 + 8 * j, 8.0 - 1.0 * j, hollow=0.15 + 0.2 * j, seed=24,
-                         lean=-1.0)
-            if j < 2:
-                cloud(back, (X - 30, Y - 5), 8.0, 'ABCD', hollow=0.35 + 0.25 * j, seed=26)
-                cloud(back, (X + 34, Y - 5), 8.0, 'ABCD', hollow=0.35 + 0.25 * j, seed=27)
-        # éclats incandescents et gouttes de lave en cloche
-        tau = [0.6, 1.4, 2.3, 3.2, 4.2, 9.0][k]
-        for j, (vx, vy, kk) in enumerate(IMPACT_BITS):
-            x, y, landed = ballistic(X, Y - 10, vx, vy, tau, rest=3)
-            if landed and k >= 4 and j % 2:
+def stand_plate(cv, base, w, h, seed, heat=3, sink=0.0):
+    """une plaque de basalte DEBOUT, posée au sol en base (toile, milieu du pied) ; forme irrégulière à facettes,
+    modelée par la lumière ; heat : 0 roche, 1 fêlure, 2 rouge, 3 blanche ; sink (0..1) : elle s'enfonce dans le sol
+    (on ne voit plus que ce qui dépasse, et une fente de lave à son pied)"""
+    rng = np.random.RandomState(seed + 50)
+    bx, by = base
+    dy = sink * h
+    j = lambda: rng.uniform(-0.06, 0.06)
+    pts = [(-0.5, 0.0), (0.5, 0.0), (0.46 + j(), -0.72), (0.16 + j(), -1.0), (-0.22 + j(), -0.94), (-0.5, -0.58 + j())]
+    pts = [(bx + u * w, by + dy + v * h) for (u, v) in pts]
+    m = poly_mask(pts)
+    m[int(by) + 1:, :] = False                       # sous le sol : rien
+    if not m.any():
+        return
+    tones = {0: '76543', 1: '76543', 2: '6h5g4', 3: 'vuhgt'}[heat]
+    v = light_field(m)
+    edge = m & ~(np.roll(m, 1, 0) & np.roll(m, -1, 0) & np.roll(m, 1, 1) & np.roll(m, -1, 1))
+    ys, xs = np.nonzero(m)
+    for y, x in zip(ys, xs):
+        k = v[y, x]
+        ch = tones[0] if k > 0.28 else tones[1] if k > 0.08 else tones[2] if k > -0.1 else \
+            tones[3] if k > -0.3 else tones[4]
+        if edge[y, x] and k < -0.1:
+            ch = {0: '2', 1: '2', 2: 's', 3: 'u'}[heat]
+        put(cv, x, y, ch)
+    if heat >= 1:
+        # une fêlure de lave en marches, du pied vers le haut
+        x0 = bx - w * 0.12
+        for i in range(int(h * 0.62)):
+            y = by + dy - 2 - i
+            if y > by:
                 continue
-            chunk(front, x, y, kk, flip=vx < 0, hot=(k < 3 and j % 3 != 1))
-        if k <= 3:
-            for j, (vx, vy, kk) in enumerate(IMPACT_BITS):
-                x, y, landed = ballistic(X + 2, Y - 12, vx * 1.3 + 2, vy * 1.1, tau * 0.9, rest=1)
-                if not landed:
-                    drop(front, x, y, vx, vy + 6.8 * tau, 2 if j % 3 == 0 else 1)
-                elif k >= 2:
-                    put(back, x, GROUND, 's')
-        if k >= 2:
-            for (dx, dy) in ((-16, -40), (6, -52), (22, -36)):
-                ember(front, X + dx + 2 * k, Y + dy - 5 * k, min(3, k - 2))
+            put(cv, x0 + (1 if i > h * 0.3 else 0) + (1 if i > h * 0.5 else 0), y, 'v' if heat >= 3 else 'u' if heat >= 2 else 't')
+    if sink > 0:
+        # la fente du sol où elle rentre : la lave déborde un peu de part et d'autre
+        for i in range(int(-w / 2) - 1, int(w / 2) + 2):
+            e = abs(i) / (w / 2 + 1)
+            put(cv, bx + i, by, 'v' if e < 0.4 else 'u' if e < 0.75 else 't')
+            if e < 0.6:
+                put(cv, bx + i, by - 1, 'u' if e < 0.3 else 't')
+
+
+def plate_dims(i, r=1.0):
+    """largeur et hauteur d'une plaque debout ; celles de derrière un peu plus petites (elles sont plus loin)"""
+    ang, L, T, seed, bump, off = PLATES[i]
+    back = math.sin(math.radians(RING_A[i])) > 0
+    k = 0.9 if back else 1.04
+    return T * 1.05 * k, L * 0.9 * k
+
+
+def ground_ellipse(back, front, r, w, tones, seed=0, holes=0.6):
+    """la chaleur qui court au sol en cercle autour de lui : une ellipse fine, en arcs (coupée par endroits, jamais un
+    trait régulier) ; la moitié de derrière sur le calque de fond, celle de devant devant ses pieds"""
+    rx, ry = RING_R[0] * r, RING_R[1] * r
+    cx, cy = RING_C
+    n = int(2 * math.pi * rx * 1.4)
+    for half, tgt in ((0, back), (1, front)):
+        seg = []
+        for i in range(n + 1):
+            th = math.pi * i / n + half * math.pi
+            gap = math.sin(3 * th + seed) + 0.6 * math.sin(7 * th + 2 * seed) > 2 * holes - 0.4
+            if not gap:
+                seg.append((cx + rx * math.cos(th), cy - ry * math.sin(th)))
+            if (gap or i == n) and len(seg) > 2:
+                m_ = len(seg)
+                stroke(tgt, seg, [w * min(1.0, (q + 1) / 5, (m_ - q) / 5) + 0.5 for q in range(m_)], tones)
+            if gap:
+                seg = []
+
+
+def fx_ring(stage):
+    """les plaques quittent le dôme et se posent en anneau. stage : 'vol' (le lancement : elles volent, écartées
+    dans toutes les directions), 'pose' (elles frappent le sol), 'luit' (l'anneau s'élargit, elles luisent),
+    'rentre' (elles s'enfoncent à moitié), 'fente' (il ne reste que les fentes de lave), 'froid' (elles refroidissent)"""
+    def f(cv, back, front, ctx):
+        FLOOR[0] = H - 1
+        try:
+            if stage == 'vol':
+                ground_ellipse(back, front, 0.42, 3.0, 'wvut', seed=1, holes=0.75)
+                for i, (ang, L, T, seed, bump, off) in enumerate(PLATES):
+                    P0 = shell_point(ang) + np.array([OX, OY])
+                    P1 = ring_point(RING_A[i], 0.8) - np.array([0.0, plate_dims(i)[1] * 0.5])
+                    e = 0.55
+                    p = P0 + (P1 - P0) * e
+                    p[1] -= 10 * math.sin(math.pi * e)
+                    behind = math.sin(math.radians(RING_A[i])) > 0
+                    tgt = back if behind else front
+                    # une traînée de braise courbe derrière une plaque sur deux, une bouffée de chaleur derrière
+                    # les autres
+                    if i % 2 == 0:
+                        pts = []
+                        for j in range(16):
+                            q = e * j / 15
+                            pp = P0 + (P1 - P0) * q
+                            pts.append((pp[0], pp[1] - 10 * math.sin(math.pi * q)))
+                        ws = [0.8 + 6.5 * (j / 15) ** 1.3 for j in range(16)]
+                        stroke(back, pts, ws, 'vutsr', cool=[0.6 * (1 - j / 15) for j in range(16)])
+                    else:
+                        b = P0 + (P1 - P0) * (e * 0.45)
+                        puff(back, (b[0], b[1] - 4), 3.4, 'vut', hollow=0.35)
+                    spin = (1 if i % 2 else -1) * 35
+                    plate(tgt, p, ang + 90 + spin * 0.6 + (RING_A[i] - ang) * 0.3, L, T, seed, heat=3)
+                # la poussière soufflée tout autour, au ras du sol
+                for i, th in enumerate((10, 70, 120, 170, 200, 250, 290, 340)):
+                    q = ring_point(th, 0.55)
+                    tgt = back if math.sin(math.radians(th)) > 0 else front
+                    cloud(tgt, (q[0], q[1] - 3), 3.0 + (i % 3), 'EFFH', seed=60 + i, ground=False)
+                return
+            r = {'pose': 0.86, 'luit': 1.0, 'rentre': 1.03, 'fente': 1.03, 'froid': 1.03}[stage]
+            if stage in ('pose', 'luit'):
+                ground_ellipse(back, front, 0.78 if stage == 'pose' else 1.0, 2.4 if stage == 'pose' else 1.6,
+                               'vuts' if stage == 'pose' else 'uts', seed=2 if stage == 'pose' else 4, holes=0.6)
+            order = sorted(range(8), key=lambda i: -math.sin(math.radians(RING_A[i])))   # de derrière vers devant
+            for i in order:
+                ang, L, T, seed, bump, off = PLATES[i]
+                th = RING_A[i]
+                base = ring_point(th, r)
+                behind = math.sin(math.radians(th)) > 0
+                tgt = back if behind else front
+                w, h = plate_dims(i)
+                if stage == 'pose':
+                    stand_plate(tgt, base, w, h, seed, heat=3)
+                    # elles frappent le sol : un nuage de poussière de part et d'autre du pied
+                    for s_ in (-1, 1):
+                        cloud(tgt, (base[0] + s_ * (w * 0.6 + 2), base[1] - 2), 2.6, 'EFFH', seed=seed + s_,
+                              ground=False)
+                elif stage == 'luit':
+                    stand_plate(tgt, base, w, h, seed, heat=3)
+                    # elles luisent : une lueur douce au pied, le sol rougeoie sous elles
+                    puff(back if behind else front, (base[0] + 1, base[1] - h - 2), 1.6, 'wv')
+                elif stage == 'rentre':
+                    stand_plate(tgt, base, w, h, seed, heat=2, sink=0.55)
+                    if i % 3 == 0:
+                        ember(tgt, base[0] + 2, base[1] - h * 0.5 - 4, 1)
+                else:
+                    # la fente de lave qui refroidit, et un filet de fumée au-dessus d'une plaque sur deux
+                    hot = stage == 'fente'
+                    for k in range(int(-w / 2), int(w / 2) + 1):
+                        e = abs(k) / (w / 2)
+                        ch = ('u' if e < 0.35 else 't' if e < 0.7 else 's') if hot else ('s' if e < 0.4 else 'r' if e < 0.8 else 'O')
+                        put(tgt, base[0] + k, base[1], ch)
+                    if i % 2 == 1:
+                        wisp(back if behind else front, (base[0], base[1] - 1), 8 if hot else 12, 2.0,
+                             tail=0.0 if hot else 0.35, cw=i % 4 == 1)
+        finally:
+            FLOOR[0] = None
     return f
+
+
+# ---------------------------------------------------------------- le soin : ses fissures se referment et luisent
+# HEAL : la lave de son corps, image par image. Les bords des fêlures (rouge sombre) redeviennent roche : la fissure
+# se resserre ; le coeur de la fêlure brille plus fort (« se referme et luit »), puis se calme.
+HEAL = {
+    1: {'r': '3', 's': 'u', 't': 'v', 'u': 'v', 'g': 'h'},
+    2: {'r': '3', 's': 't', 't': 'u', 'u': 'v'},
+    3: {'r': '3', 's': 't'},
+}
+# les grains de chaleur qui montent autour de lui (toile, relatif au milieu de ses pieds) et ceux qui retombent
+MOTES_UP = [(-46, -40), (40, -52), (-30, -78), (52, -28), (-56, -18), (22, -88), (-14, -60), (8, -30)]
+MOTES_DOWN = [(-36, -104), (30, -110), (-6, -118), (48, -96)]
+
+
+def warm_glow(cv, back, amax, sig=3.5, rise=2):
+    """une lueur d'or pâle, douce et translucide, qui épouse sa silhouette (aucun trait)"""
+    m = cv != '.'
+    src = np.roll(m, -rise, 0)
+    B = np.asarray(Image.fromarray((src * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig)), float) / 255
+    a = np.clip(B * 2.4, 0, 1) * amax
+    a[GROUND + 2:] = 0
+    back[(a >= ALPHA['Q'] * 0.85) & (back == '.')] = 'Q'
+    back[(a >= ALPHA['R'] * 0.85) & (back == '.')] = 'R'
+
+
+def fx_heal(k):
+    """k = 0 : la chaleur monte autour de lui (lueur douce, grains qui montent) ; 1 : elle s'élève, des grains
+    retombent sur lui ; 2 : les derniers grains"""
+    def f(cv, back, front, ctx):
+        cx, cy = RING_C
+        if k <= 1:
+            warm_glow(cv, back, [150, 110][k], sig=[3.0, 4.0][k], rise=[1, 3][k])
+        for j, (dx, dy) in enumerate(MOTES_UP):
+            age = k + (j % 2)
+            if age > 3:
+                continue
+            x = cx + dx + (1 if j % 2 else -1) * (age // 2)
+            y = cy + dy - 6 * age
+            if cv[int(y), int(x)] != '.' and age < 2:
+                continue
+            ember(front, x, y, age, big=j % 3 == 0)
+        if k >= 1:
+            for j, (dx, dy) in enumerate(MOTES_DOWN):
+                y = cy + dy + 10 * (k - 1) + 4 * j
+                put(front, cx + dx, y, 'v' if k == 1 else 'u')
+                put(front, cx + dx, y - 1, 'u' if k == 1 else 't')
+    return f
+
+
+# ---------------------------------------------------------------- le défi (provocation) : les deux poings
+# Il frappe ses deux poings l'un contre l'autre devant son ventre, face à l'ennemi. Le bras proche quitte la hanche :
+# il est retracé en blocs de basalte (bras, avant-bras, poignet de lave) et porte le poing proche du dessin, au pixel
+# près ; le bras lointain passe DEVANT le ventre (son haut reste derrière le buste) : on voit son avant-bras et le dos
+# de son poing, dont les phalanges disparaissent derrière le poing proche. Au choc : arrêt sur l'image, gerbe d'étincelles
+# de lave autour des poings, et une lueur rouge douce l'entoure (sans aucun anneau ni trait), qui gonfle et s'éteint.
+# Pas de marque au-dessus de la tête : l'effet commun « provocation » (anim/effets) la pose déjà.
+_bp = P['brasP']
+NFIST = np.where((YY >= 76) & ((XX >= 29) | ((XX >= 26) & (YY >= 82))), _bp, '.')
+NWRIST = np.array([28.0, 81.0])       # là où l'avant-bras entre dans le poing proche (grille)
+SH_NEAR = np.array([21.0, 60.0])      # l'épaule proche (sous l'épaulière moussue), grille, relative au buste
+ARM_NEAR = (17.0, 19.0)               # bras, avant-bras proches
+# sous le bras proche levé, le flanc du buste se voit : sa colonne éclairée (un reflet du poing) passe à l'ombre
+CORPS_NU = P['corps'].copy()
+CORPS_NU[(XX == 49) & (YY >= 84) & (YY <= 92) & (CORPS_NU == '6')] = '3'
+
+
+def clash_arms(cv, ctx, c, gl, stage):
+    """stage 'derriere' : le haut du bras lointain (avant le buste) ; 'devant' : son avant-bras et son poing, puis le
+    bras proche et son poing (après le buste). c = dict(near=(dx, dy) du poing proche, far=poignet lointain (grille),
+    tip=bout du poing lointain (grille))"""
+    o = ctx.o
+    Sf = SH_FAR + o
+    Wf = np.array(c['far'], float) + o
+    Ef = ik(Sf, Wf, ARM_FAR[0], ARM_FAR[1], -1)
+    if stage == 'derriere':
+        layered(cv, lambda lay: draw_rock_limb(lay, Sf, Ef, 10.0, 9.5, seams=(0.6,), lava=gl), rim_rock)
+        return
+    Tf = np.array(c['tip'], float) + o
+    v = Tf - Wf
+    u = v / max(np.linalg.norm(v), 1e-6)
+
+    def far(lay):
+        draw_rock_limb(lay, Ef, Wf - 1.5 * u, 10.5, 9.5, seams=(0.08,), crack=(0.35, 0.68), lava=gl)
+        wrist_band(lay, Wf - 2.0 * u, Wf + 1.5 * u, 10.0, gl)
+        draw_rock_limb(lay, Wf + 1.5 * u, Tf, 11.0, 10.5, seams=(0.42, 0.7), lava=gl)
+    layered(cv, far, rim_rock)
+    dxn, dyn = c['near']
+    Wn = NWRIST + np.array([dxn, dyn], float) + np.array([OX, OY], float) + np.array(ctx.body.follow(50), float)
+    Sn = SH_NEAR + o
+    En = ik(Sn, Wn, ARM_NEAR[0], ARM_NEAR[1], 1)
+    vn = Wn - En
+    un = vn / max(np.linalg.norm(vn), 1e-6)
+
+    def near(lay):
+        draw_rock_limb(lay, Sn, En, 10.5, 10.0, seams=(0.55,), lava=gl)
+        draw_rock_limb(lay, En, Wn - 1.0 * un, 9.5, 8.5, seams=(0.06,), crack=(0.3, 0.7), lava=gl)
+        wrist_band(lay, Wn - 2.5 * un, Wn + 0.5 * un, 8.0, gl)
+    layered(cv, near, rim_rock)
+    bx, by = ctx.body.follow(50)
+    layered(cv, lambda lay: blit(lay, glow(NFIST, gl), bx + dxn, by + dyn), rim_rock)
+    ctx.contact = np.array([49.0 + dxn, 84.0 + dyn]) + np.array([OX + bx, OY + by], float)
+
+
+def red_glow(cv, back, amax, sig=3.0, rise=1):
+    """la lueur rouge du défi : un halo doux et translucide qui épouse sa silhouette, plus large vers le haut comme
+    une chaleur ; aucun trait, aucun anneau"""
+    m = cv != '.'
+    src = np.roll(m, -rise, 0)
+    B = np.asarray(Image.fromarray((src * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(sig)), float) / 255
+    a = np.clip(B * 2.4, 0, 1) * amax
+    a[GROUND + 2:] = 0
+    for ch in 'JKLMNP':
+        back[(a >= ALPHA[ch] * 0.85) & (back == '.')] = ch
+
+
+# les étincelles du choc : vitesse (vx, vy) de chaque goutte de lave, dans toutes les directions autour des poings
+CLASH_DROPS = [(-7.0, -9.0, 2), (6.5, -10.0, 1), (-10.0, -2.0, 1), (9.5, -4.0, 2), (-3.0, -12.0, 1), (2.5, -13.0, 2),
+               (-8.0, 4.0, 1), (8.0, 3.0, 1)]
+
+
+def fx_clash(k):
+    """k = 0 : le choc (arrêt sur l'image) ; 1 : la gerbe s'ouvre, la lueur rouge gonfle ; 2 : elle pâlit"""
+    def f(cv, back, front, ctx):
+        red_glow(cv, back, [200, 190, 95][k], sig=[3.0, 4.6, 6.0][k], rise=[1, 2, 3][k])
+        C = getattr(ctx, 'contact', None)
+        if C is None:
+            return
+        if k == 0:
+            for (dx, dy, r) in ((0, 0, 5.0), (-3, -6, 3.2), (2, 7, 3.0), (5, -3, 2.6)):
+                puff(front, (C[0] + dx, C[1] + dy), r, 'wwvu')
+        elif k == 1:
+            for (dx, dy, r) in ((-4, -9, 3.4), (4, 9, 3.0), (6, -6, 2.8)):
+                puff(front, (C[0] + dx, C[1] + dy), r, 'vut', hollow=0.45)
+        tau = [0.5, 1.2, 2.0][k]
+        for j, (vx, vy, sz) in enumerate(CLASH_DROPS):
+            x = C[0] + vx * tau
+            y = C[1] + vy * tau + 2.6 * tau * tau
+            if k == 2 and j % 2:
+                ember(front, x, y, 2)
+                continue
+            drop(front, x, y, vx, vy + 5.2 * tau, sz if k < 2 else 1)
+    return f
+
+
+def heated(**kw):
+    """une image où il tient la garde, le poing lointain devant la poitrine"""
+    d = dict(crouch=1, arm=('punch', BRACE), head=(0, 0), gl=1)
+    d.update(kw)
+    return d
 
 
 BRACE = (104, 60)                     # le bord gauche du poing levé, redescendu devant la poitrine (grille)
+CLASH = dict(near=(19, -9), far=(90, 72), tip=(66, 71))          # les poings l'un contre l'autre
 SPECIALE = [
-    dict(ms=150),
-    # 1-5 : il se ramasse, sa lave monte, le dôme de plaques se forme autour de lui
-    dict(crouch=1, arm=('orig', 2, 8), head=(0, 1), gl=1, fx=[fx_shell_form(0.0)], ms=180),
-    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), near=(0, 0), gl=2, fx=[fx_shell_form(0.4)], ms=150),
-    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), gl=2, fx=[fx_shell_form(0.78)], ms=140),
-    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), gl=3, fx=[fx_shell_form(1.0, 1)], ms=200),
-    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), gl=4, fx=[fx_shell_form(1.0, 2)], ms=320),
-    # 6-7 : le coup de poing droit, arrêt sur l'image : le dôme éclate
-    dict(crouch=1, lean=3, arm=('punch', (126, 55)), near=(1, 0), gl=4, fx=[fx_shell_form(1.0, 3)], ms=60),
-    dict(crouch=1, lean=4, arm=('punch', (130, 55)), near=(1, 0), gl=4, flash=40, fx=[fx_burst(0.05)], ms=170),
-    # 8-9 : les plaques volent vers l'ennemi
-    dict(crouch=1, lean=4, arm=('punch', (130, 55)), near=(1, 0), gl=3, fx=[fx_burst(0.38)], ms=70),
-    dict(crouch=1, lean=3, arm=('punch', (129, 55)), gl=2, fx=[fx_burst(0.66)], ms=70),
-    dict(crouch=1, lean=3, arm=('punch', (129, 55)), gl=2, fx=[fx_burst(0.92)], ms=60),
-    # 10-15 : elles s'écrasent sur l'ennemi ; il ramène lentement le poing
-    dict(crouch=1, lean=3, arm=('punch', (128, 55)), gl=2, fx=[fx_crash(0)], ms=180),
-    dict(crouch=1, lean=2, arm=('punch', (122, 57)), gl=1, fx=[fx_crash(1)], ms=110),
-    dict(crouch=1, lean=1, arm=('orig', 4, 10), gl=1, fx=[fx_crash(2)], ms=120),
-    dict(crouch=1, arm=('orig', 2, 5), fx=[fx_crash(3)], ms=130),
-    dict(crouch=1, arm=('orig', 1, 2), fx=[fx_crash(4)], ms=140),
-    dict(arm=('orig', 0, 1), fx=[fx_crash(5)], ms=150),
-    dict(ms=160),
+    dict(ms=100),
+    # 1-6 : il se ramasse, sa lave monte, le dôme de plaques se forme autour de lui, chauffe au rouge puis à blanc
+    dict(crouch=1, arm=('orig', 2, 8), head=(0, 1), gl=1, fx=[fx_shell_form(0.0)], ms=130),
+    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), gl=2, fx=[fx_shell_form(0.4)], ms=120),
+    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), gl=2, fx=[fx_shell_form(0.78)], ms=90),
+    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), gl=3, fx=[fx_shell_form(1.0, 1)], ms=110),
+    dict(crouch=2, arm=('punch', BRACE), head=(0, 1), gl=4, fx=[fx_shell_form(1.0, 2)], ms=130),
+    dict(crouch=3, arm=('punch', (103, 62)), head=(0, 2), gl=4, fx=[fx_shell_form(1.0, 3)], ms=120),
+    # 7 : LANCEMENT (temps fort tenu) : il se redresse d'un coup, le poing levé, et le dôme s'ouvre : les plaques
+    # s'écartent de lui dans toutes les directions, une onde de chaleur court au sol en cercle autour de lui
+    dict(crouch=-1, arm=('orig', 0, -5), head=(0, -1), gl=4, flash=30, fx=[fx_ring('vol')], ms=200),
+    # 8-11 : les plaques se posent debout en anneau autour de lui, luisent, puis rentrent dans le sol ;
+    # ses fissures se referment et luisent doucement (le soin)
+    heated(crouch=2, arm=('orig', 1, 4), head=(0, 1), gl=3, fx=[fx_ring('pose')], ms=90),
+    heated(crouch=1, arm=('orig', 1, 3), gl=2, fx=[fx_ring('luit'), fx_heal(0)], post=HEAL[1],
+           tint=((255, 200, 120), 14), ms=100),
+    heated(crouch=1, arm=('orig', 1, 2), gl=1, fx=[fx_ring('rentre'), fx_heal(1)], post=HEAL[2],
+           tint=((255, 200, 120), 8), ms=100),
+    heated(crouch=1, arm=('orig', 0, 1), gl=0, fx=[fx_ring('fente'), fx_heal(2)], post=HEAL[3], ms=100),
+    # 12-13 : le défi : il écarte les bras (le poing lointain vers l'ennemi, le proche en arrière) puis les abat
+    dict(crouch=0, lean=-1, arm=('punch', (110, 50)), near=(-2, 1), head=(0, -1), gl=1, fx=[fx_ring('froid')],
+         ms=110),
+    dict(crouch=1, lean=0, clash=dict(near=(11, -4), far=(100, 66), tip=(80, 64)), gl=2, ms=60),
+    # 14-16 : les deux poings l'un contre l'autre : arrêt sur l'image, étincelles, la lueur rouge gonfle et s'éteint
+    dict(crouch=2, lean=1, clash=CLASH, head=(0, 1), gl=3, fx=[fx_clash(0)], tint=((255, 70, 60), 16), ms=200),
+    dict(crouch=2, lean=1, clash=CLASH, head=(0, 1), gl=2, fx=[fx_clash(1)], tint=((255, 70, 60), 8), ms=110),
+    dict(crouch=1, lean=1, clash=dict(near=(16, -7), far=(92, 70), tip=(70, 69)), gl=1, fx=[fx_clash(2)], ms=100),
+    # 17-18 : il laisse retomber les bras en garde
+    dict(crouch=1, arm=('punch', BRACE), near=(1, 0), ms=100),
+    dict(arm=('orig', 0, 2), ms=110),
+    dict(ms=120),
 ]
 # ==== FIN ATTAQUES ====
 
@@ -1267,7 +1499,7 @@ def build_all():
         for i, spec in enumerate(specs):
             cv, back, front, ctx = rig_frame(dict(spec))
             retouch(cv, RETOUCHES[name].get(i, []))
-            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+            fr.append((compose(cv, back, front, flash=spec.get('flash'), tint=spec.get('tint')), spec['ms']))
         anims[name] = fr
     return anims
 
@@ -1288,6 +1520,7 @@ def bbox(frames, margin=4):
 
 
 GAME_BOX = (OX, OY, OX + hd.FRAME_W, OY + hd.FRAME_H)       # la case du jeu : 128 × 120, sol en (64, 116)
+ATT_BOX = (12, 29, 330, 198)                                 # la case de l'attaque (celle des images validées)
 
 
 def save_gif(path, images, durations):
@@ -1309,10 +1542,12 @@ def save_gif(path, images, durations):
 def write_outputs(anims):
     os.makedirs(OUT, exist_ok=True)
     boxes = {'pose': GAME_BOX}
-    # une seule case pour les deux attaques (même sol, même place) : on voit la portée des effets
-    both = anims['attaque'] + anims['speciale'] + anims['pose']
-    bb = bbox(both, 6)
-    boxes['attaque'] = boxes['speciale'] = bb
+    # l'attaque garde la case de ses images validées (on voit la portée du coup, jusqu'à l'ennemi) ; la spéciale
+    # reprend cette case et la prolonge vers le bas (l'anneau de plaques posé devant ses pieds)
+    att = ATT_BOX
+    sp = bbox(anims['speciale'], 6)
+    bb = (min(att[0], sp[0]), min(att[1], sp[1]), max(att[2], sp[2]), max(att[3], sp[3]))
+    boxes['attaque'], boxes['speciale'] = att, bb
     for name in ('pose', 'attaque', 'speciale'):
         if not anims[name]:
             continue
@@ -1326,7 +1561,7 @@ def write_outputs(anims):
     for name, per in (('pose', 6), ('attaque', 5), ('speciale', 5)):
         if not anims[name]:
             continue
-        box = GAME_BOX if name == 'pose' else bb
+        box = GAME_BOX if name == 'pose' else boxes[name]
         cells = [on_bg(img).crop(box) for img, _ in anims[name]]
         blocks.append((name, per, cells, [ms for _, ms in anims[name]]))
     Wt = max(min(per, len(cells)) * (cells[0].width * k + 6) for _, per, cells, _ in blocks) + 6
