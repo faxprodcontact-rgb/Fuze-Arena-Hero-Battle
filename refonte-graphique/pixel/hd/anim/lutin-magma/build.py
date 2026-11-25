@@ -858,18 +858,18 @@ def fx_claw_hit(k, p_from, bulge=10):
         p0, tip = HIT['p0'], HIT['tip']
         c = (p0 + tip) / 2 + np.array([8, -2])
         if k == 0:
-            slash(back, p0, tip, bulge, 10.0)
-            hot_puff(front, (tip[0] + 3, tip[1] - 5), 4.5)
-            tongue(front, (c[0] + 4, c[1] + 8), 14, 6.0, bend=1.0, tones='wvutsr', lean=0.4)
-            tongue(back, (c[0] + 11, c[1] + 10), 8, 3.6, bend=-0.8, tones='vuts', lean=0.8)
-            for (dx, dy, big) in ((16, -10, True), (21, 2, False), (10, -18, False), (19, 12, True), (-2, -14, False)):
-                ember(front, c[0] + dx, c[1] + dy, big)
+            slash(back, p0, tip, bulge, 11.0)
+            hot_puff(front, (tip[0] + 2, tip[1] - 4), 6.0, 'wwvvut')
+            tongue(front, (tip[0] + 4, tip[1] - 2), 11, 4.4, bend=1.0, tones='vuutsr', lean=0.9, fork=False)
+            tongue(back, (tip[0] + 1, tip[1] - 6), 10, 4.0, bend=-0.9, tones='vuutsr', lean=0.3, fork=False)
+            for (dx, dy, big) in ((12, -12, True), (16, 0, False), (6, -20, False), (14, 8, True), (-4, -16, False)):
+                ember(front, tip[0] + dx, tip[1] + dy, big)
         elif k == 1:
-            slash(back, p0, tip, bulge, 7.0, tones='vutsr', tail=0.45)
-            tongue(front, (c[0] + 5, c[1] + 7), 9, 4.0, bend=1.2, tones='vutsr', lean=0.6)
-            cloud(back, (c[0] + 8, c[1] - 6), 3.2, 'hhij', seed=2, ground=False)
-            for (dx, dy, big) in ((20, -14, False), (26, 0, True), (14, -24, False), (25, 13, False), (-5, -18, False)):
-                ember(front, c[0] + dx, c[1] + dy, big)
+            slash(back, p0, tip, bulge, 8.0, tones='vutsr', tail=0.5)
+            hot_puff(front, (tip[0] + 3, tip[1] - 6), 6.5, 'vuutsr', hollow=0.5)
+            cloud(back, (tip[0] + 6, tip[1] - 12), 3.2, 'hhij', seed=2, ground=False)
+            for (dx, dy, big) in ((16, -16, False), (21, -2, True), (9, -26, False), (19, 9, False), (-6, -20, False)):
+                ember(front, tip[0] + dx, tip[1] + dy, big)
         else:
             smoke_column(back, (c[0] + 8, c[1] - 2), 9, 3.0, hollow=0.3, seed=3)
             for (dx, dy) in ((24, -8), (30, 8), (16, -30), (-8, -22)):

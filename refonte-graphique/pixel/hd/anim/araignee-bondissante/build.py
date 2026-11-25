@@ -375,7 +375,7 @@ def capsule(cv, P0, P1, r0, r1, tone, t0=0.0, t1=1.0, keep=None):
             r = r0 + (r1 - r0) * t
             w = p - c
             d = math.hypot(*w)
-            if d <= r and (keep is None or keep(x, y)):
+            if d <= r and y <= GROUND and (keep is None or keep(x, y)):
                 k = (w @ LN) / max(r, 1e-6)
                 ch = tone(k, t)
                 if ch:
@@ -825,6 +825,218 @@ ATTAQUE = [
     dict(sp=(0, 1), head=(0, 1), fx=[fx_launch_dust(2, 2)], ms=90),
     # 11 : en garde
     dict(pG=(0, -1), ms=110),
+]
+
+
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Bond de la carrière »
+# Ses yeux s'embrasent, une goutte de venin perle aux crocs ; elle se tasse très bas et des cailloux se soulèvent
+# autour de ses pattes (la terre répond) ; elle jaillit à la verticale (gros nuage de poussière, cailloux projetés),
+# monte très haut, pattes repliées sous elle, se fige un instant au sommet ; puis plonge sur l'ennemi en diagonale,
+# pattes avant tendues, en laissant une traînée de venin courbe ; elle s'écrase sur lui (arrêt sur image, elle
+# pâlit) : le sol éclate en blocs de pierre projetés, une couronne de venin vert gicle, la poussière roule des deux
+# côtés ; elle rebondit en arrière jusqu'à sa place pendant que les blocs retombent, qu'une flaque de venin fume sous
+# l'ennemi puis se dissipe ; elle amortit et se remet en garde.
+TUCK = {   # au sommet du bond : pattes repliées sous le corps, pattes avant ramenées
+    'N1': dict(new=[(4, 97), (12, 106), (22, 108)]), 'N2': dict(new=[(40, 108), (48, 112), (55, 111)]),
+    'F1': dict(new=[(30, 95), (37, 104), (45, 106)]), 'F2': dict(new=[(55, 102), (62, 108), (69, 108)]),
+    'N3': dict(new=[(66, 108), (78, 109), (86, 105)]), 'F3': dict(new=[(108, 97), (113, 105), (110, 111)]),
+    'N4': dict(t=(-2, 3), k=(-1, 1), j=3), 'F4': dict(t=(-3, 4), k=(-1, 2), j=2)}
+DIVE = dict(TRAIL)
+DIVE.update({   # le plongeon : pattes arrière relevées derrière, pattes avant tendues vers le bas-avant
+    'N1': dict(new=[(2, 90), (-8, 94), (-15, 95)]), 'N2': dict(new=[(36, 104), (28, 106), (21, 106)]),
+    'F1': dict(new=[(27, 88), (18, 92), (11, 93)]), 'F2': dict(new=[(50, 97), (43, 101), (36, 102)]),
+    'N4': dict(new=[(74, 52), (98, 64), (110, 80)]), 'F4': dict(new=[(105, 61), (122, 70), (128, 86)])})
+SLAM = dict(STAB)
+SLAM.update({'N4': dict(new=[(75, 52), (100, 62), (118, 80)]), 'F4': dict(new=[(106, 61), (125, 68), (133, 86)])})
+SP_HIT = (70, 2)                              # là où elle s'écrase (sur l'ennemi), tassée de 2 pixels
+HIT_S = np.array([FOE[0] - 6, GROUND - 30], float)   # le coeur de l'impact (toile)
+
+
+def fx_drip(level):
+    """une goutte de venin perle sous les crocs, puis tombe"""
+    def f(cv, back, front, ctx):
+        c = ctx.fangs
+        if level == 0:
+            put(front, c[0], c[1] + 1, 'I')
+            put(front, c[0], c[1] + 2, 'J')
+        elif level == 1:
+            drop(front, c[0] - 1, c[1] + 1, 0)
+        else:
+            drop(front, c[0] - 1, c[1] + 6, 2)
+            put(front, c[0], c[1] + 1, 'J')
+    return f
+
+
+def fx_pebbles(level):
+    """des cailloux se soulèvent du sol autour des pattes (la terre répond) ; level 1, 2 : plus haut"""
+    def f(cv, back, front, ctx):
+        for i, (x, k) in enumerate(((22, 2), (48, 0), (70, 2), (96, 1), (118, 2))):
+            up = (2, 5, 9)[level] + (i % 2) * (1 + level)
+            chunk(back if i % 2 else front, x + OX + (i % 3) - 1, GROUND - 2 - up, k, flip=i % 2 == 1)
+            if level:
+                put(back, x + OX + 1, GROUND, 'Y')
+    return f
+
+
+def fx_blast(level):
+    """le départ : un gros nuage de poussière sous elle et des cailloux projetés en arrière et sur les côtés"""
+    def f(cv, back, front, ctx):
+        hollow = (0.0, 0.45, 0.8)[level]
+        for i, (x, r) in enumerate(((30, 7.5), (62, 8.5), (96, 7.0), (12, 5.0), (116, 5.0))):
+            cloud(back if i < 3 else front, (x + OX + (i - 2) * 3 * level, GROUND - 3), r * (1 - 0.12 * level),
+                  'VWXY', hollow=hollow, seed=40 + i)
+        if level < 2:
+            for i, (vx, vy, k) in enumerate(((-1.4, 1.6, 0), (-0.6, 2.2, 2), (0.5, 2.0, 1), (1.2, 1.4, 2))):
+                tt = 0.45 + 0.5 * level
+                x = 60 + OX + vx * 30 * tt
+                y = GROUND - 8 - vy * 22 * tt + 26 * tt * tt
+                chunk(front, x, y, k, flip=vx < 0)
+    return f
+
+
+def fx_trail(p_from, p_to, bend=-14, w=4.0):
+    """la traînée de venin du plongeon : un ruban courbe (pas un trait droit) qui s'effile vers l'arrière"""
+    def f(cv, back, front, ctx):
+        a, b = np.array(p_from, float) + (OX, OY), np.array(p_to, float) + (OX, OY)
+        m = (a + b) / 2 + np.array([0, bend])
+        pts = bezier(a, a + (m - a) * 0.9, m + (b - m) * 0.4, b, 30)
+        stroke(back, pts, [0.3 + w * (i / 30) ** 1.5 for i in range(31)], 'HIJL')
+    return f
+
+
+def stone_burst(cv, t, seed=7):
+    """blocs de pierre projetés par l'impact (paraboles), retombent"""
+    rng = np.random.RandomState(seed)
+    cx = FOE[0] - 4
+    for i in range(10):
+        vx = rng.uniform(-1.7, 1.7) * 15
+        vy = rng.uniform(1.4, 2.4) * 19
+        x = cx + rng.uniform(-12, 12) + vx * t
+        y = GROUND - 6 - vy * t + 34 * t * t
+        if y < GROUND - 1:
+            chunk(cv, x, y, i, flip=vx < 0)
+
+
+def broken_ground(cv, level=1.0):
+    """le sol éclaté sous l'ennemi : des dalles soulevées de travers, posées sur la ligne du sol"""
+    cx = FOE[0] - 4
+    for (dx, k, flip) in ((-19, 3, True), (-9, 4, False), (4, 4, True), (15, 3, False), (24, 2, True)):
+        if level < 1 and abs(dx) > 18:
+            continue
+        rows = CHUNKS[k]
+        sprite(cv, rows, cx + dx, GROUND - len(rows) + 1, flip)
+
+
+def venom_crown(cv, level):
+    """la couronne de venin qui gicle : des jets courbes qui montent et retombent, une goutte au bout de chacun"""
+    c = HIT_S + np.array([0, 10])
+    for i, (ang, L) in enumerate(((150, 22), (118, 28), (88, 30), (62, 27), (32, 22))):
+        a = math.radians(ang)
+        tip = c + np.array([math.cos(a) * L, -math.sin(a) * L])
+        ctrl = c + np.array([math.cos(a) * L * 0.5, -math.sin(a) * L * 0.9 - 6])
+        s0 = 0.25 if level >= 1 else 0.0
+        pts = bezier(c, ctrl, ctrl + (tip - ctrl) * 0.4, tip, 24)
+        n = len(pts)
+        pts = pts[int(s0 * n):int((0.8 if level == 0 else 1.0) * n)]
+        stroke(cv, pts, [0.6 + 2.4 * math.sin(math.pi * j / max(len(pts) - 1, 1)) for j in range(len(pts))], 'HIJL')
+        if level >= 1:
+            drop(cv, tip[0] - 1, tip[1] + (4 if level == 2 else 0), 0 if i % 2 else 1, flip=ang > 90)
+
+
+def puddle(cv, level, fume=0.0):
+    """la flaque de venin sous l'ennemi, qui fume (bouffées vertes qui montent et se défont)"""
+    cx = FOE[0] - 4
+    rx = 16 * level
+    for y in range(GROUND - 2, GROUND + 1):
+        for x in range(int(cx - rx - 1), int(cx + rx + 2)):
+            if ((x + 0.5 - cx) / max(rx, 0.5)) ** 2 + ((y + 0.5 - GROUND) / 2.5) ** 2 <= 1:
+                put(cv, x, y, 'I' if y == GROUND - 2 and x > cx else 'J' if y < GROUND else 'L')
+    if fume:
+        for (dx, r, sd) in ((-9, 5.0, 61), (6, 4.2, 62), (0, 3.4, 63)):
+            cloud(cv, (cx + dx, GROUND - 6 - 10 * fume), r * (1 - 0.3 * fume), 'IJLM', hollow=min(1.0, fume),
+                  seed=sd, ground=False)
+
+
+def fx_impact(stage):
+    """l'impact du plongeon, étape par étape"""
+    def f(cv, back, front, ctx):
+        if stage == 0:                                  # arrêt sur image : éclat blanc-vert, le sol se fend
+            pop(front, HIT_S, 9.0, facing=20, tones='lHIJL')
+            broken_ground(back, 0.6)
+            for (dx, r, sd) in ((-26, 6.0, 1), (22, 5.5, 2)):
+                cloud(back, (FOE[0] + dx, GROUND - 3), r, 'VWXY', seed=sd)
+        elif stage == 1:                                # la couronne de venin, les blocs partent
+            pop(front, HIT_S + np.array([1, 2]), 5.0, facing=20, tones='HIJL')
+            venom_crown(front, 0)
+            stone_burst(front, 0.25)
+            broken_ground(back)
+            for (dx, r, sd) in ((-32, 7.0, 1), (28, 6.5, 2), (-16, 5.0, 3), (14, 4.6, 4)):
+                cloud(back, (FOE[0] + dx, GROUND - 4), r, 'VWXY', seed=sd)
+        elif stage == 2:
+            venom_crown(front, 1)
+            stone_burst(front, 0.55)
+            broken_ground(back)
+            puddle(back, 0.6)
+            for (dx, r, sd) in ((-38, 7.0, 1), (34, 6.5, 2), (-20, 5.0, 3), (18, 4.6, 4)):
+                cloud(back, (FOE[0] + dx, GROUND - 5), r, 'VWXY', hollow=0.35, seed=sd)
+        elif stage == 3:
+            venom_crown(front, 2)
+            stone_burst(front, 0.85)
+            broken_ground(back)
+            puddle(back, 1.0)
+            for (dx, r, sd) in ((-42, 6.5, 1), (38, 6.0, 2)):
+                cloud(back, (FOE[0] + dx, GROUND - 6), r, 'VWXY', hollow=0.65, seed=sd)
+        elif stage == 4:
+            stone_burst(front, 1.0)
+            broken_ground(back)
+            puddle(back, 1.0, fume=0.2)
+        elif stage == 5:
+            broken_ground(back)
+            puddle(back, 0.9, fume=0.55)
+        elif stage == 6:
+            broken_ground(back, 0.6)
+            puddle(back, 0.6, fume=0.85)
+    return f
+
+
+SPECIALE = [
+    # 0 : les yeux s'embrasent, une goutte perle aux crocs, les pattes avant se reculent
+    dict(sp=(0, 1), glow=1, legs=COCK, fx=[fx_drip(0)], ms=110),
+    # 1 : elle se tasse très bas, l'abdomen se serre ; des cailloux se soulèvent du sol
+    dict(sp=(-3, 4), glow=1, head=(0, 1), abd=1, legs={**COCK, 'N4': dict(t=(-4, -4), k=(-2, -2), j=3),
+                                                       'F4': dict(t=(-4, -3), k=(-2, -2), j=2)},
+         fx=[fx_drip(1), fx_pebbles(0)], ms=180),
+    # 2 : frémissement, les cailloux montent encore
+    dict(sp=(-4, 5), glow=1, head=(0, 1), legs={**COCK, 'N4': dict(t=(-5, -4), k=(-2, -2), j=3),
+                                                'F4': dict(t=(-5, -4), k=(-2, -2), j=2)}, pD=(0, -1),
+         fx=[fx_drip(2), fx_pebbles(1)], ms=110),
+    # 3 : elle jaillit (les pattes arrière encore au sol) : nuage, cailloux projetés
+    dict(sp=(8, -26), air=True, glow=1, legs=push((8, -26)), fang=1, fx=[fx_blast(0)], ms=50),
+    # 4 : elle monte, pattes qui se replient
+    dict(sp=(26, -60), air=True, glow=1, legs=TUCK, fx=[fx_blast(1)], ms=60),
+    # 5 : au sommet : figée un instant, pattes repliées
+    dict(sp=(38, -72), air=True, glow=1, legs=TUCK, abd=1, fx=[fx_blast(2)], ms=130),
+    # 6 : le plongeon, traînée de venin
+    dict(sp=(58, -36), air=True, glow=1, legs=DIVE, fang=2, fx=[fx_trail((88, 46), (128, 84))], ms=50),
+    # 7 : IMPACT (arrêt sur image) : elle s'écrase sur l'ennemi, pâlit ; éclat, le sol se fend
+    dict(sp=SP_HIT, air=True, glow=1, head=(1, 1), legs=SLAM, fang=2, flash=45, fx=[fx_impact(0)], ms=200),
+    # 8 : la couronne de venin gicle, les blocs partent
+    dict(sp=SP_HIT, air=True, glow=1, head=(2, 1), legs=SLAM, fang=0, fx=[fx_impact(1)], ms=90),
+    # 9 : elle se ramasse sur sa proie
+    dict(sp=(68, 3), air=True, glow=1, head=(1, 1), legs=SLAM, abd=1, fx=[fx_impact(2)], ms=80),
+    # 10 : elle rebondit en arrière
+    dict(sp=(46, -30), air=True, legs=LAND, fx=[fx_impact(3)], ms=60),
+    # 11 : en l'air, vers sa place
+    dict(sp=(20, -26), air=True, legs=LAND, fx=[fx_impact(4)], ms=60),
+    # 12 : elle redescend, pattes tendues vers le sol
+    dict(sp=(5, -9), air=True, legs=LAND, fx=[fx_impact(5)], ms=60),
+    # 13 : elle retombe à sa place et amortit ; poussière ; la flaque fume
+    dict(sp=(0, 3), head=(0, -1), abd=1, fx=[fx_launch_dust(1, 2), fx_impact(5)], ms=120),
+    # 14 : elle se redresse ; la flaque se dissipe
+    dict(sp=(0, 1), head=(0, 1), fx=[fx_launch_dust(2, 2), fx_impact(6)], ms=100),
+    # 15 : en garde
+    dict(pG=(0, -1), ms=140),
 ]
 
 

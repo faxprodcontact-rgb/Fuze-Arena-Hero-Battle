@@ -138,6 +138,7 @@ P['corps'] = rest.copy()
 # sous le bec de l'ara (quand sa tête bouge) : les cheveux continuent
 for (_x, _y) in zip(*np.nonzero((P['ara_tete'] != '.') & (XX >= 52))[::-1]):
     P['tete'][_y, _x] = 'B'
+P['corps_nu'] = P['corps'].copy()
 
 
 # ---------------------------------------------------------------- outils de pose (au pixel, jamais lissé)
@@ -547,3 +548,97 @@ def draw_arm(cv, S, Wr, lengths, bend, r=(4.2, 3.8, 3.4), lit=0.0, cuff=True):
         C0 = E + 0.55 * v
         draw_limb(cv, C0, np.array(Wr, float) - 0.08 * v, r[2] + 0.6, r[2] + 1.1, 'or', lit * 0.5, rim=True)
     return E
+
+
+# ---------------------------------------------------------------- une image : le montage complet
+class Ctx:
+    """ce qu'une image a calculé (positions sur la toile) : utile aux effets"""
+    pass
+
+
+SH_FAR = (83.5, 64.5)                   # l'épaule lointaine (grille)
+ARM_FAR = (10.5, 10.5)                  # bras, avant-bras (jusqu'au poignet)
+SH_NEAR = (49.5, 63.5)                  # l'épaule proche (sous l'ara)
+ARM_NEAR = (11.0, 12.0)
+
+
+def wrist_for(grip, S, back=4.0):
+    """le poignet : un peu en arrière du point de prise, vers l'épaule"""
+    v = np.array(S, float) - grip
+    return grip + back * v / max(np.linalg.norm(v), 1e-6)
+
+
+def rig_frame(f):
+    """f : réglages de l'image (voir POSE, ATTAQUE, SPECIALE). Renvoie (monstre, effets derrière, effets devant, ctx)"""
+    body = Body(crouch=f.get('s', 0), breath=f.get('b', 0), lean=f.get('lean', 0))
+    cx, cy = body.follow(60)                       # le buste (tête, ara, bras)
+    hx, hy = f.get('head', (0, 0))
+    cv, back, front = empty(), empty(), empty()
+    ctx = Ctx()
+    ctx.body, ctx.f, ctx.chest = body, f, (cx, cy)
+    swap = BLINK if f.get('k') else SQUINT if f.get('sq') else None
+    gun = f.get('gun', 'orig')
+    ax, ay = f.get('ah', (0, 0))
+
+    # 1) la queue de l'ara (derrière tout)
+    blit(cv, ara_tail(f.get('aq', 0)), cx, cy)
+    # 2) le corps (sans le bras proche quand il épaule : le flanc repeint)
+    body.draw(cv, P['corps_nu'] if gun == 'epaule' else P['corps'])
+    blit(cv, scarf(f.get('e', 0)), *body.follow(80))
+    # 3) la tête (avec son petit retard) ; si elle monte, la rangée du bas est doublée (pas de trou)
+    if hy < 0:
+        blit(cv, P['tete'], cx, cy, swap)
+    blit(cv, P['tete'], cx + hx, cy + hy, swap)
+    # 4) l'ara sur l'épaule proche
+    draw_ara(cv, f, (cx, cy))
+    # 5) les bras et le mousquet
+    if gun == 'orig':
+        # en garde : le bras lointain et le mousquet du dessin (le mousquet ne respire pas : il suit les hanches)
+        blit(cv, P['brasL'], cx, cy)
+        mdx, mdy = f.get('mdx', 0), f.get('mdy', 0)
+        gx, gy = body.follow(84) if f.get('fixe', True) else (cx, cy)
+        blit(cv, MUSK, gx + mdx, gy + mdy)
+        ctx.O, ctx.ang = g2c((39.0, 89.5), (gx + mdx, gy + mdy)), 26.565
+        ctx.muzzle = musket_at(ctx.O, ctx.ang, MUSKET_L + 0.5, 1.5)
+    elif gun == 'hanche':
+        draw_hip(cv, f, body, ctx)
+    elif gun == 'epaule':
+        draw_shoulder(cv, f, body, ctx)
+    for fx in f.get('fx', []):
+        fx(cv, back, front, ctx)
+    return cv, back, front, ctx
+
+
+def draw_hip(cv, f, body, ctx):
+    """le coup de hanche : le mousquet tourne autour du poing proche (qui ne bouge pas) ; le bras lointain descend
+    tenir le fût"""
+    nx, ny = body.follow(82)
+    fx_, fy_ = body.follow(64)
+    ang = f.get('ang', 0.0)
+    pv = g2c(NEAR_PIVOT, (nx, ny))
+    O, u, n = musket_frame((0, 0), ang)
+    O = pv - 20.0 * u - 2.0 * n                    # le poing tient l'arme en t = 20, s = 2
+    O = O + np.array(f.get('slide', (0, 0)), float)
+    tf = f.get('tf', 57.0)                         # où la main lointaine tient le fût
+    grip = musket_at(O, ang, tf, 1.5)
+    S = g2c(SH_FAR, (fx_, fy_))
+    draw_arm(cv, S, wrist_for(grip, S, 3.5), ARM_FAR, f.get('bend', -1), r=(4.0, 3.6, 3.2), lit=-0.35)
+    draw_musket(cv, O, ang, fired=f.get('fired', False))
+    fist_on(cv, FAR_FIST, O, ang, tf)
+    blit(cv, NEAR_HAND, nx, ny)
+    ctx.O, ctx.ang = O, ang
+    ctx.muzzle = musket_at(O, ang, MUSKET_L + 0.5, 1.5)
+    ctx.pan = musket_at(O, ang, 27.5, -1.5)
+
+
+def draw_shoulder(cv, f, body, ctx):
+    raise NotImplementedError
+
+
+def draw_ara(cv, f, chest):
+    cx, cy = chest
+    ax, ay = f.get('ah', (0, 0))
+    blit(cv, P['ara_corps'], cx, cy)
+    if ay < 0:
+        blit(cv, P['ara_tete'], cx + ax, cy)
+    blit(cv, P['ara_tete'], cx + ax, cy + ay)

@@ -260,22 +260,17 @@ def head_img(f):
         out[36, 102] = 'N'
     cr = f.get('cr', (0, 0))
     if cr != (0, 0):
+        # la crête se plie : la pointe bouge de tout le décalage, la base (rangée 17) ne bouge pas ; chaque pixel de
+        # destination va chercher son pixel source (jamais de trou)
         tips = np.where(CREST_TIPS, out, '.')
         out[CREST_TIPS] = '.'
-        # la crête se plie : la pointe bouge de tout le décalage, la base (rangée 17) ne bouge pas
-        for y in range(9, 18):
-            w = (17 - y) / 8
+        for y in range(5, 18):
+            w = min(1.0, max(0.0, (17 - y) / 8))
             dx, dy = int(round(cr[0] * w)), int(round(cr[1] * w))
-            xs = np.nonzero(tips[y] != '.')[0]
-            for x in xs:
-                ty, tx = y + dy, x + dx
-                if 0 <= ty < GH and 0 <= tx < GW and out[ty, tx] == '.':
-                    out[ty, tx] = tips[y, x]
-        # pas de trou : là où la crête a quitté sa place, on garde le pixel d'origine en dessous des pointes
-        for y in range(14, 18):
-            for x in np.nonzero(tips[y] != '.')[0]:
-                if out[y, x] == '.':
-                    out[y, x] = tips[y, x]
+            for x in range(50, 80):
+                sy, sx = y - dy, x - dx
+                if 0 <= sy < GH and 0 <= sx < GW and tips[sy, sx] != '.' and out[y, x] == '.':
+                    out[y, x] = tips[sy, sx]
     return out
 
 

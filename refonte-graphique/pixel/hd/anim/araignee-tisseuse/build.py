@@ -887,7 +887,7 @@ ATTAQUE = [
 # éclate sur l'ennemi et s'ouvre en un grand filet en dôme (des courbes qui pendent entre les fils, jamais une grille)
 # dont les bords se plantent dans le sol avec des éclats de pierre et de la poussière (arrêt sur image, éclair) ;
 # le filet se resserre, des gouttes de venin vert y brillent, puis il se défait. Elle se remet en garde.
-BALL_G = (95.0, 79.0)                    # où se forme la pelote (grille), devant les filières
+BALL_G = (108.0, 84.0)                   # où se forme la pelote (grille), devant les filières, entre deux pattes
 
 
 def weave(front, ctx, c, r, spin, pebbles):
@@ -1015,9 +1015,9 @@ def fx_net(stage, flash=False):
     return f
 
 
-RC_LOW1 = [(81, 36), (101, 25), (107, 50), (99, 72)]       # la patte avant proche descend vers la pelote
-RC_LOW2 = [(81, 36), (102, 26), (105, 52), (94, 71)]       # (sa cuisse reste où elle était, la jambe plonge)
-RC_LOW3 = [(81, 36), (101, 25), (109, 51), (102, 73)]
+RC_LOW1 = [(81, 36), (101, 25), (110, 48), (110, 76)]      # la patte avant proche descend vers la pelote
+RC_LOW2 = [(81, 36), (102, 26), (108, 50), (104, 76)]      # (sa cuisse reste où elle était, la jambe plonge)
+RC_LOW3 = [(81, 36), (101, 25), (112, 48), (114, 76)]
 RC_HIGH = [(81, 37), (96, 16), (113, 18), (124, 30)]       # dressée (élan)
 RC_FLING = [(82, 37), (106, 30), (126, 38), (138, 52)]     # lancée vers l'ennemi
 SPECIALE = [

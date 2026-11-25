@@ -20,7 +20,7 @@
 #     courbes (bouffées, langues, volutes) : jamais de rayons droits ;
 #   - à la fin, chaque image peut recevoir des retouches pixel par pixel (RETOUCHES, plus bas).
 #
-# Pour le jeu : l'attaque de base touche à l'image 6 (la boule arrive sur l'ennemi), la spéciale à l'image 6
+# Pour le jeu : l'attaque de base touche à l'image 7 (la boule arrive sur l'ennemi), la spéciale à l'image 5
 # (arrêt sur l'image : le souffle atteint l'ennemi), numérotées depuis 0 comme sur la planche.
 import sys, os, math
 import numpy as np
