@@ -902,7 +902,7 @@ POSE = [
     dict(b=0, s=0, head=(0, 0), wu=0, wf=0, q=0, k=0, ms=100),
     dict(b=1, s=0, head=(0, 1), wu=1, wf=0, q=0, k=0, ms=90),
     dict(b=1, s=0, head=(1, 0), wu=1, wf=1, q=1, k=0, ms=90),
-    dict(b=1, s=0, head=(1, 0), wu=1, wf=1, q=1, k=0, ms=120),
+    dict(b=1, s=0, head=(1, 0), wu=1, wf=0, q=2, k=0, ms=120),
     dict(b=1, s=0, head=(0, 0), wu=0, wf=0, q=1, k=1, ms=70),
     dict(b=0, s=0, head=(0, -1), wu=0, wf=-1, q=0, k=0, ms=90),
     dict(b=0, s=1, head=(0, -1), wu=-1, wf=-1, q=-1, k=0, ms=90),

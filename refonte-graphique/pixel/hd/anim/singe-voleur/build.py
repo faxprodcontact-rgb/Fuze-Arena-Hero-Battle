@@ -769,14 +769,17 @@ def fx_dash_trail(k=0, low=True, high=True):
         b = ctx.f.get('bascule', 0)
         rear = OX + 40 + tx
         tail = [0.0, 0.4, 0.75][k]
-        if low:      # sous le ventre : de la croupe vers l'arrière, en descendant vers le sol
+        # chaque ruban part de loin derrière (le plus vieux, il s'efface le premier) et finit contre le singe
+        if low:      # sous le ventre : il rase le sol puis remonte vers la croupe
             y = OY + 104 + ty - b
-            gust(back, (rear + 30, y - 2), (rear + 4, y + 1), (rear - 20, y + 2), (rear - 44, y - 6), 4.0,
-                 'xyzvu', curl_r=3.5, up=True, tail=tail)
-        if high:     # au-dessus du dos : derrière la crosse de la queue, une rafale qui finit en volute
-            y = OY + 70 + ty - b
-            gust(back, (rear + 6, y + 4), (rear - 14, y + 2), (rear - 30, y - 2), (rear - 46, y + 4), 3.2,
-                 'yzvu', curl_r=3.5, up=False, tail=tail)
+            gust(back, (rear - 46, y - 8), (rear - 26, y + 3), (rear - 2, y + 4), (rear + 28, y - 1), 4.6,
+                 'xyzvu', curl_r=0.1, up=True, tail=tail)
+            if k == 0:
+                curl(back, (rear - 48, y - 12), 4.0, 270, turn=280, w=2.2, tones='yzv', cw=True)
+        if high:     # au-dessus du dos : derrière la crosse de la queue
+            y = OY + 66 + ty - b
+            gust(back, (rear - 44, y + 6), (rear - 28, y - 2), (rear - 12, y - 2), (rear + 6, y + 4), 3.4,
+                 'yzvu', curl_r=0.1, up=False, tail=tail)
     return f
 
 
@@ -815,19 +818,19 @@ def fx_hit(k, facing=-20, big=1.0):
 # tranche en retombant (croissant de vent), touche (éclat tenu), puis repart d'un saut en arrière et retombe à sa place.
 ATTAQUE = [
     dict(dos=(-2, 2), tete=(-1, 1), sac=(0, -1), queue=(-1, 1), e=1,
-         arm=dict(wrist=(4, 10), ang=-80), ms=80),
+         arm=dict(wrist=(5, 10), ang=-55), ms=80),
     dict(dos=(-3, 4), tete=(-1, 1), sac=(0, 0), queue=(-2, 2), e=1,
-         arm=dict(wrist=(2, 10), ang=-105), ms=170),
-    dict(T=(16, -10), bascule=-5, arr=(-9, 4), av=(8, -2), dos=(0, -1), tete=(1, 0), sac=(-1, 2), queue=(-3, 3), e=-1,
-         arm=dict(wrist=(5, 11), ang=-110), fx=[fx_dust(0, 1.0, 1), fx_dash_trail(0)], ms=60),
+         arm=dict(wrist=(4, 10), ang=-70), ms=170),
+    dict(T=(12, -7), bascule=-5, arr=(-8, 5), av=(7, -2), dos=(0, -1), tete=(1, 0), sac=(-1, 2), queue=(-3, 3), e=-1,
+         arm=dict(wrist=(5, 11), ang=-90), fx=[fx_dust(0, 1.0, 1), fx_dash_trail(0)], ms=60),
     dict(T=(34, -16), bascule=-2, arr=(4, -7), av=(-1, -6), tete=(0, 0), sac=(-1, 2), queue=(-2, 1), e=-1,
-         arm=dict(wrist=(4, 10), ang=-120), fx=[fx_dust(0, 1.1, 1, hollow=0.5), fx_dash_trail(1)], ms=60),
+         arm=dict(wrist=(5, 10), ang=-100), fx=[fx_dust(0, 1.1, 1, hollow=0.5), fx_dash_trail(1)], ms=60),
     dict(T=(44, -6), bascule=3, arr=(-2, -2), av=(5, 0), tete=(1, 1), sac=(0, -2), queue=(1, -2), e=1,
-         arm=dict(wrist=(17, -2), ang=35), fx=[fx_slash(-120, 35), fx_dash_trail(2, high=False)], ms=50),
+         arm=dict(wrist=(18, 3), ang=18), fx=[fx_slash(-100, 18), fx_dash_trail(2, high=False)], ms=50),
     dict(T=(46, 0), dos=(1, 2), tete=(1, 1), sac=(0, -2), queue=(2, -1), e=1,
-         arm=dict(wrist=(17, 0), ang=40), fx=[fx_hit(0, 20)], ms=150),
+         arm=dict(wrist=(18, 2), ang=22), fx=[fx_hit(0, 15)], ms=150),
     dict(T=(46, 0), dos=(0, 1), tete=(0, 1), sac=(0, 0), queue=(1, 0), e=0,
-         arm=dict(wrist=(15, 3), ang=30), fx=[fx_hit(1, 20)], ms=80),
+         arm=dict(wrist=(16, 4), ang=20), fx=[fx_hit(1, 15)], ms=80),
     dict(T=(26, -12), bascule=-2, arr=(3, -4), av=(-3, -4), tete=(-1, 0), sac=(0, 2), queue=(2, 2), e=-1,
          arm=dict(wrist=(7, 8), ang=15), fx=[fx_dust(46, 0.9, 5)], ms=70),
     dict(T=(4, 0), dos=(0, 3), tete=(0, 1), sac=(0, -1), queue=(1, 1), e=1, fx=[fx_dust(4, 0.9, 7)], ms=80),

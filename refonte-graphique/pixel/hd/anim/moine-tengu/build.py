@@ -451,8 +451,760 @@ def pose_frame(f):
     return cv, back, front
 
 
-# ================================================================ (attaques : plus bas, avant les retouches)
-# @@ATTAQUES@@
+# ---------------------------------------------------------------- le shakujō, retracé à n'importe quel angle
+# Mesuré sur le dessin (bâton droit) : s = distance le long de la hampe depuis le bout du pied (s = 115,5 - y),
+# t = écart en travers (t = x - 22 ; t > 0 : à droite, côté lumière au repos). Hampe de 3 pixels (E, w, x) ; pointe de
+# fer et virole d'or au pied ; collier d'or sous la boucle ; boucle en ogive (fer, 2 pixels) ; axe et joyau d'or au
+# milieu ; pointe d'or au sommet ; quatre anneaux d'or accrochés aux flancs de la boucle. Chaque ton est choisi par
+# l'orientation de la surface vers la lumière (en haut à droite) : la lumière reste au même endroit quand il tourne.
+LIGHT = np.array([0.6, -0.8])
+LN = LIGHT / np.linalg.norm(LIGHT)
+S_TOP = 115.5 - 1.0                     # le sommet de la pointe d'or
+S_COLLAR = (95.0, 97.6)                 # le collier d'or (y 19-20)
+LOOP_C = np.array([0.0, 104.5])         # le centre de la boucle (t, s)
+_LOOP_LEFT = [(-1.0, 97.5), (-3.0, 98.5), (-4.6, 100.0), (-5.6, 102.0), (-5.8, 104.5), (-5.2, 107.0), (-3.8, 108.8),
+              (-1.8, 110.0), (0.0, 110.4)]
+LOOP_PTS = _LOOP_LEFT + [(-t, s) for (t, s) in reversed(_LOOP_LEFT[:-1])]
+# les anneaux : point d'accroche sur la boucle (t, s) ; au repos ils pendent sur les flancs, centre à 3 pixels dehors
+RINGS = [(-5.8, 104.5), (-5.0, 100.8), (5.8, 104.5), (5.0, 100.8)]
+G0 = np.array([22.5, 49.5])             # le point de prise du poing du dessin (milieu de la hampe dans le poing)
+SG0 = 115.5 - 49.0                      # où le poing serre la hampe (s)
+
+
+def unit(deg):
+    a = math.radians(deg)
+    return np.array([math.cos(a), -math.sin(a)])
+
+
+def seg_dist(p, a, b):
+    v = b - a
+    t = float(np.clip((p - a) @ v / max(v @ v, 1e-9), 0, 1))
+    return float(np.linalg.norm(p - (a + t * v))), t
+
+
+def iron(k):
+    return 'x' if k > 0.42 else 'w' if k > -0.12 else 'v' if k > -0.55 else 'E'
+
+
+def gold(k):
+    return 'u' if k > 0.62 else 't' if k > 0.22 else 's' if k > -0.25 else 'r' if k > -0.65 else 'q'
+
+
+def staff_frame(G, ang, sg):
+    """repère du bâton : G = point de prise (toile), ang = direction du pied vers la tête (degrés, 90 = debout),
+    sg = où la main serre (s). Renvoie (origine du pied, u le long, n en travers vers la « droite » du dessin)."""
+    u = unit(ang)
+    n = np.array([-u[1], u[0]])
+    # au repos (ang = 90) : u = (0, -1) et n = (1, 0) : t > 0 à droite, comme le dessin
+    return np.array(G, float) - sg * u, u, n
+
+
+def staff_to_canvas(G, ang, sg, t, s):
+    F, u, n = staff_frame(G, ang, sg)
+    return F + s * u + t * n
+
+
+def draw_staff(cv, G, ang, sg, swing=(0.0, 0.0), rings=True, glint=None):
+    """trace le shakujō entier ; swing : élan (toile) qui écarte les anneaux de leur aplomb (ils traînent)"""
+    F, u, n = staff_frame(G, ang, sg)
+    sgn = 1.0 if n @ LN >= 0 else -1.0            # de quel côté du travers vient la lumière
+    loop = [F + s * u + t * n for (t, s) in LOOP_PTS]
+    corners = [F, F + S_TOP * u] + loop
+    xs = [c[0] for c in corners]
+    ys = [c[1] for c in corners]
+    x0, x1 = int(min(xs)) - 8, int(max(xs)) + 9
+    y0, y1 = int(min(ys)) - 8, int(max(ys)) + 9
+    for y in range(max(0, y0), min(H, y1)):
+        for x in range(max(0, x0), min(W, x1)):
+            p = np.array([x + 0.5, y + 0.5])
+            d = p - F
+            s, t = d @ u, d @ n
+            k = t * sgn
+            ch = None
+            if 0 <= s <= S_COLLAR[1] and abs(t) <= 1.5:
+                if s < 1.6:
+                    ch = 'E' if k < -0.5 else 'v' if k < 0.5 else 'w'          # la pointe de fer
+                elif s < 3.0:
+                    ch = iron(k / 1.5)
+                elif s < 5.0:
+                    ch = gold(k / 1.5 - 0.15)                                 # la virole d'or
+                else:
+                    ch = iron(k / 1.5)
+            if S_COLLAR[0] <= s <= S_COLLAR[1] and abs(t) <= 2.5:
+                ch = gold(k / 2.5 + (0.25 if s > 96.3 else -0.2))             # le collier (deux bagues)
+            # la boucle en ogive : un trait de fer de 2 pixels
+            best = 9.0
+            for i in range(len(LOOP_PTS) - 1):
+                a = np.array(LOOP_PTS[i]); b = np.array(LOOP_PTS[i + 1])
+                dd, _ = seg_dist(np.array([t, s]), a, b)
+                best = min(best, dd)
+            if best <= 1.15 and s >= S_COLLAR[1] - 0.4:
+                o = np.array([t, s]) - LOOP_C
+                o = o / max(np.linalg.norm(o), 1e-6)
+                wn = o[0] * n + o[1] * u
+                ch = iron(float(wn @ LN))
+            # l'axe d'or et le joyau, au milieu de la boucle
+            if 98.0 <= s <= 110.0 and abs(t) <= 0.5:
+                ch = 'r' if s < 103 or s > 106 else ch
+            o = np.array([t, s - 104.5])
+            if abs(o[0]) <= 1.5 and abs(o[1]) <= 1.5:
+                ow = o[0] * n + o[1] * u
+                ch = gold(float(ow @ LN) / 1.4 + 0.1)
+            # la pointe d'or du sommet
+            if 110.0 <= s <= S_TOP:
+                r = 1.5 if s < 112.8 else 0.55
+                if abs(t) <= r:
+                    ch = gold(k / 1.5 + (0.35 if s > 112.8 else -0.1))
+            if ch:
+                cv[y, x] = ch
+    if rings:
+        draw_rings(cv, F, u, n, swing, glint)
+
+
+def ring_center(F, u, n, i, swing=(0.0, 0.0)):
+    """le centre d'un anneau : il pend depuis son accroche (vers le dehors de la boucle, la pesanteur et l'élan)"""
+    t, s = RINGS[i]
+    A = F + s * u + t * n
+    out = (1.0 if t > 0 else -1.0) * n
+    v = 0.55 * out + np.array([0.0, 1.0]) * 0.75 + np.array(swing, float)
+    v = v / max(np.linalg.norm(v), 1e-6)
+    return A + 2.6 * v
+
+
+def draw_rings(cv, F, u, n, swing=(0.0, 0.0), glint=None):
+    for i in range(4):
+        c = ring_center(F, u, n, i, swing)
+        for y in range(int(c[1]) - 3, int(c[1]) + 4):
+            for x in range(int(c[0]) - 3, int(c[0]) + 4):
+                o = np.array([x + 0.5, y + 0.5]) - c
+                d = float(np.linalg.norm(o))
+                if 0.95 <= d <= 2.1 and 0 <= y < H and 0 <= x < W:
+                    cv[y, x] = 't' if (o @ LN) / d > 0.45 else 's' if (o @ LN) / d > -0.35 else 'r'
+        if glint and i in glint:
+            gx, gy = int(c[0] + 1.2), int(c[1] - 1.6)
+            if 0 <= gy < H and 0 <= gx < W:
+                cv[gy, gx] = 'u'
+
+
+# ---------------------------------------------------------------- le bras proche, retracé (manche, avant-bras, poing)
+# Mesuré sur le dessin : l'épaule dans la manche, le coude en bas (au ras de la ceinture), le poignet sous le poing.
+SH = np.array([40.0, 47.5])
+ELB0 = np.array([36.5, 69.0])
+WR0 = np.array([27.5, 55.5])
+L_UP = float(np.linalg.norm(ELB0 - SH))
+L_FORE = float(np.linalg.norm(WR0 - ELB0))
+WR_OFF = WR0 - G0                         # le poing n'est pas tourné : le poignet reste au même endroit sous lui
+
+
+def shade_skin(k):
+    return 'f' if k > 0.62 else 'e' if k > 0.22 else 'd' if k > -0.22 else 'c' if k > -0.62 else 'b'
+
+
+def shade_cloth(k):
+    return '9' if k > 0.38 else '8' if k > -0.12 else '7' if k > -0.6 else '6'
+
+
+def capsule(cv, P0, P1, r0, r1, shade, kbias=0.0, keep=None):
+    P0, P1 = np.array(P0, float), np.array(P1, float)
+    v = P1 - P0
+    L2 = max(v @ v, 1e-6)
+    R = max(r0, r1) + 1
+    for y in range(max(0, int(min(P0[1], P1[1]) - R)), min(H, int(max(P0[1], P1[1]) + R + 1))):
+        for x in range(max(0, int(min(P0[0], P1[0]) - R)), min(W, int(max(P0[0], P1[0]) + R + 1))):
+            p = np.array([x + 0.5, y + 0.5])
+            t = float(np.clip((p - P0) @ v / L2, 0, 1))
+            c = P0 + t * v
+            r = r0 + (r1 - r0) * t
+            w = p - c
+            dist = math.hypot(*w)
+            if dist <= r and (keep is None or keep(p, t, dist / r)):
+                cv[y, x] = shade(float(w @ LN) / r + kbias)
+
+
+def ik(S, T, L1, L2, bend):
+    S, T = np.array(S, float), np.array(T, float)
+    v = T - S
+    d = max(np.linalg.norm(v), 1e-6)
+    u = v / d
+    if d > L1 + L2:
+        k = d / (L1 + L2)
+        L1, L2 = L1 * k, L2 * k
+    a = (L1 * L1 - L2 * L2 + d * d) / (2 * d)
+    hh = math.sqrt(max(L1 * L1 - a * a, 0))
+    perp = np.array([-u[1], u[0]])
+    return S + a * u + bend * hh * perp
+
+
+def draw_arm(cv, S, G, bend=1.0, elbow=None):
+    """épaule S -> coude -> poignet (sous le poing posé au point de prise G), coordonnées de la toile.
+    La manche retroussée : une grosse boule ivoire autour du haut du bras, un bourrelet plus sombre côté coude ;
+    l'avant-bras nu, rouge, du coude au poignet ; puis le poing du dessin."""
+    Wr = np.array(G, float) + WR_OFF
+    E = np.array(elbow, float) if elbow is not None else ik(S, Wr, L_UP, L_FORE, bend)
+    v = E - S
+    Q = S + 0.42 * v
+    capsule(cv, S, Q, 10.6, 9.2, shade_cloth)
+    # le bourrelet (le bord roulé de la manche, côté coude) : un anneau d'ombre sous la boule
+    R = S + 0.56 * v
+    capsule(cv, Q, R, 8.4, 7.2, shade_cloth, kbias=-0.35)
+    capsule(cv, R - 0.08 * v, E, 4.6, 4.3, shade_skin)
+    capsule(cv, E, Wr, 4.3, 3.7, shade_skin)
+    dn = np.round(np.array(G, float) - (G0 + np.array([OX, OY]))).astype(int)
+    blit(cv, P['poing'], *dn)
+    return E
+
+
+class Ctx:
+    pass
+
+
+def rig_frame(f):
+    """une image des attaques. f : réglages (voir ATTAQUE et SPECIALE). Renvoie (monstre, effets derrière, devant)."""
+    body = Body(crouch=f.get('crouch', 0), breath=f.get('breath', 0), lean=f.get('lean', 0))
+    cv, back, front = empty(), empty(), empty()
+    swap = BLINK if f.get('blink') else None
+    ctx = Ctx()
+    ctx.body, ctx.f = body, f
+    wa, wb = wings(f.get('wl', 0))
+    body.draw(cv, wa)
+    body.draw(cv, wb)
+    arm = f.get('arm', 'orig')
+    if arm != 'orig':
+        body.draw(cv, WING_FILL)
+    body.draw(cv, P['corps'], swap)
+    if arm != 'orig':
+        body.draw(cv, FLANK)
+    draw_head(cv, body, 0, swap, f.get('head', (0, 0)))
+    body.draw(cv, P['perles'])
+    body.draw(cv, pans(f.get('p', 0)))
+    cdx, cdy = body.follow(50)
+    o = np.array([OX, OY], float)
+    if arm == 'orig':
+        body.draw(cv, P['manche'])
+        body.draw(cv, P['avantbras'])
+    # le bâton
+    lift = f.get('lift', 0)
+    if f.get('staff', 'droit') == 'droit':
+        st, sparks = staff_rest(f.get('j', 0))
+        blit(cv, st, 0, -lift)
+        for (x, y, ch) in sparks:
+            front[y + OY - lift, x + OX] = ch
+        G = G0 + o + np.array([0, -lift + f.get('slip', 0)], float)
+        ctx.G, ctx.ang, ctx.sg = G, 90.0, SG0 - f.get('slip', 0)
+    else:
+        G = np.array(f['G'], float) + o + np.array([cdx, cdy], float)
+        ctx.G, ctx.ang, ctx.sg = G, f['ang'], f['sg']
+        for fx in f.get('smear', []):
+            fx(cv, back, front, ctx)
+        draw_staff(cv, G, f['ang'], f['sg'], f.get('swing', (0.0, 0.0)), glint=f.get('glint'))
+    ctx.foot = staff_to_canvas(ctx.G, ctx.ang, ctx.sg, 0.0, 0.0)
+    ctx.head = staff_to_canvas(ctx.G, ctx.ang, ctx.sg, 0.0, 104.5)
+    if arm == 'orig':
+        blit(cv, P['poing'], 0, cdy + f.get('slip', 0))
+    else:
+        S = SH + o + np.array([cdx, cdy], float)
+        ctx.elbow = draw_arm(cv, S, ctx.G, f.get('bend', 1.0))
+    for fx in f.get('fx', []):
+        fx(cv, back, front, ctx)
+    return cv, back, front
+
+
+# ---------------------------------------------------------------- les effets de vent : formes courbes (outils d'Orin et d'Eldra, mêmes tons)
+def put(cv, x, y, ch, keep=None):
+    x, y = int(x), int(y)
+    if 0 <= x < W and 0 <= y < H and y <= GROUND and (keep is None or cv[y, x] in keep):
+        cv[y, x] = ch
+
+
+def ribbon(cv, c, rx, ry, a0, a1, wmax, head=0.7, tones='WFGH', tilt=0.0):
+    """un ruban de vent : arc d'ellipse (centre c, rayons rx, ry) de l'angle a0 à a1 (degrés, sens de la marche),
+    épaisseur qui gonfle puis s'effile (le plus épais à 'head' du parcours). tones : coeur -> bord."""
+    cx, cy = c
+    n = max(12, int(abs(a1 - a0) / 360 * 2 * math.pi * max(rx, ry) * 2))
+    pts = []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (a1 - a0) * s)
+        px, py = rx * math.cos(a), -ry * math.sin(a)
+        if tilt:
+            ct, st = math.cos(math.radians(tilt)), math.sin(math.radians(tilt))
+            px, py = px * ct + py * st, -px * st + py * ct
+        wv = wmax * (s / head if s < head else (1 - s) / (1 - head)) ** 0.8
+        pts.append((cx + px, cy + py, max(wv, 0.0)))
+    best = {}
+    for (px, py, wv) in pts:
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1 else 1.0
+                    if R < 0.8:
+                        k = max(k, 0.75)
+                    old = best.get((x, y), 9)
+                    if k < old:
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in best.items():
+        put(cv, x, y, tones[min(m - 1, int(k * m))])
+
+
+def puff(cv, c, r, tones='KLM', hollow=0.0):
+    """une bouffée de poussière, ronde, éclairée en haut à droite ; hollow > 0 : elle se défait (trou au milieu)"""
+    cx, cy = c
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            w = np.array([x + 0.5 - cx, y + 0.5 - cy])
+            d = math.hypot(*w)
+            if d <= r and d >= hollow * r:
+                k = (w @ LN) / max(r, 1e-6)
+                ch = tones[min(len(tones) - 1, int((1 - k) / 2 * len(tones)))]
+                put(cv, x, y, ch)
+
+
+def burst(cv, c, r, tones='WJFG'):
+    """éclat rond (coeur blanc, bord jade pâle)"""
+    cx, cy = c
+    m = len(tones)
+    for y in range(int(cy - r - 1), int(cy + r + 2)):
+        for x in range(int(cx - r - 1), int(cx + r + 2)):
+            d = math.hypot(x + 0.5 - cx, y + 0.5 - cy)
+            if d <= r:
+                put(cv, x, y, tones[min(m - 1, int(d / r * m))])
+
+
+def crescent(cv, c, r, facing, span=110, w=3.0, tones='WFG'):
+    """un croissant d'impact (une virgule de souffle) tourné vers 'facing' (degrés)"""
+    ribbon(cv, c, r, r, facing + span / 2, facing - span / 2, w, head=0.5, tones=tones)
+
+
+def cloud(cv, c, r, tones='KLM', hollow=0.0, seed=0):
+    """un nuage de poussière en chou-fleur : une grosse bouffée et des petites autour (pas une bille ronde).
+    hollow (0..1) : le nuage se défait — les bouffées s'écartent, montent un peu, rapetissent et pâlissent."""
+    rng = np.random.RandomState(seed)
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for i in range(4):
+        a = math.radians(150 - i * 40 + rng.uniform(-12, 12))
+        d = r * rng.uniform(0.55, 0.8)
+        lobes.append((d * math.cos(a), -d * math.sin(a) * 0.7, r * rng.uniform(0.5, 0.7)))
+    if hollow:
+        out = []
+        for (dx, dy, rr) in lobes[1:]:
+            out.append((dx * (1 + hollow), dy * (1 + hollow) - hollow * r * 0.5, rr * (1 - 0.45 * hollow)))
+        out.append((0, -hollow * r * 0.4, r * (1 - 0.6 * hollow)))
+        lobes = out
+        tones = tones[:1] * 2 + tones[1:2] if hollow > 0.5 else tones
+    for (dx, dy, rr) in lobes:
+        puff(cv, (cx + dx, min(cy + dy, GROUND - rr * 0.6)), rr, tones)
+
+
+def curl(cv, c, r0, a0, turn=300, w=2.4, tones='JFGH', cw=False):
+    """une volute de vent : une spirale qui s'enroule (r décroît), épaisse au départ, effilée au coeur"""
+    cx, cy = c
+    n = int(turn / 4) + 8
+    pts = []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + (-turn if cw else turn) * s)
+        r = r0 * (1 - 0.72 * s)
+        pts.append((cx + r * math.cos(a), cy - r * math.sin(a), w * (1 - s) ** 0.7 + 0.4 * (1 - s)))
+    best = {}
+    for (px, py, wv) in pts:
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1 else 0.8
+                    if k < best.get((x, y), 9):
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in best.items():
+        put(cv, x, y, tones[min(m - 1, int(k * m))])
+
+
+def pop(cv, c, r, facing=0.0, tones='WJFG'):
+    """un éclat d'impact en forme de nuage (un coeur et des pétales arrondis, plus gros vers l'avant)"""
+    cx, cy = c
+    lobes = [(0, 0, r)]
+    for i, da in enumerate((-70, -25, 20, 65, 150, 210)):
+        a = math.radians(facing + da)
+        big = 0.62 if abs(da) < 80 else 0.45
+        lobes.append((r * 0.95 * math.cos(a), -r * 0.95 * math.sin(a), r * big))
+    m = len(tones)
+    best = {}
+    for (dx, dy, rr) in lobes:
+        for y in range(int(cy + dy - rr - 1), int(cy + dy + rr + 2)):
+            for x in range(int(cx + dx - rr - 1), int(cx + dx + rr + 2)):
+                d = math.hypot(x + 0.5 - cx - dx, y + 0.5 - cy - dy)
+                if d <= rr:
+                    D = math.hypot(x + 0.5 - cx, y + 0.5 - cy) / (r * 1.5)
+                    if D < best.get((x, y), 9):
+                        best[(x, y)] = D
+    for (x, y), D in best.items():
+        put(cv, x, y, tones[min(m - 1, int(D * m))])
+
+
+def arc_trail(cv, c, R, a_staff, length, w, tones='OWJFG', ccw=True):
+    """traînée pleine en croissant derrière ce qui tourne (le bout du bâton) : bord extérieur sur le cercle de rayon R,
+    épaisse (w) contre le bâton, effilée au bout de la traînée ; dégradé du clair (contre le bâton) au jade (au bout),
+    les limites de tons suivent la courbe (jamais des rayons droits)."""
+    cx, cy = c
+    m = len(tones)
+    for y in range(int(cy - R - 2), int(cy + R + 3)):
+        for x in range(int(cx - R - 2), int(cx + R + 3)):
+            dx, dy = x + 0.5 - cx, y + 0.5 - cy
+            r = math.hypot(dx, dy)
+            if r > R + 0.5:
+                continue
+            ang = math.degrees(math.atan2(-dy, dx))
+            da = ((ang - a_staff) % 360) if ccw else ((a_staff - ang) % 360)
+            if da > length:
+                continue
+            s = da / length
+            ww = w * (1 - s) ** 0.9 + (0.6 if s < 0.97 else 0)
+            if r < R - ww:
+                continue
+            k = min(1.0, max(0.0, (R - r) / max(ww, 1e-6)))   # 0 au bord extérieur, 1 au bord intérieur
+            i = int((0.62 * s + 0.38 * k) * m)
+            put(cv, x, y, tones[min(m - 1, i)])
+
+
+def bezier(p0, p1, p2, p3, n):
+    out = []
+    for i in range(n + 1):
+        t = i / n
+        a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+        out.append((a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]))
+    return out
+
+
+def stroke(cv, pts, widths, tones):
+    """peint un ruban le long de points, avec une épaisseur par point (coeur clair -> bord sombre)"""
+    best = {}
+    for (px, py), wv in zip(pts, widths):
+        R = wv / 2
+        if R < 0.35:
+            continue
+        for y in range(int(py - R - 1), int(py + R + 2)):
+            for x in range(int(px - R - 1), int(px + R + 2)):
+                d = math.hypot(x + 0.5 - px, y + 0.5 - py)
+                if d <= R:
+                    k = d / R if R >= 1.2 else 0.85
+                    if k < best.get((x, y), 9):
+                        best[(x, y)] = k
+    m = len(tones)
+    for (x, y), k in best.items():
+        put(cv, x, y, tones[min(m - 1, int(k * m))])
+
+
+def gust(cv, p0, p1, p2, p3, w, tones='JFGH', curl_r=5.0, up=True, tail=0.0):
+    """une rafale à la chinoise : un long ruban courbe (Bézier) qui finit en volute enroulée.
+    tail : la part du début déjà effacée (0..1) quand la rafale se défait."""
+    n = 60
+    pts = bezier(p0, p1, p2, p3, n)
+    # la volute : elle continue la courbe et s'enroule (vers le haut si up)
+    ex, ey = pts[-1]
+    tx, ty = pts[-1][0] - pts[-2][0], pts[-1][1] - pts[-2][1]
+    tl = math.hypot(tx, ty) or 1
+    tx, ty = tx / tl, ty / tl
+    nx, ny = (ty, -tx) if up else (-ty, tx)            # vers l'intérieur de la volute
+    cx, cy = ex + nx * curl_r, ey + ny * curl_r
+    a0 = math.atan2(-(ey - cy), ex - cx)
+    turn = math.radians(300)
+    m = 40
+    sgn = 1 if up else -1
+    for i in range(1, m + 1):
+        s = i / m
+        a = a0 + sgn * turn * s
+        r = curl_r * (1 - 0.75 * s)
+        pts.append((cx + r * math.cos(a), cy - r * math.sin(a)))
+    N = len(pts)
+    widths = []
+    for i in range(N):
+        s = i / (N - 1)
+        if s < tail:
+            widths.append(0)
+            continue
+        ss = (s - tail) / max(1 - tail, 1e-6)
+        prof = (ss / 0.35) ** 0.7 if ss < 0.35 else ((1 - ss) / 0.65) ** 0.8
+        widths.append(w * prof + 0.5)
+    stroke(cv, pts, widths, tones)
+
+
+
+
+# Les plumes envolées (celles d'Orin : noir corbeau des ailes, sans contour, reflet k du côté de la lumière) et les
+# feuilles (celles d'Eldra, en jade), les cailloux soulevés (poussière sombre).
+CROW_FEATHERS = [
+    ['.....kkk..', 'hhijjjjjkk', '...iiijj..'],                              # couchée, file vers la droite
+    ['h.......', 'ijkk....', '.ijjkk..', '..iijjk.', '....iijk', '......i.'],  # plonge en bas à droite
+    ['......jk', '....ijjk', '..iijjk.', '.iijk...', 'hi......'],               # monte en haut à droite
+    ['.k.', 'jk.', 'jjk', 'ijk', 'ij.', '.h.'],                                 # dressée (elle tourne)
+    ['..kkk.....', 'kjjjjiihh.', '..jjiii...'],                              # couchée, retournée (elle tourne)
+]
+LEAVES = [['.G', 'GH', 'HI'], ['.GH', 'HI.'], ['GH.', '.HI'], ['G.', 'HG', '.I']]
+PEBBLE = ['MN', 'N.']
+
+
+def sprite(cv, rows, x, y):
+    for j, r in enumerate(rows):
+        for i, ch in enumerate(r):
+            if ch != '.':
+                put(cv, int(round(x)) + i, int(round(y)) + j, ch)
+
+
+def feather(cv, x, y, k=0):
+    sprite(cv, CROW_FEATHERS[k % len(CROW_FEATHERS)], x, y)
+
+
+def leaf(cv, x, y, k=0):
+    sprite(cv, LEAVES[k % len(LEAVES)], x, y)
+
+
+def pebble(cv, x, y):
+    sprite(cv, PEBBLE, x, y)
+
+
+# ---------------------------------------------------------------- 2) l'attaque de base : « Coup de shakujō »
+# 12 images, 1,7 s. Il arrache le bâton du sol, le lève par-dessus l'épaule en se cambrant (la main glisse vers le bas
+# de la hampe pour avoir de l'allonge), tient la préparation longtemps pendant que le vent s'enroule autour des
+# anneaux ; puis le bâton tourne d'un coup par-dessus sa tête (deux images de traînée en croissant) et s'abat devant
+# lui, la tête du shakujō frappe le sol : arrêt sur l'impact, le colosse tassé, le sol tremble (un pixel), nuages de
+# poussière arrondis, cailloux ; les anneaux, lancés par l'élan, retombent en tintant ; une rafale part au ras du sol et
+# frappe l'ennemi (une volute qui s'enroule sur lui). Retour lent : il relève le bâton et le replante.
+def fx_gather(level):
+    def f(cv, back, front, ctx):
+        c = ctx.head
+        a = 40 + 70 * level
+        curl(front, (c[0] - 6, c[1] + 2), 5.0 + level, a, turn=260, w=1.8, tones='JFGH')
+        if level:
+            curl(back, (c[0] + 7, c[1] - 4), 4.5, a + 150, turn=240, w=1.6, tones='FGH', cw=True)
+            leaf(front, c[0] - 15, c[1] + 12 - 4 * level, level)
+        # au sol, le vent soulève une feuille devant les geta
+        leaf(back, SOL[0] + 30 - 4 * level, GROUND - 3 - 5 * level, 1 + level)
+    return f
+
+
+def fx_trail(length, w=5.0):
+    def f(cv, back, front, ctx):
+        R = S_TOP - ctx.sg + 0.5
+        arc_trail(back, ctx.G, R, ctx.ang, length, w, tones='OWJFGH', ccw=True)
+        arc_trail(back, ctx.G, R - 9, ctx.ang + 4, length * 0.6, w * 0.5, tones='JFG', ccw=True)
+    return f
+
+
+def contact(ctx):
+    p = staff_to_canvas(ctx.G, ctx.ang, ctx.sg, 0.0, 111.0)
+    return np.array([p[0], min(p[1], GROUND - 1)])
+
+
+def fx_hit(k):
+    def f(cv, back, front, ctx):
+        c = contact(ctx)
+        cx = c[0]
+        if k == 0:
+            pop(front, (cx + 2, GROUND - 6), 6.5, facing=40, tones='WJFG')
+            cloud(back, (cx - 13, GROUND - 4), 5.0, tones='KLMN', seed=1)
+            cloud(back, (cx + 17, GROUND - 4), 6.0, tones='KLMN', seed=2)
+            for (dx, dy) in ((-6, -14), (9, -17), (19, -9)):
+                pebble(front, cx + dx, GROUND + dy)
+            for (dx, dy) in ((-9, -24), (8, -27)):
+                put(front, cx + dx, GROUND + dy, 'O')
+        elif k == 1:
+            crescent(front, (cx + 4, GROUND - 7), 8.0, 20, span=120, w=2.6, tones='WJFG')
+            cloud(back, (cx - 16, GROUND - 6), 6.5, tones='KLMN', seed=1, hollow=0.15)
+            cloud(back, (cx + 20, GROUND - 6), 7.5, tones='KLMN', seed=2, hollow=0.15)
+            gust(front, (cx + 10, GROUND - 4), (cx + 30, GROUND - 2), (cx + 45, GROUND - 9), (cx + 58, GROUND - 12),
+                 5.0, tones='JFGH', curl_r=5.0, up=True)
+            for (dx, dy) in ((-9, -20), (13, -24), (27, -13)):
+                pebble(front, cx + dx, GROUND + dy)
+            leaf(front, cx + 34, GROUND - 18, 0)
+        elif k == 2:
+            cloud(back, (cx - 18, GROUND - 8), 7.0, tones='KLMN', seed=1, hollow=0.45)
+            cloud(back, (cx + 22, GROUND - 8), 8.0, tones='KLMN', seed=2, hollow=0.45)
+            fx_ = FOE_X
+            gust(front, (cx + 18, GROUND - 3), (cx + 50, GROUND - 1), (fx_ - 30, GROUND - 6), (fx_ - 10, GROUND - 20),
+                 5.5, tones='JFGH', curl_r=7.0, up=True, tail=0.35)
+            pop(front, (fx_ - 6, GROUND - 22), 5.0, facing=20, tones='WJFG')
+            pebble(front, cx + 16, GROUND - 7)
+            leaf(front, fx_ - 24, GROUND - 30, 2)
+            leaf(front, cx + 52, GROUND - 14, 1)
+        elif k == 3:
+            cloud(back, (cx - 19, GROUND - 10), 6.0, tones='KLM', seed=1, hollow=0.8)
+            cloud(back, (cx + 23, GROUND - 10), 7.0, tones='KLM', seed=2, hollow=0.8)
+            curl(front, (FOE_X - 2, GROUND - 30), 7.0, 200, turn=280, w=2.2, tones='JFGH')
+            crescent(front, (FOE_X - 4, GROUND - 22), 9.0, 10, span=100, w=2.0, tones='FGH')
+            leaf(front, FOE_X - 18, GROUND - 40, 3)
+            leaf(front, FOE_X + 12, GROUND - 36, 0)
+        elif k == 4:
+            curl(front, (FOE_X + 2, GROUND - 38), 5.0, 260, turn=240, w=1.6, tones='FGH')
+            leaf(front, FOE_X - 14, GROUND - 30, 1)
+            leaf(front, FOE_X + 18, GROUND - 26, 2)
+        elif k == 5:
+            leaf(front, FOE_X - 10, GROUND - 16, 0)
+            leaf(front, FOE_X + 22, GROUND - 12, 3)
+    return f
+
+
+ATTAQUE = [
+    dict(ms=140),
+    # il arrache le bâton du sol (la main glisse un peu vers le bas de la hampe), le buste se cambre
+    dict(arm='rig', staff='libre', G=(25.0, 46.0), ang=100, sg=60, lean=-1, breath=1, wl=1, swing=(0.3, 0.2),
+         ms=130),
+    dict(arm='rig', staff='libre', G=(31.0, 32.0), ang=126, sg=48, lean=-2, breath=2, wl=1, head=(-1, 0),
+         swing=(0.5, 0.4), fx=[fx_gather(0)], ms=130),
+    # la préparation, tenue : le bâton loin derrière l'épaule, tout le corps tendu, le vent s'enroule aux anneaux
+    dict(arm='rig', staff='libre', G=(35.0, 24.0), ang=152, sg=40, lean=-3, crouch=-1, breath=2, head=(-1, 0),
+         swing=(0.0, 0.0), p=-1, fx=[fx_gather(1)], ms=320),
+    # le coup : le bâton passe par-dessus sa tête (traînées en croissant)
+    dict(arm='rig', staff='libre', G=(47.0, 30.0), ang=84, sg=36, lean=0, breath=1, wl=-1, head=(0, 0),
+         swing=(-0.9, 0.6), smear=[fx_trail(70, 6.0)], ms=50),
+    dict(arm='rig', staff='libre', G=(59.0, 44.0), ang=18, sg=34, lean=2, crouch=1, wl=-1, head=(1, 0),
+         swing=(-0.6, -0.9), smear=[fx_trail(90, 7.0)], ms=50),
+    # l'impact : la tête du shakujō frappe le sol devant lui ; arrêt, le sol tremble
+    dict(arm='rig', staff='libre', G=(66.0, 60.0), ang=-36, sg=31, lean=3, crouch=3, wl=-1, head=(1, 1), p=1,
+         swing=(0.9, 0.2), glint=(0, 2), fx=[fx_hit(0)], shake=1, ms=210),
+    dict(arm='rig', staff='libre', G=(66.0, 60.0), ang=-36, sg=31, lean=3, crouch=3, wl=0, head=(1, 1), p=1,
+         swing=(-0.4, 0.1), glint=(1, 3), fx=[fx_hit(1)], shake=-1, ms=110),
+    dict(arm='rig', staff='libre', G=(65.0, 59.0), ang=-34, sg=31, lean=3, crouch=2, head=(1, 0), p=0,
+         swing=(0.2, 0.0), fx=[fx_hit(2)], ms=120),
+    # le retour, lent : il relève le bâton
+    dict(arm='rig', staff='libre', G=(52.0, 50.0), ang=28, sg=42, lean=1, crouch=1, p=-1, swing=(0.5, 0.3),
+         fx=[fx_hit(3)], ms=150),
+    dict(arm='rig', staff='libre', G=(33.0, 47.0), ang=72, sg=58, lean=0, breath=1, p=0, swing=(0.4, 0.2),
+         fx=[fx_hit(4)], ms=150),
+    dict(j=2, fx=[fx_hit(5)], ms=170),
+]
+
+
+# ---------------------------------------------------------------- 3) l'attaque spéciale : « Bourrasque des anneaux »
+# 15 images, 2,1 s. Il inspire, lève le shakujō tout droit à bout de bras au-dessus de lui (le bâton monte tel quel,
+# pixels du dessin) en se grandissant ; les anneaux tintent et le vent s'y enroule en tourbillon (rubans, volutes,
+# feuilles et plumes noires aspirées) ; préparation tenue. Puis il plante le bâton d'un coup : éclair, arrêt, le sol
+# tremble, le souffle jaillit au pied du bâton (un dôme de vent et de poussière) ; et la bourrasque roule au ras du
+# sol vers la droite, une grosse vague de vent qui s'enroule à son front, soulève la poussière, les feuilles et les
+# plumes sur tout le premier rang ennemi, puis remonte en volutes et se défait. Il reste tassé, souffle, se relève.
+def fx_whirl(level):
+    def f(cv, back, front, ctx):
+        c = ctx.head
+        rx, ry = 9 + 4 * level, 4 + 1.5 * level
+        ph = 70 * level
+        # le tourbillon : deux rubans qui tournent autour de la boucle (l'un derrière, l'autre devant)
+        ribbon(back, (c[0], c[1] + 1), rx, ry, 30 + ph, 200 + ph, 2.4 + 0.6 * level, head=0.6, tones='JFGH')
+        ribbon(front, (c[0], c[1] + 2), rx + 2, ry + 1, 210 + ph, 330 + ph, 2.0 + 0.6 * level, head=0.6,
+               tones='WJFG')
+        if level >= 1:
+            curl(front, (c[0] + rx + 3, c[1] - 6), 4.0, 120 + ph, turn=260, w=1.6, tones='JFG')
+            leaf(front, c[0] - rx - 6, c[1] + 6 - 3 * level, level)
+            feather(back, c[0] + rx - 2, c[1] + 10 + 2 * level, 2)
+        if level >= 2:
+            curl(back, (c[0] - rx - 2, c[1] - 8), 4.5, 300 + ph, turn=260, w=1.6, tones='FGH', cw=True)
+            feather(front, c[0] - 20, c[1] + 18, 1)
+            leaf(front, c[0] + 18, c[1] + 14, 3)
+            for (dx, dy) in ((-4, -7), (6, 5)):
+                put(front, c[0] + dx, c[1] + dy, 'O')
+        # au sol : la poussière se lève vers le bâton
+        if level >= 1:
+            puff(back, (SOL[0] - 26, GROUND - 3), 2.5 + level, tones='KLM')
+            puff(back, (SOL[0] + 8, GROUND - 2), 2.0 + level, tones='KLM')
+    return f
+
+
+def fx_drop_smear(cv, back, front, ctx):
+    """le bâton descend d'un coup : un seul sillage courbe derrière la boucle (pas de traits répétés)"""
+    c = ctx.head
+    pts = bezier((c[0] - 1, c[1] - 26), (c[0] - 3, c[1] - 18), (c[0] - 2, c[1] - 8), (c[0], c[1] - 2), 30)
+    widths = [0.5 + 7.5 * (i / 30) ** 1.3 for i in range(31)]
+    stroke(back, pts, widths, 'WJFG')
+
+
+def fx_slam(k):
+    def f(cv, back, front, ctx):
+        fx0 = ctx.foot[0]
+        if k == 0:
+            # le souffle jaillit au pied du bâton : un dôme de vent, la poussière qui gicle des deux côtés
+            pop(front, (fx0 + 1, GROUND - 6), 7.0, facing=90, tones='WJFG')
+            ribbon(back, (fx0, GROUND - 2), 22, 6, 175, 5, 3.0, head=0.5, tones='JFGH')
+            cloud(back, (fx0 - 14, GROUND - 4), 6.0, tones='KLMN', seed=3)
+            cloud(back, (fx0 + 18, GROUND - 4), 6.5, tones='KLMN', seed=4)
+            for (dx, dy) in ((-10, -16), (12, -19), (22, -10)):
+                pebble(front, fx0 + dx, GROUND + dy)
+            return
+        # la vague de vent qui roule vers la droite : son front avance ; derrière, la poussière retombe
+        front_x = fx0 + [0, 62, 118, 176, 214, 232][k]
+        hgt = [0, 16, 20, 24, 26, 26][k]
+        tail = [0, 0.0, 0.25, 0.45, 0.7, 0.85][k]
+        if k <= 4:
+            gust(front, (fx0 + 8, GROUND - 3), (fx0 + 40, GROUND - 2), (front_x - 30, GROUND - 2),
+                 (front_x - 6, GROUND - hgt * 0.55), 6.5, tones='WJFGH', curl_r=hgt * 0.32, up=True, tail=tail)
+            gust(back, (fx0 + 20, GROUND - 10), (fx0 + 55, GROUND - 14), (front_x - 40, GROUND - 10),
+                 (front_x - 20, GROUND - hgt * 0.8), 3.5, tones='JFGH', curl_r=hgt * 0.22, up=True,
+                 tail=min(0.9, tail + 0.15))
+        # au front : la poussière soulevée, les feuilles et les plumes qui roulent
+        if 1 <= k <= 4:
+            cloud(back, (front_x - 4, GROUND - 6), 5.5 + k, tones='KLMN', seed=10 + k, hollow=0.1 * (k - 1))
+            leaf(front, front_x - 10, GROUND - hgt - 4, k)
+            feather(front, front_x - 24, GROUND - hgt + 2, [0, 2, 3, 4][k - 1])
+            leaf(front, front_x + 2, GROUND - hgt * 0.6, k + 1)
+        # sur le premier rang : la bourrasque frappe (éclats ronds au niveau des jambes et du ventre)
+        if k == 3:
+            pop(front, (FOE_X - 18, GROUND - 16), 5.5, facing=30, tones='WJFG')
+            pop(front, (FOE_X + 22, GROUND - 12), 4.5, facing=30, tones='WJFG')
+        if k >= 4:
+            r = 1.0 if k == 4 else 0.0
+            curl(front, (FOE_X - 8, GROUND - 34 - 6 * (k - 4)), 7.0 - 2 * (k - 4), 200 + 60 * k, turn=280,
+                 w=2.2 - 0.6 * (k - 4), tones='JFGH')
+            curl(front, (FOE_X + 28, GROUND - 26 - 6 * (k - 4)), 5.5 - 1.5 * (k - 4), 250 + 60 * k, turn=260,
+                 w=1.8 - 0.4 * (k - 4), tones='FGH', cw=True)
+            cloud(back, (FOE_X - 14, GROUND - 10), 7.0, tones='KLM', seed=21, hollow=0.45 + 0.35 * (k - 4))
+            cloud(back, (FOE_X + 26, GROUND - 8), 6.0, tones='KLM', seed=22, hollow=0.5 + 0.35 * (k - 4))
+            feather(front, FOE_X - 30 + 6 * (k - 4), GROUND - 46 + 8 * (k - 4), 3 + (k - 4))
+            leaf(front, FOE_X + 8, GROUND - 44 + 10 * (k - 4), k)
+            if r:
+                leaf(front, FOE_X + 40, GROUND - 30, 2)
+        # derrière la vague : la poussière du pied du bâton retombe
+        cloud(back, (fx0 + 20, GROUND - 6), 6.0, tones='KLM', seed=4, hollow=min(0.95, 0.25 * k))
+        cloud(back, (fx0 - 14, GROUND - 6), 5.0, tones='KLM', seed=3, hollow=min(0.95, 0.3 * k))
+    return f
+
+
+def fx_settle(k):
+    def f(cv, back, front, ctx):
+        feather(back, FOE_X - 12 + 4 * k, GROUND - 22 + 10 * k, 3 + k)
+        leaf(back, FOE_X + 20, GROUND - 14 + 6 * k, k)
+        if k == 0:
+            curl(front, (FOE_X + 4, GROUND - 52), 3.5, 40, turn=220, w=1.4, tones='FGH')
+    return f
+
+
+SPECIALE = [
+    dict(ms=120),
+    # il inspire et commence à lever le bâton tout droit
+    dict(arm='rig', lift=7, breath=2, wl=1, fx=[fx_whirl(0)], ms=130),
+    dict(arm='rig', lift=18, breath=2, crouch=-1, lean=-1, head=(0, -1), wl=1, j=1, fx=[fx_whirl(1)], ms=130),
+    # à bout de bras : le tourbillon autour des anneaux (préparation tenue)
+    dict(arm='rig', lift=27, breath=2, crouch=-2, lean=-1, head=(0, -1), j=2, fx=[fx_whirl(2)], ms=320),
+    # il plante le bâton d'un coup
+    dict(arm='rig', lift=9, breath=1, crouch=2, lean=1, wl=-1, head=(0, 1), smear=True, fx=[fx_drop_smear],
+         ms=50),
+    dict(arm='orig', crouch=4, lean=1, wl=-1, head=(1, 1), p=1, slip=1, fx=[fx_slam(0)], flash=35, shake=1, ms=220),
+    dict(arm='orig', crouch=4, lean=1, wl=0, head=(1, 1), p=1, slip=1, j=1, fx=[fx_slam(1)], shake=-1, ms=90),
+    dict(arm='orig', crouch=3, lean=1, wl=1, head=(1, 0), p=0, slip=1, j=2, fx=[fx_slam(2)], ms=90),
+    dict(arm='orig', crouch=3, lean=1, head=(1, 0), p=-1, slip=1, fx=[fx_slam(3)], shake=1, ms=120),
+    dict(arm='orig', crouch=3, lean=1, head=(1, 0), p=-1, slip=1, fx=[fx_slam(4)], ms=110),
+    dict(arm='orig', crouch=2, lean=1, p=0, slip=1, fx=[fx_slam(5)], ms=110),
+    # il souffle et se relève, lentement
+    dict(arm='orig', crouch=2, breath=1, p=1, fx=[fx_settle(0)], ms=150),
+    dict(arm='orig', crouch=1, breath=2, p=0, fx=[fx_settle(1)], ms=150),
+    dict(arm='orig', crouch=0, breath=1, j=1, fx=[fx_settle(2)], ms=150),
+    dict(j=2, ms=170),
+]
 
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)

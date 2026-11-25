@@ -1127,3 +1127,153 @@ def crown(cv, X, G, k, big=1.0, seed=0):
         m |= hm
         foam_m |= hm
     shade_mask(cv, m, 'XYZAB', foam=foam_m)
+
+
+def ring(cv, c, rx, ry, w, a0=0.0, a1=360.0, tones='WXYZ'):
+    """un anneau d'eau vu de biais (ellipse de rayons rx, ry), de l'angle a0 à a1 (degrés), épaisseur w ; le bord
+    éclairé (en haut à droite) le plus clair"""
+    cx, cy = c
+    n = max(16, int(abs(a1 - a0) / 360 * 2 * math.pi * max(rx, ry) * 2))
+    pts, ws = [], []
+    for i in range(n + 1):
+        a = math.radians(a0 + (a1 - a0) * i / n)
+        pts.append((cx + rx * math.cos(a), cy - ry * math.sin(a)))
+        lit = (math.cos(a) * LN[0] - math.sin(a) * LN[1])       # > 0 du côté de la lumière
+        ws.append(w * (0.75 + 0.25 * lit))
+    stroke(cv, pts, ws, tones)
+
+
+# ---------------------------------------------------------------- 2) l'attaque de base : « Coup de hanche »
+# Elle abaisse le canon à l'horizontale contre la hanche (le mousquet tourne autour du poing proche, la main lointaine
+# descend tenir le fût), se cale (genoux un peu pliés, buste en avant), plisse l'oeil, tient. Le chien s'abat :
+# étincelle sur la batterie. Le coup part : éclair rond à la bouche, la balle file vers la droite et sort du cadre ;
+# le recul repousse le buste et cabre le canon, qui remonte d'un seul élan jusqu'à la garde du dessin. La fumée
+# blanche reste là où le coup est parti : elle gonfle, monte, s'enroule en volutes et se défait ; un filet de fumée
+# monte encore de la bouche. L'ara sursaute au coup : il ouvre les ailes, crie, puis se recoiffe en hochant la tête.
+BALL = ['.ji', 'kjj', 'lk.']
+SHOT_AT = [None]                          # là où le coup de hanche est parti (toile) : la fumée y reste
+
+
+def fx_spark(cv, back, front, ctx):
+    """le chien frappe la batterie : une étincelle ronde et deux grains de poudre qui sautent"""
+    x, y = ctx.pan
+    pop(front, (x + 0.5, y - 0.5), 1.8, facing=70, tones='eefg')
+    put(front, x + 3, y - 3, 'f')
+    put(front, x - 1, y - 4, 'g')
+
+
+def fx_flash(cv, back, front, ctx):
+    """le coup : l'éclair rond à la bouche du canon (coeur blanc, bord orange) et la balle qui part"""
+    mx, my = ctx.muzzle
+    pop(front, (mx + 5, my), 5.0, facing=float(ctx.ang), tones='eefgh')
+    pop(front, (mx + 3, my), 2.4, facing=float(ctx.ang), tones='e')
+    sprite(front, BALL, int(mx + 17), int(my - 1))
+    puff(back, (ctx.pan[0] + 1, ctx.pan[1] - 3), 1.8, tones='stu')          # la fumée de l'amorce
+
+
+def fx_ball(dx, trail=16):
+    def f(cv, back, front, ctx):
+        mx, my = SHOT_AT[0]
+        x = mx + dx
+        taper(back, (x - trail, my), (x, my), 0.2, 1.1, 'tu')
+        sprite(front, BALL, int(x), int(my - 1))
+    return f
+
+
+def smoke(cv, lobes, tones='sstuv'):
+    """une fumée faite de bouffées rondes (x, y, r) fondues en un seul volume, modelé par la lumière"""
+    m = np.zeros((H, W), bool)
+    for (x, y, r) in lobes:
+        if r >= 0.8:
+            m |= ellipse_mask((x, y), r, r)
+    shade_mask(cv, m, tones)
+
+
+# La fumée du coup, image par image (décalages depuis la bouche du canon au moment du coup) : un jet de bouffées
+# rondes poussé vers l'avant, qui ralentit, gonfle, monte, s'enroule aux deux bouts en volutes et se défait (le
+# dessin de la fumée de Barzul, un peu plus long : le mousquet pousse plus fort que le pistolet).
+SMOKE = [
+    [(5, 0, 2.6), (11, -1, 3.6), (17, 0.5, 3.8), (23, -2, 4.6), (30, -0.5, 4.8), (36, -3, 3.6)],
+    [(6, -1, 3.2), (12, -3, 4.6), (19, -1, 5.2), (27, -5, 6.0), (34, -2, 6.2), (41, -6, 4.6)],
+    [(7, -3, 3.6), (14, -6, 5.2), (21, -4, 6.0), (29, -9, 6.6), (37, -6, 6.6), (44, -10, 4.8)],
+    [(9, -7, 3.4), (16, -10, 5.2), (23, -8, 6.0), (31, -13, 6.4), (39, -10, 6.2), (46, -14, 4.2)],
+    [(11, -11, 2.8), (18, -14, 4.4), (25, -12, 4.8), (33, -17, 5.4), (41, -14, 4.8), (47, -18, 3.2)],
+    [(20, -19, 3.2), (27, -17, 3.2), (35, -22, 4.0), (42, -19, 3.2)],
+    [(29, -23, 2.4), (37, -27, 2.6)],
+]
+# les volutes : (x, y, rayon, angle de départ, sens) — elles naissent aux bouts du nuage et s'enroulent en montant
+CURLS = [
+    [],
+    [(46, -8, 3.0, 300, False)],
+    [(3, -7, 3.0, 150, True), (49, -13, 3.4, 300, False)],
+    [(5, -11, 3.4, 150, True), (51, -18, 3.6, 300, False), (22, -17, 2.8, 60, True)],
+    [(7, -15, 3.6, 150, True), (52, -22, 3.6, 300, False), (25, -21, 3.0, 60, True)],
+    [(10, -20, 3.4, 150, True), (48, -25, 3.2, 300, False), (28, -26, 3.0, 60, True)],
+    [(14, -25, 2.8, 150, True), (36, -32, 2.6, 60, True)],
+]
+
+
+def fx_smoke(k, at=None, tint=None):
+    """la fumée du coup, là où il est parti (at : un autre point de départ, pour la spéciale)"""
+    def f(cv, back, front, ctx):
+        mx, my = at[0] if at else SHOT_AT[0]
+        layer = front if k <= 1 else back
+        tones = 'sstuv' if k < 4 else 'ssttu' if k < 6 else 'sttuu'
+        if tint:
+            tones = tint[min(k, len(tint) - 1)]
+        smoke(layer, [(mx + x, my + y, r) for (x, y, r) in SMOKE[k]], tones)
+        if k == 0:
+            pop(layer, (mx + 4, my), 2.0, facing=0, tones='ef')
+        for (x, y, r, a0, cw) in CURLS[k]:
+            curl(layer, (mx + x, my + y), r, a0, turn=290, w=1.9 if k < 5 else 1.5, tones='stu', cw=cw)
+    return f
+
+
+def fx_wisp(k):
+    """un mince filet de fumée qui monte encore de la bouche du canon et s'enroule"""
+    def f(cv, back, front, ctx):
+        mx, my = ctx.muzzle
+        pts = bezier((mx + 1, my - 1), (mx + 3, my - 5), (mx - 1, my - 8 - k), (mx + 2, my - 12 - k), 20)
+        stroke(back, pts, [2.2 - 1.2 * i / 20 for i in range(21)], 'tu')
+        curl(back, (mx + 3.5, my - 13 - k), 2.2, 180, turn=240, w=1.3, tones='tu', cw=True)
+    return f
+
+
+def fx_kick(k):
+    """le recul : la poussière soulevée sous les talons (deux petites bouffées qui roulent vers l'arrière)"""
+    def f(cv, back, front, ctx):
+        x0 = SOL[0] - 16 - 2 * k
+        r = [2.6, 3.4, 3.2, 2.4][k]
+        hol = [0.0, 0.0, 0.4, 0.7][k]
+        cloud(back, (x0 - 3 * k, GROUND - 2), r, tones='mmnoo', hollow=hol, seed=60 + k)
+        cloud(back, (x0 + 26 - 2 * k, GROUND - 2), r * 0.8, tones='mmnoo', hollow=hol, seed=70 + k)
+    return f
+
+
+HIP_0 = dict(gun='hanche', ang=0.0, s=1, lean=1, head=(1, 0), sq=1)
+ATTAQUE = [
+    # 0 : elle abaisse le canon (le mousquet tourne autour du poing proche), se cale
+    dict(gun='hanche', ang=14.036, s=1, lean=-1, head=(0, 1), ah=(0, 0), aq=1, e=1, ms=90),
+    # 1 : à l'horizontale, contre la hanche, buste en avant, l'oeil plissé ; elle tient
+    dict(HIP_0, ah=(1, 0), aq=1, e=0, ms=230),
+    # 2 : le chien s'abat — étincelle
+    dict(HIP_0, fired=True, ah=(1, 0), aq=0, e=-1, fx=[fx_spark], ms=60),
+    # 3 : le coup ! éclair, la balle part ; le recul cabre le canon et repousse le buste ; l'ara sursaute
+    dict(gun='hanche', ang=7.125, s=1, lean=-1, head=(0, 0), fired=True, aile='mi', cri=1, ab=-1, aq=-1, e=-1,
+         fx=[fx_flash, fx_kick(0)], ms=70),
+    # 4 : la fumée jaillit, la balle file ; le canon monte encore, l'ara ouvre grand les ailes et crie
+    dict(gun='hanche', ang=14.036, s=0, lean=-2, head=(-1, 0), fired=True, aile='haut', cri=1, ab=-2, aq=-2, e=0,
+         fx=[fx_smoke(0), fx_ball(80), fx_kick(1)], ms=70),
+    # 5 : d'un seul élan, le mousquet revient en garde (le mousquet du dessin) ; l'ara retombe, ailes à demi
+    dict(gun='orig', s=0, lean=-1, head=(-1, 0), aile='mi', cri=1, ab=-1, aq=-1, e=1,
+         fx=[fx_smoke(1), fx_ball(170), fx_kick(2)], ms=80),
+    # 6-10 : en garde ; la fumée monte et se défait, un filet de fumée sort encore du canon ; l'ara se recoiffe
+    dict(gun='orig', s=0, lean=0, head=(0, 1), ah=(0, 1), aq=1, e=1, fx=[fx_smoke(2), fx_kick(3)], ms=90),
+    dict(gun='orig', s=1, lean=0, head=(0, 0), ah=(1, 1), aq=1, e=0, fx=[fx_smoke(3), fx_wisp(0)], ms=100),
+    dict(gun='orig', s=1, lean=0, head=(0, 0), ah=(0, 0), aq=0, e=-1, fx=[fx_smoke(4), fx_wisp(1)], ms=110),
+    dict(gun='orig', s=0, lean=0, head=(0, 0), ah=(1, 1), aq=0, e=0, fx=[fx_smoke(5), fx_wisp(2)], ms=120),
+    dict(gun='orig', s=0, lean=0, head=(0, 0), ah=(0, 0), aq=0, e=0, fx=[fx_smoke(6)], ms=130),
+]
+# la bouche du canon à l'image du coup : la fumée et la balle partent de là, quoi que fasse le mousquet ensuite
+_c = rig_frame(dict(ATTAQUE[2], fx=[]))[3]
+SHOT_AT[0] = (float(_c.muzzle[0]), float(_c.muzzle[1]))
