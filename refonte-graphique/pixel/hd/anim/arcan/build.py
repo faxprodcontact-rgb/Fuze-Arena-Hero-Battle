@@ -1,5 +1,6 @@
 # Arcan (mages-7, vent, soutien, épique) : l'ogre au sac à vent — pose (respiration), attaque de base « Coup de col »,
-# attaque spéciale « Fronde d'Éole ».
+# attaque spéciale « Fronde d'Éole » (refaite le 25/11/2026 en sort d'ÉQUIPE : il ouvre le sac vers ses alliés, derrière
+# lui ; voir « la spéciale d'équipe » plus bas).
 #
 # Lancer : python3 refonte-graphique/pixel/hd/anim/arcan/build.py
 # Écrit dans refonte-graphique/pixel/sortie/ : anim-arcan-pose.gif, anim-arcan-attaque.gif, anim-arcan-speciale.gif,
@@ -18,7 +19,7 @@
 #     bracelet d'or), le poing (quatre rouleaux de doigts, le pouce par-dessus), le col du sac (tube de toile froncé,
 #     cordon d'or noué, bout froncé fermé ou ouvert en corolle) et, dans la spéciale, le sac entier quand il quitte
 #     les épaules (un long ballon de toile à deux cols, plis qui partent des cols, la pièce rapiécée, ombré par la
-#     lumière d'en haut à droite) : plein, étiré par la vitesse, qui se vide, puis flasque ;
+#     lumière d'en haut à droite) : plein, calé sur l'épaule, qui se vide, puis flasque ;
 #   - c'est un ogre lourd : préparations tenues, gestes brefs et puissants, retours un peu comiques (il grogne) ;
 #   - les effets (vent, poussière, feuilles) ont leur petite palette, sans contour noir, en formes courbes (rubans,
 #     volutes enroulées, bouffées) : jamais de rayons droits répétés ;
@@ -1358,9 +1359,7 @@ def embers(front, back, cv, t, n=9, spread=46, fade=0.0):
 def orb(cv, c, r, gold=False):
     """un orbe d'énergie : un coeur blanc décalé vers la lumière (en haut à droite), le corps bleu pâle (ou or), un
     bord plus soutenu"""
-    tones = 'WyY8' if gold else 'WXYx'
-    if gold:
-        tones = 'Wy89'
+    tones = 'Wy89' if gold else 'WXYx'
     cx, cy = c
     best = {}
     for y in range(int(cy - r - 1), int(cy + r + 2)):
@@ -1559,11 +1558,11 @@ SPECIALE = [
          fx=[fx_team(0)], ms=150),
     # il ouvre le col en poussant son cri de guerre : arrêt sur l'image, le vent porteur jaillit, l'aura flambe
     dict(mode='bag', crouch=3, lean=-2, G=SHOULDER_G, bend=1, jaw=2, head=(-1, 0), bag=shouldered(open_=1.0),
-         fx=[fx_team(1)], flash=(24, WARM), ms=210),
+         fx=[fx_team(1)], flash=(12, WARM), ms=210),
     dict(mode='bag', crouch=2, lean=-1, G=SHOULDER_G, bend=1, jaw=2, bag=shouldered(full=0.6, open_=1.0, wob=0.5),
-         fx=[fx_team(2)], flash=(12, WARM), ms=110),
+         fx=[fx_team(2)], flash=(6, WARM), ms=110),
     dict(mode='bag', crouch=2, lean=-1, G=SHOULDER_G, bend=1, jaw=2,
-         bag=shouldered(full=0.3, open_=1.0, wob=0.9, sway=1.0, L=70), fx=[fx_team(3)], flash=(8, WARM), ms=130),
+         bag=shouldered(full=0.3, open_=1.0, wob=0.9, sway=1.0, L=70), fx=[fx_team(3)], ms=130),
     dict(mode='bag', crouch=2, lean=0, G=SHOULDER_G, bend=1, jaw=1,
          bag=shouldered(full=0.08, open_=0.8, wob=1.0, sway=-1.0, L=66, d=196), fx=[fx_team(4)], ms=120),
     # le sac est vide : il le ramène par-dessus sa tête (la toile vide claque au vent)…
