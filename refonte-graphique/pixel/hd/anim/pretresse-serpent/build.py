@@ -894,12 +894,21 @@ def cocoon(cv, level, cracks=0, top_cut=None):
 SHEAD = [(-4.0, -2.4), (-0.5, -3.4), (3.0, -2.6), (6.0, -0.8), (6.6, 0.8), (3.4, 2.2), (-0.5, 2.6), (-4.4, 1.8)]
 
 
-def snake_head(cv, c, ang, tones='STUV', eye='Z', k=1.0):
+def snake_head(cv, c, ang, tones='TUVV', eye='Z', k=1.5, tongue=True):
+    """la tête du serpent (un coin à facettes, pointe vers ang), un oeil, et sa langue rouge fourchue"""
     ca, sa = math.cos(math.radians(ang)), math.sin(math.radians(ang))
     tr = lambda pts: [(c[0] + k * (x * ca - y * sa), c[1] + k * (x * sa + y * ca)) for (x, y) in pts]
-    facets(cv, tr(SHEAD), tones, core=tones[1], hi=tones[0])
-    ex, ey = tr([(2.2, -1.2)])[0]
-    put(cv, ex, ey, eye)
+    if tongue:
+        tip = tr([(9.2, 0.6)])[0]
+        for (x, y) in line_px(tuple(map(rnd, tr([(6.6, 0.4)])[0])), tuple(map(rnd, tip))):
+            put(cv, x, y, 'O')
+        for (fx, fy) in ((10.4, -0.4), (10.4, 1.6)):
+            q = tr([(fx, fy)])[0]
+            put(cv, rnd(q[0]), rnd(q[1]), 'O')
+    facets(cv, tr(SHEAD), tones, core=tones[1], hi='S')
+    ex, ey = tr([(2.4, -1.3)])[0]
+    put(cv, rnd(ex), rnd(ey), eye)
+    put(cv, rnd(ex) - 1, rnd(ey), eye)
 
 
 def serpent_body(cv, pts, w_head=4.6, w_tail=1.0, tones='STUV'):
@@ -927,10 +936,10 @@ def fx_gather(stage):
                 a = math.radians(200 - 330 * s)
                 r = 10.5 - 1.5 * s
                 pts.append((g[0] + r * math.cos(a), g[1] - 0.75 * r * math.sin(a)))
-            serpent_body(back, pts[:22], 3.4, 1.0, 'TUV')
-            serpent_body(front, pts[22:], 4.4, 3.4, 'STUV')
+            serpent_body(back, pts[:22], 4.0, 1.0, 'TUV')
+            serpent_body(front, pts[22:], 5.4, 4.0, 'STUV')
             hx, hy = pts[-1]
-            snake_head(front, (hx + 3, hy - 1), -40)
+            snake_head(front, (hx + 2, hy - 1), -40, k=1.3)
             for i, (dx, dy) in enumerate(((-14, -3), (12, 11), (9, -12))):
                 rock(back, (g[0] + dx, g[1] + dy), 1.0, seed=24 + i)
     return f
@@ -961,7 +970,7 @@ def fx_serpent(p, tail=0.0):
             off = 4.0 * math.sin(rel * 9.0 + p * 5.0) * min(1.0, rel * 3)
             pts.append((path[i][0] + nx * off, path[i][1] + ny * off))
         if len(pts) > 3:
-            serpent_body(back, pts[:-2], 4.4, 0.8)
+            serpent_body(back, pts[:-3], 6.0, 1.0)
             hx, hy = pts[-1]
             ax, ay = pts[-4]
             snake_head(back, (hx, hy), math.degrees(math.atan2(hy - ay, hx - ax)))
@@ -1004,7 +1013,8 @@ def coil(back, front_cv, tones_front, tones_back, w=3.4, upto=1.0, head=True, ey
             stroke(front_cv, run, [w] * len(run), tones_front)
     if head:
         x, y, _ = pts[-1]
-        snake_head(front_cv, (x - 3, y - 3), 200, tones_front if len(tones_front) == 4 else 'STUV', eye=eye)
+        snake_head(front_cv, (x - 3, y - 3), 200, 'TUVV' if eye == 'Z' else 'KLPQ', eye=eye, k=1.3,
+                   tongue=(eye == 'Z'))
 
 
 def fx_bind(k):

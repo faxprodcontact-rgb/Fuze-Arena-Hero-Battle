@@ -883,18 +883,112 @@ def club_angle(ctx):
     return ang_of(ctx.club - ctx.S)
 
 
-def fx_club_smear(prev_club, tones='65432', lava='uts', w=16):
-    """la massue floue : un croissant de roche entre l'ancienne place de la massue et la nouvelle, bordé d'une
-    traînée de braise ; prev_club = centre de la massue à l'image d'avant (grille, comme les réglages)"""
+def club_dir(arm):
+    """où est la massue, vue de l'épaule (degrés), pour des angles de bras donnés"""
+    E, Wr = arm_geometry(np.zeros(2), *arm)
+    return ang_of(Wr + rot(np.array([2.0, 14.0]), arm[2] - PHI0))
+
+
+def fx_club_smear(prev_arm, tones='65432', lava='uts', w=16):
+    """la massue floue : un croissant de roche entre l'ancienne place de la massue (prev_arm = les angles du bras à
+    l'image d'avant) et la nouvelle, bordé d'une traînée de braise"""
     def f(cv, back, front, ctx):
         a_to = club_angle(ctx)
-        a_from = ang_of(np.array(prev_club, float) + np.array([OX, OY]) - ctx.S)
+        a_from = club_dir(prev_arm)
         span = ((a_to - a_from + 180) % 360) - 180
         R = float(np.linalg.norm(ctx.club - ctx.S)) + 13
         arc_trail(back, ctx.S, R - 3, a_to - span, a_to, w, tones)
         if lava:
             arc_trail(back, ctx.S, R - 1, a_to - span * 0.8, a_to, 3.2, lava)
     return f
+
+
+
+# ---------------------------------------------------------------- 2) l'attaque de base : « Coup de massue »
+# Un coup de massue par-dessus la tête, lourd : il arrache la massue du sol et la soulève en arrière (il se cabre, le
+# haut du corps bascule vers l'arrière, le petit bras se replie) ; longue attente, massue haute derrière la bosse ;
+# puis il bascule d'un bloc vers l'avant et l'abat devant lui (une image floue) : la massue s'écrase au sol, tout
+# tremble, des bouffées de poussière roulent au ras du sol, des éclats de roche et quelques gouttes de lave sautent.
+# Impact tenu ; puis il traîne la massue en arrière et se redresse lentement.
+ARM_REST = (A_UP0, A_FORE0, PHI0)
+ARM_LIFT = (-150.0, -140.0, -120.0)
+ARM_HIGH = (150.0, 115.0, 120.0)
+ARM_PEAK = (125.0, 95.0, 140.0)
+ARM_SWING = (55.0, 15.0, -10.0)
+ARM_HIT = (-42.0, -66.0, -90.0)
+ARM_DRAG = (-75.0, -78.0, -92.0)
+ARM_BACK = (A_UP0 + 6, A_FORE0 + 4, PHI0)
+
+
+def fx_slam(k, big=1.0):
+    """l'impact au sol, sous la massue : k = 0 l'écrasement (poussière plaquée au sol, éclats, gouttes),
+    1 la poussière roule en bouffées et les éclats volent, 2 la poussière retombe, 3 il en reste un voile"""
+    def f(cv, back, front, ctx):
+        gy = GROUND
+        x0 = ctx.club[0]
+        L, R = x0 - 24 * big, x0 + 26 * big                 # les deux bords de la massue
+        if k == 0:
+            cloud(back, (L - 2, gy - 3), 5.5 * big, 'EEFK', seed=11)
+            cloud(front, (R + 3, gy - 3), 6.0 * big, 'EEFK', seed=12)
+            cloud(back, (x0 + 4, gy - 4), 4.0 * big, 'EFK', seed=13)
+            for (dx, dy, kk, fl) in ((-10, -14, 1, False), (14, -16, 0, True), (30, -8, 2, True), (-28, -7, 2, False)):
+                chunk(front, R + dx - 20 if dx > 0 else L + dx + 12, gy + dy, kk, fl)
+            for (dx, dy, vx, vy, sz) in ((8, -12, 1, -1, 2), (-6, -16, -0.5, -1, 1), (22, -10, 1, -0.6, 1)):
+                drop(front, x0 + dx, gy + dy, vx, vy, sz)
+        elif k == 1:
+            cloud(back, (L - 8, gy - 4), 7.0 * big, 'EEFK', seed=21)
+            cloud(front, (R + 10, gy - 4), 7.5 * big, 'EEFK', seed=22)
+            cloud(back, (R + 22, gy - 3), 4.0 * big, 'EFK', seed=23)
+            cloud(back, (L - 20, gy - 3), 3.6 * big, 'EFK', seed=24)
+            for (x, y, kk, fl) in ((R + 10, gy - 26, 0, True), (R + 28, gy - 14, 2, True), (L - 14, gy - 22, 1, False),
+                                   (x0 + 6, gy - 34, 3, False)):
+                chunk(front, x, y, kk, fl)
+            for (dx, dy, vx, vy, sz) in ((20, -24, 1, 0.2, 2), (-14, -26, -0.5, 0.3, 1), (36, -16, 1, 0.5, 1)):
+                drop(front, x0 + dx, gy + dy, vx, vy, sz)
+        elif k == 2:
+            cloud(back, (L - 12, gy - 6), 7.0 * big, 'EFFK', hollow=0.35, seed=31)
+            cloud(back, (R + 16, gy - 6), 7.5 * big, 'EFFK', hollow=0.35, seed=32)
+            for (x, y, kk, fl) in ((R + 34, gy - 6, 2, True), (L - 22, gy - 8, 1, False), (x0 + 10, gy - 24, 3, False)):
+                chunk(front, x, y, kk, fl)
+            ember(front, x0 + 30, gy - 20)
+            ember(front, x0 - 12, gy - 30, True)
+        else:
+            cloud(back, (L - 14, gy - 8), 6.0 * big, 'EEF', hollow=0.7, seed=41)
+            cloud(back, (R + 20, gy - 8), 6.5 * big, 'EEF', hollow=0.7, seed=42)
+            chunk(back, R + 36, gy - 3, 2, True)
+            chunk(back, L - 26, gy - 3, 1, False)
+    return f
+
+
+def fx_lift_dust(cv, back, front, ctx):
+    """la massue s'arrache du sol : un peu de terre et deux cailloux tombent de sa base"""
+    gy = GROUND
+    x0 = ctx.club[0]
+    cloud(back, (x0 - 6, gy - 2), 3.6, 'EFK', seed=5)
+    cloud(back, (x0 + 14, gy - 2), 3.0, 'EFK', seed=6)
+    chunk(front, x0 - 2, ctx.club_bottom + 3, 2, False)
+    chunk(front, x0 + 9, ctx.club_bottom + 6, 1, True)
+
+
+ATTAQUE = [
+    # arm = (angle du bras, de l'avant-bras, de la massue) ; lean / tilt = glissement / bascule du haut du corps ;
+    # head = retard du visage ; pa = le petit bras ; plant = la massue est posée juste sur le sol
+    dict(arms='orig', ms=140),
+    dict(arm=ARM_LIFT, lean=-1, tilt=-2, crouch=1, head=(0, 1), pa=(-1, 0), fx_list=[fx_lift_dust], ms=130),
+    dict(arm=ARM_HIGH, lean=-2, tilt=-4, crouch=-1, head=(0, -1), pa=(-2, -1), smear=fx_club_smear(ARM_LIFT, w=10,
+         lava=''), ms=110),
+    dict(arm=ARM_PEAK, lean=-2, tilt=-5, crouch=-2, head=(0, -1), pa=(-2, -2), glow=1, ms=360),
+    dict(arm=ARM_SWING, lean=2, tilt=3, crouch=0, pa=(0, -1), glow=1, smear=fx_club_smear(ARM_PEAK, w=20), ms=50),
+    dict(arm=ARM_HIT, plant=True, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), glow=1, shake=1,
+         smear=fx_club_smear(ARM_SWING, w=14), fx_list=[fx_slam(0)], ms=200),
+    dict(arm=ARM_HIT, plant=True, lean=4, tilt=8, crouch=3, head=(0, 1), pa=(1, 1), shake=-1, fx_list=[fx_slam(1)],
+         ms=110),
+    dict(arm=ARM_HIT, plant=True, lean=4, tilt=7, crouch=3, pa=(1, 0), fx_list=[fx_slam(2)], ms=150),
+    dict(arm=ARM_DRAG, plant=True, lean=3, tilt=4, crouch=2, pa=(0, 0), fx_list=[fx_slam(3)], ms=150),
+    dict(arm=ARM_BACK, plant=True, lean=1, tilt=1, crouch=1, ms=150),
+    dict(arms='orig', ms=160),
+]
+SPECIALE = []
 
 # ---------------------------------------------------------------- toutes les images
 def build_one(name):

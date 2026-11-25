@@ -700,6 +700,32 @@ def drop(cv, x, y, k=0, flip=False):
     sprite(cv, DROPS[k % len(DROPS)], int(x), int(y), flip)
 
 
+
+# ---------------------------------------------------------------- poses de pattes pour les bonds (grille, corps au repos)
+# 'new' = patte redessinée [genou, cheville, pointe] ; t/k/j = patte du dessin pliée (les deux pattes avant dressées).
+TRAIL = {   # en plein vol : les pattes arrière traînent, tendues ; les pattes avant visent la proie
+    'N1': dict(new=[(4, 95), (-3, 104), (-8, 111)]), 'N2': dict(new=[(38, 106), (31, 111), (26, 114)]),
+    'F1': dict(new=[(28, 92), (21, 101), (16, 107)]), 'F2': dict(new=[(52, 99), (46, 106), (41, 111)]),
+    'N3': dict(new=[(64, 106), (76, 110), (86, 111)]), 'F3': dict(new=[(108, 96), (115, 102), (120, 105)]),
+    'N4': dict(t=(5, 6), k=(2, 2), j=3), 'F4': dict(t=(4, 8), k=(2, 3), j=2)}
+
+
+def push(sp):
+    """le départ : les pattes arrière sont encore plantées au sol derrière (tendues comme des ressorts lâchés)"""
+    dx, dy = sp
+    P = dict(TRAIL)
+    P['N1'] = dict(new=[(8, 92), (20 - dx, 100 - dy), (17 - dx, 115.5 - dy)])
+    P['F1'] = dict(new=[(32, 90), (38 - dx, 100 - dy), (32 - dx, 115.5 - dy)])
+    P['N2'] = dict(new=[(41, 106), (48 - dx, 108 - dy), (44 - dx, 115.5 - dy)])
+    P['F2'] = dict(new=[(55, 98), (62 - dx, 104 - dy), (57 - dx, 115.5 - dy)])
+    return P
+
+
+ATTAQUE = [
+    dict(ms=60),
+]
+
+
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)
 # RETOUCHES[nom de l'animation][numéro d'image] = [(x, y, 'TEXTE')] : TEXTE écrit sur la toile du monstre à partir
 # de (x, y) en coordonnées de la GRILLE du dessin ; '.' efface, ' ' laisse le pixel tel quel.
@@ -841,6 +867,7 @@ def dev_sheet(name, frames, k=3, per=10, box=None, path=None):
 
 # ---------------------------------------------------------------- essais (brouillon)
 ESSAI = [
+    dict(sp=(16, -12), air=True, legs=push((16, -12)), ms=60),
     dict(sp=(30, -22), air=True, legs={
         'N1': dict(new=[(4, 95), (-3, 104), (-8, 111)]), 'N2': dict(new=[(38, 106), (31, 111), (26, 114)]),
         'F1': dict(new=[(28, 92), (21, 101), (16, 107)]), 'F2': dict(new=[(52, 99), (46, 106), (41, 111)]),

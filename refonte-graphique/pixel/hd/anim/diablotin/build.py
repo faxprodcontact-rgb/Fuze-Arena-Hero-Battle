@@ -944,7 +944,7 @@ def fx_smear(a_from, fire=False):
         a_to = math.degrees(math.atan2(-v[1], v[0]))
         if fire:
             arc_trail(back, S, R + 2, a_from, a_to, 13.0, 'wvutsr')
-            arc_trail(front, S, R + 2, a_to - math.copysign(40, a_to - a_from), a_to, 6.0, 'wvut')
+            arc_trail(front, S, R + 2, a_to - math.copysign(15, a_to - a_from), a_to, 6.0, 'wvut')
         else:
             arc_trail(back, S, R, a_from, a_to, 10.0, 'mmlk', taper=0.6)
             arc_trail(back, S, R + 1.2, a_from + (a_to - a_from) * 0.4, a_to, 2.0, 'ut')
@@ -1210,7 +1210,8 @@ SPECIALE = [
          pg=1, fh=(-1, -1), skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], fx_list=[fx_club_fire(2, 0.2)], ms=110),
     # il l'abat (grand croissant de feu)
     dict(G=(73, 88), ang=-20, bend=-1, lift=6, shift=34, crouch=0, lean=2, head=(1, 1), q=(-1, 1), en=1, pg=0,
-         skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], smear=fx_smear(110, fire=True), ms=40),
+         skin=SKIN_HOT[2], glow=1, hot=IRON_HOT[2], smear=fx_smear(110, fire=True),
+         fx_list=[fx_club_fire(2, -0.9)], ms=40),
     # le choc : arrêt sur l'image, éclair, puis la gerbe de feu
     dict(**HIT_S, flash=45, fx_list=[at(HIT_S_C, fx_burst(0))], ms=200),
     dict(**HIT_S, fx_list=[at(HIT_S_C, fx_burst(1))], ms=100),

@@ -133,7 +133,7 @@ P['echarpe'] = take(filled & isin(ORIG, RED) & (XX >= 76) & (YY >= 78) & (YY <= 
 P['brasL'] = take(filled & isin(ORIG, COAT + GOLD) & (((XX >= 81) & (YY >= 62) & (YY <= 69)) |
                                                     ((XX >= 80) & (YY >= 70) & (YY <= 77))))
 # la tête : chapeau, visage, cheveux (les deux mèches qui tombent aux épaules), oreille et anneau
-P['tete'] = take(filled & ((YY <= 57) & (XX >= 52) | ((YY <= 60) & (XX >= 52) & (XX <= 62) & isin(ORIG, HAIR))))
+P['tete'] = take(filled & ((YY <= 57) & (XX >= 52) | (YY <= 40) | ((YY <= 60) & (XX >= 52) & (XX <= 62) & isin(ORIG, HAIR))))
 P['corps'] = rest.copy()
 # sous le bec de l'ara (quand sa tête bouge) : les cheveux continuent
 for (_x, _y) in zip(*np.nonzero((P['ara_tete'] != '.') & (XX >= 52))[::-1]):
