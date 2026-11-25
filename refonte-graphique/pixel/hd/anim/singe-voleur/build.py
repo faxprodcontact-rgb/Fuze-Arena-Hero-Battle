@@ -713,3 +713,155 @@ def gust(cv, p0, p1, p2, p3, w, tones='xyzv', curl_r=5.0, up=True, tail=0.0):
         widths.append(w * prof + 0.5)
     stroke(cv, pts, widths, tones)
 
+
+
+# ---------------------------------------------------------------- petits objets : feuilles, pièce d'or
+def coin(cv, x, y, face=0):
+    """la pièce d'or volée (posée sur la toile du singe : elle a son contour) ; face 0 = de face, 1 = de biais,
+    2 = sur la tranche (elle tourne en vol)"""
+    rows = [['.TT.', 'TUTS', 'TTSR', '.SR.'],
+            ['TT', 'US', 'TS', 'SR'],
+            ['T', 'U', 'S', 'R']][face % 3]
+    for j, r in enumerate(rows):
+        for i, ch in enumerate(r):
+            X, Y = int(x) + i - len(r) // 2, int(y) + j - 2
+            if ch != '.' and 0 <= X < W and 0 <= Y < H:
+                cv[Y, X] = ch
+
+
+def sparkle(cv, x, y, big=False):
+    """un éclat doré (une petite croix arrondie, pas des rayons)"""
+    pts = [(0, 0, 'g'), (1, 0, 'T'), (-1, 0, 'T'), (0, 1, 'T'), (0, -1, 'T')]
+    if big:
+        pts += [(2, 0, 'S'), (-2, 0, 'S'), (0, 2, 'S'), (0, -2, 'S'), (1, 1, 'g'), (-1, -1, 'g')]
+    for (dx, dy, ch) in pts:
+        X, Y = int(x) + dx, int(y) + dy
+        if 0 <= X < W and 0 <= Y < H:
+            cv[Y, X] = 'g' if ch == 'g' else {'T': 'k', 'S': 'm'}[ch] if False else ch
+
+
+# ---------------------------------------------------------------- montage d'une image d'attaque
+def rig_frame(spec):
+    """spec : réglages du corps (voir body_frame), 'arm' (poignet relatif à l'épaule, angle de la dague) et la liste
+    des effets. Renvoie (singe, effets derrière, effets devant, ctx)."""
+    cv, ctx = body_frame(spec, spec.get('arm'))
+    back, front = empty(), empty()
+    ctx.home = np.array([SOL[0], GROUND], float)
+    for fx in spec.get('fx', []):
+        fx(cv, back, front, ctx)
+    return cv, back, front, ctx
+
+
+def fx_dust(x_off, size=1.0, seed=0, hollow=0.0):
+    """la poussière d'un départ ou d'une réception : deux nuages bas aux pattes"""
+    def f(cv, back, front, ctx):
+        for i, dx in enumerate((-22, 14)):
+            cloud(back, (SOL[0] + x_off + dx, GROUND - 3 * size), 4.0 * size, 'kkkmn', hollow=hollow, seed=seed + i)
+    return f
+
+
+def fx_dash_trail(x0, x1, y_mid, k=0):
+    """la traînée de vent d'un bond : deux rubans courbes du point de départ jusqu'au singe (vent à la chinoise)"""
+    def f(cv, back, front, ctx):
+        tail = [0.0, 0.35, 0.7][k]
+        L = x1 - x0
+        gust(back, (x0, GROUND - 6), (x0 + L * 0.35, GROUND - 6 - 2), (x0 + L * 0.7, y_mid + 10), (x1, y_mid + 4),
+             4.4, 'xyzvu', curl_r=0.1, up=True, tail=tail)
+        gust(back, (x0 - 6, y_mid + 6), (x0 + L * 0.3, y_mid - 2), (x0 + L * 0.65, y_mid - 8), (x1 - 4, y_mid - 10),
+             3.0, 'yzvu', curl_r=3.0, up=False, tail=tail)
+    return f
+
+
+def fx_slash(a_from, a_to, w=9.0, tones='gwxyz', inner=True):
+    """la traînée de la lame : un croissant plein derrière la dague, du premier angle au dernier (autour de l'épaule)"""
+    def f(cv, back, front, ctx):
+        S = ctx.shoulder
+        R = float(np.linalg.norm(ctx.tip - S))
+        a_tip = math.degrees(math.atan2(-(ctx.tip[1] - S[1]), ctx.tip[0] - S[0]))
+        span = abs(a_from - a_to)
+        ccw = a_from > a_to                       # la lame descend (sens des aiguilles) : la traînée est au-dessus
+        arc_trail(back, S, R + 1, a_tip + (2 if ccw else -2), span, w, tones, ccw=ccw)
+        if inner:
+            arc_trail(back, S, R * 0.62, a_tip + (5 if ccw else -5), span * 0.6, w * 0.4, 'xyz', ccw=ccw)
+    return f
+
+
+def fx_hit(k, facing=-20, big=1.0):
+    """l'éclat du coup au bout de la lame : 0 = le choc (blanc), 1 = il se défait en volutes de vent"""
+    def f(cv, back, front, ctx):
+        tip = ctx.tip + 2 * ctx.u
+        if k == 0:
+            pop(front, tip, 5.0 * big, facing=facing, tones='wwxy')
+            crescent(back, tip + np.array([4, 0]), 9 * big, facing, span=120, w=2.6, tones='xyz')
+        else:
+            pop(front, tip + np.array([2, 0]), 4.0 * big, facing=facing, tones='xyzv')
+            curl(front, tip + np.array([7, -6]) * big, 3.6 * big, 200, turn=240, w=1.8, tones='yzv', cw=True)
+            curl(front, tip + np.array([6, 6]) * big, 3.0 * big, 160, turn=220, w=1.5, tones='zv')
+            leaf(front, tip[0] + 12 * big, tip[1] - 3, 0)
+    return f
+
+
+# ---------------------------------------------------------------- 2) l'attaque de base : « Coup de patte du chapardeur »
+# Il se ramasse sur ses quatre pattes (le dos se creuse, la queue s'enroule, la dague se lève), bondit en rasant le
+# sol vers l'ennemi (pattes arrière détendues, patte avant tendue, traînée de vent), lève la dague au sommet du bond,
+# tranche en retombant (croissant de vent), touche (éclat tenu), puis repart d'un saut en arrière et retombe à sa place.
+ATTAQUE = [
+    dict(dos=(-2, 2), tete=(-1, 1), sac=(0, -1), queue=(-1, 1), arr=(0, 0), e=1,
+         arm=dict(wrist=(3, 9), ang=45), ms=80),
+    dict(dos=(-3, 4), tete=(-1, 1), sac=(0, 0), queue=(-2, 2), e=1,
+         arm=dict(wrist=(1, 7), ang=70), ms=170),
+    dict(T=(16, -10), bascule=-4, arr=(-7, 2), av=(7, -4), dos=(0, -1), tete=(1, 0), sac=(-1, 2), queue=(-3, 3), e=-1,
+         arm=dict(wrist=(6, 4), ang=80), fx=[fx_dust(0, 1.0, 1), fx_dash_trail(SOL[0] + 10, SOL[0] + 30, GROUND - 30)],
+         ms=60),
+    dict(T=(34, -16), bascule=-2, arr=(2, -4), av=(4, -5), tete=(0, 0), sac=(-1, 2), queue=(-2, 1), e=-1,
+         arm=dict(wrist=(6, -9), ang=105), fx=[fx_dust(0, 1.1, 1, hollow=0.5),
+                                                 fx_dash_trail(SOL[0] + 10, SOL[0] + 52, GROUND - 40, 1)], ms=60),
+    dict(T=(44, -6), bascule=3, arr=(-2, -2), av=(5, 0), tete=(1, 1), sac=(0, -2), queue=(1, -2), e=1,
+         arm=dict(wrist=(17, 4), ang=-28), fx=[fx_slash(105, -28)], ms=50),
+    dict(T=(46, 0), dos=(1, 2), tete=(1, 1), sac=(0, -2), queue=(2, -1), e=1,
+         arm=dict(wrist=(16, 8), ang=-38), fx=[fx_hit(0, -25)], ms=150),
+    dict(T=(46, 0), dos=(0, 1), tete=(0, 1), sac=(0, 0), queue=(1, 0), e=0,
+         arm=dict(wrist=(14, 8), ang=-30), fx=[fx_hit(1, -25)], ms=80),
+    dict(T=(26, -12), bascule=-2, arr=(3, -3), av=(-3, -3), tete=(-1, 0), sac=(0, 2), queue=(2, 2), e=-1,
+         arm=dict(wrist=(7, 8), ang=15), fx=[fx_dust(46, 0.9, 5)], ms=70),
+    dict(T=(4, 0), dos=(0, 3), tete=(0, 1), sac=(0, -1), queue=(1, 1), e=1, fx=[fx_dust(4, 0.9, 7)], ms=80),
+    dict(dos=(0, 1), tete=(0, 0), sac=(0, -1), queue=(0, 1), e=0, fx=[fx_dust(4, 0.8, 7, hollow=0.6)], ms=90),
+    dict(dos=(0, 0), tete=(0, 0), sac=(0, 1), queue=(0, 0), e=0, ms=110),
+]
+
+
+# ---------------------------------------------------------------- toutes les images
+RETOUCHES = {'pose': {}, 'attaque': {}, 'speciale': {}}
+
+
+def retouch(cv, fixes):
+    for (x, y, text) in fixes:
+        for i, ch in enumerate(text):
+            if ch != ' ':
+                X, Y = x + i + OX, y + OY
+                if 0 <= X < W and 0 <= Y < H:
+                    cv[Y, X] = ch
+
+
+def build_all():
+    anims = {}
+    fr = []
+    for i, f in enumerate(POSE):
+        cv = pose_frame(f)
+        retouch(cv, RETOUCHES['pose'].get(i, []))
+        fr.append((compose(cv), f['ms']))
+    anims['pose'] = fr
+    for name, specs in (('attaque', ATTAQUE), ('speciale', globals().get('SPECIALE', []))):
+        fr = []
+        for i, spec in enumerate(specs):
+            cv, back, front, ctx = rig_frame(dict(spec))
+            retouch(cv, RETOUCHES[name].get(i, []))
+            fr.append((compose(cv, back, front, flash=spec.get('flash')), spec['ms']))
+        anims[name] = fr
+    return anims
+
+
+def on_bg(img, bg=BG):
+    im = Image.new('RGBA', (img.shape[1], img.shape[0]), bg + (255,))
+    im.alpha_composite(Image.fromarray(img, 'RGBA'))
+    return im

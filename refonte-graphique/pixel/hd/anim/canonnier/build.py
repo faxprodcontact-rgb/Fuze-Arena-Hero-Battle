@@ -1084,8 +1084,8 @@ def fx_wave(k):
             foam(front, (xx, G - 1), max(1.2, 3.2 - 0.6 * i - 0.2 * k), hollow=min(0.85, 0.15 * (k + i)),
                  seed=60 + i)
         if k >= 5:
-            foam(front, (X - 4, G - 1), 4.4, hollow=0.2, seed=70)
-            foam(front, (X + 4, G - 1), 3.2, hollow=0.4, seed=72)
+            foam(front, (X - 4, G - 1), 4.4, hollow=0.2 if k == 5 else 0.6, seed=70)
+            foam(front, (X + 4, G - 1), 3.2, hollow=0.4 if k == 5 else 0.75, seed=72)
             curl(front, (X + 9, G - 3), 2.8, 90, turn=260, w=1.6, tones='WXY', cw=True)
             curl(front, (X - 11, G - 3), 2.4, 90, turn=260, w=1.5, tones='WXY')
     return f
@@ -1155,7 +1155,7 @@ def schedule(fr):
         k = fr - at
         if 0 <= k <= 7:
             out.append(fx_crown(j, k))
-    if fr > SPLASH_AT[2]:
+    if 1 <= fr - SPLASH_AT[2] <= 6:
         out.append(fx_wave(fr - SPLASH_AT[2]))
     return out
 

@@ -173,8 +173,8 @@ RACCORD = [
     (50, 73, 'EHHHHHH'),
     (50, 74, 'EFFFFFF'),
     (50, 75, 'EFFFFFF'),
-    (50, 76, 'EEFFFFF'),
-    (51, 77, 'EFFFFF'),
+    (50, 76, 'EEFFFFFF'),
+    (51, 77, 'EFFFFFF'),
     (51, 78, 'mnnnnnnnnnooo'),
     (51, 79, 'mnnnnnnnnnooo'),
     (51, 80, 'mnnnnnnnnnnoo'),
@@ -677,8 +677,30 @@ def draw_hip(cv, f, body, ctx):
     ctx.pan = musket_at(O, ang, 27.5, -1.5)
 
 
+BUTT_AIM = (53.0, 61.0)                 # épaulé : le haut de la plaque de couche contre l'épaule (grille)
+
+
 def draw_shoulder(cv, f, body, ctx):
-    raise NotImplementedError
+    """le mousquet épaulé (ou en train de monter / redescendre) : bras lointain tendu sous le fût, bras proche plié,
+    le poing au poignet de la crosse, l'index sur la détente"""
+    cx, cy = body.follow(64)
+    ang = f.get('ang', 0.0)
+    O = g2c(f.get('butt', BUTT_AIM), (cx, cy))
+    tn, tf = f.get('tn', 16.0), f.get('tf', 52.0)
+    # le bras lointain (derrière l'arme)
+    gf = musket_at(O, ang, tf, 1.5)
+    Sf = g2c(SH_FAR, (cx, cy))
+    draw_arm(cv, Sf, wrist_for(gf, Sf, 3.5), ARM_FAR, f.get('bend', 1), r=(3.4, 3.0, 2.7), lit=-0.55)
+    draw_musket(cv, O, ang, fired=f.get('fired', False))
+    fist_on(cv, FAR_FIST, O, ang, tf)
+    # le bras proche (devant l'arme : l'avant-bras remonte vers le poing)
+    gn = musket_at(O, ang, tn - 1.0, 3.0)
+    Sn = g2c(SH_NEAR, (cx, cy))
+    ctx.elbow = draw_arm(cv, Sn, wrist_for(gn, Sn, 3.0), ARM_NEAR, f.get('bend_near', 1), r=(4.2, 3.7, 3.2), lit=0.0)
+    fist_on(cv, NEAR_FIST, O, ang, tn)
+    ctx.O, ctx.ang = O, ang
+    ctx.muzzle = musket_at(O, ang, MUSKET_L + 0.5, 1.5)
+    ctx.pan = musket_at(O, ang, 27.5, -1.5)
 
 
 # ---------------------------------------------------------------- l'ara : ailes ouvertes, bec ouvert (dessinés à la main)

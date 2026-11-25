@@ -997,8 +997,8 @@ def fx_land(level):
 # montante éclair (traînée de vent en croissant sous la lame), le coup porte (éclat, marque de la coupe, plumes
 # noires) et il reste un instant lame levée ; puis un saut en arrière, ailes levées puis rabattues, et il retombe en
 # garde, accroupi, en rebondissant sur ses genoux.
-T1 = (FOE[0] - 24, FOE[1] - 8)          # là où porte la coupe montante
-T2 = (FOE[0] - 22, FOE[1] + 8)          # là où porte la coupe descendante (spéciale)
+T1 = (FOE[0] - 19, FOE[1] - 8)          # là où porte la coupe montante
+T2 = (FOE[0] - 18, FOE[1] + 8)          # là où porte la coupe descendante (spéciale)
 SH = [fx_shadow]
 
 ATTAQUE = [
@@ -1156,8 +1156,10 @@ def fx_dive(cv, back, front, ctx):
     c = ctx.o + (60.0, 80.0)                         # le milieu du corps (toile)
     p0 = c + (-30.0, -50.0)
     pts = path_pts(p0, p0 + (2.0, 18.0), c + (-24.0, -16.0), c, n=70)
-    comet(back, pts, 0.0, 1.0, 28, 'WEFGHI')
-    braid(back, pts, 0.05, 0.95, 9.0, 1.1, 0.0, 2.8, 'FGHI')
+    n = len(pts) - 1
+    stroke(back, [tuple(p) for p in pts], [24.0 * math.sin(math.pi * min(1.0, 0.15 + 0.85 * i / n)) ** 0.7 + 0.6
+                                           for i in range(n + 1)], 'WEFGHI')
+    braid(back, pts, 0.0, 0.8, 10.0, 1.1, 0.0, 2.8, 'FGHI')
     crow_feather(back, p0[0] - 6, p0[1] + 4, 1)
     crow_feather(back, p0[0] + 6, p0[1] - 8, 3)
 
