@@ -1193,18 +1193,20 @@ def fx_roar(k):
         body = ctx['body']
         m = body.pt(*MOUTH) + np.array([0.0, -2.0])
         if k == 0:
-            wisp(front, m, m + (8, -2), m + (16, -8), m + (22, -14), 4.2, 'abc', curl_r=3.0)
-            wisp(front, m + (1, 2), m + (9, 4), m + (17, 3), m + (24, -2), 3.4, 'abc', curl_r=2.5, cw=True)
-            cloud(front, m + (13, -3), 4.2, 'aabc', seed=1, ground=False)
-            puff(front, m + (25, -9), 3.0, 'abc')
-            for (dx, dy) in ((18, -16), (28, 2), (10, 8)):
+            wisp(front, m, m + (10, -2), m + (20, -10), m + (28, -18), 5.6, 'abc', curl_r=4.0)
+            wisp(front, m + (1, 3), m + (12, 6), m + (24, 5), m + (32, -2), 4.6, 'abc', curl_r=3.2, cw=True)
+            cloud(front, m + (15, -2), 5.6, 'aabc', seed=1, ground=False)
+            cloud(front, m + (31, -12), 4.2, 'aabc', seed=5, ground=False)
+            puff(front, m + (36, 2), 3.0, 'abc')
+            for (dx, dy) in ((22, -24), (40, -4), (12, 12), (34, 10)):
                 flake(front, m[0] + dx, m[1] + dy, 1)
         elif k == 1:
-            curl(front, m + (24, -14), 4.0, 200, turn=280, w=2.6, tones='bc')
-            cloud(front, m + (20, -5), 4.6, 'abc', hollow=0.5, seed=2, ground=False)
-            puff(front, m + (31, -11), 2.4, 'bc', hollow=0.4)
-            for (dx, dy) in ((24, -20), (33, 0), (14, 6)):
-                flake(front, m[0] + dx, m[1] + dy + 3, 0)
+            curl(front, m + (30, -18), 5.0, 200, turn=280, w=3.2, tones='abc')
+            cloud(front, m + (24, -6), 5.6, 'abc', hollow=0.5, seed=2, ground=False)
+            puff(front, m + (40, -12), 3.0, 'bc', hollow=0.4)
+            puff(front, m + (38, 4), 2.2, 'bc')
+            for (dx, dy) in ((26, -26), (44, 0), (16, 10)):
+                flake(front, m[0] + dx, m[1] + dy + 4, 0)
     return fx
 
 
