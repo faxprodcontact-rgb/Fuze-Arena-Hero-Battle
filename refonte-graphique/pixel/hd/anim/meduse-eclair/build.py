@@ -460,22 +460,53 @@ def arc_pts(p0, p1, bend=0.25, wob=1.2, waves=1.0, phase=0.0, n=None):
 
 
 def zap(cv, pts, w=1.0, halo=True, edge=True, fade=(0.0, 1.0), taper=True):
-    """peint une décharge le long de points : coeur blanc, halo cyan, bord bleu-violet ; effilée aux deux bouts ;
-    fade = la partie encore visible (de, à), pour qu'elle naisse et s'éteigne le long de sa course"""
+    """peint une décharge le long de points : un trait de coeur blanc continu (pixel par pixel), entouré d'un halo
+    cyan d'un pixel, puis d'un bord bleu-violet là où elle est épaisse ; effilée aux deux bouts (le halo et le bord
+    s'arrêtent avant le bout) ; fade = la partie encore visible (de, à), pour qu'elle naisse et s'éteigne"""
     N = len(pts)
-    sel = [i for i in range(N) if fade[0] <= i / (N - 1) <= fade[1]]
-    if len(sel) < 2:
+    P = [pts[i] for i in range(N) if fade[0] <= i / (N - 1) <= fade[1]]
+    if len(P) < 2:
         return
-    P = [pts[i] for i in sel]
-    prof = []
-    for j in range(len(P)):
-        s = j / (len(P) - 1)
-        prof.append(math.sin(math.pi * s) ** 0.5 if taper else 1.0)
-    if edge:
-        solid(cv, P, [w * p + 2.4 for p in prof], 'O')
-    if halo:
-        solid(cv, P, [w * p + 1.3 for p in prof], 'T')
-    solid(cv, P, [max(0.0, w * p) for p in prof], 'W')
+    # échantillonnage serré : un pixel tous les tiers de pixel (le trait ne se coupe jamais)
+    dense = []
+    for j in range(len(P) - 1):
+        (x0, y0), (x1, y1) = P[j], P[j + 1]
+        n = max(1, int(math.hypot(x1 - x0, y1 - y0) * 3))
+        for i in range(n):
+            t = i / n
+            dense.append((x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, (j + t) / (len(P) - 1)))
+    dense.append((P[-1][0], P[-1][1], 1.0))
+    core, ring1, ring2 = set(), set(), set()
+    for (x, y, s) in dense:
+        prof = math.sin(math.pi * s) if taper else 1.0
+        r = w * prof / 2
+        cx, cy = int(math.floor(x)), int(math.floor(y))
+        if r < 0.75:
+            core.add((cx, cy))
+        else:
+            for yy in range(int(y - r - 1), int(y + r + 2)):
+                for xx in range(int(x - r - 1), int(x + r + 2)):
+                    if math.hypot(xx + 0.5 - x, yy + 0.5 - y) <= r:
+                        core.add((xx, yy))
+        if halo and prof > 0.25:
+            ring1.add((cx, cy))
+        if edge and prof > 0.55:
+            ring2.add((cx, cy))
+    def grow(src, k):
+        out = set()
+        for (x, y) in src:
+            for dy in range(-k, k + 1):
+                for dx in range(-k, k + 1):
+                    if abs(dx) + abs(dy) <= k:
+                        out.add((x + dx, y + dy))
+        return out
+    pad = int(round(w / 2))
+    for (x, y) in grow(ring2, pad + 2) - grow(ring2, pad + 1) if edge else ():
+        put(cv, x, y, 'O', keep='.OTYXZAE')
+    for (x, y) in grow(ring1, pad + 1) if halo else ():
+        put(cv, x, y, 'T', keep='.OTYXZAE')
+    for (x, y) in core:
+        put(cv, x, y, 'W')
 
 
 def spark(cv, x, y, big=False):

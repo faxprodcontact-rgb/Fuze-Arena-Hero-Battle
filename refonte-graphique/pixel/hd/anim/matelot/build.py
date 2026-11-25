@@ -820,3 +820,82 @@ POSE = [
     dict(b=0, crouch=0, lean=1, head=(0, 0), pl=0, ar=(0, 0), na=-1, k=1, ms=90),
     dict(b=0, crouch=0, lean=0, head=(0, 0), pl=1, ar=(0, 0), na=-1, ms=90),
 ]
+
+
+# ---------------------------------------------------------------- les effets du sabre et des pieds
+def fx_swing(a_from, tones='WXYZA', w=7.0):
+    """la traînée du sabre qui taille : un croissant d'eau entre l'ancien angle et le nouveau, autour du poing"""
+    def f(cv, back, front, ctx):
+        R = float(np.linalg.norm(ctx.tip - ctx.fist_c))
+        arc_trail(back, ctx.fist_c, R + 0.5, ctx.a + 2, a_from - ctx.a, w, tones)
+        arc_trail(back, ctx.fist_c, R * 0.6, ctx.a + 5, (a_from - ctx.a) * 0.55, w * 0.4, 'XYZ')
+    return f
+
+
+def water_arc(cv, c, R, a0, span, w, tail=0.0, tones='XYZAB'):
+    """un croissant d'eau pleine (modelé par la lumière) le long d'un arc de cercle : épais en a0 (contre la lame),
+    effilé au bout ; tail : la part du début déjà défaite en gouttes"""
+    n = 40
+    pts, ws = [], []
+    for i in range(n + 1):
+        s = i / n
+        a = math.radians(a0 + span * s)
+        pts.append((c[0] + R * math.cos(a), c[1] - R * math.sin(a)))
+        ws.append(0 if s < tail else w * (1 - s) ** 0.8 + 0.6)
+    lit_stroke(cv, pts, ws, tones, foam=(0.0, 0.35))
+
+
+def fx_cut(k):
+    """l'impact du coup de taille au bout de la lame : k = 0 l'éclat et le croissant d'eau, 1 il se défait en gouttes,
+    2 les dernières gouttes retombent"""
+    def f(cv, back, front, ctx):
+        tip = ctx.tip
+        R = float(np.linalg.norm(tip - ctx.fist_c))
+        seeds = [(3.0, -3.6), (4.4, -2.0), (2.0, -4.8), (5.2, -0.6), (1.2, -2.8)]
+        if k == 0:
+            water_arc(back, ctx.fist_c, R - 1, ctx.a + 4, 64, 6.0)
+            pop(front, tip + np.array([2.0, 0.0]), 4.5, facing=-20, tones='WWXY')
+            spray(front, tip + np.array([2.0, -1.0]), 0.8, seeds, g=0.8)
+        elif k == 1:
+            water_arc(back, ctx.fist_c, R - 1, ctx.a + 4, 64, 4.6, tail=0.45)
+            curl(front, tip + np.array([5.0, -4.0]), 3.0, 200, turn=260, w=1.8, tones='WXY', cw=True)
+            spray(front, tip + np.array([2.0, -1.0]), 2.2, seeds, g=0.8)
+        else:
+            spray(front, tip + np.array([2.0, -1.0]), 3.6 + k, seeds, g=0.8, sizes=(2, 2, 1, 1))
+    return f
+
+
+def fx_dust(k, x0=None, back_only=False):
+    """la poussière soulevée par les pieds : k = 0 elle part, 1 elle enfle, 2 elle se défait ; x0 : où (toile), sinon
+    sous les pieds de l'image"""
+    def f(cv, back, front, ctx):
+        xl, xr, gy = ctx.feet
+        if x0 is not None:
+            xl, xr = x0 - 20, x0 + 20
+        hol = [0.0, 0.3, 0.75][k]
+        r = [3.6, 4.6, 4.4][k]
+        cloud(back, (xl - 4 - 3 * k, GROUND - 2), r, 'kkkmn', hollow=hol, seed=11)
+        cloud(back if back_only else front, (xr + 6 + 3 * k, GROUND - 2), r * 0.85, 'kkkmn', hollow=hol, seed=12)
+    return f
+
+
+# ---------------------------------------------------------------- 2) l'attaque de base : « Coup d'abordage »
+# Il ramène le sabre en arrière au-dessus de l'épaule en pliant les genoux (anticipation tenue), fond sur l'ennemi
+# d'un bond rasant (image étirée : jambes tendues, traînée d'eau du sabre qui part), taille de haut en bas : la lame
+# laisse un croissant d'eau et l'impact éclabousse (arrêt sur l'image) ; le croissant se défait en gouttes, puis il
+# rebondit en arrière et retombe à sa place, genoux pliés, en garde.
+ATTAQUE = [
+    dict(crouch=1, lean=-2, fist=(-5, -9), a=100, bend=1, head=(0, 0), pl=1, na=2, ms=90),
+    dict(crouch=3, lean=-4, fist=(-8, -13), a=128, bend=1, blade_behind=True, head=(-1, 1), pl=2, na=3, ms=210),
+    dict(tx=20, lift=5, crouch=-2, lean=5, fist=(5, -10), a=62, bend=1, head=(0, 0), pl=-2, na=-3,
+         smear=fx_swing(128, 'oWXYZ', 6.0), fx_list=[fx_dust(0, x0=SOL[0], back_only=True)], ms=50),
+    dict(tx=34, lift=1, crouch=1, lean=6, fist=(12, -1), a=-22, bend=1, head=(0, 0), pl=-2, na=-3,
+         smear=fx_swing(62), fx_list=[fx_dust(1, x0=SOL[0], back_only=True)], ms=50),
+    dict(tx=36, crouch=3, lean=6, fist=(12, 3), a=-36, bend=1, head=(0, 1), pl=-2, na=-3,
+         fx_list=[fx_cut(0), fx_dust(2, x0=SOL[0], back_only=True)], ms=150),
+    dict(tx=36, crouch=3, lean=6, fist=(12, 3), a=-36, bend=1, head=(0, 1), pl=-1, na=-2, fx_list=[fx_cut(1)], ms=90),
+    dict(tx=18, lift=6, crouch=-1, lean=-2, fist=(4, -4), a=22, bend=1, pl=2, na=0, fx_list=[fx_cut(2)], ms=60),
+    dict(tx=3, crouch=3, lean=-1, fist=(1, 0), a=40, bend=1, head=(0, 1), pl=2, na=1, fx_list=[fx_dust(0)], ms=80),
+    dict(crouch=1, pl=1, na=1, fx_list=[fx_dust(2)], ms=100),
+    dict(ms=120),
+]

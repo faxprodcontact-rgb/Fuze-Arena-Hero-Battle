@@ -927,9 +927,108 @@ def check_club():
     sheet.save(os.path.join(BROUILLON, 'massue.png'))
 
 
-# ================================================================ 2) l'attaque de base (plus bas : ATTAQUE)
-# ================================================================ 3) l'attaque spéciale (plus bas : SPECIALE)
-ATTAQUE = []
+# ---------------------------------------------------------------- 2) l'attaque de base : « Bond du diablotin »
+# Il se ramasse sur ses talons, la massue armée au-dessus de l'épaule, la queue dressée (attente courte). Puis il
+# BONDIT vers l'ennemi en arc de cercle (la queue traîne derrière lui, la massue part loin derrière sa tête au sommet
+# du bond), l'abat en retombant (une image floue : traînée de fer avec un liseré de braise) et frappe au ras du sol
+# devant lui (impact tenu : éclat de feu, braises qui jaillissent en cloche vers l'ennemi). La massue rebondit, il
+# repart d'un petit bond en arrière jusqu'à sa place, atterrit sur la pointe des pieds et reprend sa garde.
+def fx_smear(a_from, fire=False):
+    """la traînée de la massue qui s'abat : un croissant autour de l'épaule, fer clair contre la massue, liseré de
+    braise (ou une vraie traînée de feu quand la massue brûle)"""
+    def f(cv, back, front, ctx):
+        S = ctx.S
+        tip = club_tip(ctx.G, ctx.ang, S_HEAD[1] + 1)
+        v = tip - S
+        R = float(np.linalg.norm(v)) + 1
+        a_to = math.degrees(math.atan2(-v[1], v[0]))
+        if fire:
+            arc_trail(back, S, R + 1, a_from, a_to, 11.0, 'wvutsr')
+            arc_trail(back, S, R * 0.6, a_from + 15, a_to, 4.0, 'vuts')
+        else:
+            arc_trail(back, S, R, a_from, a_to, 8.0, 'mlkj', taper=0.6)
+            arc_trail(back, S, R + 1.2, a_from + (a_to - a_from) * 0.4, a_to, 1.8, 'ut')
+    return f
+
+
+EMBERS_HIT = [  # (vx, vy, grosse) : les braises qui jaillissent du choc, plutôt vers l'avant, en cloche
+    (2.6, -2.4, 1), (3.6, -1.0, 0), (1.8, -3.4, 0), (4.0, 0.2, 1), (1.0, -1.8, 0), (2.8, -3.8, 0), (-0.8, -2.8, 0)]
+
+
+def embers_at(cv, c, T, data, g=0.5, hot=True):
+    for (vx, vy, big) in data:
+        x = c[0] + vx * T
+        y = c[1] + vy * T + g * T * T
+        if y < GROUND - 1:
+            ember(cv, x, y, big=bool(big) and T < 3, hot=hot and T < 2.5)
+
+
+def fx_hit(k):
+    """le choc au bout de la massue : 0 éclat de feu, 1 il se referme et lâche un peu de fumée, 2 et 3 la fumée
+    s'enroule et les braises retombent"""
+    def f(cv, back, front, ctx):
+        c = ctx.hit if hasattr(ctx, 'hit') else club_tip(ctx.G, ctx.ang, S_HEAD[1] + 1.5)
+        if k == 0:
+            pop(back, c + np.array([1.5, -1.0]), 4.6, facing=30, tones='wvuts')
+            tongue(back, (c[0] + 3, c[1] + 1), 8, 3.4, bend=0.8, lean=0.5, fork=False)
+            embers_at(front, c, 1.0, EMBERS_HIT)
+        elif k == 1:
+            pop(back, c + np.array([3.0, -2.0]), 2.8, facing=30, tones='vuts')
+            puff(back, c + np.array([7.0, -5.0]), 2.2, 'abc')
+            embers_at(front, c, 2.0, EMBERS_HIT)
+        elif k == 2:
+            curl(back, c + np.array([9.0, -8.0]), 2.8, 200, turn=280, w=1.8, tones='abc')
+            puff(back, c + np.array([12.0, -2.0]), 1.6, 'ab', hollow=0.4)
+            embers_at(front, c, 3.0, EMBERS_HIT, hot=False)
+        else:
+            puff(back, c + np.array([11.0, -12.0]), 1.5, 'ab', hollow=0.5)
+            embers_at(front, c, 4.0, EMBERS_HIT, hot=False)
+    return f
+
+
+def fixed_hit(spec):
+    """le point d'impact du coup (toile), calculé sur l'image du choc : les effets qui suivent restent à cette place
+    même quand le diablotin repart en arrière"""
+    _, _, _, ctx = rig_frame(dict(spec, fx_list=[]))
+    return club_tip(ctx.G, ctx.ang, S_HEAD[1] + 1.5)
+
+
+def at(c, fx):
+    """un effet posé à un point fixe de la toile"""
+    def f(cv, back, front, ctx):
+        ctx.hit = c
+        fx(cv, back, front, ctx)
+    return f
+
+
+HIT_A = dict(G=(72, 92), ang=-38, bend=-1, lift=0, shift=32, crouch=3, lean=2, head=(1, 1), q=(-1, 1), en=1, pg=1)
+HIT_A_C = fixed_hit(HIT_A)
+ATTAQUE = [
+    # il se ramasse, la massue armée au-dessus de l'épaule, la queue dressée
+    dict(G=(52, 80), ang=140, bend=-1, crouch=3, lean=-1, head=(0, 1), q=(2, -1), en=-1, pg=-1, fh=(0, 1), ms=120),
+    # le bond (la massue part derrière la tête, la queue traîne)
+    dict(G=(54, 75), ang=128, bend=-1, lift=8, shift=9, crouch=-2, lean=1, head=(0, -1), q=(-2, 2), en=1, pg=1,
+         fh=(0, -1), ms=60),
+    dict(G=(52, 74), ang=152, bend=-1, lift=12, shift=20, crouch=0, lean=1, head=(1, 0), q=(-2, 2), en=1, pg=1,
+         fh=(-1, -1), ms=70),
+    # il l'abat en retombant (traînée)
+    dict(G=(71, 86), ang=6, bend=-1, lift=4, shift=29, crouch=0, lean=2, head=(1, 1), q=(-1, 1), en=1, pg=0,
+         smear=fx_smear(152), ms=40),
+    # le choc (tenu)
+    dict(**HIT_A, fx_list=[at(HIT_A_C, fx_hit(0))], ms=150),
+    dict(G=(71, 89), ang=-22, bend=-1, shift=32, crouch=2, lean=1, head=(1, 0), q=(0, 0), en=0, pg=0,
+         fx_list=[at(HIT_A_C, fx_hit(1))], ms=80),
+    # le petit bond en arrière
+    dict(G=(54, 78), ang=140, bend=-1, lift=8, shift=18, crouch=-1, lean=-1, head=(0, -1), q=(2, 1), en=-1, pg=-1,
+         fx_list=[at(HIT_A_C, fx_hit(2))], ms=70),
+    dict(G=(51, 83), ang=160, bend=-1, lift=4, shift=6, crouch=0, lean=0, head=(0, 0), q=(1, 0), en=0, pg=-1,
+         fx_list=[at(HIT_A_C, fx_hit(3))], ms=70),
+    # il atterrit sur la pointe des pieds, en garde
+    dict(arms='orig', crouch=2, head=(0, 1), q=(0, -1), en=-1, pg=1, ms=90),
+    dict(arms='orig', crouch=1, head=(0, 0), q=(-1, 0), en=0, pg=0, ms=100),
+]
+
+
 SPECIALE = []
 
 # ---------------------------------------------------------------- retouches pixel par pixel (après le montage)

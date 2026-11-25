@@ -163,6 +163,14 @@ for name, L in LEGS.items():
     g = FAR if L['layer'] == 'far' else NEAR
     PARTS[name] = np.where(LABEL[L['layer']] == name, g, '.')
 BODY = np.where(LABEL['near'] == 'corps', NEAR, '.')
+# l'abscisse de chaque pixel le long du squelette de sa patte (pour ne jamais aller chercher un pixel d'un autre
+# tronçon quand la patte se plie fort)
+ABSC = {}
+for name, L in LEGS.items():
+    a = np.full((GH, GW), -9.0)
+    for y, x in zip(*np.nonzero(PARTS[name] != '.')):
+        a[y, x] = sk_locate(L['sk'], np.array([x + 0.5, y + 0.5]))[1]
+    ABSC[name] = a
 
 
 def fill_under(part, holes, passes=4):
@@ -319,7 +327,7 @@ def draw_leg_pixels(cv, name, disp):
     ok = (sx >= 0) & (sx < GW) & (sy >= 0) & (sy < GH) & (best <= 8)
     sx, sy, qxi, qyi = sx[ok], sy[ok], QX.ravel()[ok], QY.ravel()[ok]
     vals = part[sy, sx]
-    good = vals != '.'
+    good = (vals != '.') & (np.abs(ABSC[name][sy, sx] - sabs[ok]) <= 0.75)
     cx, cy = qxi[good] + OX, qyi[good] + OY
     inb = (cx >= 0) & (cx < W) & (cy >= 0) & (cy < H) & (cy <= GROUND)
     cv[cy[inb], cx[inb]] = vals[good][inb]
