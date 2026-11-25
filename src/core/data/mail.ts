@@ -10,6 +10,8 @@ export interface MailDef {
   title: { fr: string; en: string };
   body: { fr: string; en: string };
   reward?: Reward;
+  /** Le cadeau dépend du joueur : il est rangé dans sa sauvegarde (`mail.personal`), le message n'arrive que s'il y en a un. */
+  personal?: boolean;
 }
 
 export const MAILS: MailDef[] = [
@@ -30,6 +32,17 @@ export const MAILS: MailDef[] = [
     body: {
       fr: 'Merci de tester le jeu ! Tout peut encore changer : les dessins sont provisoires et les réglages seront revus avant la bêta.',
       en: 'Thanks for testing the game! Everything can still change: art is temporary and balance will be reviewed before the beta.',
+    },
+  },
+  {
+    // Cadeau personnel (state/migrate.ts) : seulement dans les vieilles sauvegardes qui avaient des héros retirés.
+    id: 'heros-retires-2611',
+    at: null,
+    personal: true,
+    title: { fr: 'Nouveaux héros', en: 'New heroes' },
+    body: {
+      fr: 'Le jeu garde désormais 36 héros, tous redessinés. Les héros retirés de ta collection sont échangés contre ce cadeau ; leurs niveaux et leur équipement te sont rendus.',
+      en: 'The game now keeps 36 heroes, all redrawn. The heroes removed from your collection are exchanged for this gift; their levels and gear are given back.',
     },
   },
 ];

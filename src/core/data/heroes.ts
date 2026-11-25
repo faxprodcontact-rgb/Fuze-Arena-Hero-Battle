@@ -1,10 +1,8 @@
-// Les 72 héros du lancement, construits comme des GABARITS : rareté × élément × rôle × variante.
+// Les 36 héros du jeu, construits comme des GABARITS : rareté × élément × rôle × variante.
 // Chaque gabarit a ses statistiques, son attaque, sa compétence, ses passifs et (1 sur 3) son talent de chef.
-// Les noms et les dessins sont PROVISOIRES : on habillera chaque gabarit plus tard (nom, histoire, dessin).
-//
-// Par élément, 18 héros : 3 Communs, 4 Rares, 6 Épiques, 5 Légendaires ; chaque rôle 3 fois ; 6 chefs.
+// Les 72 gabarits d'origine sont gardés pour les statistiques ; seuls les 36 dessinés en HD sont dans le jeu (HERO_IDS).
 import type { Effect, Passive, SkillDef, Talent } from '../battle/types';
-import { ELEMENTS, FACTIONS, type Element, type Faction, type HeroDef, type Rarity, type Role } from '../types';
+import { ELEMENTS, type Element, type HeroDef, type Rarity, type Role } from '../types';
 
 // ---------- Profils de rôle (niveau 1, ★1, Épique) ----------
 
@@ -167,9 +165,8 @@ function talentFor(role: Role, rarity: Rarity): Talent {
 }
 
 // ---------- Les 18 gabarits d'un élément ----------
-
-/** [rareté, rôle, variante, chef ?] pour chaque place de la liste d'un élément. */
-export const ELEMENT_ROSTER: [Rarity, Role, number, boolean][] = [
+/** [rareté, rôle, variante, chef ?] pour chaque place de la liste d'un élément (les 72 gabarits d'origine). */
+const ELEMENT_ROSTER: [Rarity, Role, number, boolean][] = [
   ['common', 'protector', 0, false], ['common', 'warrior', 0, false], ['common', 'marksman', 0, false],
   ['rare', 'protector', 1, false], ['rare', 'assassin', 0, false], ['rare', 'healer', 0, false], ['rare', 'support', 0, true],
   ['epic', 'protector', 2, true], ['epic', 'warrior', 1, false], ['epic', 'marksman', 1, false],
@@ -178,8 +175,10 @@ export const ELEMENT_ROSTER: [Rarity, Role, number, boolean][] = [
   ['legendary', 'healer', 2, false], ['legendary', 'support', 2, true],
 ];
 
-// Identifiants et noms provisoires conservés (les sauvegardes existantes restent valables).
-const OLD_NAMES: Record<Faction, string[]> = {
+// Identifiants et noms conservés (les sauvegardes existantes restent valables) : les identifiants viennent des
+// anciens groupes du dessin provisoire (knights, mages…), ils ne veulent plus rien dire.
+const GROUPS = ['knights', 'assassins', 'mages', 'demons', 'angels', 'myths'] as const;
+const OLD_NAMES: Record<(typeof GROUPS)[number], string[]> = {
   knights: ['Bérold', 'Maëla', 'Aldric', 'Sorène', 'Tybalt', 'Cassian', 'Ysolde', 'Garvin', 'Lenore', 'Aurèle', 'Valdis', 'Orlane'],
   assassins: ['Nyx', 'Kael', 'Sable', 'Vesper', 'Rook', 'Isha', 'Corvin', 'Lysa', 'Jinn', 'Morrow', 'Zéphyre', 'Saïko'],
   mages: ['Pell', 'Mira', 'Orin', 'Tessa', 'Ilvar', 'Sélène', 'Arcan', 'Eldra', 'Nimue', 'Ozias', 'Myrr', 'Faust'],
@@ -187,9 +186,22 @@ const OLD_NAMES: Record<Faction, string[]> = {
   angels: ['Célia', 'Ilian', 'Aube', 'Séraphin', 'Lumen', 'Elyon', 'Solenn', 'Ariel', 'Raphaëlle', 'Auriel', 'Gabryel', 'Céleste'],
   myths: ['Faune', 'Satyre', 'Astérion', 'Méduse', 'Dryade', 'Minotaure', 'Anubis', 'Freyja', 'Isis', 'Arachné', 'Atlas', 'Zeus'],
 };
-const SLOTS = FACTIONS.flatMap((f) => OLD_NAMES[f].map((name, i) => ({ id: `${f}-${i + 1}`, name, faction: f })));
+const SLOTS = GROUPS.flatMap((f) => OLD_NAMES[f].map((name, i) => ({ id: `${f}-${i + 1}`, name })));
 
-export const HEROES: HeroDef[] = ELEMENTS.flatMap((element, e) =>
+/**
+ * Les 36 héros du jeu (décision du propriétaire, 25/11/2026) : ceux qui sont dessinés et animés en pixel art HD
+ * (refonte-graphique/pixel/hd/, planches public/art/hd/<id>.webp). Les 36 autres gabarits sont retirés : dans une
+ * vieille sauvegarde, ils sont échangés contre un dédommagement (state/migrate.ts).
+ */
+export const HERO_IDS = [
+  'knights-1', 'knights-3', 'knights-5', 'knights-7', 'knights-8', 'knights-9', 'assassins-2', 'assassins-3', 'assassins-5',
+  'assassins-7', 'assassins-9', 'assassins-11', 'mages-2', 'mages-3', 'mages-4', 'mages-7', 'mages-8', 'mages-11',
+  'demons-3', 'demons-4', 'demons-5', 'demons-8', 'demons-9', 'demons-12', 'angels-1', 'angels-2', 'angels-6',
+  'angels-7', 'angels-10', 'angels-11', 'myths-3', 'myths-4', 'myths-6', 'myths-7', 'myths-9', 'myths-10',
+] as const;
+const KEPT = new Set<string>(HERO_IDS);
+
+const TEMPLATES: HeroDef[] = ELEMENTS.flatMap((element, e) =>
   ELEMENT_ROSTER.map(([rarity, role, v, leader], i) => {
     const slot = SLOTS[e * ELEMENT_ROSTER.length + i]!;
     const pr = ROLE_PROFILES[role];
@@ -199,8 +211,6 @@ export const HEROES: HeroDef[] = ELEMENTS.flatMap((element, e) =>
     return {
       id: slot.id,
       name: slot.name,
-      // Le « camp » n'est plus une règle : il sert seulement au dessin provisoire.
-      faction: slot.faction,
       element,
       role,
       rarity,
@@ -221,7 +231,18 @@ export const HEROES: HeroDef[] = ELEMENTS.flatMap((element, e) =>
   }),
 );
 
+export const HEROES: HeroDef[] = TEMPLATES.filter((h) => KEPT.has(h.id));
+
+/** Les héros retirés du jeu (identifiant → rareté, élément) : seulement pour dédommager les vieilles sauvegardes. */
+export const RETIRED_HEROES: ReadonlyMap<string, { rarity: Rarity; element: Element }> = new Map(
+  TEMPLATES.filter((h) => !KEPT.has(h.id)).map((h) => [h.id, { rarity: h.rarity, element: h.element }]),
+);
+
 const BY_ID = new Map(HEROES.map((h) => [h.id, h]));
+
+export function isHero(id: string): boolean {
+  return BY_ID.has(id);
+}
 
 export function heroDef(id: string): HeroDef {
   const def = BY_ID.get(id);
@@ -234,7 +255,5 @@ export function heroesOfElement(element: Element, rarity: Rarity): HeroDef[] {
   return HEROES.filter((h) => h.element === element && h.rarity === rarity);
 }
 
-/** Les héros d'un groupe de la liste provisoire et d'une rareté (les camps ne sont plus une règle du jeu). */
-export function heroesOf(faction: Faction, rarity: Rarity): HeroDef[] {
-  return HEROES.filter((h) => h.faction === faction && h.rarity === rarity);
-}
+/** Le héros du départ (Garvin, protecteur Épique de feu), offert à la création du compte. */
+export const STARTER_HERO = 'knights-8';

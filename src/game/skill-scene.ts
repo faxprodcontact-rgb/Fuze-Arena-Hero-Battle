@@ -9,7 +9,7 @@ import { FightScene, W } from './fight-view';
 export const SKILL_H = 470;
 /** Vitesse des animations (moins de 1 = ralenti). */
 const SPEED = 0.7;
-/** Temps entre deux lancers de la compétence. */
+/** Temps entre deux lancers de la compétence (au moins : le temps de son animation). */
 const EVERY_MS = 2000;
 /** Personne n'attaque tout seul : seule la compétence demandée est jouée. */
 const NEVER = 1e9;
@@ -30,7 +30,6 @@ export class SkillScene extends FightScene {
     // Pas de talent de chef dans l'aperçu : on ne montre que la compétence.
     this.hero = { ...data.hero, slot: 2, talent: undefined };
     this.groundTop = 130;
-    this.cutInBand = false;
   }
 
   protected preloadUnits() {
@@ -81,8 +80,10 @@ export class SkillScene extends FightScene {
   update(_time: number, delta: number) {
     this.wait -= delta;
     if (this.wait <= 0) {
-      this.wait = EVERY_MS;
+      this.turnMs = undefined;
       this.cast();
+      // une spéciale HD peut durer plus de 2 s au ralenti : on attend qu'elle soit finie
+      this.wait = Math.max(EVERY_MS, (this.turnMs ?? 0) + 500);
     }
     this.syncUnits();
   }

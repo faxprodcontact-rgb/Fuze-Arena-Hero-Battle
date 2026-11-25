@@ -1,7 +1,7 @@
 // Ce que le jeu sait d'un joueur. Aujourd'hui sur le téléphone ; demain, la même chose sur le serveur.
 import type { Slot } from '../../core/battle/types';
 import type { GearSlot, Item } from '../../core/data/items';
-import type { DungeonKind } from '../../core/data/modes';
+import type { DungeonKind, Reward } from '../../core/data/modes';
 import type { Hero } from '../../core/types';
 
 export interface Wallet {
@@ -71,7 +71,7 @@ export interface PlayerState {
   nameChanges: number;
   settings: { sound: boolean; music: boolean; notifications: boolean };
   createdAt: number;
-  /** Décalage du temps pour les tests (avancer de quelques heures). */
+  /** Décalage de l'horloge du jeu (simulations : le joueur automatique fait passer le temps). */
   timeShift: number;
   lang: 'fr' | 'en';
   speed: 1 | 2 | 3;
@@ -96,15 +96,13 @@ export interface PlayerState {
   summon: { pity: number; total: number };
   tower: { floor: number };
   dungeons: Record<DungeonKind, number>;
-  /** Mode Défense : dernier niveau gagné, étoiles par niveau, et les héros posés (uid → emplacement). */
   /** Amis : la liste, les cadeaux envoyés aujourd'hui et ceux reçus à ouvrir (par id d'ami). */
   friends: { list: Friend[]; day: string; sent: string[]; inbox: string[] };
-  defense: { level: number; stars: Record<number, number>; placement: [number, number][]; chests?: number };
   arena: { points: number; opponents: ArenaOpponent[] };
   /** Étape du tutoriel des premières minutes (-1 = fini ou passé). */
   tutorial?: number;
-  /** Courrier : messages reçus (id → date d'arrivée), lus, et cadeaux récupérés. */
-  mail?: { got: Record<string, number>; read: string[]; claimed: string[] };
+  /** Courrier : messages reçus (id → date d'arrivée), lus, cadeaux récupérés, et cadeaux propres à ce joueur (id → cadeau). */
+  mail?: { got: Record<string, number>; read: string[]; claimed: string[]; personal?: Record<string, Reward> };
   /** Calendrier de connexion : dernier jour coché et nombre de jours cochés. */
   login?: { day: string; count: number };
   /** Section de défense (attaquée par les autres en guerre de guildes) ; vide = la section principale. */

@@ -1,6 +1,7 @@
 // Un donjon : une échelle de niveaux. On combat le niveau suivant (obligatoire pour avancer),
 // ou on « balaie » le dernier niveau gagné (récompense tout de suite, sans combat). 3 essais par jour.
-import { sceneVar, useTerrainImage } from '../terrain-image';
+import { sceneVar } from '../fond-image';
+import { DUNGEON_CLAN } from '../../look';
 import { DUNGEON_ATTEMPTS_PER_DAY, DUNGEON_LEVELS, type DungeonKind } from '../../../core/data/modes';
 import { fmt, t } from '../../i18n';
 import { dungeonAttemptsLeft, dungeonPlan, dungeonPower, dungeonRewardPreview, sweepDungeon } from '../../state/actions';
@@ -22,7 +23,6 @@ function Reward({ kind, level }: { kind: DungeonKind; level: number }) {
 }
 
 export function DungeonPage({ kind }: { kind: DungeonKind }) {
-  const sceneImg = useTerrainImage(({ gold: 'mine', essence: 'spring', gear: 'armory' } as const)[kind]);
   const s = useGame();
   const done = s.dungeons[kind];
   const next = done + 1;
@@ -33,7 +33,7 @@ export function DungeonPage({ kind }: { kind: DungeonKind }) {
 
   return (
     <Page title={t(`dungeon.${kind}`)}>
-      <div class={`dungeon-head dungeon-${kind}`} style={sceneVar(sceneImg)}>
+      <div class={`dungeon-head dungeon-${kind}`} style={sceneVar(DUNGEON_CLAN[kind])}>
         <Icon name={DUNGEON_ICON[kind]} size={40} />
         <span class={`dungeon-tries big${left ? '' : ' none'}`}>{t('dungeon.tries')} {left} / {DUNGEON_ATTEMPTS_PER_DAY}</span>
       </div>

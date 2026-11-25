@@ -1,12 +1,14 @@
-// Aventure : les modes du quotidien (tour, missions, donjons, boss du jour, arène, défense).
-import { sceneBg, sceneVar, useTerrainImage } from '../terrain-image';
+// Aventure : les modes du quotidien (tour, missions, donjons, boss du jour, arène, Colisée).
+import { sceneBg, sceneVar } from '../fond-image';
 import { useEffect, useState } from 'preact/hooks';
 import { stagePower } from '../../../core/data/campaign';
 import {
   ARENA_FREE_TICKETS, ARENA_LEAGUES, ARENA_SHOP, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS,
   DUNGEON_ATTEMPTS_PER_DAY, TOWER_STAGE_PER_FLOOR, UNLOCKS, type DungeonKind,
 } from '../../../core/data/modes';
-import { ITEM_COLORS, heroImage, monsterImage } from '../../art';
+import { ITEM_COLORS, heroImage } from '../../art';
+import { DUNGEON_CLAN, battleLook, bossArt, bossClan } from '../../look';
+import { Figure } from '../hero-figure';
 import { fmt, t } from '../../i18n';
 import {
   arenaPlan, buyExchange, claimMission, dailyBossId, dailyBossPlan, dungeonAttemptsLeft, markSeen, missionEnd,
@@ -76,7 +78,7 @@ function Colisee() {
   return (
     <section class="card center">
       <h1>{t('adv.defense')}</h1>
-      <div class="boss-scene colisee-scene" style={sceneBg(useTerrainImage('arena'))}><ModeIcon kind="defense" size={132} class="colisee-art" /></div>
+      <div class="boss-scene colisee-scene" style={sceneBg('lenore')}><ModeIcon kind="defense" size={132} class="colisee-art" /></div>
       <div class="colisee-duel">
         <div class="team-faces">{mine.map((h) => <span class="team-face"><img src={heroImage(h!.defId)} alt="" /></span>)}</div>
         <span class="vs">VS</span>
@@ -103,7 +105,7 @@ function Tower() {
   return (
     <section class="card center">
       <h1>{t('adv.tower')}</h1>
-      <div class="tower-art" style={sceneBg(useTerrainImage('tower'))}>
+      <div class="tower-art" style={sceneBg(battleLook('tower', String(floor)).fond)}>
         {[2, 1, 0].map((k) => <div class={`tower-floor${k === 0 ? ' current' : ''}`}>{t('tower.floor', { n: floor + k })}</div>)}
         {s.tower.floor > 0 && <div class="tower-floor done">{t('tower.floor', { n: s.tower.floor })}</div>}
       </div>
@@ -166,14 +168,13 @@ export const DUNGEON_ICON: Record<DungeonKind, string> = { gold: 'gold', essence
 
 function Dungeons() {
   const s = useGame();
-  const imgs = { gold: useTerrainImage('mine'), essence: useTerrainImage('spring'), gear: useTerrainImage('armory') };
   return (
     <section class="list">
       <h1>{t('adv.dungeons')}</h1>
       {DUNGEON_KINDS.map((k) => {
         const left = dungeonAttemptsLeft(s, k);
         return (
-          <button class={`card dungeon dungeon-${k}`} style={sceneVar(imgs[k])} onClick={() => open({ type: 'dungeon', kind: k })}>
+          <button class={`card dungeon dungeon-${k}`} style={sceneVar(DUNGEON_CLAN[k])} onClick={() => open({ type: 'dungeon', kind: k })}>
             <span class="dungeon-icon"><Icon name={DUNGEON_ICON[k]} size={34} /></span>
             <span class="grow">
               <strong>{t(`dungeon.${k}`)}</strong>
@@ -197,7 +198,7 @@ function DailyBoss() {
   return (
     <section class="card center">
       <h1>{t('adv.dailyBoss')} · {t(`monster.${boss}`)}</h1>
-      <div class="boss-scene" style={sceneBg(useTerrainImage('lair'))}><img class="boss-img" src={monsterImage(boss, 'fire')} alt="" /></div>
+      <div class="boss-scene" style={sceneBg(bossClan(boss))}><Figure id={bossArt(boss)} class="boss-img" /></div>
       {/* Les récompenses sont des paliers sur la barre des dégâts : on voit d'un coup d'œil où on en est. */}
       <div class="boss-track">
         {DAILY_BOSS_TIERS.map((tier) => (

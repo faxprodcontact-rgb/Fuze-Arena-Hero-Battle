@@ -1,5 +1,8 @@
-// Les monstres. Statistiques pour une force de 100 ; le niveau de campagne les multiplie.
+// Les monstres des règles. Statistiques pour une force de 100 ; le niveau de campagne les multiplie.
+// Leur dessin vient du clan du combat (src/game/look.ts) : rapide (goblin, wolf), costaud (golem), tireur ou lanceur
+// de sorts (archer, shaman, wraith) ; les boss sont le général du clan, ou un grand boss de leur élément.
 import type { SkillDef } from '../battle/types';
+import type { Element } from '../types';
 
 export interface MonsterDef {
   id: string;
@@ -27,6 +30,8 @@ export const MONSTERS: MonsterDef[] = [
 export const FRONT_MONSTERS = ['goblin', 'wolf', 'golem'];
 export const BACK_MONSTERS = ['archer', 'shaman', 'wraith'];
 export const BOSSES = ['ogre', 'lich', 'dragon'];
+/** L'élément des boss du jour et de guilde (et du grand boss qui les joue : titan de pierre, léviathan, dragon de lave). */
+export const BOSS_ELEMENT: Record<string, Element> = { ogre: 'earth', lich: 'water', dragon: 'fire' };
 
 const BY_ID = new Map(MONSTERS.map((m) => [m.id, m]));
 

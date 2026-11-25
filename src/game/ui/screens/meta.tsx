@@ -4,22 +4,20 @@ import {
   AD_SECONDS, ARENA_SHOP, DAILY_CHESTS, DAILY_QUESTS, GUILD_SHOP, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL,
   WEEKLY_CHESTS, WEEKLY_QUESTS, type Reward,
 } from '../../../core/data/modes';
-import { heroDef, heroesOf } from '../../../core/data/heroes';
+import { STARTER_HERO, heroDef } from '../../../core/data/heroes';
 import { RENAME_COST } from '../../../core/data/modes';
 import { heroImage } from '../../art';
 import { legalDoc, type LegalDoc } from '../../legal';
 import { APP_VERSION } from '../../version';
 import { t } from '../../i18n';
-import { THEMES, getTheme, setTheme } from '../../theme';
-import { FOND_CHOICES, forcedTerrain, setForcedTerrain } from '../../look';
 import {
-  buyExchange, buyOffer, claimChest, claimPass, claimQuest, demoUnlockAll, giveTestResources, passLevel, questPoints,
-  chooseName, deleteAccount, pixelDemoBattle, playerId, randomName, rename, resetGame, setLang, setSetting, timeTravel,
+  buyExchange, buyOffer, claimChest, claimPass, claimQuest, passLevel, questPoints,
+  chooseName, deleteAccount, playerId, randomName, rename, setLang, setSetting,
 } from '../../state/actions';
 import { now, useGame } from '../../state/store';
 import type { Gain } from '../../state/types';
 import { Art, Bar, Btn, Cur, HeroCard, ItemIcon, Modal, Tabs } from '../kit';
-import { close, go, open, startBattle, swap, toast } from '../nav';
+import { close, open, toast } from '../nav';
 import { Chest, Halo } from '../anim';
 import { ShopTile } from './adventure';
 
@@ -240,40 +238,6 @@ export function SettingsModal() {
         <p class="muted small center">{t('settings.version')} {APP_VERSION}</p>
       </section>
 
-      <section class="settings-group tests">
-        <h3>{t('settings.tests')}</h3>
-        {/* Essai : trois directions graphiques au choix, le temps que le propriétaire en retienne une. */}
-        <div class="tabs">
-          {THEMES.map((th) => <button class={`tab${getTheme() === th ? ' tab-on' : ''}`} onClick={() => { setTheme(th); close(); toast('✓'); }}>{t(`theme.${th}`)}</button>)}
-        </div>
-        <div class="row gap-s wrap">
-          <Btn kind="ghost" small onClick={() => { timeTravel(2); toast('+2 h'); }}>{t('settings.h2')}</Btn>
-          <Btn kind="ghost" small onClick={() => { timeTravel(12); toast('+12 h'); }}>{t('settings.h12')}</Btn>
-          <Btn kind="ghost" small onClick={() => { timeTravel(24); toast('+24 h'); }}>{t('settings.d1')}</Btn>
-          <Btn kind="ghost" small onClick={() => { giveTestResources(); toast('✓'); }}>{t('settings.resources')}</Btn>
-          <Btn kind="purple" small onClick={() => { demoUnlockAll(); toast('✓'); }}>{t('settings.unlock')}</Btn>
-          {/* Page à part (public/apercu) : les nouveaux personnages animés, pas encore dans le jeu. */}
-          <Btn kind="blue" small onClick={() => { location.href = 'apercu/index.html'; }}>{t('settings.preview')}</Btn>
-          {/* Les 5 héros et les 5 monstres redessinés en pixel art, dans un vrai combat (sans récompense). */}
-          <Btn kind="gold" small onClick={() => { close(); startBattle(pixelDemoBattle()); }}>{t('settings.pixel')}</Btn>
-          {/* Les personnages HD animés : choix des combattants (ou les 60 à la suite), puis un combat scénarisé sans récompense. */}
-          <Btn kind="gold" small onClick={() => swap({ type: 'hdPick' })}>{t('settings.hd')}</Btn>
-          <Btn kind="red" small onClick={() => open({ type: 'confirm', text: t('settings.resetConfirm'), onYes: () => { resetGame(); close(); } })}>{t('settings.reset')}</Btn>
-        </div>
-        {/* Voir chaque décor de combat, l'un après l'autre : il remplace celui de l'accueil et des combats jusqu'à « Normal ». */}
-        <h3>{t('settings.fond')}</h3>
-        <div class="row gap-s wrap">
-          {[null, ...FOND_CHOICES].map((ter) => (
-            <Btn kind={forcedTerrain() === ter ? 'gold' : 'ghost'} small onClick={() => {
-              setForcedTerrain(ter);
-              close();
-              // l'accueil relance son combat avec le nouveau décor
-              go('heroes');
-              setTimeout(() => go('campaign'), 60);
-            }}>{t(ter ? `fond.${ter}` : 'fond.auto')}</Btn>
-          ))}
-        </div>
-      </section>
     </Modal>
   );
 }
@@ -299,7 +263,7 @@ export function NameScreen() {
   return (
     <div class="name-screen" style={{ backgroundImage: 'linear-gradient(180deg, #2f224466, #2f224499), url(art/ui/loading.jpg)' }}>
       <div class="name-card">
-        <img src={heroImage(heroesOf('knights', 'epic')[0]!.id)} alt="" />
+        <img src={heroImage(STARTER_HERO)} alt="" />
         <h1>{t('name.title')}</h1>
         <NameField value={name} onInput={(v) => { setName(v); setError(null); }} error={error} />
         <Btn kind="green" wide onClick={() => setError(chooseName(name))}>{t('ok')}</Btn>

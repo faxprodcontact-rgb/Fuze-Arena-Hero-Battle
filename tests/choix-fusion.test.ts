@@ -6,8 +6,8 @@ import { getState, update } from '../src/game/state/store';
 
 describe('fusion : héros choisis', () => {
   const epic = HEROES.find((h) => h.rarity === 'epic')!;
-  const sameFaction = HEROES.filter((h) => h.element === epic.element && h.rarity === 'rare');
-  const otherFaction = HEROES.find((h) => h.element !== epic.element && h.rarity === 'rare')!;
+  const sameFaction = HEROES.filter((h) => h.element === epic.element && h.id !== epic.id && h.rarity !== 'legendary');
+  const otherFaction = HEROES.find((h) => h.element !== epic.element && h.rarity !== 'legendary')!;
 
   function setup() {
     update((s) => {

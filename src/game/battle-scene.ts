@@ -6,9 +6,8 @@ import { ENERGY_MAX, TICK_MS, type Slot, type Unit } from '../core/battle/types'
 import { C, FONT, FightScene, W, applyTheme } from './fight-view';
 import { HUD_BUTTONS, loadHudArt } from './hud-art';
 import { t } from './i18n';
-import { hdChar, hasHd } from './hd-fight';
-import { hdTrialScript } from './hd-trial';
-import { battleLook, trialFond } from './look';
+import { faceUrl } from './art';
+import { battleLook } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
 import { getState } from './state/store';
 
@@ -40,9 +39,7 @@ export class BattleScene extends FightScene {
   private ended = false;
   private waveLabel!: Phaser.GameObjects.Text;
   private damageLabel?: Phaser.GameObjects.Text;
-  /** Combat d'essai HD « tous » : la manche en cours. */
-  private hdRound = 0;
-  /** Les pièces des portraits (refaits quand les équipes changent, essai HD). */
+  /** Les pièces des portraits. */
   private portraitObjs: Phaser.GameObjects.GameObject[] = [];
 
   constructor() {
@@ -57,40 +54,12 @@ export class BattleScene extends FightScene {
     this.acc = 0;
     this.ended = false;
     this.bigBoss = !!data.request.damageMode;
-    this.hdMode = data.request.kind === 'hdDemo';
-    this.look = battleLook(data.request.kind, data.request.title, data.request.dungeon?.kind, this.hdMode ? this.trialFond() : undefined);
-    this.script = undefined;
-    this.hdRound = 0;
+    this.look = battleLook(data.request.kind, data.request.title, data.request.dungeon?.kind);
     this.portraitObjs = [];
   }
 
-  /** Combat d'essai HD : le fond du clan des ennemis de la première manche (les monstres `mon-<clan>-…`, sinon les généraux). */
-  private trialFond() {
-    const foes = this.req.waves[0] ?? [];
-    const mons = foes.map((u) => (u.id && this.req.hdArt?.[u.id]) || '').filter((a) => a.startsWith('mon-')).map((a) => a.split('-')[1]!);
-    return trialFond(mons.length ? mons : foes.map((u) => (hasHd(u.defId) ? hdChar(u.defId).name : '')));
-  }
-
-  /** Combat d'essai HD : certains monstres prennent leur dessin HD (voir hdTrialBattle). */
-  protected charId(u: { id?: string; defId: string; element: string }): string {
-    return (u.id && this.req.hdArt?.[u.id]) || super.charId(u);
-  }
-
   protected preloadUnits() {
-    return [...this.req.heroes, ...this.req.waves.flat(), ...(this.req.hdRounds ?? []).flatMap((r) => [...r.heroes, ...r.enemies])];
-  }
-
-  /** Essai HD « tous » : les équipes de la manche `r` entrent (les héros ici, les ennemis par l'évènement de vague). */
-  private hdNextRound(r: number): Unit[] {
-    const round = this.req.hdRounds![r]!;
-    const next = new Battle({ heroes: round.heroes, waves: [round.enemies], seed: 1, auto: true });
-    this.hdRound = r;
-    this.battle.heroes = next.heroes;
-    this.battle.enemies = next.enemies;
-    this.clearViews('hero');
-    for (const u of next.heroes) this.addView(u, true, getState().speed);
-    this.drawPortraits();
-    return next.enemies;
+    return [...this.req.heroes, ...this.req.waves.flat()];
   }
 
   /** Un bouton dans le style des menus (hud-art.tsx) : cadre d'or, émail bombé, lettres cernées de la couleur du bouton. */
@@ -115,6 +84,8 @@ export class BattleScene extends FightScene {
   preload() {
     super.preload();
     loadHudArt(this);
+    // les visages des portraits du bas (refonte-graphique/pixel/hd/anim/vignettes.py)
+    for (const u of this.req.heroes) if (!this.textures.exists(`v-${u.defId}`)) this.load.image(`v-${u.defId}`, faceUrl(u.defId));
   }
 
   /** Haut du panneau des héros (tout le bas de l'écran se place à partir de là). */
@@ -129,17 +100,6 @@ export class BattleScene extends FightScene {
   create() {
     applyTheme();
     this.battle = new Battle({ heroes: this.req.heroes, waves: this.req.waves, seed: this.req.seed, auto: getState().auto });
-    if (this.hdMode) {
-      this.script = hdTrialScript({
-        battle: this.battle,
-        genre: (u, which) => {
-          const id = this.charId(u);
-          return hasHd(id) ? hdChar(id).anims[which].genre : undefined;
-        },
-        rounds: this.req.hdRounds?.length ?? 1,
-        nextRound: (r) => this.hdNextRound(r),
-      });
-    }
     // disposition : les boutons et le panneau des héros sont ancrés en bas, le décor prend tout le reste
     const H = this.scale.height;
     const { groundTop, bottom: arenaBottom } = this.arenaBox();
@@ -169,9 +129,7 @@ export class BattleScene extends FightScene {
   }
 
   private updateWaveLabel() {
-    const rounds = this.req.hdRounds?.length ?? 0;
-    if (rounds > 1) this.waveLabel.setText(`${t('battle.wave')} ${this.hdRound + 1} / ${rounds}`);
-    else this.waveLabel.setText(this.battle.waveCount > 1 ? `${t('battle.wave')} ${this.battle.wave + 1} / ${this.battle.waveCount}` : '');
+    this.waveLabel.setText(this.battle.waveCount > 1 ? `${t('battle.wave')} ${this.battle.wave + 1} / ${this.battle.waveCount}` : '');
   }
 
   private drawHud() {
@@ -202,9 +160,8 @@ export class BattleScene extends FightScene {
       const glow = keep(this.add.circle(x, y, 70, C.energy, 0.4).setVisible(false));
       const el = this.textures.exists(`hud-disc-${unit.element}`) ? unit.element : 'none';
       keep(this.add.image(x, y, `hud-disc-${el}`).setDisplaySize(100, 100));
-      const card = `c-${this.charId(unit)}`;
-      // le portrait en buste : plus grand que le trou de l'anneau, coupé en rond juste sous l'or (le visage remplit le médaillon)
-      const img = keep(this.textures.exists(card) ? this.add.image(x, y + 8, card).setDisplaySize(122, 122) : this.add.image(x, y + 10, this.texture(unit)).setScale(0.9));
+      // le visage, un peu plus grand que le trou de l'anneau, coupé en rond juste sous l'or
+      const img = keep(this.add.image(x, y + 4, `v-${unit.defId}`).setDisplaySize(112, 112));
       img.setMask(keep(this.make.graphics({}, false).fillCircle(x, y, 50)).createGeometryMask());
       const frame = keep(this.add.image(x, y, 'hud-ring').setDisplaySize(140, 140));
       keep(this.add.image(x, this.hudY + 190, 'hud-hp').setDisplaySize(120, 22));

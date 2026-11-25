@@ -417,6 +417,28 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   baron vaudou, Freyja le barbare à la massue, Isis le chasseur au crâne de cerf, Thor la femme-araignée, Atlas l'enfant
   de la forêt, Zeus le roi noir). Les noms de fichiers suivent les noms du jeu, pas ce que montre le dessin. Une couleur
   de clignement passe par une lettre de la légende (jamais une couleur directe dans `HEAD_BLINK`).
+  **v0.56.0 (brouillon, version pas encore changée) : jeu propre, tout en HD** (demande du 25/11 : « supprimer les anciens
+  fonds et personnages, tout brancher, retirer les boutons de test »). **36 héros** (`HERO_IDS`, les 36 dessinés en HD ;
+  les 36 autres retirés : une vieille sauvegarde les échange contre parchemins selon rareté et étoiles, niveaux et
+  emplacements rendus, objets au sac, courrier personnel `heros-retires-2611`, `state/migrate.ts`, test
+  `heros-retires.test.ts`). **Monstres par clan** (`look.ts` refait : gobelin/loup = rapide, golem = costaud,
+  archer/chaman/spectre = tireur ou sorts ; boss = général du clan agrandi, ou grand boss de l'élément pour le boss du
+  jour, de guilde et la **fin de chaque région**, qui devient un boss seul : `REGION_CHAPTERS`, `soloBoss` de
+  `core/stages.ts`) ; boss du jour : titan (terre), léviathan (eau), dragon (feu) (`BOSS_ELEMENT`). **Décors** : celui du
+  clan des ennemis dans tous les modes ; menus : image fixe du décor (`ui/fond-image.ts` ; dans une variable CSS, adresse
+  complète, sinon elle se lit depuis `assets/`). **Combats** : `fight-view.ts` réécrit, uniquement HD + `hd-fight.ts`
+  (grand boss seul au milieu, `BIG_BOSS_X`) ; portraits du panneau = visages HD. **Menus** : visages et héros en pied
+  qui respirent, faits par `refonte-graphique/pixel/hd/anim/vignettes.py` (`art/hd/v/`, `art/hd/pied/`, `hd-figures.ts`
+  léger, sans charger `hd-meta.ts`) ; **à relancer après chaque export** (grands boss compris). **Supprimés** : outils de
+  test des réglages, `TEST_OPEN_ALL_MODES`, combats d'essai pixel et HD (`hd-roster`, `hd-trial`, `hd-pick`), décor imposé
+  (`#fond`), couleurs d'essai (thèmes royal / crépuscule), mode Défense, décors dessinés par le code (`src/game/bg/` sauf
+  `fond-px.ts`), anciens dessins (`public/art/p`, `r`, `c`, `t`, `fx`, `px` sauf `fonds/`, `public/apercu`),
+  `art-meta.ts`, `pixel-meta.ts`, dessins provisoires d'`art.ts`, et leurs chaînes (`art-jeu.py`, `decoupe-hailuo.py`,
+  `decoupe-decors.py`, `rig*.py`, `rig/`, `rig-out/`, `recadre.py`, `adoucir.py`, `pixel/jeu.py`, `fond.py`, `page.py`).
+  Vérifié dans le vrai jeu (Playwright, 390 × 844 et 360 × 640) : `refonte-graphique/pixel/sortie/jeu-propre/`.
+  Les 4 grands boss (dragon, léviathan, titan, oiseau-tempête) sont branchés. Test `clans.test.ts` (chaque monstre des
+  règles a son dessin HD dans tous les modes). Note : Chromium sans carte graphique tourne à ~9 images/s, les combats y
+  paraissent lents (pas sur un téléphone).
   **v0.55.0 : 8 fonds de combat pixel art HD animés, un par clan** (Eldra, Arachné, Méduse, Kael, Orin, Barzul, Lenore,
   Kesha) : dessinés par `refonte-graphique/pixel/fonds/<clan>/build.py` (outillage `fondlib.py`, LISEZMOI.md), mis au jeu par
   `fonds/jeu.py` → `public/art/px/fonds/`, `src/game/fond-meta.ts`, `src/game/bg/fond-px.ts`. Un fond par région de la campagne

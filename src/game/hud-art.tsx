@@ -3,7 +3,7 @@
 // une image à part pour Phaser) ; les adresses des images sont gardées d'un combat à l'autre.
 import type Phaser from 'phaser';
 import type { VNode } from 'preact';
-import { svgString } from './bg/core';
+import { svgString } from './svg';
 
 const INK = '#2f1b0c';
 

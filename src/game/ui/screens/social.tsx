@@ -1,10 +1,12 @@
 // Social : guilde (boss commun, membres, tchat, boutique), tchat général, classements.
 // Dans le prototype, les autres joueurs sont des joueurs fictifs : le vrai social arrivera avec le serveur.
-import { sceneBg, useTerrainImage } from '../terrain-image';
+import { sceneBg } from '../fond-image';
+import { bossArt, bossClan } from '../../look';
+import { Figure } from '../hero-figure';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { GUILD_BOSS_ATTEMPTS, GUILD_SHOP, GUILD_WAR, UNLOCKS } from '../../../core/data/modes';
 import { createRng } from '../../../core/rng';
-import { heroImage, monsterImage } from '../../art';
+import { heroImage } from '../../art';
 import { CHAT_LINES, fmt, t } from '../../i18n';
 import {
   BOT_GUILDS, botChatter, buyExchange, claimWar, ensureWar, guildBossPlan, joinGuild, leaveGuild, markSeen, sendChat,
@@ -37,7 +39,7 @@ function members(guild: string) {
     name,
     power: Math.round(mine * (0.6 + rng() * 0.9)),
     role: i === 0 ? 'crown' : i < 3 ? 'star' : '',
-    defId: ['knights-10', 'mages-11', 'angels-12', 'demons-10', 'myths-10', 'assassins-11', 'knights-6', 'mages-7', 'angels-8'][i]!,
+    defId: ['knights-9', 'mages-11', 'angels-6', 'demons-9', 'myths-10', 'assassins-11', 'knights-7', 'mages-7', 'angels-10'][i]!,
   }));
 }
 
@@ -48,7 +50,6 @@ function botDamage(): number {
 }
 
 export function GuildScreen() {
-  const lairImg = useTerrainImage('lair');
   const s = useGame();
   const [tab, setTab] = useState<'boss' | 'war' | 'members' | 'chat' | 'shop'>('boss');
   useEffect(() => markSeen('guild'), []);
@@ -90,7 +91,7 @@ export function GuildScreen() {
       ]} />
       {tab === 'boss' && (
         <section class="card center">
-          <div class="boss-scene" style={sceneBg(lairImg)}><img class="boss-img" src={monsterImage('dragon', 'fire')} alt="" /></div>
+          <div class="boss-scene" style={sceneBg(bossClan('dragon'))}><Figure id={bossArt('dragon')} class="boss-img" /></div>
           <h2>{t('monster.dragon')}</h2>
           <Bar value={GUILD_BOSS_HP - total} max={GUILD_BOSS_HP} color="#e5484d" label={`${fmt(GUILD_BOSS_HP - total)} / ${fmt(GUILD_BOSS_HP)}`} />
           <p class="muted">{t('guild.total')} : <b>{fmt(total)}</b></p>

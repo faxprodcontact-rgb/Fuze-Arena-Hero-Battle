@@ -1,5 +1,9 @@
 # Personnages en pixel art « gros pixels encrés » — le guide à suivre (à lire AVANT de dessiner)
 
+> **Depuis la v0.56.0, ce style n'est plus dans le jeu** : le jeu est entièrement en pixel art HD (`hd/`, lire `hd/GUIDE.md`).
+> `jeu.py`, `fond.py` et `page.py` (qui mettaient ces 72 héros et le fond « prairie » dans le jeu) sont supprimés ; les
+> dessins `persos/` et les outils de contrôle restent pour mémoire.
+
 Demande du propriétaire (23/11/2026) : « un dossier à suivre pour ne pas se tromper sur la prochaine génération, que tout
 soit cohérent : la DA, la taille des têtes, leur position, les articulations pas visibles, la cohérence des premiers et
 seconds plans… je ne peux pas repasser 10 fois sur chaque personnage ». Ce guide rassemble **toutes ses consignes**

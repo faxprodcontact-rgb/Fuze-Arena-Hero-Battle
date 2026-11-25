@@ -1,15 +1,16 @@
 // Stockage de la partie et notification des écrans à chaque changement.
 import { useEffect, useState } from 'preact/hooks';
-import { HEROES, heroDef, heroesOf } from '../../core/data/heroes';
+import { HEROES, STARTER_HERO, heroDef } from '../../core/data/heroes';
 import { levelCap } from '../../core/data/stats';
 import { RARITY_RULES } from '../../core/data/stars';
+import { retireHeroes } from './migrate';
 import type { PlayerState } from './types';
 
 const KEY = 'hero-battle-v2';
 const HERO_IDS = new Set(HEROES.map((h) => h.id));
 
 export function fresh(now = Date.now()): PlayerState {
-  const starter = heroesOf('knights', 'epic')[0]!.id;
+  const starter = STARTER_HERO;
   const lang = typeof navigator !== 'undefined' && !navigator.language.startsWith('fr') ? 'en' : 'fr';
   return {
     v: 2,
@@ -37,7 +38,6 @@ export function fresh(now = Date.now()): PlayerState {
     summon: { pity: 0, total: 0 },
     tower: { floor: 0 },
     dungeons: { gold: 0, essence: 0, gear: 0 },
-    defense: { level: 0, stars: {}, placement: [] },
     friends: { list: [], day: '', sent: [], inbox: [] },
     arena: { points: 1000, opponents: [] },
     guild: { joined: null, bossDamage: 0, chat: [], lastBotAt: now },
@@ -62,19 +62,7 @@ function load(): PlayerState {
     const raw = localStorage.getItem(KEY);
     if (raw) {
       const saved = JSON.parse(raw) as PlayerState;
-      if (saved.v === 2) {
-        const base = fresh();
-        const discovered = saved.discovered ?? [...new Set((saved.heroes ?? []).map((h) => h.defId))];
-        // Une ancienne partie déjà commencée ne refait pas le tutoriel.
-        const tutorial = saved.tutorial ?? ((saved.campaign?.cleared ?? 0) > 0 ? -1 : 0);
-        // Les héros ont été refondus (raretés) : on ramène étoiles et niveaux dans les limites de leur rareté.
-        const heroes = (saved.heroes ?? []).filter((h) => HERO_IDS.has(h.defId)).map((h) => {
-          const rule = RARITY_RULES[heroDef(h.defId).rarity];
-          const stars = Math.min(rule.maxStars, Math.max(rule.bornStars, h.stars));
-          return { ...h, stars, level: Math.min(h.level, levelCap(stars)) };
-        });
-        return { ...base, ...saved, heroes, discovered, tutorial, wallet: { ...base.wallet, ...saved.wallet } };
-      }
+      if (saved.v === 2) return restore(saved);
     }
   } catch {
     // stockage indisponible : nouvelle partie en mémoire
@@ -82,11 +70,27 @@ function load(): PlayerState {
   return fresh();
 }
 
+/** Une partie enregistrée, remise d'aplomb (champs ajoutés depuis, héros retirés du jeu, raretés refondues). */
+export function restore(saved: PlayerState): PlayerState {
+  const base = fresh();
+  const discovered = saved.discovered ?? [...new Set((saved.heroes ?? []).map((h) => h.defId))];
+  // Une ancienne partie déjà commencée ne refait pas le tutoriel.
+  const tutorial = saved.tutorial ?? ((saved.campaign?.cleared ?? 0) > 0 ? -1 : 0);
+  const s = retireHeroes({ ...base, ...saved, heroes: saved.heroes ?? [], discovered, tutorial, wallet: { ...base.wallet, ...saved.wallet } });
+  // Les héros ont été refondus (raretés) : on ramène étoiles et niveaux dans les limites de leur rareté.
+  s.heroes = s.heroes.filter((h) => HERO_IDS.has(h.defId)).map((h) => {
+    const rule = RARITY_RULES[heroDef(h.defId).rarity];
+    const stars = Math.min(rule.maxStars, Math.max(rule.bornStars, h.stars));
+    return { ...h, stars, level: Math.min(h.level, levelCap(stars)) };
+  });
+  return s;
+}
+
 export function getState(): PlayerState {
   return state;
 }
 
-/** Heure du jeu (avec le décalage des outils de test). */
+/** Heure du jeu (`timeShift` : décalage de l'horloge, utilisé par les simulations). */
 export function now(): number {
   return Date.now() + state.timeShift;
 }

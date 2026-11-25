@@ -127,3 +127,8 @@ noms des clans) ; les identifiants (myths-6, fichiers .txt, mon-<clan>-*) ne cha
 Minotaure → Néfira ; Astérion → Taurok ; Méduse → Ophira ; Arachné → Soyane ; Anubis → Malgrave ; Isis → Sylvar ;
 Gabryel → Dardane ; Elyon → Elvyn ; Auriel → Aurelle ; Jinn → Jarek.
 - 25/11 : oiseau-tempête animé VALIDÉ (« Super »). Les 4 grands boss sont faits. Retouche de Tessa (héroïne aigle) : jonction tête / corps en cours.
+- 25/11 : FAIT dans la copie de travail (journal v0.56.0, brouillon) : 36 héros, monstres et généraux par clan, grands
+  boss (boss du jour, de guilde, fins de région : les 4 sont branchés), 8 décors partout, combats HD
+  partout, visages et héros en pied dans les menus (`hd/anim/vignettes.py`, à relancer après chaque export), outils de
+  test et vieux fichiers supprimés. Reste : fusionner la branche (si `hd-meta.ts` a encore changé, relancer
+  `vignettes.py`), `npx tsc --noEmit`, `npm test`, `npm run build`, publier v0.56.0, puis les nouveaux noms ci-dessus.

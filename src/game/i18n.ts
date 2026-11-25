@@ -6,7 +6,6 @@ const FR = {
   'nav.campaign': 'Campagne', 'nav.heroes': 'Héros', 'nav.summon': 'Invoquer', 'nav.adventure': 'Aventure', 'nav.guild': 'Guilde',
   'edge.fold': 'Replier', 'edge.unfold': 'Déplier',
   'side.quests': 'Quêtes', 'side.shop': 'Boutique', 'side.pass': 'Passe', 'side.ranking': 'Classement', 'side.chat': 'Tchat', 'side.settings': 'Réglages',
-
   'cur.dust': 'Poussière de forge', 'forge.title': 'Forge', 'fusion.title': 'Fusion', cancel: 'Annuler', 'fusion.choose': 'Choisir', 'reset.none': 'Aucun héros', 'fusion.none': 'Aucun héros disponible',
   'recycle.count': '✓ {n}', 'recycle.confirm': 'Recycler',
   'bag.title': 'Sac', 'bag.forgeAll': 'Tout forger', 'bag.recycleLow': 'Recycler gris et verts', 'bag.empty': 'Sac vide',
@@ -21,20 +20,16 @@ const FR = {
   back: 'Retour', ok: 'OK', yes: 'Oui', no: 'Non', auto: 'Auto', max: 'MAX', power: 'Force', lv: 'Niv.', stage: 'Niveau',
   chapter: 'Chapitre', locked: 'Niveau {n}', soon: 'Bientôt', left: '{n} restants', send: 'Envoyer', all: 'Tous', new: 'Nouveau',
   required: 'Demandé', ad: 'Pub',
-
   'camp.loot': 'Butin', 'camp.perHour': '/ h', 'camp.fast': 'Butin rapide', 'camp.adBoost': '+2 h', 'camp.next': 'Niveau suivant',
   'camp.done': 'Campagne terminée', 'camp.boss': 'Boss',
-
   'heroes.team': 'Section', 'heroes.autoTeam': 'Meilleure section', 'heroes.fuseAll': 'Tout fusionner', 'heroes.fused': '{n} fusions',
   'heroes.full': 'Section complète', 'sort.power': 'Force', 'sort.stars': 'Étoiles', 'sort.rarity': 'Rareté', 'heroes.inTeam': 'Retirer de la section', 'heroes.addTeam': 'Ajouter à la section',
-
   'detail.levelUp': 'Niveau +1', 'detail.levelUp10': '+10', 'detail.cap': 'Niveau max : plus d’étoiles', 'detail.stars': 'Étoiles',
-  'detail.copies': 'Copies : {have} / {need}', 'detail.fodder': 'Héros ★{s} de la faction : {have} / {need}',
+  'detail.copies': 'Copies : {have} / {need}',
   'detail.crystals': 'Cristaux : {have} / {need}', 'detail.fuse': 'Fusionner', 'detail.maxStars': 'Étoiles au maximum',
   'detail.triple': '3 héros identiques : {have} / 3', 'detail.equip': 'Équipement', 'detail.autoEquip': 'Équiper le meilleur',
   'detail.unequip': 'Tout retirer', 'detail.tabStats': 'Attributs', 'detail.reset': 'Renaissance', 'detail.hp': 'PV', 'detail.atk': 'ATQ', 'detail.def': 'DÉF',
   'detail.skill': 'Compétence', 'detail.leader': 'Chef de section',
-
   'rarity.common': 'Commun', 'rarity.rare': 'Rare', 'rarity.epic': 'Épique', 'rarity.legendary': 'Légendaire', 'rarity.mythic': 'Mythique',
   'role.protector': 'Protecteur', 'role.warrior': 'Guerrier', 'role.marksman': 'Tireur', 'role.assassin': 'Assassin',
   'role.healer': 'Soigneur', 'role.support': 'Soutien', 'talent.healMult': 'Soins +{n} %',
@@ -62,29 +57,22 @@ const FR = {
   'skill.assassin-0': 'Exécution', 'skill.assassin-1': 'Lame muette', 'skill.assassin-2': 'Traque',
   'skill.healer-0': 'Lumière', 'skill.healer-1': 'Souffle de vie', 'skill.healer-2': 'Purification',
   'skill.support-0': 'Tonnerre', 'skill.support-1': 'Cri de guerre', 'skill.support-2': 'Malédiction',
-  'faction.knights': 'Chevaliers', 'faction.assassins': 'Assassins', 'faction.mages': 'Mages', 'faction.demons': 'Démons',
-  'faction.angels': 'Anges', 'faction.myths': 'Mythes',
   'element.fire': 'Feu', 'element.wind': 'Vent', 'element.water': 'Eau', 'element.earth': 'Terre',
   'slot.weapon': 'Arme', 'slot.armor': 'Armure', 'slot.helmet': 'Casque', 'slot.boots': 'Bottes',
   'item.0': 'Gris', 'item.1': 'Vert', 'item.2': 'Bleu', 'item.3': 'Violet', 'item.4': 'Or', 'item.5': 'Rouge',
-
   'talent.atkMult': 'Attaque +{n} %', 'talent.defMult': 'Défense +{n} %', 'talent.intervalMult': "Vitesse d'attaque +{n} %",
   'talent.energyMult': 'Énergie +{n} %', 'talent.startEnergy': 'Jauges à {n} % au départ',
-
   'skill.rampart': 'Rempart', 'skill.quake': 'Séisme', 'skill.light': 'Lumière', 'skill.thunder': 'Tonnerre', 'skill.firestorm': 'Déluge',
   'skill.snipe': 'Tir précis', 'skill.slash': 'Taillade', 'skill.bite': 'Morsure', 'skill.shadowblade': "Lame d'ombre",
   'skill.mend': 'Soin', 'skill.crush': 'Écrasement', 'skill.doom': 'Fléau',
   'skilltext.shieldAll': 'Bouclier sur toute la section', 'skilltext.smash': 'Frappe toute la première ligne',
   'skilltext.healAll': 'Soigne toute la section', 'skilltext.stunFront': 'Étourdit la première ligne', 'skilltext.aoe': 'Frappe tous les ennemis',
   'skilltext.strikeBack': "Frappe l'arrière le plus fragile", 'skilltext.strike': 'Gros coup sur l’avant', 'skilltext.drain': 'Frappe et se soigne',
-
   'monster.goblin': 'Gobelin', 'monster.wolf': 'Loup', 'monster.golem': 'Golem', 'monster.archer': 'Archer', 'monster.shaman': 'Chaman',
-  'monster.wraith': 'Spectre', 'monster.ogre': 'Mammouth', 'monster.lich': 'Kraken', 'monster.dragon': 'Dragon',
-
+  'monster.wraith': 'Spectre', 'monster.ogre': 'Titan', 'monster.lich': 'Léviathan', 'monster.dragon': 'Dragon',
   'summon.normal': 'Invocation', 'summon.basic': 'Invocation simple', 'summon.x1': '×1', 'summon.x10': '×10',
   'summon.pity': 'Légendaire garanti dans {n}', 'summon.odds': 'Chances', 'summon.adFree': 'Invocation gratuite',
   'summon.fragments': 'Fragments', 'summon.copy': 'Obtenir une copie', 'summon.target': 'Cible des fragments',
-
   'adv.tower': 'Tour des Épreuves', 'adv.dungeons': 'Donjons', 'adv.missions': 'Missions', 'adv.dailyBoss': 'Boss du jour',
   'adv.arena': 'Arène', 'adv.defense': 'Colisée',
   'tower.floor': 'Étage {n}', 'tower.challenge': 'Défier',
@@ -94,27 +82,22 @@ const FR = {
   'boss.best': 'Record', 'boss.attempts': 'Essais : {n} / {m}', 'boss.attack': 'Attaquer',
   'arena.points': 'Points', 'arena.tickets': 'Combats : {n} / {m}', 'arena.refresh': 'Autres adversaires', 'arena.shop': 'Boutique',
   'league.bronze': 'Bronze', 'league.silver': 'Argent', 'league.gold': 'Or', 'league.platinum': 'Platine', 'league.diamond': 'Diamant',
-  'defense.prepare': 'Placer les héros', 'defense.replay': 'Rejouer',
 
   'guild.join': 'Rejoindre', 'guild.leave': 'Quitter', 'guild.members': 'Membres', 'guild.boss': 'Boss', 'guild.war': 'Guerre', 'war.prep': 'Préparation', 'war.battle': 'Combats', 'war.results': 'Résultats',
   'war.day': 'jour {n} / 5', 'war.attacks': 'Attaques : {n} / {m}', 'war.ranking': 'Étoiles de la guilde', 'war.tired': 'Déjà attaqué aujourd’hui',
   'war.defense': 'Défense', 'war.win': 'Victoire !', 'war.draw': 'Égalité', 'war.loss': 'Défaite', 'mode.guildWar': 'Guerre', 'guild.chat': 'Tchat',
   'guild.shop': 'Boutique', 'guild.total': 'Dégâts de la guilde', 'guild.level': 'Niv. {n}',
-
   'quests.daily': 'Du jour', 'quests.weekly': 'De la semaine', 'quests.activity': 'Activité',
   'quest.login': 'Connexion', 'quest.collectIdle': 'Récolter le butin', 'quest.winStage': 'Gagner en campagne', 'quest.summon': 'Invoquer',
   'quest.levelUp': 'Monter des niveaux', 'quest.fuse': 'Fusionner', 'quest.tower': 'Étages de la tour', 'quest.dungeon': 'Donjon',
   'quest.mission': 'Missions', 'quest.dailyBoss': 'Boss du jour', 'quest.arena': 'Combats d’arène', 'quest.guildBoss': 'Boss de guilde',
   'quest.watchAd': 'Pub',
-
   'shop.offers': 'Offres', 'shop.gems': 'Gemmes', 'shop.pass': 'Passe', 'shop.exchange': 'Échanges', 'shop.simulated': 'Achat simulé (prototype)',
   'offer.starter': 'Offre de départ', 'offer.growth': 'Pack de croissance', 'offer.card': 'Carte mensuelle', 'offer.pass': 'Passe premium',
   'offer.noads': 'Sans pub', 'offer.card.desc': '+100 gemmes par jour, 30 jours', 'offer.noads.desc': 'Bonus des pubs sans les regarder',
   'offer.daysLeft': '{n} j restants', 'offer.owned': 'Acheté',
   'pass.level': 'Palier {n}', 'pass.free': 'Gratuit', 'pass.premium': 'Premium', 'pass.points': '{n} / {m} points',
-
   'rank.campaign': 'Campagne', 'rank.power': 'Force', 'rank.arena': 'Arène', 'rank.you': 'Toi',
-
   'settings.account': 'Compte', 'settings.rename': 'Changer', 'settings.id': 'Identifiant', 'settings.game': 'Jeu',
   'settings.sound': 'Sons', 'settings.music': 'Musique', 'settings.notifications': 'Notifications', 'settings.info': 'Informations',
   'settings.delete': 'Supprimer mon compte', 'settings.deleteConfirm': 'Supprimer ton compte et toute ta progression ?',
@@ -126,19 +109,18 @@ const FR = {
   'name.title': 'Ton nom', 'name.random': 'Nom au hasard', 'name.rule': '3 à 16 caractères',
   'name.length': '3 à 16 caractères', 'name.chars': 'Lettres, chiffres, espaces, - et _ seulement', 'name.taken': 'Nom non autorisé',
   'name.gems': 'Pas assez de gemmes',
-  'settings.name': 'Nom', 'settings.lang': 'Langue', 'settings.speed': 'Vitesse des combats', 'settings.tests': 'Outils de test', 'settings.pixel': 'Combat pixel art', 'settings.hd': 'Combat HD (essai)', 'hdpick.monsters': 'Monstres', 'hdpick.random': 'Au hasard', 'hdpick.all': 'Les {n} à la suite', 'theme.bois': 'Bleu nuit', 'theme.royal': 'Royal', 'theme.crepuscule': 'Crépuscule',
-  'settings.h2': '+2 h', 'settings.h12': '+12 h', 'settings.d1': '+1 jour', 'settings.resources': 'Ressources',
-  'settings.unlock': 'Tout débloquer', 'settings.preview': 'Aperçu des graphismes', 'settings.fond': 'Décor des combats',
-  'fond.eldra': 'Montagne des singes', 'fond.arachne': 'Repaire des araignées', 'fond.meduse': 'Temple englouti',
-  'fond.kael': 'Volcan', 'fond.orin': 'Sommet des tengu', 'fond.barzul': 'Crique des pirates', 'fond.lenore': 'Forteresse des oni',
-  'fond.kesha': 'Récif des abysses',
-  'fond.auto': 'Normal', 'fond.meadow': 'Prairie', 'fond.bramble': 'Forêt des ronciers', 'fond.bayou': 'Bayou', 'fond.ash': 'Terres de cendre',
-  'fond.tundra': 'Toundra', 'fond.storm': 'Pics de l’orage', 'fond.temple': 'Temple des sables', 'fond.abyss': 'Abysses', 'fond.tower': 'Tour',
-  'fond.mine': 'Mine d’or', 'fond.spring': 'Source d’essence', 'fond.armory': 'Armurerie', 'fond.lair': 'Antre', 'fond.arena': 'Arène', 'settings.reset': 'Recommencer', 'settings.resetConfirm': 'Effacer la partie ?',
+  'settings.name': 'Nom', 'settings.lang': 'Langue', 'settings.speed': 'Vitesse des combats',
+
+
+
+
+
+
+
 
   'result.victory': 'Victoire !', 'result.defeat': 'Défaite', 'result.damage': 'Dégâts', 'result.nothing': 'Rien cette fois',
   'battle.quit': 'Quitter', 'battle.wave': 'Vague', 'battle.auto': 'AUTO',
-  'mode.campaign': 'Niveau', 'mode.tower': 'Étage', 'mode.dungeon': 'Donjon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arène', 'mode.guildBoss': 'Guilde', 'mode.friend': 'Défi', 'mode.demo': 'Essai pixel art', 'mode.hdDemo': 'Essai HD',
+  'mode.campaign': 'Niveau', 'mode.tower': 'Étage', 'mode.dungeon': 'Donjon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arène', 'mode.guildBoss': 'Guilde', 'mode.friend': 'Défi',
   'mail.title': 'Courrier', 'mail.claimAll': 'Tout récupérer',
   'login.title': 'Connexion', 'login.welcome': 'Bienvenue',
   'friends.title': 'Amis', 'friends.code': 'Mon code', 'friends.add': 'Ajouter', 'friends.placeholder': 'Code ami',
@@ -154,7 +136,6 @@ const EN: Record<Key, string> = {
   'nav.campaign': 'Campaign', 'nav.heroes': 'Heroes', 'nav.summon': 'Summon', 'nav.adventure': 'Adventure', 'nav.guild': 'Guild',
   'edge.fold': 'Fold', 'edge.unfold': 'Unfold',
   'side.quests': 'Quests', 'side.shop': 'Shop', 'side.pass': 'Pass', 'side.ranking': 'Ranking', 'side.chat': 'Chat', 'side.settings': 'Settings',
-
   'cur.dust': 'Forge dust', 'forge.title': 'Forge', 'fusion.title': 'Fusion', cancel: 'Cancel', 'fusion.choose': 'Choose', 'reset.none': 'No hero', 'fusion.none': 'No hero available',
   'recycle.count': '✓ {n}', 'recycle.confirm': 'Recycle',
   'bag.title': 'Bag', 'bag.forgeAll': 'Forge all', 'bag.recycleLow': 'Recycle grey and green', 'bag.empty': 'Bag empty',
@@ -169,20 +150,16 @@ const EN: Record<Key, string> = {
   back: 'Back', ok: 'OK', yes: 'Yes', no: 'No', auto: 'Auto', max: 'MAX', power: 'Power', lv: 'Lv.', stage: 'Stage',
   chapter: 'Chapter', locked: 'Stage {n}', soon: 'Soon', left: '{n} left', send: 'Send', all: 'All', new: 'New',
   required: 'Required', ad: 'Ad',
-
   'camp.loot': 'Loot', 'camp.perHour': '/ h', 'camp.fast': 'Fast loot', 'camp.adBoost': '+2 h', 'camp.next': 'Next stage',
   'camp.done': 'Campaign complete', 'camp.boss': 'Boss',
-
   'heroes.team': 'Squad', 'heroes.autoTeam': 'Best squad', 'heroes.fuseAll': 'Fuse all', 'heroes.fused': '{n} fusions',
   'heroes.full': 'Squad full', 'sort.power': 'Power', 'sort.stars': 'Stars', 'sort.rarity': 'Rarity', 'heroes.inTeam': 'Remove from squad', 'heroes.addTeam': 'Add to squad',
-
   'detail.levelUp': 'Level +1', 'detail.levelUp10': '+10', 'detail.cap': 'Max level: more stars needed', 'detail.stars': 'Stars',
-  'detail.copies': 'Copies: {have} / {need}', 'detail.fodder': '★{s} heroes of the faction: {have} / {need}',
+  'detail.copies': 'Copies: {have} / {need}',
   'detail.crystals': 'Crystals: {have} / {need}', 'detail.fuse': 'Fuse', 'detail.maxStars': 'Max stars',
   'detail.triple': '3 identical heroes: {have} / 3', 'detail.equip': 'Gear', 'detail.autoEquip': 'Equip best',
   'detail.unequip': 'Remove all', 'detail.tabStats': 'Stats', 'detail.reset': 'Rebirth', 'detail.hp': 'HP', 'detail.atk': 'ATK', 'detail.def': 'DEF',
   'detail.skill': 'Skill', 'detail.leader': 'Squad leader',
-
   'rarity.common': 'Common', 'rarity.rare': 'Rare', 'rarity.epic': 'Epic', 'rarity.legendary': 'Legendary', 'rarity.mythic': 'Mythic',
   'role.protector': 'Protector', 'role.warrior': 'Warrior', 'role.marksman': 'Marksman', 'role.assassin': 'Assassin',
   'role.healer': 'Healer', 'role.support': 'Support', 'talent.healMult': 'Healing +{n}%',
@@ -210,29 +187,22 @@ const EN: Record<Key, string> = {
   'skill.assassin-0': 'Execution', 'skill.assassin-1': 'Silent Blade', 'skill.assassin-2': 'Hunt',
   'skill.healer-0': 'Radiance', 'skill.healer-1': 'Breath of Life', 'skill.healer-2': 'Purify',
   'skill.support-0': 'Thunder', 'skill.support-1': 'War Cry', 'skill.support-2': 'Curse',
-  'faction.knights': 'Knights', 'faction.assassins': 'Assassins', 'faction.mages': 'Mages', 'faction.demons': 'Demons',
-  'faction.angels': 'Angels', 'faction.myths': 'Myths',
   'element.fire': 'Fire', 'element.wind': 'Wind', 'element.water': 'Water', 'element.earth': 'Earth',
   'slot.weapon': 'Weapon', 'slot.armor': 'Armor', 'slot.helmet': 'Helmet', 'slot.boots': 'Boots',
   'item.0': 'Grey', 'item.1': 'Green', 'item.2': 'Blue', 'item.3': 'Purple', 'item.4': 'Gold', 'item.5': 'Red',
-
   'talent.atkMult': 'Attack +{n}%', 'talent.defMult': 'Defense +{n}%', 'talent.intervalMult': 'Attack speed +{n}%',
   'talent.energyMult': 'Energy +{n}%', 'talent.startEnergy': 'Gauges start at {n}%',
-
   'skill.rampart': 'Rampart', 'skill.quake': 'Quake', 'skill.light': 'Radiance', 'skill.thunder': 'Thunder', 'skill.firestorm': 'Deluge',
   'skill.snipe': 'Snipe', 'skill.slash': 'Slash', 'skill.bite': 'Bite', 'skill.shadowblade': 'Shadow Blade',
   'skill.mend': 'Mend', 'skill.crush': 'Crush', 'skill.doom': 'Doom',
   'skilltext.shieldAll': 'Shields the whole squad', 'skilltext.smash': 'Hits the whole front row',
   'skilltext.healAll': 'Heals the whole squad', 'skilltext.stunFront': 'Stuns the front row', 'skilltext.aoe': 'Hits all enemies',
   'skilltext.strikeBack': 'Hits the weakest back-row enemy', 'skilltext.strike': 'Heavy hit on the front', 'skilltext.drain': 'Hits and heals itself',
-
   'monster.goblin': 'Goblin', 'monster.wolf': 'Wolf', 'monster.golem': 'Golem', 'monster.archer': 'Archer', 'monster.shaman': 'Shaman',
-  'monster.wraith': 'Wraith', 'monster.ogre': 'Mammoth', 'monster.lich': 'Kraken', 'monster.dragon': 'Dragon',
-
+  'monster.wraith': 'Wraith', 'monster.ogre': 'Titan', 'monster.lich': 'Leviathan', 'monster.dragon': 'Dragon',
   'summon.normal': 'Summon', 'summon.basic': 'Basic summon', 'summon.x1': '×1', 'summon.x10': '×10',
   'summon.pity': 'Legendary guaranteed in {n}', 'summon.odds': 'Odds', 'summon.adFree': 'Free summon',
   'summon.fragments': 'Shards', 'summon.copy': 'Get a copy', 'summon.target': 'Shard target',
-
   'adv.tower': 'Tower of Trials', 'adv.dungeons': 'Dungeons', 'adv.missions': 'Missions', 'adv.dailyBoss': 'Daily boss',
   'adv.arena': 'Arena', 'adv.defense': 'Colosseum',
   'tower.floor': 'Floor {n}', 'tower.challenge': 'Challenge',
@@ -242,27 +212,22 @@ const EN: Record<Key, string> = {
   'boss.best': 'Best', 'boss.attempts': 'Tries: {n} / {m}', 'boss.attack': 'Attack',
   'arena.points': 'Points', 'arena.tickets': 'Fights: {n} / {m}', 'arena.refresh': 'New opponents', 'arena.shop': 'Shop',
   'league.bronze': 'Bronze', 'league.silver': 'Silver', 'league.gold': 'Gold', 'league.platinum': 'Platinum', 'league.diamond': 'Diamond',
-  'defense.prepare': 'Place heroes', 'defense.replay': 'Replay',
 
   'guild.join': 'Join', 'guild.leave': 'Leave', 'guild.members': 'Members', 'guild.boss': 'Boss', 'guild.war': 'War', 'war.prep': 'Preparation', 'war.battle': 'Battles', 'war.results': 'Results',
   'war.day': 'day {n} / 5', 'war.attacks': 'Attacks: {n} / {m}', 'war.ranking': 'Guild stars', 'war.tired': 'Already attacked today',
   'war.defense': 'Defense', 'war.win': 'Victory!', 'war.draw': 'Draw', 'war.loss': 'Defeat', 'mode.guildWar': 'War', 'guild.chat': 'Chat',
   'guild.shop': 'Shop', 'guild.total': 'Guild damage', 'guild.level': 'Lv. {n}',
-
   'quests.daily': 'Daily', 'quests.weekly': 'Weekly', 'quests.activity': 'Activity',
   'quest.login': 'Log in', 'quest.collectIdle': 'Collect loot', 'quest.winStage': 'Win campaign stages', 'quest.summon': 'Summon',
   'quest.levelUp': 'Level up heroes', 'quest.fuse': 'Fuse', 'quest.tower': 'Tower floors', 'quest.dungeon': 'Dungeon',
   'quest.mission': 'Missions', 'quest.dailyBoss': 'Daily boss', 'quest.arena': 'Arena fights', 'quest.guildBoss': 'Guild boss',
   'quest.watchAd': 'Ad',
-
   'shop.offers': 'Offers', 'shop.gems': 'Gems', 'shop.pass': 'Pass', 'shop.exchange': 'Exchange', 'shop.simulated': 'Simulated purchase (prototype)',
   'offer.starter': 'Starter pack', 'offer.growth': 'Growth pack', 'offer.card': 'Monthly card', 'offer.pass': 'Premium pass',
   'offer.noads': 'No ads', 'offer.card.desc': '+100 gems a day, 30 days', 'offer.noads.desc': 'Ad bonuses without watching',
   'offer.daysLeft': '{n} days left', 'offer.owned': 'Owned',
   'pass.level': 'Tier {n}', 'pass.free': 'Free', 'pass.premium': 'Premium', 'pass.points': '{n} / {m} points',
-
   'rank.campaign': 'Campaign', 'rank.power': 'Power', 'rank.arena': 'Arena', 'rank.you': 'You',
-
   'settings.account': 'Account', 'settings.rename': 'Change', 'settings.id': 'Player ID', 'settings.game': 'Game',
   'settings.sound': 'Sound', 'settings.music': 'Music', 'settings.notifications': 'Notifications', 'settings.info': 'Information',
   'settings.delete': 'Delete my account', 'settings.deleteConfirm': 'Delete your account and all your progress?',
@@ -274,19 +239,18 @@ const EN: Record<Key, string> = {
   'name.title': 'Your name', 'name.random': 'Random name', 'name.rule': '3 to 16 characters',
   'name.length': '3 to 16 characters', 'name.chars': 'Letters, digits, spaces, - and _ only', 'name.taken': 'Name not allowed',
   'name.gems': 'Not enough gems',
-  'settings.name': 'Name', 'settings.lang': 'Language', 'settings.speed': 'Battle speed', 'settings.tests': 'Test tools', 'settings.pixel': 'Pixel art battle', 'settings.hd': 'HD battle (trial)', 'hdpick.monsters': 'Monsters', 'hdpick.random': 'Random', 'hdpick.all': 'All {n} in a row', 'theme.bois': 'Night blue', 'theme.royal': 'Royal', 'theme.crepuscule': 'Dusk',
-  'settings.h2': '+2 h', 'settings.h12': '+12 h', 'settings.d1': '+1 day', 'settings.resources': 'Resources',
-  'settings.unlock': 'Unlock everything', 'settings.preview': 'Art preview', 'settings.fond': 'Battle background',
-  'fond.eldra': 'Monkey mountain', 'fond.arachne': 'Spider lair', 'fond.meduse': 'Sunken temple',
-  'fond.kael': 'Volcano', 'fond.orin': 'Tengu summit', 'fond.barzul': 'Pirate cove', 'fond.lenore': 'Oni fortress',
-  'fond.kesha': 'Abyssal reef',
-  'fond.auto': 'Normal', 'fond.meadow': 'Meadow', 'fond.bramble': 'Bramble forest', 'fond.bayou': 'Bayou', 'fond.ash': 'Ashlands',
-  'fond.tundra': 'Tundra', 'fond.storm': 'Storm peaks', 'fond.temple': 'Sand temple', 'fond.abyss': 'Abyss', 'fond.tower': 'Tower',
-  'fond.mine': 'Gold mine', 'fond.spring': 'Essence spring', 'fond.armory': 'Armory', 'fond.lair': 'Lair', 'fond.arena': 'Arena', 'settings.reset': 'Start over', 'settings.resetConfirm': 'Erase progress?',
+  'settings.name': 'Name', 'settings.lang': 'Language', 'settings.speed': 'Battle speed',
+
+
+
+
+
+
+
 
   'result.victory': 'Victory!', 'result.defeat': 'Defeat', 'result.damage': 'Damage', 'result.nothing': 'Nothing this time',
   'battle.quit': 'Quit', 'battle.wave': 'Wave', 'battle.auto': 'AUTO',
-  'mode.campaign': 'Stage', 'mode.tower': 'Floor', 'mode.dungeon': 'Dungeon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arena', 'mode.guildBoss': 'Guild', 'mode.friend': 'Challenge', 'mode.demo': 'Pixel art trial', 'mode.hdDemo': 'HD trial',
+  'mode.campaign': 'Stage', 'mode.tower': 'Floor', 'mode.dungeon': 'Dungeon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arena', 'mode.guildBoss': 'Guild', 'mode.friend': 'Challenge',
   'mail.title': 'Mail', 'mail.claimAll': 'Claim all',
   'login.title': 'Check-in', 'login.welcome': 'Welcome',
   'friends.title': 'Friends', 'friends.code': 'My code', 'friends.add': 'Add', 'friends.placeholder': 'Friend code',
