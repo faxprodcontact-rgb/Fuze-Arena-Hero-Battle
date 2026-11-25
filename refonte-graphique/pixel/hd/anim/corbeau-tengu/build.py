@@ -812,6 +812,30 @@ def comet(cv, pts, s0, s1, wmax, tones):
 
 
 
+# ---------------------------------------------------------------- nettoyage après le montage
+WOOD = set('ABCD')
+
+
+def clean(cv):
+    """les plis et décalages d'un pixel laissent parfois une encoche d'un pixel (vide entouré sur trois côtés) ou un
+    pixel seul : l'encoche prend la couleur la plus fréquente autour d'elle, le pixel seul s'efface (sauf la pointe
+    du sabre). Les encoches du dessin (sous les geta) restent."""
+    for _ in range(3):
+        f = cv != '.'
+        p = np.pad(f, 1)
+        n4 = p[:-2, 1:-1].astype(int) + p[2:, 1:-1] + p[1:-1, :-2] + p[1:-1, 2:]
+        for y, x in np.argwhere(~f & (n4 >= 3)):
+            nb = [cv[y + dy, x + dx] for dy, dx in ((0, -1), (0, 1), (-1, 0), (1, 0))
+                  if 0 <= y + dy < H and 0 <= x + dx < W and cv[y + dy, x + dx] != '.']
+            if any(c in WOOD for c in nb):
+                continue
+            cv[y, x] = max(nb, key=nb.count)
+        for y, x in np.argwhere(f & (n4 == 0)):
+            if cv[y, x] not in STEEL:
+                cv[y, x] = '.'
+    return cv
+
+
 # ---------------------------------------------------------------- une image « montée » (corps plié, ailes, bras, sabre)
 class Ctx:
     """ce qu'une image a calculé (positions sur la toile) : utile aux effets"""
@@ -860,6 +884,7 @@ def rig_frame(f):
     else:
         O_ = O_ + (X, 0)
         C = C + (X, 0)
+    clean(cv)
     ctx.C, ctx.O, ctx.ang = C, O_, ang
     ctx.tip = O_ + BLADE_L * unit(ang)
     for fx in f.get('fx', []):
