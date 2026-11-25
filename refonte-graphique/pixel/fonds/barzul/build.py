@@ -170,7 +170,7 @@ PLAGE_Y = 742                       # le haut de la plage (le pied de la falaise
 def cap(t):
     X, Y = t.X, t.Y
     yl = cap_ligne(X)
-    m = (Y >= yl) & (X < cap_bord(Y)) & (Y < PLAGE_Y + 3 + (bruit1(X, 12, 415, 2) - 0.5) * 6)
+    m = (Y >= yl) & (X < cap_bord(Y)) & (Y < PLAGE_Y + 2 + (bruit1(X, 22, 415, 3) - 0.5) * 12)
     F.roche(t, m, GRES[0:5], 417, taille=30, etire=(1.0, 1.5), fentes=0.45, bas_sombre=0.7)
     nettoie(t, m)
     # l'herbe qui coiffe le plateau : une bande verte au bord bruité, des touffes qui retombent sur la paroi
@@ -318,11 +318,10 @@ SIGNE = ['...uuu...',
          'u..u.u..u']
 SIGNE_LEG = {'u': OR[3], 'w': OR[4], 's': OR[2]}
 PETIT = ['..uuu..',
-         'uu.w.uu',
-         '..uuu..',
-         '.......',
-         '.uu..uu',
-         'u..uu..']
+         '.u.w.u.',
+         'u.www.u',
+         '.u.w.u.',
+         '..uuu..']
 PETIT_LEG = {'u': OR[3], 'w': OR[4]}
 
 
@@ -1041,6 +1040,11 @@ def construit():
     cap_m, cyl = cap(t)
     buissons(t)
     pl = plage(t, cap_m)
+    for (x, rx, ry, g) in [(84, 9, 6, 461), (100, 5, 3.5, 462), (178, 12, 8, 463), (162, 6, 4, 464)]:
+        y = PLAGE_Y + 3
+        rm = t.ellipse(x, y, rx, ry * 1.6) & (Y < y + 1)
+        relief(t, rm, GRES[0:5], g, arrondi=2, rugosite=0.3, grain=6)
+        t.fill(t.ellipse(x - 1, y + 1, rx + 1, 1.4) & ~rm & ~cap_m & (Y >= y), SABLE[1])
     r['grotte'] = grotte(t, cap_m)
     r['sous_tresor'] = t.col.copy()
     chaloupe(t)

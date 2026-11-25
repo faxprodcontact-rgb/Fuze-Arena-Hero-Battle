@@ -260,8 +260,7 @@ def collier(t, x0, x1, yb, graine, voile=0.4, taille=(6, 11)):
     # sous les amas, la nappe de nuage qui rejoint la mer (cache le pied des pitons)
     nappe = (t.Y >= yb + 1 + (bruit1(t.X, 6, graine, 2) * 3).astype(int)) & (t.Y < MER_Y0 + 3) & (t.X >= x0 - 8) \
         & (t.X < x1 + 8)
-    t.fill(nappe & ~m, g[2])
-    t.fill(nappe & ~m & ~S(nappe, 0, -1), g[3])
+    t.fill(nappe & ~m, brume([NUAGE[1], NUAGE[2], NUAGE[3]], AIR, 0.6)[2])     # le ton de la mer au loin
     return m | nappe
 
 

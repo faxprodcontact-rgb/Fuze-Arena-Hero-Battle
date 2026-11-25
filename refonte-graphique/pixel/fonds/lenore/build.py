@@ -104,10 +104,10 @@ def nuage(t, cx, cy, rx, ry, graine, gamme, voile=0.0):
         f = (k + 0.5) / n
         r = ry * (0.85 + 0.6 * math.sin(math.pi * f)) * rng.uniform(0.85, 1.15)
         boules.append((cx - rx * 0.62 + 1.24 * rx * f + rng.uniform(-5, 5), cy - r * 0.3 + rng.uniform(-1, 2), r))
-    nb = int(math.ceil(2 * rx / (ry * 0.8)))
+    nb = int(math.ceil(2 * rx / (ry * 1.5)))
     for k in range(nb + 1):                              # le corps (devant), qui s'effile aux deux bouts
         f = k / nb
-        r = ry * (0.5 + 0.35 * math.sin(math.pi * f)) * rng.uniform(0.9, 1.1)
+        r = ry * (0.62 + 0.3 * math.sin(math.pi * f)) * rng.uniform(0.9, 1.1)
         boules.append((cx - rx + 2 * rx * f, cy + ry * 0.2, r))
     boules.sort(key=lambda b: b[1])
     return F.lobes(t, boules, g, plat=cy + ry * 0.5)
