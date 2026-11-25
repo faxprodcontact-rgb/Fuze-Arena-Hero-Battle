@@ -103,3 +103,6 @@
 - Pilote en cours : dragon de lave (feu), `boss/dragon.txt`, + case agrandie dans hd.py (`cadre:`), aperçu
   `pixel/sortie/boss-dragon-echelle.png`. Ensuite : léviathan (eau), titan de pierre (terre), oiseau-tempête (vent),
   puis animations et branchement (boss du jour, de guilde, fins de région).
+- 25/11 : dragon VALIDÉ (taille, tête) avec 2 retouches demandées : pattes plus cohérentes, intérieur de la bouche
+  TRANSPARENT (on voit le fond entre les mâchoires ; vaut pour tous les boss, remplace « gorge rouge sombre »).
+  Retouche du dragon en cours ; léviathan, titan, oiseau-tempête lancés (brief scratchpad brief-boss.md).
