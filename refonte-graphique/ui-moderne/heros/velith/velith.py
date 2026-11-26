@@ -462,7 +462,7 @@ def head(fig, P, HEAD):
 FIST_FINGERS = [(-6.6, -3.1, 5.6), (-3.1, 0.3, 6.2), (0.3, 3.4, 5.8), (3.4, 6.1, 4.6)]   # (haut, bas, jointure) de
 FIST_XL = -2.6                                                                           # l'index au petit doigt
 FIST_GRIP = 29.5                 # poing proche : le creux du poing sur le manche (distance depuis le haut du manche)
-FIST_HN = (-4.6, 5.0)            # poing proche : le talon de la main (vers le poignet, en bas à gauche)
+FIST_HN = (-5.4, 4.0)            # poing proche : le talon de la main (vers le poignet, en bas à gauche)
 FIST_KF, FIST_WF, FIST_HF = 0.95, (-3.2, -9.6), (-4.6, -4.0)   # poing lointain : taille, poignet, talon (en haut)
 
 
@@ -497,22 +497,24 @@ def fist_parts(fig, name, M, cast_on, wrist, heel):
                  cast_on=[name] + ['%s%d' % (name, j) for j in range(i + 1, n)],
                  details=[(L(s_), c, o) for s_, c, o in fdet])
         names.append('%s%d' % (name, i))
-    for i in range(1, n):                              # les griffes : du bout des doigts, recourbées vers la paume
+    for i in range(2, n):                              # les griffes : du bout des doigts, recourbées vers la paume
         y0, y1, xr = FIST_FINGERS[i]
         ym = (y0 + y1) / 2
-        k = 1.0 if i < 3 else 0.85
+        k = 1.0 if i < 3 else 0.88
         x = FIST_XL - 0.2
         cl = sm([(x + 0.9 * k, ym - 1.0 * k), (x - 1.0 * k, ym - 0.3 * k), (x - 2.0 * k, ym + 1.6 * k),
                  (x + 0.3 * k, ym + 0.9 * k)], sharp=(2,))
         fig.part('%sc%d' % (name, i), L(cl), IVORY, cel=0.3, rim=0.3, cast=0.4,
                  cast_on=[name] + ['%s%d' % (name, j) for j in range(n)])
         names.append('%sc%d' % (name, i))
-    th = limb([(-7.0, -3.2), (-4.0, -6.4), (0.0, -7.2), (3.2, -6.0)], [4.8, 4.2, 3.7, 3.2])
-    fig.part(name + 't', L(th), SKIN, cel=0.8, rim=0.6, cast=0.9, cast_on=[name, name + '0', name + '1', name + 'c1'],
-             details=[(L(ribbon([(-5.4, -6.8), (-1.6, -8.4), (2.6, -7.4)], [0.2, 0.8, 0.2])), SKIN.hi, 0.6),
-                      (L(ribbon([(-4.6, -4.6), (-1.0, -5.4), (2.0, -4.8)], [0.2, 0.6, 0.2])), SKIN.shadow, 0.35)])
-    fig.part(name + 'tc', L(sm([(3.0, -7.4), (5.4, -6.8), (6.4, -4.4), (3.8, -4.8)], sharp=(2,))), IVORY, cel=0.3,
-             rim=0.3, cast=0.4, cast_on=[name + 't', name + '0', name + '1'])
+    # le pouce : il part du haut de la paume et descend en travers de l'index et du majeur, sa griffe au bout
+    th = limb([(-7.8, -5.6), (-5.2, -4.8), (-3.0, -2.6), (-1.6, 0.2)], [5.0, 4.5, 4.0, 3.4])
+    fig.part(name + 't', L(th), SKIN, cel=0.9, rim=0.6, cast=1.0,
+             cast_on=[name, name + '0', name + '1', name + '2', name + 'c1', name + 'c2'],
+             details=[(L(ribbon([(-7.0, -7.6), (-4.4, -6.8), (-1.8, -4.0), (-0.4, -0.8)], [0.2, 0.9, 0.7, 0.2])), SKIN.hi, 0.6),
+                      (L(ellipse(-6.4, -5.8, 1.6, 0.9, 15)), SKIN.light, 0.4)])
+    fig.part(name + 'tc', L(sm([(-2.0, -0.4), (0.0, 0.4), (0.6, 2.8), (-1.6, 1.4)], sharp=(2,))), IVORY, cel=0.3,
+             rim=0.3, cast=0.4, cast_on=[name + 't', name + '1', name + '2'])
     return names + [name + 't', name + 'tc']
 
 
@@ -604,7 +606,7 @@ def far_arm(fig, P, UC):
             a = math.radians(P['fang'] - 90)
             M = mchain(mT(W[0], W[1]), (math.cos(a), math.sin(a), -math.sin(a), math.cos(a), 0, 0), mS(FIST_KF),
                        mT(-FIST_WF[0], -FIST_WF[1]))
-            fist_parts(fig, 'ff', M, ['farm', 'fsleeve'], W, FIST_HF)
+            fist_parts(fig, 'ff', M, ['farm', 'fsleeve'], lerp(W, E, -0.12), FIST_HF)
             fig.ctx_arm['ftips'] = [mapp(M, (6.4, 0.5))]
     return draw
 
@@ -757,7 +759,8 @@ def near_hand(fig, P):
     # talon de la main descend jusqu'au vrai poignet, dans le brassard
     O = (22.4 + FIST_GRIP * HU[0], 2.0 + FIST_GRIP * HU[1])
     Mh = mchain(MA, mT(*O), (HU[1], -HU[0], HU[0], HU[1], 0, 0), mS(0.92))
-    fist_parts(fig, 'nf', Mh, ['handle', 'mantle', 'socket'], fig.ctx_arm['nW'], FIST_HN)
+    nE, nW = fig.ctx_arm['nE'], fig.ctx_arm['nW']
+    fist_parts(fig, 'nf', Mh, ['handle', 'mantle', 'socket'], lerp(nW, nE, -3.0 / (math.dist(nE, nW) or 1)), FIST_HN)
 
 
 def main():

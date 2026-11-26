@@ -531,9 +531,9 @@ def head(fig, P):
 # bout arrondi ; un galon d'or continu en suit tout le bord libre (bout, devant, aile relevée) ; la broche épingle
 # l'aile sur le ruban de la calotte.
 HAT_TOP = [(103.0, 38.3), (99.0, 37.7), (93.0, 37.3), (86.0, 36.8), (78.0, 36.3), (70.0, 36.1), (63.0, 36.4)]
-FLAP = [(62.2, 34.4), (62.4, 30.2), (61.8, 26.0), (60.2, 22.6), (57.6, 20.4), (54.4, 19.8), (51.4, 20.9), (49.4, 23.6),
-        (48.4, 27.6), (48.2, 32.4), (48.6, 36.6)]
-HAT_LIP = [(50.0, 40.0), (54.0, 41.4), (58.0, 42.1), (66.0, 42.4), (74.0, 42.5), (82.0, 42.2), (90.0, 41.6), (97.0, 40.9),
+FLAP = [(62.6, 35.0), (62.8, 31.0), (62.1, 27.2), (60.4, 24.2), (57.6, 22.2), (54.0, 21.5), (50.4, 22.5), (47.6, 25.0),
+        (45.6, 28.6), (44.5, 32.6), (44.4, 36.2)]
+HAT_LIP = [(46.2, 39.4), (50.0, 41.0), (54.0, 41.6), (58.0, 42.1), (66.0, 42.4), (74.0, 42.5), (82.0, 42.2), (90.0, 41.6), (97.0, 40.9),
            (101.6, 40.4), (103.4, 39.6)]
 
 
@@ -572,11 +572,11 @@ def hat(fig, P):
     n1 = len(HAT_TOP)
     brim = sm(pts, sharp=(n1 - 1, n1), t=0.9)
     # le dessus du bord, éclairé (plus large vers l'avant : on le voit d'un peu au-dessus)
-    surf = sm(HAT_TOP + [(62.0, 36.6), (62.0, 39.0), (70.0, 39.6), (80.0, 39.7), (90.0, 39.3), (98.0, 38.9), (102.6, 39.0)],
-              sharp=(n1 - 1, n1, n1 + 1), t=0.85)
+    surf = sm(HAT_TOP + [(58.0, 37.4), (52.0, 39.4), (47.0, 39.2), (52.0, 40.2), (58.0, 39.9), (64.0, 39.7), (70.0, 39.7), (80.0, 39.7),
+                         (90.0, 39.3), (98.0, 38.9), (102.6, 39.0)], sharp=(0, n1 + 2), t=0.85)
     # le pli : l'aile se relève depuis le bord (une ombre douce, pas un trait)
-    fold = sm([(44.0, 36.4), (48.0, 38.0), (54.0, 38.8), (60.0, 38.6), (62.8, 37.2), (63.4, 39.8), (60.0, 41.0), (52.0, 41.0),
-               (46.0, 40.4), (43.6, 38.8)], t=0.9)
+    fold = sm([(43.0, 33.6), (47.0, 35.8), (53.0, 37.0), (59.0, 36.8), (63.0, 35.4), (63.0, 38.2), (58.0, 38.4), (52.0, 39.4),
+               (46.6, 39.0), (43.0, 37.4)], t=0.9)
     # le galon d'or : le long du bord libre (bout, devant, pli, aile), pas sur le bord du fond qui touche la calotte
     from shapely.geometry import Polygon, LineString, Point
     B = Polygon(poly(brim, 16)).buffer(0)
@@ -589,14 +589,14 @@ def hat(fig, P):
         k0 = next(i for i in range(len(ring)) if inm[i] and not inm[i - 1])
         ring, inm = ring[k0:] + ring[:k0], inm[k0:] + inm[:k0]
         c_ = [p for p, m in zip(ring, inm) if not m]
-        c_ = LineString(c_).simplify(0.04).coords
-        c_ = crpath(list(c_), 3) if len(c_) < 200 else list(c_)
+        c_ = LineString(c_).simplify(0.12).coords
+        c_ = crpath(list(c_), 240)
         n_ = len(c_)
         gal.append((ribbon(c_, [w_ * min(1.0, 0.4 + i / 6, 0.4 + (n_ - 1 - i) / 6) for i in range(n_)], sharp_ends=False), col, op))
     bd = [(sm(FLAP[2:] + [(46.0, 40.0), (40.0, 40.0), (40.0, 20.0)]), ('lin', 60, 22, 46, 38, [(0, HAT.base, 0), (1, HAT.shadow, 0.55)]), 1),
           (ribbon(crpath([(51.8, 22.4), (55.0, 21.6), (58.4, 23.4), (60.4, 26.8), (61.0, 30.4)], 16), swell(16, 1.2)), HAT.light, 0.7),
           (ribbon(crpath([(53.4, 22.2), (56.4, 22.4), (58.6, 24.6)], 10), swell(10, 0.45)), HAT.hi, 0.55),
-          (fold, ('lin', 0, 37.0, 0, 41.0, [(0, HAT.deep, 0), (0.5, HAT.deep, 0.32), (1, HAT.deep, 0.1)]), 1),
+          (fold, ('lin', 0, 33.8, 0, 39.2, [(0, HAT.deep, 0), (0.75, HAT.deep, 0.3), (1, HAT.deep, 0.05)]), 1),
           (surf, ('lin', 0, 36.2, 0, 39.8, [(0, HAT.hi), (0.5, HAT.light), (1, HAT.base)]), 0.95),
           (ribbon(crpath([(64.0, 36.9), (76.0, 36.9), (88.0, 37.6), (99.0, 38.2)], 18), swell(18, 0.45)), '#fff2d8', 0.6)] + gal
     part('brim', brim, HAT, grad=(100, 37, 50, 41, [(0, HAT.base), (0.6, HAT.base), (1, HAT.shadow)]), cel=0.5, rim=0.5, cast=1.0,
