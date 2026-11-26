@@ -9,11 +9,14 @@
 # Corps : trapèzes qui montent derrière la mâchoire, deltoïdes ronds, gros pectoraux lourds (pli d'ombre dessous,
 # sillon du sternum décalé à droite), flanc proche dans l'ombre, gros ventre rond qui retombe sur la corde, hanches
 # larges, cuisses lourdes, grands pieds nus à quatre orteils. Bras proche (droit) levé : le haut du bras à l'horizontale,
-# l'avant-bras qui monte, le poing serré sur le manche de la massue tenue haut en arrière (rien devant le visage). Bras
-# lointain (gauche) en garde : coude bas derrière le ventre, poing levé vers l'ennemi (phalanges, pouce en travers).
+# l'avant-bras qui monte, le poing serré sur le manche de la massue tenue haut en arrière (rien devant le visage) ; la
+# racine du bras se fond dans la poitrine (masque en dégradé, outils.FigureM : aucune couture à l'épaule). Bras lointain
+# (gauche) en garde de lutteur : il sort sous le deltoïde du buste, coude bas à côté du ventre, avant-bras presque droit,
+# poing levé à hauteur d'épaule vers l'ennemi (phalanges, pouce en travers) ; tout le bras est derrière le buste.
 # Tête : crâne chauve et rond (reflet sur le dôme, cicatrice pâle), UN grand œil ambre au milieu du visage, un seul
 # gros sourcil froncé en V, plis de colère, nez épaté qui dépasse à droite, grande bouche ouverte en grimace (dents de
-# travers, gorge rouge sombre), défenses tordues qui montent de la mâchoire du bas, grande oreille décollée.
+# travers, gorge rouge sombre), défenses tordues plantées dans la mâchoire du bas (elles sortent d'entre les lèvres,
+# le pied caché par la lèvre du bas), grande oreille décollée.
 # Massue : un tronc noueux qui s'élargit en tête ronde, quatre pointes de fer, un nœud creux, mousse verte sur le dessus.
 # Ceinture de corde tressée (nœud côté lointain, deux bouts, un petit crâne de bête), un os à la hanche proche, pagne de
 # fourrure en grosses grappes (pan de devant plus long, pan de derrière dans l'ombre), brassards de cuir à plaques d'os.

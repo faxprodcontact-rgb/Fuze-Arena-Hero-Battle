@@ -54,7 +54,9 @@ HIP = (70.0, 92.0)              # le pivot du buste (il se penche depuis les han
 NECK = (76.0, 54.0)             # le pivot de la tête quand elle tourne
 HP = (92.0, 52.0)               # la tête est agrandie ×1,1 autour de ce point (elle grandit vers le haut et l'arrière)
 HSC = 1.1
-NS, NE0, NW0 = (48.4, 63.4), (41.6, 83.2), (53.4, 68.4)       # bras proche : épaule, coude, poignet (repos)
+NS, NE0, NW0 = (54.0, 60.6), (47.6, 81.0), (61.4, 71.4)       # bras proche : épaule, coude, poignet (repos)
+GW = (53.4, 68.4)               # le poignet dans le dessin du gant proche (le gant est porté là où est le poignet)
+NGA0 = -18.0                    # le gant proche, au repos, dans l'axe de l'avant-bras (le poignet droit)
 FS, FE0, FW0 = (84.6, 63.6), (94.2, 79.6), (102.6, 64.8)      # bras lointain (épaule cachée derrière le plastron)
 NH, NK0, NA0 = (51.6, 95.0), (50.4, 102.6), (46.8, 110.2)     # jambe proche : hanche, genou, cheville
 FH, FK0, FA0 = (80.0, 93.0), (86.2, 102.2), (84.8, 110.0)     # jambe lointaine
@@ -285,7 +287,7 @@ def skeleton(Pz):
     Wt = mapp(UC, (NW0[0] + Pz['nw'][0], NW0[1] + Pz['nw'][1]))
     k = 1 + 0.05 * Pz['nstretch']
     E, W = ik(S, Wt, NL[0] * k, NL[1] * k, SG_NA)
-    HANDM = mchain(mT(W[0] - NW0[0], W[1] - NW0[1]), mR(0.25 * (ang_of(E, W) - ang_of(NE0, NW0)) + Pz['nga'], *NW0))
+    HANDM = mchain(mT(W[0] - GW[0], W[1] - GW[1]), mR(0.25 * (ang_of(E, W) - ang_of(NE0, NW0)) + NGA0 + Pz['nga'], *GW))
     return dict(ROOTM=ROOTM, PEL=PEL, U=U, UC=UC, TOR=TOR, HEAD=HEAD, SHM=SHM, SHO=SHO, FS=FSw, FE=FEw, FW=FWw, FGM=FGM,
                 NS=S, NE=E, NW=W, HANDM=HANDM, far_fist=mapp(FGM, (111.0, 52.0)), near_fist=mapp(HANDM, (68.0, 68.0)))
 
@@ -443,9 +445,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ============================================================== le corps : une seule silhouette
     # ---- le bras proche (épaule → coude → poignet d'un seul tenant), plié en garde ----
     S, E, W = sk['NS'], sk['NE'], sk['NW']
-    arm = bent(S, E, W, 15.6, 12.6, 10.0, bulge=(0.06, 0.06), n=12)
-    upper = limb([S, lerp(S, E, 0.5), E], [15.6, 14.8, 12.6])
-    fore = limb([E, lerp(E, W, 0.5), W], [12.0, 11.0, 10.0])
+    arm = bent(S, E, W, 14.0, 11.6, 9.6, bulge=(0.06, 0.06), n=12)
+    upper = limb([S, lerp(S, E, 0.5), E], [14.0, 13.0, 11.6])
+    fore = limb([E, lerp(E, W, 0.5), W], [11.2, 10.4, 9.6])
     nH, nK, nA, nlg, nfoot, nFM = leg_geom(NH, NK0, NA0, NLL, SG_NL, (19.0, 17.6, 16.0), NEAR_FOOT)
     torso = MS(TOR, sm(TORSO_PTS, t=0.9))
     body, bodyg = fuse([torso, arm, nlg, nfoot], smooth=0.6)

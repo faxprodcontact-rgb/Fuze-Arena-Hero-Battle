@@ -320,13 +320,17 @@ FACE_PTS = [(60.6, 31.6), (62.6, 29.2), (67.0, 28.0), (73.0, 27.7), (78.6, 28.2)
 HOOD_PTS = [(47.8, 53.0), (46.4, 46.0), (46.0, 40.0), (46.8, 33.4), (49.0, 27.6), (52.4, 22.8), (57.0, 19.0), (63.4, 17.6),
             (69.8, 17.9), (75.8, 19.6), (80.4, 22.8), (83.6, 26.8), (85.0, 30.4), (84.6, 33.6), (82.6, 36.6), (80.4, 40.0),
             (79.2, 45.0), (77.2, 49.2), (74.8, 53.8), (68.0, 55.4), (58.0, 55.2), (51.0, 54.4)]
-EAR_PTS = [(58.8, 37.0), (52.4, 34.6), (45.6, 31.8), (40.6, 29.8), (37.4, 28.8), (40.0, 31.4), (45.0, 35.2), (50.4, 39.0),
-           (54.0, 42.0), (56.4, 43.6), (58.8, 43.2)]
+# l'oreille : sa racine (les deux derniers points et le premier) est sous la joue, sur le côté du crâne, à hauteur des
+# yeux (place donnée par ../visage.py : V['oreille'] ≈ (60.6, 41.6)) ; le visage la recouvre, elle sort de derrière la joue
+EAR_PTS = [(62.0, 36.6), (54.6, 34.6), (47.8, 31.8), (42.8, 29.8), (39.6, 28.8), (42.2, 31.4), (47.2, 35.2), (52.6, 39.0),
+           (56.2, 42.0), (58.8, 43.9), (62.0, 44.0)]
 FRINGE_PTS = [(59.2, 27.8), (70.0, 26.8), (82.8, 27.4), (83.4, 30.4), (82.8, 35.0), (80.0, 33.8), (78.0, 30.2), (77.2, 36.2),
               (74.0, 34.4), (72.0, 30.4), (70.8, 36.4), (67.6, 34.2), (66.2, 30.8), (65.2, 35.0), (63.8, 33.2), (63.6, 37.4),
               (63.2, 43.8), (61.4, 41.0), (60.0, 35.0), (59.4, 31.0)]
-TRIM_C = [(81.8, 26.7), (76.0, 26.4), (68.0, 26.5), (61.2, 27.4), (58.6, 29.4), (57.7, 34.0), (57.8, 40.0), (58.6, 44.8),
-          (60.4, 48.6), (63.2, 51.6), (66.8, 53.4), (70.6, 54.4)]
+# le galon de l'ouverture épouse le contour du visage (il mord un peu sur la joue : aucun vide sombre entre les deux) ;
+# il s'interrompt là où l'oreille traverse la capuche (une fente) : un morceau au-dessus, un morceau au-dessous
+TRIM_C = [(81.8, 26.7), (76.0, 26.4), (68.0, 26.5), (61.8, 27.5), (60.0, 29.5), (59.55, 32.4), (59.5, 35.7)]
+TRIMLOW_C = [(60.3, 43.3), (60.75, 45.0), (62.3, 47.5), (65.1, 50.1), (68.3, 52.0), (71.0, 53.3)]
 TRIMFAR_C = [(81.8, 26.7), (83.6, 28.2), (84.3, 30.8), (84.0, 33.8), (82.6, 37.2), (80.6, 40.4)]
 
 
@@ -344,7 +348,7 @@ def head(fig, P, HEAD, UC):
         (ribbon(crpath([(59.6, 19.4), (68.0, 18.8), (76.4, 21.0), (81.6, 25.0)], 16), swell(16, 2.2)).move(0, 0.6), GREEN.hi, 0.75),
         (ribbon(crpath([(56.0, 23.0), (54.0, 30.0), (53.6, 37.0)], 10), swell(10, 1.2)), GREEN.light, 0.45),
         # sous l'oreille : l'ombre de l'oreille sur la capuche
-        (ribbon(crpath([(56.0, 44.4), (52.0, 41.8), (47.4, 38.4)], 10), swell(10, 1.6)), GREEN.deep, 0.45),
+        (ribbon(crpath([(57.6, 44.6), (53.6, 41.8), (49.0, 38.4)], 10), swell(10, 1.6)), GREEN.deep, 0.45),
     ]
     fig.part('hood', hood, GREEN, grad=(82, 20, 48, 50, [(0, GREEN.light), (0.45, GREEN.base), (1, GREEN.shadow)]),
              cel=1.4, rim=0.8, cast=1.2, cast_on=['pel', 'cape', 'tunic'], details=hdet)
@@ -359,14 +363,14 @@ def head(fig, P, HEAD, UC):
     ear = sm(EAR_PTS, sharp=(4,), t=0.9)
     edet = [
         # le creux de l'oreille, qui s'ouvre vers la base ; le bord ourlé clair au-dessus
-        (sm([(57.6, 38.8), (51.6, 36.6), (45.4, 33.6), (41.4, 31.0), (46.0, 34.8), (51.0, 38.6), (54.6, 41.6), (57.8, 42.0)], t=0.9),
-         ('lin', 56, 38, 42, 32, [(0, SKIN.shadow), (1, SKIN.base)]), 0.9),
-        (sm([(56.8, 39.6), (53.0, 38.4), (50.4, 37.8), (53.4, 40.4), (56.4, 41.8)], t=0.9), SKIN.deep, 0.45),
-        (ribbon(crpath([(57.6, 37.2), (51.6, 35.0), (45.0, 32.2), (39.4, 29.6)], 14), swell(14, 0.9)), SKIN.hi, 0.75),
+        (sm([(60.6, 38.8), (53.8, 36.6), (47.6, 33.6), (43.6, 31.0), (48.2, 34.8), (53.2, 38.6), (56.8, 41.6), (60.6, 42.2)], t=0.9),
+         ('lin', 58, 38, 44, 32, [(0, SKIN.shadow), (1, SKIN.base)]), 0.9),
+        (sm([(59.4, 39.6), (55.2, 38.4), (52.6, 37.8), (55.6, 40.4), (59.0, 41.9)], t=0.9), SKIN.deep, 0.45),
+        (ribbon(crpath([(60.6, 37.0), (53.8, 35.0), (47.2, 32.2), (41.6, 29.6)], 14), swell(14, 0.9)), SKIN.hi, 0.75),
     ]
-    fig.part('ear', ear, SKIN, grad=(56, 36, 40, 32, [(0, SKIN.light), (1, SKIN.base)]), cel=0.8, rim=0.4, cast=1.0,
+    fig.part('ear', ear, SKIN, grad=(58, 36, 42, 32, [(0, SKIN.light), (1, SKIN.base)]), cel=0.8, rim=0.4, cast=1.0,
              cast_on=['hood'], details=edet)
-    ER = mchain(HEAD, mR(-5.0 * P['ear'], 57.6, 40.0))
+    ER = mchain(HEAD, mR(-5.0 * P['ear'], 60.4, 40.4))     # elle frémit autour de sa racine (sous la joue)
     fig.pose(_names(fig, n1), ER)
 
     # ---- le visage : les traits sont placés par ../visage.py (VZ) ----
@@ -448,7 +452,7 @@ def head(fig, P, HEAD, UC):
                    [0.1, 0.42, 0.46, 0.4, 0.1]), LIP, 0.95),
            (ribbon([(mx - hm * 0.6, my + 0.75), (mx, my + 0.85), (mx + hm * 0.6, my + 0.75)], [0.1, 0.35, 0.1]), SKIN.light, 0.5)]
     fig.part('face', face, SKIN, grad=(83, 30, 61, 50, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]), cel=0.8, rim=0.55,
-             cast=1.0, cast_on=['hood', 'trimfar'], details=fd)
+             cast=1.0, cast_on=['hood', 'trimfar', 'ear'], details=fd)
     fig.ctx_face = dict(oeil_proche=(exN, eyY, ewN), oeil_fond=(exF, eyY, ewF), nez=(nx, ny), bouche=(mx, my, 2 * hm))
     fig.pose(_names(fig, n2), HEAD)
 
@@ -476,10 +480,13 @@ def head(fig, P, HEAD, UC):
     trim = limb(TRIM_C, [1.9] * len(TRIM_C))
     fig.part('trim', trim, GOLD, grad=(80, 25, 60, 52, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), cel=0.5, rim=0.45,
              cast=1.0, cast_on=['face', 'fringe', 'hood', 'ear'],
-             details=[(ribbon(crpath([(81.6, 26.2), (72.0, 25.8), (63.0, 26.6), (59.2, 28.6)], 12), swell(12, 0.5)), GOLD.hi, 0.75)])
+             details=[(ribbon(crpath([(81.6, 26.2), (72.0, 25.8), (63.0, 26.6), (59.6, 29.2)], 12), swell(12, 0.5)), GOLD.hi, 0.75)])
+    trimlow = limb(TRIMLOW_C, [1.9] * len(TRIMLOW_C))
+    fig.part('trimlow', trimlow, GOLD, grad=(80, 25, 60, 52, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), cel=0.5,
+             rim=0.45, cast=1.0, cast_on=['face', 'fringe', 'hood', 'ear'])
     clasp = sm([(70.6, 51.8), (72.6, 53.0), (73.0, 54.8), (71.2, 56.4), (69.0, 56.0), (68.2, 54.2), (69.0, 52.6)], t=0.95)
     fig.part('clasp', clasp, GOLD, grad=(73, 52, 68, 56.4, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), cel=0.6, rim=0.5,
-             cast=0.9, cast_on=['face', 'hood', 'pel', 'trim'],
+             cast=0.9, cast_on=['face', 'hood', 'pel', 'trim', 'trimlow'],
              details=[(ellipse(70.7, 54.2, 1.0, 0.95), GOLD.shadow, 0.7), (ellipse(70.85, 54.0, 0.65, 0.6), GOLD.light, 1),
                       (ellipse(71.6, 53.0, 0.42, 0.3, -30), GOLD.glint, 0.95)])
     fig.pose(_names(fig, n4), HEAD)

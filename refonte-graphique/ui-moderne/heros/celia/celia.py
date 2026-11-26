@@ -4,8 +4,9 @@
 #   python3 refonte-graphique/ui-moderne/heros/celia/celia.py      # → celia.svg + images 512 et 160 px de haut
 #
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/celia.txt) : la dame des neiges (yuki-onna), beauté
-# froide et inquiétante. Grande, mince et droite, épaules tombantes, longue colonne de kimono blanc jusqu'au sol (l'ourlet
-# de neige bleu pâle traîne derrière et se relève sur le pied avant : chaussette blanche, geta laqué bleu nuit), col
+# froide et inquiétante. Grande, mince et droite, épaules tombantes, longue colonne de kimono blanc jusqu'aux chevilles
+# (traîne posée au sol derrière, ourlet bleu pâle à festons ; dessous, deux pieds en tabi blanc sur geta laqué bleu nuit,
+# pointes vers l'ennemi, le pied lointain dépasse de la robe), col
 # croisé (le pan gauche sur le pan droit, col de dessous bleu pâle), obi bleu roi noué devant en deux boucles et deux
 # pans, flocons inventés sur le tissu, doublure bleue entre les pans. Longs cheveux bleu nuit (raie au milieu, anneau
 # de reflet sur le crâne, une mèche devant l'épaule) qui tombent dans le dos puis s'envolent vers la gauche ; épingle
