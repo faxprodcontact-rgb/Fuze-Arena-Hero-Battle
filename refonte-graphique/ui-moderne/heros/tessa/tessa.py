@@ -30,6 +30,7 @@ from lib import Shape  # noqa: E402
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
 # ---------- matières (tons du pixel art, passés à la gamme de l'interface : lumières chaudes, ombres violettes) ----------
+ARM = Mat('#f6c890', '#c4884e', '#9a5e36', '#68382a', '#42202a')            # les bras : brun plus chaud que les ailes
 WHITE = Mat('#ffffff', '#fbf9ff', '#e4e1f0', '#aaa5c8', '#6a6490')
 WARM = Mat('#fff4ee', '#ece0de', '#d2bec0', '#a2868e', '#6e5468')          # pointes tièdes des plumes du cou
 BROWN = Mat('#f0c07c', '#b97c44', '#8c5230', '#5e3226', '#3a1c22')
@@ -202,7 +203,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     U = mchain(mT(P['lean'] * 0.35, dyb), mR(P['lean'] * 0.8, 66, 88))          # le haut du corps (depuis les hanches)
     UC = mchain(U, mT(0, -0.6 * br))                                            # ce qui monte avec la poitrine
     TOR = mchain(U, mS(1, 1 + 0.012 * br, 66, 76))                              # le buste se gonfle
-    HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], NECK[0], NECK[1] - 4), mS(1.1, 1.1, NECK[0], NECK[1]))
+    HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'] + 2.0, NECK[0], NECK[1] - 4), mS(1.1, 1.1, NECK[0], NECK[1]))
     LEG = mS(1, 1 - dyb / 34, 0, GRD)                                           # les jambes plient (pieds au sol)
 
     # ================================================================ les ailes (derrière tout)
@@ -219,8 +220,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     Lf = math.dist(Ef, Wf)
     F_ = lambda sh: xf(sh, Ef[0], Ef[1], math.degrees(fa))
     fbz = lambda u0, u1, h0, h1, r=0.6: F_(rpoly([(Lf * u0, -h0), (Lf * u1 + 2, -h1), (Lf * u1 + 2, h1), (Lf * u0, h0)], r))
-    fig.part('farm', farm, BROWN, cel=1.4, rim=0.6, cast=0,
-             details=[(ribbon([lerp(S_F, Ef, 0.2), lerp(S_F, Ef, 0.6), lerp(Ef, Wf, 0.1)], [0.1, 0.9, 0.1]), BROWN.light, 0.6),
+    fig.part('farm', farm, ARM, cel=1.4, rim=0.6, cast=0,
+             details=[(ribbon([lerp(S_F, Ef, 0.2), lerp(S_F, Ef, 0.6), lerp(Ef, Wf, 0.1)], [0.1, 0.9, 0.1]), ARM.light, 0.6),
                       (fbz(0.28, 1.0, 4.4, 3.8, 0.9), LEATHER.base, 1),
                       (F_(rpoly([(Lf * 0.28, -4.4), (Lf + 2, -3.8), (Lf + 2, -1.6), (Lf * 0.28, -1.8)], 0.4)), LEATHER.light, 0.95),
                       (fbz(0.26, 0.36, 4.7, 4.7, 0.4), GOLD.base, 1),
@@ -296,7 +297,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            gold_feather('tn2', (52.8, 77.0), (50.4, 95.6), 8.6)]
 
     # ================================================================ le buste : ventre de plumes brunes, cuirasse d'or
-    torso = sm([(58.4, 50.4), (52.6, 53.0), (49.6, 58.4), (50.6, 65.0), (53.6, 70.6), (54.6, 77.6), (66.0, 79.0),
+    torso = sm([(58.4, 50.4), (52.6, 53.0), (47.4, 58.6), (45.6, 65.6), (50.6, 71.6), (54.6, 77.6), (66.0, 79.0),
                 (79.4, 77.6), (80.6, 71.0), (83.6, 64.6), (85.6, 58.6), (83.0, 53.4), (77.0, 50.4)])
     det = [(sm([(54.0, 69.0), (79.6, 69.2), (80.6, 72.4), (79.6, 77.8), (66, 79.2), (54.6, 77.8), (54.0, 73)]), BROWN.base, 1)]
     # les plumes du ventre (sous la cuirasse) : quelques pointes douces
@@ -363,8 +364,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     sg = -1 if math.cos(na) > 0 else 1        # le dessus de l'avant-bras (vers la lumière)
     bz = lambda u0, u1, h0, h1, r=0.6: N_(rpoly([(Ln * u0, -h0), (Ln * u1 + 1.4, -h1), (Ln * u1 + 1.4, h1), (Ln * u0, h0)], r))
     bztop = lambda u0, u1, h0, h1, k0, k1: N_(rpoly([(Ln * u0, -h0 * -sg), (Ln * u1 + 1.4, -h1 * -sg), (Ln * u1 + 1.4, -k1 * -sg), (Ln * u0, -k0 * -sg)], 0.4))
-    fig.part('narm', narm, BROWN, cel=1.6, rim=0.8, cast=1.4, cast_on=['torso', 'belt', 'buckle', 'tn1', 'tn2', 'tn3'] + nw_names,
-             details=[(ribbon([lerp(Sn, En, 0.2), lerp(Sn, En, 0.6), lerp(En, Wn, 0.05)], [0.1, 1.2, 0.1]), BROWN.light, 0.6),
+    fig.part('narm', narm, ARM, cel=1.6, rim=0.8, cast=1.4, cast_on=['torso', 'belt', 'buckle', 'tn1', 'tn2', 'tn3'] + nw_names,
+             details=[(ribbon([lerp(Sn, En, 0.2), lerp(Sn, En, 0.6), lerp(En, Wn, 0.05)], [0.1, 1.2, 0.1]), ARM.light, 0.6),
                       (bz(0.22, 1.0, 4.6, 4.0, 1.0), LEATHER.base, 1),
                       (bztop(0.22, 1.0, 4.6, 4.0, 1.6, 1.4), LEATHER.light, 0.95),
                       (N_(ribbon([(Ln * 0.3, 2.6 * sg), (Ln * 0.65, 2.9 * sg), (Ln * 0.98, 2.4 * sg)], [0.1, 0.8, 0.1])), LEATHER.shadow, 0.7),
@@ -441,9 +442,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
               sharp=(12, 13, 14, 15, 16, 17, 18, 21, 23))
     hd = []
     # le côté de la tête vers la nuque, dans l'ombre lilas (plans nets), la demi-teinte autour ; la gorge sous le bec
-    hd += [(sm([(52.6, 28.8), (56.6, 26.4), (58.4, 31.0), (58.6, 37.4), (60.0, 43.6), (58.4, 48.4), (55.6, 48.6), (53.4, 44.6),
-                (52.2, 41.8), (50.2, 39.0), (51.8, 35.8), (50.8, 32.2)]), WHITE.shadow, 0.9),
-           (sm([(56.8, 24.4), (61.4, 22.8), (62.2, 30.6), (63.0, 37.6), (65.4, 44.0), (63.8, 47.8), (60.8, 49.0), (60.0, 43.6), (58.6, 37.4), (58.4, 31.0)]), '#d4d0e6', 0.8),
+    # (le bord des plans n'est pas une courbe lisse : de petites pointes de plumes couchées vers la nuque)
+    hd += [(sm([(52.6, 28.8), (56.4, 26.2), (57.4, 29.6), (59.6, 32.2), (57.8, 33.4), (59.0, 36.8), (61.0, 39.6), (58.8, 40.4),
+                (60.0, 43.6), (61.4, 47.0), (58.6, 47.0), (55.6, 48.6), (53.4, 44.6), (52.2, 41.8), (50.2, 39.0), (51.8, 35.8), (50.8, 32.2)],
+               sharp=(3, 4, 6, 7, 9, 10)), WHITE.shadow, 0.9),
+           (sm([(56.6, 24.2), (61.2, 22.6), (61.6, 27.8), (63.8, 31.4), (61.8, 32.2), (62.8, 36.4), (65.2, 40.0), (63.0, 40.4), (64.4, 44.2),
+                (66.0, 46.6), (62.4, 47.6), (60.0, 43.6), (58.6, 37.4), (58.4, 31.0)], sharp=(3, 4, 6, 7, 9, 10)), '#d4d0e6', 0.8),
            (sm([(70.0, 40.0), (78.6, 41.6), (79.6, 44.6), (77.6, 48.4), (73.0, 47.2), (69.6, 44.0)]), '#d4d0e6', 0.7)]
     # quelques petites plumes sur la joue (des festons doux, jamais de traits sombres)
     for (x, y, s) in ((60.6, 41.6, 1.0), (64.6, 43.4, 1.1), (68.4, 44.8, 0.9)):
@@ -458,9 +462,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hd += [(sm([(61.2, 28.6), (65.4, 27.0), (70.6, 26.8), (74.4, 27.6), (75.2, 30.2), (73.4, 31.6 + 0.3 * fixk), (68.4, 30.8 + 0.2 * fixk),
                 (64.0, 30.4), (61.8, 30.0)], sharp=(0, 5)), WHITE.deep, 0.58),
            (sm([(76.2, 28.0), (80.6, 27.2), (84.0, 28.0), (83.4, 29.8), (81.6, 30.4), (78.4, 30.8), (76.6, 30.4)], sharp=(0, 2)), WHITE.deep, 0.5),
-           (sm([(60.6, 27.8), (64.6, 25.6), (70.6, 25.2), (75.6, 26.0), (79.6, 25.4), (83.9, 27.1), (82.2, 27.9), (78.6, 27.6),
-                (75.4, 28.6), (70.8, 27.8), (65.4, 28.0)], sharp=(0, 5, 8)), '#ffffff', 1),
-           (ribbon([(62.2, 26.6), (67.0, 25.4), (73.2, 25.6)], [0.1, 0.45, 0.1]), WHITE.base, 0.5)]
+           (sm([(61.4, 27.6), (65.0, 25.8), (70.6, 25.4), (75.0, 26.2), (75.6, 28.4), (70.8, 27.8), (65.4, 28.0)], sharp=(0, 4)), '#ffffff', 1),
+           (sm([(77.4, 27.0), (80.2, 25.8), (83.9, 27.1), (82.2, 27.9), (78.6, 27.8)], sharp=(0, 2)), '#ffffff', 1)]
     # l'œil proche : grande amande d'ambre (le coin avant vers le bec), pupille noire, petit reflet ; l'œil lointain de
     # même forme sur la même ligne, plus étroit, juste au-dessus de la base du bec
     eyeN = sm([(62.6, 31.2), (65.0, 29.0), (69.6, 28.6), (72.4, 30.0), (70.0, 32.4), (65.8, 32.8)], sharp=(0, 3))
@@ -506,12 +509,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     def bow_pt(p):
         return rot_about((p[0] + bx, p[1]), G, bt)
     # la ligne de l'arc (le dos), du bout haut au bout bas : bras qui se bandent vers l'archère, pointes recourbées
-    k = 1.0 + 0.12 * rl
-    top_tip = bow_pt((104.6 + 1.6 * rl, 32.6 - 0.8 * rl))
-    bot_tip = bow_pt((104.6 + 1.6 * rl, 104.6 + 0.8 * rl))
-    spine = crpath([bow_pt((106.6 + 0.6 * rl, 31.0 - 0.8 * rl)), top_tip, bow_pt((107.4 + 0.9 * rl, 38.6)), bow_pt((110.4 + 0.3 * rl, 50.0)),
-                    bow_pt((110.6, 61.0)), bow_pt((110.6, 76.2)), bow_pt((110.4 + 0.3 * rl, 87.2)), bow_pt((107.4 + 0.9 * rl, 98.6)),
-                    bot_tip, bow_pt((106.6 + 0.6 * rl, 106.2 + 0.8 * rl))], n=60)
+    top_tip = bow_pt((104.6 + 1.0 * rl, 32.6 - 0.5 * rl))
+    bot_tip = bow_pt((104.6 + 1.0 * rl, 104.6 + 0.5 * rl))
+    spine = crpath([bow_pt((106.6 + 0.4 * rl, 31.0 - 0.5 * rl)), top_tip, bow_pt((107.4 + 0.6 * rl, 38.6)), bow_pt((110.4 + 0.2 * rl, 50.0)),
+                    bow_pt((110.6, 61.0)), bow_pt((110.6, 76.2)), bow_pt((110.4 + 0.2 * rl, 87.2)), bow_pt((107.4 + 0.6 * rl, 98.6)),
+                    bot_tip, bow_pt((106.6 + 0.4 * rl, 106.2 + 0.5 * rl))], n=60)
     ws = []
     for i in range(61):
         t = i / 60
@@ -555,17 +557,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ================================================================ la corde (deux traits fins et clairs) et la flèche
     Hn = hand
-    nock = (Hn[0] + 3.0, Hn[1] + 0.4)
     ta = (top_tip[0] - 0.2, top_tip[1] + 2.4)
     ba = (bot_tip[0] - 0.2, bot_tip[1] - 2.4)
-    if P['free'] > 0.5:
-        # la corde libre : un seul trait presque droit qui vibre
-        mid = lerp(ta, ba, 0.5)
-        mid = (mid[0] + P['bulge'], mid[1])
-        sline = crpath([ta, mid, ba], n=16)
-        strings = [sline]
-    else:
-        strings = [[ta, nock], [ba, nock]]
+    # l'encoche : dans le poing proche ; quand la corde est libre (free = 1), au milieu de la corde droite, qui vibre
+    hold = (Hn[0] + 3.0, Hn[1] + 0.4)
+    mid = lerp(ta, ba, (hold[1] - ta[1]) / ((ba[1] - ta[1]) or 1))
+    mid = (mid[0] + P['bulge'], mid[1])
+    nock = lerp(hold, mid, max(0.0, min(1.0, P['free'])))
+    strings = [[ta, nock], [ba, nock]]
     for i, s in enumerate(strings):
         # un fil clair (pas de gros contour : une fine bordure sombre, comme le trait d'un pixel du pixel art)
         edge = ribbon(resample(s, 8), [0.5] + [1.25] * 7 + [0.5], sharp_ends=False)
@@ -610,10 +609,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         # la main ouverte après le lâcher : les doigts d'aigle s'écartent vers l'arrière
         palm = sm([(hx - 4.4, hy - 2.6), (hx - 0.6, hy - 3.6), (hx + 1.6, hy - 1.4), (hx + 1.4, hy + 2.4), (hx - 1.6, hy + 3.6), (hx - 4.8, hy + 2.0)])
         fig.part('npalm', palm, BEAK, cel=0.9, rim=0.5, cast=1.0)
-        for j, (a, L) in enumerate(((-38, 5.6), (-8, 6.2), (22, 5.4))):
-            p0 = (hx + 0.6, hy - 0.4 + 1.6 * j - 1.6)
+        # (les trois doigts détendus, presque parallèles, un peu écartés ; la corde vient de les quitter)
+        for j, (a, L) in enumerate(((-24, 4.6), (-6, 5.2), (12, 4.6))):
+            p0 = (hx + 0.4, hy - 1.8 + 1.9 * j)
             tip = add(p0, unit(a), L)
-            fig.part('nfing%d' % j, limb([p0, lerp(p0, tip, 0.5), tip], [2.6, 2.3, 1.9]), BEAK, cel=0.6, rim=0.4, cast=0.7)
+            fig.part('nfing%d' % j, limb([p0, lerp(p0, tip, 0.5), tip], [2.8, 2.5, 2.1]), BEAK, cel=0.6, rim=0.4, cast=0.7)
             fig.part('nclaw%d' % j, sm([add(tip, unit(a - 90), 0.9), add(tip, unit(a), 1.8), add(tip, unit(a + 90), 0.9)], sharp=(1,)), CLAW, cel=0.3, rim=0.3, cast=0.3)
 
     # ---- chaque groupe de morceaux prend sa pose ----
@@ -624,7 +624,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['domeF', 'domeN', 'collar'] + fr_names + frN + rn + fw_names + nw_names, UC)
     fig.pose(lf + ln, LEG)
     fig.ctx = dict(P=P, U=U, UC=UC, HEAD=HEAD, grip=G, nock=nock, top=top_tip, bot=bot_tip,
-                   tip=(nock[0] + 62.0, nock[1]), eye=mapp(HEAD, (68.4, 30.2)), beak=mapp(HEAD, (88, 40)))
+                   tip=(nock[0] + 62.0, nock[1]), eye=mapp(HEAD, (68.4, 30.2)), beak=mapp(HEAD, (88, 40)), feet=FEET)
     if fx:
         for f_ in fx:
             f_(fig, fig.ctx)

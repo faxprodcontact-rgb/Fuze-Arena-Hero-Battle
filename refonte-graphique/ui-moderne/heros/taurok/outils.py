@@ -255,3 +255,24 @@ def inv(M):
     a, b, c, d, e, f_ = M
     det = a * d - b * c
     return (d / det, -b / det, -c / det, a / det, (c * f_ - d * e) / det, (b * e - a * f_) / det)
+
+
+def arc_pts(ctr, frm, to, r, k=5, through=None):
+    """Les points d'un arc rond autour de ctr, de la direction de frm à celle de to (le plus court, ou par `through`)."""
+    a0 = math.atan2(frm[1] - ctr[1], frm[0] - ctr[0])
+    a1 = math.atan2(to[1] - ctr[1], to[0] - ctr[0])
+    pts = _cap(ctr, a0, a1, r, k + 1, through)
+    return pts
+
+
+def round_limb(center, keys, n=24, start_k=6, end_k=5):
+    """Comme body_limb, mais les deux bouts sont de vrais arrondis (un dôme d'épaule bien rond, pas un coin)."""
+    c, ws = stations(center, keys, n)
+    back, front = edges(c, ws)
+    d = math.atan2(c[-1][1] - c[-2][1], c[-1][0] - c[-2][0])
+    r1 = (ws[-1][0] + ws[-1][1]) / 2
+    end = arc_pts(c[-1], back[-1], front[-1], r1, end_k, d)
+    d0 = math.atan2(c[0][1] - c[1][1], c[0][0] - c[1][0])
+    r0 = (ws[0][0] + ws[0][1]) / 2
+    start = arc_pts(c[0], front[0], back[0], r0, start_k, d0)
+    return sm(back + end + front[::-1] + start, t=0.9)

@@ -741,7 +741,7 @@ def find_offset(sprite, frame):
 
 
 SPRITE = os.path.join(ROOT, 'public', 'art', 'hd', 'pose', 'assassins-5.webp')
-SPRITE_FEET = (61, 128)          # les pieds dans l'image pixel de la pose (src/game/hd-figures.ts)
+SPRITE_FEET = (64, 116)          # les pieds dans la grille du dessin pixel art (pose : 128 × 120)
 
 
 def pixel_frames(name):
@@ -758,12 +758,26 @@ def pixel_frames(name):
         key = (a[:, :, 0] == 232) & (a[:, :, 1] == 236) & (a[:, :, 2] == 242)
         a[key, 3] = 0
         out.append((Image.fromarray(a), g.info.get('duration', 100)))
-    sprite = Image.open(SPRITE)
-    ref = out[0][0] if name == 'pose' else out[-1][0]
+    if name == 'pose':
+        return out, (0, 0)                  # la pose : la grille du dessin (128 × 120), les pieds en (64, 116)
+    g0 = Image.open(os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'anim-rook-pose.gif'))
+    g0.seek(0)
+    sprite = g0.convert('RGBA')
+    sprite = sprite.resize((sprite.width // 4, sprite.height // 4), Image.NEAREST)
+    ref = out[-1][0]
     bg = Image.new('RGBA', ref.size, (232, 236, 242, 255))
     bg.alpha_composite(ref)
-    ox, oy = find_offset(sprite, bg)
+    sa = np_alpha(sprite)
+    ox, oy = find_offset(sa, bg)
     return out, (ox, oy)
+
+
+def np_alpha(im):
+    import numpy as np
+    a = np.array(im)
+    key = (a[:, :, 0] == 232) & (a[:, :, 1] == 236) & (a[:, :, 2] == 242)
+    a[key, 3] = 0
+    return Image.fromarray(a)
 
 
 def game_size_part():

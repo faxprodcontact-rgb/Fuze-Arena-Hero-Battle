@@ -62,10 +62,10 @@ H0 = (72.5, 47.5)  # le pivot de la tête (agrandie ×1,1 : proportions stylisé
 #   autour de leur racine) ; wph : la houle des plumes ; tm : l'embouchure de la trompette ; tang : son angle ;
 #   gs : où le poing la tient (distance depuis l'embouchure) ; nh : la main proche s'ouvre (0..1) ; hem : le bas de la
 #   robe ondule ; ear : la goutte d'oreille se balance ; blink : yeux fermés ; cheek : elle gonfle les joues (souffle).
-TM0 = (85.6, 83.8)         # l'embouchure, au repos (près de la hanche)
-TANG0 = -61.0              # la trompette monte en biais vers le haut à droite
-TLEN = 47.0                # de l'embouchure au bord du pavillon
-GS0 = 23.0                 # le poing, sur le tube, à cette distance de l'embouchure
+TM0 = (85.8, 83.6)         # l'embouchure, au repos (près de la hanche)
+TANG0 = -61.5              # la trompette monte en biais vers le haut à droite
+TLEN = 49.5                # de l'embouchure au bord du pavillon
+GS0 = 24.0                 # le poing, sur le tube, à cette distance de l'embouchure
 SF0 = (86.0, 55.0)         # l'épaule lointaine
 LUF, LFF = 14.6, 9.8       # bras lointain : bras, avant-bras (jusqu'au poignet)
 S0 = (53.6, 57.6)          # l'épaule proche (sous l'épaulière)
@@ -96,13 +96,13 @@ WING_STATES = dict(
     fold=FOLD,
     # à moitié ouverte : la main remonte, les plumes s'écartent en éventail
     demi=dict(R=(58.0, 43.0), E=(46.0, 26.0), W=(29.0, 8.0), T=(10.0, -4.0), ai=100.0, ao=150.0, li=50.0, lo=40.0,
-              c1=0.30, c2=0.50, c3=0.70),
+              c1=0.30, c2=0.50, c3=0.70, b1=2.4, b2=3.0),
     # grande ouverte, levée en V au-dessus d'elle
     grande=dict(R=(58.0, 43.0), E=(45.0, 28.0), W=(30.0, 4.0), T=(6.0, -24.0), ai=104.0, ao=176.0, li=42.0, lo=34.0,
-                c1=0.30, c2=0.50, c3=0.70),
+                c1=0.30, c2=0.50, c3=0.70, b1=2.0, b2=2.0),
     # battue (coup d'aile vers le bas) : presque à l'horizontale
     battue=dict(R=(58.0, 43.0), E=(44.0, 36.0), W=(24.0, 34.0), T=(-2.0, 40.0), ai=98.0, ao=132.0, li=36.0, lo=30.0,
-                c1=0.30, c2=0.50, c3=0.70),
+                c1=0.30, c2=0.50, c3=0.70, b1=2.0, b2=2.0),
 )
 
 
@@ -140,14 +140,18 @@ def _jitter():
     cur = wing_curve(FOLD)
     out = []
     for i, s in enumerate(FS):
-        p, _ = _at(cur, s)
+        p0, tg = _at(cur, s)
+        p = p0
+        for _ in range(4):
+            d = sub(FOLD_TIPS[i], p)
+            dd = norm(d)
+            p = add(p0, outward(tg, dd), -0.5 * FW[i] * abs(tg[0] * dd[0] + tg[1] * dd[1]))
         d = sub(FOLD_TIPS[i], p)
         a0, l0 = _lin_af(FOLD, i)
         out.append((ang_of(d) - a0, math.hypot(*d) / l0))
     return out
 
 
-JIT = _jitter()
 
 
 def mix_state(a, b, t):
@@ -174,7 +178,7 @@ def feathers(st, ph=0.0, flut=0.0):
         ja, jl = JIT[i]
         a = a0 + ja + flut * 2.2 * math.sin(ph - 0.7 * i)
         dd = unit(a)
-        p = add(p, outward(tg, dd), 0.5 * FW[i] * abs(tg[0] * dd[0] + tg[1] * dd[1]))
+        p = add(p, outward(tg, dd), -0.5 * FW[i] * abs(tg[0] * dd[0] + tg[1] * dd[1]))
         L = l0 * jl
         d = unit(a)
         side = (-d[1], d[0])
@@ -206,7 +210,7 @@ def outward(tg, d):
     return n
 
 
-def covert_row(cur, st, feat, frac, lobes, back=0.8, seed=0.0, s0=0.0, s1=1.0, tipfall=0.4):
+def covert_row(cur, st, feat, frac, lobes, back=1.0, seed=0.0, s0=0.0, s1=1.0, tipfall=0.4):
     """Une rangée de couvertures : le haut suit le bord d'attaque (un peu derrière), le bas fait des écailles arrondies
     (des bouts de plumes) ; profondeur = frac × longueur locale des plumes, qui baisse vers le bout de la main."""
     n = len(cur) - 1
@@ -231,7 +235,7 @@ def covert_row(cur, st, feat, frac, lobes, back=0.8, seed=0.0, s0=0.0, s1=1.0, t
         s = s0 + (s1 - s0) * k / m
         p, tg = _at(cur, s)
         d, _ = local(s)
-        top.append(add(p, outward(tg, d), back + 4.6 * abs(tg[0] * d[0] + tg[1] * d[1])))
+        top.append(add(p, outward(tg, d), back))
     bot = []
     sharp = []
     edges = [s0 + (s1 - s0) * (j + 0.12 * math.sin(3.1 * j + seed)) / lobes for j in range(lobes + 1)]
@@ -252,6 +256,9 @@ def covert_row(cur, st, feat, frac, lobes, back=0.8, seed=0.0, s0=0.0, s1=1.0, t
     nt = len(top)
     sh = [nt + (len(bot) - 1 - i) for i in sharp]
     return sm(pts, sharp=sh, t=0.9), top
+
+
+JIT = _jitter()
 
 
 def wing(fig, pre, st, mp, mats, P, far=False):
@@ -344,11 +351,11 @@ def tr_frame(tm, tang):
 
 def bell_r(x):
     """Le rayon du tube à l'abscisse x (pavillon qui s'évase sur les 15 derniers pixels)."""
-    b0 = TLEN - 15.5
+    b0 = TLEN - 16.0
     if x <= b0:
         return 1.0
     t = (x - b0) / (TLEN - b0)
-    return 1.0 + 5.4 * t ** 2.3
+    return 1.0 + 5.6 * t ** 2.3
 
 
 def trumpet(fig, P):
@@ -552,17 +559,19 @@ def halo(fig, P):
 def boots(fig, P, BODY):
     names = []
     for name, pts, buck in (
-            ('nboot', [(46.4, 116.2), (46.8, 112.0), (48.8, 109.6), (55.0, 109.4), (58.4, 111.0), (62.2, 113.0), (63.2, 116.2)], (55.6, 111.6)),
-            ('fboot', [(70.2, 116.2), (70.6, 111.8), (73.0, 109.6), (79.8, 109.6), (83.6, 111.4), (87.2, 113.4), (88.0, 116.2)], (80.4, 111.6))):
+            ('nboot', [(46.4, 116.2), (46.8, 112.0), (48.8, 109.6), (55.0, 109.4), (58.4, 111.0), (62.2, 113.0), (63.2, 116.2)], (57.4, 112.6)),
+            ('fboot', [(70.2, 116.2), (70.6, 111.8), (73.0, 109.6), (79.8, 109.6), (83.6, 111.4), (87.2, 113.4), (88.0, 116.2)], (82.4, 112.6))):
         sh = sm(pts, sharp=(0, 6), t=0.9)
         x0_, x1_ = pts[0][0], pts[-1][0]
         det = [(sm([(x0_ - 1, 114.6), (x1_ + 1, 114.6), (x1_ + 1, 117), (x0_ - 1, 117)], sharp=(0, 1, 2, 3), t=0.2), LEATHER.deep, 1),
                (sm([(x0_ - 1, 114.6), (x1_ + 1, 114.6), (x1_ + 1, 115.2), (x0_ - 1, 115.2)], sharp=(0, 1, 2, 3), t=0.2), LEATHER.shadow, 1),
                # le cou-de-pied éclairé, une boucle d'or sur la bride
                (ellipse(buck[0] + 2.4, 111.0, 3.2, 1.0, -12), LEATHER.hi, 0.55),
-               (ribbon([(buck[0] - 3.2, buck[1] - 1.4), (buck[0], buck[1]), (buck[0] + 3.6, buck[1] + 1.4)], [0.6, 1.2, 0.6]), LEATHER.deep, 0.6),
-               (rpoly([(buck[0] - 1.0, buck[1] - 1.2), (buck[0] + 1.1, buck[1] - 1.0), (buck[0] + 1.0, buck[1] + 1.2), (buck[0] - 1.1, buck[1] + 1.0)], 0.4), GOLD.base, 1),
-               (ellipse(buck[0] + 0.3, buck[1] - 0.5, 0.45, 0.3), GOLD.hi, 0.9)]
+               # la bride, de l'empeigne à la semelle (elle fait le tour du pied), sa boucle d'or
+               (ribbon([(buck[0] - 1.6, buck[1] - 4.0), (buck[0], buck[1]), (buck[0] + 0.9, buck[1] + 3.0)], [1.2, 1.3, 1.2]), LEATHER.deep, 0.7),
+               (rpoly([(buck[0] - 1.0, buck[1] - 1.1), (buck[0] + 1.1, buck[1] - 1.0), (buck[0] + 1.1, buck[1] + 1.1), (buck[0] - 1.0, buck[1] + 1.0)], 0.45), GOLD.base, 1),
+               (rpoly([(buck[0] - 0.4, buck[1] - 0.5), (buck[0] + 0.5, buck[1] - 0.45), (buck[0] + 0.5, buck[1] + 0.5), (buck[0] - 0.4, buck[1] + 0.45)], 0.2), LEATHER.deep, 0.8),
+               (ellipse(buck[0] + 0.5, buck[1] - 0.8, 0.45, 0.25), GOLD.hi, 0.9)]
         fig.part(name, sh, LEATHER, grad=(x1_, 109, x0_, 116, [(0, LEATHER.light), (0.5, LEATHER.base), (1, LEATHER.shadow)]),
                  cel=1.0, rim=0.6, cast=0.8, details=det)
         names.append(name)
@@ -572,8 +581,8 @@ def boots(fig, P, BODY):
 
 # ---------------------------------------------------------------- la robe
 # les pétales du bas de la surjupe : (début, fin, profondeur du bas) ; les creux entre deux pétales
-PETALS = [(47.2, 52.2, 100.6), (52.2, 62.0, 103.4), (62.0, 72.2, 104.6), (72.2, 82.0, 104.4), (82.0, 90.0, 102.4)]
-CUSP_Y = {47.2: 98.8, 52.2: 99.0, 62.0: 99.8, 72.2: 100.2, 82.0: 99.6, 90.0: 99.4}
+PETALS = [(47.2, 52.2, 101.0), (52.2, 62.0, 104.0), (62.0, 72.2, 105.2), (72.2, 82.0, 105.0), (82.0, 90.0, 103.0)]
+CUSP_Y = {47.2: 98.6, 52.2: 98.6, 62.0: 99.4, 72.2: 99.8, 82.0: 99.2, 90.0: 99.2}
 
 
 def petal_edge(hm=0.0):
@@ -661,6 +670,13 @@ def dress(fig, P, ROBE, TOR):
            (ribbon([(x + 0.1, y - 0.95) for x, y in edge], [0.55] * len(edge)), GOLD.light, 0.95),
            (ribbon([(x, y + 0.55) for x, y in edge], [0.8] * len(edge)), GOLD.shadow, 0.7)]
     del up
+    # chaque pétale se détache comme une plume : un pli doux qui remonte de chaque creux, le pétale un peu bombé
+    for a, b, yb in PETALS[1:]:
+        cy_ = CUSP_Y[a]
+        dd += [(ribbon([(a + 0.3, cy_ - 0.2), (a + 0.1, cy_ - 3.0), (a - 0.3, cy_ - 6.4)], [0.9, 0.6, 0.1]), IVORY.shadow, 0.55)]
+    for a, b, yb in PETALS:
+        m = (a + b) / 2
+        dd += [(ellipse(m + 1.4, CUSP_Y[a] - 2.4, (b - a) * 0.2, 1.2, -8), IVORY.hi, 0.5)]
     # la ceinture d'or, plus basse devant (elle fait le tour de la taille)
     belt_top = [(54, 69.0), (62, 69.6), (70, 70.2), (78, 70.0), (88, 69.2)]
     belt_bot = [(54, 72.0), (62, 72.6), (70, 73.2), (78, 73.0), (88, 72.2)]
@@ -723,22 +739,22 @@ def hand(fig, W, fa, nh, bg):
 
     def L(x, y):
         return (W[0] + u[0] * x + o[0] * y, W[1] + u[1] * x + o[1] * y)
-    palm = sm([L(-0.8, -2.6), L(2.0, -3.2), L(5.6, -3.0), L(6.9, -1.0), L(6.7, 1.8), L(4.6, 3.0), L(1.2, 2.8), L(-0.6, 2.2)], t=0.9)
+    palm = sm([L(-0.8, -2.8), L(2.0, -3.5), L(5.8, -3.3), L(7.2, -1.1), L(7.0, 2.0), L(4.8, 3.3), L(1.2, 3.0), L(-0.6, 2.4)], t=0.9)
     fig.part('palm', palm, SKIN, cel=0.8, rim=0.45, cast=0.8, cast_on=bg,
              details=[(sm([L(1.6, -2.0), L(5.0, -2.2), L(5.4, 0.4), L(2.4, 0.6)]), SKIN.hi, 0.35),
                       (ribbon([L(1.6, 1.6), L(3.6, 0.5), L(5.8, 0.3)], [0.1, 0.5, 0.1]), SKIN.shadow, 0.45),
                       (ribbon([L(2.2, -1.6), L(4.6, -1.0), L(6.2, -1.4)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.3)])
     names = ['palm']
     sp = 1 + 0.8 * nh
-    for i, (y0, ang, ln, w) in enumerate(((-2.0, -7 * sp, 4.6, 1.85), (-0.1, 1 * sp, 5.6, 1.85), (1.8, 8 * sp, 5.0, 1.75))):
-        base = L(5.8, y0)
+    for i, (y0, ang, ln, w) in enumerate(((-2.1, -6 * sp, 4.0, 2.2), (-0.1, 1 * sp, 4.8, 2.25), (1.9, 7 * sp, 4.3, 2.1))):
+        base = L(6.0, y0)
         dirv = rot(u, ang if o[0] < 0 and u[1] > 0 else -ang)
         mid = add(base, dirv, ln * 0.55)
         tip = add(base, dirv, ln)
         sh = limb([base, mid, tip], [w, w * 0.96, w * 0.84])
         fig.part('fg%d' % i, sh, SKIN, cel=0.5, rim=0.35, cast=0.55, cast_on=['palm'] + ['fg%d' % j for j in range(i)] + bg)
         names.append('fg%d' % i)
-    fig.part('thumb', limb([L(1.0, 2.2), L(2.8, 3.8), L(4.4, 4.4)], [2.2, 1.9, 1.5]), SKIN, cel=0.5, rim=0.35, cast=0.6,
+    fig.part('thumb', limb([L(1.0, 2.4), L(2.8, 4.1), L(4.6, 4.8)], [2.6, 2.2, 1.8]), SKIN, cel=0.5, rim=0.35, cast=0.6,
              cast_on=['palm'] + bg)
     names.append('thumb')
     return names

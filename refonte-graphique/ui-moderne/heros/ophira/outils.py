@@ -180,3 +180,88 @@ def union(*shapes, step=0.7, smooth=0.0):
     if smooth > 0:
         g = g.buffer(smooth, join_style=1).buffer(-smooth, join_style=1)
     return shape_of(g, step=step)
+
+
+# ---------- le corps de serpent ----------
+
+def smooth_path(keys, step=0.8):
+    """Une ligne souple par des points clés (x, y, largeur) : rend (points, largeurs), régulièrement espacés."""
+    pts = [(k[0], k[1]) for k in keys]
+    dense = crpath(pts, n=max(8, len(keys) * 10))
+    L = sum(math.dist(dense[i - 1], dense[i]) for i in range(1, len(dense)))
+    n = max(8, int(L / step))
+    c = resample(dense, n)
+    # la largeur suit l'abscisse (interpolation douce entre les clés, rapportée à la longueur)
+    kl = [0.0]
+    for i in range(1, len(keys)):
+        kl.append(kl[-1] + math.dist(pts[i - 1], pts[i]))
+    cl = [0.0]
+    for i in range(1, len(c)):
+        cl.append(cl[-1] + math.dist(c[i - 1], c[i]))
+    ws = []
+    for s in cl:
+        u = s / (cl[-1] or 1) * kl[-1]
+        j = 1
+        while j < len(kl) - 1 and kl[j] < u:
+            j += 1
+        t = (u - kl[j - 1]) / ((kl[j] - kl[j - 1]) or 1)
+        t = t * t * (3 - 2 * t)
+        ws.append(keys[j - 1][2] + (keys[j][2] - keys[j - 1][2]) * t)
+    return c, ws
+
+
+def tube_poly(c, ws, res=12):
+    """Le tube (polygone shapely) : l'union des capsules entre points voisins (bouts arrondis, aucun pli)."""
+    from shapely.geometry import Point
+    from shapely.ops import unary_union
+    pieces = []
+    circ = [Point(p).buffer(max(0.05, w / 2), res) for p, w in zip(c, ws)]
+    for i in range(len(c) - 1):
+        pieces.append(circ[i].union(circ[i + 1]).convex_hull)
+    return unary_union(pieces)
+
+
+def normals(c):
+    """Pour chaque point : la normale « ventre » nb = (dy, -dx) (à droite du sens de marche, à l'écran)."""
+    out = []
+    n = len(c)
+    for i in range(n):
+        a = c[max(0, i - 1)]
+        b = c[min(n - 1, i + 1)]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy) or 1
+        out.append((dy / L, -dx / L))
+    return out
+
+
+def band_poly(c, ws, f0, f1, i0=0, i1=None, side=1):
+    """La bande entre les décalages f0·w/2 et f1·w/2 (du côté `side` de nb), des points i0 à i1 (polygone)."""
+    from shapely.geometry import Polygon
+    i1 = len(c) - 1 if i1 is None else i1
+    nb = normals(c)
+    A, B = [], []
+    for i in range(i0, i1 + 1):
+        p, w, (nx, ny) = c[i], ws[i], nb[i]
+        A.append((p[0] + side * nx * w / 2 * f0, p[1] + side * ny * w / 2 * f0))
+        B.append((p[0] + side * nx * w / 2 * f1, p[1] + side * ny * w / 2 * f1))
+    pg = Polygon(A + B[::-1])
+    if not pg.is_valid:
+        pg = pg.buffer(0)
+    return pg
+
+
+def shape_poly(geom, step=0.6, t=0.9):
+    """Un polygone (ou plusieurs) → une forme souple avec tous ses morceaux (sans les trous)."""
+    from atelier import Shape  # noqa
+    gs = list(geom.geoms) if geom.geom_type in ('MultiPolygon', 'GeometryCollection') else [geom]
+    subs = []
+    for g in gs:
+        if g.geom_type != 'Polygon' or g.area < 0.02:
+            continue
+        ring_ = list(g.exterior.coords)[:-1]
+        L = sum(math.dist(ring_[i - 1], ring_[i]) for i in range(len(ring_)))
+        n = max(8, int(L / step))
+        pts = resample(ring_ + [ring_[0]], n)[:-1]
+        subs += sm(pts, t=t).subs
+    from atelier import Shape as _S  # noqa
+    return _S(subs)

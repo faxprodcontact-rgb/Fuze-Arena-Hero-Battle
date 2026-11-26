@@ -78,21 +78,37 @@ def lerp(a, b, t):
     return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
 
 
-def cloud_shape(cp, swell):
-    """Le nuage : un dessous plat posé au sol, un dessus en lobes arrondis, deux bouts roulés. Les lobes gonflent par
-    une vague qui court de gauche à droite (cp), tout le nuage enfle (swell)."""
+# le nuage est un bouquet de bouffées rondes (centre x, centre y, rayon), de l'arrière vers l'avant : celles du
+# dessus (en partie cachées par la robe), les deux bouts roulés (avec leur volute), puis celles du devant, au dessous
+# plat posé sur le sol. Pas deux bouffées de la même taille (jamais une frise régulière).
+PUFFS = [('pB0', 40.6, 102.2, 5.0), ('pB1', 91.8, 101.6, 4.0), ('pB2', 98.6, 102.4, 5.4),
+         ('pF0', 47.6, 111.2, 8.2), ('pF1', 64.6, 111.9, 8.7), ('pF2', 81.4, 111.4, 8.3),
+         ('pL', 33.4, 109.4, 6.8), ('pR', 104.6, 109.2, 6.9)]
+
+
+def arc(c, r, a0, a1, n=10):
+    return [(c[0] + r * math.cos(math.radians(a0 + (a1 - a0) * i / n)), c[1] + r * math.sin(math.radians(a0 + (a1 - a0) * i / n)))
+            for i in range(n + 1)]
+
+
+def puffs(cp, swell):
+    """Les bouffées posées : (nom, centre, rayon, forme). Elles gonflent par une vague qui court de gauche à droite
+    (cp) ; tout le nuage enfle (swell) ; le dessous reste plat sur le sol."""
     def wv(x, a=0.45):
         return a * math.sin(2 * math.pi * (cp - (x - 30) / 46.0))
-    k = 1 + 0.06 * swell
-    top = [(40.0, 99.6), (52.0, 99.0), (64.0, 98.8), (76.0, 99.0), (88.0, 99.2)]
-    pts = [(31.0, GRD - 0.2), (108.6, GRD - 0.2), (110.6, 113.6 + 0.3 * wv(110)), (110.8 + 0.3 * wv(108), 110.2),
-           (109.0, 107.0 - 0.5 * wv(106)), (105.8, 104.8 - 0.4 * wv(104)), (102.0, 103.6 - 0.6 * wv(100)),
-           (99.0, 101.0 - 0.6 * wv(96)), (94.0, 99.6)]
-    pts += [(x, y - 0.4 * wv(x)) for x, y in reversed(top)]
-    pts += [(36.4, 100.6 - 0.5 * wv(36)), (32.2, 102.6 - 0.5 * wv(32)), (29.4 - 0.3 * wv(28), 105.8),
-            (28.2 - 0.3 * wv(27), 109.6), (28.6, 113.4 + 0.2 * wv(28)), (29.6, 115.4)]
-    sh = sm(pts, sharp=(0, 1), t=0.9)
-    return sh.map(lambda p: (70 + (p[0] - 70) * (1 + 0.03 * swell), GRD + (p[1] - GRD) * k)), wv
+    out = []
+    for nm, x, y, r in PUFFS:
+        r2 = r * (1 + 0.045 * wv(x) / 0.45) * (1 + 0.05 * swell)
+        cx = 70 + (x - 70) * (1 + 0.03 * swell)
+        cy = GRD + (y - GRD) * (1 + 0.06 * swell) - 0.35 * wv(x)
+        if cy + r2 > GRD:
+            # le dessous plat : la bouffée est coupée au sol (deux coins doux)
+            ac = math.degrees(math.asin(max(-1.0, min(1.0, (GRD - cy) / r2))))
+            sh = sm(arc((cx, cy), r2, 180 - ac, 360 + ac, 40), sharp=(0, 40), t=0.9)
+        else:
+            sh = ellipse(cx, cy, r2, r2)
+        out.append((nm, (cx, cy), r2, sh))
+    return out, wv
 
 
 def spiral_pts(c, r0, r1, a0, a1, n=30):
@@ -149,28 +165,23 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(taper(crpath([(40.6, 97.4), (35.6, 97.6), (31.8, 95.2), (30.4, 90.6), (30.6, 85.2), (32.8, 81.0),
                                      (36.0, 79.2), (39.4, 79.6)], 30), 0.5, 0.25, tip='sharp'), FUR.hi, 0.55)])
 
-    # ---- le nuage : crème, ombres lilas, deux volutes aux bouts (signe inventé, aucune rayure) ----
-    cloud, wv = cloud_shape(P['cp'], P['swell'])
-    CL = mchain(FL, mT(0, 0))
-    cd = []
-    # le bas dans l'ombre lilas (le dessous du nuage), en vagues douces : les lobes du dessous
-    lobes = sm([(27, 117), (27, 112.6), (34, 111.6 + 0.4 * wv(34)), (40, 113.2), (47, 112.2 + 0.4 * wv(47)),
-                (55, 113.4), (63, 112.4 + 0.4 * wv(63)), (71, 113.6), (79, 112.6 + 0.4 * wv(79)), (87, 113.6),
-                (95, 112.4 + 0.4 * wv(95)), (103, 113.2), (112, 112), (112, 117)], t=0.9)
-    cd += [(lobes, CLOUD.shadow, 0.75)]
-    # les lobes du devant : des bosses éclairées en haut à droite, séparées par des creux lilas doux
-    for (x0, x1, y0, y1) in ((33.0, 46.0, 101.6, 111.0), (46.0, 60.0, 101.0, 110.6), (60.0, 74.0, 101.0, 111.0),
-                             (74.0, 88.0, 101.2, 110.6), (88.0, 101.0, 101.4, 111.2)):
-        cx_, cy_ = (x0 + x1) / 2, (y0 + y1) / 2 + 0.6 * wv((x0 + x1) / 2)
-        cd += [(ribbon([(x0 + 1.0, cy_ + 3.4), (x0 + 0.2, cy_ - 0.4), (x0 + 1.6, cy_ - 3.6)], [0.2, 1.1, 0.2]), CLOUD.shadow, 0.45),
-               (ellipse(cx_ + 2.2, cy_ - 2.0, (x1 - x0) * 0.24, 1.3, -8), CLOUD.hi, 0.85)]
-    # deux volutes en relief (le creux lilas, l'arête claire au-dessus)
-    for (c, sgn) in (((39.2, 108.2 + 0.4 * wv(39)), 1), ((97.8, 108.2 + 0.4 * wv(98)), -1)):
-        sp = spiral_pts(c, 3.6, 0.7, 200 if sgn > 0 else -20, 200 + sgn * 470 if sgn > 0 else -20 - 470, 36)
-        cd += [(taper(sp, 1.3, 0.5, tip='round'), CLOUD.deep, 0.55),
-               (taper([(x + 0.3, y - 0.4) for x, y in sp], 0.6, 0.2, tip='round'), CLOUD.hi, 0.7)]
-    fig.part('cloud', cloud, CLOUD, grad=(100, 100, 40, 117, [(0, CLOUD.light), (0.45, CLOUD.base), (1, '#e2c8d2')]),
-             cel=1.4, rim=0.8, cast=1.0, details=cd)
+    # ---- le nuage : un bouquet de bouffées crème, ombres lilas, deux volutes aux bouts (aucune rayure) ----
+    pf, wv = puffs(P['cp'], P['swell'])
+    k_ = 1 + 0.06 * P['swell']
+    core = sm([(34.0, GRD), (106.0, GRD), (107.0, GRD - 9 * k_), (96.0, GRD - 15.4 * k_), (44.0, GRD - 15.6 * k_),
+               (32.0, GRD - 9 * k_)], sharp=(0, 1), t=0.8)
+    fig.part('cl_core', core, CLOUD, grad=(100, 100, 40, 117, [(0, CLOUD.light), (0.5, CLOUD.base), (1, '#e6cdd6')]),
+             cel=1.2, rim=0.6, cast=0)
+    for nm, (cx_, cy_), r, sh in pf:
+        det = [(ellipse(cx_ + 0.34 * r, cy_ - 0.5 * r, 0.3 * r, 0.14 * r, -30), CLOUD.hi, 0.75)]
+        if nm in ('pL', 'pR'):
+            sgn = 1 if nm == 'pL' else -1
+            sp = spiral_pts((cx_ + 0.5 * sgn, cy_ + 0.2), 3.4, 0.6, 200 if sgn > 0 else -20, 670 if sgn > 0 else -490, 36)
+            det += [(taper(sp, 1.25, 0.5, tip='round'), CLOUD.deep, 0.5),
+                    (taper([(x + 0.3, y - 0.4) for x, y in sp], 0.55, 0.2, tip='round'), CLOUD.hi, 0.75)]
+        fig.part('cl_' + nm, sh, CLOUD, grad=(cx_ + r, cy_ - r, cx_ - r * 0.6, cy_ + r, [(0, CLOUD.light), (0.5, CLOUD.base), (1, '#e6cdd6')]),
+                 cel=1.3, rim=0.6, cast=0.9, details=det)
+    CLOUD_NAMES = ['cl_core'] + ['cl_' + p_[0] for p_ in PUFFS]
 
     # ---- la manche lointaine : de l'épaule (sous la barbe) au poing qui tient le bâton ; elle pend sous l'avant-bras ----
     S = mapp(UC, SHOULDER_F)
@@ -243,29 +254,44 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
           (ribbon([(40.4, 97.6), (64, 97.4), (88.8, 97.2)], [0.2, 0.6, 0.2]), GOLD.hi, 0.85),
           (sm([(38, 99.2), (91, 99.0), (91, 101), (38, 101)]), GOLD.shadow, 0.7)]
     fig.part('lap', lap, ROBE, grad=(88, 90, 44, 100, [(0, ROBE.light), (0.5, ROBE.base), (1, ROBE.shadow)]),
-             cel=1.1, rim=0.8, cast=1.2, cast_on=['robe', 'cloud', 'tail'], details=ld)
+             cel=1.1, rim=0.8, cast=1.2, cast_on=['robe', 'tail'] + CLOUD_NAMES, details=ld)
 
     # ---- le noeud de la ceinture et ses deux pans qui pendent droit (devant la robe) ----
-    knot = sm([(70.2, 82.0), (73.2, 81.4), (75.8, 82.2), (76.2, 85.0), (73.4, 86.4), (70.4, 85.6)])
+    knot = sm([(70.4, 82.6), (72.0, 81.4), (74.4, 81.4), (76.2, 82.6), (75.8, 85.0), (73.8, 86.2), (71.4, 85.8)])
     fig.part('knot', knot, RED, grad=(76, 81, 70, 86, [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]),
              cel=0.8, rim=0.6, cast=0.9, cast_on=['robe'],
-             details=[(ribbon([(71.2, 82.6), (73.4, 82.0), (75.4, 82.8)], [0.1, 0.6, 0.1]), RED.hi, 0.7)])
-    for nm, pts, w0, w1 in (('sashA', [(71.6, 85.0), (71.2, 88.6), (71.0, 92.0), (70.6, 94.8)], 2.4, 2.0),
-                            ('sashB', [(74.6, 85.2), (74.8, 88.4), (75.2, 91.2), (75.4, 93.4)], 2.4, 2.1)):
-        sh = taper(crpath(pts, 12), w0, w1, tip='round')
+             details=[(ribbon([(71.6, 82.6), (73.4, 81.9), (75.4, 82.6)], [0.1, 0.6, 0.1]), RED.hi, 0.7),
+                      (ribbon([(73.2, 82.6), (73.4, 84.2), (73.0, 85.6)], [0.1, 0.6, 0.1]), RED.deep, 0.5)])
+    # les pans : un peu évasés, coupés en biais, de longueurs différentes ; ils pendent droit (pesanteur)
+    for nm, pts, w0, w1, cut in (('sashA', [(72.2, 85.0), (71.6, 88.6), (71.2, 92.0), (71.0, 95.4)], 2.2, 2.7, 1.1),
+                                 ('sashB', [(74.8, 85.2), (75.2, 88.0), (75.6, 90.6), (75.8, 92.8)], 2.1, 2.5, -0.9)):
+        c = crpath(pts, 12)
+        e = c[-1]
+        n_ = len(c) - 1
+        wd = [w0 + (w1 - w0) * i / n_ for i in range(n_ + 1)]
+        right = [(x + w / 2, y) for (x, y), w in zip(c, wd)]
+        left = [(x - w / 2, y) for (x, y), w in zip(c, wd)]
+        right[-1] = (right[-1][0], right[-1][1] + max(0.0, cut))
+        left[-1] = (left[-1][0], left[-1][1] + max(0.0, -cut))
+        # le haut du pan (sous le noeud) arrondi ; le bout coupé en biais (deux coins nets)
+        sh = sm(right + left[::-1], sharp=(n_, n_ + 1), t=0.8)
         xm = pts[-1][0]
         fig.part(nm, sh, RED, grad=(xm + 1.2, 86, xm - 1.2, 94, [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]),
                  cel=0.6, rim=0.5, cast=0.9, cast_on=['robe', 'lap', 'sashA'],
-                 details=[(ribbon([(x + 0.5, y) for x, y in pts], [0.1, 0.5, 0.5, 0.1]), RED.hi, 0.55)])
+                 details=[(ribbon([(x + 0.55, y) for x, y in pts], [0.1, 0.5, 0.5, 0.1]), RED.hi, 0.55),
+                          (ribbon([(x - 0.3, y + 0.4) for x, y in pts[1:]], [0.1, 0.5, 0.1]), RED.deep, 0.35)])
 
     # ---- la grande manche proche : l'avant-bras levé dedans (le coude caché), la manche pend sous lui, ourlée d'or ----
-    sleeve = sm([(53.4, 66.4), (57.0, 63.6), (60.6, 63.4), (63.0, 66.6), (64.2, 70.4), (65.2, 73.6), (66.0, 79.0),
-                 (65.8, 86.0), (64.6, 91.4), (62.0, 95.4), (57.8, 97.0), (54.2, 95.8), (52.6, 90.4), (52.2, 82.0),
-                 (52.4, 74.0)])
+    sleeve = sm([(51.6, 71.0), (52.8, 66.8), (55.6, 63.8), (59.4, 62.4), (62.6, 63.8), (64.0, 67.0), (64.4, 70.6),
+                 (65.4, 73.8), (66.2, 79.0), (66.0, 86.0), (64.8, 91.4), (62.2, 95.4), (58.0, 97.0), (54.4, 95.8),
+                 (52.6, 90.4), (52.0, 82.0)], t=0.9)
     trim = [(63.2, 71.2), (64.4, 74.6), (65.0, 79.0), (64.8, 85.6), (63.6, 90.8), (61.2, 94.4), (57.6, 95.9)]
-    sd = [(ribbon([(55.6, 67.0), (54.8, 76.0), (55.4, 86.0), (57.6, 94.0)], [0.2, 1.5, 1.3, 0.2]), ROBE.deep, 0.5),
-          (ribbon([(59.4, 65.4), (61.2, 72.0), (61.6, 80.0)], [0.2, 1.0, 0.2]), ROBE.hi, 0.45),
-          (ribbon([(58.8, 80.6), (59.8, 87.0), (59.2, 92.0)], [0.2, 1.2, 0.2]), ROBE.deep, 0.45),
+    sd = [(ribbon([(54.6, 68.0), (54.6, 76.0), (55.4, 86.0), (57.6, 94.0)], [0.2, 1.5, 1.3, 0.2]), ROBE.deep, 0.5),
+          (ribbon([(55.4, 65.2), (58.6, 63.4), (61.8, 64.0)], [0.2, 1.0, 0.2]), ROBE.hi, 0.6),
+          (ribbon([(60.4, 65.6), (61.6, 72.0), (61.8, 79.0)], [0.2, 1.0, 0.2]), ROBE.hi, 0.4),
+          # le pli de la manche sous le coude, et le grand pli qui pend
+          (ribbon([(57.6, 80.4), (61.0, 82.6), (64.2, 82.6)], [0.2, 1.0, 0.2]), ROBE.deep, 0.45),
+          (ribbon([(58.8, 85.0), (59.8, 89.0), (59.2, 93.0)], [0.2, 1.1, 0.2]), ROBE.deep, 0.4),
           # l'ouverture de la manche, sombre, sous le poignet
           (sm([(60.8, 70.6), (63.4, 70.6), (64.6, 73.6), (63.0, 76.4), (60.6, 74.0)]), ROBE.deep, 0.8),
           # l'ourlet d'or le long de l'ouverture
@@ -310,9 +336,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     eyeF = sm([(84.6, 53.4), (85.4, 52.7), (86.6, 52.6), (87.2, 53.0), (86.4, 53.8), (85.2, 53.9)], sharp=(0, 3))
     eh = P['eyes']
     if eh > 0.05 and P['blink'] <= 0.5:
-        # les yeux s'allument (le vent) : une lueur claire sur la peau (un dégradé rond, pas de flou)
-        hd += [(ellipse(79.6, 53.4, 4.0, 2.6), ('rad', 79.6, 53.4, 4.0, 2.6, [(0, '#ffffff', 0.7 * eh), (0.5, WINDL[2], 0.35 * eh), (1, WINDL[3], 0)]), 1),
-               (ellipse(86.0, 53.3, 3.0, 2.2), ('rad', 86.0, 53.3, 3.0, 2.2, [(0, '#ffffff', 0.65 * eh), (0.5, WINDL[2], 0.3 * eh), (1, WINDL[3], 0)]), 1)]
+        # les yeux d'or s'allument : une lueur dorée sur la peau (un dégradé rond, pas de flou)
+        hd += [(ellipse(79.6, 53.4, 4.0, 2.6), ('rad', 79.6, 53.4, 4.0, 2.6, [(0, '#fffbe0', 0.75 * eh), (0.5, IRIS[1], 0.35 * eh), (1, IRIS[2], 0)]), 1),
+               (ellipse(86.0, 53.3, 3.0, 2.2), ('rad', 86.0, 53.3, 3.0, 2.2, [(0, '#fffbe0', 0.7 * eh), (0.5, IRIS[1], 0.3 * eh), (1, IRIS[2], 0)]), 1)]
     if P['blink'] > 0.5:
         # les paupières de peau se ferment : un pli courbé vers le bas (les yeux plissés du vieux sage)
         for e, (cx, cy), pr in ((eyeN, (79.5, 53.4), 1.0), (eyeF, (85.9, 53.3), 0.7)):
@@ -323,7 +349,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             cid = fig.uid('ce')
             fig.defs.append('<clipPath id="%s"><path d="%s"/></clipPath>' % (cid, e.d()))
             hd += [(e.scale(1.12, 1.35, cx - 0.4, cy), '#3a1426', 0.9), (e, '#f6e6da', 1)]
-            stops = [(0, '#ffffff'), (0.4, '#f2feff'), (0.8, WINDL[2]), (1, WINDL[3])] if eh > 0.5 else \
+            stops = [(0, '#ffffff'), (0.35, '#fff6c8'), (0.75, IRIS[1]), (1, IRIS[2])] if eh > 0.5 else \
                 [(0, IRIS[0]), (0.35, IRIS[1]), (0.8, IRIS[2]), (1, IRIS[3])]
             hd += [('<path d="%s" fill="FILL" clip-path="url(#%s)"/>' % (ellipse(cx, cy, rx, ry).d(), cid),
                     ('rad', cx + 0.3, cy - 0.3, rx * 1.2, ry * 1.2, stops), 1)]
@@ -340,18 +366,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (ribbon([(78.0, 56.4), (80.2, 56.9), (82.4, 56.4)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.5),
            (ribbon([(84.8, 54.7), (86.2, 55.1), (87.4, 54.7)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.6),
            (ribbon([(76.8, 53.0), (75.8, 53.8), (75.4, 55.0)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.55),
-           (ellipse(80.4, 57.8, 1.6, 0.6, -10), SKIN.hi, 0.5)]
+           (ellipse(80.8, 57.9, 1.2, 0.45, -10), SKIN.hi, 0.3)]
     # le museau qui avance : l'arête du nez éclairée, le plan du devant clair, les deux narines, le pli vers la bouche
-    hd += [(ribbon([(83.6, 52.6), (86.8, 53.8), (89.6, 54.0), (92.4, 54.8)], [0.2, 0.9, 1.1, 0.3]), SKIN.hi, 0.6),
+    hd += [(ribbon([(86.4, 55.2), (89.0, 54.7), (91.2, 54.6), (93.0, 55.4)], [0.2, 0.8, 0.9, 0.3]), SKIN.hi, 0.6),
+           (ribbon([(83.6, 52.8), (84.2, 54.2), (85.6, 55.4)], [0.1, 0.5, 0.1]), SKIN.shadow, 0.35),
            (sm([(88.4, 55.0), (91.6, 54.4), (93.4, 55.4), (93.8, 57.0), (92.8, 58.2), (89.6, 58.0), (88.0, 56.8)]), SKIN.light, 0.55),
            (sm([(89.6, 57.2), (90.6, 56.4), (91.6, 56.6), (90.8, 57.4)], sharp=(0,)), '#6e2438', 1),
            (sm([(92.4, 56.4), (93.2, 56.0), (93.7, 56.5), (93.0, 57.1)], sharp=(0,)), '#6e2438', 0.9),
            (ribbon([(88.6, 55.6), (87.6, 57.2), (87.2, 59.2)], [0.2, 0.8, 0.2]), SKIN.shadow, 0.6)]
     # la bouche sévère aux coins tombants (entre la moustache et la barbe), la lèvre du bas, le petit croc
-    mouth = sm([(86.0, 61.4), (87.6, 60.6), (89.4, 60.4), (91.0, 60.4), (90.8, 61.2), (89.0, 61.2), (87.4, 61.6)], sharp=(0, 3))
-    hd += [(mouth.scale(1.06, 1.5, 88.6, 61.0), '#3a0d1e', 0.9), (mouth, MOUTH, 1),
-           (ribbon([(86.8, 62.0), (88.8, 61.8), (90.6, 61.5)], [0.1, 0.6, 0.1]), LIP, 0.9),
-           (sm([(88.4, 61.4), (89.3, 61.3), (89.0, 60.3)], sharp=(0, 1, 2)), '#fff6e8', 1)]
+    hd += [(ribbon([(85.8, 61.9), (87.0, 60.9), (89.0, 60.5), (91.0, 60.6)], [0.1, 0.5, 0.55, 0.15]), MOUTH, 1),
+           (ribbon([(86.8, 62.1), (88.8, 61.6), (90.6, 61.4)], [0.1, 0.55, 0.1]), LIP, 0.85),
+           (sm([(88.3, 61.2), (89.3, 61.15), (88.95, 60.0)], sharp=(0, 1, 2)), '#fff6e8', 1)]
     # le bandeau d'or (le cercle des singes) : il fait le tour du crâne, peint dedans ; un jade au milieu du front
     lo = [(62.0, 51.0), (68.0, 50.8), (74.0, 50.6), (80.0, 50.0), (85.0, 49.2), (90.0, 48.0)]
     up_ = [(90.0, 45.8), (85.0, 47.0), (80.0, 47.8), (74.0, 48.4), (68.0, 48.6), (62.0, 48.8)]
@@ -461,7 +487,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (ribbon([(100.4, 54.0), (101.4, 58.0), (102.2, 63.0)], [0.1, 0.5, 0.1]), WOOD.deep, 0.5),
             (ribbon([(100.4, 88.0), (101.4, 92.0), (102.0, 98.0)], [0.1, 0.5, 0.1]), WOOD.deep, 0.45)]
     fig.part('staff', staff, WOOD, grad=(103, 60, 99, 62, [(0, WOOD.light), (0.5, WOOD.base), (1, WOOD.shadow)]),
-             cel=0.8, rim=0.5, cast=1.0, cast_on=['cloud', 'sleeveF'], details=sdet)
+             cel=0.8, rim=0.5, cast=1.0, cast_on=['sleeveF'] + CLOUD_NAMES, details=sdet)
     KN = [(103.0, 50.4, 1, False), (99.4, 66.0, -1, True), (103.2, 89.6, 1, False)]
     for k, (x, y, sd_, stub) in enumerate(KN):
         pts = [(x - 0.4 * sd_, y - 2.4), (x + 1.0 * sd_, y - 1.1), (x + 1.4 * sd_, y + 0.4), (x + 0.9 * sd_, y + 1.7),
@@ -503,7 +529,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- chaque groupe de morceaux prend sa pose ----
     fig.pose(['tail'], TAIL)
-    fig.pose(['cloud'], CL)
+    fig.pose(CLOUD_NAMES, FL)
     fig.pose(['robe'], TOR)
     fig.pose(['lap'], FL)
     fig.pose(['knot'], U)
