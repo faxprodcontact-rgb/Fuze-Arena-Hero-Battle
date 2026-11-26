@@ -23,7 +23,7 @@ import { applyFusion, canGainStar, isValidFusion, planFusion, type FusionPlan } 
 import { levelRefund } from '../../core/power';
 import { createRng, pick, type Rng } from '../../core/rng';
 import { MAIL_KEEP_DAYS, MAILS, type MailDef } from '../../core/data/mail';
-import { BOSS_ELEMENT, BOSSES } from '../../core/data/monsters';
+import { BOSS_ELEMENT, BOSSES, GUILD_BOSSES } from '../../core/data/monsters';
 import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '../../core/stages';
 import { summonBasic, summonOne } from '../../core/summon';
 import type { Hero } from '../../core/types';
@@ -699,8 +699,8 @@ export function dungeonBattle(kind: DungeonKind): BattleRequest {
 }
 
 /** Les boss tournent selon le jour de la semaine. Ils sont très résistants : on vise le plus de dégâts. */
-export function dailyBossId(): string {
-  return BOSSES[new Date(now()).getDay() % BOSSES.length]!;
+export function dailyBossId(at = now()): string {
+  return BOSSES[new Date(at).getDay() % BOSSES.length]!;
 }
 
 /**
@@ -708,7 +708,11 @@ export function dailyBossId(): string {
  * jour. Son élément donne l'image de l'onglet Boss de la guilde (« Donjon de feu »…, ui/backdrop-dungeon.tsx).
  */
 export function guildBossId(at = now()): string {
-  return BOSSES[(new Date(at).getDay() + 1) % BOSSES.length]!;
+  // chaque jour (jour local), un des 4 boss de guilde, jamais celui du boss du jour : on tourne parmi les 3 autres
+  const d = new Date(at);
+  const day = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+  const others = GUILD_BOSSES.filter((b) => b !== dailyBossId(at));
+  return others[day % others.length]!;
 }
 
 /** Le moment où le boss de guilde laisse sa place à un autre (le prochain minuit où il change). */
