@@ -725,13 +725,19 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (ribbon([J((78.0, 54.4)), J((84.6, 54.9)), J((91.4, 53.8))], [0.1, 1.0, 0.1]), skin.light, 0.65),
            (sm([J((84.0, 55.0)), J((91.6, 54.2)), J((91.2, 56.0)), J((85.0, 56.4))]), skin.hi, 0.35),
            (ribbon([J((72.6, 53.4)), J((78.0, 55.6)), J((86.0, 56.2))], [0.1, 0.8, 0.1]), skin.deep, 0.45)]
+    # 2e avis (cercle sous la défense proche) : les défenses sortent de la gueule ; leur racine est plantée dans la
+    # gencive, au coin de la lèvre du bas (plus de racine posée sur le bord de la mâchoire)
+    hd += [(ellipse(*J((77.7, 53.0)), 2.2, 1.1, -8), '#2a0b24', 0.75),
+           (ellipse(*J((77.7, 52.8)), 1.8, 0.8, -8), GUMS, 1),
+           (ellipse(*J((91.4, 52.4)), 1.4, 0.8, -12), '#2a0b24', 0.7),
+           (ellipse(*J((91.4, 52.3)), 1.1, 0.6, -12), GUMS, 1)]
     fig.part('head', head, skin, grad=(96, 30, 66, 54, [(0, skin.light), (0.5, skin.base), (1, skin.shadow)]),
              cel=1.3, rim=0.65, cast=1.4, details=hd, cast_on=[q.name for q in fig.parts if q.name not in ('m3', 'm4')])
     # les deux défenses d'ivoire qui montent de la mâchoire (la proche devant la lèvre)
-    tN = sm([J(p) for p in [(75.8, 54.2), (76.4, 51.0), (77.0, 48.2), (78.6, 45.8), (79.0, 48.4), (78.8, 51.4), (78.6, 54.0)]], sharp=(3,))
+    tN = sm([J(p) for p in [(76.2, 53.0), (76.5, 50.6), (77.1, 48.0), (78.6, 45.8), (79.1, 48.4), (79.1, 51.0), (79.0, 52.9), (77.6, 53.5)]], sharp=(3,))
     fig.part('tuskN', tN, IVORY, cel=0.6, rim=0.5, cast=0.7, cast_on=['head'],
-             details=[(ribbon([J(p) for p in [(78.2, 53.0), (78.4, 49.6), (78.7, 46.8)]], [0.6, 0.5, 0.1]), IVORY.hi, 0.9)])
-    tF = sm([J(p) for p in [(90.6, 52.8), (90.6, 50.4), (91.6, 48.2), (92.6, 47.4), (92.6, 49.8), (92.4, 52.6)]], sharp=(3,))
+             details=[(ribbon([J(p) for p in [(78.3, 52.4), (78.5, 49.6), (78.7, 46.8)]], [0.6, 0.5, 0.1]), IVORY.hi, 0.9)])
+    tF = sm([J(p) for p in [(90.6, 52.4), (90.6, 50.4), (91.6, 48.2), (92.6, 47.4), (92.6, 49.8), (92.3, 52.3), (91.4, 52.8)]], sharp=(3,))
     fig.part('tuskF', tF, IVORY, cel=0.5, rim=0.45, cast=0.6, cast_on=['head'])
     # (2) la chevelure qui naît du crâne : la calotte (racine en petites pointes juste derrière les cornes, puis derrière
     # l'oreille jusqu'à la nuque ; elle déborde un peu du crâne : c'est le volume des cheveux) fondue avec les mèches
@@ -797,7 +803,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # crâne (vue de trois quarts : elle part près du bord droit du crâne, au-dessus du bout du sourcil lointain) ;
     # un peu plus courte et plus fine que la proche ; sa pointe s'écarte vers la droite comme la proche vers la gauche
     def HF(pts):
-        return [(x + 3.3 + 0.9 * max(0.0, 33.0 - y) / 19.0, y) for x, y in pts]
+        return [(x + 2.0 + 0.9 * max(0.0, 33.0 - y) / 19.0, y) for x, y in pts]
     hornF = sm(HF([(83.6, 33.4), (82.9, 29.4), (85.2, 24.4), (87.4, 19.2), (89.2, 14.2), (90.4, 18.6), (90.6, 24.6),
                    (89.5, 29.6), (88.6, 33.2), (86.4, 34.4)]), sharp=(4,))
     fig.part('hornF', hornF, IVORY, grad=(95, 20, 86, 30, [(0, IVORY.light), (0.55, IVORY.base), (1, IVORY.shadow)]),
