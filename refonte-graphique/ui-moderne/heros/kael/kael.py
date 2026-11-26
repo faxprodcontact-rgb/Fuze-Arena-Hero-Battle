@@ -310,20 +310,24 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ]
     strands = []
     for name, p0, p1, p2, p3, w0, _ in [wave_lock(i, L, P) for i, L in enumerate(LOCKS)]:
-        strands.append((lock(p0, p1, p2, p3, w0, bulge=0.32), p0, p3, 7.0,
+        strands.append((lock(p0, p1, p2, p3, w0, bulge=0.32), p0, p3, (0.0, 7.0),
                         [(0, '#ffe680'), (0.22, '#ffbc34'), (0.58, '#ff7a22'), (1, '#e03a1a')],
                         [(0, '#ff8a24'), (0.5, '#d8381a'), (1, '#a82418')]))
     for name, p0, p1, p2, p3, w0 in front_locks(P):
-        strands.append((lock(p0, p1, p2, p3, w0, bulge=0.3), p0, p3, 5.0,
+        strands.append((lock(p0, p1, p2, p3, w0, bulge=0.3), p0, p3, FORE_FADE,
                         [(0, '#fff0a8'), (0.3, '#ffc63c'), (0.68, '#ff8424'), (1, '#e03a1a')],
                         [(0, '#ff9a2a'), (1, '#c8301a')]))
     mass = fused([scalp] + [s[0] for s in strands])
     hair = [(mass, ('rad', 94, 19, 30, 30, [(0, '#fff0a8'), (0.3, '#ffcc40'), (0.62, '#ff9426'), (1, '#f06a1e')]), 1)]
-    # chaque mèche se détache de la masse sur ses `fade` premiers pixels (7 pour la crinière, 5 pour la mèche du front)
-    for sh, p0, p3, fade, cols, under in strands:
-        fade = min(0.5, fade / math.dist(p0, p3))
+    # chaque mèche se détache de la masse entre `start` et `fade` pixels de sa racine (0 → 7 pour la crinière) ;
+    # 3e avis (cercle au-dessus de l'œil) : la racine de la mèche du front faisait un crochet (son coin de racine et sa
+    # face du dessous, visibles au-dessus de l'arcade) qui cassait la courbe de la chevelure ; elle n'apparaît plus
+    # qu'une fois couchée vers l'arrière, dans la courbe des autres mèches (FORE_FADE)
+    for sh, p0, p3, (start, fade), cols, under in strands:
+        L = math.dist(p0, p3)
+        start, fade = min(0.4, start / L), min(0.55, fade / L)
 
-        def faded(stops, k=1.0, fade=fade):
+        def faded(stops, k=1.0, fade=fade, start=start):
             # la couleur de la mèche n'apparaît qu'après sa racine (transparente sur le crâne, pleine à `fade`) :
             # opacité en douce rampe (smoothstep) de la racine à fade, échantillonnée finement
             def col_at(o):
@@ -331,8 +335,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                     if o1 <= o <= o2:
                         return hexmix(c1, c2, (o - o1) / ((o2 - o1) or 1))
                 return stops[-1][1] if o > stops[-1][0] else stops[0][1]
-            a0 = 0.0
-            out = []
+            a0 = start
+            out = [(0, col_at(0), 0.0)] if a0 > 0 else []
             for i in range(7):
                 o = a0 + (fade - a0) * i / 6
                 u = i / 6
@@ -469,6 +473,9 @@ def wave_lock(i, L, P):
     p2 = (p2[0] + 0.5 * k * math.sin(2 * ph + 1.0) - 1.2 * tr, p2[1] + 0.9 * k * math.sin(ph) - 0.8 * ri)
     p3 = (p3[0] + 1.1 * k * math.sin(ph + 0.8) - 2.6 * tr - 1.2 * fl, p3[1] + 1.3 * k * math.cos(ph) - 1.6 * ri - 1.6 * fl + 0.6 * tr)
     return (name, p0, p1, p2, p3, w0 * (1 + 0.1 * fl), spur)
+
+
+FORE_FADE = (5.0, 9.5)      # la mèche du front : transparente jusqu'à 5 px de sa racine, pleine à 9,5 px
 
 
 def front_locks(P):
