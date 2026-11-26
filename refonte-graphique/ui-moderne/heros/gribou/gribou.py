@@ -448,7 +448,7 @@ def head_part(fig, P, HEAD):
             hd += [(ribbon([(cx - w_ / 2, eyy - 0.1), (cx, eyy + 0.55 * pr), (cx + w_ / 2, eyy)], [0.1, 0.65, 0.1]), EYEINK, 0.95)]
     else:
         eyes_fill = []
-        for cx, w_, pr in ((exn, ewn, 1.0), (exf, ewf, 0.86)):
+        for cx, w_, pr in ((exn, ewn, 1.2), (exf, ewf, 1.04)):
             hw = w_ / 2
             eye = sm([(cx - hw, eyy + 0.2), (cx - hw * 0.45, eyy - 1.05 * pr), (cx + hw * 0.5, eyy - 1.15 * pr),
                       (cx + hw, eyy - 0.3), (cx + hw * 0.35, eyy + 1.0 * pr), (cx - hw * 0.5, eyy + 0.95 * pr)], sharp=(0, 3))
