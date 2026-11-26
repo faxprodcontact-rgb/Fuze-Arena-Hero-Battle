@@ -8,8 +8,8 @@
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/monstres/tengu-eventail.txt) : un karasu-tengu mystique,
 # prêtre des bourrasques, mince et droit, trois quarts vers la droite, posé sur ses deux geta. Vraie tête de corbeau
 # (plumes noires bleutées) couverte d'un MASQUE de laque blanche qui épouse le front et le bec (bec épais et crochu,
-# blanc, fente de la bouche rouge sombre, narine), sourcils peints en V rouge, petite larme rouge sous l'œil, yeux
-# d'ambre dans des trous cerclés de rouge sombre (le lointain en partie caché par l'arête du bec) ; cordon rouge noué
+# blanc, fente de la bouche rouge sombre, narine), sourcil peint en V rouge, petite larme rouge sous l'œil, œil
+# d'ambre dans un trou cerclé de rouge sombre (presque de profil : un seul œil visible) ; cordon rouge noué
 # derrière la tête et son pompon d'or et de rouge ; eboshi de laque noire plié en arrière, bande d'or ; collerette de
 # plumes noires en quatre touffes inégales. GRANDES AILES de corbeau levées en V (la proche vers le haut à gauche, la
 # lointaine derrière la tête, plus sombre). Longue robe ivoire de prêtre (plis qui s'ouvrent vers le bas, ourlet
@@ -365,7 +365,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (sm([(68.6, 30.6), (75.4, 31.0), (78.6, 33.4), (75.2, 33.2), (71.0, 32.0)]), '#ffffff', 0.9),
            (sm([(64.0, 40.6), (69.0, 41.6), (72.6, 44.0), (70.6, 46.0), (66.4, 45.6)]), MASK.base, 0.6)]
     # les trous des yeux, cerclés de rouge sombre ; les yeux d'ambre (pupille vers l'ennemi) ; le lointain plus étroit
-    eyes = ((67.6, 35.9, 2.55, 1.9, 1.5, 68.2), (76.2, 35.5, 1.6, 1.75, 1.05, 76.7))
+    # (tête d'oiseau masquée, presque de profil : UN seul œil visible, demande du propriétaire du 26/11 — l'œil du
+    # fond est caché par le front du masque et la racine du bec)
+    eyes = ((68.0, 35.9, 2.55, 1.9, 1.5, 68.7),)
     for cx, cy, rx, ry, ir, px in eyes:
         md += [(ellipse(cx - 0.2, cy + 0.25, rx + 0.7, ry + 0.6), RIM_EYE, 0.95)]
         if P['blink'] > 0.5:
@@ -383,11 +385,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                         (cx + rx * 0.3, cy - ry * 0.55)]), RIM_EYE, 0.6),
                    (ellipse(px + 0.75, cy - 0.55, ir * 0.3, ir * 0.25), '#ffffff', 1)]
     # les sourcils peints en V rouge (ils descendent vers le bec), la petite larme rouge sous l'œil proche
-    md += [(sm([(62.8, 32.6), (66.0, 32.0), (69.4, 32.8), (71.8, 34.2), (71.2, 34.9), (68.8, 34.0), (65.6, 33.6), (63.2, 34.0)], sharp=(0, 3)), SILK.base, 1),
-           (ribbon([(63.4, 32.6), (66.4, 32.2), (69.6, 33.0)], [0.1, 0.45, 0.1]), SILK.light, 0.9),
-           (sm([(73.6, 34.4), (75.4, 32.8), (77.8, 31.8), (79.0, 31.9), (78.6, 32.7), (76.4, 33.6), (74.4, 35.0)], sharp=(0, 3)), SILK.base, 1),
-           (sm([(67.4, 38.4), (68.0, 39.6), (67.8, 41.0), (67.0, 41.2), (66.8, 39.8)], sharp=(0,)), SILK.base, 1),
-           (ellipse(67.6, 40.2, 0.25, 0.4), SILK.hi, 0.8)]
+    md += [(sm([(63.2, 32.6), (66.4, 32.0), (69.8, 32.8), (72.6, 34.4), (72.0, 35.1), (69.2, 34.0), (66.0, 33.6), (63.6, 34.0)], sharp=(0, 3)), SILK.base, 1),
+           (ribbon([(63.8, 32.6), (66.8, 32.2), (70.0, 33.0)], [0.1, 0.45, 0.1]), SILK.light, 0.9),
+           (sm([(67.8, 38.4), (68.4, 39.6), (68.2, 41.0), (67.4, 41.2), (67.2, 39.8)], sharp=(0,)), SILK.base, 1),
+           (ellipse(68.0, 40.2, 0.25, 0.4), SILK.hi, 0.8)]
     fig.part('mask', mask, MASK, grad=(79, 31, 62, 45, [(0, MASK.light), (0.5, MASK.base), (1, MASK.shadow)]),
              cel=1.0, rim=0.7, cast=1.2, cast_on=['skull', 'cord'], details=md)
 
@@ -418,7 +419,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       # le pli du chapeau (une arête douce, pas un trait)
                       (ribbon([(56.2, 24.8), (58.6, 26.4), (60.6, 29.4)], [0.1, 0.8, 0.1]), LACQ.deep, 0.7),
                       (ellipse(65.0, 24.8, 0.7, 0.35, 25), '#ffffff', 0.7)])
-    band = sm([(56.6, 29.6), (66.0, 30.2), (76.8, 30.6), (76.4, 32.2), (66.0, 31.8), (56.6, 31.4)], sharp=(0, 3))
+    band = sm([(56.6, 29.6), (66.0, 30.2), (75.8, 30.6), (76.0, 31.4), (75.6, 32.1), (66.0, 31.8), (56.6, 31.4)], sharp=(0, 6))
     fig.part('band', band, GOLD, grad=(76, 30, 56, 32, [(0, GOLD.hi), (0.4, GOLD.light), (1, GOLD.shadow)]),
              cel=0.4, rim=0.4, cast=0.9, cast_on=['mask', 'skull'],
              details=[(ribbon([(58.0, 30.0), (67.0, 30.6), (75.6, 30.9)], [0.1, 0.45, 0.1]), '#fffbe0', 0.8)])

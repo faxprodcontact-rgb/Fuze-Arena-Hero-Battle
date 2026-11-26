@@ -62,8 +62,8 @@ EYE_INK = '#1c0c1c'
 
 GRD = 116          # le sol
 FEET = (64, 116)   # le point « pieds » du pixel art (sol: 64 116)
-FRAME = (28, 12, 96, 108)     # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-PK = 1.12          # l'ara, agrandi autour de ses pattes
+FRAME = (35, 14, 84, 105)      # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
+PK = 1.2           # l'ara, agrandi autour de ses pattes
 H0 = (71.0, 58.6)  # le pivot de la tête (agrandie ×1,1 : proportions stylisées, comme Kael)
 
 # ---------- le squelette (animation) ----------
@@ -125,7 +125,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- le bras lointain (derrière le buste ; la main sur le fût viendra devant le mousquet) ----
     SF = mapp(UC, SF0)
-    FH = Lg(P['fu'], 0.9)                                                   # la main lointaine sur le fût
+    FH = Lg(P['fu'], 1.9)                                                   # la main lointaine sur le fût
     WF = add(FH, (math.cos(math.radians(P['fwa'])), math.sin(math.radians(P['fwa']))), HAND_D)
     EF = ik(SF, WF, LUF, LFF, 1)
     far_arm(fig, P, SF, EF, WF)
@@ -561,6 +561,7 @@ def hat(fig, P):
     # le côté proche relevé contre la calotte (une grande aile bombée), bordé d'or, tenu par la broche
     up_pts = [(41.0, 24.6), (44.2, 20.8), (48.8, 19.4), (53.4, 20.2), (57.4, 23.4), (60.0, 28.2), (61.0, 33.4), (60.2, 38.0),
               (57.6, 41.0), (52.4, 41.8), (47.2, 40.6), (43.0, 37.2), (40.4, 32.2), (39.8, 28.0)]
+    up_pts = [(56.0 + (x - 56.0) * 0.88, 39.0 + (y - 39.0) * 0.9) for x, y in up_pts]
     upb = sm(up_pts, t=0.95)
     ud = [(sm([(38, 29), (43, 34.4), (49, 38.4), (56, 40.2), (61, 38), (61, 44), (38, 44)]), HAT.shadow, 0.55),
           (ellipse(50.6, 31.6, 6.4, 7.6, 25), ('rad', 52.6, 28.8, 8.0, 8.0, [(0, HAT.light, 0.0), (0.6, HAT.shadow, 0.12), (1, HAT.shadow, 0.4)]), 1),
@@ -647,7 +648,8 @@ def parrot(fig, P):
     hd = sm([(46.4, 53.0), (45.4, 49.2), (45.6, 45.6), (47.6, 42.8), (50.6, 42.4), (52.8, 43.8), (53.6, 46.4), (53.2, 49.4),
              (51.8, 51.6), (49.6, 53.2)], t=0.95)
     cheek = sm([(49.6, 44.0), (52.0, 43.6), (53.8, 45.4), (53.8, 48.6), (52.0, 49.8), (49.8, 49.0), (49.0, 46.4)], t=0.95)
-    hdd = [(ribbon(crpath([(47.4, 43.8), (50.4, 42.9), (52.6, 44.0)], 10), [0.1] + [0.8] * 9 + [0.1]).move(0, 0.4), RED.hi, 0.6),
+    hdd = [(sm([(45.2, 44.0), (47.0, 43.0), (46.4, 47.6), (47.6, 51.6), (45.2, 52.4)]), RED.shadow, 0.55),
+           (ribbon(crpath([(47.4, 43.8), (50.4, 42.9), (52.6, 44.0)], 10), [0.1] + [0.8] * 9 + [0.1]).move(0, 0.4), RED.hi, 0.6),
            (cheek, ('lin', 53.8, 44, 49.4, 49.6, [(0, '#ffffff'), (0.6, '#f4f0f6'), (1, '#c8c4dc')]), 1),
            (ribbon([(50.2, 47.4), (51.2, 48.2), (52.4, 48.4)], [0.1, 0.2, 0.1]), '#b0aac8', 0.6)]
     # l'œil : iris d'or pâle, pupille noire, un reflet
@@ -656,7 +658,7 @@ def parrot(fig, P):
         pass
     hdd += [(ellipse(ec[0], ec[1], 1.05, 1.0), '#3a2a3a', 1), (ellipse(ec[0], ec[1], 0.8, 0.76), '#fff0b0', 1),
             (ellipse(ec[0] + 0.08, ec[1] + 0.02, 0.44, 0.46), '#120c1a', 1), (ellipse(ec[0] + 0.3, ec[1] - 0.3, 0.2, 0.18), '#ffffff', 1)]
-    fig.part('phead', hd, RED, grad=(53, 43, 46, 52, [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]), cel=0.7, rim=0.5, cast=0,
+    fig.part('phead', hd, RED, grad=(53, 42.4, 47, 52.4, [(0, RED.light), (0.75, RED.base), (1, RED.base)]), cel=0, rim=0.5, cast=0,
              details=hdd)
     out['head'].append('phead')
     # le bec : la mandibule du bas (sombre) s'ouvre quand il crie ; le gros bec crochu du haut, clair
@@ -771,9 +773,11 @@ def hand(fig, pre, F, W, P, near, bg):
            (ellipse(*H(2.6, 0.3), 0.55 * k, 0.4 * k), SKIN.hi, 0.35)]
     fig.part(pre + 'hand', body, SKIN, grad=(*H(2, -3), *H(-4, 3), [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=0.7, rim=0.45, cast=0.8, cast_on=bg, details=det)
-    thumb = limb([H(-3.8, -2.0), H(-1.0, -2.9), H(1.4, -2.7)], [2.3 * k, 2.1 * k, 1.8 * k])
+    # le pouce, couché le long du bois vers la bouche du canon
+    t0 = add(H(-1.6, 1.4), gd, 0.2 * k)
+    thumb = limb([t0, add(t0, gd, 1.8 * k), add(add(t0, gd, 3.4 * k), a, 0.4 * k)], [2.2 * k, 2.0 * k, 1.7 * k])
     fig.part(pre + 'thumb', thumb, SKIN, cel=0.45, rim=0.35, cast=0.55, cast_on=[pre + 'hand'] + bg,
-             details=[(ellipse(*H(0.4, -3.1), 0.7, 0.28, ang_of(a)), SKIN.hi, 0.5)])
+             details=[(ellipse(*add(t0, gd, 2.6 * k), 0.7, 0.28, ang_of(gd)), SKIN.hi, 0.5)])
     return [pre + 'hand', pre + 'thumb']
 
 

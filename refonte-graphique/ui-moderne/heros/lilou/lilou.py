@@ -55,19 +55,20 @@ HP = (92.0, 52.0)               # la tête est agrandie ×1,1 autour de ce point
 HSC = 1.1
 NS, NE0, NW0 = (48.4, 63.4), (41.6, 83.2), (53.4, 68.4)       # bras proche : épaule, coude, poignet (repos)
 FS, FE0, FW0 = (84.6, 63.6), (94.2, 79.6), (102.6, 64.8)      # bras lointain (épaule cachée derrière le plastron)
-NH, NK0, NA0 = (51.6, 95.0), (47.6, 103.0), (46.8, 110.2)     # jambe proche : hanche, genou, cheville
+NH, NK0, NA0 = (51.6, 95.0), (50.4, 102.6), (46.8, 110.2)     # jambe proche : hanche, genou, cheville
 FH, FK0, FA0 = (80.0, 93.0), (86.2, 102.2), (84.8, 110.0)     # jambe lointaine
 TAILR = (36.0, 98.0)            # la racine de la queue
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, pan=0.0, ph=0.0, blink=0.0, shift=0.0, lift=0.0,
             nw=(0.0, 0.0), fw=(0.0, 0.0), nga=0.0, fga=0.0, sq=0.0, tail=0.0, shell=(0.0, 0.0), sh=(0.0, 0.0), tuck=0.0,
-            gape=0.0, fstretch=0.0, nstretch=0.0)
+            gape=0.0, fstretch=0.0, nstretch=0.0, fabs=0.0)
 #   breath : souffle 0..1 ; crouch : elle plie les genoux (pixels, négatif : elle se dresse) ; lean : elle se penche en
 #   avant (+) ; head / tilt : la tête ; pan : les pans du bandeau se soulèvent (+) ou retombent ; ph : la phase de leur
 #   ondulation ; shift : tout le corps glisse vers l'ennemi ; lift : il décolle du sol (saut) ; nw / fw : décalage des
 #   poignets proche / lointain ; nga / fga : les gants tournent autour du poignet (degrés ; fga = 90 : le poing
 #   lointain pointe vers l'ennemi) ; sh : les épaules avancent (le direct) ; shell : la carapace traîne (inertie) ;
-#   tail : la queue ; tuck : la tête rentre dans les épaules (0..1) ; gape : le bec s'entrouvre.
+#   tail : la queue ; tuck : la tête rentre dans les épaules (0..1) ; gape : le bec s'entrouvre ; fabs : le gant lointain
+#   garde son cap au lieu de suivre l'avant-bras (0..1, le cap est alors fga).
 
 
 def rot(v, deg):
@@ -239,13 +240,8 @@ BAND_PTS = [(58.0, 29.6), (66.0, 28.6), (74.0, 28.0), (82.0, 27.8), (90.0, 28.4)
             (97.0, 35.4), (90.0, 34.6), (82.0, 34.4), (74.0, 34.8), (66.0, 35.6), (58.0, 36.6)]
 
 
-def build(ow=0.95, pose=None, fx=None, frame=FRAME):
-    Pz = dict(REST, **(pose or {}))
-    fig = Figure(*frame, ow=ow)
-    from shapely import affinity
-    from shapely.geometry import Polygon
-
-    # ---- le squelette : une matrice par groupe ----
+def skeleton(Pz):
+    """Les matrices et les jointures d'une pose (sans dessiner : les effets s'en servent pour suivre les poings)."""
     ROOTM = mT(Pz['shift'], -Pz['lift'])
     dyb = Pz['crouch'] * 0.85
     PEL = mchain(ROOTM, mT(0, dyb))
@@ -257,6 +253,33 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hx, hy = Pz['head']
     HEAD = mchain(UC, mT(hx - 2.0 * tk, hy + 7.0 * tk), mR(Pz['tilt'], *NECK), mS(HSC, HSC, *HP))
     SHM = mchain(U, mT(*Pz['shell']))
+    SHO = mchain(UC, mT(*Pz['sh']))
+    # le bras lointain : le poignet visé, le coude par cinématique inverse ; le gant suit l'avant-bras (poing levé au repos)
+    FSw = mapp(SHO, FS)
+    FWt = mapp(UC, (FW0[0] + Pz['fw'][0], FW0[1] + Pz['fw'][1]))
+    k = 1 + 0.04 * Pz['fstretch']
+    FEw, FWw = ik(FSw, FWt, FL[0] * k, FL[1] * k, SG_FA)
+    FGM = mchain(mT(FWw[0] - FW0[0], FWw[1] - FW0[1]), mR((1 - Pz['fabs']) * (ang_of(FEw, FWw) - ang_of(FE0, FW0)) + Pz['fga'], *FW0))
+    # le bras proche : le gant garde à peu près son cap (le poignet souple), réglé par nga
+    S = mapp(SHO, NS)
+    Wt = mapp(UC, (NW0[0] + Pz['nw'][0], NW0[1] + Pz['nw'][1]))
+    k = 1 + 0.05 * Pz['nstretch']
+    E, W = ik(S, Wt, NL[0] * k, NL[1] * k, SG_NA)
+    HANDM = mchain(mT(W[0] - NW0[0], W[1] - NW0[1]), mR(0.25 * (ang_of(E, W) - ang_of(NE0, NW0)) + Pz['nga'], *NW0))
+    return dict(ROOTM=ROOTM, PEL=PEL, U=U, UC=UC, TOR=TOR, HEAD=HEAD, SHM=SHM, SHO=SHO, FS=FSw, FE=FEw, FW=FWw, FGM=FGM,
+                NS=S, NE=E, NW=W, HANDM=HANDM, far_fist=mapp(FGM, (111.0, 52.0)), near_fist=mapp(HANDM, (68.0, 68.0)))
+
+
+def build(ow=0.95, pose=None, fx=None, frame=FRAME):
+    Pz = dict(REST, **(pose or {}))
+    fig = Figure(*frame, ow=ow)
+    from shapely import affinity
+    from shapely.geometry import Polygon
+
+    # ---- le squelette : une matrice par groupe ----
+    sk = skeleton(Pz)
+    ROOTM, PEL, U, UC, TOR, HEAD, SHM, SHO = (sk[k] for k in ('ROOTM', 'PEL', 'U', 'UC', 'TOR', 'HEAD', 'SHM', 'SHO'))
+    br = Pz['breath']
     hp = lambda p: mapp(HEAD, p)
     HD = lambda sh: MS(HEAD, sh)
     HDp = lambda pts: MP(HEAD, pts)
@@ -387,10 +410,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ============================================================== le bras lointain (derrière le buste), le poignet dans le
     # revers lacé
-    SHO = mchain(UC, mT(*Pz['sh']))
-    FSw = mapp(SHO, FS)
-    FWt = mapp(UC, (FW0[0] + Pz['fw'][0], FW0[1] + Pz['fw'][1]))
-    FEw, FWw = ik(FSw, FWt, FL[0] * (1 + 0.04 * Pz['fstretch']), FL[1] * (1 + 0.04 * Pz['fstretch']), SG_FA)
+    FSw, FEw, FWw = sk['FS'], sk['FE'], sk['FW']
     farm = bent(FSw, FEw, FWw, 11.8, 10.4, 8.8, bulge=(0.06, 0.08), n=10)
     det = [(ribbon([seg_pt(FEw, FWw, 0.1, -3.0), seg_pt(FEw, FWw, 0.5, -3.0), seg_pt(FEw, FWw, 0.9, -2.6)], [0.2, 1.6, 0.2]), SKIN.light, 0.6),
            (ribbon([seg_pt(FSw, FEw, 0.45, -4.0), seg_pt(FSw, FEw, 0.8, -3.6), seg_pt(FSw, FEw, 0.98, -2.0)], [0.2, 1.4, 0.2]), SKIN.light, 0.45)]
@@ -401,9 +421,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ============================================================== le corps : une seule silhouette
     # ---- le bras proche (épaule → coude → poignet d'un seul tenant), plié en garde ----
-    S = mapp(SHO, NS)
-    Wt = mapp(UC, (NW0[0] + Pz['nw'][0], NW0[1] + Pz['nw'][1]))
-    E, W = ik(S, Wt, NL[0] * (1 + 0.05 * Pz['nstretch']), NL[1] * (1 + 0.05 * Pz['nstretch']), SG_NA)
+    S, E, W = sk['NS'], sk['NE'], sk['NW']
     arm = bent(S, E, W, 15.6, 12.6, 10.0, bulge=(0.06, 0.06), n=12)
     upper = limb([S, lerp(S, E, 0.5), E], [15.6, 14.8, 12.6])
     fore = limb([E, lerp(E, W, 0.5), W], [12.0, 11.0, 10.0])
@@ -525,9 +543,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (ellipse(kn[0] + 1.0, kn[1] - 1.4, 1.0, 0.6, -20), ROPE.hi, 0.7)])
 
     # ============================================================== le gant proche, ramené contre la poitrine
-    fa = ang_of(E, W)
-    fa0 = ang_of(NE0, NW0)
-    HANDM = mchain(mT(W[0] - NW0[0], W[1] - NW0[1]), mR(fa - fa0 + Pz['nga'], *NW0))
+    HANDM = sk['HANDM']
     NG = lambda pts: MP(HANDM, pts)
     ncuff = sm(NG([(49.8, 62.6), (55.0, 62.0), (58.6, 74.4), (53.4, 75.2), (50.4, 70.6), (49.4, 66.6)]), sharp=(1, 2), t=0.85)
     fig.part('ncuff', ncuff, RED, grad=(*mapp(HANDM, (57, 62)), *mapp(HANDM, (50, 74)), [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]),
@@ -578,14 +594,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (HD(ribbon([(91.8, 29.2), (90.6, 31.0), (89.4, 32.4)], [0.1, 0.45, 0.1])), RED.hi, 0.5),
            (HD(ellipse(95.4, 31.2, 1.8, 0.7, 8)), RED.hi, 0.7)]
     # les arcades lourdes et froncées (elles écrasent les yeux) : le bourrelet éclairé, le creux sombre dessous
-    hd += [(HD(sm([(80.4, 36.6), (84.6, 35.6), (89.4, 36.4), (91.6, 38.0), (89.0, 37.8), (85.0, 37.4), (81.2, 38.0)], sharp=(0, 3), t=0.8)), SKIN.deep, 0.9),
-           (HD(sm([(80.0, 35.4), (84.6, 34.6), (89.6, 35.4), (92.4, 37.4), (89.4, 36.6), (84.6, 36.0), (80.6, 36.4)], sharp=(0, 3), t=0.8)), SKIN.light, 0.85),
-           (HD(sm([(94.0, 37.2), (96.6, 36.0), (99.4, 36.4), (100.2, 37.4), (97.2, 37.4), (94.6, 38.2)], sharp=(0, 3), t=0.8)), SKIN.deep, 0.85),
-           (HD(sm([(93.4, 36.2), (96.6, 35.0), (99.6, 35.4), (100.6, 36.4), (97.0, 36.2)], sharp=(0, 3), t=0.8)), SKIN.light, 0.8),
-           # la ride du froncement entre les deux yeux
-           (HD(ribbon([(91.2, 38.6), (92.2, 37.4), (93.0, 36.4)], [0.1, 0.6, 0.1])), SKIN.deep, 0.6)]
-    # les petits yeux féroces : iris orange, pupille tournée vers l'ennemi, reflet en haut à droite ; le lointain plus
-    # étroit, sur la même ligne, juste derrière l'arête du museau
+    # le petit oeil féroce : iris orange, pupille tournée vers l'ennemi, reflet en haut à droite (tête de tortue presque
+    # de profil : un seul oeil, celui du fond est caché par le museau)
     def eye(pts, c, r, pup, hi_r, narrow=1.0):
         out = []
         e = HD(sm(pts, sharp=(0, 3), t=0.8))
@@ -607,7 +617,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         out += [(HD(ellipse(pup[0] + 0.55 * narrow, pup[1] - 0.55, hi_r, hi_r * 0.8)), '#fff6d0', 1)]
         return out
     hd += eye([(81.4, 38.4), (83.4, 37.4), (86.8, 37.6), (89.0, 38.6), (87.2, 40.0), (83.6, 40.2)], (85.6, 38.9), 1.9, (86.8, 39.0), 0.42)
-    hd += eye([(94.6, 38.6), (96.0, 37.8), (98.0, 37.9), (99.2, 38.8), (97.8, 39.8), (95.6, 39.8)], (97.2, 38.9), 1.6, (98.0, 38.9), 0.34, 0.85)
+    # l'arcade lourde et froncée, peinte PAR-DESSUS l'oeil (elle l'écrase) : l'ombre dessous, le bourrelet éclairé,
+    # qui descend vers le bec (regard dur) ; la ride du froncement au bout
+    hd += [(HD(sm([(79.8, 37.0), (84.8, 36.6), (89.6, 37.4), (92.8, 39.4), (89.4, 39.0), (85.4, 38.4), (81.0, 38.8)], sharp=(0, 3), t=0.8)), SKIN.deep, 0.85),
+           (HD(sm([(79.4, 35.6), (84.6, 34.9), (89.8, 35.8), (93.4, 38.4), (90.4, 38.2), (85.8, 37.2), (80.6, 37.4)], sharp=(0, 3), t=0.8)),
+            ('lin', *hp((90, 35)), *hp((80, 38)), [(0, SKIN.hi), (0.5, SKIN.light), (1, SKIN.base)]), 1),
+           (HD(ribbon([(82.0, 35.8), (86.6, 35.6), (90.6, 36.8)], [0.1, 0.5, 0.1])), SKIN.glint, 0.6),
+           (HD(ribbon([(92.6, 40.0), (93.8, 38.8), (94.4, 37.2)], [0.1, 0.6, 0.1])), SKIN.deep, 0.5)]
     # le museau : l'arête éclairée, la narine
     hd += [(HD(ribbon([(97.4, 34.0), (100.0, 36.6), (101.4, 39.6)], [0.1, 0.8, 0.1])), SKIN.hi, 0.6),
            (HD(ellipse(100.6, 40.2, 0.6, 0.42, 30)), SKIN.deep, 0.9)]
@@ -618,7 +634,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     JAW = mR(gp_ * 3.0, 87.6, 50.0)
     HJ = mchain(HEAD, JAW)
     JD = lambda sh: MS(HJ, sh)
-    gul = HD(sm([(87.2, 50.0), (91.0, 49.8), (95.0, 49.8), (92.0, 51.0), (88.6, 51.6), (87.4, 51.2)], t=0.9))
+    gul = HD(sm([(87.4, 50.2), (90.6, 50.0), (94.0, 50.0), (91.0, 50.8), (88.4, 51.2)], t=0.9))
     fig.part('gullet', gul, Mat(GULLET[2], GULLET[1], GULLET[0], '#2a0818', '#1a0410'), cel=0, rim=0, cast=0,
              details=[(gul, ('rad', *hp((88.0, 49.6)), 5.0, 5.0, [(0, GULLET[2]), (0.6, GULLET[1]), (1, GULLET[0])]), 1)])
     # -- le bec du bas, en retrait (dans l'ombre du bec du haut) --
@@ -645,9 +661,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (HD(ellipse(62.8, 30.0, 0.9, 0.55, -30)), RED.hi, 0.7)])
 
     # ============================================================== le gant lointain, levé à hauteur du menton
-    fa_ = ang_of(FEw, FWw)
-    fa0_ = ang_of(FE0, FW0)
-    FGM = mchain(mT(FWw[0] - FW0[0], FWw[1] - FW0[1]), mR(fa_ - fa0_ + Pz['fga'], *FW0))
+    FGM = sk['FGM']
     FG = lambda pts: MP(FGM, pts)
     fp = lambda p: mapp(FGM, p)
     fcuff = rpoly(FG([(97.8, 58.6), (107.0, 58.0), (107.8, 66.2), (98.4, 66.8)]), 1.4)
@@ -674,10 +688,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('fthumb', fthumb, RED, grad=(*fp((106, 49)), *fp((101, 58)), [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]),
              cel=0.9, rim=0.6, cast=0.9, cast_on=['fglove'],
              details=[(ellipse(*fp((105.2, 50.4)), 0.9, 0.5, -40), RED.hi, 0.6)])
-
-    # la mise en scène de l'attaque : un poing peut passer devant ou derrière (ordre des morceaux)
-    if Pz.get('far_front'):
-        pass
 
     # ---- ce que les effets doivent savoir ----
     fig.ctx = dict(far_fist=fp((111.0, 52.0)), near_fist=mapp(HANDM, (68.0, 68.0)), far_wrist=FWw, near_wrist=W,

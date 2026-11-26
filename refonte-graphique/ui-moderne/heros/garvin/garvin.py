@@ -591,8 +591,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fist_parts(fig, 'nfist', W, na, -1, False, 1.0)
 
     fig.ctx = dict(U=U, UC=UC, TOR=TOR, HEAD=HEAD, P=P, near=fig.ctx_near, far=fig.ctx_far,
-                   chest=mapp(TOR, (72, 62)), head=mapp(HEAD, (80, 34)), mouth=mapp(HEAD, (86, 47)),
-                   eyeN=mapp(HEAD, (80, 34)), eyeF=mapp(HEAD, (93, 33)),
+                   chest=mapp(TOR, (72, 62)), head=mapp(HEAD, (84, 34)), mouth=mapp(HEAD, (85, 47.5)),
+                   eyeN=mapp(HEAD, (76.2, 34.9)), eyeF=mapp(HEAD, (91.3, 34.9)),
                    shN=mapp(UC, (38, 31)), shF=mapp(UC, (99, 32)))
     if fx:
         for f_ in fx:
@@ -618,57 +618,58 @@ def build_head(fig, P):
     # la pierre d'oreille, sur le côté dans l'ombre
     hd += [(ellipse(65.4, 38.6, 3.2, 4.4, 8), FACE[2], 1), (ellipse(66.0, 37.6, 2.0, 2.8, 8), FACE[1], 0.8),
            (ellipse(64.6, 40.0, 1.0, 1.8, 8), FACE[3], 0.8)]
-    # le visage : la joue proche à mi-ton, la pommette lointaine éclairée, le bas du visage plus sombre
-    hd += [(sm([(72.4, 36.6), (84.4, 37.6), (86.4, 42.4), (80.0, 44.6), (73.6, 43.0)]), FACE[1], 0.75),
-           (sm([(92.4, 36.4), (96.0, 35.6), (98.2, 41.8), (94.4, 42.8)]), FACE[0], 0.85)]
+    # le visage (3/4 vers la droite) : l'axe du visage passe par x = 84,5 (racine du nez, milieu de la bouche) ; les
+    # deux yeux sur la même ligne, même forme en miroir (coin intérieur plus bas : regard dur), l'œil du fond à peine
+    # plus étroit ; la bouche fermée (crocs serrés) centrée sous le nez
+    hd += [(sm([(71.0, 37.4), (81.4, 38.4), (82.6, 42.8), (77.0, 44.6), (71.8, 43.0)]), FACE[1], 0.75),
+           (sm([(89.4, 38.0), (95.6, 36.6), (97.8, 41.8), (91.6, 43.0)]), FACE[0], 0.85)]
     # les orbites creusées sous les arcades
-    hd += [(sm([(71.4, 30.4), (80.6, 31.2), (87.6, 33.4), (85.6, 37.4), (78.6, 38.0), (73.0, 36.2)]), ROCK.deep, 0.7),
-           (sm([(89.6, 32.8), (96.4, 29.2), (96.8, 33.6), (93.8, 35.8), (90.6, 35.6)]), ROCK.deep, 0.7)]
-    # lueur des yeux sur la pierre
-    hd += [(ellipse(79.6, 34.4, 6.0, 4.0), ('rad', 79.6, 34.4, 6.0, 4.0, [(0, LAVA[2], 0.55), (1, LAVA[3], 0)]), 1),
-           (ellipse(93.0, 33.2, 4.0, 3.0), ('rad', 93.0, 33.2, 4.0, 3.0, [(0, LAVA[2], 0.5), (1, LAVA[3], 0)]), 1)]
-    # les yeux de braise : même forme, même ligne ; le lointain plus étroit ; coin intérieur plus bas (regard dur)
-    eyeN = sm([(74.2, 32.0), (85.2, 34.2), (82.8, 36.4), (77.2, 36.0)], sharp=(0, 1))
-    eyeF = sm([(90.4, 34.0), (95.8, 31.4), (95.4, 34.0), (92.2, 35.4)], sharp=(0, 1))
-    for e, (cx, cy) in ((eyeN, (80.0, 34.6)), (eyeF, (93.2, 33.4))):
-        hd += [(e.scale(1.14, 1.34, cx - 0.4, cy - 0.2), '#4a1420', 0.9)]
+    hd += [(sm([(70.2, 31.0), (79.0, 31.4), (83.6, 33.6), (82.4, 37.6), (76.0, 38.4), (71.4, 36.6)]), ROCK.deep, 0.7),
+           (sm([(85.6, 33.6), (90.4, 31.4), (95.8, 30.8), (96.0, 35.0), (93.6, 38.0), (88.0, 37.8)]), ROCK.deep, 0.7)]
+    EN, EF = (76.2, 34.9), (91.3, 34.9)
+    hd += [(ellipse(EN[0], EN[1], 6.2, 4.0), ('rad', EN[0], EN[1], 6.2, 4.0, [(0, LAVA[2], 0.55), (1, LAVA[3], 0)]), 1),
+           (ellipse(EF[0], EF[1], 5.0, 3.8), ('rad', EF[0], EF[1], 5.0, 3.8, [(0, LAVA[2], 0.5), (1, LAVA[3], 0)]), 1)]
+    eyeN = sm([(71.2, 32.6), (81.0, 34.4), (79.4, 36.7), (73.8, 36.4)], sharp=(0, 1))
+    eyeF = sm([(87.8, 34.4), (95.0, 32.6), (93.8, 36.4), (89.4, 36.7)], sharp=(0, 1))
+    for e, (cx, cy) in ((eyeN, EN), (eyeF, EF)):
+        hd += [(e.scale(1.14, 1.34, cx, cy - 0.2), '#4a1420', 0.9)]
         if P['blink'] > 0.5:
             hd += [(e, FACE[2], 1), (e.scale(1, 0.25, cx, cy + 0.9), LAVA[4], 0.9)]
         else:
             g = _GL[0]
             hd += [(e, ('rad', cx, cy, 4.4, 2.6, [(0, LAVA[0]), (0.35, LAVA[1]), (0.75, LAVA[2] if g < 3 else LAVA[1]), (1, LAVA[3])]), 1)]
     if P['blink'] <= 0.5:
-        hd += [(ellipse(81.0, 34.6, 0.8, 0.55), '#ffffff', 1), (ellipse(93.8, 33.0, 0.55, 0.42), '#ffffff', 1)]
-    # les arcades : deux lourdes pierres en V qui descendent vers le nez, le dessus éclairé
-    hd += [(sm([(69.6, 27.6), (76.6, 26.0), (83.6, 28.4), (88.4, 31.8), (87.4, 33.4), (80.6, 31.4), (72.4, 31.0), (69.8, 30.0)], sharp=(3,)), ROCK.base, 1),
-           (sm([(70.0, 27.4), (76.6, 25.8), (83.6, 28.2), (88.2, 31.6), (82.6, 30.0), (75.6, 28.6)]), ROCK.light, 0.95),
-           (sm([(89.4, 31.4), (93.2, 28.0), (97.0, 26.8), (97.2, 29.6), (93.6, 31.0), (90.2, 33.0)], sharp=(0,)), ROCK.base, 1),
-           (sm([(89.6, 31.0), (93.2, 27.8), (97.0, 26.6), (94.0, 28.8)]), ROCK.light, 0.95)]
-    # le nez : un caillou tassé, le flanc dans l'ombre, la narine ; il ne dépasse pas du profil
-    hd += [(sm([(86.8, 34.0), (90.0, 33.4), (92.4, 36.6), (93.6, 40.0), (91.6, 41.8), (87.6, 41.6), (85.8, 39.4)]), FACE[1], 1),
-           (sm([(89.4, 34.0), (91.6, 36.4), (93.0, 39.6), (91.0, 39.0), (89.4, 36.6)]), FACE[0], 0.95),
-           (sm([(85.8, 39.4), (87.6, 41.6), (91.6, 41.8), (90.4, 42.8), (86.6, 42.6)]), FACE[3], 0.7),
-           (ellipse(89.2, 41.0, 1.0, 0.5, 8), ROCK.deep, 0.9)]
-    # la bouche : une fente de braise aux coins tombants, crocs de pierre espacés inégalement en haut et en bas
+        hd += [(ellipse(EN[0] + 1.0, EN[1] - 0.1, 0.75, 0.52), '#ffffff', 1), (ellipse(EF[0] + 0.9, EF[1] - 0.1, 0.62, 0.46), '#ffffff', 1)]
+    # les arcades : deux lourdes pierres en V qui se rejoignent au-dessus de la racine du nez, le dessus éclairé
+    hd += [(sm([(68.6, 28.4), (75.6, 27.0), (82.4, 29.6), (85.0, 32.6), (84.0, 34.0), (78.6, 31.8), (71.4, 31.3), (68.8, 30.4)], sharp=(3,)), ROCK.base, 1),
+           (sm([(69.0, 28.2), (75.6, 26.8), (82.4, 29.4), (84.8, 32.4), (80.0, 30.6), (74.6, 29.4)]), ROCK.light, 0.95),
+           (sm([(84.4, 32.6), (88.6, 29.6), (96.0, 28.2), (96.4, 30.8), (92.4, 31.8), (86.4, 34.2)], sharp=(0,)), ROCK.base, 1),
+           (sm([(84.8, 32.2), (88.6, 29.4), (96.0, 28.0), (92.0, 30.0)]), ROCK.light, 0.95)]
+    # le nez : un caillou tassé entre les deux yeux, le flanc dans l'ombre, la narine ; il ne dépasse pas du profil
+    hd += [(sm([(83.2, 35.0), (85.8, 34.6), (88.0, 37.4), (89.0, 40.6), (87.0, 42.2), (83.0, 42.0), (81.4, 39.8)]), FACE[1], 1),
+           (sm([(85.8, 35.0), (87.8, 37.6), (88.6, 40.2), (86.8, 39.6), (85.6, 37.4)]), FACE[0], 0.95),
+           (sm([(81.4, 39.8), (83.0, 42.0), (87.0, 42.2), (86.0, 43.2), (82.4, 43.0)]), FACE[3], 0.7),
+           (ellipse(85.0, 41.4, 0.95, 0.48, 8), ROCK.deep, 0.9)]
+    # la bouche fermée : une fente de braise aux coins tombants, crocs de pierre serrés, espacés inégalement
     gp = P['gape']
-    m_up = [(74.6, 48.4), (77.4, 46.2), (84.0, 45.0), (91.0, 44.8), (95.2, 45.8), (96.8, 48.2)]
-    m_lo = [(95.2, 49.0 + gp), (91.0, 48.4 + gp * 1.2), (84.0, 48.8 + gp * 1.3), (77.4, 49.2 + gp)]
+    m_up = [(74.8, 48.6), (78.0, 46.6), (84.6, 46.0), (90.8, 46.0), (94.4, 46.8), (95.6, 48.6)]
+    m_lo = [(94.2, 48.8 + gp), (90.6, 48.3 + gp * 1.2), (84.6, 48.4 + gp * 1.3), (78.2, 48.8 + gp)]
     mouth = sm(m_up + m_lo, sharp=(0, 5), t=0.8)
-    hd += [(mouth.scale(1.04, 1.25, 85.6, 47.2), '#3a0d18', 0.95),
-           (mouth, ('rad', 86.0, 47.0, 10.0, 3.0 + gp, [(0, LAVA[1]), (0.4, LAVA[2]), (0.8, LAVA[3]), (1, LAVA[4])]), 1)]
-    for (x, w_, h_) in ((78.4, 1.8, 2.0), (83.6, 2.2, 2.4), (90.6, 2.0, 2.2), (94.4, 1.4, 1.6)):
-        y0 = 45.2 + (0.6 if x < 80 else 0) + (0.4 if x > 94 else 0)
+    hd += [(mouth.scale(1.04, 1.4, 85.0, 47.4), '#3a0d18', 0.95),
+           (mouth, ('rad', 85.0, 47.4, 9.6, 2.0 + gp, [(0, LAVA[1]), (0.4, LAVA[2]), (0.8, LAVA[3]), (1, LAVA[4])]), 1)]
+    for (x, w_, h_) in ((78.6, 1.7, 1.7), (83.4, 2.1, 2.0), (89.6, 1.9, 1.9), (93.2, 1.4, 1.4)):
+        y0 = 46.0 + (0.5 if x < 80 else 0) + (0.5 if x > 93 else 0)
         hd += [(sm([(x - w_ / 2, y0 - 0.4), (x + w_ / 2, y0 - 0.5), (x + 0.2, y0 + h_)], sharp=(0, 1, 2), t=0.6), '#e8dcc4', 1),
                (sm([(x, y0 - 0.45), (x + w_ / 2, y0 - 0.5), (x + 0.2, y0 + h_)], sharp=(0, 1, 2), t=0.6), '#b8a898', 0.8)]
-    for (x, w_, h_) in ((80.8, 1.9, 1.8), (87.2, 2.2, 2.2), (92.8, 1.7, 1.6)):
-        y1 = 48.9 + gp * 1.25 - (0.3 if x > 90 else 0)
+    for (x, w_, h_) in ((81.0, 1.8, 1.5), (86.6, 2.0, 1.8), (91.8, 1.6, 1.4)):
+        y1 = 48.6 + gp * 1.25 - (0.2 if x > 90 else 0)
         hd += [(sm([(x - w_ / 2, y1 + 0.5), (x + w_ / 2, y1 + 0.4), (x + 0.1, y1 - h_)], sharp=(0, 1, 2), t=0.6), '#d8cab2', 1)]
     # la lèvre du bas chauffée, la mâchoire qui avance (le menton éclairé), une fêlure de braise sur la mâchoire
-    hd += [(ribbon([(76.0, 50.2 + gp), (84.0, 50.4 + gp * 1.2), (92.0, 50.0 + gp), (96.4, 49.2 + gp)], [0.2, 1.4, 1.2, 0.2]), HOT[1], 0.85),
-           (ribbon([(78.0, 50.0 + gp), (86.0, 50.1 + gp * 1.2), (93.0, 49.6 + gp)], [0.1, 0.6, 0.1]), HOT[2], 0.7),
+    hd += [(ribbon([(76.4, 49.8 + gp), (84.6, 50.0 + gp * 1.2), (92.0, 49.6 + gp), (95.4, 49.0 + gp)], [0.2, 1.3, 1.1, 0.2]), HOT[1], 0.85),
+           (ribbon([(78.4, 49.6 + gp), (85.6, 49.7 + gp * 1.2), (92.4, 49.3 + gp)], [0.1, 0.55, 0.1]), HOT[2], 0.7),
            (sm([(89.0, 51.4), (97.6, 49.8), (97.0, 53.0), (91.0, 55.4)]), ROCK.light, 0.6),
            (ribbon([(73.4, 53.6), (80.0, 55.8), (89.0, 55.8), (95.4, 53.0)], [0.3, 1.8, 1.6, 0.3]), ROCK.deep, 0.45)]
-    hd += lava_vein(zig((84.4, 51.0), (83.4, 56.0), 2, 0.6, 15), 0.6, 1.8)
+    hd += lava_vein([(88.6, 51.2), (87.6, 53.4), (88.4, 55.6)], 0.6, 1.8)
     hd += heat_tint(head, P['heat'] * 0.45)
     fig.part('head', head, ROCK, grad=(98, 20, 64, 52, [(0, '#b8aa96'), (0.45, '#8e8080'), (1, ROCK.shadow)]),
              cel=1.4, rim=0.7, cast=1.6, details=hd, cast_on=['chestn', 'chestf', 'fsh', 'dome', 'sf', 'belly'])

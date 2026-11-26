@@ -89,6 +89,17 @@ def sm_under(sh, dx=0.8, dy=-2.4):
     return Shape(sh.subs + sh.move(dx, dy).subs, evenodd=True)
 
 
+def tuft(p0, p1, p2, p3, w0, n=14, k=2.2):
+    """Une grappe de poils : large et ronde presque jusqu'au bout, puis vite pointue (pas un triangle), le long d'une
+    courbe de Bézier ; la racine (p0) est un bord droit, caché sous la corde."""
+    from atelier import bez, resample, sides
+    c = resample(bez(p0, p1, p2, p3, 40), n)
+    ws = [max(0.0, w0 * (1 - (i / n) ** k) ** 0.75 * (1 + 0.12 * math.sin(math.pi * i / n))) for i in range(n + 1)]
+    left, right = sides(c, ws)
+    pts = left[:-1] + [c[-1]] + right[:-1][::-1]
+    return sm(pts, sharp=(len(left) - 1,), t=0.9)
+
+
 def diag(mat, x0, y0, x1, y1):
     """Le dégradé « diagonal » d'une matière dans une boîte donnée (comme atelier, mais une boîte choisie : deux morceaux
     d'un même membre gardent ainsi exactement la même couleur à leur raccord)."""
@@ -299,8 +310,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             if i:
                 fd.append((ribbon(Fp([(x - w_ * 0.62, -h_ - 0.8), (x - w_ * 0.7, -h_ * 0.5), (x - w_ * 0.66, -0.4)]), [0.1, 0.55, 0.1]), SKIN.deep, 0.55))
             fd += [(ellipse(*Fp([(x + 0.1, -h_ * 0.62)])[0], w_ * 0.42, h_ * 0.42), SKIN.light, 0.4),
-                   (ellipse(*Fp([(x + w_ * 0.32, -h_ * 0.5)])[0], w_ * 0.3, h_ * 0.26), '#f2c0a6', 0.9),
-                   (ellipse(*Fp([(x + w_ * 0.38, -h_ * 0.6)])[0], w_ * 0.14, h_ * 0.1), '#fff4ea', 0.8)]
+                   (ellipse(*Fp([(x + w_ * 0.34, -h_ * 0.52)])[0], w_ * 0.24, h_ * 0.2, -20 * toes_dir), '#eebc9c', 0.75),
+                   (ellipse(*Fp([(x + w_ * 0.38, -h_ * 0.6)])[0], w_ * 0.1, h_ * 0.07, -20 * toes_dir), '#fff4ea', 0.5)]
         fig.part(name + 'p', foot, SKIN, grad=diag(SKIN, B[0] - 15, B[1] - 9, B[0] + 16, B[1]), cel=1.2, rim=0.7, cast=0.9,
                  cast_on=cast_on, details=fd)
         return K, B
@@ -312,67 +323,63 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ======================================================================== le pagne de fourrure : de grosses grappes
     # de poils aux pointes fendues ; le pan de devant plus long ; inégales (jamais une rangée régulière)
-    CL = [  # (x du milieu, demi-largeur, y de la pointe, penchant)
-        (40.6, 4.6, 98.0, -1.0), (49.4, 4.6, 99.8, -0.4),
-        (58.2, 4.4, 104.6, 0.0), (66.8, 4.8, 109.2, 0.6), (75.6, 4.4, 107.0, 0.8), (83.6, 4.0, 102.4, 0.8),
-        (91.8, 4.2, 98.8, 1.0), (99.6, 3.6, 96.4, 1.2)]
-    top_y = lambda x: 88.8 + 3.0 * math.sin(math.pi * min(1.0, max(0.0, (x - 37) / 66))) - 1.4
-    pts = [(36.6, top_y(37) - 1.0)]
-    sharp = []
-    for i, (x, hw, ty, ln) in enumerate(CL):
-        ystart = top_y(x) + 5.0 + (2.0 if 55 < x < 86 else 0.0)
-        if i == 0:
-            pts.append((x - hw - 0.4, ystart - 1.0))
-        pts.append((x - hw * 0.55 + ln * 0.5, (ystart + ty) / 2 + 1.0))
-        pts.append((x - hw * 0.25 + ln, ty))                         # la pointe gauche
-        sharp.append(len(pts) - 1)
-        pts.append((x + 0.15 * hw + ln * 0.9, ty - 1.6 - 0.3 * (i % 2)))   # la fente
-        sharp.append(len(pts) - 1)
-        pts.append((x + hw * 0.5 + ln * 0.8, ty - 0.5 - 0.6 * ((i + 1) % 2)))   # la pointe droite
-        sharp.append(len(pts) - 1)
-        if i < len(CL) - 1:
-            nx_ = CL[i + 1][0] - CL[i + 1][1]
-            pts.append(((x + hw + nx_) / 2 + 0.4, min(ystart, top_y(nx_) + 5.0) - 2.4))   # entre deux grappes
-            sharp.append(len(pts) - 1)
-    pts.append((103.4, top_y(103) + 3.0))
-    pts.append((103.2, top_y(103) - 1.0))
-    skirt = sm(pts, sharp=tuple(sharp), t=0.85)
-    sd = []
-    for i, (x, hw, ty, ln) in enumerate(CL):
-        y0_ = top_y(x) + 2.0
-        # la face d'ombre à gauche de chaque grappe, une mèche claire à droite, un creux au milieu
-        sd += [(lock((x - hw * 0.4, y0_), (x - hw * 0.6, (y0_ + ty) / 2), (x - hw * 0.4 + ln, ty - 3), (x - hw * 0.25 + ln, ty - 0.4),
-                     hw * 0.9, n=8, bulge=0.1), FUR.shadow, 0.55),
-               (lock((x + hw * 0.3, y0_ + 1), (x + hw * 0.5, (y0_ + ty) / 2), (x + hw * 0.4 + ln, ty - 4), (x + hw * 0.45 + ln * 0.8, ty - 1.8),
-                     hw * 0.55, n=8, bulge=0.1), FUR.hi if 2 < i < 9 else FUR.light, 0.4),
-               (ribbon([(x + 0.2, y0_ + 2), (x + 0.1 + ln * 0.5, (y0_ + ty) / 2 + 1), (x + 0.15 * hw + ln * 0.9, ty - 2.2)], [0.1, 0.8, 0.1]), FUR.deep, 0.5)]
-    sd += [(skirt, ('lin', 0, 86, 0, 92, [(0, FUR.deep, 0.6), (1, FUR.deep, 0)]), 1)]   # l'ombre sous la corde
-    fig.part('skirt', skirt, FUR, grad=(100, 88, 50, 108, [(0, FUR.light), (0.5, FUR.base), (1, FUR.shadow)]),
-             cel=1.2, rim=0.6, cast=1.1, cast_on=['nleg', 'fleg', 'backfur'], details=sd)
+    # chaque grappe : une touffe large sous la corde, qui tombe en s'effilant (la pointe un peu tournée vers l'extérieur),
+    # avec une petite pointe fendue à côté ; du fond vers le devant (hanche lointaine, hanche proche, puis le devant)
+    TUFTS = [  # (racine x, racine y, pointe x, pointe y, largeur, sens de la fente)
+        (99.4, 89.6, 101.2, 96.8, 7.6, 1), (93.0, 90.6, 94.6, 99.4, 8.6, 1),
+        (40.4, 89.4, 38.8, 97.8, 8.6, -1), (48.0, 90.2, 47.4, 100.0, 8.8, 1),
+        (86.2, 91.6, 87.6, 102.6, 8.8, 1), (56.4, 91.6, 55.8, 103.6, 8.8, -1), (79.0, 92.2, 80.4, 105.8, 9.0, 1),
+        (64.0, 92.4, 64.0, 108.0, 9.4, -1), (71.8, 92.4, 72.8, 109.2, 9.4, 1)]
+    tnames = []
+    ph = P['pg']
+    for i, (x0_, y0_, x3, y3, w0, sd_) in enumerate(TUFTS):
+        sw = 0.5 * ph * (1 + 0.15 * (i % 3))                       # le balancement (les pointes traînent)
+        p0 = (x0_, y0_ - 3.0)
+        p3 = (x3 - sw, y3)
+        p1 = (x0_ + 0.2 * (x3 - x0_), y0_ + (y3 - y0_) * 0.3)
+        p2 = (x3 - 0.3 * (x3 - x0_) - 0.6 * sw, y3 - (y3 - y0_) * 0.32)
+        sh = tuft(p0, p1, p2, p3, w0)
+        # la petite pointe fendue, à côté de la grande (derrière elle)
+        q0 = (x0_ + sd_ * w0 * 0.12, y0_ + (y3 - y0_) * 0.35)
+        q3 = (x3 + sd_ * w0 * 0.3 - sw, y3 - 1.6 - 0.3 * (i % 2))
+        sp = tuft(q0, (q0[0] + sd_ * 0.6, (q0[1] + q3[1]) / 2), (q3[0] - sd_ * 0.4, q3[1] - 2.0), q3, w0 * 0.46, n=10)
+        x0b, y0b, x1b, y1b = sh.bbox()
+        grd = (x1b + 2, y0b, x0b + (x1b - x0b) * 0.3, y1b, [(0, FUR.light), (0.5, FUR.base), (1, FUR.shadow)])
+        below = ['nleg', 'fleg', 'backfur'] + tnames
+        fig.part('tus%d' % i, sp, FUR, grad=grd, cel=0.5, rim=0.4, cast=0.6, cast_on=below)
+        fig.part('tuf%d' % i, sh, FUR, grad=grd, cel=0, rim=0.45, cast=1.1, cast_on=below + ['tus%d' % i],
+                 details=[(sm_under(sh, 0.9, -2.2), ('lin', 0, y0b, 0, y1b, [(0, FUR.base), (1, FUR.shadow)]), 0.75),
+                          (tuft(lerp(p0, p1, 0.5), lerp(p1, p2, 0.3), lerp(p2, p3, 0.2), lerp(p2, p3, 0.7), w0 * 0.3, n=10)
+                           .move(0.4 + 0.12 * w0, -0.05 * w0), FUR.hi, 0.4),
+                          (ribbon([lerp(p0, p1, 0.9), lerp(p1, p2, 0.6), lerp(p2, p3, 0.6)], [0.1, 0.7, 0.1]), FUR.deep, 0.45)])
+        tnames += ['tus%d' % i, 'tuf%d' % i]
+    SKIRT = tnames
 
     # ======================================================================== la ceinture de corde tressée (elle suit
     # la taille en trois quarts : plus basse devant, elle remonte sur les hanches et passe derrière)
-    RC = [(36.2, 87.8), (44.0, 89.0), (52.0, 90.3), (60.0, 91.4), (68.0, 92.0), (76.0, 91.8), (84.0, 91.0), (92.0, 89.8),
-          (98.0, 88.8), (103.6, 87.6)]
-    rope = limb(RC, [4.6] * len(RC))
-    rd = []
-    # la torsade : des brins en fuseau, chacun éclairé en haut à droite (pas des rayures : des volumes)
+    RC = [(38.6, 88.4), (44.0, 89.2), (52.0, 90.4), (60.0, 91.4), (68.0, 92.0), (76.0, 91.8), (84.0, 91.0), (92.0, 89.8),
+          (98.0, 88.8), (102.2, 88.0)]
+    rope = limb(RC, [5.0] * len(RC))
+    rd = [(rope, ROPE.shadow, 0.6)]
+    # la torsade : des brins dodus en fuseau, penchés, qui se recouvrent ; chacun éclairé en haut à droite et ombré en
+    # bas à gauche (des volumes, pas des rayures)
     from atelier import resample
-    cpts = resample(RC, 22)
-    for i in range(1, len(cpts) - 1):
+    cpts = resample(RC, 21)
+    for i in range(len(cpts) - 1):
         p, q = cpts[i], cpts[i + 1]
         mx, my = (p[0] + q[0]) / 2, (p[1] + q[1]) / 2
         a = math.degrees(math.atan2(q[1] - p[1], q[0] - p[0]))
         L = math.dist(p, q)
-        bead = xf(ellipse(0, 0, L * 0.62, 1.9), mx, my, a + 32)
-        rd += [(bead, ('lin', mx + 1.5, my - 2, mx - 1.5, my + 2, [(0, ROPE.light), (0.5, ROPE.base), (1, ROPE.shadow)]), 1),
-               (xf(ellipse(0.3, -0.7, L * 0.34, 0.5), mx, my, a + 32), ROPE.hi, 0.75)]
-    fig.part('rope', rope, ROPE, cel=0.9, rim=0.5, cast=1.0, cast_on=['skirt', 'nleg', 'fleg'], details=rd)
+        bead = xf(sm([(-L * 0.95, 0.0), (-L * 0.3, -1.55), (L * 0.5, -1.35), (L * 0.95, 0.0), (L * 0.3, 1.55), (-L * 0.5, 1.35)], t=0.9),
+                  mx, my, a + 38)
+        rd += [(bead, ('lin', mx + 1.2, my - 2.0, mx - 1.2, my + 2.0, [(0, ROPE.light), (0.55, ROPE.base), (1, ROPE.shadow)]), 1),
+               (xf(ellipse(L * 0.1, -0.6, L * 0.42, 0.45), mx, my, a + 38), ROPE.hi, 0.7)]
+    fig.part('rope', rope, ROPE, cel=0.9, rim=0.5, cast=1.0, cast_on=SKIRT + ['nleg', 'fleg'], details=rd)
     # l'os qui pend à la hanche proche, attaché à la corde
     fig.part('bonecord', limb([(45.2, 90.0), (45.0, 92.4)], [1.2, 1.0]), ROPE, cel=0.3, rim=0.2, cast=0.5)
     bone = sm([(43.2, 92.0), (44.6, 91.6), (45.8, 92.2), (46.0, 93.4), (45.4, 94.4), (45.6, 97.6), (46.6, 98.6), (46.2, 100.0),
                (44.8, 100.2), (44.0, 99.4), (42.8, 99.8), (42.0, 98.6), (43.0, 97.4), (43.6, 94.4), (42.6, 93.2)])
-    fig.part('bone', bone, BONE, cel=0.6, rim=0.5, cast=0.8, cast_on=['skirt', 'nleg'],
+    fig.part('bone', bone, BONE, cel=0.6, rim=0.5, cast=0.8, cast_on=SKIRT + ['nleg'],
              details=[(ribbon([(45.0, 93.0), (44.8, 96.0), (45.2, 99.2)], [0.1, 0.6, 0.1]), BONE.hi, 0.8)])
 
     # ======================================================================== le buste (avec les trapèzes et le ventre)
@@ -416,7 +423,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     for nm, pts_, w_ in (('rend1', [(88.6, 92.6), (88.2, 96.6), (89.0, 100.4)], [1.8, 1.7, 1.4]),
                          ('rend2', [(90.2, 92.8), (91.6, 96.0), (91.8, 99.0)], [1.7, 1.6, 1.3])):
         sh = limb(pts_, w_)
-        fig.part(nm, sh, ROPE, cel=0.5, rim=0.4, cast=0.8, cast_on=['skirt', 'rope', 'fleg'],
+        fig.part(nm, sh, ROPE, cel=0.5, rim=0.4, cast=0.8, cast_on=SKIRT + ['rope', 'fleg'],
                  details=[(ribbon([(pts_[0][0] + 0.4, pts_[0][1] + 1), (pts_[1][0] + 0.4, pts_[1][1]), (pts_[2][0] + 0.3, pts_[2][1] - 0.6)],
                                   [0.1, 0.5, 0.1]), ROPE.hi, 0.6)])
     fig.part('knot', ellipse(89.2, 91.4, 2.6, 2.2, -15), ROPE, cel=0.6, rim=0.5, cast=0.9,
@@ -425,7 +432,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('skcord', limb([(86.4, 92.4), (84.8, 95.2)], [1.0, 0.9]), ROPE, cel=0.3, rim=0.2, cast=0.5)
     skull = sm([(81.2, 96.4), (82.8, 95.0), (85.2, 94.8), (87.0, 96.0), (87.4, 98.0), (86.6, 99.4), (86.4, 101.4),
                 (85.0, 102.0), (83.4, 101.8), (82.4, 100.8), (81.4, 99.4), (80.8, 97.8)])
-    fig.part('skull', skull, BONE, cel=0.7, rim=0.5, cast=0.9, cast_on=['skirt', 'rope', 'fleg'],
+    fig.part('skull', skull, BONE, cel=0.7, rim=0.5, cast=0.9, cast_on=SKIRT + ['rope', 'fleg'],
              details=[(ellipse(82.9, 97.9, 1.0, 1.15), BONE.deep, 0.9), (ellipse(85.6, 97.8, 0.9, 1.05), BONE.deep, 0.9),
                       (ellipse(84.4, 100.0, 0.45, 0.6), BONE.deep, 0.75),
                       (ribbon([(82.8, 101.4), (84.4, 101.7), (86.0, 101.2)], [0.1, 0.5, 0.1]), BONE.shadow, 0.8),
@@ -565,7 +572,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         Snu = mapp(inv(U), Sn)
         Wn = Cp(WRN[0], WRN[1])
         En, Wn2 = ik(Snu, Wn, LN1, LN2, P['bn'])
-        keys = [(0, 9.0, 9.0), (0.16, 8.8, 8.6), (0.38, 8.0, 7.4), (0.56, 6.4, 6.2), (0.66, 6.6, 6.6), (0.82, 6.0, 6.0), (1, 5.4, 5.4)]
+        keys = [(0, 9.0, 9.0), (0.16, 8.8, 8.6), (0.38, 8.0, 7.4), (0.56, 6.8, 6.6), (0.66, 7.2, 7.2), (0.82, 6.6, 6.6), (1, 6.0, 6.0)]
         arm = round_limb([Snu, En, Wn2], keys, n=34)
         a1, a2 = Seg(Snu, En), Seg(En, Wn2)
         aa1 = math.degrees(math.atan2(a1.u[1], a1.u[0]))
@@ -588,10 +595,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         ]
         fig.part('narm', arm, SKIN, grad=diag(SKIN, min(Snu[0], En[0], Wn2[0]) - 8, min(Snu[1], En[1], Wn2[1]) - 8,
                                                  max(Snu[0], En[0], Wn2[0]) + 8, max(Snu[1], En[1], Wn2[1]) + 8),
-                 cel=1.9, rim=0.7, cast=1.4, cast_on=['torso', 'club', 'moss', 'skirt', 'rope', 'nleg', 'head', 'ear'] + ['spk%d' % i for i in range(4)],
+                 cel=1.9, rim=0.7, cast=1.4, cast_on=['torso', 'club', 'moss', 'rope', 'nleg', 'head', 'ear'] + SKIRT + ['spk%d' % i for i in range(4)],
                  details=ad)
         bc = a2.at(0.6)
-        fig.part('nbrac', bracer(bc, aa2, 10.4, 12.6), LEATHER, cel=0.9, rim=0.6, cast=1.0, details=bracer_det(bc, aa2, 10.4, 12.6, s2))
+        fig.part('nbrac', bracer(bc, aa2, 10.4, 13.8), LEATHER, cel=0.9, rim=0.6, cast=1.0, details=bracer_det(bc, aa2, 10.4, 13.8, s2))
         # le poing serré sur le manche : le dos de la main du côté du poignet, quatre doigts repliés qui passent devant
         # le manche (phalanges vers l'ennemi), le pouce par-dessus
         out = C_(sm([(-6.4, -6.4), (-2.0, -7.4), (3.4, -7.0), (6.6, -4.6), (7.2, 0.4), (6.6, 5.6), (3.4, 7.0),
@@ -605,7 +612,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                    (C_(ribbon([(u1, -1.0), (u1 - 0.05, 2.4), (u1 + 0.1, ve - 0.4)], [0.1, 0.55, 0.1])), SKIN.deep, 0.55 if i < 3 else 0)]
         fd += [(C_(ribbon([(-6.0, -1.8), (0.0, -2.2), (6.0, -1.6)], [0.1, 0.8, 0.1])), SKIN.deep, 0.35)]
         fig.part('nfist', out, SKIN, cel=1.3, rim=0.7, cast=1.1,
-                 cast_on=['club', 'narm', 'nbrac', 'torso', 'spk0', 'spk1', 'moss', 'head', 'ear', 'skirt', 'rope'], details=fd)
+                 cast_on=['club', 'narm', 'nbrac', 'torso', 'spk0', 'spk1', 'moss', 'head', 'ear', 'rope'] + SKIRT, details=fd)
         thumb = C_(limb([(4.4, -5.8), (6.6, -2.4), (7.2, 1.6)], [3.6, 3.4, 3.0]))
         fig.part('nthumb', thumb, SKIN, cel=0.8, rim=0.6, cast=0.8, cast_on=['nfist', 'club'],
                  details=[(C_(ellipse(7.0, 1.2, 1.1, 0.8)), '#f4c8b0', 0.9), (C_(ellipse(7.2, 0.9, 0.5, 0.35)), '#ffffff', 0.6)])
@@ -625,7 +632,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- chaque groupe de morceaux prend sa pose ----
     fig.pose(['head', 'ear'], HEAD)
     fig.pose(['torso'], TOR)
-    fig.pose(['skirt', 'backfur'], CLO)
+    fig.pose(SKIRT + ['backfur'], CLO)
     fig.pose(['rope', 'knot', 'rend1', 'rend2', 'skcord', 'skull', 'skhorn', 'bonecord', 'bone'], PEL)
     club = ['club', 'moss'] + ['spk%d' % i for i in range(4)]
     fig.pose(club + ['narm', 'nbrac', 'nfist', 'nthumb', 'farm', 'ffore', 'fbrac', 'ffist', 'fthumb'], U)
