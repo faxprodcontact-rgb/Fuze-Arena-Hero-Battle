@@ -1,4 +1,4 @@
 fait
-Corrigé d'après l'avis du propriétaire : la corne du fond a maintenant la même forme et la même longueur que celle de devant (même courbe recourbée vers l'arrière, pointe qui redescend, juste un peu raccourcie par la perspective), bien plantée sur le haut du crâne et dessinée derrière la corne proche.
-Visage refait avec visage.py (verifier() sans défaut, voir visage.png) : le nez crochu n'est plus de profil collé à la joue, il est sur la ligne du milieu, entre les deux yeux ; l'œil du fond un peu moins écrasé ; bouche fermée centrée sous le nez, moustache et croc recentrés.
-Le reste n'a pas changé (costume, bâton, lanterne, animations : repos, « Feu follet », « La lanterne aux âmes »).
+Tour 2 de l'avis (cercle sans texte autour de la bouche) : la bouche et la moustache ne collaient pas (moustache décalée vers la droite, grand trou sombre entre moustache et barbe, croc posé sur la barbe sous la bouche).
+Corrigé : la moustache part juste sous le nez, centrée entre les narines, avec deux ailes qui tombent de chaque côté (celle de devant un peu plus large, 3/4) ; bouche fermée et fine, centrée sous le nez, la barbe commence juste sous la lèvre ; le croc sort maintenant de la bouche (base plantée dans la fente) et monte devant la moustache. Visage vérifié avec visage.py (aucun défaut, visage.png).
+Tour 1 gardé : les deux cornes de même forme, le nez entre les yeux. Le reste n'a pas changé (costume, bâton, lanterne, animations : repos, « Feu follet », « La lanterne aux âmes »).
