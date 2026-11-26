@@ -69,6 +69,8 @@ export interface PlayerState {
   named: boolean;
   /** Nombre de changements de nom payés. */
   nameChanges: number;
+  /** Le portrait choisi (un héros découvert) ; absent : le visage du premier héros de la section. */
+  avatar?: string;
   settings: { sound: boolean; music: boolean; notifications: boolean };
   createdAt: number;
   /** Décalage de l'horloge du jeu (simulations : le joueur automatique fait passer le temps). */

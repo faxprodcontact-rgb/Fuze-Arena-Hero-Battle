@@ -56,6 +56,7 @@ export function retireHeroes(s: PlayerState): PlayerState {
     delete s.fragments[defId];
   }
   if (s.fragmentTarget && !isHero(s.fragmentTarget)) delete s.fragmentTarget;
+  if (s.avatar && !isHero(s.avatar)) delete s.avatar;
 
   const goneUids = new Set(gone.map((h) => h.uid));
   s.heroes = s.heroes.filter((h) => !goneUids.has(h.uid));

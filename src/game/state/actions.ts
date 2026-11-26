@@ -1228,6 +1228,13 @@ export function playerId(s: PlayerState): string {
   return (s.createdAt % 2_176_782_336).toString(36).toUpperCase().padStart(6, '0');
 }
 
+/** Choisit le portrait du joueur parmi les héros découverts. Renvoie faux si le héros n'est pas connu. */
+export function setAvatar(defId: string): boolean {
+  if (!getState().discovered.includes(defId)) return false;
+  update((s) => void (s.avatar = defId));
+  return true;
+}
+
 export function setSetting(key: keyof PlayerState['settings'], on: boolean): void {
   update((s) => void (s.settings[key] = on));
 }

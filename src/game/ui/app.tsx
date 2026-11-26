@@ -10,7 +10,7 @@ import { ensureDay, finishBattle, type BattleRequest } from '../state/actions';
 import { getState, useGame } from '../state/store';
 import { dots } from './dots';
 import { Icon, RedDot, Sign } from './kit';
-import { teamPower } from '../state/selectors';
+import { avatarOf, teamPower } from '../state/selectors';
 import { close, go, open, startBattle, useNav, type Modal, type Tab } from './nav';
 import { AdventureScreen } from './screens/adventure';
 import { CampaignScreen, FastLootModal, WorldMapModal } from './screens/campaign';
@@ -27,6 +27,7 @@ import { TutorialHand } from './tutorial';
 import { MailPage } from './screens/mail';
 import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
+import { AvatarModal } from './screens/avatar';
 import { AdModal, ConfirmModal, GainModal, LegalModal, NameScreen, QuestsModal, RenameModal, SettingsModal, ShopModal } from './screens/meta';
 import { ChatModal, GuildScreen, RankingModal } from './screens/social';
 import { FragmentsModal, OddsModal, SummonResult, SummonScreen } from './screens/summon';
@@ -50,11 +51,11 @@ function WalletPill({ k, n, onPlus }: { k: string; n: number; onPlus?: () => voi
 
 function TopBar() {
   const s = useGame();
-  const leader = s.heroes.find((h) => h.uid === s.formation[0]?.[0]) ?? s.heroes[0];
+  const face = avatarOf(s);
   return (
     <header class="topbar">
       <button class="avatar" aria-label={t('side.settings')} onClick={() => open({ type: 'settings' })}>
-        <Medallion size={54}>{leader && <img src={heroImage(leader.defId)} alt="" />}</Medallion>
+        <Medallion size={54}>{face && <img src={heroImage(face)} alt="" />}</Medallion>
         <LevelShield level={s.account.level} />
         <span class="avatar-xp" style={{ width: `${(s.account.xp / accountXpForLevel(s.account.level)) * 100}%` }} />
       </button>
@@ -99,6 +100,7 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'ranking': return <RankingModal />;
     case 'chat': return <ChatModal />;
     case 'settings': return <SettingsModal />;
+    case 'avatar': return <AvatarModal />;
     case 'odds': return <OddsModal />;
     case 'fragments': return <FragmentsModal />;
     case 'confirm': return <ConfirmModal text={modal.text} onYes={modal.onYes} />;

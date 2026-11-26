@@ -123,3 +123,9 @@ export function sortedHeroes(s: PlayerState): Hero[] {
 export function heroName(hero: Hero): string {
   return heroDef(hero.defId).name;
 }
+
+/** Le portrait du joueur : le héros choisi dans les réglages, sinon le visage du premier héros de la section. */
+export function avatarOf(s: PlayerState): string | undefined {
+  if (s.avatar && s.discovered.includes(s.avatar)) return s.avatar;
+  return (s.heroes.find((h) => h.uid === s.formation[0]?.[0]) ?? s.heroes[0])?.defId;
+}

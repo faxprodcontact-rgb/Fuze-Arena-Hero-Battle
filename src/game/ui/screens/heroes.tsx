@@ -1,4 +1,5 @@
-// Héros : la salle des héros (la section debout sur son estrade, la fusion et la Renaissance en médaillons),
+// Héros : la salle des héros (la section debout sur son estrade, le bouton Formation au-dessus, la fusion et la
+// Renaissance en médaillons),
 // puis la collection : filtre par élément, tri dépliable, les cases.
 import { useState } from 'preact/hooks';
 import { LEADER_SLOT } from '../../../core/battle/types';
@@ -13,7 +14,6 @@ import type { PlayerState } from '../../state/types';
 import { Art, HeroCard, Icon, RedDot, Sign } from '../kit';
 import { ELEMENT_TONE, btClass } from '../buttons';
 import { HeroFigure } from '../hero-figure';
-import { TitleBanner } from '../title-banner';
 import { open, prepare } from '../nav';
 import { BagView } from './bag';
 import { Tabs } from '../kit';
@@ -48,7 +48,7 @@ const SPOTS = [
   { x: 50, y: 80.6, w: 19.5, back: true }, { x: 23.5, y: 81.2, w: 19.5, back: true }, { x: 76.5, y: 81.2, w: 19.5, back: true },
 ];
 
-/** La salle des héros : le titre, la section debout sur l'estrade (la toucher ouvre son réglage), sa puissance, les médaillons. */
+/** La salle des héros : le bouton Formation, la section debout sur l'estrade (la toucher ouvre son réglage), sa puissance, les médaillons. */
 function Hall() {
   const s = useGame();
   const team = teamHeroes(s);
@@ -60,7 +60,11 @@ function Hall() {
   const order = placed.map((x, i) => ({ ...x, spot: SPOTS[i]! })).reverse();
   return (
     <div class="hall">
-      <div class="hall-title"><TitleBanner title={t('nav.heroes')} ribbon={['#5a8cf0', '#2a4fb5', '#172c6e']} /></div>
+      <div class="hall-cta">
+        <button class={`hall-formation ${btClass('basalte', 'l')}`} onClick={() => prepare(null, 'main')}>
+          <FormationSign />{t('heroes.formation')}
+        </button>
+      </div>
       <button class="hall-team" aria-label={t('heroes.team')} onClick={() => prepare(null, 'main')}>
         {order.map(({ hero, spot }, i) => (
           <span class={`hall-hero${spot.back ? ' hall-back' : ''}`} style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, animationDelay: `${-i * 0.7}s` }}>
@@ -83,6 +87,27 @@ function Hall() {
         </button>
       </div>
     </div>
+  );
+}
+
+/**
+ * Le signe de la formation (inventé) : les cinq dalles des postes vues d'un peu au-dessus, comme sur le terrain
+ * (deux à l'arrière, le chef au milieu, deux à l'avant) et un chevron vers les ennemis ; il luit de l'or du basalte.
+ */
+function FormationSign() {
+  const tile = (x: number, y: number, lead = false) => (
+    <g>
+      <rect x={x - 5.5} y={y - 1.6} width="11" height="6.4" rx="3.2" fill="#6a3000" opacity="0.6" />
+      <rect x={x - 5.5} y={y - 3.4} width="11" height="6.4" rx="3.2" fill={lead ? '#fff1b8' : '#ffc95a'} />
+      <rect x={x - 3.6} y={y - 2.6} width="7.2" height="1.8" rx="0.9" fill="#fffbe6" opacity={lead ? 0.95 : 0.6} />
+    </g>
+  );
+  return (
+    <svg class="fm-sign" viewBox="0 0 42 32" aria-hidden="true">
+      {tile(7, 12)}{tile(7, 27)}{tile(35, 12)}{tile(35, 27)}{tile(21, 20, true)}
+      {/* la couronne du chef, au-dessus de sa dalle */}
+      <path d="M16 15 L15.4 8.6 L18.6 11.2 L21 6.6 L23.4 11.2 L26.6 8.6 L26 15 Z" fill="#ffd23a" stroke="#6a3000" stroke-opacity="0.55" stroke-width="0.9" stroke-linejoin="round" />
+    </svg>
   );
 }
 

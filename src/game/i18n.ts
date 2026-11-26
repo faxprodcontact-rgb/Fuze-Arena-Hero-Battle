@@ -23,6 +23,8 @@ const FR = {
   'camp.loot': 'Butin', 'camp.perHour': '/ h', 'camp.fast': 'Butin rapide', 'camp.adBoost': '+2 h', 'camp.next': 'Niveau suivant',
   'camp.done': 'Campagne terminée', 'camp.boss': 'Boss',
   'heroes.team': 'Section', 'heroes.autoTeam': 'Meilleure section', 'heroes.fuseAll': 'Tout fusionner', 'heroes.fused': '{n} fusions',
+  // vague 3 « Héros et formation » : le bouton Formation, le choix du portrait du joueur
+  'heroes.formation': 'Formation', 'settings.avatar': 'Portrait',
   'heroes.full': 'Section complète', 'sort.power': 'Force', 'sort.stars': 'Étoiles', 'sort.rarity': 'Rareté', 'heroes.inTeam': 'Retirer de la section', 'heroes.addTeam': 'Ajouter à la section',
   'detail.levelUp': 'Niveau +1', 'detail.levelUp10': '+10', 'detail.cap': 'Niveau max : plus d’étoiles', 'detail.stars': 'Étoiles',
   'detail.copies': 'Copies : {have} / {need}',
@@ -157,6 +159,8 @@ const EN: Record<Key, string> = {
   'camp.loot': 'Loot', 'camp.perHour': '/ h', 'camp.fast': 'Fast loot', 'camp.adBoost': '+2 h', 'camp.next': 'Next stage',
   'camp.done': 'Campaign complete', 'camp.boss': 'Boss',
   'heroes.team': 'Squad', 'heroes.autoTeam': 'Best squad', 'heroes.fuseAll': 'Fuse all', 'heroes.fused': '{n} fusions',
+  // vague 3 « Héros et formation » : le bouton Formation, le choix du portrait du joueur
+  'heroes.formation': 'Formation', 'settings.avatar': 'Portrait',
   'heroes.full': 'Squad full', 'sort.power': 'Power', 'sort.stars': 'Stars', 'sort.rarity': 'Rarity', 'heroes.inTeam': 'Remove from squad', 'heroes.addTeam': 'Add to squad',
   'detail.levelUp': 'Level +1', 'detail.levelUp10': '+10', 'detail.cap': 'Max level: more stars needed', 'detail.stars': 'Stars',
   'detail.copies': 'Copies: {have} / {need}',

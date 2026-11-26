@@ -20,6 +20,7 @@ import { Art, Bar, Btn, Cur, HeroCard, Icon, ItemIcon, Modal, Sign, Tabs } from 
 import { close, open, toast } from '../nav';
 import { Halo } from '../anim';
 import { ShopTile } from './adventure';
+import { AvatarRow } from './avatar';
 
 function RewardLine({ reward }: { reward: Reward }) {
   return <span class="row gap-s wrap">{Object.entries(reward).map(([k, v]) => <Cur k={k} n={v ?? 0} />)}</span>;
@@ -196,6 +197,7 @@ export function SettingsModal() {
     <Modal title={t('side.settings')}>
       <section class="settings-group">
         <h3>{t('settings.account')}</h3>
+        <AvatarRow />
         <div class="setting-row static">
           <span>{t('settings.name')}</span>
           <span class="row gap-s center-y">

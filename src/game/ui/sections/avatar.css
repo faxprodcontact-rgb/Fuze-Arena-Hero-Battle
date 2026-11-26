@@ -1,0 +1,24 @@
+/* Le portrait du joueur (vague 3, 26/11/2026) : la ligne des réglages et la grille des visages (screens/avatar.tsx).
+   Chaque visage : une tuile arrondie, fond de la couleur de l'élément du héros (assombrie), lumière en haut à droite ;
+   le choisi : cerclé d'or, une coche dans un rond vert. */
+
+/* la ligne « Portrait » des réglages : le visage choisi en petite tuile */
+.setting-row.avatar-row { min-height: 58px; }
+.avatar-face { width: 42px; height: 42px; flex: none; border-radius: 12px; overflow: hidden;
+  background: linear-gradient(200deg, #4a3a9e, #251b5c); box-shadow: 0 0 0 2px var(--c-reward, #ffc22e), 0 3px 6px #12083a40; }
+.avatar-face img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; image-rendering: pixelated; }
+
+/* la grille : 5 visages par ligne (4 sur un petit téléphone), la fenêtre défile seule si la liste est longue */
+.avatar-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; padding: 4px 2px 6px; }
+@media (max-width: 370px) { .avatar-grid { grid-template-columns: repeat(4, 1fr); } }
+.avatar-pick { position: relative; aspect-ratio: 1; padding: 0; border: 0; border-radius: 16px; overflow: visible; cursor: pointer;
+  background:
+    radial-gradient(90% 80% at 85% 10%, #ffffff40 0%, #fff0 60%),
+    linear-gradient(200deg, color-mix(in srgb, var(--el, #7a6fe0) 70%, #2a1f63) 0%, color-mix(in srgb, var(--el, #7a6fe0) 30%, #1a1246) 100%);
+  box-shadow: inset 0 0 0 2px #ffffff38, 0 3px 8px #12083a33; transition: transform 0.12s; }
+.avatar-pick img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 16px; object-fit: cover; object-position: 50% 12%;
+  image-rendering: pixelated; filter: drop-shadow(-1px 2px 1px #0a052a66); }
+.avatar-pick:active { transform: scale(0.93); }
+.avatar-pick.on { box-shadow: inset 0 0 0 2px #fff6cf, 0 0 0 3px var(--c-reward, #ffc22e), 0 0 14px #ffc22e80, 0 3px 8px #12083a33; }
+.avatar-check { position: absolute; right: -5px; bottom: -5px; z-index: 1; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%;
+  background: linear-gradient(200deg, var(--c-action-hi, #7cf08a), var(--c-action, #2fc457)); box-shadow: 0 0 0 2px #fff, 0 2px 4px #12083a59; }

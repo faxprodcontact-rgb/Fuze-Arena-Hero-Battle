@@ -18,6 +18,7 @@ export type Modal =
   | { type: 'ranking' }
   | { type: 'chat' }
   | { type: 'settings' }
+  | { type: 'avatar' }
   | { type: 'odds' }
   | { type: 'fragments' }
   | { type: 'confirm'; text: string; onYes: () => void }

@@ -1,7 +1,8 @@
 // Le plateau du choix de la section (style moderne, 26/11/2026) : un terrain d'entraînement dessiné pour la formation
-// (ce n'est plus le décor du combat). Vu d'un peu au-dessus : au fond un ciel teinté par l'élément du clan ennemi, des
-// collines, une haie ronde ; aux bords une tente et des fanions de la couleur de l'élément ; devant, une grande dalle de
-// pierre lavande, plate, d'un bord à l'autre, calme sous les cinq postes. Une seule lumière, en haut à droite.
+// (ce n'est plus le décor du combat). Vu d'un peu au-dessus : au fond un ciel teinté par l'élément du clan ennemi, une
+// crête lointaine où se dressent des châteaux (petits, voilés par la distance, toits et fanions de la couleur de
+// l'élément), des collines, une haie ronde ; devant, une grande dalle de pierre lavande, plate, d'un bord à l'autre, calme
+// sous les cinq postes. Une seule lumière, en haut à droite.
 // La formation est posée dessus en dalles lisses : deux postes à l'arrière, le chef au centre, deux à l'avant, et trois
 // chevrons du côté des ennemis. Chaque poste a sa dalle (`Plate`) : une tuile de verre clair aux coins arrondis (jamais un
 // rond au sol), cerclée de la couleur de l'élément du héros, d'or pour le chef ; vide, elle appelle un héros.
@@ -9,14 +10,14 @@ import { Component } from 'preact';
 import type { Element } from '../../core/types';
 import type { Slot } from '../../core/battle/types';
 import { clanElement, type Clan } from '../look';
-import { Glow, Mat, Motes, Soft, VGrad, Vol, cloud, f, hills, rr, Flag } from './backdrop-kit';
+import { Glow, Mat, Motes, Soft, VGrad, Vol, cloud, f, hills, mix, peaks, rr } from './backdrop-kit';
 import './sections/backdrops.css';
 
 export const STAGE_W = 420, STAGE_H = 360;
 /** Le point où chaque héros pose les pieds (le centre de sa dalle). */
 export const STAGE_POS: Record<Slot, [number, number]> = { 3: [100, 180], 4: [100, 292], 2: [210, 236], 0: [320, 180], 1: [320, 292] };
 
-/** Les teintes du terrain selon l'élément du clan ennemi : ciel (haut, horizon), couleur des tentes et fanions. */
+/** Les teintes du terrain selon l'élément du clan ennemi : ciel (haut, horizon), couleur des toits et des fanions. */
 const TINT: Record<Element, { sky: [string, string]; accent: string; flag: string }> = {
   fire: { sky: ['#5b3db4', '#ffb08a'], accent: '#ff6b5e', flag: '#ffc22e' },
   water: { sky: ['#3466d8', '#a6dcff'], accent: '#2f8cff', flag: '#5ce1ff' },
@@ -26,14 +27,48 @@ const TINT: Record<Element, { sky: [string, string]; accent: string; flag: strin
 /** Le fond de la dalle et la haie. */
 const BACK = 122;
 
-/** Une tente ronde, sa porte et son fanion (posée au sol en x, y). */
-function Tent({ p, x, y, w, c, flag, mirror }: { p: string; x: number; y: number; w: number; c: string; flag: string; mirror?: boolean }) {
-  const h = w * 0.78;
+/** Une tour : ses murs (de `x - w/2` à `x + w/2`, jusqu'à `h` au-dessus du sol) et son toit pointu (haut de `rh`). */
+type Tower = { x: number; w: number; h: number; rh: number };
+/** Le toit d'une tour, du bord gauche au bord droit en passant par la pointe (déborde un peu des murs). */
+const roof = ({ x, w, h, rh }: Tower, y: number, k: number) =>
+  `L${f(x - w / 2 - 1.6 * k)} ${f(y - h)} Q${f(x - 1.2 * k)} ${f(y - h - rh * 0.5)} ${f(x)} ${f(y - h - rh)} Q${f(x + 1.2 * k)} ${f(y - h - rh * 0.5)} ${f(x + w / 2 + 1.6 * k)} ${f(y - h)}`;
+
+/**
+ * Un château lointain posé sur la crête (le pied au milieu en x, y ; `k` = sa taille) : trois tours à toits pointus
+ * reliées par un mur, une porte sombre, deux fenêtres allumées, un fanion. Une seule forme, un seul contour léger ;
+ * murs et toits sont mêlés à la couleur de l'horizon : plus c'est loin, plus c'est voilé.
+ */
+function Castle({ p, x, y, k, haze, roofC, flag }: { p: string; x: number; y: number; k: number; haze: string; roofC: string; flag: string }) {
+  const towers: Tower[] = [
+    { x: x - 14 * k, w: 8 * k, h: 30 * k, rh: 13 * k },
+    { x, w: 9 * k, h: 41 * k, rh: 16 * k },
+    { x: x + 14 * k, w: 8 * k, h: 25 * k, rh: 11 * k },
+  ];
+  const [L, C, R] = towers as [Tower, Tower, Tower];
+  const wall = 18 * k;
+  // la silhouette entière, de bas en haut et de gauche à droite : tour, mur, tour du milieu, mur, tour
+  const d = `M${f(L.x - L.w / 2)} ${f(y)} L${f(L.x - L.w / 2)} ${f(y - L.h)} ${roof(L, y, k)} L${f(L.x + L.w / 2)} ${f(y - L.h)}`
+    + ` L${f(L.x + L.w / 2)} ${f(y - wall)} L${f(C.x - C.w / 2)} ${f(y - wall)} L${f(C.x - C.w / 2)} ${f(y - C.h)} ${roof(C, y, k)} L${f(C.x + C.w / 2)} ${f(y - C.h)}`
+    + ` L${f(C.x + C.w / 2)} ${f(y - wall)} L${f(R.x - R.w / 2)} ${f(y - wall)} L${f(R.x - R.w / 2)} ${f(y - R.h)} ${roof(R, y, k)} L${f(R.x + R.w / 2)} ${f(y - R.h)}`
+    + ` L${f(R.x + R.w / 2)} ${f(y)} Z`;
+  const wallC = mix('#a9a3e8', haze, 0.5);
+  const top = y - C.h - C.rh;
   return (
-    <g transform={mirror ? `translate(${2 * x} 0) scale(-1 1)` : undefined}>
-      <Flag p={p} x={x} y={y - h + 2} h={18} color={flag} />
-      <Vol p={p} d={`M${f(x - w / 2)} ${y} Q${f(x - w * 0.38)} ${f(y - h * 0.7)} ${f(x)} ${f(y - h)} Q${f(x + w * 0.38)} ${f(y - h * 0.7)} ${f(x + w / 2)} ${y} Z`} fill={`url(#${p}-tent)`} depth={w * 0.12} />
-      <Vol p={p} d={`M${f(x - w * 0.13)} ${y} Q${f(x - w * 0.1)} ${f(y - h * 0.42)} ${f(x)} ${f(y - h * 0.48)} Q${f(x + w * 0.1)} ${f(y - h * 0.42)} ${f(x + w * 0.13)} ${y} Z`} fill="#3a2a7e" line={1.2} depth={2} shade={0.2} rim={0.15} />
+    <g>
+      {/* le fanion, au sommet de la tour du milieu */}
+      <path d={`M${f(x)} ${f(top + 1)} V${f(top - 9 * k)}`} stroke={mix('#2a1257', haze, 0.45)} stroke-width={f(Math.max(0.9, 1.1 * k))} stroke-linecap="round" />
+      <path class="bk-flag" style={{ transformOrigin: `${f(x)}px ${f(top - 6 * k)}px` }}
+        d={`M${f(x + 0.4)} ${f(top - 9 * k)} Q${f(x + 4 * k)} ${f(top - 9.6 * k)} ${f(x + 8 * k)} ${f(top - 7 * k)} Q${f(x + 4 * k)} ${f(top - 5.2 * k)} ${f(x + 0.4)} ${f(top - 4.6 * k)} Z`}
+        fill={mix(flag, haze, 0.25)} />
+      <Vol p={p} d={d} fill={wallC} line={1} inkA={0.28} depth={2.4 * k} shade={0.22} rim={0.45}>
+        {towers.map((t) => (
+          <path d={`M${f(t.x - t.w / 2 - 2 * k)} ${f(y - t.h + 0.6)} ${roof(t, y, k)} Z`} fill={mix(roofC, haze, 0.35)} />
+        ))}
+        {/* la porte (une arche sombre) et deux fenêtres où brille une lampe */}
+        <path d={`M${f(x - 3 * k)} ${f(y)} V${f(y - 5 * k)} Q${f(x - 3 * k)} ${f(y - 8.5 * k)} ${f(x)} ${f(y - 8.5 * k)} Q${f(x + 3 * k)} ${f(y - 8.5 * k)} ${f(x + 3 * k)} ${f(y - 5 * k)} V${f(y)} Z`} fill={mix('#3a2a7e', haze, 0.3)} />
+        <rect x={f(x - 1.2 * k)} y={f(y - 31 * k)} width={f(2.4 * k)} height={f(4 * k)} rx={f(1.2 * k)} fill="#fff1b8" opacity="0.9" />
+        <rect x={f(L.x - 1.1 * k)} y={f(y - 22 * k)} width={f(2.2 * k)} height={f(3.4 * k)} rx={f(1.1 * k)} fill="#fff1b8" opacity="0.75" />
+      </Vol>
     </g>
   );
 }
@@ -53,18 +88,22 @@ function Ground({ clan }: { clan: Clan }) {
         <Glow id={`${p}-sun`} c="#fff3c7" a={0.85} />
         <Mat id={`${p}-hill`} c="#8f8de6" k={0.5} />
         <Mat id={`${p}-hedge`} c="#46b87e" />
-        <Mat id={`${p}-tent`} c={t.accent} />
+        <Mat id={`${p}-ridge`} c={mix('#9a95ea', t.sky[1], 0.45)} k={0.4} />
+        <VGrad id={`${p}-mist`} y1={BACK - 40} y2={BACK - 4} stops={[[0, t.sky[1], 0], [1, t.sky[1], 0.55]]} />
         <Mat id={`${p}-rim`} c="#c9c0fa" k={0.5} />
       </defs>
       {/* le ciel, sa lumière en haut à droite, un nuage */}
       <rect width={W} height={BACK + 4} fill={`url(#${p}-sky)`} />
       <circle class="bk-breathe" cx="392" cy="10" r="90" fill={`url(#${p}-sun)`} />
-      <g class="bk-cloud" opacity="0.9"><Vol p={p} d={cloud(70, 60, 60, 6)} fill="#ffffff" line={0} depth={4} shade={0.15} rim={0} /></g>
-      <Vol p={p} d={hills(13, BACK - 12, 22, 110, BACK + 4)} fill={`url(#${p}-hill)`} line={1.2} inkA={0.35} depth={5} shade={0.2} rim={0.35} />
+      <g class="bk-cloud" opacity="0.9"><Vol p={p} d={cloud(104, 40, 52, 6)} fill="#ffffff" line={0} depth={4} shade={0.15} rim={0} /></g>
 
-      {/* aux bords : une tente de chaque côté, des fanions */}
-      <Tent p={p} x={26} y={BACK + 2} w={64} c={t.accent} flag={t.flag} />
-      <Tent p={p} x={402} y={BACK + 2} w={56} c={t.accent} flag={t.flag} mirror />
+      {/* au loin : une crête voilée et ses châteaux (dans les trouées entre les héros du fond), une brume à leur pied */}
+      <Vol p={p} d={peaks([[34, 24, 62], [214, 20, 86], [398, 26, 66]], BACK - 4, BACK + 4)} fill={`url(#${p}-ridge)`} line={0} depth={3} shade={0.12} rim={0.3} />
+      <Castle p={p} x={36} y={BACK - 26} k={0.62} haze={t.sky[1]} roofC={t.accent} flag={t.flag} />
+      <Castle p={p} x={212} y={BACK - 22} k={0.92} haze={t.sky[1]} roofC={t.accent} flag={t.flag} />
+      <Castle p={p} x={398} y={BACK - 28} k={0.56} haze={t.sky[1]} roofC={t.accent} flag={t.flag} />
+      <rect y={BACK - 40} width={W} height="40" fill={`url(#${p}-mist)`} />
+      <Vol p={p} d={hills(13, BACK - 4, 12, 110, BACK + 4)} fill={`url(#${p}-hill)`} line={1.2} inkA={0.35} depth={5} shade={0.2} rim={0.35} />
 
       {/* la haie ronde, au fond de la dalle */}
       <Vol p={p} d={hills(41, BACK + 2, 12, 34, BACK + 12)} fill={`url(#${p}-hedge)`} line={1.3} inkA={0.5} depth={4} />
