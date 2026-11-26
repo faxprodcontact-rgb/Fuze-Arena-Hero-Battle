@@ -1,65 +1,174 @@
-// Les pièces du panneau des héros en combat (battle-scene.ts), nouvelle DA (26/11/2026) : les mêmes dessins en pixels que
-// les menus (ui/px.ts : une seule palette, un seul contour, lumière en haut à droite), recomposés à la bonne taille et
-// agrandis ×4 (un pixel du dessin = 4 unités du combat, à peu près 2 pixels CSS sur un téléphone), sans flou.
+// Les pièces de l'interface du combat (battle-scene.ts), style moderne (26/11/2026, demande du propriétaire : « on voit
+// tout le terrain, sans bandeau ») : tout flotte sur la scène, léger — des boutons ronds, des pilules de verre sombre, une
+// rangée de cartes de héros (portrait, nom, vie, énergie) posée sur un fondu doux en bas de l'écran.
+// Dessinées lisses dans des toiles (×2 pour rester nettes sur un téléphone), données à Phaser comme textures.
 import type Phaser from 'phaser';
-import { INK, PAL, pxCanvas, radialCanvas, rampFrom, type Tone } from './ui/px';
 
-/** Unités du combat par pixel du dessin. */
-const U = 4;
+/** Les toiles sont dessinées 2 fois plus grandes que leur taille au combat (puis réduites : bords nets). */
+const R = 2;
+/** (pour poser une texture faite ici à sa vraie taille : `setScale(1 / HUD_RES)`) */
+export const HUD_RES = R;
 
-/** Les couleurs des boutons : la teinte du dessin et la couleur du cerne des lettres. */
+/** Les boutons : dégradé (haut, milieu, bas), la lèvre, la couleur de l'ombre des lettres. */
 export const HUD_BUTTONS = {
-  green: { tone: 'green' as Tone, ink: '#145040' },
-  blue: { tone: 'blue' as Tone, ink: '#1c2f7a' },
-  navy: { tone: 'navy' as Tone, ink: '#121636' },
+  green: { top: '#7cf08a', mid: '#38cc5c', bot: '#25b34a', lip: '#12823a', ink: '#12823a' },
+  blue: { top: '#7cc8ff', mid: '#3b95ff', bot: '#2a78f0', lip: '#1a47b8', ink: '#1a47b8' },
+  red: { top: '#ff98a2', mid: '#ff5a6c', bot: '#f03e58', lip: '#b01f3a', ink: '#b01f3a' },
+  navy: { top: '#4b3c9e', mid: '#3a2d86', bot: '#2e2470', lip: '#150f3a', ink: '#0c0822' },
+};
+export type HudButton = keyof typeof HUD_BUTTONS;
+
+/** Le haut des cartes, par élément : deux tons (haut clair, bas sombre). */
+const TINTS: Record<string, [string, string]> = {
+  fire: ['#ff9a6a', '#c8402a'], wind: ['#8be89a', '#2f9a4c'], water: ['#7cc8ff', '#2a68d0'], earth: ['#ffd07a', '#b8722a'], none: ['#a99cf0', '#4b3c9e'],
 };
 
-/** Les disques des portraits, par élément (la couleur du milieu de leur gamme). */
-const DISCS: Record<string, string> = { fire: '#d8502e', wind: '#4fae5a', water: '#3f86e0', earth: '#b8822e', none: '#4a5fc0' };
+/** Une carte de héros (unités du combat) : sa taille, son arrondi, la hauteur du portrait. */
+export const CARD = { w: 128, h: 182, r: 22, face: 120 };
+/** Un bouton rond : son diamètre. */
+export const ROUND = 68;
 
-function add(sc: Phaser.Scene, key: string, make: () => HTMLCanvasElement) {
+function add(sc: Phaser.Scene, key: string, w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) {
   if (sc.textures.exists(key)) return;
-  const tex = sc.textures.addCanvas(key, make());
-  tex?.setFilter(1 as Phaser.Textures.FilterMode); // au plus proche : les pixels restent nets
-}
-
-/** Le panneau (720 × 400) : émail bleu nuit, le plateau creusé des portraits cerclé d'or. */
-function panel(): HTMLCanvasElement {
-  const w = 180, h = 100;
   const c = document.createElement('canvas');
-  c.width = w * U; c.height = h * U;
+  c.width = Math.round(w * R); c.height = Math.round(h * R);
   const g = c.getContext('2d')!;
-  g.imageSmoothingEnabled = false;
-  g.fillStyle = PAL.navy[2]; g.fillRect(0, 0, c.width, c.height);
-  g.fillStyle = PAL.navy[1]; g.fillRect(0, (h - 2) * U, c.width, 2 * U);
-  const tray = pxCanvas('plaque-navy', 176, 56, U);
-  // le creux du plateau : la plaque, assombrie au milieu (les portraits s'y posent)
-  g.drawImage(tray, 2 * U, 7 * U);
-  g.fillStyle = PAL.well[1]; g.fillRect(4 * U, 10 * U, 172 * U, 50 * U);
-  g.fillStyle = PAL.well[0]; g.fillRect(4 * U, 9 * U, 172 * U, U);
-  return c;
+  g.scale(R, R);
+  draw(g);
+  sc.textures.addCanvas(key, c);
 }
 
-/** Le rail (720 × 16) posé à cheval sur le bas du terrain : contour, filet d'or, contour. */
-function rail(): HTMLCanvasElement {
-  const c = document.createElement('canvas');
-  c.width = 720; c.height = 4 * U;
-  const g = c.getContext('2d')!;
-  [INK, PAL.gold[3], PAL.gold[1], INK].forEach((col, i) => { g.fillStyle = col; g.fillRect(0, i * U, 720, U); });
-  return c;
+function rr(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number | number[]) {
+  g.beginPath();
+  g.roundRect(x, y, w, h, r);
 }
 
-/** Met en file toutes les pièces du panneau (à appeler dans `preload`). Les boutons : une taille par usage. */
+/** Le fondu du bas (sous les cartes) : du transparent au raisin. Étiré à la largeur de l'écran. */
+function fade(g: CanvasRenderingContext2D) {
+  const grad = g.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0, 'rgba(12, 8, 34, 0)');
+  grad.addColorStop(0.45, 'rgba(12, 8, 34, 0.45)');
+  grad.addColorStop(1, 'rgba(12, 8, 34, 0.82)');
+  g.fillStyle = grad; g.fillRect(0, 0, 8, 256);
+}
+
+/** Le fond d'une carte : verre raisin, le haut (le portrait) de la couleur de l'élément. 8 unités de marge pour l'ombre. */
+function card(tint: [string, string]) {
+  return (g: CanvasRenderingContext2D) => {
+    const m = 8, { w, h, r, face } = CARD;
+    g.save();
+    g.shadowColor = 'rgba(5, 2, 26, 0.6)'; g.shadowBlur = 12; g.shadowOffsetY = 4;
+    rr(g, m, m, w, h, r);
+    const body = g.createLinearGradient(0, m, 0, m + h);
+    body.addColorStop(0, 'rgba(42, 32, 99, 0.94)'); body.addColorStop(1, 'rgba(21, 15, 54, 0.96)');
+    g.fillStyle = body; g.fill();
+    g.restore();
+    rr(g, m, m, w, face, [r, r, 0, 0]);
+    const top = g.createLinearGradient(0, m, 0, m + face);
+    top.addColorStop(0, tint[0]); top.addColorStop(1, tint[1]);
+    g.fillStyle = top; g.fill();
+    const glow = g.createRadialGradient(m + w / 2, m + face * 0.35, 4, m + w / 2, m + face * 0.35, w * 0.62);
+    glow.addColorStop(0, 'rgba(255, 255, 255, 0.35)'); glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    g.fillStyle = glow; g.fill();
+  };
+}
+
+/** Le liseré d'une carte (posé par-dessus le portrait) : blanc, fin ; le bas du portrait fondu dans le verre. */
+function cardFrame(g: CanvasRenderingContext2D) {
+  const m = 8, { w, h, r, face } = CARD;
+  const shade = g.createLinearGradient(0, m + face - 34, 0, m + face);
+  shade.addColorStop(0, 'rgba(21, 15, 54, 0)'); shade.addColorStop(1, 'rgba(21, 15, 54, 0.85)');
+  g.fillStyle = shade; g.fillRect(m, m + face - 34, w, 34);
+  g.strokeStyle = 'rgba(255, 255, 255, 0.9)'; g.lineWidth = 3;
+  rr(g, m + 1.5, m + 1.5, w - 3, h - 3, r - 1.5); g.stroke();
+}
+
+/** La lueur d'or d'une carte dont l'attaque spéciale est prête. */
+function cardGlow(g: CanvasRenderingContext2D) {
+  const p = 22, { w, h, r } = CARD;
+  g.save();
+  g.shadowColor = '#ffc22e'; g.shadowBlur = 20;
+  g.strokeStyle = '#ffe27a'; g.lineWidth = 5;
+  rr(g, p, p, w, h, r); g.stroke(); g.stroke();
+  g.restore();
+}
+
+/** Le creux d'une jauge (pilule sombre) : `w` × `h` unités. */
+function track(w: number, h: number) {
+  return (g: CanvasRenderingContext2D) => {
+    rr(g, 0, 0, w, h, h / 2);
+    g.fillStyle = 'rgba(5, 2, 26, 0.8)'; g.fill();
+  };
+}
+
+/** Un bouton rond : la lèvre, le dégradé (ou du verre sombre), une lumière en haut ; une ombre douce. */
+function round(kind: HudButton | 'glass') {
+  return (g: CanvasRenderingContext2D) => {
+    const m = 8, d = ROUND, c = m + d / 2;
+    g.save();
+    g.shadowColor = 'rgba(5, 2, 26, 0.5)'; g.shadowBlur = 10; g.shadowOffsetY = 4;
+    g.beginPath(); g.arc(c, c, d / 2, 0, Math.PI * 2);
+    g.fillStyle = kind === 'glass' ? 'rgba(13, 8, 38, 0.7)' : HUD_BUTTONS[kind].lip; g.fill();
+    g.restore();
+    if (kind === 'glass') {
+      g.strokeStyle = 'rgba(255, 255, 255, 0.3)'; g.lineWidth = 2;
+      g.beginPath(); g.arc(c, c, d / 2 - 1, 0, Math.PI * 2); g.stroke();
+      return;
+    }
+    const b = HUD_BUTTONS[kind];
+    g.beginPath(); g.arc(c, c - 2.5, d / 2 - 2.5, 0, Math.PI * 2);
+    const grad = g.createLinearGradient(0, m, 0, m + d);
+    grad.addColorStop(0, b.top); grad.addColorStop(0.5, b.mid); grad.addColorStop(1, b.bot);
+    g.fillStyle = grad; g.fill();
+    g.strokeStyle = 'rgba(255, 255, 255, 0.45)'; g.lineWidth = 2;
+    g.beginPath(); g.arc(c, c - 2.5, d / 2 - 3.5, Math.PI * 1.15, Math.PI * 1.85); g.stroke();
+  };
+}
+
+/** Un bouton large arrondi (fenêtre de pause) : la lèvre, le dégradé, une lumière en haut. */
+function wide(b: (typeof HUD_BUTTONS)[HudButton], w: number, h: number) {
+  return (g: CanvasRenderingContext2D) => {
+    const m = 8, bw = w - 2 * m, bh = h - 2 * m, r = Math.min(26, bh / 2);
+    g.save();
+    g.shadowColor = 'rgba(5, 2, 26, 0.45)'; g.shadowBlur = 10; g.shadowOffsetY = 4;
+    rr(g, m, m, bw, bh, r);
+    g.fillStyle = b.lip; g.fill();
+    g.restore();
+    rr(g, m, m, bw, bh - 6, r);
+    const grad = g.createLinearGradient(0, m, 0, m + bh - 6);
+    grad.addColorStop(0, b.top); grad.addColorStop(0.46, b.mid); grad.addColorStop(1, b.bot);
+    g.fillStyle = grad; g.fill();
+  };
+}
+
+/** Le signe « pause » (deux barres) et « fermer » : blancs, arrondis. */
+function pauseSign(g: CanvasRenderingContext2D) {
+  g.fillStyle = '#ffffff';
+  rr(g, 6, 4, 8, 28, 4); g.fill();
+  rr(g, 22, 4, 8, 28, 4); g.fill();
+}
+
+/** Une pilule de verre sombre de `w` × `h` (titre, vague, score) : une texture par taille, faite à la demande. */
+export function pillKey(sc: Phaser.Scene, w: number, h = 48): string {
+  const key = `hud-pill-${Math.round(w)}x${h}`;
+  add(sc, key, Math.round(w), h, (g) => {
+    rr(g, 0, 0, Math.round(w), h, h / 2);
+    g.fillStyle = 'rgba(13, 8, 38, 0.62)'; g.fill();
+    g.strokeStyle = 'rgba(255, 255, 255, 0.2)'; g.lineWidth = 2;
+    rr(g, 1, 1, Math.round(w) - 2, h - 2, h / 2 - 1); g.stroke();
+  });
+  return key;
+}
+
+/** Met en file toutes les pièces (à appeler dans `preload`). */
 export function loadHudArt(sc: Phaser.Scene) {
-  add(sc, 'hud-panel', panel);
-  add(sc, 'hud-rail', rail);
-  // l'anneau d'un portrait (144) : contour, or, contour, la rainure sombre où court l'énergie, contour ; le centre vide
-  add(sc, 'hud-ring', () => radialCanvas(36, [[12.5, null], [12.9, INK], [14.7, PAL.well[1]], [15.5, INK], [17.2, PAL.gold], [18, INK]], U));
-  // la rainure de la barre de vie (120 × 24)
-  add(sc, 'hud-hp', () => pxCanvas('groove', 30, 6, U));
-  for (const [el, col] of Object.entries(DISCS)) add(sc, `hud-disc-${el}`, () => radialCanvas(25, [[13, rampFrom(col)]], U));
-  for (const [k, b] of Object.entries(HUD_BUTTONS)) {
-    add(sc, `hud-btn-${k}-290`, () => pxCanvas(`btn-${b.tone}`, 73, 21, U));
-    add(sc, `hud-btn-${k}-160`, () => pxCanvas(`btn-${b.tone}`, 40, 16, U));
-  }
+  add(sc, 'hud-fade', 8, 256, fade);
+  for (const [el, tint] of Object.entries(TINTS)) add(sc, `hud-card-${el}`, CARD.w + 16, CARD.h + 16, card(tint));
+  add(sc, 'hud-card-frame', CARD.w + 16, CARD.h + 16, cardFrame);
+  add(sc, 'hud-card-glow', CARD.w + 44, CARD.h + 44, cardGlow);
+  add(sc, 'hud-hp', 108, 14, track(108, 14));
+  add(sc, 'hud-en', 108, 8, track(108, 8));
+  for (const k of ['glass', 'green', 'blue'] as const) add(sc, `hud-round-${k}`, ROUND + 16, ROUND + 16, round(k));
+  add(sc, 'hud-pause', 36, 36, pauseSign);
+  for (const [k, b] of Object.entries(HUD_BUTTONS)) add(sc, `hud-btn-${k}`, 306, 100, wide(b, 306, 100));
 }

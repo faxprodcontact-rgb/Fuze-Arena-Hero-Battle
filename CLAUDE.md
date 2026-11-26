@@ -50,17 +50,18 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   `vecto/GUIDE.md`) ; pixel art « gros pixels encrés » `refonte-graphique/pixel/persos/` (lire `pixel/GUIDE.md`, contrôle
   `python3 refonte-graphique/pixel/controle.py <nom>`). Les anciens dessins (Hailuo, décors dessinés par le code, 72 héros
   pixel) et leurs chaînes de fabrication sont supprimés (v0.56.0) ; pictos : `icons.webp`, tous en pixel art
-  (`refonte-graphique/pixel/ui/pictos/`, `assemble.py` ; petits signes et halo dessinés par `src/game/ui/px.ts`).
+  (`refonte-graphique/pixel/ui/pictos/`, `assemble.py` ; petits signes (SVG lisses) et halo : `style.css`, `anim.css`).
 - **Interface en nouvelle DA (pixel art HD), partie par partie** (demande du 25/11) : plan, inventaire et outils dans
   `refonte-graphique/pixel/ui/` (lire `PLAN.md`) ; partie 1 faite en v0.57.0 (chargement, logo, icône d'application).
-  **Style commun (26/11) : lire `refonte-graphique/pixel/ui/STYLE.md`** (pièces en pixels de `src/game/ui/px.ts`, variables
-  `--px-…`, aucun ornement) ; section Campagne faite, vague 2 : Héros, Invoquer, Aventure, Guilde.
-- Interface (v0.39 à v0.41) : polices **Lilita One** (titres, chiffres) et **Fredoka** (textes), `font-synthesis: none`,
-  jamais `fontStyle: 'bold'` dans Phaser. Couleurs : **émail bleu nuit cerclé d'or** (le bois brun est refusé),
-  panneaux parchemin ; variables en tête de `src/game/ui/style.css`. Pièces dessinées : `ui/chrome.tsx` (`ChromeDefs`
-  posé une fois, jamais caché ; `BarArt` toujours **dernier enfant** de sa barre). **Toutes les fenêtres s'ouvrent au
-  milieu de l'écran.** Décors des onglets et pictos animés dessinés par le code (`ui/backdrop-*.tsx`, `mode-icons.tsx`,
-  `portal.tsx`, `anim.tsx`). Combats : panneau `hud-art.tsx`. Tirage des héros : `SummonResult` + `ui/card-back.tsx`.
+  **Style « moderne » choisi le 26/11 : lire `refonte-graphique/pixel/ui/STYLE.md`** (jetons en tête de
+  `src/game/ui/style.css` : fond raisin, couleurs à rôle, arrondis, ombres douces ; fenêtres claires à bandeau coloré ;
+  plus de pièces en pixels ni de `?skin=`) ; Socle + Campagne faits, sections Héros, Invoquer, Aventure, Guilde dans
+  `src/game/ui/sections/<section>.css`. Personnages, monstres, décors restent en pixel art HD.
+- Interface : polices **Lilita One** (titres, chiffres) et **Fredoka** (textes), `font-synthesis: none`, jamais
+  `fontStyle: 'bold'` dans Phaser. Composants communs : `ui/kit.tsx` (`HeroCard` = le héros en entier, `CardFigure`),
+  `ui/chrome.tsx` (`ChromeDefs` posé une fois, jamais caché ; `BarArt` toujours **dernier enfant** de sa barre).
+  **Toutes les fenêtres s'ouvrent au milieu de l'écran.** Combat plein écran, interface qui flotte dessus (pause, pilules,
+  AUTO/vitesse ronds, cartes des héros) : `hud-art.tsx` + `battle-scene.ts`. Tirage : `SummonResult` + `ui/card-back.tsx`.
 - Plus tard : profil du joueur, événements, sons et musique, Siège. Ensuite : serveur (Supabase) → habillage → social
   réel → argent réel → bêta → lancement.
 

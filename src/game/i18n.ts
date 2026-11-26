@@ -121,7 +121,7 @@ const FR = {
 
 
   'result.victory': 'Victoire !', 'result.defeat': 'Défaite', 'result.damage': 'Dégâts', 'result.nothing': 'Rien cette fois',
-  'battle.quit': 'Quitter', 'battle.wave': 'Vague', 'battle.auto': 'AUTO',
+  'battle.quit': 'Quitter', 'battle.resume': 'Reprendre', 'battle.wave': 'Vague', 'battle.auto': 'AUTO',
   'mode.campaign': 'Niveau', 'mode.tower': 'Étage', 'mode.dungeon': 'Donjon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arène', 'mode.guildBoss': 'Guilde', 'mode.friend': 'Défi',
   'mail.title': 'Courrier', 'mail.claimAll': 'Tout récupérer',
   'login.title': 'Connexion', 'login.welcome': 'Bienvenue',
@@ -253,7 +253,7 @@ const EN: Record<Key, string> = {
 
 
   'result.victory': 'Victory!', 'result.defeat': 'Defeat', 'result.damage': 'Damage', 'result.nothing': 'Nothing this time',
-  'battle.quit': 'Quit', 'battle.wave': 'Wave', 'battle.auto': 'AUTO',
+  'battle.quit': 'Quit', 'battle.resume': 'Resume', 'battle.wave': 'Wave', 'battle.auto': 'AUTO',
   'mode.campaign': 'Stage', 'mode.tower': 'Floor', 'mode.dungeon': 'Dungeon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arena', 'mode.guildBoss': 'Guild', 'mode.friend': 'Challenge',
   'mail.title': 'Mail', 'mail.claimAll': 'Claim all',
   'login.title': 'Check-in', 'login.welcome': 'Welcome',

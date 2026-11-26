@@ -274,15 +274,10 @@ def html(M):
     svg = open(os.path.join(U.PUBLIC, 'art', 'ui', 'logo.svg'), encoding='utf-8').read()
     vw, vh = [float(v) for v in re.search(r'viewBox="[\d.-]+ [\d.-]+ ([\d.]+) ([\d.]+)"', svg).groups()]
     svg = svg.replace('<svg ', '<svg class="logo" ', 1)
-    bar = data_uri(barre())
-    fw = BW - 2 * BI
-    # la jauge avance pixel par pixel (steps), vite au début puis de plus en plus lentement, jusqu'à 92 %
+    # la jauge (style moderne, 26/11) : une pilule de verre sombre, l'or qui la remplit en douceur, vite au début puis de
+    # plus en plus lentement, jusqu'à 92 %
     pts = [(0, 0), (8, 0.30), (20, 0.52), (40, 0.70), (65, 0.82), (100, 0.92)]
-    kf = []
-    for (p0, v0), (p1, v1) in zip(pts, pts[1:]):
-        n = max(1, round((v1 - v0) * fw))
-        kf.append(f'{p0}%{{width:{v0 * 100:.2f}%;animation-timing-function:steps({n})}}')
-    kf.append(f'100%{{width:{pts[-1][1] * 100:.0f}%}}')
+    kf = [f'{p}%{{width:{v * 100:.0f}%}}' for p, v in pts]
     style = f"""<style>
       /* écran de chargement (fabriqué par refonte-graphique/pixel/ui/chargement.py) : visible pendant le téléchargement
          du jeu, retiré par main.tsx. Le dessin est peint à sa vraie taille ({SW} × {SH}) dans le canvas puis agrandi
@@ -293,18 +288,18 @@ def html(M):
         --px: max(calc(min(100vw, 480px) / {SW}), calc(100vh / {SH})); background: #2a1424; }}
       @supports (height: 100dvh) {{ #splash .sp {{ --px: max(calc(min(100vw, 480px) / {SW}), calc(100dvh / {SH})); }} }}
       #splash canvas, #splash .logo, #splash .load {{ position: absolute; }}
-      #splash canvas, #splash .load {{ image-rendering: pixelated; }}
+      #splash canvas {{ image-rendering: pixelated; }}
       #splash canvas {{ width: calc(var(--px) * {SW}); height: calc(var(--px) * {SH}); left: calc(50% - var(--px) * {SW / 2}); top: calc((100% - var(--px) * {SH}) * {ANCRE}); }}
       /* le logo est vectoriel (net à toutes les tailles) : au milieu de l'écran (un peu au-dessus : le colisée est
          dessous), 62 % de la colonne, 280 px et 19 % de la hauteur au plus */
       #splash .logo {{ left: 50%; top: calc(45% + env(safe-area-inset-top, 0px) / 2); width: min(62%, 280px, calc(19vh * {vw / vh:.3f})); height: auto; aspect-ratio: {vw:.0f} / {vh:.0f}; overflow: visible; transform: translate(-50%, -50%); }}
-      #splash .load {{ left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + var(--px) * 12); width: calc(var(--px) * {BW}); height: calc(var(--px) * {BH}); transform: translateX(-50%);
-        background: url({bar}) 0 0 / 100% 100%; }}
-      #splash .load i {{ position: absolute; left: calc(var(--px) * {BI}); top: calc(var(--px) * {BI}); height: calc(var(--px) * {BH - 2 * BI}); width: calc(var(--px) * {fw}); }}
-      #splash .load b {{ display: block; height: 100%; width: 0; animation: splash-load 6s forwards;
-        background: linear-gradient(#fff6c0 0 16.6%, #ffd84a 16.6% 50%, #f5a524 50% 83.3%, #c0601a 83.3%); }}
+      #splash .load {{ left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 30px); width: min(62%, 240px); height: 14px; transform: translateX(-50%);
+        padding: 3px; border-radius: 999px; background: #0d0826b8; box-shadow: inset 0 0 0 1px #ffffff2e, 0 4px 14px #0a062099; }}
+      #splash .load i {{ display: block; height: 100%; border-radius: 999px; overflow: hidden; }}
+      #splash .load b {{ display: block; height: 100%; width: 0; border-radius: 999px; animation: splash-load 6s ease-out forwards;
+        background: linear-gradient(90deg, #ffb21f, #ffe27a); box-shadow: inset 0 2px 0 #ffffff80, 0 0 8px #ffc22e99; }}
       @keyframes splash-load {{ {' '.join(kf)} }}
-      #splash.done .load b {{ width: 100%; animation: none; }}
+      #splash.done .load b {{ width: 100%; animation: none; transition: width .25s; }}
     </style>"""
     data = json.dumps(M, separators=(',', ':'))
     script = (

@@ -83,7 +83,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
       <div class="stage">
         <IdleStage running={running} />
         <button class="stage-title" aria-label={`${t('chapter')} ${chapter}`} onClick={() => open({ type: 'worldMap' })}>
-          <ChapterPlaque title={`${t('chapter')} ${chapter}`} progress={(pos - 1) / STAGES_PER_CHAPTER} />
+          <ChapterPlaque title={`${t('chapter')} ${chapter}`} progress={(pos - 1) / STAGES_PER_CHAPTER} icon={<Icon name="campaign" size={22} />} />
         </button>
         <EdgeColumn side="left" dot={leftDots.some(Boolean)}>
           <EdgeButton icon="calendar" label={t('login.title')} dot={leftDots[0]} onClick={() => open({ type: 'login' })} />
@@ -145,9 +145,9 @@ export function FastLootModal() {
   };
   return (
     <Modal title={t('camp.fast')}>
-      <div class="row gap center-y">
+      <div class="fast-hero">
         <Icon name="hourglass" size={64} />
-        <div class="grow">
+        <div class="fast-gain grow">
           <strong>2 h</strong>
           <div class="row gap-s wrap">
             <Cur k="gold" n={loot.perHour * 2} />

@@ -1,11 +1,12 @@
-// Préparation d'un combat : les ennemis en haut, la section sur l'estrade de la salle des héros (formation-stage.tsx),
-// les héros en bas.
+// Préparation d'un combat : la section posée sur le sol du décor du combat à venir (formation-stage.tsx), les héros en
+// bas (en entier, dans leurs cases), Combattre tout en bas.
 // Toucher un héros = l'ajouter ou le retirer. Toucher deux postes = les échanger.
 import { useState } from 'preact/hooks';
 import { LEADER_SLOT, type Slot } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
 import { ELEMENT_COLOR } from '../../art';
 import { FormationStage, Plate, STAGE_H, STAGE_POS, STAGE_W } from '../formation-stage';
+import { battleLook, idleLook, type Clan } from '../../look';
 import { HeroFigure } from '../hero-figure';
 import { fmt, t } from '../../i18n';
 import { autoFormation, startBattleFromPlan, swapSlots, toggleInFormation, type BattlePlan } from '../../state/actions';
@@ -15,7 +16,7 @@ import { Art, Btn, HeroCard, Icon, Stars } from '../kit';
 import { close, startBattle, toast } from '../nav';
 import { talentText } from './hero-detail';
 
-export function Board({ tired, team = 'main' }: { tired?: Set<number>; team?: TeamKind } = {}) {
+export function Board({ tired, team = 'main', clan }: { tired?: Set<number>; team?: TeamKind; clan?: Clan } = {}) {
   const s = useGame();
   const formation = formationOf(s, team);
   const [picked, setPicked] = useState<Slot | null>(null);
@@ -34,7 +35,7 @@ export function Board({ tired, team = 'main' }: { tired?: Set<number>; team?: Te
     <div class="board-wrap">
       <div class="field">
         <div class="field-art">
-        <FormationStage />
+        <FormationStage clan={clan ?? idleLook(s.campaign.cleared + 1).fond} />
         {([3, 0, 2, 4, 1] as Slot[]).map((slot) => {
           const uid = formation.find(([, sl]) => sl === slot)?.[0];
           const hero = uid !== undefined ? heroByUid(s, uid) : undefined;
@@ -80,7 +81,7 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
         </span>
       </header>
 
-      <Board tired={tired} team={team} />
+      <Board tired={tired} team={team} clan={plan ? battleLook(plan.kind, plan.title, plan.dungeon).fond : undefined} />
 
       <div class="row between prep-bar">
         <strong>{t('heroes.team')} {formation.length} / {slotCount(s)}</strong>

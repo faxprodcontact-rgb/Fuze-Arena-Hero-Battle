@@ -27,7 +27,7 @@ function save(s) {
     const body = (await res.text()).replace(/env\(safe-area-inset-top(,\s*0px)?\)/g, '47px').replace(/env\(safe-area-inset-bottom(,\s*0px)?\)/g, '34px');
     await r.fulfill({ response: res, body });
   });
-  await page.goto('http://localhost:4391/');
+  await page.goto(`http://localhost:${process.env.PORT || 4391}/`);
   await page.waitForSelector('#splash', { state: 'detached', timeout: 20000 });
   const oks = await page.$$('.name-card button'); const ok = oks[oks.length - 1];
   if (ok) { await ok.click(); await page.waitForTimeout(400); }
