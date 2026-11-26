@@ -90,6 +90,9 @@ LN1, LN2 = 29.4, 15.0                # bras proche : bras, avant-bras (jusqu'au 
 LF1, LF2 = 18.0, 12.6                # bras lointain
 HIP = (64.0, 86.0)                   # le pivot du buste
 NECK = (74.0, 50.0)                  # le pivot (et le centre d'agrandissement) de la tête
+# la tête posée bien au milieu, entre les deux épaules (avis du propriétaire du 26/11, tour 2) : tout ce qui est
+# dessiné dans le repère de la tête glisse de ce décalage (le visage garde ses propres mesures)
+HEAD_AT = (-16.0, 3.0)
 S_POM, S_END, S_HEAD = -22.6, 88.0, 79.0     # le pommeau, le bout du manche, l'axe du fer (le long du manche)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, ml=0.0, pg=0.0, blink=0.0,
@@ -126,6 +129,58 @@ def cuff_det(c, a, L, W, nr):
 
 
 
+# ---------- les épaulières de métal (avis du propriétaire du 26/11, tour 2) ----------
+# Une épaulière d'acier sur chaque épaule : un dôme qui coiffe le deltoïde (bord roulé, rivets) et deux lames
+# rivetées dessous qui entourent le haut du bras ; la lame du haut recouvre celle du bas. Elle est fixée à l'épaule :
+# elle ne suit le bras qu'à moitié quand il se lève (repère : `pa`, l'angle du bras au repos + la moitié de l'écart).
+NARM_REST, FARM_REST = 109.45, 71.71           # l'angle du haut du bras au repos (proche, lointain)
+
+
+def pauldron(S, ang, k):
+    """Les trois plaques d'une épaulière : [(suffixe, forme, détails)], du fond (la lame du bas) au devant (le dôme).
+    S : l'articulation de l'épaule ; ang : la direction du haut du bras ; k : la taille (1 = épaule proche)."""
+    sg = Seg(S, (S[0] + math.cos(math.radians(ang)), S[1] + math.sin(math.radians(ang))))
+    P_ = lambda a, b: sg(a * k, b * k)
+    pts = lambda L: [P_(a, b) for a, b in L]
+
+    def rivet(a, b, r=0.9):
+        c = P_(a, b)
+        return [(ellipse(c[0] - 0.12 * k, c[1] + 0.18 * k, r * k, r * k), STEEL.deep, 0.75),
+                (ellipse(c[0], c[1], r * 0.78 * k, r * 0.78 * k), STEEL.light, 1),
+                (ellipse(c[0] + 0.25 * k, c[1] - 0.3 * k, r * 0.36 * k, r * 0.3 * k), STEEL.glint, 0.95)]
+    out = []
+    # les deux lames (la plus basse d'abord) : une bande bombée, le bord du bas éclairé, une gorge sous la lame du dessus
+    for nm, a0, a1, wb in (('2', 7.4, 15.4, 11.6), ('1', 1.6, 9.8, 12.8)):
+        am = (a0 + a1) / 2
+        sh = sm(pts([(a0, -wb), (a0 - 1.0, 0.0), (a0, wb), (a1 - 1.6, wb + 0.3), (a1, wb * 0.5), (a1 + 0.6, 0.0),
+                     (a1, -wb * 0.5), (a1 - 1.6, -wb - 0.3)]), sharp=(0, 2, 3, 7), t=0.8)
+        det = [(ribbon(pts([(a1 - 1.5, -wb + 0.8), (a1 - 0.6, -wb * 0.4), (a1 - 0.3, 0.0), (a1 - 0.6, wb * 0.4), (a1 - 1.5, wb - 0.8)]),
+                       [0.1 * k, 0.55 * k, 0.6 * k, 0.55 * k, 0.1 * k]), STEEL.hi, 0.7),
+               (ribbon(pts([(am - 0.6, -wb + 1.2), (am - 1.0, 0.0), (am - 0.6, wb - 1.2)]), [0.1 * k, 1.1 * k, 0.1 * k]), STEEL.light, 0.35)]
+        det += rivet(am, -wb + 2.2, 0.75) + rivet(am, wb - 2.2, 0.75)
+        out.append((nm, sh, det))
+    # le dôme : il coiffe l'épaule (plus haut côté cou), le bord du bas bombé, roulé et éclairé
+    cap = sm(pts([(1.2, -13.0), (-5.6, -14.2), (-11.6, -11.6), (-15.0, -5.6), (-15.6, 1.0), (-14.0, 7.4),
+                  (-10.4, 12.0), (-5.0, 14.2), (1.6, 13.8), (4.2, 7.0), (5.0, 0.0), (4.2, -7.0)]), sharp=(0, 8), t=0.85)
+    det = [(ribbon(pts([(0.8, -11.8), (3.0, -6.4), (3.7, 0.0), (3.0, 6.4), (0.9, 12.6)]), [0.2 * k, 1.1 * k, 1.2 * k, 1.1 * k, 0.2 * k]),
+            STEEL.deep, 0.45),
+           (ribbon(pts([(2.2, -11.0), (4.0, -5.6), (4.5, 0.0), (4.0, 5.6), (2.4, 11.4)]), [0.1 * k, 0.6 * k, 0.65 * k, 0.6 * k, 0.1 * k]),
+            STEEL.hi, 0.8),
+           # le reflet du dôme (lumière en haut à droite) et une arête douce au sommet
+           (ribbon(pts([(-12.6, -3.0), (-12.2, 2.4), (-10.0, 7.0), (-6.4, 10.0)]), [0.2 * k, 1.5 * k, 1.3 * k, 0.2 * k]), STEEL.glint, 0.7),
+           (ribbon(pts([(-9.4, -8.4), (-11.6, -2.0), (-11.0, 3.6)]), [0.1 * k, 0.8 * k, 0.1 * k]), STEEL.hi, 0.45)]
+    for b in (-9.0, -3.0, 3.0, 9.0):
+        det += rivet(1.4 - abs(b) * 0.12, b, 0.85)
+    out.append(('c', cap, det))
+    return out
+
+
+def pgrad(sh):
+    """Le dégradé de l'acier : clair en haut à droite, sombre en bas à gauche."""
+    x0, y0, x1, y1 = sh.bbox()
+    return (x1, y0, x0 + (x1 - x0) * 0.25, y1, [(0, STEEL.hi), (0.3, STEEL.light), (0.68, STEEL.base), (1, STEEL.shadow)])
+
+
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P = dict(REST, **(pose or {}))
     fig = Figure(*frame, ow=ow)
@@ -139,8 +194,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     br = P['breath']
     UC = mchain(U, mT(0, -0.6 * br))                                           # ce qui monte avec la poitrine
     TOR = mchain(U, mS(1, 1 + 0.014 * br, 64, 84))
-    HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], *NECK), mS(1.1, 1.1, *NECK))
-    MAN = mchain(UC, mT(0.5 * P['head'][0], 0.5 * P['head'][1] - 0.5 * P['rn']))
+    HEAD = mchain(UC, mT(*HEAD_AT), mT(*P['head']), mR(P['tilt'], *NECK), mS(1.1, 1.1, *NECK))
     CLO = mchain(PEL, mskx(-0.05 * P['pg'], 82))
 
     # ======================================================================== la corne lointaine (derrière la tête)
@@ -241,24 +295,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('ring', ring, GOLD, cel=0.6, rim=0.5, cast=0.8, cast_on=['torso', 'strapA', 'strapB'],
              details=[(ellipse(RING[0] + 1.3, RING[1] - 1.4, 0.7, 0.5, -30), GOLD.glint, 0.9)])
 
-    # ======================================================================== la crinière (1) : la mèche du haut,
-    # derrière la tête et la corne (sa racine passe sous le crâne) ; les autres mèches poussent SUR la tête et passent
-    # devant elle et devant l'épaule (plus bas, « la crinière (2) »)
-    ph, ml = P['ph'], P['ml']
-    LOCKS = [('m3', (62.0, 27.4), (56.0, 27.6), (49.4, 26.0), (45.0, 18.6), 8.4)]
-    for i, (name, p0, p1, p2, p3, w0) in enumerate(LOCKS):
-        k = 0.9
-        w = ph - 3.2
-        p2 = (p2[0] + 0.4 * k * math.sin(2 * w + 1.0), p2[1] + 0.5 * k * math.sin(w) + 0.5 * ml)
-        p3 = (p3[0] + 0.7 * k * math.sin(w + 0.8) - 0.3 * ml, p3[1] + 0.8 * k * math.cos(w) + 1.0 * ml)
-        sh = lock(p0, p1, p2, p3, w0, n=14, bulge=0.32)
-        x0_, y0_, x1_, y1_ = sh.bbox()
-        fig.part(name, sh, MANE, grad=(x1_, y0_, x0_ + (x1_ - x0_) * 0.35, y1_, [(0, MANE.light), (0.5, MANE.base), (1, MANE.shadow)]),
-                 cel=0, rim=0.6, cast=1.1, cast_on=['torso', 'strapA', 'strapB'],
-                 details=[(sm_under(sh, 0.7, -2.0), ('lin', 0, y0_, 0, y1_, [(0, MANE.base), (1, MANE.shadow)]), 0.75),
-                          (lock(lerp(p0, p1, 0.3), lerp(p1, p2, 0.3), lerp(p2, p3, 0.2), lerp(p2, p3, 0.8), w0 * 0.22, n=8, bulge=0.1)
-                           .move(0.3 + 0.03 * w0, -0.12 * w0), MANE.hi, 0.45)])
-
     # ======================================================================== le pagne rouge (deux plis, pan déchiré)
     cloth = sm([(34.6, 79.4), (50.0, 80.6), (64.0, 81.2), (80.0, 80.4), (93.4, 79.2), (93.8, 86.0), (92.4, 93.0),
                 (90.6, 99.6), (88.4, 97.4), (86.2, 100.2), (83.6, 97.0), (81.2, 100.6), (78.4, 98.0), (76.4, 103.4),
@@ -326,6 +362,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.part('farm', farm, FUR, cel=1.6, rim=0.7, cast=1.2, cast_on=['torso', 'belt', 'cloth', 'strapA', 'strapB', 'stud3', 'stud4', 'buckle', 'haft', 'head'],
                  details=[(ribbon([f1(-5.6, 3.6), f1(-6.8, -1.0), f1(-4.4, -5.6)], [0.2, 2.2, 0.2]), FUR.light, 0.5),
                           (ellipse(*f1.at(0.65, 2.0), 2.0, 4.0, fa1 - 90), FUR.light, 0.22)])
+        # l'épaulière d'acier de l'épaule lointaine (plus petite : elle est plus loin)
+        for sfx, sh, det_ in pauldron(Sfu, FARM_REST + 0.5 * (fa1 - FARM_REST), 0.74):
+            fig.part('fpaul' + sfx, sh, STEEL, grad=pgrad(sh), cel=0.8, rim=0.5, cast=0.8 if sfx == 'c' else 0.55,
+                     cast_on=['farm', 'torso', 'strapA', 'strapB', 'fpaul2', 'fpaul1'], details=det_)
         fa2 = math.degrees(math.atan2(f2.u[1], f2.u[0]))
         bc = f2.at(0.42)
         fig.part('fbrac', cuff(bc, fa2, 7.0, 10.6), GOLD, cel=0.8, rim=0.6, cast=0.9, details=cuff_det(bc, fa2, 7.0, 10.6, 2))
@@ -336,7 +376,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # la corne proche : épaisse à la base, elle part vers l'arrière puis remonte ; la pointe sombre, un reflet
     hornN = lock((66.2, 22.4), (52.0, 25.2), (41.2, 22.6), (39.4, 3.4), 8.8, n=16, bulge=0.04)
     fig.part('hornN', hornN, HORN, grad=(64, 22, 39.4, 3.4, [(0, HORN.base), (0.3, HORN.light), (0.62, '#cdbca4'), (0.84, '#8a788a'), (1, HORN_TIP)]),
-             cel=1.2, rim=0.8, cast=1.3, cast_on=['m3', 'm4', 'm5', 'torso'],
+             cel=1.2, rim=0.8, cast=1.3, cast_on=['torso'],
              details=[(ribbon([(60.0, 19.6), (51.0, 19.8), (44.6, 17.4), (41.6, 11.6), (40.4, 5.6)], [0.2, 1.3, 1.0, 0.6, 0.1]), HORN.hi, 0.75),
                       (ribbon([(63.6, 24.4), (54.0, 25.0), (46.6, 23.4)], [0.2, 0.9, 0.1]), HORN.deep, 0.35)])
     head = sm([(57.6, 23.8), (62.6, 19.6), (68.0, 16.4), (75.0, 15.4), (82.0, 16.6), (87.6, 19.6), (91.2, 23.8),
@@ -422,7 +462,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(ellipse(92.6, 41.8, 0.6, 0.45, -40), GOLD.glint, 0.95)])
     # l'oreille couchée à l'horizontale (vers l'arrière), son creux rose
     ear = sm([(58.0, 29.6), (52.4, 29.0), (46.6, 29.6), (42.0, 31.8), (46.6, 33.8), (52.4, 35.2), (58.0, 35.8)], sharp=(3,))
-    fig.part('ear', ear, FUR, cel=0.9, rim=0.5, cast=0.9, cast_on=['head', 'm3', 'm4', 'm5'],
+    fig.part('ear', ear, FUR, cel=0.9, rim=0.5, cast=0.9, cast_on=['head'],
              details=[(sm([(56.8, 31.0), (51.6, 30.8), (47.0, 31.4), (44.6, 32.0), (47.6, 33.0), (52.4, 33.8), (56.6, 34.0)], sharp=(3,)),
                        ('lin', 56, 31, 46, 33, [(0, '#e09a88'), (1, '#a85e62')]), 0.95)])
     # le toupet bouclé du front, entre les cornes
@@ -544,70 +584,45 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         (ellipse(*a2.at(0.22, 2.4), 3.0, 4.2, aa2 - 90), FUR.light, 0.45),
     ]
     fig.part('narm', arm, FUR, cel=1.9, rim=0.7, cast=1.4,
-             cast_on=['torso', 'cloth', 'belt', 'nleg', 'nlegf', 'strapA', 'strapB', 'm7', 'm6', 'm5', 'm4', 'haft', 'stud0', 'stud1'], details=ad)
+             cast_on=['torso', 'cloth', 'belt', 'nleg', 'nlegf', 'strapA', 'strapB', 'haft', 'stud0', 'stud1'], details=ad)
+    # l'épaulière d'acier de l'épaule proche (par-dessus le bras et le harnais)
+    for sfx, sh, det_ in pauldron(Snu, NARM_REST + 0.5 * (aa1 - NARM_REST), 1.0):
+        fig.part('npaul' + sfx, sh, STEEL, grad=pgrad(sh), cel=0.9, rim=0.55, cast=1.0 if sfx == 'c' else 0.7,
+                 cast_on=['narm', 'torso', 'strapA', 'strapB', 'npaul2', 'npaul1', 'head', 'ear', 'hornN'], details=det_)
     # le brassard d'or riveté sur l'avant-bras proche
     bc = a2.at(0.64)
     fig.part('nbrac', cuff(bc, aa2, 8.4, 13.4), GOLD, cel=0.9, rim=0.6, cast=1.0, details=cuff_det(bc, aa2, 8.4, 13.4, 3))
-    # ======================================================================== la crinière (2) (avis du propriétaire du
-    # 26/11) : des mèches de poil sombre qui POUSSENT sur l'arrière de la tête (racine pointue posée sur la joue, de
-    # sous l'oreille jusqu'à la gorge : elles cachent la jonction tête / cou) et coulent vers l'arrière par-dessus la
-    # bosse et DEVANT l'épaule proche. La racine suit la tête, la pointe suit le buste (la mèche se plie entre les
-    # deux) : la crinière reste fixée à la tête dans toutes les poses. Points dans le repère du dessin, pose de repos.
-    def skin(p, wh):
-        a = mapp(HEAD, (NECK[0] + (p[0] - NECK[0]) / 1.1, NECK[1] + (p[1] - NECK[1]) / 1.1))
-        b = mapp(UC, p)
-        return (b[0] + (a[0] - b[0]) * wh, b[1] + (a[1] - b[1]) * wh)
-    FRONT = [
-        ('m4', (58.6, 35.4), (51.0, 32.4), (41.0, 31.8), (30.8, 24.6), 9.0),
-        ('m5', (60.2, 40.2), (51.0, 40.4), (37.0, 39.6), (24.4, 32.6), 11.0),
-        ('m6', (62.6, 45.0), (52.0, 47.6), (34.0, 47.8), (16.4, 43.6), 12.0),
-        ('m7', (66.4, 50.2), (56.0, 54.8), (39.0, 56.4), (22.0, 56.2), 10.2),
-    ]
-    prof = []
-    for i in range(19):
-        t = i / 18
-        prof.append(math.sin(math.pi / 2 * min(1.0, t / 0.24)) ** 0.7 * (1 - t) ** 0.85)
-    pk = max(prof)
-    names_f = [q[0] for q in FRONT]
-    for i, (name, p0, p1, p2, p3, w0) in enumerate(FRONT):
-        k = 0.6 + 0.12 * i
-        w = ph - 0.8 * (i + 1)
-        p2 = (p2[0] + 0.4 * k * math.sin(2 * w + 1.0), p2[1] + 0.5 * k * math.sin(w) + 0.5 * ml)
-        p3 = (p3[0] + 0.7 * k * math.sin(w + 0.8) - 0.3 * ml, p3[1] + 0.8 * k * math.cos(w) + 1.0 * ml)
-        q0, q1, q2, q3 = skin(p0, 1.0), skin(p1, 0.75), skin(p2, 0.2), skin(p3, 0.0)
-        cl = resample(bez(q0, q1, q2, q3, 40), 18)
-        sh = ribbon(cl, [w0 * v / pk for v in prof])
-        x0_, y0_, x1_, y1_ = sh.bbox()
-        hl = ribbon(resample(bez(lerp(q0, q1, 0.45), lerp(q1, q2, 0.35), lerp(q2, q3, 0.2), lerp(q2, q3, 0.75), 20), 8),
-                    [0.1, 0.5, 0.9, 1.0, 0.9, 0.7, 0.5, 0.3, 0.1])
-        fig.part(name, sh, MANE, grad=(x1_, y0_, x0_ + (x1_ - x0_) * 0.35, y1_, [(0, MANE.light), (0.5, MANE.base), (1, MANE.shadow)]),
-                 cel=0, rim=0.6, cast=1.1,
-                 cast_on=['head', 'torso', 'narm', 'nbrac', 'strapA', 'strapB', 'ring', 'm3', 'hornN'] + names_f[:i],
-                 details=[(sm_under(sh, 0.7, -2.0), ('lin', 0, y0_, 0, y1_, [(0, MANE.base), (1, MANE.shadow)]), 0.75),
-                          (hl.move(0.3 + 0.03 * w0, -0.14 * w0), MANE.hi, 0.45)])
     fist('nfist', 0.0, ['narm', 'nbrac'])
     fist('ffist', sf, ['farm', 'fbrac', 'strapA'])
 
     # ---- chaque groupe de morceaux prend sa pose ----
     heads = ['hornF', 'hornN', 'head', 'nring', 'ear', 'tuft']
     fig.pose(heads, HEAD)
-    fig.pose(['m3'], MAN)
     fig.pose(['torso'], TOR)
     fig.pose(['strapA', 'strapB', 'ring'], UC)
     fig.pose(['cloth'], CLO)
     fig.pose(['belt', 'buckle'] + ['stud%d' % i for i in range(5)], PEL)
     axe = ['haft', 'pommel', 'pring', 'bladeU', 'bladeD', 'socket']
-    fig.pose(axe + ['narm', 'nbrac', 'nfist', 'nfistt', 'farm', 'fbrac', 'ffist', 'ffistt'], U)
+    pauls = ['npaul2', 'npaul1', 'npaulc', 'fpaul2', 'fpaul1', 'fpaulc']
+    fig.pose(axe + ['narm', 'nbrac', 'nfist', 'nfistt', 'farm', 'fbrac', 'ffist', 'ffistt'] + pauls, U)
     # l'ordre de dessin : le bras proche, puis la crinière (devant la tête et devant l'épaule), puis l'oreille (elle
     # sort de la crinière), puis la hache et les poings, toujours devant
     # (quand la hache est levée, le manche monte devant la crinière ; sinon le bras proche passe devant le manche,
     # comme dans le dessin d'origine)
-    order = ['narm', 'nbrac'] + names_f + ['ear']
+    order = ['narm', 'npaul2', 'npaul1', 'npaulc', 'nbrac']
     moved = [p for nm in order for p in fig.parts if p.name == nm]
     rest = [p for p in fig.parts if p.name not in order]
     names_r = [p.name for p in rest]
     at = names_r.index('haft') if P['ang'] < -45 else names_r.index('socket') + 1
     fig.parts = rest[:at] + moved + rest[at:]
+    if P['farfront'] > 0.5:
+        # l'épaulière lointaine est derrière la tête (l'épaule lointaine est plus loin que le mufle) : quand le bras
+        # lointain passe devant (hache levée), la tête se redessine par-dessus l'épaule et le haut de ce bras
+        hg = ['hornN', 'head', 'nring', 'ear', 'tuft']
+        hp = [p for p in fig.parts if p.name in hg]
+        fig.parts = [p for p in fig.parts if p.name not in hg]
+        j = [p.name for p in fig.parts].index('fbrac') + 1
+        fig.parts = fig.parts[:j] + hp + fig.parts[j:]
     # ce que les effets doivent savoir (repère du dessin)
     fig.ctx = dict(U=U, G=mapp(U, G), ang=ang + P['lean'] * 1.1, P=P,
                    head_pt=mapp(U, Ap(S_HEAD, 0)), edge_lo=mapp(U, Ap(S_HEAD, 22.8)), edge_up=mapp(U, Ap(S_HEAD, -22.8)),

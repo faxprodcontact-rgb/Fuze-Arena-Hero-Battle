@@ -71,11 +71,11 @@ G0 = (23.4, 35.4)                    # le poing proche sur le manche
 ANG0 = -110.0                        # le manche monte vers l'arrière (la tête de la massue en haut à gauche)
 WRN = (-5.0, -4.6)                   # le poignet proche, dans le repère du manche (le long, en travers)
 S_N = (43.6, 61.4)                   # l'épaule proche (articulation)
-S_F = (96.6, 62.4)                   # l'épaule lointaine
+S_F = (97.6, 61.6)                   # l'épaule lointaine (sous le deltoïde, qui appartient au buste)
 LN1, LN2 = 28.4, 19.6                # bras proche : bras, avant-bras (jusqu'au poignet)
-LF1, LF2 = 17.6, 17.0                # bras lointain
-FF0 = (111.4, 60.6)                  # le poing lointain (son milieu)
-FFA0 = -62.0                         # l'avant-bras lointain monte vers la droite
+LF1, LF2 = 19.0, 16.5                # bras lointain
+FF0 = (117.0, 56.0)                  # le poing lointain (son milieu), à hauteur d'épaule, devant lui
+FFA0 = -70.0                         # l'avant-bras lointain monte presque droit (une garde de lutteur)
 HIP = (68.0, 90.0)                   # le pivot du buste
 NECK = (66.0, 54.0)                  # le pivot (et le centre d'agrandissement) de la tête
 # Le visage est placé par l'outil commun ../visage.py (une sphère qui tourne de 18° : tout le visage tourne ensemble).
@@ -225,8 +225,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  details=[(C_(ellipse(37.0, 1.6 * up, 1.2, 0.8)), MOSS.hi, 0.8),
                           (C_(ellipse(35.2, -2.6 * up, 0.9, 0.6)), MOSS.hi, 0.5)])
 
-    # ======================================================================== le bras lointain (gauche), en garde :
-    # coude bas derrière le ventre, l'avant-bras revient devant le ventre, le poing levé vers l'ennemi
+    # ======================================================================== le bras lointain (gauche), en garde
+    # de lutteur (comme le pixel art) : il sort de SOUS le deltoïde lointain (le deltoïde fait partie du buste : la
+    # liaison épaule / buste est le bord du muscle, pas une couture), le coude descend juste à côté du ventre, l'avant-bras
+    # remonte presque droit et le poing se dresse à hauteur d'épaule, tourné vers l'ennemi. Tout le bras est DERRIÈRE le
+    # buste (le bras du fond) : rien ne passe devant le ventre.
     FFp = P['FF']
     ffa = P['ffa']
     fa_ = math.radians(ffa)
@@ -235,25 +238,19 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     Sfu = mapp(inv(U), Sf)
     Wfu = mapp(inv(U), Wf_target)
     Ef, Wf = ik(Sfu, Wfu, LF1, LF2, P['bf'])
-    FAR_GRAD = diag(SKIN, 92, 54, 114, 88)
-    fkeys = [(0, 8.0, 8.0), (0.22, 7.4, 7.6), (0.48, 6.0, 6.2), (0.58, 6.0, 6.0), (0.74, 6.0, 6.2), (1, 5.0, 5.0)]
-    far_arm = round_limb([Sfu, Ef, Wf], fkeys, n=26)
+    FAR_GRAD = diag(SKIN, 96, 50, 122, 84)
+    fkeys = [(0, 7.6, 7.6), (0.3, 7.0, 7.0), (0.5, 6.2, 6.0), (0.56, 6.3, 6.1), (0.7, 6.2, 6.0), (1, 5.0, 5.0)]
+    far_arm = round_limb([Sfu, Ef, Wf], fkeys, n=30)
     f1, f2 = Seg(Sfu, Ef), Seg(Ef, Wf)
-    fig.part('farm', far_arm, SKIN, grad=FAR_GRAD, cel=1.5, rim=0.6, cast=0.8,
-             details=[(ellipse(*f1.at(0.2, -2.0), 4.6, 3.4, 0), SKIN.light, 0.35)])
-
-    def draw_far_front():
-        """L'avant-bras lointain repassé DEVANT le ventre (le même membre, même couleur : le coude est derrière le
-        ventre), son brassard, puis le poing."""
-        fa2 = math.degrees(math.atan2(f2.u[1], f2.u[0]))
-        fore = body_limb([f2.at(-0.02), f2.at(0.5), Wf], [(0, 6.0, 6.2), (0.3, 6.0, 6.2), (1, 5.0, 5.0)], n=14)
-        fig.part('ffore', fore, SKIN, grad=FAR_GRAD, cel=1.3, rim=0.6, cast=1.0, cast_on=['torso', 'farm'],
-                 details=[(ellipse(*f2.at(0.25, 2.0), 3.0, 4.0, fa2 - 90), SKIN.light, 0.3)])
-        bc = f2.at(0.6)
-        upf = 1 if (-f2.v[0] * 0.6 + f2.v[1] * 0.8) < 0 else -1
-        fig.part('fbrac', bracer(bc, fa2, 9.4, 11.4), LEATHER, cel=0.8, rim=0.5, cast=0.9,
-                 details=bracer_det(bc, fa2, 9.4, 11.4, -upf))
-        far_fist(Wf, fa2)
+    fa2 = math.degrees(math.atan2(f2.u[1], f2.u[0]))
+    sf2 = 1 if (f2.v[0] * 0.6 - f2.v[1] * 0.8) > 0 else -1
+    fig.part('farm', far_arm, SKIN, grad=FAR_GRAD, cel=1.4, rim=0.6, cast=0.8,
+             details=[(ellipse(*f1.at(0.72, 2.0 * sf2), 3.6, 2.6, math.degrees(math.atan2(f1.u[1], f1.u[0]))), SKIN.light, 0.3),
+                      (ellipse(*f2.at(0.0, -0.6 * sf2), 2.0, 1.5, fa2), SKIN.shadow, 0.3),                     # la pointe du coude
+                      (ellipse(*f2.at(0.28, 2.2 * sf2), 2.2, 4.0, fa2 - 90), SKIN.light, 0.35)])             # le muscle de l'avant-bras
+    bc = f2.at(0.62)
+    fig.part('fbrac', bracer(bc, fa2, 9.4, 11.4), LEATHER, cel=0.8, rim=0.5, cast=0.9, cast_on=['farm'],
+             details=bracer_det(bc, fa2, 9.4, 11.4, sf2))
 
     def far_fist(W, a_deg):
         """Le poing lointain fermé, tourné vers l'ennemi (le poignet cassé) : quatre doigts repliés vus de côté, l'un
@@ -280,6 +277,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.part('fthumb', th, SKIN, cel=0.8, rim=0.5, cast=0.8, cast_on=['ffist'],
                  details=[(F(ellipse(9.2, 2.6, 1.05, 0.8, -25)), '#f4c8b0', 0.9),
                           (F(ellipse(9.4, 2.3, 0.45, 0.3, -25)), '#ffffff', 0.6)])
+    far_fist(Wf, fa2)
 
     # ======================================================================== le pan de derrière du pagne (dans
     # l'ombre, entre les jambes)
@@ -394,8 +392,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ======================================================================== le buste (avec les trapèzes et le ventre)
     torso = sm([(54.0, 49.0), (47.4, 51.6), (41.6, 54.2), (38.0, 57.8), (36.6, 63.4), (37.2, 70.4), (37.0, 78.0),
                 (36.6, 84.0), (37.8, 88.0), (44.0, 88.6), (52.0, 89.6), (60.0, 90.8), (68.0, 91.6), (76.0, 91.4),
-                (84.0, 90.2), (92.0, 88.8), (97.6, 87.4), (100.8, 84.6), (102.8, 79.4), (103.4, 73.2), (102.8, 67.6),
-                (101.4, 62.8), (99.4, 58.8), (95.2, 56.0), (89.8, 54.6), (84.8, 52.0), (80.0, 49.4)])
+                (84.0, 90.2), (92.0, 88.8), (97.6, 87.4), (100.8, 84.6), (102.8, 79.4), (103.4, 74.6), (104.6, 71.4),
+                (106.8, 68.0), (107.6, 64.0), (106.2, 59.8), (102.8, 56.8), (97.4, 55.2), (89.8, 54.4), (84.8, 52.0), (80.0, 49.4)])
     det = [(torso, ('lin', 37, 70, 58, 66, [(0, SKIN.deep, 0.55), (1, SKIN.deep, 0)]), 1)]   # le flanc proche dans l'ombre
     # les trapèzes qui montent vers la mâchoire : la masse éclairée en haut
     det += [(sm([(44.0, 53.6), (50.0, 51.0), (55.6, 51.6), (54.0, 54.4), (48.0, 55.6), (42.6, 56.6)]), SKIN.light, 0.35),
@@ -409,6 +407,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  (78.6, 66.4)]), SKIN.hi, 0.42),
             (sm([(77.6, 67.0), (85.6, 70.4), (94.6, 70.2), (99.6, 67.2), (99.0, 70.8), (94.6, 73.2), (85.4, 73.2),
                  (77.2, 70.4)]), SKIN.shadow, 0.7),
+            # le deltoïde lointain (le bras sort dessous) : une masse ronde éclairée, un creux doux entre lui et le pectoral
+            (ellipse(103.0, 61.4, 3.8, 4.8, 20), SKIN.light, 0.4),
+            (ellipse(103.8, 60.0, 1.8, 2.4, 20), SKIN.hi, 0.35),
+            (ribbon([(98.4, 57.6), (99.6, 62.4), (99.6, 66.8), (101.6, 70.0)], [0.1, 0.9, 0.9, 0.1]), SKIN.shadow, 0.4),
             # le sillon du sternum, décalé à droite (trois quarts)
             (ribbon([(75.6, 56.8), (76.2, 62.0), (76.0, 67.6), (75.4, 71.2)], [0.1, 1.2, 1.0, 0.1]), SKIN.shadow, 0.6),
             (ribbon([(76.8, 58.4), (77.4, 63.0), (77.2, 67.0)], [0.1, 0.6, 0.1]), SKIN.hi, 0.35)]
@@ -557,21 +559,29 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                    (ribbon([(MX + -6.81, MY + 1.90), (MX + -6.22, MY + 3.10)], [0.5, 0.1]), '#3a1424', 0.5),
                    (ribbon([(MX + 6.81, MY + 1.70), (MX + 6.36, MY + 2.90)], [0.5, 0.1]), '#3a1424', 0.5),
                    (ribbon([(MX + -4.88, MY + -0.70), (MX + 0.00, MY + -1.10), (MX + 4.88, MY + -0.80)], [0.1, 0.7, 0.1]), SKIN.shadow, 0.5)]
-        # la lèvre du bas, la grosse mâchoire qui avance, le menton éclairé
+        # les défenses tordues : elles PARTENT DE LA BOUCHE — plantées dans la mâchoire du bas, elles sortent d'entre
+        # les lèvres (la fente s'ouvre un peu autour de chacune) et montent devant la lèvre du haut, à l'intérieur des
+        # coins de la bouche (la lointaine un peu plus petite, trois quarts) ; leur pied est caché par la lèvre du bas
         dj = 4.0 * mo
-        hd += [(ribbon([(MX + -5.92, MY + 2.10 + dj), (MX + 0.00, MY + 2.70 + dj), (MX + 5.92, MY + 2.10 + dj)], [0.1, 1.1, 0.1]), SKIN.light, 0.45),
+        for (tx, w0, top, lean_) in ((-4.7, 2.6, -3.5, -0.7), (4.5, 2.2, -2.5, 0.5)):
+            b = MY + 2.6 + dj                                        # le pied, derrière la lèvre du bas
+            pts_ = [(MX + tx, b), (MX + tx - 0.15 * lean_, MY + 0.9 + dj * 0.6), (MX + tx + 0.5 * lean_, MY - 0.6 + dj * 0.3),
+                    (MX + tx + 1.1 * lean_, MY + top + dj * 0.2)]
+            tk = lock(pts_[0], pts_[1], pts_[2], pts_[3], w0, n=10, bulge=0.05)
+            hd += [(ellipse(MX + tx, MY + 0.8 + 0.6 * dj, w0 * 0.62, 0.95), '#3a1424', 0.85),       # la fente qui s'ouvre
+                   (tk.scale(1.18, 1.06, pts_[0][0], (pts_[0][1] + pts_[3][1]) / 2), '#3a1424', 0.9),
+                   (tk, ('lin', pts_[0][0] + 1.4, pts_[3][1], pts_[0][0] - 1.4, pts_[0][1], [(0, BONE.hi), (0.45, BONE.light), (1, BONE.shadow)]), 1),
+                   (ribbon([(pts_[0][0] + 0.5, pts_[0][1] - 1.4), (pts_[1][0] + 0.55, pts_[1][1]), (pts_[2][0] + 0.4, pts_[2][1])], [0.1, 0.5, 0.1]), '#ffffff', 0.6)]
+        # la lèvre du bas, charnue, qui avance (elle couvre le pied des défenses), la grosse mâchoire, le menton éclairé
+        lowlip = sm([(MX - 7.1, MY + 1.5 + dj * 0.6), (MX - 3.6, MY + 1.1 + dj), (MX, MY + 1.0 + dj), (MX + 3.6, MY + 1.1 + dj),
+                     (MX + 7.1, MY + 1.3 + dj * 0.6), (MX + 5.8, MY + 2.4 + dj), (MX + 2.6, MY + 3.0 + dj), (MX - 0.4, MY + 3.2 + dj),
+                     (MX - 3.4, MY + 3.0 + dj), (MX - 6.0, MY + 2.5 + dj)], sharp=(0, 4))
+        hd += [(lowlip, ('lin', MX + 2, MY + 1.0 + dj, MX - 1, MY + 3.2 + dj, [(0, SKIN.light), (0.45, SKIN.base), (1, SKIN.shadow)]), 1),
+               (ribbon([(MX - 5.6, MY + 2.6 + dj), (MX - 0.4, MY + 3.3 + dj), (MX + 4.6, MY + 2.6 + dj)], [0.1, 0.7, 0.1]), SKIN.shadow, 0.5),
+               (ribbon([(MX + -5.92, MY + 1.9 + dj), (MX + 0.00, MY + 2.5 + dj), (MX + 5.92, MY + 1.9 + dj)], [0.1, 1.0, 0.1]), SKIN.light, 0.35),
                (ribbon([(MX + -6.36, MY + 3.30 + dj), (MX + 0.00, MY + 4.10 + dj), (MX + 6.36, MY + 3.30 + dj)], [0.1, 0.8, 0.1]), SKIN.shadow, 0.55),
                (sm([(MX + -1.48, MY + 4.50), (MX + 4.44, MY + 3.90), (MX + 8.44, MY + 2.30), (MX + 7.40, MY + 4.30), (MX + 2.96, MY + 5.50), (MX + -1.48, MY + 5.70)]), SKIN.hi, 0.4),
                (ribbon([(54.0, 49.4), (MX + -11.40, MY + 2.30), (MX + -7.40, MY + 4.90)], [0.1, 0.8, 0.1]), SKIN.deep, 0.4)]
-        # les défenses tordues qui montent de la mâchoire du bas, aux deux coins de la bouche (la lointaine un peu
-        # plus petite), devant la lèvre du haut
-        for (pts_, w0) in (([(MX + -6.36, MY + 4.10), (MX + -6.96, MY + 1.50), (MX + -6.22, MY + -0.90), (MX + -6.81, MY + -3.50)], 2.5),
-                           ([(MX + 6.22, MY + 3.70), (MX + 6.66, MY + 1.50), (MX + 6.22, MY + -0.50), (MX + 6.81, MY + -2.50)], 2.1)):
-            pts_ = [(x, y + dj * (1 - i / 3)) for i, (x, y) in enumerate(pts_)]
-            tk = lock(pts_[0], pts_[1], pts_[2], pts_[3], w0, n=10, bulge=0.05)
-            hd += [(tk.scale(1.18, 1.06, pts_[0][0], (pts_[0][1] + pts_[3][1]) / 2), '#3a1424', 0.9),
-                   (tk, ('lin', pts_[0][0] + 1.4, pts_[3][1], pts_[0][0] - 1.4, pts_[0][1], [(0, BONE.hi), (0.45, BONE.light), (1, BONE.shadow)]), 1),
-                   (ribbon([(pts_[0][0] + 0.5, pts_[0][1] - 1.0), (pts_[1][0] + 0.6, pts_[1][1]), (pts_[2][0] + 0.4, pts_[2][1])], [0.1, 0.5, 0.1]), '#ffffff', 0.6)]
         fig.part('head', head, SKIN, grad=(84, 22, 52, 54, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
                  cel=1.3, rim=0.65, cast=1.4, details=hd)
         # la grande oreille décollée, côté proche : son creux dans l'ombre (la racine se fond dans la peau du crâne)
@@ -638,10 +648,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  details=[(C_(ellipse(5.4, 2.0, 0.9, 1.1)), '#f4c8b0', 0.9), (C_(ellipse(5.6, 1.8, 0.4, 0.45)), '#ffffff', 0.6)])
         return En
 
-    # l'ordre : la massue (derrière le bras), l'avant-bras lointain devant le ventre, la tête, le bras proche (devant la
+    # l'ordre : la massue (derrière le bras), la tête, le bras proche (devant la
     # tête seulement quand il est levé au-dessus d'elle)
     draw_club()
-    draw_far_front()
     if P['front'] <= 0.5:
         En = draw_near()
         draw_head()
@@ -655,7 +664,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(SKIRT + ['backfur'], CLO)
     fig.pose(['rope', 'knot', 'rend1', 'rend2', 'skcord', 'skull', 'skhorn', 'bonecord', 'bone'], PEL)
     club = ['club', 'moss'] + ['spk%d' % i for i in range(4)]
-    fig.pose(club + ['narm', 'nbrac', 'nfist', 'nthumb', 'farm', 'ffore', 'fbrac', 'ffist', 'fthumb'], U)
+    fig.pose(club + ['narm', 'nbrac', 'nfist', 'nthumb', 'farm', 'fbrac', 'ffist', 'fthumb'], U)
     # ce que les effets doivent savoir (repère du dessin)
     fig.ctx = dict(U=U, G=mapp(U, G), ang=ang + P['lean'] * 1.1, P=P, club_head=mapp(U, Cp(29.0, 0)), club_top=mapp(U, Cp(38.6, 0)),
                    chest=mapp(TOR, (72, 70)), head=mapp(HEAD, (68, 36)), eye=mapp(HEAD, EYE_C), feet=[BN, BF], HEAD=HEAD, ROOT=ROOTM,

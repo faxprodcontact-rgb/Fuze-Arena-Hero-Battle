@@ -34,6 +34,7 @@ RED = Mat('#ffb486', '#f45e40', '#c62c32', '#8a1a30', '#4a0e28')
 STEEL = Mat('#ffffff', '#e2ecf8', '#a6b6d4', '#5f6c94', '#2c2e4c')
 GOLD = Mat('#fff2a8', '#f6cc58', '#c4862e', '#7a3e1a', '#3e1c12')
 LIPS = ('#7a1a3a', '#b23a52', '#d45a6a')
+CLOTH = Mat('#e8889a', '#a8344e', '#7c1e40', '#561434', '#340c28')      # le cache-cou de tissu (rouge sombre, mat)
 
 GRD = 116          # le sol
 FEET = (64, 116)   # le point « pieds » du pixel art
@@ -412,12 +413,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (ellipse(85.6, 57.4, 2.6, 1.2, -10), SKIN.hi, 0.6)]
     fig.part('torso', torso, SKIN, grad=(92, 48, 68, 70, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=1.2, rim=0.5, cast=1.0, details=tdet)
-    # le ras-du-cou de chitine (fait le tour du cou), une petite pierre rouge devant
-    chok = sm([(78.4, 46.4), (82.6, 47.6), (86.8, 46.4), (86.9, 48.8), (82.6, 50.2), (78.3, 48.9)], sharp=(0, 2, 3, 5), t=0.8)
-    fig.part('choker', chok, CHIT, cel=0.5, rim=0.4, cast=0.7, cast_on=['torso'],
-             details=[(ribbon([(79.0, 47.1), (82.6, 48.2), (86.2, 47.1)], [0.1, 0.45, 0.1]), CHIT.light, 0.8)])
-    fig.part('chokgem', sm([(83.6, 48.4), (84.7, 49.6), (83.6, 51.2), (82.5, 49.6)], sharp=(0, 1, 2, 3), t=0.4), RED,
-             cel=0.3, rim=0.3, cast=0.4, details=[(ellipse(83.9, 49.3, 0.3, 0.4), '#ffe0c8', 0.9)])
+    # le cache-cou de tissu (avis du propriétaire, 26/11, 3e passage) : sur le cou, un tube de tissu qui s'évase un peu
+    # sur la base du cou ; le masque (avec la tête) le recouvre sous le menton ; le ras-du-cou le serre
+    cowl = sm([(78.0, 41.0), (86.9, 41.0), (87.4, 46.0), (88.4, 49.4), (90.4, 51.6), (86.6, 53.0), (82.4, 53.4), (78.2, 52.8),
+               (74.8, 51.6), (77.2, 49.0), (77.9, 45.6)], sharp=(0, 1), t=0.9)
+    cdet = [(sm([(74.8, 51.6), (77.2, 49.0), (77.9, 45.6), (78.0, 41.0), (80.6, 41.0), (80.4, 46.4), (79.6, 50.2), (78.2, 52.8)], t=0.9),
+             CLOTH.shadow, 0.5),
+            (ribbon([(84.8, 44.0), (85.6, 47.4), (87.4, 50.6), (89.2, 51.6)], [0.1, 0.8, 0.7, 0.1]), CLOTH.light, 0.45),
+            (ribbon([(77.6, 51.6), (82.4, 52.6), (87.0, 52.0)], [0.1, 0.5, 0.1]), CLOTH.deep, 0.4)]
+    fig.part('cowl', cowl, CLOTH, grad=(90, 42, 76, 52, [(0, CLOTH.light), (0.5, CLOTH.base), (1, CLOTH.shadow)]),
+             cel=0.8, rim=0.4, cast=1.0, cast_on=['torso'], details=cdet)
+    # (le ras-du-cou de chitine est retiré : le cache-cou couvre maintenant tout le cou)
     # le haut rouge : décolleté en V, poitrine modelée (deux volumes, le lointain plus petit)
     top = sm([(65.0, 57.6), (70.6, 56.6), (75.6, 58.0), (79.4, 63.4), (83.2, 58.2), (87.4, 56.4), (92.6, 57.4), (92.8, 62.4),
               (90.2, 67.8), (87.6, 71.6), (70.4, 71.8), (67.0, 66.8), (64.8, 62.0)], sharp=(6,))
@@ -487,7 +493,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     head_parts = head(fig, P)
 
     # ---- chaque groupe prend sa pose ----
-    fig.pose(['torso', 'top', 'vborder', 'choker', 'chokgem'], TOR)
+    fig.pose(['torso', 'top', 'vborder', 'cowl'], TOR)
     fig.pose(['corset', 'bq1', 'bq2', 'bq3'], U)
     fig.pose(['fpad', 'padhook', 'pad2', 'pad1'], UC)
     fig.pose(['abd', 'spinner', 'aspine0', 'aspine1', 'aspine2'], ABD)
@@ -646,6 +652,39 @@ def head(fig, P):
     part('face', face, SKIN, grad=(94, 24, 74, 46, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]),
          cel=1.1, rim=0.5, cast=1.0, details=fd)
     fig.face = {'oeil_proche': meas['oeil_proche'], 'oeil_fond': meas['oeil_fond'], 'nez': (nx, ny), 'bouche': (mx, my, 2 * hw)}
+
+    # ---- le cache-cou de ninja (avis du propriétaire, 26/11, 3e passage) : un masque de tissu qui remonte jusque sous
+    # les yeux et couvre le nez, la bouche, le menton et le cou (les yeux restent visibles). Bord du haut sous les yeux,
+    # un peu relevé sur l'arête du nez ; le nez et le menton se devinent sous le tissu (relief doux), la bouche n'est
+    # plus qu'un pli à sa place ; derrière, il passe sous la patte de cheveux jusqu'à l'oreille ----
+    rxm = V['mediane'](37.4)
+    top_edge = [(73.6, 38.9), (76.4, 38.2), (79.6, 37.85), (83.0, 37.75), (85.6, 37.45), (rxm, 37.05), (89.0, 37.4),
+                (91.6, 37.75), (94.0, 37.75), (95.6, 37.6)]
+    mask = sm(top_edge + [(96.0, 39.6), (95.6, 42.4), (94.0, 45.4), (91.6, 48.2), (89.8, 50.4), (88.6, 52.0), (84.4, 52.8),
+                          (80.2, 52.2), (78.0, 50.4), (76.2, 47.6), (74.4, 44.4), (73.4, 41.4)],
+              sharp=(0, len(top_edge) - 1), t=0.9)
+    md = []
+    # les plans : le côté proche (joue, mâchoire) dans l'ombre douce, la joue lointaine et le bas du nez éclairés
+    md += [(sm([(73.6, 39.0), (76.2, 38.6), (77.4, 42.4), (79.6, 46.2), (83.0, 49.0), (80.0, 51.4), (76.6, 47.8), (74.2, 43.6)], t=0.9),
+            CLOTH.shadow, 0.5),
+           (sm([(90.6, 38.6), (94.6, 38.4), (95.2, 40.8), (93.6, 44.2), (91.4, 43.4), (90.4, 41.0)], t=0.9), CLOTH.light, 0.5)]
+    # sous le menton : le tissu tombe du menton vers le cou (une ombre douce en croissant, le menton se devine)
+    md += [(sm([(79.4, 48.6), (83.0, 50.6), (86.4, 51.2), (89.8, 49.6), (91.6, 48.0), (89.6, 51.4), (86.4, 52.6), (82.2, 52.4),
+                (79.6, 50.8)], t=0.9), CLOTH.deep, 0.45),
+           (ribbon([(81.6, 48.2), (84.4, 49.5), (87.6, 49.4), (90.0, 47.8)], [0.1, 0.55, 0.5, 0.1]), CLOTH.light, 0.35)]
+    # le bord du haut : un ourlet épais (sa lumière sur le dessus, son ombre dessous)
+    md += [(ribbon([(x, y + 0.75) for x, y in top_edge], [0.3, 0.9, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.9, 0.3]), CLOTH.deep, 0.35),
+           (ribbon([(x, y + 0.3) for x, y in top_edge[1:]], [0.15, 0.5, 0.55, 0.55, 0.6, 0.6, 0.6, 0.5, 0.15]), CLOTH.light, 0.7)]
+    # le nez sous le tissu : l'arête éclairée (lumière en haut à droite), le flanc proche dans l'ombre, l'ombre du tissu
+    # tendu sous le bout du nez
+    md += [(ribbon([(rxm + 0.25, 37.8), (nx + 0.4, ny - 1.0), (nx + 0.45, ny + 0.1)], [0.1, 0.45, 0.3]), CLOTH.light, 0.55),
+           (ribbon([(rxm - 0.35, 38.0), (nx - 0.5, ny - 0.8), (nx - 0.9, ny + 0.5)], [0.1, 0.6, 0.3]), CLOTH.shadow, 0.3),
+           (sm([(nx - 1.3, ny + 0.8), (nx + 0.7, ny + 0.6), (nx + 0.1, ny + 1.4), (nx - 1.0, ny + 1.7)], t=0.9), CLOTH.shadow, 0.3)]
+    # la bouche sous le masque : un pli à peine marqué, à sa place (centrée sous le nez) ; il se creuse quand elle sourit
+    md += [(ribbon([(mx - mw * 0.38, my + 0.05), (mx, my + 0.25 + 0.2 * g), (mx + mw * 0.38, my)], [0.05, 0.3 + 0.1 * g, 0.05]),
+            CLOTH.deep, 0.35 + 0.15 * g)]
+    part('mask', mask, CLOTH, grad=(95, 38, 76, 50, [(0, CLOTH.light), (0.5, CLOTH.base), (1, CLOTH.shadow)]),
+         cel=0.9, rim=0.5, cast=1.0, cast_on=['face'], details=md)
 
     # ---- la boucle d'oreille rouge (accrochée au lobe, son attache cachée sous la patte de cheveux) ----
     e = P['ear']

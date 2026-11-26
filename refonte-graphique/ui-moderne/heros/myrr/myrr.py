@@ -893,16 +893,17 @@ def head(fig, P):
             fd += [(almond.scale(1.04, 1.1, ix, iy), SKIN.base, 1),
                    (ribbon([p0, lerp(p5, p4, 0.5), p3], [0.3, 0.85, 0.25]).move(0, -0.3), LASH, 0.95)]
             continue
-        fd += [(almond.scale(1.08, 1.2, ix, iy + 0.2), SKIN.shadow, 0.55), (almond, '#f6f0ec', 1)]
-        iris = inter(ellipse(ix, iy, ir * sx, ir * 1.05), almond)
-        pup = inter(ellipse(ix + 0.05, iy + 0.05, ir * 0.48 * sx, ir * 0.55), almond)
-        if iris:
-            fd += [(iris, ('rad', ix + 0.3, iy + 0.5, ir * 1.2, ir * 1.2, [(0, '#8af2d8'), (0.45, '#3cc8aa'), (1, '#126a72')]), 1)]
-        if pup:
-            fd += [(pup, '#10202c', 1)]
-        fd += [(sm([p0, p1, p2, p3, lerp(p3, (ix, iy), 0.3), lerp(p2, (ix, iy + 0.6), 0.45), lerp(p1, (ix, iy + 0.6), 0.45)], t=0.8), SKIN.shadow, 0.4),
-               (ellipse(ix + ir * 0.35 * sx, iy - ir * 0.25, ir * 0.3 * sx, ir * 0.26), '#ffffff', 1),
-               (ellipse(ix - ir * 0.35 * sx, iy + ir * 0.4, ir * 0.14 * sx, ir * 0.12), '#ffffff', 0.7)]
+        # Tour 2 de l'avis (26/11 soir) : « les yeux blancs total sans pupille » : plus d'iris ni de pupille, l'œil
+        # entier est une lumière blanche divine (cœur blanc pur, bord à peine doré), avec un léger rayonnement doux
+        # sur la peau autour (aplats dégradés, aucun flou) ; la forme de l'amande, les cils et le reste du visage
+        # restent les mêmes.
+        cx_, cy_ = (b0 + b2) / 2, (b1 + b3) / 2
+        fd += [(almond.scale(1 + 0.11 * k, 1 + 0.22 * k, cx_, cy_), '#fff2d0', 0.09) for k in (4, 3, 2, 1)]
+        fd += [
+               (almond, ('rad', cx_ + 0.2, cy_ - 0.1, (b2 - b0) * 0.6, (b2 - b0) * 0.6,
+                         [(0, '#ffffff'), (0.55, '#fffdf6'), (1, '#f4e6c4')]), 1),
+               # l'ombre de la paupière du haut, très légère (l'œil garde son volume sans perdre sa lumière)
+               (sm([p0, p1, p2, p3, lerp(p3, (ix, iy), 0.2), lerp(p2, (ix, iy + 0.6), 0.25), lerp(p1, (ix, iy + 0.6), 0.25)], t=0.8), '#e8cfa0', 0.35)]
         # les cils : épais sur le haut, plus marqués au coin extérieur (à gauche pour l'œil proche, à droite pour l'autre)
         fd += [(ribbon([add(p0, (-0.45, -0.15)), p1, p2, add(p3, (0.2, 0.05))], [0.35, 0.72, 0.55, 0.15] if p0[0] < 75 else [0.15, 0.5, 0.62, 0.38]), LASH, 0.95),
                (ribbon([p0, p5, p4, p3], [0.1, 0.3, 0.26, 0.1]), '#7a3a4a', 0.6)]

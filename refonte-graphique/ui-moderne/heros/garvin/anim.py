@@ -71,7 +71,7 @@ def monotone(ts, vs, t):
 
 
 PAIRS = {'head': ('headx', 'heady'), 'fw': ('fwx', 'fwy'), 'nw': ('nwx', 'nwy')}
-SCAL = ['crouch', 'lean', 'tilt', 'glow', 'heat', 'gape', 'frot', 'nrot', 'ffront', 'fsw', 'heal', 'red', 'inhale']
+SCAL = ['crouch', 'lean', 'tilt', 'glow', 'heat', 'gape', 'frot', 'nrot', 'ffront', 'fsw', 'heal', 'red', 'inhale', 'sway']
 NUM = SCAL + [k for v in PAIRS.values() for k in v]
 BASE = dict(fw=K.FW0, nw=K.NW0)
 
@@ -96,16 +96,27 @@ def keyed(keys, t):
 # 2) « Poing du rempart » (pixel : ATTAQUE, 1,9 s). Il lève le poing très haut (le buste part en arrière, il se
 # grandit, la lave du bras s'allume) — longue attente — puis l'abat d'un coup devant lui, coude en l'air comme un
 # gorille, et frappe le sol des phalanges : arrêt sur l'image. Il reste appuyé, puis relève lentement le poing en garde.
+# Bras raccourcis (avis du propriétaire, tour 2) : garvin.py ramène chaque cible de poignet vers l'épaule. Pour les
+# gestes qui doivent TOUCHER quelque chose (le poing au sol, les deux poings l'un contre l'autre), on donne la vraie
+# place voulue : rawF / rawN la convertissent (le bras s'étire alors un peu, comme un animateur triche).
+def rawF(p):
+    return K.reach(K.FS, p, 1 / K.ARM_K[1])
+
+
+def rawN(p):
+    return K.reach(K.NS, p, 1 / K.ARM_K[0])
+
+
 ATTACK = [
     (0, {}),
     (160, dict(crouch=0.8, lean=-1.0, fw=(112.0, 49.0), nw=(33.8, 88.6), glow=1.0, tilt=-1.0)),
-    (520, dict(crouch=-1.0, lean=-3.0, fw=(115.0, 17.0), frot=-8, head=(-0.4, -1.0), tilt=-2.4, nw=(32.6, 88.0), glow=2.0)),
-    (700, dict(crouch=-1.1, lean=-3.3, fw=(114.6, 15.6), frot=-10, head=(-0.5, -1.2), tilt=-2.8, nw=(32.4, 87.8), glow=2.2)),
-    (738, dict(crouch=0.6, lean=1.2, fw=(131.0, 50.0), frot=-4, fsw=0.7, head=(0.0, 0.0), tilt=0.0, glow=2.2, gape=0.4)),
-    (770, dict(crouch=3.0, lean=4.0, fw=(128.0, 87.4), frot=0, fsw=1.0, head=(0.6, 1.0), tilt=2.2, nw=(35.6, 89.6), glow=3.2, gape=1.0)),
-    (1000, dict(crouch=3.0, lean=4.0, fw=(128.0, 87.6), fsw=1.0, head=(0.6, 1.1), tilt=2.2, nw=(35.6, 89.6), glow=2.6, gape=0.9)),
-    (1270, dict(crouch=2.2, lean=3.0, fw=(127.0, 85.6), fsw=1.0, head=(0.4, 0.8), tilt=1.5, nw=(35.2, 89.4), glow=1.6, gape=0.3)),
-    (1430, dict(crouch=1.8, lean=2.0, fw=(123.0, 74.0), fsw=0.5, glow=1.0, tilt=0.8)),
+    (520, dict(crouch=-1.0, lean=-3.0, fw=(115.0, 17.0), frot=-8, head=(-0.4, -1.0), tilt=-2.4, nw=(32.6, 88.0), glow=2.0, sway=2.5)),
+    (700, dict(crouch=-1.1, lean=-3.3, fw=(114.6, 15.6), frot=-10, head=(-0.5, -1.2), tilt=-2.8, nw=(32.4, 87.8), glow=2.2, sway=1.2)),
+    (738, dict(crouch=0.6, lean=1.2, fw=rawF((126.0, 56.0)), frot=-4, fsw=0.7, head=(0.0, 0.0), tilt=0.0, glow=2.2, gape=0.4, sway=-3.5)),
+    (770, dict(crouch=4.0, lean=7.0, fw=rawF((122.0, 80.4)), frot=0, fsw=1.0, head=(0.6, 1.0), tilt=2.2, nw=(35.6, 89.6), glow=3.2, gape=1.0, sway=7.0)),
+    (1000, dict(crouch=4.0, lean=7.0, fw=rawF((122.0, 80.6)), fsw=1.0, head=(0.6, 1.1), tilt=2.2, nw=(35.6, 89.6), glow=2.6, gape=0.9, sway=-2.0)),
+    (1270, dict(crouch=3.0, lean=5.4, fw=rawF((121.4, 79.0)), fsw=1.0, head=(0.4, 0.8), tilt=1.5, nw=(35.2, 89.4), glow=1.6, gape=0.3, sway=0.8)),
+    (1430, dict(crouch=2.2, lean=3.0, fw=rawF((120.0, 70.0)), fsw=0.5, glow=1.0, tilt=0.8, sway=-0.6)),
     (1600, dict(crouch=1.0, lean=1.0, fw=(117.0, 63.0), fsw=0.1, glow=0.5)),
     (1760, dict(crouch=0.4, fw=(115.6, 60.6))),
     (1920, {}),
@@ -124,22 +135,22 @@ SPECIAL = [
     (0, {}),
     (100, {}),
     (230, dict(crouch=1.0, fw=(114.0, 65.0), head=(0.0, 1.0), glow=1.0)),
-    (350, dict(crouch=2.0, fw=(110.6, 68.0), head=(0.0, 1.2), glow=2.0, tilt=1.0, heat=0.2)),
+    (350, dict(crouch=2.0, fw=(110.6, 68.0), head=(0.0, 1.2), glow=2.0, tilt=1.0, heat=0.2, sway=1.0)),
     (680, dict(crouch=2.6, fw=(109.0, 69.0), head=(0.0, 1.6), glow=3.4, tilt=1.4, heat=0.7)),
     (800, dict(crouch=3.0, fw=(108.4, 70.0), head=(0.0, 2.0), glow=4.0, tilt=1.6, heat=1.0, gape=0.5)),
-    (850, dict(crouch=-1.0, fw=(116.0, 51.0), frot=-8, head=(0.0, -1.2), glow=4.0, tilt=-2.0, heat=0.85, gape=1.3)),
-    (1000, dict(crouch=-0.8, fw=(116.0, 52.0), frot=-8, head=(0.0, -1.0), glow=3.6, tilt=-1.8, heat=0.6, gape=1.1)),
-    (1090, dict(crouch=1.6, fw=(115.8, 61.6), head=(0.0, 0.6), glow=3.0, heat=0.35, heal=1.0)),
+    (850, dict(crouch=-1.0, fw=(116.0, 51.0), frot=-8, head=(0.0, -1.2), glow=4.0, tilt=-2.0, heat=0.85, gape=1.3, sway=-4.0)),
+    (1000, dict(crouch=-0.8, fw=(116.0, 52.0), frot=-8, head=(0.0, -1.0), glow=3.6, tilt=-1.8, heat=0.6, gape=1.1, sway=2.0)),
+    (1090, dict(crouch=1.6, fw=(115.8, 61.6), head=(0.0, 0.6), glow=3.0, heat=0.35, heal=1.0, sway=-1.2)),
     (1290, dict(crouch=1.0, fw=(115.4, 61.0), glow=2.2, heat=0.1, heal=1.0)),
     (1390, dict(crouch=0.6, fw=(115.2, 60.4), glow=1.4, heal=0.6)),
     (1480, dict(crouch=0.0, lean=-1.0, fw=(122.0, 50.0), frot=-10, fsw=0.3, nw=(27.0, 86.0), nrot=10, head=(0.0, -1.0), glow=1.2,
                 ffront=1.0, heal=0.2)),
-    (1540, dict(crouch=1.0, lean=0.0, fw=(110.0, 64.0), frot=0, fsw=1.0, nw=(52.0, 76.0), nrot=-20, glow=2.0, ffront=1.0)),
-    (1580, dict(crouch=2.0, lean=1.0, fw=CLASH_F, frot=0, fsw=1.0, nw=CLASH_N, nrot=-34, head=(0.0, 1.0), glow=3.2, ffront=1.0,
-                gape=0.9, red=1.0)),
-    (1780, dict(crouch=2.0, lean=1.0, fw=(CLASH_F[0] + 0.3, CLASH_F[1]), frot=0, fsw=1.0, nw=(CLASH_N[0] - 0.3, CLASH_N[1]), nrot=-34,
-                head=(0.0, 1.0), glow=2.4, ffront=1.0, gape=0.8, red=0.8)),
-    (1890, dict(crouch=1.2, lean=1.0, fw=(108.0, 64.0), frot=0, fsw=1.0, nw=(56.0, 76.0), nrot=-20, glow=1.4, ffront=1.0, red=0.3)),
+    (1540, dict(crouch=1.0, lean=0.0, fw=rawF((110.0, 64.0)), frot=0, fsw=1.0, nw=rawN((52.0, 76.0)), nrot=-20, glow=2.0, ffront=1.0, sway=-1.5)),
+    (1580, dict(crouch=2.0, lean=1.0, fw=rawF(CLASH_F), frot=0, fsw=1.0, nw=rawN(CLASH_N), nrot=-34, head=(0.0, 1.0), glow=3.2, ffront=1.0,
+                gape=0.9, red=1.0, sway=4.0)),
+    (1780, dict(crouch=2.0, lean=1.0, fw=rawF((CLASH_F[0] + 0.3, CLASH_F[1])), frot=0, fsw=1.0, nw=rawN((CLASH_N[0] - 0.3, CLASH_N[1])), nrot=-34,
+                head=(0.0, 1.0), glow=2.4, ffront=1.0, gape=0.8, red=0.8, sway=-1.0)),
+    (1890, dict(crouch=1.2, lean=1.0, fw=rawF((108.0, 64.0)), frot=0, fsw=1.0, nw=rawN((56.0, 76.0)), nrot=-20, glow=1.4, ffront=1.0, red=0.3, sway=0.8)),
     (1990, dict(crouch=1.0, fw=(112.0, 64.0), frot=-6, nw=(38.0, 88.0), glow=0.8)),
     (2100, dict(crouch=0.4, fw=(115.0, 61.6))),
     (2300, {}),
@@ -164,7 +175,8 @@ def idle_offsets(T):
     beat = 0.9 * bump(ph, 0.17, 0.035) + 1.7 * bump(ph, 0.27, 0.045)
     return dict(inhale=br, crouch=0.55 * (0.5 - 0.5 * math.cos(u - 2.7)), heady=0.4 * math.sin(u - 1.0),
                 tilt=0.5 * math.sin(u - 1.2), fwy=0.7 * math.sin(u - 1.1), fwx=0.2 * math.sin(u - 1.6),
-                nwy=0.3 * math.sin(u - 0.9), glow=beat, gape=0.15 + 0.15 * math.sin(u - 1.4))
+                nwy=0.3 * math.sin(u - 0.9), glow=beat, gape=0.15 + 0.15 * math.sin(u - 1.4),
+                sway=1.3 * math.sin(u - 2.0))   # le petit arbre suit la respiration, en retard
 
 
 def pose_at(T, action=None, t0=0.0):

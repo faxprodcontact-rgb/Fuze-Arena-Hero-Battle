@@ -39,6 +39,8 @@ ROCK = Mat('#d8cbae', '#ab9d8c', '#7b6f73', '#4c4258', '#2a2238', glint='#f8f0de
 MOSS = Mat('#d2dc76', '#98a84c', '#6a7a3e', '#42522e', '#283222')
 HOT = ('#7e4440', '#b4664a', '#d89062')                 # roche chauffée par la braise : ombre, ton, lumière
 LAVA = ['#fffbe4', '#ffe68a', '#ffb43a', '#f2701a', '#cc3a12', '#8a1a10']
+BARK = Mat('#dcb88e', '#a97e5c', '#7a5642', '#503444', '#2c1c32')      # le petit arbre de l'épaule : écorce
+LEAF = Mat('#e6f28c', '#a8c656', '#6e9a42', '#42683a', '#25402c')      # son feuillage (plus frais que la mousse)
 FACE = ('#c9bba4', '#a2948a', '#7a6d74', '#54485e')     # les plans du visage : lumière, mi-ton, ombre, creux
 
 GRD = 117.0                     # le sol (plante des pieds)
@@ -93,8 +95,18 @@ def sign_for(S, E, W):
     return best[1]
 
 
-NL = (math.dist(NS, NE0), math.dist(NE0, NW0))
-FL = (math.dist(FS, FE0), math.dist(FE0, FW0))
+# Avis du propriétaire (tour 2) : bras trop longs → raccourcis (golem trapu). Les gestes restent les mêmes : tout le
+# bras (et la cible du poignet donnée par l'animation) est ramené vers l'épaule d'un même facteur.
+ARM_K = (0.78, 0.72)            # bras proche, bras lointain
+
+
+def reach(S, p, k):
+    """Une cible de poignet (repère du dessin, bras d'origine) ramenée vers l'épaule S : bras raccourci d'un facteur k."""
+    return (S[0] + (p[0] - S[0]) * k, S[1] + (p[1] - S[1]) * k)
+
+
+NL = (math.dist(NS, NE0) * ARM_K[0], math.dist(NE0, NW0) * ARM_K[0])
+FL = (math.dist(FS, FE0) * ARM_K[1], math.dist(FE0, FW0) * ARM_K[1])
 SG_N, SG_F = sign_for(NS, NE0, NW0), sign_for(FS, FE0, FW0)
 FA0 = ang_of(FE0, FW0)
 NA0 = ang_of(NE0, NW0)
@@ -125,7 +137,7 @@ FACE_BOX = (63.0, 17.0, 99.0, 55.0)
 from visage import placer as _placer  # noqa: E402
 FACE_V = _placer(FACE_BOX, l_oeil=0.25)
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, glow=0.0, blink=0.0, heat=0.0, heal=0.0,
-            fw=FW0, frot=0.0, ffront=0.0, nw=NW0, nrot=0.0, nfront=0.0, gape=0.0, fistglow=0.0)
+            fw=FW0, frot=0.0, ffront=0.0, nw=NW0, nrot=0.0, nfront=0.0, gape=0.0, fistglow=0.0, sway=0.0)
 _GL = [0.0, 0.0]                 # l'embrasement en cours (lave), la chaleur (roche qui rougit)
 
 
@@ -399,6 +411,41 @@ def arm_details(S, E, W, gu, gf, fold, w):
     return det
 
 
+# ---------- le petit arbre planté sur l'épaule-rocher (avis du propriétaire, tour 2) ----------
+# Comme un arbuste poussé dans la mousse d'un rocher : un tronc court un peu tordu, racines qui s'étalent sur la
+# pierre, deux branches qui partent en V, un feuillage rond en trois boules (la plus grosse au milieu). Il se balance
+# autour de son pied (P['sway'], en degrés), le feuillage un peu plus que le tronc (souplesse).
+TREE_BASE = (42.6, 30.6)
+
+
+def tree_parts(fig, P):
+    from shapely.geometry import Point
+    from shapely.ops import unary_union
+    from outils import crpath, taper, union
+    trunk = union(
+        taper(crpath([(42.6, 31.7), (42.9, 28.6), (41.8, 25.4), (40.6, 20.4)], 12), 3.6, 1.8, wmid=2.4),
+        taper(crpath([(42.2, 27.0), (39.6, 25.0), (37.0, 23.4), (35.2, 21.2)], 10), 1.7, 0.9),
+        taper(crpath([(42.0, 26.2), (44.2, 24.6), (45.8, 23.0), (46.8, 21.0)], 10), 1.6, 0.9),
+        taper(crpath([(42.0, 31.2), (40.4, 31.0), (38.8, 31.8)], 6), 1.6, 0.6),          # les racines sur la pierre
+        taper(crpath([(43.2, 31.0), (44.8, 30.8), (46.6, 31.6)], 6), 1.5, 0.6),
+        step=0.35, smooth=0.5)
+    from shapely.geometry import box
+    trunk = geom_shape(PG(trunk).intersection(box(0, 0, 100, 31.3)), sharp_deg=70, simplify=0.02)   # le pied entre dans la mousse
+    blobs = [((40.6, 16.8), 5.2), ((35.2, 19.2), 3.6), ((46.0, 18.6), 3.8)]
+    g = unary_union([Point(c).buffer(r, 48) for c, r in blobs]).buffer(0.7).buffer(-0.7)
+    crown = geom_shape(g, sharp_deg=200, simplify=0.02)
+    bdet = [(sm([(42.2, 30.6), (43.4, 28.2), (43.0, 25.4), (43.9, 26.2), (44.2, 28.8), (43.8, 30.6)]), BARK.light, 0.55),
+            (sm([(41.3, 28.6), (40.9, 26.8), (41.7, 27.4)]), BARK.deep, 0.45)]
+    fig.part('trunk', trunk, BARK, cel=0.9, rim=0.5, cast=0.6, cast_on=['dome'], details=bdet)
+    ldet = []
+    for (cx, cy), r in blobs:
+        # chaque boule : sa lumière en haut à droite, un reflet ; le creux entre les boules reste dans l'ombre
+        ldet.append((ellipse(cx + 0.8, cy - 0.9, r * 0.74, r * 0.66), LEAF.light, 0.7))
+        ldet.append((ellipse(cx + 1.5, cy - 1.9, r * 0.32, r * 0.24), LEAF.hi, 0.65))
+    fig.part('crown', crown, LEAF, cel=1.1, rim=0.6, cast=1.0, cast_on=['trunk', 'dome'], details=ldet,
+             occl=(LEAF.deep, 0.18, 1.6))
+
+
 # ---------- le dessin ----------
 
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
@@ -432,7 +479,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ================================================================ le bras lointain
     def far_arm(front):
         S = mapp(UC, FS)
-        Wt = mapp(UC, P['fw'])
+        Wt = mapp(UC, reach(FS, P['fw'], ARM_K[1]))
         E, W = ik(S, Wt, FL[0], FL[1], SG_F)
         if P.get('fsw', 0) > 0.001:
             # le coude passe de l'autre côté (vers l'extérieur) : il glisse en raccourci, sans saut
@@ -560,7 +607,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ================================================================ le bras proche, l'épaule-rocher, le poing sur la hanche
     S = mapp(UC, NS)
-    Wt = mapp(U, P['nw'])
+    Wt = mapp(U, reach(NS, P['nw'], ARM_K[0]))
     E, W = ik(S, Wt, NL[0], NL[1], SG_N)
     shp, g, gu, gf = arm_shape(S, E, W, (20.5, 17.6, 19.0, 15.4), [('u', 0.5, 3.6, 8.2, 6.6), ('f', 0.45, -0.4, 9.6, 8.0)])
     fold = fold_of(S, E, W)
@@ -589,11 +636,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     dd += [(rk([(44.0, 30.4), (53.2, 32.2), (58.6, 36.8), (51.0, 36.0)], 0.8), ROCK.hi, 0.35)]
     dd += moss_patch([(21.0, 42.4), (24.0, 36.6), (30.4, 32.6), (38.4, 31.0), (44.0, 32.0), (41.4, 34.6), (35.0, 35.4), (29.4, 38.6), (25.4, 43.6)], 1.0)
     dd += moss_patch([(47.6, 33.4), (52.0, 33.4), (56.0, 36.2), (53.8, 37.4), (50.0, 36.6)], 0.9)
+    dd += moss_patch([(37.4, 31.6), (40.4, 30.0), (44.0, 29.8), (47.6, 31.0), (46.0, 33.2), (41.0, 33.6)], 1.0)   # au pied de l'arbre
     dd += lava_vein([(33.4, 43.6), (35.6, 46.0), (34.4, 48.6), (37.0, 51.6)], 0.85, 2.0)
     dd += pits([(45.0, 48.6, 0.7), (47.4, 47.2, 0.45)])
     dd += heat_tint(dome, tnt)
     fig.part('dome', dome, ROCK, grad=rock_grad(dome), cel=1.3, rim=0.8, cast=1.4, details=dd, occl=(ROCK.deep, 0.16, 2.8))
     fig.pose(['sb', 'sf', 'dome'], UC)
+    tree_parts(fig, P)
+    sw = P['sway']
+    fig.pose(['trunk'], mchain(UC, mR(sw, *TREE_BASE)))
+    fig.pose(['crown'], mchain(UC, mR(sw, *TREE_BASE), mR(sw * 0.6, 41.0, 22.0)))
 
     na = ang_of(E, W) + P['nrot']
     fist_parts(fig, 'nfist', W, na, -1, False, 1.12)
@@ -601,7 +653,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.ctx = dict(U=U, UC=UC, TOR=TOR, HEAD=HEAD, P=P, near=fig.ctx_near, far=fig.ctx_far,
                    chest=mapp(TOR, (72, 62)), head=mapp(HEAD, (84, 34)), mouth=mapp(HEAD, FACE_V['bouche'][:2]),
                    eyeN=mapp(HEAD, FACE_V['oeil_proche'][:2]), eyeF=mapp(HEAD, FACE_V['oeil_fond'][:2]),
-                   shN=mapp(UC, (38, 31)), shF=mapp(UC, (99, 32)))
+                   shN=mapp(UC, (24, 38)), shF=mapp(UC, (99, 32)))
     if fx:
         for f_ in fx:
             f_(fig, fig.ctx)

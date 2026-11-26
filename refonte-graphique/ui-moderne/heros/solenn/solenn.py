@@ -32,7 +32,7 @@ from atelier import Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, m
 from lib import Shape  # noqa: E402
 from visage import placer, verifier  # noqa: E402
 from outils import (rot, unit, add, sub, lerp, norm, ang_of, arm_shape, crpath, taper, curve_band, under,  # noqa: E402
-                    almond_pt, inter, FigN, leaf, poly, from_poly)
+                    almond_pt, inter, FigN, leaf, poly, from_poly, fused, cast_off, faded, ink_ring)
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
@@ -183,9 +183,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     W = wrist_of(G, ang)
     E = arm_ik(S, W, P['bend'])
 
-    # ---- la crinière : les flammes derrière la tête ----
-    fl_names = flames_back(fig, P)
-    fig.pose(fl_names, HEAD)
+    # (2e avis du propriétaire : les flammes de la crinière ne sont plus des morceaux posés derrière la tête, elles
+    # font UNE masse avec la calotte, peinte avec la tête : voir head())
 
     # ---- la masse, quand elle passe derrière la tête et le corps (armée dans le dos) ----
     if P['behind']:
@@ -207,10 +206,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     bl = belt(fig)
     fig.pose(bl, U)
 
-    # ---- le bouclier, devant le flanc lointain (le bras lointain caché derrière) ----
-    sd = shield(fig, P)
-    fig.pose(sd, SHD)
-
     # ---- les tresses, la barbe posée sur la poitrine ----
     bz = braids(fig, P)
     fig.pose(bz, BEARD)
@@ -221,6 +216,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hd = head(fig, P)
     fig.pose(hd, HEAD)
 
+    # ---- le bouclier, DEVANT la barbe et le flanc lointain (2e avis du propriétaire : « le bouclier doit passer
+    # devant ») ; le bras lointain caché derrière ; son propre contour le détache de la barbe ----
+    i0 = len(fig.parts)
+    sd = shield(fig, P)
+    fig.pose(sd, SHD)
+    front_ring(fig, 'shring', sd, SHD, i0)
+
     # ---- le bras proche : bras d'un seul tenant, l'épaulière par-dessus, la cubitière au coude ----
     am = near_arm(fig, S, E, W)
     pa = pauldron(fig)
@@ -228,9 +230,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(pa, mchain(mR(max(-30.0, min(40.0, 0.35 * dl)), *S), UC))
     elbow_cap(fig, S, E, W)
 
-    # ---- la masse (devant), le poing serré sur le manche ----
+    # ---- la masse (devant, avec son propre contour : elle passe devant la crinière), le poing serré sur le manche ----
     if not P['behind']:
-        mace(fig, P, G, ang, handle_only=False)
+        i0 = len(fig.parts)
+        mc = mace(fig, P, G, ang, handle_only=False)
+        front_ring(fig, 'mcring', mc, None, i0)
     if not P['behind']:
         mace(fig, P, G, ang, pommel_only=True)
     fist(fig, G, ang)
@@ -246,13 +250,24 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     return fig
 
 
+def front_ring(fig, name, names, M, i0):
+    """Le contour propre d'un objet tenu devant le corps (outils.ink_ring), glissé juste sous ses morceaux."""
+    shapes = [p.shape for p in fig.parts if p.name in names]
+    ring = ink_ring(shapes, 0.55 * fig.ow)
+    p = fig.part(name, ring, IRON, grad=(0, 0, 1, 1, [(0, fig.ink), (1, fig.ink)]), cel=0, rim=0, cast=0, outline=False)
+    fig.parts.remove(p)
+    fig.parts.insert(i0, p)
+    if M is not None:
+        p.M = M
+
+
 def _ua0():
     W = wrist_of(G0, ANG0)
     E = arm_ik(S0, W)
     return ang_of(sub(E, S0))
 
 
-# ---------------------------------------------------------------- la crinière (derrière la tête)
+# ---------------------------------------------------------------- les flammes de la crinière (fondues dans la masse des cheveux, head())
 def flame_locks(P):
     """Les flammes de la crinière (racine, contrôles, pointe, largeur), couchées vers l'arrière ; elles ondulent à la
     pointe (sw) et se dressent (flare)."""
@@ -268,20 +283,6 @@ def flame_locks(P):
         # la grande flamme du sommet : elle monte, puis se couche vers l'arrière
         ('flA', (64.0, 22.0), (63.0, 13.4), (56.0, 10.4 + 0.4 * w[0]), (47.6 + 0.8 * w[0] - 1.0 * fl, 12.4 + 0.8 * w[0] - 2.0 * fl), 13.0),
     ]
-
-
-def flames_back(fig, P):
-    names = []
-    for name, p0, p1, p2, p3, w0 in flame_locks(P):
-        sh = lock(p0, p1, p2, p3, w0, bulge=0.3)
-        grad = (p0[0] + 4, p0[1] - 2, p3[0], p3[1], [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)])
-        # le dessus éclairé, le dessous dans l'ombre (bordeaux), une mèche plus claire qui suit la courbe
-        mid = [lerp(lerp(p0, p1, t), lerp(p2, p3, t), t) for t in (0.2, 0.45, 0.7)]
-        fig.part(name, sh, HAIR, grad=grad, cel=0, rim=0.7, cast=1.0,
-                 details=[(under(sh, 0.6, -2.0), ('lin', p0[0], p0[1], p3[0], p3[1], [(0, HAIR.shadow), (1, HAIR.deep)]), 0.75),
-                          (ribbon([add(m, (0.3, -0.9)) for m in mid], [0.2, w0 * 0.12, 0.1]), HAIR.hi, 0.55)])
-        names.append(name)
-    return names
 
 
 # ---------------------------------------------------------------- les jambes et les bottes
@@ -495,8 +496,8 @@ def braids(fig, P):
 
 # les grappes de la barbe (cx, cy, rx, ry) : de haut en bas ; la grappe du milieu descend le plus bas
 LOBES = [
-    [(59.1, 54.0, 5.0, 5.6), (65.5, 55.0, 5.6, 5.8), (72.5, 55.6, 5.8, 6.0), (79.3, 54.6, 5.4, 5.6), (84.5, 53.4, 4.0, 4.8)],
-    [(60.1, 61.6, 4.6, 5.0), (66.1, 63.0, 5.2, 5.6), (72.9, 63.6, 5.6, 6.0), (79.1, 62.2, 5.0, 5.4), (83.9, 59.6, 3.6, 4.4)],
+    [(59.1, 54.0, 5.0, 5.6), (65.5, 55.0, 5.6, 5.8), (72.5, 55.6, 5.8, 6.0), (78.0, 56.2, 4.8, 5.2)],
+    [(60.1, 61.6, 4.6, 5.0), (66.1, 63.0, 5.2, 5.6), (72.9, 63.6, 5.6, 6.0), (79.1, 62.2, 5.0, 5.4), (82.8, 60.4, 3.4, 4.2)],
     [(62.5, 68.6, 4.2, 4.8), (67.9, 70.4, 4.8, 5.4), (74.1, 70.6, 4.8, 5.6), (79.1, 68.0, 4.0, 4.6)],
     [(65.9, 75.8, 3.8, 4.4), (70.9, 77.6, 4.2, 5.2), (76.1, 75.0, 3.6, 4.2)],
     [(70.5, 82.2, 2.8, 3.8)],
@@ -506,7 +507,9 @@ LOBES = [
 def beard(fig):
     """La barbe énorme posée sur la poitrine : une masse en V faite de grappes qui se chevauchent (reflet court en haut
     à droite de chaque grappe, dessous plus sombre). Une seule silhouette ; son haut passe sous la barbe des joues."""
-    shapes = [sm([(53.4, 48.0), (85.6, 47.4), (86.4, 53.0), (53.0, 54.0)])]
+    # (2e avis : « la barbe va trop loin » : son haut s'arrête au bord de la joue lointaine, elle s'élargit seulement
+    # sous la mâchoire)
+    shapes = [sm([(53.4, 48.0), (79.6, 47.6), (80.6, 53.0), (53.0, 54.0)])]
     for row in LOBES:
         for cx, cy, rx, ry in row:
             shapes.append(ellipse(cx, cy, rx, ry))
@@ -627,35 +630,70 @@ def head(fig, P):
                   (ellipse(nb[0] - 0.7, nb[1] + 1.3, 0.65, 0.3, 10), SKIN.deep, 0.6)])
 
     sw, fl = P['sw'], P['flare']
-    # ---- la crinière : UNE forme qui suit le crâne (dessus, arrière, nuque), la limite du front faite de mèches qui
-    # mordent sur le front ; les flammes (derrière) partent de dessous ----
+    # ---- la crinière (refaite au 2e avis du propriétaire : « liaison des cheveux », « liaison barbe cheveux ») :
+    # UNE seule masse, comme la chevelure corrigée de Kael : la calotte qui suit le crâne, les flammes couchées vers
+    # l'arrière, la mèche de devant, les favoris devant l'oreille et la barbe des joues, fondus en une silhouette (plus
+    # de calotte posée sur des flammes, plus de favori collé en crochet). Les flammes se détachent peu à peu de la
+    # masse : leurs couleurs, leur face du dessous et leur ombre apparaissent en fondu depuis la racine. ----
     cap = sm([(81.0, 35.0), (78.6, 35.8), (76.0, 37.0), (73.8, 38.8), (73.6, 36.2), (71.6, 35.4), (68.6, 36.4),
               (66.0, 38.0), (65.4, 36.0), (62.0, 35.4), (58.8, 37.2), (56.2, 38.8), (54.0, 39.6), (52.6, 42.6),
               (52.4, 47.4), (53.0, 52.0), (50.0, 53.6), (47.0, 50.6), (45.4, 43.6), (45.8, 35.0), (48.2, 28.0),
               (53.4, 22.6), (60.4, 19.4), (67.6, 19.0), (74.0, 21.0), (78.8, 24.8), (81.6, 29.6)],
              sharp=(3, 7), t=0.9)
-    cd = [(cap, ('rad', 74, 22, 30, 30, [(0, HAIR.hi), (0.3, HAIR.light), (0.65, HAIR.base), (1, HAIR.shadow)]), 1),
-          (sm([(46, 38), (52.6, 40), (52.4, 52), (48, 52)]), HAIR.deep, 0.45),
-          (sm([(45.0, 30.0), (54.0, 30.4), (58.0, 35.6), (53.4, 39.0), (46.0, 40.4)]), HAIR.shadow, 0.5),
-          # un seul reflet souple qui suit le crâne, et la mèche du côté qui file vers la nuque
-          (ribbon([(77.6, 26.0), (72.0, 22.6), (64.0, 22.0), (57.0, 24.6)], [0.1, 1.3, 1.0, 0.1]), HAIR.hi, 0.55),
-          (ribbon([(58.4, 31.0), (53.4, 35.0), (50.4, 41.6), (50.0, 48.0)], [0.1, 0.9, 0.8, 0.1]), HAIR.light, 0.4),
-          (ribbon([(70.0, 33.4), (63.0, 32.6), (57.6, 34.6)], [0.1, 0.7, 0.1]), HAIR.shadow, 0.45)]
-    # la mèche de devant : une langue de flamme née au bord du front, qui monte un peu en avant puis se couche vers
-    # l'arrière en suivant le crâne, la pointe relevée ; elle fait partie de la même forme que la calotte (aucune
-    # coupure à sa racine), son volume est peint dedans
+    # la mèche de devant : une langue de flamme née au bord du front, qui se couche vers l'arrière, la pointe relevée
     w1 = math.sin(sw + 0.7)
     fore = lock((73.0, 31.0), (82.6, 27.6), (81.4, 19.6 + 0.4 * w1), (73.0 - 0.8 * fl, 15.0 + 0.6 * w1 - 1.4 * fl), 10.0, bulge=0.35)
+    # les favoris et la barbe des joues : ils descendent de la tempe DEVANT l'oreille sans crochet (le bord du côté
+    # du visage est une seule courbe douce), suivent la mâchoire et, du côté lointain, s'arrêtent au bord de la joue
+    # (« la barbe va trop loin » : elle ne dépasse plus le visage)
+    cb = sm([(54.6, 37.8), (58.8, 37.0), (59.0, 40.6), (59.7, 44.2), (61.2, 47.2), (63.6, 49.0), (67.4, 50.6), (71.6, 51.0),
+             (75.0, 50.6), (77.8, 49.2), (79.6, 47.4), (80.4, 46.6), (80.5, 50.2), (79.0, 54.4), (75.8, 58.4),
+             (71.6, 61.0), (65.6, 60.4), (59.6, 57.4), (55.6, 52.6), (54.2, 46.0), (54.0, 41.4)], t=0.9)
+    locks = flame_locks(P)
+    strands = [(lock(p0, p1, p2, p3, w0, bulge=0.3), p0, p1, p2, p3, w0) for _, p0, p1, p2, p3, w0 in locks]
+    mass = fused([cap, fore, cb] + [s_[0] for s_ in strands])
+    cd = [(mass, ('rad', 74, 22, 30, 30, [(0, HAIR.hi), (0.3, HAIR.light), (0.65, HAIR.base), (1, HAIR.shadow)]), 1)]
+    # les flammes, de la plus basse à la plus haute : chacune se détache de la masse sur ses 6 premiers pixels
+    for sh_, p0, p1, p2, p3, w0 in strands:
+        fd_ = min(0.5, 6.0 / math.dist(p0, p3))
+        ax = (p0[0], p0[1], p3[0], p3[1])
+        c = 1.0
+        for (dx, dy), op in (((-c * 0.55, c * 1.25), 0.2), ((-c * 0.3, c * 0.6), 0.28)):
+            co = cast_off(sh_, dx, dy)
+            if co:
+                cd.append((co, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], fd_, op / 0.28),), 0.28))
+        cd.append((sh_, ('lin', p0[0] + 4, p0[1] - 2, p3[0], p3[1], faded([(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)], fd_)), 1))
+        cd.append((under(sh_, 0.6, -2.0), ('lin',) + ax + (faded([(0, HAIR.shadow), (1, HAIR.deep)], fd_, 0.75),), 1))
+        mid = [lerp(lerp(p0, p1, t), lerp(p2, p3, t), t) for t in (0.35, 0.55, 0.75)]
+        cd.append((ribbon([add(m, (0.3, -0.9)) for m in mid], [0.2, w0 * 0.12, 0.1]), HAIR.hi, 0.5))
+    # le volume de la calotte (par-dessus les racines des flammes : le crâne reste rond, sans bord)
+    cd += [(sm([(46, 38), (52.6, 40), (52.4, 52), (48, 52)]), HAIR.deep, 0.45),
+           (sm([(45.0, 30.0), (54.0, 30.4), (58.0, 35.6), (53.4, 39.0), (46.0, 40.4)]), HAIR.shadow, 0.35),
+           (ribbon([(77.6, 26.0), (72.0, 22.6), (64.0, 22.0), (57.0, 24.6)], [0.1, 1.3, 1.0, 0.1]), HAIR.hi, 0.55),
+           (ribbon([(58.4, 31.0), (53.4, 35.0), (50.4, 41.6), (50.0, 48.0)], [0.1, 0.9, 0.8, 0.1]), HAIR.light, 0.4),
+           (ribbon([(70.0, 33.4), (63.0, 32.6), (57.6, 34.6)], [0.1, 0.7, 0.1]), HAIR.shadow, 0.45)]
     fade = lambda c, a: ('lin', 74, 31, 82, 22, [(0, c, 0), (0.45, c, a), (1, c, a)])
     cd += [(fore.move(-0.6, 1.0), fade(HAIR.deep, 0.35), 1),
            (fore, ('lin', 74, 31, 82, 22, [(0, HAIR.base, 0), (0.4, HAIR.light, 1), (1, HAIR.hi, 1)]), 1),
            (under(fore, 0.8, -2.2), fade(HAIR.shadow, 0.6), 1),
            (ribbon([(80.0, 27.4), (81.0, 22.0), (77.6, 17.6)], [0.1, 0.9, 0.1]), HAIR.hi, 0.75)]
-    cap = union([cap, fore])
-    part('cap', cap, HAIR, grad=(80, 20, 50, 46, [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)]),
+    # la barbe des joues : sa lumière propre (claire du côté lointain, sombre près de l'oreille) apparaît en fondu
+    # sous la tempe, sans bord entre favori et cheveux
+    mk = fig.uid('m')
+    gk = fig.uid('l')
+    cd += [('<defs><linearGradient id="%s" gradientUnits="userSpaceOnUse" x1="0" y1="41" x2="0" y2="47">'
+            '<stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff"/></linearGradient>'
+            '<mask id="%s" maskUnits="userSpaceOnUse" x="30" y="20" width="70" height="50"><rect x="30" y="20" width="70" '
+            'height="50" fill="url(#%s)"/></mask></defs><path d="%s" fill="FILL" mask="url(#%s)"/>' % (gk, mk, gk, cb.d(), mk),
+            ('lin', 80, 47, 56, 58, [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)]), 1)]
+    cd += [(sm([(54, 42), (58, 43), (59, 50), (64, 58), (58, 58), (54.6, 52)]), HAIR.shadow, 0.45),
+           (ribbon([(57.0, 39.0), (57.6, 42.6), (58.0, 46.0), (59.6, 49.4)], [0.1, 0.6, 0.6, 0.1]), HAIR.light, 0.45),
+           (ribbon([(61.0, 53.0), (64.0, 54.6), (66.0, 57.6)], [0.1, 0.6, 0.1]), HAIR.deep, 0.35),
+           (ribbon([(76.0, 51.4), (78.4, 49.8), (79.6, 48.4)], [0.1, 0.7, 0.1]), HAIR.hi, 0.6)]
+    part('hair', mass, HAIR, grad=(80, 20, 50, 46, [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)]),
          cel=1.0, rim=0.7, cast=1.1, cast_on=['face', 'nose'], details=cd)
 
-    # ---- l'oreille proche (devant les cheveux de la nuque), son anneau d'or ----
+    # ---- l'oreille proche (devant les cheveux de la nuque, au bord arrière du favori), son anneau d'or ----
     ear = sm([(55.4, 41.6), (53.4, 40.6), (51.4, 41.6), (50.6, 44.6), (51.2, 47.8), (52.8, 49.8), (55.0, 49.4)], t=0.9)
     part('ear', ear, SKIN, grad=(55, 40, 51, 48, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]), cel=0.8, rim=0.5, cast=0.8,
          details=[(sm([(54.6, 42.8), (53.0, 42.2), (52.0, 43.6), (52.2, 46.4), (53.4, 48.0), (54.4, 46.2), (53.4, 44.6)]), SKIN.shadow, 0.7),
@@ -663,18 +701,6 @@ def head(fig, P):
     ring = ellipse(52.6, 50.8, 1.9, 1.9).hole(ellipse(52.6, 50.8, 1.05, 1.05))
     part('earring', ring, GOLD, grad=(54.5, 48.9, 50.7, 52.7, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), cel=0.3, rim=0.3,
          cast=0.6, details=[(ellipse(53.6, 49.6, 0.5, 0.3, -40), '#ffffff', 0.9)])
-
-    # ---- les favoris devant l'oreille et la barbe des joues et de la mâchoire (sur le visage) ----
-    cb = sm([(55.0, 38.6), (57.4, 38.2), (58.4, 40.4), (57.9, 42.4), (59.1, 44.2), (59.3, 46.2), (60.8, 47.6), (63.4, 49.0), (67.4, 50.6), (71.6, 51.0),
-             (75.0, 50.6), (78.0, 49.4), (79.8, 47.6), (81.0, 47.2), (81.6, 50.0), (80.2, 54.0), (76.6, 58.4),
-             (71.6, 61.0), (65.6, 60.4), (59.6, 57.4), (55.6, 52.6), (54.2, 46.0), (54.0, 41.4)], t=0.9)
-    cbd = [(sm([(54, 40), (58, 41), (59, 50), (64, 58), (58, 58), (54.6, 52)]), HAIR.shadow, 0.5),
-           (ribbon([(56.2, 40.4), (57.0, 42.6), (56.6, 44.8)], [0.1, 0.6, 0.1]), HAIR.light, 0.5),
-           (ribbon([(57.2, 46.6), (58.4, 49.0), (60.6, 51.0)], [0.1, 0.6, 0.1]), HAIR.light, 0.45),
-           (ribbon([(61.0, 53.0), (64.0, 54.6), (66.0, 57.6)], [0.1, 0.6, 0.1]), HAIR.deep, 0.35),
-           (ribbon([(76.0, 51.4), (78.8, 49.6), (80.4, 48.6)], [0.1, 0.7, 0.1]), HAIR.hi, 0.6)]
-    part('cbeard', cb, HAIR, grad=(80, 47, 56, 58, [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)]),
-         cel=1.0, rim=0.6, cast=1.0, cast_on=['face', 'ear'], details=cbd)
 
     # ---- la bouche, centrée sous le nez (par-dessus la barbe du menton, sous la moustache) : fermée, mâchoire serrée
     # (on voit la lèvre du bas) ; ouverte pour le cri du défi ----
@@ -707,7 +733,7 @@ def head(fig, P):
                   (73.1, 53.0), (71.7, 53.2), (70.1, 53.0), (67.3, 53.6), (64.7, 55.0), (62.5, 57.0), (62.7, 54.2),
                   (64.5, 51.8), (67.9, 50.0)], sharp=(4, 13), t=0.9)
     part('mus', mus, HAIR, grad=(77, 50, 62, 56, [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)]),
-         cel=0.9, rim=0.6, cast=1.0, cast_on=['face', 'cbeard', 'beard', 'mouth'],
+         cel=0.9, rim=0.6, cast=1.0, cast_on=['face', 'hair', 'beard', 'mouth'],
          details=[(ribbon([(71.6, 50.0), (71.7, 51.6), (71.6, 53.4)], [0.1, 0.6, 0.1]), HAIR.deep, 0.6),
                   (ribbon([(72.9, 50.6), (75.9, 51.2), (78.1, 53.4)], [0.1, 0.8, 0.1]), HAIR.hi, 0.65),
                   (ribbon([(70.1, 50.6), (66.9, 51.4), (64.3, 53.6)], [0.1, 0.7, 0.1]), HAIR.light, 0.55),
