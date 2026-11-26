@@ -1,5 +1,8 @@
 // Un donjon : une échelle de niveaux. On combat le niveau suivant (obligatoire pour avancer),
 // ou on « balaie » le dernier niveau gagné (récompense tout de suite, sans combat). 3 essais par jour.
+// Style moderne : le décor du donjon en tête (grand picto, essais du jour), puis un chemin de niveaux (pastille numérotée
+// reliée aux autres, carte claire, une seule action sur la carte qui en a une).
+import '../sections/aventure.css';
 import { sceneVar } from '../fond-image';
 import { DUNGEON_CLAN } from '../../look';
 import { DUNGEON_ATTEMPTS_PER_DAY, DUNGEON_LEVELS, type DungeonKind } from '../../../core/data/modes';
@@ -7,14 +10,14 @@ import { fmt, t } from '../../i18n';
 import { dungeonAttemptsLeft, dungeonPlan, dungeonPower, dungeonRewardPreview, sweepDungeon } from '../../state/actions';
 import { teamPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import { Btn, Cur, Icon, Page } from '../kit';
+import { Art, Btn, Cur, Icon, Page } from '../kit';
 import { open, prepare } from '../nav';
-import { DUNGEON_ICON } from './adventure';
+import { DUNGEON_ART, Tries } from './adventure';
 
 function Reward({ kind, level }: { kind: DungeonKind; level: number }) {
   const r = dungeonRewardPreview(kind, level);
   return (
-    <span class="row gap-s center-y">
+    <span class="av-reward">
       {r.gold !== undefined && <Cur k="gold" n={r.gold} />}
       {r.essence !== undefined && <Cur k="essence" n={r.essence} />}
       {r.items !== undefined && <span class="cur"><Icon name="weapon" size={18} /> ×{r.items}</span>}
@@ -33,32 +36,38 @@ export function DungeonPage({ kind }: { kind: DungeonKind }) {
 
   return (
     <Page title={t(`dungeon.${kind}`)}>
-      <div class={`dungeon-head dungeon-${kind}`} style={sceneVar(DUNGEON_CLAN[kind])}>
-        <Icon name={DUNGEON_ICON[kind]} size={40} />
-        <span class={`dungeon-tries big${left ? '' : ' none'}`}>{t('dungeon.tries')} {left} / {DUNGEON_ATTEMPTS_PER_DAY}</span>
+      <div class={`av-scene av-dhead dungeon-${kind}`} style={sceneVar(DUNGEON_CLAN[kind])}>
+        <Art name={DUNGEON_ART[kind]} class="av-dhead-art" />
+        <span class="av-dhead-side">
+          <span class="av-chip">{t('dungeon.tries')}</span>
+          <Tries left={left} max={DUNGEON_ATTEMPTS_PER_DAY} />
+        </span>
       </div>
-      <div class="dungeon-ladder">
+      <div class="av-ladder">
         {rows.map((level) => {
           const state = level > next ? 'locked' : level === next ? 'next' : level === done ? 'last' : 'old';
           const need = dungeonPower(level);
           return (
-            <div class={`dungeon-step ${state}`}>
-              <div class="grow">
-                <strong>{state === 'locked' && <Icon name="lock" size={16} />}{t('dungeon.level', { n: level })}</strong>
-                <div class="row gap-s center-y">
-                  <span class={`power-chip ${mine >= need ? 'ok' : 'low'}`}><Icon name="power" size={14} />{fmt(need)}</span>
-                  <Reward kind={kind} level={level} />
+            <div class={`av-step ${state}`}>
+              <span class="av-step-node">{state === 'locked' ? <Icon name="lock" size={18} /> : level}</span>
+              <div class="av-step-card">
+                <div class="av-step-main">
+                  <strong>{t('dungeon.level', { n: level })}</strong>
+                  <span class="av-step-info">
+                    <span class={`av-power ${mine >= need ? 'ok' : 'low'}`}><Icon name="power" size={15} /><b>{fmt(need)}</b></span>
+                    <Reward kind={kind} level={level} />
+                  </span>
                 </div>
+                {state === 'next' && (
+                  <Btn kind="green" small disabled={!left} onClick={() => { const p = dungeonPlan(kind); if (p) prepare(p); }}>{t('fight')}</Btn>
+                )}
+                {state === 'last' && (
+                  <Btn kind="gold" small disabled={!left} onClick={() => {
+                    const gain = sweepDungeon(kind);
+                    if (gain) open({ type: 'gain', title: `${t(`dungeon.${kind}`)} · ${t('dungeon.level', { n: level })}`, gain });
+                  }}>{t('dungeon.sweep')}</Btn>
+                )}
               </div>
-              {state === 'next' && (
-                <Btn kind="red" small disabled={!left} onClick={() => { const p = dungeonPlan(kind); if (p) prepare(p); }}>{t('fight')}</Btn>
-              )}
-              {state === 'last' && (
-                <Btn kind="gold" small disabled={!left} onClick={() => {
-                  const gain = sweepDungeon(kind);
-                  if (gain) open({ type: 'gain', title: `${t(`dungeon.${kind}`)} · ${t('dungeon.level', { n: level })}`, gain });
-                }}>» {t('dungeon.sweep')}</Btn>
-              )}
             </div>
           );
         })}

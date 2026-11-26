@@ -1,0 +1,280 @@
+/* Section Aventure, style moderne (26/11/2026) : l'onglet Aventure (tuiles des modes) et chaque mode (tour, missions,
+   donjons, boss du jour, arène, Colisée). Classes « av- » propres à la section (aucune règle commune n'est touchée).
+   Principe : une carte = le décor du mode (image fixe du clan, variable --scene posée par fond-image.ts), son picto, son nom,
+   UNE information (étage, essais, ligue…) et une seule action. Couleurs à rôle : vert = l'action principale,
+   azur = ce qui est en cours / choisi, or = les récompenses, corail = fermé ou insuffisant. */
+
+:root {
+  --av-text: #221c45; --av-muted: #736d97; --av-line: #e7e3f6;
+  --av-glass: #0d0826b8; --av-ring: inset 0 0 0 1px #ffffff2e;
+  --av-ok: #1f9d48; --av-low: #e23b52;
+  --av-azure: linear-gradient(180deg, #6cc4ff 0%, #2f8cff 60%, #2a78f0 100%);
+  --av-gold: linear-gradient(180deg, #ffe680 0%, #ffc22e 55%, #ffab1a 100%);
+  --av-green: linear-gradient(180deg, #7cf08a 0%, #38cc5c 50%, #25b34a 100%);
+  --av-ico-back: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M12.5 4l-6 6 6 6' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --av-ico-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4.5 10.5l3.8 3.8 7.2-8' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  --av-ico-next: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M7.5 4l6 6-6 6' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* ==================== pièces communes de la section ==================== */
+/* une information courte : une pilule de verre sombre (picto + chiffre) */
+.av-chip { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 9px; border-radius: 999px; background: var(--av-glass);
+  box-shadow: var(--av-ring); font: 400 12.5px/1 var(--font-title); color: #fff; text-shadow: none; white-space: nowrap;
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.av-chip:has(> .icon) { padding-left: 4px; }
+.av-chip.gold { background: var(--av-gold); color: #5a2c00; box-shadow: inset 0 1.5px 0 #ffffff80, 0 2px 8px #ffc22e66; }
+.av-chip.off { color: #c3bcea; }
+.av-chip.league-bronze { color: #ffbe8a; } .av-chip.league-silver { color: #eef2fb; } .av-chip.league-gold { color: #ffe27a; }
+.av-chip.league-platinum { color: #9ff3e3; } .av-chip.league-diamond { color: #a9dcff; }
+
+/* les essais du jour : des pastilles (vertes = restants) et le compte */
+.av-tries { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px 0 8px; border-radius: 999px; background: var(--av-glass);
+  box-shadow: var(--av-ring); text-shadow: none; flex: none; }
+.av-tries i { width: 9px; height: 9px; border-radius: 50%; background: #ffffff38; }
+.av-tries i.on { background: var(--av-green); box-shadow: 0 0 6px #38cc5c99; }
+.av-tries b { margin-left: 3px; font: 400 14px/1 var(--font-title); color: #fff; }
+.av-tries.none b { color: #c3bcea; }
+
+/* la force : verte si elle suffit, corail sinon */
+.av-power { display: inline-flex; align-items: center; gap: 3px; font: 400 16px/1 var(--font-title); text-shadow: none; white-space: nowrap; }
+.av-power.ok b { color: var(--av-ok); } .av-power.low b { color: var(--av-low); }
+.av-power small { margin-left: 3px; font-size: 0.86em; color: var(--av-muted); }
+
+/* une barre de progression arrondie */
+.av-progress { position: relative; height: 18px; border-radius: 999px; background: #e7e3f6; overflow: hidden; box-shadow: inset 0 1px 3px #12083a33; }
+.av-progress > span { display: block; height: 100%; border-radius: 999px; background: var(--av-azure); box-shadow: inset 0 1.5px 0 #ffffff66; }
+.av-progress > b { position: absolute; inset: 0; display: grid; place-items: center; font: 400 12px/1 var(--font-title); color: #1d2a6b; }
+.av-progress.gold { height: 10px; background: #ffffff26; box-shadow: inset 0 1px 2px #0006; }
+.av-progress.gold > span { background: linear-gradient(90deg, #ffb21f, #ffe27a); box-shadow: 0 0 8px #ffc22e80; }
+
+/* visages ronds d'une équipe (missions en cours, adversaires, Colisée) */
+.av-faces { display: flex; align-items: center; }
+.av-face { width: 44px; height: 44px; flex: none; border-radius: 50%; overflow: hidden; margin-left: -8px;
+  background: radial-gradient(circle at 50% 30%, #8f7bff, #3a2c99 75%); box-shadow: 0 0 0 2px #fff, 0 2px 6px #0006; }
+.av-face:first-child { margin-left: 0; }
+.av-face img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 10%; }
+.av-face.unknown { display: grid; place-items: center; background: radial-gradient(circle at 50% 30%, #6b5a96, #2e2452 75%); }
+.av-faces.small .av-face { width: 30px; height: 30px; margin-left: -6px; box-shadow: 0 0 0 1.5px #fff, 0 1px 4px #0005; }
+.av-faces.small .av-face:first-child { margin-left: 0; }
+
+/* un décor de mode : l'image du clan, aux coins arrondis (pixel art agrandi sans flou) */
+.av-scene { position: relative; overflow: hidden; border-radius: 18px; background: #3d2f8a var(--scene) 50% var(--sy, 52%) / cover no-repeat;
+  image-rendering: pixelated; box-shadow: inset 0 0 0 1px #0000001f; }
+/* centré par inset + margin auto : « translate » est pris par l'animation float */
+.av-scene-art { display: block; position: absolute; inset: 0; margin: auto; width: 120px; height: 120px;
+  filter: drop-shadow(0 8px 6px #0009); animation: float 3.4s ease-in-out infinite; }
+.av-scene-name { position: absolute; left: 10px; bottom: 10px; padding: 5px 14px 6px; border-radius: 999px; background: var(--av-glass); box-shadow: var(--av-ring);
+  font: 400 18px/1 var(--font-title); color: #fff; text-shadow: 0 2px 0 #0a062099; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
+/* ==================== l'onglet Aventure : six tuiles-images ==================== */
+.av-tiles { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.av-tile { --tile: #7c4dff; position: relative; isolation: isolate; min-height: 0; padding: 0; border: 0; border-radius: 22px; color: #fff; text-align: left;
+  background: none; box-shadow: 0 8px 18px #05021a73; transition: transform 0.1s; -webkit-tap-highlight-color: transparent; }
+.av-tile:active { transform: scale(0.97); }
+/* le décor (dessous) puis le voile de la couleur du mode en bas, qui porte le texte, et le liseré clair */
+.av-tile::before, .av-tile::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+.av-tile::before { z-index: -2; background: #3d2f8a var(--scene) 50% var(--sy, 50%) / cover no-repeat; }
+.av-tile::after { z-index: -1;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--tile) 22%, #0000) 0%, #0000 30%, color-mix(in srgb, var(--tile) 55%, #0c0822e6) 100%);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--tile) 45%, #ffffff66), inset 0 2px 0 #ffffff59; }
+.av-tile-art { display: block; position: absolute; top: 6px; right: 6px; width: auto; height: min(92px, calc(100% - 50px)); aspect-ratio: 1;
+  filter: drop-shadow(0 5px 5px #0000008c); animation: float 3.4s ease-in-out infinite; }
+.av-tile:nth-child(2n) .av-tile-art { animation-delay: -1.1s; } .av-tile:nth-child(3n) .av-tile-art { animation-delay: -2.2s; }
+.av-tile-text { position: absolute; left: 11px; right: 10px; bottom: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.av-tile-name { max-width: 100%; font: 400 17px/1.05 var(--font-title); color: #fff; text-shadow: 0 2px 0 #0a0620a6, 0 0 8px #0a062080;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 1px; }
+.av-tile .locked { height: 22px; padding: 0 9px 0 4px; border-radius: 999px; background: #0d0826e0; box-shadow: var(--av-ring); color: #fff; font: 400 12.5px/1 var(--font-title); text-shadow: none; }
+.av-tile .locked .icon { width: 16px !important; height: 16px !important; }
+.av-tile.is-locked::before { filter: grayscale(1) brightness(0.55); }
+.av-tile.is-locked::after { background: linear-gradient(180deg, #0c082233, #0c0822d9); box-shadow: inset 0 0 0 2px #ffffff26; }
+.av-tile.is-locked .av-tile-art { filter: grayscale(0.85) brightness(0.8) drop-shadow(0 5px 5px #0000008c); animation: none; }
+.av-tile.is-locked .av-tile-name { color: #d8d3ee; }
+.av-new { position: absolute; top: 9px; left: 10px; padding: 3px 9px 4px; border-radius: 999px; background: linear-gradient(180deg, #ff8a96, #ff4d63);
+  box-shadow: 0 3px 8px #ff4d6366, inset 0 1.5px 0 #ffffff66; font: 400 11.5px/1 var(--font-title); color: #fff; text-shadow: none; }
+.av-tile > .dot { z-index: 2; top: -4px; right: -4px; }
+/* la couleur de chaque mode et l'endroit du décor qu'on montre */
+.av-tile.tile-tower { --tile: #8b5cf6; } .av-tile.tile-missions { --tile: #14b8a6; --sy: 46%; } .av-tile.tile-dungeons { --tile: #e07b39; --sy: 46%; }
+.av-tile.tile-dailyBoss { --tile: #ef4458; } .av-tile.tile-arena { --tile: #3b82f6; --sy: 44%; } .av-tile.tile-defense { --tile: #f5a524; --sy: 48%; }
+@media (max-height: 700px) {
+  .av-tiles { gap: 10px; }
+  .av-tile-art { top: 4px; right: 4px; height: min(70px, calc(100% - 46px)); }
+  .av-tile-name { font-size: 15px; }
+  .av-tile-text { bottom: 8px; left: 9px; gap: 4px; }
+  .av-tile .av-chip, .av-tile .locked { height: 20px; font-size: 11.5px; }
+}
+
+/* ==================== un mode : la tête et les panneaux ==================== */
+.adv-scroll > .screen.av-sub { flex: 1 0 auto; gap: 10px; }
+.av-head { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 5px 8px 5px 5px; border-radius: 999px; background: #120b33cc;
+  box-shadow: inset 0 0 0 1px #ffffff26, 0 6px 16px #05021a59; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); flex: none; }
+.av-back { width: 36px; height: 36px; flex: none; border: 0; padding: 0; border-radius: 50%; background: var(--av-ico-back) 45% 50% / 16px no-repeat, var(--av-azure);
+  box-shadow: inset 0 1.5px 0 #ffffff73, inset 0 -3px 0 #1d56d6, 0 3px 8px #2f8cff59; }
+.av-back:active { transform: scale(0.92); }
+.av-head h1 { flex: 1; min-width: 0; margin: 0; padding: 0 0 1px; font: 400 20px/1 var(--font-title); color: #fff; text-shadow: 0 2px 0 #0a062099;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.av-head-side { display: flex; align-items: center; gap: 6px; flex: none; }
+.av-head-side > .cur { height: 28px; padding: 0 12px 0 4px; border-radius: 999px; background: #ffffff1a; box-shadow: var(--av-ring); color: #fff; font: 400 15px/1 var(--font-title); text-shadow: none; }
+
+.av-panel { flex: 1 0 auto; display: flex; flex-direction: column; gap: 12px; padding: 10px 10px 12px; border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #f4f2fc 100%); box-shadow: 0 12px 30px #05021a73; color: var(--av-text); text-shadow: none; }
+.av-grow { flex: 1 1 auto; min-height: 150px; }
+.av-panel > .btn { flex: none; }
+.av-action { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.av-action > .av-power, .av-action > .av-record { align-self: center; }
+.av-panel .av-power { font-size: 19px; }
+/* les récompenses : des pilules dorées */
+.av-rewards { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
+.av-rewards .cur, .av-row-side > .cur, .av-reward .cur { padding: 3px 11px 3px 4px; border-radius: 999px; background: #fff4d6; color: #7a4a00;
+  box-shadow: inset 0 0 0 1px #ffdc8f; font: 400 15px/1 var(--font-title); }
+.av-rewards .cur { font-size: 17px; padding: 4px 14px 4px 5px; }
+.av-rewards .cur .icon { width: 26px !important; height: 26px !important; }
+
+/* ==================== la tour : le chemin des étages ==================== */
+.av-floors { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 16px 12px; min-height: 250px; }
+/* le fil qui relie un étage au suivant */
+.av-floor + .av-floor::before { content: ''; position: absolute; bottom: 100%; left: 50%; width: 6px; height: 9px; margin-left: -3px; background: #ffffffb3; }
+.av-floor { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; width: 62%; height: 38px; border-radius: 14px;
+  font: 400 16px/1 var(--font-title); background: #ffffffd9; color: #4a4373; box-shadow: 0 4px 10px #0a062059; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.av-floor.up .icon { position: absolute; right: 8px; top: 50%; translate: 0 -50%; }
+.av-floor.up:nth-child(1) { opacity: 0.75; } .av-floor.up:nth-child(2) { opacity: 0.88; }
+.av-floor.now { width: 80%; height: 56px; font-size: 21px; color: #fff; background: var(--av-azure); text-shadow: 0 2px 0 #1a47b8;
+  box-shadow: inset 0 2px 0 #ffffff73, inset 0 -4px 0 #1d56d6, 0 0 0 3px #ffffffcc, 0 10px 24px #2f8cff8c; }
+.av-floor.now .art { margin-left: -10px; filter: drop-shadow(0 3px 3px #0006); }
+.av-floor.done { width: 56%; height: 34px; font-size: 15px; color: #fff; background: linear-gradient(180deg, #5fdc78, #25b34a); text-shadow: 0 1px 0 #12823a; opacity: 0.9; }
+.av-check { width: 18px; height: 18px; flex: none; background: var(--av-ico-check) center / contain no-repeat; }
+
+/* ==================== missions ==================== */
+.av-list { display: flex; flex-direction: column; gap: 8px; }
+.av-row { position: relative; display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 8px 10px 8px 8px; border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #f7f5fd); color: var(--av-text); text-shadow: none; box-shadow: 0 5px 14px #05021a59; }
+.av-row-icon { width: 52px; height: 52px; flex: none; display: grid; place-items: center; border-radius: 15px; background: linear-gradient(160deg, #eef0ff, #dcd6f5);
+  box-shadow: inset 0 0 0 1px #00000010; }
+.av-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.av-row-main > strong { font: 400 16px/1.1 var(--font-title); color: var(--av-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.av-row-main > strong small { font: 600 12px var(--font); color: var(--av-muted); }
+.av-meta { display: flex; flex-wrap: wrap; gap: 3px 10px; font: 600 12.5px/1.2 var(--font); color: var(--av-muted); }
+.av-meta > span { display: inline-flex; align-items: center; gap: 3px; }
+.av-row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex: none; }
+.av-row-side > .cur { font-size: 14px; padding: 2px 10px 2px 3px; }
+.av-mission.ready { background: linear-gradient(180deg, #fffaf0, #fff4dc); box-shadow: 0 0 0 2.5px #ffc22e, 0 6px 16px #ffc22e4d; }
+.av-mission.ready .av-row-icon { background: linear-gradient(160deg, #fff1c4, #ffd76e); }
+.av-mission.running .av-row-icon { background: linear-gradient(160deg, #e3f1ff, #c4defd); }
+.av-mission .av-progress { margin-right: 4px; }
+
+/* ==================== donjons ==================== */
+.av-dungeons { flex: 1 0 auto; gap: 12px; }
+.av-dcard { position: relative; isolation: isolate; flex: 1 1 0; min-height: 96px; display: flex; align-items: center; gap: 12px; padding: 10px 14px 10px 10px;
+  border: 0; border-radius: 22px; background: none; color: #fff; text-align: left; box-shadow: 0 8px 18px #05021a73; transition: transform 0.1s; }
+.av-dcard:active { transform: scale(0.98); }
+.av-dcard::before, .av-dcard::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
+.av-dcard::before { z-index: -2; background: #3d2f8a var(--scene) 50% 48% / cover no-repeat; }
+.av-dcard::after { z-index: -1; background: linear-gradient(90deg, #0d0826e0 0%, #0d0826a6 42%, #0d082600 78%);
+  box-shadow: inset 0 0 0 2px #ffffff33, inset 0 2px 0 #ffffff4d; }
+.av-dcard-art { display: block; width: 78px; height: 78px; flex: none; filter: drop-shadow(0 5px 5px #0000008c); }
+.av-dcard-text { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.av-dcard-text strong { font: 400 20px/1.05 var(--font-title); text-shadow: 0 2px 0 #0a0620a6; }
+.av-dcard > .dot { z-index: 2; top: -4px; right: -4px; }
+.av-dcard.dungeon-essence::before { background-position: 50% 40%; }
+
+/* la page d'un donjon : le décor en tête, puis le chemin des niveaux */
+.av-dhead { flex: none; height: 128px; display: flex; align-items: flex-end; justify-content: flex-end; padding: 12px; border-radius: 22px;
+  box-shadow: inset 0 0 0 2px #ffffff33, 0 8px 18px #05021a73; }
+.av-dhead::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #0d082600 40%, #0d0826a6 100%); }
+.av-dhead-art { display: block; position: absolute; left: 12px; top: 0; bottom: 0; margin: auto 0; width: 104px; height: 104px; z-index: 1;
+  filter: drop-shadow(0 6px 6px #0000008c); animation: float 3.4s ease-in-out infinite; }
+.av-dhead-side { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.av-ladder { position: relative; display: flex; flex-direction: column; gap: 10px; }
+/* le fil qui relie les pastilles des niveaux */
+.av-ladder::before { content: ''; position: absolute; left: 18px; top: 24px; bottom: 24px; width: 5px; border-radius: 999px; background: #ffffff4d; }
+.av-step { position: relative; display: flex; align-items: center; gap: 10px; }
+.av-step-node { position: relative; z-index: 1; width: 40px; height: 40px; flex: none; display: grid; place-items: center; border-radius: 50%;
+  font: 400 17px/1 var(--font-title); color: #fff; text-shadow: 0 1px 0 #0006; background: linear-gradient(180deg, #6a5fae, #463b85);
+  box-shadow: 0 0 0 3px #ffffff66, 0 3px 8px #05021a73; }
+.av-step-card { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 62px; padding: 9px 10px 9px 14px; border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff, #f7f5fd); color: var(--av-text); text-shadow: none; box-shadow: 0 5px 14px #05021a59; }
+.av-step-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.av-step-main strong { font: 400 17px/1 var(--font-title); color: var(--av-text); }
+.av-step-info { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.av-reward { display: inline-flex; gap: 6px; }
+.av-reward .cur { font-size: 13.5px; padding: 2px 9px 2px 3px; }
+.av-step.next .av-step-node { background: var(--av-azure); box-shadow: 0 0 0 3px #fff, 0 0 16px #2f8cffb3; }
+.av-step.next .av-step-card { box-shadow: 0 0 0 2.5px #2f8cff, 0 8px 18px #2f8cff59; }
+.av-step.last .av-step-node { background: var(--av-gold); color: #5a2c00; text-shadow: none; box-shadow: 0 0 0 3px #fff, 0 3px 8px #05021a73; }
+.av-step.old .av-step-node { background: var(--av-green); }
+.av-step.old .av-step-card { opacity: 0.82; }
+.av-step.locked .av-step-node { background: #2e2560; box-shadow: 0 0 0 3px #ffffff40; }
+.av-step.locked .av-step-card { background: #ffffffc7; }
+.av-step.locked .av-step-main strong { color: var(--av-muted); }
+
+/* ==================== boss du jour ==================== */
+.av-boss .av-grow { min-height: 210px; --sy: 62%; }
+.av-boss-img { position: absolute; left: 50%; bottom: 6%; height: min(84%, 280px); width: auto; max-width: 96%; transform: translateX(-50%) scaleX(-1);
+  filter: drop-shadow(0 10px 8px #0009); }
+.av-track { position: relative; height: 12px; margin: 6px 16px 30px; }
+.av-track-bar { height: 12px; border-radius: 999px; background: #e7e3f6; box-shadow: inset 0 1px 3px #12083a33; overflow: hidden; }
+.av-track-bar > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ffb21f, #ffe27a); box-shadow: inset 0 1.5px 0 #ffffff80; }
+.av-tier { position: absolute; top: -3px; translate: -50% 0; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.av-tier > i { width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: inset 0 0 0 3px #cfc8ea, 0 1px 3px #12083a40; }
+.av-tier .icon { margin-top: 1px; filter: grayscale(1); opacity: 0.55; }
+.av-tier small { font: 400 11.5px/1 var(--font-title); color: var(--av-muted); }
+.av-tier.on > i { background: var(--av-gold); box-shadow: inset 0 0 0 2px #fff, 0 0 8px #ffc22e; }
+.av-tier.on .icon { filter: none; opacity: 1; }
+.av-tier.on small { color: #c86a00; }
+.av-record { display: inline-flex; align-items: center; gap: 5px; font: 600 14px var(--font); color: var(--av-muted); }
+.av-record b { font: 400 17px var(--font-title); color: var(--av-text); }
+
+/* ==================== arène ==================== */
+.av-arena { flex: 1 0 auto; display: flex; flex-direction: column; gap: 10px; }
+.av-league { display: flex; align-items: center; gap: 12px; padding: 10px 16px 12px 10px; border-radius: 22px; color: #fff; text-shadow: none;
+  background: linear-gradient(135deg, #4a39a8 0%, #2a1f6a 100%); box-shadow: inset 0 0 0 1px #ffffff26, inset 0 2px 0 #ffffff26, 0 8px 18px #05021a66; }
+.av-league > .icon { filter: drop-shadow(0 4px 4px #0008); }
+.av-league-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.av-league-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.av-league-top strong { font: 400 22px/1 var(--font-title); text-shadow: 0 2px 0 #0a062099; }
+.av-league-top span { font: 600 13px var(--font); color: #c9c2ef; white-space: nowrap; }
+.av-league-top b { font: 400 17px var(--font-title); color: #fff; }
+.av-league-next { display: flex; align-items: center; gap: 6px; }
+.av-league-next .av-progress { flex: 1; }
+.av-league-next .icon { opacity: 0.85; }
+.league-bronze .av-league-top strong { color: #ffbe8a; } .league-silver .av-league-top strong { color: #eef2fb; } .league-gold .av-league-top strong { color: #ffe27a; }
+.league-platinum .av-league-top strong { color: #9ff3e3; } .league-diamond .av-league-top strong { color: #a9dcff; }
+/* une commande segmentée : le choix en azur */
+.av-seg { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 4px; border-radius: 16px; background: #0d0826b3; box-shadow: var(--av-ring); flex: none; }
+.av-seg button { display: flex; align-items: center; justify-content: center; gap: 6px; height: 38px; border: 0; border-radius: 12px; background: none;
+  font: 400 16px/1 var(--font-title); color: #c3bcea; text-shadow: none; }
+.av-seg button.on { color: #fff; background: var(--av-azure); text-shadow: 0 1px 0 #1a47b8; box-shadow: inset 0 1.5px 0 #ffffff66, 0 3px 8px #1d56d659; }
+.av-seg button:not(.on) .icon { filter: saturate(0.6); opacity: 0.8; }
+.av-bar-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.av-opponent { min-height: 60px; padding: 8px 10px 8px 14px; }
+.av-opponent .av-row-main { gap: 6px; }
+
+/* ==================== Colisée (les règles restent à construire) ==================== */
+.av-colisee .av-grow { min-height: 200px; --sy: 56%; }
+.av-colisee .av-scene-art { width: 132px; height: 132px; }
+.av-duel { display: flex; align-items: center; justify-content: center; gap: 16px; padding: 4px 0; }
+.av-vs { font: 400 26px/1 var(--font-title); color: #ff5468; text-shadow: 0 2px 0 #a81d3840; }
+
+/* petits écrans : tout se resserre pour éviter le défilement */
+@media (max-height: 700px) {
+  .av-head { min-height: 42px; padding: 3px 8px 3px 3px; }
+  .av-back { width: 34px; height: 34px; }
+  .av-head h1 { font-size: 18px; }
+  .av-grow { min-height: 120px; }
+  .av-floors { min-height: 0; gap: 6px; padding: 10px; }
+  .av-floor { height: 32px; font-size: 14px; } .av-floor.now { height: 46px; font-size: 18px; } .av-floor.done { height: 28px; }
+  .av-floor.up:nth-child(1) { display: none; }
+  .av-row { min-height: 56px; padding: 6px 8px 6px 6px; gap: 8px; }
+  .av-row-icon { width: 44px; height: 44px; border-radius: 13px; }
+  .av-row-icon .icon { width: 38px !important; height: 38px !important; }
+  .av-list { gap: 6px; }
+  .av-dcard { min-height: 84px; } .av-dcard-art { width: 64px; height: 64px; }
+  .av-boss .av-grow { min-height: 150px; }
+  .av-league { padding: 8px 14px 8px 8px; } .av-league > .icon { width: 46px !important; height: 46px !important; }
+  .av-seg button { height: 34px; }
+  .av-dhead { height: 104px; } .av-dhead-art { width: 84px; height: 84px; }
+  .av-step-card { min-height: 54px; padding: 7px 8px 7px 12px; }
+  .av-ladder { gap: 7px; }
+  .av-floor + .av-floor::before { height: 6px; }
+  /* l'équipe se règle aussi sur l'écran de préparation, avant chaque combat */
+  .av-arena .team-strip { display: none; }
+}
