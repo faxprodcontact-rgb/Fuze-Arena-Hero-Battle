@@ -6,6 +6,8 @@ import { ENERGY_MAX, TICK_MS, type BattleEvent, type Hit, type SkillDef, type Sl
 import { isHero } from '../core/data/heroes';
 import type { Element } from '../core/types';
 import { loadPxFond, placePxFond } from './bg/fond-px';
+import { playDeath, playRevive, type DeathTier, type DeathView } from './fx-death';
+import { StatusFx } from './fx-status';
 import { HdActor, hasHd, hdChar, hdStrike, loadHd, type HdHost } from './hd-fight';
 import { HD_ANIM } from './hd-meta';
 import { t } from './i18n';
@@ -60,6 +62,13 @@ const STATUS_COLOR: Partial<Record<string, string>> = {
   slow: '#7fc8ff', taunt: '#ffb15c', atkUp: '#ffcf5a', atkDown: '#b0b7d6', defUp: '#7fc8ff', defDown: '#b0b7d6',
   speedUp: '#9be15d', critUp: '#ffcf5a',
 };
+/** Ordre des pictos au-dessus de la barre de vie : ce qui empêche d'agir d'abord, puis les dégâts, les malus, les bonus. */
+const STATUS_ORDER = ['stun', 'silence', 'taunt', 'burn', 'poison', 'bleed', 'slow', 'atkDown', 'defDown', 'atkUp', 'defUp', 'speedUp', 'critUp', 'regen'];
+/** La teinte du dessin au coup d'une brûlure, d'un poison, d'un saignement. */
+const DOT_TINT: Partial<Record<string, number>> = { burn: 0xffa070, poison: 0xa8f070, bleed: 0xff7080 };
+/** Au plus 3 pictos, puis « +n ». */
+const MAX_ICONS = 3;
+const ICON_SIZE = 34;
 
 export interface View {
   unit: Unit;
@@ -77,8 +86,21 @@ export interface View {
   /** Vie affichée : elle baisse quand le coup est montré, pas quand les règles l'ont calculé. */
   hp: number;
   /** Petits pictos des effets en cours (brûlure, étourdi, bonus…) au-dessus de la barre de vie. */
-  stIcons?: Phaser.GameObjects.Image[];
+  stIcons?: Phaser.GameObjects.GameObject[];
   stKey?: string;
+  /** Son ombre au sol (elle rétrécit quand il tombe). */
+  shadow: Phaser.GameObjects.Ellipse;
+  /** Hauteur et largeur du dessin (pour placer les effets). */
+  h: number;
+  w: number;
+  /** Les altérations dessinées sur lui (fx-status.ts). */
+  fx: StatusFx;
+  /** Il est en train de tomber (ou est tombé) : ses barres et ses effets ne sont plus dessinés. */
+  dying?: boolean;
+  /** La teinte de ses altérations (poison, lenteur), reprise après chaque coup. */
+  baseTint?: number;
+  /** Retiré du terrain pendant sa chute (nouvelle vague) : son conteneur se détruit à la fin de l'animation. */
+  detached?: boolean;
   sx: number;
   sy: number;
   /** Le personnage HD animé (hd-fight.ts) : il joue ses propres animations. */
@@ -189,6 +211,7 @@ export abstract class FightScene extends Phaser.Scene {
     const imgs: Phaser.GameObjects.Image[] = [];
     let shadow: Phaser.GameObjects.Ellipse;
     let barY: number;
+    let h = 100, w = 60;
     // un grand boss est dessiné à sa taille (deux fois un héros) ; un général de clan qui joue un boss est agrandi
     const boost = (big ? 1 : unit.boss ? (this.bigBoss ? 1.45 : 1.2) : 1) * BATTLE_LAYOUT.size;
     const barW = big ? 170 : unit.boss ? 130 : 86;
@@ -199,7 +222,9 @@ export abstract class FightScene extends Phaser.Scene {
       hd = new HdActor(this, fig, id, k, unit.element);
       imgs.push(hd.img);
       shadow = this.add.ellipse(0, FEET, Math.min(big ? 300 : 160, (ch.sol[1]! - ch.sol[0]!) * k * 1.1), big ? 30 : 20, 0x000000, 0.3);
-      barY = FEET - Math.min(ch.top * k, (big ? 290 : 126) * boost) - 6;
+      h = Math.min(ch.top * k, (big ? 290 : 126) * boost);
+      w = Phaser.Math.Clamp((ch.sol[1]! - ch.sol[0]!) * k, 40, big ? 260 : 150);
+      barY = FEET - h - 6;
     } else {
       // dessin pas encore arrivé : seulement son ombre et sa barre de vie
       shadow = this.add.ellipse(0, FEET, 90, 20, 0x000000, 0.3);
@@ -208,31 +233,44 @@ export abstract class FightScene extends Phaser.Scene {
     fig.setScale(hero ? 1 : -1, 1);
     const bars = this.add.graphics();
     body.add([shadow, fig, bars]);
-    this.views.set(unit.id, { unit, body, sprite: fig, imgs, bars, homeX: x, homeY: body.y, barY, barW, hp: unit.hp, sx: fig.scaleX, sy: 1, hd });
+    const fx = new StatusFx(this, { body, fig, feet: FEET, h, w, inward: hero ? 1 : -1 });
+    this.views.set(unit.id, { unit, body, sprite: fig, imgs, bars, homeX: x, homeY: body.y, barY, barW, hp: unit.hp, sx: fig.scaleX, sy: 1, hd, shadow, h, w, fx });
     if (enter) this.tweens.add({ targets: body, x, duration: 450 / speed, ease: 'Back.easeOut' });
   }
 
   protected clearViews(side?: 'hero' | 'enemy') {
     for (const [id, v] of this.views) {
       if (side && v.unit.side !== side) continue;
-      v.body.destroy();
       this.views.delete(id);
+      v.fx.destroy();
+      // il finit de tomber avant de disparaître
+      if (v.dying && v.body.alpha > 0) v.detached = true;
+      else v.body.destroy();
     }
   }
 
-  /** Les effets en cours, en petits pictos alignés au-dessus de la barre de vie (4 au plus). */
-  private syncStatusIcons(v: View) {
-    const kinds = [...new Set(v.unit.statuses.map((x) => x.kind))].filter((k) => `st-${k}` in ICON_INDEX).slice(0, 4);
+  /** Les effets en cours, en petits pictos alignés au-dessus de la barre de vie (3 au plus, puis « +n »). */
+  private syncStatusIcons(v: View, kinds: string[]) {
     if (!this.textures.exists('icons')) return;
-    const key = kinds.join(',');
+    const shown = kinds.filter((k) => `st-${k}` in ICON_INDEX);
+    const key = shown.join(',');
     if (key === v.stKey) return;
     v.stKey = key;
     v.stIcons?.forEach((i) => i.destroy());
-    v.stIcons = kinds.map((k, i) => {
-      const img = this.add.image(-v.barW / 2 + 12 + i * 27, v.barY - 18, 'icons', ICON_INDEX[`st-${k}`]).setDisplaySize(27, 27);
-      v.body.add(img);
-      return img;
+    const y = v.barY - 21, step = ICON_SIZE - 2, x0 = -v.barW / 2 + ICON_SIZE / 2 - 2;
+    v.stIcons = [];
+    shown.slice(0, MAX_ICONS).forEach((k, i) => {
+      // un rond sombre derrière chaque picto : il se lit sur n'importe quel décor
+      const back = this.add.circle(x0 + i * step, y, ICON_SIZE / 2 - 1, 0x0c0822, 0.6);
+      const img = this.add.image(x0 + i * step, y, 'icons', ICON_INDEX[`st-${k}`]).setDisplaySize(ICON_SIZE, ICON_SIZE);
+      v.stIcons!.push(back, img);
     });
+    // les autres : « +n » en pastille sur le coin du dernier picto (sans dépasser la barre de vie)
+    if (shown.length > MAX_ICONS) {
+      const bx = x0 + (MAX_ICONS - 1) * step + 12, by = y + 10;
+      v.stIcons.push(this.add.circle(bx, by, 11, 0x0c0822, 0.9), this.text(bx, by, `+${shown.length - MAX_ICONS}`, 17, '#ffe27a'));
+    }
+    v.body.add(v.stIcons);
   }
 
   protected syncUnits() {
@@ -240,12 +278,26 @@ export abstract class FightScene extends Phaser.Scene {
     const fa = this.veil?.active ? 1 - Math.min(1, this.veil.fillAlpha * 2.2) : 1;
     const dt = this.lastNow ? Math.min(100, this.time.now - this.lastNow) : 0;
     this.lastNow = this.time.now;
-    for (const v of this.views.values()) v.hd?.update(dt);
+    for (const v of this.views.values()) {
+      v.hd?.update(dt);
+      v.fx.update(dt);
+    }
     for (const o of this.fg) (o as unknown as Phaser.GameObjects.Components.Alpha).setAlpha(fa);
     for (const v of this.views.values()) {
       const u = v.unit;
       const g = v.bars;
+      // il tombe : sa barre (vide) s'efface toute seule, plus d'effets sur lui
+      if (v.dying) continue;
       g.clear();
+      const kinds = [...new Set(u.statuses.map((x) => x.kind))].sort((a, b) => STATUS_ORDER.indexOf(a) - STATUS_ORDER.indexOf(b));
+      v.fx.sync(u.hp > 0 ? kinds : [], u.hp > 0 && u.shield > 0);
+      if (v.hd) v.hd.poseRate = kinds.includes('slow') ? 0.5 : 1;
+      // empoisonné : le dessin verdit un peu ; ralenti : il bleuit un peu
+      const base = kinds.includes('poison') ? 0xcdf5b4 : kinds.includes('slow') ? 0xc4d8ff : undefined;
+      if (base !== v.baseTint) {
+        v.baseTint = base;
+        this.tint(v);
+      }
       if (v.hp <= 0 && u.hp <= 0) continue;
       const w = v.barW;
       const y = v.barY;
@@ -269,14 +321,14 @@ export abstract class FightScene extends Phaser.Scene {
         g.fillStyle(u.energy >= ENERGY_MAX ? C.gold : C.energy);
         g.fillRoundedRect(-w / 2, y + 17, Math.max(5, w * Math.min(1, u.energy / ENERGY_MAX)), 5, 2.5);
       }
-      this.syncStatusIcons(v);
-      // étourdi : il vacille (le dessin respire déjà tout seul)
-      v.sprite.setAngle(u.stun > 0 ? Math.sin(this.time.now / 60) * 8 : 0);
+      this.syncStatusIcons(v, kinds);
+      // étourdi : il vacille doucement (les étoiles tournent au-dessus de sa tête)
+      v.sprite.setAngle(u.stun > 0 ? Math.sin(this.time.now / 140) * 5 : 0);
     }
   }
 
-  /** Une teinte sur tout le dessin, ou aucune. */
-  private tint(v: View, color?: number) {
+  /** Une teinte sur tout le dessin, ou celle de ses altérations (`baseTint`). */
+  private tint(v: View, color = v.baseTint) {
     for (const img of v.imgs) {
       if (color === undefined) img.clearTint();
       else img.setTint(color);
@@ -334,7 +386,55 @@ export abstract class FightScene extends Phaser.Scene {
     }
   }
 
+  /** Vitesse du combat au moment présent (pour les animations lancées par un coup). */
+  private speedNow = 1;
+  /** Moment (horloge de la scène) où la dernière chute sera finie : la fin du combat l'attend. */
+  protected deathsEnd = 0;
+
+  private deathView(v: View): DeathView {
+    return { body: v.body, fig: v.sprite, shadow: v.shadow, bars: v.bars, img: v.hd?.img, sx: v.sx, side: v.unit.side, element: v.unit.element, feet: FEET, h: v.h, w: v.w };
+  }
+
+  /** Il tombe (fx-death.ts) : monstre, héros, boss ou grand boss. */
+  private kill(v: View) {
+    v.dying = true;
+    v.fx.sync([], false);
+    v.hd?.halt();
+    v.sprite.setAngle(0);
+    // la barre se vide d'un coup, puis s'efface avec les pictos
+    this.drawEmptyBar(v);
+    v.stIcons?.forEach((i) => this.tweens.add({ targets: i, alpha: 0, duration: 250 }));
+    v.stKey = '-';
+    const tier: DeathTier = v.hd && isBigBoss(v.hd.id) ? 'bigBoss' : v.unit.boss ? 'boss' : v.unit.side === 'hero' ? 'hero' : 'monster';
+    const ms = playDeath(this, this.deathView(v), tier, this.speedNow, () => {
+      if (v.detached) v.body.destroy();
+    });
+    this.deathsEnd = Math.max(this.deathsEnd, this.time.now + ms);
+  }
+
+  /** Il se relève (fx-death.ts) : tout reprend comme avant sa chute. */
+  private raise(v: View) {
+    if (!v.dying) {
+      this.tweens.add({ targets: v.body, alpha: 1, duration: 300 });
+      return;
+    }
+    v.dying = false;
+    v.stKey = undefined;
+    this.tweens.killTweensOf(v.body);
+    v.body.setPosition(v.homeX, v.homeY);
+    playRevive(this, this.deathView(v), this.speedNow);
+    v.hd?.resume();
+  }
+
+  private drawEmptyBar(v: View) {
+    const g = v.bars, w = v.barW, y = v.barY;
+    g.clear();
+    g.fillStyle(0x0c0822, 0.85);
+    g.fillRoundedRect(-w / 2 - 3, y - 3, w + 6, 18, 9);
+  }
+
   protected handle(events: BattleEvent[], speed: number) {
+    this.speedNow = speed;
     for (const e of events) {
       switch (e.type) {
         case 'attack':
@@ -352,7 +452,7 @@ export abstract class FightScene extends Phaser.Scene {
         case 'death': {
           const v = this.views.get(e.unit);
           if (v) {
-            this.tweens.add({ targets: v.body, alpha: 0, y: v.body.y + 20, angle: v.unit.side === 'hero' ? -20 : 20, duration: 450 });
+            if (!v.dying) this.kill(v);
             this.onDeath(v.unit);
           }
           break;
@@ -381,6 +481,7 @@ export abstract class FightScene extends Phaser.Scene {
   private recoil(v: View, dir: number, px: number, t: number) {
     v.body.x = v.homeX + dir * px;
     this.tweens.add({ targets: v.body, x: v.homeX, duration: 170 * t, ease: 'Quad.easeOut' });
+    if (v.dying) return;
     v.sprite.setScale(v.sx, v.sy);
     this.tweens.add({ targets: v.sprite, scaleX: v.sx * 0.9, scaleY: v.sy * 1.06, duration: 50 * t, yoyo: true });
   }
@@ -432,11 +533,15 @@ export abstract class FightScene extends Phaser.Scene {
   private showHit(hit: Hit, big: boolean) {
     const v = this.views.get(hit.target);
     if (!v) return;
-    if (hit.kind === 'damage') v.hp = Math.max(0, v.hp - hit.amount);
+    if (hit.kind === 'damage') {
+      v.hp = Math.max(0, v.hp - hit.amount);
+      // le coup qui tue : il tombe tout de suite, sans attendre la fin de l'animation de celui qui frappe
+      if (v.hp <= 0 && v.unit.hp <= 0 && !v.dying) this.kill(v);
+    }
     else if (hit.kind === 'heal') v.hp = Math.min(v.unit.maxHp, v.hp + hit.amount);
     else if (hit.kind === 'revive') v.hp = v.unit.hp;
     if (hit.kind === 'miss' || hit.kind === 'status' || hit.kind === 'revive') {
-      if (hit.kind === 'revive') this.tweens.add({ targets: v.body, alpha: 1, y: v.homeY, angle: 0, duration: 400 });
+      if (hit.kind === 'revive') this.raise(v);
       const label = hit.kind === 'miss' ? t('fx.miss') : hit.kind === 'revive' ? '+' : t(`st.${hit.status}`, { n: '' }).replace(/[+−-]\s*%/, '').trim();
       const color = hit.kind === 'miss' ? '#c8d0ff' : hit.kind === 'revive' ? '#5dff9a' : STATUS_COLOR[hit.status ?? 'stun'] ?? '#ffe27a';
       // un effet ou un relevé : son picto (planche des pictos) ; à défaut (planche pas encore arrivée), son nom écrit
@@ -460,9 +565,13 @@ export abstract class FightScene extends Phaser.Scene {
       return;
     } else {
       color = hit.crit ? '#ffe27a' : hit.advantage ? '#ffb15c' : v.unit.side === 'hero' ? '#ff9b9b' : '#ffffff';
-      // touché : le dessin rougit un instant
-      this.tint(v, 0xff9a9a);
-      this.time.delayedCall(90, () => this.tint(v));
+      // touché : le dessin rougit un instant (une brûlure, un poison… : il prend la couleur de l'effet, qui repart)
+      if (!v.dying) {
+        const dotColor = hit.dot ? DOT_TINT[hit.status ?? ''] : undefined;
+        this.tint(v, dotColor ?? 0xff9a9a);
+        this.time.delayedCall(hit.dot ? 140 : 90, () => { if (!v.dying) this.tint(v); });
+        if (hit.dot && hit.status) v.fx.pulse(hit.status);
+      }
       if (hit.stun) {
         // le coup étourdit : le picto de l'étourdissement saute au-dessus de la tête, puis s'efface
         const y0 = v.body.y + v.barY + 10;
@@ -473,9 +582,12 @@ export abstract class FightScene extends Phaser.Scene {
       }
     }
     if (hit.dot) {
+      // les dégâts dans le temps : un chiffre plus petit, à la couleur de l'effet, qui monte de son corps
       color = hit.kind === 'heal' ? '#5dff9a' : STATUS_COLOR[hit.status ?? 'burn'] ?? color;
-      const n = this.text(x, v.body.y - 40, label, 20, color).setDepth(2000);
-      this.tweens.add({ targets: n, y: n.y - 60, alpha: 0, duration: 750, ease: 'Quad.easeOut', onComplete: () => n.destroy() });
+      if (hit.kind === 'heal') v.fx.pulse('regen');
+      const n = this.text(x, v.body.y - 30, label, 24, color).setDepth(2000).setScale(1.3);
+      this.tweens.add({ targets: n, scale: 1, duration: 160, ease: 'Back.easeOut' });
+      this.tweens.add({ targets: n, y: n.y - 56, alpha: 0, delay: 200, duration: 650, ease: 'Quad.easeIn', onComplete: () => n.destroy() });
       return;
     }
     // le chiffre jaillit au-dessus de la tête (gros, puis il se pose), tient un instant, puis monte et s'efface

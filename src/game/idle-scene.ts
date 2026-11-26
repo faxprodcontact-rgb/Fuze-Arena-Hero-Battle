@@ -91,7 +91,7 @@ export class IdleScene extends FightScene {
   }
 
   protected onEnd() {
-    this.pause = 900;
+    this.pause = Math.max(900, this.deathsEnd - this.time.now + 200);
   }
 }
 
