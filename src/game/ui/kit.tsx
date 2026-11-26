@@ -10,6 +10,7 @@ import { fmt, t } from '../i18n';
 import { close } from './nav';
 import { ICON_COLS, ICON_INDEX, ICON_ROWS } from '../icons-meta';
 import { HD_FIG } from '../hd-figures';
+import { heroArt } from '../look';
 
 // ---------- Pictos (style moderne, lisses : planche public/art/icons.webp, refonte-graphique/ui-moderne/pictos/) ----------
 
@@ -150,7 +151,7 @@ export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; 
       style={{ '--rar': color, '--el': ELEMENT_COLOR[d.element] } as never}
       onClick={p.onClick}
     >
-      <CardFigure id={d.id} alt={d.name} />
+      <CardFigure id={heroArt(d.id)} alt={d.name} />
       <i class="hcard-frame" />
       <Art name={d.element} class="hcard-el" />
       <span class="hcard-lv">{p.hero.level}</span>

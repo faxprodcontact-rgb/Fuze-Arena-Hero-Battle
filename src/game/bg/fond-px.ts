@@ -47,16 +47,17 @@ function rng(seed: string) {
  * À appeler dans `create` : pose le fond, son bas sur `bottom` (le bas du terrain). Renvoie le premier plan (il passe
  * devant les combattants et s'efface pendant les compétences), ou ok = false si les images ne sont pas arrivées.
  */
-export function placePxFond(sc: Phaser.Scene, fond: PxFond, bottom: number): { front: Phaser.GameObjects.GameObject[]; ok: boolean } {
+export function placePxFond(sc: Phaser.Scene, fond: PxFond, bottom: number, zoom = 1): { front: Phaser.GameObjects.GameObject[]; ok: boolean } {
   const front: Phaser.GameObjects.GameObject[] = [];
   const m = FOND_META[fond];
   const k = key(fond), ak = `${k}-anim`;
   if (!sc.textures.exists(k) || !sc.textures.exists(ak)) return { front, ok: false };
-  const U = GAME_W / m.w;
+  // `zoom` : le décor agrandi (centré, ses bords coupés) ; le combat s'en sert pour que le sol aille jusqu'en bas
+  const U = (GAME_W / m.w) * zoom, ox = (GAME_W - m.w * U) / 2;
   const top = bottom - m.h * U;
-  const X = (px: number) => px * U, Y = (py: number) => top + py * U;
+  const X = (px: number) => ox + px * U, Y = (py: number) => top + py * U;
   for (const t of [k, ak]) sc.textures.get(t).setFilter(Phaser.Textures.FilterMode.NEAREST);
-  sc.add.image(0, top, k).setOrigin(0).setScale(U).setDepth(-30);
+  sc.add.image(ox, top, k).setOrigin(0).setScale(U).setDepth(-30);
 
   const sheet = sc.textures.get(ak);
   const frame = (sx: number, sy: number, w: number, h: number) => {

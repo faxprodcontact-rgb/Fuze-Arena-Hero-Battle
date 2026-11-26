@@ -443,7 +443,10 @@ p { margin: 6px 0; }
   padding: 11px 22px; color: #fff; white-space: nowrap; font: 400 16px var(--font-title); background: #150f36f0; border-radius: var(--r-pill); box-shadow: var(--sh-3), inset 0 0 0 1px #ffffff1f; }
 @keyframes toast-in { from { transform: translate(-50%, -50%) scale(0.85); opacity: 0; } }
 /* le combat passe au-dessus des pages (45 : un donjon lancé depuis sa page reste ouvert dessous) et sous les fenêtres (50 : le résultat) */
-.battle { position: absolute; inset: 0; z-index: 48 !important; display: flex; flex-direction: column; background: var(--hud-under); padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
+/* le combat prend tout l'écran, encoche comprise (le décor passe dessous) ; la scène tient ses boutons hors de l'encoche
+   en lisant la zone sûre sur .safe-probe */
+.battle { position: absolute; inset: 0; z-index: 48 !important; display: flex; flex-direction: column; background: var(--hud-under); }
+.safe-probe { position: absolute; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top, 0px) 0 env(safe-area-inset-bottom, 0px); }
 .battle-host { flex: 1; min-height: 0; position: relative; }
 .back { --pxf: var(--c-glass-strong); --pr: var(--r-pill); --psh: inset 0 0 0 1px #ffffff24; align-self: flex-start; font: 400 14px var(--font-title); color: #fff; padding: 6px 14px; }
 .back::before { background: #0d0826b8; }

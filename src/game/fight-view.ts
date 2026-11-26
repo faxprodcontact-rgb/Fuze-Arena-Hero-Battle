@@ -99,6 +99,8 @@ export abstract class FightScene extends Phaser.Scene {
   protected bigBoss = false;
   /** Resserre le terrain vers le centre (écran d'accueil, plus étroit). */
   protected xSquash = 1;
+  /** Le décor agrandi (combat plein écran : son sol va jusqu'en bas, sous les cartes des héros). */
+  protected fondZoom = 1;
   /** Premier plan du décor (il passe devant les combattants, s'efface pendant les compétences). */
   private fg: Phaser.GameObjects.GameObject[] = [];
   /** Bas du terrain (pour l'assombrir en entier). */
@@ -154,7 +156,7 @@ export abstract class FightScene extends Phaser.Scene {
   /** Le décor animé du clan : son bas 430 unités sous le haut du sol (= le bas du terrain ; l'accueil en coupe le bas). */
   protected drawArena(bottom: number) {
     this.arenaBottom = bottom;
-    const placed = placePxFond(this, this.look.fond, this.arenaBox().groundTop + 430);
+    const placed = placePxFond(this, this.look.fond, this.arenaBox().groundTop + 430 * this.fondZoom, this.fondZoom);
     if (placed.ok) {
       this.fg = placed.front;
       return;
