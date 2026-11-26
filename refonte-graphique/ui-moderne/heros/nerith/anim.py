@@ -473,9 +473,9 @@ def tint(fig, k):
         tf = ' transform="matrix(%s)"' % ' '.join(fm(v) for v in p.M) if p.M != (1, 0, 0, 1, 0, 0) else ''
         paths.append('<path d="%s"%s/>' % (p.shape.d(), tf))
     body = ''.join(paths)
-    fig.fx_front.insert(0, '<g fill="#e8fff8" opacity="%g">%s</g>' % (0.42 * k, body))
+    fig.fx_front.insert(0, '<g fill="#e8fff8" opacity="%g">%s</g>' % (0.22 * k, body))
     fig.fx_back.append('<g fill="%s" stroke="%s" stroke-width="%s" stroke-linejoin="round" opacity="%g">%s</g>' % (
-        JADE[2], JADE[2], fm(2 * 0.95 + 2.2 * k), min(1, 1.2 * k), body))
+        JADE[2], JADE[2], fm(2 * 0.95 + 1.6 * k), min(1, 1.1 * k), body))
 
 
 def fountain(fig, ctx, lift, phase, rise, spill):

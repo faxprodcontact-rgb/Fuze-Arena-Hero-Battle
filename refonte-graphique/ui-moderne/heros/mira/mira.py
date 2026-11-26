@@ -392,8 +392,8 @@ def boots(fig):
 
 
 # ---------------------------------------------------------------- la jupe
-SK_EDGE = [(53.0, 90.4), (55.4, 92.0), (58.6, 92.0), (61.8, 89.8), (65.0, 92.6), (68.2, 92.6), (71.0, 90.2),
-           (74.2, 92.4), (77.2, 92.2), (79.8, 89.8), (83.0, 91.2), (86.0, 90.6), (88.2, 89.0)]
+SK_EDGE = [(53.0, 90.6), (55.4, 92.2), (59.4, 92.0), (61.8, 87.4), (64.2, 92.6), (68.6, 92.6), (70.8, 87.8),
+           (73.2, 92.4), (77.4, 92.2), (79.6, 87.6), (81.8, 91.2), (85.6, 90.8), (88.2, 89.0)]
 SK_NOTCH = (3, 6, 9)
 
 
@@ -408,8 +408,8 @@ def skirt(fig, P):
     # les pans : chaque fente remonte en un pli sombre, le pan bombé éclairé à droite
     for i in SK_NOTCH:
         x, y = SK_EDGE[i]
-        d += [(ribbon([(x + 0.2, y + 0.2), (x - 0.1, y - 5.0), (x - 0.6, y - 13.6)], [1.0, 1.3, 0.1]), BLUE.deep, 0.85),
-              (ribbon([(x + 1.1, y - 0.4), (x + 0.9, y - 5.6), (x + 0.4, y - 12.6)], [0.2, 0.7, 0.1]), BLUE.light, 0.55)]
+        d += [(ribbon([(x, y + 0.4), (x - 0.2, y - 4.0), (x - 0.6, y - 11.0)], [1.6, 1.2, 0.1]), BLUE.deep, 0.85),
+              (ribbon([(x + 1.3, y + 0.6), (x + 1.0, y - 4.0), (x + 0.4, y - 10.0)], [0.2, 0.7, 0.1]), BLUE.light, 0.55)]
     d += [(sm([(53.0, 82.0), (56.4, 75.0), (60.0, 76.0), (58.6, 92.0), (53.0, 91.0)]), BLUE.shadow, 0.6)]
     # l'ourlet d'or (le long du bas, d'une fente à l'autre)
     d += [(ribbon(SK_EDGE, [2.1] * n), GOLD.base, 1),
@@ -555,21 +555,28 @@ def fist(fig, G, ang, W):
 
     def L(x, y):
         return (G[0] + u[0] * x + v[0] * y, G[1] + u[1] * x + v[1] * y)
-    body = sm([L(-4.8, -4.6), L(-1.4, -5.6), L(2.6, -5.2), L(4.8, -3.0), L(5.0, 0.6), L(4.2, 3.4), L(1.0, 4.4),
-               L(-2.6, 4.4), L(-4.8, 3.0), L(-5.6, -0.6)], t=0.95)
-    lit = (L(3, -5), L(-4, 4))
-    det = [(sm([L(-4.4, -4.2), L(-1.4, -5.2), L(2.6, -4.8), L(4.4, -2.8), L(1.0, -1.6), L(-3.6, -1.6)]), SKIN.light, 0.55)]
-    # les plis entre les doigts (de la jointure vers le bout replié) ; la jointure de chaque doigt éclairée
-    for x0, x1 in ((-4.6, -2.3), (-2.3, 0.0), (0.0, 2.3), (2.3, 4.6)):
-        det += [(ellipse((x0 + x1) / 2 + 0.2, -1.4, (x1 - x0) * 0.36, 0.8, ang), SKIN.hi, 0.5)]
-    for x in (-2.3, 0.0, 2.3):
-        det += [(ribbon([L(x, -1.0), L(x + 0.1, 1.2), L(x - 0.1, 3.6)], [0.1, 0.55, 0.1]), SKIN.shadow, 0.65)]
-    det += [(ribbon([L(-4.4, 3.2), L(0, 4.0), L(4.0, 3.0)], [0.2, 0.9, 0.2]), SKIN.shadow, 0.5)]
+    body = sm([L(-4.6, -5.4), L(-0.8, -6.0), L(3.0, -5.4), L(5.2, -3.4), L(5.6, 0.4), L(4.8, 3.6), L(1.2, 4.6),
+               L(-2.6, 4.6), L(-4.9, 3.4), L(-5.6, -0.8)], t=0.95)
+    lit = (L(3, -6), L(-4, 4))
+    det = [
+        # le dos de la main (côté poignet), éclairé ; la rangée des jointures
+        (sm([L(-4.4, -5.2), L(-0.8, -5.8), L(3.0, -5.2), L(4.8, -3.2), L(4.4, -1.6), L(-4.8, -1.4)]), SKIN.light, 0.6)]
+    for x0, x1 in ((-4.8, -2.4), (-2.4, 0.0), (0.0, 2.4), (2.4, 4.8)):
+        xm = (x0 + x1) / 2
+        # le doigt replié devant la hampe : un rouleau (éclairé en haut), son bout qui rentre sous la main
+        det += [(rpoly([L(x0 + 0.15, -1.2), L(x1 - 0.15, -1.2), L(x1 - 0.25, 4.0), L(x0 + 0.25, 4.0)], 1.0), SKIN.base, 0.55),
+                (ellipse(*L(xm + 0.25, -1.3), (x1 - x0) * 0.34, 0.75, ang), SKIN.hi, 0.6),
+                (ellipse(*L(xm + 0.3, 1.0), (x1 - x0) * 0.22, 0.9, ang), SKIN.light, 0.35)]
+    for x in (-2.4, 0.0, 2.4):
+        det += [(ribbon([L(x, -1.8), L(x + 0.1, 1.0), L(x - 0.1, 4.0)], [0.1, 0.6, 0.15]), SKIN.shadow, 0.7)]
+    det += [(ribbon([L(-4.6, 3.4), L(0, 4.3), L(4.2, 3.4)], [0.2, 1.0, 0.2]), SKIN.shadow, 0.55),
+            (ribbon([L(-4.6, -1.2), L(0, -0.9), L(4.6, -1.3)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.35)]
     fig.part('fist', body, SKIN, grad=(*lit[0], *lit[1], [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=0.9, rim=0.5, cast=0.9, details=det)
-    thumb = limb([L(-1.0, -4.2), L(1.8, -3.4), L(4.6, -1.6)], [3.0, 2.6, 2.2])
+    # le pouce : il passe derrière la hampe et revient par-dessus l'index, côté fer
+    thumb = limb([L(5.6, -2.8), L(5.0, -0.6), L(3.0, 1.0)], [3.0, 2.7, 2.3])
     fig.part('fthumb', thumb, SKIN, cel=0.5, rim=0.45, cast=0.7, cast_on=['fist'],
-             details=[(ellipse(*L(4.0, -2.0), 0.9, 0.55, ang), SKIN.hi, 0.6)])
+             details=[(ellipse(*L(3.6, 0.7), 0.95, 0.6, ang + 35), SKIN.hi, 0.7)])
     return ['fist', 'fthumb']
 
 
