@@ -177,15 +177,33 @@ export const OFFERS: Offer[] = [
   { id: 'gems-3', price: '19,99 €', reward: { gems: 3600 }, limit: 0, kind: 'gems' },
   { id: 'gems-4', price: '49,99 €', reward: { gems: 9500 }, limit: 0, kind: 'gems' },
 ];
-/** Carte mensuelle : 300 gemmes à l'achat, puis 100 par jour pendant 30 jours. */
-export const MONTHLY_CARD = { days: 30, gemsPerDay: 100 };
+/** Carte mensuelle : 300 gemmes à l'achat, puis 200 par jour pendant 30 jours (choix du propriétaire, 26/11). */
+export const MONTHLY_CARD = { days: 30, gemsPerDay: 200 };
 
 /** Passe de saison : on gagne des points avec les quêtes ; chaque palier a une récompense gratuite et une payante. */
 export const PASS_POINTS_PER_LEVEL = 100;
-export const PASS_LEVELS: { free: Reward; premium: Reward }[] = Array.from({ length: 30 }, (_, i) => ({
-  free: i % 5 === 4 ? { scrolls: 1 } : { gold: 2000 * (i + 1) },
-  premium: i % 5 === 4 ? { scrolls: 3, crystals: 30 } : { gems: 100 },
-}));
+// Plus de choses à chaque palier (demande du propriétaire, 26/11) : chaque palier mélange plusieurs gains, ceux qui
+// tombent sur 5 sont de gros paliers, le 30e est le grand final. Valeurs raisonnables, à revoir au réglage final.
+export const PASS_LEVELS: { free: Reward; premium: Reward }[] = Array.from({ length: 30 }, (_, i) => {
+  const lv = i + 1;
+  if (lv === 30) return {
+    free: { scrolls: 3, gems: 300, gold: 100000 },
+    premium: { scrolls: 10, crystals: 200, gems: 1000, dust: 500 },
+  };
+  if (lv % 5 === 0) return {
+    free: { scrolls: 1, gems: 100, gold: 4000 * lv },
+    premium: { scrolls: 3, crystals: 50, gems: 300, essence: 1000 * lv },
+  };
+  // les autres paliers : un gain principal qui tourne, toujours avec un peu d'or et d'essence
+  const turn = lv % 4;
+  return {
+    free: { gold: 2000 * lv, essence: 300 * lv, ...(turn === 1 ? { basicScrolls: 2 } : turn === 3 ? { gems: 30 } : {}) },
+    premium: {
+      gems: 120,
+      ...(turn === 0 ? { scrolls: 1 } : turn === 1 ? { crystals: 20 } : turn === 2 ? { dust: 80 } : { basicScrolls: 5, essence: 600 * lv }),
+    },
+  };
+});
 
 /** Boutiques d'échange : arène (jetons) et guilde (pièces). */
 export interface ShopItem {
