@@ -17,6 +17,7 @@ import { heroArt } from './look';
 import { battleLook } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
 import { getState } from './state/store';
+import { killGame } from './game-kill';
 
 /** Hauteur de base de l'écran de combat ; sur un téléphone plus allongé, l'écran s'étire (jusqu'à `H_MAX`) et le décor en profite. */
 export const H = 1280;
@@ -370,9 +371,9 @@ export function runBattle(parent: HTMLElement, request: BattleRequest, done: (r:
     request,
     done: (r: BattleResult) => {
       done(r);
-      setTimeout(() => game.destroy(true), 0);
+      setTimeout(() => killGame(game), 0);
     },
     safe,
   } satisfies BattleSceneData);
-  return () => game.destroy(true);
+  return () => killGame(game);
 }

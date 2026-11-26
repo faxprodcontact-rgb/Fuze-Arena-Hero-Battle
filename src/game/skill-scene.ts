@@ -5,6 +5,7 @@ import { Battle } from '../core/battle/engine';
 import { ENERGY_MAX, type UnitInit } from '../core/battle/types';
 import { monsterToUnit } from '../core/battle/units';
 import { FightScene, W } from './fight-view';
+import { killGame } from './game-kill';
 
 export const SKILL_H = 470;
 /** Vitesse des animations (moins de 1 = ralenti). */
@@ -106,5 +107,5 @@ export function runSkillPreview(parent: HTMLElement, hero: UnitInit): () => void
     banner: false,
   });
   game.scene.add('skill', SkillScene, true, { hero } satisfies SkillData);
-  return () => game.destroy(true);
+  return () => killGame(game);
 }

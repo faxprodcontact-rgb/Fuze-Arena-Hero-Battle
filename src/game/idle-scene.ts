@@ -96,7 +96,25 @@ export class IdleScene extends FightScene {
 }
 
 /** Lance le combat permanent dans le cadre donné. Renvoie la fonction qui l'arrête. */
+/**
+ * Le combat permanent est créé UNE seule fois : quand on quitte l'accueil, il dort (rien ne tourne) et son dessin reste
+ * en mémoire ; au retour, on le replace dans le nouveau cadre et il reprend. Le recréer à chaque changement d'écran
+ * faisait planter les iPhone (bug du 26/11 : un nouveau contexte WebGL et toutes les planches rechargées à chaque fois).
+ */
+let kept: Phaser.Game | undefined;
+
+/** Lance le combat permanent dans le cadre donné. Renvoie la fonction qui l'arrête (le met en sommeil). */
 export function runIdle(parent: HTMLElement, setup: () => IdleSetup): () => void {
+  if (kept && kept.isRunning !== false) {
+    const game = kept;
+    parent.appendChild(game.canvas);
+    game.scale.parent = parent;
+    game.scale.getParentBounds();
+    game.scale.refresh();
+    game.loop.wake();
+    game.scene.getScene('idle')?.scene.restart({ setup } satisfies IdleData);
+    return () => game.loop.sleep();
+  }
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
@@ -108,5 +126,6 @@ export function runIdle(parent: HTMLElement, setup: () => IdleSetup): () => void
     banner: false,
   });
   game.scene.add('idle', IdleScene, true, { setup } satisfies IdleData);
-  return () => game.destroy(true);
+  kept = game;
+  return () => game.loop.sleep();
 }

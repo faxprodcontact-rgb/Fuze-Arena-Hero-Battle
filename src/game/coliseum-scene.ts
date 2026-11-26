@@ -14,6 +14,7 @@ import { t } from './i18n';
 import { battleLook } from './look';
 import { setSpeed } from './state/actions';
 import { getState } from './state/store';
+import { killGame } from './game-kill';
 
 const H = 1280;
 const H_MAX = 1640;
@@ -319,9 +320,9 @@ export function runColiseumFight(parent: HTMLElement, data: Omit<ColiseumSceneDa
     ...data,
     done: (win: boolean) => {
       data.done(win);
-      setTimeout(() => game.destroy(true), 0);
+      setTimeout(() => killGame(game), 0);
     },
     safe,
   } satisfies ColiseumSceneData);
-  return () => game.destroy(true);
+  return () => killGame(game);
 }
