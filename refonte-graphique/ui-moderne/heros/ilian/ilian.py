@@ -555,17 +555,23 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (ribbon([(60.4, 28.4), (59.4, 31.0), (59.8, 34.2)], [0.1, 0.5, 0.1]), SKIN.light, 0.6)])
 
     # ---- la grande barbe blanche, en mèches, posée sur la poitrine ; la bouche (fermée au repos) dedans
+    # (avis du 26/11, 2e passage : du côté du fond aussi, la barbe monte le long de la joue jusqu'à la tempe, sous la
+    # queue du sourcil, et colle au bord du visage : son bord extérieur suit le contour de la face, un peu dehors)
     beard = sm([(62.6, 28.6), (64.4, 30.4), (65.6, 33.6), (68.6, 35.8), (72.4, 37.0), (75.6, 38.6), (78.0, 38.9),
-                (80.6, 38.2), (83.6, 37.4), (86.4, 37.8), (88.4, 40.0), (88.8, 43.0), (86.8, 49.0), (83.0, 55.6),
+                (80.8, 37.8), (83.2, 36.4), (84.9, 34.4), (85.9, 32.0), (86.3, 30.2), (86.9, 29.0), (87.6, 29.6),
+                (87.8, 32.4), (87.7, 35.6), (88.2, 38.4), (88.8, 41.0), (88.8, 43.0), (86.8, 49.0), (83.0, 55.6),
                 (79.2, 60.2), (77.8, 63.4), (75.4, 60.8), (72.8, 64.6), (70.8, 68.6), (68.4, 63.8), (66.4, 61.0),
-                (64.0, 62.0), (62.4, 56.4), (60.4, 49.6), (59.6, 42.0), (60.2, 35.4), (61.0, 30.6)], sharp=(15, 18, 21))
+                (64.0, 62.0), (62.4, 56.4), (60.4, 49.6), (59.6, 42.0), (60.2, 35.4), (61.0, 30.6)], sharp=(22, 25, 28))
     ro = P['roar']
     # la bouche : fermée, lèvres serrées, coins vers le bas (la colère) ; quand il crie (roar), elle s'entrouvre un peu
     # (petite ouverture sombre, jamais une grande gueule qui déforme le visage)
     hm = mw / 2
     bdt = [
         # sous les joues : l'ombre portée du visage sur le haut de la barbe
-        (ribbon([(63.8, 31.0), (66.0, 34.8), (70.0, 36.8), (76.0, 39.2), (84.0, 38.6)], [0.2, 1.4, 1.2, 1.0, 0.2]), HAIR.shadow, 0.7),
+        (ribbon([(63.8, 31.0), (66.0, 34.8), (70.0, 36.8), (76.0, 39.2), (80.8, 38.6)], [0.2, 1.4, 1.2, 1.0, 0.2]), HAIR.shadow, 0.7),
+        (ribbon([(80.4, 38.8), (83.4, 37.2), (85.4, 34.8), (86.4, 31.8), (86.9, 29.8)], [0.2, 0.9, 0.8, 0.5, 0.1]), HAIR.shadow, 0.6),
+        # le favori du fond : une mèche éclairée qui descend le long de la joue (la lumière vient d'en haut à droite)
+        (ribbon([(87.2, 30.6), (87.1, 33.6), (87.2, 36.8), (87.8, 40.4)], [0.1, 0.55, 0.6, 0.2]), HAIR.hi, 0.8),
         # les mèches : de grandes ombres en S qui coulent vers les pointes, inégales ; des reflets sur le dessus
         (ribbon([(63.2, 39), (62.8, 47), (64.0, 54), (64.4, 60)], [0.2, 1.2, 1.2, 0.2]), HAIR.shadow, 0.8),
         (ribbon([(67.8, 42), (67.4, 50), (69.2, 59), (70.6, 66.6)], [0.2, 1.5, 1.3, 0.2]), HAIR.shadow, 0.85),

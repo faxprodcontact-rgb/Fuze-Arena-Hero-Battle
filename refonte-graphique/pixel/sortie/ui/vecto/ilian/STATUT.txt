@@ -1,4 +1,4 @@
 fait
-Corrigé d'après l'avis du 26/11 : bouche fermée (lèvres serrées sous la moustache ; elle s'entrouvre juste un peu quand il crie pendant les attaques) ; nez refait, plus petit, posé au milieu entre les deux yeux (il ne dépasse plus du bord de la joue), moustache recentrée dessous.
-Visage reconstruit avec visage.py : les deux yeux sur la même ligne, même dessin, l'œil du fond un peu plus étroit, nez et bouche sur la ligne médiane (contrôle : visage.png, aucun défaut).
-Jambes resserrées (pieds compris) : le haut des cuisses reste caché sous la jupe, plus rien ne dépasse sur les côtés, et le poing gauche ne passe plus derrière la cuisse. Avant / après : avant-apres.png.
+Corrigé d'après le 2e avis du 26/11 : du côté droit de l'image (la joue du fond), la barbe monte maintenant le long de la joue jusqu'à la tempe, juste sous le bout du sourcil, comme de l'autre côté où elle part de l'oreille ; elle colle au bord du visage (son bord suit le contour de la face), plus de peau entre la barbe et le bord ; une mèche éclairée descend sur ce favori.
+Le reste n'a pas changé : visage déjà validé (visage.py : aucun défaut, visage.png refait), bouche fermée, nez entre les yeux, jambes resserrées (avis précédent).
+Vérifié en grand au repos, pendant l'attaque et la spéciale (tête penchée, barbe qui traîne) : la barbe reste collée au visage. Avant / après : avant-apres.png.
