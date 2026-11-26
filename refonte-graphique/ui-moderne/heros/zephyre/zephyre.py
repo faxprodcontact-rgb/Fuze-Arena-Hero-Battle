@@ -64,7 +64,9 @@ NECK = (74.0, 56.0)             # le pivot de la tête (agrandie ×1,1 autour de
 HSC = 1.1
 FS, FE0, FW0 = (85.0, 60.5), (95.4, 58.8), (93.6, 36.6)      # bras lointain levé : épaule, coude, poignet
 NS, NE0, NW0 = (57.2, 62.0), (53.2, 75.6), (66.4, 73.6)      # bras proche replié devant la poitrine
-FH, FK0, FA0 = (59.5, 87.0), (48.0, 98.6), (47.6, 109.4)     # jambe lointaine (repliée derrière) : hanche, genou, cheville
+FH, FK0, FA0 = (59.5, 87.0), (56.6, 98.6), (47.6, 109.4)     # jambe lointaine (en arrière) : hanche, genou, cheville
+#   (avis du 26/11, tour 2 : le genou plie vers l'AVANT, comme l'autre : il est devant la ligne hanche → cheville, le
+#   tibia repart en biais vers le pied posé en arrière)
 NH, NK0, NA0 = (66.5, 87.5), (85.8, 91.6), (83.8, 109.6)     # jambe proche (en avant)
 FL = (math.dist(FS, FE0), math.dist(FE0, FW0))
 NL = (math.dist(NS, NE0), math.dist(NE0, NW0))
@@ -72,7 +74,8 @@ FLL = (math.dist(FH, FK0), math.dist(FK0, FA0))
 NLL = (math.dist(NH, NK0), math.dist(NK0, NA0))
 SG_FA, SG_NA = sign_for(FS, FE0, FW0), sign_for(NS, NE0, NW0)
 SG_FL, SG_NL = sign_for(FH, FK0, FA0), sign_for(NH, NK0, NA0)
-STAR_LOCAL = (19.9, 3.4)        # le centre du shuriken dans le repère du poing (le long de l'avant-bras, vers la droite)
+STAR_LOCAL = (14.2, 2.6)        # le centre du shuriken dans le repère du poing (le long de l'avant-bras, vers la droite) :
+#   tenu de près (avis du 26/11, tour 2) : la branche basse entre dans le poing jusqu'au moyeu, pincée entre pouce et index
 STAR_R = 11.0
 
 # la boîte de la face (ovale du visage sous la cagoule, sans le crâne) et la place des traits (../visage.py)

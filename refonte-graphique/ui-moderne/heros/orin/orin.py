@@ -242,7 +242,7 @@ def sleeve(S, E, Wr, k_cuff, depth, sway=0.0, hw1=6.3, hwc=6.2, drape=0.45):
            (xL + (xR - xL) * 0.86 + sway * 0.6, bottom - (bottom - A[1]) * drape)]
     if drape < 0.2:
         # la toile tombe jusqu'à la taille et cache le bout de la ceinture (qui ressort de dessous, sans bout visible)
-        hem[3] = (A[0] - 1.6 + sway * 0.4, bottom - 1.0)
+        hem[3] = (A[0] - 1.6 + sway * 0.4, max(bottom - 1.0, A[1] + 15.6))
     if u1[0] < -0.3:
         # le bras part sur le côté : le haut de la manche rejoint la ligne d'épaule du buste
         pts += hem + [A, (S[0] + 5.0, S[1] + 2.0), (S[0] + 7.6, S[1] - 4.2)]

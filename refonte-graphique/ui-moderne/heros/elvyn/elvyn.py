@@ -284,7 +284,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     back = bez(B, add(B, (-5.4, -1.4)), add(AP, (-1.6, 12)), AP, 10)
     # le haut de la manche part de sous le pan du col (le col est reposé par-dessus, plus bas) : l'épaule descend
     # d'un seul arc du col au bras, sans coin ni marche
-    sleeve_pts = [top0, top1, top2, cuff_t] + hem + back[1:-1] + [AP, add(S, (-2.4, -0.6))]
+    sleeve_pts = [top0, top1, top2, cuff_t] + hem + back[1:-1] + [AP]
     sleeve = sm(sleeve_pts, t=0.7)
     edge = [add(cuff_t, nf, 0.6), cuff_t] + hem
     edge = resample(edge, 22)
