@@ -68,7 +68,7 @@ def monotone(ts, vs, t):
 
 
 PAIRS = {'G': ('gx', 'gy'), 'head': ('headx', 'heady'), 'nsh': ('nshx', 'nshy'), 'FF': ('ffx', 'ffy'), 'eye': ('eyex', 'eyey')}
-SCAL = ['crouch', 'lean', 'tilt', 'pg', 'rn', 'rf', 'lift', 'shift', 'glow', 'ang', 'length', 'front', 'ffa', 'mouth']
+SCAL = ['crouch', 'lean', 'tilt', 'pg', 'rn', 'rf', 'lift', 'shift', 'glow', 'ang', 'length', 'front', 'ffa', 'mouth', 'fca']
 NUM = SCAL + [k for v in PAIRS.values() for k in v]
 
 
@@ -111,21 +111,27 @@ REB = dict(front=0, G=(52.0, 19.0), ang=-82, lean=0.0, crouch=1.0, nsh=(3, -1), 
            FF=(115.0, 56.0), pg=0.4)
 GROUND = dict(front=1, G=(92.0, 86.0), ang=42, lean=6.0, crouch=3.0, nsh=(7, 2), head=(1.5, 2.0), tilt=6, glow=1.2,
               mouth=1.0, FF=(112.0, 60.0), ffa=-88, eye=(0.6, 0.8), pg=-1.2)
+# La deuxième massue (poing lointain, tour 3 de l'avis) frappe aussi : elle s'arme pendant que la grande remonte après
+# le premier coup, puis s'abat devant lui (coup sec, à hauteur d'épaule) pendant que la grande est au-dessus de sa tête,
+# et reste en avant pendant le coup au sol : un, deux, trois. fca = la bascule de la petite massue par le poignet.
+FCOCK = dict(FF=(109.0, 49.0), ffa=-98, fca=-8)                  # armée, la tête de la petite massue en arrière
+FCHOP = dict(FF=(127.0, 62.0), ffa=-32, fca=88)                   # le coup : la petite massue s'abat devant lui
+FHOLD = dict(FF=(125.0, 64.0), ffa=-38, fca=74)                   # elle reste en avant pendant le coup au sol
 ATTACK = [
     (0, {}),
     (170, dict(RAISE)),
-    (330, dict(WIND)),
-    (520, dict(WIND, G=(31.0, 21.0), ang=-166, lean=-4.0, crouch=2.3, glow=1.0)),
+    (330, dict(WIND, FF=(112.0, 50.0), ffa=-92, fca=-14)),
+    (520, dict(WIND, G=(31.0, 21.0), ang=-166, lean=-4.0, crouch=2.3, glow=1.0, FF=(111.0, 49.0), ffa=-94, fca=-18)),
     (568, dict(OVER)),
     (590, dict(OVER, G=(84.0, 30.0), ang=-24, lean=1.0)),
     (610, dict(HIT1)),
-    (720, dict(HIT1, G=(91.0, 73.0), ang=0)),
-    (745, dict(HIT1, G=(86.0, 60.0), ang=-24, front=0)),
-    (800, dict(REB)),
-    (840, dict(REB, G=(86.0, 26.0), ang=-12, lean=3.0, crouch=2.0)),
-    (862, dict(GROUND, G=(97.0, 52.0), ang=12, lean=4.0, crouch=2.4)),
-    (880, dict(GROUND)),
-    (1100, dict(GROUND, G=(92.5, 86.5), crouch=3.2)),
+    (720, dict(HIT1, G=(91.0, 73.0), ang=0, **FCOCK)),
+    (760, dict(HIT1, G=(86.0, 60.0), ang=-24, front=0, **FCOCK)),
+    (790, dict(REB, **FCHOP)),
+    (840, dict(REB, G=(86.0, 26.0), ang=-12, lean=3.0, crouch=2.0, **FHOLD)),
+    (862, dict(GROUND, G=(97.0, 52.0), ang=12, lean=4.0, crouch=2.4, **FHOLD)),
+    (880, dict(GROUND, **FHOLD)),
+    (1100, dict(GROUND, G=(92.5, 86.5), crouch=3.2, **FHOLD)),
     (1200, dict(front=0.6, G=(62.0, 72.0), ang=-10, lean=3.0, crouch=2.0, nsh=(4, 1), head=(0.5, 1), tilt=2, glow=0.4, mouth=0.2,
                 FF=(115.0, 56.0))),
     (1270, dict(front=0, G=(20.0, 60.0), ang=-64, lean=1.2, crouch=1.2, glow=0.2)),
@@ -134,6 +140,7 @@ ATTACK = [
 ]
 ATTACK_HIT = 610
 ATTACK_HIT2 = 880
+ATTACK_FHIT = 790             # le coup de la petite massue
 
 # 3) L'attaque spéciale « Rocher du cyclope » : il lève la massue, l'œil s'embrase (la terre répond), et l'abat sur le
 # sol devant lui : une fêlure dorée court sous la terre vers l'avant. Là-bas, le sol se bombe, puis un énorme rocher
@@ -146,6 +153,9 @@ LOWB = dict(front=1, G=(34.0, 86.0), ang=158, lean=-2.0, crouch=2.6, nsh=(-1, 2)
             FF=(116.0, 54.0), eye=(1.2, 0.2), pg=1.0)
 BAT = dict(front=1, G=(96.0, 73.0), ang=-26, lean=3.0, crouch=1.4, nsh=(6, 3), head=(1.5, 0.5), tilt=-2, glow=2.0,
            mouth=1.0, FF=(112.0, 60.0), ffa=-88, eye=(1.0, -0.4), pg=-1.2)
+# Pendant le coup de batte, la petite massue descend le long de sa jambe (élan contraire), pour laisser la place au
+# rocher et à la grande massue ; elle remonte en garde à la fin.
+FLOW = dict(FF=(112.0, 72.0), ffa=-60, fca=120)
 SPECIAL = [
     (0, {}),
     (200, dict(RAISE, glow=0.8)),
@@ -157,13 +167,13 @@ SPECIAL = [
     (760, dict(GROUND, G=(92.5, 86.5), crouch=3.2, glow=1.8)),
     (1000, dict(LOWB)),
     (1340, dict(LOWB, G=(33.0, 87.0), ang=160, crouch=2.9, lean=-2.4)),
-    (1410, dict(BAT, G=(80.0, 80.0), ang=30, lean=3.0)),
-    (1452, dict(BAT)),
-    (1560, dict(BAT, G=(97.0, 72.0), ang=-29)),
+    (1410, dict(BAT, G=(80.0, 80.0), ang=30, lean=3.0, **FLOW)),
+    (1452, dict(BAT, **FLOW)),
+    (1560, dict(BAT, G=(97.0, 72.0), ang=-29, **FLOW)),
     (1700, dict(front=1, G=(92.0, 57.0), ang=-50, lean=2.0, crouch=1.0, nsh=(4, -1), head=(1, 0), glow=1.2, mouth=0.3,
-                FF=(115.0, 56.0), eye=(1.6, 0.0))),
+                eye=(1.6, 0.0), **FLOW)),
     (2050, dict(front=1, G=(90.0, 58.0), ang=-56, lean=1.6, crouch=1.2, nsh=(4, -1), head=(1, 0.5), glow=1.0, eye=(1.8, 0.4),
-                FF=(115.0, 56.0))),
+                **FLOW)),
     (2200, dict(front=0.6, G=(62.0, 72.0), ang=-20, lean=2.0, crouch=1.6, nsh=(3, 1), glow=0.4)),
     (2290, dict(front=0, G=(20.0, 60.0), ang=-64, lean=1.0, crouch=1.2, glow=0.2)),
     (2420, dict(front=0, G=(26.0, 44.0), ang=-96, lean=0.4, crouch=0.6, glow=0.1)),
@@ -200,7 +210,8 @@ def idle_offsets(T):
     return dict(breath=br, crouch=0.7 * (0.5 - 0.5 * math.cos(u - 2.6)), heady=0.5 * math.sin(u - 0.7),
                 tilt=-0.8 * math.sin(u - 0.9), rn=0.9 * (0.5 - 0.5 * math.cos(u - 0.4)), rf=0.8 * (0.5 - 0.5 * math.cos(u - 1.3)),
                 pg=0.6 * math.sin(u + 0.4), gx=0.5 * math.sin(u - 0.5), gy=-0.9 * (0.5 - 0.5 * math.cos(u - 0.4)),
-                ang=1.8 * math.sin(u - 1.4), eyex=ex, eyey=ey, ffy=-0.6 * (0.5 - 0.5 * math.cos(u - 1.3)))
+                ang=1.8 * math.sin(u - 1.4), eyex=ex, eyey=ey, ffy=-0.6 * (0.5 - 0.5 * math.cos(u - 1.3)),
+                fca=2.2 * math.sin(u - 2.0))
 
 
 def pose_at(T, action=None, t0=0.0):
@@ -508,6 +519,26 @@ def fx_attack(tl):
             if 0.02 < tau < 0.5:
                 k = (tau - 0.02) / 0.48
                 fig.fx_back.append(puff(fig, hp[0] + 4 + 8 * k, hp[1] - 2 - 4 * k, 2.4 + 2.6 * k, op=0.8 * env(k, 0, 0.15, 0.5, 1)))
+        # le coup de la petite massue (poing lointain), devant lui à hauteur d'épaule : un petit éclat doré
+        tau = (tl - ATTACK_FHIT) / 1000.0
+        c = HIT_AT.get('hf')
+        if 720 <= tl <= 830:
+            e = env(tl, 720, 760, 795, 830)
+            fc = ctx['ffist']
+            ch = ctx['fclub_head']
+            R = math.dist(fc, ch)
+            a = math.degrees(math.atan2(ch[1] - fc[1], ch[0] - fc[0]))
+            fig.fx_back.append(club_trail(fig, fc, R + 3, a - 70, a, 8 * e + 1.5, op=e))
+        if c and -0.01 <= tau < 0.4:
+            hp = (c[0] + 6, c[1] + 1)
+            flash(fig, hp, 22, env(tau, -0.01, 0.0, 0.04, 0.12))
+            e = env(tau, 0, 0.02, 0.08, 0.22)
+            if e > 0:
+                fig.fx_front.append(pop(fig, hp, 4.4 * (0.6 + 0.4 * e), facing=10, op=e))
+            for i, (vx, vy) in enumerate(((54, -30), (40, -56), (66, 4))):
+                if tau < 0.32:
+                    x, y = ballistic(hp, (vx, vy), 160, tau)
+                    fig.fx_front.append(rock(fig, (x, y), 0.7, seed=60 + i, rot=tau * 600, op=min(1, 3 * (0.32 - tau))))
         # deuxième coup, au sol devant ses orteils : la terre saute
         tau = (tl - ATTACK_HIT2) / 1000.0
         c = HIT_AT.get('h2')
@@ -785,6 +816,7 @@ def frame_svg(T, segs, view=VIEW, ow=0.95):
         if 'h1' not in HIT_AT:
             HIT_AT['h1'] = K.build(pose=pose_at(t0 + ATTACK_HIT / 1000.0, act, t0)[0]).ctx['club_head']
             HIT_AT['h2'] = K.build(pose=pose_at(t0 + ATTACK_HIT2 / 1000.0, act, t0)[0]).ctx['club_head']
+            HIT_AT['hf'] = K.build(pose=pose_at(t0 + ATTACK_FHIT / 1000.0, act, t0)[0]).ctx['fclub_head']
         fx = [fx_attack(tl)]
     elif act == 'special':
         if 's1' not in HIT_AT:

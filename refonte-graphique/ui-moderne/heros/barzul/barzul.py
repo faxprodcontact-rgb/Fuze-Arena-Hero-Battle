@@ -30,7 +30,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
-from atelier import Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
+from atelier import Mat, sm, sides, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from lib import Shape  # noqa: E402
 from visage import placer  # noqa: E402
 from outils import (rot, unit, add, sub, lerp, norm, ang_of, ik, arm_shape, crpath, taper, curve_band, under,  # noqa: E402
@@ -415,7 +415,8 @@ def skirt(fig, P, legs):
 
 # ---------------------------------------------------------------- le buste du manteau
 def torso(fig, P):
-    sh = sm([(44.0, 52.6), (49.6, 48.6), (56.4, 47.8), (62.0, 50.2), (68.0, 50.4), (73.6, 49.2), (78.8, 51.4), (81.4, 55.6),
+    # (le haut à gauche est le dôme de l'épaule proche : il enveloppe le haut de la manche, qui s'y fond ; avis tour 3)
+    sh = sm([(42.8, 53.6), (44.4, 50.6), (47.4, 48.9), (51.2, 48.0), (56.4, 47.8), (62.0, 50.2), (68.0, 50.4), (73.6, 49.2), (78.8, 51.4), (81.4, 55.6),
              (81.0, 62.0), (80.8, 70.4), (64.0, 71.4), (47.0, 70.6), (45.2, 62.0), (43.2, 56.6)], t=0.9)
     det = [(sm([(42, 52), (52, 50), (55.6, 60), (56, 72), (42, 72)]), COAT.shadow, 0.35)]
     # les revers : le proche (bordé d'or), le lointain ; les boutons d'or sous le baudrier
@@ -486,24 +487,22 @@ def baldric(fig, P, UC, TOR, U):
     # la ligne du baudrier dans le repère du buste (UC) : il part de derrière l'épaule, s'arrondit sur elle, puis file
     A, B = (49.8, 51.8), (74.4, 67.0)
     a = ang_of(sub(B, A))
-    line = crpath([(44.6, 46.6), (46.6, 48.6), (49.8, 51.8), (61.0, 58.8), (76.0, 68.0)], 40)
-    belt = taper(line, 4.4, 4.4, wmid=4.4)
+    line = crpath([(42.4, 46.4), (45.4, 48.4), (49.8, 51.8), (61.0, 58.8), (76.0, 68.0)], 60)
+    lft, rgt = sides(line, [4.4] * len(line))
+    belt = lft + rgt[::-1]
     # la découpe (dans le repère UC) : dans le buste, le col et le haut du bras ; hors de l'écharpe et du nœud
     iU = inv(UC)
     to_uc = lambda M, pts: [mapp(iU, mapp(M, q)) for q in pts]
     keep, cut = [], []
     for p in fig.parts:
-        if p.name in ('torso', 'collar', 'narm'):
+        if p.name == 'torso':
             keep.append(to_uc(p.M, poly(p.shape)))
         elif p.name in ('sash', 'knot', 'tailA', 'tailB'):
             cut.append(to_uc(p.M, poly(p.shape)))
-    belt = clip_to(belt, keep, cut)
+    belt = clip_to(belt, keep, cut, close=1.6)
     bk = lambda x, y: xf_pt(A, a, (x, y))
     det = [(ribbon(line[2:-2:4], [0.2] + [0.6] * (len(line[2:-2:4]) - 2) + [0.2]).move(*rot((0, -1.5), a)), LEATHER.hi, 0.6),
            (ribbon(line[2:-2:4], [0.2] + [0.6] * (len(line[2:-2:4]) - 2) + [0.2]).move(*rot((0, 1.6), a)), LEATHER.deep, 0.55)]
-    # le haut, sur l'arrondi de l'épaule : un peu plus clair (il reçoit la lumière), un peu plus sombre au bout (il
-    # passe derrière)
-    det += [(ellipse(47.4, 49.4, 2.6, 1.6, a), LEATHER.light, 0.35), (ellipse(44.6, 47.0, 2.0, 2.4, a), LEATHER.deep, 0.35)]
     fig.part('baldric', belt, LEATHER, grad=(*bk(20, -2), *bk(4, 2), [(0, LEATHER.light), (0.5, LEATHER.base), (1, LEATHER.shadow)]),
              cel=0.6, rim=0.45, cast=1.0, cast_on=['torso', 'collar', 'jab1', 'jab2', 'jab3', 'narm'], details=det)
     buckle = xf(rpoly([(6.6, -3.0), (10.6, -3.0), (10.6, 3.0), (6.6, 3.0)], 0.7), A[0], A[1], a)

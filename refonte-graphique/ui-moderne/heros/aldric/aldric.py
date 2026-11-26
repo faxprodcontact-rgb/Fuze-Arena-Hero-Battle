@@ -216,7 +216,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                 (52.2, 70.0), (52.8, 75.0), (53.0, 80.6), (62.0, 82.6), (70.0, 82.8), (77.8, 81.2), (78.0, 75.6),
                 (77.4, 71.0), (78.6, 66.0), (80.6, 61.8), (83.4, 59.0), (86.6, 56.2), (86.0, 53.4), (82.6, 51.8),
                 (78.8, 50.8), (75.2, 49.0), (74.2, 44.8)])
+    # (avis du propriétaire, tour 3 : « transition épaule ») le buste PREND le dôme de l'épaule proche : une seule
+    # forme continue du trapèze au deltoïde (le creux entre les deux comblé, au-dessus de l'articulation seulement :
+    # l'aisselle garde son creux) ; la racine du bras s'y fond plus bas (masque en dégradé, voir le bras proche)
+    torso = shoulder_torso(torso)
     det = [(torso, ('lin', 54, 66, 66, 62, [(0, SKIN.deep, 0.4), (1, SKIN.deep, 0)]), 1)]
+    # le dôme de l'épaule sur le buste, éclairé comme la racine du bras qui s'y fond (mêmes tons : aucune marche de
+    # couleur là où le bras devient transparent), qui s'éteint doucement vers la poitrine
+    det += [(ellipse(NS0[0] - 0.6, NS0[1] - 0.6, 7.0, 7.0),
+             ('rad', NS0[0] - 0.6, NS0[1] - 0.6, 7.0, 7.0, [(0, SKIN.light, 0.75), (0.55, SKIN.light, 0.5), (1, SKIN.light, 0)]), 1)]
     # les pectoraux plats et nets (le proche plus large, trois quarts) : la plaque éclairée, l'ombre douce dessous
     det += [(sm([(53.6, 55.4), (60.6, 54.2), (66.4, 55.2), (66.8, 59.6), (64.4, 62.0), (58.6, 62.0), (54.6, 59.6)]), SKIN.light, 0.5),
             (sm([(54.0, 60.6), (58.8, 62.8), (64.6, 63.0), (67.0, 60.4), (67.2, 62.8), (64.6, 64.6), (58.6, 64.4), (53.6, 62.4)]), SKIN.shadow, 0.7),
@@ -348,7 +356,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     from shapely.geometry import Point
     zone = poly_of(torso).intersection(Point(NS0).buffer(8.4, 64))
     d = rot(a1.u, -128.0)          # au repos : vers la poitrine (un peu vers le trapèze) ; tourne avec le bras
-    m0 = mapp(U, (S[0] - 1.2 * d[0], S[1] - 1.2 * d[1]))
+    m0 = mapp(U, (S[0] - 2.6 * d[0], S[1] - 2.6 * d[1]))
     m1 = mapp(U, (S[0] + 4.8 * d[0], S[1] + 4.8 * d[1]))
     fig.masks['narm'] = (m0[0], m0[1], m1[0], m1[1], (geom_shape(zone, simplify=0.02), TOR))
     fig.part('narm', arm, SKIN, cel=1.7, rim=0.7, cast=1.2, details=ad,
@@ -497,6 +505,18 @@ _LAST = {}
 
 
 # ---------- morceaux dessinés au repos (posés ensuite par un mouvement rigide) ----------
+
+def shoulder_torso(torso0, r=5.2, rb=5.0):
+    """Le buste avec le dôme de l'épaule proche (modèle : ../taurok/taurok.py) : l'union avec le dôme, puis le creux
+    entre le dôme et le trapèze comblé (une fermeture), seulement au-dessus de l'articulation."""
+    from shapely.geometry import Point, box
+    g = poly_of(torso0)
+    S = (NS0[0] - 0.4, NS0[1] - 0.2)
+    u = g.union(Point(S).buffer(r, 64))
+    closed = u.buffer(rb, 64, join_style=1).buffer(-rb, 64, join_style=1)
+    g = u.union(closed.intersection(box(S[0] - r - 2.0, S[1] - r - 8.0, S[0] + r + 8.0, S[1] + 0.5)))
+    return geom_shape(g, simplify=0.02)
+
 
 def fist_matrix(W0, a0, W, a, flip):
     """Le mouvement rigide d'un poing : dessiné au repos (poignet W0, avant-bras à l'angle a0), posé au poignet W

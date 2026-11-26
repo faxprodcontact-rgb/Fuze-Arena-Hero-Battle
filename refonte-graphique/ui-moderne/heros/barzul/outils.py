@@ -303,15 +303,21 @@ def inv(M):
     return (d / det, -b / det, -c / det, a / det, (c * f_ - d * e) / det, (b * e - a * f_) / det)
 
 
-def clip_to(shape, keep, cut=()):
-    """La partie de la forme qui est DANS l'union des polygones `keep` et HORS de ceux de `cut` (le plus grand morceau)."""
+def clip_to(shape, keep, cut=(), close=0.0):
+    """La partie de la forme (ou d'un polygone) qui est DANS l'union des polygones `keep` et HORS de ceux de `cut` (le
+    plus grand morceau). close : rayon dont on arrondit les creux de l'union (le bout du baudrier suit une ligne
+    souple, sans encoche là où deux morceaux se rejoignent)."""
     from shapely.geometry import Polygon
     from shapely.ops import unary_union
-    g = Polygon(poly(shape)).buffer(0).intersection(unary_union([Polygon(k).buffer(0) for k in keep]))
+    K = unary_union([Polygon(k).buffer(0) for k in keep])
+    if close:
+        K = K.buffer(close, join_style=1).buffer(-close, join_style=1)     # les creux entre les morceaux sont comblés
+    g = Polygon(shape if isinstance(shape, list) else poly(shape)).buffer(0).intersection(K)
     if cut:
         g = g.difference(unary_union([Polygon(k).buffer(0) for k in cut]))
     if g.is_empty:
         return None
     if g.geom_type != 'Polygon':
         g = max(getattr(g, 'geoms', [g]), key=lambda q: q.area)
+    g = g.simplify(0.03)
     return from_poly(list(g.exterior.coords)[:-1])

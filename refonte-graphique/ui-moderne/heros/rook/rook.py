@@ -115,8 +115,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ======================================================================== les jambes
     legs(fig, P, LEG)
     # ======================================================================== tabard, braconnière, tassettes, plastron
-    tabard(fig, P)
-    waist(fig, P)
+    waist(fig, P)                     # tassettes, puis le tabard DEVANT les jambes, puis la braconnière
     torso(fig, P)
     # ======================================================================== le heaume
     helm(fig, P)
@@ -392,31 +391,27 @@ def legs(fig, P, LEG):
 
 
 # ======================================================================== le tabard
+TAB_X, TAB_K = 68.2, 1.1                 # le tabard un peu élargi autour de son milieu (avis du 26/11)
+
+
 def tabard(fig, P):
-    """Le tabard rouge sang : un pan d'étoffe qui tombe sous la braconnière, entre les jambes, au bas déchiré."""
-    sh = sm([(61.6, 81.0), (74.4, 81.0), (75.2, 91.0), (75.8, 101.0), (73.4, 99.0), (71.6, 104.0), (69.0, 99.6),
-             (66.6, 105.2), (64.2, 99.8), (62.2, 103.0), (61.0, 92.0)], sharp=(3, 4, 5, 6, 7, 8, 9), t=0.85)
-    det = [(ribbon([(68.2, 83.0), (68.0, 91.0), (67.4, 99.0)], [0.2, 1.6, 0.4]), BLOOD.shadow, 0.75),
-           (ribbon([(71.6, 83.0), (72.2, 91.0), (72.4, 98.0)], [0.2, 1.1, 0.2]), BLOOD.light, 0.7),
-           (ribbon([(64.0, 84.0), (63.8, 92.0), (63.4, 99.0)], [0.2, 1.0, 0.2]), BLOOD.shadow, 0.6),
-           # le liseré gris du haut, sous la braconnière
-           (sm([(61.6, 81.0), (74.4, 81.0), (74.5, 83.0), (61.5, 83.0)]), BLOOD.deep, 0.8)]
+    """Le tabard rouge sang : un pan d'étoffe qui tombe de sous la braconnière, DEVANT les jambes (par-dessus les
+    tassettes et les genouillères), au bas déchiré."""
+    X = lambda p: (TAB_X + (p[0] - TAB_X) * TAB_K, p[1])
+    sh = sm([X(q) for q in ((61.6, 79.0), (74.4, 79.0), (75.2, 91.0), (75.8, 101.0), (73.4, 99.0), (71.6, 104.0),
+                            (69.0, 99.6), (66.6, 105.2), (64.2, 99.8), (62.2, 103.0), (61.0, 92.0))],
+            sharp=(3, 4, 5, 6, 7, 8, 9), t=0.85)
+    det = [(ribbon([X((68.2, 85.0)), X((68.0, 91.0)), X((67.4, 99.0))], [0.2, 1.6, 0.4]), BLOOD.shadow, 0.75),
+           (ribbon([X((71.6, 85.0)), X((72.2, 91.0)), X((72.4, 98.0))], [0.2, 1.1, 0.2]), BLOOD.light, 0.7),
+           (ribbon([X((64.0, 86.0)), X((63.8, 92.0)), X((63.4, 99.0))], [0.2, 1.0, 0.2]), BLOOD.shadow, 0.6)]
     fig.part('tabard', sh, BLOOD, cel=1.2, rim=0.6, cast=1.0, details=det,
-             cast_on=['nleg', 'fleg', 'ncuisse', 'fcuisse', 'nknee', 'fknee', 'cape'])
+             cast_on=['nleg', 'fleg', 'ncuisse', 'fcuisse', 'nknee', 'fknee', 'ngreave', 'fgreave', 'ntasset', 'ftasset', 'cape'])
 
 
 # ======================================================================== braconnière et tassettes
 def waist(fig, P):
     """La braconnière (deux lames cintrées sous le plastron, plus basses au milieu) et les deux tassettes qui pendent
     sur les cuisses (la lointaine plus étroite), bords gris."""
-    fauld = sm([(50.6, 73.6), (58.6, 76.4), (67.6, 77.6), (76.0, 76.2), (81.4, 72.8), (83.0, 78.0), (81.2, 82.6),
-                (68.0, 85.6), (55.0, 84.4), (49.6, 80.6)], t=0.85)
-    fdet = [(ribbon([(50.2, 79.0), (59.0, 81.2), (68.0, 82.0), (76.4, 80.6), (82.4, 77.4)], [0.2, 0.9, 1.0, 0.9, 0.2]), BLACK.deep, 0.65),
-            (ribbon([(50.4, 78.2), (59.0, 80.4), (68.0, 81.2), (76.4, 79.8), (82.4, 76.6)], [0.1, 0.5, 0.6, 0.5, 0.1]), BLACK.light, 0.65),
-            (ribbon([(50.0, 81.0), (58.0, 84.0), (68.0, 85.2), (76.0, 84.0), (81.4, 82.0)], [0.2, 0.9, 1.0, 0.9, 0.2]), GREY.shadow, 0.85),
-            (ellipse(80.2, 75.6, 1.6, 0.6, -40), BLACK.glint, 0.6)]
-    fig.part('fauld', fauld, BLACK, cel=1.2, rim=0.8, cast=1.0, details=fdet,
-             cast_on=['tabard', 'nleg', 'fleg', 'ncuisse', 'fcuisse', 'cape', 'farm', 'ffist', 'fcuff', 'fvamb'])
     for nm, pts, gx in (('ftasset', [(71.0, 83.4), (78.0, 82.2), (83.2, 79.6), (84.0, 85.0), (82.4, 89.8), (76.6, 91.4), (71.8, 89.4)], 80.0),
                         ('ntasset', [(49.0, 80.4), (56.0, 82.6), (62.0, 83.4), (61.6, 90.6), (57.2, 92.6), (50.6, 90.4), (48.2, 85.4)], 58.0)):
         sh = sm(pts, t=0.85)
@@ -427,7 +422,16 @@ def waist(fig, P):
                (ribbon([pts[-1], pts[-2], pts[-3], pts[-4]], [0.3, 1.0, 1.0, 0.3]), GREY.shadow, 0.9),
                (ellipse(gx, y0 + 1.6, 1.4, 0.55, -10), BLACK.glint, 0.7)]
         fig.part(nm, sh, BLACK, cel=1.0, rim=0.7, cast=1.0, details=det,
-                 cast_on=['tabard', 'nleg', 'fleg', 'ncuisse', 'fcuisse', 'nknee', 'fknee', 'cape', 'fauld', 'ffist', 'fcuff'])
+                 cast_on=['nleg', 'fleg', 'ncuisse', 'fcuisse', 'nknee', 'fknee', 'cape', 'ffist', 'fcuff'])
+    tabard(fig, P)
+    fauld = sm([(50.6, 73.6), (58.6, 76.4), (67.6, 77.6), (76.0, 76.2), (81.4, 72.8), (83.0, 78.0), (81.2, 82.6),
+                (68.0, 85.6), (55.0, 84.4), (49.6, 80.6)], t=0.85)
+    fdet = [(ribbon([(50.2, 79.0), (59.0, 81.2), (68.0, 82.0), (76.4, 80.6), (82.4, 77.4)], [0.2, 0.9, 1.0, 0.9, 0.2]), BLACK.deep, 0.65),
+            (ribbon([(50.4, 78.2), (59.0, 80.4), (68.0, 81.2), (76.4, 79.8), (82.4, 76.6)], [0.1, 0.5, 0.6, 0.5, 0.1]), BLACK.light, 0.65),
+            (ribbon([(50.0, 81.0), (58.0, 84.0), (68.0, 85.2), (76.0, 84.0), (81.4, 82.0)], [0.2, 0.9, 1.0, 0.9, 0.2]), GREY.shadow, 0.85),
+            (ellipse(80.2, 75.6, 1.6, 0.6, -40), BLACK.glint, 0.6)]
+    fig.part('fauld', fauld, BLACK, cel=1.2, rim=0.8, cast=1.0, details=fdet,
+             cast_on=['tabard', 'ntasset', 'ftasset', 'nleg', 'fleg', 'ncuisse', 'fcuisse', 'cape', 'farm', 'ffist', 'fcuff', 'fvamb'])
 
 
 # ======================================================================== le plastron et le gorgerin

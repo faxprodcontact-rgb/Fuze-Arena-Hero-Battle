@@ -494,8 +494,9 @@ def head(fig, P, HEAD, UC):
     end = add(TRIMLOW_C[-1], norm(sub(TRIMLOW_C[-1], TRIMLOW_C[-2])), 0.95)
     trimlow = sm(tl_l + [end] + tl_r[::-1], sharp=(0, 2 * len(tl_l)), t=0.6)
     fig.part('trimlow', trimlow, GOLD, grad=(80, 25, 60, 52, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), cel=0.5,
-             rim=0.45, cast=1.0, cast_on=['face', 'fringe', 'hood'],
-             details=[(sm([add(tl_l[0], d0, -1), add(tl_r[0], d0, -1), add(tl_r[0], d0, 0.9), add(tl_l[0], d0, 0.9)], t=0.5),
+             rim=0.0, cast=1.0, cast_on=['face', 'fringe', 'hood'],
+             details=[(limb([add(tl_r[0], d0, 0.6)] + tl_r[1:], [0.75] * len(tl_r)), GOLD.hi, 0.85),   # le liseré de lumière
+                      (sm([add(tl_l[0], d0, -1), add(tl_r[0], d0, -1), add(tl_r[0], d0, 0.9), add(tl_l[0], d0, 0.9)], t=0.5),
                        GOLD.shadow, 0.55)])
     clasp = sm([(70.6, 51.8), (72.6, 53.0), (73.0, 54.8), (71.2, 56.4), (69.0, 56.0), (68.2, 54.2), (69.0, 52.6)], t=0.95)
     fig.part('clasp', clasp, GOLD, grad=(73, 52, 68, 56.4, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), cel=0.6, rim=0.5,

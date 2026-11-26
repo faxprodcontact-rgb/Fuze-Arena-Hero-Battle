@@ -10,8 +10,8 @@
 # croisé (le pan gauche sur le pan droit, col de dessous bleu pâle), obi bleu roi noué devant en deux boucles et deux
 # pans, flocons inventés sur le tissu, doublure bleue entre les pans. Longs cheveux bleu nuit (raie au milieu, anneau
 # de reflet sur le crâne, une mèche devant l'épaule) qui tombent dans le dos puis s'envolent vers la gauche ; épingle
-# de glace (fleur de neige et pampille). Visage fin : yeux en amande au trait de cils relevé, iris bleu glacier très
-# pâle, petit nez, lèvres bleu-violet au sourire cruel relevé d'un côté, menton pointu. Bras lointain tendu vers
+# de glace (fleur de neige et pampille). Visage fin : yeux en amande au trait de cils relevé, tout blancs et
+# lumineux (sans iris ni pupille, tour 3 de l'avis), petit nez, lèvres bleu-violet au sourire cruel relevé d'un côté, menton pointu. Bras lointain tendu vers
 # l'ennemi, paume en l'air, pouce relevé : trois cristaux de glace flottent au-dessus. Bras proche plié, le poing posé
 # sur l'obi serre un éventail de fer fermé (tessen) pointé vers le bas ; les grandes manches pendent.
 # Coordonnées = pixels du dessin pixel art (le sol est y = 116, les pieds en (64, 116)), pour se poser au même endroit
