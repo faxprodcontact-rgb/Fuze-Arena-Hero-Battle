@@ -541,7 +541,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ring_c, tip = mapp(NF, (64.2, 69.2)), mapp(NF, (100.8, 74.4))
     blade, handle, ring_, up, ridge, edge, ku, kn = kunai_shapes(ring_c, tip)
     fig.part('khandle', handle, CLOTH, cel=0.3, rim=0.3, cast=0.4, cast_on=['narm', 'torso'],
-             details=[(handle, ('lin', *ring_c, *lerp(ring_c, tip, 0.4), [(0, TURQ.base), (1, TURQ.shadow)]), 1)])
+             details=[(handle, ('lin', *ring_c, *lerp(ring_c, tip, 0.4), [(0, LEATHER.base), (1, LEATHER.shadow)]), 1)])
     fig.part('kring', ring_, STEEL, cel=0.35, rim=0.35, cast=0.6, cast_on=['narm', 'torso', 'khandle'],
              details=[(ellipse(ring_c[0] + 0.7, ring_c[1] - 0.8, 0.5, 0.35), STEEL.glint, 0.9)])
     fig.part('blade', blade, STEEL, grad=(tip[0], tip[1] - 2, ring_c[0] + 15, ring_c[1] + 3, [(0, STEEL.shadow), (1, STEEL.deep)]),
@@ -550,8 +550,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (ridge, STEEL.glint, 0.95), (edge, '#ffffff', 0.7)])
 
     # ---- le poing proche (doigts devant le manche), la plaque d'acier sur le dos de la main ----
-    nf = sm([(66.4, 69.8), (69.0, 67.6), (74.0, 67.2), (78.4, 68.2), (79.6, 70.8), (79.2, 74.0), (76.6, 75.8), (71.6, 76.0),
-             (67.6, 75.4), (65.8, 73.0)], t=0.9)
+    nf = sm([(66.4, 69.8), (69.0, 67.6), (74.0, 67.2), (78.4, 68.2), (79.6, 70.8), (79.4, 73.6), (78.2, 75.4), (76.8, 75.9),
+             (75.5, 75.5), (74.1, 76.2), (72.7, 75.6), (71.2, 76.3), (69.8, 75.7), (68.2, 76.0), (66.6, 74.9), (65.8, 72.8)], t=0.9)
     nfd = [(ellipse(72.6, 72.6, 6.0, 3.4), ('rad', 76, 70, 7.5, 7.5, [(0, SKIN.light, 0.0), (1, SKIN.shadow, 0.25)]), 1)]
     for i in range(4):            # quatre doigts repliés devant le manche (le bout des doigts en bas, dans l'ombre)
         x0 = 67.6 + 2.8 * i

@@ -857,7 +857,7 @@ def head(fig, P, HEAD, HEADN):
     # pleine avec un éclat
     hb = bw / 2
     if P['smile'] > 0.5:
-        mid = [(bx - hb, by - 0.35), (bx - 0.5 * hb, by + 0.12), (bx, by + 0.28), (bx + 0.5 * hb, by + 0.1), (bx + hb, by - 0.4)]
+        mid = [(bx - hb, by - 0.5), (bx - 0.5 * hb, by + 0.14), (bx, by + 0.34), (bx + 0.5 * hb, by + 0.12), (bx + hb, by - 0.55)]
     else:
         mid = [(bx - hb * 0.9, by), (bx - 0.5 * hb, by + 0.05), (bx, by + 0.1), (bx + 0.5 * hb, by + 0.05), (bx + hb * 0.9, by)]
     a0, a1, a2, a3, a4 = mid

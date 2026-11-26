@@ -402,8 +402,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     NKF = (86.8, 52.6)
     dkf = math.dist(FB, NKF)
     a_tf = math.degrees(math.atan2(NKF[1] - FB[1], NKF[0] - FB[0]) + math.acos(min(1.0, R_FS / dkf)))
-    far_sh = [(FB[0] - 1.0, FB[1] + 2.4)] + ball_arc(FB, R_FS, -62, a_tf, step=10) + \
-        [lerp(NKF, (FB[0] + R_FS * math.cos(math.radians(a_tf)), FB[1] + R_FS * math.sin(math.radians(a_tf))), 0.5), NKF]
+    TF = (FB[0] + R_FS * math.cos(math.radians(a_tf)), FB[1] + R_FS * math.sin(math.radians(a_tf)))
+    # le flanc du buste remonte en courbe pleine (le grand dorsal) devant l'épaule lointaine jusqu'à la tangente
+    far_sh = [(FB[0] + 0.9, FB[1] - 0.6), (FB[0] + 1.9, FB[1] - 3.4), TF, lerp(NKF, TF, 0.5), NKF]
     torso = sm([(66.0, 48.0), NK] + trap + sh_ball + [(Su[0] - 3.0, Su[1] + 5.4), (51.8, 68.6),
                 (53.8, 72.6), (54.6, 77.0), (54.2, 81.4), (53.4, 86.0), (56.0, 90.6), (70.0, 91.6), (85.0, 90.6),
                 (88.6, 86.4), (87.2, 82.0), (87.0, 78.0), (88.4, 73.0), (89.6, 68.0), (91.4, 63.2)] + far_sh +
@@ -718,12 +719,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=1.1, rim=0.8, cast=1.2, cast_on=['head', 'capc', 'tA', 'm1', 'm2'],
              details=[(ribbon([(75.0, 31.6), (71.4, 25.4), (69.4, 19.0), (68.2, 14.0)], [0.2, 1.2, 0.8, 0.1]), IVORY.hi, 0.75),
                       (sm([(69.2, 33.0), (76.6, 31.4), (76.2, 34.0), (72.8, 35.8), (69.4, 35.4)]), IVORY.deep, 0.35)])
-    hornF = sm([(83.4, 33.4), (82.8, 29.4), (85.2, 24.4), (87.4, 19.2), (89.2, 14.2), (90.4, 18.6), (90.6, 24.6),
-                (89.6, 29.6), (89.0, 33.4), (86.4, 34.4)], sharp=(4,))
-    fig.part('hornF', hornF, IVORY, grad=(91, 20, 83, 30, [(0, IVORY.light), (0.55, IVORY.base), (1, IVORY.shadow)]),
+    # la corne lointaine : plantée à la même hauteur que la proche et symétrique d'elle par rapport à la médiane du
+    # crâne (vue de trois quarts : elle part près du bord droit du crâne, au-dessus du bout du sourcil lointain) ;
+    # un peu plus courte et plus fine que la proche ; sa pointe s'écarte vers la droite comme la proche vers la gauche
+    def HF(pts):
+        return [(x + 3.3 + 0.9 * max(0.0, 33.0 - y) / 19.0, y) for x, y in pts]
+    hornF = sm(HF([(83.6, 33.4), (82.9, 29.4), (85.2, 24.4), (87.4, 19.2), (89.2, 14.2), (90.4, 18.6), (90.6, 24.6),
+                   (89.5, 29.6), (88.6, 33.2), (86.4, 34.4)]), sharp=(4,))
+    fig.part('hornF', hornF, IVORY, grad=(95, 20, 86, 30, [(0, IVORY.light), (0.55, IVORY.base), (1, IVORY.shadow)]),
              cel=0.9, rim=0.7, cast=1.0, cast_on=['head', 'tB'],
-             details=[(ribbon([(88.6, 31.4), (89.4, 24.4), (89.4, 16.4)], [0.2, 0.9, 0.1]), IVORY.hi, 0.7),
-                      (sm([(83.2, 32.0), (89.2, 31.6), (89.0, 33.4), (86.4, 34.4), (83.4, 33.4)]), IVORY.deep, 0.3)])
+             details=[(ribbon(HF([(88.6, 31.4), (89.4, 24.4), (89.4, 16.4)]), [0.2, 0.9, 0.1]), IVORY.hi, 0.7),
+                      (sm(HF([(83.2, 32.0), (89.2, 31.6), (88.8, 33.4), (86.4, 34.4), (83.4, 33.4)])), IVORY.deep, 0.3)])
 
     # ---- chaque groupe de morceaux prend sa pose ----
     heads = ['m4', 'm3', 'm2', 'm1', 'tA', 'tB', 'head', 'capc', 'tuskN', 'tuskF', 'ear', 'ering', 'hornN', 'hornF']

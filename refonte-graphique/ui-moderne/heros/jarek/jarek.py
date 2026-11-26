@@ -198,7 +198,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     IH = inv(HEAD)
     root = mapp(HEAD, (55.4, 46.4))
     bw = P['braid']
-    bpts0 = [(55.4, 46.4), (52.8, 50.2), (49.8, 53.8), (47.2, 57.0), (45.2, 59.8), (43.8, 62.2), (42.6, 65.0)]
+    bpts0 = [(55.4, 46.4), (52.2, 50.0), (48.8, 53.4), (45.8, 56.6), (43.6, 59.6), (42.2, 62.2), (41.2, 65.2)]
     bpts = [root]
     for k, p in enumerate(bpts0[1:], 1):
         t = k / (len(bpts0) - 1)
@@ -238,7 +238,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # le lien rouge de la natte
     tc = bc[tie_i]
     td = norm((bc[tie_i + 1][0] - bc[tie_i - 1][0], bc[tie_i + 1][1] - bc[tie_i - 1][1]))
-    tie = limb([add(tc, td, -1.0), add(tc, td, 1.0)], [4.6, 4.2])
+    tie = limb([add(tc, td, -0.7), add(tc, td, 0.7)], [4.0, 3.8])
     fig.part('tie', tie, RED, cel=0.5, rim=0.5, cast=0.6, cast_on=['hair'],
              details=[(ribbon([add(add(tc, td, -0.3), (td[1], -td[0]), 1.8), add(add(tc, td, -0.3), (td[1], -td[0]), -1.6)], [0.1, 0.5]), RED.hi, 0.6)])
 
@@ -459,14 +459,23 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hu = unit(hang)
     W = add(H, hu, -4.6)
     E = ik(Sn, W, L1N, L2N, 1)
-    nsl = bent(Sn, E, W, 11.2, 10.4, 8.0, bulge=(0.05, 0.16))
+    # deux manches arrondies fondues en UNE forme (aucune couture au coude), le dessous de la manche qui pend
+    ed = norm((W[0] - E[0], W[1] - E[1]))
+    pe = (-ed[1], ed[0]) if ed[0] >= 0 else (ed[1], -ed[0])             # vers le bas de l'avant-bras
+    drape = sm([add(E, pe, 2.0), add(lerp(E, W, 0.25), pe, 6.0), add(lerp(E, W, 0.6), pe, 5.6), add(W, pe, 3.4), lerp(E, W, 0.6)], t=0.9)
+    nsl = fused([limb([Sn, lerp(Sn, E, 0.5), E], [11.6, 11.2, 10.6]), limb([E, lerp(E, W, 0.5), W], [10.2, 9.6, 8.6]), drape])
     na = math.atan2(W[1] - E[1], W[0] - E[0])
     Ln = math.dist(E, W)
     N_ = lambda sh: xf(sh, E[0], E[1], math.degrees(na))
     sg = -1 if math.cos(na) > 0 else 1
-    ndet = [(ribbon([lerp(Sn, E, 0.15), lerp(Sn, E, 0.55), lerp(E, W, 0.0), lerp(E, W, 0.4)], [0.1, 1.2, 1.0, 0.1]), FELT.light, 0.55),
-            (N_(soft([(Ln * 0.2, 3.4 * sg), (Ln * 0.55, 4.2 * sg), (Ln * 0.9, 3.4 * sg)], 1.4)), FELT.deep, 0.45),
-            (soft([lerp(Sn, E, 0.35), lerp(Sn, E, 0.7), lerp(E, W, 0.12)], 0.9), FELT.shadow, 0.45)]
+    ua = norm((Sn[0] - E[0], Sn[1] - E[1]))
+    bis = norm((ua[0] + ed[0], ua[1] + ed[1]))
+    cr = add(E, bis, 5.2)
+    up_out = (ua[1], -ua[0]) if ua[1] < 0 else (-ua[1], ua[0])
+    ndet = [(N_(soft([(Ln * 0.15, -3.5 * -sg), (Ln * 0.55, -3.9 * -sg), (Ln * 0.92, -3.4 * -sg)], 1.3)), FELT.light, 0.6),
+            (soft([add(lerp(E, Sn, 0.85), up_out, 4.4), add(lerp(E, Sn, 0.5), up_out, 4.6), add(lerp(E, Sn, 0.2), up_out, 4.2)], 1.3), FELT.light, 0.5),
+            (soft([add(cr, ua, 2.0), cr, add(cr, ed, 2.6)], 1.0), FELT.deep, 0.5),
+            (N_(soft([(Ln * 0.2, 4.6 * -sg), (Ln * 0.5, 6.2 * -sg), (Ln * 0.85, 4.6 * -sg)], 1.2)), FELT.deep, 0.4)]
     fig.part('nsleeve', nsl, FELT, grad=(Sn[0] + 6, Sn[1] - 2, E[0] - 4, E[1] + 4, [(0, FELT.light), (0.5, FELT.base), (1, FELT.shadow)]),
              cel=1.5, rim=0.8, cast=1.4, cast_on=['torso', 'sash', 'knot', 'skirt', 'hair', 'tie', 'strap', 'quiver'] + qa_names, details=ndet)
     ncuff = N_(rpoly([(Ln - 2.8, -4.6), (Ln + 1.4, -5.4), (Ln + 1.6, 5.4), (Ln - 2.8, 4.6)], [1.0, 1.2, 1.2, 1.0]))
@@ -582,23 +591,19 @@ def head(fig, P):
            (sm([(59.4, 31.6), (82.0, 31.6), (82.0, 35.0), (76.0, 36.2), (68.0, 36.4), (60.0, 36.6)]),
             ('lin', 0, 32.4, 0, 36.8, [(0, SKIN.deep, 0.55), (1, SKIN.deep, 0)]), 1)]
     # la pommette haute (un méplat éclairé sous chaque œil), le hâle des joues, le creux sous la pommette
-    fd += [(ellipse(exN - 0.6, eyY + 2.9, 2.6, 0.75, -6), SKIN.light, 0.5),
-           (ellipse(exF + 0.4, eyY + 2.7, 1.5, 0.6, 4), SKIN.hi, 0.45),
-           (ellipse(exN - 1.4, eyY + 4.4, 2.4, 1.2, 10), '#d8664e', 0.22),
-           (ellipse(exF + 0.8, eyY + 4.2, 1.2, 0.9), '#e07058', 0.18),
+    def glow_(cx, cy, rx, ry, col, op):
+        return (ellipse(cx, cy, rx, ry), ('rad', cx, cy, rx, ry, [(0, col, op), (0.6, col, op * 0.5), (1, col, 0)]), 1)
+    fd += [glow_(exN - 0.4, eyY + 3.0, 3.0, 1.3, SKIN.light, 0.7),
+           glow_(exF + 0.5, eyY + 2.8, 1.8, 1.0, SKIN.hi, 0.6),
+           glow_(exN - 1.4, eyY + 4.6, 3.0, 1.9, '#d8664e', 0.4),
+           glow_(exF + 0.9, eyY + 4.3, 1.6, 1.3, '#e07058', 0.3),
            (soft([(64.4, 46.0), (67.0, 48.4), (70.4, 49.6)], 0.8), SKIN.shadow, 0.3)]
     # le menton (sur la médiane), l'ombre douce sous la lèvre
     cx_ = V['menton'][0]
-    fd += [(ellipse(cx_ + 0.6, 50.6, 1.6, 0.6), SKIN.light, 0.4),
-           (ellipse(mx + 0.1, my + 1.5, 1.4, 0.38), SKIN.shadow, 0.45)]
+    fd += [glow_(cx_ + 0.7, 50.7, 2.0, 0.9, SKIN.light, 0.55)]
     # le favori brun devant l'oreille (il descend du bonnet, attaché au crâne)
     fd += [(sm([(60.2, 34.0), (63.8, 34.4), (63.6, 37.4), (62.8, 41.6), (61.6, 42.2), (60.6, 39.0)]), ('lin', 64, 35, 60, 41, [(0, HAIR.base), (1, HAIR.shadow)]), 1),
            (soft([(62.8, 34.8), (62.6, 37.6), (62.0, 40.8)], 0.5), HAIR.light, 0.6)]
-    # le pli du froncement entre les sourcils (sur la médiane)
-    mdx = V['mediane'](eyY - 3)
-    fd += [(soft([(mdx - 0.5, eyY - 4.6), (mdx - 0.3, eyY - 3.6), (mdx - 0.1, eyY - 2.6)], 0.45), SKIN.shadow, 0.6),
-           (soft([(mdx + 0.7, eyY - 4.4), (mdx + 0.8, eyY - 3.6), (mdx + 0.7, eyY - 2.9)], 0.35), SKIN.shadow, 0.45)]
-
     # les yeux bridés, noisette : MÊME dessin, même ligne, même regard (vers l'ennemi) ; l'œil du fond un peu plus étroit ;
     # le coin extérieur un peu plus haut (yeux étroits), la paupière lourde
     def eye_shape(ex, ew, inner_right):
@@ -650,7 +655,7 @@ def head(fig, P):
     # le nez : ombre douce du côté proche (la lumière vient de droite), ombre sous le bout
     fd += [(sm([(nx - 0.9, eyY + 0.6), (nx - 0.4, eyY + 1.0), (nx - 0.3, ny - 0.4), (nx - 1.0, ny + 0.4), (nx - 1.6, ny - 0.4), (nx - 1.3, eyY + 1.6)]),
             ('lin', nx - 1.8, 0, nx, 0, [(0, SKIN.shadow, 0.5), (1, SKIN.shadow, 0)]), 1),
-           (ellipse(nx + 0.3, ny + 1.15, 1.5, 0.4, 2), SKIN.shadow, 0.45)]
+           glow_(nx + 0.2, ny + 1.0, 1.5, 0.55, SKIN.shadow, 0.55)]
     # la bouche, fermée (lèvres serrées, coins un peu tombants : il est tendu) ; il serre les dents à l'effort (grit)
     gr = P['grit']
     hm = mw / 2
@@ -663,8 +668,7 @@ def head(fig, P):
                 (ribbon([(mx - hm * 0.6, my + 0.15 + 0.36 * gr), (mx + hm * 0.6, my + 0.15 + 0.36 * gr)], [0.12, 0.12]), '#b8a898', 0.7)]
     fd += [(ribbon(crpath([(mx - hm, my + 0.3), (mx - hm * 0.5, my - 0.05), (mx, my - 0.12), (mx + hm * 0.5, my - 0.05), (mx + hm, my + 0.32)], 10),
                    swell(10, 0.5, 0.1)), LIP, 0.9),
-           (ellipse(mx + 0.2, my + 0.75 + 0.5 * gr, hm * 0.5, 0.36), SKIN.light, 0.55),
-           (ribbon([(mx - hm * 0.4, my - 0.95), (mx, my - 0.8), (mx + hm * 0.4, my - 0.95)], [0.1, 0.35, 0.1]), SKIN.shadow, 0.35)]
+           glow_(mx + 0.2, my + 0.85 + 0.5 * gr, hm * 0.55, 0.45, SKIN.light, 0.6)]
     fig.ctx_face = dict(oeil_proche=meas['oeil_proche'], oeil_fond=meas['oeil_fond'], nez=(nx + 0.1, ny), bouche=(mx, my, mw))
     part('face', face, SKIN, grad=(82, 33, 61, 50, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]), cel=0.9, rim=0.55, cast=1.0,
          cast_on=['hair', 'neck'], details=fd)
