@@ -32,6 +32,16 @@ VISAGE = {
     'mon-orin-rapide': (83, 14, 28),       # Karu
     'mon-arachne-tisseuse': (74, 17, 26),  # Nyrra
     'mon-meduse-rapide': (68, 11, 24),     # Sarvik
+    # contrôle complet du 26/11 : têtes coupées ou décentrées dans les cadres ronds
+    'mon-eldra-sorts': (56, 29, 32),       # Bao (la tête, pas le bâton)
+    'mon-orin-sorts': (70, 15, 34),        # Sorai (la tête d'oiseau, pas l'éventail)
+    'mon-lenore-sorts': (41, 21, 32),      # Oboro (sans la lanterne)
+    'angels-10': (62, 32, 40),             # Aurelle (l'œil entier, pas la massue)
+    'mon-kesha-costaud': (84, 28, 30),     # le crabe : ses yeux, pas la carapace
+    'mon-orin-costaud': (56, 24, 40),
+    'mon-lenore-costaud': (80, 33, 40),
+    'mon-arachne-costaud': (98, 68, 34),
+    'mon-kael-costaud': (95, 47, 30),
 }
 
 
