@@ -597,9 +597,9 @@ def hat(fig, P):
         # on fait tourner le tour pour que la partie masquée (le bord du fond, contre la calotte) soit aux deux bouts
         k0 = next(i for i in range(n_) if inm[i] and not inm[i - 1])
         ring, inm = ring[k0:] + ring[:k0], inm[k0:] + inm[:k0]
-        c_ = resample([p for p, m in zip(ring, inm) if not m], 300)
+        c_ = resample([p for p, m in zip(ring, inm) if not m], 64)   # peu de points : la forme reste lisse
         m_ = len(c_)
-        gal.append((ribbon(c_, [w_ * min(1.0, 0.3 + i / 8, 0.3 + (m_ - 1 - i) / 8) for i in range(m_)], sharp_ends=False), col, op))
+        gal.append((ribbon(c_, [w_ * min(1.0, 0.3 + i / 2.5, 0.3 + (m_ - 1 - i) / 2.5) for i in range(m_)], sharp_ends=False), col, op))
     bd = [(sm(FLAP[2:] + [(46.0, 40.0), (40.0, 40.0), (40.0, 20.0)]), ('lin', 60, 22, 46, 38, [(0, HAT.base, 0), (1, HAT.shadow, 0.55)]), 1),
           (ribbon(crpath([(51.8, 22.4), (55.0, 21.6), (58.4, 23.4), (60.4, 26.8), (61.0, 30.4)], 16), swell(16, 1.2)), HAT.light, 0.7),
           (ribbon(crpath([(53.4, 22.2), (56.4, 22.4), (58.6, 24.6)], 10), swell(10, 0.45)), HAT.hi, 0.55),

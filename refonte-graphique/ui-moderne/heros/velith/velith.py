@@ -475,12 +475,12 @@ def fist_parts(fig, name, M, cast_on, wrist, heel):
     from shapely.ops import unary_union
     from outils import poly_of, geom_shape
     L = lambda sh: sh.map(lambda p: mapp(M, p))
-    body = sm([(-8.8, -3.6), (-6.6, -7.6), (-1.4, -8.4), (3.4, -7.8), (6.0, -5.0), (6.4, 0.2), (5.8, 4.8), (3.6, 7.4),
+    body = sm([(-8.8, -3.6), (-6.6, -7.6), (-2.0, -8.2), (2.6, -6.9), (5.2, -4.8), (6.4, 0.2), (5.8, 4.8), (3.6, 7.4),
                (-1.2, 8.0), (-5.6, 7.2), (-8.4, 3.8), (-9.0, 0.0)])
     hw = mapp(M, heel)
     neck = limb([hw, lerp(hw, wrist, 0.55), wrist], [8.8, 8.4, 8.2])
     sh = geom_shape(unary_union([poly_of(L(body)), poly_of(neck)]))
-    det = [(L(sm([(-6.2, -7.6), (-1.4, -8.4), (3.4, -7.8), (5.2, -6.0), (0.0, -6.6), (-5.0, -5.6)])), SKIN.light, 0.55),
+    det = [(L(sm([(-6.4, -7.4), (-2.0, -8.0), (2.4, -6.8), (0.0, -6.2), (-5.0, -5.6)])), SKIN.light, 0.55),
            (L(ellipse(-6.0, 1.2, 2.2, 3.6, 10)), SKIN.shadow, 0.35)]
     fig.part(name, sh, SKIN, cel=1.3, rim=0.7, cast=1.0, cast_on=cast_on, details=det)
     names = [name]

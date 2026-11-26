@@ -73,6 +73,10 @@ WRIST_N = (-5.4, -6.5)            # les poignets : la main proche par le dos du 
 WRIST_F = (-10.4, 7.6)
 BLADE_L = 49.0
 HEAD_C = (70.0, 54.0)             # le centre de l'agrandissement de la tête (le cou)
+# les épaulières (avis du propriétaire, tour 2 : « Réduire la taille des épaulettes ») : plaques moins nombreuses, moins
+# hautes et moins larges ; x gauche / droit de la plaque du haut, y du haut, hauteur d'une plaque, pas entre deux, nombre
+NS_X, NS_Y, NS_H, NS_STEP, NS_N = (39.6, 54.4), 52.2, 5.4, 4.6, 4
+FS_X, FS_Y, FS_H, FS_STEP, FS_N = (88.6, 97.4), 54.8, 5.4, 4.6, 3
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, O=O0, ang=ANG0, edge=1,
             bn=0, bf=0, shn=(0.0, 0.0), shf=(0.0, 0.0), lift=0.0, sn=0.0, sf=0.0, kz=0.0, stretch=0.0,
@@ -312,7 +316,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- le bras lointain : il sort de sous l'épaulière lointaine, l'avant-bras passe devant la cuirasse ----
     arm('farm', SFp, EF, WF, 9.0, 8.0, 6.6, ['do', 'kz0', 'kz1', 'kz2', 'fleg', 'gorget'])
-    fs = plate_parts(fig, 'fs', [(88.0 + 0.15 * i, 54.4 + 5.6 * i, 99.4 + 0.3 * i, 61.0 + 5.6 * i) for i in range(4)],
+    fs = plate_parts(fig, 'fs', [(FS_X[0] + 0.15 * i, FS_Y + FS_STEP * i, FS_X[1] + 0.3 * i, FS_Y + FS_H + FS_STEP * i) for i in range(FS_N)],
                      cords=(0.58,), gold_top=True, gold_bot=True, cast=0.8, tilt=0.3)
 
     def sword():
@@ -361,7 +365,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     if not P['sw_front']:
         sword()
     arm('narm', SNp, EN, WN, 9.2, 8.0, 6.6, ['do', 'kz0', 'kz1', 'kz2', 'farm', 'gorget', 'tsuka', 'ffist', 'nleg', 'fleg'])
-    ns = plate_parts(fig, 'ns', [(37.4 - 0.45 * i, 51.8 + 5.6 * i, 54.4 + 0.12 * i, 58.4 + 5.6 * i) for i in range(5)],
+    ns = plate_parts(fig, 'ns', [(NS_X[0] - 0.45 * i, NS_Y + NS_STEP * i, NS_X[1] + 0.12 * i, NS_Y + NS_H + NS_STEP * i) for i in range(NS_N)],
                      cords=(0.27, 0.66), gold_top=True, gold_bot=True, cast=1.0, tilt=0.15)
 
     def near_fist():
