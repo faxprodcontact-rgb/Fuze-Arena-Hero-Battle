@@ -349,3 +349,7 @@ html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum
 @media (prefers-reduced-motion: reduce) {
   .sr-screen *, .sg *, .sg-stage * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
 }
+
+/* Chances : un héros jamais obtenu n'est qu'une ombre (sa silhouette sombre, sans détail) ; sa carte et sa chance restent */
+.odds2-cell.unknown .hcard-fig img,
+.odds2-cell.unknown .hcard img { filter: brightness(0) drop-shadow(0 0 3px #ffffff55); opacity: 0.85; }

@@ -195,7 +195,7 @@ export function OddsModal() {
               {g.r === 'legendary' && kind === 'normal' && <p class="odds2-pity">{t('summon.pity', { n: LEGENDARY_PITY })}</p>}
               <div class="odds2-grid">
                 {g.list.map(({ def, p }) => (
-                  <div class="odds2-cell">
+                  <div class={`odds2-cell${s.discovered.includes(def.id) ? '' : ' unknown'}`}>
                     <HeroCard hero={{ uid: 0, defId: def.id, stars: RARITY_RULES[def.rarity].bornStars, level: 1 }} small />
                     <span class="odds2-p">{pct(p, s.lang)}</span>
                   </div>
