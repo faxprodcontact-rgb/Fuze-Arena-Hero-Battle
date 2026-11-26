@@ -403,17 +403,17 @@ def emblem(cx, cy, a, shot, gold):
     def T(sh):
         return sh.map(lambda p: (lambda q: (ox + q[0], oy + q[1]))(rot((p[0] * kx, p[1]), a)))
     # le contour de la flamme (y vers le bas) : bas rond, flancs pleins, trois pointes nettes, deux creux doux
-    whole = sm([(0.0, 10.2), (-4.4, 9.0), (-7.0, 5.8), (-7.6, 1.6), (-6.8, -2.4), (-6.0, -5.2), (-6.9, -8.6),
-                (-4.0, -6.2), (-2.6, -3.8), (-2.4, -7.6), (-1.0, -11.0), (1.4, -14.4), (2.6, -10.6), (3.2, -6.8),
-                (3.4, -3.6), (5.0, -6.0), (7.6, -9.4), (7.4, -5.2), (7.8, -1.4), (7.6, 2.6), (6.4, 6.4), (3.8, 9.2)],
-               sharp=(6, 8, 11, 14, 16), t=0.8)
-    # le cœur : une petite flamme d'une seule pointe, posée au fond de la grande
-    heart = sm([(0.2, 8.0), (-2.8, 7.2), (-4.2, 4.6), (-4.0, 1.4), (-2.6, -1.8), (-0.6, -4.6), (0.6, -7.4),
-                (1.6, -4.4), (3.6, -1.2), (4.6, 2.0), (4.4, 5.0), (2.8, 7.2)], sharp=(6,), t=0.8)
+    whole = sm([(0.4, 10.2), (-3.8, 9.4), (-6.4, 6.8), (-7.2, 3.2), (-6.8, -0.4), (-7.4, -3.4), (-8.8, -6.8),
+                (-5.8, -5.0), (-3.4, -2.0), (-3.4, -5.6), (-2.2, -9.2), (-0.4, -12.4), (1.8, -15.4), (2.6, -11.8),
+                (3.0, -8.2), (3.6, -3.8), (5.4, -5.6), (7.8, -8.6), (8.0, -4.8), (7.8, -1.0), (7.4, 3.0), (6.2, 6.6),
+                (3.8, 9.2)], sharp=(6, 8, 12, 15, 17), t=0.8)
+    # le cœur : une petite flamme d'une seule pointe (qui penche comme la grande), posée au fond de la grande
+    heart = sm([(0.6, 8.2), (-2.0, 7.6), (-3.4, 5.4), (-3.4, 2.6), (-2.2, -0.4), (-0.6, -3.0), (0.2, -6.4),
+                (1.4, -3.4), (3.2, -0.6), (4.2, 2.6), (4.0, 5.6), (2.8, 7.6)], sharp=(6,), t=0.8)
     h = shot / 3.0
     hc = [(0, '#ffe08a' if h < 0.5 else LAVA[0]), (0.45, '#ffa040' if h < 0.5 else LAVA[1]),
           (1, '#e8541c' if h < 0.5 else LAVA[3])]
-    out = [(T(whole.move(-0.7, 0.9)), RED.deep, 0.6),
+    out = [(T(whole.move(-0.5, 0.6)), RED.deep, 0.45),
            (T(whole), ('lin', ox + 6, oy - 12, ox - 6, oy + 9, [(0, gold.hi), (0.35, gold.light), (0.75, gold.base), (1, gold.shadow)]), 1),
            (T(sm_in(whole, 0.9, -0.9)), gold.shadow, 0.45),
            (T(heart.scale(1.12, 1.08, 0.4, 3.0)), gold.shadow, 0.55),
@@ -422,7 +422,7 @@ def emblem(cx, cy, a, shot, gold):
            # les éclats (en haut à droite) : le long de la grande pointe, sur le flanc droit, sur le cœur
            (T(ribbon([(1.9, -11.6), (2.6, -8.0), (2.9, -4.6)], [0.1, 0.55, 0.1])), gold.glint, 0.85),
            (T(ribbon([(6.4, -3.0), (6.7, 0.6), (5.8, 4.6)], [0.1, 0.5, 0.1])), gold.hi, 0.7),
-           (T(ellipse(2.0, 0.6, 0.9, 1.6, 20)), '#fffbe8', 0.75)]
+           (T(ribbon([(2.2, -1.0), (2.8, 1.4), (2.6, 3.6)], [0.1, 0.5, 0.1])), '#fffbe8', 0.7)]
     if h > 0:
         out.insert(0, (T(ellipse(0, -2, 13, 13)), ('rad', ox, oy - 2, 13 * kx, 13, [(0, LAVA[1], 0.7 * h), (0.6, LAVA[2], 0.35 * h), (1, LAVA[3], 0)]), 1))
     return out
@@ -808,6 +808,21 @@ def near_arm(fig, P, S):
           (ribbon([a2.at(0.1, -2.6), a2.at(0.3, -3.2), a2.at(0.5, -2.8)], [0.1, 0.7, 0.1]), SKIN.light, 0.55)]
     fig.part('narm', arm, SKIN, cel=1.7, rim=0.7, cast=1.2, details=ad,
              cast_on=['torso', 'belt', 'skirt', 'cape', 'shaft', 'butt', 'neck', 'helmet', 'shield', 'sside'])
+    # l'épaulière d'or : une plaque bombée qui part du col de la cuirasse et coiffe le haut de l'épaule (le raccord
+    # épaule / cuirasse disparaît dessous) ; elle suit à moitié le bras quand il se lève
+    rotk = 0.5 * (((a1.deg - 105.3) + 180) % 360 - 180)
+    UCm = mchain(mT(S[0] - NS0[0], S[1] - NS0[1]), mR(rotk, *NS0))
+    Q = lambda pts: [mapp(UCm, p_) for p_ in pts]
+    flap = sm(Q([(53.6, 49.4), (49.6, 49.6), (45.6, 50.4), (42.6, 52.2), (41.0, 55.0), (41.2, 57.6), (43.0, 58.4),
+                 (45.8, 57.6), (49.2, 56.0), (52.4, 54.8), (54.8, 53.2)]), t=0.8)
+    fdt = [(sm(Q([(41.4, 56.0), (43.2, 56.6), (45.8, 56.0), (49.4, 54.4), (52.6, 53.2), (54.6, 52.6), (54.8, 53.2),
+                  (52.4, 54.8), (49.2, 56.0), (45.8, 57.6), (43.0, 58.4), (41.2, 57.6)])), GOLD.shadow, 0.75),
+           (ribbon(Q([(41.8, 55.4), (45.6, 55.4), (49.4, 53.8), (53.6, 52.0)]), [0.1, 0.7, 0.7, 0.2]), GOLD.hi, 0.8),
+           (sm(Q([(45.0, 51.4), (49.6, 50.4), (53.0, 50.4), (53.0, 51.6), (49.4, 52.6), (46.0, 53.4)])), GOLD.light, 0.6),
+           (ellipse(*mapp(UCm, (50.2, 51.2)), 1.6, 0.6, -12 + rotk), GOLD.glint, 0.85),
+           (ellipse(*mapp(UCm, (44.0, 54.2)), 0.65, 0.6, 0), GOLD.deep, 0.8),
+           (ellipse(*mapp(UCm, (44.2, 54.0)), 0.35, 0.3, 0), GOLD.hi, 0.9)]
+    fig.part('nepau', flap, GOLD, cel=1.0, rim=0.7, cast=1.0, details=fdt, cast_on=['narm', 'torso', 'neck'])
     # le poing : le bloc des doigts et la paume jusqu'au poignet, fondus
     block = sm([T(p) for p in out], t=0.85)
     cx = sum(p[0] for p in out) / len(out)

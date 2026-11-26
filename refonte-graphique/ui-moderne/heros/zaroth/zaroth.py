@@ -7,7 +7,7 @@
 # Grosse tête casquée (bol laqué rouge, visière qui met les yeux dans l'ombre, grand croissant d'or sur une monture à
 # gemme bleue, aileron retourné à blason de vague, protège-nuque en trois paliers), cache-cou de tissu rouge à liseré
 # d'or qui couvre tout le bas du visage jusqu'au bord avant (avis du propriétaire : plus de nez), yeux ambre sous de gros
-# sourcils blancs froncés ; deux grandes épaulières carrées à laçage bleu, cuirasse en tonneau (liserés d'or, blason de
+# sourcils blancs froncés ; deux épaulières carrées à laçage bleu (réduites : avis tour 2), cuirasse en tonneau (liserés d'or, blason de
 # vague), jupe de plaques, hakama bleu nuit, jambières laquées, tabi et sandales de paille ; sabre tenu à deux mains
 # devant le ventre, lame qui monte vers l'ennemi ; fourreau bleu nuit qui dépasse derrière la hanche.
 # Garde de samouraï : jambe proche tendue en arrière, jambe lointaine en avant, genou fléchi, pieds à plat.

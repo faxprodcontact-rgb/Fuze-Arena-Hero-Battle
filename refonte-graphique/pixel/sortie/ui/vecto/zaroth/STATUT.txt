@@ -1,4 +1,4 @@
 fait
-Correction d'après l'avis du 26/11 : le nez du masque est supprimé ; à sa place, le cache-cou de tissu rouge (liseré d'or en haut) monte jusque sous les yeux et couvre tout le bas du visage jusqu'au bord avant, sans rien qui dépasse (plus de gueule, de crocs ni de moustache : on ne voit que le cache-cou, avec deux plis doux et la lumière en haut à droite).
-Yeux ambre et sourcils blancs replacés avec visage.py (même ligne, œil du fond un peu plus étroit, racine du nez entre les deux, sous le tissu) : verifier() sans défaut, contrôle dans visage.png ; la tête bouge d'un bloc dans toutes les poses (repos, attaque, spéciale).
-Reste du héros inchangé : casque, croissant, épaulières, cuirasse, sabre, animations ; mesures du jeu inchangées.
+Correction d'après l'avis du 26/11 (tour 2, « Réduire la taille des épaulettes ») : les deux épaulières sont plus petites. Celle de devant passe de 5 à 4 plaques, moins hautes et moins larges (elle s'arrête au-dessus de la jupe au lieu de la recouvrir) ; celle du fond passe de 4 à 3 plaques, plus étroite : on voit davantage les bras bleu nuit qui en sortent.
+Vérifié dans toutes les poses (repos, levée du sabre, coupe, sabre planté, défi) : les bras sortent toujours proprement de dessous, rien ne se décroche.
+Reste du héros inchangé (visage et cache-cou du tour 1, casque, cuirasse, sabre, animations) ; mesures du jeu inchangées.

@@ -615,11 +615,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         left, right = sides(c, ws)
         return sm(left[:-1] + [c[-1]] + right[:-1][::-1], sharp=(len(left) - 1,), t=0.9), c
     hornF, cF = horn((77.0, 38.6), (69.6, 31.8), (61.2, 26.4), 4.4)
-    hornN, cN = horn((82.0, 37.4), (74.4, 30.4), (65.6, 24.6), 5.2)
-    for name, sh, c in (('hornF', hornF, cF), ('hornN', hornN, cN)):
-        fig.part(name, sh, HORN, grad=(c[0][0], c[0][1] - 3, c[-1][0], c[-1][1] + 2, [(0, HORN.light), (0.6, HORN.base), (1, HORN.shadow)]),
-                 cel=0.9, rim=0.7, cast=0.9,
-                 details=[(ribbon([(x + 0.4, y - 0.5) for x, y in (c[2], c[7], c[13])], [0.3, 0.8, 0.1]), HORN.hi, 0.7)])
+    fig.part('hornF', hornF, HORN, grad=(cF[0][0], cF[0][1] - 3, cF[-1][0], cF[-1][1] + 2, [(0, HORN.light), (0.6, HORN.base), (1, HORN.shadow)]),
+             cel=0.9, rim=0.7, cast=0.9,
+             details=[(ribbon([(x + 0.4, y - 0.5) for x, y in (cF[2], cF[7], cF[13])], [0.3, 0.8, 0.1]), HORN.hi, 0.7)])
+    # la corne PROCHE (avis du propriétaire, tour 2 : « la corne visible de notre côté doit passer devant la tête ») :
+    # elle est plantée sur le côté du crâne, au-dessus et en arrière de l'arcade, et peinte APRÈS la tête (voir plus
+    # bas) ; sa base est arrondie et posée sur la peau, avec son ombre douce portée sur le crâne.
+    hornN, cN = horn((81.6, 37.4), (74.6, 30.4), (65.6, 24.6), 5.2)
+    hbase = MS(HEAD, ellipse(81.2, 37.7, 3.1, 1.6, -6))
+    hornN, _ = fuse([hornN, hbase], smooth=1.0)
 
     # -- la gorge (derrière les mâchoires) : rouge sombre ; le feu y monte (glow) --
     g = Pz['glow']
@@ -726,6 +730,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('head', head, SKIN, grad=(hp((110, 39))[0], hp((110, 39))[1], hp((72, 53))[0], hp((72, 53))[1],
                                        [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=1.2, rim=0.7, cast=1.3, details=hd)
+    # la corne proche, DEVANT la tête : sa racine plus sombre (là où elle sort de la peau), son reflet le long du dessus
+    fig.part('hornN', hornN, HORN, grad=(cN[0][0], cN[0][1] - 3, cN[-1][0], cN[-1][1] + 2, [(0, HORN.light), (0.6, HORN.base), (1, HORN.shadow)]),
+             cel=0.9, rim=0.7, cast=1.0, cast_on=['head', 'hornF'],
+             details=[(ribbon([(x + 0.4, y - 0.5) for x, y in (cN[2], cN[7], cN[13])], [0.3, 0.8, 0.1]), HORN.hi, 0.7),
+                      (MS(HEAD, ribbon([(78.6, 38.2), (81.6, 39.0), (84.6, 38.0)], [0.1, 0.9, 0.1])), HORN.shadow, 0.5)])
 
     # ============================================================== la main lointaine : le poing et la dague courbe
     ang = Pz['ang']

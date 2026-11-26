@@ -485,8 +485,8 @@ def torso_parts(fig, P, TOR, HEAD):
     l'épaule jusqu'au dos du crâne (il se confond avec lui : la tête naît du cou, sans marche ni bosse)."""
     torso = sm([(92.4, 52.0), (91.6, 58.6), (89.4, 62.6), (91.0, 65.6), (90.0, 69.4), (86.4, 72.4), (81.4, 75.4),
                 (77.6, 79.0), (76.6, 83.6), (66.0, 84.6), (55.4, 83.6), (55.0, 78.0), (53.2, 72.4), (51.0, 67.6),
-                (51.6, 63.4), (55.4, 60.6), (62.0, 59.2), (67.8, 58.3), (73.2, 56.7), (77.4, 54.0), (79.6, 50.8),
-                (80.3, 47.6), (80.7, 44.8), (83.6, 42.6), (89.0, 43.0), (92.8, 46.6)], t=0.92)
+                (51.6, 63.4), (55.4, 60.6), (62.0, 59.2), (67.8, 58.3), (73.0, 56.8), (76.8, 54.4), (78.8, 51.8),
+                (79.9, 49.0), (80.45, 46.2), (81.05, 43.6), (84.0, 42.0), (89.0, 43.0), (92.8, 46.6)], t=0.92)
     det = []
     # l'ombre du côté proche (bas-gauche), douce
     det.append((torso, ('lin', 54, 72, 66, 68, [(0, SCALE.deep, 0.45), (1, SCALE.deep, 0)]), 1))
@@ -514,7 +514,7 @@ def torso_parts(fig, P, TOR, HEAD):
     band = sm(L_ + R_[::-1], t=0.9)
     det.append((band, ('lin', 84, 56, 62, 82, [(0, BELLY.light), (0.45, BELLY.base), (1, BELLY.shadow)]), 1))
     # son bord gauche dans l'ombre (le volume du ventre), son bord droit éclairé
-    det.append((ribbon([L_[i] for i in range(4, 41, 4)], [0.2] + [1.6] * 8 + [0.6]), BELLY.shadow, 0.45))
+    det.append((ribbon([lerp(L_[i], ctr[i], 0.16) for i in range(4, 41, 4)], [0.2] + [1.6] * 8 + [0.6]), BELLY.shadow, 0.45))
     det.append((ribbon([R_[i] for i in range(2, 37, 4)], [0.1] + [0.9] * 7 + [0.2]), BELLY.hi, 0.55))
     # les plaques : de la gorge (petites) au ventre (grandes, six), chacune bombée (un pli d'ombre dessous, un éclat
     # dessus) ; leurs écarts grandissent vers le bas, jamais réguliers comme des rayures
@@ -650,8 +650,13 @@ def head_parts(fig, P):
     hd.append((E(ribbon([(85.8, 46.5), (88.4, 46.3), (90.8, 47.0), (93.2, 47.9)], [0.1, 0.6, 0.5, 0.1])), SCALE.deep, 0.7))
     # l'ombre sous la mâchoire (à la place de l'ombre automatique, qui marquait aussi le dos du crâne d'un bord)
     hd.append((ribbon([lo((86.4, 55.6)), lo((90.6, 55.7)), lo((95.4, 54.9)), lo((98.6, 53.4))], [0.1, 0.8, 0.7, 0.1]), BELLY.shadow, 0.8))
+    # le liseré de lumière, posé à la main sur le haut et l'avant de la tête seulement (le liseré automatique laissait
+    # un fil clair sur le dos du crâne, là où il se fond dans le cou)
+    hd.append((ribbon([lerp(p, (90.0, 47.5), 0.025) for p in [(81.0, 44.4), (82.0, 42.4), (84.2, 40.6), (88.8, 39.6), (93.4, 40.6),
+                                                            (97.2, 42.8), (99.8, 45.4), (100.9, 47.8), (100.5, 49.2)]],
+                      [0.1, 0.35, 0.6, 0.7, 0.75, 0.75, 0.7, 0.55, 0.1]), SCALE.hi, 0.85))
     fig.part('head', head, SCALE, grad=(100, 41, 81, 56, [(0, SCALE.light), (0.48, SCALE.base), (0.8, SCALE.shadow)]),
-             cel=0, rim=0.6, cast=0, details=hd)
+             cel=0, rim=0, cast=0, details=hd)
     # ---- la langue fourchue ----
     tg = P['tg']
     if tg > 0.15:
