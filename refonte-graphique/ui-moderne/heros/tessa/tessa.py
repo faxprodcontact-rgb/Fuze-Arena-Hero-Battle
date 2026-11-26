@@ -64,7 +64,7 @@ S_F = (80.5, 59.0)          # l'épaule lointaine
 GRIP = (108.6, 68.6)        # le milieu de la poignée de l'arc (dans le poing lointain)
 HAND0 = (57.2, 68.6)        # le poing proche, sur la corde (l'encoche de la flèche)
 NECK = (68.0, 50.0)         # le pivot de la tête (agrandie ×1,1 autour de ce point)
-L1N, L2N = 15.6, 12.4       # bras, avant-bras (proche)
+L1N, L2N = 17.6, 13.4       # bras, avant-bras (proche)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, fix=0.0, ruff=0.0, ph=0.0,
             wn_lift=0.0, wn_spread=0.0, wf_lift=0.0, wf_spread=0.0, hand=HAND0, open=0.0, arrow=1.0, free=0.0,
@@ -375,7 +375,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- l'épaulière proche : grand dôme d'or bordé d'un rang de plumes d'or pendantes ----
     frN = []
-    for i, (x, y, L, w) in enumerate(((41.2, 59.4, 6.6, 4.2), (44.8, 61.0, 7.4, 4.6), (48.6, 61.8, 7.6, 4.6), (52.4, 61.4, 6.8, 4.2), (55.4, 59.6, 5.4, 3.6))):
+    for i, (x, y, L, w) in enumerate(((41.0, 58.8, 4.8, 4.0), (44.6, 60.2, 5.4, 4.4), (48.4, 60.8, 5.2, 4.4), (52.2, 60.4, 4.6, 4.0), (55.4, 58.8, 3.8, 3.4))):
         nm = 'frN%d' % i
         frN.append(nm)
         a = 96 - 4 * (i - 2) + 2.0 * math.sin(ph - 0.7 * i) * P['ruff'] * 0.3
@@ -434,7 +434,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ================================================================ la tête de pygargue (agrandie ×1,1 autour du cou)
     # crâne plat, front qui avance en arcade au-dessus de l'œil, petites plumes pointues sur la nuque ; le bas de la
     # tête finit en courtes pointes de plumes posées sur les longues plumes du cou (aucune coupure)
-    head = sm([(54.0, 24.2), (58.0, 19.4), (64.0, 17.6), (71.0, 17.2), (77.0, 18.0), (81.0, 20.6), (83.4, 25.6), (83.8, 28.8),
+    head = sm([(53.8, 25.0), (58.0, 20.6), (64.0, 18.8), (71.0, 18.4), (77.0, 19.2), (81.2, 21.6), (83.4, 25.8), (83.8, 28.8),
                (81.6, 31.4), (80.6, 36.0), (79.6, 41.0), (78.8, 44.6), (76.8, 48.0), (73.8, 46.2), (70.2, 49.2), (66.8, 46.8),
                (63.0, 49.0), (59.8, 46.6), (56.2, 47.8), (53.6, 44.4), (52.2, 41.8), (50.2, 39.0),
                (51.8, 35.8), (50.8, 32.2), (52.6, 28.8)],
@@ -449,7 +449,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     for (x, y, s) in ((60.6, 41.6, 1.0), (64.6, 43.4, 1.1), (68.4, 44.8, 0.9)):
         hd.append((ribbon([(x - 2.2 * s, y - 0.6), (x, y + 0.9), (x + 2.2 * s, y - 0.4)], [0.1, 0.55, 0.1]), WHITE.shadow, 0.45))
     # le front lumineux, en haut à droite
-    hd += [(sm([(66.0, 18.8), (73.6, 18.4), (79.0, 20.8), (81.6, 24.6), (77.0, 23.2), (71.6, 21.4)]), '#ffffff', 0.7)]
+    hd += [(sm([(66.0, 20.0), (73.6, 19.6), (79.2, 21.8), (81.6, 24.8), (77.0, 23.8), (71.6, 22.2)]), '#ffffff', 0.7)]
     # l'arcade sourcilière, lourde, plus basse vers le bec (regard dur) : l'ombre violette dessous qui coupe le haut
     # de l'iris, la crête claire au-dessus
     fixk = P['fix']

@@ -88,8 +88,8 @@ FS = [0.22, 0.36, 0.45, 0.53, 0.61, 0.70, 0.79, 0.89, 0.985]     # racines des p
 FW = [10.6, 11.0, 11.2, 11.0, 10.8, 10.4, 10.0, 9.4, 8.6]        # leurs largeurs
 # l'aile repliée du dessin (pixel art) : le bord, et le bout de chaque plume (de la plus proche du corps à la plus
 # lointaine) ; on en tire, pour chaque plume, un petit écart d'angle et de longueur gardé dans tous les états
-FOLD = dict(R=(58.0, 43.0), E=(49.6, 21.0), W=(29.0, 9.8), T=(16.2, 33.0), ai=96.0, ao=97.0, li=60.0, lo=66.0,
-            c1=0.30, c2=0.50, c3=0.70)
+FOLD = dict(R=(58.0, 43.0), E=(49.6, 21.0), W=(28.4, 9.4), T=(15.8, 33.0), ai=96.0, ao=97.0, li=60.0, lo=66.0,
+            c1=0.30, c2=0.50, c3=0.70, b1=2.6, b2=5.4)
 FOLD_TIPS = [(48.0, 81.0), (43.6, 85.6), (39.0, 88.2), (34.0, 90.8), (29.0, 93.2), (24.0, 95.6), (19.2, 98.6),
              (14.0, 100.4), (8.8, 96.6)]
 WING_STATES = dict(
@@ -107,7 +107,18 @@ WING_STATES = dict(
 
 
 def wing_curve(st, n=60):
-    return crpath([st['R'], st['E'], st['W'], st['T']], n)
+    """Le bord d'attaque : R → E → W → T, arrondi au coude et au poignet (b1, b2 : bombé vers le dehors)."""
+    R, E, W, T = st['R'], st['E'], st['W'], st['T']
+    fd = unit(st['ai'])
+
+    def bulge(a, b, t, k):
+        m = lerp(a, b, t)
+        d = norm(sub(b, a))
+        n_ = (-d[1], d[0])
+        if n_[0] * fd[0] + n_[1] * fd[1] > 0:
+            n_ = (-n_[0], -n_[1])
+        return add(m, n_, k)
+    return crpath([R, E, bulge(E, W, 0.5, st.get('b1', 2.0)), W, bulge(W, T, 0.35, st.get('b2', 2.0)), T], n)
 
 
 def _at(curve, s):
@@ -158,10 +169,12 @@ def feathers(st, ph=0.0, flut=0.0):
     out = []
     n = len(FS)
     for i, s in enumerate(FS):
-        p, _ = _at(cur, s)
+        p, tg = _at(cur, s)
         a0, l0 = _lin_af(st, i)
         ja, jl = JIT[i]
         a = a0 + ja + flut * 2.2 * math.sin(ph - 0.7 * i)
+        dd = unit(a)
+        p = add(p, outward(tg, dd), 0.5 * FW[i] * abs(tg[0] * dd[0] + tg[1] * dd[1]))
         L = l0 * jl
         d = unit(a)
         side = (-d[1], d[0])
@@ -193,7 +206,7 @@ def outward(tg, d):
     return n
 
 
-def covert_row(cur, st, feat, frac, lobes, back=1.4, seed=0.0, s0=0.0, s1=1.0, tipfall=0.4):
+def covert_row(cur, st, feat, frac, lobes, back=0.8, seed=0.0, s0=0.0, s1=1.0, tipfall=0.4):
     """Une rangée de couvertures : le haut suit le bord d'attaque (un peu derrière), le bas fait des écailles arrondies
     (des bouts de plumes) ; profondeur = frac × longueur locale des plumes, qui baisse vers le bout de la main."""
     n = len(cur) - 1
@@ -218,7 +231,7 @@ def covert_row(cur, st, feat, frac, lobes, back=1.4, seed=0.0, s0=0.0, s1=1.0, t
         s = s0 + (s1 - s0) * k / m
         p, tg = _at(cur, s)
         d, _ = local(s)
-        top.append(add(p, outward(tg, d), back + 5.6 * abs(tg[0] * d[0] + tg[1] * d[1])))
+        top.append(add(p, outward(tg, d), back + 4.6 * abs(tg[0] * d[0] + tg[1] * d[1])))
     bot = []
     sharp = []
     edges = [s0 + (s1 - s0) * (j + 0.12 * math.sin(3.1 * j + seed)) / lobes for j in range(lobes + 1)]
