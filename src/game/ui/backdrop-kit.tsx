@@ -59,8 +59,11 @@ export function Glow({ id, c, a = 0.8 }: { id: string; c: string; a?: number }) 
   );
 }
 /** Le flou des ombres intérieures (une fois par dessin, sous le préfixe du décor). */
-export function Soft({ p }: { p: string }) {
-  return <filter id={`${p}-soft`} x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="2.4" /></filter>;
+// Plus aucun flou (plantage sur iPhone le 26/11, trouvé par le test automatique) : chaque ombre floue d'un volume était
+// calculée sur un rectangle géant (BIG) et Safari préparait une image énorme par volume. Les ombres sont maintenant nettes
+// et plus transparentes ; `Soft` est gardé vide pour ne rien casser.
+export function Soft(_: { p: string }) {
+  return null;
 }
 
 const BIG = 'M-2000 -2000 H3000 V3000 H-2000 Z';
@@ -88,7 +91,7 @@ export function Vol({ p, d, fill, line = 1.6, ink = INK, inkA = 0.7, depth = 5, 
       <path d={d} fill={fill} fill-rule={rule} />
       <g clip-path={`url(#${id})`}>
         {children}
-        {shade > 0 && <path d={`${BIG} ${d}`} fill-rule="evenodd" fill="#2a1257" opacity={shade} transform={`translate(${depth} ${-depth})`} filter={`url(#${p}-soft)`} />}
+        {shade > 0 && <path d={`${BIG} ${d}`} fill-rule="evenodd" fill="#2a1257" opacity={shade * 0.7} transform={`translate(${depth} ${-depth})`} />}
         {rim > 0 && <path d={`${BIG} ${d}`} fill-rule="evenodd" fill="#fff6cf" opacity={rim} transform="translate(-1.6 1.6)" />}
       </g>
       {line > 0 && <path d={d} fill="none" stroke={ink} stroke-opacity={inkA} stroke-width={line} stroke-linejoin="round" />}

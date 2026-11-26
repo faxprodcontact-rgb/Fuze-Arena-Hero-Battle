@@ -63,7 +63,7 @@ function Ground({ clan }: { clan: Clan }) {
       {/* la dalle : plate, d'un bord à l'autre ; un liseré clair la cerne à peine ; la lumière vient de la droite */}
       <rect y={BACK + 6} width={W} height={H - BACK - 6} fill={`url(#${p}-mat)`} />
       <rect y={BACK + 6} width={W} height={H - BACK - 6} fill={`url(#${p}-sheen)`} />
-      <rect y={BACK + 4} width={W} height="8" fill="#2a1257" opacity="0.3" filter={`url(#${p}-soft)`} />
+      <rect y={BACK + 4} width={W} height="8" fill="#2a1257" opacity="0.3" />
       <Vol p={p} d={`${rr(14, BACK + 18, W - 28, H, 22)} ${rr(22, BACK + 25, W - 44, H, 16)}`} ring fill={`url(#${p}-rim)`} line={0} depth={2} shade={0.25} rim={0.5} />
       <Motes seed={3} n={7} x0={20} x1={400} y0={60} y1={BACK + 60} color="#fffbe6" />
     </svg>

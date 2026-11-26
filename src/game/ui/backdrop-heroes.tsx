@@ -104,14 +104,14 @@ export function HeroesBackdrop() {
       <Banner x={40} color="azure" /><Banner x={350} color="coral" />
 
       {/* l'estrade : plate, d'un bord à l'autre ; la lumière de la fenêtre s'y couche ; liseré d'or ; sa face, son ombre */}
-      <rect y={FLOOR - 2} width={W} height="10" fill="#2a1257" opacity="0.35" filter={`url(#${P}-soft)`} />
+      <rect y={FLOOR - 2} width={W} height="10" fill="#2a1257" opacity="0.35" />
       <rect y={FLOOR} width={W} height={EDGE - FLOOR} fill={`url(#${P}-stage)`} />
       <rect y={FLOOR} width={W} height={EDGE - FLOOR} fill={`url(#${P}-sheen)`} />
       <path d={`M${WX0 + 6} ${FLOOR} H${WX1 - 4} L${WX1 - 24} ${EDGE} H${WX0 - 54} Z`} fill={`url(#${P}-beam)`} />
       <rect y={FLOOR} width={W} height="1.4" fill="#fff6cf" opacity="0.35" />
       <rect y={EDGE + 6} width={W} height={FACE - EDGE - 6} fill={`url(#${P}-face)`} />
       <Vol p={P} d={rr(-12, EDGE - 1, W + 24, 8, 4)} fill={`url(#${P}-gold)`} line={1.4} depth={2.5} />
-      <rect y={FACE} width={W} height="16" fill="#0c0822" opacity="0.4" filter={`url(#${P}-soft)`} />
+      <rect y={FACE} width={W} height="16" fill="#0c0822" opacity="0.4" />
       <path d={`M0 ${FACE} H${W}`} stroke={INK} stroke-opacity="0.7" stroke-width="1.6" />
 
       {/* deux lanternes, au bord de l'estrade */}

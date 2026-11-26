@@ -75,13 +75,13 @@ function Plinth({ x, y, i, here }: { x: number; y: number; i: number; here: bool
   return (
     <g>
       {/* l'ombre portée, vers le bas à gauche (la lumière vient d'en haut à droite) */}
-      <path d={rr(x - PW - 2, y + 8, PW * 2, 22, 10)} transform="translate(-6 5)" fill="#05031a" opacity="0.55" filter={u('blur')} />
-      {here && <path d={rr(x - PW - 8, y - 30, PW * 2 + 16, 62, 22)} fill="#ffc94d" opacity="0.5" filter={u('blur')} />}
+      <path d={rr(x - PW - 2, y + 8, PW * 2, 22, 10)} transform="translate(-6 5)" fill="#05031a" opacity="0.55" />
+      {here && <path d={rr(x - PW - 8, y - 30, PW * 2 + 16, 62, 22)} fill="#ffc94d" opacity="0.5" />}
       <Vol p={P} d={block(x, y)} fill={`url(#${P}-side${i})`} depth={4} shade={0.4} rim={0.35}>
         {stones.map(([sx, sy, w]) => <path d={rr(sx, sy, w * 1.6, w, w / 2)} fill="#2a1257" opacity="0.18" />)}
         {s.vein && <path class="cm-glow" d={`M${x - 40} ${y + 25} Q${x - 36} ${y + 17} ${x - 30} ${y + 14} M${x + 16} ${y + 25} Q${x + 20} ${y + 18} ${x + 28} ${y + 16} Q${x + 33} ${y + 14} ${x + 36} ${y + 10}`} fill="none" stroke={s.vein} stroke-width="2" stroke-linecap="round" />}
       </Vol>
-      <path d={topFace(x, y, 9 + i, s.drop)} transform="translate(-1 2.5)" fill="#1a0f30" opacity="0.35" filter={u('soft')} />
+      <path d={topFace(x, y, 9 + i, s.drop)} transform="translate(-1 2.5)" fill="#1a0f30" opacity="0.35" />
       <Vol p={P} d={topFace(x, y, 9 + i, s.drop)} fill={`url(#${P}-top${i})`} line={0} depth={3} shade={0.22} rim={0.6} />
       {here && <path d={block(x, y)} fill="none" stroke="#ffd35c" stroke-width="2.2" />}
     </g>
@@ -193,7 +193,7 @@ function Bayou({ x, y }: { x: number; y: number }) {
       <Vol p={P} d={`M${x - 42} ${y - 30} H${x - 33} L${x - 34} ${y - 20} H${x - 41} Z`} fill={u('gold')} line={1.1} depth={1.2} shade={0.2} rim={0.3} />
       <path class="cm-flicker" d={rr(x - 40, y - 28, 5, 6, 2)} fill="#fff1b0" />
       {cattail(x - 52, y + 7, 22, -3)}{cattail(x - 30, y + 2, 18, 2)}{cattail(x + 42, y + 6, 24, 3)}{cattail(x + 50, y + 7, 18, -2)}
-      <path class="cm-mist" d={`M${x - 58} ${y - 6} Q${x - 30} ${y - 14} ${x} ${y - 8} Q${x + 30} ${y - 2} ${x + 58} ${y - 9}`} fill="none" stroke="#e8e4ff" stroke-width="7" stroke-linecap="round" opacity="0.22" filter={u('soft')} />
+      <path class="cm-mist" d={`M${x - 58} ${y - 6} Q${x - 30} ${y - 14} ${x} ${y - 8} Q${x + 30} ${y - 2} ${x + 58} ${y - 9}`} fill="none" stroke="#e8e4ff" stroke-width="7" stroke-linecap="round" opacity="0.22" />
     </g>
   );
 }
@@ -401,7 +401,6 @@ export function ChapterMap({ cur }: { cur: number }) {
           <linearGradient id={`${P}-fire`} x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#ff5a1f" /><stop offset="1" stop-color="#ffe27a" /></linearGradient>
           <Glow id={`${P}-ember`} c="#ff9a3a" a={0.75} /><Glow id={`${P}-lamp`} c="#ffd35c" a={0.7} /><Glow id={`${P}-abyssglow`} c="#5ef0d8" a={0.6} />
           <Glow id={`${P}-shroomglow`} c="#ff8a5a" a={0.55} /><Glow id={`${P}-boltglow`} c="#ffe27a" a={0.5} />
-          <filter id={`${P}-blur`} x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="5" /></filter>
         </defs>
         {/* la mer de nuit, une lueur de lune en haut à droite */}
         <rect x="0" y="0" width={VW} height={VH} fill={u('sea')} />
@@ -411,10 +410,10 @@ export function ChapterMap({ cur }: { cur: number }) {
         </g>
         {/* l'île qui serpente : la rive de sable, puis la terre (vert en bas, gris des cendres, sarcelle des abysses) */}
         <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-          {legs.map((d) => <path d={d} stroke="#05031a" stroke-opacity="0.5" stroke-width="52" transform="translate(-6 7)" filter={u('blur')} />)}
-          {ISLES.map((d) => <path d={d} fill="#05031a" fill-opacity="0.5" transform="translate(-6 7)" filter={u('blur')} />)}
-          {legs.map((d) => <path d={d} stroke="#26366e" stroke-opacity="0.55" stroke-width="70" filter={u('blur')} />)}
-          {ISLES.map((d) => <path d={d} fill="#26366e" fill-opacity="0.55" stroke="#26366e" stroke-opacity="0.55" stroke-width="22" filter={u('blur')} />)}
+          {legs.map((d) => <path d={d} stroke="#05031a" stroke-opacity="0.5" stroke-width="52" transform="translate(-6 7)" />)}
+          {ISLES.map((d) => <path d={d} fill="#05031a" fill-opacity="0.5" transform="translate(-6 7)" />)}
+          {legs.map((d) => <path d={d} stroke="#26366e" stroke-opacity="0.55" stroke-width="70" />)}
+          {ISLES.map((d) => <path d={d} fill="#26366e" fill-opacity="0.55" stroke="#26366e" stroke-opacity="0.55" stroke-width="22" />)}
           {legs.map((d) => <path d={d} stroke={u('shore')} stroke-width="48" />)}
           {ISLES.map((d) => <path d={d} fill={u('shore')} stroke={u('shore')} stroke-width="6" />)}
           {legs.map((d) => <path d={d} stroke="#2e2750" stroke-width="42" />)}
