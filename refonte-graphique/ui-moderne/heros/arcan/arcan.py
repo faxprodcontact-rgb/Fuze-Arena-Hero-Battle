@@ -184,7 +184,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- le bras lointain (gauche), derrière le buste ; son poing sur le col du sac ----
     arm(fig, 'f', SF, EF, WF, far=True)
-    fist(fig, 'f', GF, P['fa'], +1, far=True)
+    fist(fig, 'f', GF, P['fa'], +1, far=True, neck=outline[I_FAR], P=P)
 
     # ---- les jambes arquées, pieds à plat ----
     leg(fig, 'f', mapp(U, HF0), KF0, AF0, LEG, far=True)
@@ -196,9 +196,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     loincloth(fig, P, U)
     # ---- le bras proche (droit), devant le buste ----
     arm(fig, 'n', SN, EN, WN, far=False)
-    if not front_bag or m < 0.5:
-        pass
-    fist(fig, 'n', GN, P['na'], -1, far=False)
+    fist(fig, 'n', GN, P['na'], -1, far=False, neck=outline[0] if m < 0.5 else None, P=P)
     # ---- la tête ----
     head(fig, P, HEAD)
     if front_bag:
@@ -349,8 +347,7 @@ def neck_parts(fig, P, outline, m, GN, GF, uN, uF, bu, only=None):
         E = lerp(GN, tip_end, m) if hold > 0.5 or m > 0 else tip_end
         fig.part('nneck', neck_tube(A, E, 5.4, 4.4, bow=0.8 * (1 - m)), CANVAS, cel=1.0, rim=0.6, cast=0.6,
                  details=[(ribbon([lerp(A, E, 0.15), lerp(A, E, 0.5), lerp(A, E, 0.8)], [0.1, 0.7, 0.1]), CANVAS.shadow, 0.45)])
-        ang = P['nend'] if m <= 0 else (P['nend'] + (ang_of(bu) - P['nend'] + 180) % 360 - 180) if m >= 1 else \
-            P['nend'] + (((ang_of(bu) - P['nend'] + 180) % 360) - 180) * m
+        ang = P['nend'] + (((ang_of(bu) - P['nend'] + 180) % 360) - 180) * m
         ctx['end_n'] = frilled(fig, 'nend', E, ang, P['nopen'], 1.0)
         ctx['end_ndir'] = ang
         if m > 0.5:
@@ -441,12 +438,12 @@ def arm(fig, s, S, E, W, far):
                    [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]))
 
 
-def fist(fig, s, G, ang, side, far):
+def fist(fig, s, G, ang, side, far, neck=None, P=None):
     """Le poing serré sur le col : quatre doigts repliés en rouleaux, le pouce par-dessus, les phalanges à l'extérieur ;
     le bracelet d'or au poignet (il cache la jonction avec l'avant-bras), le cordon d'or sur le col juste au-dessus."""
     k = 0.94 if far else 1.0
     F = frame_of(G, ang)
-    o = -side            # q > 0 : vers l'extérieur (gauche pour le poing proche, droite pour le lointain)
+    o = side             # q > 0 : vers l'extérieur (gauche pour le poing proche, droite pour le lointain)
     Q = lambda p, q: F(p * k, q * k * o)
     body = sm([Q(6.2, -4.6), Q(6.6, 0.5), Q(5.4, 5.2), Q(0, 6.4), Q(-5.0, 5.6), Q(-6.4, 1.0), Q(-6.0, -4.4), Q(-2.0, -6.2), Q(3.0, -6.0)], t=0.9)
     det = []
@@ -472,6 +469,10 @@ def fist(fig, s, G, ang, side, far):
                       (ribbon([Q(-7.6, -5.4), Q(-7.9, 0), Q(-7.6, 5.4)], [0.1, 0.7, 0.1]), GOLD.shadow, 0.7),
                       (ellipse(*Q(-6.5, 2.6), 0.9, 0.9), GOLD.hi, 0.6)])
     fig.ctx[s + 'fist'] = G
+    if neck is not None:
+        # le cordon d'or noué sur le col, juste au-dessus du poing
+        d = norm(sub(neck, G))
+        cord(fig, s + 'cord', add(G, d, 7.0 * k), d, 4.8, P, side)
 
 
 def leg(fig, s, H, K0, A0, LEG, far):
