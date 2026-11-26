@@ -380,7 +380,7 @@ def ring_glow(fig, C, r, op):
     if op <= 0.02:
         return ''
     return '<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(C[0]), fm(C[1]), fm(r), g_rad(fig, C, r, [
-        (0, LAVA[2], 0), (0.42, LAVA[2], 0), (0.58, LAVA[2], 0.38 * op), (0.78, LAVA[3], 0.16 * op), (1, LAVA[3], 0)]))
+        (0, LAVA[2], 0), (0.42, LAVA[2], 0), (0.6, '#ff8a2a', 0.24 * op), (0.8, '#ff7a1e', 0.1 * op), (1, LAVA[3], 0)]))
 
 
 # ---- l'attaque de base
@@ -496,7 +496,6 @@ def fire_wheel(fig, C, ph, orbit=8.0, size=1.0, trail=0.0, t=0.0):
     autour d'eux, deux croissants de flammes qui suivent leur ronde ; trail : elle file vers la droite (une queue de
     flammes derrière elle, à gauche)."""
     R = (orbit + K.RR + 3) * size
-    fig.fx_back.append(ring_glow(fig, C, R * 1.25, 1.0))
     for k in (0, 180):
         a0 = ph + k
         band = arc_band(C, R, a0 + 150, a0, 6.5 * size)
@@ -585,8 +584,11 @@ def fx_special(tl):
             e = k * (2 - k)
             pa = lerp((112.0, 50.0), (110.0, 22.0), e)
             pb = lerp((50.0, 86.0), (116.0, 25.0), e ** 0.8)
-            for p, prev, ph in ((pa, (112.0, 56.0), 40), (pb, (48.0, 94.0), 160)):
-                pts = trim([lerp(p, prev, i / 16 * 0.7) for i in range(17)], p, 9.0)
+            kp = max(0.0, k - 0.3)
+            ep = kp * (2 - kp)
+            prevs = (lerp((112.0, 50.0), (110.0, 22.0), ep), lerp((50.0, 86.0), (116.0, 25.0), ep ** 0.8))
+            for p, prev, ph in ((pa, prevs[0], 40), (pb, prevs[1], 160)):
+                pts = trim([lerp(p, prev, i / 16) for i in range(17)], p, 9.0)
                 fig.fx_back.append(fire_ribbon(fig, pts, 4.0, op=1 - 0.5 * k))
                 ring_fx(fig, p, 1.0, 1.0 - 0.3 * math.sin(k * 3), 0, ph - 3 * (t - SP_TOSS), hot=2.0)
         # la roue de feu : au-dessus, devant lui ; elle redescend ; le coup de pied ; elle file vers l'ennemi
@@ -601,9 +603,9 @@ def fx_special(tl):
             fire_wheel(fig, (cx, cy), 3.2 * (t - 440), orbit=7.0, size=sz, trail=tr, t=t)
         # le pied frappe la roue : un éclat blanc et or contre la plante, le chemin du pied en croissant de feu
         tk = (t - SP_KICK) / 1000.0
-        if -0.03 <= tk < 0.2:
+        if -0.03 <= tk < 0.13:
             foot = ctx['fleg'][2]
-            e = env(tk, -0.03, 0.0, 0.04, 0.16)
+            e = env(tk, -0.03, 0.0, 0.04, 0.13)
             fig.fx_front.append(pop(fig, (foot[0] + 8, foot[1] - 6), 4.6 * (0.6 + 0.4 * e), facing=-20, op=e))
             from atelier import bez
             B_ = mapp(ctx['ROOT'], (95.0, 90.0))

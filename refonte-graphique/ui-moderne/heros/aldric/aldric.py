@@ -127,7 +127,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         a1, a2 = Seg(S, E), Seg(E, W)
         ad = [(ellipse(*a1.at(0.55, 1.2), 2.2, 3.6, a1.deg - 90), SKIN.light, 0.4),
               (ellipse(*a2.at(0.3, 1.0), 1.6, 2.6, a2.deg - 90), SKIN.light, 0.35)]
-        fig.part('farm', arm, SKIN, cel=1.5, rim=0.6, cast=0.9 if P['ffront'] > 0.5 else 0, details=ad)
+        fig.part('farm', arm, SKIN, cel=1.5, rim=0.6, cast=1.3 if P['ffront'] > 0.5 else 0, details=ad)
         # le poing (dessiné au repos, posé par un mouvement rigide : il suit l'avant-bras)
         fa_ = a2.deg + P['frot']
         flip = math.cos(math.radians(fa_)) < 0
@@ -146,7 +146,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  details=[(s.map(lambda p: mapp(M, p)), c, o) for s, c, o in fdet])
         fig.part('fthumb', thumb.map(lambda p: mapp(M, p)), SKIN, cel=0.7, rim=0.55, cast=0.7, cast_on=['ffist', 'ringF'])
         # la bande de toile, autour de l'avant-bras et de la base du poing (elle cache le raccord)
-        bandage(fig, 'fband', a2, arm, fist.map(lambda p: mapp(M, p)), 0.3, 1.3, 3.3)
+        bandage(fig, 'fband', a2, arm, fist.map(lambda p: mapp(M, p)), a2.L - 4.6, a2.L + 1.3, 3.3)
         return S, E, W
 
     # ======================================================================== les jambes
@@ -308,7 +308,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cast_on=['torso', 'scarf', 'belt', 'nleg', 'fleg', 'ringN', 'bead0', 'bead1', 'cord'])
     fig.part('nfist', fist_m, SKIN, cel=1.2, rim=0.6, cast=1.0, details=[(s.map(lambda p: mapp(M, p)), c, o) for s, c, o in fdet])
     fig.part('nthumb', thumb.map(lambda p: mapp(M, p)), SKIN, cel=0.7, rim=0.55, cast=0.7, cast_on=['nfist', 'ringN'])
-    bandage(fig, 'nband', a2, arm, fist_m, 0.5, 1.22, 4.0)
+    bandage(fig, 'nband', a2, arm, fist_m, a2.L - 5.6, a2.L + 1.4, 4.0)
 
     # ======================================================================== la tête
     head = sm([(51.6, 35.0), (51.9, 31.0), (53.4, 27.8), (56.2, 25.2), (60.0, 23.6), (64.8, 23.0), (69.8, 23.4),
@@ -543,8 +543,9 @@ def band_tails(ph, tl):
 
 def bandage(fig, name, seg, arm, fist, a0, a1, half):
     """Les bandes de toile autour de l'avant-bras et de la base du poing (découpées dans le bras et le poing) : un pli
-    en biais, la lumière en haut à droite."""
+    en biais, la lumière en haut à droite. a0, a1 : où elles commencent et finissent, en pixels depuis le coude."""
     L = seg.L
+    a0, a1 = a0 / L, a1 / L
     band = sm([seg(L * a0, -half - 2), seg(L * a1, -half - 2), seg(L * a1, half + 2), seg(L * a0, half + 2)],
               sharp=(0, 1, 2, 3), t=0.3)
     sh, _ = fuse([arm, fist], smooth=0.3)
