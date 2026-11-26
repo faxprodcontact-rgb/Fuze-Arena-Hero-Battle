@@ -153,6 +153,24 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
     return () => { removeEventListener('resize', onResize); f.destroy(); fx.current = null; };
   }, []);
 
+  // La taille du héros sur l'estrade : environ 75 % de l'ancienne taille, arrondie au plus proche pour qu'un pixel du dessin couvre un nombre
+  // entier de pixels de l'écran (il reste net). Boîte 200 × 240, 1,75 unité par pixel du dessin (hero-figure.tsx).
+  useLayoutEffect(() => {
+    const st = stage.current;
+    if (!st) return;
+    const fit = () => {
+      const dpr = window.devicePixelRatio || 1;
+      const h = Math.min(st.clientHeight * 0.48, st.clientWidth * 0.72);
+      const perArt = (h * (200 / 240)) / 200 * 1.75; // pixels de l'écran (CSS) par pixel du dessin
+      const snapped = Math.max(1, Math.round(perArt * dpr)) / dpr;
+      st.style.setProperty('--hero-px', `${((snapped * 240) / 1.75).toFixed(2)}px`);
+    };
+    fit();
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(fit) : null;
+    ro?.observe(st);
+    return () => ro?.disconnect();
+  }, []);
+
   /** Un point d'un élément, dans le repère du canvas. */
   const where = (sel: string): DOMRect | null => {
     const el = root.current?.querySelector(sel), c = canvas.current?.getBoundingClientRect();

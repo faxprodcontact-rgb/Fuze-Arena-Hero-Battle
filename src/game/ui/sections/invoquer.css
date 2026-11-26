@@ -178,17 +178,20 @@ html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum
 
 /* la scène : le portail (en halo derrière le héros), l'estrade, le héros */
 .sr-stage { position: relative; z-index: 2; flex: 1; min-height: 0; container-type: size; }
-.sr-gate { position: absolute !important; left: 50%; top: 36%; width: min(90cqw, 64cqh); translate: -50% -50%; transition: opacity 0.4s, scale 0.5s; }
+.sr-gate { position: absolute !important; left: 50%; top: 48%; width: min(82cqw, 58cqh); translate: -50% -50%; transition: opacity 0.4s, scale 0.5s; }
 .sr-p-charge .sr-gate { animation: sr-gate-in 0.4s cubic-bezier(.2, 1.4, .4, 1) backwards; }
 @keyframes sr-gate-in { from { scale: 0.6; opacity: 0; } }
 .sr-screen:not(.sr-p-charge) .sr-gate { opacity: 0.6; scale: 1.08; }
 .sr-p-recap .sr-gate { opacity: 0.14; scale: 1.3; }
-.sr-charge-ring { position: absolute; left: 50%; top: 36%; width: min(90cqw, 64cqh); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; pointer-events: none;
+.sr-charge-ring { position: absolute; left: 50%; top: 48%; width: min(82cqw, 58cqh); aspect-ratio: 1; translate: -50% -50%; border-radius: 50%; pointer-events: none;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--g-b) 70%, transparent), 0 0 30px var(--g-a); animation: sr-charge-ring 0.6s ease-in infinite; }
 @keyframes sr-charge-ring { 0% { scale: 1.9; opacity: 0; } 50% { opacity: 0.8; } 100% { scale: 0.75; opacity: 0; } }
 
 /* un héros sur l'estrade */
-.sr-show { position: absolute; inset: 0; --pre: 0ms; --mat: 420ms; --dais-w: min(88cqw, 64cqh); --hero-h: min(64cqh, 100cqw); }
+.sr-show { position: absolute; inset: 0; --pre: 0ms; --mat: 420ms; --dais-w: min(80cqw, 56cqh);
+  /* la taille du héros : --hero-px est calculé par summon-reveal.tsx (un pixel du dessin = un nombre entier de pixels de
+     l'écran, pour qu'il reste net), sinon environ 72 % de la place (demande du 26/11 : « qu'il arrive moins gros ») */
+  --hero-h: var(--hero-px, min(46cqh, 72cqw)); }
 .sr-dais { position: absolute; left: 50%; bottom: 0; width: var(--dais-w); translate: -50% 0; animation: sr-dais 0.4s cubic-bezier(.2, 1.3, .4, 1) backwards; }
 @keyframes sr-dais { from { translate: -50% 30%; opacity: 0; } }
 /* le haut de la dalle (et donc les pieds du héros) est à 69 % de la hauteur de l'estrade, comptée depuis le bas */
@@ -207,7 +210,7 @@ html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum
 @keyframes sr-ghost-in { 0% { opacity: 0; transform: translateY(-14%) scale(0.12); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
 @keyframes sr-ghost-out { from { opacity: 1; } to { opacity: 0; transform: scale(1.06); } }
 /* la colonne de lumière qui descend du portail sur l'estrade */
-.sr-beam { position: absolute; left: 50%; top: 30%; bottom: calc(var(--dais-w) * 0.2); width: calc(var(--hero-h) * 0.55); translate: -50% 0; border-radius: 999px 999px 40% 40%;
+.sr-beam { position: absolute; left: 50%; top: 44%; bottom: calc(var(--dais-w) * 0.2); width: calc(var(--hero-h) * 0.55); translate: -50% 0; border-radius: 999px 999px 40% 40%;
   background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--rar) 55%, transparent) 45%, #ffffffd9 100%); filter: blur(10px);
   transform-origin: 50% 0; opacity: 0; animation: sr-beam 0.95s ease-out forwards; }
 @keyframes sr-beam { 0% { opacity: 0; transform: scaleX(0.15) scaleY(0.2); } 25% { opacity: 1; transform: scaleX(1) scaleY(1); } 100% { opacity: 0.18; transform: scaleX(0.7); } }
