@@ -394,29 +394,35 @@ def arc(cx, cy, rx, ry, a0, a1, rot_=0.0, n=5):
 
 
 def emblem(cx, cy, a, shot, gold):
-    """Le soleil d'or couronné de trois flammes, peint sur la face bombée (vu de trois quarts : aplati)."""
+    """La flamme d'or peinte sur la face bombée (vue de trois quarts : aplatie) : une seule flamme ronde en bas, trois
+    langues qui montent en se recourbant (celle du milieu la plus haute, celles des côtés plus courtes, penchées vers
+    l'extérieur), et dans son creux une flamme plus petite, orange vif, de la même forme (le cœur du feu)."""
     kx = 0.84
     ox, oy = cx - 0.6, cy + 0.6
 
     def T(sh):
         return sh.map(lambda p: (lambda q: (ox + q[0], oy + q[1]))(rot((p[0] * kx, p[1]), a)))
-    from atelier import lock
-    disc = ellipse(0, 3.4, 6.4, 6.4)
-    # trois flammes qui montent du haut du soleil : celle du milieu droite et plus haute, celles des côtés penchées
-    # vers l'extérieur, la pointe qui se recourbe (courbes en S, jamais des cornes)
-    fl_c = lock((0.0, -0.4), (2.4, -4.4), (-2.0, -8.2), (1.2, -13.4), 7.0, n=14, bulge=0.32)
-    fl_l = lock((-3.6, 0.2), (-6.6, -2.2), (-4.4, -5.6), (-7.0, -9.0), 5.0, n=12, bulge=0.3)
-    fl_r = lock((3.8, -0.2), (6.8, -2.6), (4.8, -6.2), (7.6, -9.8), 5.2, n=12, bulge=0.3)
-    whole = fuse([disc, fl_c, fl_l, fl_r], smooth=0.5)[0]
-    heart = lock((0.2, -0.6), (1.6, -3.6), (-1.0, -6.4), (0.8, -10.2), 3.6, n=12, bulge=0.3)
+    # le contour de la flamme (y vers le bas) : bas rond, flancs pleins, trois pointes nettes, deux creux doux
+    whole = sm([(0.0, 10.2), (-4.4, 9.0), (-7.0, 5.8), (-7.6, 1.6), (-6.8, -2.4), (-6.0, -5.2), (-6.9, -8.6),
+                (-4.0, -6.2), (-2.6, -3.8), (-2.4, -7.6), (-1.0, -11.0), (1.4, -14.4), (2.6, -10.6), (3.2, -6.8),
+                (3.4, -3.6), (5.0, -6.0), (7.6, -9.4), (7.4, -5.2), (7.8, -1.4), (7.6, 2.6), (6.4, 6.4), (3.8, 9.2)],
+               sharp=(6, 8, 11, 14, 16), t=0.8)
+    # le cœur : une petite flamme d'une seule pointe, posée au fond de la grande
+    heart = sm([(0.2, 8.0), (-2.8, 7.2), (-4.2, 4.6), (-4.0, 1.4), (-2.6, -1.8), (-0.6, -4.6), (0.6, -7.4),
+                (1.6, -4.4), (3.6, -1.2), (4.6, 2.0), (4.4, 5.0), (2.8, 7.2)], sharp=(6,), t=0.8)
     h = shot / 3.0
-    out = [(T(whole.scale(1.1, 1.08, 0, 0)), RED.deep, 0.55),
-           (T(whole), ('lin', ox + 6, oy - 12, ox - 6, oy + 8, [(0, gold.hi), (0.35, gold.light), (0.75, gold.base), (1, gold.shadow)]), 1),
-           (T(sm_in(whole, 0.8, -0.9)), gold.shadow, 0.5),
-           (T(disc.scale(0.7, 0.7, 0.8, 2.6)), ('rad', ox + 1.6, oy + 1.6, 5.0, 5.0, [(0, gold.hi), (0.55, gold.light), (1, gold.light, 0)]), 1),
-           (T(heart), ('lin', ox, oy - 10, ox, oy, [(0, '#ff7a3a' if h < 0.5 else LAVA[1]), (1, RED.shadow if h < 0.5 else LAVA[3])]), 1),
-           (T(ribbon([(1.6, -2.0), (2.6, -6.0), (1.8, -10.6)], [0.1, 0.6, 0.1])), gold.glint, 0.8),
-           (T(ellipse(2.2, 1.2, 1.4, 0.8, -40)), gold.glint, 0.8)]
+    hc = [(0, '#ffe08a' if h < 0.5 else LAVA[0]), (0.45, '#ffa040' if h < 0.5 else LAVA[1]),
+          (1, '#e8541c' if h < 0.5 else LAVA[3])]
+    out = [(T(whole.move(-0.7, 0.9)), RED.deep, 0.6),
+           (T(whole), ('lin', ox + 6, oy - 12, ox - 6, oy + 9, [(0, gold.hi), (0.35, gold.light), (0.75, gold.base), (1, gold.shadow)]), 1),
+           (T(sm_in(whole, 0.9, -0.9)), gold.shadow, 0.45),
+           (T(heart.scale(1.12, 1.08, 0.4, 3.0)), gold.shadow, 0.55),
+           (T(heart), ('lin', ox + 1.2, oy - 7, ox - 0.6, oy + 8, hc), 1),
+           (T(sm_in(heart, -0.6, 0.7)), '#fff2b0' if h < 0.5 else '#ffffff', 0.45),
+           # les éclats (en haut à droite) : le long de la grande pointe, sur le flanc droit, sur le cœur
+           (T(ribbon([(1.9, -11.6), (2.6, -8.0), (2.9, -4.6)], [0.1, 0.55, 0.1])), gold.glint, 0.85),
+           (T(ribbon([(6.4, -3.0), (6.7, 0.6), (5.8, 4.6)], [0.1, 0.5, 0.1])), gold.hi, 0.7),
+           (T(ellipse(2.0, 0.6, 0.9, 1.6, 20)), '#fffbe8', 0.75)]
     if h > 0:
         out.insert(0, (T(ellipse(0, -2, 13, 13)), ('rad', ox, oy - 2, 13 * kx, 13, [(0, LAVA[1], 0.7 * h), (0.6, LAVA[2], 0.35 * h), (1, LAVA[3], 0)]), 1))
     return out
@@ -699,7 +705,13 @@ def head(fig, P):
             (ribbon([(46.8, 43.4), (51.6, 45.6), (57.4, 46.4)], [0.1, 0.4, 0.1]), GOLD.base, 0.6)]
     # le bord de la joue, éclairé, le long de l'ouverture ; le couvre-joue lointain (étroit)
     hdt += [(ribbon([(68.9, 36.6), (68.4, 41.0), (68.7, 45.0), (69.4, 48.4)], [0.1, 0.7, 0.7, 0.1]), GOLD.hi, 0.7),
-            (ribbon([(80.6, 35.4), (81.0, 40.0), (80.6, 45.0), (79.8, 48.0)], [0.1, 0.6, 0.5, 0.1]), GOLD.hi, 0.6),
+            (ribbon([(80.6, 35.4), (81.0, 40.0), (80.8, 45.0), (80.0, 48.6)], [0.1, 0.6, 0.5, 0.1]), GOLD.hi, 0.6),
+            # le couvre-joue lointain : sa tranche le long de la fente (dans l'ombre, comme la tranche proche), le
+            # bombé de la plaque éclairé, son bord du bas
+            (ribbon([(76.9, 36.0), (77.3, 41.0), (77.4, 45.6), (77.8, 49.2)], [0.1, 0.8, 0.8, 0.2]), GOLD.deep, 0.5),
+            (ribbon([(77.7, 36.4), (78.2, 41.0), (78.3, 45.4), (78.6, 48.6)], [0.1, 0.5, 0.5, 0.1]), GOLD.light, 0.6),
+            (ellipse(79.4, 41.6, 0.8, 3.0, 4), GOLD.light, 0.45),
+            (ribbon([(77.6, 48.6), (79.0, 48.9), (80.6, 48.2)], [0.1, 0.5, 0.1]), GOLD.shadow, 0.5),
             (ribbon([(65.6, 37.4), (64.6, 41.4), (65.2, 45.8)], [0.1, 1.6, 0.1]), GOLD.light, 0.5)]
     # l'arête du sourcil en relief, qui file vers la tempe : son dessus éclairé, son dessous dans l'ombre
     hdt += [(ribbon([(55.0, 31.4), (60.0, 29.4), (68.0, 28.6), (76.0, 28.6), (80.8, 29.6)], [0.1, 1.0, 1.3, 1.2, 0.3]), GOLD.hi, 0.85),

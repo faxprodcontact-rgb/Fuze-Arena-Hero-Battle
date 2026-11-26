@@ -650,7 +650,7 @@ def head_parts(fig, P):
     hd.append((E(ribbon([(85.8, 46.5), (88.4, 46.3), (90.8, 47.0), (93.2, 47.9)], [0.1, 0.6, 0.5, 0.1])), SCALE.deep, 0.7))
     # l'ombre sous la mâchoire (à la place de l'ombre automatique, qui marquait aussi le dos du crâne d'un bord)
     hd.append((ribbon([lo((86.4, 55.6)), lo((90.6, 55.7)), lo((95.4, 54.9)), lo((98.6, 53.4))], [0.1, 0.8, 0.7, 0.1]), BELLY.shadow, 0.8))
-    fig.part('head', head, SCALE, grad=(100, 41, 81, 56, [(0, SCALE.light), (0.5, SCALE.base), (1, SCALE.shadow)]),
+    fig.part('head', head, SCALE, grad=(100, 41, 81, 56, [(0, SCALE.light), (0.48, SCALE.base), (0.8, SCALE.shadow)]),
              cel=0, rim=0.6, cast=0, details=hd)
     # ---- la langue fourchue ----
     tg = P['tg']
