@@ -7,7 +7,8 @@ import { HEROES } from '../src/core/data/heroes';
 import { campaignWaves } from '../src/core/stages';
 import type { Hero } from '../src/core/types';
 
-const epic = (element: string, role: string) => HEROES.find((h) => h.rarity === 'epic' && h.element === element && h.role === role)!.id;
+const epic = (element: string, role: string) =>
+  (HEROES.find((h) => h.rarity === 'epic' && h.element === element && h.role === role) ?? HEROES.find((h) => h.element === element && h.role === role))!.id;
 const team: [string, Slot][] = [
   [epic('fire', 'protector'), 0],
   [epic('water', 'warrior'), 1],

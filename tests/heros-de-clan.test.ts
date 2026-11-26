@@ -24,7 +24,7 @@ const NEW: Record<string, [string, string]> = {
 const IDS = Object.keys(NEW);
 
 describe('monstres de clan devenus héros', () => {
-  it('les 8 existent, avec leur nom et leur élément ; 2 Légendaires, 3 Épiques, 3 Rares', () => {
+  it('les 8 existent, avec leur nom et leur élément ; 2 Épiques, 3 Rares, 3 Communs', () => {
     expect(HEROES).toHaveLength(44);
     for (const id of IDS) {
       expect(isHero(id)).toBe(true);
@@ -32,7 +32,7 @@ describe('monstres de clan devenus héros', () => {
       expect(heroDef(id).element).toBe(NEW[id]![1]);
     }
     const count = (r: string) => IDS.filter((id) => heroDef(id).rarity === r).length;
-    expect([count('legendary'), count('epic'), count('rare')]).toEqual([2, 3, 3]);
+    expect([count('legendary'), count('epic'), count('rare'), count('common')]).toEqual([0, 2, 3, 3]);
     expect(heroDef('bao').role).toBe('healer');
   });
 
@@ -70,13 +70,13 @@ describe('monstres de clan devenus héros', () => {
   it('ils fusionnent avec des héros de leur élément', () => {
     let uid = 1;
     const hero = (defId: string, stars: number): Hero => ({ uid: uid++, defId, stars, level: 1 });
-    const target = hero('karu', 3);
+    const target = hero('bao', 3);
     const wind = (r: 'common' | 'rare') => heroesOfElement('wind', r)[0]!.id;
-    const roster = [target, hero('karu', 3), hero(wind('common'), 3), hero(wind('rare'), 3), hero(heroesOfElement('fire', 'rare')[0]!.id, 3)];
+    const roster = [target, hero('bao', 3), hero(wind('common'), 3), hero(wind('rare'), 3), hero(heroesOfElement('fire', 'rare')[0]!.id, 3)];
     const plan = planFusion(roster, target.uid);
     expect(plan).not.toBeNull();
     expect(plan!.consumed).not.toContain(roster[4]!.uid);
-    expect(heroesOfElement('wind', 'legendary').map((h) => h.id)).toContain('bao');
+    expect(heroesOfElement('wind', 'epic').map((h) => h.id)).toContain('bao');
   });
 
   it('ils combattent ; la compétence de Bao frappe et soigne son équipe', () => {

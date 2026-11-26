@@ -304,7 +304,7 @@ function Temple({ x, y }: { x: number; y: number }) {
       {/* la colonne tombée, devant à gauche */}
       <Vol p={P} d={`M${x - 58} ${y + 3} V${y - 14} H${x - 50} V${y + 3} Z`} fill={u('column')} line={1.2} depth={2} />
       <Vol p={P} d={rr(x - 52, y + 2, 16, 6, 3)} fill={u('column')} line={1.1} depth={1.5} />
-      {brazier(x - 47, y + 2)}{brazier(x + 50, y + 3)}
+      {brazier(x - 47, y + 2)}{brazier(x + 46, y + 3)}
     </g>
   );
 }
@@ -437,18 +437,19 @@ export function ChapterMap({ cur }: { cur: number }) {
         {SPOTS.map(([x, y], i) => {
           const Place = PLACES[i]!;
           const state = i < here ? 'done' : i === here ? 'here' : 'locked';
+          const fx = x + (i === 6 ? 57 : PW - 12);
           return (
             <g class={`cm-place ${state}`}>
               <Plinth x={x} y={y} i={i} here={state === 'here'} />
               <Place x={x} y={y} />
               {state === 'here' && (
                 <g class="cm-flag">
-                  <path d={`M${x + PW - 12} ${y + 8} V${y - 30}`} stroke="#1f1238" stroke-opacity="0.75" stroke-width="3" stroke-linecap="round" />
-                  <path d={`M${x + PW - 12} ${y + 8} V${y - 30}`} stroke="#fff1c7" stroke-width="1.2" stroke-linecap="round" />
-                  <circle cx={x + PW - 12} cy={y - 32} r="2.6" fill="#ffc22e" stroke="#1f1238" stroke-opacity="0.6" stroke-width="1" />
-                  <g class="cm-cloth" style={{ transformOrigin: `${x + PW - 12}px ${y - 24}px` }}>
-                    <Vol p={P} d={`M${x + PW - 11} ${y - 29} Q${x + PW - 1} ${y - 32} ${x + PW + 9} ${y - 26} Q${x + PW + 3} ${y - 22} ${x + PW + 8} ${y - 16} Q${x + PW - 2} ${y - 19} ${x + PW - 11} ${y - 17} Z`} fill={u('roof')} line={1.2} depth={2} shade={0.25} rim={0.45}>
-                      <path d={spark(x + PW - 2, y - 23, 3.6)} fill="#ffd35c" />
+                  <path d={`M${fx} ${y + 8} V${y - 30}`} stroke="#1f1238" stroke-opacity="0.75" stroke-width="3" stroke-linecap="round" />
+                  <path d={`M${fx} ${y + 8} V${y - 30}`} stroke="#fff1c7" stroke-width="1.2" stroke-linecap="round" />
+                  <circle cx={fx} cy={y - 32} r="2.6" fill="#ffc22e" stroke="#1f1238" stroke-opacity="0.6" stroke-width="1" />
+                  <g class="cm-cloth" style={{ transformOrigin: `${fx}px ${y - 24}px` }}>
+                    <Vol p={P} d={`M${fx + 1} ${y - 29} Q${fx + 11} ${y - 32} ${fx + 21} ${y - 26} Q${fx + 15} ${y - 22} ${fx + 20} ${y - 16} Q${fx + 10} ${y - 19} ${fx + 1} ${y - 17} Z`} fill={u('roof')} line={1.2} depth={2} shade={0.25} rim={0.45}>
+                      <path d={spark(fx + 10, y - 23, 3.6)} fill="#ffd35c" />
                     </Vol>
                   </g>
                 </g>

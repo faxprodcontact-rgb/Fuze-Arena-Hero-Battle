@@ -236,9 +236,16 @@ function build(s: Spec): HeroDef {
   };
 }
 
+/**
+ * Raretés choisies par le propriétaire (26/11/2026) : 8 Légendaires, 12 Épiques, 13 Rares, 11 Communs, 2 Légendaires et
+ * 3 Épiques par élément. Elles remplacent celles des gabarits (statistiques, compétence et talent suivent la rareté).
+ */
+const RARITY: Readonly<Record<string, Rarity>> = {'angels-11':  'legendary', 'mages-3':  'legendary', 'assassins-5':  'epic', 'demons-5':  'epic', 'myths-9':  'epic', 'mages-11':  'epic', 'knights-3':  'rare', 'demons-3':  'rare', 'demons-9':  'rare', 'demons-12':  'rare', 'myths-3':  'rare', 'myths-4':  'rare', 'mages-7':  'rare', 'mages-2':  'rare', 'knights-8':  'common', 'demons-4':  'common', 'angels-10':  'common', 'assassins-11':  'common'};
+
 const TEMPLATES: HeroDef[] = ELEMENTS.flatMap((element, e) =>
-  ELEMENT_ROSTER.map(([rarity, role, v, leader], i) => {
+  ELEMENT_ROSTER.map(([base, role, v, leader], i) => {
     const slot = SLOTS[e * ELEMENT_ROSTER.length + i]!;
+    const rarity = RARITY[slot.id] ?? base;
     return build({
       id: slot.id, name: slot.name, element, role, rarity,
       skill: skillFor(role, v, element, rarity),
@@ -269,19 +276,19 @@ const CLAN_HEROES: HeroDef[] = [
   }),
   // Serpent guerrier (clan de Méduse) : deux lames très vite, la morsure empoisonne
   build({
-    id: 'sarvik', name: 'Sarvik', element: 'earth', role: 'assassin', rarity: 'epic', tweak: { interval: 8 },
+    id: 'sarvik', name: 'Sarvik', element: 'earth', role: 'assassin', rarity: 'common', tweak: { interval: 8 },
     skill: { id: 'sarvik', effects: [
-      { type: 'damage', target: 'lowestHp', power: pw(1.4, 'epic') },
-      { type: 'damage', target: 'same', power: pw(1.4, 'epic') },
+      { type: 'damage', target: 'lowestHp', power: pw(1.4, 'common') },
+      { type: 'damage', target: 'same', power: pw(1.4, 'common') },
       { type: 'status', target: 'same', status: 'poison', value: 0.03, seconds: 5, chance: 0.9 },
     ] },
     passives: [first('assassin'), { kind: 'trigger', on: 'attack', chance: 0.3, effects: [{ type: 'status', target: 'attacker', status: 'poison', value: 0.02, seconds: 3 }] }],
   }),
   // Tireuse pirate (clan de Barzul) : le mousquet, puis la grosse balle d'eau ; son perroquet repère les points faibles
   build({
-    id: 'jessa', name: 'Jessa', element: 'water', role: 'marksman', rarity: 'epic', tweak: { crit: 0.14 },
+    id: 'jessa', name: 'Jessa', element: 'water', role: 'marksman', rarity: 'common', tweak: { crit: 0.14 },
     skill: { id: 'jessa', effects: [
-      { type: 'damage', target: 'highestAtk', power: pw(2.4, 'epic') },
+      { type: 'damage', target: 'highestAtk', power: pw(2.4, 'common') },
       { type: 'status', target: 'same', status: 'slow', value: 0.4, seconds: 4, chance: 0.8 },
       { type: 'status', target: 'self', status: 'critUp', value: 0.2, seconds: 6 },
     ] },
@@ -289,9 +296,9 @@ const CLAN_HEROES: HeroDef[] = [
   }),
   // Sorcier oni (clan de Lenore) : sa lanterne lâche des feux follets qui brûlent et affaiblissent
   build({
-    id: 'oboro', name: 'Oboro', element: 'fire', role: 'support', rarity: 'legendary',
+    id: 'oboro', name: 'Oboro', element: 'fire', role: 'support', rarity: 'epic',
     skill: { id: 'oboro', effects: [
-      { type: 'damage', target: 'random3', power: pw(1.2, 'legendary') },
+      { type: 'damage', target: 'random3', power: pw(1.2, 'epic') },
       { type: 'status', target: 'same', status: 'burn', value: 0.4, seconds: 5, chance: 0.9 },
       { type: 'status', target: 'same', status: 'atkDown', value: 0.2, seconds: 5, chance: 0.6 },
     ] },
@@ -310,10 +317,10 @@ const CLAN_HEROES: HeroDef[] = [
   }),
   // Singe chaman (clan d'Eldra) : le grand souffle de sa gourde frappe l'ennemi et soigne toute l'équipe
   build({
-    id: 'bao', name: 'Bao', element: 'wind', role: 'healer', rarity: 'legendary',
+    id: 'bao', name: 'Bao', element: 'wind', role: 'healer', rarity: 'epic',
     skill: { id: 'bao', effects: [
-      { type: 'damage', target: 'front', power: pw(1, 'legendary') },
-      { type: 'heal', target: 'allies', power: pw(1.6, 'legendary') },
+      { type: 'damage', target: 'front', power: pw(1, 'epic') },
+      { type: 'heal', target: 'allies', power: pw(1.6, 'epic') },
       { type: 'cleanse', target: 'allies' },
       { type: 'energy', target: 'allies', amount: 10 },
     ] },
@@ -322,10 +329,10 @@ const CLAN_HEROES: HeroDef[] = [
   }),
   // Singe voleur (clan d'Eldra) : deux coups de dague éclair, il chipe l'énergie de sa cible
   build({
-    id: 'gribou', name: 'Gribou', element: 'wind', role: 'assassin', rarity: 'rare', tweak: { interval: 8, dodge: 0.14 },
+    id: 'gribou', name: 'Gribou', element: 'wind', role: 'assassin', rarity: 'common', tweak: { interval: 8, dodge: 0.14 },
     skill: { id: 'gribou', effects: [
-      { type: 'damage', target: 'back', power: pw(1.2, 'rare') },
-      { type: 'damage', target: 'same', power: pw(1.2, 'rare') },
+      { type: 'damage', target: 'back', power: pw(1.2, 'common') },
+      { type: 'damage', target: 'same', power: pw(1.2, 'common') },
       { type: 'energy', target: 'same', amount: -30 },
       { type: 'energy', target: 'self', amount: 30 },
     ] },
@@ -333,9 +340,9 @@ const CLAN_HEROES: HeroDef[] = [
   }),
   // Corbeau tengu (clan d'Orin) : un coup de sabre précis sur le plus affaibli, ses coups critiques font très mal
   build({
-    id: 'karu', name: 'Karu', element: 'wind', role: 'assassin', rarity: 'epic', tweak: { crit: 0.25, critDmg: 1.8 },
+    id: 'karu', name: 'Karu', element: 'wind', role: 'assassin', rarity: 'rare', tweak: { crit: 0.25, critDmg: 1.8 },
     skill: { id: 'karu', effects: [
-      { type: 'damage', target: 'lowestHp', power: pw(2.8, 'epic'), execute: 0.5 },
+      { type: 'damage', target: 'lowestHp', power: pw(2.8, 'rare'), execute: 0.5 },
       { type: 'status', target: 'self', status: 'critUp', value: 0.3, seconds: 6 },
     ] },
     passives: [first('assassin'), { kind: 'stats', stats: { critDmg: 0.4 } }],
