@@ -67,6 +67,10 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   Réglages, invité par défaut (champ `auth` de la sauvegarde) ; tout passe par `src/game/auth.ts` (éteint tant que
   `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` manquent : fenêtre « Bientôt disponible »). Comptes à créer, branchement,
   invité → compte lié : **`docs/connexion-comptes.md`**.
+- **Refonte des héros en vectoriel animé** (décidée le 26/11 après l'essai de Kael) : un héros = un dossier
+  `refonte-graphique/ui-moderne/heros/<nom>/` (outil commun `atelier.py`, modèle `kael/`), sorties `pixel/sortie/ui/vecto/<nom>/`
+  (`STATUT.txt`), images `public/art/vecto/<id>.webp`, table `VECTO` de `src/game/vecto.ts` (menus, `?vecto=1`).
+  Page de suivi : `python3 refonte-graphique/ui-moderne/heros/suivi.py` → https://claude.ai/artifact/L59gwsBUz9SPcEG272Jh4c.
 - Plus tard : profil du joueur, événements, sons et musique, Siège. Ensuite : serveur (Supabase) → habillage → social
   réel → argent réel → bêta → lancement.
 

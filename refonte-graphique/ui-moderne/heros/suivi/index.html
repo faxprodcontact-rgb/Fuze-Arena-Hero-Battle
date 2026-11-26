@@ -1,0 +1,346 @@
+<title>Refonte des héros</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* une salle de pierre sombre et or, comme le jeu ; un seul thème, voulu */
+:root { --bg: #15131b; --panel: #221f2b; --line: #3a3546; --text: #f1ece0; --muted: #aaa3b8; --gold: #e8b64c;
+  --ok: #5fcf8a; --redo: #ff8a6a; --wip: #e8b64c; --todo: #6f6880;
+  --display: "Lilita One", "Trebuchet MS", sans-serif; --body: "Fredoka", system-ui, sans-serif; color-scheme: dark; }
+body { background: var(--bg); color: var(--text); font: 15px/1.45 var(--body); }
+main { max-width: 1180px; margin: 0 auto; padding-block: 24px 40px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font: 400 clamp(28px, 6vw, 40px)/1.1 var(--display); color: var(--gold); margin: 0 0 6px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0 0 18px; max-width: 65ch; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 22px; font-variant-numeric: tabular-nums; }
+.bar span { padding: 6px 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }
+.bar b { font: 400 18px var(--display); margin-right: 6px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.hero { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-width: 0; }
+.hero header { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hero h3 { margin: 0; font: 400 20px var(--display); }
+.pill { font-size: 12px; padding: 3px 10px; border-radius: 999px; color: #111; text-transform: uppercase; letter-spacing: .04em; }
+.ok .pill { background: var(--ok); } .redo .pill { background: var(--redo); } .wip .pill { background: var(--wip); } .todo .pill { background: var(--todo); color: var(--text); }
+.meta { margin: 2px 0 8px; color: var(--muted); font-size: 13px; }
+.duo { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+figure { margin: 0; background: #1a1822; border-radius: 10px; display: grid; place-items: center; min-height: 150px; padding: 6px; }
+figure img { max-height: 150px; width: auto; image-rendering: auto; }
+.duo figure:first-child img { image-rendering: pixelated; }
+figcaption { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+.vide { color: var(--todo); font: 400 28px var(--display); }
+.note { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+.r-legendary { border-color: #7a5d22; }
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500&family=Lilita+One&display=swap">
+<main>
+<h1>Refonte des héros</h1>
+<p class="sub">Chaque héros redessiné dans le style de l’interface et animé. À gauche le pixel art d’avant, à droite le nouveau dessin (animé quand il est fini). Dis-moi lesquels reprendre.</p>
+<div class="bar"><span><b>1</b>faits</span><span><b>0</b>à revoir</span><span><b>0</b>en cours</span><span><b>43</b>à faire</span><span><b>44</b>héros</span></div>
+<section class="grid">
+<article class="hero todo r-legendary">
+  <header><h3>Dardane</h3><span class="pill">à faire</span></header>
+  <p class="meta">Légendaire · terre</p>
+  <div class="duo"><figure><img src="px/angels-11.webp" alt="Dardane pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-legendary">
+  <header><h3>Soyane</h3><span class="pill">à faire</span></header>
+  <p class="meta">Légendaire · terre</p>
+  <div class="duo"><figure><img src="px/myths-10.webp" alt="Soyane pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero ok r-legendary">
+  <header><h3>Kael</h3><span class="pill">fait</span></header>
+  <p class="meta">Légendaire · feu</p>
+  <div class="duo"><figure><img src="px/assassins-2.webp" alt="Kael pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><img src="gif/assassins-2.gif" alt="Kael animé" loading="lazy"><figcaption>après</figcaption></figure></div>
+  <p class="note">Kael, le guerrier de lave : validé par le propriétaire (essai du 26/11), nouvelle mèche, animé.</p>
+</article>
+<article class="hero todo r-legendary">
+  <header><h3>Sable</h3><span class="pill">à faire</span></header>
+  <p class="meta">Légendaire · feu</p>
+  <div class="duo"><figure><img src="px/assassins-3.webp" alt="Sable pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-legendary">
+  <header><h3>Elvyn</h3><span class="pill">à faire</span></header>
+  <p class="meta">Légendaire · eau</p>
+  <div class="duo"><figure><img src="px/angels-6.webp" alt="Elvyn pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-legendary">
+  <header><h3>Ilian</h3><span class="pill">à faire</span></header>
+  <p class="meta">Légendaire · eau</p>
+  <div class="duo"><figure><img src="px/angels-2.webp" alt="Ilian pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-legendary">
+  <header><h3>Eldra</h3><span class="pill">à faire</span></header>
+  <p class="meta">Légendaire · vent</p>
+  <div class="duo"><figure><img src="px/mages-8.webp" alt="Eldra pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-legendary">
+  <header><h3>Orin</h3><span class="pill">à faire</span></header>
+  <p class="meta">Légendaire · vent</p>
+  <div class="duo"><figure><img src="px/mages-3.webp" alt="Orin pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Malgrave</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · terre</p>
+  <div class="duo"><figure><img src="px/myths-7.webp" alt="Malgrave pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Néfira</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · terre</p>
+  <div class="duo"><figure><img src="px/myths-6.webp" alt="Néfira pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Sylvar</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · terre</p>
+  <div class="duo"><figure><img src="px/myths-9.webp" alt="Sylvar pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Lenore</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · feu</p>
+  <div class="duo"><figure><img src="px/knights-9.webp" alt="Lenore pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Oboro</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · feu</p>
+  <div class="duo"><figure><img src="px/oboro.webp" alt="Oboro pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Rook</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · feu</p>
+  <div class="duo"><figure><img src="px/assassins-5.webp" alt="Rook pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Célia</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · eau</p>
+  <div class="duo"><figure><img src="px/angels-1.webp" alt="Célia pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Kesha</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · eau</p>
+  <div class="duo"><figure><img src="px/demons-5.webp" alt="Kesha pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Zaroth</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · eau</p>
+  <div class="duo"><figure><img src="px/demons-8.webp" alt="Zaroth pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Bao</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · vent</p>
+  <div class="duo"><figure><img src="px/bao.webp" alt="Bao pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Myrr</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · vent</p>
+  <div class="duo"><figure><img src="px/mages-11.webp" alt="Myrr pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-epic">
+  <header><h3>Tessa</h3><span class="pill">à faire</span></header>
+  <p class="meta">Épique · vent</p>
+  <div class="duo"><figure><img src="px/mages-4.webp" alt="Tessa pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Nyrra</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · terre</p>
+  <div class="duo"><figure><img src="px/nyrra.webp" alt="Nyrra pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Ophira</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · terre</p>
+  <div class="duo"><figure><img src="px/myths-4.webp" alt="Ophira pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Taurok</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · terre</p>
+  <div class="duo"><figure><img src="px/myths-3.webp" alt="Taurok pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Aldric</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · feu</p>
+  <div class="duo"><figure><img src="px/knights-3.webp" alt="Aldric pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Tybalt</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · feu</p>
+  <div class="duo"><figure><img src="px/knights-5.webp" alt="Tybalt pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Ysolde</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · feu</p>
+  <div class="duo"><figure><img src="px/knights-7.webp" alt="Ysolde pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Barzul</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · eau</p>
+  <div class="duo"><figure><img src="px/demons-3.webp" alt="Barzul pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Nerith</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · eau</p>
+  <div class="duo"><figure><img src="px/demons-12.webp" alt="Nerith pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Velith</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · eau</p>
+  <div class="duo"><figure><img src="px/demons-9.webp" alt="Velith pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Arcan</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · vent</p>
+  <div class="duo"><figure><img src="px/mages-7.webp" alt="Arcan pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Karu</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · vent</p>
+  <div class="duo"><figure><img src="px/karu.webp" alt="Karu pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Mira</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · vent</p>
+  <div class="duo"><figure><img src="px/mages-2.webp" alt="Mira pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-rare">
+  <header><h3>Sorai</h3><span class="pill">à faire</span></header>
+  <p class="meta">Rare · vent</p>
+  <div class="duo"><figure><img src="px/sorai.webp" alt="Sorai pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Aurelle</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · terre</p>
+  <div class="duo"><figure><img src="px/angels-10.webp" alt="Aurelle pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Sarvik</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · terre</p>
+  <div class="duo"><figure><img src="px/sarvik.webp" alt="Sarvik pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Solenn</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · terre</p>
+  <div class="duo"><figure><img src="px/angels-7.webp" alt="Solenn pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Bérold</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · feu</p>
+  <div class="duo"><figure><img src="px/knights-1.webp" alt="Bérold pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Garvin</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · feu</p>
+  <div class="duo"><figure><img src="px/knights-8.webp" alt="Garvin pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Jessa</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · eau</p>
+  <div class="duo"><figure><img src="px/jessa.webp" alt="Jessa pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Lilou</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · eau</p>
+  <div class="duo"><figure><img src="px/demons-4.webp" alt="Lilou pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Corvin</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · vent</p>
+  <div class="duo"><figure><img src="px/assassins-7.webp" alt="Corvin pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Gribou</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · vent</p>
+  <div class="duo"><figure><img src="px/gribou.webp" alt="Gribou pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Jarek</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · vent</p>
+  <div class="duo"><figure><img src="px/assassins-9.webp" alt="Jarek pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+<article class="hero todo r-common">
+  <header><h3>Zéphyre</h3><span class="pill">à faire</span></header>
+  <p class="meta">Commun · vent</p>
+  <div class="duo"><figure><img src="px/assassins-11.webp" alt="Zéphyre pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <figure><span class="vide">—</span><figcaption>après</figcaption></figure></div>
+  
+</article>
+</section>
+</main>
