@@ -11,7 +11,9 @@ import { heroDef, isHero } from '../core/data/heroes';
 import { C, FONT, FightScene, W, applyTheme } from './fight-view';
 import { CARD, HUD_RES, ROUND, ROUND_LIP, WIDE, hudText, loadHudArt, pillKey, type HudTone } from './hud-art';
 import { t } from './i18n';
-import { heroImage } from './art';
+import { figureUrl, heroImage } from './art';
+import { HD_FIG } from './hd-figures';
+import { heroArt } from './look';
 import { battleLook } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
 import { getState } from './state/store';
@@ -25,6 +27,12 @@ const FOND_ZOOM = 1.4;
 /** Marges du bas : sous les cartes, entre les cartes et les boutons ronds. */
 const CARD_BOTTOM = 14, CARD_GAP = 10;
 
+/** Les mesures du héros en entier [largeur, hauteur, x et y des pieds, images, durée d'une image] (hd-figures.ts). */
+type Fig = readonly [number, number, number, number, number, number, number];
+function pied(defId: string): Fig | undefined {
+  return (HD_FIG.chars as Record<string, Fig | undefined>)[heroArt(defId)];
+}
+
 interface Portrait {
   unit: Unit;
   x: number;
@@ -32,7 +40,7 @@ interface Portrait {
   bars: Phaser.GameObjects.Graphics;
   glow: Phaser.GameObjects.Image;
   card: Phaser.GameObjects.Container;
-  face: Phaser.GameObjects.Image;
+  face: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite;
 }
 
 export interface BattleSceneData {
@@ -130,7 +138,12 @@ export class BattleScene extends FightScene {
     super.preload();
     loadHudArt(this);
     // les visages des cartes du bas (refonte-graphique/pixel/hd/anim/vignettes.py)
-    for (const u of this.req.heroes) if (!this.textures.exists(`v-${u.defId}`)) this.load.image(`v-${u.defId}`, heroImage(u.defId));
+    // le héros en entier qui respire (art/hd/pied/, vignettes.py) ; à défaut, son visage
+    for (const u of this.req.heroes) {
+      const f = pied(u.defId);
+      if (f && !this.textures.exists(`pied-${u.defId}`)) this.load.spritesheet(`pied-${u.defId}`, figureUrl(heroArt(u.defId)), { frameWidth: f[0] * HD_FIG.up, frameHeight: f[1] * HD_FIG.up });
+      else if (!f && !this.textures.exists(`v-${u.defId}`)) this.load.image(`v-${u.defId}`, heroImage(u.defId));
+    }
   }
 
   /** Le haut des cartes des héros. */
@@ -207,7 +220,18 @@ export class BattleScene extends FightScene {
       const bg = this.add.image(0, 0, `hud-card-${el}`).setDisplaySize(CARD.w + 16, CARD.h + 16);
       // le visage, au haut de la carte, coupé à sa forme (coins du haut arrondis)
       const top = -CARD.h / 2;
-      const face = this.add.image(0, top + CARD.face / 2 + 4, `v-${unit.defId}`).setDisplaySize(CARD.w + 4, CARD.w + 4);
+      // le héros en entier, petit, centré, avec de l'air autour (demande du 26/11 : plus de visage trop zoomé)
+      const f = pied(unit.defId);
+      let face: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite;
+      if (f && this.textures.exists(`pied-${unit.defId}`)) {
+        const [fw, fh, fx, fy, n, ms] = f;
+        const k = Math.min((CARD.w - 22) / fw, (CARD.face - 40) / fh);
+        const sp = this.add.sprite(0, top + CARD.face - 30, `pied-${unit.defId}`, 0).setOrigin(fx / fw, fy / fh).setScale(k / HD_FIG.up);
+        const key = `pied-${unit.defId}-idle`;
+        if (!this.anims.exists(key)) this.anims.create({ key, frames: this.anims.generateFrameNumbers(`pied-${unit.defId}`, { start: 0, end: n - 1 }), frameRate: 1000 / ms, repeat: -1 });
+        sp.play({ key, startFrame: i % n });
+        face = sp;
+      } else face = this.add.image(0, top + CARD.face / 2 + 4, `v-${unit.defId}`).setDisplaySize(CARD.w + 4, CARD.w + 4);
       const mask = this.make.graphics({}, false).fillRoundedRect(x - CARD.w / 2, y + top, CARD.w, CARD.face, { tl: CARD.r, tr: CARD.r, bl: 0, br: 0 });
       face.setMask(mask.createGeometryMask());
       const frame = this.add.image(0, 0, 'hud-card-frame').setDisplaySize(CARD.w + 16, CARD.h + 16);
