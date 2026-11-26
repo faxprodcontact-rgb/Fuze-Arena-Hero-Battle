@@ -1,7 +1,9 @@
 # Les images à montrer au propriétaire pour Tybalt vectoriel (refonte-graphique/pixel/sortie/ui/vecto/tybalt/) :
 #   python3 presentation.py
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
-# - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne.
+# - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
+# - visage.png : contrôle obligatoire du visage (../visage.py) : la tête zoomée ×4, à gauche telle quelle, à droite avec
+#   le calque guide_svg (tête de profil : tour=75, un seul oeil) ; verifier() doit rendre une liste vide.
 import os
 import subprocess
 import sys
@@ -81,6 +83,38 @@ def main():
     os.remove(big)
     os.remove(svg)
     print('écrit', os.path.join(OUT, 'fixe.png'), 'et comparaison.png')
+    visage()
+
+
+def visage():
+    """visage.png : la tête au repos zoomée ×4 (cadre du jeu 512 px → ×4), sans rien | avec le calque guide_svg posé
+    dans le repère de la tête (même ×1,1 autour du cou que le dessin)."""
+    rendu = os.path.join(HERE, '..', 'rendu.cjs')
+    defauts = L.verifier(L.face_mesures(), L.FACE_BOX)
+    print('visage : défauts =', defauts or 'aucun')
+    zone = (60.0, 18.0, 62.0, 42.0)                   # x0, y0, largeur, hauteur (pixels du dessin)
+    plain = L.build(frame=zone).svg()
+    nx, ny = L.NECK
+    g = '<g transform="translate(%g %g) scale(%g) translate(%g %g)">%s</g>' % (nx, ny, L.HSC, -nx, -ny,
+                                                                             L.guide_svg(L.FACE_BOX, tour=75))
+    ims = []
+    for i, txt in enumerate((plain, plain[:plain.rindex('</svg>')] + g + '</svg>')):
+        sv = os.path.join(HERE, '_visage%d.svg' % i)
+        pn = sv[:-4] + '.png'
+        open(sv, 'w').write(txt)
+        subprocess.run(['node', rendu, sv, pn, str(round(42 * 4 * 512 / L.FRAME[3]))], check=True)
+        fg = Image.open(pn).convert('RGBA')
+        bg = stone(fg.width, fg.height)
+        bg.alpha_composite(fg)
+        ims.append(bg.convert('RGB'))
+        os.remove(sv)
+        os.remove(pn)
+    out = Image.new('RGB', (2 * ims[0].width + 20, ims[0].height), (20, 14, 34))
+    out.paste(ims[0], (0, 0))
+    out.paste(ims[1], (ims[0].width + 20, 0))
+    out.save(os.path.join(OUT, 'visage.png'))
+    print('écrit', os.path.join(OUT, 'visage.png'))
+    return defauts
 
 
 if __name__ == '__main__':
