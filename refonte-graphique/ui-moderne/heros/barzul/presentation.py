@@ -140,7 +140,7 @@ def visage():
 def avant_apres(fig, k):
     """avant-apres.png : à gauche l'image annotée par le propriétaire (telle quelle, ses cercles), à droite le dessin
     corrigé sur le même fond, au même cadrage (même hauteur de personnage, pieds au même endroit)."""
-    src = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/avis-img/demons-3.png'
+    src = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/avis-img3/demons-3.png'
     if not os.path.exists(src):
         print('(image annotée introuvable : avant-apres.png non refait)')
         return

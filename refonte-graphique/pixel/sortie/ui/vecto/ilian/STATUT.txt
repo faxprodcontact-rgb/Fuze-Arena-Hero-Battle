@@ -1,4 +1,4 @@
 fait
-Corrigé d'après l'avis du 26/11 (tour 2) (« la couronne est dans le vide, elle finit trop loin ») : la couronne s'arrête maintenant au-dessus de la tempe, juste au-dessus de l'oreille, au lieu de dépasser à gauche au-dessus des cheveux ; son bout s'arrondit et passe un peu dans l'ombre, comme s'il tournait autour du crâne. Les deux pointes de gauche et leurs pierres se sont resserrées pour garder un écart régulier (4 pointes comme le pixel art).
-Le reste n'a pas changé (visage validé par visage.py, barbe collée à la joue, jambes resserrées : avis précédents).
-Vérifié en grand au repos, pendant l'attaque et la spéciale (tête penchée) : la couronne suit la tête et finit au même endroit. Avant / après : avant-apres.png.
+Corrigé d'après l'avis du 26/11 (tour 3) (« l'oreille doit apparaître devant et la barbe l'entourer ») : l'oreille est maintenant dessinée par-dessus la barbe, entière et bien visible (bord roulé éclairé en haut, creux dans l'ombre, petit lobe) ; le favori part de sous la couronne, passe au-dessus de l'oreille, derrière elle et dessous, puis rejoint la barbe : la barbe l'entoure sans la cacher.
+Le reste n'a pas changé (couronne qui s'arrête au-dessus de la tempe, visage validé par visage.py, barbe collée à la joue, jambes resserrées : avis précédents).
+Vérifié en grand au repos, pendant l'attaque et la spéciale (tête penchée, barbe qui traîne) : l'oreille reste devant et entourée. Avant / après : avant-apres.png.

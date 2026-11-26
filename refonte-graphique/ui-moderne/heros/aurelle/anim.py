@@ -114,7 +114,7 @@ GROUND = dict(front=1, G=(92.0, 86.0), ang=42, lean=6.0, crouch=3.0, nsh=(7, 2),
 # La deuxième massue (poing lointain, tour 3 de l'avis) frappe aussi : elle s'arme pendant que la grande remonte après
 # le premier coup, puis s'abat devant lui (coup sec, à hauteur d'épaule) pendant que la grande est au-dessus de sa tête,
 # et reste en avant pendant le coup au sol : un, deux, trois. fca = la bascule de la petite massue par le poignet.
-FCOCK = dict(FF=(109.0, 49.0), ffa=-98, fca=-8)                  # armée, la tête de la petite massue en arrière
+FCOCK = dict(FF=(109.0, 49.0), ffa=-98, fca=48)                  # armée, la tête de la petite massue en arrière
 FCHOP = dict(FF=(127.0, 62.0), ffa=-32, fca=88)                   # le coup : la petite massue s'abat devant lui
 FHOLD = dict(FF=(125.0, 64.0), ffa=-38, fca=74)                   # elle reste en avant pendant le coup au sol
 ATTACK = [
