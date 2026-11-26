@@ -498,7 +498,7 @@ def head_parts(fig, P):
     for cx, cy, w, s in ((n_x, n_y, n_w, 1), (f_x, f_y, f_w, -1)):
         hd += [(sm([(cx + s * u * w, cy + v * w) for u, v in
                     ((0.72, -0.12), (0.3, -0.46), (-0.2, -0.52), (-0.66, -0.5), (-0.86, -0.3), (-0.5, -0.32), (-0.1, -0.3), (0.4, -0.18))],
-                   sharp=(0, 4)), SKIN.deep, 0.32)]
+                   sharp=(0, 4)), SKIN.deep, 0.42)]
     # le fard rouge d'opéra en sourcils froncés (bas près du nez, il remonte en pointe vers l'arrière)
     hd += [(brow_shape(n_x, n_y, n_w, 1), '#c8283a', 0.95), (brow_shape(f_x, f_y, f_w, -1), '#c8283a', 0.92),
            (ribbon([(n_x + 0.5 * n_w, n_y - 0.48 * n_w), (n_x, n_y - 0.6 * n_w), (n_x - 0.55 * n_w, n_y - 0.76 * n_w)], [0.1, 0.45, 0.1]), '#ff8a6e', 0.75),
@@ -523,7 +523,7 @@ def head_parts(fig, P):
             fig.defs.append('<clipPath id="%s"><path d="%s"/></clipPath>' % (cid, e.d()))
             hd += [('<path d="%s" fill="FILL" clip-path="url(#%s)"/>' % (ellipse(ix, iy, ir * (1 if i == 0 else 0.86), ir).d(), cid),
                     ('rad', ix + 0.3, iy - 0.4, ir * 1.2, ir * 1.2, [(0, IRIS[0]), (0.35, IRIS[1]), (0.8, IRIS[2]), (1, IRIS[3])]), 1),
-                   ('<path d="%s" fill="FILL" clip-path="url(#%s)"/>' % (ellipse(ix + 0.05, iy + 0.05, 0.36 * ir, 0.6 * ir).d(), cid), '#2a0c1c', 1),
+                   ('<path d="%s" fill="FILL" clip-path="url(#%s)"/>' % (ellipse(ix + 0.05, iy + 0.05, 0.28 * ir, 0.62 * ir).d(), cid), '#2a0c1c', 1),
                    (ellipse(ix + 0.32 * ir, iy - 0.3 * ir, 0.22 * ir, 0.2 * ir), '#ffffff', 1)]
             # l'ombre de la paupière (l'arcade) sur le haut de l'œil
             hd += [('<path d="%s" fill="FILL" clip-path="url(#%s)"/>' % (

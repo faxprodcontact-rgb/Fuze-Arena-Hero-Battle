@@ -2,6 +2,7 @@
 #   python3 refonte-graphique/ui-moderne/heros/eldra/visage_controle.py
 # → mesure les places RÉELLES des traits dessinés (yeux, narines, bouche), passe verifier() (doit être vide), et écrit
 #   pixel/sortie/ui/vecto/eldra/visage.png : la tête zoomée ×4, à gauche sans rien, à droite avec le calque guide_svg.
+import math
 import os
 import subprocess
 import sys
@@ -24,8 +25,16 @@ def mesures(fig):
     """Les places réelles des traits (formes dessinées, posées comme la tête) et la boîte de la face posée de même."""
     H = fig.ctx['HEAD']
     F = fig.ctx_face
-    s = abs(H[0])
-    m = lambda p: mapp(H, p)  # noqa: E731
+    s = math.hypot(H[0], H[1])
+    # la tête penche d'un bloc dans l'animation : on mesure dans le repère de la tête redressée (même échelle, même
+    # place, sans la rotation), sinon la boîte de la face, tournée, ne serait plus alignée sur les axes
+    a = -math.atan2(H[1], H[0])
+    o = mapp(H, (80, 53))
+
+    def m(p):
+        q = mapp(H, p)
+        dx, dy = q[0] - o[0], q[1] - o[1]
+        return (o[0] + dx * math.cos(a) - dy * math.sin(a), o[1] + dx * math.sin(a) + dy * math.cos(a))
     out = {}
     for key, (cx, cy, w, sg) in zip(('oeil_proche', 'oeil_fond'), F['eyes']):
         x0, y0, x1, y1 = E.eye_shape(cx, cy, w, sg).bbox()

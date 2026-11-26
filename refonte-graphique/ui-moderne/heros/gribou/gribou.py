@@ -48,14 +48,14 @@ EYEINK = '#3a1426'
 GRD = 116.2        # le sol (le dessous des pieds et de la main)
 FEET = (64.0, 116.0)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (24.0, 51.0, 91.0, 68.0)
+FRAME = (26.0, 51.0, 87.0, 68.0)
 
 # ---------- le squelette (pose de repos, pixels du dessin, y vers le bas) ----------
 BODY_C = (62.0, 95.0)          # le pivot du corps (bascule dans les bonds)
 NECK = (83.0, 79.0)            # le pivot (et le centre d'agrandissement ×1,1) de la tête
 HIP_N, KNEE_N, ANK_N = (49.0, 95.0), (67.0, 99.6), (56.4, 111.0)      # la jambe proche (genou en avant)
 HIP_F, KNEE_F, ANK_F = (61.0, 97.0), (73.4, 103.0), (69.6, 111.6)     # la jambe lointaine (presque cachée)
-SH_N, ELB_N, WR_N = (76.4, 84.0), (77.0, 98.0), (82.4, 109.6)         # le bras proche (main à plat devant)
+SH_N, ELB_N, WR_N = (78.2, 82.4), (77.0, 98.0), (82.4, 109.6)         # le bras proche (main à plat devant)
 SH_F, ELB_F, WR_F = (85.0, 85.4), (85.6, 95.4), (94.6, 98.2)          # le bras lointain (la dague)
 TAIL_R = (42.0, 91.0)          # la racine de la queue
 SACK_P = (57.0, 84.0)          # le sac pivote autour de son appui sur le dos
@@ -413,9 +413,9 @@ def head_part(fig, P, HEAD):
 
     # le contour : crâne rond, touffe de la joue côté oreille (couchée vers l'arrière), menton sur la médiane, petit
     # museau qui dépasse à peine à droite (au niveau du nez et de la bouche)
-    head = sm([(80.8, 80.4), (78.2, 78.6), (76.6, 75.4), (77.0, 71.6), (77.2, 67.0), (78.4, 62.4), (81.4, 58.6),
+    head = sm([(80.8, 80.6), (76.2, 80.2), (78.0, 78.2), (75.4, 76.6), (77.2, 74.4), (76.6, 71.4), (77.2, 67.0), (78.4, 62.4), (81.4, 58.6),
                (86.0, 56.4), (91.4, 56.2), (96.0, 57.8), (99.2, 61.0), (100.6, 65.0), (101.0, 69.0), (101.6, 72.2),
-               (102.4, 74.6), (101.8, 77.0), (99.6, 79.2), (96.4, 80.8), (92.6, 81.6), (88.4, 81.6), (84.6, 81.2)], t=0.95)
+               (102.4, 74.6), (101.8, 77.0), (99.6, 79.2), (96.4, 80.8), (92.6, 81.6), (88.4, 81.6), (84.6, 81.2)], sharp=(2, 4), t=0.95)
     hd = []
     # le crâne : la calotte éclairée en haut à droite, l'arrière du crâne dans l'ombre
     hd += [(sm([(83.0, 58.6), (88.0, 56.8), (93.6, 57.0), (97.6, 59.4), (99.6, 62.4), (95.6, 60.8), (90.0, 59.6), (85.2, 60.2)]), FUR.light, 0.75),
@@ -435,13 +435,13 @@ def head_part(fig, P, HEAD):
     hd += [(mask.move(-0.5, 0.5), FUR.deep, 0.35),
            (mask, ('lin', 100, 62, 84, 80, [(0, SKIN.light), (0.45, SKIN.base), (1, '#d48272')]), 1)]
     # les plans du visage : le côté proche (vers l'oreille) dans une ombre douce, la joue lointaine claire
-    hd += [(sm([(exn - 4.6, 69.6), (exn - 4.0, 66.6), (exn - 3.0, 69.4), (86.4, 72.4), (88.0, 76.0), (90.0, 80.0),
-                (89.0, 81.0), (86.6, 79.0), (86.0, 75.6), (84.8, 72.4)]), SKIN.shadow, 0.35),
+    hd += [(sm([(exn - 4.6, 69.6), (exn - 4.0, 66.6), (exn - 3.0, 69.4), (86.4, 72.4), (87.6, 76.4), (89.6, 80.4),
+                (89.0, 81.0), (86.6, 79.0), (86.0, 75.6), (84.8, 72.4)]), SKIN.shadow, 0.22),
            (ellipse(98.6, 70.6, 1.6, 1.0, -20), SKIN.hi, 0.35)]
     # les arcades (creux sous le front, au-dessus des yeux) : le sourcil proche plonge vers le nez (air rusé),
     # le lointain remonte un peu
-    hd += [(ribbon([(exn - 3.2, 66.0), (exn - 0.6, 65.6), (exn + 1.8, 66.2), (exn + 3.0, 67.0)], [0.2, 1.2, 1.1, 0.2]), SKIN.deep, 0.55),
-           (ribbon([(exf - 2.4, 66.8), (exf - 0.4, 66.0), (exf + 1.6, 65.6)], [0.2, 0.9, 0.2]), SKIN.deep, 0.45)]
+    hd += [(ribbon([(exn - 3.2, 66.0), (exn - 0.6, 65.6), (exn + 1.8, 66.2), (exn + 3.0, 67.0)], [0.2, 1.0, 0.9, 0.2]), SKIN.shadow, 0.35),
+           (ribbon([(exf - 2.4, 66.8), (exf - 0.4, 66.0), (exf + 1.6, 65.6)], [0.2, 0.8, 0.2]), SKIN.shadow, 0.3)]
     # les yeux : même forme (amande), même ligne ; le lointain plus étroit ; regard vers l'ennemi (à droite)
     if P['blink'] > 0.5:
         for cx, w_, pr in ((exn, ewn, 1.0), (exf, ewf, 0.85)):

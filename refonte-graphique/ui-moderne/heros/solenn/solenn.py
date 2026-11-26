@@ -109,14 +109,17 @@ def _ik(S, W, L1, L2, bend):
 BEND0 = min((1.0, -1.0), key=lambda b: math.dist(_ik(S0, W0, LU, LF, b), E0))
 
 
-def arm_ik(S, W, bend):
+def arm_ik(S, W, bend=None):
     """Le coude ; si le poing va plus loin que le bras, le bras s'allonge un peu (comme le pixel art), jamais le poing
-    ne se décroche."""
+    ne se décroche. bend = None : le coude plie toujours dans le bon sens, vers le bas et vers l'extérieur (à gauche),
+    jamais vers la tête ni vers le haut."""
     L1, L2 = LU, LF
     dw = math.dist(S, W)
     if dw > L1 + L2 - 0.5:
         k = dw / (L1 + L2 - 0.5)
         L1, L2 = L1 * k, L2 * k
+    if bend is None:
+        return max((_ik(S, W, L1, L2, b) for b in (1.0, -1.0)), key=lambda e: e[1] - 0.5 * e[0])
     return _ik(S, W, L1, L2, bend)
 
 
@@ -178,8 +181,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     G = mapp(U, P['grip'])
     ang = P['ang'] + P['lean'] * 1.0
     W = wrist_of(G, ang)
-    bend = BEND0 if P['bend'] is None else P['bend']
-    E = arm_ik(S, W, bend)
+    E = arm_ik(S, W, P['bend'])
 
     # ---- la crinière : les flammes derrière la tête ----
     fl_names = flames_back(fig, P)
@@ -246,7 +248,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
 def _ua0():
     W = wrist_of(G0, ANG0)
-    E = arm_ik(S0, W, BEND0)
+    E = arm_ik(S0, W)
     return ang_of(sub(E, S0))
 
 

@@ -1,3 +1,4 @@
 fait
-Soyane, la femme-araignée : redessinée en vectoriel lisse comme Kael (même trait, même échelle), même costume que le pixel art (chignon et aiguilles en X, pierre rouge au front, haut rouge, corset et basque de chitine, deux dagues courbes, huit pattes aux genoux pointus et anneaux rouges).
-Animée : respiration avec pattes nerveuses (jamais toutes ensemble), « Piqûre » (deux coups de dague, pattes avant plantées) et « Nid de pierre » (fils de soie, cocon, quatre pattes de pierre qui jaillissent du sol).
+Corrigé d'après l'avis du 26/11 : 1) le visage est refait avec visage.py (3/4 léger) : le petit nez est sur la ligne du milieu, ENTRE les deux yeux (plus de nez de profil qui dépasse de la joue), les deux yeux ont la même forme et la même hauteur, la bouche est centrée sous le nez, fermée au repos (sourire en coin, petit croc) et s'ouvre en sourire à crocs pendant les attaques ; contrôle : visage.png.
+2) La patte arrière gauche ne passe plus derrière l'abdomen : elle est au premier plan et se plante sur son flanc, sous une petite plaque de chitine bombée (4 pattes devant, 4 derrière).
+3) Les deux aiguilles sont descendues et plantées derrière le chignon : leur croisement est caché dans les cheveux, seules les tiges et les perles rouges dépassent. Avant | après : avant-apres.png.
