@@ -12,16 +12,16 @@ import { createRng } from '../../../core/rng';
 import { heroImage } from '../../art';
 import { CHAT_LINES, fmt, t } from '../../i18n';
 import {
-  BOT_GUILDS, botChatter, buyExchange, claimWar, ensureWar, guildBossPlan, joinGuild, leaveGuild, markSeen, sendChat,
+  BOT_GUILDS, botChatter, claimWar, ensureWar, guildBossPlan, joinGuild, leaveGuild, markSeen, sendChat,
   warAttacksLeft, warDefenses, warPhase, warPlan, warScores,
 } from '../../state/actions';
 import { isUnlocked, teamPower } from '../../state/selectors';
 import { getState, now, useGame } from '../../state/store';
 import type { ChatMessage } from '../../state/types';
-import { Bar, Btn, Cur, Icon, Locked, Modal, RedDot, Tabs } from '../kit';
+import { Bar, Btn, Icon, Locked, Modal, RedDot, Tabs } from '../kit';
 import { btClass } from '../buttons';
 import { open, prepare } from '../nav';
-import { ShopTile } from './adventure';
+import { ModeShop } from '../sections/boutiques-modes';
 import { TeamStrip } from './heroes';
 import '../sections/guilde.css';
 
@@ -184,17 +184,7 @@ export function GuildScreen() {
       {tab === 'war' && <GuildWar guild={name} />}
       {tab === 'chat' && <Chat target="guild" />}
       {tab === 'shop' && (
-        <section class="g-scroll g-shop">
-          <div class="shop-grid">
-            {GUILD_SHOP.map((x) => (
-              <ShopTile cost={<Cur k="guildCoins" n={x.cost} />} reward={x.reward} disabled={s.wallet.guildCoins < x.cost}
-                onBuy={() => {
-                  const gain = buyExchange('guild', x.id);
-                  if (gain) open({ type: 'gain', title: t('guild.shop'), gain });
-                }} />
-            ))}
-          </div>
-        </section>
+        <section class="g-shop"><ModeShop kind="guild" items={GUILD_SHOP} crest={emblem(name)} /></section>
       )}
     </div>
   );

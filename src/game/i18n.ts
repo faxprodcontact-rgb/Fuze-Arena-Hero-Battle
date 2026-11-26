@@ -133,6 +133,8 @@ const FR = {
   // vague 3 « Boutique » : calendrier de connexion et vitrine de la boutique
   'login.week': 'Semaine {n}', 'bq.value': '×{n}', 'bq.bonus': '+{n} %', 'bq.best': 'Meilleur prix', 'bq.once': 'Unique',
   'bq.perDay': '+{n} / jour', 'bq.days': '{n} j',
+  // vague 3 « Boutiques de guilde et d'arène » (sections/boutiques-modes.tsx)
+  'mx.best.guild': 'Trésor', 'mx.best.arena': 'Élite', 'mx.gear': 'Équipement',
   'friends.title': 'Amis', 'friends.code': 'Mon code', 'friends.add': 'Ajouter', 'friends.placeholder': 'Code ami',
   'friends.sendAll': 'Tout envoyer', 'friends.claim': 'Ouvrir', 'friends.challenge': 'Défier', 'friends.suggest': 'Suggestions',
   'friends.copied': 'Code copié', 'friends.added': 'Ami ajouté', 'friends.self': "C'est ton code", 'friends.already': 'Déjà ami',
@@ -273,6 +275,8 @@ const EN: Record<Key, string> = {
   // vague 3 « Boutique » : calendrier de connexion et vitrine de la boutique
   'login.week': 'Week {n}', 'bq.value': '×{n}', 'bq.bonus': '+{n}%', 'bq.best': 'Best value', 'bq.once': 'One-time',
   'bq.perDay': '+{n} / day', 'bq.days': '{n} d',
+  // vague 3 « Boutiques de guilde et d'arène » (sections/boutiques-modes.tsx)
+  'mx.best.guild': 'Treasure', 'mx.best.arena': 'Elite', 'mx.gear': 'Gear',
   'friends.title': 'Friends', 'friends.code': 'My code', 'friends.add': 'Add', 'friends.placeholder': 'Friend code',
   'friends.sendAll': 'Send all', 'friends.claim': 'Open', 'friends.challenge': 'Challenge', 'friends.suggest': 'Suggestions',
   'friends.copied': 'Code copied', 'friends.added': 'Friend added', 'friends.self': 'This is your code', 'friends.already': 'Already a friend',

@@ -155,7 +155,7 @@
 .g-stars { display: inline-flex; align-items: center; gap: 3px; font: 400 15px var(--font-title); color: #c86a00; }
 
 /* ---------- la boutique ---------- */
-.g-shop .shop-grid { flex: none; }
+/* le trésor de la guilde (ModeShop) : sections/boutiques-modes.css */
 
 /* ---------- le tchat (guilde, et tchat général des bords) : des bulles nettes ---------- */
 .chat { min-height: 0; gap: 8px; }
