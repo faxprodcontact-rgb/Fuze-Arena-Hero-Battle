@@ -504,7 +504,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 def head(fig, P):
     """Le visage fin de femme, le chignon et ses aiguilles ; rend la liste des morceaux (posés avec la tête).
     Le visage est construit avec ../visage.py (méthode commune) : les deux yeux, le nez et la bouche sont aux places
-    que donne la sphère tournée de 18° (FACE_V) ; leurs positions réelles sont rangées dans fig.face (contrôle)."""
+    que donne la sphère tournée de 18° (FACE_V) ; leurs positions réelles sont rangées dans fig.face (contrôle).
+    Corrigé le 26/11 (2e avis du propriétaire, la limite cheveux / visage) : plus de casque posé autour du visage ; la
+    chevelure est une calotte serrée sur le crâne, sa racine suit le front (petite pointe au milieu), recule à la tempe
+    et redescend en une fine patte devant l'oreille ; une mèche échappée tombe sur la tempe ; aucun liseré ni ombre dure
+    le long du visage (deux voiles d'ombre très doux sous la racine)."""
     names = []
 
     def part(name, *a, **k):
