@@ -1259,7 +1259,7 @@ def essai(folder):
 JEU = {
     'attaque': dict(genre='melee', coup=4, cible=(205, 131), coupe=[None] * 4 + [180] * 3 + [None] * 3,
                     avance=[0, 0, 16, 32, 34, 34, 18, 7, 0, 0]),
-    'speciale': dict(genre='melee', coup=12, cible=(225, 100),
+    'speciale': dict(calques=True, genre='melee', coup=12, cible=(225, 100),
                      coupe=[None] * 4 + [198] * 10 + [188] * 3 + [None] * 2,
                      avance=[0, 0, 0, 26] + [XS] * 10 + [30, 12, 0, 0, 0], charge=(1, 2)),
 }

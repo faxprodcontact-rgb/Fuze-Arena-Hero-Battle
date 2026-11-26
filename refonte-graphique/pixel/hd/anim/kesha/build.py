@@ -1228,7 +1228,7 @@ def essai(folder):
 # cible (la gerbe reste sous l'ennemi pendant qu'il y saute, mord et retombe). `avance` reste au maximum tant qu'il
 # est sur l'ennemi : le jeu le garde collé à sa cible, les petits écarts dessinés restent dans les images.
 JEU = {
-    'attaque': dict(genre='melee', coup=4, cible=(196, 107), coupe=[None] * 4 + [164, 170, 170, 170, None, None],
+    'attaque': dict(calques=True, genre='melee', coup=4, cible=(196, 107), coupe=[None] * 4 + [164, 170, 170, 170, None, None],
                     avance=[0, 0, 11, 23, 25, 25, 12, 4, 0, 0]),
     'speciale': dict(genre='melee', coup=12, cible=(ENEMY_X, 108),
                      coupe=[None] * 9 + [144] * 6 + [150, 150] + [None] * 3,

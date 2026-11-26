@@ -1494,7 +1494,7 @@ def dev_sheet(name, frames, k=3, per=10, box=None, path=None):
 
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
-    'attaque': dict(genre='melee', coup=4, cible=(186, GROUND - 60), coupe=[None] * 4 + [166] * 3 + [None] * 3),
+    'attaque': dict(calques=True, genre='melee', coup=4, cible=(186, GROUND - 60), coupe=[None] * 4 + [166] * 3 + [None] * 3),
     'speciale': dict(genre='sort', coup=8, cible=(FOE[0], GROUND - 19),
                      coupe=[None] * 4 + [192] * 3 + [166] * 6 + [None] * 2, charge=(0, 1)),
 }

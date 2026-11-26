@@ -1738,7 +1738,7 @@ def main():
 # Attaque : la massue s'abat au contact. Spéciale : il frappe le sol sur place ; la faille et ses geysers, au-delà du
 # deuxième geyser, sont posés sous chaque cible (les dégâts quand le geyser de la cible jaillit).
 JEU = {
-    'attaque': dict(genre='melee', coup=3, cible=(220, GROUND - 50), coupe=209),
+    'attaque': dict(calques=True, genre='melee', coup=3, cible=(220, GROUND - 50), coupe=209),
     # la ligne de feu court au ras du sol jusqu'à la vraie cible (image 6), puis y flambe ; `calques` : seuls les
     # effets partent, par morceaux entiers (jamais coupés en ligne droite)
     'speciale': dict(genre='tir', tir=(6, 7), depuis=190, rase=True, vitesse=600, coup=7, cible=(272, GROUND - 40),

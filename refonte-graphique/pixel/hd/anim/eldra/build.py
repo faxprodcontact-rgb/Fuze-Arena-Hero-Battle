@@ -1191,8 +1191,8 @@ def write_outputs(anims):
 # Le genre de chaque attaque et ses moments clés (numéros d'image) : le jeu déplace le personnage, fait voler le
 # projectile jusqu'à la vraie cible et y pose l'impact. Ne change rien aux GIF.
 JEU = {
-    'attaque': dict(genre='melee', coup=3, cible=(198, 104), coupe=174),
-    'speciale': dict(genre='melee', coup=7, cible=(196, 130), coupe=[None] * 7 + [160] * 8, charge=(0, 1)),
+    'attaque': dict(calques=True, genre='melee', coup=3, cible=(198, 104), coupe=174),
+    'speciale': dict(calques=True, genre='melee', coup=7, cible=(196, 130), coupe=[None] * 7 + [160] * 8, charge=(0, 1)),
 }
 
 

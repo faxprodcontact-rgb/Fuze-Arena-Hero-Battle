@@ -1218,9 +1218,9 @@ def write_outputs(anims):
 # Le bond est cuit dans 'x' (avance). Attaque : la griffure au contact. Spéciale : griffures en croix, il saute
 # (les croix restent sur l'ennemi), retombe, gerbe de feu ; les débris restent sur la cible quand il rebondit chez lui.
 JEU = {
-    'attaque': dict(genre='melee', coup=5, cible=(210, GROUND - 36), coupe=[None] * 4 + [192, 192, 190] + [165] * 4,
+    'attaque': dict(calques=True, genre='melee', coup=5, cible=(210, GROUND - 36), coupe=[None] * 4 + [192, 192, 190] + [165] * 4,
                     avance=[f.get('x', 0) for f in ATTAQUE]),
-    'speciale': dict(genre='melee', coup=10, cible=(210, GROUND - 36),
+    'speciale': dict(calques=True, genre='melee', coup=10, cible=(210, GROUND - 36),
                      coupe=[None] * 3 + [195, 195, 190, 190, 174, 174, 193, 195, 195] + [160] * 4,
                      avance=[f.get('x', 0) for f in SPECIALE], charge=(0, 1)),
 }

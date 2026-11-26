@@ -1427,9 +1427,9 @@ def main():
 # l'image 2 (`elan`), puis ses trois coups sont joués sur place devant lui, comme dans le GIF (les petits pas en avant
 # restent dans les images) ; les dégâts tombent sur le grand coup final.
 JEU = {
-    'attaque': dict(genre='melee', coup=4, cible=(172, GROUND - 12), coupe=[None] * 4 + [146] * 6,
+    'attaque': dict(calques=True, genre='melee', coup=4, cible=(172, GROUND - 12), coupe=[None] * 4 + [146] * 6,
                     avance=[f.get('shift', 0) for f in ATTAQUE]),
-    'speciale': dict(genre='melee', coup=9, cible=(176, GROUND - 14), coupe=[None] * 9 + [146] * 7,
+    'speciale': dict(calques=True, genre='melee', coup=9, cible=(176, GROUND - 14), coupe=[None] * 9 + [146] * 7,
                      elan=(2, 3), charge=(0, 1)),
 }
 

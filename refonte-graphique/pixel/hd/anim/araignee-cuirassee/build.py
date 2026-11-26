@@ -1295,7 +1295,7 @@ def dev_sheet(name, frames, k=3, per=10, box=None, path=None):
 
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
-    'attaque': dict(genre='melee', coup=4, cible=(170, GROUND - 28), coupe=[None] * 4 + [157, 157, 150] + [None] * 4),
+    'attaque': dict(calques=True, genre='melee', coup=4, cible=(170, GROUND - 28), coupe=[None] * 4 + [157, 157, 150] + [None] * 4),
     'speciale': dict(genre='sort', coup=7, cible=(WAVE[2][0] + OX, GROUND - 24),
                      coupe=[None] * 5 + [110] * 8 + [None] * 2, charge=(1, 3), calques=True),   # cristaux entiers
 }

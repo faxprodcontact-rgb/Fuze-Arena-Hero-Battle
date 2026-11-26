@@ -1203,9 +1203,9 @@ def zone(args):
 # Le genre de chaque attaque et ses moments clés (numéros d'image) : le jeu déplace le personnage, fait voler le
 # projectile jusqu'à la vraie cible et y pose l'impact. Ne change rien aux GIF.
 JEU = {
-    'attaque': dict(genre='melee', coup=4, cible=(ENEMY_X, GROUND - 44), coupe=182,
+    'attaque': dict(calques=True, genre='melee', coup=4, cible=(ENEMY_X, GROUND - 44), coupe=182,
                     avance=[f.get('tx', 0) for f in ATTAQUE]),
-    'speciale': dict(genre='melee', coup=6, cible=(ENEMY_X, GROUND - 44), coupe=182,
+    'speciale': dict(calques=True, genre='melee', coup=6, cible=(ENEMY_X, GROUND - 44), coupe=182,
                      avance=[f.get('tx', 0) for f in SPECIALE], charge=(0, 1)),
 }
 

@@ -1213,7 +1213,7 @@ def dev_sheet(name, frames, k=3, per=10, box=None, path=None):
 JEU = {
     'attaque': dict(genre='melee', coup=5, cible=(FOE[0], GROUND - 37), coupe=[None] * 5 + [219, 219, 183, 183] + [None] * 3,
                     avance=[f.get('sp', (0, 0))[0] for f in ATTAQUE]),
-    'speciale': dict(genre='melee', coup=7, cible=(FOE[0], GROUND - 30),
+    'speciale': dict(calques=True, genre='melee', coup=7, cible=(FOE[0], GROUND - 30),
                      coupe=[None] * 7 + [226, 226, 226, 189, 163, 150, 150, 150, None],
                      avance=[f.get('sp', (0, 0))[0] for f in SPECIALE], charge=(0, 2)),
 }

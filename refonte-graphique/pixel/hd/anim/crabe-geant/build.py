@@ -1261,7 +1261,7 @@ def essai(folder):
 # maximum pendant l'écrasement). Spéciale : la vague qui roule à travers la première ligne ennemie est posée sur
 # chaque cible (à partir de la colonne 201, juste devant la pince) ; l'éclat du coup dans le sol reste avec lui.
 JEU = {
-    'attaque': dict(genre='melee', coup=4, cible=(228, 150), coupe=[None] * 4 + [205, 205, 200] + [None] * 3,
+    'attaque': dict(calques=True, genre='melee', coup=4, cible=(228, 150), coupe=[None] * 4 + [205, 205, 200] + [None] * 3,
                     avance=[0, 0, 0, 12, 26, 26, 16, 5, 0, 0]),
     # la vague court au ras du sol de la pince à la cible (projectile), puis jaillit sur elle
     'speciale': dict(genre='tir', tir=(7, 11), depuis=200, rase=True, coup=11, cible=(ENEMY_X, GROUND - 40),

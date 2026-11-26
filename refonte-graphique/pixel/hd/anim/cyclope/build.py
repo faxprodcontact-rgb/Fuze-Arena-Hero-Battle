@@ -1648,7 +1648,7 @@ def decoupe():
 # Spéciale : la ruée (élan cuit : shift) ; après le coup, la coupe suit le bord avant du minotaure (il ne doit pas être
 # coupé : ce qui est posé sur la cible suit son recul).
 JEU = {
-    'attaque': dict(genre='melee', coup=5, elan=(0, 2), cible=(200, GROUND - 30),
+    'attaque': dict(calques=True, genre='melee', coup=5, elan=(0, 2), cible=(200, GROUND - 30),
                     coupe=[None] * 2 + [168] * 4 + [198, 198, 180, 168]),
     'speciale': dict(genre='melee', coup=8, cible=(ENEMY_X, GROUND - 30),
                      coupe=[None] * 8 + [240, 273, 237, 193, 167, 167, 167],

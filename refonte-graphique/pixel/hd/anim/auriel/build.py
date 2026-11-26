@@ -1516,7 +1516,7 @@ def decoupe():
 # Attaque : double coup de massue au contact (les dégâts au premier coup). Spéciale : il fait jaillir le rocher et le
 # frappe : le rocher vole en cloche jusqu'à la vraie cible (images 10 à 12) et s'y brise.
 JEU = {
-    'attaque': dict(genre='melee', coup=4, cible=(196, GROUND - 37), coupe=176),
+    'attaque': dict(calques=True, genre='melee', coup=4, cible=(196, GROUND - 37), coupe=176),
     'speciale': dict(genre='tir', tir=(10, 13), depuis=195, coup=13, cible=(281, GROUND - 40),
                      coupe=[None] * 13 + [186] * 5, arc=20, charge=(0, 2)),
 }

@@ -1628,7 +1628,7 @@ def essai(folder):
 # Attaque : l'estoc au contact (l'éclat de la pointe reste sur l'ennemi). Spéciale : sort d'équipe, le bouclier part
 # vers l'équipe à l'image 7 (voir l'en-tête) ; il se concentre sous son voile de feu avant.
 JEU = {
-    'attaque': dict(genre='melee', coup=4, cible=(186, GROUND - 57), coupe=[None] * 4 + [167] * 7),
+    'attaque': dict(calques=True, genre='melee', coup=4, cible=(186, GROUND - 57), coupe=[None] * 4 + [167] * 7),
     'speciale': dict(genre='equipe', coup=7, charge=(1, 6)),
 }
 

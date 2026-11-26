@@ -1595,7 +1595,7 @@ def decoupe():
 
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
-    'attaque': dict(genre='melee', coup=5, cible=(190, GROUND - 40), coupe=168),
+    'attaque': dict(calques=True, genre='melee', coup=5, cible=(190, GROUND - 40), coupe=168),
     'speciale': dict(genre='equipe', coup=6, charge=(1, 2)),
 }
 

@@ -1353,9 +1353,9 @@ def write_outputs(anims):
 # Corps à corps (élan cuit : X). Spéciale : les dégâts à l'estoc dans la tornade (image 11) ; avant, pendant les deux
 # coupes (images 4 à 7), la coupe passe devant lui pour qu'il ne soit pas tranché (il n'est pas encore au bout de l'élan).
 JEU = {
-    'attaque': dict(genre='melee', coup=4, cible=(FOE[0], FOE[1]), coupe=[176] * 5 + [181, 182] + [176] * 4,
+    'attaque': dict(calques=True, genre='melee', coup=4, cible=(FOE[0], FOE[1]), coupe=[176] * 5 + [181, 182] + [176] * 4,
                     avance=[f.get('X', 0) for f in ATTAQUE]),
-    'speciale': dict(genre='melee', coup=11, cible=(FOE[0], FOE[1]),
+    'speciale': dict(calques=True, genre='melee', coup=11, cible=(FOE[0], FOE[1]),
                      coupe=[176] * 4 + [192] * 4 + [176, 180, 200, 176, 202, 171, 150, 140, 140, 140],
                      avance=[f.get('X', 0) for f in SPECIALE], charge=(1, 2)),
 }

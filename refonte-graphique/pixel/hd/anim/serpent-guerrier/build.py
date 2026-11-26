@@ -1135,7 +1135,7 @@ def zoom(anim, i, k=8):
 JEU = {
     'attaque': dict(genre='melee', coup=4, cible=ENEMY, coupe=[None] * 4 + [147] * 4 + [None] * 2,
                     avance=[f.get('base', 0) for f in ATTAQUE]),
-    'speciale': dict(genre='melee', coup=8, cible=ENEMY,
+    'speciale': dict(calques=True, genre='melee', coup=8, cible=ENEMY,
                      coupe=[None] * 4 + [145, 145, 158, 158, 158, 158, 130, 130, None, None] + [130] * 7,
                      avance=[f.get('base', 0) for f in SPECIALE], charge=(0, 2)),
 }

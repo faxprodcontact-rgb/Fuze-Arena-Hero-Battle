@@ -1804,7 +1804,7 @@ def zone(args):
 
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
-    'attaque': dict(genre='melee', coup=5, cible=(ENEMY_X, 172), coupe=204, elan=(0, 3)),
+    'attaque': dict(calques=True, genre='melee', coup=5, cible=(ENEMY_X, 172), coupe=204, elan=(0, 3)),
     'speciale': dict(genre='equipe', coup=9, charge=(2, 4)),
 }
 
