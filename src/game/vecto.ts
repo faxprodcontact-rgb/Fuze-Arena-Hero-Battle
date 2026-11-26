@@ -17,6 +17,7 @@ const VECTO_ON = (() => {
  * échelle : il se pose au même endroit). Mesures écrites par refonte-graphique/ui-moderne/heros/kael/kael.py. */
 const VECTO: Record<string, readonly [number, number, number, number]> = {
   'assassins-2': [133, 122, 67, 120],
+  'myths-10': [130, 125, 64, 122],
 };
 
 export interface VectoFig { w: number; h: number; fx: number; fy: number; big: string; small: string }
