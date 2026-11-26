@@ -1,87 +1,6 @@
 {
  "planches": [
   {
-   "nom": "eldra",
-   "id": "mages-8",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 7,
-   "calque": "cible",
-   "rangees": 21
-  },
-  {
-   "nom": "eldra",
-   "id": "mages-8",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 8,
-   "calque": "cible",
-   "rangees": 8
-  },
-  {
-   "nom": "eldra",
-   "id": "mages-8",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 10,
-   "calque": "cible",
-   "rangees": 9
-  },
-  {
-   "nom": "matelot",
-   "id": "mon-barzul-rapide",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 3,
-   "calque": "cible",
-   "rangees": 14
-  },
-  {
-   "nom": "matelot",
-   "id": "mon-barzul-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 9
-  },
-  {
-   "nom": "matelot",
-   "id": "mon-barzul-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 6,
-   "calque": "cible",
-   "rangees": 13
-  },
-  {
-   "nom": "matelot",
-   "id": "mon-barzul-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 7,
-   "calque": "cible",
-   "rangees": 8
-  },
-  {
-   "nom": "matelot",
-   "id": "mon-barzul-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 9,
-   "calque": "cible",
-   "rangees": 10
-  },
-  {
-   "nom": "matelot",
-   "id": "mon-barzul-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 10,
-   "calque": "cible",
-   "rangees": 9
-  },
-  {
    "nom": "orin",
    "id": "mages-3",
    "anim": "speciale",
@@ -89,87 +8,6 @@
    "image": 8,
    "calque": "projectile",
    "rangees": 8
-  },
-  {
-   "nom": "corbeau-tengu",
-   "id": "mon-orin-rapide",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 3,
-   "calque": "cible",
-   "rangees": 18
-  },
-  {
-   "nom": "corbeau-tengu",
-   "id": "mon-orin-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 13
-  },
-  {
-   "nom": "corbeau-tengu",
-   "id": "mon-orin-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 6,
-   "calque": "cible",
-   "rangees": 24
-  },
-  {
-   "nom": "corbeau-tengu",
-   "id": "mon-orin-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 7,
-   "calque": "cible",
-   "rangees": 13
-  },
-  {
-   "nom": "corbeau-tengu",
-   "id": "mon-orin-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 11,
-   "calque": "cible",
-   "rangees": 27
-  },
-  {
-   "nom": "corbeau-tengu",
-   "id": "mon-orin-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 12,
-   "calque": "cible",
-   "rangees": 9
-  },
-  {
-   "nom": "garvin",
-   "id": "knights-8",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 13
-  },
-  {
-   "nom": "solenn",
-   "id": "angels-7",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 15
-  },
-  {
-   "nom": "ilian",
-   "id": "angels-2",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 3,
-   "calque": "cible",
-   "rangees": 19
   },
   {
    "nom": "tessa",
@@ -181,177 +19,6 @@
    "rangees": 13
   },
   {
-   "nom": "crabe-geant",
-   "id": "mon-kesha-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 8
-  },
-  {
-   "nom": "crabe-geant",
-   "id": "mon-kesha-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 8
-  },
-  {
-   "nom": "tybalt",
-   "id": "knights-5",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 32
-  },
-  {
-   "nom": "tybalt",
-   "id": "knights-5",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 13
-  },
-  {
-   "nom": "lilou",
-   "id": "demons-4",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 6,
-   "calque": "cible",
-   "rangees": 14
-  },
-  {
-   "nom": "lilou",
-   "id": "demons-4",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 7,
-   "calque": "cible",
-   "rangees": 10
-  },
-  {
-   "nom": "velith",
-   "id": "demons-9",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 17
-  },
-  {
-   "nom": "singe-voleur",
-   "id": "mon-eldra-rapide",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 25
-  },
-  {
-   "nom": "singe-voleur",
-   "id": "mon-eldra-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 3,
-   "calque": "cible",
-   "rangees": 11
-  },
-  {
-   "nom": "singe-voleur",
-   "id": "mon-eldra-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 11
-  },
-  {
-   "nom": "singe-voleur",
-   "id": "mon-eldra-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 31
-  },
-  {
-   "nom": "singe-voleur",
-   "id": "mon-eldra-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 6,
-   "calque": "cible",
-   "rangees": 31
-  },
-  {
-   "nom": "singe-voleur",
-   "id": "mon-eldra-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 9,
-   "calque": "cible",
-   "rangees": 24
-  },
-  {
-   "nom": "singe-voleur",
-   "id": "mon-eldra-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 10,
-   "calque": "cible",
-   "rangees": 8
-  },
-  {
-   "nom": "arachne",
-   "id": "myths-10",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 14
-  },
-  {
-   "nom": "arachne",
-   "id": "myths-10",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 6,
-   "calque": "cible",
-   "rangees": 10
-  },
-  {
-   "nom": "araignee-bondissante",
-   "id": "mon-arachne-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 8,
-   "calque": "cible",
-   "rangees": 8
-  },
-  {
-   "nom": "araignee-cuirassee",
-   "id": "mon-arachne-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 8
-  },
-  {
-   "nom": "araignee-cuirassee",
-   "id": "mon-arachne-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 11
-  },
-  {
    "nom": "meduse",
    "id": "myths-4",
    "anim": "attaque",
@@ -361,60 +28,6 @@
    "rangees": 8
   },
   {
-   "nom": "serpent-guerrier",
-   "id": "mon-meduse-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 7,
-   "calque": "cible",
-   "rangees": 8
-  },
-  {
-   "nom": "serpent-guerrier",
-   "id": "mon-meduse-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 8,
-   "calque": "cible",
-   "rangees": 21
-  },
-  {
-   "nom": "serpent-guerrier",
-   "id": "mon-meduse-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 9,
-   "calque": "cible",
-   "rangees": 23
-  },
-  {
-   "nom": "naga-bouclier",
-   "id": "mon-meduse-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 16
-  },
-  {
-   "nom": "naga-bouclier",
-   "id": "mon-meduse-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 18
-  },
-  {
-   "nom": "naga-bouclier",
-   "id": "mon-meduse-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 6,
-   "calque": "cible",
-   "rangees": 9
-  },
-  {
    "nom": "aldric",
    "id": "knights-3",
    "anim": "speciale",
@@ -422,331 +35,104 @@
    "image": 6,
    "calque": "projectile",
    "rangees": 10
-  },
+  }
+ ],
+ "calcul": [
   {
-   "nom": "mira",
-   "id": "mages-2",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 17
-  },
-  {
-   "nom": "mira",
-   "id": "mages-2",
-   "anim": "attaque",
-   "genre": "melee",
+   "nom": "aldric",
+   "anim": "speciale",
+   "genre": "tir",
    "image": 6,
-   "calque": "cible",
-   "rangees": 8
-  },
-  {
-   "nom": "gorille-guerrier",
-   "id": "mon-eldra-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 28
-  },
-  {
-   "nom": "gorille-guerrier",
-   "id": "mon-eldra-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 16
-  },
-  {
-   "nom": "corvin",
-   "id": "assassins-7",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 3,
-   "calque": "cible",
+   "coupe": "depuis=162",
    "rangees": 10
   },
   {
-   "nom": "corvin",
-   "id": "assassins-7",
+   "nom": "garvin",
    "anim": "attaque",
    "genre": "melee",
    "image": 5,
-   "calque": "cible",
-   "rangees": 20
+   "coupe": "coupe=206",
+   "rangees": 13
   },
   {
-   "nom": "corvin",
-   "id": "assassins-7",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 7,
-   "calque": "cible",
-   "rangees": 8
-  },
-  {
-   "nom": "lenore",
-   "id": "knights-9",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 3,
-   "calque": "cible",
-   "rangees": 12
-  },
-  {
-   "nom": "lenore",
-   "id": "knights-9",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 11
-  },
-  {
-   "nom": "diablotin",
-   "id": "mon-lenore-rapide",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 11
-  },
-  {
-   "nom": "diablotin",
-   "id": "mon-lenore-rapide",
+   "nom": "gorille-guerrier",
    "anim": "speciale",
-   "genre": "melee",
-   "image": 9,
-   "calque": "cible",
-   "rangees": 26
-  },
-  {
-   "nom": "diablotin",
-   "id": "mon-lenore-rapide",
-   "anim": "speciale",
-   "genre": "melee",
+   "genre": "rayon",
    "image": 10,
-   "calque": "cible",
-   "rangees": 18
-  },
-  {
-   "nom": "diablotin",
-   "id": "mon-lenore-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 11,
-   "calque": "cible",
-   "rangees": 9
-  },
-  {
-   "nom": "oni-brute",
-   "id": "mon-lenore-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 3,
-   "calque": "cible",
-   "rangees": 26
-  },
-  {
-   "nom": "oni-brute",
-   "id": "mon-lenore-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 21
-  },
-  {
-   "nom": "oni-brute",
-   "id": "mon-lenore-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 14
-  },
-  {
-   "nom": "oni-brute",
-   "id": "mon-lenore-costaud",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 6,
-   "calque": "cible",
-   "rangees": 13
-  },
-  {
-   "nom": "lutin-magma",
-   "id": "mon-kael-rapide",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
+   "coupe": "depuis=166",
    "rangees": 12
   },
   {
-   "nom": "lutin-magma",
-   "id": "mon-kael-rapide",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 39
-  },
-  {
-   "nom": "lutin-magma",
-   "id": "mon-kael-rapide",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 6,
-   "calque": "cible",
-   "rangees": 12
-  },
-  {
-   "nom": "lutin-magma",
-   "id": "mon-kael-rapide",
+   "nom": "gorille-guerrier",
    "anim": "speciale",
-   "genre": "melee",
-   "image": 3,
-   "calque": "cible",
-   "rangees": 22
-  },
-  {
-   "nom": "lutin-magma",
-   "id": "mon-kael-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 32
-  },
-  {
-   "nom": "lutin-magma",
-   "id": "mon-kael-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 11
-  },
-  {
-   "nom": "lutin-magma",
-   "id": "mon-kael-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 6,
-   "calque": "cible",
-   "rangees": 13
-  },
-  {
-   "nom": "lutin-magma",
-   "id": "mon-kael-rapide",
-   "anim": "speciale",
-   "genre": "melee",
-   "image": 10,
-   "calque": "cible",
-   "rangees": 28
-  },
-  {
-   "nom": "lutin-magma",
-   "id": "mon-kael-rapide",
-   "anim": "speciale",
-   "genre": "melee",
+   "genre": "rayon",
    "image": 11,
-   "calque": "cible",
-   "rangees": 13
-  },
-  {
-   "nom": "auriel",
-   "id": "angels-10",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
+   "coupe": "depuis=166",
    "rangees": 16
   },
   {
-   "nom": "auriel",
-   "id": "angels-10",
+   "nom": "meduse",
    "anim": "attaque",
-   "genre": "melee",
-   "image": 7,
-   "calque": "cible",
-   "rangees": 9
-  },
-  {
-   "nom": "auriel",
-   "id": "angels-10",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 8,
-   "calque": "cible",
-   "rangees": 12
-  },
-  {
-   "nom": "berold",
-   "id": "knights-1",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 12
-  },
-  {
-   "nom": "berold",
-   "id": "knights-1",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 14
-  },
-  {
-   "nom": "cyclope",
-   "id": "myths-3",
-   "anim": "attaque",
-   "genre": "melee",
+   "genre": "tir",
    "image": 3,
-   "calque": "cible",
-   "rangees": 17
+   "coupe": "depuis=130",
+   "rangees": 8
   },
   {
-   "nom": "cyclope",
-   "id": "myths-3",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 4,
-   "calque": "cible",
-   "rangees": 9
-  },
-  {
-   "nom": "cyclope",
-   "id": "myths-3",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 5,
-   "calque": "cible",
-   "rangees": 13
-  },
-  {
-   "nom": "cyclope",
-   "id": "myths-3",
-   "anim": "attaque",
-   "genre": "melee",
-   "image": 6,
-   "calque": "cible",
-   "rangees": 14
-  },
-  {
-   "nom": "cyclope",
-   "id": "myths-3",
-   "anim": "attaque",
-   "genre": "melee",
+   "nom": "moine-tengu",
+   "anim": "speciale",
+   "genre": "rayon",
    "image": 7,
-   "calque": "cible",
-   "rangees": 9
+   "coupe": "depuis=163",
+   "rangees": 12
+  },
+  {
+   "nom": "orin",
+   "anim": "speciale",
+   "genre": "tir",
+   "image": 8,
+   "coupe": "depuis=196",
+   "rangees": 8
+  },
+  {
+   "nom": "salamandre",
+   "anim": "speciale",
+   "genre": "rayon",
+   "image": 4,
+   "coupe": "depuis=150",
+   "rangees": 11
+  },
+  {
+   "nom": "salamandre",
+   "anim": "speciale",
+   "genre": "rayon",
+   "image": 5,
+   "coupe": "depuis=150",
+   "rangees": 10
+  },
+  {
+   "nom": "salamandre",
+   "anim": "speciale",
+   "genre": "rayon",
+   "image": 6,
+   "coupe": "depuis=150",
+   "rangees": 11
+  },
+  {
+   "nom": "salamandre",
+   "anim": "speciale",
+   "genre": "rayon",
+   "image": 7,
+   "coupe": "depuis=150",
+   "rangees": 8
+  },
+  {
+   "nom": "tessa",
+   "anim": "attaque",
+   "genre": "tir",
+   "image": 2,
+   "coupe": "depuis=127",
+   "rangees": 13
   }
- ],
- "calcul": null
+ ]
 }
