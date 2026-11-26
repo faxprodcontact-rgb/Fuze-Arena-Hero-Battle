@@ -1,4 +1,4 @@
 fait
-Corrigé d'après l'avis du propriétaire (26/11) : 1) le nez est petit, posé entre l'œil et le bandeau (visage refait avec visage.py : l'œil bleu et le bandeau sur la même ligne, bouche fermée en sourire en coin et barbiche centrées sous le nez, moustache recentrée ; contrôle : visage.png, aucun défaut) ;
-2) le coude du bras qui tient le sabre plie dans le bon sens : au repos il pointe vers l'arrière (avant-bras vers l'avant) ; sabre levé, il pointe vers l'extérieur et le bas ; il ne change de côté que bras tendu, sans à-coup ;
-3) les cheveux : une seule forme posée sur le crâne (tempe peignée vers l'arrière, favori devant l'oreille), nouée par le ruban rouge à l'ARRIÈRE du crâne ; la queue de cheval part de là et tombe derrière la tête, la nuque et l'épaule. Le reste est inchangé (avant | après : avant-apres.png).
+Tour 3 de l'avis (26/11, un cercle sur l'épaule proche, près du baudrier) : l'épaule faisait une boule posée à côté du buste, avec une marche, et le baudrier semblait sortir de dessous la manche.
+1) L'épaule se fond maintenant dans le buste (comme le cyclope) : le haut du buste forme le dôme de l'épaule et le haut de la manche s'y efface en douceur, sans marche ni creux, dans toutes les poses (repos, sabre tiré en arrière, sabre levé, « Feu ! ») ;
+2) le baudrier passe PAR-DESSUS l'épaule : il vient de derrière, épouse l'arrondi de l'épaule, descend sur la poitrine (boucle d'or) et file sous l'écharpe et le nœud. Le reste est inchangé (avant | après : avant-apres.png).

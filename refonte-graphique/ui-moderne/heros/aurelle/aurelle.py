@@ -13,6 +13,8 @@
 # racine du bras se fond dans la poitrine (masque en dégradé, outils.FigureM : aucune couture à l'épaule). Bras lointain
 # (gauche) en garde de lutteur : il sort sous le deltoïde du buste, coude bas à côté du ventre, avant-bras presque droit,
 # poing levé à hauteur d'épaule vers l'ennemi (phalanges, pouce en travers) ; tout le bras est derrière le buste.
+# Dans ce poing, une deuxième massue (avis du propriétaire, tour 3) : la même, un peu plus petite (FCLUB_K), le manche
+# en travers des doigts repliés, la tête en haut ; elle suit le poing (et frappe aussi dans l'attaque, ./anim.py).
 # Tête : crâne chauve et rond (reflet sur le dôme, cicatrice pâle), UN grand œil ambre au milieu du visage, un seul
 # gros sourcil froncé en V, plis de colère, nez épaté qui dépasse à droite, grande bouche ouverte en grimace (dents de
 # travers, gorge rouge sombre), défenses tordues plantées dans la mâchoire du bas (elles sortent d'entre les lèvres,
