@@ -1,5 +1,8 @@
 fait
-Tour 2 de l'avis (« Visage trop losange, trou dans le col, pied droit mal fait ») :
+Tour 3 de l'avis (« Il faut encore enlever l'espace restant, et l'oreille n'est pas collée à son visage ») :
+- espace restant : le galon d'or de la capuche épouse maintenant la joue et la tempe (il mord un peu sur le visage) et l'intérieur sombre de la capuche reste caché sous le visage : plus aucun vide entre la joue et la capuche ;
+- oreille : sa racine est sur le côté du crâne, à hauteur des yeux, juste derrière la joue (place donnée par visage.py) ; elle sort par une fente du galon (un morceau au-dessus, un au-dessous) et la joue la recouvre à la base, avec une ombre douce : elle est attachée à la tête dans toutes les poses (elle frémit autour de sa racine).
+Tour 2 de l'avis :
 - visage : plus de losange ; la joue proche est bien ronde, le côté du fond plus plat, le menton arrondi sur la médiane (traits toujours placés par visage.py, verifier() : aucun défaut) ;
 - col : le grand creux sombre entre la joue et le galon d'or est comblé (galon qui suit la joue jusqu'au fermoir, intérieur de capuche vert sombre au lieu de presque noir) ;
 - pied droit (botte de gauche) : plus de talon en bloc qui dépasse ni de creux sur le cou-de-pied ; une seule courbe de la tige au bout, même pied que la botte du fond.

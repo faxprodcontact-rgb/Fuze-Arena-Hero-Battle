@@ -213,7 +213,7 @@ def wing(fig, key, R, vals, mat, ph, ws, scale=1.0):
 
 # ---------------------------------------------------------------- la grande manche (toile qui pend)
 
-def sleeve(S, E, Wr, k_cuff, depth, sway=0.0, hw1=6.3, hwc=6.2):
+def sleeve(S, E, Wr, k_cuff, depth, sway=0.0, hw1=6.3, hwc=6.2, drape=0.45):
     """La manche d'un bras : le haut de l'épaule, le bras, le poignet de toile (au coude quand l'avant-bras se dresse,
     plus loin quand il est tendu), puis la toile qui pend sous le bras (gravité) jusqu'à l'aisselle. Une seule forme."""
     u1 = norm(sub_(E, S))
@@ -239,7 +239,10 @@ def sleeve(S, E, Wr, k_cuff, depth, sway=0.0, hw1=6.3, hwc=6.2):
     hem = [(xL + (xR - xL) * 0.0 - 0.8 * (1 if xR > xL else -1) + sway * 0.3, cb[1] + (bottom - cb[1]) * 0.55),
            (xL + (xR - xL) * 0.22 + sway * 0.8, bottom - 1.8),
            (xL + (xR - xL) * 0.55 + sway, bottom),
-           (xL + (xR - xL) * 0.86 + sway * 0.6, bottom - (bottom - A[1]) * 0.45)]
+           (xL + (xR - xL) * 0.86 + sway * 0.6, bottom - (bottom - A[1]) * drape)]
+    if drape < 0.2:
+        # la toile tombe jusqu'à la taille et cache le bout de la ceinture (qui ressort de dessous, sans bout visible)
+        hem[3] = (A[0] - 1.6 + sway * 0.4, bottom - 1.0)
     if u1[0] < -0.3:
         # le bras part sur le côté : le haut de la manche rejoint la ligne d'épaule du buste
         pts += hem + [A, (S[0] + 5.0, S[1] + 2.0), (S[0] + 7.6, S[1] - 4.2)]
@@ -301,8 +304,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (ribbon([(86.4, 80.0), (88.0, 87.0), (86.4, 94.4)], [0.1, 1.2, 0.1]), HAKAMA.shadow, 0.55),
                       (ribbon([(66.4, 88.0), (68.2, 93.4), (71.0, 96.6)], [0.1, 1.0, 0.1]), HAKAMA.deep, 0.5)],
              occl=(HAKAMA.deep, 0.3, 3.0))
-    near_leg = sm([(40.4, 72.6), (61.8, 72.6), (62.8, 80.4), (61.8, 88.6), (59.6, 94.6), (53.4, 97.8), (43.4, 98.0),
-                   (36.8, 96.6), (32.8, 92.4), (32.8, 85.6), (35.8, 78.4)])
+    near_leg = sm([(40.6, 74.2), (61.8, 72.6), (62.8, 80.4), (61.8, 88.6), (59.6, 94.6), (53.4, 97.8), (43.4, 98.0),
+                   (36.8, 96.6), (32.8, 92.4), (33.0, 85.0), (36.0, 79.8), (39.0, 76.4)])
     fig.part('nhaka', near_leg, HAKAMA, cel=2.0, rim=0.8, cast=1.2, cast_on=['fhaka', 'fshin', 'nshin', 'fboard', 'nboard'],
              details=[(ribbon([(49.6, 75.4), (49.0, 84.0), (46.4, 92.0), (44.0, 97.4)], [0.2, 1.7, 1.5, 0.2]), HAKAMA.shadow, 0.75),
                       (ribbon([(50.8, 75.8), (50.4, 84.0), (48.0, 92.0)], [0.1, 0.8, 0.1]), HAKAMA.hi, 0.45),
@@ -314,8 +317,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # (le flanc proche descend en s'évasant jusqu'à la ceinture, qui va d'un bord à l'autre de la taille : aucun bout
     # arrondi qui dépasse sous la manche)
     torso = sm([(45.2, 51.4), (52.0, 48.6), (60.0, 48.0), (71.0, 48.8), (80.6, 50.8), (86.4, 53.4), (89.2, 58.0),
-                (89.6, 66.0), (89.0, 74.0), (84.0, 77.2), (66.0, 77.0), (46.0, 77.2), (37.8, 77.4), (39.2, 72.6),
-                (41.4, 67.6), (44.4, 61.0)], sharp=(12,))
+                (89.6, 66.0), (89.0, 74.0), (84.0, 77.2), (66.0, 77.0), (46.0, 77.2), (40.6, 77.4), (39.4, 75.8),
+                (39.6, 72.0), (41.4, 67.6), (44.4, 61.0)])
     det = []
     # la tunique noire dans l'ouverture du col (un V), le revers lointain croisé par-dessus (UNE diagonale)
     vee = sm([(59.0, 48.2), (71.8, 49.0), (69.6, 53.6), (66.0, 59.4), (63.2, 64.0), (61.6, 58.4), (59.8, 52.6)], sharp=(0, 1, 4))
@@ -331,7 +334,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     sash = sm([(34.0, 68.6), (60.0, 69.4), (80.0, 69.0), (95.0, 68.2), (95.0, 75.8), (80.0, 76.6), (60.0, 76.8), (34.0, 77.6)])
     det += [(sash, ('lin', 0, 68.6, 0, 76.8, [(0, SILK.light), (0.4, SILK.base), (1, SILK.shadow)]), 1),
             # le bord proche : la ceinture tourne autour de la taille (une ombre douce qui suit le flanc, pas de bout)
-            (sm([(34.0, 68.4), (43.0, 68.8), (43.8, 72.8), (43.0, 77.6), (34.0, 77.6)]), SILK.shadow, 0.5),
+            (sash, ('lin', 39.4, 0, 48.0, 0, [(0, SILK.deep, 0.85), (0.4, SILK.shadow, 0.55), (1, SILK.shadow, 0)]), 1),
             (ribbon([(44.0, 70.2), (62.0, 70.8), (82.0, 70.4), (92.0, 69.8)], [0.2, 0.9, 0.9, 0.2]), SILK.hi, 0.55),
             (ribbon([(44.0, 75.0), (62.0, 75.6), (82.0, 75.2)], [0.2, 1.2, 0.2]), SILK.deep, 0.5),
             (ribbon([(42.0, 68.8), (62.0, 69.6), (90.0, 68.6)], [0.2, 0.9, 0.2]), CLOTH.deep, 0.35)]
@@ -534,7 +537,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(ribbon([lerp(NE, NW, 0.25), lerp(NE, NW, 0.85)], [0.6, 0.2]), SKIN.light, 0.0)])
     raised = (NW[1] < NE[1] - 4)
     k_cuff = 0.12 if raised else 0.5
-    nsl, nC, hem, A, topS, ca, cb = sleeve(S_N, NE, NW, k_cuff, 14.0 if raised else 7.0, sway=P['sw'])
+    nsl, nC, hem, A, topS, ca, cb = sleeve(S_N, NE, NW, k_cuff, 16.0 if raised else 7.0, sway=P['sw'],
+                                            drape=0.12 if raised else 0.45)
     # dans la manche : le creux sombre de l'ouverture (on voit l'intérieur), les grands plis de la toile qui pend
     inw = norm(sub_(S_N, nC))
     sdet = [(ribbon([add(ca, inw, 1.2), add(lerp(ca, cb, 0.5), inw, 1.6), add(cb, inw, 1.2)], [0.2, 1.8, 0.2]), CLOTH.deep, 0.45)]

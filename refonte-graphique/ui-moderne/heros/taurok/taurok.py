@@ -131,13 +131,14 @@ def cuff_det(c, a, L, W, nr):
 
 
 # ---------- les épaulières du minotaure (avis du propriétaire du 26/11, tour 3) ----------
-# Pas la calotte ronde rivetée des chevaliers : deux écailles de cuir durci, en pointe, l'une sur l'autre (celle du
-# dessous dépasse vers le bas du bras), bordées de bronze martelé, deux clous d'or ; une petite pointe de fer plantée
-# sur l'écaille du dessus (vers le haut et l'extérieur) ; une sangle de cuir autour du haut du bras qui la tient.
-# Petites et ajustées au deltoïde. Elle est fixée à l'épaule : elle ne suit le bras qu'à moitié quand il se lève
-# (repère : l'angle du bras au repos + la moitié de l'écart) ; la sangle, elle, suit le bras.
+# Pas la calotte ronde rivetée des chevaliers : deux grandes écailles de fer noirci martelé, en pointe vers le bas du
+# bras, l'une sur l'autre (celle du dessous dépasse plus bas, vers l'extérieur), bordées de bronze, un clou d'or de
+# chaque côté ; une petite pointe de fer plantée sur l'écaille du dessus (vers le haut et l'extérieur) ; une sangle de
+# cuir autour du haut du bras qui la tient. Petites et ajustées au deltoïde. Elle est fixée à l'épaule : elle ne suit
+# le bras qu'à moitié quand il se lève (l'angle du bras au repos + la moitié de l'écart) ; la sangle, elle, suit le bras.
 NARM_REST, FARM_REST = 109.45, 71.71           # l'angle du haut du bras au repos (proche, lointain)
-HIDE = Mat('#c08a6a', '#86523e', '#5c3236', '#3a1c2a', '#22101c')     # le cuir durci des épaulières
+IRON = Mat('#dfe4f4', '#98a0c0', '#666c90', '#3e4264', '#24263e', glint='#ffffff')   # le fer noirci martelé
+BRONZE = Mat('#ffe8b0', '#e0a85a', '#b07434', '#74401e', '#46220e', glint='#ffffff')
 
 
 def pauldron(S, ang, k, o):
@@ -149,53 +150,56 @@ def pauldron(S, ang, k, o):
     P_ = lambda a, c: sg(a * k, o * c * k)
     pts = lambda L: [P_(a, c) for a, c in L]
 
-    def stud(a, c, r=0.85):
+    def stud(a, c, r=0.8):
         p_ = P_(a, c)
-        return [(ellipse(p_[0] - 0.15 * k, p_[1] + 0.2 * k, r * k, r * k), GOLD.deep, 0.7),
+        return [(ellipse(p_[0] - 0.15 * k, p_[1] + 0.2 * k, r * k, r * k), BRONZE.deep, 0.7),
                 (ellipse(p_[0], p_[1], r * 0.8 * k, r * 0.8 * k), GOLD.base, 1),
                 (ellipse(p_[0] + 0.25 * k, p_[1] - 0.3 * k, r * 0.36 * k, r * 0.3 * k), GOLD.glint, 0.95)]
 
-    def scale_(L, edge, sharp):
-        """Une écaille : sa forme, la bordure de bronze le long du bord du bas (edge : la ligne du bord)."""
-        sh = sm(pts(L), sharp=sharp, t=0.85)
-        n = len(edge)
-        det = [(ribbon(pts(edge), [0.15 * k] + [0.95 * k] * (n - 2) + [0.15 * k]), GOLD.base, 0.95),
-               (ribbon(pts([(a - 0.45, c) for a, c in edge]), [0.1 * k] + [0.4 * k] * (n - 2) + [0.1 * k]), GOLD.hi, 0.8)]
+    def scale_(a0, c0, W, Lg):
+        """Une écaille en écusson : le haut arrondi, la pointe vers le bas du bras ; bordée de bronze en bas."""
+        h, w = Lg / 2, W / 2
+        prof = [(-1.0, 0.0), (-0.9, 0.42), (-0.62, 0.86), (-0.2, 1.0), (0.22, 0.86), (0.6, 0.5), (1.0, 0.0)]
+        L = [(a0 + h * x, c0 + w * y) for x, y in prof] + [(a0 + h * x, c0 - w * y) for x, y in prof[1:-1][::-1]]
+        sh = sm(pts(L), sharp=(6,), t=0.85)
+        rim = [(-0.12, 0.93), (0.22, 0.8), (0.58, 0.46), (0.9, 0.0), (0.58, -0.46), (0.22, -0.8), (-0.12, -0.93)]
+        R = [(a0 + h * x, c0 + w * y) for x, y in rim]
+        det = [(ribbon(pts(R), [0.15 * k] + [1.15 * k] * 5 + [0.15 * k]), BRONZE.base, 1),
+               (ribbon(pts([(a - 0.55, c) for a, c in R]), [0.1 * k] + [0.42 * k] * 5 + [0.1 * k]), BRONZE.hi, 0.85),
+               # le martelage : deux creux doux et un reflet (lumière en haut à droite)
+               (ellipse(*P_(a0 - h * 0.25, c0 - w * 0.25), w * 0.32 * k, h * 0.22 * k), IRON.shadow, 0.3),
+               (ellipse(*P_(a0 + h * 0.15, c0 + w * 0.3), w * 0.26 * k, h * 0.18 * k), IRON.shadow, 0.25),
+               (ribbon(pts([(a0 - h * 0.78, c0 - w * 0.2), (a0 - h * 0.62, c0 - w * 0.6), (a0 - h * 0.25, c0 - w * 0.82)]),
+                       [0.1 * k, 0.9 * k, 0.1 * k]), IRON.hi, 0.7)]
+        det += stud(a0 + h * 0.1, c0 + w * 0.66) + stud(a0 + h * 0.1, c0 - w * 0.66)
         return sh, det
     out = []
-    # l'écaille du dessous : elle dépasse sous la première, vers l'extérieur du bras, en pointe
-    sh, det = scale_([(-1.0, 1.0), (0.2, 8.0), (4.4, 10.2), (8.8, 9.0), (11.8, 5.6), (10.6, 1.8), (7.2, -1.4), (2.4, -2.4)],
-                     [(5.6, 9.8), (9.0, 8.4), (11.2, 5.6), (10.0, 2.2)], sharp=(4,))
-    det += stud(7.8, 5.2, 0.75)
-    out.append(('l', sh, HIDE, det))
-    # l'écaille du dessus : elle coiffe le haut du deltoïde (plus haute côté cou), sa pointe descend sur le bras
-    sh, det = scale_([(-11.4, -5.4), (-12.2, 0.6), (-10.4, 6.2), (-6.0, 9.4), (-0.4, 9.6), (4.2, 7.0), (6.4, 3.2), (4.6, -0.8),
-                      (0.6, -4.6), (-4.6, -7.4), (-9.0, -7.6)],
-                     [(-5.2, 9.0), (-0.4, 9.0), (3.8, 6.6), (5.8, 3.2), (4.2, -0.4)], sharp=(6,))
-    det += [(ribbon(pts([(-9.6, -4.4), (-10.0, 0.6), (-8.0, 5.4)]), [0.1 * k, 0.9 * k, 0.1 * k]), HIDE.hi, 0.55),
-            (ribbon(pts([(-3.0, -5.0), (-1.4, 0.0), (0.0, 4.6)]), [0.1 * k, 0.6 * k, 0.1 * k]), HIDE.deep, 0.35)]
-    det += stud(-2.6, 7.0) + stud(2.4, 5.0)
-    out.append(('c', sh, HIDE, det))
+    # l'écaille du dessous : elle dépasse sous la première, plus bas sur le bras, vers l'extérieur
+    sh, det = scale_(5.0, 2.6, 13.0, 13.6)
+    out.append(('l', sh, IRON, det))
+    # l'écaille du dessus : elle coiffe le haut du deltoïde
+    sh, det = scale_(-3.6, 0.4, 18.4, 18.4)
+    out.append(('c', sh, IRON, det))
     # la pointe de fer : un cône court planté sur l'écaille, vers le haut et l'extérieur
-    base_ = (-6.6, 2.4)
-    d_ = (-0.62, 0.78)
+    base_ = (-8.6, 3.4)
+    d_ = (-0.66, 0.75)
     nrm = (d_[1], -d_[0])
-    L_, w_ = 5.2, 2.0
+    L_, w_ = 6.0, 2.0
     tip = (base_[0] + d_[0] * L_, base_[1] + d_[1] * L_)
-    spike = sm(pts([(base_[0] + nrm[0] * w_, base_[1] + nrm[1] * w_), (base_[0] + d_[0] * 2.4 + nrm[0] * 1.3, base_[1] + d_[1] * 2.4 + nrm[1] * 1.3),
-                    tip, (base_[0] + d_[0] * 2.4 - nrm[0] * 1.3, base_[1] + d_[1] * 2.4 - nrm[1] * 1.3),
-                    (base_[0] - nrm[0] * w_, base_[1] - nrm[1] * w_), (base_[0] - d_[0] * 0.8, base_[1] - d_[1] * 0.8)]), sharp=(2,), t=0.8)
-    sd = [(ellipse(*P_(*base_), 2.3 * k, 2.3 * k), STEEL.base, 0.9),
-          (ribbon(pts([(base_[0] - 0.4, base_[1] + 1.2), (base_[0] + d_[0] * 2.6, base_[1] + d_[1] * 2.6 + 0.4), tip]), [0.2 * k, 0.6 * k, 0.05 * k]), STEEL.glint, 0.7)]
-    out.append(('s', spike, STEEL, sd))
+    q = lambda t, s_: (base_[0] + d_[0] * t + nrm[0] * s_, base_[1] + d_[1] * t + nrm[1] * s_)
+    spike = sm(pts([q(0, w_), q(2.4, 1.2), tip, q(2.4, -1.2), q(0, -w_), q(-0.8, 0)]), sharp=(2,), t=0.8)
+    sd = [(ellipse(*P_(*base_), 2.2 * k, 2.2 * k), BRONZE.base, 0.95),
+          (ellipse(*P_(*base_), 1.3 * k, 1.3 * k), IRON.light, 0.9),
+          (ribbon(pts([q(0.6, 0.9), q(2.6, 0.5), tip]), [0.2 * k, 0.55 * k, 0.05 * k]), IRON.glint, 0.75)]
+    out.append(('s', spike, IRON, sd))
     return out
 
 
 def arm_strap(sg_, a, hw, k):
     """La sangle de cuir autour du haut du bras (sg_ : le repère du bras, a : sa place le long du bras, hw : la
     demi-largeur du bras à cet endroit) : un peu bombée vers le bas (elle fait le tour), une petite boucle d'or."""
-    sh = limb([sg_(a, -hw - 0.3), sg_(a + 1.1 * k, -hw * 0.4), sg_(a + 1.3 * k, 0.0), sg_(a + 1.1 * k, hw * 0.4), sg_(a, hw + 0.3)],
-              [2.5 * k] * 5, n=18)
+    sh = limb([sg_(a, -hw + 0.6), sg_(a + 1.1 * k, -hw * 0.4), sg_(a + 1.3 * k, 0.0), sg_(a + 1.1 * k, hw * 0.4), sg_(a, hw - 0.6)],
+              [2.5 * k, 2.5 * k], n=18)
     det = [(ribbon([sg_(a - 0.7 * k, -hw * 0.8), sg_(a + 0.5 * k, 0.0), sg_(a - 0.7 * k, hw * 0.8)], [0.1, 0.5 * k, 0.1]), LEATHER.hi, 0.55)]
     bc = sg_(a + 1.25 * k, hw * 0.3)
     buckle = rpoly([(bc[0] - 1.5 * k, bc[1] - 1.6 * k), (bc[0] + 1.5 * k, bc[1] - 1.6 * k), (bc[0] + 1.5 * k, bc[1] + 1.6 * k),
@@ -206,10 +210,22 @@ def arm_strap(sg_, a, hw, k):
     return sh, det, buckle, bd
 
 
-def pgrad(sh):
-    """Le dégradé de l'acier : clair en haut à droite, sombre en bas à gauche."""
+def pgrad(sh, m=STEEL):
+    """Le dégradé d'une pièce d'armure : clair en haut à droite, sombre en bas à gauche."""
     x0, y0, x1, y1 = sh.bbox()
-    return (x1, y0, x0 + (x1 - x0) * 0.25, y1, [(0, STEEL.hi), (0.3, STEEL.light), (0.68, STEEL.base), (1, STEEL.shadow)])
+    return (x1, y0, x0 + (x1 - x0) * 0.25, y1, [(0, m.hi), (0.3, m.light), (0.68, m.base), (1, m.shadow)])
+
+
+def put_pauldron(fig, pre, S, ang, k, o, arm_seg, a_strap, hw, cast_on):
+    """Pose la sangle (sur le bras) puis l'épaulière (sur l'épaule) : morceaux pre+'strap', pre+'buck', pre+'paull',
+    pre+'paulc', pre+'pauls'."""
+    sh, det, buckle, bd = arm_strap(arm_seg, a_strap, hw, k)
+    fig.part(pre + 'strap', sh, LEATHER, cel=0.5, rim=0.4, cast=0.6, cast_on=[pre + 'arm', 'torso'], details=det)
+    fig.part(pre + 'buck', buckle, GOLD, cel=0.3, rim=0.3, cast=0.4, cast_on=[pre + 'strap'], details=bd)
+    for sfx, sh, m, det_ in pauldron(S, ang, k, o):
+        fig.part(pre + 'paul' + sfx, sh, m, grad=pgrad(sh, m), cel=0.8 * k if sfx != 's' else 0.4, rim=0.5 if sfx != 's' else 0.35,
+                 cast=(0.9 if sfx == 'c' else 0.6) * k, cast_on=cast_on + [pre + 'arm', pre + 'strap', pre + 'buck', pre + 'paull', pre + 'paulc'],
+                 details=det_)
 
 
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
@@ -393,10 +409,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.part('farm', farm, FUR, cel=1.6, rim=0.7, cast=1.2, cast_on=['torso', 'belt', 'cloth', 'strapA', 'strapB', 'stud3', 'stud4', 'buckle', 'haft', 'head'],
                  details=[(ribbon([f1(-5.6, 3.6), f1(-6.8, -1.0), f1(-4.4, -5.6)], [0.2, 2.2, 0.2]), FUR.light, 0.5),
                           (ellipse(*f1.at(0.65, 2.0), 2.0, 4.0, fa1 - 90), FUR.light, 0.22)])
-        # l'épaulière d'acier de l'épaule lointaine (plus petite : elle est plus loin)
-        for sfx, sh, det_ in pauldron(Sfu, FARM_REST + 0.5 * (fa1 - FARM_REST), 0.74):
-            fig.part('fpaul' + sfx, sh, STEEL, grad=pgrad(sh), cel=0.8, rim=0.5, cast=0.8 if sfx == 'c' else 0.55,
-                     cast_on=['farm', 'torso', 'strapA', 'strapB', 'fpaul2', 'fpaul1'], details=det_)
+        # l'épaulière de l'épaule lointaine (plus petite : elle est plus loin)
+        put_pauldron(fig, 'f', Sfu, FARM_REST + 0.5 * (fa1 - FARM_REST), 0.74, 1, f1, 6.4, 6.6, ['torso', 'strapA', 'strapB'])
         fa2 = math.degrees(math.atan2(f2.u[1], f2.u[0]))
         bc = f2.at(0.42)
         fig.part('fbrac', cuff(bc, fa2, 7.0, 10.6), GOLD, cel=0.8, rim=0.6, cast=0.9, details=cuff_det(bc, fa2, 7.0, 10.6, 2))
@@ -616,10 +630,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ]
     fig.part('narm', arm, FUR, cel=1.9, rim=0.7, cast=1.4,
              cast_on=['torso', 'cloth', 'belt', 'nleg', 'nlegf', 'strapA', 'strapB', 'haft', 'stud0', 'stud1'], details=ad)
-    # l'épaulière d'acier de l'épaule proche (par-dessus le bras et le harnais)
-    for sfx, sh, det_ in pauldron(Snu, NARM_REST + 0.5 * (aa1 - NARM_REST), 1.0):
-        fig.part('npaul' + sfx, sh, STEEL, grad=pgrad(sh), cel=0.9, rim=0.55, cast=1.0 if sfx == 'c' else 0.7,
-                 cast_on=['narm', 'torso', 'strapA', 'strapB', 'npaul2', 'npaul1', 'head', 'ear', 'hornN'], details=det_)
+    # l'épaulière de l'épaule proche (par-dessus le bras et le harnais ; la tête passe devant)
+    put_pauldron(fig, 'n', Snu, NARM_REST + 0.5 * (aa1 - NARM_REST), 1.0, -1, a1, 10.6, 9.8, ['torso', 'strapA', 'strapB'])
     # le brassard d'or riveté sur l'avant-bras proche
     bc = a2.at(0.64)
     fig.part('nbrac', cuff(bc, aa2, 8.4, 13.4), GOLD, cel=0.9, rim=0.6, cast=1.0, details=cuff_det(bc, aa2, 8.4, 13.4, 3))
@@ -634,25 +646,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['cloth'], CLO)
     fig.pose(['belt', 'buckle'] + ['stud%d' % i for i in range(5)], PEL)
     axe = ['haft', 'pommel', 'pring', 'bladeU', 'bladeD', 'socket']
-    pauls = ['npaul2', 'npaul1', 'npaulc', 'fpaul2', 'fpaul1', 'fpaulc']
+    pauls = [pre + nm for pre in 'nf' for nm in ('strap', 'buck', 'paull', 'paulc', 'pauls')]
     fig.pose(axe + ['narm', 'nbrac', 'nfist', 'nfistt', 'farm', 'fbrac', 'ffist', 'ffistt'] + pauls, U)
-    # l'ordre de dessin : le bras proche et son épaulière, puis la hache et les poings, toujours devant
-    # (quand la hache est levée, le manche monte devant le bras ; sinon le bras proche passe devant le manche,
-    # comme dans le dessin d'origine)
-    order = ['narm', 'npaul2', 'npaul1', 'npaulc', 'nbrac']
-    moved = [p for nm in order for p in fig.parts if p.name == nm]
-    rest = [p for p in fig.parts if p.name not in order]
-    names_r = [p.name for p in rest]
-    at = names_r.index('haft') if P['ang'] < -45 else names_r.index('socket') + 1
-    fig.parts = rest[:at] + moved + rest[at:]
-    if P['farfront'] > 0.5:
-        # l'épaulière lointaine est derrière la tête (l'épaule lointaine est plus loin que le mufle) : quand le bras
-        # lointain passe devant (hache levée), la tête se redessine par-dessus l'épaule et le haut de ce bras
-        hg = ['hornN', 'head', 'nring', 'ear', 'tuft']
-        hp = [p for p in fig.parts if p.name in hg]
-        fig.parts = [p for p in fig.parts if p.name not in hg]
-        j = [p.name for p in fig.parts].index('fbrac') + 1
-        fig.parts = fig.parts[:j] + hp + fig.parts[j:]
+    # l'ordre de dessin (avis du propriétaire du 26/11, tour 3 : la tête passe DEVANT les deux épaulières) :
+    #   … le bras lointain et son épaulière, le bras proche et son épaulière, la TÊTE, puis la hache, le brassard et
+    #   les poings, toujours devant (le poignet proche est caché par le poing, là où le bras touche le manche).
+    hg = ['hornN', 'head', 'nring', 'ear', 'tuft']
+    near = ['narm'] + ['n' + nm for nm in ('strap', 'buck', 'paull', 'paulc', 'pauls')]
+    byname = {p.name: p for p in fig.parts}
+    rest = [p for p in fig.parts if p.name not in near + hg + ['nbrac']]
+    at = [p.name for p in rest].index('haft')
+    fig.parts = rest[:at] + [byname[n] for n in near + hg] + rest[at:at + 6] + [byname['nbrac']] + rest[at + 6:]
     # ce que les effets doivent savoir (repère du dessin)
     fig.ctx = dict(U=U, G=mapp(U, G), ang=ang + P['lean'] * 1.1, P=P,
                    head_pt=mapp(U, Ap(S_HEAD, 0)), edge_lo=mapp(U, Ap(S_HEAD, 22.8)), edge_up=mapp(U, Ap(S_HEAD, -22.8)),

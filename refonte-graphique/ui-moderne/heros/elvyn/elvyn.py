@@ -266,7 +266,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # la manche du fond : une grande cloche qui pend sous l'avant-bras ; galon d'or le long de l'ouverture
     sfw = P['sf']
-    top0 = add(S, (-3.6, -3.2))
+    top0 = add(S, (-1.0, -4.8))
     # le dessus de la manche : l'étoffe passe en arc lisse de l'épaule au poignet (le coude ne marque pas)
     cuff_t0 = add(W, nf, 3.6)
     ua_ = unit(top0, cuff_t0)
@@ -280,9 +280,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     anchor = lerp(E, W, 0.35 * horiz)
     B = (anchor[0] - 3.5 - 1.8 * sfw, max(E[1], W[1]) + 20 + 7 * horiz + 0.6 * sfw)
     hem = bez(cuff_b, add(cuff_b, (-0.6, 8.5)), add(B, (6.2, -6.4)), B, 14)
-    AP = add(S, (0.6, 5.4))
+    AP = add(S, (-1.0, 3.4))
     back = bez(B, add(B, (-5.4, -1.4)), add(AP, (-1.6, 12)), AP, 10)
-    sleeve_pts = [top0, top1, top2, cuff_t] + hem + back[1:-1] + [AP, add(S, (-4.4, 2.4))]
+    # le haut de la manche part de sous le pan du col (le col est reposé par-dessus, plus bas) : l'épaule descend
+    # d'un seul arc du col au bras, sans coin ni marche
+    sleeve_pts = [top0, top1, top2, cuff_t] + hem + back[1:-1] + [AP, add(S, (-2.4, -0.6))]
     sleeve = sm(sleeve_pts, t=0.7)
     edge = [add(cuff_t, nf, 0.6), cuff_t] + hem
     edge = resample(edge, 22)
@@ -301,6 +303,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(ribbon([(60.6, 101.4), (63.6, 102.6), (66.2, 101.8)], [0.1, 0.5, 0.1]), SCALE.shadow, 0.6)])
     foot(fig, 'f', 57.0, 0.94)
 
+    COLLAR_G = (62, 40, 52, 59, [(0, GOLD.light), (1, GOLD.shadow)])   # le dégradé du pan de droite du col (et de son tour)
     # ---- le cou : la gorge à plaques claires sort du col (la robe le recouvre, il se voit dans le V) ----
     neck = sm([(41.0, 28), (50, 30), (60.4, 33.6), (61.6, 40.6), (61.4, 48), (57, 58), (51, 61), (45, 58), (41.8, 48.2), (42.2, 38)])
     ndet = [(sm([(48.6, 33.2), (60.4, 34.4), (61.4, 41), (61.0, 49), (56, 59), (50.4, 60), (48.6, 42)]),
@@ -308,6 +311,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     for y in (38.2, 42.0, 45.6, 49.4, 53.0):
         ndet.append((ribbon([(48.8, y + 0.8), (55, y + 0.1), (61.4, y - 0.6)], [0.1, 0.7, 0.1]), BELLY.shadow, 0.6))
         ndet.append((ribbon([(49.4, y + 1.6), (55, y + 0.9), (61.0, y + 0.2)], [0.1, 0.5, 0.1]), BELLY.hi, 0.5))
+    # le col d'or fait le tour du cou : du côté du fond, il remonte derrière le cou (le cou rentre dans le col) puis
+    # redescend sur l'épaule ; posé AVANT le cou (le cou passe devant), la robe et la manche le recouvrent en bas
+    bcol = sm([(56.6, 40.4), (60.4, 39.4), (62.8, 39.9), (64.4, 41.6), (64.8, 44.2), (63.0, 47.0), (58.0, 46.4)], t=0.9)
+    bdet = [(ribbon([(61.8, 40.2), (63.4, 40.8), (64.4, 42.6)], [0.2, 0.7, 0.2]), GOLD.hi, 0.7),
+            # l'intérieur du col, dans l'ombre du cou
+            (sm([(57.0, 40.6), (61.4, 40.4), (62.6, 42.4), (62.2, 46.0), (58.0, 46.0)]), GOLD.shadow, 0.4)]
+    fig.part('bcol', bcol, GOLD, grad=COLLAR_G, cel=0.8, rim=0.6, cast=0, details=bdet)
     fig.part('neck', neck, SCALE, cel=1.4, rim=0.5, cast=0, details=ndet)
 
     # ---- la robe bleu nuit (épaules, buste, jupe d'un seul tenant) ----
@@ -318,7 +328,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # l'encolure : le cou passe dans un V ; le large col d'or croisé (pan gauche sur pan droit) jusqu'à la ceinture
     collarL = [(41.0, 44.2), (46.2, 51.0), (51.4, 57.8), (52.4, 61.0)]
     collarR = [(60.8, 44.6), (56.4, 51.0), (51.4, 57.8)]
-    rdet += [(band_along(collarR, 5.6), ('lin', 60, 45, 52, 59, [(0, GOLD.light), (1, GOLD.shadow)]), 1),
+    rdet += [(band_along(collarR, 5.6), ('lin',) + COLLAR_G, 1),
              (ribbon([(60.0, 45.6), (57.6, 50.0), (53.8, 55.2)], [0.2, 0.8, 0.2]), GOLD.hi, 0.6),
              (band_along([add(p, (1.3, 0.6)) for p in collarL[:3]] + [(53.6, 61)], 2.6), ROBE.deep, 0.6),
              (band_along(collarL, 5.8), ('lin', 41, 44, 52, 61, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), 1),
@@ -366,6 +376,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # la manche du fond (posée après la robe : le bras est tendu en avant du buste)
     fig.part('fsleeve', sleeve, ROBE, cel=1.5, rim=0.8, cast=1.1, cast_on=['robe', 'fpalm'], details=sdet)
+
+    # le haut du pan droit du col, reposé par-dessus la manche : il monte d'un trait jusqu'au cou et rejoint le tour du
+    # col (même dégradé que le col de la robe : aucune couture avec lui)
+    # (la moitié extérieure du galon, comme celui de la robe, que la forme de la robe coupe sur le bord du V)
+    cf_c = [(62.0, 42.2), (60.8, 44.6), (56.4, 51.0), (53.9, 54.4)]
+    cl_, cr_ = sides(cf_c, [5.6] * len(cf_c))
+    outer = cr_ if cr_[1][0] > cl_[1][0] else cl_
+    cf = sm(cf_c + outer[::-1], sharp=(0, 3, 4, 7), t=0.6)
+    fig.part('collarF', cf, GOLD, grad=COLLAR_G, cel=0, rim=0, cast=0.7, cast_on=['fsleeve'],
+             details=[(ribbon([(60.0, 45.6), (57.6, 50.0), (53.8, 55.2)], [0.2, 0.8, 0.2]), GOLD.hi, 0.6),
+                      (ribbon([(61.8, 42.6), (61.0, 44.2), (60.0, 45.6)], [0.2, 0.6, 0.2]), GOLD.hi, 0.6)])
 
     # ---- la perle, posée dans la paume ----
     pr = 6.4 * P['pearl']
@@ -587,7 +608,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(head_parts, HEAD)
     fig.pose(['mfront'], mchain(NECK, mT(P['head'][0] * 0.3, P['head'][1] * 0.3)))
     fig.pose(['neck'], NECK)
-    fig.pose(['robe', 'apron', 'medal'], TOR)
+    fig.pose(['robe', 'apron', 'medal', 'bcol', 'collarF'], TOR)
     fig.pose(['nsleeve', 'fist', 'fcl0', 'fcl1', 'fcl2', 'fthumb'], U)
     fig.pose(['fsleeve', 'fpalm', 'pearl', 'ff0', 'ff1', 'ff2', 'ff3', 'ff0c', 'ff1c', 'ff2c', 'ff3c'], UC)
     fig.pose(['fleg'], LEG)

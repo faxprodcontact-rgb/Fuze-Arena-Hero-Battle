@@ -7,14 +7,17 @@
 # plus rien d'humain ; attention aux connexions entre les angles, à la cohérence du visage ») : Rook est un PHÉNIX
 # debout, posé au sol sur ses serres, tourné de 3/4 vers la droite, les deux grandes ailes de feu levées en V (même
 # pose et mêmes ailes que le pixel art refonte-graphique/pixel/hd/rook.txt).
-# - Tête d'aigle de profil (un seul œil, placé par visage.placer(boite, tour=75)) : bec crochu doré, arcade sombre
-#   qui abaisse le regard (fier), œil d'ambre, trait de flamme jaune sous l'œil, crête de grandes plumes de feu
+# - Tête d'aigle (au tour 1 de profil ; au tour 2 presque de face, voir plus bas) : bec crochu doré, arcades qui
+#   abaissent le regard (fier), yeux d'ambre, trait de flamme jaune sous l'œil, crête de grandes plumes de feu
 #   couchées vers l'arrière, diadème d'or au rubis à la base de la crête ;
 # - le cou est fait des plumes de la nuque (camail) qui descendent sur le dos et des plumes de la gorge qui tombent
 #   sur le jabot : la tête se pose sur le corps SANS couture (plumes par-dessus plumes) ;
 # - corps d'aigle en forme d'œuf, d'un seul tenant avec la naissance de l'aile proche (outils.fuse) ; jabot et
 #   poitrine de plumes d'or en écailles ; torque d'or au rubis à la base du cou ; frange de plumes du ventre sur
 #   les « culottes » de plumes des cuisses ; pattes écailleuses aux serres sombres ; longue queue de flammes.
+# TOUR 2 de l'avis (26/11 soir) : tête presque DE FACE comme Tessa (deux yeux, bec qui part du milieu, visage.placer
+# sans tour de profil) ; diadème qui fait le tour du crâne ; nuque en pointes de plumes sur le camail ; aisselle souple
+# entre le corps et l'aile proche (plus de moignon) ; flanc qui descend droit sur la cuisse proche ; petit plastron d'or.
 # Coordonnées = pixels du dessin pixel art (y = 116 est le sol), pour se poser au même endroit dans le jeu.
 # Une seule lumière, en haut à droite ; un seul contour (atelier.py) ; aucune jointure visible.
 import math

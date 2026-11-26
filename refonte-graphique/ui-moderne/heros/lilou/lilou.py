@@ -220,7 +220,7 @@ TORSO_PTS = [(57.6, 59.4), (60.6, 53.4), (67.0, 50.0), (76.0, 49.4), (83.2, 51.4
              (89.4, 82.0), (87.0, 90.4), (81.6, 97.6), (73.8, 101.2), (65.6, 100.8), (58.4, 96.6), (55.8, 89.6), (55.4, 81.0),
              (56.0, 72.0), (56.4, 64.0)]
 # le plastron (jaune) : sa limite haute passe sous le gant proche ; à droite, le pont de carapace jusqu'au bord du buste
-PLAS_PTS = [(58.6, 63.4), (64.0, 61.2), (72.0, 60.6), (80.0, 61.4), (86.6, 64.0), (91.0, 69.0), (87.0, 78.0), (85.8, 86.0),
+PLAS_PTS = [(58.6, 67.4), (65.4, 63.0), (72.0, 60.8), (80.0, 61.4), (86.6, 64.0), (91.0, 69.0), (87.0, 78.0), (85.8, 86.0),
             (83.2, 92.6), (78.6, 97.6), (72.6, 100.8), (65.0, 101.6), (57.0, 98.0), (50.0, 88.0), (49.0, 76.0), (52.0, 67.0)]
 NEAR_FOOT = [(35.0, 117.0), (34.6, 113.4), (36.4, 110.0), (41.4, 108.0), (48.6, 108.2), (54.4, 109.8), (58.2, 111.8),
              (60.6, 114.4), (60.4, 117.0)]
@@ -502,8 +502,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ============================================================== le plastron jaune à plaques, le pont de carapace
     # (le plastron va jusqu'au bord de l'avant-bras : pas de coin de peau coincé entre le bras plié et le plastron)
-    gfront = gtors.union(garm.buffer(2.6).intersection(bodyg))
-    gpl = PG(sm(T_(PLAS_PTS), t=0.9)).intersection(gfront).difference(garm.buffer(0.05)).difference(gleg.buffer(0.05).difference(garm.buffer(3.0)))
+    gfront = gtors.union(garm.buffer(2.6).intersection(PG(body).buffer(-0.02)))
+    gpl = PG(sm(T_(PLAS_PTS), t=0.9)).intersection(gfront).difference(garm.buffer(0.05)).difference(gleg.buffer(0.05))
     plas = geom_shapes(gpl, simplify=0.02)
     det = []
     PS = lambda pts: crpath(T_(pts), 16)
@@ -541,7 +541,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # (pas de miette de corde coincée entre le coude et le plastron)
     if grope.geom_type == 'MultiPolygon':
         from shapely.geometry import MultiPolygon
-        grope = MultiPolygon([g for g in grope.geoms if g.area > 4.0 and g.centroid.x > E[0] + 4.0])
+        gs = list(grope.geoms)
+        big = max(gs, key=lambda g: g.area)
+        grope = MultiPolygon([g for g in gs if g.area >= big.area or (g.area > 4.0 and g.centroid.x > E[0] + 4.0)])
     rope = geom_shapes(grope, simplify=0.02)
     det = []
     # la corde tressée : quelques torsions éclairées (inégales), le dessous dans l'ombre
