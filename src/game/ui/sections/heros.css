@@ -77,7 +77,6 @@
   border-radius: 999px; font: 400 13px/1 var(--font-title); color: #fff; background: #120b33; box-shadow: inset 0 0 0 1.5px #ffc22e, 0 2px 4px #05021a80; white-space: nowrap; }
 .hx-med.locked .hx-med-badge { box-shadow: inset 0 0 0 1.5px #8a87a3; color: #c9c6dc; }
 .hx-med-badge .sign-star { --k: 1.5; }
-.hx-med-play { padding: 0 6px; background: linear-gradient(180deg, #7cf08a, #2fc457); box-shadow: 0 0 0 2px #120b33; }
 
 /* les flèches : au milieu de la hauteur, au bord */
 .hx-arrow { position: absolute; top: 66%; z-index: 4; width: 40px; height: 52px; margin-top: -26px; display: grid; place-items: center; border: 0; color: #fff;

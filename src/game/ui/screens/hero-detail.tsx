@@ -182,7 +182,6 @@ export function HeroDetail({ uid }: { uid: number }) {
         <div class="hx-meds hx-meds-l">
           <button class={`hx-med hx-med-ult${awakened ? ' on' : ''}`} aria-label={t(`skill.${d.skill.id}`)} onClick={() => setSheet({ kind: 'skill' })}>
             <Art name={d.element} class="hx-med-ic" />
-            <span class="hx-med-badge hx-med-play"><Sign name="play" /></span>
           </button>
           <button class="hx-med" aria-label={t('detail.basic')} onClick={() => setSheet({ kind: 'basic' })}>
             <Icon name={basicIcon} size={32} />
