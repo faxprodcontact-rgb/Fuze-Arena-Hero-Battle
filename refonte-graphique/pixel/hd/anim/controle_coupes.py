@@ -63,9 +63,13 @@ def seam(c, nl, xl, nr, xr):
     top, bot = max(lay, ray), min(lay + L.shape[0], ray + R.shape[0])
     if bot <= top:
         return 0
-    el = L[top - lay:bot - lay, -1, 3] > 0
-    er = R[top - ray:bot - ray, 0, 3] > 0
-    return runs(el & er)
+    return runs(cut(L[top - lay:bot - lay, -1]) & cut(R[top - ray:bot - ray, 0]))
+
+
+def cut(col):
+    """les pixels d'un bord qui peuvent être une coupe : opaques et pas le contour sombre (deux dessins qui se touchent
+    par leur contour ne sont pas coupés)"""
+    return (col[:, 3] > 0) & (col[:, :3].max(1) >= 64)
 
 
 def audit_sheets(meta):
@@ -94,7 +98,7 @@ def audit_sheets(meta):
                 if lax + L.shape[1] == b[0] + rax:
                     top, bot = max(lay, b[1] + ray), min(lay + L.shape[0], b[1] + ray + R.shape[0])
                     if bot > top:
-                        r = runs((L[top - lay:bot - lay, -1, 3] > 0) & (R[top - b[1] - ray:bot - b[1] - ray, 0, 3] > 0))
+                        r = runs(cut(L[top - lay:bot - lay, -1]) & cut(R[top - b[1] - ray:bot - b[1] - ray, 0]))
                         if r >= RUN:
                             out.append(dict(nom=ch['name'], id=cid, anim=an, genre=a['genre'], image=dep,
                                             calque='projectile', rangees=r))

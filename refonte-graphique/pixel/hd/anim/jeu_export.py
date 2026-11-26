@@ -213,7 +213,9 @@ def seams(left, right, x, run=8):
     `right` en x (le même dessin coupé net, en ligne droite). 0 si rien n'est tranché."""
     if x is None or x <= 0 or x >= left.shape[1]:
         return 0
-    m = alpha(left)[:, x - 1] & alpha(right)[:, x]
+    # deux dessins qui se touchent par leur contour (encre sombre) ne sont pas coupés : on ne compte pas ces rangées
+    ink = lambda c: c[:, :3].max(1) < 64
+    m = alpha(left)[:, x - 1] & alpha(right)[:, x] & ~ink(left[:, x - 1]) & ~ink(right[:, x])
     best = cur = 0
     for v in m:
         cur = cur + 1 if v else 0
