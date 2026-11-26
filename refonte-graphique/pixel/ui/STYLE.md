@@ -18,8 +18,9 @@ tactiles, de l'air, une hiérarchie claire. Joyeux, très lisible, actuel (jeux 
 |---|---|
 | Jetons (couleurs, arrondis, ombres, espaces, tailles de texte), pièces, composants communs, accueil, campagne | `src/game/ui/style.css` (sections 1 à 5) |
 | Base de mise en page des autres sections + retouches de l'essai | `style.css` section 6 et fin du fichier (à reprendre dans `src/game/ui/sections/<section>.css`) |
-| Composants Preact communs | `ui/kit.tsx` (`Btn`, `Modal`, `Page`, `Tabs`, `Bar`, `Cur`, `RedDot`, `Sign`, `Stars`, `HeroCard`, `CardFigure`, `ItemIcon`), `ui/chrome.tsx` (`BarArt`, `ChapterPlaque`, `FightButtonArt`, `LevelShield`, `Medallion`, `Chevron`), `ui/title-banner.tsx` (`TitleBanner`), `ui/anim.tsx` (`Halo`) |
-| Combat (Phaser) | `src/game/hud-art.tsx` (feuille du bas, tuiles des portraits, pilules de vie/énergie, boutons), `battle-scene.ts`, `fight-view.ts` (barres au-dessus des têtes, chiffres) |
+| Composants Preact communs | `ui/kit.tsx` (`Btn`, `Modal`, `Page`, `Tabs`, `Bar`, `Cur`, `RedDot`, `Sign`, `Stars`, `HeroCard`, `CardFigure`, `ItemIcon`), `ui/chrome.tsx` (`BarArt`, `ChapterPlaque`, `LevelShield`, `Medallion`, `Chevron`), `ui/title-banner.tsx` (`TitleBanner`), `ui/anim.tsx` (`Halo`) |
+| Boutons « Pierre de l'arène » (v0.60.0) | `src/game/ui/buttons.ts` (dessins SVG, `installButtons()` appelé par `main.tsx`), `style.css` section « Boutons » |
+| Combat (Phaser) | `src/game/hud-art.tsx` (feuille du bas, tuiles des portraits, pilules de vie/énergie, galets et dalles rendus depuis `buttons.ts`), `battle-scene.ts`, `fight-view.ts` (barres au-dessus des têtes, chiffres) |
 | Chargement | `index.html` (fait par `pixel/ui/chargement.py`) : jauge en pilule, `theme-color` raisin |
 
 Ordre de chargement : `main.tsx` importe `style.css` **avant** l'application ; le CSS d'une section, importé par ses écrans,
@@ -58,27 +59,41 @@ Noms historiques gardés (tous les écrans s'en servent, ils suivent les jetons)
 ## Les pièces (`--pxf`, `--pr`, `--psh`)
 
 Un élément « à pièce » a son fond sur son `::before` : `--pxf` = le fond (un dégradé), `--pr` = l'arrondi, `--psh` = l'ombre
-(et `--pxd` = le fond enfoncé d'un bouton). La classe **`pxf`** donne ce mécanisme à un nouvel élément. Fonds prêts
+La classe **`pxf`** donne ce mécanisme à un nouvel élément. Fonds prêts
 (noms historiques `--px-…`, ce sont des dégradés) : `--px-panel`, `--px-frame`, `--px-inset`, `--px-groove(-s)`,
-`--px-btn-<green|blue|gold|red|purple|teal|grey|cream|navy>(-down)`, `--px-plaque-<navy|blue|purple|red|green|teal|gold>`,
+`--px-plaque-<navy|blue|purple|red|green|teal|gold>`,
 `--px-chip`, `--px-badge(-gold)`, et les signes `--px-star`, `--px-check`, `--px-cross`, `--px-badge`… (SVG lisses de `signs-art.ts`, posés sur `<html>` par `installSigns()` de `px.ts` ; `<Sign>`).
 
 ## Les composants (classes à utiliser)
 
-- **Boutons** `Btn` → `.btn .btn-<green|blue|gold|purple|red|ghost>` ; tailles `.btn-small` (36 px), normal (46), `.btn-fight`
-  (62) ; `.btn-wide`. Enfoncé : il descend de sa lèvre (4 px). Impossible : gris. Un montant dedans : `.cur` en pilule.
+- **Boutons « Pierre de l'arène »** (choisis le 26/11, v0.60.0 ; maquettes : `refonte-graphique/ui-moderne/boutons/`) : une
+  dalle taillée aux coins éclatés, comme le sol de l'arène. Dessins SVG faits par `ui/buttons.ts` ; `installButtons()` les pose
+  dans `--bt-pierre-<teinte>-<taille>[-down]` et `--bt-pierre-rond-<teinte>[-down]` (+ `--bt-pierre-creux-rail`) et relie les
+  classes aux dessins. Un bouton = `bt bt-<teinte> bt-<taille>` (`btClass(teinte, taille)`) : le dessin sur le `::before` en
+  3 morceaux (bouts fixes, milieu étiré : toute largeur). Tailles : `s` 38, `m` 48, `l` 62, `xl` 72, `xxl` 84.
+  Teintes : **basalte** = l'action principale (pierre sombre où brûle une lumière d'or, lettres qui luisent, deux fêlures à
+  partir de `l`) ; **or** = récompense, achat ; **arcane** = invocation ; **feu** = danger, fermer ; **ardoise** = secondaire
+  (pierre claire, lettres brunes) ; **galet** = neutre sombre (outils, pause, vitesse, retour) ; **eau / terre / vent / feu**
+  = un élément (`ELEMENT_TONE`). Enfoncé (`:active`, `.is-down`) : la dalle descend de son épaisseur. Impossible
+  (`:disabled`) : la pierre éteinte (`off`). Un prix dedans : `.cur` devient un creux taillé.
+  `Btn` (kit.tsx) garde son API : `green` → basalte, `gold` → or, `purple` → arcane, `red` → feu, `blue` / `ghost` → ardoise ;
+  `small` → s, normal → m, `btn-fight` → l (ou `size`) ; les classes `btn btn-<sorte>` restent (le tutoriel les vise).
+  Rond : `bt-rond bt-<teinte>` (galet de 44 × 48, mis à l'échelle), son signe par `--sg` / `--sgs` (`.x` = feu + croix,
+  retour = galet + chevron, `.plus` = vent, filtres d'élément allumés de leur couleur, AUTO allumé = basalte).
+  Onglets : rail creusé (`.tabs`, `.bt-rail`) et onglet ouvert = petite dalle de basalte allumée (`Tabs`, `.av-seg`,
+  `.g-tabs`, `.sum-kinds`, barre des onglets du bas). Combat : `hud-art.tsx` rend les mêmes SVG en textures Phaser
+  (`hud-round-<galet|basalte|feu>`, `hud-btn-…`, avec `-down`).
 - **Fenêtres** `Modal` → `.modal-back` (voile + flou) › `.modal` (corps lavande clair, coins 24, `--sh-3`) › `.modal-head`
-  (bandeau `--g-head`, titre blanc) + `.x` (rond de verre, croix blanche) › `.modal-body`. Toujours au milieu de l'écran.
-- **Pages** `Page` → `.page` › `.prep-head` (même bandeau, coins arrondis en bas, bouton retour rond) › `.page-body`.
+  (bandeau `--g-head`, titre blanc) + `.x` (galet de feu, croix blanche) › `.modal-body`. Toujours au milieu de l'écran.
+- **Pages** `Page` → `.page` › `.prep-head` (même bandeau, coins arrondis en bas, retour = galet sombre) › `.page-body`.
 - **Cartes** `.card` (blanche, coins 20, `--sh-2`) ; une ligne posée dans une fenêtre : `.block`, `.quests li`,
   `.setting-row`… (blanche, coins 14, `--sh-1`). Liste groupée (réglages) : `.settings-group` (une seule carte, filets).
-- **Onglets** `Tabs` → `.tabs` (commande segmentée ; sur fond sombre : verre ; dans une fenêtre : lavande) › `.tab`,
-  `.tab-on` (tuile azur).
+- **Onglets** `Tabs` → `.tabs` (rail de pierre creusé) › `.tab`, `.tab-on` (dalle de basalte allumée, `bt-s`).
 - **Barre du haut** `.topbar` (bandeau raisin aux coins arrondis en bas, posé sur le jeu : `margin-bottom: -18px`) :
   `.avatar` (portrait en tuile arrondie cerclée d'un dégradé, `LevelShield` en pilule d'or), `.who`, `.wallet` › `.pill`
-  (monnaie : pilule de verre sombre, picto qui déborde à gauche, `.plus` rond vert).
-- **Barre des onglets** `.tabbar` (coins arrondis en haut, `margin-top: -18px`) › `.tabbar-btn` ; ouvert : `.on` (tuile azur
-  soulevée, picto agrandi). `BarArt` toujours **dernier enfant** de sa barre.
+  (monnaie : pilule de verre sombre, picto qui déborde à gauche, `.plus` = petit galet allumé de vert).
+- **Barre des onglets** `.tabbar` (coins arrondis en haut, `margin-top: -18px`) › `.tabbar-btn` ; ouvert : `.on` (dalle de
+  basalte allumée derrière, picto agrandi). `BarArt` toujours **dernier enfant** de sa barre.
 - **Pastilles** : `RedDot` → `.dot` (rond corail cerclé de blanc, 16 px, sautille) ; compteurs/pilules : `.cur-big`, `.chip`
   (`.chip.on` = azur), `.tag`, `.pts` (or).
 - **Jauges** `Bar` → `.bar` (pilule creusée) › `.bar-fill` (pilule, lumière en haut) ; `.chapter-bar`, `.dock-bar`.
@@ -109,6 +124,7 @@ Un élément « à pièce » a son fond sur son `::before` : `--pxf` = le fond (
 ## Vérifier
 
 `npm run build`, `npx vite preview --port 4471`, puis
-`node refonte-graphique/pixel/ui/outils/socle-captures.cjs <dossier> 4471 [écrans…]` (accueil, bords, reglages, carte,
+`node refonte-graphique/pixel/ui/outils/socle-captures.cjs <dossier> 4471 [écrans…]` ; boutons dans tout le jeu (héros,
+fiche, invoquer, aventure, arène, guilde, combat, AUTO allumé, pause) : `outils/boutons-captures.cjs <dossier> 4471 [écrans…]` (accueil, bords, reglages, carte,
 rapide, butin, connexion, quetes, passe, boutique, classement, tchat, courrier, amis, prep, combat, victoire, defaite) ;
-avant | après : `pixel/ui/outils/avant-apres.py`. Captures du Socle : `refonte-graphique/pixel/sortie/ui/moderne/socle/`.
+avant | après : `pixel/ui/outils/avant-apres.py`. Captures du Socle : `refonte-graphique/pixel/sortie/ui/moderne/socle/` ; des boutons de pierre : `…/moderne/boutons-jeu/` (`apercu.png`).

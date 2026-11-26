@@ -95,8 +95,9 @@ function StageFigure({ defId, up }: { defId: string; up: number }) {
   const [w, h, fx, fy, n, ms] = m;
   const dpr = Math.round(window.devicePixelRatio || 1) || 1;
   const steps = dpr >= 2 ? dpr : 2;
-  // en hauteur : 116 pixels du dessin (un grand héros) sur 80 % de la scène ; en largeur : entre les médaillons
-  const fit = Math.min((bh * 0.8) / 116, (bw - 2 * 64) / (w * 0.82));
+  // en hauteur : 116 pixels du dessin (un grand héros) sur 80 % de la scène ; en largeur : entre les médaillons ;
+  // puis réduit d'un quart (demande du 26/11) : le héros garde de l'air autour de lui, loin des médaillons et des flèches
+  const fit = 0.74 * Math.min((bh * 0.8) / 116, (bw - 2 * 64) / (w * 0.82));
   const k = Math.max(1, Math.floor(fit * steps) / steps);
   const feetY = bh * 0.88;
   return (
