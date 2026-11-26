@@ -1,0 +1,198 @@
+/* La guilde, style « moderne » (choisi le 26/11/2026). Écran : screens/social.tsx (GuildScreen, GuildWar, Chat).
+   Disposition : le panorama de la forteresse (backdrop-guild) en haut ; à son pied, la carte de la guilde (grand emblème sur
+   sa tuile, nom, niveau, membres, pièces) ; une rangée d'onglets en tuiles ; puis l'onglet ouvert, qui prend toute la place
+   restante (rien ne déborde de l'écran : seules les listes défilent, à l'intérieur de leur cadre).
+   Couleurs à rôle : vert = action, azur = choix, or = récompenses, rouge = boss / danger. Les pictos restent ceux de Icon. */
+
+.adv-scroll > .screen.guild { flex: 1 1 0; min-height: 0; gap: 10px; }
+.screen.guild { --g-glass: #120b33c7; --g-line: #ffffff2e; --g-ink: #221c45; --g-muted: #736d97; --g-azure: #2f8cff; --g-gold: #ffc22e; }
+
+/* ---------- la carte de la guilde ---------- */
+/* posée au pied du panorama : l'emblème déborde vers le haut, sur les remparts */
+.g-head { position: relative; flex: none; display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; align-items: center;
+  column-gap: 12px; row-gap: 5px; margin-top: calc(min(100vw, 480px) * 0.44 - 92px); padding: 10px 14px 11px 10px; border-radius: 24px;
+  background: linear-gradient(180deg, #2c1f70e0, #1a124ef2); box-shadow: inset 0 0 0 1px var(--g-line), inset 0 1px 0 #ffffff33, 0 12px 28px #05021a8c;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; text-shadow: none; }
+.g-head > .g-crest { grid-row: 1 / 3; margin: -26px 0 -2px; }
+.g-id { display: contents; }
+.g-name { grid-column: 2 / 4; margin: 0; min-width: 0; font: 400 22px/1.1 var(--font-title); color: #fff; letter-spacing: 0.01em;
+  text-shadow: 0 2px 0 #0a062099; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-head > .g-id:only-of-type .g-name:only-child { grid-row: 1 / 3; }
+.g-meta { grid-column: 2; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.g-lv, .g-count, .g-coins, .g-pill { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px; border-radius: 999px;
+  font: 400 14px var(--font-title); white-space: nowrap; }
+.g-lv { background: linear-gradient(180deg, #ffe27a, #ffb21f); color: #5a2c00; box-shadow: inset 0 1px 0 #ffffff99, 0 2px 6px #ffad1f40; }
+.g-count { background: #ffffff1f; box-shadow: inset 0 0 0 1px #ffffff1f; color: #fff; padding-left: 6px; }
+.g-coins { grid-column: 3; grid-row: 2; background: #00000059; box-shadow: inset 0 0 0 1px #ffffff1f, inset 0 2px 3px #00000040; color: #fff; padding: 0 12px 0 22px; position: relative; }
+.g-coins .icon { position: absolute; left: -8px; top: 50%; translate: 0 -50%; filter: drop-shadow(0 2px 2px #0006); }
+.g-coins b { font-weight: 400; }
+
+/* l'emblème : une tuile arrondie au dégradé violet → azur, un halo doux derrière */
+.g-crest { position: relative; flex: none; display: grid; place-items: center; border-radius: 22px;
+  background: radial-gradient(circle at 50% 38%, #ffffff40, #ffffff00 60%), linear-gradient(150deg, #8b6bff 0%, #4f63ff 52%, #2f8cff 100%);
+  box-shadow: inset 0 2px 0 #ffffff66, inset 0 -4px 0 #1d3fb866, 0 8px 18px #2f5cff59; }
+.g-crest .icon { filter: drop-shadow(0 3px 3px #0a062066); }
+.g-crest-l { width: 80px; height: 80px; border-radius: 24px; }
+.g-crest-m { width: 60px; height: 60px; border-radius: 18px; }
+.g-crest-s { width: 54px; height: 54px; border-radius: 16px; }
+.g-crest-l::after { content: ''; position: absolute; inset: -3px; border-radius: 27px; box-shadow: 0 0 0 2px #ffffff40; pointer-events: none; }
+
+/* ---------- les onglets : des tuiles (picto + nom), l'ouverte en azur soulevé ---------- */
+.g-tabs { flex: none; display: flex; gap: 4px; padding: 5px; border-radius: 20px; background: var(--g-glass);
+  box-shadow: inset 0 0 0 1px #ffffff1f, 0 6px 16px #05021a59; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.g-tab { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 2px 5px;
+  border: 0; border-radius: 15px; background: none; color: #b6addf; font: 600 11.5px var(--font); text-shadow: none; cursor: pointer;
+  transition: background 0.15s, transform 0.15s; }
+.g-tab .icon { filter: drop-shadow(0 2px 2px #00000059) saturate(0.85); opacity: 0.88; transition: transform 0.18s cubic-bezier(.3, 1.4, .5, 1); }
+.g-tab.on { color: #fff; background: linear-gradient(180deg, #6cc4ff 0%, #2f8cff 60%, #2a78f0 100%);
+  box-shadow: inset 0 2px 0 #ffffff73, inset 0 -3px 0 #1a47b8, 0 6px 14px #2f8cff59; transform: translateY(-2px); }
+.g-tab.on .icon { opacity: 1; filter: drop-shadow(0 2px 2px #1a47b880); transform: scale(1.1); }
+.g-tab-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.g-tab .dot { top: 1px; right: 6px; }
+.g-tab:active { transform: scale(0.96); }
+
+/* ---------- le cadre d'un onglet ---------- */
+.g-panel { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 10px; border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff, #f4f2fc); box-shadow: 0 12px 28px #05021a73; color: var(--g-ink); text-shadow: none; }
+/* une liste qui défile dans son cadre (les ombres des lignes ont de l'air ; un fondu en bas) */
+.g-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; gap: 8px;
+  margin: 0 -6px; padding: 2px 6px 16px; scrollbar-width: none;
+  -webkit-mask: linear-gradient(180deg, #000 calc(100% - 18px), #0000); mask: linear-gradient(180deg, #000 calc(100% - 18px), #0000); }
+.g-scroll::-webkit-scrollbar { display: none; }
+.g-locked { flex: none; align-items: center; padding: 22px 14px; }
+.g-locked .locked { font-size: 14px; }
+
+/* ---------- une ligne (guilde à rejoindre, membre) : une carte blanche nette ---------- */
+.g-row { flex: none; display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 8px 12px 8px 8px; border-radius: 18px;
+  background: #fff; box-shadow: 0 3px 10px #12083a33; color: var(--g-ink); text-shadow: none; }
+.g-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.g-row-name { max-width: 100%; font: 400 17px/1.1 var(--font-title); color: var(--g-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-row-sub { display: flex; align-items: center; gap: 6px; }
+.g-row .g-lv { height: 22px; font-size: 13px; padding: 0 8px; }
+/* le remplissage d'une guilde : 18 / 30 et une jauge fine */
+.g-fill { position: relative; display: inline-flex; align-items: center; gap: 3px; height: 22px; padding: 0 9px 0 5px; border-radius: 999px;
+  background: #efecf9; color: var(--g-muted); font: 400 13px var(--font-title); overflow: hidden; }
+.g-fill i { position: absolute; left: 0; bottom: 0; height: 3px; width: var(--p); background: linear-gradient(90deg, #2f8cff, #6cc4ff); border-radius: 0 3px 3px 0; }
+.g-find .btn { flex: none; }
+
+/* un membre : son visage arrondi (niveau en pastille), son nom, son rôle, sa puissance */
+.g-face { position: relative; flex: none; width: 48px; height: 48px; border-radius: 15px; background: linear-gradient(160deg, #6a5ae6, #2e2380);
+  box-shadow: inset 0 0 0 2px #ffffff33, 0 2px 6px #12083a40; }
+.g-face img { width: 100%; height: 100%; border-radius: 15px; object-fit: cover; object-position: 50% 15%; image-rendering: pixelated; }
+.g-face-lv { position: absolute; left: 50%; bottom: -6px; translate: -50% 0; min-width: 24px; height: 17px; padding: 0 5px; border-radius: 999px;
+  background: #221c45; box-shadow: 0 0 0 2px #fff; color: #fff; font: 400 11px/17px var(--font-title); text-align: center; }
+.g-role { display: inline-flex; align-items: center; gap: 3px; height: 20px; padding: 0 8px 0 4px; border-radius: 999px; font: 600 11.5px var(--font); }
+.g-role.leader { background: #fff2c7; color: #9a4f00; }
+.g-role.officer { background: #e7e1ff; color: #5420c4; }
+.g-power { flex: none; display: inline-flex; align-items: center; gap: 2px; font: 400 16px var(--font-title); color: #c86a00; font-variant-numeric: tabular-nums; }
+.g-member.me { background: linear-gradient(180deg, #eef6ff, #dcecff); box-shadow: inset 0 0 0 2px #6cc4ff, 0 3px 10px #2f8cff40; }
+.g-member.me .g-face { background: linear-gradient(160deg, #6cc4ff, #2f8cff); }
+.g-leave { flex: none; align-self: center; margin-top: 6px; padding: 8px 20px; border: 0; border-radius: 999px; background: #ffffff1a;
+  box-shadow: inset 0 0 0 1.5px #ff8a96a6; color: #ff8a96; font: 600 14px var(--font); text-shadow: none; cursor: pointer; }
+.g-leave:active { transform: scale(0.96); }
+
+/* ---------- le boss de guilde : en grand, sur son décor ---------- */
+.g-boss { padding: 8px; }
+.g-boss-stage { position: relative; flex: 1 1 0; min-height: 120px; display: grid; place-items: end center; overflow: hidden; border-radius: 18px;
+  background: #5a2a2a center 88% / cover no-repeat; image-rendering: pixelated; box-shadow: inset 0 0 0 1px #00000026, inset 0 -60px 40px -30px #0a062099; }
+.g-boss-fig { height: 84%; width: auto; max-width: 96%; margin-bottom: 30px; transform: scaleX(-1); filter: drop-shadow(0 8px 6px #0009); }
+.g-boss-name { position: absolute; top: 10px; left: 10px; z-index: 1; display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 14px 0 8px;
+  border-radius: 999px; background: #120b33bf; box-shadow: inset 0 0 0 1px #ffffff2e, 0 4px 10px #05021a59; color: #fff;
+  font: 400 18px var(--font-title); text-shadow: 0 2px 0 #0a062099; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.g-boss-hp { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 1; }
+.g-boss-hp .bar { height: 22px; padding: 3px; }
+.g-boss-hp .bar { --pxf: linear-gradient(#0a0620b3, #0a0620b3); --pr: 999px; --psh: inset 0 0 0 1px #ffffff2e; }
+.g-boss-hp .bar-label { font-size: 13px; }
+.g-stats { flex: none; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.g-stat { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 7px 10px 7px 8px; border-radius: 16px; background: #f1eefb; }
+.g-stat .icon { flex: none; }
+.g-stat > span { display: flex; flex-direction: column; min-width: 0; }
+.g-stat b { font: 400 18px/1.1 var(--font-title); color: var(--g-ink); font-weight: 400; }
+.g-stat small { font: 600 11.5px/1.2 var(--font); color: var(--g-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-stat.mine { background: #fff3d1; }
+.g-stat.mine b { color: #b05f00; }
+.g-war-result .btn { flex: none; }
+.g-boss .g-attack { flex: none; min-height: 54px; font-size: 21px; gap: 10px; }
+.g-tries { display: inline-flex; align-items: center; height: 24px; padding: 0 9px; border-radius: 999px; background: #0000002e; font-size: 14px; text-shadow: none; }
+
+/* ---------- la guerre de guildes ---------- */
+.g-war { gap: 10px; }
+.g-vs { flex: none; position: relative; display: flex; align-items: flex-start; gap: 6px; padding: 12px 8px 12px; border-radius: 22px;
+  background: linear-gradient(90deg, #e9f3ff 0%, #ffffff 46%, #ffffff 54%, #ffe9ec 100%); box-shadow: 0 6px 16px #05021a59; color: var(--g-ink); text-shadow: none; }
+.g-vs-side { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; }
+.g-vs-side strong { max-width: 100%; font: 600 13px/1.15 var(--font); color: var(--g-ink); }
+.g-vs-side.foe .g-crest { background: radial-gradient(circle at 50% 38%, #ffffff40, #ffffff00 60%), linear-gradient(150deg, #ff8a6a, #f03e58 60%, #b01f3a);
+  box-shadow: inset 0 2px 0 #ffffff66, inset 0 -4px 0 #8a142e66, 0 8px 18px #f03e5859; }
+.g-vs-score { display: inline-flex; align-items: center; gap: 3px; height: 26px; padding: 0 11px 0 6px; border-radius: 999px; background: #2f8cff; color: #fff;
+  font: 400 17px var(--font-title); box-shadow: inset 0 1px 0 #ffffff66; }
+.g-vs-side.foe .g-vs-score { background: #f03e58; }
+.g-vs-badge { flex: none; align-self: center; display: grid; place-items: center; width: 44px; height: 44px; margin-top: -16px; border-radius: 50%;
+  background: linear-gradient(180deg, #ffe27a, #ffad1f); box-shadow: inset 0 2px 0 #ffffff99, inset 0 -3px 0 #c06a00, 0 4px 10px #ffad1f66;
+  color: #fff; font: 400 18px var(--font-title); text-shadow: 0 2px 0 #b05f00; }
+.g-war-result { flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px; border-radius: 20px; background: #fff;
+  box-shadow: 0 6px 16px #05021a59; text-shadow: none; }
+.g-war-result h2 { margin: 0; font: 400 24px var(--font-title); color: #c86a00; }
+.g-war-result.loss h2 { color: #f03e58; } .g-war-result.draw h2 { color: var(--g-muted); }
+.g-war-phase { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.g-pill { background: var(--g-glass); box-shadow: inset 0 0 0 1px #ffffff26; color: #fff; font-size: 13.5px; text-shadow: none; }
+.g-pill.gold { background: linear-gradient(180deg, #ffe27a, #ffb21f); color: #5a2c00; box-shadow: inset 0 1px 0 #ffffff99; }
+.g-war > .team-strip { flex: none; }
+.g-forts { flex: none; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.g-fort { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; padding: 10px 4px 9px; border: 0; border-radius: 18px;
+  background: #fff; box-shadow: inset 0 -3px 0 #e3def3, 0 4px 10px #05021a4d; color: var(--g-ink); text-shadow: none; cursor: pointer; }
+.g-fort .g-face { width: 52px; height: 52px; background: linear-gradient(160deg, #ff8a6a, #b01f3a); }
+.g-fort strong { max-width: 100%; font: 600 12px var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-fort .g-power { font-size: 14px; }
+.g-power.ok { color: #16893b; } .g-power.low { color: #e0334f; }
+.g-fort:disabled { opacity: 0.55; cursor: default; }
+.g-fort:active:not(:disabled) { transform: scale(0.96); }
+.g-sub { flex: none; margin: 4px 4px 0; font: 600 12px var(--font); letter-spacing: 0.08em; text-transform: uppercase; color: #c3bcea; text-shadow: none; }
+.g-ranking { flex: none; display: flex; flex-direction: column; border-radius: 18px; background: #fff; box-shadow: 0 4px 12px #05021a4d; overflow: hidden; }
+.g-rank-row { display: flex; align-items: center; gap: 10px; min-height: 42px; padding: 0 12px 0 10px; color: var(--g-ink); text-shadow: none; font-weight: 600;
+  box-shadow: inset 0 -1px 0 #efecf9; }
+.g-rank-row.me { background: #e8f2ff; color: #1d56d6; }
+.g-rank { flex: none; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #efecf9; color: var(--g-muted); font: 400 13px var(--font-title); }
+.g-rank.r1 { background: linear-gradient(180deg, #ffe27a, #ffb21f); color: #5a2c00; }
+.g-rank.r2 { background: linear-gradient(180deg, #f1f3fa, #bcc4d8); color: #3a4260; }
+.g-rank.r3 { background: linear-gradient(180deg, #ffd0a0, #d0844a); color: #5a2c00; }
+.g-rank-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g-stars { display: inline-flex; align-items: center; gap: 3px; font: 400 15px var(--font-title); color: #c86a00; }
+
+/* ---------- la boutique ---------- */
+.g-shop .shop-grid { flex: none; }
+
+/* ---------- le tchat (guilde, et tchat général des bords) : des bulles nettes ---------- */
+.chat { min-height: 0; gap: 8px; }
+.screen.guild > .chat { flex: 1 1 0; height: auto; min-height: 0; }
+.chat .chat-list { gap: 8px; padding: 12px 10px; }
+.chat .chat-list { --pxf: linear-gradient(#f4f2fc, #f4f2fc); --pr: 20px; --psh: inset 0 0 0 1px #e7e3f6; }
+.screen.guild > .chat .chat-list { --pxf: linear-gradient(180deg, #ffffff, #f4f2fc); --pr: 24px; --psh: 0 12px 28px #05021a73; }
+.chat .msg { max-width: 82%; gap: 1px; padding: 7px 12px 8px; border: 0; border-radius: 18px 18px 18px 6px; background: #fff;
+  box-shadow: 0 2px 6px #12083a26; color: var(--g-ink, #221c45); text-shadow: none; font: 500 14.5px/1.3 var(--font); }
+.chat .msg b { font: 700 12px var(--font); color: #7c4dff; }
+.chat .msg-me { border-radius: 18px 18px 6px 18px; background: linear-gradient(180deg, #5fb3ff, #2f8cff); color: #fff; box-shadow: 0 3px 8px #2f8cff59; }
+.chat .chat-input { flex: none; gap: 8px; align-items: center; padding: 6px; border-radius: 999px; background: var(--g-glass, #120b33c7);
+  box-shadow: inset 0 0 0 1px #ffffff1f, 0 6px 16px #05021a59; }
+.chat .chat-input input { height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: #fff; color: #221c45; font: 500 15px var(--font);
+  box-shadow: inset 0 1px 3px #12083a33; outline: none; }
+.chat .chat-input input:focus { box-shadow: inset 0 1px 3px #12083a33, 0 0 0 2px #6cc4ff; }
+.chat .chat-input .btn { flex: none; min-height: 40px; --pr: 999px; padding: 0 18px; }
+.modal .chat .chat-input { background: #ece8f8; box-shadow: inset 0 1px 3px #12083a26; }
+
+/* ---------- petits écrans (360 × 640…) : le panorama et la carte se resserrent ---------- */
+@media (max-height: 700px) {
+  .adv-scroll > .screen.guild { gap: 8px; }
+  .g-head { margin-top: 26px; padding: 8px 12px 8px 8px; column-gap: 10px; row-gap: 4px; }
+  .g-crest-l { width: 64px; height: 64px; border-radius: 20px; }
+  .g-crest-l .icon { width: 48px !important; height: 48px !important; }
+  .g-crest-l::after { border-radius: 23px; }
+  .g-head > .g-crest { margin: -18px 0 -2px; }
+  .g-name { font-size: 19px; }
+  .g-tab { padding: 4px 2px; font-size: 11px; }
+  .g-tab .icon { width: 22px !important; height: 22px !important; }
+  .g-stat { padding: 5px 8px 5px 6px; } .g-stat .icon { width: 24px !important; height: 24px !important; } .g-stat b { font-size: 16px; }
+  .g-boss .g-attack { min-height: 48px; font-size: 19px; }
+  .g-row { min-height: 58px; padding: 6px 10px 6px 6px; }
+  .g-face { width: 44px; height: 44px; }
+  .g-boss-stage { min-height: 100px; }
+}
