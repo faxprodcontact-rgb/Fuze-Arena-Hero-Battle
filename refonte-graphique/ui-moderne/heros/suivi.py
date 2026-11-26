@@ -87,8 +87,11 @@ def main():
     cartes = []
     for h, statut, note, has_vx, has_gif in rows:
         cls = {'fait': 'ok', 'à revoir': 'redo', 'en cours': 'wip', 'à faire': 'todo'}[statut]
-        vx_html = (f'<img src="gif/{h["id"]}.gif" alt="{html.escape(h["name"])} animé" loading="lazy">' if has_gif
-                   else f'<img src="vx/{h["id"]}.webp" alt="{html.escape(h["name"])} vectoriel" loading="lazy">' if has_vx
+        def _v(rel):
+            f = os.path.join(PAGE, rel)
+            return f'{rel}?v={int(os.path.getmtime(f))}' if os.path.exists(f) else rel
+        vx_html = (f'<img src="{_v("gif/" + h["id"] + ".gif")}" alt="{html.escape(h["name"])} animé" loading="lazy">' if has_gif
+                   else f'<img src="{_v("vx/" + h["id"] + ".webp")}" alt="{html.escape(h["name"])} vectoriel" loading="lazy">' if has_vx
                    else '<span class="vide">—</span>')
         cartes.append(f'''<article class="hero {cls} r-{h["r"]}">
   <header><h3>{html.escape(h["name"])}</h3><span class="pill">{statut}</span></header>
