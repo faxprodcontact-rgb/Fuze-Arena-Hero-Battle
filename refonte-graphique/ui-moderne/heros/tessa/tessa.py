@@ -86,51 +86,74 @@ def g2(c1, c2):
 
 # ================================================================ les ailes d'aigle
 
-def eagle_wing(fig, key, R, W, feathers, mat, P, lift, spread, ph, cov_scale=1.0, lead_w=(6.4, 5.6, 4.4)):
+def eagle_wing(fig, key, R, W, feathers, mat, P, lift, spread, ph, cov=1.0):
     """Une aile d'aigle repliée en manteau : les rémiges (du bout de l'aile vers le corps ; chacune pose une ombre douce
-    sur la précédente, aucune ligne), deux rangées de couvertures festonnées plus claires, puis le bord d'attaque
-    éclairé. feathers = [(u, tip, w)] : la racine à u le long du bras W → R, le bout de la plume, sa largeur.
+    sur la précédente, aucune ligne), deux rangées de couvertures (des plumes plus courtes, plus claires, au bout
+    arrondi, qui recouvrent les racines), puis le bord d'attaque (petites couvertures claires, sans trait).
+    feathers = [(u, tip, w)] : la racine à u le long du bras W → R, le bout de la plume, sa largeur.
     lift (degrés) : toute l'aile tourne autour de la racine ; spread : les plumes s'écartent en éventail (hérissées)."""
     names = []
     Wp = rot_about(W, R, lift)
     n = len(feathers)
+    dirs_at = []
     for i, (u, tip, w) in enumerate(feathers):
         root = lerp(Wp, R, u)
         tip = rot_about(tip, R, lift)
-        # l'éventail s'ouvre autour de la racine : les plumes du bout tournent plus
-        tip = rot_about(tip, root, spread * (1.0 - i / max(1, n - 1)) * 1.0 + 0.8 * math.sin(ph - 0.6 * i) * (0.6 + 0.4 * spread))
+        # l'éventail s'ouvre autour de la racine : les plumes du bout tournent plus ; elles ondulent un peu
+        tip = rot_about(tip, root, spread * (1.0 - i / max(1, n - 1)) + 0.9 * math.sin(ph - 0.6 * i) * (0.6 + 0.4 * abs(spread) / 10))
         d = norm((tip[0] - root[0], tip[1] - root[1]))
+        dirs_at.append((u, d))
         side = (-d[1], d[0])
         L = math.dist(root, tip)
-        bend = 1.4 + 0.5 * math.sin(ph * 0.7 - 0.5 * i)
+        bend = 1.2 + 0.4 * math.sin(ph * 0.7 - 0.5 * i)
         p1 = add(add(root, d, L * 0.33), side, bend * 0.3)
         p2 = add(add(root, d, L * 0.7), side, bend)
         sh = plume(root, p1, p2, tip, w)
         nm = '%s_r%d' % (key, i)
         names.append(nm)
-        fig.part(nm, sh, mat, grad=(root[0] + 3, root[1] - 3, tip[0], tip[1], [(0, mat.light), (0.45, mat.base), (1, mat.shadow)]),
-                 cel=0.9, rim=0.45, cast=1.3,
-                 details=[(ribbon([lerp(root, tip, 0.15), lerp(root, p2, 0.8), lerp(root, tip, 0.86)], [0.1, 0.55, 0.1]), mat.light, 0.55)])
-    # les couvertures : deux rangées festonnées qui couvrent les racines (plus claires : le brun miel du pixel art)
-    line = resample([R, lerp(R, Wp, 0.5), Wp], 12)
-    a_r = math.degrees(math.atan2(feathers[-1][1][1] - R[1], feathers[-1][1][0] - R[0])) + lift
-    a_w = math.degrees(math.atan2(feathers[0][1][1] - Wp[1], feathers[0][1][0] - Wp[0])) + lift * 0.0
-    dirs = [unit(a_r + (a_w - a_r) * k / (len(line) - 1)) for k in range(len(line))]
-    big = [d_ * cov_scale for d_ in (12.5, 14, 15, 15, 14.5, 14, 13, 12, 10.5, 9, 7.5, 6, 4.5)]
-    small = [d_ * cov_scale for d_ in (7, 8, 8.4, 8.4, 8, 7.6, 7, 6.4, 5.6, 4.8, 4, 3.2, 2.4)]
-    for nm, deps, lobes, g0, jit in ((key + '_cov2', big, 6, mat.base, (1.0, 1.06, 0.94, 1.04, 0.97)),
-                                     (key + '_cov1', small, 7, mat.light, (1.0, 0.95, 1.05, 0.98))):
-        cov = feston(line, dirs, deps, lobes, jit)
-        names.append(nm)
-        fig.part(nm, cov, mat, grad=(Wp[0] + 6, Wp[1] - 4, R[0] - 8, R[1] + 10, [(0, lite_(g0)), (0.55, g0), (1, mat.shadow)]),
-                 cel=0.9, rim=0.5, cast=1.3)
-    # le bord d'attaque (le « bras » de l'aile), éclairé
-    lead = limb([lerp(R, Wp, 0.0), lerp(R, Wp, 0.5), lerp(R, Wp, 0.92)], list(lead_w))
+        fig.part(nm, sh, mat, grad=(root[0] + 3, root[1] - 3, tip[0], tip[1], [(0, mat.light), (0.5, mat.base), (1, mat.shadow)]),
+                 cel=0.9, rim=0.4, cast=1.3)
+
+    def dir_at(u):
+        for j in range(len(dirs_at) - 1):
+            u0, d0 = dirs_at[j]
+            u1, d1 = dirs_at[j + 1]
+            if u0 <= u <= u1:
+                return norm(lerp(d0, d1, (u - u0) / ((u1 - u0) or 1)))
+        return dirs_at[0][1] if u < dirs_at[0][0] else dirs_at[-1][1]
+    # le bras de l'aile, un peu bombé vers la lumière (en haut à droite)
+    dv = norm((Wp[0] - R[0], Wp[1] - R[1]))
+    nv = (-dv[1], dv[0])
+    if nv[0] < 0:
+        nv = (-nv[0], -nv[1])
+    arm = lambda t: add(lerp(R, Wp, t), nv, 2.2 * math.sin(math.pi * t))
+    # les couvertures : deux rangées de plumes au bout arrondi (longueurs et écarts un peu inégaux), du bout vers le
+    # corps ; les grandes couvrent les racines des rémiges, les moyennes le haut des grandes
+    rows = ((key + '_g', 7, 0.04, 0.92, 15.0 * cov, 9.4 * cov, mat.base, (1.0, 0.9, 1.06, 0.95, 1.05, 0.9, 1.0), 4.4 * cov),
+            (key + '_m', 8, 0.0, 0.95, 9.6 * cov, 7.4 * cov, mat.light, (0.95, 1.06, 0.9, 1.0, 1.08, 0.94, 1.0, 0.92), 1.6 * cov))
+    for rk, cnt, ua, ub, Lc, wc, col, jit, off in rows:
+        for j in range(cnt - 1, -1, -1):
+            u = ua + (ub - ua) * j / (cnt - 1)
+            d = dir_at(u)
+            root = add(arm(1 - u), d, off)
+            L = Lc * jit[j] * (0.7 + 0.3 * math.sin(math.pi * min(1, u * 1.2 + 0.15)))
+            tip = add(root, d, L)
+            side = (-d[1], d[0])
+            sh = plume(root, add(root, d, L * 0.35), add(add(root, d, L * 0.72), side, 0.5), tip, wc * (0.8 + 0.2 * jit[j]), n=10, tip=0.6)
+            nm = '%s%d' % (rk, j)
+            names.append(nm)
+            fig.part(nm, sh, mat, grad=(root[0] + 2, root[1] - 2, tip[0], tip[1], [(0, lite_(col)), (0.55, col), (1, mat.shadow)]),
+                     cel=0.7, rim=0.4, cast=1.0)
+    # le bord d'attaque : une bande de petites couvertures claires, large au poignet, fine à l'épaule ; le haut suit le
+    # bras bombé, le bas fait de petits festons (aucun trait)
+    line = [arm(t) for t in [k / 12 for k in range(13)]]
+    dirs = [dir_at(1 - k / 12) for k in range(13)]
+    deps = [(2.6 + 3.8 * math.sin(math.pi * min(1, 0.15 + 0.85 * k / 12))) * cov for k in range(13)]
+    lead = feston(line, dirs, deps, 6, (1.0, 0.9, 1.1, 0.95))
     nm = key + '_lead'
     names.append(nm)
     fig.part(nm, lead, mat, grad=(Wp[0] + 3, Wp[1] - 2, R[0] - 4, R[1] + 4, [(0, mat.hi), (0.4, mat.light), (1, mat.base)]),
-             cel=1.0, rim=0.7, cast=1.1,
-             details=[(ribbon([lerp(R, Wp, 0.15), lerp(R, Wp, 0.55), lerp(R, Wp, 0.9)], [0.1, 0.9, 0.1]), mat.hi, 0.5)])
+             cel=0.9, rim=0.7, cast=1.1)
     return names, Wp
 
 
@@ -182,8 +205,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     LEG = mS(1, 1 - dyb / 34, 0, GRD)                                           # les jambes plient (pieds au sol)
 
     # ================================================================ les ailes (derrière tout)
-    fw_names, _ = eagle_wing(fig, 'wf', R_F, W_F, FAR_FEATHERS, BROWNF, P, P['wf_lift'], P['wf_spread'], ph + 1.1,
-                             cov_scale=0.8, lead_w=(5.6, 4.8, 3.6))
+    fw_names, _ = eagle_wing(fig, 'wf', R_F, W_F, FAR_FEATHERS, BROWNF, P, P['wf_lift'], P['wf_spread'], ph + 1.1, cov=0.8)
     nw_names, _ = eagle_wing(fig, 'wn', R_N, W_N, NEAR_FEATHERS, BROWN, P, P['wn_lift'], P['wn_spread'], ph)
 
     # ================================================================ le bras lointain (vers l'arc), derrière le buste

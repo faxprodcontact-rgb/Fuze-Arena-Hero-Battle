@@ -199,3 +199,42 @@ class FigN(Figure):
             glow = glow.replace('<g stroke-linejoin="round">', '<g stroke-linejoin="round" opacity="%.3f">' % op, 1)
             out = out[:i] + glow + out[i:]
         return out
+
+
+# ---------- formes ↔ polygones (shapely) : couper une forme par une autre (iris dans l'œil, bande dans un morceau)
+
+def poly(shape, n=6):
+    """Les points d'une forme (chaque segment de Bézier découpé en n)."""
+    s, segs = shape.subs[0]
+    out = [s]
+    p = s
+    for c1, c2, q in segs:
+        for k in range(1, n + 1):
+            t = k / n
+            a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+            out.append((a * p[0] + b * c1[0] + c * c2[0] + d * q[0], a * p[1] + b * c1[1] + c * c2[1] + d * q[1]))
+        p = q
+    return out
+
+
+def from_poly(pts):
+    """Un polygone (liste de points) → une forme à côtés droits (assez de points pour paraître lisse)."""
+    pts = list(pts)
+    segs = []
+    for i in range(1, len(pts) + 1):
+        a, b = pts[i - 1], pts[i % len(pts)]
+        segs.append(((a[0] + (b[0] - a[0]) / 3, a[1] + (b[1] - a[1]) / 3), (a[0] + 2 * (b[0] - a[0]) / 3, a[1] + 2 * (b[1] - a[1]) / 3), b))
+    return Shape([(pts[0], segs)])
+
+
+def inter(a, b):
+    """La partie de la forme a qui est dans la forme b (le plus grand morceau) ; None si elles ne se touchent pas."""
+    from shapely.geometry import Polygon
+    g = Polygon(poly(a)).buffer(0).intersection(Polygon(poly(b)).buffer(0))
+    if g.is_empty:
+        return None
+    if g.geom_type != 'Polygon':
+        g = max(getattr(g, 'geoms', [g]), key=lambda q: q.area)
+        if g.geom_type != 'Polygon':
+            return None
+    return from_poly(list(g.exterior.coords)[:-1])
