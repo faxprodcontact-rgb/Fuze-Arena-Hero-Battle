@@ -1,4 +1,4 @@
 fait
-Corrigé d'après l'avis du 26/11 (tour 3) : la tête est remontée (8 px du dessin) et ne s'enfonce plus dans le torse ; on voit maintenant un vrai cou de taureau, court et épais, sous la mâchoire (le muscle du cou éclairé, le pli à sa base). Le visage n'a pas bougé dans la tête (visage.png : aucun défaut). Quand il lève la hache, elle monte d'autant, pour que le fer reste au-dessus des cornes.
-La tête passe maintenant DEVANT les deux épaulières, dans toutes les poses (repos, hache levée, coup, ruée tête baissée).
-Nouvelles épaulières, plus petites et propres au minotaure (plus la calotte ronde rivetée) : deux écailles de fer noirci martelé en pointe, l'une sur l'autre, bordées de bronze, avec une petite pointe de fer et une sangle de cuir à boucle d'or autour du bras.
+Corrigé d'après l'avis du 26/11 (tour 4) : l'épaule et le corps ne font plus qu'une seule forme, comme sur le cyclope. Le haut de l'épaule (deltoïde) fait maintenant partie du buste : le trapèze descend en douceur jusqu'à l'épaule, sans creux dans la silhouette, et le haut du bras se fond dans le buste par un dégradé (plus de bord de boule ni de trait entre l'épaule et la poitrine). Fait des deux côtés, et ça suit l'épaule dans toutes les poses (hache levée, coup, ruée).
+Les deux lanières du harnais croisé montent maintenant jusqu'en haut des épaules et passent par-dessus (elles disparaissent derrière l'arrondi de l'épaule, vers le dos) ; celle de droite ne s'arrête plus avant l'épaule.
+La tête, le cou, les épaulières et la hache n'ont pas changé.
