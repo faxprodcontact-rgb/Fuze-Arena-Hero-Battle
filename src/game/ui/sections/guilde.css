@@ -87,14 +87,61 @@
 .g-member.me .g-face { background: linear-gradient(160deg, #6cc4ff, #2f8cff); }
 .g-leave { align-self: center; margin-top: 6px; }
 
-/* ---------- le boss de guilde : en grand, sur son décor ---------- */
+/* ---------- le boss de guilde : la grande image du donjon de son élément (backdrop-dungeon.tsx) ---------- */
+/* L'image remplit la scène (le sol reste en bas) ; en haut à gauche, la carte du nom (« Donjon de feu ») et du temps qu'il
+   reste ; en bas, la jauge de vie posée sur le sol calme. */
 .g-boss { padding: 8px; }
-.g-boss-stage { position: relative; flex: 1 1 0; min-height: 120px; display: grid; place-items: end center; overflow: hidden; border-radius: 18px;
-  background: #5a2a2a center 88% / cover no-repeat; image-rendering: pixelated; box-shadow: inset 0 0 0 1px #00000026, inset 0 -60px 40px -30px #0a062099; }
-.g-boss-fig { height: 84%; width: auto; max-width: 96%; margin-bottom: 30px; transform: scaleX(-1); filter: drop-shadow(0 8px 6px #0009); }
-.g-boss-name { position: absolute; top: 10px; left: 10px; z-index: 1; display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 14px 0 8px;
+.g-boss-stage { position: relative; flex: 1 1 0; min-height: 120px; overflow: hidden; border-radius: 18px; background: #130d33;
+  box-shadow: inset 0 0 0 1px #00000026; isolation: isolate; }
+.g-dungeon-art { position: absolute; inset: 0; z-index: -1; width: 100%; height: 100%; display: block; }
+/* un voile doux en bas, sous la jauge */
+.g-dungeon::after { content: ''; position: absolute; inset: auto 0 0; height: 44px; z-index: -1; pointer-events: none;
+  background: linear-gradient(180deg, #0a062000, #0a062073); }
+.g-boss-label { position: absolute; top: 10px; left: 10px; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.g-boss-name { display: inline-flex; align-items: center; gap: 5px; height: 34px; padding: 0 14px 0 7px;
   border-radius: 999px; background: #120b33bf; box-shadow: inset 0 0 0 1px #ffffff2e, 0 4px 10px #05021a59; color: #fff;
-  font: 400 18px var(--font-title); text-shadow: 0 2px 0 #0a062099; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+  font: 400 18px var(--font-title); text-shadow: 0 2px 0 #0a062099; white-space: nowrap; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+/* la teinte de l'élément, en liseré sous le nom */
+.g-dungeon.el-fire { --el: #ff8a3a; } .g-dungeon.el-water { --el: #4ee0d0; } .g-dungeon.el-earth { --el: #8ee05a; } .g-dungeon.el-wind { --el: #b4ffe4; }
+.g-dungeon .g-boss-name { box-shadow: inset 0 0 0 1px #ffffff2e, inset 0 -2px 0 var(--el), 0 4px 10px #05021a59; }
+.g-boss-time { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px 0 5px; margin-left: 6px; border-radius: 999px;
+  background: #120b33a6; box-shadow: inset 0 0 0 1px #ffffff26; color: #fff; font: 600 13px var(--font); text-shadow: none;
+  font-variant-numeric: tabular-nums; white-space: nowrap; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+
+/* ce qui bouge dans l'image (doux et lent ; tout s'arrête si le téléphone demande moins de mouvements) */
+.gd-ember { animation: gd-ember 8s linear infinite; }
+.gd-bubble { animation: gd-bubble 8s linear infinite; }
+.gd-flicker { animation: gd-flicker 1.6s ease-in-out infinite; }
+.gd-lava { animation: gd-lava 3.2s ease-in-out infinite; }
+.gd-shimmer { animation: gd-lava 4.5s ease-in-out infinite; }
+.gd-caustic { animation: gd-caustic 9s ease-in-out infinite alternate; }
+.gd-fish { animation: gd-fish 26s ease-in-out infinite alternate; }
+.gd-fish-2 { animation-duration: 34s; animation-direction: alternate-reverse; }
+.gd-bob { animation: bk-float 4s ease-in-out infinite; }
+.gd-gem { animation: gd-gem 3.4s ease-in-out infinite; }
+.gd-spin { animation: gd-gem 3s ease-in-out infinite; }
+.gd-wing { animation: gd-wing 3.6s ease-in-out infinite; }
+.gd-wind { stroke-dasharray: 60 260; animation: gd-wind 5s ease-in-out infinite; }
+.gd-wind-2 { animation-delay: -1.8s; animation-duration: 6s; }
+.gd-wind-3 { animation-delay: -3.4s; animation-duration: 5.6s; }
+.gd-feather { animation: gd-feather 11s ease-in-out infinite; }
+@keyframes gd-ember { 0% { transform: translate(0, 18px); opacity: 0; } 15% { opacity: 1; } 60% { transform: translate(8px, -40px); opacity: 0.85; } 100% { transform: translate(-4px, -90px); opacity: 0; } }
+@keyframes gd-bubble { 0% { transform: translate(0, 20px); opacity: 0; } 15% { opacity: 0.9; } 50% { transform: translate(4px, -34px); } 100% { transform: translate(-3px, -96px); opacity: 0; } }
+@keyframes gd-flicker { 0%, 100% { transform: scale(1, 1); } 30% { transform: scale(0.94, 1.08); } 60% { transform: scale(1.05, 0.95); } }
+@keyframes gd-lava { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+@keyframes gd-caustic { from { transform: translateX(-20px); } to { transform: translateX(20px); } }
+@keyframes gd-fish { from { transform: translateX(-30px); } to { transform: translateX(60px); } }
+@keyframes gd-gem { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-2px) scale(1.06); } }
+@keyframes gd-wing { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(calc(var(--s, 1) * -4deg)); } }
+@keyframes gd-wind { 0% { stroke-dashoffset: 80; opacity: 0; } 25% { opacity: 1; } 75% { opacity: 1; } 100% { stroke-dashoffset: -260; opacity: 0; } }
+@keyframes gd-feather { 0% { transform: translate(-20px, -6px) rotate(-12deg); opacity: 0; } 15% { opacity: 1; } 50% { transform: translate(18px, 8px) rotate(10deg); }
+  85% { opacity: 1; } 100% { transform: translate(52px, 2px) rotate(-6deg); opacity: 0; } }
+.g-dungeon .gd-flicker, .g-dungeon .gd-gem, .g-dungeon .gd-spin, .g-dungeon .gd-wing { transform-box: view-box; }
+@media (prefers-reduced-motion: reduce) {
+  .gd-ember, .gd-bubble, .gd-flicker, .gd-lava, .gd-shimmer, .gd-caustic, .gd-fish, .gd-bob, .gd-gem, .gd-spin, .gd-wing, .gd-wind, .gd-feather { animation: none; }
+  .gd-wind { stroke-dasharray: none; }
+}
+
 .g-boss-hp { position: absolute; left: 10px; right: 10px; bottom: 10px; z-index: 1; }
 .g-boss-hp .bar { height: 22px; padding: 3px; }
 .g-boss-hp .bar { --pxf: linear-gradient(#0a0620b3, #0a0620b3); --pr: 999px; --psh: inset 0 0 0 1px #ffffff2e; }

@@ -94,6 +94,9 @@ const FR = {
   'war.defense': 'Défense', 'war.win': 'Victoire !', 'war.draw': 'Égalité', 'war.loss': 'Défaite', 'mode.guildWar': 'Guerre', 'guild.chat': 'Tchat',
   'guild.shop': 'Boutique', 'guild.total': 'Dégâts de la guilde', 'guild.level': 'Niv. {n}',
   'guild.mine': 'Mes dégâts', 'guild.leader': 'Chef', 'guild.officer': 'Officier',
+  // vague 3 « Boss de guilde » : l'image du donjon de l'élément du boss et le temps qu'il reste (screens/social.tsx)
+  'gboss.fire': 'Donjon de feu', 'gboss.water': "Donjon d'eau", 'gboss.earth': 'Donjon de terre', 'gboss.wind': 'Donjon du vent',
+  'gboss.left': 'pendant {d}',
   'quests.daily': 'Du jour', 'quests.weekly': 'De la semaine', 'quests.activity': 'Activité',
   'quest.login': 'Connexion', 'quest.collectIdle': 'Récolter le butin', 'quest.winStage': 'Gagner en campagne', 'quest.summon': 'Invoquer',
   'quest.levelUp': 'Monter des niveaux', 'quest.fuse': 'Fusionner', 'quest.tower': 'Étages de la tour', 'quest.dungeon': 'Donjon',
@@ -236,6 +239,9 @@ const EN: Record<Key, string> = {
   'war.defense': 'Defense', 'war.win': 'Victory!', 'war.draw': 'Draw', 'war.loss': 'Defeat', 'mode.guildWar': 'War', 'guild.chat': 'Chat',
   'guild.shop': 'Shop', 'guild.total': 'Guild damage', 'guild.level': 'Lv. {n}',
   'guild.mine': 'My damage', 'guild.leader': 'Leader', 'guild.officer': 'Officer',
+  // vague 3 « Boss de guilde » : l'image du donjon de l'élément du boss et le temps qu'il reste (screens/social.tsx)
+  'gboss.fire': 'Fire Dungeon', 'gboss.water': 'Water Dungeon', 'gboss.earth': 'Earth Dungeon', 'gboss.wind': 'Wind Dungeon',
+  'gboss.left': 'for {d}',
   'quests.daily': 'Daily', 'quests.weekly': 'Weekly', 'quests.activity': 'Activity',
   'quest.login': 'Log in', 'quest.collectIdle': 'Collect loot', 'quest.winStage': 'Win campaign stages', 'quest.summon': 'Summon',
   'quest.levelUp': 'Level up heroes', 'quest.fuse': 'Fuse', 'quest.tower': 'Tower floors', 'quest.dungeon': 'Dungeon',
