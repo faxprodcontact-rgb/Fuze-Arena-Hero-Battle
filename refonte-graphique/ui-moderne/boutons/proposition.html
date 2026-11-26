@@ -9,6 +9,7 @@
 <style>
   /* la page de présentation (pas le jeu) : planche des familles, maquettes d'écrans */
   :root { --bg: #150f36; --bg2: #1e1648; --muted: #a69ed3; }
+  * { box-sizing: border-box; }
   html, body { margin: 0; background: var(--bg); color: #fff; font-family: 'Fredoka', system-ui, sans-serif; font-synthesis: none; }
   .board { display: flex; gap: 22px; padding: 26px 26px 30px; width: max-content; background: radial-gradient(120% 70% at 80% 0%, #2a1f63 0%, #150f36 60%); }
   .col { width: 372px; display: flex; flex-direction: column; gap: 14px; }
@@ -113,7 +114,8 @@
   function seg(f, items, on, light) {
     const F = FAM[f];
     if (f === 'etendard') return `<div class="bt-seg">${items.map((x, i) => `<button class="${i === on ? 'on' : ''}">${x}</button>`).join('')}</div>`;
-    return `<div class="bt-seg"${light ? ' style="--seg-c:#d8d3f2"' : ''}>${items.map((x, i) => i === on ? b(f, F.seg, 's', `<span>${x}</span>`) : `<button class="seg-off">${x}</button>`).join('')}</div>`;
+    const L = BT.buttonVars(f, 'creux', 'rail');
+    return `<div class="bt-seg rail" style="--sk:${L['--sk']};--L:${L['--L']};--Ln:${L['--Ln']}">${items.map((x, i) => i === on ? b(f, F.seg, 's', `<span>${x}</span>`) : `<button class="seg-off">${x}</button>`).join('')}</div>`;
   }
 
   function column(f) {

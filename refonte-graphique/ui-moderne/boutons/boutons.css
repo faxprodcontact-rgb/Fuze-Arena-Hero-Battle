@@ -3,7 +3,7 @@
    --sk / --skd (dessin normal / enfoncé), --L et --Ln (largeur des bouts, en px et sans unité), --h, --lip, --tc, --ts. */
 
 /* ---------- le bouton (toutes tailles) : le dessin sur ::before, en 3 morceaux (bouts fixes, milieu étiré) ---------- */
-.bt { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: none;
+.bt { box-sizing: border-box; white-space: nowrap; position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: none;
   height: var(--h); min-width: calc(var(--L) * 2 + 24px); padding: 0 calc(var(--L) + 4px) var(--lip);
   font: 400 var(--fs, 20px)/1 'Lilita One', system-ui, sans-serif; letter-spacing: 0.3px; color: var(--tc); text-shadow: var(--ts);
   border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
@@ -26,7 +26,7 @@
 .bt.s .bt-ico { width: 22px; height: 22px; }
 
 /* ---------- le prix dans le bouton : un creux (picto qui déborde à gauche + chiffre) ; chaque famille le taille à sa façon ---------- */
-.bt-price { display: inline-flex; align-items: center; gap: 2px; height: 22px; padding: 0 8px 0 0; margin-left: 10px;
+.bt-price { white-space: nowrap; display: inline-flex; align-items: center; gap: 2px; height: 22px; padding: 0 8px 0 0; margin-left: 10px;
   font: 400 15px/1 'Lilita One', system-ui, sans-serif; color: #fff; text-shadow: 0 1px 0 #000a; }
 .bt-price img { width: 26px; height: 26px; margin: -4px 0 -4px -14px; filter: drop-shadow(-1px 1px 0 #0007); }
 .bt-col .bt-price { margin-left: 12px; }
@@ -43,24 +43,25 @@
 .bt-seg > button { flex: 1; }
 .bt-seg .seg-off { height: 34px; border: 0; background: none; cursor: pointer; font: 400 15px/1 'Lilita One', system-ui, sans-serif; color: var(--seg-c, #c7c0ea); padding: 0 0 2px; }
 .bt-seg .bt { min-width: 0; }
+/* le rail : un creux de la famille (dessin --bt-<famille>-creux-rail), posé sur son ::before comme un bouton */
+.bt-seg.rail { height: 46px; padding: 0 calc(var(--L) - 9px); gap: 0; }
+.bt-seg.rail::before { content: ''; position: absolute; inset: 0; pointer-events: none;
+  border-style: solid; border-width: 0 var(--L); border-image: var(--sk) 0 var(--Ln) fill / 0 var(--L) stretch; }
+.bt-seg.rail > * { position: relative; z-index: 1; }
+.bt-seg.rail .bt { margin-top: -1px; }
 
 /* ======================== 1. Émail serti ======================== */
-.fam-email .bt-seg { border-radius: 4px; background: linear-gradient(180deg, #14123d, #1f1c55); box-shadow: inset 0 0 0 2px #1c0f26, inset -2px 2px 0 4px #0c0a2a, inset 0 0 0 4px #b77a28;
-  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px); padding: 6px; }
 .fam-email .bt-seg .seg-off { --seg-c: #c9c4ef; }
 .fam-email .bt-price { background: #1c0f2699; border-radius: 3px; box-shadow: inset -1px 1px 0 #0008, inset 1px -1px 0 #ffffff26; }
 .fam-email .bt[data-t="or"] .bt-price { background: #5a2408cc; }
 .fam-email .bt-rond svg { --sg: #fff1c8; }
 
 /* ======================== 2. Pierre de l'arène ======================== */
-.fam-pierre .bt-seg { border-radius: 10px 14px 9px 12px; background: linear-gradient(200deg, #3e3b58, #2a283f); box-shadow: inset 0 0 0 2px #1c0f26, inset 2px -2px 0 2px #ffffff1c, inset -3px 3px 0 2px #0a081a; padding: 6px; }
-.fam-pierre .bt-seg .seg-off { --seg-c: #b3aecb; text-shadow: -1px 1px 0 #00000066; }
+.fam-pierre .bt-seg .seg-off { --seg-c: #bdb8d2; text-shadow: -1px 1px 0 #00000080; }
 .fam-pierre .bt-price { background: #0b081899; border-radius: 6px 8px 5px 7px; box-shadow: inset -2px 2px 0 #00000080, inset 1px -1px 0 #ffffff2e; }
 .fam-pierre .bt[data-t="ardoise"] .bt-price { background: #2e2948b3; }
 
 /* ======================== 3. Cristal élémentaire ======================== */
-.fam-cristal .bt-seg { background: linear-gradient(180deg, #0e0a2ccc, #1d1650cc); box-shadow: inset 0 0 0 2px #1c0f26, inset -1px 1px 0 3px #ffffff1f;
-  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%); padding: 4px 12px; }
 .fam-cristal .bt-seg .seg-off { --seg-c: #bdb5ea; }
 .fam-cristal .bt-price { background: #120a3399; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); padding: 0 12px 0 2px; }
 .fam-cristal .bt-price img { margin-left: -6px; }

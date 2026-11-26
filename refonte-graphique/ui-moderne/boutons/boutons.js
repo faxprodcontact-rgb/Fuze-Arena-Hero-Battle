@@ -7,7 +7,7 @@
 (function () {
   const INK = '#1c0f26';
   // tailles : hauteur totale (épaisseur comprise) et épaisseur (la « lèvre » qui disparaît quand on appuie)
-  const SIZES = { xxl: { h: 84, lip: 7 }, xl: { h: 72, lip: 6 }, l: { h: 62, lip: 6 }, m: { h: 48, lip: 5 }, s: { h: 38, lip: 4 } };
+  const SIZES = { rail: { h: 46, lip: 0 }, xxl: { h: 84, lip: 7 }, xl: { h: 72, lip: 6 }, l: { h: 62, lip: 6 }, m: { h: 48, lip: 5 }, s: { h: 38, lip: 4 } };
 
   let uid = 0;
   const id = (p) => `${p}${++uid}`;
@@ -36,7 +36,8 @@
      ================================================================================================================ */
   const EMAIL = {
     // bezel : cadre d'or [clair, moyen, sombre] ; face : émail [haut, bas] ; ink : couleur du texte et de son ombre
-    or: { bez: ['#fff3b4', '#f2b53a', '#9c5414'], face: ['#ffe07a', '#f3a52c'], glow: '#fff8d0', lip: '#7a3a10' },
+    or: { bez: ['#ffe9a0', '#d08e2c', '#7e400f'], face: ['#ffe58a', '#f4a62a'], glow: '#fffbe0', lip: '#6a300c' },
+    creux: { bez: ['#ffe7a0', '#d99a34', '#8a4a14'], face: ['#0f0d30', '#1f1c58'], glow: '#5b63c8', lip: '#5e2c0e' },
     nuit: { bez: ['#ffe7a0', '#d99a34', '#8a4a14'], face: ['#3a3f97', '#1b1d58'], glow: '#8fa2ff', lip: '#5e2c0e' },
     feu: { bez: ['#ffe7a0', '#d99a34', '#8a4a14'], face: ['#e8553a', '#8a1630'], glow: '#ffb27a', lip: '#5e2c0e' },
     eau: { bez: ['#ffe7a0', '#d99a34', '#8a4a14'], face: ['#3a8ff0', '#142a80'], glow: '#9fe0ff', lip: '#5e2c0e' },
@@ -68,7 +69,7 @@
     const cl = id('c');
     s += `<clipPath id='${cl}'><path d='${en}'/></clipPath><g clip-path='url(#${cl})'>`;
     s += `<path d='${en}' fill='${T.bez[2]}'/>`;
-    s += `<path d='${en}' fill='url(#${g2})' transform='translate(-1.5 1.5)'/>`;
+    s += `<path d='${en}' fill='url(#${g2})' transform='translate(-2.2 2.2)'/>`;
     s += `<path d='${en}' fill='url(#${g3})'/>`;
     // un reflet net de l'émail, en haut à droite (dans le bout droit : il ne s'étire pas)
     s += `<path d='M${w - 2 - bw - c * 1.9} ${y0 + 2 + bw + 2.5}h${c * 1.1}l${-3} ${3}h${-c * 1.1}z' fill='#fff' fill-opacity='0.5'/>`;
@@ -88,30 +89,49 @@
     terre: { st: ['#a08e78', '#5b4c3f', '#372c24', '#251d17'], light: '#f0a02f', core: '#fff0c0' },
     vent: { st: ['#7fa497', '#3f5e55', '#243a34', '#172722'], light: '#3fd884', core: '#dcffe6' },
     arcane: { st: ['#9a8ab8', '#4f4270', '#2e2549', '#1f1834'], light: '#b07bff', core: '#f3e6ff' },
-    ardoise: { st: ['#d8d3e6', '#a7a1c2', '#7c7699', '#55506e'] },
+    ardoise: { st: ['#f6eedc', '#d3c6ad', '#a89a80', '#6f624f'] },
+    creux: { st: ['#57536f', '#2a2840', '#1d1b2f', '#141224'] },
     off: { st: ['#7a7790', '#4f4c63', '#38364a', '#28263a'] },
   };
   function pierre(t, w, h, lip, down) {
     const T = PIERRE[t];
     const y0 = down ? lip - 1 : 0, yb = down ? h - 1 : h - lip;
-    const k = h >= 56 ? 1 : h >= 44 ? 0.8 : 0.65;
-    const cc = [6 * k, 11 * k, 5 * k, 8 * k]; // coins éclatés : haut-gauche, haut-droit, bas-droit, bas-gauche
-    const g1 = id('g'), g2 = id('g'), g3 = id('g');
-    let s = `<defs>${lin(g1, w * 0.7, y0, w * 0.3, yb, [[0, T.st[1]], [1, T.st[2]]])}`;
-    if (T.light) s += rad(g2, w / 2, (y0 + yb) / 2, w * 0.42, (yb - y0) * 0.62, [[0, T.light, 0.75], [0.55, T.light, 0.22], [1, T.light, 0]]);
-    // quelques taches douces de la pierre (pas de grain répété)
-    s += rad(g3, w * 0.22, yb * 0.7, h * 0.5, h * 0.3, [[0, '#000', 0.16], [1, '#000', 0]]);
+    const k = h >= 56 ? 1 : h >= 44 ? 0.82 : 0.66;
+    const cc = [6 * k, 13 * k, 5 * k, 9 * k]; // coins éclatés : haut-gauche, haut-droit, bas-droit, bas-gauche
+    const bv = 4.5 * k + 1; // largeur du biseau
+    const g1 = id('g'), g2 = id('g'), g3 = id('g'), g4 = id('g');
+    let s = `<defs>${lin(g1, w * 0.75, y0, w * 0.25, yb, [[0, T.st[1]], [1, T.st[2]]])}`;
+    if (T.light) s += rad(g2, w / 2, (y0 + yb) / 2 + 1, w * 0.4, (yb - y0) * 0.6, [[0, T.light, down ? 0.85 : 0.7], [0.5, T.light, 0.2], [1, T.light, 0]]);
+    // la pierre n'est pas lisse : quelques taches douces, à des places fixes (pas de grain répété)
+    s += rad(g3, 0.62 * h, yb * 0.72, h * 0.55, h * 0.32, [[0, '#000', 0.2], [1, '#000', 0]]);
+    s += rad(g4, w - h * 0.5, y0 + h * 0.28, h * 0.5, h * 0.26, [[0, '#fff', 0.14], [1, '#fff', 0]]);
     s += `</defs>`;
-    s += `<path d='${oct(0, y0, w, h, cc)}' fill='${INK}' stroke='${INK}' stroke-width='1' stroke-linejoin='round'/>`;
+    s += `<path d='${oct(0, y0, w, h, cc)}' fill='${INK}' stroke='${INK}' stroke-width='1.2' stroke-linejoin='round'/>`;
     if (!down) s += `<path d='${oct(2, y0 + 2, w - 2, h - 2, cc.map((v) => v - 0.8))}' fill='${T.st[3]}'/>`;
     const face = oct(2, y0 + 2, w - 2, yb, cc.map((v) => v - 0.8));
-    // biseau : un filet clair épais en haut et à droite, la pierre, puis le plat de la dalle
-    s += lit(face, T.st[0], `url(#${g1})`, 2.5, 2.5,
-      `<path d='${oct(6, y0 + 6, w - 6, yb - 4, cc.map((v) => Math.max(2, v - 3)))}' fill='url(#${g1})' />` +
-      `<path d='${face}' fill='url(#${g3})'/>` +
-      // un éclat dans le coin haut-droit (le coin cassé reçoit la lumière)
-      `<path d='M${w - 2 - cc[1] - 7 * k} ${y0 + 2}l${4 * k} ${5 * k}l${6 * k} ${-1 * k}z' fill='${T.st[0]}' fill-opacity='0.55'/>` +
-      (T.light ? `<path d='${face}' fill='url(#${g2})'/>` : ''));
+    const cl = id('c');
+    s += `<clipPath id='${cl}'><path d='${face}'/></clipPath><g clip-path='url(#${cl})'>`;
+    // le biseau en 4 pans : en haut et à droite éclairés, en bas et à gauche dans l'ombre
+    s += `<path d='${face}' fill='${T.st[2]}'/>`;
+    s += `<rect x='0' y='${y0}' width='${w}' height='${bv + 2}' fill='${T.st[0]}' fill-opacity='0.75'/>`;
+    s += `<rect x='${w - bv - 2}' y='${y0}' width='${bv + 2}' height='${h}' fill='${T.st[0]}'/>`;
+    s += `<rect x='0' y='${yb - bv - 1}' width='${w - bv - 2}' height='${bv + 1}' fill='${T.st[3]}' fill-opacity='0.6'/>`;
+    s += `<rect x='0' y='${y0 + bv + 2}' width='${bv + 2}' height='${yb - y0}' fill='${T.st[3]}' fill-opacity='0.45'/>`;
+    // le plat de la dalle
+    const top = oct(2 + bv, y0 + 2 + bv, w - 2 - bv, yb - bv, cc.map((v) => Math.max(2, v - bv * 0.6)));
+    s += `<path d='${top}' fill='url(#${g1})'/><path d='${top}' fill='url(#${g3})'/><path d='${top}' fill='url(#${g4})'/>`;
+    // le coin haut-droit est cassé : sa cassure prend la lumière
+    s += `<path d='M${w - 2 - cc[1] - 1} ${y0 + 2}L${w - 2} ${y0 + 2 + cc[1] + 1}L${w - 2 - bv - 2} ${y0 + 2 + cc[1] + 1}L${w - 2 - cc[1] - 1} ${y0 + 2 + bv + 1}Z' fill='#fff' fill-opacity='0.28'/>`;
+    if (T.light) {
+      s += `<path d='${top}' fill='url(#${g2})'/>`;
+      // la lumière passe par deux fêlures, aux bouts (fixes : elles ne s'étirent pas)
+      const crack = (pts) => { const d = 'M' + pts.map((p) => p.join(' ')).join('L');
+        return `<path d='${d}' fill='none' stroke='${T.light}' stroke-opacity='0.5' stroke-width='${3.6 * k}' stroke-linecap='round' stroke-linejoin='round'/><path d='${d}' fill='none' stroke='${T.core}' stroke-width='${1.3 * k + 0.2}' stroke-linecap='round' stroke-linejoin='round'/>`; };
+      const my = (y0 + yb) / 2;
+      s += crack([[2 + bv, my - 6 * k], [2 + bv + 5 * k, my - 2 * k], [2 + bv + 3.5 * k, my + 3 * k], [2 + bv + 9 * k, my + 7 * k]]);
+      s += crack([[w - 2 - bv, my + 5 * k], [w - 2 - bv - 4.5 * k, my + 1 * k], [w - 2 - bv - 3 * k, my - 4 * k], [w - 2 - bv - 8 * k, my - 8 * k]]);
+    }
+    s += `</g>`;
     return s;
   }
 
@@ -129,6 +149,7 @@
     amethyste: { c: ['#f4e4ff', '#c79cff', '#8c56f0', '#5226b0', '#2f136e'], light: '#f0dcff' },
     fume: { c: ['#c9c0ee', '#6a5fa6', '#3e3478', '#262058', '#160f38'], light: '#b9a8ff' },
     off: { c: ['#d6d4e2', '#9e9bb4', '#7a7792', '#55526c', '#38364a'] },
+    creux: { c: ['#6c62a8', '#2a2266', '#1a1446', '#120d36', '#0b0826'] },
   };
   function cristal(t, w, h, lip, down) {
     const T = CRISTAL[t];
@@ -137,7 +158,7 @@
     const hex = (x0, ya, x1, yz, pp) => { const m = (ya + yz) / 2; return P([[x0 + pp, ya], [x1 - pp, ya], [x1, m], [x1 - pp, yz], [x0 + pp, yz], [x0, m]]); };
     const g1 = id('g'), g2 = id('g'), g3 = id('g');
     let s = `<defs>${lin(g1, 0, y0, 0, yb, [[0, T.c[1]], [0.5, T.c[2]], [1, T.c[3]]])}`;
-    if (T.light) s += rad(g2, w / 2, my + 1, w * 0.36, fh * 0.42, [[0, T.light, down ? 0.95 : 0.7], [0.6, T.light, down ? 0.35 : 0.18], [1, T.light, 0]]);
+    if (T.light) s += rad(g2, w / 2, my + 1, w * 0.36, fh * 0.42, [[0, T.light, down ? 1 : 0.85], [0.45, T.light, down ? 0.5 : 0.32], [1, T.light, 0]]);
     s += lin(g3, 0, y0, 0, my, [[0, '#fff', 0.55], [1, '#fff', 0.08]]);
     s += `</defs>`;
     // contour + épaisseur (la gemme est posée : sa tranche se voit en bas)
@@ -156,6 +177,7 @@
     // la table : le cœur, sa lumière, et une facette claire en haut
     s += `<path d='${table}' fill='url(#${g1})'/>`;
     if (T.light) s += `<path d='${table}' fill='url(#${g2})'/>`;
+    s += `<path d='${table}' fill='none' stroke='${T.c[0]}' stroke-opacity='0.45' stroke-width='1'/>`;
     s += `<path d='${hex(2.4 + ins + 2, y0 + 2 + ins * 0.7, w - 2.4 - ins - 2, my + 1, p - ins * 0.35)}' fill='url(#${g3})' fill-opacity='0.55'/>`;
     // une étincelle nette sur l'arête haut-droite
     s += `<path d='M${w - p - 4} ${y0 + 3.2}h${-14}l${2} ${-1.2}h${14}z' fill='#fff' fill-opacity='0.9'/>`;
@@ -197,8 +219,8 @@
     s += `<clipPath id='${cl}'><path d='${cloth}'/></clipPath><g clip-path='url(#${cl})'>`;
     s += `<path d='${cloth}' fill='${T.cl[0]}'/><path d='${cloth}' fill='url(#${g1})' transform='translate(-1 2)'/>`;
     s += `<path d='M${cap - 1} ${y0}h7V${h}h-7z' fill='${T.cl[3]}' fill-opacity='0.55'/><path d='M${w - cap - 5} ${y0}h6V${h}h-6z' fill='${T.cl[3]}' fill-opacity='0.35'/>`;
-    s += `<path d='M${cap - 1} ${y0 + ci + 6}H${w - cap + 1}' stroke='${T.fil}' stroke-width='1.6'/>`;
-    s += `<path d='M${cap - 1} ${yb - ci - 4.5}H${w - cap + 1}' stroke='${T.fil}' stroke-opacity='0.8' stroke-width='1.6'/>`;
+    s += `<path d='M${cap - 1} ${y0 + ci + 4.6}H${w - cap + 1}' stroke='${T.fil}' stroke-width='1.4'/>`;
+    s += `<path d='M${cap - 1} ${yb - ci - 3.2}H${w - cap + 1}' stroke='${T.fil}' stroke-opacity='0.75' stroke-width='1.4'/>`;
     s += `</g>`;
     // embouts de bronze : un cylindre éclairé à droite, une perle claire en haut
     for (const [x0, x1, g] of [[2, cap, g2], [w - cap, w - 2, g3]]) {
@@ -269,10 +291,10 @@
   }
 
   const FAMILIES = {
-    email: { draw: email, tones: Object.keys(EMAIL), L: { xxl: 21, xl: 19, l: 18, m: 15, s: 12 } },
-    pierre: { draw: pierre, tones: Object.keys(PIERRE), L: { xxl: 23, xl: 21, l: 20, m: 17, s: 14 } },
-    cristal: { draw: cristal, tones: Object.keys(CRISTAL), L: { xxl: 40, xl: 34, l: 30, m: 24, s: 19 } },
-    etendard: { draw: etendard, tones: Object.keys(ETENDARD), L: { xxl: 22, xl: 21, l: 20, m: 18, s: 15 } },
+    email: { draw: email, tones: Object.keys(EMAIL), L: { rail: 15, xxl: 21, xl: 19, l: 18, m: 15, s: 12 } },
+    pierre: { draw: pierre, tones: Object.keys(PIERRE), L: { rail: 17, xxl: 23, xl: 21, l: 20, m: 17, s: 14 } },
+    cristal: { draw: cristal, tones: Object.keys(CRISTAL), L: { rail: 22, xxl: 40, xl: 34, l: 30, m: 24, s: 19 } },
+    etendard: { draw: etendard, tones: Object.keys(ETENDARD), L: { rail: 18, xxl: 22, xl: 21, l: 20, m: 18, s: 15 } },
   };
 
   function installButtons(root = document.documentElement) {
@@ -305,7 +327,7 @@
     if (fam === 'pierre') {
       const T = PIERRE[t];
       if (T.light) return { '--tc': T.core, '--ts': `0 0 5px ${T.light}, 0 0 12px ${T.light}, 0 2px 0 #0a061499` };
-      if (t === 'ardoise') return { '--tc': '#332e4c', '--ts': '-1px 1px 0 #ffffff80' };
+      if (t === 'ardoise') return { '--tc': '#3d3224', '--ts': '-1px 1px 0 #fff8e899' };
       return { '--tc': '#9e9ab6', '--ts': '-1px 1px 0 #0000004d' };
     }
     if (fam === 'cristal') {
