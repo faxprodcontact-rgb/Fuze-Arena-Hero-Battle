@@ -247,9 +247,11 @@ SNAKE0 = {
 # l'angle de la tête au repos (degrés, à l'écran) : les quatre du fond regardent à gauche, un peu vers le bas
 HEAD_ANG0 = {'S1': 200, 'S2': 186, 'S3': 176, 'S4': 172, 'S5': 10, 'S6': 14}
 HEADK = 1.15               # les têtes des serpents, un peu plus grandes (lisibles à la taille du jeu)
+# chacune sa taille (jamais toutes pareilles) : celles du fond un peu plus petites
+HEADS = {'S1': 0.9, 'S2': 0.95, 'S3': 1.0, 'S4': 0.97, 'S5': 1.04, 'S6': 1.0}
 
 
-def snake_head_shapes(gape=0.0):
+def snake_head_shapes(gape=0.0, k=HEADK):
     """La tête d'un serpent dans son repère (cou à l'origine, museau vers +x, dessus vers −y) : la silhouette (gueule
     ouverte), l'intérieur de la gueule, la mâchoire du bas dorée, le dessus éclairé."""
     g = gape
@@ -257,15 +259,15 @@ def snake_head_shapes(gape=0.0):
     def lo(p):                                   # la mâchoire du bas s'ouvre autour du coin de la gueule
         r = rot((p[0] - 3.2, p[1] - 0.6), 14 * g)
         return (r[0] + 3.2, r[1] + 0.6)
-    k = HEADK
     K = lambda pts: [(x * k, y * k) for x, y in pts]
-    sil = sm(K([(-0.8, -2.2), (2.4, -3.1), (5.6, -3.3), (8.6, -2.6), (10.9, -1.1), (10.7, -0.2), (8.8, 0.25),
-                lo((8.2, 1.0)), lo((9.8, 2.2)), lo((9.2, 3.1)), lo((5.8, 3.3)), lo((2.4, 2.9)), (-0.8, 2.3)]),
-             sharp=(4, 7, 8), t=0.85)
+    # l'arrière de la tête s'affine jusqu'à la largeur du cou (jamais une boîte posée au bout du corps)
+    sil = sm(K([(-2.6, -1.4), (0.2, -2.4), (2.6, -3.1), (5.6, -3.3), (8.6, -2.6), (10.9, -1.1), (10.7, -0.2), (8.8, 0.25),
+                lo((8.2, 1.0)), lo((9.8, 2.2)), lo((9.2, 3.1)), lo((5.8, 3.3)), lo((2.4, 2.9)), (0.0, 2.3), (-2.6, 1.4)]),
+             sharp=(5, 8, 9), t=0.85)
     mouth = sm(K([(3.4, 0.6), (8.8, 0.25), lo((8.2, 1.0)), lo((5.2, 1.4))]), sharp=(1, 2), t=0.8)
-    jaw = sm(K([lo((3.0, 1.2)), lo((8.4, 1.5)), lo((9.8, 2.2)), lo((9.2, 3.1)), lo((5.8, 3.3)), lo((2.4, 2.9)), (0.0, 2.2)]),
+    jaw = sm(K([lo((3.0, 1.2)), lo((8.4, 1.5)), lo((9.8, 2.2)), lo((9.2, 3.1)), lo((5.8, 3.3)), lo((2.4, 2.9)), (0.0, 2.3), (-2.0, 1.4)]),
              sharp=(2,), t=0.85)
-    top = sm(K([(1.4, -2.5), (5.6, -3.0), (8.6, -2.3), (10.2, -1.2), (7.4, -1.6), (4.0, -1.5)]), t=0.85)
+    top = sm(K([(-0.6, -1.9), (1.4, -2.5), (5.6, -3.0), (8.6, -2.3), (10.2, -1.2), (7.4, -1.6), (4.0, -1.5)]), t=0.85)
     return sil, mouth, jaw, top
 
 
@@ -321,11 +323,9 @@ def snake_parts(fig, P, names, lines):
                 return xf(sh, hx, hy, a)
             return xf(sh, hx, hy, a - 180, -1, 1)
         g = gp.get(k, 0.55)
-        sil, mouth, jaw, top = snake_head_shapes(g)
+        K = HEADK * HEADS[k]
+        sil, mouth, jaw, top = snake_head_shapes(g, K)
         bdet = [(shape_poly(bel), ('lin', gx1, gy1, gx2, gy2, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), 1)]
-        fig.part(k + 'b', body, mat, grad=(gx1, gy1, gx2, gy2, [(0, mat.light), (0.55, mat.base), (1, mat.shadow)]),
-                 cel=1.0, rim=0.55, cast=0.9, details=bdet)
-        K = HEADK
         hd = [(H(top), mat.light, 0.7),
               (H(jaw), ('lin', hx, hy - 1, hx, hy + 4, [(0, GOLD.light), (1, GOLD.shadow)]), 1),
               (H(mouth), THROAT, 1), (H(sm([(4.4 * K, 0.75 * K), (8.4 * K, 0.4 * K), (7.6 * K, 0.95 * K)], t=0.8)), '#8e2a44', 0.8)]
@@ -337,7 +337,10 @@ def snake_parts(fig, P, names, lines):
                (H(ellipse(ex_ + 0.5, ey_ - 0.35, 0.26, 0.2)), '#ffffff', 0.95),
                (H(ribbon([(3.7 * K, -2.45 * K), (5.2 * K, -2.75 * K), (6.7 * K, -2.35 * K)], [0.1, 0.5, 0.1])), mat.deep, 0.75),
                (H(ellipse(9.5 * K, -1.55 * K, 0.34, 0.22, 20)), mat.deep, 0.9)]
-        fig.part(k + 'h', H(sil), mat, cel=0.8, rim=0.5, cast=0.8, details=hd)
+        # le corps et la tête d'UNE seule forme : le cou passe dans la tête sans couture
+        fig.part(k + 'b', union(body, H(sil), step=0.4, smooth=0.5), mat,
+                 grad=(gx1, gy1, gx2, gy2, [(0, mat.light), (0.55, mat.base), (1, mat.shadow)]),
+                 cel=1.0, rim=0.55, cast=0.9, details=bdet + hd)
         # la langue fourchue
         t_ = tg.get(k, 1)
         if t_ > 0.05:

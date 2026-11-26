@@ -664,6 +664,20 @@ def head(fig, P):
     part('face', face, SKIN, grad=(84, 26, 68, 46, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]),
          cel=1.0, rim=0.5, cast=1.0, details=fd)
 
+    # ---- la petite plume de la tempe (sa pointe orangée vient sur la pommette) ----
+    ph, amp = P['ph'], P['amp']
+    a = 80 + amp * 2 * math.sin(ph + 0.4)
+    sh = plume((68.2, 29.6), a, 9.6, 3.4, curl=-24)
+    tp = sh_tip((68.2, 29.6), a, 9.6, -24)
+    part('temple', sh, FEA, grad=(68.2, 29.6, tp[0], tp[1], [(0, '#c42c26'), (0.55, '#f26422'), (1, '#ffb23a')]), cel=0, rim=0.4,
+         cast=0.9, ink=FINK, details=[(under(sh, 0.5, -1.4), '#5a0e2e', 0.35)])
+    # ---- la longue plume qui suit la joue jusque sous la mâchoire (pointe jaune) ----
+    a = 98 + amp * 2 * math.sin(ph - 0.4)
+    sh = plume((67.8, 30.4), a, 18.8, 4.0, curl=-64)
+    tp = sh_tip((67.8, 30.4), a, 18.8, -64)
+    part('cheek', sh, FEA, grad=(67.8, 30.4, tp[0], tp[1], [(0, '#b42a2c'), (0.4, '#e8501e'), (0.75, '#ff9a2a'), (1, '#ffdc68')]),
+         cel=0, rim=0.45, cast=1.1, ink=FINK, details=[(under(sh, 0.7, -1.8), ('lin', 67.6, 29.4, tp[0], tp[1], [(0, '#4a0c2a', 0.5), (1, '#c8381e', 0.3)]), 1)])
+
     # ---- la calotte de plumes (sur le crâne) : la naissance des plumes arrondie sous le diadème, tempe dégagée ;
     # l'arrière se termine en pointes de plumes couchées (pas un bord de casque) ----
     ph, amp = P['ph'], P['amp']
@@ -678,7 +692,7 @@ def head(fig, P):
                                       (((76.6, 25.8), (69.2, 26.4), (62.6, 32.0)), 1.2, '#9a1e32', 0.45),
                                       (((69.6, 31.2), (65.6, 34.6), (62.4, 40.0)), 1.1, '#8e1c32', 0.45)):
         cdet.append((ribbon([a0, a1, a2], [0.15, w_, 0.15]), col, op))
-    part('cap', cap, FEA, cel=0.9, rim=0.6, cast=1.1, cast_on=['face'] + [n for n in fig_names(fig) if n.startswith('h')],
+    part('cap', cap, FEA, cel=0.9, rim=0.6, cast=1.1, cast_on=['face', 'temple', 'cheek'] + [n for n in fig_names(fig) if n.startswith('h')],
          ink=FINK, details=cdet)
 
     # ---- la grande plume du dessus du front : elle monte un peu en avant puis se couche vers l'arrière en suivant
@@ -701,18 +715,6 @@ def head(fig, P):
                   (ellipse(77.6, 23.3, 0.78, 0.82), ('rad', 77.9, 23.0, 0.9, 0.9, [(0, RUBY.light), (0.6, RUBY.base), (1, RUBY.shadow)]), 1),
                   (ellipse(77.9, 23.0, 0.25, 0.22), '#ffeee8', 0.95)])
 
-    # ---- la petite plume de la tempe (sa pointe orangée vient sur la pommette) ----
-    a = 80 + amp * 2 * math.sin(ph + 0.4)
-    sh = plume((68.2, 29.6), a, 9.6, 3.4, curl=-24)
-    tp = sh_tip((68.2, 29.6), a, 9.6, -24)
-    part('temple', sh, FEA, grad=(68.2, 29.6, tp[0], tp[1], [(0, '#c42c26'), (0.55, '#f26422'), (1, '#ffb23a')]), cel=0, rim=0.4,
-         cast=0.9, ink=FINK, details=[(under(sh, 0.5, -1.4), '#5a0e2e', 0.35)])
-    # ---- la longue plume qui suit la joue jusque sous la mâchoire (pointe jaune) ----
-    a = 98 + amp * 2 * math.sin(ph - 0.4)
-    sh = plume((67.8, 30.4), a, 18.8, 4.0, curl=-64)
-    tp = sh_tip((67.8, 30.4), a, 18.8, -64)
-    part('cheek', sh, FEA, grad=(67.8, 30.4, tp[0], tp[1], [(0, '#b42a2c'), (0.4, '#e8501e'), (0.75, '#ff9a2a'), (1, '#ffdc68')]),
-         cel=0, rim=0.45, cast=1.1, ink=FINK, details=[(under(sh, 0.7, -1.8), ('lin', 67.6, 29.4, tp[0], tp[1], [(0, '#4a0c2a', 0.5), (1, '#c8381e', 0.3)]), 1)])
     return names
 
 

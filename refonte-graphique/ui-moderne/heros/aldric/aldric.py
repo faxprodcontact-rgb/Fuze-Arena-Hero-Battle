@@ -82,13 +82,14 @@ _E, _W = ik(FS0, FW0, 8.4, 6.2, 1.0)
 FA_REST = math.degrees(math.atan2(_W[1] - _E[1], _W[0] - _E[0]))
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, tail=0.0, pg=0.0, blink=0.0,
-            fw=FW0, fbend=1.0, fsh=0.0, ffront=0.0, frot=0.0, ringF=1.0, rF_sy=1.0, rF_spin=0.0, rF_rot=0.0,
-            nw=NW0, nrot=0.0, ringN=1.0, fa=FA0, fext=0.0, foot=0.0, fkb=1.0, hot=0.0, gl=None, gn=None,
+            fw=FW0, fbend=1.0, fsh=0.0, ffront=0.0, frot=0.0, ringF=1.0, rF_sy=1.0, rF_spin=0.0, rF_rot=0.0, rF_da=0.0,
+            nw=NW0, nrot=0.0, ringN=1.0, fa=FA0, fext=0.0, foot=0.0, fkb=-1.0, hot=0.0, gl=None, gn=None,
             shift=0.0, lift=0.0)
 
 
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P = dict(REST, **(pose or {}))
+    _LAST.clear()
     fig = Figure(*frame, ow=ow)
     hot = P['hot']
     bronze = matmix(BRONZE, BRONZE_HOT, 0.5 * hot)
@@ -117,7 +118,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         k = P['fsh']
         L1, L2 = 8.4 + 4.2 * k, 6.2 + 6.6 * k
         S = FS0
-        E, W = ik(S, P['fw'], L1, L2, P['fbend'])
+        E, W = ik(S, P['fw'], L1, L2, 1)
+        E2, W2 = ik(S, P['fw'], L1, L2, -1)
+        if E2[1] > E[1]:                         # le coude lointain reste toujours en bas
+            E, W = E2, W2
         arm = body_limb([S, E, W], [(0, 4.6, 4.4), (0.3, 4.2, 4.1), (0.55, 3.6, 3.5), (0.72, 3.5, 3.4), (1, 3.2, 3.1)],
                         n=20, soft=True)
         a1, a2 = Seg(S, E), Seg(E, W)
@@ -133,7 +137,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         if P['ringF'] > 0.5:
             G = mapp(M, (104.2, 56.0))
             q = mapp(M, (105.2, 56.0))
-            d = (q[0] - G[0], q[1] - G[1])           # du poing vers le centre de l'anneau
+            d = rot((q[0] - G[0], q[1] - G[1]), P['rF_da'])   # du poing vers le centre de l'anneau
             sy = P['rF_sy']
             Rm = (RR + Rr) / 2 * math.hypot(d[0], d[1] * sy)
             C = (G[0] + d[0] * Rm, G[1] + d[1] * Rm)
@@ -184,7 +188,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fleg = leg('f', FHIP, P['fa'], 12.8 + 8.4 * fe, 10.6 + 2.6 * fe, P['fkb'],
                [(0, 7.0, 7.0), (0.4, 6.4, 7.0), (0.56, 6.6, 7.6), (0.78, 6.0, 6.4), (0.92, 4.6, 4.8), (1, 3.9, 3.9)],
                foot_far(), P['foot'], None)
-    nleg = leg('n', NHIP, NA0, 12.2, 10.4, 1,
+    nleg = leg('n', NHIP, NA0, 12.2, 10.4, -1,
                [(0, 7.0, 7.0), (0.42, 6.6, 6.6), (0.58, 7.0, 6.8), (0.78, 6.2, 6.0), (0.92, 4.6, 4.6), (1, 3.9, 3.9)],
                foot_near(), 0.0, None)
 
@@ -267,11 +271,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         sh = cut_strip(pts, w0, w1, slant=(1 if name == 'sash1' else -1))
         fig.part(name, sh, RED, cel=0.8, rim=0.55, cast=0.9,
                  details=[(ribbon([lerp(pts[0], pts[1], 0.5), pts[2], lerp(pts[2], pts[3], 0.8)], [0.1, 0.6, 0.1]), RED.shadow, 0.55)])
-    knot = sm([(67.4, 77.6), (69.0, 75.8), (71.6, 75.6), (73.6, 76.8), (74.0, 79.4), (73.0, 82.0), (70.4, 82.8),
-               (68.2, 81.8), (67.2, 79.8)])
+    knot = sm([(67.6, 77.0), (70.4, 75.8), (73.4, 76.4), (74.2, 78.8), (73.6, 81.4), (70.8, 82.4), (68.2, 81.6),
+               (67.2, 79.4)])
     fig.part('knot', knot, RED, cel=0.8, rim=0.6, cast=1.0,
-             details=[(ribbon([(68.6, 77.4), (70.6, 79.4), (72.2, 82.2)], [0.1, 0.9, 0.1]), RED.shadow, 0.6),
-                      (ellipse(72.2, 77.4, 1.0, 0.6, -30), RED.hi, 0.8)])
+             details=[(ribbon([(69.0, 76.6), (70.4, 79.2), (70.6, 82.0)], [0.1, 0.9, 0.1]), RED.shadow, 0.6),
+                      (ribbon([(71.0, 76.4), (72.8, 78.2), (73.2, 80.6)], [0.1, 0.7, 0.1]), RED.hi, 0.6),
+                      (ribbon([(67.8, 79.0), (69.0, 80.6), (70.4, 81.6)], [0.1, 0.6, 0.1]), RED.deep, 0.35)])
 
     if P['ffront'] > 0.5:
         FAR = far_arm()
@@ -292,6 +297,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         chakram(fig, 'ringN', C, 0.6, 0.88, -6.0 + (a2.deg + P['nrot'] - na) * 0.6, 15.0, bronze, P['gn'], cast=0.9)
     arm = body_limb([S, E, W], [(0, 5.3, 5.3), (0.16, 5.0, 4.6), (0.3, 4.3, 4.4), (0.5, 3.7, 3.7), (0.6, 3.6, 3.6),
                                 (0.7, 4.0, 3.8), (1, 3.3, 3.2)], n=28, soft=True)
+    # l'épaule ronde (le deltoïde) fondue avec le bras : une seule forme, aucune couture
+    delt = ellipse(S[0] - 0.4, S[1] - 0.2, 5.5, 5.1, a1.deg - 90)
+    arm, _ = fuse([arm, delt], smooth=1.2)
     ad = [(ellipse(*a1.at(0.1, 1.2), 3.8, 4.4, a1.deg), SKIN.light, 0.45),
           (ribbon([a1.at(0.18, -4.4), a1.at(0.34, -1.0), a1.at(0.28, 3.6)], [0.1, 0.7, 0.1]), SKIN.shadow, 0.4),
           (ellipse(*a1.at(0.62, 1.8), 2.0, 4.0, a1.deg - 90), SKIN.light, 0.35),
