@@ -461,6 +461,9 @@ def head(fig, P, HEAD):
 #   x vers les jointures (à droite), y vers le petit doigt (en bas) ; (0, 0) = le creux où passe le manche.
 FIST_FINGERS = [(-6.6, -3.1, 5.6), (-3.1, 0.3, 6.2), (0.3, 3.4, 5.8), (3.4, 6.1, 4.6)]   # (haut, bas, jointure) de
 FIST_XL = -2.6                                                                           # l'index au petit doigt
+FIST_GRIP = 29.5                 # poing proche : le creux du poing sur le manche (distance depuis le haut du manche)
+FIST_HN = (-4.6, 5.0)            # poing proche : le talon de la main (vers le poignet, en bas à gauche)
+FIST_KF, FIST_WF, FIST_HF = 0.95, (-3.2, -9.6), (-4.6, -4.0)   # poing lointain : taille, poignet, talon (en haut)
 
 
 def fist_parts(fig, name, M, cast_on, wrist, heel):
@@ -599,9 +602,10 @@ def far_arm(fig, P, UC):
             fig.ctx_arm['ftips'] = tips
         else:
             a = math.radians(P['fang'] - 90)
-            M = mchain(mT(W[0], W[1]), (math.cos(a), math.sin(a), -math.sin(a), math.cos(a), 0, 0), mT(-2.4, 2.0))
-            fist_parts(fig, 'ff', M, ['farm', 'fsleeve'])
-            fig.ctx_arm['ftips'] = [mapp(M, (13, 5))]
+            M = mchain(mT(W[0], W[1]), (math.cos(a), math.sin(a), -math.sin(a), math.cos(a), 0, 0), mS(FIST_KF),
+                       mT(-FIST_WF[0], -FIST_WF[1]))
+            fist_parts(fig, 'ff', M, ['farm', 'fsleeve'], W, FIST_HF)
+            fig.ctx_arm['ftips'] = [mapp(M, (6.4, 0.5))]
     return draw
 
 
@@ -749,9 +753,11 @@ def near_hand(fig, P):
                       (sm(A([(21.8, 11.8), (26.2, 11.4), (26.3, 12.6), (21.9, 13.0)])), IRON.light, 0.9),
                       (ellipse(*mapp(MA, (24.0, 9.8)), 0.7, 0.7), IRON.glint, 0.9)])
     # ---- le poing proche, serré sur le manche (les doigts devant) ----
-    th = math.radians(AXE0 + 90)                     # les doigts barrent le manche, les jointures côté lame
-    Mh = mchain(MA, mT(23.4 + GRIP * HU[0], 17.6 + GRIP * HU[1]), (math.cos(th), math.sin(th), -math.sin(th), math.cos(th), 0, 0), mS(0.92))
-    fist_parts(fig, 'nf', Mh, ['handle', 'narm', 'socket'])
+    # les doigts entourent le manche (le manche passe dans le creux du poing, visible au-dessus et au-dessous), le
+    # talon de la main descend jusqu'au vrai poignet, dans le brassard
+    O = (22.4 + FIST_GRIP * HU[0], 2.0 + FIST_GRIP * HU[1])
+    Mh = mchain(MA, mT(*O), (HU[1], -HU[0], HU[0], HU[1], 0, 0), mS(0.92))
+    fist_parts(fig, 'nf', Mh, ['handle', 'mantle', 'socket'], fig.ctx_arm['nW'], FIST_HN)
 
 
 def main():

@@ -578,28 +578,21 @@ def hat(fig, P):
     fold = sm([(44.0, 36.4), (48.0, 38.0), (54.0, 38.8), (60.0, 38.6), (62.8, 37.2), (63.4, 39.8), (60.0, 41.0), (52.0, 41.0),
                (46.0, 40.4), (43.6, 38.8)], t=0.9)
     # le galon d'or : le long du bord libre (bout, devant, pli, aile), pas sur le bord du fond qui touche la calotte
-    from shapely.geometry import Polygon, LineString
+    from shapely.geometry import Polygon, LineString, Point
     B = Polygon(poly(brim, 16)).buffer(0)
     mask = Polygon([(62.8, 30.0)] + [(x, y + 1.6) for x, y in HAT_TOP[::-1][:-1]] + [(100.0, 39.3), (100.0, 30.0)])
     gal = []
     for d_, w_, col, op in ((0.6, 1.2, GOLD.base, 1), (0.42, 0.42, GOLD.hi, 0.75)):
-        ring = B.buffer(-d_, join_style=1).exterior
-        ln_ = ring.difference(mask)
-        segs = [s for s in getattr(ln_, 'geoms', [ln_]) if s.length > 2]
-        # la ligne du galon (un seul morceau : on recolle les bouts du cercle coupé par le masque)
-        if len(segs) > 1:
-            segs.sort(key=lambda s: -s.length)
-            a_, b_ = segs[0], segs[1]
-            cs = list(a_.coords)
-            if Polygon(mask).distance(LineString([cs[-1], cs[-1]])) < 0.01 and b_.coords[0] == cs[-1]:
-                cs += list(b_.coords)[1:]
-            elif list(b_.coords)[-1] == cs[0]:
-                cs = list(b_.coords)[:-1] + cs
-            segs = [LineString(cs)]
-        for s in segs:
-            c_ = list(s.simplify(0.05).coords)
-            c_ = crpath(c_[::max(1, len(c_) // 60)] + [c_[-1]], 3)
-            gal.append((ribbon(c_, [w_ * 0.5] + [w_] * (len(c_) - 2) + [w_ * 0.5], sharp_ends=False), col, op))
+        ring = list(B.buffer(-d_, join_style=1).exterior.coords)[:-1]
+        inm = [mask.contains(Point(p)) for p in ring]
+        # on fait tourner le cercle pour que la partie masquée (le bord du fond) soit aux deux bouts, puis on l'enlève
+        k0 = next(i for i in range(len(ring)) if inm[i] and not inm[i - 1])
+        ring, inm = ring[k0:] + ring[:k0], inm[k0:] + inm[:k0]
+        c_ = [p for p, m in zip(ring, inm) if not m]
+        c_ = LineString(c_).simplify(0.04).coords
+        c_ = crpath(list(c_), 3) if len(c_) < 200 else list(c_)
+        n_ = len(c_)
+        gal.append((ribbon(c_, [w_ * min(1.0, 0.4 + i / 6, 0.4 + (n_ - 1 - i) / 6) for i in range(n_)], sharp_ends=False), col, op))
     bd = [(sm(FLAP[2:] + [(46.0, 40.0), (40.0, 40.0), (40.0, 20.0)]), ('lin', 60, 22, 46, 38, [(0, HAT.base, 0), (1, HAT.shadow, 0.55)]), 1),
           (ribbon(crpath([(51.8, 22.4), (55.0, 21.6), (58.4, 23.4), (60.4, 26.8), (61.0, 30.4)], 16), swell(16, 1.2)), HAT.light, 0.7),
           (ribbon(crpath([(53.4, 22.2), (56.4, 22.4), (58.6, 24.6)], 10), swell(10, 0.45)), HAT.hi, 0.55),
