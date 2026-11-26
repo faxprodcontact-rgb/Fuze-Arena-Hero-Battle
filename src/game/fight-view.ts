@@ -42,18 +42,11 @@ const FEET = 47;
 /** Un grand boss est seul en face : au milieu du côté ennemi, un peu plus loin du bord pour que sa queue tienne. */
 const BIG_BOSS_X = 548;
 /**
- * Place des combattants (essai demandé le 25/11) : `gap` = l'écart au milieu entre les deux premières colonnes (unités),
- * chaque équipe recule vers son bord ; `dx` / `dy` resserrent ou écartent les équipiers (en X depuis la première
- * colonne, en Y autour du rang du milieu), `size` règle la taille des dessins. Variante 0 = la place actuelle (celle du
- * jeu) ; les autres ne servent qu'au test, par l'adresse (`?layout=1|2|3`). Pour en garder une : la mettre en première ligne.
+ * Place des combattants (choisie le 26/11, « V1 ») : `gap` = l'écart au milieu entre les deux premières colonnes
+ * (unités), chaque équipe recule vers son bord ; `dx` / `dy` resserrent les équipiers (en X depuis la première colonne,
+ * en Y autour du rang du milieu), `size` règle la taille des dessins.
  */
-const LAYOUTS = [
-  { gap: 230, dx: 1, dy: 1, size: 1 },
-  { gap: 288, dx: 0.88, dy: 1, size: 0.95 },
-  { gap: 334, dx: 0.78, dy: 1.05, size: 0.9 },
-  { gap: 380, dx: 0.66, dy: 1.1, size: 0.85 },
-] as const;
-const BATTLE_LAYOUT = LAYOUTS[Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('layout')) || 0] ?? LAYOUTS[0];
+const BATTLE_LAYOUT = { gap: 288, dx: 0.88, dy: 1, size: 0.95 } as const;
 /** Une place en X (côté héros, depuis le bord gauche) avec l'écart choisi ; les ennemis sont en miroir. */
 const spreadX = (x: number) => (W - BATTLE_LAYOUT.gap) / 2 + (x - HERO_X[0]) * BATTLE_LAYOUT.dx;
 
