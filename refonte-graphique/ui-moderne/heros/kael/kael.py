@@ -17,7 +17,7 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..'))
-from atelier import Figure, Mat, sm, lock, limb, ribbon, xf, ellipse, rpoly  # noqa: E402
+from atelier import Figure, Mat, sm, lock, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
@@ -36,13 +36,44 @@ GRD = 115          # le sol
 FRAME = (-4, -5, 133, 122)
 FEET = (63, 115)
 
+# ---------- le squelette (animation) ----------
+# Une pose = ces réglages ; REST est la pose du dessin. Tout est en pixels du dessin et en degrés (y vers le bas).
+#   breath : souffle 0..1 (le buste se gonfle, épaules et tête montent) ; crouch : il se tasse dans la fente (0..3) ;
+#   lean : il se penche en avant (+) ou en arrière (−) ; head : décalage de la tête ; tilt : la tête tourne ;
+#   ph : phase des flammes (elles ondulent sans arrêt) ; trail : les flammes s'étirent vers l'arrière (il fonce) ;
+#   flare / rise : elles flambent plus grandes / se dressent ; glow : la lave s'embrase (0..3) ; molten : la lave
+#   coule sur la lame (0..2) ; farm / farm_rot : la griffe ; pg : le pagne se balance ; blink : yeux éteints ;
+#   hand : où est le poing (point de prise) ; ang : où pointe la lame ; edge : le tranchant devant (+1) ou derrière
+#   (−1) ; bend : le coude (−1..1) ; stretch : la lame s'allonge par la vitesse.
+G0 = (33.8, 84.3)                                     # la garde, au repos
+ANG0 = math.degrees(math.atan2(0.478, -0.878))        # la lame part vers le bas à gauche
+GRIP = (-7.4, 0.4)                                    # le point de prise, dans le repère de l'épée
+WRIST = (-11.5, 2.73)                                 # le poignet, dans le repère de l'épée
+S0 = (60.0, 53.6)                                     # l'épaule proche
+L1, L2 = 17.17, 11.66                                 # bras, avant-bras
+
+
+def rot(v, deg):
+    a = math.radians(deg)
+    return (v[0] * math.cos(a) - v[1] * math.sin(a), v[0] * math.sin(a) + v[1] * math.cos(a))
+
+
+HAND0 = (G0[0] + rot(GRIP, ANG0)[0], G0[1] + rot(GRIP, ANG0)[1])
+REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, trail=0.0, flare=0.0, rise=0.0,
+            glow=0.0, molten=0.0, farm=(0.0, 0.0), farm_rot=0.0, pg=0.0, blink=0.0, hand=HAND0, ang=ANG0, edge=1,
+            bend=1.0, stretch=0.0)
+_GL = [0.0]                                           # l'embrasement en cours (lueur des veines)
+
 
 def lava_vein(fig, pts, w=1.0, glow=2.6):
     """Une veine de lave : une lueur douce (dégradé), la fêlure rouge, un cœur jaune clair. Rendue en détails."""
     core = ribbon(pts, [0.15] + [w] * (len(pts) - 2) + [0.15])
     hot = ribbon(pts, [0.05] + [w * 0.45] * (len(pts) - 2) + [0.05])
     halo = ribbon(pts, [0.6] + [w * glow] * (len(pts) - 2) + [0.6])
-    return [(halo, LAVA[3], 0.28), (core, LAVA[4], 1), (hot, LAVA[1], 1)]
+    g = _GL[0]
+    if g > 0:
+        halo = ribbon(pts, [0.6] + [w * glow * (1 + 0.35 * g)] * (len(pts) - 2) + [0.6])
+    return [(halo, LAVA[3], min(0.75, 0.28 + 0.14 * g)), (core, LAVA[4], 1), (hot, LAVA[1] if g < 2 else LAVA[0], 1)]
 
 
 def fissure(pts, w=0.8):
@@ -52,12 +83,27 @@ def fissure(pts, w=0.8):
     return [(hl, ROCK.hi, 0.55), (sh, ROCK.deep, 0.75)]
 
 
-def build(ow=0.95):
-    fig = Figure(*FRAME, ow=ow)
+def build(ow=0.95, pose=None, fx=None, frame=FRAME):
+    P = dict(REST, **(pose or {}))
+    _GL[0] = P['glow']
+    fig = Figure(*frame, ow=ow)
+
+    # ---- le squelette : une matrice par groupe de morceaux ----
+    dyb = P['crouch'] * 0.85
+    U = mchain(mT(P['lean'] * 0.35, dyb), mR(P['lean'] * 1.1, 76, 86))       # le haut du corps (depuis les hanches)
+    br = P['breath']
+    UC = mchain(U, mT(0, -0.55 * br))                                         # ce qui monte avec la poitrine
+    TOR = mchain(U, mS(1, 1 + 0.014 * br, 76, 82))                            # le buste se gonfle
+    HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], 89, 47), mS(1.1, 1.1, 90, 48))   # tête un peu plus grande
+    FARM = mchain(UC, mT(*P['farm']), mR(P['farm_rot'], 96, 53))
+    CLO = mchain(U, mskx(-0.06 * P['pg'], 80))
+    LEG = mS(1, 1 - dyb / 31, 0, GRD)                                         # les jambes plient (pieds au sol)
 
     # ---- lueur de la crinière et de la griffe (derrière tout) ----
-    fig.glow(66, 22, 40, 26, '#ff7a1e', 0.22)
-    fig.glow(116, 55, 12, 12, '#ff8a2a', 0.3)
+    gx, gy = mapp(HEAD, (66, 22))
+    fig.glow(gx, gy, 40 + 6 * P['flare'], 26 + 6 * P['flare'], '#ff7a1e', 0.22 + 0.1 * P['glow'])
+    cx_, cy_ = mapp(FARM, (116, 55))
+    fig.glow(cx_, cy_, 12, 12, '#ff8a2a', 0.3)
 
     # ---- la crinière : six mèches de flamme, de la plus basse à la plus haute (chacune pose sa ligne rouge sombre
     # sur la suivante) ; leurs racines passent sous la calotte de cheveux ----
@@ -71,6 +117,7 @@ def build(ow=0.95):
         ('mB', (82.5, 19), (73, 22), (58, 21.5), (53.5, 6.5), 12.5, None),
         ('mA', (89, 17.5), (85, 13), (76.5, 14.5), (71.5, 2.5), 10.0, None),
     ]
+    LOCKS = [wave_lock(i, L, P) for i, L in enumerate(LOCKS)]
     for name, p0, p1, p2, p3, w0, spur in LOCKS:
         if spur:
             # une petite langue de feu, derrière la mèche, qui sort de son dessus
@@ -181,10 +228,11 @@ def build(ow=0.95):
     det += fissure([(94.4, 64.4), (93.2, 68.6)], 0.6)
     # LA grande fêlure du sternum : un cœur de lave blanc-jaune qui descend en zigzag jusqu'à la ceinture
     st = [(83.6, 49.2), (82.6, 53.2), (84.2, 57.2), (82.8, 61.8), (84, 65.8), (82.8, 70.4), (83.8, 74.6), (83, 79.2)]
-    det += [(ribbon(st, [0.3] + [4.6] * 6 + [0.6]), LAVA[3], 0.22),
-            (ribbon(st, [0.2] + [1.9] * 6 + [0.4]), LAVA[4], 1),
-            (ribbon(st, [0.1] + [1.1] * 6 + [0.2]), LAVA[2], 1),
-            (ribbon(st, [0.05] + [0.5] * 6 + [0.1]), LAVA[0], 1)]
+    g = P['glow']
+    det += [(ribbon(st, [0.3] + [4.6 + 1.2 * br + 1.8 * g] * 6 + [0.6]), LAVA[3], min(0.8, 0.2 + 0.14 * br + 0.16 * g)),
+            (ribbon(st, [0.2] + [1.9 + 0.3 * g] * 6 + [0.4]), LAVA[4], 1),
+            (ribbon(st, [0.1] + [1.1 + 0.3 * g] * 6 + [0.2]), LAVA[2] if g < 2 else LAVA[1], 1),
+            (ribbon(st, [0.05] + [0.5 + 0.12 * br + 0.3 * g] * 6 + [0.1]), LAVA[0], 1)]
     fig.part('torso', torso, ROCK, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(ROCK.deep, 0.25, 3.4))
 
     # ---- la tassette (hanche proche) puis la ceinture de cuir (plus basse devant) ----
@@ -225,9 +273,15 @@ def build(ow=0.95):
     eyeN = sm([(84.0, 32.0), (90.8, 33.7), (88.6, 35.3), (85.3, 34.5)], sharp=(0, 1))
     eyeF = sm([(95.3, 33.3), (99.7, 31.9), (98.7, 34.1), (96.3, 34.5)], sharp=(0, 1))
     for e, (cx, cy) in ((eyeN, (88.7, 34.1)), (eyeF, (98.3, 33.1))):
-        hd += [(e.scale(1.16, 1.32, cx - 0.6, cy - 0.2), '#4a1420', 0.9),
-               (e, ('rad', cx, cy, 3.6, 2.2, [(0, LAVA[0]), (0.35, LAVA[1]), (0.75, LAVA[2]), (1, LAVA[3])]), 1)]
-    hd += [(ellipse(89.2, 34.0, 0.6, 0.45), '#ffffff', 1), (ellipse(98.7, 33.0, 0.48, 0.38), '#ffffff', 1)]
+        if P['blink'] > 0.5:
+            # les yeux de braise s'éteignent : une paupière de pierre, une fente rouge sombre
+            hd += [(e.scale(1.16, 1.32, cx - 0.6, cy - 0.2), '#4a1420', 0.9), (e, F3, 1),
+                   (e.scale(1, 0.25, cx, cy + 0.9), LAVA[4], 0.9)]
+        else:
+            hd += [(e.scale(1.16, 1.32, cx - 0.6, cy - 0.2), '#4a1420', 0.9),
+                   (e, ('rad', cx, cy, 3.6, 2.2, [(0, LAVA[0]), (0.35, LAVA[1]), (0.75, LAVA[2]), (1, LAVA[3])]), 1)]
+    if P['blink'] <= 0.5:
+        hd += [(ellipse(89.2, 34.0, 0.6, 0.45), '#ffffff', 1), (ellipse(98.7, 33.0, 0.48, 0.38), '#ffffff', 1)]
     # arcades : le dessus éclairé
     hd += [(sm([(81.4, 27.2), (86.4, 27.6), (93.2, 30.4), (92.6, 32.0), (86.6, 30.6), (81.8, 30.4)], sharp=(0, 3)), ROCK.light, 0.95),
            (sm([(94.0, 30.6), (97.6, 28.4), (101.9, 28.4), (101.0, 30.2), (97.6, 30.9), (94.4, 31.9)], sharp=(0, 3)), ROCK.light, 0.9)]
@@ -266,11 +320,13 @@ def build(ow=0.95):
               (80.4, 16.6), (88, 15.6), (95, 17.6), (99.8, 21.2)], sharp=(2, 5))
     fig.part('cap', cap, FLAME, cel=0.9, rim=0.8, cast=1.1, cast_on=['head'], ink=flame_ink,
              details=[(cap, ('rad', 94, 19, 22, 22, [(0, '#fff0a8'), (0.35, '#ffcc40'), (0.75, '#ff9426'), (1, '#f06a1e')]), 1)])
-    # la flamme du front : elle monte, puis repart vers l'arrière par-dessus le crâne (une vague, pas une corne)
-    fore = lock((96.2, 23.2), (104.8, 18.6), (99.5, 7.6), (82.5, 7.6), 14.5, bulge=0.15)
-    fig.part('fore', fore, FLAME, grad=(99, 24, 85, 8, [(0, '#fff0a8'), (0.3, '#ffc63c'), (0.7, '#ff8424'), (1, '#e03a1a')]),
-             cel=0, rim=0.9, cast=1.2, ink=flame_ink,
-             details=[(sm_under(fore), ('lin', 99, 24, 89, 3, [(0, '#ff9a2a'), (1, '#c8301a')]), 0.85)])
+    # la mèche de devant (refaite le 26/11, demande du propriétaire) : des langues de feu qui naissent au bord du front,
+    # montent un peu en avant puis se couchent vers l'arrière comme le reste de la crinière, la pointe relevée
+    for name, p0, p1, p2, p3, w0 in front_locks(P):
+        sh = lock(p0, p1, p2, p3, w0, bulge=0.3)
+        fig.part(name, sh, FLAME, grad=(p0[0], p0[1], p3[0], p3[1], [(0, '#fff0a8'), (0.3, '#ffc63c'), (0.68, '#ff8424'), (1, '#e03a1a')]),
+                 cel=0, rim=0.8, cast=1.1, ink=flame_ink,
+                 details=[(sm_under(sh), ('lin', p0[0], p0[1], p3[0], p3[1], [(0, '#ff9a2a'), (1, '#c8301a')]), 0.85)])
 
     # ---- l'oreille pointue, couchée en arrière ----
     ear = sm([(81, 31.4), (77.4, 29.6), (71.6, 26.8), (73.8, 30), (77.2, 34.6), (80.8, 38.6)], sharp=(2,))
@@ -278,33 +334,58 @@ def build(ow=0.95):
              details=[(sm([(79.8, 32.6), (76.4, 30.6), (74.8, 29.8), (77.6, 33.6), (80.2, 36.4)], sharp=(2,)), ROCK.deep, 0.6)])
 
     # ---- l'épée noire (lame, garde, poignée, pommeau), tenue par la main proche ----
-    G = (33.8, 84.3)                 # la garde
-    ang = math.degrees(math.atan2(0.478, -0.878))   # la lame part vers le bas à gauche
-    blade = xf(sm([(0, -3.0), (32.5, -2.5), (40.2, -0.5), (38.2, 2.6), (0, 3.4)], sharp=(0, 2, 3, 4), t=0.4), G[0], G[1], ang)
-    edgeb = xf(sm([(0, 1.5), (37.6, 1.1), (38.2, 2.6), (0, 3.4)], sharp=(0, 1, 2, 3), t=0.3), G[0], G[1], ang)
-    fuller = xf(ribbon([(3, -0.2), (16, -0.3), (29, -0.4)], [0.2, 1.1, 0.2]), G[0], G[1], ang)
-    grip = xf(sm([(-1, -1.3), (-15, -1.2), (-15, 1.2), (-1, 1.3)], sharp=(0, 1, 2, 3), t=0.3), G[0], G[1], ang)
-    guard = xf(sm([(1.3, -6.8), (1.5, 7.0), (-0.7, 7.6), (-1.6, 0), (-0.9, -7.4)], sharp=(0, 1, 2, 4)), G[0], G[1], ang)
+    # la pose de l'épée : le poing (point de prise) et l'angle de la lame donnent la garde ; edge = −1 retourne la lame
+    ang, sg = P['ang'], P['edge']
+    gp = rot((GRIP[0], GRIP[1] * sg), ang)
+    G = (P['hand'][0] - gp[0], P['hand'][1] - gp[1])
+    st_ = 1 + 0.035 * P['stretch']
+
+    def xs(sh, ox, oy, a):           # le repère de l'épée et du poing, retourné si besoin
+        return xf(sh, ox, oy, a, 1, sg)
+
+    def xfb(sh, ox, oy, a):          # la lame : allongée par la vitesse
+        return xf(sh, ox, oy, a, st_, sg)
+    mol = P['molten']
+    blade = xfb(sm([(0, -3.0), (32.5, -2.5), (40.2, -0.5), (38.2, 2.6), (0, 3.4)], sharp=(0, 2, 3, 4), t=0.4), G[0], G[1], ang)
+    edgeb = xfb(sm([(0, 1.5), (37.6, 1.1), (38.2, 2.6), (0, 3.4)], sharp=(0, 1, 2, 3), t=0.3), G[0], G[1], ang)
+    fuller = xfb(ribbon([(3, -0.2), (16, -0.3), (29, -0.4)], [0.2, 1.1, 0.2]), G[0], G[1], ang)
+    grip = xs(sm([(-1, -1.3), (-15, -1.2), (-15, 1.2), (-1, 1.3)], sharp=(0, 1, 2, 3), t=0.3), G[0], G[1], ang)
+    guard = xs(sm([(1.3, -6.8), (1.5, 7.0), (-0.7, 7.6), (-1.6, 0), (-0.9, -7.4)], sharp=(0, 1, 2, 4)), G[0], G[1], ang)
     fig.part('blade', blade, BLADE, cel=0.9, rim=0.8, cast=0,
-             details=[(edgeb, ('lin', G[0], G[1], G[0] - 38, G[1] + 21, [(0, LAVA[3]), (0.6, LAVA[2]), (1, LAVA[1])]), 1),
-                      (xf(sm([(0, 2.6), (37.8, 2.1), (38.2, 2.6), (0, 3.4)], sharp=(0, 1, 2, 3), t=0.3), G[0], G[1], ang), LAVA[1], 1),
+             details=[(edgeb, ('lin', G[0], G[1], G[0] + rot((40, 0), ang)[0], G[1] + rot((40, 0), ang)[1],
+                                [(0, LAVA[3] if mol < 1 else LAVA[1]), (0.6, LAVA[2] if mol < 1 else LAVA[0]), (1, LAVA[1] if mol < 2 else LAVA[0])]), 1),
+                      (xfb(sm([(0, 2.6), (37.8, 2.1), (38.2, 2.6), (0, 3.4)], sharp=(0, 1, 2, 3), t=0.3), G[0], G[1], ang), LAVA[1], 1),
                       (fuller, BLADE.deep, 0.8)])
     fig.part('grip', grip, LEATHER, cel=0.6, rim=0.4, cast=0.6)
-    fig.part('guard', guard, OBS, cel=0.7, rim=0.6, cast=0.9, edge=(LAVA[2], LAVA[3], 0.7, (-0.88, 0.48)))
+    fig.part('guard', guard, OBS, cel=0.7, rim=0.6, cast=0.9, edge=(LAVA[2], LAVA[3], 0.7, rot((1, 0), ang)))
 
-    # la tête et sa crinière un peu plus grandes que nature (proportions des RPG mobiles : on lit le visage de loin)
-    fig.scale(['mE', 'mD', 'mC', 'mB', 'mA', 'head', 'cap', 'fore', 'ear'], 1.1, 90, 48)
-
-    # ---- le bras proche (droit) : il descend vers l'arrière ----
-    narm = limb([(60, 53.6), (54.4, 60), (48.6, 66.4), (45.4, 71.4), (42.6, 76.4)], [12.8, 12.0, 10.8, 10.0, 9.4])
-    bracer_n = sm([(40.2, 66.4), (52.2, 70.6), (48.6, 79.8), (36.6, 77.4)])
-    fig.part('narm', narm, ROCK, cel=1.8, rim=0.7, cast=1.3, cast_on=['torso', 'belt', 'tass', 'nleg'],
-             details=lava_vein(fig, [(52.4, 57.4), (50.6, 60.4), (51.6, 62.4), (49.4, 65.4)], 0.9)
-             + [(bracer_n, OBS.base, 1),
-                (sm([(42.4, 66.8), (52.2, 70.6), (51.0, 73.2), (41.2, 69.8)]), OBS.light, 1),
-                (ellipse(48.4, 70.6, 1.6, 0.7, 20), OBS.glint, 0.8),
-                (sm([(37.0, 75.0), (48.6, 77.4), (48.6, 79.8), (36.6, 77.4)]), LAVA[3], 1),
-                (sm([(37.0, 76.1), (48.6, 78.6), (48.6, 79.8), (36.6, 77.4)]), LAVA[2], 1)])
+    # ---- le bras proche (droit) : bras et avant-bras d'un seul tenant chacun, le coude placé par le squelette (le
+    # poignet suit le poing) ; au repos il descend vers l'arrière ----
+    S = (S0[0], S0[1] - 0.55 * br)
+    wp = rot((WRIST[0], WRIST[1] * sg), ang)
+    W = (G[0] + wp[0], G[1] + wp[1])
+    d = math.dist(S, W)
+    dd = max(abs(L1 - L2) + 0.01, min(L1 + L2 - 0.01, d))
+    alpha = math.acos(max(-1, min(1, (L1 * L1 + dd * dd - L2 * L2) / (2 * L1 * dd))))
+    th = math.atan2(W[1] - S[1], W[0] - S[0]) + P['bend'] * alpha
+    E = (S[0] + L1 * math.cos(th), S[1] + L1 * math.sin(th))
+    mid = lambda a_, b_, t: (a_[0] + (b_[0] - a_[0]) * t, a_[1] + (b_[1] - a_[1]) * t)
+    upper = limb([S, mid(S, E, 0.5), E], [12.8, 12.2, 10.8])
+    fore_ = limb([E, mid(E, W, 0.5), W], [10.6, 10.0, 9.4])
+    ua = math.degrees(math.atan2(E[1] - S[1], E[0] - S[0]))
+    fa = math.degrees(math.atan2(W[1] - E[1], W[0] - E[0]))
+    Lf = math.dist(E, W)
+    U_ = lambda sh: xf(sh, S[0], S[1], ua)
+    F_ = lambda sh: xf(sh, E[0], E[1], fa)
+    fig.part('nupper', upper, ROCK, cel=1.8, rim=0.7, cast=1.3, cast_on=['torso', 'belt', 'tass', 'nleg'],
+             details=lava_vein(fig, [xf_pt(S, ua, p_) for p_ in ((7.9, 3.1), (10.4, 1.4), (12.6, 1.9), (15.8, 0.2))], 0.9))
+    sgn = 1 if math.cos(math.radians(fa)) < 0 else -1          # le côté du dessus du brassard (vers la lumière)
+    fig.part('nfore', fore_, ROCK, cel=1.6, rim=0.7, cast=1.1, cast_on=['nupper', 'torso', 'belt', 'tass', 'nleg'],
+             details=[(F_(sm([(Lf * 0.28, -6.4), (Lf + 1.8, -6.4), (Lf + 1.8, 6.4), (Lf * 0.28, 6.4)], sharp=(0, 1, 2, 3), t=0.3)), OBS.base, 1),
+                      (F_(sm([(Lf * 0.28, -6.4 * sgn), (Lf + 1.8, -6.4 * sgn), (Lf + 1.8, -3.2 * sgn), (Lf * 0.28, -2.6 * sgn)], sharp=(0, 1, 2, 3), t=0.3)), OBS.light, 0.9),
+                      (F_(ellipse(Lf * 0.55, -3.6 * sgn, 1.6, 0.7)), OBS.glint, 0.8),
+                      (F_(sm([(Lf - 0.8, -6.4), (Lf + 1.8, -6.4), (Lf + 1.8, 6.4), (Lf - 0.8, 6.4)], sharp=(0, 1, 2, 3), t=0.3)), LAVA[3], 1),
+                      (F_(sm([(Lf + 0.3, -6.4), (Lf + 1.8, -6.4), (Lf + 1.8, 6.4), (Lf + 0.3, 6.4)], sharp=(0, 1, 2, 3), t=0.3)), LAVA[2], 1)])
 
     # ---- l'épaulière proche, en facettes : une calotte à arête, deux lames en croissant ----
     lame2 = sm([(44.8, 59.6), (51, 58.4), (57.5, 59.4), (64.2, 57.8), (64, 60.4), (62, 62.4), (55, 63.4), (49.4, 62.2)], sharp=(0,))
@@ -319,8 +400,8 @@ def build(ow=0.95):
              edge=edge)
 
     # ---- le poing proche, serré sur la poignée ----
-    fist = xf(sm([(-1.4, -3.4), (-6.4, -5.4), (-11.8, -4.6), (-13.4, 0.4), (-11.6, 5.0), (-6.6, 6.2), (-2.0, 4.6), (-0.8, 0.6)]), G[0], G[1], ang)
-    L = lambda sh: xf(sh, G[0], G[1], ang)
+    fist = xs(sm([(-1.4, -3.4), (-6.4, -5.4), (-11.8, -4.6), (-13.4, 0.4), (-11.6, 5.0), (-6.6, 6.2), (-2.0, 4.6), (-0.8, 0.6)]), G[0], G[1], ang)
+    L = lambda sh: xs(sh, G[0], G[1], ang)
     # le dos de la main en haut ; dessous, les doigts repliés sur la poignée (quatre phalanges de tailles inégales,
     # séparées par des plis doux) ; la rangée des jointures éclairée
     fdet = [(L(sm([(-1.6, -3.2), (-6.4, -5.2), (-11.6, -4.4), (-12.8, -0.6), (-7, 0.6), (-1.4, 0.2)])), ROCK.light, 0.45)]
@@ -332,7 +413,53 @@ def build(ow=0.95):
     fig.part('fist', fist, ROCK, cel=1.3, rim=0.7, cast=1.1, details=fdet)
     thumb_n = L(limb([(-10.2, -3.6), (-6.4, -3.6), (-2.8, -2.0)], [3.4, 3.2, 2.8]))
     fig.part('nthumb', thumb_n, ROCK, cel=0.8, rim=0.6, cast=0.8, cast_on=['fist', 'grip', 'guard', 'blade'])
+
+    # ---- chaque groupe de morceaux prend sa pose ----
+    fig.pose(['mE', 'mD', 'mC', 'mB', 'mA', 'head', 'cap', 'fore', 'fore2', 'ear'], HEAD)
+    fig.pose(['torso'], TOR)
+    fig.pose(['belt', 'buckle', 'tass', 'blade', 'grip', 'guard', 'nupper', 'nfore', 'fist', 'nthumb'], U)
+    fig.pose(['cloth'], CLO)
+    fig.pose(['lame2', 'lame1', 'dome'], UC)
+    fig.pose(['farm', 'palm', 'f1', 'f2', 'f3', 'f4', 'f1c', 'f2c', 'f3c', 'f4c', 'thumb', 'thumbc'], FARM)
+    fig.pose(['fleg', 'fknee', 'nleg', 'nknee'], LEG)
+    # ce que les effets doivent savoir (repère du dessin)
+    tip = mapp(U, (G[0] + rot((40.2 * st_, 0), ang)[0], G[1] + rot((40.2 * st_, 0), ang)[1]))
+    fig.ctx = dict(U=U, G=mapp(U, G), ang=ang + P['lean'] * 1.1, tip=tip, hand=mapp(U, P['hand']), P=P,
+                   chest=mapp(TOR, (82, 62)), head=mapp(HEAD, (90, 34)), claw=mapp(FARM, (118, 55)))
+    if fx:
+        for f_ in fx:
+            f_(fig, fig.ctx)
     return fig
+
+
+def xf_pt(o, a, p):
+    """Un point du repère local (origine o, angle a) → dessin."""
+    r = rot(p, a)
+    return (o[0] + r[0], o[1] + r[1])
+
+
+def wave_lock(i, L, P):
+    """Une mèche de la crinière qui vit : la vague court de la racine vers la pointe (phase ph), la flamme s'étire
+    vers l'arrière quand il fonce (trail), flambe (flare) ou se dresse (rise)."""
+    name, p0, p1, p2, p3, w0, spur = L
+    ph = P['ph'] - i * 0.9
+    k = 0.6 + 0.12 * i                      # les grandes mèches ondulent plus
+    tr, fl, ri = P['trail'], P['flare'], P['rise']
+    p2 = (p2[0] + 0.5 * k * math.sin(2 * ph + 1.0) - 1.2 * tr, p2[1] + 0.9 * k * math.sin(ph) - 0.8 * ri)
+    p3 = (p3[0] + 1.1 * k * math.sin(ph + 0.8) - 2.6 * tr - 1.2 * fl, p3[1] + 1.3 * k * math.cos(ph) - 1.6 * ri - 1.6 * fl + 0.6 * tr)
+    return (name, p0, p1, p2, p3, w0 * (1 + 0.1 * fl), spur)
+
+
+def front_locks(P):
+    """La mèche de devant : une langue de feu née au bord du front, qui monte un peu en avant puis se couche vers
+    l'arrière en suivant le crâne, comme le reste de la crinière, la pointe relevée."""
+    ph = P['ph']
+    tr, fl, ri = P['trail'], P['flare'], P['rise']
+    w1, w2 = math.sin(ph + 0.4), math.sin(ph - 0.5)
+    return [
+        # la grande : elle monte au-dessus du front puis file vers l'arrière en suivant le crâne, pointe relevée
+        ('fore', (98.4, 24.4), (104.2, 18.4), (95.5, 12.2 + 0.5 * w1), (80.5 - 1.8 * tr - fl, 7.2 + 1.0 * w1 - 1.4 * ri - fl), 11.0 * (1 + 0.1 * fl)),
+    ]
 
 
 def sm_under(sh):

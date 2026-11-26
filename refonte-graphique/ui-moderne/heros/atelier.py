@@ -124,6 +124,51 @@ def xf(shape, ox, oy, ang, sx=1, sy=1):
     return shape.map(lambda p: (ox + p[0] * sx * ca - p[1] * sy * sa, oy + p[0] * sx * sa + p[1] * sy * ca))
 
 
+# ---------- transformations (matrices SVG a b c d e f : x' = a x + c y + e, y' = b x + d y + f) ----------
+
+ID = (1, 0, 0, 1, 0, 0)
+
+
+def mmul(A, B):
+    """A après B."""
+    a1, b1, c1, d1, e1, f1 = A
+    a2, b2, c2, d2, e2, f2 = B
+    return (a1 * a2 + c1 * b2, b1 * a2 + d1 * b2, a1 * c2 + c1 * d2, b1 * c2 + d1 * d2,
+            a1 * e2 + c1 * f2 + e1, b1 * e2 + d1 * f2 + f1)
+
+
+def mchain(*Ms):
+    out = ID
+    for M in Ms:
+        out = mmul(out, M)
+    return out
+
+
+def mT(dx, dy):
+    return (1, 0, 0, 1, dx, dy)
+
+
+def mR(deg, cx=0, cy=0):
+    a = math.radians(deg)
+    ca, sa = math.cos(a), math.sin(a)
+    return mchain(mT(cx, cy), (ca, sa, -sa, ca, 0, 0), mT(-cx, -cy))
+
+
+def mS(sx, sy=None, cx=0, cy=0):
+    sy = sx if sy is None else sy
+    return mchain(mT(cx, cy), (sx, 0, 0, sy, 0, 0), mT(-cx, -cy))
+
+
+def mskx(k, cy=0):
+    """Un cisaillement horizontal (ce qui est sous la ligne y = cy part de k × la distance)."""
+    return (1, 0, k, 1, -k * cy, 0)
+
+
+def mapp(M, p):
+    a, b, c, d, e, f_ = M
+    return (a * p[0] + c * p[1] + e, b * p[0] + d * p[1] + f_)
+
+
 # ---------- matières ----------
 
 
@@ -140,7 +185,7 @@ class Mat:
 
 class Part:
     def __init__(self, name, shape, mat, grad, cel, rim, cast, details, outline, ink, cast_on, edge, occl):
-        self.tf = ''                  # une transformation SVG (agrandir un groupe de morceaux, ex. la tête)
+        self.M = ID                   # la pose du morceau (matrice) : le squelette de l'animation, ou un agrandissement
         self.name, self.shape, self.mat, self.grad = name, shape, mat, grad
         self.cel, self.rim, self.cast, self.details, self.outline = cel, rim, cast, details, outline
         self.ink, self.cast_on, self.edge, self.occl = ink, cast_on, edge, occl
@@ -155,6 +200,8 @@ class Figure:
         self.defs = []
         self.under = []               # lueurs derrière tout (dégradés radiaux)
         self.over = []                # éléments par-dessus tout (étincelles), sans contour
+        self.fx_back = []             # effets derrière le personnage (SVG brut)
+        self.fx_front = []            # effets devant le personnage (SVG brut)
         self.n = 0
 
     def uid(self, p):
@@ -174,11 +221,16 @@ class Figure:
         self.parts.append(p)
         return p
 
-    def scale(self, names, k, cx, cy):
-        """Agrandit des morceaux (et tout ce qui est peint dedans) autour d'un point : ex. la tête et sa crinière."""
+    def pose(self, names, M):
+        """Pose des morceaux (et tout ce qui est peint dedans) par une matrice. Les ombres restent en bas à gauche
+        (la lumière ne tourne pas avec le morceau)."""
         for p in self.parts:
             if p.name in names:
-                p.tf = 'translate(%s %s) scale(%s) translate(%s %s)' % (f(cx), f(cy), f(k), f(-cx), f(-cy))
+                p.M = M
+
+    def scale(self, names, k, cx, cy):
+        """Agrandit des morceaux autour d'un point : ex. la tête et sa crinière."""
+        self.pose(names, mS(k, k, cx, cy))
 
     def glow(self, cx, cy, rx, ry, color, op=0.5, stops=None):
         self.under.append((cx, cy, rx, ry, color, op, stops))
@@ -220,7 +272,7 @@ class Figure:
         ids = {}
         for p in self.parts:
             ids[p.name] = self.uid('p')
-            tf = ' transform="%s"' % p.tf if p.tf else ''
+            tf = ' transform="matrix(%s)"' % ' '.join(f(v) for v in p.M) if p.M != ID else ''
             self.defs.append('<path id="%s" d="%s"%s/>' % (ids[p.name], d[p.name], tf))
         # lueurs de fond
         for cx, cy, rx, ry, color, op, stops in self.under:
@@ -232,6 +284,7 @@ class Figure:
             if p.outline:
                 ink = p.ink or self.ink
                 sil.append('<use href="#%s" fill="%s" stroke="%s" stroke-width="%s"/>' % (ids[p.name], ink, ink, f(2 * self.ow)))
+        out.extend(self.fx_back)
         out.append('<g stroke-linejoin="round">%s</g>' % ''.join(sil))
         # les morceaux
         clip_ids = {}
@@ -258,12 +311,18 @@ class Figure:
             out.append('<use href="#%s" fill="%s"/>' % (ids[p.name], self._fill(p)))
             inner = []
             sd = p.shape.d()
+            a_, b_, c_, d_ = p.M[:4]
+            det_ = a_ * d_ - b_ * c_ or 1
+
+            def mv(dx, dy):
+                # un décalage voulu dans le dessin (vers la lumière) → dans le repère du morceau
+                return p.shape.move((d_ * dx - c_ * dy) / det_, (-b_ * dx + a_ * dy) / det_)
             if p.occl:
                 oc, oo, ow = p.occl
-                inner.append('<path d="%s%s" fill-rule="evenodd" fill="%s" opacity="%g"/>' % (sd, p.shape.move(ow, -ow).d(), oc, oo))
+                inner.append('<path d="%s%s" fill-rule="evenodd" fill="%s" opacity="%g"/>' % (sd, mv(ow, -ow).d(), oc, oo))
             if p.cel:
                 c = p.cel
-                inner.append('<path d="%s%s" fill-rule="evenodd" fill="%s" opacity="0.9"/>' % (sd, p.shape.move(c * 0.8, -c).d(), m.shadow))
+                inner.append('<path d="%s%s" fill-rule="evenodd" fill="%s" opacity="0.9"/>' % (sd, mv(c * 0.8, -c).d(), m.shadow))
             for shape, fill, op in p.details:
                 fl = fill
                 if isinstance(fill, tuple) and fill[0] == 'lin':
@@ -276,16 +335,17 @@ class Figure:
                     inner.append('<path d="%s"%s fill="%s"%s/>' % (shape.d(), ' fill-rule="evenodd"' if shape.evenodd else '', fl, '' if op == 1 else ' opacity="%g"' % op))
             if p.rim:
                 r = p.rim
-                inner.append('<path d="%s%s" fill-rule="evenodd" fill="%s" opacity="0.85"/>' % (sd, p.shape.move(-r * 0.75, r).d(), m.hi))
+                inner.append('<path d="%s%s" fill-rule="evenodd" fill="%s" opacity="0.85"/>' % (sd, mv(-r * 0.75, r).d(), m.hi))
             if p.edge:
                 c1, c2, th, (dx, dy) = p.edge
                 inner.append('<path d="%s%s" fill-rule="evenodd" fill="%s"/>' % (sd, p.shape.move(-dx * th, -dy * th).d(), c2))
                 inner.append('<path d="%s%s" fill-rule="evenodd" fill="%s"/>' % (sd, p.shape.move(-dx * th * 0.45, -dy * th * 0.45).d(), c1))
             if inner:
                 body = ''.join(inner)
-                if p.tf:
-                    body = '<g transform="%s">%s</g>' % (p.tf, body)
+                if p.M != ID:
+                    body = '<g transform="matrix(%s)">%s</g>' % (' '.join(f(v) for v in p.M), body)
                 out.append('<g clip-path="url(#%s)">%s</g>' % (clip_of(p.name), body))
+        out.extend(self.fx_front)
         for el in self.over:
             out.append(el)
         vb = '%s %s %s %s' % (f(self.x0), f(self.y0), f(self.w), f(self.h))
