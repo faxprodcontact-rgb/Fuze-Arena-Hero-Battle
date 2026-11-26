@@ -716,9 +716,9 @@ def twinkle(fig, name, size, HEAD, TOR):
 # ---------- la chevelure (2e avis : racine collée au front, sans bord dur) ----------
 # La ligne des cheveux, du contour du fond (à droite) à la tempe proche (au-dessus de l'oreille), dans le repère de la
 # tête avant son agrandissement : la raie est sur la médiane du visage (FV['mediane']).
-HAIRLINE = [(88.0, 28.9), (86.7, 27.9), (84.6, 26.95), (82.6, 26.55), (81.05, 27.0), (79.4, 26.5), (77.0, 26.25),
+HAIRLINE = [(87.55, 29.4), (86.6, 28.0), (84.6, 26.95), (82.6, 26.55), (81.05, 27.0), (79.4, 26.5), (77.0, 26.25),
             (74.6, 26.6), (72.6, 27.7), (71.2, 29.5), (70.3, 31.5), (69.6, 33.5)]
-HAIRMASS = sm([(88.6, 22.6), (88.75, 24.6), (88.55, 26.8)] + HAIRLINE +
+HAIRMASS = sm([(88.5, 22.6), (88.5, 24.6), (88.15, 27.0)] + HAIRLINE +
               [(69.0, 34.6), (68.2, 37.0), (68.4, 40.4), (69.4, 43.0), (71.0, 45.4), (72.4, 47.4), (68.4, 48.4), (63.6, 47.6),
                (59.8, 44.6), (57.6, 40.4), (56.6, 35.4), (56.8, 30.2), (58.4, 25.8), (61.6, 22.6), (65.6, 21.0), (71.0, 20.6),
                (77.0, 20.4), (83.0, 20.6)], t=0.9)
@@ -754,7 +754,7 @@ def hair_details():
 def hairline_shade():
     """L'ombre de la racine sur le front et la tempe : la chevelure décalée vers le bas, en couches de plus en plus
     pâles (un dégradé, jamais un bord net) ; elle s'efface avant les sourcils."""
-    return [(HAIRMASS.move(-0.12 * k, 0.32 * k), SKIN.shadow, op) for k, op in ((1, 0.32), (2, 0.2), (3.2, 0.12), (4.6, 0.07))]
+    return [(HAIRMASS.move(-0.12 * k, 0.32 * k), SKIN.shadow, op) for k, op in ((0.5, 0.13), (1.0, 0.12), (1.6, 0.1), (2.3, 0.08), (3.1, 0.06), (4.0, 0.045), (5.0, 0.03))]
 
 
 def head(fig, P):
