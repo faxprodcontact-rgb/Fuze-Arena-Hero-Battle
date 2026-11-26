@@ -442,8 +442,8 @@ def gold_feather_rain(fig, ctx, tl):
         k = (tl - t0) / 620
         if k <= 0 or k > 1.25:
             continue
-        R_ = 14 + (34 + 8 * math.sin(j * 1.7)) * ease(min(1, k))
-        y0 = 20 - ctx['P']['lift'] * 0.5
+        R_ = 30 + (28 + 8 * math.sin(j * 1.7)) * ease(min(1, k))
+        y0 = -12 - ctx['P']['lift'] * 0.5
         y1 = GR + 2 + 6 * math.sin(a)
         y = y0 + (y1 - y0) * min(1, k) ** 1.4
         x = cx + R_ * math.cos(a)
@@ -451,7 +451,7 @@ def gold_feather_rain(fig, ctx, tl):
         back = math.sin(a) < 0
         sway = 30 * math.sin(k * 7 + j)
         op = 1.0 if k < 0.9 else max(0.0, 1 - (k - 0.9) / 0.35)
-        s = feather_fx(fig, (x, y), 100 + sway, 6.4, 2.2, op, gold=True)
+        s = feather_fx(fig, (x, y), (180 if math.cos(a) < 0 else 0) + 25 + sway, 7.4, 3.0, op, gold=True)
         (fig.fx_back if back else fig.fx_front).append(s)
         if k > 0.95:
             fig.fx_back.append(ember(fig, x, y1 - 1, 0.6, op, pal=GOLDL))
@@ -470,23 +470,26 @@ def ring(fig, ctx, k, op=1.0):
     fade = op * (1.0 if k < 0.7 else max(0.0, 1 - (k - 0.7) / 0.3))
     if fade <= 0.02:
         return
+    ph = k * 9
+    hmax = (5.0 - 2.0 * e) * (1.25 if k > 0.7 else 1.0)
     for half, lst in ((0, fig.fx_back), (1, fig.fx_front)):
         a0, a1 = (180, 360) if half == 0 else (0, 180)
-        outer = [(c[0] + rx * math.cos(math.radians(a)), c[1] + ry * math.sin(math.radians(a))) for a in range(a0, a1 + 1, 6)]
-        inner = [(c[0] + (rx - w) * math.cos(math.radians(a)), c[1] + (ry - w * 0.35) * math.sin(math.radians(a))) for a in range(a0, a1 + 1, 6)]
-        band = sm(outer + inner[::-1], sharp=(0, len(outer) - 1, len(outer)), t=0.5)
-        gr = g_lin(fig, (c[0] + rx, c[1] - ry), (c[0] - rx, c[1] + ry), [(0, GOLDL[1]), (0.5, GOLDL[2]), (1, GOLDL[4])])
-        s = outlined([(band, gr, 0.95 if half else 0.75)], ink=GINK, w=0.9, op=fade)
-        tongues = ''
-        for j in range(12):
-            a = j * 30 + 9 * math.sin(j * 1.9)
-            if not (a0 <= a % 360 < a1):
-                continue
-            ar = math.radians(a)
-            hh = (3.0 + 2.6 * abs(math.sin(j * 2.7 + k * 9))) * (1 - 0.4 * e) * (1 + (0.8 if k > 0.7 else 0))
-            p = (c[0] + (rx - w / 2) * math.cos(ar), c[1] + (ry - w * 0.2) * math.sin(ar))
-            tongues += tongue(fig, p, hh, 2.4, bend=0.5 * math.sin(j + k * 8), lean=0.15 * math.cos(ar), op=1.0, pal=GOLDL, ink=GINK, iw=0.9)
-        lst.append('<g opacity="%g">%s%s</g>' % (fade, s, tongues))
+        top, bot = [], []
+        for i in range(0, 61):
+            ad = a0 + (a1 - a0) * i / 60
+            ar = math.radians(ad)
+            x = c[0] + rx * math.cos(ar)
+            y = c[1] + ry * math.sin(ar)
+            # des flammes douces sur le dessus de l'anneau : des vagues inégales, penchées, qui dansent
+            wv = max(0.0, math.sin(ar * 7 + ph + 0.8 * math.sin(ar * 3))) ** 1.6
+            h = w * 0.5 + hmax * wv * (0.75 + 0.25 * math.sin(ar * 5 + 1.3))
+            top.append((x + 0.35 * h * math.cos(ar + 1.2), y - h))
+            bot.append((x, y + w * 0.5))
+        band = sm(top + bot[::-1], sharp=(0, 60, 61, 121), t=0.8)
+        core = sm([(p[0], (p[1] + q[1]) / 2 + 0.4) for p, q in zip(top, bot)] + bot[::-1], sharp=(0, 60, 61, 121), t=0.8)
+        gr = g_lin(fig, (c[0], c[1] - ry - hmax), (c[0], c[1] + ry + w), [(0, GOLDL[3]), (0.4, GOLDL[2]), (1, GOLDL[4])])
+        gc = g_lin(fig, (c[0], c[1] - ry), (c[0], c[1] + ry), [(0, GOLDL[0]), (1, GOLDL[1])])
+        lst.append(outlined([(band, gr, 1), (core, gc, 0.85)], ink=GINK, w=0.9, op=fade * (0.85 if half == 0 else 1)))
 
 
 def phoenix(fig, c, open_=1.0, op=1.0, ph=0.0):
@@ -584,14 +587,9 @@ def fx_special(tl):
         # de petites langues d'or dansent sur ses bords (elle s'embrase)
         fi = P['fire']
         if fi > 0.3:
-            for j, (key, dx, dy, hh) in enumerate((('tipN', 1, 3, 6), ('tipF', -1, 3, 6), ('wristN', 0, 2, 4), ('wristF', 0, 2, 4))):
+            for key in ('tipN', 'tipF'):
                 p = ctx[key]
-                fl = 1 + 0.3 * math.sin(tl / 45.0 + j * 1.7)
-                fig.fx_front.append(tongue(fig, (p[0] + dx, p[1] + dy), hh * fl * min(1, fi / 1.5), 2.6, bend=0.6 * math.sin(tl / 70 + j),
-                                           op=min(1, fi / 1.5), pal=GOLDL, ink=GINK, iw=0.9))
-            hp = ctx['head']
-            fig.fx_back.append(tongue(fig, (hp[0] - 12, hp[1] - 16), 7 * min(1, fi / 1.5), 3.0, bend=0.6 * math.sin(tl / 60), lean=-0.3,
-                                      op=min(1, fi / 1.5), pal=GOLDL, ink=GINK, iw=0.9))
+                fig.glow(p[0], p[1], 12, 12, '#ffd860', 0.35 * min(1, fi / 1.5))
         # la purification : de petites taches sombres sur son plumage, qui se détachent, montent et s'évaporent
         sp = env(tl, 240, 330, 590, 1000)
         if sp > 0:

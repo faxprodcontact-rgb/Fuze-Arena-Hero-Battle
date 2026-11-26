@@ -375,9 +375,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     if P['fire'] > 0:
         for p in fig.parts:
             x0, y0, x1, y1 = p.shape.bbox()
+            skin = p.mat is SKIN or p.mat is WHITE
             p.details.append((p.shape, ('lin', x1, y0, x0, y1, [(0, '#fff6c0'), (0.5, '#ffd858'), (1, '#ffa830')]),
-                              min(0.55, 0.16 * P['fire'])))
-            p.rim = max(p.rim, 0.35 + 0.2 * P['fire'])
+                              min(0.12 if skin else 0.3, (0.04 if skin else 0.1) * P['fire'])))
+            p.rim = max(p.rim, 0.35 + 0.12 * P['fire'])
 
     # ---- chaque groupe prend sa pose ----
     fig.pose(head_names + hair_back, HEAD)
@@ -417,7 +418,8 @@ def tail(fig, P, BODY):
         wv = amp * math.sin(ph - 0.7 * k - 0.4)
         if ground:
             # elle repose au sol : la pointe reste posée, le milieu se soulève à peine
-            q1, q2, q3 = (p1[0] + dx, p1[1] + dy), (p2[0] + 0.4 * dx, p2[1] + 0.4 * dy - 0.3 * abs(q)), p3
+            lf = P['lift']
+            q1, q2, q3 = (p1[0] + dx, p1[1] + dy), (p2[0] + 0.4 * dx, p2[1] + 0.4 * dy - 0.3 * abs(q) - 0.6 * lf), (p3[0], p3[1] - lf)
         else:
             sw = 1.6 * q + 1.2 * wv
             q1 = rotp((p1[0] + dx, p1[1] + dy), sw * 0.5, R0)
