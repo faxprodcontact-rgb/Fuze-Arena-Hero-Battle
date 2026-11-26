@@ -156,8 +156,10 @@ export class BattleScene extends FightScene {
    * pieds du dernier rang restent au-dessus des boutons ronds.
    */
   protected arenaBox() {
+    // la zone sûre du bas (barre de geste) remonte les cartes et les boutons ronds : le terrain remonte d'autant, sinon
+    // AUTO et la vitesse couvrent le dernier ennemi (contrôle complet du 26/11, téléphone à encoche)
     const bottom = this.scale.height;
-    return { groundTop: bottom - Math.round(430 * FOND_ZOOM), bottom };
+    return { groundTop: bottom - this.safe.bottom - Math.round(430 * FOND_ZOOM), bottom };
   }
 
   create() {
