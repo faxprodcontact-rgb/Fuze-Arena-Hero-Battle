@@ -624,7 +624,8 @@ def rock_tone(q):
 
 
 def draw_rock_limb(cv, P0, P1, r0, r1, seams=(), crack=None, lava=0):
-    """un segment de membre en basalte de P0 à P1 (toile), rayon r0 -> r1 ; bouts arrondis comme des blocs usés.
+    """un segment de membre en basalte de P0 à P1 (toile), rayon r0 -> r1 ; un rocher bosselé (26/11/2026 : plus de
+    tube à bouts carrés) : le bord se gonfle et se creuse doucement, différemment de chaque côté, bouts arrondis.
     seams : positions t (0..1) des joints (rainure sombre, braise au fond) ; crack : (t0, t1) une fêlure de braise
     qui court sur la face éclairée ; lava : 0..4, la lave s'allume (comme le corps)"""
     P0, P1 = np.array(P0, float), np.array(P1, float)
@@ -638,16 +639,20 @@ def draw_rock_limb(cv, P0, P1, r0, r1, seams=(), crack=None, lava=0):
     x0, x1 = int(min(P0[0], P1[0]) - R), int(max(P0[0], P1[0]) + R + 1)
     y0, y1 = int(min(P0[1], P1[1]) - R), int(max(P0[1], P1[1]) + R + 1)
     pl = PULSE[lava] if lava else {}
+    ph = ((r0 * 7.3 + r1 * 3.1) % 1.0, (r0 * 2.7 + r1 * 5.9) % 1.0)   # les bosses : propres à chaque morceau
     for y in range(max(0, y0), min(H, y1)):
         for x in range(max(0, x0), min(W, x1)):
             p = np.array([x + 0.5, y + 0.5]) - P0
             t = float(p @ u) / L
             tc = min(1.0, max(0.0, t))
-            r = r0 + (r1 - r0) * tc
             d = float(p @ n)
-            # bouts : un bloc aux coins abattus (pas un rond)
+            # le rocher se gonfle au milieu et se bosselle (pas pareil des deux côtés)
+            k = ph[0] if d >= 0 else ph[1]
+            r = (r0 + (r1 - r0) * tc) * (1.0 + 0.07 * math.sin(math.pi * tc) +
+                                         0.06 * math.sin(2 * math.pi * (1.6 * tc + k)))
+            # bouts : arrondis comme un galet usé
             over_end = (-t * L) if t < 0 else ((t - 1) * L if t > 1 else 0.0)
-            if over_end > 0 and over_end + max(0.0, abs(d) - r * 0.45) * 0.9 > r * 0.55:
+            if over_end > 0 and (over_end / (r * 0.6)) ** 2 + (d / r) ** 2 > 1.0:
                 continue
             if abs(d) > r:
                 continue
@@ -669,7 +674,7 @@ def draw_rock_limb(cv, P0, P1, r0, r1, seams=(), crack=None, lava=0):
 
 
 def wrist_band(cv, P0, P1, r, lava=0):
-    """le poignet de lave : un anneau de braise (une bande courte en travers du membre), comme sur le dessin"""
+    """le poignet de lave : une jointure de braise (une bande courte en travers du membre), comme sur le dessin"""
     P0, P1 = np.array(P0, float), np.array(P1, float)
     v = P1 - P0
     L = max(float(np.linalg.norm(v)), 1e-6)
@@ -691,6 +696,11 @@ def wrist_band(cv, P0, P1, r, lava=0):
                 ch = 'r' if e < 0.9 or abs(q) > 0.85 else ('u' if q > 0.3 else 't' if q > -0.35 else 's')
                 if e >= 0.9 and abs(q) < 0.3 and q > 0:
                     ch = 'v'
+                # comme sur le dessin : une jointure irrégulière, coupée par des ponts de pierre (pas un anneau lisse)
+                if math.sin(q * 7.0 + 1.3) > 0.82:
+                    ch = '4' if q > 0 else '3'
+                elif e < 0.9 and math.sin(q * 11.0 + 0.4) > 0.3:
+                    ch = '3'
                 cv[y, x] = pl.get(ch, ch)
 
 
@@ -1385,6 +1395,10 @@ ARM_NEAR = (17.0, 19.0)               # bras, avant-bras proches
 # sous le bras proche levé, le flanc du buste se voit : sa colonne éclairée (un reflet du poing) passe à l'ombre
 CORPS_NU = P['corps'].copy()
 CORPS_NU[(XX == 49) & (YY >= 78) & (YY <= 94) & np.isin(CORPS_NU, list('678'))] = '4'
+# le haut du tibia proche, caché par le poing dans le dessin : quand le poing s'en va, on le bouche (roche dans l'ombre
+# du bassin, plus claire vers la droite)
+_shin = grid_poly([(31, 108), (30, 99), (34, 92), (45, 89), (56, 91), (59, 99), (57, 108)]) & (CORPS_NU == '.')
+CORPS_NU[_shin] = np.where(YY[_shin] <= 91, '2', np.where(XX[_shin] <= 32, '3', np.where(XX[_shin] >= 42, '5', '4')))
 
 
 FIST_UP = over(P['poingL'], P['poignetL'])      # le poing levé du dessin et son poignet de lave (sans l'avant-bras)

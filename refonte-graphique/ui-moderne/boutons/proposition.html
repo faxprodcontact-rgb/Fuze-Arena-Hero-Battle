@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Familles de boutons</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Fredoka:wght@500;600;700&display=swap" />
+<link rel="stylesheet" href="boutons.css" />
+<style>
+  /* la page de présentation (pas le jeu) : planche des familles, maquettes d'écrans */
+  :root { --bg: #150f36; --bg2: #1e1648; --muted: #a69ed3; }
+  html, body { margin: 0; background: var(--bg); color: #fff; font-family: 'Fredoka', system-ui, sans-serif; font-synthesis: none; }
+  .board { display: flex; gap: 22px; padding: 26px 26px 30px; width: max-content; background: radial-gradient(120% 70% at 80% 0%, #2a1f63 0%, #150f36 60%); }
+  .col { width: 372px; display: flex; flex-direction: column; gap: 14px; }
+  .col h2 { font: 400 27px/1 'Lilita One'; margin: 0; color: #fff; }
+  .col .idea { font: 500 13.5px/1.35 'Fredoka'; color: var(--muted); margin: -6px 0 0; min-height: 54px; }
+  .zone { border-radius: 20px; padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .dark { background: radial-gradient(130% 90% at 90% 0%, #2d2270 0%, #1a1344 55%, #120c30 100%); box-shadow: inset 0 0 0 1px #ffffff14; }
+  .light { background: linear-gradient(180deg, #ffffff, #f2effb); color: #221c45; box-shadow: 0 10px 24px #05021a66; }
+  .cap { font: 600 11.5px/1 'Fredoka'; letter-spacing: 0.6px; text-transform: uppercase; color: #8f87c4; margin-bottom: -4px; }
+  .light .cap { color: #8a83ad; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .row.c { justify-content: center; }
+  .state { display: flex; flex-direction: column; align-items: center; gap: 5px; font: 500 11px 'Fredoka'; color: #9d96c8; }
+  .light .state { color: #8a83ad; }
+
+  /* --- maquettes : un téléphone 390 × 844 --- */
+  .phone { position: relative; width: 390px; height: 844px; overflow: hidden; background: #150f36 center top / 390px 844px no-repeat; }
+  .dock { position: absolute; left: 0; right: 0; top: 632px; height: 140px; border-radius: 24px 24px 0 0;
+    background: linear-gradient(180deg, #221a55 0%, #1a1345 100%); box-shadow: 0 -10px 24px #05021a59, inset 0 1px 0 #ffffff1f; }
+  .dock-in { position: absolute; left: 0; right: 0; top: 12px; display: flex; align-items: flex-start; justify-content: space-between; padding: 0 12px; }
+  .slot { position: relative; width: 74px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .slot .bt { width: 70px; min-width: 0; padding-left: 0; padding-right: 0; }
+  .slot .bt img { width: 50px; height: 50px; margin-top: -2px; }
+  .slot-t { font: 400 13px/1 'Lilita One'; color: #fff; text-shadow: 0 2px 0 #0a0620; }
+  .slot-bar { width: 52px; height: 6px; border-radius: 3px; background: #00000059; overflow: hidden; }
+  .slot-bar i { display: block; height: 100%; width: 46%; background: linear-gradient(90deg, #2f8cff, #6cc4ff); border-radius: 3px; }
+  .dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #ff4d63; box-shadow: 0 0 0 2px #fff, 0 2px 3px #0006; z-index: 3; }
+  .fight { width: 206px; }
+  .fight .bt-col { gap: 3px; }
+  .pow { display: inline-flex; align-items: center; gap: 3px; font: 400 12.5px/1 'Lilita One'; padding: 2px 8px 2px 4px; border-radius: 9px; background: #0a062040; text-shadow: 0 1px 0 #000a; color: #fff; }
+  .pow img { width: 15px; height: 15px; }
+  .tabbar { position: absolute; left: 0; right: 0; bottom: 0; height: 97px; display: grid; grid-template-columns: repeat(5, 1fr); padding: 10px 0 34px;
+    border-radius: 24px 24px 0 0; background: linear-gradient(180deg, #1e1650 0%, #140e38 100%); box-shadow: 0 -10px 24px #05021a59, inset 0 1px 0 #ffffff1f; }
+  .tab { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; font: 400 11.5px/1 'Lilita One'; color: #a69ed3; }
+  .tab img { position: relative; z-index: 1; width: 30px; height: 30px; filter: drop-shadow(0 2px 2px #00000059); }
+  .tab.on { color: #fff; }
+  .tab.on img { transform: translateY(-11px) scale(1.18); }
+  .tab.on > span { z-index: 1; text-shadow: 0 2px 0 #0a0620; }
+  .tab-bg { position: absolute; left: 50%; top: -15px; translate: -50% 0; z-index: 0; }
+  .tab-bg.bt { width: 60px; min-width: 0; padding: 0; }
+  .sum-panel { position: absolute; left: 12px; right: 12px; top: 565px; height: 172px; border-radius: 22px; padding: 14px 14px 0;
+    background: linear-gradient(180deg, #221a55ee, #1a1345ee); box-shadow: inset 0 0 0 1px #ffffff1f, 0 10px 24px #05021a59; }
+  .sum-prog { display: flex; align-items: center; gap: 8px; font: 400 15px 'Lilita One'; color: #ffd65a; margin-bottom: 12px; }
+  .sum-prog img { width: 22px; height: 22px; }
+  .sum-prog .tr { flex: 1; height: 10px; border-radius: 5px; background: #0000005c; overflow: hidden; }
+  .sum-prog .tr i { display: block; width: 6%; height: 100%; border-radius: 5px; background: linear-gradient(90deg, #ffb21f, #ffe27a); }
+  .sum-row { display: flex; gap: 10px; }
+  .sum-row .bt { flex: 1; min-width: 0; }
+  .sum-free { display: flex; justify-content: center; margin-top: 10px; }
+  .notch { position: absolute; z-index: 9; left: 50%; top: 0; width: 126px; height: 34px; margin-left: -63px; background: #000; border-radius: 0 0 18px 18px; }
+</style>
+<script src="boutons.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  // Les quatre familles : leur idée, et la teinte de chaque rôle (action principale, secondaire, prix, onglet choisi…)
+  const FAM = {
+    email: { nom: 'Émail serti', idee: 'Un émail profond serti dans un cadre d’or, coins coupés : un sceau, une médaille. Reprend l’or et le bleu nuit de nos titres.',
+      main: 'or', sec: 'nuit', sum1: 'violet', sum10: 'or', home: 'terre', close: 'rubis', rond: 'nuit', rondOn: 'or', seg: 'or', tile: 'nuit', tab: 'or' },
+    pierre: { nom: 'Pierre de l’arène', idee: 'Une dalle taillée, aux coins éclatés, comme le sol de l’arène. L’action principale est une pierre sombre où brûle une lumière.',
+      main: 'basalte', sec: 'ardoise', sum1: 'arcane', sum10: 'basalte', home: 'terre', close: 'feu', rond: 'off', rondOn: 'basalte', seg: 'basalte', tile: 'off', tab: 'basalte' },
+    cristal: { nom: 'Cristal élémentaire', idee: 'Une gemme taillée en long, bouts en pointe : la lumière vient du cœur, de la couleur de l’élément. Des facettes nettes, pas de reflet de bonbon.',
+      main: 'citrine', sec: 'fume', sum1: 'amethyste', sum10: 'citrine', home: 'terre', close: 'feu', rond: 'fume', rondOn: 'citrine', seg: 'amethyste', tile: 'fume', tab: 'citrine' },
+    etendard: { nom: 'Étendard', idee: 'Une bande d’étoffe brodée d’or, tendue entre deux embouts de bronze : la bannière du clan. Les onglets sont des fanions.',
+      main: 'pourpre', sec: 'nuit', sum1: 'nuit', sum10: 'royal', home: 'terre', close: 'pourpre', rond: 'nuit', rondOn: 'pourpre', seg: 'pourpre', tile: 'nuit', tab: 'pourpre' },
+  };
+  const ELEMENTS = { feu: 'fire', eau: 'water', terre: 'earth', vent: 'wind' };
+  const ELT_TONE = { email: (e) => e, pierre: (e) => e, cristal: (e) => e, etendard: (e) => e };
+
+  const pic = (n) => `<img src="pictos/${n}.webp" alt="">`;
+  // les signes : contour sombre + trait de couleur (24 × 24)
+  const SIGN = {
+    pause: '<path class="ff" d="M7 5.5h3.4v13H7zM13.6 5.5H17v13h-3.4z"/>',
+    auto: '<path class="o" d="M18.5 12a6.5 6.5 0 1 1-2.4-5"/><path class="f" d="M18.5 12a6.5 6.5 0 1 1-2.4-5"/><path class="ff" d="M14.2 3.2l5.6 1.6-3.4 4.6z"/>',
+    vitesse: '<path class="ff" d="M3.5 6l8 6-8 6zM12 6l8 6-8 6z"/>',
+    fermer: '<path class="o" d="M6.5 6.5l11 11M17.5 6.5l-11 11"/><path class="f" d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  };
+  const sign = (n, color) => `<svg class="sg" viewBox="0 0 24 24" style="${color ? `--sg:${color}` : ''}">${SIGN[n]}</svg>`;
+  const signColor = (f, t) => {
+    if (f === 'email') return t === 'or' ? '#5a2208' : '#fff1c8';
+    if (f === 'pierre') { const T = BT.PAL.PIERRE[t]; return T.light ? T.core : '#d6d1e6'; }
+    if (f === 'etendard') return '#fff1cf';
+    return '#ffffff';
+  };
+
+  // un bouton : b(famille, teinte, taille, contenu, {w, down, off})
+  function b(f, t, sz, html, o = {}) {
+    const tone = o.off ? 'off' : t;
+    const v = BT.buttonVars(f, tone, sz);
+    const st = Object.entries(v).map(([k, x]) => `${k}:${x}`).join(';') + (o.w ? `;width:${o.w}px` : '') + (o.style || '');
+    return `<button class="bt ${sz}${o.down ? ' is-down' : ''}${o.cls ? ' ' + o.cls : ''}" data-t="${tone}" style="${st}"${o.off ? ' disabled' : ''}>${html}</button>`;
+  }
+  function r(f, t, s, o = {}) {
+    const tone = o.off ? 'off' : t;
+    const v = BT.roundVars(f, tone);
+    const st = Object.entries(v).map(([k, x]) => `${k}:${x}`).join(';');
+    return `<button class="bt-rond${o.down ? ' is-down' : ''}" data-t="${tone}" style="${st}"${o.off ? ' disabled' : ''}>${sign(s, o.off ? '#c9c6d8' : signColor(f, tone))}</button>`;
+  }
+  const price = (k, n) => `<span class="bt-price">${pic(k)}<span>${n}</span></span>`;
+  const st = (label, html) => `<div class="state">${html}<span>${label}</span></div>`;
+  function seg(f, items, on, light) {
+    const F = FAM[f];
+    if (f === 'etendard') return `<div class="bt-seg">${items.map((x, i) => `<button class="${i === on ? 'on' : ''}">${x}</button>`).join('')}</div>`;
+    return `<div class="bt-seg"${light ? ' style="--seg-c:#d8d3f2"' : ''}>${items.map((x, i) => i === on ? b(f, F.seg, 's', `<span>${x}</span>`) : `<button class="seg-off">${x}</button>`).join('')}</div>`;
+  }
+
+  function column(f) {
+    const F = FAM[f];
+    const fight = (o = {}) => b(f, F.main, 'l', `<span>Combattre</span>`, o);
+    let h = `<div class="col fam-${f}"><h2>${F.nom}</h2><p class="idea">${F.idee}</p>`;
+    h += `<div class="zone dark">`;
+    h += `<div class="cap">Action principale</div><div class="row c">${b(f, F.main, 'l', `<span class="bt-col"><span>Combattre</span><span class="bt-sub">12-21</span></span>`, { w: 240 })}</div>`;
+    h += `<div class="row c">${st('appuyé', fight({ w: 165, down: true }))}${st('impossible', fight({ w: 165, off: true }))}</div>`;
+    h += `<div class="cap">Avec un prix</div><div class="row c">${b(f, F.sum1, 'xl', `<span class="bt-col"><span>×1</span>${price('scrolls', '1')}</span>`, { w: 150 })}${b(f, F.sum10, 'xl', `<span class="bt-col"><span>×10</span>${price('scrolls', '10')}</span>`, { w: 172 })}</div>`;
+    h += `<div class="row c">${b(f, F.sec, 'm', `<span>Améliorer</span>${price('gold', '1,2 k')}`, { w: 210 })}${b(f, F.sec, 'm', price('gems', '300'), { w: 112 })}</div>`;
+    h += `<div class="cap">Action secondaire</div><div class="row c">${st('normal', b(f, F.sec, 'm', '<span>Équipe</span>', { w: 104 }))}${st('appuyé', b(f, F.sec, 'm', '<span>Équipe</span>', { w: 104, down: true }))}${st('impossible', b(f, F.sec, 'm', '<span>Équipe</span>', { w: 104, off: true }))}</div>`;
+    h += `<div class="cap">Ronds : pause, auto (allumé), vitesse, fermer</div><div class="row c">${r(f, F.rond, 'pause')}${r(f, F.rondOn, 'auto')}${r(f, F.rond, 'vitesse')}${r(f, F.close, 'fermer')}${st('', r(f, F.rond, 'pause', { down: true }))}${r(f, F.rond, 'vitesse', { off: true })}</div>`;
+    h += `<div class="cap">Onglets</div>${seg(f, ['Héros', 'Sac', 'Fusion'], 0)}`;
+    h += `<div class="cap">Teinte de l’élément (feu, eau, terre, vent)</div><div class="row c">${Object.entries(ELEMENTS).map(([e, ic]) => b(f, ELT_TONE[f](e), 'm', pic(ic).replace('<img', '<img class="bt-ico"'), { w: 74 })).join('')}</div>`;
+    h += `</div>`;
+    h += `<div class="zone light">`;
+    h += `<div class="cap">Sur une fenêtre claire</div><div class="row c">${b(f, F.sec, 'm', '<span>Annuler</span>', { w: 140 })}${b(f, F.main, 'm', '<span>Valider</span>', { w: 160 })}</div>`;
+    h += `<div class="row c">${b(f, F.main, 'm', `<span>Acheter</span>${price('gems', '300')}`, { w: 200 })}${r(f, F.close, 'fermer')}${r(f, F.rond, 'vitesse', { off: true })}</div>`;
+    h += `${seg(f, ['Jour', 'Semaine', 'Saison'], 1, true)}`;
+    h += `</div></div>`;
+    return h;
+  }
+
+  function tabbar(f, on) {
+    const F = FAM[f];
+    const tabs = [['campaign', 'Campagne'], ['heroes', 'Héros'], ['summon', 'Invoquer'], ['adventure', 'Aventure'], ['guild', 'Guilde']];
+    return `<nav class="tabbar fam-${f}">${tabs.map(([ic, n], i) => {
+      let bg = '';
+      if (i === on) bg = f === 'etendard'
+        ? `<span class="tab-bg" style="top:-16px"><span class="bt-seg" style="padding:0;height:auto"><button class="on" style="width:62px;height:56px;pointer-events:none"></button></span></span>`
+        : b(f, F.tab, 'm', '', { cls: 'tab-bg', style: ';height:50px' });
+      return `<div class="tab${i === on ? ' on' : ''}">${bg}${pic(ic)}<span>${n}</span>${i !== on ? '<i class="dot" style="top:-4px;right:18%"></i>' : ''}</div>`;
+    }).join('')}</nav>`;
+  }
+
+  function accueil(f) {
+    const F = FAM[f];
+    let h = `<div class="phone fam-${f}" style="background-image:url(fonds/accueil.jpg)">`;
+    h += `<div class="dock"><div class="dock-in">`;
+    h += `<div class="slot">${b(f, F.tile, 'l', pic('chestReady'))}<span class="slot-t">5 h 30</span><span class="slot-bar"><i></i></span><i class="dot" style="top:-4px;right:0"></i></div>`;
+    h += `<div class="fight">${b(f, F.home, 'xxl', `<span class="bt-col"><span>Combattre</span><span class="bt-sub">12-21</span><span class="pow">${pic('power')}9 272 / 13 k</span></span>`, { w: 206 })}</div>`;
+    h += `<div class="slot">${b(f, F.tile, 'l', pic('hourglass'))}<span class="slot-t">Butin rapide</span><i class="dot" style="top:-4px;right:0"></i></div>`;
+    h += `</div></div>`;
+    h += tabbar(f, 0) + `</div>`;
+    return h;
+  }
+
+  function invoquer(f) {
+    const F = FAM[f];
+    let h = `<div class="phone fam-${f}" style="background-image:url(fonds/invoquer.jpg)">`;
+    h += `<div class="sum-panel"><div class="sum-prog">${pic('star')}<span class="tr"><i></i></span><span>40</span></div>`;
+    h += `<div class="sum-row">${b(f, F.sum1, 'xl', `<span class="bt-col"><span>×1</span>${price('scrolls', '1')}</span>`)}${b(f, F.sum10, 'xl', `<span class="bt-col"><span>×10</span>${price('scrolls', '10')}</span>`)}</div>`;
+    h += `<div class="sum-free">${b(f, F.sec, 's', `${pic('ad').replace('<img', '<img class="bt-ico"')}<span>Invocation gratuite</span>`)}</div></div>`;
+    h += tabbar(f, 2) + `</div>`;
+    return h;
+  }
+
+  BT.installButtons();
+  const q = new URLSearchParams(location.search);
+  const vue = q.get('vue') || 'planche', fam = q.get('f') || 'email';
+  const root = document.getElementById('root');
+  if (vue === 'planche') root.innerHTML = `<div class="board">${Object.keys(FAM).map(column).join('')}</div>`;
+  else root.innerHTML = vue === 'accueil' ? accueil(fam) : invoquer(fam);
+</script>
+</body>
+</html>

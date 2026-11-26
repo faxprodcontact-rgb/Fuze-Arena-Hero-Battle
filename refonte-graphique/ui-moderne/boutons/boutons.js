@@ -7,7 +7,7 @@
 (function () {
   const INK = '#1c0f26';
   // tailles : hauteur totale (épaisseur comprise) et épaisseur (la « lèvre » qui disparaît quand on appuie)
-  const SIZES = { xl: { h: 72, lip: 6 }, l: { h: 62, lip: 6 }, m: { h: 48, lip: 5 }, s: { h: 38, lip: 4 } };
+  const SIZES = { xxl: { h: 84, lip: 7 }, xl: { h: 72, lip: 6 }, l: { h: 62, lip: 6 }, m: { h: 48, lip: 5 }, s: { h: 38, lip: 4 } };
 
   let uid = 0;
   const id = (p) => `${p}${++uid}`;
@@ -269,10 +269,10 @@
   }
 
   const FAMILIES = {
-    email: { draw: email, tones: Object.keys(EMAIL), L: { xl: 19, l: 18, m: 15, s: 12 } },
-    pierre: { draw: pierre, tones: Object.keys(PIERRE), L: { xl: 21, l: 20, m: 17, s: 14 } },
-    cristal: { draw: cristal, tones: Object.keys(CRISTAL), L: { xl: 34, l: 30, m: 24, s: 19 } },
-    etendard: { draw: etendard, tones: Object.keys(ETENDARD), L: { xl: 21, l: 20, m: 18, s: 15 } },
+    email: { draw: email, tones: Object.keys(EMAIL), L: { xxl: 21, xl: 19, l: 18, m: 15, s: 12 } },
+    pierre: { draw: pierre, tones: Object.keys(PIERRE), L: { xxl: 23, xl: 21, l: 20, m: 17, s: 14 } },
+    cristal: { draw: cristal, tones: Object.keys(CRISTAL), L: { xxl: 40, xl: 34, l: 30, m: 24, s: 19 } },
+    etendard: { draw: etendard, tones: Object.keys(ETENDARD), L: { xxl: 22, xl: 21, l: 20, m: 18, s: 15 } },
   };
 
   function installButtons(root = document.documentElement) {

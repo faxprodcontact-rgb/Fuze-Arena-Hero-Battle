@@ -1,0 +1,87 @@
+/* Familles de boutons (proposition du 26/11/2026) — la mécanique commune ; les dessins sont fabriqués par boutons.js et
+   rangés dans des variables --bt-… ; chaque bouton reçoit les siennes dans son style (buttonVars / roundVars) :
+   --sk / --skd (dessin normal / enfoncé), --L et --Ln (largeur des bouts, en px et sans unité), --h, --lip, --tc, --ts. */
+
+/* ---------- le bouton (toutes tailles) : le dessin sur ::before, en 3 morceaux (bouts fixes, milieu étiré) ---------- */
+.bt { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: none;
+  height: var(--h); min-width: calc(var(--L) * 2 + 24px); padding: 0 calc(var(--L) + 4px) var(--lip);
+  font: 400 var(--fs, 20px)/1 'Lilita One', system-ui, sans-serif; letter-spacing: 0.3px; color: var(--tc); text-shadow: var(--ts);
+  border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  /* l'ombre portée tombe en bas à gauche (la lumière vient d'en haut à droite) */
+  filter: drop-shadow(-2px 4px 4px #0a052a59); }
+.bt::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  border-style: solid; border-width: 0 var(--L); border-image: var(--sk) 0 var(--Ln) fill / 0 var(--L) stretch; }
+.bt > * { position: relative; z-index: 1; }
+.bt:active:not(:disabled), .bt.is-down { padding-top: calc(var(--lip) - 1px); padding-bottom: 1px; filter: drop-shadow(-1px 2px 2px #0a052a59); }
+.bt:active:not(:disabled)::before, .bt.is-down::before { border-image-source: var(--skd); }
+.bt:disabled { cursor: default; }
+.bt.l { --fs: 25px; }
+.bt.xl { --fs: 27px; }
+.bt.xxl { --fs: 28px; }
+.bt.m { --fs: 18px; }
+.bt.s { --fs: 15px; gap: 6px; }
+.bt-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.bt-sub { font: 400 13px/1 'Lilita One', system-ui, sans-serif; opacity: 0.92; letter-spacing: 0.4px; }
+.bt-ico { width: 26px; height: 26px; filter: drop-shadow(-1px 1px 0 #0006); }
+.bt.s .bt-ico { width: 22px; height: 22px; }
+
+/* ---------- le prix dans le bouton : un creux (picto qui déborde à gauche + chiffre) ; chaque famille le taille à sa façon ---------- */
+.bt-price { display: inline-flex; align-items: center; gap: 2px; height: 22px; padding: 0 8px 0 0; margin-left: 10px;
+  font: 400 15px/1 'Lilita One', system-ui, sans-serif; color: #fff; text-shadow: 0 1px 0 #000a; }
+.bt-price img { width: 26px; height: 26px; margin: -4px 0 -4px -14px; filter: drop-shadow(-1px 1px 0 #0007); }
+.bt-col .bt-price { margin-left: 12px; }
+
+/* ---------- boutons ronds (44 × 48 : la face + son épaisseur) ---------- */
+.bt-rond { position: relative; width: 44px; height: 48px; flex: none; border: 0; padding: 0 0 4px; cursor: pointer;
+  background: var(--skr) no-repeat 0 0 / 44px 48px; display: grid; place-items: center; filter: drop-shadow(-2px 3px 3px #0a052a59); }
+.bt-rond svg { width: 24px; height: 24px; }
+.bt-rond:active:not(:disabled), .bt-rond.is-down { background-image: var(--skrd); padding: 3px 0 1px; filter: drop-shadow(-1px 1px 1px #0a052a59); }
+.bt-rond:disabled { cursor: default; }
+
+/* ---------- onglets (segments) : un rail, l'onglet choisi est un vrai petit bouton de la famille ---------- */
+.bt-seg { display: flex; align-items: center; gap: 2px; padding: 4px; position: relative; }
+.bt-seg > button { flex: 1; }
+.bt-seg .seg-off { height: 34px; border: 0; background: none; cursor: pointer; font: 400 15px/1 'Lilita One', system-ui, sans-serif; color: var(--seg-c, #c7c0ea); padding: 0 0 2px; }
+.bt-seg .bt { min-width: 0; }
+
+/* ======================== 1. Émail serti ======================== */
+.fam-email .bt-seg { border-radius: 4px; background: linear-gradient(180deg, #14123d, #1f1c55); box-shadow: inset 0 0 0 2px #1c0f26, inset -2px 2px 0 4px #0c0a2a, inset 0 0 0 4px #b77a28;
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 0 calc(100% - 8px), 0 8px); padding: 6px; }
+.fam-email .bt-seg .seg-off { --seg-c: #c9c4ef; }
+.fam-email .bt-price { background: #1c0f2699; border-radius: 3px; box-shadow: inset -1px 1px 0 #0008, inset 1px -1px 0 #ffffff26; }
+.fam-email .bt[data-t="or"] .bt-price { background: #5a2408cc; }
+.fam-email .bt-rond svg { --sg: #fff1c8; }
+
+/* ======================== 2. Pierre de l'arène ======================== */
+.fam-pierre .bt-seg { border-radius: 10px 14px 9px 12px; background: linear-gradient(200deg, #3e3b58, #2a283f); box-shadow: inset 0 0 0 2px #1c0f26, inset 2px -2px 0 2px #ffffff1c, inset -3px 3px 0 2px #0a081a; padding: 6px; }
+.fam-pierre .bt-seg .seg-off { --seg-c: #b3aecb; text-shadow: -1px 1px 0 #00000066; }
+.fam-pierre .bt-price { background: #0b081899; border-radius: 6px 8px 5px 7px; box-shadow: inset -2px 2px 0 #00000080, inset 1px -1px 0 #ffffff2e; }
+.fam-pierre .bt[data-t="ardoise"] .bt-price { background: #2e2948b3; }
+
+/* ======================== 3. Cristal élémentaire ======================== */
+.fam-cristal .bt-seg { background: linear-gradient(180deg, #0e0a2ccc, #1d1650cc); box-shadow: inset 0 0 0 2px #1c0f26, inset -1px 1px 0 3px #ffffff1f;
+  clip-path: polygon(14px 0, calc(100% - 14px) 0, 100% 50%, calc(100% - 14px) 100%, 14px 100%, 0 50%); padding: 4px 12px; }
+.fam-cristal .bt-seg .seg-off { --seg-c: #bdb5ea; }
+.fam-cristal .bt-price { background: #120a3399; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%); padding: 0 12px 0 2px; }
+.fam-cristal .bt-price img { margin-left: -6px; }
+
+/* ======================== 4. Étendard ======================== */
+/* les onglets sont des fanions pendus à une tringle de bronze ; le fanion choisi descend plus bas */
+.fam-etendard .bt-seg { gap: 6px; padding: 10px 14px 0; align-items: flex-start; height: 58px; }
+.fam-etendard .bt-seg::before { content: ''; position: absolute; left: 0; right: 0; top: 2px; height: 10px; border-radius: 5px; z-index: 2;
+  background: linear-gradient(180deg, #ffe9a8 0 2px, #cf8a34 2px 6px, #6e3412 6px); box-shadow: 0 0 0 2px #1c0f26, 0 3px 4px #0006; }
+.fam-etendard .bt-seg > button { position: relative; height: 38px; border: 0; padding: 4px 0 8px; font: 400 15px/1 'Lilita One', system-ui, sans-serif;
+  color: #d9d4f2; text-shadow: 0 2px 0 #141444; background: none; filter: drop-shadow(-2px 3px 2px #0a052a73); cursor: pointer; }
+.fam-etendard .bt-seg > button::before, .fam-etendard .bt-seg > button::after { content: ''; position: absolute; inset: 0; z-index: -1;
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 9px), 0 100%); }
+.fam-etendard .bt-seg > button::before { background: #1c0f26; }
+.fam-etendard .bt-seg > button::after { inset: 0 2px 3px; clip-path: polygon(0 0, 100% 0, 100% 100%, 50% calc(100% - 7px), 0 100%);
+  background: linear-gradient(180deg, #4a52b8 0 2px, #3a3f94 2px, #1e1f5e); }
+.fam-etendard .bt-seg > button.on { height: 50px; color: #fff3d6; text-shadow: 0 2px 0 #560a26; padding-bottom: 14px; }
+.fam-etendard .bt-seg > button.on::after { background: linear-gradient(180deg, #e0485e 0 2px, #c8304a 2px, #7c1234); }
+.fam-etendard .bt-price { background: #14081c80; border-radius: 3px; box-shadow: 0 0 0 1px #ffd65a66; }
+
+/* ======================== les signes (dessinés, jamais de lettres) : contour sombre + couleur ======================== */
+.sg .o { fill: none; stroke: #1c0f26; stroke-width: 5.2; stroke-linecap: round; stroke-linejoin: round; }
+.sg .f { fill: none; stroke: var(--sg, #fff4dc); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.sg .ff { fill: var(--sg, #fff4dc); stroke: #1c0f26; stroke-width: 1.6; stroke-linejoin: round; }
