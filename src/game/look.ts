@@ -115,6 +115,9 @@ export function battleLook(kind: string, title: string, dungeon?: DungeonKind): 
     case 'dailyBoss':
     case 'guildBoss':
       return clanLook(bossClan(title), true);
+    case 'coliseum':
+      // le Colisée : la cour pavée du temple aux bannières et aux torches (le décor qui fait le plus arène)
+      return clanLook('lenore');
     default:
       return namedLook(`${kind}:${title}`);
   }

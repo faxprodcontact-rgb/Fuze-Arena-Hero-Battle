@@ -25,6 +25,7 @@ function defer(load: () => Promise<() => Stop>): Stop {
 export const runIdle: typeof import('./idle-scene').runIdle = (...a) => defer(() => import('./idle-scene').then((m) => () => m.runIdle(...a)));
 export const runBattle: typeof import('./battle-scene').runBattle = (...a) => defer(() => import('./battle-scene').then((m) => () => m.runBattle(...a)));
 export const runSkillPreview: typeof import('./skill-scene').runSkillPreview = (...a) => defer(() => import('./skill-scene').then((m) => () => m.runSkillPreview(...a)));
+export const runColiseumFight: typeof import('./coliseum-scene').runColiseumFight = (...a) => defer(() => import('./coliseum-scene').then((m) => () => m.runColiseumFight(...a)));
 
 /** Place des héros sur le terrain (en X, par emplacement) : sert au combat et à l'écran de préparation. */
 export const HERO_X: Record<Slot, number> = { 3: 82, 4: 82, 2: 163, 0: 245, 1: 245 };

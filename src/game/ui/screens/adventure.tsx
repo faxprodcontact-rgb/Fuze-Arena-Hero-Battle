@@ -24,6 +24,8 @@ import { now, useGame } from '../../state/store';
 import { ADVENTURE_ORDER, dots, isNew } from '../dots';
 import { TeamStrip } from './heroes';
 import { TileScene } from '../backdrop-adventure';
+import { Coliseum, LEAGUE_ICON } from './coliseum';
+import { COLISEUM_LEAGUES } from '../../../core/data/coliseum';
 import { Art, Btn, Cur, Icon, Locked, duration, starText } from '../kit';
 import { btClass } from '../buttons';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
@@ -57,6 +59,10 @@ function TileInfo({ f }: { f: Mode }) {
       const l = leagueOf(s.arena.points).id;
       return <span class={`av-chip league-${l}`}><Icon name={`league-${l}`} size={16} />{t(`league.${l}`)}</span>;
     }
+    case 'defense': {
+      const l = s.coliseum?.league ?? 0;
+      return <span class={`av-chip league-${COLISEUM_LEAGUES[l]}`}><Icon name={LEAGUE_ICON(l)} size={16} />{t(`league.${COLISEUM_LEAGUES[l]}`)}</span>;
+    }
     default:
       return <span class="av-chip off">{t('soon')}</span>;
   }
@@ -72,7 +78,7 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
         {sub === 'dungeons' && <Dungeons />}
         {sub === 'dailyBoss' && <DailyBoss />}
         {sub === 'arena' && <Arena />}
-        {sub === 'defense' && <Colisee />}
+        {sub === 'defense' && <Coliseum />}
       </div>
     );
   }
@@ -131,28 +137,6 @@ function PowerVs({ need }: { need: number }) {
     <span class={`av-power ${mine >= need ? 'ok' : 'low'}`}>
       <Icon name="power" size={18} /><b>{fmt(mine)}</b><small>/ {fmt(need)}</small>
     </span>
-  );
-}
-
-/** Le Colisée (il remplace le Siège) : deux équipes de 3, un duel à la fois. Les règles restent à construire. */
-function Colisee() {
-  const s = useGame();
-  const mine = s.formation.slice(0, 3).map(([uid]) => s.heroes.find((h) => h.uid === uid)).filter(Boolean);
-  return (
-    <>
-      <SubHead title={t('adv.defense')} />
-      <section class="av-panel av-colisee">
-        <div class="av-scene av-grow" style={sceneVar('lenore')}>
-          <Art name="defense" class="av-scene-art" />
-        </div>
-        <div class="av-duel">
-          <div class="av-faces">{mine.map((h) => <span class="av-face"><img src={heroImage(h!.defId)} alt="" /></span>)}</div>
-          <span class="av-vs">VS</span>
-          <div class="av-faces">{[0, 1, 2].map(() => <span class="av-face unknown"><Icon name="unknownHero" size={34} /></span>)}</div>
-        </div>
-        <Btn kind="gold" wide disabled>{t('soon')}</Btn>
-      </section>
-    </>
   );
 }
 

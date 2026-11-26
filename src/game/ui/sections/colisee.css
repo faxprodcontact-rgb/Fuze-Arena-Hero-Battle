@@ -1,0 +1,139 @@
+/* Le Colisée (26/11/2026) : la page du mode (screens/coliseum.tsx), classes « col- ». Les deux familles de couleur de
+   l'interface : le bleu foncé des barres et la pierre grise où brûle l'or. Vert = monter (et l'action principale),
+   corail = descendre, or = le joueur et les récompenses. La page tient sans défiler : seule la liste défile. */
+
+.adv-scroll > .screen.av-sub-defense { flex: 1 1 0; min-height: 0; gap: 8px; }
+.col-page { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
+
+/* ---------- la ligue : son blason, la place, la fin de la semaine ---------- */
+.col-league { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 12px 8px 8px; border-radius: 20px; color: #fff; text-shadow: none;
+  background: linear-gradient(160deg, var(--c-navy-hi) 0%, var(--c-navy) 55%, var(--c-navy-lo) 100%);
+  box-shadow: inset 0 0 0 1px #ffffff1f, inset 0 2px 0 #ffffff1f, inset 0 -2px 0 #ffc94d66, 0 8px 18px #05021a66; }
+.col-league > .icon { flex: none; filter: drop-shadow(0 4px 4px #0008); }
+.col-league-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.col-league-main strong { font: 400 21px/1 var(--font-title); text-shadow: 0 2px 0 #0a062099; }
+.col-league-sub { font: 600 13px/1 var(--font); color: var(--c-on-dark-muted); white-space: nowrap; }
+.col-league-sub b { font: 400 16px/1 var(--font-title); color: var(--c-reward-hi); }
+.col-ends { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 10px 0 5px; border-radius: 999px;
+  background: #ffffff14; box-shadow: inset 0 0 0 1px #ffffff26; font: 400 13px/1 var(--font-title); color: #fff; }
+.league-bronze .col-league-main strong { color: #ffbe8a; } .league-silver .col-league-main strong { color: #eef2fb; }
+.league-gold .col-league-main strong { color: #ffe27a; } .league-platinum .col-league-main strong { color: #9ff3e3; }
+.league-diamond .col-league-main strong { color: #d7c4ff; } .league-champion .col-league-main strong { color: #ff9b9b; }
+.av-chip.league-champion { color: #ff9b9b; }
+
+/* ---------- les onglets (le rail de pierre de l'arène, à trois places) ---------- */
+.col-tabs { grid-template-columns: 1fr 1fr 1fr; }
+.col-tabs button, .col-tabs button.bt { font-size: 15px; gap: 4px; }
+
+/* ---------- le contenu de l'onglet : une carte de pierre sombre, seule partie qui défile ---------- */
+.col-body { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px; border-radius: 20px;
+  background: linear-gradient(180deg, #1b1449e6, #120c36e6); box-shadow: inset 0 0 0 1px #ffffff1a, 0 8px 18px #05021a59; }
+.col-rows { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.col-row { position: relative; display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 12px 0 6px; border-radius: 12px;
+  background: #ffffff0f; color: #fff; text-shadow: none; }
+.col-rank { width: 30px; flex: none; text-align: center; font: 400 16px/1 var(--font-title); color: var(--c-on-dark-muted); }
+.col-name { flex: 1; min-width: 0; font: 600 14px/1 var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-pts { flex: none; font: 400 15px/1 var(--font-title); color: #fff; }
+/* les zones : les 3 premiers montent (vert), les 3 derniers descendent (corail) — une bande à gauche et une flèche */
+.col-row.zone-up { background: linear-gradient(90deg, #2fc45740, #2fc45712 60%); box-shadow: inset 3px 0 0 var(--c-action); }
+.col-row.zone-down { background: linear-gradient(90deg, #ff546840, #ff546812 60%); box-shadow: inset 3px 0 0 var(--c-danger); }
+.col-row.zone-up .col-rank { color: var(--c-action-hi); }
+.col-row.zone-down .col-rank { color: var(--c-danger-hi); }
+/* le joueur : la pierre dorée */
+.col-row.me { background: linear-gradient(180deg, #ffe680, #ffc22e 60%, #ffab1a); color: #4a2600; box-shadow: inset 0 1.5px 0 #ffffff99, inset 0 -2px 0 #c06a00, 0 0 0 2px #fff3, 0 4px 12px #ffc22e59; }
+.col-row.me .col-rank, .col-row.me .col-pts { color: #4a2600; }
+.col-row.me.zone-up { box-shadow: inset 4px 0 0 var(--c-action), inset 0 1.5px 0 #ffffff99, inset 0 -2px 0 #c06a00, 0 4px 12px #ffc22e59; }
+.col-row.me.zone-down { box-shadow: inset 4px 0 0 var(--c-danger), inset 0 1.5px 0 #ffffff99, inset 0 -2px 0 #c06a00, 0 4px 12px #ffc22e59; }
+/* une flèche dessinée (monter, descendre, rester) */
+.col-arrow { flex: none; width: 16px; height: 16px; background: center / contain no-repeat; }
+.col-arrow.up { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 3l7 8h-4.2v6H7.2v-6H3z' fill='%2338cc5c' stroke='%230c5a24' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.col-arrow.down { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 17l7-8h-4.2V3H7.2v6H3z' fill='%23ff5468' stroke='%237a1024' stroke-width='1.4' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+.col-arrow.same { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3 7.5h14M3 12.5h14' stroke='%23b6addf' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E"); }
+.col-arrow.big { width: 30px; height: 30px; }
+
+/* ---------- récompenses : le chemin des ligues, puis une ligne par place ---------- */
+.col-rewards { display: flex; flex-direction: column; gap: 8px; }
+.col-ladder { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 6px; }
+.col-step { position: relative; display: grid; place-items: center; opacity: 0.5; filter: saturate(0.5); }
+.col-step.done { opacity: 0.75; }
+.col-step.on { opacity: 1; filter: drop-shadow(0 0 8px #ffc22e99); }
+.col-step + .col-step::before { content: ''; position: absolute; right: calc(100% + 3px); top: 50%; width: 10px; height: 3px; border-radius: 2px; background: #ffffff40; }
+.col-tier { min-height: 40px; }
+.col-place { width: 58px; flex: none; text-align: center; font: 400 16px/1 var(--font-title); color: #fff; }
+.col-place.p1 { color: #ffe27a; } .col-place.p2 { color: #eef2fb; } .col-place.p3 { color: #ffbe8a; }
+.col-row.me .col-place { color: #4a2600; }
+.col-gifts { flex: 1; display: flex; justify-content: flex-end; align-items: center; gap: 6px; }
+.col-gifts .cur { padding: 2px 9px 2px 3px; border-radius: 999px; background: #fff4d6; color: #7a4a00; box-shadow: inset 0 0 0 1px #ffdc8f; font: 400 14px/1 var(--font-title); text-shadow: none; }
+
+/* ---------- boutique ---------- */
+.col-shop { gap: 8px; }
+.col-shop .shop-tile { padding: 8px; gap: 6px; }
+
+/* ---------- le pied : l'équipe (ordre de passage), les combats du jour, Combattre ---------- */
+.col-foot { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 22px;
+  background: linear-gradient(180deg, var(--c-navy-hi), var(--c-navy-lo)); box-shadow: inset 0 0 0 1px #ffffff1f, inset 0 -2px 0 #ffc94d59, 0 8px 18px #05021a66; }
+.col-team { position: relative; flex: none; display: flex; align-items: center; gap: 4px; padding: 6px 6px 16px; border: 0; border-radius: 16px;
+  background: var(--g-stone); box-shadow: var(--sh-stone); cursor: pointer; }
+.col-team-face { position: relative; width: 40px; height: 40px; border-radius: 50%; overflow: visible; }
+.col-team-face img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 10%; box-shadow: 0 0 0 2px #fff, 0 2px 4px #0006; }
+.col-team-face i, .col-vface i, .col-slot-n { position: absolute; left: -3px; top: -3px; display: grid; place-items: center; width: 17px; height: 17px; border-radius: 50%;
+  background: linear-gradient(180deg, #ffe680, #ffab1a); color: #4a2600; font: 400 11px/1 var(--font-title); font-style: normal; box-shadow: 0 1px 2px #0007; }
+.col-team-pow { position: absolute; left: 50%; bottom: 2px; translate: -50% 0; display: inline-flex; align-items: center; gap: 2px; font: 400 12px/1 var(--font-title); color: var(--c-reward-hi); white-space: nowrap; text-shadow: 0 1px 0 #0008; }
+.col-go { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+.col-go .av-tries { align-self: center; }
+.col-more { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; }
+.col-more .cur { font-size: 15px; }
+
+/* ---------- les fenêtres : adversaire, résultat, fin de semaine, équipe ---------- */
+.col-vs { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 6px; padding: 4px 0; }
+.col-side { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; color: var(--c-text); text-shadow: none; }
+.col-side > strong { max-width: 100%; font: 400 17px/1.1 var(--font-title); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-side > small { font: 600 12px var(--font); color: var(--c-muted); }
+.col-side .av-power b { color: var(--c-reward-lo); }
+.col-faces { display: flex; flex-direction: column; gap: 6px; }
+.col-vface { position: relative; width: 52px; height: 52px; border-radius: 50%; box-shadow: 0 0 0 3px var(--c-action), 0 3px 6px #0004; }
+.col-faces.foe .col-vface { box-shadow: 0 0 0 3px var(--c-danger), 0 3px 6px #0004; }
+.col-vface img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; object-position: 50% 10%; }
+.col-vs-mark { font: 400 30px/1 var(--font-title); color: var(--c-danger); text-shadow: 0 2px 0 #a81d3840; }
+
+.col-delta { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.col-pts-delta { font: 400 26px/1 var(--font-title); white-space: nowrap; }
+.col-pts-delta.col-up { color: var(--c-action); } .col-pts-delta.col-dn { color: var(--c-danger); }
+.col-rank-move { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; background: var(--c-surface-3); color: var(--c-text); text-shadow: none; }
+.col-rank-move b { font: 400 18px/1 var(--font-title); }
+
+.col-week { display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--c-text); text-shadow: none; }
+.col-week-leagues { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.col-week-leagues > .icon { opacity: 0.6; }
+.col-week-new { position: relative; display: grid; place-items: center; width: 130px; height: 120px; }
+.col-week-new > .icon { position: relative; filter: drop-shadow(0 6px 6px #0006); animation: pop .5s backwards cubic-bezier(.2,1.6,.4,1); }
+.col-week-title { font: 400 26px/1 var(--font-title); color: var(--c-title); }
+.col-week.up .col-week-title { color: var(--c-action-lo); }
+.col-week.down .col-week-title { color: var(--c-danger-lo); }
+.col-week-league { font: 400 18px/1 var(--font-title); color: var(--c-muted); }
+.col-week-rank { font: 600 14px var(--font); color: var(--c-muted); }
+
+.col-pickwrap { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.col-pickwrap > .btn { flex: none; }
+.col-pick { display: flex; justify-content: center; gap: 12px; }
+.col-slot { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; width: 74px; padding: 6px 4px 4px; border: 0; border-radius: 16px;
+  background: var(--g-stone); box-shadow: var(--sh-stone); cursor: pointer; }
+.col-slot img { width: 58px; height: 58px; border-radius: 50%; object-fit: cover; object-position: 50% 10%; box-shadow: 0 0 0 2px #fff; }
+.col-slot.empty { min-height: 84px; justify-content: center; opacity: 0.8; }
+.col-slot .stars { transform: scale(0.8); }
+.col-slot-n { left: 3px; top: 3px; width: 20px; height: 20px; font-size: 13px; }
+.col-pick-pow { align-self: center; }
+.col-pick-pow b { color: var(--c-reward-lo); }
+.col-roster { max-height: 40vh; }
+
+/* petits écrans : tout se resserre */
+@media (max-height: 700px) {
+  .col-league { padding: 6px 10px 6px 6px; }
+  .col-league > .icon { width: 44px !important; height: 44px !important; }
+  .col-league-main strong { font-size: 18px; }
+  .col-row { min-height: 32px; }
+  .col-foot { padding: 6px; }
+  .col-team-face { width: 34px; height: 34px; }
+  .col-vface { width: 44px; height: 44px; }
+  .col-roster { max-height: 32vh; }
+}

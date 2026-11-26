@@ -2,6 +2,7 @@
 import type { Slot } from '../../core/battle/types';
 import type { GearSlot, Item } from '../../core/data/items';
 import type { DungeonKind, Reward } from '../../core/data/modes';
+import type { FoeHero } from '../../core/coliseum';
 import type { Hero } from '../../core/types';
 
 export interface Wallet {
@@ -15,6 +16,8 @@ export interface Wallet {
   crystals: number;
   /** Poussière de forge : recyclage des objets, sert à renforcer les emplacements. */
   dust: number;
+  /** Insignes du Colisée (boutique du Colisée). */
+  badge: number;
 }
 export type Currency = keyof Wallet;
 
@@ -31,6 +34,37 @@ export interface ArenaOpponent {
   name: string;
   points: number;
   team: { defId: string; stars: number; level: number; slot: Slot }[];
+}
+
+/** L'adversaire tiré au Colisée (gardé jusqu'au combat : partir et revenir ne le change pas). */
+export interface ColiseumFoe {
+  /** Sa place dans le groupe (core/coliseum.ts, makeGroup). */
+  idx: number;
+  name: string;
+  points: number;
+  team: FoeHero[];
+  seed: number;
+}
+
+/** Le Colisée de la semaine (core/coliseum.ts). */
+export interface ColiseumState {
+  week: string;
+  /** Ligue (0 = Bronze … 5 = Champion). */
+  league: number;
+  /** Graine du groupe de la semaine. */
+  seed: number;
+  points: number;
+  fights: number;
+  wins: number;
+  /** Jour en cours : combats joués et combats achetés aujourd'hui. */
+  day: string;
+  today: number;
+  bought: number;
+  /** Les 3 héros, dans l'ordre de passage. */
+  team: number[];
+  foe?: ColiseumFoe;
+  /** Résultat de la semaine passée, pas encore récupéré. */
+  pending?: { week: string; league: number; rank: number; next: number; gems: number; badge: number };
 }
 
 export interface Friend {
@@ -101,6 +135,8 @@ export interface PlayerState {
   /** Amis : la liste, les cadeaux envoyés aujourd'hui et ceux reçus à ouvrir (par id d'ami). */
   friends: { list: Friend[]; day: string; sent: string[]; inbox: string[] };
   arena: { points: number; opponents: ArenaOpponent[] };
+  /** Colisée (créé à son ouverture). */
+  coliseum?: ColiseumState;
   /** Étape du tutoriel des premières minutes (-1 = fini ou passé). */
   tutorial?: number;
   /** Courrier : messages reçus (id → date d'arrivée), lus, cadeaux récupérés, et cadeaux propres à ce joueur (id → cadeau). */

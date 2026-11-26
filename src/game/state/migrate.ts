@@ -68,6 +68,10 @@ export function retireHeroes(s: PlayerState): PlayerState {
   for (const m of s.daily?.missions ?? []) m.heroUids = m.heroUids.filter((uid) => !goneUids.has(uid));
   for (const o of s.arena?.opponents ?? []) for (const m of o.team) m.defId = stand(m.defId);
   for (const f of s.friends?.list ?? []) for (const m of f.team) m.defId = stand(m.defId);
+  if (s.coliseum) {
+    s.coliseum.team = (s.coliseum.team ?? []).filter((uid) => !goneUids.has(uid));
+    for (const m of s.coliseum.foe?.team ?? []) m.defId = stand(m.defId);
+  }
 
   if (Object.keys(reward).length) {
     const box = (s.mail ??= { got: {}, read: [], claimed: [] });

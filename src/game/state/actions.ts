@@ -28,9 +28,14 @@ import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '.
 import { summonBasic, summonOne } from '../../core/summon';
 import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
-import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
+import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, isUnlocked, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
 import type { TeamKind } from './selectors';
-import type { ArenaOpponent, Friend, Gain, GuildWarState, MissionState, PlayerState, Wallet } from './types';
+import type { ArenaOpponent, ColiseumFoe, ColiseumState, Friend, Gain, GuildWarState, MissionState, PlayerState, Wallet } from './types';
+import {
+  botTeam, foeUnits, leagueAfter, makeGroup, mixSeed, myRank, pointsChange, rankReward, runColiseum, standings, WEEK_HOURS,
+  type ColiseumBot, type ColiseumSetup, type Standing,
+} from '../../core/coliseum';
+import { COLISEUM, COLISEUM_SHOP } from '../../core/data/coliseum';
 
 // ---------- Outils ----------
 
@@ -101,6 +106,7 @@ export function ensureDay(): void {
   checkMail();
   friendsDay();
   ensureWar();
+  ensureColiseum();
   const s = getState();
   const today = dayKey(now());
   const week = weekKey(now());
@@ -1169,10 +1175,10 @@ export function buyOffer(id: string): Gain | null {
   });
 }
 
-export function buyExchange(shop: 'arena' | 'guild', id: string): Gain | null {
+export function buyExchange(shop: 'arena' | 'guild' | 'coliseum', id: string): Gain | null {
   return update((s) => {
-    const list = shop === 'arena' ? ARENA_SHOP : GUILD_SHOP;
-    const currency = shop === 'arena' ? 'arenaTokens' : 'guildCoins';
+    const list = shop === 'arena' ? ARENA_SHOP : shop === 'coliseum' ? COLISEUM_SHOP : GUILD_SHOP;
+    const currency = shop === 'arena' ? 'arenaTokens' : shop === 'coliseum' ? 'badge' : 'guildCoins';
     const entry = list.find((x) => x.id === id);
     if (!entry || s.wallet[currency] < entry.cost) return null;
     s.wallet[currency] -= entry.cost;
@@ -1632,4 +1638,212 @@ export function mailWaiting(s: PlayerState = getState()): number {
 
 export function setTutorial(step: number): void {
   update((s) => void (s.tutorial = step));
+}
+
+// ---------- Colisée ----------
+// Duels en chaîne, équipes de 3, classement de la semaine par groupe de 30 et par ligue (règles : src/core/coliseum.ts).
+// Le résultat d'un combat est rejoué ici à partir de la graine (l'écran ne fait que le montrer) : demain, le serveur.
+
+function weekStartMs(ms: number): number {
+  const d = new Date(ms);
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.getTime();
+}
+
+/** Heures écoulées depuis le début de la semaine (lundi 0 h). */
+export function coliseumHours(): number {
+  return (now() - weekStartMs(now())) / 3.6e6;
+}
+
+/** Fin de la semaine du Colisée (lundi prochain, 0 h). */
+export function coliseumWeekEnd(): number {
+  const d = new Date(weekStartMs(now()));
+  d.setDate(d.getDate() + 7);
+  return d.getTime();
+}
+
+function hashText(text: string): number {
+  let h = 2166136261;
+  for (const ch of text) h = Math.imul(h ^ ch.charCodeAt(0), 16777619) >>> 0;
+  return h;
+}
+
+function newColiseumWeek(s: PlayerState, week: string, league: number, team: number[] = []): ColiseumState {
+  return {
+    week, league, seed: mixSeed(s.createdAt >>> 0, hashText(week)), points: COLISEUM.startPoints, fights: 0, wins: 0,
+    day: dayKey(now()), today: 0, bought: 0, team,
+  };
+}
+
+/** Le groupe de la semaine en cours. */
+export function coliseumGroup(c: ColiseumState): ColiseumBot[] {
+  return makeGroup(c.seed, c.league);
+}
+
+/** Le classement du groupe, maintenant (ou à la fin de la semaine). */
+export function coliseumStandings(s: PlayerState = getState(), hours = coliseumHours()): Standing[] {
+  const c = s.coliseum;
+  if (!c) return [];
+  return standings(coliseumGroup(c), hours, { name: s.name, points: c.points });
+}
+
+/**
+ * Nouvelle semaine : la place de la semaine passée donne sa récompense (à récupérer) et la ligue monte ou descend.
+ * Une semaine sans combat ne rapporte rien et ne change pas de ligue. Nouveau jour : les combats du jour reviennent.
+ */
+export function ensureColiseum(): void {
+  const s0 = getState();
+  if (!isUnlocked(s0, 'defense')) return;
+  const week = weekKey(now());
+  const today = dayKey(now());
+  const c0 = s0.coliseum;
+  if (c0 && c0.week === week && c0.day === today) return;
+  update((s) => {
+    const c = s.coliseum;
+    if (!c) {
+      s.coliseum = newColiseumWeek(s, week, 0);
+      return;
+    }
+    if (c.week !== week) {
+      let league = c.league;
+      if (c.fights > 0) {
+        const rank = myRank(coliseumGroup(c), WEEK_HOURS, { name: s.name, points: c.points });
+        league = leagueAfter(c.league, rank);
+        const r = rankReward(c.league, rank);
+        // une récompense pas encore prise s'ajoute à la nouvelle (rien ne se perd)
+        const prev = c.pending;
+        c.pending = { week: c.week, league: c.league, rank, next: league, gems: r.gems + (prev?.gems ?? 0), badge: r.badge + (prev?.badge ?? 0) };
+      }
+      s.coliseum = { ...newColiseumWeek(s, week, league, c.team), pending: c.pending };
+      return;
+    }
+    c.day = today;
+    c.today = 0;
+    c.bought = 0;
+  });
+}
+
+/** Combats encore possibles aujourd'hui (offerts + achetés − joués). */
+export function coliseumFightsLeft(s: PlayerState = getState()): number {
+  const c = s.coliseum;
+  if (!c) return 0;
+  return Math.max(0, COLISEUM.freeFights + c.bought - c.today);
+}
+
+/** Prix du prochain combat en plus (null : plus d'achat possible aujourd'hui). */
+export function coliseumExtraCost(s: PlayerState = getState()): number | null {
+  const c = s.coliseum;
+  if (!c) return null;
+  return COLISEUM.extraCosts[c.bought] ?? null;
+}
+
+/** Achète un combat de plus (seulement quand ceux du jour sont joués). */
+export function buyColiseumFight(): boolean {
+  return update((s) => {
+    const cost = coliseumExtraCost(s);
+    if (!s.coliseum || cost === null || s.wallet.gems < cost || coliseumFightsLeft(s) > 0) return false;
+    s.wallet.gems -= cost;
+    s.coliseum.bought += 1;
+    return true;
+  });
+}
+
+/** Les 3 héros du Colisée (ordre de passage) : ceux choisis, complétés par les plus forts. */
+export function coliseumTeam(s: PlayerState = getState()): Hero[] {
+  const chosen = (s.coliseum?.team ?? []).map((u) => heroByUid(s, u)).filter((h): h is Hero => !!h);
+  const want = Math.min(COLISEUM.team, s.heroes.length);
+  if (chosen.length >= want) return chosen.slice(0, want);
+  const rest = s.heroes.filter((h) => !chosen.includes(h)).sort((a, b) => heroPower(s, b) - heroPower(s, a));
+  return [...chosen, ...rest].slice(0, want);
+}
+
+export function coliseumTeamPower(s: PlayerState = getState()): number {
+  return coliseumTeam(s).reduce((a, h) => a + heroPower(s, h), 0);
+}
+
+/** Choisit les héros (dans l'ordre de passage). */
+export function setColiseumTeam(uids: number[]): boolean {
+  const s0 = getState();
+  const ok = uids.length >= 1 && uids.length <= COLISEUM.team && new Set(uids).size === uids.length && uids.every((u) => heroByUid(s0, u));
+  if (!ok || !s0.coliseum) return false;
+  return update((s) => {
+    s.coliseum!.team = [...uids];
+    return true;
+  });
+}
+
+/**
+ * Cherche un adversaire : au hasard parmi les joueurs du groupe les plus proches au classement, avec une équipe de la
+ * même puissance que la nôtre. Il reste le même jusqu'au combat.
+ */
+export function findColiseumFoe(): ColiseumFoe | null {
+  const s0 = getState();
+  if (!s0.coliseum || coliseumFightsLeft(s0) <= 0) return null;
+  if (s0.coliseum.foe) return s0.coliseum.foe;
+  return update((s) => {
+    const c = s.coliseum!;
+    const rng = nextRng(s);
+    const rows = coliseumStandings(s).filter((r) => r.idx >= 0).sort((a, b) => Math.abs(a.points - c.points) - Math.abs(b.points - c.points));
+    const row = pick(rng, rows.slice(0, COLISEUM.foeChoice));
+    const bot = coliseumGroup(c)[row.idx]!;
+    const [lo, hi] = COLISEUM.foePower;
+    const power = Math.max(300, coliseumTeamPower(s)) * (lo + rng() * (hi - lo));
+    c.foe = { idx: bot.idx, name: bot.name, points: row.points, team: botTeam(bot.heroes, power), seed: seedFor(s) };
+    return c.foe;
+  });
+}
+
+/** Le combat contre l'adversaire tiré : les deux équipes et la graine (le même combat partout). */
+export function coliseumSetup(s: PlayerState = getState()): ColiseumSetup | null {
+  const foe = s.coliseum?.foe;
+  if (!foe) return null;
+  const heroes = coliseumTeam(s).map((h) => heroToUnit(h, 0, gearStatsOf(s, h.uid)));
+  if (!heroes.length) return null;
+  return { heroes, foes: foeUnits(foe.team), seed: foe.seed };
+}
+
+export interface ColiseumFightResult {
+  win: boolean;
+  delta: number;
+  points: number;
+  rankBefore: number;
+  rankAfter: number;
+  foe: string;
+  gain: Gain;
+}
+
+/** Fin du combat : le résultat est rejoué à partir de la graine, puis les points et les insignes sont donnés. */
+export function finishColiseum(): ColiseumFightResult | null {
+  const setup = coliseumSetup();
+  if (!setup || coliseumFightsLeft() <= 0) return null;
+  const outcome = runColiseum(setup);
+  return update((s) => {
+    const c = s.coliseum!;
+    const foe = c.foe!;
+    const rankBefore = myRank(coliseumGroup(c), coliseumHours(), { name: s.name, points: c.points });
+    const delta = pointsChange(c.points, foe.points, outcome.win);
+    c.points = Math.max(0, c.points + delta);
+    c.fights += 1;
+    c.today += 1;
+    if (outcome.win) c.wins += 1;
+    delete c.foe;
+    const gain = emptyGain();
+    addCurrency(s, gain, 'badge', outcome.win ? COLISEUM.fightBadges.win : COLISEUM.fightBadges.loss);
+    const rankAfter = myRank(coliseumGroup(c), coliseumHours(), { name: s.name, points: c.points });
+    return { win: outcome.win, delta, points: c.points, rankBefore, rankAfter, foe: foe.name, gain };
+  });
+}
+
+/** Récupère la récompense de la semaine passée. */
+export function claimColiseumWeek(): Gain | null {
+  return update((s) => {
+    const p = s.coliseum?.pending;
+    if (!p) return null;
+    const gain = emptyGain();
+    addCurrency(s, gain, 'gems', p.gems);
+    addCurrency(s, gain, 'badge', p.badge);
+    delete s.coliseum!.pending;
+    return gain;
+  });
 }
