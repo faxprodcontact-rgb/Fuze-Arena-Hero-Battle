@@ -77,7 +77,43 @@ def main():
     im.convert('RGB').save(os.path.join(OUT, 'comparaison.png'))
     os.remove(big)
     os.remove(svg)
+    visage()
     print('écrit', os.path.join(OUT, 'fixe.png'), 'et comparaison.png')
+
+
+def visage():
+    """visage.png : la tête zoomée ×4 (cadre du jeu 512 px → ×4), à gauche sans rien, à droite avec le calque
+    guide_svg de visage.py (tour=75 : un seul œil) posé dans le repère de la tête (même ×1,08 que la pose) ; vérifie
+    aussi les places réelles des traits."""
+    sys.path.insert(0, os.path.join(HERE, '..'))
+    from visage import guide_svg, verifier
+    rendu = os.path.join(HERE, '..', 'rendu.cjs')
+    x0, y0, w, h = L.FRAME
+    head_svg = L.build().svg()
+    nx, ny = L.NECK
+    g = guide_svg(L.FACE_BOX, tour=75)
+    g = '<g transform="translate(%g %g) scale(1.08) translate(%g %g)">' % (nx, ny, -nx, -ny) + g + '</g>'
+    guided = head_svg[:head_svg.rindex('</svg>')] + g + '</svg>'
+    H = 4 * 512
+    k = H / h
+    box = (round((58 - x0) * k), round((14 - y0) * k), round((112 - x0) * k), round((60 - y0) * k))
+    ims = []
+    for i, svg_txt in enumerate((head_svg, guided)):
+        path = os.path.join(HERE, '_visage%d.svg' % i)
+        png = os.path.join(HERE, '_visage%d.png' % i)
+        open(path, 'w').write(svg_txt)
+        subprocess.run(['node', rendu, path, png, str(H)], check=True)
+        im = Image.open(png).convert('RGBA').crop(box)
+        os.remove(path)
+        os.remove(png)
+        bg = stone(im.width, im.height)
+        bg.alpha_composite(im)
+        ims.append(bg)
+    out = Image.new('RGB', (2 * ims[0].width + 30, ims[0].height), (20, 14, 34))
+    out.paste(ims[0].convert('RGB'), (0, 0))
+    out.paste(ims[1].convert('RGB'), (ims[0].width + 30, 0))
+    out.save(os.path.join(OUT, 'visage.png'))
+    print('visage : défauts =', verifier(L.face_mesures(), L.FACE_BOX) or 'aucun')
 
 
 if __name__ == '__main__':

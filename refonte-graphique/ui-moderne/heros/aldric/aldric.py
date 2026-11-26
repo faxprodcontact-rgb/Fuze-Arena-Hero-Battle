@@ -415,11 +415,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     for e, sg in ((pe, 1), (pf, -1)):
         cx, cy, w = e
         B = lambda u, dy: (cx + sg * u * w, cy + dy)
-        brow = sm([B(-0.80, -2.4), B(-0.40, -3.4), B(0.08, -3.4), B(0.62, -2.2), B(0.60, -0.9), B(0.06, -1.6),
-                   B(-0.40, -1.6), B(-0.74, -1.3)], sharp=(0, 3))
+        brow = sm([B(-0.80, -2.7), B(-0.40, -3.6), B(0.10, -3.3), B(0.64, -1.8), B(0.58, -0.6), B(0.06, -1.4),
+                   B(-0.40, -1.8), B(-0.74, -1.6)], sharp=(0, 3))
         hd += [(brow.move(-0.3, 0.6), SKIN.deep, 0.35),
                (brow, ('lin', cx, cy - 3.4, cx, cy - 1.0, [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.deep)]), 1),
-               (ribbon([B(-0.62, -2.6), B(-0.16, -3.0), B(0.34, -2.8)], [0.1, 0.45, 0.1]), HAIR.hi, 0.6)]
+               (ribbon([B(-0.62, -2.9), B(-0.16, -3.1), B(0.34, -2.6)], [0.1, 0.45, 0.1]), HAIR.hi, 0.6)]
     # la bouche FERMÉE, centrée sous le nez ; le coin proche remonte à peine (assurance) ; la lèvre du bas éclairée ;
     # le menton ferme sur la médiane
     hl, hr = mw * 0.52, mw * 0.46

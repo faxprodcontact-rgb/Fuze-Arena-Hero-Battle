@@ -1,3 +1,4 @@
 fait
-Lenore, l'oni rouge : redessinée en vectoriel (cornes d'ivoire, crinière noire, gueule ouverte aux défenses, collier de perles, pagne en peau de tigre, kanabō clouté), bras et jambes d'un seul tenant (aucune jointure visible).
-Animée comme son pixel art : respiration avec souffle chaud par le naseau, « Revers du kanabō » (coup à plat, éclat de feu), « Colère de l'oni » (rugissement, aura de flammes, bond, anneau de feu au sol).
+Corrigé d'après l'avis du 26/11 : la corne du fond est replantée plus loin, près du bord droit du crâne, à la même hauteur que la proche et symétrique d'elle (un peu plus courte) ; les deux épaules sont des boules rondes qui continuent le trapèze du buste (plus de « boîte » ni de marche entre l'épaule et le corps).
+Le genou de la jambe du fond pliait vers l'arrière : les deux genoux plient maintenant vers l'avant, dans toutes les poses (repos, attaque, saut de la spéciale).
+Visage refait avec visage.py (verifier() vide, visage.png) : yeux de même dessin sur la même ligne, gros nez rond d'oni entre les yeux (plus de nez de profil qui sortait de la joue), gueule centrée dessous.
