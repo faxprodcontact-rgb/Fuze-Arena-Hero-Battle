@@ -755,6 +755,93 @@ def eye_shape(cx, cy, w, h, near):
     return sm(pts, sharp=(0, 3), t=0.9)
 
 
+# ---------- le bandana : une bande de tissu rouge qui fait le tour du crâne à la racine des cheveux (elle cache le haut
+# du front), un liseré d'or sur chaque bord et trois petits losanges d'or ; le nœud derrière l'oreille, deux pans qui
+# flottent dans la crinière (avec son vent) ; dans le repère de la tête (agrandie ×1,1) ----------
+BAND = [(60.4, 33.8), (63.6, 32.5), (67.0, 30.4), (70.4, 28.3), (74.0, 26.8), (78.0, 26.1), (82.0, 25.9), (85.6, 26.0),
+        (89.6, 26.4)]
+BAND_W = [3.5, 3.7, 3.9, 4.1, 4.3, 4.4, 4.4, 4.3, 4.2]
+KNOT = (59.8, 34.4)
+TAILS = [([(59.2, 34.8), (55.8, 36.0), (52.2, 36.5), (48.6, 37.9), (45.0, 38.4)], [1.6, 2.3, 2.6, 2.7, 2.6]),
+         ([(59.6, 35.6), (57.4, 38.6), (54.6, 41.0), (51.6, 42.8), (48.4, 45.0)], [1.6, 2.2, 2.5, 2.6, 2.5])]
+
+
+def bandana(fig, P):
+    """Le bandana, posé comme la tête (ses morceaux sont dans la liste des noms de head)."""
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    names = []
+    # la bande : un ruban le long de la ligne, coupé au bord du crâne (côté du fond) avec l'épaisseur du tissu ;
+    # elle épouse la tête, aucun vide entre elle et le front
+    cl = crpath(BAND, 40)
+    ws = []
+    for i in range(len(cl)):
+        t = i / (len(cl) - 1) * (len(BAND) - 1)
+        j = min(len(BAND) - 2, int(t))
+        ws.append(BAND_W[j] + (BAND_W[j + 1] - BAND_W[j]) * (t - j))
+    from atelier import sides
+    left, right = sides(cl, ws)
+    head_g = unary_union([poly_of(sm(FACE_PTS, t=0.9), 8), poly_of(cap_shape(), 8)]).buffer(0.35, join_style=1)
+    g = Polygon(left + right[::-1]).buffer(0).intersection(head_g)
+    band = shape_of(g, step=0.4, t=0.9)
+    det = []
+    # le liseré d'or le long des deux bords, et trois petits losanges d'or (raccourcis vers le côté du fond)
+    for k, wk in ((0.78, 0.42), (-0.78, 0.36)):
+        lk, rk = sides(cl, [w * abs(k) for w in ws])
+        edge = lk if k > 0 else rk
+        tr = inter(ribbon(edge[2:-1], [0.1] + [wk] * (len(edge) - 5) + [0.1], sharp_ends=False), band)
+        if tr:
+            det.append((tr, GOLD.base if k > 0 else GOLD.light, 0.95))
+    for t, sz in ((0.33, 0.95), (0.58, 0.9), (0.83, 0.6)):
+        q = cl[int(t * 40)]
+        d = norm(sub(cl[int(t * 40) + 1], cl[int(t * 40) - 1]))
+        a = ang_of(d)
+        dia = xf(sm([(-sz, 0), (0, -0.62), (sz, 0), (0, 0.62)], sharp=(0, 1, 2, 3), t=0.6), q[0], q[1], a)
+        det += [(dia.move(-0.2, 0.3), RED.deep, 0.45), (dia, GOLD.light, 1), (ellipse(q[0] + 0.15, q[1] - 0.15, 0.22 * sz, 0.18), GOLD.hi, 0.9)]
+    # le tissu : un pli doux le long de la bande, un éclat sur le front (la lumière en haut à droite)
+    det += [(ribbon(cl[6:38], [0.1] + [0.5] * 30 + [0.1]).move(0, 0.5), RED.shadow, 0.35),
+            (ribbon([(74.6, 25.6), (79.0, 24.8), (84.0, 24.7), (87.0, 25.1)], [0.1, 0.55, 0.5, 0.1]), RED.light, 0.55)]
+    # les deux pans : ils partent du nœud et flottent dans la crinière (même vague, même vent qu'elle) ; le bout
+    # coupé en biais
+    tails = []
+    for i, (pts, tw) in enumerate(TAILS):
+        pts = wave(pts, P, 2 + i, 0.75)
+        c = crpath(pts, 24)
+        tws = []
+        for k in range(len(c)):
+            t = k / (len(c) - 1) * (len(tw) - 1)
+            j = min(len(tw) - 2, int(t))
+            tws.append(tw[j] + (tw[j + 1] - tw[j]) * (t - j))
+        lt, rt = sides(c, tws)
+        d = norm(sub(c[-1], c[-2]))
+        end_l = add(lt[-1], d, 0.9)                  # la coupe en biais : le bord du haut dépasse
+        sh = sm(lt + [end_l] + rt[::-1], sharp=(len(lt), len(lt) + 1), t=0.9)
+        ax = (c[0][0], c[0][1], c[-1][0], c[-1][1])
+        tdet = [(sh, ('lin',) + ax + ([(0, RED.shadow), (0.35, RED.base), (1, RED.light)],), 1),
+                (under(sh, 0.4, -1.3), RED.shadow, 0.6),
+                (ribbon(c[3:-2], [0.1] + [0.42] * (len(c) - 7) + [0.1]).move(0.3, -0.5), RED.light, 0.5)]
+        lk, _ = sides(c, [w * 0.72 for w in tws])
+        tr = ribbon(lk[4:-1], [0.1] + [0.32] * (len(lk) - 7) + [0.1], sharp_ends=False)
+        tdet.append((tr, GOLD.base, 0.85))
+        tails.append(('bdt%d' % i, sh, tdet))
+    for name, sh, tdet in tails[::-1]:
+        names.append(name)
+        fig.part(name, sh, RED, cel=0.6, rim=0.35, cast=0.7, cast_on=['hair', 'bdt1'], details=tdet)
+    names.append('band')
+    fig.part('band', band, RED, grad=(86, 22, 62, 36, [(0, RED.light), (0.45, RED.base), (1, RED.shadow)]), cel=0.9, rim=0.45,
+             cast=0.8, cast_on=['face', 'hair'], details=det)
+    # le nœud : un petit nœud rond serré, ses plis
+    kx, ky = KNOT
+    knot = sm([(kx - 1.9, ky + 0.2), (kx - 1.2, ky - 1.5), (kx + 0.6, ky - 1.8), (kx + 1.9, ky - 0.6), (kx + 1.6, ky + 1.2),
+               (kx + 0.1, ky + 1.9), (kx - 1.4, ky + 1.5)], t=0.95)
+    names.append('knot')
+    fig.part('knot', knot, RED, grad=(kx + 2, ky - 2, kx - 2, ky + 2, [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]), cel=0.7,
+             rim=0.45, cast=0.7, cast_on=['band', 'bdt0', 'bdt1', 'hair'],
+             details=[(ribbon([(kx - 1.2, ky - 0.9), (kx - 0.1, ky + 0.1), (kx + 0.4, ky + 1.5)], [0.1, 0.4, 0.1]), RED.deep, 0.55),
+                      (ellipse(kx + 0.7, ky - 0.8, 0.7, 0.45, -25), RED.hi, 0.6)])
+    return names
+
+
 def head(fig, P, HEAD, HEADN):
     """Le visage (agrandi ×1,1 ; traits placés par visage.py), les deux plumes nouées d'une perle d'or, l'oreille et son
     anneau d'or. Les cheveux tirés sur le crâne font partie de la chevelure (mane) : le haut du visage suit leur ligne."""
@@ -876,6 +963,9 @@ def head(fig, P, HEAD, HEADN):
          cel=0, rim=0, cast=1.0, cast_on=['body', 'top', 'necklace'], details=fd)
     # pour le contrôle (visage_controle.py) : les places RÉELLES des traits dessinés
     fig.ctx_face = dict(V=V, eyes=eyes, nez_reel=nez_reel, bouche_reelle=(bx, by + 0.3, bw))
+
+    # ---- le bandana (avis du propriétaire, 26/11 soir) ----
+    names += bandana(fig, P)
 
     # ---- les deux plumes, nouées d'une perle d'or derrière l'oreille, couchées le long de la crinière ----
     for name, mat, a, b, c, d, w in (('pl1', FEATR, (63.0, 30.4), (58.0, 27.6), (52.0, 24.6), (45.4, 22.0), 3.0),
