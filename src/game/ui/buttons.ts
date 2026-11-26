@@ -1,6 +1,6 @@
 // Les boutons « Pierre de l'arène » (choisis par le propriétaire le 26/11/2026, parmi les 4 familles de
 // refonte-graphique/ui-moderne/boutons/) : une dalle taillée aux coins éclatés, comme le sol de l'arène. L'action principale
-// est une pierre sombre où brûle une lumière (lettres qui luisent, deux fêlures de lumière) ; les autres, une pierre claire
+// est une pierre sombre où brûle une lumière (lettres qui luisent) ; les autres, une pierre claire
 // gravée. Chaque bouton est un dessin vectoriel (SVG) fait ici par le code :
 // - `installButtons()` (main.tsx, au lancement) pose les dessins dans des variables CSS `--bt-pierre-<teinte>-<taille>[-down]`
 //   et `--bt-pierre-rond-<teinte>[-down]`, et les règles qui les relient aux classes `bt-<teinte>` + `bt-<taille>` ;
@@ -98,18 +98,7 @@ function slab(t: BtTone, w: number, h: number, lip: number, down: boolean): stri
   s += `<path d='${P([[w - 2 - c1 - 1, y0 + 2], [w - 2, y0 + 2 + c1 + 1], [w - 2 - bv - 2, y0 + 2 + c1 + 1], [w - 2 - c1 - 1, y0 + 2 + bv + 1]])}' fill='#fff' fill-opacity='0.28'/>`;
   if (T.light) {
     s += `<path d='${top}' fill='url(#${g2})'/>`;
-    // la lumière passe par deux fêlures, aux bouts (fixes : elles ne s'étirent pas)
-    const crack = (pts: number[][]) => {
-      const d = 'M' + pts.map((p) => p.map(n2).join(' ')).join('L');
-      return `<path d='${d}' fill='none' stroke='${T.light}' stroke-opacity='0.5' stroke-width='${n2(3.6 * k)}' stroke-linecap='round' stroke-linejoin='round'/>`
-        + `<path d='${d}' fill='none' stroke='${T.core}' stroke-width='${n2(1.3 * k + 0.2)}' stroke-linecap='round' stroke-linejoin='round'/>`;
-    };
-    const my = (y0 + yb) / 2;
-    if (h >= 56) {
-      // une fissure qui part du bord et se divise (gauche), une plus courte (droite)
-      s += crack([[2, my - 3 * k], [2 + bv + 5 * k, my - 0.5 * k], [2 + bv + 11 * k, my + 4 * k]]) + crack([[2 + bv + 5 * k, my - 0.5 * k], [2 + bv + 9 * k, my - 5 * k]]);
-      s += crack([[w - 2, my + 4 * k], [w - 2 - bv - 4 * k, my + 1.5 * k], [w - 2 - bv - 9 * k, my - 3.5 * k]]);
-    }
+    // (plus de fêlures de lumière aux bouts : demande du propriétaire, 26/11)
   }
   s += `</g>`;
   return s;
