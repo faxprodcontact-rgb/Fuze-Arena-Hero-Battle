@@ -71,6 +71,10 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
 - Plus aucune rayure ni hachure, ni rayons répétés ; signes inventés, jamais de lettres ; une seule lumière (en haut à
   droite) ; tout élément est posé au sol ; de l'air autour du sujet ; sous une grille de tuiles, un décor calme.
 - Un seul contour par personnage ou objet dessiné, ombres douces entre les morceaux (jamais un contour par morceau).
+- **iPhone (Safari) plante par manque de mémoire graphique** (26/11) : jamais de flou SVG (`feGaussianBlur`) sur une grande
+  forme, jamais un morceau de grande planche affiché en l'agrandissant (une image par picto : `art/icons/<nom>.webp`),
+  jamais de bande d'images animée par carte, un seul `Phaser.Game` à la fois. Outils : `?diag=1` (boîte noire),
+  `?leger=1`, `?bisect=1` (`src/game/diag.ts`, à retirer avant la bêta).
 - Écrans sans défilement quand c'est possible (vérifier sur plusieurs tailles de téléphone, encoche comprise).
 - Ne jamais cacher un `TitleBanner` par `display: none` (dégradés partagés) ; dans le CSS, jamais `url(art/…)` (passer
   l'adresse par un `style` dans le TSX) ; depuis les menus, passer par `src/game/scenes.ts` pour lancer un combat.
