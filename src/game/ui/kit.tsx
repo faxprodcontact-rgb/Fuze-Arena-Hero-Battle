@@ -10,7 +10,7 @@ import { fmt, t } from '../i18n';
 import { close } from './nav';
 import { ICON_COLS, ICON_INDEX, ICON_ROWS } from '../icons-meta';
 
-// ---------- Pictos (pixel art, planche public/art/icons.webp : refonte-graphique/pixel/ui/pictos/) ----------
+// ---------- Pictos (style moderne, lisses : planche public/art/icons.webp, refonte-graphique/ui-moderne/pictos/) ----------
 
 /** Ce picto a-t-il son dessin (public/art/icons.webp) ? */
 export function hasArt(name: string): boolean {
@@ -30,10 +30,10 @@ export function Art({ name, size, class: cls }: { name: string; size?: number; c
   );
 }
 
-/** Les petits signes dessinés en pixels par px.ts (variables CSS --px-<signe>). */
+/** Les petits signes (style moderne, SVG de signs-art.ts posés par px.ts dans les variables CSS --px-<signe>). */
 export type SignName = 'star' | 'star-red' | 'check' | 'cross' | 'up' | 'chev' | 'chev-s' | 'back-s' | 'play' | 'stop' | 'op-plus' | 'op-eq' | 'op-arrow';
 
-/** Un petit signe en pixels (coche, croix, étoile, chevron…), agrandi ×k sans flou (k = 2 par défaut : 1 pixel = 2 px). */
+/** Un petit signe (coche, croix, étoile, chevron…), à k fois sa taille de base (k = 2 par défaut). */
 export function Sign({ name, k, class: cls }: { name: SignName; k?: number; class?: string }) {
   return <i class={`sign sign-${name} ${cls ?? ''}`} aria-hidden="true" style={k ? { '--k': k } : undefined} />;
 }

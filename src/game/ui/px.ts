@@ -6,6 +6,10 @@
 // Règles du dessin (voir refonte-graphique/pixel/ui/STYLE.md) : un seul contour sombre par objet, une seule lumière en haut
 // à droite (arête claire en haut et à droite, ombre en bas et à gauche), gammes décalées en teinte, coins arrondis en
 // escalier, aucun ornement (ni losange, ni clou, ni double cadre).
+// Les petits signes (étoiles, coche, croix, chevrons, plus / égal, pastilles, petits boutons ronds) et le halo ne sont
+// plus en pixels : ils sont dans le style moderne (lisses, HD), dessinés en SVG par
+// refonte-graphique/ui-moderne/pictos/signes.py (→ signs-art.ts) ; on garde ici leurs noms de variables CSS.
+import { SIGN_SVG } from './signs-art';
 
 /** Un pixel du dessin = PX pixels CSS (toujours un entier : l'image reste nette). */
 export const PX = 2;
@@ -191,31 +195,6 @@ function band(edge: 'top' | 'bottom'): Piece {
 
 // ---------- Petites pièces entières (non étirées) ----------
 
-/** Pastille rouge (quelque chose attend) : 7 × 7. */
-function badge(g: Ramp = PAL.red): Px[][] {
-  return paint(disc(7), [flat(INK)], (dx, dy) => (dx >= 3 && dy <= 1 ? g[4]! : dy >= 3 && dx <= 1 ? g[1]! : g[2]!));
-}
-
-/** Un signe dessiné sur un bouton carré : la croix (fermer), le chevron (retour), le plus (acheter). */
-function glyphButton(g: Ramp, size: number, glyph: 'x' | 'back' | 'next' | 'plus'): Px[][] {
-  const b = button(g).px;
-  // le bouton carré : on recompose la pièce 12 × 13 à la taille voulue
-  const p = compose({ px: b, slice: [4, 4, 5, 4] }, size, size + 1);
-  const ink = '#fff8e8', shade = g[0]!;
-  const cx = Math.floor(size / 2), cy = Math.floor((size - 1) / 2);
-  const dots: [number, number][] = [];
-  const k = Math.max(2, Math.round(size / 5));
-  if (glyph === 'x') for (let i = -k; i <= k; i++) dots.push([cx + i, cy + i], [cx + i - 1, cy + i], [cx - i, cy + i], [cx - i - 1, cy + i]);
-  if (glyph === 'plus') for (let i = -k; i <= k; i++) dots.push([cx + i, cy], [cx + i, cy - 1], [cx, cy + i], [cx - 1, cy + i]);
-  if (glyph === 'back' || glyph === 'next') for (let i = 0; i <= k + 1; i++) dots.push([cx - 2 + i, cy - i], [cx - 1 + i, cy - i], [cx - 2 + i, cy + i - 1], [cx - 1 + i, cy + i - 1]);
-  // « suivant » : le chevron du retour retourné (autour du milieu du bouton)
-  if (glyph === 'next') for (const d of dots) d[0] = size - 1 - d[0];
-  // l'ombre du signe (un pixel plus bas), puis le signe
-  for (const [x, y] of dots) if (p[y + 1]?.[x] && !dots.some(([a, b2]) => a === x && b2 === y + 1)) p[y + 1]![x] = shade;
-  for (const [x, y] of dots) if (p[y]?.[x]) p[y]![x] = ink;
-  return p;
-}
-
 /** Médaillon (bouton rond, portrait du joueur) : contour, anneau d'or, disque d'émail bleu nuit éclairé en haut à droite. */
 function medal(d: number, tone: Ramp = PAL.navy): Px[][] {
   const m = disc(d);
@@ -233,50 +212,23 @@ function medal(d: number, tone: Ramp = PAL.navy): Px[][] {
   });
 }
 
-/**
- * Un petit signe dessiné (chevron, flèche…) : `rows` = le corps (« X » = plein), en une couleur d'une gamme ; le contour
- * (1 pixel tout autour, coins compris) est ajouté ; arête claire en haut, ombre en bas.
- */
-export function glyph(rows: string[], g: Ramp = PAL.gold): Px[][] {
-  const h = rows.length + 2, w = rows[0]!.length + 2;
-  const body = (x: number, y: number) => rows[y - 1]?.[x - 1] === 'X';
-  const out: Px[][] = Array.from({ length: h }, () => Array<Px>(w).fill(null));
-  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
-    if (body(x, y)) out[y]![x] = !body(x, y - 1) ? g[4]! : !body(x, y + 1) ? g[1]! : g[3]!;
-    else if ([-1, 0, 1].some((a) => [-1, 0, 1].some((b) => body(x + a, y + b)))) out[y]![x] = INK;
-  }
-  return out;
+/** Un signe de signs-art.ts (SVG) en adresse d'image (`data:`). */
+export function signUrl(name: string): string {
+  return `data:image/svg+xml,${encodeURIComponent(SIGN_SVG[name] ?? '')}`;
 }
+const signCss = (name: string) => `url("${signUrl(name)}")`;
 
-const CHEVRON = ['XX.....XX', 'XXX...XXX', '.XXX.XXX.', '..XXXXX..', '...XXX...'];
-
-/** Les lignes d'un signe tournées d'un quart de tour (un chevron vers le bas devient un chevron vers la droite). */
-const transpose = (rows: string[]) => [...rows[0]!].map((_, x) => rows.map((r) => r[x]).join(''));
-
-/**
- * Les petits signes de l'interface (dessinés en « X », contour et lumière ajoutés par `glyph`), posés dans le CSS par
- * `installPx()` sous le nom `--px-<signe>` : étoile des héros, coche, croix, flèche « mieux », chevron, lecture, arrêt,
- * plus / égal / flèche des écrans de fusion et de forge.
- */
-const SIGNS: Record<string, [string[], Ramp]> = {
-  star: [['..X..', '.XXX.', 'XXXXX', '.XXX.', 'XX.XX'], PAL.gold],
-  'star-red': [['..X..', '.XXX.', 'XXXXX', '.XXX.', 'XX.XX'], PAL.red],
-  check: [['......XX', '.....XXX', 'XX..XXX.', 'XXXXXX..', '.XXXX...', '..XX....'], PAL.green],
-  cross: [['XX..XX', 'XXXXXX', '.XXXX.', '.XXXX.', 'XXXXXX', 'XX..XX'], PAL.red],
-  up: [['..X..', '.XXX.', 'XXXXX', '.XXX.', '.XXX.'], PAL.green],
-  chev: [transpose(CHEVRON), PAL.gold],
-  'chev-s': [['XX..', 'XXX.', '.XXX', 'XXX.', 'XX..'], PAL.navy],
-  'back-s': [['..XX', '.XXX', 'XXX.', '.XXX', '..XX'], PAL.gold],
-  play: [['X...', 'XX..', 'XXX.', 'XXXX', 'XXX.', 'XX..', 'X...'], PAL.cream],
-  stop: [['XXXXX', 'XXXXX', 'XXXXX', 'XXXXX', 'XXXXX'], PAL.cream],
-  'op-plus': [['..XX..', '..XX..', 'XXXXXX', 'XXXXXX', '..XX..', '..XX..'], PAL.gold],
-  'op-eq': [['XXXXXX', 'XXXXXX', '......', '......', '......', 'XXXXXX', 'XXXXXX'], PAL.gold],
-  'op-arrow': [['....X...', '....XX..', 'XXXXXXX.', 'XXXXXXXX', 'XXXXXXX.', '....XX..', '....X...'], PAL.gold],
-};
 /** Le chevron d'or d'une languette (vers le bas = déplier, vers le haut = replier). */
 export function chevronUrl(up: boolean): string {
-  return toCanvas(glyph(up ? [...CHEVRON].reverse() : CHEVRON)).toDataURL('image/png');
+  return signUrl(up ? 'chevron-up' : 'chevron-down');
 }
+
+/** Les petits signes posés dans le CSS (`--px-<nom>`, mêmes noms qu'en pixel art), et leur dessin dans signs-art.ts. */
+const SIGNS: Record<string, string> = {
+  star: 'star', 'star-red': 'star-red', check: 'check', cross: 'cross', up: 'up', chev: 'chev', 'chev-s': 'chev-s',
+  'back-s': 'back-s', play: 'play', stop: 'stop', 'op-plus': 'op-plus', 'op-eq': 'op-eq', 'op-arrow': 'op-arrow',
+  badge: 'badge', 'badge-gold': 'badge-gold', close: 'btn-close', back: 'btn-back', next: 'btn-next', plus: 'btn-plus',
+};
 
 /** Recompose une pièce en 9 morceaux à une taille donnée (en pixels du dessin). */
 export function compose(p: Piece, w: number, h: number): Px[][] {
@@ -381,13 +333,7 @@ export function installPx() {
   installed = true;
   const root = document.documentElement.style;
   for (const [name, p] of Object.entries(pieces())) root.setProperty(`--px-${name}`, nineCss(p));
-  root.setProperty('--px-badge', url(badge()));
-  root.setProperty('--px-badge-gold', url(badge(PAL.gold)));
-  for (const [name, [rows, g]] of Object.entries(SIGNS)) root.setProperty(`--px-${name}`, url(glyph(rows, g)));
-  root.setProperty('--px-close', url(glyphButton(PAL.red, 15, 'x')));
-  root.setProperty('--px-back', url(glyphButton(PAL.blue, 15, 'back')));
-  root.setProperty('--px-next', url(glyphButton(PAL.navy, 15, 'next')));
-  root.setProperty('--px-plus', url(glyphButton(PAL.green, 9, 'plus')));
+  for (const [name, svg] of Object.entries(SIGNS)) root.setProperty(`--px-${name}`, signCss(svg));
 }
 
 const medalCache = new Map<string, string>();
@@ -472,54 +418,38 @@ export function nearestTone(hex: string): Tone {
 
 // ---------- Le halo (derrière un trophée, un héros fusionné, un tirage rare, un Légendaire) ----------
 
-/** Deux signes inventés (jamais des lettres), posés en alternance sur l'anneau du halo. */
-const HALO_SIGNS = [['.X.', 'XXX', '.X.'], ['X.X', '.X.', 'X.X']];
-export const HALO_FRAMES = 16;
-const haloCache = new Map<string, string>();
+const haloCache = new Map<string, { glow: string; spin: string }>();
+/** Une étincelle à 4 branches rentrantes (signe inventé), centrée en (x, y), de rayon r. */
+function sparklePath(x: number, y: number, r: number): string {
+  const f = (v: number) => v.toFixed(1);
+  return `M${f(x)} ${f(y - r)}Q${f(x)} ${f(y)} ${f(x + r)} ${f(y)}Q${f(x)} ${f(y)} ${f(x)} ${f(y + r)}Q${f(x)} ${f(y)} ${f(x - r)} ${f(y)}Q${f(x)} ${f(y)} ${f(x)} ${f(y - r)}Z`;
+}
 /**
- * Le halo en pixel art : une lueur en paliers, un anneau, huit signes qui tournent lentement et quatre étincelles qui
- * tournent dans l'autre sens en clignant. `d` = diamètre en pixels du dessin ; une bande de HALO_FRAMES images (la boucle
- * ne se voit pas : les signes avancent de deux places, les étincelles d'une). Gardé en mémoire par taille et couleur.
+ * Le halo, dans le style moderne : une lueur douce de la couleur demandée et un anneau de lumière (`glow`, qui respire),
+ * et huit étincelles posées sur un cercle (`spin`, qui tourne lentement ; anim.css). Pas de rayons. Deux images SVG
+ * (adresses `url(…)`), gardées en mémoire par couleur.
  */
-export function haloStrip(d: number, hex: string): string {
-  const key = `${d}${hex}`;
-  const hit = haloCache.get(key);
+export function haloLayers(hex: string): { glow: string; spin: string } {
+  const hit = haloCache.get(hex);
   if (hit) return hit;
   const g = rampFrom(hex);
-  const c = document.createElement('canvas');
-  c.width = d * HALO_FRAMES; c.height = d;
-  const ctx = c.getContext('2d')!;
-  const R = d / 2, put = (x: number, y: number, col: string) => { ctx.fillStyle = col; ctx.fillRect(Math.round(x), Math.round(y), 1, 1); };
-  for (let f = 0; f < HALO_FRAMES; f++) {
-    const ox = f * d;
-    // la lueur, en deux paliers, et l'anneau
-    for (let y = 0; y < d; y++) for (let x = 0; x < d; x++) {
-      const r = Math.hypot(x + 0.5 - R, y + 0.5 - R) / R;
-      if (r > 0.98) continue;
-      if (Math.abs(r - 0.9) < 0.022 + 0.5 / R) put(ox + x, y, g[2]!);
-      else if (r < 0.58) put(ox + x, y, `${g[3]}30`);
-      else if (r < 0.86) put(ox + x, y, `${g[3]}18`);
-    }
-    // les huit signes : une ombre d'un pixel en bas à gauche, puis le signe clair
-    const turn = (f / HALO_FRAMES) * (Math.PI / 2);
-    for (let i = 0; i < 8; i++) {
-      const a = turn + (i * Math.PI) / 4, cx = R + Math.cos(a) * R * 0.74, cy = R + Math.sin(a) * R * 0.74;
-      const s = HALO_SIGNS[i % 2]!, k = d >= 120 ? 2 : 1;
-      for (const [dx, dy, col] of [[-1, 1, g[1]!], [0, 0, g[2]!], [1, -1, g[4]!]] as [number, number, string][])
-        s.forEach((row, sy) => [...row].forEach((ch, sx) => {
-          if (ch !== 'X') return;
-          for (let u = 0; u < k; u++) for (let v = 0; v < k; v++) put(ox + cx - 1.5 * k + sx * k + u + dx, cy - 1.5 * k + sy * k + v + dy, col);
-        }));
-    }
-    // les quatre étincelles (croix claires), plus grandes une image sur deux
-    for (let i = 0; i < 4; i++) {
-      const a = -(f / HALO_FRAMES) * (Math.PI / 2) + (i * Math.PI) / 2 + Math.PI / 4;
-      const cx = R + Math.cos(a) * R * 0.5, cy = R + Math.sin(a) * R * 0.5, arm = (f + i) % 4 < 2 ? 2 : 1;
-      put(ox + cx, cy, '#ffffff');
-      for (let t = 1; t <= arm; t++) for (const [dx, dy] of [[t, 0], [-t, 0], [0, t], [0, -t]]) put(ox + cx + dx!, cy + dy!, t === 1 ? '#fff6c8' : g[4]!);
-    }
+  const glow = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs>`
+    + `<radialGradient id="a"><stop offset="0" stop-color="${g[4]}" stop-opacity="0.75"/><stop offset="0.38" stop-color="${hex}" stop-opacity="0.42"/>`
+    + `<stop offset="0.72" stop-color="${hex}" stop-opacity="0.14"/><stop offset="1" stop-color="${hex}" stop-opacity="0"/></radialGradient>`
+    + `<filter id="b" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.2"/></filter></defs>`
+    + `<circle cx="50" cy="50" r="50" fill="url(#a)"/>`
+    + `<circle cx="50" cy="50" r="41" fill="none" stroke="${g[3]}" stroke-width="2.4" opacity="0.55" filter="url(#b)"/>`
+    + `<circle cx="50" cy="50" r="41" fill="none" stroke="${g[4]}" stroke-width="0.8" opacity="0.8"/></svg>`;
+  let stars = '';
+  for (let i = 0; i < 8; i++) {
+    const a = (i * Math.PI) / 4 - Math.PI / 2, big = i % 2 === 0, x = 50 + Math.cos(a) * 41, y = 50 + Math.sin(a) * 41;
+    stars += `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${big ? 6 : 4}" fill="url(#c)"/>`
+      + `<path d="${sparklePath(x, y, big ? 5.5 : 3.2)}" fill="#ffffff"/>`;
   }
-  const out = c.toDataURL('image/png');
-  haloCache.set(key, out);
+  const spin = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="c">`
+    + `<stop offset="0" stop-color="${g[4]}" stop-opacity="0.9"/><stop offset="1" stop-color="${hex}" stop-opacity="0"/></radialGradient></defs>${stars}</svg>`;
+  const css = (svg: string) => `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+  const out = { glow: css(glow), spin: css(spin) };
+  haloCache.set(hex, out);
   return out;
 }
