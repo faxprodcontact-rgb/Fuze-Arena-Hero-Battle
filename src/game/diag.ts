@@ -31,6 +31,7 @@ export function startDiag(): void {
     st.textContent = '.leger *, .leger *::before, .leger *::after { animation: none !important; transition: none !important; }';
     document.head.appendChild(st);
   }
+  bisect();
   let prev: Record | null = null;
   try {
     const old = localStorage.getItem(KEY);
@@ -88,4 +89,59 @@ function showPanel(prev: Record | null): void {
   x.onclick = () => box.remove();
   box.appendChild(x);
   document.body.appendChild(box);
+}
+
+// ---------- Test automatique de l'onglet Héros (`?bisect=1`, 26/11) ----------
+// Il ouvre l'onglet Héros plusieurs fois, en cachant à chaque fois une partie différente de l'écran ; si la page plante,
+// Safari la recharge et le test note « PLANTE » pour cette partie, puis passe à la suivante. À la fin : le résultat.
+const VARIANTS: [string, string][] = [
+  ['complet', ''],
+  ['sans le fond', '.backdrop { display: none !important; }'],
+  ['sans la salle du haut', '.hall { display: none !important; }'],
+  ['sans la grille', '.hall-scroll { display: none !important; }'],
+  ['grille sans décor de carte', '.hcard-aura, .hcard-frame, .hcard::before, .hcard::after { display: none !important; } .hcard { background: #333 !important; --crest: none !important; }'],
+  ['grille sans les héros', '.hcard-fig, .hcard-face { display: none !important; }'],
+  ['sans filtres', '*, *::before, *::after { filter: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }'],
+  ['sans masques', '*, *::before, *::after { mask: none !important; -webkit-mask: none !important; }'],
+  ['sans ombres', '*, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }'],
+];
+const BKEY = 'fuze-bisect';
+
+function bisect(): void {
+  let st: { i: number; pending?: number; res: string[] } | null = null;
+  try {
+    if (new URLSearchParams(location.search).get('bisect') === '1' && !localStorage.getItem(BKEY)) localStorage.setItem(BKEY, JSON.stringify({ i: 0, res: [] }));
+    const raw = localStorage.getItem(BKEY);
+    st = raw ? JSON.parse(raw) : null;
+  } catch { return; }
+  if (!st) return;
+  const save = () => { try { localStorage.setItem(BKEY, JSON.stringify(st)); } catch { /* rien */ } };
+  if (st.pending !== undefined) { st.res.push(`${VARIANTS[st.pending]![0]} : PLANTE`); st.pending = undefined; st.i++; save(); }
+  const box = document.createElement('div');
+  box.style.cssText = 'position:fixed;z-index:100001;left:8px;right:8px;bottom:max(8px,env(safe-area-inset-bottom));background:#0b0820f2;color:#e8e4ff;'
+    + 'font:13px/1.4 ui-monospace,Menlo,monospace;padding:10px 12px;border-radius:12px;border:1px solid #ffc94d88;white-space:pre-wrap;pointer-events:none';
+  const show = (text: string) => { box.textContent = text; if (!box.isConnected) document.body.appendChild(box); };
+  const done = st.res.join('\n');
+  if (st.i >= VARIANTS.length) {
+    try { localStorage.removeItem(BKEY); } catch { /* rien */ }
+    window.addEventListener('load', () => show(`Test terminé : fais une capture.\n\n${done}`));
+    setTimeout(() => show(`Test terminé : fais une capture.\n\n${done}`), 3000);
+    return;
+  }
+  const [name, css] = VARIANTS[st.i]!;
+  const style = document.createElement('style');
+  style.textContent = css;
+  document.head.appendChild(style);
+  st.pending = st.i;
+  save();
+  const status = () => show(`Test automatique ${st!.i + 1} / ${VARIANTS.length} : ${name}…\nNe touche à rien (si Safari affiche une erreur, rouvre le même lien).\n\n${done}`);
+  setTimeout(status, 1500);
+  setTimeout(() => (document.querySelector('.tabbar-btn:nth-child(2)') as HTMLElement | null)?.click(), 3000);
+  setTimeout(() => {
+    st!.res.push(`${name} : OK`);
+    st!.pending = undefined;
+    st!.i++;
+    save();
+    location.reload();
+  }, 10000);
 }
