@@ -359,14 +359,40 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('body', body_f, BODYM, grad=(86, 44, 58, 80, [(0, '#ff9a3a'), (0.4, '#e2502a'), (1, '#9a1e34')]),
              cel=1.2, rim=0.5, cast=1.0, ink=FINK, details=bdet)
 
+    # ---- le petit plastron d'or (avis du 26/11, tour 2 : « une petite armure sur le torse ») : une pièce d'armure
+    # ajustée, posée sur les plumes de la poitrine, accrochée sous le torque ; elle épouse le jabot (3/4 : la moitié
+    # du fond plus étroite, l'arête un peu à droite du milieu), les plumes d'or du ventre sortent de dessous ----
+    plate0 = [(67.4, 51.0), (72.4, 53.4), (78.2, 54.2), (83.6, 52.8), (87.6, 50.4), (88.4, 54.8), (87.8, 60.0),
+              (86.0, 64.6), (82.8, 68.6), (78.8, 71.6), (74.8, 68.8), (71.2, 64.6), (68.6, 59.4), (67.4, 54.8)]
+    plate = sm([T_(p) for p in plate0], sharp=(0, 4, 9), t=0.95)
+    pdet = [
+        # la moitié proche dans la demi-teinte (la lumière vient d'en haut à droite), l'arête plus vive
+        (sm([T_(p) for p in ((67.4, 51.0), (72.4, 53.4), (78.2, 54.2), (78.9, 60.6), (78.8, 71.6), (74.8, 68.8), (71.2, 64.6),
+                              (68.6, 59.4), (67.4, 54.8))], sharp=(0, 2, 4), t=0.95), ('lin', *T_((79, 56)), *T_((68, 66)),
+                                                                                    [(0, '#e8962a', 0.2), (1, '#9c4e1a', 0.7)]), 1),
+        (ribbon([T_((78.4, 54.6)), T_((79.0, 60.8)), T_((78.9, 66.6)), T_((78.8, 70.8))], [0.2, 0.7, 0.6, 0.1]), GOLD.hi, 0.9),
+        # le bord relevé (un liseré plus sombre, parallèle au bord) et le reflet sur la moitié claire
+        (ribbon([T_((69.2, 56.0)), T_((70.6, 61.6)), T_((73.6, 66.2)), T_((78.8, 70.0)), T_((83.0, 66.6)), T_((86.0, 61.4)), T_((86.8, 55.6))],
+                [0.1, 0.5, 0.55, 0.55, 0.55, 0.5, 0.1]), '#9c4e1a', 0.55),
+        (ribbon([T_((84.6, 54.2)), T_((85.4, 58.6)), T_((84.0, 63.0))], [0.1, 0.8, 0.1]), '#fffbe6', 0.8),
+        # au milieu, un signe en relief : une flamme d'or (signe inventé)
+        (sm([T_(p) for p in ((80.0, 57.4), (81.6, 60.0), (81.8, 62.8), (80.4, 65.0), (78.6, 65.4), (77.4, 63.4), (78.0, 60.8),
+                              (79.0, 61.8))], sharp=(0, 7), t=0.9), '#a8561c', 0.55),
+        (sm([T_(p) for p in ((80.2, 58.0), (81.4, 60.2), (81.4, 62.6), (80.2, 64.4), (79.0, 64.6), (78.2, 63.2), (78.6, 61.4),
+                              (79.4, 62.2))], sharp=(0, 7), t=0.9), ('lin', *T_((81.4, 58.4)), *T_((78.4, 64.6)),
+                                                                     [(0, '#fff6c8'), (0.5, '#ffd862'), (1, '#e29a28')]), 1),
+    ]
+    fig.part('plate', plate, GOLD, grad=(*T_((88, 51)), *T_((68, 70)), [(0, '#fff3b8'), (0.3, '#ffd862'), (0.7, '#eea434'), (1, '#b8621e')]),
+             cel=0.7, rim=0.55, cast=1.2, ink=FINK, cast_on=['body'], details=pdet)
+
     # ---- le torque d'or (il fait le tour de la base du cou : l'arrière passe sous le camail) et son rubis ----
     tq0 = [(64.8, 46.4), (69.4, 49.4), (74.6, 51.2), (80.0, 50.8), (84.6, 48.6), (87.0, 47.6), (87.6, 49.6),
            (85.0, 51.0), (80.2, 53.0), (74.4, 53.4), (69.0, 51.6), (64.6, 48.6)]
     fig.part('torque', sm([T_(p) for p in tq0], sharp=(5, 6), t=0.9), GOLD, cel=0.6, rim=0.5, cast=0.8,
-             cast_on=['body'],
+             cast_on=['body', 'plate'],
              details=[(ribbon([T_((66.0, 47.6)), T_((74.6, 51.8)), T_((84.8, 49.2))], [0.1, 0.55, 0.1]), GOLD.hi, 0.85)])
     pend = sm([T_((76.2, 52.4)), T_((78.2, 53.2)), T_((78.0, 55.6)), T_((76.9, 57.4)), T_((75.8, 55.6)), T_((75.6, 53.4))], sharp=(3,), t=0.9)
-    fig.part('pend', pend, RUBY, cel=0.5, rim=0.4, cast=0.7, cast_on=['body'],
+    fig.part('pend', pend, RUBY, cel=0.5, rim=0.4, cast=0.7, cast_on=['body', 'plate'],
              details=[(ellipse(*T_((77.3, 54.0)), 0.55, 0.7), '#ffe2d8', 0.9)])
 
     # ---- le camail : les plumes de la nuque descendent sur le dos (posées avec la tête) ----

@@ -655,7 +655,9 @@ def head(fig, P):
     cd = [(mass, ('rad', 74, 22, 30, 30, [(0, HAIR.hi), (0.3, HAIR.light), (0.65, HAIR.base), (1, HAIR.shadow)]), 1)]
     # les flammes, de la plus basse à la plus haute : chacune se détache de la masse sur ses 6 premiers pixels
     for k, (sh_, p0, p1, p2, p3, w0) in enumerate(strands):
-        fd_ = min(0.5, 6.0 / math.dist(p0, p3))
+        if k == 0:
+            continue                 # la mèche de la nuque reste fondue dans la masse (elle ne fait que la prolonger)
+        fd_ = min(0.6, (6.0 if k >= 2 else 8.0) / math.dist(p0, p3))
         ax = (p0[0], p0[1], p3[0], p3[1])
         c = 1.0
         # seules les deux grandes flammes du haut posent leur ombre sur celles du dessous
@@ -668,7 +670,7 @@ def head(fig, P):
         mid = [lerp(lerp(p0, p1, t), lerp(p2, p3, t), t) for t in (0.35, 0.55, 0.75)]
         cd.append((ribbon([add(m, (0.3, -0.9)) for m in mid], [0.2, w0 * 0.12, 0.1]), HAIR.hi, 0.5))
     # le volume de la calotte (par-dessus les racines des flammes : le crâne reste rond, sans bord)
-    cd += [(sm([(46, 38), (52.6, 40), (52.4, 52), (48, 52)]), HAIR.deep, 0.45),
+    cd += [(ellipse(47.6, 47.0, 6.0, 9.0), ('rad', 47.6, 47.0, 6.0, 9.0, [(0, HAIR.deep, 0.5), (0.6, HAIR.deep, 0.3), (1, HAIR.deep, 0)]), 1),
            (sm([(45.0, 30.0), (54.0, 30.4), (58.0, 35.6), (53.4, 39.0), (46.0, 40.4)]), HAIR.shadow, 0.35),
            (ribbon([(77.6, 26.0), (72.0, 22.6), (64.0, 22.0), (57.0, 24.6)], [0.1, 1.3, 1.0, 0.1]), HAIR.hi, 0.55),
            (ribbon([(70.0, 33.4), (63.0, 32.6), (57.6, 34.6)], [0.1, 0.7, 0.1]), HAIR.shadow, 0.45)]
