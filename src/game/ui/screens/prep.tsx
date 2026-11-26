@@ -1,6 +1,7 @@
 // Préparation d'un combat : la section posée sur le sol du décor du combat à venir (formation-stage.tsx), les héros en
 // bas (en entier, dans leurs cases), Combattre tout en bas.
-// Toucher un héros = l'ajouter ou le retirer. Toucher deux postes = les échanger.
+// Toucher un héros en bas = l'ajouter ou le retirer. Toucher une place = la choisir (elle s'allume, une croix la vide) ;
+// puis toucher un héros en bas = le poser là (il remplace celui qui y était), ou une autre place = les échanger.
 import { useState } from 'preact/hooks';
 import { LEADER_SLOT, type Slot } from '../../../core/battle/types';
 import { heroDef } from '../../../core/data/heroes';
@@ -9,23 +10,26 @@ import { FormationStage, Plate, STAGE_H, STAGE_POS, STAGE_W } from '../formation
 import { battleLook, idleLook, type Clan } from '../../look';
 import { HeroFigure } from '../hero-figure';
 import { fmt, t } from '../../i18n';
-import { autoFormation, startBattleFromPlan, swapSlots, toggleInFormation, type BattlePlan } from '../../state/actions';
+import { autoFormation, placeInSlot, startBattleFromPlan, swapSlots, toggleInFormation, type BattlePlan } from '../../state/actions';
 import { formationOf, heroByUid, heroPower, slotCount, sortedHeroes, teamPower, type TeamKind } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import { Art, Btn, HeroCard, Icon, Stars } from '../kit';
+import { Art, Btn, HeroCard, Icon, Sign, Stars } from '../kit';
 import { close, startBattle, toast } from '../nav';
 import { talentText } from './hero-detail';
 
-export function Board({ tired, team = 'main', clan }: { tired?: Set<number>; team?: TeamKind; clan?: Clan } = {}) {
+export function Board({ tired, team = 'main', clan, picked, setPicked, ask }: {
+  tired?: Set<number>; team?: TeamKind; clan?: Clan; picked: Slot | null; setPicked: (s: Slot | null) => void; ask?: boolean;
+}) {
   const s = useGame();
   const formation = formationOf(s, team);
-  const [picked, setPicked] = useState<Slot | null>(null);
   const tap = (slot: Slot) => {
-    if (picked === null) {
-      if (formation.some(([, sl]) => sl === slot)) setPicked(slot);
-      return;
-    }
+    if (picked === null) return setPicked(slot);
     if (picked !== slot) swapSlots(picked, slot, team);
+    setPicked(null);
+  };
+  /** La croix d'une place choisie : retire son héros (il en reste toujours au moins un). */
+  const out = (uid: number) => {
+    if (toggleInFormation(uid, team) === 'last') toast(t('heroes.last'));
     setPicked(null);
   };
   const leaderUid = formation.find(([, sl]) => sl === LEADER_SLOT)?.[0];
@@ -42,7 +46,7 @@ export function Board({ tired, team = 'main', clan }: { tired?: Set<number>; tea
           const [x, y] = STAGE_POS[slot];
           return (
             <button
-              class={`field-slot${picked === slot ? ' on' : ''}${slot === LEADER_SLOT ? ' leader' : ''}${hero ? '' : ' empty'}${hero && tired?.has(hero.uid) ? ' tired' : ''}`}
+              class={`field-slot${picked === slot ? ' on' : ''}${ask && !hero ? ' ask' : ''}${ask && hero ? ' ask-full' : ''}${slot === LEADER_SLOT ? ' leader' : ''}${hero ? '' : ' empty'}${hero && tired?.has(hero.uid) ? ' tired' : ''}`}
               style={{ left: `${(x / STAGE_W) * 100}%`, top: `${(y / STAGE_H) * 100}%`, zIndex: y }}
               onClick={() => tap(slot)}
             >
@@ -50,6 +54,9 @@ export function Board({ tired, team = 'main', clan }: { tired?: Set<number>; tea
               {slot === LEADER_SLOT && (!hero || chief) && <Art name="crown" size={22} class="crown" />}
               {hero && <span class="field-hero"><HeroFigure defId={hero.defId} /></span>}
               {hero && <Stars stars={hero.stars} />}
+              {hero && picked === slot && (
+                <span class="field-out" role="button" aria-label={t('heroes.inTeam')} onClick={(e) => { e.stopPropagation(); out(hero.uid); }}><Sign name="cross" /></span>
+              )}
             </button>
           );
         })}
@@ -70,6 +77,24 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
     ? formation.filter(([u]) => !tired.has(u)).reduce((sum, [u]) => sum + heroPower(s, heroByUid(s, u)!), 0)
     : teamPower(s, team);
   const need = plan?.need;
+  const [picked, setPicked] = useState<Slot | null>(null);
+  const [ask, setAsk] = useState(false);
+  const pick = (uid: number) => {
+    // une place est choisie : le héros touché s'y pose (il remplace celui qui y était, ou change de place)
+    if (picked !== null) {
+      if (placeInSlot(uid, picked, team) === 'full') toast(t('heroes.full'));
+      setPicked(null);
+      return;
+    }
+    const r = toggleInFormation(uid, team);
+    if (r === 'last') toast(t('heroes.last'));
+    if (r === 'full') {
+      // section pleine : les places s'allument pour montrer qu'on en choisit une à remplacer
+      setAsk(true);
+      setTimeout(() => setAsk(false), 1600);
+      toast(t('heroes.pickSlot'));
+    }
+  };
   return (
     <div class={`prep prep-hall${plan ? ' prep-plan' : ''}`}>
       <div class="backdrop prep-bg" aria-hidden="true" />
@@ -81,7 +106,7 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
         </span>
       </header>
 
-      <Board tired={tired} team={team} clan={plan ? battleLook(plan.kind, plan.title, plan.dungeon).fond : undefined} />
+      <Board tired={tired} team={team} picked={picked} setPicked={setPicked} ask={ask} clan={plan ? battleLook(plan.kind, plan.title, plan.dungeon).fond : undefined} />
 
       <div class="row between prep-bar">
         <strong>{t('heroes.team')} {formation.length} / {slotCount(s)}</strong>
@@ -93,8 +118,7 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
           <HeroCard key={h.uid} hero={h} small power={heroPower(s, h)} selected={inTeam.has(h.uid)} dim={tired.has(h.uid)}
             onClick={() => {
               if (tired.has(h.uid) && !inTeam.has(h.uid)) return toast(t('war.tired'));
-              const r = toggleInFormation(h.uid, team);
-              if (r === 'full') toast(t('heroes.full'));
+              pick(h.uid);
             }} />
         ))}
       </div>

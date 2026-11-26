@@ -630,6 +630,12 @@ p { margin: 6px 0; }
 .field-hero { position: absolute; left: 50%; top: 84%; width: 80%; transform: translate(-53%, -95%); pointer-events: none; }
 .field-hero .hfig { transform-origin: 53% 95%; animation: hf-breathe 3.4s ease-in-out infinite; }
 .field-slot.on .field-hero { animation: hop-fig 0.6s ease-in-out infinite alternate; }
+/* une place choisie : une croix ronde (pierre de feu) pour vider la place ; section pleine : les places clignotent */
+.field-out { position: absolute; top: 2%; right: 4%; z-index: 3; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 65% 30%, #ff8a6a, #c9372a 60%, #7d1d18); box-shadow: 0 0 0 2px #2a0d0a, 0 3px 6px #0008; }
+.field-out .sign { width: 14px; height: 14px; }
+.field-slot.ask-full .field-plate { animation: field-ask 0.4s ease-in-out 4 alternate; }
+@keyframes field-ask { to { filter: drop-shadow(0 0 10px #ffc94d) brightness(1.25); } }
 @keyframes hop-fig { from { transform: translate(-53%, -95%); } to { transform: translate(-53%, -101%); } }
 .field-slot .stars { position: relative; z-index: 1; font-size: 12px; margin-bottom: -5%; }
 .fd-ring { transform-origin: 0 0; animation: an-spin 22s linear infinite; }

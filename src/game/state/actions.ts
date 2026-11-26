@@ -195,6 +195,27 @@ export function toggleInFormation(uid: number, team: TeamKind = 'main'): 'added'
   });
 }
 
+/**
+ * Pose un héros sur une place choisie de la section (demande du 26/11 : choisir soi-même, sans « Meilleure section ») :
+ * s'il y est déjà ailleurs, les deux places s'échangent ; sinon il prend la place (celui qui y était sort de la section).
+ * Une place vide se remplit seulement s'il reste de la place.
+ */
+export function placeInSlot(uid: number, slot: Slot, team: TeamKind = 'main'): 'placed' | 'full' {
+  return update((s) => {
+    const list = formationOf(s, team);
+    const here = list.find(([, sl]) => sl === slot)?.[0];
+    const mine = list.find(([u]) => u === uid)?.[1];
+    if (here === uid) return 'placed';
+    if (mine !== undefined) {
+      editTeam(s, team, (l) => l.map(([u, sl]): [number, Slot] => [u, sl === slot ? mine : sl === mine ? slot : sl]));
+      return 'placed';
+    }
+    if (here === undefined && list.length >= slotsAt(s.campaign.cleared)) return 'full';
+    editTeam(s, team, (l) => [...l.filter(([, sl]) => sl !== slot), [uid, slot]]);
+    return 'placed';
+  });
+}
+
 export function swapSlots(a: Slot, b: Slot, team: TeamKind = 'main'): void {
   update((s) => editTeam(s, team, (l) => l.map(([u, slot]): [number, Slot] => [u, slot === a ? b : slot === b ? a : slot])));
 }

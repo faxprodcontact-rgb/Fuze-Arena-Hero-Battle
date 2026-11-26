@@ -25,7 +25,7 @@ const FR = {
   'heroes.team': 'Section', 'heroes.autoTeam': 'Meilleure section', 'heroes.fuseAll': 'Tout fusionner', 'heroes.fused': '{n} fusions',
   // vague 3 « Héros et formation » : le bouton Formation, le choix du portrait du joueur
   'heroes.formation': 'Formation', 'settings.avatar': 'Portrait',
-  'heroes.full': 'Section complète', 'sort.power': 'Force', 'sort.stars': 'Étoiles', 'sort.rarity': 'Rareté', 'heroes.inTeam': 'Retirer de la section', 'heroes.addTeam': 'Ajouter à la section',
+  'heroes.full': 'Section complète', 'heroes.pickSlot': 'Touche une place pour la remplacer', 'heroes.last': 'Il faut au moins un héros', 'sort.power': 'Force', 'sort.stars': 'Étoiles', 'sort.rarity': 'Rareté', 'heroes.inTeam': 'Retirer de la section', 'heroes.addTeam': 'Ajouter à la section',
   'detail.levelUp': 'Niveau +1', 'detail.levelUp10': '+10', 'detail.cap': 'Niveau max : plus d’étoiles', 'detail.stars': 'Étoiles',
   'detail.copies': 'Copies : {have} / {need}',
   'detail.crystals': 'Cristaux : {have} / {need}', 'detail.fuse': 'Fusionner', 'detail.maxStars': 'Étoiles au maximum',
@@ -165,7 +165,7 @@ const EN: Record<Key, string> = {
   'heroes.team': 'Squad', 'heroes.autoTeam': 'Best squad', 'heroes.fuseAll': 'Fuse all', 'heroes.fused': '{n} fusions',
   // vague 3 « Héros et formation » : le bouton Formation, le choix du portrait du joueur
   'heroes.formation': 'Formation', 'settings.avatar': 'Portrait',
-  'heroes.full': 'Squad full', 'sort.power': 'Power', 'sort.stars': 'Stars', 'sort.rarity': 'Rarity', 'heroes.inTeam': 'Remove from squad', 'heroes.addTeam': 'Add to squad',
+  'heroes.full': 'Squad full', 'heroes.pickSlot': 'Tap a spot to replace it', 'heroes.last': 'Keep at least one hero', 'sort.power': 'Power', 'sort.stars': 'Stars', 'sort.rarity': 'Rarity', 'heroes.inTeam': 'Remove from squad', 'heroes.addTeam': 'Add to squad',
   'detail.levelUp': 'Level +1', 'detail.levelUp10': '+10', 'detail.cap': 'Max level: more stars needed', 'detail.stars': 'Stars',
   'detail.copies': 'Copies: {have} / {need}',
   'detail.crystals': 'Crystals: {have} / {need}', 'detail.fuse': 'Fuse', 'detail.maxStars': 'Max stars',
