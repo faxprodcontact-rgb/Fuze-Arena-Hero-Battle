@@ -48,7 +48,7 @@ SKIN = Mat('#ffdcb2', '#f4ae7c', '#da895c', '#a85a4a', '#6a2e3c')
 RED = Mat('#ffa488', '#f2664e', '#c8323c', '#861a3a', '#4c0c28')
 LEATHER = Mat('#eaa870', '#c27c46', '#8e4c2c', '#5c2a26', '#341620')
 HAT = Mat('#f6cc90', '#d89a5a', '#ac6a3a', '#723c2c', '#421e22')                      # cuir brun clair du chapeau
-PATCH = Mat('#9a6a5a', '#5e3a34', '#3e2228', '#2a1420', '#180a14')                     # cuir sombre du cache-œil
+PATCH = Mat('#c08a6a', '#86564a', '#5a3434', '#3a1e2a', '#22101c')                     # cuir sombre du cache-œil
 SHIRT = Mat('#ffffff', '#f8f8ff', '#e2e2f4', '#aeb0da', '#6e6ea2')
 STEEL = Mat('#f4f8ff', '#cad6ec', '#8e9cbe', '#565f84', '#2e3454', glint='#ffffff')
 WOOD = Mat('#f2b676', '#d48a4a', '#a45c2e', '#66302a', '#3a1a20')
@@ -448,9 +448,16 @@ def head(fig, P):
            (ellipse(75.4, 57.2, 1.3, 0.55), SKIN.light, 0.18)]
     # l'ombre sous le bord du chapeau
     fd += [(sm([(61, 38.6), (85, 38.6), (85, 41.8), (78, 42.4), (70, 42.2), (62.6, 42.8)]), SKIN.deep, 0.4)]
-    # la lanière du cache-œil : tout droit, de l'œil du fond vers le bord du chapeau (loin du sourcil)
-    fd += [(ribbon([(78.4, 46.0), (75.8, 43.0), (73.2, 40.0)], [0.85, 0.85, 0.85]), PATCH.base, 1),
-           (ribbon([(78.3, 45.4), (75.8, 42.6), (73.4, 39.8)], [0.15, 0.3, 0.15]), PATCH.hi, 0.5)]
+    # la lanière du cache-œil (avis du propriétaire, tour 2 : « bandeau mal fait ») : une vraie lanière de cuir, plate,
+    # qui suit l'arrondi du front et file sous le bord du chapeau (loin du sourcil) ; de l'autre côté, elle part vers
+    # l'arrière de la tête et passe derrière le contour. Son ombre douce sur la peau, un reflet sur le bord du haut.
+    ST1 = [(78.4, 45.9), (77.2, 44.3), (75.9, 42.9), (74.6, 41.5), (73.6, 40.4)]
+    ST2 = [(82.4, 46.3), (83.4, 45.9), (84.6, 45.5)]
+    for st, w in ((ST1, 1.05), (ST2, 1.0)):
+        fd += [(ribbon([(x - 0.35, y + 0.55) for x, y in st], [w * 0.9] * len(st), sharp_ends=False), SKIN.deep, 0.3),
+               (ribbon(st, [w] * len(st), sharp_ends=False), ('lin', st[0][0], st[0][1], st[-1][0], st[-1][1],
+                                                              [(0, PATCH.base), (1, PATCH.shadow)]), 1),
+               (ribbon([(x + 0.2, y - 0.25) for x, y in st], [0.28] * len(st), sharp_ends=False), PATCH.light, 0.8)]
     # le sourcil fin et froncé (il descend vers le nez)
     by = 0.45 * sq
     fd += [(sm([(68.2, 44.7), (70.2, 43.4), (72.6, 43.2), (74.4, 44.0 + by * 0.6), (75.2, 45.0 + by), (74.0, 44.7 + by), (72.4, 44.1),
@@ -498,12 +505,19 @@ def head(fig, P):
            (ribbon([(74.6, 56.6), (75.6, 56.9), (76.6, 56.6)], [0.1, 0.3, 0.1]), SKIN.shadow, 0.35)]
     part('face', face, SKIN, grad=(84, 40, 63, 56, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]), cel=0.8, rim=0.5, cast=1.0,
          cast_on=['hair'], details=fd)
-    # ---- le cache-œil de cuir sur l'œil du fond (à la place de l'œil du fond donnée par VZ) ----
-    patch = sm([(77.8, 46.6), (79.4, 45.6), (81.3, 45.7), (82.3, 46.9), (82.1, 48.5), (80.6, 49.4), (78.7, 49.2), (77.7, 48.0)], t=0.92)
-    part('patch', patch, PATCH, grad=(82.3, 45.6, 77.7, 49.4, [(0, PATCH.light), (0.5, PATCH.base), (1, PATCH.shadow)]), cel=0.45, rim=0.4,
-         cast=0.7, cast_on=['face'],
-         details=[(ribbon([(78.6, 46.3), (80.2, 45.9), (81.8, 46.3)], [0.1, 0.38, 0.1]), PATCH.hi, 0.55),
-                  (ellipse(80.0, 47.6, 1.4, 0.95, -8), PATCH.shadow, 0.35)])
+    # ---- le cache-œil de cuir sur l'œil du fond (à la place de l'œil du fond donnée par VZ) : un écusson de cuir bombé
+    # (bord du haut droit, bas arrondi), un bord relevé plus clair, le reflet de la lumière en haut à droite, un rivet d'or
+    # à l'attache de la lanière ----
+    patch = sm([(77.6, 46.3), (79.6, 45.5), (81.6, 45.4), (82.9, 46.2), (83.0, 47.6), (82.2, 49.1), (80.6, 50.0), (78.9, 49.8),
+                (77.7, 48.6), (77.3, 47.3)], t=0.92)
+    part('patch', patch, PATCH, grad=(83.0, 45.4, 77.3, 50.0, [(0, PATCH.light), (0.45, PATCH.base), (1, PATCH.shadow)]), cel=0.35,
+         rim=0.3, cast=0.5, cast_on=['face'],
+         details=[(rim_band(patch, 0.5), PATCH.light, 0.55),
+                  (sm([(79.6, 45.95), (81.6, 45.9), (82.5, 46.7), (82.2, 47.6), (81.2, 47.0), (79.8, 46.6)], t=0.9), PATCH.hi, 0.45),
+                  (ellipse(79.6, 48.4, 1.6, 0.9, -12), PATCH.shadow, 0.4),
+                  (ellipse(78.25, 46.45, 0.5, 0.5), GOLD.shadow, 1), (ellipse(78.2, 46.4, 0.36, 0.36), GOLD.base, 1),
+                  (ellipse(78.3, 46.3, 0.14, 0.12), GOLD.glint, 1),
+                  (ellipse(82.65, 46.6, 0.45, 0.45), GOLD.shadow, 1), (ellipse(82.6, 46.55, 0.32, 0.32), GOLD.base, 1)])
     # ---- le nez, petit, sur la médiane (sans contour : il est dans le visage) ; son petit bout arrondi ----
     nose = sm([(75.5, 47.4), (76.3, 47.6), (76.8, 49.2), (77.3, 50.4), (77.0, 51.1), (76.1, 51.35), (75.2, 51.1), (75.0, 50.3),
                (75.4, 48.8)], t=0.9)

@@ -75,7 +75,7 @@ BLADE_L = 49.0
 HEAD_C = (70.0, 54.0)             # le centre de l'agrandissement de la tête (le cou)
 # les épaulières (avis du propriétaire, tour 2 : « Réduire la taille des épaulettes ») : plaques moins nombreuses, moins
 # hautes et moins larges ; x gauche / droit de la plaque du haut, y du haut, hauteur d'une plaque, pas entre deux, nombre
-NS_X, NS_Y, NS_H, NS_STEP, NS_N = (39.6, 54.4), 52.2, 5.4, 4.6, 4
+NS_X, NS_Y, NS_H, NS_STEP, NS_N = (39.6, 54.4), 52.2, 5.6, 5.1, 4
 FS_X, FS_Y, FS_H, FS_STEP, FS_N = (88.6, 97.4), 54.8, 5.4, 4.6, 3
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, O=O0, ang=ANG0, edge=1,
