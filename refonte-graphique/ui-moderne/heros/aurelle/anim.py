@@ -124,7 +124,7 @@ ATTACK = [
     (520, dict(WIND, G=(31.0, 21.0), ang=-166, lean=-4.0, crouch=2.3, glow=1.0, FF=(111.0, 49.0), ffa=-94, fca=-18)),
     (568, dict(OVER)),
     (590, dict(OVER, G=(84.0, 30.0), ang=-24, lean=1.0)),
-    (610, dict(HIT1)),
+    (610, dict(HIT1, fca=30)),
     (720, dict(HIT1, G=(91.0, 73.0), ang=0, **FCOCK)),
     (760, dict(HIT1, G=(86.0, 60.0), ang=-24, front=0, **FCOCK)),
     (790, dict(REB, **FCHOP)),

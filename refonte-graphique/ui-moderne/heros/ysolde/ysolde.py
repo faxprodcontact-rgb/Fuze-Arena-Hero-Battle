@@ -762,6 +762,16 @@ def eye_shape(cx, cy, w, h, near):
 BAND = [(60.0, 34.2), (63.6, 32.5), (67.0, 30.4), (70.4, 28.3), (74.0, 26.8), (78.0, 26.1), (82.0, 25.8), (85.6, 25.6),
         (89.6, 25.4)]
 BAND_W = [2.7, 3.6, 3.9, 4.1, 4.3, 4.4, 4.4, 4.1, 3.6]
+
+
+def band_dy(x):
+    """Avis du propriétaire (tour 3) : « le bandeau un peu plus bas ». La bande descend sur le front (elle en cache un peu
+    plus) ; à peine derrière, près du nœud et de l'oreille, davantage sur le front."""
+    t = min(1.0, max(0.0, (x - 61.0) / (80.0 - 61.0)))
+    return 0.45 + 1.35 * t * t * (3 - 2 * t)
+
+
+BAND = [(x, y + band_dy(x)) for x, y in BAND]
 KNOT = (59.2, 34.7)
 TAILS = [([(58.4, 35.4), (55.6, 37.0), (52.8, 37.6), (50.0, 39.4), (47.2, 40.0)], [1.6, 2.3, 2.6, 2.6, 2.5]),
          ([(58.8, 36.2), (57.4, 39.0), (55.4, 41.6), (53.6, 44.0), (50.8, 45.8)], [1.6, 2.2, 2.5, 2.5, 2.4])]
@@ -801,7 +811,7 @@ def bandana(fig, P):
         det += [(dia.move(-0.2, 0.3), RED.deep, 0.45), (dia, GOLD.light, 1), (ellipse(q[0] + 0.15, q[1] - 0.15, 0.22 * sz, 0.18), GOLD.hi, 0.9)]
     # le tissu : un pli doux le long de la bande, un éclat sur le front (la lumière en haut à droite)
     det += [(ribbon(cl[6:38], [0.1] + [0.5] * 30 + [0.1]).move(0, 0.5), RED.shadow, 0.35),
-            (ribbon([(74.6, 25.6), (79.0, 24.8), (84.0, 24.7), (87.0, 25.1)], [0.1, 0.55, 0.5, 0.1]), RED.light, 0.55)]
+            (ribbon([(x, y + band_dy(x)) for x, y in [(74.6, 25.6), (79.0, 24.8), (84.0, 24.7), (87.0, 25.1)]], [0.1, 0.55, 0.5, 0.1]), RED.light, 0.55)]
     # les deux pans : ils partent du nœud et flottent dans la crinière (même vague, même vent qu'elle) ; le bout
     # coupé en biais
     tails = []
@@ -863,7 +873,12 @@ def head(fig, P, HEAD, HEADN):
     V = placer(FACE, l_oeil=L_OEIL)
     face_full = sm(FACE_PTS, t=0.9)
     cap = cap_shape()
-    face = diff_shape(face_full, cap)               # le haut du visage s'arrête sous la ligne des cheveux
+    # le haut du visage s'arrête sous la ligne des cheveux, et sous le bandana (descendu sur le front, avis du
+    # propriétaire tour 3) : au-dessus de lui, ce sont les cheveux tirés en arrière, sans bande de peau
+    from shapely.geometry import Polygon
+    bl = crpath(BAND, 40)
+    above = Polygon([(bl[0][0] - 8, bl[0][1]), (bl[0][0] - 8, 0)] + [(bl[-1][0] + 8, 0), (bl[-1][0] + 8, bl[-1][1])] + bl[::-1])
+    face = shape_of(poly_of(face_full, 8).difference(poly_of(cap, 8)).difference(above.buffer(0)), step=0.4)
     fd = []
     blink = P['blink'] > 0.5
     # la lumière d'en haut à droite : la bande d'ombre (bas-gauche) et le liseré clair (haut-droit) suivent le contour

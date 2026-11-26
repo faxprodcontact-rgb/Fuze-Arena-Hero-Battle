@@ -6,7 +6,8 @@
 #   chevalier vectoriel, à la même échelle, pieds sur la même ligne ;
 # - heaume.png : le heaume zoomé, sans rien | avec le calque de visage.py (aucun visage : la fente des yeux est sur la
 #   ligne des yeux, les braises aux places des yeux, la fente de souffle sur l'axe du visage) ;
-# - avant-apres.png : le phénix d'avant (son fixe.png, gardé avant de commencer) | le chevalier.
+# - avant-apres.png : l'image annotée de l'avis du propriétaire (cercles gardés) | le chevalier corrigé, même cadrage
+#   (le dessin seul, même hauteur, même fond).
 import os
 import subprocess
 import sys
@@ -22,7 +23,7 @@ OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 
 RENDU = os.path.join(HERE, '..', 'rendu.cjs')
 TMP = os.environ.get('ROOK_TMP', os.path.join(HERE, '_tmp'))
 SCRATCH = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad'
-AVANT = os.path.join(SCRATCH, 'vecto-rook-phenix', 'sortie', 'fixe.png')     # le phénix, gardé avant de commencer
+AVANT = os.path.join(SCRATCH, 'avis-img3', 'assassins-5.png')     # l'image annotée par le propriétaire (avis du 26/11)
 
 
 def stone(w, h, floor):
@@ -81,22 +82,23 @@ def heaume():
 
 
 def avant_apres(fixe):
-    """avant-apres.png : à gauche le phénix d'avant (son fixe.png), à droite le chevalier (fixe.png), même hauteur."""
+    """avant-apres.png : à gauche l'image annotée de l'avis (le dessin seul rendu à sa hauteur, avec ses cercles), à
+    droite le chevalier corrigé rendu de la même façon (même hauteur, même fond) : même cadrage."""
     if not os.path.exists(AVANT):
-        print('(phénix d\'avant introuvable : avant-apres.png non refait)')
+        print('(image annotée introuvable : avant-apres.png non refait)')
         return
     av = Image.open(AVANT).convert('RGB')
-    ap = fixe.convert('RGB')
-    H = max(av.height, ap.height)
-    av = av.resize((round(av.width * H / av.height), H), Image.LANCZOS)
-    ap = ap.resize((round(ap.width * H / ap.height), H), Image.LANCZOS)
+    fig = render(S.build(ow=0.95).svg(), av.height, 'apres')
+    ap = Image.new('RGBA', fig.size, av.getpixel((4, 4)) + (255,))
+    ap.alpha_composite(fig)
+    ap = ap.convert('RGB').crop((0, 0, av.width, av.height))
     gap = 40
-    out = Image.new('RGB', (av.width + ap.width + gap, H + 60), (20, 14, 34))
+    out = Image.new('RGB', (av.width * 2 + gap, av.height + 60), (20, 14, 34))
     out.paste(av, (0, 60))
     out.paste(ap, (av.width + gap, 60))
     dr = ImageDraw.Draw(out)
-    dr.text((20, 22), 'AVANT : le phenix (abandonne)', fill=(255, 220, 120))
-    dr.text((av.width + gap + 20, 22), 'APRES : le chevalier noir a l\'epee de feu (nouveau heros)', fill=(255, 220, 120))
+    dr.text((20, 22), 'AVANT (avis du proprietaire)', fill=(255, 220, 120))
+    dr.text((av.width + gap + 20, 22), 'APRES : tabard un peu plus large, DEVANT les jambes', fill=(255, 220, 120))
     out.save(os.path.join(OUT, 'avant-apres.png'))
 
 

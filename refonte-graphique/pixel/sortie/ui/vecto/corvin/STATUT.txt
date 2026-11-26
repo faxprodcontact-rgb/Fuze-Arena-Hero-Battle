@@ -1,4 +1,7 @@
 fait
+Dernier avis (« La main est dans le mauvais sens, on ne doit pas voir le pouce quand il tient une arme dans ce sens-là ») :
+- main à la dague : le poing est tourné, on voit maintenant le DOS de la main (côté poignet), la rangée des jointures le long de la poignée et les quatre doigts repliés dessous (l'index contre la garde) ; le pouce passe de l'autre côté de la poignée, caché : il ne se voit plus dans aucune pose (garde, attaque, estocade, spéciale, défi) ;
+- petit cercle sous l'oreille : le bout arrondi du galon d'or qui se posait sur l'oreille est remplacé par une coupe nette le long du bas de l'oreille, avec son ombre douce : le galon passe sous l'oreille au lieu de s'arrêter dessus.
 Tour 3 de l'avis (« Il faut encore enlever l'espace restant, et l'oreille n'est pas collée à son visage ») :
 - espace restant : le galon d'or de la capuche épouse maintenant la joue et la tempe (il mord un peu sur le visage) et l'intérieur sombre de la capuche reste caché sous le visage : plus aucun vide entre la joue et la capuche ;
 - oreille : sa racine est sur le côté du crâne, à hauteur des yeux, juste derrière la joue (place donnée par visage.py) ; elle sort par une fente du galon (un morceau au-dessus, un au-dessous) et la joue la recouvre à la base, avec une ombre douce : elle est attachée à la tête dans toutes les poses (elle frémit autour de sa racine).
