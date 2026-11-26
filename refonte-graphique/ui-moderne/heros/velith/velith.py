@@ -6,10 +6,12 @@
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/velith.txt) : le yéti, brute voûtée de grand singe des
 # neiges. Énorme masse de fourrure blanche (bosse du dos, épaules rondes, tête ronde qui dépasse d'entre elles), ventre
 # de gorille en tonneau à la peau bleu glacé, petites jambes épaisses couvertes de fourrure jusqu'aux chevilles, pieds
-# de singe à trois orteils griffus. Bras proche levé et plié (coude en bas à gauche) : le poing serre le manche de la
-# hache à côté de la tête, la lame de glace au-dessus et derrière ; bras lointain qui pend en avant, poing fermé.
+# de singe à trois orteils griffus. Bras proche levé et plié (coude en bas à gauche) : le poing serre la hache vers le
+# milieu du manche (avis du propriétaire, 26/11), la lame de glace au-dessus et derrière ; bras lointain qui pend en
+# avant, poing fermé.
 # Tête de grand singe : arcade lourde en V, yeux jaunes qui brûlent au fond des orbites, nez plat aux grosses narines,
 # gueule en rictus (gencives, gorge rouge sombre, deux crocs en haut, deux en bas), petites cornes d'ardoise, favoris.
+# Visage reconstruit avec ../visage.py (FACE_BOX) : contrôle par visage_controle.py → sortie/ui/vecto/velith/visage.png.
 # Coordonnées = pixels du dessin pixel art (mêmes pieds, même échelle : y = 116 est le sol). Une seule lumière, en
 # haut à droite ; un seul contour (atelier.py) ; la fourrure en grappes nettes (outils.py : mèches fondues dans la
 # masse, limites d'ombre découpées en mèches).

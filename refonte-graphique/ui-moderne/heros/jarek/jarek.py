@@ -68,7 +68,8 @@ NECK = (70.5, 51.0)          # la tête est agrandie ×1,1 autour de ce point (c
 #   aim : la visée (degrés, − = l'arc se lève, le bras lointain tourne autour de l'épaule) ; draw : la main tire la corde
 #   plus loin (+, en pixels) ; relax : l'arc se détend (+) ; bow_dx : l'arc saute en avant ; arrow : flèche encochée (1) ;
 #   free : la corde est libre (0..1, droite entre les oreilles) ; bulge : elle vibre ;
-#   rk : la main proche quitte la corde (0..1) pour aller en (tx, ty) (carquois, geste de recharge) ; open : la main
+#   rk : la main proche quitte la corde (0..1) pour aller en (tx, ty) (carquois, geste de recharge) ; hdx, hdy : elle
+#   part en arrière après le lâcher ; open : la main
 #   s'ouvre (après le lâcher) ; hold : elle tient une nouvelle flèche (angle ga).
 S_N = (53.4, 57.0)           # l'épaule proche
 S_F = (84.0, 59.2)           # l'épaule lointaine
@@ -83,7 +84,7 @@ CUFF = [(-2.8, -4.6), (0.8, -5.4), (3.4, -5.2), (4.6, -3.4), (3.2, -1.2), (1.8, 
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, squint=0.0, grit=0.0, ph=0.0,
             braid=0.0, skirt=0.0, fur=0.0, aim=0.0, draw=0.0, relax=0.0, bow_dx=0.0, arrow=1.0, free=0.0, bulge=0.0,
-            rk=0.0, tx=44.0, ty=74.0, open=0.0, hold=0.0, ga=-60.0)
+            rk=0.0, tx=44.0, ty=74.0, hdx=0.0, hdy=0.0, open=0.0, hold=0.0, ga=-60.0)
 
 V = placer(FACEBOX)
 
@@ -150,7 +151,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     aim = P['aim']
     AIMM = mchain(UC, mT(P['bow_dx'], 0), mR(aim, S_F[0], S_F[1]))           # le bras lointain, l'arc, la flèche
     AL = mchain(UC, mR(aim, S_F[0], S_F[1]))                                   # (sans le saut de l'arc)
-    ang = aim + P['lean'] * 1.0                                                # l'angle de la flèche dans le dessin
+    # la flèche : de l'encoche (qui ne descend qu'un peu quand il vise haut : la main qui tire reste devant la poitrine)
+    # au repos de la flèche sur le poing lointain ; la main tire le long de cette ligne
+    rest_ = mapp(AL, (GRIP0[0], NOCK0[1]))
+    n0 = mapp(mchain(UC, mR(aim * 0.35, S_F[0], S_F[1])), NOCK0)
+    ang = math.degrees(math.atan2(rest_[1] - n0[1], rest_[0] - n0[0]))
 
     # ================================================================ le carquois (derrière tout) et ses trois flèches
     qd = norm((QUIVER_BOT[0] - QUIVER_TOP[0], QUIVER_BOT[1] - QUIVER_TOP[1]))
@@ -240,9 +245,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # le lien rouge de la natte
     tc = bc[tie_i]
     td = norm((bc[tie_i + 1][0] - bc[tie_i - 1][0], bc[tie_i + 1][1] - bc[tie_i - 1][1]))
-    tie = limb([add(tc, td, -1.1), add(tc, td, 1.1)], [3.9, 3.6])
+    # (un cordon enroulé : plus long que large, deux tours visibles)
+    tie = limb([add(tc, td, -1.5), add(tc, td, 1.5)], [3.7, 3.4])
+    tn = (td[1], -td[0])
     fig.part('tie', tie, RED, cel=0.5, rim=0.5, cast=0.6, cast_on=['hair'],
-             details=[(ribbon([add(add(tc, td, -0.3), (td[1], -td[0]), 1.8), add(add(tc, td, -0.3), (td[1], -td[0]), -1.6)], [0.1, 0.5]), RED.hi, 0.6)])
+             details=[(ribbon([add(add(tc, td, k_), tn, 1.9), add(add(tc, td, k_ + 0.25), tn, -1.9)], [0.35, 0.35], sharp_ends=False), RED.shadow, 0.8)
+                      for k_ in (-0.8, 0.5)]
+             + [(ribbon([add(add(tc, td, -1.2), tn, 1.0), add(add(tc, td, 1.2), tn, 1.1)], [0.1, 0.5]), RED.hi, 0.6)])
 
     # ================================================================ les bottes de feutre (bout relevé), semelles claires
     def boot(key, shaft_c, foot_pts, sole_pts, ros):
@@ -429,10 +438,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cast_on=['ffist', 'ff0', 'bow'])
 
     # ================================================================ la flèche encochée
-    nock = mapp(AL, (NOCK0[0] - P['draw'], NOCK0[1]))
     u = unit(ang)
+    nock = add(n0, u, -P['draw'])
     sd = (-u[1], u[0])
-    A_ = lambda a, b: add(add(nock, u, a), sd, b)
     if P['arrow'] > 0.5:
         arrow_parts(fig, nock, ang, 'a')
 
@@ -456,7 +464,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     Hs = add(add(nock, u, -4.6), sd, 0.2)                         # le poing sur la corde
     rk = P['rk']
     tgt = mapp(U, (P['tx'], P['ty']))
-    H = lerp(Hs, tgt, rk)
+    H = add(lerp(Hs, tgt, rk), (P['hdx'], P['hdy']))
     hang = ang * (1 - rk) + (P['ga'] if P['hold'] > 0.5 else ang + 20) * rk
     hu = unit(hang)
     W = add(H, hu, -4.6)
@@ -473,10 +481,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     sg = -1 if math.cos(na) > 0 else 1
     ua = norm((Sn[0] - E[0], Sn[1] - E[1]))
     ur = (-ua[1], ua[0]) if -ua[1] > 0 else (ua[1], -ua[0])              # le côté du bras tourné vers la lumière
-    ndet = [(soft([add(lerp(E, Sn, t), ur, 3.6) for t in (0.2, 0.5, 0.85)], 1.4), FELT.light, 0.55),
-            (soft([add(lerp(E, W, t), pe, -(4.7 + 0.4 * (1 - t))) for t in (0.05, 0.3, 0.55, 0.8)], 1.3), FELT.deep, 0.6),
-            (soft([add(lerp(E, W, t), pe, -(3.3 - 0.4 * t)) for t in (0.1, 0.4, 0.7, 0.95)], 1.2), FELT.light, 0.7),
-            (soft([add(lerp(E, W, t), pe, 4.2 - 0.8 * t) for t in (0.1, 0.4, 0.75)], 1.2), FELT.deep, 0.4)]
+    # (le pli de l'avant-bras ne se voit que quand le bras est replié : l'avant-bras passe alors devant le bras)
+    fold = max(0.0, min(1.0, (ua[0] * ed[0] + ua[1] * ed[1] - 0.15) / 0.4)) * min(1.0, max(0.0, (Ln - 6) / 3))
+    ndet = [(soft([add(lerp(E, Sn, t), ur, 3.6) for t in (0.55, 0.75, 0.95)], 1.3), FELT.light, 0.55)]
+    if fold > 0.02:
+        ndet += [(soft([add(lerp(E, W, t), pe, -(4.7 + 0.4 * (1 - t))) for t in (0.05, 0.3, 0.55, 0.8)], 1.3), FELT.deep, 0.6 * fold),
+                 (soft([add(lerp(E, W, t), pe, -(3.3 - 0.4 * t)) for t in (0.1, 0.4, 0.7, 0.95)], 1.2), FELT.light, 0.7 * fold),
+                 (soft([add(lerp(E, W, t), pe, 4.2 - 0.8 * t) for t in (0.1, 0.4, 0.75)], 1.2), FELT.deep, 0.4 * fold)]
     fig.part('nsleeve', nsl, FELT, grad=(Sn[0] + 6, Sn[1] - 2, E[0] - 4, E[1] + 4, [(0, FELT.light), (0.5, FELT.base), (1, FELT.shadow)]),
              cel=1.5, rim=0.8, cast=1.4, cast_on=['torso', 'sash', 'knot', 'skirt', 'hair', 'tie', 'strap', 'quiver'] + qa_names, details=ndet)
     cm = lambda pts: [(Ln + x, y * -sg) for x, y in pts]

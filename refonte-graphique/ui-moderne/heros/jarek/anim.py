@@ -82,13 +82,13 @@ def monotone(ts, vs, t):
 
 
 NUM = ['crouch', 'lean', 'tilt', 'squint', 'grit', 'braid', 'skirt', 'fur', 'aim', 'draw', 'relax', 'bow_dx', 'bulge', 'rk',
-       'tx', 'ty', 'ga', 'headx', 'heady']
+       'tx', 'ty', 'ga', 'headx', 'heady', 'hdx', 'hdy']
 TX0, TY0 = 40.6, 69.0                 # la main au carquois (elle prend une flèche par l'encoche)
 
 
 def flat(k):
     d = dict(crouch=0, lean=0, tilt=0, squint=0, grit=0, braid=0, skirt=0, fur=0, aim=0, draw=0, relax=0, bow_dx=0, bulge=0,
-             rk=0, tx=TX0, ty=TY0, ga=-24, headx=0, heady=0)
+             rk=0, tx=TX0, ty=TY0, ga=-24, headx=0, heady=0, hdx=0, hdy=0)
     for key, v in k.items():
         if key == 'head':
             d['headx'], d['heady'] = v
@@ -116,13 +116,13 @@ SWING = REL + 330             # le grand geste en arc, la flèche dans la main
 NOCKT = REL + 420             # la flèche est encochée
 ATTACK = [
     (0, {}),
-    (120, dict(aim=-6, draw=1, braid=-0.4, skirt=-0.4)),
-    (340, dict(aim=-12, draw=3.2, relax=-0.8, lean=-1, head=(0, 0.6), squint=1, grit=0.5, braid=-0.6, skirt=-0.5)),
-    (REL - 10, dict(aim=-12.5, draw=3.5, relax=-0.95, lean=-1.1, head=(0, 0.6), squint=1, grit=0.6, braid=-0.7, skirt=-0.6)),
-    (REL + 50, dict(aim=-12, draw=9.6, relax=2.0, bow_dx=1.2, bulge=3, lean=-1.2, head=(0, 0.2), squint=1, braid=-0.9, skirt=-0.7)),
-    (REL + 120, dict(aim=-10, draw=10.4, relax=1.4, bow_dx=0.6, bulge=-2, lean=-0.8, squint=0.8, braid=-0.8, skirt=-0.6)),
-    (REL + 170, dict(aim=-8, draw=9.6, relax=1.1, bulge=0.6, lean=-0.4, braid=-0.5, skirt=-0.4, rk=0.35, to=(TX0 + 6, TY0 - 2))),
-    (GRAB, dict(aim=-5, draw=8, relax=1.0, bulge=0, rk=1, to=(TX0, TY0), braid=-0.2, skirt=-0.2, head=(-0.3, 0.2))),
+    (120, dict(aim=-8, draw=1, braid=-0.4, skirt=-0.4)),
+    (340, dict(aim=-16, draw=3.2, relax=-0.8, lean=-1, head=(0, 0.6), squint=1, grit=0.5, braid=-0.6, skirt=-0.5)),
+    (REL - 10, dict(aim=-16.5, draw=3.5, relax=-0.95, lean=-1.1, head=(0, 0.6), squint=1, grit=0.6, braid=-0.7, skirt=-0.6)),
+    (REL + 50, dict(aim=-16, draw=3.6, hdx=-6.4, hdy=-0.6, relax=2.0, bow_dx=1.2, bulge=3, lean=-1.2, head=(0, 0.2), squint=1, braid=-0.9, skirt=-0.7)),
+    (REL + 120, dict(aim=-13, draw=3.6, hdx=-7.4, hdy=-0.4, relax=1.4, bow_dx=0.6, bulge=-2, lean=-0.8, squint=0.8, braid=-0.8, skirt=-0.6)),
+    (REL + 170, dict(aim=-10, draw=3.6, hdx=-6.4, hdy=0, relax=1.1, bulge=0.6, lean=-0.4, braid=-0.5, skirt=-0.4, rk=0.35, to=(TX0 + 6, TY0 - 2))),
+    (GRAB, dict(aim=-5, draw=3, relax=1.0, bulge=0, rk=1, to=(TX0, TY0), braid=-0.2, skirt=-0.2, head=(-0.3, 0.2))),
     (GRAB + 40, dict(aim=-4, relax=1.0, rk=1, to=(TX0 - 0.6, TY0 - 1.2), braid=0, skirt=0, head=(-0.3, 0.2))),
     (SWING, dict(aim=-3, relax=0.9, rk=1, to=(55.0, 66.0), ga=-24, braid=0.4, skirt=0.3)),
     (NOCKT, dict(aim=-1, draw=-5, relax=0.8, rk=0, ga=-8, braid=0.7, skirt=0.5)),
@@ -149,14 +149,14 @@ SPECIAL = [
     (290, dict(crouch=2.0, aim=-24, draw=2.4, lean=-1.0, braid=-1.0, skirt=-1.0, fur=1.6, squint=1, head=(0, 0.4))),
     (460, dict(crouch=2.2, aim=-30, draw=4.0, relax=-1.4, lean=-1.3, braid=-1.3, skirt=-1.1, fur=2, squint=1, grit=1, head=(0, 0.6))),
     (SREL - 10, dict(crouch=2.2, aim=-31, draw=4.3, relax=-1.5, lean=-1.4, braid=-1.4, skirt=-1.2, fur=2, squint=1, grit=1, head=(0, 0.6))),
-    (SREL + 50, dict(crouch=1.6, aim=-30, draw=11, relax=2.4, bow_dx=1.4, bulge=4, lean=-2, braid=-1.5, skirt=-1.2, fur=1.5, squint=1,
+    (SREL + 50, dict(crouch=1.6, aim=-30, draw=4.3, hdx=-6.6, hdy=-2.4, relax=2.4, bow_dx=1.4, bulge=4, lean=-2, braid=-1.5, skirt=-1.2, fur=1.5, squint=1,
                      head=(0, -0.2))),
-    (SREL + 130, dict(crouch=1.4, aim=-27, draw=11.4, relax=1.4, bow_dx=0.6, bulge=-2, lean=-1.6, braid=-1.2, skirt=-1, fur=1, squint=0.8,
+    (SREL + 130, dict(crouch=1.4, aim=-27, draw=4.3, hdx=-7.6, hdy=-2.2, relax=1.4, bow_dx=0.6, bulge=-2, lean=-1.6, braid=-1.2, skirt=-1, fur=1, squint=0.8,
                       head=(0, -0.4))),
-    (SREL + 320, dict(crouch=1.0, aim=-18, draw=10, relax=1.1, lean=-0.8, braid=-0.6, skirt=-0.4, fur=0.6, squint=0.6, head=(0.2, -0.6))),
-    (S_HIT, dict(crouch=0.4, aim=-6, draw=9, relax=1.0, lean=0.4, braid=0.3, skirt=0.3, squint=1, head=(0.4, 0.2))),
-    (S_HIT + 100, dict(crouch=0.2, aim=-5, draw=8.6, relax=1.0, rk=0.4, to=(TX0 + 6, TY0 - 2), braid=0.1, squint=0.5)),
-    (SGRAB, dict(aim=-4, draw=8, relax=1.0, rk=1, to=(TX0, TY0), head=(-0.3, 0.2))),
+    (SREL + 320, dict(crouch=1.0, aim=-18, draw=4, hdx=-6.6, hdy=-1.4, relax=1.1, lean=-0.8, braid=-0.6, skirt=-0.4, fur=0.6, squint=0.6, head=(0.2, -0.6))),
+    (S_HIT, dict(crouch=0.4, aim=-6, draw=3.6, hdx=-6, hdy=-0.4, relax=1.0, lean=0.4, braid=0.3, skirt=0.3, squint=1, head=(0.4, 0.2))),
+    (S_HIT + 100, dict(crouch=0.2, aim=-5, draw=3.4, hdx=-4, relax=1.0, rk=0.4, to=(TX0 + 6, TY0 - 2), braid=0.1, squint=0.5)),
+    (SGRAB, dict(aim=-4, draw=3, relax=1.0, rk=1, to=(TX0, TY0), head=(-0.3, 0.2))),
     (SGRAB + 40, dict(aim=-4, relax=1.0, rk=1, to=(TX0 - 0.6, TY0 - 1.2), head=(-0.3, 0.2))),
     (SSWING, dict(aim=-3, relax=0.9, rk=1, to=(55.0, 66.0), ga=-24, braid=0.4, skirt=0.3)),
     (SNOCK, dict(aim=-1, draw=-5, relax=0.8, rk=0, ga=-8, braid=0.7, skirt=0.5)),

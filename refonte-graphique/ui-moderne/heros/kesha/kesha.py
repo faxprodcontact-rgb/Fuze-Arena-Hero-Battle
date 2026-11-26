@@ -4,7 +4,7 @@
 #   python3 refonte-graphique/ui-moderne/heros/kesha/kesha.py        # → kesha.svg + images 512 et 160 px de haut
 #
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/kesha.txt) : l'homme-requin, général du clan des abysses.
-# Vraie tête de requin blanc (museau pointu, petit oeil jaune-orangé sous une arcade en colère, balafre, trois fentes de
+# Vraie tête de requin blanc (museau pointu, UN SEUL oeil jaune-orangé sous une arcade en colère, balafre, trois fentes de
 # branchies, gueule ouverte aux deux rangées de dents, SANS fond derrière les dents : on voit le décor entre les
 # mâchoires), aileron dorsal entaillé d'une vieille morsure, queue de requin en croissant, ventre blanc aux abdominaux
 # marqués, grande fente (jambe lointaine pliée devant, jambe proche tendue derrière), griffe palmée levée (main proche),

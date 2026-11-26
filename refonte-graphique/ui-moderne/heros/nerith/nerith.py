@@ -71,19 +71,19 @@ NECK = (77.0, 46.5)        # le centre de l'agrandissement de la tête (×1,1, c
 # ---------- le visage : placé par l'outil commun ../visage.py (une sphère qui tourne de 18° : tout tourne ensemble) ----------
 # FACE_BOX = l'ovale de la face (sans cheveux ni oreille), dans le repère de la tête AVANT son agrandissement ×1,1.
 FACE_BOX = (68.0, 22.0, 88.0, 47.5)
-FV = placer(FACE_BOX, l_oeil=0.24)
+FV = placer(FACE_BOX, l_oeil=0.27)
 EYE_N, EYE_F = FV['oeil_proche'], FV['oeil_fond']     # (x, y, largeur) : l'œil proche (à gauche), l'œil du fond
 EW = EYE_N[2]                                          # la hauteur des deux yeux suit l'œil proche (même taille apparente)
 NOSE = FV['nez']                                       # la base du nez, sur la médiane
 MOUTH = FV['bouche']                                   # le milieu de la bouche (fermée), sur la médiane
-CHIN = (round(FV['menton'][0], 2), 47.2)               # la pointe du menton, sur la médiane
+CHIN = (round(FV['menton'][0], 2), 47.4)               # la pointe du menton, sur la médiane
 # Un œil MODÈLE (l'œil proche, coin extérieur à gauche), en fractions de sa largeur autour de son centre : l'amande,
 # le trait de cils épais relevé au coin (le « coup de pinceau »), le sourcil dur qui descend vers le nez, l'iris.
 # L'œil du fond est CE MÊME œil retourné en miroir et un peu plus étroit (même hauteur, même ligne).
 AL_T = [(-0.5, -0.03), (-0.224, -0.19), (0.19, -0.205), (0.5, 0.01), (0.224, 0.205), (-0.224, 0.19)]
-LN_T = [(-0.776, -0.3), (-0.33, -0.335), (0.19, -0.35), (0.57, -0.026), (0.19, -0.13), (-0.26, -0.115), (-0.5, 0.01)]
-BROW_T = [(-0.72, -0.66), (-0.26, -0.87), (0.26, -0.8), (0.70, -0.46), (0.65, -0.37), (0.22, -0.63), (-0.22, -0.7), (-0.65, -0.555)]
-IRIS_T = (0.07, 0.03, 0.25, 0.26)       # décalage du centre de l'iris (le regard va vers la droite), rayons
+LN_T = [(-0.776, -0.3), (-0.33, -0.335), (0.19, -0.35), (0.57, -0.026), (0.19, -0.085), (-0.26, -0.075), (-0.5, 0.01)]
+BROW_T = [(-0.72, -0.56), (-0.2, -0.80), (0.26, -0.69), (0.70, -0.40), (0.66, -0.32), (0.22, -0.56), (-0.2, -0.66), (-0.66, -0.46)]
+IRIS_T = (0.07, 0.05, 0.25, 0.26)       # décalage du centre de l'iris (le regard va vers la droite), rayons
 
 
 def eyes():
@@ -727,9 +727,9 @@ def head(fig, P):
     # Toutes les places viennent de placer() (../visage.py) : deux yeux IDENTIQUES en miroir sur la même ligne (l'œil
     # du fond à peine plus étroit), le nez sur la médiane entre les yeux, la bouche fermée centrée dessous, le menton
     # pointu sur la médiane. Joue proche (à gauche) ronde, côté droit plus plat ; le nez ne sort pas du contour.
-    face = sm([(68.8, 23.4), (78.0, 22.8), (84.8, 23.2), (86.8, 25.6), (87.5, 29.4), (87.8, 33.0), (87.6, 36.6), (87.0, 39.8),
-               (85.9, 42.6), (84.2, 45.0), (82.2, 46.6), (CHIN[0], CHIN[1]), (77.8, 46.7), (74.8, 44.9), (71.9, 42.5),
-               (69.8, 39.6), (68.6, 36.4), (68.2, 30.0)], sharp=(11,), t=0.9)
+    face = sm([(68.8, 23.4), (78.0, 22.8), (84.8, 23.2), (86.8, 25.6), (87.5, 29.4), (87.8, 33.0), (87.6, 36.6), (86.8, 39.6),
+               (85.4, 42.4), (83.6, 44.8), (81.8, 46.5), (CHIN[0], CHIN[1]), (78.0, 46.7), (75.4, 45.0), (72.6, 42.6),
+               (70.4, 39.8), (68.6, 36.4), (68.2, 30.0)], sharp=(11,), t=0.9)
     fd = []
     # les plans : la tempe et la joue proches dans une ombre douce, le plan de face éclairé, l'ombre sous le menton
     fd += [(sm([(67.6, 25.0), (70.4, 28.6), (71.2, 34.4), (72.4, 38.8), (74.8, 42.6), (77.6, 45.6), (80.0, 47.2), (76.6, 46.6),
@@ -743,7 +743,7 @@ def head(fig, P):
     for e in eyes():
         al, ln, (ix, iy), (irx, iry), near, k = e['al'], e['ln'], e['iris'], e['ir'], e['near'], e['w']
         # le sourcil fin et dur, qui descend vers le nez (air sévère) ; le même pour les deux yeux, en miroir
-        fd += [(sm(e['brow'], sharp=(0, 3), t=0.8), HAIR.shadow, 1)]
+        fd += [(sm(e['brow'], sharp=(0, 1, 3), t=0.8), HAIR.shadow, 1)]
         almond = sm(al, sharp=(0, 3), t=0.9)
         liner = sm(ln, sharp=(0, 3), t=0.8)
         # la paupière lourde : un pli de peau au-dessus du trait (du coin intérieur vers l'extérieur, en miroir)
@@ -766,7 +766,7 @@ def head(fig, P):
         if pup is not None:
             fd += [(pup, '#1a0a14', 1)]
         fd += [(sm([al[0], al[1], al[2], al[3], lerp(al[2], (cx_, cy_), 0.45), lerp(al[1], (cx_, cy_), 0.45)], t=0.8), SKIN.deep, 0.32),
-               (ellipse(ix + irx * 0.45, iy - iry * 0.4, 0.3 * irx, 0.26 * iry), '#ffffff', 1)]
+               (ellipse(ix + irx * 0.42, iy - iry * 0.12, 0.28 * irx, 0.26 * iry), '#ffffff', 1)]
         if mep > 0.02:
             # le regard qui se pose, méprisant : la paupière descend sur l'iris (pareil sur les deux yeux)
             ytop = min(y for _, y in al[1:3])
@@ -787,12 +787,12 @@ def head(fig, P):
     # droite), l'arête claire, le petit bout arrondi, deux narines discrètes de part et d'autre de la médiane, l'ombre dessous
     nx, ny = NOSE
     fd += [(sm([(nx - 0.5, ny - 3.6), (nx - 0.15, ny - 2.2), (nx - 0.2, ny - 0.9), (nx - 0.9, ny - 0.3), (nx - 1.1, ny - 0.9),
-                (nx - 0.75, ny - 2.4)]), ('lin', nx - 1.2, 0, nx, 0, [(0, SKIN.shadow, 0.55), (1, SKIN.shadow, 0)]), 1),
+                (nx - 0.75, ny - 2.4)]), ('lin', nx - 1.2, 0, nx, 0, [(0, SKIN.shadow, 0.8), (1, SKIN.shadow, 0)]), 1),
            (ribbon(crpath([(nx + 0.05, ny - 3.4), (nx + 0.25, ny - 2.0), (nx + 0.35, ny - 0.8)], 6), [0.06, 0.28, 0.2]), SKIN.hi, 0.85),
            (ellipse(nx + 0.3, ny - 0.55, 0.42, 0.3, -10), '#ffffff', 0.55),
-           (ribbon(crpath([(nx - 1.1, ny + 0.05), (nx, ny + 0.35), (nx + 0.95, ny + 0.05)], 6), [0.12, 0.42, 0.12]), SKIN.shadow, 0.6),
+           (ribbon(crpath([(nx - 1.1, ny + 0.05), (nx, ny + 0.35), (nx + 0.95, ny + 0.05)], 6), [0.12, 0.45, 0.12]), SKIN.shadow, 0.8),
            (ellipse(nx - 0.62, ny + 0.02, 0.36, 0.2, 15), SKIN.deep, 0.8),
-           (ellipse(nx + 0.52, ny + 0.02, 0.28, 0.18, -15), SKIN.deep, 0.65)]
+           (ellipse(nx + 0.52, ny + 0.02, 0.26, 0.16, -15), SKIN.deep, 0.45)]
     # les lèvres rouges et pleines, fermées, centrées sous le nez (l'arc du haut, la lèvre du bas éclairée)
     mx, my, mw = MOUTH
     L_, R_ = mx - 0.53 * mw, mx + 0.47 * mw

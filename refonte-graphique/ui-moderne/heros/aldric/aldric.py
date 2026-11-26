@@ -189,8 +189,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # le fond du pantalon (avis du propriétaire : « trou dans le pantalon ») : sous la ceinture, le tissu bouffant relie
     # les deux jambes jusqu'à l'entrejambe ; il suit le bassin, les jambes passent devant et y posent leur ombre
-    seat = sm([(54.6, 79.6), (66.0, 79.4), (78.8, 79.4), (79.4, 84.0), (77.4, 88.0), (73.0, 90.8), (68.4, 92.0),
-               (64.0, 91.0), (59.4, 88.4), (55.6, 84.6)])
+    # (quand la jambe lointaine se lève, le fond se resserre sous la cuisse : aucune marche sous le genou levé)
+    fk = max(0.0, min(1.0, P['fext']))
+    seat = sm([(54.6, 79.6), (66.0, 79.4), (78.8, 79.4), lerp((79.4, 84.0), (76.4, 83.0), fk),
+               lerp((77.4, 88.0), (73.6, 86.4), fk), lerp((73.0, 90.8), (70.4, 88.6), fk), lerp((68.4, 92.0), (67.4, 89.8), fk),
+               lerp((64.0, 91.0), (63.6, 90.0), fk), (59.4, 88.4), (55.6, 84.6)])
     seat = seat.map(lambda p: mapp(PEL, p))
     sdet = [(ribbon([mapp(PEL, q) for q in ((66.8, 83.0), (67.6, 87.0), (68.2, 91.0))], [0.1, 1.0, 0.2]), ORANGE.shadow, 0.6),
             (ribbon([mapp(PEL, q) for q in ((62.0, 88.6), (65.4, 90.0), (68.4, 91.2))], [0.1, 0.9, 0.1]), ORANGE.deep, 0.35)]

@@ -54,10 +54,11 @@ FRAME = (8, -6, 114, 124)
 #   proche ; hand : 'draw' (tire la corde), 'open' (vient de lâcher), 'grab' (tient une flèche prise au carquois) ;
 #   arrow : 1 = flèche encochée ; free : la corde est libre (elle vibre : vib) ; stone : la pointe de pierre (spéciale).
 SH_N = (55.5, 57.5)                 # l'épaule proche
-E0 = (35.6, 52.0)                   # le coude proche (en arrière)
-W0 = (47.0, 51.4)                   # le poignet proche
+E0 = (35.6, 49.6)                   # le coude proche (en arrière)
+W0 = (47.0, 48.0)                   # le poignet proche (la flèche passe AU-DESSUS de l'épaulette)
 HA0 = -2.0                          # la main proche (degrés)
-GRIP0 = (104.6, 57.0)               # la poignée de l'arc (le poing lointain)
+GRIP0 = (104.6, 57.0)               # la poignée de l'arc (le poing lointain), dessin de l'arc
+LIFT = 2.4                          # l'arc et le poing lointain levés d'autant (la flèche reste presque à plat)
 SH_F = (77.0, 57.6)                 # l'épaule lointaine
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, cape=0.0, tal=0.0, blink=0.0, eyes=0.0,
             flex=0.0, push=0.0, btilt=0.0, E=E0, W=W0, ha=HA0, hand='draw', arrow=1.0, free=0.0, vib=0.0, stone=0.0,
@@ -221,7 +222,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('quiver', quiver, LEATHER, cel=1.2, rim=0.6, cast=0.9, details=qdet)
 
     # ================================================================ le bras lointain : la manche (sous le buste et le col)
-    G = add(GRIP0, (P['push'], 0))
+    G = add(GRIP0, (P['push'], -LIFT))
     G = mapp(UC, G)
     FW = add(G, rot((-7.4, 0.4), P['btilt'] * 0.4))           # le poignet lointain
     FSh = mapp(UC, SH_F)
@@ -262,7 +263,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         rpoly([(53.6, 101.9), (56.6, 101.8), (56.7, 105.0), (53.7, 105.1)], 0.7))
 
     # ================================================================ la tunique en lambeaux (sur les cuisses)
-    tun = sm([(52.2, 77.6), (74.8, 77.4), (75.6, 83.4), (74.6, 88.8), (72.0, 86.4), (69.6, 90.8), (66.8, 86.8), (63.4, 89.8),
+    tun = sm([(52.2, 77.6), (72.6, 77.6), (73.6, 83.2), (74.4, 88.6), (72.0, 86.4), (69.6, 90.8), (66.8, 86.8), (63.4, 89.8),
               (60.4, 86.6), (57.4, 90.4), (54.6, 86.4), (51.8, 88.6), (51.0, 83.0)], sharp=(3, 4, 5, 6, 7, 8, 9, 10, 11))
     fig.part('tunic', tun, GREEN, cel=1.3, rim=0.7, cast=1.0,
              details=[(ribbon([(62.4, 80), (62.0, 84.6), (61.0, 88.6)], [0.2, 1.6, 0.2]), GREEN.deep, 0.6),
@@ -306,6 +307,30 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(rpoly([(57.8, 76.6), (60.2, 76.7), (60.3, 79.6), (57.9, 79.5)], 0.6), LEATHER.deep, 1),
                       (ribbon([(57.2, 78.2), (59.4, 78.1)], [0.7, 0.7]), BRONZE.light, 1),
                       (ellipse(60.6, 75.9, 0.55, 0.4), BRONZE.glint, 0.95)])
+
+    # ================================================================ la main proche et l'arc (calculés avant le col)
+    hand = P['hand']
+    E, W, ha = P['E'], P['W'], P['ha']
+    Sh = mapp(UC, SH_N)
+    Ew, Ww = mapp(UC, E), mapp(UC, W)
+    hsil, hdet_m, nock_l = hand_shapes(hand)
+    N = add(Ww, rot(nock_l, ha))                          # l'encoche (où la corde est tenue)
+    bl = bow_line(P, G)
+    bowc = crpath(bl, 40)
+    a_top = lerp(bowc[2], bowc[3], 0.5)
+    a_bot = lerp(bowc[-3], bowc[-4], 0.5)
+
+    def string_part(i, sg_):
+        n = len(sg_)
+        fig.part('strd%d' % i, ribbon(sg_, [0.5] + [1.05] * (n - 2) + [0.5]), WOOD, grad=solid('#2a1626', 0.85), outline=False,
+                 cel=0, rim=0, cast=0.5)
+        fig.part('strl%d' % i, ribbon(sg_, [0.2] + [0.45] * (n - 2) + [0.2]), BONE, grad=solid('#efe4cc'), outline=False,
+                 cel=0, rim=0, cast=0)
+
+    # la corde tirée, brin du bas (de l'encoche à la pointe basse de l'arc) : elle passe DERRIÈRE le col de loup, la
+    # capuche et l'épaulette (avis du propriétaire, 26/11), devant l'armure de cuir
+    if P['free'] <= 0.5:
+        string_part(1, [N, lerp(N, a_bot, 0.5), a_bot])
 
     # ================================================================ le col de loup (sur les épaules)
     col_pts = [(49.6, 51.0), (56.0, 48.6), (66.0, 48.8), (76.4, 49.4), (84.0, 51.2), (87.8, 54.6), (87.2, 58.4),
@@ -371,13 +396,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                    (T_(ribbon([(0.8, 9.4), (0.9, 12)], [0.1, 0.4])), RED.hi, 0.6)])
 
     # ================================================================ la flèche encochée
-    hand = P['hand']
-    E, W, ha = P['E'], P['W'], P['ha']
-    Sh = mapp(UC, SH_N)
-    Ew, Ww = mapp(UC, E), mapp(UC, W)
-    hsil, hdet, nock_l = hand_shapes(hand)
-    N = add(Ww, rot(nock_l, ha))                          # l'encoche (où la corde est tenue)
-    bl = bow_line(P, G)
     rest = add(G, rot((-0.6, -5.0), P['btilt']))           # la flèche repose sur le poing lointain
     a_ang = math.degrees(math.atan2(rest[1] - N[1], rest[0] - N[0]))
     ARW = 63.5                                              # la longueur de la flèche (encoche → pointe)
@@ -386,7 +404,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         arrow_parts(fig, A, ARW, P['stone'], 'a')
 
     # ================================================================ l'arc
-    bowc = crpath(bl, 40)
     n_ = len(bowc) - 1
     ws = []
     for i in range(n_ + 1):
@@ -440,9 +457,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('ffist', fist, SKIN, cel=1.1, rim=0.6, cast=1.0, details=fdet)
 
     # ================================================================ la corde (devant le masque et le col)
-    t_top, t_bot = bl[0], bl[-1]
-    a_top = lerp(bowc[2], bowc[3], 0.5)
-    a_bot = lerp(bowc[-3], bowc[-4], 0.5)
     if P['free'] > 0.5:
         # la corde libre : droite entre les pointes, elle vibre (un ventre qui va et vient)
         mid = lerp(a_top, a_bot, 0.5)
@@ -451,13 +465,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         segs = [crpath([a_top, (lerp(a_top, a_bot, 0.25)[0] - P['vib'] * 0.7, lerp(a_top, a_bot, 0.25)[1]), mid,
                         (lerp(a_top, a_bot, 0.75)[0] - P['vib'] * 0.7, lerp(a_top, a_bot, 0.75)[1]), a_bot], 20)]
     else:
-        segs = [[a_top, lerp(a_top, N, 0.5), N], [N, lerp(N, a_bot, 0.5), a_bot]]
-    for i, s in enumerate(segs):
-        n = len(s)
-        fig.part('strd%d' % i, ribbon(s, [0.5] + [1.05] * (n - 2) + [0.5]), WOOD, grad=solid('#2a1626', 0.85), outline=False,
-                 cel=0, rim=0, cast=0.5)
-        fig.part('strl%d' % i, ribbon(s, [0.2] + [0.45] * (n - 2) + [0.2]), BONE, grad=solid('#efe4cc'), outline=False,
-                 cel=0, rim=0, cast=0)
+        # tirée : le brin du haut passe devant le masque ; le brin du bas est déjà posé DERRIÈRE le col et l'épaulette
+        segs = [[a_top, lerp(a_top, N, 0.5), N]]
+    for i, sg_ in enumerate(segs):
+        string_part(i, sg_)
 
     # ================================================================ le bras proche : bras + avant-bras d'UNE seule forme
     # (aucune jointure : le coude est l'arrondi de la silhouette ; l'avant-bras se distingue par le brassard et l'ombre
@@ -497,7 +508,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         # la flèche prise au carquois, tenue dans le poing (sous les doigts)
         A2 = lambda sh: xf(sh, *add(Ww, rot((6.6, 0.2), ha)), P['hang'])
         arrow_parts(fig, A2, 30, 0, 'h', short=True)
-    fig.part('nhand', H_(hsil), SKIN, cel=1.1, rim=0.7, cast=1.1, details=hdet(H_))
+    fig.part('nhand', H_(hsil), SKIN, cel=1.1, rim=0.7, cast=1.1, details=hdet_m(H_))
 
     # ---- chaque groupe de morceaux prend sa pose ----
     fig.pose(head_names, HEAD)
