@@ -88,6 +88,11 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
     }
     const r = toggleInFormation(uid, team);
     if (r === 'last') toast(t('heroes.last'));
+    if (r === 'full' && formation.length === 1) {
+      // une seule place (début du jeu) : le héros touché remplace directement celui qui y est
+      placeInSlot(uid, formation[0]![1], team);
+      return;
+    }
     if (r === 'full') {
       // section pleine : les places s'allument pour montrer qu'on en choisit une à remplacer
       setAsk(true);
