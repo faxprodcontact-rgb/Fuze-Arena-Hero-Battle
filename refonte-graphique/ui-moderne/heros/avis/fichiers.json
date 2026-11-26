@@ -41,6 +41,8 @@
 "gif/mages-4.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/mages-4.gif",
 "img/nyrra.webp": "public/art/vecto/mon-arachne-tisseuse.webp",
 "gif/nyrra.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/nyrra.gif",
+"img/myths-4.webp": "public/art/vecto/myths-4.webp",
+"gif/myths-4.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/myths-4.gif",
 "img/myths-3.webp": "public/art/vecto/myths-3.webp",
 "gif/myths-3.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/myths-3.gif",
 "img/knights-3.webp": "public/art/vecto/knights-3.webp",
@@ -54,5 +56,7 @@
 "img/demons-12.webp": "public/art/vecto/demons-12.webp",
 "gif/demons-12.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/demons-12.gif",
 "img/demons-9.webp": "public/art/vecto/demons-9.webp",
-"gif/demons-9.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/demons-9.gif"
+"gif/demons-9.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/demons-9.gif",
+"img/mages-2.webp": "public/art/vecto/mages-2.webp",
+"gif/mages-2.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/mages-2.gif"
 }

@@ -50,6 +50,7 @@ WOOD = Mat('#e2ac72', '#c89058', '#9c6436', '#6a3a24', '#3a1e1a')
 LACQ = Mat('#9aa2d6', '#4c4c74', '#2c2842', '#1c1628', '#0e0a16', glint='#e8ecff')         # l'eboshi laqué
 JADE = Mat('#d4fbcf', '#78d898', '#35a27a', '#1e6e64', '#123e4a')
 CLAW = Mat('#d2c4da', '#9a8aa4', '#6e607a', '#4a3e58', '#2c2238')                          # serres gris violacé
+TALON = Mat('#a898b4', '#5c4e6c', '#3e3250', '#2a2038', '#170f22')                         # les griffes
 EYE = ('#fff3c8', '#f2a826', '#b8620e', '#220c16')
 RIM_EYE = '#6c1426'                # le cerne rouge sombre des trous des yeux
 MOUTH = '#6c1426'                  # la fente du bec (jamais noire)
@@ -57,7 +58,7 @@ MOUTH = '#6c1426'                  # la fente du bec (jamais noire)
 GRD = 116.0        # le sol (dessous des geta)
 FEET = (64.0, 116.0)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (-3.0, 13.0, 126.0, 106.0)
+FRAME = (-5.0, 16.0, 124.0, 103.0)
 
 # ---------- le squelette (animation) ----------
 # Une pose = ces réglages ; REST est la pose du dessin. Pixels du dessin, degrés (y vers le bas).
@@ -78,15 +79,15 @@ T_F = (106.0, 23.4)
 NECK = (64.0, 47.0)         # le pivot de la tête (agrandie ×1,1 autour de ce point)
 NH0 = (42.0, 55.6)          # le poing proche, au repos (le centre de la prise)
 FAN_OFF = 4.8               # le poignet, à cette distance du centre du poing, à l'opposé de l'éventail
-L1N, L2N = 13.6, 12.4       # bras, avant-bras (proche)
+L1N, L2N = 18.0, 12.0       # bras, avant-bras (proche)
 KNOT = (55.8, 38.4)         # le nœud du cordon du masque (derrière la tête)
 FCLAW = (81.4, 92.2)        # le bas des serres lointaines, d'où pend le chapelet
 
 # les plumes des ailes : (u le long de R → W → T, angle, longueur, largeur) ; secondaires qui pendent, puis rémiges
 NEAR_FEATHERS = [
     (0.20, 98, 16.0, 9.0), (0.40, 103, 21.0, 9.6), (0.60, 108, 24.0, 9.8), (0.80, 116, 25.0, 9.6),
-    (1.00, 132, 23.5, 8.8), (1.22, 148, 22.0, 7.8), (1.46, 163, 20.5, 7.0), (1.72, 176, 18.0, 6.4),
-    (1.96, 188, 13.5, 5.6),
+    (1.00, 132, 23.5, 8.8), (1.22, 148, 22.0, 7.8), (1.46, 163, 20.0, 7.0), (1.72, 176, 16.5, 6.4),
+    (1.96, 188, 12.0, 5.6),
 ]
 FAR_FEATHERS = [
     (0.25, 92, 13.0, 7.6), (0.5, 86, 17.0, 8.2), (0.75, 76, 19.0, 8.2), (0.98, 58, 18.0, 7.6),
@@ -118,15 +119,47 @@ def near_sleeve(S, E, Wr, sway=0.0):
     low = max(E[1] + 5.5, 79.0)
     bottom = low + 5.2
     out = add(E, p2, 6.6)                        # le dehors du coude
-    pts = [(57.2, 53.0), (53.2, 54.6), add(cr, u2, 0.6),
+    pts = [(58.6, 53.4), (54.6, 53.0), (51.2, 54.4), (48.8, 57.0), add(cr, u2, 0.6),
            add(lerp(cl, cr, 0.5), u2, 1.4), add(cl, u2, 0.6),
            add(cl, u2, -4.0), (out[0] - 0.4 + sway * 0.2, (out[1] + cl[1]) / 2 + 2.0),
            (out[0] - 0.2 + sway * 0.5, low - 1.0),
            (out[0] + 2.2 + sway * 0.8, bottom - 0.6), (out[0] + 6.8 + sway * 0.9, bottom),
-           (out[0] + 10.8 + sway * 0.6, bottom - 1.8), (52.4, low - 3.4), (53.0, 70.0), (53.6, 62.0)]
-    shape = sm(pts, sharp=(2, 4), t=0.92)
-    hem = [pts[8], pts[9], pts[10]]
+           (out[0] + 10.8 + sway * 0.6, bottom - 1.8), (52.6, low - 3.4), (54.0, 71.0), (55.6, 64.0), (57.4, 58.0)]
+    shape = sm(pts, sharp=(4, 6), t=0.92)
+    hem = [pts[10], pts[11], pts[12]]
     return shape, C, cl, cr, hem, out
+
+
+# ================================================================ une main de serres refermée sur un manche
+
+def claw_fist(fig, key, c, ang, k, flip, held):
+    """Un poing de serres grises refermé sur un manche (ou un fil) : le dos de la main (écailles), trois doigts noueux
+    qui s'enroulent en travers, leurs griffes sombres, le pouce par-dessus. c : le centre de la prise ; ang : la
+    direction du manche (vers ce qu'il tient au-dessus) ; k : la taille ; flip : −1 la vue de l'autre côté ; held :
+    les morceaux tenus (ils reçoivent l'ombre des doigts). Renvoie les noms des morceaux."""
+    def E_(sh):
+        return xf(sh, c[0], c[1], ang, k, k * flip)
+    names = [key + 'fist']
+    fist = E_(sm([(3.4, -4.2), (-1.0, -4.6), (-4.2, -3.6), (-4.6, -0.6), (-3.4, 1.6), (3.0, 1.6), (4.2, -1.2)]))
+    fig.part(key + 'fist', fist, CLAW, cel=1.0 * k, rim=0.6 * k, cast=1.0 * k,
+             details=[(E_(ribbon([(2.6, -3.4), (-0.6, -3.8), (-3.4, -2.8)], [0.1, 0.8, 0.1])), CLAW.light, 0.55),
+                      (E_(ribbon([(1.4, -2.0), (-1.2, -2.4)], [0.1, 0.4])), CLAW.deep, 0.35)])
+    fing = []
+    for j, (x, w) in enumerate(((2.6, 2.7), (0.0, 2.9), (-2.6, 2.7))):
+        nm = '%sclaw%d' % (key, j)
+        fig.part(nm, E_(limb([(x + 0.3, -1.8), (x + 0.4, 0.8), (x - 0.2, 3.0)], [w, w * 0.95, w * 0.8])), CLAW,
+                 cel=0.7 * k, rim=0.5 * k, cast=0.7 * k, cast_on=[key + 'fist'] + held + fing,
+                 details=[(E_(ribbon([(x + 1.0, -1.2), (x + 1.1, 0.8), (x + 0.6, 2.4)], [0.1, 0.55, 0.1])), CLAW.hi, 0.55)])
+        fing.append(nm)
+        tal = E_(sm([(x + 0.4, 3.2), (x - 1.0, 3.4), (x - 2.4, 4.6), (x - 0.6, 4.4)], sharp=(2,), t=0.6))
+        fig.part(nm + 't', tal, TALON, cel=0.3 * k, rim=0.35 * k, cast=0.4 * k, cast_on=[nm] + held)
+        fing.append(nm + 't')
+    fig.part(key + 'thumb', E_(limb([(1.0, -4.0), (3.6, -3.4), (5.0, -1.8)], [2.6, 2.4, 2.0])), CLAW, cel=0.6 * k,
+             rim=0.5 * k, cast=0.8 * k, cast_on=[key + 'fist'] + held + fing,
+             details=[(E_(ellipse(3.0, -3.8, 0.8, 0.4)), CLAW.hi, 0.5)])
+    fig.part(key + 'thumbt', E_(sm([(4.6, -2.6), (5.8, -1.2), (6.6, 0.8), (5.0, -0.6)], sharp=(2,), t=0.6)), TALON,
+             cel=0.3 * k, rim=0.35 * k, cast=0.4 * k, cast_on=[key + 'thumb'] + held)
+    return names + fing + [key + 'thumb', key + 'thumbt']
 
 
 # ================================================================ le dessin
@@ -150,33 +183,32 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ROS = mchain(UC, mR(P['ro'] * 3.0, *FCLAW))
 
     # ================================================================ les ailes (derrière tout)
-    fw_names, fW, fT = wing(fig, 'wf', R_F, W_F, T_F, FAR_FEATHERS, RAVENF, ph=ph + 1.2, ws=P['ws'], lift=P['wf_l'],
-                            spread=P['wf_s'], droop=P['wd'], cov=0.82)
-    nw_names, nW, nT = wing(fig, 'wn', R_N, W_N, T_N, NEAR_FEATHERS, RAVEN, ph=ph, ws=P['ws'], lift=-P['wn_l'],
-                            spread=-P['wn_s'], droop=-P['wd'], cov=1.0)
+    fw_names, fW, fT = wing(fig, 'wf', R_F, W_F, T_F, FAR_FEATHERS, RAVENF, ph=ph + 1.2, ws=P['ws'], lift=-P['wf_l'],
+                            spread=-P['wf_s'], droop=-P['wd'], cov=0.82)
+    nw_names, nW, nT = wing(fig, 'wn', R_N, W_N, T_N, NEAR_FEATHERS, RAVEN, ph=ph, ws=P['ws'], lift=P['wn_l'],
+                            spread=P['wn_s'], droop=P['wd'], cov=1.0)
 
     # ================================================================ les pieds : tabi, hanao, geta à une dent
     feet = []
     for key, x0 in (('f', 70.6), ('n', 47.6)):
-        tooth = rpoly([(x0 + 4.0, 112.0), (x0 + 8.4, 112.0), (x0 + 8.2, GRD), (x0 + 4.2, GRD)], [0.3, 0.3, 0.7, 0.7])
+        tooth = rpoly([(x0 + 4.0, 112.2), (x0 + 8.4, 112.2), (x0 + 8.2, GRD), (x0 + 4.2, GRD)], [0.3, 0.3, 0.7, 0.7])
         fig.part(key + 'tooth', tooth, WOOD, cel=0.9, rim=0.5, cast=0,
-                 details=[(rpoly([(x0 + 4.0, 112.0), (x0 + 8.4, 112.0), (x0 + 8.4, 113.2), (x0 + 4.0, 113.2)], 0), WOOD.deep, 0.6)])
-        board = rpoly([(x0, 109.2), (x0 + 14.2, 109.2), (x0 + 14.2, 112.3), (x0, 112.3)], [0.8, 1.2, 0.8, 0.8])
-        fig.part(key + 'board', board, WOOD, cel=0.9, rim=0.6, cast=0.7,
-                 details=[(rpoly([(x0 + 0.4, 109.2), (x0 + 13.8, 109.2), (x0 + 13.6, 110.3), (x0 + 0.6, 110.3)], 0.5), WOOD.hi, 0.7)])
+                 details=[(rpoly([(x0 + 4.0, 112.2), (x0 + 8.4, 112.2), (x0 + 8.4, 113.4), (x0 + 4.0, 113.4)], 0), WOOD.deep, 0.6)])
+        board = rpoly([(x0, 109.8), (x0 + 14.2, 109.8), (x0 + 14.2, 112.4), (x0, 112.4)], [0.8, 1.2, 0.8, 0.8])
+        fig.part(key + 'board', board, WOOD, cel=0.8, rim=0.6, cast=0.7,
+                 details=[(rpoly([(x0 + 0.4, 109.8), (x0 + 13.8, 109.8), (x0 + 13.6, 110.7), (x0 + 0.6, 110.7)], 0.4), WOOD.hi, 0.7)])
         # le tabi (on ne voit que le bout du pied sous l'ourlet), le hanao rouge en V renversé
         bx = x0 + 1.0
-        tabi = sm([(bx + 0.2, 104.6), (bx + 9.6, 104.4), (bx + 11.6, 106.4), (bx + 12.8, 108.2), (bx + 12.4, 109.4),
-                   (bx - 0.2, 109.4), (bx - 0.4, 107.0)], sharp=(4, 5))
-        fig.part(key + 'tabi', tabi, CLOTH, cel=1.0, rim=0.6, cast=0.6,
-                 details=[(ribbon([(bx + 4.4, 109.4), (bx + 7.0, 107.0), (bx + 8.8, 106.2)], [0.8, 0.9, 0.7]), SILK.shadow, 1),
-                          (ribbon([(bx + 8.8, 106.2), (bx + 10.4, 107.4), (bx + 11.6, 109.2)], [0.7, 0.8, 0.6]), SILK.base, 1),
-                          (ellipse(bx + 8.8, 106.3, 0.95, 0.75), SILK.light, 1)])
+        tabi = sm([(bx + 0.2, 104.6), (bx + 9.6, 104.4), (bx + 11.4, 106.4), (bx + 12.6, 108.4), (bx + 12.2, 110.0),
+                   (bx - 0.2, 110.0), (bx - 0.4, 107.0)], sharp=(4, 5))
+        fig.part(key + 'tabi', tabi, CLOTH, cel=0.9, rim=0.6, cast=0.6,
+                 details=[(ribbon([(bx + 7.6, 108.4), (bx + 9.4, 108.6), (bx + 11.0, 109.4)], [0.6, 0.7, 0.5]), SILK.base, 1),
+                          (ellipse(bx + 9.6, 108.6, 0.75, 0.55), SILK.light, 1)])
         feet += [key + 'tooth', key + 'board', key + 'tabi']
 
     # ================================================================ la longue robe ivoire (avec la kesa et la ceinture)
     robe = sm([(51.4, 56.4), (55.0, 51.8), (61.6, 49.8), (72.0, 49.8), (78.6, 51.4), (81.8, 55.2), (82.6, 64.0),
-               (82.8, 76.0), (83.6, 88.0), (84.8, 98.0), (85.8, 104.4), (86.0, 108.6), (48.8, 108.6), (49.2, 102.0),
+               (82.8, 76.0), (83.6, 88.0), (84.8, 98.0), (85.8, 104.0), (86.0, 108.0), (48.8, 108.0), (49.2, 102.0),
                (50.4, 92.0), (51.4, 80.0), (51.8, 68.0), (51.0, 61.0)], sharp=(11, 12))
     det = []
     # le côté proche (à gauche) dans l'ombre mauve, d'un seul pan qui s'élargit vers le bas
@@ -192,9 +224,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det += [(ribbon([(56.0, 66.4), (64.0, 67.8), (74.0, 67.4)], [0.2, 1.4, 0.2]), CLOTH.shadow, 0.35),
             (sm([(74.6, 51.6), (78.8, 51.8), (81.6, 55.4), (82.0, 62.0), (79.4, 60.6), (76.6, 55.6)]), CLOTH.hi, 0.7)]
     # l'ourlet prune (il fait le tour : peint dans la robe, d'un bord à l'autre)
-    det += [(sm([(47.0, 105.0), (88.0, 105.0), (88.0, 109.6), (47.0, 109.6)]), ('lin', 0, 105.0, 0, 108.8, g2(PRUNE.light, PRUNE.shadow)), 1),
-            (ribbon([(50.0, 105.6), (68.0, 105.7), (85.6, 105.5)], [0.1, 0.8, 0.1]), PRUNE.hi, 0.6),
-            (ribbon([(47.0, 104.9), (68.0, 104.9), (88.0, 104.9)], [0.3, 0.6, 0.3]), CLOTH.deep, 0.4)]
+    det += [(sm([(47.0, 105.4), (88.0, 105.4), (88.0, 109.6), (47.0, 109.6)]), ('lin', 0, 105.4, 0, 108.2, g2(PRUNE.light, PRUNE.shadow)), 1),
+            (ribbon([(50.0, 105.9), (68.0, 106.0), (85.6, 105.8)], [0.1, 0.7, 0.1]), PRUNE.hi, 0.6),
+            (ribbon([(47.0, 105.3), (68.0, 105.3), (88.0, 105.3)], [0.3, 0.6, 0.3]), CLOTH.deep, 0.4)]
     # la kesa prune en diagonale (de l'épaule lointaine à la hanche proche), son anneau d'or
     kc = [(83.0, 50.6), (76.0, 56.6), (68.6, 62.6), (61.0, 68.6), (53.4, 74.6)]
     det += [(ribbon([(x - 0.8, y + 1.2) for x, y in kc], [5.6, 5.6, 5.4, 5.2, 5.2]), CLOTH.deep, 0.35),
@@ -212,7 +244,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (sash, ('lin', 0, 70.8, 0, 77.8, [(0, SILK.light), (0.4, SILK.base), (1, SILK.shadow)]), 1),
             (ribbon([(50.0, 72.0), (66.0, 72.5), (84.0, 72.0)], [0.2, 0.9, 0.2]), SILK.hi, 0.55),
             (ribbon([(50.0, 76.4), (66.0, 76.8), (84.0, 76.4)], [0.2, 1.1, 0.2]), SILK.deep, 0.5)]
-    fig.part('robe', robe, CLOTH, cel=2.0, rim=0.8, cast=1.3, details=det, occl=(CLOTH.shadow, 0.28, 3.4))
+    fig.part('robe', robe, CLOTH, grad=(84, 62, 50, 76, [(0, CLOTH.light), (0.55, CLOTH.base), (1, CLOTH.shadow)]),
+             cel=2.0, rim=0.8, cast=1.3, details=det, occl=(CLOTH.shadow, 0.28, 3.4))
 
     # ---- les deux pompons rouges de la kesa (petites houppes de soie) ----
     def pompon(name, c, r):
@@ -247,25 +280,43 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # l'ouverture de la manche (vue de biais) : la doublure prune, d'où sortent les serres
     fcuff = ellipse(82.8, 91.0, 3.8, 1.5, -4)
     fig.part('fcuff', fcuff, PRUNE, grad=(84, 89.6, 80, 92.4, g2(PRUNE.base, PRUNE.deep)), cel=0, rim=0, cast=0, outline=False)
-    # le chapelet : perles d'or sur un fil, terminé par un pompon rouge (il pend des serres et se balance)
-    bead_names = []
-    beads = [(81.2, 94.6, 1.15), (81.1, 96.9, 1.2), (81.0, 99.2, 1.15), (81.0, 101.4, 1.05)]
+    # le chapelet : un fil, des perles d'or, un pompon rouge (il pend des serres et se balance)
+    bead_names = ['rstring']
+    fig.part('rstring', ribbon([(81.6, 92.6), (81.3, 97.0), (81.0, 101.8)], [0.6, 0.55, 0.5]), WOOD, cel=0, rim=0, cast=0.3)
+    beads = [(81.4, 95.6, 1.15), (81.2, 97.9, 1.2), (81.1, 100.2, 1.1)]
     for i, (x, y, r) in enumerate(beads):
         nm = 'bead%d' % i
         fig.part(nm, ellipse(x, y, r, r * 0.95), GOLD, grad=(x + r, y - r, x - r, y + r, [(0, GOLD.hi), (0.4, GOLD.light), (0.8, GOLD.base), (1, GOLD.shadow)]),
                  cel=0.35, rim=0.3, cast=0.5, details=[(ellipse(x + 0.4 * r, y - 0.42 * r, 0.32 * r, 0.25 * r), '#fffbe8', 0.9)])
         bead_names.append(nm)
-    tass = sm([(80.0, 102.4), (82.0, 102.4), (82.6, 105.0), (83.2, 107.6), (81.0, 108.2), (78.8, 107.6), (79.4, 105.0)], sharp=())
+    tass = sm([(80.0, 102.6), (82.0, 102.6), (82.6, 105.0), (83.2, 107.4), (81.0, 108.0), (78.8, 107.4), (79.4, 105.0)], sharp=())
     fig.part('tassel', tass, SILK, cel=0.6, rim=0.5, cast=0.7,
-             details=[(ribbon([(80.6, 103.4), (80.4, 105.6), (80.2, 107.6)], [0.1, 0.5, 0.1]), SILK.shadow, 0.6),
-                      (ribbon([(81.6, 103.4), (81.8, 105.6), (82.2, 107.4)], [0.1, 0.4, 0.1]), SILK.hi, 0.5)])
-    fig.part('tcap', rpoly([(79.8, 101.8), (82.2, 101.8), (82.4, 103.2), (79.6, 103.2)], 0.6), GOLD, cel=0.3, rim=0.3, cast=0.5)
-    # les serres lointaines (trois doigts repliés sur le fil, griffes sombres)
-    fclaw = sm([(80.0, 90.6), (83.6, 90.2), (84.0, 92.4), (83.0, 94.4), (81.2, 94.8), (79.8, 93.4)])
-    fig.part('fclaw', fclaw, CLAW, cel=0.7, rim=0.5, cast=0.8,
-             details=[(ribbon([(80.6, 92.4), (81.6, 93.0), (82.6, 92.6)], [0.1, 0.5, 0.1]), CLAW.deep, 0.6),
-                      (sm([(80.2, 93.2), (81.2, 94.0), (80.6, 95.4)], sharp=(2,)), CLAW.deep, 0.9),
-                      (sm([(82.2, 93.6), (83.2, 94.0), (82.6, 95.6)], sharp=(2,)), CLAW.deep, 0.9)])
+             details=[(ribbon([(80.6, 103.4), (80.4, 105.6), (80.2, 107.4)], [0.1, 0.5, 0.1]), SILK.shadow, 0.6),
+                      (ribbon([(81.6, 103.4), (81.8, 105.6), (82.2, 107.2)], [0.1, 0.4, 0.1]), SILK.hi, 0.5)])
+    fig.part('tcap', rpoly([(79.8, 101.6), (82.2, 101.6), (82.4, 103.0), (79.6, 103.0)], 0.6), GOLD, cel=0.3, rim=0.3, cast=0.5)
+    bead_names += ['tassel', 'tcap']
+    # les serres lointaines : un petit poing refermé sur le fil (même main que la proche, vue de l'autre côté)
+    fing_f = claw_fist(fig, 'f', (81.8, 92.8), 90.0, 0.62, -1.0, ['rstring', 'bead0', 'fcuff'])
+
+    # ================================================================ le bras proche et sa manche (sous la collerette)
+    fang = P['fang']
+    NH = P['nh']
+    NW = add(NH, unit(fang), -FAN_OFF)                       # le poignet
+    NE = ik(S_N, NW, L1N, L2N, -1)                           # le coude (en bas, sous le poignet)
+    nsl, C, cl, cr, hem, outp = near_sleeve(S_N, NE, NW, sway=P['sw'])
+    u2 = norm(sub_(NW, NE))
+    sdet = [(ribbon([lerp(cl, hem[0], 0.4), lerp(cl, hem[0], 0.8), hem[1]], [0.2, 1.8, 0.4]), CLOTH.shadow, 0.55),
+            (ribbon([lerp(cr, hem[2], 0.3), lerp(cr, hem[2], 0.7), hem[2]], [0.2, 1.4, 0.2]), CLOTH.shadow, 0.45),
+            (ribbon([(56.0, 54.2), lerp((56.0, 54.2), cr, 0.5), cr], [0.2, 1.0, 0.2]), CLOTH.hi, 0.8)]
+    fig.part('nsleeve', nsl, CLOTH, cel=1.8, rim=0.8, cast=1.4, details=sdet, occl=(CLOTH.shadow, 0.25, 3.0))
+    # l'ouverture de la manche (vue de biais) : la doublure prune ; le poignet en sort
+    ang = math.degrees(math.atan2(cr[1] - cl[1], cr[0] - cl[0]))
+    cuff = ellipse(C[0], C[1], 4.5, 1.7, ang)
+    fig.part('cuff', cuff, PRUNE, grad=(C[0] + 3, C[1] - 1, C[0] - 3, C[1] + 1.5, g2(PRUNE.base, PRUNE.deep)), cel=0, rim=0,
+             cast=0, outline=False,
+             details=[(ellipse(C[0] + 0.6, C[1] - 0.5, 4.2, 1.1, ang), PRUNE.light, 0.45)])
+    wrist = limb([lerp(C, NW, 0.0), NW], [4.4, 4.0])
+    fig.part('wrist', wrist, CLAW, cel=0.8, rim=0.5, cast=0.7, cast_on=['cuff', 'nsleeve'])
 
     # ================================================================ la collerette de plumes noires (quatre touffes inégales)
     ruff = []
@@ -358,15 +409,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              grad=(73, 42, 84, 42, g2(MOUTH, SILK.shadow)), cel=0, rim=0, cast=0, outline=False)
 
     # l'eboshi de laque noire, plié en arrière (pointe vers l'arrière), bande d'or au bord
-    hat = sm([(57.0, 31.2), (57.0, 26.6), (55.2, 23.0), (52.6, 19.6), (57.8, 20.0), (63.0, 22.0), (68.4, 24.8),
-              (73.0, 27.8), (76.6, 30.6), (66.0, 31.8)], sharp=(0, 3, 8))
-    fig.part('hat', hat, LACQ, grad=(72, 22, 56, 31, [(0, LACQ.light), (0.5, LACQ.base), (1, LACQ.shadow)]),
-             cel=1.0, rim=0.8, cast=1.2, cast_on=['skull', 'mask'],
-             details=[(sm([(57.8, 20.4), (63.0, 22.2), (68.4, 25.0), (73.0, 28.0), (69.8, 28.6), (64.2, 25.2), (59.6, 22.8)], sharp=(0, 3)), LACQ.light, 0.6),
-                      (ribbon([(58.8, 20.8), (64.0, 23.0), (70.4, 26.8)], [0.1, 0.8, 0.2]), LACQ.glint, 0.6),
+    hat = sm([(57.4, 31.0), (57.0, 27.8), (55.6, 25.0), (53.8, 22.4), (56.6, 21.4), (61.0, 21.6), (65.8, 23.0),
+              (70.0, 25.6), (73.4, 28.4), (75.0, 30.6), (66.0, 31.6)], sharp=(0, 3, 9))
+    fig.part('hat', hat, LACQ, grad=(72, 23, 56, 31, [(0, LACQ.light), (0.5, LACQ.base), (1, LACQ.shadow)]),
+             cel=0.9, rim=0.8, cast=1.2, cast_on=['skull', 'mask'],
+             details=[(sm([(57.6, 22.3), (62.2, 23.0), (66.8, 25.0), (71.2, 27.8), (68.2, 28.4), (63.2, 25.8), (59.4, 24.0)], sharp=(0, 3)), LACQ.light, 0.6),
+                      (ribbon([(58.6, 22.8), (63.0, 24.0), (68.6, 26.8)], [0.1, 0.7, 0.2]), LACQ.glint, 0.6),
                       # le pli du chapeau (une arête douce, pas un trait)
-                      (ribbon([(55.6, 23.6), (58.6, 25.2), (61.4, 28.6)], [0.1, 0.9, 0.1]), LACQ.deep, 0.7),
-                      (ellipse(66.0, 24.0, 0.8, 0.4, 25), '#ffffff', 0.7)])
+                      (ribbon([(56.2, 24.8), (58.6, 26.4), (60.6, 29.4)], [0.1, 0.8, 0.1]), LACQ.deep, 0.7),
+                      (ellipse(65.0, 24.8, 0.7, 0.35, 25), '#ffffff', 0.7)])
     band = sm([(56.6, 29.6), (66.0, 30.2), (76.8, 30.6), (76.4, 32.2), (66.0, 31.8), (56.6, 31.4)], sharp=(0, 3))
     fig.part('band', band, GOLD, grad=(76, 30, 56, 32, [(0, GOLD.hi), (0.4, GOLD.light), (1, GOLD.shadow)]),
              cel=0.4, rim=0.4, cast=0.9, cast_on=['mask', 'skull'],
@@ -382,26 +433,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(ribbon([(53.6, 43.6), (53.4, 46.4), (53.4, 49.0)], [0.1, 0.5, 0.1]), SILK.shadow, 0.6),
                       (ribbon([(55.2, 43.6), (55.6, 46.4), (55.8, 48.8)], [0.1, 0.45, 0.1]), SILK.hi, 0.55)])
 
-    # ================================================================ le bras proche, sa manche, l'éventail
-    fang = P['fang']
-    NH = P['nh']
-    NW = add(NH, unit(fang), -FAN_OFF)                       # le poignet
-    NE = ik(S_N, NW, L1N, L2N, 1)                            # le coude (en bas, sous le poignet)
-    nsl, C, cl, cr, hem, outp = near_sleeve(S_N, NE, NW, sway=P['sw'])
-    u2 = norm(sub_(NW, NE))
-    sdet = [(ribbon([lerp(cl, hem[0], 0.4), lerp(cl, hem[0], 0.8), hem[1]], [0.2, 1.8, 0.4]), CLOTH.shadow, 0.55),
-            (ribbon([lerp(cr, hem[2], 0.3), lerp(cr, hem[2], 0.7), hem[2]], [0.2, 1.4, 0.2]), CLOTH.shadow, 0.45),
-            (ribbon([(56.0, 54.2), lerp((56.0, 54.2), cr, 0.5), cr], [0.2, 1.0, 0.2]), CLOTH.hi, 0.8)]
-    fig.part('nsleeve', nsl, CLOTH, cel=1.8, rim=0.8, cast=1.4, details=sdet, occl=(CLOTH.shadow, 0.25, 3.0))
-    # l'ouverture de la manche (vue de biais) : la doublure prune ; le poignet en sort
-    ang = math.degrees(math.atan2(cr[1] - cl[1], cr[0] - cl[0]))
-    cuff = ellipse(C[0], C[1], 4.5, 1.7, ang)
-    fig.part('cuff', cuff, PRUNE, grad=(C[0] + 3, C[1] - 1, C[0] - 3, C[1] + 1.5, g2(PRUNE.base, PRUNE.deep)), cel=0, rim=0,
-             cast=0, outline=False,
-             details=[(ellipse(C[0] + 0.6, C[1] - 0.5, 4.2, 1.1, ang), PRUNE.light, 0.45)])
-    wrist = limb([lerp(C, NW, 0.0), NW], [4.4, 4.0])
-    fig.part('wrist', wrist, CLAW, cel=0.8, rim=0.5, cast=0.7, cast_on=['cuff', 'nsleeve'])
-
+    # ================================================================ l'éventail (devant tout)
     # l'éventail de plumes (hauchiwa) : sept plumes jade autour de trois blanches, bouton d'or, perle rouge, manche d'or
     def E_(sh):
         return xf(sh, NH[0], NH[1], fang)
@@ -412,8 +444,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (E_(rpoly([(-7.6, -1.0), (-6.4, -1.0), (-6.4, 1.0), (-7.6, 1.0)], 0.3)), GOLD.shadow, 0.7)])
     fl = P['fl']
     B = 11.4                                                   # la base des plumes (repère de l'éventail)
-    JADES = [(-62, 12.6, 5.6), (62, 12.6, 5.6), (-42, 15.6, 6.4), (42, 15.6, 6.4), (-21, 17.6, 6.8), (21, 17.6, 6.8), (0, 18.6, 7.0)]
-    WHITES = [(-16, 14.2, 5.6), (16, 14.2, 5.6), (0, 15.6, 6.0)]
+    JADES = [(-88, 12.6, 7.0), (88, 12.6, 7.0), (-60, 15.8, 8.0), (60, 15.8, 8.0), (-30, 18.0, 8.6), (30, 18.0, 8.6), (0, 19.0, 8.6)]
+    WHITES = [(-24, 14.6, 7.4), (24, 14.6, 7.4), (0, 16.2, 8.0)]
     fnames = []
     for j, (a, L, w, mat, kind) in enumerate([(a, L, w, JADE, 'j') for a, L, w in JADES] + [(a, L, w, MASK, 'w') for a, L, w in WHITES]):
         a2 = a + 1.4 * fl * math.sin(ph * 2.2 + j * 1.3)
@@ -423,12 +455,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         tip = add(base, d, L)
         p1 = add(base, d, L * 0.33)
         p2 = add(add(base, d, L * 0.7), side, 0.25 * fl * math.sin(ph * 2.2 + j))
-        sh = E_(plume(base, p1, p2, tip, w, n=12, tip=0.35))
+        sh = E_(plume(base, p1, p2, tip, w, n=12, tip=0.5))
         nm = 'fan%s%d' % (kind, j)
         gt, gb = mapp(EM, tip), mapp(EM, base)
         fdet = [(E_(ribbon([lerp(base, tip, 0.12), lerp(base, tip, 0.55), lerp(base, tip, 0.92)], [0.25, 0.5, 0.1])),
                  mat.hi if kind == 'j' else MASK.shadow, 0.8),
-                (E_(Shape(plume(base, p1, p2, tip, w, n=12, tip=0.35).subs + plume(add(base, side, -1.6), add(p1, side, -1.6), add(p2, side, -1.6), add(tip, side, -1.2), w, n=12, tip=0.35).subs, evenodd=True)),
+                (E_(Shape(plume(base, p1, p2, tip, w, n=12, tip=0.5).subs + plume(add(base, side, -1.6), add(p1, side, -1.6), add(p2, side, -1.6), add(tip, side, -1.2), w, n=12, tip=0.5).subs, evenodd=True)),
                  mat.shadow, 0.55)]
         fig.part(nm, sh, mat, grad=(gt[0] + 3, gt[1] - 3, gb[0], gb[1], [(0, mat.hi), (0.35, mat.light), (0.8, mat.base), (1, mat.shadow)]),
                  cel=0.8, rim=0.55, cast=1.0, cast_on=fnames[:], details=fdet)
@@ -443,28 +475,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # le poing proche : des serres grises refermées sur le manche (trois doigts en travers, griffes sombres), le pouce
     # par-dessus
-    fist = E_(sm([(4.0, -3.4), (0.0, -3.9), (-4.0, -3.6), (-4.8, 0.0), (-4.0, 3.6), (0.0, 4.2), (3.8, 3.6), (4.4, 0.0)]))
-    fdet = [(E_(sm([(3.8, -3.0), (0.0, -3.5), (-3.8, -3.2), (-4.2, -0.4), (0.0, -0.2), (4.0, -0.4)])), CLAW.light, 0.45)]
-    for s0, s1 in ((3.8, 1.4), (1.4, -1.0), (-1.0, -3.6)):
-        fdet += [(E_(ribbon([(s1, 0.4), (s1 - 0.05, 2.2), (s1 + 0.15, 3.7)], [0.1, 0.5, 0.1])), CLAW.deep, 0.6),
-                 (E_(ellipse((s0 + s1) / 2, 1.2, abs(s1 - s0) * 0.32, 0.5)), CLAW.hi, 0.45),
-                 # la griffe au bout du doigt replié
-                 (E_(sm([((s0 + s1) / 2 + 0.9, 3.0), ((s0 + s1) / 2 - 0.7, 3.2), ((s0 + s1) / 2 + 0.1, 4.6)], sharp=(2,), t=0.6)), CLAW.deep, 0.95)]
-    fig.part('fist', fist, CLAW, cel=1.0, rim=0.6, cast=1.0, details=fdet)
-    thumb = E_(limb([(-3.0, -3.4), (0.4, -3.8), (3.2, -2.8)], [2.8, 2.6, 2.2]))
-    fig.part('thumb', thumb, CLAW, cel=0.6, rim=0.5, cast=0.8, cast_on=['fist', 'handle'],
-             details=[(E_(sm([(3.0, -3.8), (4.6, -3.2), (3.4, -2.0)], sharp=(1,), t=0.6)), CLAW.deep, 0.9)])
+    fing = claw_fist(fig, 'n', NH, fang, 1.0, 1.0, ['handle'])
 
     # ---- chaque groupe de morceaux prend sa pose ----
     fig.pose(fw_names + nw_names, UC)
     fig.pose(['robe'], ROBE_M)
-    fig.pose(['pomA', 'pomB', 'knot', 'fsleeve', 'fcuff', 'fclaw'], U)
+    fig.pose(['pomA', 'pomB', 'knot', 'fsleeve', 'fcuff'] + fing_f, U)
     fig.pose(['pan1', 'pan2'], PANS)
-    fig.pose(bead_names + ['tassel', 'tcap'], ROS)
+    fig.pose(bead_names, ROS)
     fig.pose(ruff + ['neck'], UC)
     fig.pose(['skull', 'cord', 'mask', 'lower', 'upper', 'slit', 'hat', 'band', 'cknot'], HEAD)
     fig.pose(['pcord', 'pcap', 'ptass'], POM)
-    fig.pose(['nsleeve', 'cuff', 'wrist', 'handle', 'button', 'pearl', 'fist', 'thumb'] + fnames, U)
+    fig.pose(['nsleeve', 'cuff', 'wrist', 'handle', 'button', 'pearl'] + fing + fnames, U)
     # ce que les effets doivent savoir (repère du dessin)
     fig.ctx = dict(U=U, UC=UC, P=P, fist=mapp(U, NH), fang=fang - la,
                    fan_c=mapp(U, add(NH, unit(fang), 20.0)), fan_tip=mapp(U, add(NH, unit(fang), 30.0)),

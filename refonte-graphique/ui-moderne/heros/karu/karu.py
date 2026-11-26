@@ -52,7 +52,7 @@ GORGE = ('#3a0a1c', '#6c1426', '#a62028')
 GRD = 116.0        # le sol (dessous des geta)
 FEET = (64.0, 116.0)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (-1.0, 26.0, 114.0, 93.0)
+FRAME = (1.0, 26.0, 114.0, 92.0)
 
 # ---------- le squelette (animation) ----------
 # Une pose = ces réglages ; REST est la pose du dessin. Pixels du dessin, degrés (y vers le bas).
@@ -64,6 +64,7 @@ FRAME = (-1.0, 26.0, 114.0, 93.0)
 #   (degrés, y vers le bas : −26,6 = vers l'avant et le haut).
 HIP = (68.0, 92.0)                  # le pivot du buste
 NECK = (77.0, 64.0)                 # le pivot (et le centre d'agrandissement) de la tête
+HEAD_OFF = (1.2, 2.4)               # la tête agrandie, reposée plus bas et plus en avant
 S_N = (60.4, 66.4)                  # l'épaule proche (dans la manche)
 R_N = (60.0, 55.0)                  # l'attache de l'aile proche (derrière l'épaule)
 R_F = (68.0, 52.0)                  # l'attache de l'aile lointaine
@@ -74,7 +75,7 @@ GRIP_S = -4.6                       # le centre de la serre sur la poignée (rep
 BLADE_L = 30.5
 
 WINGS_N = dict(
-    demi=((-20, -12), (-17, 3), 110, 172, 36, 19),
+    demi=((-20, -13), (-18, 2), 104, 176, 37, 21),
     haut=((-15, -21), (-14, -9), 138, 205, 34, 20),
     bas=((-22, -1), (-15, 9), 96, 148, 33, 19),
     grande=((-19, -24), (-19, -11), 128, 214, 37, 22),
@@ -109,7 +110,7 @@ def under(sh, dx=0.8, dy=-2.4):
     return Shape(sh.subs + sh.move(dx, dy).subs, evenodd=True)
 
 
-def fluff(cx, cy, r, n=7, k=0.84, a0=0.3):
+def fluff(cx, cy, r, n=9, k=0.93, a0=0.3):
     """Un pompon : une boule aux bords doucement bosselés (des lobes arrondis, jamais des rayons)."""
     pts = []
     for i in range(n * 2):
@@ -131,7 +132,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     U = mchain(ROOTM, mT(P['lean'] * 0.3, dyb), mR(P['lean'] * 1.1, *HIP))       # le haut du corps (depuis les hanches)
     UC = mchain(U, mT(0, -0.6 * br))                                           # ce qui monte avec la poitrine
     TOR = mchain(U, mS(1, 1 + 0.018 * br, 74, 86))                             # le buste se gonfle
-    HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], *NECK), mS(1.1, 1.1, *NECK))   # tête un peu plus grande (×1,1)
+    # tête un peu plus grande (×1,1), posée un peu plus bas et plus en avant (elle pique vers l'ennemi, comme le dessin)
+    HEAD = mchain(UC, mT(*P['head']), mT(*HEAD_OFF), mR(P['tilt'], *NECK), mS(1.1, 1.1, *NECK))
     CLO = mchain(U, mskx(-0.08 * P['pg'], 82))
     TAIL = mchain(U, mR(P['tail'], 57.0, 88.0))
     LEG = mchain(ROOTM, mS(1, 1 - dyb / 32, 0, GRD))                            # les jambes plient (pieds au sol)
@@ -139,7 +141,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ================================================================ les ailes (derrière tout)
     fw_names, fW, fT = wing(fig, 'wf', R_F, P['wf'], RAVENF, ph + 1.3, P['ws'], scale=0.78,
                             widths=[13.0, 13.0, 12.0, 11.4, 10.6, 9.6, 8.4, 7.2], cov=(0.85, 0.9))
-    nw_names, nW, nT = wing(fig, 'wn', R_N, P['wn'], RAVEN, ph, P['ws'], scale=1.0)
+    nw_names, nW, nT = wing(fig, 'wn', R_N, P['wn'], RAVEN, ph, P['ws'], scale=1.0,
+                            widths=[14.0, 14.0, 13.0, 12.0, 9.0, 7.8, 7.0, 6.2])
 
     # ================================================================ la petite queue de corbeau (sous la veste)
     tail_names = []
@@ -243,17 +246,19 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                           (ellipse(x + 0.42 * r, y - 0.45 * r, 0.32 * r, 0.24 * r, -35), '#ffe6dc', 0.9)])
 
     # ---- le nœud de la ceinture et ses deux pans (ils se balancent) ----
-    tail1 = sm([(82.2, 86.2), (85.6, 86.0), (86.2, 90.2), (85.8, 94.0), (84.4, 95.6), (83.0, 93.8), (82.0, 90.0)], sharp=(4,))
-    tail2 = sm([(86.6, 86.0), (89.8, 85.8), (90.6, 89.0), (91.0, 92.4), (89.8, 93.8), (88.4, 92.4), (87.4, 89.4)], sharp=(4,))
+    tail1 = sm([(83.0, 85.6), (85.6, 85.4), (86.0, 89.6), (85.6, 93.2), (84.4, 94.8), (83.4, 93.0), (82.8, 89.4)], sharp=(4,))
+    tail2 = sm([(86.6, 85.4), (89.0, 85.2), (89.8, 88.4), (90.4, 91.6), (89.4, 93.0), (88.2, 91.6), (87.2, 88.8)], sharp=(4,))
     fig.part('pan2', tail2, SILK, cel=1.0, rim=0.6, cast=1.0,
              details=[(ribbon([(88.4, 86.8), (89.0, 89.6), (89.6, 92.6)], [0.2, 0.7, 0.1]), SILK.shadow, 0.6)])
     fig.part('pan1', tail1, SILK, cel=1.0, rim=0.6, cast=1.0,
              details=[(ribbon([(83.6, 86.8), (84.0, 90.4), (84.2, 94.0)], [0.2, 0.8, 0.1]), SILK.shadow, 0.6)])
-    knot = sm([(81.0, 80.8), (85.6, 80.0), (90.4, 80.8), (90.6, 86.4), (85.8, 88.0), (81.2, 87.0)])
-    fig.part('knot', knot, SILK, cel=1.0, rim=0.8, cast=1.1,
-             details=[(sm([(84.4, 80.4), (87.0, 80.3), (87.2, 87.6), (84.6, 87.8)]), SILK.light, 0.7),
-                      (ribbon([(84.0, 80.8), (84.2, 84.0), (84.4, 87.4)], [0.2, 0.8, 0.2]), SILK.shadow, 0.6),
-                      (ribbon([(87.6, 80.8), (87.6, 84.0), (87.4, 87.4)], [0.2, 0.6, 0.2]), SILK.shadow, 0.45)])
+    knot = sm([(82.4, 81.2), (85.8, 82.4), (89.2, 80.8), (90.2, 84.2), (89.0, 87.4), (85.8, 85.8), (82.4, 87.2), (81.4, 84.2)],
+              sharp=(1, 5))
+    fig.part('knot', knot, SILK, cel=0.9, rim=0.7, cast=1.1,
+             details=[(ellipse(85.8, 84.1, 1.6, 1.9), SILK.light, 0.9),
+                      (ellipse(86.2, 83.6, 0.7, 0.7), SILK.hi, 0.6),
+                      (ribbon([(82.6, 85.6), (84.0, 85.2), (84.6, 84.4)], [0.1, 0.6, 0.1]), SILK.deep, 0.5),
+                      (ribbon([(87.4, 85.0), (88.4, 85.6), (89.2, 86.4)], [0.1, 0.5, 0.1]), SILK.deep, 0.45)])
 
     # ================================================================ la tête de corbeau (agrandie ×1,1 autour du cou)
     # les plumes de nuque hérissées vers l'arrière (derrière la tête) : une seule forme à quelques pointes inégales
@@ -266,8 +271,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (ribbon([(64.6, 46.0), (60.0, 45.6), (57.0, 45.0)], [0.2, 0.6, 0.1]), RAVEN.light, 0.5),
                       (ribbon([(64.2, 51.0), (59.0, 51.0), (56.8, 51.0)], [0.2, 0.6, 0.1]), RAVEN.light, 0.4)])
     # la tête : crâne rond, front qui avance au-dessus du bec, gorge en petites pointes de plumes sur le col
-    head = sm([(62.6, 48.4), (64.6, 42.6), (69.4, 38.4), (76.0, 36.2), (82.6, 35.8), (88.2, 37.4), (91.8, 40.6),
-               (93.4, 44.4), (93.0, 48.6), (91.0, 53.0), (88.4, 58.4), (87.4, 62.6), (85.6, 65.4), (82.6, 64.4),
+    head = sm([(62.6, 48.4), (64.6, 42.6), (69.4, 38.4), (76.0, 36.2), (82.6, 35.8), (88.0, 37.6), (91.2, 41.0),
+               (92.6, 44.6), (92.2, 49.0), (90.4, 53.4), (88.4, 58.4), (87.4, 62.6), (85.6, 65.4), (82.6, 64.4),
                (80.8, 67.4), (78.0, 65.6), (75.6, 68.0), (73.4, 65.4), (70.4, 66.6), (68.8, 63.8), (65.6, 62.6),
                (63.6, 58.4), (62.4, 53.4)], sharp=(12, 13, 14, 15, 16, 17, 18, 19))
     hd = []
@@ -276,18 +281,21 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                 (68.8, 63.8), (65.6, 62.6), (63.6, 58.4), (62.4, 53.4)], sharp=(3, 5, 7)), RAVEN.shadow, 0.75),
            (sm([(76.0, 37.4), (82.6, 36.8), (88.2, 38.4), (91.4, 41.4), (92.4, 44.6), (88.0, 42.2), (82.0, 40.0)]), RAVEN.light, 0.8),
            (sm([(80.0, 37.6), (85.0, 37.2), (89.0, 38.8), (86.0, 39.6)]), RAVEN.hi, 0.55)]
-    for (x, y, s) in ((70.8, 53.6, 1.0), (74.6, 56.0, 1.1), (71.2, 59.4, 0.9), (78.8, 58.6, 1.0), (75.4, 61.8, 0.9),
-                      (82.4, 61.2, 0.9)):
-        hd += [(ribbon([(x - 2.2 * s, y - 0.8), (x, y + 0.8), (x + 2.0 * s, y - 0.2)], [0.1, 0.7, 0.1]), RAVEN.shadow, 0.6),
-               (ribbon([(x - 1.6 * s, y - 1.4), (x + 0.2, y - 0.2), (x + 1.8 * s, y - 0.9)], [0.1, 0.5, 0.1]), RAVEN.light, 0.45)]
+    # trois plumes de la joue (des festons doux, inégaux ; jamais une rangée régulière)
+    for (x, y, s) in ((72.0, 56.4, 1.2), (79.4, 59.4, 1.0), (74.2, 62.0, 0.9)):
+        hd += [(ribbon([(x - 2.8 * s, y - 1.0), (x - 0.4, y + 0.8), (x + 2.6 * s, y - 0.4)], [0.1, 0.9, 0.1]), RAVEN.shadow, 0.45),
+               (ribbon([(x - 2.0 * s, y - 1.6), (x, y - 0.4), (x + 2.2 * s, y - 1.1)], [0.1, 0.55, 0.1]), RAVEN.light, 0.35)]
+    # la joue sous l'œil, un peu plus claire (le volume du crâne), et le coin charnu du bec
+    hd += [(sm([(74.0, 50.8), (80.6, 50.6), (84.0, 53.0), (82.6, 56.4), (77.0, 56.4), (73.4, 54.0)]), RAVEN.light, 0.28),
+           (ellipse(84.0, 57.4, 1.6, 1.0, 20), BEAK.shadow, 0.8)]
     # l'arête du front entre les yeux (claire), qui descend vers le bec et cache le bord de l'œil lointain
     hd += [(sm([(82.4, 41.6), (85.0, 41.0), (86.0, 44.6), (85.4, 49.0), (84.2, 51.0), (83.0, 47.6)]), RAVEN.light, 0.7)]
     # les orbites (creux sombres autour des yeux)
     hd += [(ellipse(77.8, 47.2, 3.4, 3.2), RAVEN.deep, 0.65),
-           (ellipse(88.6, 46.8, 2.4, 2.9, 8), RAVEN.deep, 0.6)]
+           (ellipse(88.4, 45.6, 2.3, 2.8, 8), RAVEN.deep, 0.6)]
     # les yeux d'ambre ronds, petite pupille vers l'ennemi, un éclat ; le lointain plus étroit, sur la même ligne
     for (cx, cy), (rx, ry), pr, (px, py) in (((77.8, 47.2), (2.45, 2.35), 0.92, (78.6, 47.1)),
-                                             ((88.7, 46.8), (1.55, 2.1), 0.7, (89.2, 46.8))):
+                                             ((88.5, 45.6), (1.5, 2.0), 0.7, (89.0, 45.6))):
         if P['blink'] > 0.5:
             hd += [(ellipse(cx, cy, rx, ry), RAVEN.base, 1),
                    (ribbon([(cx - rx, cy + 0.2), (cx, cy + 0.9), (cx + rx, cy + 0.1)], [0.1, 0.6, 0.1]), RAVEN.deep, 0.9),
@@ -297,51 +305,51 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                    (ellipse(px, py, pr, pr * 1.05), EYE[3], 1),
                    (ellipse(px + 0.45 * pr, py - 0.5 * pr, 0.42 * pr, 0.38 * pr), '#ffffff', 1),
                    (ribbon([(cx - rx * 0.9, cy + ry * 0.55), (cx, cy + ry * 0.95), (cx + rx * 0.9, cy + ry * 0.5)], [0.1, 0.45, 0.1]), EYE[2], 0.5)]
-    fig.part('head', head, RAVEN, grad=(90, 38, 64, 62, [(0, RAVEN.light), (0.45, RAVEN.base), (1, RAVEN.shadow)]),
+    fig.part('head', head, RAVEN, grad=(90, 38, 64, 62, [(0, RAVEN.light), (0.35, RAVEN.base), (1, RAVEN.shadow)]),
              cel=1.3, rim=0.7, cast=1.3, cast_on=['ruff', 'torso'] + pom_names + nw_names + fw_names, details=hd)
     # les sourcils de plumes froncés (en V : le bout vers le bec plus bas, il écrase le coin de l'œil)
     browN = sm([(72.4, 43.4), (73.6, 41.4), (75.6, 42.4), (77.4, 41.0), (79.0, 42.6), (81.2, 43.4), (83.2, 45.6),
                 (82.6, 46.8), (80.4, 45.8), (77.6, 45.2), (74.6, 45.2)], sharp=(1, 3, 6))
-    browF = sm([(85.2, 46.0), (86.4, 44.2), (88.8, 43.2), (91.0, 42.0), (92.4, 42.6), (93.6, 42.2), (92.8, 44.0),
-                (90.6, 45.0), (88.0, 45.8), (86.2, 46.8)], sharp=(0, 3, 5))
+    browF = sm([(85.2, 44.8), (86.4, 43.0), (88.8, 42.0), (91.0, 40.8), (92.4, 41.4), (93.4, 41.0), (92.6, 42.8),
+                (90.6, 43.8), (88.0, 44.6), (86.2, 45.6)], sharp=(0, 3, 5))
     for nm, sh, gx in (('browN', browN, 78), ('browF', browF, 89)):
         fig.part(nm, sh, RAVEN, grad=(gx + 4, 41, gx - 4, 46, [(0, RAVEN.hi), (0.5, RAVEN.light), (1, RAVEN.base)]),
                  cel=0.6, rim=0.5, cast=1.0, cast_on=['head'],
                  details=[(ribbon([(gx - 4, 43.8), (gx, 43.6), (gx + 4, 44.8)], [0.1, 0.5, 0.1]), RAVEN.glint, 0.5)])
     # le tokin : petit bonnet noir laqué à facettes, posé sur le front
-    tokin = sm([(78.6, 37.4), (79.4, 33.6), (81.4, 30.6), (83.6, 29.0), (85.6, 30.8), (87.2, 34.0), (87.6, 37.6), (83.0, 38.6)],
+    tokin = sm([(79.6, 37.6), (80.2, 35.0), (81.8, 32.8), (83.6, 31.6), (85.4, 33.0), (86.6, 35.4), (86.8, 37.8), (83.2, 38.6)],
                sharp=(0, 3, 6))
     fig.part('tokin', tokin, LACQ, grad=(87, 30, 78, 38, [(0, LACQ.light), (0.5, LACQ.base), (1, LACQ.shadow)]),
              cel=0.8, rim=0.7, cast=1.2, cast_on=['head'],
-             details=[(sm([(83.6, 29.4), (85.6, 31.0), (87.2, 34.2), (87.4, 37.2), (85.0, 37.8), (84.6, 33.6)], sharp=(0, 4)), LACQ.light, 0.7),
-                      (ribbon([(84.2, 30.4), (85.6, 33.6), (86.2, 37.0)], [0.1, 0.7, 0.2]), LACQ.glint, 0.75),
-                      (sm([(78.6, 36.2), (83.0, 37.2), (87.6, 36.4), (87.6, 37.6), (83.0, 38.6), (78.6, 37.4)]), LACQ.deep, 0.8),
-                      (ellipse(85.4, 32.0, 0.6, 0.35, -55), '#ffffff', 0.8)])
+             details=[(sm([(83.6, 31.9), (85.4, 33.2), (86.6, 35.6), (86.6, 37.4), (84.8, 37.8), (84.4, 34.6)], sharp=(0, 4)), LACQ.light, 0.7),
+                      (ribbon([(84.2, 32.6), (85.4, 35.0), (85.8, 37.2)], [0.1, 0.6, 0.2]), LACQ.glint, 0.75),
+                      (sm([(79.6, 36.6), (83.2, 37.4), (86.8, 36.8), (86.8, 37.8), (83.2, 38.6), (79.6, 37.6)]), LACQ.deep, 0.8),
+                      (ellipse(85.0, 33.8, 0.5, 0.3, -55), '#ffffff', 0.8)])
     # ---- le bec entrouvert : la gorge rouge sombre au fond, la mandibule, puis le bec crochu par-dessus ----
     op = P['open']
-    gorge = sm([(85.0, 56.4), (92.0, 57.0), (99.0, 57.8), (104.0, 59.4), (99.6, 60.8 + 0.8 * op), (92.0, 60.6 + 1.2 * op),
-                (86.0, 60.0 + 0.8 * op)], sharp=(3,))
+    gorge = sm([(85.0, 56.6), (92.0, 57.2), (99.0, 57.8), (103.4, 59.2), (99.6, 59.8 + 0.8 * op), (92.0, 59.8 + 1.2 * op),
+                (86.0, 59.4 + 0.8 * op)], sharp=(3,))
     fig.part('gorge', gorge, Mat(GORGE[2], GORGE[2], GORGE[1], GORGE[0], GORGE[0]), grad=None, cel=0, rim=0, cast=0,
              details=[(gorge, ('lin', 92, 57, 92, 61, [(0, GORGE[0]), (0.5, GORGE[1]), (1, GORGE[2])]), 1),
                       (ribbon([(88.0, 59.6 + 0.6 * op), (95.0, 60.0 + 0.9 * op), (101.0, 60.0 + 0.6 * op)], [0.1, 0.6, 0.1]), '#c84038', 0.6)])
     MAND = mR(4.0 * op, 86.0, 59.0)
-    mand = sm([(84.6, 59.0), (90.0, 60.2), (96.0, 60.8), (101.4, 60.8), (104.2, 61.0), (102.8, 62.8), (97.0, 64.0),
-               (91.0, 64.0), (86.6, 62.8), (84.4, 61.0)])
+    mand = sm([(84.6, 58.8), (90.0, 59.4), (96.0, 59.8), (101.0, 60.0), (104.4, 60.4), (101.2, 61.8), (96.0, 62.6),
+               (90.4, 62.8), (86.4, 62.0), (84.4, 60.6)], sharp=(4,))
     fig.part('mand', mand, BEAK, grad=(102, 60, 86, 64, [(0, BEAK.light), (0.5, BEAK.base), (1, BEAK.shadow)]),
              cel=0.7, rim=0.45, cast=0.9, cast_on=['head', 'gorge', 'torso'] + pom_names,
-             details=[(ribbon([(87.0, 61.2), (94.0, 61.8), (101.6, 61.6)], [0.1, 0.6, 0.1]), BEAK.light, 0.5)])
-    beak = sm([(83.4, 51.0), (87.0, 49.4), (92.4, 49.2), (97.6, 50.8), (102.4, 53.6), (106.2, 57.0), (108.4, 60.4),
-               (108.0, 62.8), (106.4, 61.4), (103.6, 59.4), (98.6, 58.2), (92.6, 57.6), (87.2, 57.8), (84.0, 56.6),
-               (83.0, 53.8)], sharp=(7,))
+             details=[(ribbon([(87.0, 60.6), (94.0, 61.0), (101.6, 60.8)], [0.1, 0.6, 0.1]), BEAK.light, 0.5)])
+    beak = sm([(83.4, 50.4), (87.0, 48.4), (91.6, 47.0), (97.2, 48.4), (102.2, 51.6), (106.0, 55.4), (108.2, 59.4),
+               (108.0, 62.6), (106.4, 61.2), (103.6, 59.2), (98.6, 58.0), (92.6, 57.6), (87.2, 57.8), (84.0, 56.6),
+               (83.0, 53.4)], sharp=(7,))
     bk = [(sm([(85.0, 54.2), (92.0, 54.6), (98.4, 55.6), (104.0, 57.6), (107.2, 60.4), (108.0, 62.8), (106.4, 61.4),
                (103.6, 59.4), (98.6, 58.2), (92.6, 57.6), (87.2, 57.8), (84.0, 56.6)]), BEAK.shadow, 0.6),
           # l'arête éclairée (le dessus du bec), le reflet ; la narine sous les plumes de la base
-          (ribbon([(86.4, 50.0), (92.4, 49.8), (98.0, 51.4), (103.4, 54.6), (106.8, 58.4)], [0.2, 1.3, 1.2, 0.9, 0.2]), BEAK.light, 0.9),
-          (ribbon([(89.0, 50.0), (95.0, 50.6), (100.6, 52.8)], [0.1, 0.6, 0.1]), BEAK.glint, 0.75),
-          (ellipse(89.8, 52.6, 1.1, 0.5, 6), BEAK.deep, 0.7),
+          (ribbon([(87.0, 49.0), (92.0, 48.2), (97.6, 49.6), (103.0, 53.0), (106.8, 57.8)], [0.2, 1.3, 1.2, 0.9, 0.2]), BEAK.light, 0.9),
+          (ribbon([(90.0, 48.4), (95.0, 49.0), (100.6, 51.6)], [0.1, 0.6, 0.1]), BEAK.glint, 0.75),
+          (ellipse(91.2, 51.6, 1.1, 0.5, 6), BEAK.deep, 0.7),
           # les petites plumes de la base qui couvrent le haut du bec (comme les vibrisses du corbeau)
-          (sm([(83.4, 51.0), (86.0, 49.8), (88.4, 50.2), (90.6, 51.4), (87.6, 52.0), (85.0, 53.4), (83.2, 53.4)], sharp=(3,)), RAVEN.base, 1),
-          (ribbon([(84.0, 50.8), (86.4, 50.4), (89.2, 51.0)], [0.1, 0.5, 0.1]), RAVEN.light, 0.7)]
+          (sm([(83.4, 50.4), (86.4, 48.8), (89.4, 48.6), (92.2, 50.0), (88.8, 51.2), (85.6, 52.6), (83.2, 52.8)], sharp=(3,)), RAVEN.base, 1),
+          (ribbon([(84.2, 50.0), (87.0, 49.4), (90.0, 49.4)], [0.1, 0.5, 0.1]), RAVEN.light, 0.7)]
     fig.part('beak', beak, BEAK, grad=(104, 50, 86, 58, [(0, BEAK.light), (0.45, BEAK.base), (1, BEAK.shadow)]),
              cel=0.8, rim=0.6, cast=1.2, cast_on=['head', 'mand', 'gorge', 'torso'] + pom_names, details=bk)
 
@@ -356,7 +364,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # la toile qui pend sous le bras (gravité), jusqu'à l'ourlet : derrière le bras
     sway = P['sw']
     low = max(E[1], Wr[1])
-    hem_y = max(low + 11.0, 93.0)
+    hem_y = low + 12.0
     xl = min(E[0], S[0]) - 4.6
     xr = Wr[0] + 1.0
     drape = sm([(S[0] - 3.8, S[1] - 1.6), (xl + 0.6, (S[1] + E[1]) / 2), (xl - 0.2 + sway * 0.4, E[1] + 4.0),
@@ -456,6 +464,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     return fig
 
 
+def bounds(fig):
+    """La boîte de tout le dessin (pixels du dessin), contour compris."""
+    xs, ys = [], []
+    for p in fig.parts:
+        for q in p.shape.pts():
+            x, y = mapp(p.M, q)
+            xs.append(x)
+            ys.append(y)
+    o = fig.ow
+    return min(xs) - o, min(ys) - o, max(xs) + o, max(ys) + o
+
+
 def main():
     """karu.svg (grand) et karu-petit.svg (contour plus épais, pour les cases), puis les images du jeu :
     public/art/vecto/mon-orin-rapide.webp (512 px de haut) et mon-orin-rapide-160.webp (160 px de haut)."""
@@ -481,7 +501,9 @@ if __name__ == '__main__':
         out = sys.argv[sys.argv.index('--apercu') + 1]
         h = sys.argv[sys.argv.index('--apercu') + 2] if len(sys.argv) > sys.argv.index('--apercu') + 2 else '900'
         p = out.replace('.png', '.svg')
-        open(p, 'w').write(build().svg())
+        fg = build()
+        print('boîte du dessin :', [round(v, 1) for v in bounds(fg)])
+        open(p, 'w').write(fg.svg())
         subprocess.run(['node', os.path.join(HERE, '..', 'rendu.cjs'), p, out, h, '#e9e6f2'], check=True)
     else:
         main()

@@ -309,12 +309,12 @@ def wing(fig, key, R, W, T, feathers, mat, ph=0.0, ws=0.0, lift=0.0, spread=0.0,
                  cel=0.9, rim=0.5, cast=1.2)
     # le bord d'attaque (le « bras » de l'aile), éclairé de reflets bleus
     lead = limb_([lerp(R, Wp, 0.12), lerp(R, Wp, 0.6), Wp, lerp(Wp, Tp, 0.5), lerp(Wp, Tp, 0.9)],
-                 [5.6 * cov, 5.0 * cov, 4.4 * cov, 3.4 * cov, 2.4 * cov])
+                 [4.6 * cov, 4.2 * cov, 3.7 * cov, 2.9 * cov, 2.0 * cov])
     nm = key + '_lead'
     names.append(nm)
-    fig.part(nm, lead, mat, grad=(Wp[0] + 3, Wp[1] - 4, R[0], R[1] + 4, [(0, mat.hi), (0.35, mat.light), (1, mat.base)]),
-             cel=0.9, rim=0.8, cast=1.1,
-             details=[(ribbon([lerp(R, Wp, 0.3), lerp(R, Wp, 0.75), lerp(Wp, Tp, 0.1)], [0.1, 0.9 * cov, 0.1]), mat.glint, 0.55)])
+    fig.part(nm, lead, mat, grad=(Wp[0] + 3, Wp[1] - 4, R[0], R[1] + 4, [(0, mat.light), (0.4, mat.base), (1, mat.shadow)]),
+             cel=0.9, rim=0.7, cast=1.1,
+             details=[(ribbon([lerp(R, Wp, 0.3), lerp(R, Wp, 0.75), lerp(Wp, Tp, 0.1)], [0.1, 0.8 * cov, 0.1]), mat.hi, 0.45)])
     return names, Wp, Tp
 
 

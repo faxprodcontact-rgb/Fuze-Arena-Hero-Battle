@@ -126,7 +126,7 @@ ATTACK = [
     (250, dict(grip=(42.5, 42.5), ang=-132, crouch=1.2, lean=-2.0, head=(-1.0, 0.0), tilt=-4.0, wn=3, tr=2.0, cp=1.0, sk=0.8)),
     (380, dict(grip=(42.0, 42.0), ang=-135, crouch=1.3, lean=-2.2, head=(-1.1, -0.1), tilt=-4.5, wn=3, tr=2.2, cp=1.0, sk=0.8)),
     (430, dict(grip=(57.5, 33.5), ang=-72, stretch=2.0, crouch=1.0, lean=0.0, head=(0, 0), tilt=-1.0, wn=1, tr=1.0, cp=0.0)),
-    (480, dict(grip=(79.0, 57.0), ang=-20, stretch=2.0, crouch=2.0, lean=2.0, head=(0.8, 0.2), tilt=2.0, wn=-2, tr=-1.0, cp=-1.0, sk=-0.6)),
+    (480, dict(grip=(79.0, 59.0), ang=-20, stretch=2.0, crouch=2.0, lean=2.0, head=(0.8, 0.2), tilt=2.0, wn=-2, tr=-1.0, cp=-1.0, sk=-0.6)),
     (525, dict(grip=(82.5, 61.0), ang=5, crouch=2.3, lean=3.0, head=(1.0, 0.3), tilt=3.0, wn=-3, tr=-2.0, cp=-1.0, sk=-1.0)),
     (650, dict(grip=(82.5, 61.2), ang=6, crouch=2.2, lean=3.0, head=(1.0, 0.3), tilt=3.0, wn=-2, tr=-2.0, cp=-1.0, sk=-1.0)),
     (750, dict(grip=(81.5, 61.6), ang=4, crouch=2.0, lean=2.6, head=(0.9, 0.2), tilt=2.4, wn=-1, tr=-1.0, cp=0.0, sk=-0.5)),
@@ -135,8 +135,8 @@ ATTACK = [
     (1040, dict(crouch=0.6, cp=-0.6, tr=0.3)),
     (1170, {}),
 ]
-ATT_BEHIND = (95, 455)    # la lance passe derrière la tête et le corps
-ATT_COUCH = (455, 900)    # couchée sous le bras (le talon passe derrière le corps)
+ATT_BEHIND = (95, 485)    # la lance passe derrière la tête et le corps
+ATT_COUCH = (485, 900)    # couchée sous le bras (le talon passe derrière le corps)
 ATT_SWING = (380, 525)    # la fauche (le croissant de vent suit le fer)
 ATT_HIT = 525             # l'impact
 

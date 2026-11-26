@@ -245,9 +245,9 @@ def wing(fig, key, R, vals, mat, ph, ws, scale=1.0, widths=None, cov=(1.0, 1.0))
         fig.part(nm, sh, mat, grad=grad, cel=0.9, rim=0.0, cast=1.4)
     line = resample([R, W, T], 14)
     dirs = [unit(ai + (ao - ai) * k / (len(line) - 1)) for k in range(len(line))]
-    big = [d_ * scale * cov[0] for d_ in (15, 17, 18, 18, 17.5, 17, 16, 14.5, 13, 11.5, 9.5, 7.5, 5.8, 4.2, 3.0)]
+    big = [d_ * scale * cov[0] for d_ in (13, 14.5, 15, 15, 14.5, 14, 13, 12, 11, 9.6, 8.0, 6.4, 5.0, 3.6, 2.6)]
     small = [d_ * scale * cov[1] for d_ in (8, 9, 9.5, 9.5, 9, 8.6, 8, 7.4, 6.6, 5.8, 4.8, 4.0, 3.2, 2.4, 1.6)]
-    for nm, deps, lobes, g0 in ((key + '_cov2', big, 6, mat.base), (key + '_cov1', small, 8, mat.light)):
+    for nm, deps, lobes, g0 in ((key + '_cov2', big, 4, mat.base), (key + '_cov1', small, 6, mat.light)):
         cv = scallop(line, dirs, deps, lobes)
         names.append(nm)
         fig.part(nm, cv, mat, grad=(W[0] + 4, W[1] - 6, R[0], R[1] + 14, [(0, g0), (0.6, mat.base), (1, mat.shadow)]),
