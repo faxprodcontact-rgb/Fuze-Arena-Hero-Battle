@@ -27,7 +27,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mapp, sides, resample  # noqa: E402,F401
-from outils import bent, crpath, smooth_path, tube_poly, normals, shape_poly, poly_of  # noqa: E402
+from outils import FigureM, bent, crpath, smooth_path, tube_poly, normals, shape_poly, poly_of  # noqa: E402
 from visage import placer, verifier, guide_svg  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
@@ -366,7 +366,7 @@ def bracer(S, E, W, t0, t1, w_up, w_fo):
 # ======================================================================== le dessin
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P = dict(REST, **(pose or {}))
-    fig = Figure(*frame, ow=ow)
+    fig = FigureM(*frame, ow=ow)
     D = P['dash']
     br = P['breath']
 
@@ -439,17 +439,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=1.5, rim=0.7, cast=1.5, cast_on=['torso', 'tail', 'belt', 'hood'],
              details=[(ribbon([lerp(SN, En, 0.2), lerp(SN, En, 0.55), lerp(SN, En, 0.85)], [0.2, 1.2, 0.2]), SCALE.light, 0.35)]
              + bracer(SN, En, Wn, 0.5, 0.86, 8.2, 7.0))
-    # l'épaulière : une lame en croissant, puis la coque à pierre violette
-    lame = sm([(49.6, 66.6), (54.4, 65.2), (60.4, 65.0), (63.0, 66.4), (61.2, 68.6), (55.0, 69.4), (51.0, 69.0)], sharp=(0,), t=0.9)
-    dome = sm([(50.4, 64.0), (52.2, 60.4), (56.4, 58.6), (60.8, 59.4), (63.2, 62.4), (62.0, 65.6), (56.6, 66.8), (51.6, 66.4)], t=0.95)
-    fig.part('lame', lame, GOLD, cel=0.9, rim=0.6, cast=1.0,
-             details=[(ribbon([(51.4, 67.0), (56.0, 66.4), (61.4, 66.6)], [0.2, 0.7, 0.2]), GOLD.hi, 0.6)])
-    fig.part('dome', dome, GOLD, cel=1.2, rim=0.8, cast=1.1,
-             details=[(sm([(52.0, 61.6), (55.6, 59.6), (59.6, 59.8), (61.6, 61.4), (58.2, 61.0), (54.6, 62.0)]), GOLD.light, 0.7),
-                      (ellipse(56.6, 62.8, 2.3, 2.4), GOLD.shadow, 0.9), (ellipse(56.6, 62.6, 1.75, 1.85), PURPLE.shadow, 1),
-                      (ellipse(56.75, 62.45, 1.35, 1.45), PURPLE.base, 1), (ellipse(57.2, 61.9, 0.5, 0.55), PURPLE.hi, 0.95),
-                      (ribbon([(54.0, 60.4), (57.0, 59.4), (60.2, 60.2)], [0.1, 0.55, 0.1]), GOLD.hi, 0.85)])
-    fig.pose(['lame', 'dome'], UC)
+    # l'épaule (avis du propriétaire, tour 3 : plus d'épaulière) : la racine du bras se fond dans le buste par un masque
+    # en dégradé le long du bras (outils.FigureM, comme Aurelle) : ni bord de boule, ni couture ; le bras reste devant
+    # le buste plus bas (le coude, l'avant-bras)
+    m0 = lerp(SN, En, 0.55)
+    m1 = add(SN, (SN[0] - En[0], SN[1] - En[1]), 0.22)
+    fig.masks['narm'] = (m0[0], m0[1], m1[0], m1[1], 'torso')
     nb_, ndet, nclaws = fist_shapes(Fn, a_n, 1)
     for i, cl in enumerate(nclaws):
         fig.part('nc%d' % i, cl, IVORY, cel=0.3, rim=0.25, cast=0.3)
@@ -491,8 +486,14 @@ def torso_parts(fig, P, TOR, HEAD):
     # l'ombre du côté proche (bas-gauche), douce
     det.append((torso, ('lin', 54, 72, 66, 68, [(0, SCALE.deep, 0.45), (1, SCALE.deep, 0)]), 1))
     # le pectoral proche et le pectoral lointain : la plaque éclairée, l'ombre dessous
-    det += [(sm([(53.4, 64.2), (58.0, 61.6), (62.4, 62.0), (63.0, 66.4), (59.6, 69.0), (55.0, 68.6)]), SCALE.light, 0.4),
-            (sm([(54.0, 68.6), (59.4, 69.4), (62.8, 67.2), (63.0, 69.4), (59.6, 71.2), (54.6, 70.6)]), SCALE.shadow, 0.75),
+    # (tour 3 : plus d'épaulière ; l'épaule proche est le dôme du deltoïde, éclairé en haut, qui descend dans le bras
+    # en dégradé, sans bord ; le pectoral à côté, plus doux)
+    det += [(ribbon([(51.4, 67.6), (52.8, 63.6), (56.2, 61.4), (60.8, 62.0)], [0.2, 2.8, 2.6, 0.2]), SCALE.light, 0.42),
+            (ribbon([(52.6, 64.2), (54.6, 62.0), (57.8, 61.2)], [0.1, 0.8, 0.1]), SCALE.hi, 0.35),
+            (sm([(58.0, 63.6), (62.2, 62.0), (63.4, 65.4), (61.0, 68.6), (57.8, 67.6)]),
+             ('lin', 63.0, 64.0, 57.6, 65.6, [(0, SCALE.light, 0.4), (1, SCALE.light, 0)]), 1),
+            (sm([(55.0, 68.8), (59.4, 69.4), (62.8, 67.2), (63.0, 69.4), (59.6, 71.2), (55.4, 70.8)]),
+             ('lin', 60.0, 68.4, 59.0, 71.4, [(0, SCALE.shadow, 0.75), (1, SCALE.shadow, 0.1)]), 1),
             (sm([(80.4, 62.4), (85.6, 61.6), (89.6, 64.0), (89.0, 68.0), (84.8, 69.4), (80.6, 68.0)]), SCALE.hi, 0.35),
             (sm([(80.6, 68.0), (84.8, 69.6), (88.8, 68.2), (87.4, 70.6), (84.0, 71.6), (80.4, 70.2)]), SCALE.shadow, 0.75)]
     # le flanc lointain : deux creux doux (pas de rayures : inégaux, courbes)

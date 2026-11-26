@@ -470,10 +470,13 @@ def shape_points(shape, n=10):
     return out
 
 
-def merge_shapes(a, b, r):
-    """Une seule forme pour deux formes qui se touchent (union), les creux du raccord arrondis (rayon r)."""
+def merge_shapes(a, b, r, fill=None):
+    """Une seule forme pour deux formes qui se touchent (union), les creux du raccord arrondis (rayon r) ; fill : un
+    polygone qui bouche en plus un creux entre les deux."""
     from shapely.geometry import Polygon
     u = Polygon(shape_points(a)).buffer(0).union(Polygon(shape_points(b)).buffer(0))
+    if fill:
+        u = u.union(Polygon(fill))
     u = u.buffer(r, join_style=1, quad_segs=12).buffer(-r, join_style=1, quad_segs=12).simplify(0.02)
     pts = list(u.exterior.coords)[:-1]
     ring = pts[1:] + [pts[0]]
@@ -560,11 +563,13 @@ def head_parts(fig, P):
     def marc(a0, a1, n, kx=1.0, ky=1.0):
         return [(mx + mrx * kx * math.cos(math.radians(a)), my + mry * ky * math.sin(math.radians(a)))
                 for a in (a0 + (a1 - a0) * i / n for i in range(n + 1))]
+    def bell(n, w):
+        return [0.1 + (w - 0.1) * math.sin(math.pi * i / n) ** 0.6 for i in range(n + 1)]
     muz = sm(marc(0, 345, 23))
     hd += [(muz, ('lin', mx + 4.6, my - 5.4, mx - 4.4, my + 5.6, [(0, '#fff0de'), (0.5, '#ffd8b8'), (1, '#f4ae94', 0.75)]), 0.85),
            (sm(marc(-120, -30, 6) + marc(-40, -110, 6, 0.72, 0.72)), SKIN.hi, 0.5),
-           (ribbon(marc(-145, -235, 8, 0.97, 0.97)[::-1], [0.2, 0.6, 0.9, 0.9, 0.9, 0.9, 0.8, 0.6, 0.2]), SKIN.shadow, 0.6),
-           (ribbon(marc(-40, 55, 8, 0.97, 0.97), [0.1, 0.3, 0.5, 0.55, 0.55, 0.55, 0.5, 0.35, 0.1]), SKIN.shadow, 0.4)]
+           (ribbon(marc(-145, -235, 18, 0.95, 0.95), bell(18, 0.9)), SKIN.shadow, 0.6),
+           (ribbon(marc(-40, 55, 18, 0.95, 0.95), bell(18, 0.55)), SKIN.shadow, 0.4)]
     nN = sm([(nz_x - 1.6, nz_y + 0.35), (nz_x - 0.9, nz_y - 0.5), (nz_x - 0.35, nz_y - 0.3), (nz_x - 0.8, nz_y + 0.4)], sharp=(0,))
     nF = sm([(nz_x + 1.55, nz_y + 0.25), (nz_x + 1.0, nz_y - 0.5), (nz_x + 0.5, nz_y - 0.3), (nz_x + 0.9, nz_y + 0.35)], sharp=(0,))
     cN, cF = nN.bbox(), nF.bbox()
@@ -613,11 +618,12 @@ def head_parts(fig, P):
     # (une seule silhouette, raccord arrondi, pas de bout rond posé sur le crâne ni d'ombre en travers de la racine)
     lc = crpath([(64.0, 32.2), (61.0, 34.4), (58.3, 38.2), (56.8, 42.8), (57.0, 47.6), (58.8, 52.6)], 16)
     lock = taper(lc, 4.0, 1.4, tip='sharp', wmid=4.0)
-    head = merge_shapes(head, lock, 0.7)
+    # (le bas de la mèche repose contre la nuque : pas de jour entre elle, le crâne et le col)
+    head = merge_shapes(head, lock, 0.7, fill=[(57.6, 45.0), (60.0, 45.0), (61.0, 50.8), (59.4, 52.0), (58.4, 51.6)])
     # la mèche elle-même : sa fourrure plus claire apparaît en douceur depuis la racine (aucun bord à la racine),
     # une lumière en haut à droite, une ombre douce dans le creux où elle repose contre la nuque
     hd += [(lock, ('lin', 62.8, 33.2, 59.2, 37.8, [(0, FUR.base, 0), (1, FUR.base, 1)]), 1),
-           (ribbon([(62.0, 33.6), (59.6, 35.8), (58.1, 39.4), (57.5, 43.4), (57.8, 47.8), (58.8, 51.6)], [0.2, 1.2, 1.8, 1.8, 1.3, 0.3]),
+           (ribbon([(62.0, 33.6), (59.6, 35.8), (58.1, 39.4), (57.4, 43.4), (57.6, 47.6), (58.3, 50.4)], [0.2, 1.2, 1.7, 1.6, 0.9, 0.1]),
             ('lin', 62.0, 33.6, 59.0, 37.8, [(0, FUR.light, 0), (1, FUR.light, 1)]), 0.75),
            (ribbon([(61.8, 34.0), (59.8, 36.2), (58.6, 39.2), (58.0, 43.4), (58.2, 48.0)], [0.1, 0.45, 0.7, 0.6, 0.1]),
             ('lin', 61.8, 34.0, 59.2, 37.6, [(0, FUR.hi, 0), (1, FUR.hi, 1)]), 0.6),
