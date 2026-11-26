@@ -5,8 +5,9 @@
 #
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/cyclope.txt, ancien nom de fichier) : le minotaure brun,
 # un colosse. Trois quarts vers la droite, grande fente, sabots à plat. Énorme bosse de trapèzes (plus de crinière :
-# avis du propriétaire, tour 2), la tête posée au milieu entre les épaules, une épaulière d'acier rivetée sur chaque
-# épaule ; deltoïdes énormes, torse en tonneau, bras épais, petites jambes
+# avis du propriétaire, tour 2), la tête posée au milieu entre les épaules et remontée sur un cou de taureau court et
+# épais, DEVANT les deux épaulières (tour 3) ; deux petites écailles de fer noirci bordées de bronze sur chaque épaule,
+# une pointe de fer, une sangle au bras ; deltoïdes énormes, torse en tonneau, bras épais, petites jambes
 # solides poilues jusqu'aux sabots fendus (fanons). Il tient la grosse hache double à deux mains, basse, en travers du
 # corps : main droite (proche) près du pommeau, main gauche (lointaine) près du fer ; les doigts passent devant le
 # manche, le pouce par-dessus. Vraie tête de taureau : toupet bouclé, grosses cornes ivoire aux pointes sombres,
@@ -91,8 +92,9 @@ LN1, LN2 = 29.4, 15.0                # bras proche : bras, avant-bras (jusqu'au 
 LF1, LF2 = 18.0, 12.6                # bras lointain
 HIP = (64.0, 86.0)                   # le pivot du buste
 NECK = (74.0, 50.0)                  # le pivot (et le centre d'agrandissement) de la tête
-# la tête posée bien au milieu, entre les deux épaules (avis du propriétaire du 26/11, tour 2) : tout ce qui est
-# dessiné dans le repère de la tête glisse de ce décalage (le visage garde ses propres mesures)
+# la tête posée bien au milieu, entre les deux épaules (avis du propriétaire du 26/11, tour 2), et remontée au-dessus
+# du torse sur un vrai cou (tour 3) : tout ce qui est dessiné dans le repère de la tête glisse de ce décalage (le visage
+# garde ses propres mesures)
 HEAD_AT = (-16.0, -8.0)
 S_POM, S_END, S_HEAD = -22.6, 88.0, 79.0     # le pommeau, le bout du manche, l'axe du fer (le long du manche)
 

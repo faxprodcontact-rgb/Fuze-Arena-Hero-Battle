@@ -7,8 +7,8 @@
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/monstres/singe-voleur.txt) : un petit macaque voleur,
 # vif et espiègle, accroupi à quatre pattes, ramassé, prêt à bondir, trois quarts vers la droite. Crâne rond de
 # fourrure fauve, masque de peau rose pêche (le même qu'Eldra et Bao) autour des yeux et du petit museau, oreille
-# ronde à l'anneau d'or, yeux d'or au regard rusé (sourcil proche qui plonge vers le nez), sourire en coin bouche
-# fermée et petit croc. Petit gilet rouge ouvert liseré d'or, foulard de soie jade noué sous le menton (deux pans qui
+# ronde à l'anneau d'or, yeux d'or au regard rusé (sourcil proche qui plonge vers le nez), museau rond
+# centré, petit sourire symétrique bouche fermée et petit croc. Petit gilet rouge ouvert liseré d'or, foulard de soie jade noué sous le menton (deux pans qui
 # pendent droit), sac de butin prune sur le dos (bouche froncée en corolle, une pièce d'or qui dépasse, cordon d'or
 # et perle de jade), sangle en travers du gilet. Cuisse proche repliée (genou en avant, talon sous la hanche), pied à
 # plat aux longs orteils, main proche posée à plat devant, bras lointain qui tient la dague courte (pommeau de jade,

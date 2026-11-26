@@ -31,7 +31,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
-from atelier import Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
+from atelier import Mat, sm, limb, ribbon, sides, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from lib import Shape  # noqa: E402
 from outils import (rot, add, sub, lerp, norm, ang_of, ik, arm_shape, crpath, taper, curve_band, under,  # noqa: E402
                     almond_pt, inter, FigN, inset, rim_band, morph, poly, from_poly)
@@ -452,12 +452,15 @@ def head(fig, P):
     # qui suit l'arrondi du front et file sous le bord du chapeau (loin du sourcil) ; de l'autre côté, elle part vers
     # l'arrière de la tête et passe derrière le contour. Son ombre douce sur la peau, un reflet sur le bord du haut.
     ST1 = [(78.4, 45.9), (77.2, 44.3), (75.9, 42.9), (74.6, 41.5), (73.6, 40.4)]
-    ST2 = [(82.4, 46.3), (83.4, 45.9), (84.6, 45.5)]
+    ST2 = [(82.0, 46.4), (83.2, 46.0), (84.6, 45.5)]
+    def band(st, w, dx=0.0, dy=0.0):
+        c_ = crpath([(x + dx, y + dy) for x, y in st], 12)
+        l_, r_ = sides(c_, [w] * len(c_))
+        return sm(l_ + r_[::-1], sharp=(0, len(l_) - 1, len(l_), 2 * len(l_) - 1), t=0.9)
     for st, w in ((ST1, 1.05), (ST2, 1.0)):
-        fd += [(ribbon([(x - 0.35, y + 0.55) for x, y in st], [w * 0.9] * len(st), sharp_ends=False), SKIN.deep, 0.3),
-               (ribbon(st, [w] * len(st), sharp_ends=False), ('lin', st[0][0], st[0][1], st[-1][0], st[-1][1],
-                                                              [(0, PATCH.base), (1, PATCH.shadow)]), 1),
-               (ribbon([(x + 0.2, y - 0.25) for x, y in st], [0.28] * len(st), sharp_ends=False), PATCH.light, 0.8)]
+        fd += [(band(st, w * 0.95, -0.35, 0.55), SKIN.deep, 0.3),
+               (band(st, w), ('lin', st[0][0], st[0][1], st[-1][0], st[-1][1], [(0, PATCH.base), (1, PATCH.shadow)]), 1),
+               (band(st, 0.26, 0.18, -0.3), PATCH.light, 0.7)]
     # le sourcil fin et froncé (il descend vers le nez)
     by = 0.45 * sq
     fd += [(sm([(68.2, 44.7), (70.2, 43.4), (72.6, 43.2), (74.4, 44.0 + by * 0.6), (75.2, 45.0 + by), (74.0, 44.7 + by), (72.4, 44.1),
@@ -512,12 +515,11 @@ def head(fig, P):
                 (77.7, 48.6), (77.3, 47.3)], t=0.92)
     part('patch', patch, PATCH, grad=(83.0, 45.4, 77.3, 50.0, [(0, PATCH.light), (0.45, PATCH.base), (1, PATCH.shadow)]), cel=0.35,
          rim=0.3, cast=0.5, cast_on=['face'],
-         details=[(rim_band(patch, 0.5), PATCH.light, 0.55),
-                  (sm([(79.6, 45.95), (81.6, 45.9), (82.5, 46.7), (82.2, 47.6), (81.2, 47.0), (79.8, 46.6)], t=0.9), PATCH.hi, 0.45),
-                  (ellipse(79.6, 48.4, 1.6, 0.9, -12), PATCH.shadow, 0.4),
+         details=[(rim_band(patch, 0.42), PATCH.light, 0.3),
+                  (ellipse(81.0, 46.9, 2.0, 1.2, -10), ('rad', 81.4, 46.6, 2.2, 1.4, [(0, PATCH.light, 0.55), (1, PATCH.light, 0)]), 1),
+                  (ellipse(79.4, 48.6, 1.8, 1.0, -12), PATCH.shadow, 0.35),
                   (ellipse(78.25, 46.45, 0.5, 0.5), GOLD.shadow, 1), (ellipse(78.2, 46.4, 0.36, 0.36), GOLD.base, 1),
-                  (ellipse(78.3, 46.3, 0.14, 0.12), GOLD.glint, 1),
-                  (ellipse(82.65, 46.6, 0.45, 0.45), GOLD.shadow, 1), (ellipse(82.6, 46.55, 0.32, 0.32), GOLD.base, 1)])
+                  (ellipse(78.3, 46.3, 0.14, 0.12), GOLD.glint, 1)])
     # ---- le nez, petit, sur la médiane (sans contour : il est dans le visage) ; son petit bout arrondi ----
     nose = sm([(75.5, 47.4), (76.3, 47.6), (76.8, 49.2), (77.3, 50.4), (77.0, 51.1), (76.1, 51.35), (75.2, 51.1), (75.0, 50.3),
                (75.4, 48.8)], t=0.9)
