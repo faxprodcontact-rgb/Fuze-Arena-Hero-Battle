@@ -501,7 +501,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.part('ncl%d' % i, claw(mapp(nFM, b), d_, L_, w_), CLAW, cel=0.4, rim=0.35, cast=0.4, cast_on=['body'])
 
     # ============================================================== le plastron jaune à plaques, le pont de carapace
-    gpl = PG(sm(T_(PLAS_PTS), t=0.9)).intersection(gtors).difference(garm.buffer(0.05)).difference(gleg.buffer(0.05))
+    # (le plastron va jusqu'au bord de l'avant-bras : pas de coin de peau coincé entre le bras plié et le plastron)
+    gfront = gtors.union(garm.buffer(2.6).intersection(bodyg))
+    gpl = PG(sm(T_(PLAS_PTS), t=0.9)).intersection(gfront).difference(garm.buffer(0.05)).difference(gleg.buffer(0.05))
     plas = geom_shapes(gpl, simplify=0.02)
     det = []
     PS = lambda pts: crpath(T_(pts), 16)
@@ -535,7 +537,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ============================================================== la ceinture de corde goudronnée, nouée devant
     rope_c = crpath(T_([(44.0, 85.6), (52.0, 86.4), (60.0, 87.4), (68.0, 88.2), (76.0, 88.0), (83.0, 87.0), (91.0, 85.2)]), 40)
     rope0 = taper(rope_c, 3.4, 3.4, tip='round')
-    grope = PG(rope0).intersection(gtors.union(gleg)).difference(garm)
+    grope = PG(rope0).intersection(gfront.union(gleg)).difference(garm)
     # (pas de miette de corde coincée entre le coude et le plastron)
     if grope.geom_type == 'MultiPolygon':
         from shapely.geometry import MultiPolygon
