@@ -540,8 +540,8 @@ def head(fig, P):
     # sombre, iris d'ambre, pupille vers la cible (à droite), reflet en haut à droite ; une arcade de plumes au-dessus
     # de chaque œil, un peu plus basse côté bec (regard fier, pas méchant), qui coupe le haut de l'iris ----
     # formes données pour l'œil proche (+x = côté bec) ; l'œil du fond les reprend en miroir, plus étroites
-    BROW = [(-3.9, -2.3), (-1.2, -4.3), (2.2, -4.0), (4.0, -2.2), (3.6, -0.9), (1.2, -1.6), (-1.4, -2.1), (-3.4, -1.7)]
-    BROW_HI = [(-3.6, -2.8), (-1.1, -4.3), (2.2, -4.0), (2.0, -3.5), (-1.0, -3.7)]
+    BROW = [(-3.9, -2.1), (-1.2, -4.2), (2.2, -4.2), (4.0, -2.7), (3.6, -1.6), (1.2, -2.0), (-1.4, -2.1), (-3.4, -1.5)]
+    BROW_HI = [(-3.6, -2.6), (-1.1, -4.2), (2.2, -4.2), (2.0, -3.7), (-1.0, -3.6)]
     for cx, w_, side in ((exn, ewn, 1), (exf, ewf, -1)):
         k = w_ / ewn
         rx, ry = w_ / 2, 2.45
@@ -603,7 +603,7 @@ def head(fig, P):
              (81.9, 42.5), (80.1, 40.5), (78.0, 38.9)], sharp=(0, 6)), BEAK.shadow, 0.5),
         # la cire, plus claire, à la racine (entre les yeux), et les deux narines (celle du fond plus petite)
         (sm([(nx - 1.5, eyy - 0.5), (nx, eyy - 1.1), (nx + 1.5, eyy - 0.5), (nx + 2.1, eyy + 1.8), (nx + 1.4, eyy + 3.0), (nx, eyy + 3.4),
-             (nx - 1.5, eyy + 3.0), (nx - 2.0, eyy + 1.6)]), BEAK.hi, 0.75),
+             (nx - 1.5, eyy + 3.0), (nx - 2.0, eyy + 1.6)]), '#fff1b0', 0.6),
         (ribbon([(nx - 1.9, eyy + 2.5), (nx - 1.2, eyy + 2.1), (nx - 0.5, eyy + 2.2)], [0.45, 0.65, 0.2]), '#8a4a1e', 0.9),
         (ribbon([(nx + 0.6, eyy + 2.2), (nx + 1.1, eyy + 2.0), (nx + 1.6, eyy + 2.3)], [0.2, 0.45, 0.3]), '#8a4a1e', 0.75),
         # l'arête éclairée, un peu à droite de la médiane, jusqu'au crochet
@@ -614,7 +614,7 @@ def head(fig, P):
         (ribbon([(86.0, 36.8), (85.7, 39.6), (84.6, 42.6)], [0.1, 0.5, 0.1]), BEAK.shadow, 0.45),
     ]
     part('beakU', up, BEAK, grad=(86, 33, 77, 43, [(0, BEAK.light), (0.5, BEAK.base), (1, '#e09a32')]),
-         cel=0.7, rim=0.6, cast=1.2, ink=FINK, details=udet)
+         cel=0.7, rim=0.6, cast=1.2, ink=FINK, details=udet, cast_on=['skull'])
     return names
 
 
