@@ -656,66 +656,66 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('uteeth', upt, TOOTH, grad=(hp((108, 0))[0], hp((0, 49))[1], hp((92, 0))[0], hp((0, 52))[1],
                                          [(0, TOOTH.hi), (0.55, TOOTH.light), (1, TOOTH.shadow)]), cel=0.35, rim=0.3, cast=0.6)
 
-    # -- le crâne et le museau : crâne court et plat, arcade lourde (une bosse au-dessus de l'oeil), l'arcade lointaine
-    # qui dépasse derrière l'arête du museau, le naseau au bout --
-    UH = [(73.4, 51.4), (69.4, 48.4), (68.4, 43.6), (69.4, 39.8), (72.2, 37.2), (76.8, 35.6), (82.0, 34.4), (87.4, 32.8),
-          (91.8, 33.0), (94.8, 34.8), (96.6, 36.6), (97.6, 37.4), (99.8, 36.2), (102.4, 36.6), (104.6, 38.0), (107.6, 39.0),
-          (110.4, 39.6), (112.0, 40.6), (113.0, 42.6), (113.2, 45.2), (112.4, 47.2), (110.4, 48.3), (106.0, 48.9), (100.0, 49.3),
-          (94.0, 49.6), (88.4, 49.8), (84.6, 50.0), (83.4, 52.0), (80.0, 52.6), (76.4, 52.2)]
-    head = HD(sm(UH, sharp=(11, 21, 26), t=0.9))
+    # -- la tête de dragon VUE DE PROFIL (avis du propriétaire du 26/11 : « enlever l'oeil du fond » ; une vraie tête
+    # de dragon cohérente) : crâne rond et bas derrière, arcade qui fait une petite bosse au-dessus de l'oeil, cassure
+    # (le « stop ») puis l'arête du museau, longue et droite, qui descend doucement jusqu'à la bosse du naseau ; le bout
+    # du museau arrondi ; la lèvre du haut file en arrière jusqu'au coin de la gueule (sous l'avant de l'oeil) ; derrière
+    # lui, la joue ronde recouvre la charnière de la mâchoire. UN seul oeil (visage.placer(FACE_BOX, tour=75)). --
+    UH = [(73.6, 53.0), (70.4, 50.2), (69.0, 46.0), (69.6, 41.4), (72.4, 37.6), (76.8, 35.4), (82.0, 34.5), (86.2, 34.0),
+          (89.8, 33.5), (93.4, 34.3), (95.8, 36.4), (98.0, 37.6), (101.6, 38.2), (105.4, 38.9), (108.2, 39.1), (110.6, 38.7),
+          (112.8, 39.6), (114.0, 41.8), (113.8, 44.8), (112.4, 47.0), (109.8, 48.1), (104.0, 48.7), (98.6, 49.1), (94.0, 49.4),
+          (93.0, 51.4), (90.6, 53.0), (86.6, 54.0), (81.6, 54.1), (77.2, 53.8)]
+    head = HD(sm(UH, sharp=(23,), t=0.9))
     hd = []
-    # des plans nets : le dessus du crâne et le dessus du museau éclairés, la joue (derrière la gueule) dans l'ombre
-    hd += [(HD(sm([(73.6, 37.8), (78.0, 36.4), (83.0, 35.6), (88.0, 34.6), (92.0, 34.8), (94.6, 36.4), (92.6, 37.2), (88.0, 36.8),
-                   (82.0, 37.6), (77.0, 38.6)], t=0.9)), SKIN.light, 0.7),
-           (HD(sm([(97.8, 37.8), (100.0, 36.8), (102.8, 37.4), (105.0, 38.8), (108.0, 40.0), (110.6, 41.0), (112.2, 42.4),
-                   (109.0, 42.2), (105.6, 41.2), (101.6, 40.0), (98.6, 39.2)], t=0.9)), SKIN.light, 0.7),
-           (HD(ellipse(77.4, 49.6, 8.0, 5.6)), ('rad', hp((77.4, 50.6))[0], hp((77.4, 50.6))[1], 8.6, 6.4, [(0, SKIN.shadow, 0.55), (1, SKIN.shadow, 0)]), 1),
-           (HD(ribbon([(86.0, 48.6), (94.0, 48.5), (102.0, 48.1), (108.6, 47.4)], [0.2, 1.0, 1.0, 0.2])), SKIN.shadow, 0.45)]
-    # l'arcade lourde qui descend vers le museau : son dessus éclairé, le creux sombre de l'orbite dessous
-    hd += [(HD(sm([(84.6, 38.4), (89.2, 37.6), (94.0, 38.2), (96.8, 40.2), (95.0, 41.6), (91.6, 40.2), (87.6, 39.6), (84.8, 40.2)],
-                  sharp=(0, 4), t=0.8)), SKIN.deep, 0.85),
-           (HD(sm([(82.4, 36.4), (87.4, 34.0), (91.8, 34.2), (94.8, 35.8), (96.6, 38.6), (93.6, 37.6), (89.4, 36.6), (84.2, 37.6)],
-                  sharp=(0, 4), t=0.8)), SKIN.hi, 0.65)]
-    # l'oeil proche : amande jaune coupée en haut par l'arcade, pupille fendue (le regard du prédateur)
-    EC = (90.2, 41.8)
-    eye = sm([(86.6, 40.2), (89.8, 40.3), (93.0, 41.4), (94.2, 42.2), (91.0, 43.3), (88.0, 42.8)], sharp=(0, 3), t=0.8)
+    # des plans nets : le dessus du crâne et l'arête du museau éclairés (lumière en haut à droite), la joue dans l'ombre
+    hd += [(HD(sm([(73.4, 38.6), (77.4, 36.4), (82.4, 35.5), (87.0, 35.0), (90.6, 34.7), (93.4, 35.6), (90.6, 36.4), (86.4, 36.6),
+                   (81.8, 37.2), (77.0, 38.4)], t=0.9)), SKIN.light, 0.7),
+           (HD(sm([(97.0, 38.6), (101.6, 39.2), (105.4, 39.9), (108.4, 40.1), (110.8, 39.8), (112.8, 41.0), (113.4, 42.6),
+                   (110.4, 42.0), (106.2, 41.6), (101.8, 41.0), (98.4, 40.4)], t=0.9)), SKIN.light, 0.7),
+           (HD(ellipse(78.4, 49.8, 8.6, 5.4)), ('rad', hp((78.4, 50.8))[0], hp((78.4, 50.8))[1], 9.0, 6.2, [(0, SKIN.shadow, 0.55), (1, SKIN.shadow, 0)]), 1),
+           (HD(ribbon([(94.6, 48.4), (100.0, 48.0), (105.0, 47.6), (110.0, 46.9)], [0.2, 0.9, 0.9, 0.2])), SKIN.shadow, 0.45),
+           # le côté du museau, sous l'arête : une ombre douce qui part du creux de l'orbite (la racine du museau)
+           (HD(ribbon([(94.8, 41.0), (96.4, 43.4), (100.0, 44.2), (105.0, 44.4)], [0.2, 1.0, 0.8, 0.1])), SKIN.shadow, 0.3)]
+    # l'arcade : la bosse au-dessus de l'oeil, son dessus éclairé, le creux sombre de l'orbite dessous
+    ex, ey, ew = FACE['oeil_proche']
+    hd += [(HD(sm([(ex - 4.6, ey - 2.2), (ex - 1.0, ey - 3.4), (ex + 2.8, ey - 3.2), (ex + 5.4, ey - 1.6), (ex + 3.8, ey - 0.6),
+                   (ex + 0.8, ey - 1.6), (ex - 2.4, ey - 1.6), (ex - 4.4, ey - 1.0)], sharp=(0, 3), t=0.8)), SKIN.deep, 0.85),
+           (HD(sm([(ex - 6.4, ey - 4.2), (ex - 2.2, ey - 6.6), (ex + 1.8, ey - 6.8), (ex + 4.8, ey - 5.6), (ex + 6.2, ey - 2.6),
+                   (ex + 3.4, ey - 3.6), (ex - 0.6, ey - 4.4), (ex - 4.2, ey - 3.6)], sharp=(0, 4), t=0.8)), SKIN.hi, 0.6)]
+    # l'oeil (un seul) : amande jaune coupée en haut par l'arcade, pupille fendue (le regard du prédateur)
+    hw = ew / 2
+    eye = sm([(ex - hw, ey - 1.3), (ex - 0.4, ey - 1.4), (ex + hw * 0.8, ey - 0.6), (ex + hw, ey + 0.2), (ex + 0.6, ey + 1.4),
+              (ex - hw * 0.6, ey + 1.1)], sharp=(0, 3), t=0.8)
     if Pz['blink'] > 0.5:
-        hd += [(HD(eye.scale(1.12, 1.3, EC[0], EC[1])), SKIN.deep, 0.7), (HD(eye), SKIN.base, 1),
-               (HD(ribbon([(86.6, 41.8), (90.0, 42.6), (93.8, 42.2)], [0.1, 0.6, 0.1])), SKIN.deep, 0.85)]
+        hd += [(HD(eye.scale(1.12, 1.3, ex, ey)), SKIN.deep, 0.7), (HD(eye), SKIN.base, 1),
+               (HD(ribbon([(ex - hw, ey - 0.2), (ex, ey + 0.7), (ex + hw * 0.95, ey + 0.3)], [0.1, 0.6, 0.1])), SKIN.deep, 0.85)]
     else:
-        ex, ey = hp(EC)
-        hd += [(HD(eye.scale(1.12, 1.3, EC[0], EC[1] - 0.2)), '#3a0c22', 0.9),
-               (HD(eye), ('rad', ex + 0.9, ey - 0.7, 4.0, 4.0, [(0, '#fff6b0'), (0.35, '#ffe23a'), (0.8, '#f4a21e'), (1, '#d4661a')]), 1),
-               (HD(sm([(90.2, 40.4), (91.1, 40.6), (91.2, 42.0), (90.8, 43.3), (90.3, 42.0)], sharp=(0, 3), t=0.7)), '#140a16', 1),
-               (HD(ellipse(92.2, 41.8, 0.55, 0.38)), '#ffffff', 1),
-               (HD(ribbon([(86.8, 40.3), (89.8, 40.4), (93.4, 41.5)], [0.1, 0.7, 0.1])), '#3a0c22', 0.85)]
-    # l'arcade et l'oeil lointains : même forme, plus étroits, derrière l'arête du museau
-    eyeF = sm([(98.2, 40.0), (100.0, 39.4), (101.6, 40.0), (100.8, 41.2), (99.0, 41.2)], sharp=(0, 2), t=0.8)
-    hd += [(HD(sm([(97.4, 38.6), (100.0, 37.8), (102.8, 38.6), (102.6, 39.8), (100.0, 39.2), (97.8, 39.8)], sharp=(0, 3), t=0.8)), SKIN.deep, 0.75)]
-    if Pz['blink'] > 0.5:
-        hd += [(HD(eyeF), SKIN.base, 1), (HD(ribbon([(98.2, 40.4), (99.8, 40.8), (101.4, 40.4)], [0.1, 0.45, 0.1])), SKIN.deep, 0.8)]
-    else:
-        hd += [(HD(eyeF.scale(1.12, 1.3, 99.8, 40.3)), '#3a0c22', 0.85),
-               (HD(eyeF), ('rad', hp((100.4, 40.0))[0], hp((100.4, 40.0))[1], 2.0, 2.0, [(0, '#fff2a0'), (0.5, '#ffd23a'), (1, '#e08a1e')]), 1),
-               (HD(sm([(99.9, 39.5), (100.4, 39.6), (100.4, 40.4), (100.1, 41.1), (99.8, 40.4)], sharp=(0, 3), t=0.7)), '#140a16', 1)]
-    # l'arête du museau (elle passe devant l'oeil lointain), les petites écailles éclairées, le naseau
-    hd += [(HD(ribbon([(97.8, 38.8), (102.0, 39.0), (106.0, 40.2), (109.6, 41.2), (112.0, 42.8)], [0.2, 0.7, 0.9, 0.7, 0.2])), SKIN.hi, 0.55)]
-    for (sx, sy, rx) in ((101.8, 41.8, 0.95), (104.8, 42.2, 0.85), (103.2, 44.4, 0.8), (106.6, 44.6, 0.75), (99.8, 43.8, 0.8)):
+        wx, wy = hp((ex, ey))
+        hd += [(HD(eye.scale(1.12, 1.3, ex, ey - 0.2)), '#3a0c22', 0.9),
+               (HD(eye), ('rad', wx + 0.9, wy - 0.7, 4.0, 4.0, [(0, '#fff6b0'), (0.35, '#ffe23a'), (0.8, '#f4a21e'), (1, '#d4661a')]), 1),
+               (HD(sm([(ex + 0.2, ey - 1.3), (ex + 1.1, ey - 1.1), (ex + 1.2, ey + 0.2), (ex + 0.8, ey + 1.4), (ex + 0.3, ey + 0.2)],
+                      sharp=(0, 3), t=0.7)), '#140a16', 1),
+               (HD(ellipse(ex + 2.0, ey - 0.2, 0.55, 0.38)), '#ffffff', 1),
+               (HD(ribbon([(ex - hw + 0.2, ey - 1.3), (ex - 0.4, ey - 1.3), (ex + hw * 0.9, ey - 0.4)], [0.1, 0.7, 0.1])), '#3a0c22', 0.85)]
+    # l'arête du museau, les petites écailles éclairées sur le côté, le naseau sur la bosse du bout
+    hd += [(HD(ribbon([(97.4, 38.2), (101.6, 38.8), (105.6, 39.5), (108.6, 39.7), (111.2, 39.6), (113.0, 41.0)], [0.2, 0.7, 0.9, 0.8, 0.6, 0.2])), SKIN.hi, 0.55)]
+    for (sx, sy), rx in zip(((100.4, 41.8), (103.6, 41.6), (102.0, 43.8), (105.6, 43.4), (98.8, 44.6)), (0.9, 0.85, 0.8, 0.75, 0.75)):
         hd += [(HD(ellipse(sx, sy, rx, rx * 0.55, -10)), SKIN.light, 0.55),
                (HD(ellipse(sx + 0.15, sy - 0.2, rx * 0.6, rx * 0.26, -10)), SKIN.hi, 0.75)]
-    hd += [(HD(sm([(107.0, 42.8), (108.6, 42.0), (109.8, 42.8), (109.0, 43.7), (107.6, 43.7)], t=0.8)), SKIN.deep, 0.9),
-           (HD(ribbon([(106.8, 41.9), (108.6, 41.2), (110.2, 42.0)], [0.1, 0.5, 0.1])), SKIN.hi, 0.7)]
-    # le rictus : le pli de la babine qui remonte vers l'oeil, la gencive du haut (rouge, jamais noire)
-    hd += [(HD(ribbon([(84.4, 49.6), (85.4, 47.8), (86.8, 46.6)], [0.2, 0.9, 0.1])), SKIN.deep, 0.55),
-           (HD(ribbon([(85.0, 49.4), (90.0, 49.2), (96.0, 48.9), (102.0, 48.6), (107.0, 48.2), (110.0, 47.8)], [0.2, 0.7, 0.8, 0.8, 0.7, 0.2])), GUM[1], 1),
-           (HD(ribbon([(90.0, 48.8), (98.0, 48.5), (106.0, 48.0)], [0.1, 0.35, 0.1])), GUM[2], 0.8)]
+    hd += [(HD(sm([(108.4, 41.6), (110.0, 40.8), (111.4, 41.6), (110.6, 42.6), (109.0, 42.6)], t=0.8)), SKIN.deep, 0.9),
+           (HD(ribbon([(108.2, 40.6), (110.0, 39.9), (111.8, 40.8)], [0.1, 0.5, 0.1])), SKIN.hi, 0.7)]
+    # le rictus : le pli de la babine qui remonte du coin de la gueule vers l'oeil, la gencive du haut (rouge)
+    hd += [(HD(ribbon([(94.2, 49.0), (93.2, 47.4), (92.0, 46.4)], [0.2, 0.8, 0.1])), SKIN.deep, 0.5),
+           (HD(ribbon([(94.4, 49.2), (98.0, 49.0), (102.0, 48.7), (106.0, 48.4), (110.0, 47.8)], [0.2, 0.7, 0.8, 0.7, 0.2])), GUM[1], 1),
+           (HD(ribbon([(97.0, 48.8), (102.0, 48.5), (107.0, 48.1)], [0.1, 0.35, 0.1])), GUM[2], 0.8)]
     # les taches sombres qui font le lien avec le corps de salamandre
-    hd += spot(hp((75.4, 41.6)), 2.0 * HSC, 1.4 * HSC, -15)
-    hd += spot(hp((97.6, 45.8)), 1.2 * HSC, 0.85 * HSC, -10, 0.95)
-    hd += spot(hp((103.0, 46.2)), 1.0 * HSC, 0.7 * HSC, 0, 0.9)
-    hd += spot(hp((71.4, 46.6)), 1.0 * HSC, 1.3 * HSC, 0, 0.85)
-    hd += gloss(hp((88.4, 35.6)), 2.0, 0.5, -10, 0.75)
-    fig.part('head', head, SKIN, grad=(hp((108, 38))[0], hp((108, 38))[1], hp((72, 52))[0], hp((72, 52))[1],
+    hd += spot(hp((76.4, 42.4)), 2.0 * HSC, 1.4 * HSC, -15)
+    hd += spot(hp((72.2, 47.6)), 1.0 * HSC, 1.3 * HSC, 0, 0.85)
+    hd += spot(hp((82.2, 46.8)), 1.1 * HSC, 0.8 * HSC, -10, 0.85)
+    hd += spot(hp((99.4, 46.4)), 1.1 * HSC, 0.78 * HSC, -8, 0.95)
+    hd += spot(hp((104.4, 46.4)), 0.95 * HSC, 0.66 * HSC, 0, 0.9)
+    hd += gloss(hp((84.4, 36.2)), 2.0, 0.5, -8, 0.75)
+    fig.part('head', head, SKIN, grad=(hp((110, 39))[0], hp((110, 39))[1], hp((72, 53))[0], hp((72, 53))[1],
                                        [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=1.2, rim=0.7, cast=1.3, details=hd)
 

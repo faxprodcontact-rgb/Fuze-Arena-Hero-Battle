@@ -78,6 +78,8 @@ ARROW_L = 49.0
 L1N, L2N = 13.4, 12.2        # bras, avant-bras (proche)
 QUIVER_TOP = (41.0, 78.0)
 QUIVER_BOT = (46.6, 99.8)
+# la manchette en sabot de cheval (repère de l'avant-bras : x vers la main, −y = le dessus) : elle couvre le dos de la main
+CUFF = [(-2.8, -4.6), (0.8, -5.4), (3.4, -5.2), (4.6, -3.4), (3.2, -1.2), (1.8, 1.6), (1.6, 4.8), (-2.8, 4.6)]
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, squint=0.0, grit=0.0, ph=0.0,
             braid=0.0, skirt=0.0, fur=0.0, aim=0.0, draw=0.0, relax=0.0, bow_dx=0.0, arrow=1.0, free=0.0, bulge=0.0,
@@ -198,7 +200,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     IH = inv(HEAD)
     root = mapp(HEAD, (55.4, 46.4))
     bw = P['braid']
-    bpts0 = [(55.4, 46.4), (52.2, 50.0), (48.8, 53.4), (45.8, 56.6), (43.6, 59.6), (42.2, 62.2), (41.2, 65.2)]
+    bpts0 = [(55.4, 46.4), (51.8, 49.8), (47.8, 53.0), (44.4, 56.2), (42.0, 59.0), (40.6, 61.8), (39.6, 64.8)]
     bpts = [root]
     for k, p in enumerate(bpts0[1:], 1):
         t = k / (len(bpts0) - 1)
@@ -238,7 +240,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # le lien rouge de la natte
     tc = bc[tie_i]
     td = norm((bc[tie_i + 1][0] - bc[tie_i - 1][0], bc[tie_i + 1][1] - bc[tie_i - 1][1]))
-    tie = limb([add(tc, td, -0.7), add(tc, td, 0.7)], [4.0, 3.8])
+    tie = limb([add(tc, td, -1.1), add(tc, td, 1.1)], [3.9, 3.6])
     fig.part('tie', tie, RED, cel=0.5, rim=0.5, cast=0.6, cast_on=['hair'],
              details=[(ribbon([add(add(tc, td, -0.3), (td[1], -td[0]), 1.8), add(add(tc, td, -0.3), (td[1], -td[0]), -1.6)], [0.1, 0.5]), RED.hi, 0.6)])
 
@@ -312,10 +314,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (soft([(88.6, 61.2), (91.8, 63.4), (94.0, 63.0)], 0.9), FELT.shadow, 0.5)]
     fig.part('fsleeve', fsl, FELT, grad=(96, 58, 86, 68, [(0, FELT.light), (0.5, FELT.base), (1, FELT.shadow)]),
              cel=1.4, rim=0.7, cast=0, details=fdet)
-    fcuff = xf(rpoly([(-2.4, -5.0), (1.9, -5.8), (2.2, 5.6), (-2.4, 4.8)], [1.0, 1.2, 1.2, 1.0]), 97.0, 64.8, 14)
+    fcuff = xf(sm(CUFF, t=0.9), 96.6, 64.8, 12)
     fig.part('fcuff', fcuff, TURQ, cel=0.8, rim=0.6, cast=0.9,
-             details=[(xf(sm([(-2.4, -5.0), (1.9, -5.8), (1.9, -3.8), (-2.4, -3.4)]), 97.0, 64.8, 14), TURQ.hi, 0.6),
-                      (xf(soft([(0.0, -4.2), (0.2, 0.0), (0.2, 4.2)], 0.6), 97.0, 64.8, 14), TURQ.light, 0.6)])
+             details=[(xf(soft([(-2.0, -4.2), (1.0, -4.8), (3.4, -4.4)], 0.9), 96.6, 64.8, 12), TURQ.hi, 0.6),
+                      (xf(soft([(-0.6, -4.0), (-0.4, 0.0), (-0.6, 4.0)], 0.6), 96.6, 64.8, 12), TURQ.light, 0.5)])
 
     # ================================================================ le cou (dans l'ombre de la mâchoire)
     neck = sm([(61.4, 44.0), (70.6, 47.4), (77.0, 47.6), (77.4, 53.6), (69.4, 55.0), (60.8, 54.0), (60.2, 48.0)])
@@ -459,29 +461,29 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hu = unit(hang)
     W = add(H, hu, -4.6)
     E = ik(Sn, W, L1N, L2N, 1)
-    # deux manches arrondies fondues en UNE forme (aucune couture au coude), le dessous de la manche qui pend
+    # deux manches arrondies fondues en UNE forme (aucune couture au coude), le dessous de la manche qui pend ; l'avant-
+    # bras passe devant le bras : un pli sombre et doux le long de son bord du dessus, sa crête éclairée
     ed = norm((W[0] - E[0], W[1] - E[1]))
     pe = (-ed[1], ed[0]) if ed[0] >= 0 else (ed[1], -ed[0])             # vers le bas de l'avant-bras
-    drape = sm([add(E, pe, 2.0), add(lerp(E, W, 0.25), pe, 6.0), add(lerp(E, W, 0.6), pe, 5.6), add(W, pe, 3.4), lerp(E, W, 0.6)], t=0.9)
-    nsl = fused([limb([Sn, lerp(Sn, E, 0.5), E], [11.6, 11.2, 10.6]), limb([E, lerp(E, W, 0.5), W], [10.2, 9.6, 8.6]), drape])
+    drape = sm([add(E, pe, 1.6), add(lerp(E, W, 0.25), pe, 5.0), add(lerp(E, W, 0.6), pe, 4.6), add(W, pe, 3.0), lerp(E, W, 0.6)], t=0.9)
+    nsl = fused([limb([Sn, lerp(Sn, E, 0.5), E], [10.8, 10.4, 10.0]), limb([E, lerp(E, W, 0.5), W], [9.4, 9.0, 8.2]), drape])
     na = math.atan2(W[1] - E[1], W[0] - E[0])
     Ln = math.dist(E, W)
     N_ = lambda sh: xf(sh, E[0], E[1], math.degrees(na))
     sg = -1 if math.cos(na) > 0 else 1
     ua = norm((Sn[0] - E[0], Sn[1] - E[1]))
-    bis = norm((ua[0] + ed[0], ua[1] + ed[1]))
-    cr = add(E, bis, 5.2)
-    up_out = (ua[1], -ua[0]) if ua[1] < 0 else (-ua[1], ua[0])
-    ndet = [(N_(soft([(Ln * 0.15, -3.5 * -sg), (Ln * 0.55, -3.9 * -sg), (Ln * 0.92, -3.4 * -sg)], 1.3)), FELT.light, 0.6),
-            (soft([add(lerp(E, Sn, 0.85), up_out, 4.4), add(lerp(E, Sn, 0.5), up_out, 4.6), add(lerp(E, Sn, 0.2), up_out, 4.2)], 1.3), FELT.light, 0.5),
-            (soft([add(cr, ua, 2.0), cr, add(cr, ed, 2.6)], 1.0), FELT.deep, 0.5),
-            (N_(soft([(Ln * 0.2, 4.6 * -sg), (Ln * 0.5, 6.2 * -sg), (Ln * 0.85, 4.6 * -sg)], 1.2)), FELT.deep, 0.4)]
+    ur = (-ua[1], ua[0]) if -ua[1] > 0 else (ua[1], -ua[0])              # le côté du bras tourné vers la lumière
+    ndet = [(soft([add(lerp(E, Sn, t), ur, 3.6) for t in (0.2, 0.5, 0.85)], 1.4), FELT.light, 0.55),
+            (soft([add(lerp(E, W, t), pe, -(4.7 + 0.4 * (1 - t))) for t in (0.05, 0.3, 0.55, 0.8)], 1.3), FELT.deep, 0.6),
+            (soft([add(lerp(E, W, t), pe, -(3.3 - 0.4 * t)) for t in (0.1, 0.4, 0.7, 0.95)], 1.2), FELT.light, 0.7),
+            (soft([add(lerp(E, W, t), pe, 4.2 - 0.8 * t) for t in (0.1, 0.4, 0.75)], 1.2), FELT.deep, 0.4)]
     fig.part('nsleeve', nsl, FELT, grad=(Sn[0] + 6, Sn[1] - 2, E[0] - 4, E[1] + 4, [(0, FELT.light), (0.5, FELT.base), (1, FELT.shadow)]),
              cel=1.5, rim=0.8, cast=1.4, cast_on=['torso', 'sash', 'knot', 'skirt', 'hair', 'tie', 'strap', 'quiver'] + qa_names, details=ndet)
-    ncuff = N_(rpoly([(Ln - 2.8, -4.6), (Ln + 1.4, -5.4), (Ln + 1.6, 5.4), (Ln - 2.8, 4.6)], [1.0, 1.2, 1.2, 1.0]))
+    cm = lambda pts: [(Ln + x, y * -sg) for x, y in pts]
+    ncuff = N_(sm(cm(CUFF), t=0.9))
     fig.part('ncuff', ncuff, TURQ, cel=0.8, rim=0.6, cast=1.0, cast_on=['nsleeve', 'torso', 'sash'],
-             details=[(N_(sm([(Ln - 2.8, -4.6 * -sg), (Ln + 1.4, -5.4 * -sg), (Ln + 1.4, -3.6 * -sg), (Ln - 2.8, -3.2 * -sg)])), TURQ.hi, 0.6),
-                      (N_(soft([(Ln - 0.4, -4.0), (Ln - 0.2, 0), (Ln - 0.4, 4.0)], 0.6)), TURQ.light, 0.55)])
+             details=[(N_(soft(cm([(-2.0, -4.2), (1.0, -4.8), (3.4, -4.4)]), 0.9)), TURQ.hi, 0.6),
+                      (N_(soft(cm([(-0.6, -4.0), (-0.4, 0), (-0.6, 4.0)]), 0.6)), TURQ.light, 0.5)])
     hand_parts(fig, P, H, hang)
 
     # ---- chaque groupe de morceaux prend sa pose ----
@@ -704,27 +706,23 @@ def head(fig, P):
          cast_on=['crown'], details=[(ellipse(68.4, 15.0, 0.45, 0.7, 20), GOLD.glint, 0.9)])
     # ---- le gros bourrelet de fourrure blanche, en touffes (dessus au soleil, dessous lavande) : une seule forme
     fur_w = P['fur']
-    tufts = [(52.8, 32.4, 2.9, 3.4), (57.4, 31.2, 3.4, 4.0), (63.0, 30.8, 3.6, 4.3), (69.0, 30.6, 3.5, 4.4), (75.0, 30.7, 3.5, 4.3),
-             (80.6, 30.9, 3.2, 4.1), (85.0, 31.4, 2.3, 3.4)]
+    tufts = [(53.0, 32.8, 2.9, 3.3), (57.2, 31.6, 4.0, 4.0), (62.6, 31.3, 3.7, 4.3), (68.0, 30.6, 4.3, 4.6), (74.0, 31.0, 3.8, 4.1),
+             (79.2, 30.7, 4.0, 4.4), (84.2, 31.7, 2.9, 3.5)]
     tsh = []
     for i, (x, y, rx, ry) in enumerate(tufts):
         lean_ = -0.5 * fur_w * (0.6 + 0.4 * math.sin(i * 1.7 + P['ph'] * 2))
-        tsh.append(sm([(x - rx, y + ry * 0.5), (x - rx * 0.85 + lean_ * 0.4, y - ry * 0.45), (x - rx * 0.2 + lean_, y - ry),
-                       (x + rx * 0.55 + lean_ * 0.8, y - ry * 0.82), (x + rx, y - ry * 0.1), (x + rx * 0.8, y + ry * 0.75),
-                       (x, y + ry * 0.95), (x - rx * 0.75, y + ry * 0.85)], t=0.95))
-    core = rpoly([(52.4, 29.2), (85.6, 29.0), (85.6, 34.8), (52.4, 35.2)], 2.0)
+        tsh.append(sm([(x - rx, y + ry * 0.45), (x - rx * 0.85 + lean_ * 0.4, y - ry * 0.45), (x - rx * 0.2 + lean_, y - ry),
+                       (x + rx * 0.55 + lean_ * 0.8, y - ry * 0.82), (x + rx, y - ry * 0.1), (x + rx * 0.85, y + ry * 0.6),
+                       (x + rx * 0.1, y + ry * (0.86 + 0.06 * (i % 3))), (x - rx * 0.75, y + ry * 0.75)], t=0.95))
+    core = rpoly([(52.6, 29.8), (85.4, 29.6), (85.4, 34.0), (52.6, 34.4)], 1.6)
     fur = fused(tsh + [core], smooth=0.25)
-    fdt = []
-    for i, (x, y, rx, ry) in enumerate(tufts):
-        lean_ = -0.5 * fur_w * (0.6 + 0.4 * math.sin(i * 1.7 + P['ph'] * 2))
-        # chaque touffe : son ventre lavande en bas à gauche, son dessus au soleil, un petit creux entre deux touffes
-        fdt += [(sm([(x - rx * 0.95, y + ry * 0.2), (x - rx * 0.3, y + ry * 0.35), (x + rx * 0.4, y + ry * 0.55), (x + rx * 0.7, y + ry * 0.78),
-                     (x, y + ry * 0.95), (x - rx * 0.75, y + ry * 0.85)], t=0.9), FUR.shadow, 0.55),
-                (sm([(x - rx * 0.4 + lean_ * 0.8, y - ry * 0.75), (x + rx * 0.45 + lean_ * 0.8, y - ry * 0.72), (x + rx * 0.82, y - ry * 0.05),
-                     (x + rx * 0.2, y - ry * 0.25)], t=0.9), '#ffffff', 0.9)]
-        if i < len(tufts) - 1:
-            nx_ = (x + rx + tufts[i + 1][0] - tufts[i + 1][2]) / 2
-            fdt += [(soft([(nx_ + 0.3 * lean_, y - ry * 0.55), (nx_, y + 0.2), (nx_ - 0.3, y + ry * 0.7)], 0.9), FUR.shadow, 0.45 + 0.08 * (i % 2))]
+    # chaque touffe a son volume (dégradé : dessus au soleil, bord lavande) ; celles de devant recouvrent leurs voisines :
+    # les touffes se séparent par le volume, sans trait
+    fdt = [(core, FUR.base, 1)]
+    for i in (0, 6, 1, 5, 2, 4, 3):
+        x, y, rx, ry = tufts[i]
+        fdt += [(tsh[i], ('rad', x + rx * 0.3, y - ry * 0.45, rx * 1.55, ry * 1.4,
+                          [(0, '#ffffff'), (0.45, FUR.light), (0.8, FUR.base), (1, FUR.shadow)]), 1)]
     part('fur', fur, FUR, grad=(86, 27, 52, 36, [(0, '#ffffff'), (0.45, FUR.light), (1, FUR.base)]), cel=1.0, rim=0.6, cast=1.3,
          cast_on=['face', 'hair', 'ear', 'crown', 'nose'], details=fdt)
     return names

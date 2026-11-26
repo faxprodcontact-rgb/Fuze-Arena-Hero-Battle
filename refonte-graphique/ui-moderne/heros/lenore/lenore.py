@@ -25,6 +25,7 @@ sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import (Figure, Mat, sm, lock, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp,  # noqa: E402
                      resample)
 from lib import Shape  # noqa: E402
+from visage import placer  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'knights-9'
@@ -68,6 +69,15 @@ FS0 = (93.0, 61.4)                        # l'épaule lointaine
 HIP = (72.0, 89.0)                        # le pivot du buste
 NECK = (82.0, 55.0)                       # le pivot (et le centre d'agrandissement) de la tête
 HINGE = (69.0, 47.0)                      # la charnière de la mâchoire
+
+# Le visage (règle commune ../visage.py, demande du propriétaire du 26/11) : la boîte de la face (sans cheveux, cornes
+# ni oreille), dans le repère de la tête AVANT son agrandissement ×1,1. placer() y donne la place des deux yeux (l'œil du
+# fond un peu plus étroit), du nez (sur la médiane, ENTRE les yeux) et de la bouche (sous le nez) : les traits y sont
+# construits. Le gros nez rond de l'oni est donc dans le visage (plus de nez de profil qui sort de la joue).
+FACE_BOX = (67.4, 26.2, 93.0, 55.4)
+V = placer(FACE_BOX, l_oeil=0.24)
+NOSE = V['nez']                           # la base du nez, sur la médiane
+EYE_N, EYE_F = V['oeil_proche'], V['oeil_fond']
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, jaw=0.0, ph=0.0, ml=0.0, mu=0.0, pg=0.0,
             blink=0.0, G=G0, ang=ANG0, bend=1.0, wr=WR0, length=1.0, shs=(0.0, 0.0), rn=0.0, rf=0.0, far=(0.0, 0.0),
@@ -607,8 +617,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         return (HINGE[0] + r[0], HINGE[1] + r[1])
 
     head = sm([(62.6, 33.2), (65.6, 28.4), (71.0, 26.0), (78.6, 25.2), (85.8, 26.0), (90.0, 28.6), (92.0, 32.2),
-               (92.9, 35.6), (92.3, 38.4), (93.2, 40.0), (95.2, 41.0), (97.4, 41.9), (98.4, 43.8), (97.8, 45.7), (95.8, 46.8), (93.4, 46.8),
-               (92.6, 48.2), (92.3, 49.8), J((92.5, 51.4)), J((92.5, 53.8)), J((91.0, 55.8)), J((85.0, 56.6)), J((78.0, 56.2)),
+               (92.9, 35.6), (93.2, 38.8), (93.3, 42.0), (93.1, 45.2), (92.7, 48.0), (92.4, 49.8), J((92.5, 51.4)), J((92.5, 53.8)), J((91.0, 55.8)), J((85.0, 56.6)), J((78.0, 56.2)),
                J((72.0, 54.4), 0.6), (67.2, 51.0), (63.2, 46.6), (61.8, 40.0)])
     hd = []
     # le plan de côté (vers l'oreille) dans l'ombre ; la joue proche à mi-ton ; le plan de face éclairé
@@ -616,22 +625,37 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                 (67.2, 51.0), (63.2, 46.6)]), skin.shadow, 0.55),
            (sm([(84.0, 41.6), (90.6, 40.6), (92.4, 42.4), (92.4, 46.2), (88.0, 46.6), (84.6, 45.2)]), skin.light, 0.55),
            (sm([(77.0, 26.4), (85.0, 26.4), (88.4, 29.4), (86.8, 33.4), (80.0, 34.0), (76.0, 31.0)]), skin.hi, 0.35)]
-    # le gros nez (avant les yeux) : le flanc dans l'ombre, le bulbe rond éclairé qui dépasse, l'aile, la narine
-    hd += [(sm([(85.6, 40.0), (87.4, 42.0), (90.6, 43.0), (93.2, 45.6), (91.4, 46.9), (88.4, 46.0), (85.8, 43.4)]), skin.shadow, 0.5),
-           (sm([(90.8, 41.8), (95.2, 41.4), (97.6, 42.4), (98.2, 44.4), (97.0, 46.2), (94.0, 46.4), (91.4, 44.8)]), skin.light, 0.85),
-           (ellipse(96.3, 42.7, 1.2, 0.7, 18), skin.hi, 0.95),
-           (sm([(89.8, 43.8), (92.6, 43.4), (94.2, 45.2), (92.6, 46.7), (89.8, 46.3)]), skin.base, 0.92),
-           (ribbon([(90.0, 44.0), (89.6, 45.4), (91.0, 46.7)], [0.1, 0.6, 0.1]), skin.deep, 0.65),
-           (ellipse(93.4, 46.1, 1.0, 0.45, 10), '#2a0b24', 0.9),
-           (ribbon([(89.6, 47.1), (93.0, 47.4), (96.6, 46.6)], [0.1, 0.8, 0.1]), skin.deep, 0.5)]
+    # le gros nez rond de l'oni, SUR la médiane entre les deux yeux (sa base en NOSE) : l'arête qui descend d'entre les
+    # sourcils, le flanc proche dans l'ombre, le gros bout rond éclairé (un peu vers la droite : il avance vers nous et
+    # la tête est tournée vers la droite), les deux ailes, les deux narines (la proche plus grande), l'ombre dessous
+    nx, ny = NOSE
+    hd += [(sm([(nx - 0.2, ny - 6.4), (nx - 1.4, ny - 3.6), (nx - 2.6, ny - 1.0), (nx - 1.0, ny - 0.6), (nx + 0.4, ny - 3.2)]), skin.shadow, 0.45),
+           (ribbon([(nx - 2.8, ny + 1.6), (nx + 0.8, ny + 2.3), (nx + 4.2, ny + 1.6)], [0.1, 0.9, 0.1]), skin.deep, 0.5),
+           (ellipse(nx - 2.0, ny + 0.2, 1.6, 1.4, 0), skin.base, 0.95),
+           (ellipse(nx + 3.0, ny + 0.1, 1.2, 1.2, 0), skin.base, 0.9),
+           (ribbon([(nx - 3.0, ny - 0.6), (nx - 3.3, ny + 0.6), (nx - 2.4, ny + 1.4)], [0.1, 0.6, 0.1]), skin.deep, 0.6),
+           (ribbon([(nx + 4.0, ny - 0.6), (nx + 4.2, ny + 0.5), (nx + 3.6, ny + 1.2)], [0.1, 0.45, 0.1]), skin.deep, 0.5),
+           (ellipse(nx + 0.6, ny - 0.7, 3.3, 2.6, 0), skin.shadow, 0.55),
+           (ellipse(nx + 0.9, ny - 1.2, 3.0, 2.3, 0), skin.light, 0.95),
+           (ellipse(nx + 1.7, ny - 2.0, 1.2, 0.75, 18), skin.hi, 0.95),
+           (ellipse(nx - 1.0, ny + 0.9, 0.95, 0.5, 12), '#2a0b24', 0.9),
+           (ellipse(nx + 2.5, ny + 0.9, 0.7, 0.42, -12), '#2a0b24', 0.85)]
     # les orbites, creusées sous les arcades
-    hd += [(sm([(72.0, 37.6), (79.0, 37.2), (85.0, 39.0), (83.0, 42.4), (77.4, 43.0), (73.2, 41.4)]), skin.deep, 0.5),
-           (sm([(86.4, 38.6), (91.6, 37.2), (92.4, 39.4), (90.6, 42.0), (87.0, 42.2)]), skin.deep, 0.45)]
+    hd += [(sm([(72.0, 37.6), (79.0, 37.2), (83.6, 39.0), (82.4, 42.4), (77.4, 43.0), (73.2, 41.4)]), skin.deep, 0.5),
+           (sm([(85.6, 38.8), (91.6, 37.2), (92.5, 39.4), (91.2, 42.4), (86.2, 42.6)]), skin.deep, 0.45)]
     # les yeux jaunes féroces : même ligne, le lointain plus étroit (son coin intérieur caché par l'arête du nez)
-    eyeN = sm([(74.8, 39.4), (78.4, 39.6), (82.0, 40.8), (80.6, 42.1), (77.2, 42.2), (75.4, 41.2)], sharp=(0, 2))
-    eyeF = sm([(86.8, 39.8), (89.0, 39.6), (90.6, 40.2), (89.8, 41.6), (87.6, 41.7)], sharp=(0, 2))
+    # même dessin pour les deux (coin extérieur haut, coin intérieur bas : le regard furieux), le lointain un peu plus
+    # étroit (largeurs de placer()), sur la même ligne
+    def eye_shape(E, outer_left):
+        ex, ey, ew = E
+        pts = [(-0.5, -1.4), (0.0, -1.2), (0.5, 0.0), (0.31, 1.3), (-0.17, 1.4), (-0.42, 0.4)]
+        if not outer_left:              # l'œil lointain : son coin intérieur est à gauche (miroir)
+            pts = [(-u, v) for u, v in pts]
+        return sm([(ex + u * ew, ey + v) for u, v in pts], sharp=(0, 2))
+    eyeN = eye_shape(EYE_N, True)
+    eyeF = eye_shape(EYE_F, False)
     eye_hot = glow > 0.5
-    for e, (cx, cy), pr in ((eyeN, (78.6, 40.8), 0.85), (eyeF, (88.9, 40.6), 0.62)):
+    for e, (cx, cy), pr in ((eyeN, EYE_N[:2], 0.85), (eyeF, EYE_F[:2], 0.85 * EYE_F[2] / EYE_N[2])):
         if P['blink'] > 0.5:
             hd += [(e.scale(1.12, 1.25, cx, cy), skin.deep, 0.7), (e, skin.shadow, 1),
                    (ribbon([(cx - 3.6 * pr / 0.85, cy - 0.2), (cx, cy + 0.6), (cx + 3.4 * pr / 0.85, cy + 0.2)], [0.1, 0.7, 0.1]), '#2a0b24', 0.9)]
@@ -644,24 +668,25 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                 hd += [(ellipse(cx + 0.9 * pr, cy, 0.62 * pr, 0.95 * pr), PUPIL, 1),
                        (ellipse(cx + 1.15 * pr, cy - 0.45 * pr, 0.3 * pr, 0.26 * pr), '#ffffff', 1)]
     # l'arête du nez, claire, qui descend d'entre les yeux et cache le coin intérieur de l'oeil lointain
-    hd += [(ribbon([(85.9, 38.4), (86.5, 40.4), (88.2, 42.0), (91.6, 42.4)], [0.4, 1.3, 1.1, 0.3]), skin.light, 1),
-           (ribbon([(86.3, 38.8), (86.8, 40.4), (88.4, 41.6)], [0.1, 0.5, 0.1]), skin.hi, 0.6)]
+    hd += [(ribbon([(nx - 0.2, ny - 7.0), (nx + 0.2, ny - 5.0), (nx + 0.8, ny - 3.2)], [0.4, 1.2, 0.3]), skin.light, 1),
+           (ribbon([(nx + 0.1, ny - 6.6), (nx + 0.4, ny - 5.0), (nx + 0.9, ny - 3.6)], [0.1, 0.5, 0.1]), skin.hi, 0.6)]
     # les sourcils noirs épais froncés en V (le bout intérieur plus bas), le dessus bleuté
-    browN = sm([(69.8, 36.6), (73.0, 35.2), (78.4, 35.8), (83.2, 37.2), (86.4, 38.9), (85.6, 40.1), (81.0, 39.4), (76.0, 38.5), (71.4, 38.4)], sharp=(0, 4))
-    browF = sm([(86.6, 38.6), (88.8, 36.6), (91.2, 35.0), (92.7, 35.1), (92.3, 36.4), (89.8, 38.0), (87.6, 39.6)], sharp=(0, 3))
+    browN = sm([(69.8, 36.6), (73.0, 35.2), (78.4, 35.8), (82.4, 37.1), (85.0, 38.8), (84.3, 40.0), (80.4, 39.4), (76.0, 38.5), (71.4, 38.4)], sharp=(0, 4))
+    browF = sm([(85.6, 38.7), (88.4, 36.7), (91.2, 35.0), (92.7, 35.1), (92.3, 36.4), (89.8, 38.0), (87.0, 39.7)], sharp=(0, 3))
     hd += [(browN, ('lin', 78, 35, 78, 40, [(0, MANE.light), (0.4, MANE.base), (1, MANE.deep)]), 1),
            (browF, ('lin', 90, 35, 90, 39.6, [(0, MANE.light), (0.4, MANE.base), (1, MANE.deep)]), 1),
            (ribbon([(71.0, 36.4), (76.0, 35.8), (82.6, 37.4)], [0.1, 0.6, 0.1]), MANE.hi, 0.7),
            (ribbon([(88.4, 37.2), (90.4, 35.8), (92.2, 35.4)], [0.1, 0.45, 0.1]), MANE.hi, 0.6)]
     # les plis de colère : au front et entre les sourcils
-    hd += [(ribbon([(85.0, 34.0), (85.6, 35.8), (86.2, 37.6)], [0.1, 0.8, 0.1]), skin.deep, 0.6),
-           (ribbon([(86.6, 33.6), (87.4, 35.4)], [0.6, 0.1]), skin.shadow, 0.6),
+    hd += [(ribbon([(83.6, 34.0), (84.2, 35.8), (84.8, 37.6)], [0.1, 0.8, 0.1]), skin.deep, 0.6),
+           (ribbon([(85.4, 33.6), (86.2, 35.4)], [0.6, 0.1]), skin.shadow, 0.6),
            (ribbon([(77.6, 31.6), (81.2, 30.8), (85.0, 31.4)], [0.1, 0.8, 0.1]), skin.shadow, 0.5),
            (ribbon([(77.8, 30.7), (81.2, 29.9), (84.8, 30.5)], [0.1, 0.5, 0.1]), skin.hi, 0.5),
            (ribbon([(79.0, 33.8), (82.0, 33.2), (84.4, 33.6)], [0.1, 0.6, 0.1]), skin.shadow, 0.45)]
     # la pommette sous l'oeil proche ; le pli du rictus qui descend du nez au coin de la gueule
     hd += [(ribbon([(75.6, 43.8), (79.6, 43.6), (83.6, 44.6)], [0.1, 1.1, 0.1]), skin.light, 0.6),
-           (ribbon([(89.6, 45.6), (85.6, 46.4), (80.6, 47.2), (77.0, 49.2)], [0.1, 0.9, 0.9, 0.1]), skin.deep, 0.55)]
+           (ribbon([(nx - 3.4, ny - 0.4), (nx - 4.6, ny + 1.0), (nx - 5.8, ny + 2.2), (77.0, 49.2)], [0.1, 0.9, 0.8, 0.1]), skin.deep, 0.55),
+           (ribbon([(nx + 4.4, ny - 0.4), (nx + 5.6, ny + 1.0), (92.2, 48.6)], [0.1, 0.6, 0.1]), skin.deep, 0.45)]
     # la gueule ouverte : la gorge rouge sombre, les gencives, les dents, deux crocs en haut, deux petits en bas
     up_edge = [(77.0, 49.4), (80.0, 48.8), (86.0, 48.6), (90.6, 48.7), (92.6, 49.6)]
     lo_edge = [J((92.6, 50.4)), J((90.2, 53.0)), J((85.0, 53.7)), J((80.0, 53.3)), J((77.4, 51.6))]
@@ -745,11 +770,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.ctx = dict(U=U, G=mapp(U, G), ang=ang + P['lean'] * 1.1, P=P, S=mapp(U, Su),
                    tip=mapp(U, (G[0] + u[0] * SB * lk, G[1] + u[1] * SB * lk)),
                    chest=mapp(TOR, (72, 66)), head=mapp(HEAD, (80, 40)), mouth=mapp(HEAD, (88, 51)),
-                   nostril=mapp(HEAD, (93.4, 46.2)), HEAD=HEAD, ROOT=ROOTM)
+                   nostril=mapp(HEAD, (NOSE[0] + 2.5, NOSE[1] + 0.9)), HEAD=HEAD, ROOT=ROOTM)
     if fx:
         for f_ in fx:
             f_(fig, fig.ctx)
     return fig
+
+
+def mesures():
+    """Les positions RÉELLES des traits (pour visage.verifier), repère de la tête avant l'agrandissement ×1,1 : les
+    yeux et le nez sont construits aux places de placer() ; la bouche = le milieu de la gueule (entre ses deux coins)."""
+    return {'oeil_proche': EYE_N, 'oeil_fond': EYE_F, 'nez': NOSE, 'bouche': ((77.0 + 92.6) / 2, 51.0, 92.6 - 77.0)}
 
 
 def _inv(M):

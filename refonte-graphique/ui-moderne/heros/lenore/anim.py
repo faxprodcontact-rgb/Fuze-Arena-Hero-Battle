@@ -368,7 +368,7 @@ def snort(fig, ctx, k, big=1.0):
         return
     n = ctx['nostril']
     o = env(k, 0, 0.15, 0.55, 1)
-    x = n[0] + 3 + 7 * k * big
+    x = n[0] + 5 + 7 * k * big            # le nez est dans le visage : la volute naît devant la joue
     y = n[1] + 0.5 - 7 * k * big
     fig.fx_front.append(smoke(fig, x, y, (0.8 + 1.7 * k) * big, op=0.8 * o))
     if k > 0.3:

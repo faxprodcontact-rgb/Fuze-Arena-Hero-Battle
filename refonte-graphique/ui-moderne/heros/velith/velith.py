@@ -60,14 +60,17 @@ FRAME = (-3, -2, 126, 120)
 #   replient sous lui ; head : décalage de la tête ; tilt : la tête bascule (− = en arrière) ; jaw : la gueule s'ouvre
 #   (0..2) ; blink : yeux fermés ; ph : phase de la fourrure (les mèches ondulent) ; sway : amplitude des mèches qui
 #   pendent ; crest : la crête du crâne frémit ;
-#   nG : le poing proche sur le manche (point de prise) ; axe : la hache tourne autour du poing (degrés) ;
+#   nG : où se pose le repère G0 de la hache (le poing serre le manche GRIP plus bas) ; axe : la hache tourne autour
+#   de ce repère (degrés) ;
 #   fW : le poignet lointain ; fang : la main lointaine pointe dans cette direction (degrés, 90 = vers le bas) ;
 #   claw : la main lointaine s'ouvre en griffe (0 poing, 1 griffe) ; spread : les doigts s'écartent ; ffront : le bras
 #   lointain passe devant le corps (0/1).
 S_N0 = (45.0, 47.0)                                     # l'épaule proche (sous la fourrure)
-G0 = (25.8, 22.0)                                       # le point de prise du poing proche sur le manche
-W_N0 = (24.0, 31.4)                                     # le poignet proche (dans le brassard)
-E_N0 = (13.2, 54.0)                                     # le coude proche, au repos
+G0 = (25.8, 22.0)                                       # le repère de la hache sur le manche (nG le place)
+HU = (0.1697, 0.9856)                                   # le manche, de la lame vers le pommeau
+GRIP = 9.0                                              # le poing serre le manche plus bas (vers le milieu), d'autant
+W_N0 = (24.0 + GRIP * HU[0], 31.4 + GRIP * HU[1])       # le poignet proche (dans le brassard)
+E_N0 = (15.6, 60.6)                                     # le coude proche, au repos
 LN1, LN2 = math.dist(S_N0, E_N0), math.dist(E_N0, W_N0)
 S_F0 = (98.0, 52.0)                                     # l'épaule lointaine (sous la fourrure)
 W_F0 = (106.4, 79.2)                                    # le poignet lointain, au repos
@@ -352,11 +355,11 @@ def head(fig, P, HEAD):
         hd += [(ellipse(xn + 0.3 * an, ye - 0.05 * an, 0.21 * an, 0.16 * an), '#ffffff', 1),
                (ellipse(xf + 0.3 * af, ye - 0.05 * af, 0.21 * af, 0.16 * af), '#ffffff', 1)]
     # l'arcade : deux bourrelets lourds en V qui se rejoignent au-dessus de la racine du nez, le dessus éclairé
-    hd += [(sm([(xn - 2.0 * an, ye - 1.75 * an), (xn - 0.5 * an, ye - 1.95 * an), (xn + 1.5 * an, ye - 0.95 * an),
-                (xn + 1.35 * an, ye - 0.35 * an), (xn - 0.5 * an, ye - 1.05 * an), (xn - 1.95 * an, ye - 0.95 * an)],
-               sharp=(0, 3)), SKIN.light, 0.95),
-           (sm([(xn - 1.5 * an, ye - 1.85 * an), (xn - 0.3 * an, ye - 1.95 * an), (xn + 1.0 * an, ye - 1.3 * an),
-                (xn - 0.3 * an, ye - 1.6 * an)], sharp=(0, 2)), SKIN.hi, 0.6),
+    hd += [(sm([(xn - 1.6 * an, ye - 1.6 * an), (xn - 0.4 * an, ye - 1.85 * an), (xn + 1.5 * an, ye - 0.95 * an),
+                (xn + 1.35 * an, ye - 0.4 * an), (xn - 0.4 * an, ye - 1.15 * an), (xn - 1.55 * an, ye - 1.0 * an)],
+               sharp=(0, 3)), SKIN.light, 0.9),
+           (sm([(xn - 1.2 * an, ye - 1.7 * an), (xn - 0.3 * an, ye - 1.85 * an), (xn + 1.0 * an, ye - 1.25 * an),
+                (xn - 0.3 * an, ye - 1.55 * an)], sharp=(0, 2)), SKIN.hi, 0.55),
            (sm([(xf - 1.6 * af, ye - 0.35 * af), (xf + 0.5 * af, ye - 2.05 * af), (xf + 1.55 * af, ye - 2.0 * af),
                 (xf + 1.5 * af, ye - 1.25 * af), (xf + 0.5 * af, ye - 1.2 * af), (xf - 1.45 * af, ye + 0.15 * af)],
                sharp=(0, 3)), SKIN.light, 0.95),
@@ -377,7 +380,7 @@ def head(fig, P, HEAD):
     # les plis du rictus, du nez aux coins de la gueule ; les pommettes
     hd += [(ribbon([(nx - 4.2, ny + 0.2), (mx - 6.0, my - 1.2), (mx - 6.4, my + 0.8)], [0.1, 0.8, 0.1]), SKIN.deep, 0.6),
            (ribbon([(nx + 3.4, ny + 0.1), (mx + 5.6, my - 1.4), (mx + 6.2, my + 0.2)], [0.1, 0.6, 0.1]), SKIN.shadow, 0.6),
-           (ellipse(xf + 0.6, ye + 3.4, 2.2, 1.0, -8), SKIN.hi, 0.35), (ellipse(xn - 3.6, ye + 4.0, 1.6, 1.0, 10), SKIN.light, 0.3)]
+           (ellipse(xf + 0.6, ye + 3.4, 2.2, 1.0, -8), SKIN.hi, 0.35), (ellipse(xn - 3.8, ye + 4.2, 1.5, 0.9, 10), SKIN.light, 0.2)]
     # la gueule : un rictus de grand singe, centré sous le nez, mâchoires serrées (elle s'ouvre quand il rugit) —
     # gorge rouge sombre (pas de noir), gencives, deux crocs en haut, deux en bas, petites incisives
     ML, MR = mx - 5.5, mx + 5.1
@@ -399,7 +402,7 @@ def head(fig, P, HEAD):
         hd.append((sm([(x - 1.0, yt - 0.2), (x + 1.0, yt - 0.2), (x + 0.15, yt + L)], sharp=(0, 1, 2)),
                    ('lin', x + 1.0, yt, x - 1.0, yt + L, [(0, IVORY.hi), (0.6, IVORY.light), (1, IVORY.shadow)]), 1))
     yb = my + 1.6 + jaw * 1.6
-    for x, L in ((mx - 2.2, 2.2), (mx + 2.0, 2.2)):
+    for x, L in ((mx - 2.3, 1.9), (mx + 2.1, 1.9)):
         hd.append((sm([(x - 0.95, yb), (x + 0.1, yb - L), (x + 0.95, yb)], sharp=(0, 1, 2)),
                    ('lin', x + 0.9, yb - L, x - 0.9, yb, [(0, IVORY.hi), (1, IVORY.base)]), 1))
     # la lèvre du bas, le menton qui avance, éclairé (centré sur la médiane)
@@ -716,7 +719,7 @@ def near_hand(fig, P):
                       (ellipse(*mapp(MA, (24.0, 9.8)), 0.7, 0.7), IRON.glint, 0.9)])
     # ---- le poing proche, serré sur le manche (les doigts devant) ----
     th = math.radians(AXE0 + 90)                     # les doigts barrent le manche, les jointures côté lame
-    Mh = mchain(MA, mT(23.4, 17.6), (math.cos(th), math.sin(th), -math.sin(th), math.cos(th), 0, 0), mS(0.92))
+    Mh = mchain(MA, mT(23.4 + GRIP * HU[0], 17.6 + GRIP * HU[1]), (math.cos(th), math.sin(th), -math.sin(th), math.cos(th), 0, 0), mS(0.92))
     fist_parts(fig, 'nf', Mh, ['handle', 'narm', 'socket'])
 
 

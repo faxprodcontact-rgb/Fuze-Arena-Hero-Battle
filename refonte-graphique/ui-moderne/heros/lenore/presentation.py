@@ -10,7 +10,10 @@ from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(HERE, '..'))
 import lenore as L  # noqa: E402
+from atelier import mapp  # noqa: E402
+from visage import verifier, guide_svg  # noqa: E402
 
 ROOT = L.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'lenore')
@@ -37,9 +40,45 @@ def ground(w, h, cx, cy, rx, ry, a=150):
     return im.filter(ImageFilter.GaussianBlur(ry * 0.8))
 
 
+def visage(rendu):
+    """visage.png : la tête zoomée ×4 (sur l'image du jeu de 512 px), à gauche telle quelle, à droite avec le calque
+    guide_svg de ../visage.py (sphère, médiane, ligne des yeux, places idéales) ; verifier() doit être vide."""
+    H = L.build().ctx['HEAD']
+    x0, y0, x1, y1 = L.FACE_BOX
+    a, b = mapp(H, (x0, y0)), mapp(H, (x1, y1))
+    boite = (a[0], a[1], b[0], b[1])
+    m = {}
+    for kk, v in L.mesures().items():
+        q = mapp(H, v[:2])
+        m[kk] = (q[0], q[1], v[2] * 1.1) if len(v) == 3 else q
+    defauts = verifier(m, boite)
+    pad = 5
+    frame = (boite[0] - pad, boite[1] - pad - 3, boite[2] - boite[0] + 2 * pad, boite[3] - boite[1] + 2 * pad + 3)
+    hpx = int(frame[3] * 4 * 512 / L.FRAME[3])
+    s1 = L.build(frame=frame).svg()
+    out = []
+    for i, svg in enumerate((s1, s1.replace('</svg>', guide_svg(boite) + '</svg>'))):
+        p = os.path.join(HERE, '_v%d.svg' % i)
+        open(p, 'w').write(svg)
+        subprocess.run(['node', rendu, p, p[:-4] + '.png', str(hpx), '#2c1e4a'], check=True)
+        out.append(Image.open(p[:-4] + '.png').convert('RGBA'))
+        os.remove(p)
+        os.remove(p[:-4] + '.png')
+    A, B = out
+    im = Image.new('RGB', (A.width * 2 + 30, A.height + 40), (30, 20, 52))
+    im.paste(A, (0, 40), A)
+    im.paste(B, (A.width + 30, 40), B)
+    ImageDraw.Draw(im).text((10, 12), 'verifier() : ' + ('aucun defaut (liste vide)' if not defauts else ' ; '.join(defauts)),
+                            fill=(255, 255, 255))
+    im.save(os.path.join(OUT, 'visage.png'))
+    print('défauts du visage :', defauts or 'aucun')
+    return defauts
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     rendu = os.path.join(HERE, '..', 'rendu.cjs')
+    visage(rendu)
     svg = os.path.join(HERE, '_fixe.svg')
     open(svg, 'w').write(L.build().svg())
     big = os.path.join(HERE, '_fixe.png')
