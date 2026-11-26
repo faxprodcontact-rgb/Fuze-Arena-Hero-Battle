@@ -402,7 +402,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     tinfo = tail_parts(fig, P, W)
 
     # ---- le buste (avec le cou), en V ----
-    torso_parts(fig, P)
+    torso_parts(fig, P, TOR, HEAD)
 
     # ---- la ceinture d'or, sa boucle violette, le pagne violet ourlé d'or ----
     belt = sm([(55.0, 79.4), (65.4, 80.4), (76.6, 79.6), (77.0, 84.0), (65.6, 85.2), (54.6, 84.0)], sharp=(0, 2, 3, 5), t=0.9)
@@ -457,7 +457,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- la tête (et la langue) ----
     head_parts(fig, P)
-    fig.pose(['torso'], TOR)
     fig.pose(['hood', 'head', 'tongue'], HEAD)
 
     fig.ctx = dict(P=P, U=U, HEAD=HEAD, tipF=tipF, tipN=tipN, Gf=Gf, Gn=Gn, Ff=Ff, Fn=Fn, W=W,
@@ -468,12 +467,26 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     return fig
 
 
-def torso_parts(fig, P):
+def neck_skin(TOR, HEAD):
+    """Le cou suit la tête : chaque point du buste (repère du dessin) va avec le buste en bas (y >= 58) et avec la tête
+    en haut (y <= 52), en fondu entre les deux ; ainsi le dos du cou reste collé au dos du crâne dans toutes les poses
+    (une seule courbe continue, sans marche, quand la tête tourne, penche ou avance)."""
+    def f(p):
+        t = max(0.0, min(1.0, (58.0 - p[1]) / 6.0))
+        w = t * t * (3 - 2 * t)
+        a, b = mapp(TOR, p), mapp(HEAD, p)
+        return (a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w)
+    return f
+
+
+def torso_parts(fig, P, TOR, HEAD):
     """Le buste en V (épaules nettes, taille fine) avec le cou ; pectoraux verts, la bande de plaques jaunes de la gorge
-    à la ceinture, les côtes du flanc lointain dans l'ombre."""
+    à la ceinture, les côtes du flanc lointain dans l'ombre. Le dos du cou monte en une seule courbe continue de
+    l'épaule jusqu'au dos du crâne (il se confond avec lui : la tête naît du cou, sans marche ni bosse)."""
     torso = sm([(92.4, 52.0), (91.6, 58.6), (89.4, 62.6), (91.0, 65.6), (90.0, 69.4), (86.4, 72.4), (81.4, 75.4),
                 (77.6, 79.0), (76.6, 83.6), (66.0, 84.6), (55.4, 83.6), (55.0, 78.0), (53.2, 72.4), (51.0, 67.6),
-                (51.6, 63.4), (55.4, 60.6), (62.0, 59.2), (68.6, 57.6), (73.6, 54.2), (78.0, 49.6), (86.0, 48.6)], t=0.92)
+                (51.6, 63.4), (55.4, 60.6), (62.0, 59.2), (67.8, 58.3), (73.2, 56.7), (77.4, 54.0), (79.6, 50.8),
+                (80.3, 47.6), (80.7, 44.8), (83.6, 42.6), (89.0, 43.0), (92.8, 46.6)], t=0.92)
     det = []
     # l'ombre du côté proche (bas-gauche), douce
     det.append((torso, ('lin', 54, 72, 66, 68, [(0, SCALE.deep, 0.45), (1, SCALE.deep, 0)]), 1))
@@ -511,9 +524,23 @@ def torso_parts(fig, P):
         b2 = lerp(b, m, 0.1)
         det.append((ribbon([a2, m, b2], [0.1, 0.55 + 0.05 * j, 0.1]), BELLY.shadow, 0.6))
         det.append((ribbon([(a2[0] + 0.3, a2[1] - 0.7), (m[0] + 0.3, m[1] - 0.75), (b2[0] + 0.3, b2[1] - 0.7)], [0.05, 0.35, 0.05]), BELLY.hi, 0.55))
-    # la gorge sous la tête : l'ombre portée de la mâchoire
-    det.append((sm([(80.4, 54.6), (86.0, 56.6), (91.8, 55.4), (91.8, 58.2), (86.0, 59.6), (80.4, 57.6)]), SCALE.deep, 0.35))
-    fig.part('torso', torso, SCALE, grad=(92, 52, 56, 84, [(0, SCALE.light), (0.45, SCALE.base), (1, SCALE.shadow)]),
+    # le dos du cou sous le crâne : dans l'ombre de la tête (la même teinte que le dos du crâne, puis elle s'éclaircit en
+    # descendant vers l'épaule : la tête et le cou ne font qu'un)
+    det.append((sm([(80.0, 42.0), (88.0, 42.0), (88.4, 50.0), (85.6, 56.6), (80.4, 60.0), (72.0, 59.4), (77.0, 54.6),
+                    (79.6, 49.6)]), ('lin', 81, 50, 74, 59, [(0, SCALE.shadow, 1), (0.5, SCALE.shadow, 0.5), (1, SCALE.shadow, 0)]), 1))
+    # sous la mâchoire : une ombre douce, sur la bande jaune seulement (pas de voile gris)
+    det.append((sm([(84.6, 54.6), (88.6, 55.8), (92.0, 55.0), (91.6, 58.0), (87.6, 58.6), (84.4, 57.4)]),
+                ('lin', 88, 55, 88, 59, [(0, BELLY.shadow, 0.55), (1, BELLY.shadow, 0)]), 1))
+    sk = neck_skin(TOR, HEAD)
+
+    def fill_(fl):
+        if isinstance(fl, tuple) and fl[0] == 'lin':
+            a, b = mapp(TOR, fl[1:3]), mapp(TOR, fl[3:5])
+            return ('lin', a[0], a[1], b[0], b[1], fl[5])
+        return fl
+    det = [(sh.map(sk), fill_(fl), op) for sh, fl, op in det]
+    g0, g1 = mapp(TOR, (92, 52)), mapp(TOR, (56, 84))
+    fig.part('torso', torso.map(sk), SCALE, grad=(g0[0], g0[1], g1[0], g1[1], [(0, SCALE.light), (0.45, SCALE.base), (1, SCALE.shadow)]),
              cel=1.7, rim=0.7, cast=1.2, details=det, occl=(SCALE.deep, 0.25, 3.2))
 
 
@@ -523,11 +550,8 @@ def hood_parts(fig, P):
     hood = sm([(82.0, 44.6), (77.4, 41.4), (69.4, 40.2), (61.4, 41.4), (55.4, 44.6), (52.0, 49.4), (51.8, 54.6),
                (54.2, 58.6), (60.0, 60.6), (68.4, 61.0), (76.0, 60.0), (82.0, 58.0)], t=0.95)
     det = []
-    # la face avant jaune (en biais), le long du cou, dans l'ombre de la tête
-    face = sm([(80.4, 43.8), (76.6, 45.8), (74.6, 50.6), (74.6, 55.6), (76.4, 60.0), (82.4, 58.4)], t=0.9)
-    det.append((face, ('lin', 76, 46, 80, 60, [(0, BELLY.light), (0.5, BELLY.base), (1, BELLY.shadow)]), 1))
-    det.append((sm([(78.8, 46.0), (77.0, 48.6), (76.6, 53.6), (77.8, 58.6), (82.4, 58.4), (82.4, 45.0)]), BELLY.shadow, 0.6))
-    det.append((ribbon([(77.2, 46.4), (75.8, 50.8), (75.8, 55.4), (77.0, 59.0)], [0.1, 0.8, 0.8, 0.1]), BELLY.hi, 0.5))
+    # le creux du capuchon le long du cou (il s'enroule autour) : une ombre douce, sans bord
+    det.append((sm([(70.0, 42.0), (82.0, 42.0), (82.0, 60.0), (70.0, 60.0)]), ('lin', 82, 50, 70, 50, [(0, SCALE.deep, 0.5), (1, SCALE.deep, 0)]), 1))
     # le dos du capuchon : le bas dans l'ombre (il se creuse), un liseré clair d'écailles au bord du haut
     det.append((hood, ('lin', 0, 46, 0, 60, [(0, SCALE.shadow, 0), (0.45, SCALE.shadow, 0.55), (1, SCALE.deep, 0.6)]), 1))
     det.append((ribbon([(53.0, 51.2), (55.4, 46.2), (61.0, 42.6), (69.2, 41.4), (76.6, 42.6)], [0.2, 1.2, 1.5, 1.3, 0.2]), SCALE.light, 0.6))
@@ -566,7 +590,9 @@ def head_parts(fig, P):
     # les plans : le dessus du crâne éclairé ; la joue et l'arrière de la tête à mi-ton ; le dessous dans l'ombre
     hd.append((sm([(81.6, 44.0), (84.6, 41.0), (89.0, 40.0), (93.6, 41.0), (97.6, 43.4), (99.6, 45.8), (95.4, 44.6),
                    (90.6, 44.0), (86.0, 44.4), (82.4, 46.4)], t=0.9), SCALE.light, 0.55))
-    hd.append((sm([(80.4, 47.6), (84.4, 48.8), (86.6, 51.4), (85.6, 55.8), (82.0, 54.4)]), SCALE.shadow, 0.6))
+    # le dos du crâne se fond dans le cou (même ombre que le haut du cou, sans bord : la tête naît du cou)
+    hd.append((sm([(79.0, 42.0), (86.0, 44.0), (88.6, 49.0), (87.4, 57.0), (79.0, 57.0)]),
+               ('lin', 80.4, 50, 87.6, 49, [(0, SCALE.shadow, 1), (0.45, SCALE.shadow, 0.7), (1, SCALE.shadow, 0)]), 1))
     # une grande écaille du crâne, douce
     hd.append((sm([(85.2, 41.8), (89.2, 41.0), (92.8, 41.8), (91.2, 43.2), (87.0, 43.4)]), SCALE.hi, 0.35))
     # la mâchoire du bas et la gorge : jaune clair, en plaques
@@ -622,8 +648,10 @@ def head_parts(fig, P):
                      (85.6, 46.4)], sharp=(0, 4), t=0.9)), SCALE.base, 1))
     hd.append((E(sm([(85.0, 44.4), (87.2, 43.2), (90.6, 43.6), (93.0, 45.4), (94.0, 47.2), (91.4, 45.8), (87.8, 44.6)], t=0.9)), SCALE.light, 0.85))
     hd.append((E(ribbon([(85.8, 46.5), (88.4, 46.3), (90.8, 47.0), (93.2, 47.9)], [0.1, 0.6, 0.5, 0.1])), SCALE.deep, 0.7))
+    # l'ombre sous la mâchoire (à la place de l'ombre automatique, qui marquait aussi le dos du crâne d'un bord)
+    hd.append((ribbon([lo((86.4, 55.6)), lo((90.6, 55.7)), lo((95.4, 54.9)), lo((98.6, 53.4))], [0.1, 0.8, 0.7, 0.1]), BELLY.shadow, 0.8))
     fig.part('head', head, SCALE, grad=(100, 41, 81, 56, [(0, SCALE.light), (0.5, SCALE.base), (1, SCALE.shadow)]),
-             cel=1.1, rim=0.6, cast=0.7, details=hd)
+             cel=0, rim=0.6, cast=0.7, cast_on=['hood'], details=hd)
     # ---- la langue fourchue ----
     tg = P['tg']
     if tg > 0.15:

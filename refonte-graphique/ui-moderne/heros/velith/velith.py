@@ -462,7 +462,6 @@ def head(fig, P, HEAD):
 FIST_FINGERS = [(-6.6, -3.1, 5.6), (-3.1, 0.3, 6.2), (0.3, 3.4, 5.8), (3.4, 6.1, 4.6)]   # (haut, bas, jointure) de
 FIST_XL = -2.6                                                                           # l'index au petit doigt
 FIST_GRIP = 29.5                 # poing proche : le creux du poing sur le manche (distance depuis le haut du manche)
-FIST_HN = (-5.4, 4.0)            # poing proche : le talon de la main (vers le poignet, en bas à gauche)
 FIST_KF, FIST_WF, FIST_HF = 0.95, (-3.2, -9.6), (-3.4, -5.6)   # poing lointain : taille, poignet, talon (en haut)
 
 
@@ -478,6 +477,14 @@ def fist_parts(fig, name, M, cast_on, wrist, heel):
     body = sm([(-8.8, -3.6), (-6.6, -7.6), (-2.0, -8.2), (2.6, -6.9), (5.2, -4.8), (6.4, 0.2), (5.8, 4.8), (3.6, 7.4),
                (-1.2, 8.0), (-5.6, 7.2), (-8.4, 3.8), (-9.0, 0.0)])
     if wrist is not None:
+        if heel is None:                               # le talon : vers le poignet, depuis le milieu de la paume
+            a_, b_, c_, d_, e_, f_ = M
+            det_ = a_ * d_ - b_ * c_
+            qx, qy = wrist[0] - e_, wrist[1] - f_
+            wl = ((d_ * qx - c_ * qy) / det_, (-b_ * qx + a_ * qy) / det_)
+            c0 = (-2.6, 1.0)
+            dl = math.hypot(wl[0] - c0[0], wl[1] - c0[1]) or 1
+            heel = (c0[0] + (wl[0] - c0[0]) * 4.2 / dl, c0[1] + (wl[1] - c0[1]) * 4.2 / dl)
         hw = mapp(M, heel)
         neck = limb([hw, lerp(hw, wrist, 0.55), wrist], [8.8, 8.4, 8.2])
         sh = geom_shape(unary_union([poly_of(L(body)), poly_of(neck)]))
@@ -771,7 +778,7 @@ def near_hand(fig, P):
     O = (22.4 + FIST_GRIP * HU[0], 2.0 + FIST_GRIP * HU[1])
     Mh = mchain(MA, mT(*O), (HU[1], -HU[0], HU[0], HU[1], 0, 0), mS(0.92))
     nE, nW = fig.ctx_arm['nE'], fig.ctx_arm['nW']
-    fist_parts(fig, 'nf', Mh, ['handle', 'mantle', 'socket'], lerp(nW, nE, -3.0 / (math.dist(nE, nW) or 1)), FIST_HN)
+    fist_parts(fig, 'nf', Mh, ['handle', 'mantle', 'socket'], lerp(nW, nE, -4.6 / (math.dist(nE, nW) or 1)), None)
 
 
 def main():

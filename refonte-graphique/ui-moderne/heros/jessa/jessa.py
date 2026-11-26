@@ -452,13 +452,13 @@ def head(fig, P):
     # qui suit l'arrondi du front et file sous le bord du chapeau (loin du sourcil) ; de l'autre côté, elle part vers
     # l'arrière de la tête et passe derrière le contour. Son ombre douce sur la peau, un reflet sur le bord du haut.
     ST1 = [(78.4, 45.9), (77.2, 44.3), (75.9, 42.9), (74.6, 41.5), (73.6, 40.4)]
-    ST2 = [(82.0, 46.4), (83.2, 46.0), (84.6, 45.5)]
+    ST2 = [(81.8, 46.2), (83.0, 45.9), (84.6, 45.5)]
     def band(st, w, dx=0.0, dy=0.0):
         c_ = crpath([(x + dx, y + dy) for x, y in st], 12)
         l_, r_ = sides(c_, [w] * len(c_))
         return sm(l_ + r_[::-1], sharp=(0, len(l_) - 1, len(l_), 2 * len(l_) - 1), t=0.9)
     for st, w in ((ST1, 1.05), (ST2, 1.0)):
-        fd += [(band(st, w * 0.95, -0.35, 0.55), SKIN.deep, 0.3),
+        fd += [(band(st, w * 0.9, -0.15, 0.4), SKIN.deep, 0.22),
                (band(st, w), ('lin', st[0][0], st[0][1], st[-1][0], st[-1][1], [(0, PATCH.base), (1, PATCH.shadow)]), 1),
                (band(st, 0.26, 0.18, -0.3), PATCH.light, 0.7)]
     # le sourcil fin et froncé (il descend vers le nez)
@@ -511,13 +511,12 @@ def head(fig, P):
     # ---- le cache-œil de cuir sur l'œil du fond (à la place de l'œil du fond donnée par VZ) : un écusson de cuir bombé
     # (bord du haut droit, bas arrondi), un bord relevé plus clair, le reflet de la lumière en haut à droite, un rivet d'or
     # à l'attache de la lanière ----
-    patch = sm([(77.6, 46.3), (79.6, 45.5), (81.6, 45.4), (82.9, 46.2), (83.0, 47.6), (82.2, 49.1), (80.6, 50.0), (78.9, 49.8),
-                (77.7, 48.6), (77.3, 47.3)], t=0.92)
-    part('patch', patch, PATCH, grad=(83.0, 45.4, 77.3, 50.0, [(0, PATCH.light), (0.45, PATCH.base), (1, PATCH.shadow)]), cel=0.35,
-         rim=0.3, cast=0.5, cast_on=['face'],
-         details=[(rim_band(patch, 0.42), PATCH.light, 0.3),
-                  (ellipse(81.0, 46.9, 2.0, 1.2, -10), ('rad', 81.4, 46.6, 2.2, 1.4, [(0, PATCH.light, 0.55), (1, PATCH.light, 0)]), 1),
-                  (ellipse(79.4, 48.6, 1.8, 1.0, -12), PATCH.shadow, 0.35),
+    patch = sm([(77.4, 46.2), (79.8, 45.5), (81.8, 45.5), (82.5, 46.5), (82.3, 48.1), (81.2, 49.5), (79.7, 50.3), (78.3, 49.7),
+                (77.4, 48.3)], t=0.92)
+    part('patch', patch, PATCH, grad=(82.5, 45.5, 77.4, 50.3, [(0, PATCH.light), (0.45, PATCH.base), (1, PATCH.shadow)]), cel=0.3,
+         rim=0.3, cast=0.35, cast_on=['face'],
+         details=[                  (ellipse(80.9, 47.0, 1.9, 1.3, -10), ('rad', 81.3, 46.7, 2.1, 1.5, [(0, PATCH.light, 0.45), (1, PATCH.light, 0)]), 1),
+                  (ellipse(79.2, 48.8, 1.6, 1.0, -20), PATCH.shadow, 0.3),
                   (ellipse(78.25, 46.45, 0.5, 0.5), GOLD.shadow, 1), (ellipse(78.2, 46.4, 0.36, 0.36), GOLD.base, 1),
                   (ellipse(78.3, 46.3, 0.14, 0.12), GOLD.glint, 1)])
     # ---- le nez, petit, sur la médiane (sans contour : il est dans le visage) ; son petit bout arrondi ----
@@ -617,6 +616,11 @@ def hat(fig, P):
         m_ = len(c_)
         gal.append((ribbon(c_, [w_ * min(1.0, 0.3 + i / 2.5, 0.3 + (m_ - 1 - i) / 2.5) for i in range(m_)], sharp_ends=False), col, op))
     bd = [(sm(FLAP[2:] + [(46.0, 40.0), (40.0, 40.0), (40.0, 20.0)]), ('lin', 60, 22, 46, 38, [(0, HAT.base, 0), (1, HAT.shadow, 0.55)]), 1),
+          # l'aile est un peu creuse : la lumière glisse sur sa moitié droite (là où elle s'enroule vers la calotte)
+          (ellipse(57.4, 28.6, 4.2, 6.4, 12), ('rad', 58.2, 27.6, 4.6, 6.8, [(0, HAT.light, 0.4), (1, HAT.light, 0)]), 1),
+          # le pli doux que tire la broche (l'aile est épinglée)
+          (ribbon(crpath([(59.0, 32.4), (55.6, 29.6), (52.0, 27.8), (49.4, 27.6)], 12), swell(12, 1.4)), HAT.shadow, 0.35),
+          (ribbon(crpath([(59.4, 31.2), (56.4, 28.4), (53.0, 26.6), (50.6, 26.2)], 12), swell(12, 0.7)), HAT.light, 0.35),
           (ribbon(crpath([(51.8, 22.4), (55.0, 21.6), (58.4, 23.4), (60.4, 26.8), (61.0, 30.4)], 16), swell(16, 1.2)), HAT.light, 0.7),
           (ribbon(crpath([(53.4, 22.2), (56.4, 22.4), (58.6, 24.6)], 10), swell(10, 0.45)), HAT.hi, 0.55),
           (fold, ('lin', 0, 33.8, 0, 39.2, [(0, HAT.deep, 0), (0.75, HAT.deep, 0.3), (1, HAT.deep, 0.05)]), 1),
