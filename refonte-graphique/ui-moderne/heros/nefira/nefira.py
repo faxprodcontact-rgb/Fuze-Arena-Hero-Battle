@@ -90,28 +90,46 @@ def ik(S, W, L1, L2, bend):
 
 
 def arm_shape(S, E, W, ws):
-    """Un bras d'un seul tenant : la ligne passe par l'épaule, tourne en douceur au coude, finit au poignet ; la largeur
-    s'affine de l'épaule au poignet (le coude reste plein : aucune jointure visible)."""
+    """Un bras d'un seul tenant : la ligne passe par l'épaule, tourne au coude sur un ARC de cercle (rayon toujours plus
+    grand que la demi-largeur : le dedans du coude ne se replie jamais), finit au poignet ; la largeur s'affine de
+    l'épaule au poignet (le coude reste plein : aucune jointure visible)."""
     l1, l2 = math.dist(S, E), math.dist(E, W)
-    r = min(2.6, 0.32 * l1, 0.32 * l2)
-    a = lerp(E, S, r / l1)
-    b = lerp(E, W, r / l2)
-    c = []
-    for i in range(6):
-        c.append(lerp(S, a, i / 6))
-    for i in range(7):
-        t = i / 6
-        c.append(((1 - t) ** 2 * a[0] + 2 * (1 - t) * t * E[0] + t * t * b[0], (1 - t) ** 2 * a[1] + 2 * (1 - t) * t * E[1] + t * t * b[1]))
-    for i in range(1, 6):
-        c.append(lerp(b, W, i / 5))
-    n = len(c)
+    d1 = norm((E[0] - S[0], E[1] - S[1]))
+    d2 = norm((W[0] - E[0], W[1] - E[1]))
+    cosphi = max(-1.0, min(1.0, d1[0] * d2[0] + d1[1] * d2[1]))
+    phi = math.acos(cosphi)                      # l'angle du coude (0 = bras tendu)
     w0, we, ww = ws
+    rho = we / 2 + 0.6
+    t = rho * math.tan(phi / 2)
+    t = min(t, 0.45 * l1, 0.45 * l2)
+    rho = t / math.tan(phi / 2) if phi > 1e-3 else 0
+    a = add(E, d1, -t)
+    b = add(E, d2, t)
+    c = []
+    n1 = 8
+    for i in range(n1):
+        c.append(lerp(S, a, i / n1))
+    if phi > 1e-3:
+        # le centre de l'arc, du côté où le bras tourne
+        side = 1 if d1[0] * d2[1] - d1[1] * d2[0] > 0 else -1
+        nrm = (-d1[1] * side, d1[0] * side)
+        ctr = add(a, nrm, rho)
+        a0 = math.atan2(a[1] - ctr[1], a[0] - ctr[0])
+        for k in range(7):
+            ang = a0 + side * phi * k / 6
+            c.append((ctr[0] + rho * math.cos(ang), ctr[1] + rho * math.sin(ang)))
+    else:
+        c.append(a)
+    for i in range(1, 7):
+        c.append(lerp(b, W, i / 6))
+    n = len(c)
+    ke = n1 + 3
     widths = []
     for i in range(n):
-        if i <= 9:
-            widths.append(w0 + (we - w0) * i / 9)
+        if i <= ke:
+            widths.append(w0 + (we - w0) * i / ke)
         else:
-            widths.append(we + (ww - we) * (i - 9) / (n - 1 - 9))
+            widths.append(we + (ww - we) * (i - ke) / (n - 1 - ke))
     return limb(c, widths)
 
 
@@ -280,11 +298,12 @@ def wing(fig, pre, mp, far, P):
 
 def wing_map(far, lift, P):
     """Le repère d'une aile : l'aile proche tourne autour de sa racine ; la lointaine est son miroir resserré."""
+    st = mS(1 + 0.07 * P['ws'], 1 + 0.03 * P['ws'], R_N[0], R_N[1])      # l'aile s'ouvre : elle s'élargit un peu
     if not far:
-        M = mR(lift, R_N[0], R_N[1])
+        M = mchain(mR(lift, R_N[0], R_N[1]), st)
         return lambda p: mapp(M, p)
     # miroir : la racine (56, 50) vient en (88.4, 49.4), largeur × 0,7 ; la levée tourne dans l'autre sens
-    M = mchain(mR(-lift, 88.4, 49.4), mT(88.4, 49.4), mS(-0.7, 1.0), mT(-R_N[0], -R_N[1]))
+    M = mchain(mR(-lift, 88.4, 49.4), mT(88.4, 49.4), mS(-0.7, 1.0), mT(-R_N[0], -R_N[1]), st)
     return lambda p: mapp(M, p)
 
 
@@ -307,9 +326,29 @@ def ankh_shapes():
 
 # ---------- le dessin ----------
 
+class FigN(Figure):
+    """La figure, avec en plus un liseré de lumière possible autour de toute la silhouette (aura : (couleur, largeur,
+    opacité)) : une copie des silhouettes, plus large, peinte juste sous le contour (aucun flou)."""
+    aura = None
+
+    def svg(self, size=None, bg=None):
+        out = Figure.svg(self, size, bg)
+        if self.aura:
+            col, w, op = self.aura
+            i = out.index('<g stroke-linejoin="round">')
+            j = out.index('</g>', i) + 4
+            sil = out[i:j]
+            import re
+            glow = re.sub(r'fill="[^"]+" stroke="[^"]+" stroke-width="[^"]+"',
+                          'fill="%s" stroke="%s" stroke-width="%.2f"' % (col, col, 2 * self.ow + 2 * w), sil)
+            glow = glow.replace('<g stroke-linejoin="round">', '<g stroke-linejoin="round" opacity="%.3f">' % op, 1)
+            out = out[:i] + glow + out[i:]
+        return out
+
+
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P = dict(REST, **(pose or {}))
-    fig = Figure(*frame, ow=ow)
+    fig = FigN(*frame, ow=ow)
     br = P['breath']
     U = mchain(mT(P['lean'] * 0.35, 0), mR(P['lean'] * 1.0, 70, 100))           # le haut du corps (depuis les hanches)
     UC = mchain(U, mT(0, -0.55 * br))                                            # ce qui monte avec le souffle
@@ -335,7 +374,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ua = math.degrees(math.atan2(EF[1] - SF[1], EF[0] - SF[0]))
     Lf = math.dist(EF, WF)
     Lu = math.dist(SF, EF)
-    farm = arm_shape(SF, EF, WF, (4.6, 3.9, 3.2))
+    farm = arm_shape(SF, EF, WF, (5.0, 4.4, 3.7))
     # brassard d'or près de l'épaule, bracelet d'or à perle de lapis au poignet (ils font le tour du bras)
     bra = xf(rpoly([(Lu * 0.3, -4), (Lu * 0.5, -4), (Lu * 0.5, 4), (Lu * 0.3, 4)], 0.3), SF[0], SF[1], ua)
     brl = xf(ribbon([(Lu * 0.31, -1.6), (Lu * 0.4, -2.2), (Lu * 0.49, -1.6)], [0.1, 0.6, 0.1]), SF[0], SF[1], ua)
@@ -437,7 +476,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fa_ = math.degrees(math.atan2(W[1] - E[1], W[0] - E[0]))
     Ln = math.dist(E, W)
     Lun = math.dist(S, E)
-    narm = arm_shape(S, E, W, (4.9, 4.0, 3.1))
+    narm = arm_shape(S, E, W, (5.1, 4.3, 3.4))
     ndet = [(ribbon([lerp(S, E, 0.2), lerp(S, E, 0.55), lerp(E, W, 0.1), lerp(E, W, 0.7)], [0.1, 0.9, 0.7, 0.1]).move(0.9, 0.1), SKIN.hi, 0.3),
             # le brassard (sous le collier) et le bracelet du poignet
             (xf(rpoly([(Lun * 0.22, -4), (Lun * 0.42, -4), (Lun * 0.42, 4), (Lun * 0.22, 4)], 0.3), S[0], S[1], ua_), GOLD.base, 1),
