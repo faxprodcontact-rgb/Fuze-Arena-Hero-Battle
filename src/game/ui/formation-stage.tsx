@@ -27,52 +27,6 @@ const TINT: Record<Element, { sky: [string, string]; accent: string; flag: strin
 /** Le fond de la dalle et la haie. */
 const BACK = 122;
 
-/** Une tour : ses murs (de `x - w/2` à `x + w/2`, jusqu'à `h` au-dessus du sol) et son toit pointu (haut de `rh`). */
-type Tower = { x: number; w: number; h: number; rh: number };
-/** Le toit d'une tour, du bord gauche au bord droit en passant par la pointe (déborde un peu des murs). */
-const roof = ({ x, w, h, rh }: Tower, y: number, k: number) =>
-  `L${f(x - w / 2 - 1.6 * k)} ${f(y - h)} Q${f(x - 1.2 * k)} ${f(y - h - rh * 0.5)} ${f(x)} ${f(y - h - rh)} Q${f(x + 1.2 * k)} ${f(y - h - rh * 0.5)} ${f(x + w / 2 + 1.6 * k)} ${f(y - h)}`;
-
-/**
- * Un château lointain posé sur la crête (le pied au milieu en x, y ; `k` = sa taille) : trois tours à toits pointus
- * reliées par un mur, une porte sombre, deux fenêtres allumées, un fanion. Une seule forme, un seul contour léger ;
- * murs et toits sont mêlés à la couleur de l'horizon : plus c'est loin, plus c'est voilé.
- */
-function Castle({ p, x, y, k, haze, roofC, flag }: { p: string; x: number; y: number; k: number; haze: string; roofC: string; flag: string }) {
-  const towers: Tower[] = [
-    { x: x - 14 * k, w: 8 * k, h: 30 * k, rh: 13 * k },
-    { x, w: 9 * k, h: 41 * k, rh: 16 * k },
-    { x: x + 14 * k, w: 8 * k, h: 25 * k, rh: 11 * k },
-  ];
-  const [L, C, R] = towers as [Tower, Tower, Tower];
-  const wall = 18 * k;
-  // la silhouette entière, de bas en haut et de gauche à droite : tour, mur, tour du milieu, mur, tour
-  const d = `M${f(L.x - L.w / 2)} ${f(y)} L${f(L.x - L.w / 2)} ${f(y - L.h)} ${roof(L, y, k)} L${f(L.x + L.w / 2)} ${f(y - L.h)}`
-    + ` L${f(L.x + L.w / 2)} ${f(y - wall)} L${f(C.x - C.w / 2)} ${f(y - wall)} L${f(C.x - C.w / 2)} ${f(y - C.h)} ${roof(C, y, k)} L${f(C.x + C.w / 2)} ${f(y - C.h)}`
-    + ` L${f(C.x + C.w / 2)} ${f(y - wall)} L${f(R.x - R.w / 2)} ${f(y - wall)} L${f(R.x - R.w / 2)} ${f(y - R.h)} ${roof(R, y, k)} L${f(R.x + R.w / 2)} ${f(y - R.h)}`
-    + ` L${f(R.x + R.w / 2)} ${f(y)} Z`;
-  const wallC = mix('#a9a3e8', haze, 0.5);
-  const top = y - C.h - C.rh;
-  return (
-    <g>
-      {/* le fanion, au sommet de la tour du milieu */}
-      <path d={`M${f(x)} ${f(top + 1)} V${f(top - 9 * k)}`} stroke={mix('#2a1257', haze, 0.45)} stroke-width={f(Math.max(0.9, 1.1 * k))} stroke-linecap="round" />
-      <path class="bk-flag" style={{ transformOrigin: `${f(x)}px ${f(top - 6 * k)}px` }}
-        d={`M${f(x + 0.4)} ${f(top - 9 * k)} Q${f(x + 4 * k)} ${f(top - 9.6 * k)} ${f(x + 8 * k)} ${f(top - 7 * k)} Q${f(x + 4 * k)} ${f(top - 5.2 * k)} ${f(x + 0.4)} ${f(top - 4.6 * k)} Z`}
-        fill={mix(flag, haze, 0.25)} />
-      <Vol p={p} d={d} fill={wallC} line={1} inkA={0.28} depth={2.4 * k} shade={0.22} rim={0.45}>
-        {towers.map((t) => (
-          <path d={`M${f(t.x - t.w / 2 - 2 * k)} ${f(y - t.h + 0.6)} ${roof(t, y, k)} Z`} fill={mix(roofC, haze, 0.35)} />
-        ))}
-        {/* la porte (une arche sombre) et deux fenêtres où brille une lampe */}
-        <path d={`M${f(x - 3 * k)} ${f(y)} V${f(y - 5 * k)} Q${f(x - 3 * k)} ${f(y - 8.5 * k)} ${f(x)} ${f(y - 8.5 * k)} Q${f(x + 3 * k)} ${f(y - 8.5 * k)} ${f(x + 3 * k)} ${f(y - 5 * k)} V${f(y)} Z`} fill={mix('#3a2a7e', haze, 0.3)} />
-        <rect x={f(x - 1.2 * k)} y={f(y - 31 * k)} width={f(2.4 * k)} height={f(4 * k)} rx={f(1.2 * k)} fill="#fff1b8" opacity="0.9" />
-        <rect x={f(L.x - 1.1 * k)} y={f(y - 22 * k)} width={f(2.2 * k)} height={f(3.4 * k)} rx={f(1.1 * k)} fill="#fff1b8" opacity="0.75" />
-      </Vol>
-    </g>
-  );
-}
-
 function Ground({ clan }: { clan: Clan }) {
   const el = clanElement(clan);
   const t = TINT[el];
@@ -97,11 +51,8 @@ function Ground({ clan }: { clan: Clan }) {
       <circle class="bk-breathe" cx="392" cy="10" r="90" fill={`url(#${p}-sun)`} />
       <g class="bk-cloud" opacity="0.9"><Vol p={p} d={cloud(104, 40, 52, 6)} fill="#ffffff" line={0} depth={4} shade={0.15} rim={0} /></g>
 
-      {/* au loin : une crête voilée et ses châteaux (dans les trouées entre les héros du fond), une brume à leur pied */}
+      {/* au loin : une crête voilée, une brume à son pied */}
       <Vol p={p} d={peaks([[34, 24, 62], [214, 20, 86], [398, 26, 66]], BACK - 4, BACK + 4)} fill={`url(#${p}-ridge)`} line={0} depth={3} shade={0.12} rim={0.3} />
-      <Castle p={p} x={36} y={BACK - 26} k={0.62} haze={t.sky[1]} roofC={t.accent} flag={t.flag} />
-      <Castle p={p} x={212} y={BACK - 22} k={0.92} haze={t.sky[1]} roofC={t.accent} flag={t.flag} />
-      <Castle p={p} x={398} y={BACK - 28} k={0.56} haze={t.sky[1]} roofC={t.accent} flag={t.flag} />
       <rect y={BACK - 40} width={W} height="40" fill={`url(#${p}-mist)`} />
       <Vol p={p} d={hills(13, BACK - 4, 12, 110, BACK + 4)} fill={`url(#${p}-hill)`} line={1.2} inkA={0.35} depth={5} shade={0.2} rim={0.35} />
 
