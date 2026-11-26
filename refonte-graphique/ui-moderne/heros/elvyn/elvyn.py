@@ -22,7 +22,7 @@ sys.path.insert(0, HERE)
 from atelier import (Figure, Mat, sm, lock, limb, ribbon, xf, bez, resample, sides, ellipse, rpoly,  # noqa: E402
                      mchain, mT, mR, mS, mskx, mapp)
 from lib import Shape  # noqa: E402
-from meches import fused, cast_off, faded  # noqa: E402
+from meches import fused  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
@@ -203,7 +203,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         ('mC', (43.2, 20.6), (32.6, 16.6), (20.6, 24.4), (15.4, 23.8), 11.6, 0.48),
         ('mB', (46.8, 16.0), (39.6, 9.6), (28.6, 7.6), (22.0, 10.4), 9.2, 0.45),
     ]
-    upper_locks = []
     for i, (name, p0, p1, p2, p3, w0, bu) in enumerate(LOCKS):
         k = 0.7 + 0.1 * i
         w1 = math.sin(ph - i * 0.8)
@@ -215,11 +214,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         grad = (p0[0] + 4, p0[1] - 6, p3[0], p3[1] + 4, [(0, MANE.light), (0.45, MANE.base), (1, '#a9b2e2')])
         # le reflet des cheveux : une mèche claire le long du dessus
         sheen = ribbon(resample(bez(lerp(p0, p1, 0.3), p1, p2, lerp(p2, p3, 0.6), 12), 6), [0.2, w0 * 0.14, w0 * 0.18, w0 * 0.14, w0 * 0.08, 0.1, 0.1])
-        if name in ('mB', 'mC', 'mD'):
-            # les mèches du haut naissent du crâne : elles sont fondues plus bas avec la racine de la crinière (MANE_ROOT)
-            # en UNE forme posée sur l'arrière de la tête (voir « la crinière qui naît du crâne »)
-            upper_locks.append((name, sh, p0, p3, grad, sheen))
-            continue
         fig.part(name, sh, MANE, grad=grad, cel=1.1, rim=0.8, cast=1.2,
                  details=[(sm_under(sh), ('lin', p0[0], p0[1], p3[0], p3[1], [(0, MANE.deep), (0.5, MANE.shadow), (1, MANE.shadow)]), 0.85),
                           (sheen.move(0.4, -1.0), MANE.hi, 0.75)])
@@ -244,7 +238,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         return [(n, sh, g) for n, sh in out]
     BACK_ANT = antler('antB', [(45.8, 19.6), (45.0, 13), (44.6, 7.0), (46.0, 0.6)],
                       [[(44.8, 12.6), (39.6, 9.6), (33.0, 7.2), (27.0, 3.0)], [(39.0, 9.6), (37.0, 6.0), (37.4, 1.0)]], 4.8)
-    # (le bois du côté du spectateur est posé DEVANT la tête et la crinière, sa base plantée dans la crinière : plus bas)
+    # (le bois du côté du spectateur est posé DEVANT la tête, sa base enfouie dans la racine de la crinière : plus bas)
 
     # ---- le bras du fond : le poignet suit la perle, le coude placé par le squelette (dans la manche) ----
     S = SF
@@ -458,7 +452,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     FRONT_ANT = antler('antF', [(56.8, 21.0), (55.8, 13.4), (53.0, 7.0), (48.4, 1.2)],
                        [[(55.4, 13.2), (58.6, 8.6), (62.2, 2.6)]], 5.0)
     for name, sh, g in FRONT_ANT:
-        fig.part(name, sh, GOLD, grad=g, cel=1.0, rim=0.7, cast=0.9, cast_on=['antF0'],
+        fig.part(name, sh, GOLD, grad=g, cel=1.0, rim=0.7, cast=0.9, cast_on=['antF0', 'mB'],
                  details=[(ribbon([add(p, (0.6, -0.2)) for p in (resample(sh_pts, 6))], [0.1, 0.5, 0.6, 0.6, 0.5, 0.3, 0.1]), GOLD.hi, 0.6)
                           for sh_pts in [[(56.6, 19.0), (55.8, 13.4), (53.0, 7.2), (49.4, 2.6)]] if name == 'antF'])
     # ---- la barbiche blanche sous le menton ----
@@ -549,46 +543,32 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (ribbon([(q[0] + 0.7, q[1] - 0.2) for q in ridge], [0.1, 0.6, 0.1]), SCALE.hi, 0.45)]
     hd += eye_kit(FCX, FK) + eye_kit(NCX, 1.0)
     fig.part('head', head, SCALE, grad=(74, 18, 42, 36, [(0, '#56c8d0'), (0.45, SCALE.base), (1, '#245c9c')]),
-             cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'mfront', 'robe', 'mF', 'mE'], details=hd)
+             cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'mfront', 'robe', 'mF', 'mE', 'mD', 'mC'], details=hd)
 
-    # ---- la crinière qui naît du crâne : la racine (posée sur l'arrière de la tête, derrière l'œil, jusqu'à la base du
-    # bois) et les trois mèches du haut, fondues en UNE forme (aucune couture : comme la chevelure de Kael) ; chaque mèche
-    # sort de la masse sans ligne (sa couleur et ses ombres apparaissent en douceur après sa racine) ----
-    w_ = 0.25 * math.sin(ph - 0.5)
-    # la naissance des poils suit le dos du crâne en retrait, en trois touffes qui pointent vers le bas (le long de la
-    # joue) ; en haut, elle passe juste au-dessus de l'arcade et enveloppe la base du bois
-    root = sm([(50.6, 12.8), (49.8, 15.4), (48.4, 18.0), (46.6, 20.6), (44.2, 22.0),
-               (43.4, 24.2), (44.0 + w_, 27.6), (41.8, 27.4), (41.2, 30.0), (42.0 + w_, 33.4), (40.2, 33.0), (39.8, 35.4),
-               (41.0 + w_, 38.2), (38.4, 37.6), (35.4, 33.0), (35.0, 26.0), (36.6, 19.4), (40.6, 15.0), (45.6, 12.6)],
-              sharp=(6, 7, 9, 10, 12), t=0.85)
-    mane = fused([root] + [L[1] for L in upper_locks])
-    MGRAD = ('lin', 50, 14, 34, 36, [(0, MANE.light), (0.5, MANE.base), (1, '#b4bde6')])
-    mdet = [(mane, MGRAD, 1),
-            # l'ombre douce sous la racine (le dessous de la tête, la nuque)
-            (sm([(34.6, 30), (39.6, 31.6), (42.6, 33.4), (43.4, 36.4), (41.2, 38.2), (37.6, 38.0), (34.4, 34.6)]), MANE.shadow, 0.55)]
-    for name, sh, p0, p3, grad, sheen in reversed(upper_locks):          # de la plus haute (devant) à la plus basse
-        fade = min(0.5, 5.0 / math.dist(p0, p3))
-        ax = (p0[0], p0[1], p3[0], p3[1])
-        for (dx, dy), op in (((-0.66, 1.5), 0.2), ((-0.36, 0.72), 0.28)):
-            sh_ = cast_off(sh, dx, dy)
-            if sh_:
-                mdet.append((sh_, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], fade, op / 0.3),), 0.3))
-        mdet.append((sh, ('lin',) + ax + (faded(grad[4], fade),), 1))
-        mdet.append((sm_under(sh), ('lin',) + ax + (faded([(0, MANE.deep), (0.5, MANE.shadow), (1, MANE.shadow)], fade, 0.85),), 1))
-        mdet.append((sheen.move(0.4, -1.0), ('lin',) + ax + (faded([(0, MANE.hi), (1, MANE.hi)], fade, 0.75),), 1))
-    # le long de la naissance des poils (sur la joue) : quelques mèches courtes, à peine marquées, qui partent en arrière
-    for pts, wv in (([(43.0, 25.2), (40.4, 26.4), (37.6, 26.0)], 0.6), ([(41.2, 31.2), (39.0, 32.2), (36.6, 31.8)], 0.55)):
-        mdet.append((ribbon(pts, [0.1, wv, 0.1]), MANE.shadow, 0.5))
-    fig.part('mane', mane, MANE, cel=1.1, rim=0.8, cast=1.2, cast_on=['head', 'neck', 'mfront', 'mE', 'mF', 'robe'], details=mdet)
-
-    # ---- le bois proche (côté spectateur) : devant la tête et la crinière, sa base plantée dans la crinière ----
+    # ---- le bois proche (côté spectateur) : devant la tête ; sa base est enfouie dans la racine de la crinière ----
     for name, sh, g in BACK_ANT:
-        fig.part(name, sh, GOLD, grad=g, cel=1.0, rim=0.7, cast=0.6, cast_on=['antB0', 'antB1', 'mane', 'head'])
-    # la base du bois est enfouie dans les poils : une touffe de la racine (même dégradé que la crinière, aucun bord
-    # visible sur elle) la recouvre ; ses pointes remontent un peu sur le bois
-    tuftb = sm([(48.2, 17.6), (47.6, 16.6), (46.9 + w_, 14.8), (46.0, 16.2), (45.0, 15.4), (44.4 + w_, 13.8), (43.6, 15.8),
-                (42.0, 16.4), (41.0, 19.6), (42.4, 22.0), (44.6, 21.6), (46.6, 20.2)], sharp=(2, 5), t=0.85)
-    fig.part('mtuft', tuftb, MANE, grad=MGRAD[1:], cel=0, rim=0, cast=0.8, cast_on=['antB', 'antB0', 'antB1', 'head'])
+        fig.part(name, sh, GOLD, grad=g, cel=1.0, rim=0.7, cast=0.6, cast_on=['antB0', 'antB1', 'mB', 'mC', 'head'])
+
+    # ---- la racine de la crinière : elle naît du crâne, derrière l'œil, et couvre l'arrière de la tête (plus de tête
+    # « posée » sur la crinière). Trois grosses touffes fondues en UNE forme : leur naissance suit le dos du crâne en
+    # retrait (bord ondulé sur la joue), elles enveloppent la base du bois et se couchent en arrière sur les longues
+    # mèches, où elles finissent en pointes (comme des mèches posées les unes sur les autres) ----
+    w_ = 0.3 * math.sin(ph - 0.5)
+    m_ = P['mane']
+    RL = [((48.8, 17.0), (44.6, 14.2), (38.6, 14.6), (32.8 - 0.6 * m_, 17.4 + w_), 7.4),
+          ((45.4, 23.6), (41.4, 22.2), (36.0, 23.2), (30.4 - 0.8 * m_, 27.4 + w_), 8.4),
+          ((43.4, 30.4), (40.4, 30.4), (36.6, 32.4), (32.6 - 0.6 * m_, 37.4 + w_), 7.6)]
+    rlocks = [lock(a, b, c, d, w, n=12, bulge=0.4) for a, b, c, d, w in RL]
+    # la naissance des poils sur la tête : un bord doux, en léger retrait du dos du crâne
+    patch = sm([(49.6, 15.0), (49.2, 17.8), (47.2, 20.2), (45.6, 22.0), (45.0, 25.6), (43.8, 28.6), (43.4, 32.4), (42.6, 35.4),
+                (40.6, 37.2), (37.0, 35.0), (36.0, 26.0), (38.6, 18.0), (43.6, 14.6)], t=0.9)
+    root = fused([patch] + rlocks)
+    rdet_ = [(root, ('lin', 50, 15, 32, 36, [(0, MANE.hi), (0.45, MANE.light), (1, MANE.base)]), 1)]
+    for sh, (a, b, c, d, w) in zip(rlocks, RL):
+        rdet_.append((sm_under(sh, 0.7, -2.0), ('lin', a[0], a[1], d[0], d[1], [(0, MANE.shadow, 0), (0.25, MANE.shadow, 0.7), (1, MANE.deep, 0.8)]), 1))
+    rdet_.append((ribbon([(46.4, 17.8), (41.6, 16.6), (36.4, 17.0)], [0.2, 0.9, 0.2]), MANE.hi, 0.8))
+    fig.part('mroot', root, MANE, cel=1.0, rim=0.8, cast=1.1,
+             cast_on=['head', 'antB', 'antB0', 'antB1', 'mB', 'mC', 'mD', 'mE', 'mfront', 'neck'], details=rdet_)
 
     # ---- le barbillon d'or en S, qui tombe de la truffe ----
     bb = P['barb']
@@ -602,7 +582,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # (voir plus bas : l'ordre est remis en place)
 
     # ---- chaque groupe de morceaux prend sa pose ----
-    head_parts = ['head', 'beard', 'beard2', 'barbel', 'antF', 'antF0', 'antB', 'antB0', 'antB1', 'mane', 'mtuft', 'mE', 'mF']
+    head_parts = ['head', 'beard', 'beard2', 'barbel', 'antF', 'antF0', 'antB', 'antB0', 'antB1', 'mroot', 'mB', 'mC', 'mD', 'mE', 'mF']
     fig.pose(head_parts, HEAD)
     fig.pose(['mfront'], mchain(NECK, mT(P['head'][0] * 0.3, P['head'][1] * 0.3)))
     fig.pose(['neck'], NECK)

@@ -54,7 +54,7 @@ HIP = (70.0, 92.0)              # le pivot du buste (il se penche depuis les han
 NECK = (76.0, 54.0)             # le pivot de la tête quand elle tourne
 HP = (92.0, 52.0)               # la tête est agrandie ×1,1 autour de ce point (elle grandit vers le haut et l'arrière)
 HSC = 1.1
-NS, NE0, NW0 = (54.0, 60.6), (47.6, 81.0), (61.4, 71.4)       # bras proche : épaule, coude, poignet (repos)
+NS, NE0, NW0 = (54.0, 60.6), (47.2, 82.8), (61.4, 71.4)       # bras proche : épaule, coude, poignet (repos)
 GW = (53.4, 68.4)               # le poignet dans le dessin du gant proche (le gant est porté là où est le poignet)
 CUFF_A = 28.0                   # le revers du gant lointain, incliné comme l'avant-bras (degrés)
 NGA0 = -18.0                    # le gant proche, au repos, dans l'axe de l'avant-bras (le poignet droit)
@@ -477,6 +477,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det += [(ellipse(S[0] + 2.2, S[1] - 2.6, 6.0, 4.4, -20), ('rad', S[0] + 2.8, S[1] - 3.0, 6.0, 6.0, [(0, SKIN.light, 0.85), (1, SKIN.light, 0)]), 1)]
     det += gloss((S[0] + 3.0, S[1] - 3.4), 2.2, 1.0, -24, 0.8)
     det += [(ribbon([seg_pt(E, W, 0.15, 3.8), seg_pt(E, W, 0.55, 3.9), seg_pt(E, W, 0.9, 3.4)], [0.3, 1.6, 0.3]), SKIN.light, 0.6)]
+    # le pli du coude : un creux doux le long du dessus de l'avant-bras, sur le haut du bras (le V se lit)
+    det += [(clip(ribbon([seg_pt(E, W, -0.05, 4.4), seg_pt(E, W, 0.35, 6.0), seg_pt(E, W, 0.75, 6.0), seg_pt(E, W, 1.0, 5.4)], [0.4, 1.7, 1.5, 0.3]), gupv), SKIN.deep, 0.42)]
     det += scale_patch(seg_pt(S, E, 0.45, 2.6), 1.7, ang_of(S, E))
     det += scale_patch(seg_pt(S, E, 0.75, -2.6), 1.4, ang_of(S, E), 0.85)
     det += scale_patch(seg_pt(E, W, 0.45, 0.8), 1.4, ang_of(E, W) + 90, 0.9)
@@ -537,7 +539,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # (pas de miette de corde coincée entre le coude et le plastron)
     if grope.geom_type == 'MultiPolygon':
         from shapely.geometry import MultiPolygon
-        grope = MultiPolygon([g for g in grope.geoms if g.area > 4.0])
+        grope = MultiPolygon([g for g in grope.geoms if g.area > 4.0 and g.centroid.x > E[0] + 4.0])
     rope = geom_shapes(grope, simplify=0.02)
     det = []
     # la corde tressée : quelques torsions éclairées (inégales), le dessous dans l'ombre

@@ -69,7 +69,7 @@ def mesures_visage():
 GRD = 116.0        # le sol (le point « sol » du pixel art)
 FEET = (64.0, 116.0)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (1.0, -12.0, 130.0, 131.0)
+FRAME = (1.0, -14.0, 130.0, 133.0)
 
 # ---------- le squelette ----------
 # Une pose = ces réglages ; REST est la pose du dessin (pixels du dessin, degrés, y vers le bas).
@@ -93,7 +93,7 @@ HIP = (64.0, 86.0)                   # le pivot du buste
 NECK = (74.0, 50.0)                  # le pivot (et le centre d'agrandissement) de la tête
 # la tête posée bien au milieu, entre les deux épaules (avis du propriétaire du 26/11, tour 2) : tout ce qui est
 # dessiné dans le repère de la tête glisse de ce décalage (le visage garde ses propres mesures)
-HEAD_AT = (-16.0, -6.0)
+HEAD_AT = (-16.0, -8.0)
 S_POM, S_END, S_HEAD = -22.6, 88.0, 79.0     # le pommeau, le bout du manche, l'axe du fer (le long du manche)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, ml=0.0, pg=0.0, blink=0.0,
