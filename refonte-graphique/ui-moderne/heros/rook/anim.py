@@ -429,7 +429,7 @@ def fx_attack(tl):
 
 # ---- l'attaque spéciale
 
-SPECKS = [(66, 62), (77, 65), (70, 68), (60, 80), (80, 82), (72, 86), (40, 60), (104, 58)]
+SPECKS = [(58, 66), (64, 82), (78, 84), (71, 88), (44, 62), (102, 60)]
 
 
 def gold_feather_rain(fig, ctx, tl):
@@ -499,19 +499,33 @@ def phoenix(fig, c, open_=1.0, op=1.0, ph=0.0):
     shapes = []
     tails = []
     gw = lambda p0, p3: g_lin(fig, p0, p3, [(0, GOLDL[0]), (0.35, GOLDL[1]), (0.7, GOLDL[2]), (1, GOLDL[3])])
-    # les ailes : de longues plumes-flammes, de la plus basse à la plus haute (courbes, longueurs inégales)
+    # les ailes : un bras de lumière qui monte en courbe vers l'extérieur, et dessous des plumes-flammes qui pendent
+    # vers l'extérieur (comme ses propres ailes : on lit une aile d'oiseau, pas des rayons)
+    from atelier import limb
     for s in (-1, 1):
-        for j, (a, L, w) in enumerate(((10, 26, 5.0), (-8, 32, 5.6), (-26, 34, 5.6), (-44, 30, 5.2), (-62, 24, 4.6))):
-            aa = math.radians((a * open_ + (1 - open_) * 70) + 4 * math.sin(ph + j))
-            dx, dy = s * math.cos(aa), math.sin(aa)
-            p0 = (cx + s * 2.5, cy - 1.0)
-            p3 = (p0[0] + dx * L * (0.4 + 0.6 * open_), p0[1] + dy * L * (0.4 + 0.6 * open_))
-            p1 = lerp(p0, p3, 0.33)
-            p1 = (p1[0], p1[1] + 3)
+        o = open_
+        sh_ = (cx + s * 2.6, cy - 2.0)
+        el = (cx + s * (6 + 9 * o), cy - 4 - 9 * o)
+        tp = (cx + s * (10 + 22 * o), cy - 8 - 12 * o + 2 * math.sin(ph))
+        arm = [sh_, lerp(sh_, el, 0.5), el, lerp(el, tp, 0.5), tp]
+        for j in range(5):
+            t = 0.15 + 0.8 * j / 4
+            seg = int(t * 4)
+            p0 = lerp(arm[min(seg, 3)], arm[min(seg, 3) + 1], t * 4 - min(seg, 3))
+            ang = math.radians(90 - s * (20 + 32 * t) * (0.4 + 0.6 * o))
+            L = (9 + 9 * t) * (0.6 + 0.4 * o)
+            dx, dy = math.cos(ang), math.sin(ang)
+            if s < 0:
+                dx = -dx if dx > 0 else dx
+            else:
+                dx = abs(dx)
+            p3 = (p0[0] + dx * L, p0[1] + dy * L)
+            p1 = lerp(p0, p3, 0.35)
             p2 = lerp(p0, p3, 0.7)
-            p2 = (p2[0], p2[1] + 2.5)
-            p3 = (p3[0], p3[1] - 2.0)
-            shapes.append((lock(p0, p1, p2, p3, w, n=10, bulge=0.25), gw(p0, p3), 1))
+            p2 = (p2[0] + s * 1.2, p2[1])
+            p3 = (p3[0] + s * 2.0, p3[1] - 2.2)
+            shapes.append((lock(p0, p1, p2, p3, 4.2, n=10, bulge=0.25), gw(p0, p3), 1))
+        shapes.append((limb(arm, [3.6, 3.2, 2.8, 2.0, 1.0]), g_lin(fig, sh_, tp, [(0, GOLDL[0]), (1, GOLDL[1])]), 1))
     # la queue : des rubans qui tombent en éventail (derrière elle)
     for j, (a, L) in enumerate(((100, 26), (88, 30), (76, 24), (112, 22), (64, 20))):
         aa = math.radians(a + 5 * math.sin(ph * 1.3 + j))
@@ -586,7 +600,7 @@ def fx_special(tl):
                 k = max(0.0, (tl - S_HEAL - 30 * j) / 380)
                 y = p[1] - 30 * ease(k) - 4 * k
                 x = p[0] + 4 * math.sin(k * 5 + j)
-                r = 1.3 * (1 - 0.4 * k)
+                r = 0.95 * (1 - 0.4 * k)
                 col = '#3a2238' if k < 0.4 else ('#6a5470' if k < 0.75 else '#a898a8')
                 sh = sm([(x - r, y), (x - 0.2 * r, y - 1.1 * r), (x + r, y - 0.3 * r), (x + 0.6 * r, y + r), (x - 0.5 * r, y + 0.8 * r)], t=0.9)
                 fig.fx_front.append(outlined([(sh, col, 1)], ink='#1f1238', w=0.6, op=sp * (1 - ease((k - 0.5) / 0.5)) if k > 0.5 else sp))
@@ -602,13 +616,13 @@ def fx_special(tl):
             hp = ctx['head']
             gather = env(tl, 1040, 1140, 1180, 1260)
             if gather > 0:
-                c = (hp[0] - 2, hp[1] - 24)
+                c = (hp[0] - 4, hp[1] - 32)
                 fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(7 * gather), g_rad(fig, c, 7 * gather, [(0, GOLDL[0], gather), (0.5, GOLDL[2], 0.7 * gather), (1, GOLDL[3], 0)])))
             op_ = env(tl, 1150, 1250, 1470, 1640)
             if op_ > 0:
                 open_ = ease((tl - 1150) / 100) if tl < 1250 else 1.0 + 0.06 * math.sin((tl - 1250) / 50)
                 rise = max(0.0, (tl - 1470) / 1000) * 30
-                c = (hp[0] - 2, hp[1] - 26 - rise)
+                c = (hp[0] - 4, hp[1] - 34 - rise)
                 front, back = phoenix(fig, c, open_, op_, tl / 90.0)
                 fig.fx_back.append(back)
                 fig.fx_front.append(front)

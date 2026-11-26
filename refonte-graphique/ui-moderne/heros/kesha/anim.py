@@ -403,11 +403,12 @@ def fx_attack(tl, path):
                     T1 = ctx['teeth'][1]
                     pts = [(X, Y + 3), (X - 3, Y + 7), ((X + T1[0]) / 2, (Y + T1[1]) / 2 + 6), (T1[0] + 1, T1[1] + 2)]
                     fig.fx_back.append(stream(fig, pts, 0.6, 3.6 * ek + 0.4, op=min(1, 3 * ek)))
+                RIPV = [[(-34, -96), (22, -128)], [(-70, -62), (4, -150), (40, -84)], [(-12, -118), (-52, -40)], [(30, -60), (-26, -140)]]
                 for j, Tt in enumerate(HIT['teeth']):
-                    for m, (vx, vy) in enumerate(((-30, -100), (10, -120), (-60, -70))):
-                        tt = tr - 0.015 * m
+                    for m, (vx, vy) in enumerate(RIPV[j % 4]):
+                        tt = tr - 0.02 * ((j + m) % 3)
                         if 0 < tt < 0.6:
-                            x, y = ballistic(Tt, (vx + 8 * j, vy - 6 * j), 300, tt)
+                            x, y = ballistic(Tt, (vx, vy), 300, tt)
                             if y < GR:
                                 fig.fx_front.append(drop(fig, x, y, vx, vy + 300 * tt, 0.8 + 0.15 * ((j + m) % 2), op=min(1, (0.6 - tt) * 5)))
     return f
@@ -459,11 +460,11 @@ def fx_special(tl):
                 tg = (t - 950) / 1000.0
                 # elle monte d'un coup, tient, puis s'effondre : elle maigrit et se défait en pluie (le sommet ne
                 # redescend pas à travers lui)
-                up = env(tg, 0, 0.12, 5, 6)
-                rise = env(tg, 0, 0.12, 0.42, 0.62)
-                top = GR - 112 * up + 30 * (1 - rise) * (tg > 0.42)
-                wb = (30 + 8 * up) * (0.35 + 0.65 * rise)
-                wt = (18 + 8 * up) * (0.35 + 0.65 * rise)
+                up = env(tg, 0, 0.12, 0.5, 0.68)
+                rise = env(tg, 0, 0.12, 0.5, 0.7)
+                top = GR - 112 * up
+                wb = (30 + 8 * up) * (0.75 + 0.25 * rise)
+                wt = (18 + 8 * up) * (0.75 + 0.25 * rise)
                 if rise > 0:
                     fig.fx_back.append(column(fig, X, top, wb, wt, 3 * math.sin(tg * 6), tg, op=min(1, rise * 1.6)))
                     fig.fx_front.append(mound(fig, X, 12 * rise, 30, op=min(1, rise * 2.5)))
@@ -474,7 +475,7 @@ def fx_special(tl):
                         (1.0, 0.7, 75, 0.47), (-1.0, 0.3, -70, 0.5), (0.6, 0.25, 45, 0.53), (-0.2, 0.55, -15, 0.49),
                         (0.15, 0.75, 10, 0.56), (-0.7, 0.45, -45, 0.58), (0.9, 0.9, 35, 0.6), (-0.35, 0.98, -20, 0.62)]
                 for j, (sx, hy, vx, st) in enumerate(RAIN):
-                    tt = tg - st
+                    tt = tg - st - 0.1
                     if 0 < tt < 0.6:
                         p0 = (X + sx * 13, GR - 104 * hy)
                         x, y = ballistic(p0, (vx, -25 - 10 * (j % 3)), 360, tt)

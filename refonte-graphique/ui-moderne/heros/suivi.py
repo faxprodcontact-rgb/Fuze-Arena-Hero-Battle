@@ -69,7 +69,7 @@ def main():
         elif os.path.isdir(os.path.join(HEROS, s)):
             statut = 'en cours'
         vignette(os.path.join(RACINE, 'public', 'art', 'hd', 'pose', f"{h['art']}.webp"), os.path.join(PAGE, 'px', f"{h['id']}.webp"), 160)
-        vx = os.path.join(RACINE, 'public', 'art', 'vecto', f"{h['id']}.webp")
+        vx = os.path.join(RACINE, 'public', 'art', 'vecto', f"{h['art']}.webp")
         has_vx = statut in ('fait', 'à revoir') and os.path.exists(vx)
         if has_vx:
             vignette(vx, os.path.join(PAGE, 'vx', f"{h['id']}.webp"), 160)
