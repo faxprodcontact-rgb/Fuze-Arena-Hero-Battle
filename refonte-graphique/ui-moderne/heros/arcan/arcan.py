@@ -22,6 +22,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, lock, limb, ribbon, ellipse, rpoly, mchain, mT, mR, mS, mapp  # noqa: E402
 from outils import inter, rot, add, sub, lerp, norm, ang_of, ik, taper, under, limb_u, union, unit, ell_geom, several  # noqa: E402
+from outils import poly_of, geom_shape, fused_geom, cast_off, faded, posed_geom, to_local  # noqa: E402
 from lib import Shape  # noqa: E402
 from visage import placer, verifier, guide_svg  # noqa: E402
 
@@ -181,8 +182,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # le sac sur les épaules passe derrière la crinière ; tenu en l'air, il passe devant elle (derrière la tête)
     if not front_bag and m < 0.5:
         bag_parts(fig, P, outline, m, GN, GF, uN, uF, bu)
-    # ---- la crinière de derrière (couchée vers l'arrière, devant le sac) ----
-    back_hair(fig, P, HEAD, which=(2, 3, 4))
+    # ---- la crinière de derrière : elle fait partie de la chevelure d'un seul tenant, peinte avec la tête (voir
+    # head()) ; tout ce qui est peint d'ici à la tête (le sac brandi, les bras, les poings) passe devant ses mèches
+    i_hair = len(fig.parts)
     if not front_bag and m >= 0.5:
         bag_parts(fig, P, outline, m, GN, GF, uN, uF, bu)
     if front_bag:
@@ -204,7 +206,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     arm(fig, 'n', SN, EN, WN, far=False)
     fist(fig, 'n', GN, P['na'], -1, far=False, neck=outline[0] if m < 0.05 else None, P=P)
     # ---- la tête ----
-    head(fig, P, HEAD)
+    head(fig, P, HEAD, i_hair)
     if front_bag:
         bag_parts(fig, P, outline, m, GN, GF, uN, uF, bu, front=True)
     # ce que les effets doivent savoir
@@ -386,19 +388,72 @@ BACK_LOCKS = [   # (racine, contrôle 1, contrôle 2, pointe, largeur), de la pl
 ]
 
 
-def back_hair(fig, P, HEAD, which=(0, 1, 2, 3, 4)):
-    names = []
-    for i, L in enumerate(BACK_LOCKS):
-        if i not in which:
-            continue
-        p0, p1, p2, p3, w = wave(i, *L, P)
+# 2e avis du propriétaire (« les cheveux doivent partir du début comme Kael ») : plus de calotte posée sur le crâne
+# (elle faisait un casque à bord dentelé au-dessus du front) ni de mèches empilées par-dessus. Comme la correction de
+# Kael (morceau `hair` de ../kael/kael.py) : UNE seule masse qui naît du crâne — la racine couvre le crâne et descend
+# jusqu'au-dessus des sourcils (plus de grand front), les mèches de la nuque, de l'arrière et du dessus en partent, fondues
+# en une silhouette ; chaque mèche se détache peu à peu de la masse (sa couleur, sa face du dessous et son ombre
+# apparaissent en fondu depuis la racine : aucun bord net sur le crâne).
+
+# la racine sur le crâne (repère de la tête) : le bord du front juste au-dessus des arcades (une petite langue au
+# milieu), la patte qui descend devant l'oreille, l'arrière du crâne, le dessus un peu gonflé
+SCALP = [(93.9, 28.6), (91.6, 29.0), (88.6, 28.7), (85.6, 29.1), (83.4, 30.5), (81.6, 29.4), (78.4, 28.9), (74.6, 29.1),
+         (70.6, 29.4), (67.2, 30.0), (64.4, 30.8), (62.6, 33.2), (62.2, 36.6), (59.6, 35.8), (56.0, 33.6), (53.2, 29.4),
+         (53.0, 23.4), (56.2, 17.2), (62.0, 12.4), (70.4, 9.8), (80.0, 10.0), (88.0, 12.8), (93.0, 17.4), (94.6, 21.6),
+         (94.5, 25.4)]
+SCALP_SHARP = (4, 12)
+# les mèches du dessus, plantées au bord du front : elles montent un peu puis se couchent vers l'arrière (vent)
+FRONT_LOCKS = [((68.4, 29.2), (66.2, 24.0), (60.4, 19.6), (50.0, 17.6), 6.4),      # (racine, c1, c2, pointe, largeur)
+               ((77.0, 28.4), (76.4, 21.6), (70.6, 15.6), (58.4, 10.6), 7.2),
+               ((89.0, 27.6), (95.0, 16.8), (84.0, 7.6), (62.0, 1.6), 7.0),
+               ((92.6, 27.4), (97.4, 19.8), (95.0, 13.6), (87.6, 10.8), 5.8),
+               ((84.6, 28.4), (88.4, 21.4), (84.6, 16.8), (77.0, 15.2), 5.4)]
+BACK_FADE = (0.0, 7.0)       # une mèche : transparente à sa racine, pleine à 7 px
+FRONT_FADE = (1.0, 7.0)      # les mèches du dessus : elles se détachent en fondu depuis le bord du front
+
+
+def hair(fig, P, HEAD, i_hair):
+    """La chevelure d'un seul tenant (peinte devant la tête, l'oreille devant elle)."""
+    strands = []     # (forme, racine, pointe, (début, fondu), couleurs, dessous, reflet, mèche du haut ?)
+    for i in (2, 3, 4, 0, 1):
+        p0, p1, p2, p3, w = wave(i, *BACK_LOCKS[i], P)
         sh = lock(p0, p1, p2, p3, w, bulge=0.3)
-        g = (p0[0], p0[1] - 3, p3[0], p3[1], [(0, '#55628c'), (0.45, HAIR.light), (1, HAIR.base)])
-        fig.part('hb%d' % i, sh, HAIR, grad=g, cel=0, rim=0.75, cast=1.1, ink=HAIR_INK,
-                 details=[(under(sh, 0.6, -2.4), ('lin', p0[0], p0[1], p3[0], p3[1], [(0, HAIR.shadow), (1, HAIR.deep)]), 0.9),
-                          (ribbon([lerp(p0, p1, 0.6), p1, p2, lerp(p2, p3, 0.6)], [0.2, w * 0.13, w * 0.09, 0.05]).move(0.3, -w * 0.24), HAIR.hi, 0.45)])
-        names.append('hb%d' % i)
-    fig.pose(names, HEAD)
+        hl = ribbon([lerp(p0, p1, 0.6), p1, p2, lerp(p2, p3, 0.6)], [0.2, w * 0.13, w * 0.09, 0.05]).move(0.3, -w * 0.24)
+        strands.append((sh, p0, p3, BACK_FADE, [(0, '#55628c'), (0.45, HAIR.light), (1, HAIR.base)],
+                        [(0, HAIR.shadow), (1, HAIR.deep)], hl, i >= 2))
+    for i, (p0, p1, p2, p3, w) in enumerate(FRONT_LOCKS):
+        p0, p1, p2, p3, w = wave(min(4, i + 1), p0, p1, p2, p3, w, P)
+        sh = lock(p0, p1, p2, p3, w, bulge=0.3)
+        strands.append((sh, p0, p3, FRONT_FADE, [(0, '#5a6892'), (0.4, HAIR.light), (1, HAIR.base)],
+                        [(0, HAIR.shadow), (1, HAIR.deep)], None, False))
+    scalp = sm(SCALP, sharp=SCALP_SHARP)
+    near = fused_geom([scalp] + [st[0] for st in strands if not st[7]])
+    far = fused_geom([st[0] for st in strands if st[7]])
+    # ce qui est peint entre la crinière de derrière et la tête (sac brandi, bras, poings) passe devant les grandes
+    # mèches de l'arrière : on les découpe (dans le repère de la tête)
+    between = [posed_geom(q) for q in fig.parts[i_hair:]]
+    if between:
+        from shapely.ops import unary_union
+        far = far.difference(to_local(unary_union(between), HEAD))
+    mass = geom_shape(near.union(far).buffer(0.02).buffer(-0.02))
+    det = [(mass, ('rad', 88, 13, 36, 30, [(0, '#5a6892'), (0.3, HAIR.light), (0.75, HAIR.base), (1, HAIR.shadow)]), 1)]
+    for sh, p0, p3, (st, fd), cols, und, hl, _ in strands:
+        L = math.dist(p0, p3)
+        a0, f0 = min(0.4, st / L), min(0.55, fd / L)
+        ax = (p0[0], p0[1], p3[0], p3[1])
+        for (dx, dy), op in (((-0.66, 1.5), 0.2), ((-0.36, 0.72), 0.28)):
+            sh_ = cast_off(sh, dx, dy)
+            if sh_:
+                det.append((sh_, ('lin',) + ax + (faded([(0, '#0a0a1e'), (1, '#0a0a1e')], a0, f0, op / 0.28),), 0.28))
+        det.append((sh, ('lin',) + ax + (faded(cols, a0, f0),), 1))
+        det.append((under(sh, 0.6, -2.4), ('lin',) + ax + (faded(und, a0, f0),), 0.9))
+        if hl is not None:
+            det.append((hl, ('lin',) + ax + (faded([(0, HAIR.hi), (1, HAIR.hi)], a0, f0 + 0.1),), 0.45))
+    # l'ombre de la chevelure sur le sac quand il est sur les épaules (jamais sur la tête : pas de ligne de crâne)
+    below = [q.name for q in fig.parts[:i_hair] if q.name == 'bag']
+    fig.part('hair', mass, HAIR, cel=0, rim=0.8, cast=1.1 if below else 0, cast_on=below or None, ink=HAIR_INK,
+             details=det)
+    return 'hair'
 
 
 # ======================================================================== les membres
@@ -533,8 +588,8 @@ def leg(fig, s, H, K0, A0, LEG, far):
 # ======================================================================== le buste
 
 def torso(fig, P, TOR):
-    pts = [(62, 43.5), (52, 45.5), (43.5, 49.0), (41.0, 56.0), (44.5, 63.0), (48.5, 69.5), (51.2, 76.0), (53.2, 82.0),
-           (54.0, 88.6), (72, 90.6), (90.0, 88.6), (90.2, 82.0), (91.4, 76.0), (93.2, 70.0), (96.6, 64.0), (99.6, 58.0),
+    pts = [(62, 43.5), (52, 45.5), (43.5, 49.0), (41.0, 56.0), (44.5, 63.0), (48.5, 69.5), (51.0, 76.0), (51.8, 81.0),
+           (50.0, 85.4), (47.4, 88.8), (56.0, 90.6), (72, 90.6), (90.0, 88.6), (90.2, 82.0), (91.4, 76.0), (93.2, 70.0), (96.6, 64.0), (99.6, 58.0),
            (99.4, 51.5), (94.5, 47.0), (86, 44.5), (82, 43.0)]
     sh = sm(pts, t=0.95)
     det = []
@@ -573,7 +628,7 @@ def torso(fig, P, TOR):
 def loincloth(fig, P, U):
     pg = P['pg']
     sk = lambda p: (p[0] - 0.06 * pg * (p[1] - 88), p[1])
-    cloth = sm([sk(p) for p in [(49, 88.6), (97.0, 87.6), (99.6, 94.0), (97.6, 101.2), (93.0, 99.6), (89.6, 104.0), (86.4, 101.0),
+    cloth = sm([sk(p) for p in [(47.6, 89.2), (97.0, 87.6), (99.6, 94.0), (97.6, 101.2), (93.0, 99.6), (89.6, 104.0), (86.4, 101.0),
                                 (82.6, 106.2), (78.6, 102.4), (75.4, 108.6), (71.6, 103.6), (68.2, 109.4), (64.6, 104.0),
                                 (61.0, 108.0), (57.6, 102.6), (54.0, 106.0), (51.2, 100.6), (47.2, 103.0), (45.4, 96.0)]],
                sharp=tuple(range(3, 19)), t=0.85)
@@ -594,16 +649,19 @@ def loincloth(fig, P, U):
             (ribbon([sk(p) for p in [(86.0, 90.6), (88.0, 96.0), (88.6, 101.0)]], [0.2, 1.2, 0.2]), HIDE.light, 0.6)]
     fig.part('cloth', cloth, HIDE, cel=1.4, rim=0.7, cast=1.2, details=det)
     # la corde tressée, serrée à la taille (plus basse devant) : des torons ronds, chacun éclairé sur le dessus
-    top = [(48.6, 85.8), (62, 87.4), (74, 88.2), (86, 87.3), (97.4, 85.4)]
-    bot = [(97.6, 90.4), (86, 92.2), (74, 93.0), (62, 92.3), (48.8, 90.8)]
-    belt = sm(top + bot, sharp=(0, 4, 5, 9), t=0.8)
+    # 2e avis (cercle sur la hanche proche) : la corde dépassait du corps en bout carré (une marche dans le contour) ;
+    # elle s'arrête maintenant au bord du corps en s'arrondissant (elle fait le tour de la taille, vers l'arrière),
+    # et la taille s'évase en douceur vers la cuisse (plus de creux dans la silhouette)
+    top = [(50.6, 85.4), (62, 87.4), (74, 88.2), (86, 87.3), (97.4, 85.4)]
+    bot = [(97.6, 90.4), (86, 92.2), (74, 93.0), (62, 92.3), (49.4, 90.9), (47.6, 89.6), (48.6, 87.2)]
+    belt = sm(top + bot, sharp=(4, 5), t=0.8)
     det = []
     n = 9
     for i in range(n):
         t0 = (i + 0.15) / n
         t1 = (i + 0.95) / n
-        a = lerp(lerp(top[0], top[-1], t0), lerp(bot[-1], bot[0], t0), 0.85)
-        b = lerp(lerp(top[0], top[-1], t1), lerp(bot[-1], bot[0], t1), 0.12)
+        a = lerp(lerp(top[0], top[-1], t0), lerp(bot[4], bot[0], t0), 0.85)
+        b = lerp(lerp(top[0], top[-1], t1), lerp(bot[4], bot[0], t1), 0.12)
         # suit la courbe de la corde
         sag = 1.9 * math.sin(math.pi * (t0 + t1) / 2)
         a, b = (a[0], a[1] + sag), (b[0], b[1] + sag)
@@ -633,7 +691,7 @@ def loincloth(fig, P, U):
 
 # ======================================================================== la tête
 
-def head(fig, P, HEAD):
+def head(fig, P, HEAD, i_hair):
     jd = 2.4 * max(0.0, min(1.0, P['jaw'] / 2.2))
     J = lambda p, k=1.0: (p[0], p[1] + jd * k)
     # Le visage est construit avec ../visage.py (règle commune à tous les héros) : yeux, nez et bouche à leurs places
@@ -737,41 +795,35 @@ def head(fig, P, HEAD):
                       (ellipse(83.2, 40.2, 1.0, 0.75, 25), '#f4ffd0', 0.55),
                       (ribbon([(78.6, 40.2), (78.8, 41.8), (80.2, 42.6)], [0.2, 0.8, 0.2]), SKIN.shadow, 0.75),
                       (ellipse(81.0, 42.5, 1.0, 0.45, 5), SKIN.deep, 0.8), (ellipse(83.6, 42.3, 0.6, 0.35, 15), SKIN.deep, 0.6)])
-    # les deux défenses d'ivoire qui remontent de la lèvre du bas (la lointaine plus fine)
-    tN = taper([J((75.4, 51.0)), J((74.4, 47.6)), (73.6, 44.8), (73.8, 42.2)], 2.8, 0.45, tip='sharp', wmid=2.6)
-    tF = taper([J((85.8, 50.6)), J((86.4, 47.6)), (86.8, 45.0), (87.6, 42.6)], 2.3, 0.4, tip='sharp', wmid=2.1)
-    for nm, t_, x in (('tuskn', tN, 74.4), ('tuskf', tF, 86.6)):
-        fig.part(nm, t_, IVORY, grad=(x + 2, 40, x - 2, 50, [(0, IVORY.hi), (0.5, IVORY.light), (1, IVORY.shadow)]),
-                 cel=0.7, rim=0.5, cast=0.8, cast_on=['head'])
-    # les mèches de la nuque : elles partent de l'arrière du crâne (peintes sur la tête, la chevelure tient au crâne)
-    back_hair(fig, P, HEAD, which=(0, 1))
-    # la calotte de cheveux sur le crâne, puis les mèches de devant (une grande vague au-dessus du front, deux courtes)
-    # (son bord arrière finit en pointes de mèches couchées vers l'arrière : la chevelure part du crâne, pas de bord
-    # de perruque)
-    cap = sm([(60.6, 34.0), (50.4, 31.2), (57.0, 27.4), (47.6, 20.6), (58.4, 19.8), (54.6, 11.0), (66.0, 12.6),
-              (77.0, 11.6), (86.8, 14.0), (92.6, 19.6), (93.6, 24.6),
-              (91.2, 27.6), (88.8, 25.4), (85.8, 28.4), (82.8, 26.2), (79.0, 28.6), (75.6, 26.8), (71.2, 29.4), (67.8, 28.4),
-              (63.8, 31.2)], sharp=(1, 2, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16, 17, 18, 19))
-    fig.part('cap', cap, HAIR, grad=(90, 14, 60, 26, [(0, '#56628c'), (0.45, HAIR.light), (1, HAIR.shadow)]),
-             cel=0, rim=0.8, cast=1.2, cast_on=['head', 'ear'], ink=HAIR_INK,
-             details=[(ribbon([(60.0, 22.4), (68.0, 16.4), (78.0, 14.6), (87.6, 16.8)], [0.2, 1.4, 1.2, 0.2]), HAIR.hi, 0.4)])
-    # la longue oreille pointue, couchée en arrière
+    # 2e avis du propriétaire (« les dents partent pas de la bouche ») : les deux défenses d'ivoire sortent DE LA
+    # BOUCHE — plantées dans la mâchoire du bas, juste en dedans des coins de la bouche : leur pied naît dans la fente
+    # des lèvres (coupé au ras de la lèvre du bas, une ombre de bouche autour), elles passent devant la lèvre du haut et
+    # remontent le long des joues (la lointaine plus courte et plus fine). Elles suivent la mâchoire quand il grogne.
+    shut = [(x, y + 0.2) for x, y in line]                   # le bord de la lèvre du bas, bouche fermée
+    low = shut if o < 0.1 else [(x, y - 0.1) for x, y in bot]   # … et quand il grogne (elle descend)
+
+    def y_at(pts, x):
+        for (x1, y1), (x2, y2) in zip(pts, pts[1:]):
+            if x1 <= x <= x2:
+                return y1 + (y2 - y1) * (x - x1) / ((x2 - x1) or 1)
+        return pts[0][1] if x < pts[0][0] else pts[-1][1]
+    above = sm([(mx - 14, my - 16), (mx + 14, my - 16), (mx + 14, low[-1][1])] + low[::-1] + [(mx - 14, low[0][1])],
+               sharp=tuple(range(0, 3 + len(low) + 1)), t=0.6)
+    for nm, xb, sg, L, w0 in (('tuskn', mx - 3.3, -1, 1.0, 3.0), ('tuskf', mx + 3.4, 1, 0.86, 2.5)):
+        yb = y_at(low, xb) + 1.5
+        c = [(xb, yb), (xb + sg * 0.5, yb - 3.6 * L), (xb + sg * 1.5, yb - 6.2 * L), (xb + sg * 1.9, yb - 8.8 * L)]
+        t_ = inter(taper(c, w0, 0.4, tip='sharp', wmid=w0 * 0.92), above)
+        y0 = y_at(low, xb)
+        hd_t = [(ellipse(xb, y0 + 0.1, w0 * 0.62, 0.55), MOUTH, 0.55)]
+        fig.part(nm, t_, IVORY, grad=(xb + 2, my - 7, xb - 2, my + 1, [(0, IVORY.hi), (0.5, IVORY.light), (1, IVORY.shadow)]),
+                 cel=0.7, rim=0.5, cast=0.8, cast_on=['head'], details=hd_t)
+    # la chevelure d'un seul tenant (elle naît du crâne), puis la longue oreille pointue couchée en arrière, devant elle
+    hair(fig, P, HEAD, i_hair)
     ear = sm([(60.4, 34.0), (55.0, 30.6), (46.4, 24.6), (49.6, 31.4), (54.4, 38.6), (59.8, 42.0)], sharp=(2,))
     fig.part('ear', ear, SKIN, cel=1.0, rim=0.55, cast=0.9,
              details=[(sm([(58.6, 36.0), (54.4, 32.6), (49.8, 28.4), (52.6, 33.4), (56.4, 38.8), (58.8, 39.8)], sharp=(2,)), SKIN.deep, 0.5),
                       (ribbon([(48.6, 26.2), (53.0, 29.8), (57.4, 32.4)], [0.1, 0.8, 0.2]), SKIN.light, 0.6)])
-    fronts = [((89.6, 24.4), (95.0, 16.8), (84.0, 7.6), (62.0, 1.6), 7.0),
-              ((92.8, 24.6), (97.4, 19.8), (95.0, 13.6), (87.6, 10.8), 5.8),
-              ((85.4, 26.4), (88.4, 21.4), (84.6, 16.8), (77.0, 15.2), 5.4)]
-    names = []
-    for i, (p0, p1, p2, p3, w) in enumerate(fronts):
-        p0, p1, p2, p3, w = wave(i + 2, p0, p1, p2, p3, w, P)
-        sh = lock(p0, p1, p2, p3, w, bulge=0.3)
-        fig.part('hf%d' % i, sh, HAIR, grad=(p0[0], p0[1], p3[0], p3[1], [(0, '#5a6892'), (0.4, HAIR.light), (1, HAIR.base)]),
-                 cel=0, rim=0.8, cast=1.1, ink=HAIR_INK,
-                 details=[(under(sh, 0.6, -2.2), ('lin', p0[0], p0[1], p3[0], p3[1], [(0, HAIR.shadow), (1, HAIR.deep)]), 0.85)])
-        names.append('hf%d' % i)
-    fig.pose(['head', 'nose', 'tuskn', 'tuskf', 'ear', 'cap'] + names, HEAD)
+    fig.pose(['head', 'nose', 'tuskn', 'tuskf', 'hair', 'ear'], HEAD)
 
 
 # ======================================================================== les images

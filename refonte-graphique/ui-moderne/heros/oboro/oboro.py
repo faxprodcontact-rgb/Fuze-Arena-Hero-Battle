@@ -348,11 +348,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            # les plis qui descendent des ailes du nez vers la moustache
            (ribbon([(90.0, 53.8), (88.9, 55.0), (88.4, 56.2)], [0.1, 0.6, 0.1]), SKIN.deep, 0.5),
            (ribbon([(95.2, 54.0), (95.9, 55.0), (96.1, 56.0)], [0.1, 0.5, 0.1]), SKIN.deep, 0.4)]
-    # la bouche fermée (une fente sombre entre la moustache et la barbe), centrée sous le nez, la lèvre du bas
-    mouth = sm([(90.0, 58.5), (92.2, 58.1), (94.4, 58.5), (94.2, 58.9), (92.2, 59.2), (90.2, 58.9)], sharp=(0, 3))
-    hd += [(sm([(89.4, 57.4), (95.0, 57.4), (95.0, 58.4), (89.4, 58.4)]), SKIN.shadow, 0.6),
+    # la bouche fermée (avis du propriétaire, tour 2 : bouche et moustache pas cohérentes) : une fente fine, coins
+    # un peu tombants (vieux grincheux), centrée sous le nez, juste sous la moustache ; la lèvre du bas collée dessous,
+    # et la barbe qui commence aussitôt sous la lèvre (plus de grand trou sombre entre moustache et barbe)
+    mouth = sm([(90.2, 58.55), (92.4, 58.1), (94.6, 58.5), (94.4, 58.8), (92.4, 58.6), (90.4, 58.85)], sharp=(0, 3))
+    hd += [(sm([(90.0, 57.4), (95.2, 57.4), (95.0, 58.2), (90.2, 58.2)]), SKIN.shadow, 0.35),
            (mouth, MOUTH, 1),
-           (ribbon([(90.4, 59.2), (92.2, 59.7), (94.0, 59.1)], [0.1, 0.8, 0.1]), LIP, 1)]
+           (ribbon([(90.6, 58.95), (92.4, 59.15), (94.2, 58.9)], [0.1, 0.6, 0.1]), LIP, 1)]
     # les mesures RÉELLES des traits (pour visage_controle.py) : centre et largeur des yeux, base du nez (entre les
     # narines), centre et largeur de la bouche
     def box_(sh):
@@ -371,8 +373,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('ering', ring, GOLD, cel=0.4, rim=0.4, cast=0.5, cast_on=['ear', 'hair', 'stole', 'head'])
 
     # ---- la longue barbe blanche : une seule forme, trois mèches de longueurs différentes, pointe en bas ----
-    beard = sm([(80.6, 47.4), (81.2, 50.8), (83.2, 53.6), (86.4, 55.6), (89.6, 57.6), (92.2, 59.9), (95.6, 59.8),
-                (97.6, 58.8), (98.8, 57.8), (98.6, 60.6), (98.2, 65.0), (97.6, 72.0), (96.8, 78.0), (95.8, 83.0),
+    beard = sm([(80.6, 47.4), (81.2, 50.8), (83.2, 53.6), (86.4, 56.0), (89.6, 58.8), (92.4, 59.45), (95.4, 59.25),
+                (97.6, 58.6), (98.8, 57.8), (98.6, 60.6), (98.2, 65.0), (97.6, 72.0), (96.8, 78.0), (95.8, 83.0),
                 (94.2, 79.6), (93.2, 84.6), (91.6, 90.0), (89.6, 95.4), (87.8, 88.8), (86.4, 86.0), (84.0, 89.0),
                 (82.4, 84.0), (80.8, 76.6), (79.6, 68.0), (79.0, 60.0), (79.4, 52.4)], sharp=(13, 14, 17, 18, 20))
     bd = []
@@ -388,16 +390,21 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=1.3, rim=0.7, cast=1.3, cast_on=['robe', 'stole', 'sleeveF', 'head', 'staff'], details=bd)
 
     # ---- la moustache tombante ; le croc d'ivoire qui monte de la lèvre du bas ----
-    must = sm([(90.6, 55.4), (92.6, 54.6), (94.8, 54.8), (97.0, 55.4), (98.4, 56.8), (98.4, 59.0), (97.6, 61.6),
-               (96.6, 59.0), (95.2, 57.6), (93.0, 57.2), (90.6, 57.8), (88.6, 59.6), (86.6, 62.2), (87.2, 58.8), (88.8, 56.4)],
-              sharp=(6, 12))
-    fig.part('must', must, HAIR, grad=(98, 54, 87, 60, [(0, HAIR.light), (0.5, HAIR.base), (1, HAIR.shadow)]),
+    # (avis du propriétaire, tour 2) la moustache PART DE SOUS LE NEZ : son haut épouse le bas du nez, centré sur la
+    # médiane (x ≈ 92,7, entre les narines) ; deux ailes qui tombent de chaque côté de la bouche, la proche (à gauche)
+    # un peu plus large que celle du fond (3/4), une petite encoche au milieu au-dessus de la bouche.
+    must = sm([(89.6, 55.6), (91.0, 55.15), (92.7, 54.95), (94.4, 55.15), (95.8, 55.6), (97.2, 56.6), (98.0, 58.2),
+               (98.1, 60.0), (97.6, 61.6), (97.0, 60.0), (95.9, 59.0), (95.0, 58.2), (94.2, 57.85), (93.5, 57.95),
+               (92.7, 57.7), (91.9, 57.95), (91.0, 57.95), (90.1, 58.3), (89.0, 59.6), (86.7, 62.3), (86.9, 59.6),
+               (87.8, 57.4), (88.6, 56.2)], sharp=(8, 14, 20))
+    fig.part('must', must, HAIR, grad=(99, 54, 86, 62, [(0, HAIR.light), (0.6, HAIR.light), (1, HAIR.base)]),
              cel=0.8, rim=0.6, cast=1.0, cast_on=['beard', 'head'],
-             details=[(ribbon([(92.4, 55.3), (95.6, 55.3), (97.6, 56.8), (97.8, 59.8)], [0.1, 0.8, 0.6, 0.1]), HAIR.hi, 0.8),
-                      (ribbon([(92.4, 56.0), (89.6, 57.4), (87.6, 60.2)], [0.2, 0.8, 0.1]), HAIR.shadow, 0.6)])
-    fang = sm([(90.7, 59.7), (92.5, 59.6), (92.1, 57.9), (91.8, 56.4), (91.2, 57.9)], sharp=(3,))
-    fig.part('fang', fang, IVORY, cel=0.35, rim=0.35, cast=0.5, cast_on=['head', 'beard'],
-             details=[(ribbon([(92.0, 59.3), (92.0, 57.9), (91.8, 56.7)], [0.4, 0.3, 0.1]), IVORY.hi, 0.8)])
+             details=[(ribbon([(93.4, 55.55), (95.8, 56.0), (97.3, 57.4), (97.6, 59.6)], [0.1, 0.8, 0.6, 0.1]), HAIR.hi, 0.8),
+                      (ribbon([(92.0, 56.5), (89.6, 57.3), (87.8, 60.0)], [0.2, 0.8, 0.1]), HAIR.shadow, 0.6)])
+    # le croc PART DE LA BOUCHE : sa base est plantée dans la fente (côté proche), il monte devant la moustache
+    fang = sm([(90.6, 58.75), (91.85, 58.62), (91.7, 57.6), (91.1, 56.6), (90.75, 57.5)], sharp=(3,))
+    fig.part('fang', fang, IVORY, cel=0.35, rim=0.35, cast=0.5, cast_on=['head', 'must'],
+             details=[(ribbon([(91.6, 58.4), (91.5, 57.5), (91.2, 56.85)], [0.3, 0.22, 0.06]), IVORY.hi, 0.8)])
 
     # ---- les gros sourcils blancs broussailleux, froncés (le bout intérieur plus bas, vers le nez) ----
     browN = sm([(81.6, 46.8), (82.4, 44.6), (84.0, 45.4), (85.4, 43.8), (86.8, 45.0), (88.8, 45.6), (90.8, 47.0),

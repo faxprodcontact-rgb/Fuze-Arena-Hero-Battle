@@ -248,13 +248,13 @@ def shoulders(torso0, Sn, Sf):
     return shape_of(g, step=0.6)
 
 
-def shoulder_mask(U, S, seg, r, side=1):
+def shoulder_mask(U, S, seg, r, zone, side=1):
     """Le masque en dégradé de la racine d'un bras (outils.FigureM) : opaque à l'articulation S, transparent à une
     racine de bras de là, dans la direction du buste. Cette direction tourne avec le bras (−130° depuis l'axe du bras
     pour le bras proche ; en miroir pour le lointain) : au repos elle vise la poitrine et le trapèze ; quand le bras
     passe devant la poitrine, elle vise le haut de l'épaule, et le bras reste opaque devant le buste."""
     d = rot(seg.u, -130.0 * side)
-    return (*mapp(U, (S[0] - 2.0 * d[0], S[1] - 2.0 * d[1])), *mapp(U, (S[0] + (r + 1.0) * d[0], S[1] + (r + 1.0) * d[1])), 'torso')
+    return (*mapp(U, (S[0] - 2.0 * d[0], S[1] - 2.0 * d[1])), *mapp(U, (S[0] + (r + 1.0) * d[0], S[1] + (r + 1.0) * d[1])), zone)
 
 
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
@@ -341,6 +341,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     Sn_t = mapp(inv(TOR), mapp(UC, (S_N[0] + P['nsh'][0], S_N[1] + P['nsh'][1] - 0.8 * P['rn'])))
     Sf_t = mapp(inv(TOR), mapp(UC, (S_F[0] + P['fsh'][0], S_F[1] + P['fsh'][1] - 0.8 * P['rf'])))
     torso = shoulders(torso0, Sn_t, Sf_t)
+    # la zone où chaque racine de bras se fond : le buste, seulement autour de l'articulation (l'avant-bras qui repasse
+    # devant la poitrine pendant les coups reste opaque)
+    from shapely.geometry import Point
+    tgp = poly_of(torso)
+    zones = [(shape_of(tgp.intersection(Point(S_).buffer(r_ + 2.0, 64)), step=0.5), TOR) for S_, r_ in ((Sn_t, R_N), (Sf_t, R_F))]
     tx0, ty0, tx1, ty1 = torso0.bbox()
     det = [(torso, ('lin', 34, 66, 56, 62, [(0, FUR.deep, 0.5), (1, FUR.deep, 0)]), 1)]
     # les pectoraux : la plaque éclairée, l'ombre dessous (le proche plus large, trois quarts)
@@ -458,7 +463,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                                            (1, 4.2, 4.2)], n=24)
         f1, f2 = Seg(Sfu, Ef), Seg(Ef, Wf2)
         fa1 = math.degrees(math.atan2(f1.u[1], f1.u[0]))
-        fig.masks['farm'] = shoulder_mask(U, Sfu, f1, R_F, side=-1)
+        fig.masks['farm'] = shoulder_mask(U, Sfu, f1, R_F, zones[1], side=-1)
         fig.part('farm', farm, FUR, cel=1.6, rim=0.7, cast=1.2, cast_on=['torso', 'belt', 'cloth', 'strapA', 'strapB', 'stud3', 'stud4', 'buckle', 'haft', 'head'],
                  details=[(ribbon([f1(-5.6, 3.6), f1(-6.8, -1.0), f1(-4.4, -5.6)], [0.2, 2.2, 0.2]), FUR.light, 0.5),
                           (ellipse(*f1.at(0.65, 2.0), 2.0, 4.0, fa1 - 90), FUR.light, 0.22)])
@@ -672,7 +677,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     aa2 = math.degrees(math.atan2(a2.u[1], a2.u[0]))
     # la racine du bras (le dôme de l'épaule) se fond dans le deltoïde du buste : opaque à l'articulation et vers le
     # dehors, transparente du côté du buste (vers la poitrine et le trapèze) : aucune couture, aucun bord de boule
-    fig.masks['narm'] = shoulder_mask(U, Snu, a1, R_N)
+    fig.masks['narm'] = shoulder_mask(U, Snu, a1, R_N, zones[0])
     ad = [
         # le deltoïde énorme éclairé (le haut de l'épaule), sa limite douce sur le bras
         (ribbon([a1(-9.0, 4.0), a1(-11.0, -2.0), a1(-8.6, -8.0), a1(-2.0, -10.6)], [0.2, 3.4, 3.0, 0.3]), FUR.light, 0.55),

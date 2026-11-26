@@ -639,7 +639,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (ribbon([(q[0] + 0.7, q[1] - 0.2) for q in ridge], [0.1, 0.6, 0.1]), SCALE.hi, 0.45)]
     hd += eye_kit(FCX, FK) + eye_kit(NCX, 1.0)
     fig.part('head', head, SCALE, grad=(74, 18, 42, 36, [(0, '#56c8d0'), (0.45, SCALE.base), (1, '#245c9c')]),
-             cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'manef', 'robe', 'mane'], details=hd)
+             cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'robe'], details=hd)
 
     # ---- le bois proche (côté spectateur) : devant la tête ; sa base est enfouie dans la racine de la crinière ----
     for name, sh, g in BACK_ANT:

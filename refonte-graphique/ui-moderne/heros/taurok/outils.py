@@ -315,7 +315,8 @@ def shape_of(geom, step=0.7, t=0.9):
 
 
 class FigureM(Figure):
-    """La Figure d'atelier.py, plus des MASQUES par morceau : fig.masks[nom] = (dégradé, ref) ; le morceau (son ombre
+    """(Taurok : `ref` peut aussi être un couple (forme, matrice) : une zone seulement du buste, autour de l'épaule.)
+    La Figure d'atelier.py, plus des MASQUES par morceau : fig.masks[nom] = (dégradé, ref) ; le morceau (son ombre
     portée, sa couleur, ses ombres et lumières) est peint à travers un masque qui le rend transparent PAR-DESSUS le
     morceau `ref` (dans le sens du dégradé : (x1, y1) opaque → (x2, y2) transparent), et opaque partout ailleurs.
     Sert au raccord épaule / buste : la racine du bras se fond dans la poitrine (aucune couture, aucun bord de boule),
@@ -332,7 +333,7 @@ class FigureM(Figure):
         pid = lambda nm: 'p%d' % (n0 + names.index(nm) + 1)
         add_defs = []
         for k, (name, (x1, y1, x2, y2, ref)) in enumerate(self.masks.items()):
-            if name not in names or ref not in names:
+            if name not in names or (not isinstance(ref, tuple) and ref not in names):
                 continue
             P = pid(name)
             mid, gid = 'mk%s' % P, 'mg%s' % P
@@ -342,9 +343,12 @@ class FigureM(Figure):
                             % (gid, x1, y1, x2, y2))
             add_defs.append('<mask id="%s" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="%.2f" y="%.2f" '
                             'width="%.2f" height="%.2f"><rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" fill="#fff"/>'
-                            '<use href="#%s" fill="url(#%s)"/></mask>'
+                            '%s</mask>'
                             % (mid, self.x0 - 50, self.y0 - 50, self.w + 100, self.h + 100,
-                               self.x0 - 50, self.y0 - 50, self.w + 100, self.h + 100, pid(ref), gid))
+                               self.x0 - 50, self.y0 - 50, self.w + 100, self.h + 100,
+                               ('<use href="#%s" fill="url(#%s)"/>' % (pid(ref), gid)) if not isinstance(ref, tuple) else
+                               ('<path d="%s" transform="matrix(%s)" fill="url(#%s)"/>'
+                                % (ref[0].d(), ' '.join('%.5f' % v for v in ref[1]), gid))))
             i_fill = s.index('<use href="#%s" fill="url(#' % P)        # la couleur du morceau (pas sa silhouette)
             start = i_fill
             i_cast = s.rfind('<g clip-path=', 0, i_fill)

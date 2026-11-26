@@ -378,7 +378,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     rx, ry = ew * 0.56, ew * 0.48
     ir = ew * 0.36
     px = ex + ew * 0.14
-    md += [(ellipse(ex - 0.2, ey + 0.25, rx + 0.7, ry + 0.6), RIM_EYE, 0.95)]
+    md += [(ellipse(ex, ey + 0.1, rx + 0.75, ry + 0.7), RIM_EYE, 0.95)]
     if P['blink'] > 0.5:
         # la paupière : des plumes noires qui se ferment sur l'œil
         md += [(ellipse(ex, ey, rx, ry), RAVEN.base, 1),
@@ -390,15 +390,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                (ellipse(px, ey + 0.05, ir, ir * 1.08), ('rad', px + 0.35, ey - 0.4, ir * 1.5, ir * 1.5, [(0, '#ffe080'), (0.5, EYE[1]), (1, EYE[2])]), 1),
                (ellipse(px + 0.2, ey + 0.1, ir * 0.5, ir * 0.66), EYE[3], 1),
                # la paupière du haut (une ombre portée par le bord du trou)
-               (sm([(ex - rx - 0.3, ey - 0.5), (ex - rx * 0.2, ey - ry - 0.2), (ex + rx + 0.3, ey - ry * 0.6),
-                    (ex + rx * 0.3, ey - ry * 0.55)]), RIM_EYE, 0.6),
+               (sm([(ex + rx * math.cos(math.radians(a)), ey + ry * math.sin(math.radians(a))) for a in range(196, 345, 12)]
+                   + [(ex + rx * 0.8 * math.cos(math.radians(a)), ey - ry * 0.42 + ry * 0.34 * math.sin(math.radians(a)))
+                      for a in range(330, 200, -26)], sharp=(0, 12)), RIM_EYE, 0.5),
                (ellipse(px + 0.6, ey - 0.5, ir * 0.3, ir * 0.25), '#ffffff', 1)]
     # le sourcil peint en V rouge au-dessus de l'œil (il descend vers le bec), la petite larme rouge sous l'œil
-    md += [(sm([(ex - 5.0, ey - 3.4), (ex - 2.0, ey - 4.4), (ex + 1.2, ey - 3.8), (ex + 3.2, ey - 2.4), (ex + 2.6, ey - 1.7),
-                (ex + 0.8, ey - 2.8), (ex - 2.0, ey - 3.2), (ex - 4.6, ey - 2.4)], sharp=(0, 3)), SILK.base, 1),
-           (ribbon([(ex - 4.4, ey - 3.5), (ex - 1.8, ey - 4.1), (ex + 1.2, ey - 3.5)], [0.1, 0.45, 0.1]), SILK.light, 0.9),
-           (sm([(ex - 2.0, ey + 2.4), (ex - 1.4, ey + 3.6), (ex - 1.6, ey + 4.8), (ex - 2.4, ey + 5.0), (ex - 2.6, ey + 3.7)], sharp=(0,)), SILK.base, 1),
-           (ellipse(ex - 1.8, ey + 4.1, 0.25, 0.4), SILK.hi, 0.8)]
+    brow = [(ex - 4.4, ey - 2.9), (ex - 2.2, ey - 4.2), (ex + 0.6, ey - 4.45), (ex + 2.8, ey - 3.5), (ex + 4.1, ey - 1.9)]
+    md += [(ribbon(brow, [0.2, 1.15, 1.3, 1.05, 0.2]), SILK.base, 1),
+           (ribbon([lerp(brow[0], brow[1], 0.5), lerp(brow[1], brow[2], 0.6), lerp(brow[2], brow[3], 0.5)], [0.1, 0.42, 0.1]), SILK.light, 0.9),
+           (sm([(ex - 1.7, ey + 3.95), (ex - 1.15, ey + 4.95), (ex - 1.3, ey + 5.95), (ex - 2.1, ey + 6.15), (ex - 2.35, ey + 5.05)], sharp=(0,)), SILK.base, 1),
+           (ellipse(ex - 1.55, ey + 5.3, 0.22, 0.36), SILK.hi, 0.8)]
     fig.part('mask', mask, MASK, grad=(80, 31, 65, 46, [(0, MASK.light), (0.5, MASK.base), (1, MASK.shadow)]),
              cel=1.0, rim=0.7, cast=1.2, cast_on=['skull', 'cord'], details=md)
 
@@ -430,7 +431,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # l'eboshi de laque noire, plié en arrière (pointe vers l'arrière), bande d'or au bord
     hat = sm([(57.4, 31.0), (57.0, 27.8), (55.6, 25.0), (53.8, 22.4), (56.6, 21.4), (61.0, 21.6), (65.8, 23.0),
-              (70.0, 25.6), (73.4, 28.4), (75.0, 30.6), (66.0, 31.6)], sharp=(0, 3, 9))
+              (70.0, 25.6), (73.8, 28.0), (76.6, 29.9), (77.9, 31.9), (72.0, 31.0), (65.0, 30.8)], sharp=(0, 3, 10))
     fig.part('hat', hat, LACQ, grad=(72, 23, 56, 31, [(0, LACQ.light), (0.5, LACQ.base), (1, LACQ.shadow)]),
              cel=0.9, rim=0.8, cast=1.2, cast_on=['skull', 'mask'],
              details=[(sm([(57.6, 22.3), (62.2, 23.0), (66.8, 25.0), (71.2, 27.8), (68.2, 28.4), (63.2, 25.8), (59.4, 24.0)], sharp=(0, 3)), LACQ.light, 0.6),
@@ -438,10 +439,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       # le pli du chapeau (une arête douce, pas un trait)
                       (ribbon([(56.2, 24.8), (58.6, 26.4), (60.6, 29.4)], [0.1, 0.8, 0.1]), LACQ.deep, 0.7),
                       (ellipse(65.0, 24.8, 0.7, 0.35, 25), '#ffffff', 0.7)])
-    band = rpoly([(56.6, 29.6), (75.6, 30.5), (75.4, 32.1), (56.6, 31.4)], 0.6)
+    band = limb([(56.4, 30.5), (64.0, 30.75), (71.0, 31.0), (75.4, 31.4), (77.8, 32.3), (79.2, 33.7)],
+                [1.7, 1.72, 1.7, 1.62, 1.45, 1.1])
     fig.part('band', band, GOLD, grad=(76, 30, 56, 32, [(0, GOLD.hi), (0.4, GOLD.light), (1, GOLD.shadow)]),
              cel=0.4, rim=0.4, cast=0.9, cast_on=['mask', 'skull'],
-             details=[(ribbon([(58.0, 30.0), (67.0, 30.6), (75.6, 30.9)], [0.1, 0.45, 0.1]), '#fffbe0', 0.8)])
+             details=[(ribbon([(58.0, 30.0), (67.0, 30.25), (74.8, 30.75), (77.6, 31.7)], [0.1, 0.45, 0.4, 0.1]), '#fffbe0', 0.8)])
     # le nœud du cordon, puis le pompon d'or et de rouge qui pend derrière la tête (il se balance)
     fig.part('cknot', ellipse(KNOT[0], KNOT[1], 1.3, 1.1), SILK, cel=0.4, rim=0.4, cast=0.6)
     pcord = ribbon([(KNOT[0] - 0.2, KNOT[1] + 0.6), (55.0, 40.2), (54.4, 41.6)], [0.8, 0.7, 0.7])

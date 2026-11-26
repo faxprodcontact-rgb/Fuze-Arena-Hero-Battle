@@ -252,3 +252,90 @@ def several(shapes):
     for s in shapes:
         subs += s.subs
     return Shape(subs)
+
+
+# ---------- la chevelure d'un seul tenant (repris de ../kael/kael.py, correction de Kael du 26/11) ----------
+
+def _ring(coords, sharp_deg=38):
+    """Un anneau de polygone → une forme souple qui garde les coins vifs (pointes des mèches, creux entre mèches)."""
+    pts = list(coords)[:-1]
+    n = len(pts)
+    sharp = []
+    for i in range(n):
+        a, b, c = pts[i - 1], pts[i], pts[(i + 1) % n]
+        d = abs((math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(b[1] - a[1], b[0] - a[0]) + math.pi) % (2 * math.pi) - math.pi)
+        if math.degrees(d) > sharp_deg:
+            sharp.append(i)
+    return sm(pts, sharp=tuple(sharp), t=0.9).subs
+
+
+def geom_shape(geom, simplify=0.02, min_area=0.05):
+    """Un (multi)polygone shapely → une forme (trous compris, orientés pour la règle « nonzero »)."""
+    from shapely.geometry import Polygon
+    from shapely.geometry.polygon import orient
+    gs = list(geom.geoms) if hasattr(geom, 'geoms') else [geom]
+    subs = []
+    for g in gs:
+        if g.geom_type != 'Polygon' or g.area < min_area:
+            continue
+        g = orient(g.simplify(simplify), 1.0)
+        subs += _ring(g.exterior.coords)
+        for h in g.interiors:
+            if Polygon(h).area >= 1.0:
+                subs += _ring(h.coords)
+    return Shape(subs) if subs else None
+
+
+def fused_geom(shapes, smooth=0.35):
+    """Plusieurs formes fondues en UNE silhouette shapely (aucune couture), creux à peine arrondis."""
+    from shapely.ops import unary_union
+    g = unary_union([poly_of(s, 8) for s in shapes])
+    return g.buffer(smooth, join_style=1, quad_segs=6).buffer(-smooth, join_style=1, quad_segs=6)
+
+
+def cast_off(sh, dx, dy):
+    """L'ombre d'une mèche sur ce qui est dessous : la mèche décalée, moins la mèche elle-même."""
+    from shapely import affinity
+    g = poly_of(sh, 8)
+    d = affinity.translate(g, dx, dy).difference(g)
+    return geom_shape(d.buffer(-0.04).buffer(0.04), min_area=0.3)
+
+
+def hexmix(a, b, t):
+    a = [int(a[i:i + 2], 16) for i in (1, 3, 5)]
+    b = [int(b[i:i + 2], 16) for i in (1, 3, 5)]
+    return '#%02x%02x%02x' % tuple(round(x + (y - x) * t) for x, y in zip(a, b))
+
+
+def faded(stops, start, fade, k=1.0):
+    """Un dégradé le long d'une mèche dont la couleur n'apparaît qu'après sa racine : transparent sur le crâne,
+    plein à `fade` (fractions de la longueur), en douce rampe (smoothstep)."""
+    def col_at(o):
+        for (o1, c1), (o2, c2) in zip(stops, stops[1:]):
+            if o1 <= o <= o2:
+                return hexmix(c1, c2, (o - o1) / ((o2 - o1) or 1))
+        return stops[-1][1] if o > stops[-1][0] else stops[0][1]
+    out = [(0, col_at(0), 0.0)] if start > 0 else []
+    for i in range(7):
+        o = start + (fade - start) * i / 6
+        u = i / 6
+        out.append((round(o, 4), col_at(o), round(k * u * u * (3 - 2 * u), 3)))
+    out += [(o, col, k) for o, col in stops if o > fade]
+    return out
+
+
+def posed_geom(part):
+    """La silhouette shapely d'un morceau, posée (sa matrice appliquée)."""
+    from shapely import affinity
+    a, b, c, d, e, f = part.M
+    return affinity.affine_transform(poly_of(part.shape, 6), [a, c, b, d, e, f])
+
+
+def to_local(geom, M):
+    """Une silhouette du dessin → le repère d'un morceau posé par M (matrice inverse)."""
+    from shapely import affinity
+    a, b, c, d, e, f = M
+    det = a * d - b * c
+    ia, ib, ic, id_ = d / det, -b / det, -c / det, a / det
+    ie, if_ = -(ia * e + ic * f), -(ib * e + id_ * f)
+    return affinity.affine_transform(geom, [ia, ic, ib, id_, ie, if_])

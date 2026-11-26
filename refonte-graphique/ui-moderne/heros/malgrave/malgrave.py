@@ -76,11 +76,14 @@ FACE = {'oeil_proche': (62.8, 36.9, 5.0), 'oeil_fond': (78.4, 36.5, 4.0), 'nez':
 WAIST0, WAIST1 = 64.0, 78.0     # le buste s'étire entre ces deux lignes (au-dessus : rien ne bouge ; dessous : + DROP)
 LEG0, LEG1 = 76.0, 101.0        # les jambes (pantalon) : leur haut passe de LEG0 à LEG0 + DROP, le bas (LEG1) reste
 CROTCH = 88.2                   # l'entrejambe (repère final), là où le propriétaire a dessiné le bas du bassin
-# la jambe proche ET le bassin, d'un seul tenant (repère final) : bord extérieur, bas (dans la botte), intérieur qui
-# monte à l'entrejambe, le pli de la jambe lointaine, puis le haut (caché sous l'habit et le gilet)
-NLEG_SEAT = [(51.2, 78.0), (49.9, 84.0), (50.2, 90.2), (50.5, 96.7), (50.7, 101.2), (51.8, 104.4), (54.4, 105.2),
-             (57.1, 104.4), (58.1, 101.0), (58.4, 96.2), (59.2, 92.0), (60.7, 89.4), (62.6, CROTCH), (64.2, CROTCH - 0.4),
-             (65.0, 85.6), (65.8, 82.0), (66.8, 78.6), (67.4, 75.4), (63.6, 73.8), (59.0, 75.2), (54.6, 76.6)]
+# le pantalon d'un seul tenant (repère final) : jambe proche (bord extérieur, bas dans la botte, intérieur), l'arrondi
+# de l'entrejambe, la jambe lointaine (intérieur, bas dans la botte, extérieur), puis le haut caché sous l'habit
+PANTS = [(51.2, 78.0), (49.9, 84.0), (50.2, 90.2), (50.5, 96.7), (50.7, 101.2), (51.8, 104.4), (54.4, 105.2),
+         (57.1, 104.4), (58.1, 101.0), (58.4, 96.2), (59.2, 92.0), (60.6, 89.5),
+         (62.2, CROTCH + 0.2), (63.8, CROTCH - 0.1), (65.4, CROTCH + 0.4), (66.6, 90.0),
+         (67.5, 92.6), (68.6, 96.6), (69.3, 101.0), (69.9, 103.9), (72.8, 104.9), (75.6, 103.9), (76.3, 101.0),
+         (76.1, 96.7), (75.9, 90.2), (75.9, 84.0), (75.6, 79.0), (74.4, 75.6), (70.6, 73.8), (66.0, 73.4), (59.0, 75.0),
+         (54.6, 76.6)]
 REST = dict(breath=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, hat=(0.0, 0.0), htilt=0.0, pl=0.0, ch=0.0, tl=0.0,
             hand=WF0, skr=0.0, sk=0.0, flare=0.0, blink=0.0, cane=0.0, grin=0.0, bendF=1.0, jaw=0.0)
 
@@ -219,21 +222,22 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (ribbon([(48.4, 78.0), (46.8, 88.0), (43.6, 98.0)], [0.2, 1.3, 0.2]), PURPLE.deep, 0.45)])
 
     # ---- les jambes : longues et sèches, pantalon noir ; la lointaine un peu en avant ----
-    flegs = limb([(69.8, 76.0), (71.2, 86.0), (72.4, 95.0), (72.8, 101.0)], [12.0, 9.6, 7.4, 7.0])
     # Avis du propriétaire (tour 2) : « un trou entre ces jambes qui monte trop haut ; fais le bassin avec une belle
-    # liaison entre les membres ». La jambe proche et le bassin sont UNE seule forme : le fond du pantalon remplit
-    # l'ouverture de l'habit jusqu'à l'entrejambe (CROTCH, juste sous le bas des devants), l'intérieur de la jambe y
-    # monte par un arrondi doux, et la jambe lointaine sort de derrière par un pli (ombre portée, jamais un trait).
+    # liaison entre les membres ». Le pantalon est UNE seule forme : les deux jambes et le bassin qui les relie. Le fond
+    # du pantalon remplit l'ouverture de l'habit jusqu'à l'entrejambe (CROTCH, juste sous le bas des devants) ; sous
+    # l'entrejambe, un arrondi doux entre les deux jambes (plus de fente qui monte jusqu'au gilet). Le départ de la jambe
+    # lointaine n'est qu'un pli peint (ombre douce), jamais une couture ni un trait.
     # Points écrits dans le repère final (après l'allongement du buste), ramenés avant la déformation par uy().
     uy = lambda y: y if y >= LEG1 else LEG1 - (LEG1 - y) * (LEG1 - LEG0) / (LEG1 - LEG0 - DROP)
-    nlegs = sm([(x, uy(y)) for x, y in NLEG_SEAT], sharp=(18,))
-    fig.part('fleg', flegs, BLACK, grad=(76, 78, 66, 100, [(0, BLACK.light), (0.5, BLACK.base), (1, BLACK.shadow)]),
-             cel=1.3, rim=0.7, cast=0.9,
-             details=[(ribbon([(74.6, 80.0), (75.4, 89.0), (75.6, 98.0)], [0.2, 1.0, 0.2]), BLACK.hi, 0.35),
-                      (ribbon([(70.4, 86.4), (71.4, 91.4), (71.6, 97.0)], [0.1, 0.8, 0.1]), BLACK.deep, 0.4)])
-    fig.part('nleg', nlegs, BLACK, grad=(60, 78, 50, 100, [(0, BLACK.light), (0.5, BLACK.base), (1, BLACK.shadow)]),
-             cel=1.5, rim=0.7, cast=1.0, cast_on=['fleg', 'lining', 'tailN'],
-             details=[(ribbon([(58.4, 80.0), (57.6, 89.0), (57.2, 98.0)], [0.2, 1.1, 0.2]), BLACK.hi, 0.35),
+    U_ = lambda pts: [(x, uy(y)) for x, y in pts]
+    pants = sm(U_(PANTS), sharp=(29,))
+    fold = ribbon(U_([(64.6, 88.6), (65.4, 85.6), (66.4, 82.4), (67.6, 79.4)]), [0.2, 1.3, 1.1, 0.2])
+    fig.part('nleg', pants, BLACK, grad=(70, 72, 60, 104, [(0, BLACK.light), (0.45, BLACK.base), (1, BLACK.shadow)]),
+             cel=1.5, rim=0.7, cast=1.0, cast_on=['tailF', 'lining', 'tailN'],
+             details=[(fold, BLACK.shadow, 0.55),
+                      (ribbon([(74.6, 80.0), (75.4, 89.0), (75.6, 98.0)], [0.2, 1.0, 0.2]), BLACK.hi, 0.35),
+                      (ribbon([(70.4, 86.4), (71.4, 91.4), (71.6, 97.0)], [0.1, 0.8, 0.1]), BLACK.deep, 0.4),
+                      (ribbon([(58.4, 80.0), (57.6, 89.0), (57.2, 98.0)], [0.2, 1.1, 0.2]), BLACK.hi, 0.35),
                       (ribbon([(54.4, 85.0), (54.0, 91.4), (54.0, 97.0)], [0.1, 0.8, 0.1]), BLACK.deep, 0.4)])
     boot_parts(fig, 'f', 72.6, 1.0)
     boot_parts(fig, 'n', 54.6, 0.94)
@@ -334,7 +338,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     warp(fig, ['torso', 'gilet', 'lapN', 'lapF', 'button', 'btn0', 'btn1'], wy_body)
     warp(fig, ['tailN', 'tailF'], wy_tail)
     warp(fig, ['lining'], wy_lining)
-    warp(fig, ['fleg', 'nleg'], wy_leg)
+    warp(fig, ['nleg'], wy_leg)
 
     # ---- chaque groupe prend sa pose ----
     fig.pose(['tailN', 'tailF', 'lining'], TAIL)

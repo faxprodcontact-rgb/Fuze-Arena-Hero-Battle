@@ -1,4 +1,3 @@
 fait
-Corrigé d'après l'avis du 26/11 : la flèche passe maintenant AU-DESSUS de l'épaulette de fourrure (main qui tire et arc un peu remontés : la flèche longe la mâchoire du masque, toujours presque à plat), et le brin bas de la corde passe DERRIÈRE le col et l'épaulette (il ressort sous la fourrure, devant l'armure) — dans toutes les poses de tir (repos, tir, spéciale, reprise de flèche).
-Hanche : la petite bosse sous la ceinture est enlevée (bord de la tunique redressé, bout de ceinture raccourci) : silhouette lisse, vérifiée en aplat noir.
-Visage vérifié avec visage.py (visage.png, aucun défaut) : seul changement, l'œil du fond un peu moins étroit. Image avant | après : avant-apres.png.
+Corrigé d'après le 2e avis du 26/11 (« la corde passe en dessous de l'épaulette ») : le brin bas de la corde passe maintenant DEVANT le col de loup et l'épaulette de fourrure (il sort de sous les plumes de la flèche, traverse la fourrure en entier, puis descend devant l'armure jusqu'au bas de l'arc), dans toutes les poses où la corde est tirée (repos, tir, spéciale, reprise de flèche).
+Rien d'autre n'a changé (flèche au-dessus de l'épaulette, hanche lisse, visage vérifié avec visage.py : aucun défaut). Image avant | après : avant-apres.png.
