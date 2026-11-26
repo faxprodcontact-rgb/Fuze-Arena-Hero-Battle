@@ -1,4 +1,3 @@
 fait
-Corrigé d'après l'avis du 26/11 (« replacer le nez entre les deux yeux ») : le bec part maintenant du milieu du visage, sa racine (la cire claire et la narine) posée entre les deux yeux, puis il descend et se referme en crochet ; bouche fermée.
-Les deux yeux d'ambre sont sur la même ligne (celui du fond un peu plus étroit), les deux pupilles regardent la cible, les arcades lourdes en « V » gardent le regard dur ; visage placé et vérifié avec visage.py (visage.png, aucun défaut), il tourne d'un bloc dans toutes les poses.
-Le reste du dessin (ailes, armure, arc, animations) est inchangé.
+Tour 2 de l'avis (26/11 soir, un cercle sans texte sur le haut de l'aile du fond, contre la tête) : le bord de cette aile faisait des marches et des petits copeaux de plumes, et venait se coller en biais contre le crâne. Il a maintenant un bord d'attaque net d'un seul trait (bande claire, comme l'aile proche) qui longe la grande plume du haut puis plonge franchement derrière la tête, avec un peu d'air entre l'aile et le crâne au-dessus du croisement.
+Vérifié au repos et dans les poses extrêmes (aile hérissée et levée de la spéciale, tête tournée vers le ciel, recul du tir) ; l'aile proche, le visage (visage.png, aucun défaut), l'armure, l'arc et les animations sont inchangés.

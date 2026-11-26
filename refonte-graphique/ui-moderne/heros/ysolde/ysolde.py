@@ -11,7 +11,7 @@
 # droite) serre une torche au-dessus de la tête, jamais devant le visage ; le manche ressort dessous avec un embout
 # d'or ; la flamme (une seule forme à trois langues, penchée vers l'arrière, cœur clair) dans une coupe d'or. Bras
 # droit (proche) tendu vers l'arrière, gracieux : main ouverte, doigts en éventail, index relevé, pouce dessous.
-# Visage de femme à la peau sombre : cheveux tirés en arrière, deux mèches balayées sur le haut du front, sourcils épais qui descendent vers le nez
+# Visage de femme à la peau sombre : front dégagé, cheveux tirés en arrière, sourcils épais qui descendent vers le nez
 # (regard féroce), grands yeux en amande à l'iris ambre, grand sourire aux dents visibles, lèvres baies ; oreille à
 # l'anneau d'or. La grande crinière noir bleuté vole loin vers la gauche en cinq mèches ondulées (reflets lavande,
 # trois bagues d'or), une longue mèche descend dans le dos ; deux plumes (rouge, orange) nouées d'une perle d'or
@@ -230,14 +230,10 @@ def wave(pts, P, i, amp=1.0, down=False):
 
 # les cheveux tirés en arrière sur le crâne (front dégagé, tempe, derrière l'oreille, nuque), dans le repère de la
 # tête (agrandie ×1,1)
-# 2e avis (26/11 soir) : « plus de cheveux devant, trop gros front » : la ligne des cheveux descend (le front passe
-# de ~6 à ~3 px au-dessus des sourcils) et deux mèches balayées de la tempe lointaine vers la nuque couvrent le haut
-# du front, leurs pointes tournées vers l'arrière (le sens de la crinière).
-CAP = [(87.8, 32.8), (86.7, 30.4), (84.6, 29.4), (82.0, 29.6), (79.6, 30.4), (77.4, 31.2), (76.6, 29.6),
-       (74.4, 29.7), (72.2, 30.6), (70.4, 32.2), (69.2, 34.0), (68.4, 34.8), (66.4, 34.6), (64.6, 36.6), (64.2, 41.0),
-       (65.2, 45.0), (62.0, 47.4), (58.4, 43.6), (56.6, 36.0), (57.0, 27.4), (60.4, 19.8), (66.0, 15.2), (73.6, 13.4),
-       (80.2, 14.6), (85.0, 17.8), (87.8, 22.6), (88.7, 27.4)]
-CAP_SHARP = (0, 5, 6, 10, 12)
+CAP = [(87.4, 27.4), (84.8, 25.1), (80.4, 24.8), (76.4, 25.5), (72.8, 27.0), (70.6, 29.4), (69.6, 32.4),
+       (68.4, 34.8), (66.4, 34.6), (64.6, 36.6), (64.2, 41.0), (65.2, 45.0), (62.0, 47.4), (58.4, 43.6),
+       (56.6, 36.0), (57.0, 27.4), (60.4, 19.8), (66.0, 15.2), (73.6, 13.4), (80.2, 14.6), (85.0, 17.8), (87.8, 22.6)]
+CAP_SHARP = (0, 8)
 
 
 def cap_shape():
@@ -315,19 +311,14 @@ def mane(fig, P, HEADN, HEAD):
                     (xf(rpoly([(-0.25, -wl), (0.25, -wl), (0.25, wl), (-0.25, wl)], 0.2), p[0], p[1], a).move(0.3, -0.2), GOLD.hi, 0.8)]
     # sur le crâne : l'anneau de reflet lavande (il dit la rondeur de la tête), les cheveux tirés vers l'arrière
     # (creux doux qui filent vers la crinière), la tempe et la nuque dans l'ombre ; rien n'y dessine un bord
-    # les deux mèches du front (2e avis) : un sillon entre elles et au-dessus de la seconde, qui file de la couronne
-    # vers leurs pointes ; un reflet lavande sur chacune ; sur le côté, les cheveux tirés vers la crinière
     for line, ws, col, op in (([(61.0, 24.0), (66.0, 18.4), (74.0, 15.8), (81.0, 17.0), (85.6, 20.6)], [0.2, 1.6, 2.2, 1.6, 0.2], HAIR.light, 0.85),
                               ([(64.0, 21.6), (69.0, 17.4), (76.0, 16.4)], [0.1, 0.8, 0.1], HAIR.hi, 0.6),
-                              ([(84.4, 19.4), (81.4, 22.6), (78.8, 26.2), (76.8, 29.4)], [0.1, 0.55, 0.65, 0.1], HAIR.deep, 0.6),
-                              ([(83.2, 21.0), (80.6, 24.2), (78.4, 27.6)], [0.1, 0.5, 0.1], HAIR.shadow, 0.45),
-                              ([(77.0, 18.0), (73.0, 21.4), (69.6, 25.6), (66.8, 30.0), (64.8, 34.4)], [0.1, 0.55, 0.65, 0.5, 0.1], HAIR.deep, 0.55),
-                              ([(87.6, 24.0), (85.6, 26.2), (82.6, 28.0), (79.2, 29.8)], [0.1, 0.7, 0.6, 0.1], HAIR.light, 0.55),
-                              ([(86.4, 21.0), (84.2, 23.4), (81.8, 25.4)], [0.1, 0.5, 0.1], HAIR.hi, 0.4),
-                              ([(79.6, 22.4), (76.6, 25.0), (73.6, 27.6), (71.0, 30.8)], [0.1, 0.7, 0.6, 0.1], HAIR.light, 0.5),
-                              ([(76.0, 23.4), (73.8, 25.2)], [0.1, 0.4, 0.1], HAIR.hi, 0.35),
-                              ([(68.6, 25.2), (64.6, 28.0), (60.6, 32.4)], [0.1, 0.6, 0.1], HAIR.shadow, 0.55),
-                              ([(66.6, 30.4), (64.0, 33.0), (62.0, 36.4)], [0.1, 0.45, 0.1], HAIR.light, 0.35)):
+                              ([(84.6, 24.4), (78.0, 23.2), (71.4, 23.4), (65.0, 26.0), (58.6, 30.4)], [0.1, 0.7, 0.8, 0.6, 0.1], HAIR.deep, 0.6),
+                              ([(80.0, 24.2), (75.0, 21.0), (69.0, 20.8), (63.4, 23.8)], [0.1, 0.6, 0.6, 0.1], HAIR.shadow, 0.6),
+                              ([(76.0, 25.0), (71.0, 23.6), (66.0, 25.4), (61.6, 29.2)], [0.1, 0.7, 0.6, 0.1], HAIR.light, 0.45),
+                              ([(72.0, 27.0), (68.4, 27.6), (64.4, 30.2), (60.6, 34.2)], [0.1, 0.6, 0.5, 0.1], HAIR.shadow, 0.6),
+                              ([(70.2, 30.2), (67.4, 31.6), (63.8, 35.0)], [0.1, 0.45, 0.1], HAIR.light, 0.35),
+                              ([(81.6, 20.8), (74.6, 19.6), (68.0, 20.8), (60.6, 25.6)], [0.1, 0.5, 0.5, 0.1], HAIR.light, 0.5)):
         det.append((ribbon(line, ws).map(MH), col, op))
     fig.part('hair', sil, HAIR, cel=0, rim=0.55, cast=0, details=det)
     return ['hair']
@@ -789,7 +780,7 @@ def head(fig, P, HEAD, HEADN):
     # les plans : la joue proche dans une ombre douce, le front et la joue lointaine éclairés
     fd += [(sm([(67.0, 31.0), (68.0, 36.4), (69.8, 41.0), (72.8, 44.6), (77.0, 47.6), (75.6, 48.6), (71.6, 46.4),
                 (68.4, 42.6), (66.6, 37.0)]), SKIN.shadow, 0.5),
-           (sm([(81.4, 30.4), (85.0, 30.2), (86.8, 31.4), (85.6, 32.4), (82.6, 31.6)]), SKIN.hi, 0.3),
+           (sm([(80.6, 23.2), (85.2, 24.4), (86.8, 28.0), (85.8, 30.0), (82.4, 28.2)]), SKIN.hi, 0.35),
            (sm([(84.8, 37.8), (86.9, 36.6), (87.2, 39.6), (85.8, 42.2), (84.6, 40.4)]), SKIN.light, 0.35),
            (sm([(74.4, 46.6), (79.4, 48.0), (83.6, 46.6), (81.6, 48.3), (79.2, 48.9), (75.6, 48.1)]), SKIN.shadow, 0.45)]
     ex, ey, ew = V['oeil_proche']
