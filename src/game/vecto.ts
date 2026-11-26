@@ -22,7 +22,7 @@ const VECTO: Record<string, readonly [number, number, number, number]> = {
   'myths-3': [130, 124, 63, 121],
   'angels-1': [118, 113, 58, 110],
   'assassins-2': [133, 122, 67, 120],
-  'assassins-5': [136, 126, 69, 124],
+  'assassins-5': [138, 126, 64, 124],
   'demons-8': [102, 125, 52, 122],
   'angels-2': [106, 122, 63, 120],
   'assassins-3': [127, 110, 62, 108],
