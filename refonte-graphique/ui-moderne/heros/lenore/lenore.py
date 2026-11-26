@@ -62,6 +62,8 @@ ANG0 = 139.5                              # la massue descend vers l'arrière (p
 WR0 = (-5.0, 5.0)
 S0 = (49.0, 61.4)                         # l'épaule proche (articulation)
 L1, L2 = 13.6, 10.6                       # bras, avant-bras (jusqu'au poignet)
+R_FS = 5.8                                # le rayon de la boule de l'épaule lointaine
+R_SH = 7.4                                # le rayon de la boule de l'épaule proche (bras et buste la partagent)
 FS0 = (93.0, 61.4)                        # l'épaule lointaine
 HIP = (72.0, 89.0)                        # le pivot du buste
 NECK = (82.0, 55.0)                       # le pivot (et le centre d'agrandissement) de la tête
@@ -177,10 +179,35 @@ def cap(ctr, frm, to, r, k=3):
     return [(ctr[0] + r * math.cos(a0 + da * j / (k + 1)), ctr[1] + r * math.sin(a0 + da * j / (k + 1))) for j in range(1, k + 1)]
 
 
-def body_limb(center, keys, n=24, end_cap=True):
-    """Un membre d'un seul tenant le long d'une ligne brisée (épaule, coude, poignet), bouts arrondis."""
+def ball_arc(ctr, r, a_from, a_to, step=12):
+    """Les points d'un arc de cercle (angles en degrés, de a_from à a_to, dans un sens ou dans l'autre)."""
+    k = max(2, int(abs(a_to - a_from) / step))
+    return [(ctr[0] + r * math.cos(math.radians(a_from + (a_to - a_from) * j / k)),
+             ctr[1] + r * math.sin(math.radians(a_from + (a_to - a_from) * j / k))) for j in range(k + 1)]
+
+
+def body_limb(center, keys, n=24, end_cap=True, round_start=False):
+    """Un membre d'un seul tenant le long d'une ligne brisée (épaule, coude, poignet), bouts arrondis.
+    round_start : le départ est une vraie boule (l'épaule, centrée sur l'articulation) : elle reste la même quand le bras
+    tourne, et le buste porte la même boule (le raccord épaule / buste est ainsi continu, sans marche)."""
     c, ws = stations(center, keys, n)
     back, front = edges(c, ws)
+    if round_start:
+        r0 = (ws[0][0] + ws[0][1]) / 2
+        a_f = math.degrees(math.atan2(front[0][1] - c[0][1], front[0][0] - c[0][0]))
+        a_b = math.degrees(math.atan2(back[0][1] - c[0][1], back[0][0] - c[0][0]))
+        a_up = math.degrees(math.atan2(c[0][1] - c[1][1], c[0][0] - c[1][0]))     # à l'opposé du membre
+        # du bord « devant » au bord « dos » en passant par l'opposé du membre
+        while a_b > a_f:
+            a_b -= 360
+        if not (a_b <= a_up <= a_f or a_b <= a_up - 360 <= a_f or a_b <= a_up + 360 <= a_f):
+            a_b += 360
+        d = (c[-1][0] - c[-2][0], c[-1][1] - c[-2][1])
+        L = math.hypot(*d) or 1
+        tip = (c[-1][0] + d[0] / L * (ws[-1][0] + ws[-1][1]) / 2, c[-1][1] + d[1] / L * (ws[-1][0] + ws[-1][1]) / 2)
+        end = [lerp(back[-1], tip, 0.55), tip, lerp(front[-1], tip, 0.55)] if end_cap else []
+        arc = ball_arc(c[0], r0, a_f, a_b)[1:-1]
+        return sm(back + end + front[::-1] + arc, t=0.9)
     # le bout : un arc qui va du bord « dos » au bord « devant » en passant par l'avant du membre
     d = (c[-1][0] - c[-2][0], c[-1][1] - c[-2][1])
     L = math.hypot(*d) or 1
@@ -274,7 +301,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ======================================================================== le bras lointain (gauche), derrière le flanc
     FE, FW = (94.4, 71.2), (94.9, 79.4)
-    farm = body_limb([FS0, FE, FW], [(0, 5.6, 5.9), (0.25, 5.2, 5.3), (0.52, 4.4, 4.6), (0.7, 4.8, 4.9), (1, 4.0, 4.1)], n=20)
+    farm = body_limb([FS0, FE, FW], [(0, R_FS, R_FS), (0.25, 5.2, 5.3), (0.52, 4.4, 4.6), (0.7, 4.8, 4.9), (1, 4.0, 4.1)], n=20,
+                     round_start=True)
     s1 = Seg(FS0, FE)
     fig.part('farm', farm, skin, cel=1.6, rim=0.6, cast=0,
              details=[(ellipse(*s1.at(0.55, 1.6), 1.8, 3.4, math.degrees(math.atan2(s1.u[1], s1.u[0])) - 90), skin.light, 0.45),
@@ -352,16 +380,34 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.part(name, sh, skin, cel=1.7, rim=0.6, cast=1.0, cast_on=cast_on, details=det)
         return K
 
-    leg('fleg', (85.6, 89.0), (89.0, 110.2), 12.6, 10.0, 1,
+    # les deux genoux plient vers l'avant (vers l'ennemi, à droite) : bend = -1 pour les deux jambes
+    leg('fleg', (85.6, 89.0), (89.0, 110.2), 12.6, 10.0, -1,
         [(0, 6.4, 6.4), (0.48, 5.4, 5.4), (0.62, 5.8, 4.8), (0.82, 5.5, 4.4), (1, 4.9, 4.9)], 41.6, None)
     leg('nleg', (57.0, 89.0), (48.0, 110.2), 13.8, 10.2, -1,
         [(0, 7.2, 7.2), (0.5, 5.8, 5.8), (0.64, 6.3, 5.0), (0.84, 6.0, 4.7), (1, 5.2, 4.8)], 0.0, ['fleg'])
 
     # ======================================================================== le buste (avec le cou)
-    torso = sm([(66.0, 48.0), (60.6, 50.8), (55.2, 52.8), (50.4, 55.0), (47.6, 59.8), (48.6, 65.0), (51.8, 68.6),
+    # l'épaule proche : une boule centrée sur l'articulation (la même que le départ du bras) ; le trapèze descend du cou
+    # en ligne douce jusqu'à elle (tangente) : le raccord épaule / buste est continu, sans marche ni coin
+    S = mapp(UC, (S0[0] + P['shs'][0], S0[1] + P['shs'][1] - 0.8 * P['rn']))
+    Su = mapp(_inv(U), S)                                  # dans le repère du haut du corps (le bras y est posé)
+    NK = (60.6, 50.8)
+    dk = math.dist(Su, NK)
+    a_t = math.degrees(math.atan2(NK[1] - Su[1], NK[0] - Su[0]) - math.acos(min(1.0, R_SH / dk)))
+    sh_ball = ball_arc(Su, R_SH, a_t, -190, step=10)
+    trap = [lerp(NK, sh_ball[0], 0.33), lerp(NK, sh_ball[0], 0.7)]
+    # l'épaule lointaine : la même idée (le bras lointain, derrière, part d'une boule de même rayon) ; le trapèze
+    # descend jusqu'à elle en tangente, le bord du buste ne la quitte que plus bas, vers l'aisselle
+    FB = (FS0[0] + P['far'][0], FS0[1] + P['far'][1] - 0.8 * P['rf'] - 0.6 * br)
+    NKF = (86.8, 52.6)
+    dkf = math.dist(FB, NKF)
+    a_tf = math.degrees(math.atan2(NKF[1] - FB[1], NKF[0] - FB[0]) + math.acos(min(1.0, R_FS / dkf)))
+    far_sh = [(FB[0] - 1.0, FB[1] + 2.4)] + ball_arc(FB, R_FS, -62, a_tf, step=10) + \
+        [lerp(NKF, (FB[0] + R_FS * math.cos(math.radians(a_tf)), FB[1] + R_FS * math.sin(math.radians(a_tf))), 0.5), NKF]
+    torso = sm([(66.0, 48.0), NK] + trap + sh_ball + [(Su[0] - 3.0, Su[1] + 5.4), (51.8, 68.6),
                 (53.8, 72.6), (54.6, 77.0), (54.2, 81.4), (53.4, 86.0), (56.0, 90.6), (70.0, 91.6), (85.0, 90.6),
-                (88.6, 86.4), (87.2, 82.0), (87.0, 78.0), (88.4, 73.0), (89.6, 68.0), (91.4, 63.2), (92.2, 58.0),
-                (90.6, 54.4), (86.8, 52.6), (82.0, 50.6), (80.0, 47.6)])
+                (88.6, 86.4), (87.2, 82.0), (87.0, 78.0), (88.4, 73.0), (89.6, 68.0), (91.4, 63.2)] + far_sh +
+               [(82.0, 50.6), (80.0, 47.6)])
     det = [(torso, ('lin', 56, 70, 70, 66, [(0, skin.deep, 0.45), (1, skin.deep, 0)]), 1)]
     # les pectoraux : la plaque éclairée, l'ombre dessous (le proche plus large, trois quarts)
     det += [(sm([(57.4, 56.2), (64.8, 54.8), (72.0, 56.0), (73.4, 60.8), (71.4, 64.4), (64.4, 64.6), (58.6, 61.8)]), skin.light, 0.5),
@@ -491,13 +537,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ======================================================================== le bras proche (droit) : épaule → coude → poignet
     # d'un seul tenant ; le coude est placé par le squelette (le poignet suit le poing, qui suit la massue)
-    S = mapp(UC, (S0[0] + P['shs'][0], S0[1] + P['shs'][1] - 0.8 * P['rn']))
-    Su = mapp(_inv(U), S)                                  # dans le repère du haut du corps (le bras y est posé)
     wr = P['wr']
     W = (G[0] + u[0] * wr[0] + nv[0] * wr[1], G[1] + u[1] * wr[0] + nv[1] * wr[1])
     E, W2 = ik(Su, W, L1, L2, P['bend'])
-    arm = body_limb([Su, E, W2], [(0, 7.6, 7.8), (0.22, 6.7, 6.9), (0.42, 6.3, 6.6), (0.57, 5.3, 5.5),
-                                   (0.67, 5.8, 5.9), (0.86, 5.0, 5.1), (1, 4.6, 4.6)], n=26)
+    arm = body_limb([Su, E, W2], [(0, R_SH, R_SH), (0.22, 6.7, 6.9), (0.42, 6.3, 6.6), (0.57, 5.3, 5.5),
+                                   (0.67, 5.8, 5.9), (0.86, 5.0, 5.1), (1, 4.6, 4.6)], n=26, round_start=True)
     a1, a2 = Seg(Su, E), Seg(E, W2)
     aa1 = math.degrees(math.atan2(a1.u[1], a1.u[0]))
     aa2 = math.degrees(math.atan2(a2.u[1], a2.u[0]))
@@ -511,7 +555,25 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         # l'avant-bras qui s'affine : le muscle près du coude éclairé
         (ellipse(*a2.at(0.3, 1.8), 2.2, 3.6, aa2 - 90), skin.light, 0.45),
     ]
-    fig.part('narm', arm, skin, cel=1.8, rim=0.7, cast=1.3, cast_on=['torso', 'cloth', 'rope', 'nleg', 'bead0', 'bead1', 'chead', 'collar', 'handle'],
+    # le liseré de lumière du bras : partout, SAUF sur le bord de la boule d'épaule qui passe sur le buste (là, le bras
+    # et le buste ne font qu'un : aucune ligne claire entre eux)
+    RIM = 0.7
+    a_, b_, c_, d_ = U[:4]
+    det_ = a_ * d_ - b_ * c_ or 1
+    rdx, rdy = -RIM * 0.75, RIM
+    rim_d = arm.d() + arm.move((d_ * rdx - c_ * rdy) / det_, (-b_ * rdx + a_ * rdy) / det_).d()
+    big = 'M-200 -200H400V400H-200Z'
+    # la zone : la part de la boule qui passe sur le buste (de la tangente du trapèze au creux de l'aisselle)
+    zone = sm([Su] + ball_arc(Su, R_SH + 3.2, a_t, 95, step=15), sharp=(0,), t=0.2).d()
+    tor_u = torso.map(lambda q: mapp(mS(1, 1 + 0.014 * br, 72, 84), q)).d()
+    cz, czn, ctn = fig.uid('c'), fig.uid('c'), fig.uid('c')
+    fig.defs += ['<clipPath id="%s"><path d="%s"/></clipPath>' % (cz, zone),
+                 '<clipPath id="%s"><path clip-rule="evenodd" d="%s%s"/></clipPath>' % (czn, big, zone),
+                 '<clipPath id="%s"><path clip-rule="evenodd" d="%s%s"/></clipPath>' % (ctn, big, tor_u)]
+    rim_p = '<path d="%s" fill-rule="evenodd" fill="FILL" opacity="0.85"%s/>'
+    ad.append((rim_p % (rim_d, ' clip-path="url(#%s)"' % czn) +
+               '<g clip-path="url(#%s)">%s</g>' % (cz, rim_p % (rim_d, ' clip-path="url(#%s)"' % ctn)), skin.hi, 1))
+    fig.part('narm', arm, skin, cel=1.8, rim=0, cast=1.3, cast_on=['torso', 'cloth', 'rope', 'nleg', 'bead0', 'bead1', 'chead', 'collar', 'handle'],
              details=ad)
 
     # ---- le poing proche, serré sur le manche : le dos de la main, la rangée des jointures, quatre doigts repliés ----

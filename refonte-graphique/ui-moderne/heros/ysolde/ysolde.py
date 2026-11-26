@@ -230,9 +230,9 @@ def wave(pts, P, i, amp=1.0, down=False):
 
 # les cheveux tirés en arrière sur le crâne (front dégagé, tempe, derrière l'oreille, nuque), dans le repère de la
 # tête (agrandie ×1,1)
-CAP = [(86.6, 25.4), (84.4, 24.0), (80.4, 23.6), (76.4, 24.4), (72.8, 26.0), (70.6, 28.8), (69.6, 32.0),
+CAP = [(87.4, 27.4), (84.8, 25.1), (80.4, 24.8), (76.4, 25.5), (72.8, 27.0), (70.6, 29.4), (69.6, 32.4),
        (68.4, 34.8), (66.4, 34.6), (64.6, 36.6), (64.2, 41.0), (65.2, 45.0), (62.0, 47.4), (58.4, 43.6),
-       (56.6, 36.0), (57.0, 27.4), (60.4, 19.8), (66.0, 15.2), (73.6, 13.4), (80.2, 14.6), (84.8, 17.6), (87.0, 21.8)]
+       (56.6, 36.0), (57.0, 27.4), (60.4, 19.8), (66.0, 15.2), (73.6, 13.4), (80.2, 14.6), (85.0, 17.8), (87.8, 22.6)]
 CAP_SHARP = (0, 8)
 
 
@@ -263,10 +263,12 @@ def mane(fig, P, HEADN, HEAD):
             pts = [(x + sw * 1.6 * (k / 4) ** 1.4, y) for k, (x, y) in enumerate(pts)]
         c = crpath([M(p) for p in pts], 40)
         locks.append((name, taper(c, w0, 0.25, tip='sharp', tipk=1.7), c, w0))
-    sil = fused([mass, cap] + [l_[1] for l_ in locks], smooth=0.35)
-    crown = MH((81.0, 16.0))
-    det = [(sil, ('rad', crown[0], crown[1], 46, 46, [(0, HAIR.light), (0.2, HAIR.base), (0.42, HAIR.shadow), (0.75, HAIR.deep)]), 1)]
-    FADE = 8.0
+    # la silhouette passe aussi sous le visage (peint par-dessus) : aucun bord de cheveux le long de la tempe
+    under_face = sm(FACE_PTS, t=0.9).map(MH)
+    sil = fused([mass, cap, under_face] + [l_[1] for l_ in locks], smooth=0.35)
+    crown = MH((84.0, 17.0))
+    det = [(sil, ('rad', crown[0], crown[1], 58, 58, [(0, HAIR.light), (0.3, HAIR.base), (0.72, HAIR.shadow), (1, HAIR.deep)]), 1)]
+    FADE = 7.0
     for name, sh, c, w0 in locks:
         L = sum(math.dist(c[j], c[j + 1]) for j in range(len(c) - 1))
         fd = min(0.5, FADE / L)
@@ -276,7 +278,7 @@ def mane(fig, P, HEADN, HEAD):
             co = cast_off(sh, dx, dy)
             if co:
                 det.append((co, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], fd),), op))
-        det.append((sh, ('lin',) + ax + (faded([(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)], fd),), 1))
+        det.append((sh, ('lin',) + ax + (faded([(0, HAIR.base), (0.2, HAIR.light), (0.55, HAIR.base), (1, HAIR.shadow)], fd),), 1))
         det += [(under(sh, 0.6, -2.4), ('lin',) + ax + (faded([(0, HAIR.shadow), (1, HAIR.shadow)], fd),), 0.85),
                 (under(sh, 0.4, -1.1), ('lin',) + ax + (faded([(0, HAIR.deep), (1, HAIR.deep)], fd),), 0.55)]
         # les reflets lavande : deux filets qui suivent la mèche, sur son dessus (vers la lumière)
@@ -309,11 +311,14 @@ def mane(fig, P, HEADN, HEAD):
                     (xf(rpoly([(-0.25, -wl), (0.25, -wl), (0.25, wl), (-0.25, wl)], 0.2), p[0], p[1], a).move(0.3, -0.2), GOLD.hi, 0.8)]
     # sur le crâne : l'anneau de reflet lavande (il dit la rondeur de la tête), les cheveux tirés vers l'arrière
     # (creux doux qui filent vers la crinière), la tempe et la nuque dans l'ombre ; rien n'y dessine un bord
-    for line, ws, col, op in (([(62.0, 23.0), (67.0, 17.8), (74.0, 16.0), (80.6, 17.2), (85.0, 20.4)], [0.2, 1.3, 1.6, 1.2, 0.2], HAIR.light, 0.8),
-                              ([(64.0, 21.6), (69.0, 17.6), (75.0, 16.6)], [0.1, 0.6, 0.1], HAIR.hi, 0.6),
-                              ([(84.4, 23.8), (78.0, 22.4), (71.4, 22.6), (65.0, 25.4), (58.6, 30.0)], [0.1, 0.6, 0.7, 0.6, 0.1], HAIR.shadow, 0.7),
-                              ([(70.6, 27.6), (66.0, 28.6), (59.4, 33.6)], [0.1, 0.5, 0.1], HAIR.shadow, 0.6),
-                              ([(81.0, 20.6), (74.6, 19.8), (68.0, 21.0), (60.6, 25.6)], [0.1, 0.4, 0.4, 0.1], HAIR.light, 0.45)):
+    for line, ws, col, op in (([(61.0, 24.0), (66.0, 18.4), (74.0, 15.8), (81.0, 17.0), (85.6, 20.6)], [0.2, 1.6, 2.2, 1.6, 0.2], HAIR.light, 0.85),
+                              ([(64.0, 21.6), (69.0, 17.4), (76.0, 16.4)], [0.1, 0.8, 0.1], HAIR.hi, 0.6),
+                              ([(84.6, 24.4), (78.0, 23.2), (71.4, 23.4), (65.0, 26.0), (58.6, 30.4)], [0.1, 0.7, 0.8, 0.6, 0.1], HAIR.deep, 0.6),
+                              ([(80.0, 24.2), (75.0, 21.0), (69.0, 20.8), (63.4, 23.8)], [0.1, 0.6, 0.6, 0.1], HAIR.shadow, 0.6),
+                              ([(76.0, 25.0), (71.0, 23.6), (66.0, 25.4), (61.6, 29.2)], [0.1, 0.7, 0.6, 0.1], HAIR.light, 0.45),
+                              ([(72.0, 27.0), (68.4, 27.6), (64.4, 30.2), (60.6, 34.2)], [0.1, 0.6, 0.5, 0.1], HAIR.shadow, 0.6),
+                              ([(70.2, 30.2), (67.4, 31.6), (63.8, 35.0)], [0.1, 0.45, 0.1], HAIR.light, 0.35),
+                              ([(81.6, 20.8), (74.6, 19.6), (68.0, 20.8), (60.6, 25.6)], [0.1, 0.5, 0.5, 0.1], HAIR.light, 0.5)):
         det.append((ribbon(line, ws).map(MH), col, op))
     fig.part('hair', sil, HAIR, cel=0, rim=0.55, cast=0, details=det)
     return ['hair']
@@ -770,7 +775,7 @@ def head(fig, P, HEAD, HEADN):
     # du visage, pas la ligne des cheveux
     fd += [(under(face_full, 0.8, -1.0), SKIN.shadow, 0.9)]
     # l'ombre douce des cheveux sur le front et la tempe
-    for (dx, dy), op in (((-0.7, 1.6), 0.3), ((-0.35, 0.8), 0.4)):
+    for (dx, dy), op in (((-0.9, 2.0), 0.3), ((-0.45, 1.0), 0.45)):
         fd.append((under(cap.move(dx, dy), -dx, -dy), SKIN.deep, op))
     # les plans : la joue proche dans une ombre douce, le front et la joue lointaine éclairés
     fd += [(sm([(67.0, 31.0), (68.0, 36.4), (69.8, 41.0), (72.8, 44.6), (77.0, 47.6), (75.6, 48.6), (71.6, 46.4),

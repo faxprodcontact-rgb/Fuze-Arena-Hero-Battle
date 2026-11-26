@@ -65,6 +65,16 @@ LUN, LFN = 9.6, 8.4       # bras proche
 WN0 = (42.4, 70.8)        # le poignet proche (au-dessus du poing sur la canne)
 CANE_X = 35.4             # l'axe de la canne
 SKULL_C = (95.0, 41.4)    # le centre du crâne tenu, au repos
+# Avis du propriétaire (26/11) : « les jambes montent trop haut, allonger son torse, les jambes commencent plus bas ».
+# Le bas de l'habit, la taille et le départ des jambes descendent de DROP pixels ; les épaules, la tête, le chapeau, les
+# bottes et les pieds ne bougent pas (même hauteur totale) : le buste s'allonge, la partie visible des jambes raccourcit.
+DROP = 7.0
+# La boîte de la face (ovale du visage peint, sans les cheveux ni l'oreille), repère de la tête avant l'agrandissement ×1,1,
+# et les places RÉELLES des traits (contrôle par ../visage.py : verifier(), image visage.png par visage_controle.py).
+FACE_BOX = (57.0, 26.0, 86.0, 51.0)
+FACE = {'oeil_proche': (62.8, 36.9, 5.0), 'oeil_fond': (78.4, 36.5, 4.0), 'nez': (73.0, 42.2), 'bouche': (71.9, 46.6, 24.6)}
+WAIST0, WAIST1 = 64.0, 78.0     # le buste s'étire entre ces deux lignes (au-dessus : rien ne bouge ; dessous : + DROP)
+LEG0, LEG1 = 76.0, 101.0        # les jambes (pantalon) : leur haut passe de LEG0 à LEG0 + DROP, le bas (LEG1) reste
 REST = dict(breath=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, hat=(0.0, 0.0), htilt=0.0, pl=0.0, ch=0.0, tl=0.0,
             hand=WF0, skr=0.0, sk=0.0, flare=0.0, blink=0.0, cane=0.0, grin=0.0, bendF=1.0, jaw=0.0)
 
@@ -86,6 +96,52 @@ def ik(S, W, L1, L2, bend):
     return (S[0] + L1 * math.cos(th), S[1] + L1 * math.sin(th))
 
 
+def wy_body(y):
+    """Le buste allongé : rien ne bouge au-dessus de WAIST0, tout descend de DROP sous WAIST1, étirement doux entre."""
+    if y <= WAIST0:
+        return y
+    if y >= WAIST1:
+        return y + DROP
+    return WAIST0 + (y - WAIST0) * (WAIST1 - WAIST0 + DROP) / (WAIST1 - WAIST0)
+
+
+def wy_leg(y):
+    """Les jambes : le haut (LEG0) descend de DROP, le bas (LEG1, dans les bottes) ne bouge pas."""
+    if y >= LEG1:
+        return y
+    return LEG1 - (LEG1 - y) * (LEG1 - LEG0 - DROP) / (LEG1 - LEG0)
+
+
+def wy_tail(y):
+    """Les pans de l'habit et la doublure : ils partent DROP plus bas et pendent un peu plus bas (pas jusqu'au sol)."""
+    t = max(0.0, min(1.0, (y - 70.0) / 36.0))
+    return y + DROP * (1 - 0.55 * t)
+
+
+def wy_lining(y):
+    """La doublure cramoisie entre les jambes : elle reste juste sous les pointes du gilet et pend un peu plus bas."""
+    return y + 1.5 + 1.5 * max(0.0, (y - LEG0) / (LEG1 - LEG0))
+
+
+def warp(fig, names, fy):
+    """Applique la déformation verticale fy à des morceaux déjà posés (forme, dégradé, détails peints dedans)."""
+    F = lambda p: (p[0], fy(p[1]))
+
+    def fill(v):
+        if isinstance(v, tuple) and v and v[0] == 'lin':
+            return ('lin', v[1], fy(v[2]), v[3], fy(v[4]), v[5])
+        if isinstance(v, tuple) and v and v[0] == 'rad':
+            return ('rad', v[1], fy(v[2])) + tuple(v[3:])
+        return v
+    for p in fig.parts:
+        if p.name in names:
+            p.shape = p.shape.map(F)
+            if p.grad:
+                g = p.grad
+                p.grad = (g[0], fy(g[1]), g[2], fy(g[3]), g[4])
+            p.details = [(sh.map(F), fill(fl), op) for sh, fl, op in p.details]
+
+
 def under(sh, dx=0.8, dy=-2.4):
     """La face du dessous d'une forme (la forme moins elle-même décalée vers le haut-droit)."""
     return Shape(sh.subs + sh.move(dx, dy).subs, evenodd=True)
@@ -99,14 +155,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- le squelette : une matrice par groupe de morceaux ----
     ln = P['lean']
     br = P['breath']
-    U = mchain(mT(ln * 0.25, 0), mR(ln * 1.5, 63, 80))                 # le haut du corps (depuis les hanches)
+    U = mchain(mT(ln * 0.25, 0), mR(ln * 1.5, 63, 80 + DROP))                 # le haut du corps (depuis les hanches)
     UC = mchain(U, mT(0, -0.7 * br))                                    # ce qui monte avec la poitrine
-    TOR = mchain(U, mS(1, 1 + 0.014 * br, 63, 78))                     # le buste se gonfle
+    TOR = mchain(U, mS(1, 1 + 0.014 * br, 63, 78 + DROP))                     # le buste se gonfle
     HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], 68, 47), mS(1.1, 1.1, 68, 48))   # tête un peu plus grande
     HAT = mchain(HEAD, mT(*P['hat']), mR(P['htilt'], 84, 26))
     PLU = mchain(HAT, mR(P['pl'], 53.4, 21.6))
     CHM = mchain(HAT, mR(P['ch'], 46.6, 26.6))
-    TAIL = mchain(U, mskx(-0.05 * P['tl'], 72))
+    TAIL = mchain(U, mskx(-0.05 * P['tl'], 72 + DROP))
     CANE = mT(0, -P['cane'])
 
     # ---- lueur du crâne (derrière tout) ----
@@ -262,6 +318,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     head_names = head_parts(fig, P)
     hat_names = hat_parts(fig, P)
 
+    # ---- le buste allongé, les jambes qui partent plus bas (avis du propriétaire) ----
+    warp(fig, ['torso', 'gilet', 'lapN', 'lapF', 'button', 'btn0', 'btn1'], wy_body)
+    warp(fig, ['tailN', 'tailF'], wy_tail)
+    warp(fig, ['lining'], wy_lining)
+    warp(fig, ['fleg', 'nleg'], wy_leg)
+
     # ---- chaque groupe prend sa pose ----
     fig.pose(['tailN', 'tailF', 'lining'], TAIL)
     fig.pose(['torso', 'gilet', 'lapN', 'lapF', 'button', 'btn0', 'btn1'], TOR)
@@ -273,6 +335,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['cane', 'canef', 'canec', 'vial', 'cork', 'fist', 'nthumb', 'ring'], CANE)
     fig.pose(SKULL_NAMES, SKM)
     fig.pose(['jaw'], mchain(SKM, mR(P['jaw'], 91.6, 46.0)))
+    fig.face = FACE
     fig.ctx = dict(P=P, U=U, UC=UC, HEAD=HEAD, HAT=HAT, TAIL=TAIL, SKM=SKM, skull=sc, mouth=mapp(SKM, (98.6, 46.0)), cane_foot=(CANE_X, GRD - P['cane']),
                    cane_top=mapp(CANE, (CANE_X, 54.0)), head=mapp(HEAD, (70, 36)), chest=mapp(TOR, (64, 64)),
                    eyes=(mapp(HEAD, (62.4, 36.4)), mapp(HEAD, (78.0, 36.0))))

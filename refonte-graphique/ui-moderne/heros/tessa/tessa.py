@@ -4,8 +4,9 @@
 #   python3 refonte-graphique/ui-moderne/heros/tessa/tessa.py        # → tessa.svg + images 512 et 160 px de haut
 #
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/tessa.txt) : la femme-aigle archère, fière, froide et
-# précise. Vraie tête de pygargue (blanche, arcade lourde qui coupe le haut de l'iris d'ambre, bec jaune citron crochu,
-# cire et narine) ; un VRAI COU de plumes (demande du propriétaire sur le pixel art) : les plumes blanches de la tête
+# précise. Vraie tête de pygargue (blanche, de 3/4 : deux yeux d'ambre sur la même ligne, arcades lourdes en « V » qui
+# coupent le haut de l'iris ; le bec jaune citron crochu part du MILIEU du visage, entre les yeux — demande du
+# propriétaire du 26/11 —, traits placés par ../visage.py : FACE_BOX, FACE_V) ; un VRAI COU de plumes (demande du propriétaire sur le pixel art) : les plumes blanches de la tête
 # s'allongent en descendant, leurs pointes tournent au tiède et s'emboîtent dans un col de plumes brunes posé sur la
 # cuirasse ; elles s'évasent sur les deux épaulières. Grandes ailes brunes levées et repliées en manteau (l'aile proche
 # en éventail à gauche, l'aile lointaine plus sombre derrière la tête). Épaulières en dôme d'or bordées de plumes d'or,
