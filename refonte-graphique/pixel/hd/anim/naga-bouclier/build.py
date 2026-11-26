@@ -1119,7 +1119,9 @@ def zone(args):
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
     'attaque': dict(genre='melee', coup=4, cible=(158, GROUND - 40), coupe=[None] * 4 + [136] * 4 + [None] * 2),
-    'speciale': dict(genre='sort', coup=10, cible=(ENEMY_X, GROUND - 30), coupe=[None] * 5 + [133] * 14, charge=(0, 3)),
+    # la ligne de pics sort de terre devant la cible, entière (`calques` : par morceaux entiers, la naga jamais coupée)
+    'speciale': dict(genre='sort', coup=10, cible=(ENEMY_X, GROUND - 30), coupe=[None] * 5 + [100] * 14, charge=(0, 3),
+                     calques=True),
 }
 
 

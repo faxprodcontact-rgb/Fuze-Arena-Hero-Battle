@@ -1363,8 +1363,10 @@ def zone(args):
 # (le gros coup) et la vague (à partir de la colonne où s'arrête la fumée, image par image) sont posés sur chaque cible.
 JEU = {
     'attaque': dict(genre='tir', tir=(4, 6), depuis=205, coup=6, cible=(ENEMY_X + 120, 137)),
-    'speciale': dict(genre='sort', coup=9, cible=(ENEMY_X, GROUND - 40),
-                     coupe=[None] * 7 + [213, 213, 216, 216, 216, 216, 218, 218, 212] + [None] * 2, charge=(0, 2)),
+    # les gerbes de glace courent au ras du sol jusqu'à la vraie cible (images 6 à 8) ; la fumée reste au canon ;
+    # `calques` : seuls les effets partent, par morceaux entiers
+    'speciale': dict(genre='tir', tir=(6, 9), depuis=165, rase=True, vitesse=500, coup=9, cible=(ENEMY_X, GROUND - 40),
+                     coupe=[None] * 9 + [165] * 7 + [None] * 2, charge=(0, 2), calques=True),
 }
 
 

@@ -1346,7 +1346,9 @@ def essai(folder):
 # faille et les geysers suivants (à partir du deuxième, GEYSERS[1]) sont posés sous chaque cible.
 JEU = {
     'attaque': dict(genre='melee', coup=5, cible=(212, GROUND - 50), coupe=198),
-    'speciale': dict(genre='sort', coup=8, cible=(283, GROUND - 40), coupe=259, charge=(1, 4)),
+    # la fissure de lave et ses jets, entiers, devant la cible (`calques` : par morceaux entiers)
+    'speciale': dict(genre='sort', coup=8, cible=(283, GROUND - 40), coupe=[None] * 7 + [165] * 9, charge=(1, 4),
+                     calques=True),
 }
 
 

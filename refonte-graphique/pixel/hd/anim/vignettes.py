@@ -24,6 +24,14 @@ OUT_TS = os.path.join(ROOT, 'src', 'game', 'hd-figures.ts')
 FACE = 4
 # le carré du visage est élargi de 25 % (la case de jeu_export.py serre la tête)
 MARGIN = 1.25
+# visages placés à la main quand le haut de la silhouette n'est pas la tête (le sac du singe voleur, les ailes du corbeau,
+# les pattes de l'araignée) : monstres devenus héros, leur visage est sur leur carte. [x, y du milieu de la tête, côté],
+# en pixels du dessin, dans la première image de la pose
+VISAGE = {
+    'mon-eldra-rapide': (67, 15, 26),      # Gribou
+    'mon-orin-rapide': (83, 14, 28),       # Karu
+    'mon-arachne-tisseuse': (74, 17, 26),  # Nyrra
+}
 
 
 def load_meta():
@@ -45,6 +53,9 @@ def main():
         # visage : le carré de la tête, un peu élargi (le portrait respire), sans sortir de la première image de la pose
         vx, vy, side = ch['visage']
         fx, fy, fw, fh = ch['frames'][ch['anims']['pose']['f'][0]][:4]
+        if cid in VISAGE:
+            hx, hy, side = VISAGE[cid]
+            vx, vy = fx + hx - side / 2, fy + hy - side / 2
         big = min(round(side * MARGIN), fw, fh)
         x = min(max(round(vx + side / 2 - big / 2), fx), fx + fw - big)
         y = min(max(round(vy + side / 2 - big / 2), fy), fy + fh - big)

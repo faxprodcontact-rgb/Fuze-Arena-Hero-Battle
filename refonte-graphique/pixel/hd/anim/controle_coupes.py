@@ -23,7 +23,8 @@ SORTIE = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie')
 PLANCHES = os.path.join(SORTIE, 'controle-speciales')
 
 RUN = 8                  # une coupe suspecte : au moins 8 rangées de suite tranchées sur la même colonne
-NEAR, FAR = 188, 456     # pieds à pieds, en pixels du dessin : 1er rang contre 1er rang, dernier contre dernier (jeu)
+NEAR, FAR = 248, 496     # pieds à pieds, en pixels du dessin : 1er rang contre 1er rang, dernier contre dernier
+                         # (BATTLE_LAYOUT de fight-view.ts du 26/11 : écart 288, dx 0,88, taille 0,95)
 DUMMY = 'mon-barzul-rapide'   # la silhouette grise de la cible (le matelot)
 
 

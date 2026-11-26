@@ -1736,8 +1736,8 @@ JEU = {
     'attaque': dict(genre='sort', coup=5, cible=CLAW_HIT, coupe=ENEMY_X - 40),
     # la tempête : la boule de feu reste avec le dragon (images 0 à 7) ; la pluie de blocs de lave, l'impact et le feu
     # qui brûle (images 8 à 17) sont posés aux pieds de CHAQUE héros
-    'speciale': dict(genre='sort', coup=11, cible=(ENEMY_X, GROUND - 44), coupe=[None] * 8 + [ENEMY_X - 48] * 10,
-                     charge=(1, 4)),
+    'speciale': dict(genre='sort', coup=11, cible=(ENEMY_X, GROUND - 44), coupe=[None] * 8 + [ENEMY_X - 70] * 10,
+                     charge=(1, 4), calques=True),   # météores entiers
 }
 
 

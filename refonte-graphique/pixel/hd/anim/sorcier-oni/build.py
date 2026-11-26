@@ -1070,7 +1070,8 @@ def main():
 # projectile jusqu'à la vraie cible et y pose l'impact. Ne change rien aux GIF.
 JEU = {
     'attaque': dict(genre='tir', tir=(3, 5), depuis=150, coup=5, cible=HIT, coupe=215),
-    'speciale': dict(genre='tir', tir=(9, 11), depuis=150, coup=11, cible=HIT2, coupe=205, charge=(3, 8)),
+    'speciale': dict(genre='tir', tir=(9, 11), depuis=150, coup=11, cible=HIT2, coupe=205, charge=(3, 8),
+                     calques=True),   # boules de feu entières
 }
 
 
