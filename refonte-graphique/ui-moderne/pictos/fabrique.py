@@ -155,6 +155,9 @@ def main():
         with open(os.path.join(RENDU, 'svg', n + '.svg'), 'w', encoding='utf-8') as f:
             f.write(svg_de(n))
     atlas(noms)
+    # une petite image par picto pour les menus (decoupe.py : plantage sur iPhone le 26/11)
+    import decoupe
+    decoupe.main()
     planche(noms, os.path.join(SORTIE, 'planche.png'), cols=10)
 
 

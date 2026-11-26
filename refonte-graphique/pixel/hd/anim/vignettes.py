@@ -90,6 +90,10 @@ def main():
             cell = sheet.crop((sx * up, sy * up, (sx + fw) * up, (sy + fh) * up))
             strip.alpha_composite(cell, ((n * w + ax - x0) * up, (ay - y0) * up))
         strip.save(os.path.join(ART, 'pied', f'{cid}.webp'), lossless=True, method=6)
+        # la première image seule (cartes des héros) : une petite image par carte, jamais la bande entière (plantage
+        # sur iPhone le 26/11 : Safari agrandissait toute la bande de 12 images derrière chaque carte)
+        os.makedirs(os.path.join(ART, 'pose'), exist_ok=True)
+        strip.crop((0, 0, w * up, h * up)).save(os.path.join(ART, 'pose', f'{cid}.webp'), lossless=True, method=6)
         ms = ch['anims']['pose']['ms']
         # [largeur, hauteur de la case, x et y des pieds dans la case, nombre d'images, durée d'une image (ms), haut de la tête]
         figs[cid] = [w, h, -x0, -y0, len(frames), round(sum(ms) / len(ms)), ch['top']]

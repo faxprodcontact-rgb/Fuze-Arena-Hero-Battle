@@ -5,10 +5,10 @@ import { itemMain, type Item } from '../../core/data/items';
 import { MAX_YELLOW, MYTHIC_STARS } from '../../core/data/stars';
 import type { Hero } from '../../core/types';
 import { Backdrop } from './backdrop';
-import { ELEMENT_COLOR, ITEM_COLORS, RARITY_COLOR, figureUrl, heroImage } from '../art';
+import { ELEMENT_COLOR, ITEM_COLORS, RARITY_COLOR, heroImage } from '../art';
 import { fmt, t } from '../i18n';
 import { close } from './nav';
-import { ICON_COLS, ICON_INDEX, ICON_ROWS } from '../icons-meta';
+import { ICON_INDEX } from '../icons-meta';
 import { HD_FIG } from '../hd-figures';
 import { heroArt } from '../look';
 import { btClass, type BtSize, type BtTone } from './buttons';
@@ -24,13 +24,13 @@ export function hasArt(name: string): boolean {
 
 /** Un picto dessiné, découpé dans l'image de tous les pictos ; sa taille vient de `size` ou de la classe CSS. */
 export function Art({ name, size, class: cls }: { name: string; size?: number; class?: string }) {
-  const i = ICON_INDEX[name];
-  if (i === undefined) return null;
-  const x = ((i % ICON_COLS) / (ICON_COLS - 1)) * 100, y = (Math.floor(i / ICON_COLS) / Math.max(1, ICON_ROWS - 1)) * 100;
+  if (ICON_INDEX[name] === undefined) return null;
+  // une petite image par picto (public/art/icons/<nom>.webp, decoupe.py) : afficher un picto en agrandissant la planche
+  // entière faisait garder à Safari une copie de toute la planche par taille de picto (plantage sur iPhone, 26/11)
   return (
     <span class={`art ${cls ?? ''}`} aria-hidden="true" style={{
       ...(size ? { width: `${size}px`, height: `${size}px` } : {}),
-      backgroundImage: `url(${artUrl('art/icons.webp')})`, backgroundRepeat: 'no-repeat', backgroundSize: `${ICON_COLS * 100}% ${ICON_ROWS * 100}%`, backgroundPosition: `${x}% ${y}%`,
+      backgroundImage: `url(${artUrl(`art/icons/${name}.webp`)})`, backgroundRepeat: 'no-repeat', backgroundSize: '100% 100%',
     }} />
   );
 }
@@ -138,12 +138,12 @@ export function Stars({ stars }: { stars: number }) {
 export function CardFigure({ id, alt = '' }: { id: string; alt?: string }) {
   const m = (HD_FIG.chars as Record<string, readonly number[] | undefined>)[id];
   if (!m) return <img class="hcard-face" src={heroImage(id)} alt={alt} />;
-  const [w, h, fx, fy, n] = m as unknown as [number, number, number, number, number, number];
+  const [w, h, fx, fy] = m as unknown as [number, number, number, number, number, number];
   // Une seule image, immobile, dessinée en fond (plantage sur iPhone le 26/11 : chaque carte faisait défiler une bande
   // 12 fois plus large qu'elle, et Safari gardait en mémoire 44 de ces bandes géantes dès l'ouverture de l'onglet Héros).
   return (
     <span class="hcard-fig" role="img" aria-label={alt} style={{ '--w': w, '--h': h, '--fx': fx, '--fy': fy } as never}>
-      <span class="hcard-still" style={{ backgroundImage: `url(${figureUrl(id)})`, backgroundSize: `${n * 100}% 100%` }} />
+      <span class="hcard-still" style={{ backgroundImage: `url(${artUrl(`art/hd/pose/${id}.webp`)})`, backgroundSize: '100% 100%' }} />
     </span>
   );
 }
