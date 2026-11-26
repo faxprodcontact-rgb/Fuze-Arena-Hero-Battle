@@ -12,11 +12,9 @@ import { installSkin } from './ui/skin';
 import { installTheme } from './ui/theme';
 import { watchUpdates } from './updater';
 import { artUrl } from './art-url';
-import { startDiag } from './diag';
 
 // l'habillage de l'interface (style moderne, skin.ts), les petits signes (signs-art.ts) et les boutons de pierre
 // (buttons.ts), posés avant le premier dessin
-startDiag();
 installSkin();
 installTheme();
 installSigns();

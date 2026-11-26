@@ -27,8 +27,6 @@ function IdleStage({ running }: { running: boolean }) {
   const key = `${s.campaign.cleared}|${s.formation.map(([u, sl]) => `${u}:${sl}`).join(',')}`;
   useEffect(() => {
     if (!running || !host.current) return;
-    // mode léger (diag.ts, essai du 26/11) : pas de combat sur l'accueil
-    if (document.documentElement.classList.contains('leger')) return;
     return runIdle(host.current, idleSetup);
   }, [running, key]);
   return <div class="idle-canvas" ref={host} />;
