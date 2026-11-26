@@ -49,8 +49,8 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   https://claude.ai/artifact/5qE3vDUzsMFMQVC4ywqLrK, lire
   `vecto/GUIDE.md`) ; pixel art « gros pixels encrés » `refonte-graphique/pixel/persos/` (lire `pixel/GUIDE.md`, contrôle
   `python3 refonte-graphique/pixel/controle.py <nom>`). Les anciens dessins (Hailuo, décors dessinés par le code, 72 héros
-  pixel) et leurs chaînes de fabrication sont supprimés (v0.56.0) ; pictos : `icons.webp`, tous en pixel art
-  (`refonte-graphique/pixel/ui/pictos/`, `assemble.py` ; petits signes (SVG lisses) et halo : `style.css`, `anim.css`).
+  pixel) et leurs chaînes de fabrication sont supprimés (v0.56.0) ; pictos : `icons.webp`, en style moderne (v0.59.0)
+  (`refonte-graphique/ui-moderne/pictos/fabrique.py` ; l'ancienne chaîne pixel `pixel/ui/pictos/assemble.py` demande `--pixel` ; petits signes (SVG lisses) et halo : `style.css`, `anim.css`).
 - **Interface en nouvelle DA (pixel art HD), partie par partie** (demande du 25/11) : plan, inventaire et outils dans
   `refonte-graphique/pixel/ui/` (lire `PLAN.md`) ; partie 1 faite en v0.57.0 (chargement, logo, icône d'application).
   **Style « moderne » choisi le 26/11 : lire `refonte-graphique/pixel/ui/STYLE.md`** (jetons en tête de
