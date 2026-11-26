@@ -1,0 +1,278 @@
+/* ==========================================================================================================
+   Boutique et calendrier de connexion (vague 3, 26/11/2026) : screens/login.tsx, sections/boutique-offres.tsx,
+   sections/boutique-kit.tsx, ShopModal de screens/meta.tsx.
+   Demande : « plus spectaculaire, que ça donne envie ». Couleurs du propriétaire : le bleu foncé des barres, le gris
+   pierre et l'or des boutons (pas de bleu clair). Une seule lumière, en haut à droite : les lueurs penchent de ce côté,
+   les ombres tombent en bas à gauche. Tout est posé : les héros et les pictos des vitrines ont un sol plat bord à bord.
+   ========================================================================================================== */
+
+/* les couleurs de la vitrine (bleu nuit, pierre, or) */
+.bq, .lg {
+  --bq-n0: #081026; --bq-n1: #0d1a3d; --bq-n2: #142655; --bq-n3: #1d3570; --bq-n4: #29478c;
+  --bq-stone: #8e8aa3; --bq-stone-lo: #4c4962;
+  --bq-gold: var(--c-reward, #ffc22e); --bq-gold-hi: var(--c-reward-hi, #ffe27a); --bq-gold-lo: var(--c-reward-lo, #c06a00);
+  --bq-ink: #050b1f;
+  display: flex; flex-direction: column; gap: 12px;
+}
+/* la fenêtre devient une vitrine de nuit (le bandeau du titre reste celui de toutes les fenêtres) */
+.modal:has(.bq), .modal:has(.lg) { --pxf: radial-gradient(120% 60% at 88% 0%, #ffcf5a1f 0%, #0000 55%), linear-gradient(180deg, #16295c 0%, #0f1e48 40%, #0a1535 100%);
+  --psh: var(--sh-3), inset 0 0 0 1.5px #8e8aa366; max-height: 94%; }
+.modal:has(.bq) .modal-body, .modal:has(.lg) .modal-body { gap: 12px; padding-top: 14px; }
+
+/* ---------- Étincelles et héros en pied (boutique-kit.tsx) ---------- */
+.bq-sparks { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.bq-sparks i { position: absolute; width: calc(16px * var(--k, 1)); height: calc(16px * var(--k, 1)); margin: calc(-8px * var(--k, 1));
+  background: radial-gradient(circle, #fff 0 22%, var(--bq-gold-hi) 46%, #ffc22e00 72%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+  animation: bq-twinkle 2.6s ease-in-out infinite; }
+@keyframes bq-twinkle { 0%, 100% { transform: scale(0.15) rotate(0deg); opacity: 0; } 45% { transform: scale(1) rotate(25deg); opacity: 1; } 70% { opacity: 0.7; } }
+.bq-jet i { left: 50%; top: 42%; opacity: 0; animation: bq-jet 0.8s cubic-bezier(.15,.7,.3,1) forwards; }
+@keyframes bq-jet { 0% { transform: translate(0, 0) scale(0.3); opacity: 1; } 70% { opacity: 1; } 100% { transform: translate(var(--dx), var(--dy)) scale(1) rotate(60deg); opacity: 0; } }
+
+.bq-fig { position: absolute; z-index: 1; pointer-events: none; overflow: hidden;
+  left: calc(var(--x, 50%) - var(--fx) * var(--u)); bottom: calc(var(--y, 0px) - (var(--h) - 1 - var(--fy)) * var(--u));
+  width: calc(var(--w) * var(--u)); height: calc(var(--h) * var(--u)); }
+.bq-fig img { position: absolute; left: 0; top: 0; height: 100%; max-width: none; image-rendering: pixelated; }
+
+/* la lueur douce derrière un picto (penchée vers la lumière, en haut à droite) */
+.lg-glow { position: absolute; inset: -6% -10%; z-index: 0; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(closest-side at 56% 44%, #ffe9a0aa 0%, #ffc22e55 38%, #ffc22e00 100%); }
+
+/* ==========================================================================================================
+   Calendrier de connexion
+   ========================================================================================================== */
+.lg { gap: 10px; }
+/* la jauge du calendrier : le compte en pilule, la piste creusée, l'or qui la remplit */
+.lg-track { display: flex; align-items: center; gap: 10px; }
+.lg-count { display: inline-flex; align-items: center; gap: 4px; padding: 3px 12px 3px 6px; border-radius: var(--r-pill); flex: none;
+  background: linear-gradient(180deg, var(--bq-n0), var(--bq-n1)); box-shadow: inset 0 1px 2px #000a, inset 0 -1px 0 #ffffff1a;
+  font: 400 18px/1 var(--font-title); color: #fff; }
+.lg-count b { font-weight: 400; color: var(--bq-gold-hi); }
+.lg-count small { font-size: 13px; color: #aeb5d6; }
+.lg-bar { position: relative; flex: 1; height: 14px; border-radius: var(--r-pill); background: var(--bq-n0); box-shadow: inset 0 2px 3px #000c, 0 1px 0 #ffffff1f; }
+.lg-bar > i { position: absolute; left: 0; top: 0; bottom: 0; min-width: 14px; border-radius: inherit; transition: width 0.6s cubic-bezier(.2,1.2,.4,1);
+  background: linear-gradient(180deg, var(--bq-gold-hi) 0%, var(--bq-gold) 50%, #e8920f 100%); box-shadow: 0 0 10px #ffc22e88, inset 0 1px 0 #fff8; }
+/* (le mois) une étape par semaine sur la piste : la grande récompense de la semaine */
+.lg-node { position: absolute; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -26px; display: grid; place-items: center; border-radius: 10px;
+  background: linear-gradient(180deg, var(--bq-n3), var(--bq-n1)); box-shadow: inset 0 0 0 1.5px var(--bq-stone-lo), -1px 2px 4px #000a; }
+.lg-node .art { width: 24px; height: 24px; filter: saturate(0.5) brightness(0.8); }
+.lg-node.on { background: linear-gradient(180deg, #ffe27a, #e8920f); box-shadow: inset 0 0 0 1.5px #fff8, -1px 2px 4px #000a; }
+.lg-node.on .art { filter: none; opacity: 0.55; }
+.lg-node .sign { position: absolute; filter: drop-shadow(0 1px 1px #0008); }
+.lg-node.here { box-shadow: inset 0 0 0 2px var(--bq-gold), 0 0 12px #ffc22e99, -1px 2px 4px #000a; }
+.lg-node.here .art { filter: none; }
+.lg-week { align-self: center; margin: 4px 0 -2px; padding: 2px 14px; border-radius: var(--r-pill); font: 400 14px/1.3 var(--font-title); color: var(--bq-gold-hi);
+  background: #ffffff10; box-shadow: inset 0 0 0 1px #ffffff1f; }
+
+/* les cases : 6 jours en 3 colonnes, le 7e en vitrine sur toute la largeur */
+.lg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.lg-day { position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px;
+  height: 102px; padding: 0 4px 8px; border-radius: 16px; overflow: visible;
+  background: radial-gradient(90% 70% at 80% 0%, #ffffff14, #0000 60%), linear-gradient(170deg, var(--bq-n4) 0%, var(--bq-n2) 50%, var(--bq-n1) 100%);
+  box-shadow: inset 0 0 0 1.5px #8e8aa380, inset 0 1px 0 #ffffff33, -2px 4px 8px #040a1e8c; }
+.lg-n { position: absolute; left: 7px; top: 5px; z-index: 2; font: 400 14px/1 var(--font-title); color: #b9bfdd; text-shadow: 0 1px 0 #000a; }
+.lg-stage { position: relative; display: grid; place-items: center; width: 60px; height: 58px; margin-bottom: 1px; }
+.lg-stage .lg-glow { opacity: 0.55; }
+.lg-art { position: relative; z-index: 1; width: 54px; height: 54px; filter: drop-shadow(-2px 3px 2px #000a); }
+.lg-amt { position: relative; z-index: 1; font: 400 18px/1 var(--font-title); color: #fff; text-shadow: 0 2px 0 var(--bq-ink), 0 0 6px #0008; }
+/* le jour à prendre : liseré d'or qui respire, lueur pleine, picto qui sautille, étincelles */
+.lg-day.lg-today { background: radial-gradient(90% 80% at 75% 10%, #ffd86a40, #0000 65%), linear-gradient(170deg, #2f4f96 0%, var(--bq-n3) 55%, var(--bq-n2) 100%);
+  box-shadow: inset 0 0 0 2.5px var(--bq-gold), inset 0 1px 0 #fff6, -2px 4px 8px #040a1e8c, 0 0 18px 2px #ffb21f66;
+  animation: lg-pulse 1.6s ease-in-out infinite; z-index: 1; }
+.lg-today .lg-n { color: var(--bq-gold-hi); }
+.lg-today .lg-glow { opacity: 1; animation: lg-glow 1.6s ease-in-out infinite; }
+.lg-today .lg-art { width: 60px; height: 60px; animation: lg-bob 1.6s ease-in-out infinite; }
+.lg-today .lg-amt { color: var(--bq-gold-hi); }
+@keyframes lg-pulse { 50% { box-shadow: inset 0 0 0 2.5px var(--bq-gold-hi), inset 0 1px 0 #fff6, -2px 4px 8px #040a1e8c, 0 0 28px 6px #ffb21f99; } }
+@keyframes lg-glow { 50% { transform: scale(1.15); } }
+@keyframes lg-bob { 0%, 100% { transform: translateY(1px); } 50% { transform: translateY(-5px) scale(1.06); } }
+/* jour pris : la case s'éteint, une grosse coche verte posée dessus */
+.lg-day.lg-done { background: linear-gradient(170deg, #1a2a58 0%, #111f47 60%, #0d183a 100%); box-shadow: inset 0 0 0 1.5px #8e8aa340, -2px 4px 8px #040a1e8c; }
+.lg-done .lg-stage, .lg-done .lg-amt, .lg-done .lg-show, .lg-done .lg-prize { opacity: 0.5; filter: saturate(0.4); }
+.lg-done .lg-glow { display: none; }
+.lg-check { position: absolute; z-index: 4; left: 64%; top: 54%; width: 32px; height: 32px; margin: -16px 0 0 -16px; display: grid; place-items: center; border-radius: 50%;
+  background: linear-gradient(180deg, var(--c-action-hi, #7cf08a) 0%, var(--c-action, #2fc457) 45%, var(--c-action-lo, #12823a) 100%);
+  box-shadow: inset 0 1px 0 #fff9, 0 0 0 2.5px #fff, -2px 3px 5px #000a; }
+.lg-check .sign { filter: drop-shadow(0 1px 0 #0a4a20); }
+
+/* le 7e jour : la vitrine (héros Légendaire en ombre dorée, ou la pile de la semaine) posée sur son sol */
+.lg-day.lg-big { grid-column: 1 / -1; flex-direction: row; align-items: stretch; justify-content: flex-start; height: 126px; padding: 0; overflow: hidden;
+  background: radial-gradient(70% 120% at 90% 0%, #ffcf5a47, #0000 60%), radial-gradient(60% 90% at 25% 70%, #ffc22e2e, #0000 70%),
+    linear-gradient(170deg, #2b4a92 0%, var(--bq-n3) 45%, var(--bq-n1) 100%);
+  box-shadow: inset 0 0 0 1.5px #8e8aa3a0, inset 0 0 0 3.5px #ffc22e40, inset 0 1px 0 #ffffff40, -2px 5px 10px #040a1e99; }
+.lg-big::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 22px; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, #1b3166 0%, #12244f 40%, #0b1838 100%); box-shadow: inset 0 1px 0 #ffffff33, inset 0 2px 0 #00000040; }
+.lg-day.lg-big.lg-today { animation: lg-pulse-big 1.6s ease-in-out infinite;
+  background: radial-gradient(70% 120% at 90% 0%, #ffcf5a66, #0000 60%), radial-gradient(60% 90% at 25% 70%, #ffc22e47, #0000 70%),
+    linear-gradient(170deg, #31549e 0%, var(--bq-n3) 45%, var(--bq-n1) 100%);
+  box-shadow: inset 0 0 0 2.5px var(--bq-gold), inset 0 1px 0 #fff6, -2px 5px 10px #040a1e99, 0 0 20px 3px #ffb21f77; }
+@keyframes lg-pulse-big { 50% { box-shadow: inset 0 0 0 2.5px var(--bq-gold-hi), inset 0 1px 0 #fff6, -2px 5px 10px #040a1e99, 0 0 30px 7px #ffb21faa; } }
+.lg-big .lg-n { font-size: 18px; left: 10px; top: 8px; color: var(--bq-gold-hi); }
+.lg-show { position: relative; z-index: 1; flex: 0 0 46%; }
+.lg-show .lg-glow { inset: -4% -2% 8% -2%; opacity: 1; background: radial-gradient(closest-side at 54% 50%, #fff2b0 0%, #ffd24ccc 30%, #ffc22e44 65%, #ffc22e00 100%); animation: lg-glow 2.4s ease-in-out infinite; }
+.lg-mystery { --x: 52%; --y: 22px; filter: brightness(0) drop-shadow(0 0 1.5px var(--bq-gold-hi)) drop-shadow(0 0 7px #ffb21fdd) drop-shadow(-2px 3px 3px #000c); }
+.lg-pile { position: absolute; z-index: 1; filter: drop-shadow(-2px 3px 2px #000b); }
+.lg-pile-0 { width: 86px; height: 86px; left: calc(50% - 50px); bottom: 14px; }
+.lg-pile-1 { width: 62px; height: 62px; left: calc(50% + 6px); bottom: 14px; }
+.lg-prize { position: relative; z-index: 2; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 4px 10px 22px 0; }
+.lg-rar { font: 400 24px/1 var(--font-title); letter-spacing: 0.4px; color: var(--bq-gold-hi);
+  background: linear-gradient(180deg, #fffbe0 0%, #ffe27a 40%, #ffb21f 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 0 #5a2a00) drop-shadow(0 0 8px #ffb21f88); }
+.lg-stars { display: flex; gap: 1px; filter: drop-shadow(-1px 2px 1px #0009); }
+.lg-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 12px 3px 4px; border-radius: var(--r-pill); background: #050b1f8c; box-shadow: inset 0 1px 2px #000a, 0 1px 0 #ffffff1f; }
+.lg-pill b { font: 400 19px/1 var(--font-title); color: #fff; text-shadow: 0 2px 0 var(--bq-ink); }
+.lg-big .lg-check { left: 30%; top: 58%; width: 42px; height: 42px; margin: -21px 0 0 -21px; }
+
+/* le bouton : gros, d'or ; pris aujourd'hui : la pierre éteinte et le temps jusqu'à demain */
+.lg-claim { width: 100%; margin-top: 2px; font-size: 22px; }
+.lg-claim:disabled { color: #d9d3c4; font-variant-numeric: tabular-nums; }
+
+/* le moment où l'on prend : la case s'illumine, la récompense saute et s'envole, des étincelles jaillissent, la coche tombe */
+.lg-day.lg-burst { z-index: 3; animation: lg-hit 0.55s cubic-bezier(.2,1.6,.4,1); }
+@keyframes lg-hit { 0% { transform: scale(1); } 30% { transform: scale(1.12); filter: brightness(1.6); } 100% { transform: scale(1); } }
+.lg-flash { position: absolute; z-index: 2; left: 50%; top: 42%; width: 120px; height: 120px; margin: -60px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, #fffbe0 0%, #ffe27acc 30%, #ffc22e55 60%, #ffc22e00 100%); opacity: 0;
+  animation: lg-flash 0.7s ease-out; }
+@keyframes lg-flash { 0% { transform: scale(0.2); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
+.lg-big .lg-flash { left: 23%; top: 50%; }
+.lg-fly { position: absolute; z-index: 5; left: 50%; top: 42%; width: 60px; height: 60px; margin: -30px; pointer-events: none; opacity: 0;
+  filter: drop-shadow(0 0 8px #ffe27a) drop-shadow(-2px 3px 2px #000a); animation: lg-fly 1.15s cubic-bezier(.3,0,.5,1) forwards; }
+@keyframes lg-fly {
+  0% { transform: scale(0.9); opacity: 1; }
+  28% { transform: translateY(-14px) scale(1.7); opacity: 1; }
+  45% { transform: translateY(-10px) scale(1.55); opacity: 1; }
+  100% { transform: translateY(-190px) scale(0.6); opacity: 0; } }
+.lg-burst .lg-check { animation: lg-stamp 0.45s cubic-bezier(.3,1.7,.5,1) 0.45s backwards; }
+@keyframes lg-stamp { 0% { transform: scale(2.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+/* petits écrans (360 × 640) : des cases un peu plus basses */
+@media (max-height: 700px) {
+  .lg-day { height: 88px; padding-bottom: 6px; }
+  .lg-stage { height: 48px; } .lg-art { width: 46px; height: 46px; } .lg-today .lg-art { width: 50px; height: 50px; }
+  .lg-amt { font-size: 16px; }
+  .lg-day.lg-big { height: 108px; }
+  .lg-mystery { --u: 0.74px !important; }
+  .lg-pile-0 { width: 72px; height: 72px; } .lg-pile-1 { width: 52px; height: 52px; }
+  .lg-claim { min-height: 52px; }
+}
+
+/* ==========================================================================================================
+   Boutique : onglets sur la vitrine de nuit, offre du moment, cases d'offres, gemmes, passe
+   ========================================================================================================== */
+.bq-offers { display: flex; flex-direction: column; gap: 10px; }
+
+/* l'offre du moment : grande carte, le héros Légendaire en pied posé sur le sol, le cadeau devant lui */
+.bq-feat { position: relative; isolation: isolate; height: 172px; flex: none; border-radius: 20px; overflow: hidden;
+  background: linear-gradient(165deg, #2a4a93 0%, #1b3473 40%, #10224f 100%);
+  box-shadow: inset 0 0 0 1.5px #8e8aa3b0, inset 0 0 0 3.5px #ffc22e4d, inset 0 1px 0 #ffffff4d, -3px 6px 14px #040a1eb3, 0 0 22px #ffb21f33; }
+.bq-feat-sky { position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background: radial-gradient(60% 80% at 84% 6%, #ffe08a66 0%, #ffc22e1f 45%, #0000 75%), radial-gradient(40% 50% at 70% 64%, #ffc22e33, #0000 70%); }
+.bq-floor { position: absolute; left: 0; right: 0; bottom: 0; height: 30px; z-index: 0; pointer-events: none;
+  background: linear-gradient(180deg, #2c4a8a 0%, #1a3066 35%, #0f1f47 100%); box-shadow: inset 0 1px 0 #ffffff40, inset 0 2px 0 #00000040; }
+.bq-feat-hero { --x: 81%; --y: 30px; filter: drop-shadow(-3px 3px 2px #0009); }
+.bq-feat-gift { position: absolute; z-index: 2; right: 25%; bottom: 18px; width: 72px; height: 72px; display: grid; place-items: center; }
+.bq-feat-gift .lg-glow { inset: -20%; animation: lg-glow 2.4s ease-in-out infinite; }
+.bq-feat-gift .art { position: relative; width: 72px; height: 72px; filter: drop-shadow(-3px 4px 3px #000b); animation: bq-float 2.8s ease-in-out infinite; }
+@keyframes bq-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.bq-feat-text { position: relative; z-index: 3; width: 54%; height: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; padding: 12px 0 10px 14px; }
+.bq-feat-text strong { font: 400 22px/1.05 var(--font-title); color: #fff; letter-spacing: 0.2px; text-shadow: 0 2px 0 var(--bq-ink), 0 0 10px #0009; }
+.bq-feat .bq-price { margin-top: auto; width: 100%; font-size: 23px; }
+.bq-tags { display: flex; gap: 6px; align-items: center; min-height: 24px; }
+
+/* les badges : la valeur (pastille d'or), « unique » (pilule de nuit au texte d'or) */
+.bq-x { display: inline-flex; align-items: center; padding: 3px 10px 4px; border-radius: var(--r-pill); transform: rotate(-5deg);
+  font: 400 16px/1 var(--font-title); color: #5a2a00; letter-spacing: 0.3px;
+  background: linear-gradient(180deg, #fffbe0 0%, #ffe27a 25%, #ffc22e 60%, #f0a018 100%);
+  box-shadow: inset 0 1px 0 #fff, -1px 2px 0 #8a4a00, 0 0 12px #ffc22e99; animation: bq-badge 2.2s ease-in-out infinite; }
+@keyframes bq-badge { 50% { transform: rotate(-5deg) scale(1.08); } }
+.bq-once { display: inline-flex; align-items: center; gap: 3px; padding: 2px 9px 2px 4px; border-radius: var(--r-pill); font: 400 13px/1 var(--font-title); color: var(--bq-gold-hi);
+  background: #050b1fb3; box-shadow: inset 0 0 0 1px #ffc22e66; }
+.bq-corner { position: absolute; z-index: 3; top: 7px; right: 7px; }
+.bq-once.bq-corner { padding: 3px; }
+.bq-corner-l { position: absolute; z-index: 3; top: 8px; left: 7px; padding-right: 7px; }
+
+/* les monnaies d'une offre en petites pilules de nuit */
+.bq-rw { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; }
+.bq-feat .bq-rw { justify-content: flex-start; }
+.bq-chip { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px 2px 3px; border-radius: var(--r-pill); background: #050b1f8c;
+  box-shadow: inset 0 1px 2px #000a, 0 1px 0 #ffffff1a; }
+.bq-chip b { font: 400 13px/1 var(--font-title); font-weight: 400; color: #fff; white-space: nowrap; }
+.bq-rw-big .bq-chip { padding: 3px 10px 3px 3px; } .bq-rw-big .bq-chip b { font-size: 17px; }
+.bq-time b { color: var(--bq-gold-hi); }
+
+/* le prix : la dalle d'or de « Pierre de l'arène » sur toute la largeur */
+.bq-price { width: 100%; }
+.bq-price:disabled { color: #cfc9b8; }
+
+/* les autres offres : cases de nuit, gros picto sur sa lueur, posé sur un socle plat */
+.bq-grid, .bq-gems { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.bq-card { position: relative; isolation: isolate; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 8px 9px; text-align: center; border-radius: 18px;
+  background: radial-gradient(80% 50% at 80% 0%, #ffffff17, #0000 70%), linear-gradient(170deg, var(--bq-n4) 0%, var(--bq-n2) 50%, var(--bq-n1) 100%);
+  box-shadow: inset 0 0 0 1.5px #8e8aa38c, inset 0 1px 0 #ffffff33, -2px 5px 10px #040a1e99; }
+.bq-card strong { font: 400 15px/1.1 var(--font-title); color: #fff; text-shadow: 0 2px 0 var(--bq-ink); }
+.bq-stage { position: relative; display: grid; place-items: end center; width: 100%; height: 62px; padding-bottom: 3px; }
+.bq-stage::after { content: ''; position: absolute; z-index: 0; left: 26%; right: 26%; bottom: 1px; height: 7px; border-radius: 3px;
+  background: linear-gradient(180deg, #050b1f99, #050b1f33); }
+.bq-stage .lg-glow { inset: -4% 14%; }
+.bq-art { position: relative; z-index: 1; width: 62px; height: 62px; filter: drop-shadow(-2px 3px 2px #000a); }
+.bq-card .bq-price { margin-top: auto; }
+.bq-card.bq-out .bq-stage, .bq-card.bq-out strong, .bq-card.bq-out .bq-rw { opacity: 0.45; filter: saturate(0.4); }
+.bq-card.bq-out .lg-glow { display: none; }
+.bq-k-starter, .bq-k-growth { box-shadow: inset 0 0 0 1.5px #8e8aa38c, inset 0 0 0 3px #ffc22e40, inset 0 1px 0 #ffffff33, -2px 5px 10px #040a1e99; }
+.bq-card.bq-k-starter.bq-out, .bq-card.bq-k-growth.bq-out { box-shadow: inset 0 0 0 1.5px #8e8aa358, -2px 5px 10px #040a1e99; }
+
+/* les gemmes : la pile grossit d'une case à l'autre, la meilleure affaire a sa couronne */
+.bq-gems { padding-top: 8px; }
+.bq-gem { padding-top: 10px; gap: 6px; }
+.bq-gem .bq-stage { height: 92px; }
+.bq-gem .bq-stage .lg-glow { background: radial-gradient(closest-side at 56% 44%, #ffd6f5aa 0%, #c87dff55 40%, #9b5cff00 100%); }
+.bq-tier-0 .bq-art { width: 62px; height: 62px; } .bq-tier-1 .bq-art { width: 72px; height: 72px; }
+.bq-tier-2 .bq-art { width: 82px; height: 82px; } .bq-tier-3 .bq-art { width: 92px; height: 92px; }
+.bq-amount { display: inline-flex; align-items: center; gap: 4px; font: 400 23px/1 var(--font-title); color: #fff; text-shadow: 0 2px 0 var(--bq-ink), 0 0 8px #c87dff88; }
+.bq-amount b { font-weight: 400; }
+.bq-best { box-shadow: inset 0 0 0 2px var(--bq-gold), inset 0 1px 0 #fff6, -2px 5px 10px #040a1e99, 0 0 18px #ffb21f66;
+  background: radial-gradient(80% 60% at 75% 10%, #ffd86a40, #0000 70%), linear-gradient(170deg, #2f4f96 0%, var(--bq-n3) 50%, var(--bq-n2) 100%); }
+.bq-crown { position: absolute; z-index: 4; left: 50%; top: 0; transform: translate(-50%, -55%); display: inline-flex; align-items: center; gap: 3px; white-space: nowrap;
+  padding: 2px 10px 3px 5px; border-radius: var(--r-pill); font: 400 13px/1 var(--font-title); color: #5a2a00;
+  background: linear-gradient(180deg, #fffbe0 0%, #ffe27a 30%, #ffc22e 70%, #f0a018 100%); box-shadow: inset 0 1px 0 #fff, -1px 2px 0 #8a4a00, 0 0 10px #ffc22e99; }
+.bq-gem .bq-corner { top: 8px; }
+.bq-best .bq-corner { top: 22px; }
+
+/* le passe : la carte à prendre en tête de l'onglet */
+.bq-passbuy { position: relative; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 6px; border-radius: 16px;
+  background: radial-gradient(70% 120% at 90% 0%, #ffcf5a33, #0000 60%), linear-gradient(170deg, var(--bq-n4) 0%, var(--bq-n2) 60%, var(--bq-n1) 100%);
+  box-shadow: inset 0 0 0 1.5px #8e8aa3a0, inset 0 0 0 3px #ffc22e40, -2px 5px 10px #040a1e99; }
+.bq-passbuy .bq-stage { width: 64px; height: 56px; flex: none; }
+.bq-passbuy .bq-art { width: 56px; height: 56px; }
+.bq-passbuy strong { flex: 1; text-align: left; font: 400 18px/1.1 var(--font-title); color: #fff; text-shadow: 0 2px 0 var(--bq-ink); }
+.bq-passbuy .bq-price { width: auto; min-width: 104px; }
+
+/* les onglets du passe et des échanges sur la vitrine de nuit : cartes et cases de nuit, textes clairs */
+.bq .card, .bq .pass-cell { --pxf: radial-gradient(80% 60% at 80% 0%, #ffffff14, #0000 70%), linear-gradient(170deg, var(--bq-n4) 0%, var(--bq-n2) 55%, var(--bq-n1) 100%);
+  --psh: inset 0 0 0 1.5px #8e8aa38c, inset 0 1px 0 #ffffff2e, -2px 4px 8px #040a1e8c; color: #fff; }
+.bq .card strong, .bq .card .cur, .bq .pass-cell .cur { color: #fff; text-shadow: 0 1px 0 var(--bq-ink); }
+.bq .card .cur-big { --pxf: #050b1f8c; --psh: inset 0 1px 2px #000a, 0 1px 0 #ffffff1a; color: #fff; }
+.bq .pass-cell.ready { --pxf: radial-gradient(90% 80% at 75% 10%, #ffd86a40, #0000 65%), linear-gradient(170deg, #2f4f96 0%, var(--bq-n3) 55%, var(--bq-n2) 100%);
+  --psh: inset 0 0 0 2px var(--bq-gold), -2px 4px 8px #040a1e8c, 0 0 12px #ffb21f55; }
+.bq .pass-num { background: var(--bq-n0); color: #aeb5d6; box-shadow: inset 0 1px 2px #000a; }
+.bq .pass-num.on { background: linear-gradient(180deg, var(--bq-gold-hi), var(--bq-gold) 55%, #e8920f); color: #5a2a00; text-shadow: none; box-shadow: 0 0 8px #ffc22e88; }
+.bq .card .bar { --pxf: linear-gradient(var(--bq-n0), var(--bq-n0)); --psh: inset 0 2px 3px #000c; }
+.bq .card .bar-label { color: #fff; text-shadow: 0 1px 0 #000; }
+.bq .muted { color: #aeb5d6; }
+.bq h3 { color: #fff; }
+.bq h3 .cur { font: 400 18px var(--font-title); text-shadow: 0 2px 0 var(--bq-ink); }
+
+/* petits écrans : la vitrine un peu plus basse */
+@media (max-height: 700px) {
+  .bq-feat { height: 164px; }
+  .bq-feat-hero { --u: 1px !important; }
+  .bq-feat-gift, .bq-feat-gift .art { width: 64px; height: 64px; }
+  .bq-feat-text strong { font-size: 20px; }
+  .bq-gem .bq-stage { height: 76px; }
+  .bq-tier-2 .bq-art { width: 74px; height: 74px; } .bq-tier-3 .bq-art { width: 80px; height: 80px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-day.lg-today, .lg-today .lg-art, .lg-glow, .bq-sparks i, .bq-x, .bq-feat-gift .art, .lg-burst, .lg-fly, .lg-flash { animation: none; }
+  .bq-sparks i { opacity: 0.8; transform: none; }
+}

@@ -1,7 +1,7 @@
 // Fenêtres : quêtes, boutique et passe, réglages, récompenses, pub simulée, confirmation.
 import { useEffect, useState } from 'preact/hooks';
 import {
-  AD_SECONDS, ARENA_SHOP, DAILY_CHESTS, DAILY_QUESTS, GUILD_SHOP, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL,
+  AD_SECONDS, ARENA_SHOP, DAILY_CHESTS, DAILY_QUESTS, GUILD_SHOP, PASS_LEVELS, PASS_POINTS_PER_LEVEL,
   WEEKLY_CHESTS, WEEKLY_QUESTS, type Reward,
 } from '../../../core/data/modes';
 import { STARTER_HERO, heroDef } from '../../../core/data/heroes';
@@ -20,6 +20,8 @@ import { Art, Bar, Btn, Cur, HeroCard, Icon, ItemIcon, Modal, Sign, Tabs } from 
 import { close, open, toast } from '../nav';
 import { Halo } from '../anim';
 import { ShopTile } from './adventure';
+import { GemsTab, OffersTab, PassBuy } from '../sections/boutique-offres';
+import '../sections/boutique.css';
 
 function RewardLine({ reward }: { reward: Reward }) {
   return <span class="row gap-s wrap">{Object.entries(reward).map(([k, v]) => <Cur k={k} n={v ?? 0} />)}</span>;
@@ -95,43 +97,18 @@ export function ShopModal({ tab: initial = 'offers' }: { tab?: 'offers' | 'pass'
   const level = passLevel(s);
   return (
     <Modal title={t('side.shop')} wide>
+      <div class={`bq bq-tab-${tab}`}>
       <Tabs value={tab} onChange={setTab} options={[
         ['offers', t('shop.offers')], ['gems', t('shop.gems')], ['pass', t('shop.pass')], ['exchange', t('shop.exchange')],
       ]} />
-      {tab === 'offers' && (
-        <div class="list">
-          {OFFERS.filter((o) => o.kind !== 'gems').map((o) => {
-            const bought = s.shop.bought[o.id] ?? 0;
-            const soldOut = o.limit > 0 && bought >= o.limit;
-            const cardDays = Math.ceil((s.shop.cardUntil - now()) / 86_400_000);
-            return (
-              <div class={`card offer offer-${o.kind}`}>
-                <Art class="offer-art" name={`offer-${o.kind}`} />
-                <div class="grow">
-                  <strong>{t(`offer.${o.id}`)}</strong>
-                  {o.kind === 'card' && <p class="muted small">{cardDays > 0 ? t('offer.daysLeft', { n: cardDays }) : t('offer.card.desc')}</p>}
-                  {o.kind === 'noAds' && <p class="muted small">{t('offer.noads.desc')}</p>}
-                  <RewardLine reward={o.reward} />
-                </div>
-                <Btn kind="gold" small disabled={soldOut} onClick={() => simulatedBuy(o.id)}>{soldOut ? t('offer.owned') : o.price}</Btn>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      {tab === 'gems' && (
-        <div class="shop-grid">
-          {OFFERS.filter((o) => o.kind === 'gems').map((o) => (
-            <ShopTile cost={o.price} reward={o.reward} onBuy={() => simulatedBuy(o.id)} art={`offer-${o.id}`} />
-          ))}
-        </div>
-      )}
+      {tab === 'offers' && <OffersTab onBuy={simulatedBuy} />}
+      {tab === 'gems' && <GemsTab onBuy={simulatedBuy} />}
       {tab === 'pass' && (
         <div class="list">
           <div class="card">
             <div class="row between"><strong>{t('pass.level', { n: level })}</strong><span class="muted">{t('pass.points', { n: s.pass.points % PASS_POINTS_PER_LEVEL, m: PASS_POINTS_PER_LEVEL })}</span></div>
             <Bar value={s.pass.points % PASS_POINTS_PER_LEVEL} max={PASS_POINTS_PER_LEVEL} color="#a35cff" />
-            {!s.shop.passPremium && <Btn kind="purple" wide onClick={() => simulatedBuy('pass')}>{t('offer.pass')} · 9,99 €</Btn>}
+            {!s.shop.passPremium && <PassBuy onBuy={() => simulatedBuy('pass')} />}
           </div>
           <div class="pass-grid">
             <span class="muted small">{t('pass.free')}</span><span /><span class="muted small">{t('pass.premium')}</span>
@@ -159,6 +136,7 @@ export function ShopModal({ tab: initial = 'offers' }: { tab?: 'offers' | 'pass'
           </div>
         </div>
       )}
+      </div>
     </Modal>
   );
 }
