@@ -1,7 +1,7 @@
 // Aventure : les modes du quotidien (tour, missions, donjons, boss du jour, arène, Colisée).
-// Style moderne (26/11/2026) : des cartes claires qui montrent le décor du mode (l'image fixe du clan, fond-image.ts),
-// son picto, son nom, UNE information utile (étage, essais, ligue…) et une seule action. Mise en page dans
-// sections/aventure.css (classes « av- »).
+// Style moderne (26/11/2026), onglet refait le 27/11 : six tuiles qui prennent tout l'écran (un petit paysage du mode dessiné
+// par le code, TileScene de backdrop-adventure.tsx, son picto posé sur le sol, son nom, UNE information utile), sur un fond
+// épuré. Chaque mode : une tête, son décor, une seule action. Mise en page dans sections/aventure.css (classes « av- »).
 import '../sections/aventure.css';
 import { sceneVar } from '../fond-image';
 import { useEffect, useState } from 'preact/hooks';
@@ -11,9 +11,8 @@ import {
   ARENA_FREE_TICKETS, ARENA_LEAGUES, ARENA_SHOP, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS,
   DUNGEON_ATTEMPTS_PER_DAY, TOWER_STAGE_PER_FLOOR, UNLOCKS, type DungeonKind,
 } from '../../../core/data/modes';
-import type { PlayerState } from '../../state/types';
 import { ITEM_COLORS, heroImage } from '../../art';
-import { DUNGEON_CLAN, battleLook, bossArt, bossClan, type Clan } from '../../look';
+import { DUNGEON_CLAN, battleLook, bossArt, bossClan } from '../../look';
 import { Figure } from '../hero-figure';
 import { fmt, t } from '../../i18n';
 import {
@@ -24,24 +23,12 @@ import { isUnlocked, teamPower } from '../../state/selectors';
 import { now, useGame } from '../../state/store';
 import { ADVENTURE_ORDER, dots, isNew } from '../dots';
 import { TeamStrip } from './heroes';
-import { TitleBanner } from '../title-banner';
+import { TileScene } from '../backdrop-adventure';
 import { Art, Btn, Cur, Icon, Locked, duration, starText } from '../kit';
 import { btClass } from '../buttons';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
 
 type Mode = (typeof ADVENTURE_ORDER)[number];
-
-/** Le décor (clan) montré sur la tuile et en tête de chaque mode. */
-function modeClan(s: PlayerState, f: Mode): Clan {
-  switch (f) {
-    case 'tower': return battleLook('tower', String(s.tower.floor + 1)).fond;
-    case 'missions': return 'barzul';
-    case 'dungeons': return 'arachne';
-    case 'dailyBoss': return bossClan(dailyBossId());
-    case 'arena': return 'orin';
-    default: return 'lenore';
-  }
-}
 
 const leagueOf = (points: number) => [...ARENA_LEAGUES].reverse().find((l) => points >= l.from)!;
 const DUNGEON_KINDS: DungeonKind[] = ['gold', 'essence', 'gear'];
@@ -91,27 +78,33 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
   }
   return (
     <div class="screen adventure av-hub">
-      <div class="adv-banner"><h1 class="sr-only">{t('nav.adventure')}</h1><TitleBanner title={t('nav.adventure')}><Icon name="adventure" size={27} /></TitleBanner></div>
+      {/* plus de titre ni de panorama (27/11) : les six tuiles prennent tout l'écran */}
+      <h1 class="sr-only">{t('nav.adventure')}</h1>
       <div class="av-tiles">
         {ADVENTURE_ORDER.map((f) => {
           const unlocked = isUnlocked(s, f);
+          const fresh = unlocked && isNew(s, f);
           return (
             <button
               class={`av-tile tile-${f}${unlocked ? '' : ' is-locked'}`}
-              style={sceneVar(modeClan(s, f))}
               onClick={() => {
                 if (!unlocked) return toast(t('locked', { n: UNLOCKS[f] }));
                 markSeen(f);
                 openSub(f);
               }}
             >
-              <Art name={f} class="av-tile-art" />
-              <span class="av-tile-text">
-                {unlocked ? <TileInfo f={f} /> : <Locked stage={UNLOCKS[f]} />}
-                <strong class="av-tile-name">{t(`adv.${f}`)}</strong>
+              {/* le petit paysage du mode, son picto posé sur le sol (jamais coupé : il tient dans la case) */}
+              <span class="av-tile-scene">
+                <TileScene mode={f} />
+                <Art name={f} class="av-tile-art" />
+                {fresh && <span class="av-new">{t('new')}</span>}
+                {!unlocked && <span class="av-lock"><Icon name="lock" size={30} /></span>}
               </span>
-              {unlocked && isNew(s, f) && <span class="av-new">{t('new')}</span>}
-              {unlocked && !isNew(s, f) && dots[f](s) && <span class="dot" />}
+              <span class="av-tile-foot">
+                <strong class="av-tile-name">{t(`adv.${f}`)}</strong>
+                {unlocked ? <TileInfo f={f} /> : <Locked stage={UNLOCKS[f]} />}
+              </span>
+              {unlocked && !fresh && dots[f](s) && <span class="dot" />}
             </button>
           );
         })}

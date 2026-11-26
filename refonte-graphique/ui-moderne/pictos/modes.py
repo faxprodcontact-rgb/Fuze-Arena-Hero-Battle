@@ -10,8 +10,9 @@ from lib import (C, Icon, arc_pts, band, blob, circle, col, dark, ellipse, lite,
 def _():
     """L'arène : deux épées croisées."""
     ic = Icon()
-    sword(ic, 24, 80, 84, 16, gem_c='azure')
-    sword(ic, 76, 80, 16, 16, gem_c='red')
+    # gardes remontées (27/11) : les pommeaux restent dans la case (ils étaient coupés en bas)
+    sword(ic, 27, 74, 84, 14, gem_c='azure')
+    sword(ic, 73, 74, 16, 14, gem_c='red')
     return ic
 
 
@@ -20,17 +21,18 @@ def _():
     """La tour : un donjon de pierre, toit pointu rouge et fanion."""
     ic = Icon()
     o = ic.obj()
-    o.part(rpoly([(26, 40), (74, 40), (70, 92), (30, 92)], [1, 1, 3, 3]), 'stone', gloss=False)
-    o.part(rect(22, 34, 56, 12, 3), lite(col('stone'), 0.1), gloss=False)
-    o.part(rpoly([(50, 4), (80, 36), (20, 36)], [2, 3, 3]), 'red', gloss=False)
+    o.part(rpoly([(26, 44), (74, 44), (70, 92), (30, 92)], [1, 1, 3, 3]), 'stone', gloss=False)
+    o.part(rect(22, 38, 56, 11, 3), lite(col('stone'), 0.1), gloss=False)
+    o.part(rpoly([(50, 13), (80, 40), (20, 40)], [2, 3, 3]), 'red', gloss=False)
     o.detail(rpoly([(42, 66), (58, 66), (58, 92), (42, 92)], [8, 8, 0, 0]), fill='#3a2a5e')
     o.detail(rect(46, 50, 8, 10, 4), fill='#ffe27a')
     for y in (58, 76):
         o.detail(openpath([(32, y), (40, y)]), stroke=(dark(col('stone'), 0.35), 2), clip=0, opacity=0.7)
         o.detail(openpath([(62, y + 6), (68, y + 6)]), stroke=(dark(col('stone'), 0.35), 2), clip=0, opacity=0.7)
     f = ic.obj(shadow=False)
-    f.part(rect(49, -2, 3, 12, 1.5), 'wood', cast=False)
-    f.part(rpoly([(52, 0), (66, 4), (52, 8)], 1), 'gold', gloss=False)
+    # fanion descendu (27/11) : il était coupé en haut de la case
+    f.part(rect(49, 4, 3, 12, 1.5), 'wood', cast=False)
+    f.part(rpoly([(52, 5), (66, 9), (52, 13)], 1), 'gold', gloss=False)
     return ic
 
 
@@ -98,11 +100,12 @@ def _():
     """Le Colisée (tuile du mode, clé « defense ») : l'amphithéâtre, et deux petites épées croisées devant, en bas."""
     ic = Icon()
     o = ic.obj()
-    arcade(o, 6, 50, 88, 32, 5, '#e9c995')
-    arcade(o, 13, 28, 74, 24, 4, '#f4d9a8', top=True)
-    arcade(o, 20, 12, 60, 18, 4, '#fbe6bd', top=True)
-    sword(ic, 40, 92, 82, 56, gem_c='azure', wide=0.62, guard=0.62)
-    sword(ic, 82, 92, 40, 56, gem_c='red', wide=0.62, guard=0.62)
+    # redessiné le 27/11 : tout tient dans la case (les épées et le pied du Colisée étaient coupés en bas)
+    arcade(o, 7, 44, 86, 28, 5, '#e9c995')
+    arcade(o, 14, 24, 72, 22, 4, '#f4d9a8', top=True)
+    arcade(o, 21, 9, 58, 17, 4, '#fbe6bd', top=True)
+    sword(ic, 38, 76, 78, 46, gem_c='azure', wide=0.62, guard=0.62)
+    sword(ic, 62, 76, 22, 46, gem_c='red', wide=0.62, guard=0.62)
     return ic
 
 

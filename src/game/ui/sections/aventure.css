@@ -8,7 +8,8 @@
   --av-text: #221c45; --av-muted: #736d97; --av-line: #e7e3f6;
   --av-glass: #0d0826b8; --av-ring: inset 0 0 0 1px #ffffff2e;
   --av-ok: #1f9d48; --av-low: #e23b52;
-  --av-azure: linear-gradient(180deg, #6cc4ff 0%, #2f8cff 60%, #2a78f0 100%);
+  /* « en cours / choisi » : le bleu foncé des barres (plus de bleu clair depuis le 27/11) */
+  --av-azure: linear-gradient(180deg, #4558cc 0%, #2b3797 60%, #222c80 100%);
   --av-gold: linear-gradient(180deg, #ffe680 0%, #ffc22e 55%, #ffab1a 100%);
   --av-green: linear-gradient(180deg, #7cf08a 0%, #38cc5c 50%, #25b34a 100%);
   --av-ico-back: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M12.5 4l-6 6 6 6' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -42,7 +43,7 @@
 
 /* une barre de progression arrondie */
 .av-progress { position: relative; height: 18px; border-radius: 999px; background: #e7e3f6; overflow: hidden; box-shadow: inset 0 1px 3px #12083a33; }
-.av-progress > span { display: block; height: 100%; border-radius: 999px; background: var(--av-azure); box-shadow: inset 0 1.5px 0 #ffffff66; }
+.av-progress > span { display: block; height: 100%; border-radius: 999px; background: var(--av-gold); box-shadow: inset 0 1.5px 0 #ffffff66; }
 .av-progress > b { position: absolute; inset: 0; display: grid; place-items: center; font: 400 12px/1 var(--font-title); color: #1d2a6b; }
 .av-progress.gold { height: 10px; background: #ffffff26; box-shadow: inset 0 1px 2px #0006; }
 .av-progress.gold > span { background: linear-gradient(90deg, #ffb21f, #ffe27a); box-shadow: 0 0 8px #ffc22e80; }
@@ -66,41 +67,50 @@
 .av-scene-name { position: absolute; left: 10px; bottom: 10px; padding: 5px 14px 6px; border-radius: 999px; background: var(--av-glass); box-shadow: var(--av-ring);
   font: 400 18px/1 var(--font-title); color: #fff; text-shadow: 0 2px 0 #0a062099; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 
-/* ==================== l'onglet Aventure : six tuiles-images ==================== */
+/* ==================== l'onglet Aventure : six tuiles qui prennent tout l'écran (27/11) ==================== */
+/* plus de titre ni de panorama : les tuiles se partagent toute la hauteur entre la barre du haut et celle du bas */
+.adv-scroll > .screen.adventure.av-hub { flex: 1 1 0; min-height: 0; gap: 0; }
 .av-tiles { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.av-tile { --tile: #7c4dff; position: relative; isolation: isolate; min-height: 0; padding: 0; border: 0; border-radius: 22px; color: #fff; text-align: left;
-  background: none; box-shadow: 0 8px 18px #05021a73; transition: transform 0.1s; -webkit-tap-highlight-color: transparent; }
+/* une tuile = une carte : en haut le petit paysage du mode (TileScene) et son picto posé sur le sol ; en bas, le pied
+   bleu nuit (la couleur des barres) qui porte le nom et UNE information */
+.av-tile { --av-c: #8b5cf6; position: relative; min-height: 0; display: flex; flex-direction: column; padding: 0; border: 0; border-radius: 22px;
+  color: #fff; text-align: center; background: linear-gradient(180deg, var(--c-bg-3, #2a1f63), var(--c-bg-1, #150f36));
+  box-shadow: inset 0 0 0 1.5px #ffffff24, 0 8px 18px #05021a80; transition: transform 0.1s; -webkit-tap-highlight-color: transparent; }
 .av-tile:active { transform: scale(0.97); }
-/* le décor (dessous) puis le voile de la couleur du mode en bas, qui porte le texte, et le liseré clair */
-.av-tile::before, .av-tile::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; }
-.av-tile::before { z-index: -2; background: #3d2f8a var(--scene) 50% var(--sy, 50%) / cover no-repeat; }
-.av-tile::after { z-index: -1;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--tile) 22%, #0000) 0%, #0000 30%, color-mix(in srgb, var(--tile) 55%, #0c0822e6) 100%);
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--tile) 45%, #ffffff66), inset 0 2px 0 #ffffff59; }
-.av-tile-art { display: block; position: absolute; top: 6px; right: 6px; width: auto; height: min(92px, calc(100% - 50px)); aspect-ratio: 1;
-  filter: drop-shadow(0 5px 5px #0000008c); animation: float 3.4s ease-in-out infinite; }
-.av-tile:nth-child(2n) .av-tile-art { animation-delay: -1.1s; } .av-tile:nth-child(3n) .av-tile-art { animation-delay: -2.2s; }
-.av-tile-text { position: absolute; left: 11px; right: 10px; bottom: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-.av-tile-name { max-width: 100%; font: 400 17px/1.05 var(--font-title); color: #fff; text-shadow: 0 2px 0 #0a0620a6, 0 0 8px #0a062080;
+.av-tile-scene { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; border-radius: 22px 22px 8px 8px; margin: 3px 3px 0;
+  container-type: size; isolation: isolate; box-shadow: inset 0 2px 0 #ffffff40; }
+.av-tile-svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; z-index: -1; }
+/* le sol du dessin commence à 124 / 150 de sa hauteur, le dessin suit la largeur (ou la hauteur, la plus grande des deux) :
+   le picto se pose dessus, centré, assez grand, et tient toujours en entier dans la case */
+.av-tile-scene { --ground: max(13cqw, 17.4cqh); --art: min(78cqh, 64cqw, 128px); }
+.av-tile-art { position: absolute; left: 0; right: 0; bottom: calc(var(--ground) - var(--art) * 0.07); margin: 0 auto; width: var(--art); height: var(--art);
+  filter: drop-shadow(0 6px 4px #0a062066); animation: av-float 3.6s ease-in-out infinite; }
+.av-tile:nth-child(2n) .av-tile-art { animation-delay: -1.2s; } .av-tile:nth-child(3n) .av-tile-art { animation-delay: -2.4s; }
+@keyframes av-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -4px; } }
+@media (prefers-reduced-motion: reduce) { .av-tile-art { animation: none; } }
+.av-tile-foot { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 6px 8px 9px; min-width: 0; }
+.av-tile-name { max-width: 100%; font: 400 17px/1.05 var(--font-title); color: #fff; text-shadow: 0 2px 0 #0a0620a6;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-bottom: 1px; }
-.av-tile .locked { height: 22px; padding: 0 9px 0 4px; border-radius: 999px; background: #0d0826e0; box-shadow: var(--av-ring); color: #fff; font: 400 12.5px/1 var(--font-title); text-shadow: none; }
+.av-tile-foot .av-chip { max-width: 100%; overflow: hidden; background: #ffffff14; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.av-tile .locked { display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 10px 0 5px; border-radius: 999px; background: #00000047;
+  box-shadow: var(--av-ring); color: #d8d3ee; font: 400 12.5px/1 var(--font-title); text-shadow: none; white-space: nowrap; }
 .av-tile .locked .icon { width: 16px !important; height: 16px !important; }
-.av-tile.is-locked::before { filter: grayscale(1) brightness(0.55); }
-.av-tile.is-locked::after { background: linear-gradient(180deg, #0c082233, #0c0822d9); box-shadow: inset 0 0 0 2px #ffffff26; }
-.av-tile.is-locked .av-tile-art { filter: grayscale(0.85) brightness(0.8) drop-shadow(0 5px 5px #0000008c); animation: none; }
-.av-tile.is-locked .av-tile-name { color: #d8d3ee; }
-.av-new { position: absolute; top: 9px; left: 10px; padding: 3px 9px 4px; border-radius: 999px; background: linear-gradient(180deg, #ff8a96, #ff4d63);
-  box-shadow: 0 3px 8px #ff4d6366, inset 0 1.5px 0 #ffffff66; font: 400 11.5px/1 var(--font-title); color: #fff; text-shadow: none; }
+/* fermé : le paysage s'éteint, le picto aussi ; un cadenas d'or posé à côté du picto */
+.av-tile.is-locked .av-tile-svg { filter: grayscale(0.92) brightness(0.62); }
+.av-tile.is-locked .av-tile-art { filter: grayscale(0.85) brightness(0.72) drop-shadow(0 6px 4px #0a062066); animation: none; }
+.av-tile.is-locked .av-tile-name { color: #b9b3d6; }
+.av-lock { position: absolute; right: 8px; top: 8px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 14px;
+  background: #0d0826b3; box-shadow: inset 0 0 0 1px #ffffff26, 0 4px 10px #05021a66; }
+.av-new { position: absolute; top: 8px; left: 8px; padding: 4px 10px 5px; border-radius: 999px; background: linear-gradient(180deg, #ff8a96, #ff4d63);
+  box-shadow: 0 3px 8px #ff4d6366, inset 0 1.5px 0 #ffffff66; font: 400 12px/1 var(--font-title); color: #fff; text-shadow: none; }
 .av-tile > .dot { z-index: 2; top: -4px; right: -4px; }
-/* la couleur de chaque mode et l'endroit du décor qu'on montre */
-.av-tile.tile-tower { --tile: #8b5cf6; } .av-tile.tile-missions { --tile: #14b8a6; --sy: 46%; } .av-tile.tile-dungeons { --tile: #e07b39; --sy: 46%; }
-.av-tile.tile-dailyBoss { --tile: #ef4458; } .av-tile.tile-arena { --tile: #3b82f6; --sy: 44%; } .av-tile.tile-defense { --tile: #f5a524; --sy: 48%; }
 @media (max-height: 700px) {
   .av-tiles { gap: 10px; }
-  .av-tile-art { top: 4px; right: 4px; height: min(70px, calc(100% - 46px)); }
   .av-tile-name { font-size: 15px; }
-  .av-tile-text { bottom: 8px; left: 9px; gap: 4px; }
+  .av-tile-foot { gap: 3px; padding: 4px 6px 7px; }
   .av-tile .av-chip, .av-tile .locked { height: 20px; font-size: 11.5px; }
+  .av-lock { width: 34px; height: 34px; border-radius: 12px; right: 6px; top: 6px; }
+  .av-lock .icon { width: 24px !important; height: 24px !important; }
 }
 
 /* ==================== un mode : la tête et les panneaux ==================== */
@@ -135,8 +145,8 @@
   font: 400 16px/1 var(--font-title); background: #ffffffd9; color: #4a4373; box-shadow: 0 4px 10px #0a062059; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .av-floor.up .icon { position: absolute; right: 8px; top: 50%; translate: 0 -50%; }
 .av-floor.up:nth-child(1) { opacity: 0.75; } .av-floor.up:nth-child(2) { opacity: 0.88; }
-.av-floor.now { width: 80%; height: 56px; font-size: 21px; color: #fff; background: var(--av-azure); text-shadow: 0 2px 0 #1a47b8;
-  box-shadow: inset 0 2px 0 #ffffff73, inset 0 -4px 0 #1d56d6, 0 0 0 3px #ffffffcc, 0 10px 24px #2f8cff8c; }
+.av-floor.now { width: 80%; height: 56px; font-size: 21px; color: #fff; background: var(--av-azure); text-shadow: 0 2px 0 #121a5c;
+  box-shadow: inset 0 2px 0 #ffffff4d, inset 0 -4px 0 #161e66, 0 0 0 3px #ffc22e, 0 10px 24px #ffc22e59; }
 .av-floor.now .art { margin-left: -10px; filter: drop-shadow(0 3px 3px #0006); }
 .av-floor.done { width: 56%; height: 34px; font-size: 15px; color: #fff; background: linear-gradient(180deg, #5fdc78, #25b34a); text-shadow: 0 1px 0 #12823a; opacity: 0.9; }
 .av-check { width: 18px; height: 18px; flex: none; background: var(--av-ico-check) center / contain no-repeat; }
@@ -156,7 +166,7 @@
 .av-row-side > .cur { font-size: 14px; padding: 2px 10px 2px 3px; }
 .av-mission.ready { background: linear-gradient(180deg, #fffaf0, #fff4dc); box-shadow: 0 0 0 2.5px #ffc22e, 0 6px 16px #ffc22e4d; }
 .av-mission.ready .av-row-icon { background: linear-gradient(160deg, #fff1c4, #ffd76e); }
-.av-mission.running .av-row-icon { background: linear-gradient(160deg, #e3f1ff, #c4defd); }
+.av-mission.running .av-row-icon { background: linear-gradient(160deg, #e6e3f6, #cbc5ea); }
 .av-mission .av-progress { margin-right: 4px; }
 
 /* ==================== donjons ==================== */
@@ -195,8 +205,8 @@
 .av-step-info { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .av-reward { display: inline-flex; gap: 6px; }
 .av-reward .cur { font-size: 13.5px; padding: 2px 9px 2px 3px; }
-.av-step.next .av-step-node { background: var(--av-azure); box-shadow: 0 0 0 3px #fff, 0 0 16px #2f8cffb3; }
-.av-step.next .av-step-card { box-shadow: 0 0 0 2.5px #2f8cff, 0 8px 18px #2f8cff59; }
+.av-step.next .av-step-node { background: var(--av-azure); box-shadow: 0 0 0 3px #ffc22e, 0 0 16px #ffc22e99; }
+.av-step.next .av-step-card { box-shadow: 0 0 0 2.5px #ffc22e, 0 8px 18px #ffc22e4d; }
 .av-step.last .av-step-node { background: var(--av-gold); color: #5a2c00; text-shadow: none; box-shadow: 0 0 0 3px #fff, 0 3px 8px #05021a73; }
 .av-step.old .av-step-node { background: var(--av-green); }
 .av-step.old .av-step-card { opacity: 0.82; }
