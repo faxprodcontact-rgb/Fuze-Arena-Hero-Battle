@@ -1,16 +1,16 @@
-// La page d'un héros (refaite le 26/11/2026, style moderne ; demande du propriétaire : « le héros en grand sur un beau
-// fond sobre mais classe, en dessous ses caractéristiques et attaques, bien agencées de façon ludique avec des pictos,
-// épuré ; son niveau bien visible ; pas trop d'informations »).
-// De haut en bas : le nom et ses pastilles (rareté, élément, rôle) ; la scène (le héros en pied qui respire, à une
-// échelle entière pour rester net, sous une lumière à la couleur de son élément ; ses étoiles ; un geste ou les flèches
-// passent au héros suivant) ; le niveau (un gros médaillon cerclé de sa progression, le coût, le bouton) ; cinq
-// attributs en pictos (les autres en touchant la rangée) ; ses deux attaques en cartes ; ses talents en pastilles ;
-// l'équipement. Les détails s'ouvrent dans des fenêtres au milieu de l'écran.
+// La page d'un héros (style moderne, 26/11/2026 ; disposition voulue par le propriétaire : « bien agencé » comme les
+// grands jeux du genre). Tout l'écran est son sanctuaire, teinté par son élément : une arche douce au fond, une dalle
+// plate d'un bord à l'autre où il se tient, en grand, au milieu (échelle entière : le pixel art reste net).
+// En haut : ses étoiles, son nom, sa rareté. De part et d'autre : ses capacités en médaillons ronds (à gauche sa
+// compétence et son attaque, à droite ses talents ; toucher = la description au milieu de l'écran). Des flèches (ou un
+// geste) passent au héros d'avant ou d'après. Dessous : sa puissance entre de petits ronds (élément, rôle, attributs,
+// section) ; une rangée d'attributs (niveau bien visible, PV, ATQ, DÉF, vitesse) ; le niveau +1 ; les actions
+// (retour, équipement, fusion, Renaissance).
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { applyStatMods } from '../../../core/battle/engine';
 import { AWAKEN_SKILL, AWAKEN_STARS, heroDef } from '../../../core/data/heroes';
 import { heroToUnit } from '../../../core/battle/units';
-import { ENERGY_PER_ATTACK, type Talent, type UnitInit } from '../../../core/battle/types';
+import { ENERGY_PER_ATTACK, type Passive, type Talent, type UnitInit } from '../../../core/battle/types';
 import { GEAR_SLOTS, type GearSlot } from '../../../core/data/items';
 import { levelCap } from '../../../core/data/stats';
 import { MYTHIC_STARS } from '../../../core/data/stars';
@@ -19,7 +19,7 @@ import { fmt, t } from '../../i18n';
 import { equipBest, levelUp, toggleInFormation, unequipAll } from '../../state/actions';
 import { canLevelUp, gearStatsOf, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
-import { Art, Btn, Cur, Icon, ItemIcon, Modal, Sign, Stars, starText } from '../kit';
+import { Art, Btn, Cur, Icon, ItemIcon, Modal, Sign, Stars, hasArt, starText } from '../kit';
 import { SlotPanel, betterInBag } from './bag';
 import { describePassive, describeSkill, describeTalent } from '../../describe';
 import { runSkillPreview } from '../../scenes';
@@ -42,6 +42,27 @@ function statsOf(unit: UnitInit) {
   return { main, minor };
 }
 
+/** Le picto d'un talent : l'attribut qu'il renforce, ou l'effet qu'il déclenche. */
+function passiveIcon(p: Passive): string {
+  const pick = (...names: string[]) => names.find(hasArt) ?? 'star';
+  if (p.kind === 'stats') {
+    const k = Object.keys(p.stats).find((x) => (p.stats as Record<string, number | undefined>)[x]) ?? 'hp';
+    return pick(k === 'lifesteal' ? 'hp' : k);
+  }
+  const e = p.effects[0];
+  if (!e) return 'star';
+  switch (e.type) {
+    case 'damage': return pick('atk');
+    case 'heal': return pick('healer', 'hp');
+    case 'shield': return pick('def');
+    case 'energy': return pick('power');
+    case 'revive': return pick('revive');
+    case 'cleanse': return pick('st-regen');
+    case 'status': return pick(`st-${e.status}`);
+  }
+  return 'star';
+}
+
 /** La compétence jouée en boucle contre des monstres. Redémarre si la force du héros change. */
 function SkillPreview({ unit }: { unit: UnitInit }) {
   const host = useRef<HTMLDivElement>(null);
@@ -53,8 +74,8 @@ function SkillPreview({ unit }: { unit: UnitInit }) {
   return <div class="skill-preview" ref={host} />;
 }
 
-/** Le héros en grand, au milieu de la scène, pieds sur le sol. L'échelle est la même pour tous (calée sur la hauteur de
- * la scène) et tombe sur un multiple d'un demi-pixel d'écran : le pixel art reste net. */
+/** Le héros en grand, pieds sur la dalle (88 % de la scène). L'échelle est la même pour tous (calée sur la hauteur de la
+ * scène, sans toucher les médaillons) et tombe sur un nombre entier de points de l'écran : le pixel art reste net. */
 function StageFigure({ defId, up }: { defId: string; up: number }) {
   const host = useRef<HTMLSpanElement>(null);
   const [box, setBox] = useState<[number, number]>([0, 0]);
@@ -71,16 +92,16 @@ function StageFigure({ defId, up }: { defId: string; up: number }) {
   const [bw, bh] = box;
   if (!m) return <span class="hx-stage-fig" ref={host}><img class="hx-flat" src={heroImage(defId)} alt="" /></span>;
   const [w, h, fx, fy, n, ms] = m;
-  // la place du héros : de 4 % sous le haut de la scène jusqu'à la ligne du sol (84 %) ; 116 = un grand héros.
-  // Un pixel du dessin = un nombre entier de points de l'écran (1/3 de pixel CSS sur un écran ×3) : il reste net.
   const dpr = Math.round(window.devicePixelRatio || 1) || 1;
   const steps = dpr >= 2 ? dpr : 2;
-  const k = Math.max(1, Math.floor(((bh * 0.8) / 116) * steps) / steps);
-  const feetY = bh * 0.84;
+  // en hauteur : 116 pixels du dessin (un grand héros) sur 80 % de la scène ; en largeur : entre les médaillons
+  const fit = Math.min((bh * 0.8) / 116, (bw - 2 * 64) / (w * 0.82));
+  const k = Math.max(1, Math.floor(fit * steps) / steps);
+  const feetY = bh * 0.88;
   return (
     <span class="hx-stage-fig" ref={host}>
       {bh > 0 && (
-        <span class={`hx-stage-win hx-up-${up % 2}`} key={`${defId}-${up}`} style={{ left: `${bw / 2 - fx * k}px`, top: `${feetY - fy * k}px`, width: `${w * k}px`, height: `${h * k}px` }}>
+        <span class="hx-stage-win" key={`${defId}-${up}`} style={{ left: `${bw / 2 - fx * k}px`, top: `${feetY - fy * k}px`, width: `${w * k}px`, height: `${h * k}px` }}>
           <FigStrip id={defId} n={n} ms={ms} />
         </span>
       )}
@@ -88,14 +109,14 @@ function StageFigure({ defId, up }: { defId: string; up: number }) {
   );
 }
 
-type Sheet = { kind: 'gear'; slot: GearSlot } | { kind: 'stats' } | { kind: 'talents' } | { kind: 'skill' } | null;
+type Sheet = { kind: 'gear'; slot: GearSlot } | { kind: 'stats' } | { kind: 'skill' } | { kind: 'basic' } | { kind: 'passive'; i: number } | { kind: 'lead' } | null;
 
 export function HeroDetail({ uid }: { uid: number }) {
   const s = useGame();
-  // la fenêtre ouverte par-dessus la page (équipement, attributs, talents, aperçu de la compétence)
+  // la fenêtre ouverte au milieu de l'écran (capacité, attributs, équipement)
   const [sheet, setSheet] = useState<Sheet>(null);
   const hero = heroByUid(s, uid);
-  // Un niveau gagné : la scène s'illumine, « +1 » monte du médaillon.
+  // Un niveau gagné : la scène s'illumine, « +1 » monte du niveau.
   const seen = useRef({ uid, level: hero?.level ?? 0 });
   const [flash, setFlash] = useState(0);
   useEffect(() => {
@@ -116,40 +137,31 @@ export function HeroDetail({ uid }: { uid: number }) {
   const cap = levelCap(hero.stars);
   const can = canLevelUp(s, hero);
   const stats = statsOf(unit);
+  const gearUp = GEAR_SLOTS.some((g) => betterInBag(s, uid, g));
   // les flèches : le héros d'avant ou d'après, du plus fort au plus faible
   const order = [...s.heroes].sort((a, b) => heroPower(s, b) - heroPower(s, a));
   const at = order.findIndex((h) => h.uid === uid);
   const step = (k: number) => swap({ type: 'hero', uid: order[(at + k + order.length) % order.length]!.uid });
-  const ranged = unit.ranged;
-  const basicIcon = unit.hitsBack ? 'assassin' : ranged ? 'marksman' : 'atk';
+  const basicIcon = unit.hitsBack ? 'assassin' : unit.ranged ? 'marksman' : 'atk';
   const basicText = `${t('fx.damage', { p: '1', t: t(unit.hitsBack ? 'tgt.back' : 'tgt.front') })} · ${t('fx.energy', { n: ENERGY_PER_ATTACK, t: t('tgt.self') })}`;
   const awaken = d.rarity === 'legendary';
+  const awakened = awaken && hero.stars >= AWAKEN_STARS;
+  const statIcon = (k: string) => (k === 'lifesteal' ? 'hp' : k);
 
   return (
     <div class={`page hx-page hx-p-${d.rarity}${mythic ? ' hx-p-mythic' : ''}`} style={{ '--rar': rar, '--el': ELEMENT_COLOR[d.element] } as never}>
+      {/* le sanctuaire : tout l'écran */}
       <i class="hx-bg" />
+      <i class="hx-light" />
 
-      {/* le haut : retour, le nom et ses pastilles, l'entrée dans la section */}
+      {/* en haut au milieu : étoiles, nom, rareté */}
       <header class="hx-head">
-        <button class="hx-round hx-back" aria-label={t('back')} onClick={close}><Sign name="chev" class="flip" /></button>
-        <div class="hx-title">
-          <h1>{d.name}</h1>
-          <div class="hx-tags">
-            <span class="hx-tag hx-tag-rar">{t(mythic ? 'rarity.mythic' : `rarity.${d.rarity}`)}</span>
-            <span class="hx-tag"><Art name={d.element} size={16} />{t(`element.${d.element}`)}</span>
-            <span class="hx-tag"><Icon name={d.role} size={16} />{t(`role.${d.role}`)}</span>
-          </div>
-        </div>
-        <button class={`hx-round hx-team${inTeam ? ' on' : ''}`} aria-label={inTeam ? t('heroes.inTeam') : t('heroes.addTeam')} onClick={() => {
-          const r = toggleInFormation(uid);
-          if (r === 'full') toast(t('heroes.full'));
-        }}>
-          <Icon name="heroes" size={26} />
-          <i>{inTeam ? <Sign name="check" /> : <Sign name="op-plus" />}</i>
-        </button>
+        <Stars stars={hero.stars} />
+        <h1>{d.name}</h1>
+        <span class="hx-tag-rar">{t(mythic ? 'rarity.mythic' : `rarity.${d.rarity}`)}</span>
       </header>
 
-      {/* la scène : le héros en grand */}
+      {/* la scène : le héros en grand, ses capacités de part et d'autre */}
       <div class="hx-stage"
         onTouchStart={(e) => { swipe.current = e.touches[0]!.clientX; }}
         onTouchEnd={(e) => {
@@ -159,91 +171,104 @@ export function HeroDetail({ uid }: { uid: number }) {
           const dx = e.changedTouches[0]!.clientX - x0;
           if (Math.abs(dx) > 44) step(dx < 0 ? 1 : -1);
         }}>
-        <i class="hx-light" />
-        <i class="hx-floor-band" />
+        <i class="hx-arch" />
+        <i class="hx-slab" />
         <i class="hx-shadow" />
         {flash > 0 && <i class="hx-flash" key={flash} />}
         <StageFigure defId={d.id} up={flash} />
-        <span class="hx-power"><Icon name="power" size={22} /><b>{fmt(heroPower(s, hero))}</b></span>
-        {d.talent && <span class="hx-lead" aria-label={t('detail.leader')}><Icon name="crown" size={20} /></span>}
-        <span class="hx-stars"><Stars stars={hero.stars} /></span>
+
+        <div class="hx-meds hx-meds-l">
+          <button class={`hx-med hx-med-ult${awakened ? ' on' : ''}`} aria-label={t(`skill.${d.skill.id}`)} onClick={() => setSheet({ kind: 'skill' })}>
+            <Art name={d.element} class="hx-med-ic" />
+            <span class="hx-med-badge hx-med-play"><Sign name="play" /></span>
+          </button>
+          <button class="hx-med" aria-label={t('detail.basic')} onClick={() => setSheet({ kind: 'basic' })}>
+            <Icon name={basicIcon} size={32} />
+          </button>
+        </div>
+        <div class="hx-meds hx-meds-r">
+          {d.passives.map((p, i) => {
+            const locked = hero.stars < p.stars;
+            return (
+              <button class={`hx-med${locked ? ' locked' : ''}`} aria-label={`${t('detail.passive')} ${i + 1}`} onClick={() => setSheet({ kind: 'passive', i })}>
+                <Icon name={passiveIcon(p.passive)} size={32} />
+                <span class="hx-med-badge">{locked ? <Icon name="lock" size={12} /> : <Sign name="star" />}{p.stars}</span>
+              </button>
+            );
+          })}
+          {d.talent && (
+            <button class="hx-med hx-med-lead" aria-label={t('detail.leader')} onClick={() => setSheet({ kind: 'lead' })}>
+              <Icon name="crown" size={32} />
+            </button>
+          )}
+        </div>
+
         {order.length > 1 && <button class="hx-arrow hx-arrow-l" aria-label="‹" onClick={() => step(-1)}><Sign name="chev" class="flip" /></button>}
         {order.length > 1 && <button class="hx-arrow hx-arrow-r" aria-label="›" onClick={() => step(1)}><Sign name="chev" /></button>}
       </div>
 
-      {/* le niveau : le médaillon cerclé de la progression vers le niveau maximum, le coût, le bouton */}
-      <div class="hx-level">
-        <span class="hx-lvbadge" style={{ '--p': `${Math.min(1, hero.level / cap) * 360}deg` } as never}>
-          <span class="hx-lvin"><small>{t('lv')}</small><b>{hero.level}</b><em>/ {cap}</em></span>
-          {flash > 0 && <b class="hx-lvpop" key={flash}>+1</b>}
-        </span>
-        {cost ? (
-          <>
-            <span class="hx-cost"><Cur k="gold" n={cost.gold} /><Cur k="essence" n={cost.essence} /></span>
-            <span class="hx-lvbtns">
-              <Btn kind="green" class="tuto-levelup hx-lvup" disabled={!can} onClick={() => levelUp(uid)}><Icon name="levelUp" size={22} />{t('detail.levelUp')}</Btn>
-              <Btn kind="green" small class="hx-lv10" disabled={!can} onClick={() => levelUp(uid, 10)}>{t('detail.levelUp10')}</Btn>
-            </span>
-          </>
-        ) : (
-          <span class="hx-lvbtns hx-capped">
-            <Btn kind="gold" onClick={() => open({ type: 'fusion', uid })}><Icon name="fusion" size={22} /> {t('fusion.title')}</Btn>
-          </span>
-        )}
-      </div>
-
-      {/* cinq attributs en pictos ; les autres en touchant la rangée */}
-      <button class="hx-stats" aria-label={t('detail.tabStats')} onClick={() => setSheet({ kind: 'stats' })}>
-        {stats.main.map(([k, v]) => (
-          <span class={`hx-stat hx-stat-${k}`}><Art name={k} class="hx-stat-ic" /><b>{v}</b><small>{t(`stat.${k}`)}</small></span>
-        ))}
-        <span class="hx-more" aria-hidden="true"><i /><i /><i /></span>
-      </button>
-
-      {/* ses deux attaques, en cartes */}
-      <div class="hx-moves">
-        <div class="hx-move hx-basic">
-          <span class="hx-move-ic"><Icon name={basicIcon} size={30} /></span>
-          <small>{t('detail.basic')}</small>
-          <b>{t(ranged ? 'detail.ranged' : 'detail.melee')}</b>
-          <p>{basicText}</p>
-        </div>
-        <button class="hx-move hx-special" aria-label={t('detail.preview')} onClick={() => setSheet({ kind: 'skill' })}>
-          <span class="hx-move-ic"><Art name={d.element} size={30} /></span>
-          <span class="hx-play"><Sign name="play" /></span>
-          <small>{t('detail.skill')}</small>
-          <b>{t(`skill.${d.skill.id}`)}</b>
-          <p>{describeSkill(unit.skill)}</p>
+      {/* la puissance, entre de petits ronds */}
+      <div class="hx-powerline">
+        <span class="hx-dot" aria-label={t(`element.${d.element}`)}><Art name={d.element} size={24} /></span>
+        <span class="hx-dot" aria-label={t(`role.${d.role}`)}><Icon name={d.role} size={24} /></span>
+        <span class="hx-power"><Icon name="power" size={26} /><b>{fmt(heroPower(s, hero))}</b></span>
+        <button class="hx-dot" aria-label={t('detail.tabStats')} onClick={() => setSheet({ kind: 'stats' })}><Icon name="crit" size={24} /></button>
+        <button class={`hx-dot hx-team${inTeam ? ' on' : ''}`} aria-label={inTeam ? t('heroes.inTeam') : t('heroes.addTeam')} onClick={() => {
+          const r = toggleInFormation(uid);
+          if (r === 'full') toast(t('heroes.full'));
+        }}>
+          <Icon name="heroes" size={24} />
+          <i>{inTeam ? <Sign name="check" /> : <Sign name="op-plus" />}</i>
         </button>
       </div>
 
-      {/* l'équipement, puis les talents en pastilles */}
-      <div class="hx-gear">
-        {GEAR_SLOTS.map((g) => (
-          <div class="hx-slot">
-            <ItemIcon item={items[g]} slot={g} level={slotLevel(s, uid, g)} onClick={() => setSheet({ kind: 'gear', slot: g })} />
-            {!items[g] && <Icon name={g} size={26} />}
-            {betterInBag(s, uid, g) && <span class="hx-better"><Sign name="up" /></span>}
-          </div>
-        ))}
-        <button class="hx-auto" aria-label={t('detail.autoEquip')} onClick={() => equipBest(uid)}><Icon name="armory" size={28} /><small>{t('detail.autoEquip')}</small></button>
-      </div>
-      <button class="hx-talents" aria-label={t('detail.talents')} onClick={() => setSheet({ kind: 'talents' })}>
-        {d.passives.map((p) => {
-          const locked = hero.stars < p.stars;
-          return <span class={`hx-tal${locked ? ' locked' : ''}`}>{locked ? <Icon name="lock" size={14} /> : <Sign name="check" />}<Sign name="star" />{p.stars}</span>;
-        })}
-        {d.talent && <span class="hx-tal hx-tal-lead"><Icon name="crown" size={16} />{t('detail.leader')}</span>}
-        {awaken && <span class={`hx-tal${hero.stars >= AWAKEN_STARS ? '' : ' locked'}`}><Sign name="star" />{AWAKEN_STARS}</span>}
+      {/* les attributs : le niveau d'abord, bien visible */}
+      <button class="hx-stats" aria-label={t('detail.tabStats')} onClick={() => setSheet({ kind: 'stats' })}>
+        <span class="hx-stat hx-stat-lv">
+          <small>{t('lv')}</small><b>{hero.level}</b>
+          <i class="hx-lvbar"><i style={{ width: `${Math.min(100, (hero.level / cap) * 100)}%` }} /></i>
+          {flash > 0 && <b class="hx-lvpop" key={flash}>+1</b>}
+        </span>
+        {stats.main.map(([k, v]) => <span class={`hx-stat hx-stat-${k}`}><Art name={k} class="hx-stat-ic" /><b>{v}</b></span>)}
       </button>
+
+      {/* le niveau +1 (ou la fusion au niveau maximum) */}
+      {cost ? (
+        <div class="hx-lvrow">
+          <span class="hx-cost"><Cur k="gold" n={cost.gold} /><Cur k="essence" n={cost.essence} /></span>
+          <Btn kind="green" class="tuto-levelup hx-lvup" disabled={!can} onClick={() => levelUp(uid)}><Icon name="levelUp" size={22} />{t('detail.levelUp')}</Btn>
+          <Btn kind="green" class="hx-lv10" disabled={!can} onClick={() => levelUp(uid, 10)}>{t('detail.levelUp10')}</Btn>
+        </div>
+      ) : (
+        <div class="hx-lvrow hx-capped">
+          <span class="hx-cap"><Sign name="star" />{cap}</span>
+          <Btn kind="gold" class="hx-lvup" onClick={() => open({ type: 'fusion', uid })}><Icon name="fusion" size={22} />{t('fusion.title')}</Btn>
+        </div>
+      )}
+
+      {/* les actions ; le retour en bas à gauche */}
+      <nav class="hx-actions">
+        <button class="hx-act hx-act-back" aria-label={t('back')} onClick={close}><Sign name="chev" class="flip" /></button>
+        <span class="grow" />
+        <button class="hx-act" onClick={() => setSheet({ kind: 'gear', slot: 'weapon' })}>
+          <Icon name="armory" size={30} /><small>{t('detail.equip')}</small>
+          {gearUp && <span class="hx-act-up"><Sign name="up" /></span>}
+        </button>
+        <button class="hx-act" onClick={() => open({ type: 'fusion', uid })}><Icon name="fusion" size={30} /><small>{t('fusion.title')}</small></button>
+        <button class="hx-act" onClick={() => open({ type: 'reset', uid })}><Icon name="rebirth" size={30} /><small>{t('detail.reset')}</small></button>
+      </nav>
 
       {/* les fenêtres, au milieu de l'écran */}
       {sheet?.kind === 'gear' && (
         <Modal center title={t('detail.equip')} onClose={() => setSheet(null)}>
           <div class="hx-sheet">
-            <div class="hx-sheet-tabs">
+            <div class="hx-sheet-slots">
               {GEAR_SLOTS.map((g) => (
-                <button class={`hx-sheet-tab${g === sheet.slot ? ' on' : ''}`} aria-label={t(`slot.${g}`)} onClick={() => setSheet({ kind: 'gear', slot: g })}><Icon name={g} size={28} /></button>
+                <div class={`hx-sheet-slot${g === sheet.slot ? ' on' : ''}`}>
+                  <ItemIcon item={items[g]} slot={g} level={slotLevel(s, uid, g)} onClick={() => setSheet({ kind: 'gear', slot: g })} />
+                  {!items[g] && <Icon name={g} size={26} />}
+                  {betterInBag(s, uid, g) && <span class="hx-better"><Sign name="up" /></span>}
+                </div>
               ))}
             </div>
             <div class="row gap-s">
@@ -259,35 +284,8 @@ export function HeroDetail({ uid }: { uid: number }) {
         <Modal center title={t('detail.tabStats')} onClose={() => setSheet(null)}>
           <div class="hx-statlist">
             {[...stats.main, ...stats.minor].map(([k, v]) => (
-              <span><Art name={k === 'lifesteal' ? 'hp' : k} class="hx-stat-ic" /><small>{t(`stat.${k}`)}</small><b>{v}</b></span>
+              <span><Art name={statIcon(k)} class="hx-stat-ic" /><small>{t(`stat.${k}`)}</small><b>{v}</b></span>
             ))}
-          </div>
-        </Modal>
-      )}
-      {sheet?.kind === 'talents' && (
-        <Modal center title={t('detail.talents')} onClose={() => setSheet(null)}>
-          <div class="hx-tallist">
-            {d.passives.map((p, i) => {
-              const locked = hero.stars < p.stars;
-              return (
-                <section class={locked ? 'locked' : ''}>
-                  <span class="hx-req">{locked && <Icon name="lock" size={15} />}<Sign name="star" />{p.stars}</span>
-                  <div><h3>{t('detail.passive')} {i + 1}</h3><p>{describePassive(p.passive)}</p></div>
-                </section>
-              );
-            })}
-            {d.talent && (
-              <section class="lead">
-                <span class="hx-req"><Icon name="crown" size={20} /></span>
-                <div><h3>{t('detail.leader')}</h3><p>{talentText(d.talent)}</p></div>
-              </section>
-            )}
-            {awaken && (
-              <section class={hero.stars >= AWAKEN_STARS ? '' : 'locked'}>
-                <span class="hx-req">{hero.stars < AWAKEN_STARS && <Icon name="lock" size={15} />}<Sign name="star" />{AWAKEN_STARS}</span>
-                <div><p>{starText(t('detail.awaken', { n: AWAKEN_STARS, p: Math.round((AWAKEN_SKILL - 1) * 100) }))}</p></div>
-              </section>
-            )}
           </div>
         </Modal>
       )}
@@ -296,7 +294,27 @@ export function HeroDetail({ uid }: { uid: number }) {
           <div class="hx-skillsheet">
             <SkillPreview unit={unit} />
             <p>{describeSkill(unit.skill)}</p>
+            {awaken && <p class={`hx-awaken${awakened ? ' on' : ''}`}>{starText(t('detail.awaken', { n: AWAKEN_STARS, p: Math.round((AWAKEN_SKILL - 1) * 100) }))}</p>}
           </div>
+        </Modal>
+      )}
+      {sheet?.kind === 'basic' && (
+        <Modal center title={t(unit.ranged ? 'detail.ranged' : 'detail.melee')} onClose={() => setSheet(null)}>
+          <div class="hx-capsheet"><span class="hx-med"><Icon name={basicIcon} size={32} /></span><p>{basicText}</p></div>
+        </Modal>
+      )}
+      {sheet?.kind === 'passive' && d.passives[sheet.i] && (
+        <Modal center title={`${t('detail.passive')} ${sheet.i + 1}`} onClose={() => setSheet(null)}>
+          <div class={`hx-capsheet${hero.stars < d.passives[sheet.i]!.stars ? ' locked' : ''}`}>
+            <span class="hx-med"><Icon name={passiveIcon(d.passives[sheet.i]!.passive)} size={32} />
+              <span class="hx-med-badge">{hero.stars < d.passives[sheet.i]!.stars ? <Icon name="lock" size={12} /> : <Sign name="star" />}{d.passives[sheet.i]!.stars}</span></span>
+            <p>{describePassive(d.passives[sheet.i]!.passive)}</p>
+          </div>
+        </Modal>
+      )}
+      {sheet?.kind === 'lead' && d.talent && (
+        <Modal center title={t('detail.leader')} onClose={() => setSheet(null)}>
+          <div class="hx-capsheet"><span class="hx-med hx-med-lead"><Icon name="crown" size={32} /></span><p>{talentText(d.talent)}</p></div>
         </Modal>
       )}
     </div>
