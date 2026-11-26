@@ -55,7 +55,7 @@ const VECTO: Record<string, readonly [number, number, number, number]> = {
   'mon-barzul-tireur': [84, 105, 29, 102],
   'mon-meduse-rapide': [98, 88, 45, 84],
   'demons-4': [110, 104, 50, 100],
-  'angels-10': [130, 124, 66.5, 120.5],
+  'angels-10': [134, 124, 66.5, 120.5],
   'angels-7': [100, 123, 50, 120],
   'mon-eldra-rapide': [87, 68, 38, 65],
   'assassins-7': [82, 106.5, 40.5, 104.2],

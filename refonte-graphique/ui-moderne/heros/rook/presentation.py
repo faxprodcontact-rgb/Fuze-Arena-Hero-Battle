@@ -3,8 +3,8 @@
 #   python3 presentation.py --kael     # en plus (brouillon) : à côté de Kael, même échelle, et à la taille du jeu
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
 # - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
-# - visage.png : la tête zoomée, sans rien | avec le calque de visage.py (tête de profil : un seul œil) ;
-# - avant-apres.png : l'image annotée par le propriétaire (l'ancienne harpie) | le phénix, même cadrage.
+# - visage.png : la tête zoomée, sans rien | avec le calque de visage.py (tête presque de face, deux yeux, bec au milieu) ;
+# - avant-apres.png : l'image annotée par le propriétaire (tour 2 de l'avis) | le phénix corrigé, même cadrage.
 import os
 import subprocess
 import sys
@@ -58,14 +58,14 @@ def render(svg, h, name):
 
 def visage():
     """visage.png : la tête au repos zoomée (×4 environ), à gauche sans rien, à droite avec le calque guide_svg
-    (tour=75 : tête d'oiseau de profil, un seul œil) ; verifier() (visage.py) doit rendre une liste vide."""
+    (3/4 léger commun, comme Tessa : deux yeux, bec au milieu) ; verifier() (visage.py) doit rendre une liste vide."""
     from atelier import mS, f as fm
     fr = (60.0, 10.0, 44.0, 42.0)
     plain = S.build(frame=fr).svg()
     defauts = S.verifier(S.fig_face, S.FACE_BOX)
     print('visage : défauts =', defauts or 'aucun')
     M = mS(S.HK, S.HK, *S.NECK)            # la tête au repos (comme HEAD dans rook.py)
-    guide = '<g transform="matrix(%s)">%s</g>' % (' '.join(fm(v) for v in M), S.guide_svg(S.FACE_BOX, tour=75))
+    guide = '<g transform="matrix(%s)">%s</g>' % (' '.join(fm(v) for v in M), S.guide_svg(S.FACE_BOX))
     ims = [render(s, 42 * 15, 'visage%d' % k) for k, s in enumerate((plain, plain.replace('</svg>', guide + '</svg>')))]
     out = Image.new('RGBA', (ims[0].width * 2 + 20, ims[0].height), (20, 14, 34, 255))
     for k, im in enumerate(ims):
@@ -77,9 +77,10 @@ def visage():
 
 
 def avant_apres(fig):
-    """avant-apres.png : à gauche l'image annotée par le propriétaire (l'ancienne harpie, telle quelle), à droite le
-    phénix sur le même fond, au même cadrage (pieds sur la même ligne, même échelle de dessin)."""
-    src = os.path.join(SCRATCH, 'avis-img', 'assassins-5.png')
+    """avant-apres.png : à gauche l'image annotée par le propriétaire (tour 2 de l'avis, telle quelle, cercles compris),
+    à droite le phénix corrigé sur le même fond, au même cadrage. L'image annotée est le dessin d'avant rendu dans le
+    cadre FRAME : on retrouve son échelle par la largeur des ailes (inchangées) mesurée sur un rendu du même cadre."""
+    src = os.path.join(SCRATCH, 'avis-img2', 'assassins-5.png')
     if not os.path.exists(src):
         print('(image annotée introuvable : avant-apres.png non refait)')
         return
@@ -89,15 +90,12 @@ def avant_apres(fig):
     bgc = a[5, 5]
     m = (np.abs(a - bgc).sum(axis=2) > 40)
     ys, xs = np.nonzero(m)
-    # l'ancienne image : cadre (-5, -8, 136, 126) en 512 px de haut, agrandie ; on retrouve l'échelle par la
-    # largeur des ailes (du bout de l'aile proche au bout de l'aile lointaine, ≈ 3,8 → 128 px du dessin)
-    s_ = (xs.max() - xs.min()) / (128.6 - 3.0)
-    x0o = xs.min() - (3.0 - (-5)) * s_          # l'origine du cadre de l'ancienne image
-    feet_y = ys.max()
-    x0, y0, w, h = S.FRAME
-    new = fig.resize((round(w * s_), round(h * s_)), Image.LANCZOS)
-    ox = round(x0o + (x0 - (-5)) * s_)
-    oy = round(feet_y - (S.GRD + 0.6 - y0) * s_)
+    al = np.asarray(fig)[:, :, 3] > 40
+    fy_, fx_ = np.nonzero(al)
+    s_ = (xs.max() - xs.min()) / (fx_.max() - fx_.min())
+    new = fig.resize((round(fig.width * s_), round(fig.height * s_)), Image.LANCZOS)
+    ox = round(xs.min() - fx_.min() * s_)
+    oy = round(ys.max() - fy_.max() * s_)
     ap = Image.new('RGBA', av.size, tuple(int(c) for c in bgc) + (255,))
     ap.alpha_composite(new, (ox, oy))
     gap = 40
@@ -105,8 +103,8 @@ def avant_apres(fig):
     out.paste(av, (0, 60))
     out.paste(ap.convert('RGB'), (av.width + gap, 60))
     dr = ImageDraw.Draw(out)
-    dr.text((20, 22), 'AVANT (avis du proprietaire)', fill=(255, 220, 120))
-    dr.text((av.width + gap + 20, 22), 'APRES : le phenix', fill=(255, 220, 120))
+    dr.text((20, 22), 'AVANT (avis du proprietaire, tour 2)', fill=(255, 220, 120))
+    dr.text((av.width + gap + 20, 22), 'APRES : tete de face, plastron, liaisons', fill=(255, 220, 120))
     out.save(os.path.join(OUT, 'avant-apres.png'))
 
 

@@ -423,9 +423,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (ribbon([(79.0, 85.6), (80.6, 86.1), (82.0, 85.5)], [0.1, 0.5, 0.1]), SKIN.hi, 0.6),
             # le flanc proche : un pli doux entre la poitrine et le ventre
             (ribbon([(39.0, 74.6), (43.0, 76.6), (47.4, 76.0)], [0.1, 0.9, 0.1]), SKIN.deep, 0.35)]
-    # les cicatrices pâles : sur le pectoral proche (en biais), sur le ventre
-    det += [(ribbon([(54.6, 60.4), (58.6, 63.6), (62.0, 67.4)], [0.2, 1.0, 0.2]), SCAR, 0.9),
-            (ribbon([(54.9, 60.9), (58.8, 64.0), (61.8, 67.8)], [0.1, 0.35, 0.1]), SKIN.shadow, 0.6),
+    # les cicatrices pâles : au milieu du pectoral proche (en biais, loin du raccord de l'épaule), sur le ventre
+    det += [(ribbon([(58.0, 61.6), (61.4, 64.4), (64.2, 67.8)], [0.2, 1.0, 0.2]), SCAR, 0.9),
+            (ribbon([(58.3, 62.1), (61.6, 64.8), (64.0, 68.2)], [0.1, 0.35, 0.1]), SKIN.shadow, 0.6),
             (ribbon([(90.6, 81.2), (93.0, 79.6), (95.6, 79.4)], [0.2, 0.8, 0.2]), SCAR, 0.85)]
     fig.part('torso', torso, SKIN, grad=(100, 52, 44, 90, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=2.0, rim=0.7, cast=1.2, details=det, occl=(SKIN.deep, 0.22, 3.4))

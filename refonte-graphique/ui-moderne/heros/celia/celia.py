@@ -25,7 +25,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, lock, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402,F401
 from lib import Shape, sparkle_shape  # noqa: E402
-from outils import inter, crpath, taper, crystal_shapes  # noqa: E402
+from outils import inter, crpath, taper, crystal_shapes, poly, from_poly  # noqa: E402
 from visage import placer  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
@@ -193,16 +193,39 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P['_TOR'] = TOR
     far_arm(fig, S, E, W, P)
 
-    # ---- le pied avant : chaussette blanche et geta laqué (sous l'ourlet qui se relève) ----
-    geta = rpoly([(79.6, 113.2), (90.2, 112.8), (90.6, 116.2), (79.8, 116.4)], [1.2, 1.4, 0.6, 0.6])
-    fig.part('geta', geta, GETA, cel=0.6, rim=0.5, cast=0,
-             details=[(sm([(80.2, 113.4), (90.0, 113.0), (90.2, 114.0), (80.2, 114.4)]), GETA.light, 0.8),
-                      (ellipse(87.2, 113.4, 1.4, 0.35), GETA.hi, 0.6)])
-    tabi = sm([(80.6, 113.6), (80.8, 110.6), (83.4, 109.4), (87.0, 109.6), (89.6, 111.2), (90.0, 113.4)])
-    fig.part('tabi', tabi, KIMO, grad=(90, 109, 81, 114, [(0, '#ffffff'), (0.6, KIMO.base), (1, KIMO.shadow)]),
-             cel=0.7, rim=0.5, cast=0.8,
-             details=[(ribbon([(87.4, 110.0), (87.0, 111.6), (87.4, 113.2)], [0.1, 0.4, 0.1]), KIMO.shadow, 0.8),
-                      (ribbon([(84.6, 111.4), (86.6, 112.6), (89.4, 112.8)], [0.1, 0.6, 0.1]), OBI.light, 0.8)])
+    # ---- les pieds (avant la robe : l'ourlet se pose dessus) ----
+    # Le pied lointain avance vers l'ennemi, sous l'ourlet qui se relève : chaussette blanche (tabi, le gros orteil
+    # séparé), lanière bleue (hanao) qui part d'entre les orteils, socle de bois laqué (dai) sur ses deux dents (ha)
+    # posées au sol. Le pied proche, en retrait : seul le bout du tabi et du geta sort sous le coin du pan.
+    def foot(nm, x0, x1, top, ank, toe_h=1.9, far=True):
+        """Un pied chaussé (talon x0, bout x1) : socle (dai) dont le dessus est à top, deux dents posées au sol, tabi
+        dont le cou-de-pied monte jusqu'à ank (caché sous l'ourlet), gros orteil séparé, lanière bleue."""
+        th = 1.05
+        yb = top + th
+        for k, (a_, b_) in enumerate(((x1 - 3.4, x1 - 1.1), (x0 + 1.1, x0 + 3.4))):
+            fig.part('%sh%d' % (nm, k), rpoly([(a_, yb - 0.3), (b_, yb - 0.3), (b_ - 0.12, GRD + 0.1), (a_ + 0.12, GRD + 0.1)], [0.2, 0.2, 0.3, 0.3]),
+                     GETA, grad=(b_, yb, a_, GRD, [(0, GETA.shadow), (1, GETA.deep)]), cel=0.3, rim=0.25, cast=0,
+                     details=[(sm([(b_ - 0.7, yb), (b_ - 0.15, yb), (b_ - 0.2, GRD), (b_ - 0.6, GRD)]), GETA.base, 0.7)])
+        dai = rpoly([(x0, top + 0.15), (x1 - 0.6, top), (x1 + 0.2, top + 0.45), (x1, yb), (x0 + 0.2, yb + 0.05)], [0.5, 0.6, 0.6, 0.4, 0.4])
+        fig.part(nm, dai, GETA, grad=(x1, top, x0, yb, [(0, GETA.light), (0.5, GETA.base), (1, GETA.shadow)]), cel=0.5, rim=0.4, cast=0.5,
+                 details=[(ribbon([(x0 + 0.8, top + 0.3), ((x0 + x1) / 2, top + 0.25), (x1 - 0.5, top + 0.35)], [0.1, 0.4, 0.1]), GETA.hi, 0.75),
+                          (ellipse(x1 - 1.4, top + 0.4, 0.7, 0.2), '#ffffff', 0.45)])
+        L = x1 - x0
+        tabi = sm([(x0 + 0.5, top + 0.05), (x0 + 0.6, ank), (x0 + 0.55 * L, ank + 0.5), (x1 - 2.6, top - toe_h + 0.1),
+                   (x1 - 0.7, top - toe_h * 0.55), (x1 - 0.1, top - 0.35), (x1 - 0.5, top + 0.05)], sharp=(0, 6), t=0.9)
+        tg = [(0, '#ffffff'), (0.55, KIMO.base), (1, KIMO.shadow)] if far else [(0, KIMO.light), (0.6, KIMO.base), (1, KIMO.shadow)]
+        tx = x1 - 2.0      # le creux entre le gros orteil et les autres
+        fig.part('tabi' + nm[4:], tabi, KIMO, grad=(x1, top - 3, x0, top, tg), cel=0.7, rim=0.5, cast=0.8, cast_on=[nm],
+                 details=[(ribbon([(tx - 0.1, top - toe_h + 0.5), (tx + 0.15, top - toe_h * 0.4), (tx + 0.2, top - 0.05)], [0.1, 0.3, 0.1]), KIMO.deep, 0.85),
+                          (ribbon([(tx + 0.1, top - toe_h + 0.45), (tx - 1.8, top - toe_h - 0.4), (tx - 4.0, top - toe_h - 1.3)], [0.7, 0.85, 0.8]), OBI.base, 1),
+                          (ribbon([(tx + 0.1, top - toe_h + 0.3), (tx - 1.8, top - toe_h - 0.6), (tx - 3.8, top - toe_h - 1.5)], [0.1, 0.3, 0.1]), OBI.light, 0.9),
+                          (ellipse(tx + 0.1, top - toe_h + 0.55, 0.4, 0.3), OBI.shadow, 0.9),
+                          (sm([(x0 + 0.5, top + 0.05), (x0 + 0.6, top - 1.0), (x0 + 0.5 * L, top - 0.6), (x1 - 0.5, top + 0.05)]), KIMO.shadow, 0.4)])
+
+    # le pied proche, en retrait (talon sous la traîne), puis le pied lointain qui avance vers l'ennemi (le bout du pied
+    # dépasse de la robe, comme dans le pixel art)
+    foot('geta2', 58.4, 69.8, 113.75, 109.0, far=False)
+    foot('geta', 77.2, 91.6, 113.5, 108.6)
 
     # ---- le cou (avant la robe : le col croisé passe dessus) ----
     neck = sm([(67.2, 42.0), (75.4, 42.0), (75.0, 47.6), (72.6, 53.6), (68.6, 59.6), (66.4, 52.6), (66.8, 47.0)], sharp=(4,))
@@ -218,10 +241,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det += [(sm([(49, 92), (53, 93.6), (55.6, 100), (55.4, 108), (53.2, 116.6), (42, 116.6), (46, 108)]), KIMO.shadow, 0.5),
             (sm([(84.4, 76), (86.4, 82), (86.4, 86), (84, 84.4), (82.4, 79.6)]), KIMO.shadow, 0.55)]
     # le pan du dessus (gauche sur droite) : son bord descend de l'obi à l'ourlet, la doublure bleue s'ouvre en bas
-    det += [(ribbon(crpath([(67.2, 71.6), (66.4, 86), (65.4, 100), (64.2, 112.8)], 10), [0.2] + [1.3] * 9 + [0.6]), KIMO.shadow, 0.75),
-            (ribbon(crpath([(67.9, 72.0), (67.2, 86), (66.2, 100), (65.0, 111.6)], 10), [0.1] + [0.6] * 9 + [0.3]), '#ffffff', 0.85),
-            (sm([(63.2, 106.4), (65.4, 112.0), (66.6, 117), (61.0, 117), (62.4, 111.0)], sharp=(0,)), OBI.base, 1),
-            (sm([(63.2, 106.4), (64.6, 110.6), (65.4, 117), (63.6, 117), (63.0, 111.0)], sharp=(0,)), OBI.light, 0.9)]
+    det += [(ribbon(crpath([(67.2, 71.6), (66.4, 86), (65.4, 100), (64.6, 110.8)], 10), [0.2] + [1.3] * 9 + [0.6]), KIMO.shadow, 0.75),
+            (ribbon(crpath([(67.9, 72.0), (67.2, 86), (66.2, 100), (65.2, 110.4)], 10), [0.1] + [0.6] * 9 + [0.3]), '#ffffff', 0.85),
+            ]
     # le genou de la jambe lointaine, qui avance et tend le tissu ; les plis qui en tombent
     det += [(ellipse(80.6, 95.4, 4.0, 6.4, -8), ('rad', 81.6, 93.6, 6.0, 6.0, [(0, '#ffffff', 0.9), (1, '#ffffff', 0)]), 1),
             (ribbon(crpath([(78.4, 101.6), (79.4, 106.4), (81.0, 110.2)], 6), [0.1, 0.8, 1.0, 0.9, 0.7, 0.4, 0.1]), KIMO.shadow, 0.6),
@@ -235,11 +257,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (ribbon([(74.6, 49.6), (71.6, 55.0), (68.8, 60.4)], [0.2, 0.7, 0.3]), KIMO.shadow, 0.7)]
     # les flocons inventés
     det += flake_motif((79.0, 87.6), 1.7) + flake_motif((66.4, 99.6), 1.7) + flake_motif((56.6, 107.4), 1.5, 0.8) + flake_motif((83.4, 103.6), 1.3, 0.8)
-    # l'ourlet de neige bleu pâle, au bord ondulé (il fait le tour : peint dans la robe)
-    wave = [(38 + 2.6 * k, 110.6 + 0.7 * math.sin(k * 1.3) + (1.6 if k * 2.6 + 38 > 76 else 0) * min(1, (k * 2.6 + 38 - 76) / 4)) for k in range(22)]
-    hem = sm(wave + [(96, 120), (38, 120)], sharp=(len(wave) - 1, len(wave)), t=0.8)
-    det += [(hem, ('lin', 60, 110, 60, 117, [(0, PAT[1]), (0.5, '#78aee6'), (1, PAT[0])]), 1),
-            (ribbon(crpath(wave[1:-1], 30), [0.1] + [0.7] * 29 + [0.1]), '#ffffff', 0.9)]
+    # l'ourlet : une bande bleu pâle de largeur constante qui suit tout le bas de la robe (les festons des plis, la
+    # traîne, l'arc relevé sur le pied lointain et le coin relevé du pan), un liseré blanc au-dessus, une ombre dessous
+    B = hem_line(robe)
+    det += hem_band(robe, B)
+    # les plis qui tombent jusqu'aux creux de l'ourlet
+    det += [(ribbon(crpath([(69.0, 100.0), (70.0, 106.0), (70.8, 111.6)], 8), [0.1] + [0.7] * 7 + [0.1]), KIMO.shadow, 0.45),
+            (ribbon(crpath([(76.0, 103.0), (76.8, 107.6), (77.6, 111.4)], 8), [0.1] + [0.6] * 7 + [0.1]), KIMO.shadow, 0.4),
+            (ribbon(crpath([(72.0, 102.0), (72.8, 107.0), (73.6, 111.4)], 6), [0.1] + [0.45] * 5 + [0.1]), '#ffffff', 0.6),
+            (ribbon(crpath([(83.6, 104.0), (84.2, 108.0), (84.6, 111.0)], 6), [0.1] + [0.5] * 5 + [0.1]), KIMO.shadow, 0.35)]
+    # le coin du pan du dessus, à peine relevé : la doublure bleue apparaît en un petit revers au-dessus de l'ourlet
+    det += [(sm([(64.6, 106.6), (64.6, 109.4), (65.0, 111.4), (68.2, 111.2), (66.2, 109.6)], sharp=(0, 3), t=0.8), OBI.base, 1),
+            (sm([(64.7, 107.6), (64.9, 109.6), (65.4, 110.9), (67.2, 110.9), (65.8, 109.6)], sharp=(0, 3), t=0.8), OBI.light, 0.85)]
     fig.part('robe', robe, KIMO, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(KIMO.shadow, 0.3, 3.0))
 
     # ---- l'obi : une bande qui fait le tour de la taille (peinte dans la robe), plus sombre côté proche ----
@@ -352,10 +381,51 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
 def robe_shape():
     return sm([(64.4, 48.8), (59.6, 50.2), (54.6, 52.6), (51.2, 57.6), (50.0, 66.0), (49.8, 76.0), (49.4, 88.0),
-               (48.8, 98.0), (47.6, 106.0), (45.6, 111.4), (42.2, 115.0), (43.6, 116.5), (56.0, 116.7), (70.0, 116.6),
-               (79.0, 116.3), (80.0, 112.8), (83.4, 110.4), (87.4, 110.2), (89.2, 111.6), (88.6, 104.0), (87.8, 96.0),
+               (48.8, 98.0), (47.6, 106.0), (45.6, 111.4), (42.4, 115.2),
+               # le bas : la traîne posée au sol (à gauche), puis l'ourlet à hauteur de cheville (les pieds dessous), ses
+               # festons suivent les plis
+               (44.8, 116.6), (49.0, 116.8), (53.0, 116.2), (56.4, 114.9), (59.6, 113.0), (62.4, 112.3),
+               (66.6, 112.5), (70.8, 112.0), (74.4, 112.3), (77.6, 111.8), (81.2, 112.0), (84.6, 111.5), (87.4, 111.6),
+               (89.2, 111.2),
+               (88.6, 104.0), (87.8, 96.0),
                (86.8, 86.0), (85.8, 76.0), (85.0, 66.0), (84.6, 58.0), (83.2, 53.6), (79.4, 50.8), (74.6, 48.6),
-               (73.8, 48.8), (68.4, 59.2), (64.8, 49.0)], sharp=(10, 14, 28, 29, 30), t=0.9)
+               (73.8, 48.8), (68.4, 59.2), (64.8, 49.0)], sharp=(10, 35, 36, 37), t=0.9)
+
+
+HEM = (10, 24)   # les points du bas de la robe (de la pointe de la traîne au bord droit au-dessus du pied)
+
+
+def hem_line(robe, n=8):
+    """Le bas réel de la robe (points de la courbe), de la traîne au bord droit."""
+    pts = poly(robe, n)
+    return pts[HEM[0] * n: HEM[1] * n + 1]
+
+
+def hem_band(robe, B, w=1.9):
+    """La bande de l'ourlet (largeur constante w le long du bas B, peinte DANS la robe), son liseré blanc et l'ombre
+    douce du bord."""
+    from shapely.geometry import LineString, Polygon as SPoly
+    rp = SPoly(poly(robe)).buffer(0)
+    g = rp.intersection(LineString(B).buffer(w, cap_style=2, join_style=1))
+    if g.geom_type != 'Polygon':
+        g = max(g.geoms, key=lambda x: x.area)
+    band = from_poly(list(g.exterior.coords)[:-1])
+    # la ligne du haut de la bande : B décalé de w vers l'intérieur (normale vers le haut)
+    top = []
+    for i in range(len(B)):
+        a, b = B[max(0, i - 1)], B[min(len(B) - 1, i + 1)]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy) or 1
+        nx, ny = dy / L, -dx / L
+        if ny > 0:
+            nx, ny = -nx, -ny
+        top.append((B[i][0] + nx * w, B[i][1] + ny * w))
+    top = top[3:-3]
+    k = max(1, len(top) // 40)
+    tl = top[::k]
+    return [(band, ('lin', 60, 109, 60, 117, [(0, PAT[2]), (0.45, PAT[1]), (1, '#78aee6')]), 1),
+            (ribbon(tl, [0.1] + [0.55] * (len(tl) - 2) + [0.1]), '#ffffff', 0.95),
+            (ribbon([(x, y + 0.9) for x, y in tl], [0.1] + [0.35] * (len(tl) - 2) + [0.1]), PAT[0], 0.35)]
 
 
 def far_arm(fig, S, E, W, P):

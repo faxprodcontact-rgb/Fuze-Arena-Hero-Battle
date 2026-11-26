@@ -12,7 +12,7 @@
 # jade au-dessus ; la grande manche pend sous l'avant-bras (ouverture bordée d'or, doublure sombre, un grand pli).
 # Main lointaine serrée sur la hampe du bâton d'or à crosse (gemme de jade au bout, bagues) ; la lanterne de palais
 # pend à la crosse (toit à bouts relevés, faces vitrées qui brillent autour d'une flamme de jade, pompon rouge).
-# Visage de femme mûre, anguleux : grand front, sourcils fins et durs qui descendent vers le nez, paupières lourdes,
+# Visage de femme mûre, anguleux : front dégagé sous une raie au milieu, sourcils fins et durs qui descendent vers le nez, paupières lourdes,
 # trait de cils épais relevé au coin avec une touche de fard rouge, iris brun rouge, nez droit et fin, lèvres rouges
 # pleines, menton pointu ; ornement rouge et or au front ; boucle d'or et goutte de jade à l'oreille. Cheveux noir prune
 # tirés en arrière vers un haut chignon caché dans la couronne d'or (dôme à perle rouge, gemme de jade, bandeau à
@@ -713,6 +713,50 @@ def twinkle(fig, name, size, HEAD, TOR):
     fig.over.append('<circle cx="%.2f" cy="%.2f" r="%.2f" fill="#ffffff"/>' % (x, y, 0.35 * r))
 
 
+# ---------- la chevelure (2e avis : racine collée au front, sans bord dur) ----------
+# La ligne des cheveux, du contour du fond (à droite) à la tempe proche (au-dessus de l'oreille), dans le repère de la
+# tête avant son agrandissement : la raie est sur la médiane du visage (FV['mediane']).
+HAIRLINE = [(88.0, 28.9), (86.7, 27.9), (84.6, 26.95), (82.6, 26.55), (81.05, 27.0), (79.4, 26.5), (77.0, 26.25),
+            (74.6, 26.6), (72.6, 27.7), (71.2, 29.5), (70.3, 31.5), (69.6, 33.5)]
+HAIRMASS = sm([(88.6, 22.6), (88.75, 24.6), (88.55, 26.8)] + HAIRLINE +
+              [(69.0, 34.6), (68.2, 37.0), (68.4, 40.4), (69.4, 43.0), (71.0, 45.4), (72.4, 47.4), (68.4, 48.4), (63.6, 47.6),
+               (59.8, 44.6), (57.6, 40.4), (56.6, 35.4), (56.8, 30.2), (58.4, 25.8), (61.6, 22.6), (65.6, 21.0), (71.0, 20.6),
+               (77.0, 20.4), (83.0, 20.6)], t=0.9)
+
+
+def lock(pts, w, op_root=0.0):
+    """Une mèche (reflet) le long d'une ligne souple : fine à la racine, pleine au milieu, effilée au bout."""
+    c = crpath(pts, 14)
+    n = len(c)
+    ws = [w * min(1.0, 0.15 + 1.6 * i / n) * (1 - (i / (n - 1)) ** 3 * 0.85) for i in range(n)]
+    return ribbon(c, ws)
+
+
+def hair_details():
+    """Les reflets de la chevelure tirée en arrière : chaque mèche part de la racine (fine, presque invisible) et file
+    vers l'arrière du crâne (à gauche, sous la couronne) ou vers le fond (à droite) ; la raie, douce, sur la médiane."""
+    mx = FV['mediane'](27)
+    return [
+        # le côté du fond (à droite), sous la lumière : deux mèches courtes qui montent de la raie vers la couronne
+        (lock([(mx + 0.6, 26.6), (83.6, 25.4), (86.0, 24.4), (87.6, 23.2)], 0.9), HAIR.hi, 0.6),
+        (lock([(mx + 2.6, 26.9), (85.6, 26.2), (87.6, 25.4)], 0.5), HAIR.glint, 0.5),
+        # le côté proche : les mèches tirées de la raie et de la tempe vers l'arrière, en arc sur le crâne
+        (lock([(mx - 0.8, 26.4), (76.0, 25.0), (70.4, 24.0), (64.6, 24.4), (60.0, 27.4)], 1.4), HAIR.hi, 0.55),
+        (lock([(75.0, 26.6), (71.6, 26.2), (67.4, 26.8), (62.6, 29.6), (59.4, 33.0)], 0.75), HAIR.glint, 0.5),
+        (lock([(71.4, 29.6), (68.6, 29.4), (64.6, 31.2), (61.0, 34.4), (59.0, 38.0)], 0.8), HAIR.light, 0.5),
+        (lock([(69.4, 34.0), (66.0, 33.6), (62.6, 36.6), (60.6, 41.0)], 0.6), HAIR.light, 0.4),
+        (ribbon(crpath([(66.4, 46.6), (62.4, 44.6), (59.4, 41.0), (57.8, 36.0)], 12), [0.1] + [1.0] * 11 + [0.2]), HAIR.deep, 0.55),
+        # la raie : un creux doux qui part de la racine et s'efface sous la couronne
+        (lock([(mx + 0.05, 27.0), (mx - 0.15, 25.6), (mx - 0.45, 24.2)], 0.45), HAIR.deep, 0.5),
+    ]
+
+
+def hairline_shade():
+    """L'ombre de la racine sur le front et la tempe : la chevelure décalée vers le bas, en couches de plus en plus
+    pâles (un dégradé, jamais un bord net) ; elle s'efface avant les sourcils."""
+    return [(HAIRMASS.move(-0.12 * k, 0.32 * k), SKIN.shadow, op) for k, op in ((1, 0.32), (2, 0.2), (3.2, 0.12), (4.6, 0.07))]
+
+
 def head(fig, P):
     """Le visage anguleux de l'impératrice, l'oreille et sa boucle, la chevelure tirée en arrière, la couronne d'or
     (dôme, perle, gemme de jade, bandeau à perles, deux ailes de phénix) et la pampille courte ; rend la liste des
@@ -806,26 +850,24 @@ def head(fig, P):
            (ribbon([(L_ - 0.5, my - 0.6), (L_ + 0.05, my - 0.1)], [0.08, 0.3]), SKIN.deep, 0.6),
            (ribbon([(mx - 1.1, my + 1.7), (mx + 0.1, my + 1.95), (mx + 1.1, my + 1.65)], [0.08, 0.3, 0.08]), SKIN.shadow, 0.4)]
     # l'ornement rouge et or au milieu du front, sur la médiane (une fleur à trois pétales, inventée)
-    oc_ = (FV['mediane'](26.4), 26.4)
+    oc_ = (FV['mediane'](28.5), 28.5)
     for a in (-90, 30, 150):
         r = math.radians(a)
         fd += [(ellipse(oc_[0] + 0.8 * math.cos(r), oc_[1] + 0.8 * math.sin(r), 0.7, 0.48, a), LIPS[1], 1)]
     fd += [(ellipse(oc_[0], oc_[1], 0.45, 0.45), GOLD.light, 1),
            (ellipse(oc_[0] + 0.15, oc_[1] - 0.15, 0.22, 0.2), '#ffffff', 0.9)]
+    fd += hairline_shade()
     part('face', face, SKIN, grad=(87, 24, 68, 47, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]), cel=0.9, rim=0.5, cast=1.0,
          details=fd)
 
-    # ---- la chevelure tirée en arrière (une seule forme qui suit le crâne, de la ligne du front à la nuque) ----
-    hair = sm([(70.6, 22.0), (70.2, 26.4), (69.6, 30.4), (69.0, 33.6), (68.2, 37.0), (68.4, 40.4), (69.4, 43.0), (71.0, 45.4),
-               (72.4, 47.4), (68.4, 48.4), (63.6, 47.6), (59.8, 44.6), (57.6, 40.4), (56.6, 35.4), (56.8, 30.2), (58.4, 25.8),
-               (61.6, 22.6), (65.6, 21.2)], t=0.95)
-    hd = [(ribbon(crpath([(69.2, 25.0), (64.4, 24.4), (60.4, 27.0), (58.4, 31.6)], 12), [0.1] + [1.4] * 11 + [0.2]), HAIR.hi, 0.6),
-          (ribbon(crpath([(68.8, 28.4), (64.6, 27.6), (61.0, 29.6), (59.2, 33.4)], 12), [0.1] + [0.7] * 11 + [0.2]), HAIR.glint, 0.55),
-          (ribbon(crpath([(68.0, 34.4), (64.2, 33.0), (60.6, 34.0), (58.6, 37.6)], 12), [0.1] + [0.8] * 11 + [0.2]), HAIR.light, 0.55),
-          (ribbon(crpath([(67.6, 42.6), (64.0, 41.4), (60.8, 41.0)], 8), [0.1] + [0.7] * 7 + [0.2]), HAIR.light, 0.45),
-          (ribbon(crpath([(66.4, 46.6), (62.4, 44.6), (59.4, 41.0), (57.8, 36.0)], 12), [0.1] + [1.0] * 11 + [0.2]), HAIR.deep, 0.55)]
-    part('hair', hair, HAIR, grad=(70, 22, 58, 46, [(0, HAIR.light), (0.4, HAIR.base), (1, HAIR.shadow)]), cel=1.1, rim=0, cast=1.1,
-         cast_on=['face'], details=hd)
+    # ---- la chevelure tirée en arrière (refaite le 26/11, 2e avis : cercle sur la tempe et le front) ----
+    # Avant : un grand front nu jusqu'au bandeau et une ligne droite verticale crâne / cheveux sur la tempe. Maintenant
+    # la chevelure couvre le haut du crâne SOUS la couronne et naît d'une vraie racine qui épouse le front : raie au
+    # milieu (sur la médiane), une ligne de cheveux douce qui descend en arc de la raie jusqu'au haut de l'oreille
+    # (tempe), et de l'autre côté jusqu'au contour du fond ; plus de bord droit. La racine est fondue dans la peau
+    # (ombre en dégradé sous la ligne, mèches qui ne prennent leur couleur qu'après la racine).
+    part('hair', HAIRMASS, HAIR, grad=(88, 22, 58, 46, [(0, HAIR.light), (0.35, HAIR.base), (1, HAIR.shadow)]), cel=1.1, rim=0,
+         cast=0, details=hair_details())
 
     # ---- l'oreille, la boucle d'or et la goutte de jade ----
     ear = sm([(69.2, 33.4), (67.6, 32.6), (66.0, 33.4), (65.5, 35.8), (66.0, 38.2), (67.2, 39.6), (68.8, 40.0), (69.6, 37.0)])

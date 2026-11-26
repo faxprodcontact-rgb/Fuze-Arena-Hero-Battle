@@ -106,11 +106,11 @@ WIND = dict(G=(30.0, 22.0), ang=-162, lean=-3.6, crouch=2.0, nsh=(-1, -2), head=
             eye=(0.8, 0.0), pg=1.0, rn=1.0)
 OVER = dict(front=0, G=(49.0, 17.0), ang=-78, lean=-1.0, crouch=1.0, nsh=(2, -2), head=(0, 0), tilt=-1, glow=1.0, pg=0.5)
 HIT1 = dict(front=1, G=(90.0, 72.0), ang=-2, lean=3.0, crouch=1.6, nsh=(6, 3), head=(1, 1), tilt=4, glow=1.0, mouth=0.8,
-            FF=(105.0, 66.0), ffa=-70, eye=(0.8, 0.4), pg=-1.0)
+            FF=(113.0, 58.0), ffa=-84, eye=(0.8, 0.4), pg=-1.0)
 REB = dict(front=0, G=(52.0, 19.0), ang=-82, lean=0.0, crouch=1.0, nsh=(3, -1), head=(0, 0), tilt=0, glow=0.8, mouth=0.4,
-           FF=(108.0, 64.0), pg=0.4)
+           FF=(115.0, 56.0), pg=0.4)
 GROUND = dict(front=1, G=(92.0, 86.0), ang=42, lean=6.0, crouch=3.0, nsh=(7, 2), head=(1.5, 2.0), tilt=6, glow=1.2,
-              mouth=1.0, FF=(104.0, 70.0), ffa=-74, eye=(0.6, 0.8), pg=-1.2)
+              mouth=1.0, FF=(112.0, 60.0), ffa=-88, eye=(0.6, 0.8), pg=-1.2)
 ATTACK = [
     (0, {}),
     (170, dict(RAISE)),
@@ -127,7 +127,7 @@ ATTACK = [
     (880, dict(GROUND)),
     (1100, dict(GROUND, G=(92.5, 86.5), crouch=3.2)),
     (1200, dict(front=0.6, G=(62.0, 72.0), ang=-10, lean=3.0, crouch=2.0, nsh=(4, 1), head=(0.5, 1), tilt=2, glow=0.4, mouth=0.2,
-                FF=(108.0, 64.0))),
+                FF=(115.0, 56.0))),
     (1270, dict(front=0, G=(20.0, 60.0), ang=-64, lean=1.2, crouch=1.2, glow=0.2)),
     (1380, dict(front=0, G=(26.0, 44.0), ang=-96, lean=0.4, crouch=0.6, glow=0.1)),
     (1560, {}),
@@ -143,9 +143,9 @@ ATTACK_HIT2 = 880
 # tournant sur lui-même et s'écrase sur l'ennemi : il éclate en blocs, la poussière monte en dôme, l'onde dorée court
 # au ras du sol. Il repose la massue et revient en garde.
 LOWB = dict(front=1, G=(34.0, 86.0), ang=158, lean=-2.0, crouch=2.6, nsh=(-1, 2), head=(0, 1.5), tilt=2, glow=1.6,
-            FF=(110.0, 62.0), eye=(1.2, 0.2), pg=1.0)
+            FF=(116.0, 54.0), eye=(1.2, 0.2), pg=1.0)
 BAT = dict(front=1, G=(96.0, 73.0), ang=-26, lean=3.0, crouch=1.4, nsh=(6, 3), head=(1.5, 0.5), tilt=-2, glow=2.0,
-           mouth=1.0, FF=(104.0, 70.0), ffa=-76, eye=(1.0, -0.4), pg=-1.2)
+           mouth=1.0, FF=(112.0, 60.0), ffa=-88, eye=(1.0, -0.4), pg=-1.2)
 SPECIAL = [
     (0, {}),
     (200, dict(RAISE, glow=0.8)),
@@ -161,9 +161,9 @@ SPECIAL = [
     (1452, dict(BAT)),
     (1560, dict(BAT, G=(97.0, 72.0), ang=-29)),
     (1700, dict(front=1, G=(92.0, 57.0), ang=-50, lean=2.0, crouch=1.0, nsh=(4, -1), head=(1, 0), glow=1.2, mouth=0.3,
-                FF=(108.0, 64.0), eye=(1.6, 0.0))),
+                FF=(115.0, 56.0), eye=(1.6, 0.0))),
     (2050, dict(front=1, G=(90.0, 58.0), ang=-56, lean=1.6, crouch=1.2, nsh=(4, -1), head=(1, 0.5), glow=1.0, eye=(1.8, 0.4),
-                FF=(108.0, 64.0))),
+                FF=(115.0, 56.0))),
     (2200, dict(front=0.6, G=(62.0, 72.0), ang=-20, lean=2.0, crouch=1.6, nsh=(3, 1), glow=0.4)),
     (2290, dict(front=0, G=(20.0, 60.0), ang=-64, lean=1.0, crouch=1.2, glow=0.2)),
     (2420, dict(front=0, G=(26.0, 44.0), ang=-96, lean=0.4, crouch=0.6, glow=0.1)),
