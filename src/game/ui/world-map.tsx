@@ -192,7 +192,7 @@ function Cendres({ x, y }: { x: number; y: number }) {
   return (
     <g>
       <ellipse class="cm-glow" cx={x - 6} cy={y - 46} rx="26" ry="16" fill={u('ember')} />
-      {[0, 1, 2].map((k) => <path class="cm-smoke" style={{ animationDelay: `${-k * 1.3}s` }} d={puff(x - 14 + k * 5, y - 50 - k * 2, 18 - k * 2)} fill={u('smoke')} stroke="#1f1238" stroke-opacity="0.4" stroke-width="1" />)}
+      {[0, 1, 2].map((k) => <path class="cm-smoke" style={{ animationDelay: `${-k * 1.3}s` }} d={puff(x - 20 + k * 6, y - 50 - k * 3, 26 - k * 3)} fill={u('smoke')} stroke="#1f1238" stroke-opacity="0.35" stroke-width="1" />)}
       {/* les roches noires, derrière à droite */}
       <Vol p={P} d={`M${x + 30} ${y + 1} L${x + 34} ${y - 22} Q${x + 37} ${y - 26} ${x + 40} ${y - 22} L${x + 42} ${y - 14} L${x + 46} ${y - 30} Q${x + 49} ${y - 34} ${x + 52} ${y - 30} L${x + 57} ${y + 1} Z`} fill={u('basalt')} depth={3} />
       {/* le volcan, sa bouche de lave et ses coulées */}
@@ -337,6 +337,20 @@ function leg(i: number): string {
   return `M${x0} ${a} C${x0 + out * 92} ${a + 4} ${x1 + out * 92} ${b - 4} ${x1} ${b}`;
 }
 
+/** Une île à bord souple autour d'un point (le sol vu d'en haut, sur la carte). */
+function isle(cx: number, cy: number, rx: number, ry: number, seed: number) {
+  const r = rng(seed), n = 16;
+  const pts = Array.from({ length: n }, (_, k) => {
+    const a = (k / n) * Math.PI * 2, j = 0.9 + r() * 0.16;
+    return [cx + Math.cos(a) * rx * j, cy + Math.sin(a) * ry * j] as const;
+  });
+  const mid = (k: number) => { const a = pts[k % n]!, b = pts[(k + 1) % n]!; return [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2] as const; };
+  let d = `M${f(mid(0)[0])} ${f(mid(0)[1])}`;
+  for (let k = 1; k <= n; k++) { const p = pts[k % n]!, m = mid(k); d += ` Q${f(p[0])} ${f(p[1])} ${f(m[0])} ${f(m[1])}`; }
+  return `${d} Z`;
+}
+const ISLES = SPOTS.map(([x, y], i) => isle(x, y + 10, 76, 40, 60 + i));
+
 /** Les vaguelettes de la mer (petits reflets courbes, peu nombreux). */
 const GLINTS = (() => {
   const r = rng(21);
@@ -354,15 +368,15 @@ export function ChapterMap({ cur }: { cur: number }) {
         <defs>
           <Soft p={P} />
           <VGrad id={`${P}-sea`} stops={[[0, '#0e1034'], [0.5, '#141a46'], [1, '#1b2858']]} />
-          <VGrad id={`${P}-land`} y1={VH} y2={0} stops={[[0, '#3d5e48'], [0.3, '#4c4a4c'], [0.55, '#4a4a64'], [0.8, '#4b4f63'], [1, '#253f52']]} />
-          <VGrad id={`${P}-shore`} y1={VH} y2={0} stops={[[0, '#8f9a72'], [0.5, '#7c7690'], [1, '#4a7a86']]} />
+          <VGrad id={`${P}-land`} y1={VH} y2={0} stops={[[0, '#3f6a4a'], [0.22, '#4a5a44'], [0.45, '#4e4450'], [0.68, '#55536c'], [0.85, '#3f4a5e'], [1, '#24434f']]} />
+          <VGrad id={`${P}-shore`} y1={VH} y2={0} stops={[[0, '#b9a678'], [0.5, '#a08f86'], [1, '#6f8a86']]} />
           <Glow id={`${P}-moon`} c="#ffe9a8" a={0.32} />
           {SOIL.map((s, i) => <><Mat id={`${P}-top${i}`} c={s.top} k={0.8} /><Mat id={`${P}-side${i}`} c={s.side} /></>)}
           <Mat id={`${P}-grass2`} c="#4fa85a" /><Mat id={`${P}-leaf`} c="#3f9e55" /><Mat id={`${P}-wood`} c="#8a5a3a" /><Mat id={`${P}-gold`} c="#ffc22e" />
           <Mat id={`${P}-wall`} c="#efe0c4" /><Mat id={`${P}-roof`} c="#c8482e" /><Mat id={`${P}-sail`} c="#f6eedd" />
           <Mat id={`${P}-rock`} c="#7d6a70" /><Mat id={`${P}-bark`} c="#5a3f3e" /><Mat id={`${P}-plum`} c="#5a4a6e" /><Mat id={`${P}-thorn`} c="#7a3f52" />
           <Mat id={`${P}-shroom`} c="#ff6a4a" /><Mat id={`${P}-moss`} c="#6f8a48" /><Mat id={`${P}-cat`} c="#8a5a36" /><Mat id={`${P}-marsh`} c="#2f5a4e" />
-          <Mat id={`${P}-ash`} c="#54444f" /><Mat id={`${P}-basalt`} c="#3a2f3e" /><Mat id={`${P}-smoke`} c="#6a6082" />
+          <Mat id={`${P}-ash`} c="#54444f" /><Mat id={`${P}-basalt`} c="#3a2f3e" /><Mat id={`${P}-smoke`} c="#8f86a6" />
           <Mat id={`${P}-peak`} c="#9396b4" /><Mat id={`${P}-snow`} c="#fbfaff" k={0.6} /><Mat id={`${P}-pine`} c="#2f7a5a" />
           <Mat id={`${P}-storm`} c="#4e4b72" /><Mat id={`${P}-foam`} c="#f1eefa" k={0.6} />
           <Mat id={`${P}-sand`} c="#e3b878" /><Mat id={`${P}-column`} c="#eed6a8" /><Mat id={`${P}-stone`} c="#8d8aa8" />
@@ -382,14 +396,15 @@ export function ChapterMap({ cur }: { cur: number }) {
         <g fill="none" stroke="#9aa6e8" stroke-width="1.2" stroke-linecap="round">
           {GLINTS.map(([gx, gy, w, dl]) => <path class="cm-glint" style={{ animationDelay: `${f(dl)}s` }} d={`M${f(gx - w)} ${f(gy)} Q${f(gx)} ${f(gy - 2.4)} ${f(gx + w)} ${f(gy)}`} />)}
         </g>
-        {/* l'île qui serpente : la rive, la terre ; un socle de terre sous chaque lieu */}
+        {/* l'île qui serpente : la rive de sable, puis la terre (vert en bas, gris des cendres, sarcelle des abysses) */}
         <g fill="none" stroke-linecap="round" stroke-linejoin="round">
-          {legs.map((d) => <path d={d} stroke="#05031a" stroke-opacity="0.45" stroke-width="58" transform="translate(-5 6)" filter={u('blur')} />)}
-          {legs.map((d) => <path d={d} stroke={u('shore')} stroke-width="54" />)}
+          {legs.map((d) => <path d={d} stroke="#05031a" stroke-opacity="0.5" stroke-width="52" transform="translate(-6 7)" filter={u('blur')} />)}
+          {ISLES.map((d) => <path d={d} fill="#05031a" fill-opacity="0.5" transform="translate(-6 7)" filter={u('blur')} />)}
+          {legs.map((d) => <path d={d} stroke={u('shore')} stroke-width="50" />)}
+          {ISLES.map((d) => <path d={d} fill={u('shore')} stroke={u('shore')} stroke-width="8" />)}
+          {legs.map((d) => <path d={d} stroke={u('land')} stroke-width="42" />)}
+          {ISLES.map((d) => <path d={d} fill={u('land')} />)}
         </g>
-        {SPOTS.map(([x, y]) => <path d={rr(x - PW - 12, y - 22, PW * 2 + 24, 62, 26)} fill={u('shore')} />)}
-        <g fill="none" stroke-linecap="round" stroke-linejoin="round">{legs.map((d) => <path d={d} stroke={u('land')} stroke-width="46" />)}</g>
-        {SPOTS.map(([x, y]) => <path d={rr(x - PW - 8, y - 18, PW * 2 + 16, 54, 22)} fill={u('land')} />)}
         {/* le chemin : des pas de pierre ; la part faite, d'or */}
         <g fill="none" stroke-linecap="round">
           {legs.map((d) => <path d={d} stroke="#1f1238" stroke-opacity="0.45" stroke-width="11" transform="translate(-1.5 2)" />)}
