@@ -42,8 +42,6 @@
 @keyframes cm-cloud { to { translate: 10px 0; } }
 .cm-cloth { animation: cm-cloth 1.8s ease-in-out infinite; }
 @keyframes cm-cloth { 0%, 100% { transform: skewY(-5deg) scaleX(1); } 50% { transform: skewY(5deg) scaleX(0.9); } }
-.cm-done-road { animation: cm-road 1.6s linear infinite; }
-@keyframes cm-road { to { stroke-dashoffset: -9.1; } }
 
 /* sous chaque lieu : l'élément, ses chapitres, un point par chapitre (fait = or, en cours = blanc qui luit, à faire = creux) */
 .cm-tag { position: absolute; translate: -50% -50%; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border-radius: var(--r-pill); white-space: nowrap;

@@ -407,7 +407,7 @@ export function ChapterMap({ cur }: { cur: number }) {
         <rect x="0" y="0" width={VW} height={VH} fill={u('sea')} />
         <circle cx={VW - 10} cy={6} r="120" fill={u('moon')} />
         <g fill="none" stroke="#9aa6e8" stroke-width="1.2" stroke-linecap="round">
-          {GLINTS.map(([gx, gy, w, dl]) => <path class="cm-glint" style={{ animationDelay: `${f(dl)}s` }} d={`M${f(gx - w)} ${f(gy)} Q${f(gx)} ${f(gy - 2.4)} ${f(gx + w)} ${f(gy)}`} />)}
+          {GLINTS.map(([gx, gy, w, dl]) => <path class="cm-glint" opacity="0.35" style={{ animationDelay: `${f(dl)}s` }} d={`M${f(gx - w)} ${f(gy)} Q${f(gx)} ${f(gy - 2.4)} ${f(gx + w)} ${f(gy)}`} />)}
         </g>
         {/* l'île qui serpente : la rive de sable, puis la terre (vert en bas, gris des cendres, sarcelle des abysses) */}
         <g fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -428,7 +428,7 @@ export function ChapterMap({ cur }: { cur: number }) {
         <g fill="none" stroke-linecap="round">
           {legs.map((d) => <path d={d} stroke="#1f1238" stroke-opacity="0.45" stroke-width="11" transform="translate(-1.5 2)" />)}
           {legs.map((d, i) => <path d={d} stroke={i < here ? '#b8802a' : '#6e6584'} stroke-width="9" />)}
-          {legs.map((d, i) => <path class={i < here ? 'cm-done-road' : undefined} d={d} stroke={i < here ? '#ffd35c' : '#a79fbd'} stroke-width="4.5" stroke-dasharray="0.1 9" />)}
+          {legs.map((d, i) => <path d={d} stroke={i < here ? '#ffd35c' : '#a79fbd'} stroke-width="4.5" stroke-dasharray="0.1 9" />)}
         </g>
         {/* les nuages qui passent, au bord */}
         <g class="cm-cloud" fill="#d8d2f4" opacity="0.2">
