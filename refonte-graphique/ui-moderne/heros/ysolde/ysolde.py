@@ -11,7 +11,7 @@
 # droite) serre une torche au-dessus de la tête, jamais devant le visage ; le manche ressort dessous avec un embout
 # d'or ; la flamme (une seule forme à trois langues, penchée vers l'arrière, cœur clair) dans une coupe d'or. Bras
 # droit (proche) tendu vers l'arrière, gracieux : main ouverte, doigts en éventail, index relevé, pouce dessous.
-# Visage de femme à la peau sombre : front dégagé, cheveux tirés en arrière, sourcils épais qui descendent vers le nez
+# Visage de femme à la peau sombre : cheveux tirés en arrière, deux mèches balayées sur le haut du front, sourcils épais qui descendent vers le nez
 # (regard féroce), grands yeux en amande à l'iris ambre, grand sourire aux dents visibles, lèvres baies ; oreille à
 # l'anneau d'or. La grande crinière noir bleuté vole loin vers la gauche en cinq mèches ondulées (reflets lavande,
 # trois bagues d'or), une longue mèche descend dans le dos ; deux plumes (rouge, orange) nouées d'une perle d'or

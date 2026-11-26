@@ -28,7 +28,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, lock, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp, bez, resample  # noqa: E402
 from lib import Shape  # noqa: E402
-from outils import rot, add, lerp, hexmix, body_limb, round_limb, ik, Seg, inv, bent  # noqa: E402,F401
+from outils import rot, add, lerp, hexmix, body_limb, round_limb, ik, Seg, inv, bent, FigureM, poly_of, shape_of  # noqa: E402,F401
 from visage import placer, verifier  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
@@ -230,9 +230,25 @@ def put_pauldron(fig, pre, S, ang, k, o, arm_seg, a_strap, hw, cast_on):
                  details=det_)
 
 
+R_N, R_F = 11.4, 7.6                 # le rayon de la racine du bras (proche, lointain) : celui des dômes d'épaule du buste
+
+
+def shoulders(torso0, Sn, Sf):
+    """Le buste avec ses deux deltoïdes : un dôme du rayon de la racine du bras autour de chaque articulation d'épaule
+    (repère du buste), raccordé au trapèze par une fermeture LOCALE (le creux entre le dôme et le trapèze est comblé,
+    le reste du buste ne bouge pas). Le dôme reste toujours sous la racine du bras, quelle que soit la pose."""
+    from shapely.geometry import Point
+    g = poly_of(torso0)
+    for S, r, rb in ((Sn, R_N, 5.0), (Sf, R_F, 3.0)):
+        u = g.union(Point(S).buffer(r, 64))
+        closed = u.buffer(rb, 64, join_style=1).buffer(-rb, 64, join_style=1)
+        g = u.union(closed.intersection(Point(S).buffer(r + 8.0, 64)))
+    return shape_of(g, step=0.6)
+
+
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P = dict(REST, **(pose or {}))
-    fig = Figure(*frame, ow=ow)
+    fig = FigureM(*frame, ow=ow)
     glow = P['glow']
 
     # ---- le squelette : une matrice par groupe de morceaux ----
@@ -302,10 +318,19 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  [(0, 9.6, 9.8), (0.5, 9.2, 9.2), (0.75, 8.6, 8.2), (1, 8.2, 8.0)], ['fleg', 'flegh', 'flegf'], P['legn'])
 
     # ======================================================================== le buste (avec la bosse et le cou)
-    torso = sm([(66.0, 30.4), (57.0, 32.4), (47.0, 32.4), (39.0, 35.6), (33.4, 42.4), (30.6, 51.0), (31.0, 60.0),
+    torso0 = sm([(66.0, 30.4), (57.0, 32.4), (47.0, 32.4), (39.0, 35.6), (33.4, 42.4), (30.6, 51.0), (31.0, 60.0),
                 (32.6, 68.0), (33.4, 75.0), (33.8, 81.8), (48.0, 83.6), (64.0, 84.4), (80.0, 83.4), (93.4, 82.0),
                 (94.0, 76.4), (95.6, 70.6), (97.8, 64.6), (99.6, 58.8), (99.6, 53.6), (97.0, 50.2), (93.2, 48.4),
                 (89.4, 46.2), (86.2, 42.6), (84.4, 37.4), (81.0, 32.0), (74.0, 29.6)])
+    # le RACCORD épaule / buste (avis du propriétaire du 26/11, tour 4 : « un écart entre son épaule et son corps ») :
+    # comme pour le cyclope (../aurelle/aurelle.py), le deltoïde fait partie du buste. Le buste reçoit, autour de chaque
+    # articulation d'épaule (là où elle est dans CETTE pose), un dôme du rayon de la racine du bras, raccordé en douceur
+    # au trapèze (fermeture locale : ni creux ni marche dans la silhouette) ; la racine du bras se fond ensuite dans le
+    # buste par un masque en dégradé (plus bas, fig.masks) : ni bord de boule, ni couture.
+    Sn_t = mapp(inv(TOR), mapp(UC, (S_N[0] + P['nsh'][0], S_N[1] + P['nsh'][1] - 0.8 * P['rn'])))
+    Sf_t = mapp(inv(TOR), mapp(UC, (S_F[0] + P['fsh'][0], S_F[1] + P['fsh'][1] - 0.8 * P['rf'])))
+    torso = shoulders(torso0, Sn_t, Sf_t)
+    tx0, ty0, tx1, ty1 = torso0.bbox()
     det = [(torso, ('lin', 34, 66, 56, 62, [(0, FUR.deep, 0.5), (1, FUR.deep, 0)]), 1)]
     # les pectoraux : la plaque éclairée, l'ombre dessous (le proche plus large, trois quarts)
     det += [(sm([(43.0, 51.6), (52.0, 49.8), (61.6, 51.4), (66.0, 54.6), (64.8, 59.4), (57.6, 62.0), (48.0, 60.8), (42.0, 56.4)]), FUR.light, 0.5),
@@ -338,7 +363,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (ribbon([(66.4, 50.6), (67.0, 53.0), (67.4, 55.6)], [0.1, 1.0, 0.1]), FUR.shadow, 0.5)]
     # la bosse : la masse des trapèzes, éclairée en haut
     det += [(sm([(44.0, 34.4), (54.0, 34.0), (62.0, 38.6), (58.0, 42.0), (48.0, 40.6), (40.6, 40.4)]), FUR.light, 0.35)]
-    fig.part('torso', torso, FUR, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(FUR.deep, 0.22, 3.4))
+    fig.part('torso', torso, FUR, grad=(tx1, ty0, tx0 + (tx1 - tx0) * 0.2, ty1, [(0, FUR.light), (0.55, FUR.base), (1, FUR.shadow)]),
+             cel=2.0, rim=0.7, cast=1.2, details=det, occl=(FUR.deep, 0.22, 3.4))
 
     # ---- le harnais de cuir croisé, l'anneau d'or au croisement ----
     RING = (64.6, 62.0)
@@ -417,6 +443,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                                            (1, 4.2, 4.2)], n=24)
         f1, f2 = Seg(Sfu, Ef), Seg(Ef, Wf2)
         fa1 = math.degrees(math.atan2(f1.u[1], f1.u[0]))
+        fig.masks['farm'] = (*mapp(U, f1(1.4)), *mapp(U, f1(-R_F)), 'torso')
         fig.part('farm', farm, FUR, cel=1.6, rim=0.7, cast=1.2, cast_on=['torso', 'belt', 'cloth', 'strapA', 'strapB', 'stud3', 'stud4', 'buckle', 'haft', 'head'],
                  details=[(ribbon([f1(-5.6, 3.6), f1(-6.8, -1.0), f1(-4.4, -5.6)], [0.2, 2.2, 0.2]), FUR.light, 0.5),
                           (ellipse(*f1.at(0.65, 2.0), 2.0, 4.0, fa1 - 90), FUR.light, 0.22)])
@@ -628,6 +655,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     a1, a2 = Seg(Snu, En), Seg(En, Wn2)
     aa1 = math.degrees(math.atan2(a1.u[1], a1.u[0]))
     aa2 = math.degrees(math.atan2(a2.u[1], a2.u[0]))
+    # la racine du bras (le dôme de l'épaule) se fond dans le deltoïde du buste : opaque dès l'articulation vers le
+    # coude, transparente au-dessus du buste vers le haut de l'épaule (aucune couture, aucun bord de boule)
+    fig.masks['narm'] = (*mapp(U, a1(2.0)), *mapp(U, a1(-R_N)), 'torso')
     ad = [
         # le deltoïde énorme éclairé (le haut de l'épaule), sa limite douce sur le bras
         (ribbon([a1(-9.0, 4.0), a1(-11.0, -2.0), a1(-8.6, -8.0), a1(-2.0, -10.6)], [0.2, 3.4, 3.0, 0.3]), FUR.light, 0.55),
