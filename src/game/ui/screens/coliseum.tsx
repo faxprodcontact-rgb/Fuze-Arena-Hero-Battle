@@ -25,7 +25,8 @@ import { Halo } from '../anim';
 import { btClass } from '../buttons';
 import { Art, Btn, Cur, HeroCard, Icon, Modal, Stars } from '../kit';
 import { open, openSub, toast } from '../nav';
-import { ShopTile, Tries } from './adventure';
+import { Tries } from './adventure';
+import { ModeShop } from '../sections/boutiques-modes';
 
 /** Le picto de chaque ligue (Champion : le blason à la couronne). */
 export const LEAGUE_ICON = (l: number) => (COLISEUM_LEAGUES[l] === 'champion' ? 'emblem-0' : `league-${COLISEUM_LEAGUES[l]}`);
@@ -194,17 +195,8 @@ function Rewards({ league, rank }: { league: number; rank: number }) {
 
 function Shop() {
   const s = useGame();
-  return (
-    <div class="shop-grid col-shop">
-      {COLISEUM_SHOP.map((x) => (
-        <ShopTile cost={<Cur k="badge" n={x.cost} />} reward={x.reward} disabled={s.wallet.badge < x.cost}
-          onBuy={() => {
-            const gain = buyExchange('coliseum', x.id);
-            if (gain) open({ type: 'gain', title: t('adv.defense'), gain });
-          }} />
-      ))}
-    </div>
-  );
+  const l = s.coliseum?.league ?? 0;
+  return <ModeShop kind="coliseum" items={COLISEUM_SHOP} league={COLISEUM_LEAGUES[l] === 'champion' ? undefined : COLISEUM_LEAGUES[l]} />;
 }
 
 /** Une équipe en 3 visages (ordre de passage). */

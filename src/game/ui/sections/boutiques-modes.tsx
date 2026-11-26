@@ -21,8 +21,9 @@ import { Sparkles } from './boutique-kit';
 import './boutique.css';
 import './boutiques-modes.css';
 
-type Kind = 'guild' | 'arena';
-const CURRENCY: Record<Kind, 'guildCoins' | 'arenaTokens'> = { guild: 'guildCoins', arena: 'arenaTokens' };
+// le Colisée prend l'allure de la salle des trophées de l'arène, avec ses insignes
+type Kind = 'guild' | 'arena' | 'coliseum';
+const CURRENCY: Record<Kind, 'guildCoins' | 'arenaTokens' | 'badge'> = { guild: 'guildCoins', arena: 'arenaTokens', coliseum: 'badge' };
 
 /** Le contenu d'un objet : sa monnaie (ou son équipement) et sa quantité. */
 function content(x: ShopItem): [string, number] {
@@ -59,7 +60,7 @@ export function ModeShop({ kind, items, league, crest, compact }: { kind: Kind; 
   // la pièce maîtresse : la plus chère ; les autres sur l'étagère, de la moins chère à la plus chère
   const feat = items.reduce((a, b) => (b.cost > a.cost ? b : a), items[0]!);
   const rest = items.filter((x) => x !== feat).sort((a, b) => a.cost - b.cost);
-  const title = t(kind === 'guild' ? 'guild.shop' : 'arena.shop');
+  const title = t(kind === 'guild' ? 'guild.shop' : kind === 'coliseum' ? 'col.shop' : 'arena.shop');
   const buy = (x: ShopItem) => {
     if (burst) return;
     const gain = buyExchange(kind, x.id);
@@ -73,13 +74,13 @@ export function ModeShop({ kind, items, league, crest, compact }: { kind: Kind; 
       <div class={`mx mx-${kind} mx-compact${league ? ` mx-lg-${league}` : ''}`}>
         <span class="mx-bg">
           <i class="mx-light" />
-          {kind === 'arena' && <i class="mx-beam" />}
+          {kind !== 'guild' && <i class="mx-beam" />}
           <i class="mx-shelf" />
         </span>
         <header class="mx-head">
           <span class="mx-sign">
-            <Icon name={kind === 'arena' ? (league ? `league-${league}` : 'arena') : crest ?? 'guild'} size={30} />
-            <strong>{t(kind === 'arena' ? 'adv.arena' : 'nav.guild')}</strong>
+            <Icon name={kind !== 'guild' ? (league ? `league-${league}` : 'arena') : crest ?? 'guild'} size={30} />
+            <strong>{t(kind === 'guild' ? 'nav.guild' : kind === 'coliseum' ? 'adv.defense' : 'adv.arena')}</strong>
           </span>
           <span class="mx-purse"><Icon name={cur} size={30} /><b>{fmt(have)}</b></span>
         </header>
@@ -121,7 +122,7 @@ export function ModeShop({ kind, items, league, crest, compact }: { kind: Kind; 
           <i class="lg-glow" />
           <Art name={fArt} class="mx-art" />
           <i class={kind === 'guild' ? 'mx-cushion' : 'mx-plinth'} />
-          <span class="mx-tag"><Icon name={kind === 'arena' && league ? `league-${league}` : 'crown'} size={20} />{t(`mx.best.${kind}`)}</span>
+          <span class="mx-tag"><Icon name={kind !== 'guild' && league ? `league-${league}` : 'crown'} size={20} />{t(`mx.best.${kind === 'guild' ? 'guild' : 'arena'}`)}</span>
           <Sparkles n={5} />
         </span>
         <div class="mx-feat-text">
