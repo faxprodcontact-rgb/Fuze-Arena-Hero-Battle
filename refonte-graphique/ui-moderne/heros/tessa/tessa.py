@@ -38,7 +38,8 @@ GOLD = Mat('#fff3b8', '#f6c24a', '#d48826', '#9c4e1a', '#5a2418')
 BEAK = Mat('#fffbd2', '#ffe45a', '#f6c42e', '#dc8a2a', '#9c4c1c')          # bec, mains et serres : jaune citron
 CLAW = Mat('#d2cee6', '#8e88a6', '#5e566e', '#3a3248', '#221a30')
 JADE = Mat('#c2f6e0', '#5ccaab', '#2a8682', '#1a5260', '#102a3a')
-LEATHER = Mat('#c89060', '#8e5634', '#663a26', '#42221e', '#2a1418')
+BELT = Mat('#b88a64', '#7a5038', '#56362a', '#3a2222', '#24141a')           # cuir brun (ceinture, poignée)
+LEATHER = Mat('#e09a70', '#a8523a', '#7a3428', '#4e1c22', '#300e18')         # cuir rouge sombre (brassards)
 STEEL = Mat('#f6f8ff', '#cfd3e6', '#8e88a6', '#5c5674', '#34304a')
 SHAFT = Mat('#fff0c4', '#ecc282', '#c8924e', '#8a5630', '#5a3020')
 EYE = ('#ffe9a0', '#f5a623', '#a8501a', '#1a0c12')
@@ -217,14 +218,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fa = math.atan2(Wf[1] - Ef[1], Wf[0] - Ef[0])
     Lf = math.dist(Ef, Wf)
     F_ = lambda sh: xf(sh, Ef[0], Ef[1], math.degrees(fa))
+    fbz = lambda u0, u1, h0, h1, r=0.6: F_(rpoly([(Lf * u0, -h0), (Lf * u1 + 2, -h1), (Lf * u1 + 2, h1), (Lf * u0, h0)], r))
     fig.part('farm', farm, BROWN, cel=1.4, rim=0.6, cast=0,
-             details=[(F_(rpoly([(Lf * 0.3, -4.6), (Lf + 2, -4.6), (Lf + 2, 4.6), (Lf * 0.3, 4.6)], 0.6)), LEATHER.base, 1),
-                      (F_(rpoly([(Lf * 0.3, -4.6), (Lf + 2, -4.6), (Lf + 2, -2.0), (Lf * 0.3, -1.6)], 0.4)), LEATHER.light, 0.9),
-                      (F_(rpoly([(Lf * 0.3 - 0.6, -4.8), (Lf * 0.3 + 1.0, -4.8), (Lf * 0.3 + 1.0, 4.8), (Lf * 0.3 - 0.6, 4.8)], 0.3)), GOLD.base, 1),
-                      (F_(rpoly([(Lf * 0.3 - 0.6, -4.8), (Lf * 0.3 + 1.0, -4.8), (Lf * 0.3 + 1.0, -2.4), (Lf * 0.3 - 0.6, -2.2)], 0.3)), GOLD.light, 1),
-                      (F_(ellipse(Lf * 0.66, -0.4, 1.0, 1.0)), GOLD.base, 1),
-                      (F_(ellipse(Lf * 0.66 + 0.25, -0.7, 0.45, 0.45)), GOLD.hi, 1),
-                      (ribbon([lerp(S_F, Ef, 0.2), lerp(S_F, Ef, 0.6), lerp(Ef, Wf, 0.1)], [0.1, 0.9, 0.1]), BROWN.light, 0.6)])
+             details=[(ribbon([lerp(S_F, Ef, 0.2), lerp(S_F, Ef, 0.6), lerp(Ef, Wf, 0.1)], [0.1, 0.9, 0.1]), BROWN.light, 0.6),
+                      (fbz(0.28, 1.0, 4.4, 3.8, 0.9), LEATHER.base, 1),
+                      (F_(rpoly([(Lf * 0.28, -4.4), (Lf + 2, -3.8), (Lf + 2, -1.6), (Lf * 0.28, -1.8)], 0.4)), LEATHER.light, 0.95),
+                      (fbz(0.26, 0.36, 4.7, 4.7, 0.4), GOLD.base, 1),
+                      (F_(rpoly([(Lf * 0.26, -4.7), (Lf * 0.36 + 2, -4.7), (Lf * 0.36 + 2, -2.4), (Lf * 0.26, -2.4)], 0.3)), GOLD.light, 1),
+                      (F_(ellipse(Lf * 0.68, -0.2, 0.95, 0.95)), GOLD.base, 1),
+                      (F_(ellipse(Lf * 0.68 + 0.25, -0.5, 0.4, 0.4)), GOLD.hi, 1)])
 
     # ================================================================ les jambes : culottes de plumes, tarses, serres
     def leg(key, hip, knee, ankle, toes, back_toe, flip=1.0):
@@ -316,8 +318,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- la ceinture de cuir (plus basse devant), la boucle ronde d'or au jade ----
     belt = sm([(53.6, 72.4), (66.0, 74.4), (80.6, 72.0), (81.0, 76.4), (66.0, 78.6), (53.8, 76.8)])
-    fig.part('belt', belt, LEATHER, cel=0.9, rim=0.6, cast=1.0,
-             details=[(ribbon([(54.6, 73.6), (66, 75.4), (80, 73.2)], [0.1, 0.4, 0.1]), LEATHER.hi, 0.5)])
+    fig.part('belt', belt, BELT, cel=0.9, rim=0.6, cast=1.0,
+             details=[(ribbon([(54.6, 73.6), (66, 75.4), (80, 73.2)], [0.1, 0.4, 0.1]), BELT.hi, 0.5)])
     fig.part('buckle', ellipse(66.4, 76.2, 3.0, 2.9), GOLD, cel=0.8, rim=0.6, cast=0.9,
              details=[(ellipse(66.5, 76.2, 1.7, 1.6), JADE.shadow, 1), (ellipse(66.6, 76.0, 1.3, 1.2), ('rad', 67.1, 75.5, 1.5, 1.5, [(0, JADE.hi), (0.5, JADE.light), (1, JADE.base)]), 1),
                       (ellipse(67.0, 75.6, 0.4, 0.35), '#ffffff', 0.9)])
@@ -338,14 +340,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # les tassettes de la hanche lointaine passent sous le tablier, celles de la hanche proche par-dessus le ventre
 
     # ================================================================ l'épaulière lointaine (dôme d'or), devant le buste
-    domeF = sm([(76.6, 54.6), (80.6, 50.8), (85.6, 51.0), (88.8, 54.6), (88.4, 59.4), (83.6, 61.0), (78.4, 60.0)])
+    domeF = sm([(79.0, 54.8), (83.0, 51.0), (88.2, 51.4), (91.6, 55.2), (91.0, 60.0), (86.2, 61.6), (80.8, 60.6)])
     fig.part('domeF', domeF, GOLD, cel=1.1, rim=0.8, cast=1.1,
-             details=[(sm([(80.4, 53.6), (84.2, 51.8), (87.6, 54.0), (84.6, 54.2)]), GOLD.hi, 0.7)])
+             details=[(sm([(83.0, 53.6), (86.8, 51.9), (90.4, 54.2), (87.2, 54.4)]), GOLD.hi, 0.7)])
     fr_names = []
-    for i, (x, w) in enumerate(((79.4, 3.6), (82.6, 3.8), (86.0, 3.4))):
+    for i, (x, w) in enumerate(((82.0, 3.6), (85.4, 3.8), (88.8, 3.4))):
         nm = 'frF%d' % i
         fr_names.append(nm)
-        sh = plume((x, 58.6), (x - 0.2, 60.4), (x - 0.4, 62.0), (x - 0.6, 63.6 - 0.4 * i), w, n=8, tip=0.4)
+        sh = plume((x, 59.2), (x - 0.2, 61.0), (x - 0.4, 62.6), (x - 0.6, 64.6 - 0.5 * i), w, n=8, tip=0.4)
         fig.part(nm, sh, GOLD, grad=(x + 1, 58, x - 1, 63.6, g2(GOLD.light, GOLD.shadow)), cel=0.6, rim=0.4, cast=0.8)
 
     # ================================================================ le bras proche : bras et avant-bras d'une seule
@@ -359,14 +361,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     Ln = math.dist(En, Wn)
     N_ = lambda sh: xf(sh, En[0], En[1], math.degrees(na))
     sg = -1 if math.cos(na) > 0 else 1        # le dessus de l'avant-bras (vers la lumière)
-    fig.part('narm', narm, BROWN, cel=1.6, rim=0.7, cast=1.3, cast_on=['torso', 'belt', 'buckle', 'tn1', 'tn2', 'tn3'] + nw_names,
-             details=[(N_(rpoly([(Ln * 0.28, -4.4), (Ln + 1.4, -3.8), (Ln + 1.4, 3.8), (Ln * 0.28, 4.4)], 0.8)), LEATHER.base, 1),
-                      (N_(rpoly([(Ln * 0.28, -4.4 * -sg), (Ln + 1.4, -3.8 * -sg), (Ln + 1.4, -1.6 * -sg), (Ln * 0.28, -1.8 * -sg)], 0.4)), LEATHER.light, 0.9),
-                      (N_(rpoly([(Ln * 0.28 - 0.4, -4.6), (Ln * 0.28 + 1.3, -4.6), (Ln * 0.28 + 1.3, 4.6), (Ln * 0.28 - 0.4, 4.6)], 0.3)), GOLD.base, 1),
-                      (N_(rpoly([(Ln + 0.0, -4.0), (Ln + 1.5, -4.0), (Ln + 1.5, 4.0), (Ln + 0.0, 4.0)], 0.3)), GOLD.base, 1),
-                      (N_(ellipse(Ln * 0.64, 0.4 * sg, 0.95, 0.95)), GOLD.base, 1),
-                      (N_(ellipse(Ln * 0.64 + 0.25, 0.1 * sg, 0.4, 0.4)), GOLD.hi, 1),
-                      (ribbon([lerp(Sn, En, 0.15), lerp(Sn, En, 0.55), lerp(Sn, En, 0.9)], [0.1, 1.0, 0.1]), BROWN.light, 0.55)])
+    bz = lambda u0, u1, h0, h1, r=0.6: N_(rpoly([(Ln * u0, -h0), (Ln * u1 + 1.4, -h1), (Ln * u1 + 1.4, h1), (Ln * u0, h0)], r))
+    bztop = lambda u0, u1, h0, h1, k0, k1: N_(rpoly([(Ln * u0, -h0 * -sg), (Ln * u1 + 1.4, -h1 * -sg), (Ln * u1 + 1.4, -k1 * -sg), (Ln * u0, -k0 * -sg)], 0.4))
+    fig.part('narm', narm, BROWN, cel=1.6, rim=0.8, cast=1.4, cast_on=['torso', 'belt', 'buckle', 'tn1', 'tn2', 'tn3'] + nw_names,
+             details=[(ribbon([lerp(Sn, En, 0.2), lerp(Sn, En, 0.6), lerp(En, Wn, 0.05)], [0.1, 1.2, 0.1]), BROWN.light, 0.6),
+                      (bz(0.22, 1.0, 4.6, 4.0, 1.0), LEATHER.base, 1),
+                      (bztop(0.22, 1.0, 4.6, 4.0, 1.6, 1.4), LEATHER.light, 0.95),
+                      (N_(ribbon([(Ln * 0.3, 2.6 * sg), (Ln * 0.65, 2.9 * sg), (Ln * 0.98, 2.4 * sg)], [0.1, 0.8, 0.1])), LEATHER.shadow, 0.7),
+                      (bz(0.2, 0.3, 4.9, 4.9, 0.4), GOLD.base, 1), (bztop(0.2, 0.3, 4.9, 4.9, 2.4, 2.4), GOLD.light, 1),
+                      (bz(0.92, 1.0, 4.3, 4.3, 0.4), GOLD.base, 1), (bztop(0.92, 1.0, 4.3, 4.3, 2.0, 2.0), GOLD.light, 1),
+                      (N_(ellipse(Ln * 0.62, 0.2 * sg, 1.1, 1.1)), GOLD.shadow, 1), (N_(ellipse(Ln * 0.62, 0.0, 0.85, 0.85)), GOLD.base, 1),
+                      (N_(ellipse(Ln * 0.62 + 0.3, -0.3, 0.38, 0.38)), GOLD.hi, 1)])
 
     # ---- l'épaulière proche : grand dôme d'or bordé d'un rang de plumes d'or pendantes ----
     frN = []
@@ -532,7 +537,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.part(nm, sh, GOLD, cel=0.5, rim=0.5, cast=0.6)
     # la poignée de cuir
     c0, c1 = spine[24], spine[36]
-    fig.part('bgrip', limb([c0, spine[30], c1], [4.6, 4.8, 4.6]), LEATHER, cel=0.6, rim=0.4, cast=0.6)
+    fig.part('bgrip', limb([c0, spine[30], c1], [4.6, 4.8, 4.6]), BELT, cel=0.6, rim=0.4, cast=0.6)
 
     # ---- le poing lointain, serré sur la poignée : doigts d'aigle (jointures vers nous), pouce par-dessus ----
     fx_, fy_ = G[0], G[1]
@@ -562,8 +567,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     else:
         strings = [[ta, nock], [ba, nock]]
     for i, s in enumerate(strings):
-        sh = ribbon(resample(s, 8), [0.3] + [0.75] * 7 + [0.3], sharp_ends=False)
-        fig.part('string%d' % i, sh, WHITE, grad=(ta[0], ta[1], nock[0], nock[1], g2('#ffffff', STRING)), cel=0, rim=0, cast=0.5, outline=True)
+        # un fil clair (pas de gros contour : une fine bordure sombre, comme le trait d'un pixel du pixel art)
+        edge = ribbon(resample(s, 8), [0.5] + [1.25] * 7 + [0.5], sharp_ends=False)
+        core = ribbon(resample(s, 8), [0.2] + [0.55] * 7 + [0.2], sharp_ends=False)
+        fig.part('sedge%d' % i, edge, WHITE, grad=(ta[0], ta[1], nock[0], nock[1], [(0, INK, 0.75), (1, INK, 0.75)]), cel=0, rim=0, cast=0, outline=False)
+        fig.part('string%d' % i, core, WHITE, grad=(ta[0], ta[1], nock[0], nock[1], g2('#ffffff', STRING)), cel=0, rim=0, cast=0.4, outline=False)
     if P['arrow'] > 0.5:
         a0 = nock
         L = 62.0
@@ -584,14 +592,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hx, hy = Hn
     op = P['open']
     if op < 0.5:
-        nf = sm([(hx - 4.6, hy - 3.2), (hx - 0.6, hy - 4.6), (hx + 3.0, hy - 3.6), (hx + 4.4, hy - 0.4), (hx + 3.4, hy + 3.4),
-                 (hx - 0.4, hy + 4.8), (hx - 4.4, hy + 3.2), (hx - 5.6, hy)])
-        ndet = [(sm([(hx - 4.0, hy - 3.0), (hx - 0.6, hy - 4.2), (hx + 2.8, hy - 3.2), (hx + 2.0, hy - 1.0), (hx - 2.6, hy - 0.8)]), BEAK.light, 0.6)]
-        for j, (x0, x1) in enumerate(((-1.2, 1.2), (1.2, 3.6))):
-            ndet += [(ribbon([(hx + x1 - 0.2, hy - 0.4), (hx + x1, hy + 1.6), (hx + x1 - 0.4, hy + 3.4)], [0.1, 0.55, 0.1]), BEAK.deep, 0.5)]
-        ndet += [(ribbon([(hx - 2.6, hy + 0.6), (hx + 0.6, hy + 0.2), (hx + 3.6, hy + 0.8)], [0.1, 0.6, 0.1]), BEAK.shadow, 0.6),
-                 (sm([(hx + 3.0, hy + 2.6), (hx + 4.4, hy + 3.0), (hx + 3.6, hy + 4.4)], sharp=(1,)), CLAW.base, 0.9)]
-        fig.part('nfist', nf, BEAK, cel=1.1, rim=0.6, cast=1.1, details=ndet)
+        # le dos de la main (vers nous), les jointures vers l'avant ; trois doigts repliés sur la corde, griffes rentrées
+        nf = sm([(hx - 5.0, hy - 2.8), (hx - 1.4, hy - 4.4), (hx + 2.0, hy - 4.0), (hx + 3.2, hy - 1.6), (hx + 2.6, hy + 3.0),
+                 (hx - 1.0, hy + 4.4), (hx - 4.6, hy + 3.4), (hx - 5.8, hy + 0.4)])
+        fig.part('nfist', nf, BEAK, cel=1.1, rim=0.6, cast=1.1,
+                 details=[(sm([(hx - 4.6, hy - 2.4), (hx - 1.4, hy - 4.0), (hx + 1.8, hy - 3.6), (hx + 1.0, hy - 0.8), (hx - 3.2, hy - 0.4)]), BEAK.light, 0.65),
+                          (ribbon([(hx - 3.6, hy + 1.2), (hx - 1.2, hy + 1.6), (hx + 1.4, hy + 1.0)], [0.1, 0.5, 0.1]), BEAK.shadow, 0.6)])
+        for j, (y0, h) in enumerate(((-2.8, 2.6), (-0.4, 2.6), (2.0, 2.4))):
+            seg = rpoly([(hx + 0.6, hy + y0), (hx + 4.2, hy + y0 + 0.2), (hx + 4.6, hy + y0 + h), (hx + 0.6, hy + y0 + h)], [0.5, 1.1, 1.1, 0.5])
+            fig.part('nfing%d' % j, seg, BEAK, cel=0.6, rim=0.45, cast=0.6, cast_on=['nfist', 'nfing0', 'nfing1'],
+                     details=[(ellipse(hx + 2.8, hy + y0 + 0.7, 1.2, 0.4), BEAK.hi, 0.6)])
+        fig.part('nclaw', sm([(hx + 3.6, hy + 4.0), (hx + 4.8, hy + 4.2), (hx + 3.4, hy + 5.6)], sharp=(1, 2)), CLAW, cel=0.3, rim=0.3, cast=0.3)
+        fig.part('nthumb', limb([(hx - 3.0, hy - 2.6), (hx + 0.2, hy - 3.8), (hx + 3.0, hy - 3.6)], [2.8, 2.6, 2.2]), BEAK, cel=0.6, rim=0.5, cast=0.7)
     else:
         # la main ouverte après le lâcher : les doigts d'aigle s'écartent vers l'arrière
         palm = sm([(hx - 4.4, hy - 2.6), (hx - 0.6, hy - 3.6), (hx + 1.6, hy - 1.4), (hx + 1.4, hy + 2.4), (hx - 1.6, hy + 3.6), (hx - 4.8, hy + 2.0)])
