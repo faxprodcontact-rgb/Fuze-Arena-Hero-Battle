@@ -294,9 +294,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # dessous et leur ombre sur la mèche d'en dessous apparaissent en fondu depuis la racine (aucun bord net sur le
     # crâne). Peinte devant la tête ; l'oreille et l'épaulière restent devant.
     flame_ink = '#330a1a'
-    scalp = sm([(99.6, 25.4), (95, 25.6), (91.4, 28.4), (89.6, 26.8), (85.4, 28.6), (82.2, 32.4), (80.8, 30.8),
+    # 2e avis (« recoller la coiffure sur sa tête ») : la racine descend jusqu'aux arcades et suit leur courbe (plus de
+    # bande de front entre les flammes et les sourcils), le devant rejoint le contour du front sans le déborder
+    scalp = sm([(101.5, 27.9), (99.4, 27.75), (96.6, 28.5), (93.7, 29.7), (91.8, 28.6), (88.6, 27.6), (85.2, 27.2),
+                (82.6, 28.0), (82.2, 32.4), (80.8, 30.8),
                 (78.4, 32), (76.4, 36.4), (76.2, 41.6), (73.2, 38), (72.4, 29.6), (74.4, 21.4),
-                (80.4, 16.6), (88, 15.6), (95, 17.6), (99.8, 21.2)], sharp=(2, 5))
+                (80.4, 16.6), (88, 15.6), (95, 17.6), (100.2, 20.6), (101.95, 25.3)], sharp=(3, 8))
     # les mèches, de la plus basse à la plus haute, puis la mèche du front (la plus en avant)
     LOCKS = [
         ('mE', (78, 38), (71, 46), (56, 49), (48.5, 42.5), 9.5, None),
@@ -344,7 +347,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                 hair.append((sh_, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], op / 0.28),), 0.28))
         hair.append((sh, ('lin',) + ax + (faded([(o, col) for o, col in cols]),), 1))
         hair.append((sm_under(sh), ('lin',) + ax + (faded(under),), 0.9))
-    fig.part('hair', mass, FLAME, cel=0, rim=0.8, cast=1.1, cast_on=['head'], ink=flame_ink, details=hair)
+    fig.part('hair', mass, FLAME, cel=0, rim=0.8, cast=0, ink=flame_ink, details=hair)
 
     # ---- l'oreille pointue, couchée en arrière ----
     ear = sm([(81, 31.4), (77.4, 29.6), (71.6, 26.8), (73.8, 30), (77.2, 34.6), (80.8, 38.6)], sharp=(2,))
@@ -476,7 +479,7 @@ def front_locks(P):
     w1, w2 = math.sin(ph + 0.4), math.sin(ph - 0.5)
     return [
         # la grande : elle monte au-dessus du front puis file vers l'arrière en suivant le crâne, pointe relevée
-        ('fore', (98.4, 24.4), (104.2, 18.4), (95.5, 12.2 + 0.5 * w1), (80.5 - 1.8 * tr - fl, 7.2 + 1.0 * w1 - 1.4 * ri - fl), 11.0 * (1 + 0.1 * fl)),
+        ('fore', (96.3, 24.0), (99.9, 16.4), (94.5, 11.6 + 0.5 * w1), (80.5 - 1.8 * tr - fl, 7.2 + 1.0 * w1 - 1.4 * ri - fl), 9.8 * (1 + 0.1 * fl)),
     ]
 
 

@@ -511,6 +511,11 @@ def head(fig, P):
         names.append(name)
         return fig.part(name, *a, **k)
 
+    # la ligne du front (racine des cheveux), de la tempe lointaine jusqu'à la pointe de la patte devant l'oreille :
+    # elle suit la sphère de la tête, une petite pointe au milieu du front (sur la médiane), un recul à la tempe
+    HL = [(96.3, 30.2), (95.1, 28.8), (94.2, 26.8), (92.8, 25.0), (91.0, 23.9), (89.0, 23.6), (86.85, 24.7), (84.8, 23.3),
+          (82.2, 23.5), (79.8, 24.5), (77.9, 26.1), (76.9, 28.0), (76.2, 29.9), (75.5, 31.0), (75.8, 32.8), (76.3, 35.0),
+          (76.3, 37.4), (75.9, 39.6), (75.2, 41.8)]
     # ---- les aiguilles en X, plantées DERRIÈRE le chignon : leur croisement est caché dans les cheveux ----
     C = (72.3, 14.1)                      # le croisement, juste sous la surface du chignon (caché)
     for nm, p0 in (('pinA', (65.8, 7.4)), ('pinB', (79.0, 7.8))):
@@ -622,28 +627,87 @@ def head(fig, P):
            (sm([(mx - 1.5, bot + 0.1), (mx, bot + 0.25), (mx + 1.5, bot + 0.05), (mx + 1.1, bot + 0.95), (mx, bot + 1.2), (mx - 1.1, bot + 0.95)], t=0.9), LIPS[1], 0.85),
            (ellipse(mx + 0.3, bot + 0.75, 0.75, 0.25, -8), LIPS[2], 0.8),
            (ribbon([(mx - hw - 0.35, my - 1.05 - 0.25 * g), (mx - hw + 0.15, my - 0.4 - 0.25 * g)], [0.1, 0.25]), SKIN.deep, 0.6)]
+    # la racine des cheveux sur la peau : sous la ligne du front, une ombre très douce (deux voiles qui s'éteignent)
+    # (les cheveux ne portent plus d'ombre dure sur le visage) : ils naissent de la peau, aucun trait ni marche entre les deux
+    wl = [0.2] + [1.0] * (len(HL) - 2) + [0.2]
+    hl2 = [(x - 0.15, y + 0.15) for x, y in HL]
+    fd += [(ribbon([(x - 0.35, y + 0.95) for x, y in hl2], [w * 1.7 for w in wl]), SKIN.shadow, 0.2),
+           (ribbon([(x - 0.2, y + 0.5) for x, y in hl2], [w * 0.95 for w in wl]), SKIN.shadow, 0.3)]
+    # une mèche échappée qui tombe sur la tempe proche (elle part de sous la racine et s'enroule un peu)
+    lk = [(79.6, 24.2), (79.0, 26.6), (77.9, 28.6), (77.3, 30.4), (77.7, 31.9)]
+    lw = [1.15, 0.95, 0.7, 0.4, 0.05]
+    fd += [(ribbon([(x - 0.35, y + 0.55) for x, y in lk], lw), SKIN.shadow, 0.3),
+           (ribbon(lk, lw), HAIR.base, 1),
+           (ribbon([(x + 0.18, y - 0.12) for x, y in lk[:-1]], [w * 0.35 for w in lw[:-1]]), HAIR.light, 0.75)]
     part('face', face, SKIN, grad=(94, 24, 74, 46, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]),
          cel=1.1, rim=0.5, cast=1.0, details=fd)
     fig.face = {'oeil_proche': meas['oeil_proche'], 'oeil_fond': meas['oeil_fond'], 'nez': (nx, ny), 'bouche': (mx, my, 2 * hw)}
 
-    # ---- la boucle d'oreille rouge (son attache passe sous la chevelure, à l'oreille) ----
+    # ---- la boucle d'oreille rouge (accrochée au lobe, son attache cachée sous la patte de cheveux) ----
     e = P['ear']
-    ex, ey = 75.6 + 0.5 * e, 46.0
+    ex, ey = 74.7 + 0.5 * e, 44.3
     part('earring', sm([(ex - 0.2, ey - 2.6), (ex + 1.0, ey + 0.6), (ex + 0.1 * e, ey + 2.6), (ex - 1.0, ey + 0.6)], sharp=(0, 2), t=0.9),
          RED, cel=0.4, rim=0.35, cast=0.5, details=[(ellipse(ex + 0.3, ey + 0.1, 0.35, 0.45), '#ffd8c0', 0.9)])
-    # ---- la chevelure : une seule forme lisse, plaquée sur le crâne, front haut dégagé, la joue proche visible ----
-    hair = sm([(63.4, 27.6), (66.0, 19.6), (72.0, 15.6), (80.4, 15.8), (87.8, 18.0), (92.6, 21.8), (94.6, 26.0),
-               (91.0, 24.4), (86.4, 24.0), (81.4, 25.2), (77.4, 28.2), (75.0, 32.6), (74.2, 37.6), (74.8, 42.2),
-               (76.0, 45.0), (73.2, 46.0), (69.6, 44.6), (66.0, 40.4), (63.8, 34.4)], sharp=(6, 14), t=0.95)
-    # les mèches plaquées partent du front et filent vers le chignon (arcs doux, inégaux)
-    hd = [(ribbon([(91.6, 22.6), (85.4, 18.6), (77.6, 17.2), (70.6, 18.6)], [0.2, 1.5, 1.2, 0.2]), HAIR.light, 0.75),
-          (ribbon([(88.6, 20.0), (82.4, 17.8), (76.0, 17.8)], [0.1, 0.55, 0.1]), HAIR.glint, 0.6),
-          (ribbon([(84.0, 24.0), (78.0, 22.6), (71.4, 22.6), (66.4, 25.0)], [0.1, 0.9, 0.8, 0.1]), HAIR.light, 0.45),
-          (ribbon([(76.0, 31.6), (72.0, 28.8), (67.6, 29.4)], [0.1, 0.8, 0.1]), HAIR.deep, 0.5),
-          (ribbon([(74.6, 39.4), (70.6, 36.2), (66.2, 35.6)], [0.1, 0.7, 0.1]), HAIR.deep, 0.45)]
+    # ---- la chevelure, tirée en arrière vers le chignon : UNE calotte qui épouse le crâne (avis du propriétaire du
+    # 26/11, 2e passage : plus de casque ni de perruque). Devant, la racine suit le front (pointe au milieu), recule à
+    # la tempe et redescend en une fine patte devant l'oreille ; derrière, l'arrière du crâne et la nuque, serrés ----
+    hair = sm(HL + [(73.4, 42.5), (71.4, 43.4), (69.4, 42.6), (68.0, 40.0), (67.4, 36.0), (67.6, 31.0), (68.9, 25.8),
+                    (71.4, 21.0), (75.6, 17.4), (80.8, 15.6), (86.4, 15.9), (91.0, 18.2), (94.4, 22.0), (96.0, 26.0),
+                    (96.5, 28.6)], sharp=(0, 6, len(HL) - 1), t=0.9)
+    hd = []
+    # l'arrière du crâne et la nuque dans l'ombre (la lumière vient d'en haut à droite)
+    hd += [(sm([(67.2, 30.0), (69.4, 34.0), (71.6, 38.4), (73.6, 42.4), (70.4, 44.0), (67.4, 40.6), (66.8, 35.0)]), HAIR.deep, 0.35),
+           (sm([(68.0, 25.0), (70.0, 25.6), (70.4, 30.6), (71.2, 36.6), (69.0, 38.0), (67.4, 33.0)]), HAIR.shadow, 0.3)]
+    # le reflet qui suit la courbe du crâne (une bande large et douce, puis un fil plus vif)
+    hd += [(ribbon([(94.4, 23.6), (91.6, 19.8), (86.4, 17.6), (80.0, 17.6), (74.8, 19.8), (71.0, 23.6)], [0.2, 1.2, 1.6, 1.5, 1.0, 0.2]), HAIR.light, 0.55),
+           (ribbon([(92.6, 20.8), (88.6, 18.4), (83.0, 17.6), (78.2, 18.4)], [0.1, 0.5, 0.55, 0.1]), HAIR.glint, 0.6)]
+    # les mèches peignées : elles NAISSENT de la ligne du front et filent vers le chignon (creux doux, inégaux, qui
+    # s'effilent ; jamais de rayures)
+    for pts, w, op in (([(92.4, 25.0), (89.6, 21.6), (84.8, 19.8), (78.6, 19.8), (73.4, 21.8)], 0.5, 0.42),
+                       ([(85.6, 23.6), (81.6, 22.2), (76.6, 23.0), (72.4, 25.6), (70.2, 28.4)], 0.55, 0.45),
+                       ([(79.0, 25.2), (75.6, 26.6), (72.6, 29.4), (70.6, 33.0)], 0.5, 0.42),
+                       ([(75.8, 33.2), (73.6, 33.6), (71.6, 36.0), (70.6, 39.0)], 0.45, 0.38)):
+        hd += [(ribbon(pts, [0.1] + [w] * (len(pts) - 2) + [0.1]), HAIR.deep, op),
+               (ribbon([(x + 0.3, y - 0.55) for x, y in pts], [0.1] + [w * 0.6] * (len(pts) - 2) + [0.1]), HAIR.light, op * 0.8)]
+    # le liseré de lumière seulement sur le dessus du crâne (haut-droit), jamais le long du visage
+    hd += [(q, HAIR.hi, 0.8) for q in rim_band(hair, 0.42, -0.58, [(60, 21.6), (90.6, 21.6), (93.6, 31.0), (93.6, 50), (60, 50)])]
     part('hair', hair, HAIR, grad=(92, 16, 66, 42, [(0, HAIR.light), (0.4, HAIR.base), (1, HAIR.shadow)]),
-         cel=1.1, rim=0.6, cast=1.0, cast_on=['face'], details=hd)
+         cel=0, rim=0, cast=0.55, cast_on=['bun', 'earring'], details=hd)
     return names
+
+
+def poly(shape, n=6):
+    """Les points d'une forme (chaque segment de Bézier découpé en n)."""
+    s, segs = shape.subs[0]
+    out = [s]
+    p = s
+    for c1, c2, q in segs:
+        for k in range(1, n + 1):
+            t = k / n
+            a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+            out.append((a * p[0] + b * c1[0] + c * c2[0] + d * q[0], a * p[1] + b * c1[1] + c * c2[1] + d * q[1]))
+        p = q
+    return out
+
+
+def from_poly(pts, like):
+    """Un polygone → une forme à côtés droits (assez de points pour paraître lisse), du même type que `like`."""
+    pts = list(pts)
+    segs = []
+    for i in range(1, len(pts) + 1):
+        a, b = pts[i - 1], pts[i % len(pts)]
+        segs.append(((a[0] + (b[0] - a[0]) / 3, a[1] + (b[1] - a[1]) / 3), (a[0] + 2 * (b[0] - a[0]) / 3, a[1] + 2 * (b[1] - a[1]) / 3), b))
+    return type(like)([(pts[0], segs)])
+
+
+def rim_band(shape, dx, dy, cut):
+    """Le liseré de lumière d'une forme (elle-même moins sa copie décalée de (-dx, -dy)), sauf dans le polygone cut."""
+    from shapely.geometry import Polygon
+    a = Polygon(poly(shape)).buffer(0)
+    b = Polygon([(x - dx, y - dy) for x, y in poly(shape)]).buffer(0)
+    g = a.difference(b).difference(Polygon(cut))
+    return [from_poly(list(q.exterior.coords)[:-1], shape) for q in getattr(g, 'geoms', [g])
+            if q.geom_type == 'Polygon' and q.area > 0.05]
 
 
 def arm_shape(S, E, W, ws):
