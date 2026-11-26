@@ -61,7 +61,7 @@ Un élément « à pièce » a son fond sur son `::before` : `--pxf` = le fond (
 (et `--pxd` = le fond enfoncé d'un bouton). La classe **`pxf`** donne ce mécanisme à un nouvel élément. Fonds prêts
 (noms historiques `--px-…`, ce sont des dégradés) : `--px-panel`, `--px-frame`, `--px-inset`, `--px-groove(-s)`,
 `--px-btn-<green|blue|gold|red|purple|teal|grey|cream|navy>(-down)`, `--px-plaque-<navy|blue|purple|red|green|teal|gold>`,
-`--px-chip`, `--px-badge(-gold)`, et les signes `--px-star`, `--px-check`, `--px-cross`… (SVG lisses, `<Sign>`).
+`--px-chip`, `--px-badge(-gold)`, et les signes `--px-star`, `--px-check`, `--px-cross`, `--px-badge`… (SVG lisses de `signs-art.ts`, posés sur `<html>` par `installSigns()` de `px.ts` ; `<Sign>`).
 
 ## Les composants (classes à utiliser)
 
@@ -84,7 +84,7 @@ Un élément « à pièce » a son fond sur son `::before` : `--pxf` = le fond (
 - **Jauges** `Bar` → `.bar` (pilule creusée) › `.bar-fill` (pilule, lumière en haut) ; `.chapter-bar`, `.dock-bar`.
 - **Interrupteur** `.switch` (pilule, rond blanc qui glisse ; `.on` = vert).
 - **Bandeau de titre** `TitleBanner tone=…` → `.title-banner .tb-<teinte>` (pilule pleine de la teinte) ; `.plaque`.
-- **Message court** `.toast` (pilule sombre au milieu). **Halo** `Halo` (lueur douce + deux anneaux fins qui tournent).
+- **Message court** `.toast` (pilule sombre au milieu). **Halo** `Halo` (lueur qui respire + étincelles qui tournent : `haloLayers` de `px.ts`).
 - **Médaillon** `Medallion tone=…` → `.medal .medal-<teinte>` (tuile lisse en dégradé ; forme réglée par l'endroit).
 - **Case d'un héros** `HeroCard` → `.hcard` : le héros **en entier** (`CardFigure`, bande `art/hd/pied/`), même échelle pour
   tous (la case = 128 pixels du dessin + marge : `--u: calc(84cqw / 128)`), pieds au milieu à `--feet` (80 %) de la
