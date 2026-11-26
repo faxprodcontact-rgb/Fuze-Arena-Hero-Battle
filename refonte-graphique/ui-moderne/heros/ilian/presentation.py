@@ -2,7 +2,7 @@
 #   python3 refonte-graphique/ui-moderne/heros/ilian/presentation.py
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
 # - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
-# - kael.png (contrôle) : Ilian à côté de Kael, même échelle (cohérence de taille et de trait).
+# - kael-ilian.png (contrôle, dans le dossier de brouillon) : Ilian à côté de Kael, même échelle.
 import os
 import subprocess
 import sys

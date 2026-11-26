@@ -1,0 +1,3 @@
+fait
+Orin, le tengu des montagnes : visage rouge au long nez, sourcils blancs en V, crinière blanche couchée en arrière, petit bonnet noir, deux ailes de corbeau repliées comme un manteau, veste ivoire et collier d'or, ceinture de soie rouge, hakama prune, geta à une dent ; l'éventail de plumes d'or levé, le sabre pointé vers l'ennemi.
+Animé comme son pixel art : il respire (ailes, crinière, manche et pans qui bougent), attaque de base (coup de sabre puis coup d'éventail qui lance une lame de vent), spéciale (il ouvre les ailes, s'envole, une rafale emporte des plumes noires qui tournoient autour de l'ennemi, il se repose).
