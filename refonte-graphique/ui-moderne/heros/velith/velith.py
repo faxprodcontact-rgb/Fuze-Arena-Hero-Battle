@@ -777,8 +777,13 @@ def near_hand(fig, P):
     # talon de la main descend jusqu'au vrai poignet, dans le brassard
     O = (22.4 + FIST_GRIP * HU[0], 2.0 + FIST_GRIP * HU[1])
     Mh = mchain(MA, mT(*O), (HU[1], -HU[0], HU[0], HU[1], 0, 0), mS(0.92))
+    # (le poignet entre dans le brassard : on prolonge vers la main seulement si l'avant-bras pointe vers le poing)
     nE, nW = fig.ctx_arm['nE'], fig.ctx_arm['nW']
-    fist_parts(fig, 'nf', Mh, ['handle', 'mantle', 'socket'], lerp(nW, nE, -4.6 / (math.dist(nE, nW) or 1)), None)
+    ufa = ((nW[0] - nE[0]) / (math.dist(nE, nW) or 1), (nW[1] - nE[1]) / (math.dist(nE, nW) or 1))
+    fc = mapp(Mh, (-1.0, 0.5))
+    tc = ((fc[0] - nW[0]) * ufa[0] + (fc[1] - nW[1]) * ufa[1]) / (math.dist(fc, nW) or 1)
+    k = 4.6 * max(0.0, tc)
+    fist_parts(fig, 'nf', Mh, ['handle', 'mantle', 'socket'], (nW[0] + ufa[0] * k, nW[1] + ufa[1] * k), None)
 
 
 def main():

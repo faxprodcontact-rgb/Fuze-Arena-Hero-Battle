@@ -500,6 +500,10 @@ def torso_parts(fig, P, TOR, HEAD):
             (ribbon([(78.2, 77.0), (80.4, 76.2), (82.4, 74.8)], [0.2, 0.7, 0.1]), SCALE.shadow, 0.45)]
     # le muscle du cou, côté lointain
     det += [(ribbon([(90.4, 55.0), (88.8, 59.4), (86.4, 62.4)], [0.2, 1.0, 0.2]), SCALE.shadow, 0.45)]
+    # le dos du cou sous le crâne : dans l'ombre de la tête (la même teinte que le dos du crâne, puis elle s'éclaircit en
+    # descendant vers l'épaule : la tête et le cou ne font qu'un)
+    det.append((sm([(80.0, 42.0), (88.0, 42.0), (88.4, 50.0), (85.6, 56.6), (80.4, 60.0), (72.0, 59.4), (77.0, 54.6),
+                    (79.6, 49.6)]), ('lin', 81.6, 52.6, 73.4, 60.0, [(0, SCALE.shadow, 1), (0.25, SCALE.shadow, 0.85), (0.6, SCALE.shadow, 0.35), (1, SCALE.shadow, 0)]), 1))
     # ---- la bande de plaques jaunes : de sous la mâchoire à la ceinture ----
     ctr = crpath([(88.6, 52.0), (85.0, 58.0), (79.2, 62.2), (73.0, 65.6), (69.8, 70.4), (68.8, 76.0), (68.4, 84.0)], n=40)
     wid = []
@@ -524,10 +528,6 @@ def torso_parts(fig, P, TOR, HEAD):
         b2 = lerp(b, m, 0.1)
         det.append((ribbon([a2, m, b2], [0.1, 0.55 + 0.05 * j, 0.1]), BELLY.shadow, 0.6))
         det.append((ribbon([(a2[0] + 0.3, a2[1] - 0.7), (m[0] + 0.3, m[1] - 0.75), (b2[0] + 0.3, b2[1] - 0.7)], [0.05, 0.35, 0.05]), BELLY.hi, 0.55))
-    # le dos du cou sous le crâne : dans l'ombre de la tête (la même teinte que le dos du crâne, puis elle s'éclaircit en
-    # descendant vers l'épaule : la tête et le cou ne font qu'un)
-    det.append((sm([(80.0, 42.0), (88.0, 42.0), (88.4, 50.0), (85.6, 56.6), (80.4, 60.0), (72.0, 59.4), (77.0, 54.6),
-                    (79.6, 49.6)]), ('lin', 81, 50, 74, 59, [(0, SCALE.shadow, 1), (0.5, SCALE.shadow, 0.5), (1, SCALE.shadow, 0)]), 1))
     # sous la mâchoire : une ombre douce, sur la bande jaune seulement (pas de voile gris)
     det.append((sm([(84.6, 54.6), (88.6, 55.8), (92.0, 55.0), (91.6, 58.0), (87.6, 58.6), (84.4, 57.4)]),
                 ('lin', 88, 55, 88, 59, [(0, BELLY.shadow, 0.55), (1, BELLY.shadow, 0)]), 1))
@@ -651,7 +651,7 @@ def head_parts(fig, P):
     # l'ombre sous la mâchoire (à la place de l'ombre automatique, qui marquait aussi le dos du crâne d'un bord)
     hd.append((ribbon([lo((86.4, 55.6)), lo((90.6, 55.7)), lo((95.4, 54.9)), lo((98.6, 53.4))], [0.1, 0.8, 0.7, 0.1]), BELLY.shadow, 0.8))
     fig.part('head', head, SCALE, grad=(100, 41, 81, 56, [(0, SCALE.light), (0.5, SCALE.base), (1, SCALE.shadow)]),
-             cel=0, rim=0.6, cast=0.7, cast_on=['hood'], details=hd)
+             cel=0, rim=0.6, cast=0, details=hd)
     # ---- la langue fourchue ----
     tg = P['tg']
     if tg > 0.15:
