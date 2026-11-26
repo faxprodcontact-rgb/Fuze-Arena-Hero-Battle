@@ -63,10 +63,17 @@ export function stoneHex(hex: string, reach: Reach = 'ui'): string {
   const r = parseInt(c.slice(0, 2), 16), g = parseInt(c.slice(2, 4), 16), b = parseInt(c.slice(4, 6), 16);
   const chroma = Math.max(r, g, b) - Math.min(r, g, b);
   const [h, s, l] = hsl(r / 255, g / 255, b / 255);
-  // le raisin : bleu-violet (teinte 225 à 290), pas trop vif (les violets des gemmes et le bleu de l'eau restent)
-  if (chroma < 6 || h < 225 || h > 290) return hex;
-  // les violets vifs (gemmes, invocation : saturation forte) restent, sauf dans les fonds dessinés
-  if (reach === 'ui' && (s > 0.66 || chroma > 140)) return hex;
+  // le raisin : bleu-violet (teinte 225 à 290) et le bleu nuit (210 à 225, sombre)
+  if (chroma < 6 || h < 210 || h > 290) return hex;
+  if (h < 225) {
+    // le bleu nuit (boutique) : seulement les tons sombres, pas trop vifs (le bleu de l'eau reste)
+    if (l >= 0.42 || s >= 0.75) return hex;
+  } else if (reach === 'ui') {
+    // les violets vifs (gemmes, invocation : saturation forte) restent, sauf les très sombres ; tout passe dans les fonds dessinés
+    const raisin = s <= 0.66 && chroma <= 140;
+    const night = l < 0.25 && s <= 0.85;
+    if (!raisin && !night) return hex;
+  }
   const light = l > 0.84;
   const out = light ? rgb(CREAM_HUE, Math.min(s, CREAM_SAT), l) : rgb(STONE_HUE, Math.min(s, STONE_SAT), l);
   return `#${out.map(h2).join('')}${c.slice(6)}`;
