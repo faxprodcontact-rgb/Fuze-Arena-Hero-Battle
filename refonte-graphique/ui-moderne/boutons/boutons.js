@@ -103,8 +103,8 @@
     let s = `<defs>${lin(g1, w * 0.75, y0, w * 0.25, yb, [[0, T.st[1]], [1, T.st[2]]])}`;
     if (T.light) s += rad(g2, w / 2, (y0 + yb) / 2 + 1, w * 0.4, (yb - y0) * 0.6, [[0, T.light, down ? 0.85 : 0.7], [0.5, T.light, 0.2], [1, T.light, 0]]);
     // la pierre n'est pas lisse : quelques taches douces, à des places fixes (pas de grain répété)
-    s += rad(g3, 0.62 * h, yb * 0.72, h * 0.55, h * 0.32, [[0, '#000', 0.2], [1, '#000', 0]]);
-    s += rad(g4, w - h * 0.5, y0 + h * 0.28, h * 0.5, h * 0.26, [[0, '#fff', 0.14], [1, '#fff', 0]]);
+    s += rad(g3, 0.62 * h, yb * 0.72, h * 0.55, h * 0.32, [[0, '#000', 0.28], [1, '#000', 0]]);
+    s += rad(g4, w - h * 0.5, y0 + h * 0.28, h * 0.5, h * 0.26, [[0, '#fff', 0.2], [1, '#fff', 0]]);
     s += `</defs>`;
     s += `<path d='${oct(0, y0, w, h, cc)}' fill='${INK}' stroke='${INK}' stroke-width='1.2' stroke-linejoin='round'/>`;
     if (!down) s += `<path d='${oct(2, y0 + 2, w - 2, h - 2, cc.map((v) => v - 0.8))}' fill='${T.st[3]}'/>`;
@@ -113,8 +113,8 @@
     s += `<clipPath id='${cl}'><path d='${face}'/></clipPath><g clip-path='url(#${cl})'>`;
     // le biseau en 4 pans : en haut et à droite éclairés, en bas et à gauche dans l'ombre
     s += `<path d='${face}' fill='${T.st[2]}'/>`;
-    s += `<rect x='0' y='${y0}' width='${w}' height='${bv + 2}' fill='${T.st[0]}' fill-opacity='0.75'/>`;
-    s += `<rect x='${w - bv - 2}' y='${y0}' width='${bv + 2}' height='${h}' fill='${T.st[0]}'/>`;
+    s += `<rect x='0' y='${y0}' width='${w}' height='${bv + 2}' fill='${T.st[0]}' fill-opacity='0.6'/>`;
+    s += `<rect x='${w - bv - 2}' y='${y0}' width='${bv + 2}' height='${h}' fill='${T.st[0]}' fill-opacity='0.5'/>`;
     s += `<rect x='0' y='${yb - bv - 1}' width='${w - bv - 2}' height='${bv + 1}' fill='${T.st[3]}' fill-opacity='0.6'/>`;
     s += `<rect x='0' y='${y0 + bv + 2}' width='${bv + 2}' height='${yb - y0}' fill='${T.st[3]}' fill-opacity='0.45'/>`;
     // le plat de la dalle
@@ -128,8 +128,11 @@
       const crack = (pts) => { const d = 'M' + pts.map((p) => p.join(' ')).join('L');
         return `<path d='${d}' fill='none' stroke='${T.light}' stroke-opacity='0.5' stroke-width='${3.6 * k}' stroke-linecap='round' stroke-linejoin='round'/><path d='${d}' fill='none' stroke='${T.core}' stroke-width='${1.3 * k + 0.2}' stroke-linecap='round' stroke-linejoin='round'/>`; };
       const my = (y0 + yb) / 2;
-      s += crack([[2 + bv, my - 6 * k], [2 + bv + 5 * k, my - 2 * k], [2 + bv + 3.5 * k, my + 3 * k], [2 + bv + 9 * k, my + 7 * k]]);
-      s += crack([[w - 2 - bv, my + 5 * k], [w - 2 - bv - 4.5 * k, my + 1 * k], [w - 2 - bv - 3 * k, my - 4 * k], [w - 2 - bv - 8 * k, my - 8 * k]]);
+      if (h >= 56) {
+        // une fissure qui part du bord et se divise (gauche), une plus courte (droite)
+        s += crack([[2, my - 3 * k], [2 + bv + 5 * k, my - 0.5 * k], [2 + bv + 11 * k, my + 4 * k]]) + crack([[2 + bv + 5 * k, my - 0.5 * k], [2 + bv + 9 * k, my - 5 * k]]);
+        s += crack([[w - 2, my + 4 * k], [w - 2 - bv - 4 * k, my + 1.5 * k], [w - 2 - bv - 9 * k, my - 3.5 * k]]);
+      }
     }
     s += `</g>`;
     return s;
@@ -195,7 +198,7 @@
     royal: { cl: ['#d9a8ff', '#7a3fd0', '#40178a', '#2c0e66'], fil: '#ffd65a', br: ['#fff2bc', '#e0a640', '#7a3e12'] },
     feu: { cl: ['#ffb07a', '#d9482c', '#8a1a1e', '#5e0e14'], fil: '#ffd65a', br: ['#ffe9a8', '#cf8a34', '#6e3412'] },
     eau: { cl: ['#9ad8ff', '#2a74d0', '#123d86', '#0b2a62'], fil: '#ffd65a', br: ['#ffe9a8', '#cf8a34', '#6e3412'] },
-    terre: { cl: ['#ffd08a', '#b8702a', '#6e3a14', '#4a240c'], fil: '#ffe08a', br: ['#ffe9a8', '#cf8a34', '#6e3412'] },
+    terre: { cl: ['#ffe596', '#cf9a2c', '#86560f', '#5a380a'], fil: '#fff0b0', br: ['#ffe9a8', '#cf8a34', '#6e3412'] },
     vent: { cl: ['#a8f0c0', '#2a9a62', '#10583e', '#0a3c2a'], fil: '#ffd65a', br: ['#ffe9a8', '#cf8a34', '#6e3412'] },
     off: { cl: ['#c0bdd0', '#77748e', '#55526a', '#403e54'], fil: '#a9a6bd', br: ['#d8d6e2', '#8c89a0', '#4d4a60'] },
   };
@@ -220,7 +223,6 @@
     s += `<path d='${cloth}' fill='${T.cl[0]}'/><path d='${cloth}' fill='url(#${g1})' transform='translate(-1 2)'/>`;
     s += `<path d='M${cap - 1} ${y0}h7V${h}h-7z' fill='${T.cl[3]}' fill-opacity='0.55'/><path d='M${w - cap - 5} ${y0}h6V${h}h-6z' fill='${T.cl[3]}' fill-opacity='0.35'/>`;
     s += `<path d='M${cap - 1} ${y0 + ci + 4.6}H${w - cap + 1}' stroke='${T.fil}' stroke-width='1.4'/>`;
-    s += `<path d='M${cap - 1} ${yb - ci - 3.2}H${w - cap + 1}' stroke='${T.fil}' stroke-opacity='0.75' stroke-width='1.4'/>`;
     s += `</g>`;
     // embouts de bronze : un cylindre éclairé à droite, une perle claire en haut
     for (const [x0, x1, g] of [[2, cap, g2], [w - cap, w - 2, g3]]) {

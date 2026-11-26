@@ -69,13 +69,13 @@
   // Les quatre familles : leur idée, et la teinte de chaque rôle (action principale, secondaire, prix, onglet choisi…)
   const FAM = {
     email: { nom: 'Émail serti', idee: 'Un émail profond serti dans un cadre d’or, coins coupés : un sceau, une médaille. Reprend l’or et le bleu nuit de nos titres.',
-      main: 'or', sec: 'nuit', sum1: 'violet', sum10: 'or', home: 'terre', close: 'rubis', rond: 'nuit', rondOn: 'or', seg: 'or', tile: 'nuit', tab: 'or' },
+      main: 'or', sec: 'nuit', sum1: 'violet', sum10: 'or', home: 'or', close: 'rubis', rond: 'nuit', rondOn: 'or', seg: 'or', tile: 'nuit', tab: 'or' },
     pierre: { nom: 'Pierre de l’arène', idee: 'Une dalle taillée, aux coins éclatés, comme le sol de l’arène. L’action principale est une pierre sombre où brûle une lumière.',
-      main: 'basalte', sec: 'ardoise', sum1: 'arcane', sum10: 'basalte', home: 'terre', close: 'feu', rond: 'off', rondOn: 'basalte', seg: 'basalte', tile: 'off', tab: 'basalte' },
+      main: 'basalte', sec: 'ardoise', sum1: 'arcane', sum10: 'basalte', home: 'basalte', close: 'feu', rond: 'off', rondOn: 'basalte', seg: 'basalte', tile: 'off', tab: 'basalte' },
     cristal: { nom: 'Cristal élémentaire', idee: 'Une gemme taillée en long, bouts en pointe : la lumière vient du cœur, de la couleur de l’élément. Des facettes nettes, pas de reflet de bonbon.',
-      main: 'citrine', sec: 'fume', sum1: 'amethyste', sum10: 'citrine', home: 'terre', close: 'feu', rond: 'fume', rondOn: 'citrine', seg: 'amethyste', tile: 'fume', tab: 'citrine' },
+      main: 'citrine', sec: 'fume', sum1: 'amethyste', sum10: 'citrine', home: 'citrine', close: 'feu', rond: 'fume', rondOn: 'citrine', seg: 'amethyste', tile: 'fume', tab: 'citrine' },
     etendard: { nom: 'Étendard', idee: 'Une bande d’étoffe brodée d’or, tendue entre deux embouts de bronze : la bannière du clan. Les onglets sont des fanions.',
-      main: 'pourpre', sec: 'nuit', sum1: 'nuit', sum10: 'royal', home: 'terre', close: 'pourpre', rond: 'nuit', rondOn: 'pourpre', seg: 'pourpre', tile: 'nuit', tab: 'pourpre' },
+      main: 'pourpre', sec: 'nuit', sum1: 'nuit', sum10: 'royal', home: 'pourpre', close: 'pourpre', rond: 'nuit', rondOn: 'pourpre', seg: 'pourpre', tile: 'nuit', tab: 'pourpre' },
   };
   const ELEMENTS = { feu: 'fire', eau: 'water', terre: 'earth', vent: 'wind' };
   const ELT_TONE = { email: (e) => e, pierre: (e) => e, cristal: (e) => e, etendard: (e) => e };

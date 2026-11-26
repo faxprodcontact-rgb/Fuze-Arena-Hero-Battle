@@ -83,10 +83,19 @@ def capture(mod):
         calls.append(out)
         if seul:
             b = sig.bind(*args, **kw)
+            first = next(iter(sig.parameters))
+            fx = sig.bind(*args, **kw)
             for k in list(b.arguments):
                 if k.startswith('fx'):
                     b.arguments[k] = None
-            heroes[id(out)] = orig(*b.args, **b.kwargs)
+            hero = orig(*b.args, **b.kwargs)
+            # les effets seuls (personnage effacé : toile de '.') : même ce que le personnage cachait devant eux
+            h = fx.arguments.get(first)
+            alone = None
+            if isinstance(h, np.ndarray) and h.dtype.kind == 'U':
+                fx.arguments[first] = np.full_like(h, '.')
+                alone = orig(*fx.args, **fx.kwargs)
+            heroes[id(out)] = (hero, alone)
         return out
 
     mod.compose = spy
@@ -105,7 +114,7 @@ def capture(mod):
                 raise SystemExit(f'{mod.__name__} : une image de « {name} » ne vient pas de compose() '
                                  '(voir consignes/export-jeu.md, cas particuliers)')
             hero = heroes.get(id(img))
-            fr.append((img.copy(), int(ms), None if hero is None else hero.copy()))
+            fr.append((img.copy(), int(ms), hero))
             k += 1
         res[name] = fr
     return res
@@ -192,10 +201,15 @@ def pieces(m):
 def take(L, hero, x0):
     """(ce qui part, ce qui reste) : sans `hero`, tout ce qui est à droite de la colonne x0 part. Avec `hero` (l'image
     du personnage seul, JEU `calques`) : seuls les EFFETS à droite de x0 partent, le personnage n'est jamais coupé
-    (là où un effet le couvrait, on retrouve le personnage)."""
+    (là où un effet le couvrait, on retrouve le personnage ; là où il cachait un effet qui part, l'effet est complété
+    par l'image des effets seuls). Renvoie aussi (personnage seul, effets seuls) pour la coupe suivante."""
     if hero is None:
-        return cols(L, x0, None), cols(L, None, x0)
+        return cols(L, x0, None), cols(L, None, x0), None
+    hero, alone = hero
     fx = alpha(L) & ~(alpha(hero) & np.all(L == hero, axis=2))
+    if alone is not None:
+        # les effets entiers, y compris là où le personnage était devant eux (sinon : des trous à sa forme)
+        fx |= alpha(alone)
     # les effets partent par morceaux entiers (pixels qui se touchent) : un morceau part s'il commence à droite de
     # x0, sinon il reste en entier. Rien n'est jamais tranché en ligne droite.
     lab = pieces(fx)
@@ -203,9 +217,15 @@ def take(L, hero, x0):
     fx &= ~np.isin(lab, keep[keep > 0])
     gone = np.zeros_like(L)
     gone[fx] = L[fx]
+    if alone is not None:
+        under = fx & ~np.all(L == alone, axis=2) & alpha(alone)   # effet caché (personnage devant) : celui des effets seuls
+        gone[under] = alone[under]
     rest = L.copy()
     rest[fx] = hero[fx]
-    return gone, rest
+    if alone is not None:
+        alone = alone.copy()
+        alone[fx] = 0                       # déjà parti : une 2e coupe (projectile puis cible) ne le reprend pas
+    return gone, rest, (hero, alone)
 
 
 def seams(left, right, x, run=8):
@@ -257,13 +277,13 @@ def split(mod, layers, name):
         hero = hero if calques else None
         cuts = []
         if flying:
-            proj, L = take(L, hero, depuis)
+            proj, L, hero = take(L, hero, depuis)
             cuts.append(('proj', depuis))
         if back:
             # l'arme qui revient (boomerang) : le jeu la fait voler de la cible jusqu'à la main
-            ret, L = take(L, hero, depuis)
+            ret, L, hero = take(L, hero, depuis)
         if c is not None:
-            tgt, L = take(L, hero, c)
+            tgt, L, hero = take(L, hero, c)
             cuts.append(('cible', c))
         out['coupes'].append(cuts)
         # contrôle : une coupe qui tranche un dessin en ligne droite se verra au combat (le morceau de gauche reste
