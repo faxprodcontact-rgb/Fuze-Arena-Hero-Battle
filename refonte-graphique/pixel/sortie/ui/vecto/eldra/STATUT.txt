@@ -1,3 +1,4 @@
 fait
-Eldra, la reine des singes au bâton d'or : redessinée en vectoriel lisse comme Kael (même contour, même ombrage, même échelle), même costume que le pixel art (plumes rouges, bandeau d'or au jade, masque rose, épaulière, écharpe jade, queue en crosse, pieds de singe).
-Bras et jambes d'une seule forme (coudes sans couture) ; animée à 24 images/s : respiration (plumes, queue, écharpe qui suivent), estoc avec éclat de vent, spéciale « Tempête » (tourbillon, saut, moulinet, frappe au sol, onde de vent).
+Correction d'après l'avis du 26/11 (« tête plus badass, plus fine, tête de singe ; cohérence nez, yeux, bouche ») : tête redessinée, costume, couleurs et accessoires inchangés.
+Vraie tête de singe : crâne plus petit et plus bas, visage plus étroit, masque de peau en cœur avec la pointe de fourrure entre les yeux, museau rond qui avance ; regard dur et fier (arcade sourcilière creusée, fard rouge en sourcils froncés, yeux dorés plissés), bouche fermée en rictus avec un croc.
+Yeux, nez et bouche placés par visage.py (yeux sur une ligne, narines ENTRE les yeux, bouche sous le nez ; verifier() vide au repos et dans les poses extrêmes, contrôle visage.png) ; la tête bouge d'un bloc dans toute l'animation.

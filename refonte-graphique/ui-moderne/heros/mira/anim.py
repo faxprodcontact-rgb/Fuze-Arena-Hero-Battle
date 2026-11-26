@@ -34,7 +34,7 @@ from outils import add, sub, lerp, norm, unit, ang_of, leaf  # noqa: E402
 
 ROOT = M.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'mira')
-DBG = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-mira'
+DBG = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-mira-corr'
 TMP = os.path.join(DBG, '_images')
 FPS = 24
 VIEW = (-62, -58, 336.0, 189.0)      # la scène de la vidéo, en pixels du dessin (16/9)
@@ -82,8 +82,8 @@ def monotone(ts, vs, t):
 
 
 # les réglages animés (voir mira.py) ; gx, gy : le point de prise de la lance ; shx, shy : le bouclier ; cry : la
-# bouche ; wing : les ailes de vent (0 rien, 1 naissantes, 2 grandes ouvertes, 3 battues) ; wop : leur opacité
-BASE = dict(lean=0.0, crouch=0.0, lift=0.0, headx=0.0, heady=0.0, tilt=0.0, cry=1.0, wn=0.0, wf=0.0, tr=0.0, cp=0.0,
+# bouche (0 fermée ; 1 à peine entrouverte, au plus fort des attaques) ; wing : les ailes de vent (0 rien, 1 naissantes, 2 grandes ouvertes, 3 battues) ; wop : leur opacité
+BASE = dict(lean=0.0, crouch=0.0, lift=0.0, headx=0.0, heady=0.0, tilt=0.0, cry=0.0, wn=0.0, wf=0.0, tr=0.0, cp=0.0,
             cl=0.0, sk=0.0, gx=M.G0[0], gy=M.G0[1], ang=M.SANG0, shx=0.0, shy=0.0, sht=0.0, glow=0.0, stretch=0.0,
             wing=0.0, wop=0.0)
 NUM = list(BASE)
@@ -126,10 +126,10 @@ ATTACK = [
     (250, dict(grip=(42.5, 42.5), ang=-132, crouch=1.2, lean=-2.0, head=(-1.0, 0.0), tilt=-4.0, wn=3, tr=2.0, cp=1.0, sk=0.8)),
     (380, dict(grip=(42.0, 42.0), ang=-135, crouch=1.3, lean=-2.2, head=(-1.1, -0.1), tilt=-4.5, wn=3, tr=2.2, cp=1.0, sk=0.8)),
     (430, dict(grip=(57.5, 33.5), ang=-72, stretch=2.0, crouch=1.0, lean=0.0, head=(0, 0), tilt=-1.0, wn=1, tr=1.0, cp=0.0)),
-    (480, dict(grip=(79.0, 59.0), ang=-20, stretch=2.0, crouch=2.0, lean=2.0, head=(0.8, 0.2), tilt=2.0, wn=-2, tr=-1.0, cp=-1.0, sk=-0.6)),
-    (525, dict(grip=(82.5, 61.0), ang=5, crouch=2.3, lean=3.0, head=(1.0, 0.3), tilt=3.0, wn=-3, tr=-2.0, cp=-1.0, sk=-1.0)),
-    (650, dict(grip=(82.5, 61.2), ang=6, crouch=2.2, lean=3.0, head=(1.0, 0.3), tilt=3.0, wn=-2, tr=-2.0, cp=-1.0, sk=-1.0)),
-    (750, dict(grip=(81.5, 61.6), ang=4, crouch=2.0, lean=2.6, head=(0.9, 0.2), tilt=2.4, wn=-1, tr=-1.0, cp=0.0, sk=-0.5)),
+    (480, dict(grip=(79.0, 59.0), ang=-20, stretch=2.0, crouch=2.0, lean=2.0, head=(0.8, 0.2), tilt=2.0, wn=-2, tr=-1.0, cp=-1.0, sk=-0.6, cry=0.7)),
+    (525, dict(grip=(82.5, 61.0), ang=5, crouch=2.3, lean=3.0, head=(1.0, 0.3), tilt=3.0, wn=-3, tr=-2.0, cp=-1.0, sk=-1.0, cry=1.0)),
+    (650, dict(grip=(82.5, 61.2), ang=6, crouch=2.2, lean=3.0, head=(1.0, 0.3), tilt=3.0, wn=-2, tr=-2.0, cp=-1.0, sk=-1.0, cry=0.9)),
+    (750, dict(grip=(81.5, 61.6), ang=4, crouch=2.0, lean=2.6, head=(0.9, 0.2), tilt=2.4, wn=-1, tr=-1.0, cp=0.0, sk=-0.5, cry=0.3)),
     (840, dict(grip=(70.5, 70.0), ang=-18, crouch=1.0, lean=1.0, head=(0.3, 0), tilt=0.8, tr=0.0, cp=1.0, sk=0.4)),
     (930, dict(grip=(63.0, 80.5), ang=-26, crouch=1.0, head=(0, 0.5), tr=1.0, cp=0.0)),
     (1040, dict(crouch=0.6, cp=-0.6, tr=0.3)),
@@ -145,8 +145,8 @@ ATT_HIT = 525             # l'impact
 # ailes et s'élève ; au plus haut, les ailes s'enroulent autour d'elle en un anneau de plumes de vent (arrêt sur
 # l'anneau plein, des plumes se posent sur elle en armure) ; LANCEMENT : l'anneau s'élargit dans toutes les directions
 # en descendant jusqu'au sol ; un souffle doux la soigne pendant qu'elle redescend ; elle se pose, puis lance son défi
-# (bouclier levé, lance pointée vers l'ennemi, elle crie ; une lueur rouge douce pulse autour d'elle).
-DEFI = dict(grip=(80.0, 58.5), ang=-8, crouch=1.0, lean=1.0, sh=(2.0, -6.0), sht=-4, head=(0.8, 0), tilt=1.5, cry=1.5,
+# (bouclier levé, lance pointée vers l'ennemi, la bouche à peine entrouverte ; une lueur rouge douce pulse autour d'elle).
+DEFI = dict(grip=(80.0, 58.5), ang=-8, crouch=1.0, lean=1.0, sh=(2.0, -6.0), sht=-4, head=(0.8, 0), tilt=1.5, cry=1.0,
             wn=-1, tr=-1.0, cp=-1.0)
 SPECIAL = [
     (0, {}),
@@ -164,13 +164,13 @@ SPECIAL = [
     (1200, dict(lift=AIR - 12, head=(0, 0), wn=-1, tr=1.0, cp=1.0, cl=1.0, sk=-0.6)),
     (1310, dict(lift=AIR - 28, crouch=-1.0, head=(0, 0.8), tr=2.0, cp=2.0, sk=-1.0)),
     (1400, dict(lift=0.0, crouch=3.0, head=(0, 1.0), wn=1, tr=1.0, cp=1.0, sk=0.6)),
-    (1460, dict(grip=(70.5, 64.5), ang=-22, crouch=2.0, sh=(1.0, -3.0), head=(0, 1.0), cry=1.2)),
+    (1460, dict(grip=(70.5, 64.5), ang=-22, crouch=2.0, sh=(1.0, -3.0), head=(0, 1.0), cry=0.5)),
     (1560, DEFI),
     (1680, dict(DEFI, wn=0, tr=-2.0)),
-    (1790, dict(DEFI, tr=-1.0, cry=0.9)),
+    (1790, dict(DEFI, tr=-1.0, cry=0.7)),
     (1890, dict(DEFI, cry=0.0, cp=0.0)),
-    (1960, dict(grip=(70.5, 68.5), ang=-20, crouch=1.0, lean=1.0, sh=(1.0, -3.0), cry=0.3)),
-    (2050, dict(grip=(63.0, 80.5), ang=-26, crouch=1.0, sh=(0, -1.0), head=(0, 1.0), cry=0.8)),
+    (1960, dict(grip=(70.5, 68.5), ang=-20, crouch=1.0, lean=1.0, sh=(1.0, -3.0), cry=0.0)),
+    (2050, dict(grip=(63.0, 80.5), ang=-26, crouch=1.0, sh=(0, -1.0), head=(0, 1.0))),
     (2150, dict(crouch=0.6, cp=-0.6)),
     (2260, {}),
 ]

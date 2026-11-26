@@ -16,7 +16,7 @@ import mira as S  # noqa: E402
 ROOT = S.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'mira')
 RENDU = os.path.join(HERE, '..', 'rendu.cjs')
-DBG = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-mira'
+DBG = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-mira-corr'
 TMP = os.path.join(DBG, '_tmp')
 
 
