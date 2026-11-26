@@ -178,7 +178,35 @@ def aura_back(fig, P):
                 fig.fx_back.append(_aura_tongue(fig, x, h, w, ph, P, 1.0))
 
 
+EMBERS = [(38.0, 0.00, 0.9, 1.0), (47.0, 0.37, 1.1, 0.8), (62.0, 0.71, 0.8, 0.7), (75.0, 0.18, 1.0, 0.9),
+          (88.0, 0.55, 0.9, 1.0), (97.0, 0.86, 1.2, 0.8), (55.0, 0.93, 1.0, 0.6)]
+
+
+def ember(fig, x, y, r=0.7, op=1.0):
+    if op <= 0.02:
+        return ''
+    glow = fig.rad(x, y, r * 3.2, r * 3.2, [(0, FIRE[2], 0.5 * op), (1, FIRE[3], 0)])
+    core = fig.rad(x - r * 0.2, y - r * 0.2, r, r, [(0, FIRE[0], op), (0.6, FIRE[1], op), (1, FIRE[3], op)])
+    return '<circle cx="%.2f" cy="%.2f" r="%.2f" fill="%s"/><circle cx="%.2f" cy="%.2f" r="%.2f" fill="%s"/>' % (
+        x, y, r * 3.2, glow, x, y, r, core)
+
+
+def aura_embers(fig, P):
+    """Des braises douces qui montent du sol autour des jambes en ondulant (elles naissent, montent, s'éteignent)."""
+    a = P['aura']
+    if a <= 0.02:
+        return
+    t = P['ph'] / (2 * math.pi)
+    for i, (x, off, sp, s_) in enumerate(EMBERS):
+        k = (t * 0.5 * sp + off) % 1.0
+        y = GRD - 3 - 34 * k * (0.8 + 0.2 * min(2, a))
+        xx = x + 2.0 * math.sin(6.0 * k + i * 1.7)
+        o = min(1.0, 0.5 + 0.35 * a) * min(1, k * 6) * (1 - k) ** 0.8
+        fig.fx_front.append(ember(fig, xx, y, 0.5 * s_, o))
+
+
 def aura_front(fig, P):
+    aura_embers(fig, P)
     if P['aura'] > 0.02:
         for x, h, w, ph, front in aura_spots(P):
             if front:
@@ -237,9 +265,9 @@ def plume(fig, P, HEAD):
     strands = []
     for k, (pts, w0) in enumerate((
             ([(58.8, 18.4), (53.2, 18.6 + 0.2 * q), (48.2, 22.4 + 0.5 * q + 0.3 * w), (45.0, 28.6 + 0.9 * q + 0.6 * w),
-              (43.6 - 0.4 * q, 35.6 + 1.3 * q + 0.8 * w), (43.4 - 0.8 * q, 42.0 + 1.6 * q + 1.0 * w)], 4.4),
+              (43.6 - 0.4 * q, 35.6 + 1.3 * q + 0.8 * w), (43.4 - 0.8 * q, 42.0 + 1.6 * q + 1.0 * w)], 5.2),
             ([(58.6, 19.6), (53.6, 21.0 + 0.3 * q), (50.0, 25.6 + 0.6 * q + 0.4 * w), (48.4 - 0.3 * q, 31.0 + 1.0 * q + 0.7 * w),
-              (48.2 - 0.6 * q, 36.0 + 1.3 * q + 0.9 * w)], 3.2))):
+              (48.2 - 0.6 * q, 36.0 + 1.3 * q + 0.9 * w)], 3.8))):
         c = smooth_line(pts, 20)
         ws = [max(0.15, w0 * (0.8 + 0.35 * math.sin(math.pi * min(1, i / 20 * 1.6))) * (1 - (i / 20) ** 1.6)) for i in range(21)]
         left, right = sides(c, ws)
@@ -277,7 +305,7 @@ def far_arm(fig, P, UC):
                       (ellipse(*add(E, rot((1.8, -2.2), a1.deg)), 0.7, 0.35, a1.deg), BLACK.glint, 0.8)])
     gauntlet(fig, 'f', W, a2.deg, 1.0, P)
     # l'épaulière lointaine : dôme et une lame (bord gris, liseré rouge), en partie cachée par le plastron
-    k = mchain(mT(S[0] - S_F0[0], S[1] - S_F0[1]))
+    k = mchain(mT(S[0] - S_F0[0], S[1] - S_F0[1]), mS(0.9, 0.92, 80.0, 52.0))
     Q = lambda pts: [mapp(k, p) for p in pts]
     lame = sm(Q([(79.0, 57.6), (85.6, 58.0), (91.4, 56.6), (92.0, 60.4), (89.0, 64.6), (82.6, 64.4), (78.6, 62.0)]))
     dome = sm(Q([(73.6, 50.4), (79.6, 47.4), (86.4, 48.6), (90.8, 53.0), (90.6, 57.6), (85.6, 60.0), (79.0, 59.6), (74.6, 56.4)]))
@@ -581,7 +609,7 @@ def near_arm(fig, P, UC):
     gauntlet_grip(fig, P, G, ang, W, a2.deg)
     # ---- l'épaulière proche ----
     rotk = max(-12.0, min(12.0, 0.2 * (((a1.deg - 108.0) + 180) % 360 - 180)))
-    Mk = mchain(mT(S[0] - S_N0[0], S[1] - S_N0[1]), mR(rotk, *S_N0))
+    Mk = mchain(mT(S[0] - S_N0[0], S[1] - S_N0[1]), mR(rotk, *S_N0), mS(0.86, 0.88, 52.5, 52.0))
     Q = lambda pts: [mapp(Mk, p) for p in pts]
     lame2 = sm(Q([(39.0, 60.8), (45.0, 59.6), (52.6, 60.0), (58.2, 58.2), (58.0, 61.8), (53.4, 64.6), (45.6, 65.6), (40.2, 64.8)]))
     lame1 = sm(Q([(39.4, 56.6), (45.4, 55.4), (53.6, 55.8), (61.0, 53.4), (61.8, 57.0), (57.0, 60.4), (47.4, 61.8), (40.8, 61.0)]))
