@@ -3,7 +3,7 @@ import {
   ARENA_FREE_TICKETS, DAILY_BOSS_ATTEMPTS, DAILY_CHESTS, DAILY_QUESTS,
   GUILD_BOSS_ATTEMPTS, UNLOCKS, WEEKLY_CHESTS, WEEKLY_QUESTS, type Feature,
 } from '../../core/data/modes';
-import { dungeonAttemptsLeft, fusionPreview, missionEnd, passLevel, questPoints } from '../state/actions';
+import { coliseumFightsLeft, dungeonAttemptsLeft, fusionPreview, missionEnd, passLevel, questPoints } from '../state/actions';
 import { canLevelUp, heroByUid, idlePreview, isUnlocked } from '../state/selectors';
 import { now } from '../state/store';
 import type { PlayerState } from '../state/types';
@@ -26,7 +26,8 @@ export const dots = {
   dailyBoss: (s: PlayerState) => s.daily.bossAttempts < DAILY_BOSS_ATTEMPTS,
   arena: (s: PlayerState) => s.daily.arenaFights < ARENA_FREE_TICKETS,
   tower: () => false,
-  defense: () => false,
+  // Colisée : des combats à jouer aujourd'hui, ou la récompense de la semaine à prendre
+  defense: (s: PlayerState) => !!s.coliseum && (!!s.coliseum.pending || coliseumFightsLeft(s) > 0),
   adventure: (s: PlayerState) =>
     (['tower', 'missions', 'dungeons', 'dailyBoss', 'arena', 'defense'] as const).some(
       (f) => isUnlocked(s, f) && (isNew(s, f) || dots[f](s)),
