@@ -4,9 +4,8 @@ import {
   AD_SECONDS, ARENA_LEAGUES, ARENA_SHOP, DAILY_CHESTS, DAILY_QUESTS, GUILD_SHOP, PASS_LEVELS, PASS_POINTS_PER_LEVEL,
   WEEKLY_CHESTS, WEEKLY_QUESTS, type Reward,
 } from '../../../core/data/modes';
-import { STARTER_HERO, heroDef } from '../../../core/data/heroes';
+import { heroDef } from '../../../core/data/heroes';
 import { RENAME_COST } from '../../../core/data/modes';
-import { heroImage } from '../../art';
 import { legalDoc, type LegalDoc } from '../../legal';
 import { APP_VERSION } from '../../version';
 import { t } from '../../i18n';
@@ -23,6 +22,7 @@ import { AvatarRow } from './avatar';
 import { GemsTab, OffersTab, PassTab } from '../sections/boutique-offres';
 import { ModeShop } from '../sections/boutiques-modes';
 import '../sections/boutique.css';
+import { artUrl } from '../../art-url';
 
 export function QuestsModal() {
   const s = useGame();
@@ -202,9 +202,9 @@ export function NameScreen() {
   const [name, setName] = useState(randomName());
   const [error, setError] = useState<string | null>(null);
   return (
-    <div class="name-screen" style={{ backgroundImage: 'linear-gradient(180deg, #1a0e2a55, #1a0e2a99), url(art/ui-px/chargement.webp)' }}>
+    <div class="name-screen" style={{ backgroundImage: `linear-gradient(180deg, #120c3366, #120c33d9), url(${artUrl('art/ui-px/chargement.webp')})` }}>
+      {/* refaite le 26/11 (demande du propriétaire) : plus d'image, une carte bleu nuit cerclée d'or */}
       <div class="name-card">
-        <img src={heroImage(STARTER_HERO)} alt="" />
         <h1>{t('name.title')}</h1>
         <NameField value={name} onInput={(v) => { setName(v); setError(null); }} error={error} />
         <Btn kind="green" wide onClick={() => setError(chooseName(name))}>{t('ok')}</Btn>

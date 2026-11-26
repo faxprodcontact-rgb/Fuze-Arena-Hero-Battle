@@ -14,7 +14,7 @@ import { t } from './i18n';
 import { battleLook } from './look';
 import { setSpeed } from './state/actions';
 import { getState } from './state/store';
-import { killGame } from './game-kill';
+import { killGame, releaseIdle } from './game-kill';
 
 const H = 1280;
 const H_MAX = 1640;
@@ -307,6 +307,7 @@ export function runColiseumFight(parent: HTMLElement, data: Omit<ColiseumSceneDa
   const cs = getComputedStyle(probe), k = W / (parent.clientWidth || W);
   const safe = { top: (Number.parseFloat(cs.paddingTop) || 0) * k, bottom: (Number.parseFloat(cs.paddingBottom) || 0) * k };
   probe.remove();
+  releaseIdle();
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,

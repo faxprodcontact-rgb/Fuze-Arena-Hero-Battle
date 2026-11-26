@@ -6,6 +6,7 @@ import { TICK_MS, type UnitInit, type Unit } from '../core/battle/types';
 import { FightScene, W } from './fight-view';
 import { idleLook } from './look';
 import { getState } from './state/store';
+import { killGame, onIdleRelease } from './game-kill';
 
 export const IDLE_H = 980;
 const IDLE_SPEED = 1.2;
@@ -127,5 +128,11 @@ export function runIdle(parent: HTMLElement, setup: () => IdleSetup): () => void
   });
   game.scene.add('idle', IdleScene, true, { setup } satisfies IdleData);
   kept = game;
+  onIdleRelease(() => {
+    if (kept !== game) return;
+    kept = undefined;
+    onIdleRelease(undefined);
+    killGame(game);
+  });
   return () => game.loop.sleep();
 }

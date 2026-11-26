@@ -5,7 +5,7 @@ import { Battle } from '../core/battle/engine';
 import { ENERGY_MAX, type UnitInit } from '../core/battle/types';
 import { monsterToUnit } from '../core/battle/units';
 import { FightScene, W } from './fight-view';
-import { killGame } from './game-kill';
+import { killGame, releaseIdle } from './game-kill';
 
 export const SKILL_H = 470;
 /** Vitesse des animations (moins de 1 = ralenti). */
@@ -96,6 +96,7 @@ export class SkillScene extends FightScene {
 
 /** Lance l'aperçu dans le cadre donné. Renvoie la fonction qui l'arrête. */
 export function runSkillPreview(parent: HTMLElement, hero: UnitInit): () => void {
+  releaseIdle();
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
