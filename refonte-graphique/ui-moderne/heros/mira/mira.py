@@ -225,7 +225,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- le bras proche (droit) : bras nu, brassard d'acier à deux bandes d'or ; l'épaulière par-dessus ----
     arm_names = near_arm(fig, S, E, W, cast_on=None)
     pa_names = pauldron(fig)
-    fig.pose(pa_names, UC)
+    # l'épaulière suit un peu le bras quand il se lève (elle tourne autour de l'épaule) : le bras ne sort jamais
+    # du haut de l'épaulière
+    dl = ((ang_of(sub(E, S)) - UA0 + 90) % 360) - 90
+    fig.pose(pa_names, mchain(mR(max(-20.0, min(32.0, 0.22 * dl)), *S), UC))
 
     # ---- le poing, serré sur la hampe (quatre doigts devant, pouce par-dessus) ----
     fist_names = fist(fig, G, ang, W)
@@ -238,6 +241,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         for f_ in fx:
             f_(fig, fig.ctx)
     return fig
+
+
+def _ua0():
+    G, W, E = arm_ik(S0, G0, 1.0)
+    return ang_of(sub(E, S0))
 
 
 def mskx_(k, cy):
@@ -871,6 +879,8 @@ def main():
     x0, y0, w, h = FRAME
     print('mesures pour src/game/vecto.ts : [largeur, hauteur, x et y des pieds] =', [w, h, FEET[0] - x0, FEET[1] - y0])
 
+
+UA0 = _ua0()        # l'angle du bras au repos
 
 if __name__ == '__main__':
     main()

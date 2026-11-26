@@ -604,10 +604,31 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(head_parts + [k + s for k in SNAKES for s in 'bht'], HEAD)
     fig.ctx = dict(P=P, HEAD=HEAD, U=U, UC=UC, SF=SF, WF=WF, TF=TF, sinfo=sinfo, body=bodyinfo,
                    eyes=(mapp(HEAD, (76.2, 36.2)), mapp(HEAD, (83.4, 35.8))), palmF=TF((104.6, 54.0)))
+    prune_casts(fig)
     if fx:
         for f_ in fx:
             f_(fig, fig.ctx)
     return fig
+
+
+def prune_casts(fig):
+    """L'ombre portée d'un morceau ne tombe que sur les morceaux du dessous qu'il touche (même rendu, beaucoup moins de
+    découpes à calculer pour le navigateur : l'animation se rend bien plus vite)."""
+    boxes = []
+    for p in fig.parts:
+        x0, y0, x1, y1 = p.shape.bbox()
+        pts = [mapp(p.M, q) for q in ((x0, y0), (x1, y0), (x0, y1), (x1, y1))]
+        boxes.append((min(q[0] for q in pts), min(q[1] for q in pts), max(q[0] for q in pts), max(q[1] for q in pts)))
+    for i, p in enumerate(fig.parts):
+        if not p.cast:
+            continue
+        a = boxes[i]
+        m = p.cast * 1.4 + 0.5
+        near = [q.name for j, q in enumerate(fig.parts[:i])
+                if boxes[j][0] <= a[2] + m and boxes[j][2] >= a[0] - m and boxes[j][1] <= a[3] + m and boxes[j][3] >= a[1] - m]
+        p.cast_on = [n for n in near if p.cast_on is None or n in p.cast_on]
+        if not p.cast_on:
+            p.cast = 0
 
 
 def head(fig, P):

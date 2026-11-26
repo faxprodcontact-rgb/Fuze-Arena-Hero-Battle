@@ -120,6 +120,8 @@ A0 = M.SANG0
 ATTACK = [
     (0, {}),
     (90, dict(grip=(62.0, 76.5), ang=-34, crouch=1.0, head=(0, 0.6), tr=1.0, cp=0.6, sk=0.5)),
+    (112, dict(grip=(41.0, 68.0), ang=-58, crouch=1.0, lean=-0.4, head=(-0.3, 0.6), tr=1.0, cp=0.7)),
+    (136, dict(grip=(38.6, 54.0), ang=-84, crouch=1.0, lean=-0.8, head=(-0.6, 0.6), tilt=-0.8, wn=1, tr=1.0, cp=0.8)),
     (160, dict(grip=(46.5, 46.0), ang=-105, crouch=1.0, lean=-1.0, head=(-0.8, 0.6), tilt=-1.5, wn=2, tr=1.0, cp=0.8)),
     (250, dict(grip=(42.5, 42.5), ang=-132, crouch=1.2, lean=-2.0, head=(-1.0, 0.0), tilt=-4.0, wn=3, tr=2.0, cp=1.0, sk=0.8)),
     (380, dict(grip=(42.0, 42.0), ang=-135, crouch=1.3, lean=-2.2, head=(-1.1, -0.1), tilt=-4.5, wn=3, tr=2.2, cp=1.0, sk=0.8)),
@@ -133,7 +135,7 @@ ATTACK = [
     (1040, dict(crouch=0.6, cp=-0.6, tr=0.3)),
     (1170, {}),
 ]
-ATT_BEHIND = (110, 455)   # la lance passe derrière la tête et le corps
+ATT_BEHIND = (95, 455)    # la lance passe derrière la tête et le corps
 ATT_COUCH = (455, 900)    # couchée sous le bras (le talon passe derrière le corps)
 ATT_SWING = (380, 525)    # la fauche (le croissant de vent suit le fer)
 ATT_HIT = 525             # l'impact
@@ -155,7 +157,8 @@ SPECIAL = [
     (580, dict(crouch=3.0, lean=-1.0, head=(0, 0.8), tilt=-1.5, tr=1.0, cp=1.0, cl=3.0, wing=2.0, wop=1.0)),
     (650, dict(lift=20.0, crouch=-1.0, head=(0, 0.8), tr=2.0, cp=1.0, cl=2.0, wing=3.0, wop=1.0, sk=1.0, grip=(63, 81))),
     (750, dict(lift=AIR, crouch=0.0, head=(0, 0), tr=1.0, cp=0.0, cl=2.0, wing=2.0, wop=1.0, sk=0.5, grip=(63, 81))),
-    (830, dict(lift=AIR, head=(0, 0), wn=1, tr=0.0, cp=-1.0, cl=2.0, wing=3.0, wop=0.4, grip=(63, 81))),
+    (800, dict(lift=AIR, head=(0, 0), wn=1, tr=0.0, cp=-1.0, cl=2.0, wing=3.0, wop=0.35, grip=(63, 81))),
+    (830, dict(lift=AIR, head=(0, 0), wn=1, tr=0.0, cp=-1.0, cl=2.0, wing=3.0, wop=0.0, grip=(63, 81))),
     (1030, dict(lift=AIR, head=(0, -0.6), wn=1, tr=-1.0, cp=-1.0, cl=2.0, wing=3.0, wop=0.0, grip=(63, 81))),
     (1110, dict(lift=AIR - 4, head=(0, 0), tr=0.0, cp=0.0, cl=1.0, grip=(63, 81))),
     (1200, dict(lift=AIR - 12, head=(0, 0), wn=-1, tr=1.0, cp=1.0, cl=1.0, sk=-0.6)),
@@ -430,7 +433,7 @@ def fx_attack(tl):
         T = _HIT['T']
         u = (tl - ATT_HIT) / 420.0
         k = env(tl, ATT_HIT - 5, ATT_HIT + 25, ATT_HIT + 90, ATT_HIT + 260)
-        fig.fx_front.append(pop(fig, add(T, (2, 0)), 4.8 * (0.7 + 0.5 * k), facing=0, op=k))
+        fig.fx_front.append(pop(fig, add(T, (2, 0)), 6.2 * (0.7 + 0.5 * k), facing=0, op=k))
         ko = 1 - smooth((tl - ATT_HIT - 200) / 260)
         if ko > 0.02:
             g = smooth(min(1.0, u * 1.8))
@@ -605,9 +608,9 @@ def fx_special(tl):
         if kr > 0:
             grow = smooth((tl - SP_RING[0]) / 80)
             ph = tl / 160
-            rx, ry = 22 + 12 * grow, 6 + 2.4 * grow
-            fig.fx_back.append(feather_ring(fig, c, rx, ry, ph, kr, True))
-            fig.fx_front.append(feather_ring(fig, c, rx, ry, ph, kr, False))
+            rx, ry = 26 + 16 * grow, 6.5 + 4.0 * grow
+            fig.fx_back.append(feather_ring(fig, c, rx, ry, ph, kr, True, n=18, s=1.35))
+            fig.fx_front.append(feather_ring(fig, c, rx, ry, ph, kr, False, n=18, s=1.35))
             fig.fx_back.insert(0, glow(fig, c, rx + 10, WIND[2], 0.35 * kr, ry + 26))
         # l'armure de plumes : des plumes de vent se posent sur elle, brillent, puis s'en vont en lueurs
         ka = env(tl, SP_RING[0] + 80, SP_RING[0] + 160, SP_LAUNCH + 100, SP_LAUNCH + 300)
@@ -627,7 +630,7 @@ def fx_special(tl):
         if SP_LAUNCH - 10 <= tl <= SP_LAUNCH + 620:
             u = smooth((tl - SP_LAUNCH + 10) / 420)
             cc = lerp(c, CEN, smooth(min(1, (tl - SP_LAUNCH + 10) / 180)))
-            rx, ry = 34 + 120 * u, 8.4 + 20 * u
+            rx, ry = 42 + 112 * u, 10.5 + 18 * u
             op = 1 - smooth((tl - SP_LAUNCH - 260) / 360)
             gaps = smooth((tl - SP_LAUNCH - 160) / 300)
             fig.fx_back.append(ring_arcs(fig, cc, rx, ry, 4.2 * (1 - 0.5 * u), op, True, gaps, tl / 200))
@@ -656,14 +659,13 @@ def fx_special(tl):
         sw = smooth((tl - SP_DEFI[0]) / 330)
         red = []
         if kd > 0:
-            red = [(REDS, 2.0 + 5.0 * sw, 0.10 * kd), (REDS, 1.4 + 3.4 * sw, 0.14 * kd), (REDS, 1.0 + 2.0 * sw, 0.2 * kd),
-                   (REDS, 0.7 + 0.9 * sw, 0.3 * kd)]
+            red = [(REDS, (1.0 + 2.2 * sw) * q, 0.075 * kd) for q in (3.6, 3.0, 2.5, 2.0, 1.6, 1.25, 0.95, 0.7)]
             fig.fx_back.insert(0, glow(fig, ctx['chest'], 40 + 12 * sw, REDS, 0.22 * kd, 52 + 12 * sw))
         auras = []
         if kw > 0:
-            auras += [(WIND[2], 2.6, 0.25 * kw), (WIND[1], 1.4, 0.5 * kw)]
+            auras += [(WIND[2], q, 0.12 * kw) for q in (4.0, 3.0, 2.2, 1.5, 1.0)]
         if kh > 0:
-            auras += [(WIND[1], 2.4, 0.3 * kh), ('#ffffff', 1.2, 0.55 * kh)]
+            auras += [(WIND[1], q, 0.13 * kh) for q in (4.4, 3.2, 2.3, 1.6, 1.0)]
         fig.auras = auras + red
         veil = max(0.12 * kw, 0.22 * env(tl, SP_HEAL[0] + 40, SP_HEAL[0] + 120, SP_HEAL[0] + 180, SP_HEAL[1]))
         if veil > 0.01:
