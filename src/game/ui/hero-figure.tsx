@@ -5,6 +5,7 @@
 import { figureUrl, heroImage } from '../art';
 import { HD_FIG } from '../hd-figures';
 import { heroArt } from '../look';
+import { vectoFig } from '../vecto';
 
 /** Un pixel du dessin, en unités de la boîte (200 × 240) : un héros de 115 pixels mesure 200 unités. */
 const BOX_PER_PX = 1.75;
@@ -35,6 +36,18 @@ export function Figure({ id, class: cls = '' }: { id: string; class?: string }) 
 
 export function HeroFigure({ defId, class: cls = '' }: { defId: string; class?: string }) {
   const art = heroArt(defId);
+  const v = vectoFig(art);
+  if (v) {
+    // essai ?vecto=1 : le dessin vectoriel lisse, même échelle et mêmes pieds que le pixel art (il respire par le CSS)
+    const left = 53 - ((v.fx * BOX_PER_PX) / 200) * 100, top = 95 - ((v.fy * BOX_PER_PX) / 240) * 100;
+    return (
+      <span class={`hfig hfig-vec ${cls}`}>
+        <span class="px-win vec-win" style={{ left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%`, width: `${(((v.w * BOX_PER_PX) / 200) * 100).toFixed(2)}%`, aspectRatio: `${v.w} / ${v.h}` }}>
+          <img src={v.big} alt="" draggable={false} />
+        </span>
+      </span>
+    );
+  }
   const m = fig(art);
   if (!m) return <span class={`hfig ${cls}`}><img class="hfig-flat" src={heroImage(defId)} alt="" /></span>;
   const [w, h, fx, fy, n, ms] = m;

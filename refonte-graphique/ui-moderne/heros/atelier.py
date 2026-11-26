@@ -140,6 +140,7 @@ class Mat:
 
 class Part:
     def __init__(self, name, shape, mat, grad, cel, rim, cast, details, outline, ink, cast_on, edge, occl):
+        self.tf = ''                  # une transformation SVG (agrandir un groupe de morceaux, ex. la tête)
         self.name, self.shape, self.mat, self.grad = name, shape, mat, grad
         self.cel, self.rim, self.cast, self.details, self.outline = cel, rim, cast, details, outline
         self.ink, self.cast_on, self.edge, self.occl = ink, cast_on, edge, occl
@@ -172,6 +173,12 @@ class Figure:
         p = Part(name, shape, mat, grad, cel, rim, cast, list(details), outline, ink, cast_on, edge, occl)
         self.parts.append(p)
         return p
+
+    def scale(self, names, k, cx, cy):
+        """Agrandit des morceaux (et tout ce qui est peint dedans) autour d'un point : ex. la tête et sa crinière."""
+        for p in self.parts:
+            if p.name in names:
+                p.tf = 'translate(%s %s) scale(%s) translate(%s %s)' % (f(cx), f(cy), f(k), f(-cx), f(-cy))
 
     def glow(self, cx, cy, rx, ry, color, op=0.5, stops=None):
         self.under.append((cx, cy, rx, ry, color, op, stops))
@@ -213,7 +220,8 @@ class Figure:
         ids = {}
         for p in self.parts:
             ids[p.name] = self.uid('p')
-            self.defs.append('<path id="%s" d="%s"/>' % (ids[p.name], d[p.name]))
+            tf = ' transform="%s"' % p.tf if p.tf else ''
+            self.defs.append('<path id="%s" d="%s"%s/>' % (ids[p.name], d[p.name], tf))
         # lueurs de fond
         for cx, cy, rx, ry, color, op, stops in self.under:
             st = stops or [(0, color, op), (0.5, color, op * 0.45), (1, color, 0)]
@@ -274,7 +282,10 @@ class Figure:
                 inner.append('<path d="%s%s" fill-rule="evenodd" fill="%s"/>' % (sd, p.shape.move(-dx * th, -dy * th).d(), c2))
                 inner.append('<path d="%s%s" fill-rule="evenodd" fill="%s"/>' % (sd, p.shape.move(-dx * th * 0.45, -dy * th * 0.45).d(), c1))
             if inner:
-                out.append('<g clip-path="url(#%s)">%s</g>' % (clip_of(p.name), ''.join(inner)))
+                body = ''.join(inner)
+                if p.tf:
+                    body = '<g transform="%s">%s</g>' % (p.tf, body)
+                out.append('<g clip-path="url(#%s)">%s</g>' % (clip_of(p.name), body))
         for el in self.over:
             out.append(el)
         vb = '%s %s %s %s' % (f(self.x0), f(self.y0), f(self.w), f(self.h))

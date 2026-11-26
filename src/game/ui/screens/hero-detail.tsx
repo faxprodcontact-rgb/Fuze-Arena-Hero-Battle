@@ -26,6 +26,8 @@ import { describePassive, describeSkill, describeTalent } from '../../describe';
 import { runSkillPreview } from '../../scenes';
 import { close, open, swap, toast } from '../nav';
 import { FigStrip, figMeta } from '../sections/hero-fig';
+import { heroArt } from '../../look';
+import { vectoFig } from '../../vecto';
 import '../sections/heros.css';
 
 export function talentText(talent: Talent | undefined): string {
@@ -91,6 +93,26 @@ function StageFigure({ defId, up }: { defId: string; up: number }) {
   }, []);
   const m = figMeta(defId);
   const [bw, bh] = box;
+  const v = vectoFig(heroArt(defId));
+  if (v) {
+    // essai ?vecto=1 (vecto.ts) : le dessin vectoriel lisse, à la même taille que le pixel art (pas besoin d'une
+    // échelle entière : il reste net à toute taille) ; il respire par le CSS, pieds fixes
+    // même échelle que son pixel art (calée sur la largeur de sa planche, ramenée au même pas), pour comparer
+    const pw = m ? m[0] : v.w;
+    const steps = (Math.round(window.devicePixelRatio || 1) || 1) >= 2 ? Math.round(window.devicePixelRatio || 1) : 2;
+    const fit0 = 0.74 * Math.min((bh * 0.8) / 116, (bw - 2 * 64) / (pw * 0.82));
+    const fit = Math.max(1, Math.floor(fit0 * steps) / steps);
+    const feetY = bh * 0.88;
+    return (
+      <span class="hx-stage-fig" ref={host}>
+        {bh > 0 && (
+          <span class="hx-stage-win hx-vec" key={`${defId}-${up}`} style={{ left: `${bw / 2 - v.fx * fit}px`, top: `${feetY - v.fy * fit}px`, width: `${v.w * fit}px`, height: `${v.h * fit}px` }}>
+            <img src={v.big} alt="" draggable={false} style={{ transformOrigin: `${((v.fx / v.w) * 100).toFixed(1)}% ${((v.fy / v.h) * 100).toFixed(1)}%` }} />
+          </span>
+        )}
+      </span>
+    );
+  }
   if (!m) return <span class="hx-stage-fig" ref={host}><img class="hx-flat" src={heroImage(defId)} alt="" /></span>;
   const [w, h, fx, fy, n, ms] = m;
   const dpr = Math.round(window.devicePixelRatio || 1) || 1;

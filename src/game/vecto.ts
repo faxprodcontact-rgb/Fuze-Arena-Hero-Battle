@@ -1,0 +1,30 @@
+// Essai du 26/11 (demande du propriétaire) : un héros redessiné en VECTORIEL lisse, dans le style de l'interface
+// (refonte-graphique/ui-moderne/heros/), à comparer avec son pixel art dans les menus. Rien ne change par défaut :
+// l'adresse `?vecto=1` allume l'essai (gardé sur le téléphone), `?vecto=0` l'éteint. Le combat reste en pixel art.
+// À retirer (ou à généraliser) après l'avis du propriétaire.
+import { artUrl } from './art-url';
+
+const VECTO_ON = (() => {
+  try {
+    const q = new URLSearchParams(location.search).get('vecto');
+    if (q === '1') localStorage.setItem('fuze-vecto', '1');
+    if (q === '0') localStorage.removeItem('fuze-vecto');
+    return localStorage.getItem('fuze-vecto') === '1';
+  } catch { return false; }
+})();
+
+/** Par héros : [largeur, hauteur de l'image, x et y des pieds dans l'image], en pixels du dessin pixel art (même
+ * échelle : il se pose au même endroit). Mesures écrites par refonte-graphique/ui-moderne/heros/kael/kael.py. */
+const VECTO: Record<string, readonly [number, number, number, number]> = {
+  'assassins-2': [133, 122, 67, 120],
+};
+
+export interface VectoFig { w: number; h: number; fx: number; fy: number; big: string; small: string }
+
+/** Le dessin vectoriel d'un héros si l'essai est allumé et qu'il en a un ; sinon rien (on garde le pixel art). */
+export function vectoFig(id: string): VectoFig | undefined {
+  const m = VECTO_ON ? VECTO[id] : undefined;
+  if (!m) return undefined;
+  const [w, h, fx, fy] = m;
+  return { w, h, fx, fy, big: artUrl(`art/vecto/${id}.webp`), small: artUrl(`art/vecto/${id}-160.webp`) };
+}

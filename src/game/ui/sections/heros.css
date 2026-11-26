@@ -234,3 +234,6 @@ button.hx-dot { cursor: pointer; }
    n'avait plus de taille depuis la v0.39, seuls les mots restaient) */
 .hall-med .sum-med-icon { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; }
 .hall-med .sum-med-icon .icon { width: 72% !important; height: 72% !important; }
+/* essai ?vecto=1 (vecto.ts) : le héros vectoriel lisse respire, pieds fixes */
+.hx-stage-win.hx-vec { overflow: visible; }
+.hx-stage-win.hx-vec img { width: 100%; image-rendering: auto; animation: hf-breathe 3.4s ease-in-out infinite; }
