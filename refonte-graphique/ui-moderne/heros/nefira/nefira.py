@@ -48,8 +48,8 @@ FRAME = (-3, 6, 133, 113)
 #   breath : souffle 0..1 (le buste et le collier montent, la tête suit) ; lean : elle se penche en avant (+) depuis
 #   les hanches ; head / tilt : la tête ; wl / wlF : les ailes se lèvent (degrés, autour de leur racine) ; ws : elles
 #   s'ouvrent (les rémiges s'écartent en éventail) ; wph : la petite houle des plumes (repos) ; theta : la croix de
-#   vie s'incline vers l'ennemi (degrés, autour du poing) ; grip : où est le poing (point de prise) ; raise : la croix
-#   monte ; nh : la main proche s'ouvre vers l'avant (0..1) ; pend : le pendentif se balance ; ear : la boucle
+#   vie s'incline vers l'ennemi (degrés, autour du poing) ; grip : où est le poing (point de prise : la croix monte
+#   avec lui) ; nh : la main proche s'ouvre vers l'avant (0..1) ; pend : le pendentif se balance ; ear : la boucle
 #   d'oreille se balance ; hem : le bas de la robe ondule ; blink : yeux fermés ; smile : le sourire s'élargit.
 SF0 = (88.6, 56.4)         # l'épaule lointaine (sous le collier)
 LUF, LFF = 15.0, 11.4      # bras lointain : bras, avant-bras (jusqu'au poignet)
@@ -59,7 +59,7 @@ LU, LF = 13.2, 9.6         # bras proche
 HAND0 = (46.6, 80.4)       # le poignet proche (la main ouverte part de là)
 
 REST = dict(breath=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, wl=0.0, wlF=None, ws=0.0, wph=0.0, theta=0.0,
-            grip=GRIP0, nh=0.0, pend=0.0, ear=0.0, hem=0.0, blink=0.0, smile=0.0, gold=0.0)
+            grip=GRIP0, nh=0.0, pend=0.0, ear=0.0, hem=0.0, blink=0.0, smile=0.0, gold=0.0)   # gold : l'or de la croix s'illumine
 
 
 def rot(v, deg):
@@ -314,8 +314,8 @@ def ankh_shapes():
     cx = 100.9
     outer = sm([(cx, 14.6), (cx + 3.2, 16.4), (cx + 4.4, 20.4), (cx + 3.4, 24.6), (cx + 1.5, 27.8), (cx - 1.5, 27.8),
                 (cx - 3.4, 24.6), (cx - 4.4, 20.4), (cx - 3.2, 16.4)], t=0.95)
-    hole = sm([(cx, 17.2), (cx + 1.8, 18.6), (cx + 2.3, 21.0), (cx + 1.2, 24.2), (cx, 25.4), (cx - 1.2, 24.2),
-               (cx - 2.3, 21.0), (cx - 1.8, 18.6)], t=0.95)
+    hole = sm([(cx, 17.0), (cx + 2.0, 18.5), (cx + 2.6, 21.0), (cx + 1.4, 24.4), (cx, 25.7), (cx - 1.4, 24.4),
+               (cx - 2.6, 21.0), (cx - 2.0, 18.5)], t=0.95)
     loop = outer.hole(hole)
     bar = sm([(cx - 7.8, 27.6), (cx - 2.0, 28.8), (cx + 2.0, 28.8), (cx + 7.8, 27.6), (cx + 8.0, 31.8),
               (cx + 2.0, 31.0), (cx - 2.0, 31.0), (cx - 8.0, 31.8)], sharp=(0, 3, 4, 7), t=0.7)

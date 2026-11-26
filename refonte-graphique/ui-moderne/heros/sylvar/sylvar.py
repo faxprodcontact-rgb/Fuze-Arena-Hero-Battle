@@ -42,7 +42,7 @@ EYE = ['#f2ffd4', '#b4ff7a', '#6ee04e', '#2a9a40', '#17582c']
 GRD = 116          # le sol
 FEET = (64, 116)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (6, -6, 118, 125)
+FRAME = (8, -6, 114, 124)
 
 # ---------- le squelette (animation) ----------
 # Une pose = ces réglages ; REST est la pose du dessin (pixels du dessin, degrés, y vers le bas).
@@ -61,7 +61,7 @@ GRIP0 = (104.6, 57.0)               # la poignée de l'arc (le poing lointain)
 SH_F = (77.0, 57.6)                 # l'épaule lointaine
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, cape=0.0, tal=0.0, blink=0.0, eyes=0.0,
             flex=0.0, push=0.0, btilt=0.0, E=E0, W=W0, ha=HA0, hand='draw', arrow=1.0, free=0.0, vib=0.0, stone=0.0,
-            held=0.0)
+            held=0.0, hang=68.0)
 
 
 def rot(v, deg):
@@ -87,26 +87,55 @@ NOCK_L = (7.0, 0.3)                 # l'encoche (là où la corde est tirée) da
 
 
 def hand_shapes(mode):
-    """La main proche : (moufle, [doigts], pouce, point de l'encoche) dans le repère du poignet."""
+    """La main proche : (silhouette d'une seule forme, détails(H_), point de l'encoche) dans le repère du poignet
+    (x le long de l'avant-bras). Mains « en moufle » : le dos de la main, une rangée de doigts repliés."""
+    back = sm([(-1.0, -3.4), (2.8, -4.0), (5.6, -3.8), (6.8, -2.8), (7.0, 2.6), (5.6, 3.8), (2.8, 4.0), (-1.0, 3.2)])
     if mode == 'open':
-        # elle vient de lâcher : doigts ouverts, détendus, pouce en haut
-        palm = sm([(-0.8, -3.0), (3.4, -3.6), (6.6, -3.0), (7.4, -0.4), (6.8, 2.6), (3.2, 3.6), (-0.8, 3.0)])
-        fingers = [limb([(6.0, -2.0), (8.6, -2.8), (10.8, -3.2)], [2.4, 2.2, 1.9]),
-                   limb([(6.6, 0.2), (9.6, 0.4), (12.0, 0.9)], [2.5, 2.3, 2.0]),
-                   limb([(6.0, 2.2), (8.8, 3.0), (10.8, 3.8)], [2.3, 2.1, 1.8])]
-        thumb = limb([(2.6, -2.8), (4.8, -4.8), (7.0, -5.8)], [2.6, 2.3, 2.0])
-        return palm, fingers, thumb, (9.0, 0.4)
+        # elle vient de lâcher : doigts ouverts, détendus vers l'avant, pouce en haut
+        f1 = limb([(5.4, -2.6), (8.4, -3.2), (11.2, -3.6)], [2.5, 2.3, 2.0])
+        f2 = limb([(6.0, -0.2), (9.4, 0.0), (12.2, 0.5)], [2.6, 2.4, 2.1])
+        f3 = limb([(5.6, 2.2), (8.6, 2.9), (11.0, 3.8)], [2.4, 2.2, 1.9])
+        th = limb([(2.6, -2.8), (4.8, -4.8), (7.0, -6.0)], [2.6, 2.3, 2.0])
+        sil = union(back, f1, f2, f3, th, smooth=0.35, step=0.4)
+
+        def det(H_):
+            d = [(H_(sm([(-0.8, -3.2), (2.8, -3.8), (5.4, -3.6), (6.0, -0.6), (2.8, -0.4), (-0.6, -0.8)])), SKIN.light, 0.45)]
+            for a, b in (((6.4, -1.3), (11.0, -1.9)), ((6.4, 1.2), (10.6, 1.9)), ((3.4, -2.0), (5.6, -3.6))):
+                d.append((H_(ribbon([a, lerp(a, b, 0.5), b], [0.1, 0.55, 0.1])), SKIN.shadow, 0.75))
+            return d
+        return sil, det, (9.0, 0.4)
     if mode == 'grab':
-        # le poing serré sur une flèche (prise au carquois)
-        palm = sm([(-0.8, -3.2), (3.6, -3.8), (7.0, -2.8), (7.8, 0.2), (7.0, 3.2), (3.4, 3.8), (-0.8, 3.0)])
-        fingers = []
-        thumb = limb([(2.4, -2.6), (5.0, -3.6), (7.4, -3.0)], [2.6, 2.4, 2.2])
-        return palm, fingers, thumb, (6.4, 0.0)
-    # 'draw' : les doigts accrochent la corde (index au-dessus de la flèche, majeur et annulaire dessous)
-    palm = sm([(-0.8, -3.3), (3.2, -3.9), (6.4, -3.5), (8.2, -1.6), (8.6, 1.0), (7.6, 3.4), (3.6, 4.0), (-0.8, 3.2)])
-    fingers = []
-    thumb = limb([(2.2, -2.9), (4.4, -4.3), (6.6, -4.4)], [2.6, 2.4, 2.1])
-    return palm, fingers, thumb, NOCK_L
+        # le poing serré sur une flèche prise au carquois
+        fs = [rpoly([(5.0, -3.9), (8.6, -3.6), (8.6, -1.6), (5.0, -1.8)], 1.0), rpoly([(5.2, -1.8), (9.0, -1.6), (9.0, 0.5), (5.2, 0.4)], 1.0),
+              rpoly([(5.2, 0.4), (8.8, 0.5), (8.8, 2.6), (5.2, 2.5)], 1.0), rpoly([(5.0, 2.5), (8.0, 2.6), (7.9, 4.2), (5.0, 4.0)], 0.9)]
+        th = limb([(1.6, -2.8), (4.6, -4.4), (7.6, -4.0)], [2.6, 2.4, 2.2])
+        sil = union(back, *fs, th, smooth=0.55, step=0.4)
+
+        def det(H_):
+            d = [(H_(sm([(-0.8, -3.2), (2.8, -3.8), (5.0, -3.4), (5.0, -0.4), (2.8, -0.2), (-0.6, -0.8)])), SKIN.light, 0.4)]
+            for v in (-1.75, 0.45, 2.55):
+                d.append((H_(ribbon([(5.4, v), (7.2, v + 0.1), (8.8, v - 0.1)], [0.1, 0.5, 0.1])), SKIN.shadow, 0.75))
+            for v0, v1 in ((-3.8, -1.8), (-1.6, 0.4), (0.6, 2.5)):
+                d.append((H_(ellipse(7.6, (v0 + v1) / 2 - 0.2, 0.9, (v1 - v0) * 0.28)), SKIN.hi, 0.45))
+            return d
+        return sil, det, (6.4, 0.0)
+    # 'draw' : les doigts accrochent la corde (index au-dessus de la flèche, majeur et annulaire dessous), le pouce
+    # replié sous la mâchoire
+    fs = [rpoly([(5.2, -4.0), (9.2, -3.6), (9.4, -1.5), (5.2, -1.7)], 1.0),
+          rpoly([(5.4, -0.1), (9.6, 0.1), (9.6, 2.2), (5.4, 2.1)], 1.0),
+          rpoly([(5.2, 2.1), (9.0, 2.3), (8.8, 4.1), (5.2, 4.0)], 0.9)]
+    th = limb([(1.8, 3.0), (4.0, 4.4), (6.0, 4.6)], [2.6, 2.4, 2.1])
+    sil = union(back, *fs, th, smooth=0.55, step=0.4)
+
+    def det(H_):
+        d = [(H_(sm([(-0.8, -3.2), (2.8, -3.8), (5.2, -3.4), (5.4, 0.2), (2.6, 0.6), (-0.6, 0.0)])), SKIN.light, 0.45),
+             (H_(ribbon([(2.4, 2.6), (4.4, 3.4), (6.0, 3.4)], [0.1, 0.55, 0.1])), SKIN.shadow, 0.7),
+             (H_(ribbon([(5.6, 2.15), (7.4, 2.25), (9.0, 2.15)], [0.1, 0.5, 0.1])), SKIN.shadow, 0.75),
+             (H_(ribbon([(4.8, -3.2), (5.0, -0.4), (5.2, 3.6)], [0.1, 0.5, 0.1])), SKIN.shadow, 0.35)]
+        for v0, v1 in ((-3.8, -1.7), (0.0, 2.1)):
+            d.append((H_(ellipse(8.0, (v0 + v1) / 2 - 0.3, 1.0, (v1 - v0) * 0.26)), SKIN.hi, 0.5))
+        return d
+    return sil, det, (8.6, -0.8)
 
 
 def bow_line(P, G):
@@ -211,8 +240,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  details=[(ribbon([add(hip, (1.6, 2)), add(knee, (1.8, 0)), add(ank, (1.4, -1))], [0.2, 1.4, 0.2]), GREEN.light, 0.5)])
         fig.part(pre + 'boot', boot, LEATHER, cel=1.4, rim=0.7, cast=0.9,
                  details=[(sm([(boot.bbox()[0] - 1, 114.2), (boot.bbox()[2] + 1, 114.2), (boot.bbox()[2] + 1, 117), (boot.bbox()[0] - 1, 117)]), LEATHER.deep, 1),
+                          (ribbon([(boot.bbox()[0] - 1, 103.9), ((boot.bbox()[0] + boot.bbox()[2]) / 2 - 4, 103.6), (boot.bbox()[0] + 11, 103.3)], [1.9, 1.9, 1.9]), LEATHER.deep, 0.95),
+                          (ribbon([(boot.bbox()[0] - 1, 103.0), ((boot.bbox()[0] + boot.bbox()[2]) / 2 - 4, 102.7), (boot.bbox()[0] + 11, 102.4)], [0.1, 0.5, 0.1]), LEATHER.light, 0.5),
                           (buck, BRONZE.base, 1),
-                          (buck.scale(0.55, 0.5, buck.bbox()[0] + 1.2, buck.bbox()[1] + 0.6), BRONZE.hi, 0.9),
+                          (buck.scale(0.5, 0.42, (buck.bbox()[0] + buck.bbox()[2]) / 2, (buck.bbox()[1] + buck.bbox()[3]) / 2), LEATHER.deep, 1),
+                          (buck.scale(0.4, 0.3, buck.bbox()[2] - 0.6, buck.bbox()[1] + 0.3), BRONZE.hi, 0.9),
                           (ribbon([(boot.bbox()[2] - 2.6, 99.6), (boot.bbox()[2] - 2.2, 105), (boot.bbox()[2] - 1.0, 110.4)], [0.2, 1.3, 0.2]), LEATHER.hi, 0.45)])
         fig.part(pre + 'cuff', cuff, FUR, cel=1.0, rim=0.7, cast=1.0,
                  details=fur_tufts(cuff))
@@ -221,13 +253,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fcuff = sm([(68.4, 95.4), (73.6, 94.2), (79.8, 94.8), (80.8, 97.4), (79.6, 99.6), (76.4, 99.0), (73.8, 100.4), (71.2, 99.2),
                 (68.8, 99.6), (68.0, 97.4)], sharp=(5, 6, 7, 8))
     leg('f', (67.6, 80.0), (70.6, 88.4), (74.0, 97.0), [9.4, 8.2, 7.6], fboot, fcuff,
-        rpoly([(74.4, 102.4), (78.2, 102.2), (78.3, 104.4), (74.5, 104.6)], 0.7))
+        rpoly([(74.6, 101.9), (77.6, 101.8), (77.7, 105.0), (74.7, 105.1)], 0.7))
     nboot = sm([(48.8, 97.0), (57.8, 96.6), (58.0, 103.2), (58.8, 109.0), (63.0, 110.8), (65.4, 113.4), (65.2, 116.2),
                 (47.2, 116.2), (47.6, 109.4), (48.2, 102.4)], sharp=(6, 7))
     ncuff = sm([(47.2, 95.4), (52.6, 94.2), (58.6, 94.8), (59.6, 97.4), (58.4, 99.6), (55.4, 99.0), (52.6, 100.4), (50.0, 99.2),
                 (47.6, 99.6), (46.8, 97.4)], sharp=(5, 6, 7, 8))
     leg('n', (57.6, 80.0), (54.8, 88.4), (53.2, 97.0), [9.8, 8.6, 7.8], nboot, ncuff,
-        rpoly([(53.4, 102.4), (57.2, 102.2), (57.3, 104.4), (53.5, 104.6)], 0.7))
+        rpoly([(53.6, 101.9), (56.6, 101.8), (56.7, 105.0), (53.7, 105.1)], 0.7))
 
     # ================================================================ la tunique en lambeaux (sur les cuisses)
     tun = sm([(52.2, 77.6), (74.8, 77.4), (75.6, 83.4), (74.6, 88.8), (72.0, 86.4), (69.6, 90.8), (66.8, 86.8), (63.4, 89.8),
@@ -245,8 +277,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # le plastron éclairé à droite (cuir moulé), son arête, l'ombre sous les pectoraux
     tdet += [(sm([(64.4, 59.0), (71.4, 58.6), (74.6, 60.4), (74.0, 65.8), (71.0, 68.6), (65.6, 68.0), (63.6, 64.0)]), LEATHER.light, 0.75),
              (sm([(67.4, 59.4), (72.4, 59.6), (74.0, 61.2), (73.0, 63.6), (69.6, 62.0)]), LEATHER.hi, 0.55),
-             (ribbon([(63.6, 59.2), (63.2, 64), (64.0, 68.4), (64.6, 73.4), (64.4, 77.6)], [0.2, 0.9, 1.0, 0.8, 0.2]), LEATHER.shadow, 0.75),
-             (ribbon([(64.6, 59.4), (64.2, 64), (65.0, 68.4)], [0.1, 0.5, 0.1]), LEATHER.hi, 0.5),
+             (ribbon([(64.2, 69.6), (64.8, 73.4), (64.6, 77.0)], [0.2, 1.0, 0.2]), LEATHER.shadow, 0.5),
              (ribbon([(65.4, 68.8), (69.4, 69.6), (73.2, 68.4)], [0.2, 1.2, 0.2]), LEATHER.shadow, 0.7),
              (ribbon([(53.4, 69.0), (57.4, 69.8), (62.6, 69.2)], [0.2, 1.0, 0.2]), LEATHER.shadow, 0.55)]
     # deux sangles à boucles de bronze sur le flanc proche
@@ -292,9 +323,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         return fig.part(name, *a, **k)
 
     # -- le bois lointain (plus petit), derrière la capuche et le crâne
-    fant = antler([(79.0, 22.4), (81.4, 15.0), (84.4, 8.6), (87.6, 2.6)], 2.9,
-                  [([(81.2, 16.2), (78.2, 12.6), (75.8, 8.8)], 1.9), ([(84.0, 9.8), (82.0, 6.0), (80.6, 3.2)], 1.6),
-                   ([(85.6, 12.4), (88.8, 10.4), (90.2, 7.2)], 1.5)])
+    fant = antler([(79.0, 22.6), (81.2, 15.4), (84.2, 9.0), (87.4, 2.8)], 3.8,
+                  [([(81.0, 16.6), (78.0, 12.8), (75.6, 9.0)], 2.6), ([(83.8, 10.2), (81.8, 6.2), (80.4, 3.2)], 2.2),
+                   ([(85.4, 12.6), (88.4, 11.0), (90.0, 7.8)], 2.0)])
     hpart('fant', fant, ANTLER, grad=(90, 2, 76, 22, [(0, ANTLER.light), (0.5, ANTLER.base), (1, ANTLER.shadow)]),
           cel=0.9, rim=0.6, cast=0, details=antler_det(fant, far=True))
 
@@ -302,8 +333,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hood = sm([(48.6, 31.0), (50.4, 24.6), (54.4, 20.0), (60.4, 17.6), (67.4, 18.4), (74.4, 21.6), (80.6, 27.6), (83.4, 38.0),
                (81.6, 47.0), (75.0, 51.2), (64.0, 52.6), (54.6, 51.8), (49.4, 47.0), (47.8, 39.0)])
     hdet = [(sm([(60, 36), (84, 36), (84, 53), (60, 53)]), ('lin', 72, 36, 72, 52, [(0, VOID, 0.0), (0.25, VOID, 1), (1, VOID, 1)]), 1),
-            (ribbon([(51.6, 26.0), (51.4, 34.0), (52.6, 43.0), (55.6, 49.0)], [0.2, 1.6, 1.6, 0.2]), GREEN.deep, 0.55),
-            (ribbon([(55.0, 20.6), (52.8, 25.6), (52.4, 31.0)], [0.2, 1.1, 0.2]), GREEN.hi, 0.35)]
+            (sm([(48.6, 31.0), (50.4, 26.0), (52.4, 34.0), (53.6, 43.0), (56.6, 50.6), (54.6, 51.8), (49.4, 47.0), (47.8, 39.0)]), GREEN.deep, 0.35)]
     hpart('hood', hood, GREEN, grad=(70, 18, 50, 50, [(0, GREEN.light), (0.45, GREEN.base), (1, GREEN.shadow)]),
           cel=1.4, rim=0.8, cast=1.2, details=hdet)
 
@@ -321,19 +351,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
               (67.4, 49.4), (63.0, 52.0), (56.6, 51.2), (53.0, 46.0), (52.6, 37.0), (53.2, 28.0)])
     hpart('hoodrim', rim, GREEN, grad=(70, 18, 50, 50, [(0, GREEN.light), (0.45, GREEN.base), (1, GREEN.shadow)]),
           cel=1.2, rim=0.9, cast=1.1, cast_on=['skull'],
-          details=[(ribbon([(60.6, 21.4), (58.4, 27.6), (58.0, 35.0), (59.6, 42.0), (63.4, 47.6)], [0.2, 1.2, 1.3, 1.1, 0.2]), GREEN.light, 0.55),
-                   (ribbon([(55.4, 25.0), (54.8, 33.0), (55.8, 42.0)], [0.2, 1.2, 0.2]), GREEN.deep, 0.45)])
+          details=[(ribbon([(60.8, 21.0), (58.8, 27.6), (58.4, 35.0), (59.8, 42.0), (63.6, 47.6)], [0.2, 1.0, 1.1, 0.9, 0.2]), GREEN.light, 0.4)])
 
     # -- le bois proche (plus grand), sa meule sur le crâne
-    nant = antler([(63.6, 22.4), (58.0, 16.0), (51.0, 10.4), (42.6, 2.2)], 3.4,
-                  [([(59.6, 17.6), (58.6, 10.8), (57.8, 3.8)], 2.2), ([(52.2, 11.4), (50.6, 7.4), (50.0, 4.0)], 1.8),
-                   ([(62.6, 20.0), (64.8, 15.2), (66.2, 10.8)], 1.8)])
+    nant = antler([(63.8, 22.6), (58.2, 16.2), (51.2, 10.4), (42.6, 2.0)], 4.6,
+                  [([(59.4, 17.8), (58.4, 10.8), (57.6, 3.4)], 3.0), ([(52.4, 11.6), (50.8, 7.4), (50.0, 3.6)], 2.5),
+                   ([(62.4, 20.2), (64.8, 15.4), (66.4, 10.8)], 2.6), ([(46.6, 6.4), (43.6, 6.8), (41.0, 8.4)], 1.9)])
     hpart('nant', nant, ANTLER, grad=(66, 4, 44, 20, [(0, ANTLER.hi), (0.45, ANTLER.light), (1, ANTLER.shadow)]),
           cel=1.0, rim=0.6, cast=1.1, cast_on=['skull', 'hoodrim', 'hood'], details=antler_det(nant))
-    burr = sm([(60.8, 22.6), (62.6, 20.4), (65.4, 20.2), (67.0, 21.8), (66.0, 23.6), (62.4, 24.0)])
-    hpart('burr', burr, ANTLER, cel=0.6, rim=0.5, cast=0.8, cast_on=['skull'],
-          details=[(ribbon([(61.6, 22.8), (63.8, 21.6), (66.2, 21.6)], [0.1, 0.5, 0.1]), ANTLER.hi, 0.7)])
-
     # -- le talisman pendu au bois proche (cordelette, perle d'os, plume rouge), il se balance
     hang = (47.6, 7.4)
     ta = 8 + P['tal'] * 9
@@ -350,7 +375,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     E, W, ha = P['E'], P['W'], P['ha']
     Sh = mapp(UC, SH_N)
     Ew, Ww = mapp(UC, E), mapp(UC, W)
-    palm_l, fing_l, thumb_l, nock_l = hand_shapes(hand)
+    hsil, hdet, nock_l = hand_shapes(hand)
     N = add(Ww, rot(nock_l, ha))                          # l'encoche (où la corde est tenue)
     bl = bow_line(P, G)
     rest = add(G, rot((-0.6, -5.0), P['btilt']))           # la flèche repose sur le poing lointain
@@ -366,7 +391,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ws = []
     for i in range(n_ + 1):
         s = abs(i / n_ - 0.5) * 2
-        ws.append(3.9 - 2.3 * s ** 1.4)
+        ws.append(4.6 - 2.6 * s ** 1.3)
     left, right = side_lines(bowc, ws)
     bow = sm(left + [bowc[-1]] + right[::-1] + [bowc[0]], t=0.9)
     bdet = []
@@ -400,15 +425,19 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (B_(ellipse(4.2, -1.4, 0.75, 0.75)), BRONZE.light, 1),
                       (B_(ribbon([(1.8, -2.6), (4.2, -2.8), (6.4, -2.6)], [0.2, 1.0, 0.2])), LEATHER.hi, 0.6)])
     F_ = lambda sh: xf(sh, G[0], G[1], P['btilt'] * 0.4)
-    fist = F_(sm([(-7.8, -3.8), (-3.6, -4.6), (0.4, -4.2), (2.6, -2.4), (2.8, 1.6), (1.8, 4.2), (-2.4, 4.8), (-7.6, 3.8)]))
-    fdet = [(F_(sm([(-7.6, -3.6), (-3.6, -4.4), (0.2, -4.0), (0.6, -0.6), (-3.8, -0.2), (-7.4, -0.6)])), SKIN.light, 0.5)]
-    # les quatre doigts qui passent devant la poignée (de tailles inégales), séparés par des plis doux
-    for v0, v1 in ((-3.4, -1.3), (-1.3, 0.8), (0.8, 2.8), (2.8, 4.4)):
-        fdet += [(F_(ellipse(1.2, (v0 + v1) / 2 - 0.2, 1.1, (v1 - v0) * 0.32)), SKIN.light, 0.55),
-                 (F_(ribbon([(-1.2, v1), (0.8, v1 + 0.1), (2.4, v1 - 0.2)], [0.1, 0.5, 0.1])), SKIN.shadow, 0.7)]
+    palm = sm([(-7.8, -3.4), (-4.0, -4.2), (-1.0, -4.2), (-0.6, 4.2), (-3.8, 4.6), (-7.6, 3.6)])
+    FING = [(-4.1, -1.9, 2.9), (-1.9, 0.4, 3.2), (0.4, 2.6, 3.0), (2.6, 4.4, 2.4)]
+    fs = [rpoly([(-1.8, v0), (x1, v0 + 0.1), (x1, v1), (-1.8, v1)], [0.6, 1.1, 1.1, 0.6]) for v0, v1, x1 in FING]
+    fth = limb([(-6.0, -3.2), (-3.0, -4.6), (0.2, -4.8)], [2.8, 2.6, 2.3])
+    fist = F_(union(palm, *fs, fth, smooth=0.55, step=0.4))
+    fdet = [(F_(sm([(-7.6, -3.2), (-4.0, -4.0), (-1.4, -3.8), (-1.2, -0.4), (-4.0, 0.0), (-7.4, -0.4)])), SKIN.light, 0.45),
+            (F_(ribbon([(-6.0, -2.4), (-3.0, -3.4), (0.0, -3.6)], [0.1, 0.5, 0.1])), SKIN.shadow, 0.6)]
+    # les doigts qui passent devant la poignée (de tailles inégales), séparés par des plis doux, jointures éclairées
+    for v0, v1, x1 in FING:
+        fdet += [(F_(ellipse(x1 - 1.3, (v0 + v1) / 2 - 0.3, 1.0, (v1 - v0) * 0.27)), SKIN.hi, 0.5),
+                 (F_(ribbon([(-1.4, v1), (0.6, v1 + 0.1), (x1 - 0.2, v1 - 0.15)], [0.1, 0.5, 0.1])), SKIN.shadow, 0.75)]
+    fdet.append((F_(ribbon([(-1.6, -3.8), (-1.8, 0), (-1.5, 4.0)], [0.1, 0.6, 0.1])), SKIN.shadow, 0.45))
     fig.part('ffist', fist, SKIN, cel=1.1, rim=0.6, cast=1.0, details=fdet)
-    fig.part('fthumb', F_(limb([(-5.4, -3.4), (-2.2, -4.6), (0.6, -4.6)], [2.8, 2.6, 2.3])), SKIN, cel=0.6, rim=0.5, cast=0.7,
-             cast_on=['ffist', 'bow'])
 
     # ================================================================ la corde (devant le masque et le col)
     t_top, t_bot = bl[0], bl[-1]
@@ -453,8 +482,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              (FA(sm([(bx0, -4.0 * sg), (bx0 + 1.6, -4.0 * sg), (bx0 + 1.6, -1.6 * sg), (bx0, -1.6 * sg)], sharp=(0, 1, 2, 3), t=0.3)), BRONZE.light, 0.9),
              (FA(sm([(Lfa - 1.4, -3.8), (Lfa + 0.2, -3.8), (Lfa + 0.2, 3.8), (Lfa - 1.4, 3.8)], sharp=(0, 1, 2, 3), t=0.3)), BRONZE.base, 1),
              (FA(ellipse(bx0 + 5.0, -1.8 * sg, 0.7, 0.7)), BRONZE.light, 1)]
-    # le pli doux de la manche au creux du coude
-    adet.append((ribbon([lerp(Sh, Ew, 0.35), lerp(Sh, Ew, 0.7), lerp(Sh, Ew, 0.95)], [0.2, 1.2, 0.2]), GREEN.light, 0.45))
     fig.part('narm', arm, GREEN, grad=(Ew[0] + 14, Ew[1] - 8, Ew[0] - 4, Ew[1] + 8, [(0, GREEN.light), (0.5, GREEN.base), (1, GREEN.shadow)]),
              cel=1.4, rim=0.7, cast=1.2, details=adet)
 
@@ -468,13 +495,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     H_ = lambda sh: xf(sh, Ww[0], Ww[1], ha)
     if P['held'] > 0.5:
         # la flèche prise au carquois, tenue dans le poing (sous les doigts)
-        A2 = lambda sh: xf(sh, *add(Ww, rot((4.4, 0.2), ha)), ha - 96)
+        A2 = lambda sh: xf(sh, *add(Ww, rot((6.6, 0.2), ha)), P['hang'])
         arrow_parts(fig, A2, 30, 0, 'h', short=True)
-    fig.part('nhand', H_(palm_l), SKIN, cel=1.2, rim=0.7, cast=1.1,
-             details=hand_det(hand, H_))
-    for i, fsh in enumerate(fing_l):
-        fig.part('nfing%d' % i, H_(fsh), SKIN, cel=0.7, rim=0.5, cast=0.8, cast_on=['nhand'] + ['nfing%d' % j for j in range(i)])
-    fig.part('nthumb', H_(thumb_l), SKIN, cel=0.7, rim=0.5, cast=0.8, cast_on=['nhand', 'narm', 'strd0', 'strd1'])
+    fig.part('nhand', H_(hsil), SKIN, cel=1.1, rim=0.7, cast=1.1, details=hdet(H_))
 
     # ---- chaque groupe de morceaux prend sa pose ----
     fig.pose(head_names, HEAD)
@@ -501,33 +524,41 @@ def side_lines(center, widths):
 
 
 def fur_tufts(shape, big=False):
-    """Les touffes de la fourrure : des mèches courbes inégales, claires en haut à droite, des creux sombres entre."""
+    """La fourrure de loup : une couche claire devant (bord bas en touffes inégales), le fond plus sombre qui dépasse
+    dessous, et quelques touffes de tailles différentes (des formes, jamais des traits répétés)."""
     x0, y0, x1, y1 = shape.bbox()
-    out = []
-    n = 7 if big else 3
-    for i in range(n):
-        t = (i + 0.5) / n
-        x = x0 + (x1 - x0) * t + (0.8 if i % 2 else -0.6)
-        h = (y1 - y0)
-        yb = y1 - h * (0.12 + 0.08 * (i % 3))
-        out.append((ribbon([(x + 1.4, yb - h * 0.55), (x + 0.4, yb - h * 0.3), (x - 0.6, yb)], [0.1, 1.3 if big else 1.0, 0.1]), FUR.deep, 0.45))
-        out.append((ribbon([(x + 2.4, yb - h * 0.7), (x + 1.8, yb - h * 0.45), (x + 0.9, yb - h * 0.12)], [0.1, 0.9, 0.1]), FUR.hi, 0.6))
+    w, h = x1 - x0, y1 - y0
+    X = lambda u: x0 + w * u
+    Y = lambda v: y0 + h * v
+    # la couche claire : son bord bas en pointes irrégulières, au-dessus des pointes de la silhouette
+    edge = [(1.02, 0.62), (0.9, 0.78), (0.83, 0.62), (0.72, 0.84), (0.63, 0.6), (0.52, 0.8), (0.43, 0.58), (0.31, 0.76),
+            (0.22, 0.56), (0.1, 0.7), (-0.02, 0.5)]
+    layer = sm([(X(-0.05), Y(-0.1)), (X(1.05), Y(-0.1))] + [(X(u), Y(v)) for u, v in edge],
+               sharp=tuple(range(2, 2 + len(edge))), t=0.85)
+    out = [(layer, ('lin', X(1), Y(0), X(0.2), Y(0.8), [(0, FUR.hi, 0.7), (0.5, FUR.light, 0.55), (1, FUR.light, 0.1)]), 1)]
+    # deux ou trois touffes plus claires (larges, courtes, inégales) sur la couche de devant
+    clumps = [(0.78, 0.2, 0.82, 0.55, 4.2), (0.47, 0.18, 0.5, 0.5, 3.4)] if big else [(0.62, 0.15, 0.64, 0.55, 3.0)]
+    for u0, v0, u1, v1, ww in clumps:
+        c = [(X(u0) + 0.6, Y(v0)), (X((u0 + u1) / 2) + 0.3, Y((v0 + v1) / 2)), (X(u1), Y(v1))]
+        out.append((taper(crpath(c, 8), ww, 0.3, tip='sharp'), FUR.hi, 0.45))
     return out
 
 
 def antler(beam, w0, tines):
-    """Un bois de cerf d'UNE seule forme : le merrain épais qui s'affine, les andouillers qui en partent."""
+    """Un bois de cerf d'UNE seule forme : la meule à la base, le merrain épais qui s'affine, les andouillers."""
     c = crpath(beam, 18)
-    sh = [taper(c, w0, w0 * 0.42, tip='round', wmid=w0 * 0.78)]
+    sh = [taper(c, w0, w0 * 0.45, tip='round', wmid=w0 * 0.8)]
     for pts, w in tines:
-        sh.append(taper(crpath(pts, 10), w, w * 0.4, tip='round'))
-    return union(*sh, smooth=0.5, step=0.5)
+        sh.append(taper(crpath(pts, 10), w, w * 0.42, tip='round'))
+    a = math.atan2(beam[1][1] - beam[0][1], beam[1][0] - beam[0][0])
+    sh.append(ellipse(beam[0][0] + math.cos(a) * 0.8, beam[0][1] + math.sin(a) * 0.8, w0 * 0.78, w0 * 0.5, math.degrees(a) + 90))
+    return union(*sh, smooth=0.6, step=0.45)
 
 
 def antler_det(sh, far=False):
     """Les pointes polies plus claires, une arête de lumière."""
     x0, y0, x1, y1 = sh.bbox()
-    return [(sh, ('lin', 0, y1, 0, y0, [(0, ANTLER.base, 0), (0.55, ANTLER.light, 0), (1, ANTLER.hi, 0.85)]), 1)]
+    return [(sh, ('lin', 0, y1, 0, y0, [(0, ANTLER.base, 0), (0.6, ANTLER.light, 0), (1, ANTLER.hi, 0.8)]), 1)]
 
 
 def skull_details(P):
@@ -552,7 +583,7 @@ def skull_details(P):
     bl = P['blink']
     d += [(ellipse(64.6, 30.8, 4.5, 4.2), ('rad', 64.6, 30.8, 4.5, 4.2, [(0, BONE.shadow, 0.0), (0.7, BONE.shadow, 0.35), (1, BONE.shadow, 0)]), 1),
           (sm([(60.6, 30.4), (62.2, 27.4), (65.4, 26.6), (68.4, 28.2), (69.0, 31.8), (67.4, 34.8), (64.0, 35.4), (61.2, 33.6)]), VOID, 1),
-          (sm([(79.8, 29.0), (81.2, 26.6), (83.6, 26.4), (85.2, 28.6), (84.8, 32.2), (82.6, 34.0), (80.6, 33.0)]), VOID, 1)]
+          (sm([(80.2, 28.6), (82.0, 26.8), (84.4, 27.0), (85.6, 29.4), (84.8, 32.4), (82.8, 33.6), (80.8, 32.2)]), VOID, 1)]
     # la lueur verte des yeux (sur l'os autour) et les yeux eux-mêmes : une amande de lumière, inclinée (regard dur)
     gk = (1 - bl) * (1 + 0.35 * glow)
     if gk > 0.05:
@@ -576,7 +607,7 @@ def skull_details(P):
           (sm([(78.8, 27.6), (81.0, 25.2), (84.0, 24.8), (86.6, 26.6), (86.8, 28.6), (84.6, 27.0), (81.6, 26.8)], sharp=(0, 4)), BONE.hi, 0.9),
           (ribbon([(61.0, 35.2), (64.0, 36.6), (67.6, 36.0)], [0.2, 0.9, 0.2]), BONE.shadow, 0.6)]
     # la fente devant l'orbite, l'ouverture du nez au bout du museau, le bec (prémaxillaire), les molaires
-    d += [(ribbon([(70.2, 34.6), (72.4, 35.6), (74.8, 35.8)], [0.2, 0.9, 0.2]), VOID, 0.9),
+    d += [(ribbon([(69.4, 33.2), (70.8, 35.0), (72.8, 36.4)], [0.2, 0.8, 0.2]), BONE.shadow, 0.9),
           (ellipse(94.6, 42.2, 1.9, 1.05, 28), VOID, 1),
           (ellipse(95.2, 41.6, 0.8, 0.4, 28), BONE.shadow, 0.8),
           (ribbon([(93.2, 44.6), (95.8, 45.2), (98.2, 45.0)], [0.1, 0.6, 0.1]), BONE.deep, 0.6),
@@ -599,11 +630,11 @@ def arrow_parts(fig, A, length, stone, pre, short=False):
         fig.part(pre + 'shaft', shaft, WOOD, grad=solid(WOOD.light), cel=0, rim=0.35, cast=0.7)
     # les plumes (deux pennes rouges, une barbe claire), près de l'encoche
     o = -L * 0.35 if short else 0
-    vanes = A(sm([(o + 1.0, -0.6), (o + 3.0, -2.6), (o + 8.6, -2.8), (o + 9.8, -0.6), (o + 9.8, 0.6), (o + 8.6, 2.8), (o + 3.0, 2.6),
-                  (o + 1.0, 0.6)], sharp=(0, 3, 4, 7), t=0.8))
-    fig.part(pre + 'fletch', vanes, RED, cel=0.6, rim=0.5, cast=0.6,
-             details=[(A(sm([(o + 4.6, -2.7), (o + 6.2, -2.8), (o + 5.4, -0.6)], t=0.6)), '#f4ecd6', 0.9),
-                      (A(sm([(o + 4.6, 2.7), (o + 6.2, 2.8), (o + 5.4, 0.6)], t=0.6)), '#d8c8bc', 0.9)])
+    vanes = A(sm([(o + 1.2, -0.6), (o + 1.8, -2.3), (o + 4.6, -2.1), (o + 9.4, -0.5), (o + 9.4, 0.5), (o + 4.6, 2.1),
+                  (o + 1.8, 2.3), (o + 1.2, 0.6)], sharp=(1, 3, 4, 6), t=0.85))
+    fig.part(pre + 'fletch', vanes, RED, cel=0.5, rim=0.45, cast=0.6,
+             details=[(A(sm([(o + 3.6, -2.15), (o + 4.8, -2.05), (o + 6.0, -0.6), (o + 4.6, -0.6)], t=0.6)), '#f4ecd6', 0.9),
+                      (A(sm([(o + 3.6, 2.15), (o + 4.8, 2.05), (o + 6.0, 0.6), (o + 4.6, 0.6)], t=0.6)), '#d8c8bc', 0.9)])
     if short:
         return
     if stone <= 0.05:
@@ -625,22 +656,6 @@ def arrow_parts(fig, A, length, stone, pre, short=False):
                           (A(ribbon([(L - 5.4 * s, -1.4 * s), (L - 3.0 * s, -0.4 * s), (L - 1.4 * s, -1.0 * s), (L + 0.4 * s, -0.1 * s)],
                                     [0.1, 0.7 * k, 0.6 * k, 0.1])), BRONZE.light, min(1, 0.4 + 0.6 * k)),
                           (A(ribbon([(L - 4.8 * s, 1.6 * s), (L - 2.6 * s, 0.8 * s)], [0.1, 0.5 * k])), BRONZE.hi, k)])
-
-
-def hand_det(mode, H_):
-    if mode == 'draw':
-        # le dos de la main éclairé ; les doigts repliés sur la corde (index au-dessus de la flèche, deux dessous)
-        d = [(H_(sm([(-0.6, -3.1), (3.2, -3.7), (6.2, -3.3), (6.6, -0.4), (3.2, -0.2), (-0.4, -0.6)])), SKIN.light, 0.45)]
-        for v0, v1 in ((-1.6, 0.2), (0.6, 2.0), (2.0, 3.6)):
-            d += [(H_(ellipse(7.2, (v0 + v1) / 2, 1.1, (v1 - v0) * 0.36)), SKIN.light, 0.45),
-                  (H_(ribbon([(5.4, v1), (7.0, v1 + 0.1), (8.4, v1 - 0.2)], [0.1, 0.45, 0.1])), SKIN.shadow, 0.7)]
-        return d
-    if mode == 'grab':
-        d = [(H_(sm([(-0.6, -3.0), (3.6, -3.6), (6.8, -2.6), (6.8, -0.2), (3.2, 0.0), (-0.4, -0.6)])), SKIN.light, 0.45)]
-        for v0, v1 in ((-1.2, 0.6), (0.6, 2.2), (2.2, 3.6)):
-            d += [(H_(ribbon([(4.6, v1), (6.4, v1 + 0.1), (7.6, v1 - 0.2)], [0.1, 0.45, 0.1])), SKIN.shadow, 0.7)]
-        return d
-    return [(H_(sm([(-0.6, -2.8), (3.4, -3.4), (6.4, -2.8), (6.6, -0.2), (3.2, 0.0), (-0.4, -0.6)])), SKIN.light, 0.45)]
 
 
 def main():

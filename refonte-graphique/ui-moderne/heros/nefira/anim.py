@@ -306,7 +306,7 @@ def sand_ribbon(fig, pts, w, tones, op=1.0):
         return ''
     body = taper_ribbon(pts, w)
     hi = taper_ribbon([(x + 0.25, y - 0.35) for x, y in pts], w * 0.4)
-    gr = g_lin(fig, pts[0], pts[-1], [(0, tones[2], 0.2), (0.5, tones[1], 0.9), (1, tones[0], 1)])
+    gr = g_lin(fig, pts[0], pts[-1], [(0, tones[3], 0.25), (0.5, tones[2], 0.95), (1, tones[1], 1)])
     return '<g opacity="%g"><path d="%s" fill="%s"/><path d="%s" fill="%s" opacity="0.8"/></g>' % (op, body.d(), gr, hi.d(), tones[0])
 
 
@@ -569,7 +569,7 @@ def fx_special(tl):
             head_s = smooth((t - 120) / 380)
             tail_s = max(0.0, smooth((t - 260) / 420))
             if head_s - tail_s > 0.02:
-                for (ph, tones, w) in ((160, SAND, 2.4), (340, GOLDFX, 1.7)):
+                for (ph, tones, w) in ((160, SAND, 3.0), (340, GOLDFX, 2.2)):
                     seg = []
                     cur = None
                     n = 46
@@ -768,7 +768,7 @@ def pixel_frames(name):
         im = g.convert('RGBA')
         im = im.resize((im.width // 4, im.height // 4), Image.NEAREST)
         a = np.array(im)
-        key = (a[:, :, 0] == 232) & (a[:, :, 1] == 236) & (a[:, :, 2] == 242)
+        key = (a[:, :, 0] == 232) & (a[:, :, 1] == 236) & (abs(a[:, :, 2].astype(int) - 241) <= 1)   # le fond clair (242, ou 240 dans la spéciale)
         a[key, 3] = 0
         out.append((Image.fromarray(a), g.info.get('duration', 100)))
     sprite = Image.open(os.path.join(ROOT, 'public', 'art', 'hd', 'pose', 'myths-6.webp'))

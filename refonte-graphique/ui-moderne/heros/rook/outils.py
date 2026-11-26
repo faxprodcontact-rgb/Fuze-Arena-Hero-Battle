@@ -134,3 +134,24 @@ def along(path, u):
     t = (s - L[j - 1]) / ((L[j] - L[j - 1]) or 1)
     a, b = path[j - 1], path[j]
     return (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t), math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))
+
+
+def inter(a, b, step=0.25):
+    """L'intersection de deux formes (ex. l'iris coupé par les paupières), en une forme souple ; None si vide."""
+    pa, pb = Polygon(flatten(a)), Polygon(flatten(b))
+    if not pa.is_valid:
+        pa = pa.buffer(0)
+    if not pb.is_valid:
+        pb = pb.buffer(0)
+    u = pa.intersection(pb)
+    if u.is_empty:
+        return None
+    if u.geom_type != 'Polygon':
+        u = max(getattr(u, 'geoms', [u]), key=lambda g: g.area)
+        if u.geom_type != 'Polygon' or u.is_empty:
+            return None
+    ring = list(u.exterior.coords)[:-1]
+    L = sum(math.dist(ring[i], ring[(i + 1) % len(ring)]) for i in range(len(ring)))
+    n = max(10, int(L / step))
+    pts = resample(ring + [ring[0]], n)[:-1]
+    return sm(pts, t=0.6)

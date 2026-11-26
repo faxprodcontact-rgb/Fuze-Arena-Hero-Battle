@@ -273,7 +273,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['cane', 'canef', 'canec', 'vial', 'cork', 'fist', 'nthumb', 'ring'], CANE)
     fig.pose(SKULL_NAMES, SKM)
     fig.pose(['jaw'], mchain(SKM, mR(P['jaw'], 91.6, 46.0)))
-    fig.ctx = dict(P=P, U=U, UC=UC, HEAD=HEAD, skull=sc, mouth=mapp(SKM, (98.6, 46.0)), cane_foot=(CANE_X, GRD - P['cane']),
+    fig.ctx = dict(P=P, U=U, UC=UC, HEAD=HEAD, HAT=HAT, TAIL=TAIL, SKM=SKM, skull=sc, mouth=mapp(SKM, (98.6, 46.0)), cane_foot=(CANE_X, GRD - P['cane']),
                    cane_top=mapp(CANE, (CANE_X, 54.0)), head=mapp(HEAD, (70, 36)), chest=mapp(TOR, (64, 64)),
                    eyes=(mapp(HEAD, (62.4, 36.4)), mapp(HEAD, (78.0, 36.0))))
     if fx:
