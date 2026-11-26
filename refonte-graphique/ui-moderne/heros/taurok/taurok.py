@@ -314,8 +314,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         f1, f2 = Seg(Sfu, Ef), Seg(Ef, Wf2)
         fa1 = math.degrees(math.atan2(f1.u[1], f1.u[0]))
         fig.part('farm', farm, FUR, cel=1.6, rim=0.7, cast=1.2, cast_on=['torso', 'belt', 'cloth', 'strapA', 'strapB', 'stud3', 'stud4', 'buckle', 'haft', 'head'],
-                 details=[(ellipse(*f1.at(0.2, 1.4), 4.0, 4.8, fa1), FUR.hi, 0.35),
-                          (ellipse(*f1.at(0.65, 2.0), 2.2, 4.0, fa1 - 90), FUR.light, 0.35)])
+                 details=[(ribbon([f1(-5.6, 3.6), f1(-6.8, -1.0), f1(-4.4, -5.6)], [0.2, 2.2, 0.2]), FUR.light, 0.5),
+                          (ellipse(*f1.at(0.65, 2.0), 2.0, 4.0, fa1 - 90), FUR.light, 0.22)])
         fa2 = math.degrees(math.atan2(f2.u[1], f2.u[0]))
         bc = f2.at(0.42)
         fig.part('fbrac', cuff(bc, fa2, 7.0, 10.6), GOLD, cel=0.8, rim=0.6, cast=0.9, details=cuff_det(bc, fa2, 7.0, 10.6, 2))

@@ -10,3 +10,5 @@ refonte-graphique/*-vis*.png
 # valeurs locales de Supabase (docs/connexion-comptes.md)
 .env.local
 .env.*.local
+# images intermédiaires des animations vectorielles (refaites par anim.py)
+refonte-graphique/ui-moderne/heros/*/_images/
