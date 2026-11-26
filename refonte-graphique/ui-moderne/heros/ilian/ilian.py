@@ -548,20 +548,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=1.0, rim=0.6, cast=1.2, cast_on=['mane'], details=hd)
     fig.ctx_face = dict(oeil_proche=(exN, eyY, ewN), oeil_fond=(exF, eyY, ewF), nez=(nx, ny), bouche=(mx, my, mw))
 
-    # ---- l'oreille (sur la tempe, la crinière derrière)
-    ear = sm([(62.8, 28.4), (60.6, 27.4), (58.8, 28.8), (58.4, 32.2), (59.2, 35.0), (61.4, 36.4), (63.6, 34.6)])
-    fig.part('ear', ear, SKIN, cel=0.8, rim=0.5, cast=0.8, cast_on=['mane'],
-             details=[(sm([(61.6, 29.6), (60.2, 29.4), (59.8, 32.0), (60.6, 34.2), (62.2, 34.4), (61.0, 32.0)]), SKIN.shadow, 0.75),
-                      (ribbon([(60.4, 28.4), (59.4, 31.0), (59.8, 34.2)], [0.1, 0.5, 0.1]), SKIN.light, 0.6)])
-
     # ---- la grande barbe blanche, en mèches, posée sur la poitrine ; la bouche (fermée au repos) dedans
     # (avis du 26/11, 2e passage : du côté du fond aussi, la barbe monte le long de la joue jusqu'à la tempe, sous la
     # queue du sourcil, et colle au bord du visage : son bord extérieur suit le contour de la face, un peu dehors)
+    # (avis du 26/11, 3e passage : « l'oreille doit apparaître devant et la barbe l'entourer » : le favori part de sous
+    # la couronne, passe au-dessus de l'oreille, derrière elle et dessous, puis rejoint la barbe ; l'oreille est
+    # dessinée PAR-DESSUS, entière)
     beard = sm([(62.6, 28.6), (64.4, 30.4), (65.6, 33.6), (68.6, 35.8), (72.4, 37.0), (75.6, 38.6), (78.0, 38.9),
                 (80.8, 37.8), (83.2, 36.4), (84.9, 34.4), (85.9, 32.0), (86.3, 30.2), (86.9, 29.0), (87.6, 29.6),
                 (87.8, 32.4), (87.7, 35.6), (88.2, 38.4), (88.8, 41.0), (88.8, 43.0), (86.8, 49.0), (83.0, 55.6),
                 (79.2, 60.2), (77.8, 63.4), (75.4, 60.8), (72.8, 64.6), (70.8, 68.6), (68.4, 63.8), (66.4, 61.0),
-                (64.0, 62.0), (62.4, 56.4), (60.4, 49.6), (59.6, 42.0), (60.2, 35.4), (61.0, 30.6)], sharp=(22, 25, 28))
+                (64.0, 62.0), (62.4, 56.4), (60.4, 49.6), (59.4, 42.6), (57.8, 39.8), (56.6, 36.4), (56.2, 32.4),
+                (56.6, 28.6), (57.8, 25.8), (59.8, 24.6), (61.8, 25.0), (62.6, 26.6)], sharp=(22, 25, 28))
     ro = P['roar']
     # la bouche : fermée, lèvres serrées, coins vers le bas (la colère) ; quand il crie (roar), elle s'entrouvre un peu
     # (petite ouverture sombre, jamais une grande gueule qui déforme le visage)
@@ -570,6 +568,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         # sous les joues : l'ombre portée du visage sur le haut de la barbe
         (ribbon([(63.8, 31.0), (66.0, 34.8), (70.0, 36.8), (76.0, 39.2), (80.8, 38.6)], [0.2, 1.4, 1.2, 1.0, 0.2]), HAIR.shadow, 0.7),
         (ribbon([(80.4, 38.8), (83.4, 37.2), (85.4, 34.8), (86.4, 31.8), (86.9, 29.8)], [0.2, 0.9, 0.8, 0.5, 0.1]), HAIR.shadow, 0.6),
+        # le favori proche, autour de l'oreille : une ombre dans le creux derrière elle, un reflet sur le bord du dehors
+        (ribbon([(60.4, 26.0), (58.4, 28.6), (57.8, 32.6), (58.6, 36.6), (61.0, 39.0), (63.0, 40.2)], [0.2, 0.9, 1.0, 1.0, 0.8, 0.2]), HAIR.shadow, 0.75),
+        (ribbon([(58.6, 25.4), (57.2, 28.4), (56.9, 32.6), (57.6, 36.4), (59.2, 39.6)], [0.1, 0.5, 0.6, 0.5, 0.1]), HAIR.hi, 0.7),
         # le favori du fond : une mèche éclairée qui descend le long de la joue (la lumière vient d'en haut à droite)
         (ribbon([(87.2, 30.6), (87.1, 33.6), (87.2, 36.8), (87.8, 40.4)], [0.1, 0.55, 0.6, 0.2]), HAIR.hi, 0.8),
         # les mèches : de grandes ombres en S qui coulent vers les pointes, inégales ; des reflets sur le dessus
@@ -601,6 +602,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                     [0.1, 0.4, 0.45, 0.4, 0.1]), '#5a2030', 0.85)]
     fig.part('beard', beard, HAIR, cel=1.2, rim=0.7, cast=1.6, cast_on=['torso', 'farm', 'fpaul', 'face', 'mane', 'narm'],
              details=bdt, grad=(88, 38, 62, 66, [(0, HAIR.light), (0.5, HAIR.base), (1, HAIR.shadow)]))
+    # ---- l'oreille : DEVANT le favori et la barbe (ils l'entourent), entière et bien visible
+    # (le bord roulé éclairé en haut, le creux de la conque dans l'ombre, le petit lobe en bas)
+    ear = sm([(63.4, 28.8), (61.8, 27.2), (59.6, 27.4), (58.2, 29.6), (57.9, 32.6), (58.6, 35.2), (60.2, 36.9),
+              (62.0, 37.0), (63.5, 35.2)])
+    fig.part('ear', ear, SKIN, cel=0.7, rim=0.5, cast=0.9, cast_on=['beard', 'mane', 'face'],
+             grad=(63, 27, 58, 37, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]),
+             details=[(sm([(62.0, 29.4), (60.6, 29.0), (59.6, 30.8), (59.6, 33.2), (60.6, 34.9), (62.2, 34.8), (61.6, 33.0), (62.4, 31.2)]), SKIN.shadow, 0.8),
+                      (sm([(61.6, 30.6), (60.8, 30.6), (60.4, 32.2), (61.0, 33.6), (61.8, 33.4), (61.4, 32.2)]), SKIN.deep, 0.45),
+                      (ribbon([(63.0, 28.4), (61.2, 27.9), (59.6, 28.6), (58.7, 30.4), (58.5, 32.4)], [0.1, 0.6, 0.6, 0.4, 0.1]), SKIN.light, 0.75),
+                      (ellipse(61.2, 35.8, 0.9, 0.6, 20), SKIN.light, 0.45)])
     # la moustache tombante : elle part juste sous le nez (centrée sur la médiane) et pend de chaque côté de la bouche
     # (le côté du fond un peu plus court : le 3/4)
     must = sm([(mx - 7.4, my + 6.6), (mx - 7.8, my + 2.4), (mx - 5.8, my - 0.8), (mx - 2.8, my - 2.5), (nx, ny + 0.5),

@@ -25,7 +25,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
-from atelier import Mat, sm, limb, ribbon, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
+from atelier import Mat, sm, sides, limb, ribbon, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from lib import Shape  # noqa: E402
 from outils import (rot, add, sub, lerp, norm, ang_of, ik, arm_shape, crpath, taper, under, FigN, rim_band,  # noqa: E402
                     inset, unit)
@@ -330,6 +330,7 @@ FRINGE_PTS = [(61.2, 28.0), (70.0, 26.8), (82.8, 27.4), (83.4, 30.4), (82.8, 35.
 # le galon de l'ouverture épouse le contour du visage (il mord un peu sur la joue : aucun vide sombre entre les deux) ;
 # il s'interrompt là où l'oreille traverse la capuche (une fente) : un morceau au-dessus, un morceau au-dessous
 TRIM_C = [(81.8, 26.7), (76.0, 26.4), (68.0, 26.5), (61.8, 27.5), (60.0, 29.5), (59.55, 32.4), (59.5, 35.7)]
+EAR_LOW = 44.0             # le bord bas de l'oreille, là où le galon du dessous passe sous elle
 TRIMLOW_C = [(60.3, 43.3), (60.75, 45.0), (62.3, 47.5), (65.1, 50.1), (68.3, 52.0), (71.0, 53.3)]
 TRIMFAR_C = [(81.8, 26.7), (83.6, 28.2), (84.3, 30.8), (84.0, 33.8), (82.6, 37.2), (80.6, 40.4)]
 
@@ -482,9 +483,20 @@ def head(fig, P, HEAD, UC):
     fig.part('trim', trim, GOLD, grad=(80, 25, 60, 52, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), cel=0.5, rim=0.45,
              cast=1.0, cast_on=['face', 'fringe', 'hood', 'ear'],
              details=[(ribbon(crpath([(81.6, 26.2), (72.0, 25.8), (63.0, 26.6), (59.6, 29.2)], 12), swell(12, 0.5)), GOLD.hi, 0.75)])
-    trimlow = limb(TRIMLOW_C, [1.9] * len(TRIMLOW_C))
+    # le morceau du dessous part de SOUS l'oreille (avis, tour 3) : son bout est coupé net le long du bord bas de
+    # l'oreille (plus de bout arrondi posé sur elle), l'oreille y jette une ombre douce
+    tl_l, tl_r = sides(TRIMLOW_C, [1.9] * len(TRIMLOW_C))
+    d0 = norm(sub(TRIMLOW_C[1], TRIMLOW_C[0]))
+
+    def to_ear(p):                                # le coin du bout, ramené sur le bord bas de l'oreille (y = EAR_LOW)
+        return add(p, d0, (EAR_LOW - p[1]) / d0[1])
+    tl_l[0], tl_r[0] = to_ear(tl_l[0]), to_ear(tl_r[0])
+    end = add(TRIMLOW_C[-1], norm(sub(TRIMLOW_C[-1], TRIMLOW_C[-2])), 0.95)
+    trimlow = sm(tl_l + [end] + tl_r[::-1], sharp=(0, 2 * len(tl_l)), t=0.6)
     fig.part('trimlow', trimlow, GOLD, grad=(80, 25, 60, 52, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), cel=0.5,
-             rim=0.45, cast=1.0, cast_on=['face', 'fringe', 'hood', 'ear'])
+             rim=0.45, cast=1.0, cast_on=['face', 'fringe', 'hood'],
+             details=[(sm([add(tl_l[0], d0, -1), add(tl_r[0], d0, -1), add(tl_r[0], d0, 0.9), add(tl_l[0], d0, 0.9)], t=0.5),
+                       GOLD.shadow, 0.55)])
     clasp = sm([(70.6, 51.8), (72.6, 53.0), (73.0, 54.8), (71.2, 56.4), (69.0, 56.0), (68.2, 54.2), (69.0, 52.6)], t=0.95)
     fig.part('clasp', clasp, GOLD, grad=(73, 52, 68, 56.4, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), cel=0.6, rim=0.5,
              cast=0.9, cast_on=['face', 'hood', 'pel', 'trim', 'trimlow'],
@@ -632,24 +644,28 @@ def dagger_and_fist(fig, P, UC):
     fig.part('guard', guard, GOLD, grad=(*D(4.6, -3 * lit), *D(3, 3 * lit), [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]),
              cel=0.4, rim=0.4, cast=0.7, cast_on=['blade', 'tunic', 'shield'],
              details=[(ribbon([D(4.2, -2.6 * lit), D(4.4, -0.4 * lit)], [0.4, 0.2]), GOLD.glint, 0.8)])
-    # le poing : il serre la fusée, les doigts repliés le long d'elle (jointures en diagonale), le pouce par-dessus
+    # le poing, vu du DOS de la main (avis du propriétaire, tour 3) : le dos de la main côté poignet, la rangée des
+    # jointures parallèle à la fusée, les quatre doigts repliés dessous (l'index contre la garde) ; le pouce passe de
+    # l'autre côté de la fusée, caché derrière : on ne le voit jamais.
     wv = norm(sub(W, G))                          # vers le poignet
-    wx = wv[0] * u[0] + wv[1] * u[1]
     wy = wv[0] * v[0] + wv[1] * v[1]
     sy = 1 if wy < 0 else -1                      # le dos de la main est du côté du poignet (en travers)
-    fist = DS([(-3.6, -3.0 * sy), (0.4, -3.6 * sy), (3.4, -3.0 * sy), (3.9, 0.0), (3.4, 2.8 * sy), (0.0, 3.3 * sy), (-3.4, 2.9 * sy),
-               (-4.0, 0.0)], t=0.95)
-    fdt = [(DS([(-3.0, -2.6 * sy), (3.2, -2.8 * sy), (3.6, -0.6 * sy), (-3.4, -0.4 * sy)], t=0.9), SKIN.light, 0.4)]
-    # les quatre doigts repliés, de tailles inégales, séparés par des plis doux (du côté opposé au poignet)
-    for x0_, x1_ in ((2.0, 3.8), (0.2, 2.0), (-1.6, 0.2), (-3.4, -1.6)):
-        fdt += [(ribbon([D(x0_ + 0.05, 0.6 * sy), D(x0_ - 0.05, 1.8 * sy), D(x0_ + 0.1, 3.0 * sy)], [0.1, 0.45, 0.1]), SKIN.deep, 0.55),
-                (ellipse(*D((x0_ + x1_) / 2 + 0.2, 2.0 * sy), 0.55, 0.4), SKIN.light, 0.35)]
-    fdt += [(ribbon([D(-3.4, 0.6 * sy), D(0.0, 0.5 * sy), D(3.4, 0.6 * sy)], [0.1, 0.55, 0.1]), SKIN.shadow, 0.5)]
+    KX = (2.7, 0.9, -0.9, -2.6)                   # le milieu de chaque doigt (de l'index à l'auriculaire)
+    fist = DS([(-3.4, -3.0 * sy), (0.2, -3.4 * sy), (3.2, -3.0 * sy), (3.8, -0.8 * sy), (3.8, 1.2 * sy),
+               (3.4, 2.9 * sy), (2.7, 3.35 * sy), (1.8, 3.0 * sy), (0.9, 3.4 * sy), (0.0, 3.05 * sy), (-0.9, 3.35 * sy),
+               (-1.75, 2.95 * sy), (-2.6, 3.05 * sy), (-3.5, 2.4 * sy), (-4.0, 0.4 * sy)], t=0.9)
+    # le dos de la main (plat, il prend la lumière), les jointures en relief, le pli où les doigts se replient
+    fdt = [(DS([(-3.0, -2.7 * sy), (3.0, -2.8 * sy), (3.4, -0.9 * sy), (-3.4, -0.7 * sy)], t=0.9), SKIN.light, 0.35)]
+    for kx in KX:
+        fdt += [(ellipse(*D(kx + 0.15, -0.05 * sy), 0.8, 0.45), SKIN.light, 0.4)]
+    fdt += [(ribbon([D(-3.5, 0.9 * sy), D(0.0, 1.05 * sy), D(3.5, 0.9 * sy)], [0.1, 0.5, 0.1]), SKIN.shadow, 0.45)]
+    # les doigts repliés, séparés par des plis doux, chacun arrondi à sa deuxième jointure
+    for x_ in (1.8, 0.0, -1.75):
+        fdt += [(ribbon([D(x_ + 0.05, 1.2 * sy), D(x_, 2.1 * sy), D(x_ - 0.05, 3.0 * sy)], [0.1, 0.3, 0.1]), SKIN.deep, 0.4)]
+    for kx in KX[:3]:
+        fdt += [(ellipse(*D(kx + 0.2, 2.3 * sy), 0.5, 0.35), SKIN.light, 0.3)]
     fig.part('fist', fist, SKIN, grad=(*D(3, -3 * lit), *D(-3, 3 * lit), [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]),
              cel=0.9, rim=0.6, cast=1.0, cast_on=['grip', 'narm', 'tunic', 'cape', 'belt', 'shield', 'blade', 'guard', 'pommel'], details=fdt)
-    thumb = limb([D(-2.6, -2.2 * sy), D(0.4, -1.4 * sy), D(2.6, -0.2 * sy)], [2.6, 2.4, 2.1])
-    fig.part('thumb', thumb, SKIN, cel=0.6, rim=0.5, cast=0.8, cast_on=['fist', 'guard'],
-             details=[(ellipse(*D(2.4, -0.3 * sy), 0.7, 0.55), SKIN.light, 0.55)])
     fig.ctx.update(tip=D(L_, 0.0), u=u)
 
 

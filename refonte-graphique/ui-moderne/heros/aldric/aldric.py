@@ -30,7 +30,7 @@ from atelier import Figure, Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, m
 from lib import Shape  # noqa: E402
 from visage import placer  # noqa: E402
 from outils import (rot, add, lerp, matmix, body_limb, ik, Seg, inv, poly_of, geom_shape, fuse, clip,  # noqa: E402
-                    ring_map, chakram_geom, stations, edges, smooth_line)
+                    ring_map, chakram_geom, stations, edges, smooth_line, FigureM)
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'knights-3'
@@ -94,7 +94,7 @@ REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0,
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P = dict(REST, **(pose or {}))
     _LAST.clear()
-    fig = Figure(*frame, ow=ow)
+    fig = FigureM(*frame, ow=ow)
     hot = P['hot']
     bronze = matmix(BRONZE, BRONZE_HOT, 0.5 * hot)
 
@@ -341,6 +341,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
           (ribbon([a1.at(0.18, -4.4), a1.at(0.34, -1.0), a1.at(0.28, 3.6)], [0.1, 0.7, 0.1]), SKIN.shadow, 0.4),
           (ellipse(*a1.at(0.62, 1.8), 2.0, 4.0, a1.deg - 90), SKIN.light, 0.35),
           (ribbon([a1.at(0.42, 3.6), a1.at(0.66, 3.8), a1.at(0.88, 3.2)], [0.1, 0.7, 0.1]), SKIN.hi, 0.35)]
+    # (avis du propriétaire, tour 3 : « transition épaule ») la racine du bras se FOND dans le buste : le bras est peint
+    # à travers un masque en dégradé, opaque à l'articulation et vers le dehors, transparent du côté de la poitrine et
+    # du trapèze ; seulement sur une zone du buste autour de l'épaule et AU-DESSUS de l'aisselle (le reste du bras,
+    # quand il passe devant la poitrine, reste opaque) : ni bord de boule, ni ombre portée, ni couture
+    from shapely.geometry import Point
+    zone = poly_of(torso).intersection(Point(NS0).buffer(8.4, 64))
+    d = rot(a1.u, -128.0)          # au repos : vers la poitrine (un peu vers le trapèze) ; tourne avec le bras
+    m0 = mapp(U, (S[0] - 1.2 * d[0], S[1] - 1.2 * d[1]))
+    m1 = mapp(U, (S[0] + 4.8 * d[0], S[1] + 4.8 * d[1]))
+    fig.masks['narm'] = (m0[0], m0[1], m1[0], m1[1], (geom_shape(zone, simplify=0.02), TOR))
     fig.part('narm', arm, SKIN, cel=1.7, rim=0.7, cast=1.2, details=ad,
              cast_on=['torso', 'scarf', 'belt', 'nleg', 'fleg', 'ringN', 'bead0', 'bead1', 'cord'])
     fig.part('nfist', fist_m, SKIN, cel=1.2, rim=0.6, cast=1.0, details=[(s.map(lambda p: mapp(M, p)), c, o) for s, c, o in fdet])

@@ -6,7 +6,8 @@
 # - taper : un ruban effilé le long d'une ligne (plume, pan), bout arrondi ou pointu ;
 # - curve_band : la bande entre deux courbes (col, ceinture, ourlet), prolongée aux bouts (la découpe la ramène au bord) ;
 # - under : la face du dessous d'une forme (elle-même moins sa copie décalée vers la lumière) ;
-# - FigN : la figure, avec en plus un liseré de lumière possible autour de toute la silhouette (aura, sans flou).
+# - FigN : la figure, avec en plus un liseré de lumière possible autour de toute la silhouette (aura, sans flou), et des
+#   masques par morceau (le haut de la manche se fond dans le buste : raccord épaule / buste sans couture).
 import math
 import os
 import re
@@ -184,11 +185,22 @@ def almond_pt(sh, i):
 
 class FigN(Figure):
     """La figure, avec en plus un liseré de lumière possible autour de toute la silhouette (aura : (couleur, largeur,
-    opacité)) : une copie des silhouettes, plus large, peinte juste sous le contour (aucun flou)."""
+    opacité)) : une copie des silhouettes, plus large, peinte juste sous le contour (aucun flou).
+    Et des MASQUES par morceau (repris de ../aurelle/outils.py, FigureM) : fig.masks[nom] = (x1, y1, x2, y2, ref) ; le
+    morceau est peint à travers un masque qui le rend transparent PAR-DESSUS le morceau `ref`, dans le sens du dégradé
+    ((x1, y1) opaque → (x2, y2) transparent), opaque partout ailleurs. Sert au raccord épaule / buste : le haut de la
+    manche se fond dans le buste du manteau (ni bord de boule, ni marche), aucun flou."""
     aura = None
 
+    def __init__(self, *a, **k):
+        super().__init__(*a, **k)
+        self.masks = {}
+
     def svg(self, size=None, bg=None):
+        n0 = self.n
         out = Figure.svg(self, size, bg)
+        if self.masks:
+            out = self._masks(out, n0)
         if self.aura:
             col, w, op = self.aura
             i = out.index('<g stroke-linejoin="round">')
@@ -199,6 +211,50 @@ class FigN(Figure):
             glow = glow.replace('<g stroke-linejoin="round">', '<g stroke-linejoin="round" opacity="%.3f">' % op, 1)
             out = out[:i] + glow + out[i:]
         return out
+
+    def _masks(self, s, n0):
+        names = [p.name for p in self.parts]
+        pid = lambda nm: 'p%d' % (n0 + names.index(nm) + 1)
+        add_defs = []
+        for name, (x1, y1, x2, y2, ref) in self.masks.items():
+            if name not in names or ref not in names:
+                continue
+            P = pid(name)
+            mid, gid = 'mk%s' % P, 'mg%s' % P
+            add_defs.append('<linearGradient id="%s" gradientUnits="userSpaceOnUse" x1="%.3f" y1="%.3f" x2="%.3f" y2="%.3f">'
+                            '<stop offset="0" stop-color="#fff"/><stop offset="0.35" stop-color="#fff"/>'
+                            '<stop offset="0.75" stop-color="#3a3a3a"/><stop offset="1" stop-color="#000"/></linearGradient>'
+                            % (gid, x1, y1, x2, y2))
+            add_defs.append('<mask id="%s" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse" x="%.2f" y="%.2f" '
+                            'width="%.2f" height="%.2f"><rect x="%.2f" y="%.2f" width="%.2f" height="%.2f" fill="#fff"/>'
+                            '<use href="#%s" fill="url(#%s)"/></mask>'
+                            % (mid, self.x0 - 50, self.y0 - 50, self.w + 100, self.h + 100,
+                               self.x0 - 50, self.y0 - 50, self.w + 100, self.h + 100, pid(ref), gid))
+            i_fill = s.index('<use href="#%s" fill="url(#' % P)        # la couleur du morceau (pas sa silhouette)
+            start = i_fill
+            i_cast = s.rfind('<g clip-path=', 0, i_fill)
+            if i_cast >= 0 and ('<use href="#%s" opacity="0.2"' % P) in s[i_cast:i_fill]:
+                start = i_cast
+            end = s.index('/>', i_fill) + 2
+            if s.startswith('<g clip-path="url(#', end):
+                depth, j = 0, end
+                while True:
+                    a_ = s.find('<g', j)
+                    b_ = s.find('</g>', j)
+                    if a_ != -1 and a_ < b_:
+                        depth += 1
+                        j = a_ + 2
+                    else:
+                        depth -= 1
+                        j = b_ + 4
+                        if depth == 0:
+                            break
+                end = j
+            s = s[:start] + '<g mask="url(#%s)">' % mid + s[start:end] + '</g>' + s[end:]
+        if add_defs:
+            i = s.index('</defs>')
+            s = s[:i] + ''.join(add_defs) + s[i:]
+        return s
 
 
 # ---------- formes ↔ polygones (shapely) : couper une forme par une autre (iris dans l'œil, bande dans un morceau)
@@ -237,4 +293,25 @@ def inter(a, b):
         g = max(getattr(g, 'geoms', [g]), key=lambda q: q.area)
         if g.geom_type != 'Polygon':
             return None
+    return from_poly(list(g.exterior.coords)[:-1])
+
+
+def inv(M):
+    """L'inverse d'une matrice de pose (a, b, c, d, e, f)."""
+    a, b, c, d, e, f_ = M
+    det = a * d - b * c
+    return (d / det, -b / det, -c / det, a / det, (c * f_ - d * e) / det, (b * e - a * f_) / det)
+
+
+def clip_to(shape, keep, cut=()):
+    """La partie de la forme qui est DANS l'union des polygones `keep` et HORS de ceux de `cut` (le plus grand morceau)."""
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    g = Polygon(poly(shape)).buffer(0).intersection(unary_union([Polygon(k).buffer(0) for k in keep]))
+    if cut:
+        g = g.difference(unary_union([Polygon(k).buffer(0) for k in cut]))
+    if g.is_empty:
+        return None
+    if g.geom_type != 'Polygon':
+        g = max(getattr(g, 'geoms', [g]), key=lambda q: q.area)
     return from_poly(list(g.exterior.coords)[:-1])

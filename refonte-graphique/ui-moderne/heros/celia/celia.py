@@ -563,19 +563,18 @@ def head(fig, P):
             fd += [(almond, SKIN.base, 1),
                    (ribbon([lerp(oc, ic, t_) for t_ in (0, 0.5, 1)], [0.2, 0.8, 0.3]).move(0, 1.2), EYE_INK, 0.95)]
         else:
+            # Tour 3 de l'avis (26/11) : « yeux blancs sans pupille » : plus d'iris ni de pupille, l'œil entier est une
+            # lumière blanche et froide (cœur blanc pur, bord à peine bleu glacier), avec un léger rayonnement doux sur
+            # la peau autour (aplats dégradés, aucun flou) ; plus fort quand les yeux s'allument (spéciale). La forme
+            # de l'amande, les cils, le trait du bas et le clignement restent les mêmes.
+            cx_, cy_ = (ex, ey)
             if glow > 0:
                 fd += [(ellipse(ix, iy, irx * 3.6, iry * 2.5), ('rad', ix, iy, irx * 3.6, iry * 2.5, [(0, '#c8f6ff', 0.75 * glow), (1, '#5ccaee', 0)]), 1)]
-            fd += [(almond.scale(1.06, 1.2, ex, ey + 0.2), SKIN.shadow, 0.55), (almond, '#eef4fe' if glow < 0.5 else '#ffffff', 1)]
-            if glow < 0.5:
-                fd += [(ellipse(ix, iy, irx, iry), ('rad', ix + 0.35, iy - 0.4, irx * 1.15, iry * 1.1,
-                                                   [(0, '#f0fdff'), (0.5, '#a8e8fa'), (0.85, '#5cb8e6'), (1, '#3a7cc0')]), 1),
-                       (ellipse(ix - 0.05, iy + 0.1, irx * 0.3, iry * 0.4), '#16306a', 1)]
-            else:
-                fd += [(ellipse(ix, iy, irx, iry), ('rad', ix, iy, irx * 1.15, iry * 1.1, [(0, '#ffffff'), (0.6, '#e8fcff'), (1, '#8ae4fa')]), 1),
-                       (ellipse(ix - 0.05, iy + 0.05, irx * 0.3, iry * 0.4), '#5ccaee', 1)]
-            # l'ombre de la paupière du haut sur le blanc et l'iris, puis le reflet (lumière en haut à droite)
-            fd += [(sm([oc, up[0], up[1], ic, lerp(up[1], (ex, ey), 0.42), lerp(up[0], (ex, ey), 0.46)], t=0.8), SKIN.deep, 0.35),
-                   (ellipse(ix + irx * 0.4, iy - iry * 0.42, irx * 0.28, iry * 0.23), '#ffffff', 1)]
+            fd += [(almond.scale(1 + 0.1 * k, 1 + 0.2 * k, cx_, cy_), '#d8f6ff', 0.1 + 0.06 * glow) for k in (4, 3, 2, 1)]
+            fd += [(almond, ('rad', cx_ + 0.15 * ew, cy_ - 0.1, ew * 0.62, ew * 0.62,
+                             [(0, '#ffffff'), (0.55, '#fbfeff'), (1, '#d2eefc' if glow < 0.5 else '#e6faff')]), 1),
+                   # l'ombre de la paupière du haut, très légère (l'œil garde son volume sans perdre sa lumière)
+                   (sm([oc, up[0], up[1], ic, lerp(up[1], (ex, ey), 0.3), lerp(up[0], (ex, ey), 0.34)], t=0.8), '#a8c4ec', 0.3 * (1 - 0.5 * glow))]
         fd += [(liner, EYE_INK, 1)]
         if not blink:                               # le trait du bas, fin, du coin extérieur vers le milieu
             fd += [(ribbon([oc, lerp(oc, lo, 0.5), lo], [0.1, 0.3, 0.1]), EYE_INK, 0.6)]

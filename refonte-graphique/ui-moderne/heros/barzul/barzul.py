@@ -34,7 +34,7 @@ from atelier import Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, m
 from lib import Shape  # noqa: E402
 from visage import placer  # noqa: E402
 from outils import (rot, unit, add, sub, lerp, norm, ang_of, ik, arm_shape, crpath, taper, curve_band, under,  # noqa: E402
-                    almond_pt, inter, FigN)
+                    almond_pt, inter, FigN, inv, poly, clip_to)
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'demons-3'
@@ -158,6 +158,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     W = mapp(U, P['nw'])
     E = ik(S, W, LU, LF, P['nbend'])
     near = near_arm(fig, P, S, E, W)
+    # ---- le baudrier : posé PAR-DESSUS l'épaule proche (après le bras), il passe sous l'écharpe et le nœud ----
+    baldric(fig, P, UC, TOR, U)
 
     fig.ctx = dict(P=P, U=U, UC=UC, HEAD=HEAD, HM2=HM2, PM=PM,
                    muzzle=mapp(PM, (124.4, 55.0)), muzzle_dir=_dir(PM, (1, 0)), pan=mapp(PM, (104.6, 53.2)),
@@ -472,21 +474,44 @@ def chest(fig, P):
                (ribbon([(cx + 3.2, min(ys) + 1.2), (cx + 3.4, max(ys) - 2.0)], [0.2, 0.7]), '#ffffff', 0.9)]
         part(name, sh, SHIRT, grad=(max(xs), min(ys), min(xs), max(ys), [(0, SHIRT.hi), (0.5, SHIRT.base), (1, SHIRT.shadow)]),
              cel=0.8, rim=0.5, cast=0.9, details=det)
-    # le baudrier de cuir : une diagonale propre (épaule proche → hanche lointaine), boucle d'or
+    return names
+
+
+# ---------------------------------------------------------------- le baudrier
+def baldric(fig, P, UC, TOR, U):
+    """Le baudrier de cuir (avis du 26/11, tour 3) : il vient de derrière, passe SUR le haut de l'épaule proche (le
+    bout coupé net par la silhouette de l'épaule, aucune bosse), descend en diagonale sur la poitrine (boucle d'or) et
+    file sous l'écharpe et le nœud jusqu'à la hanche lointaine. Il est peint après le bras proche : il recouvre le
+    haut de la manche (l'épaule), jamais le reste du bras (le bras ne passe jamais devant la poitrine)."""
+    # la ligne du baudrier dans le repère du buste (UC) : il part de derrière l'épaule, s'arrondit sur elle, puis file
     A, B = (49.8, 51.8), (74.4, 67.0)
     a = ang_of(sub(B, A))
-    belt = xf(rpoly([(0, -2.2), (math.dist(A, B), -2.2), (math.dist(A, B), 2.2), (0, 2.2)], 0.6), A[0], A[1], a)
+    line = crpath([(44.6, 46.6), (46.6, 48.6), (49.8, 51.8), (61.0, 58.8), (76.0, 68.0)], 40)
+    belt = taper(line, 4.4, 4.4, wmid=4.4)
+    # la découpe (dans le repère UC) : dans le buste, le col et le haut du bras ; hors de l'écharpe et du nœud
+    iU = inv(UC)
+    to_uc = lambda M, pts: [mapp(iU, mapp(M, q)) for q in pts]
+    keep, cut = [], []
+    for p in fig.parts:
+        if p.name in ('torso', 'collar', 'narm'):
+            keep.append(to_uc(p.M, poly(p.shape)))
+        elif p.name in ('sash', 'knot', 'tailA', 'tailB'):
+            cut.append(to_uc(p.M, poly(p.shape)))
+    belt = clip_to(belt, keep, cut)
     bk = lambda x, y: xf_pt(A, a, (x, y))
-    det = [(xf(ribbon([(1, -1.5), (14, -1.6), (28, -1.5)], [0.2, 0.6, 0.2]), A[0], A[1], a), LEATHER.hi, 0.6),
-           (xf(ribbon([(1, 1.6), (14, 1.6), (28, 1.6)], [0.2, 0.6, 0.2]), A[0], A[1], a), LEATHER.deep, 0.55)]
-    part('baldric', belt, LEATHER, grad=(*bk(20, -2), *bk(4, 2), [(0, LEATHER.light), (0.5, LEATHER.base), (1, LEATHER.shadow)]),
-         cel=0.6, rim=0.45, cast=1.0, cast_on=['torso', 'collar', 'jab1', 'jab2', 'jab3'], details=det)
+    det = [(ribbon(line[2:-2:4], [0.2] + [0.6] * (len(line[2:-2:4]) - 2) + [0.2]).move(*rot((0, -1.5), a)), LEATHER.hi, 0.6),
+           (ribbon(line[2:-2:4], [0.2] + [0.6] * (len(line[2:-2:4]) - 2) + [0.2]).move(*rot((0, 1.6), a)), LEATHER.deep, 0.55)]
+    # le haut, sur l'arrondi de l'épaule : un peu plus clair (il reçoit la lumière), un peu plus sombre au bout (il
+    # passe derrière)
+    det += [(ellipse(47.4, 49.4, 2.6, 1.6, a), LEATHER.light, 0.35), (ellipse(44.6, 47.0, 2.0, 2.4, a), LEATHER.deep, 0.35)]
+    fig.part('baldric', belt, LEATHER, grad=(*bk(20, -2), *bk(4, 2), [(0, LEATHER.light), (0.5, LEATHER.base), (1, LEATHER.shadow)]),
+             cel=0.6, rim=0.45, cast=1.0, cast_on=['torso', 'collar', 'jab1', 'jab2', 'jab3', 'narm'], details=det)
     buckle = xf(rpoly([(6.6, -3.0), (10.6, -3.0), (10.6, 3.0), (6.6, 3.0)], 0.7), A[0], A[1], a)
-    part('buckle', buckle, GOLD, grad=(*bk(10.6, -3), *bk(6.6, 3), [(0, GOLD.hi), (0.35, GOLD.light), (1, GOLD.shadow)]),
-         cel=0.5, rim=0.45, cast=0.7, cast_on=['baldric', 'torso', 'jab3'],
-         details=[(xf(rpoly([(7.7, -1.7), (9.5, -1.7), (9.5, 1.7), (7.7, 1.7)], 0.35), A[0], A[1], a), LEATHER.base, 1),
-                  (xf(ribbon([(8.6, -1.7), (8.6, 1.7)], [0.5, 0.5]), A[0], A[1], a), GOLD.light, 1)])
-    return names
+    fig.part('buckle', buckle, GOLD, grad=(*bk(10.6, -3), *bk(6.6, 3), [(0, GOLD.hi), (0.35, GOLD.light), (1, GOLD.shadow)]),
+             cel=0.5, rim=0.45, cast=0.7, cast_on=['baldric', 'torso', 'jab3', 'narm'],
+             details=[(xf(rpoly([(7.7, -1.7), (9.5, -1.7), (9.5, 1.7), (7.7, 1.7)], 0.35), A[0], A[1], a), LEATHER.base, 1),
+                      (xf(ribbon([(8.6, -1.7), (8.6, 1.7)], [0.5, 0.5]), A[0], A[1], a), GOLD.light, 1)])
+    fig.pose(['baldric', 'buckle'], UC)
 
 
 # ---------------------------------------------------------------- l'écharpe rouge (le nœud, les deux pans)
@@ -767,6 +792,11 @@ def near_arm(fig, P, S, E, W):
            (ribbon([F(-1.2, -3.4 * sgn), F(0.4, 0), F(-1.0, 3.4 * sgn)], [0.1, 0.7, 0.1]), COAT.shadow, 0.5)]
     fig.part('narm', arm, COAT, grad=(S[0] + 6, S[1], W[0] - 5, W[1], [(0, COAT.light), (0.5, COAT.base), (1, COAT.shadow)]),
              cel=1.2, rim=0.6, cast=1.2, details=det)
+    # la LIAISON épaule / buste (avis du 26/11, tour 3) : le haut de la manche (le dôme de l'épaule) se fond dans le
+    # buste du manteau par un masque en dégradé le long du bras (comme le cyclope, ../aurelle/) : ni bord de boule, ni
+    # marche ; le bras reste devant le buste
+    du = norm(sub(E, S))
+    fig.masks['narm'] = (*add(S, du, 1.0), *add(S, du, -9.0), 'torso')
     # le grand revers de manche d'or, évasé vers la main, son bouton
     cuff = sm([F(Lf - 6.2, -5.2), F(Lf - 1.2, -5.9), F(Lf + 0.6, -6.1), F(Lf + 0.6, 6.1), F(Lf - 1.2, 5.9), F(Lf - 6.2, 5.2),
                F(Lf - 6.8, 0)], sharp=(2, 3), t=0.85)

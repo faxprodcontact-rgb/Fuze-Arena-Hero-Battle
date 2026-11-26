@@ -79,6 +79,12 @@ LN1, LN2 = 28.4, 19.6                # bras proche : bras, avant-bras (jusqu'au 
 LF1, LF2 = 21.5, 15.5                # bras lointain
 FF0 = (117.0, 53.0)                  # le poing lointain (son milieu), à hauteur d'épaule, devant lui
 FFA0 = -80.0                         # l'avant-bras lointain monte presque droit (une garde de lutteur)
+# La deuxième massue (avis du propriétaire, tour 3) : même bois noueux, mêmes pointes de fer, même mousse, un peu plus
+# petite, serrée dans le poing lointain. Le manche traverse le poing en travers des doigts repliés (repère du poing :
+# FGRIP), la tête vers le haut ; fca (réglage de pose) la fait basculer en plus par le poignet (+ = vers l'avant).
+FCLUB_K = 0.8                        # sa taille par rapport à la grande
+FGRIP = (7.0, 0.4)                   # le milieu du manche dans le poing (repère du poing : x vers les phalanges)
+FCA0 = 12.0                          # le manche un peu en biais dans la paume (le bout dépasse sous le poing, vers l'avant)
 HIP = (68.0, 90.0)                   # le pivot du buste
 NECK = (66.0, 54.0)                  # le pivot (et le centre d'agrandissement) de la tête
 # Le visage est placé par l'outil commun ../visage.py (une sphère qui tourne de 18° : tout le visage tourne ensemble).
@@ -92,7 +98,7 @@ MOUTH_C = (FACE['bouche'][0], FACE['bouche'][1] + 0.6)   # le milieu de la bouch
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, eye=(0.0, 0.0), glow=0.0,
             G=G0, ang=ANG0, bn=-1.0, nsh=(0.0, 0.0), rn=0.0, rf=0.0, FF=FF0, ffa=FFA0, bf=1.0, pg=0.0, lift=0.0,
-            shift=0.0, front=0.0, length=1.0, mouth=0.0)
+            shift=0.0, front=0.0, length=1.0, mouth=0.0, fca=0.0)
 
 
 def sm_under(sh, dx=0.8, dy=-2.4):
@@ -178,7 +184,22 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     nv = (-math.sin(a_), math.cos(a_))                  # le côté « +v » du manche, dans le dessin
     up = 1 if (nv[0] * 0.6 - nv[1] * 0.8) > 0 else -1  # le côté tourné vers la lumière (haut-droit)
 
-    def draw_club():
+    def draw_club(Gc=None, angc=None, sc=1.0, tag=''):
+        """Une massue (la grande, ou avec tag='f' la deuxième, plus petite (sc < 1), tenue dans le poing lointain) :
+        Gc = le milieu du poing sur le manche, angc = la direction du manche vers la tête."""
+        Gc = G if Gc is None else Gc
+        angc = ang if angc is None else angc
+        lkc = (lk if not tag else 1.0) * sc
+
+        def C_(sh):
+            return xf(sh, Gc[0], Gc[1], angc, lkc, sc)
+
+        def Cp(u, v=0.0):
+            a = math.radians(angc)
+            return (Gc[0] + u * lkc * math.cos(a) - v * sc * math.sin(a), Gc[1] + u * lkc * math.sin(a) + v * sc * math.cos(a))
+        a_ = math.radians(angc)
+        nv = (-math.sin(a_), math.cos(a_))
+        up = 1 if (nv[0] * 0.6 - nv[1] * 0.8) > 0 else -1
         # les quatre pointes de fer (leur base passe sous le bois) : des cônes, le dessus éclairé, la pointe claire
         for i, (u0, side, ln) in enumerate(((22.6, 1, 5.6), (22.8, -1, 5.4), (29.6, 1, 5.2), (29.8, -1, 5.0))):
             r0 = 7.2 if u0 < 25 else 7.9
@@ -187,19 +208,20 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             sp = C_(sm([base[0], (u0 - 1.6, side * (r0 + 0.6)), (tip[0] - 0.4, tip[1] - side * 0.6), tip,
                         (tip[0] + 0.5, tip[1] - side * 0.7), (u0 + 1.9, side * (r0 + 0.5)), base[1]], sharp=(3,), t=0.7))
             lit = side == up
-            fig.part('spk%d' % i, sp, IRON, cel=0.6, rim=0.5, cast=0.4,
+            fig.part('spk%d' % i + tag, sp, IRON, cel=0.6, rim=0.5, cast=0.4,
                      grad=(*Cp(u0 + 2, side * r0), *Cp(u0 - 2, side * (r0 + ln)),
                            [(0, IRON.light if lit else IRON.base), (0.6, IRON.base), (1, IRON.shadow)]),
                      details=[(C_(ribbon([(u0 + 0.6, side * (r0 + 0.2)), (u0 + 0.8, side * (r0 + ln * 0.55)), (tip[0], tip[1] - side * 0.4)],
                                          [0.2, 0.7, 0.1])), IRON.hi, 0.85 if lit else 0.5)])
         # le tronc noueux : le manche, un nœud, puis il s'élargit en tête ronde
-        R = [(-11.6, 2.5), (-6.0, 2.3), (1.0, 2.35), (6.4, 2.7), (10.4, 3.3), (12.4, 4.3), (14.2, 3.8), (17.4, 4.6),
+        bx = 2.6 if tag else 0.0          # la petite massue : le bout du manche dépasse un peu plus sous le poing
+        R = [(-11.6 - bx, 2.5), (-6.0, 2.3), (1.0, 2.35), (6.4, 2.7), (10.4, 3.3), (12.4, 4.3), (14.2, 3.8), (17.4, 4.6),
              (21.0, 5.9), (25.0, 6.7), (29.4, 7.0), (33.0, 6.5), (36.0, 4.8), (37.8, 2.2)]
         L = [(37.6, -2.6), (35.6, -5.4), (32.6, -6.9), (28.4, -7.1), (24.0, -6.6), (20.2, -5.5), (17.2, -4.2), (14.2, -3.5),
-             (10.6, -3.1), (8.6, -3.7), (7.0, -3.0), (2.0, -2.35), (-6.0, -2.3), (-11.6, -2.5)]
+             (10.6, -3.1), (8.6, -3.7), (7.0, -3.0), (2.0, -2.35), (-6.0, -2.3), (-11.6 - bx, -2.5)]
         fat = lambda pts: [(u, v * (1 + 0.22 * min(1.0, max(0.0, (u - 10) / 12)))) for u, v in pts]
         R, L = fat(R), fat(L)
-        body = C_(sm(R + [(38.8, -0.2)] + L + [(-12.8, 0.0)], t=0.85))
+        body = C_(sm(R + [(38.8, -0.2)] + L + [(-12.8 - bx, 0.0)], t=0.85))
         cd = [
             # l'arête éclairée du côté de la lumière, l'ombre de l'autre côté (dans la forme)
             (C_(ribbon([(-10, 1.6 * up), (4, 1.7 * up), (12, 2.7 * up), (20, 4.4 * up), (28, 5.6 * up), (34, 4.6 * up)],
@@ -217,13 +239,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (C_(ellipse(26.0, -2.0 * up, 1.6, 1.1)), WOOD.deep, 0.95),
             (C_(ribbon([(24.4, -0.9 * up), (26.2, -0.5 * up), (27.8, -1.0 * up)], [0.1, 0.5, 0.1])), WOOD.hi, 0.7),
         ]
-        fig.part('club', body, WOOD, cel=1.1, rim=0.7, cast=0.9,
+        fig.part('club' + tag, body, WOOD, cel=1.1, rim=0.7, cast=0.9,
                  grad=(*Cp(36, 8 * up), *Cp(-10, -3 * up), [(0, WOOD.light), (0.5, WOOD.base), (1, WOOD.shadow)]),
                  details=cd)
         # la mousse sur le dessus : une calotte verte qui coule un peu sur les côtés (bord en lobes inégaux)
         moss = C_(sm([(32.4, -7.8), (35.4, -6.4), (37.8, -3.4), (39.2, 0.0), (38.0, 3.6), (35.4, 6.6), (32.2, 7.9),
                       (31.4, 5.6), (33.0, 3.6), (31.8, 1.4), (33.4, -0.8), (32.0, -3.2), (33.2, -5.2)], t=0.8))
-        fig.part('moss', moss, MOSS, cel=0.6, rim=0.6, cast=0.7, cast_on=['club'],
+        fig.part('moss' + tag, moss, MOSS, cel=0.6, rim=0.6, cast=0.7, cast_on=['club' + tag],
                  grad=(*Cp(39, 3 * up), *Cp(32, -4 * up), [(0, MOSS.light), (0.55, MOSS.base), (1, MOSS.shadow)]),
                  details=[(C_(ellipse(37.0, 1.6 * up, 1.2, 0.8)), MOSS.hi, 0.8),
                           (C_(ellipse(35.2, -2.6 * up, 0.9, 0.6)), MOSS.hi, 0.5)])
@@ -247,6 +269,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     f1, f2 = Seg(Sfu, Ef), Seg(Ef, Wf)
     fa2 = math.degrees(math.atan2(f2.u[1], f2.u[0]))
     sf2 = 1 if (f2.v[0] * 0.6 - f2.v[1] * 0.8) > 0 else -1
+    # la deuxième massue, serrée dans le poing lointain (derrière les doigts qui l'entourent) : elle suit le poing
+    fsa = fa2 + 56                                      # l'angle du poing (comme far_fist)
+    fga = math.radians(fsa)
+    FG = (Wf[0] + FGRIP[0] * math.cos(fga) - FGRIP[1] * math.sin(fga), Wf[1] + FGRIP[0] * math.sin(fga) + FGRIP[1] * math.cos(fga))
+    fcang = fsa - 90 + FCA0 + P['fca']
+    draw_club(FG, fcang, FCLUB_K, 'f')
     fig.part('farm', far_arm, SKIN, grad=FAR_GRAD, cel=1.4, rim=0.6, cast=0.8,
              details=[(ellipse(*f1.at(0.72, 2.0 * sf2), 3.6, 2.6, math.degrees(math.atan2(f1.u[1], f1.u[0]))), SKIN.light, 0.3),
                       (ellipse(*f2.at(0.0, -0.6 * sf2), 2.0, 1.5, fa2), SKIN.shadow, 0.3),                     # la pointe du coude
@@ -671,12 +699,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['torso'], TOR)
     fig.pose(SKIRT + ['backfur'], CLO)
     fig.pose(['rope', 'knot', 'rend1', 'rend2', 'skcord', 'skull', 'skhorn', 'bonecord', 'bone'], PEL)
-    club = ['club', 'moss'] + ['spk%d' % i for i in range(4)]
+    club = ['club', 'moss'] + ['spk%d' % i for i in range(4)] + ['clubf', 'mossf'] + ['spk%df' % i for i in range(4)]
     fig.pose(club + ['narm', 'nbrac', 'nfist', 'nthumb', 'farm', 'fbrac', 'ffist', 'fthumb'], U)
     # ce que les effets doivent savoir (repère du dessin)
     fig.ctx = dict(U=U, G=mapp(U, G), ang=ang + P['lean'] * 1.1, P=P, club_head=mapp(U, Cp(29.0, 0)), club_top=mapp(U, Cp(38.6, 0)),
                    chest=mapp(TOR, (72, 70)), head=mapp(HEAD, (68, 36)), eye=mapp(HEAD, EYE_C), feet=[BN, BF], HEAD=HEAD, ROOT=ROOTM,
-                   ffist=mapp(U, FFp))
+                   ffist=mapp(U, FFp), fclub_head=mapp(U, (FG[0] + 29.0 * FCLUB_K * math.cos(math.radians(fcang)),
+                                                          FG[1] + 29.0 * FCLUB_K * math.sin(math.radians(fcang)))))
     if fx:
         for f_ in fx:
             f_(fig, fig.ctx)

@@ -219,6 +219,8 @@ SHELL_PTS = [(45.0, 43.4), (51.6, 42.4), (57.4, 43.0), (61.2, 45.2), (63.0, 48.8
 TORSO_PTS = [(57.6, 59.4), (60.6, 53.4), (67.0, 50.0), (76.0, 49.4), (83.2, 51.4), (87.8, 56.4), (89.6, 63.0), (90.0, 72.0),
              (89.4, 82.0), (87.0, 90.4), (81.6, 97.6), (73.8, 101.2), (65.6, 100.8), (58.4, 96.6), (55.8, 89.6), (55.4, 81.0),
              (56.0, 72.0), (56.4, 64.0)]
+# le trapèze : la base du cou (dans le repère du buste), reliée au dôme de l'épaule proche par une pente
+YOKE_PTS = [(60.6, 53.6), (64.0, 51.2), (56.0, 53.4)]
 # le plastron (jaune) : sa limite haute passe sous le gant proche ; à droite, le pont de carapace jusqu'au bord du buste
 PLAS_PTS = [(58.6, 67.4), (65.4, 63.0), (72.0, 60.8), (80.0, 61.4), (86.6, 64.0), (91.0, 69.0), (87.0, 78.0), (85.8, 86.0),
             (83.2, 92.6), (78.6, 97.6), (72.6, 100.8), (65.0, 101.6), (57.0, 98.0), (50.0, 88.0), (49.0, 76.0), (52.0, 67.0)]
@@ -451,8 +453,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fore = limb([E, lerp(E, W, 0.5), W], [11.2, 10.4, 9.6])
     nH, nK, nA, nlg, nfoot, nFM = leg_geom(NH, NK0, NA0, NLL, SG_NL, (19.0, 17.6, 16.0), NEAR_FOOT)
     torso = MS(TOR, sm(TORSO_PTS, t=0.9))
-    body, bodyg = fuse([torso, arm, nlg, nfoot], smooth=0.6)
-    gtors, garm, gleg, gup, gfore = PG(torso), PG(arm), PG(nlg).union(PG(nfoot)), PG(upper), PG(fore)
+    # le trapèze (tour 3 de l'avis : l'épaule se fond dans le buste) : l'enveloppe du dôme de l'épaule et de la base du
+    # cou comble le creux entre les deux ; le haut de l'épaule descend en pente douce depuis le cou, sans bosse ni marche
+    from shapely.geometry import Point, MultiPoint
+    yoke_g = MultiPoint([mapp(TOR, q) for q in YOKE_PTS]).union(
+        affinity.scale(Point(S[0] + 0.6, S[1] + 0.4).buffer(7.3, quad_segs=16), 1.1, 1.06)).convex_hull
+    body, bodyg = fuse([torso, arm, nlg, nfoot, yoke_g], smooth=0.6)
+    gtors, garm, gleg, gup, gfore = PG(torso).union(yoke_g), PG(arm), PG(nlg).union(PG(nfoot)), PG(upper), PG(fore)
     det = []
     # -- le cou et le haut de la poitrine : le cou épais et ridé (plis doux sous la mâchoire) --
     T_ = lambda pts: MP(TOR, pts)
@@ -474,8 +481,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det += inner_rim(gfore, gup, 0.7, SKIN.hi, 0.55)
     det += cast_into(garm, gtors.difference(garm), 1.8, (0.26, 0.34))
     det += inner_cel(garm, gtors, 1.6, SKIN.shadow, 0.6)
-    det += [(ellipse(S[0] + 2.2, S[1] - 2.6, 6.0, 4.4, -20), ('rad', S[0] + 2.8, S[1] - 3.0, 6.0, 6.0, [(0, SKIN.light, 0.85), (1, SKIN.light, 0)]), 1)]
-    det += gloss((S[0] + 3.0, S[1] - 3.4), 2.2, 1.0, -24, 0.8)
+    # la lumière du haut de l'épaule : une nappe allongée le long de la pente cou → épaule (pas une boule luisante)
+    yc = lerp(S, mapp(TOR, YOKE_PTS[1]), 0.42)
+    ya = ang_of(S, mapp(TOR, YOKE_PTS[1]))
+    det += [(clip(ellipse(yc[0] + 0.6, yc[1] - 0.6, 7.4, 3.6, ya), bodyg), ('rad', yc[0] + 0.8, yc[1] - 1.4, 7.0, 7.0, [(0, SKIN.light, 0.7), (1, SKIN.light, 0)]), 1)]
     det += [(ribbon([seg_pt(E, W, 0.15, 3.8), seg_pt(E, W, 0.55, 3.9), seg_pt(E, W, 0.9, 3.4)], [0.3, 1.6, 0.3]), SKIN.light, 0.6)]
     # le pli du coude : un creux doux le long du dessus de l'avant-bras, sur le haut du bras (le V se lit)
     det += [(clip(ribbon([seg_pt(E, W, -0.05, 4.4), seg_pt(E, W, 0.35, 6.0), seg_pt(E, W, 0.75, 6.0), seg_pt(E, W, 1.0, 5.4)], [0.4, 1.7, 1.5, 0.3]), gupv), SKIN.deep, 0.42)]
