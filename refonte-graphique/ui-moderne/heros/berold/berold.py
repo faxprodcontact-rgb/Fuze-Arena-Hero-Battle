@@ -464,22 +464,25 @@ def legs(fig, P, LEG):
                (ribbon([X((50.4, 88.0)), X((51.0, 92.0)), X((51.8, 95.0))], [0.1, 0.8, 0.1]), SKIN.shadow, 0.5)]
         fig.part(name + 'leg', leg, SKIN, cel=1.5, rim=0.6, cast=1.0 if name == 'n' else 0, details=lit,
                  cast_on=['fleg', 'fgreave', 'ffoot', 'cape'] if name == 'n' else None)
-        # la sandale (dessinée à plat, au sol)
-        foot = sm([X((47.0, 113.6)), X((47.6, 110.8)), X((50.8, 109.2)), X((57.6, 109.2)), X((59.4, 110.8)), X((62.0, 112.4)),
-                   X((63.8, 114.0)), X((64.0, 116.0)), X((46.8, 116.0)), X((46.4, 115.0))], sharp=(7, 8))
-        fdet = [(sm([X((46.2, 114.7)), X((64.4, 114.7)), X((64.4, 116.4)), X((46.2, 116.4))]), LEATHER.base, 1),
-                (ribbon([X((47.0, 114.8)), X((55.0, 114.9)), X((63.6, 114.8))], [0.1, 0.5, 0.1]), LEATHER.light, 0.8),
-                (ellipse(*X((49.6, 111.6)), 1.6, 1.0, 0), SKIN.light, 0.45),
+        # la sandale, posée à plat : la cheville part droit sous la jambière (même axe que la jambe), le talon
+        # dépasse un peu derrière, le pied file vers l'avant (trois quarts vers la droite), les orteils au bout
+        foot = sm([X((50.4, 116.0)), X((49.9, 114.4)), X((50.6, 112.0)), X((52.6, 109.6)), X((53.6, 108.6)),
+                   X((58.8, 108.6)), X((59.6, 110.2)), X((61.6, 111.8)), X((64.0, 113.0)), X((65.4, 114.2)),
+                   X((65.6, 116.0))], sharp=(0, 10), t=0.85)
+        fdet = [(sm([X((49.8, 114.7)), X((65.8, 114.7)), X((65.8, 116.4)), X((49.8, 116.4))]), LEATHER.base, 1),
+                (ribbon([X((50.6, 114.8)), X((58.0, 114.9)), X((65.0, 114.8))], [0.1, 0.5, 0.1]), LEATHER.light, 0.8),
+                (ellipse(*X((52.0, 112.6)), 1.3, 0.9, 0), SKIN.light, 0.45),
+                (ribbon([X((59.6, 110.6)), X((62.0, 112.0)), X((64.6, 113.4))], [0.1, 0.6, 0.1]), SKIN.light, 0.5),
                 # les orteils : deux plis doux au bout du pied, les ongles clairs
-                (ribbon([X((60.4, 112.0)), X((60.6, 113.4)), X((60.4, 114.6))], [0.1, 0.45, 0.1]), SKIN.deep, 0.5),
-                (ribbon([X((62.2, 112.8)), X((62.4, 113.8)), X((62.2, 114.6))], [0.1, 0.4, 0.1]), SKIN.deep, 0.45),
-                (ellipse(*X((61.6, 113.0)), 0.5, 0.35, 25), SKIN.hi, 0.7),
-                (ellipse(*X((63.2, 113.8)), 0.45, 0.32, 25), SKIN.hi, 0.7),
-                # la lanière de cheville et la lanière sur le pied (cuir), un petit nœud
-                (sm([X((47.4, 110.2)), X((59.0, 110.2)), X((59.6, 111.6)), X((47.2, 111.8))]), LEATHER.base, 1),
-                (ribbon([X((48.4, 110.5)), X((53.6, 110.4)), X((58.6, 110.6))], [0.1, 0.45, 0.1]), LEATHER.hi, 0.7),
-                (sm([X((55.6, 111.4)), X((57.4, 111.2)), X((60.2, 114.8)), X((58.2, 114.8))]), LEATHER.base, 1),
-                (ribbon([X((56.6, 111.6)), X((58.0, 113.0)), X((59.2, 114.6))], [0.1, 0.4, 0.1]), LEATHER.hi, 0.6)]
+                (ribbon([X((62.2, 112.6)), X((62.4, 113.6)), X((62.2, 114.6))], [0.1, 0.45, 0.1]), SKIN.deep, 0.5),
+                (ribbon([X((63.9, 113.4)), X((64.0, 114.0)), X((63.9, 114.6))], [0.1, 0.4, 0.1]), SKIN.deep, 0.45),
+                (ellipse(*X((63.2, 113.2)), 0.5, 0.35, 25), SKIN.hi, 0.7),
+                (ellipse(*X((64.8, 114.0)), 0.45, 0.32, 25), SKIN.hi, 0.7),
+                # la lanière de cheville (juste sous la jambière) et la lanière sur le cou-de-pied (cuir)
+                (sm([X((50.4, 110.6)), X((60.2, 110.4)), X((60.6, 111.8)), X((50.2, 112.2))]), LEATHER.base, 1),
+                (ribbon([X((51.2, 110.9)), X((55.6, 110.7)), X((59.8, 110.8))], [0.1, 0.45, 0.1]), LEATHER.hi, 0.7),
+                (sm([X((57.6, 111.6)), X((59.4, 111.4)), X((62.0, 114.8)), X((60.0, 114.8))]), LEATHER.base, 1),
+                (ribbon([X((58.6, 111.8)), X((59.8, 113.2)), X((61.0, 114.6))], [0.1, 0.4, 0.1]), LEATHER.hi, 0.6)]
         fig.part(name + 'foot', foot, SKIN, cel=1.0, rim=0.6, cast=0.8, details=fdet,
                  cast_on=['cape', 'fleg', 'ffoot'] if name == 'n' else ['cape'])
         # la jambière d'or : genou en dôme, mollet bombé derrière, le tibia droit devant
@@ -813,15 +816,16 @@ def near_arm(fig, P, S):
     rotk = 0.5 * (((a1.deg - 105.3) + 180) % 360 - 180)
     UCm = mchain(mT(S[0] - NS0[0], S[1] - NS0[1]), mR(rotk, *NS0))
     Q = lambda pts: [mapp(UCm, p_) for p_ in pts]
-    flap = sm(Q([(53.6, 49.4), (49.6, 49.6), (45.6, 50.4), (42.6, 52.2), (41.0, 55.0), (41.2, 57.6), (43.0, 58.4),
-                 (45.8, 57.6), (49.2, 56.0), (52.4, 54.8), (54.8, 53.2)]), t=0.8)
-    fdt = [(sm(Q([(41.4, 56.0), (43.2, 56.6), (45.8, 56.0), (49.4, 54.4), (52.6, 53.2), (54.6, 52.6), (54.8, 53.2),
-                  (52.4, 54.8), (49.2, 56.0), (45.8, 57.6), (43.0, 58.4), (41.2, 57.6)])), GOLD.shadow, 0.75),
-           (ribbon(Q([(41.8, 55.4), (45.6, 55.4), (49.4, 53.8), (53.6, 52.0)]), [0.1, 0.7, 0.7, 0.2]), GOLD.hi, 0.8),
-           (sm(Q([(45.0, 51.4), (49.6, 50.4), (53.0, 50.4), (53.0, 51.6), (49.4, 52.6), (46.0, 53.4)])), GOLD.light, 0.6),
-           (ellipse(*mapp(UCm, (50.2, 51.2)), 1.6, 0.6, -12 + rotk), GOLD.glint, 0.85),
-           (ellipse(*mapp(UCm, (44.0, 54.2)), 0.65, 0.6, 0), GOLD.deep, 0.8),
-           (ellipse(*mapp(UCm, (44.2, 54.0)), 0.35, 0.3, 0), GOLD.hi, 0.9)]
+    flap = sm(Q([(55.4, 48.6), (50.0, 48.6), (45.4, 49.6), (42.2, 51.8), (40.6, 55.0), (40.8, 58.0), (42.8, 59.2),
+                 (46.2, 58.9), (49.6, 58.1), (52.4, 56.9), (54.4, 54.9), (55.8, 51.8)]), t=0.85)
+    fdt = [  # le dôme ombré comme une sphère (lumière en haut à droite), le bord roulé du bas, l'éclat
+           (flap, ('rad', *mapp(UCm, (51.0, 50.6)), 9.0, 9.0, [(0, GOLD.light), (0.45, GOLD.base), (1, GOLD.shadow)]), 1),
+           (sm(Q([(40.9, 56.4), (43.2, 57.4), (46.4, 57.1), (49.8, 56.2), (52.6, 54.9), (54.8, 53.2), (54.4, 54.9),
+                  (52.4, 56.9), (49.6, 58.1), (46.2, 58.9), (42.8, 59.2), (40.8, 58.0)])), GOLD.shadow, 0.8),
+           (ribbon(Q([(41.4, 55.6), (45.4, 56.2), (49.6, 55.2), (53.4, 53.0)]), [0.1, 0.75, 0.75, 0.2]), GOLD.hi, 0.8),
+           (ribbon(Q([(53.4, 50.0), (54.8, 52.0), (54.4, 54.2)]), [0.1, 0.6, 0.1]), GOLD.deep, 0.35),
+           (ellipse(*mapp(UCm, (49.8, 51.0)), 2.2, 0.8, -14 + rotk), GOLD.glint, 0.85),
+           (ellipse(*mapp(UCm, (50.4, 50.8)), 0.8, 0.35, -14 + rotk), '#ffffff', 0.9)]
     fig.part('nepau', flap, GOLD, cel=1.0, rim=0.7, cast=1.0, details=fdt, cast_on=['narm', 'torso', 'neck'])
     # le poing : le bloc des doigts et la paume jusqu'au poignet, fondus
     block = sm([T(p) for p in out], t=0.85)
