@@ -76,8 +76,8 @@ La classe **`pxf`** donne ce mécanisme à un nouvel élément. Fonds prêts
   dans `--bt-pierre-<teinte>-<taille>[-down]` et `--bt-pierre-rond-<teinte>[-down]` (+ `--bt-pierre-creux-rail`) et relie les
   classes aux dessins. Un bouton = `bt bt-<teinte> bt-<taille>` (`btClass(teinte, taille)`) : le dessin sur le `::before` en
   3 morceaux (bouts fixes, milieu étiré : toute largeur). Tailles : `s` 38, `m` 48, `l` 62, `xl` 72, `xxl` 84.
-  Teintes : **basalte** = l'action principale (pierre sombre où brûle une lumière d'or, lettres qui luisent, deux fêlures à
-  partir de `l`) ; **or** = récompense, achat ; **arcane** = invocation ; **feu** = danger, fermer ; **ardoise** = secondaire
+  Teintes : **basalte** = l'action principale (pierre sombre où brûle une lumière d'or, lettres qui luisent ; plus
+  de fêlures depuis le 26/11, à la demande du propriétaire) ; **or** = récompense, achat ; **arcane** = invocation ; **feu** = danger, fermer ; **ardoise** = secondaire
   (pierre claire, lettres brunes) ; **galet** = neutre sombre (outils, pause, vitesse, retour) ; **eau / terre / vent / feu**
   = un élément (`ELEMENT_TONE`). Enfoncé (`:active`, `.is-down`) : la dalle descend de son épaisseur. Impossible
   (`:disabled`) : la pierre éteinte (`off`). Un prix dedans : `.cur` devient un creux taillé.
