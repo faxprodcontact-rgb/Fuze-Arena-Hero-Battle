@@ -409,7 +409,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # la bouche sévère FERMÉE, centrée sous le nez (ses coins tombent sous la moustache), le petit croc, la lèvre du bas
     x0m, x1m = b_x - b_w / 2, b_x + b_w / 2
     hd += [(ribbon([(x0m, b_y + 0.5), (b_x - 0.25 * b_w, b_y + 0.05), (b_x, b_y - 0.05), (b_x + 0.25 * b_w, b_y + 0.05), (x1m, b_y + 0.45)],
-                   [0.15, 0.5, 0.55, 0.5, 0.15]), MOUTH, 1),
+                   [0.15, 0.38, 0.42, 0.38, 0.15]), MOUTH, 1),
            (sm([(b_x + 0.1 * b_w, b_y), (b_x + 0.24 * b_w, b_y + 0.06), (b_x + 0.17 * b_w, b_y + 1.1)], sharp=(0, 1, 2)), '#fff6e8', 1),
            (ribbon([(b_x - 0.3 * b_w, b_y + 0.75), (b_x, b_y + 0.95), (b_x + 0.3 * b_w, b_y + 0.75)], [0.1, 0.55, 0.1]), LIP, 0.8)]
     # le bandeau d'or (le cercle des singes) : il fait le tour du crâne, peint dedans ; un jade au milieu du front
@@ -459,7 +459,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
           # l'ombre de la moustache et de la lèvre sur le haut de la barbe
           (ribbon(bw([(79.4, 59.4), (82.4, 61.4), (85.0, 62.2), (88.0, 61.6), (91.2, 60.4)]), [0.2, 1.0, 1.1, 1.0, 0.2]), HAIR.shadow, 0.5)]
     fig.part('beard', beard, HAIR, grad=(94, 58, 72, 84, [(0, HAIR.light), (0.5, HAIR.base), (1, HAIR.shadow)]),
-             cel=1.2, rim=0.45, cast=1.3, cast_on=['robe', 'sleeveF', 'lap', 'knot', 'sashB'], details=bd)
+             cel=1.2, rim=0.35, cast=1.3, cast_on=['robe', 'sleeveF', 'lap', 'knot', 'sashB'], details=bd)
 
     # ---- l'oreille ronde de singe (la racine se fond dans la tête, elle passe devant les favoris) et son anneau ----
     ear = sm([(70.8, 52.6), (68.8, 51.0), (66.4, 51.4), (65.2, 53.6), (65.6, 56.2), (67.4, 57.6), (69.8, 57.0), (71.0, 55.0)])

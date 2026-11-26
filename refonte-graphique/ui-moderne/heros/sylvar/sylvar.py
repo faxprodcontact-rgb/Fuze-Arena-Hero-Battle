@@ -291,7 +291,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('torso', torso, LEATHER, cel=1.8, rim=0.7, cast=1.2, details=tdet, occl=(LEATHER.deep, 0.25, 3.0))
 
     # ================================================================ la ceinture, sa boucle, le couteau de chasse
-    belt = sm([(52.6, 76.0), (62.0, 76.6), (72.4, 75.8), (72.6, 79.8), (62.0, 80.8), (52.8, 80.2)])
+    belt = sm([(52.6, 76.0), (62.0, 76.6), (72.2, 75.8), (72.4, 79.8), (62.0, 80.8), (52.8, 80.2)])
     fig.part('belt', belt, LEATHER, grad=(70, 76, 56, 81, [(0, LEATHER.base), (1, LEATHER.shadow)]), cel=0.9, rim=0.6, cast=1.0,
              details=[(ellipse(66.6, 78.0, 0.6, 0.6), BRONZE.light, 1), (ellipse(70.4, 77.8, 0.6, 0.6), BRONZE.light, 1)])
     sheath = sm([(49.4, 76.4), (52.4, 77.2), (50.6, 84.2), (47.6, 88.6), (46.4, 87.8), (47.0, 83.0)], sharp=(3,))
