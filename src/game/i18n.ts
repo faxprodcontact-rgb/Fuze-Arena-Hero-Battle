@@ -306,7 +306,12 @@ export function t(key: Key | string, vars: Record<string, string | number> = {})
   const table: Record<string, string> = getState().lang === 'en' ? EN : FR;
   let s = table[key] ?? FR[key as Key] ?? key;
   for (const [k, v] of Object.entries(vars)) s = s.replaceAll(`{${k}}`, String(v));
-  return s;
+  return table === EN ? s : frSpaces(s);
+}
+
+/** Français : l'espace avant « ? ! : ; » devient insécable (le signe ne part plus seul à la ligne, contrôle du 26/11). */
+function frSpaces(s: string): string {
+  return s.replace(/ ([?!:;])/g, '\u00a0$1');
 }
 
 export function fmt(n: number): string {
@@ -321,7 +326,7 @@ export function fmt(n: number): string {
 export const CHAT_LINES = {
   fr: ['Quelqu’un a battu le boss du chapitre 5 ?', 'GG à tous pour le boss !', 'Je cherche une guilde active', 'Le Légendaire sort enfin 😄',
     'Astuce : mettez un protecteur devant', 'Qui fait la tour ce soir ?', 'Mon chef de section change tout', 'Encore 2 copies pour l’étoile rouge…',
-    'Bienvenue aux nouveaux !', 'La forge donne de bons objets aujourd’hui'],
+    'Bienvenue aux nouveaux !', 'La forge donne de bons objets aujourd’hui'].map(frSpaces),
   en: ['Anyone beat the chapter 5 boss?', 'GG everyone on the boss!', 'Looking for an active guild', 'Finally pulled a Legendary 😄',
     'Tip: put a protector in front', 'Who is doing the tower tonight?', 'My squad leader changes everything', '2 more copies for the red star…',
     'Welcome newcomers!', 'The forge drops good gear today'],
