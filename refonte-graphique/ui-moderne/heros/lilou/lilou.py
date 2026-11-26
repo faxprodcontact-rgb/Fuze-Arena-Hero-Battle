@@ -247,9 +247,13 @@ MOUTH = (NOSE[0] - 0.4, 48.6)             # la fente du bec passe là, juste sou
 _EK = EYE_C[2] / 7.6                      # le dessin de l'oeil et de l'arcade (gabarit de 7,6 px de large, centré en 85,6 ; 38,9)
 
 
-def eye_t(pts):
-    """Le gabarit de l'oeil et de l'arcade → à la place donnée par visage.placer."""
-    return [(EYE_C[0] + (x - 85.6) * _EK, EYE_C[1] + (y - 38.9) * _EK) for x, y in pts]
+def eye_t(pts, ky=1.0):
+    """Le gabarit de l'oeil et de l'arcade → à la place donnée par visage.placer (ky : l'arcade s'aplatit un peu pour
+    rester sous le bandeau)."""
+    return [(EYE_C[0] + (x - 85.6) * _EK, EYE_C[1] + (y - 38.9) * _EK * ky) for x, y in pts]
+
+
+BK = 0.82                                 # l'arcade, aplatie : elle tient entre le bandeau et l'oeil
 
 
 BAND_PTS = [(58.0, 29.6), (66.0, 28.6), (74.0, 28.0), (82.0, 27.8), (90.0, 28.4), (97.0, 29.6), (103.0, 31.0), (103.0, 36.8),
@@ -640,13 +644,19 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hd += eye([(81.4, 38.6), (83.4, 37.0), (86.8, 37.0), (89.0, 38.6), (87.2, 40.4), (83.6, 40.6)], (85.6, 38.9), 2.1, (86.9, 39.0), 0.45)
     # l'arcade lourde et froncée, peinte PAR-DESSUS l'oeil (elle l'écrase) : l'ombre dessous, le bourrelet éclairé,
     # qui descend vers le bec (regard dur) ; la ride du froncement au bout
-    hd += [(HD(sm(eye_t([(79.8, 36.4), (84.8, 35.8), (89.6, 36.6), (92.8, 38.8), (89.4, 38.0), (85.4, 37.4), (81.0, 37.8)]), sharp=(0, 3), t=0.8)), SKIN.deep, 0.85),
-           (HD(sm(eye_t([(79.4, 34.8), (84.6, 34.0), (89.8, 34.9), (93.4, 37.8), (90.4, 37.2), (85.8, 36.2), (80.6, 36.6)]), sharp=(0, 3), t=0.8)),
-            ('lin', *hp(eye_t([(88, 34.6)])[0]), *hp(eye_t([(86, 38.4)])[0]), [(0, SKIN.hi, 0.8), (0.55, SKIN.light, 0.55), (1, SKIN.light, 0)]), 1),
-           (HD(ribbon(eye_t([(83.0, 34.8), (87.0, 34.7), (90.4, 35.8)]), [0.1, 0.45, 0.1])), SKIN.glint, 0.45)]
-    # le tympan (l'oreille de la tortue), un disque à peine creusé sur la joue, à la place de l'oreille
-    ox, oy = FACE['oreille']
-    hd += [(HD(ellipse(ox, oy, 3.0, 3.4, -10)), SKIN.shadow, 0.35), (HD(ellipse(ox + 0.5, oy - 0.5, 2.2, 2.5, -10)), SKIN.light, 0.3)]
+    hd += [(HD(sm(eye_t([(79.8, 36.4), (84.8, 35.8), (89.6, 36.6), (92.8, 38.8), (89.4, 38.0), (85.4, 37.4), (81.0, 37.8)], BK), sharp=(0, 3), t=0.8)), SKIN.deep, 0.85),
+           (HD(sm(eye_t([(79.4, 34.8), (84.6, 34.0), (89.8, 34.9), (93.4, 37.8), (90.4, 37.2), (85.8, 36.2), (80.6, 36.6)], BK), sharp=(0, 3), t=0.8)),
+            ('lin', *hp(eye_t([(88, 34.6)], BK)[0]), *hp(eye_t([(86, 38.4)], BK)[0]), [(0, SKIN.hi, 0.8), (0.55, SKIN.light, 0.55), (1, SKIN.light, 0)]), 1),
+           (HD(ribbon(eye_t([(83.0, 34.8), (87.0, 34.7), (90.4, 35.8)], BK), [0.1, 0.45, 0.1])), SKIN.glint, 0.45)]
+    # la paupière du haut, lourde, qui descend vers le bec : le regard concentré du boxeur (elle coupe le haut de l'oeil)
+    hd += [(HD(sm(eye_t([(81.0, 38.4), (83.2, 36.6), (87.0, 36.4), (89.8, 38.4), (88.6, 39.4), (86.0, 38.5), (83.0, 38.4)]), sharp=(0, 3), t=0.85)),
+            SKIN.shadow, 1),
+           (HD(ribbon(eye_t([(81.6, 38.5), (85.0, 38.4), (88.8, 39.3)]), [0.1, 0.5, 0.1])), '#10202c', 0.85),
+           (HD(ribbon(eye_t([(82.6, 37.4), (86.0, 37.0), (88.6, 37.8)]), [0.1, 0.4, 0.1])), SKIN.light, 0.55)]
+    # les plis de la peau au coin de l'oeil (regard de boxeur plissé), sous l'oeil un bourrelet éclairé
+    hd += [(HD(ribbon(eye_t([(80.6, 39.6), (78.6, 40.2), (76.6, 40.0)]), [0.2, 0.55, 0.1])), SKIN.deep, 0.5),
+           (HD(ribbon(eye_t([(81.0, 40.8), (79.0, 41.8), (77.2, 42.2)]), [0.2, 0.45, 0.1])), SKIN.deep, 0.4),
+           (HD(ribbon(eye_t([(82.4, 41.6), (85.4, 42.0), (88.4, 41.4)]), [0.1, 0.55, 0.1])), SKIN.light, 0.6)]
     # le museau : l'arête éclairée, la narine
     hd += [(HD(ribbon([(98.0, 33.8), (100.8, 36.6), (102.2, 39.6)], [0.1, 0.8, 0.1])), SKIN.hi, 0.6)]
     fig.part('head', head, SKIN, grad=(*hp((100, 30)), *hp((66, 54)), [(0, SKIN.light), (0.45, SKIN.base), (1, SKIN.shadow)]),
