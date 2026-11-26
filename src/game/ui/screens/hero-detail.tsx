@@ -20,6 +20,7 @@ import { equipBest, levelUp, toggleInFormation, unequipAll } from '../../state/a
 import { canLevelUp, gearStatsOf, heroByUid, heroItems, heroPower, levelUpCost, slotLevel } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import { Art, Btn, Cur, Icon, ItemIcon, Modal, Sign, Stars, hasArt, starText } from '../kit';
+import { ELEMENT_TONE, btClass } from '../buttons';
 import { SlotPanel, betterInBag } from './bag';
 import { describePassive, describeSkill, describeTalent } from '../../describe';
 import { runSkillPreview } from '../../scenes';
@@ -209,11 +210,11 @@ export function HeroDetail({ uid }: { uid: number }) {
 
       {/* la puissance, entre de petits ronds */}
       <div class="hx-powerline">
-        <span class="hx-dot" aria-label={t(`element.${d.element}`)}><Art name={d.element} size={24} /></span>
-        <span class="hx-dot" aria-label={t(`role.${d.role}`)}><Icon name={d.role} size={24} /></span>
+        <span class={`hx-dot bt-rond bt-${ELEMENT_TONE[d.element]}`} aria-label={t(`element.${d.element}`)}><Art name={d.element} size={24} /></span>
+        <span class="hx-dot bt-rond bt-galet" aria-label={t(`role.${d.role}`)}><Icon name={d.role} size={24} /></span>
         <span class="hx-power"><Icon name="power" size={26} /><b>{fmt(heroPower(s, hero))}</b></span>
-        <button class="hx-dot" aria-label={t('detail.tabStats')} onClick={() => setSheet({ kind: 'stats' })}><Icon name="crit" size={24} /></button>
-        <button class={`hx-dot hx-team${inTeam ? ' on' : ''}`} aria-label={inTeam ? t('heroes.inTeam') : t('heroes.addTeam')} onClick={() => {
+        <button class="hx-dot bt-rond bt-galet" aria-label={t('detail.tabStats')} onClick={() => setSheet({ kind: 'stats' })}><Icon name="crit" size={24} /></button>
+        <button class={`hx-dot hx-team bt-rond ${inTeam ? 'on bt-basalte' : 'bt-galet'}`} aria-label={inTeam ? t('heroes.inTeam') : t('heroes.addTeam')} onClick={() => {
           const r = toggleInFormation(uid);
           if (r === 'full') toast(t('heroes.full'));
         }}>
@@ -248,14 +249,14 @@ export function HeroDetail({ uid }: { uid: number }) {
 
       {/* les actions ; le retour en bas à gauche */}
       <nav class="hx-actions">
-        <button class="hx-act hx-act-back" aria-label={t('back')} onClick={close}><Sign name="chev" class="flip" /></button>
+        <button class="hx-act-back bt-rond bt-galet" aria-label={t('back')} onClick={close}><Sign name="chev" class="flip" /></button>
         <span class="grow" />
-        <button class="hx-act" onClick={() => setSheet({ kind: 'gear', slot: 'weapon' })}>
+        <button class={`hx-act ${btClass('galet', 'l')}`} onClick={() => setSheet({ kind: 'gear', slot: 'weapon' })}>
           <Icon name="armory" size={30} /><small>{t('detail.equip')}</small>
           {gearUp && <span class="hx-act-up"><Sign name="up" /></span>}
         </button>
-        <button class="hx-act" onClick={() => open({ type: 'fusion', uid })}><Icon name="fusion" size={30} /><small>{t('fusion.title')}</small></button>
-        <button class="hx-act" onClick={() => open({ type: 'reset', uid })}><Icon name="rebirth" size={30} /><small>{t('detail.reset')}</small></button>
+        <button class={`hx-act ${btClass('galet', 'l')}`} onClick={() => open({ type: 'fusion', uid })}><Icon name="fusion" size={30} /><small>{t('fusion.title')}</small></button>
+        <button class={`hx-act ${btClass('galet', 'l')}`} onClick={() => open({ type: 'reset', uid })}><Icon name="rebirth" size={30} /><small>{t('detail.reset')}</small></button>
       </nav>
 
       {/* les fenêtres, au milieu de l'écran */}

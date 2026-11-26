@@ -26,6 +26,7 @@ import { ADVENTURE_ORDER, dots, isNew } from '../dots';
 import { TeamStrip } from './heroes';
 import { TitleBanner } from '../title-banner';
 import { Art, Btn, Cur, Icon, Locked, duration, starText } from '../kit';
+import { btClass } from '../buttons';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
 
 type Mode = (typeof ADVENTURE_ORDER)[number];
@@ -123,7 +124,7 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
 function SubHead({ title, children }: { title: string; children?: ComponentChildren }) {
   return (
     <header class="av-head">
-      <button class="av-back" aria-label={t('back')} onClick={() => openSub(null)} />
+      <button class="av-back bt-rond bt-galet" aria-label={t('back')} onClick={() => openSub(null)} />
       <h1>{title}</h1>
       {children && <div class="av-head-side">{children}</div>}
     </header>
@@ -355,9 +356,9 @@ function Arena() {
             )}
           </div>
         </div>
-        <div class="av-seg" role="tablist">
-          <button class={tab === 'fight' ? 'on' : ''} onClick={() => setTab('fight')}><Icon name="arena" size={20} />{t('adv.arena')}</button>
-          <button class={tab === 'shop' ? 'on' : ''} onClick={() => setTab('shop')}><Icon name="shop" size={20} />{t('arena.shop')}</button>
+        <div class="av-seg bt-rail" role="tablist">
+          <button class={tab === 'fight' ? `on ${btClass('basalte', 's')}` : ''} onClick={() => setTab('fight')}><Icon name="arena" size={20} />{t('adv.arena')}</button>
+          <button class={tab === 'shop' ? `on ${btClass('basalte', 's')}` : ''} onClick={() => setTab('shop')}><Icon name="shop" size={20} />{t('arena.shop')}</button>
         </div>
         {tab === 'fight' ? (
           <>

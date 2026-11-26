@@ -1,22 +1,25 @@
 // Les pièces de l'interface du combat (battle-scene.ts), style moderne (26/11/2026, demande du propriétaire : « on voit
 // tout le terrain, sans bandeau ») : tout flotte sur la scène, léger — des boutons ronds, des pilules de verre sombre, une
 // rangée de cartes de héros (portrait, nom, vie, énergie) posée sur un fondu doux en bas de l'écran.
-// Dessinées lisses dans des toiles (×2 pour rester nettes sur un téléphone), données à Phaser comme textures.
+// Dessinées lisses dans des toiles (×2 pour rester nettes sur un téléphone), données à Phaser comme textures. Les boutons
+// sont les galets et dalles « Pierre de l'arène » des menus (ui/buttons.ts), rendus depuis le même dessin SVG.
 import type Phaser from 'phaser';
+import { PIERRE, pierreSvg, roundSvg, svgDataUrl, textColors, type BtTone } from './ui/buttons';
 
 /** Les toiles sont dessinées 2 fois plus grandes que leur taille au combat (puis réduites : bords nets). */
 const R = 2;
 /** (pour poser une texture faite ici à sa vraie taille : `setScale(1 / HUD_RES)`) */
 export const HUD_RES = R;
 
-/** Les boutons : dégradé (haut, milieu, bas), la lèvre, la couleur de l'ombre des lettres. */
-export const HUD_BUTTONS = {
-  green: { top: '#7cf08a', mid: '#38cc5c', bot: '#25b34a', lip: '#12823a', ink: '#12823a' },
-  blue: { top: '#7cc8ff', mid: '#3b95ff', bot: '#2a78f0', lip: '#1a47b8', ink: '#1a47b8' },
-  red: { top: '#ff98a2', mid: '#ff5a6c', bot: '#f03e58', lip: '#b01f3a', ink: '#b01f3a' },
-  navy: { top: '#4b3c9e', mid: '#3a2d86', bot: '#2e2470', lip: '#150f3a', ink: '#0c0822' },
-};
-export type HudButton = keyof typeof HUD_BUTTONS;
+/** Les teintes des boutons du combat : galet (éteint : pause, vitesse, AUTO coupé), basalte (allumé : AUTO, reprendre), feu (quitter). */
+export const HUD_TONES = ['galet', 'basalte', 'feu'] as const;
+export type HudTone = (typeof HUD_TONES)[number];
+
+/** Les lettres posées sur une pierre : couleur, et lueur (pierre allumée) ou ombre (pierre éteinte). */
+export function hudText(tone: BtTone): { color: string; glow?: string; ink: string } {
+  const T = PIERRE[tone];
+  return { color: textColors(tone).tc, glow: T.light, ink: '#0a0614' };
+}
 
 /** Le haut des cartes, par élément : deux tons (haut clair, bas sombre). */
 const TINTS: Record<string, [string, string]> = {
@@ -25,8 +28,11 @@ const TINTS: Record<string, [string, string]> = {
 
 /** Une carte de héros (unités du combat) : sa taille, son arrondi, la hauteur du portrait. */
 export const CARD = { w: 128, h: 182, r: 22, face: 120 };
-/** Un bouton rond : son diamètre. */
+/** Un bouton rond : son diamètre ; sa hauteur (épaisseur de la pierre comprise). */
 export const ROUND = 68;
+export const ROUND_LIP = Math.max(3, Math.round(ROUND / 11));
+/** Un bouton large (fenêtre de pause) : largeur, hauteur, épaisseur. */
+export const WIDE = { w: 290, h: 84, lip: 7 };
 
 function add(sc: Phaser.Scene, key: string, w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) {
   if (sc.textures.exists(key)) return;
@@ -101,46 +107,6 @@ function track(w: number, h: number) {
   };
 }
 
-/** Un bouton rond : la lèvre, le dégradé (ou du verre sombre), une lumière en haut ; une ombre douce. */
-function round(kind: HudButton | 'glass') {
-  return (g: CanvasRenderingContext2D) => {
-    const m = 8, d = ROUND, c = m + d / 2;
-    g.save();
-    g.shadowColor = 'rgba(5, 2, 26, 0.5)'; g.shadowBlur = 10; g.shadowOffsetY = 4;
-    g.beginPath(); g.arc(c, c, d / 2, 0, Math.PI * 2);
-    g.fillStyle = kind === 'glass' ? 'rgba(13, 8, 38, 0.7)' : HUD_BUTTONS[kind].lip; g.fill();
-    g.restore();
-    if (kind === 'glass') {
-      g.strokeStyle = 'rgba(255, 255, 255, 0.3)'; g.lineWidth = 2;
-      g.beginPath(); g.arc(c, c, d / 2 - 1, 0, Math.PI * 2); g.stroke();
-      return;
-    }
-    const b = HUD_BUTTONS[kind];
-    g.beginPath(); g.arc(c, c - 2.5, d / 2 - 2.5, 0, Math.PI * 2);
-    const grad = g.createLinearGradient(0, m, 0, m + d);
-    grad.addColorStop(0, b.top); grad.addColorStop(0.5, b.mid); grad.addColorStop(1, b.bot);
-    g.fillStyle = grad; g.fill();
-    g.strokeStyle = 'rgba(255, 255, 255, 0.45)'; g.lineWidth = 2;
-    g.beginPath(); g.arc(c, c - 2.5, d / 2 - 3.5, Math.PI * 1.15, Math.PI * 1.85); g.stroke();
-  };
-}
-
-/** Un bouton large arrondi (fenêtre de pause) : la lèvre, le dégradé, une lumière en haut. */
-function wide(b: (typeof HUD_BUTTONS)[HudButton], w: number, h: number) {
-  return (g: CanvasRenderingContext2D) => {
-    const m = 8, bw = w - 2 * m, bh = h - 2 * m, r = Math.min(26, bh / 2);
-    g.save();
-    g.shadowColor = 'rgba(5, 2, 26, 0.45)'; g.shadowBlur = 10; g.shadowOffsetY = 4;
-    rr(g, m, m, bw, bh, r);
-    g.fillStyle = b.lip; g.fill();
-    g.restore();
-    rr(g, m, m, bw, bh - 6, r);
-    const grad = g.createLinearGradient(0, m, 0, m + bh - 6);
-    grad.addColorStop(0, b.top); grad.addColorStop(0.46, b.mid); grad.addColorStop(1, b.bot);
-    g.fillStyle = grad; g.fill();
-  };
-}
-
 /** Le signe « pause » (deux barres) et « fermer » : blancs, arrondis. */
 function pauseSign(g: CanvasRenderingContext2D) {
   g.fillStyle = '#ffffff';
@@ -168,7 +134,13 @@ export function loadHudArt(sc: Phaser.Scene) {
   add(sc, 'hud-card-glow', CARD.w + 44, CARD.h + 44, cardGlow);
   add(sc, 'hud-hp', 108, 14, track(108, 14));
   add(sc, 'hud-en', 108, 8, track(108, 8));
-  for (const k of ['glass', 'green', 'blue'] as const) add(sc, `hud-round-${k}`, ROUND + 16, ROUND + 16, round(k));
   add(sc, 'hud-pause', 36, 36, pauseSign);
-  for (const [k, b] of Object.entries(HUD_BUTTONS)) add(sc, `hud-btn-${k}`, 306, 100, wide(b, 306, 100));
+  // les galets et les dalles de pierre (SVG de ui/buttons.ts, dessinés R fois plus grands : nets au combat)
+  for (const t of HUD_TONES) {
+    for (const down of [false, true]) {
+      const k = down ? '-down' : '';
+      if (!sc.textures.exists(`hud-round-${t}${k}`)) sc.load.image(`hud-round-${t}${k}`, svgDataUrl(roundSvg(t, ROUND, down, R)));
+      if (!sc.textures.exists(`hud-btn-${t}${k}`)) sc.load.image(`hud-btn-${t}${k}`, svgDataUrl(pierreSvg(t, WIDE.w, WIDE.h, WIDE.lip, down, R)));
+    }
+  }
 }

@@ -21,6 +21,7 @@ import { newlyFound, summon, summonCost } from '../../state/actions';
 import { useGame } from '../../state/store';
 import { HeroFigure } from '../hero-figure';
 import { Cur, Icon, Stars } from '../kit';
+import { btClass } from '../buttons';
 import { close } from '../nav';
 import { Dais, Gate } from './summon-gate';
 import { SummonFx } from './summon-fx';
@@ -288,7 +289,7 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
             ))}
           </div>
         )}
-        {!one && phase !== 'recap' && <button class="sr-skip" aria-label="skip" onClick={skip}><SkipGlyph /></button>}
+        {!one && phase !== 'recap' && <button class={`sr-skip ${btClass('galet', 's')}`} aria-label="skip" onClick={skip}><SkipGlyph /></button>}
       </div>
 
       <div class="sr-stage" ref={stage}>
@@ -327,12 +328,12 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
 
       <div class="sr-bar">
         {cost && !focused && (
-          <button class="sr-btn sr-again" disabled={s.wallet[cost.currency] < cost.amount} onClick={again}>
+          <button class={`sr-btn sr-again ${btClass('arcane', 'l')}`} disabled={s.wallet[cost.currency] < cost.amount} onClick={again}>
             <span class="sr-btn-n">{t(`summon.x${heroes.length}`)}</span>
             <Cur k={cost.currency} n={cost.amount} />
           </button>
         )}
-        <button class="sr-btn sr-ok reveal-ok" onClick={(e) => { e.stopPropagation(); if (focused) setFocus(null); else close(); }}>
+        <button class={`sr-btn sr-ok reveal-ok ${btClass('basalte', 'l')}`} onClick={(e) => { e.stopPropagation(); if (focused) setFocus(null); else close(); }}>
           <span class="sr-btn-n">{t('ok')}</span>
         </button>
       </div>

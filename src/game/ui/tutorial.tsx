@@ -69,7 +69,7 @@ export function TutorialHand() {
       )}
       {/* le hibou guide : il montre l'endroit à toucher (il lève l'aile au premier pas) */}
       <Art class={`tuto-owl${rect && rect.left + rect.width / 2 < innerWidth / 2 ? ' tuto-owl-right' : ''}`} name={`owl-${step === 0 ? 'explain' : rect ? 'point' : 'happy'}`} />
-      <button class="tuto-skip" aria-label="skip" onClick={() => setTutorial(-1)} />
+      <button class="tuto-skip bt-rond bt-galet" aria-label="skip" onClick={() => setTutorial(-1)} />
     </>
   );
 }

@@ -9,7 +9,7 @@ import { Battle } from '../core/battle/engine';
 import { ENERGY_MAX, TICK_MS, type Slot, type Unit } from '../core/battle/types';
 import { heroDef, isHero } from '../core/data/heroes';
 import { C, FONT, FightScene, W, applyTheme } from './fight-view';
-import { CARD, HUD_BUTTONS, HUD_RES, ROUND, loadHudArt, pillKey, type HudButton } from './hud-art';
+import { CARD, HUD_RES, ROUND, ROUND_LIP, WIDE, hudText, loadHudArt, pillKey, type HudTone } from './hud-art';
 import { t } from './i18n';
 import { heroImage } from './art';
 import { battleLook } from './look';
@@ -78,34 +78,46 @@ export class BattleScene extends FightScene {
     return [...this.req.heroes, ...this.req.waves.flat()];
   }
 
-  /** Un bouton rond (verre sombre ou couleur) avec un texte ou un picto ; il s'enfonce sous le doigt. */
-  private round(x: number, y: number, kind: 'glass' | 'green' | 'blue', label: string | null, onClick: () => void) {
+  /** Des lettres posées sur une pierre : elles luisent sur une pierre allumée, ont une ombre franche sur une pierre éteinte. */
+  private stoneText(label: string, size: number, tone: HudTone) {
+    const { color, glow, ink } = hudText(tone);
+    const txt = this.add.text(0, 0, label, { fontFamily: FONT, fontSize: `${size}px`, color }).setOrigin(0.5);
+    return glow ? txt.setShadow(0, 0, glow, 10, true, true).setStroke(ink, 2) : txt.setStroke(ink, 3).setShadow(0, 2, ink, 0, true, true);
+  }
+
+  /** Appuyer sur une pierre : elle descend de son épaisseur (dessin enfoncé), son contenu avec elle. */
+  private press(c: Phaser.GameObjects.Container, bg: Phaser.GameObjects.Image, key: string, content: Phaser.GameObjects.Components.Transform, y0: number, lip: number, onClick: () => void) {
+    const up = () => { bg.setTexture(key); content.y = y0; };
+    c.on('pointerdown', () => { bg.setTexture(`${key}-down`); content.y = y0 + lip - 1; });
+    c.on('pointerout', up);
+    c.on('pointerup', () => { up(); onClick(); });
+  }
+
+  /** Un galet rond (ui/buttons.ts) avec un texte ou le signe pause ; il s'enfonce sous le doigt. */
+  private round(x: number, y: number, tone: HudTone, label: string | null, onClick: () => void) {
     const c = this.add.container(x, y).setDepth(4000);
-    const bg = this.add.image(0, 0, `hud-round-${kind}`).setDisplaySize(ROUND + 16, ROUND + 16);
-    const ink = kind === 'glass' ? '#0c0822' : HUD_BUTTONS[kind].ink;
+    const key = `hud-round-${tone}`;
+    const bg = this.add.image(0, 0, key).setDisplaySize(ROUND, ROUND + ROUND_LIP);
+    const y0 = -ROUND_LIP / 2 - 1;
     const content = label === null
-      ? this.add.image(0, 0, 'hud-pause').setDisplaySize(30, 30)
-      : this.add.text(0, -2, label, { fontFamily: FONT, fontSize: `${label.length > 3 ? 19 : 25}px`, color: '#ffffff' })
-        .setOrigin(0.5).setStroke(ink, 3).setShadow(0, 2, ink, 0, true, true);
+      ? this.add.image(0, y0, 'hud-pause').setDisplaySize(28, 28)
+      : this.stoneText(label, label.length > 3 ? 19 : 25, tone).setY(y0);
     c.add([bg, content]);
     c.setSize(ROUND, ROUND).setInteractive({ useHandCursor: true });
-    c.on('pointerdown', () => c.setScale(0.92));
-    c.on('pointerout', () => c.setScale(1));
-    c.on('pointerup', () => { c.setScale(1); onClick(); });
+    this.press(c, bg, key, content, y0, ROUND_LIP, onClick);
     return { c, bg, content };
   }
 
-  /** Un bouton large arrondi (fenêtre de pause). */
-  private wideButton(x: number, y: number, kind: HudButton, label: string, onClick: () => void) {
+  /** Une dalle de pierre large (fenêtre de pause). */
+  private wideButton(x: number, y: number, tone: HudTone, label: string, onClick: () => void) {
     const c = this.add.container(x, y);
-    const bg = this.add.image(0, 0, `hud-btn-${kind}`).setDisplaySize(306, 100);
-    const txt = this.add.text(0, -3, label, { fontFamily: FONT, fontSize: '34px', color: '#ffffff' })
-      .setOrigin(0.5).setStroke(HUD_BUTTONS[kind].ink, 3).setShadow(0, 3, HUD_BUTTONS[kind].ink, 0, true, true);
+    const key = `hud-btn-${tone}`;
+    const bg = this.add.image(0, 0, key).setDisplaySize(WIDE.w, WIDE.h);
+    const y0 = -WIDE.lip / 2 - 1;
+    const txt = this.stoneText(label, 34, tone).setY(y0);
     c.add([bg, txt]);
-    c.setSize(290, 84).setInteractive({ useHandCursor: true });
-    c.on('pointerdown', () => c.setScale(0.95));
-    c.on('pointerout', () => c.setScale(1));
-    c.on('pointerup', () => { c.setScale(1); onClick(); });
+    c.setSize(WIDE.w, WIDE.h).setInteractive({ useHandCursor: true });
+    this.press(c, bg, key, txt, y0, WIDE.lip, onClick);
     return c;
   }
 
@@ -145,7 +157,7 @@ export class BattleScene extends FightScene {
 
     // en haut : la pause (bouton rond), le combat et la vague dans des pilules
     const top = this.safe.top;
-    this.round(52, top + 50, 'glass', null, () => this.pause());
+    this.round(52, top + 50, 'galet', null, () => this.pause());
     const title = this.text(W / 2, top + 48, `${t(`mode.${this.req.kind}`)} ${this.titleSuffix()}`, 27, '#ffe27a').setDepth(3000);
     this.pill(W / 2, top + 48, title);
     this.waveLabel = this.text(W / 2, top + 98, '', 20, '#ffffff').setDepth(3000);
@@ -164,7 +176,7 @@ export class BattleScene extends FightScene {
     this.drawCards();
     const by = this.cardsTop - CARD_GAP - ROUND / 2 - 4;
     this.drawAuto(by);
-    const speed = this.round(W - 48, by, 'blue', `×${getState().speed}`, () => {
+    const speed = this.round(W - 48, by, 'galet', `×${getState().speed}`, () => {
       const next = ((getState().speed % 3) + 1) as 1 | 2 | 3;
       setSpeed(next);
       (speed.content as Phaser.GameObjects.Text).setText(`×${next}`);
@@ -217,7 +229,7 @@ export class BattleScene extends FightScene {
 
   private drawAuto(y: number) {
     const on = getState().auto;
-    const b = this.round(W - 48 - ROUND - 14, y, on ? 'green' : 'glass', t('battle.auto'), () => {
+    const b = this.round(W - 48 - ROUND - 14, y, on ? 'basalte' : 'galet', t('battle.auto'), () => {
       setAuto(!on);
       this.battle.setAuto(!on);
       b.c.destroy();
@@ -233,13 +245,13 @@ export class BattleScene extends FightScene {
     const H = this.scale.height;
     const veil = this.add.rectangle(0, 0, W, H, 0x0a0620, 0.6).setOrigin(0).setInteractive();
     const icon = this.add.image(W / 2, H / 2 - 150, 'hud-pause').setDisplaySize(64, 64).setAlpha(0.9);
-    const resume = this.wideButton(W / 2, H / 2 - 30, 'green', t('battle.resume'), () => {
+    const resume = this.wideButton(W / 2, H / 2 - 30, 'basalte', t('battle.resume'), () => {
       this.pauseLayer?.destroy();
       this.pauseLayer = undefined;
       this.paused = false;
       this.tweens.resumeAll();
     });
-    const quit = this.wideButton(W / 2, H / 2 + 80, 'red', t('battle.quit'), () => {
+    const quit = this.wideButton(W / 2, H / 2 + 80, 'feu', t('battle.quit'), () => {
       this.pauseLayer?.destroy();
       this.finish();
     });

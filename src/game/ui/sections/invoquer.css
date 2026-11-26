@@ -60,18 +60,15 @@ html .adv-scroll > .screen.summon { gap: 8px; padding-bottom: 2px; }
 html .screen.summon { --g-a: #9b5cff; --g-b: #6fe3ff; --g-deep: #2a145e; transition: --g-a 0.4s, --g-b 0.4s, --g-deep 0.4s; }
 html .screen.summon.sum-kind-basic { --g-a: #3b95ff; --g-b: #a9f3ff; --g-deep: #12306b; }
 
-/* en haut : le choix du portail (deux pilules dans un rail de verre), le nom du portail choisi */
+/* en haut : le choix du portail (deux onglets dans un rail de pierre ; l'ouvert est une dalle allumée), le nom du portail choisi */
 .sum-head { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 4px; }
-.sum-kinds { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: #0d0826c7;
-  box-shadow: inset 0 0 0 1px #ffffff1f, 0 8px 20px #05021a73; }
-.sum-kind { display: inline-flex; align-items: center; gap: 6px; height: 42px; padding: 0 18px 0 8px; border: 0; border-radius: 999px;
-  background: transparent; color: #cfc6f5; font: 400 18px/1 var(--font-title); font-variant-numeric: tabular-nums;
-  transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.08s; }
+.sum-kinds { display: inline-flex; gap: 2px; filter: drop-shadow(0 8px 12px #05021a73); }
+.sum-kind { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 16px 2px 10px; border: 0; background: transparent;
+  color: #c9c4dd; text-shadow: -1px 1px 0 #00000080; font: 400 18px/1 var(--font-title); font-variant-numeric: tabular-nums; }
 .sum-kind .icon { filter: drop-shadow(0 2px 2px #0006); }
 .sum-kind:not(.on) .icon { opacity: 0.75; }
-.sum-kind.on { color: #fff; background: linear-gradient(180deg, #b48aff, #7c4dff); box-shadow: inset 0 1.5px 0 #ffffff66, 0 4px 12px #7c4dff80; text-shadow: 0 1.5px 0 #4a1aa8; }
-.sum-kind-tab-basic.on { background: linear-gradient(180deg, #7cc8ff, #2f8cff); box-shadow: inset 0 1.5px 0 #ffffff66, 0 4px 12px #2f8cff80; text-shadow: 0 1.5px 0 #163f9e; }
-.sum-kind:active { transform: translateY(1px); }
+.sum-kind.bt { min-height: 40px; height: 40px; padding: 0 16px 4px 10px; font-size: 18px; color: var(--tc); text-shadow: var(--ts); }
+.sum-kind.bt:active { padding: 3px 16px 1px 10px; }
 .sum-name { margin: 0; font: 400 25px/1.05 var(--font-title); letter-spacing: 0.4px; color: #fff;
   text-shadow: 0 2px 0 var(--g-deep), 0 0 22px color-mix(in srgb, var(--g-a) 80%, transparent); }
 
@@ -98,9 +95,10 @@ html .screen.summon .sum-stage { position: relative; flex: 1; min-height: 0; dis
 .sum-corner { position: absolute; top: 2px; z-index: 2; }
 .sum-corner-r { right: 2px; } .sum-corner-l { left: 2px; }
 .sum-round { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; border: 0; background: none; padding: 0; color: #fff; }
-.sum-round-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%;
-  background: linear-gradient(160deg, #6a4be6, #3a2391); box-shadow: inset 0 0 0 1.5px #ffffff33, inset 0 2px 0 #ffffff40, 0 6px 14px #05021a80; transition: transform 0.08s; }
-.sum-round:active .sum-round-icon { transform: translateY(2px); }
+/* (un galet de pierre, le dessin rond de buttons.ts) */
+.sum-round-icon { display: grid; place-items: center; width: 48px; height: 52px; padding-bottom: 4px; box-sizing: border-box;
+  background: var(--bt-pierre-rond-galet) 0 0 / 100% 100% no-repeat; filter: drop-shadow(-2px 3px 3px #0a052a59); }
+.sum-round:active .sum-round-icon { background-image: var(--bt-pierre-rond-galet-down); padding: 4px 0 0; }
 .sum-round-label { padding: 1px 8px 2px; border-radius: 999px; background: #0d0826d9; font: 400 11.5px/14px var(--font-title); letter-spacing: 0.2px; white-space: nowrap; }
 .sum-round .dot { top: -2px; right: 0; }
 
@@ -118,35 +116,19 @@ html .screen.summon .sum-pity-bar span { display: block; height: 100%; min-width
 html .screen.summon .sum-pity strong { min-width: 36px; padding: 2px 8px 3px; border-radius: 999px; text-align: center; background: #00000059;
   font: 400 15px/1 var(--font-title); color: #ffd45c; text-shadow: none; }
 html .screen.summon .sum-buttons { display: grid; grid-template-columns: 1fr 1.3fr; gap: 10px; }
-html .screen.summon .sum-btn { --c1: #c4a0ff; --c2: #9256ff; --c3: #5a22c9; --ct: #4a1aa8;
-  position: relative; overflow: hidden; min-height: 64px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; padding: 0 0 5px;
-  border: 0; border-radius: 20px; clip-path: none; filter: none; color: #fff;
-  background: linear-gradient(180deg, var(--c1) 0%, var(--c2) 48%, var(--c2) 100%);
-  box-shadow: inset 0 2px 0 #ffffff73, inset 0 -5px 0 var(--c3), 0 8px 18px #05021a80; text-shadow: 0 2px 0 var(--ct); transition: transform 0.08s, box-shadow 0.08s; }
-html .screen.summon .sum-btn::before, html .screen.summon .sum-btn::after { display: none; }
-html .screen.summon .sum-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: inset 0 2px 0 #ffffff73, inset 0 -2px 0 var(--c3), 0 3px 8px #05021a73; }
-html .screen.summon .sum-btn:disabled { filter: grayscale(0.8) brightness(0.75); }
-html .screen.summon .sum-btn-n { font: 400 28px/1 var(--font-title); letter-spacing: 0.5px; }
-html .screen.summon .sum-btn .cur { padding: 1px 9px 1px 4px; border-radius: 999px; background: #00000038; font: 400 14px var(--font-title); text-shadow: none; }
-html .screen.summon .sum-btn-10 { --c1: #ffe680; --c2: #ffb21f; --c3: #c06a00; --ct: #a35400; }
-html .screen.summon.sum-kind-basic .sum-btn { --c1: #8cd0ff; --c2: #3b95ff; --c3: #1a47b8; --ct: #163f9e; }
-html .screen.summon.sum-kind-basic .sum-btn-10 { --c1: #8ff5e4; --c2: #22c9b0; --c3: #0b7a6c; --ct: #0b6a5e; }
-/* le ×10 : un reflet courbe qui passe de temps en temps (pas une rayure : une tache de lumière arrondie) */
-html .screen.summon .sum-btn-10:not(:disabled)::after { display: block; content: ''; position: absolute; top: -30%; bottom: -30%; left: -40%; width: 36%; border-radius: 50%;
-  background: radial-gradient(closest-side, #ffffff8c, #fff0); animation: sum-glow-pass 3.6s ease-in-out infinite; pointer-events: none; }
-@keyframes sum-glow-pass { 0%, 55% { translate: 0 0; } 100% { translate: 480% 0; } }
-html .screen.summon .sum-free { align-self: center; display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 18px 2px; border: 0; border-radius: 999px; clip-path: none; filter: none;
-  color: #fff; font: 400 14.5px var(--font-title); background: linear-gradient(180deg, #7cf08a, #2fc457);
-  box-shadow: inset 0 2px 0 #ffffff66, inset 0 -3px 0 #12823a, 0 4px 10px #05021a59; text-shadow: 0 1.5px 0 #12823a; }
-html .screen.summon .sum-free:disabled { filter: grayscale(0.85) brightness(0.8); }
+/* les deux gros boutons : des dalles de pierre allumées (buttons.ts) : ×1 arcane (eau pour le portail simple), ×10 basalte */
+html .screen.summon .sum-btn { width: 100%; min-width: 0; flex-direction: column; gap: 4px; }
+html .screen.summon .sum-btn-n { font: 400 27px/1 var(--font-title); letter-spacing: 0.5px; }
+/* l'invocation gratuite : une petite dalle d'ardoise */
+html .screen.summon .sum-free { align-self: center; font-size: 14.5px; }
 html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum-head, html .screen.summon.sum-casting .sum-corner { pointer-events: none; }
 @media (max-height: 700px) {
-  html .screen.summon .sum-btn { min-height: 52px; }
-  html .screen.summon .sum-btn-n { font-size: 22px; }
+  html .screen.summon .sum-btn { min-height: 56px; }
+  html .screen.summon .sum-btn-n { font-size: 23px; }
   html .screen.summon .sum-panel { gap: 7px; padding: 9px 10px; border-radius: 22px; }
-  .sum-kind { height: 36px; font-size: 16px; }
+  .sum-kind, .sum-kind.bt { height: 36px; min-height: 36px; font-size: 16px; }
   .sum-name { font-size: 21px; }
-  .sum-round-icon { width: 42px; height: 42px; }
+  .sum-round-icon { width: 42px; height: 46px; }
 }
 
 /* ======================================================================================================================
@@ -172,9 +154,7 @@ html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum
 .sr-pip.got { animation: sr-pip-got 0.35s var(--d) ease-out backwards; box-shadow: inset 0 0 0 2px var(--rar); }
 .sr-pip.seen { background: radial-gradient(circle at 65% 35%, #fff, var(--rar) 55%); box-shadow: 0 0 8px var(--rar); transform: scale(1.1); }
 @keyframes sr-pip-got { 0% { box-shadow: inset 0 0 0 1.5px #ffffff26; } 60% { transform: scale(1.5); box-shadow: 0 0 12px #fff, inset 0 0 0 2px #fff; } }
-.sr-skip { position: absolute; right: 0; top: 2px; display: grid; place-items: center; width: 52px; height: 36px; border: 0; border-radius: 999px; color: #fff;
-  background: #ffffff21; box-shadow: inset 0 0 0 1px #ffffff2e; }
-.sr-skip:active { transform: translateY(1px); background: #ffffff33; }
+.sr-skip { position: absolute; right: 0; top: 0; min-width: 54px; }
 
 /* la scène : le portail (en halo derrière le héros), l'estrade, le héros */
 .sr-stage { position: relative; z-index: 2; flex: 1; min-height: 0; container-type: size; }
@@ -288,22 +268,15 @@ html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum
 /* en bas : « encore une fois » et OK, quand tout est montré (la place est gardée : rien ne saute) */
 .sr-bar { position: relative; z-index: 4; flex: none; height: 64px; display: flex; justify-content: center; align-items: center; gap: 10px; visibility: hidden; opacity: 0; transition: opacity 0.25s; }
 .sr-ready .sr-bar { visibility: visible; opacity: 1; }
-.sr-btn { min-width: 128px; height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 18px 4px; border: 0; border-radius: 18px; color: #fff;
-  background: linear-gradient(180deg, var(--c1), var(--c2) 50%); box-shadow: inset 0 2px 0 #ffffff73, inset 0 -5px 0 var(--c3), 0 8px 18px #05021a80; text-shadow: 0 2px 0 var(--c3);
-  transition: transform 0.08s; }
-.sr-btn:active:not(:disabled) { transform: translateY(3px); }
-.sr-btn:disabled { filter: grayscale(0.8) brightness(0.75); }
+.sr-btn { min-width: 132px; flex-direction: column; gap: 3px; }
 .sr-btn-n { font: 400 24px/1 var(--font-title); letter-spacing: 0.4px; }
-.sr-btn .cur { padding: 0 8px 0 3px; border-radius: 999px; background: #00000038; font: 400 13px var(--font-title); text-shadow: none; }
-.sr-bar .sr-ok { --c1: #7cf08a; --c2: #2fc457; --c3: #12823a; width: auto; min-width: 150px; min-height: 0; animation: none; }
-.sr-again { --c1: #ffe680; --c2: #ffb21f; --c3: #b05f00; }
-.sr-one .sr-again { --c1: #c4a0ff; --c2: #9256ff; --c3: #5a22c9; }
+.sr-bar .sr-ok { min-width: 150px; animation: none; }
 
 @media (max-height: 700px) {
   .sr-info-slot { height: 98px; }
   .sr-name { font-size: 25px; }
   .sr-bar { height: 56px; }
-  .sr-btn { height: 50px; }
+  .sr-btn { min-height: 54px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .sr-screen *, .sg * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }

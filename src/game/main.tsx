@@ -3,13 +3,16 @@ import { render } from 'preact';
 // le style commun d'abord : les fichiers des sections (ui/sections/*.css, importés par leurs écrans) passent après lui
 import './ui/style.css';
 import { App } from './ui/app';
+import { installButtons } from './ui/buttons';
 import { installSigns } from './ui/px';
 import { installSkin } from './ui/skin';
 import { watchUpdates } from './updater';
 
-// l'habillage de l'interface (style moderne, skin.ts) et les petits signes (signs-art.ts), posés avant le premier dessin
+// l'habillage de l'interface (style moderne, skin.ts), les petits signes (signs-art.ts) et les boutons de pierre
+// (buttons.ts), posés avant le premier dessin
 installSkin();
 installSigns();
+installButtons();
 render(<App />, document.getElementById('game')!);
 watchUpdates();
 

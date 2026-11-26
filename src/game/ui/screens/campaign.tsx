@@ -18,7 +18,7 @@ import { useGame } from '../../state/store';
 import { dots } from '../dots';
 import { Art, Btn, Cur, Icon, Modal, RedDot, Sign } from '../kit';
 import { close, open, prepare } from '../nav';
-import { BarArt, ChapterPlaque, Chevron, FightButtonArt, Medallion } from '../chrome';
+import { BarArt, ChapterPlaque, Chevron, Medallion } from '../chrome';
 
 function IdleStage({ running }: { running: boolean }) {
   const s = useGame();
@@ -108,8 +108,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
           {loot.hours >= 2 && <RedDot />}
         </button>
 
-        <button class="dock-fight" disabled={done} onClick={() => prepare(campaignPlan())}>
-          <FightButtonArt off={done} />
+        <button class="dock-fight bt bt-basalte bt-xxl" disabled={done} onClick={() => prepare(campaignPlan())}>
           <span class="dock-fight-label">{done ? t('camp.done') : t('fight')}</span>
           {!done && (
             <span class="dock-fight-stage">

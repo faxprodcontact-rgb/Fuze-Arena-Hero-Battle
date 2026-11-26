@@ -29,7 +29,7 @@ function FriendRow({ f, mine, sent, waiting, onAdd }: { f: Friend; mine: number;
         <Btn kind="green" small onClick={onAdd}>+</Btn>
       ) : (
         <>
-          <button class={`gift-btn${sent ? ' done' : ''}${waiting ? ' waiting' : ''}`} disabled={sent} onClick={() => sendGift(f.id)} aria-label="gift">
+          <button class={`gift-btn bt bt-galet bt-m${sent ? ' done' : ''}${waiting ? ' waiting' : ''}`} disabled={sent} onClick={() => sendGift(f.id)} aria-label="gift">
             <Icon name="gift" size={22} />
           </button>
           <Btn kind="red" small onClick={() => { const p = friendPlan(f.id); if (p) prepare(p); }}>{t('friends.challenge')}</Btn>

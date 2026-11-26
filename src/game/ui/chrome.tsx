@@ -43,11 +43,6 @@ export function ChapterPlaque({ title, progress, icon }: { title: string; progre
   );
 }
 
-/** Le fond du grand bouton Combattre : le bouton vert arrondi (gris quand il n'y a plus rien à combattre). */
-export function FightButtonArt({ off = false }: { off?: boolean }) {
-  return <span class={`fight-art${off ? ' off' : ''}`} aria-hidden="true" />;
-}
-
 /** Le niveau du joueur, sous son portrait : une petite pilule d'or. */
 export function LevelShield({ level }: { level: number }) {
   return <span class="lv-shield"><span>{level}</span></span>;

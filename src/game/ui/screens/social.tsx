@@ -19,6 +19,7 @@ import { isUnlocked, teamPower } from '../../state/selectors';
 import { getState, now, useGame } from '../../state/store';
 import type { ChatMessage } from '../../state/types';
 import { Bar, Btn, Cur, Icon, Locked, Modal, RedDot, Tabs } from '../kit';
+import { btClass } from '../buttons';
 import { open, prepare } from '../nav';
 import { ShopTile } from './adventure';
 import { TeamStrip } from './heroes';
@@ -86,9 +87,9 @@ const TAB_ICONS: Record<GuildTab, string> = { boss: 'dailyBoss', war: 'arena', m
 /** Les onglets de la guilde : une rangée de tuiles (picto + nom) ; l'onglet ouvert est une tuile azur soulevée. */
 function GuildTabs({ value, options, onChange }: { value: GuildTab; options: [GuildTab, string, boolean?][]; onChange: (v: GuildTab) => void }) {
   return (
-    <nav class="g-tabs">
+    <nav class="g-tabs bt-rail">
       {options.map(([v, label, dot]) => (
-        <button class={`g-tab${v === value ? ' on' : ''}`} onClick={() => onChange(v)}>
+        <button class={`g-tab${v === value ? ` on ${btClass('basalte', 'm')}` : ''}`} onClick={() => onChange(v)}>
           <Icon name={TAB_ICONS[v]} size={26} />
           <span class="g-tab-label">{label}</span>
           {dot && <RedDot />}
@@ -177,7 +178,7 @@ export function GuildScreen() {
               <span class="g-power"><Icon name="power" size={18} />{fmt(m.power)}</span>
             </div>
           ))}
-          <button class="g-leave" onClick={() => open({ type: 'confirm', text: `${t('guild.leave')} ?`, onYes: leaveGuild })}>{t('guild.leave')}</button>
+          <button class={`g-leave ${btClass('feu', 's')}`} onClick={() => open({ type: 'confirm', text: `${t('guild.leave')} ?`, onYes: leaveGuild })}>{t('guild.leave')}</button>
         </section>
       )}
       {tab === 'war' && <GuildWar guild={name} />}

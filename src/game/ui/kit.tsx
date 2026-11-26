@@ -11,6 +11,7 @@ import { close } from './nav';
 import { ICON_COLS, ICON_INDEX, ICON_ROWS } from '../icons-meta';
 import { HD_FIG } from '../hd-figures';
 import { heroArt } from '../look';
+import { btClass, type BtSize, type BtTone } from './buttons';
 
 // ---------- Pictos (style moderne, lisses : planche public/art/icons.webp, refonte-graphique/ui-moderne/pictos/) ----------
 
@@ -55,13 +56,22 @@ export function Icon({ name, size = 22 }: { name: string; size?: number }) {
 
 type BtnKind = 'green' | 'blue' | 'gold' | 'ghost' | 'red' | 'purple';
 
+/** La teinte de pierre de chaque sorte de bouton (buttons.ts) : l'action principale est le basalte allumé. */
+const BTN_TONE: Record<BtnKind, BtTone> = { green: 'basalte', gold: 'or', purple: 'arcane', red: 'feu', blue: 'ardoise', ghost: 'ardoise' };
+
+/**
+ * Un bouton « Pierre de l'arène » (style.css, « Boutons »). Taille : `small` = s (38 px), normal = m (48), `btn-fight` = l
+ * (62) ; `size` la donne directement. Les classes `btn btn-<sorte>` restent posées (le tutoriel les vise).
+ */
 export function Btn(p: {
-  kind?: BtnKind; onClick?: () => void; disabled?: boolean; small?: boolean; wide?: boolean;
+  kind?: BtnKind; onClick?: () => void; disabled?: boolean; small?: boolean; wide?: boolean; size?: BtSize;
   children: ComponentChildren; dot?: boolean; class?: string;
 }) {
+  const kind = p.kind ?? 'blue';
+  const size = p.size ?? (p.small ? 's' : /\bbtn-fight\b/.test(p.class ?? '') ? 'l' : 'm');
   return (
     <button
-      class={`btn btn-${p.kind ?? 'blue'}${p.small ? ' btn-small' : ''}${p.wide ? ' btn-wide' : ''} ${p.class ?? ''}`}
+      class={`btn btn-${kind} ${btClass(BTN_TONE[kind], size)}${p.small ? ' btn-small' : ''}${p.wide ? ' btn-wide' : ''} ${p.class ?? ''}`}
       disabled={p.disabled}
       onClick={() => !p.disabled && p.onClick?.()}
     >
@@ -98,7 +108,7 @@ export function Tabs<T extends string>({ value, options, onChange }: { value: T;
   return (
     <div class="tabs">
       {options.map(([v, label, dot]) => (
-        <button class={`tab${v === value ? ' tab-on' : ''}`} onClick={() => onChange(v)}>
+        <button class={`tab${v === value ? ` tab-on ${btClass('basalte', 's')}` : ''}`} onClick={() => onChange(v)}>
           {label}
           {dot && <RedDot />}
         </button>
@@ -190,7 +200,7 @@ export function Page({ title, children }: { title: string; children: ComponentCh
     <div class="page">
       <Backdrop kind="page" />
       <header class="prep-head">
-        <button class="x" aria-label={t('back')} onClick={close}>‹</button>
+        <button class="x bt-rond bt-galet" aria-label={t('back')} onClick={close}>‹</button>
         <h2>{title}</h2>
       </header>
       <div class="page-body">{children}</div>
@@ -206,7 +216,7 @@ export function Modal(p: { title: string; children: ComponentChildren; wide?: bo
       <div class={`modal${p.wide ? ' modal-wide' : ''}`}>
         <div class="modal-head">
           <h2>{p.title}</h2>
-          <button class="x" aria-label={t('close')} onClick={p.onClose ?? close}>✕</button>
+          <button class="x bt-rond bt-feu" aria-label={t('close')} onClick={p.onClose ?? close}>✕</button>
         </div>
         <div class="modal-body">{p.children}</div>
       </div>

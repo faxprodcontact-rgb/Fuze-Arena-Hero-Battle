@@ -90,16 +90,16 @@
 .hx-powerline { position: relative; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .hx-powerline::before { content: ''; position: absolute; left: 4%; right: 4%; top: 50%; height: 2px; translate: 0 -50%; z-index: -1; border-radius: 2px;
   background: linear-gradient(90deg, #0000, color-mix(in srgb, var(--el) 40%, #ffffff59) 20%, color-mix(in srgb, var(--el) 40%, #ffffff59) 80%, #0000); }
-.hx-dot { position: relative; flex: none; width: 38px; height: 38px; display: grid; place-items: center; border: 0; padding: 0; border-radius: 50%; color: #fff;
-  background: radial-gradient(circle at 50% 30%, #3f3196, #1e1650 75%); box-shadow: inset 0 0 0 1.5px #ffffff33, 0 4px 10px #05021a80; }
-button.hx-dot:active { transform: scale(0.92); }
+.hx-dot { width: 38px; height: 41px; cursor: default; }
+button.hx-dot { cursor: pointer; }
+.hx-dot > .icon, .hx-dot > .art { position: relative; top: -2px; }
+.hx-dot:active > .icon, .hx-dot:active > .art { top: 0; }
 .hx-power { display: inline-flex; align-items: center; gap: 4px; height: 44px; padding: 0 18px 0 12px; margin: 0 2px; border-radius: 999px;
   background: linear-gradient(180deg, #2a1f63, #1b1350); box-shadow: inset 0 0 0 1.5px #ffc22e59, inset 0 1px 0 #ffffff26, 0 6px 16px #05021a80; }
 .hx-power b { font: 400 25px/1 var(--font-title); color: #ffe27a; letter-spacing: 0.4px; text-shadow: 0 2px 0 #3a2200; }
 .hx-team .icon { filter: saturate(0.3) brightness(0.8); }
 .hx-team > i { position: absolute; right: -4px; bottom: -4px; width: 18px; height: 18px; display: grid; place-items: center; border-radius: 50%;
   background: linear-gradient(180deg, #a78bff, #7c4dff); box-shadow: 0 0 0 2px #100a2c; }
-.hx-team.on { background: linear-gradient(180deg, #6cc4ff, #2f8cff); }
 .hx-team.on .icon { filter: none; }
 .hx-team.on > i { background: linear-gradient(180deg, #7cf08a, #2fc457); }
 
@@ -127,19 +127,18 @@ button.hx-dot:active { transform: scale(0.92); }
 .hx-cost { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 3px; }
 .hx-cost .cur { padding: 1px 10px 1px 3px; border-radius: 999px; background: #00000040; font-size: 14px; }
 .hx-cost .cur .icon { width: 22px !important; height: 22px !important; }
-.hx-lvup { flex: none; min-height: 52px; padding-left: 14px; padding-right: 16px; font-size: 19px; gap: 5px; }
-.hx-lv10 { flex: none; min-height: 52px; padding: 0 13px 6px; }
+.hx-lvup { min-height: 52px; padding-left: 14px; padding-right: 15px; font-size: 19px; gap: 5px; }
+.hx-lv10 { min-height: 52px; padding-left: 12px; padding-right: 12px; }
 .hx-capped { justify-content: center; }
 .hx-cap { display: inline-flex; align-items: center; gap: 3px; padding: 0 12px 0 8px; height: 34px; border-radius: 999px; font: 400 17px/1 var(--font-title); color: #ffe27a; background: #00000040; }
 
 /* ---------------- les actions ; le retour en bas à gauche ---------------- */
 .hx-actions { display: flex; align-items: flex-end; gap: 8px; }
-.hx-act { position: relative; flex: none; width: 68px; height: 60px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 2px 0 0;
-  border: 0; border-radius: 18px; color: #fff; background: linear-gradient(180deg, #4a3aa8, #2c2178); box-shadow: inset 0 1.5px 0 #ffffff40, inset 0 -3px 0 #1a1246, 0 6px 14px #05021a80; }
-.hx-act small { font: 600 10.5px/1.1 var(--font); white-space: nowrap; max-width: 64px; overflow: hidden; text-overflow: ellipsis; }
-.hx-act:active { transform: translateY(2px); box-shadow: inset 0 1.5px 0 #ffffff40, inset 0 -1px 0 #1a1246; }
-.hx-act-back { width: 54px; height: 54px; border-radius: 50%; background: #ffffff1f; box-shadow: inset 0 0 0 1.5px #ffffff33, 0 4px 10px #05021a59; }
-.hx-act-back .sign { --k: 3; }
+/* des dalles de pierre sombre (galet), le picto et son nom ; le retour : un galet rond */
+.hx-act { width: 70px; min-width: 0; height: 62px; flex-direction: column; gap: 1px; padding-left: 0; padding-right: 0; }
+.hx-act small { font: 600 10.5px/1.1 var(--font); white-space: nowrap; max-width: 62px; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 1px 0 #0a0614; }
+.hx-act-back { width: 52px; height: 57px; }
+.hx-act-back .sign { --k: 3; position: relative; top: -2px; }
 .hx-act-up { position: absolute; top: -5px; right: -5px; width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%;
   background: linear-gradient(180deg, #7cf08a, #2fc457); box-shadow: 0 0 0 2px #100a2c; }
 .hx-actions .grow { flex: 1; }
@@ -193,11 +192,11 @@ button.hx-dot:active { transform: scale(0.92); }
   .hx-med .icon { width: 28px !important; height: 28px !important; }
   .hx-med-ult .hx-med-ic { width: 36px; height: 36px; }
   .hx-arrow { width: 34px; height: 46px; margin-top: -23px; }
-  .hx-dot { width: 34px; height: 34px; } .hx-power { height: 40px; } .hx-power b { font-size: 22px; }
+  .hx-dot { width: 34px; height: 37px; } .hx-power { height: 40px; } .hx-power b { font-size: 22px; }
   .hx-stats { padding: 5px; border-radius: 18px; }
   .hx-stat { padding: 3px 0 2px; } .hx-stat-ic { width: 21px; height: 21px; } .hx-stat b { font-size: 15px; } .hx-stat-lv b { font-size: 21px; }
   .hx-lvup, .hx-lv10 { min-height: 46px; }
-  .hx-act { height: 52px; width: 62px; } .hx-act-back { width: 48px; height: 48px; }
+  .hx-act { height: 54px; min-height: 54px; width: 62px; } .hx-act-back { width: 46px; height: 50px; }
   .hx-act .icon { width: 26px !important; height: 26px !important; }
 }
 /* les fenêtres de la page couvrent toute la page (et pas seulement leur place dans la colonne) */

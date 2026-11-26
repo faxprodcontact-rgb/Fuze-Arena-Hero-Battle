@@ -214,8 +214,8 @@ export function SettingsModal() {
         <div class="setting-row static">
           <span>{t('settings.lang')}</span>
           <span class="row gap-s">
-            <Btn kind={s.lang === 'fr' ? 'blue' : 'ghost'} small onClick={() => setLang('fr')}>Français</Btn>
-            <Btn kind={s.lang === 'en' ? 'blue' : 'ghost'} small onClick={() => setLang('en')}>English</Btn>
+            <Btn kind={s.lang === 'fr' ? 'green' : 'ghost'} small onClick={() => setLang('fr')}>Français</Btn>
+            <Btn kind={s.lang === 'en' ? 'green' : 'ghost'} small onClick={() => setLang('en')}>English</Btn>
           </span>
         </div>
         <Toggle label={t('settings.sound')} on={s.settings.sound} onChange={(v) => setSetting('sound', v)} />
@@ -249,7 +249,7 @@ function NameField({ value, onInput, error }: { value: string; onInput: (v: stri
       <div class="row gap-s">
         <input id="player-name" value={value} maxLength={16} autoComplete="off"
           onInput={(e) => onInput((e.target as HTMLInputElement).value)} />
-        <button class="dice pxf" aria-label={t('name.random')} onClick={() => onInput(randomName())}><Icon name="dice" size={40} /></button>
+        <button class="dice bt bt-ardoise bt-l" aria-label={t('name.random')} onClick={() => onInput(randomName())}><Icon name="dice" size={40} /></button>
       </div>
       <span class={`muted small${error ? ' error' : ''}`}>{error ? t(error) : t('name.rule')}</span>
     </div>

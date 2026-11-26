@@ -11,6 +11,7 @@ import { canLevelUp, heroPower, teamHeroes, teamPower, type TeamKind } from '../
 import { useGame } from '../../state/store';
 import type { PlayerState } from '../../state/types';
 import { Art, HeroCard, Icon, RedDot, Sign } from '../kit';
+import { ELEMENT_TONE, btClass } from '../buttons';
 import { HeroFigure } from '../hero-figure';
 import { TitleBanner } from '../title-banner';
 import { open, prepare } from '../nav';
@@ -116,13 +117,13 @@ function HeroList() {
   return (
     <div class="screen heroes">
       <div class="hero-filters">
-        <button class={`el-pick${element === 'all' ? ' on' : ''}`} aria-label={t('all')} onClick={() => setElement('all')}><Art name="allElements" size={24} /></button>
+        <button class={`el-pick bt-rond ${element === 'all' ? 'on bt-basalte' : 'bt-galet'}`} aria-label={t('all')} onClick={() => setElement('all')}><Art name="allElements" size={24} /></button>
         {ELEMENTS.map((e) => (
-          <button class={`el-pick${element === e ? ' on' : ''}`} aria-label={t(`element.${e}`)} onClick={() => setElement(e)}><Art name={e} size={24} /></button>
+          <button class={`el-pick bt-rond ${element === e ? `on bt-${ELEMENT_TONE[e]}` : 'bt-galet'}`} aria-label={t(`element.${e}`)} onClick={() => setElement(e)}><Art name={e} size={24} /></button>
         ))}
         <span class="grow" />
         <div class="dropdown">
-          <button class="sort-btn" onClick={() => setMenu(!menu)}>{t(`sort.${sort}`)}<span class="sort-caret" /></button>
+          <button class={`sort-btn ${btClass('galet', 's')}`} onClick={() => setMenu(!menu)}>{t(`sort.${sort}`)}<span class="sort-caret" /></button>
           {menu && (
             <div class="dropdown-menu">
               {sorts.map((x) => (

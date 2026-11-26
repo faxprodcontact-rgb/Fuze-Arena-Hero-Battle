@@ -12,6 +12,7 @@ import { rememberCast } from '../sections/summon-reveal';
 import { adsLeft, claimFragments, summon, summonCost, watchAd } from '../../state/actions';
 import { useGame } from '../../state/store';
 import { Bar, Btn, Cur, Icon, Modal, Stars } from '../kit';
+import { btClass } from '../buttons';
 import { close, open } from '../nav';
 import '../sections/invoquer.css';
 
@@ -22,7 +23,7 @@ type Kind = 'normal' | 'basic';
 /** Le choix du portail : deux onglets arrondis, chacun avec son parchemin et le nombre qu'il en reste. */
 function KindTab({ kind, on, icon, n, onClick }: { kind: Kind; on: boolean; icon: string; n: number; onClick: () => void }) {
   return (
-    <button class={`sum-kind sum-kind-tab-${kind}${on ? ' on' : ''}`} aria-pressed={on} onClick={onClick}>
+    <button class={`sum-kind sum-kind-tab-${kind}${on ? ` on ${btClass(kind === 'basic' ? 'eau' : 'arcane', 's')}` : ''}`} aria-pressed={on} onClick={onClick}>
       <Icon name={icon} size={30} />
       <span class="sum-kind-n">{fmt(n)}</span>
     </button>
@@ -55,7 +56,7 @@ export function SummonScreen() {
     const cost = summonCost(kind, count);
     return (
       <button
-        class={`sum-btn sum-btn-${count}${kind === 'normal' && count === 10 ? ' tuto-summon10' : ''}`}
+        class={`sum-btn sum-btn-${count} ${btClass(count === 10 ? 'basalte' : kind === 'basic' ? 'eau' : 'arcane', 'l')}${kind === 'normal' && count === 10 ? ' tuto-summon10' : ''}`}
         disabled={s.wallet[cost.currency] < cost.amount}
         onClick={() => { rememberCast({ kind, count }); cast(summon(kind, count)); }}
       >
@@ -70,7 +71,7 @@ export function SummonScreen() {
   return (
     <div class={`screen summon sum-kind-${kind}${casting ? ' sum-casting' : ''}`}>
       <div class="sum-head">
-        <div class="sum-kinds" role="tablist">
+        <div class="sum-kinds bt-rail" role="tablist">
           <KindTab kind="normal" on={kind === 'normal'} icon="scrolls" n={s.wallet.scrolls} onClick={() => setKind('normal')} />
           <KindTab kind="basic" on={kind === 'basic'} icon="basicScrolls" n={s.wallet.basicScrolls} onClick={() => setKind('basic')} />
         </div>
@@ -100,7 +101,7 @@ export function SummonScreen() {
         <div class="sum-buttons">{button(1)}{button(10)}</div>
         {kind === 'normal' && (
           <button
-            class="sum-free"
+            class={`sum-free ${btClass('ardoise', 's')}`}
             disabled={adsLeft(s) <= 0}
             onClick={() => {
               const go = () => { rememberCast(null); cast(watchAd('summon')?.heroes); };

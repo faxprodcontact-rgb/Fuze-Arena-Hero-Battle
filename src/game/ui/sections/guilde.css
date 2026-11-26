@@ -37,19 +37,16 @@
 .g-crest-s { width: 54px; height: 54px; border-radius: 16px; }
 .g-crest-l::after { content: ''; position: absolute; inset: -3px; border-radius: 27px; box-shadow: 0 0 0 2px #ffffff40; pointer-events: none; }
 
-/* ---------- les onglets : des tuiles (picto + nom), l'ouverte en azur soulevé ---------- */
-.g-tabs { flex: none; display: flex; gap: 4px; padding: 5px; border-radius: 20px; background: var(--g-glass);
-  box-shadow: inset 0 0 0 1px #ffffff1f, 0 6px 16px #05021a59; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.g-tab { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 2px 5px;
-  border: 0; border-radius: 15px; background: none; color: #b6addf; font: 600 11.5px var(--font); text-shadow: none; cursor: pointer;
-  transition: background 0.15s, transform 0.15s; }
+/* ---------- les onglets : un rail de pierre (picto + nom) ; l'ouvert est une dalle de basalte allumée ---------- */
+.g-tabs { flex: none; gap: 2px; padding: 5px 8px; }
+.g-tab { position: relative; flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 2px 5px;
+  border: 0; background: none; color: #c9c4dd; font: 600 11.5px var(--font); text-shadow: -1px 1px 0 #00000080; cursor: pointer; }
 .g-tab .icon { filter: drop-shadow(0 2px 2px #00000059) saturate(0.85); opacity: 0.88; transition: transform 0.18s cubic-bezier(.3, 1.4, .5, 1); }
-.g-tab.on { color: #fff; background: linear-gradient(180deg, #6cc4ff 0%, #2f8cff 60%, #2a78f0 100%);
-  box-shadow: inset 0 2px 0 #ffffff73, inset 0 -3px 0 #1a47b8, 0 6px 14px #2f8cff59; transform: translateY(-2px); }
-.g-tab.on .icon { opacity: 1; filter: drop-shadow(0 2px 2px #1a47b880); transform: scale(1.1); }
+.g-tab.bt { flex: 1 1 0; min-width: 0; min-height: 52px; flex-direction: column; gap: 1px; padding: 3px 2px 7px; font: 600 11.5px var(--font); letter-spacing: 0; color: var(--tc); text-shadow: var(--ts); }
+.g-tab.bt:active { padding: 6px 2px 4px; }
+.g-tab.on .icon { opacity: 1; filter: drop-shadow(0 2px 2px #0a0614b3); transform: scale(1.1); }
 .g-tab-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .g-tab .dot { top: 1px; right: 6px; }
-.g-tab:active { transform: scale(0.96); }
 
 /* ---------- le cadre d'un onglet ---------- */
 .g-panel { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; gap: 10px; padding: 10px; border-radius: 24px;
@@ -87,9 +84,7 @@
 .g-power { flex: none; display: inline-flex; align-items: center; gap: 2px; font: 400 16px var(--font-title); color: #c86a00; font-variant-numeric: tabular-nums; }
 .g-member.me { background: linear-gradient(180deg, #eef6ff, #dcecff); box-shadow: inset 0 0 0 2px #6cc4ff, 0 3px 10px #2f8cff40; }
 .g-member.me .g-face { background: linear-gradient(160deg, #6cc4ff, #2f8cff); }
-.g-leave { flex: none; align-self: center; margin-top: 6px; padding: 8px 20px; border: 0; border-radius: 999px; background: #ffffff1a;
-  box-shadow: inset 0 0 0 1.5px #ff8a96a6; color: #ff8a96; font: 600 14px var(--font); text-shadow: none; cursor: pointer; }
-.g-leave:active { transform: scale(0.96); }
+.g-leave { align-self: center; margin-top: 6px; }
 
 /* ---------- le boss de guilde : en grand, sur son décor ---------- */
 .g-boss { padding: 8px; }
@@ -188,7 +183,7 @@
   .g-crest-l::after { border-radius: 23px; }
   .g-head > .g-crest { margin: -18px 0 -2px; }
   .g-name { font-size: 19px; }
-  .g-tab { padding: 4px 2px; font-size: 11px; }
+  .g-tab, .g-tab.bt { font-size: 11px; } .g-tab.bt { min-height: 48px; }
   .g-tab .icon { width: 22px !important; height: 22px !important; }
   .g-stat { padding: 5px 8px 5px 6px; } .g-stat .icon { width: 24px !important; height: 24px !important; } .g-stat b { font-size: 16px; }
   .g-boss .g-attack { min-height: 48px; font-size: 19px; }
