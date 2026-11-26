@@ -25,6 +25,8 @@
 "gif/knights-9.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/knights-9.gif",
 "img/oboro.webp": "public/art/vecto/mon-lenore-sorts.webp",
 "gif/oboro.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/oboro.gif",
+"img/assassins-5.webp": "public/art/vecto/assassins-5.webp",
+"gif/assassins-5.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/assassins-5.gif",
 "img/angels-1.webp": "public/art/vecto/angels-1.webp",
 "gif/angels-1.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/angels-1.gif",
 "img/demons-5.webp": "public/art/vecto/demons-5.webp",
@@ -42,5 +44,11 @@
 "img/myths-3.webp": "public/art/vecto/myths-3.webp",
 "gif/myths-3.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/myths-3.gif",
 "img/knights-3.webp": "public/art/vecto/knights-3.webp",
-"gif/knights-3.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/knights-3.gif"
+"gif/knights-3.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/knights-3.gif",
+"img/knights-5.webp": "public/art/vecto/knights-5.webp",
+"gif/knights-5.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/knights-5.gif",
+"img/knights-7.webp": "public/art/vecto/knights-7.webp",
+"gif/knights-7.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/knights-7.gif",
+"img/demons-3.webp": "public/art/vecto/demons-3.webp",
+"gif/demons-3.gif": "refonte-graphique/ui-moderne/heros/suivi/gif/demons-3.gif"
 }

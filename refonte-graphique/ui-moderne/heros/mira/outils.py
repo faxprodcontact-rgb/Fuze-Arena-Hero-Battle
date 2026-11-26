@@ -188,9 +188,22 @@ class FigN(Figure):
     (couleur, largeur, opacité), de la plus large à la plus serrée) : des copies des silhouettes, plus larges, peintes
     juste sous le contour (aucun flou : plusieurs marches font une lueur douce)."""
     auras = ()
+    veil = None                   # (couleur, opacité) : un voile de lumière sur toute la silhouette (elle s'éclaire)
 
     def svg(self, size=None, bg=None):
         out = Figure.svg(self, size, bg)
+        if self.veil and self.veil[1] > 0.005:
+            i = out.index('<g stroke-linejoin="round">')
+            j = out.index('</g>', i) + 4
+            sil = re.sub(r' stroke="[^"]+" stroke-width="[^"]+"', '', out[i:j])
+            sil = re.sub(r'fill="[^"]+"', 'fill="%s"' % self.veil[0], sil)
+            sil = sil.replace('<g stroke-linejoin="round">', '<g opacity="%.3f">' % self.veil[1], 1)
+            k = out.rindex('</svg>')
+            # sous les effets de devant : juste après les morceaux (avant fx_front, s'il y en a)
+            front = ''.join(self.fx_front) + ''.join(self.over)
+            if front and out[:k].endswith(front):
+                k = k - len(front)
+            out = out[:k] + sil + out[k:]
         if self.auras:
             i = out.index('<g stroke-linejoin="round">')
             j = out.index('</g>', i) + 4

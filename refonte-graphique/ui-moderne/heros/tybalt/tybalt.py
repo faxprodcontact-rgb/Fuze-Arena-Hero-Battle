@@ -591,7 +591,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             # un pli en biais qui tire vers le noeud
             (ribbon(BN([(78.4, 52.4), (75.0, 55.0), (71.0, 56.6)]), [0.1, 0.9, 0.1]), BAND.shadow, 0.7)]
     fig.part('wrap', wrap, BAND, cel=1.2, rim=0.7, cast=1.2, details=bdet)
-    knotS = sm([mapp(NECKM, p) for p in [(57.4, 48.4), (59.8, 47.0), (62.4, 47.8), (62.8, 50.2), (61.0, 52.2), (58.4, 52.0), (57.0, 50.2)]], t=0.9)
+    knotS = sm([mapp(NECKM, p) for p in [(57.2, 48.8), (59.2, 47.2), (61.8, 47.6), (62.6, 49.4), (61.6, 50.6), (62.4, 52.0), (59.8, 52.8), (57.4, 51.6), (56.8, 50.2)]], sharp=(4,), t=0.9)
     fig.part('knot', knotS, BAND, cel=0.9, rim=0.7, cast=1.0,
              details=[(ribbon(BN([(58.2, 48.6), (59.8, 50.0), (59.6, 52.0)]), [0.1, 0.7, 0.1]), BAND.shadow, 0.8),
                       (ellipse(*mapp(NECKM, (61.2, 48.6)), 0.8, 0.5, -30), BAND.hi, 0.6)])

@@ -132,14 +132,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # proche, levé (manchon d'un seul tenant, coude en bas à gauche, brassard au poignet) : aucune jointure ----
     near_arm(fig, P, UC, global_fur)
 
+    # ---- le bras lointain, quand il frappe la poitrine : devant le buste et la fourrure, mais sous la tête ----
+    if front:
+        far_parts()
+
     # ---- la tête : cornes, visage, crinière (en C autour du visage) ----
     head(fig, P, HEAD)
 
     # ---- la hache et le poing proche qui serre le manche ----
     near_hand(fig, P)
-
-    if front:
-        far_parts()
 
     # ---- chaque groupe de morceaux prend sa pose ----
     fig.pose(['torso'], TOR)

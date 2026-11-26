@@ -65,7 +65,7 @@ SPARK_INK = '#0c3a44'                  # le contour des étincelles de jade
 GRD = 116          # le sol
 FEET = (64, 116)   # le point « pieds » du pixel art
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (15, 4, 110, 115)
+FRAME = (12, 2, 118, 118)
 NECK = (77.0, 46.5)        # le centre de l'agrandissement de la tête (×1,1, comme Kael)
 
 # ---------- le squelette (animation) ----------

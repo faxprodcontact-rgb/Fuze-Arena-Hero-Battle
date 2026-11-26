@@ -309,7 +309,7 @@ def pearl(fig, c, r, stretch=None, op=1.0, core=1.0):
     return outlined(items, w=1.2, op=op)
 
 
-def petal(fig, base, ang, length, width, op=1.0, cut=0.0):
+def petal(fig, base, ang, length, width, op=1.0, cut=0.0, jade=False):
     """Un pétale d'eau pointu (lotus) : de la base vers la pointe, un peu courbé, éclairé sur son bord droit ; cut
     (0..1) : sa base se détache (il se défait)."""
     if length < 1 or op <= 0.02:
@@ -325,8 +325,9 @@ def petal(fig, base, ang, length, width, op=1.0, cut=0.0):
     w = width * (1 - cut * 0.6)
     sh = lock(p0, p1, p2, p3, w, n=12, bulge=0.75, tipw=0.0)
     vein = lock(p0, p1, p2, ((p2[0] + p3[0]) / 2, (p2[1] + p3[1]) / 2), w * 0.36, n=8, bulge=0.4)
-    gr = g_lin(fig, p0, p3, [(0, WATER[3]), (0.45, WATER[2]), (1, WATER[1])])
-    return outlined([(sh, gr, 1), (vein, '#ffffff', 0.55, 'n')], w=1.2, op=op)
+    C = JADE if jade else WATER
+    gr = g_lin(fig, p0, p3, [(0, C[3]), (0.45, C[2]), (1, C[1])])
+    return outlined([(sh, gr, 1), (vein, '#ffffff', 0.55, 'n')], ink=JINK if jade else WINK, w=1.2, op=op)
 
 
 def ring_svg(fig, c, rx, ry, w, op, tones=None):
@@ -481,7 +482,7 @@ def tint(fig, k):
 def fountain(fig, ctx, lift, phase, rise, spill):
     """Le trône d'eau sous elle : la flaque au sol, la colonne qui ondule (serrée au milieu, évasée au pied), la vasque
     (sa surface derrière l'ourlet, sa lèvre devant), deux accoudoirs d'eau qui s'enroulent en volute et retombent en
-    cascade ; quand elle déborde, des filets clairs coulent devant la colonne."""
+    cascade ; quand elle déborde, la lèvre gonfle et les cascades grossissent."""
     back, front = fig.fx_back, fig.fx_front
     cx = THRONE_X
     G = GR + 0.2
@@ -549,14 +550,6 @@ def fountain(fig, ctx, lift, phase, rise, spill):
                                                          (ribbon([(vc[0] - vrx * 0.5, vc[1] + vry * 0.75), (vc[0] + vrx * 0.1, vc[1] + vry * 0.98),
                                                                   (vc[0] + vrx * 0.6, vc[1] + vry * 0.8)], [0.1, 0.7, 0.1]), '#ffffff', 0.8, 'n')], w=1.3)))
     front.append(spark(fig, (vc[0] - 9 + 3 * math.sin(phase), vc[1] + 1.6), 1.0))
-    if spill > 0.02:
-        # l'eau passe par-dessus la lèvre : des filets clairs coulent devant la colonne
-        for dx, ln in ((-17, 0.55), (-7, 0.35), (9, 0.42), (18, 0.6)):
-            y0 = vc[1] + vry * 0.9
-            y1 = y0 + (G - y0) * ln * spill
-            pts = crpath([(cx + dx, y0), (cx + dx * 1.06, y0 + 3), (cx + dx * 1.12, y1 - 2), (cx + dx * 1.15, y1)], 10)
-            front.append(outlined([(ribbon(pts, [2.0, 1.8, 1.2, 0.5]), g_lin(fig, pts[0], pts[-1], [(0, WATER[1]), (1, WATER[2])]), 1)],
-                                  w=1.0, op=min(1, spill * 1.6)))
 
 
 def palm_pearl(fig, ctx, level, t):
@@ -581,9 +574,8 @@ def palm_pearl(fig, ctx, level, t):
             ln = 4 + 6 * k
             a = math.radians(ang + 30 * k)
             b = (c[0] + 1.5 * k * math.cos(a), c[1] - 1.5 * k * math.sin(a))
-            front.append(petal(fig, b, math.degrees(a), ln, 3.2 * (1 - 0.4 * k), op=1 - smooth((k - 0.5) / 0.5)).replace(WINK, JINK)
-                         .replace(WATER[3], JADE[3]).replace(WATER[2], JADE[2]).replace(WATER[1], JADE[1]))
-        front.append(spark(fig, c, 3.4 * (1 - 0.5 * k), op=1 - k * 0.8))
+            front.append(petal(fig, b, math.degrees(a), ln, 3.2 * (1 - 0.4 * k), op=1 - smooth((k - 0.25) / 0.35), jade=True))
+        front.append(spark(fig, c, 3.4 * (1 - 0.5 * k), op=1 - smooth(k / 0.7)))
 
 
 def lantern_flare(fig, ctx, level):
@@ -613,13 +605,13 @@ def jade_rain(fig, t, lift):
     """La pluie de jade : des gouttes de lumière lancées par la fontaine dans toutes les directions montent en cloche et
     retombent en cercle autour d'elle (celles du fond plus haut, celles de devant plus bas) ; elles s'allument en petites
     étincelles là où elles touchent le sol."""
-    top = (THRONE_X, GR - lift - 2)
     for i in range(11):
         a = math.radians(i * 360 / 11 + 12)
         R = 42 + 10 * ((i * 7) % 3)
         k = t * (1.0 + 0.12 * (i % 3)) - 0.05 * (i % 4)
         if k <= 0:
             continue
+        top = (THRONE_X + 31 * math.cos(a), GR - lift + 0.6 + 4.5 * math.sin(a))     # elles partent du bord de la vasque
         gx, gy = THRONE_X + R * math.cos(a), GR - 0.5 + R * RING_FLAT * math.sin(a)
         if k < 1:
             x = top[0] + (gx - top[0]) * k

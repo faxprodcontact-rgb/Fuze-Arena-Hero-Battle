@@ -381,7 +381,7 @@ def fx_attack(tl, tips):
         if tau >= 0 and 'tip' in HIT:
             c = (HIT['tip'][0] + 2.0, HIT['tip'][1] + 0.5)
             e = env(tau, 0, 0.03, 0.12, 0.32)
-            fig.fx_front.append(fireball(fig, c, 4.6 * e, seed=1, op=e))
+            fig.fx_front.append(fireball(fig, c, 6.2 * e, seed=1, op=e))
             if e > 0.1:
                 fig.fx_front.append(tongue(fig, (c[0] + 1, c[1] + 2), 9 * e, 4.4, bend=0.8, lean=0.5))
             for i, (vx, vy) in enumerate(((70, -60), (95, -10), (30, -100), (80, 30), (-20, -70), (55, -40))):

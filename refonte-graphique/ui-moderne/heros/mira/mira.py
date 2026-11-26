@@ -49,7 +49,7 @@ LASH = '#3a1a2c'
 GRD = 116          # le sol
 FEET = (64, 116)   # le point « pieds » du pixel art (sol: 64 116)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (21, -5, 107, 123)
+FRAME = (21, -8, 107, 127)
 H0 = (76.5, 49.5)  # le pivot de la tête (agrandie ×1,1 : proportions stylisées, comme Kael)
 
 # ---------- le squelette (animation) ----------
@@ -195,7 +195,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- la jupe à quatre pans, le buste (cuirasse), la ceinture, les lames de hanche ----
     sk_names = skirt(fig, P)
     fig.pose(sk_names, SKIRT)
-    neck = sm([(68.6, 43.0), (78.8, 44.6), (79.6, 49.4), (80.4, 52.6), (67.6, 53.0), (67.2, 47.6)])
+    neck = sm([(68.6, 43.0), (78.8, 44.6), (79.6, 49.4), (80.4, 52.6), (62.6, 53.0), (63.2, 48.0), (65.6, 44.6)])
     fig.part('neck', neck, SKIN, grad=(80, 45, 68, 51, [(0, SKIN.base), (1, SKIN.shadow)]), cel=1.0, rim=0.4, cast=0.8,
              details=[(sm([(67.4, 43.6), (78.6, 45.6), (78.2, 47.8), (73.0, 48.8), (69.0, 48.4), (67.2, 51.0)]), SKIN.shadow, 0.65),
                       (ribbon([(75.6, 47.6), (77.4, 49.4), (78.6, 52.0)], [0.1, 0.8, 0.2]), SKIN.light, 0.6)])
@@ -392,8 +392,8 @@ def boots(fig):
 
 
 # ---------------------------------------------------------------- la jupe
-SK_EDGE = [(53.0, 90.6), (55.4, 92.2), (59.4, 92.0), (61.8, 87.4), (64.2, 92.6), (68.6, 92.6), (70.8, 87.8),
-           (73.2, 92.4), (77.4, 92.2), (79.6, 87.6), (81.8, 91.2), (85.6, 90.8), (88.2, 89.0)]
+SK_EDGE = [(53.0, 90.6), (55.6, 92.2), (60.4, 92.2), (61.8, 87.8), (63.2, 92.7), (69.2, 92.7), (70.6, 88.0),
+           (72.0, 92.5), (78.0, 92.3), (79.4, 87.8), (80.8, 91.4), (85.6, 90.9), (88.2, 89.0)]
 SK_NOTCH = (3, 6, 9)
 
 
@@ -411,10 +411,18 @@ def skirt(fig, P):
         d += [(ribbon([(x, y + 0.4), (x - 0.2, y - 4.0), (x - 0.6, y - 11.0)], [1.6, 1.2, 0.1]), BLUE.deep, 0.85),
               (ribbon([(x + 1.3, y + 0.6), (x + 1.0, y - 4.0), (x + 0.4, y - 10.0)], [0.2, 0.7, 0.1]), BLUE.light, 0.55)]
     d += [(sm([(53.0, 82.0), (56.4, 75.0), (60.0, 76.0), (58.6, 92.0), (53.0, 91.0)]), BLUE.shadow, 0.6)]
-    # l'ourlet d'or (le long du bas, d'une fente à l'autre)
-    d += [(ribbon(SK_EDGE, [2.1] * n), GOLD.base, 1),
-          (ribbon([(x, y - 0.7) for x, y in SK_EDGE], [0.5] * n), GOLD.light, 0.95),
-          (ribbon([(x, y + 0.6) for x, y in SK_EDGE], [0.7] * n), GOLD.shadow, 0.8)]
+    # l'ourlet d'or : le bas de chaque pan (il s'arrête à la fente)
+    cuts = (0,) + SK_NOTCH + (n - 1,)
+    for i in range(len(cuts) - 1):
+        seg = SK_EDGE[cuts[i]:cuts[i + 1] + 1]
+        if i > 0:
+            seg = [lerp(seg[0], seg[1], 0.55)] + seg[1:]
+        if i < len(cuts) - 2:
+            seg = seg[:-2] + [seg[-2], lerp(seg[-2], seg[-1], 0.45)]
+        m = len(seg)
+        d += [(ribbon(seg, [1.2] + [2.2] * (m - 2) + [1.2]), GOLD.base, 1),
+              (ribbon([(x, y - 0.75) for x, y in seg], [0.2] + [0.55] * (m - 2) + [0.2]), GOLD.light, 0.95),
+              (ribbon([(x, y + 0.65) for x, y in seg], [0.2] + [0.7] * (m - 2) + [0.2]), GOLD.shadow, 0.8)]
     fig.part('skirt', sh, BLUE, grad=(86, 74, 56, 92, [(0, BLUE.light), (0.5, BLUE.base), (1, BLUE.shadow)]),
              cel=1.2, rim=0.6, cast=1.0, details=d)
     names = ['skirt']
@@ -573,10 +581,11 @@ def fist(fig, G, ang, W):
             (ribbon([L(-4.6, -1.2), L(0, -0.9), L(4.6, -1.3)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.35)]
     fig.part('fist', body, SKIN, grad=(*lit[0], *lit[1], [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=0.9, rim=0.5, cast=0.9, details=det)
-    # le pouce : il passe derrière la hampe et revient par-dessus l'index, côté fer
-    thumb = limb([L(5.6, -2.8), L(5.0, -0.6), L(3.0, 1.0)], [3.0, 2.7, 2.3])
+    # le pouce, couché par-dessus les doigts, le long de la hampe (vers le fer)
+    thumb = limb([L(0.2, -4.8), L(2.8, -4.2), L(5.0, -2.4)], [3.3, 3.0, 2.6])
     fig.part('fthumb', thumb, SKIN, cel=0.5, rim=0.45, cast=0.7, cast_on=['fist'],
-             details=[(ellipse(*L(3.6, 0.7), 0.95, 0.6, ang + 35), SKIN.hi, 0.7)])
+             details=[(ellipse(*L(4.6, -2.9), 1.0, 0.6, ang + 30), SKIN.hi, 0.75),
+                      (ribbon([L(0.8, -3.6), L(3.0, -3.1), L(4.6, -1.6)], [0.1, 0.5, 0.1]), SKIN.shadow, 0.5)])
     return ['fist', 'fthumb']
 
 
@@ -763,7 +772,7 @@ def head(fig, P):
     # passe devant le coin intérieur de l'œil lointain
     fd += [(sm([(80.2, 39.4), (80.9, 39.6), (81.4, 41.0), (82.0, 42.6), (81.4, 43.4), (80.2, 43.2), (79.6, 42.4), (79.8, 40.8)]), SKIN.shadow, 0.45),
            (ribbon([(81.0, 38.8), (81.8, 40.6), (82.6, 42.0)], [0.1, 0.55, 0.5]), SKIN.hi, 0.7),
-           (ellipse(82.7, 42.2, 0.9, 0.7, 10), SKIN.hi, 0.6),
+           (ellipse(82.7, 42.2, 0.8, 0.6, 10), SKIN.hi, 0.35),
            (sm([(80.6, 43.2), (82.0, 43.6), (83.6, 43.2), (84.2, 43.6), (82.4, 44.2), (80.8, 43.9)], t=0.9), SKIN.shadow, 0.55),
            (ellipse(81.4, 43.4, 0.55, 0.3, 15), SKIN.deep, 0.45)]
     # la bouche : grande ouverte au cri (la gorge rouge sombre, jamais de noir ; les dents du haut ; la langue), ou
@@ -804,7 +813,10 @@ def head(fig, P):
           # la mèche devant l'oreille : son bord éclairé, un creux au milieu
           (ribbon([(70.0, 34.4), (68.2, 38.6), (67.6, 43.4), (66.2, 47.4)], [0.1, 0.9, 0.7, 0.1]), HAIR.light, 0.8),
           (ribbon([(68.4, 35.6), (66.6, 40.0), (65.8, 45.6)], [0.1, 0.6, 0.1]), HAIR.shadow, 0.6),
-          (ribbon([(71.0, 31.4), (69.4, 33.6), (67.6, 35.6)], [0.1, 0.5, 0.1]), HAIR.hi, 0.6)]
+          (ribbon([(71.0, 31.4), (69.4, 33.6), (67.6, 35.6)], [0.1, 0.5, 0.1]), HAIR.hi, 0.6),
+          # des ondulations dans la masse (des mèches en S, éclairées, jamais des rayures régulières)
+          (ribbon([(60.2, 33.2), (57.8, 36.4), (58.6, 40.0), (56.8, 44.6)], [0.1, 0.8, 0.7, 0.1]), HAIR.light, 0.55),
+          (ribbon([(63.6, 37.6), (61.6, 41.2), (62.4, 45.0)], [0.1, 0.6, 0.1]), HAIR.hi, 0.45)]
     part('hair', hair, HAIR, grad=(72, 31, 56, 48, [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)]),
          cel=1.0, rim=0.5, cast=1.0, cast_on=['face'], details=hd)
 
