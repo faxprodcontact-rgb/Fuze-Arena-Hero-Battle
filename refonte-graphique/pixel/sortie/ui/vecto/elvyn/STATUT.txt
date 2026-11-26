@@ -1,4 +1,6 @@
 fait
+Corrigé d'après l'avis (« Refaire l'œil du fond ») : l'œil du fond est maintenant le MÊME dessin que l'œil proche (même amande, même paupière lourde, même pupille fendue, même reflet, même arcade, même pli dessous), sur la même ligne, juste raccourci par le 3/4 (83 % de la largeur) ; les deux regardent du même côté.
+Visage refait avec la méthode commune (visage.py : placer() pour les places, verifier() sans défaut, contrôle visage.png) : yeux placés sur la sphère, arête du museau sur la médiane entre les deux yeux, bouche dessous ; la tête bouge d'un bloc dans toutes les poses (repos, clignement, attaque, spéciale).
 Elvyn, le dragon des eaux : tête de dragon d'Orient (yeux d'or à paupière lourde, crocs, naseau, barbillon d'or en S, barbiche blanche), grands bois d'or, crinière blanche en mèches qui se relèvent en crête de vague.
 Robe bleu nuit croisée au col d'or, ceinture à médaillon, tablier brodé d'une vague, poing griffu sur la ceinture, perle tenue dans la paume ; queue en crosse avec sa houppe blanche, grands pieds griffus.
 Animé : respiration (crinière, houppe, manches, barbillon), attaque « orbe de la perle », spéciale « dragon des marées » qui jaillit de la perle et plonge sur l'ennemi.

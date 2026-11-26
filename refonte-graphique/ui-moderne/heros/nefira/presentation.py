@@ -2,6 +2,8 @@
 #   python3 presentation.py
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
 # - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
+# - visage.png : la tête zoomée ×4, à gauche telle quelle, à droite avec le calque de visage.py (méthode commune :
+#   sphère, médiane, ligne des yeux, places idéales) ; affiche aussi le résultat de visage.verifier ;
 # - (brouillon) a-cote-de-kael.png : Néfira et Kael côte à côte, même échelle (cohérence de taille et de style).
 import os
 import subprocess
@@ -99,10 +101,36 @@ def main():
     dbg = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-nefira'
     if os.path.isdir(dbg):
         im.convert('RGB').resize((W4 // 2, (base + 80) // 2), Image.LANCZOS).save(os.path.join(dbg, 'a-cote-de-kael.png'))
+    visage()
     for f_ in os.listdir(TMP):
         os.remove(os.path.join(TMP, f_))
     os.rmdir(TMP)
     print('écrit', os.path.join(OUT, 'fixe.png'), 'et comparaison.png')
+
+
+def visage():
+    """visage.png : la tête zoomée ×4 (cadre du jeu 512 px → ×4), à gauche sans rien, à droite avec le calque
+    guide_svg de visage.py posé dans le repère de la tête (même ×1,1 que la pose) ; vérifie aussi les places."""
+    from visage import guide_svg, verifier
+    x0, y0, w, h = S.FRAME
+    head_svg = S.build(ow=0.95).svg()
+    g = guide_svg(S.FACE_BOX)
+    g = '<g transform="translate(77 49) scale(1.1) translate(-77 -49)">' + g + '</g>'
+    guided = head_svg[:head_svg.rindex('</svg>')] + g + '</svg>'
+    H = 4 * 512
+    k = H / h
+    box = (round((55 - x0) * k), round((13 - y0) * k), round((101 - x0) * k), round((57 - y0) * k))
+    ims = []
+    for i, svg_txt in enumerate((head_svg, guided)):
+        im = render(svg_txt, H, '_visage%d' % i).crop(box)
+        bg = stone(im.width, im.height, im.height + 10)
+        bg.alpha_composite(im)
+        ims.append(bg)
+    out = Image.new('RGB', (2 * ims[0].width + 30, ims[0].height), (20, 14, 34))
+    out.paste(ims[0].convert('RGB'), (0, 0))
+    out.paste(ims[1].convert('RGB'), (ims[0].width + 30, 0))
+    out.save(os.path.join(OUT, 'visage.png'))
+    print('visage : défauts =', verifier(S.face_mesures(), S.FACE_BOX) or 'aucun')
 
 
 if __name__ == '__main__':

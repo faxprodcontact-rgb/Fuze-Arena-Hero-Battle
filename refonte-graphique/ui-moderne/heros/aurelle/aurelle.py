@@ -55,7 +55,7 @@ EARTH = ['#fff6ce', '#ffd45c', '#e09638', '#c8a070', '#8e664a', '#5e404a', '#3e2
 GRD = 116.0        # le sol (le point « sol » du pixel art)
 FEET = (64.0, 116.0)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (-1.0, -3.0, 128.0, 122.0)
+FRAME = (-2.5, -4.5, 130.0, 124.0)
 
 # ---------- le squelette ----------
 # Une pose = ces réglages ; REST est la pose du dessin (pixels du dessin, degrés, y vers le bas).

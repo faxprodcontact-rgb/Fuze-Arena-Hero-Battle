@@ -2,7 +2,7 @@
 # les mêmes animations que son pixel art (refonte-graphique/pixel/hd/anim/kael/build.py) — respiration, attaque de
 # base « Taille du colosse », attaque spéciale « Lame de magma » — mais dans le style lisse de l'interface.
 #
-#   python3 refonte-graphique/ui-moderne/heros/kael/anim.py            # → vidéo + GIF dans pixel/sortie/ui/essai-vecto/
+#   python3 refonte-graphique/ui-moderne/heros/kael/anim.py            # → anim.mp4 + anim.gif dans pixel/sortie/ui/vecto/kael/
 #   python3 refonte-graphique/ui-moderne/heros/kael/anim.py --planche  # seulement une planche d'images clés (contrôle)
 #
 # Méthode : le dessin (kael.py) est fait de morceaux ; chaque image le redessine dans une POSE (un squelette : buste
@@ -28,8 +28,8 @@ import kael as K  # noqa: E402
 from atelier import lock, sm, ribbon, ellipse, f as fm  # noqa: E402
 
 ROOT = K.ROOT
-OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'essai-vecto')
-TMP = os.path.join(HERE, '_images')
+OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'kael')
+TMP = os.environ.get('KAEL_TMP', os.path.join(HERE, '_images'))
 LAVA = K.LAVA
 FPS = 24
 VIEW = (-30, -26, 267, 150)          # la scène de la vidéo, en pixels du dessin (16/9)
@@ -699,12 +699,12 @@ def main():
     allf = pngs + names2
     for i, p in enumerate(allf):
         os.replace(p, os.path.join(TMP, 'v%04d.png' % i))
-    mp4 = os.path.join(OUT, 'kael-anim.mp4')
+    mp4 = os.path.join(OUT, 'anim.mp4')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(TMP, 'v%04d.png'),
                     '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '18', '-preset', 'slow', '-movflags', '+faststart', mp4], check=True)
-    gifp = os.path.join(OUT, 'kael-anim.gif')
+    gifp = os.path.join(OUT, 'anim.gif')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(TMP, 'v%04d.png'),
-                    '-vf', 'fps=12,scale=560:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=160:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle',
+                    '-vf', 'fps=12,scale=400:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=bayer:bayer_scale=4:diff_mode=rectangle',
                     gifp], check=True)
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024),
           '— partie 1 : %.1f s, partie 2 : %.1f s' % (total, n2 / FPS))

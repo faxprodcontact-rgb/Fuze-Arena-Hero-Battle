@@ -185,8 +185,8 @@ function buildCards() {
       <div class="saved" id="sv-${h.id}"></div>`;
     $('h2', a).textContent = h.name;
     $('.meta', a).textContent = `${h.r} · ${h.el}`;
-    const still = $('.stage img', a); still.src = `img/${h.id}.webp`; still.alt = `${h.name}, dessin`;
-    const gif = $('.gifpane img', a); gif.src = `gif/${h.id}.gif`; gif.alt = `${h.name}, animation`;
+    const still = $('.stage img', a); still.src = `img/${h.id}.webp?v=${h.v}`; still.alt = `${h.name}, dessin`;
+    const gif = $('.gifpane img', a); gif.src = `gif/${h.id}.gif?v=${h.v}`; gif.alt = `${h.name}, animation`;
     $('.draw', a).onclick = () => openEditor(h);
     $('.b-ok', a).onclick = () => setStatus(h.id, 'ok');
     $('.b-redo', a).onclick = () => setStatus(h.id, 'redo');
@@ -214,7 +214,7 @@ function paint(id) {
 const ed = $('#ed'), edSvg = $('#ed-svg');
 let cur = null, tool = 'pen', color = '#ff3b3b', drawing = null;
 function openEditor(h) {
-  cur = h; $('#ed-name').textContent = h.name; $('#ed-img').src = `img/${h.id}.webp`; $('#ed-img').alt = `${h.name}, dessin`;
+  cur = h; $('#ed-name').textContent = h.name; $('#ed-img').src = `img/${h.id}.webp?v=${h.v}`; $('#ed-img').alt = `${h.name}, dessin`;
   drawStrokes(edSvg, state[h.id].strokes, 5); ed.showModal();
 }
 function closeEditor() { if (!cur) return; const id = cur.id; ed.close(); cur = null; paint(id); save(id); }

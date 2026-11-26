@@ -104,10 +104,10 @@ def keyed(keys, t):
 RAISE = dict(G=(21.0, 29.0), ang=-128, lean=-1.0, crouch=0.5, nsh=(0, -1), head=(0, -0.5), eye=(-0.6, -0.4))
 WIND = dict(G=(30.0, 22.0), ang=-162, lean=-3.6, crouch=2.0, nsh=(-1, -2), head=(-0.6, 1.0), tilt=-3, glow=0.8,
             eye=(0.8, 0.0), pg=1.0, rn=1.0)
-OVER = dict(front=1, G=(49.0, 17.0), ang=-78, lean=-1.0, crouch=1.0, nsh=(2, -2), head=(0, 0), tilt=-1, glow=1.0, pg=0.5)
-HIT1 = dict(front=1, G=(90.0, 66.0), ang=4, lean=4.0, crouch=1.6, nsh=(6, 1), head=(1, 1), tilt=4, glow=1.0, mouth=0.8,
+OVER = dict(front=0, G=(49.0, 17.0), ang=-78, lean=-1.0, crouch=1.0, nsh=(2, -2), head=(0, 0), tilt=-1, glow=1.0, pg=0.5)
+HIT1 = dict(front=1, G=(90.0, 72.0), ang=-2, lean=3.0, crouch=1.6, nsh=(6, 3), head=(1, 1), tilt=4, glow=1.0, mouth=0.8,
             FF=(105.0, 66.0), ffa=-70, eye=(0.8, 0.4), pg=-1.0)
-REB = dict(front=1, G=(52.0, 19.0), ang=-82, lean=0.0, crouch=1.0, nsh=(3, -1), head=(0, 0), tilt=0, glow=0.8, mouth=0.4,
+REB = dict(front=0, G=(52.0, 19.0), ang=-82, lean=0.0, crouch=1.0, nsh=(3, -1), head=(0, 0), tilt=0, glow=0.8, mouth=0.4,
            FF=(108.0, 64.0), pg=0.4)
 GROUND = dict(front=1, G=(92.0, 86.0), ang=42, lean=6.0, crouch=3.0, nsh=(7, 2), head=(1.5, 2.0), tilt=6, glow=1.2,
               mouth=1.0, FF=(104.0, 70.0), ffa=-74, eye=(0.6, 0.8), pg=-1.2)
@@ -117,15 +117,19 @@ ATTACK = [
     (330, dict(WIND)),
     (520, dict(WIND, G=(31.0, 21.0), ang=-166, lean=-4.0, crouch=2.3, glow=1.0)),
     (568, dict(OVER)),
+    (590, dict(OVER, G=(84.0, 30.0), ang=-24, lean=1.0)),
     (610, dict(HIT1)),
-    (720, dict(HIT1, G=(91.0, 67.0), ang=6)),
+    (720, dict(HIT1, G=(91.0, 73.0), ang=0)),
+    (745, dict(HIT1, G=(86.0, 60.0), ang=-24, front=0)),
     (800, dict(REB)),
-    (846, dict(REB, G=(70.0, 30.0), ang=-40, lean=3.0, crouch=2.0)),
+    (840, dict(REB, G=(86.0, 26.0), ang=-12, lean=3.0, crouch=2.0)),
+    (862, dict(GROUND, G=(97.0, 52.0), ang=12, lean=4.0, crouch=2.4)),
     (880, dict(GROUND)),
     (1100, dict(GROUND, G=(92.5, 86.5), crouch=3.2)),
-    (1260, dict(front=1, G=(56.0, 56.0), ang=-40, lean=2.0, crouch=1.6, nsh=(3, 0), head=(0.5, 1), tilt=2, glow=0.3, mouth=0.2,
+    (1200, dict(front=0.6, G=(62.0, 72.0), ang=-10, lean=3.0, crouch=2.0, nsh=(4, 1), head=(0.5, 1), tilt=2, glow=0.4, mouth=0.2,
                 FF=(108.0, 64.0))),
-    (1400, dict(front=0, G=(30.0, 40.0), ang=-100, lean=0.4, crouch=0.6)),
+    (1270, dict(front=0, G=(20.0, 60.0), ang=-64, lean=1.2, crouch=1.2, glow=0.2)),
+    (1380, dict(front=0, G=(26.0, 44.0), ang=-96, lean=0.4, crouch=0.6, glow=0.1)),
     (1560, {}),
 ]
 ATTACK_HIT = 610
@@ -140,7 +144,7 @@ ATTACK_HIT2 = 880
 # au ras du sol. Il repose la massue et revient en garde.
 LOWB = dict(front=1, G=(34.0, 86.0), ang=158, lean=-2.0, crouch=2.6, nsh=(-1, 2), head=(0, 1.5), tilt=2, glow=1.6,
             FF=(110.0, 62.0), eye=(1.2, 0.2), pg=1.0)
-BAT = dict(front=1, G=(96.0, 62.0), ang=-22, lean=5.0, crouch=1.4, nsh=(7, 0), head=(1.5, 0.5), tilt=-2, glow=2.0,
+BAT = dict(front=1, G=(96.0, 73.0), ang=-26, lean=3.0, crouch=1.4, nsh=(6, 3), head=(1.5, 0.5), tilt=-2, glow=2.0,
            mouth=1.0, FF=(104.0, 70.0), ffa=-76, eye=(1.0, -0.4), pg=-1.2)
 SPECIAL = [
     (0, {}),
@@ -148,18 +152,21 @@ SPECIAL = [
     (380, dict(WIND, glow=1.6)),
     (500, dict(WIND, G=(31.0, 21.0), ang=-166, lean=-4.0, crouch=2.3, glow=2.0)),
     (548, dict(OVER, glow=2.0)),
+    (570, dict(OVER, G=(86.0, 28.0), ang=-14, lean=2.0, glow=2.0)),
     (590, dict(GROUND, glow=2.0)),
     (760, dict(GROUND, G=(92.5, 86.5), crouch=3.2, glow=1.8)),
     (1000, dict(LOWB)),
     (1340, dict(LOWB, G=(33.0, 87.0), ang=160, crouch=2.9, lean=-2.4)),
     (1410, dict(BAT, G=(80.0, 80.0), ang=30, lean=3.0)),
     (1452, dict(BAT)),
-    (1560, dict(BAT, G=(97.0, 61.0), ang=-24)),
-    (1700, dict(front=1, G=(86.0, 40.0), ang=-58, lean=2.0, crouch=1.0, nsh=(4, -1), head=(1, 0), glow=1.2, mouth=0.3,
+    (1560, dict(BAT, G=(97.0, 72.0), ang=-29)),
+    (1700, dict(front=1, G=(92.0, 57.0), ang=-50, lean=2.0, crouch=1.0, nsh=(4, -1), head=(1, 0), glow=1.2, mouth=0.3,
                 FF=(108.0, 64.0), eye=(1.6, 0.0))),
-    (2050, dict(front=1, G=(80.0, 40.0), ang=-62, lean=1.6, crouch=1.2, nsh=(4, -1), head=(1, 0.5), glow=1.0, eye=(1.8, 0.4),
+    (2050, dict(front=1, G=(90.0, 58.0), ang=-56, lean=1.6, crouch=1.2, nsh=(4, -1), head=(1, 0.5), glow=1.0, eye=(1.8, 0.4),
                 FF=(108.0, 64.0))),
-    (2300, dict(front=0, G=(34.0, 38.0), ang=-100, lean=0.4, crouch=0.8, glow=0.2)),
+    (2200, dict(front=0.6, G=(62.0, 72.0), ang=-20, lean=2.0, crouch=1.6, nsh=(3, 1), glow=0.4)),
+    (2290, dict(front=0, G=(20.0, 60.0), ang=-64, lean=1.0, crouch=1.2, glow=0.2)),
+    (2420, dict(front=0, G=(26.0, 44.0), ang=-96, lean=0.4, crouch=0.6, glow=0.1)),
     (2600, {}),
 ]
 SP_SLAM = 590

@@ -2,6 +2,8 @@
 #   python3 presentation.py
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
 # - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
+# - visage.png : le contrôle du visage (méthode commune ../visage.py) : la tête zoomée ×4, à gauche telle quelle, à
+#   droite avec le calque guide_svg (sphère, médiane, ligne des yeux, places idéales) ; verifier() doit être vide ;
 # - (brouillon) a-cote-de-kael.png : Célia et Kael côte à côte, même échelle (cohérence de taille et de style).
 import os
 import subprocess
@@ -12,6 +14,9 @@ from PIL import Image, ImageDraw, ImageFilter
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import celia as S  # noqa: E402
+sys.path.insert(0, os.path.join(HERE, '..'))
+from atelier import mapp  # noqa: E402
+from visage import verifier, guide_svg  # noqa: E402
 
 ROOT = S.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'celia')
@@ -53,8 +58,35 @@ def render(svg, h, name):
     return Image.open(png).convert('RGBA')
 
 
+def visage():
+    """La tête zoomée ×4 (repère du dessin : la boîte du visage passe par l'agrandissement ×1,1 de la tête)."""
+    H = S.build().ctx['HEAD']
+    x0, y0, x1, y1 = S.FACE_BOX
+    a, b = mapp(H, (x0, y0)), mapp(H, (x1, y1))
+    boite = (a[0], a[1], b[0], b[1])
+    m = {}
+    for kk, v in S.mesures().items():
+        q = mapp(H, v[:2])
+        m[kk] = (q[0], q[1], v[2] * 1.1) if len(v) == 3 else q
+    defauts = verifier(m, boite)
+    pad = 5
+    frame = (boite[0] - pad, boite[1] - pad, boite[2] - boite[0] + 2 * pad, boite[3] - boite[1] + 2 * pad)
+    hpx = int(frame[3] * 4 * 512 / S.FRAME[3])       # ×4 sur l'image du jeu (512 px de haut)
+    s1 = S.build(frame=frame).svg()
+    A = render(s1, hpx, 'v1')
+    B = render(s1.replace('</svg>', guide_svg(boite) + '</svg>'), hpx, 'v2')
+    im = Image.new('RGB', (A.width * 2 + 30, A.height + 40), (30, 20, 52))
+    im.paste(A, (0, 40), A)
+    im.paste(B, (A.width + 30, 40), B)
+    ImageDraw.Draw(im).text((10, 12), 'verifier() : ' + ('aucun defaut (liste vide)' if not defauts else ' ; '.join(defauts)),
+                            fill=(255, 255, 255))
+    im.save(os.path.join(OUT, 'visage.png'))
+    return defauts
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
+    print('défauts du visage :', visage() or 'aucun')
     x0, y0, w, h = S.FRAME
     fx, fy = S.FEET[0] - x0, S.FEET[1] - y0
     # 1) en grand

@@ -99,6 +99,11 @@ def keyed(keys, t):
     near = min(range(len(ts)), key=lambda i: abs(ts[i] - t) + (0 if ts[i] <= t else 1e-6))
     for n in STEP:
         out[n] = fl[near][n]
+    # la lance reste derrière la tête plus longtemps (elle ne passe devant qu'une fois sous la barbe)
+    i = max([j for j in range(len(ts)) if ts[j] <= t] or [0])
+    if i + 1 < len(ts):
+        u = (t - ts[i]) / (ts[i + 1] - ts[i])
+        out['behind'] = 1 if ((fl[i]['behind'] and u < 0.8) or (fl[i + 1]['behind'] and u > 0.2)) else 0
     return out
 
 
@@ -469,15 +474,14 @@ def fx_special(tl):
 
 
 def veil(fig, cx, cy, rx, ry, tl, op, flash=0.0):
-    """La bulle de feu doré, translucide : l'intérieur à peine teinté (derrière lui), le bord lumineux (plus épais et
-    plus clair en haut à droite, plus rouge en bas à gauche), de petites langues de feu qui dansent sur le bord à des
-    places irrégulières ; coupée par le sol."""
+    """La bulle de feu doré, translucide : l'intérieur teinté d'or (derrière lui), le bord lumineux (plus épais et
+    plus clair en haut à droite, plus rouge en bas à gauche), des braises qui s'en échappent ; coupée par le sol."""
     if op <= 0.01:
         return
     clip = fig.uid('c')
     fig.defs.append('<clipPath id="%s"><rect x="-400" y="-400" width="900" height="%s"/></clipPath>' % (clip, fm(GR + 400)))
     inner = g_rad(fig, (cx + rx * 0.3, cy - ry * 0.35), max(rx, ry) * 1.2,
-                  [(0, '#fff2b0', 0.16 + 0.12 * flash), (0.7, '#ffcc5a', 0.22 + 0.1 * flash), (1, '#ffb43a', 0.42)])
+                  [(0, '#ffe680', 0.22 + 0.15 * flash), (0.65, '#ffb42a', 0.3 + 0.1 * flash), (1, '#ff9a1a', 0.55)])
     fig.fx_back.append('<g clip-path="url(#%s)"><ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"/></g>' % (
         clip, fm(cx), fm(cy), fm(rx), fm(ry), inner))
     # le bord : une couronne (anneau) de feu doré, plus épaisse en haut à droite
@@ -489,14 +493,6 @@ def veil(fig, cx, cy, rx, ry, tl, op, flash=0.0):
     glow = Shape(outer.subs + inn2.rev().subs)
     fig.fx_front.append('<g clip-path="url(#%s)" opacity="%g"><path d="%s" fill="#ffe08a" opacity="0.28"/>'
                         '<path d="%s" fill="%s" opacity="0.9"/></g>' % (clip, op, glow.d(), band.d(), gb))
-    # les langues de feu sur le bord (places irrégulières)
-    for j, (a, hk) in enumerate(((-118, 0.8), (-74, 1.0), (-37, 0.7), (-160, 0.5), (12, 0.55))):
-        ar = math.radians(a)
-        bx, by = cx + rx * math.cos(ar), cy + ry * math.sin(ar)
-        if by > GR - 2:
-            continue
-        h = (4.4 + 3.4 * hk) * (1 + 0.25 * math.sin(tl / 35 + j * 2.3)) * min(1, rx / 30)
-        fig.fx_front.append(tongue(fig, (bx, by), h, 3.2, bend=0.7 if j % 2 else -0.6, lean=0.3 * math.cos(ar), op=op, gold=True))
     for j, (a, d) in enumerate(((-110, 6), (-50, 9), (-80, 12))):
         ar = math.radians(a)
         fig.fx_front.append(ember(fig, cx + (rx + d) * math.cos(ar), cy + (ry + d) * math.sin(ar) - 0.03 * tl % 6, 0.55, op=op * 0.8))

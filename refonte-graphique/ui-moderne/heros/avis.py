@@ -29,7 +29,7 @@ def main():
         if not (os.path.exists(f) and os.path.exists(img) and os.path.exists(gif)):
             continue
         rows.append({'id': h['id'], 'name': h['name'], 'r': suivi.RARETE[h['r']], 'el': suivi.ELEMENT[h['el']],
-                     'rk': h['r']})
+                     'rk': h['r'], 'v': int(max(os.path.getmtime(img), os.path.getmtime(gif))) % 100000})
         files[f"img/{h['id']}.webp"] = os.path.relpath(img, suivi.RACINE)
         files[f"gif/{h['id']}.gif"] = os.path.relpath(gif, suivi.RACINE)
     total = len(tous)

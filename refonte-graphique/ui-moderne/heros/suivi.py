@@ -77,7 +77,10 @@ def main():
         has_gif = has_vx and os.path.exists(g)
         dg = os.path.join(PAGE, 'gif', f"{h['id']}.gif")
         if has_gif and (not os.path.exists(dg) or os.path.getmtime(g) > os.path.getmtime(dg) or Image.open(dg).width < 420):
-            gif_petit(g, os.path.join(PAGE, 'gif', f"{h['id']}.gif"))
+            try:
+                gif_petit(g, os.path.join(PAGE, 'gif', f"{h['id']}.gif"))
+            except subprocess.CalledProcessError:
+                print(f"  (gif de {h['name']} en cours d'écriture : gardé tel quel)")
         rows.append((h, statut, note, has_vx, has_gif))
 
     n = {k: sum(1 for r in rows if r[1] == k) for k in ('fait', 'à revoir', 'en cours', 'à faire')}

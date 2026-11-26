@@ -16,6 +16,7 @@ const VECTO_ON = (() => {
 /** Par héros : [largeur, hauteur de l'image, x et y des pieds dans l'image], en pixels du dessin pixel art (même
  * échelle : il se pose au même endroit). Mesures écrites par refonte-graphique/ui-moderne/heros/kael/kael.py. */
 const VECTO: Record<string, readonly [number, number, number, number]> = {
+  'knights-1': [98, 123, 50, 121],
   'demons-3': [133, 122, 68, 120],
   'myths-3': [130, 124, 63, 121],
   'angels-1': [118, 113, 58, 110],
@@ -49,6 +50,11 @@ const VECTO: Record<string, readonly [number, number, number, number]> = {
   'mon-orin-rapide': [114, 92, 63, 90],
   'mages-7': [122, 125, 62, 122],
   'mon-orin-sorts': [124, 103, 69, 100],
+  'knights-8': [123, 109, 52, 106],
+  'mon-barzul-tireur': [84, 105, 29, 102],
+  'mon-meduse-rapide': [98, 88, 45, 84],
+  'demons-4': [110, 104, 50, 100],
+  'angels-10': [130, 124, 66.5, 120.5],
 };
 
 export interface VectoFig { w: number; h: number; fx: number; fy: number; big: string; small: string }

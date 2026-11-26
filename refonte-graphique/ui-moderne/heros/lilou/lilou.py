@@ -411,9 +411,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         return H, K, A2, lg, ft, FM
     fH, fK, fA, flg, ffoot, fFM = leg_geom(FH, FK0, FA0, FLL, SG_FL, (16.0, 13.6, 12.0), FAR_FOOT)
     fleg, flegg = fuse([flg, ffoot], smooth=0.6)
-    det = [(ribbon([seg_pt(fH, fK, 0.2, -5.2), seg_pt(fH, fK, 0.6, -5.4), seg_pt(fK, fA, 0.3, -4.6), seg_pt(fK, fA, 0.85, -4.2)],
+    # (la lumière vient d'en haut à droite : le devant de la jambe, à droite, est éclairé ; l'arrière dans l'ombre)
+    det = [(ribbon([seg_pt(fH, fK, 0.2, 5.2), seg_pt(fH, fK, 0.6, 5.4), seg_pt(fK, fA, 0.3, 4.6), seg_pt(fK, fA, 0.85, 4.2)],
                    [0.3, 1.8, 1.6, 0.3]), SKIN.light, 0.55),
-           (ribbon([seg_pt(fH, fK, 0.3, 4.6), seg_pt(fK, fA, 0.2, 4.4), seg_pt(fK, fA, 0.8, 4.0)], [0.3, 2.2, 0.3]), SKIN.shadow, 0.5)]
+           (ribbon([seg_pt(fH, fK, 0.3, -4.6), seg_pt(fK, fA, 0.2, -4.4), seg_pt(fK, fA, 0.8, -4.0)], [0.3, 2.2, 0.3]), SKIN.shadow, 0.5)]
     det += scale_patch(seg_pt(fH, fK, 0.7, -1.4), 1.6, ang_of(fH, fK))
     det += scale_patch(seg_pt(fK, fA, 0.45, -1.8), 1.3, ang_of(fK, fA) - 90, 0.9)
     det += scale_patch(seg_pt(fK, fA, 0.7, 1.6), 1.0, ang_of(fK, fA) - 90, 0.8)
@@ -429,7 +430,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     FSw, FEw, FWw = sk['FS'], sk['FE'], sk['FW']
     farm = bent(FSw, FEw, FWw, 11.8, 10.4, 8.8, bulge=(0.06, 0.08), n=10)
     det = [(ribbon([seg_pt(FEw, FWw, 0.1, -3.0), seg_pt(FEw, FWw, 0.5, -3.0), seg_pt(FEw, FWw, 0.9, -2.6)], [0.2, 1.6, 0.2]), SKIN.light, 0.6),
-           (ribbon([seg_pt(FSw, FEw, 0.45, -4.0), seg_pt(FSw, FEw, 0.8, -3.6), seg_pt(FSw, FEw, 0.98, -2.0)], [0.2, 1.4, 0.2]), SKIN.light, 0.45)]
+           (ribbon([seg_pt(FSw, FEw, 0.45, 4.0), seg_pt(FSw, FEw, 0.8, 3.6), seg_pt(FSw, FEw, 0.98, 2.0)], [0.2, 1.4, 0.2]), SKIN.light, 0.45)]
     det += scale_patch(seg_pt(FEw, FWw, 0.4, -0.6), 1.4, ang_of(FEw, FWw) + 90)
     det += scale_patch(seg_pt(FSw, FEw, 0.78, 0.4), 1.2, ang_of(FSw, FEw), 0.85)
     fig.part('farm', farm, SKIN, grad=(FWw[0] + 4, FWw[1], FEw[0] - 4, FEw[1] + 4, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
@@ -475,10 +476,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det += scale_patch(seg_pt(S, E, 0.2, -3.6), 1.1, ang_of(S, E), 0.75)
     # -- la jambe proche : la cuisse pleine (le devant éclairé), le genou, le tibia, le pied à plat --
     det += cast_into(gleg, gtors.difference(gleg), 1.6)
-    det += [(ribbon([seg_pt(nH, nK, 0.2, -7.6), seg_pt(nH, nK, 0.6, -7.8), seg_pt(nK, nA, 0.2, -7.2), seg_pt(nK, nA, 0.85, -6.6)],
+    det += [(ribbon([seg_pt(nH, nK, 0.2, 7.0), seg_pt(nH, nK, 0.6, 7.2), seg_pt(nK, nA, 0.2, 6.8), seg_pt(nK, nA, 0.85, 6.2)],
                     [0.3, 2.4, 2.2, 0.3]), SKIN.light, 0.55),
-            (ribbon([seg_pt(nH, nK, 0.3, 6.6), seg_pt(nK, nA, 0.1, 7.2), seg_pt(nK, nA, 0.9, 6.8)], [0.3, 2.6, 0.3]), SKIN.shadow, 0.55)]
-    det += gloss(seg_pt(nH, nK, 0.75, -4.4), 2.0, 0.9, ang_of(nH, nK) + 90, 0.6)
+            (ribbon([seg_pt(nH, nK, 0.3, -7.0), seg_pt(nK, nA, 0.1, -7.4), seg_pt(nK, nA, 0.9, -7.0)], [0.3, 2.6, 0.3]), SKIN.shadow, 0.55)]
+    det += gloss(seg_pt(nH, nK, 0.7, 4.6), 2.0, 0.9, ang_of(nH, nK) + 90, 0.6)
     det += scale_patch(seg_pt(nH, nK, 0.5, -1.0), 2.0, ang_of(nH, nK) + 90)
     det += scale_patch(seg_pt(nK, nA, 0.4, -2.4), 1.7, ang_of(nK, nA) + 90, 0.9)
     det += scale_patch(seg_pt(nK, nA, 0.55, 3.4), 1.3, ang_of(nK, nA) + 90, 0.75)

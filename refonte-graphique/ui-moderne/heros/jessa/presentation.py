@@ -2,6 +2,8 @@
 #   python3 presentation.py
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
 # - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
+# - visage.png : la tête zoomée, à gauche telle quelle, à droite avec le calque de ../visage.py (sphère, médiane, ligne
+#   des yeux, places idéales) ; verifier() doit ne rien trouver ;
 # - (brouillon) a-cote-de-kael.png : Jessa et Kael côte à côte, même échelle (cohérence de taille et de style).
 import os
 import subprocess
@@ -85,7 +87,25 @@ def main():
     im.alpha_composite(ground(W3, H3, x2 + (fx + 2) * s, base, 24 * s, 3.2 * s))
     im.alpha_composite(vec, (x2, base - fy * s))
     im.convert('RGB').save(os.path.join(OUT, 'comparaison.png'))
-    # 3) à côté de Kael (même échelle) : brouillon de contrôle
+    # 3) le contrôle du visage (../visage.py) : la tête en grand, sans puis avec le calque des places idéales
+    sys.path.insert(0, os.path.join(HERE, '..'))
+    from visage import verifier, guide_svg
+    from atelier import mS
+    defauts = verifier(S.MESURES, S.BOITE)
+    print('contrôle du visage :', defauts or 'aucun défaut')
+    hv = (55, 33, 34, 30)
+    svg = S.build(ow=0.95, frame=hv).svg()
+    M = mS(1.1, 1.1, *S.H0)
+    guide = '<g transform="matrix(%s)">%s</g>' % (' '.join('%.4f' % v for v in M), guide_svg(S.BOITE))
+    a_ = render(svg, 600, 'visage-a')
+    b_ = render(svg.replace('</svg>', guide + '</svg>'), 600, 'visage-b')
+    im = Image.new('RGBA', (a_.width * 2 + 30, 600), (44, 30, 74, 255))
+    for i, x in enumerate((a_, b_)):
+        bg_ = stone(x.width, 600, 600)
+        bg_.alpha_composite(x)
+        im.alpha_composite(bg_, (i * (a_.width + 30), 0))
+    im.convert('RGB').save(os.path.join(OUT, 'visage.png'))
+    # 4) à côté de Kael (même échelle) : brouillon de contrôle
     sys.path.insert(0, os.path.join(HERE, '..', 'kael'))
     import kael as K
     kx0, ky0, kw, kh = K.FRAME

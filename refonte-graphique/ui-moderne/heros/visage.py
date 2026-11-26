@@ -60,6 +60,11 @@ def placer(boite, tour=TOUR, az_oeil=AZ_OEIL, y_oeil=Y_OEIL, y_nez=Y_NEZ, y_bouc
 
     ye = y0 + y_oeil * h
     proche = (X(-az_oeil, y_oeil), ye, larg(-az_oeil, l_oeil))
+    if tour >= 60:
+        # tête de profil (animal, bec, museau) : l'œil unique se voit de côté, PAS écrasé ; il garde une bonne
+        # taille (lisible au téléphone : au moins 0,24 de la largeur de la tête) et reste au-dessus de la racine
+        # du museau / du bec, jamais collé au bord avant de la tête.
+        proche = (min(proche[0], x0 + 0.78 * w), ye, max(l_oeil, 0.24) * w)
     fond_az = az_oeil + tour
     fond = None if fond_az >= 80 else (X(az_oeil, y_oeil), ye, larg(az_oeil, l_oeil))
     return {

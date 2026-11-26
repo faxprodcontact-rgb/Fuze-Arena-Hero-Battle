@@ -1,18 +1,19 @@
-# Les images à montrer au propriétaire pour l'essai « Kael vectoriel » (refonte-graphique/pixel/sortie/ui/essai-vecto/) :
-#   python3 presentation.py <dossier des captures de captures.cjs>
-# - kael-vecto.png : le dessin vectoriel en grand, sur un fond neutre (ombre douce au sol pour la présentation) ;
-# - kael-comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle ;
+# Les images à montrer au propriétaire pour Kael vectoriel (refonte-graphique/pixel/sortie/ui/vecto/kael/) :
+#   python3 presentation.py [dossier des captures de captures.cjs]
+# - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
+# - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle ;
 # - tirage / fiche / cartes / salle -390x844.png : le vrai jeu, pixel art à gauche, vectoriel à droite ;
 # - apercu.png : tout sur une planche.
 import os
 import subprocess
 import sys
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
-OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'essai-vecto')
+OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'kael')
+STONE = ((44, 30, 74), (24, 16, 42))
 BG = (233, 230, 242, 255)
 
 
@@ -27,21 +28,45 @@ def ground(w, h, cx, cy, rx, ry):
     return im
 
 
+def stone(w, h):
+    """La pierre sombre et calme des menus (raisin), une lumière douce venue d'en haut à droite."""
+    im = Image.new('RGBA', (w, h))
+    d = ImageDraw.Draw(im)
+    for y in range(h):
+        t = y / h
+        d.line([(0, y), (w, y)], fill=tuple(int(a + (b - a) * t) for a, b in zip(*STONE)) + (255,))
+    g = Image.new('RGBA', (w, h))
+    ImageDraw.Draw(g).ellipse([w * 0.4, -h * 0.5, w * 1.3, h * 0.6], fill=(120, 90, 170, 60))
+    im.alpha_composite(g.filter(ImageFilter.GaussianBlur(h * 0.1)))
+    return im
+
+
+def ground_dark(w, h, cx, cy, rx, ry, a=150):
+    im = Image.new('RGBA', (w, h))
+    ImageDraw.Draw(im).ellipse((cx - rx, cy - ry, cx + rx, cy + ry), fill=(10, 4, 24, a))
+    return im.filter(ImageFilter.GaussianBlur(ry * 0.8))
+
+
 def main():
     cap = sys.argv[1] if len(sys.argv) > 1 else None
     os.makedirs(OUT, exist_ok=True)
     rendu = os.path.join(HERE, '..', 'rendu.cjs')
     big = os.path.join(OUT, '_kael-1000.png')
-    subprocess.run(['node', rendu, os.path.join(HERE, 'kael.svg'), big, '1000'], check=True)
+    sys.path.insert(0, HERE)
+    import kael as K
+    svg = os.path.join(OUT, '_kael.svg')
+    open(svg, 'w').write(K.build().svg())
+    subprocess.run(['node', rendu, svg, big, '1000'], check=True)
+    os.remove(svg)
     fig = Image.open(big).convert('RGBA')
     k = 1000 / 122                      # pixels de l'image par pixel du dessin
     fx, fy = 67 * k, 120 * k
-    # 1) en grand
+    # 1) en grand, sur la pierre sombre
     W, H = fig.width + 120, fig.height + 100
-    im = Image.new('RGBA', (W, H), BG)
-    im.alpha_composite(ground(W, H, 60 + fx - 4 * k, 40 + fy, 46 * k, 4.2 * k))
+    im = stone(W, H)
+    im.alpha_composite(ground_dark(W, H, 60 + fx - 4 * k, 40 + fy, 46 * k, 3.4 * k))
     im.alpha_composite(fig, (60, 40))
-    im.convert('RGB').save(os.path.join(OUT, 'kael-vecto.png'))
+    im.convert('RGB').save(os.path.join(OUT, 'fixe.png'))
     # 2) comparaison à la même échelle : le pixel art agrandi sans flou (pieds au même endroit)
     px = Image.open(os.path.join(ROOT, 'public', 'art', 'hd', 'pose', 'assassins-2.webp')).convert('RGBA')
     s = 6
@@ -57,7 +82,7 @@ def main():
     x2 = 2 * pad + pxb.width
     im.alpha_composite(ground(W, H, x2 + 67 * s - 4 * s, base, 46 * s, 4 * s))
     im.alpha_composite(vec, (x2, base - 120 * s))
-    im.convert('RGB').save(os.path.join(OUT, 'kael-comparaison.png'))
+    im.convert('RGB').save(os.path.join(OUT, 'comparaison.png'))
     os.remove(big)
     # 3) le vrai jeu, côte à côte
     pairs = []
@@ -74,8 +99,11 @@ def main():
             path = os.path.join(OUT, '%s-390x844.png' % n)
             im.save(path)
             pairs.append(im)
+    if not pairs:
+        print('écrit dans', OUT, ': fixe.png, comparaison.png')
+        return
     # 4) la planche d'ensemble : la comparaison en haut, puis tirage et fiche (pixel | vecto), réduits
-    comp = Image.open(os.path.join(OUT, 'kael-comparaison.png'))
+    comp = Image.open(os.path.join(OUT, 'comparaison.png'))
     tiles = [p.resize((round(p.width * 700 / p.height), 700), Image.LANCZOS) for p in pairs[:2]]
     W = max(comp.width, sum(t.width for t in tiles) + 30 * (len(tiles) - 1)) if tiles else comp.width
     H = comp.height + (730 if tiles else 0)

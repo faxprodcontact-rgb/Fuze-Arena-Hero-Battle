@@ -114,13 +114,13 @@ ATTACK = [
     (335, dict(shift=6, crouch=1.0, lean=2, head=(1, 0), tilt=1, fw=fwp(114.0, 58.6), fga=26, fstretch=1, nw=(0, -1), pan=-1, shell=(-0.8, 0))),
     (355, dict(shift=8, crouch=1.0, lean=2.2, head=(1, 0), tilt=1, fw=fwp(116.4, 58.0), fga=30, fstretch=1.6, nw=(0, -1), pan=-1.8, shell=(-1.4, 0))),
     (440, dict(shift=9, crouch=1.0, lean=2.4, head=(1, 0), fw=fwp(113.0, 58.8), fga=24, fstretch=1.2, nw=(0.4, -0.8), pan=-2, shell=(-1.2, 0))),
-    (485, dict(shift=13, crouch=0.9, lean=3, head=(1.2, 0), fw=fwp(99.0, 59.0), fabs=0.6, fga=0, nw=nwp(68.0, 67.0), sh=(3, 1), nga=-4,
+    (485, dict(shift=13, crouch=0.9, lean=3, head=(1.2, 0), fw=fwp(99.0, 62.5), fabs=0.6, fga=0, nw=nwp(68.0, 67.0), sh=(3, 1), nga=-4,
                pan=-2, shell=(-0.4, 0))),
-    (520, dict(shift=27, crouch=0.6, lean=5, head=(2, 0), tilt=2, fw=fwp(97.0, 58.0), fabs=1, fga=-8, nw=nwp(90.0, 70.0), sh=(8, 2), nga=-6,
+    (520, dict(shift=27, crouch=0.6, lean=5, head=(2, 0), tilt=2, fw=fwp(96.0, 65.5), fabs=1, fga=-8, nw=nwp(90.0, 70.0), sh=(8, 2), nga=-6,
                nstretch=1, pan=-3, shell=(-3, 0))),
-    (545, dict(shift=30, crouch=0.6, lean=5.6, head=(2, 0), tilt=2.4, fw=fwp(97.0, 58.0), fabs=1, fga=-8, nw=nwp(95.0, 71.0), sh=(9, 2),
+    (545, dict(shift=30, crouch=0.6, lean=5.6, head=(2, 0), tilt=2.4, fw=fwp(96.0, 65.5), fabs=1, fga=-8, nw=nwp(95.0, 71.0), sh=(9, 2),
                nga=-6, nstretch=1.6, pan=-2.6, shell=(-3.6, 0))),
-    (700, dict(shift=30.4, crouch=0.8, lean=5.4, head=(2, 0.2), tilt=2.2, fw=fwp(97.2, 58.4), fabs=1, fga=-8, nw=nwp(94.4, 71.0), sh=(9, 2),
+    (700, dict(shift=30.4, crouch=0.8, lean=5.4, head=(2, 0.2), tilt=2.2, fw=fwp(96.2, 65.6), fabs=1, fga=-8, nw=nwp(94.4, 71.0), sh=(9, 2),
                nga=-6, nstretch=1.2, pan=-2, shell=(-1, 0))),
     (790, dict(shift=23, crouch=1.0, lean=3, head=(1, 1), fw=fwp(99.0, 61.0), fabs=0.5, fga=-4, nw=nwp(74.0, 68.0), sh=(4, 1), nga=-3,
                pan=-1, shell=(1.2, 0))),
@@ -382,7 +382,15 @@ def curl(fig, C, r, a0, turn, w, op=1.0):
     return outlined([(sh, gr, 1)], w=1.0, op=op)
 
 
-def spout(fig, X, top, wb, wt, t, op=1.0, spiral=1.0):
+def spiral_band(seg, k):
+    """Un tour de la spirale, sur le devant de la trombe : une bande d'eau profonde, son bord haut clair."""
+    c = [(a, b) for a, b, _ in seg]
+    wm = max(0.9, seg[len(seg) // 2][2] * 0.13) * k
+    return [(taper(c, 0.3, 0.3, tip='round', wmid=wm), WATER[4], 0.55, 'n'),
+            (taper([(a + 0.2, b - wm * 0.55) for a, b in c], 0.2, 0.2, tip='round', wmid=wm * 0.45), '#ffffff', 0.8, 'n')]
+
+
+def spout(fig, X, top, wb, wt, t, op=1.0, spiral=1.0, crown=1.0):
     """La trombe : une colonne d'eau qui monte du sol en tournant ; ses bords ondulent, une bande claire s'enroule
     autour en spirale (seul le côté visible est peint), une couronne d'écume au sommet."""
     if GR - top < 2 or op <= 0.02:
@@ -422,18 +430,17 @@ def spout(fig, X, top, wb, wt, t, op=1.0, spiral=1.0):
                 seg.append((x, y - 0.5, w))
             elif len(seg) > 3:
                 c = [(a, b) for a, b, _ in seg]
-                items.append((taper(c, 0.4, 0.4, tip='round', wmid=max(0.8, seg[len(seg) // 2][2] * 0.16) * spiral), WATER[1], 0.85, 'n'))
+                items += spiral_band(seg, spiral)
                 seg = []
             else:
                 seg = []
         if len(seg) > 3:
-            c = [(a, b) for a, b, _ in seg]
-            items.append((taper(c, 0.4, 0.4, tip='round', wmid=max(0.8, seg[len(seg) // 2][2] * 0.16) * spiral), WATER[1], 0.85, 'n'))
+            items += spiral_band(seg, spiral)
     out = outlined(items, w=1.5, op=op)
     cx = mids[-1][0]
     for j, (dx, dy, rr) in enumerate(((-0.62, 2.6, 0.24), (0.66, 2.2, 0.24), (-0.42, -0.6, 0.32), (0.4, -0.8, 0.34),
                                       (-0.16, -2.6, 0.4), (0.18, -3.4, 0.42), (0.0, -5.6, 0.34))):
-        out += foam(fig, cx + dx * wt, top + dy * (wt / 14.0), rr * wt * (1 + 0.07 * math.sin(t * 11 + j * 1.7)), op=op, seed=j)
+        out += foam(fig, cx + dx * wt, top + dy * (wt / 14.0), crown * rr * wt * (1 + 0.07 * math.sin(t * 11 + j * 1.7)), op=op, seed=j)
     return out
 
 
@@ -596,14 +603,14 @@ def fx_attack(tl, T, t0):
         if 300 <= tl <= 400:
             pts = fist_path(T, t0, 'far_fist', (0.09, 0.06, 0.03)) + [ctx['far_fist']]
             if len(pts) >= 3:
-                pts = [(x - 6, y + 1.5) for x, y in pts]
+                pts = [(x - 7, y + 3.0) for x, y in pts]
                 back.append(stream(fig, pts, 0.4, 3.4, op=env(tl, 300, 320, 360, 400)))
         # l'impact du jab : éclat d'écume, deux petites nappes, des gouttes en avant
         if tl >= JAB_HIT - 5 and 'jab' not in HIT:
             HIT['jab'] = ctx['far_fist']
-        if 'jab' in HIT and JAB_HIT <= tl <= 900:
+        if 'jab' in HIT and JAB_HIT <= tl <= 600:
             X, Y = HIT['jab'][0] + 7, HIT['jab'][1]
-            k = (tl - JAB_HIT) / 300
+            k = (tl - JAB_HIT) / 230
             b, fr = splash(fig, X, Y, k, 0.8, dirs=((52, 12, -40, 3.0), (-20, 9, -30, 2.4)), seed=1)
             back += b
             front += fr
@@ -620,7 +627,7 @@ def fx_attack(tl, T, t0):
         if 'cross' in HIT and CROSS_HIT <= tl:
             X, Y = HIT['cross'][0] + 9, HIT['cross'][1]
             k = (tl - CROSS_HIT) / 420
-            b, fr = splash(fig, X, Y, k, 1.0, dirs=((64, 22, -60, 5.2), (-26, 12, -34, 3.4), (122, 9, 46, 2.4)), seed=3)
+            b, fr = splash(fig, X, Y, k, 1.3, dirs=((64, 22, -60, 5.2), (-26, 12, -34, 3.4), (122, 9, 46, 2.4)), seed=3)
             back += b
             front += fr
             front += burst(fig, X, Y, (tl - CROSS_HIT) / 1000, [(70, -110), (110, -55), (40, -140), (120, 15), (10, -120), (90, 30),
@@ -666,7 +673,8 @@ def fx_special(tl):
                     back.append(curl(fig, (xj, GR - 2.2 - 1.2 * (j % 2)), 3.4 - 1.6 * age, 160 + 50 * j, -260, 1.6, op=(1 - age) * L))
                     front.append(foam(fig, xj + 4, GR - 1.0, 2.0 * (1 - age) + 0.4, op=(1 - age) * L, seed=j))
             # la vague qui la porte : un dos long derrière, la crête qui roule devant
-            back.append(wave(fig, cx, 12 * L, 36, 30, op=L, crest=1.0))
+            back.append(wave(fig, cx, 13 * L, 40, 30, op=L, crest=1.0))
+            front.append(wave(fig, cx + 2, 4.6 * L, 30, 26, op=L, crest=0.8))
             # l'anneau d'eau qui tourbillonne autour d'elle : la moitié du fond derrière, celle de devant par-dessus
             if L > 0.2:
                 C = (cx, GR - 9.0)
@@ -704,9 +712,11 @@ def fx_special(tl):
         if 1000 <= tl <= 1700:
             rise = env(tl, 1000, 1060, 1260, 1400)
             top = GR - 4 - 150 * rise
-            wb = 22 * (0.4 + 0.6 * min(1, (tl - 1000) / 80))
-            back.append(spout(fig, SPOUT_X, top, wb, 15, tl / 1000, op=min(1, (1700 - tl) / 200, (tl - 995) / 30),
-                              spiral=1.0 if tl < 1300 else max(0, (1400 - tl) / 100)))
+            wb = 30 * (0.4 + 0.6 * min(1, (tl - 1000) / 80))
+            if rise > 0.04:
+                # elle s'efface en s'affaissant (jamais un fantôme gris)
+                back.append(spout(fig, SPOUT_X, top, wb * min(1, 0.4 + rise), 21 * min(1, 0.4 + rise), tl / 1000,
+                                  crown=min(1, rise * 2.5), spiral=1.0 if tl < 1300 else max(0, (1400 - tl) / 100)))
             # la pluie : la trombe s'effondre, les gouttes retombent tout autour
             if tl > 1260:
                 k = (tl - 1260) / 1000
@@ -803,7 +813,7 @@ def frame_svg(T, segs, view=VIEW, ow=0.95):
     if act == 'special' and TUCK_END <= tl < POP:
         cx, hy, spin, tilt, sq = top_at(tl)
         L = env(tl, 380, 450, 760, 860)
-        fig = build_toupie(T, cx, hy + 5.5 * L, spin, tilt, sq, ow=ow, frame=view, ph=P['ph'])
+        fig = build_toupie(T, cx, hy + 7.0 * L, spin, tilt, sq, ow=ow, frame=view, ph=P['ph'])
         fig.ctx.update(P=P, T=T, t0=t0, toupie=True)
         fx_special(tl)(fig, fig.ctx)
         return fig.svg(), (cx, hy + 3, 30.0)

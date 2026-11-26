@@ -23,6 +23,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from outils import crpath, bent, taper  # noqa: E402
+from visage import placer, verifier  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'mages-8'
@@ -46,6 +47,9 @@ GRD = 116.4        # le dessous des pieds
 FEET = (64, 116)   # le point « sol » du pixel art (l'image se pose par ce point)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin : même hauteur que Kael (même échelle à 512 px)
 FRAME = (-1, -4, 133, 122)
+# la boîte du visage (ovale de la face, sans la fourrure du crâne ni l'oreille) : les traits sont placés par visage.py
+FACE = (71.0, 23.0, 98.0, 54.5)
+L_OEIL = 0.24      # des yeux un peu plus grands que le réglage commun (0,20) : le regard se lit à la taille du téléphone
 
 # ---------- le squelette ----------
 # Le bâton (mesuré sur le pixel art) : l'axe passe par C avec l'angle ANG0 (degrés, y vers le HAUT comme le pixel
@@ -428,121 +432,162 @@ def tuft_marks():
     return out
 
 
+def eye_shape(cx, cy, w, s):
+    """Un œil en amande « dur » : la paupière du haut presque droite qui descend vers le coin intérieur (regard
+    froncé), le coin extérieur relevé. s = +1 : coin intérieur à droite (œil proche) ; s = -1 : à gauche (œil du fond).
+    Les deux yeux ont la même forme, en miroir."""
+    pts = [(-0.5, -0.15), (-0.2, -0.22), (0.16, -0.12), (0.5, 0.1), (0.2, 0.2), (-0.22, 0.14)]
+    return sm([(cx + s * u * w, cy + v * w) for u, v in pts], sharp=(0, 3))
+
+
+def lid_shape(cx, cy, w, s):
+    """La paupière du haut : un trait sombre épais qui suit le haut de l'œil, le coin extérieur qui file en pointe
+    vers l'arrière et vers le haut."""
+    pts = [(-0.72, -0.32), (-0.46, -0.21), (-0.2, -0.33), (0.18, -0.25), (0.6, 0.06), (0.5, 0.14), (0.16, -0.08),
+           (-0.2, -0.15), (-0.5, -0.07)]
+    return sm([(cx + s * u * w, cy + v * w) for u, v in pts], sharp=(0, 4, 5))
+
+
+def brow_shape(cx, cy, w, s):
+    """Le fard rouge d'opéra en sourcil froncé : épais et bas près du nez, il remonte et s'effile vers l'arrière."""
+    pts = [(0.66, -0.2), (0.36, -0.5), (-0.1, -0.6), (-0.52, -0.72), (-0.95, -1.0), (-0.66, -0.52), (-0.22, -0.36),
+           (0.3, -0.18)]
+    return sm([(cx + s * u * w, cy + v * w) for u, v in pts], sharp=(0, 4))
+
+
 def head_parts(fig, P):
-    """La tête de singe : crâne de fourrure, masque de peau en cœur, yeux, nez plat, museau, bouche, bandeau,
-    mèche nouée, oreille ronde à anneau d'or."""
-    head = sm([(58.4, 50.2), (55.6, 48.6), (56.2, 46.8), (54.6, 44.2), (55.4, 41.6), (55.4, 35.6), (58.2, 27.8), (63.4, 21.6), (69.4, 17.6), (72.4, 15.4), (73.6, 16.6), (78.6, 16.4),
-               (86.8, 18.0), (93.2, 21.6), (97.8, 26.0), (100.0, 30.4), (100.8, 33.4), (101.6, 35.8), (103.0, 38.0),
-               (104.2, 40.6), (104.2, 42.8), (102.2, 44.6), (101.4, 45.4), (101.6, 46.8), (99.8, 49.6), (96.6, 52.4),
-               (91.0, 54.0), (84.0, 53.8), (74.0, 53.4), (63.6, 52.6)], sharp=(1, 3, 9))
+    """La tête de singe : crâne de fourrure, masque de peau en cœur, arcade marquée, yeux durs, museau, nez plat,
+    bouche fermée au croc, bandeau, mèche nouée, oreille ronde à anneau d'or.
+    Traits placés par visage.py (sphère qui tourne de 18° : yeux sur une ligne, nez ENTRE les yeux, bouche sous
+    le nez) ; la tête tourne et penche d'un seul bloc dans l'animation."""
+    V = placer(FACE, l_oeil=L_OEIL)
+    (n_x, n_y, n_w), (f_x, f_y, f_w) = V['oeil_proche'], V['oeil_fond']
+    nz_x, nz_y = V['nez']
+    b_x, b_y, b_w = V['bouche']
+    b_w *= 1.45                      # une bouche de singe : large sur le museau (centrée sous le nez)
+    med = V['mediane']
+    head = sm([(61.2, 50.6), (59.4, 47.2), (59.0, 42.0), (59.8, 35.4), (62.2, 28.8), (66.6, 24.4), (72.0, 21.2),
+               (78.4, 19.8), (85.0, 20.2), (90.8, 22.4), (94.9, 25.2), (97.4, 29.2), (98.7, 32.6), (99.2, 35.2),
+               (97.7, 37.4), (97.6, 39.8), (98.9, 42.0), (100.1, 44.4), (99.8, 46.8), (98.2, 49.0), (95.6, 51.4),
+               (92.0, 53.4), (88.2, 54.6), (83.4, 54.6), (75.0, 53.9), (67.4, 52.9)], sharp=(13, 15))
     hd = []
-    # le crâne : la calotte éclairée en haut à droite, l'arrière dans l'ombre
-    hd += [(sm([(70, 18.6), (80, 17.4), (89.6, 19.6), (95.6, 24.4), (92, 24.6), (84, 22.6), (75, 22.0), (69, 22.6)]), FUR.light, 0.75),
-           (ribbon([(74.6, 19.2), (82, 18.6), (89.6, 20.8)], [0.1, 0.9, 0.1]), FUR.hi, 0.7)]
-    # les joues de fourrure claire qui encadrent le masque (touffes couchées vers l'arrière)
-    ruff = sm([(71.2, 34.0), (73.8, 33.2), (76.4, 37.6), (79.8, 42.6), (83.6, 47.8), (87.6, 52.6), (84.0, 53.8),
-               (80.8, 52.2), (78.2, 51.8), (76.6, 49.0), (73.6, 48.0), (72.8, 44.6), (70.2, 43.2), (70.6, 39.6),
-               (68.8, 37.6)], sharp=(7, 10, 13))
-    hd += [(ruff, ('lin', 84, 40, 70, 50, [(0, FURL.light), (1, FURL.base)]), 1),
-           (sm([(74.4, 37.4), (77.4, 41.8), (81.0, 46.6), (84.4, 51.0), (81.4, 50.6), (78.0, 46.6), (74.8, 42.6), (72.8, 39.4)]), FURL.hi, 0.5),
-           (ribbon([(73.4, 44.6), (75.6, 46.4), (77.0, 49.0)], [0.1, 0.7, 0.1]), FURL.shadow, 0.5),
-           (ribbon([(70.8, 39.8), (72.8, 41.4), (73.4, 43.4)], [0.1, 0.6, 0.1]), FURL.shadow, 0.45)]
-    # des mèches de fourrure sur le crâne (couchées vers l'arrière), sans rayures : deux ou trois masses d'ombre douce
-    hd += [(sm([(60.4, 30.0), (63.0, 24.8), (68.6, 20.6), (66.0, 25.2), (65.6, 29.4)], sharp=(2,)), FUR.shadow, 0.45),
-           (sm([(57.6, 44.6), (57.0, 38.6), (59.6, 34.0), (60.6, 39.4), (62.0, 44.0), (60.2, 48.4)], sharp=(5,)), FUR.shadow, 0.5),
-           (sm([(76.4, 26.6), (82.0, 23.6), (88.4, 23.4), (84.0, 25.4), (79.6, 27.6)], sharp=(2,)), FUR.hi, 0.3)]
-    # le masque de peau rose pêche en cœur (deux lobes autour des yeux, l'encoche entre eux), jusqu'au menton
-    mask = sm([(73.4, 34.6), (75.8, 32.4), (80.4, 31.8), (84.0, 32.8), (85.8, 33.6), (87.8, 32.4), (91.6, 31.0),
-               (96.4, 30.8), (100.4, 31.8), (102.2, 35.4), (104.6, 39.6), (105, 43.6), (102.4, 46.6), (101.2, 49.4),
-               (97.4, 52.8), (90.4, 54.6), (86.0, 52.6), (82.0, 47.6), (78.2, 42.8), (75.0, 38.6)], sharp=(4,))
+    # le crâne : la calotte éclairée en haut à droite, l'arrière dans l'ombre ; deux masses de fourrure douces
+    hd += [(sm([(70.6, 21.6), (78, 20.0), (85.4, 20.4), (91.4, 23.0), (94.6, 26.4), (90.4, 25.4), (84, 24.0), (76, 24.0), (70.2, 25.2)]), FUR.light, 0.75),
+           (ribbon([(75.0, 21.0), (81.6, 20.4), (88.6, 22.2)], [0.1, 0.9, 0.1]), FUR.hi, 0.7),
+           (sm([(62.4, 31.4), (64.6, 26.4), (69.2, 22.6), (67.2, 27.0), (66.8, 31.0)], sharp=(2,)), FUR.shadow, 0.45),
+           (sm([(60.4, 45.4), (60.0, 39.0), (62.0, 34.6), (63.0, 39.6), (64.0, 44.4), (62.4, 48.8)], sharp=(5,)), FUR.shadow, 0.5)]
+    # la collerette de fourrure claire autour du masque (joue proche), en touffes couchées vers l'arrière
+    ruff = sm([(74.2, 34.0), (77.2, 33.4), (78.6, 37.4), (79.2, 42.0), (81.6, 46.4), (84.4, 50.4), (88.0, 53.4),
+               (85.0, 54.8), (81.6, 53.4), (78.6, 53.2), (77.4, 50.4), (74.4, 49.6), (73.8, 46.4), (71.6, 45.2),
+               (72.2, 41.6), (70.8, 39.0)], sharp=(8, 11, 14))
+    hd += [(ruff, ('lin', 84, 38, 70, 52, [(0, FURL.light), (1, FURL.base)]), 1),
+           (sm([(76.6, 37.4), (77.4, 42.0), (79.8, 46.4), (83.0, 50.6), (80.4, 50.4), (77.8, 46.8), (75.8, 42.4), (75.0, 38.8)]), FURL.hi, 0.45),
+           (ribbon([(74.8, 46.0), (76.8, 47.8), (78.2, 50.6)], [0.1, 0.7, 0.1]), FURL.shadow, 0.5),
+           (ribbon([(72.4, 41.6), (74.2, 43.0), (74.8, 45.0)], [0.1, 0.6, 0.1]), FURL.shadow, 0.45)]
+    # le masque de peau en cœur : deux lobes autour des yeux, la pointe de fourrure qui descend entre eux (front
+    # froncé) ; le côté droit suit le contour (joue, museau, menton)
+    mz = med(36.4)
+    mask = sm([(78.4, 38.6), (78.6, 35.6), (80.6, 33.8), (83.6, 33.4), (86.6, 34.4), (mz, 36.6), (90.6, 34.4),
+               (93.2, 33.4), (96.2, 33.4), (99.6, 33.8), (101, 38), (102, 46), (99, 53), (93, 55.2), (88, 55.2),
+               (84.4, 52.4), (81.8, 48.0), (79.6, 43.2)], sharp=(5,))
     F1, F2, F3 = SKIN.light, SKIN.base, SKIN.shadow
-    hd += [(mask, ('lin', 100, 34, 80, 50, [(0, F1), (0.45, F2), (1, '#d68474')]), 1)]
-    # le plan de côté (vers l'oreille) dans l'ombre douce ; l'arcade sourcilière marquée (ombre sous la fourrure)
-    hd += [(sm([(73.4, 34.6), (75.4, 33.4), (78.6, 40.0), (83.0, 46.6), (88.6, 53.8), (85.4, 52.8), (81.6, 47.4), (77.6, 42.4)]), F3, 0.22),
-           (ribbon([(74.4, 33.4), (79.8, 32.4), (84.8, 33.6)], [0.3, 1.3, 0.3]), SKIN.deep, 0.35),
-           (ribbon([(87.0, 33.0), (92.4, 31.6), (98.8, 31.8)], [0.3, 1.2, 0.2]), SKIN.deep, 0.3)]
-    # le fard rouge d'opéra au-dessus des yeux (il s'étire vers l'arrière en pointe)
-    hd += [(sm([(72.2, 33.4), (76.6, 32.8), (81.2, 32.8), (84.4, 34.4), (84.0, 35.4), (80.4, 34.6), (76.4, 34.8), (73.6, 35.4)], sharp=(0,)), '#d2343e', 0.92),
-           (sm([(87.4, 34.6), (90.4, 33.0), (94.4, 32.8), (96.6, 33.6), (94.2, 34.4), (90.4, 34.6), (88.2, 35.4)], sharp=(3,)), '#d2343e', 0.88),
-           (ribbon([(75.4, 33.2), (79.4, 33.0), (82.6, 33.6)], [0.1, 0.5, 0.1]), '#ff8a6e', 0.8)]
-    # les yeux dorés en amande : même forme, même ligne ; le lointain plus étroit, son coin intérieur derrière le nez
-    eyeN = sm([(75.4, 36.2), (77.8, 35.0), (81.0, 35.0), (83.4, 36.6), (81.4, 38.0), (78.2, 38.0)], sharp=(0, 3))
-    eyeF = sm([(88.4, 36.8), (90.0, 35.4), (92.4, 35.0), (94.0, 35.4), (92.6, 37.2), (90.0, 37.8)], sharp=(0, 3))
+    hd += [(mask, ('lin', 98, 34, 80, 52, [(0, F1), (0.45, F2), (1, '#d68474')]), 1)]
+    # le plan de côté (vers l'oreille) dans l'ombre douce
+    hd += [(sm([(78.4, 38.6), (78.7, 35.8), (80.4, 39.6), (82.2, 44.2), (85.4, 49.0), (89.4, 54.2), (86.2, 53.6), (82.8, 49.2), (80.0, 44.0)]), F3, 0.25)]
+    # l'arcade sourcilière : une ombre nette sous l'os, qui creuse les yeux (le regard est dans l'ombre)
+    for cx, cy, w, s in ((n_x, n_y, n_w, 1), (f_x, f_y, f_w, -1)):
+        hd += [(sm([(cx + s * u * w, cy + v * w) for u, v in
+                    ((0.72, -0.12), (0.3, -0.46), (-0.2, -0.52), (-0.66, -0.5), (-0.86, -0.3), (-0.5, -0.32), (-0.1, -0.3), (0.4, -0.18))],
+                   sharp=(0, 4)), SKIN.deep, 0.32)]
+    # le fard rouge d'opéra en sourcils froncés (bas près du nez, il remonte en pointe vers l'arrière)
+    hd += [(brow_shape(n_x, n_y, n_w, 1), '#c8283a', 0.95), (brow_shape(f_x, f_y, f_w, -1), '#c8283a', 0.92),
+           (ribbon([(n_x + 0.5 * n_w, n_y - 0.48 * n_w), (n_x, n_y - 0.6 * n_w), (n_x - 0.55 * n_w, n_y - 0.76 * n_w)], [0.1, 0.45, 0.1]), '#ff8a6e', 0.75),
+           (ribbon([(f_x - 0.45 * f_w, f_y - 0.48 * f_w), (f_x, f_y - 0.6 * f_w), (f_x + 0.5 * f_w, f_y - 0.74 * f_w)], [0.1, 0.4, 0.1]), '#ff8a6e', 0.7)]
+    # le pli du front entre les sourcils (froncés), sur la médiane
+    hd += [(ribbon([(med(34.6) - 0.3, 34.4), (med(36.2), 36.4), (med(37.6) + 0.1, 37.6)], [0.1, 0.5, 0.1]), SKIN.shadow, 0.55)]
+    # les yeux : même forme (en miroir), même ligne ; l'œil du fond un peu plus étroit (visage.py)
+    eyes = ((n_x, n_y, n_w, 1), (f_x, f_y, f_w, -1))
     if P['blink'] > 0.5:
-        # les paupières de peau se ferment (le trait de cils reste)
-        for e, cx, cy in ((eyeN, 79.4, 36.6), (eyeF, 91.2, 36.4)):
-            hd += [(e, F2, 1), (e.scale(1, 0.4, cx, cy + 1.0), F3, 0.5)]
-        hd += [(ribbon([(74.2, 36.0), (77.4, 37.4), (80.8, 37.8), (83.4, 36.8)], [0.2, 0.9, 0.9, 0.3]), '#3a1426', 1),
-               (ribbon([(88.4, 37.0), (90.6, 37.6), (93.4, 36.4)], [0.2, 0.8, 0.2]), '#3a1426', 1)]
+        for cx, cy, w, s in eyes:
+            e = eye_shape(cx, cy, w, s)
+            hd += [(e, F2, 1), (e.scale(1, 0.45, cx, cy + 0.12 * w), F3, 0.45),
+                   (ribbon([(cx - s * 0.62 * w, cy - 0.2 * w), (cx - s * 0.2 * w, cy + 0.06 * w), (cx + s * 0.2 * w, cy + 0.1 * w),
+                            (cx + s * 0.5 * w, cy + 0.06 * w)], [0.2, 0.75, 0.7, 0.2]), '#3a1426', 1)]
     else:
-        hd += [(eyeN, '#fff6ea', 1), (eyeF, '#f6e6da', 1)]
-        # l'iris (il regarde vers l'ennemi), la pupille, le reflet ; découpés dans l'œil par une forme « œil »
-        for e, (cx, cy, rx, ry) in ((eyeN, (80.4, 36.6, 1.75, 1.75)), (eyeF, (92.0, 36.2, 1.25, 1.55))):
+        for i, (cx, cy, w, s) in enumerate(eyes):
+            e = eye_shape(cx, cy, w, s)
+            hd += [(e, '#fff2e2' if i == 0 else '#f4e2d4', 1)]
+            # l'iris (il regarde vers l'ennemi, à droite) mi-couvert par la paupière : regard dur ; pupille, reflet
+            ix, iy, ir = cx + 0.12 * w, cy + 0.03 * w, 0.26 * w
             cid = fig.uid('ce')
             fig.defs.append('<clipPath id="%s"><path d="%s"/></clipPath>' % (cid, e.d()))
-            hd += [('<path d="%s" fill="FILL" clip-path="url(#%s)"/>' % (ellipse(cx, cy, rx, ry).d(), cid),
-                    ('rad', cx + 0.3, cy - 0.4, rx * 1.2, ry * 1.2, [(0, IRIS[0]), (0.35, IRIS[1]), (0.8, IRIS[2]), (1, IRIS[3])]), 1)]
-        hd += [(ellipse(80.6, 36.7, 0.7, 0.95), '#2a0c1c', 1), (ellipse(92.2, 36.3, 0.5, 0.85), '#2a0c1c', 1),
-               (ellipse(81.2, 35.9, 0.45, 0.42), '#ffffff', 1), (ellipse(92.6, 35.6, 0.32, 0.3), '#ffffff', 1)]
-        # l'ombre de la paupière sur le haut de l'œil
-        hd += [(sm([(75.4, 36.2), (77.8, 35.0), (81.0, 35.0), (83.4, 36.6), (81.0, 35.8), (77.8, 36.0)], sharp=(0, 3)), '#c8907e', 0.6),
-               (sm([(88.4, 36.8), (90.0, 35.4), (92.4, 35.0), (94.0, 35.4), (92.4, 35.8), (90.0, 36.2)], sharp=(0, 3)), '#c8907e', 0.6)]
-        # la paupière du haut : un trait sombre épais, le cil qui file en pointe vers l'arrière
-        hd += [(sm([(73.2, 34.6), (75.6, 35.2), (77.8, 34.4), (81.2, 34.4), (83.8, 36.2), (83.6, 36.9), (80.8, 35.3),
-                    (77.8, 35.3), (75.6, 36.5), (74.6, 35.6)], sharp=(0, 4, 5)), '#3a1426', 1),
-               (sm([(87.8, 36.4), (89.8, 34.6), (92.4, 34.2), (94.4, 34.6), (95.6, 33.8), (95.0, 35.2), (94.0, 35.8),
-                    (92.4, 35.2), (90.2, 35.6), (88.4, 37.2)], sharp=(0, 4, 9)), '#3a1426', 1),
-               (ribbon([(77.6, 38.4), (80.4, 38.6), (82.6, 37.6)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.8)]
-    # le museau : le plan de devant éclairé, le pli qui part du nez vers le coin de la bouche
-    hd += [(sm([(94.4, 39.6), (99.4, 38.2), (103.0, 38.6), (104.0, 41.4), (103.2, 43.4), (98.6, 43.4), (94.4, 42.0)]), SKIN.light, 0.5),
-           (ribbon([(92.4, 39.0), (90.4, 40.4), (89.0, 42.6), (89.0, 43.4)], [0.2, 0.9, 0.7, 0.2]), SKIN.shadow, 0.6),
-           (ribbon([(86.6, 35.6), (90.2, 38.0), (95.0, 38.8), (99.6, 38.2)], [0.3, 1.0, 1.2, 0.3]), SKIN.hi, 0.6)]
-    # le nez plat de singe : à peine une bosse, deux narines obliques
-    hd += [(sm([(97.4, 40.6), (100.6, 39.8), (103.6, 40.4), (103.6, 41.8), (100.8, 42.6), (98.0, 42.2)]), '#d8857c', 0.35),
-           (sm([(97.8, 41.8), (98.8, 40.9), (99.8, 41.1), (99.0, 42.0)], sharp=(0,)), '#6e2438', 1),
-           (sm([(101.6, 40.9), (102.7, 40.6), (103.2, 41.2), (102.3, 41.8)], sharp=(0,)), '#6e2438', 0.9),
-           (ribbon([(100.4, 42.6), (100.6, 43.6)], [0.4, 0.2]), SKIN.shadow, 0.4)]
-    # la lèvre du haut, la bouche entrouverte en rictus (le coin arrière remonte), les dents, un croc
-    mouth = sm([(89.2, 43.4), (92.6, 44.6), (96.8, 44.8), (101.2, 44.4), (101.0, 45.6), (97.6, 46.8), (93.4, 46.4)], sharp=(0, 3))
-    hd += [(ribbon([(89.0, 43.0), (92.4, 43.8), (97.0, 43.8), (101.4, 43.6)], [0.2, 0.9, 0.9, 0.3]), '#f8c2a2', 0.6),
-           (mouth.scale(1.04, 1.25, 95, 45.4), '#4a1028', 0.95),
-           (mouth, ('rad', 96.4, 45.8, 5.6, 2.0, [(0, '#8e2a40'), (0.6, MOUTH), (1, '#3e0c22')]), 1),
-           (sm([(92.6, 44.6), (96.8, 44.8), (101.0, 44.4), (100.8, 45.2), (96.8, 45.5), (93.0, 45.3)]), '#fff6e8', 1),
-           (sm([(93.4, 44.9), (94.6, 45.0), (94.1, 46.4)], sharp=(0, 1, 2)), '#fff6e8', 1),
-           (ribbon([(97.0, 45.0), (97.1, 45.5)], [0.2, 0.1]), '#d8bca8', 0.8)]
-    # la lèvre du bas, rose ; le menton fin éclairé ; l'ombre sous la mâchoire
-    hd += [(sm([(92.4, 46.6), (96.6, 47.4), (100.4, 46.4), (100.6, 47.2), (97.4, 48.6), (93.4, 48.0)]), LIP, 0.95),
-           (ribbon([(95.0, 47.6), (97.4, 47.9), (99.4, 47.2)], [0.1, 0.5, 0.1]), '#ffb0b8', 0.8),
-           (sm([(96.4, 49.6), (100.2, 48.8), (99.6, 51.0), (96.8, 52.2)]), SKIN.hi, 0.4),
-           (ribbon([(86.0, 52.4), (91.0, 53.4), (96.4, 52.4)], [0.2, 1.0, 0.2]), SKIN.shadow, 0.5)]
-    # le bandeau d'or (le cercle des singes) : il fait le tour du crâne, peint dedans ; un jade au milieu du front
-    lo = [(54.6, 32.8), (62, 32.0), (70, 31.2), (78, 30.2), (86, 28.6), (93, 26.8), (98.8, 25.6)]
-    up_ = [(99.0, 22.8), (93, 24.0), (86, 25.6), (78, 27.2), (70, 28.2), (62, 29.0), (54.8, 29.8)]
+            hd += [('<path d="%s" fill="FILL" clip-path="url(#%s)"/>' % (ellipse(ix, iy, ir * (1 if i == 0 else 0.86), ir).d(), cid),
+                    ('rad', ix + 0.3, iy - 0.4, ir * 1.2, ir * 1.2, [(0, IRIS[0]), (0.35, IRIS[1]), (0.8, IRIS[2]), (1, IRIS[3])]), 1),
+                   ('<path d="%s" fill="FILL" clip-path="url(#%s)"/>' % (ellipse(ix + 0.05, iy + 0.05, 0.36 * ir, 0.6 * ir).d(), cid), '#2a0c1c', 1),
+                   (ellipse(ix + 0.32 * ir, iy - 0.3 * ir, 0.22 * ir, 0.2 * ir), '#ffffff', 1)]
+            # l'ombre de la paupière (l'arcade) sur le haut de l'œil
+            hd += [('<path d="%s" fill="FILL" clip-path="url(#%s)"/>' % (
+                sm([(cx - 0.7 * w, cy - 0.5 * w), (cx + 0.7 * w, cy - 0.5 * w), (cx + 0.7 * w, cy - 0.12 * w + s * 0.1 * w),
+                    (cx, cy - 0.06 * w), (cx - 0.7 * w, cy - 0.12 * w - s * 0.1 * w)]).d(), cid), '#8a4a5a', 0.45)]
+        for cx, cy, w, s in eyes:
+            hd += [(lid_shape(cx, cy, w, s), '#2e1022', 1),
+                   (ribbon([(cx - s * 0.3 * w, cy + 0.24 * w), (cx + s * 0.05 * w, cy + 0.28 * w), (cx + s * 0.42 * w, cy + 0.16 * w)], [0.1, 0.32, 0.1]), SKIN.shadow, 0.8)]
+    # le museau de singe : un volume rond qui avance, éclairé en haut à droite ; le pli du côté proche
+    hd += [(sm([(84.4, 43.8), (87.0, 41.4), (91.4, 40.6), (96.0, 41.0), (99.2, 42.6), (100.0, 45.6), (98.8, 49.0),
+                (95.4, 51.8), (90.6, 52.8), (86.6, 51.6), (84.6, 48.6)]), ('lin', 98, 41, 85, 52, [(0, '#fff0de'), (0.55, '#ffd8b8'), (1, '#f0a48e', 0)]), 0.8),
+           (sm([(89.0, 41.4), (93.0, 40.8), (97.2, 41.6), (99.2, 43.2), (96.8, 43.2), (93.0, 42.4)]), SKIN.hi, 0.55),
+           (ribbon([(86.0, 42.4), (84.4, 45.0), (84.4, 48.2), (86.4, 50.8)], [0.2, 0.9, 0.9, 0.2]), SKIN.shadow, 0.6)]
+    # le nez plat de singe : la racine entre les yeux (une arête claire sur la médiane), deux narines obliques
+    # de part et d'autre de la médiane
+    hd += [(ribbon([(med(38.8) + 0.4, 38.8), (med(40.6) + 0.5, 40.8), (nz_x + 0.4, nz_y - 1.4)], [0.2, 0.7, 0.3]), SKIN.hi, 0.6),
+           (sm([(nz_x - 2.0, nz_y), (nz_x - 0.6, nz_y - 1.3), (nz_x + 1.2, nz_y - 1.3), (nz_x + 2.3, nz_y - 0.3),
+                (nz_x + 1.6, nz_y + 0.9), (nz_x + 0.1, nz_y + 1.0), (nz_x - 1.4, nz_y + 0.8)]), '#d8857c', 0.4),
+           (sm([(nz_x - 1.6, nz_y + 0.35), (nz_x - 0.9, nz_y - 0.5), (nz_x - 0.35, nz_y - 0.3), (nz_x - 0.8, nz_y + 0.4)], sharp=(0,)), '#6e2438', 1),
+           (sm([(nz_x + 1.55, nz_y + 0.25), (nz_x + 1.0, nz_y - 0.5), (nz_x + 0.5, nz_y - 0.3), (nz_x + 0.9, nz_y + 0.35)], sharp=(0,)), '#6e2438', 0.95),
+           (ribbon([(nz_x + 0.2, nz_y + 1.0), (b_x + 0.1, b_y - 1.0)], [0.4, 0.2]), SKIN.shadow, 0.45)]
+    # la bouche FERMÉE, en rictus assuré (le coin du fond remonte), un croc qui pointe sur la lèvre ; la lèvre du bas
+    x0m, x1m = b_x - b_w / 2, b_x + b_w / 2
+    hd += [(ribbon([(x0m, b_y + 0.35), (b_x - 0.25 * b_w, b_y + 0.2), (b_x, b_y + 0.15), (b_x + 0.3 * b_w, b_y - 0.15), (x1m, b_y - 0.95)],
+                   [0.2, 0.7, 0.75, 0.7, 0.2]), '#4a1028', 1),
+           (sm([(b_x + 0.12 * b_w, b_y + 0.15), (b_x + 0.26 * b_w, b_y + 0.02), (b_x + 0.2 * b_w, b_y + 1.5)], sharp=(0, 1, 2)), '#fff6e8', 1),
+           (sm([(b_x - 0.3 * b_w, b_y + 0.7), (b_x, b_y + 0.85), (b_x + 0.28 * b_w, b_y + 0.55), (b_x + 0.2 * b_w, b_y + 1.6),
+                (b_x - 0.05 * b_w, b_y + 1.85), (b_x - 0.26 * b_w, b_y + 1.4)]), LIP, 0.5),
+           (ribbon([(b_x - 0.15 * b_w, b_y + 1.25), (b_x + 0.05 * b_w, b_y + 1.35), (b_x + 0.2 * b_w, b_y + 1.1)], [0.1, 0.35, 0.1]), '#ffc0c0', 0.6),
+           (ribbon([(x0m - 0.2, b_y - 1.0), (x0m - 0.1, b_y - 0.2), (x0m + 0.4, b_y + 0.4)], [0.1, 0.35, 0.1]), SKIN.shadow, 0.6)]
+    # le menton, sous la bouche (sur la médiane) ; l'ombre sous la mâchoire
+    cx_, cy_ = V['menton']
+    hd += [(sm([(cx_ + 0.4, cy_ - 2.9), (cx_ + 3.4, cy_ - 3.4), (cx_ + 4.0, cy_ - 2.2), (cx_ + 1.6, cy_ - 1.5)]), SKIN.hi, 0.3),
+           (ribbon([(83.4, 52.8), (88.4, 54.2), (94.4, 53.2)], [0.2, 1.0, 0.2]), SKIN.shadow, 0.5)]
+    # le bandeau d'or (le cercle des singes) : il fait le tour du crâne ; un jade au milieu du front (sur la médiane)
+    lo = [(57.4, 32.4), (64, 31.6), (71, 30.8), (78, 29.8), (85, 28.4), (92, 26.8), (98.4, 25.6)]
+    up_ = [(98.0, 22.8), (92, 24.0), (85, 25.6), (78, 27.0), (71, 28.0), (64, 28.8), (57.6, 29.6)]
     band = sm(lo + up_)
+    jx = med(27.0)
     hd += [(sm([(x - 0.4, y + 1.0) for x, y in lo] + [(x - 0.4, y + 1.0) for x, y in up_]), FUR.deep, 0.45),
            (band, ('lin', 60, 32, 96, 24, [(0, GOLD.shadow), (0.4, GOLD.base), (1, GOLD.light)]), 1),
-           (ribbon([(55, 30.6), (62, 29.8), (70, 29.0), (78, 28.0), (86, 26.4), (93, 24.8), (98.8, 23.6)], [0.6, 0.7, 0.8, 0.8, 0.8, 0.7, 0.5]), GOLD.hi, 0.85),
-           (ribbon([(55, 32.2), (62, 31.4), (70, 30.6), (78, 29.6), (86, 28.0), (93, 26.2), (98.8, 25.0)], [0.4, 0.6, 0.7, 0.7, 0.6, 0.6, 0.4]), GOLD.shadow, 0.8),
-           (rpoly([(85.0, 27.4), (86.8, 25.2), (88.8, 27.0), (87.0, 29.2)], 0.7), GOLD.deep, 0.9),
-           (rpoly([(85.5, 27.3), (86.8, 25.8), (88.3, 27.0), (87.0, 28.6)], 0.6), JADE.base, 1),
-           (ellipse(87.3, 26.4, 0.45, 0.4), JADE.glint, 1)]
+           (ribbon([(58, 30.4), (64, 29.6), (71, 28.8), (78, 27.8), (85, 26.4), (92, 24.8), (98.4, 23.6)], [0.6, 0.7, 0.8, 0.8, 0.8, 0.7, 0.5]), GOLD.hi, 0.85),
+           (ribbon([(58, 31.8), (64, 31.0), (71, 30.2), (78, 29.2), (85, 27.8), (92, 26.2), (98.4, 25.0)], [0.4, 0.6, 0.7, 0.7, 0.6, 0.6, 0.4]), GOLD.shadow, 0.8),
+           (rpoly([(jx - 1.8, 27.6), (jx, 25.4), (jx + 1.8, 27.2), (jx, 29.4)], 0.7), GOLD.deep, 0.9),
+           (rpoly([(jx - 1.3, 27.5), (jx, 26.0), (jx + 1.3, 27.2), (jx, 28.8)], 0.6), JADE.base, 1),
+           (ellipse(jx + 0.3, 26.6, 0.45, 0.4), JADE.glint, 1)]
     # l'anneau d'or de l'oreille (il pend sous le lobe)
-    hd += [(ellipse(66.6, 44.2, 1.65, 1.8).hole(ellipse(66.6, 44.3, 0.95, 1.1)), '#3a1426', 0.9),
-           (ellipse(66.6, 44.0, 1.4, 1.55).hole(ellipse(66.6, 44.2, 0.85, 0.95)), ('lin', 68, 42.5, 65, 45.5, [(0, GOLD.hi), (0.5, GOLD.light), (1, GOLD.shadow)]), 1)]
-    fig.part('head', head, FUR, grad=(100, 22, 58, 48, [(0, FUR.light), (0.45, FUR.base), (1, FUR.shadow)]),
+    hd += [(ellipse(67.4, 45.4, 1.65, 1.8).hole(ellipse(67.4, 45.5, 0.95, 1.1)), '#3a1426', 0.9),
+           (ellipse(67.4, 45.2, 1.4, 1.55).hole(ellipse(67.4, 45.4, 0.85, 0.95)), ('lin', 68.8, 43.7, 65.8, 46.7, [(0, GOLD.hi), (0.5, GOLD.light), (1, GOLD.shadow)]), 1)]
+    fig.part('head', head, FUR, grad=(98, 22, 58, 48, [(0, FUR.light), (0.45, FUR.base), (1, FUR.shadow)]),
              cel=1.4, rim=0.7, cast=1.3, details=hd)
+    fig.ctx_face = dict(V=V, eyes=eyes, nez=(nz_x, nz_y), bouche=(b_x, b_y, b_w))
     # la longue mèche nouée d'un anneau d'or, qui tombe dans la nuque (pesanteur)
-    lc = crpath([(59.0, 32.6), (56.4, 37.0), (55.0, 42.6), (55.0, 47.4), (56.4, 52.0)], 16)
+    lc = crpath([(61.0, 32.0), (58.2, 37.0), (56.8, 42.6), (56.8, 47.4), (58.0, 52.0)], 16)
     lock = taper(lc, 4.0, 1.2, tip='sharp', wmid=3.6)
     fig.part('lock', lock, FUR, cel=1.0, rim=0.6, cast=1.0, cast_on=['head', 'collar', 'dome', 'lame1', 'lame2'],
-             details=[(ribbon([(57.6, 38.4), (56.4, 43.4), (56.6, 48.6)], [0.1, 0.7, 0.1]), FUR.hi, 0.45)])
-    ring = sm([(54.6, 35.8), (58.2, 36.2), (58.0, 38.8), (54.4, 38.4)])
-    fig.part('ring', ring, GOLD, cel=0.6, rim=0.5, cast=0.7, details=[(ribbon([(54.4, 36.6), (56.4, 37.0), (58.2, 37.2)], [0.2, 0.6, 0.2]), GOLD.hi, 0.9)])
-    # l'oreille ronde de singe, sur le côté (la racine se fond dans la tête)
-    ear = sm([(69.4, 34.6), (66.6, 32.4), (63.2, 33.0), (61.4, 36.4), (62.0, 40.4), (64.6, 42.8), (67.8, 42.2), (69.6, 39.6)])
-    fig.part('ear', ear, SKIN, grad=(69, 33, 62, 42, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]), cel=0.9, rim=0.6, cast=1.0,
-             details=[(sm([(66.6, 34.6), (64.4, 35.0), (63.4, 37.4), (64.4, 40.4), (66.4, 40.8), (66.0, 38.4), (67.4, 36.6)]), '#a84c5e', 0.85),
-                      (ribbon([(65.6, 35.6), (64.6, 37.6), (65.2, 39.6)], [0.1, 0.6, 0.1]), SKIN.light, 0.7)])
+             details=[(ribbon([(59.4, 38.4), (58.2, 43.4), (58.4, 48.6)], [0.1, 0.7, 0.1]), FUR.hi, 0.45)])
+    ring = sm([(56.4, 35.8), (60.0, 36.4), (59.8, 39.0), (56.2, 38.4)])
+    fig.part('ring', ring, GOLD, cel=0.6, rim=0.5, cast=0.7, details=[(ribbon([(56.2, 36.6), (58.2, 37.1), (60.0, 37.4)], [0.2, 0.6, 0.2]), GOLD.hi, 0.9)])
+    # l'oreille ronde de singe, sur le côté (à hauteur des yeux, la racine se fond dans la tête)
+    ear = sm([(71.0, 36.0), (68.4, 33.8), (65.2, 34.2), (63.4, 37.4), (63.8, 41.4), (66.2, 43.8), (69.2, 43.4), (71.2, 40.6)])
+    fig.part('ear', ear, SKIN, grad=(71, 34, 63, 43, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]), cel=0.9, rim=0.6, cast=1.0,
+             details=[(sm([(68.4, 35.8), (66.2, 36.0), (65.2, 38.4), (66.0, 41.4), (68.0, 41.8), (67.8, 39.4), (69.2, 37.6)]), '#a84c5e', 0.85),
+                      (ribbon([(67.4, 36.6), (66.4, 38.6), (67.0, 40.6)], [0.1, 0.6, 0.1]), SKIN.light, 0.7)])
 
 
 def staff_part(fig, A, B, u):

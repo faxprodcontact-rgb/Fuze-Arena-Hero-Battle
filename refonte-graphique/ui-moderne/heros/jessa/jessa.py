@@ -513,13 +513,15 @@ def head(fig, P):
                   (ellipse(76.7, 50.4, 0.38, 0.28), '#ffffff', 0.45),
                   (ellipse(75.6, 50.85, 0.4, 0.22, 15), SKIN.deep, 0.75)])
     # ---- l'oreille (devant les cheveux, sa racine fondue dans la peau) et son anneau d'or ----
+    # l'anneau d'or : un fil courbe qui part du lobe et y revient (l'ouverture est cachée dans le lobe)
+    ring = limb([(62.5 + 1.1 * math.cos(math.radians(a_)), 54.55 + 1.3 * math.sin(math.radians(a_))) for a_ in range(-70, 251, 20)],
+                [0.5] * 17)
+    part('earring', ring, GOLD, cel=0.3, rim=0.35, cast=0.5, cast_on=['face', 'hair', 'neck', 'torso'],
+         details=[(ellipse(63.3, 54.0, 0.28, 0.2, -30), GOLD.glint, 0.95)])
     ear = sm([(64.4, 46.8), (62.4, 46.2), (60.8, 47.2), (60.3, 49.4), (60.8, 51.8), (62.2, 53.4), (63.8, 53.4), (64.8, 50.6)], t=0.95)
     part('ear', ear, SKIN, grad=(64.5, 46, 60.3, 53.5, [(0, SKIN.base), (1, SKIN.shadow)]), cel=0.55, rim=0.4, cast=0.7, cast_on=['hair'],
          details=[(sm([(63.4, 47.8), (62.0, 47.8), (61.6, 49.8), (62.3, 52.0), (63.2, 51.2)], t=0.9), SKIN.shadow, 0.75),
                   (ribbon([(61.8, 46.9), (61.0, 49.2), (61.6, 52.2)], [0.1, 0.4, 0.1]), SKIN.hi, 0.5)])
-    ring = Shape(ellipse(62.4, 55.2, 1.3, 1.5).subs + ellipse(62.45, 55.35, 0.88, 1.02).subs, evenodd=True)
-    part('earring', ring, GOLD, cel=0.3, rim=0.35, cast=0.5, cast_on=['face', 'hair', 'ear', 'neck', 'torso'],
-         details=[(ellipse(63.1, 54.1, 0.3, 0.22, -30), GOLD.glint, 0.95)])
     return names
 
 

@@ -1,3 +1,4 @@
 fait
-Ilian, le roi des mers : vieux roi massif en colère, couronne d'or à pointes et pierres de mer, crinière et grande barbe blanches, trident d'or planté, grande épaulière en coquille, ceinture à boucle sertie, jupe bleue à pans, cape bleu nuit, jambières d'or, sandales.
-Animé comme son pixel art : il respire (barbe, crinière et cape suivent), lève le trident et l'abat (gerbe d'eau), puis la spéciale : tourbillon d'eau, la mer se lève en vague qui s'enroule et s'écrase sur l'ennemi.
+Corrigé d'après l'avis du 26/11 : bouche fermée (lèvres serrées sous la moustache ; elle s'entrouvre juste un peu quand il crie pendant les attaques) ; nez refait, plus petit, posé au milieu entre les deux yeux (il ne dépasse plus du bord de la joue), moustache recentrée dessous.
+Visage reconstruit avec visage.py : les deux yeux sur la même ligne, même dessin, l'œil du fond un peu plus étroit, nez et bouche sur la ligne médiane (contrôle : visage.png, aucun défaut).
+Jambes resserrées (pieds compris) : le haut des cuisses reste caché sous la jupe, plus rien ne dépasse sur les côtés, et le poing gauche ne passe plus derrière la cuisse. Avant / après : avant-apres.png.
