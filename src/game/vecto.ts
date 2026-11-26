@@ -16,6 +16,7 @@ const VECTO_ON = (() => {
 /** Par héros : [largeur, hauteur de l'image, x et y des pieds dans l'image], en pixels du dessin pixel art (même
  * échelle : il se pose au même endroit). Mesures écrites par refonte-graphique/ui-moderne/heros/kael/kael.py. */
 const VECTO: Record<string, readonly [number, number, number, number]> = {
+  'demons-3': [133, 122, 68, 120],
   'myths-3': [130, 124, 63, 121],
   'angels-1': [118, 113, 58, 110],
   'assassins-2': [133, 122, 67, 120],

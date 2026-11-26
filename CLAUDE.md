@@ -71,6 +71,9 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   `refonte-graphique/ui-moderne/heros/<nom>/` (outil commun `atelier.py`, modèle `kael/`), sorties `pixel/sortie/ui/vecto/<nom>/`
   (`STATUT.txt`), images `public/art/vecto/<id>.webp`, table `VECTO` de `src/game/vecto.ts` (menus, `?vecto=1`).
   Page de suivi : `python3 refonte-graphique/ui-moderne/heros/suivi.py` → https://claude.ai/artifact/L59gwsBUz9SPcEG272Jh4c.
+  Avis du propriétaire (notes, cercles au doigt, OK / à reprendre) : `python3 refonte-graphique/ui-moderne/heros/avis.py`
+  → https://claude.ai/artifact/D5UVkXKfKg8AmFzy5Ezart (republier avec root = dépôt et `avis/fichiers.json` ; ses notes se lisent
+  avec ArtifactData, collection `avis`, un document par héros : text, status ok/redo, strokes en 0-1000).
 - Plus tard : profil du joueur, événements, sons et musique, Siège. Ensuite : serveur (Supabase) → habillage → social
   réel → argent réel → bêta → lancement.
 

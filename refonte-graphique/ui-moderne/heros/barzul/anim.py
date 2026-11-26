@@ -435,6 +435,38 @@ def mound(fig, X, h, L, op=1.0, foamy=1.0):
     return outlined([(sh, gr, 1), (crest, '#ffffff', min(1, foamy), 'n'), (glint, WATER[1], 0.6, 'n')], w=1.4, op=op)
 
 
+# (la colonne d'eau de Kesha, ../kesha/anim.py)
+def column(fig, X, top, wb, wt, sway, t, op=1.0):
+    """La grande gerbe : une colonne d'eau qui monte du sol (plus large en bas), ses bords ondulent ; la lumière à
+    droite ; une couronne d'écume au sommet et deux lèvres qui retombent en volute de chaque côté."""
+    if GR - top < 2 or op <= 0.02:
+        return ''
+    G = GR + 0.4
+    H = G - top
+    n = 8
+    left, right = [], []
+    for i in range(n + 1):
+        k = i / n
+        y = G - H * k
+        w = wb + (wt - wb) * k ** 0.8
+        wob = 0.9 * math.sin(k * 7 + t * 9) * (0.3 + k)
+        x = X + sway * k * k
+        left.append((x - w / 2 + wob, y))
+        right.append((x + w / 2 + wob * 0.6, y))
+    sh = sm(left + right[::-1], sharp=(0, 2 * n + 1), t=0.9)
+    gr = g_lin(fig, (X - wb / 2, 0), (X + wb / 2, 0), [(0, WATER[4]), (0.35, WATER[3]), (0.75, WATER[2]), (1, WATER[1])])
+    hi = taper([(r[0] - wt * 0.22, r[1]) for r in right[1:-1]], wb * 0.07, wt * 0.08, tip='round')
+    dk = taper([(l_[0] + wt * 0.16, l_[1]) for l_ in left[1:-2]], wb * 0.08, wt * 0.05, tip='round')
+    items = [(sh, gr, 1), (hi, '#ffffff', 0.7, 'n'), (dk, WATER[5], 0.35, 'n')]
+    # la couronne d'écume déborde un peu de chaque côté
+    cx = X + sway
+    out = outlined(items, w=1.5, op=op)
+    for j, (dx, dy, rr) in enumerate(((-0.62, 2.6, 0.22), (0.66, 2.2, 0.22), (-0.42, -0.6, 0.3), (0.4, -0.8, 0.32),
+                                      (-0.16, -2.6, 0.38), (0.18, -3.4, 0.4), (0.0, -5.6, 0.34))):
+        out += foam(fig, cx + dx * wt, top + dy * (wt / 14.0), rr * wt * (1 + 0.07 * math.sin(t * 11 + j * 1.7)), op=op, seed=j)
+    return out
+
+
 def ballistic(p, v, g, t):
     return (p[0] + v[0] * t, p[1] + v[1] * t + 0.5 * g * t * t)
 
@@ -667,6 +699,12 @@ def fx_special(tl):
             ks = (te - BOOM_AT[j] - 20 - FLIGHT) / (640.0 if j < 2 else 820.0)
             if 0 < ks < 1:
                 b, fr = splash_crown(fig, IMPACT_X[j], ks, IMPACT_BIG[j], seed=j)
+                # le corps de la gerbe : une colonne d'eau qui jaillit et s'effondre (plus haute au troisième coup)
+                up = env(ks, 0, 0.14, 0.4, 0.75)
+                if up > 0:
+                    hgt = (26 if j < 2 else 44) * up
+                    wb = (12 if j < 2 else 20) * (0.7 + 0.3 * up)
+                    back.append(column(fig, IMPACT_X[j], GR - hgt, wb, wb * 0.6, 1.5 * math.sin(ks * 7 + j), ks, op=min(1, up * 1.8)))
                 back += b
                 front += fr
                 # le bouillon d'écume et un peu de fumée grise à l'impact

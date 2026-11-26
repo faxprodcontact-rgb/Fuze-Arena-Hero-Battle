@@ -431,11 +431,21 @@ def zigzag(line, n, depth, out, seed=0, flow=(0.0, 1.0), k_flow=0.6, jit=0.5):
 
 def shade_cut(line, n, depth, out, close, seed=0, flow=(0.0, 1.0), k_flow=0.6, jit=0.5):
     """Une zone (ombre ou lumière) dont un bord est découpé en mèches : `line` = la limite, `close` = les points qui
-    referment la zone de l'autre côté (loin, la zone est découpée dans le morceau)."""
+    referment la zone de l'autre côté (loin, la zone est découpée dans le morceau). Les mèches claires entrent dans la
+    zone en pointes (côté `out`), leurs flancs un peu bombés ; les creux entre elles sont vifs aussi."""
     pts, sharp = zigzag(line, n, depth, out, seed, flow, k_flow, jit)
-    k0 = len(pts)
-    pts = pts + list(close)
-    sharp = sharp + [0, k0 - 1] + list(range(k0, len(pts)))
+    # chaque flanc de mèche un peu bombé : un point au milieu, poussé vers l'extérieur de la mèche
+    curved = [pts[0]]
+    for i in range(1, len(pts)):
+        a, b = pts[i - 1], pts[i]
+        m = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy) or 1
+        k = 0.12 * L * (1 if i % 2 == 1 else -1)
+        curved += [(m[0] - dy / L * k, m[1] + dx / L * k), b]
+    k0 = len(curved)
+    pts = curved + list(close)
+    sharp = list(range(0, k0, 2)) + list(range(k0, len(pts)))
     return sm(pts, sharp=tuple(sharp), t=0.85)
 
 

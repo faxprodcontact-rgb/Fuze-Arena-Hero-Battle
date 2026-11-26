@@ -30,7 +30,7 @@ ID_JEU = 'demons-9'
 
 # ---------- matières (tons du pixel art, passés à la gamme de l'interface : lumières chaudes, ombres violettes) ----------
 FUR = Mat('#ffffff', '#fffcf2', '#e4e9f6', '#a3add9', '#666dab')
-FUR_GRAD = [(0, '#fffdf5'), (0.45, '#f4f6fc'), (1, '#d3daf0')]
+FUR_GRAD = [(0, '#fffdf5'), (0.5, '#f5f7fc'), (1, '#d9dff2')]
 FMID, FSH, FDEEP = '#c6cfec', '#8d99cf', '#6a70ae'           # demi-teinte, ombre, creux de la fourrure
 SKIN = Mat('#b6e6f6', '#6eaee6', '#4479c8', '#2c4996', '#1b2358')
 ICE = Mat('#f2fffd', '#9ceaf7', '#40b8e6', '#1f70b4', '#183270', glint='#ffffff')
@@ -69,7 +69,7 @@ LF1, LF2 = 16.5, 15.0
 AXE0 = math.degrees(math.atan2(2.0 - 45.0, 22.5 - 29.5))   # le manche monte vers la lame (un peu penché en arrière)
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, shift=0.0, lift=0.0, feet_up=0.0, head=(0.0, 0.0), tilt=0.0,
             jaw=0.0, blink=0.0, ph=0.0, sway=0.0, crest=0.0, nG=G0, axe=0.0, fW=W_F0, fang=90.0, claw=0.0,
-            spread=1.0, ffront=0.0, pg=0.0)
+            spread=1.0, ffront=0.0, pg=0.0, freach=1.0)
 
 
 def M_apply(M, pts):
@@ -181,14 +181,13 @@ def mantle(P):
     T += edge_tufts([(49, 61.2), (43, 60), (37, 58), (32.4, 53.4)], 4, 4.4, 5.0, -1, seed=5, flow=(-0.1, 1.0),
                     k_flow=0.7, sway=sw, ph=ph + 1.3)
     det = []
-    # la masse : demi-teinte en bas à gauche (sous la bosse, le flanc), limite découpée en mèches
-    det.append((shade_cut([(30, 41), (38, 40), (46, 43), (54, 48), (62, 52), (72, 54.5), (86, 55), (96, 53),
-                           (104, 55.5), (112, 54)], 9, 3.4, -1, [(114, 70), (28, 70)], seed=11, flow=(0, 1)), FMID, 1))
-    det.append((shade_cut([(30, 48), (38, 51), (46, 54.5), (56, 57), (70, 58.4), (88, 58), (98, 57.6), (106, 60.4),
-                           (112, 60)], 9, 2.6, -1, [(114, 70), (28, 70)], seed=12, flow=(0, 1)), FSH, 0.9))
-    # la bosse du dos dans la lumière ; quelques mèches peintes, dans le sens des poils
-    det += [(strand((47, 30), (44, 34), (41, 39), 1.0), FMID, 0.9), (strand((56, 27), (53, 32), (51, 37), 1.1), FMID, 0.8),
-            (strand((103, 49), (104.6, 53), (105, 57), 0.9), FMID, 0.9), (strand((99, 46), (100, 50), (100, 54), 0.8), FMID, 0.7)]
+    # la masse : la bosse et le haut des épaules dans la lumière ; dessous (le flanc, le col), la demi-teinte puis
+    # l'ombre, leur limite découpée en mèches claires qui retombent (dans le sens des poils)
+    det.append((shade_cut([(28, 46), (36, 47.6), (44, 50.4), (52, 53.4), (62, 55.2), (74, 56.0), (86, 55.6), (96, 53.4),
+                           (104, 54.6), (113, 53)], 9, 3.2, (0, 1), [(114, 72), (27, 72)], seed=11, flow=(0, 1)), FMID, 1))
+    det.append((shade_cut([(28, 52), (38, 54.4), (48, 57.6), (58, 58.6), (72, 59.2), (88, 59), (98, 58.6), (106, 60.6),
+                           (113, 60)], 8, 2.4, (0, 1), [(114, 72), (27, 72)], seed=12, flow=(0, 1)), FSH, 0.9))
+    det += [(strand((104.6, 47.6), (106, 51.6), (106.4, 55.4), 1.2), FMID, 0.6)]
     return base, T, det
 
 
@@ -220,9 +219,9 @@ def legs(fig, P, LEG, FOOT, gfur):
                    k_flow=0.7, curl=0.6, sway=sw * 0.5, ph=ph)
     T += edge_tufts([(93.6, 86), (95.2, 94), (96.4, 102)], 2, 2.8, 4.0, -1, seed=22, flow=(0, 1), k_flow=0.6)
     fsh = furry(fbase, T)
-    fdet = [(shade_cut([(78, 80), (79, 88), (80, 96), (82, 103), (86, 107)], 4, 2.6, -1, [(60, 112), (60, 78)],
+    fdet = [(shade_cut([(78, 80), (79, 88), (80, 96), (82, 103), (86, 107)], 4, 2.6, (-1, 0), [(60, 112), (60, 78)],
                        seed=23, flow=(0.3, 1), k_flow=0.4), FMID, 1),
-            (shade_cut([(74, 98), (80, 102), (88, 104.6), (98, 104)], 5, 2.4, 1, [(100, 114), (70, 114)], seed=24,
+            (shade_cut([(74, 98), (80, 102), (88, 104.6), (98, 104)], 5, 2.4, (0, 1), [(100, 114), (70, 114)], seed=24,
                        flow=(0, 1)), FMID, 0.9),
             (strand((89, 86), (90.5, 92), (91, 98), 0.9), FMID, 0.8)]
     fig.part('fleg', fsh, FUR, grad=gfur(fbase), cel=1.8, rim=0.8, cast=1.2, details=fdet,
@@ -234,11 +233,11 @@ def legs(fig, P, LEG, FOOT, gfur):
                    flow=(0.15, 1), k_flow=0.7, curl=0.6, sway=sw * 0.5, ph=ph + 1)
     T += edge_tufts([(33.2, 98), (34.4, 89), (37.4, 81)], 3, 3.0, 4.2, -1, seed=32, flow=(-0.2, 1), k_flow=0.55)
     nsh = furry(nbase, T)
-    ndet = [(shade_cut([(42, 76), (40, 84), (40, 92), (42, 100), (46, 106)], 4, 2.8, 1, [(20, 112), (20, 70)],
+    ndet = [(shade_cut([(42, 76), (40, 84), (40, 92), (42, 100), (46, 106)], 4, 2.8, (-1, 0), [(20, 112), (20, 70)],
                        seed=33, flow=(0.3, 1), k_flow=0.4), FMID, 1),
-            (shade_cut([(30, 96), (34, 101), (42, 103.6), (52, 104), (60, 102)], 5, 2.4, 1, [(62, 114), (28, 114)],
+            (shade_cut([(30, 96), (34, 101), (42, 103.6), (52, 104), (60, 102)], 5, 2.4, (0, 1), [(62, 114), (28, 114)],
                        seed=34, flow=(0, 1)), FSH, 0.75),
-            (shade_cut([(37.6, 78), (35.6, 86), (35.2, 94), (36.6, 101)], 3, 2.2, 1, [(20, 104), (20, 76)], seed=35,
+            (shade_cut([(37.6, 78), (35.6, 86), (35.2, 94), (36.6, 101)], 3, 2.2, (-1, 0), [(20, 104), (20, 76)], seed=35,
                        flow=(0.3, 1), k_flow=0.4), FSH, 0.7),
             (strand((50, 80), (51.5, 87), (52, 94), 1.0), FMID, 0.8), (strand((45, 86), (46, 92), (46.5, 98), 0.8), FMID, 0.6)]
     fig.part('nleg', nsh, FUR, grad=gfur(nbase), cel=2.0, rim=0.8, cast=1.2, details=ndet,
@@ -384,7 +383,7 @@ def head(fig, P, HEAD):
                                            (79.8, 16.8, 2.8, 3.2, 0.4), (82.0, 16.9, 3.4, 3.2, 0.6), (91.6, 18.6, 3.6, 3.6, 0.7),
                                            (95.4, 21.4, 3.0, 3.4, 0.5))):
         T.append(((x, y + 1.0), (-0.75 + 0.15 * math.sin(ph + i) * cr, -1.0), L, w, cu))
-    T += edge_tufts([(66, 18.6), (60, 24), (57.6, 33), (58.2, 44), (61, 51.6)], 4, 3.8, 4.4, -1, seed=42,
+    T += edge_tufts([(66, 18.6), (60, 24), (57.6, 33), (58.2, 44), (61, 51.6)], 3, 3.4, 4.2, -1, seed=42,
                     flow=(-0.2, 1), k_flow=0.55, curl=0.6)
     T += edge_tufts([(100.6, 29), (102.4, 36), (103, 43), (102.6, 49)], 3, 2.6, 3.8, -1, seed=43, flow=(0.3, 1),
                     k_flow=0.55, curl=-0.4)
@@ -397,11 +396,11 @@ def head(fig, P, HEAD):
                     flow=(0.4, 1), k_flow=0.45, curl=0.7, inset=1.0)
     sh = furry(base, T)
     det = []
-    det.append((shade_cut([(64, 16), (64, 24), (65.6, 32), (66.6, 40), (68.4, 48), (70.6, 56)], 5, 2.8, 1,
-                          [(50, 60), (50, 12)], seed=48, flow=(0.2, 1), k_flow=0.4), FMID, 1))
-    det.append((shade_cut([(58, 40), (62, 47), (66, 52), (72, 56)], 3, 2.0, 1, [(72, 62), (50, 62)], seed=49,
+    det.append((shade_cut([(60.6, 22), (61.4, 30), (62.6, 38), (64.6, 46), (68.4, 53)], 4, 2.4, (-1, 0),
+                          [(50, 60), (50, 18)], seed=48, flow=(0.2, 1), k_flow=0.4), FMID, 0.85))
+    det.append((shade_cut([(58, 40), (62, 47), (66, 52), (72, 56)], 3, 2.0, (0, 1), [(72, 62), (50, 62)], seed=49,
                           flow=(0, 1)), FSH, 0.8))
-    det.append((shade_cut([(96, 41), (98.4, 46), (101, 50), (104, 52)], 2, 1.6, 1, [(106, 60), (92, 60)], seed=50,
+    det.append((shade_cut([(96, 41), (98.4, 46), (101, 50), (104, 52)], 2, 1.6, (0, 1), [(106, 60), (92, 60)], seed=50,
                           flow=(0, 1)), FMID, 0.9))
     det += [(strand((79, 18.4), (75.4, 20.6), (72.4, 23.8), 1.4), FMID, 0.55), (strand((63.4, 27), (62.4, 31), (62.6, 35.6), 1.3), FMID, 0.6)]
     fig.part('mane', sh, FUR, grad=(100, 16, 62, 52, FUR_GRAD), cel=1.6, rim=0.8, cast=1.3, details=det,
@@ -480,7 +479,7 @@ def far_arm(fig, P, UC):
     fer, le poing (ou la griffe ouverte). Renvoie une fonction qui dessine (l'ordre dépend de ffront)."""
     S = mapp(UC, S_F0)
     Wt = P['fW']
-    E, W = ik(S, Wt, LF1, LF2, -1)
+    E, W = ik(S, Wt, LF1 * P['freach'], LF2 * P['freach'], -1)
     fig.ctx_arm = dict(fS=S, fE=E, fW=W)
 
     def draw():
@@ -610,10 +609,10 @@ def near_arm(fig, P, UC, gfur):
     adet = []
     midS = lerp(S, lowS, 0.15)
     adet.append((shade_cut([lerp(midS, E, -0.1), lerp(midS, E, 0.4), lerp(midS, E, 0.85), lerp(E, lowE, 0.6)], 5, 2.8,
-                           (-nu[0], -nu[1]),
+                           nu,
                            [(lowE[0] + nu[0] * 12, lowE[1] + nu[1] * 12), (lowS[0] + nu[0] * 12, lowS[1] + nu[1] * 12)],
                            seed=73, flow=(uu[0] * 0.5, 1)), FMID, 1))
-    adet.append((shade_cut([lerp(lowS, lowE, 0.0), lerp(lowS, lowE, 0.5), lowE], 4, 2.0, (-nu[0], -nu[1]),
+    adet.append((shade_cut([lerp(lowS, lowE, 0.0), lerp(lowS, lowE, 0.5), lowE], 4, 2.0, nu,
                            [(lowE[0] + nu[0] * 12, lowE[1] + nu[1] * 12), (lowS[0] + nu[0] * 12, lowS[1] + nu[1] * 12)],
                            seed=74, flow=(0, 1)), FSH, 0.85))
     inner_f = (-nf[0], -nf[1])
@@ -634,7 +633,10 @@ def near_arm(fig, P, UC, gfur):
              (ribbon([B(a0 + 4, -3.6), B(a0 + 6.5, -3.8), B(a1 - 1, -3.6)], [0.2, 0.8, 0.2]), IRON.light, 0.7),
              (ellipse(*B(a0 + 5.2, -1.2), 0.85, 0.85), IRON.light, 1), (ellipse(*B(a0 + 5.4, -1.5), 0.35, 0.35), IRON.glint, 1)]
     det += clipped(fig, arm, adet)
-    fig.part('mantle', sh, FUR, grad=gfur(mb), cel=2.0, rim=0.8, cast=1.4, details=det,
+    # la lumière vient d'en haut à droite : le dessus de la bosse et des épaules est clair, le dessous plus sombre
+    c0, c1 = mapp(UC, (76, 20)), mapp(UC, (58, 66))
+    fig.part('mantle', sh, FUR, grad=(c0[0], c0[1], c1[0], c1[1], [(0, '#fffdf5'), (0.5, '#f3f5fb'), (1, '#d2d9ef')]),
+             cel=2.0, rim=0.8, cast=1.4, details=det,
              cast_on=['torso', 'farm', 'fsleeve', 'belt', 'buckle', 'cloth', 'nleg', 'fleg'])
 
 
