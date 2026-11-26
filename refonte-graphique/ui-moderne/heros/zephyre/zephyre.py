@@ -405,15 +405,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         p0, p1 = lerp(K, A, 0.3), lerp(K, A, 0.8)
         half = ws[2] / 2 + 0.6
         u = ((A[0] - K[0]) / math.dist(K, A), (A[1] - K[1]) / math.dist(K, A))
-        side = (abs(u[1]), -u[0] if u[1] > 0 else u[0])
-        side = (1.0, 0.0) if True else side
-        g_ = sm([(p0[0] - 0.8, p0[1] - 0.2), (p0[0] + half + 1.5, p0[1] - 0.4), (p1[0] + half + 1.5, p1[1] + 0.3),
-                 (p1[0] - 0.4, p1[1] + 0.6), (lerp(p0, p1, 0.5)[0] - 1.2, lerp(p0, p1, 0.5)[1])], t=0.8)
-        det += [(g_, ('lin', p0[0] + half, p0[1], p0[0] - 1, p0[1], [(0, STEEL.light), (0.6, STEEL.base), (1, STEEL.shadow)]), 1),
-                (ribbon([(p0[0] + half * 0.55, p0[1] + 0.6), lerp((p0[0] + half * 0.55, p0[1]), (p1[0] + half * 0.55, p1[1]), 0.5),
-                         (p1[0] + half * 0.55, p1[1] - 0.6)], [0.05, 0.7, 0.05]), STEEL.hi, 0.85),
-                (ribbon([(p0[0] - 0.5, p0[1] + 0.4), (lerp(p0, p1, 0.5)[0] - 0.9, lerp(p0, p1, 0.5)[1]), (p1[0] - 0.2, p1[1] - 0.2)],
-                        [0.05, 0.5, 0.05]), STEEL.deep, 0.45)]
+        fr_ = (u[1], -u[0])               # en travers du tibia, vers le devant (l'ennemi) : la jambière suit le tibia
+
+        def Q(p, a, b=0.0):
+            return (p[0] + fr_[0] * a + u[0] * b, p[1] + fr_[1] * a + u[1] * b)
+        pm = lerp(p0, p1, 0.5)
+        g_ = sm([Q(p0, -0.8, -0.2), Q(p0, half + 1.5, -0.4), Q(p1, half + 1.5, 0.3), Q(p1, -0.4, 0.6), Q(pm, -1.2)], t=0.8)
+        a0_, a1_ = Q(p0, half), Q(p0, -1)
+        det += [(g_, ('lin', *a0_, *a1_, [(0, STEEL.light), (0.6, STEEL.base), (1, STEEL.shadow)]), 1),
+                (ribbon([Q(p0, half * 0.55, 0.6), Q(pm, half * 0.55), Q(p1, half * 0.55, -0.6)], [0.05, 0.7, 0.05]), STEEL.hi, 0.85),
+                (ribbon([Q(p0, -0.5, 0.4), Q(pm, -0.9), Q(p1, -0.2, -0.2)], [0.05, 0.5, 0.05]), STEEL.deep, 0.45)]
         if plate:
             det += plate(K)
         # le tabi : l'orteil séparé, la lanière de la sandale en diagonale
@@ -431,7 +432,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                 (42.2, 115.7), (41.2, 114.5), (41.6, 111.8)], t=0.9)
     fsole = sm([(41.0, 115.0), (57.6, 115.0), (59.0, 115.5), (58.8, 116.8), (57.6, GRD), (41.4, GRD), (40.4, 116.4), (40.4, 115.4)], t=0.8)
     fig_fk = leg('fleg', FH, FK0, FA0, FLL, SG_FL, (10.0, 8.0, 6.0), ffoot,
-                 [(55.0, 112.0), (55.5, 113.6), (55.7, 115.3)], [(48.6, 110.4), (52.2, 112.0), (55.0, 112.4)], fsole, None, 0)
+                 [(55.0, 112.0), (55.5, 113.6), (55.7, 115.3)], [(49.6, 111.6), (52.8, 112.7), (55.6, 113.0)], fsole, None, 0)
 
     # ======================================================================== les pans de la ceinture (sur la hanche)
     e_ = P['e']
@@ -539,11 +540,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # la sangle du sabre passe PAR-DESSUS l'épaule (avis du 26/11, tour 2 : elle ne s'arrête plus en l'air au bord du
     # bras) : elle suit la même diagonale que sur le buste, s'arrondit sur le haut de l'épaule et file derrière, vers la
     # garde du sabre
-    sp = [mapp(TOR, STRAP[1])] + MP(UC, [(58.6, 59.9), (56.8, 58.5), (55.0, 57.4)])
-    ndet += [(ribbon([(x - 0.4, y + 0.7) for x, y in sp], [2.3] * 4), CLOTH.deep, 0.45),
-             (ribbon(sp, [2.3] * 4), ('lin', *MP(UC, [(58, 57.6)])[0], *MP(UC, [(60, 63.0)])[0],
-                                      [(0, LEATHER.light), (1, LEATHER.base)]), 1),
-             (ribbon([(x + 0.25, y - 0.6) for x, y in sp], [0.5, 0.5, 0.45, 0.05]), LEATHER.hi, 0.55)]
+    sp = MP(TOR, [STRAP[2], STRAP[1]]) + MP(UC, [(58.4, 60.2), (56.6, 58.7), (55.0, 57.5)])
+    ndet += [(ribbon([(x - 0.4, y + 0.7) for x, y in sp], [2.3] * 5), CLOTH.deep, 0.45),
+             (ribbon(sp, [2.3] * 5), ('lin', *mapp(TOR, (60, 58)), *mapp(TOR, (62, 64)), [(0, LEATHER.light), (1, LEATHER.base)]), 1),
+             (ribbon([(x + 0.25, y - 0.6) for x, y in sp], [0.5, 0.5, 0.5, 0.45, 0.05]), LEATHER.hi, 0.55)]
     fig.part('narm', narm, CLOTH, grad=(S2[0] + 1.0, S2[1] - 2.0, E2[0] - 1.5, E2[1] + 3.0,
                                         [(0, cap_col), (0.5, CLOTH.base), (1, CLOTH.shadow)]),
              cel=1.1, rim=0, cast=1.2, cast_on=['torso', 'bknot', 'grip', 'tsuba'], details=ndet)

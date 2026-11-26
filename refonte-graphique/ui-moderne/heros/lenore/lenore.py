@@ -282,19 +282,26 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     FARM = mchain(UC, mT(P['far'][0], P['far'][1] - 0.8 * P['rf']), mR(P['far_rot'], *FS0))
     CLO = mchain(PEL, mskx(-0.05 * P['pg'], 84))
 
-    # ======================================================================== la crinière (derrière tout)
+    # ======================================================================== la crinière
+    # 2e avis du propriétaire (cercles sur la tête) : la chevelure NAÎT DU CRÂNE, comme celle de Kael. Elle est en deux
+    # couches : (1) les deux mèches basses de la nuque (m3, m4), derrière tout (elles descendent derrière le cou et
+    # passent derrière l'épaule) ; (2) UNE masse fondue, peinte devant la tête : la calotte qui couvre le crâne (racine
+    # juste derrière les cornes, puis derrière l'oreille jusqu'à la nuque) et les mèches hautes qui en partent. Les
+    # couleurs des mèches n'apparaissent qu'après leur racine (fondu) : aucune ligne entre le crâne et les cheveux.
     ph = P['ph']
     ml, mu = P['ml'], P['mu']
-    # (nom, racine, c1, c2, pointe, largeur) ; de la plus basse (la nuque) à la plus haute ; les racines passent
-    # sous la tête. Chaque mèche ondule un peu (la vague court vers la pointe) et traîne en retard (ml, mu).
+    # (nom, racine, c1, c2, pointe, largeur) ; de la plus basse (la nuque) à la plus haute. Chaque mèche ondule un peu
+    # (la vague court vers la pointe) et traîne en retard (ml, mu).
     LOCKS = [
-        ('m4', (66.5, 47.6), (62.6, 47.4), (58.8, 49.2), (55.4, 53.2), 7.2),
-        ('m3', (66.0, 40.6), (59.6, 38.0), (50.6, 40.4), (43.8, 49.8), 12.6),
-        ('m2', (68.6, 30.4), (61.4, 26.8), (51.6, 27.6), (43.6, 32.8), 10.2),
-        ('m1', (70.6, 22.8), (65.4, 19.0), (59.2, 17.4), (52.6, 18.0), 7.6),
+        ('m4', (64.6, 46.0), (60.6, 47.6), (56.6, 51.4), (52.4, 58.4), 7.6),
+        ('m3', (64.0, 39.6), (58.6, 37.6), (50.6, 40.4), (43.8, 49.8), 12.6),
+        ('m2', (66.6, 30.8), (60.4, 26.8), (51.6, 27.6), (43.6, 32.8), 10.2),
+        ('m1', (70.6, 26.0), (65.4, 19.0), (59.2, 17.4), (52.6, 18.0), 7.6),
         ('tA', (78.0, 27.6), (76.4, 24.4), (73.8, 21.2), (70.4, 17.8), 5.8),
-        ('tB', (83.4, 28.0), (83.0, 24.4), (82.2, 21.4), (81.0, 17.6), 5.2),
+        ('tB', (84.2, 27.6), (83.4, 24.4), (82.2, 21.4), (81.0, 17.6), 5.2),
     ]
+    MG = ('lin', 92.0, 14.0, 50.0, 54.0, [(0, '#7a6ea8'), (0.3, MANE.base), (0.75, MANE.shadow), (1, MANE.deep)])
+    strands = []
     for i, (name, p0, p1, p2, p3, w0) in enumerate(LOCKS):
         k = (0.5 + 0.14 * i) if i < 4 else 0.45
         w = ph - 0.8 * i
@@ -302,9 +309,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         p2 = (p2[0] + 0.4 * k * math.sin(2 * w + 1.0), p2[1] + 0.6 * k * math.sin(w) + 0.5 * lag)
         p3 = (p3[0] + 0.8 * k * math.sin(w + 0.8) - 0.3 * lag, p3[1] + 0.9 * k * math.cos(w) + 1.1 * lag)
         sh = lock(p0, p1, p2, p3, w0, n=12, bulge=0.28)
+        strands.append((name, sh, p0, p1, p2, p3, w0))
+    # (1) les mèches de la nuque, derrière tout (leurs racines sont cachées par la tête et la calotte)
+    for name, sh, p0, p1, p2, p3, w0 in strands[:2]:
         x0_, y0_, x1_, y1_ = sh.bbox()
-        fig.part(name, sh, MANE, grad=(x1_, y0_, x0_ + (x1_ - x0_) * 0.35, y1_, [(0, '#6a5e94'), (0.45, MANE.base), (1, MANE.shadow)]),
-                 cel=0, rim=0.75, cast=1.3, cast_on=[q[0] for q in LOCKS[:i]],
+        fig.part(name, sh, MANE, grad=MG[1:], cel=0, rim=0.75, cast=1.3, cast_on=['m4'],
                  details=[(sm_under(sh), ('lin', 0, y0_, 0, y1_, [(0, MANE.shadow), (1, MANE.deep)]), 0.85),
                           (lock(lerp(p0, p1, 0.3), lerp(p1, p2, 0.3), lerp(p2, p3, 0.2), lerp(p2, p3, 0.75), w0 * 0.22, n=8, bulge=0.1)
                            .move(0.3 + 0.03 * w0, -0.12 * w0), MANE.light, 0.55)])
@@ -717,31 +726,71 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (sm([J((84.0, 55.0)), J((91.6, 54.2)), J((91.2, 56.0)), J((85.0, 56.4))]), skin.hi, 0.35),
            (ribbon([J((72.6, 53.4)), J((78.0, 55.6)), J((86.0, 56.2))], [0.1, 0.8, 0.1]), skin.deep, 0.45)]
     fig.part('head', head, skin, grad=(96, 30, 66, 54, [(0, skin.light), (0.5, skin.base), (1, skin.shadow)]),
-             cel=1.3, rim=0.65, cast=1.4, details=hd)
+             cel=1.3, rim=0.65, cast=1.4, details=hd, cast_on=[q.name for q in fig.parts if q.name not in ('m3', 'm4')])
     # les deux défenses d'ivoire qui montent de la mâchoire (la proche devant la lèvre)
     tN = sm([J(p) for p in [(75.8, 54.2), (76.4, 51.0), (77.0, 48.2), (78.6, 45.8), (79.0, 48.4), (78.8, 51.4), (78.6, 54.0)]], sharp=(3,))
     fig.part('tuskN', tN, IVORY, cel=0.6, rim=0.5, cast=0.7, cast_on=['head'],
              details=[(ribbon([J(p) for p in [(78.2, 53.0), (78.4, 49.6), (78.7, 46.8)]], [0.6, 0.5, 0.1]), IVORY.hi, 0.9)])
     tF = sm([J(p) for p in [(90.6, 52.8), (90.6, 50.4), (91.6, 48.2), (92.6, 47.4), (92.6, 49.8), (92.4, 52.6)]], sharp=(3,))
     fig.part('tuskF', tF, IVORY, cel=0.5, rim=0.45, cast=0.6, cast_on=['head'])
-    # la calotte de cheveux sur l'arrière du crâne (de la corne proche à la nuque) : elle rejoint les mèches du dos,
-    # la crinière est ainsi une seule masse qui pousse du crâne ; la limite du front finit en petite pointe
-    capc = sm([(73.4, 26.4), (67.6, 26.2), (63.2, 29.0), (60.8, 34.2), (61.0, 39.6), (62.2, 42.0), (63.0, 38.6),
-               (64.6, 36.6), (66.8, 35.4), (69.4, 33.6), (71.2, 30.0)], sharp=(5,))
-    fig.part('capc', capc, MANE, grad=(72, 26, 62, 40, [(0, '#6a5e94'), (0.5, MANE.base), (1, MANE.shadow)]),
-             cel=0.9, rim=0.7, cast=1.1, cast_on=['head'],
-             details=[(ribbon([(70.4, 27.4), (66.0, 28.0), (62.6, 31.4)], [0.1, 0.9, 0.1]), MANE.light, 0.6)])
+    # (2) la chevelure qui naît du crâne : la calotte (racine en petites pointes juste derrière les cornes, puis derrière
+    # l'oreille jusqu'à la nuque ; elle déborde un peu du crâne : c'est le volume des cheveux) fondue avec les mèches
+    # hautes en UNE silhouette, peinte devant la tête (l'oreille et les cornes restent devant elle)
+    scalp = sm([(93.0, 30.4), (91.0, 30.0), (89.4, 31.4), (88.4, 29.6), (85.6, 29.2), (83.6, 30.8), (82.0, 29.2),
+                (78.8, 29.4), (77.0, 30.6), (75.4, 29.8), (72.0, 31.0), (69.4, 33.2), (67.4, 34.4), (65.6, 35.6),
+                (64.6, 37.4), (63.6, 39.6), (63.5, 43.0), (64.2, 46.6), (65.0, 48.6), (62.4, 47.6), (60.6, 44.0),
+                (60.2, 38.4), (61.2, 32.4), (64.8, 26.8), (70.8, 24.0), (78.6, 23.4), (86.2, 24.2), (91.0, 26.8)],
+               sharp=(2, 5, 8, 18), t=0.8)
+    front = strands[2:]
+    mass = fused([scalp] + [q[1] for q in front])
+    hair = [(mass, ('rad', 86.0, 21.0, 30.0, 30.0, [(0, '#7a6ea8'), (0.3, MANE.base), (0.72, MANE.shadow), (1, MANE.deep)]), 1),
+            # le volume du crâne chevelu : la bosse éclairée en haut à droite, l'ombre douce vers la nuque
+            (sm([(70.0, 27.4), (76.0, 25.0), (84.0, 25.0), (88.6, 27.0), (84.6, 27.6), (78.0, 27.6), (72.4, 29.0)]), MANE.light, 0.35),
+            (sm([(61.4, 36.0), (63.4, 37.6), (63.0, 44.0), (64.0, 47.4), (61.6, 45.4), (60.8, 40.0)]), MANE.deep, 0.45)]
+    head_poly = _poly(head).buffer(0.25)
+    for name, sh, p0, p1, p2, p3, w0 in front:
+        # chaque mèche se détache de la masse entre 1,5 et 6 px de sa racine (transparente sur le crâne, pleine ensuite)
+        L_ = math.dist(p0, p3)
+        start, fd = min(0.3, 1.5 / L_), min(0.5, 6.0 / L_)
+
+        def faded(stops, k=1.0, fd=fd, start=start):
+            def col_at(o):
+                for (o1, c1), (o2, c2) in zip(stops, stops[1:]):
+                    if o1 <= o <= o2:
+                        return hexmix(c1, c2, (o - o1) / ((o2 - o1) or 1))
+                return stops[-1][1] if o > stops[-1][0] else stops[0][1]
+            out = [(0, col_at(0), 0.0)]
+            for j in range(7):
+                o = start + (fd - start) * j / 6
+                u_ = j / 6
+                out.append((round(o, 4), col_at(o), round(k * u_ * u_ * (3 - 2 * u_), 3)))
+            return out + [(o, c_, k) for o, c_ in stops if o > fd]
+        ax = (p0[0], p0[1], p3[0], p3[1])
+        for (dx, dy), op in (((-0.66, 1.5), 0.2), ((-0.36, 0.72), 0.28)):
+            # l'ombre d'une mèche sur celle d'en dessous, seulement hors du crâne (jamais une tache sur la calotte)
+            sh_ = cast_off(sh, dx, dy, head_poly.buffer(1.8))
+            if sh_:
+                hair.append((sh_, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], op / 0.28),), 0.28))
+        hair.append((sm_under(sh), ('lin',) + ax + (faded([(0, MANE.shadow), (1, MANE.deep)]),), 0.85))
+        hair.append((lock(lerp(p0, p1, 0.3), lerp(p1, p2, 0.3), lerp(p2, p3, 0.2), lerp(p2, p3, 0.75), w0 * 0.22, n=8, bulge=0.1)
+                     .move(0.3 + 0.03 * w0, -0.12 * w0), ('lin',) + ax + (faded([(0, MANE.light), (1, MANE.light)], 0.55),), 1))
+    # le liseré de lumière : seulement sur le bord extérieur de la chevelure (jamais sur la racine, sur la peau)
+    mp = _poly(mass)
+    rim_ = _shape(mp.difference(_affine_move(mp, -0.6, 0.8)).difference(head_poly), min_area=0.02)
+    if rim_:
+        hair.append((rim_, MANE.hi, 0.8))
+    fig.part('mane', mass, MANE, cel=0, rim=0, cast=0, details=hair)
     # l'oreille pointue (couchée vers l'arrière), son anneau d'or
     ear = sm([(67.6, 40.0), (65.0, 38.2), (61.0, 35.2), (62.2, 39.6), (63.4, 43.8), (65.0, 47.2), (66.8, 47.0), (67.8, 43.6)], sharp=(2,))
-    fig.part('ear', ear, skin, cel=0.8, rim=0.5, cast=0.8, cast_on=['head'],
+    fig.part('ear', ear, skin, cel=0.8, rim=0.5, cast=0.8, cast_on=['head', 'mane'],
              details=[(sm([(66.6, 41.0), (64.6, 39.6), (63.0, 38.2), (64.2, 41.8), (65.4, 44.8), (66.6, 44.6)], sharp=(2,)), skin.deep, 0.55)])
     ring = ellipse(65.6, 48.8, 1.55, 1.75).hole(ellipse(65.7, 48.9, 0.75, 0.95))
-    fig.part('ering', ring, GOLD, cel=0.4, rim=0.4, cast=0.5, cast_on=['head', 'ear'])
+    fig.part('ering', ring, GOLD, cel=0.4, rim=0.4, cast=0.5, cast_on=['head', 'ear', 'mane'])
     # les cornes d'ivoire : la proche plus grosse ; la base s'enfonce dans la peau
     hornN = sm([(69.4, 35.4), (67.4, 29.0), (66.4, 22.0), (66.8, 16.2), (67.8, 12.2), (69.0, 15.6), (70.8, 21.0),
                 (73.4, 26.6), (76.8, 31.2), (76.2, 34.0), (72.8, 35.8)], sharp=(4,))
     fig.part('hornN', hornN, IVORY, grad=(76, 20, 66, 30, [(0, IVORY.light), (0.55, IVORY.base), (1, IVORY.shadow)]),
-             cel=1.1, rim=0.8, cast=1.2, cast_on=['head', 'capc', 'tA', 'm1', 'm2'],
+             cel=1.1, rim=0.8, cast=1.2, cast_on=['head', 'mane'],
              details=[(ribbon([(75.0, 31.6), (71.4, 25.4), (69.4, 19.0), (68.2, 14.0)], [0.2, 1.2, 0.8, 0.1]), IVORY.hi, 0.75),
                       (sm([(69.2, 33.0), (76.6, 31.4), (76.2, 34.0), (72.8, 35.8), (69.4, 35.4)]), IVORY.deep, 0.35)])
     # la corne lointaine : plantée à la même hauteur que la proche et symétrique d'elle par rapport à la médiane du
@@ -752,12 +801,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hornF = sm(HF([(83.6, 33.4), (82.9, 29.4), (85.2, 24.4), (87.4, 19.2), (89.2, 14.2), (90.4, 18.6), (90.6, 24.6),
                    (89.5, 29.6), (88.6, 33.2), (86.4, 34.4)]), sharp=(4,))
     fig.part('hornF', hornF, IVORY, grad=(95, 20, 86, 30, [(0, IVORY.light), (0.55, IVORY.base), (1, IVORY.shadow)]),
-             cel=0.9, rim=0.7, cast=1.0, cast_on=['head', 'tB'],
+             cel=0.9, rim=0.7, cast=1.0, cast_on=['head', 'mane'],
              details=[(ribbon(HF([(88.6, 31.4), (89.4, 24.4), (89.4, 16.4)]), [0.2, 0.9, 0.1]), IVORY.hi, 0.7),
                       (sm(HF([(83.2, 32.0), (89.2, 31.6), (88.8, 33.4), (86.4, 34.4), (83.4, 33.4)])), IVORY.deep, 0.3)])
 
     # ---- chaque groupe de morceaux prend sa pose ----
-    heads = ['m4', 'm3', 'm2', 'm1', 'tA', 'tB', 'head', 'capc', 'tuskN', 'tuskF', 'ear', 'ering', 'hornN', 'hornF']
+    heads = ['m4', 'm3', 'head', 'tuskN', 'tuskF', 'mane', 'ear', 'ering', 'hornN', 'hornF']
     fig.pose(heads, HEAD)
     fig.pose(['torso'], TOR)
     fig.pose(['bead%d' % i for i in range(len(beads))], UC)
@@ -775,6 +824,76 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         for f_ in fx:
             f_(fig, fig.ctx)
     return fig
+
+
+def _poly(shape, k=8):
+    """Une forme (courbes de Bézier) → un polygone shapely (repris de ../kael/kael.py)."""
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    polys = []
+    for s0, segs in shape.subs:
+        pts, q = [s0], s0
+        for c1, c2, p in segs:
+            for i in range(1, k + 1):
+                t = i / k
+                a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+                pts.append((a * q[0] + b * c1[0] + c * c2[0] + d * p[0], a * q[1] + b * c1[1] + c * c2[1] + d * p[1]))
+            q = p
+        g = Polygon(pts)
+        polys.append(g if g.is_valid else g.buffer(0))
+    return unary_union(polys)
+
+
+def _ring(coords, sharp_deg=38):
+    """Un anneau de polygone → une forme souple qui garde les coins vifs (pointes des mèches)."""
+    pts = list(coords)[:-1]
+    n = len(pts)
+    sharp = []
+    for i in range(n):
+        a, b, c = pts[i - 1], pts[i], pts[(i + 1) % n]
+        d = abs((math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(b[1] - a[1], b[0] - a[0]) + math.pi) % (2 * math.pi) - math.pi)
+        if math.degrees(d) > sharp_deg:
+            sharp.append(i)
+    return sm(pts, sharp=tuple(sharp), t=0.9).subs
+
+
+def _shape(geom, simplify=0.02, min_area=0.05):
+    """Un (multi)polygone shapely → une forme."""
+    from shapely.geometry import Polygon
+    from shapely.geometry.polygon import orient
+    gs = list(geom.geoms) if hasattr(geom, 'geoms') else [geom]
+    subs = []
+    for g in gs:
+        if g.geom_type != 'Polygon' or g.area < min_area:
+            continue
+        g = orient(g.simplify(simplify), 1.0)
+        subs += _ring(g.exterior.coords)
+        for h in g.interiors:
+            if Polygon(h).area >= 1.0:
+                subs += _ring(h.coords)
+    return Shape(subs) if subs else None
+
+
+def _affine_move(g, dx, dy):
+    from shapely import affinity
+    return affinity.translate(g, dx, dy)
+
+
+def fused(shapes, smooth=0.35):
+    """Plusieurs formes fondues en UNE silhouette (aucune couture), creux à peine arrondis."""
+    from shapely.ops import unary_union
+    g = unary_union([_poly(s) for s in shapes])
+    g = g.buffer(smooth, join_style=1, quad_segs=6).buffer(-smooth, join_style=1, quad_segs=6)
+    return _shape(g)
+
+
+def cast_off(sh, dx, dy, hors=None):
+    """L'ombre d'une mèche sur ce qui est dessous : la mèche décalée, moins la mèche elle-même (et moins `hors`)."""
+    g = _poly(sh)
+    d = _affine_move(g, dx, dy).difference(g)
+    if hors is not None:
+        d = d.difference(hors)
+    return _shape(d.buffer(-0.04).buffer(0.04), min_area=0.3)
 
 
 def mesures():

@@ -1,4 +1,4 @@
 fait
-Corrigé d'après le 2e avis du 26/11 : du côté droit de l'image (la joue du fond), la barbe monte maintenant le long de la joue jusqu'à la tempe, juste sous le bout du sourcil, comme de l'autre côté où elle part de l'oreille ; elle colle au bord du visage (son bord suit le contour de la face), plus de peau entre la barbe et le bord ; une mèche éclairée descend sur ce favori.
-Le reste n'a pas changé : visage déjà validé (visage.py : aucun défaut, visage.png refait), bouche fermée, nez entre les yeux, jambes resserrées (avis précédent).
-Vérifié en grand au repos, pendant l'attaque et la spéciale (tête penchée, barbe qui traîne) : la barbe reste collée au visage. Avant / après : avant-apres.png.
+Corrigé d'après l'avis du 26/11 (tour 2) (« la couronne est dans le vide, elle finit trop loin ») : la couronne s'arrête maintenant au-dessus de la tempe, juste au-dessus de l'oreille, au lieu de dépasser à gauche au-dessus des cheveux ; son bout s'arrondit et passe un peu dans l'ombre, comme s'il tournait autour du crâne. Les deux pointes de gauche et leurs pierres se sont resserrées pour garder un écart régulier (4 pointes comme le pixel art).
+Le reste n'a pas changé (visage validé par visage.py, barbe collée à la joue, jambes resserrées : avis précédents).
+Vérifié en grand au repos, pendant l'attaque et la spéciale (tête penchée) : la couronne suit la tête et finit au même endroit. Avant / après : avant-apres.png.

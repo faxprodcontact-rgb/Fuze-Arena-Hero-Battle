@@ -102,14 +102,14 @@ def keyed(keys, t):
 # l'abat d'un coup vers l'avant : le fer mord la terre devant lui. Arrêt sur l'image : éclair doré de la terre, le sol
 # se fend, des mottes et des éclats de roche giclent en éventail, la poussière roule des deux côtés. Puis il arrache la
 # hache du sol et revient en garde.
-RAISED = dict(farfront=1, G=(50.0, 68.0), ang=-98, sf=11, lean=-3, crouch=2, head=(-0.5, 1), tilt=-4, fsh=(-8, -1), nsh=(3, -1),
+RAISED = dict(farfront=1, G=(50.0, 62.0), ang=-98, sf=11, lean=-3, crouch=2, head=(-0.5, 1), tilt=-4, fsh=(-8, -1), nsh=(3, -1),
               ml=1, pg=1)
 CHOP = dict(farfront=1, G=(60.0, 60.5), ang=21, sf=29, lean=4, crouch=3, head=(1, 2), tilt=6, fsh=(0, 0), nsh=(2, 1), ml=-1, pg=-1)
 ATTACK = [
     (0, {}),
     (120, dict(G=(38.0, 86.0), ang=-40, sf=30, crouch=1, lean=-0.5, head=(0, 0.5), ml=0.5, farfront=1)),
     (280, dict(RAISED)),
-    (560, dict(RAISED, G=(49.0, 67.0), ang=-101, lean=-3.4, crouch=2.3, tilt=-5)),
+    (560, dict(RAISED, G=(49.0, 61.0), ang=-101, lean=-3.4, crouch=2.3, tilt=-5)),
     (612, dict(farfront=1, G=(63.0, 60.0), ang=-34, sf=20, lean=1.5, crouch=1.6, head=(0.5, 1), tilt=0, fsh=(-4, 0), nsh=(2, 0), ml=0, pg=0)),
     (640, dict(CHOP)),
     (820, dict(CHOP, G=(60.0, 61.0), ang=21.5, crouch=3.2)),
