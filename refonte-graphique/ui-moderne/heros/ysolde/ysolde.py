@@ -106,10 +106,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- lueur de la torche (derrière tout) ----
     SF = mapp(UC, SF0)
-    WF = mapp(UC, P['arm'])
+    WF = reach(SF, mapp(UC, P['arm']), LUF + LFF)
     torch = torch_frame(WF, P['tang'])
     fc = torch(0, -16.5)
-    fig.glow(fc[0], fc[1], 15 + 4 * P['flare'], 15 + 4 * P['flare'], '#ff8a2a', 0.3 + 0.08 * P['flare'])
+    fig.glow(fc[0], fc[1], 15 + 4 * P['flare'], 15 + 4 * P['flare'], '#ff8a2a', 0.3 + 0.08 * P['flare'] + 0.12 * P['glow'])
 
     # ---- la crinière : cinq mèches ondulées (de la plus basse à la plus haute), puis la longue mèche du dos ----
     hair_names = mane(fig, P, HEADN)
@@ -133,7 +133,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- la jambe lointaine (gauche), levée : la cuisse sous la jupe, le tibia qui pend, le pied pointé ----
     HF = mapp(HIP, HF0)
-    AF = mapp(HIP, P['foot'])
+    AF = reach(HF, mapp(HIP, P['foot']), LTF + LSF)
     KF = ik(HF, AF, LTF, LSF, -1)
     far_leg(fig, HF, KF, AF)
 
@@ -144,7 +144,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- le corps : buste, cou et bras proche d'une seule forme (aucune jointure à l'épaule) ----
     SN = mapp(UC, SN0)
-    WN = mapp(UC, P['near'])
+    WN = reach(SN, mapp(UC, P['near']), LUN + LFN)
     EN = ik(SN, WN, LUN, LFN, P['nbend'])
     body(fig, P, U, UC, TOR, SN, EN, WN, hair_names + pan_names)
     hand_names = hand(fig, P, EN, WN, ['body'] + hair_names + pan_names)
@@ -169,6 +169,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     return fig
 
 
+def reach(S, W, L):
+    """Un poignet (ou une cheville) hors de portée est ramené au bout du membre tendu."""
+    d = math.dist(S, W)
+    if d <= L - 0.05:
+        return W
+    return lerp(S, W, (L - 0.05) / d)
+
+
 def spin_view(fig, spin):
     """La pirouette : elle tourne autour de sa jambe d'appui. La figure se resserre (cos de l'angle) et, de dos, elle
     est vue retournée (comme le pixel art) ; la lumière reste en haut à droite (les ombres ne tournent pas)."""
@@ -179,22 +187,26 @@ def spin_view(fig, spin):
     for p in fig.parts:
         p.M = mchain(M, p.M)
     fig.spin_k = k
+    fig.under = [(58.0 + (cx - 58.0) * k, cy, rx * abs(k), ry, col, op, st) for cx, cy, rx, ry, col, op, st in fig.under]
+    for key, v in list(fig.ctx.items()):
+        if isinstance(v, tuple) and len(v) == 2 and all(isinstance(c, (int, float)) for c in v):
+            fig.ctx[key] = mapp(M, v)
 
 
 # ======================================================================== la crinière
 LOCKS = [
     # nom, points de la ligne (racine → pointe, en pixels du dessin, tête non agrandie), largeur à la racine ; des
     # longueurs, des courbures et des pointes toutes différentes (jamais des rayons réguliers)
-    ('h4', [(60.0, 36.0), (50.0, 39.6), (40.0, 45.6), (30.0, 47.6), (20.0, 49.0), (12.0, 52.0)], 14.0),
-    ('h3b', [(58.0, 33.0), (47.0, 36.0), (37.0, 40.4), (28.0, 41.4), (20.0, 43.8)], 10.5),
-    ('h3', [(60.0, 28.6), (49.0, 29.0), (38.0, 33.6), (27.0, 37.2), (17.0, 37.4), (7.0, 36.4)], 14.6),
-    ('h2', [(62.0, 21.6), (51.0, 19.6), (40.0, 22.8), (29.0, 26.0), (17.0, 25.8), (5.5, 23.6)], 14.8),
-    ('h1', [(68.0, 16.4), (58.0, 12.6), (47.0, 13.0), (37.0, 15.0), (27.0, 13.2), (17.0, 11.4)], 12.6),
+    ('h4', [(60.0, 36.0), (50.0, 39.6), (40.0, 45.2), (30.0, 47.0), (20.0, 49.4), (13.0, 54.4)], 14.0),
+    ('h3b', [(58.0, 33.0), (47.0, 36.0), (37.0, 40.8), (28.0, 41.0), (21.0, 39.2)], 10.0),
+    ('h3', [(60.0, 28.6), (49.0, 29.0), (38.0, 33.8), (27.0, 37.6), (16.0, 37.4), (7.5, 33.6)], 14.6),
+    ('h2', [(62.0, 21.6), (51.0, 19.6), (40.0, 22.6), (29.0, 26.4), (17.0, 26.6), (5.5, 25.8)], 14.8),
+    ('h1', [(68.0, 16.4), (58.0, 12.6), (47.0, 13.4), (37.0, 15.4), (27.0, 13.6), (18.5, 9.0)], 12.6),
 ]
 LONG = ('h5', [(61.5, 42.0), (56.4, 49.6), (53.4, 57.6), (51.6, 64.6), (47.8, 71.6), (41.6, 79.6)], 12.0)
 MASS = [(66.0, 14.0), (56.0, 10.8), (44.0, 11.4), (34.0, 13.6), (26.0, 18.6), (21.0, 25.6), (25.0, 31.4), (21.0, 37.4),
         (25.0, 43.6), (33.0, 49.6), (43.0, 54.0), (51.0, 58.0), (57.0, 53.0), (62.0, 44.0), (64.0, 30.0)]
-RINGS = {'h2': 0.56, 'h3': 0.5, 'h4': 0.44}
+RINGS = {'h2': 0.62, 'h3': 0.4, 'h4': 0.54}
 
 
 def wave(pts, P, i, amp=1.0, down=False):
@@ -261,10 +273,10 @@ def mane(fig, P, HEADN):
             j = int(t * 40)
             p = c[j]
             d = norm(sub(c[j + 1], c[j - 1]))
-            wl = w0 * (1 - t ** 1.7) * 0.6
+            wl = w0 * (1 - t ** 1.7) * 0.42
             a = ang_of(d)
-            band = xf(rpoly([(-1.05, -wl), (1.05, -wl), (1.05, wl), (-1.05, wl)], 0.5), p[0], p[1], a)
-            det += [(xf(rpoly([(-1.35, -wl - 0.35), (1.35, -wl - 0.35), (1.35, wl + 0.35), (-1.35, wl + 0.35)], 0.6), p[0] - 0.3, p[1] + 0.5, a), HAIR.deep, 0.6),
+            band = xf(rpoly([(-0.8, -wl), (0.8, -wl), (0.8, wl), (-0.8, wl)], 0.5), p[0], p[1], a)
+            det += [(xf(rpoly([(-1.1, -wl - 0.35), (1.1, -wl - 0.35), (1.1, wl + 0.35), (-1.1, wl + 0.35)], 0.6), p[0] - 0.3, p[1] + 0.5, a), HAIR.deep, 0.6),
                     (band, ('lin', p[0] + 1, p[1] - wl, p[0] - 1, p[1] + wl, [(0, GOLD.hi), (0.35, GOLD.light), (0.7, GOLD.base), (1, GOLD.shadow)]), 1),
                     (xf(rpoly([(-0.25, -wl), (0.25, -wl), (0.25, wl), (-0.25, wl)], 0.2), p[0], p[1], a).move(0.3, -0.2), GOLD.hi, 0.8)]
         fig.part(name, sh, HAIR, grad=(c[0][0] + 4, c[0][1] - 8, c[-1][0], c[-1][1] + 6, [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)]),
@@ -813,8 +825,8 @@ def head(fig, P, HEAD, HEADN):
          cel=0.9, rim=0.6, cast=1.0, cast_on=['face', 'h1', 'h2', 'h3', 'h3b', 'h4', 'h5', 'hm'], details=hd)
 
     # ---- les deux plumes, nouées d'une perle d'or derrière l'oreille, couchées le long de la crinière ----
-    for name, mat, a, b, c, d, w in (('pl1', FEATR, (63.0, 30.4), (58.0, 27.6), (52.0, 24.6), (45.4, 22.0), 2.6),
-                                      ('pl2', FEATO, (62.4, 32.6), (58.0, 31.4), (53.6, 30.6), (48.6, 30.2), 2.3)):
+    for name, mat, a, b, c, d, w in (('pl1', FEATR, (63.0, 30.4), (58.0, 27.6), (52.0, 24.6), (45.4, 22.0), 3.0),
+                                      ('pl2', FEATO, (62.4, 32.6), (58.0, 31.4), (53.6, 30.6), (48.6, 30.2), 2.7)):
         cpts = crpath([a, b, c, d], 24)
         sh = taper(cpts, w * 0.55, 0.25, tip='sharp', wmid=w * 1.25)
         tipc = mat.hi

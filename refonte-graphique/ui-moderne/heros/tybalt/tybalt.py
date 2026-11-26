@@ -64,7 +64,7 @@ G0 = (108.0, 70.5)              # le milieu de la garde de la dague, au repos
 TAILR = (50.0, 87.0)            # le pivot de la queue
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, gape=0.0, glow=0.0, q=0.0, qu=0.0, qw=0.0,
-            pan=0.0, na=(0.0, 0.0), fw=(0.0, 0.0), ang=0.0, bend=0.0, hot=0.0, blink=0.0, shift=0.0, curl=0.0,
+            pan=0.0, na=(0.0, 0.0), fw=(0.0, 0.0), ang=0.0, bend=0.0, hot=0.0, blink=0.0, shift=0.0, curl=0.0, ph=0.0, back=0.0,
             stretch=0.0)
 #   breath : souffle 0..1 ; crouch : il se tasse sur ses genoux (0..3, négatif : il se dresse) ; lean : il se penche
 #   en avant (+) ; head / tilt : la tête ; gape : la gueule s'ouvre (pixels au bout du museau ; négatif : serrée) ;
@@ -270,8 +270,8 @@ def tail_rig(Pz, PEL):
 # ============================================================================================ les formes au repos
 
 TORSO_PTS = [(66.0, 43.0), (62.2, 46.8), (59.4, 51.6), (57.4, 56.8), (56.0, 62.0), (54.4, 67.2), (52.0, 71.6),
-             (48.8, 75.6), (46.2, 79.6), (45.2, 83.6), (47.4, 88.0), (52.0, 90.6), (58.0, 90.8), (63.4, 89.4),
-             (67.6, 87.4), (71.8, 84.6), (74.6, 80.6), (77.4, 76.6), (80.6, 73.0), (86.4, 71.4), (90.0, 69.6),
+             (48.8, 75.6), (46.2, 79.6), (45.2, 83.6), (47.4, 87.6), (52.0, 89.4), (58.0, 88.8), (63.4, 87.6),
+             (67.6, 86.0), (71.8, 84.0), (74.6, 80.6), (77.4, 76.6), (80.6, 73.0), (86.4, 71.4), (90.0, 69.6),
              (91.0, 66.4), (89.6, 62.6), (87.8, 58.8), (85.2, 54.8), (81.0, 50.0), (76.0, 46.2), (71.0, 43.6)]
 
 PALM = [(35.2, 59.4), (35.6, 57.0), (37.6, 55.6), (40.8, 55.0), (44.0, 55.8), (46.0, 57.8), (45.6, 60.6), (43.4, 62.2),
@@ -285,16 +285,16 @@ FINGERS = [('f1', [(37.4, 57.6), (35.4, 56.0), (33.6, 54.6)], 2.3, 1.55),
 
 def near_foot():
     """Le pied proche, à plat : talon en arrière, quatre orteils écartés posés au sol, terminés par des pelotes."""
-    base = [(25.6, 107.4), (22.4, 109.0), (19.8, 111.6), (18.6, 114.2), (19.0, 115.8), (38.6, 115.8), (39.2, 114.0),
-            (37.4, 112.2), (35.0, 110.4), (33.6, 107.0)]
-    toes = [((18.4, 116.0), 1.6, 1.0), ((23.6, 116.0), 2.2, 1.0), ((29.4, 116.0), 2.3, 1.0), ((36.6, 115.9), 3.2, 1.1)]
+    base = [(25.6, 107.4), (22.4, 109.0), (19.8, 111.6), (18.8, 113.8), (19.6, 115.0), (38.0, 115.0), (39.0, 113.6),
+            (37.4, 112.0), (35.0, 110.4), (33.6, 107.0)]
+    toes = [((18.8, 115.7), 1.7, 1.3), ((23.8, 115.7), 2.3, 1.3), ((29.6, 115.7), 2.4, 1.3), ((36.6, 115.6), 3.2, 1.4)]
     return base, toes
 
 
 def far_foot():
-    base = [(83.0, 106.2), (81.4, 109.0), (80.4, 112.4), (80.4, 115.8), (101.2, 115.8), (101.6, 114.2), (99.6, 112.6),
+    base = [(83.0, 106.2), (81.4, 109.0), (80.6, 112.4), (81.0, 115.0), (100.6, 115.0), (101.4, 113.8), (99.6, 112.4),
             (96.0, 111.0), (92.6, 109.8), (89.8, 107.0), (88.2, 104.4)]
-    toes = [((81.2, 116.0), 1.4, 1.0), ((86.6, 116.0), 2.2, 1.0), ((92.4, 116.0), 2.3, 1.0), ((99.4, 115.9), 3.0, 1.1)]
+    toes = [((81.6, 115.7), 1.5, 1.3), ((86.8, 115.7), 2.3, 1.3), ((92.6, 115.7), 2.4, 1.3), ((99.4, 115.6), 3.0, 1.4)]
     return base, toes
 
 
@@ -372,20 +372,26 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     pan = Pz['pan']
     knot = mapp(NECKM, (60.0, 50.0))
 
-    def pan_shape(ctrl, w0, w1, k):
+    def pan_shape(ctrl, wc, k, cut, ph):
         c = [mapp(NECKM, p) for p in ctrl]
-        # les pans pendent du noeud : leur bout descend (pan > 0) ou se relève, plus on s'éloigne du noeud
-        c = [(x, y + pan * k * (i / (len(c) - 1)) ** 1.3) for i, (x, y) in enumerate(c)]
+        # les pans pendent du noeud : leur bout descend (pan > 0) ou se relève, plus on s'éloigne du noeud ; le tissu
+        # ondule un peu (ph)
+        c = [(x, y + pan * k * (i / (len(c) - 1)) ** 1.3 + 0.5 * math.sin(ph + i * 1.7) * (i / (len(c) - 1))) for i, (x, y) in enumerate(c)]
         cc = crpath(c, n=18)
-        ws = [w0 + (w1 - w0) * (i / 18) for i in range(19)]
+        ws = [interp([0, 0.55, 1], wc, i / 18) for i in range(19)]
         left, right = sides(cc, ws)
-        return sm(left[:-1] + [cc[-1]] + [right[-1]] + right[:-1][::-1], sharp=(len(left) - 1, len(left)), t=0.85), cc
-    panA, ca = pan_shape([(60.6, 48.6), (56.0, 46.6), (51.0, 45.0), (46.0, 43.2)], 3.4, 1.0, 1.2)
-    panB, cb = pan_shape([(60.0, 51.6), (55.4, 52.6), (50.6, 54.0), (46.2, 55.8)], 3.6, 1.2, 1.6)
-    for name, sh, cc in (('panA', panA, ca), ('panB', panB, cb)):
+        # le bout est coupé en biais (le bord du haut plus long), comme un tissu taillé
+        R = right[:-cut]
+        return sm(left + R[::-1], sharp=(len(left) - 1, len(left)), t=0.85), cc, left, R
+    ph = Pz.get('ph', 0.0)
+    panA, ca, la, ra = pan_shape([(60.6, 48.6), (56.2, 46.4), (51.6, 45.6), (46.8, 43.4)], (3.0, 3.3, 2.7), 1.2, 3, ph)
+    panB, cb, lb, rb = pan_shape([(60.0, 51.6), (55.6, 53.2), (51.0, 53.6), (46.2, 55.6)], (3.2, 3.5, 2.9), 1.6, 3, ph + 1.3)
+    for name, sh, cc, L_, R_ in (('panA', panA, ca, la, ra), ('panB', panB, cb, lb, rb)):
+        # des plis en biais (peu nombreux, inégaux) et le bord du haut éclairé
+        folds = [(ribbon([L_[i], lerp(L_[i], R_[min(len(R_) - 1, i + 3)], 0.5), R_[min(len(R_) - 1, i + 3)]], [0.1, w, 0.1]), BAND.shadow, 0.75)
+                 for i, w in ((4, 0.9), (11, 0.7))]
         fig.part(name, sh, BAND, cel=0.9, rim=0.6, cast=0,
-                 details=[(ribbon([lerp(cc[2], cc[3], 0.5), cc[8], cc[14]], [0.1, 0.9, 0.1]), BAND.shadow, 0.8),
-                          (ribbon([(x + 0.3, y - 0.5) for x, y in (cc[3], cc[9], cc[15])], [0.1, 0.6, 0.1]), BAND.hi, 0.6)])
+                 details=folds + [(ribbon([(x + 0.3, y - 0.4) for x, y in (cc[2], cc[9], cc[15])], [0.1, 0.6, 0.1]), BAND.hi, 0.55)])
 
     # ============================================================== la jambe lointaine (derrière le buste)
     def leg_geom(Hr, Kr, Ar, L, sign, w, foot):
@@ -403,9 +409,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det += [(ribbon([seg_pt(fH, fK, 0.15, 4.2), seg_pt(fH, fK, 0.55, 4.6), seg_pt(fH, fK, 0.95, 3.6)], [0.3, 2.2, 0.4]), SKIN.light, 0.55),
             (ribbon([seg_pt(fK, fA, 0.1, -2.6), seg_pt(fK, fA, 0.5, -2.8), seg_pt(fK, fA, 0.9, -2.4)], [0.3, 1.8, 0.3]), SKIN.light, 0.5),
             (ribbon([seg_pt(fH, fK, 0.25, -4.4), seg_pt(fH, fK, 0.65, -3.6), seg_pt(fK, fA, 0.2, 3.0)], [0.3, 2.2, 0.3]), SKIN.shadow, 0.5)]
-    cream = sm([mapp(PEL, p) for p in [(56.6, 84.4), (63.6, 84.8), (67.4, 87.8), (67.0, 92.6), (62.6, 95.6), (58.4, 94.6), (56.4, 90.0)]], t=0.9)
-    det += [(cream, ('lin', mapp(PEL, (66, 85))[0], mapp(PEL, (66, 85))[1], mapp(PEL, (58, 95))[0], mapp(PEL, (58, 95))[1],
-                     [(0, BELLY.light), (0.6, BELLY.base), (1, BELLY.shadow)]), 1)]
     det += spot(seg_pt(fH, fK, 0.62, -0.6), 2.6, 1.6, ang_of(fH, fK))
     det += spot(seg_pt(fK, fA, 0.6, 0.8), 1.2, 1.7, ang_of(fK, fA) - 90, 0.9)
     det += gloss(seg_pt(fH, fK, 0.8, 2.6), 1.6, 0.7, ang_of(fH, fK))
@@ -441,9 +444,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fa0 = ang_of(NE0, NW0)
     HANDM = mchain(mT(W[0] - NW0[0], W[1] - NW0[1]), mR(fa - fa0, *NW0))
     # les piquants du coude (souples, couchés vers l'arrière)
-    for i, (b, t, w) in enumerate((((44.2, 69.4), (40.2, 66.0), 2.4), ((47.6, 68.6), (45.6, 64.8), 2.2))):
-        ua = ang_of(NE0, NS)
-        M = mchain(mT(E[0] - NE0[0], E[1] - NE0[1]), mR(ang_of(E, S) - ua, *NE0))
+    for i, (b, t, w) in enumerate((((44.6, 73.2), (39.6, 74.4), 2.7), ((47.4, 74.4), (43.4, 77.8), 2.4))):
+        ua = ang_of(NE0, NW0)
+        M = mchain(mT(E[0] - NE0[0], E[1] - NE0[1]), mR(ang_of(E, W) - ua, *NE0))
         fig.part('esp%d' % i, spike(mapp(M, b), mapp(M, t), w), HORN, cel=0.4, rim=0.4, cast=0)
 
     # ---- la main ouverte : paume et doigts (fondus dans la silhouette), pelotes rondes au bout ----
@@ -479,10 +482,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # -- le ventre crème, de la gorge à l'aine (sa limite suit le tube du torse) --
     T_ = lambda pts: MP(TOR, pts)
     BW = [(70.0, 53.0), (69.4, 58.0), (68.8, 62.0), (68.4, 66.0), (67.0, 69.6), (65.0, 72.4), (62.2, 75.2), (60.0, 78.4),
-          (58.8, 81.8), (58.6, 85.4), (60.6, 88.8), (64.0, 89.4), (67.6, 87.4), (71.8, 84.6), (74.6, 80.6), (77.0, 77.0),
+          (58.8, 81.8), (58.8, 85.0), (60.8, 87.6), (64.0, 87.8), (67.6, 86.0), (71.8, 84.0), (74.6, 80.6), (77.0, 77.0),
           (79.6, 73.6), (82.6, 70.2), (85.4, 67.0), (86.8, 63.4), (86.4, 59.4), (84.6, 55.4), (80.0, 51.2)]
     wbelly = sm(T_(BW), t=0.9)
-    gb = PG(wbelly).intersection(gtors)
+    gT = gtors.difference(garm.union(ghand).union(gleg))           # le buste visible (le bras et la cuisse passent devant)
+    gb = PG(wbelly).intersection(gT)
+    wbelly = geom_shapes(gb, simplify=0.02)
     det += [(wbelly, ('lin', mapp(TOR, (88, 58))[0], mapp(TOR, (88, 58))[1], mapp(TOR, (60, 84))[0], mapp(TOR, (60, 84))[1],
                       [(0, BELLY.hi), (0.3, BELLY.light), (0.72, BELLY.base), (1, BELLY.shadow)]), 1)]
     wcel = geom_shapes(gb.difference(affinity.translate(gb, 2.2, -0.6)))
@@ -493,12 +498,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (ribbon(T_([(67.8, 68.8), (73.4, 70.0), (78.8, 69.8), (82.2, 68.4)]), [0.1, 0.6, 0.6, 0.1]), BELLY.hi, 0.7),
             (ribbon(T_([(61.6, 76.6), (66.4, 77.4), (71.4, 77.0), (74.6, 75.8)]), [0.2, 1.1, 1.0, 0.2]), BELLY.shadow, 0.6),
             (ribbon(T_([(61.8, 75.7), (66.4, 76.5), (71.4, 76.1), (74.4, 75.0)]), [0.1, 0.5, 0.5, 0.1]), BELLY.hi, 0.6),
-            (sm(T_([(77.0, 60.6), (82.4, 60.0), (85.0, 62.6), (84.0, 66.4), (79.6, 67.2), (76.6, 64.4)])), BELLY.hi, 0.55)]
+            (ellipse(*mapp(TOR, (81.4, 63.0)), 5.0, 4.4), ('rad', mapp(TOR, (82.0, 62.4))[0], mapp(TOR, (82.0, 62.4))[1], 5.2, 5.2,
+                                                       [(0, BELLY.hi, 0.9), (1, BELLY.hi, 0)]), 1)]
     # le flanc lointain (orange) entre le ventre et le bord : l'épaule lointaine
     det += [(sm(T_([(86.8, 60.4), (89.6, 62.6), (91.0, 66.4), (90.0, 69.6), (86.6, 71.2), (85.6, 67.2), (86.8, 63.4)])), SKIN.light, 0.45)]
     # le dos : l'ombre du côté du dos, la lumière de l'épaule proche
-    det += [(sm(T_([(57.4, 56.8), (61.2, 58.2), (63.0, 63.0), (62.0, 70.0), (58.0, 77.0), (52.0, 82.0), (46.2, 81.0), (48.8, 75.6), (52.0, 71.6), (54.4, 67.2), (56.0, 62.0)])),
-             SKIN.shadow, 0.28)]
+    bk_ = geom_shapes(PG(sm(T_([(57.4, 56.8), (61.2, 58.2), (63.0, 63.0), (62.0, 70.0), (58.0, 77.0), (52.0, 82.0), (46.2, 81.0),
+                                (48.8, 75.6), (52.0, 71.6), (54.4, 67.2), (56.0, 62.0)]))).intersection(gT))
+    if bk_:
+        det += [(bk_, SKIN.shadow, 0.28)]
     # -- la queue : la crête éclairée, le dessous dans l'ombre, des taches --
     TT = lambda pts: [TD(p) for p in pts]
     det += [(ribbon(TT([(44.0, 85.0), (36.0, 87.0), (28.0, 88.8), (21.0, 89.2), (15.0, 87.2)]), [0.3, 1.8, 1.8, 1.5, 0.3]), SKIN.light, 0.5),
@@ -511,8 +519,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det += spot(TD((25.2, 93.4)), 1.2, 0.9, 0, 0.85)
     det += gloss(TD((40.0, 87.0)), 1.8, 0.65, -10, 0.6)
     # -- ombres portées DANS la silhouette : le bras proche sur le buste, la jambe proche sur la queue et le buste --
-    det += cast_into(garm.union(ghand), gtors, 1.3)
-    det += inner_cel(garm, gtors, 1.4, SKIN.shadow, 0.6)
+    det += cast_into(garm.union(ghand), gtors, 1.6, (0.26, 0.34))
+    det += inner_cel(garm, gtors, 1.5, SKIN.shadow, 0.7)
     det += cast_into(gleg, gtail.union(gtors), 1.5)
     det += inner_cel(gleg, gtail.union(gtors), 1.6, SKIN.shadow, 0.6)
     det += inner_rim(gleg, gtail.union(gtors), 0.6, SKIN.hi, 0.5)
@@ -520,7 +528,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # -- le bras proche : le dessus éclairé, l'épaule ronde et luisante, une tache, le coude --
     det += [(ribbon([seg_pt(S, E, 0.1, 3.6), seg_pt(S, E, 0.55, 2.8), seg_pt(S, E, 0.95, 2.2)], [0.4, 1.8, 0.3]), SKIN.light, 0.55),
             (ribbon([seg_pt(E, W, 0.15, -2.0), seg_pt(E, W, 0.55, -2.1), seg_pt(E, W, 0.95, -2.2)], [0.3, 1.4, 0.3]), SKIN.light, 0.55)]
-    det += [(ellipse(S[0] + 1.2, S[1] - 1.2, 4.0, 3.0, -25), SKIN.light, 0.55)]
+    det += [(ellipse(S[0] + 1.4, S[1] - 1.4, 5.0, 4.0, -25), ('rad', S[0] + 1.8, S[1] - 1.8, 5.0, 5.0, [(0, SKIN.light, 0.8), (1, SKIN.light, 0)]), 1)]
     det += gloss((S[0] + 2.0, S[1] - 2.2), 1.9, 0.9, -28, 0.85)
     det += spot(seg_pt(S, E, 0.72, -0.6), 2.0, 1.3, ang_of(S, E), 0.95)
     det += spot(mapp(TOR, (58.6, 59.6)), 2.2, 1.1, -30)
@@ -554,8 +562,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (MS(PEL, ribbon([(49.4, 83.6), (45.8, 88.8), (42.0, 93.4)], [0.1, 0.6, 0.1])), LEATHER.deep, 0.5)])
     chape = MS(PEL, sm([(40.4, 93.4), (44.6, 94.8), (42.8, 98.4), (39.6, 98.0), (38.8, 95.6)], sharp=(0, 1), t=0.8))
     fig.part('chape', chape, BRASS, cel=0.6, rim=0.5, cast=0.8, details=[(MS(PEL, ellipse(42.6, 95.4, 0.8, 0.45, -50)), BRASS.glint, 0.9)])
-    belt = MS(U, sm([(46.4, 78.8), (52.0, 79.4), (58.0, 80.2), (64.0, 81.6), (69.6, 83.2), (73.4, 84.6), (72.4, 87.6),
-                     (68.6, 86.4), (63.4, 85.0), (57.6, 83.8), (51.6, 83.0), (46.0, 82.4)], sharp=(0, 5, 6, 11), t=0.85))
+    belt0 = MS(U, sm([(40.0, 78.4), (46.4, 78.8), (52.0, 79.4), (58.0, 80.2), (64.0, 81.6), (69.6, 83.2), (78.0, 85.6), (78.0, 89.0),
+                      (68.6, 86.4), (63.4, 85.0), (57.6, 83.8), (51.6, 83.0), (46.0, 82.4), (40.0, 82.0)], t=0.85))
+    belt = geom_shapes(PG(belt0).intersection(gtors.union(gleg)), simplify=0.02)
     fig.part('belt', belt, LEATHER, cel=1.0, rim=0.6, cast=1.0,
              details=[(MS(U, ribbon([(47.4, 80.2), (58.0, 81.4), (68.0, 84.2), (72.4, 85.6)], [0.2, 0.7, 0.6, 0.2])), LEATHER.light, 0.5),
                       (MS(U, ellipse(57.0, 82.0, 0.6, 0.6)), BRASS.light, 1), (MS(U, ellipse(70.2, 85.4, 0.55, 0.55)), BRASS.shadow, 1)])
@@ -579,16 +588,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                   (60.2, 53.4), (57.0, 50.8)]), t=0.9)
     bdet = [(ribbon(BN([(60.0, 50.2), (66.0, 52.0), (72.0, 54.4), (78.0, 56.6), (84.0, 58.4), (87.6, 59.4)]), [0.2, 1.6, 1.8, 1.8, 1.4, 0.2]), BAND.shadow, 0.7),
             (ribbon(BN([(61.0, 48.4), (67.0, 49.6), (73.0, 52.2), (79.0, 54.4), (85.4, 56.6)]), [0.2, 1.1, 1.3, 1.1, 0.2]), BAND.light, 0.7),
-            (ribbon(BN([(64.0, 47.6), (70.0, 49.0), (76.0, 51.6)]), [0.1, 0.6, 0.1]), BAND.hi, 0.6),
-            (ribbon(BN([(70.0, 55.6), (75.4, 57.8), (81.0, 59.4)]), [0.1, 0.8, 0.1]), BAND.deep, 0.5),
-            # deux plis en biais qui tirent vers le noeud
-            (ribbon(BN([(76.4, 51.2), (73.6, 54.0), (70.4, 56.2)]), [0.1, 0.9, 0.1]), BAND.shadow, 0.75),
-            (ribbon(BN([(83.0, 55.0), (81.0, 57.8), (78.4, 59.4)]), [0.1, 0.8, 0.1]), BAND.shadow, 0.7)]
+            # un pli en biais qui tire vers le noeud
+            (ribbon(BN([(78.4, 52.4), (75.0, 55.0), (71.0, 56.6)]), [0.1, 0.9, 0.1]), BAND.shadow, 0.7)]
     fig.part('wrap', wrap, BAND, cel=1.2, rim=0.7, cast=1.2, details=bdet)
-    knotS = sm([mapp(NECKM, p) for p in [(57.0, 47.6), (60.4, 46.4), (63.2, 47.8), (63.4, 51.0), (61.2, 53.4), (57.8, 53.0), (56.2, 50.4)]], t=0.9)
+    knotS = sm([mapp(NECKM, p) for p in [(57.4, 48.4), (59.8, 47.0), (62.4, 47.8), (62.8, 50.2), (61.0, 52.2), (58.4, 52.0), (57.0, 50.2)]], t=0.9)
     fig.part('knot', knotS, BAND, cel=0.9, rim=0.7, cast=1.0,
-             details=[(ribbon(BN([(58.4, 48.2), (60.0, 50.2), (59.6, 52.4)]), [0.1, 0.8, 0.1]), BAND.shadow, 0.8),
-                      (ellipse(*mapp(NECKM, (61.6, 48.6)), 1.0, 0.6, -30), BAND.hi, 0.6)])
+             details=[(ribbon(BN([(58.2, 48.6), (59.8, 50.0), (59.6, 52.0)]), [0.1, 0.7, 0.1]), BAND.shadow, 0.8),
+                      (ellipse(*mapp(NECKM, (61.2, 48.6)), 0.8, 0.5, -30), BAND.hi, 0.6)])
 
     # ============================================================== la tête de dragon
     # -- les piquants souples de la nuque et les deux cornes couchées en arrière (derrière le crâne) --
@@ -628,88 +634,87 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                    (x_ - w_ * 0.42, y_ + s * L_ * 0.45)]
             subs += sm(pts, sharp=(0, 1, 3), t=0.7).subs
         return MS(M, Shape(subs))
-    lot = teeth([(95.4, 52.0, 1.7, 1.7), (101.2, 52.0, 2.0, 2.6), (106.4, 51.6, 1.7, 1.9)], True, HJ)
+    lot = teeth([(95.6, 52.1, 1.4, 1.3), (101.2, 52.1, 2.2, 2.8), (106.6, 51.7, 1.6, 1.7)], True, HJ)
     fig.part('lteeth', lot, TOOTH, grad=(jp((106, 0))[0], jp((0, 49))[1], jp((94, 0))[0], jp((0, 52))[1],
                                          [(0, TOOTH.hi), (0.5, TOOTH.base), (1, TOOTH.shadow)]), cel=0.35, rim=0.3, cast=0.5)
 
     # -- la mâchoire du bas : la lèvre orange, le dessous crème comme le ventre --
-    LJ = [(82.6, 50.4), (88.0, 51.4), (94.0, 51.9), (100.0, 52.0), (105.0, 51.8), (108.8, 51.3), (110.6, 52.0),
-          (110.8, 53.6), (109.4, 55.2), (106.2, 56.8), (101.0, 58.2), (95.0, 58.4), (89.8, 57.6), (86.0, 56.2), (82.8, 53.8)]
+    LJ = [(82.6, 50.4), (88.0, 51.5), (94.0, 52.0), (100.0, 52.1), (105.0, 51.8), (108.8, 51.3), (110.6, 51.7),
+          (110.6, 52.9), (109.0, 54.2), (105.6, 55.2), (100.4, 56.2), (94.6, 56.6), (89.4, 56.2), (85.4, 55.0), (82.8, 53.4)]
     jaw = JD(sm(LJ, sharp=(0,), t=0.9))
-    jd = [(JD(sm([(84.0, 53.0), (90.0, 54.6), (96.0, 55.2), (102.0, 55.0), (106.8, 54.0), (109.8, 53.2), (110.8, 53.6),
-                  (109.4, 55.2), (106.2, 56.8), (101.0, 58.2), (95.0, 58.4), (89.8, 57.6), (86.0, 56.2), (82.8, 53.8)], t=0.9)),
-           ('lin', jp((104, 53))[0], jp((104, 53))[1], jp((88, 58))[0], jp((88, 58))[1], [(0, BELLY.light), (0.5, BELLY.base), (1, BELLY.shadow)]), 1),
-          (JD(ribbon([(86.0, 52.2), (94.0, 52.8), (102.0, 52.9), (108.4, 52.2)], [0.2, 0.8, 0.8, 0.2])), SKIN.hi, 0.45),
-          (JD(ribbon([(88.0, 51.7), (96.0, 52.2), (104.0, 52.2), (108.6, 51.6)], [0.1, 0.55, 0.55, 0.1])), GUM[1], 0.9)]
-    jd += spot(jp((97.6, 54.2)), 1.0, 0.7, 0, 0.9)
-    fig.part('jaw', jaw, SKIN, grad=(jp((110, 51))[0], jp((110, 51))[1], jp((84, 56))[0], jp((84, 56))[1],
-                                     [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
+    jd = [(JD(sm([(83.6, 53.0), (90.0, 54.4), (96.0, 54.9), (102.0, 54.6), (107.0, 53.8), (110.4, 52.8), (109.0, 54.2),
+                  (105.6, 55.2), (100.4, 56.2), (94.6, 56.6), (89.4, 56.2), (85.4, 55.0), (82.8, 53.4)], t=0.9)),
+           ('lin', jp((104, 53))[0], jp((104, 53))[1], jp((90, 57.5))[0], jp((90, 57.5))[1], [(0, BELLY.base), (0.6, BELLY.shadow), (1, BELLY.deep)]), 1),
+          (JD(ribbon([(88.0, 51.8), (96.0, 52.3), (104.0, 52.2), (108.8, 51.6)], [0.1, 0.5, 0.5, 0.1])), GUM[1], 0.9)]
+    jd += spot(jp((97.8, 53.8)), 1.0, 0.65, 0, 0.9)
+    fig.part('jaw', jaw, SKIN, grad=(jp((110, 51))[0], jp((110, 51))[1], jp((86, 56))[0], jp((86, 56))[1],
+                                     [(0, SKIN.light), (0.3, SKIN.base), (1, SKIN.shadow)]),
              cel=1.0, rim=0.6, cast=1.2, details=jd)
 
     # -- les crocs du haut (avant le crâne : la lèvre cache leur base) --
-    upt = teeth([(91.8, 49.4, 1.5, 1.5), (97.4, 49.2, 1.9, 2.3), (103.8, 49.0, 2.1, 2.9), (108.0, 48.6, 1.5, 1.6)], False, HEAD)
+    upt = teeth([(92.0, 49.5, 1.3, 1.3), (97.6, 49.3, 1.8, 2.0), (103.8, 49.0, 2.3, 3.3), (108.2, 48.6, 1.4, 1.5)], False, HEAD)
     fig.part('uteeth', upt, TOOTH, grad=(hp((108, 0))[0], hp((0, 49))[1], hp((92, 0))[0], hp((0, 52))[1],
                                          [(0, TOOTH.hi), (0.55, TOOTH.light), (1, TOOTH.shadow)]), cel=0.35, rim=0.3, cast=0.6)
 
-    # -- le crâne et le museau --
-    UH = [(72.0, 52.4), (68.6, 48.6), (68.4, 43.4), (69.6, 39.8), (72.4, 37.6), (76.4, 36.2), (80.6, 35.0), (86.0, 34.6),
-          (92.0, 35.0), (97.4, 35.8), (101.2, 37.0), (104.4, 38.4), (107.4, 39.6), (110.0, 41.2), (111.8, 42.8),
-          (112.6, 44.6), (112.0, 46.6), (110.2, 48.2), (106.0, 48.9), (100.0, 49.3), (94.0, 49.6), (88.4, 49.8),
-          (84.6, 50.0), (83.0, 52.0), (79.4, 53.4), (75.4, 53.4)]
-    head = HD(sm(UH, sharp=(17, 22), t=0.9))
+    # -- le crâne et le museau : crâne court et plat, arcade lourde (une bosse au-dessus de l'oeil), l'arcade lointaine
+    # qui dépasse derrière l'arête du museau, le naseau au bout --
+    UH = [(73.4, 51.4), (69.4, 48.4), (68.4, 43.6), (69.4, 39.8), (72.2, 37.2), (76.8, 35.6), (82.0, 34.4), (87.4, 32.8),
+          (91.8, 33.0), (94.8, 34.8), (96.6, 36.6), (97.6, 37.4), (99.8, 36.2), (102.4, 36.6), (104.6, 38.0), (107.6, 39.0),
+          (110.4, 39.6), (112.0, 40.6), (113.0, 42.6), (113.2, 45.2), (112.4, 47.2), (110.4, 48.3), (106.0, 48.9), (100.0, 49.3),
+          (94.0, 49.6), (88.4, 49.8), (84.6, 50.0), (83.4, 52.0), (80.0, 52.6), (76.4, 52.2)]
+    head = HD(sm(UH, sharp=(11, 21, 26), t=0.9))
     hd = []
-    # des plans nets : le dessus du crâne et le dessus du museau éclairés, le côté de la tête à mi-ton, la joue
-    # (derrière la gueule) dans l'ombre
-    hd += [(HD(sm([(74.6, 37.4), (80.6, 35.4), (88.0, 35.0), (96.0, 35.8), (101.4, 37.4), (106.6, 39.4), (110.4, 41.4),
-                   (111.8, 43.0), (108.6, 42.2), (103.0, 40.6), (97.0, 39.0), (93.4, 38.2), (86.0, 37.4), (79.0, 38.4)], t=0.9)), SKIN.light, 0.75),
-           (HD(sm([(80.0, 36.0), (88.0, 35.4), (95.0, 36.0), (100.0, 37.0), (95.6, 37.4), (88.0, 36.8), (81.4, 37.2)], t=0.9)), SKIN.hi, 0.6),
-           (HD(sm([(70.0, 46.0), (74.0, 45.2), (80.0, 46.6), (84.8, 49.8), (83.0, 52.0), (79.4, 53.4), (75.4, 53.4), (72.0, 52.4), (68.8, 48.8)], t=0.9)), SKIN.shadow, 0.55),
-           (HD(ribbon([(86.0, 48.6), (94.0, 48.4), (102.0, 48.0), (108.4, 47.4)], [0.2, 1.0, 1.0, 0.2])), SKIN.shadow, 0.55)]
-    # l'arcade lourde qui descend vers le museau : le dessus éclairé, le creux sombre de l'orbite dessous
-    hd += [(HD(sm([(84.0, 38.4), (88.0, 38.2), (92.0, 38.8), (95.0, 40.2), (93.6, 41.2), (90.6, 40.2), (87.0, 40.0), (84.2, 40.4)],
+    # des plans nets : le dessus du crâne et le dessus du museau éclairés, la joue (derrière la gueule) dans l'ombre
+    hd += [(HD(sm([(73.6, 37.8), (78.0, 36.4), (83.0, 35.6), (88.0, 34.6), (92.0, 34.8), (94.6, 36.4), (92.6, 37.2), (88.0, 36.8),
+                   (82.0, 37.6), (77.0, 38.6)], t=0.9)), SKIN.light, 0.7),
+           (HD(sm([(97.8, 37.8), (100.0, 36.8), (102.8, 37.4), (105.0, 38.8), (108.0, 40.0), (110.6, 41.0), (112.2, 42.4),
+                   (109.0, 42.2), (105.6, 41.2), (101.6, 40.0), (98.6, 39.2)], t=0.9)), SKIN.light, 0.7),
+           (HD(ellipse(77.4, 49.6, 8.0, 5.6)), ('rad', hp((77.4, 50.6))[0], hp((77.4, 50.6))[1], 8.6, 6.4, [(0, SKIN.shadow, 0.55), (1, SKIN.shadow, 0)]), 1),
+           (HD(ribbon([(86.0, 48.6), (94.0, 48.5), (102.0, 48.1), (108.6, 47.4)], [0.2, 1.0, 1.0, 0.2])), SKIN.shadow, 0.45)]
+    # l'arcade lourde qui descend vers le museau : son dessus éclairé, le creux sombre de l'orbite dessous
+    hd += [(HD(sm([(84.6, 38.4), (89.2, 37.6), (94.0, 38.2), (96.8, 40.2), (95.0, 41.6), (91.6, 40.2), (87.6, 39.6), (84.8, 40.2)],
                   sharp=(0, 4), t=0.8)), SKIN.deep, 0.85),
-           (HD(sm([(83.4, 37.0), (88.0, 36.6), (92.4, 37.4), (95.6, 39.4), (95.0, 40.2), (91.8, 38.8), (87.8, 38.2), (83.8, 38.6)],
-                  sharp=(0, 3), t=0.8)), SKIN.hi, 0.75)]
-    # l'oeil proche : amande jaune, pupille fendue, coupée en haut par l'arcade (le regard du prédateur)
-    EC = (89.8, 41.4)
-    eye = sm([(86.6, 40.6), (89.4, 40.4), (92.4, 41.2), (93.2, 42.0), (90.8, 43.2), (88.0, 43.0)], sharp=(0, 3), t=0.8)
+           (HD(sm([(82.4, 36.4), (87.4, 34.0), (91.8, 34.2), (94.8, 35.8), (96.6, 38.6), (93.6, 37.6), (89.4, 36.6), (84.2, 37.6)],
+                  sharp=(0, 4), t=0.8)), SKIN.hi, 0.65)]
+    # l'oeil proche : amande jaune coupée en haut par l'arcade, pupille fendue (le regard du prédateur)
+    EC = (90.2, 41.8)
+    eye = sm([(86.6, 40.2), (89.8, 40.3), (93.0, 41.4), (94.2, 42.2), (91.0, 43.3), (88.0, 42.8)], sharp=(0, 3), t=0.8)
     if Pz['blink'] > 0.5:
         hd += [(HD(eye.scale(1.12, 1.3, EC[0], EC[1])), SKIN.deep, 0.7), (HD(eye), SKIN.base, 1),
-               (HD(ribbon([(86.8, 41.6), (89.8, 42.4), (93.0, 42.0)], [0.1, 0.6, 0.1])), SKIN.deep, 0.85)]
+               (HD(ribbon([(86.6, 41.8), (90.0, 42.6), (93.8, 42.2)], [0.1, 0.6, 0.1])), SKIN.deep, 0.85)]
     else:
         ex, ey = hp(EC)
         hd += [(HD(eye.scale(1.12, 1.3, EC[0], EC[1] - 0.2)), '#3a0c22', 0.9),
-               (HD(eye), ('rad', ex + 0.8, ey - 0.6, 3.6, 3.6, [(0, '#fff6b0'), (0.35, '#ffe23a'), (0.8, '#f4a21e'), (1, '#d4661a')]), 1),
-               (HD(sm([(89.4, 40.5), (90.2, 40.6), (90.3, 41.8), (89.9, 43.1), (89.5, 41.8)], sharp=(0, 3), t=0.7)), '#140a16', 1),
-               (HD(ellipse(91.2, 41.4, 0.5, 0.36)), '#ffffff', 1),
-               (HD(ribbon([(86.8, 40.7), (89.6, 40.5), (92.6, 41.3)], [0.1, 0.55, 0.1])), '#3a0c22', 0.8)]
-    # l'oeil lointain : même forme, plus étroit, derrière l'arête du museau
-    eyeF = sm([(97.8, 39.6), (99.6, 39.0), (101.0, 39.6), (100.2, 40.8), (98.6, 40.8)], sharp=(0, 2), t=0.8)
-    hd += [(HD(sm([(96.8, 38.4), (99.6, 37.8), (102.4, 38.8), (101.6, 39.6), (99.4, 39.0), (97.4, 39.4)], sharp=(0, 3), t=0.8)), SKIN.deep, 0.75)]
+               (HD(eye), ('rad', ex + 0.9, ey - 0.7, 4.0, 4.0, [(0, '#fff6b0'), (0.35, '#ffe23a'), (0.8, '#f4a21e'), (1, '#d4661a')]), 1),
+               (HD(sm([(90.2, 40.4), (91.1, 40.6), (91.2, 42.0), (90.8, 43.3), (90.3, 42.0)], sharp=(0, 3), t=0.7)), '#140a16', 1),
+               (HD(ellipse(92.2, 41.8, 0.55, 0.38)), '#ffffff', 1),
+               (HD(ribbon([(86.8, 40.3), (89.8, 40.4), (93.4, 41.5)], [0.1, 0.7, 0.1])), '#3a0c22', 0.85)]
+    # l'arcade et l'oeil lointains : même forme, plus étroits, derrière l'arête du museau
+    eyeF = sm([(98.2, 40.0), (100.0, 39.4), (101.6, 40.0), (100.8, 41.2), (99.0, 41.2)], sharp=(0, 2), t=0.8)
+    hd += [(HD(sm([(97.4, 38.6), (100.0, 37.8), (102.8, 38.6), (102.6, 39.8), (100.0, 39.2), (97.8, 39.8)], sharp=(0, 3), t=0.8)), SKIN.deep, 0.75)]
     if Pz['blink'] > 0.5:
-        hd += [(HD(eyeF), SKIN.base, 1), (HD(ribbon([(97.8, 40.0), (99.4, 40.4), (100.8, 40.0)], [0.1, 0.45, 0.1])), SKIN.deep, 0.8)]
+        hd += [(HD(eyeF), SKIN.base, 1), (HD(ribbon([(98.2, 40.4), (99.8, 40.8), (101.4, 40.4)], [0.1, 0.45, 0.1])), SKIN.deep, 0.8)]
     else:
-        hd += [(HD(eyeF.scale(1.12, 1.3, 99.4, 39.9)), '#3a0c22', 0.85),
-               (HD(eyeF), ('rad', hp((100.0, 39.6))[0], hp((100.0, 39.6))[1], 2.0, 2.0, [(0, '#fff2a0'), (0.5, '#ffd23a'), (1, '#e08a1e')]), 1),
-               (HD(sm([(99.5, 39.1), (100.0, 39.2), (100.0, 40.0), (99.7, 40.7), (99.4, 40.0)], sharp=(0, 3), t=0.7)), '#140a16', 1)]
+        hd += [(HD(eyeF.scale(1.12, 1.3, 99.8, 40.3)), '#3a0c22', 0.85),
+               (HD(eyeF), ('rad', hp((100.4, 40.0))[0], hp((100.4, 40.0))[1], 2.0, 2.0, [(0, '#fff2a0'), (0.5, '#ffd23a'), (1, '#e08a1e')]), 1),
+               (HD(sm([(99.9, 39.5), (100.4, 39.6), (100.4, 40.4), (100.1, 41.1), (99.8, 40.4)], sharp=(0, 3), t=0.7)), '#140a16', 1)]
     # l'arête du museau (elle passe devant l'oeil lointain), les petites écailles éclairées, le naseau
-    hd += [(HD(ribbon([(94.6, 38.0), (99.0, 38.4), (103.4, 39.6), (108.0, 41.0), (111.2, 42.6)], [0.2, 0.7, 0.9, 0.7, 0.2])), SKIN.hi, 0.6)]
-    for (sx, sy, rx) in ((102.0, 40.9, 1.0), (104.6, 41.3, 0.9), (106.8, 43.4, 0.8), (103.4, 43.0, 0.8), (100.2, 42.6, 0.9),
-                         (108.8, 44.4, 0.7)):
-        hd += [(HD(ellipse(sx - 0.2, sy + 0.25, rx, rx * 0.62, -12)), SKIN.shadow, 0.35),
-               (HD(ellipse(sx + 0.1, sy - 0.12, rx * 0.72, rx * 0.4, -12)), SKIN.hi, 0.55)]
-    hd += [(HD(sm([(106.2, 42.4), (107.8, 41.8), (109.0, 42.6), (108.2, 43.4), (106.8, 43.4)], t=0.8)), SKIN.deep, 0.9),
-           (HD(ribbon([(106.2, 41.6), (107.8, 41.0), (109.4, 41.8)], [0.1, 0.5, 0.1])), SKIN.hi, 0.7)]
+    hd += [(HD(ribbon([(97.8, 38.8), (102.0, 39.0), (106.0, 40.2), (109.6, 41.2), (112.0, 42.8)], [0.2, 0.7, 0.9, 0.7, 0.2])), SKIN.hi, 0.55)]
+    for (sx, sy, rx) in ((101.8, 41.8, 0.95), (104.8, 42.2, 0.85), (103.2, 44.4, 0.8), (106.6, 44.6, 0.75), (99.8, 43.8, 0.8)):
+        hd += [(HD(ellipse(sx, sy, rx, rx * 0.55, -10)), SKIN.light, 0.55),
+               (HD(ellipse(sx + 0.15, sy - 0.2, rx * 0.6, rx * 0.26, -10)), SKIN.hi, 0.75)]
+    hd += [(HD(sm([(107.0, 42.8), (108.6, 42.0), (109.8, 42.8), (109.0, 43.7), (107.6, 43.7)], t=0.8)), SKIN.deep, 0.9),
+           (HD(ribbon([(106.8, 41.9), (108.6, 41.2), (110.2, 42.0)], [0.1, 0.5, 0.1])), SKIN.hi, 0.7)]
     # le rictus : le pli de la babine qui remonte vers l'oeil, la gencive du haut (rouge, jamais noire)
-    hd += [(HD(ribbon([(84.2, 49.6), (85.6, 47.6), (87.2, 46.2)], [0.2, 0.9, 0.1])), SKIN.deep, 0.6),
+    hd += [(HD(ribbon([(84.4, 49.6), (85.4, 47.8), (86.8, 46.6)], [0.2, 0.9, 0.1])), SKIN.deep, 0.55),
            (HD(ribbon([(85.0, 49.4), (90.0, 49.2), (96.0, 48.9), (102.0, 48.6), (107.0, 48.2), (110.0, 47.8)], [0.2, 0.7, 0.8, 0.8, 0.7, 0.2])), GUM[1], 1),
            (HD(ribbon([(90.0, 48.8), (98.0, 48.5), (106.0, 48.0)], [0.1, 0.35, 0.1])), GUM[2], 0.8)]
     # les taches sombres qui font le lien avec le corps de salamandre
-    hd += spot(hp((75.6, 41.0)), 2.0 * HSC, 1.4 * HSC, -15)
-    hd += spot(hp((96.8, 45.2)), 1.3 * HSC, 0.9 * HSC, -10, 0.95)
-    hd += spot(hp((102.6, 45.0)), 1.1 * HSC, 0.75 * HSC, 0, 0.9)
-    hd += spot(hp((71.4, 46.0)), 1.0 * HSC, 1.3 * HSC, 0, 0.85)
-    hd += gloss(hp((92.0, 36.4)), 2.0, 0.55, -6, 0.75)
+    hd += spot(hp((75.4, 41.6)), 2.0 * HSC, 1.4 * HSC, -15)
+    hd += spot(hp((97.6, 45.8)), 1.2 * HSC, 0.85 * HSC, -10, 0.95)
+    hd += spot(hp((103.0, 46.2)), 1.0 * HSC, 0.7 * HSC, 0, 0.9)
+    hd += spot(hp((71.4, 46.6)), 1.0 * HSC, 1.3 * HSC, 0, 0.85)
+    hd += gloss(hp((88.4, 35.6)), 2.0, 0.5, -10, 0.75)
     fig.part('head', head, SKIN, grad=(hp((108, 38))[0], hp((108, 38))[1], hp((72, 52))[0], hp((72, 52))[1],
                                        [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=1.2, rim=0.7, cast=1.3, details=hd)
@@ -751,6 +756,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('fist', fist, SKIN, cel=1.1, rim=0.6, cast=1.0, details=fdet)
     fig.part('fthumb', FB(limb([(100.2, 68.6), (103.4, 68.2), (106.2, 69.4)], [3.0, 2.8, 2.5])), SKIN, cel=0.7, rim=0.6, cast=0.8,
              cast_on=['fist', 'guard', 'blade'], details=[(FB(ellipse(105.6, 68.8, 0.9, 0.6)), SKIN.hi, 0.6)])
+
+    # la dague rentrée contre le ventre, lame cachée vers l'arrière (attaque) : le poing et la lame passent derrière le
+    # buste
+    if Pz['back'] > 0.5:
+        hand = [p_ for p_ in fig.parts if p_.name in ('blade', 'guard', 'fist', 'fthumb')]
+        rest_ = [p_ for p_ in fig.parts if p_.name not in ('blade', 'guard', 'fist', 'fthumb')]
+        i = [p_.name for p_ in rest_].index('farm') + 1
+        fig.parts = rest_[:i] + hand + rest_[i:]
 
     # ---- ce que les effets doivent savoir ----
     fig.ctx = dict(G=mapp(BL, (0, 0)), tip=tip, ang=ang, spine=[mapp(BL, p) for p, a, s in spn], wrist=FWw, FS=FSw,

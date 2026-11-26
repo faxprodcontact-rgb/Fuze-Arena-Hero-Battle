@@ -40,6 +40,7 @@ const VECTO: Record<string, readonly [number, number, number, number]> = {
   'mages-11': [128, 119, 67, 116],
   'mages-4': [132, 123, 68, 120],
   'myths-4': [126, 124, 66, 122],
+  'knights-7': [110, 120, 62, 118],
 };
 
 export interface VectoFig { w: number; h: number; fx: number; fy: number; big: string; small: string }

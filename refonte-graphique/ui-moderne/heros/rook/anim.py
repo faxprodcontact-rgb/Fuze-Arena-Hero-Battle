@@ -329,8 +329,8 @@ def wing_tip_angle(ctx, near=True):
 
 
 VOLLEY = [  # (départ, décalage de l'arrivée, courbure, retard)
-    ((96.0, 40.0), (-2.0, -9.0), -26.0, 0.00), ((100.0, 50.0), (0.0, -3.0), -12.0, 0.05),
-    ((98.0, 58.0), (2.0, 3.0), 10.0, 0.02), ((104.0, 46.0), (-1.0, 8.0), 22.0, 0.08), ((92.0, 30.0), (1.0, -14.0), -36.0, 0.10),
+    ((112.0, 44.0), (-2.0, -9.0), -24.0, 0.00), ((116.0, 52.0), (0.0, -3.0), -10.0, 0.05),
+    ((113.0, 60.0), (2.0, 3.0), 10.0, 0.02), ((119.0, 48.0), (-1.0, 8.0), 20.0, 0.08), ((110.0, 36.0), (1.0, -14.0), -32.0, 0.10),
 ]
 
 
@@ -378,7 +378,7 @@ def fx_attack(tl):
         # le jaillissement : une gerbe de flamme devant elle, à l'envol des plumes
         fl = env(tl, A_LAUNCH - 15, A_LAUNCH + 15, A_LAUNCH + 40, A_LAUNCH + 140)
         if fl > 0:
-            c = (100.0, 46.0)
+            c = (114.0, 49.0)
             fig.fx_front.append('<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"/>' % (
                 fm(c[0]), fm(c[1]), fm(14 * fl), fm(12 * fl), g_rad(fig, c, 14 * fl, [(0, FIRE[0], 0.9 * fl), (0.4, FIRE[2], 0.6 * fl), (1, FIRE[3], 0)])))
             for j, (dy, hh, ln) in enumerate(((-5, 10, 1.1), (1, 14, 1.4), (6, 9, 1.2))):

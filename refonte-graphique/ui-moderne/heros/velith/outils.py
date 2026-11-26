@@ -330,6 +330,16 @@ def tuft_shape(root, d, L, w, curl=0.0, n=8):
     return sm(pts, sharp=(len(left) - 1,), t=0.85), tip
 
 
+def _normal(dx, dy, dl, out):
+    """La normale d'une ligne : du côté `out` (±1 : gauche / droite du sens de la ligne, ou un vecteur : de son côté)."""
+    nx, ny = -dy / dl, dx / dl
+    if isinstance(out, (tuple, list)):
+        if nx * out[0] + ny * out[1] < 0:
+            nx, ny = -nx, -ny
+        return nx, ny
+    return nx * out, ny * out
+
+
 def edge_tufts(line, n, L, w, out, seed=0, flow=(0.0, 1.0), k_flow=0.5, curl=0.6, inset=1.2, t0=0.0, t1=1.0,
                jit=0.45, sway=0.0, ph=0.0):
     """Une rangée de n mèches le long d'une ligne (points) : longueurs et écarts inégaux. `out` = +1 / −1 : de quel
@@ -344,7 +354,7 @@ def edge_tufts(line, n, L, w, out, seed=0, flow=(0.0, 1.0), k_flow=0.5, curl=0.6
         a, b = c[j - 1], c[j + 1]
         dx, dy = b[0] - a[0], b[1] - a[1]
         dl = math.hypot(dx, dy) or 1
-        nx, ny = -dy / dl * out, dx / dl * out
+        nx, ny = _normal(dx, dy, dl, out)
         fx, fy = flow
         dd = (nx * (1 - k_flow) + fx * k_flow, ny * (1 - k_flow) + fy * k_flow)
         dd = (dd[0] + sway * math.sin(ph + i * 1.7) * 0.35, dd[1])
@@ -407,7 +417,7 @@ def zigzag(line, n, depth, out, seed=0, flow=(0.0, 1.0), k_flow=0.6, jit=0.5):
         a, b = c[k - 1], c[min(80, k + 1)]
         dx, dy = b[0] - a[0], b[1] - a[1]
         dl = math.hypot(dx, dy) or 1
-        nx, ny = -dy / dl * out, dx / dl * out
+        nx, ny = _normal(dx, dy, dl, out)
         if j % 2 == 1:
             dep = depth * (0.55 + 0.9 * hrand(j, seed + 2.2))
             dd = (nx * (1 - k_flow) + flow[0] * k_flow, ny * (1 - k_flow) + flow[1] * k_flow)

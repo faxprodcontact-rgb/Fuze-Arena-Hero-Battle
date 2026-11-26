@@ -67,7 +67,9 @@ H0 = (64.5, 49.5)  # le pivot de la tête (agrandie ×1,1 : proportions stylisé
 #   aim : le bras tendu tourne autour de l'épaule (− = il monte) ; back : la main recule (recul) ; ptilt : le
 #   pistolet tourne dans la main (− = le canon monte) ; spin : le pistolet tourne autour de l'index (degrés) ;
 #   fired : le chien est abattu (0..1) ; open : la main lâche la crosse (seul l'index la tient) ;
-#   nw : le poignet proche (point dans le repère du haut du corps) ; sang : où pointe la lame ; nbend : le coude.
+#   nw : le poignet proche (point dans le repère du haut du corps) ; sang : où pointe la lame ; nbend : le coude ;
+#   sg : de quel côté la lame se courbe (+1 au repos ; −1 sabre levé : le dos vers l'arrière, le fil vers l'ennemi) ;
+#   glint : un éclat court le long de la lame (0..1).
 SF0 = (76.0, 56.2)         # l'épaule lointaine
 WF0 = (92.8, 57.2)         # le poignet lointain
 G0 = (97.4, 58.0)          # la main sur la crosse (le pistolet tourne dans la main autour de ce point)
@@ -80,7 +82,7 @@ FIST_D = 5.0               # du poignet au milieu du poing (le long de l'avant-b
 
 REST = dict(breath=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, pl=0.0, q=0.0, cl=0.0, bl=0.0, blink=0.0, sq=0.0,
             cri=0.0, aim=0.0, back=0.0, ptilt=0.0, spin=0.0, fired=0.0, open=0.0, nw=NW0, sang=SANG0, nbend=-1.0,
-            glint=0.0)
+            glint=0.0, sg=1)
 
 
 def P_(o, u, v):
@@ -137,6 +139,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- la tête ----
     head_names = head(fig, P)
     fig.pose(head_names, HEAD)
+    _reorder(fig, ['nose'], before='goatee')                                # le bout du nez passe devant la moustache
     plume_names = plume(fig, P)
     fig.pose(plume_names, mchain(HEAD, mR(3.5 * P['pl'], 49.4, 21.6)))
     hat_names = hat(fig, P)
@@ -204,9 +207,9 @@ def far_arm(fig, P, SF, WF):
     fig.part('farm', arm, COAT, grad=(WF[0], WF[1] - 5, SF[0], SF[1] + 5, [(0, COAT.light), (0.45, COAT.base), (1, COAT.shadow)]),
              cel=1.1, rim=0.6, cast=0, details=det)
     # le grand revers de manche d'or, évasé vers la main
-    cuff = sm([F(Lf - 6.6, -4.9), F(Lf - 1.2, -6.0), F(Lf + 0.8, -6.3), F(Lf + 1.0, 6.2), F(Lf - 1.2, 5.9), F(Lf - 6.6, 4.8),
+    cuff = sm([F(Lf - 6.6, -4.7), F(Lf - 1.2, -5.5), F(Lf + 0.8, -5.8), F(Lf + 1.0, 5.4), F(Lf - 1.2, 5.2), F(Lf - 6.6, 4.5),
                F(Lf - 7.2, 0)], sharp=(2, 3), t=0.85)
-    cdet = [(sm([F(Lf - 6.6, -4.9), F(Lf + 0.8, -6.3), F(Lf + 0.8, -2.6), F(Lf - 6.8, -1.8)]), GOLD.light, 0.8),
+    cdet = [(sm([F(Lf - 6.6, -4.7), F(Lf + 0.8, -5.8), F(Lf + 0.8, -2.6), F(Lf - 6.8, -1.8)]), GOLD.light, 0.8),
             (ribbon([F(Lf - 6.2, -4.2), F(Lf - 6.9, 0), F(Lf - 6.2, 4.2)], [0.2, 0.9, 0.2]), GOLD.shadow, 0.7),
             (ellipse(*F(Lf - 3.4, -1.0), 1.15, 1.15), GOLD.shadow, 0.9),
             (ellipse(*F(Lf - 3.3, -1.15), 0.85, 0.85), GOLD.light, 1),
@@ -233,9 +236,9 @@ def pistol(fig, P):
     grip = sm([(98.4, 55.0), (101.6, 55.8), (101.4, 58.8), (99.4, 61.2), (97.8, 63.2), (93.6, 64.0), (92.8, 62.0), (95.2, 59.0),
                (97.0, 56.4)], t=0.9)
     part('pgrip', grip, WOOD, grad=(101, 55, 93, 64, [(0, WOOD.light), (0.5, WOOD.base), (1, WOOD.shadow)]), cel=0.7, rim=0.5, cast=0)
-    cap = sm([(92.0, 62.4), (96.4, 61.8), (98.0, 63.4), (97.2, 65.8), (93.6, 66.4), (91.6, 64.8)], t=0.9)
+    cap = sm([(93.0, 62.6), (96.6, 62.2), (97.8, 63.6), (97.0, 65.6), (94.0, 66.0), (92.6, 64.6)], t=0.9)
     part('pcap', cap, GOLD, cel=0.6, rim=0.5, cast=0.6, cast_on=['pgrip'],
-         details=[(ellipse(96.2, 63.2, 0.9, 0.5, -20), GOLD.glint, 0.9)])
+         details=[(ellipse(96.4, 63.4, 0.8, 0.45, -20), GOLD.glint, 0.9)])
     # le fût de bois sous le canon, la baguette dessous
     stock = sm([(100.4, 55.8), (118.6, 56.0), (119.6, 57.0), (119.0, 58.6), (101.4, 59.0)], sharp=(0, 3, 4), t=0.8)
     part('pstock', stock, WOOD, grad=(110, 55.8, 110, 59, [(0, WOOD.light), (0.45, WOOD.base), (1, WOOD.shadow)]), cel=0.5, rim=0.4, cast=0.5,
@@ -286,15 +289,15 @@ def far_hand(fig, P, pist):
         return fig.part(name, *a, **k)
     bg = pist + ['fcuff', 'flace', 'farm']
     # le gras de la main et le dos des doigts (pouce par-dessus la crosse, doigts repliés devant)
-    body = sm([(93.6, 54.2), (96.8, 52.9), (99.6, 53.4), (100.8, 55.4), (101.0, 58.2), (100.0, 60.8), (97.8, 62.2),
-               (94.8, 61.8), (93.2, 59.4), (93.0, 56.4)], t=0.92)
+    body = sm([(93.4, 54.4), (96.6, 53.0), (99.8, 53.4), (101.0, 55.6), (100.8, 58.0), (99.4, 60.8), (97.2, 62.4),
+               (94.6, 62.0), (93.0, 59.4), (92.8, 56.6)], t=0.92)
     det = [(sm([(95.4, 54.0), (98.8, 53.6), (100.2, 55.6), (99.8, 57.4), (96.6, 57.2)]), SKIN.hi, 0.3),
            (ribbon([(93.6, 57.4), (94.4, 60.4), (96.6, 61.8)], [0.1, 0.9, 0.1]), SKIN.shadow, 0.5)]
     part('fhand', body, SKIN, grad=(100, 53, 93.4, 61, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
          cel=0.8, rim=0.5, cast=0.8, cast_on=bg, details=det)
     # les doigts repliés devant la crosse : trois rouleaux inégaux, l'index tendu dans le pontet
-    rolls = [((95.2, 59.4), (98.4, 59.7), (100.4, 60.4), 2.15), ((94.8, 61.0), (97.4, 61.3), (99.2, 61.8), 2.0),
-             ((94.6, 62.4), (96.4, 62.7), (97.6, 63.0), 1.7)]
+    rolls = [((97.0, 59.3), (99.4, 59.6), (100.7, 60.2), 2.25), ((96.4, 60.9), (98.6, 61.2), (99.7, 61.7), 2.05),
+             ((95.8, 62.2), (97.6, 62.5), (98.5, 62.9), 1.75)]
     for i, (a, b, c, w) in enumerate(rolls):
         if op > 0:
             # la main lâche la crosse : les doigts se replient dans la paume
@@ -302,11 +305,11 @@ def far_hand(fig, P, pist):
         part('ffg%d' % i, limb([a, b, c], [w, w * 0.96, w * 0.86]), SKIN, cel=0.45, rim=0.35, cast=0.5,
              cast_on=['fhand'] + ['ffg%d' % j for j in range(i)] + bg,
              details=[(ellipse(b[0] + 0.3, b[1] - w * 0.18, w * 0.6, w * 0.16), SKIN.hi, 0.35)])
-    idx = limb([(96.2, 57.8), (99.6, 58.2), (101.6, 59.0), (102.8, 59.9)], [2.2, 2.1, 1.9, 1.7])
+    idx = limb([(97.6, 57.8), (100.4, 58.2), (102.0, 59.0), (103.0, 59.8)], [2.2, 2.1, 1.9, 1.7])
     part('findex', idx, SKIN, cel=0.45, rim=0.35, cast=0.6, cast_on=['fhand'] + bg)
-    thumb = limb([(94.6, 55.0), (97.4, 53.9), (100.6, 53.8)], [2.7, 2.4, 2.0])
+    thumb = limb([(95.0, 55.0), (97.6, 54.0), (99.8, 53.9)], [2.7, 2.4, 2.1])
     part('fthumb', thumb, SKIN, cel=0.5, rim=0.4, cast=0.6, cast_on=['fhand'] + bg,
-         details=[(ellipse(99.4, 53.4, 0.9, 0.35, -4), SKIN.hi, 0.5)])
+         details=[(ellipse(98.6, 53.4, 0.9, 0.35, -4), SKIN.hi, 0.5)])
     return names
 
 
@@ -578,6 +581,8 @@ def head(fig, P):
     # les pattes d'oie et le pli sous l'œil (visage d'homme mûr)
     fd += [(ribbon([(61.0, 38.6), (62.0, 39.8), (63.6, 40.4)], [0.1, 0.4, 0.1]), SKIN.deep, 0.4),
            (ribbon([(61.0, 37.6), (60.0, 37.8)], [0.3, 0.1]), SKIN.deep, 0.35)]
+    # l'ombre douce du nez sur la joue lointaine et la lèvre
+    fd += [(sm([(69.4, 41.0), (70.6, 44.2), (73.4, 45.6), (77.6, 45.4), (74.0, 46.2), (69.8, 45.4), (68.6, 43.0)], t=0.9), SKIN.deep, 0.3)]
     # le pli du rictus (de l'aile du nez vers le coin de la bouche)
     fd += [(ribbon([(68.8, 42.8), (67.6, 45.0), (68.0, 47.6)], [0.1, 0.8, 0.2]), SKIN.deep, 0.45)]
     # la bouche : un rictus qui montre les dents (ou grande ouverte : « Feu ! »)
@@ -608,10 +613,12 @@ def head(fig, P):
     part('earring', ring, GOLD, cel=0.3, rim=0.35, cast=0.5, cast_on=['face', 'hair', 'ear', 'neck', 'collar'],
          details=[(ellipse(56.4, 45.6, 0.35, 0.25, -30), GOLD.glint, 0.95)])
     # ---- le ruban rouge qui noue la queue de cheval, sur la nuque ----
-    rib = sm([(48.8, 44.8), (51.8, 44.4), (53.0, 45.8), (52.4, 47.6), (49.6, 48.0), (48.4, 46.6)], t=0.9)
-    part('ribbon', rib, RED, cel=0.5, rim=0.4, cast=0.6, cast_on=['hair'],
-         details=[(ribbon([(49.4, 45.4), (51.4, 45.0), (52.4, 45.8)], [0.1, 0.5, 0.1]), RED.hi, 0.7),
-                  (ribbon([(50.6, 44.8), (50.8, 47.6)], [0.3, 0.3]), RED.shadow, 0.55)])
+    for name, sh in (('rib1', sm([(51.2, 45.6), (49.4, 43.8), (47.6, 43.6), (47.4, 45.0), (49.2, 46.2)], t=0.9)),
+                     ('rib2', sm([(51.0, 46.6), (49.2, 46.8), (47.6, 48.2), (48.4, 49.2), (50.4, 48.0)], t=0.9))):
+        part(name, sh, RED, cel=0.5, rim=0.4, cast=0.6, cast_on=['hair', 'rib1'],
+             details=[(ellipse(48.8, 44.6 if name == 'rib1' else 47.8, 0.9, 0.45, -20), RED.hi if name == 'rib1' else RED.shadow, 0.6)])
+    part('ribk', ellipse(51.2, 46.2, 1.25, 1.35), RED, cel=0.4, rim=0.4, cast=0.6, cast_on=['hair', 'rib1', 'rib2'],
+         details=[(ellipse(51.5, 45.8, 0.5, 0.4), RED.hi, 0.7)])
     # ---- le bandeau de cuir noir sur l'œil lointain, sa lanière en biais sur le front ----
     strap = taper([(71.4, 36.4), (69.0, 35.2), (66.6, 34.2), (64.8, 33.4)], 1.1, 1.0)
     part('strap', strap, BLACK, cel=0.2, rim=0.3, cast=0.6, cast_on=['face'])
@@ -620,45 +627,51 @@ def head(fig, P):
          cast=0.9, cast_on=['face', 'strap'],
          details=[(ribbon([(72.0, 36.6), (75.0, 36.0), (77.4, 36.8)], [0.1, 0.5, 0.1]), BLACK.hi, 0.55)])
     # ---- le gros nez busqué (il dépasse du profil ; son arête passe devant le coin bas du bandeau) ----
-    nose = sm([(68.8, 36.8), (71.2, 37.6), (74.4, 38.8), (78.6, 40.6), (81.4, 42.2), (81.2, 43.6), (79.2, 44.4), (76.8, 44.0),
-               (74.4, 44.8), (72.0, 44.6), (70.2, 43.6), (69.6, 40.6)], t=0.9)
-    nd = [(sm([(68.8, 37.4), (70.6, 38.4), (71.4, 41.4), (71.0, 44.2), (69.8, 43.4), (69.4, 40.4)]), SKIN.shadow, 0.6),
-          (ribbon([(70.6, 37.4), (73.6, 38.6), (77.6, 40.4), (80.4, 41.8)], [0.2, 0.7, 0.8, 0.3]), SKIN.hi, 0.85),
-          (ellipse(80.2, 42.2, 0.9, 0.55, 25), '#ffffff', 0.45),
-          (ellipse(72.6, 43.4, 1.0, 0.55, 15), SKIN.deep, 0.85),
-          (ribbon([(73.8, 44.3), (76.8, 43.7), (79.6, 44.0)], [0.1, 0.6, 0.1]), SKIN.deep, 0.5)]
-    part('nose', nose, SKIN, grad=(81, 39, 70, 44, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]), cel=0.7, rim=0.5,
-         cast=0.9, cast_on=['face', 'patch', 'strap'], details=nd)
+    nose = sm([(69.0, 36.6), (72.2, 36.9), (75.4, 37.8), (78.4, 39.4), (80.2, 41.0), (81.0, 42.6), (80.8, 44.2), (79.6, 45.2),
+               (77.8, 44.8), (74.6, 45.0), (72.4, 44.8), (70.8, 43.8), (70.0, 40.6)], t=0.9)
+    nd = [(sm([(69.0, 38.6), (70.4, 39.4), (71.2, 42.0), (72.6, 44.0), (70.8, 43.8), (70.0, 40.6)]), SKIN.shadow, 0.3),
+          (ribbon([(70.4, 37.2), (73.6, 37.8), (76.8, 39.0), (79.4, 40.8), (80.8, 42.6)], [0.2, 0.6, 0.8, 0.7, 0.2]), SKIN.hi, 0.8),
+          (ellipse(79.9, 42.4, 0.8, 0.5, 40), '#ffffff', 0.45),
+          (sm([(74.4, 43.6), (77.4, 43.2), (79.6, 44.0), (80.6, 44.6), (79.0, 45.0), (77.0, 44.4), (74.6, 45.0)]), SKIN.shadow, 0.6),
+          (ellipse(73.2, 44.0, 0.85, 0.45, 15), SKIN.deep, 0.85),
+          (ribbon([(71.4, 41.6), (72.6, 42.8), (74.6, 43.0)], [0.1, 0.5, 0.1]), SKIN.shadow, 0.5)]
+    part('nose', nose, SKIN, grad=(80, 38, 70, 43, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.base)]), cel=0, rim=0.5,
+         cast=0.9, cast_on=['patch', 'strap', 'must'], details=nd)
     # ---- la grosse moustache noire en guidon (pointes relevées), la barbiche ----
-    must = []
-    for name, pts, w0 in (('mustN', [(73.4, 44.6), (69.6, 46.2), (64.6, 46.2), (61.2, 44.6), (60.4, 42.4)], 3.4),
-                          ('mustF', [(73.4, 44.6), (77.2, 45.8), (80.6, 45.2), (82.4, 43.4), (82.6, 41.6)], 3.0)):
-        c = crpath(pts, 16)
-        sh = taper(c, w0, 0.5, wmid=w0 * 0.92)
-        part(name, sh, BLACK, grad=(c[0][0] + 3, c[0][1] - 2, c[-1][0], c[-1][1] + 2, [(0, BLACK.light), (0.5, BLACK.base), (1, BLACK.shadow)]),
-             cel=0.5, rim=0.45, cast=0.9, cast_on=['face', 'nose'],
-             details=[(ribbon([lerp(c[1], c[2], 0.5), c[5], c[9]], [0.1, 0.6, 0.1]).move(0.3, -0.7), BLACK.hi, 0.55)])
-        must.append(name)
-    mc = sm([(71.4, 44.0), (74.6, 43.8), (76.0, 45.0), (74.6, 46.6), (72.2, 46.6), (70.8, 45.4)], t=0.9)
-    part('mustC', mc, BLACK, cel=0.4, rim=0.45, cast=0.8, cast_on=['face', 'nose'],
-         details=[(ellipse(74.4, 44.6, 1.0, 0.4, -10), BLACK.light, 0.7)])
-    goat = sm([(71.6, 49.4 + 1.2 * cri), (74.0, 49.0 + 1.4 * cri), (76.0, 49.6 + 1.2 * cri), (75.6, 51.6 + 1.0 * cri),
-               (74.4, 53.8 + 1.0 * cri), (73.0, 51.8 + 1.0 * cri)], sharp=(4,), t=0.9)
-    part('goatee', goat, BLACK, cel=0.4, rim=0.45, cast=0.8, cast_on=['face', 'neck', 'collar', 'jab1'],
+    # (une seule forme, d'une pointe à l'autre : épaisse sous le nez, un léger creux au milieu)
+    cm = crpath([(60.2, 41.8), (61.0, 44.2), (64.6, 45.8), (69.8, 46.0), (73.8, 45.0), (77.2, 45.7), (80.4, 45.0), (82.2, 43.2),
+                 (82.4, 41.2)], 40)
+    n = len(cm) - 1
+    ws = []
+    for i in range(n + 1):
+        t = i / n
+        w = 0.35 + 2.9 * math.sin(math.pi * t) ** 0.55
+        w -= 0.7 * math.exp(-((t - 0.56) / 0.05) ** 2)
+        ws.append(max(0.3, w))
+    must = ribbon(cm, ws)
+    md = [(ribbon(cm[4:20], [0.1] + [0.7] * 14 + [0.1]).move(0.4, -0.9), BLACK.light, 0.6),
+          (ribbon(cm[24:36], [0.1] + [0.6] * 10 + [0.1]).move(0.3, -0.8), BLACK.light, 0.55),
+          (ribbon(cm[8:18], [0.1] + [0.35] * 8 + [0.1]).move(0.5, -1.1), BLACK.hi, 0.5),
+          (ribbon([cm[21], cm[22], cm[23]], [0.2, 0.6, 0.2]).move(0, 0.4), BLACK.deep, 0.6)]
+    part('must', must, BLACK, grad=(78, 43, 64, 47, [(0, BLACK.light), (0.5, BLACK.base), (1, BLACK.shadow)]),
+         cel=0.6, rim=0.45, cast=0.9, cast_on=['face'], details=md)
+    goat = sm([(71.4, 49.2 + 1.2 * cri), (74.0, 48.8 + 1.4 * cri), (76.2, 49.4 + 1.2 * cri), (76.0, 51.0 + 1.0 * cri),
+               (75.0, 52.8 + 1.0 * cri), (74.0, 54.4 + 1.0 * cri), (73.2, 52.6 + 1.0 * cri), (71.8, 50.8 + 1.0 * cri)], sharp=(5,), t=0.9)
+    part('goatee', goat, BLACK, cel=0.4, rim=0.3, cast=0.8, cast_on=['face', 'neck', 'collar', 'jab1'],
          details=[(ribbon([(74.4, 49.8 + 1.2 * cri), (75.0, 51.4 + 1.0 * cri)], [0.3, 0.1]), BLACK.light, 0.7)])
     return names
 
 
 # ---------------------------------------------------------------- la plume rouge (de la cocarde vers l'arrière)
 def plume(fig, P):
-    c = crpath([(49.4, 21.6), (46.8, 16.4), (42.2, 12.2), (36.4, 11.0), (31.4, 12.6), (29.0, 15.4)], 22)
-    sh = taper(c, 2.2, 0.6, wmid=7.2)
+    c = crpath([(49.4, 21.6), (47.2, 15.6), (42.8, 10.8), (36.8, 9.0), (31.6, 10.4), (28.4, 13.8)], 22)
+    sh = taper(c, 2.4, 0.6, wmid=10.4)
     det = [(under(sh, 0.7, -1.8), RED.shadow, 0.75),
            (ribbon(c[1:-2], [0.1] + [0.55] * (len(c) - 5) + [0.1]).move(0.2, -0.2), RED.hi, 0.6),
            # deux encoches douces dans les barbes (pas de rayures) et le bout plus sombre
-           (sm([(40.2, 9.6), (38.6, 11.4), (40.8, 11.0)], t=0.8), RED.shadow, 0.8),
-           (sm([(33.6, 15.0), (34.6, 13.2), (35.6, 14.8)], t=0.8), RED.deep, 0.6),
-           (sm([(31.0, 12.0), (28.4, 14.4), (29.0, 16.6), (31.8, 15.4)]), RED.shadow, 0.6)]
+           (sm([(40.6, 7.0), (39.0, 9.6), (41.4, 9.0)], t=0.8), RED.shadow, 0.8),
+           (sm([(33.4, 13.4), (34.6, 11.4), (35.8, 13.0)], t=0.8), RED.deep, 0.55),
+           (sm([(30.6, 10.0), (27.4, 13.0), (28.2, 15.4), (31.2, 13.8)]), RED.shadow, 0.6)]
     fig.part('plume', sh, RED, grad=(46, 10, 30, 16, [(0, RED.hi), (0.35, RED.light), (0.75, RED.base), (1, RED.shadow)]),
              cel=0, rim=0.6, cast=1.0, details=det)
     return ['plume']
@@ -739,10 +752,7 @@ def near_arm(fig, P, S, E, W):
     a = math.radians(ang)
     u = (math.cos(a), math.sin(a))
     v = (-u[1], u[0])
-    sg = 1 if u[1] > -0.05 or (u[0] < 0 and u[1] > -0.2) else -1
-    if -90 < ((ang + 180) % 360 - 180) < 0 and u[0] > 0.3:
-        sg = -1
-    sg = 1 if math.sin(a) > -0.2 else -1                        # le dos de la lame vers l'arrière, le fil vers l'avant
+    sg = P['sg']                                                # le dos de la lame vers l'arrière, le fil vers l'avant
     v = (v[0] * sg, v[1] * sg)
     L = P_(G, u, v)
     bg = ['narm', 'ncuff', 'nlace', 'skirt', 'sash', 'torso', 'thighN', 'bootN', 'bootNr']
@@ -792,12 +802,9 @@ def near_arm(fig, P, S, E, W):
     thumb = limb([L(-3.4, 2.6), L(-0.6, 3.4), L(1.8, 2.8)], [2.6, 2.3, 2.0])
     fig.part('nthumb', thumb, SKIN, cel=0.5, rim=0.35, cast=0.6, cast_on=['nfist', 'nguard', 'blade'] + bg)
     # la branche de garde d'or, de la coquille au pommeau, devant les phalanges
-    bow = taper(crpath([L(3.4, -3.0), L(1.6, -5.6), L(-2.0, -6.0), L(-5.2, -4.6), L(-6.4, -1.8)], 14), 1.2, 1.0)
+    bow = taper(crpath([L(3.6, -2.8), L(2.0, -5.4), L(-1.4, -5.9), L(-4.2, -4.9), L(-5.0, -3.4)], 14), 1.25, 0.9)
     fig.part('nbow', bow, GOLD, grad=(*L(0, -6.4), *L(0, -4), [(0, GOLD.light), (1, GOLD.shadow)]), cel=0.25, rim=0.3, cast=0.6,
              cast_on=['nfist', 'nthumb', 'nguard', 'blade'] + bg)
-    pom = ellipse(*L(-6.4, -0.8), 1.3, 1.3)
-    fig.part('npom', pom, GOLD, cel=0.3, rim=0.3, cast=0.5, cast_on=['nfist', 'nlace', 'ncuff'],
-             details=[(ellipse(*L(-6.6, -1.4), 0.35, 0.3), GOLD.glint, 0.9)])
     tipw = L(*tip)
     return dict(tip=tipw, G=G, ang=ang)
 
