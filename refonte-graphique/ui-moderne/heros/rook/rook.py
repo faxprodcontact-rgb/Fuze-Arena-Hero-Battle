@@ -48,7 +48,7 @@ FINK = '#3a0c18'                     # le contour du feu
 
 GRD = 116.0
 FEET = (64.0, 116.0)
-FRAME = (6.0, 4.0, 98.0, 115.0)
+FRAME = (11.0, 6.0, 96.0, 113.0)
 
 # Le heaume (méthode commune ../visage.py, adaptée : AUCUN visage visible) : la boîte de la face du heaume, dans le
 # repère du pixel art AVANT l'agrandissement ×1,1 de la tête ; placer(BOITE) donne la ligne des yeux (la fente
@@ -64,7 +64,7 @@ V = placer(BOITE)
 #   sol (0..3) ; eyes : les braises du heaume (0..2) ; cpl / cpr : les pans de la cape ; pq : la queue du cimier ;
 #   pg : le tabard ; G : le milieu du poing proche (repère du buste) ; ang : où pointe la lame (degrés) ;
 #   bend : le coude proche (+1 : coude en arrière) ; FH : le poing lointain ; fbend : son coude (−1 : en dehors) ;
-#   sink : la lame plantée (pixels cachés dans le sol) ; stretch : la lame s'allonge par la vitesse.
+#   stretch : la lame s'allonge par la vitesse (la lame ne passe jamais sous le sol : plantée, sa pointe est cachée).
 HIP = (65.0, 80.0)                       # le pivot du buste
 NECK = (67.0, 47.5)                      # le pivot (et le centre d'agrandissement) de la tête
 S_N0 = (51.0, 57.0)                      # l'épaule proche
@@ -79,7 +79,7 @@ BL = 36.0                                # la longueur de la lame
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, fire=0.0, trail=(0.0, 0.0),
             aura=1.0, eyes=1.0, cpl=0.0, cpr=0.0, pq=0.0, pg=0.0, G=G0, ang=ANG0, bend=1.0, FH=FH0, fbend=-1.0,
-            sink=0.0, stretch=0.0, far_grip=0.0)
+            stretch=0.0)
 
 _LAST = {}
 
@@ -171,7 +171,7 @@ def aura_back(fig, P):
     a = P['aura']
     if a > 0.02:
         # la lueur au sol (un dégradé, aucun flou) et une lueur douce autour des jambes
-        fig.glow(66, GRD - 1, 40 + 6 * a, 7 + 1.5 * a, '#ff6a1e', min(0.6, 0.26 * a))
+        fig.glow(66, GRD - 0.5, 40 + 6 * a, 3.6 + 0.6 * a, '#ff6a1e', min(0.6, 0.3 * a))
         fig.glow(66, GRD - 16, 30 + 4 * a, 22 + 4 * a, '#ff5a1a', min(0.3, 0.09 * a))
         for x, h, w, ph, front in aura_spots(P):
             if not front:
@@ -377,8 +377,12 @@ def legs(fig, P, LEG):
                  cast_on=[name + 'leg'] + (['fleg', 'fcuisse', 'fknee', 'fgreave', 'cape'] if name == 'n' else ['cape']))
         # la genouillère : un dôme sur le genou (le pli du genou disparaît dessous) et son aileron vers l'extérieur
         kc = K
-        knee = sm([add(kc, (-6.0, 0.8)), add(kc, (-3.6, -3.6)), add(kc, (1.0, -4.0)), add(kc, (4.6, -1.4)),
-                   add(kc, (4.4, 2.6)), add(kc, (0.6, 4.4)), add(kc, (-3.4, 3.6))], sharp=(0,), t=0.85)
+        if name == 'n':          # l'aileron de la genouillère, sur le dehors de la jambe proche (vers l'arrière)
+            knee = sm([add(kc, (-6.0, 0.8)), add(kc, (-3.6, -3.6)), add(kc, (1.0, -4.0)), add(kc, (4.6, -1.4)),
+                       add(kc, (4.4, 2.6)), add(kc, (0.6, 4.4)), add(kc, (-3.4, 3.6))], sharp=(0,), t=0.85)
+        else:                    # la jambe lointaine : son aileron est de l'autre côté, caché
+            knee = sm([add(kc, (-4.4, 0.4)), add(kc, (-3.0, -3.6)), add(kc, (1.0, -4.0)), add(kc, (4.6, -1.4)),
+                       add(kc, (4.4, 2.6)), add(kc, (0.6, 4.4)), add(kc, (-3.4, 3.4))], t=0.85)
         kdet = [(knee, ('rad', kc[0] + 1.6, kc[1] - 1.6, 6.0, 6.0, [(0, BLACK.hi, 0.9), (0.35, BLACK.light, 0.7), (1, BLACK.base, 0)]), 1),
                 (ribbon([add(kc, (-5.4, 1.0)), add(kc, (-2.0, 2.6)), add(kc, (2.4, 3.2))], [0.1, 0.9, 0.2]), GREY.shadow, 0.8),
                 (ellipse(*add(kc, (1.8, -2.0)), 1.2, 0.6, -25), BLACK.glint, 0.9),
@@ -482,11 +486,11 @@ def helm(fig, P):
     body = sm([(66.5, 17.8), (73.6, 19.0), (78.4, 23.0), (80.4, 29.0), (80.8, 35.5), (80.0, 41.0), (77.4, 45.8),
                (72.2, 48.8), (66.0, 48.8), (60.0, 47.6), (56.4, 44.2), (54.8, 37.0), (55.0, 29.0), (57.0, 23.2), (60.8, 19.6)], t=0.9)
     # la crête : une lame basse qui suit le dessus du heaume, de l'arête du front jusqu'à la douille à l'arrière
-    crest_c = [(mid(25.0) + 0.4, 24.6), (75.8, 19.6), (71.2, 16.2), (65.4, 15.0), (60.6, 16.4), (57.8, 19.4)]
+    crest_c = [(mid(26.6) + 0.2, 26.6), (73.8, 21.4), (71.2, 17.6), (66.4, 16.2), (61.6, 17.2), (58.2, 19.6)]
     from outils import smooth_line
     from atelier import sides
     cc = smooth_line(crest_c, 16)
-    l_, r_ = sides(cc, [0.4, 1.6, 2.2, 2.6, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.8, 2.6, 2.6, 2.6, 2.4, 2.4, 2.2])
+    l_, r_ = sides(cc, [0.5, 1.4, 2.2, 2.8, 3.2, 3.6, 3.9, 4.2, 4.4, 4.5, 4.6, 4.6, 4.6, 4.6, 4.6, 4.6, 4.6])
     crest = sm(l_ + r_[::-1], t=0.8)
     socket = sm([(56.8, 17.4), (60.4, 16.0), (62.4, 18.6), (60.8, 21.6), (57.2, 21.8), (55.8, 19.6)])
     shape, _ = fuse([body, crest, socket], smooth=0.5, sharp_deg=70)
@@ -501,8 +505,8 @@ def helm(fig, P):
                    (mid(48.4) + 0.2, 48.8)], sharp=(0, 6))
     hd += [(face_far, ('lin', 81, 26, 72, 46, [(0, BLACK.hi, 0.75), (0.5, BLACK.light, 0.6), (1, BLACK.light, 0.15)]), 1)]
     # l'arête (au-dessus du bandeau) : le côté éclairé et le côté dans l'ombre
-    hd += [(ribbon([(mid(22.0) + 0.5, 22.0), (mid(26.0) + 0.5, 26.0), (mid(30.0) + 0.5, 30.0)], [0.2, 0.8, 0.6]), BLACK.hi, 0.85),
-           (ribbon([(mid(22.0) - 0.4, 22.0), (mid(26.0) - 0.5, 26.0), (mid(30.0) - 0.5, 30.0)], [0.2, 0.9, 0.7]), BLACK.deep, 0.7)]
+    hd += [(ribbon([(mid(24.0) + 0.5, 24.0), (mid(27.0) + 0.5, 27.0), (mid(30.0) + 0.5, 30.0)], [0.1, 0.6, 0.5]), BLACK.hi, 0.7),
+           (ribbon([(mid(24.0) - 0.3, 24.0), (mid(27.0) - 0.4, 27.0), (mid(30.0) - 0.4, 30.0)], [0.1, 0.6, 0.5]), BLACK.deep, 0.45)]
     # le bandeau de front, gris : il suit le tour du heaume (plus bas au milieu, sur l'arête)
     by0 = ye - 4.4
     band = sm([(54.4, by0 - 0.6), (60.0, by0 - 0.2), (mid(ye - 4) , by0 + 0.6), (77.0, by0 - 0.2), (81.0, by0 - 0.6),
@@ -543,7 +547,7 @@ def helm(fig, P):
            (socket, ('lin', 62, 16, 56, 22, [(0, GREY.base), (1, GREY.deep)]), 1),
            (ellipse(59.6, 18.0, 1.2, 0.5, -20), GREY.hi, 0.8)]
     # l'éclat sur le dôme
-    hd += [(ellipse(74.6, 22.4, 2.4, 1.0, -40), BLACK.glint, 0.75), (ellipse(75.2, 21.8, 0.8, 0.35, -40), '#ffffff', 0.85)]
+    hd += [(ellipse(77.4, 26.4, 2.0, 0.9, -60), BLACK.glint, 0.7), (ellipse(77.8, 25.8, 0.7, 0.3, -60), '#ffffff', 0.85)]
     fig.part('helm', shape, BLACK, cel=1.2, rim=0.8, cast=1.3, details=hd,
              cast_on=['torso', 'gorget', 'gem', 'plume', 'cape', 'fdome', 'flame2'])
     _LAST['helm_marks'] = dict(near=V['oeil_proche'], far=V['oeil_fond'], nose=(mid(ye + 3.0), ye + 3.0 + 0.0),
@@ -648,7 +652,12 @@ def blade_len(P):
 def sword(fig, P, G, ang):
     st = 1 + 0.04 * P['stretch']
     T = lambda a, b=0.0: sword_pt(G, ang, a, b, st)
-    vis = BL - P['sink']                      # la longueur visible (la pointe plantée dans le sol est cachée)
+    # la longueur visible : la lame ne passe jamais sous le sol (plantée, sa pointe y est cachée)
+    u = unit(ang)
+    vis = BL
+    tip_full = T(BL)
+    if tip_full[1] > GRD - 0.3 and u[1] > 0.2:
+        vis = max(4.0, BL - (tip_full[1] - (GRD - 0.3)) / u[1] / st)
     # ---- les flammes derrière la lame (un seul contour, couleur du feu) ----
     sheath = blade_flames(P, G, ang, st, vis)
     if sheath is not None:
@@ -658,8 +667,9 @@ def sword(fig, P, G, ang):
                  details=[(core, ('lin', top[0], top[1] + 4, T(vis * 0.5)[0], T(vis * 0.5)[1], [(0, FIRE[2]), (0.45, FIRE[1]), (1, FIRE[0])]), 0.95)])
     # ---- la lame : acier sombre, gouttière, deux tranchants rougeoyants ----
     hw0, hw1 = 2.5, 1.9
-    if P['sink'] > 0:
-        tipp = [T(vis, -hw1 * 0.9), T(vis + 0.2, 0), T(vis, hw1 * 0.9)]
+    if vis < BL - 0.01:
+        hwv = hw0 + (hw1 - hw0) * vis / BL
+        tipp = [T(vis, -hwv), T(vis + 0.05, 0), T(vis, hwv)]
     else:
         tipp = [T(BL - 4.0, -hw1), T(BL, 0), T(BL - 4.0, hw1)]
     blade = sm([T(-0.2, -hw0)] + [tipp[0], tipp[1], tipp[2]] + [T(-0.2, hw0)], sharp=(0, 1, 2, 3, 4), t=0.4)
@@ -686,7 +696,7 @@ def sword(fig, P, G, ang):
     pom = sm([T(-10.2, -2.0), T(-12.4, -2.6), T(-13.8, 0), T(-12.4, 2.6), T(-10.2, 2.0)], t=0.9)
     fig.part('pommel', pom, BLACK, cel=0.6, rim=0.6, cast=0.6,
              details=[(ribbon([T(-10.6, -1.9), T(-12.6, -2.1), T(-13.5, 0)], [0.1, 0.6, 0.1]), GREY.light, 0.8)])
-    _LAST['sword'] = dict(G=G, ang=ang, guard=T(0), tip=T(min(vis, BL)), st=st)
+    _LAST['sword'] = dict(G=G, ang=ang, guard=T(0), tip=T(min(vis, BL)), st=st, vis=vis, planted=vis < BL - 0.01)
 
 
 def blade_flames(P, G, ang, st, vis):
@@ -709,7 +719,7 @@ def blade_flames(P, G, ang, st, vis):
             continue
         base = T(a, 1.0)
         fl = 0.88 + 0.12 * math.sin(ph * 2.0 + i * 1.9)
-        h = h0 * (1 + 0.28 * f) * fl * (1 + 0.04 * ty)
+        h = h0 * (1 + 0.28 * f) * fl * (1 + 0.04 * ty) / (1 + 0.35 * P['stretch'])
         w = w0 * (1 + 0.12 * f)
         lean = -0.26 + 0.12 * math.sin(ph + i * 1.3) + tx * 0.06
         bend = 1.0 * math.sin(ph * 1.6 + i * 2.3)
@@ -723,28 +733,6 @@ def blade_flames(P, G, ang, st, vis):
     ys = [t[0][1] - t[1] for t in tongues] or [T(vis * 0.5)[1] - 8]
     top = (T(vis * 0.5)[0], min(ys))
     return sh, core, top
-
-
-def blade_fire_front(fig, P):
-    """Deux petites langues qui passent DEVANT la lame (elle est dans le feu, pas devant lui), à demi transparentes."""
-    sw = _LAST.get('sword')
-    if not sw:
-        return
-    G, ang, st = sw['G'], sw['ang'], sw['st']
-    vis = BL - P['sink']
-    ph, f = P['ph'], P['fire']
-    for i, (s, k) in enumerate(((0.38, 1.0), (0.68, 0.8))):
-        a = 3.0 + s * (vis - 5.0)
-        if a > vis - 2:
-            continue
-        base = sword_pt(G, ang, a, 1.6, st)
-        h = (6.0 + 2.0 * f) * k * (0.8 + 0.2 * math.sin(ph * 2.3 + i * 2.1))
-        sh = tongue_shape(base, h, 3.0 + 0.4 * f, 0.9 * math.sin(ph * 1.7 + i), -0.1 + 0.12 * math.sin(ph + i))
-        core = tongue_shape((base[0], base[1] + 0.2), h * 0.5, 1.6, 0.5 * math.sin(ph * 1.7 + i), 0.0)
-        g1 = fig.lin(base[0], base[1], base[0], base[1] - h, [(0, FIRE[1]), (0.4, FIRE[2]), (1, FIRE[4])])
-        fig.fx_front.append('<g opacity="0.85"><path d="%s" fill="%s" stroke="%s" stroke-width="0.9" stroke-linejoin="round"/>'
-                            '<path d="%s" fill="%s"/><path d="%s" fill="%s" opacity="0.9"/></g>' % (
-                                sh.d(), FINK, FINK, sh.d(), g1, core.d(), FIRE[0]))
 
 
 def gauntlet_grip(fig, P, G, ang, W, fdeg):
