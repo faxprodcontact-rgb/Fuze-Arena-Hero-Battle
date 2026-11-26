@@ -21,7 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, lock, limb, ribbon, ellipse, rpoly, mchain, mT, mR, mS, mapp  # noqa: E402
-from outils import rot, add, sub, lerp, norm, ang_of, ik, taper, under, limb_u, union, unit, ell_geom, several  # noqa: E402
+from outils import inter, rot, add, sub, lerp, norm, ang_of, ik, taper, under, limb_u, union, unit, ell_geom, several  # noqa: E402
 from lib import Shape  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
@@ -64,7 +64,7 @@ HF0, KF0, AF0 = (85.0, 91.0), (100.5, 100.0), (100.5, 109.0)   # la jambe lointa
 NECK = (72.0, 50.0)                             # le pivot de la tête (et le centre de son agrandissement ×1,1)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, jaw=0.0, blink=0.0, ph=0.0, sk=0.0,
-            ff=None, fa=-90.0, fb=None, nf=None, na=-91.0, nb=None, fend=58.0, nend=118.0, fopen=0.0, nopen=0.0,
+            ff=None, fa=-90.0, fb=None, nf=None, na=-91.0, nb=None, fend=40.0, nend=140.0, fopen=0.0, nopen=0.0,
             cs=0.0, pg=0.0, bag=None, aura=0.0, hold=1.0, wind=0.0)
 
 
@@ -237,7 +237,7 @@ def bag_parts(fig, P, outline, m, GN, GF, uN, uF, bu, front=False):
             det.append((ribbon([add(p, (0.5, -0.7)) for p in c], [0.2, w * 0.45, w * 0.35, w * 0.2, 0.05]), CANVAS.hi, 0.6 * k))
         # la pièce rapiécée, un peu de travers, sur le côté éclairé, et ses points de couture
         M_ = fig.M['BAG']
-        pc = [mapp(M_, p) for p in [(86.0, 9.0), (95.6, 10.6), (94.4, 19.4), (85.0, 18.2)]]
+        pc = [mapp(M_, p) for p in [(98.6, 21.0), (105.8, 23.4), (104.6, 30.4), (97.4, 28.4)]]
         det.append((rpoly(pc, 1.2), CANVAS.light, k))
         det.append((rpoly([lerp(pc[i], lerp(pc[0], pc[2], 0.5), 0.0) for i in range(4)], 1.2), ('lin', pc[1][0], pc[1][1], pc[3][0], pc[3][1], [(0, '#ffffff', 0.9), (1, CANVAS.base, 0.4)]), k))
         det.append((ribbon([pc[3], lerp(pc[3], pc[2], 0.5), pc[2]], [0.2, 0.9, 0.2]), CANVAS.shadow, 0.7 * k))
@@ -279,9 +279,10 @@ def neck_tube(a, b, w0, w1, bow=0.0):
     return limb([a, lerp(a, mid, 0.5), mid, lerp(mid, b, 0.5), b], [w0, w0 * 0.92 + w1 * 0.08, (w0 + w1) / 2, w1 * 1.05, w1])
 
 
-def frilled(fig, name, base, ang, op_=0.0, scale=1.0, cast_on=None):
+def frilled(fig, name, base, ang, op_=0.0, scale=1.0, cast_on=None, start=0.0):
     """Un bout froncé du sac : un petit tube de toile serré, qui s'élargit en fronces (fermé), ou s'ouvre en corolle."""
     u = unit(ang)
+    base = add(base, u, start)
     v = (-u[1], u[0])
     Q = lambda p, q: add(add(base, u, p * scale), v, q * scale)
     if op_ < 0.5:
@@ -305,28 +306,28 @@ def frilled(fig, name, base, ang, op_=0.0, scale=1.0, cast_on=None):
 
 
 def cord(fig, name, c, d, w, P, side, cast_on=None, ends=True):
-    """Le cordon d'or noué autour d'un col (c : son milieu, d : le sens du col), et ses deux brins qui pendent."""
+    """Le cordon d'or noué autour d'un col (c : son milieu, d : le sens du col), et ses deux brins qui pendent
+    à l'extérieur (side : −1 à gauche, +1 à droite)."""
     u = norm(d)
     v = (-u[1], u[0])
-    hw = w / 2 + 0.6
-    band = sm([add(add(c, u, -1.0), v, -hw), add(add(c, u, 1.0), v, -hw), add(add(c, u, 1.2), v, hw), add(add(c, u, -0.9), v, hw)],
-              sharp=(), t=0.6)
-    fig.part(name, band, GOLD, cel=0.5, rim=0.45, cast=0.6, cast_on=cast_on,
-             details=[(ribbon([add(add(c, u, 0.5), v, -hw + 0.6), add(add(c, u, 0.6), v, 0), add(add(c, u, 0.5), v, hw - 0.6)], [0.1, 0.55, 0.1]), GOLD.hi, 0.8)])
+    if v[0] * side < 0:
+        v = (-v[0], -v[1])
+    hw = w / 2 + 0.25
+    band = sm([add(add(c, u, -0.8), v, -hw), add(add(c, u, 0.8), v, -hw), add(add(c, u, 0.95), v, hw), add(add(c, u, -0.7), v, hw)],
+              t=0.6)
+    fig.part(name, band, GOLD, cel=0.45, rim=0.4, cast=0.6, cast_on=cast_on,
+             details=[(ribbon([add(add(c, u, 0.3), v, -hw + 0.5), add(add(c, u, 0.4), v, 0), add(add(c, u, 0.3), v, hw - 0.5)], [0.1, 0.5, 0.1]), GOLD.hi, 0.8)])
     if ends:
-        # les deux brins noués, du côté extérieur, qui se balancent
-        s = side
-        k0 = add(add(c, u, 0.2), v, hw * s)
+        k0 = add(add(c, u, 0.1), v, hw - 0.2)
         sw = P['cs']
-        for i, (L, a0) in enumerate(((5.0, 35), (3.8, 75))):
-            a = math.radians(ang_of((v[0] * s, v[1] * s)) + (a0 * (1 if s > 0 else -1)) * 0.0)
-            dirv = norm(add((v[0] * s, v[1] * s), (0, 1.6 + 0.6 * i)))
-            dirv = rot(dirv, sw * (9 + 5 * i) * s)
+        for i, (L, dn) in enumerate(((3.8, 0.9), (3.0, 2.0))):
+            dirv = norm(add(v, (0, dn)))
+            dirv = rot(dirv, -sw * (10 + 6 * i) * side)
             p1 = add(k0, dirv, L * 0.5)
-            p2 = add(add(k0, dirv, L), rot(dirv, 90 * s), 0.5 - i)
-            sh = taper([k0, p1, p2], 1.0, 0.55, tip='round')
-            fig.part(name + 'b%d' % i, sh, GOLD, cel=0.3, rim=0.3, cast=0.4)
-        fig.part(name + 'k', ellipse(k0[0], k0[1], 1.05, 0.95), GOLD, cel=0.35, rim=0.4, cast=0.5)
+            p2 = add(add(k0, dirv, L), (0, 0.4 * i))
+            fig.part(name + 'b%d' % i, taper([k0, p1, p2], 0.95, 0.6, tip='round'), GOLD, cel=0.3, rim=0.3, cast=0.4)
+        fig.part(name + 'k', ellipse(k0[0], k0[1], 0.95, 0.85), GOLD, cel=0.3, rim=0.35, cast=0.4,
+                 details=[(ellipse(k0[0] + 0.3, k0[1] - 0.3, 0.35, 0.25), GOLD.hi, 0.9)])
 
 
 def neck_parts(fig, P, outline, m, GN, GF, uN, uF, bu, only=None):
@@ -338,7 +339,7 @@ def neck_parts(fig, P, outline, m, GN, GF, uN, uF, bu, only=None):
         # le col lointain : du sac au poing, puis le bout froncé qui ressort du poing
         fig.part('fneck', neck_tube(A, GF, 5.6, 4.6, bow=-0.8 * (1 - m)), CANVAS, cel=1.0, rim=0.6, cast=0.6,
                  details=[(ribbon([lerp(A, GF, 0.15), lerp(A, GF, 0.5), lerp(A, GF, 0.8)], [0.1, 0.8, 0.1]), CANVAS.shadow, 0.5)])
-        ctx['end_f'] = frilled(fig, 'fend', GF, P['fend'], P['fopen'], 1.0)
+        ctx['end_f'] = frilled(fig, 'fend', GF, P['fend'], P['fopen'], 1.0, start=2.8)
         ctx['end_fdir'] = P['fend']
     if only in (None, 'near'):
         A = outline[0]
@@ -348,7 +349,7 @@ def neck_parts(fig, P, outline, m, GN, GF, uN, uF, bu, only=None):
         fig.part('nneck', neck_tube(A, E, 5.4, 4.4, bow=0.8 * (1 - m)), CANVAS, cel=1.0, rim=0.6, cast=0.6,
                  details=[(ribbon([lerp(A, E, 0.15), lerp(A, E, 0.5), lerp(A, E, 0.8)], [0.1, 0.7, 0.1]), CANVAS.shadow, 0.45)])
         ang = P['nend'] + (((ang_of(bu) - P['nend'] + 180) % 360) - 180) * m
-        ctx['end_n'] = frilled(fig, 'nend', E, ang, P['nopen'], 1.0)
+        ctx['end_n'] = frilled(fig, 'nend', E, ang, P['nopen'], 1.0, start=2.8 * (1 - m))
         ctx['end_ndir'] = ang
         if m > 0.5:
             # le cordon d'or du col du bout
@@ -439,40 +440,41 @@ def arm(fig, s, S, E, W, far):
 
 
 def fist(fig, s, G, ang, side, far, neck=None, P=None):
-    """Le poing serré sur le col : quatre doigts repliés en rouleaux, le pouce par-dessus, les phalanges à l'extérieur ;
-    le bracelet d'or au poignet (il cache la jonction avec l'avant-bras), le cordon d'or sur le col juste au-dessus."""
+    """Le poing serré sur le col : quatre doigts repliés en rouleaux (des plis doux entre eux, jamais des traits), les
+    phalanges en colonne à l'extérieur, le pouce replié par-dessus ; le bracelet d'or au poignet (il cache la jonction
+    avec l'avant-bras), le cordon d'or sur le col juste au-dessus."""
     k = 0.94 if far else 1.0
     F = frame_of(G, ang)
     o = side             # q > 0 : vers l'extérieur (gauche pour le poing proche, droite pour le lointain)
     Q = lambda p, q: F(p * k, q * k * o)
-    body = sm([Q(6.2, -4.6), Q(6.6, 0.5), Q(5.4, 5.2), Q(0, 6.4), Q(-5.0, 5.6), Q(-6.4, 1.0), Q(-6.0, -4.4), Q(-2.0, -6.2), Q(3.0, -6.0)], t=0.9)
+    body = sm([Q(6.0, 3.4), Q(3.6, 5.9), Q(-0.6, 6.3), Q(-4.6, 5.4), Q(-6.3, 1.4), Q(-6.0, -3.4), Q(-3.8, -5.6),
+               Q(-0.8, -5.4), Q(1.6, -5.9), Q(4.2, -5.3), Q(6.1, -2.8), Q(6.7, 0.4)], t=0.95)
     det = []
-    # les rouleaux des doigts (de haut en bas), séparés par des plis doux ; le dessus de chacun éclairé
-    rows = [(4.4, 2.6), (1.8, 2.6), (-0.8, 2.5), (-3.3, 2.3)]
-    for i, (pc, h) in enumerate(rows):
-        roll = sm([Q(pc + h / 2, -5.6), Q(pc + h / 2 + 0.1, 1.6), Q(pc + 0.1, 3.6), Q(pc - h / 2, 1.8), Q(pc - h / 2 - 0.1, -5.6)], t=0.8)
-        det.append((roll, SKIN.base, 1))
-        det.append((ribbon([Q(pc + h * 0.3, -5.0), Q(pc + h * 0.38, -1.4), Q(pc + h * 0.25, 2.4)], [0.1, h * 0.42, 0.1]), SKIN.light, 0.7))
-        det.append((ribbon([Q(pc - h / 2, -5.8), Q(pc - h / 2, -1.0), Q(pc - h / 2 + 0.2, 2.6)], [0.1, 0.75, 0.1]), SKIN.deep, 0.45))
-    # les phalanges : une colonne arrondie à l'extérieur, éclairée sur le dessus
-    det.append((sm([Q(5.6, 3.0), Q(5.0, 5.4), Q(0, 6.3), Q(-4.6, 5.4), Q(-5.2, 3.2), Q(0, 3.6)]), SKIN.shadow, 0.35))
-    # le pouce replié par-dessus, devant (côté intérieur)
-    thumb = sm([Q(5.8, -6.2), Q(6.6, -3.2), Q(4.2, -1.2), Q(-1.4, -2.6), Q(-3.6, -5.0), Q(-1.6, -6.6), Q(2.6, -6.8)], t=0.85)
-    det.append((thumb, ('lin', *Q(6, -1), *Q(-3, -7), [(0, SKIN.light), (1, SKIN.base)]), 1))
-    det.append((ribbon([Q(-3.0, -4.8), Q(0.6, -2.7), Q(4.4, -1.8)], [0.1, 0.9, 0.2]), SKIN.shadow, 0.55))
-    det.append((ellipse(*Q(4.2, -4.8), 1.3 * k, 0.8 * k), IVORY.light, 0.75))              # l'ongle du pouce
+    # le côté de la lumière : l'ombre douce à l'intérieur, la colonne des phalanges éclairée
+    rows = [4.2, 1.6, -0.9, -3.4]
+    for i, pc in enumerate(rows[:-1]):
+        y = pc - 1.3
+        det.append((ribbon([Q(y + 0.1, -5.6), Q(y, -2.0), Q(y + 0.2, 1.6), Q(y + 0.6, 4.2)], [0.1, 0.9, 0.7, 0.1]), SKIN.shadow, 0.6))
+    for i, pc in enumerate(rows):
+        det.append((ribbon([Q(pc + 0.3, -4.6), Q(pc + 0.6, -0.6), Q(pc + 0.4, 3.4)], [0.2, 1.3 * k, 0.3]), SKIN.light, 0.6))
+        det.append((ellipse(*Q(pc + 0.3, 4.4), 1.1 * k, 0.9 * k), SKIN.light, 0.4))
     fig.part(s + 'fist', body, SKIN, cel=1.2, rim=0.6, cast=1.0, details=det)
+    # le pouce, replié en travers des deux doigts du bas, son ongle d'ivoire au bout
+    thumb = limb([Q(-1.8, -5.6), Q(0.8, -3.8), Q(3.2, -1.2), Q(4.4, 1.0)], [3.6 * k, 3.3 * k, 2.9 * k, 2.5 * k])
+    fig.part(s + 'thumb', thumb, SKIN, cel=0.8, rim=0.55, cast=0.8, cast_on=[s + 'fist'],
+             details=[(ellipse(*Q(4.1, 0.6), 1.15 * k, 0.8 * k), IVORY.light, 0.9),
+                      (ellipse(*Q(4.3, 0.9), 0.45 * k, 0.32 * k), '#ffffff', 0.6),
+                      (ribbon([Q(-1.0, -4.6), Q(1.4, -3.0), Q(3.4, -0.6)], [0.1, 0.9, 0.1]).move(0.3, -0.3), SKIN.light, 0.55)])
     # le bracelet d'or (anneau vu un peu d'en dessus : son bord du bas bombé)
-    br_ = sm([Q(-5.0, -6.4), Q(-4.8, 0), Q(-5.0, 6.4), Q(-7.9, 6.0), Q(-8.4, 0), Q(-7.9, -6.0)], t=0.8)
+    br_ = sm([Q(-5.2, -6.2), Q(-5.0, 0), Q(-5.2, 6.4), Q(-8.0, 6.0), Q(-8.5, 0), Q(-8.0, -5.8)], t=0.8)
     fig.part(s + 'brac', br_, GOLD, cel=0.8, rim=0.55, cast=0.8,
-             details=[(ribbon([Q(-5.9, -5.6), Q(-5.7, 0), Q(-5.9, 5.6)], [0.1, 0.9, 0.1]), GOLD.hi, 0.85),
-                      (ribbon([Q(-7.6, -5.4), Q(-7.9, 0), Q(-7.6, 5.4)], [0.1, 0.7, 0.1]), GOLD.shadow, 0.7),
-                      (ellipse(*Q(-6.5, 2.6), 0.9, 0.9), GOLD.hi, 0.6)])
+             details=[(ribbon([Q(-6.0, -5.4), Q(-5.8, 0), Q(-6.0, 5.6)], [0.1, 0.9, 0.1]), GOLD.hi, 0.8),
+                      (ribbon([Q(-7.7, -5.2), Q(-8.0, 0), Q(-7.7, 5.2)], [0.1, 0.7, 0.1]), GOLD.shadow, 0.7)])
     fig.ctx[s + 'fist'] = G
     if neck is not None:
         # le cordon d'or noué sur le col, juste au-dessus du poing
         d = norm(sub(neck, G))
-        cord(fig, s + 'cord', add(G, d, 7.0 * k), d, 4.8, P, side)
+        cord(fig, s + 'cord', add(G, d, 6.6 * k), d, 4.4, P, side)
 
 
 def leg(fig, s, H, K0, A0, LEG, far):
@@ -542,11 +544,14 @@ def torso(fig, P, TOR):
     # les dentelés sous l'aisselle (deux petits coussins)
     det += [(ellipse(51.6, 67.6, 1.8, 1.0, -30), SKIN.light, 0.45), (ellipse(53.0, 71.0, 1.7, 0.9, -30), SKIN.light, 0.4)]
     # les grands droits : trois rangs de coussins doux (jamais un quadrillage dur), la ligne blanche au milieu
-    for row, y in enumerate((70.6, 76.4, 82.0)):
-        for cx, rx, op in ((67.4, 5.0, 0.55), (80.0, 4.2, 0.62)):
-            ry = 2.4 if row < 2 else 2.2
-            det.append((ellipse(cx + (0.4 if cx > 74 else 0), y, rx, ry, -4), SKIN.light, op))
-            det.append((ellipse(cx + 1.2, y - 0.8, rx * 0.5, ry * 0.4, -4), SKIN.hi, 0.35))
+    # (des coussins ronds et inégaux : le plus large en haut, le côté lointain plus étroit, rien d'aligné au cordeau)
+    for cx, cy, rx, ry, a, op in ((67.6, 70.6, 4.6, 2.5, -6, 0.42), (79.8, 70.2, 3.9, 2.4, 4, 0.5),
+                                  (68.0, 76.4, 4.2, 2.3, -3, 0.38), (79.4, 76.2, 3.6, 2.2, 3, 0.46),
+                                  (68.6, 81.8, 3.8, 2.1, 2, 0.32), (79.0, 81.6, 3.3, 2.0, -2, 0.4)):
+        det.append((ellipse(cx, cy, rx, ry, a), SKIN.light, op))
+        det.append((ellipse(cx + rx * 0.35, cy - ry * 0.4, rx * 0.42, ry * 0.32, a), SKIN.hi, 0.3))
+    det += [(ribbon([(63.6, 73.4), (68.2, 73.8), (72.6, 73.4)], [0.1, 0.8, 0.1]), SKIN.shadow, 0.3),
+            (ribbon([(64.6, 79.0), (68.6, 79.2), (72.6, 78.8)], [0.1, 0.7, 0.1]), SKIN.shadow, 0.25)]
     det += [(ribbon([(73.6, 67.4), (73.8, 74.0), (73.9, 80.0), (73.8, 86.0)], [0.2, 1.0, 0.9, 0.2]), SKIN.shadow, 0.5),
             (ellipse(73.9, 86.2, 0.9, 0.7), SKIN.deep, 0.75)]
     # les obliques et les plis de l'aine, en V vers la corde
@@ -570,10 +575,11 @@ def loincloth(fig, P, U):
              (60.4, 102.6, 1.4, 1.0, 0), (72.6, 93.2, 1.5, 1.0, -20), (84.0, 103.0, 1.3, 0.9, 10), (93.6, 92.6, 1.4, 1.0, 15)]
     for i, (x, y, rx, ry, a) in enumerate(spots):
         x, y = sk((x, y))
-        det.append((ellipse(x, y, rx, ry, a), HIDE.deep, 0.8))
-        det.append((ellipse(x + 0.35, y - 0.3, rx * 0.55, ry * 0.5, a), HIDE.shadow, 1))
+        blobp = [(x + rx * math.cos(t_) * (1 + 0.22 * math.sin(3 * t_ + i)), y + ry * math.sin(t_) * (1 + 0.2 * math.cos(2 * t_ + i)))
+                 for t_ in [j * math.pi / 4 for j in range(8)]]
+        det.append((sm(blobp).rot(a, x, y), HIDE.deep, 0.62))
         if i % 3 == 0:
-            det.append((ellipse(x - rx * 1.0, y + ry * 0.7, rx * 0.35, ry * 0.35), HIDE.deep, 0.7))
+            det.append((ellipse(x - rx * 1.2, y + ry * 0.9, rx * 0.3, ry * 0.3), HIDE.deep, 0.55))
     # les plis doux de la peau, qui suivent les cuisses
     det += [(ribbon([sk(p) for p in [(58.4, 90.6), (57.4, 97.0), (55.6, 103.4)]], [0.2, 1.6, 0.2]), HIDE.shadow, 0.55),
             (ribbon([sk(p) for p in [(76.4, 90.8), (76.6, 98.0), (75.6, 106.0)]], [0.2, 1.4, 0.2]), HIDE.shadow, 0.45),
@@ -593,8 +599,9 @@ def loincloth(fig, P, U):
         # suit la courbe de la corde
         sag = 1.9 * math.sin(math.pi * (t0 + t1) / 2)
         a, b = (a[0], a[1] + sag), (b[0], b[1] + sag)
-        det.append((ribbon([a, lerp(a, b, 0.5), b], [0.6, 2.6, 0.6]), ROPE.light, 0.7))
-        det.append((ribbon([lerp(a, b, 0.25), lerp(a, b, 0.6), lerp(a, b, 0.9)], [0.1, 0.8, 0.1]).move(0.3, -0.3), ROPE.hi, 0.55))
+        mid = lerp(a, b, 0.5)
+        det.append((ellipse(mid[0], mid[1], 2.6, 1.55, ang_of(sub(b, a))), ROPE.light, 0.55))
+        det.append((ellipse(mid[0] + 0.5, mid[1] - 0.5, 1.0, 0.45, ang_of(sub(b, a))), ROPE.hi, 0.6))
     fig.part('belt', belt, ROPE, cel=0.9, rim=0.5, cast=1.0, details=det)
     # le nœud sur la hanche lointaine, et ses deux bouts qui pendent
     kc = (90.8, 89.6)
@@ -609,10 +616,10 @@ def loincloth(fig, P, U):
                  details=[(ribbon([lerp(p0, p1, 0.3), p1, lerp(p1, p2, 0.7)], [0.1, 0.7, 0.1]).move(0.4, -0.2), ROPE.hi, 0.5)])
         for j, (a, b, ww) in enumerate(tuft):
             fig.part('rtuft%d%d' % (i, j), taper([a, lerp(a, b, 0.5), b], ww, 0.1, tip='sharp'), ROPE, cel=0, rim=0.3, cast=0.3)
-    knot = sm([(87.6, 88.0), (90.4, 86.0), (94.0, 87.2), (94.6, 90.6), (92.2, 93.2), (88.4, 92.4)])
+    knot = union(ellipse(89.4, 89.4, 2.6, 2.0, -35), ellipse(92.6, 89.0, 2.4, 2.1, 30), ellipse(91.0, 91.4, 2.0, 1.6), step=0.35)
     fig.part('knot', knot, ROPE, cel=0.9, rim=0.6, cast=1.0,
-             details=[(ribbon([(88.6, 91.4), (91.0, 89.0), (93.4, 87.8)], [0.2, 1.0, 0.2]), ROPE.shadow, 0.6),
-                      (ellipse(92.0, 88.0, 1.3, 0.7, -20), ROPE.hi, 0.6)])
+             details=[(ribbon([(89.0, 92.2), (90.8, 89.6), (91.6, 87.2)], [0.2, 0.9, 0.2]), ROPE.shadow, 0.65),
+                      (ellipse(89.0, 88.4, 1.1, 0.55, -35), ROPE.hi, 0.6), (ellipse(93.2, 88.2, 1.0, 0.5, 30), ROPE.hi, 0.55)])
     fig.pose(['cloth', 'belt', 'knot', 'rend0', 'rend1', 'rtuft00', 'rtuft01', 'rtuft10', 'rtuft11'], U)
 
 
@@ -650,7 +657,9 @@ def head(fig, P, HEAD):
             hd += [(e.scale(1.12, 1.35, cx - 1.0, cy), '#20302a', 0.85),
                    (e, ('rad', cx, cy - 0.4, 4.6, 3.0, [(0, EYE[0]), (0.45, EYE[1]), (1, EYE[2])]), 1)]
             # la paupière du haut pose son ombre (regard dur)
-            hd += [(sm([(cx - 6.5, cy - 3.2), (cx + 4.5, cy - 2.4), (cx + 4.5, cy - 0.9), (cx - 6.5, cy - 1.4)]), EYE[3], 0.45)]
+            lid = inter(sm([(cx - 6.5, cy - 3.6), (cx + 4.5, cy - 2.8), (cx + 4.5, cy - 0.9), (cx - 6.5, cy - 1.2)]), e)
+            if lid is not None:
+                hd += [(lid, EYE[3], 0.45)]
             hd += [(ellipse(px, py, r * 0.55, r * 0.75), '#2a0e10', 1)]
         hd += [(ellipse(73.7, 33.0, 0.55, 0.45), '#ffffff', 1), (ellipse(89.5, 32.6, 0.45, 0.38), '#ffffff', 1)]
     # les gros sourcils noirs broussailleux, froncés en V (bords en touffes, pas de traits)
@@ -706,9 +715,9 @@ def head(fig, P, HEAD):
     fig.part('cap', cap, HAIR, grad=(90, 14, 58, 32, [(0, '#56628c'), (0.4, HAIR.light), (1, HAIR.base)]),
              cel=1.0, rim=0.8, cast=1.2, cast_on=['head', 'ear'], ink=HAIR_INK,
              details=[(ribbon([(60.0, 22.4), (68.0, 16.4), (78.0, 14.6), (87.6, 16.8)], [0.2, 1.4, 1.2, 0.2]), HAIR.hi, 0.4)])
-    fronts = [((90.0, 24.6), (96.6, 17.6), (89.4, 8.8), (71.0, 4.8), 9.6),
-              ((92.4, 24.0), (98.6, 20.6), (98.2, 14.2), (93.0, 10.2), 6.4),
-              ((85.6, 26.6), (88.6, 21.4), (85.6, 16.6), (78.4, 14.6), 6.0)]
+    fronts = [((89.6, 24.4), (95.0, 16.8), (86.0, 8.4), (66.0, 2.4), 8.2),
+              ((92.8, 24.6), (97.4, 19.8), (95.0, 13.6), (87.6, 10.8), 5.8),
+              ((85.4, 26.4), (88.4, 21.4), (84.6, 16.8), (77.0, 15.2), 5.4)]
     names = []
     for i, (p0, p1, p2, p3, w) in enumerate(fronts):
         p0, p1, p2, p3, w = wave(i + 2, p0, p1, p2, p3, w, P)
