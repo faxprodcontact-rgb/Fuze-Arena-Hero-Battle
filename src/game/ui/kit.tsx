@@ -138,14 +138,12 @@ export function Stars({ stars }: { stars: number }) {
 export function CardFigure({ id, alt = '' }: { id: string; alt?: string }) {
   const m = (HD_FIG.chars as Record<string, readonly number[] | undefined>)[id];
   if (!m) return <img class="hcard-face" src={heroImage(id)} alt={alt} />;
-  const [w, h, fx, fy, n, ms] = m as unknown as [number, number, number, number, number, number];
-  let hash = 0;
-  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) % 997;
+  const [w, h, fx, fy, n] = m as unknown as [number, number, number, number, number, number];
+  // Une seule image, immobile, dessinée en fond (plantage sur iPhone le 26/11 : chaque carte faisait défiler une bande
+  // 12 fois plus large qu'elle, et Safari gardait en mémoire 44 de ces bandes géantes dès l'ouverture de l'onglet Héros).
   return (
     <span class="hcard-fig" role="img" aria-label={alt} style={{ '--w': w, '--h': h, '--fx': fx, '--fy': fy } as never}>
-      <img src={figureUrl(id)} alt="" draggable={false} style={{
-        width: `${n * 100}%`, animation: `px-idle ${((n * ms) / 1000).toFixed(2)}s steps(${n}) infinite`, animationDelay: `-${(((hash % n) * ms) / 1000).toFixed(2)}s`,
-      }} />
+      <span class="hcard-still" style={{ backgroundImage: `url(${figureUrl(id)})`, backgroundSize: `${n * 100}% 100%` }} />
     </span>
   );
 }

@@ -369,6 +369,7 @@ p { margin: 6px 0; }
   left: calc(50% - var(--fx) * var(--u)); top: calc(var(--feet) - var(--fy) * var(--u)); width: calc(var(--w) * var(--u)); aspect-ratio: var(--w) / var(--h);
   filter: drop-shadow(0 2px 1px #00000073); }
 .hcard .hcard-fig img { position: absolute; left: 0; top: 0; height: 100%; max-width: none; transform: none; image-rendering: pixelated; filter: none; }
+.hcard-still { position: absolute; inset: 0; background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; }
 .hcard-face { position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%); width: 80%; image-rendering: pixelated; }
 /* le liseré (la page d'un héros) ; sur les cartes, un cadre de métal par rareté (sections/cartes-heros.css) */
 .hcard-frame { position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: 16px;
@@ -556,12 +557,12 @@ p { margin: 6px 0; }
   align-items: center; margin-top: -24px; border-radius: 26px 26px 0 0;
   padding: 14px env(safe-area-inset-right, 0px) 36px env(safe-area-inset-left, 0px); box-shadow: 0 -8px 22px #05021a66; }
 .dock > button { position: relative; z-index: 1; }
-/* une colonne : le picto (64 px, posé sur la ligne de sol), le libellé, puis la jauge (le sablier garde sa place vide) */
-.dock-chest, .dock-fast { position: relative; display: grid; grid-template-rows: 58px 16px 6px; row-gap: 3px; justify-items: center; align-items: end; width: var(--side); }
-.dock-pic { position: relative; display: flex; align-items: flex-end; justify-content: center; width: 64px; height: 58px; }
+/* une colonne : le picto (62 px, posé sur la ligne de sol), le libellé, puis la jauge (le sablier garde sa place vide) */
+.dock-chest, .dock-fast { position: relative; display: grid; grid-template-rows: 54px 15px 6px; row-gap: 3px; justify-items: center; align-items: end; width: var(--side); }
+.dock-pic { position: relative; display: flex; align-items: flex-end; justify-content: center; width: 64px; height: 54px; }
 /* le coffre et le sablier : posés tels quels sur la feuille (leur ombre est dans le dessin) ; ils s'enfoncent sous le doigt */
 .dock-pic .icon { position: relative; margin-bottom: -6px; }
-.dock-fast .dock-pic .icon { margin-bottom: -3px; }
+.dock-fast .dock-pic .icon { margin-bottom: -4px; }
 .dock-chest:active .dock-pic, .dock-fast:active .dock-pic { transform: translateY(3px) scale(0.95); }
 /* le butin est prêt (2 h et plus) : le coffre sautille ; plein : il s'ouvre (le dessin luit) et sautille plus vite */
 .dock-chest.ready .icon { animation: chest-hop 2.2s ease-in-out infinite; }
@@ -570,7 +571,7 @@ p { margin: 6px 0; }
 /* le sablier se retourne de temps en temps */
 .dock-fast .icon { animation: hourglass-turn 5s ease-in-out infinite; }
 @keyframes hourglass-turn { 0%, 86% { rotate: 0deg; } 94%, 100% { rotate: 180deg; } }
-.dock-time { font: 400 13px/16px var(--font-title); letter-spacing: 0.2px; color: #fff; white-space: nowrap; text-shadow: 0 1px 0 #0a0620; }
+.dock-time { font: 400 13px/15px var(--font-title); letter-spacing: 0.2px; color: #fff; white-space: nowrap; text-shadow: 0 1px 0 #0a0620; }
 /* la jauge du butin : un creux sombre, l'or qui monte (un reflet clair dessus) */
 .dock-bar { --pxf: linear-gradient(#0b0818a6, #0b0818a6); --pr: var(--r-pill); --psh: inset -1px 1px 0 #0000008c, inset 0 -1px 0 #ffffff1f;
   align-self: center; width: 54px; height: 6px; padding: 1px; }
@@ -587,7 +588,7 @@ p { margin: 6px 0; }
 .dock-power.ok { color: #fff; } .dock-power.low { color: #ffb3bd; }
 /* petit téléphone : colonnes un peu plus étroites, Combattre un peu plus petit (les écarts restent égaux) */
 @media (max-width: 389px) { .dock { --side: 72px; grid-template-columns: var(--side) minmax(0, 182px) var(--side); } .dock-fight-label { font-size: 22px; } .dock-fight-stage { font-size: 12.5px; } }
-@media (max-height: 700px) { .dock { padding-bottom: 14px; } }
+@media (max-height: 700px) { .dock { padding-bottom: 20px; } }
 .hourglass.hourglass-art.big { width: 64px; height: 64px; }
 
 /* ---------- Campagne : fenêtres du butin ---------- */
