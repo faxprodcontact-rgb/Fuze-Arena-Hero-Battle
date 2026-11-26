@@ -5,6 +5,7 @@ import { heroToUnit } from '../src/core/battle/units';
 import { ELEMENT_BONUS, type Effect, type UnitInit } from '../src/core/battle/types';
 import { HEROES, PASSIVE_STARS } from '../src/core/data/heroes';
 import { HD_ANIM } from '../src/game/hd-meta';
+import { heroArt } from '../src/game/look';
 
 function unit(id: string, side: 'hero' | 'enemy', slot: 0 | 1 | 2 | 3 | 4, effects: Effect[], extra: Partial<UnitInit> = {}): UnitInit {
   return {
@@ -74,16 +75,16 @@ describe('effets', () => {
     expect(elementBonus([h('fire'), h('water')])).toBeNull();
   });
 
-  it('36 héros : 9 par élément, chaque rôle présent, tous dessinés en HD', () => {
-    expect(HEROES).toHaveLength(36);
+  it('44 héros (36 + 8 monstres de clan) : au moins 9 par élément, chaque rôle présent, tous dessinés en HD', () => {
+    expect(HEROES).toHaveLength(44);
     for (const el of ['fire', 'water', 'wind', 'earth']) {
       const list = HEROES.filter((h) => h.element === el);
-      expect(list).toHaveLength(9);
+      expect(list.length).toBeGreaterThanOrEqual(9);
       for (const role of ['protector', 'warrior', 'marksman', 'assassin', 'healer', 'support']) expect(list.filter((h) => h.role === role).length).toBeGreaterThan(0);
       // la fusion des Épiques demande des héros du même élément : chaque élément en a de chaque rareté
       for (const r of ['common', 'rare', 'epic', 'legendary']) expect(list.filter((h) => h.rarity === r).length).toBeGreaterThan(0);
     }
-    expect(HEROES.filter((h) => h.talent)).toHaveLength(12);
-    expect(HEROES.every((h) => h.id in HD_ANIM.chars)).toBe(true);
+    expect(HEROES.filter((h) => h.talent)).toHaveLength(15);
+    expect(HEROES.every((h) => heroArt(h.id) in HD_ANIM.chars)).toBe(true);
   });
 });
