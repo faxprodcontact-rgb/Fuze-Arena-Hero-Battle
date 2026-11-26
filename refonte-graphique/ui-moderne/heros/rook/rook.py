@@ -205,8 +205,8 @@ def wing(fig, side, P, S):
         b0, _ = along(path0, u)
         L0 = 7.2 - 2.6 * i / (nl - 1)
         tip = lerp(b0, tips0[j], L0 / math.dist(b0, tips0[j]))
-        root, ang, L, wv = place(u, tip, 1.0, i * 1.2)
-        wdt = 4.8 - 2.0 * i / (nl - 1)
+        wdt = 4.8 - 2.2 * i / (nl - 1)
+        root, ang, L, wv = place(u, tip, 0.5 + 0.5 * wdt, i * 1.2)
         sh = plume(root, ang, L + 0.6, wdt, curl=sg * 8, kind='cover')
         tp = sh_tip(root, ang, L, sg * 8)
         nm = '%sl%d' % (pre, i)
@@ -216,7 +216,7 @@ def wing(fig, side, P, S):
                                                       [(0, '#b0581c', 0.45), (1, '#e0901e', 0.3)]), 1)])
         names.append(nm)
     # -- le bord d'attaque doré (le bras, de l'épaule au bout de la main), d'un seul tenant --
-    c = crpath([lerp(bones[0], bones[1], 0.55)] + bones[1:], 30)
+    c = crpath(([lerp(bones[0], bones[1], 0.55)] if near else [lerp(bones[0], bones[1], -0.1)]) + bones[1:], 30)
     ws = [5.0 - 3.5 * (i / 30) ** 1.1 for i in range(31)]
     band = limb(c, ws)
     nm = pre + 'edge'
