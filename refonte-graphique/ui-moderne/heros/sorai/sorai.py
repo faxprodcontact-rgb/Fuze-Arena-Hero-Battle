@@ -488,7 +488,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['pcord', 'pcap', 'ptass'], POM)
     fig.pose(['nsleeve', 'cuff', 'wrist', 'handle', 'button', 'pearl'] + fing + fnames, U)
     # ce que les effets doivent savoir (repère du dessin)
-    fig.ctx = dict(U=U, UC=UC, P=P, fist=mapp(U, NH), fang=fang - la,
+    fig.ctx = dict(U=U, UC=UC, P=P, fist=mapp(U, NH), fang=fang + la,
                    fan_c=mapp(U, add(NH, unit(fang), 20.0)), fan_tip=mapp(U, add(NH, unit(fang), 30.0)),
                    fan_base=mapp(U, add(NH, unit(fang), 11.4)),
                    head=mapp(HEAD, (70, 36)), beak=mapp(HEAD, (87, 41)), chest=mapp(U, (67, 64)),

@@ -29,7 +29,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, limb, ribbon, ellipse, rpoly, sides, mchain, mT, mR, mS, mapp  # noqa: E402
-from outils import fuse, P as PG, geom_shapes  # noqa: E402
+from outils import fuse, P as PG, geom_shapes, geom_shape  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'knights-8'
@@ -211,6 +211,12 @@ def rock_grad(sh, tones=None):
     t = tones or [(0, '#9a8e8a'), (0.55, ROCK.base), (1, '#5a5066')]
     return (x1, y0, x0 + (x1 - x0) * 0.15, y1, t)
 
+
+# la poitrine lointaine et l'épaule lointaine (le bras lointain passe devant elles pendant le défi)
+CHESTF = rk([(76.8, 50.6), (83.0, 47.0), (92.6, 46.6), (99.8, 50.0), (103.0, 56.6), (102.0, 63.4), (97.0, 68.4), (88.0, 70.0),
+             (80.6, 67.0), (77.0, 60.0)], 2.0)
+FSH = sm([(86.6, 47.0), (87.6, 39.6), (91.8, 34.0), (98.4, 31.8), (104.0, 34.4), (106.8, 40.8), (106.0, 49.0),
+          (100.8, 54.4), (92.0, 54.0)], t=0.85)
 
 # ---------- les poings ----------
 # Un poing fermé vu de côté, dans le repère du poignet : +x le long de l'avant-bras (vers les jointures), +y le côté
@@ -412,8 +418,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.glow(c[0], c[1], 52, 56, '#ff7a1e', 0.06 * P['glow'] + 0.2 * P['heat'])
 
     # ================================================================ l'épaule lointaine (derrière la tête)
-    fsh = sm([(86.6, 47.0), (87.6, 39.6), (91.8, 34.0), (98.4, 31.8), (104.0, 34.4), (106.8, 40.8), (106.0, 49.0),
-              (100.8, 54.4), (92.0, 54.0)], t=0.85)
+    fsh = FSH
     fig.part('fsh', fsh, ROCK, grad=rock_grad(fsh), cel=1.4, rim=0.7, cast=0,
              details=[(sm([(94.0, 34.2), (99.4, 32.6), (104.0, 35.4), (105.6, 40.4), (100.6, 39.0), (96.0, 37.6)]), ROCK.light, 0.55)]
              + moss_patch([(93.6, 35.4), (96.6, 32.6), (101.0, 32.2), (103.6, 34.4), (100.4, 35.6), (97.0, 36.6)], 0.9)
@@ -426,6 +431,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         Wt = mapp(UC, P['fw'])
         E, W = ik(S, Wt, FL[0], FL[1], SG_F)
         shp, g, gu, gf = arm_shape(S, E, W, (14.5, 13.6, 15.6, 13.2), [('u', 0.45, -3.0, 6.5, 5.6), ('f', 0.5, 0.6, 8.2, 6.6)])
+        if front:
+            # le bras passe devant la poitrine (défi) : l'épaule reste cachée derrière la poitrine et l'épaule-rocher
+            from shapely.geometry import Point
+            hide = PG(MS(TOR, CHESTF)).union(PG(MS(UC, FSH))).intersection(Point(S).buffer(15.0))
+            g = g.difference(hide)
+            shp = geom_shape(g, sharp_deg=70)
+            gu = gu.difference(hide)
         fold = fold_of(S, E, W)
         det = arm_details(S, E, W, gu, gf, fold, (14.5, 13.6, 15.6, 13.2)) + heat_tint(shp, P['heat'] * 0.6)
         fig.part('farm', shp, ROCK, grad=rock_grad(shp), cel=1.6, rim=0.7, cast=1.2 if front else 0, details=det)
@@ -508,8 +520,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     bdet += pits([(86.0, 79.4, 0.6)])
     bdet += heat_tint(belly, P['heat'] * 0.55)
     fig.part('belly', belly, ROCK, grad=rock_grad(belly), cel=1.1, rim=0.7, cast=1.3, details=bdet, cast_on=['hipn', 'hipf'])
-    chestf = rk([(76.8, 50.6), (83.0, 47.0), (92.6, 46.6), (99.8, 50.0), (103.0, 56.6), (102.0, 63.4), (97.0, 68.4), (88.0, 70.0),
-                 (80.6, 67.0), (77.0, 60.0)], 2.0)
+    chestf = CHESTF
     cfdet = planes([(80.0, 49.6), (83.0, 47.4), (92.6, 47.0), (99.6, 50.4), (97.0, 54.6), (88.0, 55.2), (81.0, 53.0)],
                    [(97.0, 54.6), (99.6, 50.4), (102.8, 56.6), (101.8, 63.0), (98.0, 61.6)],
                    [(77.0, 60.0), (81.0, 53.0), (84.6, 58.0), (84.0, 66.0), (80.6, 67.0)])
@@ -534,6 +545,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ================================================================ la tête-rocher
     build_head(fig, P)
     fig.pose(['head'], HEAD)
+
+    # le défi : le bras lointain passe devant la poitrine (mais reste derrière le bras proche)
+    if P['ffront'] >= 0.5:
+        far_arm(True)
 
     # ================================================================ le bras proche, l'épaule-rocher, le poing sur la hanche
     S = mapp(UC, NS)
@@ -574,9 +589,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     na = ang_of(E, W) + P['nrot']
     fist_parts(fig, 'nfist', W, na, -1, False, 1.0)
-
-    if P['ffront'] >= 0.5:
-        far_arm(True)
 
     fig.ctx = dict(U=U, UC=UC, TOR=TOR, HEAD=HEAD, P=P, near=fig.ctx_near, far=fig.ctx_far,
                    chest=mapp(TOR, (72, 62)), head=mapp(HEAD, (80, 34)), mouth=mapp(HEAD, (86, 47)),

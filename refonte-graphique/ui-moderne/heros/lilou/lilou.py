@@ -55,7 +55,7 @@ HP = (92.0, 52.0)               # la tête est agrandie ×1,1 autour de ce point
 HSC = 1.1
 NS, NE0, NW0 = (48.4, 63.4), (41.6, 83.2), (53.4, 68.4)       # bras proche : épaule, coude, poignet (repos)
 FS, FE0, FW0 = (84.6, 63.6), (94.2, 79.6), (102.6, 64.8)      # bras lointain (épaule cachée derrière le plastron)
-NH, NK0, NA0 = (51.4, 90.4), (47.0, 100.8), (46.8, 109.4)     # jambe proche : hanche, genou, cheville
+NH, NK0, NA0 = (51.6, 95.0), (47.6, 103.0), (46.8, 110.2)     # jambe proche : hanche, genou, cheville
 FH, FK0, FA0 = (80.0, 93.0), (86.2, 102.2), (84.8, 110.0)     # jambe lointaine
 TAILR = (36.0, 98.0)            # la racine de la queue
 
@@ -212,8 +212,8 @@ SHELL_PTS = [(45.0, 43.4), (51.6, 42.4), (57.4, 43.0), (61.2, 45.2), (63.0, 48.8
              (26.2, 89.8), (23.0, 83.2), (20.8, 76.0), (20.0, 69.0), (20.6, 62.0), (22.6, 56.2), (25.6, 51.4), (29.8, 47.4),
              (34.8, 44.6), (40.0, 43.4)]
 TORSO_PTS = [(57.6, 59.4), (60.6, 53.4), (67.0, 50.0), (76.0, 49.4), (83.2, 51.4), (87.8, 56.4), (89.6, 63.0), (90.0, 72.0),
-             (89.4, 82.0), (87.0, 90.4), (81.6, 97.6), (73.8, 101.2), (65.6, 100.8), (58.4, 96.6), (53.4, 89.2), (51.4, 80.0),
-             (52.2, 70.0), (54.6, 63.0)]
+             (89.4, 82.0), (87.0, 90.4), (81.6, 97.6), (73.8, 101.2), (65.6, 100.8), (58.4, 96.6), (55.8, 89.6), (55.4, 81.0),
+             (56.0, 72.0), (56.4, 64.0)]
 # le plastron (jaune) : sa limite haute passe sous le gant proche ; à droite, le pont de carapace jusqu'au bord du buste
 PLAS_PTS = [(58.6, 63.4), (64.0, 61.2), (72.0, 60.6), (80.0, 61.4), (86.6, 64.0), (91.0, 69.0), (87.0, 78.0), (85.8, 86.0),
             (83.2, 92.6), (78.6, 97.6), (72.6, 100.8), (65.0, 101.6), (57.0, 98.0), (50.0, 88.0), (49.0, 76.0), (52.0, 67.0)]
@@ -407,7 +407,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     arm = bent(S, E, W, 15.6, 12.6, 10.0, bulge=(0.06, 0.06), n=12)
     upper = limb([S, lerp(S, E, 0.5), E], [15.6, 14.8, 12.6])
     fore = limb([E, lerp(E, W, 0.5), W], [12.0, 11.0, 10.0])
-    nH, nK, nA, nlg, nfoot, nFM = leg_geom(NH, NK0, NA0, NLL, SG_NL, (20.0, 18.0, 16.0), NEAR_FOOT)
+    nH, nK, nA, nlg, nfoot, nFM = leg_geom(NH, NK0, NA0, NLL, SG_NL, (19.0, 17.6, 16.0), NEAR_FOOT)
     torso = MS(TOR, sm(TORSO_PTS, t=0.9))
     body, bodyg = fuse([torso, arm, nlg, nfoot], smooth=0.6)
     gtors, garm, gleg, gup, gfore = PG(torso), PG(arm), PG(nlg).union(PG(nfoot)), PG(upper), PG(fore)
@@ -420,14 +420,21 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         det += [(ribbon(T_(pts), [0.1] + [w] * (len(pts) - 2) + [0.1]), SKIN.shadow, 0.7),
                 (ribbon(T_([(x + 0.2, y - 0.8) for x, y in pts]), [0.1] + [w * 0.6] * (len(pts) - 2) + [0.1]), SKIN.hi, 0.45)]
     # -- le bras proche : le pli de l'avant-bras contre le haut du bras, l'épaule ronde et luisante, des écailles --
-    det += cast_into(gfore, gup.difference(gfore), 1.6, (0.3, 0.4))
+    # le haut du bras, derrière l'avant-bras, un ton plus sombre ; l'avant-bras plié devant lui, éclairé sur le dessus
+    gupv = gup.difference(gfore).intersection(bodyg)
+    sh_ = geom_shapes(gupv)
+    if sh_:
+        det += [(sh_, ('lin', S[0] + 4, S[1] - 4, E[0] - 6, E[1] + 4, [(0, SKIN.shadow, 0.0), (0.5, SKIN.shadow, 0.3), (1, SKIN.deep, 0.45)]), 1)]
+    fv = geom_shapes(gfore.intersection(bodyg))
+    if fv:
+        det += [(fv, ('lin', W[0] + 3, W[1] - 4, E[0] - 3, E[1] + 3, [(0, SKIN.light, 0.75), (0.55, SKIN.light, 0.25), (1, SKIN.light, 0)]), 1)]
+    det += cast_into(gfore, gup.difference(gfore), 2.4, (0.32, 0.42))
     det += inner_rim(gfore, gup, 0.7, SKIN.hi, 0.55)
     det += cast_into(garm, gtors.difference(garm), 1.8, (0.26, 0.34))
     det += inner_cel(garm, gtors, 1.6, SKIN.shadow, 0.6)
     det += [(ellipse(S[0] + 2.2, S[1] - 2.6, 6.0, 4.4, -20), ('rad', S[0] + 2.8, S[1] - 3.0, 6.0, 6.0, [(0, SKIN.light, 0.85), (1, SKIN.light, 0)]), 1)]
     det += gloss((S[0] + 3.0, S[1] - 3.4), 2.2, 1.0, -24, 0.8)
-    det += [(ribbon([seg_pt(E, W, 0.12, 5.2), seg_pt(E, W, 0.5, 5.4), seg_pt(E, W, 0.88, 4.8)], [0.2, 1.3, 0.3]), SKIN.deep, 0.55),
-            (ribbon([seg_pt(E, W, 0.15, 3.8), seg_pt(E, W, 0.55, 3.9), seg_pt(E, W, 0.9, 3.4)], [0.3, 1.6, 0.3]), SKIN.light, 0.6)]
+    det += [(ribbon([seg_pt(E, W, 0.15, 3.8), seg_pt(E, W, 0.55, 3.9), seg_pt(E, W, 0.9, 3.4)], [0.3, 1.6, 0.3]), SKIN.light, 0.6)]
     det += scale_patch(seg_pt(S, E, 0.45, 2.6), 1.7, ang_of(S, E))
     det += scale_patch(seg_pt(S, E, 0.75, -2.6), 1.4, ang_of(S, E), 0.85)
     det += scale_patch(seg_pt(E, W, 0.45, 0.8), 1.4, ang_of(E, W) + 90, 0.9)
@@ -488,9 +495,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     rope = geom_shapes(grope, simplify=0.02)
     det = []
     # la corde tressée : quelques torsions éclairées (inégales), le dessous dans l'ombre
-    for i, (t0, t1, w) in enumerate(((0.16, 0.22, 1.0), (0.27, 0.34, 1.1), (0.4, 0.46, 1.0), (0.52, 0.58, 1.1), (0.78, 0.85, 1.0))):
+    for i, (t0, t1, w) in enumerate(((0.2, 0.3, 0.9), (0.43, 0.5, 0.8), (0.58, 0.67, 0.9), (0.84, 0.9, 0.7))):
         a, b = rope_c[int(t0 * 40)], rope_c[int(t1 * 40)]
-        det += [(ribbon([(a[0], a[1] + 0.9), lerp(a, b, 0.5), (b[0], b[1] - 0.9)], [0.1, w, 0.1]), ROPE.light, 0.75)]
+        det += [(ribbon([(a[0], a[1] + 0.8), lerp(a, b, 0.5), (b[0], b[1] - 0.9)], [0.2, w, 0.2]), ROPE.light, 0.5)]
+    det += [(ribbon([(x + 0.1, y - 1.0) for x, y in rope_c[6:36:6]], [0.1, 0.5, 0.6, 0.5, 0.1]), ROPE.hi, 0.35)]
     fig.part('rope', rope, ROPE, grad=(*rope_c[-1], rope_c[0][0], rope_c[0][1] + 3, [(0, ROPE.light), (0.5, ROPE.base), (1, ROPE.shadow)]),
              cel=0.8, rim=0.5, cast=1.0, cast_on=['plas', 'body', 'bridge'], details=det)
     # le noeud et ses deux bouts effilochés
@@ -552,9 +560,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (HD(ribbon([(86.2, 49.0), (83.4, 50.6), (79.6, 51.4)], [0.1, 0.45, 0.1])), SKIN.hi, 0.5),
            (HD(ribbon([(66.6, 44.0), (69.6, 47.6), (74.0, 50.2)], [0.1, 0.8, 0.1])), SKIN.shadow, 0.45)]
     # quelques écailles sur la tempe et le crâne
-    hd += scale_patch(hp((71.0, 40.4)), 1.5 * HSC, -10, 0.85)
-    hd += scale_patch(hp((76.4, 44.0)), 1.2 * HSC, 0, 0.75)
-    hd += scale_patch(hp((68.8, 45.2)), 1.0 * HSC, 10, 0.6)
+    hd += [(HD(ribbon([(87.4, 50.6), (85.6, 51.8), (83.8, 53.2)], [0.5, 0.8, 0.1])), SKIN.deep, 0.75)]
     # le bandeau de ninja rouge, serré autour du front (peint DANS la tête : il va d'un bord à l'autre)
     ghead = PG(head)
     gband = PG(HD(sm(BAND_PTS, t=0.9))).intersection(ghead)
@@ -568,8 +574,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     if gb_hi:
         hd += [(gb_hi, RED.hi, 0.75)]
     # un pli devant (le noeud tire le tissu vers l'arrière), un reflet chaud
-    hd += [(HD(ribbon([(90.6, 29.2), (88.4, 31.6), (85.0, 33.6)], [0.1, 0.9, 0.1])), RED.shadow, 0.8),
-           (HD(ribbon([(91.4, 29.4), (89.6, 31.4), (86.8, 33.0)], [0.1, 0.45, 0.1])), RED.hi, 0.55),
+    hd += [(HD(ribbon([(91.0, 29.0), (89.6, 31.2), (88.0, 33.0)], [0.1, 0.9, 0.1])), RED.shadow, 0.7),
+           (HD(ribbon([(91.8, 29.2), (90.6, 31.0), (89.4, 32.4)], [0.1, 0.45, 0.1])), RED.hi, 0.5),
            (HD(ellipse(95.4, 31.2, 1.8, 0.7, 8)), RED.hi, 0.7)]
     # les arcades lourdes et froncées (elles écrasent les yeux) : le bourrelet éclairé, le creux sombre dessous
     hd += [(HD(sm([(80.4, 36.6), (84.6, 35.6), (89.4, 36.4), (91.6, 38.0), (89.0, 37.8), (85.0, 37.4), (81.2, 38.0)], sharp=(0, 3), t=0.8)), SKIN.deep, 0.9),
@@ -612,7 +618,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     JAW = mR(gp_ * 3.0, 87.6, 50.0)
     HJ = mchain(HEAD, JAW)
     JD = lambda sh: MS(HJ, sh)
-    gul = HD(sm([(86.0, 49.6), (90.6, 49.4), (95.0, 49.6), (92.0, 51.0), (88.0, 51.6), (86.2, 51.2)], t=0.9))
+    gul = HD(sm([(87.2, 50.0), (91.0, 49.8), (95.0, 49.8), (92.0, 51.0), (88.6, 51.6), (87.4, 51.2)], t=0.9))
     fig.part('gullet', gul, Mat(GULLET[2], GULLET[1], GULLET[0], '#2a0818', '#1a0410'), cel=0, rim=0, cast=0,
              details=[(gul, ('rad', *hp((88.0, 49.6)), 5.0, 5.0, [(0, GULLET[2]), (0.6, GULLET[1]), (1, GULLET[0])]), 1)])
     # -- le bec du bas, en retrait (dans l'ombre du bec du haut) --

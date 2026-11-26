@@ -163,8 +163,8 @@ RAISE_G = (101.0, 16.0)
 SPECIAL = [
     (0, {}),
     (110, dict(crouch=1, sk=1, jaw=1)),
-    (260, dict(ff=(104.0, 22.0), fa=-95, crouch=2, jaw=2, sk=1, bm=1, bdir=164.8, bL=42, bR=18, cs=1, fend=-100)),
-    (630, dict(ff=WHIRL_G, fa=-92, crouch=2, jaw=2, sk=1, bm=1, bdir=164.8, bL=44, bR=17, head=(-1, 0), fend=-100, wind=1)),
+    (260, dict(ff=(104.0, 22.0), fa=-95, crouch=2, jaw=2, sk=1, bm=1, bdir=156.1, bL=42, bR=18, cs=1, fend=-100)),
+    (630, dict(ff=WHIRL_G, fa=-92, crouch=2, jaw=2, sk=1, bm=1, bdir=156.1, bL=44, bR=17, head=(-1, 0), fend=-100, wind=1)),
     (680, dict(ff=RAISE_G, fa=-92, crouch=3, jaw=2, head=(0, -1), tilt=-4, bm=1, bdir=104, bL=46, bR=15.5, aura=0.5, fend=-95, wind=1)),
     (800, dict(ff=(101.0, 15.6), fa=-92, crouch=3, jaw=2, head=(0, -1.2), tilt=-4.5, bm=1, bdir=105, bL=47, bR=15.5, aura=0.8, fend=-95, wind=1)),
     (845, dict(ff=(101.0, 15.4), fa=-92, crouch=3, jaw=2.4, head=(0, -1.3), tilt=-5, bm=1, bdir=106, bL=48, bR=16, nopen=1, aura=1, fend=-95, wind=1.4)),
@@ -183,7 +183,7 @@ SP_LAUNCH = 830        # MOMENT DE LANCEMENT : le geyser jaillit, les orbes part
 ORBIT = [(260, 160.0), (430, 250.0), (510, 340.0), (575, 430.0), (630, 520.0)]
 
 
-def orbit(theta, L=40.0, R=15.0, lift=0.14):
+def orbit(theta, L=40.0, R=15.0, lift=0.3):
     """Le sac qui tourne autour du poing levé, vu un peu d'en dessus : theta = 0 vers l'ennemi, 90 derrière lui,
     180 vers la gauche, 270 devant lui (devant sa tête). Renvoie la direction vue, la longueur vue, devant ou non."""
     a = math.radians(theta)
@@ -601,8 +601,14 @@ def fx_special(tl):
         if au > 0.02:
             T = tl / 1000
             fig.glow(*mapp(U, (66, 60)), 62, 58, WARM[3], 0.18 * au)
-            for j, (x, y, h, w, ph) in enumerate(AURA):
-                b = mapp(ctx['UC'], (x, y))
+            # des points du corps (ils suivent ses gestes) : épaules, coudes, poings, crâne, hanches, genoux
+            HD = ctx['HEAD']
+            anchors = [(add(ctx['SN'], (-9, -3)), 30, 9.0), (add(ctx['SF'], (9, -2)), 30, 9.0), (add(ctx['EN'], (-6, -1)), 26, 8.0),
+                       (add(ctx['EF'], (6, -1)), 26, 8.0), (add(ctx['GN'], (-5, 1)), 22, 7.4), (mapp(HD, (60, 14)), 28, 8.6),
+                       (mapp(HD, (80, 9)), 30, 9.0), (mapp(HD, (46, 32)), 24, 8.0), (mapp(U, (44, 98)), 24, 8.0),
+                       (mapp(U, (100, 98)), 24, 8.0), ((30, 104), 20, 7.4), ((106, 103), 20, 7.4)]
+            for j, (b, h, w) in enumerate(anchors):
+                ph = j * 1.37
                 fl = 0.75 + 0.25 * math.sin(T * 9 + ph * 1.7)
                 fig.fx_back.append(tongue(fig, b, h * au * fl, w * (0.7 + 0.3 * au), bend=math.sin(T * 7 + ph), lean=0.15 * math.sin(T * 5 + ph), op=min(1, au * 1.4)))
             for j, (x, y, h, w, ph) in enumerate(AURA_FRONT):
@@ -644,7 +650,7 @@ def fx_special(tl):
                 if u <= 0:
                     continue
                 op = env(tl, SP_LAUNCH + delay - 10, SP_LAUNCH + delay + 40, 1250, 1700)
-                rx = 14 + 66 * u if j < 2 else 18 + 52 * u
+                rx = 26 + 54 * u if j < 2 else 22 + 48 * u
                 c = mapp(U, (66, y_)) if j < 2 else (feet[0], GR - 1.5)
                 ry = rx * (0.24 if j < 2 else 0.14)
                 fig.fx_back.append(flat_ring(fig, c, rx, ry, w - 1.0 * u, op, True, warm=warm))

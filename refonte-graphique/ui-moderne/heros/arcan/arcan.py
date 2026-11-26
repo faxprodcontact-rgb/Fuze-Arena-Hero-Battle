@@ -171,14 +171,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     else:
         outline, bu = dome, (0.0, -1.0)
     front_bag = bool(bag and bag.get('front'))
-    ctx = dict(U=U, UC=UC, TOR=TOR, HEAD=HEAD, HEADN=HEADN, P=P, GN=GN, GF=GF, EN=EN, EF=EF, SN=SN, SF=SF,
+    ctx = dict(WN=WN, WF=WF, U=U, UC=UC, TOR=TOR, HEAD=HEAD, HEADN=HEADN, P=P, GN=GN, GF=GF, EN=EN, EF=EF, SN=SN, SF=SF,
                outline=outline, bu=bu, m=m)
     fig.ctx = ctx
 
-    if not front_bag:
+    # le sac sur les épaules passe derrière la crinière ; tenu en l'air, il passe devant elle (derrière la tête)
+    if not front_bag and m < 0.5:
         bag_parts(fig, P, outline, m, GN, GF, uN, uF, bu)
     # ---- la crinière de derrière (couchée vers l'arrière, devant le sac) ----
     back_hair(fig, P, HEAD)
+    if not front_bag and m >= 0.5:
+        bag_parts(fig, P, outline, m, GN, GF, uN, uF, bu)
     if front_bag:
         neck_parts(fig, P, outline, m, GN, GF, uN, uF, bu, only='far')
 
