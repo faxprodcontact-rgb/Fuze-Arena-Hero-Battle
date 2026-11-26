@@ -16,6 +16,7 @@ import { TitleBanner } from '../title-banner';
 import { open, prepare } from '../nav';
 import { BagView } from './bag';
 import { Tabs } from '../kit';
+import '../sections/heros.css';
 
 type Sort = 'power' | 'stars' | 'rarity';
 
