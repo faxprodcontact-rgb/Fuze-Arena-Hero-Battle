@@ -496,8 +496,8 @@ def braids(fig, P):
 
 # les grappes de la barbe (cx, cy, rx, ry) : de haut en bas ; la grappe du milieu descend le plus bas
 LOBES = [
-    [(59.1, 54.0, 5.0, 5.6), (65.5, 55.0, 5.6, 5.8), (72.5, 55.6, 5.8, 6.0), (78.0, 56.2, 4.8, 5.2)],
-    [(60.1, 61.6, 4.6, 5.0), (66.1, 63.0, 5.2, 5.6), (72.9, 63.6, 5.6, 6.0), (79.1, 62.2, 5.0, 5.4), (82.8, 60.4, 3.4, 4.2)],
+    [(59.1, 54.0, 5.0, 5.6), (65.5, 55.0, 5.6, 5.8), (72.5, 55.6, 5.8, 6.0), (77.4, 56.6, 4.6, 5.0)],
+    [(60.1, 61.6, 4.6, 5.0), (66.1, 63.0, 5.2, 5.6), (72.9, 63.6, 5.6, 6.0), (79.1, 62.2, 5.0, 5.4), (82.0, 61.4, 3.4, 4.2)],
     [(62.5, 68.6, 4.2, 4.8), (67.9, 70.4, 4.8, 5.4), (74.1, 70.6, 4.8, 5.6), (79.1, 68.0, 4.0, 4.6)],
     [(65.9, 75.8, 3.8, 4.4), (70.9, 77.6, 4.2, 5.2), (76.1, 75.0, 3.6, 4.2)],
     [(70.5, 82.2, 2.8, 3.8)],
@@ -509,7 +509,7 @@ def beard(fig):
     à droite de chaque grappe, dessous plus sombre). Une seule silhouette ; son haut passe sous la barbe des joues."""
     # (2e avis : « la barbe va trop loin » : son haut s'arrête au bord de la joue lointaine, elle s'élargit seulement
     # sous la mâchoire)
-    shapes = [sm([(53.4, 48.0), (79.6, 47.6), (80.6, 53.0), (53.0, 54.0)])]
+    shapes = [from_poly([(53.4, 48.0), (79.0, 47.6), (79.8, 53.0), (53.0, 54.0)])]
     for row in LOBES:
         for cx, cy, rx, ry in row:
             shapes.append(ellipse(cx, cy, rx, ry))
@@ -654,11 +654,12 @@ def head(fig, P):
     mass = fused([cap, fore, cb] + [s_[0] for s_ in strands])
     cd = [(mass, ('rad', 74, 22, 30, 30, [(0, HAIR.hi), (0.3, HAIR.light), (0.65, HAIR.base), (1, HAIR.shadow)]), 1)]
     # les flammes, de la plus basse à la plus haute : chacune se détache de la masse sur ses 6 premiers pixels
-    for sh_, p0, p1, p2, p3, w0 in strands:
+    for k, (sh_, p0, p1, p2, p3, w0) in enumerate(strands):
         fd_ = min(0.5, 6.0 / math.dist(p0, p3))
         ax = (p0[0], p0[1], p3[0], p3[1])
         c = 1.0
-        for (dx, dy), op in (((-c * 0.55, c * 1.25), 0.2), ((-c * 0.3, c * 0.6), 0.28)):
+        # seules les deux grandes flammes du haut posent leur ombre sur celles du dessous
+        for (dx, dy), op in ((((-c * 0.55, c * 1.25), 0.2), ((-c * 0.3, c * 0.6), 0.28)) if k >= 2 else ()):
             co = cast_off(sh_, dx, dy)
             if co:
                 cd.append((co, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], fd_, op / 0.28),), 0.28))
@@ -670,7 +671,6 @@ def head(fig, P):
     cd += [(sm([(46, 38), (52.6, 40), (52.4, 52), (48, 52)]), HAIR.deep, 0.45),
            (sm([(45.0, 30.0), (54.0, 30.4), (58.0, 35.6), (53.4, 39.0), (46.0, 40.4)]), HAIR.shadow, 0.35),
            (ribbon([(77.6, 26.0), (72.0, 22.6), (64.0, 22.0), (57.0, 24.6)], [0.1, 1.3, 1.0, 0.1]), HAIR.hi, 0.55),
-           (ribbon([(58.4, 31.0), (53.4, 35.0), (50.4, 41.6), (50.0, 48.0)], [0.1, 0.9, 0.8, 0.1]), HAIR.light, 0.4),
            (ribbon([(70.0, 33.4), (63.0, 32.6), (57.6, 34.6)], [0.1, 0.7, 0.1]), HAIR.shadow, 0.45)]
     fade = lambda c, a: ('lin', 74, 31, 82, 22, [(0, c, 0), (0.45, c, a), (1, c, a)])
     cd += [(fore.move(-0.6, 1.0), fade(HAIR.deep, 0.35), 1),

@@ -120,7 +120,7 @@ def visage():
     guided = head_svg[:head_svg.rindex('</svg>')] + g + '</svg>'
     H = 4 * 512
     k = H / h
-    box = (round((55 - x0) * k), round((13 - y0) * k), round((101 - x0) * k), round((57 - y0) * k))
+    box = (round((51 - x0) * k), round((11 - y0) * k), round((97 - x0) * k), round((57 - y0) * k))
     ims = []
     for i, svg_txt in enumerate((head_svg, guided)):
         im = render(svg_txt, H, '_visage%d' % i).crop(box)

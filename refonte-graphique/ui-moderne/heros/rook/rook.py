@@ -310,16 +310,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # le bas du corps finit en pointes de plumes qui tombent sur les culottes des cuisses (plumes sur plumes)
     body0 = [(65.4, 43.4), (70.6, 41.0), (77.0, 40.4), (82.2, 41.8), (85.8, 45.6), (88.4, 51.4), (89.4, 58.4),
              (88.8, 65.6), (86.8, 72.0), (84.2, 77.0), (84.6, 81.4), (81.4, 79.6), (79.6, 84.6), (76.6, 81.8),
-             (73.0, 86.4), (70.0, 82.4), (66.4, 85.8), (64.0, 81.0), (60.2, 83.4), (59.4, 78.4), (56.4, 73.6),
-             (55.0, 66.6), (55.0, 59.2), (56.0, 53.8), (59.0, 48.6), (62.2, 45.2)]
-    body = sm([T_(p) for p in body0], sharp=(10, 12, 14, 16, 18), t=0.95)
+             (73.0, 86.4), (70.0, 82.4), (66.4, 85.8), (64.0, 81.0), (60.6, 83.6), (59.4, 79.0), (56.4, 81.0),
+             (55.0, 73.6), (55.0, 66.6), (55.0, 59.2), (56.0, 53.8), (59.0, 48.6), (62.2, 45.2)]
+    # (avis du 26/11, tour 2 : la liaison corps ↔ cuisse proche) le flanc gauche descend droit jusqu'à la cuisse : le
+    # bord de la culotte de plumes continue le contour du corps (plus d'encoche), la frange du ventre tombe dessus
+    body = sm([T_(p) for p in body0], sharp=(10, 12, 14, 16, 18, 20), t=0.95)
     # la naissance de l'aile proche (avis du 26/11, tour 2 : « les liaisons ») : une aisselle souple, large contre le
     # corps et qui s'affine jusqu'au coude, sous le bord doré de l'aile ; le contour du corps monte sans marche jusqu'à
     # l'aile (plus de moignon rond)
     S0, E0 = nb[0], nb[1]
     ax, ay = E0[0] - S0[0], E0[1] - S0[1]
     al = math.hypot(ax, ay)
-    nrm = (ay / al, -ax / al)                                  # vers le haut de l'aile (côté du bord doré)
+    nrm = (-ay / al, ax / al)                                  # vers le haut de l'aile (côté du bord doré)
 
     def off(t, d):
         q = lerp(S0, E0, t)
@@ -695,8 +697,8 @@ def legs(fig, P, BODY, LIFT):
         # la culotte de plumes : elle sort de sous le ventre, s'arrondit, et finit en trois pointes de flamme
         cx = (56.4 if side == 'n' else 80.4) + dx
         sway = 0.5 * P['amp'] * math.sin(P['ph'] - (2.0 if side == 'n' else 2.6)) - 0.04 * P['sk'] * 10
-        th0 = [(cx - 4.4, 76.0), (cx + 4.6, 76.0), (cx + 6.4, 82.0), (cx + 6.2, 88.0), (cx + 4.8, 94.4), (cx + 3.0, 99.2),
-               (cx + 1.4, 96.0), (cx - 0.2, 100.6), (cx - 1.8, 96.2), (cx - 3.6, 98.8), (cx - 4.8, 93.2), (cx - 6.4, 86.6),
+        th0 = [(cx - 3.4, 73.0), (cx + 4.6, 76.0), (cx + 6.4, 82.0), (cx + 6.2, 88.0), (cx + 4.8, 94.4), (cx + 3.0, 99.2),
+               (cx + 1.4, 96.0), (cx - 0.2, 100.6), (cx - 1.8, 96.2), (cx - 3.6, 98.8), (cx - 4.8, 93.2), (cx - 6.2, 86.6),
                (cx - 6.0, 80.6)]
         th0 = [(x + (sway * (y - 90) / 10 if y > 90 else 0), y) for x, y in th0]
         thigh = sm([mapp(BODY, p) for p in th0], sharp=(5, 6, 7, 8, 9), t=0.95)

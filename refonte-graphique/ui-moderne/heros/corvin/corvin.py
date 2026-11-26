@@ -192,7 +192,7 @@ def far_arm(fig, P, UC, SHM):
 def legs(fig, P, LEG):
     n0 = len(fig.parts)
     for nm, hip, knee, ank, heel, toe, far in (('f', (70.4, 86.0), (71.2, 95.6), (72.6, 105.6), 67.4, 86.6, True),
-                                              ('n', (57.4, 86.0), (56.2, 95.6), (55.8, 105.6), 45.6, 64.2, False)):
+                                              ('n', (57.4, 86.0), (56.2, 95.6), (55.8, 105.6), 49.8, 67.8, False)):
         # la braie bouffante : de la hanche au revers de la botte
         w0, w1 = 10.4, 9.0
         pant = sm([(hip[0] - w0 / 2, hip[1] - 2), (hip[0] + w0 / 2, hip[1] - 2), (knee[0] + w1 / 2 + 0.6, knee[1]),
@@ -204,8 +204,11 @@ def legs(fig, P, LEG):
                  cel=1.0, rim=0.6, cast=0.6, details=pdet)
         # la botte : tige, pied (talon, bout arrondi vers l'avant), semelle épaisse
         x0, x1 = ank[0] - 4.6, ank[0] + 4.4
-        boot = sm([(x0, 100.6), (x1, 100.6), (x1 + 0.2, 106.0), (x1 + 2.4, 108.6), (toe - 3.0, 110.0), (toe - 0.4, 112.0),
-                   (toe, 114.4), (toe - 0.6, GRD), (heel + 0.6, GRD), (heel, 114.0), (heel + 0.4, 110.6), (x0 - 0.2, 107.6)],
+        # le cou-de-pied descend en une seule courbe de la tige au bout (jamais de creux), le talon dépasse à peine
+        fl = toe - x1
+        boot = sm([(x0, 100.6), (x1, 100.6), (x1 + 0.15, 105.6), (x1 + 0.3 * fl, 108.3), (x1 + 0.7 * fl, 110.0),
+                   (toe - 0.3, 112.0), (toe, 114.4), (toe - 0.6, GRD), (heel + 0.6, GRD), (heel, 114.4),
+                   (heel + 0.15, 111.6), (x0 - 0.35 * (x0 - heel), 108.6)],
                   sharp=(7, 8), t=0.9)
         bdet = [
             # la semelle épaisse
