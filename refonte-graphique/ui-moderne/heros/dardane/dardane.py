@@ -624,22 +624,22 @@ def head(fig, P):
     hd += [(ellipse(68.0, 35.6, 4.6, 2.8), ('rad', 68.0, 35.6, 4.6, 2.8, [(0, EYE[2], 0.5 + 0.2 * P['glow']), (1, EYE[3], 0)]), 1),
            (ellipse(75.0, 35.6, 3.4, 2.4), ('rad', 75.0, 35.6, 3.4, 2.4, [(0, EYE[2], 0.45 + 0.2 * P['glow']), (1, EYE[3], 0)]), 1)]
     # les sourcils froncés : deux crêtes sombres qui plongent vers le nez, un pli entre elles
-    hd += [(sm([(64.2, 33.0), (68.2, 33.4), (71.2, 35.0), (70.6, 35.6), (67.4, 34.6), (64.2, 34.4)], sharp=(2,)), SKIN.deep, 0.95),
+    hd += [(sm([(64.8, 33.0), (68.6, 33.4), (71.4, 35.0), (70.8, 35.6), (67.8, 34.6), (64.8, 34.4)], sharp=(2,)), SKIN.deep, 0.95),
            (sm([(73.0, 35.2), (75.4, 33.6), (77.8, 33.0), (78.0, 34.0), (75.8, 34.6), (73.6, 35.8)], sharp=(0,)), SKIN.deep, 0.95),
            (ribbon([(72.0, 33.6), (72.2, 34.6), (72.0, 35.4)], [0.1, 0.45, 0.1]), SKIN.deep, 0.8),
            (ribbon([(65.4, 32.9), (68.4, 33.1), (71.0, 34.4)], [0.1, 0.45, 0.1]), SKIN.base, 0.6),
            (ribbon([(73.6, 34.6), (75.8, 33.2), (78.2, 32.7)], [0.1, 0.45, 0.1]), SKIN.light, 0.6)]
     # les yeux : deux fentes en colère, sur la même ligne ; le lointain plus étroit
-    eyeN = sm([(65.2, 34.9), (68.2, 35.2), (71.0, 36.1), (69.0, 36.9), (66.6, 36.5)], sharp=(0, 2))
+    eyeN = sm([(65.9, 34.9), (68.6, 35.2), (71.2, 36.1), (69.2, 36.9), (67.1, 36.5)], sharp=(0, 2))
     eyeF = sm([(73.2, 36.3), (75.2, 35.2), (77.2, 34.8), (76.6, 35.9), (74.8, 36.7)], sharp=(0, 2))
-    for e, (cx, cy), rr in ((eyeN, (68.4, 35.8), 3.4), (eyeF, (75.4, 35.7), 2.4)):
+    for e, (cx, cy), rr in ((eyeN, (68.8, 35.8), 3.2), (eyeF, (75.4, 35.7), 2.4)):
         if P['blink'] > 0.5:
             hd += [(e.scale(1.1, 1.4, cx, cy), SKIN.deep, 1), (e.scale(1, 0.35, cx, cy + 0.6), SKIN.shadow, 0.9)]
         else:
             hd += [(e.scale(1.12, 1.45, cx - 0.2, cy + 0.1), '#2a0e14', 0.9),
                    (e, ('rad', cx + 0.3, cy - 0.1, rr, rr, [(0, EYE[0]), (0.35, EYE[1]), (0.72, EYE[2]), (1, EYE[3])]), 1)]
     if P['blink'] <= 0.5:
-        hd += [(ellipse(69.0, 35.7, 0.55, 0.36, 15), '#ffffff', 1), (ellipse(75.8, 35.6, 0.42, 0.3, -15), '#ffffff', 0.95)]
+        hd += [(ellipse(69.4, 35.7, 0.55, 0.36, 15), "#ffffff", 1), (ellipse(75.8, 35.6, 0.42, 0.3, -15), '#ffffff', 0.95)]
     fig.part('face', face, SKIN, grad=(76, 31, 70, 39, [(0, '#1e1222'), (0.35, '#3a1e2a'), (1, SKIN.shadow)]),
              cel=0, rim=0, cast=0.9, details=hd)
     # le foulard : il serre le bas du visage, dessine le nez et le menton, et descend autour du cou
@@ -657,7 +657,7 @@ def head(fig, P):
           (sm([(63.8, 37.8), (66.4, 37.4), (66.6, 44), (64.6, 49.0), (63.2, 44.0), (63.2, 40.0)]), RED.deep, 0.45)]
     fig.part('scarf', sc, RED, cel=1.0, rim=0.6, cast=1.0, details=sd)
     # l'ourlet roulé autour de l'ouverture : du dessous du bec, le long de la joue, jusque sous le menton
-    hl = [(81.6, 31.6), (75.6, 31.1), (68.8, 31.5), (64.4, 32.6), (62.4, 35.6), (61.9, 40.2), (62.4, 45.0), (63.2, 48.4), (64.4, 51.2)]
+    hl = [(81.6, 31.6), (75.6, 31.1), (68.8, 31.5), (64.0, 32.5), (61.8, 35.4), (61.5, 40.2), (62.4, 45.0), (63.2, 48.4), (64.4, 51.2)]
     hem = limb(resample(catmull(hl, 6), 30), widths_along(resample(catmull(hl, 6), 30), [(0, 1.3), (0.12, 2.3), (0.8, 2.3), (1, 1.4)]))
     fig.part('hem', hem, SAND, cel=0.8, rim=0.6, cast=1.0, cast_on=['face', 'scarf'],
              details=[(ribbon([(80.4, 31.0), (72, 30.6), (65.6, 31.6), (63.0, 34.4)], [0.1, 0.6, 0.6, 0.1]), SAND.hi, 0.8)])

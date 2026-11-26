@@ -66,7 +66,8 @@ def main():
     top = max(pfy, vfy)
     W = pad + pxb.width + 2 * pad + vec.width + pad
     H = top + max(pxb.height - pfy, vec.height - vfy) + 2 * pad
-    im = Image.new('RGBA', (W, H), LIGHT)
+    W, H = int(W), int(H)
+    im = Image.new("RGBA", (W, H), LIGHT)
     base = pad + top
     im.alpha_composite(ground(W, H, pad + pfx + 8 * s, base + 4, 36 * s, 3 * s, 70))
     im.alpha_composite(pxb, (pad, round(base - pfy)))
