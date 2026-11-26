@@ -258,7 +258,7 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
   let total = T(ms.length);
 
   /** Les images « sur la cible » d'une animation, posées aux pieds de la cible (retournées comme le lanceur). */
-  const onTarget = (v: HdView, from: number, delay: number) => {
+  const onTarget = (v: HdView, from: number, delay: number, dx = 0) => {
     const cells = a.cible;
     if (!cells || !cells.slice(from).some((c) => c >= 0)) return 0;
     const c = scene.add.container(0, 0).setDepth(v.body.depth + 2);
@@ -269,7 +269,7 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
       const at = t;
       scene.time.delayedCall(at, () => {
         const p = feet(v);
-        c.setPosition(p.x, p.y).setVisible(true).setDepth(v.body.depth + 2);
+        c.setPosition(p.x + dx, p.y).setVisible(true).setDepth(v.body.depth + 2);
         setCell(img, actor.key, actor.ch.frames, cells[i]!, k);
       });
       t += ms[i]!;
@@ -342,7 +342,9 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
         else src.body.setPosition(home.x, home.y).setDepth(home.y);
       },
     });
-    foes.forEach((t, n) => onTarget(t.v, 0, n * 60 / sp));
+    // la 1re cible : ce qui est posé sur elle suit le lanceur, qui frappe de plus loin une cible large (`bulk`), pour que
+    // l'arme coupée à `coupe` (export) se recolle exactement
+    foes.forEach((t, n) => onTarget(t.v, 0, n * 60 / sp, n ? 0 : -dir * bulk));
     total = T(ms.length) + back - overlap;
     return total;
   }

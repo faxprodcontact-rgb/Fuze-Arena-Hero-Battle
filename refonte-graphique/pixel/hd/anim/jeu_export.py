@@ -173,6 +173,22 @@ def flight(heads, img0, ms):
     return run / max(1, ms[i0]) * 1000, math.atan2(h0[1] - ty, run)
 
 
+def pieces(m):
+    """numérote les morceaux d'un masque (pixels voisins, diagonales comprises) : 0 = vide"""
+    H, W = m.shape
+    lab = np.where(m, np.arange(1, H * W + 1).reshape(H, W), 0)
+    big = H * W + 1
+    while True:
+        p = np.pad(np.where(m, lab, big), 1, constant_values=big)
+        low = np.min([p[1 + dy:1 + dy + H, 1 + dx:1 + dx + W] for dy in (-1, 0, 1) for dx in (-1, 0, 1)], axis=0)
+        new = np.where(m, np.minimum(lab, low), 0)
+        flat = new.ravel()
+        new = np.where(m, flat[np.maximum(new, 1) - 1], 0)      # saut de pointeur : bien plus rapide
+        if np.array_equal(new, lab):
+            return lab
+        lab = new
+
+
 def take(L, hero, x0):
     """(ce qui part, ce qui reste) : sans `hero`, tout ce qui est à droite de la colonne x0 part. Avec `hero` (l'image
     du personnage seul, JEU `calques`) : seuls les EFFETS à droite de x0 partent, le personnage n'est jamais coupé
@@ -180,7 +196,11 @@ def take(L, hero, x0):
     if hero is None:
         return cols(L, x0, None), cols(L, None, x0)
     fx = alpha(L) & ~(alpha(hero) & np.all(L == hero, axis=2))
-    fx[:, :max(0, x0)] = False
+    # les effets partent par morceaux entiers (pixels qui se touchent) : un morceau part s'il commence à droite de
+    # x0, sinon il reste en entier. Rien n'est jamais tranché en ligne droite.
+    lab = pieces(fx)
+    keep = np.unique(lab[:, :max(0, x0)])
+    fx &= ~np.isin(lab, keep[keep > 0])
     gone = np.zeros_like(L)
     gone[fx] = L[fx]
     rest = L.copy()
@@ -337,10 +357,13 @@ def export(name, voir=None):
             if not heads:
                 raise SystemExit(f'{name} {an} : aucune image de projectile entre {tir[0]} et {tir[1]}')
             i0, h0 = heads[0]
-            a['proj'] = [sheet.add(p['proj'][i], hp) for i, hp in heads]
+            # au ras du sol (`rase`) : chaque image repérée par son bout ET le sol, pour que sa base reste au sol quand
+            # l'image change (avant : par la hauteur de son bout, qui bouge d'une image à l'autre)
+            reps = [(i, (hp[0], float(sol[1])) if jeu.get('rase') else hp) for i, hp in heads]
+            a['proj'] = [sheet.add(p['proj'][i], hp) for i, hp in reps]
             a['projMs'] = [p['ms'][i] for i, _ in heads]
             a['depart'] = i0                                   # l'image où le projectile part
-            a['bouche'] = [int(round(h0[0] - sol[0])), int(round(h0[1] - sol[1]))]   # d'où il part (par rapport aux pieds)
+            a['bouche'] = [int(round(h0[0] - sol[0])), int(round(reps[0][1][1] - sol[1]))]   # d'où il part (par rapport aux pieds)
             # sa vitesse (pixels du dessin par seconde) et l'angle de son vol dans le GIF (le dessin du projectile est
             # penché ainsi : le jeu tourne de la différence) : mesurés sur le mouvement du bout du projectile d'une
             # image de vol à l'autre ; avec une seule image de vol, du bout du projectile à `cible`. JEU peut les imposer.
