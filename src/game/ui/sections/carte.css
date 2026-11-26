@@ -1,0 +1,69 @@
+/* ---------- Carte de la campagne (world-map.tsx) : une illustration lisse, les étiquettes posées par-dessus ---------- */
+.modal-body:has(> .cmap) { padding: 12px 10px 14px; -webkit-mask-image: none; mask-image: none; }
+.cmap { position: relative; align-self: center; width: min(100%, calc((86dvh - 120px) * 340 / 460)); aspect-ratio: 340 / 460; flex: none;
+  border-radius: 18px; overflow: hidden; box-shadow: inset 0 0 0 1px #ffffff1f, 0 4px 12px #05021a59; background: #141a46; }
+.cmap-art { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.cmap-art * { transform-box: view-box; }
+.cm-place { transition: filter 0.2s; }
+.cm-place.locked { filter: grayscale(0.75) brightness(0.62) contrast(0.9); }
+.cm-place.locked * { animation: none !important; }
+
+/* ce qui bouge, doucement */
+.cm-spin { animation: cm-spin 9s linear infinite; }
+@keyframes cm-spin { to { rotate: 360deg; } }
+.cm-glow { animation: cm-glow 2.6s ease-in-out infinite; }
+@keyframes cm-glow { 50% { opacity: 0.55; } }
+.cm-flicker { animation: cm-flicker 1.9s ease-in-out infinite; }
+@keyframes cm-flicker { 0%, 100% { opacity: 1; } 35% { opacity: 0.7; } 55% { opacity: 0.95; } 75% { opacity: 0.6; } }
+.cm-bolt { animation: cm-bolt 4s ease-in-out infinite; }
+.cm-flash { animation: cm-bolt 4s ease-in-out infinite; }
+@keyframes cm-bolt { 0%, 80%, 100% { opacity: 0.2; } 84%, 90% { opacity: 1; } 87% { opacity: 0.4; } }
+.cm-flame { animation: cm-flame 1.3s ease-in-out infinite alternate; }
+@keyframes cm-flame { to { scale: 1.14 0.88; } }
+.cm-smoke { animation: cm-smoke 3.9s ease-out infinite; }
+@keyframes cm-smoke { 0% { translate: 0 6px; opacity: 0; } 25% { opacity: 0.9; } 100% { translate: 4px -12px; opacity: 0; } }
+.cm-spark { animation: cm-spark 2.4s ease-out infinite; }
+@keyframes cm-spark { 0% { translate: 0 10px; opacity: 0; } 30% { opacity: 1; } 100% { translate: 3px -8px; opacity: 0; } }
+.cm-bubble { animation: cm-bubble 3.6s ease-in infinite; }
+@keyframes cm-bubble { 0% { translate: 0 10px; opacity: 0; } 25% { opacity: 0.85; } 100% { translate: 0 -14px; opacity: 0; } }
+.cm-snow { animation: cm-snow 4.5s linear infinite; }
+@keyframes cm-snow { 0% { translate: 0 -6px; opacity: 0; } 20% { opacity: 1; } 100% { translate: -6px 26px; opacity: 0; } }
+.cm-mist { animation: cm-mist 7s ease-in-out infinite alternate; }
+@keyframes cm-mist { to { translate: 8px -2px; opacity: 0.1; } }
+.cm-bob { animation: cm-bob 2.6s ease-in-out infinite alternate; }
+@keyframes cm-bob { from { translate: 0 0; rotate: -2deg; } to { translate: 0 -1.5px; rotate: 2deg; } }
+.cm-sway { animation: cm-sway 3.2s ease-in-out infinite alternate; }
+@keyframes cm-sway { from { rotate: -5deg; } to { rotate: 5deg; } }
+.cm-fly { animation: cm-fly 3s ease-in-out infinite alternate; }
+@keyframes cm-fly { from { translate: -2px 2px; opacity: 0.4; } to { translate: 2px -3px; opacity: 1; } }
+.cm-glint { animation: cm-glint 5s ease-in-out infinite; }
+@keyframes cm-glint { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.6; } }
+.cm-cloud { animation: cm-cloud 14s ease-in-out infinite alternate; }
+@keyframes cm-cloud { to { translate: 10px 0; } }
+.cm-cloth { animation: cm-cloth 1.8s ease-in-out infinite; }
+@keyframes cm-cloth { 0%, 100% { transform: skewY(-5deg) scaleX(1); } 50% { transform: skewY(5deg) scaleX(0.9); } }
+.cm-done-road { animation: cm-road 1.6s linear infinite; }
+@keyframes cm-road { to { stroke-dashoffset: -9.1; } }
+
+/* sous chaque lieu : l'élément, ses chapitres, un point par chapitre (fait = or, en cours = blanc qui luit, à faire = creux) */
+.cm-tag { position: absolute; translate: -50% -50%; display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px; border-radius: var(--r-pill); white-space: nowrap;
+  background: #140e38e6; box-shadow: inset 0 0 0 1px #ffffff26, -1px 2px 4px #05021a80; font: 400 12px/16px var(--font-title); color: #fff; text-shadow: 0 1px 0 #0a0620; }
+.cm-tag .art { filter: drop-shadow(0 1px 1px #0008); }
+.cm-tag.here { background: linear-gradient(200deg, #ffe08a, #ffb53a); box-shadow: inset 0 1px 0 #ffffff80, 0 0 10px #ffc94d80, -1px 2px 4px #05021a80; color: #4a2300; text-shadow: none; }
+.cm-tag.locked { color: #b3aec8; }
+.cm-pips { display: inline-flex; gap: 3px; margin-left: 2px; }
+.cm-pips i { width: 7px; height: 7px; border-radius: 2.5px; background: #00000059; box-shadow: inset 0 1px 1px #0008, 0 0 0 1px #ffffff1f; }
+.cm-pips i.done { background: #ffc94d; box-shadow: inset 0 1px 0 #fff8; }
+.cm-pips i.here { background: #fff; box-shadow: 0 0 0 1.5px #ffb53a, 0 0 6px #fff; animation: cm-pip 1.2s ease-in-out infinite alternate; }
+.cm-tag.here .cm-pips i:not(.done):not(.here) { background: #8a5a1259; box-shadow: inset 0 1px 1px #6a3a0066; }
+.cm-tag.here .cm-pips i.done { background: #b06a00; box-shadow: none; }
+.cm-tag.here .cm-pips i.here { box-shadow: 0 0 0 1.5px #b06a00, 0 0 6px #fff; }
+@keyframes cm-pip { to { scale: 1.25; } }
+.cm-lock, .cm-check { position: absolute; translate: -50% -50%; pointer-events: none; line-height: 0; }
+.cm-lock .icon { filter: drop-shadow(-1px 3px 2px #000a); }
+.cm-check { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(200deg, #ffe08a, #ffb53a); box-shadow: 0 0 0 2px #140e38, -1px 2px 3px #0008; }
+.cm-check .sign { --k: 1.4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cmap *, .cmap-art * { animation: none !important; }
+}

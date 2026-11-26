@@ -13,6 +13,7 @@ import { HD_FIG } from '../hd-figures';
 import { heroArt } from '../look';
 import { btClass, type BtSize, type BtTone } from './buttons';
 import { artUrl } from '../art-url';
+import './sections/cartes-heros.css';
 
 // ---------- Pictos (style moderne, lisses : planche public/art/icons.webp, refonte-graphique/ui-moderne/pictos/) ----------
 
@@ -154,14 +155,21 @@ export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; 
   const mythic = p.hero.stars >= MYTHIC_STARS;
   const color = mythic ? '#ff4d5e' : RARITY_COLOR[d.rarity];
   const Tag = p.onClick ? 'button' : 'span';
-  // Derrière le héros : un mur à la couleur de sa rareté, frappé de l'emblème de son élément, et un sol éclairé.
-  // Par-dessus : un cadre de métal de la même couleur (il luit sur les Légendaires), le niveau, l'élément, les étoiles.
+  // Chaque rareté a sa carte (sections/cartes-heros.css, demande du 26/11 : « des raretés plus spectaculaires ») :
+  // Commun en pierre mate, Rare en saphir cerclé d'argent, Épique en améthyste avec une aura et un reflet qui passe,
+  // Légendaire en or fondu avec des étincelles qui montent, un reflet sur le cadre et une gemme ; Mythique : en rubis.
+  // `hcard-aura` porte ce qui bouge derrière le héros (Épique et plus). Chaque carte a son propre temps (--hc-t), pour
+  // que les reflets d'une grille ne passent pas tous ensemble.
+  const shiny = mythic || d.rarity === 'epic' || d.rarity === 'legendary';
+  let hash = 7;
+  for (const ch of d.id) hash = (hash * 31 + ch.charCodeAt(0)) % 1009;
   return (
     <Tag
       class={`hcard hcard-${d.rarity} el-${d.element}${mythic ? ' hcard-mythic' : ''}${p.selected ? ' hcard-on' : ''}${p.dim ? ' hcard-dim' : ''}${p.small ? ' hcard-small' : ''}`}
-      style={{ '--rar': color, '--el': ELEMENT_COLOR[d.element] } as never}
+      style={{ '--rar': color, '--el': ELEMENT_COLOR[d.element], '--hc-t': `-${(hash % 97) / 10}s` } as never}
       onClick={p.onClick}
     >
+      {shiny && <i class="hcard-aura" />}
       <CardFigure id={heroArt(d.id)} alt={d.name} />
       <i class="hcard-frame" />
       <Art name={d.element} class="hcard-el" />
