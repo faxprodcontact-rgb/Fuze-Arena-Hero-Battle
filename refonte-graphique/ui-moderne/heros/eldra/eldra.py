@@ -278,6 +278,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         free_fist(fig, 'ffist', WF, EF)
     fist_part(fig, 'nfist', GN, u, WN, far=False)
 
+    # au moulinet (une seule main), le bâton tourne entre le buste et la tête : il passe derrière le col et la tête,
+    # jamais devant le visage
+    if free:
+        moved = [p for p in fig.parts if p.name in ('staff', 'nfist', 'nfistt')]
+        rest_ = [p for p in fig.parts if p.name not in ('staff', 'nfist', 'nfistt')]
+        i = [p.name for p in rest_].index('collar')
+        fig.parts = rest_[:i] + moved + rest_[i:]
+
     # ---------------------------------------------------------------- chaque groupe de morceaux prend sa pose
     fig.pose(['plume1', 'plume2', 'head', 'lock', 'ear', 'ring'], HEAD)
     fig.pose(['torso'], TOR)
@@ -424,8 +432,8 @@ def head_parts(fig, P):
     """La tête de singe : crâne de fourrure, masque de peau en cœur, yeux, nez plat, museau, bouche, bandeau,
     mèche nouée, oreille ronde à anneau d'or."""
     head = sm([(58.4, 50.2), (55.6, 48.6), (56.2, 46.8), (54.6, 44.2), (55.4, 41.6), (55.4, 35.6), (58.2, 27.8), (63.4, 21.6), (69.4, 17.6), (72.4, 15.4), (73.6, 16.6), (78.6, 16.4),
-               (86.8, 18.0), (93.2, 21.6), (97.8, 26.0), (100.0, 30.4), (100.8, 33.4), (101.8, 36.0), (103.8, 38.8),
-               (104.4, 41.2), (103.8, 43.4), (101.8, 44.6), (101.4, 45.4), (101.6, 46.8), (99.8, 49.6), (96.6, 52.4),
+               (86.8, 18.0), (93.2, 21.6), (97.8, 26.0), (100.0, 30.4), (100.8, 33.4), (101.6, 35.8), (103.0, 38.0),
+               (104.2, 40.6), (104.2, 42.8), (102.2, 44.6), (101.4, 45.4), (101.6, 46.8), (99.8, 49.6), (96.6, 52.4),
                (91.0, 54.0), (84.0, 53.8), (74.0, 53.4), (63.6, 52.6)], sharp=(1, 3, 9))
     hd = []
     # le crâne : la calotte éclairée en haut à droite, l'arrière dans l'ombre
@@ -486,15 +494,14 @@ def head_parts(fig, P):
                     (92.4, 35.2), (90.2, 35.6), (88.4, 37.2)], sharp=(0, 4, 9)), '#3a1426', 1),
                (ribbon([(77.6, 38.4), (80.4, 38.6), (82.6, 37.6)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.8)]
     # le museau : le plan de devant éclairé, le pli qui part du nez vers le coin de la bouche
-    hd += [(sm([(93.6, 38.6), (99.4, 37.4), (103.4, 38.6), (104.6, 41.6), (103.6, 43.6), (98.6, 43.6), (94.4, 42.0)]), SKIN.light, 0.75),
+    hd += [(sm([(94.4, 39.6), (99.4, 38.2), (103.0, 38.6), (104.0, 41.4), (103.2, 43.4), (98.6, 43.4), (94.4, 42.0)]), SKIN.light, 0.5),
            (ribbon([(92.4, 39.0), (90.4, 40.4), (89.0, 42.6), (89.0, 43.4)], [0.2, 0.9, 0.7, 0.2]), SKIN.shadow, 0.6),
            (ribbon([(86.6, 35.6), (90.2, 38.0), (95.0, 38.8), (99.6, 38.2)], [0.3, 1.0, 1.2, 0.3]), SKIN.hi, 0.6)]
     # le nez plat de singe : à peine une bosse, deux narines obliques
-    hd += [(sm([(96.8, 39.8), (100.4, 39.0), (103.8, 39.8), (104.2, 41.4), (101.4, 42.4), (97.6, 42.0)]), '#e08a80', 0.45),
-           (sm([(97.0, 41.6), (98.4, 40.4), (99.6, 40.6), (98.6, 41.8)], sharp=(0,)), '#6e2438', 1),
-           (sm([(101.4, 40.2), (102.8, 39.8), (103.4, 40.6), (102.2, 41.4)], sharp=(0,)), '#6e2438', 0.95),
-           (ellipse(100.4, 39.4, 1.4, 0.5, -8), '#ffe2cc', 0.8),
-           (ribbon([(99.8, 42.2), (99.8, 43.4)], [0.5, 0.2]), SKIN.shadow, 0.45)]
+    hd += [(sm([(97.4, 40.6), (100.6, 39.8), (103.6, 40.4), (103.6, 41.8), (100.8, 42.6), (98.0, 42.2)]), '#d8857c', 0.35),
+           (sm([(97.8, 41.8), (98.8, 40.9), (99.8, 41.1), (99.0, 42.0)], sharp=(0,)), '#6e2438', 1),
+           (sm([(101.6, 40.9), (102.7, 40.6), (103.2, 41.2), (102.3, 41.8)], sharp=(0,)), '#6e2438', 0.9),
+           (ribbon([(100.4, 42.6), (100.6, 43.6)], [0.4, 0.2]), SKIN.shadow, 0.4)]
     # la lèvre du haut, la bouche entrouverte en rictus (le coin arrière remonte), les dents, un croc
     mouth = sm([(89.2, 43.4), (92.6, 44.6), (96.8, 44.8), (101.2, 44.4), (101.0, 45.6), (97.6, 46.8), (93.4, 46.4)], sharp=(0, 3))
     hd += [(ribbon([(89.0, 43.0), (92.4, 43.8), (97.0, 43.8), (101.4, 43.6)], [0.2, 0.9, 0.9, 0.3]), '#f8c2a2', 0.6),

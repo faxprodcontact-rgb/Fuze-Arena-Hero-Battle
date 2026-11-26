@@ -92,7 +92,7 @@ def controle(folder):
     K_ = Image.open(kael_png).convert('RGBA')
     Sb = Image.open(sab_png).convert('RGBA')
     k = 512 / 110
-        # Kael : 122 unités → 512 px ; on le ramène à la même échelle que Sable
+    # Kael : 122 unités → 512 px ; on le ramène à la même échelle que Sable
     K_ = K_.resize((round(K_.width * k / (512 / 122)), round(K_.height * k / (512 / 122))), Image.LANCZOS)
     kf = ((63 + 4) * k, (115 + 5) * k)                 # pieds de Kael dans son image
     sf = ((64 - S.FRAME[0]) * k, (116 - S.FRAME[1]) * k)

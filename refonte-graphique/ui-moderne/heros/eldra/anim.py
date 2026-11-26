@@ -313,7 +313,7 @@ def trail(fig, C, R, a0, a1, w, op=1.0, gold=True):
     pb = (C[0] + R * math.cos(math.radians(a1)), C[1] + R * math.sin(math.radians(a1)))
     body = arc_band(C, R - 0.4, a0, a1, w)
     rim = arc_band(C, R + 0.9, a0, a1, w * 0.3)
-    g1 = g_lin(fig, pa, pb, [(0, WIND[3], 0), (0.55, WIND[2], 0.55 * op), (1, WIND[1], 0.9 * op)])
+    g1 = g_lin(fig, pa, pb, [(0, WIND[2], 0), (0.5, WIND[1], 0.6 * op), (1, '#ffffff', 0.92 * op)])
     g2 = g_lin(fig, pa, pb, [(0, '#f8c84e', 0), (0.6, '#ffe28a', 0.75 * op), (1, '#fffbe6', op)]) if gold else \
         g_lin(fig, pa, pb, [(0, WIND[2], 0), (1, WIND[0], op)])
     return '<path d="%s" fill="%s"/><path d="%s" fill="%s"/>' % (body.d(), g1, rim.d(), g2)

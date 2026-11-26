@@ -24,7 +24,7 @@ from lib import Shape  # noqa: E402
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
 # ---------- matières (tons du pixel art, passés à la gamme de l'interface : lumières chaudes, ombres violettes) ----------
-FUR = Mat('#ffe9a8', '#f3be66', '#d68f42', '#a45b38', '#66303a')
+FUR = Mat('#ffe6a0', '#f0b85e', '#d0863c', '#9a5034', '#622c38')
 DARKFUR = Mat('#c98a5a', '#9a5a3a', '#74382e', '#4e2230', '#331624')     # la touffe de la queue, le dos des oreilles
 CREAM = Mat('#fffbf0', '#fdeccc', '#eccb9e', '#c39482', '#8e5e66')
 GOLD = Mat('#fffbe0', '#ffd86a', '#e6a22c', '#a45e22', '#5e2e1c', glint='#ffffff')
@@ -568,7 +568,7 @@ def head_parts(fig, P):
     # (les pointes sont celles de la silhouette) ; deux creux doux entre les mèches
     ruff = sm([(62.4, 29.6), (66.8, 30.6), (69.6, 34.6), (70.6, 40.4), (72.6, 45.6), (77.4, 49.6), (79.6, 53.4), (58, 53.4), (57, 30)])
     hd += [(ruff.move(0.5, 0.3), FUR.shadow, 0.45),
-           (ruff, ('lin', 70, 32, 60, 50, [(0, '#fbd896'), (0.55, FUR.light), (1, FUR.base)]), 0.95),
+           (ruff, ('lin', 70, 32, 60, 50, [(0, '#f8cf88'), (0.5, FUR.light), (1, FUR.base)]), 0.9),
            (ribbon([(68.6, 40.2), (65.8, 41.6), (62.4, 41.8)], [0.2, 0.8, 0.1]), FUR.shadow, 0.6),
            (ribbon([(72.2, 46.6), (69.2, 48.4), (65.6, 49.4)], [0.2, 0.9, 0.1]), FUR.shadow, 0.6)]
     # le menton et la mâchoire crème (sous la gueule)
@@ -626,7 +626,7 @@ def head_parts(fig, P):
            (ribbon([(70.6, 28.2), (74.6, 28.0), (78.8, 29.4), (81.8, 31.6)], [0.4, 1.6, 1.4, 0.3]), '#7a3a2c', 0.9),
            (ribbon([(71.2, 27.6), (75, 27.4), (78.8, 28.6)], [0.2, 0.7, 0.2]), FUR.hi, 0.6),
            (ribbon([(83.4, 30.0), (85.6, 29.6), (87.8, 30.2)], [0.2, 0.9, 0.2]), '#7a3a2c', 0.8)]
-    fig.part('head', head, FUR, grad=(96, 28, 64, 50, [(0, FUR.light), (0.45, FUR.base), (1, FUR.shadow)]), cel=1.3, rim=0.6, cast=1.0,
+    fig.part('head', head, FUR, grad=(96, 28, 64, 50, [(0, FUR.light), (0.4, FUR.base), (1, FUR.shadow)]), cel=1.7, rim=0.6, cast=1.0,
              cast_on=['collar', 'torso', 'top', 'lappet', 'narm'], details=hd)
 
     # ---- les oreilles rondes au dos sombre, qui sortent de la coiffe ----
