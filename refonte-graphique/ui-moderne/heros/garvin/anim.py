@@ -102,9 +102,9 @@ ATTACK = [
     (520, dict(crouch=-1.0, lean=-3.0, fw=(115.0, 17.0), frot=-8, head=(-0.4, -1.0), tilt=-2.4, nw=(32.6, 88.0), glow=2.0)),
     (700, dict(crouch=-1.1, lean=-3.3, fw=(114.6, 15.6), frot=-10, head=(-0.5, -1.2), tilt=-2.8, nw=(32.4, 87.8), glow=2.2)),
     (738, dict(crouch=0.6, lean=1.2, fw=(131.0, 50.0), frot=-4, fsw=0.7, head=(0.0, 0.0), tilt=0.0, glow=2.2, gape=0.4)),
-    (770, dict(crouch=3.0, lean=4.0, fw=(128.0, 89.6), frot=0, fsw=1.0, head=(0.6, 1.0), tilt=2.2, nw=(35.6, 89.6), glow=3.2, gape=1.0)),
-    (1000, dict(crouch=3.0, lean=4.0, fw=(128.0, 89.8), fsw=1.0, head=(0.6, 1.1), tilt=2.2, nw=(35.6, 89.6), glow=2.6, gape=0.9)),
-    (1270, dict(crouch=2.2, lean=3.0, fw=(127.0, 87.6), fsw=1.0, head=(0.4, 0.8), tilt=1.5, nw=(35.2, 89.4), glow=1.6, gape=0.3)),
+    (770, dict(crouch=3.0, lean=4.0, fw=(128.0, 87.4), frot=0, fsw=1.0, head=(0.6, 1.0), tilt=2.2, nw=(35.6, 89.6), glow=3.2, gape=1.0)),
+    (1000, dict(crouch=3.0, lean=4.0, fw=(128.0, 87.6), fsw=1.0, head=(0.6, 1.1), tilt=2.2, nw=(35.6, 89.6), glow=2.6, gape=0.9)),
+    (1270, dict(crouch=2.2, lean=3.0, fw=(127.0, 85.6), fsw=1.0, head=(0.4, 0.8), tilt=1.5, nw=(35.2, 89.4), glow=1.6, gape=0.3)),
     (1430, dict(crouch=1.8, lean=2.0, fw=(123.0, 74.0), fsw=0.5, glow=1.0, tilt=0.8)),
     (1600, dict(crouch=1.0, lean=1.0, fw=(117.0, 63.0), fsw=0.1, glow=0.5)),
     (1760, dict(crouch=0.4, fw=(115.6, 60.6))),
@@ -416,7 +416,7 @@ def halo_sil(fig, color, op, widths=(6.0, 3.2)):
 
 def fist_points(ctx):
     W, a = ctx['far']['W'], math.radians(ctx['far']['ang'])
-    return (W[0] + 10 * math.cos(a), W[1] + 10 * math.sin(a)), (W[0] + 20.4 * math.cos(a), W[1] + 20.4 * math.sin(a))
+    return (W[0] + 11.2 * math.cos(a), W[1] + 11.2 * math.sin(a)), (W[0] + 22.8 * math.cos(a), W[1] + 22.8 * math.sin(a))
 
 
 # ---- la respiration : fumée qui monte des épaules, braises des fêlures, un gravier qui tombe

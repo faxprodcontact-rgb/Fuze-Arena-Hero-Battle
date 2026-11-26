@@ -34,6 +34,7 @@ from atelier import Figure, Mat, sm, limb, ribbon, xf, ellipse, rpoly, resample,
 from outils import (taper, crpath, ik, under, plume, lerp, add, unit, norm, rot, rot_about, sub_, wing,  # noqa: E402
                     feather)
 from lib import Shape  # noqa: E402
+from visage import placer, verifier, guide_svg  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'mon-orin-sorts'          # l'id du DESSIN dans le jeu (heroArt) : celui des images et de src/game/vecto.ts
@@ -80,6 +81,8 @@ NECK = (64.0, 47.0)         # le pivot de la tête (agrandie ×1,1 autour de ce 
 NH0 = (42.0, 55.6)          # le poing proche, au repos (le centre de la prise)
 FAN_OFF = 4.8               # le poignet, à cette distance du centre du poing, à l'opposé de l'éventail
 L1N, L2N = 18.0, 12.0       # bras, avant-bras (proche)
+FACE = (55.0, 29.5, 79.0, 48.0)   # la sphère de la tête (sans le chapeau ni le bec), pour ../visage.py
+MESURES = {}                # les places réelles des traits (remplies par build)
 KNOT = (55.8, 38.4)         # le nœud du cordon du masque (derrière la tête)
 FCLAW = (81.4, 92.2)        # le bas des serres lointaines, d'où pend le chapelet
 
@@ -343,71 +346,87 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(ribbon([(58.0, 47.4), (66.0, 47.0), (74.0, 47.6), (84.0, 46.4)], [0.1, 0.9, 0.9, 0.1]), RAVEN.deep, 0.4)])
 
     # ================================================================ la tête : crâne de corbeau, masque blanc, bec, eboshi
+    # Le visage est construit avec l'outil commun ../visage.py (règle du propriétaire du 26/11) : tête d'oiseau
+    # masquée, presque de profil (tour=75) → UN seul œil ; l'œil, la racine du bec (« nez ») et la commissure
+    # (« bouche ») sont posés aux places que donne placer() sur la sphère de la tête (FACE, sans le chapeau ni le bec).
+    Vz = placer(FACE, tour=75)
+    ex, ey, ew = Vz['oeil_proche']
+    nx_, ny_ = Vz['nez']
+    bx_, by_, _ = Vz['bouche']
     # le crâne (plumes noires bleutées), la nuque en petites plumes
-    skull = sm([(55.0, 34.6), (57.8, 31.0), (63.4, 29.6), (69.6, 30.6), (72.4, 35.4), (71.2, 42.6), (67.2, 47.6),
-                (62.0, 49.2), (58.8, 48.6), (57.4, 46.2), (55.2, 46.0), (54.6, 43.4), (53.2, 42.6), (54.0, 39.0)],
-               sharp=(9, 11))
+    skull = sm([(55.6, 34.0), (58.6, 30.6), (64.6, 29.4), (71.6, 30.0), (76.6, 32.6), (78.2, 38.0), (77.2, 44.6),
+                (73.4, 48.2), (66.6, 49.4), (61.0, 49.2), (58.6, 48.6), (57.2, 46.2), (55.2, 46.0), (54.6, 43.4),
+                (53.2, 42.6), (54.2, 38.4)], sharp=(11, 13))
     sk = [(ribbon([(57.4, 40.6), (58.6, 44.0), (61.2, 47.0)], [0.1, 0.9, 0.1]), RAVEN.deep, 0.5),
-          (ribbon([(55.6, 36.6), (56.2, 40.0), (56.0, 43.2)], [0.1, 0.7, 0.1]), RAVEN.hi, 0.35),
-          (ribbon([(59.4, 33.4), (61.0, 37.0), (61.2, 41.0)], [0.1, 0.8, 0.1]), RAVEN.light, 0.5)]
-    fig.part('skull', skull, RAVEN, grad=(70, 30, 55, 46, [(0, RAVEN.light), (0.55, RAVEN.base), (1, RAVEN.shadow)]),
+          (ribbon([(55.8, 36.6), (56.4, 40.0), (56.2, 43.2)], [0.1, 0.7, 0.1]), RAVEN.hi, 0.35),
+          (ribbon([(59.8, 33.0), (61.4, 37.0), (61.6, 41.0)], [0.1, 0.8, 0.1]), RAVEN.light, 0.5)]
+    fig.part('skull', skull, RAVEN, grad=(74, 30, 55, 46, [(0, RAVEN.light), (0.55, RAVEN.base), (1, RAVEN.shadow)]),
              cel=1.1, rim=0.6, cast=1.1, details=sk)
     # le cordon rouge du masque, sur le crâne, jusqu'au nœud
-    fig.part('cord', ribbon([(62.6, 37.6), (59.6, 37.8), (56.4, 38.4)], [1.6, 1.5, 1.4]), SILK, cel=0.3, rim=0.3, cast=0.6,
+    fig.part('cord', ribbon([(65.6, 38.0), (61.0, 37.8), (56.4, 38.4)], [1.6, 1.5, 1.4]), SILK, cel=0.3, rim=0.3, cast=0.6,
              cast_on=['skull'], outline=False)
 
-    # le masque de laque blanche : il épouse le front et les joues ; le bec part du milieu du visage
-    mask = sm([(61.8, 32.8), (64.6, 30.8), (70.8, 30.0), (76.2, 30.8), (79.2, 33.2), (80.2, 36.6), (79.4, 40.8),
-               (76.6, 44.4), (71.2, 46.4), (65.6, 46.0), (62.6, 43.2), (61.4, 38.2)])
+    # le masque de laque blanche : il épouse le front, l'œil et le devant de la tête jusqu'à la racine du bec
+    mask = sm([(65.4, 33.0), (68.2, 30.6), (73.6, 30.0), (77.8, 31.4), (80.0, 34.2), (80.4, 38.0), (79.8, 42.4),
+               (78.6, 46.0), (75.0, 47.8), (70.2, 47.6), (66.6, 45.4), (65.0, 40.0)])
     md = []
-    # les plans : la joue proche (vers l'arrière) dans la demi-teinte lavande, le front éclairé en haut à droite
-    md += [(sm([(61.4, 34.0), (63.8, 36.4), (64.6, 41.0), (66.6, 45.8), (65.6, 46.0), (62.6, 43.2), (61.4, 38.2)]), MASK.shadow, 0.55),
-           (sm([(68.6, 30.6), (75.4, 31.0), (78.6, 33.4), (75.2, 33.2), (71.0, 32.0)]), '#ffffff', 0.9),
-           (sm([(64.0, 40.6), (69.0, 41.6), (72.6, 44.0), (70.6, 46.0), (66.4, 45.6)]), MASK.base, 0.6)]
-    # les trous des yeux, cerclés de rouge sombre ; les yeux d'ambre (pupille vers l'ennemi) ; le lointain plus étroit
-    # (tête d'oiseau masquée, presque de profil : UN seul œil visible, demande du propriétaire du 26/11 — l'œil du
-    # fond est caché par le front du masque et la racine du bec)
-    eyes = ((68.0, 35.9, 2.55, 1.9, 1.5, 68.7),)
-    for cx, cy, rx, ry, ir, px in eyes:
-        md += [(ellipse(cx - 0.2, cy + 0.25, rx + 0.7, ry + 0.6), RIM_EYE, 0.95)]
-        if P['blink'] > 0.5:
-            # la paupière : des plumes noires qui se ferment sur l'œil
-            md += [(ellipse(cx, cy, rx, ry), RAVEN.base, 1),
-                   (ribbon([(cx - rx, cy + 0.2), (cx, cy + 0.7), (cx + rx, cy + 0.1)], [0.1, 0.6, 0.1]), RAVEN.deep, 0.9),
-                   (ribbon([(cx - rx * 0.7, cy - 0.6), (cx, cy - 0.3), (cx + rx * 0.7, cy - 0.7)], [0.1, 0.5, 0.1]), RAVEN.light, 0.6)]
-        else:
-            glow = P['eyes']
-            md += [(ellipse(cx, cy, rx, ry), EYE[0] if glow < 0.5 else '#fffbe0', 1),
-                   (ellipse(px, cy + 0.05, ir, ir * 1.08), ('rad', px + 0.35, cy - 0.4, ir * 1.5, ir * 1.5, [(0, '#ffe080'), (0.5, EYE[1]), (1, EYE[2])]), 1),
-                   (ellipse(px + 0.25, cy + 0.1, ir * 0.5, ir * 0.66), EYE[3], 1),
-                   # la paupière du haut (une ombre portée par le bord du trou)
-                   (sm([(cx - rx - 0.3, cy - 0.5), (cx - rx * 0.2, cy - ry - 0.2), (cx + rx + 0.3, cy - ry * 0.6),
-                        (cx + rx * 0.3, cy - ry * 0.55)]), RIM_EYE, 0.6),
-                   (ellipse(px + 0.75, cy - 0.55, ir * 0.3, ir * 0.25), '#ffffff', 1)]
-    # les sourcils peints en V rouge (ils descendent vers le bec), la petite larme rouge sous l'œil proche
-    md += [(sm([(63.2, 32.6), (66.4, 32.0), (69.8, 32.8), (72.6, 34.4), (72.0, 35.1), (69.2, 34.0), (66.0, 33.6), (63.6, 34.0)], sharp=(0, 3)), SILK.base, 1),
-           (ribbon([(63.8, 32.6), (66.8, 32.2), (70.0, 33.0)], [0.1, 0.45, 0.1]), SILK.light, 0.9),
-           (sm([(67.8, 38.4), (68.4, 39.6), (68.2, 41.0), (67.4, 41.2), (67.2, 39.8)], sharp=(0,)), SILK.base, 1),
-           (ellipse(68.0, 40.2, 0.25, 0.4), SILK.hi, 0.8)]
-    fig.part('mask', mask, MASK, grad=(79, 31, 62, 45, [(0, MASK.light), (0.5, MASK.base), (1, MASK.shadow)]),
+    # les plans : le bord arrière du masque dans la demi-teinte lavande, le front éclairé en haut à droite
+    md += [(sm([(65.0, 34.2), (67.6, 36.6), (68.4, 41.4), (70.4, 46.0), (69.4, 47.4), (66.6, 45.4), (65.0, 40.0)]), MASK.shadow, 0.55),
+           (sm([(71.6, 30.4), (77.2, 31.4), (79.6, 34.2), (76.8, 33.6), (73.2, 32.2)]), '#ffffff', 0.9),
+           (sm([(68.4, 42.6), (72.6, 43.8), (75.6, 46.4), (73.2, 47.6), (70.0, 46.8)]), MASK.base, 0.6)]
+    # l'œil d'ambre dans son trou cerclé de rouge sombre (pupille vers l'ennemi), à la place donnée par placer()
+    rx, ry = ew * 0.56, ew * 0.48
+    ir = ew * 0.36
+    px = ex + ew * 0.14
+    md += [(ellipse(ex - 0.2, ey + 0.25, rx + 0.7, ry + 0.6), RIM_EYE, 0.95)]
+    if P['blink'] > 0.5:
+        # la paupière : des plumes noires qui se ferment sur l'œil
+        md += [(ellipse(ex, ey, rx, ry), RAVEN.base, 1),
+               (ribbon([(ex - rx, ey + 0.2), (ex, ey + 0.7), (ex + rx, ey + 0.1)], [0.1, 0.6, 0.1]), RAVEN.deep, 0.9),
+               (ribbon([(ex - rx * 0.7, ey - 0.6), (ex, ey - 0.3), (ex + rx * 0.7, ey - 0.7)], [0.1, 0.5, 0.1]), RAVEN.light, 0.6)]
+    else:
+        glow = P['eyes']
+        md += [(ellipse(ex, ey, rx, ry), EYE[0] if glow < 0.5 else '#fffbe0', 1),
+               (ellipse(px, ey + 0.05, ir, ir * 1.08), ('rad', px + 0.35, ey - 0.4, ir * 1.5, ir * 1.5, [(0, '#ffe080'), (0.5, EYE[1]), (1, EYE[2])]), 1),
+               (ellipse(px + 0.2, ey + 0.1, ir * 0.5, ir * 0.66), EYE[3], 1),
+               # la paupière du haut (une ombre portée par le bord du trou)
+               (sm([(ex - rx - 0.3, ey - 0.5), (ex - rx * 0.2, ey - ry - 0.2), (ex + rx + 0.3, ey - ry * 0.6),
+                    (ex + rx * 0.3, ey - ry * 0.55)]), RIM_EYE, 0.6),
+               (ellipse(px + 0.6, ey - 0.5, ir * 0.3, ir * 0.25), '#ffffff', 1)]
+    # le sourcil peint en V rouge au-dessus de l'œil (il descend vers le bec), la petite larme rouge sous l'œil
+    md += [(sm([(ex - 5.0, ey - 3.4), (ex - 2.0, ey - 4.4), (ex + 1.2, ey - 3.8), (ex + 3.2, ey - 2.4), (ex + 2.6, ey - 1.7),
+                (ex + 0.8, ey - 2.8), (ex - 2.0, ey - 3.2), (ex - 4.6, ey - 2.4)], sharp=(0, 3)), SILK.base, 1),
+           (ribbon([(ex - 4.4, ey - 3.5), (ex - 1.8, ey - 4.1), (ex + 1.2, ey - 3.5)], [0.1, 0.45, 0.1]), SILK.light, 0.9),
+           (sm([(ex - 2.0, ey + 2.4), (ex - 1.4, ey + 3.6), (ex - 1.6, ey + 4.8), (ex - 2.4, ey + 5.0), (ex - 2.6, ey + 3.7)], sharp=(0,)), SILK.base, 1),
+           (ellipse(ex - 1.8, ey + 4.1, 0.25, 0.4), SILK.hi, 0.8)]
+    fig.part('mask', mask, MASK, grad=(80, 31, 65, 46, [(0, MASK.light), (0.5, MASK.base), (1, MASK.shadow)]),
              cel=1.0, rim=0.7, cast=1.2, cast_on=['skull', 'cord'], details=md)
 
-    # le bec : la mandibule du bas dans l'ombre, puis le bec du haut (arête courbe éclairée, crochet au bout)
-    lower = sm([(72.4, 41.4), (78.6, 41.8), (83.8, 42.6), (84.6, 43.6), (82.6, 45.0), (77.4, 45.6), (73.2, 45.0)])
-    fig.part('lower', lower, MASK, grad=(84, 42, 73, 46, [(0, MASK.base), (1, MASK.shadow)]), cel=0.8, rim=0.4, cast=0.9,
-             cast_on=['mask'],
-             details=[(ribbon([(73.4, 44.2), (78.0, 44.8), (82.6, 44.2)], [0.1, 0.8, 0.1]), MASK.deep, 0.35)])
-    upper = sm([(72.2, 37.6), (75.0, 36.2), (79.6, 36.2), (84.0, 37.2), (86.8, 38.8), (88.0, 41.2), (87.4, 43.6),
-                (86.2, 44.2), (85.8, 42.4), (84.4, 41.8), (79.0, 41.8), (74.2, 42.2), (72.4, 41.0)], sharp=(7,))
-    ud = [(sm([(73.0, 40.2), (78.8, 40.0), (84.4, 40.6), (85.8, 42.4), (84.4, 41.8), (79.0, 41.8), (74.2, 42.2), (72.4, 41.0)]), MASK.shadow, 0.65),
-          (ribbon([(74.6, 37.0), (79.6, 36.8), (84.0, 37.8), (86.6, 39.6)], [0.2, 1.0, 0.9, 0.2]), '#ffffff', 0.95),
-          (ellipse(81.6, 38.8, 0.95, 0.45, 10), MASK.deep, 0.6),
-          (ribbon([(86.4, 41.4), (86.6, 42.6), (86.4, 43.6)], [0.1, 0.5, 0.1]), MASK.shadow, 0.6)]
-    fig.part('upper', upper, MASK, grad=(86, 37, 74, 42, [(0, MASK.light), (0.5, MASK.base), (1, MASK.shadow)]),
+    # le bec, planté sur le devant de la tête : sa racine (« nez ») et sa commissure (« bouche ») aux places de
+    # placer() ; la mandibule du bas dans l'ombre, puis le bec du haut (arête courbe éclairée, crochet au bout)
+    B0 = (nx_ - 1.4, ny_ - 0.7)                        # le haut de la racine, sous l'œil
+    lower = sm([(bx_ + 0.2, by_ - 0.2), (bx_ + 6.0, by_ + 0.3), (bx_ + 10.8, by_ + 0.8), (bx_ + 11.2, by_ + 1.8),
+                (bx_ + 9.0, by_ + 3.0), (bx_ + 4.0, by_ + 3.4), (bx_ + 0.2, by_ + 2.6)])
+    fig.part('lower', lower, MASK, grad=(bx_ + 11, by_, bx_, by_ + 3, [(0, MASK.base), (1, MASK.shadow)]), cel=0.8,
+             rim=0.4, cast=0.9, cast_on=['mask'],
+             details=[(ribbon([(bx_ + 1.0, by_ + 2.0), (bx_ + 5.0, by_ + 2.5), (bx_ + 9.4, by_ + 2.0)], [0.1, 0.8, 0.1]), MASK.deep, 0.35)])
+    hx, hy = B0
+    upper = sm([(hx - 0.8, hy + 0.6), (hx + 1.6, hy - 0.4), (hx + 6.0, hy - 0.6), (hx + 10.0, hy + 0.4), (hx + 12.6, hy + 2.0),
+                (hx + 13.6, hy + 4.4), (hx + 13.0, hy + 6.8), (hx + 11.8, hy + 7.4), (hx + 11.4, hy + 5.6),
+                (hx + 10.0, hy + 4.9), (bx_ + 4.0, by_ - 0.1), (bx_ - 0.2, by_ - 0.1), (hx - 1.2, hy + 3.2)], sharp=(7,))
+    ud = [(sm([(hx - 0.4, hy + 3.0), (hx + 5.0, hy + 3.4), (hx + 10.0, hy + 3.8), (hx + 11.4, hy + 5.6), (hx + 10.0, hy + 4.9),
+               (bx_ + 4.0, by_ - 0.1), (bx_ - 0.2, by_ - 0.1)]), MASK.shadow, 0.65),
+          (ribbon([(hx + 0.6, hy + 0.2), (hx + 5.6, hy + 0.0), (hx + 10.0, hy + 1.0), (hx + 12.4, hy + 2.8)], [0.2, 1.0, 0.9, 0.2]), '#ffffff', 0.95),
+          (ellipse(hx + 7.2, hy + 2.0, 0.9, 0.42, 10), MASK.deep, 0.6),
+          (ribbon([(hx + 12.6, hy + 4.6), (hx + 12.8, hy + 5.8), (hx + 12.6, hy + 6.8)], [0.1, 0.5, 0.1]), MASK.shadow, 0.6)]
+    fig.part('upper', upper, MASK, grad=(hx + 12, hy, hx, hy + 5, [(0, MASK.light), (0.5, MASK.base), (1, MASK.shadow)]),
              cel=0.9, rim=0.7, cast=1.2, cast_on=['mask', 'lower'], details=ud)
-    # la fente de la bouche : rouge sombre (jamais noire), la commissure plus marquée
-    fig.part('slit', ribbon([(73.2, 42.0), (76.6, 42.1), (80.4, 42.2), (84.0, 42.4)], [0.9, 0.7, 0.55, 0.1]), SILK,
-             grad=(73, 42, 84, 42, g2(MOUTH, SILK.shadow)), cel=0, rim=0, cast=0, outline=False)
+    # la fente de la bouche (fermée) : rouge sombre (jamais noire), la commissure à la place de la « bouche »
+    fig.part('slit', ribbon([(bx_, by_), (bx_ + 3.4, by_ + 0.1), (bx_ + 7.0, by_ + 0.3), (bx_ + 10.4, by_ + 0.6)],
+                            [0.9, 0.65, 0.5, 0.1]), SILK,
+             grad=(bx_, by_, bx_ + 10, by_, g2(MOUTH, SILK.shadow)), cel=0, rim=0, cast=0, outline=False)
+    # les places réelles de ce dessin (pour visage.verifier)
+    MESURES.update(oeil_proche=(ex, ey, 2 * rx), oeil_fond=None, nez=(nx_, ny_), bouche=(bx_, by_, 2.0))
 
     # l'eboshi de laque noire, plié en arrière (pointe vers l'arrière), bande d'or au bord
     hat = sm([(57.4, 31.0), (57.0, 27.8), (55.6, 25.0), (53.8, 22.4), (56.6, 21.4), (61.0, 21.6), (65.8, 23.0),
@@ -419,7 +438,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       # le pli du chapeau (une arête douce, pas un trait)
                       (ribbon([(56.2, 24.8), (58.6, 26.4), (60.6, 29.4)], [0.1, 0.8, 0.1]), LACQ.deep, 0.7),
                       (ellipse(65.0, 24.8, 0.7, 0.35, 25), '#ffffff', 0.7)])
-    band = sm([(56.6, 29.6), (66.0, 30.2), (75.8, 30.6), (76.0, 31.4), (75.6, 32.1), (66.0, 31.8), (56.6, 31.4)], sharp=(0, 6))
+    band = rpoly([(56.6, 29.6), (75.6, 30.5), (75.4, 32.1), (56.6, 31.4)], 0.6)
     fig.part('band', band, GOLD, grad=(76, 30, 56, 32, [(0, GOLD.hi), (0.4, GOLD.light), (1, GOLD.shadow)]),
              cel=0.4, rim=0.4, cast=0.9, cast_on=['mask', 'skull'],
              details=[(ribbon([(58.0, 30.0), (67.0, 30.6), (75.6, 30.9)], [0.1, 0.45, 0.1]), '#fffbe0', 0.8)])

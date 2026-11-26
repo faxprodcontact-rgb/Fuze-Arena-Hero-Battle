@@ -20,6 +20,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, lock, limb, ribbon, xf, resample, sides, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402,F401
 from lib import Shape  # noqa: E402
+from visage import placer  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
@@ -39,6 +40,12 @@ GRD = 116          # le sol
 FEET = (64, 116)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
 FRAME = (2, 8, 127, 110)
+# le visage (méthode commune visage.py) : la boîte = le crâne de la lionne (front sous la coiffe, joue, jusqu'à la
+# racine du museau ; sans la collerette, les oreilles ni le museau qui avance), repère de head_parts (avant le ×1,1).
+# Tête de profil → placer(..., tour=75) : un seul œil (avis du propriétaire : « enlever son œil du fond »).
+FACE_BOX = (63.0, 20.0, 84.0, 44.0)
+FACE = placer(FACE_BOX, tour=75)
+EYE_SX = 0.9                       # l'œil un peu affiné (vu de profil)
 
 # ---------- le squelette (animation) ----------
 # Une pose = ces réglages ; REST est la pose du dessin. Pixels du dessin, degrés.
@@ -606,20 +613,22 @@ def head_parts(fig, P):
            (ribbon([(87.6, 32.0), (88.4, 33.2), (88.4, 34.2)], [0.1, 0.7, 0.1]), FUR.shadow, 0.3)]
     # UN SEUL ŒIL (avis du propriétaire, 26/11 : tête de profil → pas d'œil du fond) ; l'œil visible est placé comme
     # sur un profil de lionne : juste derrière l'arête du museau, au-dessus du coin de la gueule (EX = son décalage).
-    EX, EY = 3.4, 0.0
-    E = lambda pts: [(x + EX, y + EY) for x, y in pts]
+    ex, ey = FACE['oeil_proche'][:2]     # la place de l'œil donnée par visage.py
+    EX, EY = ex - 76.5, ey - 32.0        # le dessin de l'œil (centre 76,5 ; 32) est posé là, affiné de EYE_SX
+    E = lambda pts: [(ex + (x - 76.5) * EYE_SX, y + EY) for x, y in pts]
     # la crème sous l'œil, le larmier sombre qui part du coin avant de l'œil et descend le long du museau
+    fc = E([(80.4, 32.8)])[0]            # le coin avant de l'œil
     hd += [(sm(E([(73.0, 33.3), (77.4, 33.7), (80.4, 34.1), (79.2, 35.3), (76, 35.5), (73.4, 34.6)])),
-            ('lin', 80 + EX, 34 + EY, 72 + EX, 35 + EY, [(0, CREAM.light, 0.95), (0.6, CREAM.light, 0.7), (1, CREAM.light, 0)]), 1),
-           (ribbon([(80.4 + EX, 32.8), (81.2 + EX, 34.4), (81.6 + EX, 35.8), (81.8 + EX, 36.8)], [0.5, 0.9, 0.6, 0.1]), '#5a2028', 0.85)]
+            ('lin', fc[0], 34 + EY, fc[0] - 8 * EYE_SX, 35 + EY, [(0, CREAM.light, 0.95), (0.6, CREAM.light, 0.7), (1, CREAM.light, 0)]), 1),
+           (ribbon([fc, (fc[0] + 0.8, 34.4 + EY), (fc[0] + 1.2, 35.8 + EY), (fc[0] + 1.4, 36.8)], [0.5, 0.9, 0.6, 0.1]), '#5a2028', 0.85)]
     # l'œil doré, en amande (coin arrière pointu, coin avant qui descend vers le larmier)
     eyeN = sm(E([(72.6, 31.0), (76.0, 30.4), (80.4, 32.0), (78.8, 33.4), (75.0, 33.0)]), sharp=(0, 2))
-    cx, cy, px, py = 76.6 + EX, 32.0 + EY, 78.0 + EX, 32.0 + EY
+    (cx, cy), (px, py) = E([(76.6, 32.0)])[0], E([(78.0, 32.0)])[0]
     hd += [(eyeN.scale(1.16, 1.5, cx, cy - 0.1), '#3a1418', 0.95)]
     if P['blink'] > 0.5:
-        hd += [(eyeN.scale(1.04, 1.15, cx, cy), FUR.base, 1), (ribbon([(cx - 3.4, cy + 0.4), (cx, cy + 0.9), (cx + 3.4, cy + 0.2)], [0.1, 0.6, 0.1]), '#3a1418', 0.9)]
+        hd += [(eyeN.scale(1.04, 1.15, cx, cy), FUR.base, 1), (ribbon([(cx - 3.4 * EYE_SX, cy + 0.4), (cx, cy + 0.9), (cx + 3.4 * EYE_SX, cy + 0.2)], [0.1, 0.6, 0.1]), '#3a1418', 0.9)]
     else:
-        hd += [(eyeN, ('rad', px - 0.4, py - 0.2, 3.4, 2.2, [(0, '#fff2a0'), (0.4, '#ffd84a'), (0.8, '#f0920e'), (1, '#c25e0e')]), 1),
+        hd += [(eyeN, ('rad', px - 0.4, py - 0.2, 3.4 * EYE_SX, 2.2, [(0, '#fff2a0'), (0.4, '#ffd84a'), (0.8, '#f0920e'), (1, '#c25e0e')]), 1),
                (ellipse(px, py + 0.05, 0.77, 0.95), '#1c0c14', 1),
                (ellipse(px + 0.35, py - 0.4, 0.41, 0.3), '#fffbe8', 1)]
     # la paupière lourde (le haut de l'œil caché) et le sourcil froncé
@@ -657,6 +666,14 @@ def head_parts(fig, P):
                       (ellipse(83.3, 19.9, 0.3, 0.35), '#ffffff', 0.9),
                       (ribbon([(81.6, 23.4), (82.6, 24.4), (83.6, 25.8)], [0.1, 0.5, 0.1]), GOLD.shadow, 0.6)])
 
+
+
+def face_mesures():
+    """Les places RÉELLES des traits (repère de head_parts), pour visage.verifier : le centre et la largeur de l'œil
+    dessiné ; le nez = la racine du museau (le bord arrière du coussinet des moustaches, là où le museau sort du crâne) ;
+    la bouche = le coin de la gueule (la commissure). Le bout du museau (truffe) avance hors du crâne : c'est une lionne."""
+    ex, ey = FACE['oeil_proche'][:2]
+    return {'oeil_proche': (ex, ey, 7.8 * EYE_SX), 'oeil_fond': None, 'nez': (82.4, 36.8), 'bouche': (81.2, 43.0, 3.0)}
 
 def main():
     """sable.svg (grand) et sable-petit.svg (contour plus épais, pour les cases), puis les images du jeu :

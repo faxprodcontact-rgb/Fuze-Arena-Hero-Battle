@@ -54,10 +54,53 @@ def render(svg, h, name):
     return Image.open(png).convert('RGBA')
 
 
+def guide(boite):
+    """Le calque de ../visage.py (guide_svg), avec les réglages de la tête de serpent (tour = 75, yeux sur les côtés de
+    la tête : az_oeil = 80, l_oeil = 0,24) : sphère, médiane, ligne des yeux, places idéales de l'oeil, du nez (la
+    narine), de la bouche (l'avant de la fente des lèvres)."""
+    from visage import placer
+    V = placer(boite, S.FACE_TOUR, az_oeil=S.FACE_AZ, l_oeil=0.24)
+    x0, y0, x1, y1 = boite
+    w, h = x1 - x0, y1 - y0
+    c = '#00e0ff'
+    pts = ' '.join('%.2f,%.2f' % (V['mediane'](y0 + h * t / 20), y0 + h * t / 20) for t in range(21))
+    out = ['<g fill="none" stroke="%s" stroke-width="%.2f" opacity=".9">' % (c, w / 120),
+           '<ellipse cx="%.2f" cy="%.2f" rx="%.2f" ry="%.2f" stroke-dasharray="%.2f"/>' % (x0 + w / 2, y0 + h / 2, w / 2, h / 2, w / 40),
+           '<polyline points="%s"/>' % pts,
+           '<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f"/>' % (x0, V['oeil_proche'][1], x1, V['oeil_proche'][1])]
+    e = V['oeil_proche']
+    out.append('<ellipse cx="%.2f" cy="%.2f" rx="%.2f" ry="%.2f"/>' % (e[0], e[1], e[2] / 2, e[2] / 3))
+    n, b = V['nez'], V['bouche']
+    out.append('<circle cx="%.2f" cy="%.2f" r="%.2f"/>' % (n[0], n[1], w / 40))
+    out.append('<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f"/>' % (b[0] - b[2] / 2, b[1], b[0] + b[2] / 2, b[1]))
+    out.append('</g>')
+    return '\n'.join(out)
+
+
+def face_sheet():
+    """visage.png : la tête zoomée ×4 (par rapport à l'image du jeu de 512 px), à gauche telle quelle, à droite avec
+    le calque du visage (../visage.py) posé dessus, dans le repère de la tête (même agrandissement ×1,1)."""
+    sys.path.insert(0, os.path.join(HERE, '..'))
+    fr = (73.0, 33.0, 36.0, 28.0)
+    H = round(28.0 * 512 / S.FRAME[3] * 4)
+    fig = S.build(ow=0.95, frame=fr)
+    svg = fig.svg(bg='#2c1e4a')
+    M = ' '.join('%g' % v for v in fig.ctx['HEAD'])
+    svg2 = svg.replace('</svg>', '<g transform="matrix(%s)">%s</g></svg>' % (M, guide(S.FACE_BOX)))
+    a = render(svg, H, 'visage-a')
+    b = render(svg2, H, 'visage-b')
+    im = Image.new('RGB', (a.width * 2 + 30, a.height + 20), (20, 14, 36))
+    im.paste(a.convert('RGB'), (10, 10))
+    im.paste(b.convert('RGB'), (a.width + 20, 10))
+    im.save(os.path.join(OUT, 'visage.png'))
+    print('contrôle du visage :', S.face_check() or 'aucun défaut', '→ visage.png')
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
+    face_sheet()
     x0, y0, w, h = S.FRAME
-    fx, fy = S.FEET[0] - x0, S.FEET[1] - y0
+    fx, fy = int(round(S.FEET[0] - x0)), int(round(S.FEET[1] - y0))
     # 1) en grand
     H = 1000
     k = H / h
@@ -76,8 +119,8 @@ def main():
     vec = fig.resize((round(fig.width * s / k), round(fig.height * s / k)), Image.LANCZOS)
     pad = 50
     W3 = pxb.width + vec.width + 3 * pad
-    top = max(pfy, fy) * s
-    H3 = top + pad * 2 + 6 * s
+    top = int(max(pfy, fy) * s)
+    H3 = int(top + pad * 2 + 6 * s)
     base = pad + top
     im = stone(W3, H3, base)
     im.alpha_composite(ground(W3, H3, pad + (pfx + 8) * s, base, 44 * s, 3.6 * s))

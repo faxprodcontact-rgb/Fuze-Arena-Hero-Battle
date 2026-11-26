@@ -2,7 +2,9 @@
 #   python3 refonte-graphique/ui-moderne/heros/ilian/presentation.py
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
 # - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
-# - kael-ilian.png (contrôle, dans le dossier de brouillon) : Ilian à côté de Kael, même échelle.
+# - kael-ilian.png (contrôle, dans le dossier de brouillon) : Ilian à côté de Kael, même échelle ;
+# - visage.png : la tête zoomée ×4, à gauche telle quelle, à droite avec le calque de ../visage.py (sphère, médiane,
+#   ligne des yeux, places idéales) ; verifier() doit ne trouver aucun défaut.
 import os
 import subprocess
 import sys
@@ -12,6 +14,8 @@ from PIL import Image, ImageDraw, ImageFilter
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 import ilian as I  # noqa: E402
+sys.path.insert(0, os.path.join(HERE, '..'))
+from visage import verifier, guide_svg  # noqa: E402
 
 ROOT = I.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'ilian')
@@ -42,6 +46,29 @@ def ground(w, h, cx, cy, rx, ry):
     sh = Image.new('RGBA', (w, h))
     ImageDraw.Draw(sh).ellipse([cx - rx, cy - ry, cx + rx, cy + ry], fill=(10, 4, 24, 150))
     return sh.filter(ImageFilter.GaussianBlur(ry * 0.7))
+
+
+def visage():
+    """Contrôle du visage (méthode commune ../visage.py) : défauts mesurés sur le vrai dessin, puis visage.png."""
+    fig = I.build(frame=(54, 12, 38, 40))
+    m = fig.ctx['face']
+    d = verifier(m, I.FACEBOX)
+    print('visage : mesures', {k: tuple(round(v, 2) for v in t) for k, t in m.items()}, '→ défauts :', d or 'aucun')
+    a, b, c, d_, e, f_ = fig.ctx['HEAD']                 # le calque suit la tête (elle est dessinée ×1,1)
+    svg = fig.svg()
+    guide = '<g transform="matrix(%.4f %.4f %.4f %.4f %.4f %.4f)">%s</g>' % (a, b, c, d_, e, f_, guide_svg(I.FACEBOX))
+    out = []
+    for nm, s_ in (('nu', svg), ('guide', svg.replace('</svg>', guide + '</svg>'))):
+        p_svg, p_png = os.path.join(TMP, '_v-%s.svg' % nm), os.path.join(TMP, '_v-%s.png' % nm)
+        open(p_svg, 'w').write(s_)
+        subprocess.run(['node', RENDU, p_svg, p_png, str(40 * 17), '#2c1e4a'], check=True)
+        out.append(Image.open(p_png).convert('RGB'))
+        os.remove(p_svg)
+        os.remove(p_png)
+    im = Image.new('RGB', (out[0].width * 2 + 30, out[0].height + 20), (24, 16, 40))
+    im.paste(out[0], (10, 10))
+    im.paste(out[1], (out[0].width + 20, 10))
+    im.save(os.path.join(OUT, 'visage.png'))
 
 
 def main():
@@ -89,6 +116,7 @@ def main():
     im.convert('RGB').save(os.path.join(TMP, 'kael-ilian.png'))
     os.remove(big)
     os.remove(svg)
+    visage()
     print('écrit dans', OUT, ':', sorted(os.listdir(OUT)))
 
 

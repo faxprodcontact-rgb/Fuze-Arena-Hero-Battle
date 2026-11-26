@@ -52,8 +52,20 @@ REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0,
             sn=0.0, sf=0.0, barb=0.0, glow=0.0, blink=0.0, wrist=W0, hrot=0.0, pearl=1.0, jaw=0.0, fist=(0.0, 0.0))
 
 
-# l'œil du fond : centre x et raccourci du 3/4 (même dessin et même hauteur que l'œil proche)
-EYE_FAR = (61.9, 0.78)
+# ---- le visage, construit avec ../visage.py (méthode commune) ----
+# La face = l'avant du crâne (du coin de la joue au départ du museau, du dessus du crâne au bas de la mâchoire) ;
+# le museau de dragon la prolonge vers la droite. placer() donne la ligne des yeux, la place des deux yeux et la
+# largeur de l'œil du fond (un peu plus étroit), la médiane (où passe l'arête du museau entre les yeux) et la bouche.
+# Le crâne d'un dragon est plat : le haut de la boîte (la sphère) passe au-dessus du crâne, entre les bois ; le bas
+# est le dessous de la mâchoire. Un dragon d'Orient a de grands yeux : l_oeil garde la largeur dessinée de l'œil (8,2).
+from visage import placer, verifier  # noqa: E402
+FACE_BOX = (40.08, 11.07, 66.08, 36.73)  # proportions par défaut de placer() : yeux à 0,5, nez 0,66, bouche 0,8
+EYE_W = 8.2                          # largeur du dessin de l'œil proche (de 47,4 à 55,6)
+EYE_OFF = -0.7                       # centre de la forme de l'œil par rapport à son point d'ancrage (52,2)
+FACE = placer(FACE_BOX, l_oeil=EYE_W / ((FACE_BOX[2] - FACE_BOX[0]) * math.cos(math.radians(-25 + 18)) ** 0.6))
+_P, _F = FACE['oeil_proche'], FACE['oeil_fond']
+EYE_NEAR = (_P[0] - EYE_OFF, _P[1])                          # ancrage de l'œil proche (≈ 52,2 ; 23,9 : inchangé)
+EYE_FAR = (_F[0] - EYE_OFF * _F[2] / _P[2], _F[2] / _P[2])   # ancrage x de l'œil du fond, raccourci du 3/4
 
 
 def rot(v, deg):
@@ -494,13 +506,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # les yeux : iris d'or, pupille fendue, paupière lourde (calme et dangereux), sous une arcade très marquée.
     # UN seul dessin d'œil (l'œil proche) ; l'œil du fond est le même, à la même hauteur, juste raccourci par le 3/4
     # (resserré en largeur autour de son centre) ; le regard (pupille, reflet) part du même côté pour les deux.
-    ECX, ECY = 52.2, 23.9            # le centre de l'œil proche
+    ECX, ECY = 52.2, 23.9            # l'œil proche tel qu'il est dessiné (coordonnées des points ci-dessous)
+    NCX, NCY = EYE_NEAR
     FCX, FK = EYE_FAR
 
     def eye_kit(cx, k):
         """L'œil complet (arcade, contour, iris, pupille, paupière, reflet, pli) centré en (cx, ECY), largeur ×k."""
         X = lambda x: cx + (x - ECX) * k           # noqa: E731  (x dessiné pour l'œil proche → x de cet œil)
-        to = lambda sh: sh.map(lambda q: (X(q[0]), q[1]))  # noqa: E731
+        dy = NCY - ECY
+        to = lambda sh: sh.map(lambda q: (X(q[0]), q[1] + dy))  # noqa: E731
         cy = ECY
         out = [(to(sm([(46.2, 21.8), (51, 20.4), (56.2, 21.0), (55.8, 23.2), (51, 22.8), (47, 23.6)])), SCALE.deep, 0.5),
                (to(ribbon([(45.6, 21.0), (50.6, 18.8), (56.2, 19.8)], [0.2, 1.5, 0.3])), SCALE.hi, 0.75)]
@@ -509,17 +523,24 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         if P['blink'] > 0.5:
             out += [(to(e), SCALE.base, 1), (to(ribbon([(ECX - 4, cy + 0.2), (ECX, cy + 0.9), (ECX + 3, cy + 0.4)], [0.1, 0.6, 0.1])), SCALE.deep, 0.9)]
         else:
-            out += [(to(e), ('rad', X(ECX + 0.6), cy + 0.6, 4.0 * k, 4.0, [(0, '#fff4a0'), (0.4, '#ffd63a'), (0.85, '#f09a24'), (1, '#e2761c')]), 1),
+            out += [(to(e), ('rad', X(ECX + 0.6), cy + 0.6 + dy, 4.0 * k, 4.0, [(0, '#fff4a0'), (0.4, '#ffd63a'), (0.85, '#f09a24'), (1, '#e2761c')]), 1),
                     (to(ellipse(ECX + 0.2, cy + 0.5, 0.62, 1.4)), '#140a1c', 1),
                     # la paupière lourde : elle couvre le haut de l'iris, droite
                     (to(sm([(ECX - 5, cy - 3.0), (ECX + 3.8, cy - 2.4), (ECX + 3.6, cy + 0.15), (ECX - 4.6, cy - 0.75)], sharp=(0, 1, 2, 3), t=0.5)), '#28709e', 1),
                     (to(ribbon([(ECX - 4.6, cy - 0.75), (ECX - 0.4, cy - 0.45), (ECX + 3.6, cy + 0.15)], [0.2, 0.8, 0.3])), '#1a0c2c', 0.9),
-                    (ellipse(X(ECX + 1.0), cy + 0.6, 0.42, 0.34), '#ffffff', 1)]
+                    (ellipse(X(ECX + 1.0), cy + 0.6 + dy, 0.42, 0.34), '#ffffff', 1)]
         # le pli sous l'œil
         out.append((to(ribbon([(48.6, 26.8), (52, 27.4), (55.6, 26.8)], [0.1, 0.5, 0.1])), SCALE.shadow, 0.6))
         return out
 
-    hd += eye_kit(FCX, FK) + eye_kit(ECX, 1.0)
+    # l'arête du museau sur la médiane, entre les deux arcades : elle descend de l'entre-deux-yeux et file vers la
+    # truffe (le côté gauche dans l'ombre, le dessus éclairé) ; son bas = la « racine du nez » de placer()
+    nz = FACE['nez']
+    md = FACE['mediane']
+    ridge = [(md(21.2) - 0.2, 21.2), (md(24.2), 24.2), (nz[0], nz[1])]
+    hd += [(ribbon(ridge, [0.1, 1.1, 0.2]), SCALE.shadow, 0.5),
+           (ribbon([(q[0] + 0.7, q[1] - 0.2) for q in ridge], [0.1, 0.6, 0.1]), SCALE.hi, 0.45)]
+    hd += eye_kit(FCX, FK) + eye_kit(NCX, 1.0)
     fig.part('head', head, SCALE, grad=(74, 18, 42, 36, [(0, '#56c8d0'), (0.45, SCALE.base), (1, '#245c9c')]),
              cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'mfront', 'robe', 'mF', 'mE', 'mD', 'mC'], details=hd)
 

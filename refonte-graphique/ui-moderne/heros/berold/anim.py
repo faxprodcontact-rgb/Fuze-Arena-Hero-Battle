@@ -114,13 +114,13 @@ ATTACK = [
     (0, {}),
     (90, dict(ad=(0, -4), crouch=1, head=(0, 1), ct=1, cq=1)),
     (150, dict(G=(35.5, 47.5), ang=-38, behind=1, crouch=1, lean=-1, head=(0, 1), ct=1, cq=1, cpl=1, **H1)),
-    (210, dict(G=(38.5, 52.5), ang=2, crouch=1, lean=-2, head=(-1, 1), tilt=-2, ct=-1, cq=1, cpl=1, cpr=1, pg=1, **H1)),
-    (370, dict(G=(39.0, 52.8), ang=2, crouch=1.2, lean=-2.3, head=(-1.2, 1.2), tilt=-2.4, ct=-1, cq=1.2, cpl=1, cpr=1, pg=1, **H1)),
-    (420, dict(G=(62.5, 53.5), ang=3, stretch=6, crouch=1, lean=2, head=(1, 0), ct=-1, cq=-1, cpl=-1, cpr=-1, sh=(1, 0), pg=-1, **H1)),
-    (460, dict(G=(72.5, 54.5), ang=4, hot=2, stretch=2, crouch=2, lean=3, head=(1, 0), tilt=2, ct=-2, cq=-1, cpl=-1, cpr=-1, sh=(2, 0), pg=-2, **H1)),
-    (590, dict(G=(72.2, 54.5), ang=4, hot=2, crouch=2, lean=3, head=(1, 0), tilt=2, ct=-1.5, cq=-1, cpl=-1, cpr=-1, sh=(2, 0), pg=-1.5, **H1)),
-    (690, dict(G=(71.5, 54.5), ang=4, hot=1, crouch=2, lean=3, head=(1, 0), ct=-1, cq=-1, cpl=0, cpr=-1, sh=(2, 0), pg=-1, **H1)),
-    (780, dict(G=(48.5, 53.5), ang=0, crouch=1, lean=1, cpl=1, sh=(1, 0), **H1)),
+    (210, dict(G=(38.8, 55.4), ang=2, crouch=1, lean=-2, head=(-1, 1), tilt=-2, ct=-1, cq=1, cpl=1, cpr=1, pg=1, **H1)),
+    (370, dict(G=(39.2, 55.6), ang=2, crouch=1.2, lean=-2.3, head=(-1.2, 1.2), tilt=-2.4, ct=-1, cq=1.2, cpl=1, cpr=1, pg=1, **H1)),
+    (420, dict(G=(62.5, 56.2), ang=3, stretch=6, crouch=1, lean=2, head=(1, 0), ct=-1, cq=-1, cpl=-1, cpr=-1, sh=(1, 0), pg=-1, **H1)),
+    (460, dict(G=(72.5, 56.8), ang=4, hot=2, stretch=2, crouch=2, lean=3, head=(1, 0), tilt=2, ct=-2, cq=-1, cpl=-1, cpr=-1, sh=(2, 0), pg=-2, **H1)),
+    (590, dict(G=(72.2, 56.8), ang=4, hot=2, crouch=2, lean=3, head=(1, 0), tilt=2, ct=-1.5, cq=-1, cpl=-1, cpr=-1, sh=(2, 0), pg=-1.5, **H1)),
+    (690, dict(G=(71.5, 56.8), ang=4, hot=1, crouch=2, lean=3, head=(1, 0), ct=-1, cq=-1, cpl=0, cpr=-1, sh=(2, 0), pg=-1, **H1)),
+    (780, dict(G=(48.5, 56.0), ang=0, crouch=1, lean=1, cpl=1, sh=(1, 0), **H1)),
     (840, dict(G=(34.5, 48.5), ang=-48, behind=1, crouch=1, head=(0, 1), ct=1, cq=1, cpl=1, cpr=1, **H1)),
     (930, dict(ad=(0, -3), crouch=1, head=(0, 1), ct=1, cpr=1)),
     (1040, dict(crouch=1, cq=-1)),
@@ -154,7 +154,7 @@ SPECIAL = [
     (1230, dict(crouch=2, lean=1, head=(1, -1), tilt=2, ct=-2, cq=-2, cpl=-1, cpr=-1, sh=(-1, 0), shot=2, cri=1, **STRIKE)),
     (1430, dict(crouch=2, lean=1, head=(1, -0.6), tilt=1.6, ct=-1.6, cq=-1.6, cpl=-1, cpr=-1, sh=(-1, 0), shot=2, cri=1, **STRIKE)),
     (1540, dict(crouch=2, lean=1, head=(1, 0), ct=-1, cq=-1, cpr=-1, shot=1, cri=0.8, **STRIKE)),
-    (1620, dict(G=(48.5, 53.5), ang=0, crouch=1, lean=1, cpl=1, **H1)),
+    (1620, dict(G=(48.5, 56.0), ang=0, crouch=1, lean=1, cpl=1, **H1)),
     (1680, dict(G=(34.5, 48.5), ang=-48, behind=1, crouch=1, head=(0, 1), ct=1, cq=1, cpl=1, cpr=1, **H1)),
     (1770, dict(ad=(0, -3), crouch=1, head=(0, 1), ct=1, cpr=1)),
     (1870, dict(crouch=1, cq=-1)),
@@ -399,13 +399,13 @@ def fx_special(tl):
         # -- l'emblème chauffe : de petites flammes montent du bord du bouclier (côté ennemi et en haut)
         lv = env(tl, 60, 260, 470, 560)
         if lv > 0:
-            spots = [(-62, 0.9), (-38, 1.0), (-14, 0.85), (8, 0.7), (-84, 0.5), (30, 0.45)]
+            spots = [(-66, 0.85), (-31, 1.0), (4, 0.6), (-100, 0.45)]
             for j, (a, hk) in enumerate(spots):
                 ar = math.radians(a + P['srot'])
                 bx = C[0] + K.SRX * 0.92 * math.cos(ar)
                 by = C[1] + K.SRY * 0.92 * math.sin(ar)
                 h = (4 + 9 * lv) * hk * (1 + 0.15 * math.sin(tl / 40 + j * 1.9))
-                fig.fx_front.append(tongue(fig, (bx, by), h, 2.6 + 1.6 * lv * hk, bend=0.8 if j % 2 else -0.7,
+                fig.fx_front.append(tongue(fig, (bx, by), h * 1.25, 3.4 + 2.0 * lv * hk, bend=0.8 if j % 2 else -0.7,
                                            lean=0.25 * math.cos(ar), op=min(1, 1.6 * lv)))
         # -- la lance plantée : poussière des deux côtés, petite couronne de feu, braises
         pk = (tl - SP_PLANT) / 1000.0
@@ -477,7 +477,7 @@ def veil(fig, cx, cy, rx, ry, tl, op, flash=0.0):
     clip = fig.uid('c')
     fig.defs.append('<clipPath id="%s"><rect x="-400" y="-400" width="900" height="%s"/></clipPath>' % (clip, fm(GR + 400)))
     inner = g_rad(fig, (cx + rx * 0.3, cy - ry * 0.35), max(rx, ry) * 1.2,
-                  [(0, '#fff2b0', 0.12 + 0.1 * flash), (0.7, '#ffc24a', 0.16 + 0.1 * flash), (1, '#ffa830', 0.3)])
+                  [(0, '#fff2b0', 0.16 + 0.12 * flash), (0.7, '#ffcc5a', 0.22 + 0.1 * flash), (1, '#ffb43a', 0.42)])
     fig.fx_back.append('<g clip-path="url(#%s)"><ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"/></g>' % (
         clip, fm(cx), fm(cy), fm(rx), fm(ry), inner))
     # le bord : une couronne (anneau) de feu doré, plus épaisse en haut à droite
@@ -490,13 +490,13 @@ def veil(fig, cx, cy, rx, ry, tl, op, flash=0.0):
     fig.fx_front.append('<g clip-path="url(#%s)" opacity="%g"><path d="%s" fill="#ffe08a" opacity="0.28"/>'
                         '<path d="%s" fill="%s" opacity="0.9"/></g>' % (clip, op, glow.d(), band.d(), gb))
     # les langues de feu sur le bord (places irrégulières)
-    for j, (a, hk) in enumerate(((-128, 0.7), (-96, 1.0), (-61, 0.85), (-33, 0.6), (-8, 0.75), (22, 0.5), (-160, 0.45), (168, 0.55))):
+    for j, (a, hk) in enumerate(((-118, 0.8), (-74, 1.0), (-37, 0.7), (-160, 0.5), (12, 0.55))):
         ar = math.radians(a)
         bx, by = cx + rx * math.cos(ar), cy + ry * math.sin(ar)
         if by > GR - 2:
             continue
-        h = (3.2 + 2.6 * hk) * (1 + 0.25 * math.sin(tl / 35 + j * 2.3)) * min(1, rx / 30)
-        fig.fx_front.append(tongue(fig, (bx, by), h, 2.4, bend=0.7 if j % 2 else -0.6, lean=0.3 * math.cos(ar), op=op, gold=True))
+        h = (4.4 + 3.4 * hk) * (1 + 0.25 * math.sin(tl / 35 + j * 2.3)) * min(1, rx / 30)
+        fig.fx_front.append(tongue(fig, (bx, by), h, 3.2, bend=0.7 if j % 2 else -0.6, lean=0.3 * math.cos(ar), op=op, gold=True))
     for j, (a, d) in enumerate(((-110, 6), (-50, 9), (-80, 12))):
         ar = math.radians(a)
         fig.fx_front.append(ember(fig, cx + (rx + d) * math.cos(ar), cy + (ry + d) * math.sin(ar) - 0.03 * tl % 6, 0.55, op=op * 0.8))

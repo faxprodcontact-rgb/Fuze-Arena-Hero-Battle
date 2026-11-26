@@ -2,6 +2,7 @@
 #   python3 presentation.py
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol pour la présentation) ;
 # - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
+# - visage.png : la tête zoomée ×4, à gauche telle quelle, à droite avec le calque de visage.py (méthode commune) ;
 # - avec --controle <dossier> : des images de contrôle (à côté de Kael, à la taille du téléphone).
 import os
 import subprocess
@@ -79,10 +80,40 @@ def main():
     im.convert('RGB').save(os.path.join(OUT, 'comparaison.png'))
     for f_ in ('_sable.svg', '_sable-1000.png'):
         os.remove(os.path.join(OUT, f_))
+    visage()
     if '--controle' in sys.argv:
         controle(sys.argv[sys.argv.index('--controle') + 1])
     print('écrit', os.path.join(OUT, 'fixe.png'), 'et comparaison.png')
 
+
+
+def visage():
+    """visage.png : la tête zoomée ×4 (cadre du jeu 512 px → ×4), à gauche sans rien, à droite avec le calque
+    guide_svg de visage.py posé dans le repère de la tête (même ×1,1 que la pose) ; vérifie aussi les places."""
+    from visage import guide_svg, verifier
+    x0, y0, w, h = S.FRAME
+    head_svg = S.build().svg()
+    g = guide_svg(S.FACE_BOX, tour=75)
+    g = '<g transform="translate(76 50) scale(1.1) translate(-76 -50)">' + g + '</g>'
+    guided = head_svg[:head_svg.rindex('</svg>')] + g + '</svg>'
+    H = 4 * 512
+    k = H / h
+    box = (round((54 - x0) * k), round((10 - y0) * k), round((104 - x0) * k), round((56 - y0) * k))
+    ims = []
+    for i, svg_txt in enumerate((head_svg, guided)):
+        path = os.path.join(OUT, '_visage%d.svg' % i)
+        open(path, 'w').write(svg_txt)
+        im = render(path, H, os.path.join(OUT, '_visage%d.png' % i)).crop(box)
+        os.remove(path)
+        os.remove(os.path.join(OUT, '_visage%d.png' % i))
+        bg = stone(im.width, im.height, im.height + 10)
+        bg.alpha_composite(im)
+        ims.append(bg)
+    out = Image.new('RGB', (2 * ims[0].width + 30, ims[0].height), (20, 14, 34))
+    out.paste(ims[0].convert('RGB'), (0, 0))
+    out.paste(ims[1].convert('RGB'), (ims[0].width + 30, 0))
+    out.save(os.path.join(OUT, 'visage.png'))
+    print('visage : défauts =', verifier(S.face_mesures(), S.FACE_BOX) or 'aucun')
 
 def controle(folder):
     """À côté de Kael (même échelle : leurs pieds sur la même ligne), en grand puis à la taille du téléphone."""

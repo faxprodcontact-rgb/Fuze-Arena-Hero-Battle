@@ -1,3 +1,5 @@
 fait
-Sable, la déesse lionne à genou : tête de lionne qui rugit sous la coiffe bleu nuit (bandeau d'or, cobra, pan dans le dos), grand collier d'or et de turquoise, haut et jupe de lin, tablier d'or, cape lie-de-vin, grand bouclier égyptien (disque solaire ailé, lotus), khopesh d'or dans la main lointaine, queue de lion dressée.
-Animée comme son pixel art : respiration (queue qui ondule, oreille qui frémit, clignement), khopesh lancé qui revient comme un boomerang, rugissement avec crinière de flammes et lionne de feu qui bondit sur l'ennemi.
+Correction d'après l'avis du 26/11 (« Enlever son œil du fond et bien placer l'œil visible ») :
+- l'œil du fond (celui près de l'arête du museau, entouré) est enlevé, avec sa paupière et son sourcil : un seul œil, comme une vraie tête de lionne de profil, dans toutes les poses (repos, clignement, attaque, rugissement) et aussi sur la lionne de feu de l'attaque spéciale ;
+- l'œil visible est replacé par la méthode commune visage.py (placer(..., tour=75)) : plus en avant, juste derrière l'arête du museau, à la même hauteur, un peu affiné ; la crème sous l'œil, le larmier et le sourcil le suivent. Contrôle : visage.png (sans / avec le calque), avant-apres.png.
+Sable, la déesse lionne à genou : tête de lionne qui rugit sous la coiffe bleu nuit, collier d'or et turquoise, lin blanc, cape lie-de-vin, grand bouclier égyptien, khopesh d'or, queue de lion dressée ; animée (respiration, khopesh boomerang, rugissement et lionne de feu).

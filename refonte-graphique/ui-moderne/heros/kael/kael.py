@@ -105,32 +105,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     cx_, cy_ = mapp(FARM, (116, 55))
     fig.glow(cx_, cy_, 12, 12, '#ff8a2a', 0.3)
 
-    # ---- la crinière : six mèches de flamme, de la plus basse à la plus haute (chacune pose sa ligne rouge sombre
-    # sur la suivante) ; leurs racines passent sous la calotte de cheveux ----
-    flame_ink = '#330a1a'
-    # Chaque mèche ondule (courbe en S) et son bout se relève comme une vraie flamme ; longueurs et écarts inégaux
-    # (jamais des rayons réguliers). Quelques petites langues de feu sortent du dessus de certaines mèches.
-    LOCKS = [
-        ('mE', (78, 38), (71, 46), (56, 49), (48.5, 42.5), 9.5, None),
-        ('mD', (76.5, 31), (64, 38.5), (44, 41.5), (33, 31), 13.5, None),
-        ('mC', (78, 24.5), (63, 29), (42, 30.5), (35.5, 15.5), 14.5, None),
-        ('mB', (82.5, 19), (73, 22), (58, 21.5), (53.5, 6.5), 12.5, None),
-        ('mA', (89, 17.5), (85, 13), (76.5, 14.5), (71.5, 2.5), 10.0, None),
-    ]
-    LOCKS = [wave_lock(i, L, P) for i, L in enumerate(LOCKS)]
-    for name, p0, p1, p2, p3, w0, spur in LOCKS:
-        if spur:
-            # une petite langue de feu, derrière la mèche, qui sort de son dessus
-            q0, q1, q2, wq = spur
-            sp = lock(q0, ((q0[0] + q1[0]) / 2, (q0[1] + q1[1]) / 2 + 0.6), q1, q2, wq, n=8, bulge=0.1)
-            fig.part(name + 's', sp, FLAME, grad=(q0[0], q0[1], q2[0], q2[1], [(0, '#ffb43a'), (1, '#e8461c')]),
-                     cel=0, rim=0.6, cast=0, ink=flame_ink)
-        sh = lock(p0, p1, p2, p3, w0, bulge=0.32)
-        # le dessus éclairé (jaune pâle à la racine, la plus chaude) vers le bout rouge
-        grad = (p0[0], p0[1], p3[0], p3[1], [(0, '#ffe680'), (0.22, '#ffbc34'), (0.58, '#ff7a22'), (1, '#e03a1a')])
-        fig.part(name, sh, FLAME, grad=grad, cel=0, rim=0.7, cast=1.2, ink=flame_ink,
-                 details=[(sm_under(sh), ('lin', p0[0], p0[1], p3[0], p3[1], [(0, '#ff8a24'), (0.5, '#d8381a'), (1, '#a82418')]), 0.9)])
-
     # ---- le bras lointain (gauche), tendu vers l'ennemi : derrière le buste ----
     farm = limb([(95, 53), (100.5, 54.5), (105, 55.2), (109.5, 55)], [11.4, 11, 10.6, 10.2])
     bracer_f = sm([(102.6, 49.6), (109.8, 49.4), (110.4, 55), (109.8, 60.6), (102.8, 61.2), (103.4, 55)])
@@ -313,20 +287,64 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('head', head, ROCK, grad=(102, 26, 80, 46, [(0, '#b48c86'), (0.45, '#8c6c7a'), (1, ROCK.shadow)]),
              cel=1.2, rim=0.6, cast=1.3, details=hd)
 
-    # ---- la calotte de cheveux (sur le crâne, devant les racines des mèches), puis la flamme du front ----
-    # la limite du front se termine en petites langues de feu (pas un bord de casque)
-    cap = sm([(99.6, 25.4), (95, 25.6), (91.4, 28.4), (89.6, 26.8), (85.4, 28.6), (82.2, 32.4), (80.8, 30.8),
-              (78.4, 32), (76.4, 36.4), (76.2, 41.6), (73.2, 38), (72.4, 29.6), (74.4, 21.4),
-              (80.4, 16.6), (88, 15.6), (95, 17.6), (99.8, 21.2)], sharp=(2, 5))
-    fig.part('cap', cap, FLAME, cel=0.9, rim=0.8, cast=1.1, cast_on=['head'], ink=flame_ink,
-             details=[(cap, ('rad', 94, 19, 22, 22, [(0, '#fff0a8'), (0.35, '#ffcc40'), (0.75, '#ff9426'), (1, '#f06a1e')]), 1)])
-    # la mèche de devant (refaite le 26/11, demande du propriétaire) : des langues de feu qui naissent au bord du front,
-    # montent un peu en avant puis se couchent vers l'arrière comme le reste de la crinière, la pointe relevée
+    # ---- la chevelure de feu (refaite le 26/11, avis du propriétaire : « pas de délimitation de la tête ») ----
+    # UNE seule masse qui naît du crâne : la racine sur le crâne (bord du front en petites langues de feu), les mèches
+    # qui en partent vers l'arrière et la mèche du front, fondues en une silhouette (plus de calotte posée par-dessus,
+    # donc plus de ligne de crâne sous les flammes). Les mèches se séparent peu à peu : leurs couleurs, leur face du
+    # dessous et leur ombre sur la mèche d'en dessous apparaissent en fondu depuis la racine (aucun bord net sur le
+    # crâne). Peinte devant la tête ; l'oreille et l'épaulière restent devant.
+    flame_ink = '#330a1a'
+    scalp = sm([(99.6, 25.4), (95, 25.6), (91.4, 28.4), (89.6, 26.8), (85.4, 28.6), (82.2, 32.4), (80.8, 30.8),
+                (78.4, 32), (76.4, 36.4), (76.2, 41.6), (73.2, 38), (72.4, 29.6), (74.4, 21.4),
+                (80.4, 16.6), (88, 15.6), (95, 17.6), (99.8, 21.2)], sharp=(2, 5))
+    # les mèches, de la plus basse à la plus haute, puis la mèche du front (la plus en avant)
+    LOCKS = [
+        ('mE', (78, 38), (71, 46), (56, 49), (48.5, 42.5), 9.5, None),
+        ('mD', (76.5, 31), (64, 38.5), (44, 41.5), (33, 31), 13.5, None),
+        ('mC', (78, 24.5), (63, 29), (42, 30.5), (35.5, 15.5), 14.5, None),
+        ('mB', (82.5, 19), (73, 22), (58, 21.5), (53.5, 6.5), 12.5, None),
+        ('mA', (89, 17.5), (85, 13), (76.5, 14.5), (71.5, 2.5), 10.0, None),
+    ]
+    strands = []
+    for name, p0, p1, p2, p3, w0, _ in [wave_lock(i, L, P) for i, L in enumerate(LOCKS)]:
+        strands.append((lock(p0, p1, p2, p3, w0, bulge=0.32), p0, p3, 7.0,
+                        [(0, '#ffe680'), (0.22, '#ffbc34'), (0.58, '#ff7a22'), (1, '#e03a1a')],
+                        [(0, '#ff8a24'), (0.5, '#d8381a'), (1, '#a82418')]))
     for name, p0, p1, p2, p3, w0 in front_locks(P):
-        sh = lock(p0, p1, p2, p3, w0, bulge=0.3)
-        fig.part(name, sh, FLAME, grad=(p0[0], p0[1], p3[0], p3[1], [(0, '#fff0a8'), (0.3, '#ffc63c'), (0.68, '#ff8424'), (1, '#e03a1a')]),
-                 cel=0, rim=0.8, cast=1.1, ink=flame_ink,
-                 details=[(sm_under(sh), ('lin', p0[0], p0[1], p3[0], p3[1], [(0, '#ff9a2a'), (1, '#c8301a')]), 0.85)])
+        strands.append((lock(p0, p1, p2, p3, w0, bulge=0.3), p0, p3, 5.0,
+                        [(0, '#fff0a8'), (0.3, '#ffc63c'), (0.68, '#ff8424'), (1, '#e03a1a')],
+                        [(0, '#ff9a2a'), (1, '#c8301a')]))
+    mass = fused([scalp] + [s[0] for s in strands])
+    hair = [(mass, ('rad', 94, 19, 30, 30, [(0, '#fff0a8'), (0.3, '#ffcc40'), (0.62, '#ff9426'), (1, '#f06a1e')]), 1)]
+    # chaque mèche se détache de la masse sur ses `fade` premiers pixels (7 pour la crinière, 5 pour la mèche du front)
+    for sh, p0, p3, fade, cols, under in strands:
+        fade = min(0.5, fade / math.dist(p0, p3))
+
+        def faded(stops, k=1.0, fade=fade):
+            # la couleur de la mèche n'apparaît qu'après sa racine (transparente sur le crâne, pleine à `fade`) :
+            # opacité en douce rampe (smoothstep) de la racine à fade, échantillonnée finement
+            def col_at(o):
+                for (o1, c1), (o2, c2) in zip(stops, stops[1:]):
+                    if o1 <= o <= o2:
+                        return hexmix(c1, c2, (o - o1) / ((o2 - o1) or 1))
+                return stops[-1][1] if o > stops[-1][0] else stops[0][1]
+            a0 = 0.0
+            out = []
+            for i in range(7):
+                o = a0 + (fade - a0) * i / 6
+                u = i / 6
+                out.append((round(o, 4), col_at(o), round(k * u * u * (3 - 2 * u), 3)))
+            out += [(o, col, k) for o, col in stops if o > fade]
+            return out
+        ax = (p0[0], p0[1], p3[0], p3[1])
+        c = 1.2
+        for (dx, dy), op in (((-c * 0.55, c * 1.25), 0.2), ((-c * 0.3, c * 0.6), 0.28)):
+            sh_ = cast_off(sh, dx, dy)
+            if sh_:
+                hair.append((sh_, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], op / 0.28),), 0.28))
+        hair.append((sh, ('lin',) + ax + (faded([(o, col) for o, col in cols]),), 1))
+        hair.append((sm_under(sh), ('lin',) + ax + (faded(under),), 0.9))
+    fig.part('hair', mass, FLAME, cel=0, rim=0.8, cast=1.1, cast_on=['head'], ink=flame_ink, details=hair)
 
     # ---- l'oreille pointue, couchée en arrière ----
     ear = sm([(81, 31.4), (77.4, 29.6), (71.6, 26.8), (73.8, 30), (77.2, 34.6), (80.8, 38.6)], sharp=(2,))
@@ -415,7 +433,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('nthumb', thumb_n, ROCK, cel=0.8, rim=0.6, cast=0.8, cast_on=['fist', 'grip', 'guard', 'blade'])
 
     # ---- chaque groupe de morceaux prend sa pose ----
-    fig.pose(['mE', 'mD', 'mC', 'mB', 'mA', 'head', 'cap', 'fore', 'fore2', 'ear'], HEAD)
+    fig.pose(['head', 'hair', 'ear'], HEAD)
     fig.pose(['torso'], TOR)
     fig.pose(['belt', 'buckle', 'tass', 'blade', 'grip', 'guard', 'nupper', 'nfore', 'fist', 'nthumb'], U)
     fig.pose(['cloth'], CLO)
@@ -460,6 +478,79 @@ def front_locks(P):
         # la grande : elle monte au-dessus du front puis file vers l'arrière en suivant le crâne, pointe relevée
         ('fore', (98.4, 24.4), (104.2, 18.4), (95.5, 12.2 + 0.5 * w1), (80.5 - 1.8 * tr - fl, 7.2 + 1.0 * w1 - 1.4 * ri - fl), 11.0 * (1 + 0.1 * fl)),
     ]
+
+
+
+# ---------- la chevelure d'un seul tenant (formes fondues : shapely) ----------
+
+def _poly(shape, k=8):
+    """Une forme (courbes de Bézier) → un polygone shapely."""
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    polys = []
+    for s, segs in shape.subs:
+        pts, q = [s], s
+        for c1, c2, p in segs:
+            for i in range(1, k + 1):
+                t = i / k
+                a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+                pts.append((a * q[0] + b * c1[0] + c * c2[0] + d * p[0], a * q[1] + b * c1[1] + c * c2[1] + d * p[1]))
+            q = p
+        g = Polygon(pts)
+        polys.append(g if g.is_valid else g.buffer(0))
+    return unary_union(polys)
+
+
+def _ring(coords, sharp_deg=38):
+    """Un anneau de polygone → une forme souple qui garde les coins vifs (pointes des flammes, creux entre mèches)."""
+    pts = list(coords)[:-1]
+    n = len(pts)
+    sharp = []
+    for i in range(n):
+        a, b, c = pts[i - 1], pts[i], pts[(i + 1) % n]
+        d = abs((math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(b[1] - a[1], b[0] - a[0]) + math.pi) % (2 * math.pi) - math.pi)
+        if math.degrees(d) > sharp_deg:
+            sharp.append(i)
+    return sm(pts, sharp=tuple(sharp), t=0.9).subs
+
+
+def _shape(geom, simplify=0.02, min_area=0.05):
+    """Un (multi)polygone shapely → une forme (trous compris, orientés pour la règle de remplissage « nonzero »)."""
+    from shapely.geometry import Polygon
+    from shapely.geometry.polygon import orient
+    from lib import Shape
+    gs = list(geom.geoms) if hasattr(geom, 'geoms') else [geom]
+    subs = []
+    for g in gs:
+        if g.geom_type != 'Polygon' or g.area < min_area:
+            continue
+        g = orient(g.simplify(simplify), 1.0)
+        subs += _ring(g.exterior.coords)
+        for h in g.interiors:
+            if Polygon(h).area >= 1.0:             # un vrai jour entre deux mèches ; les petits trous sont bouchés
+                subs += _ring(h.coords)
+    return Shape(subs) if subs else None
+
+
+def fused(shapes, smooth=0.35):
+    """Plusieurs formes fondues en UNE silhouette (aucune couture), creux à peine arrondis."""
+    from shapely.ops import unary_union
+    g = unary_union([_poly(s) for s in shapes])
+    g = g.buffer(smooth, join_style=1, quad_segs=6).buffer(-smooth, join_style=1, quad_segs=6)
+    return _shape(g)
+
+
+def cast_off(sh, dx, dy):
+    """L'ombre d'une mèche sur ce qui est dessous : la mèche décalée, moins la mèche elle-même."""
+    from shapely import affinity
+    g = _poly(sh)
+    d = affinity.translate(g, dx, dy).difference(g)
+    return _shape(d.buffer(-0.04).buffer(0.04), min_area=0.3)        # sans les miettes
+
+def hexmix(a, b, t):
+    a = [int(a[i:i + 2], 16) for i in (1, 3, 5)]
+    b = [int(b[i:i + 2], 16) for i in (1, 3, 5)]
+    return '#%02x%02x%02x' % tuple(round(x + (y - x) * t) for x, y in zip(a, b))
 
 
 def sm_under(sh):

@@ -28,6 +28,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mapp, sides, resample  # noqa: E402,F401
 from outils import bent, crpath, smooth_path, tube_poly, normals, shape_poly, poly_of  # noqa: E402
+from visage import placer, verifier, guide_svg  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
@@ -71,6 +72,18 @@ FF0 = (98.4, 75.4)         # le poing lointain (milieu de la poignée)
 WF_OFF = (-3.6, 0.4)       # le poignet lointain, à gauche du poing
 GN_OFF = (-6.4, 0.0)       # la garde proche, à gauche du poing
 GF_OFF = (4.2, 0.6)        # la garde lointaine, à droite du poing
+
+# ---------- le visage (méthode commune, ../visage.py) : tête de serpent de profil → tour = 75, UN seul oeil ----------
+# La boîte : le crâne et le museau (sans le capuchon ni le bas de la mâchoire), dans le repère de la tête AVANT son
+# agrandissement ×1,1. Les yeux d'un serpent sont sur les côtés de la tête (az_oeil = 80° de la médiane, au lieu des
+# 25° d'un visage humain) : l'oeil se place juste derrière le museau ; la narine au bout du museau (le « nez » sur la
+# médiane), la gueule s'ouvre sous elle (la « bouche » : l'avant de la fente des lèvres).
+FACE_BOX = (80.4, 39.6, 101.0, 53.0)
+FACE_TOUR, FACE_AZ = 75, 80
+FACE = placer(FACE_BOX, tour=FACE_TOUR, az_oeil=FACE_AZ, l_oeil=0.24)
+EYE_C = FACE['oeil_proche']                   # (x, y, largeur) de l'oeil
+NOSTRIL = (FACE['nez'][0] - 0.4, FACE['nez'][1] - 0.15)
+MOUTH_FRONT = (99.0, 50.3)                    # l'avant de la fente des lèvres (gueule fermée)
 
 REST = dict(breath=0.0, spring=0.0, lean=0.0, wave=0.0, dash=0.0, reach=0.0, hook=0.0, hump=(0.0, 0.0),
             head=(0.0, 0.0), tilt=0.0, tg=1.0, jaw=0.0, blink=0.0, flare=0.0, venom=0.0,
@@ -323,6 +336,33 @@ def fist_shapes(C, ang, side):
     return body, det, claws
 
 
+def bracer(S, E, W, t0, t1, w_up, w_fo):
+    """Le brassard d'or sur l'avant-bras (de t0 à t1 du coude au poignet), découpé dans l'avant-bras seul (il fait le
+    tour du bras, d'un bord à l'autre, sans déborder sur le bras quand le coude est très plié), son côté éclairé vers
+    la lumière (en haut à droite) ; et l'ombre douce que l'avant-bras pose sur le bras dans le pli du coude."""
+    from shapely.geometry import Polygon
+    from shapely import affinity
+    fo = poly_of(limb([E, lerp(E, W, 0.5), W], [w_fo, w_fo * 0.95, w_fo * 0.9])).buffer(0.25)
+    up = poly_of(limb([S, lerp(S, E, 0.5), E], [w_up, w_up, w_up * 0.95]))
+    a = math.atan2(W[1] - E[1], W[0] - E[0])
+    ux, uy = math.cos(a), math.sin(a)
+    nx, ny = -uy, ux
+    if nx * 0.6 + ny * -0.8 < 0:            # n pointe vers la lumière
+        nx, ny = -nx, -ny
+    L = math.dist(E, W)
+    q = lambda t, v: (E[0] + ux * L * t + nx * v, E[1] + uy * L * t + ny * v)
+    band = Polygon([q(t0, -6), q(t1, -6), q(t1, 6), q(t0, 6)]).intersection(fo)
+    lit = Polygon([q(t0, w_fo * 0.12), q(t1, w_fo * 0.12), q(t1, 6), q(t0, 6)]).intersection(fo)
+    dk = Polygon([q(t0, -6), q(t1, -6), q(t1, -w_fo * 0.25), q(t0, -w_fo * 0.25)]).intersection(fo)
+    out = []
+    fold = affinity.translate(fo, -0.7, 1.1).difference(fo).intersection(up)
+    if not fold.is_empty:
+        out.append((shape_poly(fold), SCALE.deep, 0.45))
+    out += [(shape_poly(band), GOLD.base, 1), (shape_poly(lit), GOLD.light, 0.9), (shape_poly(dk), GOLD.shadow, 0.75),
+            (ribbon([q(t0 + 0.05, w_fo * 0.3), q((t0 + t1) / 2, w_fo * 0.32), q(t1 - 0.05, w_fo * 0.3)], [0.1, 0.55, 0.1]), GOLD.hi, 0.85)]
+    return out
+
+
 # ======================================================================== le dessin
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P = dict(REST, **(pose or {}))
@@ -351,14 +391,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     guard_parts(fig, 'fh', Gf, -P['phi'], 7.0)
     Ef = ik(SF, Wf, math.dist(SF0, EF0), math.dist(EF0, add(FF0, WF_OFF)), -1)
     farm = bent(SF, Ef, Wf, 8.0, 7.2, 6.4, bulge=(0.06, 0.04))
-    fa = math.degrees(math.atan2(Wf[1] - Ef[1], Wf[0] - Ef[0]))
-    Lf = math.dist(Ef, Wf)
-    br_f = xf(sm([(Lf * 0.12, -4.6), (Lf * 0.52, -4.6), (Lf * 0.52, 4.6), (Lf * 0.12, 4.6)], sharp=(0, 1, 2, 3), t=0.3), Ef[0], Ef[1], fa)
-    br_fl = xf(sm([(Lf * 0.12, -4.6), (Lf * 0.52, -4.6), (Lf * 0.52, -1.6), (Lf * 0.12, -1.6)], sharp=(0, 1, 2, 3), t=0.3), Ef[0], Ef[1], fa)
     fig.part('farm', farm, SCALE, grad=(95, 64, 84, 80, [(0, SCALE.light), (0.5, SCALE.base), (1, SCALE.shadow)]),
-             cel=1.3, rim=0.6, cast=0, details=[(br_f, GOLD.base, 1), (br_fl, GOLD.light, 0.9),
-                                                (xf(ribbon([(Lf * 0.14, -3.0), (Lf * 0.32, -3.1), (Lf * 0.5, -3.0)], [0.1, 0.6, 0.1]), Ef[0], Ef[1], fa), GOLD.hi, 0.8),
-                                                (xf(sm([(Lf * 0.12, 1.8), (Lf * 0.52, 1.8), (Lf * 0.52, 4.6), (Lf * 0.12, 4.6)], sharp=(0, 1, 2, 3), t=0.3), Ef[0], Ef[1], fa), GOLD.shadow, 0.8)])
+             cel=1.3, rim=0.6, cast=0, details=bracer(SF, Ef, Wf, 0.12, 0.55, 8.0, 7.0))
     fb, fdet, fclaws = fist_shapes(Ff, a_f, -1)
     for i, cl in enumerate(fclaws):
         fig.part('fc%d' % i, cl, IVORY, cel=0.3, rim=0.25, cast=0.3)
@@ -400,17 +434,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     tipN = blade_parts(fig, 'nblade', Gn, 180 + P['nang'], ven, 1.06)
     guard_parts(fig, 'nh', Gn, 180 + P['nang'], 9.0, pommel=add(Fn, rot((4.9, -0.1), P['nang'])))
     En = ik(SN, Wn, math.dist(SN0, EN0), math.dist(EN0, add(FN0, WN_OFF)), -1)
-    narm = bent(SN, En, Wn, 9.2, 8.4, 7.2, bulge=(0.08, 0.05))
-    na = math.degrees(math.atan2(Wn[1] - En[1], Wn[0] - En[0]))
-    Ln = math.dist(En, Wn)
-    N_ = lambda sh: xf(sh, En[0], En[1], na)
+    narm = bent(SN, En, Wn, 8.2, 7.4, 6.6, bulge=(0.1, 0.06))
     fig.part('narm', narm, SCALE, grad=(58, 62, 38, 82, [(0, SCALE.light), (0.5, SCALE.base), (1, SCALE.shadow)]),
-             cel=1.5, rim=0.7, cast=1.2, cast_on=['torso', 'tail', 'belt', 'hood'],
-             details=[(ribbon([lerp(SN, En, 0.2), lerp(SN, En, 0.55), lerp(SN, En, 0.85)], [0.2, 1.2, 0.2]), SCALE.light, 0.35),
-                      (N_(sm([(Ln * 0.56, -5.0), (Ln * 0.94, -5.0), (Ln * 0.94, 5.0), (Ln * 0.56, 5.0)], sharp=(0, 1, 2, 3), t=0.3)), GOLD.base, 1),
-                      (N_(sm([(Ln * 0.56, 1.8), (Ln * 0.94, 1.8), (Ln * 0.94, 5.0), (Ln * 0.56, 5.0)], sharp=(0, 1, 2, 3), t=0.3)), GOLD.light, 0.9),
-                      (N_(ribbon([(Ln * 0.6, 3.2), (Ln * 0.75, 3.3), (Ln * 0.9, 3.2)], [0.1, 0.6, 0.1])), GOLD.hi, 0.85),
-                      (N_(sm([(Ln * 0.56, -5.0), (Ln * 0.94, -5.0), (Ln * 0.94, -2.4), (Ln * 0.56, -2.4)], sharp=(0, 1, 2, 3), t=0.3)), GOLD.shadow, 0.75)])
+             cel=1.5, rim=0.7, cast=1.5, cast_on=['torso', 'tail', 'belt', 'hood'],
+             details=[(ribbon([lerp(SN, En, 0.2), lerp(SN, En, 0.55), lerp(SN, En, 0.85)], [0.2, 1.2, 0.2]), SCALE.light, 0.35)]
+             + bracer(SN, En, Wn, 0.5, 0.86, 8.2, 7.0))
     # l'épaulière : une lame en croissant, puis la coque à pierre violette
     lame = sm([(49.6, 66.6), (54.4, 65.2), (60.4, 65.0), (63.0, 66.4), (61.2, 68.6), (55.0, 69.4), (51.0, 69.0)], sharp=(0,), t=0.9)
     dome = sm([(50.4, 64.0), (52.2, 60.4), (56.4, 58.6), (60.8, 59.4), (63.2, 62.4), (62.0, 65.6), (56.6, 66.8), (51.6, 66.4)], t=0.95)
@@ -563,37 +591,39 @@ def head_parts(fig, P):
     hd.append((ribbon([(85.6, 51.4), (84.6, 51.8), (83.6, 51.6)], [0.1, 0.4, 0.1]), SCALE.deep, 0.6))     # le coin
     # le museau : l'arête éclairée, la narine discrète
     hd.append((ribbon([(92.6, 43.2), (96.4, 44.2), (99.4, 45.8), (100.6, 47.4)], [0.1, 0.7, 0.6, 0.1]), SCALE.hi, 0.55))
-    hd.append((ellipse(99.3, 47.3, 0.62, 0.38, 25), SCALE.deep, 0.95))
+    hd.append((ellipse(NOSTRIL[0], NOSTRIL[1], 0.6, 0.38, 25), SCALE.deep, 0.95))
     # ---- l'oeil : UN seul oeil visible (tête d'animal presque de profil : demande du propriétaire, pas d'oeil du fond
     # qui dépasse derrière le museau) ----
     fl = P['flare']
-    eyeN = sm([(85.8, 46.6), (87.4, 45.9), (90.0, 46.4), (91.0, 47.6), (89.4, 48.6), (87.0, 48.2)], sharp=(0, 3), t=0.85)
-    # les orbites creusées sous l'arcade
-    hd += [(eyeN.scale(1.22, 1.5, 88.4, 47.0), SCALE.deep, 0.7)]
+    # l'oeil et son arcade sont dessinés autour de (88.4, 47.2), puis posés à la place donnée par placer()
+    ex, ey, ew = EYE_C
+    ke = ew / 5.2
+
+    def E(sh):
+        return sh.scale(ke, ke, 88.4, 47.2).move(ex - 88.4, ey - 47.2)
+    eyeN = E(sm([(85.8, 46.6), (87.4, 45.9), (90.0, 46.4), (91.0, 47.6), (89.4, 48.6), (87.0, 48.2)], sharp=(0, 3), t=0.85))
+    # l'orbite creusée sous l'arcade
+    hd += [(eyeN.scale(1.22, 1.5, ex, ey - 0.2), SCALE.deep, 0.7)]
     if fl > 0.05:
-        hd += [(ellipse(88.4, 47.2, 4.6, 3.2), ('rad', 88.4, 47.2, 4.6, 3.2, [(0, VEN[1], 0.55 * fl), (1, VEN[2], 0)]), 1)]
-    for e, (cx, cy), pw in ((eyeN, (88.4, 47.2), 0.42),):
-        if P['blink'] > 0.5:
-            # les paupières d'écailles : l'oeil fermé, une fente sombre
-            hd += [(e, SCALE.base, 1), (e.scale(1, 0.3, cx, cy + 0.6), SCALE.deep, 0.7)]
-            continue
-        if fl > 0.5:
-            stops = [(0, VEN[0]), (0.45, VEN[1]), (1, VEN[2])]
-        else:
-            stops = [(0, EYE[1]), (0.5, EYE[2]), (1, EYE[3])]
-        hd.append((e, ('lin', cx, cy - 1.2, cx, cy + 1.2, stops), 1))
+        hd += [(ellipse(ex, ey, 4.6, 3.2), ('rad', ex, ey, 4.6, 3.2, [(0, VEN[1], 0.55 * fl), (1, VEN[2], 0)]), 1)]
+    cx, cy, pw = ex, ey, 0.42 * ke
+    if P['blink'] > 0.5:
+        # la paupière d'écailles : l'oeil fermé, une fente sombre
+        hd += [(eyeN, SCALE.base, 1), (eyeN.scale(1, 0.3, cx, cy + 0.6), SCALE.deep, 0.7)]
+    else:
+        stops = [(0, VEN[0]), (0.45, VEN[1]), (1, VEN[2])] if fl > 0.5 else [(0, EYE[1]), (0.5, EYE[2]), (1, EYE[3])]
+        hd.append((eyeN, ('lin', cx, cy - 1.2, cx, cy + 1.2, stops), 1))
         # la pupille fendue (une lentille verticale), un peu vers l'avant (il regarde l'ennemi)
-        px_ = cx + 0.35
-        hd.append((sm([(px_, cy - 1.4), (px_ + pw, cy), (px_, cy + 1.4), (px_ - pw, cy)], sharp=(0, 2), t=0.9), EYE[4], 1))
-    if P['blink'] <= 0.5:
-        hd += [(ellipse(89.4, 46.6, 0.42, 0.32), EYE[0], 1)]
+        px_ = cx + 0.35 * ke
+        hd.append((sm([(px_, cy - 1.35 * ke), (px_ + pw, cy), (px_, cy + 1.35 * ke), (px_ - pw, cy)], sharp=(0, 2), t=0.9), EYE[4], 1))
+        hd.append((E(ellipse(89.4, 46.6, 0.42, 0.32)), EYE[0], 1))
     # l'arcade lourde : elle descend vers le museau et coupe le haut de l'oeil en biais (regard dur)
-    hd.append((sm([(84.4, 45.2), (86.4, 43.8), (90.0, 44.2), (92.6, 45.8), (93.8, 47.8), (91.4, 47.4), (88.4, 46.4),
-                   (85.6, 46.4)], sharp=(0, 4), t=0.9), SCALE.base, 1))
-    hd.append((sm([(85.0, 44.4), (87.2, 43.2), (90.6, 43.6), (93.0, 45.4), (94.0, 47.2), (91.4, 45.8), (87.8, 44.6)], t=0.9), SCALE.light, 0.85))
-    hd.append((ribbon([(85.8, 46.5), (88.4, 46.3), (90.8, 47.0), (93.2, 47.9)], [0.1, 0.6, 0.5, 0.1]), SCALE.deep, 0.7))
+    hd.append((E(sm([(84.4, 45.2), (86.4, 43.8), (90.0, 44.2), (92.6, 45.8), (93.8, 47.8), (91.4, 47.4), (88.4, 46.4),
+                     (85.6, 46.4)], sharp=(0, 4), t=0.9)), SCALE.base, 1))
+    hd.append((E(sm([(85.0, 44.4), (87.2, 43.2), (90.6, 43.6), (93.0, 45.4), (94.0, 47.2), (91.4, 45.8), (87.8, 44.6)], t=0.9)), SCALE.light, 0.85))
+    hd.append((E(ribbon([(85.8, 46.5), (88.4, 46.3), (90.8, 47.0), (93.2, 47.9)], [0.1, 0.6, 0.5, 0.1])), SCALE.deep, 0.7))
     fig.part('head', head, SCALE, grad=(100, 41, 81, 56, [(0, SCALE.light), (0.5, SCALE.base), (1, SCALE.shadow)]),
-             cel=1.1, rim=0.6, cast=0.85, details=hd)
+             cel=1.1, rim=0.6, cast=0.7, details=hd)
     # ---- la langue fourchue ----
     tg = P['tg']
     if tg > 0.15:
@@ -605,6 +635,12 @@ def head_parts(fig, P):
         fig.part('tongue', tongue, Mat(TONGUE[0], TONGUE[1], TONGUE[1], TONGUE[2], TONGUE[2]),
                  grad=(bx, by - 1, bx, by + 1, [(0, TONGUE[0]), (0.4, TONGUE[1]), (1, TONGUE[2])]),
                  cel=0.3, rim=0.25, cast=0.4, cast_on=['head'])
+
+
+def face_check():
+    """Le contrôle du visage (../visage.py) sur les positions RÉELLES du dessin (repère de la tête avant ×1,1)."""
+    m = {'oeil_proche': EYE_C, 'oeil_fond': None, 'nez': NOSTRIL, 'bouche': (MOUTH_FRONT[0], MOUTH_FRONT[1], 2.0)}
+    return verifier(m, FACE_BOX)
 
 
 def main():
@@ -622,6 +658,7 @@ def main():
         subprocess.run(['node', rendu, path, png, str(h)], check=True)
         Image.open(png).save(os.path.join(pub, out + '.webp'), 'WEBP', quality=90, method=6)
         print('écrit %s.svg (%d ko) → art/vecto/%s.webp' % (name, len(svg) // 1024, out))
+    print('contrôle du visage :', face_check() or 'aucun défaut')
     x0, y0, w, h = FRAME
     print('mesures pour src/game/vecto.ts : [largeur, hauteur, x et y des pieds] =', [w, h, FEET[0] - x0, FEET[1] - y0])
 

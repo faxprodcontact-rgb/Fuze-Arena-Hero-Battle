@@ -449,7 +449,8 @@ def spirit(fig, c, k=1.0, t=0.0, mane_k=1.0, trail_k=1.0, head=True):
         sh = S.head_outline(1.0).map(tf)
         gr = g_lin(fig, tf((98, 30)), tf((62, 52)), [(0, FIRE[0]), (0.25, FIRE[1]), (0.6, FIRE[2]), (1, FIRE[3])])
         mouth = sm([(81.6, 41.8), (96.0, 41.2), (93.6, 43.4), (94.4, 46.6), (88, 47.8), (82.2, 46.2)], sharp=(1, 2, 3)).map(tf)
-        eye = sm([(76.0, 31.0), (79.4, 30.4), (83.8, 32.0), (82.2, 33.4), (78.4, 33.0)], sharp=(0, 2)).map(tf)   # le seul œil, à sa place
+        eye = sm([(S.FACE['oeil_proche'][0] + (x - 76.5) * S.EYE_SX, y) for x, y in ((72.6, 31.0), (76.0, 30.4), (80.4, 32.0), (78.8, 33.4), (75.0, 33.0))],
+                 sharp=(0, 2)).map(tf)   # le seul œil, à la place donnée par visage.py
         ears = [sm([(58.4, 26), (58.2, 16.8), (60.2, 14.2), (63.4, 14.0), (65.6, 16.4), (65.8, 26)]).map(tf),
                 sm([(74.0, 26), (74.4, 17.4), (76.6, 15.4), (79.2, 15.8), (80.6, 18.2), (80.4, 26)]).map(tf)]
         parts = [(e, g_lin(fig, tf((66, 14)), tf((58, 24)), [(0, FIRE[1]), (1, FIRE[3])]), 1) for e in ears]

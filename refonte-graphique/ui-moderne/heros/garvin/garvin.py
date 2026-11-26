@@ -43,13 +43,13 @@ FACE = ('#c9bba4', '#a2948a', '#7a6d74', '#54485e')     # les plans du visage : 
 
 GRD = 117.0                     # le sol (plante des pieds)
 FEET = (64.0, 116.0)            # le point « sol » du pixel art
-FRAME = (9.0, 10.0, 123.0, 109.0)   # x0, y0, largeur, hauteur (pixels du dessin)
+FRAME = (12.0, 10.0, 123.0, 109.0)   # x0, y0, largeur, hauteur (pixels du dessin)
 
 # ---------- le squelette ----------
 HIP = (72.0, 92.0)              # le pivot du buste (il se penche depuis les hanches)
 NECK = (77.0, 54.0)             # le pivot de la tête (agrandie ×1,1 autour de ce point)
 HSC = 1.1
-NS, NE0, NW0 = (31.0, 51.0), (19.5, 78.5), (34.5, 89.0)        # bras proche : épaule, coude, poignet (repos)
+NS, NE0, NW0 = (33.0, 51.0), (25.6, 80.0), (38.0, 89.6)        # bras proche : épaule, coude, poignet (repos)
 FS, FE0, FW0 = (97.5, 47.0), (106.4, 81.8), (115.2, 59.6)      # bras lointain (épaule derrière la poitrine)
 
 
@@ -212,7 +212,7 @@ def heat_tint(sh, k):
 def rock_grad(sh, tones=None):
     """Le dégradé d'un rocher (du haut-droit clair au bas-gauche sombre)."""
     x0, y0, x1, y1 = sh.bbox()
-    t = tones or [(0, '#9a8e8a'), (0.55, ROCK.base), (1, '#5a5066')]
+    t = tones or [(0, '#958784'), (0.55, '#73676e'), (1, '#544a60')]
     return (x1, y0, x0 + (x1 - x0) * 0.15, y1, t)
 
 
@@ -438,7 +438,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             # le coude passe de l'autre côté (vers l'extérieur) : il glisse en raccourci, sans saut
             E2, _ = ik(S, Wt, FL[0], FL[1], -SG_F)
             E = lerp(E, E2, smooth01(P['fsw']))
-        shp, g, gu, gf = arm_shape(S, E, W, (14.5, 13.6, 15.6, 13.2), [('u', 0.45, -3.0, 6.5, 5.6), ('f', 0.5, 0.6, 8.2, 6.6)])
+        shp, g, gu, gf = arm_shape(S, E, W, (16.0, 15.0, 17.4, 14.4), [('u', 0.45, -3.0, 7.0, 6.0), ('f', 0.5, 0.6, 9.0, 7.4)])
         if front:
             # le bras passe devant la poitrine (défi) : l'épaule reste cachée derrière la poitrine et l'épaule-rocher
             from shapely.geometry import Point
@@ -447,10 +447,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             shp = geom_shape(g, sharp_deg=70)
             gu = gu.difference(hide)
         fold = fold_of(S, E, W)
-        det = arm_details(S, E, W, gu, gf, fold, (14.5, 13.6, 15.6, 13.2)) + heat_tint(shp, P['heat'] * 0.6)
+        det = arm_details(S, E, W, gu, gf, fold, (16.0, 15.0, 17.4, 14.4)) + heat_tint(shp, P['heat'] * 0.6)
         fig.part('farm', shp, ROCK, grad=rock_grad(shp), cel=1.6, rim=0.7, cast=1.2 if front else 0, details=det)
         fa = ang_of(E, W) + P['frot']
-        fist_parts(fig, 'ffist', W, fa, 1, True, 1.0)
+        fist_parts(fig, 'ffist', W, fa, 1, True, 1.12)
         fig.ctx_far = dict(S=S, E=E, W=W, ang=fa)
 
     if P['ffront'] < 0.5:
@@ -459,7 +459,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ================================================================ les jambes et les pieds
     # des piliers courts et massifs (une seule forme chacun), le genou marqué par une jointure de braise ; les pieds
     # sont de gros galets posés à plat, un caillou d'orteil devant
-    fleg = limb([(87.4, 88.0), (87.8, 98.0), (88.4, 108.0)], [20.5, 19.4, 18.4])
+    fleg = limb([(87.4, 88.0), (87.8, 97.0), (88.4, 104.5)], [20.5, 19.4, 18.4])
     fig.part('fleg', fleg, ROCK, grad=rock_grad(fleg), cel=1.6, rim=0.6, cast=0,
              details=[(rk([(88.0, 89.0), (96.4, 88.6), (97.4, 96.0), (91.0, 97.4)], 1.2), ROCK.light, 0.45),
                       (rk([(89.0, 99.6), (97.0, 99.4), (97.6, 106.0), (91.4, 106.6)], 1.2), ROCK.light, 0.4)]
@@ -477,7 +477,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('ftoe', ftoe, ROCK, grad=rock_grad(ftoe), cel=1.2, rim=0.7, cast=1.0,
              details=planes([(99.6, 112.0), (102.6, 109.8), (108.4, 110.2), (110.8, 113.2), (104.0, 113.0)]) + [
                       (rk([(98.4, 114.8), (112, 114.8), (112, 117.4), (98.4, 117.4)], 0.3), ROCK.deep, 0.4)])
-    nleg = limb([(50.6, 87.0), (50.0, 97.5), (49.2, 108.0)], [24.5, 23.2, 21.8])
+    nleg = limb([(50.6, 87.0), (50.0, 96.5), (49.2, 104.0)], [24.5, 23.2, 21.8])
     fig.part('nleg', nleg, ROCK, grad=rock_grad(nleg), cel=1.8, rim=0.6, cast=1.0, cast_on=['fleg'],
              details=[(rk([(51.0, 88.0), (61.6, 87.8), (62.4, 96.0), (54.0, 96.6)], 1.4), ROCK.light, 0.45),
                       (rk([(51.6, 100.0), (60.0, 99.6), (60.6, 106.4), (53.6, 107.0)], 1.4), ROCK.light, 0.4)]
@@ -562,9 +562,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     S = mapp(UC, NS)
     Wt = mapp(U, P['nw'])
     E, W = ik(S, Wt, NL[0], NL[1], SG_N)
-    shp, g, gu, gf = arm_shape(S, E, W, (18.0, 15.4, 17.0, 14.0), [('u', 0.5, 3.2, 7.4, 6.0), ('f', 0.45, -0.4, 8.8, 7.4)])
+    shp, g, gu, gf = arm_shape(S, E, W, (20.5, 17.6, 19.0, 15.4), [('u', 0.5, 3.6, 8.2, 6.6), ('f', 0.45, -0.4, 9.6, 8.0)])
     fold = fold_of(S, E, W)
-    det = arm_details(S, E, W, gu, gf, fold, (18.0, 15.4, 17.0, 14.0)) + heat_tint(shp, P['heat'] * 0.6)
+    det = arm_details(S, E, W, gu, gf, fold, (20.5, 17.6, 19.0, 15.4)) + heat_tint(shp, P['heat'] * 0.6)
     fig.part('narm', shp, ROCK, grad=rock_grad(shp), cel=1.8, rim=0.7, cast=1.4, details=det,
              cast_on=['chestn', 'chestf', 'belly', 'hipn', 'hipf', 'nleg'])
     fig.ctx_near = dict(S=S, E=E, W=W)
@@ -596,7 +596,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['sb', 'sf', 'dome'], UC)
 
     na = ang_of(E, W) + P['nrot']
-    fist_parts(fig, 'nfist', W, na, -1, False, 1.0)
+    fist_parts(fig, 'nfist', W, na, -1, False, 1.12)
 
     fig.ctx = dict(U=U, UC=UC, TOR=TOR, HEAD=HEAD, P=P, near=fig.ctx_near, far=fig.ctx_far,
                    chest=mapp(TOR, (72, 62)), head=mapp(HEAD, (84, 34)), mouth=mapp(HEAD, FACE_V['bouche'][:2]),
@@ -661,9 +661,9 @@ def build_head(fig, P):
         hd += [(ellipse(exn + 0.9, eyn - 0.1, 0.72, 0.5), '#ffffff', 1), (ellipse(exf + 0.7, eyf - 0.1, 0.6, 0.44), '#ffffff', 1)]
     # les arcades : deux lourdes pierres en V qui se rejoignent au-dessus de la racine du nez, le dessus éclairé
     bx = (exn + ewn / 2 + exf - ewf / 2) / 2           # le haut du nez, entre les yeux
-    hd += [(sm([(exn - 7.6, 31.0), (exn - 0.6, 29.6), (bx - 3.6, 32.0), (bx, 34.6), (bx - 1.0, 36.0), (exn + 2.4, 34.0),
-                (exn - 4.6, 33.6), (exn - 7.4, 32.8)], sharp=(3,)), ROCK.base, 1),
-           (sm([(exn - 7.2, 30.8), (exn - 0.6, 29.4), (bx - 3.6, 31.8), (bx - 0.2, 34.4), (exn + 1.8, 32.8), (exn - 3.4, 31.8)]), ROCK.light, 0.95),
+    hd += [(sm([(exn - 7.6, 30.0), (exn - 0.6, 29.2), (bx - 3.6, 32.0), (bx, 34.6), (bx - 1.0, 36.0), (exn + 2.4, 34.0),
+                (exn - 4.6, 33.2), (exn - 7.4, 31.8)], sharp=(3,)), ROCK.base, 1),
+           (sm([(exn - 7.2, 29.8), (exn - 0.6, 29.0), (bx - 3.6, 31.8), (bx - 0.2, 34.4), (exn + 1.8, 32.8), (exn - 3.4, 31.8)]), ROCK.light, 0.95),
            (sm([(bx - 0.4, 34.6), (bx + 3.6, 31.6), (exf + 3.0, 30.4), (exf + 4.2, 32.8), (exf - 0.4, 34.0), (bx + 1.6, 36.2)], sharp=(0,)), ROCK.base, 1),
            (sm([(bx, 34.2), (bx + 3.6, 31.4), (exf + 3.0, 30.2), (exf - 1.0, 32.2)]), ROCK.light, 0.95)]
     # le nez : un caillou tassé SUR la médiane, entre les yeux ; le flanc gauche dans l'ombre, la narine

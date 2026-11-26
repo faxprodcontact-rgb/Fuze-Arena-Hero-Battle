@@ -80,6 +80,33 @@ def main():
     os.remove(big)
     os.remove(svg)
     print('écrit', os.path.join(OUT, 'fixe.png'), 'et comparaison.png')
+    visage(tmp, rendu)
+
+
+def visage(tmp, rendu):
+    """visage.png (contrôle obligatoire, ../visage.py) : la tête en grand, à gauche telle quelle, à droite avec le
+    calque guide_svg (sphère, médiane, ligne des yeux, places idéales) ; verifier() doit rendre une liste vide."""
+    from atelier import mchain, mS, f as fm
+    fig = L.build(frame=(48.0, 16.0, 46.0, 38.0))
+    defauts = L.verifier(L.MESURES, L.FACE)
+    print('visage : défauts =', defauts or 'aucun')
+    plain = fig.svg()
+    M = mchain(mS(1.1, 1.1, *L.NECK))                 # la tête au repos : agrandie ×1,1 autour du cou
+    guide = '<g transform="matrix(%s)">%s</g>' % (' '.join(fm(v) for v in M), L.guide_svg(L.FACE, tour=75))
+    ims = []
+    for k, svg_txt in enumerate((plain, plain.replace('</svg>', guide + '</svg>'))):
+        p = os.path.join(tmp, '_v%d.svg' % k)
+        open(p, 'w').write(svg_txt)
+        subprocess.run(['node', rendu, p, p.replace('.svg', '.png'), str(38 * 16), '#e9e6f2'], check=True)
+        ims.append(Image.open(p.replace('.svg', '.png')).convert('RGB'))
+        os.remove(p)
+        os.remove(p.replace('.svg', '.png'))
+    W = ims[0].width * 2 + 20
+    out = Image.new('RGB', (W, ims[0].height), (255, 255, 255))
+    out.paste(ims[0], (0, 0))
+    out.paste(ims[1], (ims[0].width + 20, 0))
+    out.save(os.path.join(OUT, 'visage.png'))
+    print('écrit', os.path.join(OUT, 'visage.png'))
 
 
 if __name__ == '__main__':

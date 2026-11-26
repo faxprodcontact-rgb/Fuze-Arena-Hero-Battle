@@ -28,6 +28,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, limb, ribbon, ellipse, rpoly, mchain, mT, mR, mS, mapp, sides  # noqa: E402
 from outils import bent, crpath, fuse, taper, P as PG, geom_shapes, _cap  # noqa: E402
+from visage import placer, verifier, guide_svg  # noqa: E402  (construction commune du visage)
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'demons-4'
@@ -230,12 +231,27 @@ FAR_CLAWS = [((97.6, 112.0), 18, 2.8, 1.9), ((99.6, 113.8), 22, 2.8, 1.9), ((100
 # l'agrandissement ×1,1 : la matrice HEAD la pose)
 
 HEAD_PTS = [(62.8, 45.0), (63.2, 38.6), (66.2, 32.0), (70.6, 27.0), (76.0, 24.2), (82.0, 23.6), (87.6, 24.8), (92.2, 27.6),
-            (95.8, 31.2), (98.6, 34.8), (100.8, 37.8), (101.8, 40.4), (101.0, 43.0), (99.0, 46.4), (97.4, 50.6), (94.6, 54.0),
+            (95.8, 31.2), (98.8, 34.6), (101.2, 37.4), (102.6, 40.4), (101.8, 43.2), (99.0, 46.4), (97.4, 50.6), (94.6, 54.0),
             (88.0, 55.8), (79.6, 55.8), (71.4, 54.6), (65.8, 51.2)]
-UPBEAK = [(95.4, 41.4), (99.6, 40.0), (103.0, 41.0), (105.2, 43.6), (105.4, 46.6), (103.4, 49.4), (100.8, 48.2), (96.6, 48.8),
-          (92.0, 49.6), (87.0, 50.2), (89.4, 46.8), (92.4, 43.6)]
+UPBEAK = [(94.4, 43.4), (98.8, 42.2), (102.8, 42.4), (105.2, 44.6), (105.6, 47.2), (103.4, 49.6), (100.8, 48.3), (96.6, 48.8),
+          (92.0, 49.6), (87.0, 50.2), (89.0, 47.6), (91.6, 45.2)]
 LOBEAK = [(87.8, 50.4), (92.4, 50.0), (97.0, 49.4), (99.0, 50.2), (98.0, 52.2), (95.0, 53.6), (90.8, 54.2), (88.0, 53.2),
           (87.2, 51.6)]
+# la face (ovale du crâne, sans le bec) : visage.placer(…, tour=75) y place l'oeil, le nez (narine au bout du museau) et
+# la bouche (la fente du bec) ; tête de tortue presque de profil : un seul oeil (demande du propriétaire)
+FACE_BOX = (63.2, 23.6, 102.6, 55.8)
+FACE = placer(FACE_BOX, tour=75)
+EYE_C = FACE['oeil_proche']               # (x, y, largeur)
+NOSE = FACE['nez']
+MOUTH = (NOSE[0] - 0.4, 48.6)             # la fente du bec passe là, juste sous la narine (vers le crochet)
+_EK = EYE_C[2] / 7.6                      # le dessin de l'oeil et de l'arcade (gabarit de 7,6 px de large, centré en 85,6 ; 38,9)
+
+
+def eye_t(pts):
+    """Le gabarit de l'oeil et de l'arcade → à la place donnée par visage.placer."""
+    return [(EYE_C[0] + (x - 85.6) * _EK, EYE_C[1] + (y - 38.9) * _EK) for x, y in pts]
+
+
 BAND_PTS = [(58.0, 29.6), (66.0, 28.6), (74.0, 28.0), (82.0, 27.8), (90.0, 28.4), (97.0, 29.6), (103.0, 31.0), (103.0, 36.8),
             (97.0, 35.4), (90.0, 34.6), (82.0, 34.4), (74.0, 34.8), (66.0, 35.6), (58.0, 36.6)]
 
@@ -597,6 +613,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # le petit oeil féroce : iris orange, pupille tournée vers l'ennemi, reflet en haut à droite (tête de tortue presque
     # de profil : un seul oeil, celui du fond est caché par le museau)
     def eye(pts, c, r, pup, hi_r, narrow=1.0):
+        pts = eye_t(pts)
+        c = eye_t([c])[0]
+        pup = eye_t([pup])[0]
+        r, hi_r = r * _EK, hi_r * _EK
         out = []
         e = HD(sm(pts, sharp=(0, 3), t=0.8))
         ge = PG(e)
@@ -604,7 +624,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         if Pz['blink'] > 0.5:
             out += [(e, SKIN.shadow, 1), (HD(ribbon([pts[0], (c[0], c[1] + 0.5), pts[3]], [0.1, 0.6, 0.1])), SKIN.deep, 0.9)]
             return out
-        out += [(e, '#1a0c12', 1)]
+        out += [(e, '#4a0e1c', 1)]
         ir = geom_shapes(PG(HD(ellipse(c[0], c[1], r * narrow, r))).intersection(ge))
         if ir:
             out += [(ir, ('rad', *hp((c[0] + 0.4, c[1] + 0.5)), r * 1.3, r * 1.3, [(0, EYE[0]), (0.45, EYE[1]), (1, EYE[2])]), 1)]
@@ -616,17 +636,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             out += [(pp, EYE[3], 1)]
         out += [(HD(ellipse(pup[0] + 0.55 * narrow, pup[1] - 0.55, hi_r, hi_r * 0.8)), '#fff6d0', 1)]
         return out
-    hd += eye([(81.4, 38.4), (83.4, 37.4), (86.8, 37.6), (89.0, 38.6), (87.2, 40.0), (83.6, 40.2)], (85.6, 38.9), 1.9, (86.8, 39.0), 0.42)
+    hd += eye([(81.4, 38.6), (83.4, 37.0), (86.8, 37.0), (89.0, 38.6), (87.2, 40.4), (83.6, 40.6)], (85.6, 38.9), 2.1, (86.9, 39.0), 0.45)
     # l'arcade lourde et froncée, peinte PAR-DESSUS l'oeil (elle l'écrase) : l'ombre dessous, le bourrelet éclairé,
     # qui descend vers le bec (regard dur) ; la ride du froncement au bout
-    hd += [(HD(sm([(79.8, 37.0), (84.8, 36.6), (89.6, 37.4), (92.8, 39.4), (89.4, 39.0), (85.4, 38.4), (81.0, 38.8)], sharp=(0, 3), t=0.8)), SKIN.deep, 0.85),
-           (HD(sm([(79.4, 35.6), (84.6, 34.9), (89.8, 35.8), (93.4, 38.4), (90.4, 38.2), (85.8, 37.2), (80.6, 37.4)], sharp=(0, 3), t=0.8)),
-            ('lin', *hp((88, 34.6)), *hp((86, 38.4)), [(0, SKIN.hi, 0.8), (0.55, SKIN.light, 0.55), (1, SKIN.light, 0)]), 1),
-           (HD(ribbon([(83.0, 35.6), (87.0, 35.6), (90.4, 36.6)], [0.1, 0.45, 0.1])), SKIN.glint, 0.45),
-           (HD(ribbon([(92.6, 40.0), (93.8, 38.8), (94.4, 37.2)], [0.1, 0.6, 0.1])), SKIN.deep, 0.5)]
+    hd += [(HD(sm(eye_t([(79.8, 36.4), (84.8, 35.8), (89.6, 36.6), (92.8, 38.8), (89.4, 38.0), (85.4, 37.4), (81.0, 37.8)]), sharp=(0, 3), t=0.8)), SKIN.deep, 0.85),
+           (HD(sm(eye_t([(79.4, 34.8), (84.6, 34.0), (89.8, 34.9), (93.4, 37.8), (90.4, 37.2), (85.8, 36.2), (80.6, 36.6)]), sharp=(0, 3), t=0.8)),
+            ('lin', *hp(eye_t([(88, 34.6)])[0]), *hp(eye_t([(86, 38.4)])[0]), [(0, SKIN.hi, 0.8), (0.55, SKIN.light, 0.55), (1, SKIN.light, 0)]), 1),
+           (HD(ribbon(eye_t([(83.0, 34.8), (87.0, 34.7), (90.4, 35.8)]), [0.1, 0.45, 0.1])), SKIN.glint, 0.45)]
+    # le tympan (l'oreille de la tortue), un disque à peine creusé sur la joue, à la place de l'oreille
+    ox, oy = FACE['oreille']
+    hd += [(HD(ellipse(ox, oy, 3.0, 3.4, -10)), SKIN.shadow, 0.35), (HD(ellipse(ox + 0.5, oy - 0.5, 2.2, 2.5, -10)), SKIN.light, 0.3)]
     # le museau : l'arête éclairée, la narine
-    hd += [(HD(ribbon([(97.4, 34.0), (100.0, 36.6), (101.4, 39.6)], [0.1, 0.8, 0.1])), SKIN.hi, 0.6),
-           (HD(ellipse(100.6, 40.2, 0.6, 0.42, 30)), SKIN.deep, 0.9)]
+    hd += [(HD(ribbon([(98.0, 33.8), (100.8, 36.6), (102.2, 39.6)], [0.1, 0.8, 0.1])), SKIN.hi, 0.6)]
     fig.part('head', head, SKIN, grad=(*hp((100, 30)), *hp((66, 54)), [(0, SKIN.light), (0.45, SKIN.base), (1, SKIN.shadow)]),
              cel=1.4, rim=0.7, cast=1.5, cast_on=['body', 'shell', 'plas', 'farm', 'panA', 'panB'], details=hd)
     # -- la gorge, entre les deux becs (rouge sombre) --
@@ -645,9 +666,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     upb = HD(sm(UPBEAK, sharp=(5, 9), t=0.9))
     ud = [(HD(sm([(88.2, 48.6), (92.4, 47.8), (96.8, 47.2), (101.0, 46.4), (103.4, 49.4), (100.8, 48.2), (96.6, 48.8), (92.0, 49.6), (87.0, 50.2)],
                  sharp=(4, 8), t=0.9)), BEAK.shadow, 0.9),
-          (HD(ribbon([(94.6, 42.8), (98.4, 41.4), (101.8, 41.8), (103.8, 43.8)], [0.1, 0.9, 0.8, 0.1])), BEAK.hi, 0.85),
-          (HD(ellipse(101.8, 42.6, 0.8, 0.45, 20)), '#ffffff', 0.85),
-          (HD(ribbon([(97.2, 44.6), (94.0, 46.6), (90.0, 48.6)], [0.1, 0.6, 0.1])), BEAK.light, 0.5)]
+          (HD(ribbon([(94.8, 44.2), (98.6, 43.0), (102.2, 43.2), (104.4, 45.0)], [0.1, 0.9, 0.8, 0.1])), BEAK.hi, 0.85),
+          (HD(ellipse(103.0, 43.8, 0.7, 0.4, 20)), '#ffffff', 0.85),
+          (HD(ellipse(NOSE[0] + 0.3, NOSE[1] - 0.2, 0.75, 0.5, 30)), BEAK.deep, 0.9),
+          (HD(ellipse(NOSE[0] + 0.6, NOSE[1] - 0.6, 0.45, 0.2, 30)), BEAK.hi, 0.7),
+          (HD(ribbon([(96.8, 45.6), (93.8, 47.2), (90.0, 48.8)], [0.1, 0.6, 0.1])), BEAK.light, 0.5)]
     fig.part('upbeak', upb, BEAK, grad=(*hp((103, 41)), *hp((89, 49)), [(0, BEAK.hi), (0.3, BEAK.light), (0.75, BEAK.base), (1, BEAK.shadow)]),
              cel=0.9, rim=0.6, cast=1.0, cast_on=['lobeak', 'gullet', 'head'], details=ud)
 
@@ -699,6 +722,49 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     return fig
 
 
+def face_check(pose=None):
+    """Le visage contrôlé par visage.verifier : les places RÉELLES (repère du dessin, après la pose de la tête) de
+    l'oeil, de la narine et de la fente du bec, et la boîte de la face posée de même. Renvoie (défauts, boîte, mesures)."""
+    Pz = dict(REST, **(pose or {}))
+    H = skeleton(Pz)['HEAD']
+    a, b = mapp(H, FACE_BOX[:2]), mapp(H, FACE_BOX[2:])
+    box = (a[0], a[1], b[0], b[1])
+    e = mapp(H, EYE_C[:2])
+    m = {'oeil_proche': (e[0], e[1], EYE_C[2] * HSC), 'oeil_fond': None, 'nez': mapp(H, NOSE),
+         'bouche': (*mapp(H, MOUTH), FACE['bouche'][2] * HSC)}
+    return verifier(m, box), box, m
+
+
+def face_image(out):
+    """visage.png : la tête zoomée ×4, à gauche telle quelle, à droite avec le calque guide_svg (sphère, médiane,
+    ligne des yeux, places idéales)."""
+    from PIL import Image
+    d, box, m = face_check()
+    x0, y0, x1, y1 = box
+    pad = 7
+    fr = (x0 - pad, y0 - pad, x1 - x0 + 2 * pad, y1 - y0 + 2 * pad)
+    svg = build(frame=fr).svg(bg='#3a2860')
+    g = guide_svg(box, tour=75)
+    mk = ''.join('<circle cx="%.2f" cy="%.2f" r="0.6" fill="#ff3df2"/>' % (p[0], p[1]) for p in (m['oeil_proche'], m['nez'], m['bouche']))
+    svg2 = svg.replace('</svg>', g + mk + '</svg>')
+    rendu = os.path.join(HERE, '..', 'rendu.cjs')
+    h = int(round(fr[3] * 512 / FRAME[3] * 4))
+    ims = []
+    for i, sv in enumerate((svg, svg2)):
+        p = out + '.%d.svg' % i
+        open(p, 'w').write(sv)
+        subprocess.run(['node', rendu, p, out + '.%d.png' % i, str(h)], check=True)
+        ims.append(Image.open(out + '.%d.png' % i).convert('RGB'))
+        os.remove(p)
+    W = Image.new('RGB', (ims[0].width * 2 + 20, ims[0].height), (20, 12, 36))
+    W.paste(ims[0], (0, 0))
+    W.paste(ims[1], (ims[0].width + 20, 0))
+    W.save(out)
+    for i in range(2):
+        os.remove(out + '.%d.png' % i)
+    return d
+
+
 def main():
     """lilou.svg (grand) et lilou-petit.svg (contour plus épais, pour les cases), puis les images du jeu :
     public/art/vecto/demons-4.webp (512 px de haut) et demons-4-160.webp (160 px de haut)."""
@@ -717,6 +783,10 @@ def main():
     x0, y0, w, h = FRAME
     print('mesures pour src/game/vecto.ts : [largeur, hauteur, x et y des pieds] =',
           [w, h, round(FEET[0] - x0, 2), round(FEET[1] - y0, 2)])
+    out = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'lilou')
+    os.makedirs(out, exist_ok=True)
+    d = face_image(os.path.join(out, 'visage.png'))
+    print('visage.verifier :', d or 'aucun défaut')
 
 
 if __name__ == '__main__':

@@ -99,9 +99,32 @@ def main():
     dbg = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-arcan'
     if os.path.isdir(dbg):
         im.convert('RGB').resize((W4 // 2, (base + 80) // 2), Image.LANCZOS).save(os.path.join(dbg, 'a-cote-de-kael.png'))
+    # 4) le contrôle du visage (règle commune ../visage.py) : la tête zoomée, à gauche telle quelle, à droite avec le
+    # guide (sphère, médiane, ligne des yeux, places idéales des traits) ; et la vérification des mesures réelles
+    visage()
     import shutil
     shutil.rmtree(TMP, ignore_errors=True)
     print('écrit', os.path.join(OUT, 'fixe.png'), 'et comparaison.png')
+
+
+def visage():
+    from visage import verifier, guide_svg
+    m = {'oeil_proche': S.V['oeil_proche'], 'oeil_fond': S.V['oeil_fond'], 'nez': (81.0, 42.9),
+         'bouche': (S.V['bouche'][0], S.V['bouche'][1], 9.6)}
+    d = verifier(m, S.FACE)
+    print('vérification du visage :', d or 'aucun défaut')
+    view = (50.0, 8.0, 54.0, 54.0)
+    fig = S.build(ow=0.95, frame=view)
+    svg = fig.svg()
+    a = render(svg, 640, 'tete')
+    M = fig.M['HEAD']
+    g = '<g transform="matrix(%s)">%s</g>' % (' '.join('%.4f' % v for v in M), guide_svg(S.FACE))
+    b = render(svg.replace('</svg>', g + '</svg>'), 640, 'tete-guide')
+    im = stone(1340, 680, 680)
+    im.alpha_composite(a, (20, 20))
+    im.alpha_composite(b, (680, 20))
+    im.convert('RGB').save(os.path.join(OUT, 'visage.png'))
+    return d
 
 
 if __name__ == '__main__':
