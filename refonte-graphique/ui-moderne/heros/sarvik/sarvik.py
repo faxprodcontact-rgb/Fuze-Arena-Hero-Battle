@@ -10,8 +10,8 @@
 # vers l'arrière (gauche), file vers l'avant posée à plat sur le sol (le ventre jaune dessous) et finit en petit crochet
 # relevé. Vraie tête de cobra (crâne large et plat, museau court et rond, arcade lourde qui descend vers le museau,
 # oeil d'or à pupille fendue, lèvres claires, gueule entrouverte, un crochet d'ivoire, langue fourchue rouge), grand
-# capuchon ouvert derrière la tête (dos d'écailles, un ocelle d'or au coeur violet, la face avant jaune qui se voit le
-# long du cou). Bras proche armé en arrière (coude bas, poing levé à hauteur d'épaule, la lame part vers l'arrière et
+# capuchon ouvert derrière la tête (dos d'écailles, un ocelle d'or au coeur violet) ; la tête naît du cou : le dos du
+# cou monte de l'épaule au dos du crâne en une seule courbe (avis du propriétaire, tour 2 : plus de marche ni de bande). Bras proche armé en arrière (coude bas, poing levé à hauteur d'épaule, la lame part vers l'arrière et
 # monte en croissant) ; bras lointain avancé, poing bas devant le corps (la lame part vers l'ennemi et plonge). Deux
 # lames de bronze en croissant (khopesh : fil clair dehors, reflet au milieu, dos sombre dedans), gardes et pommeau
 # d'or, épaulière d'or (une coque à pierre violette et une lame), brassards d'or, ceinture d'or à boucle violette,
@@ -546,7 +546,8 @@ def torso_parts(fig, P, TOR, HEAD):
 
 def hood_parts(fig, P):
     """Le grand capuchon ouvert derrière la tête : le dos en écailles (plus sombre vers le bas), un liseré clair au
-    bord, l'ocelle (anneau d'or, coeur violet) sur l'aile proche, et la face avant jaune qui se voit le long du cou."""
+    bord, l'ocelle (anneau d'or, coeur violet) sur l'aile proche ; il se creuse doucement le long du cou (plus de face
+    avant jaune coincée entre le capuchon et la tête : avis du propriétaire, tour 2)."""
     hood = sm([(82.0, 44.6), (77.4, 41.4), (69.4, 40.2), (61.4, 41.4), (55.4, 44.6), (52.0, 49.4), (51.8, 54.6),
                (54.2, 58.6), (60.0, 60.6), (68.4, 61.0), (76.0, 60.0), (82.0, 58.0)], t=0.95)
     det = []
