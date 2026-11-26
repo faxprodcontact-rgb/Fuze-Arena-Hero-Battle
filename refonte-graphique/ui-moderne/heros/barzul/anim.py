@@ -35,7 +35,7 @@ from outils import add, sub, lerp, norm, unit, ang_of, taper, crpath  # noqa: E4
 
 ROOT = B.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'barzul')
-DBG = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-barzul'
+DBG = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-barzul-corr'
 TMP = os.environ.get('BARZUL_TMP', os.path.join(DBG, '_images'))
 FPS = 24
 VIEW = (-48, -60, 330.0, 185.625)    # la scène de la vidéo, en pixels du dessin (16/9)

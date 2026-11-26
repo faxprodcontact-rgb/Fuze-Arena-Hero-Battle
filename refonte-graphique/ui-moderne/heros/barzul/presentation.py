@@ -16,7 +16,7 @@ import barzul as S  # noqa: E402
 ROOT = S.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'barzul')
 RENDU = os.path.join(HERE, '..', 'rendu.cjs')
-TMP = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-barzul/_tmp'
+TMP = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-barzul-corr/_tmp'
 
 
 def stone(w, h, floor):
@@ -96,7 +96,7 @@ def main():
     im = stone(W4, base + 80, base)
     im.alpha_composite(kv, (40, base - int(kfy * k)))
     im.alpha_composite(fig, (kv.width + 120, base - int(fy * k)))
-    dbg = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-barzul'
+    dbg = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-barzul-corr'
     if os.path.isdir(dbg):
         im.convert('RGB').resize((W4 // 2, (base + 80) // 2), Image.LANCZOS).save(os.path.join(dbg, 'a-cote-de-kael.png'))
     for f_ in os.listdir(TMP):
