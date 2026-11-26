@@ -83,7 +83,7 @@ NECK = (66.0, 54.0)                  # le pivot (et le centre d'agrandissement) 
 # bouche centrée sous le nez (fermée au repos). Repère de la tête AVANT son agrandissement (×1,1 autour de NECK).
 FACE_BOX = (47.0, 21.0, 86.0, 56.0)  # l'ovale de la face (crâne chauve compris, sans l'oreille)
 FACE = placer(FACE_BOX)
-EYE_C = (round(FACE['mediane'](37.8), 2), 37.8)     # le milieu de l'œil unique, sur la médiane
+EYE_C = (round(FACE['mediane'](37.0), 2), 37.0)     # le milieu de l'œil unique, sur la médiane
 NOSE = FACE['nez']                                   # la base du nez, sur la médiane
 MOUTH_C = (FACE['bouche'][0], FACE['bouche'][1] + 0.6)   # le milieu de la bouche, sur la médiane
 
@@ -480,11 +480,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                (ribbon([(ex - 8.4, ey - 0.6), (ex - 10.2, ey + 0.2)], [0.5, 0.1]), SKIN.deep, 0.5),
                (ribbon([(ex - 8.2, ey + 1.8), (ex - 10.0, ey + 3.2)], [0.5, 0.1]), SKIN.deep, 0.45)]
         # l'œil unique : le blanc (ombré sous le sourcil), l'iris ambre en anneau qui roule, la pupille, le reflet
-        white = ellipse(ex, ey, 6.5, 4.7, -3)
+        white = ellipse(ex, ey, 6.5, 4.5, -3)
         bl = P['blink']
         if bl < 0.95:
-            hd += [(ellipse(ex - 0.1, ey + 0.1, 7.3, 5.5, -3), '#3a1424', 0.95),
-                   (white, ('lin', ex, ey - 4.7, ex, ey + 4.7, [(0, EYE_W[2]), (0.3, EYE_W[1]), (0.55, EYE_W[0]), (1, EYE_W[0])]), 1)]
+            hd += [(ellipse(ex - 0.1, ey + 0.1, 7.3, 5.3, -3), '#3a1424', 0.95),
+                   (white, ('lin', ex, ey - 4.5, ex, ey + 4.5, [(0, EYE_W[2]), (0.3, EYE_W[1]), (0.55, EYE_W[0]), (1, EYE_W[0])]), 1)]
             ix, iy = ex + 0.7 + e[0], ey - 0.2 + e[1]
             g = glow
             irs = [(0, IRIS[0] if g < 1 else '#ffffff'), (0.35, IRIS[1] if g < 1.5 else IRIS[0]), (0.7, IRIS[2] if g < 1.5 else IRIS[1]),
@@ -498,8 +498,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                    (ellipse(ix + 1.4, iy - 1.6, 0.95, 0.75, -20), '#ffffff', 0.95),
                    (ellipse(ix - 1.2, iy + 1.8, 0.4, 0.3), '#ffffff', 0.6)]
             # l'ombre du sourcil sur le haut de l'œil (par-dessus l'iris)
-            cres = [(ex + 6.5 * math.cos(math.radians(t)), ey + 4.7 * math.sin(math.radians(t))) for t in range(180, 361, 15)]
-            cres += [(ex + 6.5 * math.cos(math.radians(t)), ey + 4.7 * 0.3 * math.sin(math.radians(t)) - 0.6) for t in range(345, 179, -15)]
+            cres = [(ex + 6.5 * math.cos(math.radians(t)), ey + 4.5 * math.sin(math.radians(t))) for t in range(180, 361, 15)]
+            cres += [(ex + 6.5 * math.cos(math.radians(t)), ey + 4.5 * 0.3 * math.sin(math.radians(t)) - 0.6) for t in range(345, 179, -15)]
             hd += [(sm(cres, sharp=(0, 12)), EYE_W[2], 0.45)]
             if bl > 0.05:
                 # la paupière qui descend (peau), la ligne des cils en bas
@@ -531,9 +531,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         nx, ny = NOSE
         N = lambda pts: [(nx + x, ny + y) for x, y in pts]
         hd += [(sm(N([(-3.8, -0.8), (-0.4, -1.6), (3.2, -0.8), (4.6, 1.2), (3.4, 3.4), (0.0, 3.8), (-3.2, 3.2), (-4.4, 1.2)])), SKIN.deep, 0.32),
-               (sm(N([(-2.6, -2.4), (0.6, -2.6), (3.6, -1.4), (4.6, 0.8), (3.4, 2.6), (0.2, 3.0), (-2.8, 2.4), (-3.8, 0.4)])),
+               (sm(N([(-2.6, -1.9), (0.6, -2.2), (3.6, -1.2), (4.6, 0.8), (3.4, 2.6), (0.2, 3.0), (-2.8, 2.4), (-3.8, 0.4)])),
                 ('lin', nx + 4.6, ny - 2.6, nx - 3.8, ny + 3.0, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]), 1),
-               (ribbon(N([(-1.0, -5.2), (0.0, -3.6), (0.6, -2.2)]), [0.1, 0.9, 0.2]), SKIN.light, 0.5),
                (ellipse(nx + 1.8, ny - 1.0, 1.6, 0.8, 16), '#fff0cc', 0.6),
                (ellipse(nx + 1.4, ny + 1.8, 1.15, 0.55, 8), '#3a1424', 0.75),
                (ellipse(nx - 2.0, ny + 1.6, 0.8, 0.45, -8), '#3a1424', 0.5)]
