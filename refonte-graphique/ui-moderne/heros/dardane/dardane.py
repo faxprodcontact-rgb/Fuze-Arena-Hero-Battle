@@ -530,7 +530,8 @@ def torso(fig):
     # le laçage : la couture au milieu (un peu à droite, trois-quarts), trois petits liens
     det += [(ribbon([(69.2, 60.4), (68.8, 68), (68.0, 76.4)], [0.2, 0.9, 0.2]), LEATH.deep, 0.8)]
     for y, x in ((63.6, 69.0), (68.4, 68.7), (73.0, 68.3)):
-        det += [(ribbon([(x - 1.2, y - 0.6), (x, y + 0.1), (x + 1.2, y - 0.4)], [0.1, 0.55, 0.1]), LEATH.hi, 0.7)]
+        det += [(ribbon([(x - 1.0, y + 0.1), (x + 1.1, y - 0.2)], [0.5, 0.45]), LEATH.deep, 0.8),
+                (ribbon([(x - 0.9, y - 0.25), (x + 1.0, y - 0.55)], [0.25, 0.2]), LEATH.hi, 0.55)]
     # les pectoraux et le ventre, très doux (le cuir épouse le corps)
     det += [(ribbon([(56.4, 65.8), (61.6, 67.4), (66.2, 66.6)], [0.2, 1.0, 0.2]), LEATH.shadow, 0.55),
             (ribbon([(71.2, 66.2), (74.2, 65.2), (76.4, 63.2)], [0.2, 0.8, 0.2]), LEATH.shadow, 0.5),

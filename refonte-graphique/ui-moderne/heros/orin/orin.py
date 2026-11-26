@@ -26,8 +26,8 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 SKIN = Mat('#ffa978', '#f2643e', '#d63c30', '#a0222e', '#681430')
 WHITE = Mat('#ffffff', '#f7f5fb', '#e2deee', '#a49ec4', '#625a86')
 CLOTH = Mat('#fffaf0', '#f6ead6', '#e0cebe', '#a88ea2', '#6a5070')
-RAVEN = Mat('#a8b2dc', '#5c6090', '#3e3a5a', '#28223e', '#161226', glint='#d6dcff')
-RAVENF = Mat('#8a90bc', '#4a4a72', '#322c4a', '#211b34', '#120e1e', glint='#b8c0ea')
+RAVEN = Mat('#b6c0ea', '#6c72a8', '#48446e', '#2f2a4c', '#1a1530', glint='#e0e6ff')
+RAVENF = Mat('#98a0cc', '#5a5c8c', '#3c3658', '#28223e', '#161124', glint='#c4ccf2')
 HAKAMA = Mat('#a48aac', '#7e6486', '#5e4466', '#402c4a', '#28182e')
 GOLD = Mat('#fff1a6', '#f8cc50', '#d8922a', '#965220', '#5a2a18')
 STEEL = Mat('#f6f9ff', '#d2deee', '#9ca8c6', '#5c6488', '#33385a')
@@ -38,7 +38,7 @@ EYE = ('#fff3c8', '#f2a826', '#b8620e', '#220c16')
 
 GRD = 116          # le sol (dessous des geta)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (-9, -3, 136, 122)
+FRAME = (-11, -2, 137, 121)
 FEET = (60, 116)
 
 # ---------- le squelette (animation) ----------
@@ -57,7 +57,7 @@ SWORD_GRIP = -6.4           # le centre du poing lointain, sur la poignée (rep�
 BLADE_L = 30.5
 
 WINGS_N = dict(
-    fold=((-28, -16), (-11, 24), 93, 114, 57, 34),
+    fold=((-28, -16), (-9, 26), 92, 104, 62, 36),
     demi=((-30, -25), (-15, 5), 112, 150, 44, 33),
     grande=((-19, -42), (-15, -22), 150, 218, 32, 34),
     battue=((-33, 10), (-18, 22), 112, 138, 30, 32),
@@ -240,7 +240,11 @@ def sleeve(S, E, Wr, k_cuff, depth, sway=0.0, hw1=6.3, hwc=6.2):
            (xL + (xR - xL) * 0.22 + sway * 0.8, bottom - 1.8),
            (xL + (xR - xL) * 0.55 + sway, bottom),
            (xL + (xR - xL) * 0.86 + sway * 0.6, bottom - (bottom - A[1]) * 0.45)]
-    pts += hem + [A, (S[0] + 5.0, S[1] + 2.0), (S[0] + 7.6, S[1] - 4.2)]
+    if u1[0] < -0.3:
+        # le bras part sur le côté : le haut de la manche rejoint la ligne d'épaule du buste
+        pts += hem + [A, (S[0] + 5.0, S[1] + 2.0), (S[0] + 7.6, S[1] - 4.2)]
+    else:
+        pts += hem + [A, (S[0] + 3.0, S[1] + 1.0)]
     shape = sm(pts, sharp=(), t=0.95)
     return shape, C, hem, A, top_S, ca, cb
 
@@ -371,7 +375,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('fbag', fbag, CLOTH, cel=1.4, rim=0.6, cast=1.1, cast_on=['torso', 'knot', 'tail1', 'tail2', 'fhaka'],
              details=[(ribbon([lerp(FE, fC, 0.4), (fC[0] - 0.6, low + depth * 0.7)], [0.6, 0.2]), CLOTH.shadow, 0.5)])
     fsl = limb([S_F, FE, fC], [10.4, 9.6, 9.2])
-    fig.part('fsleeve', fsl, CLOTH, cel=1.4, rim=0.7, cast=1.0, cast_on=['torso', 'fbag', 'knot', 'tail1', 'tail2', 'fhaka'],
+    fig.part('fsleeve', fsl, CLOTH, cel=1.1, rim=0.7, cast=0.6, cast_on=['torso', 'fbag', 'knot', 'tail1', 'tail2', 'fhaka'],
              details=[(ribbon([lerp(S_F, FE, 0.2), lerp(S_F, FE, 0.8), lerp(FE, fC, 0.6)], [0.1, 0.9, 0.1]), CLOTH.shadow, 0.35)])
     # le sabre : lame d'acier (dos plus sombre, fil clair), habaki et tsuba d'or vus de biais, poignée tressée, pommeau
     def S_(sh):

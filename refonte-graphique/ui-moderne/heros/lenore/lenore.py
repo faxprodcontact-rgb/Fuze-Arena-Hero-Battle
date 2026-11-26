@@ -320,7 +320,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             A = (A[0] - 0.4 * tk, A[1] - tk)
             fo = [(x - 0.4 * tk, y - tk) for x, y in fo]
             toes = [(sh.move(-0.4 * tk, -tk), c_, o_) for sh, c_, o_ in toes]
-        K, A2 = ik(H, A, L1_, L2_, bend)
+        # quand il se tasse, le genou part vers l'avant (vers nous, trois quarts) : à l'écran la jambe se raccourcit
+        # au lieu de plier en grenouille ; elle garde toujours un léger pli
+        sc = min(1.0, math.dist(H, A) * 1.06 / (L1_ + L2_))
+        K, A2 = ik(H, A, L1_ * sc, L2_ * sc, bend)
         if math.dist(A2, A) > 0.01:             # jambe trop tendue : le pied suit la cheville (il pend)
             dA = (A2[0] - A[0], A2[1] - A[1])
             A = A2
@@ -501,7 +504,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ad = [
         # le deltoïde éclairé (le haut de l'épaule), sa limite douce en V sur le bras
         (ellipse(*a1.at(0.08, 1.4), 4.6, 5.2, aa1), skin.light, 0.45),
-        (ribbon([a1.at(0.18, -5.6), a1.at(0.42, -1.2), a1.at(0.3, 4.6)], [0.1, 0.9, 0.1]), skin.shadow, 0.55),
+        (ribbon([a1.at(0.2, -5.0), a1.at(0.4, -1.2), a1.at(0.32, 4.2)], [0.1, 0.8, 0.1]), skin.shadow, 0.4),
         # le biceps devant (éclairé), le triceps dans l'ombre (bande du dos)
         (ellipse(*a1.at(0.64, 2.6), 2.6, 4.8, aa1 - 90), skin.light, 0.38),
         (ribbon([a1.at(0.45, 4.6), a1.at(0.66, 5.0), a1.at(0.86, 4.4)], [0.1, 0.8, 0.1]), skin.hi, 0.35),

@@ -134,7 +134,7 @@ SW_DOWN = ((106.0, 77.0), -32.0)        # sabre bas, pointe vers le sol devant l
 SW_BACK = ((100.0, 70.0), 20.0)
 FWD = dict(nh=(76.0, 58.0), ne=(60.6, 59.6), fang=-2.0)          # l'éventail tendu à plat vers l'ennemi
 FWD2 = dict(nh=(73.0, 59.0), ne=(58.6, 60.4), fang=0.0)
-WHIP = dict(nh=(47.0, 25.0), ne=(35.0, 42.0), fang=-48.0)        # le bras fouette par-dessus l'épaule
+WHIP = dict(nh=(44.0, 17.0), ne=(34.0, 37.0), fang=-50.0)        # le bras fouette par-dessus l'épaule
 
 # 2) L'attaque de base : il se ramasse et arme (sabre levé devant l'épaule, éventail reculé, tenu) ; coup de sabre éclair
 # en diagonale vers le bas ; dans la foulée le bras de l'éventail fouette vers l'avant et l'éventail, tendu à plat, lâche

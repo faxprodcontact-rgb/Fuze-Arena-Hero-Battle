@@ -250,8 +250,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # la manche du fond : une grande cloche qui pend sous l'avant-bras ; galon d'or le long de l'ouverture
     sfw = P['sf']
     top0 = add(S, (-3.6, -3.2))
-    top1 = add(lerp(S, E, 0.5), nu, 4.6)
-    top2 = add(E, nf, 4.4)
+    # le dessus de la manche : l'étoffe passe en arc lisse de l'épaule au poignet (le coude ne marque pas)
+    cuff_t0 = add(W, nf, 3.6)
+    ua_ = unit(top0, cuff_t0)
+    up_ = (ua_[1], -ua_[0]) if ua_[0] > 0 else (-ua_[1], ua_[0])
+    bow = 1.2 + 0.6 * max(0.0, math.dist(top0, cuff_t0) - 18) / 6
+    top1 = add(lerp(top0, cuff_t0, 0.36), up_, bow)
+    top2 = add(lerp(top0, cuff_t0, 0.72), up_, bow * 0.7)
     cuff_t = add(W, nf, 3.6)
     cuff_b = add(W, nf, -3.8)
     horiz = max(0.0, min(1.0, 1 - abs(uf[1]) * 1.2))
@@ -268,8 +273,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (band_along(edge, 4.6), ('lin', cuff_t[0], cuff_t[1], B[0], B[1], [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), 1),
             (band_along([add(p, (0.35, -0.45)) for p in edge], 1.4), GOLD.hi, 0.7)]
     # les plis de la cloche : deux creux doux qui partent du coude
-    sdet += [(ribbon([add(E, (-0.4, 3.0)), lerp(add(E, (-0.4, 3.0)), add(B, (1.5, -2)), 0.5), add(B, (1.5, -3))], [0.2, 1.8, 0.4]), ROBE.shadow, 0.8),
-             (ribbon([add(E, (3.4, 3.4)), lerp(add(E, (3.4, 3.4)), add(B, (6.5, -6)), 0.5), add(B, (6.5, -6.5))], [0.2, 1.2, 0.3]), ROBE.light, 0.45)]
+    f0 = lerp(add(E, (-0.4, 4.0)), B, 0.12)
+    f1 = lerp(add(E, (3.4, 4.4)), add(B, (6.5, -6)), 0.12)
+    sdet += [(ribbon([f0, lerp(f0, add(B, (1.5, -2)), 0.5), add(B, (1.5, -3))], [0.2, 1.8, 0.4]), ROBE.shadow, 0.8),
+             (ribbon([f1, lerp(f1, add(B, (6.5, -6)), 0.5), add(B, (6.5, -6.5))], [0.2, 1.2, 0.3]), ROBE.light, 0.45)]
 
     # ---- les jambes : les tibias, puis les grands pieds griffus (trois orteils et un ergot) ----
     fleg = limb([(62, 98), (62.6, 103), (63.4, 107)], [8.6, 7.6, 7.2])

@@ -36,7 +36,7 @@ VIEW = (-22, -25, 267, 150)          # la scène de la vidéo, en pixels du dess
 VW, VH = 1280, 720
 FINK = '#3a0c18'                     # le contour des flammes
 GR = S.GRD
-ENEMY_X = 224.0                      # où se tient l'ennemi (comme le pixel art)
+ENEMY_X = 212.0                      # où se tient l'ennemi (un peu plus près que le pixel art, pour que la gerbe tienne dans l'image)
 
 # ======================================================================== interpolation douce, sans dépassement
 
@@ -136,7 +136,7 @@ SPECIAL = [
     (1550, {}),
 ]
 SP_ROAR, SP_STRIKE, SP_HIT = 380, 640, 830
-LION = [(640, (128, 36)), (720, (168, 40)), (780, (200, 44)), (830, (222, 50))]
+LION = [(640, (128, 36)), (720, (164, 40)), (780, (192, 44)), (830, (210, 50))]
 
 # ======================================================================== la respiration (en boucle, 2 s)
 

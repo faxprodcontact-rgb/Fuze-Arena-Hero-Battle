@@ -180,7 +180,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], 72, 46), mS(1.1, 1.1, 72, 46))   # tête un peu plus grande
     MANE = mchain(HEAD, mskx(-0.05 * P['mane'], 18))                          # le bas de la crinière traîne
     BEARD = mchain(HEAD, mskx(-0.045 * P['beard'], 38))                       # la pointe de la barbe traîne
-    LEG = mS(1, 1 - dyb / 30, 0, GRD)                                         # les jambes plient (pieds au sol)
+    # les jambes plient (pieds au sol) et leur haut suit le bassin quand il se penche (le haut des cuisses reste sous la jupe)
+    LEG = mchain(mskx(-P['lean'] * 0.6 / 31, GRD), mS(1, 1 - dyb / 30, 0, GRD))
     SKI = mchain(U, mskx(0.04 * P['cape'], 82))                               # la jupe suit le bassin
     CAP = mchain(mT(P['lean'] * 0.25, dyb * 0.5), mskx(-0.05 * P['cape'] - 0.012 * P['lean'], 52))   # la cape
     FARM = mchain(UC, mR(P['far'], SF[0], SF[1]))
