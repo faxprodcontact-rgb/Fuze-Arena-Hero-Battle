@@ -79,6 +79,64 @@ V = placer(FACE_BOX, l_oeil=0.24)
 NOSE = V['nez']                           # la base du nez, sur la médiane
 EYE_N, EYE_F = V['oeil_proche'], V['oeil_fond']
 
+# Le collier de perles (4e avis du propriétaire : « il part en virages, faut qu'il soit cohérent ») : UN anneau posé
+# autour de la base du cou, vu en trois quarts. Un cercle de rayon NR_R autour de l'axe du corps (centre NR_C), incliné
+# vers l'avant de NR_PHI (il tombe sur la poitrine devant, remonte sur les trapèzes et la nuque derrière), le corps
+# tourné de NR_PSI vers la droite. Sa projection est UNE ellipse : point le plus bas sur le sternum, puis elle remonte
+# régulièrement des deux côtés, sans virage. Les perles suivent l'ellipse, régulièrement espacées, un peu plus petites
+# et plus serrées vers l'arrière. s = 0 : devant (sternum) ;
+# s < 0 : côté proche (à gauche de l'image), s > 0 : côté lointain.
+NR_C, NR_R, NR_PHI, NR_PSI = (71.4, 53.1), 11.8, 61.0, 25.0
+NR_BEAD = 2.15                         # le rayon d'une perle devant (un peu plus petites vers l'arrière)
+
+
+def ring_pt(s):
+    """Le point de l'anneau du collier à l'angle s (degrés), et sa profondeur (1 = vers nous, -1 = derrière)."""
+    a, ph, ps = math.radians(s), math.radians(NR_PHI), math.radians(NR_PSI)
+    x = NR_C[0] + NR_R * (math.cos(ph) * math.sin(ps) * math.cos(a) + math.cos(ps) * math.sin(a))
+    y = NR_C[1] + NR_R * math.sin(ph) * math.cos(a)
+    z = math.cos(ph) * math.cos(ps) * math.cos(a) - math.sin(ps) * math.sin(a)
+    return (x, y), z
+
+
+def ring_turn(side):
+    """L'angle où l'anneau passe derrière le cou (là où il est le plus à gauche / à droite à l'écran)."""
+    ph, ps = math.radians(NR_PHI), math.radians(NR_PSI)
+    s0 = math.degrees(math.atan2(math.cos(ps), math.cos(ph) * math.sin(ps)))
+    return s0 - 180.0 if side < 0 else s0
+
+
+def necklace():
+    """Les perles [(x, y, r, s, z)] du côté visible de l'anneau, et la cordelette (les points de l'anneau). Les perles se
+    touchent à l'écran : de la paire du devant (de part et d'autre du sternum) vers l'arrière, chacune est posée à la
+    distance (rayon + rayon) de la précédente le long de l'ellipse, un peu moins vers l'arrière (elles se serrent)."""
+    sl, sr = ring_turn(-1), ring_turn(1)
+
+    def r_of(s):
+        return NR_BEAD * (0.8 + 0.2 * math.cos(math.radians(s)) ** 2)
+
+    beads = []
+    for side, s_end, slack in ((-1, sl, 6.0), (1, sr, 14.0)):
+        s, prev, gap = 0.0, ring_pt(0.0)[0], r_of(0.0) * 0.98
+        while True:
+            # avancer le long de l'ellipse jusqu'à la distance voulue (petits pas)
+            d = 0.0
+            while d < gap:
+                s2 = s + side * 0.1
+                q = ring_pt(s2)[0]
+                d += math.dist(prev, q)
+                s, prev = s2, q
+            if side * s > side * s_end + slack:
+                break
+            (x, y), z = ring_pt(s)
+            r = r_of(s)
+            beads.append((x, y, r, s, z))
+            u = min(1.0, abs(s) / abs(s_end))
+            gap = (r + r_of(s + side * 15)) * (0.98 - 0.16 * u * u)
+    rope = [ring_pt(sl - 3 + (sr + 12 - sl) * i / 48)[0] for i in range(49)]
+    return beads, rope
+
+
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, jaw=0.0, ph=0.0, ml=0.0, mu=0.0, pg=0.0,
             blink=0.0, G=G0, ang=ANG0, bend=1.0, wr=WR0, length=1.0, shs=(0.0, 0.0), rn=0.0, rf=0.0, far=(0.0, 0.0),
             far_rot=0.0, lift=0.0, shift=0.0, glow=0.0, hot=0.0, tuck=0.0)
@@ -450,36 +508,25 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (rpoly([(75.9, 76.5), (83.0, 76.2), (82.6, 78.8), (76.0, 79.2)], 1.2), skin.hi, 0.14)]
     det += [(ribbon([(56.2, 68.6), (58.4, 74.0), (57.6, 80.6)], [0.1, 1.0, 0.1]), skin.shadow, 0.5),
             (ribbon([(86.6, 68.4), (85.6, 74.4), (85.2, 80.2)], [0.1, 0.9, 0.1]), skin.shadow, 0.55)]
-    # la cordelette du collier (les perles se posent dessus)
-    beads = [(57.6, 56.6, 1.8), (60.9, 59.6, 2.0), (64.7, 61.9, 2.1), (68.9, 63.1, 2.15), (73.3, 63.5, 2.15),
-             (77.7, 63.0, 2.05), (81.8, 61.8, 1.95), (85.6, 59.6, 1.85)]
-    # 3e avis du propriétaire (« le collier ne va pas jusqu'au bout ») : le collier fait le TOUR du cou. Côté proche, il
-    # remonte de la poitrine sur le trapèze jusqu'au bord du cou, puis passe derrière la nuque : la dernière perle est
-    # coupée par le contour du cou (on la voit partir derrière) et la cordelette file sous la mâchoire. Côté lointain,
-    # elle passe sous le menton (la tête la cache).
-    beads_back = [(59.6, 53.5, 1.75), (62.0, 50.8, 1.6)]           # de la poitrine vers la nuque
-    rope_pts = ([(65.4, 47.8)] + [(x, y) for x, y, _ in beads_back[::-1]] + [(x, y) for x, y, _ in beads] +
-                [(88.6, 57.0), (90.4, 55.0)])
-    det += [(ribbon(rope_pts, [0.6] + [0.7] * (len(rope_pts) - 2) + [0.2]), ROPE.shadow, 0.9)]
+    # la cordelette du collier (les perles se posent dessus) : l'anneau en entier, de la nuque (côté proche, où il passe
+    # derrière le cou) jusque sous la mâchoire (côté lointain, la tête le cache)
+    beads, rope_pts = necklace()
+    det += [(ribbon(rope_pts, [0.5] + [0.7] * (len(rope_pts) - 2) + [0.5]), ROPE.shadow, 0.9)]
     fig.part('torso', torso, skin, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(skin.deep, 0.22, 3.2))
 
-    # les perles qui montent vers la nuque (sous celles de devant) : découpées par le contour du buste, elles passent
-    # derrière le cou
+    # ---- les perles d'ivoire du collier : des plus lointaines aux plus proches (les proches passent devant) ; chacune
+    # pose son ombre douce sur la poitrine ; celle qui passe derrière la nuque est coupée par le contour du cou ----
     g_tor = _poly(torso, k=24)
-    for i, (x, y, r) in enumerate(beads_back):
+    bead_names = []
+    for i, (x, y, r, s_, z) in enumerate(sorted(beads, key=lambda b: b[4])):
         b_ = sm([(x - 1.12 * r, y), (x - 0.5 * r, y - 0.92 * r), (x + 0.6 * r, y - 0.9 * r), (x + 1.12 * r, y - 0.05 * r),
                  (x + 0.55 * r, y + 0.95 * r), (x - 0.55 * r, y + 0.92 * r)])
         cut = _clip_shape(b_, g_tor)
-        if cut is not None:
-            fig.part('bead%d' % (len(beads) + i), cut, IVORY, cel=0.5, rim=0.4, cast=0.6, cast_on=['torso'],
-                     details=[(ellipse(x + 0.35 * r, y - 0.35 * r, 0.45 * r, 0.3 * r, -25), IVORY.hi, 0.9)])
-
-    # ---- les perles d'ivoire du collier (chacune pose son ombre douce sur la poitrine) ----
-    for i, (x, y, r) in enumerate(beads):
-        b_ = sm([(x - 1.12 * r, y), (x - 0.5 * r, y - 0.92 * r), (x + 0.6 * r, y - 0.9 * r), (x + 1.12 * r, y - 0.05 * r),
-                 (x + 0.55 * r, y + 0.95 * r), (x - 0.55 * r, y + 0.92 * r)])
-        fig.part('bead%d' % i, b_, IVORY, cel=0.55, rim=0.45, cast=0.7, cast_on=['torso'],
+        if cut is None:
+            continue
+        fig.part('bead%d' % i, cut, IVORY, cel=0.5 + 0.05 * z, rim=0.45, cast=0.7, cast_on=['torso'] + bead_names,
                  details=[(ellipse(x + 0.35 * r, y - 0.35 * r, 0.45 * r, 0.3 * r, -25), IVORY.hi, 0.95)])
+        bead_names.append('bead%d' % i)
 
     # ======================================================================== le pagne en peau de tigre, la corde
     cloth = sm([(52.4, 82.4), (60.0, 83.4), (70.0, 84.0), (80.0, 83.6), (89.8, 82.0), (90.6, 86.0), (89.8, 90.2),
@@ -611,7 +658,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     rim_p = '<path d="%s" fill-rule="evenodd" fill="FILL" opacity="0.85"%s/>'
     ad.append((rim_p % (rim_d, ' clip-path="url(#%s)"' % czn) +
                '<g clip-path="url(#%s)">%s</g>' % (cz, rim_p % (rim_d, ' clip-path="url(#%s)"' % ctn)), skin.hi, 1))
-    fig.part('narm', arm, skin, cel=1.8, rim=0, cast=1.3, cast_on=['torso', 'cloth', 'rope', 'nleg', 'bead0', 'bead1', 'bead8', 'bead9', 'chead', 'collar', 'handle'],
+    fig.part('narm', arm, skin, cel=1.8, rim=0, cast=1.3, cast_on=['torso', 'cloth', 'rope', 'nleg', 'chead', 'collar', 'handle'] + bead_names,
              details=ad)
 
     # ---- le poing proche, serré sur le manche : le dos de la main, la rangée des jointures, quatre doigts repliés ----
@@ -833,8 +880,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     heads = ['m4', 'm3', 'head', 'tuskN', 'tuskF', 'mane', 'ear', 'ering', 'hornN', 'hornF']
     fig.pose(heads, HEAD)
     fig.pose(['torso'], TOR)
-    fig.pose(['bead%d' % i for i in range(len(beads))], UC)
-    fig.pose(['bead%d' % (len(beads) + i) for i in range(len(beads_back))], TOR)     # découpées sur le buste
+    fig.pose(bead_names, TOR)                       # posées sur le buste (et coupées par son contour à la nuque)
     fig.pose(['farm', 'ffist', 'fbrac'], FARM)
     fig.pose(['cloth', 'end1', 'end2'], CLO)
     fig.pose(['rope', 'knot'], PEL)
