@@ -69,8 +69,21 @@ export function slotCount(s: PlayerState): number {
   return slotsAt(s.campaign.cleared);
 }
 
+/**
+ * Essai du propriétaire (26/11) : tout ouvrir pour vérifier les zones bloquées par niveau. L'adresse `?tout=1` l'allume
+ * (gardé sur le téléphone), `?tout=0` l'éteint. À retirer avant la bêta.
+ */
+const OPEN_ALL = (() => {
+  try {
+    const q = new URLSearchParams(location.search).get('tout');
+    if (q === '1') localStorage.setItem('fuze-tout', '1');
+    if (q === '0') localStorage.removeItem('fuze-tout');
+    return localStorage.getItem('fuze-tout') === '1';
+  } catch { return false; }
+})();
+
 export function isUnlocked(s: PlayerState, feature: Feature): boolean {
-  return s.campaign.cleared >= UNLOCKS[feature];
+  return OPEN_ALL || s.campaign.cleared >= UNLOCKS[feature];
 }
 
 /** Butin hors ligne accumulé depuis la dernière récolte. */
