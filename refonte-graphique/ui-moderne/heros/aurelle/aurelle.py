@@ -31,7 +31,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, lock, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from lib import Shape  # noqa: E402
-from outils import rot, add, lerp, body_limb, round_limb, ik, Seg, inv  # noqa: E402
+from outils import rot, add, lerp, body_limb, round_limb, ik, Seg, inv, FigureM  # noqa: E402
 from visage import placer, verifier, guide_svg  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
@@ -146,7 +146,7 @@ def bracer_det(c, a, L, W, up):
 
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P = dict(REST, **(pose or {}))
-    fig = Figure(*frame, ow=ow)
+    fig = FigureM(*frame, ow=ow)
     glow = P['glow']
 
     # ---- le squelette : une matrice par groupe de morceaux ----
@@ -612,9 +612,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         s2 = 1 if (a2.v[0] * 0.6 - a2.v[1] * 0.8) > 0 else -1
         ad = [
             # le deltoïde rond éclairé (le haut de l'épaule)
-            (ellipse(*a1(1.6, 3.2 * s1), 7.0, 5.2, aa1), SKIN.light, 0.42),
-            (ellipse(*a1(0.4, 5.4 * s1), 3.6, 1.6, aa1), SKIN.hi, 0.45),
-            (ribbon([a1.at(0.24, 8.0 * s1), a1.at(0.32, 1.0 * s1), a1.at(0.28, -7.0 * s1)], [0.1, 1.0, 0.1]), SKIN.shadow, 0.4),
+            (ellipse(*a1(3.0, 3.4 * s1), 7.6, 5.0, aa1), SKIN.light, 0.4),
+            (ellipse(*a1(2.4, 5.4 * s1), 4.0, 1.6, aa1), SKIN.hi, 0.42),
             # le biceps gonflé (au-dessus, éclairé), le triceps dans l'ombre (dessous)
             (ellipse(*a1.at(0.6, 3.4 * s1), 7.4, 3.6, aa1), SKIN.light, 0.36),
             (ellipse(*a1.at(0.62, 4.6 * s1), 3.6, 1.3, aa1), SKIN.hi, 0.4),
@@ -623,6 +622,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (ellipse(*a2.at(0.04, -1.0 * s2), 2.2, 1.6, aa2), SKIN.shadow, 0.35),
             (ellipse(*a2.at(0.24, 2.6 * s2), 2.4, 4.0, aa2 - 90), SKIN.light, 0.4),
         ]
+        # la LIAISON épaule / buste : la racine du bras (le dôme de l'épaule posé sur la poitrine) se fond dans le buste
+        # par un masque en dégradé le long du bras : ni bord de boule, ni couture, ni pli en travers ; le bras reste
+        # devant le buste (il peut passer devant le ventre pendant les coups)
+        mo_ = mapp(U, a1(1.4))
+        mt_ = mapp(U, a1(-8.2))
+        fig.masks['narm'] = (mo_[0], mo_[1], mt_[0], mt_[1], 'torso')
         fig.part('narm', arm, SKIN, grad=diag(SKIN, min(Snu[0], En[0], Wn2[0]) - 8, min(Snu[1], En[1], Wn2[1]) - 8,
                                                  max(Snu[0], En[0], Wn2[0]) + 8, max(Snu[1], En[1], Wn2[1]) + 8),
                  cel=1.9, rim=0.7, cast=1.4, cast_on=['torso', 'club', 'moss', 'rope', 'nleg', 'head', 'ear'] + SKIRT + ['spk%d' % i for i in range(4)],
