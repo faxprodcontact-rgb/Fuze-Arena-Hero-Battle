@@ -132,10 +132,14 @@ HEAD_POLY = [(70, 16), (76, 16), (79, 16), (81, 18), (83, 18), (85, 20), (88, 23
              (92, 32), (90, 33), (91, 36), (91, 38), (89, 40), (91, 42), (94, 44), (94, 48), (92, 50), (88, 52),
              (64, 52), (59, 50), (56, 48), (54, 45), (53, 41), (52, 36), (52, 31), (53, 27), (54, 25), (56, 24),
              (56, 21), (58, 19), (61, 19), (65, 18)]
-# le bras proche sous l'épaule : haut du bras et avant-bras (coude sorti vers l'arrière), puis le poing contre la hanche
-NEAR_ARM_POLY = [(5, 61), (32, 61), (33, 79), (34, 92), (29, 96), (19, 96), (5, 90)]
-NEAR_FIST_POLY = [(27, 78), (30, 76), (39, 74), (46, 75), (49, 78), (49, 93), (47, 95), (46, 99), (36, 99), (35, 95),
-                  (32, 95), (28, 92)]
+# le bras proche sous l'épaule : haut du bras et avant-bras, puis le poing posé sur la hanche. Bras rapproché du torse
+# le 26/11/2026 (retour du propriétaire : trop d'espace entre le bras et le torse) : le haut du bras va jusqu'à x = 41
+# (le torse commence à x = 42), son ombre sur le dessus de la main (rangée 76) est à lui ; le poignet de lave est la
+# colonne x = 31, le poing va de x = 32 à 52 (glissé de 3 px sur la hanche). Les rangées 93 à 99 (le haut de la cuisse
+# sous le poing) restent prises avec le bras, comme avant.
+NEAR_ARM_POLY = [(9, 61), (41, 61), (41, 75), (42, 76), (31, 76), (31, 92), (34, 92), (29, 96), (19, 96), (9, 92)]
+NEAR_FIST_POLY = [(32, 77), (42, 77), (43, 76), (50, 76), (52, 78), (52, 92), (49, 93), (47, 95), (46, 99), (36, 99),
+                  (35, 95), (32, 95), (31, 92)]
 # le poing lointain (levé à hauteur de tête) : quatre doigts empilés, x >= 100, jusqu'à la rangée 52
 P['poingL'] = take(filled & (XX >= 100) & (YY <= 52))
 # son poignet (roche chauffée et bande de lave, rangées 53 à 56) et l'avant-bras dressé (jusqu'au coude, rangée 82)
@@ -143,7 +147,7 @@ P['poignetL'] = take(filled & (XX >= 101) & (YY >= 53) & (YY <= 56) | (filled & 
 P['avbrasL'] = take(filled & (XX >= 100) & (YY >= 57) & (YY <= 82))
 # la tête et sa couronne d'éclats (entre les deux épaules)
 P['tete'] = take(filled & grid_poly(HEAD_POLY))
-# le bras proche, sous l'épaule : le haut du bras (à gauche du trou), l'avant-bras et le poing contre la hanche
+# le bras proche, sous l'épaule : le haut du bras (contre le flanc), l'avant-bras et le poing posé sur la hanche
 P['brasP'] = take(filled & (grid_poly(NEAR_ARM_POLY) | grid_poly(NEAR_FIST_POLY)))
 P['corps'] = rest.copy()
 P['brasL'] = np.where(P['avbrasL'] != '.', P['avbrasL'],
@@ -522,7 +526,7 @@ EMBERS = [((32, 46), 2, -1, True), ((97, 40), 4, 1, False), ((33, 52), 6, 1, Fal
 # filets de fumée : (x, y) du haut de l'épaule (grille), décalage de phase
 WISPS = [((27, 31), 0), ((96, 29), 5)]
 # graviers : (x, y) du départ (grille), image du départ, forme
-PEBBLES = [((13, 87), 1, 0), ((112, 82), 7, 1)]
+PEBBLES = [((18, 87), 1, 0), ((112, 82), 7, 1)]
 FALL = [0, 2, 6, 13, 23, 36]                 # chute (px) image après image : ça accélère
 
 
@@ -1388,12 +1392,19 @@ def fx_heal(k):
 # de lave autour des poings, et une lueur rouge douce l'entoure (sans aucun anneau ni trait), qui gonfle et s'éteint.
 # Pas de marque au-dessus de la tête : l'effet commun « provocation » (anim/effets) la pose déjà.
 _bp = P['brasP']
-NFIST = np.where(grid_poly(NEAR_FIST_POLY) & (XX >= 29), _bp, '.')
-NWRIST = np.array([28.0, 81.0])       # là où l'avant-bras entre dans le poing proche (grille)
+# (le poing seul : sans le poignet x = 31, ni le haut de la cuisse sous lui, rangées 93 et plus, qui pendait sous le poing)
+NFIST = np.where(grid_poly(NEAR_FIST_POLY) & (XX >= 32) & (YY <= 92), _bp, '.')
+NWRIST = np.array([31.0, 81.0])       # là où l'avant-bras entre dans le poing proche (grille)
 SH_NEAR = np.array([21.0, 60.0])      # l'épaule proche (sous l'épaulière moussue), grille, relative au buste
 ARM_NEAR = (17.0, 19.0)               # bras, avant-bras proches
 # sous le bras proche levé, le flanc du buste se voit : sa colonne éclairée (un reflet du poing) passe à l'ombre
 CORPS_NU = P['corps'].copy()
+# le flanc caché par le poing (glissé de 3 px sur la hanche le 26/11) : quand le poing s'en va, on remet la roche du
+# flanc telle qu'elle était dessinée avant (x, rangée, tons)
+for (_x, _y, _t) in ([(48, 76, '22226'), (49, 77, '1116'), (50, 78, '211'), (50, 79, '334'), (50, 80, '333')] +
+                     [(50, _r, '444') for _r in range(81, 91)] + [(50, 91, '334'), (50, 92, '333')]):
+    for _k, _c in enumerate(_t):
+        CORPS_NU[_y, _x + _k] = _c
 CORPS_NU[(XX == 49) & (YY >= 78) & (YY <= 94) & np.isin(CORPS_NU, list('678'))] = '4'
 # le haut du tibia proche, caché par le poing dans le dessin : quand le poing s'en va, on le bouche (roche dans l'ombre
 # du bassin, plus claire vers la droite)
@@ -1437,7 +1448,7 @@ def clash_arms(cv, ctx, c, gl, stage='devant'):
         wrist_band(lay, Wn - 2.5 * un, Wn + 0.5 * un, 8.0, gl)
     layered(cv, near, rim_rock)
     layered(cv, lambda lay: blit(lay, glow(NFIST, gl), bx + dxn, by + dyn), rim_rock)
-    ctx.contact = np.array([49.0 + dxn, 86.0 + dyn]) + np.array([OX + bx, OY + by], float)
+    ctx.contact = np.array([52.0 + dxn, 86.0 + dyn]) + np.array([OX + bx, OY + by], float)
 
 
 def red_glow(cv, back, amax, sig=3.0, rise=1):
@@ -1489,7 +1500,7 @@ def heated(**kw):
 
 
 BRACE = (104, 60)                     # le bord gauche du poing levé, redescendu devant la poitrine (grille)
-CLASH = dict(near=(30, -22), far=(-22, 24))       # les poings l'un contre l'autre, devant la poitrine
+CLASH = dict(near=(27, -22), far=(-22, 24))       # les poings l'un contre l'autre, devant la poitrine
 SPECIALE = [
     dict(ms=100),
     # 1-6 : il se ramasse, sa lave monte, le dôme de plaques se forme autour de lui, chauffe au rouge puis à blanc
@@ -1512,11 +1523,11 @@ SPECIALE = [
     heated(crouch=1, arm=('orig', 0, 1), gl=0, fx=[fx_ring('fente'), fx_heal(2)], post=HEAL[3], ms=100),
     # 12-13 : le défi : il écarte les bras (le poing lointain vers l'ennemi, le proche en arrière) puis les abat
     dict(crouch=0, lean=-1, arm=('punch', (110, 50)), near=(-2, 1), head=(0, -1), gl=1, ms=110),
-    dict(crouch=1, lean=0, clash=dict(near=(16, -13), far=(-9, 12)), gl=2, ms=60),
+    dict(crouch=1, lean=0, clash=dict(near=(13, -13), far=(-9, 12)), gl=2, ms=60),
     # 14-16 : les deux poings l'un contre l'autre : arrêt sur l'image, étincelles, la lueur rouge gonfle et s'éteint
     dict(crouch=2, lean=1, clash=CLASH, head=(0, 1), gl=3, fx=[fx_clash(0)], tint=((255, 70, 60), 16), ms=200),
     dict(crouch=2, lean=1, clash=CLASH, head=(0, 1), gl=2, fx=[fx_clash(1)], tint=((255, 70, 60), 8), ms=110),
-    dict(crouch=1, lean=1, clash=dict(near=(26, -19), far=(-17, 21)), gl=1, fx=[fx_clash(2)], ms=100),
+    dict(crouch=1, lean=1, clash=dict(near=(23, -19), far=(-17, 21)), gl=1, fx=[fx_clash(2)], ms=100),
     # 17-18 : il laisse retomber les bras en garde
     dict(crouch=1, arm=('punch', BRACE), near=(1, 0), ms=100),
     dict(arm=('orig', 0, 2), ms=110),
