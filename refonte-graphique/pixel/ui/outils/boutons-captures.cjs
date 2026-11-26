@@ -22,7 +22,7 @@ function save(s, cleared) {
   s.campaign = { cleared, idleFrom: now - 5.5 * 3600e3, itemHours: 0 };
   s.tower = { floor: 17 };
   s.seen = ['tower', 'missions', 'dungeons', 'dailyBoss', 'arena', 'guild', 'defense'];
-  s.speed = 3;
+  s.speed = 3; s.auto = false;
   return s;
 }
 
@@ -121,9 +121,9 @@ function audit() {
       if (want('combat') || want('victoire')) {
         await page.click('.prep .btn-fight'); await page.waitForTimeout(4000); await shot('combat');
         if (want('auto')) {
-          // AUTO : à (590, bas sûr - 244) en unités du jeu ; allumé, il luit
+          // AUTO (coupé au départ) : vers (590, bas sûr - 276) en unités du jeu ; allumé, il luit
           const k = w / 720;
-          await page.mouse.click(590 * k, h - (notch ? 34 : 0) - 244 * k); await page.waitForTimeout(600); await shot('combat-auto');
+          await page.mouse.click(590 * k, h - (notch ? 34 : 0) - 276 * k); await page.waitForTimeout(600); await shot('combat-auto');
         }
         if (want('pause')) {
           // le bouton pause : en haut à gauche de la scène (52, haut sûr + 50 en unités du jeu, 720 de large)
