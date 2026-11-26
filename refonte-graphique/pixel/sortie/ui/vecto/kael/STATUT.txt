@@ -1,5 +1,6 @@
 fait
-Kael, le guerrier de lave (modèle validé le 26/11), repris d'après l'avis du propriétaire :
-- crâne / cheveux : plus de « calotte » posée sur la tête ni de ligne de crâne sous les flammes ; la chevelure est une
-  seule masse de feu qui naît du crâne (bord du front en petites langues de feu) et se sépare peu à peu en mèches vers
-  l'arrière (séparations en fondu depuis la racine), dans toutes les poses (repos, attaque, spéciale). Rien d'autre changé.
+Kael, le guerrier de lave (modèle validé le 26/11), repris deux fois d'après l'avis du propriétaire :
+- 1er avis : plus de « calotte » ni de ligne de crâne sous les flammes ; une seule masse de feu qui naît du crâne.
+- 2e avis (« recoller la coiffure sur sa tête ») : la racine des flammes descend jusqu'aux sourcils et suit leur courbe
+  (plus de bande de front ni d'ombre sombre entre les cheveux et la peau) ; le devant de la chevelure monte dans le
+  prolongement du front au lieu de déborder au-dessus du visage. Vrai dans toutes les poses. Rien d'autre changé.
