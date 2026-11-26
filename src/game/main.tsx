@@ -3,9 +3,13 @@ import { render } from 'preact';
 // le style commun d'abord : les fichiers des sections (ui/sections/*.css, importés par leurs écrans) passent après lui
 import './ui/style.css';
 import { App } from './ui/app';
+// l'essai d'habillage « pierre » (?theme=pierre, ui/theme.ts) : après tous les CSS, pour gagner à priorité égale
+import './ui/theme-pierre.css';
+import './ui/theme-pierre-or.css';
 import { installButtons } from './ui/buttons';
 import { installSigns } from './ui/px';
 import { installSkin } from './ui/skin';
+import { installTheme } from './ui/theme';
 import { watchUpdates } from './updater';
 import { artUrl } from './art-url';
 import { startDiag } from './diag';
@@ -14,6 +18,7 @@ import { startDiag } from './diag';
 // (buttons.ts), posés avant le premier dessin
 startDiag();
 installSkin();
+installTheme();
 installSigns();
 installButtons();
 render(<App />, document.getElementById('game')!);

@@ -128,7 +128,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
         </button>
 
         <button class="dock-fast" onClick={() => open({ type: 'fastLoot' })}>
-          <span class="dock-pic"><Icon name="hourglass" size={58} /></span>
+          <span class="dock-pic"><Icon name="hourglass" size={62} /></span>
           <span class="dock-time">{t('camp.fast')}</span>
           {fastLootCost(s) === 0 && <RedDot />}
         </button>

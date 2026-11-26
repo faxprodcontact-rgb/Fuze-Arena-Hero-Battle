@@ -12,6 +12,7 @@ import type { Slot } from '../../core/battle/types';
 import { clanElement, type Clan } from '../look';
 import { Glow, Mat, Motes, Soft, VGrad, Vol, cloud, f, hills, mix, peaks, rr } from './backdrop-kit';
 import './sections/backdrops.css';
+import { retintSvg } from './theme';
 
 export const STAGE_W = 420, STAGE_H = 360;
 /** Le point où chaque héros pose les pieds (le centre de sa dalle). */
@@ -72,6 +73,9 @@ function Ground({ clan }: { clan: Clan }) {
 /** Dessiné une fois par clan : l'application se redessine chaque seconde, le terrain n'a pas à suivre. */
 class Frozen extends Component<{ clan: Clan }> {
   shouldComponentUpdate(next: { clan: Clan }) { return next.clan !== this.props.clan; }
+  // l'essai « pierre » (?theme=pierre) : la dalle lavande devient basalte (le ciel garde la couleur de l'élément)
+  componentDidMount() { retintSvg(this.base as SVGElement, 'all'); }
+  componentDidUpdate() { retintSvg(this.base as SVGElement, 'all'); }
   render({ clan }: { clan: Clan }) { return <Ground clan={clan} />; }
 }
 

@@ -1,0 +1,754 @@
+/* FABRIQUÉ par refonte-graphique/ui-moderne/theme/pierre.ts — ne pas modifier à la main (relancer le script).
+   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 208 règles, 318 couleurs. */
+/*  style.css  */
+:root[data-theme="pierre"] {
+    --c-bg-0: #131218;
+    --c-bg-1: #1f1e27;
+    --c-bg-2: #2a2935;
+    --c-bg-3: #3b3949;
+    --c-bg-4: #545168;
+    --c-glass: #1c1b23b3;
+    --c-glass-strong: #15141ad9;
+    --c-surface-2: #faf8f4;
+    --c-surface-3: #f4efe5;
+    --c-line: #f2ece0;
+    --c-text: #2c2b36;
+    --c-muted: #767391;
+    --c-title: #3a3948;
+    --c-on-dark-muted: #c1bfcd;
+    --c-navy: #32313e;
+    --c-navy-hi: #454355;
+    --c-navy-lo: #201f27;
+    --c-navy-glass: #262530c7;
+    --c-stone-hi: #8d8ba3;
+    --c-stone: #514f65;
+    --c-stone-lo: #343340;
+    --c-stone-deep: #24232d;
+    --g-stone: radial-gradient(70% 60% at 55% 55%, #ffb53a2e, #ffb53a00 70%), linear-gradient(200deg, #5e5b74 0%, #514f65 40%, #343340 100%);
+    --g-head: linear-gradient(180deg, #454355 0%, #32313e 55%, #2a2934 100%)
+}
+:root[data-theme="pierre"] {
+    --px-frame: linear-gradient(180deg, #f6f4fd, #f9f6f0);
+    --px-bar-top: linear-gradient(180deg, #32313e 0%, #282731 100%);
+    --px-bar-bottom: linear-gradient(180deg, #2e2d39 0%, #201f27 100%);
+    --px-plaque-navy: linear-gradient(180deg, #514f64 0%, #363443 100%);
+    --px-plaque-blue: linear-gradient(180deg, #525065 0%, #32313e 100%);
+    --px-chip: linear-gradient(#15141ac7, #15141ac7)
+}
+:root[data-theme="pierre"] {
+    --navy-0: #131218;
+    --navy-1: #1f1e27;
+    --navy-2: #2a2935;
+    --navy-3: #3b3949;
+    --navy-4: #514f65;
+    --cream-0: #a9a7ba;
+    --cream-1: #ebe3d2;
+    --cream-2: #faf8f4;
+    --inset-line: #ebe3d2;
+    --edge: #3a3948;
+    --bar: linear-gradient(180deg, #514f64, #363443);
+    --ghost-2: #f7f3ec;
+    --ghost-edge: #cdccd7;
+    --tint: linear-gradient(180deg, #1f1e2794 0%, #3b394959 42%, #131218b3 100%);
+    --hud-panel: #3b3a49;
+    --hud-edge: #131218;
+    --hud-under: #1f1e27;
+    --s-dark-glass: #15141ab8;
+    --s-ico-next: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M7.5 4l6 6-6 6' fill='none' stroke='%23a9a7ba' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+}
+:where(:root[data-theme="pierre"]) .bar-art-dock {
+    background: linear-gradient(180deg, #3b3a49 0%, #2e2d39 100%)
+}
+:where(:root[data-theme="pierre"]) .avatar .medal-in {
+    background: linear-gradient(200deg, #514f65, #24232d)
+}
+:where(:root[data-theme="pierre"]) .tabbar-btn {
+    color: #b4b3c3
+}
+:where(:root[data-theme="pierre"]) .bt .cur {
+    background: #0e0e1299
+}
+:where(:root[data-theme="pierre"]) .bt-ardoise .cur {
+    background: #33323fb3
+}
+:where(:root[data-theme="pierre"]) .cur-big {
+    --psh: var(--sh-1), inset 0 0 0 1px #f4efe5
+}
+:where(:root[data-theme="pierre"]) .modal .bar, :where(:root[data-theme="pierre"]) .card .bar {
+    --pxf: linear-gradient(#f1ebdf, #f1ebdf)
+}
+:where(:root[data-theme="pierre"]) .tab {
+    color: #cccbd6
+}
+:where(:root[data-theme="pierre"]) .chip.on {
+    background: linear-gradient(200deg, #5e5b74, #343340);
+    box-shadow: inset 0 0 0 1.5px #ffc94d, 0 2px 6px #24232d66;
+    text-shadow: 0 1px 0 #24232d
+}
+:where(:root[data-theme="pierre"]) .switch {
+    --pxf: linear-gradient(#eae3d5, #eae3d5)
+}
+:where(:root[data-theme="pierre"]) .hcard-lv {
+    background: #15141acc
+}
+:where(:root[data-theme="pierre"]) .hcard-el {
+    background-color: #15141ab3
+}
+:where(:root[data-theme="pierre"]) .item-owner {
+    background: linear-gradient(200deg, #5e5b74, #343340)
+}
+:where(:root[data-theme="pierre"]) .item-bonus {
+    background: #15141aa6
+}
+:where(:root[data-theme="pierre"]) .modal-head h2, :where(:root[data-theme="pierre"]) .prep-head h2 {
+    --o: #131218;
+    text-shadow: 0 2px 0 #13121899
+}
+:where(:root[data-theme="pierre"]) .toast {
+    background: #1f1e27f0
+}
+:where(:root[data-theme="pierre"]) .back::before {
+    background: #15141ab8
+}
+:where(:root[data-theme="pierre"]) .prep-head .power-chip {
+    --o: #131218;
+    text-shadow: 0 1px 0 #131218
+}
+:where(:root[data-theme="pierre"]) .tb-navy {
+    --o: #1d1d24
+}
+:where(:root[data-theme="pierre"]) .tb-blue {
+    --o: #1d1d24
+}
+:where(:root[data-theme="pierre"]) .plaque {
+    --o: #1d1d24
+}
+:where(:root[data-theme="pierre"]) .medal {
+    background: linear-gradient(200deg, var(--md-1, #5e5b74), var(--md-2, #343340))
+}
+:where(:root[data-theme="pierre"]) .medal-blue {
+    --md-1: #5e5b74;
+    --md-2: #343340
+}
+:where(:root[data-theme="pierre"]) .stage {
+    background: #3b3a49
+}
+:where(:root[data-theme="pierre"]) .edge-ribbon {
+    background: linear-gradient(180deg, #32313ec2, #201f27b8)
+}
+:where(:root[data-theme="pierre"]) .edge-toggle .medal {
+    background: linear-gradient(200deg, #454355, #201f27)
+}
+:where(:root[data-theme="pierre"]) .dock-bar {
+    --pxf: linear-gradient(#0e0e12a6, #0e0e12a6)
+}
+:where(:root[data-theme="pierre"]) .dock-power {
+    background: #0e0e1299
+}
+:where(:root[data-theme="pierre"]) .fast-hero > .icon {
+    background: linear-gradient(160deg, #ece8fb, #eee7d8)
+}
+:where(:root[data-theme="pierre"]) .prep-bg {
+    background: linear-gradient(180deg, #3b3949 0%, #2a2935 38%, #1f1e27 100%)
+}
+:where(:root[data-theme="pierre"]) .team-face {
+    background: radial-gradient(circle at 60% 30%, #6c6986, #343340 75%)
+}
+:where(:root[data-theme="pierre"]) .hall-hero::before {
+    background: radial-gradient(closest-side, #15141ab3, #15141a00)
+}
+:where(:root[data-theme="pierre"]) .hall-power {
+    background: linear-gradient(180deg, #504e64, #2a2834);
+    border: 1.5px solid #100f14
+}
+:where(:root[data-theme="pierre"]) .hall-med .sum-med-icon {
+    background: radial-gradient(circle at 60% 30%, #6c6986, #24232d 72%);
+    border-color: #100f14
+}
+:where(:root[data-theme="pierre"]) .hall-med .sum-med-label {
+    background: #18171ee6
+}
+:where(:root[data-theme="pierre"]) .hero-page {
+    background: #18171e
+}
+:where(:root[data-theme="pierre"]) .hero-page > .hp-bg {
+    background: radial-gradient(70% 34% at 28% 22%, color-mix(in srgb, var(--el) 30%, #0000), #0000 100%), linear-gradient(180deg, #32303e 0%, #1f1e26 48%, #18171e 100%)
+}
+:where(:root[data-theme="pierre"]) .hp-team {
+    background: linear-gradient(180deg, #58556d, #32303e);
+    border: 1.5px solid #100f14
+}
+:where(:root[data-theme="pierre"]) .hp-card {
+    border: 1.5px solid #100f14;
+    background: #18171e
+}
+:where(:root[data-theme="pierre"]) .hp-card-lv {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--rar) 60%, #1d1c24), color-mix(in srgb, var(--rar) 30%, #0e0e11))
+}
+:where(:root[data-theme="pierre"]) .hp-power {
+    background: linear-gradient(180deg, #504e64, #212129);
+    border: 1.5px solid #100f14
+}
+:where(:root[data-theme="pierre"]) .stat-main small {
+    color: #cccbd6
+}
+:where(:root[data-theme="pierre"]) .stat-minor small {
+    color: #cccbd6
+}
+:where(:root[data-theme="pierre"]) .hp-panel {
+    --panel-flat: #3b3a49;
+    --groove: #131218;
+    --edge: #100f14;
+    --inset: #13121866;
+    --inset-line: #131218a6;
+    --field: #1f1e2799;
+    --muted: #cccbd6;
+    --ghost-edge: #100f14;
+    background: var(--corner-tl) 4px 4px no-repeat, var(--corner-tr) calc(100% - 4px) 4px no-repeat, linear-gradient(180deg, #ffffff1f 0, #ffffff00 26px), linear-gradient(180deg, #4d4b60 0%, #383645 40%, #201f27 100%);
+    border-top: 1.5px solid #100f14
+}
+:where(:root[data-theme="pierre"]) .hp-panel p {
+    color: #f4f0e8
+}
+:where(:root[data-theme="pierre"]) .hp-slot .item-empty {
+    background: radial-gradient(circle at 50% 40%, #3b3a49, #131218 80%);
+    border: 1.5px solid #100f14;
+    box-shadow: inset 0 3px 6px #000c, inset 0 0 0 1.5px #8d8ba359, 0 3px 7px #000a
+}
+:where(:root[data-theme="pierre"]) .hp-medal {
+    background: radial-gradient(circle at 50% 35%, color-mix(in srgb, var(--el) 45%, #32303e), #18171e 78%);
+    box-shadow: 0 0 0 2px #100f14, 0 0 0 3.5px var(--gold), 0 2px 5px #000a
+}
+:where(:root[data-theme="pierre"]) .hp-play.on {
+    background: linear-gradient(180deg, #58556d, #32303e);
+    border-color: #100f14
+}
+:where(:root[data-theme="pierre"]) .hp-talent.locked .hp-req {
+    color: #f4f0e8;
+    background: linear-gradient(180deg, #5e5b74, #343340);
+    border-color: #100f14
+}
+:where(:root[data-theme="pierre"]) .hp-sheet {
+    --panel-flat: #3b3a49;
+    --groove: #131218;
+    --edge: #100f14;
+    --inset: #13121866;
+    --inset-line: #131218a6;
+    --field: #1f1e2799;
+    --muted: #cccbd6;
+    --ghost-edge: #100f14;
+    background: var(--corner-tl) 4px 4px no-repeat, var(--corner-tr) calc(100% - 4px) 4px no-repeat, linear-gradient(180deg, #ffffff24 0, #ffffff00 26px), linear-gradient(180deg, #58556d 0%, #3e3c4d 40%, #22212b 100%);
+    border: 1.5px solid #100f14
+}
+:where(:root[data-theme="pierre"]) .hp-sheet-tab {
+    border: 1.5px solid #100f14
+}
+:where(:root[data-theme="pierre"]) .hp-sheet-tab.on {
+    background: linear-gradient(180deg, #6d6a88, #3e3c4d)
+}
+:where(:root[data-theme="pierre"]) .sum-med-label {
+    text-shadow: 0 1px 0 #24232d, 0 0 2px #24232d;
+    background: linear-gradient(180deg, #59576f, #282731);
+    border: 1.5px solid #141319
+}
+:where(:root[data-theme="pierre"]) .sum-panel {
+    border: 1.5px solid #141319;
+    background: var(--corner-tl) 3px 3px no-repeat, var(--corner-tr) calc(100% - 3px) 3px no-repeat, var(--corner-bl) 3px calc(100% - 3px) no-repeat, var(--corner-br) calc(100% - 3px) calc(100% - 3px) no-repeat,
+    linear-gradient(180deg, #ffffff26 0, #ffffff00 30px), linear-gradient(180deg, #59576f 0%, #393847 55%, #282731 100%)
+}
+:where(:root[data-theme="pierre"]) .sum-kind-basic .sum-panel {
+    background: var(--corner-tl) 3px 3px no-repeat, var(--corner-tr) calc(100% - 3px) 3px no-repeat, var(--corner-bl) 3px calc(100% - 3px) no-repeat, var(--corner-br) calc(100% - 3px) calc(100% - 3px) no-repeat,
+    linear-gradient(180deg, #ffffff26 0, #ffffff00 30px), linear-gradient(180deg, #454355 0%, #32313e 55%, #201f27 100%)
+}
+:where(:root[data-theme="pierre"]) .sum-pity-bar {
+    background: linear-gradient(180deg, #212129, #363543);
+    border: 1.5px solid #141319
+}
+:where(:root[data-theme="pierre"]) .reveal-sky {
+    background: radial-gradient(80% 46% at 50% 44%, color-mix(in srgb, var(--tc) 50%, #3a3848cc) 0, #26252ee0 52%, #07051af5 100%)
+}
+:where(:root[data-theme="pierre"]) .reveal-name {
+    background: color-mix(in srgb, var(--rar) 55%, #141319)
+}
+:where(:root[data-theme="pierre"]) .frag-img {
+    background: radial-gradient(circle at 60% 30%, #6c6986, #343340 75%)
+}
+:where(:root[data-theme="pierre"]) .tile {
+    --tile: #6c6986
+}
+:where(:root[data-theme="pierre"]) .tile-name > .locked {
+    background: #18171de6
+}
+:where(:root[data-theme="pierre"]) .tile-tower {
+    --tile: #83809b
+}
+:where(:root[data-theme="pierre"]) .tile-arena {
+    --tile: #6c6986
+}
+:where(:root[data-theme="pierre"]) .tower-floor {
+    background: linear-gradient(180deg, #e3ded3, #b1afc0);
+    border: 1.5px solid #3b3a49;
+    color: #3b3a49
+}
+:where(:root[data-theme="pierre"]) .tower-floor.current {
+    border-color: #413f50
+}
+:where(:root[data-theme="pierre"]) .chat-list {
+    background: linear-gradient(180deg, #2e2d39, #22212b)
+}
+:where(:root[data-theme="pierre"]) .msg-me {
+    background: linear-gradient(200deg, #565468, #393746)
+}
+:where(:root[data-theme="pierre"]) .rank-2 {
+    background: linear-gradient(180deg, #f2ede2, #a5a3b6)
+}
+:where(:root[data-theme="pierre"]) .guild-info {
+    background: linear-gradient(180deg, #57546c, #2d2c37);
+    border: 1.5px solid #16151b;
+    text-shadow: 0 1px 0 #16151b, 0 0 2px #16151b
+}
+:where(:root[data-theme="pierre"]) .friend-face {
+    background: linear-gradient(200deg, #5e5b74, #343340)
+}
+:where(:root[data-theme="pierre"]) .settings-group > .setting-row {
+    --psh: inset 0 -1px 0 #f5f1e8
+}
+:where(:root[data-theme="pierre"]) .name-card {
+    background: linear-gradient(180deg, #424051f2, #26252ff2)
+}
+:where(:root[data-theme="pierre"]) .name-card .name-field .muted {
+    color: #c7c6d2
+}
+:where(:root[data-theme="pierre"]) .fuse-slot.missing {
+    border: 1.5px dashed color-mix(in srgb, var(--fac, #b6b4c4) 80%, #000);
+    background: color-mix(in srgb, var(--fac, #b6b4c4) 28%, #0000004d)
+}
+:where(:root[data-theme="pierre"]) & .hall-power {
+    background: #1c1b23d9
+}
+:where(:root[data-theme="pierre"]) & .sum-med-label, :where(:root[data-theme="pierre"]) & .hall-med .sum-med-label {
+    background: #15141ad9
+}
+:where(:root[data-theme="pierre"]) & .sum-panel {
+    background: linear-gradient(180deg, #413f50e6, #2c2b37f2)
+}
+:where(:root[data-theme="pierre"]) & .sum-kind-basic .sum-panel {
+    background: linear-gradient(180deg, #454355e6, #2a2934f2)
+}
+:where(:root[data-theme="pierre"]) & .tile-name {
+    background: linear-gradient(180deg, #15141a00, #15141aa6 40%);
+    text-shadow: 0 2px 0 #15141a99
+}
+:where(:root[data-theme="pierre"]) & .tile-name > .locked {
+    background: #15141ae0
+}
+:where(:root[data-theme="pierre"]) & .tile-arena {
+    --tile: #6c6986
+}
+/*  sections/avatar.css  */
+:where(:root[data-theme="pierre"]) .avatar-face {
+    background: linear-gradient(200deg, #625f79, #363443)
+}
+:where(:root[data-theme="pierre"]) .avatar-pick {
+    background: radial-gradient(90% 80% at 85% 10%, #ffffff40 0%, #fff0 60%),
+    linear-gradient(200deg, color-mix(in srgb, var(--el, #9f9db2) 70%, #3b3949) 0%, color-mix(in srgb, var(--el, #9f9db2) 30%, #282731) 100%)
+}
+/*  sections/aventure.css  */
+:root[data-theme="pierre"] {
+    --av-text: #2c2b36;
+    --av-muted: #767391;
+    --av-line: #f4efe5;
+    --av-glass: #15141ab8;
+    --av-azure: linear-gradient(180deg, #7d7a97 0%, #58556d 60%, #49475b 100%)
+}
+:where(:root[data-theme="pierre"]) .av-chip.off {
+    color: #cfced8
+}
+:where(:root[data-theme="pierre"]) .av-tries.none b {
+    color: #cfced8
+}
+:where(:root[data-theme="pierre"]) .av-progress {
+    background: #f4efe5
+}
+:where(:root[data-theme="pierre"]) .av-progress > b {
+    color: #3d3c4c
+}
+:where(:root[data-theme="pierre"]) .av-face {
+    background: radial-gradient(circle at 50% 30%, #8f7bff, #59576e 75%)
+}
+:where(:root[data-theme="pierre"]) .av-face.unknown {
+    background: radial-gradient(circle at 50% 30%, #6c6a86, #353442 75%)
+}
+:where(:root[data-theme="pierre"]) .av-scene {
+    background: #545168 var(--scene) 50% var(--sy, 52%) / cover no-repeat
+}
+:where(:root[data-theme="pierre"]) .av-tile {
+    background: linear-gradient(180deg, var(--c-bg-3, #3b3949), var(--c-bg-1, #1f1e27))
+}
+:where(:root[data-theme="pierre"]) .av-tile .locked {
+    color: #ede5d4
+}
+:where(:root[data-theme="pierre"]) .av-tile.is-locked .av-tile-name {
+    color: #bfbdcc
+}
+:where(:root[data-theme="pierre"]) .av-lock {
+    background: #15141ab3
+}
+:where(:root[data-theme="pierre"]) .av-head {
+    background: #1c1b23cc
+}
+:where(:root[data-theme="pierre"]) .av-panel {
+    background: linear-gradient(180deg, #ffffff 0%, #faf8f4 100%)
+}
+:where(:root[data-theme="pierre"]) .av-floor {
+    color: #525066
+}
+:where(:root[data-theme="pierre"]) .av-floor.now {
+    box-shadow: inset 0 2px 0 #ffffff4d, inset 0 -4px 0 #383745, 0 0 0 3px #ffc22e, 0 10px 24px #ffc22e59
+}
+:where(:root[data-theme="pierre"]) .av-row-icon {
+    background: linear-gradient(160deg, #eef0ff, #f0e9db)
+}
+:where(:root[data-theme="pierre"]) .av-mission.running .av-row-icon {
+    background: linear-gradient(160deg, #f4efe5, #e7ddc8)
+}
+:where(:root[data-theme="pierre"]) .av-dcard::before {
+    background: #545168 var(--scene) 50% 48% / cover no-repeat
+}
+:where(:root[data-theme="pierre"]) .av-dcard::after {
+    background: linear-gradient(90deg, #15141ae0 0%, #15141aa6 42%, #15141a00 78%)
+}
+:where(:root[data-theme="pierre"]) .av-dhead::after {
+    background: linear-gradient(90deg, #15141a00 40%, #15141aa6 100%)
+}
+:where(:root[data-theme="pierre"]) .av-step-node {
+    background: linear-gradient(180deg, #7b7895, #57546c)
+}
+:where(:root[data-theme="pierre"]) .av-step.locked .av-step-node {
+    background: #3c3b4a
+}
+:where(:root[data-theme="pierre"]) .av-track-bar {
+    background: #f4efe5
+}
+:where(:root[data-theme="pierre"]) .av-tier > i {
+    box-shadow: inset 0 0 0 3px #e8deca, 0 1px 3px #12083a40
+}
+:where(:root[data-theme="pierre"]) .av-league {
+    background: linear-gradient(135deg, #66637e 0%, #3e3c4d 100%)
+}
+:where(:root[data-theme="pierre"]) .av-league-top span {
+    color: #e8dec9
+}
+:where(:root[data-theme="pierre"]) .av-seg button {
+    color: #cccbd6
+}
+/*  sections/backdrops.css  */
+:where(:root[data-theme="pierre"]) .backdrop-heroes.bk, :where(:root[data-theme="pierre"]) .backdrop-guild.bk, :where(:root[data-theme="pierre"]) .backdrop-page.bk {
+    background: #1d1c24
+}
+:where(:root[data-theme="pierre"]) .backdrop-adventure.bk {
+    background: #1d1c24
+}
+:where(:root[data-theme="pierre"]) .backdrop-summon.bk {
+    background: #18181e
+}
+:where(:root[data-theme="pierre"]) .field-fresh {
+    background: #8986a0
+}
+/*  sections/boutique.css  */
+:where(:root[data-theme="pierre"]) .bq, :where(:root[data-theme="pierre"]) .lg {
+    --bq-stone: #8c8aa3;
+    --bq-stone-lo: #4d4b60
+}
+:where(:root[data-theme="pierre"]) .modal:has(.bq), :where(:root[data-theme="pierre"]) .modal:has(.lg) {
+    --psh: var(--sh-3), inset 0 0 0 1.5px #8c8aa366
+}
+:where(:root[data-theme="pierre"]) .lg-count small {
+    color: #bcbbc9
+}
+:where(:root[data-theme="pierre"]) .lg-day {
+    box-shadow: inset 0 0 0 1.5px #8c8aa380, inset 0 1px 0 #ffffff33, -2px 4px 8px #040a1e8c
+}
+:where(:root[data-theme="pierre"]) .lg-n {
+    color: #c6c5d1
+}
+:where(:root[data-theme="pierre"]) .lg-day.lg-done {
+    background: linear-gradient(170deg, #1a2a58 0%, #111f47 60%, #201f28 100%);
+    box-shadow: inset 0 0 0 1.5px #8c8aa340, -2px 4px 8px #040a1e8c
+}
+:where(:root[data-theme="pierre"]) .lg-day.lg-big {
+    box-shadow: inset 0 0 0 1.5px #8c8aa3a0, inset 0 0 0 3.5px #ffc22e40, inset 0 1px 0 #ffffff40, -2px 5px 10px #040a1e99
+}
+:where(:root[data-theme="pierre"]) .bq-feat {
+    box-shadow: inset 0 0 0 1.5px #8c8aa3b0, inset 0 0 0 3.5px #ffc22e4d, inset 0 1px 0 #ffffff4d, -3px 6px 14px #040a1eb3, 0 0 22px #ffb21f33
+}
+:where(:root[data-theme="pierre"]) .bq-card {
+    box-shadow: inset 0 0 0 1.5px #8c8aa38c, inset 0 1px 0 #ffffff33, -2px 5px 10px #040a1e99
+}
+:where(:root[data-theme="pierre"]) .bq-k-starter, :where(:root[data-theme="pierre"]) .bq-k-growth {
+    box-shadow: inset 0 0 0 1.5px #8c8aa38c, inset 0 0 0 3px #ffc22e40, inset 0 1px 0 #ffffff33, -2px 5px 10px #040a1e99
+}
+:where(:root[data-theme="pierre"]) .bq-card.bq-k-starter.bq-out, :where(:root[data-theme="pierre"]) .bq-card.bq-k-growth.bq-out {
+    box-shadow: inset 0 0 0 1.5px #8c8aa358, -2px 5px 10px #040a1e99
+}
+:where(:root[data-theme="pierre"]) .bq {
+    --ps-am0: #19191f;
+    --ps-am1: #282732;
+    --ps-am2: #3e3d4d;
+    --ps-am3: #58566d
+}
+:where(:root[data-theme="pierre"]) .ps-head {
+    box-shadow: inset 0 0 0 1.5px #8c8aa38c, inset 0 1px 0 #ffffff2e, -2px 4px 8px #040a1e8c
+}
+:where(:root[data-theme="pierre"]) .ps-prog-top small {
+    color: #bcbbc9
+}
+:where(:root[data-theme="pierre"]) .ps-cols {
+    color: #bcbbc9
+}
+:where(:root[data-theme="pierre"]) .ps-node {
+    background: linear-gradient(135deg, #5a5870, #32313e);
+    box-shadow: inset 0 0 0 1.5px #8c8aa3, inset 1px -1px 0 #0005, -2px 2px 3px #000a
+}
+:where(:root[data-theme="pierre"]) .ps-node b {
+    color: #ece5d7
+}
+:where(:root[data-theme="pierre"]) .ps-cell {
+    box-shadow: inset 0 0 0 1.5px #8c8aa38c, inset 0 1px 0 #ffffff2e, -2px 4px 8px #040a1e8c
+}
+:where(:root[data-theme="pierre"]) .ps-final {
+    background: radial-gradient(60% 70% at 88% 0%, #ffe08a47, #0000 70%), linear-gradient(170deg, #4d4b5f 0%, #2e2c39 50%, #18181e 100%)
+}
+:where(:root[data-theme="pierre"]) .ps-final-plinth {
+    background: linear-gradient(180deg, var(--bq-gold-hi) 0 3px, var(--bq-gold) 3px 5px, #6a6784 5px, #504e63 60%, #3d3b4b 100%)
+}
+/*  sections/boutiques-modes.css  */
+:where(:root[data-theme="pierre"]) .mx {
+    --mx-stone: #8c8aa3
+}
+:where(:root[data-theme="pierre"]) .mx-arena {
+    --mx-n1: #212028;
+    --mx-n2: #2a2935;
+    --mx-n3: #383745;
+    --mx-n4: #4b495c;
+    --mx-ink: #0e0e12
+}
+:where(:root[data-theme="pierre"]) .mx-lg-platinum {
+    --mx-rim: #f3ede2
+}
+:where(:root[data-theme="pierre"]) .mx-feat {
+    box-shadow: inset 0 0 0 1.5px #8c8aa3b0, inset 0 0 0 3.5px color-mix(in srgb, var(--mx-rim) 34%, transparent), inset 0 1px 0 #ffffff4d,
+    -3px 6px 14px #040a1eb3, 0 0 22px color-mix(in srgb, var(--mx-rim) 22%, transparent)
+}
+:where(:root[data-theme="pierre"]) .mx-floor {
+    background: linear-gradient(180deg, #4c4a5f 0%, #383645 40%, #25242e 100%)
+}
+:where(:root[data-theme="pierre"]) .mx-plinth {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--mx-rim) 80%, #fff) 0 3px, var(--mx-rim) 3px 5px, #6a6784 5px, #504e63 60%, #3d3b4b 100%)
+}
+:where(:root[data-theme="pierre"]) .mx-card {
+    box-shadow: inset 0 0 0 1.5px #8c8aa38c, inset 0 0 0 3px color-mix(in srgb, var(--mx-rim) 26%, transparent), inset 0 1px 0 #ffffff33, -2px 5px 10px #040a1e99
+}
+:where(:root[data-theme="pierre"]) .mx-stage::after {
+    background: linear-gradient(180deg, #5a5870 0%, #434153 45%, #2f2d3a 100%)
+}
+:where(:root[data-theme="pierre"]) .mx-compact {
+    box-shadow: inset 0 0 0 1.5px #8c8aa3b0, inset 0 0 0 3.5px color-mix(in srgb, var(--mx-rim) 30%, transparent), inset 0 1px 0 #ffffff4d,
+    -3px 6px 14px #040a1eb3, 0 0 18px color-mix(in srgb, var(--mx-rim) 18%, transparent)
+}
+:where(:root[data-theme="pierre"]) .mx-compact .mx-shelf {
+    background: linear-gradient(180deg, #6c6985 0, #58556d 12px, #2f2e3a 13px, #3d3c4c 15px, #353442 45%, #292833 100%)
+}
+:where(:root[data-theme="pierre"]) .mx-arena .mx-sign {
+    background: radial-gradient(70% 90% at 80% 10%, #ffffff1f, #0000 70%), linear-gradient(180deg, #66637f 0%, #504e63 55%, #3d3b4b 100%)
+}
+/*  sections/carte.css  */
+:where(:root[data-theme="pierre"]) .cmap {
+    background: #292832
+}
+:where(:root[data-theme="pierre"]) .cm-tag {
+    background: #201f27e6
+}
+:where(:root[data-theme="pierre"]) .cm-tag.locked {
+    color: #b4b3c3
+}
+:where(:root[data-theme="pierre"]) .cm-check {
+    box-shadow: 0 0 0 2px #201f27, -1px 2px 3px #0008
+}
+/*  sections/cartes-heros.css  */
+:where(:root[data-theme="pierre"]) .hcard {
+    --c3: #2b2a33
+}
+:where(:root[data-theme="pierre"]) .hcard-common {
+    --c3: #2d2c35
+}
+/*  sections/colisee.css  */
+:where(:root[data-theme="pierre"]) .col-body {
+    background: linear-gradient(180deg, #2a2934e6, #1e1d25e6)
+}
+:where(:root[data-theme="pierre"]) .col-arrow.same {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3 7.5h14M3 12.5h14' stroke='%23c1bfcd' stroke-width='2.6' stroke-linecap='round'/%3E%3C/svg%3E")
+}
+/*  sections/guilde.css  */
+:where(:root[data-theme="pierre"]) .screen.guild {
+    --g-glass: #1c1b23c7;
+    --g-ink: #2c2b36;
+    --g-muted: #767391
+}
+:where(:root[data-theme="pierre"]) .g-head {
+    background: linear-gradient(180deg, #413f50e0, #2b2a36f2)
+}
+:where(:root[data-theme="pierre"]) .g-tab {
+    color: #cccbd6
+}
+:where(:root[data-theme="pierre"]) .g-tab.on .icon {
+    filter: drop-shadow(0 2px 2px #0c0b0fb3)
+}
+:where(:root[data-theme="pierre"]) .g-panel {
+    background: linear-gradient(180deg, #ffffff, #faf8f4)
+}
+:where(:root[data-theme="pierre"]) .g-fill {
+    background: #f8f4ed
+}
+:where(:root[data-theme="pierre"]) .g-face {
+    background: linear-gradient(160deg, #6a5ae6, #4a485b)
+}
+:where(:root[data-theme="pierre"]) .g-face-lv {
+    background: #2c2b36
+}
+:where(:root[data-theme="pierre"]) .g-boss-stage {
+    background: #1d1c24
+}
+:where(:root[data-theme="pierre"]) .g-boss-name {
+    background: #1c1b23bf
+}
+:where(:root[data-theme="pierre"]) .g-boss-time {
+    background: #1c1b23a6
+}
+:where(:root[data-theme="pierre"]) .g-stat {
+    background: #f9f6f0
+}
+:where(:root[data-theme="pierre"]) .g-fort {
+    box-shadow: inset 0 -3px 0 #f2ece0, 0 4px 10px #05021a4d
+}
+:where(:root[data-theme="pierre"]) .g-sub {
+    color: #cfced8
+}
+:where(:root[data-theme="pierre"]) .g-rank-row {
+    box-shadow: inset 0 -1px 0 #f8f4ed
+}
+:where(:root[data-theme="pierre"]) .g-rank {
+    background: #f8f4ed
+}
+:where(:root[data-theme="pierre"]) .g-rank.r2 {
+    background: linear-gradient(180deg, #f9f7f2, #bcc4d8);
+    color: #464456
+}
+:where(:root[data-theme="pierre"]) .chat .msg {
+    color: var(--g-ink, #2c2b36)
+}
+:where(:root[data-theme="pierre"]) .chat .msg-me {
+    background: linear-gradient(180deg, #565468, #393746)
+}
+:where(:root[data-theme="pierre"]) .chat .chat-input {
+    background: var(--g-glass, #1c1b23c7)
+}
+:where(:root[data-theme="pierre"]) .chat .chat-input input {
+    color: #2c2b36
+}
+:where(:root[data-theme="pierre"]) .modal .chat .chat-input {
+    background: #f6f2ea
+}
+/*  sections/heros.css  */
+:where(:root[data-theme="pierre"]) .page.hx-page {
+    background: #18181e
+}
+:where(:root[data-theme="pierre"]) .hx-bg {
+    background: radial-gradient(80% 46% at 50% 40%, color-mix(in srgb, var(--el) 30%, #0000) 0%, #0000 100%),
+    linear-gradient(180deg, #1b1a22 0%, #272631 40%, #212129 70%, #15141a 100%)
+}
+:where(:root[data-theme="pierre"]) .hx-arch {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--el) 22%, #3b3949) 0%, color-mix(in srgb, var(--el) 14%, #343240) 55%, color-mix(in srgb, var(--el) 26%, #3b3949) 100%)
+}
+:where(:root[data-theme="pierre"]) .hx-slab {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--el) 32%, #545168) 0%, color-mix(in srgb, var(--el) 18%, #3b3949) 42%, #282731 43%, #1e1d25 100%)
+}
+:where(:root[data-theme="pierre"]) .hx-med {
+    box-shadow: inset 0 0 0 2px #ffc94d8c, inset -1.5px 2px 0 #ffffff40, 0 0 0 3px #1c1b2399, -2px 6px 14px #05021a80
+}
+:where(:root[data-theme="pierre"]) .hx-med-ult {
+    background: radial-gradient(circle at 50% 32%, color-mix(in srgb, var(--el) 70%, #fff), color-mix(in srgb, var(--el) 60%, #2d2c38) 75%);
+    box-shadow: inset 0 0 0 3px #ffffff59, inset 0 2px 0 #ffffff80, 0 0 0 3px #1c1b2399, 0 0 22px color-mix(in srgb, var(--el) 60%, #0000), 0 6px 14px #05021a80
+}
+:where(:root[data-theme="pierre"]) .hx-med-ult.on {
+    box-shadow: inset 0 0 0 3px #ffe27a, inset 0 2px 0 #ffffff80, 0 0 0 3px #1c1b2399, 0 0 26px #ffc22eb3, 0 6px 14px #05021a80
+}
+:where(:root[data-theme="pierre"]) .hx-med-lead {
+    background: radial-gradient(60% 60% at 55% 45%, #ffb53a59, #ffb53a00 75%), linear-gradient(200deg, #5e5b74, #343340)
+}
+:where(:root[data-theme="pierre"]) .hx-med-badge {
+    background: #1c1b23
+}
+:where(:root[data-theme="pierre"]) .hx-med.locked .hx-med-badge {
+    box-shadow: inset 0 0 0 1.5px #8b88a2;
+    color: #cdcbd7
+}
+:where(:root[data-theme="pierre"]) .hx-arrow {
+    background: #15141a66
+}
+:where(:root[data-theme="pierre"]) .hx-power {
+    background: linear-gradient(180deg, #3b3949, #2d2c37)
+}
+:where(:root[data-theme="pierre"]) .hx-team > i {
+    box-shadow: 0 0 0 2px #18181e
+}
+:where(:root[data-theme="pierre"]) .hx-stats {
+    background: linear-gradient(180deg, #353442cc, #292832e6)
+}
+:where(:root[data-theme="pierre"]) .hx-stat-lv b {
+    text-shadow: 0 2px 0 #24232d
+}
+:where(:root[data-theme="pierre"]) .hx-act small {
+    text-shadow: 0 1px 0 #0c0b0f
+}
+:where(:root[data-theme="pierre"]) .hx-act-up {
+    box-shadow: 0 0 0 2px #18181e
+}
+:where(:root[data-theme="pierre"]) .hx-sheet-slot .item-empty {
+    background: var(--s-surface-3, #f4efe5)
+}
+:where(:root[data-theme="pierre"]) .hx-statlist > span {
+    background: var(--s-surface-2, #faf8f4)
+}
+:where(:root[data-theme="pierre"]) .hx-tallist section {
+    background: var(--s-surface-2, #faf8f4)
+}
+:where(:root[data-theme="pierre"]) .hx-tallist .locked .hx-req {
+    background: linear-gradient(180deg, #c0bfcc, #8b88a2);
+    text-shadow: 0 1px 0 #57546c
+}
+/*  sections/invoquer.css  */
+html[data-theme="pierre"] .screen.summon {
+    --g-deep: #343240
+}
+:where(:root[data-theme="pierre"]) .sum-kind {
+    color: #cccbd6
+}
+:where(:root[data-theme="pierre"]) .sum-round-label {
+    background: #15141ad9
+}
+html[data-theme="pierre"] .screen.summon .sum-panel {
+    background: var(--px-bar-bottom, linear-gradient(180deg, #2e2d39, #201f27))
+}
+:where(:root[data-theme="pierre"]) .sr-pips {
+    background: #15141a99
+}
+:where(:root[data-theme="pierre"]) .sr-name {
+    text-shadow: 0 2px 0 #15141a, 0 0 18px color-mix(in srgb, var(--rar) 70%, transparent)
+}
+:where(:root[data-theme="pierre"]) .sr-cell-plinth {
+    background: linear-gradient(180deg, color-mix(in srgb, var(--rar) 45%, #7a7795) 0 42%, #2f2e3b 42% 100%)
+}
+:where(:root[data-theme="pierre"]) .odds2-kind {
+    color: #cccbd6
+}

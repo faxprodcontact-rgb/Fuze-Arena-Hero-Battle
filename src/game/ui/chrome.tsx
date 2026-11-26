@@ -4,6 +4,7 @@
 import type { ComponentChildren } from 'preact';
 import { useLayoutEffect, useRef, useState } from 'preact/hooks';
 import type { Tone } from './px';
+import { stone } from './theme';
 
 /** La taille réelle d'un élément (pour dessiner à sa mesure exacte). */
 export function useSize<T extends Element>() {
@@ -62,7 +63,7 @@ export function ChromeDefs() {
         <linearGradient id="cx-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1a8" /><stop offset="0.45" stop-color="#ffc22e" /><stop offset="1" stop-color="#e58a00" /></linearGradient>
         <linearGradient id="cx-gold-ring" x1="0.2" y1="0" x2="0.8" y2="1"><stop offset="0" stop-color="#fff1a8" /><stop offset="0.5" stop-color="#ffb21f" /><stop offset="1" stop-color="#9a4f00" /></linearGradient>
         <linearGradient id="cx-gold-soft" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd65c" /><stop offset="1" stop-color="#e58a00" /></linearGradient>
-        <linearGradient id="cx-navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3a2d86" /><stop offset="1" stop-color="#1e1648" /></linearGradient>
+        <linearGradient id="cx-navy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color={stone('#3a2d86')} /><stop offset="1" stop-color={stone('#1e1648')} /></linearGradient>
         <radialGradient id="cx-glow"><stop offset="0" stop-color="#fff6c2" stop-opacity="0.9" /><stop offset="0.5" stop-color="#ffc22e" stop-opacity="0.35" /><stop offset="1" stop-color="#ffc22e" stop-opacity="0" /></radialGradient>
       </defs>
     </svg>

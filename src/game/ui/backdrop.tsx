@@ -10,6 +10,7 @@ import { SummonBackdrop } from './backdrop-summon';
 import { HeroesBackdrop } from './backdrop-heroes';
 import { GuildBackdrop } from './backdrop-guild';
 import { Glow, H, Motes, Soft, VGrad, Vol, W, cloud, f, hills, spark } from './backdrop-kit';
+import { retintSvg } from './theme';
 
 export type BackdropKind = 'heroes' | 'summon' | 'adventure' | 'guild' | 'page';
 
@@ -46,6 +47,9 @@ const SCENES: Record<BackdropKind, () => JSX.Element> = {
 /** Dessiné une fois, redessiné seulement si le décor change. */
 class Frozen extends Component<{ kind: BackdropKind }> {
   shouldComponentUpdate(next: { kind: BackdropKind }) { return next.kind !== this.props.kind; }
+  // l'essai « pierre » (?theme=pierre) : le dessin est repeint une fois, juste après sa pose
+  componentDidMount() { retintSvg(this.base as SVGElement, 'all'); }
+  componentDidUpdate() { retintSvg(this.base as SVGElement, 'all'); }
   render({ kind }: { kind: BackdropKind }) { const Scene = SCENES[kind]; return <Scene />; }
 }
 
