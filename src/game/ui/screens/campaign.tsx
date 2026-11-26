@@ -27,6 +27,8 @@ function IdleStage({ running }: { running: boolean }) {
   const key = `${s.campaign.cleared}|${s.formation.map(([u, sl]) => `${u}:${sl}`).join(',')}`;
   useEffect(() => {
     if (!running || !host.current) return;
+    // mode léger (diag.ts, essai du 26/11) : pas de combat sur l'accueil
+    if (document.documentElement.classList.contains('leger')) return;
     return runIdle(host.current, idleSetup);
   }, [running, key]);
   return <div class="idle-canvas" ref={host} />;
@@ -105,7 +107,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
       <div class="dock">
         <button class={`dock-chest${loot.hours >= 2 ? ' ready' : ''}${loot.full ? ' full' : ''}`}
           onClick={() => open({ type: 'gain', title: t('camp.loot'), gain: collectIdle() })}>
-          <Icon name={loot.full ? 'chestOpen' : loot.hours >= 2 ? 'chestReady' : 'chestClosed'} size={58} />
+          <span class="dock-pic"><Icon name={loot.full ? 'chestOpen' : loot.hours >= 2 ? 'chestReady' : 'chestClosed'} size={62} /></span>
           <span class="dock-time">{h} h {String(m).padStart(2, '0')}</span>
           <span class="dock-bar"><span style={{ width: `${(loot.hours / OFFLINE_CAP_HOURS) * 100}%` }} /></span>
           {loot.hours >= 2 && <RedDot />}
@@ -126,7 +128,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
         </button>
 
         <button class="dock-fast" onClick={() => open({ type: 'fastLoot' })}>
-          <Icon name="hourglass" size={58} />
+          <span class="dock-pic"><Icon name="hourglass" size={58} /></span>
           <span class="dock-time">{t('camp.fast')}</span>
           {fastLootCost(s) === 0 && <RedDot />}
         </button>
