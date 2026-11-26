@@ -1,4 +1,4 @@
 fait
-Correction d'après l'avis du 26/11 (« tête plus badass, plus fine, tête de singe ; cohérence nez, yeux, bouche ») : tête redessinée, costume, couleurs et accessoires inchangés.
-Vraie tête de singe : crâne plus petit et plus bas, visage plus étroit, masque de peau en cœur avec la pointe de fourrure entre les yeux, museau rond qui avance ; regard dur et fier (arcade sourcilière creusée, fard rouge en sourcils froncés, yeux dorés plissés), bouche fermée en rictus avec un croc.
-Yeux, nez et bouche placés par visage.py (yeux sur une ligne, narines ENTRE les yeux, bouche sous le nez ; verifier() vide au repos et dans les poses extrêmes, contrôle visage.png) ; la tête bouge d'un bloc dans toute l'animation.
+Tour 2 de l'avis (26/11 soir, « délimitation visage / tête pas belle, museau étiré vers la droite, cohérence de la tête ») : seule la tête est retouchée, le reste est inchangé.
+Délimitation : la bande de fourrure claire en dents de scie et le bord droit (avec sa bande d'ombre) entre la face et le crâne sont supprimés ; le masque de peau en cœur a maintenant un seul bord rond et lisse (joue bien ronde), entouré d'une fourrure qui s'éclaircit en douceur, sans trait.
+Museau : plus compact et centré sur l'axe du visage (sous le nez, entre les yeux), il ne déborde plus à droite ; le contour droit de la tête est presque droit, le menton revient sur l'axe ; bouche un peu moins large. Yeux, nez, bouche toujours placés par visage.py (verifier() vide au repos et dans toutes les images de l'animation, contrôle visage.png).
