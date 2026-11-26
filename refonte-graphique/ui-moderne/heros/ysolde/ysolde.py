@@ -11,7 +11,8 @@
 # droite) serre une torche au-dessus de la tête, jamais devant le visage ; le manche ressort dessous avec un embout
 # d'or ; la flamme (une seule forme à trois langues, penchée vers l'arrière, cœur clair) dans une coupe d'or. Bras
 # droit (proche) tendu vers l'arrière, gracieux : main ouverte, doigts en éventail, index relevé, pouce dessous.
-# Visage de femme à la peau sombre : front dégagé, cheveux tirés en arrière, sourcils épais qui descendent vers le nez
+# Visage de femme à la peau sombre : cheveux tirés en arrière, un bandana rouge ourlé d'or noué derrière l'oreille
+# (deux pans qui flottent dans la crinière) qui cache le haut du front, sourcils épais qui descendent vers le nez
 # (regard féroce), grands yeux en amande à l'iris ambre, grand sourire aux dents visibles, lèvres baies ; oreille à
 # l'anneau d'or. La grande crinière noir bleuté vole loin vers la gauche en cinq mèches ondulées (reflets lavande,
 # trois bagues d'or), une longue mèche descend dans le dos ; deux plumes (rouge, orange) nouées d'une perle d'or
@@ -758,12 +759,12 @@ def eye_shape(cx, cy, w, h, near):
 # ---------- le bandana : une bande de tissu rouge qui fait le tour du crâne à la racine des cheveux (elle cache le haut
 # du front), un liseré d'or sur chaque bord et trois petits losanges d'or ; le nœud derrière l'oreille, deux pans qui
 # flottent dans la crinière (avec son vent) ; dans le repère de la tête (agrandie ×1,1) ----------
-BAND = [(60.4, 33.8), (63.6, 32.5), (67.0, 30.4), (70.4, 28.3), (74.0, 26.8), (78.0, 26.1), (82.0, 25.9), (85.6, 26.0),
-        (89.6, 26.4)]
-BAND_W = [3.5, 3.7, 3.9, 4.1, 4.3, 4.4, 4.4, 4.3, 4.2]
-KNOT = (59.8, 34.4)
-TAILS = [([(59.2, 34.8), (55.8, 36.0), (52.2, 36.5), (48.6, 37.9), (45.0, 38.4)], [1.6, 2.3, 2.6, 2.7, 2.6]),
-         ([(59.6, 35.6), (57.4, 38.6), (54.6, 41.0), (51.6, 42.8), (48.4, 45.0)], [1.6, 2.2, 2.5, 2.6, 2.5])]
+BAND = [(60.0, 34.2), (63.6, 32.5), (67.0, 30.4), (70.4, 28.3), (74.0, 26.8), (78.0, 26.1), (82.0, 25.8), (85.6, 25.6),
+        (89.6, 25.4)]
+BAND_W = [2.7, 3.6, 3.9, 4.1, 4.3, 4.4, 4.4, 4.1, 3.6]
+KNOT = (59.2, 34.7)
+TAILS = [([(58.4, 35.4), (55.6, 37.0), (52.8, 37.6), (50.0, 39.4), (47.2, 40.0)], [1.6, 2.3, 2.6, 2.6, 2.5]),
+         ([(58.8, 36.2), (57.4, 39.0), (55.4, 41.6), (53.6, 44.0), (50.8, 45.8)], [1.6, 2.2, 2.5, 2.5, 2.4])]
 
 
 def bandana(fig, P):
@@ -781,17 +782,17 @@ def bandana(fig, P):
         ws.append(BAND_W[j] + (BAND_W[j + 1] - BAND_W[j]) * (t - j))
     from atelier import sides
     left, right = sides(cl, ws)
-    head_g = unary_union([poly_of(sm(FACE_PTS, t=0.9), 8), poly_of(cap_shape(), 8)]).buffer(0.35, join_style=1)
+    head_g = unary_union([poly_of(sm(FACE_PTS, t=0.9), 8), poly_of(cap_shape(), 8)]).buffer(0.25, join_style=1)
     g = Polygon(left + right[::-1]).buffer(0).intersection(head_g)
-    band = shape_of(g, step=0.4, t=0.9)
+    band = shape_of(g.simplify(0.04), step=0.7, t=0.9)
+    inside = head_g.buffer(-0.55)
     det = []
     # le liseré d'or le long des deux bords, et trois petits losanges d'or (raccourcis vers le côté du fond)
     for k, wk in ((0.78, 0.42), (-0.78, 0.36)):
         lk, rk = sides(cl, [w * abs(k) for w in ws])
-        edge = lk if k > 0 else rk
-        tr = inter(ribbon(edge[2:-1], [0.1] + [wk] * (len(edge) - 5) + [0.1], sharp_ends=False), band)
-        if tr:
-            det.append((tr, GOLD.base if k > 0 else GOLD.light, 0.95))
+        from shapely.geometry import Point
+        edge = [q for q in (lk if k > 0 else rk)[2:] if inside.contains(Point(q))]
+        det.append((ribbon(edge, [0.1] + [wk] * (len(edge) - 2) + [0.1], sharp_ends=False), GOLD.base if k > 0 else GOLD.light, 0.95))
     for t, sz in ((0.33, 0.95), (0.58, 0.9), (0.83, 0.6)):
         q = cl[int(t * 40)]
         d = norm(sub(cl[int(t * 40) + 1], cl[int(t * 40) - 1]))
@@ -827,18 +828,25 @@ def bandana(fig, P):
     for name, sh, tdet in tails[::-1]:
         names.append(name)
         fig.part(name, sh, RED, cel=0.6, rim=0.35, cast=0.7, cast_on=['hair', 'bdt1'], details=tdet)
+    # les pans sont peints juste devant la crinière, derrière le corps (le bras proche passe devant eux)
+    tp = [p_ for p_ in fig.parts if p_.name in ('bdt0', 'bdt1')]
+    fig.parts = [p_ for p_ in fig.parts if p_ not in tp]
+    ih = next(i for i, p_ in enumerate(fig.parts) if p_.name == 'hair')
+    fig.parts[ih + 1:ih + 1] = tp
     names.append('band')
     fig.part('band', band, RED, grad=(86, 22, 62, 36, [(0, RED.light), (0.45, RED.base), (1, RED.shadow)]), cel=0.9, rim=0.45,
              cast=0.8, cast_on=['face', 'hair'], details=det)
     # le nœud : un petit nœud rond serré, ses plis
     kx, ky = KNOT
-    knot = sm([(kx - 1.9, ky + 0.2), (kx - 1.2, ky - 1.5), (kx + 0.6, ky - 1.8), (kx + 1.9, ky - 0.6), (kx + 1.6, ky + 1.2),
-               (kx + 0.1, ky + 1.9), (kx - 1.4, ky + 1.5)], t=0.95)
+    knot = sm([(kx - 2.3, ky - 0.3), (kx - 1.5, ky - 1.3), (kx - 0.2, ky - 1.25), (kx + 0.6, ky - 1.7), (kx + 1.9, ky - 1.0),
+               (kx + 1.8, ky + 0.6), (kx + 0.7, ky + 1.5), (kx - 0.6, ky + 1.2), (kx - 1.9, ky + 1.0)], t=0.95)
     names.append('knot')
     fig.part('knot', knot, RED, grad=(kx + 2, ky - 2, kx - 2, ky + 2, [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]), cel=0.7,
              rim=0.45, cast=0.7, cast_on=['band', 'bdt0', 'bdt1', 'hair'],
-             details=[(ribbon([(kx - 1.2, ky - 0.9), (kx - 0.1, ky + 0.1), (kx + 0.4, ky + 1.5)], [0.1, 0.4, 0.1]), RED.deep, 0.55),
-                      (ellipse(kx + 0.7, ky - 0.8, 0.7, 0.45, -25), RED.hi, 0.6)])
+             details=[(ribbon([(kx - 0.4, ky - 1.2), (kx - 0.1, ky + 0.1), (kx - 0.5, ky + 1.2)], [0.1, 0.45, 0.1]), RED.deep, 0.6),
+                      (ribbon([(kx - 1.9, ky + 0.3), (kx - 1.0, ky + 0.5), (kx - 0.3, ky + 0.3)], [0.1, 0.3, 0.1]), RED.deep, 0.4),
+                      (ellipse(kx + 0.9, ky - 0.6, 0.75, 0.42, -25), RED.hi, 0.55),
+                      (ellipse(kx - 1.2, ky - 0.4, 0.5, 0.3, -15), RED.light, 0.5)])
     return names
 
 
