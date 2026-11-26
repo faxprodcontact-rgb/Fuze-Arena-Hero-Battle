@@ -6,6 +6,7 @@ import type { Hit, SkillDef } from '../core/battle/types';
 import type { Element } from '../core/types';
 import { HD_ANIM } from './hd-meta';
 import { meleeTempo, plainTempo, tirTempo } from './hd-tempo';
+import { artUrl } from './art-url';
 
 type Rect = readonly number[];
 /** Une animation exportée (voir l'en-tête de hd-meta.ts). */
@@ -81,10 +82,10 @@ export interface HdHost {
 
 /** Charge la planche d'un personnage HD (et, pour un sort d'équipe, les effets reçus de son élément). */
 export function loadHd(scene: Phaser.Scene, id: string, element: Element) {
-  if (!scene.textures.exists(`hd-${id}`)) scene.load.image(`hd-${id}`, `art/hd/${id}.webp`);
+  if (!scene.textures.exists(`hd-${id}`)) scene.load.image(`hd-${id}`, artUrl(`art/hd/${id}.webp`));
   if (CHARS[id]?.anims.speciale.genre === 'equipe') {
     for (const key of Object.keys(FXS)) {
-      if ((key.endsWith(`-${FX_ELEMENT[element]}`) || !key.includes('-')) && !scene.textures.exists(`hdfx-${key}`)) scene.load.image(`hdfx-${key}`, `art/hd/fx/${key}.webp`);
+      if ((key.endsWith(`-${FX_ELEMENT[element]}`) || !key.includes('-')) && !scene.textures.exists(`hdfx-${key}`)) scene.load.image(`hdfx-${key}`, artUrl(`art/hd/fx/${key}.webp`));
     }
   }
 }

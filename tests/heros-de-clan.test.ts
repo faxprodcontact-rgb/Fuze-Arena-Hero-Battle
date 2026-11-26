@@ -44,8 +44,8 @@ describe('monstres de clan devenus héros', () => {
       expect(heroArt(h.id) in anims).toBe(true);
       expect(heroArt(h.id) in figs).toBe(true);
     }
-    expect(heroImage('nyrra')).toBe('art/hd/v/mon-arachne-tisseuse.webp');
-    expect(figureUrl(heroArt('karu'))).toBe('art/hd/pied/mon-orin-rapide.webp');
+    expect(heroImage('nyrra')).toMatch(/^art\/hd\/v\/mon-arachne-tisseuse\.webp(\?h=\w+)?$/);
+    expect(figureUrl(heroArt('karu'))).toMatch(/^art\/hd\/pied\/mon-orin-rapide\.webp(\?h=\w+)?$/);
     expect(heroArt('knights-8')).toBe('knights-8');
     // ils jouent toujours les monstres de leur clan
     const monsterArts = new Set<string>();

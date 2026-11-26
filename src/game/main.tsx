@@ -7,6 +7,7 @@ import { installButtons } from './ui/buttons';
 import { installSigns } from './ui/px';
 import { installSkin } from './ui/skin';
 import { watchUpdates } from './updater';
+import { artUrl } from './art-url';
 
 // l'habillage de l'interface (style moderne, skin.ts), les petits signes (signs-art.ts) et les boutons de pierre
 // (buttons.ts), posés avant le premier dessin
@@ -32,6 +33,6 @@ if (splash) {
   };
   const icons = new Image();
   icons.onload = icons.onerror = hide;
-  icons.src = 'art/icons.webp';
+  icons.src = artUrl('art/icons.webp');
   setTimeout(hide, 6000);
 }

@@ -8,6 +8,7 @@
 // Les animations suivent l'heure, pas la vitesse du combat (×2 et ×3 ne les accélèrent pas).
 import Phaser from 'phaser';
 import { FOND_META } from '../fond-meta';
+import { artUrl } from '../art-url';
 
 export type PxFond = keyof typeof FOND_META;
 
@@ -27,8 +28,8 @@ const key = (fond: string) => `pxf-${fond}`;
 
 /** À appeler dans `preload` : l'image fixe et la planche du fond. */
 export function loadPxFond(sc: Phaser.Scene, fond: PxFond) {
-  if (!sc.textures.exists(key(fond))) sc.load.image(key(fond), `art/px/fonds/${fond}.webp`);
-  if (!sc.textures.exists(`${key(fond)}-anim`)) sc.load.image(`${key(fond)}-anim`, `art/px/fonds/${fond}-anim.webp`);
+  if (!sc.textures.exists(key(fond))) sc.load.image(key(fond), artUrl(`art/px/fonds/${fond}.webp`));
+  if (!sc.textures.exists(`${key(fond)}-anim`)) sc.load.image(`${key(fond)}-anim`, artUrl(`art/px/fonds/${fond}-anim.webp`));
 }
 
 /** Un hasard à graine (le même à chaque combat : les particules ont toujours le même ballet). */

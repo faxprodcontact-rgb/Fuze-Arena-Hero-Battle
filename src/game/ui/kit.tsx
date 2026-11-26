@@ -12,6 +12,7 @@ import { ICON_COLS, ICON_INDEX, ICON_ROWS } from '../icons-meta';
 import { HD_FIG } from '../hd-figures';
 import { heroArt } from '../look';
 import { btClass, type BtSize, type BtTone } from './buttons';
+import { artUrl } from '../art-url';
 
 // ---------- Pictos (style moderne, lisses : planche public/art/icons.webp, refonte-graphique/ui-moderne/pictos/) ----------
 
@@ -28,7 +29,7 @@ export function Art({ name, size, class: cls }: { name: string; size?: number; c
   return (
     <span class={`art ${cls ?? ''}`} aria-hidden="true" style={{
       ...(size ? { width: `${size}px`, height: `${size}px` } : {}),
-      backgroundImage: 'url(art/icons.webp)', backgroundRepeat: 'no-repeat', backgroundSize: `${ICON_COLS * 100}% ${ICON_ROWS * 100}%`, backgroundPosition: `${x}% ${y}%`,
+      backgroundImage: `url(${artUrl('art/icons.webp')})`, backgroundRepeat: 'no-repeat', backgroundSize: `${ICON_COLS * 100}% ${ICON_ROWS * 100}%`, backgroundPosition: `${x}% ${y}%`,
     }} />
   );
 }

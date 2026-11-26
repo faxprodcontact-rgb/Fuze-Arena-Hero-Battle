@@ -13,6 +13,7 @@ import { ICON_CELL, ICON_INDEX } from './icons-meta';
 import { battleLook, heroArt, isBigBoss, monsterArtId, type Look } from './look';
 import { HERO_X } from './scenes';
 import { themeColor } from './theme';
+import { artUrl } from './art-url';
 
 export const W = 720;
 /** La police des combats (la même que les titres des menus) : une seule graisse, ne jamais demander « bold ». */
@@ -125,7 +126,7 @@ export abstract class FightScene extends Phaser.Scene {
     this.events.once('create', () => {
       const fetchLater = () => {
         if (!this.sys.isActive()) return;
-        if (!this.textures.exists('icons')) this.load.spritesheet('icons', 'art/icons.webp', { frameWidth: ICON_CELL, frameHeight: ICON_CELL });
+        if (!this.textures.exists('icons')) this.load.spritesheet('icons', artUrl('art/icons.webp'), { frameWidth: ICON_CELL, frameHeight: ICON_CELL });
         this.load.start();
         laterFetched = true;
       };
