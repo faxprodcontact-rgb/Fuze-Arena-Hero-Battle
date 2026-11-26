@@ -53,7 +53,7 @@ FINK = '#3a0c18'                     # le contour des flammes (comme la crinièr
 
 GRD = 116                            # le sol
 FEET = (64, 116)                     # le point « pieds » du pixel art (sol: 64 116)
-FRAME = (1, -1, 108, 120)            # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
+FRAME = (2, -2, 110, 120)            # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
 H0 = (77.0, 48.0)                    # le pivot de la tête (agrandie ×1,1 : proportions stylisées, comme Kael)
 
 # ---------- le squelette (animation) ----------
