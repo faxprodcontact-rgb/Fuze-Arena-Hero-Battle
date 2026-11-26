@@ -253,9 +253,11 @@ def wing(fig, pre, mp, far, P):
         base, tip = fan(i, len(COVS), base, tip, 0.55)
         sh, c = feather(base, tip, w, bend, wtip=w * 1.02)
         u = norm((c[-1][0] - c[-3][0], c[-1][1] - c[-3][1]))
-        tipl = ellipse(*add(c[-1], u, 0.6), w * 0.6, 3.0, math.degrees(math.atan2(u[1], u[0])) + 90)
+        tq = add(c[-1], u, 0.8)
+        tb = add(c[-1], u, -3.6)
+        tipl = ellipse(*add(c[-1], u, 0.6), w * 0.62, 3.6, math.degrees(math.atan2(u[1], u[0])) + 90)
         part('c%d' % i, sh, TURQ, cel=0.9, rim=0.55, cast=1.0,
-             details=[(tipl, TURQ.light, 0.9)],
+             details=[(tipl, ('lin', tq[0], tq[1], tb[0], tb[1], [(0, TURQ.light, 0.95), (0.6, TURQ.light, 0.55), (1, TURQ.light, 0)]), 1)],
              cast_on=[pre + 'under'] + [pre + 'p%d' % j for j in range(len(PRIMS))] + [pre + 'c%d' % j for j in range(len(COVS))])
     # la rangée de lapis : de petites écailles le long de l'arc, juste dessous
     arc = curve_pts(ARC, 30)
@@ -340,7 +342,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     wr = xf(rpoly([(Lf - 2.6, -4), (Lf - 0.9, -4), (Lf - 0.9, 4), (Lf - 2.6, 4)], 0.3), EF[0], EF[1], fa)
     fig.part('farm', farm, SKIN, grad=(EF[0] + 3, EF[1] - 8, SF[0], SF[1] + 4, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]),
              cel=1.0, rim=0.5, cast=1.0, cast_on=wing_names,
-             details=[(limb([lerp(EF, WF, 0.15), lerp(EF, WF, 0.75)], [0.9, 0.7]).move(0.9, -0.2), SKIN.hi, 0.45),
+             details=[(ribbon([lerp(EF, WF, 0.1), lerp(EF, WF, 0.45), lerp(EF, WF, 0.8)], [0.1, 0.8, 0.1]).move(0.9, -0.2), SKIN.hi, 0.35),
                       (bra, GOLD.base, 1), (brl, GOLD.hi, 0.85),
                       (xf(rpoly([(Lu * 0.3, 1.2), (Lu * 0.5, 1.2), (Lu * 0.5, 4), (Lu * 0.3, 4)], 0.3), SF[0], SF[1], ua), GOLD.shadow, 0.9),
                       (wr, GOLD.base, 1),
@@ -367,9 +369,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- la robe de lin (buste et jupe d'un seul tenant), la ceinture d'or peinte dedans ----
     hm = P['hem']
     dress = sm([(58.4, 57.0), (85.6, 56.6), (86.8, 61.6), (85.4, 66.2), (84.0, 70.0), (86.4, 80.0), (88.6, 91.6),
-                (90.8, 103.0), (92.6 + 0.6 * hm, 111.2), (92.4 + 0.8 * hm, 113.0 - 0.4 * hm), (86.0, 113.4 + 0.3 * hm),
-                (76.0, 113.8 - 0.2 * hm), (64.0, 113.8 + 0.3 * hm), (54.0, 113.4 - 0.2 * hm), (47.0 - 0.8 * hm, 112.8 + 0.2 * hm),
-                (46.8 - 0.6 * hm, 111.0), (49.2, 101.0), (53.2, 88.0), (57.6, 76.0), (60.2, 69.6), (59.4, 64.0)],
+                (90.8, 102.0), (92.4 + 0.6 * hm, 109.8), (92.2 + 0.8 * hm, 111.8 - 0.4 * hm), (86.0, 112.4 + 0.3 * hm),
+                (76.0, 112.8 - 0.2 * hm), (64.0, 112.8 + 0.3 * hm), (54.0, 112.4 - 0.2 * hm), (47.2 - 0.8 * hm, 111.8 + 0.2 * hm),
+                (47.0 - 0.6 * hm, 109.8), (49.2, 101.0), (53.2, 88.0), (57.6, 76.0), (60.2, 69.6), (59.4, 64.0)],
                sharp=(8, 9, 14, 15), t=0.9)
     dd = []
     # le côté proche (à gauche) dans l'ombre mauve, le lin éclairé vers la droite
@@ -377,7 +379,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                 (58.6, 96.0), (57.4, 113.4)]), LINEN.shadow, 0.55),
            (sm([(52.6, 113.0), (55.0, 100.0), (59.4, 84.0), (63.2, 72.0), (66.4, 72.6), (63.6, 88.0), (61.6, 101.0), (61.4, 113.6)]), LINEN.shadow, 0.3)]
     # le genou lointain tend le lin (la jambe lointaine avance un peu)
-    dd += [(ellipse(84.2, 90.4, 3.0, 5.6, -10), LINEN.hi, 0.7),
+    dd += [(ellipse(84.0, 90.0, 2.4, 5.0, -10), LINEN.hi, 0.35),
            (ribbon([(80.4, 94.0), (82.4, 101.0), (85.4, 111.6)], [0.2, 1.2, 0.3]), LINEN.shadow, 0.45),
            (ribbon([(86.6, 82.0), (87.4, 88.0), (86.8, 95.0)], [0.1, 0.9, 0.1]), LINEN.shadow, 0.35)]
     # deux plis doux qui tombent de la ceinture (jamais des rayures)
@@ -394,10 +396,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (ribbon(PANEL_R, [0.5, 0.9, 0.9, 0.9]), GOLD.base, 1),
            (ribbon([add(p, (0.25, -0.1)) for p in PANEL_R], [0.2, 0.4, 0.4, 0.4]), GOLD.hi, 0.9)]
     # l'ourlet d'or, d'un bord à l'autre (peint dans la robe)
-    hem_in = [(44, 110.6), (56, 111.0), (68, 111.4), (80, 111.2), (95, 110.4)]
+    hem_in = [(44, 109.4), (56, 109.8), (68, 110.2), (80, 110.0), (95, 109.2)]
     dd += [(sm(hem_in + [(95, 118), (44, 118)], sharp=(4, 5, 6), t=0.7), GOLD.base, 1),
            (ribbon([add(p, (0, 0.5)) for p in hem_in], [0.2, 0.7, 0.8, 0.7, 0.2]), GOLD.light, 0.95),
-           (sm([(44, 113.2), (95, 113.0), (95, 118), (44, 118)], sharp=(0, 1, 2, 3), t=0.3), GOLD.shadow, 0.75)]
+           (sm([(44, 112.0), (95, 111.8), (95, 118), (44, 118)], sharp=(0, 1, 2, 3), t=0.3), GOLD.shadow, 0.75)]
     # le buste : le lin plus serré sous le collier, une ombre douce sous la poitrine
     dd += [(ribbon([(62.0, 66.6), (67.0, 67.6), (72.0, 67.2)], [0.2, 1.0, 0.2]), LINEN.shadow, 0.45),
            (ribbon([(74.6, 67.0), (79.4, 67.4), (83.4, 66.2)], [0.2, 0.9, 0.2]), LINEN.shadow, 0.4),
@@ -436,8 +438,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     Ln = math.dist(E, W)
     Lun = math.dist(S, E)
     narm = arm_shape(S, E, W, (4.9, 4.0, 3.1))
-    ndet = [(limb([lerp(S, E, 0.25), lerp(S, E, 0.85)], [1.1, 0.8]).move(0.9, 0.1), SKIN.hi, 0.5),
-            (limb([lerp(E, W, 0.1), lerp(E, W, 0.7)], [0.8, 0.6]).move(0.8, 0.1), SKIN.hi, 0.4),
+    ndet = [(ribbon([lerp(S, E, 0.2), lerp(S, E, 0.55), lerp(E, W, 0.1), lerp(E, W, 0.7)], [0.1, 0.9, 0.7, 0.1]).move(0.9, 0.1), SKIN.hi, 0.3),
             # le brassard (sous le collier) et le bracelet du poignet
             (xf(rpoly([(Lun * 0.22, -4), (Lun * 0.42, -4), (Lun * 0.42, 4), (Lun * 0.22, 4)], 0.3), S[0], S[1], ua_), GOLD.base, 1),
             (xf(rpoly([(Lun * 0.22, -4), (Lun * 0.42, -4), (Lun * 0.42, -1.0), (Lun * 0.22, -1.0)], 0.3), S[0], S[1], ua_), GOLD.light, 0.9),
@@ -540,36 +541,35 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
 def hand(fig, W, fa, nh):
     """La main proche, ouverte, paume vers l'avant : la paume, trois doigts un peu écartés vers le bas, le pouce sorti
-    vers l'extérieur. Rend les noms des morceaux."""
+    vers l'extérieur (à gauche de l'image). Rend les noms des morceaux."""
     a = math.radians(fa)
     u = (math.cos(a), math.sin(a))            # le long de l'avant-bras (vers le bas)
-    v = (-u[1], u[0])                          # en travers (côté extérieur = −v... vers la gauche de l'image)
-    if v[0] > 0:
-        v = (-v[0], -v[1])                     # v pointe vers l'extérieur (le dos, à gauche de l'image)
+    o = (-u[1], u[0])
+    if o[0] > 0:
+        o = (-o[0], -o[1])                     # o : vers l'extérieur (le pouce)
 
     def L(x, y):
-        return (W[0] + u[0] * x + v[0] * y, W[1] + u[1] * x + v[1] * y)
-    palm = sm([L(-0.6, -1.8), L(1.6, -2.4), L(4.6, -2.3), L(5.6, -0.6), L(5.4, 1.8), L(3.2, 2.4), L(0.4, 2.0)], t=0.9)
-    fig.part('palm', palm, SKIN, cel=0.8, rim=0.45, cast=0.8, cast_on=['narm', 'dress', 'wnunder', 'wnp4', 'wnp5', 'wnp6', 'wnp3'],
-             details=[(sm([L(1.2, -1.4), L(4.0, -1.6), L(4.4, 0.6), L(2.0, 0.6)]), SKIN.hi, 0.35),
-                      (ribbon([L(1.4, 1.2), L(3.0, 0.6), L(4.6, 0.8)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.5)])
+        return (W[0] + u[0] * x + o[0] * y, W[1] + u[1] * x + o[1] * y)
+    bg = ['narm', 'dress', 'wnunder', 'wnp2', 'wnp3', 'wnp4', 'wnp5', 'wnp6']
+    palm = sm([L(-0.8, -2.0), L(2.0, -2.7), L(5.2, -2.5), L(6.4, -0.8), L(6.2, 1.6), L(4.2, 2.6), L(1.2, 2.4), L(-0.6, 1.8)], t=0.9)
+    fig.part('palm', palm, SKIN, cel=0.8, rim=0.45, cast=0.8, cast_on=bg,
+             details=[(sm([L(1.6, -1.6), L(4.6, -1.8), L(5.0, 0.4), L(2.4, 0.6)]), SKIN.hi, 0.3),
+                      (ribbon([L(1.6, 1.4), L(3.4, 0.4), L(5.4, 0.2)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.45),
+                      (ribbon([L(2.2, -1.4), L(4.4, -0.8), L(5.8, -1.2)], [0.1, 0.35, 0.1]), SKIN.shadow, 0.3)])
     names = ['palm']
-    sp = 1 + 0.6 * nh
-    for i, (y0, ang, ln, w) in enumerate(((-1.5, -10 * sp, 4.6, 1.55), (0.0, 2 * sp, 5.0, 1.6), (1.5, 12 * sp, 4.4, 1.45))):
-        base = L(4.6, y0)
-        dirv = rot(u, ang * (1 if v[0] < 0 else -1) * -1)
+    sp = 1 + 0.8 * nh
+    # du côté du corps vers le pouce : annulaire (avec l'auriculaire), majeur, index ; longueurs inégales
+    for i, (y0, ang, ln, w) in enumerate(((-1.6, -7 * sp, 4.4, 1.75), (0.1, 1 * sp, 5.2, 1.7), (1.7, 8 * sp, 4.7, 1.6))):
+        base = L(5.4, y0)
+        dirv = rot(u, ang if o[0] < 0 and u[1] > 0 else -ang)
         mid = add(base, dirv, ln * 0.55)
-        tip = add(add(base, dirv, ln), v, -0.25)
-        sh = limb([base, mid, tip], [w, w * 0.95, w * 0.82])
-        fig.part('fg%d' % i, sh, SKIN, cel=0.5, rim=0.35, cast=0.6, cast_on=['palm', 'fg0', 'fg1', 'narm', 'dress', 'wnunder', 'wnp3', 'wnp4', 'wnp5'],
-                 details=[(ribbon([add(base, dirv, 1.6), add(base, dirv, 1.7)], [0.1, 0.1]), SKIN.shadow, 0.3)])
+        tip = add(base, dirv, ln)
+        sh = limb([base, mid, tip], [w, w * 0.96, w * 0.84])
+        fig.part('fg%d' % i, sh, SKIN, cel=0.5, rim=0.35, cast=0.55, cast_on=['palm'] + ['fg%d' % j for j in range(i)] + bg)
         names.append('fg%d' % i)
-    # le pouce, sorti vers l'extérieur
-    tb = L(1.4, -2.0)
-    tm = L(3.0, -3.6)
-    tt = L(4.6, -4.2)
-    fig.part('thumb', limb([tb, tm, tt], [1.9, 1.6, 1.35]), SKIN, cel=0.5, rim=0.35, cast=0.6,
-             cast_on=['palm', 'narm', 'wnunder', 'wnp3', 'wnp4', 'wnp5', 'wnp2'])
+    # le pouce, sorti vers l'extérieur et vers le bas
+    fig.part('thumb', limb([L(1.2, 1.8), L(2.8, 3.2), L(4.2, 3.7)], [2.0, 1.7, 1.4]), SKIN, cel=0.5, rim=0.35, cast=0.6,
+             cast_on=['palm'] + bg)
     names.append('thumb')
     return names
 
@@ -602,26 +602,27 @@ def head(fig, P):
 
     # ---- la boucle d'oreille (son attache passe sous le carré) ----
     e = P['ear']
-    ex, ey = 69.6 + 0.4 * e, 50.6
-    ring_ = sm([(ex - 0.6, ey - 2.6), (ex + 0.7, ey - 2.6), (ex + 0.9, ey - 0.6), (ex + 2.2 + 0.2 * e, ey + 1.4),
-                (ex + 0.3 * e, ey + 4.6), (ex - 2.2 + 0.2 * e, ey + 1.4), (ex - 0.9, ey - 0.6)], sharp=(4,), t=0.9)
+    ex, ey = 70.4 + 0.4 * e, 50.2
+    ring_ = sm([(ex - 0.5, ey - 2.4), (ex + 0.6, ey - 2.4), (ex + 0.7, ey - 0.4), (ex + 2.0, ey + 0.6 + 0.1 * e),
+                (ex + 2.3 + 0.2 * e, ey + 2.6), (ex + 0.4 * e, ey + 4.6), (ex - 2.0 + 0.2 * e, ey + 2.8), (ex - 1.8, ey + 0.6), (ex - 0.7, ey - 0.4)],
+               sharp=(0, 1), t=0.9)
     part('earring', ring_, GOLD, cel=0.5, rim=0.4, cast=0.6,
-         details=[(ellipse(ex + 0.15 * e, ey + 1.7, 1.0, 1.15), TURQ.base, 1), (ellipse(ex + 0.4 + 0.15 * e, ey + 1.3, 0.35, 0.4), TURQ.hi, 0.9)])
+         details=[(ellipse(ex + 0.2 * e, ey + 2.4, 1.15, 1.2), TURQ.shadow, 1), (ellipse(ex + 0.2 * e + 0.1, ey + 2.3, 0.85, 0.9), TURQ.light, 1),
+                  (ellipse(ex + 0.4 + 0.2 * e, ey + 1.9, 0.3, 0.32), '#ffffff', 0.9)])
 
     # ---- le visage ----
-    face = sm([(66.0, 27.0), (74.0, 24.4), (82.0, 24.4), (88.0, 26.4), (89.2, 30.0), (89.0, 33.4), (88.8, 35.8),
-               (89.6, 38.0), (90.4, 39.8), (89.4, 40.8), (88.8, 41.6), (89.0, 42.6), (88.4, 43.6), (88.6, 44.6),
-               (87.8, 46.8), (85.6, 49.0), (81.6, 50.2), (77.2, 49.6), (72.6, 47.4), (68.6, 43.0), (66.4, 36.0)],
+    face = sm([(66.0, 27.0), (74.0, 24.4), (82.0, 24.4), (88.0, 26.4), (89.4, 30.0), (89.4, 33.0), (89.0, 35.4),
+               (90.0, 37.4), (91.2, 39.4), (90.2, 40.4), (89.2, 40.9), (89.5, 42.0), (89.2, 43.6), (88.8, 45.2),
+               (87.6, 47.6), (85.2, 49.4), (81.8, 49.8), (77.6, 48.0), (73.4, 44.6), (69.6, 40.0), (66.4, 34.0)],
               sharp=(8,), t=0.9)
     fd = []
     # les plans du visage : la joue proche et la tempe dans une ombre douce, le plan de face éclairé
-    fd += [(sm([(68.0, 36.0), (71.6, 40.4), (74.4, 45.6), (78.6, 49.0), (77.2, 49.6), (72.6, 47.4), (68.6, 43.0)]), SKIN.shadow, 0.55),
-           (sm([(83.8, 37.6), (87.8, 36.8), (89.2, 39.6), (87.0, 41.0), (84.2, 40.6)]), SKIN.light, 0.5),
-           (ellipse(86.6, 46.4, 1.8, 1.2, -20), SKIN.hi, 0.35),
-           (ellipse(75.4, 41.0, 2.8, 1.6, 10), '#e8806a', 0.22),            # la pommette proche (un peu de rose)
-           (ellipse(87.4, 40.6, 1.0, 0.8), '#e8806a', 0.25)]
+    fd += [(sm([(68.4, 36.0), (72.0, 40.4), (75.4, 44.6), (79.6, 48.0), (77.6, 48.0), (73.4, 44.6), (69.6, 40.0)]), SKIN.shadow, 0.5),
+           (sm([(84.6, 26.6), (88.4, 27.0), (89.2, 31.0), (88.2, 33.0), (85.6, 31.2)]), SKIN.hi, 0.35),
+           (ellipse(76.4, 40.6, 2.8, 1.6, 10), '#e8806a', 0.22),            # la pommette proche (un peu de rose)
+           (ellipse(87.8, 40.2, 0.9, 0.7), '#e8806a', 0.22)]
     # l'ombre sous le menton (portée par la mâchoire sur le cou : peinte en bas du visage)
-    fd += [(sm([(79.0, 48.8), (84.6, 48.4), (87.0, 46.6), (85.6, 49.0), (81.6, 50.2), (77.2, 49.6)]), SKIN.shadow, 0.45)]
+    fd += [(sm([(79.6, 48.4), (84.6, 48.6), (87.6, 46.8), (85.2, 49.4), (81.8, 49.8), (77.6, 48.0)]), SKIN.shadow, 0.45)]
     blink = P['blink'] > 0.5
     # les longs sourcils de khôl, fins, presque droits
     fd += [(sm([(68.6, 31.4), (72.2, 30.6), (76.4, 31.2), (76.6, 31.9), (72.4, 31.5), (69.0, 32.3)], sharp=(0, 3), t=0.8), KOHL, 0.95),
@@ -655,24 +656,23 @@ def head(fig, P):
             fd += [(low, KOHL, 0.8)]
         fd += [(liner, KOHL, 1)]
     # le nez : une ligne claire d'entre les yeux jusqu'au bout, une ombre douce dessous, une narine
-    fd += [(sm([(84.8, 37.0), (88.4, 38.6), (89.6, 40.2), (87.6, 40.8), (85.4, 39.6)]), SKIN.shadow, 0.45),
-           (ribbon([(85.6, 34.8), (87.4, 37.4), (89.4, 39.4)], [0.1, 0.45, 0.35]), SKIN.hi, 0.85),
-           (ellipse(88.2, 40.5, 0.6, 0.32, 15), SKIN.deep, 0.8),
-           (ribbon([(86.6, 41.2), (88.2, 41.4), (89.2, 41.0)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.5)]
+    fd += [(sm([(86.4, 37.4), (88.6, 39.2), (89.4, 40.6), (87.8, 40.9), (86.6, 39.8)]), SKIN.shadow, 0.4),
+           (ribbon([(86.4, 34.6), (88.4, 37.4), (90.6, 39.3)], [0.1, 0.4, 0.3]), SKIN.hi, 0.85),
+           (ellipse(88.9, 40.3, 0.55, 0.3, 15), SKIN.deep, 0.75)]
     # la bouche : petit sourire sûr d'elle (le coin proche relevé), lèvres cornaline
     s_ = P['smile']
-    fd += [(sm([(83.0, 42.7 - 0.3 * s_), (85.0, 42.3), (86.4, 42.4), (88.4, 42.2), (88.0, 43.1), (86.4, 43.3), (84.8, 43.3)],
+    fd += [(sm([(84.0, 42.4 - 0.3 * s_), (86.0, 42.0), (87.2, 42.2), (89.2, 42.0), (88.9, 42.9), (87.2, 43.1), (85.6, 43.1)],
                sharp=(0, 3), t=0.85), LIPS[1], 1),
-           (ribbon([(82.8, 42.9 - 0.35 * s_), (85.0, 43.3), (87.0, 43.3), (88.4, 43.0)], [0.1, 0.4, 0.35, 0.1]), LIPS[0], 0.95),
-           (sm([(84.2, 43.6), (86.0, 43.5), (87.8, 43.4), (87.4, 44.5), (85.8, 45.0), (84.6, 44.6)], t=0.9), LIPS[1], 0.95),
-           (ellipse(86.2, 44.1, 0.85, 0.3, -6), LIPS[2], 0.85),
-           (ribbon([(82.4, 42.4 - 0.4 * s_), (83.2, 43.2)], [0.1, 0.3]), SKIN.deep, 0.5),       # la fossette du coin relevé
-           (ribbon([(84.6, 45.8), (86.2, 46.1), (87.6, 45.6)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.35)]
+           (ribbon([(83.8, 42.6 - 0.35 * s_), (86.0, 43.0), (87.8, 43.1), (89.2, 42.8)], [0.1, 0.38, 0.32, 0.1]), LIPS[0], 0.95),
+           (sm([(85.2, 43.4), (86.8, 43.3), (88.6, 43.2), (88.2, 44.2), (86.8, 44.7), (85.6, 44.3)], t=0.9), LIPS[1], 0.95),
+           (ellipse(87.1, 43.85, 0.8, 0.28, -6), LIPS[2], 0.85),
+           (ribbon([(83.4, 42.1 - 0.4 * s_), (84.2, 42.9)], [0.1, 0.3]), SKIN.deep, 0.45),       # la fossette du coin relevé
+           (ribbon([(85.6, 45.6), (87.0, 45.9), (88.2, 45.5)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.3)]
     part('face', face, SKIN, grad=(90, 28, 68, 46, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]),
          cel=1.1, rim=0.5, cast=1.0, details=fd)
 
     # ---- le carré noir bleuté : UNE seule forme (dessus, frange droite, côté, nuque coupée droit) ----
-    hair = sm([(71.6, 51.4), (70.0, 47.4), (68.8, 41.4), (68.4, 35.6), (68.8, 31.0), (74.4, 30.4), (80.6, 30.2),
+    hair = sm([(72.6, 51.4), (71.0, 47.0), (69.6, 41.4), (69.0, 35.6), (69.2, 31.0), (74.4, 30.4), (80.6, 30.2),
                (86.4, 30.4), (89.8, 30.8), (90.4, 27.0), (89.4, 22.6), (86.0, 18.8), (79.6, 16.2), (71.4, 15.8),
                (63.6, 17.8), (57.6, 22.2), (54.6, 28.0), (53.8, 35.4), (54.0, 43.6), (54.4, 51.0), (62.6, 51.8)],
               sharp=(0, 4, 8, 19), t=0.9)

@@ -515,7 +515,7 @@ def fx_special(tl):
             R, h = 22 + 12 * k, 20 + 46 * k
             for j in range(2 + int(k * 1.6)):
                 b, fr = helix(fig, (home, GR - 1), R * (1 - 0.15 * j), h * (1 - 0.18 * j), t / 420.0 + j * 0.37,
-                              (3.4 - 0.6 * j) * ev, op=min(1.0, ev * 2.5))
+                              (3.4 - 0.6 * j) * ev, op=1.0 if ev > 0.12 else ev / 0.12)
                 back.extend(b)
                 front.extend(fr)
             for i in range(10):
