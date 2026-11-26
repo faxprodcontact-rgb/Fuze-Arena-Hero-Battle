@@ -120,9 +120,9 @@ A0 = M.SANG0
 ATTACK = [
     (0, {}),
     (90, dict(grip=(62.0, 76.5), ang=-34, crouch=1.0, head=(0, 0.6), tr=1.0, cp=0.6, sk=0.5)),
-    (112, dict(grip=(41.0, 68.0), ang=-58, crouch=1.0, lean=-0.4, head=(-0.3, 0.6), tr=1.0, cp=0.7)),
-    (136, dict(grip=(38.6, 54.0), ang=-84, crouch=1.0, lean=-0.8, head=(-0.6, 0.6), tilt=-0.8, wn=1, tr=1.0, cp=0.8)),
-    (160, dict(grip=(46.5, 46.0), ang=-105, crouch=1.0, lean=-1.0, head=(-0.8, 0.6), tilt=-1.5, wn=2, tr=1.0, cp=0.8)),
+    (112, dict(grip=(36.5, 66.0), ang=-58, crouch=1.0, lean=-0.4, head=(-0.3, 0.6), tr=1.0, cp=0.7)),
+    (136, dict(grip=(34.6, 51.0), ang=-84, crouch=1.0, lean=-0.8, head=(-0.6, 0.6), tilt=-0.8, wn=1, tr=1.0, cp=0.8)),
+    (160, dict(grip=(43.0, 44.0), ang=-105, crouch=1.0, lean=-1.0, head=(-0.8, 0.6), tilt=-1.5, wn=2, tr=1.0, cp=0.8)),
     (250, dict(grip=(42.5, 42.5), ang=-132, crouch=1.2, lean=-2.0, head=(-1.0, 0.0), tilt=-4.0, wn=3, tr=2.0, cp=1.0, sk=0.8)),
     (380, dict(grip=(42.0, 42.0), ang=-135, crouch=1.3, lean=-2.2, head=(-1.1, -0.1), tilt=-4.5, wn=3, tr=2.2, cp=1.0, sk=0.8)),
     (430, dict(grip=(57.5, 33.5), ang=-72, stretch=2.0, crouch=1.0, lean=0.0, head=(0, 0), tilt=-1.0, wn=1, tr=1.0, cp=0.0)),
@@ -575,7 +575,7 @@ def fx_special(tl):
             for j in range(2):
                 uu = max(0.0, u - 0.25 * j)
                 if uu > 0:
-                    pts, ws = lens_pts(rim, 4 + 16 * uu, 160, 380, 1.6 * (1 - uu))
+                    pts, ws = lens_pts(rim, 4 + 16 * uu, 205 + 10 * j, 300 + 10 * j, 1.5 * (1 - uu))
                     fig.fx_front.append(outlined([(stroke_shape(pts, ws), GOLDFX[1], 1)], ink='#6a3a1a', w=0.8, op=(1 - uu) * 0.9))
         # 2) le vent se lève à ses pieds (de fines rafales qui montent en spirale)
         kg = env(tl, 280, 380, 560, 680)
