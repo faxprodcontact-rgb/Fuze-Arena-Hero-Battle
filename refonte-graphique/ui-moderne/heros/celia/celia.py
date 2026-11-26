@@ -197,12 +197,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # Le pied lointain avance vers l'ennemi, sous l'ourlet qui se relève : chaussette blanche (tabi, le gros orteil
     # séparé), lanière bleue (hanao) qui part d'entre les orteils, socle de bois laqué (dai) sur ses deux dents (ha)
     # posées au sol. Le pied proche, en retrait : seul le bout du tabi et du geta sort sous le coin du pan.
-    def foot(nm, x0, x1, top, ank, toe_h=2.3, far=True):
+    def foot(nm, x0, x1, top, ank, toe_h=2.0, far=True):
         """Un pied chaussé (talon x0, bout x1) : socle (dai) dont le dessus est à top, deux dents posées au sol, tabi
         dont le cou-de-pied monte jusqu'à ank (caché sous l'ourlet), gros orteil séparé, lanière bleue."""
         th = 1.0
         yb = top + th
-        for k, (a_, b_) in enumerate(((x1 - 3.8, x1 - 0.9), (x0 + 0.9, x0 + 3.8))):
+        for k, (a_, b_) in enumerate(((x1 - 3.4, x1 - 0.8), (x0 + 0.8, x0 + 3.4))):
             fig.part('%sh%d' % (nm, k), rpoly([(a_, yb - 0.3), (b_, yb - 0.3), (b_ - 0.12, GRD + 0.1), (a_ + 0.12, GRD + 0.1)], [0.2, 0.2, 0.3, 0.3]),
                      GETA, grad=(b_, yb, a_, GRD, [(0, GETA.shadow), (1, GETA.deep)]), cel=0.3, rim=0.25, cast=0,
                      details=[(sm([(b_ - 0.7, yb), (b_ - 0.15, yb), (b_ - 0.2, GRD), (b_ - 0.6, GRD)]), GETA.base, 0.7)])
@@ -211,21 +211,22 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  details=[(ribbon([(x0 + 0.8, top + 0.3), ((x0 + x1) / 2, top + 0.25), (x1 - 0.5, top + 0.35)], [0.1, 0.4, 0.1]), GETA.hi, 0.75),
                           (ellipse(x1 - 1.4, top + 0.4, 0.7, 0.2), '#ffffff', 0.45)])
         L = x1 - x0
-        tabi = sm([(x0 + 0.5, top + 0.05), (x0 + 0.6, ank), (x0 + 0.55 * L, ank + 0.5), (x1 - 2.6, top - toe_h + 0.1),
-                   (x1 - 0.7, top - toe_h * 0.55), (x1 - 0.1, top - 0.35), (x1 - 0.5, top + 0.05)], sharp=(0, 6), t=0.9)
+        tabi = sm([(x0 + 0.5, top + 0.05), (x0 + 0.05, top - 0.9), (x0 + 0.4, ank), (x0 + 0.5 * L, ank + 0.9),
+                   (x1 - 2.4, top - toe_h), (x1 - 0.6, top - toe_h * 0.62), (x1 - 0.05, top - 0.4), (x1 - 0.5, top + 0.05)],
+                  sharp=(0, 7), t=0.9)
         tg = [(0, '#ffffff'), (0.55, KIMO.base), (1, KIMO.shadow)] if far else [(0, KIMO.light), (0.6, KIMO.base), (1, KIMO.shadow)]
         tx = x1 - 2.0      # le creux entre le gros orteil et les autres
         fig.part('tabi' + nm[4:], tabi, KIMO, grad=(x1, top - 3, x0, top, tg), cel=0.7, rim=0.5, cast=0.8, cast_on=[nm],
                  details=[(ribbon([(tx - 0.1, top - toe_h + 0.5), (tx + 0.15, top - toe_h * 0.4), (tx + 0.2, top - 0.05)], [0.1, 0.3, 0.1]), KIMO.deep, 0.85),
-                          (ribbon([(tx + 0.1, top - toe_h + 0.45), (tx - 1.8, top - toe_h - 0.4), (tx - 4.0, top - toe_h - 1.3)], [0.7, 0.85, 0.8]), OBI.base, 1),
-                          (ribbon([(tx + 0.1, top - toe_h + 0.3), (tx - 1.8, top - toe_h - 0.6), (tx - 3.8, top - toe_h - 1.5)], [0.1, 0.3, 0.1]), OBI.light, 0.9),
+                          (ribbon([(tx + 0.1, top - toe_h + 0.45), (tx - 1.6, top - toe_h - 0.3), (tx - 3.4, top - toe_h - 1.0)], [0.7, 0.85, 0.8]), OBI.base, 1),
+                          (ribbon([(tx + 0.1, top - toe_h + 0.3), (tx - 1.6, top - toe_h - 0.5), (tx - 3.2, top - toe_h - 1.2)], [0.1, 0.3, 0.1]), OBI.light, 0.9),
                           (ellipse(tx + 0.1, top - toe_h + 0.55, 0.4, 0.3), OBI.shadow, 0.9),
                           (sm([(x0 + 0.5, top + 0.05), (x0 + 0.6, top - 1.0), (x0 + 0.5 * L, top - 0.6), (x1 - 0.5, top + 0.05)]), KIMO.shadow, 0.4)])
 
     # le pied proche, en retrait (talon sous la traîne), puis le pied lointain qui avance vers l'ennemi (le bout du pied
     # dépasse de la robe, comme dans le pixel art)
-    foot('geta2', 58.0, 71.0, 114.1, 108.6, far=False)
-    foot('geta', 77.0, 93.0, 114.0, 108.2)
+    foot('geta2', 59.6, 70.6, 114.15, 109.0, far=False)
+    foot('geta', 81.4, 93.0, 114.05, 108.6)
 
     # ---- le cou (avant la robe : le col croisé passe dessus) ----
     neck = sm([(67.2, 42.0), (75.4, 42.0), (75.0, 47.6), (72.6, 53.6), (68.6, 59.6), (66.4, 52.6), (66.8, 47.0)], sharp=(4,))
@@ -266,9 +267,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (ribbon(crpath([(76.0, 103.0), (76.8, 107.6), (77.6, 111.4)], 8), [0.1] + [0.6] * 7 + [0.1]), KIMO.shadow, 0.4),
             (ribbon(crpath([(72.0, 102.0), (72.8, 107.0), (73.6, 111.4)], 6), [0.1] + [0.45] * 5 + [0.1]), '#ffffff', 0.6),
             (ribbon(crpath([(83.6, 104.0), (84.2, 108.0), (84.6, 111.0)], 6), [0.1] + [0.5] * 5 + [0.1]), KIMO.shadow, 0.35)]
-    # le bord du pan du dessus montre sa doublure bleue en un mince revers qui s'élargit jusqu'à l'ourlet
-    det += [(sm([(64.7, 104.0), (64.9, 108.0), (65.0, 110.6), (66.7, 111.0), (66.0, 108.4)], sharp=(0,), t=0.9), OBI.base, 1),
-            (sm([(64.8, 105.6), (65.1, 108.4), (65.3, 110.4), (66.0, 110.5), (65.6, 108.4)], sharp=(0,), t=0.9), OBI.light, 0.8)]
+    # le bord du pan du dessus montre sa doublure bleue en un mince revers qui s'élargit doucement jusqu'à l'ourlet
+    det += [(sm([(64.8, 106.4), (65.0, 109.0), (65.1, 111.6), (66.3, 111.8), (65.8, 109.2)], sharp=(0,), t=0.9), OBI.base, 0.85),
+            (sm([(64.9, 107.8), (65.2, 109.6), (65.3, 111.2), (65.8, 111.2), (65.5, 109.6)], sharp=(0,), t=0.9), OBI.light, 0.7)]
     fig.part('robe', robe, KIMO, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(KIMO.shadow, 0.3, 3.0))
 
     # ---- l'obi : une bande qui fait le tour de la taille (peinte dans la robe), plus sombre côté proche ----
@@ -384,9 +385,9 @@ def robe_shape():
                (48.8, 98.0), (47.6, 106.0), (45.6, 111.4), (42.4, 115.2),
                # le bas : la traîne posée au sol (à gauche), puis l'ourlet à hauteur de cheville (les pieds dessous), ses
                # festons suivent les plis
-               (44.8, 116.6), (49.0, 116.8), (53.0, 116.2), (56.4, 114.6), (59.6, 112.6), (62.4, 111.8),
-               (66.6, 111.9), (70.8, 111.5), (74.4, 111.8), (77.6, 111.3), (81.2, 111.4), (84.6, 110.9), (87.4, 111.0),
-               (89.2, 110.7),
+               (44.8, 116.6), (49.0, 116.8), (53.0, 116.2), (56.4, 114.8), (59.6, 113.1), (62.4, 112.5),
+               (66.6, 112.6), (70.8, 112.2), (74.4, 112.5), (77.6, 112.1), (81.2, 112.2), (84.6, 111.8), (87.4, 111.9),
+               (89.2, 111.6),
                (88.6, 104.0), (87.8, 96.0),
                (86.8, 86.0), (85.8, 76.0), (85.0, 66.0), (84.6, 58.0), (83.2, 53.6), (79.4, 50.8), (74.6, 48.6),
                (73.8, 48.8), (68.4, 59.2), (64.8, 49.0)], sharp=(10, 35, 36, 37), t=0.9)
