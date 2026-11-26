@@ -5,10 +5,11 @@ import { itemMain, type Item } from '../../core/data/items';
 import { MAX_YELLOW, MYTHIC_STARS } from '../../core/data/stars';
 import type { Hero } from '../../core/types';
 import { Backdrop } from './backdrop';
-import { ELEMENT_COLOR, ITEM_COLORS, RARITY_COLOR, heroImage } from '../art';
+import { ELEMENT_COLOR, ITEM_COLORS, RARITY_COLOR, figureUrl, heroImage } from '../art';
 import { fmt, t } from '../i18n';
 import { close } from './nav';
 import { ICON_COLS, ICON_INDEX, ICON_ROWS } from '../icons-meta';
+import { HD_FIG } from '../hd-figures';
 
 // ---------- Pictos (style moderne, lisses : planche public/art/icons.webp, refonte-graphique/ui-moderne/pictos/) ----------
 
@@ -115,6 +116,27 @@ export function Stars({ stars }: { stars: number }) {
   return <span class={`stars${red ? ' red' : ''}`} role="img" aria-label={`${n}★`}>{Array.from({ length: n }, () => <i />)}</span>;
 }
 
+/**
+ * Le héros en entier dans sa case (demande du propriétaire, 26/11 : « pas seulement la tête »), petit, au milieu, loin
+ * des bords. Tous les héros ont la MÊME échelle : la case fait 128 pixels du dessin de large (le plus large des héros,
+ * arme comprise, mesuré sur ses images) plus une marge ; ses pieds sont au milieu, à 80 % de la hauteur (`--feet`).
+ * Il respire (sa bande d'images défile), sans flou. Sans planche HD : son visage.
+ */
+export function CardFigure({ id, alt = '' }: { id: string; alt?: string }) {
+  const m = (HD_FIG.chars as Record<string, readonly number[] | undefined>)[id];
+  if (!m) return <img class="hcard-face" src={heroImage(id)} alt={alt} />;
+  const [w, h, fx, fy, n, ms] = m as unknown as [number, number, number, number, number, number];
+  let hash = 0;
+  for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) % 997;
+  return (
+    <span class="hcard-fig" role="img" aria-label={alt} style={{ '--w': w, '--h': h, '--fx': fx, '--fy': fy } as never}>
+      <img src={figureUrl(id)} alt="" draggable={false} style={{
+        width: `${n * 100}%`, animation: `px-idle ${((n * ms) / 1000).toFixed(2)}s steps(${n}) infinite`, animationDelay: `-${(((hash % n) * ms) / 1000).toFixed(2)}s`,
+      }} />
+    </span>
+  );
+}
+
 export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; selected?: boolean; dim?: boolean; badge?: string; small?: boolean }) {
   const d = heroDef(p.hero.defId);
   const mythic = p.hero.stars >= MYTHIC_STARS;
@@ -128,7 +150,7 @@ export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; 
       style={{ '--rar': color, '--el': ELEMENT_COLOR[d.element] } as never}
       onClick={p.onClick}
     >
-      <img src={heroImage(d.id)} alt={d.name} />
+      <CardFigure id={d.id} alt={d.name} />
       <i class="hcard-frame" />
       <Art name={d.element} class="hcard-el" />
       <span class="hcard-lv">{p.hero.level}</span>

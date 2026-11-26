@@ -1,35 +1,18 @@
-// L'habillage de l'interface (essai du 26/11/2026, demande du propriétaire : « un peu moins pixel, mais cohérent ; actuel »).
-// Trois habillages à comparer, choisis par un seul réglage (pas de bouton visible) :
-// - « pixel »   : la v0.58.0, pièces en pixel art (px.ts) ;
-// - « moderne » : formes lisses arrondies, dégradés doux, ombres douces, couleurs vives sur un fond profond (skin.css) ;
-// - « hybride » : la même mise en page et les mêmes couleurs que « moderne », avec un rappel du pixel (coins en escalier
-//   de 2 px, contour net, ombres sans flou).
-// Choix : `?skin=moderne` (ou pixel, hybride) dans l'adresse ; il est gardé sur le téléphone. Sinon : SKIN_DEFAULT.
-// Les personnages, monstres, boss, décors et pictos ne changent pas (pixel art HD, validé).
+// L'habillage de l'interface : « moderne », choisi par le propriétaire le 26/11/2026 (« J'adore le mode moderne. On part
+// là-dessus. »). Il n'y en a plus qu'un : style.css. On pose seulement <html data-skin="moderne"> (des règles des sections
+// peuvent s'en servir) et on oublie l'ancien choix gardé sur le téléphone par l'essai (« pixel », « hybride »).
 
-export const SKINS = ['pixel', 'moderne', 'hybride'] as const;
-export type Skin = (typeof SKINS)[number];
+export type Skin = 'moderne';
+export const SKIN_DEFAULT: Skin = 'moderne';
 
-/** L'habillage par défaut (tant que le propriétaire n'a pas choisi). */
-export const SKIN_DEFAULT: Skin = 'pixel';
-
-const KEY = 'fuze-skin';
-const isSkin = (v: unknown): v is Skin => typeof v === 'string' && (SKINS as readonly string[]).includes(v);
-
-/** Lit l'habillage voulu (adresse, puis mémoire du téléphone) et le pose sur <html data-skin="…">. */
+/** Pose l'habillage sur <html> (avant le premier dessin). */
 export function installSkin(): Skin {
-  let skin: Skin = SKIN_DEFAULT;
-  try {
-    const q = new URLSearchParams(location.search).get('skin');
-    if (isSkin(q)) { skin = q; localStorage.setItem(KEY, q); }
-    else { const saved = localStorage.getItem(KEY); if (isSkin(saved)) skin = saved; }
-  } catch { /* sans mémoire : l'habillage par défaut */ }
-  document.documentElement.dataset.skin = skin;
-  return skin;
+  try { localStorage.removeItem('fuze-skin'); } catch { /* sans mémoire : rien à oublier */ }
+  document.documentElement.dataset.skin = SKIN_DEFAULT;
+  return SKIN_DEFAULT;
 }
 
-/** L'habillage en cours (pour les rares dessins faits par le code qui en dépendent). */
+/** L'habillage en cours (il n'y en a qu'un). */
 export function currentSkin(): Skin {
-  const v = typeof document !== 'undefined' ? document.documentElement.dataset.skin : undefined;
-  return isSkin(v) ? v : SKIN_DEFAULT;
+  return SKIN_DEFAULT;
 }

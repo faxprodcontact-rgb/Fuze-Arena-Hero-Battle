@@ -4,7 +4,7 @@ import Phaser from 'phaser';
 import { Battle } from '../core/battle/engine';
 import { ENERGY_MAX, TICK_MS, type Slot, type Unit } from '../core/battle/types';
 import { C, FONT, FightScene, W, applyTheme } from './fight-view';
-import { HUD_BUTTONS, loadHudArt } from './hud-art';
+import { HUD_BUTTONS, PANEL_SHADOW, TILE, TILE_R, loadHudArt } from './hud-art';
 import { t } from './i18n';
 import { heroImage } from './art';
 import { battleLook } from './look';
@@ -20,7 +20,7 @@ interface Portrait {
   unit: Unit;
   x: number;
   ring: Phaser.GameObjects.Graphics;
-  glow: Phaser.GameObjects.Arc;
+  glow: Phaser.GameObjects.Image;
   img: Phaser.GameObjects.Image;
 }
 
@@ -62,14 +62,15 @@ export class BattleScene extends FightScene {
     return [...this.req.heroes, ...this.req.waves.flat()];
   }
 
-  /** Un bouton dans le style des menus (hud-art.tsx) : cadre d'or, émail bombé, lettres cernées de la couleur du bouton. */
+  /** Un bouton dans le style des menus (hud-art.tsx) : arrondi, dégradé vif et lèvre ; les lettres blanches, une ombre franche. */
   private button(x: number, y: number, kind: HudButton, wide: boolean, label: string, onClick: () => void) {
     const c = this.add.container(x, y).setDepth(4000);
     const w = wide ? 290 : 160, h = wide ? 84 : 62;
-    const bg = this.add.image(0, 0, `hud-btn-${kind}-${wide ? 290 : 160}`).setDisplaySize(w, h);
+    // (la toile a 8 unités de marge tout autour pour l'ombre)
+    const bg = this.add.image(0, 0, `hud-btn-${kind}-${wide ? 290 : 160}`).setDisplaySize(w + 16, h + 16);
     const size = Math.round(h * 0.4);
-    const label_ = this.add.text(0, -4, label, { fontFamily: FONT, fontSize: `${size}px`, color: '#ffffff' })
-      .setOrigin(0.5).setStroke(HUD_BUTTONS[kind].ink, Math.max(4, Math.round(size * 0.2))).setShadow(0, 3, HUD_BUTTONS[kind].ink, 0, true, true);
+    const label_ = this.add.text(0, -3, label, { fontFamily: FONT, fontSize: `${size}px`, color: '#ffffff' })
+      .setOrigin(0.5).setStroke(HUD_BUTTONS[kind].ink, 3).setShadow(0, 3, HUD_BUTTONS[kind].ink, 0, true, true);
     c.add([bg, label_]);
     c.setSize(w, h).setInteractive({ useHandCursor: true });
     c.on('pointerdown', () => c.setScale(0.95));
@@ -91,9 +92,9 @@ export class BattleScene extends FightScene {
   /** Haut du panneau des héros (tout le bas de l'écran se place à partir de là). */
   private hudY = 908;
 
-  /** Les boutons et le panneau des héros sont ancrés en bas (372 px), le terrain prend tout le reste. */
+  /** Les boutons et le panneau des héros sont ancrés en bas (340 px), le terrain prend tout le reste. */
   protected arenaBox() {
-    const bottom = this.scale.height - 372 - 26;
+    const bottom = this.scale.height - 340 - 26;
     return { groundTop: bottom - 430, bottom };
   }
 
@@ -106,13 +107,15 @@ export class BattleScene extends FightScene {
     this.hudY = arenaBottom + 26;
     this.groundTop = groundTop;
     this.drawArena(arenaBottom);
-    // le bas de l'écran : un émail bleu nuit et son plateau cerclé d'or (hud-art.tsx) ; un rail d'or à cheval sur
-    // le bas du terrain ; sous le panneau, le même émail jusqu'en bas (grand téléphone)
-    this.add.rectangle(W / 2, arenaBottom + (H - arenaBottom) / 2, W, H - arenaBottom, 0x1c2457).setDepth(-6);
-    this.add.image(0, arenaBottom, 'hud-panel').setOrigin(0, 0).setDepth(-5);
-    this.add.image(0, arenaBottom - 8, 'hud-rail').setOrigin(0, 0).setDepth(1350);
+    // le bas de l'écran : une feuille raisin aux coins arrondis posée sur le terrain (hud-art.tsx), comme le bas de
+    // l'accueil ; sous elle, le même raisin jusqu'en bas (grand téléphone)
+    const top = arenaBottom - 30;
+    this.add.rectangle(W / 2, top + 200 + (H - top - 200) / 2, W, H - top - 200, 0x150f36).setDepth(1349);
+    this.add.image(0, top - PANEL_SHADOW, 'hud-panel').setOrigin(0, 0).setDisplaySize(W, 440 + PANEL_SHADOW).setDepth(1350);
 
-    this.text(W / 2, 60, `${t(`mode.${this.req.kind}`)} ${this.titleSuffix()}`, 32, '#ffe27a').setDepth(3000);
+    // le titre du combat, sur une pilule de verre sombre
+    const title = this.text(W / 2, 60, `${t(`mode.${this.req.kind}`)} ${this.titleSuffix()}`, 30, '#ffe27a').setDepth(3000);
+    this.add.image(W / 2, 60, 'hud-pill').setDisplaySize(Math.min(360, title.width + 56), 56).setDepth(2999);
     this.waveLabel = this.text(W / 2, 104, '', 24, '#ffffff').setDepth(3000);
     this.updateWaveLabel();
     if (this.req.damageMode) this.damageLabel = this.text(W / 2, 160, '0', 44, '#ffe27a').setDepth(3000);
@@ -135,7 +138,7 @@ export class BattleScene extends FightScene {
   private drawHud() {
     this.drawPortraits();
     this.drawAuto();
-    const speed = this.button(530, this.hudY + 292, 'blue', true, `×${getState().speed}`, () => {
+    const speed = this.button(530, this.hudY + 258, 'blue', true, `×${getState().speed}`, () => {
       const next = ((getState().speed % 3) + 1) as 1 | 2 | 3;
       setSpeed(next);
       speed.label.setText(`×${next}`);
@@ -151,23 +154,25 @@ export class BattleScene extends FightScene {
       this.portraitObjs.push(o);
       return o;
     };
-    // les portraits : un disque d'émail de la couleur de l'élément, le visage, l'anneau d'or (avec la rainure de l'énergie)
+    // les portraits : une tuile arrondie de la couleur de l'élément, le visage, un liseré blanc ; dessous, la vie et
+    // l'énergie en pilules (hud-art.tsx). Prête, l'attaque spéciale fait luire la tuile d'or.
     PORTRAIT_ORDER.forEach((slot, i) => {
       const unit = this.battle.heroes.find((h) => h.slot === slot);
       if (!unit) return;
       const x = 90 + i * 135;
-      const y = this.hudY + 104;
-      const glow = keep(this.add.circle(x, y, 70, C.energy, 0.4).setVisible(false));
+      const y = this.hudY + 70;
+      const glow = keep(this.add.image(x, y, 'hud-glow').setDisplaySize(TILE + 44, TILE + 44).setDepth(1351).setVisible(false));
       const el = this.textures.exists(`hud-disc-${unit.element}`) ? unit.element : 'none';
-      keep(this.add.image(x, y, `hud-disc-${el}`).setDisplaySize(100, 100));
-      // le visage, un peu plus grand que le trou de l'anneau, coupé en rond juste sous l'or
-      const img = keep(this.add.image(x, y + 4, `v-${unit.defId}`).setDisplaySize(112, 112));
-      img.setMask(keep(this.make.graphics({}, false).fillCircle(x, y, 50)).createGeometryMask());
-      const frame = keep(this.add.image(x, y, 'hud-ring'));
-      keep(this.add.image(x, this.hudY + 190, 'hud-hp'));
-      const ring = keep(this.add.graphics());
-      this.tweens.add({ targets: glow, scale: 1.12, alpha: 0.7, yoyo: true, repeat: -1, duration: 380 });
-      frame.setInteractive(new Phaser.Geom.Circle(72, 72, 70), Phaser.Geom.Circle.Contains).on('pointerdown', () => {
+      keep(this.add.image(x, y, `hud-disc-${el}`).setDisplaySize(TILE, TILE).setDepth(1351));
+      // le visage, un peu plus grand que la tuile, coupé à sa forme
+      const img = keep(this.add.image(x, y + 6, `v-${unit.defId}`).setDisplaySize(TILE + 14, TILE + 14).setDepth(1351));
+      img.setMask(keep(this.make.graphics({}, false).fillRoundedRect(x - TILE / 2, y - TILE / 2, TILE, TILE, TILE_R)).createGeometryMask());
+      const frame = keep(this.add.image(x, y, 'hud-frame').setDisplaySize(TILE + 12, TILE + 12).setDepth(1351));
+      keep(this.add.image(x, this.hudY + 148, 'hud-hp').setDisplaySize(116, 18).setDepth(1351));
+      keep(this.add.image(x, this.hudY + 170, 'hud-en').setDisplaySize(116, 10).setDepth(1351));
+      const ring = keep(this.add.graphics().setDepth(1352));
+      this.tweens.add({ targets: glow, alpha: 0.45, yoyo: true, repeat: -1, duration: 420 });
+      frame.setInteractive(new Phaser.Geom.Rectangle(0, 0, frame.width, frame.height), Phaser.Geom.Rectangle.Contains).on('pointerdown', () => {
         if (this.battle.requestSkill(unit.id)) this.tweens.add({ targets: img, scale: img.scale * 0.9, yoyo: true, duration: 90 });
       });
       this.portraits.push({ unit, x, ring, glow, img });
@@ -176,7 +181,7 @@ export class BattleScene extends FightScene {
 
   private drawAuto() {
     const on = getState().auto;
-    const b = this.button(190, this.hudY + 292, on ? 'green' : 'navy', true, t('battle.auto'), () => {
+    const b = this.button(190, this.hudY + 258, on ? 'green' : 'navy', true, t('battle.auto'), () => {
       setAuto(!on);
       this.battle.setAuto(!on);
       b.c.destroy();
@@ -200,23 +205,21 @@ export class BattleScene extends FightScene {
       p.img.setAlpha(u.hp > 0 ? 1 : 0.3);
       p.ring.clear();
       if (u.hp <= 0) continue;
-      // l'énergie court dans la rainure de l'anneau : bleue qui se remplit, or quand l'attaque spéciale est prête
-      const y = this.hudY + 104;
-      const a1 = -Math.PI / 2 + Math.PI * 2 * Math.min(1, u.energy / ENERGY_MAX);
-      if (u.energy > 0) {
-        p.ring.lineStyle(7, ready ? C.gold : C.energy);
-        p.ring.beginPath().arc(p.x, y, 55.3, -Math.PI / 2, a1).strokePath();
-        p.ring.lineStyle(2, 0xffffff, ready ? 0.9 : 0.55);
-        p.ring.beginPath().arc(p.x, y, 57, -Math.PI / 2, a1).strokePath();
-      }
-      // la vie, dans sa rainure (hud-art.tsx) : un aplat net, l'arête claire en haut (au pas des pixels du dessin : 4)
-      const wHp = Math.round((112 * (u.hp / u.maxHp)) / 4) * 4;
+      // la vie : une pilule verte (rouge sous 30 %), une lumière en haut
+      const iw = 110;
+      const wHp = iw * Math.max(0, Math.min(1, u.hp / u.maxHp));
       if (wHp > 0) {
-        const hy = this.hudY + 190 - 8;
-        p.ring.fillStyle(wHp < 112 * 0.3 ? C.red : C.green);
-        p.ring.fillRect(p.x - 56, hy, wHp, 16);
-        p.ring.fillStyle(0xffffff, 0.4);
-        p.ring.fillRect(p.x - 56, hy, wHp, 4);
+        const hy = this.hudY + 148 - 6;
+        p.ring.fillStyle(wHp < iw * 0.3 ? C.red : C.green);
+        p.ring.fillRoundedRect(p.x - iw / 2, hy, Math.max(12, wHp), 12, 6);
+        p.ring.fillStyle(0xffffff, 0.35);
+        p.ring.fillRoundedRect(p.x - iw / 2 + 3, hy + 2, Math.max(6, wHp - 6), 3, 1.5);
+      }
+      // l'énergie : azur qui se remplit, or quand l'attaque spéciale est prête
+      const wEn = (iw + 2) * Math.min(1, u.energy / ENERGY_MAX);
+      if (wEn > 0) {
+        p.ring.fillStyle(ready ? C.gold : C.energy);
+        p.ring.fillRoundedRect(p.x - iw / 2 - 1, this.hudY + 170 - 3, Math.max(6, wEn), 6, 3);
       }
     }
   }

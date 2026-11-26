@@ -19,7 +19,7 @@ export const W = 720;
 export const FONT = '"Lilita One", "Trebuchet MS", "Segoe UI", Roboto, sans-serif';
 /** Couleurs de l'interface des combats : les mêmes que les menus (style.css). */
 export const C = { ink: 0x2a1c12, paper: 0x5c3a1e, paper2: 0xecd9a8, paper3: 0xdfc58c, sky: 0x6b8fb5, panel: 0xecd9a8, panelLight: 0xffffff, trim: 0xd9a63e, hudText: '#4a2a0e',
-  green: 0x3fae5a, greenDark: 0x2a8442, red: 0xdc4f4f, redDark: 0xa83232, blue: 0x3f86e0, blueDark: 0x2a5fb5, energy: 0x4fc3ff, gold: 0xf0b530, goldDark: 0xc8860f };
+  green: 0x2fc457, greenDark: 0x12823a, red: 0xff5468, redDark: 0xb01f3a, blue: 0x2f8cff, blueDark: 0x1a47b8, energy: 0x6cc4ff, gold: 0xffc22e, goldDark: 0xe58a00 };
 
 /** Les couleurs du panneau de combat suivent celles des menus (variables de style.css). */
 export function applyTheme() {
@@ -147,8 +147,8 @@ export abstract class FightScene extends Phaser.Scene {
     return this.add
       .text(x, y, value, { fontFamily: FONT, fontSize: `${size}px`, color, align: 'center' })
       .setOrigin(0.5)
-      .setStroke('#1a1420', Math.max(3, Math.round(size * 0.13)))
-      .setShadow(0, Math.max(2, Math.round(size * 0.07)), '#2f2244', 0, true, true);
+      .setStroke('#150f36', Math.max(3, Math.round(size * 0.12)))
+      .setShadow(0, Math.max(2, Math.round(size * 0.08)), '#0c0822', 0, true, true);
   }
 
   /** Le décor animé du clan : son bas 430 unités sous le haut du sol (= le bas du terrain ; l'accueil en coupe le bas). */
@@ -246,23 +246,26 @@ export abstract class FightScene extends Phaser.Scene {
       if (v.hp <= 0 && u.hp <= 0) continue;
       const w = v.barW;
       const y = v.barY;
-      g.fillStyle(0x15101c);
-      g.fillRoundedRect(-w / 2 - 2, y - 2, w + 4, 16, 6);
-      g.fillStyle(0x2a2230);
-      g.fillRoundedRect(-w / 2, y, w, 12, 4);
+      // (style moderne : des pilules ; la vie dans un creux sombre, l'énergie en dessous)
+      g.fillStyle(0x0c0822, 0.85);
+      g.fillRoundedRect(-w / 2 - 3, y - 3, w + 6, 18, 9);
       const wHp = w * (Math.max(0, v.hp) / u.maxHp);
       if (wHp > 1) {
         g.fillStyle(u.side === 'hero' ? C.green : C.red);
-        g.fillRoundedRect(-w / 2, y, wHp, 12, Math.min(4, wHp / 2));
+        g.fillRoundedRect(-w / 2, y, Math.max(8, wHp), 12, Math.min(6, wHp / 2));
         g.fillStyle(0xffffff, 0.35);
-        g.fillRect(-w / 2 + 2, y + 1.5, Math.max(0, wHp - 4), 3);
+        g.fillRoundedRect(-w / 2 + 3, y + 2, Math.max(2, wHp - 6), 3, 1.5);
       }
       if (u.shield > 0) {
-        g.fillStyle(0x9fd8ff, 0.85);
-        g.fillRoundedRect(-w / 2, y, Math.min(w, w * (u.shield / u.maxHp)), 6, 3);
+        g.fillStyle(0xd4f0ff, 0.9);
+        g.fillRoundedRect(-w / 2, y, Math.min(w, w * (u.shield / u.maxHp)), 5, 2.5);
       }
-      g.fillStyle(C.energy);
-      g.fillRect(-w / 2, y + 15, w * (u.energy / ENERGY_MAX), 4);
+      if (u.energy > 0) {
+        g.fillStyle(0x0c0822, 0.85);
+        g.fillRoundedRect(-w / 2 - 1, y + 16, w + 2, 7, 3.5);
+        g.fillStyle(u.energy >= ENERGY_MAX ? C.gold : C.energy);
+        g.fillRoundedRect(-w / 2, y + 17, Math.max(5, w * Math.min(1, u.energy / ENERGY_MAX)), 5, 2.5);
+      }
       this.syncStatusIcons(v);
       // étourdi : il vacille (le dessin respire déjà tout seul)
       v.sprite.setAngle(u.stun > 0 ? Math.sin(this.time.now / 60) * 8 : 0);

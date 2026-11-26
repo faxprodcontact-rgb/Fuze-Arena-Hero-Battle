@@ -1,65 +1,151 @@
-// Les pièces du panneau des héros en combat (battle-scene.ts), nouvelle DA (26/11/2026) : les mêmes dessins en pixels que
-// les menus (ui/px.ts : une seule palette, un seul contour, lumière en haut à droite), recomposés à la bonne taille et
-// agrandis ×4 (un pixel du dessin = 4 unités du combat, à peu près 2 pixels CSS sur un téléphone), sans flou.
+// Les pièces du panneau des héros en combat (battle-scene.ts), style moderne (26/11/2026) : les mêmes formes que les menus
+// (style.css) — une feuille raisin aux coins arrondis posée sur le combat, des tuiles arrondies pour les portraits, des
+// pilules pour la vie et l'énergie, des boutons arrondis à lèvre. Dessinées lisses dans des toiles (×2 pour rester nettes
+// sur un téléphone), données à Phaser comme textures.
 import type Phaser from 'phaser';
-import { INK, PAL, pxCanvas, radialCanvas, rampFrom, type Tone } from './ui/px';
 
-/** Unités du combat par pixel du dessin. */
-const U = 4;
+/** Les toiles sont dessinées 2 fois plus grandes que leur taille au combat (puis réduites : bords nets). */
+const R = 2;
 
-/** Les couleurs des boutons : la teinte du dessin et la couleur du cerne des lettres. */
+/** Les boutons : dégradé (haut, milieu, bas), la lèvre, la couleur de l'ombre des lettres. */
 export const HUD_BUTTONS = {
-  green: { tone: 'green' as Tone, ink: '#145040' },
-  blue: { tone: 'blue' as Tone, ink: '#1c2f7a' },
-  navy: { tone: 'navy' as Tone, ink: '#121636' },
+  green: { top: '#7cf08a', mid: '#38cc5c', bot: '#25b34a', lip: '#12823a', ink: '#12823a' },
+  blue: { top: '#7cc8ff', mid: '#3b95ff', bot: '#2a78f0', lip: '#1a47b8', ink: '#1a47b8' },
+  navy: { top: '#4b3c9e', mid: '#3a2d86', bot: '#2e2470', lip: '#150f3a', ink: '#0c0822' },
 };
 
-/** Les disques des portraits, par élément (la couleur du milieu de leur gamme). */
-const DISCS: Record<string, string> = { fire: '#d8502e', wind: '#4fae5a', water: '#3f86e0', earth: '#b8822e', none: '#4a5fc0' };
+/** Le fond des portraits, par élément : deux tons (haut clair, bas sombre). */
+const TILES: Record<string, [string, string]> = {
+  fire: ['#ff9a6a', '#c8402a'], wind: ['#8be89a', '#2f9a4c'], water: ['#7cc8ff', '#2a68d0'], earth: ['#ffd07a', '#b8722a'], none: ['#a99cf0', '#4b3c9e'],
+};
 
-function add(sc: Phaser.Scene, key: string, make: () => HTMLCanvasElement) {
+/** Taille d'un portrait (unités du combat) et son arrondi. */
+export const TILE = 112;
+export const TILE_R = 26;
+
+function add(sc: Phaser.Scene, key: string, w: number, h: number, draw: (g: CanvasRenderingContext2D) => void) {
   if (sc.textures.exists(key)) return;
-  const tex = sc.textures.addCanvas(key, make());
-  tex?.setFilter(1 as Phaser.Textures.FilterMode); // au plus proche : les pixels restent nets
+  const c = document.createElement('canvas');
+  c.width = Math.round(w * R); c.height = Math.round(h * R);
+  const g = c.getContext('2d')!;
+  g.scale(R, R);
+  draw(g);
+  sc.textures.addCanvas(key, c);
 }
 
-/** Le panneau (720 × 400) : émail bleu nuit, le plateau creusé des portraits cerclé d'or. */
-function panel(): HTMLCanvasElement {
-  const w = 180, h = 100;
-  const c = document.createElement('canvas');
-  c.width = w * U; c.height = h * U;
-  const g = c.getContext('2d')!;
-  g.imageSmoothingEnabled = false;
-  g.fillStyle = PAL.navy[2]; g.fillRect(0, 0, c.width, c.height);
-  g.fillStyle = PAL.navy[1]; g.fillRect(0, (h - 2) * U, c.width, 2 * U);
-  const tray = pxCanvas('plaque-navy', 176, 56, U);
-  // le creux du plateau : la plaque, assombrie au milieu (les portraits s'y posent)
-  g.drawImage(tray, 2 * U, 7 * U);
-  g.fillStyle = PAL.well[1]; g.fillRect(4 * U, 10 * U, 172 * U, 50 * U);
-  g.fillStyle = PAL.well[0]; g.fillRect(4 * U, 9 * U, 172 * U, U);
-  return c;
+function rr(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number | number[]) {
+  g.beginPath();
+  g.roundRect(x, y, w, h, r);
 }
 
-/** Le rail (720 × 16) posé à cheval sur le bas du terrain : contour, filet d'or, contour. */
-function rail(): HTMLCanvasElement {
-  const c = document.createElement('canvas');
-  c.width = 720; c.height = 4 * U;
-  const g = c.getContext('2d')!;
-  [INK, PAL.gold[3], PAL.gold[1], INK].forEach((col, i) => { g.fillStyle = col; g.fillRect(0, i * U, 720, U); });
-  return c;
+/** La feuille du bas (720 × 460, dont 20 de marge en haut pour son ombre) : raisin, coins de 44 en haut, filet clair. */
+export const PANEL_SHADOW = 20;
+function panel(g: CanvasRenderingContext2D) {
+  const w = 720, h = 440, y0 = PANEL_SHADOW;
+  g.save();
+  g.shadowColor = 'rgba(5, 2, 26, 0.55)'; g.shadowBlur = 24; g.shadowOffsetY = -6;
+  rr(g, 0, y0, w, h, [44, 44, 0, 0]);
+  const grad = g.createLinearGradient(0, y0, 0, y0 + h);
+  grad.addColorStop(0, '#2a2063'); grad.addColorStop(0.45, '#1e1650'); grad.addColorStop(1, '#150f36');
+  g.fillStyle = grad; g.fill();
+  g.restore();
+  // un filet de lumière sur le bord du haut
+  rr(g, 1, y0 + 1, w - 2, 60, [43, 43, 0, 0]);
+  g.save(); g.clip();
+  g.strokeStyle = 'rgba(255, 255, 255, 0.14)'; g.lineWidth = 2;
+  rr(g, 1, y0 + 1, w - 2, h, [43, 43, 0, 0]); g.stroke();
+  g.restore();
+}
+
+/** Le fond d'un portrait (l'élément) : une tuile arrondie en dégradé, une lumière douce en haut. */
+function tile(cols: [string, string]) {
+  return (g: CanvasRenderingContext2D) => {
+    rr(g, 0, 0, TILE, TILE, TILE_R);
+    const grad = g.createLinearGradient(0, 0, 0, TILE);
+    grad.addColorStop(0, cols[0]); grad.addColorStop(1, cols[1]);
+    g.fillStyle = grad; g.fill();
+    const glow = g.createRadialGradient(TILE * 0.5, TILE * 0.3, 4, TILE * 0.5, TILE * 0.3, TILE * 0.6);
+    glow.addColorStop(0, 'rgba(255, 255, 255, 0.35)'); glow.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    g.fillStyle = glow; g.fill();
+  };
+}
+
+/** Le liseré d'un portrait (posé par-dessus le visage) : blanc, une ombre douce dessous. */
+function frame(g: CanvasRenderingContext2D) {
+  const p = 6;
+  g.save();
+  g.shadowColor = 'rgba(5, 2, 26, 0.55)'; g.shadowBlur = 10; g.shadowOffsetY = 4;
+  g.strokeStyle = '#ffffff'; g.lineWidth = 5;
+  rr(g, p, p, TILE, TILE, TILE_R); g.stroke();
+  g.restore();
+  g.strokeStyle = 'rgba(12, 8, 34, 0.25)'; g.lineWidth = 1.5;
+  rr(g, p + 3, p + 3, TILE - 6, TILE - 6, TILE_R - 3); g.stroke();
+}
+
+/** La lueur d'or d'un portrait dont l'attaque spéciale est prête. */
+function glow(g: CanvasRenderingContext2D) {
+  const p = 22;
+  g.save();
+  g.shadowColor = '#ffc22e'; g.shadowBlur = 22;
+  g.strokeStyle = '#ffe27a'; g.lineWidth = 6;
+  rr(g, p, p, TILE, TILE, TILE_R); g.stroke(); g.stroke();
+  g.restore();
+}
+
+/** Le creux d'une jauge (pilule sombre) : `w` × `h` unités. */
+function track(w: number, h: number) {
+  return (g: CanvasRenderingContext2D) => {
+    rr(g, 0, 0, w, h, h / 2);
+    g.fillStyle = 'rgba(5, 2, 26, 0.75)'; g.fill();
+    g.strokeStyle = 'rgba(255, 255, 255, 0.12)'; g.lineWidth = 1.5;
+    rr(g, 0.75, 0.75, w - 1.5, h - 1.5, h / 2); g.stroke();
+  };
+}
+
+/** Un bouton arrondi : la lèvre, le dégradé, une lumière en haut ; une ombre douce dessous. */
+function button(b: (typeof HUD_BUTTONS)[keyof typeof HUD_BUTTONS], w: number, h: number, glass = false) {
+  return (g: CanvasRenderingContext2D) => {
+    const m = 8, bw = w - 2 * m, bh = h - 2 * m, r = Math.min(26, bh / 2);
+    g.save();
+    g.shadowColor = 'rgba(5, 2, 26, 0.45)'; g.shadowBlur = 10; g.shadowOffsetY = 4;
+    rr(g, m, m, bw, bh, r);
+    g.fillStyle = glass ? 'rgba(13, 8, 38, 0.72)' : b.lip; g.fill();
+    g.restore();
+    if (glass) {
+      g.strokeStyle = 'rgba(255, 255, 255, 0.28)'; g.lineWidth = 2;
+      rr(g, m + 1, m + 1, bw - 2, bh - 2, r - 1); g.stroke();
+      return;
+    }
+    rr(g, m, m, bw, bh - 6, r);
+    const grad = g.createLinearGradient(0, m, 0, m + bh - 6);
+    grad.addColorStop(0, b.top); grad.addColorStop(0.46, b.mid); grad.addColorStop(1, b.bot);
+    g.fillStyle = grad; g.fill();
+    g.strokeStyle = 'rgba(255, 255, 255, 0.45)'; g.lineWidth = 2;
+    g.save(); rr(g, m, m, bw, 14, [r, r, 0, 0]); g.clip();
+    rr(g, m + 1, m + 1, bw - 2, bh - 8, r - 1); g.stroke();
+    g.restore();
+  };
+}
+
+/** Le fond du titre du combat (pilule de verre sombre) : étirée à la largeur du titre. */
+function pill(g: CanvasRenderingContext2D) {
+  rr(g, 0, 0, 120, 56, 28);
+  g.fillStyle = 'rgba(13, 8, 38, 0.62)'; g.fill();
+  g.strokeStyle = 'rgba(255, 255, 255, 0.18)'; g.lineWidth = 2;
+  rr(g, 1, 1, 118, 54, 27); g.stroke();
 }
 
 /** Met en file toutes les pièces du panneau (à appeler dans `preload`). Les boutons : une taille par usage. */
 export function loadHudArt(sc: Phaser.Scene) {
-  add(sc, 'hud-panel', panel);
-  add(sc, 'hud-rail', rail);
-  // l'anneau d'un portrait (144) : contour, or, contour, la rainure sombre où court l'énergie, contour ; le centre vide
-  add(sc, 'hud-ring', () => radialCanvas(36, [[12.5, null], [12.9, INK], [14.7, PAL.well[1]], [15.5, INK], [17.2, PAL.gold], [18, INK]], U));
-  // la rainure de la barre de vie (120 × 24)
-  add(sc, 'hud-hp', () => pxCanvas('groove', 30, 6, U));
-  for (const [el, col] of Object.entries(DISCS)) add(sc, `hud-disc-${el}`, () => radialCanvas(25, [[13, rampFrom(col)]], U));
+  add(sc, 'hud-panel', 720, 440 + PANEL_SHADOW, panel);
+  add(sc, 'hud-frame', TILE + 12, TILE + 12, frame);
+  add(sc, 'hud-glow', TILE + 44, TILE + 44, glow);
+  add(sc, 'hud-hp', 116, 18, track(116, 18));
+  add(sc, 'hud-en', 116, 10, track(116, 10));
+  add(sc, 'hud-pill', 120, 56, pill);
+  for (const [el, cols] of Object.entries(TILES)) add(sc, `hud-disc-${el}`, TILE, TILE, tile(cols));
   for (const [k, b] of Object.entries(HUD_BUTTONS)) {
-    add(sc, `hud-btn-${k}-290`, () => pxCanvas(`btn-${b.tone}`, 73, 21, U));
-    add(sc, `hud-btn-${k}-160`, () => pxCanvas(`btn-${b.tone}`, 40, 16, U));
+    add(sc, `hud-btn-${k}-290`, 306, 100, button(b, 306, 100));
+    add(sc, `hud-btn-${k}-160`, 176, 78, button(b, 176, 78, k === 'navy'));
   }
 }
