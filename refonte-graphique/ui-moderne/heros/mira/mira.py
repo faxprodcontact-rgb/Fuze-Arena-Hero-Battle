@@ -230,9 +230,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- le poing, serré sur la hampe (quatre doigts devant, pouce par-dessus) ----
     fist_names = fist(fig, G, ang, W)
 
-    fig.ctx = dict(P=P, U=U, UC=UC, HEAD=HEAD, BODY=BODY, SHD=SHD, G=G, ang=ang, W=W, E=E, S=S,
+    fig.ctx = dict(P=P, U=U, UC=UC, HEAD=HEAD, BODY=BODY, SHD=SHD, TOR=TOR, G=G, ang=ang, W=W, E=E, S=S,
                    tip=sp_frame(G, ang)[0](S_TIP + P['stretch'], 0), butt=sp_frame(G, ang)[0](-S_BUTT, 0),
-                   shield=mapp(SHD, SHIELD_C), rim=mapp(SHD, (85.6, 64.0)), head=mapp(HEAD, (78, 38)),
+                   shield=mapp(SHD, SHIELD_C), rim=mapp(SHD, (85.2, 70.6)), head=mapp(HEAD, (78, 38)),
                    mouth=mapp(HEAD, (84, 46)), chest=mapp(TOR, (74, 62)), waist=mapp(U, (72, 73)))
     if fx:
         for f_ in fx:
