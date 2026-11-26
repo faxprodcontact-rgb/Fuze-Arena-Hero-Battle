@@ -812,8 +812,8 @@ def near_arm(fig, P, S):
     fig.part('narm', arm, SKIN, cel=1.7, rim=0.7, cast=1.2, details=ad,
              cast_on=['torso', 'belt', 'skirt', 'cape', 'shaft', 'butt', 'neck', 'helmet', 'shield', 'sside'])
     # l'épaulière d'or : une plaque bombée qui part du col de la cuirasse et coiffe le haut de l'épaule (le raccord
-    # épaule / cuirasse disparaît dessous) ; elle suit à moitié le bras quand il se lève
-    rotk = 0.5 * (((a1.deg - 105.3) + 180) % 360 - 180)
+    # épaule / cuirasse disparaît dessous) ; attachée à la cuirasse, elle ne bascule qu'un peu quand le bras se lève
+    rotk = max(-10.0, min(10.0, 0.15 * (((a1.deg - 105.3) + 180) % 360 - 180)))
     UCm = mchain(mT(S[0] - NS0[0], S[1] - NS0[1]), mR(rotk, *NS0))
     Q = lambda pts: [mapp(UCm, p_) for p_ in pts]
     flap = sm(Q([(55.4, 48.6), (50.0, 48.6), (45.4, 49.6), (42.2, 51.8), (40.6, 55.0), (40.8, 58.0), (42.8, 59.2),

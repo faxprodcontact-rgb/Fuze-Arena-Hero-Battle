@@ -1,4 +1,4 @@
 fait
-Corrigé d'après l'avis du 26/11 : 1) visage refait et recentré (méthode commune visage.py) : les deux yeux jaunes sur une même ligne, le nez plat posé sur l'axe du visage ENTRE les yeux, la gueule en rictus centrée sous le nez (plus étroite qu'avant, elle ne déborde plus sur la joue), l'arcade en V au-dessus des yeux ; contrôle : visage.png.
-2) Hache : le poing serre maintenant le manche vers le milieu (plus bas qu'avant, sous la douille de la lame), dans toutes les poses (repos, attaque, saut, frappe au sol) ; le bras suit (coude et brassard replacés, aucun écart au poignet).
-Le reste ne change pas (même costume, mêmes animations, mêmes effets) ; avant | après : avant-apres.png.
+Tour 2 de l'avis (26/11 soir, deux cercles sans texte sur les poings) : les deux poings étaient des « moufles » carrées à rayures, griffes plantées sur les jointures, et le poing de la hache flottait sans toucher le poignet.
+1) Poings refaits (les deux) : quatre gros doigts repliés de taille inégale, jointures rondes, un vrai pouce couché en travers de l'index et du majeur avec sa griffe, les griffes qui sortent du bout des doigts rentrés contre la paume.
+2) Raccords : le poing de la hache sort du brassard sans écart et le manche passe dans le creux des doigts (visible dessus et dessous) ; le poing lointain continue l'avant-bras d'un seul tenant. Vérifié dans toutes les poses (repos, attaque, coups sur la poitrine, saut, frappe au sol). Le reste ne change pas ; avant | après : avant-apres.png.

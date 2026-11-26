@@ -8,7 +8,8 @@
 # de gorille en tonneau à la peau bleu glacé, petites jambes épaisses couvertes de fourrure jusqu'aux chevilles, pieds
 # de singe à trois orteils griffus. Bras proche levé et plié (coude en bas à gauche) : le poing serre la hache vers le
 # milieu du manche (avis du propriétaire, 26/11), la lame de glace au-dessus et derrière ; bras lointain qui pend en
-# avant, poing fermé.
+# avant, poing fermé. Poings de yéti refaits (avis du propriétaire, tour 2) : doigts repliés, pouce en travers, griffes au
+# bout des doigts, poignets raccordés (fist_parts).
 # Tête de grand singe : arcade lourde en V, yeux jaunes qui brûlent au fond des orbites, nez plat aux grosses narines,
 # gueule en rictus (gencives, gorge rouge sombre, deux crocs en haut, deux en bas), petites cornes d'ardoise, favoris.
 # Visage reconstruit avec ../visage.py (FACE_BOX) : contrôle par visage_controle.py → sortie/ui/vecto/velith/visage.png.
