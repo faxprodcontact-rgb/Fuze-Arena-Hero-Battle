@@ -703,6 +703,23 @@ export function dailyBossId(): string {
   return BOSSES[new Date(now()).getDay() % BOSSES.length]!;
 }
 
+/**
+ * Le boss de guilde change lui aussi chaque jour, à minuit (quand les essais reviennent) : jamais le même que le boss du
+ * jour. Son élément donne l'image de l'onglet Boss de la guilde (« Donjon de feu »…, ui/backdrop-dungeon.tsx).
+ */
+export function guildBossId(at = now()): string {
+  return BOSSES[(new Date(at).getDay() + 1) % BOSSES.length]!;
+}
+
+/** Le moment où le boss de guilde laisse sa place à un autre (le prochain minuit où il change). */
+export function guildBossEndsAt(at = now()): number {
+  const id = guildBossId(at);
+  const d = new Date(at);
+  d.setHours(24, 0, 0, 0);
+  for (let i = 0; i < 7 && guildBossId(d.getTime()) === id; i++) d.setDate(d.getDate() + 1);
+  return d.getTime();
+}
+
 function bossWave(s: PlayerState, bossId: string, hpFactor: number, seed: number): UnitInit[][] {
   const waves = buildWaves({ power: referencePower(s), count: 1, waves: 1, element: BOSS_ELEMENT[bossId] ?? 'fire', seed, boss: bossId });
   return waves.map((w) => w.map((u) => ({ ...u, maxHp: Math.round(u.maxHp * hpFactor) })));
@@ -722,9 +739,9 @@ export function dailyBossBattle(): BattleRequest {
 export function guildBossBattle(): BattleRequest {
   return update((s) => ({
     kind: 'guildBoss' as const,
-    title: 'dragon',
+    title: guildBossId(),
     heroes: teamUnits(s),
-    waves: bossWave(s, 'dragon', 40, 11),
+    waves: bossWave(s, guildBossId(), 40, 11),
     seed: seedFor(s),
     damageMode: true,
   }));
@@ -836,7 +853,7 @@ export function dailyBossPlan(): BattlePlan {
 }
 
 export function guildBossPlan(): BattlePlan {
-  return { kind: 'guildBoss', title: 'dragon', waves: bossWave(getState(), 'dragon', 40, 11), build: guildBossBattle };
+  return { kind: 'guildBoss', title: guildBossId(), waves: bossWave(getState(), guildBossId(), 40, 11), build: guildBossBattle };
 }
 
 export function arenaPlan(opponentId: string): BattlePlan | null {

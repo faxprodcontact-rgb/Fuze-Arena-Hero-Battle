@@ -4,15 +4,14 @@
 // boss en grand, membres en lignes nettes). L'onglet tient dans l'écran : seules les listes défilent, à l'intérieur.
 import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
-import { sceneBg } from '../fond-image';
-import { bossArt, bossClan } from '../../look';
-import { Figure } from '../hero-figure';
+import { DungeonArt } from '../backdrop-dungeon';
 import { GUILD_BOSS_ATTEMPTS, GUILD_SHOP, GUILD_WAR, UNLOCKS } from '../../../core/data/modes';
+import { BOSS_ELEMENT } from '../../../core/data/monsters';
 import { createRng } from '../../../core/rng';
 import { heroImage } from '../../art';
 import { CHAT_LINES, fmt, t } from '../../i18n';
 import {
-  BOT_GUILDS, botChatter, claimWar, ensureWar, guildBossPlan, joinGuild, leaveGuild, markSeen, sendChat,
+  BOT_GUILDS, botChatter, claimWar, ensureWar, guildBossEndsAt, guildBossId, guildBossPlan, joinGuild, leaveGuild, markSeen, sendChat,
   warAttacksLeft, warDefenses, warPhase, warPlan, warScores,
 } from '../../state/actions';
 import { isUnlocked, teamPower } from '../../state/selectors';
@@ -150,13 +149,7 @@ export function GuildScreen() {
       ]} />
       {tab === 'boss' && (
         <section class="g-panel g-boss">
-          <div class="g-boss-stage" style={sceneBg(bossClan('dragon'))}>
-            <span class="g-boss-name"><Icon name="fire" size={22} />{t('monster.dragon')}</span>
-            <Figure id={bossArt('dragon')} class="g-boss-fig" />
-            <div class="g-boss-hp">
-              <Bar value={GUILD_BOSS_HP - total} max={GUILD_BOSS_HP} color="linear-gradient(90deg, #f03e58, #ff7a6a)" label={`${fmt(GUILD_BOSS_HP - total)} / ${fmt(GUILD_BOSS_HP)}`} />
-            </div>
-          </div>
+          <DungeonStage hp={<Bar value={GUILD_BOSS_HP - total} max={GUILD_BOSS_HP} color="linear-gradient(90deg, #f03e58, #ff7a6a)" label={`${fmt(GUILD_BOSS_HP - total)} / ${fmt(GUILD_BOSS_HP)}`} />} />
           <div class="g-stats">
             <div class="g-stat"><Icon name="atk" size={30} /><span><b>{fmt(total)}</b><small>{t('guild.total')}</small></span></div>
             <div class="g-stat mine"><Icon name="power" size={30} /><span><b>{fmt(s.guild.bossDamage)}</b><small>{t('guild.mine')}</small></span></div>
@@ -186,6 +179,36 @@ export function GuildScreen() {
       {tab === 'shop' && (
         <section class="g-shop"><ModeShop kind="guild" items={GUILD_SHOP} crest={emblem(name)} /></section>
       )}
+    </div>
+  );
+}
+
+/** HH:MM (les heures peuvent dépasser 24). */
+function hhmm(ms: number): string {
+  const m = Math.max(0, Math.ceil(ms / 60_000));
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
+/**
+ * Le boss de guilde, montré par son élément (demande du propriétaire, 26/11/2026) : la grande image de la porte de son
+ * donjon (« Donjon de feu »…, backdrop-dungeon.tsx) et le temps qu'il reste avant qu'il change (à minuit, avec les essais).
+ * L'élément change avec le boss : l'image suit toute seule.
+ */
+function DungeonStage({ hp }: { hp: ComponentChildren }) {
+  const [, tick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => tick((x) => x + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const element = BOSS_ELEMENT[guildBossId()] ?? 'fire';
+  return (
+    <div class={`g-boss-stage g-dungeon el-${element}`}>
+      <DungeonArt element={element} class="g-dungeon-art" />
+      <div class="g-boss-label">
+        <span class="g-boss-name"><Icon name={element} size={22} /><span class="g-boss-title">{t(`gboss.${element}`)}</span></span>
+        <span class="g-boss-time"><Icon name="hourglass" size={16} />{t('gboss.left', { d: hhmm(guildBossEndsAt() - now()) })}</span>
+      </div>
+      <div class="g-boss-hp">{hp}</div>
     </div>
   );
 }
