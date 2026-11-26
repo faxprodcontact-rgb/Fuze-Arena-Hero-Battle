@@ -8,9 +8,10 @@
 .screen.guild { --g-glass: #120b33c7; --g-line: #ffffff2e; --g-ink: #221c45; --g-muted: #736d97; --g-azure: #2f8cff; --g-gold: #ffc22e; }
 
 /* ---------- la carte de la guilde ---------- */
-/* posée au pied du panorama : l'emblème déborde vers le haut, sur les remparts */
+/* posée dans la cour, au pied de la porte du donjon (y ≈ 144 du dessin de 390 de large, backdrop-guild.tsx) : toute la
+   forteresse reste visible au-dessus ; l'emblème déborde vers le haut, sur le rempart */
 .g-head { position: relative; flex: none; display: grid; grid-template-columns: auto 1fr auto; grid-template-rows: auto auto; align-items: center;
-  column-gap: 12px; row-gap: 5px; margin-top: calc(min(100vw, 480px) * 0.44 - 92px); padding: 10px 14px 11px 10px; border-radius: 24px;
+  column-gap: 12px; row-gap: 5px; margin-top: calc(min(100vw, 480px) * 0.369 - 12px); padding: 10px 14px 11px 10px; border-radius: 24px;
   background: linear-gradient(180deg, #2c1f70e0, #1a124ef2); box-shadow: inset 0 0 0 1px var(--g-line), inset 0 1px 0 #ffffff33, 0 12px 28px #05021a8c;
   backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); color: #fff; text-shadow: none; }
 .g-head > .g-crest { grid-row: 1 / 3; margin: -26px 0 -2px; }
@@ -177,7 +178,10 @@
 /* ---------- petits écrans (360 × 640…) : le panorama et la carte se resserrent ---------- */
 @media (max-height: 700px) {
   .adv-scroll > .screen.guild { gap: 8px; }
-  .g-head { margin-top: 26px; padding: 8px 12px 8px 8px; column-gap: 10px; row-gap: 4px; }
+  /* le dessin remonte un peu, la carte descend sous la bannière : le toit, la bannière et les fenêtres du donjon restent
+     visibles au-dessus de la carte (avant le 27/11, la carte cachait tout le donjon) */
+  .backdrop-guild.bk svg { transform: translateY(-14px); }
+  .g-head { margin-top: 77px; padding: 8px 12px 8px 8px; column-gap: 10px; row-gap: 4px; }
   .g-crest-l { width: 64px; height: 64px; border-radius: 20px; }
   .g-crest-l .icon { width: 48px !important; height: 48px !important; }
   .g-crest-l::after { border-radius: 23px; }
