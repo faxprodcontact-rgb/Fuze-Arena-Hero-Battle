@@ -18,6 +18,7 @@ export type Modal =
   | { type: 'ranking' }
   | { type: 'chat' }
   | { type: 'settings' }
+  | { type: 'authSoon'; provider: 'google' | 'apple' }
   | { type: 'avatar' }
   | { type: 'odds' }
   | { type: 'fragments' }

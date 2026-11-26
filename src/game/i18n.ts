@@ -126,6 +126,11 @@ const FR = {
   'name.title': 'Ton nom', 'name.random': 'Nom au hasard', 'name.rule': '3 à 16 caractères',
   'name.length': '3 à 16 caractères', 'name.chars': 'Lettres, chiffres, espaces, - et _ seulement', 'name.taken': 'Nom non autorisé',
   'name.gems': 'Pas assez de gemmes',
+  // connexion des comptes (auth.ts, ui/sign-in.tsx) : noms des boutons approuvés par Google et Apple
+  'auth.title': 'Bienvenue', 'auth.continue.google': 'Continuer avec Google', 'auth.continue.apple': 'Continuer avec Apple',
+  'auth.or': 'ou', 'auth.guest.play': 'Jouer en invité', 'auth.guest': 'Invité', 'auth.guestWarn': 'Partie gardée seulement sur ce téléphone',
+  'auth.soon': 'Bientôt disponible', 'auth.error': 'Connexion impossible',
+  'auth.signOut': 'Déconnecter', 'auth.signOutConfirm': 'Te déconnecter ? Ta partie reste sur ce téléphone.',
   'settings.name': 'Nom', 'settings.lang': 'Langue', 'settings.speed': 'Vitesse des combats',
 
 
@@ -280,6 +285,10 @@ const EN: Record<Key, string> = {
   'name.title': 'Your name', 'name.random': 'Random name', 'name.rule': '3 to 16 characters',
   'name.length': '3 to 16 characters', 'name.chars': 'Letters, digits, spaces, - and _ only', 'name.taken': 'Name not allowed',
   'name.gems': 'Not enough gems',
+  'auth.title': 'Welcome', 'auth.continue.google': 'Continue with Google', 'auth.continue.apple': 'Continue with Apple',
+  'auth.or': 'or', 'auth.guest.play': 'Play as guest', 'auth.guest': 'Guest', 'auth.guestWarn': 'Progress saved on this phone only',
+  'auth.soon': 'Coming soon', 'auth.error': 'Sign-in failed',
+  'auth.signOut': 'Sign out', 'auth.signOutConfirm': 'Sign out? Your progress stays on this phone.',
   'settings.name': 'Name', 'settings.lang': 'Language', 'settings.speed': 'Battle speed',
 
 

@@ -1,0 +1,36 @@
+/* Connexion des comptes (ui/sign-in.tsx) : boutons officiels Google et Apple, fenêtre « Bientôt », ligne des réglages.
+   Couleurs et polices des boutons = celles imposées par les marques (Google : blanc, filet gris #747775, texte #1f1f1f ;
+   Apple : blanc ou noir, police du système). Ne pas les passer aux couleurs du jeu. */
+.auth-stack { display: flex; flex-direction: column; gap: 12px; }
+.auth-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; height: 52px; padding: 0 18px;
+  border-radius: 999px; font: 500 17px/1 -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, 'Segoe UI', system-ui, sans-serif;
+  letter-spacing: 0; text-shadow: none; white-space: nowrap; box-shadow: 0 2px 6px #0000002e; }
+.auth-btn:active { filter: brightness(0.92); }
+.auth-btn:focus-visible { outline: 3px solid #ffd36b; outline-offset: 2px; }
+.auth-btn .auth-mark { flex: none; display: block; }
+.auth-btn.auth-google { background: #fff; color: #1f1f1f; box-shadow: inset 0 0 0 1px #747775, 0 2px 6px #0000002e; }
+.auth-btn.auth-apple.auth-light { background: #fff; color: #000; }
+.auth-btn.auth-apple.auth-dark { background: #000; color: #fff; }
+/* le logo seul (réglages) : un rond de 44 px */
+.auth-btn.compact { width: 44px; min-width: 44px; height: 44px; padding: 0; box-shadow: 0 1px 3px #0000002e; }
+.auth-btn.auth-google.compact { box-shadow: inset 0 0 0 1px #747775, 0 1px 3px #0000002e; }
+.auth-btn.compact .auth-mark { margin-top: -1px; }
+
+.auth-or { display: flex; align-items: center; gap: 12px; margin: -2px 6px; color: #c7c6d2; font: 600 13px var(--font); text-transform: uppercase; letter-spacing: 0.08em; }
+.auth-or::before, .auth-or::after { content: ''; flex: 1; height: 1px; background: #ffffff2e; }
+.signin-card { gap: 14px; }
+.auth-guest { align-self: center; min-height: 44px; margin: -4px 0 -8px; padding: 0 16px; color: #e9e6f2; font: 600 16px var(--font);
+  text-decoration: underline; text-decoration-color: #ffffff59; text-underline-offset: 4px; }
+.auth-guest:active { color: #ffe08a; }
+
+.auth-soon { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-bottom: 14px; }
+.auth-soon-mark { display: grid; place-items: center; width: 72px; height: 72px; border-radius: 50%; background: #fff;
+  box-shadow: inset 0 0 0 1px #74777559, 0 3px 8px #0000002e; color: #000; }
+
+.auth-row { min-height: 62px; }
+.auth-row .auth-id { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.auth-row .auth-id small { font: 500 12px/1.25 var(--font); color: var(--c-muted); overflow: hidden; text-overflow: ellipsis; }
+.auth-who { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.auth-chip { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 50%; background: #fff;
+  box-shadow: inset 0 0 0 1px #747775; }
+.auth-chip.auth-apple { background: #000; color: #fff; box-shadow: none; }

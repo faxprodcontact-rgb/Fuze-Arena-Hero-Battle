@@ -30,7 +30,7 @@ import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
 import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, isUnlocked, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
 import type { TeamKind } from './selectors';
-import type { ArenaOpponent, ColiseumFoe, ColiseumState, Friend, Gain, GuildWarState, MissionState, PlayerState, Wallet } from './types';
+import type { ArenaOpponent, AuthProvider, ColiseumFoe, ColiseumState, Friend, Gain, GuildWarState, MissionState, PlayerState, Wallet } from './types';
 import {
   botTeam, foeUnits, leagueAfter, makeGroup, mixSeed, myRank, pointsChange, rankReward, runColiseum, standings, WEEK_HOURS,
   type ColiseumBot, type ColiseumSetup, type Standing,
@@ -1285,6 +1285,24 @@ export function setAvatar(defId: string): boolean {
 
 export function setSetting(key: keyof PlayerState['settings'], on: boolean): void {
   update((s) => void (s.settings[key] = on));
+}
+
+/**
+ * Lie la partie à un compte Google ou Apple (appelé par src/game/auth.ts une fois la connexion réussie).
+ * La partie du téléphone est gardée telle quelle. Avec le serveur : elle sera envoyée au serveur à ce moment-là, et le
+ * serveur deviendra le juge (docs/connexion-comptes.md). Renvoie faux si les informations ne vont pas.
+ */
+export function linkAuth(user: { provider: AuthProvider; id: string; email?: string }): boolean {
+  if ((user.provider !== 'google' && user.provider !== 'apple') || !user.id) return false;
+  update((s) => {
+    s.auth = { provider: user.provider, id: user.id, at: now(), ...(user.email ? { email: user.email } : {}) };
+  });
+  return true;
+}
+
+/** Délie le compte : la partie redevient « invité » (elle reste sur le téléphone). */
+export function unlinkAuth(): void {
+  update((s) => void delete s.auth);
 }
 
 /** Supprime le compte. Aujourd'hui : efface la partie du téléphone. Avec le serveur : effacera aussi le compte en ligne. */

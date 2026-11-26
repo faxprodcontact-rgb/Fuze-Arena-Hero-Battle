@@ -21,6 +21,19 @@ export interface Wallet {
 }
 export type Currency = keyof Wallet;
 
+/** Fournisseur de connexion. */
+export type AuthProvider = 'google' | 'apple';
+
+/** Le compte en ligne lié à la partie (docs/connexion-comptes.md). */
+export interface AuthLink {
+  provider: AuthProvider;
+  /** Identifiant du joueur côté serveur (Supabase : l'id de l'utilisateur). */
+  id: string;
+  email?: string;
+  /** Date de la liaison. */
+  at: number;
+}
+
 export interface MissionState {
   id: string;
   templateId: string;
@@ -116,6 +129,8 @@ export interface PlayerState {
   rng: number;
   nextUid: number;
   account: { level: number; xp: number };
+  /** Compte lié (Google ou Apple, src/game/auth.ts) ; absent = joueur invité (partie gardée seulement sur ce téléphone). */
+  auth?: AuthLink;
   wallet: Wallet;
   fragments: Record<string, number>;
   /** Le Légendaire que visent les fragments des boutiques. */

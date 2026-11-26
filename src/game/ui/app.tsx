@@ -28,6 +28,7 @@ import { MailPage } from './screens/mail';
 import { HeroDetail } from './screens/hero-detail';
 import { HeroesScreen } from './screens/heroes';
 import { AvatarModal } from './screens/avatar';
+import { AuthSoonModal } from './sign-in';
 import { AdModal, ConfirmModal, GainModal, LegalModal, NameScreen, QuestsModal, RenameModal, SettingsModal, ShopModal } from './screens/meta';
 import { ChatModal, GuildScreen, RankingModal } from './screens/social';
 import { FragmentsModal, OddsModal, SummonResult, SummonScreen } from './screens/summon';
@@ -100,6 +101,7 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'ranking': return <RankingModal />;
     case 'chat': return <ChatModal />;
     case 'settings': return <SettingsModal />;
+    case 'authSoon': return <AuthSoonModal provider={modal.provider} />;
     case 'avatar': return <AvatarModal />;
     case 'odds': return <OddsModal />;
     case 'fragments': return <FragmentsModal />;

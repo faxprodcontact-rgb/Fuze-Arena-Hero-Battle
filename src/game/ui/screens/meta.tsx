@@ -23,6 +23,7 @@ import { GemsTab, OffersTab, PassTab } from '../sections/boutique-offres';
 import { ModeShop } from '../sections/boutiques-modes';
 import '../sections/boutique.css';
 import { artUrl } from '../../art-url';
+import { AccountRow, SignInCard } from '../sign-in';
 
 export function QuestsModal() {
   const s = useGame();
@@ -148,6 +149,7 @@ export function SettingsModal() {
           <span>{t('settings.id')}</span>
           <b class="mono">{playerId(s)}</b>
         </div>
+        <AccountRow />
       </section>
 
       <section class="settings-group">
@@ -197,18 +199,25 @@ function NameField({ value, onInput, error }: { value: string; onInput: (v: stri
   );
 }
 
-/** Premier lancement : le joueur choisit son nom. */
+/**
+ * Premier lancement : d'abord la connexion (Google, Apple ou invité, sign-in.tsx), puis le nom.
+ * Revenu de Google / Apple (la page se recharge), le compte est déjà lié : on passe directement au nom.
+ */
 export function NameScreen() {
+  const s = useGame();
+  const [guest, setGuest] = useState(false);
   const [name, setName] = useState(randomName());
   const [error, setError] = useState<string | null>(null);
   return (
     <div class="name-screen" style={{ backgroundImage: `linear-gradient(180deg, #120c3366, #120c33d9), url(${artUrl('art/ui-px/chargement.webp')})` }}>
       {/* refaite le 26/11 (demande du propriétaire) : plus d'image, une carte bleu nuit cerclée d'or */}
-      <div class="name-card">
-        <h1>{t('name.title')}</h1>
-        <NameField value={name} onInput={(v) => { setName(v); setError(null); }} error={error} />
-        <Btn kind="green" wide onClick={() => setError(chooseName(name))}>{t('ok')}</Btn>
-      </div>
+      {!s.auth && !guest ? <SignInCard onGuest={() => setGuest(true)} /> : (
+        <div class="name-card">
+          <h1>{t('name.title')}</h1>
+          <NameField value={name} onInput={(v) => { setName(v); setError(null); }} error={error} />
+          <Btn kind="green" wide onClick={() => setError(chooseName(name))}>{t('ok')}</Btn>
+        </div>
+      )}
     </div>
   );
 }

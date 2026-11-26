@@ -63,6 +63,10 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   `ui/chrome.tsx` (`ChromeDefs` posé une fois, jamais caché ; `BarArt` toujours **dernier enfant** de sa barre).
   **Toutes les fenêtres s'ouvrent au milieu de l'écran.** Combat plein écran, interface qui flotte dessus (pause, pilules,
   AUTO/vitesse ronds, cartes des héros) : `hud-art.tsx` + `battle-scene.ts`. Tirage : `sections/summon-reveal.tsx` (le héros sort du portail, plus de cartes).
+- **Connexion Google / Apple** (26/11) : étape « Bienvenue » avant le nom (`NameScreen`), ligne du compte dans les
+  Réglages, invité par défaut (champ `auth` de la sauvegarde) ; tout passe par `src/game/auth.ts` (éteint tant que
+  `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` manquent : fenêtre « Bientôt disponible »). Comptes à créer, branchement,
+  invité → compte lié : **`docs/connexion-comptes.md`**.
 - Plus tard : profil du joueur, événements, sons et musique, Siège. Ensuite : serveur (Supabase) → habillage → social
   réel → argent réel → bêta → lancement.
 

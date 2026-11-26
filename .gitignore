@@ -7,3 +7,6 @@ __pycache__/
 /*.png
 refonte-graphique/*-vis*.png
 .claude/worktrees/
+# valeurs locales de Supabase (docs/connexion-comptes.md)
+.env.local
+.env.*.local

@@ -1,5 +1,5 @@
 /* FABRIQUÉ par refonte-graphique/ui-moderne/theme/pierre.ts — ne pas modifier à la main (relancer le script).
-   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 319 règles, 425 couleurs. */
+   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 320 règles, 426 couleurs. */
 /*  style.css  */
 :root:where([data-theme="pierre"]) {
     --c-bg-0: #131218;
@@ -912,6 +912,10 @@
 }
 :where(:root[data-theme="pierre"]) .col-gifts .cur {
     background: #fff4d6
+}
+/*  sections/compte.css  */
+:where(:root[data-theme="pierre"]) .auth-guest {
+    color: #f2eee6
 }
 /*  sections/guilde.css  */
 :where(:root[data-theme="pierre"]) .screen.guild {

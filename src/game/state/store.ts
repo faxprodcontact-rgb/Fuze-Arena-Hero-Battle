@@ -83,6 +83,8 @@ export function restore(saved: PlayerState): PlayerState {
     const stars = Math.min(rule.maxStars, Math.max(rule.bornStars, h.stars));
     return { ...h, stars, level: Math.min(h.level, levelCap(stars)) };
   });
+  // un compte lié abîmé : la partie redevient invitée (rien d'autre ne change)
+  if (s.auth && ((s.auth.provider !== 'google' && s.auth.provider !== 'apple') || !s.auth.id)) delete s.auth;
   return s;
 }
 
