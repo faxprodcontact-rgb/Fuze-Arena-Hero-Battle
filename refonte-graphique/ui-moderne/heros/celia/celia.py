@@ -211,10 +211,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  details=[(ribbon([(x0 + 0.8, top + 0.3), ((x0 + x1) / 2, top + 0.25), (x1 - 0.5, top + 0.35)], [0.1, 0.4, 0.1]), GETA.hi, 0.75),
                           (ellipse(x1 - 1.4, top + 0.4, 0.7, 0.2), '#ffffff', 0.45)])
         L = x1 - x0
-        tabi = sm([(x0 + 0.5, top + 0.05), (x0 + 0.05, top - 0.9), (x0 + 0.4, ank), (x0 + 0.5 * L, ank + 0.9),
-                   (x1 - 2.4, top - toe_h), (x1 - 0.6, top - toe_h * 0.62), (x1 - 0.05, top - 0.4), (x1 - 0.5, top + 0.05)],
-                  sharp=(0, 7), t=0.9)
-        tg = [(0, '#ffffff'), (0.55, KIMO.base), (1, KIMO.shadow)] if far else [(0, KIMO.light), (0.6, KIMO.base), (1, KIMO.shadow)]
+        tabi = sm([(x0 + 0.6, top + 0.05), (x0 - 0.05, top - 0.7), (x0 + 0.3, top - 2.0), (x0 + 0.4, ank), (x0 + 0.5 * L, ank + 0.9),
+                   (x1 - 2.6, top - toe_h - 0.1), (x1 - 1.0, top - toe_h * 0.78), (x1 - 0.1, top - toe_h * 0.4), (x1 - 0.2, top - 0.1),
+                   (x1 - 0.8, top + 0.05)], sharp=(0, 9), t=1.0)
+        tg = [(0, '#ffffff'), (0.6, KIMO.light), (1, KIMO.base)] if far else [(0, '#ffffff'), (0.5, KIMO.light), (1, KIMO.shadow)]
         tx = x1 - 2.0      # le creux entre le gros orteil et les autres
         fig.part('tabi' + nm[4:], tabi, KIMO, grad=(x1, top - 3, x0, top, tg), cel=0.7, rim=0.5, cast=0.8, cast_on=[nm],
                  details=[(ribbon([(tx - 0.1, top - toe_h + 0.5), (tx + 0.15, top - toe_h * 0.4), (tx + 0.2, top - 0.05)], [0.1, 0.3, 0.1]), KIMO.deep, 0.85),
@@ -258,6 +258,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (ribbon([(74.6, 49.6), (71.6, 55.0), (68.8, 60.4)], [0.2, 0.7, 0.3]), KIMO.shadow, 0.7)]
     # les flocons inventés
     det += flake_motif((79.0, 87.6), 1.7) + flake_motif((66.4, 99.6), 1.7) + flake_motif((56.6, 107.4), 1.5, 0.8) + flake_motif((83.4, 103.6), 1.3, 0.8)
+    # le bord du pan du dessus montre sa doublure bleue en un mince revers qui s'élargit doucement jusqu'à l'ourlet
+    det += [(sm([(64.8, 106.4), (65.0, 109.0), (65.1, 111.6), (66.3, 111.8), (65.8, 109.2)], sharp=(0,), t=0.9), OBI.base, 0.85),
+            (sm([(64.9, 107.8), (65.2, 109.6), (65.3, 111.2), (65.8, 111.2), (65.5, 109.6)], sharp=(0,), t=0.9), OBI.light, 0.7)]
     # l'ourlet : une bande bleu pâle de largeur constante qui suit tout le bas de la robe (les festons des plis, la
     # traîne, l'arc relevé sur le pied lointain et le coin relevé du pan), un liseré blanc au-dessus, une ombre dessous
     B = hem_line(robe)
@@ -267,9 +270,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (ribbon(crpath([(76.0, 103.0), (76.8, 107.6), (77.6, 111.4)], 8), [0.1] + [0.6] * 7 + [0.1]), KIMO.shadow, 0.4),
             (ribbon(crpath([(72.0, 102.0), (72.8, 107.0), (73.6, 111.4)], 6), [0.1] + [0.45] * 5 + [0.1]), '#ffffff', 0.6),
             (ribbon(crpath([(83.6, 104.0), (84.2, 108.0), (84.6, 111.0)], 6), [0.1] + [0.5] * 5 + [0.1]), KIMO.shadow, 0.35)]
-    # le bord du pan du dessus montre sa doublure bleue en un mince revers qui s'élargit doucement jusqu'à l'ourlet
-    det += [(sm([(64.8, 106.4), (65.0, 109.0), (65.1, 111.6), (66.3, 111.8), (65.8, 109.2)], sharp=(0,), t=0.9), OBI.base, 0.85),
-            (sm([(64.9, 107.8), (65.2, 109.6), (65.3, 111.2), (65.8, 111.2), (65.5, 109.6)], sharp=(0,), t=0.9), OBI.light, 0.7)]
     fig.part('robe', robe, KIMO, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(KIMO.shadow, 0.3, 3.0))
 
     # ---- l'obi : une bande qui fait le tour de la taille (peinte dans la robe), plus sombre côté proche ----
@@ -386,7 +386,7 @@ def robe_shape():
                # le bas : la traîne posée au sol (à gauche), puis l'ourlet à hauteur de cheville (les pieds dessous), ses
                # festons suivent les plis
                (44.8, 116.6), (49.0, 116.8), (53.0, 116.2), (56.4, 114.8), (59.6, 113.1), (62.4, 112.5),
-               (66.6, 112.6), (70.8, 112.2), (74.4, 112.5), (77.6, 112.1), (81.2, 112.2), (84.6, 111.8), (87.4, 111.9),
+               (66.6, 112.1), (70.2, 111.8), (74.4, 112.5), (77.6, 112.1), (81.2, 112.2), (84.6, 111.8), (87.4, 111.9),
                (89.2, 111.6),
                (88.6, 104.0), (87.8, 96.0),
                (86.8, 86.0), (85.8, 76.0), (85.0, 66.0), (84.6, 58.0), (83.2, 53.6), (79.4, 50.8), (74.6, 48.6),
