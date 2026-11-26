@@ -26,7 +26,7 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   s'ouvrent avec la campagne, `UNLOCKS` de `src/core/data/modes.ts`).
 - Décidé : plus de camps ; la fusion demande des héros du **même élément**. Le mode Défense est supprimé, remplacé par le
   **Colisée** (duel 1 contre 1, équipes de 3) dont **les règles restent à construire** (tuile « Bientôt », clé `defense`).
-- Héros : **36 héros**, tous dessinés et animés en pixel art HD (`HERO_IDS` de `src/core/data/heroes.ts` ; les 36 autres
+- Héros : **44 héros** (36 de `HERO_IDS` + 8 monstres de clan devenus héros, `CLAN_HEROES`, dessin par `heroArt()` de `look.ts`), tous dessinés et animés en pixel art HD (`HERO_IDS` de `src/core/data/heroes.ts` ; les 36 autres
   gabarits sont retirés, une vieille sauvegarde reçoit un dédommagement par courrier : `src/game/state/migrate.ts`).
   Effets dans `src/core/battle/`, textes par `src/game/describe.ts`, équipements dans `src/core/data/items.ts`. Courrier :
   `src/core/data/mail.ts` (un `id` unique, jamais réutilisé ; `personal` = cadeau rangé dans la sauvegarde). Tutoriel :
@@ -55,13 +55,14 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   `refonte-graphique/pixel/ui/` (lire `PLAN.md`) ; partie 1 faite en v0.57.0 (chargement, logo, icône d'application).
   **Style « moderne » choisi le 26/11 : lire `refonte-graphique/pixel/ui/STYLE.md`** (jetons en tête de
   `src/game/ui/style.css` : fond raisin, couleurs à rôle, arrondis, ombres douces ; fenêtres claires à bandeau coloré ;
-  plus de pièces en pixels ni de `?skin=`) ; Socle + Campagne faits, sections Héros, Invoquer, Aventure, Guilde dans
-  `src/game/ui/sections/<section>.css`. Personnages, monstres, décors restent en pixel art HD.
+  plus de pièces en pixels ni de `?skin=`) ; tout le jeu est passé (v0.59.0), sections dans
+  `src/game/ui/sections/<section>.css` ; **boutons « Pierre de l'arène »** (v0.60.0, `ui/buttons.ts`, classes `bt-<teinte>`) ;
+  fonds des menus dessinés par le code (`ui/backdrop-kit.tsx`, `backdrop-*.tsx`, préparation `formation-stage.tsx`). Personnages, monstres, décors restent en pixel art HD.
 - Interface : polices **Lilita One** (titres, chiffres) et **Fredoka** (textes), `font-synthesis: none`, jamais
   `fontStyle: 'bold'` dans Phaser. Composants communs : `ui/kit.tsx` (`HeroCard` = le héros en entier, `CardFigure`),
   `ui/chrome.tsx` (`ChromeDefs` posé une fois, jamais caché ; `BarArt` toujours **dernier enfant** de sa barre).
   **Toutes les fenêtres s'ouvrent au milieu de l'écran.** Combat plein écran, interface qui flotte dessus (pause, pilules,
-  AUTO/vitesse ronds, cartes des héros) : `hud-art.tsx` + `battle-scene.ts`. Tirage : `SummonResult` + `ui/card-back.tsx`.
+  AUTO/vitesse ronds, cartes des héros) : `hud-art.tsx` + `battle-scene.ts`. Tirage : `sections/summon-reveal.tsx` (le héros sort du portail, plus de cartes).
 - Plus tard : profil du joueur, événements, sons et musique, Siège. Ensuite : serveur (Supabase) → habillage → social
   réel → argent réel → bêta → lancement.
 

@@ -158,3 +158,12 @@ Gabryel → Dardane ; Elyon → Elvyn ; Auriel → Aurelle ; Jinn → Jarek.
 - 26/11 : 8 monstres deviennent héros obtenables (ils restent monstres dans leur clan) : Nyrra (araignée tisseuse),
   Sarvik (serpent guerrier), Jessa (tireuse pirate), Oboro (sorcier oni), Sorai (tengu à l'éventail), Bao (singe chaman),
   Gribou (singe voleur), Karu (corbeau tengu). Raretés / compétences / stats provisoires (à revoir au réglage final).
+- 26/11 (suite) : publiés v0.59.0 (style moderne partout, combat plein écran, écart « V1 » entre les équipes, 169 pictos
+  modernes, 8 nouveaux héros, Garvin redessiné en roche naturelle), v0.59.1 (attaques spéciales jamais coupées :
+  `calques` de `jeu_export.py`, contrôle `anim/controle_coupes.py`), v0.60.0 (boutons « Pierre de l'arène », fonds des
+  menus modernes, terrain de préparation dessiné exprès, héros plus petit sur sa fiche). Leçon : après un export HD,
+  vérifier `size` de `hd-meta.ts` = taille du webp, puis `vignettes.py`.
+- Reste à faire / idées : carte de la Guilde qui cache le donjon sur petit téléphone (proposé au propriétaire) ; tutoriel
+  à revoir (étape `.modal .x` de la fiche héros devenue `.hx-act-back`) ; « Section 5 / 4 » sur la préparation avec une
+  sauvegarde de test ; poids de `icons.webp` (685 Ko) ; règles CSS mortes `ss-*`, `ts-*`, `.hp-*` ; copie claude.ai
+  (EigGhykFPgfeb7L1UoYfDX) pas republiée depuis longtemps.
