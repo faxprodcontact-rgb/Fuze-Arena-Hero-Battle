@@ -183,6 +183,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                           (xf(ribbon([(-1.0, -3.2), (0.6, -0.4), (1.6, 2.6)], [0.1, 0.5, 0.1]), tie_c[0], tie_c[1], sn.deg), RED.hi, 0.6)])
         return H, K, A
 
+    # le fond du pantalon (avis du propriétaire : « trou dans le pantalon ») : sous la ceinture, le tissu bouffant relie
+    # les deux jambes jusqu'à l'entrejambe ; il suit le bassin, les jambes passent devant et y posent leur ombre
+    seat = sm([(54.6, 79.6), (66.0, 79.4), (78.8, 79.4), (79.4, 84.0), (77.4, 88.0), (73.0, 90.8), (68.4, 92.0),
+               (64.0, 91.0), (59.4, 88.4), (55.6, 84.6)])
+    seat = seat.map(lambda p: mapp(PEL, p))
+    sdet = [(ribbon([mapp(PEL, q) for q in ((66.8, 83.0), (67.6, 87.0), (68.2, 91.0))], [0.1, 1.0, 0.2]), ORANGE.shadow, 0.6),
+            (ribbon([mapp(PEL, q) for q in ((62.0, 88.6), (65.4, 90.0), (68.4, 91.2))], [0.1, 0.9, 0.1]), ORANGE.deep, 0.35)]
+    fig.part('seat', seat, ORANGE, cel=1.2, rim=0.5, cast=0, details=sdet)
+
     # la jambe lointaine (en avant, genou fléchi), puis la jambe proche (en arrière, bien plantée)
     fe = P['fext']
     fleg = leg('f', FHIP, P['fa'], 12.8 + 8.4 * fe, 10.6 + 2.6 * fe, P['fkb'],

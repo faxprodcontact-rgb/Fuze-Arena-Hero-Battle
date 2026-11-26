@@ -30,6 +30,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mapp, sides  # noqa: E402
 from outils import bent, crpath, fuse, P as PG, geom_shapes, _cap  # noqa: E402
+from visage import placer, verifier, guide_svg  # noqa: E402,F401
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'knights-5'
@@ -62,6 +63,13 @@ NH, NK0, NA0 = (57.0, 86.5), (46.0, 100.6), (30.6, 109.6)     # jambe proche : h
 FH, FK0, FA0 = (70.5, 87.0), (85.4, 93.8), (85.4, 107.6)      # jambe lointaine : hanche, genou, cheville
 G0 = (108.0, 70.5)              # le milieu de la garde de la dague, au repos
 TAILR = (50.0, 87.0)            # le pivot de la queue
+
+# ---------- le visage (../visage.py, méthode commune) ----------
+# La boîte = le crâne (de la nuque à la racine du museau, du dessus du crâne au bas de la joue ; sans les cornes ni
+# le museau qui avance), repère de la tête AVANT l'agrandissement ×1,1. Tête de dragon de profil → tour=75 : un seul
+# oeil (avis du propriétaire : « enlever l'oeil du fond »).
+FACE_BOX = (69.0, 33.5, 96.0, 53.5)
+FACE = placer(FACE_BOX, tour=75)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, gape=0.0, glow=0.0, q=0.0, qu=0.0, qw=0.0,
             pan=0.0, na=(0.0, 0.0), fw=(0.0, 0.0), ang=0.0, bend=0.0, hot=0.0, blink=0.0, shift=0.0, curl=0.0, ph=0.0, back=0.0,
@@ -606,8 +614,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         ws = [w * HSC * (1 - i / 16) ** 0.85 + 0.15 for i in range(17)]
         left, right = sides(c, ws)
         return sm(left[:-1] + [c[-1]] + right[:-1][::-1], sharp=(len(left) - 1,), t=0.9), c
-    hornF, cF = horn((73.6, 38.6), (65.4, 32.4), (57.2, 27.0), 4.4)
-    hornN, cN = horn((83.0, 37.0), (75.4, 30.2), (66.6, 24.6), 5.2)
+    hornF, cF = horn((77.0, 38.6), (69.6, 31.8), (61.2, 26.4), 4.4)
+    hornN, cN = horn((82.0, 37.4), (74.4, 30.4), (65.6, 24.6), 5.2)
     for name, sh, c in (('hornF', hornF, cF), ('hornN', hornN, cN)):
         fig.part(name, sh, HORN, grad=(c[0][0], c[0][1] - 3, c[-1][0], c[-1][1] + 2, [(0, HORN.light), (0.6, HORN.base), (1, HORN.shadow)]),
                  cel=0.9, rim=0.7, cast=0.9,
@@ -652,7 +660,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=1.0, rim=0.6, cast=1.2, details=jd)
 
     # -- les crocs du haut (avant le crâne : la lèvre cache leur base) --
-    upt = teeth([(92.0, 49.5, 1.3, 1.3), (97.6, 49.3, 1.8, 2.0), (103.8, 49.0, 2.3, 3.3), (108.2, 48.6, 1.4, 1.5)], False, HEAD)
+    upt = teeth([(96.4, 49.3, 1.3, 1.3), (99.8, 49.2, 1.8, 2.0), (103.8, 49.0, 2.3, 3.3), (108.2, 48.6, 1.4, 1.5)], False, HEAD)
     fig.part('uteeth', upt, TOOTH, grad=(hp((108, 0))[0], hp((0, 49))[1], hp((92, 0))[0], hp((0, 52))[1],
                                          [(0, TOOTH.hi), (0.55, TOOTH.light), (1, TOOTH.shadow)]), cel=0.35, rim=0.3, cast=0.6)
 
@@ -680,8 +688,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ex, ey, ew = FACE['oeil_proche']
     hd += [(HD(sm([(ex - 4.6, ey - 2.2), (ex - 1.0, ey - 3.4), (ex + 2.8, ey - 3.2), (ex + 5.4, ey - 1.6), (ex + 3.8, ey - 0.6),
                    (ex + 0.8, ey - 1.6), (ex - 2.4, ey - 1.6), (ex - 4.4, ey - 1.0)], sharp=(0, 3), t=0.8)), SKIN.deep, 0.85),
-           (HD(sm([(ex - 6.4, ey - 4.2), (ex - 2.2, ey - 6.6), (ex + 1.8, ey - 6.8), (ex + 4.8, ey - 5.6), (ex + 6.2, ey - 2.6),
-                   (ex + 3.4, ey - 3.6), (ex - 0.6, ey - 4.4), (ex - 4.2, ey - 3.6)], sharp=(0, 4), t=0.8)), SKIN.hi, 0.6)]
+           (HD(sm([(ex - 5.2, ey - 3.6), (ex - 1.6, ey - 5.0), (ex + 2.2, ey - 5.0), (ex + 5.0, ey - 3.6), (ex + 5.8, ey - 2.2),
+                   (ex + 3.4, ey - 3.4), (ex - 0.2, ey - 3.8), (ex - 3.4, ey - 3.4)], sharp=(0, 4), t=0.8)), SKIN.hi, 0.5)]
     # l'oeil (un seul) : amande jaune coupée en haut par l'arcade, pupille fendue (le regard du prédateur)
     hw = ew / 2
     eye = sm([(ex - hw, ey - 1.3), (ex - 0.4, ey - 1.4), (ex + hw * 0.8, ey - 0.6), (ex + hw, ey + 0.2), (ex + 0.6, ey + 1.4),
@@ -705,7 +713,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hd += [(HD(sm([(108.4, 41.6), (110.0, 40.8), (111.4, 41.6), (110.6, 42.6), (109.0, 42.6)], t=0.8)), SKIN.deep, 0.9),
            (HD(ribbon([(108.2, 40.6), (110.0, 39.9), (111.8, 40.8)], [0.1, 0.5, 0.1])), SKIN.hi, 0.7)]
     # le rictus : le pli de la babine qui remonte du coin de la gueule vers l'oeil, la gencive du haut (rouge)
-    hd += [(HD(ribbon([(94.2, 49.0), (93.2, 47.4), (92.0, 46.4)], [0.2, 0.8, 0.1])), SKIN.deep, 0.5),
+    hd += [(HD(ribbon([(94.2, 49.0), (93.4, 47.6), (92.6, 46.8)], [0.2, 0.6, 0.1])), SKIN.deep, 0.4),
            (HD(ribbon([(94.4, 49.2), (98.0, 49.0), (102.0, 48.7), (106.0, 48.4), (110.0, 47.8)], [0.2, 0.7, 0.8, 0.7, 0.2])), GUM[1], 1),
            (HD(ribbon([(97.0, 48.8), (102.0, 48.5), (107.0, 48.1)], [0.1, 0.35, 0.1])), GUM[2], 0.8)]
     # les taches sombres qui font le lien avec le corps de salamandre
@@ -767,13 +775,21 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- ce que les effets doivent savoir ----
     fig.ctx = dict(G=mapp(BL, (0, 0)), tip=tip, ang=ang, spine=[mapp(BL, p) for p, a, s in spn], wrist=FWw, FS=FSw,
-                   mouth=jp((110.6, 50.6)), mouthu=hp((110.4, 48.4)), nostril=hp((108.0, 42.0)), head=hp((90, 41)),
+                   mouth=jp((110.6, 50.6)), mouthu=hp((110.4, 48.4)), nostril=hp((109.8, 41.6)), head=hp(FACE['oeil_proche'][:2]),
                    chest=mapp(TOR, (76, 66)), P=Pz, ROOT=ROOTM, hand=mapp(HANDM, (40, 54)),
                    tailtip=tailc[-1], feet=(mapp(ROOTM, (30, GRD)), mapp(ROOTM, (92, GRD))))
     if fx:
         for f_ in fx:
             f_(fig, fig.ctx)
     return fig
+
+
+def face_mesures():
+    """Les places RÉELLES des traits (repère de la tête, avant le ×1,1), pour visage.verifier : l'oeil dessiné (centre,
+    largeur) ; le nez = la racine du museau (la cassure sous l'arcade, d'où part l'arête) ; la bouche = le coin de la
+    gueule. Le museau avance ensuite hors du crâne (naseau au bout) : c'est un dragon."""
+    ex, ey, ew = FACE['oeil_proche']
+    return {'oeil_proche': (ex, ey, ew), 'oeil_fond': None, 'nez': (95.4, 46.6), 'bouche': (94.0, 49.4, 2.6)}
 
 
 def mixc(a, b, t):
@@ -797,6 +813,7 @@ def main():
         subprocess.run(['node', rendu, path, png, str(h)], check=True)
         Image.open(png).save(os.path.join(pub, out + '.webp'), 'WEBP', quality=90, method=6)
         print('écrit %s.svg (%d ko) → art/vecto/%s.webp' % (name, len(svg) // 1024, out))
+    print('visage :', verifier(face_mesures(), FACE_BOX) or 'aucun défaut')
     x0, y0, w, h = FRAME
     print('mesures pour src/game/vecto.ts : [largeur, hauteur, x et y des pieds] =',
           [w, h, round(FEET[0] - x0, 2), round(FEET[1] - y0, 2)])

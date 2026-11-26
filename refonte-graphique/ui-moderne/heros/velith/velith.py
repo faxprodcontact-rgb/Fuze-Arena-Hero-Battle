@@ -64,7 +64,7 @@ FRAME = (-3, -2, 126, 120)
 #   de ce repère (degrés) ;
 #   fW : le poignet lointain ; fang : la main lointaine pointe dans cette direction (degrés, 90 = vers le bas) ;
 #   claw : la main lointaine s'ouvre en griffe (0 poing, 1 griffe) ; spread : les doigts s'écartent ; ffront : le bras
-#   lointain passe devant le corps (0/1).
+#   lointain passe devant le corps (0/1) ; freach / nreach : le bras lointain / proche s'allonge (frappes).
 S_N0 = (45.0, 47.0)                                     # l'épaule proche (sous la fourrure)
 G0 = (25.8, 22.0)                                       # le repère de la hache sur le manche (nG le place)
 HU = (0.1697, 0.9856)                                   # le manche, de la lame vers le pommeau
@@ -78,7 +78,7 @@ LF1, LF2 = 16.5, 15.0
 AXE0 = math.degrees(math.atan2(2.0 - 45.0, 22.5 - 29.5))   # le manche monte vers la lame (un peu penché en arrière)
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, shift=0.0, lift=0.0, feet_up=0.0, head=(0.0, 0.0), tilt=0.0,
             jaw=0.0, blink=0.0, ph=0.0, sway=0.0, crest=0.0, nG=G0, axe=0.0, fW=W_F0, fang=90.0, claw=0.0,
-            spread=1.0, ffront=0.0, pg=0.0, freach=1.0)
+            spread=1.0, ffront=0.0, pg=0.0, freach=1.0, nreach=1.0)
 
 
 def M_apply(M, pts):
@@ -597,7 +597,7 @@ def near_arm(fig, P, UC, gfur):
     R = (math.cos(a), math.sin(a), -math.sin(a), math.cos(a), 0, 0)
     MA = mchain(mT(G[0], G[1]), R, mT(-G0[0], -G0[1]))            # la hache et le poing : repère du dessin au repos
     Wt = mapp(MA, W_N0)
-    E, W = ik(S, Wt, LN1, LN2, -1)
+    E, W = ik(S, Wt, LN1 * P['nreach'], LN2 * P['nreach'], -1)   # nreach : le bras s'allonge dans la frappe au sol
     fig.ctx_arm.update(nS=S, nE=E, nW=W, MA=MA, pommel=mapp(MA, (29.6, 45.6)), blade=mapp(MA, (44.6, 12)),
                        axe_top=mapp(MA, (36, 2.6)))
     ph, sw = P['ph'], P['sway']

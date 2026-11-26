@@ -69,7 +69,7 @@ def monotone(ts, vs, t):
 
 PAIRS = {'head': ('hx', 'hy'), 'nG': ('ngx', 'ngy'), 'fW': ('fwx', 'fwy')}
 SCAL = ['breath', 'crouch', 'lean', 'shift', 'lift', 'feet_up', 'tilt', 'jaw', 'axe', 'fang', 'claw', 'spread', 'ffront',
-        'freach', 'pg']
+        'freach', 'nreach', 'pg']
 NUM = SCAL + [k for v in PAIRS.values() for k in v]
 
 
@@ -129,8 +129,8 @@ ATTACK_HIT = 520
 # taillés jaillit, de plus en plus hauts, jusqu'à un gros bouquet de cristaux sous l'ennemi ; puis les pics se brisent
 # en éclats et en bouffées de neige pendant qu'il se redresse.
 POMMEL = (3.8, 23.6)                                  # le pommeau, depuis le point de prise (hache droite)
-SLAM = dict(crouch=8, lean=1.5, shift=4, head=(1, 1), tilt=3, nG=(23, 116 - POMMEL[1] - 1.0), fW=(124, 100.5), claw=0,
-            fang=84, freach=1.42)
+SLAM = dict(crouch=8.6, lean=1.5, shift=4, head=(1, 1), tilt=3, nG=(27, 116 - POMMEL[1] - 1.0), fW=(124, 100.5), claw=0,
+            fang=84, freach=1.42, nreach=1.17)
 SPECIAL = [
     (0, {}),
     (170, dict(crouch=1, breath=1.6, head=(0, -0.8), nG=(25.8, 21), ffront=1, fW=(108, 64), claw=0, fang=150)),
