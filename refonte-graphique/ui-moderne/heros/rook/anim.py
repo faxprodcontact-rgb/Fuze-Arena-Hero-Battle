@@ -381,10 +381,8 @@ def fx_attack(tl):
             c = (100.0, 46.0)
             fig.fx_front.append('<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"/>' % (
                 fm(c[0]), fm(c[1]), fm(14 * fl), fm(12 * fl), g_rad(fig, c, 14 * fl, [(0, FIRE[0], 0.9 * fl), (0.4, FIRE[2], 0.6 * fl), (1, FIRE[3], 0)])))
-            for j, (ang, hh) in enumerate(((-30, 9), (10, 11), (40, 8), (-70, 6))):
-                a = math.radians(ang)
-                fig.fx_front.append(tongue(fig, (c[0] - 2 * math.cos(a), c[1] - 2 * math.sin(a)), hh * fl, 3.6 * fl, lean=math.cos(a) * 1.3,
-                                           bend=0.4 * (j - 1.5), op=fl))
+            for j, (dy, hh, ln) in enumerate(((-5, 10, 1.1), (1, 14, 1.4), (6, 9, 1.2))):
+                fig.fx_front.append(tongue(fig, (c[0] - 4, c[1] + dy + 4), hh * fl, 6.0 * fl, lean=ln, bend=0.5 * (j - 1), op=fl))
         # la gerbe de plumes de feu : elles filent en éventail et tirent une traînée de flamme courbe
         k = (tl - A_LAUNCH) / (A_HIT - A_LAUNCH)
         if -0.05 < k < 1.12:
@@ -395,14 +393,14 @@ def fx_attack(tl):
                 if k < 1.0:
                     pts = [volley_at(i, k - 0.26 * j / 8)[0] for j in range(9)]
                     pts = [q for q in pts]
-                    ws = [2.6 * (1 - j / 8) ** 0.8 + 0.1 for j in range(9)]
+                    ws = [4.2 * (1 - j / 8) ** 0.8 + 0.1 for j in range(9)]
                     tr = ribbon(pts, ws)
                     tr2 = ribbon(pts[:6], [w * 0.45 for w in ws[:6]])
                     fig.fx_front.append('<path d="%s" fill="%s"/><path d="%s" fill="%s"/>' % (
                         tr.d(), g_lin(fig, pts[0], pts[-1], [(0, FIRE[2], 0.85), (0.5, FIRE[3], 0.5), (1, FIRE[4], 0)]),
                         tr2.d(), g_lin(fig, pts[0], pts[5], [(0, FIRE[0], 0.9), (1, FIRE[1], 0)])))
                 op = 1.0 if k < 1.0 else max(0.0, 1 - (k - 1.0) / 0.1)
-                fig.fx_front.append(feather_fx(fig, p, ang, 10.0, 3.4, op))
+                fig.fx_front.append(feather_fx(fig, p, ang, 13.0, 4.4, op))
         # l'impact : une fleur de flammes et de braises, tenue, puis la fumée monte en volutes
         h = env(tl, A_HIT - 10, A_HIT + 40, A_HIT + 150, A_HIT + 300)
         if h > 0:
@@ -451,7 +449,7 @@ def gold_feather_rain(fig, ctx, tl):
         back = math.sin(a) < 0
         sway = 30 * math.sin(k * 7 + j)
         op = 1.0 if k < 0.9 else max(0.0, 1 - (k - 0.9) / 0.35)
-        s = feather_fx(fig, (x, y), (180 if math.cos(a) < 0 else 0) + 25 + sway, 7.4, 3.0, op, gold=True)
+        s = feather_fx(fig, (x, y), (180 if math.cos(a) < 0 else 0) + 25 + sway, 8.6, 3.6, op, gold=True)
         (fig.fx_back if back else fig.fx_front).append(s)
         if k > 0.95:
             fig.fx_back.append(ember(fig, x, y1 - 1, 0.6, op, pal=GOLDL))
@@ -471,7 +469,7 @@ def ring(fig, ctx, k, op=1.0):
     if fade <= 0.02:
         return
     ph = k * 9
-    hmax = (5.0 - 2.0 * e) * (1.25 if k > 0.7 else 1.0)
+    hmax = (8.5 - 3.5 * e) * (1.2 if k > 0.7 else 1.0)
     for half, lst in ((0, fig.fx_back), (1, fig.fx_front)):
         a0, a1 = (180, 360) if half == 0 else (0, 180)
         top, bot = [], []
