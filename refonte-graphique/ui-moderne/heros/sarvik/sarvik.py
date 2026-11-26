@@ -442,8 +442,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # l'épaule (avis du propriétaire, tour 3 : plus d'épaulière) : la racine du bras se fond dans le buste par un masque
     # en dégradé le long du bras (outils.FigureM, comme Aurelle) : ni bord de boule, ni couture ; le bras reste devant
     # le buste plus bas (le coude, l'avant-bras)
-    m0 = lerp(SN, En, 0.55)
-    m1 = add(SN, (SN[0] - En[0], SN[1] - En[1]), 0.22)
+    m0 = lerp(SN, En, 0.72)
+    m1 = add(SN, (SN[0] - En[0], SN[1] - En[1]), 0.02)
     fig.masks['narm'] = (m0[0], m0[1], m1[0], m1[1], 'torso')
     nb_, ndet, nclaws = fist_shapes(Fn, a_n, 1)
     for i, cl in enumerate(nclaws):

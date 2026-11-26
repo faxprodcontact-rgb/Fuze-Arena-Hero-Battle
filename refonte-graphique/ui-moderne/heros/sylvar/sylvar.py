@@ -405,13 +405,34 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
           details=[(T_(ribbon([(0.1, 7.8), (0.3, 11.4), (0.1, 15.0)], [0.3, 0.4, 0.1])), RED.deep, 0.8),
                    (T_(ribbon([(0.8, 9.4), (0.9, 12)], [0.1, 0.4])), RED.hi, 0.6)])
 
-    # ================================================================ la flèche encochée
-    rest = add(G, rot((-0.6, -5.0), P['btilt']))           # la flèche repose sur le poing lointain
-    a_ang = math.degrees(math.atan2(rest[1] - N[1], rest[0] - N[0]))
-    ARW = 63.5                                              # la longueur de la flèche (encoche → pointe)
-    if P['arrow'] > 0.5:
-        A = lambda sh: xf(sh, N[0], N[1], a_ang)
-        arrow_parts(fig, A, ARW, P['stone'], 'a')
+    # ================================================================ le bras lointain : brassard et poing sur la poignée
+    fbr = limb([BR0, FW], [8.2, 7.4])
+    bang = math.degrees(math.atan2(uy, ux))
+    B_ = lambda sh: xf(sh, BR0[0], BR0[1], bang)
+    fig.part('fbracer', fbr, LEATHER, cel=1.2, rim=0.7, cast=1.0, cast_on=['fsleeve'],
+             details=[(B_(sm([(-1, -4.6), (1.4, -4.6), (1.4, 4.6), (-1, 4.6)], sharp=(0, 1, 2, 3), t=0.4)), BRONZE.base, 1),
+                      (B_(sm([(-1, -4.6), (1.4, -4.6), (1.4, -1.8), (-1, -1.6)], sharp=(0, 1, 2, 3), t=0.4)), BRONZE.light, 0.9),
+                      (B_(sm([(6.6, -4.4), (8.0, -4.4), (8.0, 4.4), (6.6, 4.4)], sharp=(0, 1, 2, 3), t=0.4)), BRONZE.base, 1),
+                      (B_(ellipse(4.2, -1.4, 0.75, 0.75)), BRONZE.light, 1),
+                      (B_(ribbon([(1.8, -2.6), (4.2, -2.8), (6.4, -2.6)], [0.2, 1.0, 0.2])), LEATHER.hi, 0.6)])
+    # le poing tient l'arc PAR L'ARRIÈRE (avis du propriétaire, 3e tour du 26/11) : le dos de la main et le poing passent
+    # DERRIÈRE le bois ; devant l'arc on ne voit que le bout des doigts qui se referment sur la poignée (morceau 'ffing',
+    # posé après l'arc), et la flèche, posée au-dessus du poing, passe devant l'arc
+    F_ = lambda sh: xf(sh, G[0], G[1], P['btilt'] * 0.4)
+    palm = sm([(-7.8, -3.4), (-4.0, -4.2), (-1.0, -4.2), (-0.6, 4.2), (-3.8, 4.6), (-7.6, 3.6)])
+    # les doigts (de tailles inégales) : (haut, bas, bout du pli derrière le bois, bout du doigt devant le bois)
+    FING = [(-4.1, -1.9, 4.0, 1.0), (-1.9, 0.4, 4.3, 0.5), (0.4, 2.6, 4.1, 0.8), (2.6, 4.4, 3.5, 1.4)]
+    fs = [rpoly([(-1.8, v0), (xc, v0 + 0.1), (xc, v1), (-1.8, v1)], [0.6, 1.1, 1.1, 0.6]) for v0, v1, xc, xt in FING]
+    fth = limb([(-6.0, -3.2), (-3.0, -4.6), (0.2, -4.8)], [2.8, 2.6, 2.3])
+    fist = F_(union(palm, *fs, fth, smooth=0.55, step=0.4))
+    fdet = [(F_(sm([(-7.6, -3.2), (-4.0, -4.0), (-1.4, -3.8), (-1.2, -0.4), (-4.0, 0.0), (-7.4, -0.4)])), SKIN.light, 0.45),
+            (F_(ribbon([(-6.0, -2.4), (-3.0, -3.4), (0.0, -3.6)], [0.1, 0.5, 0.1])), SKIN.shadow, 0.6)]
+    # les plis des doigts qui tournent autour du bord du bois (on les voit dépasser à droite de l'arc)
+    for v0, v1, xc, xt in FING:
+        fdet += [(F_(ellipse(xc - 0.9, (v0 + v1) / 2 - 0.3, 0.8, (v1 - v0) * 0.27)), SKIN.hi, 0.45),
+                 (F_(ribbon([(1.6, v1), (xc - 1.0, v1 + 0.05), (xc - 0.2, v1 - 0.15)], [0.1, 0.5, 0.1])), SKIN.shadow, 0.75)]
+    fdet.append((F_(ribbon([(-1.6, -3.8), (-1.8, 0), (-1.5, 4.0)], [0.1, 0.6, 0.1])), SKIN.shadow, 0.45))
+    fig.part('ffist', fist, SKIN, cel=1.1, rim=0.6, cast=1.0, details=fdet)
 
     # ================================================================ l'arc
     n_ = len(bowc) - 1
@@ -441,30 +462,24 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         tp = taper(crpath(seg, 6), 2.4, 1.2, tip='round')
         fig.part(nm, tp, BONE, cel=0.5, rim=0.5, cast=0.5)
 
-    # ================================================================ le bras lointain : brassard et poing sur la poignée
-    fbr = limb([BR0, FW], [8.2, 7.4])
-    bang = math.degrees(math.atan2(uy, ux))
-    B_ = lambda sh: xf(sh, BR0[0], BR0[1], bang)
-    fig.part('fbracer', fbr, LEATHER, cel=1.2, rim=0.7, cast=1.0, cast_on=['fsleeve'],
-             details=[(B_(sm([(-1, -4.6), (1.4, -4.6), (1.4, 4.6), (-1, 4.6)], sharp=(0, 1, 2, 3), t=0.4)), BRONZE.base, 1),
-                      (B_(sm([(-1, -4.6), (1.4, -4.6), (1.4, -1.8), (-1, -1.6)], sharp=(0, 1, 2, 3), t=0.4)), BRONZE.light, 0.9),
-                      (B_(sm([(6.6, -4.4), (8.0, -4.4), (8.0, 4.4), (6.6, 4.4)], sharp=(0, 1, 2, 3), t=0.4)), BRONZE.base, 1),
-                      (B_(ellipse(4.2, -1.4, 0.75, 0.75)), BRONZE.light, 1),
-                      (B_(ribbon([(1.8, -2.6), (4.2, -2.8), (6.4, -2.6)], [0.2, 1.0, 0.2])), LEATHER.hi, 0.6)])
-    F_ = lambda sh: xf(sh, G[0], G[1], P['btilt'] * 0.4)
-    palm = sm([(-7.8, -3.4), (-4.0, -4.2), (-1.0, -4.2), (-0.6, 4.2), (-3.8, 4.6), (-7.6, 3.6)])
-    FING = [(-4.1, -1.9, 2.9), (-1.9, 0.4, 3.2), (0.4, 2.6, 3.0), (2.6, 4.4, 2.4)]
-    fs = [rpoly([(-1.8, v0), (x1, v0 + 0.1), (x1, v1), (-1.8, v1)], [0.6, 1.1, 1.1, 0.6]) for v0, v1, x1 in FING]
-    fth = limb([(-6.0, -3.2), (-3.0, -4.6), (0.2, -4.8)], [2.8, 2.6, 2.3])
-    fist = F_(union(palm, *fs, fth, smooth=0.55, step=0.4))
-    fdet = [(F_(sm([(-7.6, -3.2), (-4.0, -4.0), (-1.4, -3.8), (-1.2, -0.4), (-4.0, 0.0), (-7.4, -0.4)])), SKIN.light, 0.45),
-            (F_(ribbon([(-6.0, -2.4), (-3.0, -3.4), (0.0, -3.6)], [0.1, 0.5, 0.1])), SKIN.shadow, 0.6)]
-    # les doigts qui passent devant la poignée (de tailles inégales), séparés par des plis doux, jointures éclairées
-    for v0, v1, x1 in FING:
-        fdet += [(F_(ellipse(x1 - 1.3, (v0 + v1) / 2 - 0.3, 1.0, (v1 - v0) * 0.27)), SKIN.hi, 0.5),
-                 (F_(ribbon([(-1.4, v1), (0.6, v1 + 0.1), (x1 - 0.2, v1 - 0.15)], [0.1, 0.5, 0.1])), SKIN.shadow, 0.75)]
-    fdet.append((F_(ribbon([(-1.6, -3.8), (-1.8, 0), (-1.5, 4.0)], [0.1, 0.6, 0.1])), SKIN.shadow, 0.45))
-    fig.part('ffist', fist, SKIN, cel=1.1, rim=0.6, cast=1.0, details=fdet)
+    # ================================================================ le bout des doigts, refermés DEVANT le bois de l'arc
+    tps = [rpoly([(xt, v0 + 0.2), (xc - 0.6, v0 + 0.1), (xc - 0.6, v1 - 0.05), (xt, v1 - 0.15)], [1.0, 0.3, 0.3, 1.0])
+           for v0, v1, xc, xt in FING]
+    ftips = F_(union(*tps, smooth=0.35, step=0.3))
+    tdet = []
+    for v0, v1, xc, xt in FING[:-1]:
+        tdet.append((F_(ribbon([(xt + 0.3, v1 - 0.05), (xt + 1.6, v1 + 0.05), (xc - 0.6, v1)], [0.1, 0.5, 0.4])), SKIN.shadow, 0.8))
+    for v0, v1, xc, xt in FING:
+        tdet.append((F_(ellipse(xt + 1.0, v0 + (v1 - v0) * 0.32, 0.8, (v1 - v0) * 0.18)), SKIN.hi, 0.5))
+    fig.part('ffing', ftips, SKIN, cel=0.7, rim=0.5, cast=0.8, cast_on=['bow'], details=tdet)
+
+    # ================================================================ la flèche encochée
+    rest = add(G, rot((-0.6, -5.0), P['btilt']))           # la flèche repose sur le poing lointain
+    a_ang = math.degrees(math.atan2(rest[1] - N[1], rest[0] - N[0]))
+    ARW = 63.5                                              # la longueur de la flèche (encoche → pointe)
+    if P['arrow'] > 0.5:
+        A = lambda sh: xf(sh, N[0], N[1], a_ang)
+        arrow_parts(fig, A, ARW, P['stone'], 'a')
 
     # ================================================================ la corde (devant le masque et le col)
     if P['free'] > 0.5:

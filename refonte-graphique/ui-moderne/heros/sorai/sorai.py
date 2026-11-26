@@ -373,8 +373,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hx, hy = (nx_ - 1.4, ny_ - 0.7)                    # le haut de la racine du bec, sous l'œil
     mask = sm([(65.4, 33.0), (68.2, 30.6), (73.6, 30.0), (77.8, 31.4), (80.0, 34.2), (80.5, 37.4),
                (hx + 4.3, hy - 1.4), (hx + 6.8, hy - 0.8), (hx + 10.1, hy + 0.3), (hx + 12.6, hy + 2.0),
-               (hx + 13.7, hy + 4.4), (hx + 13.1, hy + 6.9), (hx + 11.9, hy + 7.5), (hx + 11.5, hy + 6.0),
-               (bx_ + 9.2, by_ + 3.1), (bx_ + 4.4, by_ + 3.6), (bx_ + 0.6, by_ + 3.7), (75.0, 47.9),
+               (hx + 13.7, hy + 4.4), (hx + 13.2, hy + 7.0), (hx + 12.0, hy + 7.7), (bx_ + 10.9, by_ + 2.5),
+               (bx_ + 9.0, by_ + 2.8), (bx_ + 4.4, by_ + 3.2), (bx_ + 0.6, by_ + 3.6), (75.0, 47.9),
                (70.2, 47.6), (66.6, 45.4), (65.0, 40.0)], sharp=(11, 13))
     md = []
     # les plans : le bord arrière du masque dans la demi-teinte lavande, le front éclairé en haut à droite
@@ -409,13 +409,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (ellipse(ex - 1.55, ey + 5.3, 0.22, 0.36), SILK.hi, 0.8)]
     # le bec : la mandibule du bas dans l'ombre, le dessous du bec du haut, l'arête éclairée, la narine, le crochet ;
     # chaque plan naît en fondu sur le masque (dégradés transparents vers la racine)
-    md += [(sm([(bx_ + 0.2, by_ + 0.2), (bx_ + 3.4, by_ + 0.4), (bx_ + 7.0, by_ + 0.6), (bx_ + 10.6, by_ + 1.0),
-                (bx_ + 11.2, by_ + 2.0), (bx_ + 9.2, by_ + 3.2), (bx_ + 4.4, by_ + 3.7), (bx_ + 0.6, by_ + 3.8),
+    md += [(sm([(bx_ + 0.2, by_ + 0.2), (bx_ + 3.4, by_ + 0.4), (bx_ + 7.0, by_ + 0.8), (bx_ + 9.6, by_ + 1.5),
+                (bx_ + 11.0, by_ + 2.6), (bx_ + 9.0, by_ + 3.0), (bx_ + 4.4, by_ + 3.4), (bx_ + 0.6, by_ + 3.8),
                 (bx_ - 1.2, by_ + 2.0)]),
             ('lin', bx_ - 0.6, by_, bx_ + 5.0, by_, [(0, MASK.shadow, 0), (1, MASK.shadow, 0.6)]), 1),
-           (ribbon([(bx_ + 1.4, by_ + 2.2), (bx_ + 5.0, by_ + 2.6), (bx_ + 9.4, by_ + 2.1)], [0.1, 0.8, 0.1]), MASK.deep, 0.3),
-           (sm([(hx + 0.6, hy + 3.0), (hx + 5.0, hy + 3.3), (hx + 10.0, hy + 3.8), (hx + 11.4, hy + 5.6),
-                (hx + 10.0, hy + 4.9), (bx_ + 4.0, by_ - 0.1), (bx_ + 0.6, by_ + 0.1)]),
+           (ribbon([(bx_ + 1.4, by_ + 2.0), (bx_ + 5.0, by_ + 2.3), (bx_ + 8.8, by_ + 2.0)], [0.1, 0.7, 0.1]), MASK.deep, 0.3),
+           (sm([(hx + 0.6, hy + 3.0), (hx + 5.0, hy + 3.3), (hx + 10.0, hy + 3.8), (hx + 12.0, hy + 5.6),
+                (bx_ + 10.9, by_ + 2.4), (bx_ + 9.6, by_ + 1.3), (bx_ + 4.0, by_ + 0.1), (bx_ + 0.6, by_ + 0.1)]),
             ('lin', bx_ + 0.2, by_, bx_ + 5.0, by_, [(0, MASK.shadow, 0), (1, MASK.shadow, 0.6)]), 1),
            (ribbon([(hx + 3.0, hy - 0.4), (hx + 6.4, hy + 0.1), (hx + 10.0, hy + 1.1), (hx + 12.4, hy + 2.9)],
                    [0.1, 0.9, 0.9, 0.2]), '#ffffff', 0.95),
@@ -425,8 +425,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=1.0, rim=0.7, cast=1.2, cast_on=['skull', 'cord'], details=md)
 
     # la fente de la bouche (fermée) : rouge sombre (jamais noire), la commissure à la place de la « bouche »
-    fig.part('slit', ribbon([(bx_, by_), (bx_ + 3.4, by_ + 0.1), (bx_ + 7.0, by_ + 0.3), (bx_ + 10.4, by_ + 0.6)],
-                            [0.9, 0.65, 0.5, 0.1]), SILK,
+    fig.part('slit', ribbon([(bx_, by_), (bx_ + 3.4, by_ + 0.15), (bx_ + 7.0, by_ + 0.55), (bx_ + 9.6, by_ + 1.3),
+                             (bx_ + 10.9, by_ + 2.45)], [0.9, 0.65, 0.5, 0.35, 0.1]), SILK,
              grad=(bx_, by_, bx_ + 10, by_, g2(MOUTH, SILK.shadow)), cel=0, rim=0, cast=0, outline=False)
     # les places réelles de ce dessin (pour visage.verifier)
     MESURES.update(oeil_proche=(ex, ey, 2 * rx), oeil_fond=None, nez=(nx_, ny_), bouche=(bx_, by_, 2.0))
