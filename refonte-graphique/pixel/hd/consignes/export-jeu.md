@@ -15,7 +15,7 @@ pour garder l'image qu'elle rend (exactement celle du GIF : quels que soient ses
 `obj`, `solid`, `ghosts`, `veil`, `shake`, `tint`…, et avec ses calques translucides déjà mélangés), et appelle son
 `build_all()`. Il découpe ensuite chaque image, par colonnes, en trois : **le personnage en place** (avec ses effets « sur lui »), **ce qui est sur la cible** (posé aux
 pieds de la vraie cible par le jeu), **le projectile** (que le jeu fait voler). Il écrit la planche
-`public/art/hd/<id>.webp` (images rognées, ×2 sans flou) et la met dans `src/game/hd-meta.ts` (généré, ne pas modifier
+`public/art/hd/<id>.webp` (images rognées, ×1 : un pixel du dessin = un pixel de la planche, depuis le 26/11) et la met dans `src/game/hd-meta.ts` (généré, ne pas modifier
 à la main).
 
 Le `build.py` doit donc : avoir `SOL` (le point « sol » sur la toile), `compose(...)` et `build_all()` qui renvoie
