@@ -52,6 +52,10 @@ REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0,
             sn=0.0, sf=0.0, barb=0.0, glow=0.0, blink=0.0, wrist=W0, hrot=0.0, pearl=1.0, jaw=0.0, fist=(0.0, 0.0))
 
 
+# l'œil du fond : centre x et raccourci du 3/4 (même dessin et même hauteur que l'œil proche)
+EYE_FAR = (61.9, 0.78)
+
+
 def rot(v, deg):
     a = math.radians(deg)
     return (v[0] * math.cos(a) - v[1] * math.sin(a), v[0] * math.sin(a) + v[1] * math.cos(a))
@@ -487,29 +491,35 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                                   (49.6, 18.2, 2.8, 2.0, -8, 0.32), (42.6, 28.4, 3.2, 2.4, -60, 0.28)):
         hd.append((scale_plate(x, y, w_, h_, a), SCALE.hi, op))
         hd.append((ribbon([(x - w_ * 0.42, y + h_ * 0.2), (x, y + h_ * 0.55), (x + w_ * 0.42, y + h_ * 0.2)], [0.1, 0.45, 0.1]), SCALE.deep, op * 1.3))
-    # les arcades très marquées : leur ombre sur les yeux, le dessus éclairé
-    hd += [(sm([(46.2, 21.8), (51, 20.4), (56.2, 21.0), (55.8, 23.2), (51, 22.8), (47, 23.6)]), SCALE.deep, 0.5),
-           (sm([(57.6, 21.0), (60.4, 20.2), (63.2, 20.8), (62.6, 23.0), (60, 22.8), (57.8, 23.2)]), SCALE.deep, 0.45),
-           (ribbon([(45.6, 21.0), (50.6, 18.8), (56.2, 19.8)], [0.2, 1.5, 0.3]), SCALE.hi, 0.75),
-           (ribbon([(57.6, 20.2), (60.6, 18.8), (63.6, 19.9)], [0.2, 1.2, 0.3]), SCALE.hi, 0.7)]
-    # les yeux : iris d'or, pupille fendue, paupière lourde (calme et dangereux) ; celui du fond plus étroit
-    eyeN = sm([(47.4, 23.4), (50.8, 22.2), (55.6, 22.6), (54.8, 24.6), (51.2, 25.6), (48.4, 25.0)], sharp=(0, 2))
-    eyeF = sm([(57.6, 23.0), (60.2, 22.2), (62.6, 22.8), (61.8, 24.4), (59.4, 25.0), (58.0, 24.4)], sharp=(0, 2))
-    for e, (cx, cy), pw in ((eyeN, (52.2, 23.9), 0.62), (eyeF, (60.4, 23.6), 0.5)):
-        hd.append((e.scale(1.14, 1.4, cx, cy - 0.2), '#1a0c2c', 0.95))
+    # les yeux : iris d'or, pupille fendue, paupière lourde (calme et dangereux), sous une arcade très marquée.
+    # UN seul dessin d'œil (l'œil proche) ; l'œil du fond est le même, à la même hauteur, juste raccourci par le 3/4
+    # (resserré en largeur autour de son centre) ; le regard (pupille, reflet) part du même côté pour les deux.
+    ECX, ECY = 52.2, 23.9            # le centre de l'œil proche
+    FCX, FK = EYE_FAR
+
+    def eye_kit(cx, k):
+        """L'œil complet (arcade, contour, iris, pupille, paupière, reflet, pli) centré en (cx, ECY), largeur ×k."""
+        X = lambda x: cx + (x - ECX) * k           # noqa: E731  (x dessiné pour l'œil proche → x de cet œil)
+        to = lambda sh: sh.map(lambda q: (X(q[0]), q[1]))  # noqa: E731
+        cy = ECY
+        out = [(to(sm([(46.2, 21.8), (51, 20.4), (56.2, 21.0), (55.8, 23.2), (51, 22.8), (47, 23.6)])), SCALE.deep, 0.5),
+               (to(ribbon([(45.6, 21.0), (50.6, 18.8), (56.2, 19.8)], [0.2, 1.5, 0.3])), SCALE.hi, 0.75)]
+        e = sm([(47.4, 23.4), (50.8, 22.2), (55.6, 22.6), (54.8, 24.6), (51.2, 25.6), (48.4, 25.0)], sharp=(0, 2))
+        out.append((to(e.scale(1.14, 1.4, ECX, cy - 0.2)), '#1a0c2c', 0.95))
         if P['blink'] > 0.5:
-            hd += [(e, SCALE.base, 1), (ribbon([(cx - 4, cy + 0.2), (cx, cy + 0.9), (cx + 3, cy + 0.4)], [0.1, 0.6, 0.1]), SCALE.deep, 0.9)]
+            out += [(to(e), SCALE.base, 1), (to(ribbon([(ECX - 4, cy + 0.2), (ECX, cy + 0.9), (ECX + 3, cy + 0.4)], [0.1, 0.6, 0.1])), SCALE.deep, 0.9)]
         else:
-            hd += [(e, ('rad', cx + 0.6, cy + 0.6, 4.0, 4.0, [(0, '#fff4a0'), (0.4, '#ffd63a'), (0.85, '#f09a24'), (1, '#e2761c')]), 1),
-                   (ellipse(cx + 0.2, cy + 0.5, pw, 1.4), '#140a1c', 1),
-                   # la paupière lourde : elle couvre le haut de l'iris, droite
-                   (sm([(cx - 5, cy - 3.0), (cx + 3.8, cy - 2.4), (cx + 3.6, cy + 0.15), (cx - 4.6, cy - 0.75)], sharp=(0, 1, 2, 3), t=0.5)
-                    .scale(0.62 if e is eyeF else 1, 1, cx, cy), '#28709e', 1),
-                   (ribbon([(cx - 4.6, cy - 0.75), (cx - 0.4, cy - 0.45), (cx + 3.6, cy + 0.15)], [0.2, 0.8, 0.3]).scale(0.62 if e is eyeF else 1, 1, cx, cy), '#1a0c2c', 0.9),
-                   (ellipse(cx + 1.0, cy + 0.6, 0.42, 0.34), '#ffffff', 1)]
-    # le pli de la paupière (lumière), la joue
-    hd += [
-           (ribbon([(48.6, 26.8), (52, 27.4), (55.6, 26.8)], [0.1, 0.5, 0.1]), SCALE.shadow, 0.6)]
+            out += [(to(e), ('rad', X(ECX + 0.6), cy + 0.6, 4.0 * k, 4.0, [(0, '#fff4a0'), (0.4, '#ffd63a'), (0.85, '#f09a24'), (1, '#e2761c')]), 1),
+                    (to(ellipse(ECX + 0.2, cy + 0.5, 0.62, 1.4)), '#140a1c', 1),
+                    # la paupière lourde : elle couvre le haut de l'iris, droite
+                    (to(sm([(ECX - 5, cy - 3.0), (ECX + 3.8, cy - 2.4), (ECX + 3.6, cy + 0.15), (ECX - 4.6, cy - 0.75)], sharp=(0, 1, 2, 3), t=0.5)), '#28709e', 1),
+                    (to(ribbon([(ECX - 4.6, cy - 0.75), (ECX - 0.4, cy - 0.45), (ECX + 3.6, cy + 0.15)], [0.2, 0.8, 0.3])), '#1a0c2c', 0.9),
+                    (ellipse(X(ECX + 1.0), cy + 0.6, 0.42, 0.34), '#ffffff', 1)]
+        # le pli sous l'œil
+        out.append((to(ribbon([(48.6, 26.8), (52, 27.4), (55.6, 26.8)], [0.1, 0.5, 0.1])), SCALE.shadow, 0.6))
+        return out
+
+    hd += eye_kit(FCX, FK) + eye_kit(ECX, 1.0)
     fig.part('head', head, SCALE, grad=(74, 18, 42, 36, [(0, '#56c8d0'), (0.45, SCALE.base), (1, '#245c9c')]),
              cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'mfront', 'robe', 'mF', 'mE', 'mD', 'mC'], details=hd)
 

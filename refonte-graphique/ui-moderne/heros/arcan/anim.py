@@ -198,7 +198,7 @@ def idle_offsets(T):
     u = 2 * math.pi * T / 2.0
     br = 0.5 - 0.5 * math.cos(u)
     d = dict(sk=0.9 * math.sin(u - 1.1), crouch=0.35 * (0.5 - 0.5 * math.cos(u - 2.7)), heady=0.3 * math.sin(u - 0.7),
-             tilt=0.6 * math.sin(u - 1.0), jaw=0.7 * max(0.0, math.sin(u - 3.5)) ** 2, cs=0.9 * math.sin(u + 0.4),
+             tilt=0.6 * math.sin(u - 1.0), jaw=0.25 * max(0.0, math.sin(u - 3.5)) ** 2, cs=0.9 * math.sin(u + 0.4),
              pg=0.6 * math.sin(u + 0.2), fend=6 * math.sin(u - 1.5), nend=-6 * math.sin(u - 1.5))
     return d, br
 

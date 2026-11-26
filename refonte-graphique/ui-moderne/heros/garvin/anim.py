@@ -71,7 +71,7 @@ def monotone(ts, vs, t):
 
 
 PAIRS = {'head': ('headx', 'heady'), 'fw': ('fwx', 'fwy'), 'nw': ('nwx', 'nwy')}
-SCAL = ['crouch', 'lean', 'tilt', 'glow', 'heat', 'gape', 'frot', 'nrot', 'ffront', 'heal', 'red', 'inhale']
+SCAL = ['crouch', 'lean', 'tilt', 'glow', 'heat', 'gape', 'frot', 'nrot', 'ffront', 'fsw', 'heal', 'red', 'inhale']
 NUM = SCAL + [k for v in PAIRS.values() for k in v]
 BASE = dict(fw=K.FW0, nw=K.NW0)
 
@@ -98,15 +98,15 @@ def keyed(keys, t):
 # gorille, et frappe le sol des phalanges : arrêt sur l'image. Il reste appuyé, puis relève lentement le poing en garde.
 ATTACK = [
     (0, {}),
-    (160, dict(crouch=0.8, lean=-1.0, fw=(111.0, 51.0), nw=(33.8, 88.6), glow=1.0, tilt=-1.0)),
-    (520, dict(crouch=-1.0, lean=-3.0, fw=(110.0, 21.0), frot=-22, head=(-0.4, -1.0), tilt=-2.4, nw=(32.6, 88.0), glow=2.0)),
-    (700, dict(crouch=-1.1, lean=-3.3, fw=(109.6, 19.6), frot=-24, head=(-0.5, -1.2), tilt=-2.8, nw=(32.4, 87.8), glow=2.2)),
-    (738, dict(crouch=0.6, lean=1.2, fw=(127.0, 54.0), frot=-4, head=(0.0, 0.0), tilt=0.0, glow=2.2, gape=0.4)),
-    (770, dict(crouch=3.0, lean=4.0, fw=(125.0, 89.0), frot=0, head=(0.6, 1.0), tilt=2.2, nw=(35.6, 89.6), glow=3.2, gape=1.0)),
-    (1000, dict(crouch=3.0, lean=4.0, fw=(125.0, 89.4), head=(0.6, 1.1), tilt=2.2, nw=(35.6, 89.6), glow=2.6, gape=0.9)),
-    (1270, dict(crouch=2.2, lean=3.0, fw=(124.4, 87.6), head=(0.4, 0.8), tilt=1.5, nw=(35.2, 89.4), glow=1.6, gape=0.3)),
-    (1430, dict(crouch=1.8, lean=2.0, fw=(121.0, 76.0), glow=1.0, tilt=0.8)),
-    (1600, dict(crouch=1.0, lean=1.0, fw=(117.0, 64.0), glow=0.5)),
+    (160, dict(crouch=0.8, lean=-1.0, fw=(112.0, 49.0), nw=(33.8, 88.6), glow=1.0, tilt=-1.0)),
+    (520, dict(crouch=-1.0, lean=-3.0, fw=(115.0, 17.0), frot=-8, head=(-0.4, -1.0), tilt=-2.4, nw=(32.6, 88.0), glow=2.0)),
+    (700, dict(crouch=-1.1, lean=-3.3, fw=(114.6, 15.6), frot=-10, head=(-0.5, -1.2), tilt=-2.8, nw=(32.4, 87.8), glow=2.2)),
+    (738, dict(crouch=0.6, lean=1.2, fw=(131.0, 50.0), frot=-4, fsw=0.7, head=(0.0, 0.0), tilt=0.0, glow=2.2, gape=0.4)),
+    (770, dict(crouch=3.0, lean=4.0, fw=(128.0, 89.6), frot=0, fsw=1.0, head=(0.6, 1.0), tilt=2.2, nw=(35.6, 89.6), glow=3.2, gape=1.0)),
+    (1000, dict(crouch=3.0, lean=4.0, fw=(128.0, 89.8), fsw=1.0, head=(0.6, 1.1), tilt=2.2, nw=(35.6, 89.6), glow=2.6, gape=0.9)),
+    (1270, dict(crouch=2.2, lean=3.0, fw=(127.0, 87.6), fsw=1.0, head=(0.4, 0.8), tilt=1.5, nw=(35.2, 89.4), glow=1.6, gape=0.3)),
+    (1430, dict(crouch=1.8, lean=2.0, fw=(123.0, 74.0), fsw=0.5, glow=1.0, tilt=0.8)),
+    (1600, dict(crouch=1.0, lean=1.0, fw=(117.0, 63.0), fsw=0.1, glow=0.5)),
     (1760, dict(crouch=0.4, fw=(115.6, 60.6))),
     (1920, {}),
 ]
@@ -118,8 +118,8 @@ ATTACK_HIT = 770          # le choc (ms)
 # de ses pieds, une onde de chaleur court au sol ; elles luisent puis rentrent dans le sol (fentes de lave). Le soin :
 # ses fissures luisent d'or. Le défi : il écarte les bras puis frappe ses deux poings l'un contre l'autre devant sa
 # poitrine (arrêt sur l'image, étincelles), une lueur rouge l'entoure, gonfle et s'éteint ; il retombe en garde.
-CLASH_F = (101.0, 58.0)           # les poignets au moment du défi (repère du dessin)
-CLASH_N = (64.0, 62.0)
+CLASH_F = (101.0, 66.0)           # les poignets au moment du défi (repère du dessin)
+CLASH_N = (64.0, 71.0)
 SPECIAL = [
     (0, {}),
     (100, {}),
@@ -132,14 +132,14 @@ SPECIAL = [
     (1090, dict(crouch=1.6, fw=(115.8, 61.6), head=(0.0, 0.6), glow=3.0, heat=0.35, heal=1.0)),
     (1290, dict(crouch=1.0, fw=(115.4, 61.0), glow=2.2, heat=0.1, heal=1.0)),
     (1390, dict(crouch=0.6, fw=(115.2, 60.4), glow=1.4, heal=0.6)),
-    (1480, dict(crouch=0.0, lean=-1.0, fw=(122.0, 50.0), frot=-10, nw=(27.0, 86.0), nrot=10, head=(0.0, -1.0), glow=1.2,
+    (1480, dict(crouch=0.0, lean=-1.0, fw=(122.0, 50.0), frot=-10, fsw=0.3, nw=(27.0, 86.0), nrot=10, head=(0.0, -1.0), glow=1.2,
                 ffront=1.0, heal=0.2)),
-    (1540, dict(crouch=1.0, lean=0.0, fw=(108.0, 56.0), frot=-30, nw=(52.0, 70.0), nrot=-20, glow=2.0, ffront=1.0)),
-    (1580, dict(crouch=2.0, lean=1.0, fw=CLASH_F, frot=-34, nw=CLASH_N, nrot=-34, head=(0.0, 1.0), glow=3.2, ffront=1.0,
+    (1540, dict(crouch=1.0, lean=0.0, fw=(110.0, 64.0), frot=0, fsw=1.0, nw=(52.0, 76.0), nrot=-20, glow=2.0, ffront=1.0)),
+    (1580, dict(crouch=2.0, lean=1.0, fw=CLASH_F, frot=0, fsw=1.0, nw=CLASH_N, nrot=-34, head=(0.0, 1.0), glow=3.2, ffront=1.0,
                 gape=0.9, red=1.0)),
-    (1780, dict(crouch=2.0, lean=1.0, fw=(CLASH_F[0] + 0.3, CLASH_F[1]), frot=-34, nw=(CLASH_N[0] - 0.3, CLASH_N[1]), nrot=-34,
+    (1780, dict(crouch=2.0, lean=1.0, fw=(CLASH_F[0] + 0.3, CLASH_F[1]), frot=0, fsw=1.0, nw=(CLASH_N[0] - 0.3, CLASH_N[1]), nrot=-34,
                 head=(0.0, 1.0), glow=2.4, ffront=1.0, gape=0.8, red=0.8)),
-    (1890, dict(crouch=1.2, lean=1.0, fw=(106.0, 60.0), frot=-24, nw=(56.0, 74.0), nrot=-20, glow=1.4, ffront=1.0, red=0.3)),
+    (1890, dict(crouch=1.2, lean=1.0, fw=(108.0, 64.0), frot=0, fsw=1.0, nw=(56.0, 76.0), nrot=-20, glow=1.4, ffront=1.0, red=0.3)),
     (1990, dict(crouch=1.0, fw=(112.0, 64.0), frot=-6, nw=(38.0, 88.0), glow=0.8)),
     (2100, dict(crouch=0.4, fw=(115.0, 61.6))),
     (2300, {}),
@@ -486,8 +486,8 @@ def fx_attack(tl, prev):
         # deux dalles de basalte se dressent de part et d'autre du poing, puis se rassoient
         hs = env(tl, ATTACK_HIT, ATTACK_HIT + 70, ATTACK_HIT + 360, ATTACK_HIT + 900)
         if hs > 0:
-            fig.fx_back.append(slab(fig, c[0] - 10, 9, 13 * hs, -0.38, 0.0, 0))
-            fig.fx_back.append(slab(fig, c[0] + 11, 10, 15 * hs, 0.42, 0.0, 1))
+            fig.fx_back.append(slab(fig, c[0] - 11, 10, 16 * hs, -0.38, 0.0, 0))
+            fig.fx_back.append(slab(fig, c[0] + 12, 11, 18 * hs, 0.42, 0.0, 1))
         # éclats de roche et gouttes de lave en cloche
         if tau < 0.9:
             for i, (vx, vy, s, hot) in enumerate(SLAM_CHUNKS):
@@ -642,10 +642,7 @@ def fx_special(tl):
             for i, (vx, vy) in enumerate(((-60, -110), (70, -100), (-90, -40), (95, -50), (-20, -140), (30, -130), (110, -10), (-110, 0))):
                 if tc < 0.45:
                     x, y = ballistic(c, (vx, vy), 260, tc)
-                    if i % 2:
-                        fig.fx_front.append(drop(fig, x, y, vx, vy + 260 * tc, 0.7, op=1 - tc / 0.45))
-                    else:
-                        fig.fx_front.append(ember(fig, x, y, 0.6, op=1 - tc / 0.45))
+                    fig.fx_front.append(ember(fig, x, y, 0.75 if i % 2 else 0.55, op=1 - tc / 0.45))
     return f
 
 

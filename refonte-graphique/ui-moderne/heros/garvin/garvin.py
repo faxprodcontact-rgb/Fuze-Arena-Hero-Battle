@@ -430,6 +430,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         S = mapp(UC, FS)
         Wt = mapp(UC, P['fw'])
         E, W = ik(S, Wt, FL[0], FL[1], SG_F)
+        if P.get('fsw', 0) > 0.001:
+            # le coude passe de l'autre côté (vers l'extérieur) : il glisse en raccourci, sans saut
+            E2, _ = ik(S, Wt, FL[0], FL[1], -SG_F)
+            E = lerp(E, E2, smooth01(P['fsw']))
         shp, g, gu, gf = arm_shape(S, E, W, (14.5, 13.6, 15.6, 13.2), [('u', 0.45, -3.0, 6.5, 5.6), ('f', 0.5, 0.6, 8.2, 6.6)])
         if front:
             # le bras passe devant la poitrine (défi) : l'épaule reste cachée derrière la poitrine et l'épaule-rocher

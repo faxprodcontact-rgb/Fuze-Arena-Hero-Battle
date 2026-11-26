@@ -232,7 +232,7 @@ def from_poly(pts):
 def inter(a, b):
     """La partie de la forme a qui est dans la forme b (le plus grand morceau) ; None si elles ne se touchent pas."""
     from shapely.geometry import Polygon
-    g = Polygon(poly(a)).buffer(0).intersection(Polygon(poly(b)).buffer(0))
+    g = Polygon(poly(a, 16)).buffer(0).intersection(Polygon(poly(b, 16)).buffer(0))
     if g.is_empty:
         return None
     if g.geom_type != 'Polygon':

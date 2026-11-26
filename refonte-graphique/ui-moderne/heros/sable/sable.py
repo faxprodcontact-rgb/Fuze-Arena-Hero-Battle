@@ -603,29 +603,30 @@ def head_parts(fig, P):
            (ellipse(98.2, 37.8, 0.75, 0.45, 20), NOSE.deep, 0.9)]
     # l'arête du museau éclairée qui se plisse (rictus) : deux plis doux
     hd += [(ribbon([(81.2, 28.6), (86.4, 30.6), (92, 32.6), (95.8, 34.0)], [0.2, 1.4, 1.2, 0.2]), FUR.hi, 0.75),
-           (ribbon([(87.6, 32.0), (88.4, 33.2), (88.4, 34.2)], [0.1, 0.7, 0.1]), FUR.shadow, 0.45)]
-    # la crème sous l'œil, le larmier sombre qui descend vers le museau (la marque des lionnes)
-    hd += [(sm([(73.0, 33.3), (77.4, 33.7), (80.4, 34.1), (79.2, 35.3), (76, 35.5), (73.4, 34.6)]),
-            ('lin', 80, 34, 72, 35, [(0, CREAM.light, 0.95), (0.6, CREAM.light, 0.7), (1, CREAM.light, 0)]), 1),
-           (ribbon([(80.4, 32.8), (81.4, 35.0), (82.6, 37.2), (83.4, 38.4)], [0.5, 0.9, 0.7, 0.1]), '#5a2028', 0.85)]
-    # les yeux : même forme, même ligne ; le lointain plus étroit, en partie caché derrière l'arête
-    eyeN = sm([(72.6, 31.0), (76.0, 30.4), (80.4, 32.0), (78.8, 33.4), (75.0, 33.0)], sharp=(0, 2))
-    eyeF = sm([(84.2, 31.3), (86.0, 30.7), (87.4, 31.0), (86.4, 32.3), (84.9, 32.4)], sharp=(0, 2))
-    for e, (cx, cy), (px, py), k in ((eyeN, (76.6, 32.0), (78.0, 32.0), 1.0), (eyeF, (85.8, 31.5), (86.6, 31.5), 0.7)):
-        hd += [(e.scale(1.16, 1.5, cx, cy - 0.1), '#3a1418', 0.95)]
-        if P['blink'] > 0.5:
-            hd += [(e.scale(1.04, 1.15, cx, cy), FUR.base, 1), (ribbon([(cx - 3.4 * k, cy + 0.4), (cx, cy + 0.9), (cx + 3.4 * k, cy + 0.2)], [0.1, 0.6, 0.1]), '#3a1418', 0.9)]
-        else:
-            hd += [(e, ('rad', px - 0.4, py - 0.2, 3.4 * k, 2.2, [(0, '#fff2a0'), (0.4, '#ffd84a'), (0.8, '#f0920e'), (1, '#c25e0e')]), 1),
-                   (ellipse(px, py + 0.05, 0.62 * k + 0.15, 0.95), '#1c0c14', 1),
-                   (ellipse(px + 0.35, py - 0.4, 0.33 * k + 0.08, 0.3), '#fffbe8', 1)]
+           (ribbon([(87.6, 32.0), (88.4, 33.2), (88.4, 34.2)], [0.1, 0.7, 0.1]), FUR.shadow, 0.3)]
+    # UN SEUL ŒIL (avis du propriétaire, 26/11 : tête de profil → pas d'œil du fond) ; l'œil visible est placé comme
+    # sur un profil de lionne : juste derrière l'arête du museau, au-dessus du coin de la gueule (EX = son décalage).
+    EX, EY = 3.4, 0.0
+    E = lambda pts: [(x + EX, y + EY) for x, y in pts]
+    # la crème sous l'œil, le larmier sombre qui part du coin avant de l'œil et descend le long du museau
+    hd += [(sm(E([(73.0, 33.3), (77.4, 33.7), (80.4, 34.1), (79.2, 35.3), (76, 35.5), (73.4, 34.6)])),
+            ('lin', 80 + EX, 34 + EY, 72 + EX, 35 + EY, [(0, CREAM.light, 0.95), (0.6, CREAM.light, 0.7), (1, CREAM.light, 0)]), 1),
+           (ribbon([(80.4 + EX, 32.8), (81.2 + EX, 34.4), (81.6 + EX, 35.8), (81.8 + EX, 36.8)], [0.5, 0.9, 0.6, 0.1]), '#5a2028', 0.85)]
+    # l'œil doré, en amande (coin arrière pointu, coin avant qui descend vers le larmier)
+    eyeN = sm(E([(72.6, 31.0), (76.0, 30.4), (80.4, 32.0), (78.8, 33.4), (75.0, 33.0)]), sharp=(0, 2))
+    cx, cy, px, py = 76.6 + EX, 32.0 + EY, 78.0 + EX, 32.0 + EY
+    hd += [(eyeN.scale(1.16, 1.5, cx, cy - 0.1), '#3a1418', 0.95)]
+    if P['blink'] > 0.5:
+        hd += [(eyeN.scale(1.04, 1.15, cx, cy), FUR.base, 1), (ribbon([(cx - 3.4, cy + 0.4), (cx, cy + 0.9), (cx + 3.4, cy + 0.2)], [0.1, 0.6, 0.1]), '#3a1418', 0.9)]
+    else:
+        hd += [(eyeN, ('rad', px - 0.4, py - 0.2, 3.4, 2.2, [(0, '#fff2a0'), (0.4, '#ffd84a'), (0.8, '#f0920e'), (1, '#c25e0e')]), 1),
+               (ellipse(px, py + 0.05, 0.77, 0.95), '#1c0c14', 1),
+               (ellipse(px + 0.35, py - 0.4, 0.41, 0.3), '#fffbe8', 1)]
     # la paupière lourde (le haut de l'œil caché) et le sourcil froncé
-    hd += [(sm([(72.2, 30.9), (76.2, 29.6), (81.0, 31.4), (80.6, 32.4), (76.6, 31.2), (73.0, 31.4)], sharp=(0, 2)), FUR.base, 1),
-           (ribbon([(72.6, 31.1), (76.6, 31.0), (80.6, 32.4)], [0.2, 0.6, 0.2]), '#3a1418', 0.9),
-           (sm([(84.0, 31.1), (86.2, 30.4), (87.6, 30.8), (87.2, 31.3), (86.0, 31.0), (84.4, 31.5)], sharp=(0, 2)), FUR.base, 1),
-           (ribbon([(70.6, 28.2), (74.6, 28.0), (78.8, 29.4), (81.8, 31.6)], [0.4, 1.6, 1.4, 0.3]), '#7a3a2c', 0.9),
-           (ribbon([(71.2, 27.6), (75, 27.4), (78.8, 28.6)], [0.2, 0.7, 0.2]), FUR.hi, 0.6),
-           (ribbon([(83.4, 30.0), (85.6, 29.6), (87.8, 30.2)], [0.2, 0.9, 0.2]), '#7a3a2c', 0.8)]
+    hd += [(sm(E([(72.2, 30.9), (76.2, 29.6), (81.0, 31.4), (80.6, 32.4), (76.6, 31.2), (73.0, 31.4)]), sharp=(0, 2)), FUR.base, 1),
+           (ribbon(E([(72.6, 31.1), (76.6, 31.0), (80.6, 32.4)]), [0.2, 0.6, 0.2]), '#3a1418', 0.9),
+           (ribbon(E([(70.6, 28.2), (74.6, 28.0), (78.8, 29.4), (81.8, 31.6)]), [0.4, 1.6, 1.4, 0.3]), '#7a3a2c', 0.9),
+           (ribbon(E([(71.2, 27.6), (75, 27.4), (78.8, 28.6)]), [0.2, 0.7, 0.2]), FUR.hi, 0.6)]
     fig.part('head', head, FUR, grad=(96, 28, 64, 50, [(0, FUR.light), (0.4, FUR.base), (1, FUR.shadow)]), cel=1.7, rim=0.6, cast=1.0,
              cast_on=['collar', 'torso', 'top', 'lappet', 'narm'], details=hd)
 
