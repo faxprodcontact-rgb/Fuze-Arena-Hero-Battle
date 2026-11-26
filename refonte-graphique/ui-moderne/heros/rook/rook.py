@@ -222,8 +222,10 @@ def wing(fig, side, P, S):
                                                       [(0, '#b0581c', 0.45), (1, '#e0901e', 0.3)]), 1)])
         names.append(nm)
     # -- le bord d'attaque doré (le bras, de l'épaule au bout de la main), d'un seul tenant --
-    c = crpath(([lerp(bones[0], bones[1], 0.55)] if near else [lerp(bones[0], bones[1], -0.1)]) + bones[1:], 30)
-    ws = [5.0 - 3.5 * (i / 30) ** 1.1 for i in range(31)]
+    c = crpath(([lerp(bones[0], bones[1], 0.25)] if near else [lerp(bones[0], bones[1], -0.1)]) + bones[1:], 30)
+    # l'aile proche : le bord doré NAÎT de l'épaule (il s'élargit depuis un point sur la naissance de l'aile, aucun
+    # bout rond posé sur le corps)
+    ws = [(5.0 - 3.5 * (i / 30) ** 1.1) * (min(1.0, 0.12 + 0.88 * (i / 7) ** 0.8) if near else 1.0) for i in range(31)]
     band = limb(c, ws)
     nm = pre + 'edge'
     det = [(ribbon([(p[0] + 0.5 * sg - 0.2, p[1] - 0.9) for p in c[2:28:3]], [0.1] + [0.9] * 7 + [0.1]), gold.hi, 0.75)]
@@ -436,17 +438,19 @@ def head(fig, P):
                 (67.0, 42.6), (66.4, 37.6), (66.4, 32.2)], sharp=(14, 16, 18, 20), t=0.95)
     sd = []
     # la joue un peu plus claire sous l'œil, la nuque plus sombre
-    sd.append((sm([(78.2, 33.6), (82.0, 34.2), (85.8, 34.6), (86.0, 39.8), (84.4, 42.8), (80.8, 44.6), (77.4, 43.6), (75.8, 38.4)]),
-               ('rad', 84.0, 37.0, 9.0, 9.0, [(0, '#ffc04a', 0.9), (0.6, '#ffa236', 0.5), (1, '#ff8a2a', 0)]), 1))
+    # le masque d'or autour de l'œil et sur la joue (l'œil se détache, lisible même tout petit)
+    sd.append((sm([(77.4, 30.0), (80.6, 27.6), (85.0, 27.6), (87.6, 30.4), (86.4, 36.4), (86.0, 40.0), (84.2, 43.0),
+                   (80.6, 44.4), (77.0, 42.4), (75.6, 36.4)]),
+               ('rad', 83.6, 33.8, 9.4, 9.4, [(0, '#ffe68a', 1), (0.5, '#ffc84e', 0.9), (0.8, '#ffa63a', 0.45), (1, '#ff8a2a', 0)]), 1))
     sd.append((sm([(66.0, 30.0), (70.4, 30.6), (72.6, 37.0), (72.0, 44.0), (68.0, 47.0), (65.6, 40.0)]), HEADM.shadow, 0.35))
     # le trait de flamme jaune sous l'œil, qui file vers la nuque (le « masque » du phénix)
     ex, ey, ew = EYE
-    sd.append((lock((ex + 1.6, ey + 3.6), (ex - 2.6, ey + 4.6), (ex - 7.4, ey + 4.0), (ex - 12.6, ey + 0.4), 2.4, bulge=0.2),
-               ('lin', ex + 2, ey + 3.6, ex - 12, ey, [(0, '#fff2a0'), (0.5, '#ffd050'), (1, '#ffa236', 0.6)]), 0.95))
+    sd.append((lock((ex + 1.6, ey + 3.6), (ex - 2.6, ey + 4.6), (ex - 7.4, ey + 4.0), (ex - 12.6, ey + 0.4), 2.6, bulge=0.2),
+               ('lin', ex + 2, ey + 3.6, ex - 12, ey, [(0, '#fff6c0'), (0.5, '#ffe070'), (1, '#ffb040', 0.7)]), 1))
     # des plumes couchées dans le crâne (arcs doux, inégaux)
     for (a0, a1, a2), w_, col, op in ((((84.4, 22.8), (78.0, 22.0), (71.0, 25.6)), 1.3, '#ffd870', 0.6),
-                                      (((76.4, 27.4), (72.0, 29.0), (68.6, 33.4)), 1.0, '#9a1e32', 0.4),
-                                      (((76.8, 41.6), (73.6, 42.6), (70.8, 45.4)), 0.9, '#9a1e32', 0.4)):
+                                      (((76.4, 27.4), (72.0, 29.0), (68.6, 33.4)), 1.0, '#9a1e32', 0.22),
+                                      (((76.8, 41.6), (73.6, 42.6), (70.8, 45.4)), 0.9, '#9a1e32', 0.25)):
         sd.append((ribbon([a0, a1, a2], [0.15, w_, 0.15]), col, op))
     # ---- l'œil (un seul : tête de profil) : cerne sombre, iris d'ambre, pupille vers l'avant, reflet en haut à droite
     if P['blink'] < 0.5:

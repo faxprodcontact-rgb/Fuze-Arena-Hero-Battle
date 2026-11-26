@@ -1,15 +1,16 @@
-# Rook vectorielle ANIMÉE : les mêmes animations que son pixel art (refonte-graphique/pixel/hd/anim/rook/build.py)
+# Rook, le PHÉNIX vectoriel ANIMÉ (refonte du 26/11 : tête et corps d'aigle, plus rien d'humain) : les mêmes
+# animations que son pixel art (refonte-graphique/pixel/hd/anim/rook/build.py)
 # — respiration, attaque de base « Gerbe de plumes de feu », attaque spéciale « Renaissance du phénix » — dans le
 # style lisse de l'interface, à 24 images par seconde (même méthode que Kael : ../kael/anim.py).
 #
 #   python3 refonte-graphique/ui-moderne/heros/rook/anim.py            # → anim.mp4 + anim.gif dans pixel/sortie/ui/vecto/rook/
 #   python3 refonte-graphique/ui-moderne/heros/rook/anim.py --planche  # seulement une planche d'images clés (contrôle)
 #
-# Méthode : le dessin (rook.py) est fait de morceaux ; chaque image le redessine dans une POSE : le buste respire et se
-# penche depuis la taille, la tête suit avec un temps de retard, chaque aile tourne autour de la vraie épaule (le
+# Méthode : le dessin (rook.py) est fait de morceaux ; chaque image le redessine dans une POSE : le jabot respire et le
+# corps se penche depuis le bassin, la tête suit avec un temps de retard, chaque aile tourne autour de la vraie épaule (le
 # poignet se replie ou s'ouvre, les plumes près du corps pendent, toutes traînent un peu derrière le battement), les
-# plumes ondulent sans arrêt comme des flammes (une vague qui court vers les pointes des ailes, de la chevelure, de la
-# jupe et de la queue), les pattes restent plantées. Les poses clés et les durées reprennent celles du pixel art,
+# plumes ondulent sans arrêt comme des flammes (une vague qui court vers les pointes des ailes, de la crête, du camail,
+# des culottes de plumes et de la queue), les pattes restent plantées. Les poses clés et les durées reprennent celles du pixel art,
 # reliées par des courbes douces sans dépassement. Effets dans le même style : dégradés, un seul contour, courbes ;
 # aucun flou SVG ; jamais de rayons droits répétés. La spéciale est un SORT D'ÉQUIPE : tout naît sur elle et s'étend
 # en cercle autour d'elle (anneau de flammes d'or, pluie de plumes d'or, phénix de lumière), rien ne vise l'ennemi.
@@ -32,7 +33,7 @@ from outils import plume, lerp, rotp  # noqa: E402
 ROOT = R.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'rook')
 TMP = os.path.join(HERE, '_images')
-SCRATCH = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-rook'
+SCRATCH = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-rook-phenix'
 FPS = 24
 VIEW = (-30, -50, 304, 171)          # la scène de la vidéo, en pixels du dessin (16/9)
 VW, VH = 1280, 720
@@ -94,9 +95,9 @@ def keyed(keys, t):
 
 
 # ======================================================================== les actions (poses clés, en ms)
-# 2) L'attaque de base « Gerbe de plumes de feu » (pixel : ATTAQUE) : elle lève très haut ses deux ailes (le buste
+# 2) L'attaque de base « Gerbe de plumes de feu » (pixel : ATTAQUE) : elle lève très haut ses deux ailes (le corps
 # part en arrière, elle se ramasse ; les pointes s'embrasent, tenue frémissante), puis les rabat d'un seul battement
-# vers l'avant (croissants de flamme derrière le bout des ailes) : les ailes à plat, le buste penché vers l'ennemi, une
+# vers l'avant (croissants de flamme derrière le bout des ailes) : les ailes à plat, le corps penché vers l'ennemi, une
 # gerbe de plumes de feu jaillit et file en éventail vers l'ennemi en tirant des traînées courbes ; elles frappent :
 # une fleur de flammes et de braises, tenue ; puis la fumée monte pendant que ses ailes remontent (léger rebond).
 ATTACK = [
