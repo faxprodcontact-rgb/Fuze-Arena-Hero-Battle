@@ -127,12 +127,14 @@ HEAD_PTS = [(38.0, 21.0), (42.6, 17.4), (49, 15.8), (55.6, 16.4), (60.6, 16.6), 
             (50, 36.6), (43.6, 35.6), (39.4, 32.4), (37.4, 26.6)]
 # la racine : elle couvre le dos du crâne et le dessus de la tête entre les bois ; son bord de devant (la naissance des
 # poils) suit le dos du crâne derrière l'œil, sans toucher l'arcade, et rejoint le contour du front devant le bois du fond
-SCALP = [(61.4, 16.8), (60.0, 13.8), (57.0, 12.6), (52.0, 12.4), (47.0, 12.2), (42.0, 13.2), (38.0, 16.0), (35.8, 22.0),
-         (35.4, 29.0), (36.4, 35.0), (39.0, 37.4), (41.2, 34.8), (42.6, 31.8), (43.4, 28.6), (43.6, 25.6), (44.2, 22.6),
-         (45.6, 20.0), (47.8, 18.2), (50.6, 17.2), (54.0, 16.8), (57.6, 16.9), (60.0, 16.9)]
+SCALP = [(61.4, 16.8), (60.2, 15.6), (59.0, 13.8), (57.4, 15.0), (55.6, 14.8), (54.4, 13.6), (52.6, 14.0), (49.0, 13.0),
+         (45.0, 12.6), (41.0, 13.6), (38.0, 16.0), (35.8, 22.0), (35.4, 29.0), (36.4, 35.0), (39.0, 37.4), (41.2, 34.8),
+         (42.6, 31.8), (43.4, 28.6), (43.6, 25.6), (44.2, 22.6), (45.6, 20.0), (47.8, 18.0), (50.4, 16.9), (54.0, 16.7),
+         (57.6, 16.9), (60.0, 16.9)]
+SCALP_SHARP = (2, 5)
 # le bord des poils sur les bois : de petites touffes qui remontent contre la base de chaque bois (le bois sort des poils)
-CAP = [(39.6, 19.0), (41.4, 16.8), (43.0, 15.6), (44.0, 14.0), (45.4, 15.0), (47.0, 14.3), (48.4, 15.4), (51.0, 15.1),
-       (53.4, 15.0), (54.6, 13.6), (56.2, 14.7), (57.8, 13.8), (59.2, 15.0), (61.6, 16.4), (62.0, 19.5)]
+CAP = [(39.6, 19.0), (41.4, 16.8), (43.0, 15.6), (44.0, 14.0), (45.4, 15.0), (47.0, 14.3), (48.4, 15.4), (51.0, 15.3),
+       (53.0, 15.4), (54.4, 13.9), (55.8, 15.4), (57.4, 15.4), (58.9, 14.1), (60.4, 15.8), (62.0, 17.0), (62.0, 19.5)]
 # les mèches (nom, racine, contrôles, pointe, largeur, renflement, amplitude du balancement, fondu depuis la racine),
 # de la plus basse à la plus haute : les longues mèches du dos (pointes relevées en crête de vague), la mèche du sommet,
 # la mèche qui tombe devant l'épaule, puis les mèches courtes couchées sur le dos du crâne. Toutes partent de la racine.
@@ -142,7 +144,7 @@ MANE_LOCKS = [
     ('mD', (40.8, 22.6), (30.4, 27.4), (19.6, 42.4), (13.8, 40.0), 13.0, 0.5, 1.0, 7.0),
     ('mC', (42.8, 17.6), (32.6, 15.6), (20.6, 24.4), (15.4, 23.8), 11.6, 0.48, 1.0, 7.0),
     ('mB', (47.0, 14.6), (39.6, 8.8), (28.6, 7.6), (22.0, 10.4), 9.2, 0.45, 1.0, 7.0),
-    ('mH', (56.6, 14.4), (50.4, 10.4), (42.6, 9.6), (35.4, 12.6), 6.4, 0.4, 0.6, 6.0),
+    ('mH', (53.6, 14.6), (48.4, 11.0), (42.0, 10.0), (35.4, 12.6), 6.0, 0.4, 0.6, 6.0),
     ('mA', (42.2, 30.4), (38.6, 39.4), (36.9, 46.9), (34.5, 55.6), 8.4, 0.32, 0.8, 7.0),
     ('mG1', (46.4, 19.4), (41.6, 17.4), (35.8, 18.2), (30.2, 22.4), 7.6, 0.4, 0.5, 6.0),
     ('mG2', (44.6, 25.0), (40.8, 25.4), (35.8, 28.2), (30.8, 33.4), 8.2, 0.4, 0.5, 6.0),
@@ -166,7 +168,7 @@ def mane_geom(P):
         p2 = (p2[0] + 0.5 * k * w1 - 0.8 * amp * m_, p2[1] + 0.6 * k * w2)
         p3 = (p3[0] + 1.0 * k * w2 - 1.6 * amp * m_, p3[1] + 0.8 * k * w1 + 0.4 * amp * m_)
         strands.append((name, lock(p0, p1, p2, p3, w0, n=14, bulge=bu), p0, p1, p2, p3, w0, fade))
-    mass = fused([sm(SCALP, t=0.9)] + [s[1] for s in strands])
+    mass = fused([sm(SCALP, sharp=SCALP_SHARP, t=0.9)] + [s[1] for s in strands])
     det = []
     for name, sh, p0, p1, p2, p3, w0, fade in strands:
         ax = (p0[0], p0[1], p3[0], p3[1])
@@ -187,10 +189,30 @@ def mane_geom(P):
     g = _poly(mass)
     front = _shape(g.intersection(_poly(strands[6][1])))
     from shapely.geometry import Polygon
-    F = Polygon(HEAD_PTS).buffer(1.5).union(_poly(sm(CAP, sharp=(3, 9, 11), t=0.8)))
+    F = Polygon(HEAD_PTS).buffer(1.5).union(_poly(sm(CAP, sharp=(3, 9, 12), t=0.8)))
     root = _shape(g.intersection(F))
     grad = (54, 10, 24, 62, [(0, MANE.hi), (0.3, MANE.light), (1, MANE.base)])
     return dict(mass=mass, front=front, root=root, det=det, grad=grad)
+
+
+CLEAR = (0, 0, 1, 1, [(0, '#ffffff', 0), (1, '#ffffff', 0)])
+
+
+def as_layer(fig, base, grad, det):
+    """Le contenu d'un morceau de la crinière (le fond puis tous les détails) peint comme UNE couche : au bord du morceau,
+    la couche entière se mêle à ce qui est dessous (le même dessin) ; sans elle, chaque détail translucide se mêlerait à
+    part et laisserait un fin trait au raccord. → un seul détail « brut » (le morceau lui-même reçoit un fond vide)."""
+    def paint(fill):
+        if isinstance(fill, tuple) and fill[0] == 'lin':
+            return fig.lin(*fill[1:])
+        if isinstance(fill, tuple) and fill[0] == 'rad':
+            return fig.rad(*fill[1:])
+        return fill
+    out = ['<path d="%s" fill="%s"/>' % (base.d(), fig.lin(*grad))]
+    for sh, fill, op in det:
+        out.append('<path d="%s"%s fill="%s"%s/>' % (sh.d(), ' fill-rule="evenodd"' if sh.evenodd else '', paint(fill),
+                                                     '' if op == 1 else ' opacity="%g"' % op))
+    return [('<g opacity="0.999">%s</g>' % ''.join(out), '', 1)]
 
 
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
@@ -484,8 +506,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.part(name + 'c', claw, IVORY, cel=0.4, rim=0.35, cast=0.4, cast_on=['pearl', name])
 
     # ---- la mèche de la crinière qui tombe devant l'épaule proche (le même dessin que la masse) ----
-    fig.part('manef', MG['front'], MANE, grad=MG['grad'], cel=0, rim=0, cast=1.3, cast_on=['robe', 'neck', 'bcol'],
-             details=MG['det'])
+    fig.part('manef', MG['front'], MANE, grad=CLEAR, cel=0, rim=0, cast=1.3, cast_on=['robe', 'neck', 'bcol'],
+             details=as_layer(fig, MG['mass'], MG['grad'], MG['det']))
 
     # ---- le bras proche : la grande manche qui pend sous l'avant-bras plié, le poing sur la ceinture ----
     sn = P['sn']
@@ -626,8 +648,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.part(name, sh, GOLD, grad=g, cel=1.0, rim=0.7, cast=0.6, cast_on=['antB0', 'antB1', 'mane', 'head'])
 
     # ---- le devant de la crinière : il couvre le dos du crâne (derrière l'œil) et la base des deux bois ----
-    fig.part('mroot', MG['root'], MANE, grad=MG['grad'], cel=0, rim=0, cast=1.0,
-             cast_on=['head', 'antB', 'antB0', 'antB1', 'antF', 'antF0', 'neck'], details=MG['det'])
+    fig.part('mroot', MG['root'], MANE, grad=CLEAR, cel=0, rim=0, cast=1.0,
+             cast_on=['head', 'antB', 'antB0', 'antB1', 'antF', 'antF0', 'neck'], details=as_layer(fig, MG['mass'], MG['grad'], MG['det']))
 
     # ---- le barbillon d'or en S, qui tombe de la truffe ----
     bb = P['barb']
