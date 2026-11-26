@@ -132,6 +132,10 @@ export class HdActor {
   /** Taille d'un pixel du dessin, en unités du jeu. */
   readonly k: number;
   private play?: Play;
+  /** Figé (il tombe) : plus aucune image ne change. */
+  private halted = false;
+  /** Vitesse de la respiration (ralenti : 0,5) ; les coups gardent leur tempo. */
+  poseRate = 1;
   private glow?: { back: Phaser.GameObjects.Image; ground: Phaser.GameObjects.Image; lit: Phaser.GameObjects.Image; t: number; on: boolean; a: number };
 
   constructor(private scene: Phaser.Scene, readonly fig: Phaser.GameObjects.Container, readonly id: string, k: number, private element: Element) {
@@ -162,10 +166,27 @@ export class HdActor {
     this.setCharge(!!ch && p.name !== 'pose' && p.i >= ch[0]! && p.i <= ch[1]!);
   }
 
+  /** Il tombe : l'image s'arrête, la lumière de charge s'éteint tout de suite. */
+  halt() {
+    this.halted = true;
+    if (this.glow) {
+      this.glow.back.destroy();
+      this.glow.ground.destroy();
+      this.glow.lit.destroy();
+      this.glow = undefined;
+    }
+  }
+
+  /** Il se relève : il reprend sa respiration. */
+  resume() {
+    this.halted = false;
+    this.start('pose', this.ch.anims.pose.ms.slice(), true);
+  }
+
   update(dt: number) {
     const p = this.play;
-    if (!p) return;
-    p.t += dt;
+    if (!p || this.halted) return;
+    p.t += p.name === 'pose' ? dt * this.poseRate : dt;
     while (p.t >= p.ms[p.i]!) {
       p.t -= p.ms[p.i]!;
       p.i += 1;

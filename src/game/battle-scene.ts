@@ -242,6 +242,7 @@ export class BattleScene extends FightScene {
     if (this.paused || this.ended) return;
     this.paused = true;
     this.tweens.pauseAll();
+    this.time.paused = true;
     const H = this.scale.height;
     const veil = this.add.rectangle(0, 0, W, H, 0x0a0620, 0.6).setOrigin(0).setInteractive();
     const icon = this.add.image(W / 2, H / 2 - 150, 'hud-pause').setDisplaySize(64, 64).setAlpha(0.9);
@@ -250,6 +251,7 @@ export class BattleScene extends FightScene {
       this.pauseLayer = undefined;
       this.paused = false;
       this.tweens.resumeAll();
+      this.time.paused = false;
     });
     const quit = this.wideButton(W / 2, H / 2 + 80, 'feu', t('battle.quit'), () => {
       this.pauseLayer?.destroy();
@@ -304,7 +306,8 @@ export class BattleScene extends FightScene {
   }
 
   protected onEnd() {
-    this.time.delayedCall(700, () => this.finish());
+    // la dernière chute (un grand boss tombe plus longtemps) se voit en entier avant les récompenses
+    this.time.delayedCall(Math.max(700, this.deathsEnd - this.time.now + 250), () => this.finish());
   }
 
   private finish() {
