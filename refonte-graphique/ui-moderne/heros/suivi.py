@@ -48,7 +48,7 @@ def vignette(src, dst, h):
     im.save(dst, quality=88, method=6)
 
 
-def gif_petit(src, dst, w=260):
+def gif_petit(src, dst, w=420):
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-i', src, '-vf',
                     f'fps=12,scale={w}:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128[p];[b][p]paletteuse',
                     dst], check=True)
@@ -68,14 +68,15 @@ def main():
             note = ' '.join(l.strip() for l in lignes[1:])[:240] if statut == 'fait' else ' '.join(lignes)[:240]
         elif os.path.isdir(os.path.join(HEROS, s)):
             statut = 'en cours'
-        vignette(os.path.join(RACINE, 'public', 'art', 'hd', 'pose', f"{h['art']}.webp"), os.path.join(PAGE, 'px', f"{h['id']}.webp"), 160)
+        vignette(os.path.join(RACINE, 'public', 'art', 'hd', 'pose', f"{h['art']}.webp"), os.path.join(PAGE, 'px', f"{h['id']}.webp"), 360)
         vx = os.path.join(RACINE, 'public', 'art', 'vecto', f"{h['art']}.webp")
         has_vx = statut in ('fait', 'à revoir') and os.path.exists(vx)
         if has_vx:
-            vignette(vx, os.path.join(PAGE, 'vx', f"{h['id']}.webp"), 160)
+            vignette(vx, os.path.join(PAGE, 'vx', f"{h['id']}.webp"), 360)
         g = os.path.join(SORTIE_V, s, 'anim.gif')
         has_gif = has_vx and os.path.exists(g)
-        if has_gif and not os.path.exists(os.path.join(PAGE, 'gif', f"{h['id']}.gif")) or (has_gif and os.path.getmtime(g) > os.path.getmtime(os.path.join(PAGE, 'gif', f"{h['id']}.gif"))):
+        dg = os.path.join(PAGE, 'gif', f"{h['id']}.gif")
+        if has_gif and (not os.path.exists(dg) or os.path.getmtime(g) > os.path.getmtime(dg) or Image.open(dg).width < 420):
             gif_petit(g, os.path.join(PAGE, 'gif', f"{h['id']}.gif"))
         rows.append((h, statut, note, has_vx, has_gif))
 
@@ -107,16 +108,20 @@ h1 {{ font: 400 clamp(28px, 6vw, 40px)/1.1 var(--display); color: var(--gold); m
 .bar {{ display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 0 0 22px; font-variant-numeric: tabular-nums; }}
 .bar span {{ padding: 6px 12px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }}
 .bar b {{ font: 400 18px var(--display); margin-right: 6px; }}
-.grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }}
+.grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 14px; }}
 .hero {{ background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; min-width: 0; }}
 .hero header {{ display: flex; justify-content: space-between; align-items: center; gap: 8px; }}
-.hero h3 {{ margin: 0; font: 400 20px var(--display); }}
+.hero h3 {{ margin: 0; font: 400 24px var(--display); }}
 .pill {{ font-size: 12px; padding: 3px 10px; border-radius: 999px; color: #111; text-transform: uppercase; letter-spacing: .04em; }}
 .ok .pill {{ background: var(--ok); }} .redo .pill {{ background: var(--redo); }} .wip .pill {{ background: var(--wip); }} .todo .pill {{ background: var(--todo); color: var(--text); }}
 .meta {{ margin: 2px 0 8px; color: var(--muted); font-size: 13px; }}
 .duo {{ display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }}
-figure {{ margin: 0; background: #1a1822; border-radius: 10px; display: grid; place-items: center; min-height: 150px; padding: 6px; }}
-figure img {{ max-height: 150px; width: auto; image-rendering: auto; }}
+figure {{ margin: 0; background: #1a1822; border-radius: 10px; display: grid; place-items: center; min-height: 260px; padding: 8px; cursor: zoom-in; }}
+figure img {{ max-height: 320px; width: auto; image-rendering: auto; }}
+.duo {{ grid-template-columns: 1fr 1.4fr; }}
+#zoom {{ border: 0; padding: 0; background: #0d0b12f2; max-width: 100vw; max-height: 100vh; width: 100vw; height: 100vh; }}
+#zoom img {{ width: 100%; height: 100%; object-fit: contain; }}
+#zoom::backdrop {{ background: #000c; }}
 .duo figure:first-child img {{ image-rendering: pixelated; }}
 figcaption {{ font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }}
 .vide {{ color: var(--todo); font: 400 28px var(--display); }}
@@ -132,6 +137,15 @@ figcaption {{ font-size: 11px; color: var(--muted); text-transform: uppercase; l
 {chr(10).join(cartes)}
 </section>
 </main>
+<dialog id="zoom"><img alt=""></dialog>
+<script>
+const z = document.getElementById('zoom');
+document.addEventListener('click', (e) => {{
+  const img = e.target.closest('figure') ? e.target.closest('figure').querySelector('img') : null;
+  if (z.open) {{ z.close(); return; }}
+  if (img) {{ z.querySelector('img').src = img.src; z.querySelector('img').style.imageRendering = img.closest('figure').parentElement.firstElementChild === img.closest('figure') ? 'pixelated' : 'auto'; z.showModal(); }}
+}});
+</script>
 '''
     open(os.path.join(PAGE, 'index.html'), 'w', encoding='utf-8').write(page)
     print(f"suivi : {n} → {os.path.relpath(os.path.join(PAGE, 'index.html'), RACINE)}")

@@ -395,37 +395,45 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # Les longues plumes blanches du cou : elles s'allongent en descendant, leurs pointes tournent au tiède
     # (mauve-taupe) ; longueurs et écarts inégaux ; elles frémissent (ruff) et s'évasent sur les deux épaulières.
     RUFF = [
-        # (racine, bout, largeur, courbure) — de la nuque (gauche, dans l'ombre) vers la gorge
-        ((57.6, 45.6), (52.0, 58.6), 8.6, 1.2),
-        ((62.4, 47.0), (58.8, 61.2), 9.4, 1.0),
-        ((67.4, 47.6), (66.0, 61.8), 9.6, 0.6),
-        ((72.2, 47.2), (72.6, 60.2), 9.0, 0.2),
-        ((76.8, 46.0), (80.0, 57.4), 8.0, -0.4),
-        ((79.6, 44.6), (85.0, 53.2), 6.4, -0.6),
+        # (racine, bout, largeur, courbure) — d'abord la rangée du fond (pointes entre celles de devant), puis celle de
+        # devant ; de la nuque (gauche, dans l'ombre) vers la gorge ; longueurs et écarts inégaux
+        ((58.4, 46.0), (55.4, 59.6), 6.0, 0.8, 0),
+        ((64.6, 47.4), (62.6, 61.6), 6.4, 0.5, 0),
+        ((70.4, 47.4), (70.0, 60.8), 6.2, 0.2, 0),
+        ((76.0, 46.4), (77.4, 59.0), 5.8, -0.2, 0),
+        ((55.6, 44.6), (51.4, 57.2), 6.4, 1.0, 1),
+        ((61.6, 46.6), (59.0, 60.4), 6.8, 0.7, 1),
+        ((67.6, 47.6), (66.4, 62.0), 7.0, 0.4, 1),
+        ((73.2, 47.0), (73.8, 60.2), 6.6, 0.0, 1),
+        ((78.6, 45.2), (81.4, 56.8), 6.0, -0.4, 1),
+        ((81.4, 43.6), (85.6, 52.8), 4.8, -0.6, 1),
     ]
     rn = []
     rf = P['ruff']
-    for i, (r0, t0, w, cv) in enumerate(RUFF):
+    for i, (r0, t0, w, cv, front) in enumerate(RUFF):
         d = norm((t0[0] - r0[0], t0[1] - r0[1]))
         side = (-d[1], d[0])
         L = math.dist(r0, t0) * (1 + 0.05 * rf)
-        flick = 0.45 * math.sin(ph * 1.3 - 0.9 * i) + 0.5 * rf * math.sin(ph * 4 - 1.3 * i)
-        tip = add(add(r0, d, L), side, flick + 0.5 * rf * (i - 2.5))
-        sh = plume(r0, add(add(r0, d, L * 0.35), side, cv * 0.6), add(add(r0, d, L * 0.72), side, cv + 0.2 * flick), tip, w, tip=0.5)
+        flick = 0.4 * math.sin(ph * 1.3 - 0.9 * i) + 0.5 * rf * math.sin(ph * 4 - 1.3 * i)
+        tip = add(add(r0, d, L), side, flick + 0.4 * rf * (r0[0] - 68) / 8)
+        sh = plume(r0, add(add(r0, d, L * 0.35), side, cv * 0.6), add(add(r0, d, L * 0.72), side, cv + 0.2 * flick), tip, w, tip=0.42)
         nm = 'ruff%d' % i
         rn.append(nm)
-        light = i >= 2
-        fig.part(nm, sh, WHITE, grad=(r0[0] + 2, r0[1], tip[0], tip[1], [(0, WHITE.light if light else WHITE.base), (0.45, WHITE.base if light else '#d4d0e6'),
-                                                                         (0.75, WARM.light if light else WARM.base), (1, WARM.base if light else WARM.shadow)]),
-                 cel=0.9, rim=0.5 if light else 0.3, cast=1.0, cast_on=['collar', 'torso', 'domeF', 'domeN'] + fr_names + frN + rn[:-1])
+        light = r0[0] > 63
+        c0 = WHITE.light if light else WHITE.base
+        c1 = WHITE.base if light else '#d4d0e6'
+        if not front:
+            c0, c1 = c1, '#c8c3dc'
+        fig.part(nm, sh, WHITE, grad=(r0[0] + 2, r0[1], tip[0], tip[1], [(0, c0), (0.45, c1), (0.72, WARM.light if light else WARM.base), (1, WARM.shadow if light else WARM.deep)]),
+                 cel=0.7, rim=0.45 if light else 0.25, cast=0.8, cast_on=['collar', 'torso', 'domeF', 'domeN'] + fr_names + frN + rn[:-1])
     # ================================================================ la tête de pygargue (agrandie ×1,1 autour du cou)
     # crâne plat, front qui avance en arcade au-dessus de l'œil, petites plumes pointues sur la nuque ; le bas de la
     # tête finit en courtes pointes de plumes posées sur les longues plumes du cou (aucune coupure)
-    head = sm([(54.4, 24.0), (58.6, 19.6), (65.0, 17.4), (72.0, 17.2), (77.6, 18.8), (81.2, 22.0), (83.4, 26.2), (83.6, 28.8),
-               (81.6, 31.4), (80.6, 36.0), (79.6, 41.0), (78.8, 45.0), (77.6, 48.4), (75.0, 46.6), (72.4, 49.8), (69.6, 47.6),
-               (66.8, 50.4), (63.8, 47.8), (60.8, 49.8), (58.4, 47.4), (55.6, 48.6), (53.4, 44.6), (52.2, 41.8), (50.2, 39.0),
+    head = sm([(54.0, 24.2), (58.0, 19.4), (64.0, 17.6), (71.0, 17.2), (77.0, 18.0), (81.0, 20.6), (83.4, 25.6), (83.8, 28.8),
+               (81.6, 31.4), (80.6, 36.0), (79.6, 41.0), (78.8, 44.6), (76.8, 48.0), (73.8, 46.2), (70.2, 49.2), (66.8, 46.8),
+               (63.0, 49.0), (59.8, 46.6), (56.2, 47.8), (53.6, 44.4), (52.2, 41.8), (50.2, 39.0),
                (51.8, 35.8), (50.8, 32.2), (52.6, 28.8)],
-              sharp=(12, 13, 14, 15, 16, 17, 18, 19, 20, 23, 25))
+              sharp=(12, 13, 14, 15, 16, 17, 18, 21, 23))
     hd = []
     # le côté de la tête vers la nuque, dans l'ombre lilas (plans nets), la demi-teinte autour ; la gorge sous le bec
     hd += [(sm([(52.6, 28.8), (56.6, 26.4), (58.4, 31.0), (58.6, 37.4), (60.0, 43.6), (58.4, 48.4), (55.6, 48.6), (53.4, 44.6),
@@ -440,17 +448,20 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # l'arcade sourcilière, lourde, plus basse vers le bec (regard dur) : l'ombre violette dessous qui coupe le haut
     # de l'iris, la crête claire au-dessus
     fixk = P['fix']
-    hd += [(sm([(60.6, 27.4), (66.4, 25.8), (73.6, 25.8), (80.4, 26.2), (83.8, 27.6), (83.4, 29.8), (78.4, 30.0), (73.4, 30.6 + 0.2 * fixk),
-                (68.4, 30.2 + 0.2 * fixk), (63.4, 30.0), (60.8, 29.4)], sharp=(0, 4)), WHITE.deep, 0.62),
-           (sm([(60.4, 26.8), (66.2, 24.6), (73.6, 24.6), (80.6, 25.2), (83.8, 27.0), (82.6, 27.8), (78.4, 27.6), (72.6, 27.8), (66.6, 27.8), (61.4, 28.6)],
-               sharp=(0, 4)), '#ffffff', 1),
-           (ribbon([(62.0, 25.8), (67.4, 24.8), (74.0, 24.8), (80.4, 25.4)], [0.1, 0.5, 0.5, 0.1]), WHITE.base, 0.6)]
+    # (deux orbites creusées sous l'arcade, l'arête claire au-dessus de chacune ; entre les deux, le blanc descend
+    # jusqu'à la cire)
+    hd += [(sm([(61.2, 28.6), (65.4, 27.0), (70.6, 26.8), (74.4, 27.6), (75.2, 30.2), (73.4, 31.6 + 0.3 * fixk), (68.4, 30.8 + 0.2 * fixk),
+                (64.0, 30.4), (61.8, 30.0)], sharp=(0, 5)), WHITE.deep, 0.58),
+           (sm([(76.2, 28.0), (80.6, 27.2), (84.0, 28.0), (83.4, 29.8), (81.6, 30.4), (78.4, 30.8), (76.6, 30.4)], sharp=(0, 2)), WHITE.deep, 0.5),
+           (sm([(60.6, 27.8), (64.6, 25.6), (70.6, 25.2), (75.6, 26.0), (79.6, 25.4), (83.9, 27.1), (82.2, 27.9), (78.6, 27.6),
+                (75.4, 28.6), (70.8, 27.8), (65.4, 28.0)], sharp=(0, 5, 8)), '#ffffff', 1),
+           (ribbon([(62.2, 26.6), (67.0, 25.4), (73.2, 25.6)], [0.1, 0.45, 0.1]), WHITE.base, 0.5)]
     # l'œil proche : grande amande d'ambre (le coin avant vers le bec), pupille noire, petit reflet ; l'œil lointain de
     # même forme sur la même ligne, plus étroit, juste au-dessus de la base du bec
     eyeN = sm([(62.6, 31.2), (65.0, 29.0), (69.6, 28.6), (72.4, 30.0), (70.0, 32.4), (65.8, 32.8)], sharp=(0, 3))
     eyeF = sm([(77.2, 30.6), (78.8, 29.4), (81.0, 29.6), (81.6, 31.0), (79.4, 31.8)], sharp=(0, 3))
-    for e, (cx, cy), pr, pc in ((eyeN, (67.4, 30.7), 1.55, (68.8, 30.6)), (eyeF, (79.4, 30.6), 0.95, (80.1, 30.6))):
-        hd += [(e.scale(1.16, 1.36, cx, cy), WHITE.deep, 1)]
+    for e, (cx, cy), pr, pc in ((eyeN, (67.4, 30.7), 1.55, (69.4, 30.7)), (eyeF, (79.4, 30.6), 0.95, (80.3, 30.7))):
+        hd += [(e.scale(1.08, 1.2, cx, cy), WHITE.deep, 0.9)]
         if P['blink'] > 0.5:
             # une paupière de plumes blanches
             x0_, _, x1_, _ = e.bbox()
@@ -459,14 +470,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             hd += [(e, ('rad', cx + 0.8, cy - 0.4, 4.0, 4.0, [(0, EYE[0]), (0.45, EYE[1]), (1, EYE[2])]), 1),
                    (ellipse(pc[0], pc[1], pr, pr * 1.05), EYE[3], 1)]
         # l'ombre de l'arcade sur le haut de l'œil (le haut de l'iris coupé)
-        hd += [(sm([(cx - 6, cy - 4.4), (cx + 6, cy - 4.6), (cx + 5.4, cy - 0.9 + 0.3 * fixk), (cx - 5.6, cy - 0.5 + 0.3 * fixk)]), WHITE.deep, 0.5 + 0.15 * fixk)]
+        x0_, y0_, x1_, _ = e.bbox()
+        hd += [(sm([(x0_ - 0.4, y0_ - 0.6), (x1_ + 0.4, y0_ - 0.6), (x1_ + 0.2, cy - 0.2 + 0.3 * fixk), (x0_ - 0.2, cy - 1.0 + 0.3 * fixk)]), WHITE.deep, 0.42 + 0.15 * fixk)]
         if P['blink'] <= 0.5 and fixk < 0.5:
             hd += [(ellipse(pc[0] + 0.5 * pr, pc[1] + 0.05, pr * 0.32, pr * 0.28), '#ffffff', 1)]
     fig.part('head', head, WHITE, grad=(81, 19, 53, 46, [(0, '#ffffff'), (0.45, WHITE.light), (0.8, WHITE.base), (1, '#d4d0e6')]),
              cel=1.1, rim=0.6, cast=1.3, cast_on=['collar'] + rn + ['domeF', 'domeN'] + fr_names + frN, details=hd)
     # ---- le bec : la mandibule (et la commissure charnue sous l'œil), puis le bec crochu (arête éclairée, crochet qui
     # dépasse la mandibule), la cire claire et la narine ----
-    mand = sm([(68.6, 38.2), (70.6, 39.0), (75.6, 40.8), (80.6, 42.0), (84.4, 42.4), (84.8, 44.0), (80.6, 45.2), (74.6, 44.4),
+    mand = sm([(68.6, 38.2), (70.6, 39.0), (75.6, 40.8), (80.6, 42.0), (85.0, 42.6), (86.2, 43.6), (84.6, 44.8), (80.6, 45.2), (74.6, 44.4),
                (70.8, 42.8), (68.6, 41.0)])
     fig.part('mand', mand, BEAK, grad=(84, 41, 69, 44, [(0, BEAK.base), (0.6, BEAK.shadow), (1, BEAK.deep)]), cel=0.6, rim=0.4, cast=0.9,
              details=[(ribbon([(71.4, 41.8), (76.4, 43.2), (82.4, 43.6)], [0.1, 0.5, 0.1]), BEAK.light, 0.4),
@@ -475,7 +487,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                (85.6, 47.6), (85.2, 44.4), (83.8, 42.4), (80.0, 41.2), (75.0, 40.2), (70.6, 39.2), (69.4, 35.0)], sharp=(8,))
     bk = [(sm([(76.0, 36.0), (82.6, 37.0), (86.8, 39.6), (87.6, 43.8), (85.6, 47.6), (85.2, 44.4), (83.8, 42.4), (80.0, 41.2), (75.4, 40.2)]), BEAK.shadow, 0.55),
           (ribbon([(76.0, 31.0), (80.8, 31.6), (85.2, 34.4), (87.6, 38.8)], [0.1, 1.0, 0.8, 0.1]), '#fffbe0', 0.9),
-          (sm([(70.0, 30.8), (74.4, 30.0), (76.0, 30.6), (75.4, 34.4), (74.2, 37.8), (71.0, 38.8), (69.4, 35.0)]), BEAK.hi, 0.9),
+          (sm([(70.0, 30.8), (73.4, 30.1), (74.6, 30.4), (74.2, 34.0), (73.2, 37.6), (70.8, 38.6), (69.4, 35.0)]), BEAK.hi, 0.8),
           (ribbon([(74.2, 33.4), (75.0, 32.9), (75.8, 32.8)], [0.5, 0.7, 0.2]), BEAK.deep, 0.9),
           (ribbon([(69.8, 38.9), (75.0, 40.1), (80.2, 41.0), (84.4, 42.4)], [0.4, 0.7, 0.6, 0.2]), BEAK.deep, 0.7)]
     fig.part('beak', beak, BEAK, grad=(86, 31, 72, 40, [(0, BEAK.light), (0.5, BEAK.base), (1, BEAK.shadow)]), cel=0.7, rim=0.6, cast=1.2,
