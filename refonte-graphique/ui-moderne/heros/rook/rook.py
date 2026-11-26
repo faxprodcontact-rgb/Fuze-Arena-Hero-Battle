@@ -37,7 +37,7 @@ WHITE = Mat('#ffffff', '#fffaf2', '#f2e0e2', '#c6a2c2', '#8a5a88')
 LEG = Mat('#ffe490', '#ffae3e', '#ea6420', '#ac3028', '#5e1430')
 TALON = Mat('#dcd0f0', '#a090b8', '#5c4874', '#3a2a4e', '#22142c', glint='#f4f0ff')
 RUBY = Mat('#ffd4cc', '#ff5c5c', '#d2203c', '#8c0c30', '#4a0620')
-FEA = Mat('#fff0b4', '#ffb83e', '#f05c1e', '#b8262e', '#6a1236')                # plumes de feu (pour les bandes)
+FEA = Mat('#ffd886', '#ffb83e', '#f05c1e', '#b8262e', '#6a1236')                # plumes de feu (pour les bandes)
 CRIM = Mat('#ff9a6a', '#e04a30', '#a81e36', '#6c1238', '#3a0c2a')
 FINK = '#330a1a'                                                                # le contour des plumes (comme Kael)
 LASH = '#3a0e24'
@@ -172,7 +172,7 @@ def wing(fig, side, P, S):
         sh = plume(root, ang, L, wdt, curl=curl)
         tip = sh_tip(root, ang, L, curl)
         nm = '%sr%d' % (pre, i)
-        fig.part(nm, sh, FEA, grad=(root[0], root[1], tip[0], tip[1], G1), cel=0, rim=0.6, cast=1.1, ink=FINK,
+        fig.part(nm, sh, FEA, grad=(root[0], root[1], tip[0], tip[1], G1), cel=0, rim=0.45, cast=1.1, ink=FINK,
                  cast_on=[x for x in names],
                  details=[(under(sh, 0.6 * sg, -2.2), ('lin', root[0], root[1], tip[0], tip[1],
                                                       [(0, '#5a0e2e', 0.5), (0.6, '#a8202c', 0.45), (1, '#e0501e', 0.3)]), 1)])
@@ -190,7 +190,7 @@ def wing(fig, side, P, S):
         sh = plume(root, ang, L, wdt, curl=sg * (10 + 10 * drag), kind='cover')
         tp = sh_tip(root, ang, L, sg * 10)
         nm = '%sc%d' % (pre, i)
-        fig.part(nm, sh, FEA, grad=(root[0], root[1], tp[0], tp[1], GC), cel=0, rim=0.6, cast=1.0, ink=FINK,
+        fig.part(nm, sh, FEA, grad=(root[0], root[1], tp[0], tp[1], GC), cel=0, rim=0.45, cast=1.0, ink=FINK,
                  cast_on=[x for x in names],
                  details=[(under(sh, 0.5 * sg, -1.8), ('lin', root[0], root[1], tp[0], tp[1],
                                                       [(0, '#8a1a30', 0.45), (1, '#d2401e', 0.3)]), 1)])
@@ -413,7 +413,7 @@ def tail(fig, P, BODY):
         sh = lock(R0, q1, q2, q3, w, bulge=0.22)
         back = nm.startswith('tb')
         G = G_TAILB if back else G_TAIL
-        fig.part(nm, sh, CRIM if back else FEA, grad=(R0[0], R0[1], q3[0], q3[1], G), cel=0, rim=0.6, cast=1.2, ink=FINK,
+        fig.part(nm, sh, CRIM if back else FEA, grad=(R0[0], R0[1], q3[0], q3[1], G), cel=0, rim=0.45, cast=1.2, ink=FINK,
                  cast_on=list(names),
                  details=[(under(sh, 0.8, -2.8), ('lin', R0[0], R0[1], q3[0], q3[1], [(0, '#4a0c2a', 0.5), (0.6, '#a01e2c', 0.45), (1, '#d8481e', 0.3)]), 1)])
         names.append(nm)
@@ -516,7 +516,7 @@ def skirt(fig, P):
             sh = plume(r_, ang, L, w, curl=curl)
             tp = sh_tip(r_, ang, L, curl)
             nm = '%s%d' % (rank, i)
-            fig.part(nm, sh, mat, grad=(r_[0], r_[1], tp[0], tp[1], G), cel=0, rim=0.6, cast=1.0, ink=FINK,
+            fig.part(nm, sh, mat, grad=(r_[0], r_[1], tp[0], tp[1], G), cel=0, rim=0.45, cast=1.0, ink=FINK,
                      details=[(under(sh, 0.6, -2.2), ('lin', r_[0], r_[1], tp[0], tp[1], [(0, '#3a0c2a', 0.5), (0.6, '#8a1a30', 0.4), (1, '#c8381e', 0.3)]), 1)])
             names.append(nm)
     return names
@@ -547,7 +547,7 @@ def hair_locks(fig, P):
         p2 = lerp(lerp(p0, p2, 1.0), p2, amp) if amp != 1 else p2
         sh = lock(p0, p1, p2, p3, w, bulge=0.3)
         G = G_HAIRB if nm.startswith('hn') else G_HAIR
-        fig.part(nm, sh, FEA, grad=(p0[0], p0[1], p3[0], p3[1], G), cel=0, rim=0.7, cast=1.2, ink=FINK,
+        fig.part(nm, sh, FEA, grad=(p0[0], p0[1], p3[0], p3[1], G), cel=0, rim=0.5, cast=1.2, ink=FINK,
                  cast_on=list(names),
                  details=[(under(sh, 0.8, -2.6), ('lin', p0[0], p0[1], p3[0], p3[1], [(0, '#5a0e2e', 0.5), (0.5, '#b0242c', 0.45), (1, '#e0501e', 0.35)]), 1)])
         names.append(nm)
@@ -565,17 +565,17 @@ def head(fig, P):
     # ---- le visage ----
     face = sm([(67.4, 31.0), (68.8, 26.4), (72.6, 23.6), (78.4, 23.0), (82.0, 24.8), (83.6, 28.2), (83.5, 31.2),
                (83.9, 33.6), (85.2, 36.0), (85.8, 37.3), (85.0, 38.3), (84.0, 38.8), (84.1, 39.6), (84.4, 40.5),
-               (83.8, 41.3), (84.0, 42.4), (83.4, 43.9), (82.6, 45.5), (81.0, 46.9), (78.4, 47.5), (75.4, 46.8),
-               (72.2, 44.6), (69.6, 41.6), (67.8, 37.2)], sharp=(9,), t=0.95)
+               (83.8, 41.3), (84.0, 42.4), (83.5, 43.9), (82.7, 45.4), (81.4, 46.6), (79.2, 47.1), (76.6, 46.1),
+               (73.4, 43.8), (70.6, 40.8), (68.4, 36.8)], sharp=(9,), t=0.95)
     fd = []
     # les plans du visage : la joue proche et la tempe dans une ombre douce, le plan de face éclairé
-    fd += [(sm([(68.4, 31.4), (70.6, 36.6), (72.8, 41.0), (76.6, 45.2), (78.8, 47.0), (75.4, 46.8), (72.2, 44.6), (69.6, 41.6), (67.8, 37.2)]), SKIN.shadow, 0.5),
+    fd += [(sm([(68.6, 31.4), (70.8, 36.2), (73.2, 40.4), (76.6, 44.2), (79.4, 46.8), (76.6, 46.1), (73.4, 43.8), (70.6, 40.8), (68.4, 36.8)]), SKIN.shadow, 0.5),
            (sm([(78.6, 24.2), (82.0, 25.2), (83.4, 28.6), (83.2, 32.2), (81.0, 30.4), (79.0, 27.4)]), SKIN.hi, 0.5),
            (ellipse(82.4, 39.6, 1.5, 1.1), SKIN.hi, 0.3),
            (ellipse(74.0, 39.0, 2.6, 1.4, 12), '#f08c94', 0.26),          # la pommette proche (un peu de rose)
            (ellipse(82.6, 38.4, 1.1, 0.9), '#f08c94', 0.26)]
     # l'ombre sous le menton et la mâchoire
-    fd += [(sm([(76.8, 46.0), (80.4, 46.4), (82.6, 45.0), (81.0, 46.9), (78.4, 47.5), (75.4, 46.8)]), SKIN.shadow, 0.5)]
+    fd += [(sm([(77.4, 45.4), (80.6, 46.0), (82.7, 45.0), (81.4, 46.6), (79.2, 47.1), (76.6, 46.1)]), SKIN.shadow, 0.5)]
     blink = P['blink'] > 0.5
     # les sourcils fins, arqués, qui descendent vers le nez (fière, décidée)
     fd += [(sm([(69.0, 31.6), (70.4, 30.4), (72.6, 29.8), (74.6, 30.6), (75.6, 31.6), (74.4, 31.2), (72.6, 30.6), (70.6, 31.0), (69.3, 32.0)],
@@ -584,14 +584,14 @@ def head(fig, P):
                sharp=(0, 4), t=0.8), LASH, 0.95)]
     # les yeux en amande : (amande, trait des cils étiré vers la tempe, centre de l'iris, rayon)
     eyes = (
-        (sm([(69.8, 33.9), (71.4, 32.7), (73.6, 32.7), (75.2, 34.3), (73.6, 35.7), (71.2, 35.4)], sharp=(0, 3), t=0.9),
-         sm([(75.5, 34.3), (74.2, 32.6), (71.6, 32.0), (69.4, 32.6), (67.6, 32.4), (69.0, 33.4), (70.0, 34.2), (71.6, 33.1), (73.8, 33.2)],
+        (sm([(69.6, 33.9), (71.2, 32.6), (73.6, 32.5), (75.6, 34.1), (73.8, 35.6), (71.2, 35.4)], sharp=(0, 3), t=0.9),
+         sm([(75.9, 34.1), (74.4, 32.4), (71.6, 31.9), (69.4, 32.6), (68.0, 32.5), (68.9, 33.4), (69.8, 34.2), (71.6, 33.1), (74.0, 33.0)],
             sharp=(0, 4), t=0.85),
-         (72.9, 34.2), 1.5),
-        (sm([(78.3, 34.4), (79.6, 33.0), (81.4, 32.9), (82.6, 33.8), (81.4, 35.4), (79.4, 35.4)], sharp=(0, 3), t=0.9),
-         sm([(78.1, 34.2), (79.6, 32.4), (81.6, 32.3), (82.9, 32.9), (84.0, 32.4), (83.2, 33.6), (82.6, 34.1), (81.4, 33.3), (79.6, 33.4)],
+         (73.0, 34.1), 1.5),
+        (sm([(79.3, 34.3), (80.3, 32.9), (81.9, 32.6), (83.0, 33.4), (82.1, 34.6), (80.3, 34.9)], sharp=(0, 3), t=0.9),
+         sm([(79.0, 34.0), (80.2, 32.3), (82.0, 31.9), (83.1, 32.8), (83.6, 32.3), (83.4, 33.4), (82.9, 33.9), (81.8, 33.0), (80.3, 33.2)],
             sharp=(0, 4), t=0.85),
-         (80.4, 34.2), 1.2),
+         (81.3, 33.8), 1.1),
     )
     for almond, liner, (ix, iy), ir in eyes:
         if blink:
@@ -600,10 +600,10 @@ def head(fig, P):
                            [0.2, 0.8, 0.2]), LASH, 0.95)]
         else:
             fd += [(almond.scale(1.06, 1.18, ix, iy + 0.2), SKIN.shadow, 0.55), (almond, '#fdf3ea', 1)]
-            iris = inter(ellipse(ix, iy, ir, ir * 1.05), almond)
+            iris = inter(ellipse(ix, iy, ir * (1 if ir > 1.3 else 0.85), ir * 1.05), almond)
             if iris:
                 fd += [(iris, ('rad', ix + 0.2, iy + 0.5, ir * 1.15, ir * 1.15, [(0, '#ffd47a'), (0.45, '#ffaa36'), (0.8, '#d8640e'), (1, '#8a2e0c')]), 1)]
-            pup = inter(ellipse(ix + 0.05, iy - 0.05, ir * 0.42, ir * 0.55), almond)
+            pup = inter(ellipse(ix + 0.05, iy - 0.05, ir * (0.42 if ir > 1.3 else 0.36), ir * 0.55), almond)
             if pup:
                 fd += [(pup, '#2a0812', 1)]
             fd += [(sm([almond_pt(almond, 0), almond_pt(almond, 1), almond_pt(almond, 2), almond_pt(almond, 3),
@@ -614,12 +614,13 @@ def head(fig, P):
             o, b1 = almond_pt(almond, 0), almond_pt(almond, 5)
             fd += [(ribbon([o, lerp(o, b1, 0.55), b1], [0.1, 0.35, 0.05]), LASH, 0.6)]
         fd += [(liner, LASH, 1)]
-    # le nez fin : arête claire, flanc dans l'ombre, bout qui dépasse à peine, une narine, ombre douce dessous
-    fd += [(sm([(81.6, 35.0), (83.4, 36.8), (84.0, 38.6), (82.6, 38.8), (81.6, 37.6)]), SKIN.shadow, 0.42),
-           (ribbon([(82.6, 32.0), (84.0, 34.8), (85.2, 36.9)], [0.1, 0.45, 0.35]), SKIN.hi, 0.9),
-           (ellipse(85.0, 37.0, 0.55, 0.4, 20), '#fff8f0', 0.85),
-           (ellipse(83.6, 38.3, 0.6, 0.32, 15), SKIN.deep, 0.8),
-           (ribbon([(82.4, 39.0), (83.8, 39.2), (85.0, 38.7)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.5)]
+    # le nez fin : l'arête claire en diagonale, de l'entre-deux-yeux au bout qui dépasse à peine (elle cache le coin
+    # intérieur de l'œil lointain), le flanc dans l'ombre douce dessous, une narine
+    fd += [(sm([(78.4, 34.6), (81.4, 36.4), (83.6, 37.6), (84.2, 38.6), (82.2, 39.1), (80.2, 37.9)]), SKIN.shadow, 0.32),
+           (ribbon([(77.8, 32.6), (80.8, 34.6), (83.4, 36.0), (85.2, 37.0)], [0.15, 0.55, 0.5, 0.3]), SKIN.hi, 0.85),
+           (ellipse(85.0, 37.1, 0.6, 0.42, 20), '#fff8f0', 0.85),
+           (ellipse(83.4, 38.4, 0.65, 0.32, 15), SKIN.deep, 0.8),
+           (ribbon([(81.8, 39.2), (83.6, 39.3), (85.0, 38.7)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.5)]
     # les lèvres pleines, à peine entrouvertes, le coin relevé : l'intérieur rouge sombre (jamais noir)
     fd += [(sm([(79.4, 41.0), (81.0, 40.3), (82.3, 40.5), (83.0, 40.2), (84.1, 40.6), (83.9, 41.3), (81.6, 41.3), (79.9, 41.4)], sharp=(0, 5), t=0.85), '#b02c48', 1),
            (sm([(79.9, 41.35), (81.6, 41.25), (83.9, 41.25), (83.5, 41.9), (81.4, 42.0)], sharp=(0, 2), t=0.85), '#5c1024', 1),
@@ -646,16 +647,16 @@ def head(fig, P):
                                       (((76.6, 25.8), (69.2, 26.4), (62.6, 32.0)), 1.2, '#9a1e32', 0.45),
                                       (((69.6, 31.2), (65.6, 34.6), (62.4, 40.0)), 1.1, '#8e1c32', 0.45)):
         cdet.append((ribbon([a0, a1, a2], [0.15, w_, 0.15]), col, op))
-    part('cap', cap, FEA, cel=0.9, rim=0.8, cast=1.1, cast_on=['face'] + [n for n in fig_names(fig) if n.startswith('h')],
+    part('cap', cap, FEA, cel=0.9, rim=0.6, cast=1.1, cast_on=['face'] + [n for n in fig_names(fig) if n.startswith('h')],
          ink=FINK, details=cdet)
 
     # ---- la grande plume du dessus du front : elle monte un peu en avant puis se couche vers l'arrière en suivant
     # le crâne, comme le reste de la chevelure, la pointe relevée ----
     w1 = math.sin(ph + 0.4)
-    p0, p1, p2, p3 = (80.6, 24.2), (87.4, 18.6), (81.0, 11.6 + 0.4 * w1), (68.6 - 0.6 * amp * w1, 7.0 + 0.8 * amp * w1)
-    sh = lock(p0, p1, p2, p3, 9.0, bulge=0.3)
-    part('fore', sh, FEA, grad=(p0[0], p0[1], p3[0], p3[1], [(0, '#ffe08a'), (0.3, '#ffb238'), (0.7, '#f26a22'), (1, '#c8301e')]),
-         cel=0, rim=0.8, cast=1.1, ink=FINK,
+    p0, p1, p2, p3 = (80.2, 23.4), (85.6, 18.8), (80.0, 13.4 + 0.4 * w1), (69.6 - 0.6 * amp * w1, 10.2 + 0.8 * amp * w1)
+    sh = lock(p0, p1, p2, p3, 7.4, bulge=0.28)
+    part('fore', sh, FEA, grad=(p0[0], p0[1], p3[0], p3[1], [(0, '#ffd070'), (0.3, '#ffa232'), (0.7, '#ee6222'), (1, '#c02c22')]),
+         cel=0, rim=0.6, cast=1.1, ink=FINK,
          details=[(under(sh, 0.8, -2.6), ('lin', p0[0], p0[1], p3[0], p3[1], [(0, '#e0601e', 0.6), (1, '#8e1c32', 0.6)]), 1)])
 
     # ---- le diadème d'or (fait le tour du front d'un bord à l'autre), fleuron et rubis ----
@@ -670,17 +671,17 @@ def head(fig, P):
                   (ellipse(77.9, 23.0, 0.25, 0.22), '#ffeee8', 0.95)])
 
     # ---- la petite plume de la tempe (sa pointe orangée vient sur la pommette) ----
-    a = 72 + amp * 2 * math.sin(ph + 0.4)
-    sh = plume((69.0, 28.0), a, 9.4, 3.6, curl=-22)
-    tp = sh_tip((69.0, 28.0), a, 9.4, -22)
-    part('temple', sh, FEA, grad=(69, 28, tp[0], tp[1], [(0, '#a01c30'), (0.55, '#e8481e'), (1, '#ff9a2a')]), cel=0, rim=0.5,
+    a = 80 + amp * 2 * math.sin(ph + 0.4)
+    sh = plume((68.2, 29.6), a, 9.6, 3.4, curl=-24)
+    tp = sh_tip((68.2, 29.6), a, 9.6, -24)
+    part('temple', sh, FEA, grad=(68.2, 29.6, tp[0], tp[1], [(0, '#c42c26'), (0.55, '#f26422'), (1, '#ffb23a')]), cel=0, rim=0.4,
          cast=0.9, ink=FINK, details=[(under(sh, 0.5, -1.4), '#5a0e2e', 0.35)])
     # ---- la longue plume qui suit la joue jusque sous la mâchoire (pointe jaune) ----
     a = 98 + amp * 2 * math.sin(ph - 0.4)
-    sh = plume((67.6, 29.4), a, 19.6, 5.0, curl=-62)
-    tp = sh_tip((67.6, 29.4), a, 19.6, -62)
-    part('cheek', sh, FEA, grad=(67.6, 29.4, tp[0], tp[1], [(0, '#8e1a36'), (0.4, '#d23a24'), (0.75, '#ff8a24'), (1, '#ffd660')]),
-         cel=0, rim=0.6, cast=1.1, ink=FINK, details=[(under(sh, 0.7, -1.8), ('lin', 67.6, 29.4, tp[0], tp[1], [(0, '#4a0c2a', 0.5), (1, '#c8381e', 0.3)]), 1)])
+    sh = plume((67.8, 30.4), a, 18.8, 4.0, curl=-64)
+    tp = sh_tip((67.8, 30.4), a, 18.8, -64)
+    part('cheek', sh, FEA, grad=(67.8, 30.4, tp[0], tp[1], [(0, '#b42a2c'), (0.4, '#e8501e'), (0.75, '#ff9a2a'), (1, '#ffdc68')]),
+         cel=0, rim=0.45, cast=1.1, ink=FINK, details=[(under(sh, 0.7, -1.8), ('lin', 67.6, 29.4, tp[0], tp[1], [(0, '#4a0c2a', 0.5), (1, '#c8381e', 0.3)]), 1)])
     return names
 
 

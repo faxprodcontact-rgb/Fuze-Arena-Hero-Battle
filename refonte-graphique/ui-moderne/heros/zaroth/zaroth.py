@@ -187,11 +187,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (sm([(80, 109.6), (91, 109.4), (91, 110.2), (80, 110.4)]), GOLD.light, 1),
                       (ellipse(87.8, 106.0, 0.9, 0.9), GOLD.base, 1), (ellipse(88.0, 105.8, 0.4, 0.4), GOLD.hi, 1),
                       (ribbon([(89.6, 103.2), (89.4, 106), (88.8, 109)], [0.2, 1.0, 0.2]), LACQ.hi, 0.55)])
-    fleg = bent((78.4, 89.6), (88.4, 99.2), (86.4, 106.6), 16.0, 13.6, 12.4, bulge=(0.06, 0.04))
+    fleg = bent((78.4, 89.6), (88.2, 98.4), (86.8, 103.4), 16.0, 13.8, 13.0, bulge=(0.06, 0.04))
     fig.part('fleg', fleg, NAVY, cel=1.5, rim=0.7, cast=1.0,
-             details=[(ribbon([(78.4, 92), (84.6, 97.6), (83.6, 102.6), (82.6, 106.8)], [0.2, 1.0, 0.9, 0.2]), NAVY.shadow, 0.8),
-                      (ribbon([(73.6, 94.4), (79.2, 100.6), (79.8, 106.4)], [0.2, 0.9, 0.2]), NAVY.deep, 0.5),
-                      (ribbon([(84.4, 92.6), (89.2, 97.4), (89.6, 102.4), (89.2, 106.4)], [0.2, 0.8, 0.7, 0.2]), NAVY.light, 0.7)])
+             details=[(ribbon([(78.4, 92), (84.6, 97.6), (83.6, 101.6), (82.8, 104.8)], [0.2, 1.0, 0.9, 0.2]), NAVY.shadow, 0.8),
+                      (ribbon([(73.6, 94.4), (79.2, 100.0), (80.2, 104.6)], [0.2, 0.9, 0.2]), NAVY.deep, 0.5),
+                      (ribbon([(84.4, 92.6), (89.2, 97.4), (89.8, 101.4), (89.6, 104.6)], [0.2, 0.8, 0.7, 0.2]), NAVY.light, 0.7)])
 
     # ---- la jambe proche (droite), tendue loin en arrière ----
     fig.part('nsole', rpoly([(29.2, 113.4), (48.2, 113.2), (48.6, 116.2), (29.0, 116.2)], [1.2, 1.6, 0.6, 0.6]), STRAW, cel=0.6, rim=0.5, cast=0,
@@ -207,11 +207,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (sm([(34, 109.6), (46, 109.4), (46, 110.2), (34, 110.4)]), GOLD.light, 1),
                       (ellipse(42.0, 106.0, 0.9, 0.9), GOLD.base, 1), (ellipse(42.2, 105.8, 0.4, 0.4), GOLD.hi, 1),
                       (ribbon([(44.2, 103.2), (43.8, 106), (43.2, 109)], [0.2, 1.0, 0.2]), LACQ.hi, 0.55)])
-    nleg = limb([(52.6, 89.0), (48.8, 94.2), (44.8, 99.6), (41.0, 106.4)], [16.6, 15.6, 14.0, 12.6])
+    nleg = limb([(52.6, 89.0), (48.8, 93.8), (45.2, 98.6), (41.8, 103.2)], [16.6, 15.6, 14.4, 13.4])
     fig.part('nleg', nleg, NAVY, cel=1.6, rim=0.7, cast=1.0, cast_on=['fleg', 'fgreave', 'ffoot'],
-             details=[(ribbon([(50.4, 91.6), (45.6, 98.6), (41.4, 106.6)], [0.2, 1.1, 0.2]), NAVY.shadow, 0.8),
-                      (ribbon([(55.6, 93.4), (50.8, 100.6), (46.4, 106.6)], [0.2, 0.9, 0.2]), NAVY.light, 0.65),
-                      (ribbon([(45.8, 93.4), (40.4, 100.4), (37.0, 106.0)], [0.2, 0.8, 0.2]), NAVY.deep, 0.45)])
+             details=[(ribbon([(50.4, 91.6), (45.6, 98.0), (41.6, 104.6)], [0.2, 1.1, 0.2]), NAVY.shadow, 0.8),
+                      (ribbon([(55.6, 93.4), (51.0, 99.6), (47.2, 104.6)], [0.2, 0.9, 0.2]), NAVY.light, 0.65),
+                      (ribbon([(45.8, 93.4), (40.8, 99.6), (37.2, 104.2)], [0.2, 0.8, 0.2]), NAVY.deep, 0.45)])
 
     # ---- la jupe de plaques (kusazuri) : trois rangées, la plus basse d'abord ; un laçage par panneau ----
     KZR = [((39.4, 74.6), (91.0, 75.6), 7.8), ((37.8, 80.8), (92.0, 81.6), 8.0), ((36.2, 87.0), (93.0, 87.6), 8.2)]
@@ -337,12 +337,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         pts = [(x, y + cy) for x, y in pts]
         L = xs
         d = [(L(sm([(cx + 2.9, cy - 4.6 * s), (cx, cy - 5.4 * s), (cx - 2.9, cy - 4.8 * s), (cx - 3.1, cy - 0.6 * s), (cx + 3.1, cy - 0.6 * s)])), SKIN.light, 0.5)]
-        seg = [(cx + 2.9, cx + 1.4), (cx + 1.3, cx - 0.2), (cx - 0.3, cx - 1.8), (cx - 1.9, cx - 3.1)]
+        seg = [(cx + 2.9, cx + 1.45), (cx + 1.35, cx - 0.1), (cx - 0.2, cx - 1.7), (cx - 1.8, cx - 3.1)]
         for k, (u0, u1) in enumerate(seg):
-            v1 = (3.5 - 0.25 * abs(k - 1.3)) * s
-            d += [(L(rpoly([(u0, cy - 0.3 * s), (u1, cy - 0.3 * s), (u1, cy + v1), (u0, cy + v1)], 0.6)), SKIN.base, 1),
-                  (L(ellipse((u0 + u1) / 2 + 0.15, cy + 0.5 * s, abs(u1 - u0) * 0.32, 0.45)), SKIN.hi, 0.55),
-                  (L(ribbon([(u1, cy + 0.2 * s), (u1, cy + v1 * 0.55), (u1 + 0.1, cy + v1 - 0.3 * s)], [0.1, 0.45, 0.1])), SKIN.deep, 0.5)]
+            v1 = (3.6 - 0.3 * abs(k - 1.2)) * s
+            fg = L(rpoly([(u0, cy - 0.4 * s), (u1, cy - 0.4 * s), (u1, cy + v1), (u0, cy + v1)], [0.5, 0.5, 0.75, 0.75]))
+            a_, b_ = loc(((u0 + u1) / 2, cy - 0.4 * s)), loc(((u0 + u1) / 2, cy + v1))
+            d += [(fg, ('lin', a_[0], a_[1], b_[0], b_[1], [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]), 1),
+                  (L(ribbon([(u1 + 0.05, cy + 0.1 * s), (u1, cy + v1 * 0.55), (u1 + 0.1, cy + v1 - 0.3 * s)], [0.1, 0.5, 0.1])), SKIN.deep, 0.55)]
+        d += [(L(ribbon([(cx + 2.6, cy - 0.5 * s), (cx, cy - 0.7 * s), (cx - 2.8, cy - 0.5 * s)], [0.1, 0.7, 0.1])), SKIN.hi, 0.45)]
         fig.part(name, L(sm(pts)), SKIN, cel=1.0, rim=0.6, cast=0.9, details=d)
 
     # ---- l'ordre : sabre et poing lointain, bras proche, épaulière proche, poing proche, puis la tête ----
@@ -463,7 +465,6 @@ def head(fig, P):
                (74, 55.8), (66, 55.2), (60, 52.6), (57.6, 47.4)])
     md = [(sm([(56, 40.6), (86, 40.4), (86, 42.6), (68, 42.4), (56, 43.0)]), GOLD.base, 1),
           (sm([(56, 40.6), (86, 40.4), (86, 41.5), (68, 41.4), (56, 41.9)]), GOLD.light, 1),
-          (ellipse(63.4, 46.8, 3.0, 2.0, -10), LACQ.light, 0.35),
           (sm([(80.6, 49.6), (86.8, 48.0), (86.2, 51.2), (82.4, 54.2)]), LACQ.light, 0.55)]
     # la gueule : une gorge rouge sombre (pas de noir), deux crocs en haut, deux en bas
     mouth = sm([(68.2, 48.4), (74, 47.6), (80, 47.8), (85.6, 48.4), (84.8, 51.0), (80, 52.6), (73, 52.4), (68.8, 50.8)], sharp=(0, 3))
@@ -487,9 +488,9 @@ def head(fig, P):
     mous = taper(crpath([(87.0, 47.6), (80.6, 47.6), (74.0, 48.2), (69.4, 49.2), (66.8, 51.4), (67.0, 53.8), (68.4, 54.8)], 18), 2.8, 1.0, tip='sharp', wmid=2.4)
     part('mous', mous, WHITE, grad=(84, 46, 66, 54, [(0, WHITE.hi), (0.5, WHITE.light), (1, WHITE.shadow)]), cel=0.7, rim=0.5, cast=0.9,
          details=[(under(mous, 0.4, -1.1), WHITE.shadow, 0.7)])
-    mous2 = taper(crpath([(86.2, 47.4), (88.4, 48.4), (89.2, 50.6), (88.6, 52.4)], 10), 2.2, 0.7, tip='sharp')
+    mous2 = taper(crpath([(85.8, 47.6), (87.8, 48.4), (88.6, 50.4), (88.0, 52.2)], 10), 1.7, 0.5, tip='sharp')
     part('mous2', mous2, WHITE, cel=0.5, rim=0.4, cast=0.6)
-    goat = taper(crpath([(78.6, 54.4), (78.6, 56.4), (77.8, 58.4), (76.6, 59.6)], 10), 2.8, 0.5, tip='sharp')
+    goat = sm([(76.2, 54.4), (80.6, 54.2), (80.2, 56.2), (79.0, 58.8), (78.3, 56.9), (77.0, 57.9), (76.8, 56.0)], sharp=(3, 5), t=0.9)
     part('goat', goat, WHITE, cel=0.6, rim=0.5, cast=0.8, details=[(under(goat, 0.4, -0.8), WHITE.shadow, 0.6)])
 
     # ---- le grand croissant d'or (corne proche plus grande), la monture à gemme bleue ----
