@@ -204,3 +204,78 @@ def scroll(ic, cx=50, cy=50, w=70, h=56, paper='paper', seal='violet', rot=-12):
 def sparkles(ic, pts):
     for x, y, r in pts:
         ic.sparkle(x, y, r)
+
+
+# ---------- La pierre des boutons (« Pierre de l'arène », src/game/ui/buttons.ts) ----------
+# basalte : arête claire, haut, bas, épaisseur ; l'or brûle dedans (braise, gemme d'ambre)
+BASALT = ['#8a86a8', '#4d4a6a', '#2e2c47', '#1f1d33']
+EMBER = '#ffb53a'
+
+
+def basalt(k=0.0):
+    """Le dégradé d'une pierre de basalte, clair en haut à droite (k > 0 : plus claire)."""
+    return [(0, mix('#7d7a9c', '#fff6cf', 0.08 + k)), (0.45, lite(BASALT[1], k)), (1, BASALT[2])]
+
+
+def rune(cx, cy, r):
+    """Le signe gravé de l'arène (inventé) : un losange et ses quatre éclats."""
+    sh = rpoly([(cx, cy - r), (cx + r * 0.62, cy), (cx, cy + r), (cx - r * 0.62, cy)], r * 0.12)
+    for dx, dy in ((-1, 0), (1, 0)):
+        sh = sh + circle(cx + dx * r * 1.2, cy + dy * r, r * 0.2)
+    return sh
+
+
+def stone_chest(ic, state='closed', cx=50):
+    """Le coffre de l'arène : caisse et couvercle de basalte taillé à facettes, ferrures d'or, un signe gravé où brûle
+    la lumière d'or (comme les boutons de pierre), serrure à gemme d'ambre.
+    state : closed (fermé, la braise dort), ready (le couvercle se soulève, la lumière fuit par la fente), open (ouvert,
+    l'or déborde et luit)."""
+    x0, x1 = cx - 38, cx + 38
+    yb, ye = 56, 89                     # la caisse : du joint au sol
+    lift = 7 if state == 'ready' else 0
+    if state in ('ready', 'open'):
+        ic.glow(cx, yb - 4, 46, '#ffd36a', 0.9)
+    o = ic.obj()
+    if state == 'open':
+        # le couvercle renversé en arrière (on voit son dessous sombre), l'or qui déborde
+        o.part(rpoly([(x0 + 5, 16), (x1 - 5, 16), (x1 + 1, yb - 5), (x0 - 1, yb - 5)], [7, 7, 2, 2]), basalt(0.06), gloss=False)
+        o.part(rpoly([(x0 + 9, 22), (x1 - 9, 22), (x1 - 5, yb - 8), (x0 + 5, yb - 8)], 4), [(0, '#3a3858'), (1, '#1f1d33')], gloss=False, bevel=0.3, cast=False)
+        o.part(blob([(x0 + 4, yb + 2), (x0 + 12, yb - 10), (cx - 10, yb - 17), (cx + 6, yb - 15), (x1 - 13, yb - 11), (x1 - 4, yb + 1)]),
+               [(0, '#fff6c0'), (0.45, '#ffcf3a'), (1, '#e58a00')], gloss=False)
+    o.part(rect(x0, yb, x1 - x0, ye - yb, 5), basalt(), gloss=False)
+    bi = len(o.parts) - 1
+    ly = yb - lift
+    if state != 'open':
+        if state == 'ready':
+            # la fente qui luit, sous le couvercle soulevé
+            o.part(rect(x0 + 3, ly - 2, x1 - x0 - 6, lift + 4, 2), [(0, '#fffbe0'), (1, '#ffd25a')], gloss=False, bevel=0, cast=False)
+        # le couvercle taillé : un flanc, une face du dessus plus claire (la lumière vient d'en haut à droite)
+        lid = rpoly([(x0, ly), (x0 + 3, ly - 17), (x0 + 15, ly - 28), (x1 - 15, ly - 28), (x1 - 3, ly - 17), (x1, ly)], [2, 5, 6, 6, 5, 2])
+        o.part(lid, basalt(0.1), gloss=False)
+        li = len(o.parts) - 1
+        o.detail(rpoly([(x0 + 6, ly - 17), (x0 + 16, ly - 26), (x1 - 16, ly - 26), (x1 - 6, ly - 17)], 3), fill='#ffffff', clip=li, opacity=0.16)
+        o.detail(openpath([(x0 + 16, ly - 26), (x1 - 16, ly - 26), (x1 - 6, ly - 17)]), stroke=('#fff6cf', 1.6), clip=li, opacity=0.45, blur=1)
+        # les coins d'or du couvercle
+        for pts in ([(x0 + 1, ly - 19), (x0 + 13, ly - 29), (x0 + 19, ly - 29), (x0 + 4, ly - 12)],
+                    [(x1 - 1, ly - 19), (x1 - 4, ly - 12), (x1 - 19, ly - 29), (x1 - 13, ly - 29)]):
+            o.part(rpoly(pts, 2.5), ('metal', 'gold'), gloss=False, bevel=0.5)
+    # le panneau creusé dans la caisse, et son signe où brûle l'or
+    o.detail(rect(x0 + 11, yb + 10, x1 - x0 - 22, ye - yb - 17, 4), fill='#15132a', clip=bi, opacity=0.5, blur=1)
+    hot = state != 'closed'
+    o.detail(rune(cx, yb + 18.5, 6.5), fill='#ffb53a', clip=bi, opacity=0.9 if hot else 0.55, blur=2)
+    o.detail(rune(cx, yb + 18.5, 5), fill='#fff1b8' if hot else '#ffcf5a', clip=bi, opacity=1 if hot else 0.85)
+    # les ferrures d'or : le cerclage du couvercle, les coins du bas
+    if state != 'open':
+        o.part(rect(x0 - 2, ly - 7, x1 - x0 + 4, 8, 4), ('metal', 'gold'), gloss=False, bevel=0.7)
+    else:
+        o.part(rect(x0 - 2, yb - 3, x1 - x0 + 4, 7, 3.5), ('metal', 'gold'), gloss=False, bevel=0.7)
+    for pts in ([(x0 - 1, ye - 13), (x0 + 8, ye - 5), (x0 + 15, ye + 1), (x0 - 1, ye + 1)],
+                [(x1 + 1, ye - 13), (x1 + 1, ye + 1), (x1 - 15, ye + 1), (x1 - 8, ye - 5)]):
+        o.part(rpoly(pts, 3), ('metal', 'gold'), gloss=False, bevel=0.6)
+    # la serrure : un écu d'or sur le joint, une gemme d'ambre
+    sy = ly - 3 if state != 'open' else yb
+    o.part(rpoly([(cx - 9, sy - 7), (cx + 9, sy - 7), (cx + 9, sy + 6), (cx, sy + 13), (cx - 9, sy + 6)], 3.5), ('metal', 'gold'), bevel=0.8)
+    if state != 'open':
+        o.part(circle(cx, sy + 1, 4.6), ('radial', EMBER if state == 'closed' else '#ffe27a'), gloss=False, bevel=0.4, cast=False)
+        o.detail(circle(cx + 1.5, sy - 0.6, 1.4), fill='#fffbe6', opacity=0.95)
+    return o

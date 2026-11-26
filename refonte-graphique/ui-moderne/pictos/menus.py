@@ -2,7 +2,7 @@
 # horloge…), étoiles des héros.
 import math
 
-from composants import arrow_shape, chest, coin, crescent, gem, plus_shape, shield_shape, sparkles, sword
+from composants import arrow_shape, basalt, chest, stone_chest, coin, crescent, gem, plus_shape, shield_shape, sparkles, sword
 from lib import (C, Icon, arc_pts, band, blob, circle, col, dark, ellipse, lite, mix, openpath, picto, poly, rect, ring,
                  rpoly, sparkle_shape, star)
 from monnaies import heart
@@ -386,19 +386,27 @@ def _():
 
 @picto('hourglass')
 def _():
-    """Le sablier : montants de bois, verre bleuté, sable d'or."""
+    """Le sablier de l'arène : socle et chapeau de basalte cerclés d'or, montants d'or, verre ambré, sable d'or qui luit."""
     ic = Icon()
+    ic.glow(50, 68, 30, '#ffc94d', 0.6)
     o = ic.obj()
-    glass = blob([(30, 18), (70, 18), (68, 34), (54, 50), (68, 66), (70, 82), (30, 82), (32, 66), (46, 50), (32, 34)], sharp=(0, 1, 6, 7), t=0.9)
-    o.part(glass, [(0, '#e8f6ff'), (1, '#9ec6ee')], gloss=False, bevel=0.6)
-    o.detail(blob([(36, 28), (64, 28), (56, 42), (50, 48), (44, 42)], t=1), fill='gold', clip=0)
-    o.detail(blob([(32, 80), (68, 80), (64, 68), (50, 60), (36, 68)], t=1), fill='gold', clip=0)
-    o.detail(openpath([(50, 48), (50, 64)]), stroke=(C['gold'], 2.2), clip=0)
-    o.detail(ellipse(61, 30, 2.5, 8, 20), fill='#ffffff', opacity=0.8, clip=0)
-    for y in (8, 82):
-        o.part(rect(18, y, 64, 11, 5), 'wood')
-    for x in (22, 78):
-        o.part(rect(x - 3, 16, 6, 68, 3), 'wood', cast=False)
+    glass = blob([(31, 19), (69, 19), (67, 36), (54, 50), (67, 64), (69, 81), (31, 81), (33, 64), (46, 50), (33, 36)], sharp=(0, 1, 6, 7), t=0.9)
+    o.part(glass, [(0, '#fff8e6'), (0.55, '#e9dcc2'), (1, '#b9a98c')], gloss=False, bevel=0.7)
+    # le sable : en haut (il baisse), le filet qui tombe, le tas d'en bas qui luit
+    o.detail(blob([(37, 31), (63, 31), (56, 42), (50, 47), (44, 42)], t=1), fill='#ffcf3a', clip=0)
+    o.detail(openpath([(50, 46), (50, 66)]), stroke=('#ffcf3a', 2.4), clip=0)
+    o.detail(blob([(33, 81), (67, 81), (64, 70), (50, 59), (36, 70)], t=1), fill='#f6a417', clip=0)
+    o.detail(blob([(40, 80), (62, 80), (59, 72), (50, 64), (43, 72)], t=1), fill='#ffe58a', clip=0, opacity=0.85, blur=2)
+    o.detail(ellipse(61, 29, 2.3, 7, 22), fill='#ffffff', opacity=0.85, clip=0)
+    o.detail(ellipse(60, 72, 1.8, 5, -22), fill='#ffffff', opacity=0.5, clip=0)
+    for x in (23, 77):
+        o.part(rect(x - 3.5, 15, 7, 70, 3.5), ('metal', 'gold'), gloss=False, bevel=0.6, cast=False)
+    for y, rim in ((5, 17), (82, 78)):
+        o.part(rect(13, y, 74, 13, 6.5), basalt(), gloss=False)
+        o.part(rect(18, rim, 64, 5.5, 2.7), ('metal', 'gold'), gloss=False, bevel=0.5)
+    # deux petites gemmes d'ambre au milieu du socle et du chapeau
+    for y in (11.5, 88.5):
+        o.part(circle(50, y, 3.4), ('radial', '#f29a12'), gloss=False, bevel=0.3, cast=False)
     return ic
 
 
@@ -470,23 +478,23 @@ def _():
 @picto('chestClosed')
 def _():
     ic = Icon()
-    chest(ic, 50, 60, 80, 56, 'closed')
+    stone_chest(ic, 'closed')
     return ic
 
 
 @picto('chestReady')
 def _():
     ic = Icon()
-    chest(ic, 50, 62, 80, 56, 'ready')
-    sparkles(ic, [(84, 16, 9), (16, 22, 6)])
+    stone_chest(ic, 'ready')
+    sparkles(ic, [(86, 18, 8), (14, 26, 5.5)])
     return ic
 
 
 @picto('chestOpen')
 def _():
     ic = Icon()
-    chest(ic, 50, 62, 80, 56, 'open')
-    sparkles(ic, [(70, 22, 7)])
+    stone_chest(ic, 'open')
+    sparkles(ic, [(74, 12, 7)])
     return ic
 
 
