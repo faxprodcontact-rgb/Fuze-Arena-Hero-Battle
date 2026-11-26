@@ -344,11 +344,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('domeF', domeF, GOLD, cel=1.1, rim=0.8, cast=1.1,
              details=[(sm([(83.0, 53.6), (86.8, 51.9), (90.4, 54.2), (87.2, 54.4)]), GOLD.hi, 0.7)])
     fr_names = []
-    for i, (x, w) in enumerate(((82.0, 3.6), (85.4, 3.8), (88.8, 3.4))):
+    for i, (x, y, w, L) in enumerate(((81.6, 59.4, 3.0, 4.4), (84.4, 60.4, 3.4, 4.8), (87.4, 60.2, 3.2, 4.4), (90.0, 58.8, 2.8, 3.6))):
         nm = 'frF%d' % i
         fr_names.append(nm)
-        sh = plume((x, 59.2), (x - 0.2, 61.0), (x - 0.4, 62.6), (x - 0.6, 64.6 - 0.5 * i), w, n=8, tip=0.4)
-        fig.part(nm, sh, GOLD, grad=(x + 1, 58, x - 1, 63.6, g2(GOLD.light, GOLD.shadow)), cel=0.6, rim=0.4, cast=0.8)
+        sh = plume((x, y), (x + 0.1, y + L * 0.35), (x + 0.2, y + L * 0.7), (x + 0.4 + 0.2 * i, y + L), w, n=8, tip=0.45)
+        fig.part(nm, sh, GOLD, grad=(x + 1, y, x - 1, y + L, g2(GOLD.light, GOLD.shadow)), cel=0.6, rim=0.4, cast=0.8)
 
     # ================================================================ le bras proche : bras et avant-bras d'une seule
     # forme (le coude en arrière, aucune couture), le brassard de cuir aux bagues d'or ; le poing sur la corde
@@ -392,10 +392,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ================================================================ le cou : col brun, puis longues plumes blanches
     # Le col de plumes brunes (du corps) est posé sur la cuirasse ; il remonte entre les pointes blanches.
-    collar = sm([(56.6, 47.0), (81.6, 47.0), (84.4, 53.4), (83.2, 58.2), (80.4, 56.6), (78.4, 60.6), (75.6, 57.8), (72.6, 61.6),
-                 (69.4, 58.4), (66.2, 61.8), (63.0, 58.6), (59.8, 61.2), (57.4, 57.4), (54.4, 58.8), (53.6, 53.0)],
-                sharp=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13))
-    fig.part('collar', collar, BROWN, grad=(82, 48, 56, 60, [(0, BROWN.light), (0.5, BROWN.base), (1, BROWN.shadow)]),
+    collar = sm([(56.6, 47.0), (81.6, 47.0), (85.4, 52.6), (85.0, 58.4), (82.4, 59.2), (80.2, 62.2), (77.2, 60.6), (74.2, 64.0),
+                 (70.8, 61.6), (67.4, 64.8), (64.0, 62.0), (60.6, 64.4), (57.6, 61.0), (54.2, 62.2), (52.4, 56.6), (53.2, 51.0)],
+                sharp=(3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14))
+    fig.part('collar', collar, BROWN, grad=(84, 50, 56, 63, [(0, BROWN.light), (0.5, BROWN.base), (1, BROWN.shadow)]),
              cel=1.0, rim=0.6, cast=1.1, cast_on=['torso', 'domeF', 'domeN'] + fr_names + frN)
     # Les longues plumes blanches du cou : elles s'allongent en descendant, leurs pointes tournent au tiède
     # (mauve-taupe) ; longueurs et écarts inégaux ; elles frémissent (ruff) et s'évasent sur les deux épaulières.
@@ -449,7 +449,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     for (x, y, s) in ((60.6, 41.6, 1.0), (64.6, 43.4, 1.1), (68.4, 44.8, 0.9)):
         hd.append((ribbon([(x - 2.2 * s, y - 0.6), (x, y + 0.9), (x + 2.2 * s, y - 0.4)], [0.1, 0.55, 0.1]), WHITE.shadow, 0.45))
     # le front lumineux, en haut à droite
-    hd += [(sm([(63.0, 19.0), (72.6, 18.4), (78.6, 20.8), (81.6, 24.6), (76.6, 23.6), (70.6, 21.8), (63.6, 21.6)]), '#ffffff', 0.95)]
+    hd += [(sm([(66.0, 18.8), (73.6, 18.4), (79.0, 20.8), (81.6, 24.6), (77.0, 23.2), (71.6, 21.4)]), '#ffffff', 0.7)]
     # l'arcade sourcilière, lourde, plus basse vers le bec (regard dur) : l'ombre violette dessous qui coupe le haut
     # de l'iris, la crête claire au-dessus
     fixk = P['fix']
@@ -540,18 +540,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('bgrip', limb([c0, spine[30], c1], [4.6, 4.8, 4.6]), BELT, cel=0.6, rim=0.4, cast=0.6)
 
     # ---- le poing lointain, serré sur la poignée : doigts d'aigle (jointures vers nous), pouce par-dessus ----
-    fx_, fy_ = G[0], G[1]
-    fist = sm([(fx_ - 4.6, fy_ - 4.4), (fx_ + 0.4, fy_ - 5.0), (fx_ + 3.6, fy_ - 3.2), (fx_ + 3.8, fy_ + 2.8), (fx_ + 1.4, fy_ + 5.4),
-               (fx_ - 3.0, fy_ + 5.2), (fx_ - 5.4, fy_ + 1.6)])
-    fdet = []
-    for j, (y0, y1) in enumerate(((-3.6, -1.2), (-1.2, 1.2), (1.2, 3.6))):
-        seg = rpoly([(fx_ - 1.6, fy_ + y0 + 0.1), (fx_ + 3.4, fy_ + y0 + 0.2), (fx_ + 3.4, fy_ + y1 - 0.1), (fx_ - 1.6, fy_ + y1)], [0.6, 1.1, 1.1, 0.6])
-        fdet += [(seg, BEAK.base, 1), (ellipse(fx_ + 1.6, fy_ + (y0 + y1) / 2 - 0.4, 1.4, 0.45), BEAK.light, 0.7),
-                 (ribbon([(fx_ - 1.4, fy_ + y1), (fx_ + 1.2, fy_ + y1 + 0.1), (fx_ + 3.2, fy_ + y1)], [0.1, 0.5, 0.1]), BEAK.deep, 0.5)]
-        # les griffes repliées, sombres, au bout de chaque doigt (côté paume, à peine visibles)
-        fdet += [(sm([(fx_ + 3.0, fy_ + y0 + 0.4), (fx_ + 4.0, fy_ + y0 + 1.2), (fx_ + 3.0, fy_ + y1 - 0.2)], sharp=(1,)), CLAW.base, 0.9)]
-    fig.part('ffist', fist, BEAK, cel=1.0, rim=0.6, cast=1.0, details=fdet)
-    fig.part('fthumb', limb([(fx_ - 3.6, fy_ - 2.6), (fx_ - 0.6, fy_ - 4.2), (fx_ + 2.4, fy_ - 4.6)], [3.0, 2.8, 2.4]), BEAK, cel=0.6, rim=0.5, cast=0.7)
+    fx_, fy_ = G[0], G[1] + 2.8                # le poing est SOUS la flèche (elle repose sur l'index)
+    fist = sm([(fx_ - 5.2, fy_ - 4.0), (fx_ - 1.0, fy_ - 4.8), (fx_ + 3.2, fy_ - 4.4), (fx_ + 4.4, fy_ - 1.2), (fx_ + 4.2, fy_ + 3.0),
+               (fx_ + 1.6, fy_ + 5.2), (fx_ - 2.8, fy_ + 5.0), (fx_ - 5.6, fy_ + 1.6)])
+    fig.part('ffist', fist, BEAK, cel=1.0, rim=0.6, cast=1.0,
+             details=[(sm([(fx_ - 4.8, fy_ - 3.6), (fx_ - 1.0, fy_ - 4.4), (fx_ - 0.4, fy_ - 0.6), (fx_ - 4.4, fy_ + 0.4)]), BEAK.light, 0.5)])
+    # les doigts repliés sur la poignée, jointures vers nous (quatre phalanges de tailles inégales), griffes rentrées
+    for j, (y0, h, x1) in enumerate(((-4.4, 2.6, 4.2), (-1.9, 2.5, 4.6), (0.5, 2.4, 4.4), (2.8, 2.2, 3.6))):
+        seg = rpoly([(fx_ - 1.0, fy_ + y0), (fx_ + x1, fy_ + y0 + 0.2), (fx_ + x1 + 0.4, fy_ + y0 + h), (fx_ - 1.0, fy_ + y0 + h)], [0.5, 1.1, 1.1, 0.5])
+        fig.part('ff%d' % j, seg, BEAK, cel=0.55, rim=0.45, cast=0.55, cast_on=['ffist'] + ['ff%d' % k for k in range(j)],
+                 details=[(ellipse(fx_ + x1 - 1.6, fy_ + y0 + 0.7, 1.3, 0.4), BEAK.hi, 0.55),
+                          (sm([(fx_ + x1 - 0.6, fy_ + y0 + h - 0.9), (fx_ + x1 + 0.9, fy_ + y0 + h - 0.2), (fx_ + x1 - 0.4, fy_ + y0 + h + 0.4)], sharp=(1,)), CLAW.base, 0.9)])
+    fig.part('fthumb', limb([(fx_ - 4.2, fy_ - 2.0), (fx_ - 1.6, fy_ - 3.4), (fx_ + 1.2, fy_ - 3.6)], [3.0, 2.8, 2.4]), BEAK, cel=0.6, rim=0.5, cast=0.7)
 
     # ================================================================ la corde (deux traits fins et clairs) et la flèche
     Hn = hand
@@ -582,11 +582,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                    sharp=(0, 2, 4), t=0.7)
         fig.part('ahead', head_, STEEL, grad=(tip[0], a0[1] - 2, tip[0] - 5, a0[1] + 2, [(0, STEEL.hi), (0.5, STEEL.light), (1, STEEL.shadow)]),
                  cel=0.4, rim=0.4, cast=0.5, details=[(ribbon([(tip[0] - 5, a0[1]), (tip[0] - 0.6, a0[1])], [0.4, 0.1]), STEEL.shadow, 0.7)])
-        # l'empennage : une plume blanche au-dessus, une brune dessous (vers l'arrière)
-        vane_t = sm([(a0[0] + 2.0, a0[1] - 0.5), (a0[0] + 3.2, a0[1] - 3.4), (a0[0] + 8.6, a0[1] - 2.6), (a0[0] + 10.4, a0[1] - 0.5)], sharp=(0, 3), t=0.7)
-        vane_b = sm([(a0[0] + 2.0, a0[1] + 0.5), (a0[0] + 3.0, a0[1] + 3.2), (a0[0] + 8.2, a0[1] + 2.6), (a0[0] + 10.2, a0[1] + 0.5)], sharp=(0, 3), t=0.7)
-        fig.part('vane_b', vane_b, BROWN, cel=0.5, rim=0.4, cast=0.6)
-        fig.part('vane_t', vane_t, WHITE, cel=0.5, rim=0.4, cast=0.6, details=[(ribbon([(a0[0] + 3.6, a0[1] - 2.2), (a0[0] + 8.4, a0[1] - 1.8)], [0.1, 0.4]), WHITE.shadow, 0.6)])
+        # l'empennage : une plume blanche au-dessus, une brune dessous (bord arrière en biais, pointe vers l'avant)
+        x0f, yf = a0
+        vane_b = sm([(x0f + 1.6, yf + 0.5), (x0f + 2.2, yf + 3.0), (x0f + 5.6, yf + 3.2), (x0f + 11.4, yf + 0.5)], sharp=(0, 1, 3), t=0.7)
+        vane_t = sm([(x0f + 1.6, yf - 0.5), (x0f + 2.4, yf - 3.4), (x0f + 6.0, yf - 3.4), (x0f + 11.6, yf - 0.5)], sharp=(0, 1, 3), t=0.7)
+        fig.part('vane_b', vane_b, BROWN, grad=(x0f + 10, yf, x0f + 2, yf + 3, g2(BROWN.light, BROWN.shadow)), cel=0.5, rim=0.4, cast=0.6)
+        fig.part('vane_t', vane_t, WHITE, grad=(x0f + 10, yf - 3, x0f + 2, yf, g2('#ffffff', WHITE.base)), cel=0.5, rim=0.4, cast=0.6,
+                 details=[(ribbon([(x0f + 3.0, yf - 2.2), (x0f + 6.4, yf - 1.8), (x0f + 9.6, yf - 0.9)], [0.1, 0.4, 0.1]), WHITE.shadow, 0.6)])
 
     # ================================================================ le poing proche, sur la corde (ou ouvert)
     hx, hy = Hn
