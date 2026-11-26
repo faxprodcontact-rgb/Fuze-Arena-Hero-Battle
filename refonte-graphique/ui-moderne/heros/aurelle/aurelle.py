@@ -80,7 +80,7 @@ NECK = (66.0, 54.0)                  # le pivot (et le centre d'agrandissement) 
 EYE_C = (70.6, 37.4)                 # le milieu de l'œil (avant l'agrandissement de la tête)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, eye=(0.0, 0.0), glow=0.0,
-            G=G0, ang=ANG0, bn=1.0, nsh=(0.0, 0.0), rn=0.0, rf=0.0, FF=FF0, ffa=FFA0, bf=1.0, pg=0.0, lift=0.0,
+            G=G0, ang=ANG0, bn=-1.0, nsh=(0.0, 0.0), rn=0.0, rf=0.0, FF=FF0, ffa=FFA0, bf=1.0, pg=0.0, lift=0.0,
             shift=0.0, front=0.0, length=1.0, mouth=0.0)
 
 
@@ -235,27 +235,30 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         far_fist(Wf, fa2)
 
     def far_fist(W, a_deg):
-        """Le poing lointain fermé, phalanges vers l'ennemi : le dos de la main dans le prolongement de l'avant-bras,
-        quatre doigts repliés (phalanges devant), le pouce en travers avec son ongle."""
+        """Le poing lointain fermé, tourné vers l'ennemi (le poignet cassé) : quatre doigts repliés vus de côté, l'un
+        au-dessus de l'autre (phalanges vers l'ennemi), le pouce en travers devant les doigts du bas, avec son ongle."""
+        fa = a_deg + 44                  # le poing se tourne vers l'ennemi (le poignet plie)
+
         def F(sh):
-            return xf(sh, W[0], W[1], a_deg)
-        # repère : x le long de l'avant-bras (vers le poing), y en travers (+ = le côté « devant », vers la droite/bas)
-        out = F(sm([(-1.0, -5.6), (3.0, -7.0), (8.4, -7.0), (12.2, -5.0), (13.2, -0.8), (12.4, 3.8), (9.6, 6.6),
-                    (4.4, 7.0), (0.6, 5.8), (-0.8, 2.0)]))
-        fd = [(F(sm([(0.4, -5.2), (3.4, -6.4), (8.4, -6.4), (11.2, -4.6), (8.0, -2.6), (2.0, -2.4)])), SKIN.light, 0.45)]
-        # quatre doigts repliés, de tailles inégales, séparés par des plis doux ; la rangée des phalanges éclairée
-        for i, (x0_, x1_, y0_, y1_) in enumerate(((8.8, 12.8, -5.4, -2.2), (9.2, 13.2, -2.2, 0.9), (8.8, 12.8, 0.9, 3.8),
-                                                   (7.8, 11.4, 3.8, 6.2))):
-            seg = F(rpoly([(x0_, y0_ + 0.15), (x1_, y0_ + 0.25), (x1_, y1_ - 0.25), (x0_, y1_ - 0.15)], [1.0, 1.5, 1.5, 1.0]))
-            fd += [(seg, SKIN.base, 0.55),
-                   (F(ellipse(x1_ - 1.3, (y0_ + y1_) / 2 - 0.4, 1.0, (y1_ - y0_) * 0.3)), SKIN.hi, 0.5),
-                   (F(ribbon([(x0_ + 0.4, y1_), (x1_ - 0.6, y1_ + 0.05)], [0.5, 0.2])), SKIN.deep, 0.5 if i < 3 else 0.0)]
+            return xf(sh, W[0], W[1], fa)
+        # repère : x vers les phalanges (vers l'ennemi), y en travers (+ = vers le bas)
+        out = F(sm([(-1.6, -4.6), (1.4, -6.8), (6.4, -7.4), (10.8, -6.4), (12.8, -3.6), (13.2, 0.4), (12.6, 4.4),
+                    (10.4, 6.8), (5.4, 7.4), (1.0, 6.4), (-1.4, 3.0)]))
+        fd = [(F(sm([(-0.6, -4.4), (1.8, -6.2), (6.4, -6.8), (10.4, -5.8), (9.0, -4.4), (3.0, -3.6)])), SKIN.light, 0.5)]
+        # quatre doigts repliés, de tailles inégales, séparés par des plis doux ; le bout de chacun éclairé
+        for i, (y0_, y1_, x0_) in enumerate(((-6.4, -3.0, 4.6), (-3.0, 0.4, 4.0), (0.4, 3.6, 4.4), (3.6, 6.4, 5.4))):
+            x1_ = 12.8 - 0.25 * abs(i - 1.2)
+            seg = F(rpoly([(x0_, y0_ + 0.2), (x1_, y0_ + 0.3), (x1_, y1_ - 0.3), (x0_, y1_ - 0.2)], [1.2, 1.6, 1.6, 1.2]))
+            fd += [(seg, SKIN.base, 0.4),
+                   (F(ellipse(x1_ - 1.6, (y0_ + y1_) / 2 - 0.5, 1.4, (y1_ - y0_) * 0.26)), SKIN.hi, 0.55)]
+            if i < 3:
+                fd.append((F(ribbon([(x0_ + 0.6, y1_ + 0.05), ((x0_ + x1_) / 2, y1_ + 0.15), (x1_ - 0.3, y1_)], [0.1, 0.6, 0.3])), SKIN.deep, 0.5))
         fig.part('ffist', out, SKIN, cel=1.2, rim=0.6, cast=1.0, details=fd)
-        # le pouce en travers, sous les doigts, son ongle
-        th = F(limb([(3.4, 5.6), (7.4, 4.4), (10.6, 2.2)], [3.6, 3.4, 3.0]))
+        # le pouce en travers, devant les doigts du bas, son ongle
+        th = F(limb([(1.8, 5.8), (5.6, 4.6), (9.4, 2.6)], [3.6, 3.4, 3.0]))
         fig.part('fthumb', th, SKIN, cel=0.8, rim=0.5, cast=0.8, cast_on=['ffist'],
-                 details=[(F(ellipse(10.4, 2.6, 1.0, 0.75, -30)), '#f4c8b0', 0.9),
-                          (F(ellipse(10.6, 2.3, 0.45, 0.3, -30)), '#ffffff', 0.6)])
+                 details=[(F(ellipse(9.2, 2.6, 1.05, 0.8, -25)), '#f4c8b0', 0.9),
+                          (F(ellipse(9.4, 2.3, 0.45, 0.3, -25)), '#ffffff', 0.6)])
 
     # ======================================================================== le pan de derrière du pagne (dans
     # l'ombre, entre les jambes)
@@ -310,15 +313,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ======================================================================== le pagne de fourrure : de grosses grappes
     # de poils aux pointes fendues ; le pan de devant plus long ; inégales (jamais une rangée régulière)
     CL = [  # (x du milieu, demi-largeur, y de la pointe, penchant)
-        (39.6, 3.6, 97.4, -0.8), (45.8, 3.4, 99.2, -0.4), (51.4, 3.2, 98.0, 0.2),
-        (57.2, 3.4, 103.6, 0.0), (62.8, 3.2, 106.6, 0.3), (68.4, 3.4, 109.0, 0.5), (74.2, 3.2, 107.4, 0.6),
-        (79.8, 3.2, 104.0, 0.6), (85.0, 3.0, 100.4, 0.8),
-        (90.4, 3.2, 98.2, 0.8), (96.0, 3.2, 97.0, 1.0), (101.0, 2.8, 95.8, 1.2)]
+        (40.6, 4.6, 98.0, -1.0), (49.4, 4.6, 99.8, -0.4),
+        (58.2, 4.4, 104.6, 0.0), (66.8, 4.8, 109.2, 0.6), (75.6, 4.4, 107.0, 0.8), (83.6, 4.0, 102.4, 0.8),
+        (91.8, 4.2, 98.8, 1.0), (99.6, 3.6, 96.4, 1.2)]
     top_y = lambda x: 88.8 + 3.0 * math.sin(math.pi * min(1.0, max(0.0, (x - 37) / 66))) - 1.4
     pts = [(36.6, top_y(37) - 1.0)]
     sharp = []
     for i, (x, hw, ty, ln) in enumerate(CL):
-        ystart = top_y(x) + 5.0 + (2.0 if 55 < x < 83 else 0.0)
+        ystart = top_y(x) + 5.0 + (2.0 if 55 < x < 86 else 0.0)
         if i == 0:
             pts.append((x - hw - 0.4, ystart - 1.0))
         pts.append((x - hw * 0.55 + ln * 0.5, (ystart + ty) / 2 + 1.0))
@@ -330,7 +332,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         sharp.append(len(pts) - 1)
         if i < len(CL) - 1:
             nx_ = CL[i + 1][0] - CL[i + 1][1]
-            pts.append(((x + hw + nx_) / 2 + 0.4, min(ystart, top_y(nx_) + 5.0) - 0.4))   # entre deux grappes
+            pts.append(((x + hw + nx_) / 2 + 0.4, min(ystart, top_y(nx_) + 5.0) - 2.4))   # entre deux grappes
             sharp.append(len(pts) - 1)
     pts.append((103.4, top_y(103) + 3.0))
     pts.append((103.2, top_y(103) - 1.0))
