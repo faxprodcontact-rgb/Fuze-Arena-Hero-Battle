@@ -95,14 +95,14 @@ def _():
 
 @picto('defense')
 def _():
-    """Le Colisée (tuile du mode, clé « defense ») : l'amphithéâtre et deux épées croisées devant."""
+    """Le Colisée (tuile du mode, clé « defense ») : l'amphithéâtre, et deux petites épées croisées devant, en bas."""
     ic = Icon()
     o = ic.obj()
-    arcade(o, 8, 54, 84, 30, 5, '#e9c995')
-    arcade(o, 16, 32, 68, 24, 4, '#f4d9a8', top=True)
-    sword(ic, 30, 78, 76, 30, gem_c='azure', wide=0.75, guard=0.75)
-    sword(ic, 70, 78, 24, 30, gem_c='red', wide=0.75, guard=0.75)
-    sparkles(ic, [(84, 14, 8)])
+    arcade(o, 6, 50, 88, 32, 5, '#e9c995')
+    arcade(o, 13, 28, 74, 24, 4, '#f4d9a8', top=True)
+    arcade(o, 20, 12, 60, 18, 4, '#fbe6bd', top=True)
+    sword(ic, 40, 92, 82, 56, gem_c='azure', wide=0.62, guard=0.62)
+    sword(ic, 82, 92, 40, 56, gem_c='red', wide=0.62, guard=0.62)
     return ic
 
 

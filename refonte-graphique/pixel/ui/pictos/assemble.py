@@ -1,5 +1,9 @@
+# REMPLACÉ le 26/11/2026 : les pictos du jeu sont maintenant dans le style moderne (lisses, HD), fabriqués par
+#   python3 refonte-graphique/ui-moderne/pictos/fabrique.py
+# Ce script (planche pixel art) ne s'exécute plus sans --pixel : il effacerait la planche moderne.
+#
 # Rassemble tous les pictos de l'interface dans UNE planche pour le jeu :
-#   python3 refonte-graphique/pixel/ui/pictos/assemble.py
+#   python3 refonte-graphique/pixel/ui/pictos/assemble.py --pixel
 #
 # - Entrée : refonte-graphique/pixel/ui/pictos/png/<nom>.png, un picto par fichier, nommé EXACTEMENT comme dans le jeu
 #   (le nom passé à <Icon name="…"> / <Art name="…"> et aux statuts de combat `st-*`). Dessiné à sa vraie taille
@@ -58,6 +62,9 @@ def case_neuve(path):
 
 
 def main():
+    if '--pixel' not in sys.argv and '--liste' not in sys.argv:
+        sys.exit('La planche du jeu est fabriquée par refonte-graphique/ui-moderne/pictos/fabrique.py (style moderne). '
+                 'Ajouter --pixel pour revenir à la planche pixel art.')
     new = neufs()
     noms = sorted(anciens_noms() | set(new))
     vieux = [n for n in noms if n not in new]

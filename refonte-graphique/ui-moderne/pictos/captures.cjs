@@ -90,6 +90,7 @@ function save(s) {
     if (want('combat')) {
       await page.click('.dock-fight').catch(() => {}); await page.waitForTimeout(1200);
       await page.click('.prep .btn-fight').catch(() => {}); await page.waitForTimeout(6500); await shot('combat');
+      await page.waitForTimeout(5000); await shot('combat-2');
     }
     console.log(tag, 'erreurs :', errors.length ? errors.slice(0, 5) : 'aucune');
     await ctx.close();
