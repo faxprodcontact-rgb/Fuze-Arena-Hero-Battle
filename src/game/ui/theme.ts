@@ -16,15 +16,11 @@ let theme: Theme = 'nuit';
 
 /** Lit l'adresse (?theme=pierre / ?theme=nuit) et la mémoire, pose data-theme sur <html> (avant le premier dessin). */
 export function installTheme(): Theme {
-  let t: string | null = null;
-  try {
-    const q = new URLSearchParams(location.search).get('theme');
-    if (q === 'pierre' || q === 'nuit') localStorage.setItem(KEY, q);
-    t = localStorage.getItem(KEY);
-  } catch { /* sans mémoire : l'habillage par défaut */ }
-  theme = t === 'pierre' ? 'pierre' : 'nuit';
-  if (theme === 'pierre') document.documentElement.dataset.theme = 'pierre';
-  else delete document.documentElement.dataset.theme;
+  // Choix du propriétaire (26/11) : la pierre grise et or devient l'habillage du jeu, le bleu nuit est abandonné.
+  // (Les anciennes adresses ?theme=… et la mémoire fuze-theme ne changent plus rien.)
+  try { localStorage.removeItem(KEY); } catch { /* rien */ }
+  theme = 'pierre';
+  document.documentElement.dataset.theme = 'pierre';
   return theme;
 }
 

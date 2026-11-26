@@ -56,7 +56,7 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   **Style « moderne » choisi le 26/11 : lire `refonte-graphique/pixel/ui/STYLE.md`** (jetons en tête de
   `src/game/ui/style.css` : fond raisin, couleurs à rôle, arrondis, ombres douces ; fenêtres claires à bandeau coloré ;
   plus de pièces en pixels ni de `?skin=`) ; tout le jeu est passé (v0.59.0), sections dans
-  `src/game/ui/sections/<section>.css` ; **boutons « Pierre de l'arène »** (v0.60.0, `ui/buttons.ts`, classes `bt-<teinte>`) ;
+  `src/game/ui/sections/<section>.css` ; **boutons « Pierre de l'arène »** (v0.60.0, `ui/buttons.ts`, classes `bt-<teinte>`) ; **habillage pierre grise et or** (v0.63.0 : `ui/theme.ts` + `theme-pierre.css` GÉNÉRÉ par `npx tsx refonte-graphique/ui-moderne/theme/pierre.ts` : le relancer après tout changement de couleur dans un CSS) ;
   fonds des menus dessinés par le code (`ui/backdrop-kit.tsx`, `backdrop-*.tsx`, préparation `formation-stage.tsx`). Personnages, monstres, décors restent en pixel art HD.
 - Interface : polices **Lilita One** (titres, chiffres) et **Fredoka** (textes), `font-synthesis: none`, jamais
   `fontStyle: 'bold'` dans Phaser. Composants communs : `ui/kit.tsx` (`HeroCard` = le héros en entier, `CardFigure`),
