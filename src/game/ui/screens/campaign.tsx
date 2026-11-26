@@ -8,7 +8,6 @@ import { CAMPAIGN_STAGES, OFFLINE_CAP_HOURS, STAGES_PER_CHAPTER } from '../../..
 import { chapterElement, chapterOf, isBossStage, stageInChapter } from '../../../core/stages';
 import { ELEMENT_COLOR } from '../../art';
 import { runIdle } from '../../scenes';
-import { regionChapters } from '../../look';
 import { fmt, t } from '../../i18n';
 import {
   adsLeft, campaignPlan, collectIdle, fastLoot, fastLootCost, idleSetup, watchAd,
@@ -16,7 +15,8 @@ import {
 import { idlePreview, teamPower } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import { dots } from '../dots';
-import { Art, Btn, Cur, Icon, Modal, RedDot, Sign } from '../kit';
+import { Art, Btn, Cur, Icon, Modal, RedDot } from '../kit';
+import { ChapterMap } from '../world-map';
 import { close, open, prepare } from '../nav';
 import { BarArt, ChapterPlaque, Chevron, Medallion } from '../chrome';
 
@@ -43,8 +43,10 @@ function EdgeButton({ icon, label, dot, onClick }: { icon: string; label: string
 }
 
 /**
- * Une colonne de boutons ronds, repliable pour dégager le combat : repliée (par défaut), il ne reste que sa languette,
- * avec un point rouge si un des boutons en a un. Le choix est gardé sur le téléphone.
+ * Une colonne de boutons, repliable pour dégager le combat (demande du 26/11) : repliée (par défaut), il ne reste que sa
+ * flèche, avec un point rouge si un des boutons en a un ; dépliée, les boutons descendent l'un sous l'autre sur un ruban
+ * bleu foncé à demi transparent, reliés par un trait, et la flèche pour remonter passe en bas. Le choix est gardé sur le
+ * téléphone.
  */
 function EdgeColumn({ side, dot, children }: { side: 'left' | 'right'; dot: boolean; children: ComponentChildren }) {
   const key = `fuze-edge-${side}`;
@@ -55,11 +57,12 @@ function EdgeColumn({ side, dot, children }: { side: 'left' | 'right'; dot: bool
   };
   return (
     <div class={`edge edge-${side}${open ? ' open' : ''}`}>
+      <span class="edge-ribbon" aria-hidden="true"><span class="edge-line" /></span>
+      <div class="edge-list" aria-hidden={!open} inert={!open}><div class="edge-list-in">{children}</div></div>
       <button class="edge-toggle" aria-expanded={open} aria-label={t(open ? 'edge.fold' : 'edge.unfold')} onClick={toggle}>
         <Medallion size={38}><Chevron up={open} /></Medallion>
         {!open && dot && <RedDot />}
       </button>
-      <div class="edge-list" aria-hidden={!open}>{children}</div>
     </div>
   );
 }
@@ -172,28 +175,13 @@ export function FastLootModal() {
   );
 }
 
-/** Place de chaque région sur la carte (public/art/ui/map.jpg), en fraction de l'image. */
-const MAP_PINS: [number, number][] = [[0.12, 0.71], [0.375, 0.76], [0.62, 0.75], [0.86, 0.72], [0.86, 0.2], [0.62, 0.19], [0.375, 0.18], [0.135, 0.2]];
-
-/** Carte des 8 régions de la campagne : celles finies, celle en cours (qui brille) et celles encore fermées. */
+/** La carte de la campagne : les 8 régions sur un chemin, celle en cours brille (dessin : ui/world-map.tsx). */
 export function WorldMapModal() {
   const s = useGame();
   const cur = chapterOf(Math.min(s.campaign.cleared + 1, CAMPAIGN_STAGES));
   return (
-    <Modal title={t('chapter')} wide>
-      <div class="wmap" style={{ backgroundImage: 'url(art/ui/map.jpg)' }}>
-        {regionChapters().map((r, i) => {
-          const [x, y] = MAP_PINS[i]!;
-          const state = cur > r.to ? 'done' : cur >= r.from ? 'here' : 'locked';
-          return (
-            <span class={`wmap-pin ${state}`} style={{ left: `${x * 100}%`, top: `${y * 100}%` }}>
-              {state === 'locked' && <Icon name="lock" size={32} />}
-              {state === 'done' && <Sign name="check" />}
-              <span class="wmap-tag">{r.from === r.to ? r.from : `${r.from}-${r.to}`}</span>
-            </span>
-          );
-        })}
-      </div>
+    <Modal title={`${t('chapter')} ${cur}`} wide>
+      <ChapterMap cur={cur} />
     </Modal>
   );
 }

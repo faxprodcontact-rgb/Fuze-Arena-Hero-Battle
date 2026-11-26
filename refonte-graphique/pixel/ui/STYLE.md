@@ -41,13 +41,17 @@ pistes), filet `--c-line`. Texte : `--c-text` `#221c45`, `--c-muted`, `--c-title
 | Rôle | Jeton | Sert à |
 |---|---|---|
 | Vert | `--c-action` | l'action principale : Combattre, OK, Prendre, interrupteur allumé, vie des héros |
-| Azur | `--c-select` | ce qui est choisi : onglet ouvert, case choisie, action secondaire, focus |
+| Or des boutons | `--c-select` | ce qui est choisi : onglet ouvert, case choisie, focus (était l'azur jusqu'au 26/11) |
 | Or | `--c-reward` | récompenses, puissance, mis en avant, « Victoire » |
 | Violet | `--c-gem` | gemmes, invocation, passe |
 | Corail | `--c-danger` | fermer, danger, pastille rouge, « Défaite », vie des ennemis |
 | Sarcelle | `--c-info` | neutre coloré |
 
-Bandeau de titre : `--g-head` (dégradé violet → azur). Arrondis : `--r-xs` 8, `--r-s` 12, `--r-m` 16, `--r-l` 20, `--r-xl` 26,
+**Plus de bleu clair (règle du 26/11, vague 3)** : deux familles seulement, le **bleu foncé des barres** (`--c-navy`, `-hi`,
+`-lo`, `--c-navy-glass`) et la **pierre grise des boutons où brûle l'or** (`--c-stone-hi`, `--c-stone`, `--c-stone-lo`,
+`--c-stone-deep` ; une pièce de pierre toute faite : fond `--g-stone` + ombres `--sh-stone`, pour médaillons et tuiles). Les
+couleurs d'élément (eau = bleu) et de rareté restent.
+Bandeau de titre : `--g-head` (le bleu foncé des barres, un filet d'or dessous). Arrondis : `--r-xs` 8, `--r-s` 12, `--r-m` 16, `--r-l` 20, `--r-xl` 26,
 `--r-pill`. Ombres : `--sh-1` (posé dans une fenêtre), `--sh-2` (carte), `--sh-3` (fenêtre), `--sh-float` (posé sur le jeu).
 Espaces : `--sp-1` 4 … `--sp-5` 24. Texte : `--fs-xs` 11, `--fs-s` 13, `--fs-m` 15, `--fs-l` 18, `--fs-xl` 22, `--fs-xxl` 30.
 Polices : `--font-title` (Lilita One : titres, boutons, chiffres ; une seule graisse, jamais « bold ») et `--font` (Fredoka).
@@ -93,10 +97,15 @@ La classe **`pxf`** donne ce mécanisme à un nouvel élément. Fonds prêts
 - **Barre du haut** `.topbar` (bandeau raisin aux coins arrondis en bas, posé sur le jeu : `margin-bottom: -18px`) :
   `.avatar` (portrait en tuile arrondie cerclée d'un dégradé, `LevelShield` en pilule d'or), `.who`, `.wallet` › `.pill`
   (monnaie : pilule de verre sombre, picto qui déborde à gauche, `.plus` = petit galet allumé de vert).
-- **Barre des onglets** `.tabbar` (coins arrondis en haut, `margin-top: -18px`) › `.tabbar-btn` ; ouvert : `.on` (dalle de
-  basalte allumée derrière, picto agrandi). `BarArt` toujours **dernier enfant** de sa barre.
+- **Barre des onglets** `.tabbar` (coins arrondis en haut, `margin-top: -18px`) › `.tabbar-btn` ; ouvert : `.on` (plus rien
+  derrière les pictos depuis le 26/11 : le picto se lève et grandit, une lueur d'or douce dessous, son nom en or). `BarArt`
+  toujours **dernier enfant** de sa barre.
+- **Accueil** (26/11, vague 3) : coffre et sablier posés tels quels sur la feuille du bas (plus de dalle) ; colonnes des bords
+  (`EdgeColumn` de `screens/campaign.tsx`) : repliées = une flèche ronde ; dépliées = un ruban bleu foncé à demi transparent
+  (`.edge-ribbon`), les boutons de pierre (`--g-stone`) reliés par un trait d'or (`.edge-line`), la flèche pour remonter en
+  bas. Carte de la campagne (pilule du chapitre) : `ui/world-map.tsx` (dessinée par le code, 8 lieux sur un chemin).
 - **Pastilles** : `RedDot` → `.dot` (rond corail cerclé de blanc, 16 px, sautille) ; compteurs/pilules : `.cur-big`, `.chip`
-  (`.chip.on` = azur), `.tag`, `.pts` (or).
+  (`.chip.on` = pierre cerclée d'or), `.tag`, `.pts` (or).
 - **Jauges** `Bar` → `.bar` (pilule creusée) › `.bar-fill` (pilule, lumière en haut) ; `.chapter-bar`, `.dock-bar`.
 - **Interrupteur** `.switch` (pilule, rond blanc qui glisse ; `.on` = vert).
 - **Bandeau de titre** `TitleBanner tone=…` → `.title-banner .tb-<teinte>` (pilule pleine de la teinte) ; `.plaque`.
@@ -105,7 +114,7 @@ La classe **`pxf`** donne ce mécanisme à un nouvel élément. Fonds prêts
 - **Case d'un héros** `HeroCard` → `.hcard` : le héros **en entier** (`CardFigure`, bande `art/hd/pied/`), même échelle pour
   tous (la case = 128 pixels du dessin + marge : `--u: calc(84cqw / 128)`), pieds au milieu à `--feet` (80 %) de la
   hauteur ; liseré net de la couleur de la rareté (`--rar`), niveau en haut à gauche, élément en haut à droite, étoiles.
-  Choisi : `.hcard-on` (anneau azur + coche). Pour changer la place des pieds dans une liste : `--feet` sur `.hcard`.
+  Choisi : `.hcard-on` (anneau d'or + coche). Pour changer la place des pieds dans une liste : `--feet` sur `.hcard`.
 - **Case d'un objet** `ItemIcon` → `.item` (coins 14, liseré de la rareté).
 
 ## À faire / à ne pas faire

@@ -23,7 +23,7 @@ export function hudText(tone: BtTone): { color: string; glow?: string; ink: stri
 
 /** Le haut des cartes, par élément : deux tons (haut clair, bas sombre). */
 const TINTS: Record<string, [string, string]> = {
-  fire: ['#ff9a6a', '#c8402a'], wind: ['#8be89a', '#2f9a4c'], water: ['#7cc8ff', '#2a68d0'], earth: ['#ffd07a', '#b8722a'], none: ['#a99cf0', '#4b3c9e'],
+  fire: ['#ff9a6a', '#c8402a'], wind: ['#8be89a', '#2f9a4c'], water: ['#5aa2e6', '#1f4f9e'], earth: ['#ffd07a', '#b8722a'], none: ['#8a86a8', '#2e2c47'],
 };
 
 /** Une carte de héros (unités du combat) : sa taille, son arrondi, la hauteur du portrait. */
@@ -66,7 +66,7 @@ function card(tint: [string, string]) {
     g.shadowColor = 'rgba(5, 2, 26, 0.6)'; g.shadowBlur = 12; g.shadowOffsetY = 4;
     rr(g, m, m, w, h, r);
     const body = g.createLinearGradient(0, m, 0, m + h);
-    body.addColorStop(0, 'rgba(42, 32, 99, 0.94)'); body.addColorStop(1, 'rgba(21, 15, 54, 0.96)');
+    body.addColorStop(0, 'rgba(34, 26, 85, 0.94)'); body.addColorStop(1, 'rgba(20, 14, 56, 0.96)');
     g.fillStyle = body; g.fill();
     g.restore();
     rr(g, m, m, w, face, [r, r, 0, 0]);
@@ -85,7 +85,7 @@ function cardFrame(g: CanvasRenderingContext2D) {
   const shade = g.createLinearGradient(0, m + face - 34, 0, m + face);
   shade.addColorStop(0, 'rgba(21, 15, 54, 0)'); shade.addColorStop(1, 'rgba(21, 15, 54, 0.85)');
   g.fillStyle = shade; g.fillRect(m, m + face - 34, w, 34);
-  g.strokeStyle = 'rgba(255, 255, 255, 0.9)'; g.lineWidth = 3;
+  g.strokeStyle = 'rgba(255, 244, 220, 0.9)'; g.lineWidth = 3;
   rr(g, m + 1.5, m + 1.5, w - 3, h - 3, r - 1.5); g.stroke();
 }
 
