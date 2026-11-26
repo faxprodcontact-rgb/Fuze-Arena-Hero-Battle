@@ -83,8 +83,9 @@
 .g-role.leader { background: #fff2c7; color: #9a4f00; }
 .g-role.officer { background: #e7e1ff; color: #5420c4; }
 .g-power { flex: none; display: inline-flex; align-items: center; gap: 2px; font: 400 16px var(--font-title); color: #c86a00; font-variant-numeric: tabular-nums; }
-.g-member.me { background: linear-gradient(180deg, #eef6ff, #dcecff); box-shadow: inset 0 0 0 2px #6cc4ff, 0 3px 10px #2f8cff40; }
-.g-member.me .g-face { background: linear-gradient(160deg, #6cc4ff, #2f8cff); }
+/* soi-même : la ligne dorée du classement (plus de bleu clair, règle du propriétaire) */
+.g-member.me { background: linear-gradient(180deg, #fffaf0, #fff1c7); box-shadow: inset 0 0 0 2px var(--c-reward), 0 3px 10px #ffb21f40; }
+.g-member.me .g-face { background: linear-gradient(160deg, #ffe27a, #ffad1f); }
 .g-leave { align-self: center; margin-top: 6px; }
 
 /* ---------- le boss de guilde : la grande image du donjon de son élément (backdrop-dungeon.tsx) ---------- */

@@ -1339,11 +1339,17 @@ function friendFromCode(s: PlayerState, code: string): Friend {
 /** Des codes de joueurs à proposer quand on a peu d'amis. */
 export function friendSuggestions(s: PlayerState = getState()): Friend[] {
   const have = new Set(s.friends.list.map((f) => f.code));
+  // deux joueurs proposés n'ont jamais le même nom (contrôle du 26/11 : « Orsolya » deux fois), ni celui d'un ami
+  const names = new Set(s.friends.list.map((f) => f.name));
   const rng = createRng(codeSeed(playerId(s)) + s.friends.list.length);
   const out: Friend[] = [];
-  for (let i = 0; i < 6 && out.length < 3; i++) {
+  for (let i = 0; i < 20 && out.length < 3; i++) {
     const code = Math.floor(rng() * 2_176_782_336).toString(36).toUpperCase().padStart(6, '0');
-    if (!have.has(code)) out.push(friendFromCode(s, code));
+    if (have.has(code)) continue;
+    const f = friendFromCode(s, code);
+    if (names.has(f.name)) continue;
+    names.add(f.name);
+    out.push(f);
   }
   return out;
 }

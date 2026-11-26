@@ -25,7 +25,7 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   avant chaque combat ; réglages par l'avatar (plus aucun outil de test dans le jeu depuis la v0.56.0 : les modes
   s'ouvrent avec la campagne, `UNLOCKS` de `src/core/data/modes.ts`).
 - Décidé : plus de camps ; la fusion demande des héros du **même élément**. Le mode Défense est supprimé, remplacé par le
-  **Colisée** (duel 1 contre 1, équipes de 3) dont **les règles restent à construire** (tuile « Bientôt », clé `defense`).
+  **Colisée** (v0.61.0 : 3 héros, duels 1 contre 1 « le gagnant reste », ligues de 30, insignes ; `src/core/coliseum.ts`, clé `defense` gardée).
 - Héros : **44 héros** (36 de `HERO_IDS` + 8 monstres de clan devenus héros, `CLAN_HEROES`, dessin par `heroArt()` de `look.ts`), tous dessinés et animés en pixel art HD (`HERO_IDS` de `src/core/data/heroes.ts` ; les 36 autres
   gabarits sont retirés, une vieille sauvegarde reçoit un dédommagement par courrier : `src/game/state/migrate.ts`).
   Effets dans `src/core/battle/`, textes par `src/game/describe.ts`, équipements dans `src/core/data/items.ts`. Courrier :
