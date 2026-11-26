@@ -1,4 +1,4 @@
-/* Mouvements du halo (anim.tsx) et des fonds décorés (backdrop.tsx…). */
+/* Mouvements du halo (anim.tsx) et de quelques petits dessins. Les fonds des menus : sections/backdrops.css. */
 .anim { position: relative; display: inline-block; flex: none; line-height: 0; }
 .anim svg { display: block; overflow: visible; }
 .an-glow { transform-box: fill-box; transform-origin: center; animation: an-breathe 2.8s ease-in-out infinite; }
@@ -16,28 +16,6 @@
 @media (prefers-reduced-motion: reduce) { .halo-anim, .halo-spin { animation: none; } }
 @keyframes an-spin { to { transform: rotate(360deg); } }
 
-/* ---------- fonds décorés (backdrop.tsx) ---------- */
-.backdrop { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-.backdrop svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-/* un voile léger en haut et en bas : les titres et les barres restent lisibles */
-.backdrop::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, #0a0a2459 0%, #0a0a2400 26%, #0a0a2400 70%, #0a0a2466 100%); }
-.bd-ring { animation: an-spin 160s linear infinite; }
-.bd-mote { animation: bd-mote 9s linear infinite; }
-.bd-star { animation: bd-star 3.4s ease-in-out infinite; }
-.bd-sun { transform-box: fill-box; transform-origin: center; animation: an-breathe 6s ease-in-out infinite; }
-.bd-cloud { animation: bd-drift 46s ease-in-out infinite alternate; }
-.bd-cloud.bd-slow { animation-duration: 70s; animation-direction: alternate-reverse; }
-.bd-birds { animation: bd-fly 38s linear infinite; }
-.bd-flag { animation: bd-flag 1.8s ease-in-out infinite; }
-.bd-banner { animation: bd-sway 5s ease-in-out infinite; }
-.bd-beam { animation: bd-beam 7s ease-in-out infinite; }
-@keyframes bd-mote { 0% { transform: translateY(40px); opacity: 0; } 15% { opacity: 0.9; } 80% { opacity: 0.7; } 100% { transform: translateY(-150px); opacity: 0; } }
-@keyframes bd-star { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
-@keyframes bd-drift { from { transform: translateX(-30px); } to { transform: translateX(60px); } }
-@keyframes bd-fly { from { transform: translate(-200px, 30px); } to { transform: translate(280px, -50px); } }
-@keyframes bd-flag { 0%, 100% { transform: skewY(-8deg) scaleX(1); } 50% { transform: skewY(8deg) scaleX(0.86); } }
-@keyframes bd-sway { 0%, 100% { transform: rotate(-1.6deg); } 50% { transform: rotate(1.6deg); } }
-@keyframes bd-beam { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 
 /* ---------- fonds animés des tuiles de mode (tile-scene.tsx) ---------- */
 .tile-scene { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -57,27 +35,11 @@
 .tile:nth-child(2n) .ts-ring { animation-duration: 38s; } .tile:nth-child(3n) .ts-ring { animation-direction: reverse; }
 .tile:nth-child(2n) .an-glow { animation-delay: -1.3s; } .tile:nth-child(3n) .an-glow { animation-delay: -2.1s; }
 
-/* la montgolfière du décor de l'Aventure : elle dérive et se balance doucement */
-.ad-balloon { animation: ad-balloon 26s ease-in-out infinite alternate; }
-.ad-balloon > g { animation: float 4.4s ease-in-out infinite; }
-@keyframes ad-balloon { from { transform: translate(-26px, 6px); } to { transform: translate(18px, -10px); } }
-
-/* décor de l'Aventure : cascade, écume, ailes du moulin, feu de camp */
-.ad-fall { animation: ad-fall 1.5s linear infinite; }
-.ad-foam { transform-box: fill-box; transform-origin: center; animation: ad-foam 2s ease-in-out infinite; }
-.ad-sails { animation: an-spin 16s linear infinite; }
-.ad-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: ad-flame 0.5s ease-in-out infinite alternate; }
-@keyframes ad-fall { to { stroke-dashoffset: -51; } }
-@keyframes ad-foam { 0%, 100% { transform: scale(0.7); opacity: 0.5; } 50% { transform: scale(1.1); opacity: 0.95; } }
-@keyframes ad-flame { from { transform: scale(0.9, 0.86) skewX(-4deg); } to { transform: scale(1.06, 1.1) skewX(5deg); } }
 
 /* la lave des fissures bat comme un cœur */
 .ts-pulse { animation: ts-pulse 1.8s ease-in-out infinite; }
 @keyframes ts-pulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
 
-/* la fumée du hameau : des bouffées qui montent en s'élargissant */
-.ad-smoke { transform-box: fill-box; transform-origin: center; animation: ad-smoke 4.5s ease-out infinite; }
-@keyframes ad-smoke { 0% { transform: translate(0, 0) scale(0.5); opacity: 0; } 15% { opacity: 0.6; } 100% { transform: translate(6px, -18px) scale(2.4); opacity: 0; } }
 
 /* un petit dessin qui flotte (îles de la fiche héros, cristaux de l'invocation) */
 .mi-bob { animation: mi-bob 2.8s ease-in-out infinite; }
@@ -88,15 +50,7 @@
 .tb-sheen { animation: tb-sheen 4.5s ease-in-out infinite; }
 @keyframes tb-sheen { 0%, 55% { transform: translateX(10px); opacity: 0; } 62% { opacity: 0.32; } 95% { transform: translateX(200px); opacity: 0.32; } 100% { transform: translateX(212px); opacity: 0; } }
 
-/* ---------- la scène du portail d'invocation (summon-stage.tsx) et son décor (backdrop-summon.tsx) ---------- */
-.sm-aurora { animation: sm-aurora 14s ease-in-out infinite alternate; }
-.sm-aurora-2 { animation-duration: 19s; animation-direction: alternate-reverse; }
-.sm-shoot { opacity: 0; animation: sm-shoot 9s ease-in infinite; }
-.sm-glyph { animation: ss-rune 5.4s ease-in-out infinite; }
-.sm-mist { animation: sm-mist 30s ease-in-out infinite alternate; }
-@keyframes sm-aurora { from { transform: translateX(-16px) skewX(-4deg); opacity: 0.7; } to { transform: translateX(18px) skewX(5deg); opacity: 1; } }
-@keyframes sm-shoot { 0%, 86% { transform: translate(40px, -32px); opacity: 0; } 88% { opacity: 1; } 96% { transform: translate(-90px, 72px); opacity: 0.9; } 100% { transform: translate(-120px, 96px); opacity: 0; } }
-@keyframes sm-mist { from { transform: translateX(-40px); } to { transform: translateX(40px); } }
+/* ---------- la scène du portail d'invocation (summon-stage.tsx) ---------- */
 .ss-floor-ring, .ss-orbit, .ss-shock { transform-origin: 0 0; }
 .ss-floor-ring { animation: an-spin 44s linear infinite; }
 .ss-orbit { animation: an-spin 8s linear infinite; }
@@ -133,27 +87,3 @@
 @keyframes ss-rays { 0%, 30% { opacity: 0; transform: scale(0.5) rotate(0deg); } 55% { opacity: 0.9; transform: scale(1) rotate(6deg); } 100% { opacity: 0.6; transform: scale(1.5) rotate(14deg); } }
 @keyframes ss-white { 0%, 88% { opacity: 0; } 100% { opacity: 1; } }
 
-/* ---------- la salle des héros (backdrop-heroes.tsx) ---------- */
-.hh-ring { transform-origin: 0 0; animation: an-spin 70s linear infinite; }
-
-/* ---------- les décors de la page d'un héros (hero-scene.tsx) ---------- */
-/* le vent : un trait qui file le long de sa volute ; les feuilles traversent l'écran */
-.hs-gust { stroke-dasharray: 60 260; animation: hs-gust 4.6s linear infinite; }
-.hs-gust-2 { animation-duration: 6.2s; animation-delay: -2s; }
-@keyframes hs-gust { from { stroke-dashoffset: 320; } to { stroke-dashoffset: 0; } }
-.hs-leaf { animation: hs-leaf 8s linear infinite; }
-@keyframes hs-leaf { 0% { transform: translate(0, 0); opacity: 0; } 8% { opacity: 1; } 50% { transform: translate(220px, 22px); } 92% { opacity: 1; } 100% { transform: translate(440px, -30px); opacity: 0; } }
-/* l'eau : des ronds qui s'élargissent à la surface du bassin */
-.hs-ripple { animation: hs-ripple 4.8s ease-out infinite; }
-@keyframes hs-ripple { 0% { transform: scale(0.3); opacity: 0; } 20% { opacity: 0.9; } 100% { transform: scale(1.9); opacity: 0; } }
-
-/* ---------- la forteresse de la guilde (backdrop-guild.tsx) ---------- */
-.backdrop-guild { background: #140c1c; }
-.backdrop-guild::after { background: linear-gradient(180deg, #0a0a2433 0%, #0a0a2400 9%, #0a0a2400 70%, #0a0a2466 100%); }
-.gd-dragon { animation: gd-fly 42s linear infinite; }
-.gd-wing { transform-box: fill-box; transform-origin: 50% 100%; animation: gd-flap 0.9s ease-in-out infinite; }
-.gd-wing-2 { animation-delay: -0.45s; }
-.gd-flame { animation: gd-flame 1.1s ease-in-out infinite; }
-@keyframes gd-fly { 0% { transform: translate(440px, 0) scale(0.8); } 50% { transform: translate(195px, -26px) scale(1); } 100% { transform: translate(-60px, 6px) scale(0.85); } }
-@keyframes gd-flap { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.35); } }
-@keyframes gd-flame { 0%, 100% { transform: scale(1, 1); opacity: 1; } 35% { transform: scale(0.92, 1.1); opacity: 0.9; } 70% { transform: scale(1.05, 0.94); } }

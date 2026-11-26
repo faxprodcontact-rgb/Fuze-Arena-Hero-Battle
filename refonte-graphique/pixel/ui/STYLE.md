@@ -22,6 +22,7 @@ tactiles, de l'air, une hiérarchie claire. Joyeux, très lisible, actuel (jeux 
 | Boutons « Pierre de l'arène » (v0.60.0) | `src/game/ui/buttons.ts` (dessins SVG, `installButtons()` appelé par `main.tsx`), `style.css` section « Boutons » |
 | Combat (Phaser) | `src/game/hud-art.tsx` (feuille du bas, tuiles des portraits, pilules de vie/énergie, galets et dalles rendus depuis `buttons.ts`), `battle-scene.ts`, `fight-view.ts` (barres au-dessus des têtes, chiffres) |
 | Chargement | `index.html` (fait par `pixel/ui/chargement.py`) : jauge en pilule, `theme-color` raisin |
+| Fonds des menus (26/11) | Illustrations vectorielles lisses dessinées par le code, même manière que les pictos (une lumière en haut à droite, un contour adouci, liseré clair, ombre intérieure douce) : atelier `ui/backdrop-kit.tsx` (`Vol`, `Mat`…), `backdrop.tsx` (pages) + `backdrop-heroes/-summon/-adventure/-guild.tsx`, terrain de la préparation `formation-stage.tsx` (teinté par l'élément du clan, plus le décor du combat) ; mouvements doux `sections/backdrops.css` (coupés si « moins de mouvements ») ; détails en haut et aux bords, calme sous le contenu, sol plat bord à bord. Contrôle : `pixel/ui/outils/fonds-captures.cjs` |
 
 Ordre de chargement : `main.tsx` importe `style.css` **avant** l'application ; le CSS d'une section, importé par ses écrans,
 passe donc après lui : à priorité égale, **la section gagne**. `<html data-skin="moderne">` reste posé (`skin.ts`).

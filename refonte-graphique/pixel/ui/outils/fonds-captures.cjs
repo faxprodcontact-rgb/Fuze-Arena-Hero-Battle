@@ -20,7 +20,7 @@ function save(s) {
   s.heroes = ids.map((id, i) => ({ uid: i + 1, defId: id, stars: 5, level: 60 - i * 3 }));
   s.discovered = ids; s.nextUid = ids.length + 1;
   s.formation = [[1, 0], [2, 1], [3, 2], [4, 3], [5, 4]];
-  s.campaign = { cleared: 60, idleFrom: now - 5.5 * 3600e3, itemHours: 0 };
+  s.campaign = { cleared: 120, idleFrom: now - 5.5 * 3600e3, itemHours: 0 };
   s.seen = ['tower', 'missions', 'dungeons', 'dailyBoss', 'arena', 'guild', 'defense'];
   s.speed = 3;
   return s;
@@ -68,7 +68,11 @@ const SIZES = (process.env.SIZES || '390x844n,360x640').split(',').map((x) => { 
     const scroll = async (n) => { const s = await page.evaluate(() => [document.documentElement.scrollHeight - innerHeight, document.documentElement.scrollWidth - innerWidth]); if (s[0] > 0 || s[1] > 0) console.log(tag, n, 'défilement de la page :', s); };
     const shot = async (n) => { await scroll(n); await page.screenshot({ path: `${OUT}/${n}-${tag}.png` }); };
     const tab = async (i) => { await page.click(`.tabbar-btn:nth-child(${i})`); await page.waitForTimeout(1400); };
+    const back = async () => { await page.click('.prep .prep-head .x, .page .prep-head .x, .hx-act-back').catch(() => {}); await page.waitForTimeout(400); };
     if (want('heros')) { await tab(2); await shot('heros'); }
+    if (want('equipe')) { await tab(2); await page.click('.hall-team'); await page.waitForTimeout(1300); await shot('equipe'); await back(); }
+    if (want('fiche')) { await tab(2); await page.click('.hall-scroll .hcard'); await page.waitForTimeout(1300); await shot('fiche'); await back(); }
+    if (want('prep')) { await tab(1); await page.click('.dock-fight'); await page.waitForTimeout(1300); await shot('prep'); await back(); }
     if (want('invoquer')) { await tab(3); await shot('invoquer'); }
     if (want('aventure')) { await tab(4); await shot('aventure'); }
     if (want('guilde')) { await tab(5); await shot('guilde'); }

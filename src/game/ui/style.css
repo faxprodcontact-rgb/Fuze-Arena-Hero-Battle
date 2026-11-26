@@ -600,9 +600,7 @@ p { margin: 6px 0; }
 .prep-plan .field { height: min(44vh, calc(min(100vw, 480px) * 360 / 420)); aspect-ratio: auto; }
 .prep-plan .field-art { -webkit-mask-image: linear-gradient(90deg, #0000, #000 7%, #000 93%, #0000); mask-image: linear-gradient(90deg, #0000, #000 7%, #000 93%, #0000); }
 .field-bg { position: absolute; inset: 0; width: 100%; height: 100%; }
-/* le décor du combat à venir (image du clan, calée en bas : son sol prend le bas du plateau) ; un voile doux en haut */
-.field-scene { background: #2a2063 50% 100% / 100% auto no-repeat; image-rendering: pixelated; }
-.field-scene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, #150f3680 0%, #150f3600 30%); }
+/* le terrain de la formation (formation-stage.tsx) : sections/backdrops.css */
 .field-arrows { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; filter: drop-shadow(0 2px 2px #0a0620a6); }
 /* un poste : son point (left, top) est le centre de la dalle, là où le héros pose les pieds */
 .field-slot { position: absolute; width: 23.5%; aspect-ratio: 1; transform: translate(-50%, -84%); display: flex; flex-direction: column; align-items: center; justify-content: flex-end; }
@@ -660,7 +658,7 @@ p { margin: 6px 0; }
 .set-line strong { color: var(--text); }
 h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon { vertical-align: -3px; }
 
-/* ---------- Héros : la salle (backdrop-heroes.tsx) ---------- */
+/* ---------- Héros : la salle (son décor : backdrop-heroes.tsx) ---------- */
 /* la salle occupe le haut de l'écran, bord à bord, à la même échelle que le décor (58 % de la largeur : jusqu'au pied de
    l'estrade) ; dessous, les onglets, les filtres, puis la liste, qui défile seule */
 .adv-scroll > .screen.heroes-tab { flex: 1 1 0; min-height: 0; gap: 8px; }
@@ -697,17 +695,14 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 /* la liste : elle défile seule, sous la salle ; le bas s'efface */
 .hall-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px 6px 22px; margin: 0 -6px;
   -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), #0000); mask-image: linear-gradient(180deg, #000 calc(100% - 22px), #0000); }
-.backdrop-heroes::after { background: linear-gradient(180deg, #0a0a2433 0%, #0a0a2400 8%, #0a0a2400 70%, #0a0a2466 100%); }
-/* petit téléphone : la salle remonte (le haut du mur sort de l'écran) et le titre s'efface, pour laisser la place à la liste */
-.backdrop-heroes { background: #141938; }
+/* petit téléphone : le titre s'efface, pour laisser la place à la liste (le fond de la salle : sections/backdrops.css) */
 @media (max-height: 700px) {
   .hall-scroll { padding-bottom: 14px; }
   .hall { height: calc(min(100vw, 480px) * 0.47); }
   .hall-title { opacity: 0; }
-  .backdrop-heroes svg { transform: translateY(calc(min(100vw, 480px) * -0.11)); }
 }
 
-/* ---------- La page d'un héros (screens/hero-detail.tsx, hero-scene.tsx) ---------- */
+/* ---------- La page d'un héros (screens/hero-detail.tsx) ---------- */
 /* de haut en bas : le titre ; la case du héros et, à côté, sa puissance et ses attributs ; le panneau sombre (il défile) */
 .hero-page { background: #0b0f2a; gap: 10px; animation: fade 0.2s; }
 .hero-page > .hp-bg { position: absolute; inset: 0; z-index: 0; pointer-events: none;
@@ -729,8 +724,6 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 /* la case : une fenêtre sur le décor de l'élément, cerclée de métal de la couleur de la rareté (.hcard-frame) */
 .hp-card { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden; isolation: isolate; border: 1.5px solid #070a1c;
   background: #0b0f2a; box-shadow: 0 6px 14px #000000a6; }
-.hp-card .hero-scene { z-index: 0; }
-.hp-card .hero-scene::after { background: linear-gradient(180deg, #05061a59 0%, #05061a00 22%, #05061a00 66%, #05061ad9 100%); }
 .hp-card .hcard-frame { border-radius: 12.5px; padding: 4.5px; z-index: 5; }
 .hp-ped { position: absolute; left: 10%; width: 80%; top: 79%; transform: translateY(-28.8%); z-index: 1; }
 .hp-ped .pedestal { position: static; display: block; }
@@ -1091,7 +1084,6 @@ img[src^="art/hd/"] { image-rendering: pixelated; }
 .adventure .tile { min-height: 0; }
 /* petits écrans : un bandeau plus court et des pictos plus petits, pour que les six tuiles tiennent toujours */
 @media (max-height: 700px) { .adv-banner { height: 112px; } .adventure .tile > .icon { width: 64px !important; height: 64px !important; } .adventure .tile-name { font-size: 14px; padding: 2px 6px 4px; } }
-.backdrop-adventure::after { background: linear-gradient(180deg, #0a0a2438 0%, #0a0a2400 9%, #0a0a2400 78%, #0a0a2440 100%); }
 /* une tuile de mode : couleur du mode en dégradé, son petit décor animé (tile-scene.tsx) derrière le picto, nom sur un bandeau sombre */
 .tile { --tile: #3a78c9;
   position: relative; min-height: 146px; display: grid; grid-template-rows: 1fr auto; justify-items: center; align-items: center; padding: 0; overflow: hidden;

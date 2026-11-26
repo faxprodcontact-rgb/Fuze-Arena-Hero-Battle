@@ -19,6 +19,8 @@ export type Clan = (typeof CLANS)[number];
 const CLAN_ELEMENT: Record<Clan, Element> = {
   eldra: 'wind', orin: 'wind', arachne: 'earth', meduse: 'earth', kael: 'fire', lenore: 'fire', barzul: 'water', kesha: 'water',
 };
+/** L'élément d'un clan (teinte du plateau de la préparation : ui/formation-stage.tsx). */
+export const clanElement = (clan: Clan): Element => CLAN_ELEMENT[clan];
 /** Le général de chaque clan (un héros HD). */
 export const CLAN_CHIEF: Record<Clan, string> = {
   eldra: 'mages-8', orin: 'mages-3', arachne: 'myths-10', meduse: 'myths-4', kael: 'assassins-2', lenore: 'knights-9',

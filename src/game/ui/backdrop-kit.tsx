@@ -75,14 +75,17 @@ function hash(s: string) {
  * Un volume : sa forme `d`, sa matière `fill` ; un liseré de lumière en haut à droite, une ombre douce en bas à gauche
  * (la forme elle-même, décalée, découpée dans la forme), un seul contour.
  */
-export function Vol({ p, d, fill, line = 1.6, ink = INK, inkA = 0.7, depth = 5, shade = 0.32, rim = 0.55, children }: {
-  p: string; d: string; fill: string; line?: number; ink?: string; inkA?: number; depth?: number; shade?: number; rim?: number; children?: ComponentChildren;
+export function Vol({ p, d, fill, line = 1.6, ink = INK, inkA = 0.7, depth = 5, shade = 0.32, rim = 0.55, ring = false, children }: {
+  p: string; d: string; fill: string; line?: number; ink?: string; inkA?: number; depth?: number; shade?: number; rim?: number;
+  /** une forme percée (plusieurs tracés : le second fait le trou) */
+  ring?: boolean; children?: ComponentChildren;
 }) {
+  const rule = ring ? 'evenodd' : undefined;
   const id = `${p}-v${hash(d + fill)}`;
   return (
     <g>
-      <clipPath id={id}><path d={d} /></clipPath>
-      <path d={d} fill={fill} />
+      <clipPath id={id}><path d={d} clip-rule={rule} /></clipPath>
+      <path d={d} fill={fill} fill-rule={rule} />
       <g clip-path={`url(#${id})`}>
         {children}
         {shade > 0 && <path d={`${BIG} ${d}`} fill-rule="evenodd" fill="#2a1257" opacity={shade} transform={`translate(${depth} ${-depth})`} filter={`url(#${p}-soft)`} />}
