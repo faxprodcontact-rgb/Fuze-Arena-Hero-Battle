@@ -1,8 +1,10 @@
-# Les images de contrôle de Rook vectorielle (refonte-graphique/pixel/sortie/ui/vecto/rook/) :
-#   python3 presentation.py
+# Les images de contrôle de Rook, le phénix (refonte-graphique/pixel/sortie/ui/vecto/rook/) :
+#   python3 presentation.py            # fixe.png, comparaison.png, visage.png, avant-apres.png
+#   python3 presentation.py --kael     # en plus (brouillon) : à côté de Kael, même échelle, et à la taille du jeu
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
 # - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
-# - (brouillon) a-cote-de-kael.png : Rook et Kael côte à côte, même échelle (cohérence de taille et de style).
+# - visage.png : la tête zoomée, sans rien | avec le calque de visage.py (tête de profil : un seul œil) ;
+# - avant-apres.png : l'image annotée par le propriétaire (l'ancienne harpie) | le phénix, même cadrage.
 import os
 import subprocess
 import sys
@@ -16,7 +18,8 @@ import rook as S  # noqa: E402
 ROOT = S.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'rook')
 RENDU = os.path.join(HERE, '..', 'rendu.cjs')
-TMP = os.path.join(HERE, '_tmp')
+TMP = os.environ.get('ROOK_TMP', os.path.join(HERE, '_tmp'))
+SCRATCH = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad'
 
 
 def stone(w, h, floor):
@@ -53,6 +56,60 @@ def render(svg, h, name):
     return Image.open(png).convert('RGBA')
 
 
+def visage():
+    """visage.png : la tête au repos zoomée (×4 environ), à gauche sans rien, à droite avec le calque guide_svg
+    (tour=75 : tête d'oiseau de profil, un seul œil) ; verifier() (visage.py) doit rendre une liste vide."""
+    from atelier import mS, f as fm
+    fr = (60.0, 10.0, 44.0, 42.0)
+    plain = S.build(frame=fr).svg()
+    defauts = S.verifier(S.fig_face, S.FACE_BOX)
+    print('visage : défauts =', defauts or 'aucun')
+    M = mS(S.HK, S.HK, *S.NECK)            # la tête au repos (comme HEAD dans rook.py)
+    guide = '<g transform="matrix(%s)">%s</g>' % (' '.join(fm(v) for v in M), S.guide_svg(S.FACE_BOX, tour=75))
+    ims = [render(s, 42 * 15, 'visage%d' % k) for k, s in enumerate((plain, plain.replace('</svg>', guide + '</svg>')))]
+    out = Image.new('RGBA', (ims[0].width * 2 + 20, ims[0].height), (20, 14, 34, 255))
+    for k, im in enumerate(ims):
+        bg = Image.new('RGBA', im.size, (44, 30, 74, 255))
+        bg.alpha_composite(im)
+        out.alpha_composite(bg, (k * (im.width + 20), 0))
+    out.convert('RGB').save(os.path.join(OUT, 'visage.png'))
+    return defauts
+
+
+def avant_apres(fig):
+    """avant-apres.png : à gauche l'image annotée par le propriétaire (l'ancienne harpie, telle quelle), à droite le
+    phénix sur le même fond, au même cadrage (pieds sur la même ligne, même échelle de dessin)."""
+    src = os.path.join(SCRATCH, 'avis-img', 'assassins-5.png')
+    if not os.path.exists(src):
+        print('(image annotée introuvable : avant-apres.png non refait)')
+        return
+    import numpy as np
+    av = Image.open(src).convert('RGB')
+    a = np.asarray(av).astype(int)
+    bgc = a[5, 5]
+    m = (np.abs(a - bgc).sum(axis=2) > 40)
+    ys, xs = np.nonzero(m)
+    # l'ancienne image : cadre (-5, -8, 136, 126) en 512 px de haut, agrandie ; on retrouve l'échelle par la
+    # largeur des ailes (du bout de l'aile proche au bout de l'aile lointaine, ≈ 3,8 → 128 px du dessin)
+    s_ = (xs.max() - xs.min()) / (128.6 - 3.0)
+    x0o = xs.min() - (3.0 - (-5)) * s_          # l'origine du cadre de l'ancienne image
+    feet_y = ys.max()
+    x0, y0, w, h = S.FRAME
+    new = fig.resize((round(w * s_), round(h * s_)), Image.LANCZOS)
+    ox = round(x0o + (x0 - (-5)) * s_)
+    oy = round(feet_y - (S.GRD + 0.6 - y0) * s_)
+    ap = Image.new('RGBA', av.size, tuple(int(c) for c in bgc) + (255,))
+    ap.alpha_composite(new, (ox, oy))
+    gap = 40
+    out = Image.new('RGB', (2 * av.width + gap, av.height + 60), (20, 14, 34))
+    out.paste(av, (0, 60))
+    out.paste(ap.convert('RGB'), (av.width + gap, 60))
+    dr = ImageDraw.Draw(out)
+    dr.text((20, 22), 'AVANT (avis du proprietaire)', fill=(255, 220, 120))
+    dr.text((av.width + gap + 20, 22), 'APRES : le phenix', fill=(255, 220, 120))
+    out.save(os.path.join(OUT, 'avant-apres.png'))
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     x0, y0, w, h = S.FRAME
@@ -64,7 +121,7 @@ def main():
     W2, H2 = fig.width + 120, fig.height + 110
     floor = 40 + int(fy * k)
     im = stone(W2, H2, floor)
-    im.alpha_composite(ground(W2, H2, 60 + fx * k, floor, 60 * k, 3.6 * k))
+    im.alpha_composite(ground(W2, H2, 60 + fx * k, floor, 52 * k, 3.6 * k))
     im.alpha_composite(fig, (60, 40))
     im.convert('RGB').save(os.path.join(OUT, 'fixe.png'))
     # 2) comparaison à la même échelle : le pixel art agrandi sans flou, pieds au même endroit
@@ -79,30 +136,45 @@ def main():
     H3 = top + pad * 2 + 6 * s
     base = pad + top
     im = stone(W3, H3, base)
-    im.alpha_composite(ground(W3, H3, pad + pfx * s, base, 62 * s, 3.6 * s))
+    im.alpha_composite(ground(W3, H3, pad + pfx * s, base, 52 * s, 3.6 * s))
     im.alpha_composite(pxb, (pad, base - pfy * s))
     x2 = 2 * pad + pxb.width
-    im.alpha_composite(ground(W3, H3, x2 + fx * s, base, 62 * s, 3.6 * s))
+    im.alpha_composite(ground(W3, H3, x2 + fx * s, base, 52 * s, 3.6 * s))
     im.alpha_composite(vec, (x2, base - fy * s))
     im.convert('RGB').save(os.path.join(OUT, 'comparaison.png'))
-    # 3) à côté de Kael (même échelle) : brouillon de contrôle
-    sys.path.insert(0, os.path.join(HERE, '..', 'kael'))
-    import kael as K
-    kx0, ky0, kw, kh = K.FRAME
-    kfx, kfy = K.FEET[0] - kx0, K.FEET[1] - ky0
-    kv = render(K.build(ow=0.95).svg(), round(kh * k), 'kael')
-    W4 = kv.width + fig.width + 200
-    base = 40 + int(max(fy, kfy) * k)
-    im = stone(W4, base + 80, base)
-    im.alpha_composite(kv, (40, base - int(kfy * k)))
-    im.alpha_composite(fig, (kv.width + 120, base - int(fy * k)))
-    dbg = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-rook'
-    if os.path.isdir(dbg):
-        im.convert('RGB').resize((W4 // 2, (base + 80) // 2), Image.LANCZOS).save(os.path.join(dbg, 'a-cote-de-kael.png'))
+    visage()
+    avant_apres(fig)
+    print('écrit fixe.png, comparaison.png, visage.png, avant-apres.png dans', OUT)
+    if '--kael' in sys.argv:
+        # brouillon : à côté de Kael (même échelle, pieds sur la même ligne), puis à la taille du téléphone
+        dst = os.path.join(SCRATCH, 'vecto-rook-phenix')
+        sys.path.insert(0, os.path.join(HERE, '..', 'kael'))
+        import kael as K
+        kx0, ky0, kw, kh = K.FRAME
+        s = 5
+        kf = render(K.build().svg(), kh * s, 'kael')
+        tf = render(S.build().svg(), h * s, 'rook')
+        W, H = kf.width + tf.width + 120, max(kf.height, tf.height) + 80
+        floor = 40 + 120 * s
+        im = stone(W, H, floor)
+        im.alpha_composite(kf, (40, round(floor - (K.GRD - ky0) * s)))
+        im.alpha_composite(tf, (80 + kf.width, round(floor - (S.GRD - y0) * s)))
+        im.convert('RGB').resize((W // 2, H // 2), Image.LANCZOS).save(os.path.join(dst, 'a-cote-de-kael.png'))
+        # à la taille du jeu : un personnage d'environ 65 px de haut (image 160 au contour épais, réduite)
+        small = render(S.build(ow=1.35).svg(), 160, 'petit')
+        ks = render(K.build(ow=1.35).svg(), 160, 'kpetit')
+        z = 0.55
+        a = ks.resize((round(ks.width * z), round(ks.height * z)), Image.LANCZOS)
+        b = small.resize((round(small.width * z), round(small.height * z)), Image.LANCZOS)
+        im = stone(a.width + b.width + 40, 120, 104)
+        im.alpha_composite(a, (10, 104 - round((K.GRD - ky0) * 160 / kh * z)))
+        im.alpha_composite(b, (30 + a.width, 104 - round((S.GRD - y0) * 160 / h * z)))
+        im = im.resize((im.width * 3, im.height * 3), Image.NEAREST)
+        im.convert('RGB').save(os.path.join(dst, 'taille-jeu.png'))
+        print('brouillons :', dst)
     for f_ in os.listdir(TMP):
         os.remove(os.path.join(TMP, f_))
     os.rmdir(TMP)
-    print('écrit', os.path.join(OUT, 'fixe.png'), 'et comparaison.png')
 
 
 if __name__ == '__main__':

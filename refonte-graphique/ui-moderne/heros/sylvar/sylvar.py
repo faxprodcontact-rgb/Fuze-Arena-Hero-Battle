@@ -39,6 +39,21 @@ WOOD = Mat('#d08a56', '#9c5a36', '#6e3a26', '#4a2420', '#2c1418')
 VOID = '#140e20'
 EYE = ['#f2ffd4', '#b4ff7a', '#6ee04e', '#2a9a40', '#17582c']
 
+# ---------- le visage (méthode commune ../visage.py, avis du propriétaire du 26/11) ----------
+# La face du crâne de cerf (sans bois, capuche ni bout du museau), dans le repère de la tête AVANT l'agrandissement ×1,1 :
+# une sphère tournée de 18° vers la droite. Comme pour une tête d'animal vue de 3/4 (Taurok), les orbites sont plus
+# écartées (az 35°) ; le « nez » de la méthode = la racine du chanfrein, sur la médiane entre les deux orbites, là où
+# l'arête du museau descend ; la « bouche » = le bord de la mâchoire du masque sous la médiane (il n'a pas de bouche).
+FACE_BOX = (52.4, 21.0, 86.6, 48.0)
+FACE_ARGS = dict(tour=18, az_oeil=35, y_oeil=0.36, y_nez=0.47, y_bouche=0.95, l_oeil=0.17)
+
+
+def face_mesures():
+    """Les positions RÉELLES du dessin (centres et largeurs des yeux, racine du chanfrein, bord de la mâchoire)."""
+    return {'oeil_proche': (64.7, 30.8, 5.8), 'oeil_fond': (82.85, 30.5, 4.3), 'nez': (74.9, 33.4),
+            'bouche': (73.9, 47.3, 5.8)}
+
+
 GRD = 116          # le sol
 FEET = (64, 116)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
@@ -263,8 +278,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         rpoly([(53.6, 101.9), (56.6, 101.8), (56.7, 105.0), (53.7, 105.1)], 0.7))
 
     # ================================================================ la tunique en lambeaux (sur les cuisses)
-    tun = sm([(52.2, 77.6), (72.6, 77.6), (73.6, 83.2), (74.4, 88.6), (72.0, 86.4), (69.6, 90.8), (66.8, 86.8), (63.4, 89.8),
-              (60.4, 86.6), (57.4, 90.4), (54.6, 86.4), (51.8, 88.6), (51.0, 83.0)], sharp=(3, 4, 5, 6, 7, 8, 9, 10, 11))
+    tun = sm([(52.2, 77.6), (72.2, 77.4), (73.5, 83.2), (74.6, 88.6), (72.0, 86.4), (69.6, 90.8), (66.8, 86.8), (63.4, 89.8),
+              (60.4, 86.6), (57.4, 90.4), (54.6, 86.4), (51.8, 88.6), (51.0, 83.0)], sharp=(1, 3, 4, 5, 6, 7, 8, 9, 10, 11))
     fig.part('tunic', tun, GREEN, cel=1.3, rim=0.7, cast=1.0,
              details=[(ribbon([(62.4, 80), (62.0, 84.6), (61.0, 88.6)], [0.2, 1.6, 0.2]), GREEN.deep, 0.6),
                       (ribbon([(69.6, 80), (69.6, 84.8), (69.4, 89.6)], [0.2, 1.4, 0.2]), GREEN.deep, 0.5),
@@ -603,8 +618,8 @@ def skull_details(P):
               (ellipse(82.6, 30.2, 4.4 + glow * 0.7, 4.4 + glow * 0.7), ('rad', 82.6, 30.2, 4.4 + glow * 0.7, 4.4 + glow * 0.7,
                                                                        [(0, EYE[2], min(0.9, 0.5 * gk)), (0.55, EYE[3], 0.22 * gk), (1, EYE[3], 0)]), 1)]
     eN = sm([(61.8, 30.0), (64.4, 29.0), (67.6, 30.2), (66.6, 32.6), (63.6, 32.6)], sharp=(0, 2))
-    eF = sm([(81.0, 29.4), (83.0, 28.8), (84.6, 29.8), (83.8, 31.8), (81.8, 31.8)], sharp=(0, 2))
-    for e, (cx, cy) in ((eN, (64.6, 31.0)), (eF, (82.9, 30.4))):
+    eF = sm([(80.7, 29.5), (83.0, 28.9), (85.0, 29.9), (84.0, 31.9), (81.6, 31.9)], sharp=(0, 2))   # un peu moins étroit (visage.py)
+    for e, (cx, cy) in ((eN, (64.6, 31.0)), (eF, (82.85, 30.5))):
         if bl > 0.5:
             d += [(e.scale(1, 0.35, cx, cy + 0.6), EYE[4], 0.95)]
         else:

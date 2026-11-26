@@ -137,7 +137,7 @@ ATTACK = [
     (625, dict(REACH, flex=-1.0, head=(0, -0.8), tilt=-1.0, tal=-0.5, cape=0.2)),
     (660, dict(REACH, E=(44.6, 47.2), W=(44.0, 37.6), ha=-80, hang=40, flex=-1.0, head=(0, -0.6), tal=-0.2, cape=0.3)),
     # encochée : la main revient tirer la corde
-    (700, dict(hand='draw', held=0, arrow=1, free=0, W=(58.6, 51.0), E=(44.6, 54.0), ha=-2, flex=-0.62, head=(0, -0.2), tal=0.3, cape=0.3)),
+    (700, dict(hand='draw', held=0, arrow=1, free=0, W=(58.6, 47.6), E=(44.6, 51.6), ha=-2, flex=-0.62, head=(0, -0.2), tal=0.3, cape=0.3)),
     (800, dict(**arm(4.0), flex=-0.25, head=(0, 0.2), tal=0.3, cape=0.1)),
     (890, dict(**arm(0.6), flex=-0.02, head=(0, 0.3), tal=0.0)),
     (1020, {}),
@@ -172,7 +172,7 @@ SPECIAL = [
     (1390, dict(OPEN, **arm(-3.0, -4.0), ha=-60, flex=-1.0, head=(0, -0.6), tal=-0.3)),
     (1450, dict(REACH, flex=-1.0, head=(0, -0.8), tilt=-1.0, tal=-0.5, cape=0.2)),
     (1490, dict(REACH, E=(44.6, 47.2), W=(44.0, 37.6), ha=-80, hang=40, flex=-1.0, head=(0, -0.6), tal=-0.2, cape=0.3)),
-    (1530, dict(hand='draw', held=0, arrow=1, free=0, W=(58.6, 51.0), E=(44.6, 54.0), ha=-2, flex=-0.62, head=(0, -0.2), tal=0.3, cape=0.3)),
+    (1530, dict(hand='draw', held=0, arrow=1, free=0, W=(58.6, 47.6), E=(44.6, 51.6), ha=-2, flex=-0.62, head=(0, -0.2), tal=0.3, cape=0.3)),
     (1620, dict(**arm(4.0), flex=-0.25, head=(0, 0.2), tal=0.3, cape=0.1)),
     (1700, dict(**arm(0.6), flex=-0.02, head=(0, 0.3))),
     (1750, {}),

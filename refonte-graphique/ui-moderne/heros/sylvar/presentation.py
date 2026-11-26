@@ -105,5 +105,42 @@ def main():
     print('écrit', os.path.join(OUT, 'fixe.png'), 'et comparaison.png')
 
 
+def visage():
+    """visage.png : la tête zoomée ×4, à gauche telle quelle, à droite avec le calque guide_svg de visage.py (posé dans
+    le repère de la tête : même ×1,1 que la pose) ; vérifie aussi les places (verifier)."""
+    sys.path.insert(0, os.path.join(HERE, '..'))
+    import visage
+    from visage import verifier
+    x0, y0, w, h = S.FRAME
+    head_svg = S.build().svg()
+    # guide_svg place les traits avec les réglages par défaut : on lui passe ceux du crâne (orbites écartées, az 35°)
+    p0 = visage.placer
+    visage.placer = lambda boite, tour=18: p0(boite, **S.FACE_ARGS)
+    try:
+        g = visage.guide_svg(S.FACE_BOX, tour=S.FACE_ARGS['tour'])
+    finally:
+        visage.placer = p0
+    g = '<g transform="translate(66 50) scale(1.1) translate(-66 -50)">' + g + '</g>'
+    guided = head_svg[:head_svg.rindex('</svg>')] + g + '</svg>'
+    H = 4 * 512
+    k = H / h
+    box = (round((48 - x0) * k), round((14 - y0) * k), round((104 - x0) * k), round((56 - y0) * k))
+    ims = []
+    for i, svg_txt in enumerate((head_svg, guided)):
+        im = render(svg_txt, H, '_visage%d' % i).crop(box)
+        bg = stone(im.width, im.height, im.height + 10)
+        bg.alpha_composite(im)
+        ims.append(bg)
+    out = Image.new('RGB', (2 * ims[0].width + 30, ims[0].height), (20, 14, 34))
+    out.paste(ims[0].convert('RGB'), (0, 0))
+    out.paste(ims[1].convert('RGB'), (ims[0].width + 30, 0))
+    out.save(os.path.join(OUT, 'visage.png'))
+    for f_ in os.listdir(TMP):
+        os.remove(os.path.join(TMP, f_))
+    os.rmdir(TMP)
+    print('visage : défauts =', verifier(S.face_mesures(), S.FACE_BOX) or 'aucun')
+
+
 if __name__ == '__main__':
     main()
+    visage()

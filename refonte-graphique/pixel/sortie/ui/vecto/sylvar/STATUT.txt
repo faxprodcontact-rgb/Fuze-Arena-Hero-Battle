@@ -1,4 +1,4 @@
 fait
-Sylvar, le chasseur au crâne de cerf, redessiné en vectoriel lisse comme Kael : masque de crâne blanc aux yeux verts qui brillent, marque rouge en Y, grands bois (le lointain plus petit) avec son talisman, capuche et grande cape vertes en lambeaux, col de loup, armure de cuir, carquois, bottes à revers de fourrure, grand arc recourbé bandé (la corde passe devant le masque).
-Animé à 24 images par seconde : respiration à l'affût, tir (lâcher, corde qui vibre, flèche reprise au carquois), tir spécial « Flèche de la faille » (cailloux qui montent vers la pointe, pointe de pierre veinée d'or, faille d'or jusqu'à l'ennemi, éclats de roche dressés, poussière).
-Bras proche et mains d'une seule forme chacun : aucune jointure visible, même dans les poses extrêmes.
+Corrigé d'après l'avis du 26/11 : la flèche passe maintenant AU-DESSUS de l'épaulette de fourrure (main qui tire et arc un peu remontés : la flèche longe la mâchoire du masque, toujours presque à plat), et le brin bas de la corde passe DERRIÈRE le col et l'épaulette (il ressort sous la fourrure, devant l'armure) — dans toutes les poses de tir (repos, tir, spéciale, reprise de flèche).
+Hanche : la petite bosse sous la ceinture est enlevée (bord de la tunique redressé, bout de ceinture raccourci) : silhouette lisse, vérifiée en aplat noir.
+Visage vérifié avec visage.py (visage.png, aucun défaut) : seul changement, l'œil du fond un peu moins étroit. Image avant | après : avant-apres.png.
