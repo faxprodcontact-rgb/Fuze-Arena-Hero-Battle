@@ -203,8 +203,8 @@ def wing(fig, side, P, S):
         b0, _ = along(path0, u)
         L0 = 7.2 - 2.6 * i / (nl - 1)
         tip = lerp(b0, tips0[j], L0 / math.dist(b0, tips0[j]))
-        root, ang, L, wv = place(u, tip, -0.6, i * 1.2)
-        wdt = 5.4 - 2.2 * i / (nl - 1)
+        root, ang, L, wv = place(u, tip, 1.0, i * 1.2)
+        wdt = 4.8 - 2.0 * i / (nl - 1)
         sh = plume(root, ang, L + 0.6, wdt, curl=sg * 8, kind='cover')
         tp = sh_tip(root, ang, L, sg * 8)
         nm = '%sl%d' % (pre, i)
@@ -214,8 +214,8 @@ def wing(fig, side, P, S):
                                                       [(0, '#b0581c', 0.45), (1, '#e0901e', 0.3)]), 1)])
         names.append(nm)
     # -- le bord d'attaque doré (le bras, de l'épaule au bout de la main), d'un seul tenant --
-    c = crpath(bones, 30)
-    ws = [4.8 - 3.4 * (i / 30) ** 1.1 for i in range(31)]
+    c = crpath([lerp(bones[0], bones[1], 0.55)] + bones[1:], 30)
+    ws = [5.0 - 3.5 * (i / 30) ** 1.1 for i in range(31)]
     band = limb(c, ws)
     nm = pre + 'edge'
     det = [(ribbon([(p[0] + 0.5 * sg - 0.2, p[1] - 0.9) for p in c[2:28:3]], [0.1] + [0.9] * 7 + [0.1]), gold.hi, 0.75)]
@@ -223,6 +223,10 @@ def wing(fig, side, P, S):
                                    [(0, gold.light), (0.5, gold.base), (1, gold.light)]),
              cel=1.0, rim=0.6, cast=1.1, ink=FINK, details=det, cast_on=[x for x in names])
     names.append(nm)
+    if not near:
+        for p in fig.parts:
+            if p.name in names:
+                p.details.append((p.shape, '#2a0828', 0.16))
     return names, bones, path
 
 
@@ -631,7 +635,8 @@ def head(fig, P):
     # le nez fin : l'arête claire en diagonale, de l'entre-deux-yeux au bout qui dépasse à peine (elle cache le coin
     # intérieur de l'œil lointain), le flanc dans l'ombre douce dessous, une narine
     fd += [(sm([(78.4, 34.6), (81.4, 36.4), (83.6, 37.6), (84.2, 38.6), (82.2, 39.1), (80.2, 37.9)]), SKIN.shadow, 0.32),
-           (ribbon([(77.8, 32.6), (80.8, 34.6), (83.4, 36.0), (85.2, 37.0)], [0.15, 0.55, 0.5, 0.3]), SKIN.hi, 0.85),
+           (ribbon([(79.6, 35.0), (82.0, 35.9), (83.8, 36.4), (85.2, 37.0)], [0.1, 0.4, 0.5, 0.3]), SKIN.hi, 0.85),
+           (ribbon([(77.9, 32.4), (78.6, 33.4), (79.0, 34.2)], [0.1, 0.35, 0.1]), SKIN.hi, 0.5),
            (ellipse(85.0, 37.1, 0.6, 0.42, 20), '#fff8f0', 0.85),
            (ellipse(83.4, 38.4, 0.65, 0.32, 15), SKIN.deep, 0.8),
            (ribbon([(81.8, 39.2), (83.6, 39.3), (85.0, 38.7)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.5)]
