@@ -181,7 +181,7 @@ function buildCards() {
         <div class="pane"><small>dessin</small><button type="button" class="draw" aria-label="Entourer sur le dessin"><span class="stage"><img alt="" loading="lazy"><svg viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg></span></button><span class="pen-tag">Entourer</span></div>
         <div class="pane gifpane"><small>animation</small><img alt="" loading="lazy"></div>
       </div>
-      <textarea rows="3" placeholder="Ce qu’il faut changer…"></textarea>
+      <textarea rows="3" autocomplete="off" placeholder="Ce qu’il faut changer…"></textarea>
       <div class="saved" id="sv-${h.id}"></div>`;
     $('h2', a).textContent = h.name;
     $('.meta', a).textContent = `${h.r} · ${h.el}`;
@@ -275,7 +275,12 @@ function note(t) { const el = $('#cx'); el.textContent = t; el.hidden = !t; }
   col = db.collection('avis');
   col.onSnapshot((snap) => {
     if (!snap.metadata || !snap.metadata.fromCache) { clearTimeout(timer); note(''); }
-    snap.docs.forEach(d => { if (d.exists) applyRemote(d.id, d.data()); });
+    const seen = new Set();
+    snap.docs.forEach(d => { if (d.exists) { seen.add(d.id); applyRemote(d.id, d.data()); } });
+    // réponse définitive de la base : un héros sans avis enregistré repart à vide (copie ancienne du téléphone effacée)
+    if (!snap.metadata || !snap.metadata.fromCache) {
+      HEROES.forEach(h => { if (!seen.has(h.id) && !timers[h.id] && !writing[h.id]) applyRemote(h.id, { text: '', status: '', strokes: [] }); });
+    }
     renderFilters(); applyFilter();
   }, () => { clearTimeout(timer); col = null; note('Sauvegarde en ligne coupée : tes notes restent sur cet appareil.'); });
 })();
