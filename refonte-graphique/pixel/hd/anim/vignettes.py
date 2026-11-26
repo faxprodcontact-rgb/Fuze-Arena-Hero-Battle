@@ -21,7 +21,7 @@ META = os.path.join(ROOT, 'src', 'game', 'hd-meta.ts')
 ART = os.path.join(ROOT, 'public', 'art', 'hd')
 OUT_TS = os.path.join(ROOT, 'src', 'game', 'hd-figures.ts')
 # le visage : chaque pixel du dessin devient FACE × FACE pixels (net sur tous les écrans)
-FACE = 4
+FACE = 2
 # le portrait : la tête et le haut du buste, avec de l'air (demande du 26/11 : « moins zoomés ») ; le carré fait MARGIN fois
 # la case de la tête (celle de jeu_export.py la serre), et le milieu de la tête est à HEAD_Y de la hauteur, en partant du haut
 MARGIN = 1.85

@@ -51,7 +51,7 @@ META = os.path.join(ROOT, 'src', 'game', 'hd-meta.ts')
 sys.path.insert(0, HD)
 import hd  # noqa: E402
 
-UP = 2                     # les planches sont agrandies ×2 sans flou (le jeu les réduit : un pixel du dessin = 1,22)
+UP = 1                     # un pixel du dessin = 1 pixel de la planche (×2 jusqu’au 26/11 : 4 fois trop de mémoire, iPhone qui plantait)
 SCALE = 1.22               # taille d'un pixel du dessin au combat (unités du jeu, écran de 720 de large), comme jeu.py
 MAXW = 2048 // UP * UP     # largeur de la planche avant agrandissement : 4096 au plus une fois agrandie
 ANIMS = ('pose', 'attaque', 'speciale')
