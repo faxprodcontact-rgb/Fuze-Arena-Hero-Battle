@@ -1,51 +1,16 @@
 {
  "planches": [
   {
-   "nom": "orin",
-   "id": "mages-3",
-   "anim": "speciale",
-   "genre": "tir",
-   "image": 8,
-   "calque": "projectile",
-   "rangees": 8
-  },
-  {
-   "nom": "tessa",
-   "id": "mages-4",
+   "nom": "garvin",
+   "id": "knights-8",
    "anim": "attaque",
-   "genre": "tir",
-   "image": 2,
-   "calque": "projectile",
+   "genre": "melee",
+   "image": 5,
+   "calque": "cible",
    "rangees": 13
-  },
-  {
-   "nom": "meduse",
-   "id": "myths-4",
-   "anim": "attaque",
-   "genre": "tir",
-   "image": 3,
-   "calque": "projectile",
-   "rangees": 8
-  },
-  {
-   "nom": "aldric",
-   "id": "knights-3",
-   "anim": "speciale",
-   "genre": "tir",
-   "image": 6,
-   "calque": "projectile",
-   "rangees": 10
   }
  ],
  "calcul": [
-  {
-   "nom": "aldric",
-   "anim": "speciale",
-   "genre": "tir",
-   "image": 6,
-   "coupe": "depuis=162",
-   "rangees": 10
-  },
   {
    "nom": "garvin",
    "anim": "attaque",
@@ -55,44 +20,12 @@
    "rangees": 13
   },
   {
-   "nom": "gorille-guerrier",
-   "anim": "speciale",
-   "genre": "rayon",
-   "image": 10,
-   "coupe": "depuis=166",
-   "rangees": 12
-  },
-  {
-   "nom": "gorille-guerrier",
-   "anim": "speciale",
-   "genre": "rayon",
-   "image": 11,
-   "coupe": "depuis=166",
-   "rangees": 16
-  },
-  {
-   "nom": "meduse",
-   "anim": "attaque",
-   "genre": "tir",
-   "image": 3,
-   "coupe": "depuis=130",
-   "rangees": 8
-  },
-  {
    "nom": "moine-tengu",
    "anim": "speciale",
    "genre": "rayon",
    "image": 7,
    "coupe": "depuis=163",
    "rangees": 12
-  },
-  {
-   "nom": "orin",
-   "anim": "speciale",
-   "genre": "tir",
-   "image": 8,
-   "coupe": "depuis=196",
-   "rangees": 8
   },
   {
    "nom": "salamandre",
@@ -125,14 +58,6 @@
    "image": 7,
    "coupe": "depuis=150",
    "rangees": 8
-  },
-  {
-   "nom": "tessa",
-   "anim": "attaque",
-   "genre": "tir",
-   "image": 2,
-   "coupe": "depuis=127",
-   "rangees": 13
   }
  ]
 }

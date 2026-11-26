@@ -1724,7 +1724,8 @@ def write_outputs(anims):
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
     'attaque': dict(genre='tir', tir=(6, 8), depuis=194, coup=8, cible=FOE, coupe=278),
-    'speciale': dict(genre='tir', tir=(8, 10), depuis=196, coup=10, cible=FOE, coupe=[None] * 10 + [198] * 8,
+    # calques + depuis 165 : le souffle de vent part entier (196 le coupait en ligne droite)
+    'speciale': dict(calques=True, genre='tir', tir=(8, 10), depuis=165, coup=10, cible=FOE, coupe=[None] * 10 + [198] * 8,
                      charge=(1, 2)),
 }
 

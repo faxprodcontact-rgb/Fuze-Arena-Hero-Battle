@@ -1439,7 +1439,8 @@ def essai(folder):
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
     'attaque': dict(genre='tir', tir=(2, 5), depuis=128, coup=5, cible=(ENEMY_X, GROUND - 64), coupe=204),
-    'speciale': dict(genre='tir', tir=(6, 8), depuis=162, coup=8, cible=(ENEMY_X, GROUND - 40), coupe=200,
+    # depuis 142 : la boule de feu (anneau et flammes) part entière, entre le pied et elle (162 la coupait)
+    'speciale': dict(genre='tir', tir=(6, 8), depuis=142, coup=8, cible=(ENEMY_X, GROUND - 40), coupe=200,
                      charge=(0, 1)),
 }
 

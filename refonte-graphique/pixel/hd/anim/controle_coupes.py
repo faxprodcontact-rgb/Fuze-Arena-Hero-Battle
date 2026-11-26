@@ -227,7 +227,7 @@ def scenes(meta, c, dummy, an, suspects):
                 p0 = (hx + b[0], gy + b[1])
                 p1 = (tx, gy - a.get('haut', 40))
                 ln = math.hypot(p1[0] - p0[0], p1[1] - p0[1])
-                st = min(3, max(0.5, ln / max(20, a.get('longueur', 100))))
+                st = min(6, max(0.5, ln / max(20, a.get('longueur', 100))))
                 img, ax, ay = c.cell(a['rayon'][i])
                 paste(cv, img, p0[0] + ax, p0[1] + ay, rot=math.atan2(p1[1] - p0[1], abs(p1[0] - p0[0])),
                       anchor=(-ax, -ay), sx=st, sy=min(1.35, max(0.85, math.sqrt(st))))

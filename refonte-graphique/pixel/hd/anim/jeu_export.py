@@ -37,6 +37,8 @@
 #   rase    (facultatif, 'tir') : le projectile court au ras du sol (vague, pics de glace) : il glisse à plat jusqu'aux
 #           pieds de la cible, à la hauteur où il a quitté le personnage.
 #   vitesse, pente (facultatifs, 'tir') : imposent la vitesse (pixels/s) et l'angle du dessin du projectile (sinon mesurés).
+#   calques (facultatif) True : le personnage n'est jamais coupé ; les effets partent par morceaux entiers (jamais de bord
+#           droit vertical). L'export prévient (ATTENTION …) quand une coupe tranche un dessin : consignes/export-jeu.md §6.
 import sys, os, json, math, hashlib, importlib.util, inspect
 import numpy as np
 from PIL import Image, ImageDraw

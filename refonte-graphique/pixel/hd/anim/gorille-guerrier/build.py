@@ -1240,8 +1240,11 @@ WAVE_X = 258                            # l'ennemi de la spéciale : le front de
 JEU = {
     'attaque': dict(calques=True, genre='melee', coup=4, elan=(0, 2), cible=(FOE_X, g2c(*KNUCKLE)[1]),
                     coupe=[None] * 4 + [144, 155, 155, 148] + [None] * 2),
-    'speciale': dict(genre='rayon', rayon=(10, 13), depuis=166, coup=12, cible=(WAVE_X, GROUND - 23),
-                     coupe=[None] * 13 + [166] * 2 + [None] * 2, charge=(2, 7)),
+    # l'onde de poussière court au ras du sol jusqu'à la vraie cible (images 10-11) ; en `rayon`, étirée, elle
+    # s'arrêtait en chemin et était coupée à 166 ; `calques` : par morceaux entiers
+    'speciale': dict(genre='tir', tir=(10, 12), depuis=110, rase=True, vitesse=500, coup=12,
+                     cible=(WAVE_X, GROUND - 23), coupe=[None] * 12 + [110] * 3 + [None] * 2, charge=(2, 7),
+                     calques=True),
 }
 
 

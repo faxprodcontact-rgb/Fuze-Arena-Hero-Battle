@@ -1255,7 +1255,8 @@ if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'decoupe':
 
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
-    'attaque': dict(genre='tir', tir=(3, 6), depuis=130, coup=6, cible=(ENEMY_X, GROUND - 60), coupe=150),
+    # tir dès l'image 4 : à l'image 3, la griffe est encore dans la main (elle était coupée en deux)
+    'attaque': dict(genre='tir', tir=(4, 6), depuis=130, coup=6, cible=(ENEMY_X, GROUND - 60), coupe=150),
     'speciale': dict(genre='rayon', rayon=(4, 6), depuis=126, coup=9, cible=(ENEMY_X, GROUND - 42), coupe=126,
                      charge=(0, 3)),
 }

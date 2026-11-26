@@ -1451,7 +1451,8 @@ def essai(folder):
 
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
-    'attaque': dict(genre='tir', tir=(2, 3), depuis=127, coup=3, cible=(ENEMY_X, GROUND - 47), coupe=196),
+    # depuis 130 : la lueur de la corde reste à l'arc, la flèche part entière (127 coupait la lueur)
+    'attaque': dict(genre='tir', tir=(2, 3), depuis=130, coup=3, cible=(ENEMY_X, GROUND - 47), coupe=196),
     'speciale': dict(genre='sort', coup=10, cible=(ENEMY_X, GROUND - 40), coupe=[None] * 6 + [150] * 10,
                      charge=(1, 3)),
 }

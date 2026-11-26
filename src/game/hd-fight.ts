@@ -471,8 +471,10 @@ function beam(scene: Phaser.Scene, host: HdHost, src: HdView, dst: HdView, a: An
       const p0 = { x: src.body.x + dir * a.bouche![0]! * k, y: src.body.y + host.feetY + a.bouche![1]! * k };
       const p1 = { x: dst.body.x, y: dst.body.y + host.feetY - (a.haut ?? 40) * k };
       const len = Math.hypot(p1.x - p0.x, p1.y - p0.y);
-      // étiré jusqu'à la cible ; un peu plus épais quand il va loin (étiré seulement en long, il paraîtrait écrasé)
-      const stretch = Phaser.Math.Clamp(len / Math.max(20, (a.longueur ?? 100) * k), 0.5, 3);
+      // étiré jusqu'à la cible ; un peu plus épais quand il va loin (étiré seulement en long, il paraîtrait écrasé).
+      // Jusqu'à ×6 : depuis l'écart du 26/11, un jet vers le rang du fond doit s'étirer ×4,5 à ×5 (à ×3, il s'arrêtait
+      // en chemin, loin de la cible)
+      const stretch = Phaser.Math.Clamp(len / Math.max(20, (a.longueur ?? 100) * k), 0.5, 6);
       c.setPosition(p0.x, p0.y).setScale(dir * stretch, Phaser.Math.Clamp(Math.sqrt(stretch), 0.85, 1.35)).setRotation(dir * Math.atan2(p1.y - p0.y, Math.abs(p1.x - p0.x)))
         .setDepth(Math.max(src.body.depth, dst.body.depth) + 3).setVisible(true);
       setCell(img, actor.key, actor.ch.frames, cell, k);
