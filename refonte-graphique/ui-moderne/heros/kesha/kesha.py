@@ -26,6 +26,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from outils import bent, taper, crpath, fuse, P as PG, geom_shapes  # noqa: E402
+from visage import placer  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'demons-5'
@@ -59,6 +60,12 @@ FL1, FL2 = 13.5, 15.0
 NH, NA = (51.5, 88.5), (30.6, 108.6)    # jambe proche : hanche, cheville (tendue loin derrière)
 FH, FA = (80.0, 88.5), (92.4, 108.4)    # jambe lointaine : hanche, cheville (pliée devant)
 TAILR = (53.0, 81.0)                    # la racine de la queue
+# le visage (méthode commune visage.py) : la boîte = le crâne du requin (du haut du crâne jusqu'à la ligne de la gueule,
+# de l'arrière des branchies jusqu'à la racine du museau ; sans le museau qui avance), repère de la tête (avant le ×1,08).
+# Tête de requin de profil → placer(..., tour=75) : UN SEUL œil (avis du propriétaire : « supprimer son œil du fond »).
+FACE_BOX = (66.0, 19.0, 92.0, 45.0)
+FACE = placer(FACE_BOX, tour=75)
+EYE = FACE['oeil_proche']               # (x, y, largeur) : l'œil unique, bien lisible, loin du bord avant
 
 #   breath : souffle 0..1 ; crouch : il se ramasse (0..4) ; lean : il se penche en avant (+) ; head : décalage de la
 #   tête ; tilt : la tête tourne ; gape : la gueule s'ouvre (+, en pixels au bout du museau) ou se serre (−) ;
@@ -409,31 +416,31 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                 (HD(ribbon([(x + 0.7 + 0.25 * Pz['gill'], y - 0.2) for x, y in c], [0.1, 0.55, 0.5, 0.1])), SKIN.light, 0.7)]
         if Pz['gill'] > 0.05:
             det += [(HD(ribbon([(x + 0.1, y) for x, y in c], [0.05, 0.55 * Pz['gill'], 0.5 * Pz['gill'], 0.05])), GUM[1], 0.9)]
-    # l'oeil proche : petit, rond, jaune-orangé, sous l'arcade en colère ; l'oeil lointain juste visible
-    EC = (86.0, 32.3)
-    det += [(HD(ellipse(EC[0] - 0.2, EC[1] + 0.2, 3.0, 2.6, -8)), SKIN.deep, 0.55)]
+    # UN SEUL ŒIL (avis du propriétaire, 26/11 : « supprimer son œil du fond » ; tête de profil, visage.placer tour=75) :
+    # rond, jaune-orangé, à la place et à la taille données par visage.py (bien lisible, loin du bord avant du museau),
+    # sous l'arcade en colère qui mord sur son haut. Rien d'autre devant lui : ni paupière, ni sourcil, ni orbite du fond.
+    ex, ey, ew = EYE
+    rx, ry = ew / 2, ew / 2 * 0.88
+    det += [(HD(ellipse(ex - 0.25, ey + 0.3, rx + 0.85, ry + 0.75, -8)), SKIN.deep, 0.55)]   # l'orbite (creux doux)
     if Pz['blink'] > 0.5:
-        det += [(HD(ellipse(EC[0], EC[1], 2.3, 2.0)), SKIN.shadow, 1),
-                (HD(ribbon([(EC[0] - 2.2, EC[1] + 0.3), (EC[0], EC[1] + 0.9), (EC[0] + 2.2, EC[1] + 0.4)], [0.1, 0.6, 0.1])), SKIN.deep, 0.9)]
+        det += [(HD(ellipse(ex, ey, rx + 0.1, ry + 0.1)), SKIN.shadow, 1),
+                (HD(ribbon([(ex - rx, ey + 0.4), (ex, ey + 1.2), (ex + rx, ey + 0.5)], [0.1, 0.75, 0.1])), SKIN.deep, 0.9)]
     else:
-        ecx, ecy = hp(EC)
-        det += [(HD(ellipse(EC[0], EC[1], 2.1, 1.9)), ('rad', ecx + 0.5, ecy + 0.3, 2.6, 2.6,
-                                                         [(0, '#fff4b0'), (0.35, '#f7c83a'), (0.8, '#e08a26'), (1, '#b4521a')]), 1),
-                (HD(ellipse(EC[0] + 0.45, EC[1] + 0.15, 0.8, 1.25, 6)), '#0e0812', 1),
-                (HD(ellipse(EC[0] + 1.05, EC[1] - 0.75, 0.48, 0.38)), '#ffffff', 1),
-                (HD(ellipse(EC[0] - 0.7, EC[1] + 1.0, 0.3, 0.22)), '#fffbe8', 0.8)]
-    # arcade lourde en V (elle mord sur le haut de l'oeil : le regard dur)
-    det += [(HD(sm([(80.6, 28.6), (84.0, 29.2), (88.0, 30.4), (91.6, 32.4), (91.0, 33.4), (87.6, 32.0), (84.0, 31.4), (80.8, 31.0)],
+        ecx, ecy = hp((ex, ey))
+        det += [(HD(ellipse(ex, ey, rx, ry)), ('rad', ecx + 0.7, ecy + 0.4, rx * 1.25, rx * 1.25,
+                                               [(0, '#fff4b0'), (0.35, '#f7c83a'), (0.8, '#e08a26'), (1, '#b4521a')]), 1),
+                (HD(ellipse(ex + 0.65, ey + 0.2, 1.15, ry * 0.68, 6)), '#0e0812', 1),            # la pupille (regard vers l'ennemi)
+                (HD(ellipse(ex + 1.45, ey - 1.05, 0.66, 0.52)), '#ffffff', 1),                    # le reflet (lumière en haut à droite)
+                (HD(ellipse(ex - 1.0, ey + 1.4, 0.4, 0.3)), '#fffbe8', 0.8)]
+    # arcade lourde en V (elle mord sur le haut de l'oeil : le regard dur) ; elle s'arrête au-dessus de l'œil (pas de
+    # sourcil d'un œil du fond)
+    ox, oy = ex - 86.0, ey - 32.3
+    A = lambda pts: [(x + ox, y + oy) for x, y in pts]
+    det += [(HD(sm(A([(79.4, 27.6), (83.4, 28.0), (87.6, 29.2), (91.4, 31.2), (90.8, 32.2), (87.2, 30.8), (83.4, 30.2), (79.6, 30.0)]),
                    sharp=(0, 3), t=0.8)), SKIN.shadow, 1),
-            (HD(sm([(80.4, 27.6), (84.2, 28.0), (88.4, 29.2), (92.0, 31.6), (91.6, 32.4), (88.0, 30.6), (84.0, 29.4), (80.6, 29.2)],
+            (HD(sm(A([(79.2, 26.6), (83.6, 26.8), (88.0, 28.0), (91.8, 30.4), (91.4, 31.2), (87.6, 29.4), (83.4, 28.2), (79.4, 28.2)]),
                    sharp=(0, 3), t=0.8)), SKIN.light, 0.85),
-            (HD(ribbon([(83.4, 34.6), (86.0, 35.0), (88.6, 34.0)], [0.1, 0.5, 0.1])), SKIN.deep, 0.6)]
-    FE_ = (98.0, 29.7)
-    det += [(HD(ellipse(FE_[0], FE_[1], 0.95, 1.25, 20)), SKIN.deep, 0.8)]
-    if Pz['blink'] <= 0.5:
-        det += [(HD(ellipse(FE_[0] + 0.1, FE_[1] + 0.1, 0.62, 0.9, 20)), '#e8a030', 1),
-                (HD(ellipse(FE_[0] + 0.25, FE_[1] + 0.15, 0.3, 0.55, 20)), '#0e0812', 1)]
-    det += [(HD(sm([(96.6, 28.0), (98.4, 28.4), (99.8, 29.6), (99.4, 30.0), (98.0, 29.2), (96.8, 29.0)], t=0.8)), SKIN.shadow, 1)]
+            (HD(ribbon(A([(82.6, 35.6), (86.0, 36.2), (89.4, 35.0)]), [0.1, 0.55, 0.1])), SKIN.deep, 0.6)]
     # la balafre au-dessus de l'oeil (deux entailles cicatrisées)
     for c, w_ in (([(78.6, 23.6), (79.6, 28.2), (80.6, 33.4)], 1.15), ([(80.6, 24.2), (81.6, 27.6), (82.2, 30.0)], 0.8)):
         det += [(HD(ribbon(c, [0.1, w_, 0.1])), GUM[1], 1),
@@ -621,12 +628,19 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- ce que les effets doivent savoir ----
     tip = bl((26.6, -2.0))
-    fig.ctx = dict(G=G, ang=angW, tip=tip, teeth=TEETH, mouth=hp((104.0, 44.0)), head=hp((86, 32)), fin=hp((48.2, 5.2)),
+    fig.ctx = dict(G=G, ang=angW, tip=tip, teeth=TEETH, mouth=hp((104.0, 44.0)), head=hp(EYE[:2]), fin=hp((48.2, 5.2)),
                    chest=mapp(TOR, (78, 66)), P=Pz, ROOT=ROOTM, hand=mapp(HANDM, (40, 44)), tailtip=tail_map((7.4, 65.0)))
     if fx:
         for f_ in fx:
             f_(fig, fig.ctx)
     return fig
+
+
+def face_mesures():
+    """Les places RÉELLES des traits (repère de la tête, avant le ×1,08), pour visage.verifier : l'œil unique dessiné
+    (centre, largeur) ; le nez = la racine du museau (là où le museau sort du crâne, devant l'œil, au-dessus de la
+    gencive) ; la bouche = le milieu de la gueule ouverte juste en dessous (entre les deux gencives)."""
+    return {'oeil_proche': EYE, 'oeil_fond': None, 'nez': (91.0, 36.4), 'bouche': (90.6, 44.0, 22.0)}
 
 
 def main():
