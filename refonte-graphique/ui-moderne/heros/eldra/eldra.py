@@ -21,7 +21,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
-from atelier import Figure, Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
+from atelier import Figure, Mat, Shape, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from outils import crpath, bent, taper  # noqa: E402
 from visage import placer, verifier  # noqa: E402
 
@@ -291,7 +291,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.parts = rest_[:i] + moved + rest_[i:]
 
     # ---------------------------------------------------------------- chaque groupe de morceaux prend sa pose
-    fig.pose(['plume1', 'plume2', 'head', 'lock', 'ear', 'ring'], HEAD)
+    fig.pose(['plume1', 'plume2', 'head', 'ear', 'ring'], HEAD)
     fig.pose(['torso'], TOR)
     fig.pose(['belt', 'buckle', 'tassF', 'tassM', 'tassN', 'skirt'], U)
     fig.pose(['pan1', 'pan2', 'knot'], SCARF)
@@ -455,6 +455,31 @@ def brow_shape(cx, cy, w, s):
     return sm([(cx + s * u * w, cy + v * w) for u, v in pts], sharp=(0, 4))
 
 
+def shape_points(shape, n=10):
+    """Les points d'une forme (courbes de Bézier échantillonnées)."""
+    out = []
+    for s0, segs in shape.subs:
+        p0 = s0
+        out.append(p0)
+        for c1, c2, p3 in segs:
+            for i in range(1, n + 1):
+                t = i / n
+                a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+                out.append((a * p0[0] + b * c1[0] + c * c2[0] + d * p3[0], a * p0[1] + b * c1[1] + c * c2[1] + d * p3[1]))
+            p0 = p3
+    return out
+
+
+def merge_shapes(a, b, r):
+    """Une seule forme pour deux formes qui se touchent (union), les creux du raccord arrondis (rayon r)."""
+    from shapely.geometry import Polygon
+    u = Polygon(shape_points(a)).buffer(0).union(Polygon(shape_points(b)).buffer(0))
+    u = u.buffer(r, join_style=1, quad_segs=12).buffer(-r, join_style=1, quad_segs=12).simplify(0.02)
+    pts = list(u.exterior.coords)[:-1]
+    ring = pts[1:] + [pts[0]]
+    return Shape([(pts[0], [(a_, q, q) for a_, q in zip(pts, ring)])])
+
+
 def head_parts(fig, P):
     """La tête de singe : crâne de fourrure, masque de peau en cœur, arcade marquée, yeux durs, museau, nez plat,
     bouche fermée au croc, bandeau, mèche nouée, oreille ronde à anneau d'or.
@@ -526,12 +551,20 @@ def head_parts(fig, P):
         for cx, cy, w, s in eyes:
             hd += [(lid_shape(cx, cy, w, s), '#2e1022', 1),
                    (ribbon([(cx - s * 0.3 * w, cy + 0.24 * w), (cx + s * 0.05 * w, cy + 0.28 * w), (cx + s * 0.42 * w, cy + 0.16 * w)], [0.1, 0.32, 0.1]), SKIN.shadow, 0.8)]
-    # le museau de singe : un volume rond qui avance, éclairé en haut à droite ; le pli du côté proche
-    hd += [(sm([(83.6, 44.2), (85.4, 41.8), (88.6, 40.8), (92.0, 41.0), (94.4, 42.4), (95.4, 45.2), (94.8, 48.6),
-                (92.6, 51.4), (89.0, 52.6), (85.8, 51.8), (84.0, 49.0)]), ('lin', 95, 41, 84, 52, [(0, '#fff0de'), (0.55, '#ffd8b8'), (1, '#f0a48e', 0)]), 0.8),
-           (sm([(88.6, 41.4), (91.8, 41.4), (94.0, 42.8), (94.6, 44.2), (92.4, 43.4), (90.0, 42.6)]), SKIN.hi, 0.55),
-           (ribbon([(85.2, 42.4), (83.8, 45.0), (84.0, 48.2), (85.8, 50.8)], [0.2, 0.9, 0.9, 0.2]), SKIN.shadow, 0.6),
-           (ribbon([(95.0, 43.6), (95.6, 46.4), (94.6, 49.4)], [0.1, 0.5, 0.1]), SKIN.shadow, 0.35)]
+    # le museau de singe : un volume rond qui avance, CENTRÉ sur le nez et la bouche (tour 3 de l'avis : « recentrer
+    # la bouche et le nez par rapport au cercle ») ; éclairé en haut à droite, un bord doux tout autour (le pli du
+    # côté proche un peu plus marqué que celui du fond)
+    mx, my = (nz_x + b_x) / 2, (nz_y + b_y) / 2 + 0.15
+    mrx, mry = 5.6, 5.75
+
+    def marc(a0, a1, n, kx=1.0, ky=1.0):
+        return [(mx + mrx * kx * math.cos(math.radians(a)), my + mry * ky * math.sin(math.radians(a)))
+                for a in (a0 + (a1 - a0) * i / n for i in range(n + 1))]
+    muz = sm(marc(0, 345, 23))
+    hd += [(muz, ('lin', mx + 4.6, my - 5.4, mx - 4.4, my + 5.6, [(0, '#fff0de'), (0.5, '#ffd8b8'), (1, '#f4ae94', 0.75)]), 0.85),
+           (sm(marc(-120, -30, 6) + marc(-40, -110, 6, 0.72, 0.72)), SKIN.hi, 0.5),
+           (ribbon(marc(-145, -235, 8, 0.97, 0.97)[::-1], [0.2, 0.6, 0.9, 0.9, 0.9, 0.9, 0.8, 0.6, 0.2]), SKIN.shadow, 0.6),
+           (ribbon(marc(-40, 55, 8, 0.97, 0.97), [0.1, 0.3, 0.5, 0.55, 0.55, 0.55, 0.5, 0.35, 0.1]), SKIN.shadow, 0.4)]
     nN = sm([(nz_x - 1.6, nz_y + 0.35), (nz_x - 0.9, nz_y - 0.5), (nz_x - 0.35, nz_y - 0.3), (nz_x - 0.8, nz_y + 0.4)], sharp=(0,))
     nF = sm([(nz_x + 1.55, nz_y + 0.25), (nz_x + 1.0, nz_y - 0.5), (nz_x + 0.5, nz_y - 0.3), (nz_x + 0.9, nz_y + 0.35)], sharp=(0,))
     cN, cF = nN.bbox(), nF.bbox()
@@ -575,16 +608,26 @@ def head_parts(fig, P):
     # l'anneau d'or de l'oreille (il pend sous le lobe)
     hd += [(ellipse(67.4, 45.4, 1.65, 1.8).hole(ellipse(67.4, 45.5, 0.95, 1.1)), '#3a1426', 0.9),
            (ellipse(67.4, 45.2, 1.4, 1.55).hole(ellipse(67.4, 45.4, 0.85, 0.95)), ('lin', 68.8, 43.7, 65.8, 46.7, [(0, GOLD.hi), (0.5, GOLD.light), (1, GOLD.shadow)]), 1)]
+    # la longue mèche nouée d'un anneau d'or, qui tombe dans la nuque (pesanteur). Tour 3 de l'avis (« meilleure
+    # transition avec sa mèche ») : elle NAÎT du crâne, sous le bandeau, et fait partie de la même forme que la tête
+    # (une seule silhouette, raccord arrondi, pas de bout rond posé sur le crâne ni d'ombre en travers de la racine)
+    lc = crpath([(64.0, 32.2), (61.0, 34.4), (58.3, 38.2), (56.8, 42.8), (57.0, 47.6), (58.8, 52.6)], 16)
+    lock = taper(lc, 4.0, 1.4, tip='sharp', wmid=4.0)
+    head = merge_shapes(head, lock, 0.7)
+    # la mèche elle-même : sa fourrure plus claire apparaît en douceur depuis la racine (aucun bord à la racine),
+    # une lumière en haut à droite, une ombre douce dans le creux où elle repose contre la nuque
+    hd += [(lock, ('lin', 62.8, 33.2, 59.2, 37.8, [(0, FUR.base, 0), (1, FUR.base, 1)]), 1),
+           (ribbon([(62.0, 33.6), (59.6, 35.8), (58.1, 39.4), (57.5, 43.4), (57.8, 47.8), (58.8, 51.6)], [0.2, 1.2, 1.8, 1.8, 1.3, 0.3]),
+            ('lin', 62.0, 33.6, 59.0, 37.8, [(0, FUR.light, 0), (1, FUR.light, 1)]), 0.75),
+           (ribbon([(61.8, 34.0), (59.8, 36.2), (58.6, 39.2), (58.0, 43.4), (58.2, 48.0)], [0.1, 0.45, 0.7, 0.6, 0.1]),
+            ('lin', 61.8, 34.0, 59.2, 37.6, [(0, FUR.hi, 0), (1, FUR.hi, 1)]), 0.6),
+           (ribbon([(59.8, 39.0), (59.4, 43.2), (59.6, 47.6), (60.6, 51.0)], [0.1, 0.9, 1.0, 0.3]),
+            ('lin', 59.8, 38.8, 59.4, 42.4, [(0, FUR.deep, 0), (1, FUR.deep, 1)]), 0.35)]
     fig.part('head', head, FUR, grad=(98, 22, 58, 48, [(0, FUR.light), (0.45, FUR.base), (1, FUR.shadow)]),
              cel=1.4, rim=0.7, cast=1.3, details=hd)
     fig.ctx_face = dict(V=V, eyes=eyes, nez_reel=nez_reel, bouche_reelle=(b_x, b_y, b_w))    # pour visage_controle.py
-    # la longue mèche nouée d'un anneau d'or, qui tombe dans la nuque (pesanteur)
-    lc = crpath([(61.0, 32.0), (58.2, 37.0), (56.8, 42.6), (56.8, 47.4), (58.0, 52.0)], 16)
-    lock = taper(lc, 4.0, 1.2, tip='sharp', wmid=3.6)
-    fig.part('lock', lock, FUR, cel=1.0, rim=0.6, cast=1.0, cast_on=['head', 'collar', 'dome', 'lame1', 'lame2'],
-             details=[(ribbon([(59.4, 38.4), (58.2, 43.4), (58.4, 48.6)], [0.1, 0.7, 0.1]), FUR.hi, 0.45)])
-    ring = sm([(56.4, 35.8), (60.0, 36.4), (59.8, 39.0), (56.2, 38.4)])
-    fig.part('ring', ring, GOLD, cel=0.6, rim=0.5, cast=0.7, details=[(ribbon([(56.2, 36.6), (58.2, 37.1), (60.0, 37.4)], [0.2, 0.6, 0.2]), GOLD.hi, 0.9)])
+    ring = sm([(54.6, 41.4), (59.0, 42.0), (58.9, 44.6), (54.4, 44.1)])
+    fig.part('ring', ring, GOLD, cel=0.6, rim=0.5, cast=0.7, details=[(ribbon([(54.5, 42.2), (56.8, 42.6), (59.0, 42.9)], [0.2, 0.6, 0.2]), GOLD.hi, 0.9)])
     # l'oreille ronde de singe, sur le côté (à hauteur des yeux, la racine se fond dans la tête)
     ear = sm([(71.0, 36.0), (68.4, 33.8), (65.2, 34.2), (63.4, 37.4), (63.8, 41.4), (66.2, 43.8), (69.2, 43.4), (71.2, 40.6)])
     fig.part('ear', ear, SKIN, grad=(71, 34, 63, 43, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]), cel=0.9, rim=0.6, cast=1.0,

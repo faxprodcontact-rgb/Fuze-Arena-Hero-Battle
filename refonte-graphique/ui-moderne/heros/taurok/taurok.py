@@ -138,6 +138,9 @@ def cuff_det(c, a, L, W, nr):
 # chaque côté ; une petite pointe de fer plantée sur l'écaille du dessus (vers le haut et l'extérieur) ; une sangle de
 # cuir autour du haut du bras qui la tient. Petites et ajustées au deltoïde. Elle est fixée à l'épaule : elle ne suit
 # le bras qu'à moitié quand il se lève (l'angle du bras au repos + la moitié de l'écart) ; la sangle, elle, suit le bras.
+# un peu plus grosses (avis du propriétaire du 26/11, tour 3 : « épaulette plus grosse ») : toujours deux écailles en
+# écusson, pas les calottes rondes d'avant
+PAUL_K = 1.24
 NARM_REST, FARM_REST = 109.45, 71.71           # l'angle du haut du bras au repos (proche, lointain)
 IRON = Mat('#dfe4f4', '#98a0c0', '#666c90', '#3e4264', '#24263e', glint='#ffffff')   # le fer noirci martelé
 BRONZE = Mat('#ffe8b0', '#e0a85a', '#b07434', '#74401e', '#46220e', glint='#ffffff')
@@ -224,7 +227,7 @@ def put_pauldron(fig, pre, S, ang, k, o, arm_seg, a_strap, hw, cast_on):
     sh, det, buckle, bd = arm_strap(arm_seg, a_strap, hw, k)
     fig.part(pre + 'strap', sh, LEATHER, cel=0.5, rim=0.4, cast=0.6, cast_on=[pre + 'arm', 'torso'], details=det)
     fig.part(pre + 'buck', buckle, GOLD, cel=0.3, rim=0.3, cast=0.4, cast_on=[pre + 'strap'], details=bd)
-    for sfx, sh, m, det_ in pauldron(S, ang, k, o):
+    for sfx, sh, m, det_ in pauldron(S, ang, k * PAUL_K, o):
         fig.part(pre + 'paul' + sfx, sh, m, grad=pgrad(sh, m), cel=0.8 * k if sfx != 's' else 0.4, rim=0.5 if sfx != 's' else 0.35,
                  cast=(0.9 if sfx == 'c' else 0.6) * k, cast_on=cast_on + [pre + 'arm', pre + 'strap', pre + 'buck', pre + 'paull', pre + 'paulc'],
                  details=det_)
@@ -486,12 +489,30 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                (92.8, 28.0), (95.8, 30.0), (98.6, 32.4), (100.0, 35.8), (100.1, 40.4), (98.9, 44.4), (96.2, 46.8),
                (92.8, 47.9), (91.4, 50.2), (87.2, 52.6), (80.0, 53.6), (72.0, 52.6), (65.0, 49.8), (59.4, 45.2),
                (55.6, 39.6), (54.2, 33.2), (55.2, 27.6)])
+    # l'oreille couchée à l'horizontale (vers l'arrière) : elle SORT du crâne (avis du propriétaire du 26/11, tour 3 :
+    # « transition oreille ») — une seule forme avec la tête, sa racine large qui s'évase dans le crâne par deux creux
+    # arrondis (dessus et dessous), sans marche ni coupure ; son creux rose et l'ombre douce du pli à la racine sont
+    # peints dans la tête.
+    from shapely.geometry import box as _box
+    ear = sm([(62.0, 27.0), (57.4, 28.4), (52.4, 29.0), (46.6, 29.6), (42.0, 31.8), (46.6, 33.8), (52.4, 35.2),
+              (57.0, 36.6), (61.6, 38.8), (64.0, 33.0)], sharp=(4,))
+    g_h = poly_of(head)
+    g_u = g_h.union(poly_of(ear))
+    g_c = g_u.buffer(2.4, 64, join_style=1).buffer(-2.4, 64, join_style=1)
+    # le comblement arrondi seulement autour de la racine de l'oreille (le reste du crâne ne bouge pas)
+    head = shape_of(g_u.union(g_c.intersection(_box(48.0, 24.0, 60.0, 41.0))), step=0.5)
     hd = []
     # les plans : le côté (vers l'oreille) dans l'ombre, la joue proche à mi-ton, le front éclairé
     hd += [(sm([(54.2, 30.0), (60.0, 31.0), (64.0, 36.0), (66.4, 42.0), (70.0, 48.6), (72.0, 52.6), (65.0, 49.8),
                 (59.4, 45.2), (55.6, 39.6)]), FUR.shadow, 0.55),
            (sm([(70.0, 17.0), (80.0, 16.4), (87.6, 19.8), (90.6, 24.0), (84.0, 25.0), (76.0, 26.6), (70.0, 24.0)]), FUR.hi, 0.35),
            (sm([(66.0, 33.6), (72.0, 32.0), (78.0, 34.0), (79.0, 40.0), (77.0, 46.0), (71.0, 46.4), (67.0, 41.0)]), FUR.light, 0.18)]
+    # l'oreille : le dessus éclairé (la lumière vient d'en haut à droite), le creux rose qui s'enfonce vers la racine,
+    # l'ombre douce sous l'oreille sur la joue
+    hd += [(ribbon([(43.4, 31.0), (47.0, 29.8), (52.4, 29.4), (57.0, 28.9)], [0.1, 0.7, 0.8, 0.1]), FUR.light, 0.55),
+           (sm([(57.0, 31.0), (51.6, 30.8), (47.0, 31.4), (44.6, 32.0), (47.6, 33.0), (52.4, 33.8), (56.4, 34.2), (58.4, 33.0)], sharp=(3,)),
+            ('lin', 57, 31, 46, 33, [(0, '#a85e62'), (0.35, '#e09a88'), (1, '#c87a76')]), 0.95),
+           (sm([(50.0, 35.2), (55.6, 36.6), (60.2, 38.8), (61.4, 40.6), (57.6, 39.4), (53.0, 37.4), (49.4, 36.0)]), FUR.deep, 0.25)]
     # le mufle nu (le poil du visage descend sur ses côtés) : beige, éclairé en haut, plus sombre dessous
     muz = sm([(81.0, 31.6), (86.0, 31.0), (92.6, 31.8), (96.8, 32.4), (99.5, 34.4), (100.2, 37.6), (99.8, 42.0),
               (98.0, 45.4), (93.6, 47.4), (88.0, 47.8), (83.4, 46.6), (80.4, 43.4), (79.6, 38.0), (80.0, 34.0)])
@@ -563,11 +584,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     nring = ellipse(90.8, 43.4, 2.7, 3.0).hole(ellipse(90.8, 43.6, 1.5, 1.85))
     fig.part('nring', nring, GOLD, cel=0.5, rim=0.45, cast=0.6, cast_on=['head'],
              details=[(ellipse(92.6, 41.8, 0.6, 0.45, -40), GOLD.glint, 0.95)])
-    # l'oreille couchée à l'horizontale (vers l'arrière), son creux rose
-    ear = sm([(58.0, 29.6), (52.4, 29.0), (46.6, 29.6), (42.0, 31.8), (46.6, 33.8), (52.4, 35.2), (58.0, 35.8)], sharp=(3,))
-    fig.part('ear', ear, FUR, cel=0.9, rim=0.5, cast=0.9, cast_on=['head'],
-             details=[(sm([(56.8, 31.0), (51.6, 30.8), (47.0, 31.4), (44.6, 32.0), (47.6, 33.0), (52.4, 33.8), (56.6, 34.0)], sharp=(3,)),
-                       ('lin', 56, 31, 46, 33, [(0, '#e09a88'), (1, '#a85e62')]), 0.95)])
     # le toupet bouclé du front, entre les cornes
     tuft = sm([(63.6, 22.0), (63.8, 19.6), (65.6, 17.2), (68.2, 17.0), (70.2, 14.8), (73.2, 14.0), (75.4, 15.8),
                (78.0, 15.4), (80.4, 17.2), (80.8, 20.2), (79.6, 22.2), (77.8, 22.8), (76.4, 22.0), (75.0, 23.4),
@@ -700,7 +716,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fist('ffist', sf, ['farm', 'fbrac', 'strapA'])
 
     # ---- chaque groupe de morceaux prend sa pose ----
-    heads = ['hornF', 'hornN', 'head', 'nring', 'ear', 'tuft']
+    heads = ['hornF', 'hornN', 'head', 'nring', 'tuft']
     fig.pose(heads, HEAD)
     fig.pose(['torso'], TOR)
     fig.pose(['strapA', 'strapB', 'ring'], UC)
@@ -712,7 +728,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # l'ordre de dessin (avis du propriétaire du 26/11, tour 3 : la tête passe DEVANT les deux épaulières) :
     #   … le bras lointain et son épaulière, le bras proche et son épaulière, la TÊTE, puis la hache, le brassard et
     #   les poings, toujours devant (le poignet proche est caché par le poing, là où le bras touche le manche).
-    hg = ['hornN', 'head', 'nring', 'ear', 'tuft']
+    hg = ['hornN', 'head', 'nring', 'tuft']
     near = ['narm'] + ['n' + nm for nm in ('strap', 'buck', 'paull', 'paulc', 'pauls')]
     byname = {p.name: p for p in fig.parts}
     rest = [p for p in fig.parts if p.name not in near + hg + ['nbrac']]

@@ -412,6 +412,51 @@ BACK_FADE = (0.0, 7.0)       # une mèche : transparente à sa racine, pleine à
 FRONT_FADE = (1.0, 7.0)      # les mèches du dessus : elles se détachent en fondu depuis le bord du front
 
 
+# 3e avis du propriétaire (un cercle sur la tempe droite) : la chevelure débordait du visage à droite puis rentrait
+# d'un coup au ras du front (un coude dans le contour, un petit creux entre le bas des cheveux et la joue). Désormais
+# le bord droit des cheveux redescend en une seule courbe douce (vers l'intérieur) qui vient se coucher sur le bord du
+# visage, tangente à lui, au-dessus de l'œil du fond : une petite patte effilée couvre la tempe ; le contour passe
+# des cheveux au visage sans marche ni creux.
+TEMPLE_END = 33.6            # la pointe de la patte, sur le bord du visage (repère de la tête)
+
+
+def _edge_x(g, y, right=True):
+    from shapely.geometry import LineString
+    i = g.intersection(LineString([(0, y), (200, y)]))
+    return None if i.is_empty else (i.bounds[2] if right else i.bounds[0])
+
+
+def temple(mass, face):
+    """Le raccord cheveux ↔ visage à la tempe droite (repère de la tête) : courbe douce, tangente au visage."""
+    from shapely.geometry import Polygon
+    # le point le plus à droite de la chevelure, sur le côté du crâne (il bouge un peu avec le vent)
+    best = None
+    for k in range(0, 41):
+        y = 16.0 + 0.25 * k
+        x = _edge_x(mass, y)
+        if x is not None and (best is None or x > best[0]):
+            best = (x, y)
+    if best is None:
+        return mass
+    x0, y0 = best
+    y1 = TEMPLE_END
+    x1 = _edge_x(face, y1)
+    s1 = (_edge_x(face, y1 + 0.5) - _edge_x(face, y1 - 0.5))     # la pente du bord du visage (dx/dy) à la pointe
+    # une courbe d'Hermite : verticale en haut (le flanc des cheveux), tangente au visage en bas
+    L = y1 - y0
+    curve = []
+    for i in range(41):
+        t = i / 40
+        h00, h01, h11 = 2 * t ** 3 - 3 * t ** 2 + 1, -2 * t ** 3 + 3 * t ** 2, t ** 3 - t ** 2
+        curve.append((h00 * x0 + h01 * x1 + h11 * L * s1, y0 + t * L))
+    # tout ce qui dépassait à droite de la courbe (le bas carré et le crochet) est retiré…
+    cut = Polygon(curve + [(x0 + 30, y1), (x0 + 30, y0)])
+    # … et la patte : de la courbe au bord du front, sa pointe effilée posée sur le bord du visage
+    hx = _edge_x(face, 28.6) - 1.4
+    patte = Polygon(curve + [(hx + 0.6, 29.2), (hx - 0.6, 28.4), (hx - 0.6, y0)])
+    return mass.difference(cut).union(patte.buffer(0))
+
+
 def hair(fig, P, HEAD, i_hair):
     """La chevelure d'un seul tenant (peinte devant la tête, l'oreille devant elle)."""
     strands = []     # (forme, racine, pointe, (début, fondu), couleurs, dessous, reflet, mèche du haut ?)
@@ -435,7 +480,11 @@ def hair(fig, P, HEAD, i_hair):
     if between:
         from shapely.ops import unary_union
         far = far.difference(to_local(unary_union(between), HEAD))
-    mass = geom_shape(near.union(far).buffer(0.02).buffer(-0.02))
+    mass = near.union(far)
+    face = [q for q in fig.parts if q.name == 'head']
+    if face:
+        mass = temple(mass, poly_of(face[0].shape, 8))
+    mass = geom_shape(mass.buffer(0.02).buffer(-0.02))
     det = [(mass, ('rad', 88, 13, 36, 30, [(0, '#5a6892'), (0.3, HAIR.light), (0.75, HAIR.base), (1, HAIR.shadow)]), 1)]
     for sh, p0, p3, (st, fd), cols, und, hl, _ in strands:
         L = math.dist(p0, p3)

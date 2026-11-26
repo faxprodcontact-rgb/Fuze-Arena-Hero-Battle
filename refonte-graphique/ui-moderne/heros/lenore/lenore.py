@@ -457,11 +457,22 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # remonte de la poitrine sur le trapèze jusqu'au bord du cou, puis passe derrière la nuque : la dernière perle est
     # coupée par le contour du cou (on la voit partir derrière) et la cordelette file sous la mâchoire. Côté lointain,
     # elle passe sous le menton (la tête la cache).
-    beads_back = [(58.9, 53.3, 1.75), (61.6, 51.0, 1.6)]           # de la poitrine vers la nuque
+    beads_back = [(59.6, 53.5, 1.75), (62.0, 50.8, 1.6)]           # de la poitrine vers la nuque
     rope_pts = ([(65.4, 47.8)] + [(x, y) for x, y, _ in beads_back[::-1]] + [(x, y) for x, y, _ in beads] +
                 [(88.6, 57.0), (90.4, 55.0)])
     det += [(ribbon(rope_pts, [0.6] + [0.7] * (len(rope_pts) - 2) + [0.2]), ROPE.shadow, 0.9)]
     fig.part('torso', torso, skin, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(skin.deep, 0.22, 3.2))
+
+    # les perles qui montent vers la nuque (sous celles de devant) : découpées par le contour du buste, elles passent
+    # derrière le cou
+    g_tor = _poly(torso, k=24)
+    for i, (x, y, r) in enumerate(beads_back):
+        b_ = sm([(x - 1.12 * r, y), (x - 0.5 * r, y - 0.92 * r), (x + 0.6 * r, y - 0.9 * r), (x + 1.12 * r, y - 0.05 * r),
+                 (x + 0.55 * r, y + 0.95 * r), (x - 0.55 * r, y + 0.92 * r)])
+        cut = _clip_shape(b_, g_tor)
+        if cut is not None:
+            fig.part('bead%d' % (len(beads) + i), cut, IVORY, cel=0.5, rim=0.4, cast=0.6, cast_on=['torso'],
+                     details=[(ellipse(x + 0.35 * r, y - 0.35 * r, 0.45 * r, 0.3 * r, -25), IVORY.hi, 0.9)])
 
     # ---- les perles d'ivoire du collier (chacune pose son ombre douce sur la poitrine) ----
     for i, (x, y, r) in enumerate(beads):
@@ -469,15 +480,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  (x + 0.55 * r, y + 0.95 * r), (x - 0.55 * r, y + 0.92 * r)])
         fig.part('bead%d' % i, b_, IVORY, cel=0.55, rim=0.45, cast=0.7, cast_on=['torso'],
                  details=[(ellipse(x + 0.35 * r, y - 0.35 * r, 0.45 * r, 0.3 * r, -25), IVORY.hi, 0.95)])
-    # les perles qui montent vers la nuque : découpées par le contour du buste (elles passent derrière le cou)
-    g_tor = _poly(torso)
-    for i, (x, y, r) in enumerate(beads_back):
-        b_ = sm([(x - 1.12 * r, y), (x - 0.5 * r, y - 0.92 * r), (x + 0.6 * r, y - 0.9 * r), (x + 1.12 * r, y - 0.05 * r),
-                 (x + 0.55 * r, y + 0.95 * r), (x - 0.55 * r, y + 0.92 * r)])
-        cut = _shape(_poly(b_).intersection(g_tor), min_area=0.02)
-        if cut is not None:
-            fig.part('bead%d' % (len(beads) + i), cut, IVORY, cel=0.5, rim=0.4, cast=0.6, cast_on=['torso'],
-                     details=[(ellipse(x + 0.35 * r, y - 0.35 * r, 0.45 * r, 0.3 * r, -25), IVORY.hi, 0.9)])
 
     # ======================================================================== le pagne en peau de tigre, la corde
     cloth = sm([(52.4, 82.4), (60.0, 83.4), (70.0, 84.0), (80.0, 83.6), (89.8, 82.0), (90.6, 86.0), (89.8, 90.2),
@@ -866,6 +868,18 @@ def _poly(shape, k=8):
         polys.append(g if g.is_valid else g.buffer(0))
     return unary_union(polys)
 
+
+def _clip_shape(sh, g_clip):
+    """Une forme découpée par une autre (polygone shapely) : une forme lisse (le contour simplifié en quelques points,
+    repassé en courbes ; les deux coins de la coupe restent vifs), ou None si rien ne reste."""
+    g = _poly(sh, k=24).intersection(g_clip)
+    gs = [q for q in (list(g.geoms) if hasattr(g, 'geoms') else [g]) if q.geom_type == 'Polygon' and q.area > 0.02]
+    if not gs:
+        return None
+    subs = []
+    for q in gs:
+        subs += _ring(q.simplify(0.06).exterior.coords, sharp_deg=50)
+    return Shape(subs)
 
 def _ring(coords, sharp_deg=38):
     """Un anneau de polygone → une forme souple qui garde les coins vifs (pointes des mèches)."""
