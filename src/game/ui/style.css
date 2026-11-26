@@ -72,7 +72,8 @@ p { margin: 6px 0; }
 .col-end { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 .icon { flex: none; vertical-align: middle; }
-.art { display: inline-block; flex: none; background-repeat: no-repeat; vertical-align: middle; image-rendering: pixelated; }
+/* les pictos (style moderne, lisses : refonte-graphique/ui-moderne/pictos/) : réduits en douceur, jamais « pixelated » */
+.art { display: inline-block; flex: none; background-repeat: no-repeat; vertical-align: middle; image-rendering: auto; }
 :focus-visible { outline: 2px solid var(--trim); outline-offset: 2px; }
 
 /* ---------- Coquille ---------- */
@@ -572,7 +573,7 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 .hp-team i:not(.sign) { position: absolute; right: -6px; bottom: -5px; display: grid; filter: drop-shadow(0 2px 0 #00000080); }
 .hp-team.on { box-shadow: inset 0 0 0 2px var(--gold-hi), 0 0 10px 1px var(--gold), 0 2px 5px #000a; }
 .hp-team.on .icon { filter: none; }
-.hp-team.on i { background: linear-gradient(180deg, var(--green-hi), var(--green-dark)); font-size: 11px; }
+.hp-team.on i:not(.sign) { font-size: 11px; }
 
 /* le haut : la case (46 % de la largeur) et la colonne d'à côté */
 .hp-top { flex: none; display: grid; grid-template-columns: 46% minmax(0, 1fr); gap: 12px; align-items: stretch; }

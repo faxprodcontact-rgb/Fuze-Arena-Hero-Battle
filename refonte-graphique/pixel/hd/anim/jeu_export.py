@@ -267,8 +267,9 @@ def split(mod, layers, name):
             cuts.append(('cible', c))
         out['coupes'].append(cuts)
         # contrôle : une coupe qui tranche un dessin en ligne droite se verra au combat (le morceau de gauche reste
-        # près du lanceur, celui de droite part sur la cible ou vole). Au corps à corps, le jeu recolle les morceaux.
-        if genre != 'melee':
+        # près du lanceur, celui de droite part sur la cible ou vole). Au corps à corps, le jeu recolle les morceaux ;
+        # un jet (`rayon`) est coupé exprès à la bouche (le jeu l'étire depuis là).
+        if genre not in ('melee', 'rayon'):
             for kind, x in cuts:
                 n_ = seams(L, proj if kind == 'proj' else tgt, x)
                 if n_ >= 8:

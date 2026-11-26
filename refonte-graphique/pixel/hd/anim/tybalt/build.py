@@ -1309,7 +1309,8 @@ def essai(folder):
 JEU = {
     'attaque': dict(calques=True, genre='melee', coup=4, cible=(184, GROUND - 66), coupe=[None] * 4 + [166] * 6,
                     avance=[f.get('x', 0) for f in ATTAQUE]),
-    'speciale': dict(genre='rayon', rayon=(5, 11), depuis=147, coup=6, cible=TARGET,
+    # depuis 144 : la flamme est coupée là où elle est la plus fine, au sortir de la gueule (147 la tranchait)
+    'speciale': dict(genre='rayon', rayon=(5, 11), depuis=144, coup=6, cible=TARGET,
                      coupe=[None] * 11 + [190] * 4, charge=(2, 3)),
 }
 

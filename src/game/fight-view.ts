@@ -9,7 +9,7 @@ import { loadPxFond, placePxFond } from './bg/fond-px';
 import { HdActor, hasHd, hdChar, hdStrike, loadHd, type HdHost } from './hd-fight';
 import { HD_ANIM } from './hd-meta';
 import { t } from './i18n';
-import { ICON_INDEX } from './icons-meta';
+import { ICON_CELL, ICON_INDEX } from './icons-meta';
 import { battleLook, heroArt, isBigBoss, monsterArtId, type Look } from './look';
 import { HERO_X } from './scenes';
 import { themeColor } from './theme';
@@ -123,7 +123,7 @@ export abstract class FightScene extends Phaser.Scene {
     this.events.once('create', () => {
       const fetchLater = () => {
         if (!this.sys.isActive()) return;
-        if (!this.textures.exists('icons')) this.load.spritesheet('icons', 'art/icons.webp', { frameWidth: 128, frameHeight: 128 });
+        if (!this.textures.exists('icons')) this.load.spritesheet('icons', 'art/icons.webp', { frameWidth: ICON_CELL, frameHeight: ICON_CELL });
         this.load.start();
         laterFetched = true;
       };

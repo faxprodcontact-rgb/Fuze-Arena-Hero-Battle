@@ -119,15 +119,32 @@ def take(mask):
 
 filled = rest != '.'
 P = {}
+def grid_poly(pts):
+    """le masque d'un polygone en coordonnées de la grille du dessin"""
+    im = Image.new('L', (GW, GH), 0)
+    ImageDraw.Draw(im).polygon([(float(x), float(y)) for x, y in pts], fill=255, outline=255)
+    return np.asarray(im) > 0
+
+
+# Découpe refaite le 26/11/2026 (tête et bras redessinés en rochers) : la tête et le bras proche sont pris par leur
+# silhouette (polygones ci-dessous), plus par des rectangles.
+HEAD_POLY = [(70, 16), (76, 16), (79, 16), (81, 18), (83, 18), (85, 20), (88, 23), (91, 26), (93, 28), (94, 30),
+             (92, 32), (90, 33), (91, 36), (91, 38), (89, 40), (91, 42), (94, 44), (94, 48), (92, 50), (88, 52),
+             (64, 52), (59, 50), (56, 48), (54, 45), (53, 41), (52, 36), (52, 31), (53, 27), (54, 25), (56, 24),
+             (56, 21), (58, 19), (61, 19), (65, 18)]
+# le bras proche sous l'épaule : haut du bras et avant-bras (coude sorti vers l'arrière), puis le poing contre la hanche
+NEAR_ARM_POLY = [(5, 61), (32, 61), (33, 79), (34, 92), (29, 96), (19, 96), (5, 90)]
+NEAR_FIST_POLY = [(27, 78), (30, 76), (39, 74), (46, 75), (49, 78), (49, 93), (47, 95), (46, 99), (36, 99), (35, 95),
+                  (32, 95), (28, 92)]
 # le poing lointain (levé à hauteur de tête) : quatre doigts empilés, x >= 100, jusqu'à la rangée 52
 P['poingL'] = take(filled & (XX >= 100) & (YY <= 52))
 # son poignet (roche chauffée et bande de lave, rangées 53 à 56) et l'avant-bras dressé (jusqu'au coude, rangée 82)
 P['poignetL'] = take(filled & (XX >= 101) & (YY >= 53) & (YY <= 56) | (filled & (XX == 100) & (YY == 53)))
 P['avbrasL'] = take(filled & (XX >= 100) & (YY >= 57) & (YY <= 82))
 # la tête et sa couronne d'éclats (entre les deux épaules)
-P['tete'] = take(filled & (YY <= 52) & (XX >= 49) & (XX <= 91))
+P['tete'] = take(filled & grid_poly(HEAD_POLY))
 # le bras proche, sous l'épaule : le haut du bras (à gauche du trou), l'avant-bras et le poing contre la hanche
-P['brasP'] = take(filled & (((YY >= 61) & (YY <= 75) & (XX <= 31)) | ((YY >= 76) & (YY <= 98) & (XX <= 48))))
+P['brasP'] = take(filled & (grid_poly(NEAR_ARM_POLY) | grid_poly(NEAR_FIST_POLY)))
 P['corps'] = rest.copy()
 P['brasL'] = np.where(P['avbrasL'] != '.', P['avbrasL'],
                       np.where(P['poignetL'] != '.', P['poignetL'], P['poingL']))
@@ -167,8 +184,8 @@ def swapped(part, mapping, mask=None):
 # Les jambes sont des piliers courts : seule la zone des tibias (95 à 105) plie ; les dalles des pieds restent à plat.
 LEG_TOP, LEG_BOT = 95, 105
 CHEST = 66                                   # ligne du souffle (comme garvin.txt)
-CROUCH_ORDER = [105, 97, 104, 99, 96]        # rangées retirées quand il plie les genoux (rangées sans détail)
-STRETCH_ORDER = [104, 97, 99]                # rangées doublées quand il se redresse
+CROUCH_ORDER = [102, 100, 103, 101, 105]     # rangées retirées quand il plie les genoux (milieu des tibias, sans braise)
+STRETCH_ORDER = [102, 100, 103]              # rangées doublées quand il se redresse
 
 
 def body_rows(crouch=0, breath=0, lean=0):
@@ -500,12 +517,12 @@ POSE = [
 NPOSE = len(POSE)
 
 # braises de la pose : (x, y) de la fêlure (grille), image où elle sort, côté (dérive), grosse ou non
-EMBERS = [((29, 43), 2, -1, True), ((97, 41), 4, 1, False), ((36, 45), 6, 1, False), ((84, 45), 9, 1, False),
-          ((74, 58), 10, -1, False)]
+EMBERS = [((32, 46), 2, -1, True), ((97, 40), 4, 1, False), ((33, 52), 6, 1, False), ((86, 42), 9, 1, False),
+          ((76, 49), 10, -1, False)]
 # filets de fumée : (x, y) du haut de l'épaule (grille), décalage de phase
-WISPS = [((24, 35), 0), ((96, 31), 5)]
+WISPS = [((27, 31), 0), ((96, 29), 5)]
 # graviers : (x, y) du départ (grille), image du départ, forme
-PEBBLES = [((13, 89), 1, 0), ((114, 83), 7, 1)]
+PEBBLES = [((13, 87), 1, 0), ((112, 82), 7, 1)]
 FALL = [0, 2, 6, 13, 23, 36]                 # chute (px) image après image : ça accélère
 
 
@@ -569,14 +586,14 @@ def retouch(cv, fixes):
 
 # ---------------------------------------------------------------- le poing lointain « marteau » (remonté à la main)
 # Pour frapper le sol, le poing doit avoir le poignet au-dessus. On ne fait pas tourner l'image : on la remonte par
-# bandes. Les quatre doigts du dessin sont des bandes de rangées (doigt 1 = rangées 26-32, le plus grand ; 2 = 33-39 ;
-# 3 = 40-45 ; 4 = 46-52, le plus petit) ; on les empile dans l'ordre inverse sous le poignet (rangées 53-56, retournées :
+# bandes. Les quatre doigts du dessin sont des bandes de rangées (doigt 1 = rangées 25-32, le plus grand ; 2 = 33-39 ;
+# 3 = 40-45 ; 4 = 46-52, le plus petit ; chaque bande garde en bas son creux de braise) ; on les empile dans l'ordre inverse sous le poignet (rangées 53-56, retournées :
 # la lave côté avant-bras, la roche chauffée côté doigts). Chaque doigt garde son modelé (bord éclairé en haut, ombre
 # en bas), les phalanges restent tournées vers l'ennemi. Le gros doigt 1 se retrouve en bas : la masse qui frappe.
 def make_hammer():
     src = over(P['poingL'], P['poignetL'])
     order = list(range(56, 52, -1)) + list(range(46, 53)) + list(range(40, 46)) + list(range(33, 40)) + \
-        list(range(26, 33))
+        list(range(25, 33))
     out = np.full((len(order), GW), '.', dtype='<U1')
     for j, r in enumerate(order):
         out[j] = src[r]
@@ -584,7 +601,7 @@ def make_hammer():
 
 
 HAMMER = make_hammer()
-HAMMER_WRIST = (110.5, 0)            # le milieu du haut du poignet, dans HAMMER (colonne, rangée)
+HAMMER_WRIST = (109.5, 0)            # le milieu du haut du poignet, dans HAMMER (colonne, rangée)
 FIST_WRIST = (101.0, 40.0)           # là où un avant-bras couché entre dans le poing du dessin (son bord gauche)
 
 
@@ -1361,13 +1378,13 @@ def fx_heal(k):
 # de lave autour des poings, et une lueur rouge douce l'entoure (sans aucun anneau ni trait), qui gonfle et s'éteint.
 # Pas de marque au-dessus de la tête : l'effet commun « provocation » (anim/effets) la pose déjà.
 _bp = P['brasP']
-NFIST = np.where((YY >= 76) & ((XX >= 29) | ((XX >= 26) & (YY >= 82))), _bp, '.')
+NFIST = np.where(grid_poly(NEAR_FIST_POLY) & (XX >= 29), _bp, '.')
 NWRIST = np.array([28.0, 81.0])       # là où l'avant-bras entre dans le poing proche (grille)
 SH_NEAR = np.array([21.0, 60.0])      # l'épaule proche (sous l'épaulière moussue), grille, relative au buste
 ARM_NEAR = (17.0, 19.0)               # bras, avant-bras proches
 # sous le bras proche levé, le flanc du buste se voit : sa colonne éclairée (un reflet du poing) passe à l'ombre
 CORPS_NU = P['corps'].copy()
-CORPS_NU[(XX == 49) & (YY >= 84) & (YY <= 92) & (CORPS_NU == '6')] = '3'
+CORPS_NU[(XX == 49) & (YY >= 78) & (YY <= 94) & np.isin(CORPS_NU, list('678'))] = '4'
 
 
 FIST_UP = over(P['poingL'], P['poignetL'])      # le poing levé du dessin et son poignet de lave (sans l'avant-bras)

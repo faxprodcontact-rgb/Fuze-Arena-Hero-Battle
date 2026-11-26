@@ -7,10 +7,13 @@
 @keyframes an-breathe { 0%, 100% { transform: scale(0.9); opacity: 0.6; } 50% { transform: scale(1.06); opacity: 1; } }
 @keyframes an-twinkle { 0%, 100% { transform: scale(0.1) rotate(0deg); opacity: 0; } 50% { transform: scale(1) rotate(45deg); opacity: 1; } }
 
-/* halo en pixel art (anim.tsx, haloStrip de px.ts) : une bande d'images jouée par steps() */
-.halo-anim { position: absolute; left: 50%; top: 50%; translate: -50% -50%; pointer-events: none; background-repeat: no-repeat; image-rendering: pixelated;
-  animation: halo-run 4s steps(16) infinite; }
-@keyframes halo-run { to { background-position-x: calc(var(--hw) * -16); } }
+/* le halo moderne (anim.tsx, haloLayers de px.ts) : la lueur respire, les étincelles tournent lentement */
+.halo-anim { position: absolute; left: 50%; top: 50%; translate: -50% -50%; pointer-events: none; background: center / 100% 100% no-repeat;
+  animation: halo-breathe 3.2s ease-in-out infinite; }
+.halo-spin { position: absolute; inset: 0; background: center / 100% 100% no-repeat; animation: halo-turn 18s linear infinite; }
+@keyframes halo-breathe { 0%, 100% { scale: 0.96; opacity: 0.85; } 50% { scale: 1.04; opacity: 1; } }
+@keyframes halo-turn { to { rotate: 360deg; } }
+@media (prefers-reduced-motion: reduce) { .halo-anim, .halo-spin { animation: none; } }
 @keyframes an-spin { to { transform: rotate(360deg); } }
 
 /* ---------- fonds décorés (backdrop.tsx) ---------- */
