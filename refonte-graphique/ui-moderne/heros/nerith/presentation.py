@@ -2,7 +2,9 @@
 #   python3 presentation.py            # fixe.png et comparaison.png
 #   python3 presentation.py --kael     # en plus (brouillon) : Nérith à côté de Kael, même échelle, et à la taille du jeu
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
-# - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne.
+# - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
+# - visage.png : la tête zoomée, à gauche telle quelle, à droite avec le calque de contrôle de ../visage.py (sphère,
+#   ligne médiane, ligne des yeux, places idéales) ; et le contrôle verifier() (doit être vide).
 # Les brouillons vont dans le dossier NERITH_TMP (par défaut un dossier temporaire du système, jamais dans le dépôt).
 import os
 import subprocess
@@ -63,6 +65,34 @@ def pixel_pose():
     return hd.frames('nerith')[0]
 
 
+def visage():
+    """La tête zoomée : à gauche sans rien, à droite avec le calque guide_svg (posé dans le repère de la tête, agrandie
+    ×1,1 autour de NECK) ; et le contrôle verifier() sur les vraies positions du dessin."""
+    from atelier import mapp, mS
+    from PIL import ImageFont
+    defauts = N.verifier(N.mesures_visage(), N.FACE_BOX)
+    HEAD = mS(1.1, 1.1, *N.NECK)
+    bx0, by0, bx1, by1 = N.FACE_BOX
+    a, b = mapp(HEAD, (bx0 - 6, by0 - 4)), mapp(HEAD, (bx1 + 4, by1 + 2))
+    frame = (a[0], a[1], b[0] - a[0], b[1] - a[1])
+    svg = N.build(frame=frame).svg()
+    H = int(round(frame[3] * 16))
+    guide = '<g transform="matrix(%s)">%s</g>' % (' '.join('%g' % v for v in HEAD), N.guide_svg(N.FACE_BOX))
+    A = render(svg, H, 'v1')
+    B = render(svg.replace('</svg>', guide + '</svg>'), H, 'v2')
+    im = Image.new('RGBA', (A.width + B.width + 30, A.height + 40), BG)
+    im.alpha_composite(A, (0, 40))
+    im.alpha_composite(B, (A.width + 30, 40))
+    try:
+        font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf', 18)
+    except OSError:
+        font = None
+    ImageDraw.Draw(im).text((10, 10), 'verifier() : ' + ('aucun défaut' if not defauts else ' ; '.join(defauts)),
+                            fill=(40, 20, 60), font=font)
+    im.convert('RGB').save(os.path.join(OUT, 'visage.png'))
+    return defauts
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     x0, y0, w, h = N.FRAME
@@ -93,7 +123,8 @@ def main():
     cmp_.alpha_composite(ground(W, H, x2 + fx * s, base, 38 * s, 3.2 * s))
     cmp_.alpha_composite(vec, (x2, round(base - 1 * s - (N.GRD - y0) * s)))
     cmp_.convert('RGB').save(os.path.join(OUT, 'comparaison.png'))
-    print('écrit fixe.png et comparaison.png dans', OUT)
+    d = visage()
+    print('écrit fixe.png, comparaison.png et visage.png dans', OUT, '; verifier() :', d or 'aucun défaut')
     if '--kael' in sys.argv:
         # brouillon : à côté de Kael (même échelle, pieds sur la même ligne), puis à la taille du téléphone
         sys.path.insert(0, os.path.join(HERE, '..', 'kael'))

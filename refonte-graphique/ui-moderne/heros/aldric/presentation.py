@@ -77,7 +77,39 @@ def main():
     im.convert('RGB').save(os.path.join(OUT, 'comparaison.png'))
     os.remove(big)
     os.remove(svg)
-    print('écrit', os.path.join(OUT, 'fixe.png'), 'et comparaison.png')
+    # 3) le contrôle du visage (règle commune ../visage.py) : la tête zoomée ×4, à gauche telle quelle, à droite avec
+    # le guide (sphère, médiane, ligne des yeux, places idéales des traits) ; et la vérification des mesures réelles
+    visage()
+    print('écrit', os.path.join(OUT, 'fixe.png'), ', comparaison.png et visage.png')
+
+
+def visage():
+    from visage import verifier, guide_svg
+    V = L.V
+    m = {'oeil_proche': V['oeil_proche'], 'oeil_fond': V['oeil_fond'], 'nez': V['nez'], 'bouche': V['bouche']}
+    d = verifier(m, L.FACE)
+    print('vérification du visage :', d or 'aucun défaut')
+    view = (48.0, 14.0, 38.0, 40.0)
+    fig = L.build(ow=0.95, frame=view)
+    svg = fig.svg()
+    M = fig.ctx['HEAD']
+    g = '<g transform="matrix(%s)">%s</g>' % (' '.join('%.4f' % v for v in M), guide_svg(L.FACE))
+    rendu = os.path.join(HERE, '..', 'rendu.cjs')
+    ims = []
+    for k, src in (('a', svg), ('b', svg.replace('</svg>', g + '</svg>'))):
+        p = os.path.join(HERE, '_tete-%s.svg' % k)
+        open(p, 'w').write(src)
+        png = p[:-4] + '.png'
+        subprocess.run(['node', rendu, p, png, '640'], check=True)
+        ims.append(Image.open(png).convert('RGBA'))
+        os.remove(p)
+        os.remove(png)
+    w, h = ims[0].size
+    im = stone(2 * w + 60, h + 40)
+    im.alpha_composite(ims[0], (20, 20))
+    im.alpha_composite(ims[1], (w + 40, 20))
+    im.convert('RGB').save(os.path.join(OUT, 'visage.png'))
+    return d
 
 
 if __name__ == '__main__':
