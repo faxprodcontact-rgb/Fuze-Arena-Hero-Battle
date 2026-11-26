@@ -55,6 +55,7 @@ build.py (celle où `SOL` est posé), pas de la grille du dessin.
 | `arc` | (`tir`, facultatif) hauteur de la cloche du vol, en pixels (0 = droit). |
 | `retour` | (`tir`, facultatif) `(i0, i1)` : images où l'arme lancée revient à la main (boomerang, khopesh) : ce qui est à droite de `depuis` vole de la cible jusqu'à la main (sinon elle réapparaît d'un coup à mi-chemin). |
 | `rase` | (`tir`, facultatif) `True` : le projectile court au ras du sol (vague, pics de glace) : il glisse à plat jusqu'aux pieds de la cible au lieu de monter vers sa poitrine. |
+| `calques` | (facultatif, conseillé dès qu'un effet traverse `coupe` ou `depuis`) `True` : la coupe ne touche plus le personnage (il n'est JAMAIS coupé, arme comprise) et les effets partent par **morceaux entiers** (pixels qui se touchent) : un morceau part s'il commence à droite de la colonne, sinon il reste en entier. Ce que le personnage cachait d'un effet qui part est complété. Plus aucun bord droit vertical. Il faut que `compose` reçoive les effets par ses arguments `fx_…` (le cas de tous les build.py). Au corps à corps, l'arme reste avec le personnage (il est devant la cible au moment du coup). |
 | `vitesse`, `pente` | (`tir`, facultatifs) la vitesse du projectile (pixels du dessin par seconde) et l'angle de son dessin (radians, positif = il descend). Mesurés tout seuls sur le mouvement du bout du projectile d'une image de vol à l'autre (avec une seule image de vol : de sa queue au bord `depuis` à son bout, sur cette image). À donner seulement si la mesure est fausse (projectile qui grossit, qui tourne…). |
 
 Choisir le genre d'après le GIF : un coup porté au contact → `melee` (même si l'arme est longue) ; un objet qui part de
@@ -127,3 +128,35 @@ Contrôle : `npx tsx refonte-graphique/pixel/hd/anim/vitesse-attaques.ts` (depui
 `refonte-graphique/pixel/sortie/vitesse-attaques.md` : durée de l'attaque de base de chaque personnage avant / après.
 Un nouveau personnage exporté y passe tout seul ; si son attaque paraît trop pressée, ralentir son GIF ne sert à rien
 (le jeu la remet au tempo commun) : régler plutôt `EVEN`, pour tout le monde.
+
+
+## 6. Jamais de dessin coupé en ligne droite (26/11/2026)
+
+Bug vu par le propriétaire : la vague d'Ilian (spéciale) laissait un coin d'eau bleu coupé net devant le trident, et la
+vague posée sur la cible était coupée net à gauche : la colonne `coupe` passait au milieu de la vague. Quand une coupe
+traverse un dessin, le morceau de gauche reste près du lanceur et celui de droite part sur la cible (ou vole) : au
+combat, deux bords droits verticaux, d'autant plus visibles que la cible est loin.
+
+- Un effet qui **court au sol** du lanceur à la cible (vague, ligne de feu, gerbes) : `genre='tir'`, `rase=True`, les
+  images où il avance dans `tir`, `calques=True` (Ilian, oni-brute, canonnier, Kael). Avec `rase`, chaque image du
+  projectile est repérée par son bout ET le sol : sa base reste au sol quand l'image change.
+- Un effet qui **sort de terre** devant la cible en ligne (pics, cristaux, fissure) : `sort` + `calques=True` et une
+  `coupe` juste devant le lanceur : la ligne entière se pose devant la vraie cible (naga-bouclier, araignée cuirassée,
+  golem de lave).
+- Sinon, choisir la colonne là où rien n'est traversé (Velith 176, Sable 142, Tybalt 144) : essayer quelques colonnes
+  et garder celle où la planche de contrôle ne montre aucun bord droit.
+- Un jet (`rayon`) est coupé exprès à la bouche (le jeu l'étire depuis là) : la couper où il est le plus fin.
+- Au corps à corps, le jeu recolle les morceaux au moment du coup (même contre une cible large : `hd-fight.ts` décale ce
+  qui est posé sur la 1re cible de la même distance que le lanceur) ; avec `calques`, l'arme n'est même plus coupée
+  (une 2e cible, « rang de devant », ne reçoit plus un bout d'arme).
+
+Contrôles :
+
+- l'export écrit `ATTENTION <nom> <anim> <image> : coupe … tranche un dessin sur N rangées` quand une coupe traverse un
+  dessin sur au moins 8 rangées (deux contours sombres qui se touchent ne comptent pas ; ni le corps à corps ni les
+  jets) : corriger avant d'envoyer ;
+- `python3 refonte-graphique/pixel/hd/anim/controle_coupes.py [--calcul] [noms…]` : planches « comme au combat »
+  (`refonte-graphique/pixel/sortie/controle-speciales/<nom>.png` : chaque image de l'attaque et de la spéciale contre
+  une cible proche, en haut, et une cible au fond, en bas ; cadre rouge = suspect) et la liste
+  `refonte-graphique/pixel/sortie/coupes-verticales.md`. `--calcul` refait la découpe de chaque build.py (20 min pour
+  les 64).

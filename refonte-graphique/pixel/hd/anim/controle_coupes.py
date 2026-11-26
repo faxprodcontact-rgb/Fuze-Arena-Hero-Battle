@@ -265,6 +265,35 @@ def planche(meta, cid, dummy, suspects):
     return path
 
 
+MARK = '<!-- liste automatique (controle_coupes.py) : ne pas écrire sous cette ligne -->'
+
+
+def write_md(found, calc):
+    """réécrit la liste automatique de coupes-verticales.md (le texte au-dessus de MARK est gardé)"""
+    path = os.path.join(SORTIE, 'coupes-verticales.md')
+    head = open(path).read().split(MARK)[0] if os.path.exists(path) else '# Coupes verticales (export jeu)\n\n'
+    L = [MARK, '', '## Liste automatique', '',
+         f'Rangées tranchées : au moins {RUN} rangées de suite où deux morceaux d\'une même image (personnage / sur la '
+         'cible / projectile) se touchent bord à bord sur la même colonne, hors contour sombre. Au corps à corps, le jeu '
+         'recolle les morceaux au moment du coup (listés à part).', '']
+    for title, rows, key in (('Sur les planches exportées (public/art/hd + hd-meta.ts)', found, 'calque'),
+                             ('En refaisant la découpe des build.py (--calcul)', calc, 'coupe')):
+        if rows is None:
+            continue
+        L += [f'### {title}', '']
+        for melee in (False, True):
+            sub = [r for r in rows if (r['genre'] == 'melee') == melee]
+            L += ['Corps à corps (recollé au coup) :' if melee else 'Tirs, sorts, jets :', '']
+            if not sub:
+                L += ['- aucun', '']
+                continue
+            L += ['| personnage | animation | genre | image | morceau | rangées |', '|---|---|---|---|---|---|']
+            L += [f"| {r['nom']} | {r['anim']} | {r['genre']} | {r['image']} | {r[key]} | {r['rangees']} |"
+                  for r in sorted(sub, key=lambda r: (r['nom'], r['anim'], r['image']))]
+            L.append('')
+    open(path, 'w').write(head.rstrip() + '\n\n' + '\n'.join(L) + '\n')
+
+
 def main(argv):
     meta = read_meta()
     found = audit_sheets(meta)
@@ -281,6 +310,7 @@ def main(argv):
         planche(meta, cid, dummy, sus)
     json.dump({'planches': found, 'calcul': calc}, open(os.path.join(SORTIE, 'coupes-verticales.json'), 'w'),
               indent=1, default=int)
+    write_md(found, calc)
     print(len(found), 'suspects sur les planches', '' if calc is None else f'; {len(calc)} coupes qui tranchent')
 
 
