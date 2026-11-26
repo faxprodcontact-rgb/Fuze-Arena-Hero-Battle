@@ -1,7 +1,7 @@
 // Captures « cartes des héros par rareté » (vague 3, 26/11/2026) : node cartes-captures.cjs <dossier> [port]
 // (vite build ; vite preview --port 4688 ; puis ce script.) 390×844 avec encoche imitée et 360×640.
 // La sauvegarde : les 36 héros (toutes les raretés), un Légendaire Mythique (11 étoiles), une équipe de 5.
-// Écrans : heros (onglet Héros), heros-zoom (le haut de la grille, agrandi), formation, chances, butin (fenêtre de gain).
+// Écrans : heros (onglet Héros), heros-zoom (le haut de la grille), heros-bas (la grille plus bas : Communs, Rares), formation, chances, butin (fenêtre de gain).
 // GIF=1 : une suite d'images de 4 cartes (Commun, Rare, Épique, Légendaire, Mythique) pour cartes.gif.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -107,6 +107,9 @@ async function boot(browser, w, h, notch, scale = 2) {
     await page.screenshot({ path: `${OUT}/heros-zoom-${tag}.png`, clip: { x: b.x, y: b.y, width: b.width, height: Math.min(b.height, 300) } });
     const scroll = await page.evaluate(() => [document.scrollingElement.scrollHeight, innerHeight, document.scrollingElement.scrollWidth, innerWidth]);
     console.log(tag, 'page (haut, écran, large, écran) :', scroll.join(' '));
+    await page.evaluate(() => { const e = document.querySelector('.hall-scroll'); if (e) e.scrollTop = 470; }); await page.waitForTimeout(500);
+    await page.screenshot({ path: `${OUT}/heros-bas-${tag}.png`, clip: { x: b.x, y: b.y, width: b.width, height: Math.min(h - b.y - 60, 420) } });
+    await page.evaluate(() => { const e = document.querySelector('.hall-scroll'); if (e) e.scrollTop = 0; });
     await page.click('.hall-formation, .hall-team'); await page.waitForTimeout(1200); await shot('formation');
     await closeAll(page);
     await page.click('.tabbar-btn:nth-child(3)'); await page.waitForTimeout(1200);

@@ -8,14 +8,24 @@
 // élément, ses chapitres et un point par chapitre (fait, en cours, à faire). Mouvements : sections/carte.css.
 import { CLANS, clanElement, regionChapters } from '../look';
 import { Art, Icon, Sign } from './kit';
-import { Glow, Mat, Soft, VGrad, Vol, cloud, f, rng, rr, spark } from './backdrop-kit';
+import { Glow, Mat, Soft, VGrad, Vol, f, rng, rr, spark } from './backdrop-kit';
 import './sections/carte.css';
 
-/** Une touffe (feuillage, fumée, nuage d'orage) : trois bosses rondes, la plus haute au milieu, sur une base plate. */
-function puff(x0: number, base: number, w: number) {
-  const s = w / 3, r1 = s * 0.6, r2 = s * 0.74;
-  return `M${f(x0)} ${f(base)} A${f(r1)} ${f(r1)} 0 1 1 ${f(x0 + s)} ${f(base)} A${f(r2)} ${f(r2)} 0 1 1 ${f(x0 + 2 * s)} ${f(base)} A${f(r1)} ${f(r1)} 0 1 1 ${f(x0 + w)} ${f(base)} Z`;
+/**
+ * Une forme festonnée (nuage, feuillage, fumée) : des demi-cercles qui vont d'un point au suivant, sur une base plate.
+ * Les bosses se touchent sans se croiser : un seul contour, sans traits à l'intérieur.
+ */
+function scallop(pts: (readonly [number, number])[]) {
+  let d = `M${f(pts[0]![0])} ${f(pts[0]![1])}`;
+  for (let k = 1; k < pts.length; k++) {
+    const [ax, ay] = pts[k - 1]!, [bx, by] = pts[k]!, r = Math.hypot(bx - ax, by - ay) / 2;
+    d += ` A${f(r)} ${f(r)} 0 0 1 ${f(bx)} ${f(by)}`;
+  }
+  return `${d} Z`;
 }
+/** Une touffe : trois bosses, la plus haute au milieu, sur une base plate (x0 = gauche, w = largeur). */
+const puff = (x0: number, base: number, w: number) =>
+  scallop([[x0, base], [x0 + w * 0.3, base - w * 0.34], [x0 + w * 0.7, base - w * 0.3], [x0 + w, base]]);
 
 const VW = 340, VH = 460;
 const P = 'cm';
@@ -176,7 +186,7 @@ function Bayou({ x, y }: { x: number; y: number }) {
       <Vol p={P} d={`M${x - 30} ${y + 2} Q${x - 34} ${y + 6} ${x - 26} ${y + 6.5} Q${x - 20} ${y + 6} ${x - 23} ${y + 2.5} L${x - 27} ${y + 4} Z`} fill={u('grass2')} line={0.8} depth={1} shade={0} rim={0.3} />
       {/* le vieil arbre couvert de mousse */}
       <Vol p={P} d={`M${x - 4} ${y} Q${x} ${y - 24} ${x - 12} ${y - 40} Q${x - 2} ${y - 36} ${x + 4} ${y - 26} Q${x + 10} ${y - 42} ${x + 26} ${y - 46} Q${x + 14} ${y - 34} ${x + 14} ${y - 14} L${x + 16} ${y} Z`} fill={u('bark')} depth={3} />
-      <Vol p={P} d={`M${x - 22} ${y - 34} Q${x - 18} ${y - 50} ${x - 2} ${y - 48} Q${x + 12} ${y - 56} ${x + 28} ${y - 48} Q${x + 40} ${y - 46} ${x + 36} ${y - 34} Q${x + 34} ${y - 22} ${x + 31} ${y - 30} Q${x + 28} ${y - 20} ${x + 24} ${y - 32} Q${x + 14} ${y - 30} ${x + 8} ${y - 34} Q${x + 2} ${y - 24} ${x - 2} ${y - 34} Q${x - 8} ${y - 18} ${x - 12} ${y - 32} Q${x - 18} ${y - 26} ${x - 22} ${y - 34} Z`} fill={u('moss')} depth={4} />
+      <Vol p={P} d={`M${x - 24} ${y - 36} Q${x - 22} ${y - 52} ${x - 4} ${y - 50} Q${x + 10} ${y - 60} ${x + 28} ${y - 50} Q${x + 42} ${y - 48} ${x + 40} ${y - 34} Q${x + 40} ${y - 18} ${x + 36} ${y - 16} Q${x + 33} ${y - 22} ${x + 33} ${y - 32} Q${x + 30} ${y - 20} ${x + 27} ${y - 22} Q${x + 25} ${y - 28} ${x + 24} ${y - 36} Q${x + 18} ${y - 34} ${x + 14} ${y - 38} Q${x + 8} ${y - 34} ${x + 2} ${y - 37} Q${x - 1} ${y - 24} ${x - 4} ${y - 18} Q${x - 7} ${y - 24} ${x - 8} ${y - 35} Q${x - 13} ${y - 22} ${x - 16} ${y - 20} Q${x - 19} ${y - 26} ${x - 18} ${y - 34} Q${x - 22} ${y - 30} ${x - 24} ${y - 36} Z`} fill={u('moss')} depth={4} />
       {/* la lanterne sur son poteau */}
       <circle class="cm-flicker" cx={x - 44} cy={y - 30} r="16" fill={u('lamp')} />
       <Vol p={P} d={`M${x - 46} ${y + 6} V${y - 34} H${x - 36} V${y - 31} H${x - 43} V${y + 6} Z`} fill={u('wood')} line={1.1} depth={1.5} shade={0.25} rim={0.3} />
@@ -192,7 +202,8 @@ function Cendres({ x, y }: { x: number; y: number }) {
   return (
     <g>
       <ellipse class="cm-glow" cx={x - 6} cy={y - 46} rx="26" ry="16" fill={u('ember')} />
-      {[0, 1, 2].map((k) => <path class="cm-smoke" style={{ animationDelay: `${-k * 1.3}s` }} d={puff(x - 20 + k * 6, y - 50 - k * 3, 26 - k * 3)} fill={u('smoke')} stroke="#1f1238" stroke-opacity="0.35" stroke-width="1" />)}
+      <Vol p={P} d={puff(x - 26, y - 46, 36)} fill={u('smoke')} depth={3} rim={0.3} />
+      {[0, 1, 2].map((k) => <path class="cm-smoke" style={{ animationDelay: `${-k * 1.3}s` }} d={puff(x - 16 + k * 6, y - 60 - k * 3, 20 - k * 3)} fill={u('smoke')} stroke="#1f1238" stroke-opacity="0.35" stroke-width="1" />)}
       {/* les roches noires, derrière à droite */}
       <Vol p={P} d={`M${x + 30} ${y + 1} L${x + 34} ${y - 22} Q${x + 37} ${y - 26} ${x + 40} ${y - 22} L${x + 42} ${y - 14} L${x + 46} ${y - 30} Q${x + 49} ${y - 34} ${x + 52} ${y - 30} L${x + 57} ${y + 1} Z`} fill={u('basalt')} depth={3} />
       {/* le volcan, sa bouche de lave et ses coulées */}
@@ -244,7 +255,8 @@ function Orage({ x, y }: { x: number; y: number }) {
     <g>
       {/* le nuage d'orage et son éclair courbe */}
       <path class="cm-flash" d={rr(x - 14, y - 56, 74, 60, 24)} fill={u('boltglow')} />
-      <Vol p={P} d={`M${x - 10} ${y - 34} A9 9 0 0 1 ${x + 4} ${y - 46} A13 13 0 0 1 ${x + 30} ${y - 52} A11 11 0 0 1 ${x + 50} ${y - 42} A8 8 0 0 1 ${x + 56} ${y - 34} Z`} fill={u('storm')} depth={4} rim={0.3} />
+      <Vol p={P} d={scallop([[x + 2, y - 40], [x + 12, y - 50], [x + 30, y - 55], [x + 46, y - 48], [x + 54, y - 40]])} fill={u('storm2')} depth={4} rim={0.2} />
+      <Vol p={P} d={scallop([[x - 14, y - 30], [x - 8, y - 40], [x + 6, y - 47], [x + 24, y - 49], [x + 40, y - 44], [x + 50, y - 37], [x + 56, y - 30]])} fill={u('storm')} depth={4} rim={0.35} />
       <path class="cm-bolt" d={`M${x + 26} ${y - 34} Q${x + 18} ${y - 26} ${x + 22} ${y - 20} L${x + 16} ${y - 20} Q${x + 14} ${y - 10} ${x + 22} ${y - 1} Q${x + 22} ${y - 11} ${x + 29} ${y - 16} L${x + 24} ${y - 16} Q${x + 28} ${y - 25} ${x + 34} ${y - 34} Z`} fill="#ffe27a" stroke="#1f1238" stroke-opacity="0.6" stroke-width="1" stroke-linejoin="round" />
       {/* le rocher et son phare */}
       <circle class="cm-flicker" cx={x - 34} cy={y - 46} r="15" fill={u('lamp')} />
@@ -305,8 +317,10 @@ function Abysses({ x, y }: { x: number; y: number }) {
   };
   return (
     <g>
-      {/* la roche sombre au fond, percée d'une arche */}
-      <Vol p={P} d={`M${x - 40} ${y + 1} L${x - 34} ${y - 30} Q${x - 30} ${y - 44} ${x - 14} ${y - 46} Q${x + 2} ${y - 44} ${x + 6} ${y - 30} L${x + 10} ${y + 1} L${x + 2} ${y + 1} Q${x} ${y - 28} ${x - 14} ${y - 30} Q${x - 28} ${y - 28} ${x - 30} ${y + 1} Z`} fill={u('deep')} depth={4} />
+      {/* les aiguilles de roche sombre, au fond */}
+      <Vol p={P} d={`M${x - 46} ${y + 1} L${x - 38} ${y - 30} Q${x - 35} ${y - 36} ${x - 32} ${y - 30} L${x - 29} ${y - 18} L${x - 22} ${y - 44} Q${x - 18} ${y - 50} ${x - 14} ${y - 44} L${x - 6} ${y - 14} L${x - 2} ${y - 22} Q${x + 1} ${y - 26} ${x + 4} ${y - 22} L${x + 10} ${y + 1} Z`} fill={u('deep')} depth={4}>
+        <path class="cm-glow" d={`M${x - 19} ${y - 38} L${x - 16} ${y - 28} L${x - 19} ${y - 20} M${x - 36} ${y - 24} L${x - 33} ${y - 16}`} fill="none" stroke="#5ef0d8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+      </Vol>
       {/* le gouffre qui luit, dans le socle */}
       <ellipse class="cm-glow" cx={x - 14} cy={y - 6} rx="26" ry="16" fill={u('abyssglow')} />
       <Vol p={P} d={rr(x - 30, y - 1, 32, 8, 4)} fill={u('pit')} line={1.1} depth={2} shade={0.5} rim={0} />
@@ -318,7 +332,6 @@ function Abysses({ x, y }: { x: number; y: number }) {
       <g class="cm-sway" style={{ transformOrigin: `${x + 6}px ${y + 6}px` }}>
         <Vol p={P} d={`M${x + 4} ${y + 6} Q${x} ${y - 6} ${x + 6} ${y - 14} Q${x + 11} ${y - 22} ${x + 6} ${y - 30} Q${x + 12} ${y - 24} ${x + 11} ${y - 14} Q${x + 6} ${y - 6} ${x + 9} ${y + 6} Z`} fill={u('kelp')} line={1} depth={1.5} />
       </g>
-      <Vol p={P} d={`M${x - 26} ${y + 8} Q${x - 22} ${y + 2} ${x - 14} ${y + 3} Q${x - 8} ${y + 4} ${x - 8} ${y + 8} Z`} fill={u('coral2')} line={1} depth={1} />
       {[[x - 18, y - 18, 2.4], [x - 10, y - 30, 1.8], [x - 22, y - 40, 1.4], [x + 26, y - 44, 1.6]].map(([cx, cy, r], i) => (
         <circle class="cm-bubble" style={{ animationDelay: `${-i * 0.9}s` }} cx={cx} cy={cy} r={r} fill="none" stroke="#bff6ea" stroke-width="1.1" opacity="0.8" />
       ))}
@@ -368,7 +381,7 @@ export function ChapterMap({ cur }: { cur: number }) {
         <defs>
           <Soft p={P} />
           <VGrad id={`${P}-sea`} stops={[[0, '#0e1034'], [0.5, '#141a46'], [1, '#1b2858']]} />
-          <VGrad id={`${P}-land`} y1={VH} y2={0} stops={[[0, '#3f6a4a'], [0.22, '#4a5a44'], [0.45, '#4e4450'], [0.68, '#55536c'], [0.85, '#3f4a5e'], [1, '#24434f']]} />
+          <VGrad id={`${P}-land`} y1={VH} y2={0} stops={[[0, '#4f8a56'], [0.2, '#5e6a48'], [0.42, '#5e4c52'], [0.62, '#6a6886'], [0.8, '#4f5a76'], [1, '#2e5866']]} />
           <VGrad id={`${P}-shore`} y1={VH} y2={0} stops={[[0, '#b9a678'], [0.5, '#a08f86'], [1, '#6f8a86']]} />
           <Glow id={`${P}-moon`} c="#ffe9a8" a={0.32} />
           {SOIL.map((s, i) => <><Mat id={`${P}-top${i}`} c={s.top} k={0.8} /><Mat id={`${P}-side${i}`} c={s.side} /></>)}
@@ -378,10 +391,10 @@ export function ChapterMap({ cur }: { cur: number }) {
           <Mat id={`${P}-shroom`} c="#ff6a4a" /><Mat id={`${P}-moss`} c="#6f8a48" /><Mat id={`${P}-cat`} c="#8a5a36" /><Mat id={`${P}-marsh`} c="#2f5a4e" />
           <Mat id={`${P}-ash`} c="#54444f" /><Mat id={`${P}-basalt`} c="#3a2f3e" /><Mat id={`${P}-smoke`} c="#8f86a6" />
           <Mat id={`${P}-peak`} c="#9396b4" /><Mat id={`${P}-snow`} c="#fbfaff" k={0.6} /><Mat id={`${P}-pine`} c="#2f7a5a" />
-          <Mat id={`${P}-storm`} c="#4e4b72" /><Mat id={`${P}-foam`} c="#f1eefa" k={0.6} />
+          <Mat id={`${P}-storm`} c="#5e5a86" /><Mat id={`${P}-storm2`} c="#3e3a62" /><Mat id={`${P}-foam`} c="#f1eefa" k={0.6} />
           <Mat id={`${P}-sand`} c="#e3b878" /><Mat id={`${P}-column`} c="#eed6a8" /><Mat id={`${P}-stone`} c="#8d8aa8" />
           <Mat id={`${P}-deep`} c="#2c4f62" /><Mat id={`${P}-crystal`} c="#4fe0c0" /><Mat id={`${P}-violet`} c="#a684ff" />
-          <Mat id={`${P}-coral`} c="#ff7a7a" /><Mat id={`${P}-coral2`} c="#ffad5a" /><Mat id={`${P}-kelp`} c="#3fae7a" />
+          <Mat id={`${P}-coral`} c="#ff7a7a" /><Mat id={`${P}-kelp`} c="#3fae7a" />
           <linearGradient id={`${P}-pit`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0a1828" /><stop offset="1" stop-color="#1f8a7e" /></linearGradient>
           <linearGradient id={`${P}-lava`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe27a" /><stop offset="0.5" stop-color="#ff8a2a" /><stop offset="1" stop-color="#e2401f" /></linearGradient>
           <linearGradient id={`${P}-lavatop`} x1="1" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff1b0" /><stop offset="1" stop-color="#ff8a2a" /></linearGradient>
@@ -400,10 +413,16 @@ export function ChapterMap({ cur }: { cur: number }) {
         <g fill="none" stroke-linecap="round" stroke-linejoin="round">
           {legs.map((d) => <path d={d} stroke="#05031a" stroke-opacity="0.5" stroke-width="52" transform="translate(-6 7)" filter={u('blur')} />)}
           {ISLES.map((d) => <path d={d} fill="#05031a" fill-opacity="0.5" transform="translate(-6 7)" filter={u('blur')} />)}
-          {legs.map((d) => <path d={d} stroke={u('shore')} stroke-width="50" />)}
-          {ISLES.map((d) => <path d={d} fill={u('shore')} stroke={u('shore')} stroke-width="8" />)}
-          {legs.map((d) => <path d={d} stroke={u('land')} stroke-width="42" />)}
-          {ISLES.map((d) => <path d={d} fill={u('land')} />)}
+          {legs.map((d) => <path d={d} stroke="#26366e" stroke-opacity="0.55" stroke-width="70" filter={u('blur')} />)}
+          {ISLES.map((d) => <path d={d} fill="#26366e" fill-opacity="0.55" stroke="#26366e" stroke-opacity="0.55" stroke-width="22" filter={u('blur')} />)}
+          {legs.map((d) => <path d={d} stroke={u('shore')} stroke-width="48" />)}
+          {ISLES.map((d) => <path d={d} fill={u('shore')} stroke={u('shore')} stroke-width="6" />)}
+          {legs.map((d) => <path d={d} stroke="#2e2750" stroke-width="42" />)}
+          {ISLES.map((d) => <path d={d} fill="#2e2750" />)}
+          <g transform="translate(1.6 -1.6)">
+            {legs.map((d) => <path d={d} stroke={u('land')} stroke-width="41" />)}
+            {ISLES.map((d) => <path d={d} fill={u('land')} />)}
+          </g>
         </g>
         {/* le chemin : des pas de pierre ; la part faite, d'or */}
         <g fill="none" stroke-linecap="round">
@@ -413,7 +432,7 @@ export function ChapterMap({ cur }: { cur: number }) {
         </g>
         {/* les nuages qui passent, au bord */}
         <g class="cm-cloud" fill="#d8d2f4" opacity="0.2">
-          <path d={cloud(-30, 238, 90, 4)} /><path d={cloud(270, 136, 100, 8)} />
+          <path d={scallop([[-26, 240], [-14, 228], [6, 222], [28, 228], [42, 240]])} /><path d={scallop([[292, 130], [300, 120], [318, 115], [336, 120], [348, 130]])} />
         </g>
         {SPOTS.map(([x, y], i) => {
           const Place = PLACES[i]!;
@@ -452,7 +471,7 @@ export function ChapterMap({ cur }: { cur: number }) {
               <span class="cm-pips">{chapters.map((c) => <i class={c < cur ? 'done' : c === cur ? 'here' : ''} />)}</span>
             </span>
             {state === 'locked' && <span class="cm-lock" style={pct(x, y - 22)}><Icon name="lock" size={30} /></span>}
-            {state === 'done' && <span class="cm-check" style={pct(x + PW - 4, y - 2)}><Sign name="check" /></span>}
+            {state === 'done' && <span class="cm-check" style={pct(x + PW - 8, y + 19)}><Sign name="check" /></span>}
           </>
         );
       })}
