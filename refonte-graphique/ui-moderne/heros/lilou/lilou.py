@@ -503,7 +503,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ============================================================== le plastron jaune à plaques, le pont de carapace
     # (le plastron va jusqu'au bord de l'avant-bras : pas de coin de peau coincé entre le bras plié et le plastron)
     gfront = gtors.union(garm.buffer(2.6).intersection(bodyg))
-    gpl = PG(sm(T_(PLAS_PTS), t=0.9)).intersection(gfront).difference(garm.buffer(0.05)).difference(gleg.buffer(0.05))
+    gpl = PG(sm(T_(PLAS_PTS), t=0.9)).intersection(gfront).difference(garm.buffer(0.05)).difference(gleg.buffer(0.05).difference(garm.buffer(3.0)))
     plas = geom_shapes(gpl, simplify=0.02)
     det = []
     PS = lambda pts: crpath(T_(pts), 16)

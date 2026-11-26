@@ -236,7 +236,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         ys = [p[1] for p in beam + sum(branches, [])]
         g = (max(xs), min(ys), min(xs), max(ys), [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)])
         return [(n, sh, g) for n, sh in out]
-    BACK_ANT = antler('antB', [(45.8, 19.6), (45.0, 13), (44.6, 7.0), (46.0, 0.6)],
+    BACK_ANT = antler('antB', [(45.4, 18.4), (45.0, 13), (44.6, 7.0), (46.0, 0.6)],
                       [[(44.8, 12.6), (39.6, 9.6), (33.0, 7.2), (27.0, 3.0)], [(39.0, 9.6), (37.0, 6.0), (37.4, 1.0)]], 4.8)
     # (le bois du côté du spectateur est posé DEVANT la tête, sa base enfouie dans la racine de la crinière : plus bas)
 
@@ -555,13 +555,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # mèches, où elles finissent en pointes (comme des mèches posées les unes sur les autres) ----
     w_ = 0.3 * math.sin(ph - 0.5)
     m_ = P['mane']
-    RL = [((48.8, 17.0), (44.6, 14.2), (38.6, 14.6), (32.8 - 0.6 * m_, 17.4 + w_), 7.4),
-          ((45.4, 23.6), (41.4, 22.2), (36.0, 23.2), (30.4 - 0.8 * m_, 27.4 + w_), 8.4),
-          ((43.4, 30.4), (40.4, 30.4), (36.6, 32.4), (32.6 - 0.6 * m_, 37.4 + w_), 7.6)]
+    RL = [((48.0, 17.6), (44.4, 14.8), (38.6, 14.8), (32.8 - 0.6 * m_, 17.4 + w_), 6.6),
+          ((43.6, 23.6), (40.6, 22.4), (35.6, 23.4), (30.4 - 0.8 * m_, 27.4 + w_), 8.0),
+          ((41.8, 30.6), (39.6, 30.8), (36.4, 32.6), (32.6 - 0.6 * m_, 37.4 + w_), 7.2)]
     rlocks = [lock(a, b, c, d, w, n=12, bulge=0.4) for a, b, c, d, w in RL]
     # la naissance des poils sur la tête : un bord doux, en léger retrait du dos du crâne
-    patch = sm([(49.6, 15.0), (49.2, 17.8), (47.2, 20.2), (45.6, 22.0), (45.0, 25.6), (43.8, 28.6), (43.4, 32.4), (42.6, 35.4),
-                (40.6, 37.2), (37.0, 35.0), (36.0, 26.0), (38.6, 18.0), (43.6, 14.6)], t=0.9)
+    patch = sm([(49.4, 15.8), (48.8, 18.6), (46.8, 20.8), (45.0, 22.2), (44.0, 24.6), (44.8 + w_, 27.8), (42.8, 28.0),
+                (42.0, 30.4), (42.8 + w_, 33.8), (40.8, 34.0), (40.0, 36.6), (37.0, 35.0), (36.0, 26.0), (38.6, 18.0), (43.6, 15.2)],
+               sharp=(5, 8), t=0.9)
     root = fused([patch] + rlocks)
     rdet_ = [(root, ('lin', 50, 15, 32, 36, [(0, MANE.hi), (0.45, MANE.light), (1, MANE.base)]), 1)]
     for sh, (a, b, c, d, w) in zip(rlocks, RL):

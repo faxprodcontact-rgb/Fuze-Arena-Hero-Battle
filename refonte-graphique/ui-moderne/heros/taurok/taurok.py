@@ -130,50 +130,80 @@ def cuff_det(c, a, L, W, nr):
 
 
 
-# ---------- les épaulières de métal (avis du propriétaire du 26/11, tour 2) ----------
-# Une épaulière d'acier sur chaque épaule : un dôme qui coiffe le deltoïde (bord roulé, rivets) et deux lames
-# rivetées dessous qui entourent le haut du bras ; la lame du haut recouvre celle du bas. Elle est fixée à l'épaule :
-# elle ne suit le bras qu'à moitié quand il se lève (repère : `pa`, l'angle du bras au repos + la moitié de l'écart).
+# ---------- les épaulières du minotaure (avis du propriétaire du 26/11, tour 3) ----------
+# Pas la calotte ronde rivetée des chevaliers : deux écailles de cuir durci, en pointe, l'une sur l'autre (celle du
+# dessous dépasse vers le bas du bras), bordées de bronze martelé, deux clous d'or ; une petite pointe de fer plantée
+# sur l'écaille du dessus (vers le haut et l'extérieur) ; une sangle de cuir autour du haut du bras qui la tient.
+# Petites et ajustées au deltoïde. Elle est fixée à l'épaule : elle ne suit le bras qu'à moitié quand il se lève
+# (repère : l'angle du bras au repos + la moitié de l'écart) ; la sangle, elle, suit le bras.
 NARM_REST, FARM_REST = 109.45, 71.71           # l'angle du haut du bras au repos (proche, lointain)
+HIDE = Mat('#c08a6a', '#86523e', '#5c3236', '#3a1c2a', '#22101c')     # le cuir durci des épaulières
 
 
-def pauldron(S, ang, k):
-    """Les trois plaques d'une épaulière : [(suffixe, forme, détails)], du fond (la lame du bas) au devant (le dôme).
-    S : l'articulation de l'épaule ; ang : la direction du haut du bras ; k : la taille (1 = épaule proche)."""
+def pauldron(S, ang, k, o):
+    """Les morceaux d'une épaulière : [(suffixe, forme, matière, détails)], du fond (l'écaille du dessous) au devant
+    (la pointe de fer). S : l'articulation de l'épaule ; ang : la direction du haut du bras ; k : la taille (1 = épaule
+    proche) ; o : le côté extérieur de l'épaule (−1 : vers la gauche de l'image, +1 : vers la droite).
+    Repère : a le long du bras (− = vers le haut de l'épaule), c en travers (+ = vers l'extérieur)."""
     sg = Seg(S, (S[0] + math.cos(math.radians(ang)), S[1] + math.sin(math.radians(ang))))
-    P_ = lambda a, b: sg(a * k, b * k)
-    pts = lambda L: [P_(a, b) for a, b in L]
+    P_ = lambda a, c: sg(a * k, o * c * k)
+    pts = lambda L: [P_(a, c) for a, c in L]
 
-    def rivet(a, b, r=0.9):
-        c = P_(a, b)
-        return [(ellipse(c[0] - 0.12 * k, c[1] + 0.18 * k, r * k, r * k), STEEL.deep, 0.75),
-                (ellipse(c[0], c[1], r * 0.78 * k, r * 0.78 * k), STEEL.light, 1),
-                (ellipse(c[0] + 0.25 * k, c[1] - 0.3 * k, r * 0.36 * k, r * 0.3 * k), STEEL.glint, 0.95)]
+    def stud(a, c, r=0.85):
+        p_ = P_(a, c)
+        return [(ellipse(p_[0] - 0.15 * k, p_[1] + 0.2 * k, r * k, r * k), GOLD.deep, 0.7),
+                (ellipse(p_[0], p_[1], r * 0.8 * k, r * 0.8 * k), GOLD.base, 1),
+                (ellipse(p_[0] + 0.25 * k, p_[1] - 0.3 * k, r * 0.36 * k, r * 0.3 * k), GOLD.glint, 0.95)]
+
+    def scale_(L, edge, sharp):
+        """Une écaille : sa forme, la bordure de bronze le long du bord du bas (edge : la ligne du bord)."""
+        sh = sm(pts(L), sharp=sharp, t=0.85)
+        n = len(edge)
+        det = [(ribbon(pts(edge), [0.15 * k] + [0.95 * k] * (n - 2) + [0.15 * k]), GOLD.base, 0.95),
+               (ribbon(pts([(a - 0.45, c) for a, c in edge]), [0.1 * k] + [0.4 * k] * (n - 2) + [0.1 * k]), GOLD.hi, 0.8)]
+        return sh, det
     out = []
-    # les deux lames (la plus basse d'abord) : une bande bombée, le bord du bas éclairé, une gorge sous la lame du dessus
-    for nm, a0, a1, wb in (('2', 7.4, 15.4, 11.6), ('1', 1.6, 9.8, 12.8)):
-        am = (a0 + a1) / 2
-        sh = sm(pts([(a0, -wb), (a0 - 1.0, 0.0), (a0, wb), (a1 - 1.6, wb + 0.3), (a1, wb * 0.5), (a1 + 0.6, 0.0),
-                     (a1, -wb * 0.5), (a1 - 1.6, -wb - 0.3)]), sharp=(0, 2, 3, 7), t=0.8)
-        det = [(ribbon(pts([(a1 - 1.5, -wb + 0.8), (a1 - 0.6, -wb * 0.4), (a1 - 0.3, 0.0), (a1 - 0.6, wb * 0.4), (a1 - 1.5, wb - 0.8)]),
-                       [0.1 * k, 0.55 * k, 0.6 * k, 0.55 * k, 0.1 * k]), STEEL.hi, 0.7),
-               (ribbon(pts([(am - 0.6, -wb + 1.2), (am - 1.0, 0.0), (am - 0.6, wb - 1.2)]), [0.1 * k, 1.1 * k, 0.1 * k]), STEEL.light, 0.35)]
-        det += rivet(am, -wb + 2.2, 0.75) + rivet(am, wb - 2.2, 0.75)
-        out.append((nm, sh, det))
-    # le dôme : il coiffe l'épaule (plus haut côté cou), le bord du bas bombé, roulé et éclairé
-    cap = sm(pts([(1.2, -13.0), (-5.6, -14.2), (-11.6, -11.6), (-15.0, -5.6), (-15.6, 1.0), (-14.0, 7.4),
-                  (-10.4, 12.0), (-5.0, 14.2), (1.6, 13.8), (4.2, 7.0), (5.0, 0.0), (4.2, -7.0)]), sharp=(0, 8), t=0.85)
-    det = [(ribbon(pts([(0.8, -11.8), (3.0, -6.4), (3.7, 0.0), (3.0, 6.4), (0.9, 12.6)]), [0.2 * k, 1.1 * k, 1.2 * k, 1.1 * k, 0.2 * k]),
-            STEEL.deep, 0.45),
-           (ribbon(pts([(2.2, -11.0), (4.0, -5.6), (4.5, 0.0), (4.0, 5.6), (2.4, 11.4)]), [0.1 * k, 0.6 * k, 0.65 * k, 0.6 * k, 0.1 * k]),
-            STEEL.hi, 0.8),
-           # le reflet du dôme (lumière en haut à droite) et une arête douce au sommet
-           (ribbon(pts([(-12.6, -3.0), (-12.2, 2.4), (-10.0, 7.0), (-6.4, 10.0)]), [0.2 * k, 1.5 * k, 1.3 * k, 0.2 * k]), STEEL.glint, 0.7),
-           (ribbon(pts([(-9.4, -8.4), (-11.6, -2.0), (-11.0, 3.6)]), [0.1 * k, 0.8 * k, 0.1 * k]), STEEL.hi, 0.45)]
-    for b in (-9.0, -3.0, 3.0, 9.0):
-        det += rivet(1.4 - abs(b) * 0.12, b, 0.85)
-    out.append(('c', cap, det))
+    # l'écaille du dessous : elle dépasse sous la première, vers l'extérieur du bras, en pointe
+    sh, det = scale_([(-1.0, 1.0), (0.2, 8.0), (4.4, 10.2), (8.8, 9.0), (11.8, 5.6), (10.6, 1.8), (7.2, -1.4), (2.4, -2.4)],
+                     [(5.6, 9.8), (9.0, 8.4), (11.2, 5.6), (10.0, 2.2)], sharp=(4,))
+    det += stud(7.8, 5.2, 0.75)
+    out.append(('l', sh, HIDE, det))
+    # l'écaille du dessus : elle coiffe le haut du deltoïde (plus haute côté cou), sa pointe descend sur le bras
+    sh, det = scale_([(-11.4, -5.4), (-12.2, 0.6), (-10.4, 6.2), (-6.0, 9.4), (-0.4, 9.6), (4.2, 7.0), (6.4, 3.2), (4.6, -0.8),
+                      (0.6, -4.6), (-4.6, -7.4), (-9.0, -7.6)],
+                     [(-5.2, 9.0), (-0.4, 9.0), (3.8, 6.6), (5.8, 3.2), (4.2, -0.4)], sharp=(6,))
+    det += [(ribbon(pts([(-9.6, -4.4), (-10.0, 0.6), (-8.0, 5.4)]), [0.1 * k, 0.9 * k, 0.1 * k]), HIDE.hi, 0.55),
+            (ribbon(pts([(-3.0, -5.0), (-1.4, 0.0), (0.0, 4.6)]), [0.1 * k, 0.6 * k, 0.1 * k]), HIDE.deep, 0.35)]
+    det += stud(-2.6, 7.0) + stud(2.4, 5.0)
+    out.append(('c', sh, HIDE, det))
+    # la pointe de fer : un cône court planté sur l'écaille, vers le haut et l'extérieur
+    base_ = (-6.6, 2.4)
+    d_ = (-0.62, 0.78)
+    nrm = (d_[1], -d_[0])
+    L_, w_ = 5.2, 2.0
+    tip = (base_[0] + d_[0] * L_, base_[1] + d_[1] * L_)
+    spike = sm(pts([(base_[0] + nrm[0] * w_, base_[1] + nrm[1] * w_), (base_[0] + d_[0] * 2.4 + nrm[0] * 1.3, base_[1] + d_[1] * 2.4 + nrm[1] * 1.3),
+                    tip, (base_[0] + d_[0] * 2.4 - nrm[0] * 1.3, base_[1] + d_[1] * 2.4 - nrm[1] * 1.3),
+                    (base_[0] - nrm[0] * w_, base_[1] - nrm[1] * w_), (base_[0] - d_[0] * 0.8, base_[1] - d_[1] * 0.8)]), sharp=(2,), t=0.8)
+    sd = [(ellipse(*P_(*base_), 2.3 * k, 2.3 * k), STEEL.base, 0.9),
+          (ribbon(pts([(base_[0] - 0.4, base_[1] + 1.2), (base_[0] + d_[0] * 2.6, base_[1] + d_[1] * 2.6 + 0.4), tip]), [0.2 * k, 0.6 * k, 0.05 * k]), STEEL.glint, 0.7)]
+    out.append(('s', spike, STEEL, sd))
     return out
+
+
+def arm_strap(sg_, a, hw, k):
+    """La sangle de cuir autour du haut du bras (sg_ : le repère du bras, a : sa place le long du bras, hw : la
+    demi-largeur du bras à cet endroit) : un peu bombée vers le bas (elle fait le tour), une petite boucle d'or."""
+    sh = limb([sg_(a, -hw - 0.3), sg_(a + 1.1 * k, -hw * 0.4), sg_(a + 1.3 * k, 0.0), sg_(a + 1.1 * k, hw * 0.4), sg_(a, hw + 0.3)],
+              [2.5 * k] * 5, n=18)
+    det = [(ribbon([sg_(a - 0.7 * k, -hw * 0.8), sg_(a + 0.5 * k, 0.0), sg_(a - 0.7 * k, hw * 0.8)], [0.1, 0.5 * k, 0.1]), LEATHER.hi, 0.55)]
+    bc = sg_(a + 1.25 * k, hw * 0.3)
+    buckle = rpoly([(bc[0] - 1.5 * k, bc[1] - 1.6 * k), (bc[0] + 1.5 * k, bc[1] - 1.6 * k), (bc[0] + 1.5 * k, bc[1] + 1.6 * k),
+                    (bc[0] - 1.5 * k, bc[1] + 1.6 * k)], 0.5 * k)
+    bd = [(ellipse(bc[0] + 0.4 * k, bc[1] - 0.6 * k, 0.5 * k, 0.4 * k), GOLD.glint, 0.9),
+          (rpoly([(bc[0] - 0.6 * k, bc[1] - 0.7 * k), (bc[0] + 0.6 * k, bc[1] - 0.7 * k), (bc[0] + 0.6 * k, bc[1] + 0.7 * k),
+                  (bc[0] - 0.6 * k, bc[1] + 0.7 * k)], 0.2 * k), LEATHER.base, 1)]
+    return sh, det, buckle, bd
 
 
 def pgrad(sh):

@@ -311,8 +311,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              occl=(HAKAMA.deep, 0.3, 3.0))
 
     # ================================================================ le buste : veste ivoire croisée, tunique noire, collier
+    # (le flanc proche descend en s'évasant jusqu'à la ceinture, qui va d'un bord à l'autre de la taille : aucun bout
+    # arrondi qui dépasse sous la manche)
     torso = sm([(45.2, 51.4), (52.0, 48.6), (60.0, 48.0), (71.0, 48.8), (80.6, 50.8), (86.4, 53.4), (89.2, 58.0),
-                (89.6, 66.0), (89.0, 74.0), (84.0, 77.2), (66.0, 77.0), (46.0, 77.0), (41.4, 76.2), (40.4, 72.4), (41.6, 67.4), (44.4, 61.0)])
+                (89.6, 66.0), (89.0, 74.0), (84.0, 77.2), (66.0, 77.0), (46.0, 77.2), (37.8, 77.4), (39.2, 72.6),
+                (41.4, 67.6), (44.4, 61.0)], sharp=(12,))
     det = []
     # la tunique noire dans l'ouverture du col (un V), le revers lointain croisé par-dessus (UNE diagonale)
     vee = sm([(59.0, 48.2), (71.8, 49.0), (69.6, 53.6), (66.0, 59.4), (63.2, 64.0), (61.6, 58.4), (59.8, 52.6)], sharp=(0, 1, 4))
@@ -325,11 +328,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det += [(ribbon([(80.0, 56.0), (82.6, 62.0), (82.0, 69.0)], [0.2, 1.4, 0.2]), CLOTH.shadow, 0.45),
             (ribbon([(54.0, 54.0), (53.0, 60.0), (54.6, 66.0)], [0.2, 1.2, 0.2]), CLOTH.shadow, 0.4)]
     # la ceinture de soie rouge : elle fait le tour (peinte dans le buste, d'un bord à l'autre)
-    sash = sm([(36.0, 68.6), (60.0, 69.4), (80.0, 69.0), (95.0, 68.2), (95.0, 75.8), (80.0, 76.6), (60.0, 76.8), (36.0, 76.6)])
+    sash = sm([(34.0, 68.6), (60.0, 69.4), (80.0, 69.0), (95.0, 68.2), (95.0, 75.8), (80.0, 76.6), (60.0, 76.8), (34.0, 77.6)])
     det += [(sash, ('lin', 0, 68.6, 0, 76.8, [(0, SILK.light), (0.4, SILK.base), (1, SILK.shadow)]), 1),
             # le bord proche : la ceinture tourne autour de la taille (une ombre douce qui suit le flanc, pas de bout)
-            (sm([(36.0, 68.4), (43.6, 68.8), (44.6, 72.6), (44.2, 77.0), (36.0, 77.0)]), SILK.shadow, 0.55),
-            (sm([(36.0, 68.4), (41.8, 68.6), (42.4, 72.6), (42.0, 77.0), (36.0, 77.0)]), SILK.deep, 0.45),
+            (sm([(34.0, 68.4), (43.0, 68.8), (43.8, 72.8), (43.0, 77.6), (34.0, 77.6)]), SILK.shadow, 0.5),
             (ribbon([(44.0, 70.2), (62.0, 70.8), (82.0, 70.4), (92.0, 69.8)], [0.2, 0.9, 0.9, 0.2]), SILK.hi, 0.55),
             (ribbon([(44.0, 75.0), (62.0, 75.6), (82.0, 75.2)], [0.2, 1.2, 0.2]), SILK.deep, 0.5),
             (ribbon([(42.0, 68.8), (62.0, 69.6), (90.0, 68.6)], [0.2, 0.9, 0.2]), CLOTH.deep, 0.35)]
