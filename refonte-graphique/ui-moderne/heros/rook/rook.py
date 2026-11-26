@@ -60,7 +60,6 @@ G_TAILB = [(0, '#4e0e2e'), (0.4, '#86183a'), (0.75, '#c03228'), (1, '#ec7628')]
 G_HAIR = [(0, '#a01c30'), (0.35, '#e0401e'), (0.68, '#ff8a24'), (0.88, '#ffbe3c'), (1, '#ffe07c')]
 G_HAIRB = [(0, '#6a1236'), (0.45, '#a82030'), (0.8, '#e2522a'), (1, '#ff9a34')]
 
-STUB, CAP = True, True
 GRD = 116          # le sol
 FEET = (64, 116)   # le point « pieds » du pixel art (sol : 64 116)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin : les pieds (64, 116) y tombent en (64, 124)
@@ -328,7 +327,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         return (q[0] + nrm[0] * d, q[1] + nrm[1] * d)
     stub = sm([T_((62.0, 44.6)), off(0.1, 2.6), off(0.45, 2.2), off(0.88, 1.6), off(1.0, 0.0), off(0.9, -2.4),
                off(0.55, -3.6), off(0.2, -5.0), T_((55.6, 61.0)), T_((57.0, 52.0))], sharp=(4,), t=0.95)
-    body_f = fuse([body] + ([stub] if STUB else []), close=1.2, step=0.7, t=0.9)
+    body_f = fuse([body, stub], close=1.2, step=0.7, t=0.9)
     bdet = []
     # des plumes de dos et de flanc (arcs doux) dans la partie rouge, à gauche du jabot
     for (a0, a1, a2), w_, col, op in ((((59.2, 58.0), (61.6, 62.6), (61.4, 67.8)), 1.0, '#5e1030', 0.4),
@@ -401,12 +400,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- l'aile proche ----
     near_names, near_bones, near_path = wing(fig, 'n', P, SN)
 
-    # ---- l'épaule (avis du 26/11, tour 2 : la liaison aile ↔ corps) : un paquet de plumes scapulaires, de la couleur
-    # du dos, posé par-dessus la naissance de l'aile proche ; ses pointes tombent sur le flanc, le bord doré de l'aile
-    # sort de dessous. Plus de moignon rond entre le corps et l'aile. ----
-    if CAP:
-        shoulder(fig, P, nb)
-
     # ---- la tête ----
     head_names = head(fig, P)
 
@@ -431,33 +424,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         for f_ in fx:
             f_(fig, fig.ctx)
     return fig
-
-
-def shoulder(fig, P, nb):
-    """Les plumes de l'épaule proche (scapulaires) : trois plumes larges et courtes qui partent de l'épaule et du haut du
-    bras de l'aile, couchées vers le bas sur le flanc, réunies en une seule forme (une seule ombre portée)."""
-    S, E = nb[0], nb[1]
-    a_arm = math.degrees(math.atan2(E[1] - S[1], E[0] - S[0]))      # la direction du bras (vers le coude)
-    r0 = a_arm - math.degrees(math.atan2(NEAR_BONES[1][1] - NEAR_BONES[0][1], NEAR_BONES[1][0] - NEAR_BONES[0][0]))
-    ph, amp = P['ph'], P['amp']
-    SC = [(0.62, 96.0, 9.6, 6.4), (0.34, 84.0, 11.4, 7.0), (0.04, 72.0, 10.0, 6.6), (-0.22, 62.0, 7.0, 5.6)]
-    shapes, dets = [], []
-    for i, (t, ang, L, w) in enumerate(SC):
-        root = lerp(S, E, t)
-        a = ang + 0.45 * r0 + 1.5 * amp * math.sin(ph - 0.6 * i - 1.2)
-        sh = plume(root, a, L, w, curl=-10, kind='cover')
-        shapes.append(sh)
-        tip = sh_tip(root, a, L, -10)
-        dets.append((root, tip, sh))
-    cap = fuse(shapes + [ellipse(*lerp(S, E, 0.25), 4.6, 3.6, a_arm)], close=0.8, step=0.6, t=0.9)
-    det = []
-    # la séparation des plumes : la face du dessous de chacune (sauf la dernière, devant)
-    for root, tip, sh in dets[:-1]:
-        det.append((under(sh, -0.6, -1.8), ('lin', root[0], root[1], tip[0], tip[1], [(0, '#6a1236', 0.0), (0.5, '#8a1a34', 0.5), (1, '#5e1030', 0.55)]), 1))
-    root, tip, _ = dets[1]
-    fig.part('scap', cap, BODYM, grad=(S[0] + 3, S[1] - 6, tip[0] - 3, tip[1] + 2, [(0, '#ff9a3a'), (0.45, '#e2502a'), (1, '#a8243a')]),
-             cel=1.0, rim=0.5, cast=1.1, ink=FINK, details=det)
-    return ['scap']
 
 
 def hackles(fig, P):
@@ -592,8 +558,8 @@ def head(fig, P):
     # s'élargit sous les yeux (commissures sous chaque œil) et se referme en crochet sous la médiane, un peu vers la
     # droite (il regarde à droite). Bec fermé : la mandibule ne dépasse qu'à peine sous le bord, côté proche. ----
     mand = sm([(76.2, 37.7), (78.2, 39.5), (80.3, 41.2), (82.4, 43.1), (82.4, 44.3), (80.1, 43.3), (78.0, 41.7), (76.4, 39.9), (75.6, 38.6)])
-    part('beakL', mand, BEAK, grad=(83, 44, 76, 39, [(0, BEAK.base), (0.6, BEAK.shadow), (1, BEAK.deep)]), cel=0.6, rim=0.3, cast=0.9,
-         ink=FINK, details=[(ribbon([(77.0, 39.2), (79.4, 41.2), (82.0, 43.6)], [0.1, 0.45, 0.1]), BEAK.light, 0.4)])
+    part('beakL', mand, BEAK, grad=(83, 44, 76, 39, [(0, BEAK.base), (0.6, BEAK.shadow), (1, BEAK.deep)]), cel=0.3, rim=0, cast=0.9,
+         ink=FINK)
     up = sm([(nx - 1.5, eyy - 0.5), (nx, eyy - 1.1), (nx + 1.5, eyy - 0.5), (nx + 2.2, eyy + 2.2), (85.4, 35.1), (86.1, 36.9),
              (86.0, 39.2), (85.4, 41.5), (84.5, 43.6), (83.1, 45.6), (82.7, 44.1), (81.9, 42.5), (80.1, 40.5), (78.0, 38.9),
              (76.4, 37.6), (76.8, 35.9), (78.2, 34.5), (nx - 2.0, eyy + 1.6)], sharp=(9, 14))

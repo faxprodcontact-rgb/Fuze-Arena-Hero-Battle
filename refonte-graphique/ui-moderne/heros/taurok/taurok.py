@@ -4,8 +4,9 @@
 #   python3 refonte-graphique/ui-moderne/heros/taurok/taurok.py      # → taurok.svg + images 512 et 160 px de haut
 #
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/cyclope.txt, ancien nom de fichier) : le minotaure brun,
-# un colosse. Trois quarts vers la droite, grande fente, sabots à plat. Énorme bosse de trapèzes couverte d'une
-# crinière en mèches qui coulent vers l'arrière ; deltoïdes énormes, torse en tonneau, bras épais, petites jambes
+# un colosse. Trois quarts vers la droite, grande fente, sabots à plat. Énorme bosse de trapèzes (plus de crinière :
+# avis du propriétaire, tour 2), la tête posée au milieu entre les épaules, une épaulière d'acier rivetée sur chaque
+# épaule ; deltoïdes énormes, torse en tonneau, bras épais, petites jambes
 # solides poilues jusqu'aux sabots fendus (fanons). Il tient la grosse hache double à deux mains, basse, en travers du
 # corps : main droite (proche) près du pommeau, main gauche (lointaine) près du fer ; les doigts passent devant le
 # manche, le pouce par-dessus. Vraie tête de taureau : toupet bouclé, grosses cornes ivoire aux pointes sombres,
@@ -605,9 +606,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     axe = ['haft', 'pommel', 'pring', 'bladeU', 'bladeD', 'socket']
     pauls = ['npaul2', 'npaul1', 'npaulc', 'fpaul2', 'fpaul1', 'fpaulc']
     fig.pose(axe + ['narm', 'nbrac', 'nfist', 'nfistt', 'farm', 'fbrac', 'ffist', 'ffistt'] + pauls, U)
-    # l'ordre de dessin : le bras proche, puis la crinière (devant la tête et devant l'épaule), puis l'oreille (elle
-    # sort de la crinière), puis la hache et les poings, toujours devant
-    # (quand la hache est levée, le manche monte devant la crinière ; sinon le bras proche passe devant le manche,
+    # l'ordre de dessin : le bras proche et son épaulière, puis la hache et les poings, toujours devant
+    # (quand la hache est levée, le manche monte devant le bras ; sinon le bras proche passe devant le manche,
     # comme dans le dessin d'origine)
     order = ['narm', 'npaul2', 'npaul1', 'npaulc', 'nbrac']
     moved = [p for nm in order for p in fig.parts if p.name == nm]
