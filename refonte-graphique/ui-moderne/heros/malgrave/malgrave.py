@@ -79,8 +79,8 @@ CROTCH = 88.2                   # l'entrejambe (repère final), là où le propr
 # la jambe proche ET le bassin, d'un seul tenant (repère final) : bord extérieur, bas (dans la botte), intérieur qui
 # monte à l'entrejambe, le pli de la jambe lointaine, puis le haut (caché sous l'habit et le gilet)
 NLEG_SEAT = [(51.2, 78.0), (49.9, 84.0), (50.2, 90.2), (50.5, 96.7), (50.7, 101.2), (51.8, 104.4), (54.4, 105.2),
-             (57.1, 104.4), (58.1, 101.0), (58.4, 96.2), (59.1, 92.2), (60.5, 89.6), (62.6, CROTCH), (65.2, CROTCH - 0.5),
-             (66.6, 86.4), (68.0, 83.6), (69.4, 80.4), (70.2, 77.0), (66.4, 74.2), (60.6, 75.0), (55.2, 76.6)]
+             (57.1, 104.4), (58.1, 101.0), (58.4, 96.2), (59.2, 92.0), (60.7, 89.4), (62.6, CROTCH), (64.2, CROTCH - 0.4),
+             (65.0, 85.6), (65.8, 82.0), (66.8, 78.6), (67.4, 75.4), (63.6, 73.8), (59.0, 75.2), (54.6, 76.6)]
 REST = dict(breath=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, hat=(0.0, 0.0), htilt=0.0, pl=0.0, ch=0.0, tl=0.0,
             hand=WF0, skr=0.0, sk=0.0, flare=0.0, blink=0.0, cane=0.0, grin=0.0, bendF=1.0, jaw=0.0)
 
@@ -219,14 +219,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (ribbon([(48.4, 78.0), (46.8, 88.0), (43.6, 98.0)], [0.2, 1.3, 0.2]), PURPLE.deep, 0.45)])
 
     # ---- les jambes : longues et sèches, pantalon noir ; la lointaine un peu en avant ----
-    flegs = limb([(70.6, 76.0), (71.6, 86.0), (72.4, 95.0), (72.8, 101.0)], [10.4, 8.6, 7.4, 7.0])
+    flegs = limb([(69.8, 76.0), (71.2, 86.0), (72.4, 95.0), (72.8, 101.0)], [12.0, 9.6, 7.4, 7.0])
     # Avis du propriétaire (tour 2) : « un trou entre ces jambes qui monte trop haut ; fais le bassin avec une belle
     # liaison entre les membres ». La jambe proche et le bassin sont UNE seule forme : le fond du pantalon remplit
     # l'ouverture de l'habit jusqu'à l'entrejambe (CROTCH, juste sous le bas des devants), l'intérieur de la jambe y
     # monte par un arrondi doux, et la jambe lointaine sort de derrière par un pli (ombre portée, jamais un trait).
     # Points écrits dans le repère final (après l'allongement du buste), ramenés avant la déformation par uy().
     uy = lambda y: y if y >= LEG1 else LEG1 - (LEG1 - y) * (LEG1 - LEG0) / (LEG1 - LEG0 - DROP)
-    nlegs = sm([(x, uy(y)) for x, y in NLEG_SEAT], sharp=(17,))
+    nlegs = sm([(x, uy(y)) for x, y in NLEG_SEAT], sharp=(18,))
     fig.part('fleg', flegs, BLACK, grad=(76, 78, 66, 100, [(0, BLACK.light), (0.5, BLACK.base), (1, BLACK.shadow)]),
              cel=1.3, rim=0.7, cast=0.9,
              details=[(ribbon([(74.6, 80.0), (75.4, 89.0), (75.6, 98.0)], [0.2, 1.0, 0.2]), BLACK.hi, 0.35),
