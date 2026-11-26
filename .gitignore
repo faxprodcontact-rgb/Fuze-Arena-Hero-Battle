@@ -12,3 +12,4 @@ refonte-graphique/*-vis*.png
 .env.*.local
 # images intermédiaires des animations vectorielles (refaites par anim.py)
 refonte-graphique/ui-moderne/heros/*/_images/
+*.whl
