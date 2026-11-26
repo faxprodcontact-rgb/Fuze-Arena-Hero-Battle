@@ -14,8 +14,8 @@
 # cou monte de l'épaule au dos du crâne en une seule courbe (avis du propriétaire, tour 2 : plus de marche ni de bande). Bras proche armé en arrière (coude bas, poing levé à hauteur d'épaule, la lame part vers l'arrière et
 # monte en croissant) ; bras lointain avancé, poing bas devant le corps (la lame part vers l'ennemi et plonge). Deux
 # lames de bronze en croissant (khopesh : fil clair dehors, reflet au milieu, dos sombre dedans), gardes et pommeau
-# d'or, épaulière d'or (une coque à pierre violette et une lame), brassards d'or, ceinture d'or à boucle violette,
-# pagne violet ourlé d'or.
+# d'or, brassards d'or, ceinture d'or à boucle violette, pagne violet ourlé d'or. Plus d'épaulière (avis du
+# propriétaire, tour 3) : l'épaule proche est un deltoïde nu qui se fond dans le buste (une seule forme, comme Aurelle).
 # Coordonnées = pixels du dessin pixel art (le sol est y = 116, le point « pieds » en (64, 116)), pour se poser au même
 # endroit dans le jeu. Une seule lumière, en haut à droite ; un seul contour (atelier.py).
 import math
@@ -425,7 +425,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (hem, GOLD.base, 1)])
     fig.pose(['belt', 'buckle', 'pagne'], U)
 
-    # ---- la lame proche, sa garde, le bras proche, l'épaulière, le poing ----
+    # ---- la lame proche, sa garde, le bras proche (épaule fondue dans le buste), le poing ----
     SN = mapp(UC, SN0)
     Fn = mapp(U, add(FN0, P['nhand']))
     a_n = P['nang'] * 0.4
@@ -435,7 +435,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     guard_parts(fig, 'nh', Gn, 180 + P['nang'], 9.0, pommel=add(Fn, rot((4.9, -0.1), P['nang'])))
     En = ik(SN, Wn, math.dist(SN0, EN0), math.dist(EN0, add(FN0, WN_OFF)), -1)
     narm = bent(SN, En, Wn, 8.2, 7.4, 6.6, bulge=(0.1, 0.06))
-    fig.part('narm', narm, SCALE, grad=(58, 62, 38, 82, [(0, SCALE.light), (0.5, SCALE.base), (1, SCALE.shadow)]),
+    # (le dégradé du bras suit l'épaule : même teinte que le buste au raccord dans toutes les poses)
+    ga, gb = add(SN, (2.2, -3.4)), add(SN, (-17.8, 16.6))
+    fig.part('narm', narm, SCALE, grad=(ga[0], ga[1], gb[0], gb[1], [(0, SCALE.light), (0.5, SCALE.base), (1, SCALE.shadow)]),
              cel=1.5, rim=0.7, cast=1.5, cast_on=['torso', 'tail', 'belt', 'hood'],
              details=[(ribbon([lerp(SN, En, 0.2), lerp(SN, En, 0.55), lerp(SN, En, 0.85)], [0.2, 1.2, 0.2]), SCALE.light, 0.35)]
              + bracer(SN, En, Wn, 0.5, 0.86, 8.2, 7.0))
@@ -490,8 +492,7 @@ def torso_parts(fig, P, TOR, HEAD):
     # en dégradé, sans bord ; le pectoral à côté, plus doux)
     det += [(ribbon([(51.4, 67.6), (52.8, 63.6), (56.2, 61.4), (60.8, 62.0)], [0.2, 2.8, 2.6, 0.2]), SCALE.light, 0.42),
             (ribbon([(52.6, 64.2), (54.6, 62.0), (57.8, 61.2)], [0.1, 0.8, 0.1]), SCALE.hi, 0.35),
-            (sm([(58.0, 63.6), (62.2, 62.0), (63.4, 65.4), (61.0, 68.6), (57.8, 67.6)]),
-             ('lin', 63.0, 64.0, 57.6, 65.6, [(0, SCALE.light, 0.4), (1, SCALE.light, 0)]), 1),
+            (ribbon([(57.6, 65.6), (60.4, 63.2), (63.6, 63.4)], [0.2, 2.2, 0.3]), SCALE.light, 0.34),
             (sm([(55.0, 68.8), (59.4, 69.4), (62.8, 67.2), (63.0, 69.4), (59.6, 71.2), (55.4, 70.8)]),
              ('lin', 60.0, 68.4, 59.0, 71.4, [(0, SCALE.shadow, 0.75), (1, SCALE.shadow, 0.1)]), 1),
             (sm([(80.4, 62.4), (85.6, 61.6), (89.6, 64.0), (89.0, 68.0), (84.8, 69.4), (80.6, 68.0)]), SCALE.hi, 0.35),

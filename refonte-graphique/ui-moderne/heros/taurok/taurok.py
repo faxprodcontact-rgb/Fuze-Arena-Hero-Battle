@@ -6,7 +6,7 @@
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/cyclope.txt, ancien nom de fichier) : le minotaure brun,
 # un colosse. Trois quarts vers la droite, grande fente, sabots à plat. Énorme bosse de trapèzes (plus de crinière :
 # avis du propriétaire, tour 2), la tête posée au milieu entre les épaules et remontée sur un cou de taureau court et
-# épais, DEVANT les deux épaulières (tour 3) ; deux petites écailles de fer noirci bordées de bronze sur chaque épaule,
+# épais, DEVANT les deux épaulières (tour 3) ; deux écailles de fer noirci (un peu plus grosses, tour 3 bis) bordées de bronze sur chaque épaule,
 # une pointe de fer, une sangle au bras ; deltoïdes énormes, torse en tonneau, bras épais, petites jambes
 # solides poilues jusqu'aux sabots fendus (fanons). Il tient la grosse hache double à deux mains, basse, en travers du
 # corps : main droite (proche) près du pommeau, main gauche (lointaine) près du fer ; les doigts passent devant le
