@@ -10,7 +10,7 @@ import { HdActor, hasHd, hdChar, hdStrike, loadHd, type HdHost } from './hd-figh
 import { HD_ANIM } from './hd-meta';
 import { t } from './i18n';
 import { ICON_INDEX } from './icons-meta';
-import { battleLook, isBigBoss, monsterArtId, type Look } from './look';
+import { battleLook, heroArt, isBigBoss, monsterArtId, type Look } from './look';
 import { HERO_X } from './scenes';
 import { themeColor } from './theme';
 
@@ -42,20 +42,20 @@ const FEET = 47;
 /** Un grand boss est seul en face : au milieu du côté ennemi, un peu plus loin du bord pour que sa queue tienne. */
 const BIG_BOSS_X = 548;
 /**
- * Place des combattants (essai demandé le 25/11) : `dx` / `dy` écartent les combattants d'une équipe (en X à partir de
- * leur rang du fond, posé à `back` unités du bord ; en Y autour du rang du milieu), `size` règle la taille des dessins.
- * Variante 0 = la place actuelle (celle du jeu) ; les autres ne servent qu'au test, par l'adresse (`?layout=1|2|3`).
- * Pour en garder une : la mettre en première ligne.
+ * Place des combattants (essai demandé le 25/11) : `gap` = l'écart au milieu entre les deux premières colonnes (unités),
+ * chaque équipe recule vers son bord ; `dx` / `dy` resserrent ou écartent les équipiers (en X depuis la première
+ * colonne, en Y autour du rang du milieu), `size` règle la taille des dessins. Variante 0 = la place actuelle (celle du
+ * jeu) ; les autres ne servent qu'au test, par l'adresse (`?layout=1|2|3`). Pour en garder une : la mettre en première ligne.
  */
 const LAYOUTS = [
-  { dx: 1, dy: 1, size: 1, back: 82 },
-  { dx: 1.15, dy: 1.15, size: 0.9, back: 80 },
-  { dx: 1.25, dy: 1.25, size: 0.85, back: 76 },
-  { dx: 1.3, dy: 1.3, size: 0.8, back: 72 },
+  { gap: 230, dx: 1, dy: 1, size: 1 },
+  { gap: 288, dx: 0.88, dy: 1, size: 0.95 },
+  { gap: 334, dx: 0.78, dy: 1.05, size: 0.9 },
+  { gap: 380, dx: 0.66, dy: 1.1, size: 0.85 },
 ] as const;
 const BATTLE_LAYOUT = LAYOUTS[Number(typeof location === 'undefined' ? 0 : new URLSearchParams(location.search).get('layout')) || 0] ?? LAYOUTS[0];
-/** Une place en X (côté héros, depuis le bord gauche) avec l'espacement choisi ; les ennemis sont en miroir. */
-const spreadX = (x: number) => BATTLE_LAYOUT.back + (x - HERO_X[3]) * BATTLE_LAYOUT.dx;
+/** Une place en X (côté héros, depuis le bord gauche) avec l'écart choisi ; les ennemis sont en miroir. */
+const spreadX = (x: number) => (W - BATTLE_LAYOUT.gap) / 2 + (x - HERO_X[0]) * BATTLE_LAYOUT.dx;
 
 /** Les effets et la planche de pictos ont déjà été téléchargés une fois (le navigateur les a gardés). */
 let laterFetched = false;
@@ -147,7 +147,7 @@ export abstract class FightScene extends Phaser.Scene {
 
   /** Le dessin d'un combattant : un héros, ou le monstre du clan de ce combat (général ou grand boss pour un boss). */
   protected charId(u: { id?: string; defId: string; element: string }): string {
-    return isHero(u.defId) ? u.defId : monsterArtId(u.defId, u.element as Element, this.look);
+    return isHero(u.defId) ? heroArt(u.defId) : monsterArtId(u.defId, u.element as Element, this.look);
   }
 
   protected text(x: number, y: number, value: string, size = 28, color = '#ffffff') {
@@ -420,6 +420,11 @@ export abstract class FightScene extends Phaser.Scene {
       this.tweens.add({ targets: name, y: name.y - 30, alpha: 0, delay: 650 / speed, duration: 450 / speed, onComplete: () => name.destroy() });
     }
     const ms = hdStrike(this, this.hdHost, src, which, hits, speed, skill);
+    // une frappe qui soigne aussi son équipe (hors sort d'équipe, qui les montre lui-même) : soins et boucliers au coup
+    if (src.hd.ch.anims[which].genre !== 'equipe') {
+      const mine = hits.filter((h) => (h.kind === 'heal' || h.kind === 'shield' || h.kind === 'revive') && this.views.get(h.target)?.unit.side === src.unit.side);
+      if (mine.length) this.time.delayedCall(ms * 0.6, () => mine.forEach((h) => this.showHit(h, false)));
+    }
     if (which === 'speciale') this.dim(Math.max(300, ms - 300));
     this.turnMs = ms + 260 / speed;
     return true;

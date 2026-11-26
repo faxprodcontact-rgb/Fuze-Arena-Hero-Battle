@@ -2,7 +2,7 @@
 // (public/art/hd/v/<id>.webp) et leur respiration en pied (public/art/hd/pied/<id>.webp), tirés des planches HD par
 // refonte-graphique/pixel/hd/anim/vignettes.py. Au combat, les planches HD elles-mêmes (hd-fight.ts).
 import type { Element, Rarity } from '../core/types';
-import { DEFAULT_LOOK, monsterArtId, type Look } from './look';
+import { DEFAULT_LOOK, heroArt, monsterArtId, type Look } from './look';
 
 export const ELEMENT_COLOR: Record<Element, string> = {
   fire: '#ff6b3d', water: '#3da5ff', wind: '#5bd17a', earth: '#c08a4a',
@@ -23,7 +23,7 @@ export function figureUrl(id: string): string {
 
 /** Image d'un héros pour les menus (balise <img>) : son visage. */
 export function heroImage(defId: string): string {
-  return faceUrl(defId);
+  return faceUrl(heroArt(defId));
 }
 
 /** Image d'un monstre pour les menus ; `look` choisit le clan (celui du combat à venir). */

@@ -4,6 +4,7 @@
 // Sert à l'estrade de l'onglet Héros, au choix de la section et à la page d'un héros.
 import { figureUrl, heroImage } from '../art';
 import { HD_FIG } from '../hd-figures';
+import { heroArt } from '../look';
 
 /** Un pixel du dessin, en unités de la boîte (200 × 240) : un héros de 115 pixels mesure 200 unités. */
 const BOX_PER_PX = 1.75;
@@ -33,14 +34,15 @@ export function Figure({ id, class: cls = '' }: { id: string; class?: string }) 
 }
 
 export function HeroFigure({ defId, class: cls = '' }: { defId: string; class?: string }) {
-  const m = fig(defId);
+  const art = heroArt(defId);
+  const m = fig(art);
   if (!m) return <span class={`hfig ${cls}`}><img class="hfig-flat" src={heroImage(defId)} alt="" /></span>;
   const [w, h, fx, fy, n, ms] = m;
   const left = 53 - ((fx * BOX_PER_PX) / 200) * 100, top = 95 - ((fy * BOX_PER_PX) / 240) * 100;
   return (
     <span class={`hfig hfig-px ${cls}`}>
       <span class="px-win" style={{ left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%`, width: `${(((w * BOX_PER_PX) / 200) * 100).toFixed(2)}%`, aspectRatio: `${w} / ${h}` }}>
-        <Strip id={defId} n={n} ms={ms} />
+        <Strip id={art} n={n} ms={ms} />
       </span>
     </span>
   );

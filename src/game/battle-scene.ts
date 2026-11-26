@@ -6,7 +6,7 @@ import { ENERGY_MAX, TICK_MS, type Slot, type Unit } from '../core/battle/types'
 import { C, FONT, FightScene, W, applyTheme } from './fight-view';
 import { HUD_BUTTONS, loadHudArt } from './hud-art';
 import { t } from './i18n';
-import { faceUrl } from './art';
+import { heroImage } from './art';
 import { battleLook } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
 import { getState } from './state/store';
@@ -85,7 +85,7 @@ export class BattleScene extends FightScene {
     super.preload();
     loadHudArt(this);
     // les visages des portraits du bas (refonte-graphique/pixel/hd/anim/vignettes.py)
-    for (const u of this.req.heroes) if (!this.textures.exists(`v-${u.defId}`)) this.load.image(`v-${u.defId}`, faceUrl(u.defId));
+    for (const u of this.req.heroes) if (!this.textures.exists(`v-${u.defId}`)) this.load.image(`v-${u.defId}`, heroImage(u.defId));
   }
 
   /** Haut du panneau des héros (tout le bas de l'écran se place à partir de là). */

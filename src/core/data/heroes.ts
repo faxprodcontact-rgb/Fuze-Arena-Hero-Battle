@@ -1,6 +1,7 @@
-// Les 36 héros du jeu, construits comme des GABARITS : rareté × élément × rôle × variante.
-// Chaque gabarit a ses statistiques, son attaque, sa compétence, ses passifs et (1 sur 3) son talent de chef.
-// Les 72 gabarits d'origine sont gardés pour les statistiques ; seuls les 36 dessinés en HD sont dans le jeu (HERO_IDS).
+// Les 44 héros du jeu. 36 sont construits comme des GABARITS : rareté × élément × rôle × variante (statistiques,
+// attaque, compétence, passifs et, 1 sur 3, talent de chef) ; les 72 gabarits d'origine sont gardés pour les
+// statistiques, seuls les 36 dessinés en HD sont dans le jeu (HERO_IDS). Les 8 autres sont des monstres de clan devenus
+// héros (CLAN_HEROES), avec une compétence écrite pour eux.
 import type { Effect, Passive, SkillDef, Talent } from '../battle/types';
 import { ELEMENTS, type Element, type HeroDef, type Rarity, type Role } from '../types';
 
@@ -201,37 +202,148 @@ export const HERO_IDS = [
 ] as const;
 const KEPT = new Set<string>(HERO_IDS);
 
+/** Ce qu'un héros a en propre ; le reste (PV, attaque, défense, vitesse) vient de son rôle, sa rareté, son élément. */
+interface Spec {
+  id: string; name: string; element: Element; role: Role; rarity: Rarity;
+  skill: SkillDef; passives: [Passive, Passive]; talent?: Talent;
+  /** Retouches de son profil de rôle (un assassin plus rapide, un tireur plus précis…). */
+  tweak?: Partial<Profile>;
+}
+
+function build(s: Spec): HeroDef {
+  const pr = { ...ROLE_PROFILES[s.role], ...s.tweak };
+  const k = RARITY_STAT[s.rarity];
+  const el = ELEMENT_STAT[s.element];
+  return {
+    id: s.id,
+    name: s.name,
+    element: s.element,
+    role: s.role,
+    rarity: s.rarity,
+    ranged: pr.ranged,
+    hitsBack: pr.hitsBack,
+    hp: Math.round(pr.hp * k * (1 + (el.hp ?? 0))),
+    atk: Math.round(pr.atk * k * (1 + (el.atk ?? 0))),
+    def: Math.round(pr.def * k * (1 + (el.def ?? 0))),
+    interval: Math.max(4, Math.round(pr.interval / (1 + (el.speed ?? 0)))),
+    crit: pr.crit,
+    critDmg: pr.critDmg,
+    dodge: pr.dodge,
+    tenacity: pr.tenacity,
+    skill: s.skill,
+    passives: [{ stars: PASSIVE_STARS[0], passive: s.passives[0] }, { stars: PASSIVE_STARS[1], passive: s.passives[1] }],
+    talent: s.talent,
+  };
+}
+
 const TEMPLATES: HeroDef[] = ELEMENTS.flatMap((element, e) =>
   ELEMENT_ROSTER.map(([rarity, role, v, leader], i) => {
     const slot = SLOTS[e * ELEMENT_ROSTER.length + i]!;
-    const pr = ROLE_PROFILES[role];
-    const k = RARITY_STAT[rarity];
-    const el = ELEMENT_STAT[element];
-    const [p1, p2] = passivesFor(role, v);
-    return {
-      id: slot.id,
-      name: slot.name,
-      element,
-      role,
-      rarity,
-      ranged: pr.ranged,
-      hitsBack: pr.hitsBack,
-      hp: Math.round(pr.hp * k * (1 + (el.hp ?? 0))),
-      atk: Math.round(pr.atk * k * (1 + (el.atk ?? 0))),
-      def: Math.round(pr.def * k * (1 + (el.def ?? 0))),
-      interval: Math.max(4, Math.round(pr.interval / (1 + (el.speed ?? 0)))),
-      crit: pr.crit,
-      critDmg: pr.critDmg,
-      dodge: pr.dodge,
-      tenacity: pr.tenacity,
+    return build({
+      id: slot.id, name: slot.name, element, role, rarity,
       skill: skillFor(role, v, element, rarity),
-      passives: [{ stars: PASSIVE_STARS[0], passive: p1 }, { stars: PASSIVE_STARS[1], passive: p2 }],
+      passives: passivesFor(role, v),
       talent: leader ? talentFor(role, rarity) : undefined,
-    } satisfies HeroDef;
+    });
   }),
 );
 
-export const HEROES: HeroDef[] = TEMPLATES.filter((h) => KEPT.has(h.id));
+// ---------- Les 8 monstres de clan devenus héros (décision du propriétaire, 26/11/2026) ----------
+// Ils restent aussi des monstres dans leur clan ; leur dessin est celui du monstre (src/game/look.ts, HERO_ART).
+// Compétences écrites pour coller à leur animation. Valeurs raisonnables : le grand réglage se fera avant la bêta.
+
+/** Force d'une compétence selon la rareté (comme skillFor). */
+const pw = (x: number, rarity: Rarity) => Math.round(x * RARITY_SKILL[rarity] * 100) / 100;
+const first = (role: Role) => passivesFor(role, 0)[0];
+
+const CLAN_HEROES: HeroDef[] = [
+  // Araignée tisseuse (clan d'Arachné) : elle crache sa toile, la cible ralentit et reste collée
+  build({
+    id: 'nyrra', name: 'Nyrra', element: 'earth', role: 'marksman', rarity: 'rare',
+    skill: { id: 'nyrra', effects: [
+      { type: 'damage', target: 'back', power: pw(2, 'rare') },
+      { type: 'status', target: 'same', status: 'slow', value: 0.5, seconds: 5 },
+      { type: 'status', target: 'same', status: 'stun', seconds: 1.5, chance: 0.5 },
+    ] },
+    passives: [first('marksman'), { kind: 'trigger', on: 'attack', chance: 0.3, effects: [{ type: 'status', target: 'attacker', status: 'slow', value: 0.3, seconds: 3 }] }],
+  }),
+  // Serpent guerrier (clan de Méduse) : deux lames très vite, la morsure empoisonne
+  build({
+    id: 'sarvik', name: 'Sarvik', element: 'earth', role: 'assassin', rarity: 'epic', tweak: { interval: 8 },
+    skill: { id: 'sarvik', effects: [
+      { type: 'damage', target: 'lowestHp', power: pw(1.4, 'epic') },
+      { type: 'damage', target: 'same', power: pw(1.4, 'epic') },
+      { type: 'status', target: 'same', status: 'poison', value: 0.03, seconds: 5, chance: 0.9 },
+    ] },
+    passives: [first('assassin'), { kind: 'trigger', on: 'attack', chance: 0.3, effects: [{ type: 'status', target: 'attacker', status: 'poison', value: 0.02, seconds: 3 }] }],
+  }),
+  // Tireuse pirate (clan de Barzul) : le mousquet, puis la grosse balle d'eau ; son perroquet repère les points faibles
+  build({
+    id: 'jessa', name: 'Jessa', element: 'water', role: 'marksman', rarity: 'epic', tweak: { crit: 0.14 },
+    skill: { id: 'jessa', effects: [
+      { type: 'damage', target: 'highestAtk', power: pw(2.4, 'epic') },
+      { type: 'status', target: 'same', status: 'slow', value: 0.4, seconds: 4, chance: 0.8 },
+      { type: 'status', target: 'self', status: 'critUp', value: 0.2, seconds: 6 },
+    ] },
+    passives: [first('marksman'), { kind: 'stats', stats: { critDmg: 0.3 } }],
+  }),
+  // Sorcier oni (clan de Lenore) : sa lanterne lâche des feux follets qui brûlent et affaiblissent
+  build({
+    id: 'oboro', name: 'Oboro', element: 'fire', role: 'support', rarity: 'legendary',
+    skill: { id: 'oboro', effects: [
+      { type: 'damage', target: 'random3', power: pw(1.2, 'legendary') },
+      { type: 'status', target: 'same', status: 'burn', value: 0.4, seconds: 5, chance: 0.9 },
+      { type: 'status', target: 'same', status: 'atkDown', value: 0.2, seconds: 5, chance: 0.6 },
+    ] },
+    passives: [first('support'), { kind: 'trigger', on: 'attack', chance: 0.3, effects: [{ type: 'status', target: 'attacker', status: 'burn', value: 0.3, seconds: 3 }] }],
+    talent: { energyMult: 1.22 },
+  }),
+  // Tengu à l'éventail (clan d'Orin) : ses rafales repoussent la première ligne et lui volent son énergie
+  build({
+    id: 'sorai', name: 'Sorai', element: 'wind', role: 'support', rarity: 'rare',
+    skill: { id: 'sorai', effects: [
+      { type: 'damage', target: 'frontRow', power: pw(0.9, 'rare') },
+      { type: 'energy', target: 'same', amount: -25 },
+      { type: 'status', target: 'same', status: 'slow', value: 0.3, seconds: 3, chance: 0.7 },
+    ] },
+    passives: [first('support'), { kind: 'stats', stats: { speed: 0.06 }, team: true }],
+  }),
+  // Singe chaman (clan d'Eldra) : le grand souffle de sa gourde frappe l'ennemi et soigne toute l'équipe
+  build({
+    id: 'bao', name: 'Bao', element: 'wind', role: 'healer', rarity: 'legendary',
+    skill: { id: 'bao', effects: [
+      { type: 'damage', target: 'front', power: pw(1, 'legendary') },
+      { type: 'heal', target: 'allies', power: pw(1.6, 'legendary') },
+      { type: 'cleanse', target: 'allies' },
+      { type: 'energy', target: 'allies', amount: 10 },
+    ] },
+    passives: [first('healer'), { kind: 'trigger', on: 'start', effects: [{ type: 'shield', target: 'allies', power: 0.08 }] }],
+    talent: { healMult: 1.35 },
+  }),
+  // Singe voleur (clan d'Eldra) : deux coups de dague éclair, il chipe l'énergie de sa cible
+  build({
+    id: 'gribou', name: 'Gribou', element: 'wind', role: 'assassin', rarity: 'rare', tweak: { interval: 8, dodge: 0.14 },
+    skill: { id: 'gribou', effects: [
+      { type: 'damage', target: 'back', power: pw(1.2, 'rare') },
+      { type: 'damage', target: 'same', power: pw(1.2, 'rare') },
+      { type: 'energy', target: 'same', amount: -30 },
+      { type: 'energy', target: 'self', amount: 30 },
+    ] },
+    passives: [first('assassin'), { kind: 'trigger', on: 'kill', effects: [{ type: 'status', target: 'self', status: 'speedUp', value: 0.3, seconds: 5 }] }],
+  }),
+  // Corbeau tengu (clan d'Orin) : un coup de sabre précis sur le plus affaibli, ses coups critiques font très mal
+  build({
+    id: 'karu', name: 'Karu', element: 'wind', role: 'assassin', rarity: 'epic', tweak: { crit: 0.25, critDmg: 1.8 },
+    skill: { id: 'karu', effects: [
+      { type: 'damage', target: 'lowestHp', power: pw(2.8, 'epic'), execute: 0.5 },
+      { type: 'status', target: 'self', status: 'critUp', value: 0.3, seconds: 6 },
+    ] },
+    passives: [first('assassin'), { kind: 'stats', stats: { critDmg: 0.4 } }],
+    talent: { atkMult: 1.1 },
+  }),
+];
+
+export const HEROES: HeroDef[] = [...TEMPLATES.filter((h) => KEPT.has(h.id)), ...CLAN_HEROES];
 
 /** Les héros retirés du jeu (identifiant → rareté, élément) : seulement pour dédommager les vieilles sauvegardes. */
 export const RETIRED_HEROES: ReadonlyMap<string, { rarity: Rarity; element: Element }> = new Map(
