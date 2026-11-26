@@ -69,7 +69,7 @@ def mesures_visage():
 GRD = 116.0        # le sol (le point « sol » du pixel art)
 FEET = (64.0, 116.0)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (1.0, -5.0, 130.0, 124.0)
+FRAME = (1.0, -12.0, 130.0, 131.0)
 
 # ---------- le squelette ----------
 # Une pose = ces réglages ; REST est la pose du dessin (pixels du dessin, degrés, y vers le bas).
@@ -93,7 +93,7 @@ HIP = (64.0, 86.0)                   # le pivot du buste
 NECK = (74.0, 50.0)                  # le pivot (et le centre d'agrandissement) de la tête
 # la tête posée bien au milieu, entre les deux épaules (avis du propriétaire du 26/11, tour 2) : tout ce qui est
 # dessiné dans le repère de la tête glisse de ce décalage (le visage garde ses propres mesures)
-HEAD_AT = (-16.0, 3.0)
+HEAD_AT = (-16.0, -6.0)
 S_POM, S_END, S_HEAD = -22.6, 88.0, 79.0     # le pommeau, le bout du manche, l'axe du fer (le long du manche)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, ml=0.0, pg=0.0, blink=0.0,
@@ -254,10 +254,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  [(0, 9.6, 9.8), (0.5, 9.2, 9.2), (0.75, 8.6, 8.2), (1, 8.2, 8.0)], ['fleg', 'flegh', 'flegf'], P['legn'])
 
     # ======================================================================== le buste (avec la bosse et le cou)
-    torso = sm([(64.0, 38.0), (56.0, 33.4), (47.0, 32.4), (39.0, 35.6), (33.4, 42.4), (30.6, 51.0), (31.0, 60.0),
+    torso = sm([(66.0, 30.4), (57.0, 32.4), (47.0, 32.4), (39.0, 35.6), (33.4, 42.4), (30.6, 51.0), (31.0, 60.0),
                 (32.6, 68.0), (33.4, 75.0), (33.8, 81.8), (48.0, 83.6), (64.0, 84.4), (80.0, 83.4), (93.4, 82.0),
-                (94.0, 76.4), (95.6, 70.6), (97.8, 64.6), (99.6, 58.8), (99.6, 53.6), (97.0, 50.2), (92.0, 48.2),
-                (86.0, 46.2), (76.0, 43.6)])
+                (94.0, 76.4), (95.6, 70.6), (97.8, 64.6), (99.6, 58.8), (99.6, 53.6), (97.0, 50.2), (93.2, 48.4),
+                (89.4, 46.2), (86.2, 42.6), (84.4, 37.4), (81.0, 32.0), (74.0, 29.6)])
     det = [(torso, ('lin', 34, 66, 56, 62, [(0, FUR.deep, 0.5), (1, FUR.deep, 0)]), 1)]
     # les pectoraux : la plaque éclairée, l'ombre dessous (le proche plus large, trois quarts)
     det += [(sm([(42.6, 50.4), (52.0, 47.6), (61.6, 49.0), (66.0, 53.6), (64.8, 59.4), (57.6, 62.0), (48.0, 60.8), (42.0, 56.4)]), FUR.light, 0.5),

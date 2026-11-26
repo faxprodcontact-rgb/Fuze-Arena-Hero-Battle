@@ -470,7 +470,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fv = geom_shapes(gfore.intersection(bodyg))
     if fv:
         det += [(fv, ('lin', W[0] + 3, W[1] - 4, E[0] - 3, E[1] + 3, [(0, SKIN.light, 0.75), (0.55, SKIN.light, 0.25), (1, SKIN.light, 0)]), 1)]
-    det += cast_into(gfore, gup.difference(gfore), 2.4, (0.32, 0.42))
+    det += cast_into(gfore, gup.difference(gfore), 2.6, (0.4, 0.5))
     det += inner_rim(gfore, gup, 0.7, SKIN.hi, 0.55)
     det += cast_into(garm, gtors.difference(garm), 1.8, (0.26, 0.34))
     det += inner_cel(garm, gtors, 1.6, SKIN.shadow, 0.6)
@@ -534,6 +534,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     rope_c = crpath(T_([(44.0, 85.6), (52.0, 86.4), (60.0, 87.4), (68.0, 88.2), (76.0, 88.0), (83.0, 87.0), (91.0, 85.2)]), 40)
     rope0 = taper(rope_c, 3.4, 3.4, tip='round')
     grope = PG(rope0).intersection(gtors.union(gleg)).difference(garm)
+    # (pas de miette de corde coincée entre le coude et le plastron)
+    if grope.geom_type == 'MultiPolygon':
+        from shapely.geometry import MultiPolygon
+        grope = MultiPolygon([g for g in grope.geoms if g.area > 4.0])
     rope = geom_shapes(grope, simplify=0.02)
     det = []
     # la corde tressée : quelques torsions éclairées (inégales), le dessous dans l'ombre

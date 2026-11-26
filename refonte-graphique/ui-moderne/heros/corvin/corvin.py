@@ -340,8 +340,9 @@ def head(fig, P, HEAD, UC):
     # ---- la capuche (le dos de la tête) : une pointe douce en haut, vers l'arrière ----
     hood = sm(HOOD_PTS, sharp=(6,), t=0.92)
     hdet = [
-        # l'intérieur de la capuche (dans l'ombre) : il se voit autour du visage et sous le menton
-        (sm([(58.4, 27.4), (84.2, 27.0), (84.0, 33.0), (80.2, 40.0), (78.4, 46.0), (76.0, 53.0), (70.0, 55.0), (61.0, 52.4), (58.0, 44.0)]),
+        # l'intérieur de la capuche (dans l'ombre) : il reste DANS le galon (sous le visage), il ne se voit que sous le menton
+        (sm([(60.6, 27.6), (84.2, 27.0), (84.0, 33.0), (80.2, 40.0), (78.4, 46.0), (76.0, 53.0), (70.0, 54.6), (64.2, 51.0),
+             (61.0, 45.4), (59.9, 40.0), (59.9, 32.0)]),
          ('lin', 80, 30, 62, 52, [(0, GREEN.shadow), (1, GREEN.deep)]), 1),
         # un grand pli doux de la pointe vers la nuque, la lumière sur le dessus (en haut à droite)
         (ribbon(crpath([(56.6, 20.4), (51.4, 28.0), (49.6, 38.0), (50.4, 48.0)], 16), swell(16, 2.0)), GREEN.shadow, 0.6),
