@@ -457,32 +457,60 @@ def head(fig, P, HEAD):
 
 # ======================================================================== les bras
 
-def fist_parts(fig, name, M, cast_on):
-    """Un poing fermé, vu de côté : le dos de la main, quatre doigts repliés (des bandes, de la plus haute à la plus
-    basse), les jointures à droite (dans le repère du poing : x vers les jointures, y vers le bas), le pouce par-dessus,
-    les griffes d'ivoire. Dessiné dans un repère local (0, 0) = le poignet ; M le pose."""
+# le poing fermé (avis du propriétaire, tour 2 : poings refaits, lisibles) : repère du poing, unité = pixel du dessin
+#   x vers les jointures (à droite), y vers le petit doigt (en bas) ; (0, 0) = le creux où passe le manche.
+FIST_FINGERS = [(-6.6, -3.1, 5.6), (-3.1, 0.3, 6.2), (0.3, 3.4, 5.8), (3.4, 6.1, 4.6)]   # (haut, bas, jointure) de
+FIST_XL = -2.6                                                                           # l'index au petit doigt
+
+
+def fist_parts(fig, name, M, cast_on, wrist, heel):
+    """Un poing de yéti, fermé (vu côté doigts) : la paume et le dos de la main d'une seule forme, FONDUE au poignet
+    (elle descend jusqu'au vrai poignet `wrist`, dans le dessin, depuis le talon `heel` du repère du poing : aucun écart
+    entre la main et l'avant-bras) ; quatre gros doigts repliés, de l'index (en haut) au petit doigt (plus court), leurs
+    jointures arrondies à droite, le bout des doigts rentré contre la paume à gauche, d'où sortent les griffes d'ivoire
+    recourbées ; le pouce, un vrai doigt, couché en travers de l'index, sa griffe au bout. M pose le repère du poing."""
+    from shapely.ops import unary_union
+    from outils import poly_of, geom_shape
     L = lambda sh: sh.map(lambda p: mapp(M, p))
-    body = sm([(-3.6, -2.4), (2.6, -4.4), (9.6, -4.2), (12.8, -1.6), (13.4, 4.6), (12.6, 10.6), (9, 12.8),
-               (2.6, 12.4), (-2.8, 9.6), (-4.4, 3.6)])
-    det = [(sm([(-3.6, -2.4), (2.6, -4.4), (9.6, -4.2), (11.6, -2.8), (3, -2), (-3, 0)]), SKIN.light, 0.6)]
-    fig.part(name, L(body), SKIN, cel=1.3, rim=0.7, cast=1.0, cast_on=cast_on, details=[(L(s), c, o) for s, c, o in det])
-    ys = [(-1.2, 2.2), (2.2, 5.4), (5.4, 8.6), (8.6, 11.8)]
-    for i, (y0, y1) in enumerate(ys):
-        x1 = 13.4 - abs(i - 1.2) * 0.6
-        fing = rpoly([(3.6, y0), (x1, y0 + 0.1), (x1 + 0.4, y1 - 0.1), (3.2, y1)], [1.0, 1.5, 1.5, 1.0])
-        fdet = [(rpoly([(3.6, y0), (x1, y0 + 0.1), (x1 + 0.2, y0 + 1.0), (3.6, y0 + 1.0)], 0.5), SKIN.light, 0.55),
-                (ellipse(x1 - 1.6, (y0 + y1) / 2 - 0.4, 1.1, 0.6), SKIN.hi, 0.45)]
+    body = sm([(-8.6, -3.4), (-6.2, -7.6), (-1.4, -8.4), (3.4, -7.8), (6.0, -5.0), (6.4, 0.2), (5.8, 4.8), (3.6, 7.4),
+               (-1.2, 8.0), (-5.6, 7.2), (-8.4, 3.8), (-9.0, 0.0)])
+    hw = mapp(M, heel)
+    neck = limb([hw, lerp(hw, wrist, 0.55), wrist], [9.0, 8.6, 8.4])
+    sh = geom_shape(unary_union([poly_of(L(body)), poly_of(neck)]))
+    det = [(L(sm([(-6.2, -7.6), (-1.4, -8.4), (3.4, -7.8), (5.2, -6.0), (0.0, -6.6), (-5.0, -5.6)])), SKIN.light, 0.55),
+           (L(ellipse(-6.0, 1.2, 2.2, 3.6, 10)), SKIN.shadow, 0.35)]
+    fig.part(name, sh, SKIN, cel=1.3, rim=0.7, cast=1.0, cast_on=cast_on, details=det)
+    names = [name]
+    n = len(FIST_FINGERS)
+    for i in range(n - 1, -1, -1):                     # du petit doigt à l'index : chaque doigt fait ombre sur le suivant
+        y0, y1, xr = FIST_FINGERS[i]
+        h = y1 - y0
+        ym = (y0 + y1) / 2
+        fing = limb([(FIST_XL, ym + 0.25), ((FIST_XL + xr) / 2, ym - 0.2), (xr - h * 0.42, ym)], [h * 0.92, h, h * 0.98])
+        fdet = [(ribbon([(FIST_XL + 0.6, y0 + 0.75), ((FIST_XL + xr) / 2, y0 + 0.5), (xr - 0.4, y0 + 0.9)],
+                        [0.2, 0.75, 0.2]), SKIN.light, 0.75),
+                (ellipse(xr - h * 0.42, ym - 0.5, 1.2, 0.75, -20), SKIN.hi, 0.5)]
         fig.part('%s%d' % (name, i), L(fing), SKIN, cel=0.8, rim=0.5, cast=0.7,
-                 cast_on=[name] + ['%s%d' % (name, j) for j in range(i)], details=[(L(s), c, o) for s, c, o in fdet])
-        cl = sm([(x1 - 0.2, y1 - 1.6), (x1 + 1.6, y1 - 0.9), (x1 + 2.0, y1 + 0.9), (x1 + 0.3, y1 - 0.2)], sharp=(2,))
-        fig.part('%sc%d' % (name, i), L(cl), IVORY, cel=0.3, rim=0.3, cast=0.3)
-    th = limb([(-1.4, -1.6), (4.2, -3.0), (8.8, -2.2)], [3.6, 3.2, 2.8])
-    fig.part(name + 't', L(th), SKIN, cel=0.8, rim=0.6, cast=0.8, cast_on=[name, name + '0', name + 'c0'],
-             details=[(L(ribbon([(0.4, -3.2), (4.2, -4.0), (8, -3.4)], [0.2, 0.8, 0.2])), SKIN.hi, 0.6)])
-    fig.part(name + 'tc', L(sm([(8.6, -3.4), (10.8, -3.0), (11.4, -1.2), (9.0, -1.2)], sharp=(2,))), IVORY, cel=0.3,
-             rim=0.3, cast=0.3)
-    return [name, name + '0', name + '1', name + '2', name + '3', name + 'c0', name + 'c1', name + 'c2', name + 'c3',
-            name + 't', name + 'tc']
+                 cast_on=[name] + ['%s%d' % (name, j) for j in range(i + 1, n)],
+                 details=[(L(s_), c, o) for s_, c, o in fdet])
+        names.append('%s%d' % (name, i))
+    for i in range(1, n):                              # les griffes : du bout des doigts, recourbées vers la paume
+        y0, y1, xr = FIST_FINGERS[i]
+        ym = (y0 + y1) / 2
+        k = 1.0 if i < 3 else 0.85
+        x = FIST_XL - 0.2
+        cl = sm([(x + 0.9 * k, ym - 1.0 * k), (x - 1.0 * k, ym - 0.3 * k), (x - 2.0 * k, ym + 1.6 * k),
+                 (x + 0.3 * k, ym + 0.9 * k)], sharp=(2,))
+        fig.part('%sc%d' % (name, i), L(cl), IVORY, cel=0.3, rim=0.3, cast=0.4,
+                 cast_on=[name] + ['%s%d' % (name, j) for j in range(n)])
+        names.append('%sc%d' % (name, i))
+    th = limb([(-7.0, -3.2), (-4.0, -6.4), (0.0, -7.2), (3.2, -6.0)], [4.8, 4.2, 3.7, 3.2])
+    fig.part(name + 't', L(th), SKIN, cel=0.8, rim=0.6, cast=0.9, cast_on=[name, name + '0', name + '1', name + 'c1'],
+             details=[(L(ribbon([(-5.4, -6.8), (-1.6, -8.4), (2.6, -7.4)], [0.2, 0.8, 0.2])), SKIN.hi, 0.6),
+                      (L(ribbon([(-4.6, -4.6), (-1.0, -5.4), (2.0, -4.8)], [0.2, 0.6, 0.2])), SKIN.shadow, 0.35)])
+    fig.part(name + 'tc', L(sm([(3.0, -7.4), (5.4, -6.8), (6.4, -4.4), (3.8, -4.8)], sharp=(2,))), IVORY, cel=0.3,
+             rim=0.3, cast=0.4, cast_on=[name + 't', name + '0', name + '1'])
+    return names + [name + 't', name + 'tc']
 
 
 def claw_parts(fig, name, W, ang, spread, cast_on):

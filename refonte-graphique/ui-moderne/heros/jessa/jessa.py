@@ -34,7 +34,7 @@ sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from lib import Shape  # noqa: E402
 from outils import (rot, add, sub, lerp, norm, ang_of, ik, arm_shape, crpath, taper, curve_band, under,  # noqa: E402
-                    almond_pt, inter, FigN, inset, rim_band, morph)
+                    almond_pt, inter, FigN, inset, rim_band, morph, poly, from_poly)
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'mon-barzul-tireur'
@@ -526,6 +526,17 @@ def head(fig, P):
 
 
 # ---------------------------------------------------------------- le chapeau de cuir (avant l'agrandissement ×1,1)
+# Avis du propriétaire (tour 2) : « chapeau à refaire ». Le bord est maintenant UNE seule pièce : le côté proche se
+# relève contre la calotte depuis un pli (plus de disque rond posé à part), le reste file vers l'ennemi et finit en
+# bout arrondi ; un galon d'or continu en suit tout le bord libre (bout, devant, aile relevée) ; la broche épingle
+# l'aile sur le ruban de la calotte.
+HAT_TOP = [(103.0, 38.3), (99.0, 37.7), (93.0, 37.3), (86.0, 36.8), (78.0, 36.3), (70.0, 36.1), (63.0, 36.4)]
+FLAP = [(62.2, 34.4), (62.4, 30.2), (61.8, 26.0), (60.2, 22.6), (57.6, 20.4), (54.4, 19.8), (51.4, 20.9), (49.4, 23.6),
+        (48.4, 27.6), (48.2, 32.4), (48.6, 36.6)]
+HAT_LIP = [(50.0, 40.0), (54.0, 41.4), (58.0, 42.1), (66.0, 42.4), (74.0, 42.5), (82.0, 42.2), (90.0, 41.6), (97.0, 40.9),
+           (101.6, 40.4), (103.4, 39.6)]
+
+
 def hat(fig, P):
     names = []
 
@@ -533,17 +544,17 @@ def hat(fig, P):
         names.append(name)
         return fig.part(name, *a, **k)
     # la calotte pincée (un creux au sommet), le ruban rouge et sa boucle d'or (ils en font le tour : peints dedans)
-    crown = sm([(56.8, 38.0), (57.0, 31.6), (58.4, 27.4), (61.8, 25.0), (66.0, 24.4), (69.6, 25.6), (71.2, 25.0), (75.2, 24.2),
+    crown = sm([(58.4, 38.0), (58.4, 31.6), (59.6, 27.4), (62.6, 25.0), (66.0, 24.4), (69.6, 25.6), (71.2, 25.0), (75.2, 24.2),
                 (79.4, 25.2), (82.6, 28.6), (84.0, 33.0), (84.2, 38.0)], t=0.92)
     BI = [(55.0, 31.6), (62.0, 32.2), (70.0, 32.6), (78.0, 32.4), (86.0, 31.6)]
     BO = [(55.0, 35.6), (62.0, 36.2), (70.0, 36.6), (78.0, 36.4), (86.0, 35.6)]
-    cd = [(ribbon(crpath([(62.0, 26.0), (66.4, 25.4), (69.4, 26.6)], 10), [0.1] + [0.9] * 9 + [0.1]), HAT.light, 0.6),
+    cd = [(ribbon(crpath([(63.0, 26.0), (66.4, 25.4), (69.4, 26.6)], 10), [0.1] + [0.9] * 9 + [0.1]), HAT.light, 0.6),
           (ribbon(crpath([(72.4, 25.6), (76.6, 25.0), (80.6, 26.8), (83.0, 30.6)], 12), [0.1] + [1.3] * 11 + [0.1]), HAT.light, 0.75),
           (ribbon(crpath([(74.6, 25.6), (78.6, 26.0), (81.4, 28.6)], 10), [0.1] + [0.5] * 9 + [0.1]), HAT.hi, 0.6),
           # le pli du pincement, du creux du sommet vers le ruban
           (ribbon(crpath([(70.6, 25.8), (70.0, 28.4), (70.8, 31.6)], 10), [0.6] + [0.9] * 9 + [0.2]), HAT.shadow, 0.75),
           (ribbon(crpath([(71.4, 26.0), (71.0, 28.6), (71.6, 31.4)], 10), [0.2] + [0.4] * 9 + [0.1]), HAT.hi, 0.45),
-          (sm([(55, 30), (61, 28), (63, 38), (55, 38)]), HAT.shadow, 0.45),
+          (sm([(57, 26), (64, 26), (66, 38), (57, 38)]), ('lin', 62, 0, 67, 0, [(0, HAT.shadow, 0.6), (1, HAT.shadow, 0)]), 1),
           (curve_band(BI, BO, 0, 1), RED.base, 1),
           (curve_band(BI, BO, 0, 0.3), RED.light, 0.9),
           (curve_band(BI, BO, 0.78, 1), RED.shadow, 0.85),
@@ -556,42 +567,53 @@ def hat(fig, P):
            (ribbon([(bx + 1.2, 32.6), (bx + 1.2, 35.6)], [0.25, 0.2]), GOLD.light, 0.9)]
     part('crown', crown, HAT, grad=(83, 25, 58, 37, [(0, HAT.light), (0.5, HAT.base), (1, HAT.shadow)]), cel=1.0, rim=0.7, cast=0.9,
          details=cd)
-    # le bord de devant, qui file vers l'ennemi : on en voit le dessus (éclairé) et la tranche ; galon d'or au bord
-    top = [(54.0, 37.0), (62.0, 36.2), (70.0, 36.0), (78.0, 36.4), (86.0, 37.0), (93.0, 37.6), (98.8, 38.0), (102.6, 37.8)]
-    bot = [(101.4, 40.2), (96.0, 40.9), (88.0, 41.5), (80.0, 41.9), (72.0, 42.0), (64.0, 41.9), (56.0, 41.6), (52.6, 40.8)]
-    brim = sm(top + bot, sharp=(0, 7, 8, 15), t=0.85)
-    # le dessus du bord (la bande claire, plus large près de la calotte) et la tranche
-    surf = sm([(54.0, 37.0), (62.0, 36.2), (70.0, 36.0), (78.0, 36.4), (86.0, 37.0), (93.0, 37.6), (98.8, 38.0), (102.6, 37.8),
-               (98.0, 39.0), (90.0, 39.2), (80.0, 39.6), (70.0, 39.8), (60.0, 39.6), (54.0, 39.4)], sharp=(0, 7), t=0.85)
-    gal = crpath([(53.4, 40.9), (64.0, 41.4), (72.0, 41.5), (80.0, 41.4), (88.0, 41.0), (96.0, 40.4), (101.4, 39.6)], 30)
-    bd = [(surf, ('lin', 0, 36, 0, 39.8, [(0, HAT.hi), (0.5, HAT.light), (1, HAT.base)]), 0.95),
-          (ribbon(crpath([(62.0, 36.8), (74.0, 36.8), (88.0, 37.6), (100.0, 38.3)], 18), swell(18, 0.5)), '#fff2d8', 0.6),
-          (taper(gal, 1.2, 0.8), GOLD.base, 1),
-          (taper([(x + 0.1, y - 0.3) for x, y in gal], 0.45, 0.3), GOLD.hi, 0.85),
-          (sm([(53, 36.6), (60, 36.8), (63, 38.6), (60, 42), (53, 42)]), HAT.shadow, 0.5)]
-    part('brimR', brim, HAT, grad=(100, 38, 56, 41.6, [(0, HAT.base), (0.5, HAT.base), (1, HAT.shadow)]), cel=0.4, rim=0.4, cast=1.0,
-         cast_on=['crown', 'face', 'hair', 'patch', 'ear'], details=bd)
-    # le côté proche relevé contre la calotte (une grande aile bombée), bordé d'or, tenu par la broche
-    up_pts = [(41.0, 24.6), (44.2, 20.8), (48.8, 19.4), (53.4, 20.2), (57.4, 23.4), (60.0, 28.2), (61.0, 33.4), (60.2, 38.0),
-              (57.6, 41.0), (52.4, 41.8), (47.2, 40.6), (43.0, 37.2), (40.4, 32.2), (39.8, 28.0)]
-    up_pts = [(56.0 + (x - 56.0) * 0.88, 39.0 + (y - 39.0) * 0.9) for x, y in up_pts]
-    upb = sm(up_pts, t=0.95)
-    ud = [(sm([(38, 29), (43, 34.4), (49, 38.4), (56, 40.2), (61, 38), (61, 44), (38, 44)]), HAT.shadow, 0.55),
-          (ellipse(50.6, 31.6, 6.4, 7.6, 25), ('rad', 52.6, 28.8, 8.0, 8.0, [(0, HAT.light, 0.0), (0.6, HAT.shadow, 0.12), (1, HAT.shadow, 0.4)]), 1),
-          (ribbon(crpath([(44.4, 22.8), (49.4, 21.4), (54.6, 23.4), (58.4, 28.4), (59.4, 33.4)], 18), swell(18, 1.6)), HAT.light, 0.75),
-          (ribbon(crpath([(47.6, 22.6), (52.0, 22.4), (55.8, 25.4)], 10), swell(10, 0.6)), HAT.hi, 0.6),
-          # le pli où l'aile se relève depuis le bord
-          (ribbon(crpath([(46.0, 39.0), (51.2, 40.4), (56.6, 39.6)], 10), swell(10, 0.9)), HAT.deep, 0.35),
-          (rim_band(upb, 1.3), GOLD.base, 1),
-          (rim_band(upb, 0.75, 0.25), GOLD.light, 0.55)]
-    part('brimL', upb, HAT, grad=(58, 21, 42, 39, [(0, HAT.light), (0.5, HAT.base), (1, HAT.shadow)]), cel=0.8, rim=0.6, cast=1.2,
-         cast_on=['crown', 'brimR', 'hair'], details=ud)
-    # la broche d'or (une rosace inventée à quatre lobes, une perle rouge)
-    bc = (56.6, 33.4)
+    # ---- le bord, d'une seule pièce : le dessus qui file vers la droite, le bout arrondi, le devant, le pli, l'aile ----
+    pts = HAT_TOP + FLAP + HAT_LIP
+    n1 = len(HAT_TOP)
+    brim = sm(pts, sharp=(n1 - 1, n1), t=0.9)
+    # le dessus du bord, éclairé (plus large vers l'avant : on le voit d'un peu au-dessus)
+    surf = sm(HAT_TOP + [(62.0, 36.6), (62.0, 39.0), (70.0, 39.6), (80.0, 39.7), (90.0, 39.3), (98.0, 38.9), (102.6, 39.0)],
+              sharp=(n1 - 1, n1, n1 + 1), t=0.85)
+    # le pli : l'aile se relève depuis le bord (une ombre douce, pas un trait)
+    fold = sm([(44.0, 36.4), (48.0, 38.0), (54.0, 38.8), (60.0, 38.6), (62.8, 37.2), (63.4, 39.8), (60.0, 41.0), (52.0, 41.0),
+               (46.0, 40.4), (43.6, 38.8)], t=0.9)
+    # le galon d'or : le long du bord libre (bout, devant, pli, aile), pas sur le bord du fond qui touche la calotte
+    from shapely.geometry import Polygon, LineString
+    B = Polygon(poly(brim, 16)).buffer(0)
+    mask = Polygon([(62.8, 30.0)] + [(x, y + 1.6) for x, y in HAT_TOP[::-1][:-1]] + [(100.0, 39.3), (100.0, 30.0)])
+    gal = []
+    for d_, w_, col, op in ((0.6, 1.2, GOLD.base, 1), (0.42, 0.42, GOLD.hi, 0.75)):
+        ring = B.buffer(-d_, join_style=1).exterior
+        ln_ = ring.difference(mask)
+        segs = [s for s in getattr(ln_, 'geoms', [ln_]) if s.length > 2]
+        # la ligne du galon (un seul morceau : on recolle les bouts du cercle coupé par le masque)
+        if len(segs) > 1:
+            segs.sort(key=lambda s: -s.length)
+            a_, b_ = segs[0], segs[1]
+            cs = list(a_.coords)
+            if Polygon(mask).distance(LineString([cs[-1], cs[-1]])) < 0.01 and b_.coords[0] == cs[-1]:
+                cs += list(b_.coords)[1:]
+            elif list(b_.coords)[-1] == cs[0]:
+                cs = list(b_.coords)[:-1] + cs
+            segs = [LineString(cs)]
+        for s in segs:
+            c_ = list(s.simplify(0.05).coords)
+            c_ = crpath(c_[::max(1, len(c_) // 60)] + [c_[-1]], 3)
+            gal.append((ribbon(c_, [w_ * 0.5] + [w_] * (len(c_) - 2) + [w_ * 0.5], sharp_ends=False), col, op))
+    bd = [(sm(FLAP[2:] + [(46.0, 40.0), (40.0, 40.0), (40.0, 20.0)]), ('lin', 60, 22, 46, 38, [(0, HAT.base, 0), (1, HAT.shadow, 0.55)]), 1),
+          (ribbon(crpath([(51.8, 22.4), (55.0, 21.6), (58.4, 23.4), (60.4, 26.8), (61.0, 30.4)], 16), swell(16, 1.2)), HAT.light, 0.7),
+          (ribbon(crpath([(53.4, 22.2), (56.4, 22.4), (58.6, 24.6)], 10), swell(10, 0.45)), HAT.hi, 0.55),
+          (fold, ('lin', 0, 37.0, 0, 41.0, [(0, HAT.deep, 0), (0.5, HAT.deep, 0.32), (1, HAT.deep, 0.1)]), 1),
+          (surf, ('lin', 0, 36.2, 0, 39.8, [(0, HAT.hi), (0.5, HAT.light), (1, HAT.base)]), 0.95),
+          (ribbon(crpath([(64.0, 36.9), (76.0, 36.9), (88.0, 37.6), (99.0, 38.2)], 18), swell(18, 0.45)), '#fff2d8', 0.6)] + gal
+    part('brim', brim, HAT, grad=(100, 37, 50, 41, [(0, HAT.base), (0.6, HAT.base), (1, HAT.shadow)]), cel=0.5, rim=0.5, cast=1.0,
+         cast_on=['crown', 'face', 'hair', 'patch', 'ear', 'nose'], details=bd)
+    # la broche d'or (une rosace inventée à quatre lobes, une perle rouge) : elle épingle l'aile sur le ruban
+    bc = (60.0, 33.8)
     ro = sm([(bc[0] + (2.7 if i % 2 == 0 else 1.7) * math.cos(math.radians(a)), bc[1] + (2.7 if i % 2 == 0 else 1.7) * math.sin(math.radians(a)))
              for i, a in enumerate(range(0, 360, 45))], t=0.95)
     part('brooch', ro, GOLD, grad=(bc[0] + 2.4, bc[1] - 2.4, bc[0] - 2.4, bc[1] + 2.4, [(0, GOLD.hi), (0.4, GOLD.light), (1, GOLD.shadow)]),
-         cel=0.5, rim=0.45, cast=0.9, cast_on=['brimL', 'crown'],
+         cel=0.5, rim=0.45, cast=0.9, cast_on=['brim', 'crown'],
          details=[(ellipse(bc[0], bc[1], 1.25, 1.25), GOLD.shadow, 0.8), (ellipse(bc[0], bc[1], 0.95, 0.95), RED.base, 1),
                   (ellipse(bc[0] - 0.2, bc[1] + 0.25, 0.6, 0.5), RED.shadow, 0.6),
                   (ellipse(bc[0] + 0.3, bc[1] - 0.3, 0.32, 0.28), '#ffffff', 0.9)])
@@ -636,7 +658,7 @@ def parrot(fig, P):
     body = sm([(46.4, 47.6), (49.6, 47.4), (51.8, 49.6), (52.6, 53.6), (52.0, 57.8), (50.2, 61.4), (47.6, 62.8), (45.0, 62.4),
                (43.6, 59.0), (43.4, 54.0), (44.4, 50.0)], t=0.95)
     fig.part('pbody', body, RED, grad=(52, 48, 44, 62, [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]), cel=0.9, rim=0.5, cast=1.0,
-             cast_on=['hair', 'narm', 'torso', 'ptail', 'brimL'],
+             cast_on=['hair', 'narm', 'torso', 'ptail', 'brim'],
              details=[(ribbon(crpath([(50.8, 49.8), (52.0, 53.6), (51.4, 57.8), (49.6, 60.8)], 14), [0.1] + [0.9] * 13 + [0.1]).move(-0.4, 0), RED.light, 0.6),
                       (ellipse(51.2, 53.0, 0.8, 2.2, -10), RED.hi, 0.35)])
     out['body'].append('pbody')
@@ -654,7 +676,7 @@ def parrot(fig, P):
           (ribbon(crpath(morph([(49.6, 57.6), (48.2, 60.0), (46.4, 62.2)], [(36.8, 38.0), (34.0, 36.4), (31.4, 35.6)], pw), 8),
                   [0.1] + [0.4] * 7 + [0.1]), PBLUE.hi, 0.6)]
     fig.part('pwing', wing, PBLUE, grad=(51, 50, 44, 64, [(0, PBLUE.light), (0.5, PBLUE.base), (1, PBLUE.shadow)]), cel=0.7, rim=0.45,
-             cast=0.9, cast_on=['pbody', 'hair', 'narm', 'torso', 'ptail', 'brimL', 'crown'], details=wd)
+             cast=0.9, cast_on=['pbody', 'hair', 'narm', 'torso', 'ptail', 'brim', 'crown'], details=wd)
     out['body'].append('pwing')
     # la tête (le cou y est compris : la tête hoche sans laisser de jour), la joue blanche, l'œil
     pc = P['pc']

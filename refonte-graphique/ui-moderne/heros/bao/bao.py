@@ -330,9 +330,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     b_x, b_y, b_w = V['bouche']
     med = V['mediane']
     head = sm([(66.6, 60.6), (65.0, 56.4), (64.8, 51.6), (66.0, 47.2), (68.6, 43.8), (72.4, 41.8), (77.2, 41.6),
-               (81.8, 42.6), (85.8, 44.4), (89.0, 46.6), (91.4, 49.2), (92.9, 51.6), (92.4, 53.4), (93.4, 55.0),
-               (94.3, 57.0), (94.1, 58.9), (93.0, 60.4), (91.4, 61.8), (88.6, 63.2), (84.0, 63.8), (78.0, 63.6),
-               (72.0, 62.6)], t=0.95, sharp=(11, 12))
+               (81.8, 42.6), (85.8, 44.4), (89.0, 46.6), (91.3, 49.4), (92.6, 52.4), (93.0, 55.4),
+               (92.6, 58.2), (91.4, 60.6), (89.4, 62.6), (86.4, 63.7), (83.0, 64.0), (78.0, 63.6),
+               (72.0, 62.6)], t=0.95)
     hd = []
     # le crâne : la calotte éclairée en haut à droite, l'arrière dans l'ombre
     hd += [(sm([(69.6, 43.6), (74.0, 42.2), (79.4, 42.6), (84.6, 45.0), (80.0, 45.4), (74.6, 45.0), (70.6, 45.8)]), FUR.light, 0.7),
@@ -342,8 +342,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # sur la médiane ; le côté droit suit le contour (joue, museau) ; le bas se cache sous la barbe
     mz = med(51.4)
     mask = sm([(75.0, 57.4), (74.2, 54.6), (74.8, 51.8), (76.8, 50.2), (79.6, 49.6), (82.4, 50.0), (mz, 51.6),
-               (86.8, 50.0), (89.2, 49.4), (91.6, 49.6), (94.6, 51.0), (96.0, 55.0), (96.0, 59.0), (94.4, 62.6),
-               (89.0, 65.0), (82.0, 65.0), (77.4, 61.4)], sharp=(6,))
+               (86.8, 50.0), (89.2, 49.4), (91.6, 49.6), (93.6, 51.0), (94.4, 55.0), (94.0, 59.0), (92.6, 62.6),
+               (88.6, 65.0), (82.0, 65.0), (77.4, 61.4)], sharp=(6,))
     F1, F2, F3 = SKIN.light, SKIN.base, SKIN.shadow
     hd += [(mask.scale(1.04, 1.03, 85, 56).move(-0.5, 0.2), FUR.deep, 0.35),
            (mask, ('lin', 93, 50, 76, 60, [(0, F1), (0.45, F2), (1, '#d48272')]), 1)]
@@ -393,10 +393,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hd += [(ellipse(n_x + 0.2, n_y + 3.6, 1.2, 0.45, -10), SKIN.hi, 0.3)]
     # le museau de singe : un volume rond qui avance (centré sur la médiane), éclairé en haut à droite ; le pli du
     # côté proche
-    hd += [(sm([(80.4, 56.0), (82.6, 54.6), (86.4, 54.2), (90.4, 54.6), (93.2, 55.8), (94.0, 57.8), (92.6, 60.0),
-                (88.6, 61.2), (84.0, 61.2), (81.0, 59.6)]), ('lin', 92, 54.4, 81, 60.6, [(0, '#fff0de'), (0.55, '#ffd8b8'), (1, '#f0a48e', 0)]), 0.75),
-           (sm([(85.6, 54.6), (88.6, 54.4), (91.6, 54.9), (93.0, 56.0), (90.8, 55.8), (88.0, 55.4)]), SKIN.hi, 0.5),
-           (ribbon([(81.8, 55.0), (80.6, 56.8), (80.6, 58.6)], [0.2, 0.7, 0.2]), SKIN.shadow, 0.55)]
+    mx, my = nz_x + 0.2, nz_y + 1.7          # le centre du museau : sous le nez, sur la médiane
+    muz = sm([(mx + u * (4.9 if u < 0 else 4.4), my + v * 3.4) for u, v in
+              ((-1.0, 0.0), (-0.78, -0.66), (-0.3, -0.97), (0.3, -0.97), (0.78, -0.66), (1.0, 0.0), (0.74, 0.7),
+               (0.26, 0.98), (-0.26, 0.98), (-0.74, 0.7))])
+    hd += [(muz, ('lin', mx + 4, my - 3.4, mx - 4.4, my + 3, [(0, '#fff0de'), (0.55, '#ffd8b8'), (1, '#f0a48e', 0)]), 0.75),
+           (sm([(mx - 0.4, my - 3.1), (mx + 1.6, my - 3.25), (mx + 3.3, my - 2.5), (mx + 3.9, my - 1.6), (mx + 2.4, my - 2.2), (mx + 0.6, my - 2.6)]), SKIN.hi, 0.5),
+           (ribbon([(mx - 3.6, my - 2.4), (mx - 4.6, my - 0.9), (mx - 4.7, my + 0.8)], [0.2, 0.7, 0.2]), SKIN.shadow, 0.55)]
     # le nez plat de singe : l'arête claire entre les yeux (sur la médiane), deux narines de part et d'autre
     nN = sm([(nz_x - 1.3, nz_y + 0.3), (nz_x - 0.75, nz_y - 0.4), (nz_x - 0.3, nz_y - 0.25), (nz_x - 0.65, nz_y + 0.32)], sharp=(0,))
     nF = sm([(nz_x + 1.25, nz_y + 0.2), (nz_x + 0.8, nz_y - 0.4), (nz_x + 0.4, nz_y - 0.25), (nz_x + 0.72, nz_y + 0.28)], sharp=(0,))
@@ -438,8 +441,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             out.append((x - 0.065 * P['bs'] * d * d / (d + 8.0), y))
         return out
     beard = sm(bw([(70.8, 51.4), (72.4, 53.2), (73.8, 55.2), (75.6, 56.8), (77.8, 57.7), (80.2, 58.2), (82.0, 59.6),
-                   (83.4, 60.7), (84.6, 61.0), (85.8, 60.8), (87.2, 60.2), (89.2, 59.4), (91.4, 58.9), (93.4, 58.8),
-                   (94.2, 60.2), (93.6, 62.4), (92.6, 64.8), (91.2, 67.6), (89.9, 72.4), (88.8, 77.2), (87.6, 81.8),
+                   (83.4, 60.7), (84.6, 61.0), (85.8, 60.8), (87.2, 60.2), (88.8, 59.2), (90.4, 58.7), (91.8, 58.9),
+                   (92.6, 60.2), (92.5, 62.4), (91.8, 64.8), (90.8, 67.6), (89.9, 72.4), (88.8, 77.2), (87.6, 81.8),
                    (86.2, 86.0), (84.4, 89.4), (82.6, 92.2), (81.8, 88.6), (80.2, 90.6), (79.2, 86.8), (77.2, 88.0),
                    (76.2, 83.4), (74.8, 77.6), (73.4, 71.4), (71.8, 67.8), (69.4, 65.2), (66.8, 63.0), (65.0, 60.4),
                    (64.6, 57.6), (65.4, 55.2), (67.8, 53.0)]), sharp=(23, 24, 25, 26, 27))
@@ -453,11 +456,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
           (ribbon(bw([(81.0, 61.6), (81.6, 67.0), (82.0, 74.0), (81.8, 80.0)]), [0.1, 0.9, 0.9, 0.2]), HAIR.hi, 0.7),
           (ribbon(bw([(84.2, 62.4), (84.4, 70.0), (83.8, 78.0), (82.2, 88.0)]), [0.2, 1.0, 0.9, 0.2]), HAIR.base, 0.75),
           (ribbon(bw([(87.4, 62.2), (87.4, 68.0), (86.4, 76.0)]), [0.2, 1.1, 0.2]), HAIR.hi, 0.9),
-          (ribbon(bw([(91.2, 61.0), (90.6, 65.4), (89.0, 72.0)]), [0.1, 0.8, 0.2]), HAIR.hi, 0.8),
+          (ribbon(bw([(90.6, 61.2), (90.2, 65.4), (89.0, 72.0)]), [0.1, 0.8, 0.2]), HAIR.hi, 0.8),
           # les favoris : un reflet doux sur la joue (la barbe a du volume, elle ne fait pas de marche)
           (ribbon(bw([(72.6, 54.0), (74.4, 56.2), (77.0, 57.8)]), [0.1, 0.6, 0.1]), HAIR.hi, 0.6),
           # l'ombre de la moustache et de la lèvre sur le haut de la barbe
-          (ribbon(bw([(79.4, 59.4), (82.4, 61.4), (85.0, 62.2), (88.0, 61.6), (91.2, 60.4)]), [0.2, 1.0, 1.1, 1.0, 0.2]), HAIR.shadow, 0.5)]
+          (ribbon(bw([(79.4, 59.4), (82.0, 61.4), (84.6, 62.2), (87.2, 61.6), (89.8, 60.4)]), [0.2, 1.0, 1.1, 1.0, 0.2]), HAIR.shadow, 0.5)]
     fig.part('beard', beard, HAIR, grad=(94, 58, 72, 84, [(0, HAIR.light), (0.5, HAIR.base), (1, HAIR.shadow)]),
              cel=1.2, rim=0.35, cast=1.3, cast_on=['robe', 'sleeveF', 'lap', 'knot', 'sashB'], details=bd)
 
@@ -477,15 +480,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- la moustache blanche : elle part de sous le nez (sur la médiane), couvre la lèvre du haut, ses deux pointes
     #      tombent dans la barbe ; la pointe du fond pend au bord du museau ----
-    must = sm([(nz_x - 0.2, nz_y + 0.7), (nz_x - 1.8, nz_y + 0.55), (nz_x - 3.8, nz_y + 1.0), (nz_x - 5.4, nz_y + 2.4),
-               (nz_x - 6.2, nz_y + 4.6), (nz_x - 6.3, nz_y + 6.8), (nz_x - 5.1, nz_y + 4.8), (nz_x - 3.8, nz_y + 3.2),
-               (nz_x - 1.8, nz_y + 2.4), (nz_x + 0.2, nz_y + 2.2),
-               (nz_x + 2.4, nz_y + 2.3), (nz_x + 4.6, nz_y + 2.8), (nz_x + 6.4, nz_y + 4.4), (nz_x + 7.6, nz_y + 6.8),
-               (nz_x + 8.2, nz_y + 8.6), (nz_x + 8.8, nz_y + 6.2), (nz_x + 8.6, nz_y + 3.6), (nz_x + 7.2, nz_y + 1.6),
-               (nz_x + 5.0, nz_y + 0.6), (nz_x + 2.2, nz_y + 0.45)], sharp=(5, 14))
-    fig.part('must', must, HAIR, grad=(nz_x + 8, nz_y, nz_x - 5, nz_y + 6, [(0, HAIR.light), (0.5, HAIR.base), (1, HAIR.shadow)]),
+    half = [(1.8, 0.55), (3.8, 1.0), (5.4, 2.4), (6.2, 4.6), (6.3, 6.8), (5.1, 4.8), (3.8, 3.2), (1.8, 2.4)]
+    kf = 0.9                                  # la moitié du fond, un peu raccourcie (3/4), même forme en miroir
+    must = sm([(nz_x, nz_y + 0.7)] + [(nz_x - u, nz_y + v) for u, v in half] + [(nz_x, nz_y + 2.2)]
+              + [(nz_x + kf * u, nz_y + v) for u, v in reversed(half)], sharp=(5, 14))
+    fig.part('must', must, HAIR, grad=(nz_x + 6, nz_y, nz_x - 5, nz_y + 6, [(0, HAIR.light), (0.5, HAIR.base), (1, HAIR.shadow)]),
              cel=0.7, rim=0.5, cast=1.0, cast_on=['beard', 'head'],
-             details=[(ribbon([(nz_x + 2.0, nz_y + 1.0), (nz_x + 5.4, nz_y + 1.4), (nz_x + 7.6, nz_y + 3.2), (nz_x + 8.3, nz_y + 6.0)], [0.1, 0.6, 0.6, 0.1]), HAIR.hi, 0.85),
+             details=[(ribbon([(nz_x + 1.6, nz_y + 1.0), (nz_x + 3.6, nz_y + 1.5), (nz_x + 5.0, nz_y + 3.0), (nz_x + 5.6, nz_y + 5.4)], [0.1, 0.6, 0.6, 0.1]), HAIR.hi, 0.85),
                       (ribbon([(nz_x - 1.0, nz_y + 1.2), (nz_x - 3.6, nz_y + 1.8), (nz_x - 5.2, nz_y + 3.6), (nz_x - 5.8, nz_y + 5.6)], [0.1, 0.6, 0.5, 0.1]), HAIR.shadow, 0.6)])
 
     # ---- les longs sourcils blancs qui tombent : le proche se fond dans les favoris ----
