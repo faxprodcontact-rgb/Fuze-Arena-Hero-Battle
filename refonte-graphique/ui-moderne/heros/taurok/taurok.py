@@ -306,9 +306,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                 (89.4, 46.2), (86.2, 42.6), (84.4, 37.4), (81.0, 32.0), (74.0, 29.6)])
     det = [(torso, ('lin', 34, 66, 56, 62, [(0, FUR.deep, 0.5), (1, FUR.deep, 0)]), 1)]
     # les pectoraux : la plaque éclairée, l'ombre dessous (le proche plus large, trois quarts)
-    det += [(sm([(42.6, 50.4), (52.0, 47.6), (61.6, 49.0), (66.0, 53.6), (64.8, 59.4), (57.6, 62.0), (48.0, 60.8), (42.0, 56.4)]), FUR.light, 0.5),
+    det += [(sm([(43.0, 51.6), (52.0, 49.8), (61.6, 51.4), (66.0, 54.6), (64.8, 59.4), (57.6, 62.0), (48.0, 60.8), (42.0, 56.4)]), FUR.light, 0.5),
             (sm([(41.6, 58.0), (48.0, 62.2), (57.6, 63.6), (65.4, 60.4), (66.2, 63.8), (58.0, 66.4), (47.4, 65.2), (40.8, 61.0)]), FUR.shadow, 0.8),
-            (sm([(69.0, 52.6), (78.0, 51.0), (88.4, 52.2), (95.6, 55.8), (95.0, 61.0), (87.4, 63.4), (76.4, 63.0), (69.6, 59.4)]), FUR.hi, 0.42),
+            (sm([(69.4, 54.4), (78.0, 53.2), (88.4, 53.6), (95.6, 55.8), (95.0, 61.0), (87.4, 63.4), (76.4, 63.0), (69.6, 59.4)]), FUR.hi, 0.42),
             (sm([(69.4, 61.0), (77.0, 64.6), (87.6, 65.0), (95.2, 62.0), (94.4, 65.6), (87.2, 67.6), (76.4, 67.0), (69.0, 64.4)]), FUR.shadow, 0.75),
             (ribbon([(67.2, 51.0), (67.8, 57.4), (67.4, 64.4)], [0.1, 1.3, 0.2]), FUR.shadow, 0.6)]
     # les abdominaux : des blocs doux qui rétrécissent vers le bas (la ligne du milieu décalée vers la droite)
@@ -325,6 +325,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det += [(ribbon([(38.6, 63.0), (42.4, 64.4), (45.4, 63.6)], [0.1, 0.9, 0.1]), FUR.deep, 0.4),
             (ribbon([(39.0, 67.6), (42.8, 68.6), (45.6, 67.8)], [0.1, 0.8, 0.1]), FUR.deep, 0.35),
             (ribbon([(90.6, 68.0), (89.4, 74.0), (89.0, 80.0)], [0.1, 1.0, 0.1]), FUR.shadow, 0.5)]
+    # le cou de taureau (avis du propriétaire du 26/11, tour 3 : la tête ne s'enfonce plus dans le torse) : une colonne
+    # épaisse et courte sous la mâchoire, éclairée à droite, le muscle du cou côté lumière, le pli à sa base (le haut
+    # du sternum et les clavicules), le creux du sternum au milieu
+    det += [(sm([(48.0, 41.0), (64.0, 44.6), (78.0, 44.4), (85.6, 39.4), (88.8, 45.4), (84.6, 49.6), (74.0, 52.0), (62.0, 52.4),
+                 (52.0, 49.6), (45.6, 45.4)]), FUR.light, 0.3),
+            (ribbon([(86.2, 40.4), (84.6, 44.6), (80.6, 48.8), (76.4, 51.2)], [0.1, 1.5, 1.2, 0.1]), FUR.hi, 0.5),
+            (ribbon([(45.0, 46.2), (53.0, 50.6), (62.0, 53.0), (72.0, 53.0), (82.0, 50.8), (90.2, 46.8)],
+                    [0.1, 1.0, 1.4, 1.4, 1.0, 0.1]), FUR.shadow, 0.6),
+            (ribbon([(66.4, 50.6), (67.0, 53.0), (67.4, 55.6)], [0.1, 1.0, 0.1]), FUR.shadow, 0.5)]
     # la bosse : la masse des trapèzes, éclairée en haut
     det += [(sm([(44.0, 34.4), (54.0, 34.0), (62.0, 38.6), (58.0, 42.0), (48.0, 40.6), (40.6, 40.4)]), FUR.light, 0.35)]
     fig.part('torso', torso, FUR, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(FUR.deep, 0.22, 3.4))

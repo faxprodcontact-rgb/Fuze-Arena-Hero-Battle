@@ -5,7 +5,7 @@
 #
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/zephyre.txt) : une kunoichi fine et athlétique, ramassée
 # comme un ressort, trois quarts vers la droite. Garde basse de ninja : les deux genoux pliés, la jambe proche en avant
-# (cuisse presque à plat, genou vers l'ennemi), la jambe lointaine repliée derrière ; buste penché vers l'ennemi. Bras
+# (cuisse presque à plat, genou vers l'ennemi), la jambe lointaine en arrière (genou plié vers l'avant lui aussi) ; buste penché vers l'ennemi. Bras
 # lointain levé, coude plié : le poing serre la branche basse du grand shuriken à quatre branches. Bras proche replié
 # devant la poitrine, avant-bras en travers : le kunaï tenu à l'envers (doigts devant le manche, anneau du côté du
 # poignet, lame vers l'ennemi). Tenue ajustée bleu nuit (jamais de noir pur), cagoule ronde et masque (on ne voit que la
@@ -77,6 +77,7 @@ SG_FL, SG_NL = sign_for(FH, FK0, FA0), sign_for(NH, NK0, NA0)
 STAR_LOCAL = (14.2, 2.6)        # le centre du shuriken dans le repère du poing (le long de l'avant-bras, vers la droite) :
 #   tenu de près (avis du 26/11, tour 2) : la branche basse entre dans le poing jusqu'au moyeu, pincée entre pouce et index
 STAR_R = 11.0
+STRAP = [(55.2, 58.2), (61.0, 61.8), (67.6, 66.6), (74.4, 72.6), (82.6, 79.8)]   # la sangle du sabre (repère du buste)
 
 # la boîte de la face (ovale du visage sous la cagoule, sans le crâne) et la place des traits (../visage.py)
 FACEBOX = (62.0, 29.5, 88.5, 56.0)
@@ -480,7 +481,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (ribbon(lap, [0.1, 0.75, 0.75, 0.7, 0.1]), CLOTH.hi, 0.8),
            (sm([(70.4, 55.2), (79.6, 55.4), (75.8, 59.2), (72.4, 58.4)], t=0.8), CLOTH.deep, 0.75)]
     # la sangle de cuir du sabre : une diagonale de l'épaule proche à la hanche lointaine, boucle de laiton
-    strap = [(55.2, 58.2), (61.0, 61.8), (67.6, 66.6), (74.4, 72.6), (82.6, 79.8)]
+    strap = STRAP
     td += [(ribbon([(x - 0.4, y + 0.7) for x, y in strap], [2.3] * 5), CLOTH.deep, 0.45),
            (ribbon(strap, [2.3] * 5), ('lin', 60, 58, 62, 64, [(0, LEATHER.light), (1, LEATHER.base)]), 1),
            (ribbon([(x + 0.25, y - 0.6) for x, y in strap], [0.05, 0.5, 0.5, 0.5, 0.05]), LEATHER.hi, 0.55)]
@@ -535,6 +536,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ndet += [(ribbon(fold, [0.05, 0.9, 1.3, 0.4]), CLOTH.deep, 0.45),
              (ribbon([lerp(S2, E2, 0.66), lerp(S2, E2, 0.88), lerp(E2, W2, 0.12)], [0.1, 0.55, 0.1]), CLOTH.deep, 0.4),
              (ribbon([lerp(S2, E2, 0.15), lerp(S2, E2, 0.45), lerp(S2, E2, 0.75)], [0.1, 0.9, 0.1]).move(0.6, 0), CLOTH.light, 0.3)]
+    # la sangle du sabre passe PAR-DESSUS l'épaule (avis du 26/11, tour 2 : elle ne s'arrête plus en l'air au bord du
+    # bras) : elle suit la même diagonale que sur le buste, s'arrondit sur le haut de l'épaule et file derrière, vers la
+    # garde du sabre
+    sp = [mapp(TOR, STRAP[1])] + MP(UC, [(58.6, 59.9), (56.8, 58.5), (55.0, 57.4)])
+    ndet += [(ribbon([(x - 0.4, y + 0.7) for x, y in sp], [2.3] * 4), CLOTH.deep, 0.45),
+             (ribbon(sp, [2.3] * 4), ('lin', *MP(UC, [(58, 57.6)])[0], *MP(UC, [(60, 63.0)])[0],
+                                      [(0, LEATHER.light), (1, LEATHER.base)]), 1),
+             (ribbon([(x + 0.25, y - 0.6) for x, y in sp], [0.5, 0.5, 0.45, 0.05]), LEATHER.hi, 0.55)]
     fig.part('narm', narm, CLOTH, grad=(S2[0] + 1.0, S2[1] - 2.0, E2[0] - 1.5, E2[1] + 3.0,
                                         [(0, cap_col), (0.5, CLOTH.base), (1, CLOTH.shadow)]),
              cel=1.1, rim=0, cast=1.2, cast_on=['torso', 'bknot', 'grip', 'tsuba'], details=ndet)

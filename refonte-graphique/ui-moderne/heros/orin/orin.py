@@ -32,7 +32,7 @@ HAKAMA = Mat('#a48aac', '#7e6486', '#5e4466', '#402c4a', '#28182e')
 GOLD = Mat('#fff1a6', '#f8cc50', '#d8922a', '#965220', '#5a2a18')
 STEEL = Mat('#f6f9ff', '#d2deee', '#9ca8c6', '#5c6488', '#33385a')
 WOOD = Mat('#e2ac72', '#c89058', '#9c6436', '#6a3a24', '#3a1e1a')
-SILK = Mat('#ffa088', '#ef5848', '#cc3036', '#8e1c34', '#581028')
+SILK = Mat('#ff8a8e', '#e2304a', '#b81834', '#7c0c2c', '#48061e')   # cramoisi : bien distinct de la peau orangée (pas de « bras » rouge sous la manche)
 LACQ = Mat('#9aa2d6', '#4c4c74', '#2c2842', '#1c1628', '#0e0a16', glint='#e8ecff')
 EYE = ('#fff3c8', '#f2a826', '#b8620e', '#220c16')
 
