@@ -555,16 +555,19 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # bois) et les trois mèches du haut, fondues en UNE forme (aucune couture : comme la chevelure de Kael) ; chaque mèche
     # sort de la masse sans ligne (sa couleur et ses ombres apparaissent en douceur après sa racine) ----
     w_ = 0.25 * math.sin(ph - 0.5)
-    root = sm([(50.2, 13.2), (49.6, 15.4), (47.8, 17.4), (46.4, 19.6), (45.4 + w_, 22.6),
-               (43.9, 23.0), (43.5, 25.6), (44.4 + w_, 29.4), (42.7, 29.6), (42.4, 32.4), (43.2 + w_, 35.8),
-               (41.2, 37.6), (38.0, 37.4), (35.4, 33.0), (35.0, 26.0), (36.6, 19.4), (40.6, 15.0), (45.6, 12.6)],
-              sharp=(4, 7, 10), t=0.85)
+    # la naissance des poils suit le dos du crâne en retrait, en trois touffes qui pointent vers le bas (le long de la
+    # joue) ; en haut, elle passe juste au-dessus de l'arcade et enveloppe la base du bois
+    root = sm([(50.6, 12.8), (49.8, 15.4), (48.4, 18.0), (46.6, 20.6), (44.2, 22.0),
+               (43.4, 24.2), (44.0 + w_, 27.6), (41.8, 27.4), (41.2, 30.0), (42.0 + w_, 33.4), (40.2, 33.0), (39.8, 35.4),
+               (41.0 + w_, 38.2), (38.4, 37.6), (35.4, 33.0), (35.0, 26.0), (36.6, 19.4), (40.6, 15.0), (45.6, 12.6)],
+              sharp=(6, 7, 9, 10, 12), t=0.85)
     mane = fused([root] + [L[1] for L in upper_locks])
-    mdet = [(mane, ('lin', 50, 14, 34, 36, [(0, MANE.hi), (0.35, MANE.light), (0.75, MANE.base), (1, MANE.shadow)]), 1),
+    MGRAD = ('lin', 50, 14, 34, 36, [(0, MANE.light), (0.5, MANE.base), (1, '#b4bde6')])
+    mdet = [(mane, MGRAD, 1),
             # l'ombre douce sous la racine (le dessous de la tête, la nuque)
             (sm([(34.6, 30), (39.6, 31.6), (42.6, 33.4), (43.4, 36.4), (41.2, 38.2), (37.6, 38.0), (34.4, 34.6)]), MANE.shadow, 0.55)]
     for name, sh, p0, p3, grad, sheen in reversed(upper_locks):          # de la plus haute (devant) à la plus basse
-        fade = min(0.5, 8.0 / math.dist(p0, p3))
+        fade = min(0.5, 5.0 / math.dist(p0, p3))
         ax = (p0[0], p0[1], p3[0], p3[1])
         for (dx, dy), op in (((-0.66, 1.5), 0.2), ((-0.36, 0.72), 0.28)):
             sh_ = cast_off(sh, dx, dy)
@@ -574,19 +577,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         mdet.append((sm_under(sh), ('lin',) + ax + (faded([(0, MANE.deep), (0.5, MANE.shadow), (1, MANE.shadow)], fade, 0.85),), 1))
         mdet.append((sheen.move(0.4, -1.0), ('lin',) + ax + (faded([(0, MANE.hi), (1, MANE.hi)], fade, 0.75),), 1))
     # le long de la naissance des poils (sur la joue) : quelques mèches courtes, à peine marquées, qui partent en arrière
-    for pts, wv in (([(47.4, 17.0), (44.2, 18.4), (40.6, 18.6)], 0.7), ([(44.8, 23.6), (41.4, 24.6), (38.2, 24.2)], 0.65),
-                    ([(43.6, 29.8), (40.4, 30.6), (37.4, 30.0)], 0.6)):
-        mdet.append((ribbon(pts, [0.1, wv, 0.1]), MANE.shadow, 0.55))
+    for pts, wv in (([(43.0, 25.2), (40.4, 26.4), (37.6, 26.0)], 0.6), ([(41.2, 31.2), (39.0, 32.2), (36.6, 31.8)], 0.55)):
+        mdet.append((ribbon(pts, [0.1, wv, 0.1]), MANE.shadow, 0.5))
     fig.part('mane', mane, MANE, cel=1.1, rim=0.8, cast=1.2, cast_on=['head', 'neck', 'mfront', 'mE', 'mF', 'robe'], details=mdet)
 
     # ---- le bois proche (côté spectateur) : devant la tête et la crinière, sa base plantée dans la crinière ----
     for name, sh, g in BACK_ANT:
         fig.part(name, sh, GOLD, grad=g, cel=1.0, rim=0.7, cast=0.6, cast_on=['antB0', 'antB1', 'mane', 'head'])
-    # une mèche de la crinière recouvre la base du bois (il sort des poils, planté dans le crâne)
-    tuft2 = lock((49.6, 18.4), (46.6, 16.4), (43.2, 15.6), (39.6 - 0.6 * w_, 16.2), 6.4, n=12, bulge=0.4)
-    fig.part('mtuft', tuft2, MANE, grad=(50, 15, 40, 19, [(0, MANE.hi), (0.5, MANE.light), (1, MANE.base)]),
-             cel=0.9, rim=0.7, cast=1.0, cast_on=['antB', 'antB0', 'antB1', 'mane', 'head'],
-             details=[(sm_under(tuft2, 0.5, -1.6), MANE.shadow, 0.8)])
+    # la base du bois est enfouie dans les poils : une touffe de la racine (même dégradé que la crinière, aucun bord
+    # visible sur elle) la recouvre ; ses pointes remontent un peu sur le bois
+    tuftb = sm([(48.2, 17.6), (47.6, 16.6), (46.9 + w_, 14.8), (46.0, 16.2), (45.0, 15.4), (44.4 + w_, 13.8), (43.6, 15.8),
+                (42.0, 16.4), (41.0, 19.6), (42.4, 22.0), (44.6, 21.6), (46.6, 20.2)], sharp=(2, 5), t=0.85)
+    fig.part('mtuft', tuftb, MANE, grad=MGRAD[1:], cel=0, rim=0, cast=0.8, cast_on=['antB', 'antB0', 'antB1', 'head'])
 
     # ---- le barbillon d'or en S, qui tombe de la truffe ----
     bb = P['barb']

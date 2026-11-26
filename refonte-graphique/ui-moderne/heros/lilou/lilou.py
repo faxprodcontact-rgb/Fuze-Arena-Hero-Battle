@@ -56,6 +56,7 @@ HP = (92.0, 52.0)               # la tête est agrandie ×1,1 autour de ce point
 HSC = 1.1
 NS, NE0, NW0 = (54.0, 60.6), (47.6, 81.0), (61.4, 71.4)       # bras proche : épaule, coude, poignet (repos)
 GW = (53.4, 68.4)               # le poignet dans le dessin du gant proche (le gant est porté là où est le poignet)
+CUFF_A = 28.0                   # le revers du gant lointain, incliné comme l'avant-bras (degrés)
 NGA0 = -18.0                    # le gant proche, au repos, dans l'axe de l'avant-bras (le poignet droit)
 FS, FE0, FW0 = (84.6, 63.6), (94.2, 79.6), (102.6, 64.8)      # bras lointain (épaule cachée derrière le plastron)
 NH, NK0, NA0 = (51.6, 95.0), (50.4, 102.6), (46.8, 110.2)     # jambe proche : hanche, genou, cheville
@@ -700,17 +701,21 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     FGM = sk['FGM']
     FG = lambda pts: MP(FGM, pts)
     fp = lambda p: mapp(FGM, p)
-    fcuff = rpoly(FG([(97.8, 58.6), (107.0, 58.0), (107.8, 66.2), (98.4, 66.8)]), 1.4)
-    lace = [(ribbon(FG([(102.6, 59.8), (102.9, 62.6), (103.2, 66.2)]), [0.3, 1.1, 0.5]), RED.deep, 0.85)]
+    # le revers (et sa bande) dans l'axe de l'avant-bras : il entre sous le gant, sans décalage
+    FCM = mchain(FGM, mT(1.2, 0.9), mR(CUFF_A, *FW0))
+    FC = lambda pts: MP(FCM, pts)
+    fc = lambda p: mapp(FCM, p)
+    fcuff = rpoly(FC([(97.8, 58.6), (107.0, 58.0), (107.8, 66.2), (98.4, 66.8)]), 1.4)
+    lace = [(ribbon(FC([(102.6, 59.8), (102.9, 62.6), (103.2, 66.2)]), [0.3, 1.1, 0.5]), RED.deep, 0.85)]
     for y_, d_ in ((61.2, 0.5), (64.2, -0.4)):
-        lace += [(ribbon(FG([(100.6, y_ + d_), (102.9, y_), (105.4, y_ - d_)]), [0.5, 0.8, 0.5]), WHITE.base, 1),
-                 (ribbon(FG([(101.0, y_ + d_ - 0.25), (102.9, y_ - 0.25), (105.0, y_ - d_ - 0.25)]), [0.1, 0.35, 0.1]), '#ffffff', 0.9)]
+        lace += [(ribbon(FC([(100.6, y_ + d_), (102.9, y_), (105.4, y_ - d_)]), [0.5, 0.8, 0.5]), WHITE.base, 1),
+                 (ribbon(FC([(101.0, y_ + d_ - 0.25), (102.9, y_ - 0.25), (105.0, y_ - d_ - 0.25)]), [0.1, 0.35, 0.1]), '#ffffff', 0.9)]
         for x_ in (100.4, 105.6):
-            lace += [(ellipse(*fp((x_, y_ + (d_ if x_ < 103 else -d_))), 0.5, 0.5), RED.deep, 0.9)]
-    fig.part('fcuff', fcuff, RED, grad=(*fp((107, 58)), *fp((98, 66)), [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]),
+            lace += [(ellipse(*fc((x_, y_ + (d_ if x_ < 103 else -d_))), 0.5, 0.5), RED.deep, 0.9)]
+    fig.part('fcuff', fcuff, RED, grad=(*fc((107, 58)), *fc((98, 66)), [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]),
              cel=1.0, rim=0.6, cast=1.1, cast_on=['farm', 'body', 'head'], details=lace)
-    fband = sm(FG([(98.4, 57.2), (106.8, 56.6), (107.0, 59.2), (98.6, 59.8)]), sharp=(0, 1, 2, 3), t=0.5)
-    fig.part('fband', fband, WHITE, grad=(*fp((106, 57)), *fp((99, 60)), [(0, WHITE.hi), (0.5, WHITE.base), (1, WHITE.shadow)]),
+    fband = sm(FC([(98.4, 57.2), (106.8, 56.6), (107.0, 59.2), (98.6, 59.8)]), sharp=(0, 1, 2, 3), t=0.5)
+    fig.part('fband', fband, WHITE, grad=(*fc((106, 57)), *fc((99, 60)), [(0, WHITE.hi), (0.5, WHITE.base), (1, WHITE.shadow)]),
              cel=0.4, rim=0.4, cast=0.8)
     fglove = sm(FG([(102.8, 49.6), (106.0, 46.4), (111.0, 45.2), (115.6, 46.6), (118.4, 50.0), (119.0, 54.2), (117.8, 58.0), (114.6, 60.4),
                     (109.6, 60.8), (105.2, 59.8), (102.6, 56.8)]), t=0.9)
