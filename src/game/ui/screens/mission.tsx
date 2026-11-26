@@ -26,7 +26,7 @@ export function MissionPage({ id }: { id: string }) {
   return (
     <Page title={t(`mission.${tpl.id}`)}>
       <section class="fuse-stage mission-stage">
-        <div class="mission-art"><Icon name={`mission-${tpl.id}`} size={120} /></div>
+        <div class="mission-art"><Icon name={`mission-${tpl.id}`} size={96} /></div>
         <div class="row between center-y">
           <span class="muted"><Icon name="clock" size={16} /> {tpl.hours} h</span>
           {tpl.reward.amount ? <Cur k={tpl.reward.kind} n={tpl.reward.amount} big /> : <span class="cur cur-big"><Icon name={tpl.reward.kind} size={22} /> {tpl.reward.hours} h</span>}
