@@ -304,6 +304,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     eyeN = sm([(84.4, 49.5), (86.4, 48.6), (88.2, 48.7), (89.4, 49.4), (87.6, 50.5), (85.6, 50.4)], sharp=(0, 3))
     eyeF = sm([(94.8, 49.3), (96.4, 48.5), (97.8, 48.7), (98.2, 49.3), (97.0, 50.2), (95.4, 50.1)], sharp=(0, 3))
     eh = P['eyes']
+    if eh > 0.05 and P['blink'] <= 0.5:
+        # les yeux allumés : leur lueur chaude sur la peau (un dégradé rond, pas de flou)
+        hd += [(ellipse(87.0, 49.4, 4.4, 3.0), ('rad', 87.0, 49.4, 4.4, 3.0, [(0, LAVA[1], 0.75 * eh), (1, LAVA[3], 0)]), 1),
+               (ellipse(96.6, 49.3, 3.4, 2.6), ('rad', 96.6, 49.3, 3.4, 2.6, [(0, LAVA[1], 0.7 * eh), (1, LAVA[3], 0)]), 1)]
     for e, (cx, cy), pr in ((eyeN, (87.0, 49.5), 1.0), (eyeF, (96.6, 49.4), 0.75)):
         if P['blink'] > 0.5:
             hd += [(e.scale(1.12, 1.3, cx, cy), SKIN.deep, 0.75), (e, SKIN.shadow, 1),

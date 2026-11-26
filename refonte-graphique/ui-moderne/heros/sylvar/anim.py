@@ -396,11 +396,11 @@ def fx_special(tl):
         heat = env(tl, 40, 300, 900, 1500)
         if heat > 0:
             sp = min(1.0, max(0.0, (tl - 40) / 380))
-            fig.fx_back.append(crack(fig, feet[0] - 26 * sp, feet[0] + 30 * sp, heat, seed=1))
+            fig.fx_back.append(crack(fig, feet[0] - 26 * sp, feet[0] + 30 * sp, heat, seed=1, w=1.4))
         # la lueur d'or au sol, sous lui
         gl = env(tl, 60, 400, 700, 1000)
         if gl > 0:
-            fig.glow(feet[0], GR, 34 * gl, 6 * gl, GOLD[2], 0.35 * gl)
+            fig.glow(feet[0], GR, 36 * gl, 7 * gl, GOLD[2], 0.5 * gl)
         tip = ctx['tip']
         # 2) les cailloux s'arrachent du sol et montent en tournant vers la pointe
         if tl < SP_REL:

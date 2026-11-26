@@ -68,7 +68,7 @@ BLADE_L = 49.0
 HEAD_C = (70.0, 54.0)             # le centre de l'agrandissement de la tête (le cou)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, O=O0, ang=ANG0, edge=1,
-            bn=1, bf=-1, shn=(0.0, 0.0), shf=(0.0, 0.0), lift=0.0, sn=0.0, sf=0.0, kz=0.0, stretch=0.0,
+            bn=0, bf=0, shn=(0.0, 0.0), shf=(0.0, 0.0), lift=0.0, sn=0.0, sf=0.0, kz=0.0, stretch=0.0,
             sw_front=False, tint=0.0)
 
 
@@ -99,8 +99,11 @@ def ik(S, W, L1, L2, bend):
         return lerp(S, W, k)
     dd = max(abs(L1 - L2) + 0.01, d)
     al = math.acos(max(-1, min(1, (L1 * L1 + dd * dd - L2 * L2) / (2 * L1 * dd))))
-    th = math.atan2(W[1] - S[1], W[0] - S[0]) + bend * al
-    return (S[0] + L1 * math.cos(th), S[1] + L1 * math.sin(th))
+    base = math.atan2(W[1] - S[1], W[0] - S[0])
+    cands = [(S[0] + L1 * math.cos(base + b * al), S[1] + L1 * math.sin(base + b * al)) for b in (1, -1)]
+    if bend == 0:                     # le coude pend : on prend la solution la plus basse (la pesanteur)
+        return max(cands, key=lambda e: e[1])
+    return cands[0] if bend > 0 else cands[1]
 
 
 def wave_sign(cx, cy, r, turn=1.0):
@@ -490,7 +493,7 @@ def head(fig, P):
          details=[(under(mous, 0.4, -1.1), WHITE.shadow, 0.7)])
     mous2 = taper(crpath([(85.8, 47.6), (87.8, 48.4), (88.6, 50.4), (88.0, 52.2)], 10), 1.7, 0.5, tip='sharp')
     part('mous2', mous2, WHITE, cel=0.5, rim=0.4, cast=0.6)
-    goat = sm([(76.2, 54.4), (80.6, 54.2), (80.2, 56.2), (79.0, 58.8), (78.3, 56.9), (77.0, 57.9), (76.8, 56.0)], sharp=(3, 5), t=0.9)
+    goat = sm([(76.4, 54.4), (80.4, 54.2), (80.0, 55.9), (79.0, 57.8), (78.3, 56.5), (77.2, 57.1), (76.9, 55.8)], sharp=(3, 5), t=0.9)
     part('goat', goat, WHITE, cel=0.6, rim=0.5, cast=0.8, details=[(under(goat, 0.4, -0.8), WHITE.shadow, 0.6)])
 
     # ---- le grand croissant d'or (corne proche plus grande), la monture à gemme bleue ----

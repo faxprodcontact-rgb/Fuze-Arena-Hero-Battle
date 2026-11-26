@@ -253,7 +253,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     def tail_map(p):
         d = max(0.0, min(1.0, (TAILR[0] - p[0]) / 46.0))
         s = d ** 1.4
-        a = Pz['q'] * 2.2 * s + Pz['qw'] * 3.0 * s ** 3
+        a = Pz['q'] * 3.2 * s + Pz['qw'] * 3.4 * s ** 3
         r = rot((p[0] - TAILR[0], p[1] - TAILR[1]), a)
         return mapp(PEL, (TAILR[0] + r[0], TAILR[1] + r[1]))
     tail = sm([tail_map(p) for p in TAIL_PTS], sharp=TAIL_SHARP, t=0.9)
@@ -445,8 +445,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (HD(ribbon([(92.0, 49.2), (98.0, 49.6), (103.4, 49.5)], [0.1, 0.6, 0.2])), GUM[2], 0.9)]
     # ombres portées DANS la silhouette : le bras proche sur le buste, la mâchoire sur la gorge
     det += cast_into(garm, gtors.union(gtail), 1.3)
-    from shapely.geometry import box
-    det += cast_into(ghead.intersection(box(79, 52, 999, 999)), gtors, 1.0)
+    # l'ombre sous la mâchoire (effilée aux deux bouts : elle naît et meurt dans la gorge)
+    jb = [hp(p) for p in ((79.0, 57.8), (85.0, 57.2), (91.0, 56.4), (97.0, 55.2), (101.6, 53.8))]
+    det += [(ribbon([(x - 0.3, y + 0.9) for x, y in jb], [0.1, 1.4, 1.9, 1.6, 0.2]), '#2a0f55', 0.16),
+            (ribbon([(x - 0.15, y + 0.45) for x, y in jb], [0.1, 0.8, 1.0, 0.9, 0.1]), '#2a0f55', 0.2)]
     # le brassard clouté sur l'avant-bras proche
     FA_ = lambda sh: xf(sh, E[0], E[1], fa)
     det += [(FA_(rpoly([(Lf * 0.18, -4.6), (Lf * 0.86, -4.4), (Lf * 0.86, 4.4), (Lf * 0.18, 4.6)], 0.6)), LEATHER.base, 1),

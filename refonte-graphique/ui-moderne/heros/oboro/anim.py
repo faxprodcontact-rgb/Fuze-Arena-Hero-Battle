@@ -232,7 +232,7 @@ def outlined(shapes_fills, ink=FINK, w=1.5, op=1.0):
     return '<g opacity="%g">%s%s</g>' % (op, sil, col)
 
 
-def tongue(fig, base, h, w, bend=0.0, lean=0.0, op=1.0, ink=True):
+def tongue(fig, base, h, w, bend=0.0, lean=0.0, op=1.0, ink=True, hot=False):
     """Une langue de feu : large et pâle à la base, fine et rouge au bout, en S."""
     if h < 0.6 or op <= 0.02:
         return ''
@@ -244,7 +244,10 @@ def tongue(fig, base, h, w, bend=0.0, lean=0.0, op=1.0, ink=True):
     sh = lock(p0, p1, p2, p3, w, n=10, bulge=0.15)
     q = lambda p, k: (bx + (p[0] - bx) * k, by + (p[1] - by) * k)
     core = lock(p0, q(p1, 0.6), q(p2, 0.6), q(p3, 0.62), w * 0.55, n=8, bulge=0.1)
-    gout = g_lin(fig, p0, p3, [(0, LAVA[1]), (0.35, LAVA[2]), (0.72, LAVA[3]), (1, LAVA[4])])
+    if hot:        # une grande flamme vive : le bout reste orange (lisible sur le fond sombre)
+        gout = g_lin(fig, p0, p3, [(0, LAVA[1]), (0.45, LAVA[2]), (0.8, LAVA[3]), (1, LAVA[3])])
+    else:
+        gout = g_lin(fig, p0, p3, [(0, LAVA[1]), (0.35, LAVA[2]), (0.72, LAVA[3]), (1, LAVA[4])])
     gin = g_lin(fig, p0, q(p3, 0.62), [(0, LAVA[0]), (0.6, LAVA[1]), (1, LAVA[2])])
     return outlined([(sh, gout, 1), (core, gin, 0.95)], w=1.3 if ink else 0, op=op)
 
@@ -385,8 +388,8 @@ def blaze(fig, ctx, level, t):
     h1 = (6 + 6 * level) * (0.85 + 0.15 * math.sin(ph))
     h2 = (5 + 5 * level) * (0.85 + 0.15 * math.sin(ph + 2.1))
     op = min(1.0, level * 1.4)
-    fig.fx_back.append(tongue(fig, (top[0] - 1.6, top[1] + 1.2), h1, 4.2, bend=-0.8 + 0.4 * math.sin(ph * 0.7), lean=-0.12, op=op))
-    fig.fx_back.append(tongue(fig, (top[0] + 2.4, top[1] + 1.4), h2, 3.6, bend=0.9 - 0.3 * math.sin(ph * 0.9), lean=0.16, op=op))
+    fig.fx_back.append(tongue(fig, (top[0] - 1.6, top[1] + 1.2), h1, 4.2, bend=-0.8 + 0.4 * math.sin(ph * 0.7), lean=-0.12, op=op, hot=True))
+    fig.fx_back.append(tongue(fig, (top[0] + 2.4, top[1] + 1.4), h2, 3.6, bend=0.9 - 0.3 * math.sin(ph * 0.9), lean=0.16, op=op, hot=True))
     for k, (dx, dy, sp) in enumerate(((-6, -16, 1.0), (5, -20, 1.3), (-1, -26, 0.8), (8, -13, 1.1))[:int(1 + level * 1.4)]):
         rise = (t * 0.018 * sp + k * 7) % 14
         fig.fx_front.append(ember(fig, c[0] + dx + 1.2 * math.sin(t / 140 + k), c[1] + dy - rise, 0.55 + 0.15 * (k == 0),
@@ -534,7 +537,7 @@ def fire_burst(fig, t):
             wob = math.sin(t / 70 + j * 1.7)
             h = 36 * hk * grow * sink * (1 + 0.07 * wob)
             fig.fx_back.append(tongue(fig, (x + dx * (0.7 + 0.3 * grow), base), h, w * (0.6 + 0.4 * sink),
-                                      bend=bend + 0.3 * wob, lean=lean + 0.1 * math.sin(t / 110 + j), op=op))
+                                      bend=bend + 0.3 * wob, lean=lean + 0.1 * math.sin(t / 110 + j), op=op, hot=True))
         # le coeur du brasier, rond, au pied des flammes
         fig.fx_front.append(pop(fig, (x + 1, base - 3), 8 * (0.5 + 0.5 * grow) * (0.4 + 0.6 * sink), facing=-90, op=op))
     # le premier éclat (les trois âmes se rejoignent)

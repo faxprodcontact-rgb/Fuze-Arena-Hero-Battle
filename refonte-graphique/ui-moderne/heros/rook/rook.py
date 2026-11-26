@@ -61,8 +61,8 @@ G_HAIRB = [(0, '#6a1236'), (0.45, '#a82030'), (0.8, '#e2522a'), (1, '#ff9a34')]
 
 GRD = 116          # le sol
 FEET = (64, 116)   # le point « pieds » du pixel art (sol : 64 116)
-# la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin : les pieds (64, 116) y tombent en (69, 122)
-FRAME = (-5, -6, 136, 124)
+# la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin : les pieds (64, 116) y tombent en (69, 124)
+FRAME = (-5, -8, 136, 126)
 
 # ---------- le squelette (animation) ----------
 # Une pose = ces réglages ; REST est la pose du dessin. Pixels du dessin et degrés (y vers le bas).
@@ -140,7 +140,9 @@ def wing(fig, side, P, S):
         L = math.dist(b0, tip)
         r = rot_at(u, us, r0, r1, r2)
         b1, _ = along(path, u)
-        ang = d0 + r
+        # les plumes près du corps pendent : elles suivent moins la rotation de l'épaule (l'aile s'ouvre en éventail)
+        kk = 0.42 + 0.58 * max(0.0, min(1.0, (u - 0.15) / 0.42))
+        ang = d0 + r0 * kk + (r - r0)
         root = (b1[0] + off * math.cos(math.radians(ang)), b1[1] + off * math.sin(math.radians(ang)))
         # l'ondulation de flamme : une vague qui court vers le bout de l'aile
         wave = amp * 2.2 * math.sin(ph - 0.55 * k)
@@ -255,7 +257,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     BODY = mchain(LIFT, mT(P['lean'] * 0.35, dyb), mR(P['lean'] * 1.1, 71, 80))   # le haut du corps (depuis la taille)
     UC = mchain(BODY, mT(0, -0.55 * br))                                            # ce qui monte avec la poitrine
     TOR = mchain(BODY, mS(1, 1 + 0.014 * br, 71, 72))                               # le buste se gonfle
-    HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], 76, 46), mS(1.1, 1.1, 77, 47))  # tête un peu plus grande
+    HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], 76, 46), mS(1.16, 1.16, 77, 47.5))  # tête un peu plus grande
     SKT = mchain(BODY, mskx(-0.05 * P['sk'], 73))
 
     # ---- l'aile lointaine (derrière tout) ----
@@ -368,6 +370,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- la tête ----
     head_names = head(fig, P)
+
+    # ---- elle s'embrase d'un feu doré bienfaisant (attaque spéciale) : toutes ses plumes montent vers l'or ----
+    if P['fire'] > 0:
+        for p in fig.parts:
+            x0, y0, x1, y1 = p.shape.bbox()
+            p.details.append((p.shape, ('lin', x1, y0, x0, y1, [(0, '#fff6c0'), (0.5, '#ffd858'), (1, '#ffa830')]),
+                              min(0.55, 0.16 * P['fire'])))
+            p.rim = max(p.rim, 0.35 + 0.2 * P['fire'])
 
     # ---- chaque groupe prend sa pose ----
     fig.pose(head_names + hair_back, HEAD)
