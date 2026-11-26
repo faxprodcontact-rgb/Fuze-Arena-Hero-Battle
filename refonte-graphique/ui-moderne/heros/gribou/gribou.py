@@ -251,8 +251,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]), cel=0.9, rim=0.55, cast=0.8,
              details=foot_details(aN, fdN))
     legN = bent(hipN, kN, aN, 15.6, 9.6, 6.0, bulge=(0.1, 0.05))
-    ld = [(ribbon(lerp_pts(hipN, kN, [(0.15, -4.6), (0.55, -4.4), (0.9, -3.4)]), [0.2, 1.4, 0.3]), FUR.light, 0.45),
-          (ribbon([lerp(kN, aN, 0.15), lerp(kN, aN, 0.55), lerp(kN, aN, 0.9)], [0.2, 0.9, 0.2]), FUR.shadow, 0.0)]
+    ld = [(ribbon(lerp_pts(hipN, kN, [(0.2, 3.2), (0.6, 4.2), (0.95, 3.0)]), [0.1, 1.1, 0.1]), FUR.hi, 0.4)]
     fig.part('legN', legN, FUR, grad=(kN[0] + 3, kN[1] - 8, hipN[0] - 6, aN[1] + 2, [(0, FUR.light), (0.45, FUR.base), (1, FUR.shadow)]),
              cel=1.3, rim=0.75, cast=1.1, cast_on=['torso', 'footN', 'legF', 'footF', 'tail'], details=ld)
 
@@ -299,7 +298,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('handN', hand_flat(wN, hdN), SKIN, grad=(wN[0] + 10, wN[1], wN[0] - 2, wN[1] + 6, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=0.9, rim=0.55, cast=0.8, details=hand_details(wN, hdN))
     armN = bent(shN, eN, wN, 9.6, 6.8, 5.0, bulge=(0.1, 0.06))
-    ad = [(ribbon([lerp(shN, eN, 0.2), lerp(shN, eN, 0.6), lerp(eN, wN, 0.2), lerp(eN, wN, 0.7)], [0.2, 1.0, 0.8, 0.2]), FUR.hi, 0.35)]
+    ad = []
     fig.part('armN', armN, FUR, grad=(eN[0] + 5, shN[1], eN[0] - 4, wN[1], [(0, FUR.light), (0.45, FUR.base), (1, FUR.shadow)]),
              cel=1.2, rim=0.75, cast=1.1, cast_on=['torso', 'legN', 'footF', 'legF', 'handN', 'armF', 'footN'], details=ad)
 
