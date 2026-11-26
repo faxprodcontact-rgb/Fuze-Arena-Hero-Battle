@@ -29,7 +29,7 @@ sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from lib import Shape  # noqa: E402
 from outils import (rot, add, lerp, matmix, body_limb, ik, Seg, inv, poly_of, geom_shape, fuse, clip,  # noqa: E402
-                    ring_map, chakram_geom, stations, edges)
+                    ring_map, chakram_geom, stations, edges, smooth_line)
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'knights-3'
@@ -249,13 +249,34 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                           (ribbon([(72.6, 53.8), (67.6, 60.8)], [0.1, 0.6, 0.1]), ORANGE.light, 0.6)])
 
     # ---- le chapelet : petites perles de bois sombre, une perle rouge en bas, un gland ----
-    beads = [(57.6, 53.2, 0.95), (58.0, 55.2, 0.95), (58.7, 57.1, 0.95), (59.7, 58.8, 0.95), (61.1, 60.1, 0.95),
-             (62.8, 60.9, 0.95), (68.0, 60.7, 0.95), (69.6, 59.6, 0.95), (70.9, 58.0, 0.95), (71.9, 56.3, 0.95),
-             (72.6, 54.5, 0.95), (73.0, 52.7, 0.9)]
-    cord = [(57.4, 51.6)] + [(x, y) for x, y, _ in beads[:6]] + [(65.4, 61.4)] + [(x, y) for x, y, _ in beads[6:]] + [(73.2, 51.0)]
-    fig.part('cord', ribbon(cord, [0.1] + [0.55] * (len(cord) - 2) + [0.1]), WOOD, cel=0, rim=0, cast=0.4, cast_on=['torso', 'scarf'], outline=False)
-    for i, (x, y, r) in enumerate(beads):
-        fig.part('bead%d' % i, ellipse(x, y, r * 1.05, r), WOOD, cel=0.4, rim=0.3, cast=0.5, cast_on=['torso', 'scarf'],
+    # (avis du propriétaire : « collier qui ne fait pas le tour du cou ») : le fil monte des deux côtés jusqu'au bord du
+    # cou et passe DERRIÈRE (perles et fil découpés dans le buste : ils disparaissent au bord, jamais coupés en l'air) ;
+    # côté proche il remonte le long du trapèze jusqu'à la nuque, côté lointain il file sous le menton.
+    RB = (65.4, 61.4)
+    near_path = [RB, (63.0, 60.8), (60.9, 59.4), (59.2, 57.4), (58.0, 55.0), (57.3, 52.6), (57.0, 50.2), (57.1, 47.6),
+                 (57.6, 45.6)]
+    far_path = [RB, (67.8, 60.8), (69.8, 59.4), (71.3, 57.4), (72.4, 55.2), (73.3, 53.0), (74.0, 50.8), (74.7, 48.6),
+                (75.6, 46.2)]
+    beads = []
+    for path in (near_path, far_path):
+        line = smooth_line(path, 60)
+        acc, k = 0.0, 1
+        for a_, b_ in zip(line, line[1:]):
+            acc += math.dist(a_, b_)
+            if acc >= 1.15 + 1.92 * (k - 1):
+                beads.append((b_[0], b_[1], 0.95, len(beads)))
+                k += 1
+    # les perles du côté proche d'abord (de la perle rouge vers la nuque), puis le côté lointain
+    neck_clip = torso
+    cord_n = clip(ribbon(smooth_line(near_path, 40), [0.55] * 41, sharp_ends=False), neck_clip)
+    cord_f = clip(ribbon(smooth_line(far_path, 40), [0.55] * 41, sharp_ends=False), neck_clip)
+    cord = fuse([c for c in (cord_n, cord_f) if c is not None], smooth=0.05)[0]
+    fig.part('cord', cord, WOOD, cel=0, rim=0, cast=0.4, cast_on=['torso', 'scarf'], outline=False)
+    for x, y, r, i in beads:
+        b_ = clip(ellipse(x, y, r * 1.05, r), neck_clip)
+        if b_ is None:
+            continue
+        fig.part('bead%d' % i, b_, WOOD, cel=0.4, rim=0.3, cast=0.5, cast_on=['torso', 'scarf', 'cord'],
                  details=[(ellipse(x + 0.3 * r, y - 0.35 * r, 0.42 * r, 0.3 * r, -25), WOOD.hi, 0.9)])
     tassel = sm([(65.0, 62.4), (66.0, 62.4), (66.6, 64.6), (66.9, 66.6), (66.0, 66.2), (65.4, 66.9), (64.6, 66.3),
                  (64.0, 66.8), (64.3, 64.6)], sharp=(3, 4, 5, 6, 7))
@@ -421,7 +442,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     heads = ['head', 'ear', 'band', 'bknot', 'bun', 'btie'] + [n for n, _, _ in tails]
     fig.pose(heads, HEAD)
     fig.pose(['torso'], TOR)
-    fig.pose(['scarf', 'cord', 'tassel', 'rbead'] + ['bead%d' % i for i in range(len(beads))], UC)
+    fig.pose(['scarf', 'cord', 'tassel', 'rbead'] + ['bead%d' % b_[3] for b_ in beads], UC)
     fig.pose(['farm', 'ffist', 'fthumb', 'ringF', 'fband'], UC)
     fig.pose(['belt', 'knot', 'sash1', 'sash2', 'narm', 'nfist', 'nthumb', 'ringN', 'nband'], U)
     fig.ctx = dict(U=U, UC=UC, P=P, HEAD=HEAD, ROOT=ROOTM, far_w=mapp(UC, FAR[2]), near_w=mapp(U, W),
