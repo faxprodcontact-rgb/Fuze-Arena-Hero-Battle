@@ -31,6 +31,7 @@ VISAGE = {
     'mon-eldra-rapide': (67, 15, 26),      # Gribou
     'mon-orin-rapide': (83, 14, 28),       # Karu
     'mon-arachne-tisseuse': (74, 17, 26),  # Nyrra
+    'mon-meduse-rapide': (68, 11, 24),     # Sarvik
 }
 
 
