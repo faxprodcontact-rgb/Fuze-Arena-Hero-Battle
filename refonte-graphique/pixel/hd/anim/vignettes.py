@@ -22,16 +22,18 @@ ART = os.path.join(ROOT, 'public', 'art', 'hd')
 OUT_TS = os.path.join(ROOT, 'src', 'game', 'hd-figures.ts')
 # le visage : chaque pixel du dessin devient FACE × FACE pixels (net sur tous les écrans)
 FACE = 4
-# le carré du visage est élargi de 25 % (la case de jeu_export.py serre la tête)
-MARGIN = 1.25
+# le portrait : la tête et le haut du buste, avec de l'air (demande du 26/11 : « moins zoomés ») ; le carré fait MARGIN fois
+# la case de la tête (celle de jeu_export.py la serre), et le milieu de la tête est à HEAD_Y de la hauteur, en partant du haut
+MARGIN = 1.85
+HEAD_Y = 0.45
 # visages placés à la main quand le haut de la silhouette n'est pas la tête (le sac du singe voleur, les ailes du corbeau,
 # les pattes de l'araignée) : monstres devenus héros, leur visage est sur leur carte. [x, y du milieu de la tête, côté],
 # en pixels du dessin, dans la première image de la pose
 VISAGE = {
-    'mon-eldra-rapide': (67, 15, 26),      # Gribou
+    'mon-eldra-rapide': (66, 17, 30),      # Gribou
     'mon-orin-rapide': (83, 14, 28),       # Karu
     'mon-arachne-tisseuse': (74, 17, 26),  # Nyrra
-    'mon-meduse-rapide': (68, 11, 24),     # Sarvik
+    'mon-meduse-rapide': (66, 14, 30),     # Sarvik
     # contrôle complet du 26/11 : têtes coupées ou décentrées dans les cadres ronds
     'mon-eldra-sorts': (56, 29, 32),       # Bao (la tête, pas le bâton)
     'mon-orin-sorts': (70, 15, 34),        # Sorai (la tête d'oiseau, pas l'éventail)
@@ -67,10 +69,13 @@ def main():
         if cid in VISAGE:
             hx, hy, side = VISAGE[cid]
             vx, vy = fx + hx - side / 2, fy + hy - side / 2
-        big = min(round(side * MARGIN), fw, fh)
-        x = min(max(round(vx + side / 2 - big / 2), fx), fx + fw - big)
-        y = min(max(round(vy + side / 2 - big / 2), fy), fy + fh - big)
-        face = sheet.crop((x * up, y * up, (x + big) * up, (y + big) * up))
+        big = round(side * MARGIN)
+        # le carré peut déborder de l'image (de l'air au-dessus de la tête) : on découpe dans l'image seule, pas dans la planche
+        cell = sheet.crop((fx * up, fy * up, (fx + fw) * up, (fy + fh) * up))
+        x = round(vx + side / 2 - big / 2) - fx
+        y = round(vy + side / 2 - HEAD_Y * big) - fy
+        face = Image.new('RGBA', (big * up, big * up), (0, 0, 0, 0))
+        face.paste(cell, (-x * up, -y * up), cell)
         face = face.resize((big * FACE, big * FACE), Image.NEAREST)
         face.save(os.path.join(ART, 'v', f'{cid}.webp'), lossless=True, method=6)
         # respiration : chaque image dans une case commune, pieds au même point
