@@ -453,7 +453,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # la cordelette du collier (les perles se posent dessus)
     beads = [(57.6, 56.6, 1.8), (60.9, 59.6, 2.0), (64.7, 61.9, 2.1), (68.9, 63.1, 2.15), (73.3, 63.5, 2.15),
              (77.7, 63.0, 2.05), (81.8, 61.8, 1.95), (85.6, 59.6, 1.85)]
-    det += [(ribbon([(56.0, 55.0)] + [(x, y) for x, y, _ in beads] + [(88.6, 57.0), (90.4, 55.0)], [0.2] + [0.7] * len(beads) + [0.7, 0.2]), ROPE.shadow, 0.9)]
+    # 3e avis du propriétaire (« le collier ne va pas jusqu'au bout ») : le collier fait le TOUR du cou. Côté proche, il
+    # remonte de la poitrine sur le trapèze jusqu'au bord du cou, puis passe derrière la nuque : la dernière perle est
+    # coupée par le contour du cou (on la voit partir derrière) et la cordelette file sous la mâchoire. Côté lointain,
+    # elle passe sous le menton (la tête la cache).
+    beads_back = [(58.9, 53.3, 1.75), (61.6, 51.0, 1.6)]           # de la poitrine vers la nuque
+    rope_pts = ([(65.4, 47.8)] + [(x, y) for x, y, _ in beads_back[::-1]] + [(x, y) for x, y, _ in beads] +
+                [(88.6, 57.0), (90.4, 55.0)])
+    det += [(ribbon(rope_pts, [0.6] + [0.7] * (len(rope_pts) - 2) + [0.2]), ROPE.shadow, 0.9)]
     fig.part('torso', torso, skin, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(skin.deep, 0.22, 3.2))
 
     # ---- les perles d'ivoire du collier (chacune pose son ombre douce sur la poitrine) ----
@@ -462,6 +469,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  (x + 0.55 * r, y + 0.95 * r), (x - 0.55 * r, y + 0.92 * r)])
         fig.part('bead%d' % i, b_, IVORY, cel=0.55, rim=0.45, cast=0.7, cast_on=['torso'],
                  details=[(ellipse(x + 0.35 * r, y - 0.35 * r, 0.45 * r, 0.3 * r, -25), IVORY.hi, 0.95)])
+    # les perles qui montent vers la nuque : découpées par le contour du buste (elles passent derrière le cou)
+    g_tor = _poly(torso)
+    for i, (x, y, r) in enumerate(beads_back):
+        b_ = sm([(x - 1.12 * r, y), (x - 0.5 * r, y - 0.92 * r), (x + 0.6 * r, y - 0.9 * r), (x + 1.12 * r, y - 0.05 * r),
+                 (x + 0.55 * r, y + 0.95 * r), (x - 0.55 * r, y + 0.92 * r)])
+        cut = _shape(_poly(b_).intersection(g_tor), min_area=0.02)
+        if cut is not None:
+            fig.part('bead%d' % (len(beads) + i), cut, IVORY, cel=0.5, rim=0.4, cast=0.6, cast_on=['torso'],
+                     details=[(ellipse(x + 0.35 * r, y - 0.35 * r, 0.45 * r, 0.3 * r, -25), IVORY.hi, 0.9)])
 
     # ======================================================================== le pagne en peau de tigre, la corde
     cloth = sm([(52.4, 82.4), (60.0, 83.4), (70.0, 84.0), (80.0, 83.6), (89.8, 82.0), (90.6, 86.0), (89.8, 90.2),
@@ -593,7 +609,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     rim_p = '<path d="%s" fill-rule="evenodd" fill="FILL" opacity="0.85"%s/>'
     ad.append((rim_p % (rim_d, ' clip-path="url(#%s)"' % czn) +
                '<g clip-path="url(#%s)">%s</g>' % (cz, rim_p % (rim_d, ' clip-path="url(#%s)"' % ctn)), skin.hi, 1))
-    fig.part('narm', arm, skin, cel=1.8, rim=0, cast=1.3, cast_on=['torso', 'cloth', 'rope', 'nleg', 'bead0', 'bead1', 'chead', 'collar', 'handle'],
+    fig.part('narm', arm, skin, cel=1.8, rim=0, cast=1.3, cast_on=['torso', 'cloth', 'rope', 'nleg', 'bead0', 'bead1', 'bead8', 'bead9', 'chead', 'collar', 'handle'],
              details=ad)
 
     # ---- le poing proche, serré sur le manche : le dos de la main, la rangée des jointures, quatre doigts repliés ----
@@ -816,6 +832,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(heads, HEAD)
     fig.pose(['torso'], TOR)
     fig.pose(['bead%d' % i for i in range(len(beads))], UC)
+    fig.pose(['bead%d' % (len(beads) + i) for i in range(len(beads_back))], TOR)     # découpées sur le buste
     fig.pose(['farm', 'ffist', 'fbrac'], FARM)
     fig.pose(['cloth', 'end1', 'end2'], CLO)
     fig.pose(['rope', 'knot'], PEL)
