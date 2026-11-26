@@ -304,8 +304,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ============================================================== la nageoire pectorale (sous le brassard)
     FINM = mchain(mT(E[0] - NE0[0], E[1] - NE0[1]), mR(fa - fa0, *NE0))
-    pfin = MS(FINM, sm([(42.6, 60.0), (38.6, 60.4), (34.8, 62.0), (31.0, 64.2), (27.6, 66.6), (31.4, 66.6), (35.2, 65.8),
-                        (38.8, 65.2), (42.4, 63.6)], sharp=(4,), t=0.9))
+    pfin = MS(FINM, sm([(42.6, 59.4), (38.4, 59.6), (34.4, 61.4), (30.6, 63.8), (27.2, 66.8), (31.2, 67.2), (35.0, 66.8),
+                        (38.8, 66.4), (42.4, 64.6)], sharp=(4,), t=0.9))
     fig.part('pfin', pfin, SKIN, cel=1.0, rim=0.6, cast=0,
              details=[(MS(FINM, ribbon([(38.0, 63.6), (34.0, 64.4), (29.6, 66.2)], [0.3, 1.0, 0.1])), SKIN.shadow, 0.55),
                       (MS(FINM, ribbon([(39.0, 61.4), (34.6, 62.8), (30.4, 65.0)], [0.2, 0.7, 0.1])), SKIN.light, 0.5)])
@@ -325,7 +325,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         shape, g = fuse([lg, fo], smooth=1.0)
         det = []
         # le genou (un plan éclairé doux), le mollet, les orteils palmés, les griffes
-        det += [(ellipse(*lerp(K, H, 0.08), w[1] * 0.42, w[1] * 0.3, math.degrees(math.atan2(A[1] - H[1], A[0] - H[0]))), SKIN.light, 0.35)]
+        nk = (K[0] - (H[0] + A[0]) / 2, K[1] - (H[1] + A[1]) / 2)
+        Ln = math.hypot(*nk) or 1
+        nk = (nk[0] / Ln, nk[1] / Ln)
+        det += [(ribbon([lerp(K, A, 0.12), lerp(K, A, 0.5), lerp(K, A, 0.85)], [0.2, w[2] * 0.32, 0.2]), SKIN.light, 0.4),
+                (ribbon([lerp(H, K, 0.55), lerp(H, K, 0.8), lerp(K, A, 0.1)], [0.2, w[1] * 0.25, 0.2]), SKIN.light, 0.3)]
         det += [(ribbon(MP(FM, c), [0.1, 0.6, 0.1]), SKIN.deep, 0.5) for c in creases]
         fig.part(name, shape, SKIN, cel=1.6, rim=0.6, cast=0, details=det)
         for i, (T, d) in enumerate(claws):
@@ -413,9 +417,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                 (HD(ribbon([(EC[0] - 2.2, EC[1] + 0.3), (EC[0], EC[1] + 0.9), (EC[0] + 2.2, EC[1] + 0.4)], [0.1, 0.6, 0.1])), SKIN.deep, 0.9)]
     else:
         ecx, ecy = hp(EC)
-        det += [(HD(ellipse(EC[0], EC[1], 2.3, 2.05)), ('rad', ecx + 0.5, ecy + 0.3, 2.6, 2.6,
+        det += [(HD(ellipse(EC[0], EC[1], 2.1, 1.9)), ('rad', ecx + 0.5, ecy + 0.3, 2.6, 2.6,
                                                          [(0, '#fff4b0'), (0.35, '#f7c83a'), (0.8, '#e08a26'), (1, '#b4521a')]), 1),
-                (HD(ellipse(EC[0] + 0.45, EC[1] + 0.15, 0.85, 1.35, 6)), '#0e0812', 1),
+                (HD(ellipse(EC[0] + 0.45, EC[1] + 0.15, 0.8, 1.25, 6)), '#0e0812', 1),
                 (HD(ellipse(EC[0] + 1.05, EC[1] - 0.75, 0.48, 0.38)), '#ffffff', 1),
                 (HD(ellipse(EC[0] - 0.7, EC[1] + 1.0, 0.3, 0.22)), '#fffbe8', 0.8)]
     # arcade lourde en V (elle mord sur le haut de l'oeil : le regard dur)
@@ -504,17 +508,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.part('ptooth%d' % i, th, IVORY, cel=0.5, rim=0.4, cast=0.7)
 
     # ============================================================== la lame-scie, la garde, la poignée, le poing lointain
-    blade = BL(sm([(0.6, -3.9), (11.0, -4.3), (21.0, -4.9), (24.6, -4.4), (26.4, -1.8), (24.6, 3.4), (12.0, 4.0), (0.6, 3.8)],
+    blade = BL(sm([(0.6, -4.4), (11.0, -5.0), (21.0, -5.8), (24.8, -5.2), (26.6, -2.0), (24.6, 3.6), (12.0, 4.2), (0.6, 4.0)],
                   sharp=(0, 3, 4, 5, 7), t=0.5))
-    tdet = [(BL(sm([(0.6, 0.9), (12.0, 1.2), (24.8, 0.8), (24.6, 3.4), (12.0, 4.0), (0.6, 3.8)], sharp=(0, 2, 3, 5), t=0.4)), STEEL.shadow, 0.95),
-            (BL(sm([(0.6, -3.9), (11.0, -4.3), (21.0, -4.9), (24.6, -4.4), (24.0, -3.0), (11.0, -2.8), (0.6, -2.6)], sharp=(0, 3, 4, 6), t=0.4)), STEEL.light, 0.9),
-            (BL(ribbon([(2.0, -3.6), (12.0, -4.0), (21.6, -4.4)], [0.1, 0.6, 0.1])), STEEL.hi, 0.9),
+    tdet = [(BL(sm([(0.6, 1.0), (12.0, 1.3), (25.4, 0.6), (24.6, 3.6), (12.0, 4.2), (0.6, 4.0)], sharp=(0, 2, 3, 5), t=0.4)), STEEL.shadow, 0.95),
+            (BL(sm([(0.6, -4.4), (11.0, -5.0), (21.0, -5.8), (24.8, -5.2), (24.2, -3.6), (11.0, -3.2), (0.6, -2.9)], sharp=(0, 3, 4, 6), t=0.4)), STEEL.light, 0.9),
+            (BL(ribbon([(2.0, -4.1), (12.0, -4.6), (21.6, -5.2)], [0.1, 0.6, 0.1])), STEEL.hi, 0.9),
             (BL(ribbon([(1.4, 3.1), (12.0, 3.3), (23.6, 2.8)], [0.1, 0.45, 0.1])), STEEL.light, 0.6)]
     # la vague gravée (signe inventé) : une volute qui s'enroule, creusée dans le plat
     wave = crpath([(5.4, 0.2), (8.0, -1.2), (10.6, -0.2), (12.2, -1.6), (14.4, -1.8), (15.6, -0.6), (14.6, 0.4), (13.6, -0.4)], n=22)
     tdet += [(BL(ribbon(wave, [0.1] + [0.55] * 21 + [0.1])), STEEL.deep, 0.9),
              (BL(ribbon([(x + 0.2, y - 0.3) for x, y in wave], [0.05] + [0.3] * 21 + [0.05])), STEEL.light, 0.7)]
-    tdet += [(BL(ellipse(22.0, -3.6, 1.6, 0.5, -4)), STEEL.glint, 0.85)]
+    tdet += [(BL(ellipse(22.0, -4.4, 1.6, 0.5, -6)), STEEL.glint, 0.85)]
     fig.part('blade', blade, STEEL, cel=0.9, rim=0.8, cast=0, details=tdet)
     # les quatre grandes dents d'ivoire du tranchant (couchées vers la garde : elles arrachent)
     TEETH = []
@@ -559,13 +563,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         return [a, b2, (b2[0] + r[0], b2[1] + r[1])]
     # la palmure entre les doigts (une peau fine, plus claire), puis les doigts et leurs griffes
     fp_ = [MP(HANDM, finger_pts(p, cu)) for _, p, _ in FING]
-    webp = [lerp(fp_[0][0], fp_[0][1], 0.2), lerp(fp_[0][0], fp_[0][1], 0.75)]
+    webp = [lerp(fp_[0][0], fp_[0][1], 0.2), fp_[0][1]]
     for i in range(3):
-        m1, m2 = lerp(fp_[i][0], fp_[i][1], 0.7), lerp(fp_[i + 1][0], fp_[i + 1][1], 0.7)
-        dip = lerp(lerp(fp_[i][0], fp_[i + 1][0], 0.5), lerp(m1, m2, 0.5), 0.55)
-        webp += [dip, lerp(fp_[i + 1][0], fp_[i + 1][1], 0.75)]
+        m1, m2 = fp_[i][1], fp_[i + 1][1]
+        dip = lerp(lerp(fp_[i][0], fp_[i + 1][0], 0.5), lerp(m1, m2, 0.5), 0.62)
+        webp += [dip, fp_[i + 1][1]]
     webp += [lerp(fp_[3][0], fp_[3][1], 0.1), mapp(HANDM, (41.0, 49.0))]
-    fig.part('web', sm(webp, sharp=(2, 4, 6), t=0.8), SKIN, grad=(48, 40, 36, 50, [(0, SKIN.hi), (0.6, SKIN.light), (1, SKIN.base)]),
+    fig.part('web', sm(webp, sharp=(1, 2, 3, 4, 5, 6, 7), t=0.8), SKIN, grad=(48, 40, 36, 50, [(0, '#d6eef0'), (0.5, SKIN.hi), (1, SKIN.light)]),
              cel=0.6, rim=0.4, cast=0.6, cast_on=['body'])
     for i, (name, pts, w) in enumerate(FING):
         pp = fp_[i]
@@ -614,7 +618,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                                             [(0, TOOTH.hi), (0.55, TOOTH.light), (1, TOOTH.shadow)]), cel=0.45, rim=0.35, cast=0.6)
 
     # ---- ce que les effets doivent savoir ----
-    tip = bl((26.4, -1.8))
+    tip = bl((26.6, -2.0))
     fig.ctx = dict(G=G, ang=angW, tip=tip, teeth=TEETH, mouth=hp((104.0, 44.0)), head=hp((86, 32)), fin=hp((48.2, 5.2)),
                    chest=mapp(TOR, (78, 66)), P=Pz, ROOT=ROOTM, hand=mapp(HANDM, (40, 44)), tailtip=tail_map((7.4, 65.0)))
     if fx:

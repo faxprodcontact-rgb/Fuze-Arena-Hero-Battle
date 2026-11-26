@@ -291,20 +291,33 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('torso', torso_f, SKIN, grad=(86, 46, 58, 70, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=1.1, rim=0.5, cast=1.0, details=tdet)
 
+    # ---- les plumes de flanc, sous l'aile proche (une touffe cramoisie, en retrait), pointes vers la hanche ;
+    # derrière le plastron ----
+    ph, amp = P['ph'], P['amp']
+    sw = 0.5 * amp * math.sin(ph - 1.6)
+    fl0 = [(53.0, 53.6), (57.2, 53.4), (60.6, 56.4), (62.4, 61.4), (63.6, 66.4), (64.0, 70.6), (62.6, 75.6 + sw),
+           (60.8, 72.6), (58.6, 77.0 + sw), (56.8, 72.8), (54.2, 76.2 + sw), (53.4, 70.0), (52.6, 61.4)]
+    flk = sm([T_(p) for p in fl0], sharp=(6, 7, 8, 9, 10), t=0.9)
+    fdet = [(ribbon([T_((56.2, 56.4)), T_((57.6, 64.0)), T_((60.6, 72.4))], [0.1, 0.9, 0.1]), '#5a0e2e', 0.45),
+            (ribbon([T_((58.8, 57.0)), T_((60.6, 63.6)), T_((62.4, 70.6))], [0.1, 0.7, 0.1]), '#ff9a3a', 0.35),
+            (ribbon([T_((54.4, 60.0)), T_((55.0, 67.0)), T_((56.8, 72.4))], [0.1, 0.8, 0.1]), '#5a0e2e', 0.4)]
+    fig.part('flank', flk, CRIM, grad=(60, 54, 56, 77, [(0, '#7a1636'), (0.5, '#b8282e'), (1, '#e85a28')]),
+             cel=1.0, rim=0.3, cast=1.0, ink=FINK, details=fdet)
+
     # ---- le plastron de plumes blanches (bustier) ----
     pl0 = [(58.8, 58.4), (61.6, 56.6), (65.2, 56.4), (68.4, 57.8), (70.8, 60.4), (73.4, 57.6), (76.8, 56.0),
            (80.4, 56.2), (83.6, 57.8), (82.0, 62.0), (80.0, 66.6), (78.9, 71.4), (63.6, 71.6), (62.6, 66.8), (60.6, 62.4)]
     plast = sm([T_(p) for p in pl0], sharp=(4,), t=0.9)
     pdet = []
     # les écailles de plumes : deux rangs de bords arrondis (ombre lilas sous chaque bord), irréguliers
-    for row, (y0, xs) in enumerate(((61.6, [(61.2, 64.8), (64.6, 68.4), (73.0, 76.8), (76.6, 80.4)]),
-                                    (65.6, [(62.2, 66.0), (65.8, 69.8), (69.6, 73.4), (73.2, 77.0), (76.8, 80.0)]),
-                                    (69.4, [(63.2, 67.0), (66.8, 70.8), (70.6, 74.4), (74.2, 78.4)]))):
+    for row, (y0, xs) in enumerate(((62.2, [(61.4, 65.2), (64.8, 68.6), (72.8, 76.6), (76.2, 79.8)]),
+                                    (66.4, [(62.8, 66.6), (66.4, 70.4), (70.2, 74.0), (73.8, 77.8)]))):
         for a, b in xs:
             m = (a + b) / 2
-            yy = y0 + (0.6 if row == 0 and m < 70 else 0) + 0.15 * math.sin(a * 1.7)
-            pdet.append((ribbon([T_((a, yy - 0.2)), T_((m, yy + 1.0)), T_((b, yy - 0.2))], [0.1, 0.9, 0.1]), WHITE.shadow, 0.55))
-            pdet.append((ribbon([T_((a + 0.6, yy - 0.9)), T_((m, yy + 0.1)), T_((b - 0.8, yy - 0.9))], [0.1, 0.55, 0.1]), WHITE.hi, 0.8))
+            yy = y0 + 0.2 * math.sin(a * 1.7)
+            arc = [(a, yy - 0.3), (a + 0.25 * (b - a), yy + 0.6), (m, yy + 0.9), (b - 0.25 * (b - a), yy + 0.6), (b, yy - 0.3)]
+            pdet.append((ribbon([T_(p) for p in arc], [0.1, 0.6, 0.8, 0.6, 0.1]), WHITE.shadow, 0.4))
+            pdet.append((ribbon([T_((p[0], p[1] - 0.8)) for p in arc[1:4]], [0.1, 0.5, 0.1]), WHITE.hi, 0.7))
     pdet += [(sm([T_((62.4, 66.0)), T_((70.6, 67.6)), T_((79.6, 66.0)), T_((78.9, 71.6)), T_((63.6, 71.8))]), WHITE.shadow, 0.35),
              (ribbon([T_((70.8, 60.6)), T_((70.9, 63.6)), T_((70.6, 66.0))], [0.1, 0.7, 0.1]), WHITE.shadow, 0.5),
              (ellipse(*T_((77.6, 59.0)), 2.6, 1.0, -12), WHITE.hi, 0.9),
@@ -331,19 +344,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(ellipse(mc[0] - 0.05, mc[1] + 0.05, 1.35, 1.35), RUBY.deep, 1),
                       (ellipse(mc[0], mc[1], 1.1, 1.1), ('rad', mc[0] + 0.3, mc[1] - 0.3, 1.2, 1.2, [(0, RUBY.light), (0.6, RUBY.base), (1, RUBY.shadow)]), 1),
                       (ellipse(mc[0] + 0.35, mc[1] - 0.35, 0.35, 0.3), '#ffe8e0', 0.95)])
-
-    # ---- les plumes de flanc, sous l'aile proche (cramoisies, en retrait), pointes vers la hanche ----
-    flank = []
-    for i, (r_, a_, L_, w_) in enumerate((((57.4, 55.0), 106, 17.0, 8.4), ((59.0, 59.0), 100, 14.0, 7.6), ((60.6, 62.6), 96, 10.6, 6.6))):
-        root = T_(r_)
-        ang = a_ + P['lean'] * 1.1 + 2.0 * P['amp'] * math.sin(P['ph'] - 0.6 * i - 1.0)
-        sh = plume(root, ang, L_, w_, curl=10, kind='cover')
-        tp = sh_tip(root, ang, L_, 10)
-        nm = 'flank%d' % i
-        fig.part(nm, sh, CRIM, grad=(root[0], root[1], tp[0], tp[1], G_CRIM), cel=0, rim=0.35, cast=1.0, ink=FINK,
-                 cast_on=['torso', 'plast', 'belt', 'sbk0', 'sbk1', 'sfr0'] + flank,
-                 details=[(under(sh, 0.5, -2.0), ('lin', root[0], root[1], tp[0], tp[1], [(0, '#3a0c2a', 0.4), (1, '#8a1a30', 0.3)]), 1)])
-        flank.append(nm)
 
     # ---- l'aile proche ----
     near_names, near_bones, near_path = wing(fig, 'n', P, SN)
@@ -389,11 +389,11 @@ def tail(fig, P, BODY):
         # (nom, p0, p1, p2, p3, largeur, posée au sol)
         ('tb0', (59.0, 84.6), (49.0, 93.0), (36.0, 104.0), (22.6, 110.8), 8.6, False),
         ('tb1', (59.0, 83.4), (47.6, 88.4), (32.4, 95.0), (17.4, 99.0), 8.6, False),
-        ('tb2', (59.4, 82.2), (47.6, 83.6), (33.0, 87.0), (18.6, 89.4), 8.0, False),
+        ('tb2', (59.4, 82.2), (48.0, 84.6), (34.0, 88.6), (21.0, 91.8), 8.0, False),
         ('tf0', (59.6, 85.4), (50.0, 95.0), (38.4, 108.0), (26.6, 116.2), 10.0, True),
         ('tf1', (59.2, 84.4), (48.0, 91.4), (33.6, 101.0), (19.8, 105.2), 10.4, False),
-        ('tf2', (59.2, 83.2), (47.0, 86.4), (31.6, 91.4), (17.0, 94.0), 10.2, False),
-        ('tf3', (59.6, 82.0), (48.0, 81.8), (34.4, 83.0), (21.6, 85.2), 9.0, False),
+        ('tf2', (59.2, 83.2), (47.4, 87.4), (32.4, 93.6), (18.6, 97.0), 10.0, False),
+        ('tf3', (59.6, 82.0), (49.0, 82.6), (37.0, 85.4), (25.6, 88.0), 8.6, False),
     ]
     out = []
     for i, (nm, p0, p1, p2, p3, w, ground) in enumerate(T):
@@ -478,6 +478,20 @@ def legs(fig, P, BODY, LIFT):
         fig.part(nm, leg, LEG, grad=(ank[0] + 4, top[1], ank[0] - 4, ank[1] + 4, [(0, LEG.light), (0.5, LEG.base), (1, LEG.shadow)]),
                  cel=1.0, rim=0.6, cast=1.0, details=det)
         names.append(nm)
+        # la cuisse emplumée (la « culotte » de plumes) : du bord de la jupe jusqu'au haut du tarse, pointes en bas
+        cx = 56.4 if side == 'n' else 80.4
+        th0 = [(cx - 4.2, 83.4), (cx + 4.0, 83.4), (cx + 3.8, 89.0), (cx + 3.0, 95.0), (cx + 1.6, 92.4), (cx + 0.2, 97.2),
+               (cx - 1.2, 92.6), (cx - 2.8, 95.6), (cx - 3.6, 90.0)]
+        sway = 0.4 * P['amp'] * math.sin(P['ph'] - (2.0 if side == 'n' else 2.6))
+        th0 = [(x + (sway if y > 91 else 0), y) for x, y in th0]
+        thigh = sm([mapp(BODY, p) for p in th0], sharp=(3, 4, 5, 6, 7), t=0.9)
+        G = G_SKF if side == 'n' else G_SKB
+        tt = mapp(BODY, (cx, 83.4))
+        fig.part('thigh' + side, thigh, FEA, grad=(tt[0] + 3, tt[1], tt[0] - 2, tt[1] + 14, G), cel=0.9, rim=0.4, cast=1.0,
+                 ink=FINK, cast_on=[nm],
+                 details=[(ribbon([mapp(BODY, (cx - 1.4, 85.0)), mapp(BODY, (cx - 0.8, 89.6)), mapp(BODY, (cx - 1.2, 93.0))], [0.1, 0.7, 0.1]), '#6a1236', 0.45),
+                          (ribbon([mapp(BODY, (cx + 1.8, 85.0)), mapp(BODY, (cx + 2.0, 89.6)), mapp(BODY, (cx + 1.6, 92.4))], [0.1, 0.6, 0.1]), '#ffd060', 0.4)])
+        names.append('thigh' + side)
         # les serres : crochets sombres au bout des doigts
         for i, (cp, dr, cs, prev) in enumerate(claws):
             a = math.atan2(cp[1] - prev[1], cp[0] - prev[0])
