@@ -24,9 +24,10 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
-from atelier import Figure, Mat, sm, lock, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
+from atelier import Figure, Mat, sm, lock, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp, bez, resample  # noqa: E402
 from lib import Shape  # noqa: E402
 from outils import rot, add, lerp, hexmix, body_limb, round_limb, ik, Seg, inv, bent  # noqa: E402,F401
+from visage import placer, verifier  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 ID_JEU = 'myths-3'
@@ -46,6 +47,23 @@ HOOF = Mat('#e4d6d8', '#a698ac', '#70627e', '#4a3e5c', '#2a2238')
 EYE = ['#fff8c0', '#ffc848', '#ff6a22', '#d0241e', '#6a0a18']
 LID = '#2a0b1c'
 EARTH = ['#fff6ce', '#ffd45c', '#e09638', '#c8a070', '#8e664a', '#5e404a', '#3e2a36']   # la lueur et la roche de la terre
+
+# ---------- le visage (méthode commune visage.py, avis du propriétaire du 26/11) ----------
+# La face du taureau (sans cornes, oreille ni toupet) dans le repère de la tête : une sphère tournée de 18° vers la
+# droite. Les yeux d'un taureau sont plus écartés que ceux d'un humain (az 35°) et plus hauts (ligne des yeux à 0,376) ;
+# le « nez » de la méthode = la racine du chanfrein, sur la médiane entre les yeux, là où le mufle commence ; la bouche
+# = le trait de la bouche sous le mufle. L'œil du fond est donc loin, près du contour droit, au-dessus du mufle.
+FACE_BOX = (53.4, 15.0, 94.6, 53.8)
+FACE = placer(FACE_BOX, tour=18, az_oeil=35, y_oeil=0.376, y_nez=0.47, y_bouche=0.87, l_oeil=0.205)
+MOUTH = ((77.4, 51.2), (85.2, 48.4))   # le coin proche (tiré vers le bas) et le bout lointain du trait (caché ensuite par le mufle)
+
+
+def mesures_visage():
+    """Les positions RÉELLES du dessin (repère de la tête), pour verifier() de visage.py."""
+    (nx, ny, nw), (fx_, fy_, fw) = FACE['oeil_proche'], FACE['oeil_fond']
+    return {'oeil_proche': (nx, ny, nw), 'oeil_fond': (fx_, fy_, fw), 'nez': (FACE['nez'][0], FACE['nez'][1]),
+            'bouche': ((MOUTH[0][0] + MOUTH[1][0]) / 2, (MOUTH[0][1] + MOUTH[1][1]) / 2, MOUTH[1][0] - MOUTH[0][0])}
+
 
 GRD = 116.0        # le sol (le point « sol » du pixel art)
 FEET = (64.0, 116.0)
@@ -223,28 +241,20 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('ring', ring, GOLD, cel=0.6, rim=0.5, cast=0.8, cast_on=['torso', 'strapA', 'strapB'],
              details=[(ellipse(RING[0] + 1.3, RING[1] - 1.4, 0.7, 0.5, -30), GOLD.glint, 0.9)])
 
-    # ======================================================================== la crinière : des mèches de poil
-    # sombre qui couvrent la bosse et coulent vers l'arrière (vers la gauche), la pointe un peu relevée ; leurs racines
-    # passent sous la tête ; longueurs et écarts inégaux (jamais des rayons réguliers)
+    # ======================================================================== la crinière (1) : la mèche du haut,
+    # derrière la tête et la corne (sa racine passe sous le crâne) ; les autres mèches poussent SUR la tête et passent
+    # devant elle et devant l'épaule (plus bas, « la crinière (2) »)
     ph, ml = P['ph'], P['ml']
-    LOCKS = [
-        ('m7', (60.0, 48.6), (50.0, 51.4), (38.0, 51.0), (30.4, 44.6), 10.0),
-        ('m6', (60.4, 43.4), (50.0, 46.6), (36.4, 45.8), (25.6, 37.2), 12.4),
-        ('m5', (60.8, 37.6), (51.0, 40.4), (38.4, 38.8), (29.0, 29.2), 12.6),
-        ('m4', (61.2, 32.0), (53.0, 33.8), (43.4, 32.4), (35.8, 23.6), 11.0),
-        ('m3', (62.0, 27.4), (56.0, 27.6), (49.4, 26.0), (45.0, 18.6), 8.4),
-    ]
+    LOCKS = [('m3', (62.0, 27.4), (56.0, 27.6), (49.4, 26.0), (45.0, 18.6), 8.4)]
     for i, (name, p0, p1, p2, p3, w0) in enumerate(LOCKS):
-        k = 0.5 + 0.1 * i
-        w = ph - 0.8 * i
+        k = 0.9
+        w = ph - 3.2
         p2 = (p2[0] + 0.4 * k * math.sin(2 * w + 1.0), p2[1] + 0.5 * k * math.sin(w) + 0.5 * ml)
         p3 = (p3[0] + 0.7 * k * math.sin(w + 0.8) - 0.3 * ml, p3[1] + 0.8 * k * math.cos(w) + 1.0 * ml)
         sh = lock(p0, p1, p2, p3, w0, n=14, bulge=0.32)
         x0_, y0_, x1_, y1_ = sh.bbox()
-        top = False
-        fig.part(name, sh, MANE, grad=(x1_, y0_, x0_ + (x1_ - x0_) * 0.35, y1_,
-                                       [(0, MANE.hi if top else MANE.light), (0.5, MANE.light if top else MANE.base), (1, MANE.shadow)]),
-                 cel=0, rim=0.6, cast=1.1, cast_on=['torso', 'strapA', 'strapB'] + [q[0] for q in LOCKS[:i]],
+        fig.part(name, sh, MANE, grad=(x1_, y0_, x0_ + (x1_ - x0_) * 0.35, y1_, [(0, MANE.light), (0.5, MANE.base), (1, MANE.shadow)]),
+                 cel=0, rim=0.6, cast=1.1, cast_on=['torso', 'strapA', 'strapB'],
                  details=[(sm_under(sh, 0.7, -2.0), ('lin', 0, y0_, 0, y1_, [(0, MANE.base), (1, MANE.shadow)]), 0.75),
                           (lock(lerp(p0, p1, 0.3), lerp(p1, p2, 0.3), lerp(p2, p3, 0.2), lerp(p2, p3, 0.8), w0 * 0.22, n=8, bulge=0.1)
                            .move(0.3 + 0.03 * w0, -0.12 * w0), MANE.hi, 0.45)])
@@ -340,10 +350,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (sm([(70.0, 17.0), (80.0, 16.4), (87.6, 19.8), (90.6, 24.0), (84.0, 25.0), (76.0, 26.6), (70.0, 24.0)]), FUR.hi, 0.35),
            (sm([(66.0, 33.6), (72.0, 32.0), (78.0, 34.0), (79.0, 40.0), (77.0, 46.0), (71.0, 46.4), (67.0, 41.0)]), FUR.light, 0.18)]
     # le mufle nu (le poil du visage descend sur ses côtés) : beige, éclairé en haut, plus sombre dessous
-    muz = sm([(81.0, 31.0), (86.0, 29.4), (92.6, 29.2), (96.6, 30.4), (99.4, 33.0), (100.2, 37.0), (99.8, 42.0),
+    muz = sm([(81.0, 31.6), (86.0, 31.0), (92.6, 31.8), (96.8, 32.4), (99.5, 34.4), (100.2, 37.6), (99.8, 42.0),
               (98.0, 45.4), (93.6, 47.4), (88.0, 47.8), (83.4, 46.6), (80.4, 43.4), (79.6, 38.0), (80.0, 34.0)])
     hd += [(muz, ('lin', 98, 30, 84, 47, [(0, MUZ.light), (0.5, MUZ.base), (1, MUZ.shadow)]), 1),
-           (sm([(82.6, 31.2), (87.0, 30.0), (93.0, 29.8), (97.2, 31.2), (99.2, 33.6), (94.0, 33.0), (88.0, 33.2), (84.0, 33.6)]), MUZ.hi, 0.75),
+           (sm([(82.6, 32.0), (87.0, 31.4), (93.0, 32.2), (97.4, 32.9), (99.3, 34.8), (94.0, 34.2), (88.0, 33.9), (84.0, 34.2)]), MUZ.hi, 0.75),
            (sm([(80.4, 40.0), (84.0, 43.0), (90.0, 44.6), (96.0, 44.0), (99.4, 42.4), (98.0, 45.4), (93.6, 47.4), (88.0, 47.8),
                 (83.4, 46.6), (80.4, 43.4)]), MUZ.shadow, 0.6)]
     # le poil des joues qui descend sur les côtés du mufle (des pointes inégales)
@@ -359,42 +369,48 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (ribbon([(92.6, 34.8), (94.8, 34.2), (97.2, 35.0)], [0.1, 0.5, 0.1]), MUZ.hi, 0.75),
            (ribbon([(90.4, 36.4), (90.8, 38.6), (90.6, 40.6)], [0.1, 0.6, 0.1]), MUZ.shadow, 0.5)]
     # la bouche fermée en rictus (le coin tiré vers le bas), la lèvre du bas, le menton lourd éclairé
-    hd += [(ribbon([(93.8, 47.6), (88.0, 48.1), (83.0, 48.7), (79.4, 49.7), (77.4, 51.2)], [0.1, 0.8, 0.9, 0.8, 0.1]), '#2a0d1c', 0.85),
+    hd += [(ribbon([MOUTH[1], (82.6, 48.7), (79.4, 49.7), MOUTH[0]], [0.1, 0.9, 0.8, 0.1]), '#2a0d1c', 0.85),
            (ribbon([(79.0, 48.4), (77.8, 49.6), (77.2, 51.0)], [0.1, 0.5, 0.1]), '#2a0d1c', 0.5),
            (ribbon([(80.4, 49.0), (86.0, 50.0), (91.0, 49.6)], [0.1, 1.0, 0.1]), MUZ.base, 0.7),
            (sm([(82.0, 50.6), (88.0, 50.8), (90.8, 50.2), (89.6, 52.2), (84.0, 53.0), (80.4, 52.4)]), FUR.light, 0.45),
            (ribbon([(66.0, 49.6), (72.4, 51.8), (80.0, 52.8)], [0.1, 0.8, 0.1]), FUR.deep, 0.45)]
+    # ---- les yeux, placés par visage.py (FACE) : même forme (en miroir), même ligne ; l'œil du fond plus étroit, loin
+    # vers le contour droit, au-dessus du mufle. Chaque trait se dessine autour du centre de son œil (k = sa largeur).
+    (enx, eny, enw), (efx, efy, efw) = FACE['oeil_proche'], FACE['oeil_fond']
+    kn, kf = enw / 8.6, efw / 8.6
+
+    def around(pts, cx, cy, k, mirror, ky=1.0):
+        return [(cx + (-x if mirror else x) * k, cy + y * ky) for x, y in pts]
+    EYE_PTS = [(-4.4, -0.9), (-1.4, -1.5), (2.0, -0.9), (4.2, 0.7), (1.2, 1.5), (-2.4, 0.9)]   # coin intérieur plus bas (colère)
+    ORB_PTS = [(-6.2, -2.0), (0.8, -2.4), (6.4, 0.0), (5.4, 3.4), (-1.2, 3.8), (-5.6, 1.8)]
+    BROW_PTS = [(-9.2, -3.0), (-4.6, -5.6), (1.4, -5.0), (6.6, -2.2), (8.8, 0.6), (5.8, 0.6), (1.2, -1.6), (-3.6, -2.0), (-7.8, -0.8)]
+    EYES = ((enx, eny, kn, False, 1.0), (efx, efy, kf, True, 0.92))
     # les orbites creusées sous les arcades
-    hd += [(sm([(59.0, 27.6), (66.0, 27.2), (71.6, 29.6), (70.6, 33.0), (64.0, 33.4), (59.6, 31.4)]), FUR.deep, 0.55),
-           (sm([(77.0, 28.8), (82.6, 26.6), (85.6, 27.4), (84.4, 30.4), (79.0, 31.2)]), FUR.deep, 0.5)]
+    for cx, cy, k, mi, ky in EYES:
+        hd.append((sm(around(ORB_PTS, cx, cy, k, mi, ky if not mi else 0.72)), FUR.deep, 0.55 if not mi else 0.5))
     # lueur des yeux sur le poil
-    hd += [(ellipse(65.6, 30.4, 6.0, 3.8), ('rad', 65.6, 30.4, 6.0, 3.8, [(0, EYE[2], 0.55 + 0.15 * glow), (1, EYE[3], 0)]), 1),
-           (ellipse(80.8, 29.2, 4.2, 3.0), ('rad', 80.8, 29.2, 4.2, 3.0, [(0, EYE[2], 0.5 + 0.15 * glow), (1, EYE[3], 0)]), 1)]
-    # les yeux rouges qui brûlent : même forme, même ligne ; le lointain plus étroit (trois quarts) ; le coin intérieur
-    # plus bas (colère)
-    eyeN = sm([(60.8, 29.4), (63.8, 28.8), (67.2, 29.4), (69.4, 31.0), (66.4, 31.8), (62.8, 31.2)], sharp=(0, 3))
-    eyeF = sm([(78.4, 29.6), (80.6, 28.4), (82.8, 27.9), (83.2, 28.9), (81.2, 29.9)], sharp=(0, 3))
-    for e, (cx, cy) in ((eyeN, (65.2, 30.3)), (eyeF, (80.8, 29.0))):
+    for cx, cy, k, mi, ky in EYES:
+        hd.append((ellipse(cx, cy, 6.0 * k, 3.8 * ky), ('rad', cx, cy, 6.0 * k, 3.8 * ky, [(0, EYE[2], 0.55 + 0.15 * glow), (1, EYE[3], 0)]), 1))
+    # les yeux rouges qui brûlent
+    for cx, cy, k, mi, ky in EYES:
+        e = sm(around(EYE_PTS, cx, cy, k, mi, ky), sharp=(0, 3))
         if P['blink'] > 0.5:
             hd += [(e.scale(1.12, 1.3, cx, cy), LID, 0.8), (e, FUR.shadow, 1),
-                   (ribbon([(cx - 4.0, cy + 0.2), (cx, cy + 0.9), (cx + 3.6, cy + 0.6)], [0.1, 0.7, 0.1]), LID, 0.9)]
+                   (ribbon(around([(-4.0, 0.2), (0.0, 0.9), (3.6, 0.6)], cx, cy, k, mi, ky), [0.1, 0.7, 0.1]), LID, 0.9)]
         else:
             hd += [(e.scale(1.14, 1.4, cx - 0.1, cy), LID, 0.95),
-                   (e, ('rad', cx + 0.5, cy - 0.2, 4.2, 2.4, [(0, EYE[0]), (0.3, EYE[1]), (0.7, EYE[2]), (1, EYE[3])]), 1)]
-    if P['blink'] <= 0.5:
-        hd += [(ellipse(66.4, 29.9, 0.75, 0.5), '#ffffff', 1), (ellipse(81.8, 28.7, 0.5, 0.36), '#ffffff', 1)]
-    # les arcades froncées en V (le bout intérieur plus bas) : un bourrelet de poil sombre, le dessus éclairé
-    browN = sm([(56.0, 26.6), (60.6, 24.0), (66.6, 24.6), (71.8, 27.4), (74.0, 30.2), (71.0, 30.2), (66.4, 28.0),
-                (61.6, 27.6), (57.4, 28.8)], sharp=(0, 4))
-    browF = sm([(75.6, 29.6), (77.8, 26.6), (82.6, 24.4), (87.6, 24.0), (89.0, 25.4), (85.2, 26.6), (80.6, 28.2),
-                (77.6, 30.4)], sharp=(0, 4))
-    hd += [(browN, ('lin', 64, 24, 64, 30, [(0, FUR.light), (0.45, FUR.base), (1, FUR.deep)]), 1),
-           (browF, ('lin', 82, 24, 82, 30, [(0, FUR.light), (0.45, FUR.base), (1, FUR.deep)]), 1),
-           (ribbon([(58.0, 25.8), (62.0, 24.6), (67.0, 25.2), (71.4, 27.6)], [0.1, 0.7, 0.6, 0.1]), FUR.hi, 0.7),
-           (ribbon([(78.4, 26.6), (82.6, 24.8), (87.4, 24.4)], [0.1, 0.6, 0.1]), FUR.hi, 0.7)]
-    # les plis de colère entre les arcades, sur le front
-    hd += [(ribbon([(74.2, 25.0), (74.6, 27.2), (75.0, 29.0)], [0.1, 0.8, 0.1]), FUR.deep, 0.55),
-           (ribbon([(72.0, 22.6), (75.0, 21.8), (78.4, 22.4)], [0.1, 0.7, 0.1]), FUR.shadow, 0.45)]
+                   (e, ('rad', cx + 0.5 * k, cy - 0.2, 4.2 * k, 2.4 * ky, [(0, EYE[0]), (0.3, EYE[1]), (0.7, EYE[2]), (1, EYE[3])]), 1),
+                   (ellipse(cx + 1.1 * k, cy - 0.4 * ky, 0.75 * max(k, 0.8), 0.5 * ky), '#ffffff', 1)]
+    # les arcades froncées en V (le bout intérieur plus bas, vers la médiane) : un bourrelet de poil sombre, le dessus
+    # éclairé
+    for cx, cy, k, mi, ky in EYES:
+        br_ = sm(around(BROW_PTS, cx, cy, k, mi, ky), sharp=(0, 4))
+        hd += [(br_, ('lin', cx, cy - 6, cx, cy, [(0, FUR.light), (0.45, FUR.base), (1, FUR.deep)]), 1),
+               (ribbon(around([(-7.2, -4.0), (-3.2, -5.2), (1.8, -4.6), (6.2, -2.2)], cx, cy, k, mi, ky), [0.1, 0.7, 0.6, 0.1]), FUR.hi, 0.7)]
+    # les plis de colère entre les arcades, sur la médiane du front
+    mx = FACE['mediane']
+    hd += [(ribbon([(mx(25.0) - 0.4, 25.0), (mx(27.2), 27.2), (mx(29.0) + 0.3, 29.0)], [0.1, 0.8, 0.1]), FUR.deep, 0.55),
+           (ribbon([(mx(22.4) - 3.4, 22.6), (mx(22.0), 21.8), (mx(22.4) + 3.4, 22.4)], [0.1, 0.7, 0.1]), FUR.shadow, 0.45)]
     # la balafre sur la joue proche : une cicatrice claire, son creux
     hd += [(ribbon([(62.6, 34.4), (64.8, 37.6), (66.4, 41.2), (67.0, 43.6)], [0.2, 1.1, 1.0, 0.2]), '#d08a76', 0.95),
            (ribbon([(62.9, 35.0), (65.0, 38.0), (66.4, 41.4)], [0.1, 0.4, 0.1]), '#7a3a40', 0.7)]
@@ -532,19 +548,66 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # le brassard d'or riveté sur l'avant-bras proche
     bc = a2.at(0.64)
     fig.part('nbrac', cuff(bc, aa2, 8.4, 13.4), GOLD, cel=0.9, rim=0.6, cast=1.0, details=cuff_det(bc, aa2, 8.4, 13.4, 3))
+    # ======================================================================== la crinière (2) (avis du propriétaire du
+    # 26/11) : des mèches de poil sombre qui POUSSENT sur l'arrière de la tête (racine pointue posée sur la joue, de
+    # sous l'oreille jusqu'à la gorge : elles cachent la jonction tête / cou) et coulent vers l'arrière par-dessus la
+    # bosse et DEVANT l'épaule proche. La racine suit la tête, la pointe suit le buste (la mèche se plie entre les
+    # deux) : la crinière reste fixée à la tête dans toutes les poses. Points dans le repère du dessin, pose de repos.
+    def skin(p, wh):
+        a = mapp(HEAD, (NECK[0] + (p[0] - NECK[0]) / 1.1, NECK[1] + (p[1] - NECK[1]) / 1.1))
+        b = mapp(UC, p)
+        return (b[0] + (a[0] - b[0]) * wh, b[1] + (a[1] - b[1]) * wh)
+    FRONT = [
+        ('m4', (58.6, 35.4), (51.0, 32.4), (41.0, 31.8), (30.8, 24.6), 9.0),
+        ('m5', (60.2, 40.2), (51.0, 40.4), (37.0, 39.6), (24.4, 32.6), 11.0),
+        ('m6', (62.6, 45.0), (52.0, 47.6), (34.0, 47.8), (16.4, 43.6), 12.0),
+        ('m7', (66.4, 50.2), (56.0, 54.8), (39.0, 56.4), (22.0, 56.2), 10.2),
+    ]
+    prof = []
+    for i in range(19):
+        t = i / 18
+        prof.append(math.sin(math.pi / 2 * min(1.0, t / 0.24)) ** 0.7 * (1 - t) ** 0.85)
+    pk = max(prof)
+    names_f = [q[0] for q in FRONT]
+    for i, (name, p0, p1, p2, p3, w0) in enumerate(FRONT):
+        k = 0.6 + 0.12 * i
+        w = ph - 0.8 * (i + 1)
+        p2 = (p2[0] + 0.4 * k * math.sin(2 * w + 1.0), p2[1] + 0.5 * k * math.sin(w) + 0.5 * ml)
+        p3 = (p3[0] + 0.7 * k * math.sin(w + 0.8) - 0.3 * ml, p3[1] + 0.8 * k * math.cos(w) + 1.0 * ml)
+        q0, q1, q2, q3 = skin(p0, 1.0), skin(p1, 0.75), skin(p2, 0.2), skin(p3, 0.0)
+        cl = resample(bez(q0, q1, q2, q3, 40), 18)
+        sh = ribbon(cl, [w0 * v / pk for v in prof])
+        x0_, y0_, x1_, y1_ = sh.bbox()
+        hl = ribbon(resample(bez(lerp(q0, q1, 0.45), lerp(q1, q2, 0.35), lerp(q2, q3, 0.2), lerp(q2, q3, 0.75), 20), 8),
+                    [0.1, 0.5, 0.9, 1.0, 0.9, 0.7, 0.5, 0.3, 0.1])
+        fig.part(name, sh, MANE, grad=(x1_, y0_, x0_ + (x1_ - x0_) * 0.35, y1_, [(0, MANE.light), (0.5, MANE.base), (1, MANE.shadow)]),
+                 cel=0, rim=0.6, cast=1.1,
+                 cast_on=['head', 'torso', 'narm', 'nbrac', 'strapA', 'strapB', 'ring', 'm3', 'hornN'] + names_f[:i],
+                 details=[(sm_under(sh, 0.7, -2.0), ('lin', 0, y0_, 0, y1_, [(0, MANE.base), (1, MANE.shadow)]), 0.75),
+                          (hl.move(0.3 + 0.03 * w0, -0.14 * w0), MANE.hi, 0.45)])
     fist('nfist', 0.0, ['narm', 'nbrac'])
     fist('ffist', sf, ['farm', 'fbrac', 'strapA'])
 
     # ---- chaque groupe de morceaux prend sa pose ----
     heads = ['hornF', 'hornN', 'head', 'nring', 'ear', 'tuft']
     fig.pose(heads, HEAD)
-    fig.pose(['m7', 'm6', 'm5', 'm4', 'm3'], MAN)
+    fig.pose(['m3'], MAN)
     fig.pose(['torso'], TOR)
     fig.pose(['strapA', 'strapB', 'ring'], UC)
     fig.pose(['cloth'], CLO)
     fig.pose(['belt', 'buckle'] + ['stud%d' % i for i in range(5)], PEL)
     axe = ['haft', 'pommel', 'pring', 'bladeU', 'bladeD', 'socket']
     fig.pose(axe + ['narm', 'nbrac', 'nfist', 'nfistt', 'farm', 'fbrac', 'ffist', 'ffistt'], U)
+    # l'ordre de dessin : le bras proche, puis la crinière (devant la tête et devant l'épaule), puis l'oreille (elle
+    # sort de la crinière), puis la hache et les poings, toujours devant
+    # (quand la hache est levée, le manche monte devant la crinière ; sinon le bras proche passe devant le manche,
+    # comme dans le dessin d'origine)
+    order = ['narm', 'nbrac'] + names_f + ['ear']
+    moved = [p for nm in order for p in fig.parts if p.name == nm]
+    rest = [p for p in fig.parts if p.name not in order]
+    names_r = [p.name for p in rest]
+    at = names_r.index('haft') if P['ang'] < -45 else names_r.index('socket') + 1
+    fig.parts = rest[:at] + moved + rest[at:]
     # ce que les effets doivent savoir (repère du dessin)
     fig.ctx = dict(U=U, G=mapp(U, G), ang=ang + P['lean'] * 1.1, P=P,
                    head_pt=mapp(U, Ap(S_HEAD, 0)), edge_lo=mapp(U, Ap(S_HEAD, 22.8)), edge_up=mapp(U, Ap(S_HEAD, -22.8)),

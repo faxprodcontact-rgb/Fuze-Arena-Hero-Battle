@@ -471,10 +471,10 @@ def coin_fx(fig, x, y, spin, op=1.0):
     if op <= 0.02:
         return ''
     k = max(0.25, abs(math.cos(spin)))
-    sh = ellipse(x, y, 2.2 * k, 2.3)
-    inner = ellipse(x + 0.1, y, 1.3 * k, 1.4)
-    gr = g_lin(fig, (x + 2, y - 2), (x - 2, y + 2), ['#fff6c0', '#f8c84e', '#d08c2c'] and [(0, '#fff6c0'), (0.5, '#f8c84e'), (1, '#d08c2c')])
-    return outlined([(sh, gr, 1), (inner, '#d08c2c', 0.5), (ellipse(x + 0.6 * k, y - 0.8, 0.5 * k, 0.35), '#fffdf0', 0.9)],
+    sh = ellipse(x, y, 3.0 * k, 3.1)
+    inner = ellipse(x + 0.1, y, 1.8 * k, 1.9)
+    gr = g_lin(fig, (x + 2, y - 2), (x - 2, y + 2), [(0, '#fff6c0'), (0.5, '#f8c84e'), (1, '#d08c2c')])
+    return outlined([(sh, gr, 1), (inner, '#d08c2c', 0.5), (ellipse(x + 0.9 * k, y - 1.1, 0.7 * k, 0.45), '#fffdf0', 0.9)],
                     ink='#4e1e1c', w=1.0, op=op)
 
 
@@ -530,8 +530,8 @@ def fx_attack(tl):
         if e > 0:
             R = math.dist(ctx['shF'], ctx['tip'])
             s_ = min(1.0, max(0.0, (t - AT_SLASH0) / (AT_HIT - AT_SLASH0)))
-            a1 = -100 + 122 * s_
-            fig.fx_back.append(slash(fig, ctx['shF'], R, -100, a1 + 2, 5.2, op=e))
+            a1 = -75 + 97 * s_
+            fig.fx_back.append(slash(fig, ctx['shF'], R, -75, a1 + 2, 5.2, op=e))
         if t >= AT_HIT:
             hit_fx(fig, START['a_tip'], t - AT_HIT, facing=0)
         # le retour : poussière où il se reçoit
@@ -577,7 +577,7 @@ def fx_special(tl):
         e = env(t, SP_S1 + 10, SP_S1 + 40, SP_H1, SP_H1 + 80)
         if e > 0:
             s_ = min(1.0, max(0.0, (t - SP_S1 - 10) / (SP_H1 - SP_S1 - 50)))
-            fig.fx_back.append(slash(fig, ctx['shF'], R, -100, -100 + 122 * s_ + 2, 5.0, op=e))
+            fig.fx_back.append(slash(fig, ctx['shF'], R, -75, -75 + 97 * s_ + 2, 5.0, op=e))
         if t >= SP_H1 - 50:
             hit_fx(fig, START['s_tip1'], t - (SP_H1 - 50), facing=10, big=0.8)
         e = env(t, SP_S2, SP_S2 + 20, SP_H2, SP_H2 + 90)
@@ -592,7 +592,7 @@ def fx_special(tl):
             c = ctx['center']
             fig.fx_back.append(ring_arc(fig, (c[0] + 2, c[1] - 4), 36, 10, 190, 350, 3.0, op=e, dark=True))
             fig.fx_front.append(ring_arc(fig, (c[0] + 2, c[1] - 4), 36, 10, 10, 170, 3.6, op=e))
-            fig.fx_front.append(curl(fig, (c[0] + 40, c[1] - 10), 4.0, 200 + 0.8 * t, 260, 2.0, op=e))
+            fig.fx_front.append(curl(fig, (c[0] + 52, c[1] + 4), 4.0, 200 + 0.8 * t, 260, 2.0, op=e))
             fig.fx_back.append(curl(fig, (c[0] - 38, c[1] + 4), 3.6, 20 + 0.8 * t, 260, 1.8, op=e, cw=False))
         # le plongeon : une rafale courbe qui le suit depuis le haut du bond
         e = env(t, 690, 720, 780, 860)

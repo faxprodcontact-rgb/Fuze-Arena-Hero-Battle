@@ -1,6 +1,7 @@
 # Les images à montrer au propriétaire (refonte-graphique/pixel/sortie/ui/vecto/tessa/) :
 #   python3 presentation.py            # fixe.png et comparaison.png
 #   python3 presentation.py --kael     # en plus (brouillon) : Tessa à côté de Kael, même échelle, et à la taille du jeu
+# - visage.png : la tête zoomée, sans rien | avec le calque de visage.py (sphère, médiane, ligne des yeux, places idéales) ;
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
 # - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne.
 import os
@@ -86,6 +87,7 @@ def main():
     cmp_.alpha_composite(vec, (x2, round(base - (T.GRD - y0) * s)))
     cmp_.convert('RGB').save(os.path.join(OUT, 'comparaison.png'))
     print('écrit fixe.png et comparaison.png dans', OUT)
+    visage()
     if '--kael' in sys.argv:
         # brouillon : à côté de Kael (même échelle, pieds sur la même ligne), puis à la taille du téléphone
         sys.path.insert(0, os.path.join(HERE, '..', 'kael'))
@@ -112,6 +114,28 @@ def main():
         im = im.resize((im.width * 3, im.height * 3), Image.NEAREST)
         im.convert('RGB').save(os.path.join(TMP, 'taille-jeu.png'))
         print('brouillons :', TMP)
+
+
+def visage():
+    """visage.png : la tête au repos zoomée (×4 environ), à gauche sans rien, à droite avec le calque guide_svg ;
+    verifier() (visage.py) doit rendre une liste vide."""
+    from atelier import mchain, mR, mS, f as fm
+    fr = (48.0, 13.0, 42.0, 38.0)
+    plain = T.build(frame=fr).svg()
+    defauts = T.verifier(T.fig_face, T.FACE_BOX)
+    print('visage : défauts =', defauts or 'aucun')
+    # la tête au repos : tournée de 2° et agrandie ×1,1 autour du cou (comme HEAD dans tessa.py)
+    M = mchain(mR(2.0, T.NECK[0], T.NECK[1] - 4), mS(1.1, 1.1, T.NECK[0], T.NECK[1]))
+    guide = '<g transform="matrix(%s)">%s</g>' % (' '.join(fm(v) for v in M), T.guide_svg(T.FACE_BOX))
+    ims = [render(s, 38 * 16, 'visage%d' % k) for k, s in enumerate((plain, plain.replace('</svg>', guide + '</svg>')))]
+    out = Image.new('RGBA', (ims[0].width * 2 + 20, ims[0].height), (20, 14, 34, 255))
+    for k, im in enumerate(ims):
+        bg = Image.new('RGBA', im.size, (44, 30, 74, 255))
+        bg.alpha_composite(im)
+        out.alpha_composite(bg, (k * (im.width + 20), 0))
+    out.convert('RGB').save(os.path.join(OUT, 'visage.png'))
+    print('écrit', os.path.join(OUT, 'visage.png'))
+    return defauts
 
 
 if __name__ == '__main__':

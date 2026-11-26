@@ -87,11 +87,14 @@ def monotone(ts, vs, t):
 
 # les réglages animés (voir barzul.py) ; b : souffle en plus ; nwx / nwy : le poignet proche
 BASE = dict(lean=0.0, headx=0.0, heady=0.0, tilt=0.0, pl=0.0, q=0.0, cl=0.0, bl=0.0, sq=0.0, cri=0.0, aim=0.0, back=0.0,
-            ptilt=0.0, spin=0.0, fired=0.0, open=0.0, nwx=B.NW0[0], nwy=B.NW0[1], sang=B.SANG0, b=0.0, glint=0.0)
+            ptilt=0.0, spin=0.0, fired=0.0, open=0.0, nwx=B.NW0[0], nwy=B.NW0[1], sang=B.SANG0, b=0.0, glint=0.0, nb=1.0)
 NUM = list(BASE)
-MI = dict(nw=(38.6, 57.0), sang=245.0)          # il tire le sabre vers le haut, devant l'épaule (la lame déjà debout)
-LEVE = dict(nw=(34.6, 42.0), sang=255.0)        # le sabre dressé au ciel
-FEU = dict(nw=(34.6, 39.4), sang=258.0)         # « Feu ! » : le poing monte encore
+# nb : de quel côté plie le coude proche (+1 : le coude en arrière, bras qui pend ; −1 : sabre levé, le coude vers
+# l'extérieur et le bas). Il ne change de côté que bras TENDU (MI), là où les deux côtés se confondent : rien ne saute,
+# et le coude ne pointe jamais vers l'ennemi (avis du propriétaire : « le coude est à l'envers »).
+MI = dict(nw=(27.9, 60.2), sang=232.0, nb=0.0)  # il sort le sabre d'un grand geste, bras tendu vers l'arrière
+LEVE = dict(nw=(34.6, 42.0), sang=255.0, nb=-1.0)        # le sabre dressé au ciel
+FEU = dict(nw=(34.6, 39.4), sang=258.0, nb=-1.0)         # « Feu ! » : le poing monte encore
 
 
 def flat(k):
@@ -223,7 +226,8 @@ def pose_at(T, action=None, t0=0.0):
     out = dict(breath=min(1.2, br), lean=P['lean'], head=(P['headx'], P['heady']), tilt=P['tilt'], pl=P['pl'], q=P['q'],
                cl=P['cl'], bl=P['bl'], sq=max(0, P['sq']), cri=max(0, P['cri']), aim=P['aim'], back=P['back'],
                ptilt=P['ptilt'], spin=P['spin'], fired=max(0, min(1, P['fired'])), open=max(0, min(1, P['open'])),
-               nw=(P['nwx'], P['nwy']), sang=P['sang'], glint=max(0, min(1, P['glint'])) if action == 'special' else 0.0)
+               nw=(P['nwx'], P['nwy']), sang=P['sang'], glint=max(0, min(1, P['glint'])) if action == 'special' else 0.0,
+               nbend=1.0 if P['nb'] >= 0 else -1.0)
     out['sg'] = -1 if (action == 'special' and SG_FLIP[0] <= tl < SG_FLIP[1]) else 1
     # un clignement de temps en temps (pas pendant l'attaque, où il plisse l'œil)
     out['blink'] = 1.0 if (w > 0.95 and 2.10 <= (T % 3.6) < 2.19) else 0.0

@@ -32,6 +32,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from lib import Shape  # noqa: E402
+from visage import placer  # noqa: E402
 from outils import (rot, unit, add, sub, lerp, norm, ang_of, ik, arm_shape, crpath, taper, curve_band, under,  # noqa: E402
                     almond_pt, inter, FigN)
 
@@ -57,6 +58,11 @@ FEET = (64, 116)   # le point « pieds » du pixel art (sol: 64 116)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
 FRAME = (-4, -4, 133, 122)
 H0 = (64.5, 49.5)  # le pivot de la tête (agrandie ×1,1 : proportions stylisées, comme Kael)
+# la boîte de la face (ovale du visage sans cheveux ni oreille, le haut sous le chapeau) : visage.placer() y donne les
+# places de l'œil, du bandeau (l'œil du fond), du nez, de la bouche et du menton (méthode commune, avis du 26/11)
+FACE_BOX = (55.0, 25.2, 78.0, 51.4)
+FACE = placer(FACE_BOX)
+TIE = (46.8, 41.4)  # le nœud de la queue de cheval, à l'arrière du crâne
 
 # ---------- le squelette (animation) ----------
 # Une pose = ces réglages ; REST est la pose du dessin. Tout est en pixels du dessin et en degrés (y vers le bas).
@@ -81,7 +87,7 @@ SANG0 = 113.0              # la lame part vers le bas, un peu en arrière
 FIST_D = 5.0               # du poignet au milieu du poing (le long de l'avant-bras)
 
 REST = dict(breath=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, pl=0.0, q=0.0, cl=0.0, bl=0.0, blink=0.0, sq=0.0,
-            cri=0.0, aim=0.0, back=0.0, ptilt=0.0, spin=0.0, fired=0.0, open=0.0, nw=NW0, sang=SANG0, nbend=-1.0,
+            cri=0.0, aim=0.0, back=0.0, ptilt=0.0, spin=0.0, fired=0.0, open=0.0, nw=NW0, sang=SANG0, nbend=1.0,
             glint=0.0, sg=1)
 
 
@@ -106,7 +112,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- la queue de cheval (derrière tout) ----
     pony = ponytail(fig, P)
-    fig.pose(pony, mchain(HEAD, mR(4.0 * P['q'], 50.6, 46.6)))
+    fig.pose(pony, mchain(HEAD, mR(4.0 * P['q'], *TIE)))
 
     # ---- le bras lointain tendu, le pistolet, la main ----
     HM = mchain(UC, mT(-P['back'], 0.0), mR(P['aim'], *SF0))
@@ -184,11 +190,13 @@ def xf_pt(o, a, p):
 
 # ---------------------------------------------------------------- la queue de cheval
 def ponytail(fig, P):
-    c = crpath([(50.6, 46.2), (48.4, 49.6), (45.6, 53.8), (42.8, 57.8), (40.4, 60.6)], 16)
-    sh = taper(c, 4.6, 1.2, wmid=4.4)
-    det = [(ribbon([(49.6, 47.4), (46.6, 51.6), (43.6, 56.0), (41.4, 59.2)], [0.2, 1.1, 0.9, 0.1]).move(0.9, -0.2), BLACK.light, 0.75),
-           (ribbon([(48.6, 48.6), (45.2, 53.6), (42.4, 57.8)], [0.1, 0.5, 0.1]).move(1.1, -0.5), BLACK.hi, 0.55)]
-    fig.part('pony', sh, BLACK, grad=(51, 46, 41, 60, [(0, BLACK.light), (0.4, BLACK.base), (1, BLACK.shadow)]),
+    """La queue de cheval : elle part du nœud, à l'ARRIÈRE du crâne, et tombe derrière la nuque et l'épaule (derrière
+    toute la figure)."""
+    c = crpath([(47.8, 40.4), (45.6, 43.6), (43.6, 48.0), (42.0, 52.8), (41.2, 57.2), (41.4, 60.8)], 16)
+    sh = taper(c, 4.6, 1.1, wmid=4.2)
+    det = [(ribbon([(46.6, 42.0), (44.4, 46.0), (42.8, 50.6), (41.8, 55.4), (41.6, 59.0)], [0.2, 1.0, 0.9, 0.6, 0.1]).move(0.9, -0.2), BLACK.light, 0.7),
+           (ribbon([(45.8, 43.6), (43.8, 48.0), (42.6, 52.4)], [0.1, 0.5, 0.1]).move(1.1, -0.3), BLACK.hi, 0.5)]
+    fig.part('pony', sh, BLACK, grad=(48, 41, 41, 60, [(0, BLACK.light), (0.4, BLACK.base), (1, BLACK.shadow)]),
              cel=0.9, rim=0.4, cast=0, details=det)
     return ['pony']
 
@@ -519,7 +527,9 @@ def sash(fig, P):
 
 # ---------------------------------------------------------------- la tête
 def head(fig, P):
-    """Les cheveux, le visage, l'oreille et son anneau, le ruban, le bandeau, le nez, la moustache, la barbiche."""
+    """Les cheveux, le visage, l'oreille et son anneau, le ruban, le bandeau, le nez, la moustache, la barbiche.
+    Les places des traits viennent de visage.placer(FACE_BOX) (méthode commune) : œil proche, bandeau sur l'œil du
+    fond (même ligne), petit nez ENTRE les deux, bouche et barbiche centrées sous le nez, menton sur la médiane."""
     names = []
 
     def part(name, *a, **k):
@@ -528,48 +538,48 @@ def head(fig, P):
     blink = P['blink'] > 0.5
     sq = P['sq']
     cri = P['cri']
-    # ---- les cheveux noirs sous le chapeau : UNE forme (nuque, derrière l'oreille, tempe, favori) ----
-    hair = sm([(46.4, 32.6), (59.6, 32.8), (59.4, 36.0), (59.0, 39.6), (57.8, 41.6), (56.6, 39.6), (55.0, 38.2), (53.6, 39.6),
-               (53.4, 43.2), (54.6, 46.2), (51.8, 47.8), (48.6, 46.6), (47.0, 42.4), (46.2, 37.6)], t=0.9)
-    hd = [(ribbon([(48.2, 34.4), (50.6, 38.6), (51.2, 43.4), (50.4, 46.4)], [0.2, 1.3, 1.1, 0.2]), BLACK.light, 0.7),
-          (ribbon([(49.4, 35.4), (51.4, 39.2), (51.8, 42.6)], [0.1, 0.5, 0.1]).move(0.3, -0.2), BLACK.hi, 0.5),
-          (ribbon([(55.6, 34.0), (57.4, 35.6), (58.2, 38.6)], [0.2, 0.8, 0.2]), BLACK.light, 0.6)]
-    part('hair', hair, BLACK, grad=(58, 33, 47, 46, [(0, BLACK.light), (0.45, BLACK.base), (1, BLACK.shadow)]),
-         cel=0.9, rim=0.5, cast=1.0, details=hd)
-    # ---- le visage buriné ----
-    face = sm([(53.0, 32.8), (66.0, 32.4), (76.0, 32.6), (77.8, 34.6), (78.0, 37.4), (77.4, 40.0), (77.6, 43.0), (77.8, 45.6),
-               (77.2, 48.4), (75.4, 50.6), (70.0, 51.4), (64.0, 50.6), (59.6, 48.6), (56.4, 45.8), (54.0, 41.8), (52.8, 37.2)], t=0.92)
+    ex, ey, ew = FACE['oeil_proche']           # l'œil proche
+    px_, py_, pw_ = FACE['oeil_fond']          # l'œil du fond, sous le bandeau
+    nx, ny = FACE['nez']
+    mx, my, mw = FACE['bouche']
+    my += 0.7                                  # (la grosse moustache couvre la lèvre du haut)
+    cx_, cy_ = FACE['menton']
+    # ---- le visage buriné (joue proche ronde, côté lointain plus plat, menton sur la médiane) ----
+    face = sm([(53.0, 32.8), (66.0, 32.4), (76.0, 32.6), (77.8, 34.6), (78.0, 37.4), (77.6, 40.4), (77.6, 43.4), (77.2, 46.0),
+               (76.0, 48.6), (73.0, 50.6), (cx_, 51.5), (64.0, 50.6), (59.6, 48.6), (56.4, 45.8), (54.0, 41.8), (52.8, 37.2)], t=0.92)
     fd = []
-    # les plans : la joue proche et la tempe dans l'ombre, la pommette éclairée, le plan de face
-    fd += [(sm([(52.6, 34), (57.6, 35.4), (59.0, 40.6), (61.4, 45.4), (65.6, 49.0), (70, 50.4), (64, 51.6), (58, 49), (53.4, 43)]), SKIN.shadow, 0.55),
+    # les plans : la joue proche et la tempe dans l'ombre, le plan de face éclairé, la pommette
+    fd += [(sm([(52.6, 34), (57.6, 35.4), (59.0, 40.6), (61.4, 45.4), (64.6, 49.0), (cx_, 50.6), (64, 51.6), (58, 49), (53.4, 43)]), SKIN.shadow, 0.55),
            (sm([(66.6, 33.0), (77.6, 33.2), (78.0, 36.0), (72.4, 35.4), (68.0, 35.8)]), SKIN.light, 0.45),
-           (ellipse(63.2, 41.6, 2.8, 1.6, 12), '#f08a6a', 0.22)]
-    # l'ombre de barbe : la mâchoire carrée, le menton, la lèvre du haut
-    fd += [(sm([(57.4, 44.6), (61.0, 45.4), (66.4, 46.2), (70.6, 45.6), (77.8, 45.4), (77.6, 49.0), (75.0, 51.0), (69.4, 51.6),
+           (ellipse(ex - 1.6, ey + 3.4, 2.6, 1.5, 12), '#f08a6a', 0.22)]
+    # l'ombre de barbe : la mâchoire carrée, le menton, autour de la bouche
+    fd += [(sm([(57.4, 44.6), (61.0, 45.4), (65.4, 45.6), (70.0, 45.4), (77.6, 45.2), (77.0, 47.6), (73.6, 50.4), (cx_, 51.4),
                 (63.6, 50.6), (59.4, 48.6)], t=0.9), STUBBLE, 0.26),
-           (sm([(58.6, 46.4), (64.4, 48.4), (70.2, 49.6), (75.6, 49.2), (74.2, 51.0), (69.0, 51.6), (63.2, 50.4)], t=0.9), STUBBLE, 0.2)]
+           (sm([(58.6, 46.4), (63.4, 48.4), (cx_, 49.6), (74.4, 48.6), (72.6, 50.6), (cx_, 51.4), (63.2, 50.4)], t=0.9), STUBBLE, 0.2)]
     # l'ombre sous le bord du chapeau
     fd += [(sm([(52, 32), (79, 32), (79, 34.4), (70, 34.0), (60, 34.6), (52, 34.4)]), SKIN.deep, 0.45)]
     # la balafre claire sur la joue proche
-    fd += [(ribbon([(58.6, 39.4), (59.8, 41.6), (61.4, 43.8)], [0.15, 0.85, 0.15]), SKIN.shadow, 0.6),
-           (ribbon([(58.8, 39.2), (60.0, 41.4), (61.6, 43.6)], [0.1, 0.5, 0.1]), SKIN.hi, 0.95)]
-    # le sourcil épais, froncé (il tombe vers le nez)
+    fd += [(ribbon([(59.4, 39.8), (60.6, 41.9), (62.0, 44.0)], [0.15, 0.85, 0.15]), SKIN.shadow, 0.6),
+           (ribbon([(59.6, 39.6), (60.8, 41.7), (62.2, 43.8)], [0.1, 0.5, 0.1]), SKIN.hi, 0.95)]
+    # l'œil proche, bleu de mer (le dessin d'origine, recentré sur sa place et à sa largeur)
+    E_ = lambda x, y: (ex + (x - 64.8) * (ew / 5.2), ey + (y - 38.1))
+    # le sourcil épais, froncé (il tombe vers la racine du nez)
     brow_dy = 0.5 * sq
-    fd += [(sm([(59.2, 35.6), (61.4, 34.4), (64.4, 34.6), (67.2, 35.6 + brow_dy * 0.6), (68.6, 37.0 + brow_dy), (66.6, 36.8 + brow_dy),
-                (64.2, 36.0), (61.4, 36.2)], sharp=(0, 4), t=0.85), BLACK.base, 1),
-           (ribbon([(60.4, 35.2), (63.4, 34.8), (66.4, 35.8)], [0.1, 0.5, 0.1]), BLACK.light, 0.7)]
-    # l'œil proche, bleu de mer (petit, dur, tourné vers l'ennemi)
-    eye = sm([(62.2, 38.2), (63.6, 37.2 + 0.5 * sq), (65.8, 37.0 + 0.6 * sq), (67.4, 37.8 + 0.3 * sq), (65.8, 38.9 - 0.15 * sq),
-              (63.6, 39.0 - 0.1 * sq)], sharp=(0, 3), t=0.9)
+    fd += [(sm([E_(59.6, 35.6), E_(61.4, 34.4), E_(64.4, 34.6), E_(67.2, 35.6 + brow_dy * 0.6), E_(68.8, 37.0 + brow_dy),
+                E_(66.8, 36.8 + brow_dy), E_(64.2, 36.0), E_(61.6, 36.2)], sharp=(0, 4), t=0.85), BLACK.base, 1),
+           (ribbon([E_(60.6, 35.2), E_(63.4, 34.8), E_(66.4, 35.8)], [0.1, 0.5, 0.1]), BLACK.light, 0.7)]
+    eye = sm([E_(62.2, 38.2), E_(63.6, 37.2 + 0.5 * sq), E_(65.8, 37.0 + 0.6 * sq), E_(67.4, 37.8 + 0.3 * sq),
+              E_(65.8, 38.9 - 0.15 * sq), E_(63.6, 39.0 - 0.1 * sq)], sharp=(0, 3), t=0.9)
     p0, p1, p2, p3, p4, p5 = (almond_pt(eye, i) for i in range(6))
+    ec = E_(64.8, 38.15)
     if blink:
-        fd += [(eye.scale(1.06, 1.2, 64.8, 38.1), SKIN.base, 1),
+        fd += [(eye.scale(1.06, 1.2, *ec), SKIN.base, 1),
                (ribbon([p0, lerp(p5, p4, 0.5), p3], [0.3, 0.8, 0.25]).move(0, -0.2), BLACK.deep, 0.95)]
     else:
-        ix, iy = 65.5, 38.1
-        fd += [(eye.scale(1.1, 1.3, 64.8, 38.2), SKIN.deep, 0.5), (eye, '#f4eee8', 1)]
-        iris = inter(ellipse(ix, iy, 1.1, 1.15), eye)
-        pup = inter(ellipse(ix + 0.1, iy + 0.05, 0.5, 0.58), eye)
+        ix, iy = E_(65.5, 38.1)
+        fd += [(eye.scale(1.1, 1.3, *ec), SKIN.deep, 0.5), (eye, '#f4eee8', 1)]
+        iris = inter(ellipse(ix, iy, 1.05, 1.15), eye)
+        pup = inter(ellipse(ix + 0.1, iy + 0.05, 0.48, 0.58), eye)
         if iris:
             fd += [(iris, ('rad', ix + 0.3, iy + 0.5, 1.4, 1.4, [(0, '#9ee6ff'), (0.45, '#3e9ce0'), (1, '#1a4a9a')]), 1)]
         if pup:
@@ -579,87 +589,112 @@ def head(fig, P):
                (ribbon([add(p0, (-0.4, 0.1)), p1, p2, add(p3, (0.3, 0.0))], [0.3, 0.7, 0.7, 0.25]), BLACK.deep, 0.95),
                (ribbon([p0, p5, p4, p3], [0.1, 0.3, 0.25, 0.1]), SKIN.deep, 0.6)]
     # les pattes d'oie et le pli sous l'œil (visage d'homme mûr)
-    fd += [(ribbon([(61.0, 38.6), (62.0, 39.8), (63.6, 40.4)], [0.1, 0.4, 0.1]), SKIN.deep, 0.4),
-           (ribbon([(61.0, 37.6), (60.0, 37.8)], [0.3, 0.1]), SKIN.deep, 0.35)]
-    # l'ombre douce du nez sur la joue lointaine et la lèvre
-    fd += [(sm([(69.4, 41.0), (70.6, 44.2), (73.4, 45.6), (77.6, 45.4), (74.0, 46.2), (69.8, 45.4), (68.6, 43.0)], t=0.9), SKIN.deep, 0.3)]
-    # le pli du rictus (de l'aile du nez vers le coin de la bouche)
-    fd += [(ribbon([(68.8, 42.8), (67.6, 45.0), (68.0, 47.6)], [0.1, 0.8, 0.2]), SKIN.deep, 0.45)]
-    # la bouche : un rictus qui montre les dents (ou grande ouverte : « Feu ! »)
+    fd += [(ribbon([E_(61.0, 38.6), E_(62.0, 39.8), E_(63.6, 40.4)], [0.1, 0.4, 0.1]), SKIN.deep, 0.4),
+           (ribbon([E_(61.0, 37.6), E_(60.0, 37.8)], [0.3, 0.1]), SKIN.deep, 0.35)]
+    # l'ombre douce du petit nez sur la joue lointaine (la lumière vient d'en haut à droite : l'ombre va en bas à gauche,
+    # sous le bout du nez) et les plis du sourire en coin, de l'aile du nez vers la moustache
+    fd += [(sm([(nx - 2.2, ny + 0.2), (nx - 0.4, ny + 1.2), (nx + 1.8, ny + 1.0), (nx + 0.6, ny + 1.8), (nx - 1.8, ny + 1.4)], t=0.9), SKIN.deep, 0.3),
+           (ribbon([(nx - 2.6, ny - 0.4), (nx - 3.4, ny + 1.0), (nx - 3.6, ny + 2.4)], [0.1, 0.6, 0.2]), SKIN.deep, 0.4)]
+    # la bouche : fermée, un sourire en coin crâneur (ou grande ouverte : « Feu ! », il rit)
     if cri > 0.05:
-        mo = sm([(68.8, 46.6), (72.6, 46.0), (76.6, 46.4), (76.0, 48.2 + 2.4 * cri), (72.6, 49.6 + 2.6 * cri), (69.4, 48.4 + 1.6 * cri)], t=0.9)
-        fd += [(mo.scale(1.08, 1.12, 72.6, 47.6), LIPS[1], 0.95), (mo, '#3a0c1c', 1),
-               (sm([(70.2, 48.4 + 2.2 * cri), (72.6, 47.8 + 2.4 * cri), (75.2, 48.0 + 2.2 * cri), (74.6, 49.2 + 2.4 * cri), (71.4, 49.2 + 2.2 * cri)]),
-                '#b84a5a', 0.9 * min(1, cri * 2)),
-               (sm([(69.4, 46.8), (72.6, 46.3), (76.0, 46.6), (75.6, 47.6), (72.6, 47.4), (69.8, 47.7)], t=0.85), '#fbf6ee', 1)]
+        mo = sm([(mx - 2.9, my - 0.2), (mx, my - 0.8), (mx + 2.6, my - 0.4), (mx + 2.2, my + 1.4 + 2.4 * cri), (mx, my + 2.8 + 2.6 * cri),
+                 (mx - 2.4, my + 1.6 + 1.6 * cri)], t=0.9)
+        fd += [(mo.scale(1.08, 1.12, mx, my + 0.8), LIPS[1], 0.95), (mo, '#3a0c1c', 1),
+               (sm([(mx - 1.8, my + 1.6 + 2.2 * cri), (mx, my + 1.0 + 2.4 * cri), (mx + 1.8, my + 1.2 + 2.2 * cri),
+                    (mx + 1.4, my + 2.4 + 2.4 * cri), (mx - 1.0, my + 2.4 + 2.2 * cri)]), '#b84a5a', 0.9 * min(1, cri * 2)),
+               (sm([(mx - 2.4, my), (mx, my - 0.5), (mx + 2.2, my - 0.2), (mx + 1.9, my + 0.8), (mx, my + 0.6), (mx - 2.1, my + 0.9)], t=0.85), '#fbf6ee', 1)]
     else:
-        mo = sm([(69.0, 46.8), (72.6, 46.2), (76.4, 46.5), (75.8, 48.0), (72.6, 48.6), (69.8, 48.0)], sharp=(0, 2), t=0.9)
-        teeth = sm([(69.6, 46.9), (72.6, 46.4), (75.9, 46.7), (75.5, 47.7), (72.6, 48.1), (70.0, 47.7)], t=0.9)
-        fd += [(mo.scale(1.06, 1.25, 72.6, 47.4), LIPS[1], 0.9), (mo, '#3a0c1c', 1), (teeth, '#fbf6ee', 1),
-               (ribbon([(70.4, 47.6), (72.6, 47.9), (75.2, 47.6)], [0.1, 0.35, 0.1]), '#cfc4d8', 0.8),
-               (ribbon([(72.2, 46.5), (72.3, 47.9)], [0.25, 0.15]), '#b8acc4', 0.7),
-               (ribbon([(74.2, 46.6), (74.25, 47.8)], [0.2, 0.12]), '#b8acc4', 0.6)]
-    # la lèvre du bas, le menton carré éclairé
-    fd += [(ribbon([(70.4, 49.4), (72.8, 49.8), (75.4, 49.2)], [0.1, 0.6, 0.1]), SKIN.deep, 0.45),
-           (sm([(74.4, 48.6), (77.4, 47.6), (77.0, 49.6), (75.4, 50.6)]), SKIN.light, 0.4)]
+        # la fente des lèvres (le coin proche remonte : le sourire en coin), la lèvre du bas, l'ombre dessous
+        fd += [(ribbon([(mx - 2.7, my - 0.7), (mx - 1.4, my + 0.1), (mx + 0.4, my + 0.2), (mx + 2.2, my - 0.1)], [0.25, 0.6, 0.55, 0.2]), LIPS[0], 0.95),
+               (ribbon([(mx - 1.6, my + 0.9), (mx + 0.2, my + 1.2), (mx + 1.8, my + 0.8)], [0.1, 0.7, 0.1]), LIPS[1], 0.6),
+               (ribbon([(mx - 1.2, my + 1.9), (mx + 0.3, my + 2.2), (mx + 1.6, my + 1.8)], [0.1, 0.5, 0.1]), SKIN.deep, 0.45)]
+    # le menton carré éclairé (côté lumière)
+    fd += [(sm([(cx_ + 3.6, my + 1.8), (76.6, my + 1.0), (75.6, my + 3.2), (cx_ + 4.4, my + 4.0)]), SKIN.light, 0.4)]
     part('face', face, SKIN, grad=(78, 33, 54, 48, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
-         cel=1.1, rim=0.5, cast=1.0, cast_on=['hair'], details=fd)
-    # ---- l'oreille (devant les cheveux de la nuque, sa racine fondue dans la peau) et son anneau d'or ----
+         cel=1.1, rim=0.5, cast=1.0, cast_on=[], details=fd)
+    # ---- les cheveux noirs sous le chapeau, UNE forme posée sur le crâne : la tempe peignée vers l'arrière, le favori
+    #      devant l'oreille, l'arrière du crâne et la nuque ; tout file vers le nœud de la queue de cheval, à l'ARRIÈRE
+    #      de la tête (ils couvrent le bord de la face : pas de couture crâne / cheveux) ----
+    hair = sm([(46.6, 32.6), (60.4, 32.9), (60.0, 35.2), (59.2, 37.4), (58.6, 40.2), (58.2, 42.6), (57.2, 41.2), (56.6, 38.6),
+               (55.2, 36.9), (53.8, 38.2), (53.4, 43.0), (53.6, 45.4), (51.4, 45.8), (48.6, 44.4), (46.6, 41.8), (45.8, 37.4)],
+              sharp=(5,), t=0.9)
+    hd = [(ribbon([(53.6, 44.2), (51.0, 43.6), (48.8, 42.4), (47.4, 41.2)], [0.2, 1.0, 0.8, 0.1]), BLACK.light, 0.6),
+          (ribbon([(48.4, 34.0), (47.4, 36.8), (47.2, 39.6)], [0.2, 0.9, 0.1]), BLACK.light, 0.6),
+          (ribbon([(50.6, 34.4), (49.8, 37.0), (48.8, 39.8)], [0.1, 0.45, 0.1]), BLACK.hi, 0.5),
+          (ribbon([(59.0, 33.8), (56.0, 34.4), (52.6, 35.6), (49.6, 38.0)], [0.1, 0.6, 0.5, 0.1]), BLACK.light, 0.6),
+          (ribbon([(59.2, 35.2), (58.4, 37.8), (58.1, 40.6)], [0.1, 0.4, 0.1]), BLACK.light, 0.5)]
+    part('hair', hair, BLACK, grad=(58, 33, 47, 46, [(0, BLACK.light), (0.45, BLACK.base), (1, BLACK.shadow)]),
+         cel=0.9, rim=0.4, cast=0.8, cast_on=['face'], details=hd)
+    # ---- l'oreille (devant les cheveux, sa racine fondue dans la peau) et son anneau d'or ----
     ear = sm([(56.8, 37.6), (55.0, 36.8), (53.4, 37.8), (52.9, 40.2), (53.6, 42.8), (55.0, 44.8), (56.6, 45.0), (57.4, 42.6)], t=0.95)
-    part('ear', ear, SKIN, grad=(57, 37, 53, 45, [(0, SKIN.base), (1, SKIN.shadow)]), cel=0.6, rim=0.4, cast=0.7, cast_on=['hair'],
+    part('ear', ear, SKIN, grad=(57, 37, 53, 45, [(0, SKIN.base), (1, SKIN.shadow)]), cel=0.6, rim=0.4, cast=0.7, cast_on=['hair', 'face'],
          details=[(sm([(55.9, 38.6), (54.6, 38.6), (54.2, 40.6), (54.9, 43.0), (55.8, 42.0)], t=0.9), SKIN.shadow, 0.75),
                   (ribbon([(54.4, 37.6), (53.6, 40.0), (54.2, 43.0)], [0.1, 0.45, 0.1]), SKIN.hi, 0.5)])
     ring = Shape(ellipse(55.6, 46.6, 1.45, 1.6).subs + ellipse(55.6, 46.75, 0.85, 0.95).subs, evenodd=True)
     part('earring', ring, GOLD, cel=0.3, rim=0.35, cast=0.5, cast_on=['face', 'hair', 'ear', 'neck', 'collar'],
          details=[(ellipse(56.4, 45.6, 0.35, 0.25, -30), GOLD.glint, 0.95)])
-    # ---- le ruban rouge qui noue la queue de cheval, sur la nuque ----
-    for name, sh in (('rib1', sm([(51.2, 45.6), (49.4, 43.8), (47.6, 43.6), (47.4, 45.0), (49.2, 46.2)], t=0.9)),
-                     ('rib2', sm([(51.0, 46.6), (49.2, 46.8), (47.6, 48.2), (48.4, 49.2), (50.4, 48.0)], t=0.9))):
-        part(name, sh, RED, cel=0.5, rim=0.4, cast=0.6, cast_on=['hair', 'rib1'],
-             details=[(ellipse(48.8, 44.6 if name == 'rib1' else 47.8, 0.9, 0.45, -20), RED.hi if name == 'rib1' else RED.shadow, 0.6)])
-    part('ribk', ellipse(51.2, 46.2, 1.25, 1.35), RED, cel=0.4, rim=0.4, cast=0.6, cast_on=['hair', 'rib1', 'rib2'],
-         details=[(ellipse(51.5, 45.8, 0.5, 0.4), RED.hi, 0.7)])
-    # ---- le bandeau de cuir noir sur l'œil lointain, sa lanière en biais sur le front ----
-    strap = taper([(71.4, 36.4), (69.0, 35.2), (66.6, 34.2), (64.8, 33.4)], 1.1, 1.0)
+    # ---- le ruban rouge qui noue la queue de cheval, à l'ARRIÈRE du crâne (les boucles dépassent vers l'arrière) ----
+    kx, ky = TIE
+    for name, sh in (('rib1', sm([(kx - 0.2, ky - 0.6), (kx - 1.8, ky - 2.6), (kx - 3.6, ky - 3.0), (kx - 3.8, ky - 1.6), (kx - 2.0, ky - 0.2)], t=0.9)),
+                     ('rib2', sm([(kx - 0.4, ky + 0.4), (kx - 2.2, ky + 0.8), (kx - 3.6, ky + 2.4), (kx - 2.6, ky + 3.2), (kx - 0.8, ky + 1.6)], t=0.9))):
+        part(name, sh, RED, cel=0.5, rim=0.4, cast=0.6, cast_on=['hair', 'rib1', 'pony'],
+             details=[(ellipse(kx - 2.4, ky - 2.0 if name == 'rib1' else ky + 1.6, 0.9, 0.45, -20), RED.hi if name == 'rib1' else RED.shadow, 0.6)])
+    part('ribk', ellipse(kx, ky, 1.2, 1.3), RED, cel=0.4, rim=0.4, cast=0.6, cast_on=['hair', 'rib1', 'rib2', 'pony'],
+         details=[(ellipse(kx + 0.3, ky - 0.4, 0.5, 0.4), RED.hi, 0.7)])
+    # ---- le bandeau de cuir noir sur l'œil du fond (même ligne que l'œil proche), sa lanière en biais sur le front ----
+    strap = taper([(px_ - 2.4, py_ - 1.6), (69.0, 35.0), (66.6, 34.1), (64.8, 33.4)], 1.1, 1.0)
     part('strap', strap, BLACK, cel=0.2, rim=0.3, cast=0.6, cast_on=['face'])
-    patch = sm([(70.4, 36.6), (73.8, 35.4), (77.4, 35.8), (78.4, 37.8), (77.6, 40.4), (74.6, 41.4), (71.4, 40.8), (70.2, 38.8)], t=0.92)
-    part('patch', patch, BLACK, grad=(78, 35.6, 71, 41, [(0, BLACK.light), (0.5, BLACK.base), (1, BLACK.shadow)]), cel=0.6, rim=0.5,
-         cast=0.9, cast_on=['face', 'strap'],
-         details=[(ribbon([(72.0, 36.6), (75.0, 36.0), (77.4, 36.8)], [0.1, 0.5, 0.1]), BLACK.hi, 0.55)])
-    # ---- le gros nez busqué (il dépasse du profil ; son arête passe devant le coin bas du bandeau) ----
-    nose = sm([(69.0, 36.6), (72.2, 36.9), (75.4, 37.8), (78.4, 39.4), (80.2, 41.0), (81.0, 42.6), (80.8, 44.2), (79.6, 45.2),
-               (77.8, 44.8), (74.6, 45.0), (72.4, 44.8), (70.8, 43.8), (70.0, 40.6)], t=0.9)
-    nd = [(sm([(69.0, 38.6), (70.4, 39.4), (71.2, 42.0), (72.6, 44.0), (70.8, 43.8), (70.0, 40.6)]), SKIN.shadow, 0.3),
-          (ribbon([(70.4, 37.2), (73.6, 37.8), (76.8, 39.0), (79.4, 40.8), (80.8, 42.6)], [0.2, 0.6, 0.8, 0.7, 0.2]), SKIN.hi, 0.8),
-          (ellipse(79.9, 42.4, 0.8, 0.5, 40), '#ffffff', 0.45),
-          (sm([(74.4, 43.6), (77.4, 43.2), (79.6, 44.0), (80.6, 44.6), (79.0, 45.0), (77.0, 44.4), (74.6, 45.0)]), SKIN.shadow, 0.6),
-          (ellipse(73.2, 44.0, 0.85, 0.45, 15), SKIN.deep, 0.85),
-          (ribbon([(71.4, 41.6), (72.6, 42.8), (74.6, 43.0)], [0.1, 0.5, 0.1]), SKIN.shadow, 0.5)]
-    part('nose', nose, SKIN, grad=(80, 38, 70, 43, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.base)]), cel=0, rim=0.5,
-         cast=0.9, cast_on=['patch', 'strap', 'must'], details=nd)
-    # ---- la grosse moustache noire en guidon (pointes relevées), la barbiche ----
-    # (une seule forme, d'une pointe à l'autre : épaisse sous le nez, un léger creux au milieu)
-    cm = crpath([(60.2, 41.8), (61.0, 44.2), (64.6, 45.8), (69.8, 46.0), (73.8, 45.0), (77.2, 45.7), (80.4, 45.0), (82.2, 43.2),
-                 (82.4, 41.2)], 40)
+    patch = sm([(px_ - 3.2, py_ - 1.0), (px_ - 0.8, py_ - 2.7), (px_ + 2.4, py_ - 2.5), (77.9, py_ - 0.6), (77.5, py_ + 1.6),
+                (px_ + 1.4, py_ + 2.6), (px_ - 1.6, py_ + 2.4), (px_ - 3.3, py_ + 1.0)], t=0.92)
+    part('patch', patch, BLACK, grad=(78, py_ - 2.6, px_ - 3, py_ + 2.6, [(0, BLACK.light), (0.5, BLACK.base), (1, BLACK.shadow)]), cel=0.6,
+         rim=0.5, cast=0.9, cast_on=['face', 'strap'],
+         details=[(ribbon([(px_ - 2.2, py_ - 1.6), (px_ + 0.4, py_ - 2.1), (px_ + 2.8, py_ - 1.5)], [0.1, 0.5, 0.1]), BLACK.hi, 0.55)])
+    # ---- le petit nez, ENTRE l'œil et le bandeau : l'arête claire depuis la racine, un bout rond qui dépasse à peine ----
+    nose = sm([(nx - 0.9, ey + 0.2), (nx + 0.3, ey + 0.4), (nx + 1.2, ny - 1.8), (nx + 2.0, ny - 0.6), (nx + 1.7, ny + 0.6),
+               (nx + 0.4, ny + 1.0), (nx - 1.2, ny + 0.9), (nx - 2.0, ny + 0.1), (nx - 1.6, ny - 1.0), (nx - 1.1, ny - 2.4)], t=0.92)
+    nd = [(sm([(nx - 1.1, ey + 0.6), (nx - 0.4, ny - 2.2), (nx - 0.6, ny - 0.6), (nx - 1.9, ny + 0.2), (nx - 1.6, ny - 1.0), (nx - 1.1, ny - 2.4)]), SKIN.shadow, 0.35),
+          (ribbon([(nx - 0.2, ey + 0.8), (nx + 0.6, ny - 2.2), (nx + 1.3, ny - 0.8)], [0.15, 0.5, 0.4]), SKIN.hi, 0.75),
+          (ellipse(nx + 1.0, ny - 0.5, 0.55, 0.4, 30), '#ffffff', 0.4),
+          (ellipse(nx - 0.6, ny + 0.45, 0.6, 0.3, 12), SKIN.deep, 0.85)]
+    part('nose', nose, SKIN, grad=(nx + 2, ey, nx - 2, ny + 1, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.base)]), cel=0, rim=0.35,
+         cast=0.6, cast_on=['face', 'must'], details=nd)
+    # ---- la grosse moustache noire en guidon (pointes relevées), centrée sous le nez, la barbiche sous la bouche ----
+    # (une seule forme, d'une pointe à l'autre : épaisse sous le nez, un léger creux au milieu ; la moitié du fond
+    # un peu plus courte, vue de trois quarts)
+    cm = crpath([(60.0, 41.6), (60.8, 44.0), (63.8, 45.6), (67.0, 45.7), (nx, ny + 2.0), (72.6, 45.5), (75.4, 45.3), (77.8, 44.0),
+                 (78.4, 42.0)], 40)
     n = len(cm) - 1
     ws = []
     for i in range(n + 1):
         t = i / n
         w = 0.35 + 2.9 * math.sin(math.pi * t) ** 0.55
-        w -= 0.7 * math.exp(-((t - 0.56) / 0.05) ** 2)
+        w -= 0.7 * math.exp(-((t - 0.5) / 0.05) ** 2)
         ws.append(max(0.3, w))
     must = ribbon(cm, ws)
-    md = [(ribbon(cm[4:20], [0.1] + [0.7] * 14 + [0.1]).move(0.4, -0.9), BLACK.light, 0.6),
-          (ribbon(cm[24:36], [0.1] + [0.6] * 10 + [0.1]).move(0.3, -0.8), BLACK.light, 0.55),
-          (ribbon(cm[8:18], [0.1] + [0.35] * 8 + [0.1]).move(0.5, -1.1), BLACK.hi, 0.5),
-          (ribbon([cm[21], cm[22], cm[23]], [0.2, 0.6, 0.2]).move(0, 0.4), BLACK.deep, 0.6)]
-    part('must', must, BLACK, grad=(78, 43, 64, 47, [(0, BLACK.light), (0.5, BLACK.base), (1, BLACK.shadow)]),
+    md = [(ribbon(cm[3:18], [0.1] + [0.7] * 13 + [0.1]).move(0.4, -0.9), BLACK.light, 0.6),
+          (ribbon(cm[22:35], [0.1] + [0.6] * 11 + [0.1]).move(0.3, -0.8), BLACK.light, 0.55),
+          (ribbon(cm[7:16], [0.1] + [0.35] * 7 + [0.1]).move(0.5, -1.1), BLACK.hi, 0.5),
+          (ribbon([cm[19], cm[20], cm[21]], [0.2, 0.6, 0.2]).move(0, 0.4), BLACK.deep, 0.6)]
+    part('must', must, BLACK, grad=(76, 43, 62, 47, [(0, BLACK.light), (0.5, BLACK.base), (1, BLACK.shadow)]),
          cel=0.6, rim=0.45, cast=0.9, cast_on=['face'], details=md)
-    goat = sm([(71.4, 49.2 + 1.2 * cri), (74.0, 48.8 + 1.4 * cri), (76.2, 49.4 + 1.2 * cri), (76.0, 51.0 + 1.0 * cri),
-               (75.0, 52.8 + 1.0 * cri), (74.0, 54.4 + 1.0 * cri), (73.2, 52.6 + 1.0 * cri), (71.8, 50.8 + 1.0 * cri)], sharp=(5,), t=0.9)
+    gx = mx - 0.4
+    goat = sm([(gx - 2.2, my + 2.6 + 1.2 * cri), (gx + 0.2, my + 2.2 + 1.4 * cri), (gx + 2.2, my + 2.8 + 1.2 * cri), (gx + 2.0, my + 4.4 + 1.0 * cri),
+               (gx + 1.1, my + 6.0 + 1.0 * cri), (gx + 0.2, my + 7.6 + 1.0 * cri), (gx - 0.6, my + 5.9 + 1.0 * cri), (gx - 1.9, my + 4.2 + 1.0 * cri)],
+              sharp=(5,), t=0.9)
     part('goatee', goat, BLACK, cel=0.4, rim=0.3, cast=0.8, cast_on=['face', 'neck', 'collar', 'jab1'],
-         details=[(ribbon([(74.4, 49.8 + 1.2 * cri), (75.0, 51.4 + 1.0 * cri)], [0.3, 0.1]), BLACK.light, 0.7)])
+         details=[(ribbon([(gx + 0.6, my + 3.2 + 1.2 * cri), (gx + 1.2, my + 4.8 + 1.0 * cri)], [0.3, 0.1]), BLACK.light, 0.7)])
     return names
+
+
+def face_mesures():
+    """Les places RÉELLES des traits (pour visage.verifier), dans le repère de head() : le centre et la largeur de l'œil
+    proche dessiné ; l'œil du fond = le centre du bandeau qui le couvre (même ligne), à la largeur de placer() ; le nez
+    = sa base (le bout rond, sur la médiane) ; la bouche = le milieu de la fente des lèvres."""
+    ex, ey, ew = FACE['oeil_proche']
+    fx_, fy_, fw_ = FACE['oeil_fond']
+    nx, ny = FACE['nez']
+    mx, my, mw = FACE['bouche']
+    return {'oeil_proche': (ex, ey, ew), 'oeil_fond': (fx_, fy_, fw_), 'nez': (nx, ny), 'bouche': (mx, my + 0.7, mw)}
 
 
 # ---------------------------------------------------------------- la plume rouge (de la cocarde vers l'arrière)

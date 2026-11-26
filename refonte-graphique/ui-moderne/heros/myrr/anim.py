@@ -186,9 +186,11 @@ def wing_state(wo, wb):
 
 
 def mouth_pre(P, br):
-    """Les lèvres (le bout de l'embouchure), dans le repère d'avant le haut du corps (comme TM0)."""
+    """Le bout de l'embouchure, dans le repère d'avant le haut du corps (comme TM0) : la coupe (2 pixels avant le
+    bout du tube) se pose sur le milieu de la bouche (M.MOUTH), le tube part vers l'avant dans l'axe de la trompette."""
     Hm = mchain(mT(0, -0.6 * br), mT(P['headx'], P['heady']), mR(P['tilt'], M.H0[0], M.H0[1] - 4), mS(1.1, 1.1, *M.H0))
-    return mapp(Hm, (82.9, 42.4))
+    a = math.radians(P['ta'])
+    return mapp(Hm, (M.MOUTH[0] + 1.7 * math.cos(a), M.MOUTH[1] + 1.7 * math.sin(a)))
 
 
 def pose_at(T, action=None, t0=0.0):

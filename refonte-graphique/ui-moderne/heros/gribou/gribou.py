@@ -421,11 +421,17 @@ def head_part(fig, P, HEAD):
            (ribbon([(86.0, 57.8), (91.0, 57.2), (96.0, 58.8), (98.8, 61.6)], [0.1, 0.9, 0.8, 0.1]), FUR.hi, 0.7),
            (sm([(77.4, 66.6), (78.8, 62.2), (81.0, 59.6), (80.6, 63.4), (80.2, 68.6), (79.0, 74.0), (77.0, 73.0)]), FUR.shadow, 0.45)]
     # la touffe des favoris (plus claire) entre l'oreille et le masque : des mèches couchées vers l'arrière
-    hd += [(sm([(82.6, 71.0), (84.6, 72.4), (85.8, 75.4), (86.0, 78.6), (84.0, 80.6), (80.6, 79.8), (78.8, 77.4),
-                (79.6, 75.4), (78.4, 74.0), (80.4, 72.8)]), FUR.light, 0.55),
-           (ribbon([(84.4, 74.0), (82.0, 76.6), (79.4, 77.6)], [0.1, 0.6, 0.1]), FUR.shadow, 0.45)]
+    hd += [(ribbon([(82.4, 74.6), (80.6, 76.8), (78.4, 77.8)], [0.1, 0.6, 0.1]), FUR.shadow, 0.4)]
     # le masque de peau en coeur : deux lobes autour des yeux (pointe de fourrure au milieu du front), le museau rond
     # autour du nez et de la bouche, jusqu'au menton ; il suit la sphère du visage (centré sur la médiane)
+    # les favoris plus clairs qui encadrent le masque (comme Eldra, la reine du clan) : une frange crème du front à
+    # la joue et sous le menton, son bord extérieur en petites mèches couchées vers l'arrière et vers le bas
+    fav = sm([(85.8, 63.6), (84.2, 65.8), (83.2, 69.0), (82.8, 72.2), (80.6, 74.4), (82.6, 75.2), (80.2, 77.6),
+              (82.8, 78.0), (81.6, 80.6), (84.6, 80.4), (85.4, 82.6), (87.6, 81.0), (90.4, 82.0), (89.2, 79.6),
+              (86.6, 76.0), (85.2, 71.0), (85.8, 66.4)], sharp=(4, 6, 8, 10, 12), t=0.9)
+    hd += [(fav.move(-0.5, 0.6), FUR.shadow, 0.45),
+           (fav, ('lin', exn + 4, 62, exn - 6, 80, [(0, '#fff0c8'), (0.5, '#f8d49a'), (1, '#dca46a')]), 1),
+           (ribbon([(84.6, 66.4), (83.8, 70.6), (83.6, 74.6), (85.6, 79.0)], [0.1, 0.5, 0.5, 0.1]), '#fff6dc', 0.5)]
     m0 = med(65.0)
     mask = sm([(exn - 4.0, 66.6), (exn - 1.6, 64.0), (exn + 1.8, 63.6), (m0 - 1.0, 64.6), (m0, 65.6),
                (m0 + 1.0, 64.4), (exf + 0.4, 63.4), (100.4, 64.6), (101.0, 69.0), (101.6, 72.2), (102.4, 74.6),
@@ -462,8 +468,9 @@ def head_part(fig, P, HEAD):
                 [(0, IRIS[0]), (0.35, IRIS[1]), (0.8, IRIS[2]), (1, IRIS[3])]
             hd += [('<path d="%s" fill="FILL" clip-path="url(#%s)"/>' % (ellipse(ix, eyy, rx, ry).d(), cid),
                     ('rad', ix + 0.3, eyy - 0.3, rx * 1.2, ry * 1.2, stops), 1)]
-            if eh <= 0.5:
-                hd += [('<path d="%s" fill="#2a0c1c" clip-path="url(#%s)"/>' % (ellipse(ix + hw * 0.12, eyy + 0.05, 0.55 * pr, 0.8 * pr).d(), cid), '', 1),
+            if True:
+                pk = 0.75 if eh > 0.5 else 1.0         # le regard qui s'allume : la pupille se resserre
+                hd += [('<path d="%s" fill="#2a0c1c" clip-path="url(#%s)"/>' % (ellipse(ix + hw * 0.12, eyy + 0.05, 0.55 * pr * pk, 0.8 * pr * pk).d(), cid), '', 1),
                        (ellipse(ix + hw * 0.28, eyy - 0.45, 0.32 * pr, 0.3 * pr), '#ffffff', 1)]
             # la paupière du haut (le regard rusé, mi-clos) et le trait des cils
             lid = sm([(cx - hw - 0.2, eyy + 0.1), (cx - hw * 0.4, eyy - 1.4 * pr), (cx + hw * 0.5, eyy - 1.5 * pr),

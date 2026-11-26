@@ -2,6 +2,8 @@
 #   python3 presentation.py
 # - fixe.png : le dessin vectoriel en grand, sur la pierre sombre des menus (ombre douce au sol) ;
 # - comparaison.png : pixel art (agrandi sans flou) | vectoriel, à la même échelle, pieds sur la même ligne ;
+# - visage.png : la tête zoomée ×4, à gauche telle quelle, à droite avec le calque de visage.py (méthode commune) ;
+# - avant-apres.png : l'image annotée par le propriétaire (avant) | le dessin corrigé, même cadrage ;
 # - (brouillon) a-cote-de-kael.png : Barzul et Kael côte à côte, même échelle (cohérence de taille et de style).
 import os
 import subprocess
@@ -99,10 +101,73 @@ def main():
     dbg = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-barzul-corr'
     if os.path.isdir(dbg):
         im.convert('RGB').resize((W4 // 2, (base + 80) // 2), Image.LANCZOS).save(os.path.join(dbg, 'a-cote-de-kael.png'))
+    visage()
+    avant_apres(fig, k)
     for f_ in os.listdir(TMP):
         os.remove(os.path.join(TMP, f_))
     os.rmdir(TMP)
     print('écrit', os.path.join(OUT, 'fixe.png'), 'et comparaison.png')
+
+
+def visage():
+    """visage.png : la tête zoomée ×4 (cadre du jeu 512 px → ×4), à gauche sans rien, à droite avec le calque
+    guide_svg de visage.py posé dans le repère de la tête (même ×1,1 que la pose) ; vérifie aussi les places."""
+    from visage import guide_svg, verifier
+    x0, y0, w, h = S.FRAME
+    head_svg = S.build().svg()
+    g = guide_svg(S.FACE_BOX)
+    hx, hy = S.H0
+    g = '<g transform="translate(%g %g) scale(1.1) translate(%g %g)">' % (hx, hy, -hx, -hy) + g + '</g>'
+    guided = head_svg[:head_svg.rindex('</svg>')] + g + '</svg>'
+    H = 4 * 512
+    k = H / h
+    box = (round((43 - x0) * k), round((22 - y0) * k), round((86 - x0) * k), round((56 - y0) * k))
+    ims = []
+    for i, svg_txt in enumerate((head_svg, guided)):
+        im = render(svg_txt, H, '_visage%d' % i).crop(box)
+        bg = stone(im.width, im.height, im.height + 10)
+        bg.alpha_composite(im)
+        ims.append(bg)
+    d = verifier(S.face_mesures(), S.FACE_BOX)
+    out = Image.new('RGB', (2 * ims[0].width + 30, ims[0].height + 40), (20, 14, 34))
+    out.paste(ims[0].convert('RGB'), (0, 40))
+    out.paste(ims[1].convert('RGB'), (ims[0].width + 30, 40))
+    ImageDraw.Draw(out).text((10, 12), 'verifier() : ' + ('; '.join(d) if d else 'aucun defaut (liste vide)'), fill=(255, 255, 255))
+    out.save(os.path.join(OUT, 'visage.png'))
+    print('visage : défauts =', d or 'aucun')
+
+
+def avant_apres(fig, k):
+    """avant-apres.png : à gauche l'image annotée par le propriétaire (telle quelle, ses cercles), à droite le dessin
+    corrigé sur le même fond, au même cadrage (même hauteur de personnage, pieds au même endroit)."""
+    src = '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/avis-img/demons-3.png'
+    if not os.path.exists(src):
+        print('(image annotée introuvable : avant-apres.png non refait)')
+        return
+    av = Image.open(src).convert('RGB')
+    # l'image annotée est l'ancienne image 512 px (cadre FRAME) agrandie : on retrouve son échelle et son décalage
+    # en y cherchant la silhouette (du haut de la plume au bas des bottes ; à droite, le bout du canon)
+    import numpy as np
+    a = np.asarray(av).astype(int)
+    bgc = a[5, 5]
+    m = (np.abs(a - bgc).sum(axis=2) > 40)
+    ys, xs = np.nonzero(m)
+    b = np.asarray(fig)[:, :, 3] > 20
+    by, bx = np.nonzero(b)
+    s_ = (ys.max() - ys.min()) / (by.max() - by.min())
+    new = fig.resize((round(fig.width * s_), round(fig.height * s_)), Image.LANCZOS)
+    ox = xs.max() - round(bx.max() * s_)          # le bout du canon (il n'a pas bougé)
+    oy = ys.max() - round(by.max() * s_)
+    ap = Image.new('RGBA', av.size, tuple(int(c) for c in bgc) + (255,))
+    ap.alpha_composite(new, (max(0, ox), max(0, oy)))
+    gap = 40
+    out = Image.new('RGB', (2 * av.width + gap, av.height + 60), (20, 14, 34))
+    out.paste(av, (0, 60))
+    out.paste(ap.convert('RGB'), (av.width + gap, 60))
+    dr = ImageDraw.Draw(out)
+    dr.text((20, 22), 'AVANT (avis du proprietaire)', fill=(255, 220, 120))
+    dr.text((av.width + gap + 20, 22), 'APRES', fill=(255, 220, 120))
+    out.save(os.path.join(OUT, 'avant-apres.png'))
 
 
 if __name__ == '__main__':

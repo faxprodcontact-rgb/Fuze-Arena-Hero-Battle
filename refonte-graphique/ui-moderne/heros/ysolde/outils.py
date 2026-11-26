@@ -252,3 +252,78 @@ def several(shapes):
     for s in shapes:
         subs += s.subs
     return Shape(subs)
+
+
+# ---------- une chevelure d'UNE seule masse (repris de Kael, ../kael/kael.py : fused, cast_off, faded) ----------
+
+def _ring(coords, sharp_deg=38):
+    """Un anneau de polygone → une forme souple qui garde les coins vifs (pointes des mèches, creux entre elles)."""
+    pts = list(coords)[:-1]
+    n = len(pts)
+    sharp = []
+    for i in range(n):
+        a, b, c = pts[i - 1], pts[i], pts[(i + 1) % n]
+        d = abs((math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(b[1] - a[1], b[0] - a[0]) + math.pi) % (2 * math.pi) - math.pi)
+        if math.degrees(d) > sharp_deg:
+            sharp.append(i)
+    return sm(pts, sharp=tuple(sharp), t=0.9).subs
+
+
+def geom_shape(geom, simplify=0.02, min_area=0.05):
+    """Un (multi)polygone shapely → une forme (trous compris, orientés pour la règle « nonzero »)."""
+    from shapely.geometry import Polygon
+    from shapely.geometry.polygon import orient
+    gs = list(geom.geoms) if hasattr(geom, 'geoms') else [geom]
+    subs = []
+    for g in gs:
+        if g.geom_type != 'Polygon' or g.area < min_area:
+            continue
+        g = orient(g.simplify(simplify), 1.0)
+        subs += _ring(g.exterior.coords)
+        for h in g.interiors:
+            if Polygon(h).area >= 1.0:
+                subs += _ring(h.coords)
+    return Shape(subs) if subs else None
+
+
+def fused(shapes, smooth=0.35):
+    """Plusieurs formes fondues en UNE silhouette (aucune couture), creux à peine arrondis."""
+    from shapely.ops import unary_union
+    g = unary_union([poly_of(s, 8) for s in shapes])
+    g = g.buffer(smooth, join_style=1, quad_segs=6).buffer(-smooth, join_style=1, quad_segs=6)
+    return geom_shape(g)
+
+
+def cast_off(sh, dx, dy):
+    """L'ombre d'une forme sur ce qui est dessous : la forme décalée, moins la forme elle-même."""
+    from shapely import affinity
+    g = poly_of(sh, 8)
+    d = affinity.translate(g, dx, dy).difference(g)
+    return geom_shape(d.buffer(-0.04).buffer(0.04), min_area=0.3)
+
+
+def hexmix(a, b, t):
+    a = [int(a[i:i + 2], 16) for i in (1, 3, 5)]
+    b = [int(b[i:i + 2], 16) for i in (1, 3, 5)]
+    return '#%02x%02x%02x' % tuple(round(x + (y - x) * t) for x, y in zip(a, b))
+
+
+def faded(stops, fade, k=1.0):
+    """Les arrêts d'un dégradé qui n'apparaît qu'après la racine : transparent à 0, plein à `fade` (rampe douce)."""
+    def col_at(o):
+        for (o1, c1), (o2, c2) in zip(stops, stops[1:]):
+            if o1 <= o <= o2:
+                return hexmix(c1, c2, (o - o1) / ((o2 - o1) or 1))
+        return stops[-1][1] if o > stops[-1][0] else stops[0][1]
+    out = []
+    for i in range(7):
+        o = fade * i / 6
+        u = i / 6
+        out.append((round(o, 4), col_at(o), round(k * u * u * (3 - 2 * u), 3)))
+    out += [(o, c, k) for o, c in stops if o > fade]
+    return out
+
+
+def diff_shape(a, b, step=0.4):
+    """La forme a moins la forme b (le plus grand morceau), en forme souple."""
+    return shape_of(poly_of(a, 8).difference(poly_of(b, 8)), step=step)

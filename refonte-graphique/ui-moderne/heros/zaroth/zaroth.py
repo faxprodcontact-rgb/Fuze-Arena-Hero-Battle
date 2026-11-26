@@ -5,8 +5,8 @@
 #
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/zaroth.txt) : le samouraï masqué, un mur d'armure rouge.
 # Grosse tête casquée (bol laqué rouge, visière qui met les yeux dans l'ombre, grand croissant d'or sur une monture à
-# gemme bleue, aileron retourné à blason de vague, protège-nuque en trois paliers), masque de démon rouge (nez qui
-# dépasse, gueule ouverte à quatre crocs, grosse moustache blanche en crochet, barbiche), yeux ambre sous de gros
+# gemme bleue, aileron retourné à blason de vague, protège-nuque en trois paliers), cache-cou de tissu rouge à liseré
+# d'or qui couvre tout le bas du visage jusqu'au bord avant (avis du propriétaire : plus de nez), yeux ambre sous de gros
 # sourcils blancs froncés ; deux grandes épaulières carrées à laçage bleu, cuirasse en tonneau (liserés d'or, blason de
 # vague), jupe de plaques, hakama bleu nuit, jambières laquées, tabi et sandales de paille ; sabre tenu à deux mains
 # devant le ventre, lame qui monte vers l'ennemi ; fourreau bleu nuit qui dépasse derrière la hanche.
@@ -23,6 +23,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
 from atelier import Figure, Mat, sm, limb, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from outils import bent, taper, crpath  # noqa: E402
+from visage import placer  # noqa: E402
 from lib import Shape  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
@@ -41,6 +42,12 @@ BRAID = Mat('#ffffff', '#efeaf6', '#d0c8e0', '#8e86aa', '#5a5476')
 FANG = Mat('#fffaf0', '#f4ead6', '#dccdb8', '#a8907e', '#6b5040')
 WATER = ['#ffffff', '#d8f2ff', '#9ed8f6', '#5cacea', '#2f74c4', '#1c4a92']
 EYE = ('#fff3c4', '#ffb020', '#c0501a', '#1a0814')
+
+# le visage (visage.py) : l'ovale de la face sous le casque (bord avant = le contour de la joue et du cache-cou)
+FACE_BOX = (52.0, 26.0, 88.4, 54.6)
+# gabarits des yeux (repère : milieu de l'œil ; largeur 7,2 pour l'œil proche ; le regard part vers la droite)
+EYE_N = [(-3.6, 0.1), (-1.0, -1.2), (2.2, -1.1), (3.6, -0.1), (1.4, 1.2), (-1.8, 1.1)]
+EYE_F = [(-3.6, 0.1), (-1.4, -1.0), (2.2, -1.3), (3.6, -0.6), (1.4, 0.7), (-1.9, 0.9)]
 
 GRD = 116          # le sol (dessous des sandales)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin : les pieds (64, 116)
@@ -381,7 +388,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['fleg', 'nleg'], LEG)
     # ce que les effets doivent savoir (repère du dessin)
     tip = mapp(U, loc((BLADE_L * st_, -4.35)))
-    fig.ctx = dict(U=U, O=mapp(U, O), ang=ang + P['lean'] * 1.0, tip=tip, P=P, chest=mapp(TOR, (72, 66)),
+    fig.ctx = dict(HEAD=HEAD, U=U, O=mapp(U, O), ang=ang + P['lean'] * 1.0, tip=tip, P=P, chest=mapp(TOR, (72, 66)),
                    head=mapp(HEAD, (74, 40)), crest=mapp(HEAD, (75, 2)), EN=mapp(U, EN), EF=mapp(U, EF),
                    WN=mapp(U, WN), WF=mapp(U, WF))
     if fx:
@@ -391,7 +398,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
 
 def head(fig, P):
-    """La tête casquée : protège-nuque, visage dans l'ombre, bol laqué, aileron, visière, masque de démon, croissant."""
+    """La tête casquée : protège-nuque, visage dans l'ombre, bol laqué, aileron, visière, cache-cou, croissant."""
     names = []
 
     def part(name, *a, **k):
@@ -413,27 +420,34 @@ def head(fig, P):
              cel=1.0, rim=0.5, cast=1.0, details=det)
 
     # ---- le visage, dans l'ombre de la visière : seuls les yeux ambre se voient, sous de gros sourcils froncés ----
+    # Places et tailles des yeux : visage.py (boîte FACE_BOX : l'ovale de la face sous le casque et le cache-cou).
+    V = placer(FACE_BOX)
     face = sm([(57.6, 33.6), (80, 33.0), (87.4, 35.0), (88.0, 40.0), (86.0, 46.0), (70, 47.0), (57.6, 46.0)])
     fd = [(face, ('lin', 72, 35, 72, 42.5, [(0, SKIN.deep), (0.45, SKIN.shadow), (1, SKIN.base)]), 1),
-          (sm([(71.0, 38.8), (75.6, 38.6), (76.6, 41.6), (73.6, 42.6), (70.6, 41.8)]), SKIN.light, 0.85),
-          (ellipse(74.6, 39.6, 1.1, 0.6, -20), SKIN.hi, 0.7),
-          (sm([(82.6, 39.0), (87.0, 38.8), (87.2, 42.0), (83.0, 42.4)]), SKIN.base, 0.9)]
-    eyeN = sm([(63.8, 40.4), (66.4, 39.1), (69.6, 39.2), (71.0, 40.2), (68.8, 41.5), (65.6, 41.4)], sharp=(0, 3))
-    eyeF = sm([(76.8, 40.4), (78.4, 39.3), (81.0, 39.0), (82.0, 39.7), (80.4, 41.0), (78.0, 41.2)], sharp=(0, 3))
-    for e, (cx, cy), r in ((eyeN, (68.2, 40.3), 2.1), (eyeF, (79.8, 40.1), 1.7)):
+          (sm([(84.6, 38.8), (87.4, 38.6), (87.6, 42.0), (85.0, 42.4)]), SKIN.base, 0.9)]
+    # positions RÉELLES des traits (pour verifier() de visage.py) ; nez et bouche sont cachés sous le cache-cou, à leur place
+    fig.face = {'nez': V['nez'], 'bouche': V['bouche']}
+    for key, (cx_, cy_, w_), tpl, irx in (('oeil_proche', V['oeil_proche'], EYE_N, 0.8), ('oeil_fond', V['oeil_fond'], EYE_F, 0.45)):
+        k_ = w_ / 7.2
+        e = sm([(cx_ + px * k_, cy_ + py) for px, py in tpl], sharp=(0, 3))
+        bx = e.bbox()
+        fig.face[key] = ((bx[0] + bx[2]) / 2, (bx[1] + bx[3]) / 2, bx[2] - bx[0])
+        cx, cy, r = cx_ + irx * k_, cy_, 2.1 * min(1.0, k_ * 1.0) if tpl is EYE_N else 2.1 * k_ * 0.97
         if P['blink'] > 0.5:
             fd += [(e.scale(1.12, 1.4, cx - 0.6, cy), SKIN.deep, 0.95), (e.move(0, -0.3), SKIN.shadow, 1),
-                   (ribbon([(cx - 3.4, cy + 0.6), (cx - 0.6, cy + 0.9), (cx + 2.2, cy + 0.4)], [0.1, 0.5, 0.1]), SKIN.deep, 1)]
+                   (ribbon([(cx - 3.4 * k_, cy + 0.6), (cx - 0.6 * k_, cy + 0.9), (cx + 2.2 * k_, cy + 0.4)], [0.1, 0.5, 0.1]), SKIN.deep, 1)]
         else:
             fd += [(e.scale(1.14, 1.42, cx - 0.4, cy), '#2a0c1c', 0.95), (e, EYE[0], 1),
                    (ellipse(cx, cy, r * 0.62, r * 0.62), ('rad', cx + 0.2, cy - 0.2, r * 0.7, r * 0.7, [(0, '#fff0a0'), (0.45, EYE[1]), (1, EYE[2])]), 1),
                    (ellipse(cx + 0.1, cy + 0.05, r * 0.26, r * 0.34), EYE[3], 1),
                    (ellipse(cx + 0.45, cy - 0.45, r * 0.16, r * 0.16), '#ffffff', 1),
                    (sm([(e.bbox()[0], cy - 1.2), (e.bbox()[2], cy - 1.4), (e.bbox()[2], cy - 0.4), (e.bbox()[0], cy - 0.3)]), '#2a0c1c', 0.35)]
-    # sourcils blancs, gros et froncés (le bout intérieur descend vers le nez)
+    # sourcils blancs, gros et froncés (le bout intérieur descend vers la racine du nez, sur la médiane)
     browN = sm([(59.6, 37.0), (63.4, 36.0), (67.8, 36.6), (71.4, 38.0), (73.2, 39.8), (70.0, 39.2), (66.0, 38.4), (62.0, 38.6), (59.8, 38.8)],
                sharp=(4,), t=0.85)
-    browF = sm([(75.6, 39.8), (77.4, 38.0), (80.6, 36.6), (84.4, 36.4), (86.2, 37.2), (84.4, 38.2), (81.2, 38.4), (78.0, 39.4)], sharp=(0,), t=0.85)
+    fb = lambda x: 77.6 + (x - 75.6) * 0.88    # sourcil du fond, posé au-dessus de l'œil du fond (visage.py)
+    browF = sm([(fb(75.6), 39.8), (fb(77.4), 38.0), (fb(80.6), 36.6), (fb(84.4), 36.4), (fb(86.2), 37.2), (fb(84.4), 38.2), (fb(81.2), 38.4), (fb(78.0), 39.4)],
+               sharp=(0,), t=0.85)
     for b in (browN, browF):
         fd += [(b.move(-0.3, 0.6), SKIN.deep, 0.7), (b, ('lin', 0, 36, 0, 39.5, [(0, WHITE.hi), (0.6, WHITE.base), (1, WHITE.shadow)]), 1)]
     part('face', face, SKIN, cel=0, rim=0, cast=0, details=fd)
@@ -463,38 +477,19 @@ def head(fig, P):
                   (sm([(56, 35.2), (68, 34.8), (80, 34.6), (90, 34.0), (90.2, 34.8), (80, 35.4), (68, 35.6), (56, 36.0)]), GOLD.light, 1),
                   (ellipse(84.6, 32.2, 2.0, 0.55, -6), '#ffe6d0', 0.8)])
 
-    # ---- le masque de démon (menpo) : liseré d'or en haut, joue éclairée, gueule ouverte, crocs ----
-    mask = sm([(58.2, 41.8), (68, 41.2), (78, 41.2), (84.4, 41.8), (87.6, 43.8), (87.4, 47.6), (85.8, 51.4), (81.8, 54.6),
-               (74, 55.8), (66, 55.2), (60, 52.6), (57.6, 47.4)])
-    md = [(sm([(56, 40.6), (86, 40.4), (86, 42.6), (68, 42.4), (56, 43.0)]), GOLD.base, 1),
-          (sm([(56, 40.6), (86, 40.4), (86, 41.5), (68, 41.4), (56, 41.9)]), GOLD.light, 1),
-          (sm([(80.6, 49.6), (86.8, 48.0), (86.2, 51.2), (82.4, 54.2)]), LACQ.light, 0.55)]
-    # la gueule : une gorge rouge sombre (pas de noir), deux crocs en haut, deux en bas
-    mouth = sm([(68.2, 48.4), (74, 47.6), (80, 47.8), (85.6, 48.4), (84.8, 51.0), (80, 52.6), (73, 52.4), (68.8, 50.8)], sharp=(0, 3))
-    md += [(mouth.scale(1.06, 1.22, 76.8, 50.2), LACQ.deep, 0.95),
-           (mouth, ('rad', 77, 50.4, 9, 4, [(0, '#c22a3a'), (0.6, '#7a1630'), (1, '#4a0c26')]), 1),
-           (ellipse(77.4, 51.4, 3.6, 0.9), '#e0606a', 0.5)]
-    for x0, up in ((73.4, True), (81.6, True), (70.8, False), (79.0, False)):
-        if up:
-            fang_ = sm([(x0 - 1.15, 47.9), (x0 + 1.15, 48.0), (x0 + 0.2, 51.0)], sharp=(0, 1, 2), t=0.8)
-        else:
-            fang_ = sm([(x0 - 1.0, 52.6), (x0 + 1.1, 52.5), (x0 + 0.3, 49.8)], sharp=(0, 1, 2), t=0.8)
-        md += [(fang_, ('lin', x0 + 1, 48, x0 - 1, 52, [(0, FANG.hi), (0.6, FANG.base), (1, FANG.shadow)]), 1)]
+    # ---- le cache-cou de tissu rouge (avis du propriétaire, 26/11) : il monte jusque sous les yeux et couvre tout le bas
+    # du visage jusqu'au bord avant (plus de nez, de gueule ni de moustache) ; liseré d'or en haut, il descend dans le col.
+    mask = sm([(57.8, 41.6), (68, 41.2), (78, 41.0), (85.2, 41.2), (88.2, 42.0), (88.9, 45.2), (88.7, 49.2), (87.6, 52.8),
+               (84.8, 55.4), (76, 56.4), (66, 55.8), (60, 53.2), (57.6, 47.6)])
+    md = [(sm([(56, 40.6), (88, 40.4), (90, 42.8), (68, 42.4), (56, 43.0)]), GOLD.base, 1),
+          (sm([(56, 40.6), (88, 40.4), (90, 41.7), (68, 41.4), (56, 41.9)]), GOLD.light, 1),
+          # la lumière (en haut à droite) sur le devant arrondi du tissu
+          (sm([(82.0, 43.4), (86.6, 43.2), (88.0, 46.4), (87.4, 50.6), (85.0, 53.0), (83.2, 49.0)]), LACQ.light, 0.5),
+          # deux plis doux : le tissu qui épouse le menton puis rentre dans le col, et qui se tend vers la joue
+          (ribbon([(67.0, 54.0), (72.6, 55.0), (78.6, 54.9), (83.0, 53.6)], [0.1, 0.55, 0.5, 0.1]), LACQ.deep, 0.4),
+          (ribbon([(61.0, 44.6), (62.2, 47.8), (64.8, 50.4)], [0.1, 0.6, 0.1]), LACQ.deep, 0.35)]
     part('mask', mask, LACQ, grad=(88, 42, 60, 54, [(0, LACQ.light), (0.5, LACQ.base), (1, LACQ.shadow)]), cel=1.3, rim=0.7, cast=1.1,
          cast_on=['face', 'shik0', 'shik1', 'shik2'], details=md)
-    # le nez du masque, qui dépasse le contour
-    nose = sm([(77.6, 41.6), (83.4, 41.4), (87.6, 43.2), (89.4, 45.2), (88.8, 47.0), (86.2, 47.8), (82.4, 47.0), (79.6, 45.0)])
-    part('nose', nose, LACQ, grad=(90, 42, 79, 47, [(0, LACQ.hi), (0.4, LACQ.light), (1, LACQ.base)]), cel=0.9, rim=0.6, cast=1.0,
-         details=[(ellipse(86.2, 46.6, 0.95, 0.5, 15), LACQ.deep, 0.9), (ellipse(87.6, 44.2, 1.0, 0.5, 25), '#ffe6d0', 0.8),
-                  (ribbon([(80.4, 42.2), (84.4, 42.6), (88.0, 44.0)], [0.1, 0.6, 0.1]), LACQ.hi, 0.6)])
-    # la grosse moustache blanche tombante, en crochet ; la barbiche sous le menton
-    mous = taper(crpath([(87.0, 47.6), (80.6, 47.6), (74.0, 48.2), (69.4, 49.2), (66.8, 51.4), (67.0, 53.8), (68.4, 54.8)], 18), 2.8, 1.0, tip='sharp', wmid=2.4)
-    part('mous', mous, WHITE, grad=(84, 46, 66, 54, [(0, WHITE.hi), (0.5, WHITE.light), (1, WHITE.shadow)]), cel=0.7, rim=0.5, cast=0.9,
-         details=[(under(mous, 0.4, -1.1), WHITE.shadow, 0.7)])
-    mous2 = taper(crpath([(85.8, 47.6), (87.8, 48.4), (88.6, 50.4), (88.0, 52.2)], 10), 1.7, 0.5, tip='sharp')
-    part('mous2', mous2, WHITE, cel=0.5, rim=0.4, cast=0.6)
-    goat = sm([(76.4, 54.4), (80.4, 54.2), (80.0, 55.9), (79.0, 57.8), (78.3, 56.5), (77.2, 57.1), (76.9, 55.8)], sharp=(3, 5), t=0.9)
-    part('goat', goat, WHITE, cel=0.6, rim=0.5, cast=0.8, details=[(under(goat, 0.4, -0.8), WHITE.shadow, 0.6)])
 
     # ---- le grand croissant d'or (corne proche plus grande), la monture à gemme bleue ----
     hN = taper(crpath([(71.6, 26.8), (66.4, 24.4), (61.4, 20.4), (58.4, 14.8), (57.0, 8.8), (56.8, 3.4)], 20), 3.6, 1.1, wmid=3.0)

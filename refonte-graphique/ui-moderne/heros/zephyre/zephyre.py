@@ -31,9 +31,9 @@ import tempfile
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..'))
-from atelier import Figure, Mat, sm, ribbon, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
+from atelier import Figure, Mat, sm, ribbon, limb, sides, xf, ellipse, rpoly, mchain, mT, mR, mS, mskx, mapp  # noqa: E402
 from lib import Shape  # noqa: E402
-from outils import bent, crpath, fuse, taper, geom_shapes, rot, lerp, ang_of, ik, sign_for, wrap_band  # noqa: E402
+from outils import bent, crpath, fuse, taper, geom_shapes, P as PG, rot, lerp, ang_of, ik, sign_for, wrap_band  # noqa: E402
 from visage import placer  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
@@ -89,6 +89,29 @@ REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, t=0.0, 
 #   shift : tout le personnage glisse (décalage).
 
 
+def minv(M):
+    a, b, c, d, e, f_ = M
+    det = a * d - b * c
+    return (d / det, -b / det, -c / det, a / det, (c * f_ - d * e) / det, (b * e - a * f_) / det)
+
+
+def hexmix(a, b, t):
+    a = [int(a[i:i + 2], 16) for i in (1, 3, 5)]
+    b = [int(b[i:i + 2], 16) for i in (1, 3, 5)]
+    return '#%02x%02x%02x' % tuple(round(x + (y - x) * t) for x, y in zip(a, b))
+
+
+def grad_color(G, p):
+    """La couleur d'un dégradé linéaire ('lin', x1, y1, x2, y2, stops) au point p."""
+    _, x1, y1, x2, y2, st = G
+    vx, vy = x2 - x1, y2 - y1
+    t = max(0.0, min(1.0, ((p[0] - x1) * vx + (p[1] - y1) * vy) / (vx * vx + vy * vy)))
+    for (o0, c0, *_), (o1, c1, *_) in zip(st, st[1:]):
+        if o0 <= t <= o1:
+            return hexmix(c0, c1, (t - o0) / ((o1 - o0) or 1))
+    return st[-1][1]
+
+
 def MP(M, pts):
     return [mapp(M, p) for p in pts]
 
@@ -123,22 +146,71 @@ def streak(A, B, t0, t1, off, w):
     return ribbon(pts, [0.05, w * 0.8, w, w * 0.8, 0.05])
 
 
-def limb_bands(A, B, specs):
-    """Brassards / bandages / jambières peints dans un membre : specs = [(t0, t1, matière, demi-largeur)]."""
+def limb_bands(A, B, specs, clip=True):
+    """Brassards / bandages / jambières peints dans un membre : specs = [(t0, t1, matière, demi-largeur)]. Avec clip,
+    chaque bande est découpée par le tube du segment A→B (elle ne déborde pas sur l'autre moitié du membre plié)."""
     out = []
+    tube = None
+    if clip:
+        hw = max(s_[3] for s_ in specs) + 0.6
+        tube = PG(limb([lerp(A, B, -0.3), lerp(A, B, 0.5), lerp(B, A, -0.3)], [hw * 2] * 3))
+
+    def cut(sh):
+        if tube is None:
+            return sh
+        return geom_shapes(PG(sh).intersection(tube)) or sh
     for t0, t1, mat, half in specs:
-        band = wrap_band(A, B, t0, t1, half + 2.5, bow=0.45)
+        band = cut(wrap_band(A, B, t0, t1, half + 2.5, bow=0.45))
         out.append((band, across(A, B, (t0 + t1) / 2, half, mat), 1))
         # le bord haut de la bande (vers l'épaule / le genou) pose une ombre douce sur le tissu juste dessous… non :
         # la bande est un peu en relief : une ombre fine sous son bord bas, un liseré clair sur son bord haut
-        lo = wrap_band(A, B, t1, t1 + 0.06, half + 2.5, bow=0.45)
+        lo = cut(wrap_band(A, B, t1, t1 + 0.06, half + 2.5, bow=0.45))
         out.append((lo, mat.deep if mat is not CLOTH else CLOTH.deep, 0.35))
-        hi = wrap_band(A, B, t0, t0 + 0.035, half + 2.5, bow=0.45)
+        hi = cut(wrap_band(A, B, t0, t0 + 0.035, half + 2.5, bow=0.45))
         out.append((hi, mat.hi, 0.45))
         if mat is STEEL:
             out.append((streak(A, B, t0 + 0.08, t1 - 0.08, half * 0.35, 0.9), STEEL.hi, 0.85))
             out.append((streak(A, B, t0 + 0.1, t1 - 0.12, -half * 0.55, 0.7), STEEL.deep, 0.35))
     return out
+
+
+# ---------- les pans de tissu (bandeau, ceinture) ----------
+
+def bend_pts(pts, deg):
+    """Un pan qui se balance : chaque point tourne autour de la racine, d'autant plus qu'il est loin (le bout traîne)."""
+    r = pts[0]
+    L = sum(math.dist(a, b) for a, b in zip(pts, pts[1:])) or 1
+    out, acc = [r], 0.0
+    for a, b in zip(pts, pts[1:]):
+        acc += math.dist(a, b)
+        k = (acc / L) ** 1.5
+        v = rot((b[0] - r[0], b[1] - r[1]), deg * k)
+        out.append((r[0] + v[0], r[1] + v[1]))
+    return out
+
+
+def flat_pan(pts, w, cut=1.2, tw=None):
+    """Un ruban plat (pan de bandeau ou de ceinture) : largeur presque constante, bout coupé en biais (cut > 0 : le bord
+    gauche dépasse) ; tw = où il se tord (il s'amincit, puis on voit l'envers, plus sombre). Renvoie (forme, envers)."""
+    c = crpath(pts, 24)
+    n = len(c) - 1
+    ws = []
+    for i in range(n + 1):
+        t = i / n
+        k = 1.0 if tw is None else 0.42 + 0.58 * min(1.0, abs(t - tw) / 0.13)
+        ws.append(w * k * (1 - 0.12 * t))
+    left, right = sides(c, ws)
+    d = (c[-1][0] - c[-2][0], c[-1][1] - c[-2][1])
+    L = math.hypot(*d) or 1
+    d = (d[0] / L, d[1] / L)
+    left[-1] = (left[-1][0] + d[0] * cut, left[-1][1] + d[1] * cut)
+    right[-1] = (right[-1][0] - d[0] * cut, right[-1][1] - d[1] * cut)
+    shape = sm(left + right[::-1], sharp=(0, len(left) - 1, len(left), 2 * len(left) - 1), t=0.85)
+    back = None
+    if tw is not None:
+        i0, i1 = int(tw * n), min(n, int((tw + 0.24) * n))
+        back = sm(left[i0:i1 + 1] + right[i0:i1 + 1][::-1], sharp=(0,), t=0.85)
+    return shape, back
 
 
 # ---------- le grand shuriken (quatre branches égales, deux pans par branche, moyeu percé) ----------
@@ -163,7 +235,7 @@ def star_shapes(C, ang, R=STAR_R, squash=1.0):
         pts.append(m)
         pts.append(lerp(b, m, 0.72))
     outline = sm(pts, sharp=tuple(range(0, 16, 4)), t=0.55)
-    hole = ellipse(C[0], C[1], R * 0.1, R * 0.1 * squash)
+    hole = ellipse(C[0], C[1], R * 0.12, R * 0.12 * squash)
     facets = []
     for k in range(4):
         tip = tips[k]
@@ -181,8 +253,8 @@ def add_star(fig, name, C, ang, R=STAR_R, squash=1.0, cast=0.8):
     outline, facets, hole = star_shapes(C, ang, R, squash)
     hub = ellipse(C[0], C[1], R * 0.25, R * 0.25 * squash)
     det = facets + [(hub, ('rad', C[0] + R * 0.08, C[1] - R * 0.08, R * 0.3, R * 0.3,
-                           [(0, STEEL.hi), (0.6, STEEL.light), (1, STEEL.base)]), 1),
-                    (ellipse(C[0] - R * 0.03, C[1] + R * 0.04, R * 0.13, R * 0.13 * squash), STEEL.deep, 0.9)]
+                           [(0, STEEL.light), (0.6, STEEL.base), (1, STEEL.shadow)]), 1),
+                    (ellipse(C[0] - R * 0.02, C[1] + R * 0.03, R * 0.15, R * 0.15 * squash), STEEL.deep, 0.7)]
     return fig.part(name, outline, STEEL, cel=0.5, rim=0.35, cast=cast, details=det)
 
 
@@ -201,7 +273,7 @@ def kunai_shapes(ring_c, tip):
     sb = L - 21.5                        # la base de la lame
     blade = sm([P_(sb - 0.4, -0.95), P_(sb + 5.5, -2.05), P_(sb + 13, -1.35), P_(L, 0), P_(sb + 13, 1.35), P_(sb + 5.5, 2.05),
                 P_(sb - 0.4, 0.95)], sharp=(3,), t=0.85)
-    handle = ribbon([P_(1.2, 0), P_(sb * 0.5, 0), P_(sb + 0.2, 0)], [1.5, 1.6, 1.6])
+    handle = limb([P_(1.0, 0), P_(sb * 0.5, 0), P_(sb + 0.2, 0)], [1.7, 1.8, 1.8])
     ring_ = ellipse(*ring_c, 1.75, 1.75).hole(ellipse(*ring_c, 0.8, 0.8))
     up = sm([P_(sb + 0.3, -0.85), P_(sb + 5.5, -1.85), P_(sb + 13, -1.15), P_(L - 0.4, -0.02), P_(sb + 13, 0.05),
              P_(sb + 5.5, 0.05), P_(sb + 0.3, 0.05)], sharp=(3,), t=0.8)
@@ -216,12 +288,14 @@ def fist_local(open_=0.0):
     """Le poing (repère local : x le long de l'avant-bras depuis le poignet, y vers la droite de l'avant-bras).
     Renvoie (contour, détails) en coordonnées locales. Les doigts serrés devant (quatre bourrelets), le pouce par-dessus."""
     if open_ > 0.5:
-        # la main ouverte, tranchant vers l'ennemi, doigts serrés (moufle), pouce relevé
-        shape = sm([(-0.6, -2.9), (3.6, -3.4), (8.6, -3.0), (11.6, -2.0), (12.4, -0.6), (11.8, 0.9), (8.4, 1.8), (4.6, 2.4),
-                    (4.0, 3.6), (2.6, 5.4), (1.0, 5.2), (0.6, 3.0), (-0.6, 2.6)], sharp=(10,), t=0.85)
-        det = [(ribbon([(3.8, 0.9), (7.6, 0.5), (11.0, -0.4)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.55),
-               (ribbon([(2.6, -1.6), (7.0, -2.2), (10.8, -1.6)], [0.1, 0.55, 0.1]), SKIN.hi, 0.5),
-               (ribbon([(1.4, 2.6), (2.2, 3.8), (2.0, 4.8)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.5)]
+        # la main ouverte, tranchant vers l'ennemi, doigts serrés (moufle), pouce relevé (y < 0 : vers le haut quand
+        # l'avant-bras est tendu vers la droite)
+        shape = sm([(-0.6, 2.9), (3.6, 3.4), (8.6, 3.0), (11.6, 2.0), (12.4, 0.6), (11.8, -0.9), (8.4, -1.8), (4.6, -2.4),
+                    (4.0, -3.6), (2.6, -5.4), (1.0, -5.2), (0.6, -3.0), (-0.6, -2.6)], sharp=(10,), t=0.85)
+        det = [(ribbon([(3.8, -0.9), (7.6, -0.5), (11.0, 0.4)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.5),
+               (ribbon([(2.6, 1.8), (7.0, 2.3), (10.8, 1.7)], [0.1, 0.6, 0.1]), SKIN.shadow, 0.45),
+               (ribbon([(3.0, -1.6), (6.8, -1.4), (10.4, -0.6)], [0.1, 0.5, 0.1]), SKIN.hi, 0.45),
+               (ribbon([(1.4, -2.6), (2.2, -3.8), (2.0, -4.8)], [0.1, 0.4, 0.1]), SKIN.hi, 0.5)]
         return shape, det
     shape = sm([(-0.6, -3.2), (2.6, -4.3), (6.8, -4.4), (9.3, -3.4), (10.2, -0.9), (10.0, 2.0), (8.8, 4.2), (5.4, 4.8),
                 (1.8, 4.4), (-0.4, 3.2)], t=0.9)
@@ -254,30 +328,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     UC = mchain(U, mT(0, -0.6 * br))                                       # ce qui monte avec la poitrine
     TOR = mchain(U, mS(1 + 0.006 * br, 1 + 0.014 * br, 70, 82))            # le buste se gonfle
     HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], *NECK), mS(HSC, HSC, *NECK))
-    TAILS = mchain(HEAD, mskx(-0.05 * P['t'], 34))                          # les pans du bandeau traînent
-    BTAIL = mchain(U, mskx(-0.06 * P['e'], 83))                             # les pans de la ceinture
+    TAILS = HEAD
+    BTAIL = U
 
     # ======================================================================== les pans du bandeau (derrière tout)
     t_ = P['t']
-    tail_long = crpath([(55.4, 34.2), (50.0, 36.6), (44.4, 40.2), (40.4, 45.6), (38.6, 51.6), (38.2, 57.6)], 22)
-    tail_short = crpath([(55.8, 36.4), (54.2, 40.6), (53.2, 45.4), (52.8, 50.0)], 16)
-
-    def pan(center, w0, w1, cut=0.9):
-        # un ruban de largeur presque constante, bout coupé en biais
-        sh = taper(center, w0, w1, tip='round', bulge=0.08)
-        x0_, y0_, x1_, y1_ = sh.bbox()
-        e = center[-1]
-        cutter = sm([(e[0] - 6, e[1] - cut - 1.6), (e[0] + 6, e[1] + cut - 1.6), (e[0] + 6, e[1] + 9), (e[0] - 6, e[1] + 9)])
-        from outils import P as PG_
-        g = PG_(sh).difference(PG_(cutter))
-        from outils import geom_shape
-        return geom_shape(g, sharp_deg=40) or sh
-    tl = pan(tail_long, 3.3, 2.8, 1.4)
-    ts = pan(tail_short, 3.0, 2.7, -1.2)
-    # la torsion du pan long : l'envers (plus sombre) montré après le tournant
-    twist = sm([(41.2, 44.4), (43.6, 42.2), (41.6, 47.4), (39.6, 49.6)], t=0.8)
+    tl, tl_back = flat_pan(bend_pts([(55.4, 34.2), (50.0, 36.6), (44.4, 40.2), (40.4, 45.6), (38.6, 51.6), (38.2, 57.6)], 7 * t_),
+                           3.3, cut=1.5, tw=0.42)
+    ts, _ = flat_pan(bend_pts([(55.8, 36.4), (54.2, 40.6), (53.2, 45.4), (52.8, 50.0)], 5 * t_), 3.0, cut=-1.1)
     fig.part('tailL', tl, TURQ, grad=(50, 34, 38, 58, [(0, TURQ.light), (0.45, TURQ.base), (1, TURQ.shadow)]), cel=0.8, rim=0.5,
-             cast=0, details=[(twist, TURQ.shadow, 0.75), (ribbon([(50.6, 35.6), (45.6, 38.4), (42.2, 42.4)], [0.1, 0.5, 0.1]), TURQ.hi, 0.55)])
+             cast=0, details=[(tl_back, ('lin', 42, 42, 38, 52, [(0, TURQ.shadow), (1, TURQ.deep)]), 0.9)])
     fig.part('tailS', ts, TURQ, grad=(56, 36, 52, 50, [(0, TURQ.light), (0.5, TURQ.base), (1, TURQ.shadow)]), cel=0.7, rim=0.45,
              cast=0.7, cast_on=['tailL'])
     knot = sm([(55.0, 31.6), (57.8, 31.2), (59.6, 33.4), (59.2, 36.6), (57.0, 38.0), (54.8, 37.2), (54.0, 34.4)], t=0.95)
@@ -363,44 +423,44 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                                    (sole.bbox()[2] - 1.2, GRD - 1.0)], [0.05, 0.35, 0.05]), ROPE.shadow, 0.6)])
         return H, K, A
 
-    ffoot = sm([(43.6, 108.0), (49.8, 107.6), (52.6, 110.2), (55.6, 111.8), (57.8, 113.6), (57.6, 115.7), (41.0, 115.7),
-                (40.4, 113.0), (41.6, 110.2)], t=0.9)
-    fsole = rpoly([(39.6, 115.0), (58.4, 115.0), (58.0, GRD), (39.8, GRD)], 0.8)
+    ffoot = sm([(43.6, 109.2), (50.2, 109.0), (53.2, 110.7), (56.2, 111.9), (58.0, 113.3), (58.3, 114.9), (57.6, 115.7),
+                (42.2, 115.7), (41.2, 114.5), (41.6, 111.8)], t=0.9)
+    fsole = sm([(41.0, 115.0), (57.6, 115.0), (59.0, 115.5), (58.8, 116.8), (57.6, GRD), (41.4, GRD), (40.4, 116.4), (40.4, 115.4)], t=0.8)
     fig_fk = leg('fleg', FH, FK0, FA0, FLL, SG_FL, (10.0, 8.0, 6.0), ffoot,
-                 [(54.2, 112.2), (54.9, 113.8), (55.2, 115.2)], [(46.2, 111.2), (50.6, 112.6), (54.0, 113.0)], fsole, None, 0)
+                 [(55.0, 112.0), (55.5, 113.6), (55.7, 115.3)], [(48.6, 110.4), (52.2, 112.0), (55.0, 112.4)], fsole, None, 0)
 
     # ======================================================================== les pans de la ceinture (sur la hanche)
     e_ = P['e']
-    bt1 = crpath([(52.6, 84.0), (49.4, 88.0), (45.6, 92.6), (42.4, 97.0), (40.6, 100.4)], 18)
-    bt2 = crpath([(53.4, 85.0), (51.4, 89.0), (49.0, 93.4), (47.4, 97.6)], 14)
-    b1 = taper(bt1, 3.2, 2.8, tip='round', bulge=0.06)
-    b2 = taper(bt2, 3.0, 2.7, tip='round', bulge=0.06)
+    b1, b1_back = flat_pan(bend_pts([(52.6, 84.0), (49.4, 88.0), (45.6, 92.6), (42.4, 97.0), (40.6, 100.4)], 6 * e_), 3.3, cut=1.3, tw=0.5)
+    b2, _ = flat_pan(bend_pts([(53.4, 85.0), (51.4, 89.0), (49.0, 93.4), (47.4, 97.6)], 5 * e_), 3.0, cut=-1.0)
     fig.part('btail1', b1, TURQ, grad=(53, 84, 41, 100, [(0, TURQ.light), (0.5, TURQ.base), (1, TURQ.shadow)]), cel=0.8, rim=0.5,
-             cast=0.8, details=[(sm([(44.8, 93.2), (46.6, 91.6), (45.2, 95.6), (43.4, 97.2)], t=0.8), TURQ.shadow, 0.7)])
+             cast=0.8, details=[(b1_back, ('lin', 46, 92, 41, 100, [(0, TURQ.shadow), (1, TURQ.deep)]), 0.9)])
     fig.part('btail2', b2, TURQ, grad=(54, 85, 47, 98, [(0, TURQ.light), (0.5, TURQ.base), (1, TURQ.shadow)]), cel=0.7, rim=0.5,
              cast=0.9, cast_on=['btail1', 'fleg'])
 
     # ======================================================================== la jambe proche (en avant)
-    nfoot = sm([(79.8, 107.8), (86.0, 107.6), (88.6, 110.0), (91.4, 111.6), (93.6, 113.4), (93.4, 115.7), (76.4, 115.7),
-                (75.8, 113.0), (77.4, 110.0)], t=0.9)
-    nsole = rpoly([(75.0, 115.0), (94.2, 115.0), (93.8, GRD), (75.2, GRD)], 0.8)
+    nfoot = sm([(79.8, 109.4), (86.4, 109.2), (89.4, 110.9), (92.4, 112.1), (94.2, 113.5), (94.5, 115.0), (93.8, 115.7),
+                (77.6, 115.7), (76.6, 114.5), (77.4, 111.8)], t=0.9)
+    nsole = sm([(76.8, 115.0), (93.8, 115.0), (95.2, 115.5), (95.0, 116.8), (93.8, GRD), (77.2, GRD), (76.2, 116.4), (76.2, 115.4)], t=0.8)
 
     def knee_plate(K):
-        c = (K[0] + 1.4, K[1] - 0.6)
-        return [(ellipse(c[0], c[1], 3.0, 3.5, -10), ('rad', c[0] + 1, c[1] - 1.2, 3.6, 3.6,
-                                                     [(0, STEEL.hi), (0.45, STEEL.light), (1, STEEL.shadow)]), 1),
-                (ribbon([(c[0] - 1.6, c[1] + 2.4), (c[0] - 0.2, c[1] + 3.2), (c[0] + 1.6, c[1] + 2.6)], [0.05, 0.4, 0.05]), STEEL.deep, 0.6)]
+        c = (K[0] + 1.8, K[1] - 0.2)
+        pl = sm([(c[0] - 2.2, c[1] - 2.8), (c[0] + 0.6, c[1] - 3.4), (c[0] + 3.0, c[1] - 1.6), (c[0] + 3.0, c[1] + 1.6),
+                 (c[0] + 0.8, c[1] + 3.0), (c[0] - 1.8, c[1] + 2.2), (c[0] - 2.6, c[1] - 0.2)], t=0.9)
+        return [(pl.move(-0.4, 0.7), CLOTH.deep, 0.45),
+                (pl, ('lin', c[0] + 2.5, c[1] - 3, c[0] - 2.5, c[1] + 3, [(0, STEEL.light), (0.5, STEEL.base), (1, STEEL.shadow)]), 1),
+                (ribbon([(c[0] - 0.6, c[1] - 2.6), (c[0] + 1.6, c[1] - 1.6), (c[0] + 2.2, c[1] + 0.6)], [0.05, 0.55, 0.05]), STEEL.hi, 0.8)]
     nH, nK, nA = leg('nleg', NH, NK0, NA0, NLL, SG_NL, (10.6, 8.4, 6.2), nfoot,
-                     [(90.2, 112.0), (90.9, 113.8), (91.2, 115.2)], [(82.2, 111.2), (86.6, 112.6), (90.0, 113.0)], nsole,
+                     [(91.2, 112.2), (91.7, 113.8), (91.9, 115.3)], [(84.8, 110.6), (88.4, 112.2), (91.2, 112.6)], nsole,
                      knee_plate, 1.0)
 
     # la sacoche de cuir sur la cuisse (pendue à la ceinture), sa boucle de laiton
-    pouch = rpoly([(66.4, 88.6), (73.4, 88.2), (73.8, 96.2), (66.8, 96.6)], 1.6)
-    flap = rpoly([(66.0, 88.4), (73.8, 88.0), (74.0, 92.0), (70.0, 93.0), (66.2, 92.2)], 1.2)
+    pouch = rpoly([(71.6, 89.0), (78.2, 88.8), (78.4, 96.0), (71.8, 96.4)], 1.6)
+    flap = rpoly([(71.2, 88.8), (78.6, 88.6), (78.8, 92.2), (75.0, 93.2), (71.4, 92.4)], 1.2)
     fig.part('pouch', pouch, LEATHER, cel=0.8, rim=0.5, cast=1.0, cast_on=['nleg'],
              details=[(flap, ('lin', 74, 88, 66, 93, [(0, LEATHER.light), (0.6, LEATHER.base), (1, LEATHER.shadow)]), 1),
-                      (ribbon([(66.4, 92.4), (70.0, 93.4), (73.8, 92.2)], [0.1, 0.5, 0.1]), LEATHER.deep, 0.55),
-                      (ellipse(70.0, 92.2, 1.0, 0.9), BRASS.base, 1), (ellipse(70.3, 91.9, 0.4, 0.3), BRASS.glint, 1)])
+                      (ribbon([(71.6, 92.6), (75.0, 93.6), (78.6, 92.4)], [0.1, 0.5, 0.1]), LEATHER.deep, 0.55),
+                      (ellipse(75.0, 92.4, 1.0, 0.9), BRASS.base, 1), (ellipse(75.3, 92.1, 0.4, 0.3), BRASS.glint, 1)])
 
     # ======================================================================== le buste (veste croisée, tunique à pans)
     torso = sm([(66.5, 55.0), (61.0, 56.4), (56.6, 58.4), (53.6, 61.8), (52.2, 67.0), (51.9, 73.0), (52.4, 79.0), (51.6, 84.0),
@@ -421,9 +481,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     td += [(ribbon([(x - 0.4, y + 0.7) for x, y in strap], [2.3] * 5), CLOTH.deep, 0.45),
            (ribbon(strap, [2.3] * 5), ('lin', 60, 58, 62, 64, [(0, LEATHER.light), (1, LEATHER.base)]), 1),
            (ribbon([(x + 0.25, y - 0.6) for x, y in strap], [0.05, 0.5, 0.5, 0.5, 0.05]), LEATHER.hi, 0.55)]
-    bk = xf(rpoly([(-1.7, -1.9), (1.7, -1.9), (1.7, 1.9), (-1.7, 1.9)], 0.6), 60.4, 61.4, 33)
-    bkh = xf(rpoly([(-0.7, -1.0), (0.7, -1.0), (0.7, 1.0), (-0.7, 1.0)], 0.3), 60.4, 61.4, 33)
-    td += [(bk.move(-0.3, 0.5), LEATHER.deep, 0.5), (bk, ('lin', 62, 59.6, 58.8, 63.2, [(0, BRASS.hi), (0.5, BRASS.light), (1, BRASS.base)]), 1),
+    bk = xf(rpoly([(-1.7, -1.9), (1.7, -1.9), (1.7, 1.9), (-1.7, 1.9)], 0.6), 64.6, 64.2, 36)
+    bkh = xf(rpoly([(-0.7, -1.0), (0.7, -1.0), (0.7, 1.0), (-0.7, 1.0)], 0.3), 64.6, 64.2, 36)
+    td += [(bk.move(-0.3, 0.5), LEATHER.deep, 0.5), (bk, ('lin', 66.2, 62.4, 63, 66, [(0, BRASS.hi), (0.5, BRASS.light), (1, BRASS.base)]), 1),
            (bkh, LEATHER.deep, 0.9)]
     # la ceinture turquoise (elle fait le tour : peinte dans le buste), sa boucle de laiton
     belt = sm([(49.0, 79.6), (60.0, 80.4), (70.0, 80.6), (84.0, 79.4), (84.0, 84.6), (70.0, 85.6), (60.0, 85.4), (49.0, 84.4)],
@@ -438,8 +498,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     td += [(ribbon([(69.6, 85.8), (69.8, 87.8), (69.5, 89.6)], [0.2, 0.6, 0.1]), CLOTH.deep, 0.55),
            (ribbon([(57.6, 86.2), (58.6, 88.6), (59.0, 90.8)], [0.1, 0.5, 0.1]), CLOTH.shadow, 0.45),
            (ribbon([(73.0, 86.0), (77.4, 87.4), (80.8, 88.6)], [0.1, 0.5, 0.1]), CLOTH.light, 0.35)]
-    fig.part('torso', torso, CLOTH, grad=(86, 56, 56, 88, [(0, CLOTH.light), (0.5, CLOTH.base), (1, CLOTH.shadow)]),
-             cel=1.4, rim=0.6, cast=1.2, details=td, occl=(CLOTH.deep, 0.18, 3.0))
+    TG = ('lin', 86, 56, 56, 88, [(0, CLOTH.light), (0.5, CLOTH.base), (1, CLOTH.shadow)])
+    fig.part('torso', torso, CLOTH, grad=TG[1:], cel=1.4, rim=0.6, cast=1.2, details=td, occl=(CLOTH.deep, 0.18, 3.0))
 
     # le nœud de la ceinture, sur la hanche proche (compact)
     bknot = sm([(49.4, 80.4), (53.0, 79.8), (55.6, 81.6), (55.4, 85.0), (52.8, 86.6), (49.6, 85.8), (48.4, 83.0)], t=0.95)
@@ -448,21 +508,37 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (ellipse(53.2, 81.4, 1.0, 0.6, -10), TURQ.hi, 0.55)])
 
     # ======================================================================== le bras proche, replié devant la poitrine
+    # D'une seule forme (épaule, coude, poignet : outils.bent). Au haut de l'épaule, la manche a la couleur du buste à cet
+    # endroit (pas de liseré, pas de couture) ; elle se détache plus bas par son ombre et le pli contre la poitrine.
     nx_, ny_ = P['nw']
     S2 = mapp(UC, NS)
     W2_ = mapp(UC, (NW0[0] + nx_, NW0[1] + ny_))
     E2, W2 = ik(S2, W2_, NL[0], NL[1], SG_NA)
     narm = bent(S2, E2, W2, 7.6, 6.6, 5.8, bulge=(0.06, 0.05))
+    from shapely.geometry import box
+    from shapely import affinity
+    A_ = PG(narm)
+    cap_col = grad_color(TG, mapp(minv(TOR), (S2[0] + 1.0, S2[1] - 2.0)))
     ndet = limb_bands(E2, W2, [(0.16, 0.68, STEEL, 2.9), (0.7, 0.98, TURQ, 2.8)])
-    # le pli de la manche au creux du coude, le dessus de l'épaule éclairé
-    ndet += [(ribbon([lerp(S2, E2, 0.62), lerp(S2, E2, 0.86), lerp(E2, W2, 0.1)], [0.1, 0.6, 0.1]), CLOTH.deep, 0.4),
-             (ribbon([lerp(S2, E2, 0.05), lerp(S2, E2, 0.35), lerp(S2, E2, 0.6)], [0.1, 0.9, 0.1]).move(1.4, 0), CLOTH.light, 0.3)]
-    fig.part('narm', narm, CLOTH, grad=(S2[0] + 4, S2[1] - 2, E2[0] - 3, E2[1] + 3, [(0, CLOTH.light), (0.55, CLOTH.base), (1, CLOTH.shadow)]),
-             cel=1.1, rim=0.5, cast=1.2, cast_on=['torso', 'bknot', 'grip', 'tsuba'], details=ndet)
+    # le liseré de lumière sur le dessus de l'avant-bras seulement (pas sur l'épaule)
+    fore = box(E2[0] + 1.0, S2[1] + 5.5, 200, 200)
+    rim_g = A_.difference(affinity.translate(A_, -0.45, 0.6)).intersection(fore)
+    if not rim_g.is_empty:
+        ndet.append((geom_shapes(rim_g), CLOTH.hi, 0.75))
+    # le pli doux entre le bras et la poitrine (il s'efface vers l'épaule), le pli de la manche au creux du coude
+    du = ((E2[0] - S2[0]) / math.dist(S2, E2), (E2[1] - S2[1]) / math.dist(S2, E2))
+    nr = (-du[1], du[0]) if -du[1] > 0 else (du[1], -du[0])
+    fold = [(lerp(S2, E2, t)[0] + nr[0] * 3.0, lerp(S2, E2, t)[1] + nr[1] * 3.0) for t in (0.2, 0.45, 0.7, 0.9)]
+    ndet += [(ribbon(fold, [0.05, 0.9, 1.3, 0.4]), CLOTH.deep, 0.45),
+             (ribbon([lerp(S2, E2, 0.66), lerp(S2, E2, 0.88), lerp(E2, W2, 0.12)], [0.1, 0.55, 0.1]), CLOTH.deep, 0.4),
+             (ribbon([lerp(S2, E2, 0.15), lerp(S2, E2, 0.45), lerp(S2, E2, 0.75)], [0.1, 0.9, 0.1]).move(0.6, 0), CLOTH.light, 0.3)]
+    fig.part('narm', narm, CLOTH, grad=(S2[0] + 1.0, S2[1] - 2.0, E2[0] - 1.5, E2[1] + 3.0,
+                                        [(0, cap_col), (0.5, CLOTH.base), (1, CLOTH.shadow)]),
+             cel=1.1, rim=0, cast=1.2, cast_on=['torso', 'bknot', 'grip', 'tsuba'], details=ndet)
 
     # ---- le kunaï : l'anneau côté poignet, la lame vers l'ennemi ----
     NF = mchain(UC, mT(nx_, ny_))
-    ring_c, tip = mapp(NF, (64.0, 68.6)), mapp(NF, (100.8, 74.4))
+    ring_c, tip = mapp(NF, (64.2, 69.2)), mapp(NF, (100.8, 74.4))
     blade, handle, ring_, up, ridge, edge, ku, kn = kunai_shapes(ring_c, tip)
     fig.part('khandle', handle, CLOTH, cel=0.3, rim=0.3, cast=0.4, cast_on=['narm', 'torso'],
              details=[(handle, ('lin', *ring_c, *lerp(ring_c, tip, 0.4), [(0, TURQ.base), (1, TURQ.shadow)]), 1)])
@@ -528,7 +604,7 @@ def head(fig, P):
     # de la mâchoire (le masque) plus sombre
     hd += [(sm([(68.0, 26.8), (76.0, 25.6), (82.6, 27.8), (86.0, 31.6), (82.4, 31.0), (75.6, 29.0), (69.6, 28.8)], t=0.9), CLOTH.light, 0.5),
            (sm([(57.0, 38.0), (60.4, 37.4), (62.4, 44.6), (64.6, 50.6), (68.6, 55.6), (63.0, 54.8), (58.6, 48.6)], t=0.9), CLOTH.shadow, 0.55),
-           (sm([(64.6, 52.2), (72.0, 54.0), (78.6, 53.4), (84.6, 50.6), (82.4, 54.6), (77.6, 57.2), (70.6, 57.4), (65.4, 55.6)], t=0.9), CLOTH.deep, 0.45)]
+           (hood, ('lin', 0, 47, 0, 57, [(0, CLOTH.deep, 0), (1, CLOTH.deep, 0.45)]), 1)]
     # le bandeau turquoise : il suit la courbe du crâne, d'un bord à l'autre (peint dans la cagoule)
     band_top = [(56.0, 32.6), (62.0, 32.2), (70.0, 32.4), (78.0, 32.2), (84.0, 31.6), (90.0, 30.8)]
     band_bot = [(90.0, 36.8), (84.0, 37.3), (78.0, 37.6), (70.0, 37.7), (62.0, 37.4), (56.0, 37.6)]
@@ -536,7 +612,7 @@ def head(fig, P):
     hd += [(band.move(-0.4, 0.9), CLOTH.deep, 0.55),
            (band, ('lin', 0, 31, 0, 37.8, [(0, TURQ.light), (0.5, TURQ.base), (1, TURQ.shadow)]), 1),
            (ribbon([(60, 32.9), (70, 33.0), (78, 32.8), (86.6, 32.0)], [0.1, 0.6, 0.6, 0.1]), TURQ.hi, 0.7),
-           (sm([(56.0, 32.6), (61.6, 32.2), (63.0, 37.4), (56.0, 37.6)]), TURQ.deep, 0.35)]
+           (band, ('lin', 56, 0, 68, 0, [(0, TURQ.deep, 0.55), (1, TURQ.deep, 0)]), 1)]
     # la fente des yeux : la peau, sous le bandeau ; elle s'arrête avant le bord du visage (la cagoule fait le tour)
     slit = sm([(65.6, 39.6), (68.0, 38.4), (74.0, 38.2), (80.0, 38.3), (85.4, 38.4), (87.3, 39.8), (87.5, 42.6), (86.6, 45.4),
                (82.6, 46.2), (79.4, 45.4), (75.8, 46.3), (71.0, 46.4), (67.4, 45.6), (65.6, 43.4)], t=0.92)
@@ -594,7 +670,7 @@ def head(fig, P):
     # la racine du nez entre les yeux (une ombre douce où elle entre sous le masque, rien de dessiné en peau)
     rx_ = V['mediane'](eyY)
     hd += [(ribbon([(rx_ - 0.5, eyY - 0.6), (rx_ - 0.7, eyY + 1.2), (rx_ - 0.6, eyY + 2.8)], [0.1, 0.9, 0.5]), SKIN.shadow, 0.4),
-           (ribbon([(rx_ + 0.4, eyY - 0.4), (rx_ + 0.5, eyY + 1.4), (rx_ + 0.5, eyY + 2.8)], [0.05, 0.45, 0.2]), SKIN.hi, 0.45)]
+           (ribbon([(rx_ + 0.4, eyY - 0.2), (rx_ + 0.5, eyY + 1.4), (rx_ + 0.5, eyY + 2.8)], [0.05, 0.35, 0.2]), SKIN.hi, 0.3)]
     # le masque (cache-cou) qui remonte sur le nez : son bord épais sur la fente, le léger relief du nez sur la médiane
     mask_edge = [(64.8, 45.2), (70.0, 46.6), (75.0, 46.6), (rx_ - 0.6, 45.9), (rx_ + 0.4, 45.5), (83.0, 46.4), (87.6, 45.4)]
     hd += [(ribbon([(x, y + 0.6) for x, y in mask_edge], [0.3, 1.2, 1.2, 1.2, 1.2, 1.2, 0.3]), CLOTH.deep, 0.35),
@@ -603,7 +679,6 @@ def head(fig, P):
            (ribbon([(rx_ + 0.2, 46.4), (nx + 0.1, ny - 0.4), (nx + 0.2, ny + 0.6)], [0.1, 0.7, 0.3]), CLOTH.light, 0.45),
            (sm([(rx_ - 0.6, 46.4), (nx - 0.6, ny - 0.8), (nx - 0.2, ny + 1.0), (nx - 2.4, ny + 1.4), (nx - 2.6, ny)], t=0.9),
             CLOTH.shadow, 0.35),
-           (ellipse(nx - 0.1, ny + 1.3, 1.8, 0.5), CLOTH.deep, 0.35),
            # la bouche, sous le masque : un pli à peine marqué, à sa place (centrée sous le nez)
            (ribbon([(mx - mw * 0.4, my + 0.1), (mx, my + 0.25), (mx + mw * 0.4, my)], [0.05, 0.35, 0.05]), CLOTH.deep, 0.35),
            # la joue proche, ronde, sous le tissu ; le menton sur la médiane
