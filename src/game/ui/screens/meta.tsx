@@ -1,7 +1,7 @@
 // Fenêtres : quêtes, boutique et passe, réglages, récompenses, pub simulée, confirmation.
 import { useEffect, useState } from 'preact/hooks';
 import {
-  AD_SECONDS, ARENA_SHOP, DAILY_CHESTS, DAILY_QUESTS, GUILD_SHOP, PASS_LEVELS, PASS_POINTS_PER_LEVEL,
+  AD_SECONDS, ARENA_LEAGUES, ARENA_SHOP, DAILY_CHESTS, DAILY_QUESTS, GUILD_SHOP, PASS_LEVELS, PASS_POINTS_PER_LEVEL,
   WEEKLY_CHESTS, WEEKLY_QUESTS, type Reward,
 } from '../../../core/data/modes';
 import { STARTER_HERO, heroDef } from '../../../core/data/heroes';
@@ -11,7 +11,7 @@ import { legalDoc, type LegalDoc } from '../../legal';
 import { APP_VERSION } from '../../version';
 import { t } from '../../i18n';
 import {
-  buyExchange, buyOffer, claimChest, claimPass, claimQuest, passLevel, questPoints,
+  buyOffer, claimChest, claimPass, claimQuest, passLevel, questPoints,
   chooseName, deleteAccount, playerId, randomName, rename, setLang, setSetting,
 } from '../../state/actions';
 import { now, useGame } from '../../state/store';
@@ -19,14 +19,10 @@ import type { Gain } from '../../state/types';
 import { Art, Bar, Btn, Cur, HeroCard, Icon, ItemIcon, Modal, Sign, Tabs } from '../kit';
 import { close, open, toast } from '../nav';
 import { Halo } from '../anim';
-import { ShopTile } from './adventure';
 import { AvatarRow } from './avatar';
-import { GemsTab, OffersTab, PassBuy } from '../sections/boutique-offres';
+import { GemsTab, OffersTab, PassTab } from '../sections/boutique-offres';
+import { ModeShop } from '../sections/boutiques-modes';
 import '../sections/boutique.css';
-
-function RewardLine({ reward }: { reward: Reward }) {
-  return <span class="row gap-s wrap">{Object.entries(reward).map(([k, v]) => <Cur k={k} n={v ?? 0} />)}</span>;
-}
 
 export function QuestsModal() {
   const s = useGame();
@@ -104,50 +100,15 @@ export function ShopModal({ tab: initial = 'offers' }: { tab?: 'offers' | 'pass'
       ]} />
       {tab === 'offers' && <OffersTab onBuy={simulatedBuy} />}
       {tab === 'gems' && <GemsTab onBuy={simulatedBuy} />}
-      {tab === 'pass' && (
-        <div class="list">
-          <div class="card">
-            <div class="row between"><strong>{t('pass.level', { n: level })}</strong><span class="muted">{t('pass.points', { n: s.pass.points % PASS_POINTS_PER_LEVEL, m: PASS_POINTS_PER_LEVEL })}</span></div>
-            <Bar value={s.pass.points % PASS_POINTS_PER_LEVEL} max={PASS_POINTS_PER_LEVEL} color="#a35cff" />
-            {!s.shop.passPremium && <PassBuy onBuy={() => simulatedBuy('pass')} />}
-          </div>
-          <div class="pass-grid">
-            <span class="muted small">{t('pass.free')}</span><span /><span class="muted small">{t('pass.premium')}</span>
-            {PASS_LEVELS.slice(0, Math.max(10, level + 3)).map((lv, i) => (
-              <>
-                <PassCell reward={lv.free} done={s.pass.claimedFree.includes(i)} ready={i < level} onClaim={() => claimPass(i, false)} />
-                <span class={`pass-num${i < level ? ' on' : ''}`}>{i + 1}</span>
-                <PassCell reward={lv.premium} done={s.pass.claimedPremium.includes(i)} ready={i < level && s.shop.passPremium} locked={!s.shop.passPremium} onClaim={() => claimPass(i, true)} />
-              </>
-            ))}
-          </div>
-        </div>
-      )}
+      {tab === 'pass' && <PassTab onBuy={() => simulatedBuy('pass')} />}
       {tab === 'exchange' && (
-        <div class="list">
-          <h3><Cur k="arenaTokens" n={s.wallet.arenaTokens} /></h3>
-          <div class="shop-grid">
-            {ARENA_SHOP.map((x) => <ShopTile cost={<Cur k="arenaTokens" n={x.cost} />} reward={x.reward} disabled={s.wallet.arenaTokens < x.cost}
-              onBuy={() => { const g = buyExchange('arena', x.id); if (g) open({ type: 'gain', title: t('shop.exchange'), gain: g }); }} />)}
-          </div>
-          <h3><Cur k="guildCoins" n={s.wallet.guildCoins} /></h3>
-          <div class="shop-grid">
-            {GUILD_SHOP.map((x) => <ShopTile cost={<Cur k="guildCoins" n={x.cost} />} reward={x.reward} disabled={s.wallet.guildCoins < x.cost}
-              onBuy={() => { const g = buyExchange('guild', x.id); if (g) open({ type: 'gain', title: t('shop.exchange'), gain: g }); }} />)}
-          </div>
+        <div class="bq-ex">
+          <ModeShop kind="arena" items={ARENA_SHOP} league={[...ARENA_LEAGUES].reverse().find((l) => s.arena.points >= l.from)?.id} compact />
+          <ModeShop kind="guild" items={GUILD_SHOP} compact />
         </div>
       )}
       </div>
     </Modal>
-  );
-}
-
-function PassCell(p: { reward: Reward; done: boolean; ready: boolean; locked?: boolean; onClaim: () => void }) {
-  return (
-    <button class={`pass-cell${p.done ? ' done' : ''}${p.ready && !p.done ? ' ready' : ''}${p.locked ? ' locked' : ''}`}
-      onClick={() => p.ready && !p.done && p.onClaim()}>
-      <RewardLine reward={p.reward} />
-    </button>
   );
 }
 

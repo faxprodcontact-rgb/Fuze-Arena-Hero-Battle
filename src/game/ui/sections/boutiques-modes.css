@@ -132,6 +132,65 @@
 .mx-feat .lg-flash, .mx-feat .lg-fly, .mx-feat .bq-jet i { left: 23%; top: 46%; }
 .mx-feat .lg-fly { width: 80px; height: 80px; margin: -40px; }
 
+/* ---------- variante compacte (onglet « Échanges » de la boutique : les deux boutiques l'une sous l'autre) ----------
+   Une vitrine par boutique : l'enseigne et la bourse en haut, les quatre objets debout côte à côte sur une étagère de
+   pierre d'un bord à l'autre (le prix sur sa face), du moins cher au plus cher ; le plus cher au bout, sous la lumière. */
+.mx-compact { --mx-pad: 8px; --mx-head-h: 38px; --mx-stage-h: 76px;
+  position: relative; isolation: isolate; flex: none; gap: 6px; padding: var(--mx-pad) 10px 10px; border-radius: 20px;
+  box-shadow: inset 0 0 0 1.5px #8e8aa3b0, inset 0 0 0 3.5px color-mix(in srgb, var(--mx-rim) 30%, transparent), inset 0 1px 0 #ffffff4d,
+    -3px 6px 14px #040a1eb3, 0 0 18px color-mix(in srgb, var(--mx-rim) 18%, transparent); }
+/* l'étagère : le dessus clair (vu d'en haut, la lumière dessus) puis la face de pierre où sont les prix */
+.mx-compact .mx-shelf { left: 0; right: 0; bottom: 0; top: calc(var(--mx-pad) + var(--mx-head-h) + 6px + var(--mx-stage-h) - 14px);
+  background: linear-gradient(180deg, #6c6886 0, #57536f 12px, #2c293f 13px, #3a3652 15px, #322e48 45%, #24213a 100%);
+  box-shadow: inset 0 1.5px 0 #ffffff59, 0 -3px 6px #0006; }
+/* arène : le rai de lumière tombe d'en haut à droite sur l'objet d'élite, au bout de l'étagère */
+.mx-compact .mx-beam { left: auto; right: -6%; width: 42%; clip-path: polygon(40% 0, 100% 0, 86% 100%, 6% 100%); opacity: 0.7; }
+.mx-compact .mx-light { background: radial-gradient(46% 70% at 90% 0%, #ffe08a4d 0%, #ffc22e14 50%, #0000 78%), radial-gradient(30% 40% at 84% 55%, #ffc22e26, #0000 72%); }
+
+/* l'enseigne et la bourse */
+.mx-head { position: relative; z-index: 2; height: var(--mx-head-h); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.mx-sign { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 14px 0 4px; min-width: 0; border-radius: 10px;
+  font: 400 19px/1 var(--font-title); color: #fff; letter-spacing: 0.3px; text-shadow: 0 2px 0 var(--mx-ink); white-space: nowrap; }
+.mx-sign .icon { margin: -4px 0; filter: drop-shadow(-1px 2px 1px #0009); }
+/* guilde : un ruban de velours pourpre bordé d'or */
+.mx-guild .mx-sign { background: radial-gradient(70% 90% at 80% 10%, #ffffff26, #0000 70%), linear-gradient(180deg, #b52a48 0%, #8e1c36 55%, #64122a 100%);
+  box-shadow: inset 0 0 0 1.5px #ffc22ecc, inset 0 2px 0 #ffffff40, -2px 3px 4px #000a; }
+/* arène : une plaque de pierre cerclée du métal de la ligue */
+.mx-arena .mx-sign { background: radial-gradient(70% 90% at 80% 10%, #ffffff1f, #0000 70%), linear-gradient(180deg, #67637f 0%, #4f4b66 55%, #3a3650 100%);
+  box-shadow: inset 0 0 0 1.5px var(--mx-rim), inset 0 2px 0 #ffffff40, -2px 3px 4px #000a; }
+.mx-compact .mx-purse { flex: none; }
+
+/* les objets : pas de case, ils sont debout sur l'étagère commune */
+.mx-compact .mx-row { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.mx-compact .mx-card { background: none; box-shadow: none; padding: 0; gap: 3px; border-radius: 0; }
+.mx-compact .mx-stage { width: 100%; height: var(--mx-stage-h); margin: 0; overflow: visible; border-radius: 0; }
+.mx-compact .mx-stage::after { content: none; }
+.mx-compact .mx-stage .lg-glow { inset: 2% -6% 22%; }
+.mx-compact .mx-card .mx-art { width: 52px; height: 52px; margin-left: -26px; bottom: 15px; }
+.mx-compact .mx-top .mx-art { --s: 60px; width: var(--s); height: var(--s); margin-left: -30px; bottom: 14px; animation: mx-float 2.8s ease-in-out infinite; }
+.mx-compact .mx-top .lg-glow { inset: -6% -14% 16%; animation: lg-glow 2.4s ease-in-out infinite; }
+.mx-compact .mx-card .mx-cushion { bottom: 4px; width: 60px; height: 14px; margin-left: -30px; }
+.mx-compact .mx-card .mx-plinth { bottom: 4px; width: 58px; height: 16px; margin-left: -29px; }
+.mx-compact .mx-top .mx-cushion, .mx-compact .mx-top .mx-plinth { width: 66px; margin-left: -33px; height: 18px; }
+.mx-compact .bq-sparks { inset: -4% -6% 24%; }
+/* la plaque du plus cher (Trésor / Élite), accrochée au pied de son socle */
+.mx-compact .mx-tag { top: calc(var(--mx-stage-h) - 15px); bottom: auto; padding: 2px 8px 3px; font-size: 12px; }
+.mx-compact .mx-tag .icon { display: none; }
+.mx-compact .mx-qty { font-size: 17px; margin-top: 1px; }
+.mx-compact .mx-top .mx-qty { margin-top: 8px; }
+.mx-compact .mx-top { gap: 2px; }
+.mx-compact .mx-rar { font-size: 12px; padding: 2px 8px 3px; }
+.mx-compact .mx-price { margin-top: auto; padding-left: 4px; padding-right: 4px; gap: 2px; }
+.mx-compact .mx-price .icon { width: 18px !important; height: 18px !important; }
+/* arène : bronze, argent, or, et l'améthyste de l'élite */
+.mx-arena .mx-tier-3 { --mx-rim: #c99bff; }
+.mx-arena.mx-compact .mx-card { box-shadow: none; }
+.mx-compact .mx-card .lg-flash { top: 40px; }
+.mx-compact .mx-card .lg-fly { top: 34px; }
+.mx-compact .mx-card .bq-jet i { top: 40px; }
+
+.bq-ex { display: flex; flex-direction: column; gap: 10px; }
+
 /* ---------- les deux écrans ---------- */
 .screen.guild > .g-shop { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
 .av-arena > .mx { flex: 1 1 auto; }
@@ -147,6 +206,13 @@
   .mx-card .mx-art { width: 50px; height: 50px; margin-left: -25px; bottom: 19px; }
   .mx-card .mx-qty { font-size: 16px; }
   .mx-card { gap: 3px; padding-bottom: 6px; }
+  .mx-compact { --mx-head-h: 32px; --mx-stage-h: 64px; gap: 4px; }
+  .mx-compact .mx-card { padding: 0; }
+  .mx-compact .mx-sign { height: 28px; font-size: 17px; }
+  .mx-compact .mx-card .mx-art { width: 44px; height: 44px; margin-left: -22px; bottom: 14px; }
+  .mx-compact .mx-top .mx-art { width: 50px; height: 50px; margin-left: -25px; }
+  .mx-compact .mx-qty { font-size: 15px; }
+  .bq-ex { gap: 8px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

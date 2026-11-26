@@ -238,29 +238,178 @@
 .bq-gem .bq-corner { top: 8px; }
 .bq-best .bq-corner { top: 22px; }
 
-/* le passe : la carte à prendre en tête de l'onglet */
-.bq-passbuy { position: relative; display: flex; align-items: center; gap: 10px; padding: 8px 10px 8px 6px; border-radius: 16px;
-  background: radial-gradient(70% 120% at 90% 0%, #ffcf5a33, #0000 60%), linear-gradient(170deg, var(--bq-n4) 0%, var(--bq-n2) 60%, var(--bq-n1) 100%);
-  box-shadow: inset 0 0 0 1.5px #8e8aa3a0, inset 0 0 0 3px #ffc22e40, -2px 5px 10px #040a1e99; }
-.bq-passbuy .bq-stage { width: 64px; height: 56px; flex: none; }
-.bq-passbuy .bq-art { width: 56px; height: 56px; }
-.bq-passbuy strong { flex: 1; text-align: left; font: 400 18px/1.1 var(--font-title); color: #fff; text-shadow: 0 2px 0 var(--bq-ink); }
-.bq-passbuy .bq-price { width: auto; min-width: 104px; }
+/* ==========================================================================================================
+   Le passe (PassTab de boutique-offres.tsx) : la voie gratuite (pierre de nuit) à gauche, la voie premium (améthyste
+   cerclée d'or) à droite, les paliers enfilés sur une piste d'or qui se remplit jusqu'au niveau du joueur ; gros paliers
+   tous les 5 (cadre d'or, gros pictos), grand final au 30 (le coffre sur son socle). La tête et la carte premium restent
+   en place, seule la piste défile.
+   ========================================================================================================== */
+.bq { --ps-am0: #160a2e; --ps-am1: #251247; --ps-am2: #3d1f6b; --ps-am3: #5a2f94; }
+.modal:has(.ps) { height: 94%; }
+.modal:has(.ps) .modal-body { flex: 1 1 auto; min-height: 0; overflow: hidden; padding-bottom: 10px; -webkit-mask-image: none; mask-image: none; }
+.bq.bq-tab-pass { flex: 1 1 auto; min-height: 0; }
+.ps { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: 8px; }
 
-/* les onglets du passe et des échanges sur la vitrine de nuit : cartes et cases de nuit, textes clairs */
-.bq .card, .bq .pass-cell { --pxf: radial-gradient(80% 60% at 80% 0%, #ffffff14, #0000 70%), linear-gradient(170deg, var(--bq-n4) 0%, var(--bq-n2) 55%, var(--bq-n1) 100%);
-  --psh: inset 0 0 0 1.5px #8e8aa38c, inset 0 1px 0 #ffffff2e, -2px 4px 8px #040a1e8c; color: #fff; }
-.bq .card strong, .bq .card .cur, .bq .pass-cell .cur { color: #fff; text-shadow: 0 1px 0 var(--bq-ink); }
-.bq .card .cur-big { --pxf: #050b1f8c; --psh: inset 0 1px 2px #000a, 0 1px 0 #ffffff1a; color: #fff; }
-.bq .pass-cell.ready { --pxf: radial-gradient(90% 80% at 75% 10%, #ffd86a40, #0000 65%), linear-gradient(170deg, #2f4f96 0%, var(--bq-n3) 55%, var(--bq-n2) 100%);
-  --psh: inset 0 0 0 2px var(--bq-gold), -2px 4px 8px #040a1e8c, 0 0 12px #ffb21f55; }
-.bq .pass-num { background: var(--bq-n0); color: #aeb5d6; box-shadow: inset 0 1px 2px #000a; }
-.bq .pass-num.on { background: linear-gradient(180deg, var(--bq-gold-hi), var(--bq-gold) 55%, #e8920f); color: #5a2a00; text-shadow: none; box-shadow: 0 0 8px #ffc22e88; }
-.bq .card .bar { --pxf: linear-gradient(var(--bq-n0), var(--bq-n0)); --psh: inset 0 2px 3px #000c; }
-.bq .card .bar-label { color: #fff; text-shadow: 0 1px 0 #000; }
-.bq .muted { color: #aeb5d6; }
-.bq h3 { color: #fff; }
-.bq h3 .cur { font: 400 18px var(--font-title); text-shadow: 0 2px 0 var(--bq-ink); }
+/* la tête : le niveau dans sa gemme d'or, la jauge des points */
+.ps-head { flex: none; display: flex; align-items: center; gap: 12px; padding: 6px 12px 6px 10px; border-radius: 16px;
+  background: radial-gradient(70% 120% at 92% 0%, #ffcf5a26, #0000 60%), linear-gradient(170deg, var(--bq-n4) 0%, var(--bq-n2) 60%, var(--bq-n1) 100%);
+  box-shadow: inset 0 0 0 1.5px #8e8aa38c, inset 0 1px 0 #ffffff2e, -2px 4px 8px #040a1e8c; }
+.ps-badge { flex: none; width: 38px; height: 38px; margin: 5px; display: grid; place-items: center; border-radius: 10px; transform: rotate(45deg);
+  background: linear-gradient(135deg, #fffbe0 0%, var(--bq-gold-hi) 25%, var(--bq-gold) 60%, #e8920f 100%);
+  box-shadow: inset 0 0 0 1.5px #fff8, -2px 2px 0 #8a4a00, 0 0 14px #ffc22e88; }
+.ps-badge b { transform: rotate(-45deg); font: 400 21px/1 var(--font-title); color: #5a2a00; text-shadow: 0 1px 0 #fff8; }
+.ps-prog { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.ps-prog-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.ps-prog-top strong { font: 400 18px/1 var(--font-title); color: #fff; text-shadow: 0 2px 0 var(--bq-ink); white-space: nowrap; }
+.ps-prog-top small { font: 400 14px/1 var(--font-title); color: #aeb5d6; white-space: nowrap; }
+.ps-bar { position: relative; height: 12px; border-radius: var(--r-pill); background: var(--bq-n0); box-shadow: inset 0 2px 3px #000c, 0 1px 0 #ffffff1f; overflow: hidden; }
+.ps-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: inherit;
+  background: linear-gradient(180deg, var(--bq-gold-hi), var(--bq-gold) 55%, #e8920f); box-shadow: inset 0 1px 0 #fff9, 0 0 8px #ffc22e88; }
+
+/* la carte du passe premium à prendre : améthyste cerclée d'or, tout ce qu'il donne en grand */
+.bq-passbuy { flex: none; position: relative; isolation: isolate; display: grid; grid-template-columns: 60px minmax(0, 1fr) auto; align-items: center;
+  column-gap: 10px; row-gap: 4px; padding: 6px 10px 9px 6px; border-radius: 18px; overflow: hidden;
+  background: radial-gradient(70% 120% at 94% 0%, #ffcf5a47, #0000 60%), linear-gradient(165deg, var(--ps-am3) 0%, var(--ps-am2) 45%, var(--ps-am1) 100%);
+  box-shadow: inset 0 0 0 2px var(--bq-gold), inset 0 0 0 4px #ffc22e2e, inset 0 1px 0 #ffffff59, -3px 6px 12px #040a1eb3, 0 0 18px #ffb21f40; }
+.bq-pb-light { position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: radial-gradient(40% 70% at 12% 40%, #ffc22e33, #0000 70%); }
+.bq-passbuy .bq-stage { width: 60px; height: 58px; }
+.bq-passbuy .bq-stage::after { content: none; }
+.bq-passbuy .bq-stage .lg-glow { inset: -10% -14%; animation: lg-glow 2.4s ease-in-out infinite; }
+.bq-passbuy .bq-art { width: 58px; height: 58px; animation: bq-float 2.8s ease-in-out infinite; }
+.bq-passbuy .bq-sparks { inset: -6% -10%; }
+.bq-pb-name { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+.bq-pb-name strong { font: 400 20px/1.05 var(--font-title); color: #fff; text-shadow: 0 2px 0 var(--bq-ink), 0 0 10px #0009; }
+.bq-pb-name .bq-x { font-size: 15px; }
+.bq-passbuy .bq-price { width: auto; min-width: 100px; }
+.bq-pb-total { grid-column: 1 / 4; display: flex; justify-content: center; gap: 5px; flex-wrap: wrap; }
+.bq-pb-total .bq-chip { padding: 2px 9px 2px 2px; background: #0d052499; }
+.bq-pb-total .bq-chip b { font-size: 15px; color: var(--bq-gold-hi); }
+
+/* les en-têtes des deux voies */
+.ps-cols { flex: none; display: grid; grid-template-columns: 1fr 44px 1fr; align-items: center; justify-items: center;
+  font: 400 15px/1 var(--font-title); color: #aeb5d6; text-shadow: 0 1px 0 var(--bq-ink); }
+.ps-cols-prem { display: inline-flex; align-items: center; gap: 3px; color: var(--bq-gold-hi); }
+.ps-cols-prem .icon { margin: -4px 0; filter: drop-shadow(-1px 1px 1px #0008); }
+
+/* la piste : seule elle défile */
+.ps-list { position: relative; flex: 1 1 auto; min-height: 0; overflow-y: auto; margin: 0 -6px; padding: 2px 6px 18px; overscroll-behavior: contain;
+  -webkit-mask-image: linear-gradient(180deg, #0000 0, #000 8px, #000 calc(100% - 18px), #0000); mask-image: linear-gradient(180deg, #0000 0, #000 8px, #000 calc(100% - 18px), #0000); }
+.ps-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr); align-items: stretch; padding: 4px 0; }
+/* le fil de la piste : d'or jusqu'au niveau du joueur (--fill), creusé après */
+.ps-row::before { content: ''; position: absolute; z-index: 0; left: 50%; top: 0; bottom: 0; width: 6px; margin-left: -3px;
+  background: linear-gradient(180deg, var(--bq-gold) 0, var(--bq-gold-hi) var(--fill, 0%), var(--bq-n0) var(--fill, 0%));
+  box-shadow: inset 1px 0 0 #0006, inset -1px 0 0 #ffffff1a; }
+/* le nœud du palier : une gemme de pierre, d'or une fois atteinte */
+.ps-node { position: relative; z-index: 1; align-self: center; justify-self: center; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px;
+  transform: rotate(45deg); background: linear-gradient(135deg, #5a5672, #2e2b44); box-shadow: inset 0 0 0 1.5px #8e8aa3, inset 1px -1px 0 #0005, -2px 2px 3px #000a; }
+.ps-node b { transform: rotate(-45deg); font: 400 14px/1 var(--font-title); color: #d7d9ec; text-shadow: 0 1px 0 #000a; }
+.ps-on .ps-node, .ps-final.ps-on .ps-node { background: linear-gradient(135deg, #fffbe0 0%, var(--bq-gold-hi) 25%, var(--bq-gold) 60%, #e8920f 100%);
+  box-shadow: inset 0 0 0 1.5px #fff8, -2px 2px 0 #8a4a00, 0 0 10px #ffc22e88; }
+.ps-on .ps-node b, .ps-final.ps-on .ps-node b { color: #5a2a00; text-shadow: 0 1px 0 #fff8; }
+.ps-big .ps-node { width: 34px; height: 34px; box-shadow: inset 0 0 0 2px var(--bq-gold), inset 1px -1px 0 #0005, -2px 2px 3px #000a, 0 0 12px #ffc22e66; }
+.ps-big .ps-node b { font-size: 16px; }
+/* le palier en cours : sa gemme bat doucement ; le repère d'or glisse sur le fil avec les points */
+.ps-now .ps-node { box-shadow: inset 0 0 0 2px var(--bq-gold-hi), -2px 2px 3px #000a, 0 0 0 3px #ffc22e40; animation: ps-beat 1.6s ease-in-out infinite; }
+@keyframes ps-beat { 50% { box-shadow: inset 0 0 0 2px var(--bq-gold-hi), -2px 2px 3px #000a, 0 0 0 6px #ffc22e2e, 0 0 14px #ffc22e88; } }
+.ps-here { position: absolute; z-index: 2; left: 50%; top: var(--fill); width: 14px; height: 14px; margin: -7px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle at 60% 38%, #fff 0 22%, var(--bq-gold-hi) 45%, var(--bq-gold) 70%); box-shadow: 0 0 0 2px #5a2a00, 0 0 12px #ffc22e; }
+
+/* une case de palier : pierre de nuit (gratuit) ou améthyste cerclée d'or (premium) */
+.ps-cell { position: relative; isolation: isolate; min-width: 0; min-height: 56px; display: flex; align-items: center; justify-content: center; padding: 6px 8px;
+  border: 0; border-radius: 14px; color: #fff; font: inherit; text-align: left; cursor: default; -webkit-tap-highlight-color: transparent;
+  background: radial-gradient(80% 60% at 80% 0%, #ffffff14, #0000 70%), linear-gradient(170deg, var(--bq-n4) 0%, var(--bq-n2) 55%, var(--bq-n1) 100%);
+  box-shadow: inset 0 0 0 1.5px #8e8aa38c, inset 0 1px 0 #ffffff2e, -2px 4px 8px #040a1e8c; }
+.ps-prem { background: radial-gradient(80% 60% at 82% 0%, #ffe08a2e, #0000 70%), linear-gradient(170deg, var(--ps-am3) 0%, var(--ps-am2) 50%, var(--ps-am1) 100%);
+  box-shadow: inset 0 0 0 1.5px #ffc22ec0, inset 0 0 0 3px #ffc22e24, inset 0 1px 0 #ffffff40, -2px 4px 8px #040a1e8c; }
+/* à prendre : un liseré d'or qui respire */
+.ps-ready { cursor: pointer; animation: ps-ready 1.8s ease-in-out infinite;
+  box-shadow: inset 0 0 0 2px var(--bq-gold), inset 0 1px 0 #ffffff59, -2px 4px 8px #040a1e8c, 0 0 10px #ffb21f66; }
+.ps-ready:not(.ps-prem) { background: radial-gradient(90% 80% at 75% 10%, #ffd86a40, #0000 65%), linear-gradient(170deg, #2f4f96 0%, var(--bq-n3) 55%, var(--bq-n2) 100%); }
+@keyframes ps-ready { 50% { box-shadow: inset 0 0 0 2px var(--bq-gold-hi), inset 0 1px 0 #ffffff59, -2px 4px 8px #040a1e8c, 0 0 18px #ffc22eaa; } }
+.ps-ready:active { transform: translateY(1px) scale(0.98); }
+/* prise : éteinte et cochée */
+.ps-done > .ps-loot, .ps-done > .ps-all { opacity: 0.42; filter: saturate(0.4); }
+.ps-check { position: absolute; z-index: 2; right: 5px; top: 5px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%;
+  background: linear-gradient(180deg, #7be08a, #2e9a4a); box-shadow: inset 0 1px 0 #fff8, -1px 2px 0 #0a3d1a, 0 0 6px #0008; }
+.ps-check .sign { width: 12px; height: 10px; }
+/* premium pas encore pris : le cadenas, les gains restent beaux (pour donner envie) */
+.ps-locked > .ps-loot, .ps-locked > .ps-all { opacity: 0.82; }
+.ps-lock { position: absolute; z-index: 2; right: 3px; top: 3px; display: grid; place-items: center; filter: drop-shadow(-1px 1px 1px #000a); }
+/* pas encore atteint */
+.ps-wait > .ps-loot { opacity: 0.92; }
+
+/* les gains : le principal en grand, les autres en pilules */
+.ps-loot { display: flex; align-items: center; justify-content: center; gap: 7px; min-width: 0; }
+.ps-main { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.ps-main .icon { filter: drop-shadow(-1px 2px 1px #000a); }
+.ps-main b, .ps-mini b { font: 400 15px/1 var(--font-title); color: #fff; text-shadow: 0 2px 0 var(--bq-ink); white-space: nowrap; }
+.ps-more { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; min-width: 0; }
+.ps-mini { display: inline-flex; align-items: center; gap: 2px; padding: 1px 7px 1px 2px; border-radius: var(--r-pill); background: #050b1f8c;
+  box-shadow: inset 0 1px 2px #000a, 0 1px 0 #ffffff1a; }
+.ps-more .ps-mini b { font-size: 12.5px; }
+.ps-prem .ps-mini { background: #0d052499; }
+
+/* les gros paliers (5, 10, 15…) : un cadre d'or, une lueur, de plus gros pictos */
+.ps-big .ps-cell { min-height: 68px; box-shadow: inset 0 0 0 2px var(--bq-gold), inset 0 0 0 4px #ffc22e2e, inset 0 1px 0 #ffffff59, -2px 4px 8px #040a1e8c, 0 0 12px #ffb21f4d; }
+.ps-big .ps-ready { box-shadow: inset 0 0 0 2.5px var(--bq-gold-hi), inset 0 1px 0 #ffffff59, -2px 4px 8px #040a1e8c, 0 0 16px #ffb21f88; }
+.ps-big .ps-main::before { content: ''; position: absolute; z-index: -1; left: 50%; top: 20px; width: 64px; height: 56px; margin: -28px -32px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side at 56% 44%, #ffe9a0aa 0%, #ffc22e44 45%, #ffc22e00 100%); }
+.ps-big .ps-main .icon { width: 42px !important; height: 42px !important; }
+.ps-big .ps-main b { font-size: 17px; }
+
+/* le moment où l'on prend : la case saute, un éclair, des étincelles */
+.ps-burst { z-index: 3; animation: lg-hit 0.55s cubic-bezier(.2,1.6,.4,1); }
+.ps-cell .lg-flash { top: 50%; width: 100px; height: 100px; margin: -50px; }
+.ps-cell .bq-jet i { top: 50%; }
+
+/* le grand final (palier 30) : le coffre sur son socle entre les deux voies, sous un cadre d'or */
+.ps-final { position: relative; isolation: isolate; margin-top: 2px; padding: 0 8px 10px; border-radius: 20px;
+  background: radial-gradient(60% 70% at 88% 0%, #ffe08a47, #0000 70%), linear-gradient(170deg, #4a2a80 0%, #2a1550 50%, #120a2c 100%);
+  box-shadow: inset 0 0 0 2px var(--bq-gold), inset 0 0 0 4.5px #ffc22e33, inset 0 1px 0 #fff6, -3px 6px 14px #040a1eb3, 0 0 22px #ffb21f55; }
+/* le fil arrive jusqu'au nœud du 30 */
+.ps-final::before { content: ''; position: absolute; z-index: 0; left: 50%; top: -2px; height: 22px; width: 6px; margin-left: -3px;
+  background: var(--bq-n0); }
+.ps-final.ps-on::before { background: var(--bq-gold); }
+.ps-final-top { position: relative; z-index: 1; display: flex; justify-content: center; padding-top: 8px; }
+.ps-final .ps-node { width: 40px; height: 40px; border-radius: 10px; box-shadow: inset 0 0 0 2px var(--bq-gold), -2px 2px 3px #000a, 0 0 16px #ffc22e88; }
+.ps-final .ps-node b { font-size: 19px; }
+.ps-final-row { display: grid; grid-template-columns: minmax(0, 1fr) 92px minmax(0, 1fr); gap: 6px; align-items: stretch; margin-top: -10px; }
+.ps-final .ps-cell { min-height: 0; padding: 8px 6px; margin-top: 18px; }
+.ps-final .ps-cell:not(.ps-prem) { box-shadow: inset 0 0 0 1.5px #ffc22e99, inset 0 1px 0 #ffffff2e, -2px 4px 8px #040a1e8c; }
+.ps-final .ps-ready { box-shadow: inset 0 0 0 2.5px var(--bq-gold-hi), inset 0 1px 0 #ffffff59, -2px 4px 8px #040a1e8c, 0 0 16px #ffb21f88; }
+.ps-all { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.ps-all .ps-mini { padding: 1px 9px 1px 1px; }
+.ps-final-show { position: relative; display: block; min-height: 118px; }
+.ps-final-show .lg-glow { inset: 6% -18% 30%; animation: lg-glow 2.4s ease-in-out infinite; }
+.ps-final-art { position: absolute; z-index: 2; left: 50%; bottom: 34px; width: 80px; height: 80px; margin-left: -40px; filter: drop-shadow(-3px 4px 3px #000b);
+  animation: bq-float 2.8s ease-in-out infinite; }
+/* le socle : une dalle de pierre cerclée d'or, posée à plat */
+.ps-final-plinth { position: absolute; z-index: 1; left: 4px; right: 4px; bottom: 18px; height: 22px; border-radius: 6px 6px 3px 3px;
+  background: linear-gradient(180deg, var(--bq-gold-hi) 0 3px, var(--bq-gold) 3px 5px, #6b6784 5px, #4f4b66 60%, #3a3650 100%);
+  box-shadow: inset 0 0 0 1px #00000040, -2px 3px 3px #000a; }
+.ps-final-show .bq-sparks { inset: 0 -10% 30%; }
+.ps-final-tag { position: absolute; z-index: 3; left: 50%; bottom: 0; transform: translateX(-50%); padding: 3px 9px 4px; border-radius: 8px; white-space: nowrap;
+  font: 400 13px/1 var(--font-title); color: #5a2a00; letter-spacing: 0.2px;
+  background: linear-gradient(180deg, #fffbe0 0%, #ffe27a 25%, #ffc22e 60%, #f0a018 100%); box-shadow: inset 0 1px 0 #fff, -1px 2px 0 #8a4a00, 0 0 12px #ffc22e88; }
+
+@media (max-height: 700px) {
+  .ps { gap: 6px; }
+  .ps-head { padding: 3px 10px 3px 8px; }
+  .ps-badge { width: 32px; height: 32px; } .ps-badge b { font-size: 18px; }
+  .bq-passbuy { grid-template-columns: 50px minmax(0, 1fr) auto; padding-top: 4px; padding-bottom: 7px; }
+  .bq-passbuy .bq-stage { width: 50px; height: 48px; } .bq-passbuy .bq-art { width: 48px; height: 48px; }
+  .bq-pb-name strong { font-size: 18px; }
+}
+@media (max-width: 370px) {
+  .bq-pb-total { gap: 4px; }
+  .bq-pb-total .bq-chip { padding-right: 7px; }
+  .bq-pb-total .bq-chip .icon { width: 20px !important; height: 20px !important; }
+  .bq-pb-total .bq-chip b { font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ps-now .ps-node, .ps-ready, .ps-burst, .ps-final-art, .bq-passbuy .bq-art { animation: none; }
+}
 
 /* petits écrans : la vitrine un peu plus basse */
 @media (max-height: 700px) {
