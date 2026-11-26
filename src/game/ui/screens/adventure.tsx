@@ -11,7 +11,7 @@ import {
   ARENA_FREE_TICKETS, ARENA_LEAGUES, ARENA_SHOP, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS,
   DUNGEON_ATTEMPTS_PER_DAY, TOWER_STAGE_PER_FLOOR, UNLOCKS, type DungeonKind,
 } from '../../../core/data/modes';
-import { ITEM_COLORS, heroImage } from '../../art';
+import { heroImage } from '../../art';
 import { DUNGEON_CLAN, battleLook, bossArt, bossClan } from '../../look';
 import { Figure } from '../hero-figure';
 import { fmt, t } from '../../i18n';
@@ -382,19 +382,5 @@ function Arena() {
         )}
       </section>
     </>
-  );
-}
-
-export function ShopTile(p: { cost: preact.ComponentChildren; reward: Record<string, number | undefined>; disabled?: boolean; onBuy: () => void; art?: string }) {
-  return (
-    <div class="card shop-tile">
-      {p.art && <Art class="shop-art" name={p.art} />}
-      <div class="shop-reward">
-        {Object.entries(p.reward).map(([k, v]) =>
-          k === 'item' ? <span class="item" style={{ '--rar': ITEM_COLORS[v ?? 0] } as never}><Icon name={`weapon-${v}`} size={38} /></span> : <Cur k={k} n={v ?? 0} big />,
-        )}
-      </div>
-      <Btn kind="gold" small wide disabled={p.disabled} onClick={p.onBuy}>{p.cost}</Btn>
-    </div>
   );
 }

@@ -1,9 +1,15 @@
 // La vitrine de la boutique (vague 3, 26/11 : « que ça donne envie d'acheter ») : l'offre du moment en grand (héros
 // Légendaire en pied posé à côté du cadeau), les autres offres en cases, les gemmes en piles de plus en plus grosses.
 // Mêmes offres, mêmes prix, même achat simulé qu'avant (le serveur jugera plus tard). Style : sections/boutique.css.
+// Le passe (PassTab) : la voie gratuite à gauche, la voie premium (pierre d'améthyste cerclée d'or) à droite, les paliers
+// enfilés sur une piste d'or qui se remplit jusqu'au niveau du joueur ; gros paliers tous les 5, grand final au 30.
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { HEROES } from '../../../core/data/heroes';
-import { GEMS_PER_SUMMON, MONTHLY_CARD, OFFERS, PASS_LEVELS, type Offer, type Reward } from '../../../core/data/modes';
+import {
+  GEMS_PER_SUMMON, MONTHLY_CARD, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL, type Offer, type Reward,
+} from '../../../core/data/modes';
 import { fmt, t } from '../../i18n';
+import { claimPass, passLevel } from '../../state/actions';
 import { now, useGame } from '../../state/store';
 import { Art, Icon, Sign } from '../kit';
 import { btClass } from '../buttons';
@@ -111,15 +117,124 @@ export function OffersTab({ onBuy }: { onBuy: (id: string) => void }) {
   );
 }
 
-/** Le passe premium à prendre, en tête de l'onglet du passe (même achat). */
+/** Ce que donne la voie premium, en grand sur la carte à prendre (les quatre plus belles monnaies). */
+const PASS_SHOW = (['gems', 'scrolls', 'crystals', 'dust'] as const).filter((k) => PASS_TOTAL[k]);
+
+/** Le passe premium à prendre, en tête de l'onglet du passe (même achat) : tout ce qu'il donne, et ce qu'il vaut. */
 export function PassBuy({ onBuy }: { onBuy: () => void }) {
   const o = OFFERS.find((x) => x.kind === 'pass');
   if (!o) return null;
+  const x = valueX(o);
   return (
     <div class="bq-passbuy">
-      <span class="bq-stage"><i class="lg-glow" /><Art name="offer-pass" class="bq-art" /></span>
-      <strong>{t('offer.pass')}</strong>
+      <i class="bq-pb-light" />
+      <span class="bq-stage"><i class="lg-glow" /><Art name="offer-pass" class="bq-art" /><Sparkles n={4} /></span>
+      <span class="bq-pb-name"><strong>{t('offer.pass')}</strong>{x > 0 && <span class="bq-x">{t('bq.value', { n: x })}</span>}</span>
       <Price o={o} soldOut={false} size="m" onBuy={onBuy} />
+      <span class="bq-pb-total">
+        {PASS_SHOW.map((k) => <span class="bq-chip"><Icon name={k} size={24} /><b>{fmt(PASS_TOTAL[k] ?? 0)}</b></span>)}
+      </span>
+    </div>
+  );
+}
+
+// ---------- Le passe ----------
+
+/** L'ordre des gains, du plus précieux au plus commun : le premier est montré en grand. */
+const RANK = ['scrolls', 'crystals', 'gems', 'dust', 'basicScrolls', 'essence', 'gold'];
+const gains = (r: Reward) => (Object.entries(r) as [string, number][]).sort((a, b) => RANK.indexOf(a[0]) - RANK.indexOf(b[0]));
+
+/** Les gains d'un palier : le principal en grand (picto et chiffre), les autres en petites pilules à côté. */
+function Loot({ reward, list }: { reward: Reward; list?: boolean }) {
+  const all = gains(reward);
+  if (list) return <span class="ps-all">{all.map(([k, v]) => <span class="ps-mini"><Icon name={k} size={24} /><b>{fmt(v)}</b></span>)}</span>;
+  const [[k, v] = ['gold', 0], ...more] = all;
+  return (
+    <span class="ps-loot">
+      <span class="ps-main"><Icon name={k} size={34} /><b>{fmt(v)}</b></span>
+      {more.length > 0 && <span class="ps-more">{more.map(([mk, mv]) => <span class="ps-mini"><Icon name={mk} size={16} /><b>{fmt(mv)}</b></span>)}</span>}
+    </span>
+  );
+}
+
+type CellState = 'done' | 'ready' | 'wait' | 'locked';
+
+/** Une case de palier : à prendre (elle luit), prise (cochée), pas encore, ou fermée (premium pas pris : un cadenas). */
+function PassCell({ reward, state, prem, burst, list, onClaim }: {
+  reward: Reward; state: CellState; prem?: boolean; burst: boolean; list?: boolean; onClaim: () => void;
+}) {
+  return (
+    <button class={`ps-cell ps-${state}${prem ? ' ps-prem' : ''}${burst ? ' ps-burst' : ''}`} aria-disabled={state !== 'ready'}
+      onClick={() => state === 'ready' && onClaim()}>
+      <Loot reward={reward} list={list} />
+      {state === 'done' && <span class="ps-check"><Sign name="check" k={1.1} /></span>}
+      {state === 'locked' && <span class="ps-lock"><Icon name="lock" size={18} /></span>}
+      {burst && <><i class="lg-flash" /><Sparkles n={7} burst /></>}
+    </button>
+  );
+}
+
+/** L'onglet du passe : le niveau, la carte premium à prendre, puis les 30 paliers sur leur piste. */
+export function PassTab({ onBuy }: { onBuy: () => void }) {
+  const s = useGame();
+  const level = passLevel(s);
+  const prem = s.shop.passPremium;
+  const pts = level >= PASS_LEVELS.length ? PASS_POINTS_PER_LEVEL : s.pass.points % PASS_POINTS_PER_LEVEL;
+  const [burst, setBurst] = useState('');
+  const list = useRef<HTMLDivElement>(null);
+  const state = (i: number, p: boolean): CellState =>
+    (p ? s.pass.claimedPremium : s.pass.claimedFree).includes(i) ? 'done' : p && !prem ? 'locked' : i < level ? 'ready' : 'wait';
+  const claim = (i: number, p: boolean) => {
+    if (!claimPass(i, p)) return;
+    setBurst(`${i}${p ? 'p' : 'f'}`);
+    setTimeout(() => setBurst(''), 800);
+  };
+  const last = PASS_LEVELS.length - 1;
+  // à l'ouverture, la piste se place sur le premier palier à prendre (sinon sur le niveau du joueur)
+  const firstReady = PASS_LEVELS.findIndex((_, i) => state(i, false) === 'ready' || state(i, true) === 'ready');
+  const go = Math.min(last, firstReady >= 0 ? firstReady : level);
+  useEffect(() => {
+    const el = list.current;
+    const row = el?.querySelector<HTMLElement>('.ps-go');
+    if (el && row) el.scrollTop = Math.max(0, row.offsetTop - 6);
+  }, []);
+  const cell = (i: number, p: boolean, lst?: boolean) => (
+    <PassCell reward={p ? PASS_LEVELS[i]!.premium : PASS_LEVELS[i]!.free} state={state(i, p)} prem={p} list={lst}
+      burst={burst === `${i}${p ? 'p' : 'f'}`} onClaim={() => claim(i, p)} />
+  );
+  return (
+    <div class={`ps${prem ? ' ps-has' : ''}`}>
+      <div class="ps-head">
+        <span class="ps-badge"><b>{level}</b></span>
+        <span class="ps-prog">
+          <span class="ps-prog-top"><strong>{t('pass.level', { n: level })}</strong><small>{t('pass.points', { n: pts, m: PASS_POINTS_PER_LEVEL })}</small></span>
+          <span class="ps-bar"><i style={{ width: `${(pts / PASS_POINTS_PER_LEVEL) * 100}%` }} /></span>
+        </span>
+      </div>
+      {!prem && <PassBuy onBuy={onBuy} />}
+      <div class="ps-cols"><span>{t('pass.free')}</span><span /><span class="ps-cols-prem"><Icon name="crown" size={20} />{t('pass.premium')}</span></div>
+      <div class="ps-list" ref={list}>
+        {PASS_LEVELS.slice(0, last).map((_, i) => (
+          <div class={`ps-row${(i + 1) % 5 === 0 ? ' ps-big' : ''}${i < level ? ' ps-on' : ''}${i === level ? ' ps-now' : ''}${i === go ? ' ps-go' : ''}`}
+            style={{ '--fill': `${i < level ? 100 : i === level ? (pts / PASS_POINTS_PER_LEVEL) * 50 : 0}%` } as never}>
+            {cell(i, false)}
+            <span class="ps-node"><b>{i + 1}</b></span>
+            {i === level && <i class="ps-here" />}
+            {cell(i, true)}
+          </div>
+        ))}
+        <div class={`ps-final${last < level ? ' ps-on' : ''}${last === go ? ' ps-go' : ''}`}>
+          <span class="ps-final-top"><span class="ps-node"><b>{last + 1}</b></span></span>
+          <div class="ps-final-row">
+            {cell(last, false, true)}
+            <span class="ps-final-show">
+              <i class="lg-glow" /><Art name="chestReady" class="ps-final-art" /><i class="ps-final-plinth" /><Sparkles n={6} />
+              <span class="ps-final-tag">{t('ps.final')}</span>
+            </span>
+            {cell(last, true, true)}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

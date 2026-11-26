@@ -135,6 +135,8 @@ const FR = {
   'bq.perDay': '+{n} / jour', 'bq.days': '{n} j',
   // vague 3 « Boutiques de guilde et d'arène » (sections/boutiques-modes.tsx)
   'mx.best.guild': 'Trésor', 'mx.best.arena': 'Élite', 'mx.gear': 'Équipement',
+  // vague 3 « Échanges et passe » (onglet Passe de la boutique, sections/boutique-offres.tsx)
+  'ps.final': 'Grand final',
   'friends.title': 'Amis', 'friends.code': 'Mon code', 'friends.add': 'Ajouter', 'friends.placeholder': 'Code ami',
   'friends.sendAll': 'Tout envoyer', 'friends.claim': 'Ouvrir', 'friends.challenge': 'Défier', 'friends.suggest': 'Suggestions',
   'friends.copied': 'Code copié', 'friends.added': 'Ami ajouté', 'friends.self': "C'est ton code", 'friends.already': 'Déjà ami',
@@ -277,6 +279,8 @@ const EN: Record<Key, string> = {
   'bq.perDay': '+{n} / day', 'bq.days': '{n} d',
   // vague 3 « Boutiques de guilde et d'arène » (sections/boutiques-modes.tsx)
   'mx.best.guild': 'Treasure', 'mx.best.arena': 'Elite', 'mx.gear': 'Gear',
+  // vague 3 « Échanges et passe » (onglet Passe de la boutique, sections/boutique-offres.tsx)
+  'ps.final': 'Grand finale',
   'friends.title': 'Friends', 'friends.code': 'My code', 'friends.add': 'Add', 'friends.placeholder': 'Friend code',
   'friends.sendAll': 'Send all', 'friends.claim': 'Open', 'friends.challenge': 'Challenge', 'friends.suggest': 'Suggestions',
   'friends.copied': 'Code copied', 'friends.added': 'Friend added', 'friends.self': 'This is your code', 'friends.already': 'Already a friend',

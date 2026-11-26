@@ -5,6 +5,9 @@
 // - arène = la salle des trophées des champions : des socles de pierre cerclés de bronze, d'argent et d'or, la médaille de
 //   la ligue du joueur sur le grand socle.
 // Mêmes objets, mêmes prix, même achat (buyExchange) qu'avant. Style : sections/boutiques-modes.css.
+// Variante `compact` (onglet « Échanges » de la boutique, où les deux boutiques sont l'une sous l'autre) : une seule
+// vitrine par boutique, son enseigne et la bourse en haut, les objets debout côte à côte sur une étagère de pierre d'un
+// bord à l'autre, le prix sur la face de l'étagère ; la plus chère au bout, sous la lumière.
 import { useState } from 'preact/hooks';
 import type { ShopItem } from '../../../core/data/modes';
 import { ITEM_COLORS } from '../../art';
@@ -48,7 +51,7 @@ function Burst({ art }: { art: string }) {
   return <><i class="lg-flash" /><Art name={art} class="lg-fly" /><Sparkles n={7} burst /></>;
 }
 
-export function ModeShop({ kind, items, league, crest }: { kind: Kind; items: ShopItem[]; league?: string; crest?: string }) {
+export function ModeShop({ kind, items, league, crest, compact }: { kind: Kind; items: ShopItem[]; league?: string; crest?: string; compact?: boolean }) {
   const s = useGame();
   const cur = CURRENCY[kind];
   const have = s.wallet[cur];
@@ -64,6 +67,46 @@ export function ModeShop({ kind, items, league, crest }: { kind: Kind; items: Sh
     setBurst(x.id);
     setTimeout(() => { setBurst(''); open({ type: 'gain', title, gain }); }, 720);
   };
+  if (compact) {
+    const all = [...rest, feat];
+    return (
+      <div class={`mx mx-${kind} mx-compact${league ? ` mx-lg-${league}` : ''}`}>
+        <span class="mx-bg">
+          <i class="mx-light" />
+          {kind === 'arena' && <i class="mx-beam" />}
+          <i class="mx-shelf" />
+        </span>
+        <header class="mx-head">
+          <span class="mx-sign">
+            <Icon name={kind === 'arena' ? (league ? `league-${league}` : 'arena') : crest ?? 'guild'} size={30} />
+            <strong>{t(kind === 'arena' ? 'adv.arena' : 'nav.guild')}</strong>
+          </span>
+          <span class="mx-purse"><Icon name={cur} size={30} /><b>{fmt(have)}</b></span>
+        </header>
+        <div class="mx-row">
+          {all.map((x, i) => {
+            const [k, v] = content(x);
+            const poor = have < x.cost;
+            const top = x === feat;
+            return (
+              <div class={`mx-card mx-tier-${i}${top ? ' mx-top' : ''}${poor ? ' mx-poor' : ''}${burst === x.id ? ' mx-burst' : ''}`}>
+                <span class="mx-stage">
+                  <i class="lg-glow" />
+                  <Art name={artOf(k, v)} class="mx-art" />
+                  <i class={kind === 'guild' ? 'mx-cushion' : 'mx-plinth'} />
+                  {top && <Sparkles n={4} />}
+                </span>
+                {top && <span class="mx-tag"><Icon name="crown" size={16} />{t(`mx.best.${kind}`)}</span>}
+                <Qty x={x} />
+                <Price kind={kind} x={x} poor={poor} size="s" onBuy={() => buy(x)} />
+                {burst === x.id && <Burst art={artOf(k, v)} />}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
   const [fk, fv] = content(feat);
   const fArt = artOf(fk, fv);
   return (
