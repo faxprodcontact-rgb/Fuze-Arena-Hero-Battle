@@ -410,11 +410,12 @@ def head_part(fig, P, HEAD):
     nx, ny = V['nez']
     mx, my, mw = V['bouche']
 
-    # le contour : crâne rond, touffe de la joue côté oreille (couchée vers l'arrière), menton sur la médiane, petit
-    # museau qui dépasse à peine à droite (au niveau du nez et de la bouche)
+    # le contour : crâne rond, touffe de la joue côté oreille (couchée vers l'arrière), menton sur la médiane ; le côté
+    # droit (le fond) suit la sphère du visage et s'arrondit vers le menton, sans bosse de museau étirée vers la droite
+    # (avis du 26/11 : « museau trop étiré à droite »)
     head = sm([(80.8, 80.6), (76.2, 80.2), (78.0, 78.2), (75.4, 76.6), (77.2, 74.4), (76.6, 71.4), (77.2, 67.0), (78.4, 62.4), (81.4, 58.6),
-               (86.0, 56.4), (91.4, 56.2), (96.0, 57.8), (99.2, 61.0), (100.6, 65.0), (101.0, 69.0), (101.6, 72.2),
-               (102.4, 74.6), (101.8, 77.0), (99.6, 79.2), (96.4, 80.8), (92.6, 81.6), (88.4, 81.6), (84.6, 81.2)], sharp=(2, 4), t=0.95)
+               (86.0, 56.4), (91.4, 56.2), (96.0, 57.8), (99.2, 61.0), (100.6, 65.0), (101.0, 69.0), (100.9, 72.4),
+               (100.2, 75.4), (98.6, 78.2), (96.0, 80.3), (92.6, 81.3), (88.6, 81.5), (84.6, 81.2)], sharp=(2, 4), t=0.95)
     hd = []
     # le crâne : la calotte éclairée en haut à droite, l'arrière du crâne dans l'ombre
     hd += [(sm([(83.0, 58.6), (88.0, 56.8), (93.6, 57.0), (97.6, 59.4), (99.6, 62.4), (95.6, 60.8), (90.0, 59.6), (85.2, 60.2)]), FUR.light, 0.75),
@@ -434,8 +435,8 @@ def head_part(fig, P, HEAD):
            (ribbon([(84.6, 66.4), (83.8, 70.6), (83.6, 74.6), (85.6, 79.0)], [0.1, 0.5, 0.5, 0.1]), '#fff6dc', 0.5)]
     m0 = med(65.0)
     mask = sm([(exn - 4.0, 66.6), (exn - 1.6, 64.0), (exn + 1.8, 63.6), (m0 - 1.0, 64.6), (m0, 65.6),
-               (m0 + 1.0, 64.4), (exf + 0.4, 63.4), (100.4, 64.6), (101.0, 69.0), (101.6, 72.2), (102.4, 74.6),
-               (101.8, 77.0), (99.6, 79.2), (96.4, 80.8), (92.6, 81.5), (89.0, 81.0), (86.6, 79.0), (86.0, 75.6),
+               (m0 + 1.0, 64.4), (exf + 0.4, 63.4), (100.4, 64.6), (101.0, 69.0), (100.9, 72.4), (100.2, 75.4),
+               (98.6, 78.2), (96.0, 80.3), (92.6, 81.2), (89.0, 81.0), (86.6, 79.0), (86.0, 75.6),
                (84.8, 72.4), (exn - 4.6, 69.6)], sharp=(4,), t=0.9)
     hd += [(mask.move(-0.5, 0.5), FUR.deep, 0.35),
            (mask, ('lin', 100, 62, 84, 80, [(0, SKIN.light), (0.45, SKIN.base), (1, '#d48272')]), 1)]
@@ -484,8 +485,10 @@ def head_part(fig, P, HEAD):
            (ribbon([(exn - 3.0, 64.2), (exn - 0.6, 64.1), (exn + 1.8, 64.9)], [0.1, 0.45, 0.1]), FUR.light, 0.8),
            (ribbon([(exf - 2.0, 65.6), (exf, 64.6), (exf + 1.8, 64.4)], [0.25, 1.0, 0.25]), FUR.shadow, 1),
            (ribbon([(exf - 1.6, 65.0), (exf, 64.1), (exf + 1.4, 64.0)], [0.1, 0.4, 0.1]), FUR.light, 0.8)]
-    # le museau : un plan rond un peu plus clair autour du nez et de la bouche (centré sur la médiane)
-    muz = ellipse(nx + 0.6, ny + 2.4, 5.6, 4.6, -6)
+    # le museau : un plan ROND un peu plus clair autour du nez et de la bouche, centré sur la médiane (même largeur
+    # de chaque côté du nez et de la bouche, pas penché : avis du 26/11)
+    mzx, mzy = (nx + mx) / 2, (ny + my) / 2 + 0.9
+    muz = ellipse(mzx, mzy, 4.7, 4.3)
     hd += [(muz.move(-0.6, 0.6), SKIN.shadow, 0.3), (muz, ('lin', nx + 5, ny - 2, nx - 4, ny + 6, [(0, SKIN.hi), (0.5, SKIN.light), (1, SKIN.base)]), 0.9)]
     # le nez : petit bout arrondi SUR la médiane, entre les yeux (l'arête qui descend de l'entre-deux-yeux), deux narines
     hd += [(ribbon([(med(68.0) - 0.2, 68.4), (med(70.4) + 0.1, 70.6), (nx + 0.2, ny - 1.2)], [0.1, 0.7, 0.4]), SKIN.light, 0.6),
@@ -493,15 +496,17 @@ def head_part(fig, P, HEAD):
            (sm([(nx - 0.6, ny - 1.2), (nx + 1.2, ny - 1.2), (nx + 1.5, ny - 0.4), (nx + 0.2, ny - 0.6)]), SKIN.hi, 0.75),
            (ellipse(nx - 0.85, ny + 0.15, 0.5, 0.32, 20), '#6e2438', 1),
            (ellipse(nx + 1.05, ny + 0.1, 0.42, 0.3, -20), '#6e2438', 0.95)]
-    # la lèvre du haut (le pli qui descend du nez) et la bouche fermée en sourire en coin (le coin lointain remonte),
-    # un petit croc qui pointe sur la lèvre du bas
-    hd += [(ribbon([(nx, ny + 0.9), (mx - 0.05, my - 0.9)], [0.2, 0.15]), SKIN.shadow, 0.5),
-           (ribbon([(mx - mw / 2 - 0.2, my + 0.05), (mx - 0.6, my + 0.45), (mx + mw * 0.3, my + 0.1), (mx + mw / 2 + 0.3, my - 0.75)],
+    # la lèvre du haut (le pli qui descend du nez) et la bouche fermée en petit sourire SYMÉTRIQUE (les deux coins
+    # remontent pareil), centrée sous le nez ; un petit croc planté dans la lèvre du haut, juste à côté du milieu
+    hw_m = mw / 2
+    hd += [(ribbon([(nx, ny + 0.9), (mx, my - 0.75)], [0.2, 0.15]), SKIN.shadow, 0.5),
+           (ribbon([(mx - hw_m - 0.1, my - 0.45), (mx - hw_m * 0.45, my + 0.3), (mx + hw_m * 0.45, my + 0.3), (mx + hw_m + 0.1, my - 0.45)],
                    [0.15, 0.55, 0.55, 0.15]), MOUTH, 1),
-           (ribbon([(mx - mw / 2 + 0.4, my + 0.9), (mx, my + 1.25), (mx + mw / 2 - 0.4, my + 0.75)], [0.1, 0.55, 0.1]), LIP, 0.65),
-           (sm([(mx + mw * 0.18, my + 0.2), (mx + mw * 0.18 + 0.95, my + 0.05), (mx + mw * 0.18 + 0.55, my + 1.3)], sharp=(0, 1, 2), t=0.6), '#fff6e8', 1),
-           (ribbon([(mx + mw / 2 + 0.2, my - 0.6), (mx + mw / 2 + 0.8, my - 0.2)], [0.1, 0.3]), SKIN.shadow, 0.6),
-           (ellipse(mx + 0.4, my + 3.0, 1.8, 0.7), SKIN.hi, 0.3)]
+           (ribbon([(mx - hw_m * 0.6, my + 0.95), (mx, my + 1.25), (mx + hw_m * 0.6, my + 0.95)], [0.1, 0.5, 0.1]), LIP, 0.6),
+           (sm([(mx + 0.35, my + 0.3), (mx + 1.15, my + 0.3), (mx + 0.8, my + 1.35)], sharp=(0, 1, 2), t=0.6), '#fff6e8', 1),
+           (ribbon([(mx - hw_m - 0.2, my - 0.35), (mx - hw_m - 0.6, my + 0.05)], [0.1, 0.25]), SKIN.shadow, 0.45),
+           (ribbon([(mx + hw_m + 0.2, my - 0.35), (mx + hw_m + 0.6, my + 0.05)], [0.1, 0.25]), SKIN.shadow, 0.45),
+           (ellipse(mx, my + 2.7, 1.6, 0.6), SKIN.hi, 0.3)]
     fig_face.update({'oeil_proche': (exn, eyy, ewn), 'oeil_fond': (exf, eyy, ewf), 'nez': (nx, ny), 'bouche': (mx, my, mw)})
     fig.part('head', head, FUR, grad=(99, 57, 80, 79, [(0, FUR.light), (0.45, FUR.base), (1, FUR.shadow)]),
              cel=1.3, rim=0.75, cast=1.2, details=hd)

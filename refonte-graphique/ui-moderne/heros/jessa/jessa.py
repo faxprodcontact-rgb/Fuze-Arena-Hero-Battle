@@ -530,11 +530,11 @@ def head(fig, P):
 # relève contre la calotte depuis un pli (plus de disque rond posé à part), le reste file vers l'ennemi et finit en
 # bout arrondi ; un galon d'or continu en suit tout le bord libre (bout, devant, aile relevée) ; la broche épingle
 # l'aile sur le ruban de la calotte.
-HAT_TOP = [(103.0, 38.3), (99.0, 37.7), (93.0, 37.3), (86.0, 36.8), (78.0, 36.3), (70.0, 36.1), (63.0, 36.4)]
+HAT_TOP = [(100.8, 38.0), (97.6, 37.5), (93.0, 37.3), (86.0, 36.8), (78.0, 36.3), (70.0, 36.1), (63.0, 36.4)]
 FLAP = [(62.6, 35.0), (62.8, 31.0), (62.1, 27.2), (60.4, 24.2), (57.6, 22.2), (54.0, 21.5), (50.4, 22.5), (47.6, 25.0),
         (45.6, 28.6), (44.5, 32.6), (44.4, 36.2)]
-HAT_LIP = [(46.2, 39.4), (50.0, 41.0), (54.0, 41.6), (58.0, 42.1), (66.0, 42.4), (74.0, 42.5), (82.0, 42.2), (90.0, 41.6), (97.0, 40.9),
-           (101.6, 40.4), (103.4, 39.6)]
+HAT_LIP = [(46.2, 39.4), (50.0, 41.0), (54.0, 41.6), (58.0, 42.1), (66.0, 42.4), (74.0, 42.5), (82.0, 42.2), (90.0, 41.6), (96.0, 40.8),
+           (99.8, 40.5), (101.6, 39.4)]
 
 
 def hat(fig, P):
@@ -573,32 +573,39 @@ def hat(fig, P):
     brim = sm(pts, sharp=(n1 - 1, n1), t=0.9)
     # le dessus du bord, éclairé (plus large vers l'avant : on le voit d'un peu au-dessus)
     surf = sm(HAT_TOP + [(58.0, 37.4), (52.0, 39.4), (47.0, 39.2), (52.0, 40.2), (58.0, 39.9), (64.0, 39.7), (70.0, 39.7), (80.0, 39.7),
-                         (90.0, 39.3), (98.0, 38.9), (102.6, 39.0)], sharp=(0, n1 + 2), t=0.85)
+                         (90.0, 39.3), (96.0, 39.0), (100.6, 38.8)], sharp=(0, n1 + 2), t=0.85)
     # le pli : l'aile se relève depuis le bord (une ombre douce, pas un trait)
     fold = sm([(43.0, 33.6), (47.0, 35.8), (53.0, 37.0), (59.0, 36.8), (63.0, 35.4), (63.0, 38.2), (58.0, 38.4), (52.0, 39.4),
                (46.6, 39.0), (43.0, 37.4)], t=0.9)
     # le galon d'or : le long du bord libre (bout, devant, pli, aile), pas sur le bord du fond qui touche la calotte
-    from shapely.geometry import Polygon, LineString, Point
-    B = Polygon(poly(brim, 16)).buffer(0)
-    mask = Polygon([(62.8, 30.0)] + [(x, y + 1.6) for x, y in HAT_TOP[::-1][:-1]] + [(100.0, 39.3), (100.0, 30.0)])
+    from shapely.geometry import Polygon, Point
+    from atelier import resample
+    ring0 = poly(brim, 12)[:-1]
+    area = sum(p[0] * q[1] - q[0] * p[1] for p, q in zip(ring0, ring0[1:] + ring0[:1]))
+    sg = 1 if area > 0 else -1                       # le sens du tracé : la normale qui rentre dans la forme
+    mask = Polygon([(62.2, 30.0), (62.2, 36.0)] + [(x, y + 1.6) for x, y in HAT_TOP[::-1][:-1]] + [(97.6, 39.1), (97.6, 30.0)])
     gal = []
-    for d_, w_, col, op in ((0.6, 1.2, GOLD.base, 1), (0.42, 0.42, GOLD.hi, 0.75)):
-        ring = list(B.buffer(-d_, join_style=1).exterior.coords)[:-1]
+    for d_, w_, col, op in ((0.62, 1.2, GOLD.base, 1), (0.42, 0.4, GOLD.hi, 0.75)):
+        n_ = len(ring0)
+        ring = []
+        for i, p in enumerate(ring0):
+            a_, b_ = ring0[i - 1], ring0[(i + 1) % n_]
+            dx, dy = b_[0] - a_[0], b_[1] - a_[1]
+            L = math.hypot(dx, dy) or 1
+            ring.append((p[0] - sg * dy / L * d_, p[1] + sg * dx / L * d_))
         inm = [mask.contains(Point(p)) for p in ring]
-        # on fait tourner le cercle pour que la partie masquée (le bord du fond) soit aux deux bouts, puis on l'enlève
-        k0 = next(i for i in range(len(ring)) if inm[i] and not inm[i - 1])
+        # on fait tourner le tour pour que la partie masquée (le bord du fond, contre la calotte) soit aux deux bouts
+        k0 = next(i for i in range(n_) if inm[i] and not inm[i - 1])
         ring, inm = ring[k0:] + ring[:k0], inm[k0:] + inm[:k0]
-        c_ = [p for p, m in zip(ring, inm) if not m]
-        c_ = LineString(c_).simplify(0.12).coords
-        c_ = crpath(list(c_), 240)
-        n_ = len(c_)
-        gal.append((ribbon(c_, [w_ * min(1.0, 0.4 + i / 6, 0.4 + (n_ - 1 - i) / 6) for i in range(n_)], sharp_ends=False), col, op))
+        c_ = resample([p for p, m in zip(ring, inm) if not m], 300)
+        m_ = len(c_)
+        gal.append((ribbon(c_, [w_ * min(1.0, 0.3 + i / 8, 0.3 + (m_ - 1 - i) / 8) for i in range(m_)], sharp_ends=False), col, op))
     bd = [(sm(FLAP[2:] + [(46.0, 40.0), (40.0, 40.0), (40.0, 20.0)]), ('lin', 60, 22, 46, 38, [(0, HAT.base, 0), (1, HAT.shadow, 0.55)]), 1),
           (ribbon(crpath([(51.8, 22.4), (55.0, 21.6), (58.4, 23.4), (60.4, 26.8), (61.0, 30.4)], 16), swell(16, 1.2)), HAT.light, 0.7),
           (ribbon(crpath([(53.4, 22.2), (56.4, 22.4), (58.6, 24.6)], 10), swell(10, 0.45)), HAT.hi, 0.55),
           (fold, ('lin', 0, 33.8, 0, 39.2, [(0, HAT.deep, 0), (0.75, HAT.deep, 0.3), (1, HAT.deep, 0.05)]), 1),
           (surf, ('lin', 0, 36.2, 0, 39.8, [(0, HAT.hi), (0.5, HAT.light), (1, HAT.base)]), 0.95),
-          (ribbon(crpath([(64.0, 36.9), (76.0, 36.9), (88.0, 37.6), (99.0, 38.2)], 18), swell(18, 0.45)), '#fff2d8', 0.6)] + gal
+          (ribbon(crpath([(64.0, 36.9), (76.0, 36.9), (88.0, 37.6), (97.0, 38.0)], 18), swell(18, 0.45)), '#fff2d8', 0.6)] + gal
     part('brim', brim, HAT, grad=(100, 37, 50, 41, [(0, HAT.base), (0.6, HAT.base), (1, HAT.shadow)]), cel=0.5, rim=0.5, cast=1.0,
          cast_on=['crown', 'face', 'hair', 'patch', 'ear', 'nose'], details=bd)
     # la broche d'or (une rosace inventée à quatre lobes, une perle rouge) : elle épingle l'aile sur le ruban
@@ -606,7 +613,7 @@ def hat(fig, P):
     ro = sm([(bc[0] + (2.7 if i % 2 == 0 else 1.7) * math.cos(math.radians(a)), bc[1] + (2.7 if i % 2 == 0 else 1.7) * math.sin(math.radians(a)))
              for i, a in enumerate(range(0, 360, 45))], t=0.95)
     part('brooch', ro, GOLD, grad=(bc[0] + 2.4, bc[1] - 2.4, bc[0] - 2.4, bc[1] + 2.4, [(0, GOLD.hi), (0.4, GOLD.light), (1, GOLD.shadow)]),
-         cel=0.5, rim=0.45, cast=0.9, cast_on=['brim', 'crown'],
+         cel=0.5, rim=0.45, cast=0.6, cast_on=['brim', 'crown'],
          details=[(ellipse(bc[0], bc[1], 1.25, 1.25), GOLD.shadow, 0.8), (ellipse(bc[0], bc[1], 0.95, 0.95), RED.base, 1),
                   (ellipse(bc[0] - 0.2, bc[1] + 0.25, 0.6, 0.5), RED.shadow, 0.6),
                   (ellipse(bc[0] + 0.3, bc[1] - 0.3, 0.32, 0.28), '#ffffff', 0.9)])

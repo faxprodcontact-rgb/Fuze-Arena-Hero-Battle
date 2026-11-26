@@ -463,7 +463,7 @@ FIST_FINGERS = [(-6.6, -3.1, 5.6), (-3.1, 0.3, 6.2), (0.3, 3.4, 5.8), (3.4, 6.1,
 FIST_XL = -2.6                                                                           # l'index au petit doigt
 FIST_GRIP = 29.5                 # poing proche : le creux du poing sur le manche (distance depuis le haut du manche)
 FIST_HN = (-5.4, 4.0)            # poing proche : le talon de la main (vers le poignet, en bas à gauche)
-FIST_KF, FIST_WF, FIST_HF = 0.95, (-3.2, -9.6), (-4.6, -4.0)   # poing lointain : taille, poignet, talon (en haut)
+FIST_KF, FIST_WF, FIST_HF = 0.95, (-3.2, -9.6), (-3.4, -5.6)   # poing lointain : taille, poignet, talon (en haut)
 
 
 def fist_parts(fig, name, M, cast_on, wrist, heel):
@@ -475,10 +475,10 @@ def fist_parts(fig, name, M, cast_on, wrist, heel):
     from shapely.ops import unary_union
     from outils import poly_of, geom_shape
     L = lambda sh: sh.map(lambda p: mapp(M, p))
-    body = sm([(-8.6, -3.4), (-6.2, -7.6), (-1.4, -8.4), (3.4, -7.8), (6.0, -5.0), (6.4, 0.2), (5.8, 4.8), (3.6, 7.4),
+    body = sm([(-8.8, -3.6), (-6.6, -7.6), (-1.4, -8.4), (3.4, -7.8), (6.0, -5.0), (6.4, 0.2), (5.8, 4.8), (3.6, 7.4),
                (-1.2, 8.0), (-5.6, 7.2), (-8.4, 3.8), (-9.0, 0.0)])
     hw = mapp(M, heel)
-    neck = limb([hw, lerp(hw, wrist, 0.55), wrist], [9.0, 8.6, 8.4])
+    neck = limb([hw, lerp(hw, wrist, 0.55), wrist], [8.8, 8.4, 8.2])
     sh = geom_shape(unary_union([poly_of(L(body)), poly_of(neck)]))
     det = [(L(sm([(-6.2, -7.6), (-1.4, -8.4), (3.4, -7.8), (5.2, -6.0), (0.0, -6.6), (-5.0, -5.6)])), SKIN.light, 0.55),
            (L(ellipse(-6.0, 1.2, 2.2, 3.6, 10)), SKIN.shadow, 0.35)]
@@ -508,12 +508,12 @@ def fist_parts(fig, name, M, cast_on, wrist, heel):
                  cast_on=[name] + ['%s%d' % (name, j) for j in range(n)])
         names.append('%sc%d' % (name, i))
     # le pouce : il part du haut de la paume et descend en travers de l'index et du majeur, sa griffe au bout
-    th = limb([(-7.8, -5.6), (-5.2, -4.8), (-3.0, -2.6), (-1.6, 0.2)], [5.0, 4.5, 4.0, 3.4])
+    th = limb([(-7.0, -5.4), (-4.8, -4.6), (-3.0, -2.6), (-1.8, -0.1)], [5.0, 4.5, 4.0, 3.4])
     fig.part(name + 't', L(th), SKIN, cel=0.9, rim=0.6, cast=1.0,
              cast_on=[name, name + '0', name + '1', name + '2', name + 'c1', name + 'c2'],
              details=[(L(ribbon([(-7.0, -7.6), (-4.4, -6.8), (-1.8, -4.0), (-0.4, -0.8)], [0.2, 0.9, 0.7, 0.2])), SKIN.hi, 0.6),
                       (L(ellipse(-6.4, -5.8, 1.6, 0.9, 15)), SKIN.light, 0.4)])
-    fig.part(name + 'tc', L(sm([(-2.0, -0.4), (0.0, 0.4), (0.6, 2.8), (-1.6, 1.4)], sharp=(2,))), IVORY, cel=0.3,
+    fig.part(name + 'tc', L(sm([(-2.2, -0.6), (-0.2, 0.2), (0.4, 2.5), (-1.8, 1.1)], sharp=(2,))), IVORY, cel=0.3,
              rim=0.3, cast=0.4, cast_on=[name + 't', name + '1', name + '2'])
     return names + [name + 't', name + 'tc']
 
