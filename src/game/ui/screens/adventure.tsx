@@ -16,7 +16,7 @@ import { DUNGEON_CLAN, battleLook, bossArt, bossClan } from '../../look';
 import { Figure } from '../hero-figure';
 import { fmt, t } from '../../i18n';
 import {
-  arenaPlan, buyExchange, claimMission, dailyBossId, dailyBossPlan, dungeonAttemptsLeft, markSeen, missionEnd,
+  arenaPlan, claimMission, dailyBossId, dailyBossPlan, dungeonAttemptsLeft, markSeen, missionEnd,
   missionTemplate, opponentPower, refreshOpponents, towerPlan,
 } from '../../state/actions';
 import { isUnlocked, teamPower } from '../../state/selectors';
@@ -26,6 +26,7 @@ import { TeamStrip } from './heroes';
 import { TileScene } from '../backdrop-adventure';
 import { Art, Btn, Cur, Icon, Locked, duration, starText } from '../kit';
 import { btClass } from '../buttons';
+import { ModeShop } from '../sections/boutiques-modes';
 import { open, openSub, prepare, toast, type Sub } from '../nav';
 
 type Mode = (typeof ADVENTURE_ORDER)[number];
@@ -377,15 +378,7 @@ function Arena() {
             })}
           </>
         ) : (
-          <div class="shop-grid">
-            {ARENA_SHOP.map((x) => (
-              <ShopTile cost={<Cur k="arenaTokens" n={x.cost} />} reward={x.reward} disabled={s.wallet.arenaTokens < x.cost}
-                onBuy={() => {
-                  const gain = buyExchange('arena', x.id);
-                  if (gain) open({ type: 'gain', title: t('arena.shop'), gain });
-                }} />
-            ))}
-          </div>
+          <ModeShop kind="arena" items={ARENA_SHOP} league={league.id} />
         )}
       </section>
     </>
