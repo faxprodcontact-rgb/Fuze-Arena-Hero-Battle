@@ -24,6 +24,16 @@ export const CLAN_CHIEF: Record<Clan, string> = {
   eldra: 'mages-8', orin: 'mages-3', arachne: 'myths-10', meduse: 'myths-4', kael: 'assassins-2', lenore: 'knights-9',
   barzul: 'demons-3', kesha: 'demons-5',
 };
+/**
+ * Les monstres de clan devenus héros (src/core/data/heroes.ts, CLAN_HEROES) : leur dessin est celui du monstre
+ * (public/art/hd/mon-<clan>-<rôle>.webp, visage et respiration compris). Côté héros, ils regardent à droite, comme dessinés.
+ */
+export const HERO_ART: Readonly<Record<string, string>> = {
+  nyrra: 'mon-arachne-tisseuse', sarvik: 'mon-meduse-rapide', jessa: 'mon-barzul-tireur', oboro: 'mon-lenore-sorts',
+  sorai: 'mon-orin-sorts', bao: 'mon-eldra-sorts', gribou: 'mon-eldra-rapide', karu: 'mon-orin-rapide',
+};
+/** Le dessin HD d'un héros (son identifiant, sauf pour un monstre de clan devenu héros). */
+export const heroArt = (defId: string): string => HERO_ART[defId] ?? defId;
 /** Le troisième monstre du clan : un tireur, ou un lanceur de sorts. */
 const THIRD: Record<Clan, string> = {
   eldra: 'sorts', orin: 'sorts', arachne: 'tisseuse', meduse: 'sorts', kael: 'tireur', lenore: 'sorts', barzul: 'tireur', kesha: 'sorts',

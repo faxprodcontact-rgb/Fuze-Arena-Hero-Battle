@@ -1439,7 +1439,8 @@ def zone(args):
 # de la colonne 180) sont posées sur chaque cible.
 JEU = {
     'attaque': dict(genre='tir', tir=(4, 6), depuis=205, coup=6, cible=(330, 124)),
-    'speciale': dict(genre='sort', coup=11, cible=(ENEMY_X, GROUND - 50), coupe=180, charge=(1, 2)),
+    'speciale': dict(genre='sort', coup=11, cible=(ENEMY_X, GROUND - 50), coupe=[None] * 7 + [120] * 11, charge=(1, 2),
+                     calques=True),   # boulets entiers (par morceaux entiers)
 }
 
 

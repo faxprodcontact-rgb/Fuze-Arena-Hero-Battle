@@ -1258,8 +1258,9 @@ def write_outputs(anims):
 JEU = {
     'attaque': dict(genre='melee', coup=4, cible=(170, GROUND - 36), coupe=158),
     # la vague de flammes court au ras du sol jusqu'à la cible
-    'speciale': dict(genre='tir', tir=(6, 8), depuis=153, rase=True, coup=8, cible=(228, GROUND - 15), coupe=175,
-                     charge=(0, 1)),
+    # le mur de flammes part entier avec sa traînée au sol (`calques` : par morceaux entiers, Kael jamais coupé)
+    'speciale': dict(genre='tir', tir=(6, 8), depuis=126, rase=True, coup=8, cible=(228, GROUND - 15),
+                     coupe=[None] * 8 + [126] * 9, charge=(0, 1), calques=True),
 }
 
 

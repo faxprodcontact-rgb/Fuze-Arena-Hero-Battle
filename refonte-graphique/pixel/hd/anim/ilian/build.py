@@ -1420,8 +1420,10 @@ def write_outputs(anims):
 # ---------------------------------------------------------------- export vers le jeu (../jeu_export.py, consigne export-jeu.md)
 JEU = {
     'attaque': dict(genre='melee', coup=3, cible=(200, GROUND - 40), coupe=191, elan=(0, 2)),
-    'speciale': dict(genre='sort', coup=6, cible=(XW + 96, GROUND - 40), coupe=[None] * 6 + [190] * 5 + [None] * 3,
-                     charge=(1, 4)),
+    # la vague, une fois haute (image 4), court au ras du sol jusqu'à la vraie cible et s'y écrase (6 à 10) ;
+    # `calques` : seuls les effets partent (par morceaux entiers), le roi et son trident ne sont jamais coupés
+    'speciale': dict(genre='tir', tir=(4, 6), depuis=137, rase=True, vitesse=600, coup=6, cible=(XW + 96, GROUND - 40),
+                     coupe=[None] * 6 + [137] * 5 + [None] * 3, charge=(1, 4), calques=True),
 }
 
 

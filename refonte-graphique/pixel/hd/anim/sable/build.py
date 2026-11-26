@@ -1261,8 +1261,8 @@ def essai(folder):
 JEU = {
     'attaque': dict(genre='tir', tir=(2, 4), depuis=135, coup=4, cible=(ENEMY_X, GROUND - 50),
                     coupe=[None] * 4 + [200] * 3 + [None] * 5, retour=(6, 8)),
-    'speciale': dict(genre='tir', tir=(5, 8), depuis=176, coup=8, cible=(ENEMY_X, GROUND - 70), coupe=190,
-                     charge=(0, 1)),
+    'speciale': dict(genre='tir', tir=(5, 8), depuis=120, coup=8, cible=(ENEMY_X, GROUND - 70), coupe=190,
+                     charge=(0, 1), calques=True),   # le lion de feu part entier, crinière comprise
 }
 
 

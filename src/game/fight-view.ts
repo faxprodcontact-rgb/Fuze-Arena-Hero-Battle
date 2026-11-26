@@ -10,7 +10,7 @@ import { HdActor, hasHd, hdChar, hdStrike, loadHd, type HdHost } from './hd-figh
 import { HD_ANIM } from './hd-meta';
 import { t } from './i18n';
 import { ICON_INDEX } from './icons-meta';
-import { battleLook, isBigBoss, monsterArtId, type Look } from './look';
+import { battleLook, heroArt, isBigBoss, monsterArtId, type Look } from './look';
 import { HERO_X } from './scenes';
 import { themeColor } from './theme';
 
@@ -41,6 +41,14 @@ const ROW_DY: Record<Slot, number> = { 0: 90, 3: 90, 2: 180, 1: 270, 4: 270 };
 const FEET = 47;
 /** Un grand boss est seul en face : au milieu du côté ennemi, un peu plus loin du bord pour que sa queue tienne. */
 const BIG_BOSS_X = 548;
+/**
+ * Place des combattants (choisie le 26/11, « V1 ») : `gap` = l'écart au milieu entre les deux premières colonnes
+ * (unités), chaque équipe recule vers son bord ; `dx` / `dy` resserrent les équipiers (en X depuis la première colonne,
+ * en Y autour du rang du milieu), `size` règle la taille des dessins.
+ */
+const BATTLE_LAYOUT = { gap: 288, dx: 0.88, dy: 1, size: 0.95 } as const;
+/** Une place en X (côté héros, depuis le bord gauche) avec l'écart choisi ; les ennemis sont en miroir. */
+const spreadX = (x: number) => (W - BATTLE_LAYOUT.gap) / 2 + (x - HERO_X[0]) * BATTLE_LAYOUT.dx;
 
 /** Les effets et la planche de pictos ont déjà été téléchargés une fois (le navigateur les a gardés). */
 let laterFetched = false;
@@ -132,7 +140,7 @@ export abstract class FightScene extends Phaser.Scene {
 
   /** Le dessin d'un combattant : un héros, ou le monstre du clan de ce combat (général ou grand boss pour un boss). */
   protected charId(u: { id?: string; defId: string; element: string }): string {
-    return isHero(u.defId) ? u.defId : monsterArtId(u.defId, u.element as Element, this.look);
+    return isHero(u.defId) ? heroArt(u.defId) : monsterArtId(u.defId, u.element as Element, this.look);
   }
 
   protected text(x: number, y: number, value: string, size = 28, color = '#ffffff') {
@@ -162,8 +170,9 @@ export abstract class FightScene extends Phaser.Scene {
 
   protected slotPos(unit: Unit): { x: number; y: number } {
     const hero = unit.side === 'hero';
-    const x = hero ? HERO_X[unit.slot] : ENEMY_X[unit.slot];
-    return { x: W / 2 + (x - W / 2) * this.xSquash, y: this.groundTop + ROW_DY[unit.slot] };
+    const x = hero ? spreadX(HERO_X[unit.slot]) : W - spreadX(W - ENEMY_X[unit.slot]);
+    const dy = ROW_DY[2] + (ROW_DY[unit.slot] - ROW_DY[2]) * BATTLE_LAYOUT.dy;
+    return { x: W / 2 + (x - W / 2) * this.xSquash, y: this.groundTop + dy };
   }
 
   protected addView(unit: Unit, enter = false, speed = 1) {
@@ -178,7 +187,7 @@ export abstract class FightScene extends Phaser.Scene {
     let shadow: Phaser.GameObjects.Ellipse;
     let barY: number;
     // un grand boss est dessiné à sa taille (deux fois un héros) ; un général de clan qui joue un boss est agrandi
-    const boost = big ? 1 : unit.boss ? (this.bigBoss ? 1.45 : 1.2) : 1;
+    const boost = (big ? 1 : unit.boss ? (this.bigBoss ? 1.45 : 1.2) : 1) * BATTLE_LAYOUT.size;
     const barW = big ? 170 : unit.boss ? 130 : 86;
     let hd: HdActor | undefined;
     if (hasHd(id) && this.textures.exists(`hd-${id}`)) {
@@ -404,6 +413,11 @@ export abstract class FightScene extends Phaser.Scene {
       this.tweens.add({ targets: name, y: name.y - 30, alpha: 0, delay: 650 / speed, duration: 450 / speed, onComplete: () => name.destroy() });
     }
     const ms = hdStrike(this, this.hdHost, src, which, hits, speed, skill);
+    // une frappe qui soigne aussi son équipe (hors sort d'équipe, qui les montre lui-même) : soins et boucliers au coup
+    if (src.hd.ch.anims[which].genre !== 'equipe') {
+      const mine = hits.filter((h) => (h.kind === 'heal' || h.kind === 'shield' || h.kind === 'revive') && this.views.get(h.target)?.unit.side === src.unit.side);
+      if (mine.length) this.time.delayedCall(ms * 0.6, () => mine.forEach((h) => this.showHit(h, false)));
+    }
     if (which === 'speciale') this.dim(Math.max(300, ms - 300));
     this.turnMs = ms + 260 / speed;
     return true;

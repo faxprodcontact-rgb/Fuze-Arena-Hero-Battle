@@ -155,3 +155,6 @@ Gabryel → Dardane ; Elyon → Elvyn ; Auriel → Aurelle ; Jinn → Jarek.
   brief-moderne.md) : Socle (style par défaut, pièces communes, HUD des combats, Campagne + fenêtres de l'accueil),
   Héros (+ nouvelle fiche héros), Invoquer (+ animation d'ouverture du portail), Aventure, Guilde, Pictos modernes.
   À la fin : fusionner les 6 branches (le Socle d'abord), régler les conflits, vérifier, publier v0.59.0.
+- 26/11 : 8 monstres deviennent héros obtenables (ils restent monstres dans leur clan) : Nyrra (araignée tisseuse),
+  Sarvik (serpent guerrier), Jessa (tireuse pirate), Oboro (sorcier oni), Sorai (tengu à l'éventail), Bao (singe chaman),
+  Gribou (singe voleur), Karu (corbeau tengu). Raretés / compétences / stats provisoires (à revoir au réglage final).

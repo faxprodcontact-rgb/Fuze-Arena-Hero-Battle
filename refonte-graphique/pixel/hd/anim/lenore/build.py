@@ -1602,7 +1602,7 @@ def main():
 JEU = {
     'attaque': dict(genre='melee', coup=3, cible=(184, GROUND - 42), coupe=167),
     'speciale': dict(genre='melee', coup=7, cible=(194, GROUND - 40), coupe=174,
-                     avance=[f.get('shift', 0) for f in SPECIALE], charge=(1, 3)),
+                     avance=[f.get('shift', 0) for f in SPECIALE], charge=(1, 3), calques=True),   # 2e cible : rien de coupé
 }
 
 

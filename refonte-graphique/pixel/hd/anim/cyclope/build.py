@@ -1652,7 +1652,7 @@ JEU = {
                     coupe=[None] * 2 + [168] * 4 + [198, 198, 180, 168]),
     'speciale': dict(genre='melee', coup=8, cible=(ENEMY_X, GROUND - 30),
                      coupe=[None] * 8 + [240, 273, 237, 193, 167, 167, 167],
-                     avance=[f.get('shift', 0) for f in SPECIALE], charge=(1, 5)),
+                     avance=[f.get('shift', 0) for f in SPECIALE], charge=(1, 5), calques=True),   # 2e cible : rien de coupé
 }
 
 
