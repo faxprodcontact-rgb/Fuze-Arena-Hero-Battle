@@ -237,13 +237,24 @@ def shoulders(torso0, Sn, Sf):
     """Le buste avec ses deux deltoïdes : un dôme du rayon de la racine du bras autour de chaque articulation d'épaule
     (repère du buste), raccordé au trapèze par une fermeture LOCALE (le creux entre le dôme et le trapèze est comblé,
     le reste du buste ne bouge pas). Le dôme reste toujours sous la racine du bras, quelle que soit la pose."""
-    from shapely.geometry import Point
+    from shapely.geometry import Point, box
     g = poly_of(torso0)
-    for S, r, rb in ((Sn, R_N, 5.0), (Sf, R_F, 3.0)):
+    for S, r, rb in ((Sn, R_N, 12.0), (Sf, R_F, 6.0)):
         u = g.union(Point(S).buffer(r, 64))
         closed = u.buffer(rb, 64, join_style=1).buffer(-rb, 64, join_style=1)
-        g = u.union(closed.intersection(Point(S).buffer(r + 8.0, 64)))
+        # seulement AU-DESSUS de l'articulation (entre le dôme et le trapèze) : l'aisselle garde son creux
+        g = u.union(closed.intersection(box(S[0] - r - 10.0, S[1] - r - 12.0, S[0] + r + 10.0, S[1] + 2.0)))
+    g = g.buffer(2.0, 64, join_style=1).buffer(-2.0, 64, join_style=1)      # l'aisselle : un creux arrondi, pas un angle
     return shape_of(g, step=0.6)
+
+
+def shoulder_mask(U, S, seg, r, side=1):
+    """Le masque en dégradé de la racine d'un bras (outils.FigureM) : opaque à l'articulation S, transparent à une
+    racine de bras de là, dans la direction du buste. Cette direction tourne avec le bras (−130° depuis l'axe du bras
+    pour le bras proche ; en miroir pour le lointain) : au repos elle vise la poitrine et le trapèze ; quand le bras
+    passe devant la poitrine, elle vise le haut de l'épaule, et le bras reste opaque devant le buste."""
+    d = rot(seg.u, -130.0 * side)
+    return (*mapp(U, (S[0] - 2.0 * d[0], S[1] - 2.0 * d[1])), *mapp(U, (S[0] + (r + 1.0) * d[0], S[1] + (r + 1.0) * d[1])), 'torso')
 
 
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
@@ -367,10 +378,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=2.0, rim=0.7, cast=1.2, details=det, occl=(FUR.deep, 0.22, 3.4))
 
     # ---- le harnais de cuir croisé, l'anneau d'or au croisement ----
+    # Chaque lanière monte jusqu'au HAUT de l'épaule et passe par-dessus (avis du propriétaire du 26/11, tour 4 : celle
+    # de droite s'arrêtait avant l'épaule) : elle est prolongée au-delà du contour du buste puis coupée par lui, ce qui
+    # la fait disparaître derrière l'arrondi de l'épaule (vers le dos) ; les épaulières passent par-dessus.
     RING = (64.6, 62.0)
-    for nm, pts in (('strapB', [(83.6, 46.6), (74.0, 54.2), RING, (54.4, 69.6), (44.6, 77.4)]),
-                    ('strapA', [(36.4, 41.6), (50.6, 51.6), RING, (77.2, 70.4), (89.0, 78.6)])):
-        sh = limb(pts, [3.1, 3.1], n=20)
+    tg = poly_of(torso)
+    for nm, pts in (('strapB', [(91.0, 40.8), (74.0, 54.2), RING, (54.4, 69.6), (44.6, 77.4)]),
+                    ('strapA', [(29.6, 36.8), (50.6, 51.6), RING, (77.2, 70.4), (89.0, 78.6)])):
+        sh = shape_of(poly_of(limb(pts, [3.1, 3.1], n=20)).intersection(tg), step=0.4, t=0.6)
         x0_, y0_, x1_, y1_ = sh.bbox()
         fig.part(nm, sh, LEATHER, cel=0.8, rim=0.6, cast=0.9, cast_on=['torso', 'strapB'],
                  details=[(ribbon([lerp(pts[0], pts[1], 0.2), pts[1], lerp(pts[1], pts[2], 0.8)], [0.1, 0.45, 0.1]), LEATHER.hi, 0.6),
@@ -443,7 +458,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                                            (1, 4.2, 4.2)], n=24)
         f1, f2 = Seg(Sfu, Ef), Seg(Ef, Wf2)
         fa1 = math.degrees(math.atan2(f1.u[1], f1.u[0]))
-        fig.masks['farm'] = (*mapp(U, f1(1.4)), *mapp(U, f1(-R_F)), 'torso')
+        fig.masks['farm'] = shoulder_mask(U, Sfu, f1, R_F, side=-1)
         fig.part('farm', farm, FUR, cel=1.6, rim=0.7, cast=1.2, cast_on=['torso', 'belt', 'cloth', 'strapA', 'strapB', 'stud3', 'stud4', 'buckle', 'haft', 'head'],
                  details=[(ribbon([f1(-5.6, 3.6), f1(-6.8, -1.0), f1(-4.4, -5.6)], [0.2, 2.2, 0.2]), FUR.light, 0.5),
                           (ellipse(*f1.at(0.65, 2.0), 2.0, 4.0, fa1 - 90), FUR.light, 0.22)])
@@ -655,9 +670,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     a1, a2 = Seg(Snu, En), Seg(En, Wn2)
     aa1 = math.degrees(math.atan2(a1.u[1], a1.u[0]))
     aa2 = math.degrees(math.atan2(a2.u[1], a2.u[0]))
-    # la racine du bras (le dôme de l'épaule) se fond dans le deltoïde du buste : opaque dès l'articulation vers le
-    # coude, transparente au-dessus du buste vers le haut de l'épaule (aucune couture, aucun bord de boule)
-    fig.masks['narm'] = (*mapp(U, a1(2.0)), *mapp(U, a1(-R_N)), 'torso')
+    # la racine du bras (le dôme de l'épaule) se fond dans le deltoïde du buste : opaque à l'articulation et vers le
+    # dehors, transparente du côté du buste (vers la poitrine et le trapèze) : aucune couture, aucun bord de boule
+    fig.masks['narm'] = shoulder_mask(U, Snu, a1, R_N)
     ad = [
         # le deltoïde énorme éclairé (le haut de l'épaule), sa limite douce sur le bras
         (ribbon([a1(-9.0, 4.0), a1(-11.0, -2.0), a1(-8.6, -8.0), a1(-2.0, -10.6)], [0.2, 3.4, 3.0, 0.3]), FUR.light, 0.55),

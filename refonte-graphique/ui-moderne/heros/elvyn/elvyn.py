@@ -127,28 +127,27 @@ HEAD_PTS = [(38.0, 21.0), (42.6, 17.4), (49, 15.8), (55.6, 16.4), (60.6, 16.6), 
             (50, 36.6), (43.6, 35.6), (39.4, 32.4), (37.4, 26.6)]
 # la racine : elle couvre le dos du crâne et le dessus de la tête entre les bois ; son bord de devant (la naissance des
 # poils) suit le dos du crâne derrière l'œil, sans toucher l'arcade, et rejoint le contour du front devant le bois du fond
-SCALP = [(61.4, 16.8), (60.2, 15.6), (59.0, 13.8), (57.4, 15.0), (55.6, 14.8), (54.4, 13.6), (52.6, 14.0), (49.0, 13.0),
-         (45.0, 12.6), (41.0, 13.6), (38.0, 16.0), (35.8, 22.0), (35.4, 29.0), (36.4, 35.0), (39.0, 37.4), (41.2, 34.8),
-         (42.6, 31.8), (43.4, 28.6), (43.6, 25.6), (44.2, 22.6), (45.6, 20.0), (47.8, 18.0), (50.4, 16.9), (54.0, 16.7),
-         (57.6, 16.9), (60.0, 16.9)]
+SCALP = [(61.2, 16.9), (60.2, 15.8), (59.3, 14.7), (58.0, 15.6), (55.6, 15.6), (54.0, 13.3), (52.6, 14.4), (49.0, 13.4),
+         (45.0, 12.6), (41.0, 13.6), (38.0, 16.0), (35.8, 22.0), (35.4, 29.0), (36.4, 35.0), (40.0, 37.6), (42.8, 34.8),
+         (44.2, 31.6), (44.6, 28.4), (44.0, 25.4), (44.2, 22.6), (45.6, 20.0), (47.8, 18.0), (50.4, 16.9), (54.0, 16.6),
+         (57.6, 16.8), (60.0, 16.9)]
 SCALP_SHARP = (2, 5)
 # le bord des poils sur les bois : de petites touffes qui remontent contre la base de chaque bois (le bois sort des poils)
-CAP = [(39.6, 19.0), (41.4, 16.8), (43.0, 15.6), (44.0, 14.0), (45.4, 15.0), (47.0, 14.3), (48.4, 15.4), (51.0, 15.3),
-       (53.0, 15.4), (54.4, 13.9), (55.8, 15.4), (57.4, 15.4), (58.9, 14.1), (60.4, 15.8), (62.0, 17.0), (62.0, 19.5)]
+CAP = [(39.6, 19.0), (41.4, 16.8), (43.0, 15.6), (44.0, 14.0), (45.4, 15.0), (47.0, 14.3), (48.4, 15.4), (51.0, 14.6),
+       (53.0, 13.0), (57.0, 13.0), (60.0, 14.0), (62.0, 17.0), (62.0, 19.5)]
 # les mèches (nom, racine, contrôles, pointe, largeur, renflement, amplitude du balancement, fondu depuis la racine),
 # de la plus basse à la plus haute : les longues mèches du dos (pointes relevées en crête de vague), la mèche du sommet,
 # la mèche qui tombe devant l'épaule, puis les mèches courtes couchées sur le dos du crâne. Toutes partent de la racine.
 MANE_LOCKS = [
-    ('mF', (39.8, 33.0), (37.6, 48.0), (31.4, 64.6), (24.8, 67.4), 10.4, 0.45, 1.0, 7.0),
-    ('mE', (40.4, 28.0), (34.6, 42.6), (24.4, 55.6), (18.6, 53.2), 12.4, 0.5, 1.0, 7.0),
-    ('mD', (40.8, 22.6), (30.4, 27.4), (19.6, 42.4), (13.8, 40.0), 13.0, 0.5, 1.0, 7.0),
-    ('mC', (42.8, 17.6), (32.6, 15.6), (20.6, 24.4), (15.4, 23.8), 11.6, 0.48, 1.0, 7.0),
-    ('mB', (47.0, 14.6), (39.6, 8.8), (28.6, 7.6), (22.0, 10.4), 9.2, 0.45, 1.0, 7.0),
-    ('mH', (53.6, 14.6), (48.4, 11.0), (42.0, 10.0), (35.4, 12.6), 6.0, 0.4, 0.6, 6.0),
-    ('mA', (42.2, 30.4), (38.6, 39.4), (36.9, 46.9), (34.5, 55.6), 8.4, 0.32, 0.8, 7.0),
-    ('mG1', (46.4, 19.4), (41.6, 17.4), (35.8, 18.2), (30.2, 22.4), 7.6, 0.4, 0.5, 6.0),
-    ('mG2', (44.6, 25.0), (40.8, 25.4), (35.8, 28.2), (30.8, 33.4), 8.2, 0.4, 0.5, 6.0),
-    ('mG3', (43.0, 30.4), (40.8, 31.8), (38.4, 34.6), (36.0, 38.8), 6.8, 0.4, 0.4, 5.0),
+    ('mF', (37.4, 32.0), (37.6, 48.0), (31.4, 64.6), (24.8, 67.4), 10.4, 0.45, 1.0, 4.5),
+    ('mE', (37.8, 25.0), (34.6, 42.6), (24.4, 55.6), (18.6, 53.2), 12.0, 0.5, 1.0, 4.5),
+    ('mD', (40.2, 22.0), (30.4, 27.4), (19.6, 42.4), (13.8, 40.0), 13.0, 0.5, 1.0, 4.5),
+    ('mC', (42.8, 17.6), (32.6, 15.6), (20.6, 24.4), (15.4, 23.8), 11.6, 0.48, 1.0, 4.5),
+    ('mB', (47.0, 14.6), (39.6, 8.8), (28.6, 7.6), (22.0, 10.4), 9.2, 0.45, 1.0, 4.5),
+    ('mH', (53.0, 14.4), (48.4, 11.0), (42.0, 10.0), (35.4, 12.6), 6.0, 0.4, 0.6, 3.5),
+    ('mA', (39.6, 27.6), (38.6, 39.4), (36.9, 46.9), (34.5, 55.6), 8.0, 0.32, 0.8, 4.5),
+    ('mG1', (44.4, 17.8), (40.4, 16.8), (35.8, 18.2), (30.2, 22.4), 7.6, 0.4, 0.5, 3.5),
+    ('mG2', (42.4, 24.0), (39.4, 25.0), (35.4, 28.4), (31.0, 33.8), 8.0, 0.4, 0.5, 3.5),
 ]
 MANE_FILL = [(0, MANE.light), (0.45, MANE.base), (1, '#a9b2e2')]
 MANE_UNDER = [(0, MANE.shadow), (0.5, MANE.shadow), (1, '#7f86c6')]
@@ -173,10 +172,9 @@ def mane_geom(P):
     for name, sh, p0, p1, p2, p3, w0, fade in strands:
         ax = (p0[0], p0[1], p3[0], p3[1])
         fd = min(0.55, fade / math.dist(p0, p3))
-        for (dx, dy), op in (((-0.66, 1.5), 0.2), ((-0.36, 0.72), 0.28)):
-            sh_ = cast_off(sh, dx, dy)
-            if sh_:
-                det.append((sh_, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], fd, op / 0.28),), 0.28))
+        sh_ = cast_off(sh, -0.5, 1.2)
+        if sh_:
+            det.append((sh_, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], fd),), 0.3))
         det.append((sh, ('lin',) + ax + (faded(MANE_FILL, fd),), 1))
         det.append((sm_under(sh, 0.8, -2.2), ('lin',) + ax + (faded(MANE_UNDER, fd),), 0.85))
         # le reflet : une mèche claire le long du dessus, qui commence après la racine
@@ -187,9 +185,9 @@ def mane_geom(P):
     det.append((Shape(mass.subs + mass.move(0.8, -1.0).subs, evenodd=True), MANE.shadow, 0.35))
     det.append((Shape(mass.subs + mass.move(-0.6, 0.8).subs, evenodd=True), MANE.hi, 0.85))
     g = _poly(mass)
-    front = _shape(g.intersection(_poly(strands[6][1])))
+    front = _shape(g.intersection(_poly(strands[[s_[0] for s_ in strands].index('mA')][1])))
     from shapely.geometry import Polygon
-    F = Polygon(HEAD_PTS).buffer(1.5).union(_poly(sm(CAP, sharp=(3, 9, 12), t=0.8)))
+    F = Polygon(HEAD_PTS).buffer(1.5).union(_poly(sm(CAP, sharp=(3,), t=0.8)))
     root = _shape(g.intersection(F))
     grad = (54, 10, 24, 62, [(0, MANE.hi), (0.3, MANE.light), (1, MANE.base)])
     return dict(mass=mass, front=front, root=root, det=det, grad=grad)

@@ -94,12 +94,14 @@ def g2(c1, c2):
 
 # ================================================================ les ailes d'aigle
 
-def eagle_wing(fig, key, R, W, feathers, mat, P, lift, spread, ph, cov=1.0):
+def eagle_wing(fig, key, R, W, feathers, mat, P, lift, spread, ph, cov=1.0, edge=None):
     """Une aile d'aigle repliée en manteau : les rémiges (du bout de l'aile vers le corps ; chacune pose une ombre douce
     sur la précédente, aucune ligne), deux rangées de couvertures (des plumes plus courtes, plus claires, au bout
     arrondi, qui recouvrent les racines), puis le bord d'attaque (petites couvertures claires, sans trait).
     feathers = [(u, tip, w)] : la racine à u le long du bras W → R, le bout de la plume, sa largeur.
-    lift (degrés) : toute l'aile tourne autour de la racine ; spread : les plumes s'écartent en éventail (hérissées)."""
+    lift (degrés) : toute l'aile tourne autour de la racine ; spread : les plumes s'écartent en éventail (hérissées).
+    edge = [(point, profondeur)] : le bord d'attaque suit cette courbe lisse (au repos) au lieu du bras ; elle passe
+    au-dehors de toutes les racines de plumes, pour un bord net d'un seul trait (aile lointaine, avis du 26/11 soir)."""
     names = []
     Wp = rot_about(W, R, lift)
     n = len(feathers)
@@ -154,10 +156,28 @@ def eagle_wing(fig, key, R, W, feathers, mat, P, lift, spread, ph, cov=1.0):
                      cel=0.7, rim=0.4, cast=1.0)
     # le bord d'attaque : une bande de petites couvertures claires, large au poignet, fine à l'épaule ; le haut suit le
     # bras bombé, le bas fait de petits festons (aucun trait)
-    line = [arm(t) for t in [k / 12 for k in range(13)]]
-    dirs = [dir_at(1 - k / 12) for k in range(13)]
-    deps = [(2.6 + 3.8 * math.sin(math.pi * min(1, 0.15 + 0.85 * k / 12))) * cov for k in range(13)]
-    lead = feston(line, dirs, deps, 6, (1.0, 0.9, 1.1, 0.95))
+    if edge:
+        # le bord net : la courbe donnée (tournée avec l'aile), les festons vers l'intérieur de l'aile
+        line = crpath([rot_about(p, R, lift) for p, _ in edge], n=14)
+        m = len(line) - 1
+        ne = len(edge) - 1
+        dk = []
+        for k in range(m + 1):
+            v = k / m * ne
+            k0 = min(ne - 1, int(v))
+            dk.append(edge[k0][1] + (edge[k0 + 1][1] - edge[k0][1]) * (v - k0))
+        dirs = []
+        for k in range(m + 1):
+            a, b = line[max(0, k - 1)], line[min(m, k + 1)]
+            t_ = norm((b[0] - a[0], b[1] - a[1]))
+            dirs.append((-t_[1], t_[0]))   # la normale tournée vers la gauche (vers l'aile)
+        deps = [d * cov for d in dk]
+        lead = feston(line, dirs, deps, 6, (1.0, 0.9, 1.1, 0.95))
+    else:
+        line = [arm(t) for t in [k / 12 for k in range(13)]]
+        dirs = [dir_at(1 - k / 12) for k in range(13)]
+        deps = [(2.6 + 3.8 * math.sin(math.pi * min(1, 0.15 + 0.85 * k / 12))) * cov for k in range(13)]
+        lead = feston(line, dirs, deps, 6, (1.0, 0.9, 1.1, 0.95))
     nm = key + '_lead'
     names.append(nm)
     fig.part(nm, lead, mat, grad=(Wp[0] + 3, Wp[1] - 2, R[0] - 4, R[1] + 4, [(0, mat.hi), (0.4, mat.light), (1, mat.base)]),
@@ -194,6 +214,11 @@ FAR_FEATHERS = [
     (0.58, (33.0, 40.4), 9.6),
     (0.76, (38.0, 50.0), 9.0),
 ]
+# le bord d'attaque de l'aile lointaine (avis du 26/11 soir : plus de marches ni de copeaux contre la tête) : une
+# courbe lisse qui longe le bord de la première rémige, passe au-dehors des racines des couvertures et plonge
+# franchement derrière le crâne ; (point, profondeur des festons)
+FAR_EDGE = [((46.6, 7.8), 1.2), ((49.4, 11.4), 3.0), ((51.2, 15.6), 4.2), ((52.6, 20.4), 4.6), ((54.2, 25.6), 4.4),
+            ((56.4, 32.0), 4.0), ((59.0, 39.0), 3.6), ((61.6, 46.0), 3.0)]
 
 
 # ================================================================ le dessin
@@ -213,7 +238,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     LEG = mS(1, 1 - dyb / 34, 0, GRD)                                           # les jambes plient (pieds au sol)
 
     # ================================================================ les ailes (derrière tout)
-    fw_names, _ = eagle_wing(fig, 'wf', R_F, W_F, FAR_FEATHERS, BROWNF, P, P['wf_lift'], P['wf_spread'], ph + 1.1, cov=0.8)
+    fw_names, _ = eagle_wing(fig, 'wf', R_F, W_F, FAR_FEATHERS, BROWNF, P, P['wf_lift'], P['wf_spread'], ph + 1.1, cov=0.8,
+                              edge=FAR_EDGE)
     nw_names, _ = eagle_wing(fig, 'wn', R_N, W_N, NEAR_FEATHERS, BROWN, P, P['wn_lift'], P['wn_spread'], ph)
 
     # ================================================================ le bras lointain (vers l'arc), derrière le buste

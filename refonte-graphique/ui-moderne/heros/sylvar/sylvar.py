@@ -342,11 +342,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.part('strl%d' % i, ribbon(sg_, [0.2] + [0.45] * (n - 2) + [0.2]), BONE, grad=solid('#efe4cc'), outline=False,
                  cel=0, rim=0, cast=0)
 
-    # la corde tirée, brin du bas (de l'encoche à la pointe basse de l'arc) : elle passe DERRIÈRE le col de loup, la
-    # capuche et l'épaulette (avis du propriétaire, 26/11), devant l'armure de cuir
-    if P['free'] <= 0.5:
-        string_part(1, [N, lerp(N, a_bot, 0.5), a_bot])
-
     # ================================================================ le col de loup (sur les épaules)
     col_pts = [(49.6, 51.0), (56.0, 48.6), (66.0, 48.8), (76.4, 49.4), (84.0, 51.2), (87.8, 54.6), (87.2, 58.4),
                (84.8, 60.4), (82.6, 59.0), (80.0, 62.6), (77.2, 60.2), (73.6, 63.8), (70.0, 61.2), (66.2, 64.4),
@@ -480,7 +475,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         segs = [crpath([a_top, (lerp(a_top, a_bot, 0.25)[0] - P['vib'] * 0.7, lerp(a_top, a_bot, 0.25)[1]), mid,
                         (lerp(a_top, a_bot, 0.75)[0] - P['vib'] * 0.7, lerp(a_top, a_bot, 0.75)[1]), a_bot], 20)]
     else:
-        # tirée : le brin du haut passe devant le masque ; le brin du bas est déjà posé DERRIÈRE le col et l'épaulette
+        # tirée : le brin du haut passe devant le masque ; le brin du bas est posé plus loin, DEVANT l'épaulette
         segs = [[a_top, lerp(a_top, N, 0.5), N]]
     for i, sg_ in enumerate(segs):
         string_part(i, sg_)
@@ -516,6 +511,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                (51.6, 62.6), (49.2, 59.4), (47.6, 55.4)], sharp=(6, 8))
     fig.part('coln', coln, FUR, grad=(86, 49, 52, 64, [(0, FUR.light), (0.5, FUR.base), (1, FUR.shadow)]),
              cel=1.3, rim=0.8, cast=1.1, cast_on=['narm', 'collar', 'torso'], details=fur_tufts(coln))
+
+    # la corde tirée, brin du bas (de l'encoche à la pointe basse de l'arc) : elle passe DEVANT le col de loup et
+    # l'épaulette de fourrure (avis du propriétaire, 2e tour du 26/11 : jamais dessous), sous la main qui la tient
+    # (flèche encochée : le brin sort de SOUS les plumes, il part du bord bas des pennes et non de l'encoche)
+    if P['free'] <= 0.5:
+        s0 = N
+        if P['arrow'] > 0.5:
+            dx, dy = a_bot[0] - N[0], a_bot[1] - N[1]
+            ln = math.hypot(dx, dy)
+            sn = abs(math.sin(math.atan2(dy, dx) - math.radians(a_ang)))
+            s0 = add(N, (dx / ln, dy / ln), min(9.0, 2.2 / max(0.25, sn)))
+        string_part(1, [s0, lerp(s0, a_bot, 0.5), a_bot])
 
     # ================================================================ la main proche (elle tient la corde, ou la lâche, ou une flèche)
     H_ = lambda sh: xf(sh, Ww[0], Ww[1], ha)

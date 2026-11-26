@@ -14,7 +14,7 @@
 # boucle d'or, jupe de languettes de cuir rouge (rivets d'or, pointes de cuir brun dessous), cuisses nues, jambières
 # d'or (genou en dôme, mollet, reflet du tibia), sandales. Bras droit (proche) nu et musclé, brassard d'or, le poing
 # serre la longue lance (fer en feuille d'acier, bague d'or, hampe de bois, talon de bronze posé au sol) ; bras gauche
-# caché derrière le grand bouclier rond (bord d'or, face rouge bombée, soleil d'or couronné de trois flammes). Grande
+# caché derrière le grand bouclier rond (bord d'or, face rouge bombée, flamme d'or à trois pointes, cœur orange). Grande
 # cape rouge derrière lui.
 #
 # Coordonnées = pixels du dessin pixel art (même toile : le point « sol » (64, 116) est le même), pour se poser au même
@@ -349,7 +349,7 @@ def shield_center(P, U):
 def shield(fig, P, C):
     """Le grand bouclier rond (aspis) vu de trois quarts : l'épaisseur du bord se voit à gauche (dans l'ombre), le
     bord d'or épais, la face rouge bombée (éclat en haut à droite, une ombre sous le bord du haut), et l'emblème
-    inventé : un soleil d'or couronné de trois flammes (la centrale la plus haute, cœur rouge). shot : il chauffe."""
+    inventé : une flamme d'or à trois pointes (la centrale la plus haute) et son cœur orange. shot : il chauffe."""
     a = P['srot']
     cx, cy = C
     hot = P['shot'] / 3.0
