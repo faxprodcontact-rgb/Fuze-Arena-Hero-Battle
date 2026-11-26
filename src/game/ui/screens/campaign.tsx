@@ -125,9 +125,10 @@ export function CampaignScreen({ running }: { running: boolean }) {
           )}
         </button>
 
-        <button class="dock-fast" onClick={() => open({ type: 'fastLoot' })}>
-          <span class="dock-pic"><Icon name="hourglass" size={62} /></span>
-          <span class="dock-time">{t('camp.fast')}</span>
+        <button class="dock-fast" aria-label={t('camp.fast')} onClick={() => open({ type: 'fastLoot' })}>
+          {/* même hauteur que le coffre (son dessin remplit toute sa case, celui du coffre les trois quarts) ; plus de libellé */}
+          <span class="dock-pic"><Icon name="hourglass" size={46} /></span>
+          <span class="dock-time" aria-hidden="true" />
           {fastLootCost(s) === 0 && <RedDot />}
         </button>
         <BarArt kind="dock" />

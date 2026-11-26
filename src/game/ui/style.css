@@ -562,7 +562,7 @@ p { margin: 6px 0; }
 .dock-pic { position: relative; display: flex; align-items: flex-end; justify-content: center; width: 64px; height: 54px; }
 /* le coffre et le sablier : posés tels quels sur la feuille (leur ombre est dans le dessin) ; ils s'enfoncent sous le doigt */
 .dock-pic .icon { position: relative; margin-bottom: -6px; }
-.dock-fast .dock-pic .icon { margin-bottom: -4px; }
+.dock-fast .dock-pic .icon { margin-bottom: -3px; }
 .dock-chest:active .dock-pic, .dock-fast:active .dock-pic { transform: translateY(3px) scale(0.95); }
 /* le butin est prêt (2 h et plus) : le coffre sautille ; plein : il s'ouvre (le dessin luit) et sautille plus vite */
 .dock-chest.ready .icon { animation: chest-hop 2.2s ease-in-out infinite; }
