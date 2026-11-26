@@ -114,8 +114,9 @@ def visage():
     from visage import guide_svg, verifier
     x0, y0, w, h = S.FRAME
     head_svg = S.build(ow=0.95).svg()
-    g = guide_svg(S.FACE_BOX)
-    g = '<g transform="translate(77 49) scale(1.1) translate(-77 -49)">' + g + '</g>'
+    g = guide_svg(S.FACE_BOX, tour=S.FACE_TOUR)
+    nx_ = S.NECK_X
+    g = '<g transform="translate(%g 49) scale(1.1) translate(%g -49)">' % (nx_, -nx_) + g + '</g>'
     guided = head_svg[:head_svg.rindex('</svg>')] + g + '</svg>'
     H = 4 * 512
     k = H / h

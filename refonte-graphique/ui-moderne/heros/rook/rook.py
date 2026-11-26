@@ -313,7 +313,19 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              (73.0, 86.4), (70.0, 82.4), (66.4, 85.8), (64.0, 81.0), (60.2, 83.4), (59.4, 78.4), (56.4, 73.6),
              (55.0, 66.6), (55.0, 59.2), (56.0, 53.8), (59.0, 48.6), (62.2, 45.2)]
     body = sm([T_(p) for p in body0], sharp=(10, 12, 14, 16, 18), t=0.95)
-    stub = limb([lerp(nb[0], nb[1], -0.05), lerp(nb[0], nb[1], 0.3), lerp(nb[0], nb[1], 0.62)], [8.0, 7.0, 6.0])
+    # la naissance de l'aile proche (avis du 26/11, tour 2 : « les liaisons ») : une aisselle souple, large contre le
+    # corps et qui s'affine jusqu'au coude, sous le bord doré de l'aile ; le contour du corps monte sans marche jusqu'à
+    # l'aile (plus de moignon rond)
+    S0, E0 = nb[0], nb[1]
+    ax, ay = E0[0] - S0[0], E0[1] - S0[1]
+    al = math.hypot(ax, ay)
+    nrm = (ay / al, -ax / al)                                  # vers le haut de l'aile (côté du bord doré)
+
+    def off(t, d):
+        q = lerp(S0, E0, t)
+        return (q[0] + nrm[0] * d, q[1] + nrm[1] * d)
+    stub = sm([T_((62.0, 44.6)), off(0.1, 2.6), off(0.45, 2.2), off(0.88, 1.6), off(1.0, 0.0), off(0.9, -2.4),
+               off(0.55, -3.6), off(0.2, -5.0), T_((55.6, 61.0)), T_((57.0, 52.0))], sharp=(4,), t=0.95)
     body_f = fuse([body] + ([stub] if STUB else []), close=1.2, step=0.7, t=0.9)
     bdet = []
     # des plumes de dos et de flanc (arcs doux) dans la partie rouge, à gauche du jabot

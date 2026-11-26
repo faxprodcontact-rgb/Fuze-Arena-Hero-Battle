@@ -5,7 +5,7 @@
 #
 # Même personnage que le pixel art (refonte-graphique/pixel/hd/minotaure.txt) : la reine ailée du Nil. Fine, droite et
 # royale : carré noir bleuté (reflet en anneau sur le crâne), bandeau d'or à perles de lapis et petit cobra d'or dressé
-# au front, peau bronze, yeux en amande au trait de khôl étiré vers la tempe, iris ambre, petit sourire cornaline ;
+# au front, peau bronze, yeux FERMÉS, sereins (cils, trait de khôl étiré vers la tempe), petit sourire cornaline ;
 # grande boucle d'oreille d'or à gemme turquoise ; large collier (bord d'or, perles de lapis et de turquoise, bande
 # turquoise à points de cornaline, rangée de gouttes) ; longue robe de lin blanc, ceinture d'or à boucle turquoise et
 # pendentif, pan de devant bordé d'or, ourlet d'or ; sandales d'or. Deux grandes ailes turquoise et or à moitié ouvertes
@@ -64,7 +64,7 @@ BAND_X = 76.0      # le milieu du front sur le bandeau (la médiane du crâne) :
 #   s'ouvrent (les rémiges s'écartent en éventail) ; wph : la petite houle des plumes (repos) ; theta : la croix de
 #   vie s'incline vers l'ennemi (degrés, autour du poing) ; grip : où est le poing (point de prise : la croix monte
 #   avec lui) ; nh : la main proche s'ouvre vers l'avant (0..1) ; pend : le pendentif se balance ; ear : la boucle
-#   d'oreille se balance ; hem : le bas de la robe ondule ; blink : yeux fermés ; smile : le sourire s'élargit.
+#   d'oreille se balance ; hem : le bas de la robe ondule ; blink : sans effet (les yeux sont toujours fermés, sereins : avis du propriétaire) ; smile : le sourire s'élargit.
 SF0 = (88.6, 56.4)         # l'épaule lointaine (sous le collier)
 LUF, LFF = 15.0, 11.4      # bras lointain : bras, avant-bras (jusqu'au poignet)
 GRIP0 = (101.2, 41.6)      # le poing lointain (point de prise sur la hampe)

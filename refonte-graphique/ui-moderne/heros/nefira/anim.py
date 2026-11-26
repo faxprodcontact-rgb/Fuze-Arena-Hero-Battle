@@ -200,7 +200,6 @@ def pose_at(T, action=None, t0=0.0):
                wlF=P['wl'] * 0.8, ws=P['ws'], wph=2 * math.pi * T / 2.0 + P['wph'], theta=P['theta'],
                grip=(N.GRIP0[0] + P['gx'], N.GRIP0[1] + P['gy']), nh=P['nh'], pend=P['pend'], hem=P['hem'],
                smile=P['smile'], gold=P['gold'], ear=math.sin(2 * math.pi * T * 0.8 - 0.5) + 0.5 * P['lean'])
-    out['blink'] = 1.0 if (w > 0.95 and 1.34 <= (T % 4.0) < 1.43) else 0.0
     return out
 
 
@@ -661,8 +660,8 @@ def fx_glints(T):
         spots = [
             (0.05, lambda: N.mapp(ctx['AM'], (104.0, 17.0))),          # la croix
             (0.55, lambda: N.mapp(ctx['UC'], (85.0, 58.4))),           # le collier
-            (0.95, lambda: N.mapp(ctx['HEAD'], (81.2, 15.6))),         # le cobra
-            (1.45, lambda: N.mapp(ctx['HEAD'], (72.2, 52.2))),         # la boucle d'oreille
+            (0.95, lambda: N.mapp(ctx['HEAD'], (N.BAND_X + 1.2, 14.6))),  # le cobra
+            (1.45, lambda: N.mapp(ctx['HEAD'], (65.2, 52.8))),         # la boucle d'oreille
             (1.7, lambda: N.mapp(ctx['U'], (79.6, 70.0))),             # la ceinture
         ]
         for t0, pos in spots:

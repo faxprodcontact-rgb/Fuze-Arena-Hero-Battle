@@ -55,7 +55,7 @@ EARTH = ['#fff6ce', '#ffd45c', '#e09638', '#c8a070', '#8e664a', '#5e404a', '#3e2
 GRD = 116.0        # le sol (le point « sol » du pixel art)
 FEET = (64.0, 116.0)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (-2.5, -4.5, 130.0, 124.0)
+FRAME = (-2.5, -4.5, 134.0, 124.0)
 
 # ---------- le squelette ----------
 # Une pose = ces réglages ; REST est la pose du dessin (pixels du dessin, degrés, y vers le bas).
@@ -71,11 +71,11 @@ G0 = (23.4, 35.4)                    # le poing proche sur le manche
 ANG0 = -110.0                        # le manche monte vers l'arrière (la tête de la massue en haut à gauche)
 WRN = (-5.0, -4.6)                   # le poignet proche, dans le repère du manche (le long, en travers)
 S_N = (43.6, 61.4)                   # l'épaule proche (articulation)
-S_F = (97.6, 61.6)                   # l'épaule lointaine (sous le deltoïde, qui appartient au buste)
+S_F = (98.6, 63.6)                   # l'épaule lointaine (sous le deltoïde, qui appartient au buste)
 LN1, LN2 = 28.4, 19.6                # bras proche : bras, avant-bras (jusqu'au poignet)
-LF1, LF2 = 19.0, 16.5                # bras lointain
-FF0 = (117.0, 56.0)                  # le poing lointain (son milieu), à hauteur d'épaule, devant lui
-FFA0 = -70.0                         # l'avant-bras lointain monte presque droit (une garde de lutteur)
+LF1, LF2 = 21.5, 15.5                # bras lointain
+FF0 = (117.0, 53.0)                  # le poing lointain (son milieu), à hauteur d'épaule, devant lui
+FFA0 = -80.0                         # l'avant-bras lointain monte presque droit (une garde de lutteur)
 HIP = (68.0, 90.0)                   # le pivot du buste
 NECK = (66.0, 54.0)                  # le pivot (et le centre d'agrandissement) de la tête
 # Le visage est placé par l'outil commun ../visage.py (une sphère qui tourne de 18° : tout le visage tourne ensemble).
@@ -255,7 +255,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     def far_fist(W, a_deg):
         """Le poing lointain fermé, tourné vers l'ennemi (le poignet cassé) : quatre doigts repliés vus de côté, l'un
         au-dessus de l'autre (phalanges vers l'ennemi), le pouce en travers devant les doigts du bas, avec son ongle."""
-        fa = a_deg + 44                  # le poing se tourne vers l'ennemi (le poignet plie)
+        fa = a_deg + 56                  # le poing se tourne vers l'ennemi (le poignet plie)
 
         def F(sh):
             return xf(sh, W[0], W[1], fa)
