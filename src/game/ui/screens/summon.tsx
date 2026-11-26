@@ -2,8 +2,8 @@
 // s'ouvre, héros qui sortent) est dans sections/summon-reveal.tsx ; le portail et son estrade dans sections/summon-gate.tsx.
 import { BASIC_SUMMON_RATES, LEGENDARY_PITY, SUMMON_RATES } from '../../../core/data/summon';
 import { HEROES, heroDef } from '../../../core/data/heroes';
-import { FRAGMENTS_PER_COPY } from '../../../core/data/stars';
-import { RARITIES, type Hero } from '../../../core/types';
+import { FRAGMENTS_PER_COPY, RARITY_RULES } from '../../../core/data/stars';
+import { RARITIES, type Hero, type Rarity } from '../../../core/types';
 import { RARITY_COLOR, heroImage } from '../../art';
 import { useState } from 'preact/hooks';
 import { fmt, t } from '../../i18n';
@@ -11,7 +11,7 @@ import { GateStage } from '../sections/summon-gate';
 import { rememberCast } from '../sections/summon-reveal';
 import { adsLeft, claimFragments, summon, summonCost, watchAd } from '../../state/actions';
 import { useGame } from '../../state/store';
-import { Bar, Btn, Cur, Icon, Modal, Stars } from '../kit';
+import { Bar, Btn, Cur, HeroCard, Icon, Modal } from '../kit';
 import { btClass } from '../buttons';
 import { close, open } from '../nav';
 import '../sections/invoquer.css';
@@ -23,17 +23,17 @@ type Kind = 'normal' | 'basic';
 /** Le choix du portail : deux onglets arrondis, chacun avec son parchemin et le nombre qu'il en reste. */
 function KindTab({ kind, on, icon, n, onClick }: { kind: Kind; on: boolean; icon: string; n: number; onClick: () => void }) {
   return (
-    <button class={`sum-kind sum-kind-tab-${kind}${on ? ` on ${btClass(kind === 'basic' ? 'eau' : 'arcane', 's')}` : ''}`} aria-pressed={on} onClick={onClick}>
+    <button class={`sum-kind sum-kind-tab-${kind}${on ? ` on ${btClass('or', 's')}` : ''}`} aria-pressed={on} onClick={onClick}>
       <Icon name={icon} size={30} />
       <span class="sum-kind-n">{fmt(n)}</span>
     </button>
   );
 }
 
-/** Un petit bouton rond posé sur la scène (chances, fragments). */
-function RoundBtn({ icon, label, dot, onClick }: { icon: string; label: string; dot?: boolean; onClick: () => void }) {
+/** Un petit bouton rond posé sur la scène (chances, fragments, invocation gratuite). */
+function RoundBtn({ icon, label, dot, off, disabled, onClick }: { icon: string; label: string; dot?: boolean; off?: boolean; disabled?: boolean; onClick: () => void }) {
   return (
-    <button class="sum-round" onClick={onClick}>
+    <button class={`sum-round${off ? ' sum-off' : ''}`} disabled={disabled || off} tabIndex={off ? -1 : 0} aria-hidden={off} onClick={onClick}>
       <span class="sum-round-icon"><Icon name={icon} size={28} /></span>
       <span class="sum-round-label">{label}</span>
       {dot && <span class="dot" />}
@@ -56,7 +56,7 @@ export function SummonScreen() {
     const cost = summonCost(kind, count);
     return (
       <button
-        class={`sum-btn sum-btn-${count} ${btClass(count === 10 ? 'basalte' : kind === 'basic' ? 'eau' : 'arcane', 'l')}${kind === 'normal' && count === 10 ? ' tuto-summon10' : ''}`}
+        class={`sum-btn sum-btn-${count} ${btClass(count === 10 ? 'basalte' : 'arcane', 'l')}${kind === 'normal' && count === 10 ? ' tuto-summon10' : ''}`}
         disabled={s.wallet[cost.currency] < cost.amount}
         onClick={() => { rememberCast({ kind, count }); cast(summon(kind, count)); }}
       >
@@ -81,37 +81,41 @@ export function SummonScreen() {
       <div class="sum-stage">
         <GateStage kind={kind} casting={casting} />
         <div class="sum-corner sum-corner-r">
-          <RoundBtn icon="star" label={t('summon.odds')} onClick={() => open({ type: 'odds' })} />
+          <RoundBtn icon="star" label={t('summon.odds')} onClick={() => { oddsKind = kind; open({ type: 'odds' }); }} />
         </div>
-        {owned.length > 0 && (
-          <div class="sum-corner sum-corner-l">
+        <div class="sum-corner sum-corner-l">
+          {owned.length > 0 && (
             <RoundBtn icon="fragments" label={t('summon.fragments')} dot={owned.some(([, n]) => n >= FRAGMENTS_PER_COPY)} onClick={() => open({ type: 'fragments' })} />
-          </div>
-        )}
+          )}
+          {/* l'invocation gratuite (une publicité) : seulement pour le portail normal ; sa place est gardée pour l'autre */}
+          <RoundBtn icon="ad" label={t('summon.freeShort')} off={kind !== 'normal'} disabled={adsLeft(s) <= 0} dot={kind === 'normal' && adsLeft(s) > 0}
+            onClick={() => {
+              const go = () => { rememberCast(null); cast(watchAd('summon')?.heroes); };
+              if (s.shop.noAds) go();
+              else open({ type: 'ad', onDone: go });
+            }} />
+        </div>
       </div>
 
+      {/* le panneau : la même hauteur pour les deux portails ; en haut, la jauge du Légendaire garanti (portail normal) ou
+          les deux raretés possibles et leur part (invocation simple), puis les deux gros boutons */}
       <div class="sum-panel">
-        {kind === 'normal' && (
+        {kind === 'normal' ? (
           <div class="sum-pity">
             <span class="sum-pity-gem"><Icon name="star" size={22} /></span>
             <div class="sum-pity-bar"><span style={{ width: `${(s.summon.pity / LEGENDARY_PITY) * 100}%` }} /></div>
             <strong>{left}</strong>
           </div>
+        ) : (
+          <div class="sum-pity sum-rates">
+            {RARITIES.filter((r) => (BASIC_SUMMON_RATES[r] ?? 0) > 0).map((r) => (
+              <span class="sum-rate" style={{ '--rar': RARITY_COLOR[r] } as never}>
+                <i />{t(`rarity.${r}`)}<strong>{Math.round((BASIC_SUMMON_RATES[r] ?? 0) * 100)} %</strong>
+              </span>
+            ))}
+          </div>
         )}
         <div class="sum-buttons">{button(1)}{button(10)}</div>
-        {kind === 'normal' && (
-          <button
-            class={`sum-free ${btClass('ardoise', 's')}`}
-            disabled={adsLeft(s) <= 0}
-            onClick={() => {
-              const go = () => { rememberCast(null); cast(watchAd('summon')?.heroes); };
-              if (s.shop.noAds) go();
-              else open({ type: 'ad', onDone: go });
-            }}
-          >
-            <Icon name="ad" size={18} /> {t('summon.adFree')}
-          </button>
-        )}
       </div>
     </div>
   );
@@ -140,31 +144,67 @@ export function FragmentsModal() {
   );
 }
 
+/** Le portail dont on montre les chances (celui de l'onglet quand on touche « Chances »). */
+let oddsKind: Kind = 'normal';
+
+/**
+ * Les chances d'un portail, calculées sur les vraies tables (core/data/summon.ts) et le vrai tirage (core/summon.ts : la
+ * rareté d'abord, puis un héros de cette rareté, tous à parts égales) : pour chaque rareté, de la plus rare à la plus
+ * commune, sa part, puis chaque héros avec sa propre chance, du plus probable au moins probable.
+ */
+function oddsOf(kind: Kind) {
+  const rates: Partial<Record<Rarity, number>> = kind === 'basic' ? BASIC_SUMMON_RATES : SUMMON_RATES;
+  return [...RARITIES].reverse().map((r) => {
+    const total = rates[r] ?? 0;
+    const defs = HEROES.filter((h) => h.rarity === r);
+    const list = defs.map((def) => ({ def, p: defs.length ? total / defs.length : 0 }))
+      .sort((a, b) => b.p - a.p || a.def.name.localeCompare(b.def.name));
+    return { r, total, list };
+  }).filter((g) => g.total > 0 && g.list.length > 0);
+}
+
+/** Un pourcentage lisible : 45 %, 16,5 %, 0,97 % (virgule en français). */
+function pct(v: number, lang: string): string {
+  const x = v * 100;
+  const s = (x >= 10 ? x.toFixed(1) : x.toFixed(2)).replace(/\.?0+$/, '');
+  return `${lang === 'en' ? s : s.replace('.', ',')} %`;
+}
+
 export function OddsModal() {
+  const s = useGame();
+  const [kind, setKind] = useState<Kind>(oddsKind);
+  const pick = (k: Kind) => { oddsKind = k; setKind(k); };
   return (
     <Modal title={t('summon.odds')}>
-      <h3>{t('summon.normal')}</h3>
-      <table class="odds">
-        {RARITIES.map((r) => (
-          <tr>
-            <td style={{ color: RARITY_COLOR[r] }}>{t(`rarity.${r}`)}</td>
-            <td>{(SUMMON_RATES[r] * 100).toFixed(1)} %</td>
-            <td class="muted">{HEROES.filter((h) => h.rarity === r).length}</td>
-          </tr>
-        ))}
-      </table>
-      <p class="muted small">{t('summon.pity', { n: LEGENDARY_PITY })}</p>
-      <h3>{t('summon.basic')}</h3>
-      <table class="odds">
-        {Object.entries(BASIC_SUMMON_RATES).map(([r, v]) => (
-          <tr>
-            <td style={{ color: RARITY_COLOR[r as keyof typeof RARITY_COLOR] }}>{t(`rarity.${r}`)}</td>
-            <td>{((v ?? 0) * 100).toFixed(0)} %</td>
-            <td />
-          </tr>
-        ))}
-      </table>
-      <div class="center"><Stars stars={5} /></div>
+      <div class={`odds2 odds2-${kind}`}>
+        <div class="odds2-kinds bt-rail" role="tablist">
+          {(['normal', 'basic'] as const).map((k) => (
+            <button class={`odds2-kind${kind === k ? ` on ${btClass('or', 's')}` : ''}`} aria-pressed={kind === k} onClick={() => pick(k)}>
+              <Icon name={k === 'basic' ? 'basicScrolls' : 'scrolls'} size={24} />
+              <span>{t(`summon.${k}`)}</span>
+            </button>
+          ))}
+        </div>
+        <div class="odds2-list">
+          {oddsOf(kind).map((g) => (
+            <section class={`odds2-group odds2-${g.r}`} style={{ '--rar': RARITY_COLOR[g.r] } as never}>
+              <header class="odds2-head">
+                <span class="odds2-rar">{t(`rarity.${g.r}`)}</span>
+                <strong class="odds2-total">{pct(g.total, s.lang)}</strong>
+              </header>
+              {g.r === 'legendary' && kind === 'normal' && <p class="odds2-pity">{t('summon.pity', { n: LEGENDARY_PITY })}</p>}
+              <div class="odds2-grid">
+                {g.list.map(({ def, p }) => (
+                  <div class="odds2-cell">
+                    <HeroCard hero={{ uid: 0, defId: def.id, stars: RARITY_RULES[def.rarity].bornStars, level: 1 }} small />
+                    <span class="odds2-p">{pct(p, s.lang)}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </div>
     </Modal>
   );
 }

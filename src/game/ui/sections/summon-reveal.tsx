@@ -1,5 +1,6 @@
 // Le tirage (refait de zéro le 26/11/2026, demande du propriétaire : « qu'ils n'arrivent plus en mode carte, mais en
 // mode héros invoqué ; refais les animations de zéro, le portail aussi »).
+// Le portail (le même que dans l'onglet) est posé sur l'estrade ; les héros sortent du tourbillon et se posent devant lui.
 // 1. Le portail se charge : des grains de lumière filent vers lui en spirale, et sa couleur monte d'un cran par rareté
 //    gagnée (argent, bleu, violet, or) : on devine ce qui arrive avant de le voir.
 // 2. Il éclate : un éclair, une onde, des grains projetés en courbes ; pour un ×10, dix perles de la couleur de chaque
@@ -23,7 +24,7 @@ import { HeroFigure } from '../hero-figure';
 import { Cur, Icon, Stars } from '../kit';
 import { btClass } from '../buttons';
 import { close } from '../nav';
-import { Dais, Gate } from './summon-gate';
+import { Dais, GATE_VIEW, Gate } from './summon-gate';
 import { SummonFx } from './summon-fx';
 import './invoquer.css';
 
@@ -74,8 +75,8 @@ function SkipGlyph() {
   );
 }
 
-/** Un héros sur l'estrade : la colonne de lumière, son aura, sa silhouette de lumière puis lui. */
-function HeroShow({ hero, uid, instant }: { hero: Hero; uid: string; instant?: boolean }) {
+/** Un héros sur l'estrade (devant le portail) : la colonne de lumière, son aura, sa silhouette de lumière puis lui. */
+function HeroShow({ hero, instant }: { hero: Hero; instant?: boolean }) {
   const d = heroDef(hero.defId);
   const r = RARITIES.indexOf(d.rarity);
   return (
@@ -92,7 +93,6 @@ function HeroShow({ hero, uid, instant }: { hero: Hero; uid: string; instant?: b
           </g>
         </svg>
       )}
-      <Dais uid={uid} class="sr-dais" />
       <div class="sr-hero">
         <HeroFigure defId={hero.defId} class="sr-real" />
         {!instant && <HeroFigure defId={hero.defId} class="sr-ghost" />}
@@ -179,7 +179,11 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
     const b = el.getBoundingClientRect();
     return new DOMRect(b.left - c.left, b.top - c.top, b.width, b.height);
   };
-  const gateCenter = () => { const g = where('.sr-gate'); return g ? { x: g.x + g.width / 2, y: g.y + g.height / 2, r: g.width / 2 } : null; };
+  // le centre de l'anneau (le portail est posé sur l'estrade : sa boîte descend jusqu'au sol, sous l'anneau)
+  const gateCenter = () => {
+    const g = where('.sr-gate');
+    return g ? { x: g.x + g.width / 2, y: g.y + (g.height * GATE_VIEW.cy) / GATE_VIEW.h, r: (g.width * GATE_VIEW.ring) / GATE_VIEW.w } : null;
+  };
 
   // 1. la charge : les grains aspirés, la couleur qui monte d'un cran par rareté gagnée
   useEffect(() => {
@@ -191,7 +195,7 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
     for (let k = 0; k <= best; k++) {
       ids.push(window.setTimeout(() => {
         setTease(k);
-        const gate = root.current?.querySelector<HTMLElement>('.sr-gate .sg-body');
+        const gate = root.current?.querySelector<HTMLElement>('.sr-gate .sg-hole');
         gate?.animate?.([{ scale: '1' }, { scale: `${1.08 + k * 0.04}` }, { scale: '1' }], { duration: 360, easing: 'cubic-bezier(.2,1.6,.4,1)' });
         if (k > 0) shake(stage.current, k - 1);
       }, total * (0.18 + (0.62 * k) / Math.max(1, best))));
@@ -293,9 +297,11 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
       </div>
 
       <div class="sr-stage" ref={stage}>
+        {/* le portail, posé sur l'estrade : les héros en sortent et se posent devant lui */}
         <Gate uid="rv" charging={phase === 'charge'} open={phase !== 'charge'} class="sr-gate" />
+        <Dais uid="rv" class="sr-dais" />
         {phase === 'charge' && <span class="sr-charge-ring" />}
-        {phase === 'show' && shown && <HeroShow hero={shown} uid={`rv${idx}`} key={`s${idx}`} />}
+        {phase === 'show' && shown && <HeroShow hero={shown} key={`s${idx}`} />}
         {phase === 'recap' && !focused && (
           <div class="sr-recap">
             {recap.map((h, i) => {
@@ -315,7 +321,7 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
             })}
           </div>
         )}
-        {focused && <HeroShow hero={focused} uid="rvf" instant key={`f${focused.uid}`} />}
+        {focused && <HeroShow hero={focused} instant key={`f${focused.uid}`} />}
         {phase === 'show' && idx === 0 && !one && order.map((h, i) => (
           <span class={`sr-orb sr-orb-${i}`} style={{ '--rar': RARITY_COLOR[heroDef(h.defId).rarity], '--d': `${i * 55}ms` } as never} />
         ))}

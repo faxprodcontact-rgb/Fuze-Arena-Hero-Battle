@@ -78,6 +78,7 @@ const FR = {
   'summon.normal': 'Invocation', 'summon.basic': 'Invocation simple', 'summon.x1': '×1', 'summon.x10': '×10',
   'summon.pity': 'Légendaire garanti dans {n}', 'summon.odds': 'Chances', 'summon.adFree': 'Invocation gratuite',
   'summon.fragments': 'Fragments', 'summon.copy': 'Obtenir une copie', 'summon.target': 'Cible des fragments',
+  'summon.freeShort': 'Gratuite', // Invoquer, vague 3
   'adv.tower': 'Tour des Épreuves', 'adv.dungeons': 'Donjons', 'adv.missions': 'Missions', 'adv.dailyBoss': 'Boss du jour',
   'adv.arena': 'Arène', 'adv.defense': 'Colisée',
   'tower.floor': 'Étage {n}', 'tower.challenge': 'Défier',
@@ -214,6 +215,7 @@ const EN: Record<Key, string> = {
   'summon.normal': 'Summon', 'summon.basic': 'Basic summon', 'summon.x1': '×1', 'summon.x10': '×10',
   'summon.pity': 'Legendary guaranteed in {n}', 'summon.odds': 'Odds', 'summon.adFree': 'Free summon',
   'summon.fragments': 'Shards', 'summon.copy': 'Get a copy', 'summon.target': 'Shard target',
+  'summon.freeShort': 'Free', // Invoquer, vague 3
   'adv.tower': 'Tower of Trials', 'adv.dungeons': 'Dungeons', 'adv.missions': 'Missions', 'adv.dailyBoss': 'Daily boss',
   'adv.arena': 'Arena', 'adv.defense': 'Colosseum',
   'tower.floor': 'Floor {n}', 'tower.challenge': 'Challenge',
