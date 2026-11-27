@@ -1389,6 +1389,29 @@ button.setting-row:active { filter: brightness(0.95); }
 .fuse-crystals.missing { opacity: 0.45; filter: grayscale(1); }
 .fuse-slot.pick { padding: 0; border-radius: 11px; }
 .fuse-slot.on { outline: 2px solid var(--gold-hi); outline-offset: 2px; border-radius: 11px; }
+/* la fusion (refaite le 27/11, « un fond plus travaillé, plus compréhensible, les ressources en plus petit dessous ») :
+   un autel de pierre grise (le gris de la DA), la lumière de l'élément du héros derrière les cartes, un filet d'or ;
+   le héros → le héros avec une étoile de plus ; dessous, dans un creux de pierre, ce qu'il faut donner, en petit */
+.fuse-stage.fuse-altar { --pxf: radial-gradient(70% 55% at 50% 30%, color-mix(in srgb, var(--el) 48%, transparent), transparent 74%),
+    radial-gradient(120% 60% at 50% 0%, #ffffff14, transparent 60%), linear-gradient(180deg, var(--c-bg-3), var(--c-bg-1) 70%, var(--c-bg-0));
+  --psh: inset 0 0 0 1.5px #ffc94d8c, inset 0 1px 0 #ffffff26, 0 8px 20px #0008; gap: 12px; padding: 16px 12px 14px; color: #fff; }
+.fuse-altar .fuse-main { gap: 6px; }
+.fuse-altar .fuse-big { width: 112px; }
+.fuse-altar .fuse-op { --k: 2.6; color: #ffd66a; filter: drop-shadow(0 0 6px #ffc22e99); animation: fuse-nudge 1.6s ease-in-out infinite; }
+@keyframes fuse-nudge { 0%, 100% { translate: -2px 0; } 50% { translate: 3px 0; } }
+.fuse-altar .fuse-needs { gap: 6px; padding: 8px 10px; margin: 0 auto; border-radius: var(--r-m); background: linear-gradient(180deg, #0000004d, #00000026);
+  box-shadow: inset 0 2px 6px #000a, inset 0 0 0 1px #ffffff14, 0 1px 0 #ffffff1f; }
+.fuse-altar .fuse-slot { width: 54px; }
+.fuse-altar .fuse-slot.pick .hcard-small { width: 54px; border-radius: 11px; }
+.fuse-altar .fuse-slot.pick .hcard-small .hcard-frame { border-radius: 11px; }
+.fuse-altar .fuse-slot.pick .hcard-small .hcard-el { width: 13px; height: 13px; }
+.fuse-altar .fuse-slot.pick .hcard-small .hcard-lv { min-width: 16px; font-size: 9px; line-height: 12px; }
+.fuse-altar .fuse-slot.pick .hcard-small .stars { scale: 0.78; }
+.fuse-altar .fuse-plus { --k: 1.5; color: #ffd66a; position: relative; z-index: 2; }
+.fuse-altar .fuse-slot.missing { border-color: color-mix(in srgb, var(--fac, #b9a9cf) 70%, #fff); background: color-mix(in srgb, var(--fac, #8d8ba3) 22%, #15141a); }
+.fuse-altar .fuse-slot.missing img { filter: grayscale(1) brightness(0.9) opacity(0.45); }
+.fuse-altar .fuse-label { font-size: 8.5px; }
+.fuse-altar .fuse-crystals { font-size: 13px; }
 .ready-tag { position: absolute; top: -9px; left: 50%; translate: -50% 0; z-index: 2; filter: drop-shadow(0 2px 0 #00000080); }
 .forge-row { display: flex; align-items: center; justify-content: center; gap: 6px; flex-wrap: wrap; }
 .item.missing { opacity: 0.55; border-style: dashed; }

@@ -1,4 +1,5 @@
-// Fusion des héros : [héros] + [ce qu'il faut sacrifier] = [résultat].
+// Fusion des héros : [héros] → [résultat], et dessous, plus petit, ce qu'il faut sacrifier (refait le 27/11 : un autel de
+// pierre grise baigné de la couleur de l'élément, à la place du fond blanc).
 // Ce qui manque est grisé et montre ce qu'il faut. Toucher une case permet de choisir quel héros sacrifier.
 // En dessous, tous les héros, ceux qu'on peut fusionner en premier.
 import { useState } from 'preact/hooks';
@@ -69,12 +70,13 @@ export function FusionPage({ uid }: { uid?: number }) {
   return (
     <Page title={t('fusion.title')}>
       {target && needs ? (
-        <section class="fuse-stage">
+        <section class="fuse-stage fuse-altar" style={{ '--el': ELEMENT_COLOR[heroDef(target.defId).element] } as never}>
           <div class="fuse-main">
             <div class="fuse-big"><HeroCard hero={target} /></div>
-            <Sign name="op-eq" class="fuse-op" />
+            <Sign name="op-arrow" class="fuse-op" />
             <div class="fuse-big result"><Halo size={190} /><HeroCard hero={{ ...target, stars: needs.newStars }} /></div>
           </div>
+          {/* ce qu'il faut donner : plus petit, dans un creux de pierre sous les deux cartes */}
           <div class="fuse-needs">
             {needs.needs.map((n) => (
               <><Sign name="op-plus" class="fuse-plus" /><NeedSlot need={n} on={editing === n.kind} onClick={() => setEditing(editing === n.kind ? undefined : n.kind)} /></>
@@ -83,7 +85,7 @@ export function FusionPage({ uid }: { uid?: number }) {
               <><Sign name="op-plus" class="fuse-plus" /><span class={`fuse-crystals${s.wallet.crystals >= needs.crystals ? '' : ' missing'}`}><Cur k="crystals" n={needs.crystals} /></span></>
             )}
           </div>
-          <Btn kind="purple" wide disabled={!needs.ready} onClick={() => {
+          <Btn kind="gold" wide disabled={!needs.ready} onClick={() => {
             if (fuse(target.uid, needs.consumed)) {
               setPicks(undefined);
               setEditing(undefined);

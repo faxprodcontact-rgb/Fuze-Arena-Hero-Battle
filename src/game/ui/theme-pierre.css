@@ -1,5 +1,5 @@
 /* FABRIQUÉ par refonte-graphique/ui-moderne/theme/pierre.ts — ne pas modifier à la main (relancer le script).
-   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 325 règles, 431 couleurs. */
+   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 326 règles, 432 couleurs. */
 /*  style.css  */
 :root:where([data-theme="pierre"]) {
     --c-bg-0: #131218;
@@ -444,6 +444,9 @@
 :where(:root[data-theme="pierre"]) .fuse-slot.missing {
     border: 1.5px dashed color-mix(in srgb, var(--fac, #b6b4c4) 80%, #000);
     background: color-mix(in srgb, var(--fac, #b6b4c4) 28%, #0000004d)
+}
+:where(:root[data-theme="pierre"]) .fuse-altar .fuse-slot.missing {
+    border-color: color-mix(in srgb, var(--fac, #b6b4c4) 70%, #fff)
 }
 :where(:root[data-theme="pierre"]) .forge-pick.on {
     background: var(--inset);
