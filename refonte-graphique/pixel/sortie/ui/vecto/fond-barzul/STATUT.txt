@@ -1,0 +1,3 @@
+fait
+27/11 : la crique des pirates de Barzul redessinée en vectoriel lisse animé, recadrée pour le vrai écran de combat (le cap de grès aux palmiers, sa bannière et son canon à gauche, la grotte au trésor et la plage ; le navire de Barzul au mouillage, entier, au milieu-droite ; le ponton calme). Touche vivante : trois mouettes qui traversent le ciel à des distances différentes, et un voilier pirate lointain qui sort de derrière les voiles du navire, glisse sur l'horizon et se cache derrière le cap.
+Branché dans le jeu derrière ?vecto=1. Vraies captures (campagne 3-4, clan de Barzul) : combat-390x844.png, combat-360x640.png, combat-430x932.png ; situation.png, comparaison.png (pixel | vectoriel), anim.mp4 / anim.gif.

@@ -1,0 +1,3 @@
+fait
+27/11 : la forteresse des oni au crépuscule redessinée en vectoriel lisse animé, recadrée pour le vrai combat (tout l'important entre x 84 et 506, sous les pilules, au-dessus des cartes) : donjon aux cornes d'ivoire au milieu, tour de guet à gauche, érable rouge à droite, porte entre deux braseros, cour pavée calme. Trois corbeaux lointains traversent le ciel (l'un devant la lune, le plus loin disparaît derrière le dernier étage du donjon).
+Branché dans le jeu derrière ?vecto=1. Vraies captures : combat-390x844.png, combat-360x640.png, combat-430x932.png (campagne 5-1) ; situation.png, comparaison.png (pixel | vectoriel), anim.mp4 / anim.gif.
