@@ -1,18 +1,17 @@
 // Petites pièces communes au calendrier de connexion et à la boutique (vague 3, 26/11) : le héros en pied posé sur
 // ses pieds, et des étincelles qui scintillent (ou jaillissent au moment de prendre). Le style : sections/boutique.css.
-import { FigStrip, figMeta } from './hero-fig';
+import { FigImage, figMeta } from './hero-fig';
 
 /**
- * Un héros en pied (sa bande de respiration), les pieds posés à l'endroit (--x, --y) que la règle CSS lui donne :
+ * Un héros en pied (son dessin, qui respire), les pieds posés à l'endroit (--x, --y) que la règle CSS lui donne :
  * u = taille d'un pixel du dessin en pixels d'écran.
  */
 export function BqFigure({ id, u, class: cls = '' }: { id: string; u: number; class?: string }) {
   const m = figMeta(id);
   if (!m) return null;
-  const [w, h, fx, fy, n, ms] = m;
   return (
-    <span class={`bq-fig ${cls}`} aria-hidden="true" style={{ '--w': w, '--h': h, '--fx': fx, '--fy': fy, '--u': `${u}px` } as never}>
-      <FigStrip id={id} n={n} ms={ms} />
+    <span class={`bq-fig ${cls}`} aria-hidden="true" style={{ '--w': m.w, '--h': m.h, '--fx': m.fx, '--fy': m.fy, '--u': `${u}px` } as never}>
+      <FigImage id={id} />
     </span>
   );
 }

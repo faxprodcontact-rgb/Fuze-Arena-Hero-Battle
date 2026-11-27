@@ -1,18 +1,16 @@
-// Les fonds de combat HD animés, en pixel art (un par clan de monstres : refonte-graphique/pixel/fonds/, LISEZMOI.md).
-// Un fond = une image fixe (590 × 1100 pixels) et des calques animés pris dans une planche (fond-meta.ts) :
+// Les fonds de combat animés, en VECTORIEL (un par clan de monstres : refonte-graphique/ui-moderne/fonds/<clan>/,
+// assemblés dans fond-vecto.ts ; le nom du fichier date du pixel art, supprimé en v0.65.0).
+// Un fond = une image fixe (590 × 1100 pixels du fond, rendue ×up) et des calques animés pris dans une planche :
 //   boucle      un morceau posé à un endroit fixe qui joue ses images en boucle (bannière, cascade, lanterne) ;
 //   défilé      une tuile qui coule sans fin dans un rectangle (rivière, lave, mer, brume) ;
 //   particules  braises, bulles, pétales… (chacune renaît au même endroit à chaque période, comme dans l'aperçu).
-// Un pixel du fond = un pixel d'un personnage HD (720 unités pour 590 pixels) ; le bas de l'image = le bas du terrain.
-// Agrandi sans flou (plus proche voisin) ; chaque calque est calé sur la grille de pixels de l'image fixe.
+// 720 unités du jeu pour 590 pixels du fond ; le bas de l'image = le bas du terrain. Agrandi en lissant.
 // Les animations suivent l'heure, pas la vitesse du combat (×2 et ×3 ne les accélèrent pas).
 import Phaser from 'phaser';
-import { FOND_META } from '../fond-meta';
 import { FOND_VECTO } from '../fond-vecto';
-import { vectoOn } from '../vecto';
 import { artUrl } from '../art-url';
 
-export type PxFond = keyof typeof FOND_META;
+export type PxFond = keyof typeof FOND_VECTO;
 
 interface Boucle { id: string; g: 'b'; z: number; x: number; y: number; w: number; h: number; ms: number; f: readonly (readonly number[])[] }
 interface Defile { id: string; g: 'd'; z: number; x: number; y: number; w: number; h: number; f: readonly number[]; vx: number; vy: number }
@@ -26,19 +24,13 @@ const GAME_W = 720;
 /** Au-delà, un calque passe devant les combattants (le premier plan, qui s'efface pendant les compétences). */
 const FRONT_DEPTH = 1290;
 
-/**
- * L'essai vectoriel (`?vecto=1`, refonte-graphique/ui-moderne/fonds/) : le fond lisse d'un clan s'il est dessiné. Même
- * format de calques, mais ses images sont rendues ×up (agrandies en lissant) : positions en pixels du fond, f en
- * pixels de la planche.
- */
-const vectoFond = (fond: string) => (vectoOn() ? (FOND_VECTO as Record<string, (typeof FOND_VECTO)[keyof typeof FOND_VECTO]>)[fond] : undefined);
-const key = (fond: string) => (vectoFond(fond) ? `vxf-${fond}` : `pxf-${fond}`);
-const dir = (fond: string) => (vectoFond(fond) ? 'art/vecto/fonds' : 'art/px/fonds');
+/** Les images sont rendues ×up (agrandies en lissant) : positions en pixels du fond, f en pixels de la planche. */
+const key = (fond: string) => `vxf-${fond}`;
 
 /** À appeler dans `preload` : l'image fixe et la planche du fond. */
 export function loadPxFond(sc: Phaser.Scene, fond: PxFond) {
-  if (!sc.textures.exists(key(fond))) sc.load.image(key(fond), artUrl(`${dir(fond)}/${fond}.webp`));
-  if (!sc.textures.exists(`${key(fond)}-anim`)) sc.load.image(`${key(fond)}-anim`, artUrl(`${dir(fond)}/${fond}-anim.webp`));
+  if (!sc.textures.exists(key(fond))) sc.load.image(key(fond), artUrl(`art/vecto/fonds/${fond}.webp`));
+  if (!sc.textures.exists(`${key(fond)}-anim`)) sc.load.image(`${key(fond)}-anim`, artUrl(`art/vecto/fonds/${fond}-anim.webp`));
 }
 
 /** Un hasard à graine (le même à chaque combat : les particules ont toujours le même ballet). */
@@ -59,17 +51,16 @@ function rng(seed: string) {
  */
 export function placePxFond(sc: Phaser.Scene, fond: PxFond, bottom: number, zoom = 1): { front: Phaser.GameObjects.GameObject[]; ok: boolean } {
   const front: Phaser.GameObjects.GameObject[] = [];
-  const vm = vectoFond(fond);
-  const m = vm ?? FOND_META[fond];
-  /** Les images vectorielles sont ×up : une unité de la planche = 1/up pixel du fond. */
-  const up = vm?.up ?? 1;
+  const m = FOND_VECTO[fond];
+  /** Les images sont ×up : une unité de la planche = 1/up pixel du fond. */
+  const up = m.up;
   const k = key(fond), ak = `${k}-anim`;
   if (!sc.textures.exists(k) || !sc.textures.exists(ak)) return { front, ok: false };
   // `zoom` : le décor agrandi (centré, ses bords coupés) ; le combat s'en sert pour que le sol aille jusqu'en bas
   const U = (GAME_W / m.w) * zoom, ox = (GAME_W - m.w * U) / 2;
   const top = bottom - m.h * U;
   const X = (px: number) => ox + px * U, Y = (py: number) => top + py * U;
-  for (const t of [k, ak]) sc.textures.get(t).setFilter(vm ? Phaser.Textures.FilterMode.LINEAR : Phaser.Textures.FilterMode.NEAREST);
+  for (const t of [k, ak]) sc.textures.get(t).setFilter(Phaser.Textures.FilterMode.LINEAR);
   sc.add.image(ox, top, k).setOrigin(0).setScale(U / up).setDepth(-30);
 
   const sheet = sc.textures.get(ak);
@@ -97,9 +88,8 @@ export function placePxFond(sc: Phaser.Scene, fond: PxFond, bottom: number, zoom
       const [sx, sy, tw, th] = c.f as [number, number, number, number];
       const ts = sc.add.tileSprite(X(c.x), Y(c.y), c.w * up, c.h * up, ak, frame(sx, sy, tw, th)).setOrigin(0).setScale(U / up).setDepth(c.z);
       if (c.z > FRONT_DEPTH) front.push(ts);
-      // au pixel près : la tuile avance d'un pixel entier du fond à la fois (comme dans l'aperçu)
-      // (le vectoriel coule sans à-coups, sans s'arrondir au pixel)
-      const step = (v: number) => (vm ? v * up : Math.round(v));
+      // la tuile coule sans à-coups (en pixels de la planche)
+      const step = (v: number) => v * up;
       tick.push((t) => {
         if (c.vx) ts.tilePositionX = -(step((t / 1000) * c.vx) % tw);
         if (c.vy) ts.tilePositionY = -(step((t / 1000) * c.vy) % th);
@@ -132,9 +122,7 @@ export function placePxFond(sc: Phaser.Scene, fond: PxFond, bottom: number, zoom
           const i = c.ms ? Math.floor((age + ph * 100) / c.ms) % names.length : Math.min(names.length - 1, Math.floor((age / life) * names.length));
           if (i !== cur) img.setFrame(names[(cur = i)]!);
           const f = c.f[i]!;
-          // posée sur la grille des pixels du fond (le vectoriel, lui, glisse librement)
-          const px = x - f[2]! / up / 2, py = y - f[3]! / up / 2;
-          img.setPosition(X(vm ? px : Math.round(px)), Y(vm ? py : Math.round(py))).setVisible(true);
+          img.setPosition(X(x - f[2]! / up / 2), Y(y - f[3]! / up / 2)).setVisible(true);
         });
       }
     }

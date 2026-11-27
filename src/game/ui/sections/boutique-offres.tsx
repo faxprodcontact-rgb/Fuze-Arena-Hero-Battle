@@ -43,7 +43,7 @@ function valueX(o: Offer): number {
   return x >= 2 ? x : 0;
 }
 
-/** Le héros qui pose dans la vitrine : un Légendaire dessiné en HD. */
+/** Le héros qui pose dans la vitrine : un Légendaire dessiné. */
 const SHOW_HERO = ['angels-2', ...HEROES.filter((h) => h.rarity === 'legendary').map((h) => h.id)].find((id) => figMeta(id));
 
 function Price({ o, soldOut, size, onBuy }: { o: Offer; soldOut: boolean; size: 's' | 'm' | 'l'; onBuy: () => void }) {

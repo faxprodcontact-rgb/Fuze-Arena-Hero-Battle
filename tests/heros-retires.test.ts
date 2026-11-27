@@ -26,7 +26,7 @@ function oldSave(): PlayerState {
   return JSON.parse(JSON.stringify(s)) as PlayerState;
 }
 
-describe('héros retirés (36 héros HD)', () => {
+describe('héros retirés (36 héros)', () => {
   it('les héros retirés existent bien, aucun n’est encore dans le jeu', () => {
     expect(RETIRED_HEROES.size).toBe(36);
     expect(HEROES.some((h) => RETIRED_HEROES.has(h.id))).toBe(false);

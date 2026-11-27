@@ -1,16 +1,16 @@
 // Ce que l'on voit pendant un combat : le clan des monstres et son décor, selon le mode et l'avancée.
 // Les règles (forces, éléments des monstres) ne changent pas : on choisit seulement les dessins.
 //
-// 8 clans, 2 par élément. Chaque clan a un général (un héros HD, qui joue ses boss, dessiné plus grand), 3 monstres
-// HD (rapide, costaud, tireur ou lanceur de sorts : public/art/hd/mon-<clan>-<rôle>.webp) et son décor animé
-// (public/art/px/fonds/<clan>.webp, src/game/bg/fond-px.ts). Les grands boss (un par élément) jouent les boss du jour,
+// 8 clans, 2 par élément. Chaque clan a un général (un héros, qui joue ses boss, dessiné plus grand), 3 monstres
+// (rapide, costaud, tireur ou lanceur de sorts : public/art/vecto/jeu/mon-<clan>-<rôle>.webp) et son décor animé
+// (public/art/vecto/fonds/<clan>.webp, src/game/bg/fond-px.ts). Les grands boss (un par élément) jouent les boss du jour,
 // de guilde et les fins de région, dès que leur animation est exportée (sinon : le général du clan, plus grand).
 import type { DungeonKind } from '../core/data/modes';
 import { STAGES_PER_CHAPTER } from '../core/data/economy';
 import { BOSS_ELEMENT } from '../core/data/monsters';
 import { REGION_CHAPTERS, chapterElement, chapterOf, isRegionFinale, regionOf } from '../core/stages';
 import type { Element } from '../core/types';
-import { HD_FIG } from './hd-figures';
+import { VECTO_ANIM } from './vecto-anim';
 
 /** Les 8 clans, dans l'ordre des régions de la campagne (et de leurs décors). */
 export const CLANS = ['eldra', 'arachne', 'meduse', 'kael', 'orin', 'barzul', 'lenore', 'kesha'] as const;
@@ -21,20 +21,20 @@ const CLAN_ELEMENT: Record<Clan, Element> = {
 };
 /** L'élément d'un clan (teinte du plateau de la préparation : ui/formation-stage.tsx). */
 export const clanElement = (clan: Clan): Element => CLAN_ELEMENT[clan];
-/** Le général de chaque clan (un héros HD). */
+/** Le général de chaque clan (un héros). */
 export const CLAN_CHIEF: Record<Clan, string> = {
   eldra: 'mages-8', orin: 'mages-3', arachne: 'myths-10', meduse: 'myths-4', kael: 'assassins-2', lenore: 'knights-9',
   barzul: 'demons-3', kesha: 'demons-5',
 };
 /**
  * Les monstres de clan devenus héros (src/core/data/heroes.ts, CLAN_HEROES) : leur dessin est celui du monstre
- * (public/art/hd/mon-<clan>-<rôle>.webp, visage et respiration compris). Côté héros, ils regardent à droite, comme dessinés.
+ * (mon-<clan>-<rôle>). Côté héros, ils regardent à droite, comme dessinés.
  */
 export const HERO_ART: Readonly<Record<string, string>> = {
   nyrra: 'mon-arachne-tisseuse', sarvik: 'mon-meduse-rapide', jessa: 'mon-barzul-tireur', oboro: 'mon-lenore-sorts',
   sorai: 'mon-orin-sorts', bao: 'mon-eldra-sorts', gribou: 'mon-eldra-rapide', karu: 'mon-orin-rapide',
 };
-/** Le dessin HD d'un héros (son identifiant, sauf pour un monstre de clan devenu héros). */
+/** Le dessin d'un héros (son identifiant, sauf pour un monstre de clan devenu héros). */
 export const heroArt = (defId: string): string => HERO_ART[defId] ?? defId;
 /** Le troisième monstre du clan : un tireur, ou un lanceur de sorts. */
 const THIRD: Record<Clan, string> = {
@@ -42,11 +42,11 @@ const THIRD: Record<Clan, string> = {
 };
 /** Les 2 clans de chaque élément. */
 const OF_ELEMENT = (e: Element): Clan[] => CLANS.filter((c) => CLAN_ELEMENT[c] === e);
-/** Les grands boss, un par élément (refonte-graphique/pixel/hd/boss/) : dragon de lave, léviathan, titan, oiseau-tempête. */
+/** Les grands boss, un par élément (refonte-graphique/ui-moderne/monstres/) : dragon de lave, léviathan, titan, oiseau-tempête. */
 const BIG_BOSS: Record<Element, string> = { fire: 'boss-feu', water: 'boss-eau', earth: 'boss-terre', wind: 'boss-vent' };
 
-/** Ce personnage a-t-il ses dessins HD (planche exportée) ? */
-export const hasFigure = (id: string): boolean => id in HD_FIG.chars;
+/** Ce personnage a-t-il sa planche de combat (exportée par jeu_export_vecto.py) ? */
+export const hasFigure = (id: string): boolean => id in VECTO_ANIM.chars;
 /** Le grand boss d'un élément, s'il est déjà exporté. */
 export function bigBoss(element: Element): string | undefined {
   const id = BIG_BOSS[element];
@@ -134,7 +134,7 @@ const ROLE_OF: Record<string, 'rapide' | 'costaud' | 'third'> = {
 };
 const BOSS_IDS = new Set(Object.keys(BOSS_ELEMENT));
 
-/** Le dessin HD d'un monstre des règles (gobelin, loup…, ou boss) dans un décor donné. */
+/** Le dessin d'un monstre des règles (gobelin, loup…, ou boss) dans un décor donné. */
 export function monsterArtId(defId: string, element: Element, look: Look): string {
   const clan = look.clan(element);
   if (BOSS_IDS.has(defId)) return (look.bigBoss && bigBoss(element)) || CLAN_CHIEF[clan];

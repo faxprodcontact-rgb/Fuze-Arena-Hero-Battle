@@ -9,7 +9,6 @@ import { ELEMENT_COLOR, ITEM_COLORS, RARITY_COLOR, heroImage } from '../art';
 import { fmt, t } from '../i18n';
 import { close } from './nav';
 import { ICON_INDEX } from '../icons-meta';
-import { HD_FIG } from '../hd-figures';
 import { heroArt } from '../look';
 import { btClass, type BtSize, type BtTone } from './buttons';
 import { artUrl } from '../art-url';
@@ -137,24 +136,13 @@ export function Stars({ stars }: { stars: number }) {
  * Immobile, sans flou. Sans dessin : son visage.
  */
 export function CardFigure({ id, alt = '' }: { id: string; alt?: string }) {
-  // le dessin vectoriel lisse (27/11 : toujours, plus seulement avec ?vecto=1), même échelle et mêmes pieds que le pixel
-  // art (la petite image, au contour plus épais, faite pour les cases) ; le pixel art ne reste que s'il n'y en a pas
-  const v = vectoFig(id, true);
-  if (v) {
-    return (
-      <span class="hcard-fig" role="img" aria-label={alt} style={{ '--w': v.w, '--h': v.h, '--fx': v.fx, '--fy': v.fy } as never}>
-        <span class="hcard-still hcard-vec" style={{ backgroundImage: `url(${v.small})`, backgroundSize: '100% 100%' }} />
-      </span>
-    );
-  }
-  const m = (HD_FIG.chars as Record<string, readonly number[] | undefined>)[id];
-  if (!m) return <img class="hcard-face" src={heroImage(id)} alt={alt} />;
-  const [w, h, fx, fy] = m as unknown as [number, number, number, number, number, number];
-  // Une seule image, immobile, dessinée en fond (plantage sur iPhone le 26/11 : chaque carte faisait défiler une bande
-  // 12 fois plus large qu'elle, et Safari gardait en mémoire 44 de ces bandes géantes dès l'ouverture de l'onglet Héros).
+  // le dessin vectoriel lisse (la petite image, au contour plus épais, faite pour les cases) ; une seule image, immobile,
+  // dessinée en fond (plantage sur iPhone le 26/11 : jamais de bande d'images animée par carte)
+  const v = vectoFig(id);
+  if (!v) return <img class="hcard-face" src={heroImage(id)} alt={alt} />;
   return (
-    <span class="hcard-fig" role="img" aria-label={alt} style={{ '--w': w, '--h': h, '--fx': fx, '--fy': fy } as never}>
-      <span class="hcard-still" style={{ backgroundImage: `url(${artUrl(`art/hd/pose/${id}.webp`)})`, backgroundSize: '100% 100%' }} />
+    <span class="hcard-fig" role="img" aria-label={alt} style={{ '--w': v.w, '--h': v.h, '--fx': v.fx, '--fy': v.fy } as never}>
+      <span class="hcard-still" style={{ backgroundImage: `url(${v.small})`, backgroundSize: '100% 100%' }} />
     </span>
   );
 }

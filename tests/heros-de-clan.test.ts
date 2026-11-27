@@ -1,5 +1,5 @@
 // Les 8 monstres de clan devenus héros (Nyrra, Sarvik, Jessa, Oboro, Sorai, Bao, Gribou, Karu) : ils existent, on peut
-// les invoquer, ils fusionnent avec leur élément, ils combattent, ils ont leurs dessins HD et restent des monstres de clan.
+// les invoquer, ils fusionnent avec leur élément, ils combattent, ils ont leurs dessins et restent des monstres de clan.
 import { describe, expect, it } from 'vitest';
 import { Battle } from '../src/core/battle/engine';
 import { heroToUnit } from '../src/core/battle/units';
@@ -10,9 +10,9 @@ import { createRng } from '../src/core/rng';
 import { campaignWaves } from '../src/core/stages';
 import { summonOne } from '../src/core/summon';
 import type { Hero } from '../src/core/types';
-import { heroImage, figureUrl } from '../src/game/art';
-import { HD_FIG } from '../src/game/hd-figures';
-import { HD_ANIM } from '../src/game/hd-meta';
+import { heroImage } from '../src/game/art';
+import { VECTO_ANIM } from '../src/game/vecto-anim';
+import { vectoFig } from '../src/game/vecto';
 import { t } from '../src/game/i18n';
 import { CLANS, HERO_ART, campaignLook, heroArt, monsterArtId } from '../src/game/look';
 import { getState } from '../src/game/state/store';
@@ -36,16 +36,15 @@ describe('monstres de clan devenus héros', () => {
     expect(heroDef('bao').role).toBe('healer');
   });
 
-  it('leur dessin HD est celui de leur monstre de clan (combat, visage, respiration)', () => {
-    const anims = HD_ANIM.chars as Record<string, unknown>;
-    const figs = HD_FIG.chars as Record<string, unknown>;
+  it('leur dessin est celui de leur monstre de clan (combat, dessin en pied) ; leur tête est la leur', () => {
+    const anims = VECTO_ANIM.chars as Record<string, unknown>;
     expect(Object.keys(HERO_ART).sort()).toEqual([...IDS].sort());
-    for (const h of HEROES.filter((d) => !d.id.startsWith('dragon-'))) {
+    for (const h of HEROES) {
       expect(heroArt(h.id) in anims).toBe(true);
-      expect(heroArt(h.id) in figs).toBe(true);
+      expect(vectoFig(heroArt(h.id))).toBeDefined();
     }
-    expect(heroImage('nyrra')).toMatch(/^art\/hd\/v\/mon-arachne-tisseuse\.webp(\?h=\w+)?$/);
-    expect(figureUrl(heroArt('karu'))).toMatch(/^art\/hd\/pied\/mon-orin-rapide\.webp(\?h=\w+)?$/);
+    expect(heroImage('nyrra')).toMatch(/^art\/vecto\/v\/nyrra\.webp(\?h=\w+)?$/);
+    expect(vectoFig(heroArt('karu'))!.big).toMatch(/^art\/vecto\/mon-orin-rapide\.webp(\?h=\w+)?$/);
     expect(heroArt('knights-8')).toBe('knights-8');
     // ils jouent toujours les monstres de leur clan
     const monsterArts = new Set<string>();

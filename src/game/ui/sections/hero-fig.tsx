@@ -1,25 +1,23 @@
-// Le héros en pied pour la page d'un héros (sa bande de respiration art/hd/pied/<id>.webp, hd-figures.ts).
-// (Les cases des héros prennent CardFigure de kit.tsx, fait par le Socle.)
-import { figureUrl } from '../../art';
-import { HD_FIG } from '../../hd-figures';
+// Le héros en pied pour la page d'un héros, la boutique et le calendrier : son dessin vectoriel (art/vecto/<id>.webp,
+// vecto.ts), qui respire par le CSS (pieds fixes). (Les cases des héros prennent CardFigure de kit.tsx.)
 import { heroArt } from '../../look';
+import { vectoFig, type VectoFig } from '../../vecto';
 
-/** [largeur, hauteur d'une image, x et y des pieds, nombre d'images, durée d'une image (ms), haut de la tête au-dessus des pieds]. */
-type Fig = [number, number, number, number, number, number, number];
-
-/** Les mesures en pied d'un personnage HD, ou rien s'il n'a pas de dessin en pied. */
-export function figMeta(id: string): Fig | undefined {
+/** Le dessin en pied d'un héros (mesures en pixels du dessin, à l'échelle du combat), ou rien s'il n'est pas dessiné. */
+export function figMeta(id: string): VectoFig | undefined {
   // un monstre de clan devenu héros (Gribou…) a le dessin de son monstre : heroArt (bug du 26/11 : visage géant)
-  return (HD_FIG.chars as Record<string, readonly number[] | undefined>)[heroArt(id)] as Fig | undefined;
+  return vectoFig(heroArt(id));
 }
 
-/** La bande d'images qui défile (respiration), décalée selon le nom pour que les héros ne respirent pas ensemble. */
-export function FigStrip({ id, n, ms }: { id: string; n: number; ms: number }) {
+/** L'image en pied, qui respire (décalée selon le nom, pour que les héros ne respirent pas ensemble). */
+export function FigImage({ id }: { id: string }) {
+  const v = figMeta(id);
+  if (!v) return null;
   let hash = 0;
   for (const ch of id) hash = (hash * 31 + ch.charCodeAt(0)) % 997;
   return (
-    <img src={figureUrl(heroArt(id))} alt="" draggable={false} style={{
-      width: `${n * 100}%`, animation: `px-idle ${((n * ms) / 1000).toFixed(2)}s steps(${n}) infinite`, animationDelay: `-${(((hash % n) * ms) / 1000).toFixed(2)}s`,
+    <img class="fig-breathe" src={v.big} alt="" draggable={false} style={{
+      transformOrigin: `${((v.fx / v.w) * 100).toFixed(1)}% ${((v.fy / v.h) * 100).toFixed(1)}%`, animationDelay: `-${((hash % 34) / 10).toFixed(1)}s`,
     }} />
   );
 }

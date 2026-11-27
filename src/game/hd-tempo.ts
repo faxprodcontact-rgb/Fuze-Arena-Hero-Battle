@@ -1,6 +1,5 @@
-// Le tempo des coups HD au combat (sans affichage : hd-fight.ts s'en sert, et le script de mesure
-// refonte-graphique/pixel/hd/anim/vitesse-attaques.ts aussi). Les durées des images viennent des GIF des animateurs
-// (hd-meta.ts) ; le jeu les ralentit pour la course du corps à corps et le vol du projectile.
+// Le tempo des coups au combat (sans affichage : hd-fight.ts s'en sert). Les durées des images viennent des planches
+// (vecto-anim.ts) ; le jeu les ralentit pour la course du corps à corps et le vol du projectile.
 //
 // Attaque de base (demande du propriétaire, 25/11/2026 : « tous les héros tapent à peu près à la même vitesse ») :
 // chaque attaque de base est ramenée au même tempo au moment de la jouer, sans toucher aux planches ni aux règles.

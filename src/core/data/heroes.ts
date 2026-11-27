@@ -190,8 +190,8 @@ const OLD_NAMES: Record<(typeof GROUPS)[number], string[]> = {
 const SLOTS = GROUPS.flatMap((f) => OLD_NAMES[f].map((name, i) => ({ id: `${f}-${i + 1}`, name })));
 
 /**
- * Les 36 héros du jeu (décision du propriétaire, 25/11/2026) : ceux qui sont dessinés et animés en pixel art HD
- * (refonte-graphique/pixel/hd/, planches public/art/hd/<id>.webp). Les 36 autres gabarits sont retirés : dans une
+ * Les 36 héros du jeu (décision du propriétaire, 25/11/2026) : ceux qui étaient dessinés en pixel art HD, redessinés
+ * en vectoriel (v0.65.0 : refonte-graphique/ui-moderne/heros/, planches public/art/vecto/jeu/<id>.webp). Les 36 autres gabarits sont retirés : dans une
  * vieille sauvegarde, ils sont échangés contre un dédommagement (state/migrate.ts).
  */
 export const HERO_IDS = [
@@ -351,8 +351,8 @@ const CLAN_HEROES: HeroDef[] = [
 ];
 
 // ---------- Les 3 dragons, famille d'Elvyn (demande du propriétaire, 27/11/2026) ----------
-// Dessinés seulement en vectoriel (refonte-graphique/ui-moderne/heros/brasyr|rocvar|venthys/, images
-// public/art/vecto/dragon-<élément>.webp) : pas de pixel art. Compétence = leur attaque spéciale animée. Légendaires comme
+// Dessinés en vectoriel comme tous les héros (refonte-graphique/ui-moderne/heros/brasyr|rocvar|venthys/, images
+// public/art/vecto/dragon-<élément>.webp). Compétence = leur attaque spéciale animée. Légendaires comme
 // Elvyn (décision du propriétaire, 27/11 : les 4 dragons sont les Légendaires du portail spécial, FEATURED_BANNER de
 // data/summon.ts) ; valeurs au niveau des Légendaires de leur rôle, sans simulation : le grand réglage se fera avant la
 // bêta. Noms provisoires.

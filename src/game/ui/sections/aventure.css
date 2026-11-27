@@ -58,9 +58,9 @@
 .av-faces.small .av-face { width: 30px; height: 30px; margin-left: -6px; box-shadow: 0 0 0 1.5px #fff, 0 1px 4px #0005; }
 .av-faces.small .av-face:first-child { margin-left: 0; }
 
-/* un décor de mode : l'image du clan, aux coins arrondis (pixel art agrandi sans flou) */
+/* un décor de mode : l'image du clan, aux coins arrondis */
 .av-scene { position: relative; overflow: hidden; border-radius: 18px; background: #3d2f8a var(--scene) 50% var(--sy, 52%) / cover no-repeat;
-  image-rendering: pixelated; box-shadow: inset 0 0 0 1px #0000001f; }
+  box-shadow: inset 0 0 0 1px #0000001f; }
 /* centré par inset + margin auto : « translate » est pris par l'animation float */
 .av-scene-art { display: block; position: absolute; inset: 0; margin: auto; width: 120px; height: 120px;
   filter: drop-shadow(0 8px 6px #0009); animation: float 3.4s ease-in-out infinite; }

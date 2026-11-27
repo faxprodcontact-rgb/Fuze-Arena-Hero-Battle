@@ -1462,13 +1462,16 @@ def main():
     # la situation : un téléphone 390 × 844 (×2), cadré comme le vrai combat, sans l'interface
     vue_combat(5200, 780).convert('RGB').save(os.path.join(SORTIE, 'situation.png'))
     # la comparaison : ancien fond pixel | nouveau fond vectoriel, mêmes personnages, même cadrage
-    pix = Image.open(os.path.join(ROOT, 'public', 'art', 'px', 'fonds', 'kael.webp')).convert('RGBA')
-    a = vue_combat(0, 780, fond=pix)
-    b = vue_combat(5200, 780)
-    comp = Image.new('RGB', (780 * 2 + 12, a.height), (31, 18, 56))
-    comp.paste(a.convert('RGB'), (0, 0))
-    comp.paste(b.convert('RGB'), (792, 0))
-    comp.save(os.path.join(SORTIE, 'comparaison.png'))
+    # (le fond pixel est supprimé depuis la v0.65.0 : la comparaison ne se fait que s'il est encore là)
+    pxf = os.path.join(ROOT, 'public', 'art', 'px', 'fonds', 'kael.webp')
+    if os.path.exists(pxf):
+        pix = Image.open(pxf).convert('RGBA')
+        a = vue_combat(0, 780, fond=pix)
+        b = vue_combat(5200, 780)
+        comp = Image.new('RGB', (780 * 2 + 12, a.height), (31, 18, 56))
+        comp.paste(a.convert('RGB'), (0, 0))
+        comp.paste(b.convert('RGB'), (792, 0))
+        comp.save(os.path.join(SORTIE, 'comparaison.png'))
     print('  test : fond.png, situation.png, comparaison.png')
     if '--video' in args:
         video()

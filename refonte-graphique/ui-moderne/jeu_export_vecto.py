@@ -19,7 +19,7 @@
 #     (navigateur, rendu-lot.cjs), ×UP pixels par pixel du dessin, rogne, retire les doublons, range tout dans UNE
 #     planche ≤ 2048 × 2048 (public/art/vecto/jeu/<id>.webp) ;
 #  4. il écrit jeu.json dans le dossier du personnage, puis assemble TOUS les jeu.json en src/game/vecto-anim.ts
-#     (même format que HD_ANIM de hd-meta.ts : hd-fight.ts s'en sert tel quel). Plusieurs agents peuvent donc exporter
+#     (lue par hd-fight.ts : le seul rendu du combat depuis la v0.65.0). Plusieurs agents peuvent donc exporter
 #     chacun leurs personnages en même temps.
 import hashlib
 import importlib.util
@@ -43,7 +43,7 @@ TS = os.path.join(ROOT, 'src', 'game', 'vecto-anim.ts')
 RENDU = os.path.join(HEROS, 'rendu-lot.cjs')
 
 UP = 1.0             # pixels de la planche par pixel du dessin (le combat montre ~1,16 pixel d'écran par pixel du dessin)
-SCALE = 1.22         # un pixel du dessin = 1,22 unité du combat (comme HD_ANIM.scale : même taille que le pixel art)
+SCALE = 1.22         # un pixel du dessin = 1,22 unité du combat (la même taille que l'ancien pixel art)
 SHEET_MAX = 2048     # côté maximal d'une planche (mémoire de l'iPhone)
 # BUDGET MÉMOIRE (iPhone, demande du 27/11) : une planche = largeur × hauteur × 4 octets de mémoire graphique, comme le
 # pixel art (~3 Mo). Au-delà de MEM_MAX, l'export prévient en gros ; au-delà de MEM_STOP, il refuse.
@@ -774,8 +774,8 @@ def assemble():
             chars[m.group(1)] = json.load(open(jj))
     body = json.dumps(dict(scale=SCALE, chars=chars), separators=(',', ':'), ensure_ascii=False)
     head = ('// Généré par refonte-graphique/ui-moderne/jeu_export_vecto.py : ne pas modifier à la main.\n'
-            '// Les personnages VECTORIELS au combat (pilote, avec ?vecto=1 : hd-fight.ts). Même format que HD_ANIM de\n'
-            '// hd-meta.ts, sauf : planche art/vecto/jeu/<id>.webp rendue ×up (lissée) ; frames [x, y, l, h] en pixels de la\n'
+            '// Les personnages VECTORIELS au combat (lus par hd-fight.ts ; le seul rendu du jeu depuis la v0.65.0). Une\n'
+            '// planche art/vecto/jeu/<id>.webp rendue ×up (lissée) ; frames [x, y, l, h] en pixels de la\n'
             '// PLANCHE, (ax, ay) en pixels du dessin (coin haut-gauche par rapport aux pieds, aux pieds de la cible ou à la\n'
             '// pointe du projectile). Un fichier jeu.json par personnage (heros/<nom>/, monstres/<nom>/), assemblés ici.\n')
     tmp = TS + '.tmp'

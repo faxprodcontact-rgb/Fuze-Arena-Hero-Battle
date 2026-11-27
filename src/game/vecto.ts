@@ -1,24 +1,10 @@
-// Essai du 26/11 (demande du propriétaire) : un héros redessiné en VECTORIEL lisse, dans le style de l'interface
-// (refonte-graphique/ui-moderne/heros/), à comparer avec son pixel art dans les menus. Rien ne change par défaut :
-// l'adresse `?vecto=1` allume l'essai (gardé sur le téléphone), `?vecto=0` l'éteint. Le combat reste en pixel art.
-// À retirer (ou à généraliser) après l'avis du propriétaire.
+// Les dessins VECTORIELS des personnages dans les menus (refonte-graphique/ui-moderne/heros/ et monstres/) : l'image
+// fixe en grand art/vecto/<id>.webp et en petit art/vecto/<id>-160.webp. Depuis la v0.65.0, tout le jeu est en
+// vectoriel (le pixel art est supprimé) : au combat, les planches art/vecto/jeu/ (vecto-anim.ts, hd-fight.ts).
 import { artUrl } from './art-url';
-import { HD_FIG } from './hd-figures';
 
-const VECTO_ON = (() => {
-  try {
-    const q = new URLSearchParams(location.search).get('vecto');
-    if (q === '1') localStorage.setItem('fuze-vecto', '1');
-    if (q === '0') localStorage.removeItem('fuze-vecto');
-    return localStorage.getItem('fuze-vecto') === '1';
-  } catch { return false; }
-})();
-
-/** L'essai vectoriel est-il allumé (`?vecto=1`) ? Sert aussi au fond de combat vectoriel (bg/fond-px.ts). */
-export const vectoOn = (): boolean => VECTO_ON;
-
-/** Par héros : [largeur, hauteur de l'image, x et y des pieds dans l'image], en pixels du dessin pixel art (même
- * échelle : il se pose au même endroit). Mesures écrites par refonte-graphique/ui-moderne/heros/kael/kael.py. */
+/** Par personnage : [largeur, hauteur de l'image, x et y des pieds dans l'image], en pixels du dessin (l'échelle du
+ * combat). Mesures écrites par le dessin de chacun (refonte-graphique/ui-moderne/heros/<nom>/<nom>.py). */
 const VECTO: Record<string, readonly [number, number, number, number]> = {
   'assassins-11': [88, 118, 37, 115],
   'knights-1': [98, 123, 50, 121],
@@ -91,13 +77,9 @@ const VECTO: Record<string, readonly [number, number, number, number]> = {
 
 export interface VectoFig { w: number; h: number; fx: number; fy: number; big: string; small: string }
 
-/**
- * Le dessin vectoriel d'un héros si l'essai est allumé et qu'il en a un ; sinon rien (on garde le pixel art).
- * Un personnage SANS pixel art (les 3 dragons, 27/11) a toujours son dessin vectoriel, essai allumé ou non.
- * `force` : le dessin vectoriel dès qu'il existe, essai allumé ou non (le tirage des invocations, 27/11).
- */
-export function vectoFig(id: string, force = false): VectoFig | undefined {
-  const m = force || VECTO_ON || !(id in HD_FIG.chars) ? VECTO[id] : undefined;
+/** Le dessin vectoriel d'un personnage (héros, monstre de clan, grand boss), ou rien s'il n'est pas dessiné. */
+export function vectoFig(id: string): VectoFig | undefined {
+  const m = VECTO[id];
   if (!m) return undefined;
   const [w, h, fx, fy] = m;
   return { w, h, fx, fy, big: artUrl(`art/vecto/${id}.webp`), small: artUrl(`art/vecto/${id}-160.webp`) };

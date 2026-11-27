@@ -2,7 +2,7 @@
    là-dessus. »). Règles, jetons et composants : refonte-graphique/pixel/ui/STYLE.md.
    Fond raisin profond, formes arrondies, ombres douces, dégradés légers, couleurs à rôle (vert = l'action principale,
    or des boutons = ce qui est choisi (plus de bleu clair depuis le 26/11 : bleu foncé des barres + pierre grise et or), or = les récompenses, violet = gemmes / invocation, corail = fermer / danger), fenêtres claires
-   à bandeau de couleur, monnaies en pilules. Les personnages, monstres, boss et décors restent en pixel art HD.
+   à bandeau de couleur, monnaies en pilules. Les personnages, monstres, boss et décors sont en vectoriel lisse (v0.65.0).
    Ordre du fichier : 1. jetons ; 2. noms historiques ; 3. base ; 4. composants communs ; 5. accueil et campagne ;
    6. les sections (Héros, Invoquer, Aventure, Guilde : leurs agents les reprennent dans src/game/ui/sections/<x>.css). */
 
@@ -202,7 +202,7 @@ p { margin: 6px 0; }
 .avatar .medal { width: 50px !important; height: 50px !important; border-radius: 16px; padding: 3px;
   background: linear-gradient(200deg, #ffe08a, #ffb53a 45%, #8a5a12); box-shadow: 0 4px 12px #05021a80; }
 .avatar .medal-in { width: 100%; height: 100%; border-radius: 13px; overflow: hidden; background: linear-gradient(200deg, #4d4a6a, #1f1d33); }
-.avatar .medal-in img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; margin: 0; image-rendering: pixelated; }
+.avatar .medal-in img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; margin: 0; }
 .avatar:active .medal { transform: scale(0.94); }
 .lv-shield { --pxf: linear-gradient(180deg, #ffe27a, #ffb21f); --pr: var(--r-pill); --psh: 0 0 0 2px var(--c-bg-2), 0 2px 4px #0006;
   position: absolute; left: 50%; bottom: -8px; min-width: 24px; height: 18px; padding: 0 6px; translate: -50% 0; display: grid; place-items: center; z-index: 1; }
@@ -368,9 +368,9 @@ p { margin: 6px 0; }
 .hcard-fig { --u: calc(84cqw / 128); position: absolute; z-index: 1; pointer-events: none; overflow: hidden;
   left: calc(50% - var(--fx) * var(--u)); top: calc(var(--feet) - var(--fy) * var(--u)); width: calc(var(--w) * var(--u)); aspect-ratio: var(--w) / var(--h);
   filter: drop-shadow(0 2px 1px #00000073); }
-.hcard .hcard-fig img { position: absolute; left: 0; top: 0; height: 100%; max-width: none; transform: none; image-rendering: pixelated; filter: none; }
-.hcard-still { position: absolute; inset: 0; background-repeat: no-repeat; background-position: 0 0; image-rendering: pixelated; }
-.hcard-face { position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%); width: 80%; image-rendering: pixelated; }
+.hcard .hcard-fig img { position: absolute; left: 0; top: 0; height: 100%; max-width: none; transform: none; filter: none; }
+.hcard-still { position: absolute; inset: 0; background-repeat: no-repeat; background-position: 0 0; }
+.hcard-face { position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%); width: 80%; }
 /* le liseré (la page d'un héros) ; sur les cartes, un cadre de métal par rareté (sections/cartes-heros.css) */
 .hcard-frame { position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: 16px;
   box-shadow: inset 0 0 0 2.5px color-mix(in srgb, var(--rar) 80%, #fff), inset 0 0 0 4px #0000002e; }
@@ -767,15 +767,11 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 .hp-fig .hfig { transform-origin: 53% 95%; animation: hf-breathe 3.4s ease-in-out infinite; }
 .hp-fig .hfig img { filter: drop-shadow(0 3px 3px #000000a6); }
 .hp-fig.hp-up .hfig img { animation: hp-bright 0.6s ease-out; }
-/* pixel art : une fenêtre carrée d'une case, où défile la planche de 8 images (elle respire et cligne déjà : pas de souffle en plus) */
+/* le dessin en pied : une fenêtre à la taille du dessin, posée sur ses pieds */
 .hfig .px-win { position: absolute; overflow: hidden; filter: drop-shadow(0 2px 2px #00000080); }
-.hfig .px-win img, .px-fit img { position: static; display: block; height: 100%; max-width: none; filter: none; image-rendering: pixelated; }
-.px-fit { display: block; overflow: hidden; }
-/* les visages HD (art/hd/v/) : pixel art agrandi sans flou */
-img[src^="art/hd/"] { image-rendering: pixelated; }
-@keyframes px-idle { to { transform: translateX(-100%); } }
-.field-hero .hfig-px, .hall-hero .hfig-px, .hp-fig .hfig-px { animation: none; }
-.hall-back .hfig-px .px-win { filter: drop-shadow(0 2px 2px #00000080) brightness(0.84) saturate(0.92); }
+.hfig .px-win img { position: static; display: block; height: 100%; max-width: none; filter: none; }
+/* un dessin en pied qui respire seul (boutique, calendrier : hero-fig.tsx) */
+.fig-breathe { animation: hf-breathe 3.4s ease-in-out infinite; }
 @keyframes hp-enter { from { opacity: 0; transform: translate(-53%, -93%) scale(0.92); } to { opacity: 1; transform: translate(-53%, -95%) scale(1); } }
 @keyframes hp-bright { 0% { filter: drop-shadow(0 3px 3px #000000a6) brightness(2.2); } 100% { filter: drop-shadow(0 3px 3px #000000a6) brightness(1); } }
 /* la lueur derrière le héros : de la couleur de sa rareté, plus forte quand il est rare */
@@ -1146,7 +1142,7 @@ img[src^="art/hd/"] { image-rendering: pixelated; }
 .team-face.unknown { display: grid; place-items: center; background: radial-gradient(circle at 50% 30%, #8a6a6a, #4a2f36 75%); }
 /* une scène peinte pour chaque mode */
 .tower-art, .boss-scene { border: 1.5px solid var(--edge); border-radius: 14px; overflow: hidden; box-shadow: inset 0 0 0 1.5px var(--trim), inset 0 0 0 3px #00000059, inset 0 0 30px #00000059, var(--shadow); }
-.tower-art { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; padding: 14px 0; background: #6b8fb5 center 80% / cover; image-rendering: pixelated; }
+.tower-art { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; width: 100%; padding: 14px 0; background: #6b8fb5 center 80% / cover; }
 .tower-floor { width: 62%; padding: 8px; border-radius: 8px; background: linear-gradient(180deg, #d9d3e3, #b3abc4); border: 1.5px solid #3b3350; font: 800 15px var(--font-title); color: #3b3350; text-align: center; box-shadow: inset 0 1px 0 #ffffff99, inset 0 -3px 0 #0000002e, 0 3px 5px #00000073; }
 .tower-floor.current { width: 74%; background: linear-gradient(180deg, var(--purple-hi), var(--purple) 50%, var(--purple-dark)); border-color: #3a1f70; color: #fff; text-shadow: 0 1px 2px #000a; box-shadow: inset 0 1px 0 #ffffff80, 0 0 0 2px var(--gold-hi), 0 4px 8px #00000080; }
 .tower-floor.done { opacity: 0.6; }
@@ -1155,7 +1151,7 @@ img[src^="art/hd/"] { image-rendering: pixelated; }
 .mission-art { display: flex; justify-content: center; margin: 4px 0 8px; }
 .mini-team { display: flex; }
 .mini-team img { width: 34px; margin-right: -6px; }
-.boss-scene { position: relative; align-self: stretch; height: 190px; display: grid; place-items: end center; background: #5a2a2a center 90% / 100% auto; image-rendering: pixelated; }
+.boss-scene { position: relative; align-self: stretch; height: 190px; display: grid; place-items: end center; background: #5a2a2a center 90% / 100% auto; }
 .boss-img { width: 150px; transform: scaleX(-1); }
 .boss-scene .boss-img { width: 190px; margin-bottom: 2px; filter: drop-shadow(0 8px 6px #0009); }
 .boss-tiers { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
@@ -1182,7 +1178,7 @@ img[src^="art/hd/"] { image-rendering: pixelated; }
 /* ---------- Donjons ---------- */
 button.dungeon { position: relative; display: flex; flex-direction: row; justify-content: flex-start; align-items: center; gap: 12px; text-align: left; width: 100%; overflow: hidden; min-height: 88px; color: var(--text); }
 button.dungeon .grow { display: flex; flex-direction: column; gap: 2px; }
-button.dungeon::before, .dungeon-head::before { content: ''; position: absolute; inset: 0 0 0 50%; background-image: var(--scene); background-position: center 86%; background-size: cover; image-rendering: pixelated; -webkit-mask-image: linear-gradient(90deg, #0000, #000 70%); mask-image: linear-gradient(90deg, #0000, #000 70%); opacity: 0.92; }
+button.dungeon::before, .dungeon-head::before { content: ''; position: absolute; inset: 0 0 0 50%; background-image: var(--scene); background-position: center 86%; background-size: cover; -webkit-mask-image: linear-gradient(90deg, #0000, #000 70%); mask-image: linear-gradient(90deg, #0000, #000 70%); opacity: 0.92; }
 button.dungeon > *:not(.dot), .dungeon-head > * { position: relative; }
 button.dungeon > .dot { top: -4px; right: -4px; z-index: 2; }
 button.dungeon { overflow: visible; }
@@ -1236,7 +1232,7 @@ button.dungeon .dungeon-tries, .dungeon-head .dungeon-tries { background: #fff6d
 /* amis */
 .friend { flex-direction: row; align-items: center; gap: 10px; padding: 10px; }
 .friend .grow { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.friend-face { width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(200deg, #5a5778, #2e2c47); box-shadow: 0 0 0 2px #fff, var(--sh-1); object-fit: cover; object-position: 50% 10%; image-rendering: pixelated; }
+.friend-face { width: 48px; height: 48px; border-radius: 16px; background: linear-gradient(200deg, #5a5778, #2e2c47); box-shadow: 0 0 0 2px #fff, var(--sh-1); object-fit: cover; object-position: 50% 10%; }
 .friend-x { color: var(--muted); padding: 4px; font-size: 14px; }
 .gift-btn { width: 52px; min-width: 52px; padding-left: 0; padding-right: 0; }
 .gift-btn.waiting::after { content: ''; position: absolute; top: -5px; right: -5px; width: 16px; height: 16px; background: var(--px-badge-gold) 0 0 / 100% 100% no-repeat; }
@@ -1310,7 +1306,7 @@ button.setting-row:active { filter: brightness(0.95); }
 .legal { display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 1.5; }
 .legal h3 { margin-top: 8px; color: var(--c-select-lo); }
 .legal p { margin: 0; color: var(--text); }
-.name-screen { position: absolute; inset: 0; z-index: 90 !important; display: grid; place-items: center; padding: 20px; background: #2a1424 center 70% / cover; image-rendering: pixelated; }
+.name-screen { position: absolute; inset: 0; z-index: 90 !important; display: grid; place-items: center; padding: 20px; background: #2a1424 center 70% / cover; }
 .name-card { width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: stretch; gap: 16px; padding: 26px 22px 22px; animation: pop-in 0.3s ease-out;
   color: #fff; border-radius: 26px; background: linear-gradient(180deg, #2a2170f2, #160f45f2);
   box-shadow: inset 0 0 0 2px #ffc94d8c, inset 0 2px 0 #ffffff26, 0 18px 40px #05021ab3; }
@@ -1488,10 +1484,6 @@ button.setting-row:active { filter: brightness(0.95); }
   & .tile-dailyBoss { --tile: #ef4458; } & .tile-arena { --tile: #6a6788; } & .tile-defense { --tile: #f5a524; }
 }
 
-/* Essai ?vecto=1 (src/game/vecto.ts, 26/11) : un héros dessiné en vectoriel lisse à la place de son pixel art, dans
-   les menus. L'image est lisse (pas « pixelated ») et respire par une transformation (rien d'autre ne bouge). */
+/* Les dessins vectoriels (src/game/vecto.ts) : lisses, ils respirent par une transformation (rien d'autre ne bouge). */
 .hfig .px-win.vec-win { overflow: visible; }
-.hfig .px-win.vec-win img { width: 100%; height: 100%; image-rendering: auto; }
-.hcard .hcard-still.hcard-vec { image-rendering: auto; }
-/* les dessins vectoriels (les 3 dragons n'ont que ceux-là, même visage) restent lisses partout, jamais « pixelated » */
-img[src^="art/vecto/"] { image-rendering: auto !important; }
+.hfig .px-win.vec-win img { width: 100%; height: 100%; }

@@ -26,38 +26,45 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   s'ouvrent avec la campagne, `UNLOCKS` de `src/core/data/modes.ts`).
 - Décidé : plus de camps ; la fusion demande des héros du **même élément**. Le mode Défense est supprimé, remplacé par le
   **Colisée** (v0.61.0 : 3 héros, duels 1 contre 1 « le gagnant reste », ligues de 30, insignes ; `src/core/coliseum.ts`, clé `defense` gardée).
-- Héros : **44 héros** (36 de `HERO_IDS` + 8 monstres de clan devenus héros, `CLAN_HEROES`, dessin par `heroArt()` de `look.ts`), tous dessinés et animés en pixel art HD (`HERO_IDS` de `src/core/data/heroes.ts` ; les 36 autres
+- Héros : **47 héros** (36 de `HERO_IDS` + 8 monstres de clan devenus héros, `CLAN_HEROES`, dessin par `heroArt()` de `look.ts`,
+  + les 3 dragons), tous dessinés et animés en vectoriel (`HERO_IDS` de `src/core/data/heroes.ts` ; les 36 autres
   gabarits sont retirés, une vieille sauvegarde reçoit un dédommagement par courrier : `src/game/state/migrate.ts`).
   Effets dans `src/core/battle/`, textes par `src/game/describe.ts`, équipements dans `src/core/data/items.ts`. Courrier :
   `src/core/data/mail.ts` (un `id` unique, jamais réutilisé ; `personal` = cadeau rangé dans la sauvegarde). Tutoriel :
   `src/game/ui/tutorial.tsx` (il vise les éléments par sélecteurs CSS).
-- **Tout le jeu est en pixel art HD** (v0.56.0) : `refonte-graphique/pixel/hd/` (lire `hd/GUIDE.md` ; pour reprendre :
-  `hd/consignes/REPRISE.md` ; suivi du propriétaire : https://claude.ai/artifact/SB9xsSLSYbExWSV89HQfaj, `hd/suivi.py`).
-  Chaîne : dessin `.txt` → animation `hd/anim/<nom>/build.py` → `hd/anim/jeu_export.py`
-  (`public/art/hd/<id>.webp`, `src/game/hd-meta.ts`, consigne `hd/consignes/export-jeu.md`) → **`python3
-  refonte-graphique/pixel/hd/anim/vignettes.py`** (visages `art/hd/v/`, respiration en pied `art/hd/pied/`,
-  `src/game/hd-figures.ts` pour les menus). Au combat : `src/game/hd-fight.ts` (corps à corps jusqu'à la cible,
-  projectile jusqu'à la vraie case, lumière de charge, sorts d'équipe et effets reçus `art/hd/fx/`).
+- **Tout le jeu est en VECTORIEL** (v0.65.0, 27/11 : le pixel art HD et ses chaînes sont supprimés, plus de drapeau
+  `?vecto`). Outils, tous dans `refonte-graphique/ui-moderne/` :
+  - dessin et animation d'un personnage : `heros/<nom>/` ou `monstres/<nom>/` (`<nom>.py`, `anim.py` ; outil commun
+    `heros/atelier.py`, visage `heros/visage.py`) ; image des menus `public/art/vecto/<id>.webp` (+ `-160`), mesures
+    dans la table `VECTO` de `src/game/vecto.ts` (`vectoFig`) ;
+  - **planche de combat** : `jeu.py` dans le dossier, puis `python3 refonte-graphique/ui-moderne/jeu_export_vecto.py
+    heros/<nom>` → `public/art/vecto/jeu/<id>.webp` + `src/game/vecto-anim.ts` GÉNÉRÉ (consigne **`EXPORT-JEU.md`** ;
+    budget 4,2 Mo par planche ; contrôle en vrai combat : `combat-video.cjs`, temps virtuel) ;
+  - têtes (cartes du combat et visages des menus) : `heros/tetes.py` → `public/art/vecto/v/<id>.webp` ;
+  - effets reçus des sorts d'équipe : `effets/recus.py` → `public/art/vecto/fx/`, `src/game/vecto-fx.ts` ;
+  - fonds : `fonds/<clan>/<clan>.py` puis `fonds/assemble_ts.py` → `public/art/vecto/fonds/` (`<clan>-menu.webp` :
+    image réduite pour les menus), `src/game/fond-vecto.ts` (lu par `bg/fond-px.ts`).
+  Au combat : `src/game/hd-fight.ts` (corps à corps jusqu'à la cible, projectile jusqu'à la vraie case, lumière de
+  charge, sorts d'équipe et effets reçus) ; test `tests/images.test.ts` (toutes les images existent).
 - **8 clans** (2 par élément : Arachné et Méduse = terre, Kesha et Barzul = eau, Lenore et Kael = feu, Orin et Eldra =
-  vent) : un général (héros HD, joue les boss, dessiné plus grand), 3 monstres `mon-<clan>-<rôle>` et un décor animé
-  (`refonte-graphique/pixel/fonds/`, `public/art/px/fonds/`, `src/game/fond-meta.ts`, `src/game/bg/fond-px.ts`).
+  vent) : un général (un héros, joue les boss, dessiné plus grand), 3 monstres `mon-<clan>-<rôle>` et un décor animé
+  (`refonte-graphique/ui-moderne/fonds/`, `public/art/vecto/fonds/`, `src/game/fond-vecto.ts`, `src/game/bg/fond-px.ts`).
   `src/game/look.ts` choisit le clan et son décor selon le mode (campagne : région + élément du chapitre ; tour ; donjons ;
-  boss ; arène). **Grands boss** (un par élément, `hd/boss/`, ids `boss-feu`, `boss-eau`, `boss-terre`, `boss-vent`) :
+  boss ; arène). **Grands boss** (un par élément, `ui-moderne/monstres/` dragon, leviathan, titan, oiseau-tempete ; ids `boss-feu`, `boss-eau`, `boss-terre`, `boss-vent`) :
   boss du jour, de guilde et fin de chaque région (seul, au milieu) dès qu'ils sont exportés, sinon le général du clan.
   Décors : une plateforme rectangulaire d'un bord à l'autre (**jamais de rond au sol**), tout est posé.
 - Anciens essais graphiques (pas dans le jeu) : personnages redessinés par le code `refonte-graphique/vecto/` (page
-  https://claude.ai/artifact/5qE3vDUzsMFMQVC4ywqLrK, lire
-  `vecto/GUIDE.md`) ; pixel art « gros pixels encrés » `refonte-graphique/pixel/persos/` (lire `pixel/GUIDE.md`, contrôle
-  `python3 refonte-graphique/pixel/controle.py <nom>`). Les anciens dessins (Hailuo, décors dessinés par le code, 72 héros
-  pixel) et leurs chaînes de fabrication sont supprimés (v0.56.0) ; pictos : `icons.webp`, en style moderne (v0.59.0)
+  https://claude.ai/artifact/5qE3vDUzsMFMQVC4ywqLrK, lire `vecto/GUIDE.md`). Les anciens dessins (Hailuo, décors dessinés
+  par le code, 72 héros pixel en v0.56.0, puis tout le pixel art HD en v0.65.0) et leurs chaînes de fabrication sont
+  supprimés (historique git ; ce qui reste de `refonte-graphique/pixel/` : `pixel/LISEZMOI.md`) ; pictos : `icons.webp`, en style moderne (v0.59.0)
   (`refonte-graphique/ui-moderne/pictos/fabrique.py` ; l'ancienne chaîne pixel `pixel/ui/pictos/assemble.py` demande `--pixel` ; petits signes (SVG lisses) et halo : `style.css`, `anim.css`).
-- **Interface en nouvelle DA (pixel art HD), partie par partie** (demande du 25/11) : plan, inventaire et outils dans
+- **Interface en nouvelle DA, partie par partie** (demande du 25/11) : plan, inventaire et outils dans
   `refonte-graphique/pixel/ui/` (lire `PLAN.md`) ; partie 1 faite en v0.57.0 (chargement, logo, icône d'application).
   **Style « moderne » choisi le 26/11 : lire `refonte-graphique/pixel/ui/STYLE.md`** (jetons en tête de
   `src/game/ui/style.css` : fond raisin, couleurs à rôle, arrondis, ombres douces ; fenêtres claires à bandeau coloré ;
   plus de pièces en pixels ni de `?skin=`) ; tout le jeu est passé (v0.59.0), sections dans
   `src/game/ui/sections/<section>.css` ; **boutons « Pierre de l'arène »** (v0.60.0, `ui/buttons.ts`, classes `bt-<teinte>`) ; **habillage pierre grise et or** (v0.63.0 : `ui/theme.ts` + `theme-pierre.css` GÉNÉRÉ par `npx tsx refonte-graphique/ui-moderne/theme/pierre.ts` : le relancer après tout changement de couleur dans un CSS) ;
-  fonds des menus dessinés par le code (`ui/backdrop-kit.tsx`, `backdrop-*.tsx`, préparation `formation-stage.tsx`). Personnages, monstres, décors restent en pixel art HD.
+  fonds des menus dessinés par le code (`ui/backdrop-kit.tsx`, `backdrop-*.tsx`, préparation `formation-stage.tsx`). Personnages, monstres, décors : en vectoriel.
 - Interface : polices **Lilita One** (titres, chiffres) et **Fredoka** (textes), `font-synthesis: none`, jamais
   `fontStyle: 'bold'` dans Phaser. Composants communs : `ui/kit.tsx` (`HeroCard` = le héros en entier, `CardFigure`),
   `ui/chrome.tsx` (`ChromeDefs` posé une fois, jamais caché ; `BarArt` toujours **dernier enfant** de sa barre).
@@ -67,24 +74,24 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   Réglages, invité par défaut (champ `auth` de la sauvegarde) ; tout passe par `src/game/auth.ts` (éteint tant que
   `VITE_SUPABASE_URL` / `VITE_SUPABASE_ANON_KEY` manquent : fenêtre « Bientôt disponible »). Comptes à créer, branchement,
   invité → compte lié : **`docs/connexion-comptes.md`**.
-- **Refonte des héros en vectoriel animé** (décidée le 26/11 après l'essai de Kael) : un héros = un dossier
+- **Refonte des héros en vectoriel animé** (décidée le 26/11 après l'essai de Kael, dans le jeu depuis la v0.65.0) : un héros = un dossier
   `refonte-graphique/ui-moderne/heros/<nom>/` (outil commun `atelier.py`, modèle `kael/`), sorties `pixel/sortie/ui/vecto/<nom>/`
-  (`STATUT.txt`), images `public/art/vecto/<id>.webp`, table `VECTO` de `src/game/vecto.ts` (menus, `?vecto=1`).
+  (`STATUT.txt`), images `public/art/vecto/<id>.webp`, table `VECTO` de `src/game/vecto.ts`.
   Page de suivi : `python3 refonte-graphique/ui-moderne/heros/suivi.py` → https://claude.ai/artifact/L59gwsBUz9SPcEG272Jh4c.
   **Visage : toujours construit avec `heros/visage.py`** (placer / verifier / guide_svg ; contrôle `visage.png`), le plus gros
   défaut relevé par le propriétaire (yeux, nez, bouche incohérents ; nez de profil sur un visage de 3/4).
   Avis du propriétaire (notes, cercles au doigt, OK / à reprendre) : `python3 refonte-graphique/ui-moderne/heros/avis.py`
   → https://claude.ai/artifact/D5UVkXKfKg8AmFzy5Ezart (republier avec root = dépôt et `avis/fichiers.json` ; ses notes se lisent
   avec ArtifactData, collection `avis`, un document par héros : text, status ok/redo, strokes en 0-1000).
-  **3 nouveaux dragons** (27/11, même famille qu'Elvyn = eau) : Brasyr feu, Rocvar terre, Venthys vent (`heros/brasyr|rocvar|venthys/`,
-  images `dragon-feu|terre|vent`), dessinés seulement : pas encore dans les données du jeu ni au combat (liste `NOUVEAUX` de `suivi.py`).
+  **3 dragons** (27/11, même famille qu'Elvyn = eau) : Brasyr feu, Rocvar terre, Venthys vent (`heros/brasyr|rocvar|venthys/`,
+  images `dragon-feu|terre|vent`), héros Légendaires jouables, avec leur planche de combat (liste `NOUVEAUX` de `suivi.py`).
   **Monstres en vectoriel** (27/11) : 16 monstres de clan + 4 grands boss, `refonte-graphique/ui-moderne/monstres/<nom>/`, sorties `pixel/sortie/ui/vecto/<nom>/` ;
   avis à part : `python3 refonte-graphique/ui-moderne/heros/avis.py --monstres` → https://claude.ai/artifact/JgkepjcHadyFrT3UUpMqD8 (même base `avis`, liste `MONSTRES`).
   État au 27/11 (détail : `docs/journal.md`, « Refonte en vectoriel animé ») : héros après 4 tours d'avis, monstres après 1 tour ;
-  combat encore en pixel art ; dragons pas encore dans les données du jeu.
+  tout est au combat depuis la v0.65.0.
   **Fonds de combat en vectoriel** (27/11, les 8 clans) : `refonte-graphique/ui-moderne/fonds/<clan>/<clan>.py` (modèle `kael/`), images
   `public/art/vecto/fonds/`, calques dans `src/game/fond-vecto.ts` GÉNÉRÉ par `fonds/assemble_ts.py` (chaque clan écrit son `meta.json`) ;
-  visibles en combat avec `?vecto=1` (`bg/fond-px.ts`). Le combat agrandit ×1,4 et ne montre que x 84-506 ; plateforme dès y 800 ; cartes dès 985.
+  lus par `bg/fond-px.ts`. Le combat agrandit ×1,4 et ne montre que x 84-506 ; plateforme dès y 800 ; cartes dès 985.
 - Plus tard : profil du joueur, événements, sons et musique, Siège. Ensuite : serveur (Supabase) → habillage → social
   réel → argent réel → bêta → lancement.
 
@@ -117,9 +124,9 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
 | `src/game/fight-view.ts` | Base commune des scènes de combat (personnages, coups, chiffres) |
 | `src/game/battle-scene.ts` | Écran de combat (Phaser), utilisé par tous les modes |
 | `src/game/idle-scene.ts` | Combat permanent de l'accueil (image du butin hors ligne) |
-| `src/game/hd-fight.ts` + `hd-meta.ts` | Personnages HD au combat : leurs planches (générées par `jeu_export.py`) et leur mise en scène |
-| `src/game/look.ts` | Clan des monstres, général, grand boss et décor animé de chaque combat (`bg/fond-px.ts`, `fond-meta.ts`) |
-| `src/game/art.ts` + `hd-figures.ts` | Couleurs, visages et héros en pied des menus (générés par `vignettes.py`) |
+| `src/game/hd-fight.ts` + `vecto-anim.ts` | Personnages au combat : leurs planches vectorielles (générées par `jeu_export_vecto.py`) et leur mise en scène |
+| `src/game/look.ts` | Clan des monstres, général, grand boss et décor animé de chaque combat (`bg/fond-px.ts`, `fond-vecto.ts`) |
+| `src/game/art.ts` + `vecto.ts` | Couleurs, têtes (`art/vecto/v/`, `tetes.py`) et héros en pied (`art/vecto/`) des menus |
 | `src/game/i18n.ts` | Tous les textes, français et anglais |
 | `simulations/` | Joueurs virtuels qui jouent des mois en accéléré pour vérifier le rythme |
 | `tests/` | Tests automatiques des règles |

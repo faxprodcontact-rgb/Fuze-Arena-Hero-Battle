@@ -1,5 +1,5 @@
 // Base commune des scènes de combat (combat, accueil, aperçu d'une compétence) : le décor animé du clan, les
-// personnages HD animés et leurs coups (hd-fight.ts), les chiffres, les barres de vie.
+// personnages animés (planches vectorielles) et leurs coups (hd-fight.ts), les chiffres, les barres de vie.
 import Phaser from 'phaser';
 import type { Battle } from '../core/battle/engine';
 import { ENERGY_MAX, TICK_MS, type BattleEvent, type Hit, type SkillDef, type Slot, type Unit } from '../core/battle/types';
@@ -9,14 +9,13 @@ import { loadPxFond, placePxFond } from './bg/fond-px';
 import { playDeath, playRevive, type DeathTier, type DeathView } from './fx-death';
 import { StatusFx } from './fx-status';
 import { HdActor, hasHd, hdChar, hdStrike, loadHd, type HdHost } from './hd-fight';
-import { HD_ANIM } from './hd-meta';
+import { VECTO_ANIM } from './vecto-anim';
 import { t } from './i18n';
 import { ICON_CELL, ICON_INDEX } from './icons-meta';
 import { battleLook, heroArt, isBigBoss, monsterArtId, type Look } from './look';
 import { HERO_X } from './scenes';
 import { themeColor } from './theme';
 import { artUrl } from './art-url';
-import { vectoFig } from './vecto';
 
 export const W = 720;
 /** La police des combats (la même que les titres des menus) : une seule graisse, ne jamais demander « bold ». */
@@ -161,7 +160,6 @@ export abstract class FightScene extends Phaser.Scene {
     for (const u of this.preloadUnits()) {
       const id = this.charId(u);
       if (hasHd(id)) loadHd(this, id, u.element as Element);
-      else loadStill(this, id);
     }
   }
 
@@ -220,24 +218,12 @@ export abstract class FightScene extends Phaser.Scene {
     let hd: HdActor | undefined;
     if (hasHd(id) && this.textures.exists(`hd-${id}`)) {
       // un pixel du dessin = `scale` unités ; les pieds sur la ligne de sol
-      const ch = hdChar(id), k = HD_ANIM.scale * boost;
+      const ch = hdChar(id), k = VECTO_ANIM.scale * boost;
       hd = new HdActor(this, fig, id, k, unit.element);
       imgs.push(hd.img);
       shadow = this.add.ellipse(0, FEET, Math.min(big ? 300 : 160, (ch.sol[1]! - ch.sol[0]!) * k * 1.1), big ? 30 : 20, 0x000000, 0.3);
       h = Math.min(ch.top * k, (big ? 290 : 126) * boost);
       w = Phaser.Math.Clamp((ch.sol[1]! - ch.sol[0]!) * k, 40, big ? 260 : 150);
-      barY = FEET - h - 6;
-    } else if (stillFig(id) && this.textures.exists(`vs-${id}`)) {
-      // pas de planche de combat (les 3 dragons, dessinés seulement en vectoriel) : son dessin fixe, à l'échelle des
-      // planches HD, pieds sur la ligne de sol ; il respire (voir stillStrike pour ses coups)
-      const v = stillFig(id)!, k = HD_ANIM.scale * boost;
-      const img = this.add.image(0, 0, `vs-${id}`).setOrigin(v.fx / v.w, v.fy / v.h).setDisplaySize(v.w * k, v.h * k);
-      fig.add(img);
-      imgs.push(img);
-      this.tweens.add({ targets: img, scaleY: img.scaleY * 1.025, duration: 950, yoyo: true, repeat: -1, ease: 'Sine.easeInOut', delay: (x % 7) * 90 });
-      shadow = this.add.ellipse(0, FEET, Math.min(160, v.w * k * 0.75), 20, 0x000000, 0.3);
-      h = Math.min(v.fy * k, 126 * boost);
-      w = Phaser.Math.Clamp(v.w * k * 0.7, 40, 150);
       barY = FEET - h - 6;
     } else {
       // dessin pas encore arrivé : seulement son ombre et sa barre de vie
@@ -452,10 +438,10 @@ export abstract class FightScene extends Phaser.Scene {
     for (const e of events) {
       switch (e.type) {
         case 'attack':
-          if (!this.hdStrike(e.source, 'attaque', [e.hit], speed) && !this.stillStrike(e.source, [e.hit], speed)) this.showHit(e.hit, false);
+          if (!this.hdStrike(e.source, 'attaque', [e.hit], speed)) this.showHit(e.hit, false);
           break;
         case 'skill':
-          if (!this.hdStrike(e.source, 'speciale', e.hits, speed, e.skill) && !this.stillStrike(e.source, e.hits, speed, e.skill)) e.hits.forEach((h) => this.showHit(h, true));
+          if (!this.hdStrike(e.source, 'speciale', e.hits, speed, e.skill)) e.hits.forEach((h) => this.showHit(h, true));
           break;
         case 'passive':
           this.time.delayedCall(250 / speed, () => e.hits.forEach((h) => this.showHit(h, false)));
@@ -544,31 +530,6 @@ export abstract class FightScene extends Phaser.Scene {
     return true;
   }
 
-  /**
-   * Le coup d'un personnage dessiné seulement en vectoriel (les 3 dragons, en attendant leur animation de combat) :
-   * il s'élance un peu vers l'ennemi et revient ; pour sa compétence, son nom s'affiche et le décor s'assombrit.
-   * Renvoie faux pour tout autre personnage.
-   */
-  private stillStrike(sourceId: string, hits: Hit[], speed: number, skill?: SkillDef): boolean {
-    const src = this.views.get(sourceId);
-    if (!src || src.hd || !src.imgs.length || src.dying) return false;
-    const hero = src.unit.side === 'hero', big = !!skill;
-    const t1 = (big ? 220 : 140) / speed;
-    this.tweens.add({ targets: src.sprite, x: (hero ? 1 : -1) * (big ? 46 : 30), duration: t1, yoyo: true, ease: 'Quad.easeOut', onComplete: () => src.sprite.setX(0) });
-    if (big) {
-      const name = this.text(src.body.x, src.body.y + src.barY - 34, t(`skill.${skill.id}`), 28, hero ? '#ffe27a' : '#ff8a8a').setDepth(2000);
-      this.tweens.add({ targets: name, y: name.y - 30, alpha: 0, delay: 650 / speed, duration: 450 / speed, onComplete: () => name.destroy() });
-      this.dim(500 / speed);
-    }
-    this.time.delayedCall(t1, () => hits.forEach((h) => {
-      const target = this.views.get(h.target);
-      if (target && h.kind === 'damage') this.flashAt(target.body.x, target.body.y + FEET - target.h / 2, 0xffffff, big ? 30 : 22, 1 / speed);
-      this.showHit(h, big);
-    }));
-    this.turnMs = t1 * 2 + 260 / speed;
-    return true;
-  }
-
   private showHit(hit: Hit, big: boolean) {
     const v = this.views.get(hit.target);
     if (!v) return;
@@ -642,17 +603,4 @@ export abstract class FightScene extends Phaser.Scene {
     this.tweens.add({ targets: b, scale: 1, duration: 250, ease: 'Back.easeOut' });
     this.tweens.add({ targets: b, alpha: 0, delay: 800, duration: 300, onComplete: () => b.destroy() });
   }
-}
-
-/** Le dessin vectoriel fixe d'un personnage sans planche de combat HD (les 3 dragons), ou rien. */
-function stillFig(id: string) {
-  return hasHd(id) ? undefined : vectoFig(id);
-}
-
-/** Charge ce dessin fixe (lissé : ce n'est pas du pixel art). */
-function loadStill(scene: Phaser.Scene, id: string) {
-  const v = stillFig(id);
-  if (!v || scene.textures.exists(`vs-${id}`)) return;
-  scene.load.image(`vs-${id}`, v.big);
-  scene.load.once(`filecomplete-image-vs-${id}`, () => scene.textures.get(`vs-${id}`).setFilter(Phaser.Textures.FilterMode.LINEAR));
 }

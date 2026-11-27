@@ -35,7 +35,7 @@
 .hx-stage { position: relative; flex: 1 1 auto !important; min-height: 230px; touch-action: pan-y; }
 .hx-stage-fig { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
 .hx-stage-win { position: absolute; overflow: hidden; animation: hx-enter 0.3s ease-out; filter: drop-shadow(0 4px 6px #05021a8c); }
-.hx-stage-win img { display: block; height: 100%; max-width: none; image-rendering: pixelated; }
+.hx-stage-win img { display: block; height: 100%; max-width: none; }
 .hx-stage-fig .hx-flat { position: absolute; left: 50%; bottom: 12%; height: 70%; translate: -50% 0; }
 @keyframes hx-enter { from { opacity: 0; transform: translateY(8px); } }
 /* l'arche du sanctuaire : une grande baie arrondie derrière le héros (elle monte derrière le nom), sans ornement */
@@ -234,6 +234,6 @@ button.hx-dot { cursor: pointer; }
    n'avait plus de taille depuis la v0.39, seuls les mots restaient) */
 .hall-med .sum-med-icon { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; }
 .hall-med .sum-med-icon .icon { width: 72% !important; height: 72% !important; }
-/* essai ?vecto=1 (vecto.ts) : le héros vectoriel lisse respire, pieds fixes */
+/* le héros vectoriel lisse respire, pieds fixes (vecto.ts) */
 .hx-stage-win.hx-vec { overflow: visible; }
 .hx-stage-win.hx-vec img { width: 100%; image-rendering: auto; animation: hf-breathe 3.4s ease-in-out infinite; }

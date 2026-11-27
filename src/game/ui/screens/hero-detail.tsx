@@ -1,6 +1,6 @@
 // La page d'un héros (style moderne, 26/11/2026 ; disposition voulue par le propriétaire : « bien agencé » comme les
 // grands jeux du genre). Tout l'écran est son sanctuaire, teinté par son élément : une arche douce au fond, une dalle
-// plate d'un bord à l'autre où il se tient, en grand, au milieu (échelle entière : le pixel art reste net).
+// plate d'un bord à l'autre où il se tient, en grand, au milieu.
 // En haut : ses étoiles, son nom, sa rareté. De part et d'autre : ses capacités en médaillons ronds (à gauche sa
 // compétence et son attaque, à droite ses talents ; toucher = la description au milieu de l'écran). Des flèches (ou un
 // geste) passent au héros d'avant ou d'après. Dessous : sa puissance entre de petits ronds (élément, rôle, attributs,
@@ -25,7 +25,6 @@ import { SlotPanel, betterInBag } from './bag';
 import { describePassive, describeSkill, describeTalent } from '../../describe';
 import { runSkillPreview } from '../../scenes';
 import { close, open, swap, toast } from '../nav';
-import { FigStrip, figMeta } from '../sections/hero-fig';
 import { heroArt } from '../../look';
 import { vectoFig } from '../../vecto';
 import '../sections/heros.css';
@@ -78,7 +77,7 @@ function SkillPreview({ unit }: { unit: UnitInit }) {
 }
 
 /** Le héros en grand, pieds sur la dalle (88 % de la scène). L'échelle est la même pour tous (calée sur la hauteur de la
- * scène, sans toucher les médaillons) et tombe sur un nombre entier de points de l'écran : le pixel art reste net. */
+ * scène, sans toucher les médaillons). */
 function StageFigure({ defId, up }: { defId: string; up: number }) {
   const host = useRef<HTMLSpanElement>(null);
   const [box, setBox] = useState<[number, number]>([0, 0]);
@@ -91,42 +90,21 @@ function StageFigure({ defId, up }: { defId: string; up: number }) {
     ro.observe(el);
     return () => ro.disconnect();
   }, []);
-  const m = figMeta(defId);
   const [bw, bh] = box;
   const v = vectoFig(heroArt(defId));
-  if (v) {
-    // essai ?vecto=1 (vecto.ts) : le dessin vectoriel lisse, à la même taille que le pixel art (pas besoin d'une
-    // échelle entière : il reste net à toute taille) ; il respire par le CSS, pieds fixes
-    // même échelle que son pixel art (calée sur la largeur de sa planche, ramenée au même pas), pour comparer
-    const pw = m ? m[0] : v.w;
-    const steps = (Math.round(window.devicePixelRatio || 1) || 1) >= 2 ? Math.round(window.devicePixelRatio || 1) : 2;
-    const fit0 = 0.74 * Math.min((bh * 0.8) / 116, (bw - 2 * 64) / (pw * 0.82));
-    const fit = Math.max(1, Math.floor(fit0 * steps) / steps);
-    const feetY = bh * 0.88;
-    return (
-      <span class="hx-stage-fig" ref={host}>
-        {bh > 0 && (
-          <span class="hx-stage-win hx-vec" key={`${defId}-${up}`} style={{ left: `${bw / 2 - v.fx * fit}px`, top: `${feetY - v.fy * fit}px`, width: `${v.w * fit}px`, height: `${v.h * fit}px` }}>
-            <img src={v.big} alt="" draggable={false} style={{ transformOrigin: `${((v.fx / v.w) * 100).toFixed(1)}% ${((v.fy / v.h) * 100).toFixed(1)}%` }} />
-          </span>
-        )}
-      </span>
-    );
-  }
-  if (!m) return <span class="hx-stage-fig" ref={host}><img class="hx-flat" src={heroImage(defId)} alt="" /></span>;
-  const [w, h, fx, fy, n, ms] = m;
-  const dpr = Math.round(window.devicePixelRatio || 1) || 1;
-  const steps = dpr >= 2 ? dpr : 2;
-  // en hauteur : 116 pixels du dessin (un grand héros) sur 80 % de la scène ; en largeur : entre les médaillons ;
-  // puis réduit d'un quart (demande du 26/11) : le héros garde de l'air autour de lui, loin des médaillons et des flèches
-  const fit = 0.74 * Math.min((bh * 0.8) / 116, (bw - 2 * 64) / (w * 0.82));
-  const k = Math.max(1, Math.floor(fit * steps) / steps);
+  if (!v) return <span class="hx-stage-fig" ref={host}><img class="hx-flat" src={heroImage(defId)} alt="" /></span>;
+  // le dessin vectoriel lisse : en hauteur, 116 pixels du dessin (un grand héros) sur 80 % de la scène ; en largeur,
+  // entre les médaillons ; puis réduit d'un quart (demande du 26/11) : le héros garde de l'air autour de lui. Il
+  // respire par le CSS, pieds fixes.
+  const steps = (Math.round(window.devicePixelRatio || 1) || 1) >= 2 ? Math.round(window.devicePixelRatio || 1) : 2;
+  const fit0 = 0.74 * Math.min((bh * 0.8) / 116, (bw - 2 * 64) / (v.w * 0.82));
+  const fit = Math.max(1, Math.floor(fit0 * steps) / steps);
   const feetY = bh * 0.88;
   return (
     <span class="hx-stage-fig" ref={host}>
       {bh > 0 && (
-        <span class="hx-stage-win" key={`${defId}-${up}`} style={{ left: `${bw / 2 - fx * k}px`, top: `${feetY - fy * k}px`, width: `${w * k}px`, height: `${h * k}px` }}>
-          <FigStrip id={defId} n={n} ms={ms} />
+        <span class="hx-stage-win hx-vec" key={`${defId}-${up}`} style={{ left: `${bw / 2 - v.fx * fit}px`, top: `${feetY - v.fy * fit}px`, width: `${v.w * fit}px`, height: `${v.h * fit}px` }}>
+          <img src={v.big} alt="" draggable={false} style={{ transformOrigin: `${((v.fx / v.w) * 100).toFixed(1)}% ${((v.fy / v.h) * 100).toFixed(1)}%` }} />
         </span>
       )}
     </span>

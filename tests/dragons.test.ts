@@ -1,6 +1,6 @@
 // Les 3 dragons de la famille d'Elvyn (Brasyr feu, Rocvar terre, Venthys vent ; 27/11) : de vrais héros Légendaires qu'on
 // peut invoquer et fusionner avec leur élément, qui combattent, avec leurs noms de compétence en français et en anglais,
-// et leurs images vectorielles (ils n'ont pas de pixel art).
+// et leurs images vectorielles (menus et planche de combat).
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { Battle } from '../src/core/battle/engine';
@@ -64,7 +64,7 @@ describe('les 3 dragons', () => {
     getState().lang = lang;
   });
 
-  it('leurs images sont vectorielles, même sans ?vecto=1 (visage, dessin en pied)', () => {
+  it('leurs images vectorielles existent (tête, dessin en pied)', () => {
     for (const id of IDS) {
       expect(heroArt(id)).toBe(id);
       expect(heroImage(id)).toMatch(new RegExp(`^art/vecto/v/${id}\\.webp(\\?h=\\w+)?$`));
@@ -72,7 +72,7 @@ describe('les 3 dragons', () => {
       expect(v).toBeDefined();
       for (const url of [heroImage(id), v!.big, v!.small]) expect(existsSync(`public/${url.split('?')[0]}`)).toBe(true);
     }
-    // un héros qui a son pixel art le garde (l'essai vectoriel reste éteint par défaut)
-    expect(vectoFig('knights-8')).toBeUndefined();
+    // tous les héros sont en vectoriel (le pixel art est supprimé en v0.65.0)
+    expect(vectoFig('knights-8')).toBeDefined();
   });
 });

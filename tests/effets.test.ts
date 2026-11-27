@@ -4,7 +4,7 @@ import { Battle, elementBonus } from '../src/core/battle/engine';
 import { heroToUnit } from '../src/core/battle/units';
 import { ELEMENT_BONUS, type Effect, type UnitInit } from '../src/core/battle/types';
 import { HEROES, PASSIVE_STARS } from '../src/core/data/heroes';
-import { HD_ANIM } from '../src/game/hd-meta';
+import { VECTO_ANIM } from '../src/game/vecto-anim';
 import { heroArt } from '../src/game/look';
 
 function unit(id: string, side: 'hero' | 'enemy', slot: 0 | 1 | 2 | 3 | 4, effects: Effect[], extra: Partial<UnitInit> = {}): UnitInit {
@@ -85,7 +85,7 @@ describe('effets', () => {
       for (const r of ['common', 'rare', 'epic', 'legendary']) expect(list.filter((h) => h.rarity === r).length).toBeGreaterThan(0);
     }
     expect(HEROES.filter((h) => h.talent)).toHaveLength(16);
-    // les 3 dragons n'ont que leur dessin vectoriel (tests/dragons.test.ts)
-    expect(HEROES.filter((h) => !h.id.startsWith('dragon-')).every((h) => heroArt(h.id) in HD_ANIM.chars)).toBe(true);
+    // chaque héros (dragons compris) a sa planche de combat vectorielle
+    expect(HEROES.every((h) => heroArt(h.id) in VECTO_ANIM.chars)).toBe(true);
   });
 });

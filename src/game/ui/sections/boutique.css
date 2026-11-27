@@ -32,7 +32,7 @@
 .bq-fig { position: absolute; z-index: 1; pointer-events: none; overflow: hidden;
   left: calc(var(--x, 50%) - var(--fx) * var(--u)); bottom: calc(var(--y, 0px) - (var(--h) - 1 - var(--fy)) * var(--u));
   width: calc(var(--w) * var(--u)); height: calc(var(--h) * var(--u)); }
-.bq-fig img { position: absolute; left: 0; top: 0; height: 100%; max-width: none; image-rendering: pixelated; }
+.bq-fig img { position: absolute; left: 0; top: 0; height: 100%; max-width: none; }
 
 /* la lueur douce derrière un picto (penchée vers la lumière, en haut à droite) */
 .lg-glow { position: absolute; inset: -6% -10%; z-index: 0; pointer-events: none; border-radius: 50%;

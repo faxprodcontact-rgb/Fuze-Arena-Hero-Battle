@@ -1,20 +1,18 @@
-// Personnages HD animés au combat : les planches de refonte-graphique/pixel/hd/anim/jeu_export.py
-// (public/art/hd/, hd-meta.ts) et leur chorégraphie. Avec ?vecto=1, un personnage déjà exporté en VECTORIEL
-// (refonte-graphique/ui-moderne/jeu_export_vecto.py : public/art/vecto/jeu/, vecto-anim.ts, même format) remplace
-// son pixel art ; les autres gardent le leur. Le personnage est dessiné « en place » : c'est le jeu qui le
-// déplace (corps à corps), fait voler le projectile jusqu'à la vraie cible (tir) et pose l'impact sur la cible.
+// Personnages animés au combat : les planches VECTORIELLES de refonte-graphique/ui-moderne/jeu_export_vecto.py
+// (public/art/vecto/jeu/, vecto-anim.ts) et leur chorégraphie ; les effets reçus des sorts d'équipe
+// (refonte-graphique/ui-moderne/effets/recus.py : public/art/vecto/fx/, vecto-fx.ts). Le personnage est dessiné
+// « en place » : c'est le jeu qui le déplace (corps à corps), fait voler le projectile jusqu'à la vraie cible (tir) et
+// pose l'impact sur la cible.
 import Phaser from 'phaser';
 import type { Hit, SkillDef } from '../core/battle/types';
 import type { Element } from '../core/types';
-import { HD_ANIM } from './hd-meta';
 import { VECTO_ANIM } from './vecto-anim';
 import { VECTO_FX } from './vecto-fx';
-import { vectoOn } from './vecto';
 import { meleeTempo, plainTempo, tirTempo } from './hd-tempo';
 import { artUrl } from './art-url';
 
 type Rect = readonly number[];
-/** Une animation exportée (voir l'en-tête de hd-meta.ts). */
+/** Une animation exportée (voir l'en-tête de vecto-anim.ts). */
 interface Anim {
   genre: 'pose' | 'melee' | 'tir' | 'sort' | 'rayon' | 'equipe';
   ms: readonly number[];
@@ -43,8 +41,8 @@ interface Anim {
 }
 interface Char {
   name: string;
-  /** planche vectorielle : pixels de la planche par pixel du dessin (cases en pixels de la planche) ; absent = pixel art */
-  up?: number;
+  /** pixels de la planche par pixel du dessin (cases en pixels de la planche) */
+  up: number;
   top: number;
   avant?: number;
   sol: readonly number[];
@@ -57,17 +55,14 @@ interface Fx {
   devant: readonly number[];
   frames: readonly Rect[];
   eclat: readonly [string, Record<string, number>];
-  /** effet vectoriel (vecto-fx.ts) : pixels de la planche par pixel du dessin ; absent = pixel art */
-  up?: number;
+  /** pixels de la planche par pixel du dessin */
+  up: number;
 }
 /** L'avant du corps d'un ennemi « ordinaire » (pixels du dessin) : celui que les animateurs ont imaginé en face. */
 const AVANT = 40;
-const CHARS = (vectoOn() ? { ...HD_ANIM.chars, ...VECTO_ANIM.chars } : HD_ANIM.chars) as unknown as Record<string, Char>;
-// avec ?vecto=1, les effets reçus vectoriels (refonte-graphique/ui-moderne/effets/recus.py) remplacent ceux du pixel art
-const VFX = (vectoOn() ? VECTO_FX.fx : {}) as unknown as Record<string, Fx>;
-const FXS = { ...(HD_ANIM.fx as unknown as Record<string, Fx>), ...VFX };
-const UP: number = HD_ANIM.up;
-/** Les éléments dans le nom des effets reçus (refonte-graphique/pixel/hd/anim/effets). */
+const CHARS = VECTO_ANIM.chars as unknown as Record<string, Char>;
+const FXS = VECTO_FX.fx as unknown as Record<string, Fx>;
+/** Les éléments dans le nom des effets reçus (public/art/vecto/fx/<effet>-<élément>.webp). */
 const FX_ELEMENT: Record<Element, string> = { fire: 'feu', wind: 'vent', water: 'eau', earth: 'terre' };
 /** La lumière de la charge, à la couleur de l'élément (douce : elle se reconnaît sans éblouir). */
 const CHARGE_COLOR: Record<Element, number> = { fire: 0xffa04a, wind: 0x8cf0c0, water: 0x7cc4ff, earth: 0xe8c070 };
@@ -95,29 +90,26 @@ export interface HdHost {
 
 /** Charge la planche d'un personnage HD (et, pour un sort d'équipe, les effets reçus de son élément). */
 export function loadHd(scene: Phaser.Scene, id: string, element: Element) {
-  if (!scene.textures.exists(`hd-${id}`)) scene.load.image(`hd-${id}`, artUrl(CHARS[id]?.up ? `art/vecto/jeu/${id}.webp` : `art/hd/${id}.webp`));
+  if (!scene.textures.exists(`hd-${id}`)) scene.load.image(`hd-${id}`, artUrl(`art/vecto/jeu/${id}.webp`));
   if (CHARS[id]?.anims.speciale.genre === 'equipe') {
-    const vec = Object.keys(VFX).length > 0;
-    for (const key of Object.keys(vec ? VFX : FXS)) {
-      if ((key.endsWith(`-${FX_ELEMENT[element]}`) || (!vec && !key.includes('-'))) && !scene.textures.exists(`hdfx-${key}`)) {
-        scene.load.image(`hdfx-${key}`, artUrl(vec ? `art/vecto/fx/${key}.webp` : `art/hd/fx/${key}.webp`));
-      }
+    for (const key of Object.keys(FXS)) {
+      if (key.endsWith(`-${FX_ELEMENT[element]}`) && !scene.textures.exists(`hdfx-${key}`)) scene.load.image(`hdfx-${key}`, artUrl(`art/vecto/fx/${key}.webp`));
     }
   }
 }
 
-/** Les cases d'une planche (une seule fois par texture) ; `mul` : pixels de la planche par unité des cases. */
-function cut(scene: Phaser.Scene, key: string, rects: readonly Rect[], mul = UP) {
+/** Les cases d'une planche (une seule fois par texture ; en pixels de la planche). */
+function cut(scene: Phaser.Scene, key: string, rects: readonly Rect[]) {
   const tex = scene.textures.get(key);
   if (tex.has('0')) return;
-  rects.forEach((r, i) => tex.add(String(i), 0, r[0]! * mul, r[1]! * mul, r[2]! * mul, r[3]! * mul));
+  rects.forEach((r, i) => tex.add(String(i), 0, r[0]!, r[1]!, r[2]!, r[3]!));
 }
 
 /**
  * Pose la case `i` d'une planche : son coin haut-gauche à (ax, ay) × k du repère (pieds, bout du projectile…) ;
  * `up` : pixels de la planche par pixel du dessin.
  */
-function setCell(img: Phaser.GameObjects.Image, key: string, rects: readonly Rect[], i: number, k: number, up = UP) {
+function setCell(img: Phaser.GameObjects.Image, key: string, rects: readonly Rect[], i: number, k: number, up: number) {
   if (i < 0) {
     img.setVisible(false);
     return;
@@ -151,7 +143,7 @@ export class HdActor {
   readonly ch: Char;
   /** Taille d'un pixel du dessin, en unités du jeu. */
   readonly k: number;
-  /** Pixels de la planche par pixel du dessin (pixel art : UP ; vectoriel : le sien). */
+  /** Pixels de la planche par pixel du dessin. */
   readonly up: number;
   private play?: Play;
   /** Figé (il tombe) : plus aucune image ne change. */
@@ -164,8 +156,8 @@ export class HdActor {
     this.key = `hd-${id}`;
     this.ch = CHARS[id]!;
     this.k = k;
-    this.up = this.ch.up ?? UP;
-    cut(scene, this.key, this.ch.frames, this.ch.up ? 1 : UP);
+    this.up = this.ch.up;
+    cut(scene, this.key, this.ch.frames);
     this.img = scene.add.image(0, 0, this.key, '0');
     fig.add(this.img);
     const pose = this.ch.anims.pose;
@@ -551,7 +543,7 @@ function playReception(scene: Phaser.Scene, v: HdView, name: string, k: number, 
   const fx = FXS[name];
   const key = `hdfx-${name}`;
   if (!fx || !scene.textures.exists(key)) return 0;
-  cut(scene, key, fx.frames, fx.up ? 1 : UP);
+  cut(scene, key, fx.frames);
   const kk = v.hd?.k ?? k;
   const mk = (dz: number) => {
     const c = scene.add.container(0, 0).setVisible(false);
@@ -568,7 +560,7 @@ function playReception(scene: Phaser.Scene, v: HdView, name: string, k: number, 
       const x = v.body.x, y = v.body.y + feetY;
       for (const L of [back, front]) {
         L.c.setPosition(x, y).setDepth(v.body.depth + L.dz).setVisible(true);
-        setCell(L.img, key, fx.frames, (L === back ? fx.dos : fx.devant)[i]!, kk, fx.up ?? UP);
+        setCell(L.img, key, fx.frames, (L === back ? fx.dos : fx.devant)[i]!, kk, fx.up);
       }
       const p = per[String(i)] ?? 0;
       glow.setPosition(x, y - 55).setDisplaySize(130, 150).setDepth(v.body.depth + 2).setVisible(p > 0).setAlpha(p / 45);

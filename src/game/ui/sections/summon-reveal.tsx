@@ -108,8 +108,8 @@ function HeroShow({ hero, instant }: { hero: Hero; instant?: boolean }) {
         </svg>
       )}
       <div class="sr-hero">
-        <HeroFigure defId={hero.defId} class="sr-real" vecto />
-        {!instant && <HeroFigure defId={hero.defId} class="sr-ghost" vecto />}
+        <HeroFigure defId={hero.defId} class="sr-real" />
+        {!instant && <HeroFigure defId={hero.defId} class="sr-ghost" />}
       </div>
       {r === 3 && !instant && <span class="sr-wave" />}
     </div>
@@ -379,7 +379,7 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
                   <span class="sr-cell-fig">
                     <span class="sr-cell-glow" />
                     <span class="sr-cell-plinth" />
-                    <HeroFigure defId={h.defId} vecto />
+                    <HeroFigure defId={h.defId} />
                     {newlyFound.has(h.uid) && <span class="sr-cell-new">{t('new')}</span>}
                   </span>
                   <span class="sr-cell-name">{d.name}</span>

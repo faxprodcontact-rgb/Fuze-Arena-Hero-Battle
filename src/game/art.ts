@@ -1,8 +1,6 @@
-// Les couleurs des éléments, raretés et objets, et les images des personnages dans les menus : leur visage
-// (public/art/hd/v/<id>.webp) et leur respiration en pied (public/art/hd/pied/<id>.webp), tirés des planches HD par
-// refonte-graphique/pixel/hd/anim/vignettes.py. Au combat, les planches HD elles-mêmes (hd-fight.ts).
+// Les couleurs des éléments, raretés et objets, et la tête des héros dans les menus (art/vecto/v/<id>.webp, faite
+// par refonte-graphique/ui-moderne/heros/tetes.py). Le héros en entier : vecto.ts ; au combat : hd-fight.ts.
 import type { Element, Rarity } from '../core/types';
-import { DEFAULT_LOOK, hasFigure, heroArt, monsterArtId, type Look } from './look';
 import { artUrl } from './art-url';
 
 export const ELEMENT_COLOR: Record<Element, string> = {
@@ -14,18 +12,6 @@ export const RARITY_COLOR: Record<Rarity, string> = {
 export const ITEM_COLORS = ['#9aa0b5', '#4cc46b', '#3d8bff', '#a35cff', '#ffc94a', '#ff4d5e'];
 
 /**
- * Le visage d'un personnage HD (héros, monstre de clan, grand boss) : carré, en pixel art agrandi sans flou. Un
- * personnage sans pixel art (les 3 dragons) a un visage vectoriel lisse, coupé dans son dessin : art/vecto/v/<id>.webp.
- */
-export function faceUrl(id: string): string {
-  return artUrl(hasFigure(id) ? `art/hd/v/${id}.webp` : `art/vecto/v/${id}.webp`);
-}
-/** La respiration d'un personnage HD : une bande d'images de même taille (mesures dans hd-figures.ts). */
-export function figureUrl(id: string): string {
-  return artUrl(`art/hd/pied/${id}.webp`);
-}
-
-/**
  * La tête d'un héros pour sa CARTE DE COMBAT (les cartes du bas, demande du 27/11) : sa tête vectorielle, lisse, centrée
  * sur le visage, à la même échelle pour tous (art/vecto/v/<id du jeu>.webp, faite par
  * refonte-graphique/ui-moderne/heros/tetes.py). Les cases des menus gardent le héros en entier.
@@ -34,12 +20,7 @@ export function headUrl(defId: string): string {
   return artUrl(`art/vecto/v/${defId}.webp`);
 }
 
-/** Image d'un héros pour les menus (balise <img>) : son visage. */
+/** Image d'un héros pour les menus (balise <img>) : sa tête vectorielle (la même que sa carte de combat). */
 export function heroImage(defId: string): string {
-  return faceUrl(heroArt(defId));
-}
-
-/** Image d'un monstre pour les menus ; `look` choisit le clan (celui du combat à venir). */
-export function monsterImage(monsterId: string, element: Element = 'fire', look: Look = DEFAULT_LOOK): string {
-  return faceUrl(monsterArtId(monsterId, element, look));
+  return headUrl(defId);
 }

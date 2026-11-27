@@ -1,10 +1,10 @@
-# Les effets REÇUS par l'équipe (sort d'équipe), en VECTORIEL (27/11/2026, remplaçants de public/art/hd/fx/) :
+# Les effets REÇUS par l'équipe (sort d'équipe), en VECTORIEL (27/11/2026, remplaçants de ceux du pixel art) :
 # soin, régénération, purification, bouclier, défense, attaque, énergie, pour les 4 éléments (feu, vent, eau, terre).
 #
 #   python3 refonte-graphique/ui-moderne/effets/recus.py [--voir <dossier>] [soin bouclier …]
 #
 # Écrit public/art/vecto/fx/<effet>-<élément>.webp (une planche par effet et par élément) et src/game/vecto-fx.ts
-# (GÉNÉRÉ : même format que HD_ANIM.fx de hd-meta.ts, que hd-fight.ts lit tel quel avec ?vecto=1). Avec --voir : une
+# (GÉNÉRÉ, lu par hd-fight.ts ; le seul rendu du jeu depuis la v0.65.0). Avec --voir : une
 # planche de contrôle par effet (chaque image, ses deux calques posés sur une silhouette de héros, les 4 éléments).
 #
 # Comment le jeu les pose (hd-fight.ts : playReception) : chaque image a deux calques, « dos » (sous le héros) et
@@ -625,8 +625,8 @@ def main():
             control(voir, key, imgs, ms, el)
     body = json.dumps(dict(up=UP, fx=dict(sorted(table.items()))), separators=(',', ':'), ensure_ascii=False)
     head = ('// Généré par refonte-graphique/ui-moderne/effets/recus.py : ne pas modifier à la main.\n'
-            '// Les effets REÇUS des sorts d\'équipe, en VECTORIEL (avec ?vecto=1 : hd-fight.ts). Même format que HD_ANIM.fx de\n'
-            '// hd-meta.ts : planche art/vecto/fx/<effet>-<élément>.webp, frames [x, y, l, h] en pixels de la planche (rendue\n'
+            '// Les effets REÇUS des sorts d\'équipe, en VECTORIEL (lus par hd-fight.ts : playReception). Une\n'
+            '// planche art/vecto/fx/<effet>-<élément>.webp, frames [x, y, l, h] en pixels de la planche (rendue\n'
             '// ×up), (ax, ay) en pixels du dessin par rapport aux pieds du héros qui reçoit ; dos / devant : -1 = rien.\n')
     open(TS, 'w').write(head + 'export const VECTO_FX = ' + body + ' as const;\n')
     print('écrit', os.path.relpath(TS, ROOT))

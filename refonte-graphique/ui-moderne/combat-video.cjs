@@ -46,7 +46,7 @@ function virtualClock() {
 (async () => {
   const browser = await chromium.launch();
   const opts = { viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 };
-  const url = `http://localhost:${PORT}/?vecto=1`;
+  const url = `http://localhost:${PORT}/`;
   // 1) la sauvegarde d'essai
   let ctx = await browser.newContext(opts);
   let page = await ctx.newPage();

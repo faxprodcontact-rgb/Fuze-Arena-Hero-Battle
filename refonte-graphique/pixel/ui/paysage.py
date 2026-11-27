@@ -26,7 +26,7 @@ import numpy as np
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(os.path.dirname(HERE), 'fonds'))
+sys.path.insert(0, HERE)  # fondlib.py (venu de pixel/fonds/, supprimé en v0.65.0) est à côté
 import fondlib as F  # noqa: E402
 from fondlib import rgb, mix, rampe, bruit, bruit1, relief, roche, lobes, bandes, halo, nettoie  # noqa: E402
 

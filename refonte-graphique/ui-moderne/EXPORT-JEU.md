@@ -5,14 +5,14 @@ les anciens pour gagner de la place. » Pilote fait sur **Kael** (`assassins-2`,
 (`assassins-9`, tir) et le **golem de lave** (`mon-kael-costaud`, monstre). Cette consigne dit comment faire pareil pour
 chacun des ~75 autres personnages, un par un, plusieurs agents en même temps.
 
-Pour l'instant tout est derrière `?vecto=1` (gardé sur le téléphone ; `?vecto=0` l'éteint) : un personnage exporté
-remplace son pixel art au combat (campagne, tour, donjons, boss, Colisée, accueil, aperçu de compétence) ; un
-personnage pas encore exporté garde son pixel art.
+**Bascule faite le 27/11/2026 (v0.65.0)** : les 67 personnages ont été réexportés avec l'outil final, le vectoriel est
+le SEUL rendu du jeu (plus de drapeau `?vecto`), le pixel art est supprimé (section 5). Cette consigne sert maintenant
+à refaire la planche d'un personnage retouché, ou à faire celle d'un nouveau personnage.
 
 ## 1. Le format choisi (et pourquoi)
 
-On **garde le format du pixel art** (`HD_ANIM` de `src/game/hd-meta.ts`) : une planche par personnage + une table
-générée. `src/game/hd-fight.ts` sert tel quel (même chorégraphie : course jusqu'à la cible, projectile qui vole
+On a **gardé le format du pixel art** (l'ancien `HD_ANIM` de `hd-meta.ts`, supprimé depuis) : une planche par
+personnage + une table générée. `src/game/hd-fight.ts` sert tel quel (même chorégraphie : course jusqu'à la cible, projectile qui vole
 jusqu'à la vraie case, impact posé aux pieds de la cible, lumière de charge, tempo commun des attaques de base). Seules
 différences, lues par `hd-fight.ts` :
 
@@ -153,60 +153,57 @@ d'agent par personnage** (un peu plus pour un tir).
   au mauvais endroit) : numéros espacés + clé de contrôle (`id_color`), pixels isolés écartés, un morceau caché sous
   le suivant prend la boîte de son effet (`hidden_parts`) ; et une image de la fenêtre serrée trop proche d'un instant
   clé était retirée avec le pas LENT (167 ms) : le bond juste avant le coup perdait toutes ses images ;
-- les effets reçus d'un sort d'équipe (`genre='equipe'`) sont encore ceux du pixel art (`public/art/hd/fx/`) : à
-  redessiner une fois, dans le même style, pour les 4 éléments.
+- ~~effets reçus~~ : faits le 27/11 (lot 5) : les effets REÇUS d'un sort d'équipe (`genre='equipe'` : soin,
+  régénération, purification, bouclier, défense, attaque, énergie × 4 éléments) sont dessinés en vectoriel par
+  `effets/recus.py` (`python3 refonte-graphique/ui-moderne/effets/recus.py [--voir <dossier>] [soin bouclier …]`) :
+  planches `public/art/vecto/fx/<effet>-<élément>.webp`, table GÉNÉRÉE `src/game/vecto-fx.ts`, posées par `hd-fight.ts`
+  (`playReception`) aux pieds de chaque allié ;
+- **seconde mesure** (lot 5, 27/11) : un effet entièrement caché sous un AUTRE effet (une bouffée de l'impact sous la
+  lueur de l'éclat) n'avait pas de boîte : l'outil remesure ces images avec les effets peints dans l'ordre inverse
+  (`idmap_svg(..., reverse=True)`) et complète les boîtes manquantes. Les premiers lots (pilote, lots 1, 5, 7) ont été
+  faits avant cette correction et celles de `avance`, `retour`, `rayon` : les 67 ont été réexportés le 27/11 avec
+  l'outil final (un à la fois, toutes les planches sous 4,2 Mo).
 
 Remarque : la spéciale de Kael (« Soif de combat ») est un bonus d'équipe dans les règles : quand elle ne vise aucun
 ennemi, le mur de flammes n'a pas de cible et seul le geste se voit (déjà le cas en pixel art).
 
-## 4. Inventaire : ce que le jeu prend encore dans le pixel art, et son remplaçant
+## 4. Ce que le jeu affiche (tout en vectoriel depuis la v0.65.0)
 
-| usage (fichier de src/) | images | remplaçant vectoriel |
+| usage (fichier de src/) | images | fabriqué par |
 |---|---|---|
-| combat : personnages (`hd-fight.ts`, `hd-meta.ts` GÉNÉRÉ, `hd-tempo.ts`, `fight-view.ts`) | `public/art/hd/<id>.webp` (64 planches) | `public/art/vecto/jeu/<id>.webp` + `src/game/vecto-anim.ts` (cette consigne) |
-| combat : effets reçus des sorts d'équipe (`hd-fight.ts` : `receptionFx`, `playReception`) | `public/art/hd/fx/` (35) | à faire : effets vectoriels (soin, bouclier, bonus…) × 4 éléments, même format `fx` |
-| cartes du bas du combat (`battle-scene.ts`) | (ancienne bande `public/art/hd/pied/`) | fait (27/11) : la tête vectorielle `art/vecto/v/<id>.webp` (`heroImage`, `heros/tetes.py`), sans drapeau |
-| héros en pied des menus (`ui/hero-figure.tsx`, `ui/sections/hero-fig.tsx`, `CardFigure` de `ui/kit.tsx`) | `public/art/hd/pied/`, `public/art/hd/pose/` (`hcard-still`) | `art/vecto/<id>.webp` et `-160.webp` (`vectoFig`, déjà branché avec `?vecto=1` dans `kit.tsx`, `hero-figure.tsx`, `hero-detail.tsx`) ; `hero-fig.tsx` reste à brancher |
-| visages carrés partout (`art.ts` : `faceUrl`, `heroImage`, `monsterImage` ; listes, courrier, amis, Colisée, prép.) | `public/art/hd/v/` | `public/art/vecto/v/<id>.webp` (faits par `heros/tetes.py`, 47 héros) ; **à faire pour les monstres et grands boss** ; puis `faceUrl` → toujours `art/vecto/v/` |
-| savoir qu'un personnage est dessiné / qu'un grand boss existe (`look.ts` : `hasFigure`, `bigBoss` ; `vecto.ts`) | `src/game/hd-figures.ts` (GÉNÉRÉ par `vignettes.py`) | `VECTO` de `vecto.ts` / `VECTO_ANIM` |
-| fonds de combat (`bg/fond-px.ts`, `fond-meta.ts` GÉNÉRÉ, `look.ts`) | `public/art/px/fonds/` (8 clans) | `public/art/vecto/fonds/` + `src/game/fond-vecto.ts` (fait, derrière `?vecto=1`) |
-| décors des cartes de modes des menus (`ui/fond-image.ts` : `sceneVar`, aventure, donjons) | `public/art/px/fonds/<clan>.webp` | `public/art/vecto/fonds/<clan>.webp` (image fixe du fond vectoriel) |
-| CSS (`ui/style.css` : `img[src^="art/hd/"] { image-rendering: pixelated }`) | — | à retirer avec `art/hd/` |
-| tests (`tests/heros-de-clan.test.ts`, `clans.test.ts`, `effets.test.ts`, `dragons.test.ts`) | lisent `HD_FIG` / `HD_ANIM` / `figureUrl` | à réécrire sur `VECTO` / `VECTO_ANIM` au moment de la bascule |
-| pictos (`icons.webp`, `art/icons/`), chargement (`art/ui-px/`), logo (`art/ui/`) | style moderne, pas du pixel art de personnage | **à garder** |
+| combat : personnages (`hd-fight.ts`, `hd-tempo.ts`, `fight-view.ts`) | `public/art/vecto/jeu/<id>.webp` + `src/game/vecto-anim.ts` | `jeu_export_vecto.py` (cette consigne) |
+| combat : effets reçus des sorts d'équipe (`hd-fight.ts` : `receptionFx`, `playReception`) | `public/art/vecto/fx/` + `src/game/vecto-fx.ts` | `effets/recus.py` |
+| cartes du bas du combat (`battle-scene.ts`) et têtes des menus (`heroImage`, `headUrl` de `art.ts`) | `public/art/vecto/v/<id du jeu>.webp` | `heros/tetes.py` |
+| héros en pied des menus (`ui/hero-figure.tsx`, `ui/sections/hero-fig.tsx`, `CardFigure` de `ui/kit.tsx`, fiche) | `public/art/vecto/<id>.webp` et `-160.webp` (`vectoFig` de `vecto.ts`) | le dessin de chacun (`heros/<nom>/<nom>.py`, `monstres/<nom>/`) |
+| savoir qu'un personnage est dessiné / qu'un grand boss existe (`look.ts` : `hasFigure`, `bigBoss`) | `VECTO_ANIM` de `vecto-anim.ts` | |
+| fonds de combat et de l'accueil (`bg/fond-px.ts`, `look.ts`) | `public/art/vecto/fonds/<clan>.webp`, `<clan>-anim.webp` + `src/game/fond-vecto.ts` | `fonds/<clan>/<clan>.py`, `fonds/assemble_ts.py` |
+| décors des cartes de modes des menus (`ui/fond-image.ts` : aventure, donjons, boss) | `public/art/vecto/fonds/<clan>-menu.webp` (590 × 1100 : le fond du combat ×2 prendrait 4 fois plus de mémoire) | `fonds/assemble_ts.py` (réduit l'image fixe) |
+| pictos (`icons.webp`, `art/icons/`), chargement (`art/ui-px/`), logo (`art/ui/`) | style moderne | `pictos/fabrique.py`, `pixel/ui/` |
 
-## 5. La bascule finale, puis ce qu'on supprimera (quand TOUS seront passés)
+Test qui vérifie que toutes ces images existent : `tests/images.test.ts`.
 
-Bascule (une seule conversation, quand les ~75 personnages, les effets reçus et les visages des monstres sont faits) :
-`vectoOn()` vrai par défaut (ou retiré), `CHARS` de `hd-fight.ts` = `VECTO_ANIM.chars` seul, `faceUrl` sur
-`art/vecto/v/`, `hasFigure` / `bigBoss` sur `VECTO`, `fond-px.ts` et `fond-image.ts` sur les fonds vectoriels, tests
-réécrits, puis la suppression ci-dessous. Vérifier un combat de chaque mode, l'accueil, le Colisée et un vieux
-téléphone avant d'envoyer.
+## 5. La bascule (faite le 27/11/2026, v0.65.0)
 
-**À supprimer à la fin** (pas avant) :
+- `vecto.ts` : plus de drapeau `?vecto` (`vectoOn` retiré ; `vectoFig(id)` rend toujours le dessin vectoriel) ;
+  `hd-fight.ts` : `CHARS` = `VECTO_ANIM.chars`, effets reçus = `VECTO_FX` ; `fight-view.ts` : la branche « dessin
+  fixe » des dragons (`stillFig`, `loadStill`, `stillStrike`) retirée ; `art.ts` : `faceUrl`, `figureUrl`,
+  `monsterImage` retirés (`heroImage` = la tête vectorielle) ; `look.ts` : `hasFigure` lit `VECTO_ANIM` ;
+  `bg/fond-px.ts` : seulement les fonds vectoriels (lissés) ; `ui/fond-image.ts` : `<clan>-menu.webp` ; les bandes de
+  respiration pixel des menus (`FigStrip`, `px-idle`, `hcard-still` pixel) remplacées par l'image vectorielle qui
+  respire par le CSS (`.fig-breathe`) ; plus aucun `image-rendering: pixelated` sur un personnage ou un décor.
+- Supprimés : `public/art/hd/` (planches, `fx/`, `v/`, `pied/`, `pose/`), `public/art/px/` ; `src/game/hd-meta.ts`,
+  `hd-figures.ts`, `fond-meta.ts` ; les chaînes du pixel art `refonte-graphique/pixel/hd/`, `pixel/fonds/` (sauf
+  `fondlib.py`, déplacé dans `pixel/ui/` : l'écran de chargement s'en sert), `pixel/persos/`, `pixel/controle.py`,
+  `pixel/scene.py`, `pixel/voir.py`, `pixel/GUIDE.md` ; dans `pixel/sortie/`, toutes les sorties du pixel art (tout
+  sauf `ui/`).
+- Gardés : `refonte-graphique/pixel/sortie/ui/` (dont `vecto/`, toutes les sorties vectorielles), `pixel/ui/` (plan,
+  style, chargement, logo, icône ; avec `pixel/pix.py` dont `fondlib.py` a besoin), `refonte-graphique/ui-moderne/`.
+- Les outils de COMPARAISON pixel / vectoriel (`presentation.py` de chaque dossier, `pixel_frames` et `game_size_part`
+  de certains `anim.py`, `voir.py` de Mira, Ophira, Sylvar) lisaient le pixel art supprimé : ils ne marchent plus (ils
+  n'ont plus d'objet). Les fonds (`fonds/<clan>/<clan>.py`) sautent leur image de comparaison quand le fond pixel n'est
+  plus là. L'export du combat, les têtes, les fonds, les effets reçus, les avis et le suivi n'en dépendent pas.
 
-- images : `public/art/hd/` en entier (planches, `fx/`, `v/`, `pied/`, `pose/`), `public/art/px/` en entier (`fonds/`) ;
-- code généré : `src/game/hd-meta.ts`, `src/game/hd-figures.ts`, `src/game/fond-meta.ts` ;
-- code : la partie pixel de `bg/fond-px.ts` (`pxf-`, `FOND_META`, filtre NEAREST), `figureUrl` de `art.ts`, `ui/sections/hero-fig.tsx` et la bande de `ui/hero-figure.tsx` (remplacés par l'image
-  vectorielle), `hcard-still` (`art/hd/pose`) de `ui/kit.tsx`, `stillFig` / `stillStrike` de `fight-view.ts` (inutiles
-  quand les dragons ont leur planche), la règle CSS `img[src^="art/hd/"]` de `ui/style.css`, l'essai `?vecto=` de
-  `vecto.ts` ;
-- chaînes de fabrication du pixel art : `refonte-graphique/pixel/hd/` (dessins `.txt`, `anim/*/build.py`,
-  `anim/jeu_export.py`, `anim/vignettes.py`, `anim/controle_coupes.py`, `anim/vitesse-attaques.ts`, `boss/`,
-  `consignes/`, `suivi.py`), `refonte-graphique/pixel/fonds/` (décors pixel), `refonte-graphique/pixel/persos/`,
-  `refonte-graphique/pixel/controle.py` (et, après avoir vérifié avec `grep` que `pixel/ui/` ne s'en sert plus :
-  `pixel/pix.py`, `pixel/scene.py`, `pixel/voir.py`, `pixel/GUIDE.md`), et dans `refonte-graphique/pixel/sortie/` les sorties du pixel art
-  (`anim-*.gif`, `anim-*-planche.png`, `controle-speciales/`, `coupes-verticales.md`, `vitesse-attaques.md`…).
-
-**À garder** :
-
-- `refonte-graphique/pixel/sortie/ui/vecto/` : les sorties VECTORIELLES (vidéos, planches, avis, `jeu-pilote/`) ;
-- `refonte-graphique/pixel/ui/` (plan et style de l'interface : `PLAN.md`, `STYLE.md`) tant qu'il sert de référence ;
-- `refonte-graphique/ui-moderne/` en entier (dessins, animations, `jeu.py`, `jeu.json`, cet outil) ;
-- `public/art/vecto/` (images fixes, `v/`, `fonds/`, `jeu/`), `public/art/icons*`, `public/art/ui*` ;
-- `src/game/hd-fight.ts` et `src/game/hd-tempo.ts` (ils servent au vectoriel ; seulement renommer plus tard si on veut).
-
-## 6. Le plan pour les ~75 personnages
+## 6. Le plan qui a été suivi pour les ~75 personnages (fait le 27/11)
 
 Ordre : d'abord ceux qui jouent le plus (les 47 héros, puis les 24 monstres de clan, puis les 4 grands boss, qui
 demandent `up` plus petit : ils sont dessinés deux fois plus grands). Lots de 5 à 8 personnages par agent, en
