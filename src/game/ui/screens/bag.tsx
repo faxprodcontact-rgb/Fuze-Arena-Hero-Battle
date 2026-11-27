@@ -162,11 +162,13 @@ export function betterInBag(s: PlayerState, heroUid: number, slot: GearSlot): bo
 }
 
 /**
- * Un emplacement d'un héros : renforcer l'emplacement, et choisir l'objet d'un geste
- * (objets du sac d'abord, puis ceux portés par d'autres héros, qu'on peut leur reprendre).
+ * Un emplacement d'un héros (refait le 27/11 : boutons pierre grise et or, et la fiche de l'objet touché) : l'objet porté
+ * (sa panoplie), renforcer l'emplacement, puis les objets qu'on peut mettre (sac d'abord, puis ceux d'autres héros) :
+ * en toucher un montre ce qu'il apporte (chiffres, panoplie et son bonus) avant de l'équiper.
  */
 export function SlotPanel({ heroUid, slot }: { heroUid: number; slot: GearSlot }) {
   const s = useGame();
+  const [sel, setSel] = useState<number | null>(null);
   const level = slotLevel(s, heroUid, slot);
   const current = s.items.find((it) => it.heroUid === heroUid && it.slot === slot);
   const now = current ? itemBonus(current) : 0;
@@ -174,18 +176,29 @@ export function SlotPanel({ heroUid, slot }: { heroUid: number; slot: GearSlot }
   const worn = sortItems(s.items.filter((it) => it.slot === slot && it.heroUid !== undefined && it.heroUid !== heroUid));
   const cost = level < SLOT_MAX_LEVEL ? slotUpgradeCost(level) : null;
   const ok = !!cost && s.wallet.gold >= cost.gold && s.wallet.dust >= cost.dust;
+  const picked = sel !== null ? [...bag, ...worn].find((it) => it.uid === sel) : undefined;
+  // les pièces de cette panoplie que le héros porterait (sur ses autres emplacements, + celle-ci)
+  const setCount = (it: Item) => s.items.filter((x) => x.heroUid === heroUid && x.set === it.set && x.slot !== slot).length + 1;
   const choice = (it: Item) => {
     const o = owner(s, it);
     return (
-      <span class="pickable">
-        <ItemIcon item={it} level={level} hideLevel heroDefId={o?.defId} onClick={() => equipItem(it.uid, heroUid)} />
+      <span class={`pickable${it.uid === sel ? ' gear-sel' : ''}`}>
+        <ItemIcon item={it} level={level} hideLevel heroDefId={o?.defId} onClick={() => setSel(it.uid === sel ? null : it.uid)} />
         {itemBonus(it) > now && <span class="better"><Sign name="up" /></span>}
       </span>
     );
   };
+  const setLine = (it: Item, n: number) => it.set && (
+    <div class={`set-line set-${it.set}${n >= SET_PIECES ? ' set-on' : ''}`}>
+      <strong><span class="set-dot" />{t(`set.${it.set}`)}</strong>
+      <span class="set-count">{Math.min(n, SET_PIECES)} / {SET_PIECES}</span>
+      <span class="set-bonus">{describeStats(SET_BONUS[it.set])}</span>
+    </div>
+  );
   return (
     <div class="slot-panel">
-      <div class="row between center-y">
+      <div class="gear-now">
+        {current && <ItemIcon item={current} level={level} />}
         <div class="grow slot-info">
           <strong>{t('slot.level', { n: level })} / {SLOT_MAX_LEVEL}</strong>
           {current && (
@@ -194,8 +207,9 @@ export function SlotPanel({ heroUid, slot }: { heroUid: number; slot: GearSlot }
             </span>
           )}
         </div>
-        {current && <Btn kind="ghost" small onClick={() => unequipItem(current.uid)}>{t('item.unequip')}</Btn>}
+        {current && <Btn tone="basalte" small onClick={() => unequipItem(current.uid)}>{t('item.unequip')}</Btn>}
       </div>
+      {current && setLine(current, s.items.filter((x) => x.heroUid === heroUid && x.set === current.set).length)}
       {cost ? (
         <Btn kind="gold" wide disabled={!ok} onClick={() => upgradeSlot(heroUid, slot)}>
           {t('slot.upgrade')} <Cur k="gold" n={cost.gold} /> <Cur k="dust" n={cost.dust} />
@@ -207,6 +221,25 @@ export function SlotPanel({ heroUid, slot }: { heroUid: number; slot: GearSlot }
           {worn.map(choice)}
         </div>
       )}
+      {picked && (() => {
+        const o = owner(s, picked);
+        const main = itemMain(picked, level), cur = current ? itemMain(current, level) : 0;
+        const subs = describeStats(itemSubs(picked));
+        return (
+          <div class="gear-pick" style={{ '--rar': ITEM_COLORS[picked.rarity] } as never}
+            ref={(el) => el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })}>
+            <div class="gear-pick-main">
+              <span class="rar-dot" style={{ background: ITEM_COLORS[picked.rarity] }} />
+              {t(`stat.${SLOT_STAT[slot]}`)} <b>+{main} %</b>
+              {main !== cur && <span class={main > cur ? 'gear-up' : 'gear-down'}>{main > cur ? '▲' : '▼'} {Math.abs(main - cur)}</span>}
+              <Btn kind="gold" small class="gear-equip" onClick={() => { equipItem(picked.uid, heroUid); setSel(null); }}>{t('item.equip')}</Btn>
+            </div>
+            {subs && <div class="gear-subs">{subs}</div>}
+            {setLine(picked, setCount(picked))}
+            {o && <div class="muted small">{t('item.wornBy', { n: heroDef(o.defId).name })}</div>}
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -685,6 +685,26 @@ p { margin: 6px 0; }
 .passive.locked { opacity: 0.55; }
 .slot-panel { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; padding: 10px; animation: pop-in 0.15s ease-out; }
 .slot-panel .better { right: auto; left: -5px; }
+/* l'emplacement (refait le 27/11) : l'objet porté et son renforcement ; l'objet touché dans la liste est cerclé d'or et
+   sa fiche (chiffres, panoplie et bonus) s'ouvre dessous, avec « Équiper » */
+.gear-now { display: flex; align-items: center; gap: 10px; }
+.gear-now .slot-info { padding-left: 0; }
+.slot-panel .gear-sel { border-radius: 14px; box-shadow: 0 0 0 3px var(--c-select), 0 4px 12px #ffb53a66; }
+.gear-pick { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; text-align: left; border-radius: var(--r-m); background: var(--c-surface-2);
+  border: 1.5px solid color-mix(in srgb, var(--rar) 55%, transparent); box-shadow: 0 4px 12px #12083a1f; animation: pop-in 0.15s ease-out; }
+.gear-pick-main { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-weight: 600; color: var(--c-muted); }
+.gear-pick-main .gear-equip { margin-left: auto; }
+.gear-pick .gear-subs { margin-top: -4px; font-size: 13px; font-weight: 600; color: var(--c-muted); }
+.gear-pick .set-line { padding: 5px 10px; }
+.gear-pick .set-line .set-bonus { flex-basis: auto; margin-left: auto; }
+.gear-pick-main b { font: 400 20px var(--font-title); color: var(--c-text); }
+.gear-up { color: var(--c-action-lo); font-weight: 700; }
+.gear-down { color: var(--c-danger-lo); font-weight: 700; }
+.set-line .set-dot { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 50%; background: var(--set); box-shadow: 0 0 0 2px #ffffffb3; vertical-align: 1px; }
+.set-line .set-count { font: 400 14px var(--font-title); color: var(--c-muted); }
+.set-line .set-bonus { flex-basis: 100%; font-size: 13px; font-weight: 600; color: var(--c-muted); }
+.set-line.set-on { background: color-mix(in srgb, var(--set) 14%, var(--inset)); }
+.set-line.set-on .set-count, .set-line.set-on .set-bonus { color: var(--c-text); }
 .better { position: absolute; top: -6px; right: -6px; z-index: 2; display: grid; pointer-events: none; filter: drop-shadow(0 2px 0 #00000080); }
 .skill-preview { width: 100%; aspect-ratio: 720 / 470; margin-top: 8px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--edge); box-shadow: 0 0 0 1px var(--trim-soft); background: #26323a; }
 .skill-preview canvas { display: block; }

@@ -67,13 +67,13 @@ const BTN_TONE: Record<BtnKind, BtTone> = { green: 'basalte', gold: 'or', purple
  */
 export function Btn(p: {
   kind?: BtnKind; onClick?: () => void; disabled?: boolean; small?: boolean; wide?: boolean; size?: BtSize;
-  children: ComponentChildren; dot?: boolean; class?: string;
+  children: ComponentChildren; dot?: boolean; class?: string; tone?: BtTone;
 }) {
   const kind = p.kind ?? 'blue';
   const size = p.size ?? (p.small ? 's' : /\bbtn-fight\b/.test(p.class ?? '') ? 'l' : 'm');
   return (
     <button
-      class={`btn btn-${kind} ${btClass(BTN_TONE[kind], size)}${p.small ? ' btn-small' : ''}${p.wide ? ' btn-wide' : ''} ${p.class ?? ''}`}
+      class={`btn btn-${kind} ${btClass(p.tone ?? BTN_TONE[kind], size)}${p.small ? ' btn-small' : ''}${p.wide ? ' btn-wide' : ''} ${p.class ?? ''}`}
       disabled={p.disabled}
       onClick={() => !p.disabled && p.onClick?.()}
     >

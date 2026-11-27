@@ -275,11 +275,11 @@ export function HeroDetail({ uid }: { uid: number }) {
               ))}
             </div>
             <div class="row gap-s">
-              <Btn kind="blue" small wide onClick={() => equipBest(uid)}>{t('detail.autoEquip')}</Btn>
-              <Btn kind="ghost" small onClick={() => unequipAll(uid)}>{t('detail.unequip')}</Btn>
+              <Btn kind="gold" small wide onClick={() => equipBest(uid)}>{t('detail.autoEquip')}</Btn>
+              <Btn tone="basalte" small onClick={() => unequipAll(uid)}>{t('detail.unequip')}</Btn>
             </div>
             <h3 class="hx-slot-name"><Icon name={sheet.slot} size={18} /> {t(`slot.${sheet.slot}`)}</h3>
-            <SlotPanel heroUid={uid} slot={sheet.slot} />
+            <SlotPanel key={sheet.slot} heroUid={uid} slot={sheet.slot} />
           </div>
         </Modal>
       )}
