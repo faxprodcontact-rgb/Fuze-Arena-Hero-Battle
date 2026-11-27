@@ -54,8 +54,7 @@ export function BagView() {
       </div>
       {picking ? (
         <div class="recycle-bar">
-          <div class="row between center-y">
-            <span>{t('recycle.count', { n: picked.size })}</span>
+          <div class="row center-y" style={{ justifyContent: 'flex-end' }}>
             <Cur k="dust" n={dust} big />
           </div>
           <div class="row gap-s">
