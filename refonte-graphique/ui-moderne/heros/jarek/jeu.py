@@ -14,7 +14,7 @@ def fleche(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE_T, images=10),
+    'pose': dict(periode=1000 * A.IDLE_T),
     # le tir en cloche : la flèche part au lâcher (REL), le jeu la fait voler jusqu'à la vraie cible ; elle s'y plante
     'attaque': dict(genre='tir', tir=A.REL, coup=A.REL + A.FLY, cible=(A.FOE[0], A.FOE[1]), depuis=BOUCHE[0] + 3,
                     coupe=140, bouche=BOUCHE, projectile=fleche, proj_images=1, arc=26),

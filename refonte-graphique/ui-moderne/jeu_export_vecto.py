@@ -42,16 +42,21 @@ OUT_ART = os.path.join(ROOT, 'public', 'art', 'vecto', 'jeu')
 TS = os.path.join(ROOT, 'src', 'game', 'vecto-anim.ts')
 RENDU = os.path.join(HEROS, 'rendu-lot.cjs')
 
-UP = 1.25            # pixels de la planche par pixel du dessin (le combat montre ~1,16 pixel d'écran par pixel du dessin)
+UP = 1.0             # pixels de la planche par pixel du dessin (le combat montre ~1,16 pixel d'écran par pixel du dessin)
 SCALE = 1.22         # un pixel du dessin = 1,22 unité du combat (comme HD_ANIM.scale : même taille que le pixel art)
 SHEET_MAX = 2048     # côté maximal d'une planche (mémoire de l'iPhone)
-SHEET_WARN = 1024    # au-delà de 2048 × 1024, on prévient (≈ 8 Mo de mémoire graphique)
+# BUDGET MÉMOIRE (iPhone, demande du 27/11) : une planche = largeur × hauteur × 4 octets de mémoire graphique, comme le
+# pixel art (~3 Mo). Au-delà de MEM_MAX, l'export prévient en gros ; au-delà de MEM_STOP, il refuse.
+MEM_MAX = 4.2        # Mo (2048 × 512)
+MEM_STOP = 6.0       # Mo
 PAD = 2              # vide autour de chaque image dans la planche (le lissage ne bave pas sur la voisine)
 ALPHA_MIN = 4        # un pixel plus transparent que ça ne compte pas pour rogner
 FX_MAX = 150         # un effet plus large ou plus haut que ça (pixels du dessin : éclair plein écran) est retiré
-POSE_IMAGES = 10     # images du repos (une boucle)
-FPS = 12             # images par seconde des coups
-SAME = 1.5           # deux images de suite plus proches que ça (écart moyen, sur 255) n'en font qu'une
+POSE_IMAGES = 8      # images du repos (une boucle : ~4 i/s, la respiration est lente)
+FPS = 6              # images par seconde des coups, loin du coup…
+FPS_COUP = 14        # …et autour du coup (de COUP_AVANT ms avant à COUP_APRES ms après) : le geste qui compte reste fluide
+COUP_AVANT, COUP_APRES = 180, 260
+SAME = 4.0           # deux images de suite plus proches que ça (écart moyen sur les pixels peints, sur 255) n'en font qu'une
 
 
 # ======================================================================== chargement d'un personnage
@@ -216,11 +221,16 @@ def idmap_svg(fig, view, elems):
 
 # ======================================================================== un personnage
 
-def times_for(dur, fps, keys):
-    """Les débuts d'image : une grille régulière, plus les instants clés exacts (le coup tombe pile sur une image)."""
+def times_for(dur, fps, keys, dense=(), fps_dense=FPS_COUP):
+    """Les débuts d'image : une grille régulière (plus serrée dans les fenêtres `dense`, autour du coup), plus les
+    instants clés exacts (le coup tombe pile sur une image)."""
     step = 1000.0 / fps
     keys = sorted({round(k) for k in keys if 0 < k < dur})
     grid = [i * step for i in range(int(math.ceil(dur / step)))]
+    for a, b in dense:
+        d = 1000.0 / fps_dense
+        grid = [t for t in grid if not a <= t < b] + [a + i * d for i in range(int(math.ceil((b - a) / d))) if 0 <= a + i * d < dur]
+    grid.sort()
     ts = [t for t in grid if all(abs(t - k) > step * 0.4 for k in keys)] + keys
     ts = sorted(set(round(t, 1) for t in ts))
     return [t for t in ts if t < dur - 8] or [0.0]
@@ -272,7 +282,8 @@ def export_one(folder, voir=None):
         act = cfg.get('action', act_default)
         dur = cfg.get('duree') or float(getattr(A, keys_name)[-1][0])
         keys = [cfg['coup']] + list(cfg.get('charge', ())) + list(cfg.get('elan', ())) + ([cfg['tir']] if 'tir' in cfg else [])
-        ts = times_for(dur, cfg.get('fps', FPS), keys)
+        dense = cfg.get('dense', [(cfg['coup'] - COUP_AVANT, cfg['coup'] + COUP_APRES)])
+        ts = times_for(dur, cfg.get('fps', FPS), keys, dense, cfg.get('fps_coup', FPS_COUP))
         # l'action se termine sur la phase 0 du repos : la respiration repart sans à-coup
         t0 = math.ceil(dur / period) * period - dur
         plan[which] = dict(genre=cfg['genre'], ts=ts, dur=dur, act=act, t0=t0, cfg=cfg)
@@ -378,7 +389,11 @@ def export_one(folder, voir=None):
     def close(a, b):
         if a.shape != b.shape:
             return False
-        return float(np.abs(a.astype(np.int16) - b.astype(np.int16)).mean()) < SAME
+        # écart moyen sur les pixels peints (sinon le vide autour du personnage dilue tout)
+        m = (a[:, :, 3] > ALPHA_MIN) | (b[:, :, 3] > ALPHA_MIN)
+        if not m.any():
+            return True
+        return float(np.abs(a.astype(np.int16) - b.astype(np.int16))[m].mean()) < SAME
 
     meta_anims = {}
     for which, p in plan.items():
@@ -458,20 +473,25 @@ def export_one(folder, voir=None):
 
     # ---- la planche : rangées, les plus hautes d'abord
     order = sorted(range(len(cells)), key=lambda i: -cells[i][0].height)
-    x = y = rowh = 0
-    pos = {}
-    width = 0
-    for i in order:
-        im = cells[i][0]
-        if x + im.width + PAD > SHEET_MAX:
-            x, y, rowh = 0, y + rowh + PAD, 0
-        pos[i] = (x, y)
-        x += im.width + PAD
-        width = max(width, x)
-        rowh = max(rowh, im.height)
-    height = y + rowh
-    if height > SHEET_MAX:
-        sys.exit('%s : la planche ferait %d px de haut (> %d) : baisser fps (jeu.py) ou up' % (name, height, SHEET_MAX))
+
+    def pack(maxw):
+        x = y = rowh = width = 0
+        pos = {}
+        for i in order:
+            im = cells[i][0]
+            if x + im.width + PAD > maxw:
+                x, y, rowh = 0, y + rowh + PAD, 0
+            pos[i] = (x, y)
+            x += im.width + PAD
+            width = max(width, x)
+            rowh = max(rowh, im.height)
+        return width * (y + rowh), pos, width, y + rowh
+    # la largeur (de 1024 à 2048) qui donne la planche la plus petite (la mémoire = largeur × hauteur)
+    widest = max(c[0].width for c in cells) + PAD
+    _, pos, width, height = min((pack(w) for w in range(max(1024, widest), SHEET_MAX + 1, 128)), key=lambda r: r[0])
+    if height > SHEET_MAX or width * height * 4 / 1e6 > MEM_STOP:
+        sys.exit('%s : la planche ferait %d × %d (%.1f Mo de mémoire graphique, refus au-delà de %.1f) : baisser fps, '
+                 'images ou up dans jeu.py' % (name, width, height, width * height * 4 / 1e6, MEM_STOP))
     sheet = Image.new('RGBA', (width, height))
     for i, (im, ax, ay) in enumerate(cells):
         sheet.paste(im, pos[i])
@@ -482,9 +502,10 @@ def export_one(folder, voir=None):
     meta = dict(name=name, up=up, top=top, avant=avant, sol=sol, size=[width, height], frames=frames, anims=meta_anims)
     json.dump(meta, open(os.path.join(folder, 'jeu.json'), 'w'), separators=(',', ':'))
     mb = width * height * 4 / 1e6
-    report.append('%s : planche %d × %d (%d images, %d ko, %.1f Mo de mémoire graphique)%s' % (
-        name, width, height, len(cells), os.path.getsize(out_img) // 1024, mb,
-        '  ATTENTION : plus de 2048 × %d' % SHEET_WARN if height > SHEET_WARN else ''))
+    report.append('%s : planche %d × %d (%d images, %d ko) : %.1f Mo de mémoire graphique (budget %.1f Mo)%s' % (
+        name, width, height, len(cells), os.path.getsize(out_img) // 1024, mb, MEM_MAX,
+        '\n  ATTENTION : BUDGET MÉMOIRE DÉPASSÉ (iPhone) : baisser fps / images / up dans jeu.py, ou retirer des effets'
+        if mb > MEM_MAX else ''))
     if voir:
         control_sheet(voir, name, meta, sheet, view, feet, grd, plan)
     shutil.rmtree(tmp, ignore_errors=True)

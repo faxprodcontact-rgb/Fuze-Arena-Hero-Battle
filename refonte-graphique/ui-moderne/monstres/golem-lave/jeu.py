@@ -5,7 +5,7 @@ import anim as A
 ID = 'mon-kael-costaud'
 ANIM, DESSIN = A, A.K            # anim.py charge le dessin (golem-lave.py) sous le nom K
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE, images=10),
+    'pose': dict(periode=1000 * A.IDLE),
     # la massue passe par-dessus la bosse et s'abat : il va jusqu'à l'ennemi
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(146, 66), coupe=120),
     # il frappe le sol : trois geysers sortent en ligne jusqu'à l'ennemi (posés devant la vraie cible)
