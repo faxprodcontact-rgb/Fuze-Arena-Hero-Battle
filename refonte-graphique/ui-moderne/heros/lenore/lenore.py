@@ -512,7 +512,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # derrière le cou) jusque sous la mâchoire (côté lointain, la tête le cache)
     beads, rope_pts = necklace()
     det += [(ribbon(rope_pts, [0.5] + [0.7] * (len(rope_pts) - 2) + [0.5]), ROPE.shadow, 0.9)]
-    fig.part('torso', torso, skin, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(skin.deep, 0.22, 3.2))
+    tor_part = fig.part('torso', torso, skin, cel=2.0, rim=0.7, cast=1.2, details=det, occl=(skin.deep, 0.22, 3.2))
 
     # ---- les perles d'ivoire du collier : des plus lointaines aux plus proches (les proches passent devant) ; chacune
     # pose son ombre douce sur la poitrine ; celle qui passe derrière la nuque est coupée par le contour du cou ----
@@ -524,8 +524,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         cut = _clip_shape(b_, g_tor)
         if cut is None:
             continue
+        bd = [(ellipse(x + 0.35 * r, y - 0.35 * r, 0.45 * r, 0.3 * r, -25), IVORY.hi, 0.95)]
+        if s_ > 50:
+            # sous la mâchoire (côté lointain) : la perle reste opaque, l'ombre de la mâchoire est peinte DEDANS, douce,
+            # du haut vers le milieu (l'ombre portée de la tête ne passe pas sur les perles : plus de perle « fantôme »)
+            k_ = min(1.0, (s_ - 46) / 12)
+            bd.append((cut, ('lin', 0, y - r, 0, y + 0.5 * r, [(0, IVORY.deep, 0.75 * k_), (0.55, IVORY.shadow, 0.35 * k_),
+                                                                (1, IVORY.shadow, 0)]), 1))
         fig.part('bead%d' % i, cut, IVORY, cel=0.5 + 0.05 * z, rim=0.45, cast=0.7, cast_on=['torso'] + bead_names,
-                 details=[(ellipse(x + 0.35 * r, y - 0.35 * r, 0.45 * r, 0.3 * r, -25), IVORY.hi, 0.95)])
+                 details=bd)
         bead_names.append('bead%d' % i)
 
     # ======================================================================== le pagne en peau de tigre, la corde
@@ -797,7 +804,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (ellipse(*J((91.4, 52.4)), 1.4, 0.8, -12), '#2a0b24', 0.7),
            (ellipse(*J((91.4, 52.3)), 1.1, 0.6, -12), GUMS, 1)]
     fig.part('head', head, skin, grad=(96, 30, 66, 54, [(0, skin.light), (0.5, skin.base), (1, skin.shadow)]),
-             cel=1.3, rim=0.65, cast=1.4, details=hd, cast_on=[q.name for q in fig.parts if q.name not in ('m3', 'm4')])
+             cel=1.3, rim=0.65, cast=1.4, details=hd, cast_on=[q.name for q in fig.parts if q.name not in ['m3', 'm4', 'torso'] + bead_names])
+    # l'ombre portée de la tête sur le buste est peinte DANS le buste (sous les perles) : peinte par-dessus, elle voilait
+    # la perle sous la mâchoire (une perle « fantôme », à moitié transparente). Mêmes décalages et densités que l'outil.
+    to_tor = _inv(TOR)
+    for (dx_, dy_), op_ in (((-1.4 * 0.55, 1.4 * 1.25), 0.2), ((-1.4 * 0.3, 1.4 * 0.6), 0.28)):
+        sh_ = head.map(lambda q: mapp(to_tor, add(mapp(HEAD, q), (dx_, dy_))))
+        tor_part.details.append((sh_, '#2a0f55', op_))
     # les deux défenses d'ivoire qui montent de la mâchoire (la proche devant la lèvre)
     tN = sm([J(p) for p in [(76.2, 53.0), (76.5, 50.6), (77.1, 48.0), (78.6, 45.8), (79.1, 48.4), (79.1, 51.0), (79.0, 52.9), (77.6, 53.5)]], sharp=(3,))
     fig.part('tuskN', tN, IVORY, cel=0.6, rim=0.5, cast=0.7, cast_on=['head'],
