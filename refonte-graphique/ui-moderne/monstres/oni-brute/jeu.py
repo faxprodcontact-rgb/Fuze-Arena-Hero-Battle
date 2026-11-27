@@ -9,7 +9,7 @@ ANIM, DESSIN = A, A.K            # anim.py charge le dessin (oni-brute.py) sous 
 CX = A.K.build(pose=A.pose_at(A.SP_HIT / 1000.0, 'special', 0)[0]).ctx['tip'][0]
 
 JEU = {
-    'vue': (-34, -52, 330, 174),          # plus large que la vidéo : la faille et le dernier geyser, la massue dressée
+    'vue': (-34, -92, 330, 214),          # plus large que la vidéo : la faille et le dernier geyser, la massue dressée
     'pose': dict(periode=2400),
     # « Écrase-crâne » : il va jusqu'à l'ennemi et abat la massue sur lui (la traînée de fer, l'impact, la poussière et
     # les mottes restent avec lui : il est collé à l'ennemi) ; la traînée en demi-cercle est large : fx_max relevé

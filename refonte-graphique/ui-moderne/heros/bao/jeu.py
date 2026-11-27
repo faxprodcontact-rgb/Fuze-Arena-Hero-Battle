@@ -39,6 +39,7 @@ def grand_nuage(fig, i):
 
 
 JEU = {
+    'vue': (-12, -40, 300, 170),          # plus large que la vidéo : le vent qui tourne autour de lui
     'pose': dict(periode=2600),
     # « Bouffée de la gourde » : il pousse le bâton, la gourde lâche une bouffée qui vole jusqu'à la vraie cible
     # et y éclate en volutes et en feuilles

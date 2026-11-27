@@ -26,6 +26,8 @@ def onde(fig, i):
 
 
 JEU = {
+    'vue': (-64, -54, 340, 192),
+    'vue_proj': (-84, -32, 100, 44),     # l'onde et son long ruban de vent          # plus large que la vidéo : le bras armé loin derrière, les poings levés
     'pose': dict(periode=2600),
     # « Poing de bourrasque » : il va jusqu'à l'ennemi, frappe droit devant ; l'éclat au poing reste avec lui, les
     # anneaux d'air et les rafales qui filent au-delà du poing sont posés sur la cible

@@ -415,7 +415,7 @@ def export_one(folder, voir=None):
                     elif w_ > cfg.get('fx_max', FX_MAX) or (w_ > 0.6 * cfg.get('fx_max', FX_MAX) and h_ > 0.6 * cfg.get('fx_max', FX_MAX)):
                         where = 'drop'
                         report.append('%s %s %d : effet de %dx%d retiré (trop grand)' % (name, which, i, w_, h_))
-                    elif flying and cx >= depuis:
+                    elif flying and (cfg['vol'](t, cx, view[1] + (y0 + y1) / 2 / up, layer, el) if 'vol' in cfg else cx >= depuis):
                         where = 'proj'
                     elif which != 'pose' and coupe is not None and cx >= coupe and t >= cfg.get('cible_des', 0):
                         where = 'tgt'

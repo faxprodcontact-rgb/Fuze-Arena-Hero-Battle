@@ -12,5 +12,5 @@ JEU = {
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(180, 92), coupe=165),
     # « Rugissement du glacier » : il rugit, bondit et frappe le sol ; l'onde de pics de glace court vers l'ennemi
     # (la fissure et les premiers pics restent devant lui, les derniers pics et le gros bouquet sont posés sur la cible)
-    'speciale': dict(genre='sort', coup=A.WAVE0 + 280, cible=(242, 60), coupe=200, charge=(150, 920)),
+    'speciale': dict(genre='sort', coup=A.WAVE0 + 280, cible=(242, 60), coupe=206, charge=(150, 920)),
 }

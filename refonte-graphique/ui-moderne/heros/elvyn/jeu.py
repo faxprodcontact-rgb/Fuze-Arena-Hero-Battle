@@ -34,6 +34,32 @@ def tidy(fx):
 A.fx_attack = tidy(A.fx_attack)
 A.fx_special = tidy(A.fx_special)
 
+# Le dragon d'eau est dessiné comme des MORCEAUX de la figure (avec ses ombres), pas comme un effet : l'outil le
+# laisserait collé à Elvyn. Au combat, on rend ces morceaux à part, en un seul effet (devant lui), pour qu'il puisse
+# être posé sur la cible.
+_water_dragon = A.water_dragon
+
+
+def water_dragon(fig, *a, **kw):
+    n = len(fig.parts)
+    r = _water_dragon(fig, *a, **kw)
+    new = fig.parts[n:]
+    if new:
+        del fig.parts[n:]
+        sub = object.__new__(type(fig))
+        sub.__dict__.update(fig.__dict__)
+        sub.__dict__.pop('svg', None)
+        sub.parts, sub.defs, sub.under, sub.over, sub.fx_back, sub.fx_front = new, [], [], [], [], []
+        sub.n = fig.n + 5000
+        s = sub.svg()
+        fig.n = sub.n
+        fig.defs.append(s[s.index('<defs>') + 6:s.index('</defs>')])
+        fig.fx_front.append('<g>%s</g>' % s[s.index('</defs>') + 7:s.rindex('</svg>')])
+    return r
+
+
+A.water_dragon = water_dragon
+
 BOUCHE = (103.3, 39.2)          # là où l'orbe se détache de la perle (perle + (6, -4,5) au lâcher)
 
 
@@ -68,13 +94,13 @@ def orbe(fig, i):
 JEU = {
     'pose': dict(periode=2000),
     # « L'orbe de la perle » : il charge la perle, tend le bras ; l'orbe vole jusqu'à la vraie cible et y éclate
-    # (après l'impact, toutes les gouttes restent sur la cible, même celles qui rebondissent vers lui)
-    'attaque': dict(genre='tir', tir=A.ATT_FIRE, coup=A.ATT_HIT, cible=A.FOE, depuis=BOUCHE[0] - 2, bouche=BOUCHE,
+    # (le coup : 20 ms après l'arrivée, l'éclat est déjà là ; après l'impact, toutes les gouttes restent sur la cible, même celles qui rebondissent vers lui)
+    'attaque': dict(genre='tir', tir=A.ATT_FIRE, coup=A.ATT_HIT + 20, cible=A.FOE, depuis=BOUCHE[0] - 2, bouche=BOUCHE,
                     projectile=orbe, proj_images=2, proj_ms=[60, 60], arc=8,
                     coupe=lambda t: 150 if t < A.ATT_HIT else -200),
     # « Dragon des marées » : il éveille la perle (bras d'eau, bulles : avec lui) ; le dragon d'eau jaillit, serpente et
     # plonge sur l'ennemi : dès qu'il jaillit, il est posé sur chaque cible (il ne se perd pas en route)
-    'speciale': dict(genre='sort', coup=A.SP_HIT, cible=A.FOE, charge=(A.SP_GATHER[0], A.SP_EMERGE), fx_max=200,
+    'speciale': dict(genre='sort', coup=A.SP_HIT, cible=A.FOE, charge=(160, A.SP_EMERGE), fx_max=200,
                      coupe=lambda t: 150 if t < A.SP_EMERGE else -200,
                      dense=[(A.SP_EMERGE - 60, A.SP_EMERGE + 200), (A.SP_HIT - 180, A.SP_HIT + 260)]),
 }

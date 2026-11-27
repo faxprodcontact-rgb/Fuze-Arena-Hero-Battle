@@ -61,7 +61,9 @@ JEU = {
     # « Shuriken du vent » : il file en tournoyant jusqu'à l'ennemi (le jeu le fait voler), s'y plante un instant
     # (éclat, croissants, étincelles sur la cible), puis revient en boomerang jusqu'à sa main (`retour`)
     'attaque': dict(genre='tir', tir=TIR, coup=A.T_HIT, cible=(A.EX, A.EY - 3), bouche=(star_x(TIR), 27),
-                    depuis=lambda t: star_x(t) - 20, coupe=165, arme=['fstar'],
+                    # en vol : le shuriken (un morceau, `arme`), sa traînée et ses croissants (derrière) ; l'éclat et les
+                    # étincelles de l'impact (devant) restent sur la cible pendant le retour
+                    vol=lambda t, x, y, couche, el: couche == 'b' and x >= star_x(t) - 20, coupe=165, arme=['fstar'],
                     projectile=lambda fig, i: _star(fig, i, False), proj_images=4, proj_ms=[60, 60, 60, 60],
                     retour=(A.T_BACK, A.T_CATCH), revient=lambda fig, i: _star(fig, i, True), retour_images=3,
                     dense=[(A.T_HIT - 180, A.T_CATCH + 60)]),

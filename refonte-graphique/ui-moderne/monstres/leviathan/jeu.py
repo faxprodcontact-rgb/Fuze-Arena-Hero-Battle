@@ -20,12 +20,12 @@ def vague(fig, i):
 JEU = {
     'up': 0.6,
     'vue_proj': (-142, -62, 180, 70),
-    'pose': dict(periode=2400, images=8),
+    'pose': dict(periode=2400, images=6),
     # « Tentacule des profondeurs » : il rugit, le tentacule plonge dans le trou et jaillit sous le héros (le tentacule
     # lointain est fait de MORCEAUX du dessin : `arme`, posés sur la cible)
-    'attaque': dict(genre='sort', coup=A.A_HIT, cible=(A.HERO_X, A.GR - 52), coupe=280, arme=('tentX', 'tentXb'), fps=5),
+    'attaque': dict(genre='sort', coup=A.A_HIT, cible=(A.HERO_X, A.GR - 52), coupe=280, arme=('tentX', 'tentXb'), fps=4),
     # « Raz-de-marée des abysses » : il se dresse, se jette en avant ; la vague roule jusqu'aux héros et déferle
     'speciale': dict(genre='tir', tir=A.S_LAUNCH, coup=A.S_CRASH, cible=(A.HERO_X, A.GR - 50), depuis=200, coupe=280,
                      bouche=(A.WAVE_X0, A.GR), projectile=vague, proj_images=2, proj_ms=[90, 90], rase=1,
-                     charge=(150, 900), fps=5),
+                     charge=(150, 900), fps=4),
 }
