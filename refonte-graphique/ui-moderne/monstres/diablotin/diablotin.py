@@ -68,7 +68,7 @@ SH_N, SH_F = (62.4, 88.0), (84.6, 88.6)                # les épaules
 G0 = (49.6, 84.6)                         # le milieu du poing proche (le manche de la massue le traverse)
 ANG0 = 201.0                              # la massue : du poing vers sa tête (degrés, repère de l'écran, y vers le bas)
 WR_F0 = (92.2, 88.6)                      # le poignet lointain (main ouverte)
-TAIL_R = (59.0, 102.4)                    # la racine de la queue
+TAIL_R = (62.6, 100.8)                    # la racine de la queue : le bas du dos, cachée derrière le pagne
 L_TN, L_SN = 7.4, 7.0                     # cuisse et jambe (proche)
 L_TF, L_SF = 5.4, 5.0
 L_UN, L_FN = 13.0, 8.0                    # bras et avant-bras (proche)
@@ -207,7 +207,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     UC = mchain(U, mT(0, -0.5 * br))                                         # ce qui monte avec la poitrine
     TOR = mchain(U, mS(1 + 0.01 * br, 1 + 0.025 * br, 72, 98))               # le ventre se gonfle
     HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], *NECK), mS(1.1, 1.1, *NECK))   # tête un peu plus grande (×1,1)
-    PAG = mchain(PEL, mskx(-0.06 * P['pg'], 96))
+    PAG = mchain(U, mskx(-0.06 * P['pg'], 96))                               # le pagne suit le buste (taille sans marche)
 
     # ---- les jambes : les hanches suivent le bassin, les pieds restent où on les pose ----
     def foot_t(A0, off):
@@ -227,8 +227,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- la longue queue fine et son fer de pique (une seule forme), derrière tout ----
     q, qc = P['q'], P['qc']
     tr = mapp(PEL, TAIL_R)
-    tpts = [(59.0, 102.4), (54.6, 104.6), (48.6, 105.4), (43.0, 104.4), (39.0, 101.6), (36.6, 98.0), (35.6, 95.0)]
-    tpts = [rot((p[0] - 59.0, p[1] - 102.4), -q * 9.0 * (i / 6) ** 1.3) for i, p in enumerate(tpts)]
+    tpts = [TAIL_R, (57.4, 104.0), (49.4, 105.4), (43.0, 104.4), (39.0, 101.6), (36.6, 98.0), (35.6, 95.0)]
+    tpts = [rot((p[0] - TAIL_R[0], p[1] - TAIL_R[1]), -q * 9.0 * (i / 6) ** 1.3) for i, p in enumerate(tpts)]
     tpts = [(tr[0] + p[0], tr[1] + p[1]) for p in tpts]
     tpts = tpts[:4] + [(p[0] + qc * 1.2 * (i + 1), p[1] - qc * 0.8 * (i + 1)) for i, p in enumerate(tpts[4:])]
     tc = crpath(tpts, 40)
@@ -313,7 +313,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  cel=0.2, rim=0.3, cast=0.3, cast_on=['fhand'])
 
     # ---- le buste : corps sec, épaules étroites, ventre rond (le dôme de l'épaule proche fait partie du buste) ----
-    torso0 = sm([(69.0, 83.4), (65.6, 84.8), (62.8, 86.6), (61.2, 89.0), (60.8, 92.0), (61.0, 95.0), (61.2, 98.0),
+    torso0 = sm([(69.0, 83.4), (65.6, 84.8), (62.8, 86.6), (61.2, 89.0), (60.8, 92.0), (60.7, 95.0), (60.8, 98.0),
                  (62.6, 100.6), (70.0, 101.4), (78.6, 100.8), (83.4, 98.8), (86.0, 95.8), (86.6, 92.6), (86.0, 89.6),
                  (84.8, 87.2), (82.8, 85.2), (79.6, 83.6), (75.0, 83.0)], t=0.95)
     Sn = mapp(inv(TOR), mapp(UC, SH_N))
@@ -359,22 +359,31 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('fknot', ellipse(pend[0], pend[1] + 0.1, 1.0, 0.75), ROPE, cel=0.2, rim=0.3, cast=0.4, cast_on=['fang', 'torso'])
 
     # ---- le pagne en peau de tigre (plus long devant, bas en touffes), la cordelette nouée côté lointain ----
-    pag_pts = [(58.6, 96.0), (64.0, 97.6), (71.0, 98.4), (78.0, 97.8), (84.4, 96.4), (85.2, 99.6), (84.8, 103.0),
+    # (avis du propriétaire, tour 1 des monstres : le pagne et la ceinture étaient coupés à la verticale sur le côté
+    # proche, avec une marche sur le flanc) : le haut du pagne suit la même ellipse que la ceinture autour du bassin ;
+    # son côté proche part du flanc sans marche et tourne autour de la hanche (bord arrondi) vers l'arrière
+    WAIST = (73.6, 95.6, 13.2, 2.4)
+    wx = lambda a: (WAIST[0] + WAIST[2] * math.cos(math.radians(a)), WAIST[1] + WAIST[3] * math.sin(math.radians(a)))
+    top_ = [wx(a) for a in (163, 140, 115, 90, 65, 40, 18)]
+    pag_pts = [(60.7, 94.9)] + top_ + [(85.6, 96.6), (85.4, 99.6), (84.8, 103.0),
                (83.6, 106.4), (81.6, 104.4), (80.2, 107.4), (78.0, 104.8), (75.6, 106.2), (73.4, 104.0), (70.6, 105.2),
-               (68.2, 103.2), (65.0, 104.2), (62.6, 102.4), (59.8, 103.4), (58.2, 100.6)]
-    pag = sm(pag_pts, sharp=(7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17), t=0.9)
+               (68.2, 103.2), (65.0, 104.2), (62.8, 102.6), (61.4, 103.0), (60.3, 101.6), (60.2, 98.4)]
+    pag = sm(pag_pts, sharp=(11, 12, 13, 14, 15, 16, 17, 18, 19), t=0.9)
     pd = [(taper(crpath([(66.8, 97.8), (66.2, 100.6), (66.6, 103.0)], 10), 1.5, 0.2, tip='sharp'), STRIPE, 0.88),
           (taper(crpath([(76.8, 98.0), (77.6, 100.8), (77.2, 104.0)], 10), 1.7, 0.2, tip='sharp'), STRIPE, 0.88),
           # les plis : le creux, l'arête claire à sa droite ; la lumière du côté lointain
           (ribbon([(71.6, 99.0), (71.4, 101.8), (71.8, 104.0)], [0.2, 1.0, 0.2]), TIGER.shadow, 0.5),
           (ribbon([(72.8, 99.0), (72.8, 101.6), (73.2, 103.4)], [0.1, 0.7, 0.1]), TIGER.light, 0.55),
           (ribbon([(80.2, 98.4), (81.6, 101.6), (82.2, 105.0)], [0.2, 1.2, 0.2]), TIGER.hi, 0.5),
-          (sm([(58.6, 97.0), (61.4, 98.0), (61.8, 101.6), (59.8, 103.0), (58.4, 100.6)]), TIGER.deep, 0.35)]
+          # le côté proche qui tourne vers l'arrière, dans l'ombre douce
+          (sm([(61.0, 95.6), (62.6, 96.6), (63.4, 99.6), (62.8, 102.4), (61.2, 102.8), (60.3, 100.6), (60.4, 97.6)]), TIGER.deep, 0.3)]
     fig.part('pagne', pag, TIGER, grad=(84, 97, 60, 105, [(0, TIGER.light), (0.5, TIGER.base), (1, TIGER.shadow)]),
              cel=1.0, rim=0.6, cast=1.0, details=pd)
     # la cordelette de la ceinture : un morceau d'ellipse autour de la taille (une seule courbe lisse)
-    belt_c = [(71.4 + 13.6 * math.cos(math.radians(a)), 95.4 + 2.5 * math.sin(math.radians(a))) for a in [176 - 172 * i / 30 for i in range(31)]][::-1]
-    belt = ribbon(belt_c, [0.9] + [1.55] * 29 + [0.9], sharp_ends=False)
+    # (elle déborde un peu de chaque côté puis est coupée par le contour du corps : elle passe derrière les hanches)
+    belt_c = [wx(a) for a in [186 - 192 * i / 30 for i in range(31)]][::-1]
+    body_g = poly_of(torso0).union(poly_of(pag))
+    belt = shape_of(poly_of(ribbon(belt_c, [1.55] * 31, sharp_ends=False)).intersection(body_g), step=0.3, t=0.7)
     fig.part('belt', belt, ROPE, cel=0.45, rim=0.4, cast=0.7, cast_on=['pagne', 'torso'],
              details=[(ribbon([(x, y - 0.4) for x, y in belt_c[2:-2]], [0.1] + [0.45] * 25 + [0.1]), ROPE.hi, 0.7)]
              + [(ellipse(x, y, 0.45, 0.75, -20), ROPE.shadow, 0.5) for x, y in belt_c[3:-2:4]])

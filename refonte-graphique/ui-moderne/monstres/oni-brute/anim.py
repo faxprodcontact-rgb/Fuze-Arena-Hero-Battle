@@ -113,13 +113,13 @@ def club(G, ang, wd, **kw):
 
 
 LIFT = club((24.5, 74.5), -118, (4.6, -7.4), crouch=1, lean=-1, head=(0, 1), tilt=-1, ml=1, pg=1)
-HOLD = club((40.5, 17.5), -214, (0.8, 8.2), crouch=-1, lean=-4, breath=1.0, head=(-1, -1), tilt=-5, ml=1, pg=1, far=(1, -1),
+HOLD = club((40.5, 17.5), -214, (0.8, 8.2), bend=-1, crouch=-1, lean=-4, breath=1.0, head=(-1, -1), tilt=-5, ml=1, pg=1, far=(1, -1),
             far_rot=-6, nsh=(1, -2))
-SWING = club((62.5, 30.5), -48, (-6.6, 5.2), crouch=1, lean=1, head=(1, 0), tilt=2, ml=0, pg=0, nsh=(2, -1))
-SMASH = club((55.5, 78.5), 19, (-4.4, -7.2), crouch=3, lean=4, head=(1, 1), tilt=4, ml=-1, pg=-1, far=(-1, 0), far_rot=8,
+SWING = club((62.5, 30.5), -48, (-6.6, 5.2), bend=-1, crouch=1, lean=1, head=(1, 0), tilt=2, ml=0, pg=0, nsh=(2, -1))
+SMASH = club((55.5, 78.5), 19, (-4.4, -7.2), bend=-1, crouch=3, lean=4, head=(1, 1), tilt=4, ml=-1, pg=-1, far=(-1, 0), far_rot=8,
              nsh=(3, 1))
-REC1 = club((46.5, 80.5), -10, (-2.4, -8.2), crouch=1, lean=2, head=(0, 1), tilt=1, ml=1, pg=1, nsh=(1, 0))
-REC2 = club((22.5, 85.5), -101, (4.0, -8.0), crouch=1, lean=1, ml=0, pg=0)
+REC1 = club((46.5, 80.5), -10, (-2.4, -8.2), bend=-1, crouch=1, lean=2, head=(0, 1), tilt=1, ml=1, pg=1, nsh=(1, 0))
+REC2 = club((30.0, 86.6), -106, (0.8, -8.6), crouch=1, lean=1, ml=0, pg=0)
 
 # 2) L'attaque de base « Écrase-crâne » : il soulève la massue (elle bascule en arrière), puis l'arme loin derrière sa
 # tête, couchée au-dessus de la bosse du dos, cambré, ventre gonflé, menton levé (temps de pose ; il souffle par le
@@ -150,7 +150,7 @@ ATTACK_HIT = 690
 # ennemi : la lave jaillit en geysers l'un après l'autre (langues de feu, gouttes de lave qui retombent, mottes de
 # roche), puis chaque geyser retombe en fumée ; derrière, la faille refroidit (jaune, orange, rouge, puis croûte sombre).
 # Il relève la massue encore rouge, qui fume, et revient en garde.
-RAISE = club((42.5, 12.5), -94, (1.2, 8.4), crouch=-1, lean=-1, breath=1.0, head=(0, -1), tilt=-3, ml=1, pg=1, far=(1, -1),
+RAISE = club((42.5, 12.5), -94, (1.2, 8.4), bend=-1, crouch=-1, lean=-1, breath=1.0, head=(0, -1), tilt=-3, ml=1, pg=1, far=(1, -1),
              far_rot=-6, nsh=(1, -3), hot=0.8)
 ROAR = dict(RAISE, lean=-2.2, head=(-1, -2), tilt=-7, jaw=2.4, eyes=1.0, hot=2.0, ml=-1, pg=-1, far=(1, -2))
 SPECIAL = [

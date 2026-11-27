@@ -71,9 +71,14 @@ FRAME = (-1.0, 0.0, 122.0, 119.0)
 #   coude ; wr : le poignet dans le repère de la massue ; length : la massue raccourcie (vue en raccourci, en plein élan) ;
 #   nsh : l'épaule proche déplacée ; rn / rf : épaules soulevées ; far / far_rot : le bras lointain ;
 #   eyes : les yeux deviennent blancs de feu (0..1) ; hot : le fer chauffe (0..2).
-G0 = (18.6, 89.0)                    # le poing proche sur le manche (pixel art : x = 19 − 0,1 × (90 − y))
-ANG0 = -95.7                         # la massue debout, la tête en haut, un peu penchée vers l'arrière
-WR0 = (7.6, 4.7)                     # le poignet proche, dans le repère de la massue (le long, en travers)
+# Avis du propriétaire (monstres, tour 1 : « la massue doit passer devant son bras, là il la tient bizarrement ») : le
+# bras pend le long du flanc, le poing contre la hanche ; la massue est tenue DEVANT l'avant-bras et le bracelet (côté
+# spectateur), un peu inclinée (la tête vers l'arrière), le pommeau ressort sous le poing devant le pagne.
+G0 = (31.4, 88.6)                    # le poing proche sur le manche
+ANG0 = -104.0                        # la massue debout, la tête en haut, un peu penchée vers l'arrière
+_a0 = math.radians(ANG0)
+# le poignet juste au-dessus du poing (l'avant-bras descend presque droit), dans le repère de la massue
+WR0 = (0.6 * math.cos(_a0) - 8.6 * math.sin(_a0), -0.6 * math.sin(_a0) - 8.6 * math.cos(_a0))
 S_N = (37.0, 49.6)                   # l'épaule proche (articulation)
 S_F = (101.6, 58.4)                  # l'épaule lointaine
 L1, L2 = 19.4, 16.8                  # bras, avant-bras proches (jusqu'au poignet)
@@ -93,7 +98,7 @@ EYE_N, EYE_F = V['oeil_proche'], V['oeil_fond']
 MOUTH_L, MOUTH_R = (83.4, 50.6), (99.8, 50.2)     # les coins de la gueule (centrée sous le nez)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, jaw=0.0, ph=0.0, ml=0.0, pg=0.0, blink=0.0,
-            G=G0, ang=ANG0, bend=-1.0, wr=WR0, length=1.0, nsh=(0.0, 0.0), rn=0.0, rf=0.0, far=(0.0, 0.0),
+            G=G0, ang=ANG0, bend=1.0, wr=WR0, length=1.0, nsh=(0.0, 0.0), rn=0.0, rf=0.0, far=(0.0, 0.0),
             far_rot=0.0, eyes=0.0, hot=0.0, lift=0.0, shift=0.0)
 
 
@@ -395,7 +400,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     if hot > 0:
         a_, b_ = Cp(SA), Cp(SB)
         hd_.append((head_c, ('lin', a_[0], a_[1], b_[0], b_[1], [(0, LAVA[4], 0.3 * hot), (1, LAVA[2], 0.5 * hot)]), 1))
-    fig.part('chead', head_c, iron, cel=1.2, rim=0.8, cast=0, details=hd_)
+    fig.part('chead', head_c, iron, cel=1.2, rim=0.8, cast=1.0, cast_on=['narm', 'nbrac', 'torso', 'mb1', 'mb2'], details=hd_)
     # les clous en pointe de diamant : rangées décalées ; ceux du bord dépassent de la silhouette
     STUDS = []
     for j in range(8):
@@ -419,7 +424,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(C(ribbon([(29.8, 1.8 * sgn), (32.2, 4.6 * sgn), (33.6, 6.4 * sgn)], [0.1, 0.8, 0.1])), GOLD.hi, 0.9),
                       (C(ribbon([(33.4, -HW0 * 0.9), (33.6, 0.0), (33.4, HW0 * 0.9)], [0.1, 0.6, 0.1])), GOLD.shadow, 0.5)])
     handle = C(sm([(-11.6, -2.0), (29.4, -2.0), (29.4, 2.0), (-11.6, 2.0)], sharp=(0, 1, 2, 3), t=0.3))
-    fig.part('handle', handle, iron, cel=0.6, rim=0.45, cast=0,
+    fig.part('handle', handle, iron, cel=0.6, rim=0.45, cast=0.9, cast_on=['narm', 'nbrac', 'torso', 'cloth', 'rope', 'nleg'],
              details=[(C(ribbon([(-10.6, 0.9 * sgn), (10, 1.0 * sgn), (28.6, 0.9 * sgn)], [0.1, 0.6, 0.1])), iron.hi, 0.75)])
     ring_ = C(rpoly([(-12.6, -2.6), (-10.2, -2.6), (-10.2, 2.6), (-12.6, 2.6)], 0.6))
     fig.part('cring', ring_, GOLD, cel=0.45, rim=0.4, cast=0.6, details=[(C(ribbon([(-12.0, 1.8 * sgn), (-11.0, 1.9 * sgn)], [0.4, 0.4])), GOLD.hi, 0.9)])
@@ -433,7 +438,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     Snu = mapp(inv(U), Sn)
     wr = P['wr']
     W = (G[0] + u[0] * wr[0] + nv[0] * wr[1], G[1] + u[1] * wr[0] + nv[1] * wr[1])
-    E, W2 = ik(Snu, W, L1, L2, P['bend'])
+    # le coude : les deux places possibles (d'un côté ou de l'autre de la ligne épaule → poignet) ; entre deux clés
+    # d'animation qui changent de côté, il glisse de l'une à l'autre (jamais de saut)
+    Ea, W2 = ik(Snu, W, L1, L2, 1.0)
+    Eb, _ = ik(Snu, W, L1, L2, -1.0)
+    E = lerp(Eb, Ea, min(1.0, max(0.0, (P['bend'] + 1) / 2)))
     arm = round_limb([Snu, E, W2], [(0, R_N, R_N + 0.2), (0.16, 10.8, 11.0), (0.4, 8.8, 9.0), (0.53, 7.8, 7.8),
                                     (0.64, 8.4, 8.6), (0.8, 7.6, 7.6), (1, 6.4, 6.4)], n=34)
     a1, a2 = Seg(Snu, E), Seg(E, W2)
@@ -456,7 +465,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cast_on=['torso', 'cloth', 'rope', 'nleg', 'chead', 'collar', 'handle', 'cring', 'pommel'] + ['stud%d' % i for i in range(k_)],
              details=ad)
     # le bracelet d'or au poignet, en travers de l'avant-bras (il cache le raccord du poing)
-    bw = add(W2, a2.u, -3.2)
+    bw = add(W2, a2.u, -4.4)
     fig.part('nbrac', cuff(bw, aa2, 3.4, 14.6), GOLD, cel=0.7, rim=0.6, cast=0.9, details=cuff_det(bw, aa2, 3.4, 14.6))
 
     # ======================================================================== la tête
@@ -754,7 +763,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     order = [p.name for p in fig.parts]
     byname = {p.name: p for p in fig.parts}
     hg = ['head', 'tuskN', 'tuskF', 'browN', 'browF', 'mane', 'ering', 'hornF', 'hornN']
-    rest = [n for n in order if n not in hg + ['fist', 'thumb']]
+    # la massue passe DEVANT le bras proche et son bracelet (le poing la serre par-devant), derrière la tête
+    clubp = [n for n in order if n in club]
+    rest = [n for n in order if n not in hg + clubp + ['fist', 'thumb']]
+    at = rest.index('nbrac') + 1
+    rest = rest[:at] + clubp + rest[at:]
     fig.parts = [byname[n] for n in rest + hg + ['fist', 'thumb']]
     fig.ctx = dict(U=U, G=mapp(U, G), ang=ang + P['lean'] * 1.1, P=P, S=mapp(U, Snu),
                    tip=mapp(U, (G[0] + u[0] * SB * lk, G[1] + u[1] * SB * lk)),

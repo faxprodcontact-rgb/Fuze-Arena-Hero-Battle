@@ -42,7 +42,7 @@ GUM = '#7a1a2a'
 
 GRD = 236                      # le sol
 FEET = (128, 236)              # le point « sol » de la case
-FRAME = (-10, 16, 276, 225)    # la boîte de l'image (x0, y0, largeur, hauteur) : les pieds (128, 236) tombent en (138, 220)
+FRAME = (-12, -6, 278, 248)    # la boîte de l'image (x0, y0, largeur, hauteur) : les pieds (128, 236) tombent en (140, 242)
 
 # ---------- le visage (../../heros/visage.py) : tête de dragon de PROFIL → placer(tour=75), un seul oeil ----------
 # La boîte = la sphère du crâne, gueule fermée (du dos du crâne à la racine du museau, du dessus du crâne au bas de la
@@ -66,13 +66,14 @@ REST = dict(br=0.0, fx=0.0, fy=0.0, fr=0.0, sq=0.0, hx=0.0, hy=0.0, ht=0.0, jaw=
             lag=(0.0, 0.0), paw=None, heat=0.0, blink=0.0, ph=0.0, smoke=0.0)
 HIP_PIV = (100.0, 176.0)        # le pivot du cabré (au-dessus des pattes arrière)
 NECK_J = (192.0, 104.0)        # la nuque (la tête tourne autour)
-HEAD_K, HEAD_C = 1.12, (198.0, 108.0)   # la tête un peu plus grande (la zone forte), comme les héros
+HEAD_K, HEAD_C = 1.1, (198.0, 108.0)    # la tête un peu plus grande (la zone forte), comme les héros
+HEAD_OFF = (-3.0, -24.0)               # la tête portée haut, au bout du long cou en S
 
 # les pattes : (racine, coude/genou, poignet/jarret, bout du pied) au repos ; longueurs prises au repos
-LEG_N_FRONT = dict(S=(164.0, 158.0), K=(146.0, 192.0), A=(163.0, 215.0), B=(178.0, 228.0), g=GRD)
-LEG_F_FRONT = dict(S=(202.0, 166.0), K=(198.0, 198.0), A=(214.0, 216.0), B=(228.0, 226.5), g=GRD - 3)
-LEG_N_HIND = dict(S=(84.0, 158.0), K=(112.0, 188.0), A=(80.0, 213.0), B=(95.0, 228.0), g=GRD)
-LEG_F_HIND = dict(S=(124.0, 174.0), K=(140.0, 197.0), A=(122.0, 215.0), B=(136.0, 226.5), g=GRD - 3)
+LEG_N_FRONT = dict(S=(172.0, 160.0), K=(157.0, 190.0), A=(171.0, 214.0), B=(185.0, 228.0), g=GRD)
+LEG_F_FRONT = dict(S=(200.0, 166.0), K=(197.0, 195.0), A=(214.0, 214.0), B=(228.0, 226.5), g=GRD - 3)
+LEG_N_HIND = dict(S=(84.0, 156.0), K=(108.0, 186.0), A=(82.0, 212.0), B=(96.0, 228.0), g=GRD)
+LEG_F_HIND = dict(S=(122.0, 170.0), K=(136.0, 194.0), A=(120.0, 214.0), B=(134.0, 226.5), g=GRD - 3)
 
 
 def unit(a, b):
@@ -178,13 +179,12 @@ def horn_shape(root, c1, c2, tip, w0):
 # ======================================================================== le corps (déformé point par point)
 
 # le torse (bosse d'épaules, dos, croupe, ventre, poitrail) ; le cou ; la queue (une ligne et ses largeurs)
-TORSO = [(46, 150), (50, 130), (68, 114), (94, 102), (120, 86), (146, 82), (168, 90), (188, 106), (206, 122),
-         (218, 142), (222, 164), (216, 183), (200, 195), (174, 199), (148, 198), (124, 197), (100, 196), (76, 191),
-         (58, 178)]
-NECK = [(146, 94), (160, 80), (178, 74), (196, 78), (210, 94), (216, 114), (216, 138), (208, 152), (186, 150),
-        (160, 130)]
-TAIL_C = [(58, 150), (36, 156), (20, 172), (13, 192), (17, 210), (29, 223), (45, 230), (60, 232.5)]
-TAIL_W = [38, 33, 28, 23, 18.5, 14, 10, 6.5]
+TORSO = [(56, 150), (62, 137), (80, 131), (110, 128), (138, 123), (158, 119), (184, 126), (204, 138), (214, 154),
+         (212, 171), (202, 183), (184, 187), (162, 183), (136, 177), (112, 176), (92, 180), (72, 179), (60, 167)]
+NECK = [(148, 122), (161, 111), (169, 97), (175, 84), (185, 72), (198, 72), (206, 86), (206, 102), (204, 118), (208, 134),
+        (194, 140), (172, 132)]
+TAIL_C = [(62, 148), (42, 151), (25, 160), (13, 177), (8, 197), (13, 214), (26, 225), (44, 231), (64, 233.6)]
+TAIL_W = [27, 23, 19.5, 16.5, 13.5, 10.5, 8, 5.5, 3.6]
 
 
 class Rig:
@@ -196,7 +196,7 @@ class Rig:
         self.H = mT(0, sq * 0.55)
         self.F = mchain(mT(P['fx'], P['fy'] + sq), mR(P['fr'], *HIP_PIV))
         hx, hy = P['hx'], P['hy']
-        self.HEAD = mchain(self.F, mT(hx, hy - 1.1 * P['br']), mR(P['ht'], *NECK_J), mS(HEAD_K, HEAD_K, *HEAD_C))
+        self.HEAD = mchain(self.F, mT(hx + HEAD_OFF[0], hy + HEAD_OFF[1] - 0.8 * P['br']), mR(P['ht'], *NECK_J), mS(HEAD_K, HEAD_K, *HEAD_C))
         self.JAW = mchain(self.HEAD, mR(JAW0 + P['jaw'], *JAW_PIV))
         self.br = P['br']
         self.tail = P['tail']
@@ -269,15 +269,15 @@ def leg_geom(R, L, near=True, front=True, A=None, fdir=0.0, spread=1.0, lifted=F
     K = K or ik(S, A, l1, l2, 1)
     f = 1.0 if near else 0.88
     if front:
-        w = [40 * f, 26 * f, 23 * f, 18 * f, 16.5 * f]
+        w = [27 * f, 16.5 * f, 14 * f, 10.5 * f, 9.8 * f]
         ang = math.degrees(math.atan2(K[1] - S[1], K[0] - S[0]))
         mc = lerp(S, K, 0.32)
-        mus = ellipse(mc[0], mc[1], 0.45 * math.dist(S, K) + 11, 21 * f).rot(ang, mc[0], mc[1])
+        mus = ellipse(mc[0], mc[1], 0.45 * math.dist(S, K) + 6, 14 * f).rot(ang, mc[0], mc[1])
     else:
-        w = [46 * f, 28 * f, 21 * f, 17 * f, 16 * f]
+        w = [31 * f, 17.5 * f, 13 * f, 10.5 * f, 9.8 * f]
         ang = math.degrees(math.atan2(K[1] - S[1], K[0] - S[0]))
         mc = lerp(S, K, 0.36)
-        mus = ellipse(mc[0], mc[1], 0.5 * math.dist(S, K) + 15, 26 * f).rot(ang, mc[0], mc[1])
+        mus = ellipse(mc[0], mc[1], 0.5 * math.dist(S, K) + 9, 17 * f).rot(ang, mc[0], mc[1])
     upper = limb([S, lerp(S, K, 0.5), K], [w[0], (w[0] + w[1]) / 2, w[1]])
     lower = limb([K, lerp(K, A, 0.5), A], [w[2] * 1.05, (w[2] + w[3]) / 2, w[3]])
     meta = limb([A, lerp(A, B, 0.5), B], [w[3], (w[3] + w[4]) / 2, w[4]])
@@ -293,12 +293,12 @@ def leg_geom(R, L, near=True, front=True, A=None, fdir=0.0, spread=1.0, lifted=F
     # les doigts, fondus dans le pied (une seule forme) : trois bosses à l'avant, séparées par de petits creux ; le doigt
     # proche est le plus bas, ceux du fond dépassent derrière lui, plus haut (perspective du sol)
     tips = []
-    spec = [(-7.5, -22.0, 14.0, -6.0), (0.0, 2.0, 19.0, -2.8), (6.5, 30.0, 14.5, -0.2)]   # (racine, angle, longueur, sol)
+    spec = [(-5.0, -22.0, 11.0, -5.0), (0.0, 2.0, 15.5, -2.4), (4.4, 30.0, 12.0, -0.2)]   # (racine, angle, longueur, sol)
     for k, (off, a, Ln, gy) in enumerate(spec):
         root = add(add(B, n, off * 0.85), fd, -2.0)
         dk = rotv(fd, a * spread * (1.3 if lifted else 1.0))
         tip = add(root, dk, Ln * f)
-        w0 = (10.0 if front else 10.4) * f
+        w0 = (7.0 if front else 7.2) * f
         if not lifted:
             tip = (tip[0], g + gy - w0 * 0.42 - 0.3)         # le coussin du doigt posé au sol
         kn = add(lerp(root, tip, 0.5), (-n[0], -n[1]), 1.0)
@@ -309,8 +309,8 @@ def leg_geom(R, L, near=True, front=True, A=None, fdir=0.0, spread=1.0, lifted=F
         if not lifted:
             # la griffe plonge jusqu'au sol (plus haut pour les doigts du fond : perspective du sol)
             ct = claw_tip(cb, cd, 1.0)
-            cl = max(6.5, min(11.0, (g + gy + 0.4 - cb[1]) / max(0.2, ct[1] - cb[1])))
-        toes.append((limb([root, kn, tip], [w0 * 1.1, w0 * 0.98, w0 * 0.84]), (cb, cd, cl, w0 * 0.62)))
+            cl = max(7.0, min(11.0, (g + gy + 0.4 - cb[1]) / max(0.2, ct[1] - cb[1])))
+        toes.append((limb([root, kn, tip], [w0 * 1.1, w0 * 0.98, w0 * 0.84]), (cb, cd, cl, w0 * 0.58)))
         tips.append(tip)
     claws = []
     if front and near:
@@ -425,9 +425,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- les échardes de la queue (derrière la queue : racines cachées) ----
     body, tc, tw = body_shape(R)
     tail_spikes(fig, tc, tw)
-    # trois échardes dorsales sur le cou (racines cachées dans le cou)
-    for j, (r_, t_, w) in enumerate((((156, 92), (143, 76), 8.6), ((170, 83), (164, 63), 10.4), ((184, 79), (182, 66), 6.8))):
-        fig.part('nsp%d' % j, shard(R.D(r_), R.D(t_), w, bend=-0.6), OBS, cel=0.6, rim=0.5, cast=0)
+    # les piquants dorsaux : ils suivent la courbe du dos, de la nuque à la croupe, leur taille varie en douceur (plus
+    # grands au milieu du dos) ; racines cachées dans le corps
+    for j, (p0, p1, L) in enumerate(DORSAL):
+        b = R.D(p0)
+        d = unit(R.D(p1), b)                      # vers l'arrière le long du dos
+        nrm = (d[1], -d[0]) if d[0] < 0 else (-d[1], d[0])
+        if nrm[1] > 0:
+            nrm = (-nrm[0], -nrm[1])
+        tip = add(add(b, nrm, L), d, L * 0.6)
+        fig.part('dsp%d' % j, shard(add(b, nrm, -2.0), tip, L * 0.62, bend=-0.5), OBS, cel=0.6, rim=0.5, cast=0)
 
     # ---- le corps : torse, cou, queue d'un seul tenant ----
     bx0, by0, bx1, by1 = body.bbox()
@@ -441,7 +448,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     S_ = pts['S']
     ang_ = math.degrees(math.atan2(K[1] - S_[1], K[0] - S_[0]))
     pc = add(lerp(S_, K, 0.42), (-4, 2))
-    det = plate(lambda p: p, pc[0], pc[1], 15, 10, ang_ + 8, 11) \
+    det = plate(lambda p: p, pc[0], pc[1], 10, 6.5, ang_ + 8, 11) \
         + lava_vein([add(lerp(S_, K, 0.2), (6, -2)), add(lerp(S_, K, 0.5), (9, 1)), add(lerp(S_, K, 0.85), (6, 2))], 1.0, heat) \
         + fissure([add(A, (1, -12)), add(A, (3, -6)), add(A, (2, -1))], 0.7)
     fig.part('legNH', sh, ROCK, cel=1.8, rim=0.8, cast=1.2, cast_on=['body', 'legFH', 'legFHc0', 'legFHc1', 'legFHc2', 'tsp5', 'tsp4', 'tsp3'], details=det)
@@ -465,8 +472,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     S, K, A = pts['S'], pts['K'], pts['A']
     fig.ctx['paw'] = pts
     det = lava_vein([lerp(K, A, 0.15), lerp(K, A, 0.5), lerp(K, A, 0.85)], 0.95, heat) \
-        + lava_vein([add(lerp(S, K, 0.15), (5, 0)), add(lerp(S, K, 0.45), (7, 2)), add(lerp(S, K, 0.75), (3, 2))], 0.95, heat) \
-        + plate(lambda p: p, *add(lerp(S, K, 0.3), (-6, -1)), 10, 7.5, math.degrees(math.atan2(K[1] - S[1], K[0] - S[0])) + 10, 12)
+        + lava_vein([add(lerp(S, K, 0.15), (4, 0)), add(lerp(S, K, 0.45), (5, 2)), add(lerp(S, K, 0.75), (2, 2))], 0.9, heat)
     cl = []
     for j, (b, d, Lc, w) in enumerate(claws):
         cl.append('legNFe%d' % j)
@@ -489,96 +495,87 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     return fig
 
 
+# (point sur le dos, point suivant vers la queue, longueur) : la nuque, le cou, le dos (sous l'aile), la croupe
+DORSAL = [((183, 75), (176, 83), 5.0), ((173, 90), (168, 100), 6.4), ((165, 106), (158, 114), 7.6), ((150, 121), (140, 123), 8.6),
+          ((128, 124.5), (118, 126), 9.0), ((106, 128), (96, 129), 8.6), ((86, 130), (76, 131.5), 7.6), ((67, 135), (58, 139), 6.4)]
+
+
 def tail_spikes(fig, tc, tw):
     """Les échardes d'obsidienne sur le dessus de la courbe de la queue, et la gerbe de trois au bout (posée au sol)."""
     n = len(tc)
     out = []
-    for t, L, w in ((0.10, 15.0, 8.6), (0.25, 10.0, 6.4), (0.38, 13.0, 7.4), (0.53, 7.0, 5.0), (0.66, 9.0, 5.4)):
+    for t, L, w in ((0.12, 5.4, 3.6), (0.27, 4.6, 3.2), (0.42, 3.8, 2.8), (0.57, 3.0, 2.4)):
         i = int(t * (n - 1))
         p, q = tc[i], tc[i + 1]
         d = unit(p, q)
         nrm = (-d[1], d[0])                   # vers l'extérieur de la courbe (à gauche de la marche)
         ww = tw[i]
-        base = add(p, nrm, ww * 0.38)
-        tip = add(add(base, nrm, L), d, -L * 0.55)
+        base = add(p, nrm, ww * 0.5 - 1.6)
+        tip = add(add(base, nrm, L + 1.6), d, -L * 0.6)
         out.append(shard(base, tip, w, bend=-0.5))
     end, prev = tc[-1], tc[-3]
     d = unit(prev, end)
-    for ang, L, w in ((-130, 17.0, 8.2), (-88, 23.0, 9.6), (-46, 15.5, 7.8)):
+    for ang, L, w in ((-140, 8.0, 4.4), (-96, 11.0, 5.2), (-52, 7.5, 4.2)):
         dd = rotv(d, ang)
-        base = add(end, d, -4)
+        base = add(end, d, -2)
         out.append(shard(base, add(base, dd, L), w, bend=0.4 if ang < -80 else -0.4))
     for j, sh in enumerate(out):
         fig.part('tsp%d' % j, sh, OBS, cel=0.7, rim=0.5, cast=0)
 
 
 def body_details(R, P):
-    """Ce qui est peint DANS le corps : le four du poitrail (plaques chauffées, lave entre elles), la lave du ventre,
-    les veines du flanc, quelques fêlures."""
+    """Ce qui est peint DANS le corps : le volume, quelques plaques d'obsidienne À PLAT dans la peau (aucun relief qui
+    casse la ligne du dos), le four du poitrail en grandes plaques, peu de fissures de lave en courbes douces."""
     heat = P['heat']
     D = R.D
     out = []
-    # le volume : le dos et la bosse d'épaules pris par la lumière, le ventre dans l'ombre
-    hx_, hy_ = D((150, 112))
-    out.append((ellipse(hx_, hy_, 64, 32).rot(-14, hx_, hy_), ('rad', hx_ + 10, hy_ - 8, 64, 64, [(0, ROCK.light, 0.55), (1, ROCK.light, 0)]), 1))
-    bx_, by_ = D((120, 202))
-    out.append((ellipse(bx_, by_, 86, 22), ('rad', bx_, by_ + 6, 86, 86, [(0, ROCK.deep, 0.6), (1, ROCK.deep, 0)]), 1))
-    # les grandes plaques d'obsidienne, de tailles variées, posées sur la roche (peu nombreuses, jamais en grille)
+    # le volume : le dos pris par la lumière, le ventre dans l'ombre
+    hx_, hy_ = D((140, 134))
+    out.append((ellipse(hx_, hy_, 70, 18).rot(-6, hx_, hy_), ('rad', hx_ + 10, hy_ - 6, 70, 70, [(0, ROCK.light, 0.5), (1, ROCK.light, 0)]), 1))
+    bx_, by_ = D((128, 186))
+    out.append((ellipse(bx_, by_, 80, 14), ('rad', bx_, by_ + 5, 80, 80, [(0, ROCK.deep, 0.6), (1, ROCK.deep, 0)]), 1))
     for spec in BODY_PLATES:
         out += plate(D, *spec)
-    # le four : une grande zone de lave sous le poitrail et la gorge
-    chest = CHEST
-    cx, cy = D((198, 163))
+    # le four : la lave du poitrail (bombé, pas énorme)
+    cx, cy = D((194, 158))
     k = min(1.0, heat / 3)
-    # la chaleur déborde un peu sur la roche autour du four (la croûte rougit près de la lave)
-    out.append((ellipse(cx, cy, 36, 42), ('rad', cx, cy, 36, 42, [(0, LAVA[4], 0.0), (0.62, LAVA[4], 0.0), (0.74, LAVA[4], 0.3 + 0.15 * k),
+    out.append((ellipse(cx, cy, 28, 32), ('rad', cx, cy, 28, 32, [(0, LAVA[4], 0.0), (0.62, LAVA[4], 0.0), (0.76, LAVA[4], 0.3 + 0.15 * k),
                                                               (1, LAVA[5], 0)]), 1))
-    csh = sm([D(p) for p in chest], t=0.9)
-    out.append((csh, ('rad', cx + 4, cy - 6, 40, 40, [(0, LAVA[0] if heat > 2 else LAVA[1]), (0.45, LAVA[2]), (1, LAVA[4])]), 1))
-    # les plaques de croûte chauffée (cellules irrégulières, rognées et arrondies : la lave brille entre elles)
+    csh = sm([D(p) for p in CHEST], t=0.9)
+    out.append((csh, ('rad', cx + 4, cy - 6, 32, 32, [(0, LAVA[0] if heat > 2 else LAVA[1]), (0.45, LAVA[2]), (1, LAVA[4])]), 1))
     for poly in chest_plates():
         sh = sm([D(p) for p in poly], t=0.95)
         x0, y0, x1, y1 = sh.bbox()
         tone = [(0, HEAT.hi if heat < 2 else '#ffe0b0'), (0.35, HEAT.light), (1, HEAT.shadow)]
         out.append((sh, ('lin', x1, y0, x0, y1, tone), 1 - 0.35 * k))
-    # la lave du ventre : deux fentes sous le ventre, entre les pattes
-    for pts in ([(118, 190), (130, 186), (142, 191), (154, 187)], [(126, 196), (138, 193), (150, 196)]):
-        out += lava_vein([D(p) for p in pts], 1.0, heat, glow=2.2)
-    # quelques fissures de lave en courbes douces : cou, flanc, croupe
-    for pts, w in (([(176, 102), (183, 113), (181, 126), (186, 136)], 1.0), ([(134, 128), (141, 142), (137, 157), (143, 171)], 1.15),
-                   ([(56, 150), (64, 160), (62, 172)], 0.9)):
+    # une fente de lave sous le ventre, et deux fissures en courbes douces (cou, flanc)
+    out += lava_vein([D(p) for p in [(120, 178), (134, 175), (148, 179), (160, 177)]], 0.9, heat, glow=2.2)
+    for pts, w in (([(178, 98), (184, 110), (183, 122), (189, 132)], 0.95), ([(128, 140), (136, 150), (133, 161), (139, 170)], 1.0)):
         out += lava_vein([D(p) for p in pts], w, heat)
     return out
 
 
-CHEST = [(176, 140), (182, 132), (190, 127), (198, 127), (206, 130), (214, 138), (220, 150), (223, 164), (221, 177),
-         (215, 188), (206, 195), (194, 198), (183, 196), (177, 189), (173, 178), (172, 164), (173, 151)]
+CHEST = [(178, 136), (186, 128), (196, 126), (205, 131), (212, 142), (215, 156), (213, 170), (206, 181), (195, 186),
+         (184, 184), (177, 175), (175, 160), (175, 147)]
 
 
 # (x, y, demi-largeur, demi-hauteur, angle, graine) au repos : quelques grandes plaques de tailles variées
-BODY_PLATES = [(152, 97, 19, 10.5, -20, 1), (180, 89, 12, 7.5, -40, 2), (118, 152, 21, 12.5, -6, 5), (70, 131, 14, 8.5, 26, 7)]
+BODY_PLATES = [(186, 112, 9, 5.5, -60, 2), (120, 150, 15, 8, -4, 5), (70, 150, 10, 7, 20, 7)]
 PLATE = Mat('#b0acd8', '#5e5a86', '#403a5e', '#2a2644', '#19162c', glint='#e8e6ff')   # obsidienne mate (plaques)
 
 
 def plate(D, x, y, rx, ry, ang, seed):
-    """Une plaque d'obsidienne posée sur la roche : contour irrégulier arrondi, une ombre douce sous son bord, éclairée
-    en haut à droite, plus sombre dans l'ombre du ventre."""
+    """Une plaque d'obsidienne À PLAT dans la peau (aucun relief, aucune ombre portée) : une teinte d'obsidienne mate,
+    éclairée en haut à droite, qui se fond dans la roche."""
     pts = []
     for k in range(8):
         a = 2 * math.pi * k / 8
-        r = 1 + 0.13 * math.sin(seed * 3.1 + k * 2.3) + 0.06 * math.cos(seed * 1.7 + k * 4.1)
+        r = 1 + 0.12 * math.sin(seed * 3.1 + k * 2.3) + 0.05 * math.cos(seed * 1.7 + k * 4.1)
         v = rotv((rx * r * math.cos(a), ry * r * math.sin(a)), ang)
         pts.append(D((x + v[0], y + v[1])))
     sh = sm(pts, t=0.95)
     x0, y0, x1, y1 = sh.bbox()
-    dark = 0.25 * smooth((y - 140) / 60)
-    out = [(sh.move(-0.7, 1.0), ROCK.deep, 0.55),
-           (sh, ('lin', x1, y0, x0, y1, [(0, PLATE.light), (0.45, PLATE.base), (1, PLATE.shadow)]), 1),
-           (Shape(sh.subs + sh.move(1.0, -1.3).subs, evenodd=True), PLATE.deep, 0.5),
-           (Shape(sh.subs + sh.move(-0.6, 0.8).subs, evenodd=True), PLATE.hi, 0.6)]
-    if dark > 0.01:
-        out.append((sh, PLATE.deep, dark))
-    return out
+    return [(sh, ('lin', x1, y0, x0, y1, [(0, PLATE.light, 0.42), (0.5, PLATE.base, 0.42), (1, PLATE.shadow, 0.5)]), 1)]
 
 
 def chest_plates():
@@ -586,7 +583,7 @@ def chest_plates():
     from shapely.geometry import Polygon, MultiPoint
     from shapely.ops import voronoi_diagram
     region = Polygon(CHEST)
-    seeds = [(186, 140), (208, 141), (194, 162), (216, 168), (182, 182), (204, 186)]
+    seeds = [(188, 136), (206, 144), (186, 158), (206, 166), (192, 180)]
     cells = voronoi_diagram(MultiPoint(seeds), envelope=region.buffer(20))
     out = []
     for c in cells.geoms:

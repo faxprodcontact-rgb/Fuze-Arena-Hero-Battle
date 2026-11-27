@@ -64,7 +64,7 @@ HEAD_K = 1.06
 #   vers le haut), ne : le coude proche ; fh / fe : poing et coude lointains ; rsw : les anneaux se balancent (degrés) ;
 #   wn / wf : les ailes (wing() d'outils.py) ; ws : les plumes ondulent ; trail : le vent couche mèches et barbe.
 S_N = (42.0, 45.0)          # l'épaule proche
-S_F = (99.0, 46.0)          # l'épaule lointaine
+S_F = (101.0, 50.0)         # l'épaule lointaine (sous le dôme de l'épaule du buste)
 R_N = (47.0, 42.0)          # l'attache de l'aile proche (derrière l'épaule)
 R_F = (95.0, 42.0)          # l'attache de l'aile lointaine
 UP_N = 21.5                 # longueur du bras (épaule → coude)
@@ -225,11 +225,12 @@ def arm(fig, key, S, E, H, Wd, mat_cast, P, far=False):
     a1 = Seg(S, C)
     aa1 = math.degrees(math.atan2(a1.u[1], a1.u[0]))
     s1 = 1 if (a1.v[0] * 0.6 - a1.v[1] * 0.8) > 0 else -1
-    wS, wC = (17.0, 15.0) if not far else (14.4, 13.0)
+    wS, wC = (17.0, 15.0) if not far else (13.0, 12.2)
     sl = limb([add(S, a1.u, -2.0), lerp(S, C, 0.5), C], [wS, wS * 0.98, wC])
-    sld = [(ribbon([a1.at(0.15, -wS * 0.28 * s1), a1.at(0.55, -wS * 0.3 * s1), a1.at(0.95, -wC * 0.22 * s1)], [0.2, 1.6, 0.2]), CLOTH.shadow, 0.5),
-           (ribbon([a1.at(0.1, wS * 0.3 * s1), a1.at(0.5, wS * 0.33 * s1), a1.at(0.85, wC * 0.3 * s1)], [0.2, 1.1, 0.2]), CLOTH.hi, 0.75),
-           (ribbon([a1.at(0.35, 0.6 * s1), a1.at(0.62, -0.8 * s1), a1.at(0.86, -2.0 * s1)], [0.1, 0.9, 0.1]), CLOTH.shadow, 0.35)]
+    # le modelé de la toile : une ombre douce le long du dessous, une lumière douce le long du dessus (formes
+    # arrondies, aucun pli pointu)
+    sld = [(ellipse(*a1.at(0.6, -wS * 0.3 * s1), a1.L * 0.42 + 1.0, wS * 0.16, aa1), CLOTH.shadow, 0.45),
+           (ellipse(*a1.at(0.5, wS * 0.3 * s1), a1.L * 0.36 + 0.8, wS * 0.09, aa1), CLOTH.hi, 0.6)]
     fig.part(key + 'sleeve', sl, CLOTH, grad=diag(CLOTH, min(S[0], C[0]) - 8, min(S[1], C[1]) - 8, max(S[0], C[0]) + 8, max(S[1], C[1]) + 8),
              cel=1.6, rim=0.7, cast=1.2, cast_on=mat_cast + [key + 'skin'], details=sld, occl=(CLOTH.shadow, 0.22, 2.6))
     # le bourrelet : la toile roulée, un gros boudin en travers du bras (deux plis de toile, ombre dessous)
@@ -272,7 +273,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         ((60.6, 31.0), (57.4, 37.0), (55.8, 42.6), (53.0, 48.6), 8.0),
         ((59.8, 25.0), (54.6, 30.0), (51.0, 37.6), (47.4, 45.8), 9.0),
         ((60.2, 19.0), (53.8, 22.0), (48.8, 29.4), (44.4, 38.6), 8.6),
-        ((62.4, 13.6), (56.4, 14.6), (51.0, 19.6), (46.8, 28.0), 6.8),
+        ((61.0, 18.4), (55.6, 19.8), (50.6, 24.6), (46.8, 31.0), 6.6),
     ]
     lock_names = []
     for i, (p0, p1, p2, p3, w0) in enumerate(LOCKS):
@@ -372,12 +373,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # la tête et la barbe), perles régulières ; la perle mère en bas, sur la ligne médiane
     beads = []
     n_b = 15
-    for i in range(n_b):
-        t = i / (n_b - 1)
-        a = math.radians(180 - 180 * t)
-        x = 81.0 + 15.6 * math.cos(a)
-        y = 39.0 + 22.4 * math.sin(a)
-        beads.append((x, y, 2.0 if i != (n_b - 1) // 2 else 2.8))
+    arc = [(80.5 + 12.6 * math.cos(math.radians(180 - k)), 37.5 + 23.5 * math.sin(math.radians(180 - k))) for k in range(181)]
+    for i, (x, y) in enumerate(resample(arc, n_b - 1)):
+        beads.append((x, y, 1.95 if i != (n_b - 1) // 2 else 2.8))
     for x, y, r in beads:
         det += [(ellipse(x - 0.45, y + 0.6, r * 1.05, r * 1.0), CLOTH.deep, 0.45),
                 (ellipse(x, y, r, r * 0.96), ('rad', x + 0.45 * r, y - 0.45 * r, r * 1.6, r * 1.6, [(0, BEAD.hi), (0.35, BEAD.light), (0.75, BEAD.base), (1, BEAD.shadow)]), 1),
@@ -416,8 +414,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ff = fist(fig, 'ffist', FH, math.degrees(math.atan2(FH[1] - FE[1], FH[0] - FE[0])) - 90, k=1.15, cast_on=['fskin'])
     far_names += ff
     # la racine de la manche lointaine se fond dans le buste (aucune couture à l'épaule)
-    mo_ = mapp(U, lerp(S_F, fC, 0.32))
-    mt_ = mapp(U, add(S_F, norm(sub_(S_F, fC)), 5.0))
+    mo_ = mapp(U, lerp(S_F, fC, 0.5))
+    mt_ = mapp(U, add(S_F, norm(sub_(S_F, fC)), 4.0))
     fig.masks['fsleeve'] = (mo_[0], mo_[1], mt_[0], mt_[1], 'torso')
 
 
@@ -431,6 +429,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (ellipse(84.0, 10.6, 2.6, 1.3, 20), '#ffd8be', 0.75),
            (ellipse(85.6, 11.2, 0.9, 0.5, 20), '#ffffff', 0.8),
            (ribbon([(72.0, 14.6), (78.0, 13.4), (85.0, 14.4)], [0.1, 0.7, 0.1]), SKIN.shadow, 0.55)]
+    # de fines mèches grises couchées sur le crâne : elles naissent de la couronne et remontent vers l'arrière en
+    # s'effilant (aucun bord net : pointes fines, pleines seulement à la racine)
+    for (q0, q1, q2, wq, op) in (((64.6, 24.0), (63.4, 19.0), (60.6, 14.2), 1.3, 0.75), ((65.2, 28.6), (64.8, 22.4), (62.8, 16.4), 1.1, 0.6),
+                                 ((63.0, 20.4), (61.0, 16.6), (58.8, 14.4), 1.1, 0.7)):
+        hd.append((ribbon([q0, q1, q2], [wq, wq * 0.8, 0.1]), ('lin', q0[0], q0[1], q2[0], q2[1], [(0, GREY.light), (1, GREY.hi)]), op))
     # la joue proche (vers l'oreille) dans l'ombre, le front et le devant du visage éclairés
     hd += [(sm([(58.0, 22.0), (63.6, 24.0), (66.4, 31.0), (68.6, 38.6), (71.0, 44.0), (64.0, 40.6), (59.0, 35.0), (57.0, 28.0)]), SKIN.shadow, 0.7),
            (sm([(86.0, 26.0), (92.8, 25.0), (93.0, 32.0), (90.6, 37.0), (87.6, 33.0)]), SKIN.light, 0.5)]
@@ -479,18 +482,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('head', head, SKIN, grad=(92, 10, 60, 40, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=1.2, rim=0.7, cast=1.3, cast_on=['torso', 'fsleeve', 'froll'], details=hd)
 
-    # la couronne de cheveux gris : elle POUSSE du crâne chauve (bord en petites touffes arrondies, pas de coupe nette),
-    # fait le tour du derrière de la tête jusque derrière l'oreille ; les grosses mèches du dos sortent de dessous
-    fringe = sm([(56.8, 15.6), (59.2, 12.6), (62.0, 11.6), (63.6, 13.0), (63.2, 15.4), (64.8, 17.4), (64.0, 20.4),
-                 (65.4, 23.2), (64.6, 26.2), (66.0, 29.4), (65.8, 33.2), (63.8, 36.8), (60.8, 35.4), (58.2, 30.6),
-                 (56.6, 23.6)], sharp=(4, 6, 8))
-    fig.part('fringe', fringe, GREY, grad=(66, 12, 56, 34, [(0, GREY.hi), (0.4, GREY.light), (1, GREY.base)]),
-             cel=1.2, rim=0.35, cast=0.7, cast_on=['head', 'h1', 'h2', 'h3', 'h4'],
-             details=[(ribbon([(61.4, 14.0), (62.0, 20.0), (62.8, 27.0), (63.6, 33.0)], [0.1, 0.8, 0.7, 0.1]), GREY.hi, 0.6),
-                      (ribbon([(59.0, 17.0), (59.0, 23.0), (60.0, 30.0)], [0.1, 0.7, 0.1]), GREY.shadow, 0.45),
-                      (ribbon([(63.2, 17.6), (64.2, 21.8)], [0.1, 0.5]), GREY.shadow, 0.35),
-                      (ribbon([(63.6, 24.6), (64.6, 28.6)], [0.1, 0.5]), GREY.shadow, 0.35)])
-
+    # la couronne de cheveux gris : elle POUSSE du crâne chauve. Sa racine se fond dans le crâne en dégradé (masque :
+    # aucun bord net, aucune « perruque » posée), elle fait le tour du derrière de la tête jusque derrière l'oreille ;
+    # les grosses mèches du dos sortent de dessous. Sur le crâne, de fines mèches couchées remontent vers l'arrière.
+    fringe = sm([(60.8, 14.2), (63.6, 16.4), (65.0, 20.6), (65.4, 25.0), (66.0, 29.4), (65.8, 33.4), (63.8, 37.4),
+                 (60.4, 36.0), (56.6, 31.0), (54.8, 24.4), (55.6, 18.6), (57.8, 15.4)])
+    fig.part('fringe', fringe, GREY, grad=(66, 14, 56, 34, [(0, GREY.light), (0.5, GREY.base), (1, GREY.shadow)]),
+             cel=1.0, rim=0.0, cast=0.0,
+             details=[(ribbon([(60.6, 18.0), (61.4, 23.0), (62.4, 29.0), (63.2, 34.0)], [0.1, 0.8, 0.7, 0.1]), GREY.hi, 0.55),
+                      (ribbon([(58.6, 20.0), (58.8, 25.0), (59.8, 31.0)], [0.1, 0.7, 0.1]), GREY.shadow, 0.45)])
+    # le dégradé de la racine : opaque vers l'arrière et le bas, transparent vers le sommet du crâne et le visage
+    fig.masks['fringe'] = (57.6, 25.0, 64.8, 13.4, 'head')
     # la grande oreille au long lobe (côté proche) : la racine se fond dans la joue, devant la couronne grise
     ox, oy = V['oreille']
     ear = sm([(ox + 1.6, oy - 6.4), (ox - 1.6, oy - 7.6), (ox - 4.2, oy - 5.4), (ox - 4.6, oy - 1.0), (ox - 3.8, oy + 3.6),

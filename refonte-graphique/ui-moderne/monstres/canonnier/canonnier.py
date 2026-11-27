@@ -708,7 +708,7 @@ def draw_cannon(fig, P, Cp, C_):
         part(nm, sh, GOLD, grad=(*Cp((u0 + u1) / 2, -r), *Cp((u0 + u1) / 2, r), [(0, GOLD.light), (0.45, GOLD.base), (1, GOLD.shadow)]),
              cel=0.5, rim=0.5, cast=0.8, cast_on=['cbody'],
              details=[(C_(ribbon([((u0 + u1) / 2, -r + 1.0), ((u0 + u1) / 2 + 0.2, -r * 0.3)], [0.4, 0.1])), GOLD.glint, 0.8),
-                      (C_(ribbon([(u0 + 0.6, r * 0.4), ((u0 + u1) / 2, r * 0.75), (u1 - 0.4, r * 0.4)], [0.1, 0.6, 0.1])), GOLD.deep, 0.5)])
+                      (C_(ribbon([((u0 + u1) / 2 - 0.1, r * 0.25), ((u0 + u1) / 2, r * 0.6), ((u0 + u1) / 2 + 0.1, r * 0.95)], [0.1, 0.7, 0.3])), GOLD.shadow, 0.45)])
     # le tourillon (le moignon de l'axe, sur le côté, vers nous)
     tr = C_(ellipse(31.0, 3.6, 2.4, 2.0))
     part('ctrun', tr, IRON, grad=(*Cp(32.6, 1.8), *Cp(29.4, 5.6), [(0, IRON.light), (0.5, IRON.base), (1, IRON.shadow)]), cel=0.6,

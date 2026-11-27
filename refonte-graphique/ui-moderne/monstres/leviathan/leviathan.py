@@ -147,8 +147,8 @@ def band_along(pts, ws):
 # ======================================================================== les formes au repos
 NECK0 = [(63.0, 246.0), (62.6, 214.0), (64.0, 196.0), (66.6, 178.0), (70.2, 160.0), (74.8, 143.0), (81.0, 127.0),
          (88.6, 112.0), (97.6, 99.0), (108.4, 87.4), (120.4, 77.4), (133.4, 68.6), (146.0, 61.0), (157.0, 54.0),
-         (172.0, 62.0), (182.0, 95.0), (181.0, 118.0), (178.0, 132.0), (176.0, 139.4), (166.0, 140.4), (154.0, 140.2),
-         (145.4, 142.6), (139.8, 148.4), (137.6, 158.0), (139.0, 172.0), (142.6, 188.0), (146.6, 202.0), (149.4, 214.0),
+         (172.0, 62.0), (182.0, 95.0), (181.0, 118.0), (178.0, 132.0), (176.0, 141.4), (166.0, 141.6), (156.0, 141.9),
+         (149.0, 142.3), (143.6, 144.2), (139.8, 148.8), (137.6, 158.0), (139.0, 172.0), (142.6, 188.0), (146.6, 202.0), (149.4, 214.0),
          (150.6, 246.0)]
 HEAD0 = [(147.0, 64.0), (158.0, 51.6), (171.0, 45.4), (186.0, 42.4), (200.0, 42.0), (213.0, 44.0), (225.0, 48.8),
          (236.0, 55.6), (245.0, 63.6), (251.2, 72.0), (254.6, 80.6), (254.4, 88.2), (251.8, 93.6), (247.4, 96.6),
@@ -158,9 +158,13 @@ SPINES0 = [
     [(162.4, 50.6), (164.6, 41.0), (164.2, 32.2), (169.6, 38.6), (177.6, 45.6)],      # l'épine de derrière
     [(178.2, 46.0), (180.4, 37.0), (181.2, 29.4), (186.2, 36.4), (194.2, 43.6)],      # l'épine de devant
 ]
-JAW0 = [(174.0, 113.0), (184.0, 108.6), (192.0, 110.4), (204.0, 113.8), (216.0, 117.8), (228.0, 122.0), (238.0, 125.6),
-        (245.0, 128.6), (249.4, 131.0), (251.4, 134.6), (250.2, 138.4), (245.6, 141.0), (234.0, 142.6), (218.0, 143.4),
-        (202.0, 143.4), (188.0, 142.8), (175.0, 141.6), (170.6, 130.0), (171.0, 118.0)]
+JAW0 = [(178.0, 109.0), (184.0, 108.6), (192.0, 110.4), (204.0, 113.8), (216.0, 117.8), (228.0, 122.0), (238.0, 125.6),
+        (245.0, 128.6), (249.4, 131.0), (251.4, 134.6), (250.2, 138.4), (245.6, 141.0), (234.0, 142.8), (218.0, 143.4),
+        (202.0, 143.3), (188.0, 142.9), (176.0, 142.5), (166.0, 142.3), (158.0, 142.1), (152.0, 141.6), (150.0, 136.0),
+        (160.0, 126.0), (170.0, 114.0)]
+# la joue couvre la charnière : un rond centré sur elle (il ne bouge pas quand la gueule s'ouvre : le coin des lèvres
+# garde la même courbe douce dans toutes les ouvertures)
+CHEEK_R = 6.2
 UPG = [(186.4, 107.0), (196.0, 104.4), (208.0, 102.0), (222.0, 100.0), (236.0, 98.2), (247.4, 96.6), (251.0, 94.6)]
 LOG = [(185.0, 109.4), (192.0, 110.8), (204.0, 114.2), (216.0, 118.2), (228.0, 122.4), (238.0, 126.0), (245.0, 129.0),
        (249.2, 131.4)]
@@ -553,27 +557,26 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('fan', SM(gfan.buffer(0.3).buffer(-0.3), sharp=40), FIN,
              grad=(170, 30, 90, 200, [(0, FIN.light), (0.4, FIN.base), (1, FIN.shadow)]), cel=1.2, rim=0.7, cast=0, details=fdet)
 
-    # ---- la mâchoire du bas (derrière la joue), ses gencives et ses dents ----
+    # ---- la mâchoire du bas : elle fait partie de la MÊME forme que la tête et le cou (aucune couture) ; la joue
+    # couvre sa charnière (un rond qui ne bouge pas), le coin des lèvres se replie en courbe douce ----
+    from shapely.geometry import Point as _Pt
     jaw = JS(sm(JAW0, t=0.9))
     gj = G(jaw)
+    cheek = Point(*hp(J0)).buffer(CHEEK_R, 24)
     jdet = []
     # le dessous pâle (il continue la gorge jusqu'au menton)
-    under = G(sm([(170, 134), (200, 136.6), (230, 135.8), (246, 133.6), (252, 136), (250, 140), (240, 146), (200, 147), (168, 146)], t=0.9))
-    under = G(JS(sm([(170, 134), (200, 136.6), (230, 135.8), (246, 133.6), (252, 136), (250, 140), (240, 146), (200, 147), (168, 146)], t=0.9)))
-    jdet.append((SS(under.intersection(gj)), ('lin', 230, 132, 190, 146, [(0, BELLY.light), (0.5, BELLY.base), (1, BELLY.shadow)]), 1))
-    jdet.append((JS(band_along([(180, 134.6), (205, 137.0), (232, 136.2), (248, 134.2)], [0.2, 0.9, 0.8, 0.2])), SKIN.shadow, 0.5))
+    under = G(JS(sm([(150, 138.4), (170, 137.6), (200, 136.6), (230, 135.8), (246, 133.6), (252, 136), (250, 140), (240, 147),
+                     (200, 148), (150, 147)], t=0.9)))
+    jdet.append((SS(under.intersection(gj)), ('lin', 230, 132, 170, 146, [(0, BELLY.light), (0.5, BELLY.base), (1, BELLY.shadow)]), 1))
+    jdet.append((JS(band_along([(176, 136.2), (205, 137.0), (232, 136.2), (248, 134.2)], [0.2, 0.9, 0.8, 0.2])), SKIN.shadow, 0.45))
     # le muscle du bas de la mâchoire (modelé : une lumière, une ombre)
-    jdet.append((JS(ellipse(214.0, 126.0, 15.0, 3.2, 14)), SKIN.light, 0.35))
-    jdet.append((JS(band_along([(190, 129.6), (210, 132.4), (232, 133.0)], [0.2, 1.0, 0.2])), SKIN.shadow, 0.4))
+    jdet.append((JS(ellipse(216.0, 126.4, 14.0, 3.0, 14)), SKIN.light, 0.3))
+    jdet.append((JS(band_along([(192, 129.6), (210, 132.4), (232, 133.0)], [0.2, 1.0, 0.2])), SKIN.shadow, 0.35))
     # la gencive du bas : un bourrelet continu le long du bord, d'où sortent les dents
     lg = crpath(LOG, n=40)
-    jdet.append((JS(rib([(x, y + 0.55) for x, y in lg], 2.2, 0.4, 0.6)), GUM[1], 1))
+    jdet.append((JS(rib([(x, y + 0.55) for x, y in lg], 2.2, 1.2, 0.6)), GUM[1], 1))
     jdet.append((JS(rib([(x + 0.2, y + 0.05) for x, y in lg], 0.9, 0.2, 0.3)), GUM[3], 0.8))
     jdet.append((JS(rib([(x, y + 1.6) for x, y in lg[2:]], 0.6)), GUM[0], 0.6))
-    # la commissure : le fond de la gueule, rouge sombre, effilé
-    jdet.append((JS(sm([(182.0, 108.4), (192.0, 109.8), (198.0, 111.8), (190.0, 112.6), (183.6, 112.0)], sharp=(2,), t=0.8)), GUM[0], 1))
-    fig.part('ljaw', jaw, SKIN, grad=(250, 112, 186, 146, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
-             cel=1.4, rim=0.6, cast=0, details=jdet)
 
     def tooth_row(gum, teeth, down, mp):
         gc = crpath(gum, n=80)
@@ -599,16 +602,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             subs += sm([r0, r1, e1, m1, tip, m0, e0], sharp=(0, 1, 4), t=0.75).subs
         from lib import Shape
         return Shape(subs).map(mp)
-    lteeth = tooth_row(LOG, LOT, False, jp)
-    fig.part('lteeth', lteeth, TOOTH, grad=(250, 112, 190, 128, [(0, TOOTH.hi), (0.5, TOOTH.base), (1, TOOTH.shadow)]),
-             cel=0.4, rim=0.35, cast=0.4, cast_on=['ljaw'])
 
     # ---- le corps : le cou, la colonne et la tête en UNE seule forme (une seule peau, aucune couture) ----
     neck = BS(sm(NECK0, sharp=(0, len(NECK0) - 1), t=0.9))
     head = HS(sm(HEAD0, t=0.9))
     spines = [HS(sm(s_, sharp=(2,), t=0.85)) for s_ in SPINES0]
     gneck, ghead = G(neck), G(head)
-    gb = unary_union([gneck, ghead] + [G(s_) for s_ in spines])
+    gb = unary_union([gneck, ghead, gj, cheek] + [G(s_) for s_ in spines])
     gb = gb.buffer(1.2, join_style=1).buffer(-1.2, join_style=1)
     gb = gb.intersection(cut_poly(lambda x: body_cut(x) - P['rise'] * 0 + 0.0))
     body = S(gb, sharp=40)
@@ -738,11 +738,20 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         tip = s_[2]
         det.append((HS(sm([lerp(s_[1], tip, 0.15), tip, lerp(s_[3], tip, 0.15), lerp(lerp(s_[1], s_[3], 0.5), tip, 0.1)], sharp=(1,), t=0.8)),
                     ('lin', tip[0], tip[1], tip[0], tip[1] + 9, [(0, IVORY.hi), (0.7, IVORY.light), (1, IVORY.base, 0)]), 0.95))
-    # l'ombre sous la mâchoire sur la gorge (portée par la tête : effilée aux deux bouts)
-    jb = [BM(p) for p in ((150.0, 132.0), (160.0, 137.0), (170.0, 140.6), (176.0, 141.4))]
-    det.append((ribbon(jb, [0.1, 1.6, 1.8, 0.2]), SHADE, 0.14))
+    # -- le coin de la gueule : la lèvre fait le tour du coin en courbe douce (la gencive du haut rejoint celle du bas
+    # par un arc autour de la charnière), puis le pli des lèvres file en arrière et descend sur la joue --
+    cx_, cy_ = J0
+    arc = [(cx_ + (CHEEK_R - 0.9) * math.cos(math.radians(a)), cy_ + (CHEEK_R - 0.9) * math.sin(math.radians(a))) for a in range(-34, 75, 6)]
+    jdet.append((HS(rib(arc, 2.0, 1.2, 0.8)), GUM[1], 1))
+    jdet.append((HS(rib([(x - 0.6, y) for x, y in arc[:12]], 0.7)), GUM[0], 0.7))
+    fold = [(cx_ + 6.6, cy_ - 1.6), (cx_ + 1.2, cy_ + 4.8), (cx_ - 3.4, cy_ + 8.4), (cx_ - 6.0, cy_ + 13.0)]
+    jdet.append((HS(band_along([(x - 0.7, y + 0.5) for x, y in fold], [0.1, 1.3, 1.1, 0.1])), SKIN.shadow, 0.5))
+    jdet.append((HS(band_along([(x + 0.9, y - 0.5) for x, y in fold], [0.1, 1.0, 0.9, 0.1])), SKIN.hi, 0.3))
+    # la joue bombée au-dessus de la charnière (une lumière douce : elle couvre l'articulation)
+    jdet.append((HS(band_along([(cx_ - 9.0, cy_ + 2.0), (cx_ - 6.4, cy_ - 4.6), (cx_ + 0.4, cy_ - 7.6), (cx_ + 6.0, cy_ - 6.4)],
+                               [0.2, 1.5, 1.4, 0.2])), SKIN.light, 0.35))
     fig.part('body', body, SKIN, grad=(240, 40, 70, 230, [(0, SKIN.light), (0.42, SKIN.base), (1, SKIN.shadow)]),
-             cel=2.4, rim=1.0, cast=2.0, cast_on=['pool', 'fan', 'tentB', 'boilB', 'ljaw', 'lteeth'], details=det)
+             cel=2.4, rim=1.0, cast=2.0, cast_on=['pool', 'fan', 'tentB', 'boilB'], details=det + jdet)
 
     # ---- la nageoire du côté proche (sortie de l'opercule, couchée sur le cou) ----
     pf = 1.2 * math.sin(P['fph'] + 0.6)
@@ -763,7 +772,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- les dents du haut (elles pendent de la gencive dans la gueule ouverte) ----
     uteeth = tooth_row(UPG, UPT, True, hp)
     fig.part('uteeth', uteeth, TOOTH, grad=(250, 96, 190, 108, [(0, TOOTH.hi), (0.55, TOOTH.light), (1, TOOTH.shadow)]),
-             cel=0.4, rim=0.35, cast=0.5, cast_on=['ljaw', 'lteeth'])
+             cel=0.4, rim=0.35, cast=0.5, cast_on=['body'])
+    lteeth = tooth_row(LOG, LOT, False, jp)
+    fig.part('lteeth', lteeth, TOOTH, grad=(250, 112, 190, 128, [(0, TOOTH.hi), (0.5, TOOTH.base), (1, TOOTH.shadow)]),
+             cel=0.4, rim=0.35, cast=0.4, cast_on=['body'])
 
     # ---- le bouillon d'écume autour de la colonne ----
     bx = BM((106.0, 214.0))[0]
