@@ -1,0 +1,4 @@
+fait
+27/11 : la montagne des singes du clan d'Eldra (vent) redessinée en vectoriel lisse et animé, sur le modèle du volcan de Kael : ciel du matin, montagne de la cascade, pêcher en fleurs, bambous et statue du singe, terrasse ocre calme ; recomposée pour le vrai combat (tout l'important entre x 84 et 506, sous les pilules du haut, au-dessus des cartes).
+Touche vivante : trois grues traversent le ciel (une proche, une plus loin, un vol de trois tout au loin) et l'ombre d'un singe saute d'arbre en arbre sur le sommet ; pétales et feuilles portés par le vent vers la droite.
+Branché derrière ?vecto=1. Vraies captures (campagne 2-4) : combat-390x844.png, combat-360x640.png, combat-430x932.png ; situation.png, comparaison.png (pixel | vectoriel), anim.mp4 / anim.gif.

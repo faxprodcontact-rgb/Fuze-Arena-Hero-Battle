@@ -1707,12 +1707,27 @@ def ecrire_ts(doc):
     print('  fond-vecto.ts :', ', '.join(assemble()))
 
 
-def composer_jeu(doc, t):
-    """Contrôle : l'image à l'instant t refaite comme le jeu la ferait (fixe + calques de la planche), à ×UP."""
-    base = Image.open(os.path.join(JEU, CLAN + '.webp')).convert('RGBA')
-    pl = Image.open(os.path.join(TMP, 'planche.png')).convert('RGBA')
+_IMG = {}
+
+
+def composer_jeu(doc, t, particules=False):
+    """L'image à l'instant t refaite comme le jeu la fait (fixe + calques de la planche, et les particules si demandé),
+    à ×UP : le contrôle, et les images de la vidéo (bien plus rapide que de rendre chaque image en SVG)."""
+    if 'base' not in _IMG:
+        _IMG['base'] = Image.open(os.path.join(JEU, CLAN + '.webp')).convert('RGBA')
+        _IMG['pl'] = Image.open(os.path.join(TMP, 'planche.png')).convert('RGBA')
+    base = _IMG['base'].copy()
+    pl = _IMG['pl']
+    elems = {e['id']: e for e in ELEMS}
     for c in sorted(doc['calques'], key=lambda c: c['prof']):
-        if c['genre'] == 'boucle':
+        if c['genre'] == 'particules' and particules:
+            for x, y, i in particules_a(elems[c['id']], t):
+                sx, sy, w_, h_ = c['cases'][i]
+                base.alpha_composite(pl.crop((sx, sy, sx + w_, sy + h_)),
+                                     (round(x * UP - w_ / 2), round(y * UP - h_ / 2))) \
+                    if 0 <= x * UP - w_ / 2 and x * UP + w_ / 2 < base.width else _coller(base, pl.crop(
+                        (sx, sy, sx + w_, sy + h_)), round(x * UP - w_ / 2), round(y * UP - h_ / 2))
+        elif c['genre'] == 'boucle':
             i = 0 if c['ms'] == 0 else int(t // c['ms']) % len(c['cases'])
             sx, sy = c['cases'][i]
             base.alpha_composite(pl.crop((sx, sy, sx + c['w'] * UP, sy + c['h'] * UP)), (c['x'] * UP, c['y'] * UP))
@@ -1729,6 +1744,14 @@ def composer_jeu(doc, t):
             base.alpha_composite(big.crop((tw - offx, th - offy, tw - offx + bw, th - offy + bh)),
                                  (c['x'] * UP, c['y'] * UP))
     return base
+
+
+def _coller(base, im, x, y):
+    """Colle une image qui dépasse peut-être du bord (alpha_composite refuse les places négatives)."""
+    x0, y0 = max(0, x), max(0, y)
+    x1, y1 = min(base.width, x + im.width), min(base.height, y + im.height)
+    if x1 > x0 and y1 > y0:
+        base.alpha_composite(im.crop((x0 - x, y0 - y, x1 - x, y1 - y)), (x0, y0))
 
 
 def contrôles(img_x1):
@@ -1801,12 +1824,13 @@ def video():
     os.makedirs(d, exist_ok=True)
     for f in os.listdir(d):
         os.unlink(os.path.join(d, f))
-    jobs = [(scene(i * 1000 / fps, (x0, top, VUE_X[1] - x0, H - top)), os.path.join(d, 'f%04d.png' % i))
-            for i in range(n)]
-    rendre(jobs, 720, hh)
+    # les images sont composées comme dans le jeu (fixe + planche + particules), puis cadrées comme le combat
+    doc = json.load(open(os.path.join(HERE, 'fond-%s.json' % CLAN)))
     gif = []
     for i in range(n):
-        im = geste(poser(Image.open(jobs[i][1]).convert('RGBA'), s, x0, top), s, phone).convert('RGB')
+        full = composer_jeu(doc, i * 1000 / fps, particules=True)
+        vue = full.crop((round(x0 * UP), round(top * UP), round(VUE_X[1] * UP), H * UP)).resize((720, hh), Image.LANCZOS)
+        im = geste(poser(vue, s, x0, top), s, phone).convert('RGB')
         if im.height % 2:
             im = im.crop((0, 0, im.width, im.height - 1))
         im.save(os.path.join(d, 'v%04d.png' % i))

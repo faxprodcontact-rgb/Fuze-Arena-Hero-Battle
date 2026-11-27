@@ -1629,11 +1629,21 @@ def video():
     hh = round((H - top) * s)
     d = os.path.join(TMP, 'video')
     os.makedirs(d, exist_ok=True)
-    for f in os.listdir(d):
-        os.unlink(os.path.join(d, f))
+    if '--reprise' not in sys.argv:        # --reprise : garde les images déjà rendues (après une coupure)
+        for f in os.listdir(d):
+            os.unlink(os.path.join(d, f))
     jobs = [(scene(i * 1000 / fps, (x0, top, VUE_X[1] - x0, H - top)), os.path.join(d, 'f%04d.png' % i))
             for i in range(n)]
-    rendre(jobs, 720, hh)
+    # par paquets, avec de nouveaux essais : sur une machine chargée, un long rendu d'un seul tenant peut casser
+    reste = [j for j in jobs if not os.path.exists(j[1])]
+    for k in range(0, len(reste), 48):
+        for essai in range(3):
+            try:
+                rendre(reste[k:k + 48], 720, hh)
+                break
+            except subprocess.CalledProcessError:
+                if essai == 2:
+                    raise
     gif = []
     for i in range(n):
         im = geste(poser(Image.open(jobs[i][1]).convert('RGBA'), s, x0, top), s, phone).convert('RGB')

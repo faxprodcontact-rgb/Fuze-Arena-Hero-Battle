@@ -1467,10 +1467,15 @@ def video():
     d = os.path.join(TMP, 'video')
     os.makedirs(d, exist_ok=True)
     for f in os.listdir(d):
-        os.unlink(os.path.join(d, f))
+        if not f.startswith('f') or '--reprise' not in sys.argv:
+            os.unlink(os.path.join(d, f))
     jobs = [(scene(i * 1000 / fps, (x0, top, VUE_X[1] - x0, H - top)), os.path.join(d, 'f%04d.png' % i))
             for i in range(n)]
-    rendre(jobs, 720, hh)
+    # par lots de 60 images (la machine est partagée : un navigateur qui tombe ne fait perdre qu'un lot) ; avec
+    # --reprise, les images déjà rendues sont gardées
+    reste = [j for j in jobs if not os.path.exists(j[1])]
+    for k in range(0, len(reste), 60):
+        rendre(reste[k:k + 60], 720, hh)
     gif = []
     for i in range(n):
         im = geste(poser(Image.open(jobs[i][1]).convert('RGBA'), s, x0, top), s, phone).convert('RGB')
