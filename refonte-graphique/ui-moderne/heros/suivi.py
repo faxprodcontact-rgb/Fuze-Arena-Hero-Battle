@@ -42,11 +42,7 @@ def heros():
 
 
 # Nouveaux héros dessinés en vectoriel, pas encore dans les données du jeu (demande du 27/11 : 3 dragons).
-NOUVEAUX = [
-    {'id': 'dragon-feu', 'name': 'Brasyr', 'r': 'epic', 'el': 'fire', 'art': 'dragon-feu'},
-    {'id': 'dragon-terre', 'name': 'Rocvar', 'r': 'epic', 'el': 'earth', 'art': 'dragon-terre'},
-    {'id': 'dragon-vent', 'name': 'Venthys', 'r': 'epic', 'el': 'wind', 'art': 'dragon-vent'},
-]
+NOUVEAUX = []  # les 3 dragons sont dans les données du jeu depuis le 27/11
 
 
 def vignette(src, dst, h):
@@ -77,8 +73,8 @@ def main():
         elif os.path.isdir(os.path.join(HEROS, s)):
             statut = 'en cours'
         px = os.path.join(RACINE, 'public', 'art', 'hd', 'pose', f"{h['art']}.webp")
-        h['px'] = os.path.exists(px)
-        if h['px']:
+        h['px'] = os.path.exists(px) or os.path.exists(os.path.join(PAGE, 'px', f"{h['id']}.webp"))
+        if os.path.exists(px):  # le pixel art est supprimé depuis la v0.65.0 : on garde les vignettes déjà faites
             vignette(px, os.path.join(PAGE, 'px', f"{h['id']}.webp"), 360)
         vx = os.path.join(RACINE, 'public', 'art', 'vecto', f"{h['art']}.webp")
         has_vx = statut in ('fait', 'à revoir') and os.path.exists(vx)
