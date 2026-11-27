@@ -70,6 +70,8 @@ export function useNav(): NavState {
 export function go(tab: Tab): void {
   nav.tab = tab;
   nav.sub = null;
+  // (les pages s'ouvrent entre les deux barres depuis le 27/11 : changer d'onglet les referme)
+  nav.modals = [];
   changed();
 }
 

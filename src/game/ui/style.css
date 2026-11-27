@@ -634,9 +634,9 @@ p { margin: 6px 0; }
 .roster .hcard-small { width: 100%; aspect-ratio: auto; height: 108px; --feet: 74%; }
 /* les listes de héros sous une barre (fusion, renaissance, formation, mission ; 27/11) : les cartes passent sous la barre dans un fondu (plus de
    coupure nette), et la carte choisie garde de l'air en haut (son cadre d'or et sa coche ne sont pas coupés) */
-.roster.fuse-roster { padding-top: 16px; margin-top: -10px;
-  -webkit-mask-image: linear-gradient(180deg, #0000 0, #000 14px, #000 calc(100% - 22px), #0000);
-  mask-image: linear-gradient(180deg, #0000 0, #000 14px, #000 calc(100% - 22px), #0000); }
+.roster.fuse-roster { padding-top: 26px; margin-top: -8px;
+  -webkit-mask-image: linear-gradient(180deg, #0000 0, #0000 4px, #000 26px, #000 calc(100% - 22px), #0000);
+  mask-image: linear-gradient(180deg, #0000 0, #0000 4px, #000 26px, #000 calc(100% - 22px), #0000); }
 .grid > *, .roster > * { min-width: 0; }
 .prep-go { padding: 8px 0 max(14px, env(safe-area-inset-bottom, 0px)); }
 /* le plateau : la scène du combat à venir, bord à bord sous le titre ; le bas se fond dans le fond de la page */
@@ -1590,3 +1590,25 @@ button.setting-row:active { filter: brightness(0.95); }
    de sa carte) : toutes les zones qui défilent ne défilent qu'en hauteur. */
 .content, .modal-body, .page-body, .roster, .hall-scroll, .hp-sheet-body, .chat-list, .ps-list, .col-body, .g-scroll, .odds2-list,
 .adv-scroll { overflow-x: hidden; }
+
+/* LES DEUX BARRES TOUJOURS AU PREMIER PLAN (27/11 : « dans toutes les sections du jeu, ces deux barres au premier
+   plan ») : une page (fusion, renaissance, forge, formation, fiche du héros, mission, donjon, amis, courrier) ne couvre
+   plus l'écran : elle prend la place du contenu, entre la barre du haut et celle du bas, qui passent par-dessus ses
+   bords (leurs coins arrondis débordent de 18 px) ; ses marges en tiennent compte. Les fenêtres et le combat restent
+   par-dessus tout. */
+.app > .topbar { grid-row: 1; grid-column: 1; } .app > .content { grid-row: 2; grid-column: 1; } .app > .tabbar { grid-row: 3; grid-column: 1; }
+.app > .page, .app > .prep { grid-row: 2; grid-column: 1; position: relative; inset: auto; z-index: 2 !important; min-height: 0; }
+.app > .page > .prep-head, .app > .prep > .prep-head { padding-top: 26px; }
+.app > .page > .page-body { padding-bottom: 30px; }
+.app > .prep { padding-bottom: 24px; }
+.app > .page.hx-page { padding-top: 22px; padding-bottom: 24px; }
+/* petit téléphone, avec les deux barres : l'autel plus compact, et la liste des héros garde toujours de la place
+   (au moins une rangée et demie ; la page défile s'il le faut) */
+.page-body > .roster.fuse-roster { flex: 1 0 auto; min-height: 150px; }
+@media (max-height: 700px) {
+  .fuse-altar { gap: 8px; padding: 10px 10px 10px; }
+  .fuse-altar .fuse-big { width: 86px; }
+  .fuse-altar .fuse-slot, .fuse-altar .fuse-slot.pick .hcard-small { width: 46px; }
+  .fuse-altar .fuse-needs { padding: 6px 8px; }
+  .reset-lv { margin-top: 2px; font-size: 12px; }
+}
