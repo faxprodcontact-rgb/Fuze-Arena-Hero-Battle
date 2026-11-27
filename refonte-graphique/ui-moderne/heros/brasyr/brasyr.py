@@ -31,7 +31,7 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 SCALE = Mat('#ffc2a0', '#f2604c', '#c92e3c', '#8c1a46', '#500e38', glint='#fff0e2')
 BELLY = Mat('#fff6d2', '#f6d47c', '#dca44c', '#a8683e', '#6c3a34')
 MANE = Mat('#fff4b8', '#ffd060', '#ff9630', '#e2562a', '#9a2a2e')
-HORN = Mat('#c4b8da', '#7a6c92', '#4c4064', '#30264a', '#1a1230')
+HORN = Mat('#b8aad0', '#665a80', '#3a3048', '#261e34', '#150f20')
 LAC = Mat('#ff9a86', '#a32a40', '#781832', '#4c0e2c', '#2c0820')        # la laque rouge sombre de l'armure
 BRONZE = Mat('#fff0b4', '#f0c264', '#c88a3a', '#8c5428', '#52301e', glint='#fffbe6')
 SASH = Mat('#b49aa6', '#66505e', '#46343f', '#2e2030', '#1c1220')       # la ceinture de tissu, noir chaud
@@ -159,7 +159,7 @@ MANE_LOCKS = [
     ('mG2', (42.4, 23.6), (38.8, 24.0), (34.4, 26.0), (29.6, 29.6), 7.4, 0.4, 0.5, 3.5),
 ]
 MANE_FILL = [(0, MANE.light), (0.45, MANE.base), (1, '#ff7a2a')]
-MANE_UNDER = [(0, MANE.shadow), (0.5, MANE.shadow), (1, '#c8402a')]
+MANE_UNDER = [(0, '#f27a32'), (0.5, '#f27a32'), (1, '#e8622c')]
 
 
 def mane_geom(P):
@@ -182,12 +182,12 @@ def mane_geom(P):
         fd = min(0.55, fade / math.dist(p0, p3))
         sh_ = cast_off(sh, -0.5, 1.2)
         if sh_:
-            det.append((sh_, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], fd),), 0.3))
+            det.append((sh_, ('lin',) + ax + (faded([(0, '#6a1a3a'), (1, '#6a1a3a')], fd),), 0.18))
         det.append((sh, ('lin',) + ax + (faded(MANE_FILL, fd),), 1))
         det.append((sm_under(sh, 0.8, -2.2), ('lin',) + ax + (faded(MANE_UNDER, fd),), 0.85))
         sheen = ribbon(resample(bez(lerp(p0, p1, 0.55), p1, p2, lerp(p2, p3, 0.6), 12), 6),
                        [0.2, w0 * 0.12, w0 * 0.16, w0 * 0.13, w0 * 0.08, 0.1, 0.1])
-        det.append((sheen.move(0.4, -1.0), MANE.hi, 0.7))
+        det.append((sheen.move(0.4, -1.0), MANE.hi, 0.55))
     det.append((Shape(mass.subs + mass.move(0.8, -1.0).subs, evenodd=True), MANE.shadow, 0.35))
     det.append((Shape(mass.subs + mass.move(-0.6, 0.8).subs, evenodd=True), MANE.hi, 0.85))
     g = _poly(mass)
@@ -225,8 +225,8 @@ def horn(beam, w0, w1=0.5):
 
 # les cornes noires (repère de la tête) : elles partent du dessus du crâne, derrière l'œil, filent vers l'arrière en
 # arc et relèvent la pointe ; celle du fond est un peu plus haute et plus en arrière (même longueur apparente)
-HORN_N = [(51.2, 18.4), (49.4, 13.6), (44.0, 9.8), (37.4, 8.8), (31.6, 9.6), (27.4, 7.8), (25.4, 4.2)]
-HORN_F = [(46.4, 16.6), (44.6, 12.2), (39.6, 8.6), (33.6, 7.4), (28.4, 8.0), (24.6, 6.4), (22.8, 3.0)]
+HORN_N = [(49.8, 15.4), (48.4, 10.8), (43.8, 6.8), (37.4, 5.2), (32.0, 5.8), (28.6, 4.4)]
+HORN_F = [(46.4, 13.4), (45.0, 8.8), (40.4, 4.6), (34.0, 3.0), (28.6, 3.6), (25.2, 2.2)]
 
 
 # ---------- la hallebarde ----------
@@ -322,7 +322,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('mane', MG['mass'], MANE, grad=MG['grad'], cel=0, rim=0, cast=0, details=MG['det'])
 
     # ---- la corne du fond (derrière la tête) ----
-    hF, cF, wF = horn(HORN_F, 5.6, 0.7)
+    hF, cF, wF = horn(HORN_F, 5.4, 1.3)
     fig.part('hornF', hF, HORN, grad=(48, -4, 26, 16, [(0, HORN.light), (0.5, HORN.base), (1, HORN.shadow)]), cel=1.0, rim=0.6, cast=0)
 
     # ---- la jambe du fond (en avant) : cuisse, genou plié au-dessus du pied, tibia, grand pied griffu ----
@@ -578,14 +578,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         hd.append((ribbon([(x - w_ * 0.42, y + h_ * 0.2), (x, y + h_ * 0.55), (x + w_ * 0.42, y + h_ * 0.2)], [0.1, 0.45, 0.1]), SCALE.deep, op * 1.3))
     # la racine du museau (le « nez » de placer() : sur la médiane, devant l'œil) : un pli doux qui descend de l'arcade
     nz = FACE['nez']
-    hd += [(ribbon([(nz[0] + 1.0, 21.6), (nz[0] + 0.4, 24.8), nz], [0.1, 0.9, 0.2]), SCALE.shadow, 0.45),
-           (ribbon([(nz[0] + 1.7, 21.8), (nz[0] + 1.1, 24.8), (nz[0] + 0.8, 27.4)], [0.1, 0.5, 0.1]), SCALE.hi, 0.4)]
+    hd += [(ribbon([(nz[0] + 0.9, 22.6), (nz[0] + 0.5, 25.2), nz], [0.1, 1.2, 0.2]), SCALE.shadow, 0.3)]
     hd += eye_kit(P)
     fig.part('head', head, SCALE, grad=(74, 18, 42, 36, [(0, '#f06a52'), (0.45, SCALE.base), (1, '#8e1c46')]),
              cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'cuirass', 'beard'], details=hd)
 
     # ---- la corne proche (côté spectateur) : devant la tête, sa base enfouie dans la racine de la crinière ----
-    hN, cN, wN = horn(HORN_N, 6.2, 0.7)
+    hN, cN, wN = horn(HORN_N, 6.0, 1.4)
     hdet = [(ribbon([add(p, (0.5, -0.9)) for p in resample(cN[2:14], 6)], [0.1, 0.6, 0.7, 0.6, 0.5, 0.3, 0.1]), HORN.hi, 0.55)]
     fig.part('hornN', hN, HORN, grad=(56, 0, 30, 18, [(0, HORN.light), (0.5, HORN.base), (1, HORN.shadow)]), cel=1.1, rim=0.7,
              cast=0.9, cast_on=['mane', 'head', 'hornF'], details=hdet)
