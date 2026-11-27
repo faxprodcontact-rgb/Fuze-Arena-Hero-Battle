@@ -534,14 +534,11 @@ def _():
 
 @picto('allElements')
 def _():
-    """Tous les éléments : quatre perles (feu, vent, eau, terre) en losange."""
-    from lib import ELEMENT
-    ic = Icon()
-    for (x, y), e in zip([(50, 22), (78, 50), (50, 78), (22, 50)], ['fire', 'wind', 'water', 'earth']):
-        o = ic.obj()
-        o.part(circle(x, y, 17), ('radial', ELEMENT[e]), gloss=False)
-        o.detail(ellipse(x + 5, y - 6, 5, 3, -35), fill='#ffffff', opacity=0.85, blur=1)
-    return ic
+    """Tous les éléments : les quatre signes épurés (combat.py, EL_FLAT) en carré."""
+    from combat import FlatSign, flat_sign
+    k = 44 / 24
+    return FlatSign(''.join(flat_sign(e, x, y, k) for e, (x, y) in
+                            zip(['fire', 'water', 'earth', 'wind'], [(4, 4), (52, 4), (4, 52), (52, 52)])))
 
 
 @picto('rebirth')

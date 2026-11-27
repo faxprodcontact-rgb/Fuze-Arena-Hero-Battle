@@ -27,50 +27,46 @@ def flame(ic, cx, cy, s, outer='fire'):
     return o
 
 
-@picto('fire')
-def _():
-    ic = Icon()
-    flame(ic, 50, 54, 44)
-    return ic
+# Les signes des éléments, ÉPURÉS (27/11, demande du propriétaire : « un nouveau signe terre épuré d'une couleur », puis
+# « mets à jour les pictos d'élément partout ») : une forme pleine d'une seule couleur (des traits ronds pour le vent),
+# un fin contour sombre pour se détacher de tout fond. Les mêmes formes que les cartes (ElementSign de kit.tsx).
+EL_FLAT = {
+    'earth': ('#e7ab63', 'M1.5 20.5L8.6 7.2l3.6 6.1 2.6-3.9 7.7 11.1Z', False),
+    'fire': ('#ff8a4a', 'M12.6 1.8c.6 4.3 6.4 6.6 6.4 12.6a7 7 0 0 1-14 0c0-3.4 2.1-5.6 3.4-6.6-.1 2.2.8 3.5 2.1 3.7-1-3.4.4-6.9 2.1-9.7Z', False),
+    'water': ('#5ab8ff', 'M12 1.8C9.2 6.6 5 10.6 5 15.2a7 7 0 0 0 14 0c0-4.6-4.2-8.6-7-13.4Z', False),
+    'wind': ('#6fe08c', 'M2.5 8.5h11.2a3.2 3.2 0 1 0-3.2-3.2M2.5 13h16.3a3.3 3.3 0 1 1-3.3 3.3M2.5 17.5h7', True),
+}
+INK_FLAT = '#1c1826'
 
 
-@picto('water')
-def _():
-    ic = Icon()
-    o = ic.obj()
-    o.part(drop(50, 52, 34, 44), ELEMENT['water'], gloss=False)
-    o.detail(openpath([(30, 66), (40, 60), (50, 66), (60, 60), (70, 66)], smooth=True), stroke=('#c8ecff', 3.4), clip=0, opacity=0.85)
-    o.detail(ellipse(62, 48, 6, 11, -20), fill='#ffffff', clip=0, opacity=0.8, blur=1)
-    return ic
+def flat_sign(el, tx=0.0, ty=0.0, k=1.0):
+    """Le signe (repère 24 × 24) posé dans la case de 100 : contour sombre dessous, la forme d'une couleur dessus."""
+    c, d, stroke = EL_FLAT[el]
+    tr = 'translate(%g %g) scale(%g)' % (tx, ty, k)
+    if stroke:
+        return ('<g transform="%s" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="%s" stroke="%s" '
+                'stroke-width="4.6"/><path d="%s" stroke="%s" stroke-width="2.8"/></g>' % (tr, d, INK_FLAT, d, c))
+    return ('<g transform="%s" stroke-linejoin="round"><path d="%s" fill="%s" stroke="%s" stroke-width="1.8"/>'
+            '<path d="%s" fill="%s"/></g>' % (tr, d, INK_FLAT, INK_FLAT, d, c))
 
 
-def gust(cx, cy, length, r, w):
-    """Une bourrasque : un trait qui finit en boucle."""
-    pts = [(cx - length, cy)] + [(cx + r * math.cos(math.radians(a)), cy - r + r * math.sin(math.radians(a))) for a in range(90, -200, -30)]
-    return band(pts, w)
+class FlatSign:
+    """Un picto fait d'un ou plusieurs signes épurés (la fabrique n'a besoin que de .svg())."""
+
+    def __init__(self, body):
+        self.body = body
+
+    def svg(self, px=None):
+        size = (' width="%d" height="%d"' % (px, px)) if px else ''
+        return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%s>%s</svg>' % (size, self.body)
 
 
-@picto('wind')
-def _():
-    """Le vent : trois bourrasques enroulées."""
-    ic = Icon()
-    o = ic.obj()
-    for cx, cy, L, r in [(58, 34, 44, 12), (70, 58, 54, 11), (46, 80, 32, 8)]:
-        o.part(gust(cx, cy, L, r, 9), ELEMENT['wind'], gloss=False)
-    return ic
+def _flat(el):
+    return FlatSign(flat_sign(el, 4, 4, 92 / 24))
 
 
-@picto('earth')
-def _():
-    """La terre : un rocher à deux sommets, une herbe au pied."""
-    ic = Icon()
-    o = ic.obj()
-    o.part(rpoly([(6, 88), (30, 34), (44, 50), (62, 14), (94, 88)], [4, 3, 3, 3, 4]), ELEMENT['earth'], gloss=False)
-    o.detail(poly([(62, 14), (94, 88), (66, 88), (58, 50)]), fill=lite(ELEMENT['earth'], 0.35), clip=0, opacity=0.6)
-    o.detail(rpoly([(62, 14), (70, 30), (64, 34), (58, 28), (54, 32)], 1.5), fill='#ffffff', clip=0, opacity=0.85)
-    g = ic.obj(shadow=False)
-    g.part(blob([(8, 88), (24, 74), (36, 80), (50, 72), (62, 80), (76, 74), (92, 88)], t=1), 'green', gloss=False)
-    return ic
+for _el in EL_FLAT:
+    picto(_el)((lambda e: lambda: _flat(e))(_el))
 
 
 # ---------- Les rôles ----------
