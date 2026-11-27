@@ -203,7 +203,8 @@ SPOTS0 = [(110.2, 205.0, 2.5), (110.6, 191.6, 2.2), (111.4, 178.6, 1.95), (112.8
 PORES0 = [(226.0, 95.6, 0.85), (234.4, 94.2, 0.8), (242.6, 92.8, 0.72)]
 # la limite ventre / flanc (du bas vers la gorge), puis le dessous du menton
 BELLY_EDGE = [(114.4, 246.0), (115.0, 214.0), (115.6, 196.0), (116.6, 178.0), (118.4, 162.0), (121.2, 148.0),
-              (125.6, 137.0), (131.6, 128.6), (139.4, 122.6), (149.0, 119.4), (160.0, 119.0), (172.0, 121.6)]
+              (125.6, 137.0), (131.6, 128.6), (139.4, 123.0), (149.0, 124.0), (158.0, 127.6), (166.0, 131.8),
+              (173.0, 135.0), (180.0, 136.8), (186.0, 137.4)]
 
 
 _SCALES = []
@@ -219,7 +220,7 @@ def scales_rest():
     ghead = G(sm(HEAD0, t=0.9))
     skin_rest = unary_union([G(sm(NECK0, t=0.9)), ghead])
     keep_out = unary_union([
-        Polygon(crpath(BELLY_EDGE, n=60) + [(175.0, 150.0), (180.0, 246.0), (114.0, 246.0)]).buffer(0).buffer(2.0),
+        Polygon(crpath(BELLY_EDGE, n=60) + [(190.0, 150.0), (180.0, 246.0), (114.0, 246.0)]).buffer(0).buffer(2.0),
         Point(EYE[0], EYE[1] - 2).buffer(13.0),
         G(sm([(182, 114), (200, 100), (254, 90), (254, 106), (200, 112)], t=0.9)),          # la lèvre du haut
         Point(NOSE[0], NOSE[1]).buffer(4.0),
@@ -565,9 +566,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     cheek = Point(*hp(J0)).buffer(CHEEK_R, 24)
     jdet = []
     # le dessous pâle (il continue la gorge jusqu'au menton)
-    under = G(JS(sm([(172, 140.6), (186, 137.4), (200, 136.6), (230, 135.8), (246, 133.6), (252, 136), (250, 140), (240, 147),
+    under = G(JS(sm([(160, 140.0), (166, 134.6), (173, 135.2), (180, 136.9), (186, 137.4), (200, 136.6), (230, 135.8), (246, 133.6), (252, 136), (250, 140), (240, 147),
                      (200, 148), (172, 147)], t=0.9)))
-    jdet.append((SS(under.intersection(gj)), ('lin', *jp((176.0, 0.0)), *jp((196.0, 0.0)), [(0, BELLY.light, 0), (1, BELLY.light, 1)]), 1))
+    jdet.append((SS(under.intersection(gj)), ('lin', *jp((162.0, 0.0)), *jp((170.0, 0.0)), [(0, BELLY.light, 0), (1, BELLY.light, 1)]), 1))
     jdet.append((SS(under.intersection(gj)), ('lin', *jp((236.0, 132.0)), *jp((200.0, 148.0)), [(0, BELLY.hi, 0.5), (1, BELLY.base, 0.0)]), 1))
     jdet.append((JS(band_along([(186, 137.2), (205, 137.0), (232, 136.2), (248, 134.2)], [0.2, 0.9, 0.8, 0.2])), SKIN.shadow, 0.4))
     # le muscle du bas de la mâchoire (modelé : une lumière, une ombre)
@@ -625,8 +626,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det.append((SS(litb.intersection(gb)), ('lin', 96, 0, 116, 0, [(0, SKIN.light, 0), (0.6, SKIN.light, 0.32), (1, SKIN.light, 0.1)]), 1))
     # -- le ventre : des plaques pâles qui se recouvrent, continues de l'eau à la gorge --
     be = [BM(p) for p in crpath(BELLY_EDGE, n=60)]
-    front = Polygon(be + [BM((175.0, 150.0)), BM((180.0, 246.0)), BM((114.0, 246.0))]).buffer(0)
-    belly = front.intersection(G(neck)).difference(ghead.buffer(0.3))
+    front = Polygon(be + [BM((190.0, 150.0)), BM((180.0, 246.0)), BM((114.0, 246.0))]).buffer(0)
+    belly = front.intersection(G(neck))
     belly = belly.intersection(gb)
     det.append((SS(belly), ('lin', 150, 120, 112, 230, [(0, BELLY.light), (0.45, BELLY.base), (1, BELLY.shadow)]), 1))
     # le côté du ventre qui tourne vers le flanc (ombre douce le long de la limite)

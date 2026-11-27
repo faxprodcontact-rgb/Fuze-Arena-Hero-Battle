@@ -85,6 +85,28 @@ def main():
     scene.alpha_composite(hero, (xh - round(hfx * u), gy - round(hfy * u)))
     scene.alpha_composite(boss, (xb - round((bw - bfx) * u), gy - round(bfy * u)))
     scene.convert('RGB').save(os.path.join(OUT, 'situation.png'))
+    # 4) avant / après (avis du propriétaire) : à gauche l'image annotée, à droite le nouveau dessin, même cadrage (même
+    #    échelle en pixels du dessin, pieds sur la même ligne, même fond)
+    av = os.environ.get('AVANT', '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/avis-mon1/boss-feu.png')
+    if os.path.exists(av):
+        A = Image.open(av).convert('RGBA')
+        # l'échelle de l'image annotée, mesurée sur le dessin d'avant : de (-5,6 ; 18,8) à (264,9 ; 239,7) en pixels du
+        # dessin → de (23, 17) à (1167, 947) dans l'image ; les pieds (128, 236) y tombent donc en (xf, yf)
+        kk = (1167 - 23) / 270.5
+        xf, yf = 23 + (128 + 5.6) * kk, 17 + (236 - 18.8) * kk
+        new = rend(B.build(), '_ap', round(B.FRAME[3] * kk))
+        nx, ny = round(xf - (128 - B.FRAME[0]) * kk), round(yf - (236 - B.FRAME[1]) * kk)
+        top = max(0, -ny + 10)                               # le nouveau dessin monte plus haut : la toile s'agrandit
+        H2 = A.height + top
+        bgA = A.getpixel((5, 5))
+        left = Image.new('RGBA', (A.width, H2), bgA)
+        left.alpha_composite(A, (0, top))
+        right = Image.new('RGBA', (A.width, H2), bgA)
+        right.alpha_composite(new, (nx, ny + top))
+        out = Image.new('RGBA', (A.width * 2 + 40, H2), (90, 80, 110, 255))
+        out.alpha_composite(left, (0, 0))
+        out.alpha_composite(right, (A.width + 40, 0))
+        out.convert('RGB').save(os.path.join(OUT, 'avant-apres.png'))
     print('écrit', OUT)
 
 
