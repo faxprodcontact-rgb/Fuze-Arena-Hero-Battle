@@ -1,1 +1,16 @@
-{}
+{
+"img/mon-arachne-costaud.webp": "public/art/vecto/mon-arachne-costaud.webp",
+"gif/mon-arachne-costaud.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-arachne-costaud.gif",
+"img/mon-arachne-rapide.webp": "public/art/vecto/mon-arachne-rapide.webp",
+"gif/mon-arachne-rapide.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-arachne-rapide.gif",
+"img/mon-meduse-costaud.webp": "public/art/vecto/mon-meduse-costaud.webp",
+"gif/mon-meduse-costaud.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-meduse-costaud.gif",
+"img/mon-meduse-sorts.webp": "public/art/vecto/mon-meduse-sorts.webp",
+"gif/mon-meduse-sorts.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-meduse-sorts.gif",
+"img/mon-kesha-rapide.webp": "public/art/vecto/mon-kesha-rapide.webp",
+"gif/mon-kesha-rapide.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-kesha-rapide.gif",
+"img/mon-kesha-costaud.webp": "public/art/vecto/mon-kesha-costaud.webp",
+"gif/mon-kesha-costaud.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-kesha-costaud.gif",
+"img/mon-kesha-sorts.webp": "public/art/vecto/mon-kesha-sorts.webp",
+"gif/mon-kesha-sorts.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-kesha-sorts.gif"
+}
