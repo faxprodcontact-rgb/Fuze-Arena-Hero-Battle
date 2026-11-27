@@ -97,7 +97,22 @@ def zones_de(mv, W, H, cell=8):
     return [(int(b[0]), int(b[1]), int(b[2] - b[0]), int(b[3] - b[1])) for b in sorted(boxes, key=lambda b: (b[1], b[0]))]
 
 
+PAD = (0.15, 0.12)  # marge autour du cadre de l'image (part de la largeur, de la hauteur) : une plume, une flamme
+                    # qui sort du cadre pendant la boucle n'est plus coupée net (27/11) ; la zone peut déborder du cadre
+G = 2               # gouttière de chaque image dans la bande (le bord recopié) : aucun fil de l'image voisine (27/11)
+re_vb = __import__('re').compile(r'viewBox="([-\d.]+) ([-\d.]+) ([\d.]+) ([\d.]+)"')
+
+
+def padded(svg, px, py, W, H):
+    """Le même dessin, la fenêtre (viewBox) élargie de px, py pixels de l'image de chaque côté."""
+    m = re_vb.search(svg)
+    vx, vy, vw, vh = [float(v) for v in m.groups()]
+    ux, uy = px * vw / W, py * vh / H
+    return svg[:m.start()] + 'viewBox="%g %g %g %g"' % (vx - ux, vy - uy, vw + 2 * ux, vh + 2 * uy) + svg[m.end():]
+
+
 def one(arg):
+    import hashlib
     folder = J.folder_of(arg)
     m = J.load_jeu(folder)
     A, K, cid = m.ANIM, m.DESSIN, m.ID
@@ -106,63 +121,89 @@ def one(arg):
     period = float(getattr(A, 'IDLE_T', 3.0))
     big = Image.open(os.path.join(PUB, cid + '.webp')).convert('RGBA')
     W, H = big.size
+    PX, PY = round(W * PAD[0]), round(H * PAD[1])
+    Wp, Hp = W + 2 * PX, H + 2 * PY
     ts = [i * period / N for i in range(N)]
-    jobs = [(K.build(ow=OW).svg(), os.path.join(TMP, 'ref.png'))]
-    jobs += [(K.build(ow=OW, pose=A.signe(t)).svg(), os.path.join(TMP, 'f%02d.png' % i)) for i, t in enumerate(ts)]
-    render(jobs, W, H)
-    ref = np.asarray(Image.open(jobs[0][1]).convert('RGBA'), dtype=np.int16)
+    jobs = [(padded(K.build(ow=OW).svg(), PX, PY, W, H), os.path.join(TMP, 'ref.png'))]
+    jobs += [(padded(K.build(ow=OW, pose=A.signe(t)).svg(), PX, PY, W, H), os.path.join(TMP, 'f%02d.png' % i))
+             for i, t in enumerate(ts)]
+    render(jobs, Wp, Hp)
+    ref = np.asarray(Image.open(jobs[0][1]).convert('RGBA'), dtype=np.int16)[PY:PY + H, PX:PX + W]
     ecart = np.abs(ref - np.asarray(big, dtype=np.int16)).mean()
     if ecart > 2.0:
         print('ATTENTION %s : le dessin au repos diffère de art/vecto/%s.webp (écart %.1f) : relancer <nom>.py ?' % (
             cid, cid, ecart))
     fr = [np.asarray(Image.open(j[1]).convert('RGBA'), dtype=np.int16) for j in jobs[1:]]
-    # la zone qui bouge : tout pixel qui change (couleur pondérée par l'opacité) d'une image à l'autre
+    # la zone qui bouge : tout pixel qui change (couleur pondérée par l'opacité) ; chaque image comparée à la première
+    # (une lueur qui monte doucement change peu d'une image à l'autre mais beaucoup sur la boucle)
     pm = [f[:, :, :3] * (f[:, :, 3:4] / 255.0) for f in fr]
-    mv = np.zeros((H, W), bool)
-    # (chaque image comparée à la première, pas seulement à sa voisine : une lueur qui monte doucement change peu
-    # d'une image à l'autre mais beaucoup sur la boucle ; sinon ses bords pâles restaient figés dans la base)
+    mv = np.zeros((Hp, Wp), bool)
     for f, q in zip(fr[1:], pm[1:]):
         mv |= np.abs(q - pm[0]).max(axis=2) > SEUIL
         mv |= np.abs(f[:, :, 3] - fr[0][:, :, 3]) > SEUIL
-    zones = zones_de(mv, W, H)
+    zones = zones_de(mv, Wp, Hp)
     if not zones:
         sys.exit('%s : rien ne bouge (signe trop faible ?)' % cid)
+    # ce qui sort encore de la marge (coupé) et ce qui sort du cadre de l'image (montré grâce à la marge)
+    bord = sum(int((f[0, :, 3] > 40).sum() + (f[-1, :, 3] > 40).sum() + (f[:, 0, 3] > 40).sum() + (f[:, -1, 3] > 40).sum())
+               for f in fr)
+    hors = max(int((f[:, :, 3] > 40).sum() - (f[PY:PY + H, PX:PX + W, 3] > 40).sum()) for f in fr)
     os.makedirs(OUT, exist_ok=True)
     for n in os.listdir(OUT):
         if n.startswith(cid + '-') or n == cid + '.webp':
             os.remove(os.path.join(OUT, n))
-    base = Image.fromarray(fr[0].astype(np.uint8), 'RGBA')
-    # la zone est vidée sauf son bord (2 px, immobile : la marge) que la bande recouvre à l'identique : aucun jour
-    # entre la base et la bande, quel que soit l'arrondi des pixels à l'écran
+    # la base : la première image dans le cadre, les zones vidées sauf leur bord (2 px immobiles, que la bande recouvre
+    # à l'identique : aucun jour entre la base et la bande, quel que soit l'arrondi des pixels à l'écran)
+    base = Image.fromarray(fr[0].astype(np.uint8), 'RGBA').crop((PX, PY, PX + W, PY + H))
     for x0, y0, rw, rh in zones:
-        base.paste((0, 0, 0, 0), (x0 + (2 if x0 > 0 else 0), y0 + (2 if y0 > 0 else 0),
-                                  x0 + rw - (2 if x0 + rw < W else 0), y0 + rh - (2 if y0 + rh < H else 0)))
-    base.save(os.path.join(OUT, cid + '-base.webp'), 'WEBP', quality=90, method=6)
-    # une bande par zone (art/vecto/repos/<id>-<k>.webp) : ses N images côte à côte
+        bx0, by0 = x0 - PX + (2 if x0 > 0 else 0), y0 - PY + (2 if y0 > 0 else 0)
+        bx1, by1 = x0 + rw - PX - (2 if x0 + rw < Wp else 0), y0 + rh - PY - (2 if y0 + rh < Hp else 0)
+        bx0, by0, bx1, by1 = max(0, bx0), max(0, by0), min(W, bx1), min(H, by1)
+        if bx1 > bx0 and by1 > by0:
+            base.paste((0, 0, 0, 0), (bx0, by0, bx1, by1))
+    # une bande par zone : ses N images côte à côte, chacune entourée d'une gouttière de G px (son bord recopié)
     strips = []
-    for k, (x0, y0, rw, rh) in enumerate(zones):
-        st = Image.new('RGBA', (rw * N, rh))
+    for x0, y0, rw, rh in zones:
+        cw = rw + 2 * G
+        st = np.zeros((rh, cw * N, 4), np.uint8)
         for i, f in enumerate(fr):
-            st.paste(Image.fromarray(f.astype(np.uint8), 'RGBA').crop((x0, y0, x0 + rw, y0 + rh)), (i * rw, 0))
-        st.save(os.path.join(OUT, '%s-%d.webp' % (cid, k)), 'WEBP', quality=88, method=6)
-        strips.append(st)
-    meta = dict(id=cid, n=N, ms=round(period * 1000), zones=[[int(v) for v in z] for z in zones], taille=[W, H])
+            c = f[y0:y0 + rh, x0:x0 + rw].astype(np.uint8)
+            cell = np.concatenate([np.repeat(c[:, :1], G, axis=1), c, np.repeat(c[:, -1:], G, axis=1)], axis=1)
+            st[:, i * cw:(i + 1) * cw] = cell
+        strips.append(Image.fromarray(st, 'RGBA'))
+    # des noms qui changent avec le contenu : un jeu resté ouvert sur l'ancienne version ne mélange jamais ses mesures
+    # avec les nouvelles images (il ne les trouve plus et montre l'image fixe)
+    import io
+    blobs = []
+    for im, q in [(base, 90)] + [(st, 88) for st in strips]:
+        b = io.BytesIO()
+        im.save(b, 'WEBP', quality=q, method=6)
+        blobs.append(b.getvalue())
+    v = hashlib.md5(b''.join(blobs) + json.dumps(zones).encode()).hexdigest()[:8]
+    open(os.path.join(OUT, '%s-%s-base.webp' % (cid, v)), 'wb').write(blobs[0])
+    for k, bl in enumerate(blobs[1:]):
+        open(os.path.join(OUT, '%s-%s-%d.webp' % (cid, v, k)), 'wb').write(bl)
+    zr = [[int(x0 - PX), int(y0 - PY), int(rw), int(rh)] for x0, y0, rw, rh in zones]
+    meta = dict(id=cid, n=N, ms=round(period * 1000), zones=zr, taille=[W, H], v=v, g=G)
     json.dump(meta, open(os.path.join(folder, 'repos.json'), 'w'))
-    mem = (sum(z[2] * z[3] for z in zones) * N + W * H) * 4 / 1e6
-    ko = sum(os.path.getsize(os.path.join(OUT, n)) for n in os.listdir(OUT) if n.startswith(cid + '-')) // 1024
-    print('%s : %d zone(s) %s sur %d × %d, %d images, %d ko, %.1f Mo de mémoire graphique%s' % (
-        cid, len(zones), ' + '.join('%d×%d' % (z[2], z[3]) for z in zones), W, H, N, ko, mem,
-        '  ATTENTION : plus de %g Mo' % MEM_MAX if mem > MEM_MAX else ''))
-    # contrôle : la boucle telle que le jeu la montre (base + bande), sur le fond raisin des menus
+    mem = (sum((z[2] + 2 * G) * z[3] for z in zones) * N + W * H) * 4 / 1e6
+    ko = sum(len(b) for b in blobs) // 1024
+    print('%s : %d zone(s) %s, %d images, %d ko, %.1f Mo de mémoire graphique%s%s%s' % (
+        cid, len(zones), ' + '.join('%d×%d' % (z[2], z[3]) for z in zones), N, ko, mem,
+        '  ATTENTION : plus de %g Mo' % MEM_MAX if mem > MEM_MAX else '',
+        '  (déborde du cadre : %d px, montrés)' % hors if hors > 30 else '',
+        '  ATTENTION : COUPÉ au bord de la marge (%d px)' % bord if bord else ''))
+    # contrôle : la boucle telle que le jeu la montre (base + bandes, débordements compris), sur le fond des menus
     sortie = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', os.path.basename(folder))
     os.makedirs(sortie, exist_ok=True)
     ims = []
     for i in range(N):
-        im = Image.new('RGBA', (W, H), (30, 22, 72, 255))
-        im.alpha_composite(base)
+        im = Image.new('RGBA', (Wp, Hp), (30, 22, 72, 255))
+        im.alpha_composite(base, (PX, PY))
         for (x0, y0, rw, rh), st in zip(zones, strips):
-            im.alpha_composite(st.crop((i * rw, 0, (i + 1) * rw, rh)), (x0, y0))
-        ims.append(im.convert('RGB').resize((W // 2, H // 2), Image.LANCZOS))
+            cw = rw + 2 * G
+            im.alpha_composite(st.crop((i * cw + G, 0, i * cw + G + rw, rh)), (x0, y0))
+        ims.append(im.convert('RGB').resize((Wp // 2, Hp // 2), Image.LANCZOS))
     ims[0].save(os.path.join(sortie, 'repos.gif'), save_all=True, append_images=ims[1:], duration=round(period * 1000 / N),
                 loop=0)
     return meta
@@ -179,17 +220,18 @@ def assemble():
     metas.sort(key=lambda m: m['id'])
     lines = ['// GÉNÉRÉ par refonte-graphique/ui-moderne/heros/repos.py --assemble : ne pas modifier à la main.',
              '// Le signe du repos des héros dans les menus : pour chaque zone qui bouge, une bande de n images côte à côte',
-             '// (art/vecto/repos/<id>-<k>.webp), posée sur l’image où ces zones sont vidées (<id>-base.webp).',
-             '// zones = [x, y, largeur, hauteur] en pixels de l’image des menus (art/vecto/<id>.webp, taille = [largeur,',
-             '// hauteur]) ; ms = la durée de la boucle.',
+             '// (art/vecto/repos/<id>-<v>-<k>.webp, chaque image entourée d’une gouttière de g px), posée sur l’image où ces',
+             '// zones sont vidées (<id>-<v>-base.webp ; v change avec le contenu). zones = [x, y, largeur, hauteur] en pixels',
+             '// de l’image des menus (art/vecto/<id>.webp, taille = [largeur, hauteur]), elles peuvent déborder du cadre ;',
+             '// ms = la durée de la boucle.',
              'export interface VectoRepos {',
-             '  n: number; ms: number; taille: readonly [number, number];',
+             '  n: number; ms: number; taille: readonly [number, number]; v: string; g: number;',
              '  zones: readonly (readonly [number, number, number, number])[];',
              '}',
              'export const VECTO_REPOS: Record<string, VectoRepos> = {']
     for m in metas:
-        lines.append("  '%s': { n: %d, ms: %d, taille: [%d, %d], zones: [%s] }," % (
-            m['id'], m['n'], m['ms'], m['taille'][0], m['taille'][1],
+        lines.append("  '%s': { n: %d, ms: %d, taille: [%d, %d], v: '%s', g: %d, zones: [%s] }," % (
+            m['id'], m['n'], m['ms'], m['taille'][0], m['taille'][1], m['v'], m['g'],
             ', '.join('[%s]' % ', '.join(str(v) for v in z) for z in m['zones'])))
     lines.append('};')
     open(TS + '.tmp', 'w').write('\n'.join(lines) + '\n')
