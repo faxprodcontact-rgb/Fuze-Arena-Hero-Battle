@@ -59,7 +59,7 @@ VEN = ['#f6ffc8', '#b8ff58', '#6cd23c', '#2a9a4a', '#0e5a3e']                # v
 
 GRD = 116          # le sol
 FEET = (64, 116)   # le point « pieds » du pixel art
-FRAME = (8.0, 14.0, 90.0, 104.0)
+FRAME = (12.0, 14.0, 81.0, 104.0)
 
 # ---------- le visage (méthode commune, ../../heros/visage.py) ----------
 # La boîte de la face (ovale du visage sans le voile, repère de la tête AVANT son ×1,1) : visage long et étroit.
@@ -584,9 +584,9 @@ def hand_part(fig, Wr, rotd, curl):
 # Repère de la tête (avant son ×1,1). Par serpent : la ligne, le sens de la tête (+1 droite, −1 gauche), l'angle de la
 # tête au repos, la taille.
 SNAKES = {
-    'SA': ([(60.0, 33.6), (57.6, 31.4), (55.4, 30.0), (53.2, 29.6)], -1, 192, 0.56),
-    'SB': ([(64.6, 32.4), (63.8, 29.8), (64.0, 27.6), (64.8, 26.2)], 1, -50, 0.58),
-    'SC': ([(69.4, 33.4), (70.6, 31.8), (71.6, 31.0), (72.4, 30.8)], 1, -14, 0.54),
+    'SA': ([(60.0, 33.6), (57.8, 31.0), (56.0, 29.0), (54.0, 28.0)], -1, 194, 0.62),
+    'SB': ([(64.6, 32.4), (63.6, 29.4), (63.8, 26.8), (64.8, 25.0)], 1, -52, 0.64),
+    'SC': ([(69.4, 33.4), (70.8, 31.4), (71.8, 30.2), (72.8, 29.6)], 1, -18, 0.6),
 }
 
 
@@ -618,7 +618,7 @@ def snake_parts(fig, P):
         n = len(pts) - 1
         moved = [(p[0] + dx * (i / n) ** 1.3, p[1] + dy * (i / n) ** 1.3) for i, p in enumerate(pts)]
         line = crpath(moved, n=16)
-        ws = [2.5 - 0.6 * (i / 16) for i in range(17)]
+        ws = [2.8 - 0.6 * (i / 16) for i in range(17)]
         mat = SCALEB if k_ == 'SA' else SCALE
         body = limb(line, ws)
         ta = math.degrees(math.atan2(line[-1][1] - line[-4][1], line[-1][0] - line[-4][0]))
@@ -711,7 +711,6 @@ def head_parts(fig, P):
     fd += [(sm([(59.4, 44.0), (60.6, 47.6), (62.8, 50.4), (65.6, 52.8), (63.6, 51.4), (61.6, 49.4), (59.8, 46.6), (58.9, 43.2)]), SKIN.shadow, 0.55),
            (sm([(60.0, 46.2), (61.8, 46.0), (63.6, 47.2), (64.4, 49.0), (63.2, 49.6), (61.6, 48.8)], t=0.95), SKIN.shadow, 0.45),
            (sm([(69.2, 46.2), (70.6, 45.6), (70.8, 47.6), (69.8, 49.4)], t=0.95), SKIN.shadow, 0.3),
-           (ellipse(exn + 0.2, eyn + 2.0, 1.5, 0.55, -8), SKIN.hi, 0.16),
            (sm([(66.0, 36.2), (70.2, 36.6), (71.2, 39.4), (69.4, 38.8), (66.4, 37.8)]), SKIN.hi, 0.3),
            (sm([(70.6, 41.0), (71.6, 43.0), (71.2, 46.0), (70.6, 44.0)]), SKIN.hi, 0.25)]
     # l'ombre sous le menton

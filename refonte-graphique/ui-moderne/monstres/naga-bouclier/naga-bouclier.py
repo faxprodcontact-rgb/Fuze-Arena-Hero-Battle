@@ -581,12 +581,13 @@ def pauldron_parts(fig, UC):
 
 
 # ======================================================================== le trident
-def trident_parts(fig, TRI, flare=0.0):
+def trident_parts(fig, TRI, ty=0.0):
     """Le trident d'or (trois pointes barbelées sur une traverse courbe, douille à émeraude) sur une hampe de bois brun.
     La hampe et la tête sont deux morceaux (la hampe passe derrière la douille)."""
     T = lambda s: s.map(lambda p: mapp(TRI, p))
     x = TRI_X
-    shaft = sm([(x - 0.95, 30.0), (x + 0.95, 30.0), (x + 0.95, 116.8), (x - 0.95, 116.8)], sharp=(0, 1, 2, 3), t=0.4)
+    yb = 116.8 - max(0.0, ty)               # le talon enfoncé dans le sol ne se voit pas
+    shaft = sm([(x - 0.95, 30.0), (x + 0.95, 30.0), (x + 0.95, yb), (x - 0.95, yb)], sharp=(0, 1, 2, 3), t=0.4)
     g0, g1 = mapp(TRI, (x + 1.0, 60)), mapp(TRI, (x - 1.0, 60))
     fig.part('shaft', T(shaft), WOOD, grad=(g0[0], g0[1], g1[0], g1[1], [(0, WOOD.light), (0.5, WOOD.base), (1, WOOD.shadow)]),
              cel=0.5, rim=0.35, cast=0.9,
@@ -850,7 +851,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     waist_parts(fig, U, P)
 
     # ---- le bras proche : la hampe, le bras (coude bas), le brassard, le poing, l'épaulière ----
-    tinfo = trident_parts(fig, TRI, P['flare'])
+    tinfo = trident_parts(fig, TRI, P['ty'])
     S = mapp(UC, SN0)
     F = add(mapp(TRI, FN0), (0, P['slide']))
     Wr = add(F, WN_OFF)
