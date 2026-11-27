@@ -1204,10 +1204,33 @@ def exporter():
         'reperes': {'hz': HZ, 'p0': P0, 'p1': P1, 'rangs': list(RANGS)}, 'periode_ms': PERIODE,
         'planche_taille': list(planche.size), 'calques': meta}
     json.dump(doc, open(os.path.join(HERE, 'fond-kael.json'), 'w'), indent=1, ensure_ascii=False)
+    ecrire_ts(doc)
     print('  jeu : public/art/vecto/fonds/kael.webp %d Ko, kael-anim.webp %d Ko (%d × %d), %d calques' % (
         os.path.getsize(os.path.join(JEU, 'kael.webp')) // 1024,
         os.path.getsize(os.path.join(JEU, 'kael-anim.webp')) // 1024, planche.size[0], planche.size[1], len(meta)))
     return doc
+
+
+def ecrire_ts(doc):
+    """src/game/fond-vecto.ts : les calques au format de FOND_META (lu par bg/fond-px.ts derrière ?vecto=1)."""
+    out = []
+    for c in doc['calques']:
+        z = c['prof']
+        if c['genre'] == 'boucle':
+            out.append(dict(id=c['id'], g='b', z=z, x=c['x'], y=c['y'], w=c['w'], h=c['h'], ms=c['ms'], f=c['cases']))
+        elif c['genre'] == 'defile':
+            out.append(dict(id=c['id'], g='d', z=z, x=c['x'], y=c['y'], w=c['w'], h=c['h'], f=c['case'], vx=c['vx'],
+                            vy=c['vy']))
+        else:
+            out.append(dict(id=c['id'], g='p', z=z, f=c['cases'], zone=c['zone'], n=c['nombre'], vie=c['vie'],
+                            vx=c['vx'], vy=c['vy'], ondule=c['ondule'], ms=0))
+    meta = {'kael': {'w': W, 'h': H, 'up': UP, 'periode': PERIODE, 'calques': out}}
+    ts = ('// Généré par refonte-graphique/ui-moderne/fonds/kael/kael.py : ne pas modifier à la main.\n'
+          '// Les fonds de combat VECTORIELS (essai, seulement avec ?vecto=1 : bg/fond-px.ts). Même format que FOND_META,\n'
+          '// mais l\'image fixe et la planche (art/vecto/fonds/<clan>.webp, <clan>-anim.webp) sont rendues ×up et\n'
+          '// agrandies en lissant : x, y, w, h, zone en pixels du fond (590 × 1100) ; f en pixels de la planche.\n'
+          'export const FOND_VECTO = %s as const;\n' % json.dumps(meta, separators=(',', ':')))
+    open(os.path.join(ROOT, 'src', 'game', 'fond-vecto.ts'), 'w').write(ts)
 
 
 def composer_jeu(doc, t):

@@ -10,7 +10,7 @@
 # l'arrière sur une arête de braise continue, gorge qui rougeoie, longue queue posée au sol qui se relève en crosse.
 # Tête large et plate VUE DE PROFIL (leçons du propriétaire : tête d'animal → UN seul oeil, placé par visage.py,
 # tour=75) : oeil de braise saillant sur le dessus du crâne, pupille fendue, paupière lourde qui descend vers le museau ;
-# glande de braise derrière l'oeil ; museau court et rond, narine discrète ; gueule entrouverte (gueule de monstre
+# aucune autre tache lumineuse sur la tête (un seul point lumineux : l'oeil) ; museau court et rond, narine discrète ; gueule entrouverte (gueule de monstre
 # voulue) : intérieur rouge sombre qui rougeoie vers la commissure, petites dents ivoire plantées dans les lèvres.
 # Pattes de reptile : coude proche vers l'arrière, genou proche vers l'avant ; pattes lointaines plus sombres, derrière ;
 # mains à 4 doigts écartés et pieds à 4 orteils (le 5e caché), tous à plat sur le sol.
@@ -480,8 +480,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (gsh, ('lin', B((106, 73))[0], B((106, 73))[1], B((100, 75))[0], B((100, 75))[1], gg), 1)]
     # -- les taches de braise (grandes, irrégulières ; plus vives quand le feu monte) --
     SPOTS = [((86.6, 72.6), 2.2, 1.7, -40, 1.0), ((80.2, 80.4), 3.4, 2.4, -35, 2.0), ((70.0, 88.4), 2.2, 1.6, -30, 3.0),
-             ((63.0, 93.6), 3.0, 2.0, -25, 4.0), ((54.2, 97.4), 1.6, 1.2, -20, 5.0), ((74.4, 92.4), 1.4, 1.0, -30, 6.0),
-             ((90.8, 64.6), 1.3, 1.0, -55, 7.0)]
+             ((63.0, 93.6), 3.0, 2.0, -25, 4.0), ((54.2, 97.4), 1.6, 1.2, -20, 5.0), ((74.4, 92.4), 1.4, 1.0, -30, 6.0)]
     for c, rx, ry, a, sd in SPOTS:
         det += ember_spot(B(c), rx, ry, a + lean, sd, g)
     TT = lambda pts: [TD(p) for p in pts]
@@ -581,8 +580,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (HD(ellipse(96.6, 61.0, 6.0, 3.6, -10)), ('rad', hp((97.0, 62.6))[0], hp((97.0, 62.6))[1], 7.0, 4.8,
                                                      [(0, SKIN.shadow, 0.6), (1, SKIN.shadow, 0)]), 1),
            (HD(ribbon([(102.4, 60.6), (108.0, 60.2), (114.0, 59.8), (120.0, 59.2)], [0.2, 0.8, 0.8, 0.2])), SKIN.shadow, 0.5)]
-    # la glande de braise derrière l'oeil (le signe du feu sur la tête)
-    hd += ember_spot(hp((99.6, 53.4)), 2.6 * HSC, 1.4 * HSC, -10, 14.0, g)
+    # (plus de glande de braise derrière l'oeil : avis du propriétaire du 27/11, de loin on la prenait pour un 2e oeil ;
+    # le seul point lumineux de la tête est l'oeil)
     hd += gloss(hp((103.4, 50.2)), 2.2, 0.5, -6, 0.8)
     hd += gloss(hp((120.6, 51.6)), 1.2, 0.45, 20, 0.75)
     # la narine discrète sur le haut du museau
