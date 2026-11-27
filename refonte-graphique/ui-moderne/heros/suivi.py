@@ -38,7 +38,15 @@ def heros():
         "import { HEROES } from './src/core/data/heroes'; import { heroArt } from './src/game/look';"
         "console.log(JSON.stringify(HEROES.map(h => ({ id: h.id, name: h.name, r: h.rarity, el: h.element, art: heroArt(h.id) }))));")],
         cwd=RACINE, capture_output=True, text=True, check=True).stdout
-    return json.loads(out.strip().splitlines()[-1])
+    return json.loads(out.strip().splitlines()[-1]) + NOUVEAUX
+
+
+# Nouveaux héros dessinés en vectoriel, pas encore dans les données du jeu (demande du 27/11 : 3 dragons).
+NOUVEAUX = [
+    {'id': 'dragon-feu', 'name': 'Brasyr', 'r': 'epic', 'el': 'fire', 'art': 'dragon-feu'},
+    {'id': 'dragon-terre', 'name': 'Rocvar', 'r': 'epic', 'el': 'earth', 'art': 'dragon-terre'},
+    {'id': 'dragon-vent', 'name': 'Venthys', 'r': 'epic', 'el': 'wind', 'art': 'dragon-vent'},
+]
 
 
 def vignette(src, dst, h):
@@ -68,7 +76,10 @@ def main():
             note = ' '.join(l.strip() for l in lignes[1:])[:240] if statut == 'fait' else ' '.join(lignes)[:240]
         elif os.path.isdir(os.path.join(HEROS, s)):
             statut = 'en cours'
-        vignette(os.path.join(RACINE, 'public', 'art', 'hd', 'pose', f"{h['art']}.webp"), os.path.join(PAGE, 'px', f"{h['id']}.webp"), 360)
+        px = os.path.join(RACINE, 'public', 'art', 'hd', 'pose', f"{h['art']}.webp")
+        h['px'] = os.path.exists(px)
+        if h['px']:
+            vignette(px, os.path.join(PAGE, 'px', f"{h['id']}.webp"), 360)
         vx = os.path.join(RACINE, 'public', 'art', 'vecto', f"{h['art']}.webp")
         has_vx = statut in ('fait', 'à revoir') and os.path.exists(vx)
         if has_vx:
@@ -96,7 +107,7 @@ def main():
         cartes.append(f'''<article class="hero {cls} r-{h["r"]}">
   <header><h3>{html.escape(h["name"])}</h3><span class="pill">{statut}</span></header>
   <p class="meta">{RARETE[h["r"]]} · {ELEMENT[h["el"]]}</p>
-  <div class="duo"><figure><img src="px/{h["id"]}.webp" alt="{html.escape(h["name"])} pixel art" loading="lazy"><figcaption>avant</figcaption></figure>
+  <div class="duo"><figure>{f'<img src="px/{h["id"]}.webp" alt="{html.escape(h["name"])} pixel art" loading="lazy">' if h['px'] else '<span class="vide">nouveau</span>'}<figcaption>avant</figcaption></figure>
   <figure>{vx_html}<figcaption>après</figcaption></figure></div>
   {f'<p class="note">{html.escape(note)}</p>' if note else ''}
 </article>''')

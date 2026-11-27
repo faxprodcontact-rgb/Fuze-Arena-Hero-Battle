@@ -24,6 +24,7 @@ from atelier import (Figure, Mat, sm, lock, limb, ribbon, xf, bez, resample, sid
                      mchain, mT, mR, mS, mapp)
 from lib import Shape  # noqa: E402
 from meches import fused, cast_off, faded, _poly, _shape  # noqa: E402
+from outils import FigureM  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
@@ -52,9 +53,10 @@ FRAME = (-5, -1, 95, 116.5)
 #   s'entrouvre (0..1) ; wrist : le poignet proche (repère du buste) ; ha : le marteau tourne dans la main (degrés) ;
 #   sh : le pavois se déplace (dx, dy) ; shr : il penche ; glow : les gemmes d'ambre s'éveillent (0..2).
 SN = (31.4, 49.6)                                     # l'épaule proche
-LN1, LN2 = 10.0, 10.4                                  # bras, avant-bras
-W0 = (32.0, 67.6)                                     # le poignet proche au repos
-HA0 = 96.0                                            # le marteau au repos : le manche descend le long de la jambe
+LN1, LN2 = 10.8, 11.4                                  # bras, avant-bras
+W0 = (38.2, 70.0)                                     # le poignet proche au repos (bras presque tendu)
+HA0 = 84.0                                            # le marteau au repos : le manche descend, la tête posée au sol
+HL = 34.6                                             # du poing au milieu de la tête du marteau
 SC0 = (74.6, 79.0)                                    # le milieu du pavois au repos
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, mane=0.0, tail=0.0, tuft=0.0,
             barb=0.0, blink=0.0, jaw=0.0, wrist=W0, ha=0.0, sh=(0.0, 0.0), shr=0.0, glow=0.0)
@@ -245,7 +247,7 @@ def arm_ik(S, W, L1, L2, bend=1):
 
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P = dict(REST, **(pose or {}))
-    fig = Figure(*frame, ow=ow)
+    fig = FigureM(*frame, ow=ow)
     br = P['breath']
     cr = P['crouch']
 
@@ -525,7 +527,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('barbel', whisk, MANE, grad=(80, 28, 74, 42, [(0, MANE.light), (1, MANE.base)]), cel=0.45, rim=0.4, cast=0.7)
 
     # ---- le bras proche : l'épaule nue (écailles), le gros gantelet de pierre, le poing sur le manche du marteau ----
-    near_arm(fig, P, gl)
+    near_arm(fig, P, gl, U)
 
     # ---- chaque groupe de morceaux prend sa pose ----
     head_parts = ['head', 'beard', 'beard2', 'barbel', 'hornN', 'hornF', 'mroot', 'mane', 'manef']
@@ -534,9 +536,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['vest', 'straps', 'plateN', 'plateF', 'belt', 'buckle'], TOR)
     fig.pose(['farm'], UC)
     fig.pose(['shield', 'shside', 'shgem'], SHM)
-    fig.pose(['narm', 'vsh', 'gaunt', 'fist', 'nthumb', 'ncl0', 'ncl1', 'ncl2', 'haft', 'hhead', 'hband0', 'hband1'], UC)
+    fig.pose(['narm', 'gaunt', 'fist', 'nthumb', 'ncl0', 'ncl1', 'ncl2', 'haft', 'hhead', 'hcollar'], U)
     fig.pose(['trousers', 'ffoot', 'fc0', 'fc1', 'fc2', 'nfoot', 'nc0', 'nc1', 'nc2'], LEG)
-    fig.ctx = dict(U=U, UC=UC, HEAD=HEAD, SHM=SHM, P=P, hammer=mapp(UC, fig.ctx_hammer), wrist=mapp(UC, fig.ctx_wrist),
+    fig.ctx = dict(U=U, UC=UC, HEAD=HEAD, SHM=SHM, P=P, hammer=mapp(U, fig.ctx_hammer), wrist=mapp(U, fig.ctx_wrist),
                    head=mapp(HEAD, (58, 24)), mouth=mapp(HEAD, (76, 31)), shield=mapp(SHM, SC0),
                    shield_gem=mapp(SHM, (SC0[0] + 0.8, SC0[1] - 16.0)), shield_foot=mapp(SHM, (SC0[0], SC0[1] + 26.5)))
     _near_foot(fig)
@@ -593,72 +595,108 @@ def shield_parts(fig, P, gl):
 # ======================================================================== le bras proche et le marteau
 
 
-def near_arm(fig, P, gl):
-    """Le bras proche (côté spectateur) : l'épaule et le bras nus (écailles), le gros gantelet de pierre qui couvre
-    l'avant-bras et le dos de la main, le poing griffu serré sur le manche du marteau (tête de pierre, bagues de bronze)."""
+def taper(pts, ws, per=6):
+    """Une forme d'un seul tenant le long d'une courbe douce passant par les points, largeur donnée en chaque point."""
+    c = catmull(pts, per)
+    m = len(c) - 1
+    k = len(ws) - 1
+    w = []
+    for i in range(m + 1):
+        t = i / m * k
+        a = min(int(t), k - 1)
+        w.append(ws[a] + (ws[a + 1] - ws[a]) * (t - a))
+    return limb(c, w), c, w
+
+
+def near_arm(fig, P, gl, U):
+    """Le bras proche (côté spectateur), d'un seul tenant de l'épaule au poignet : le dôme de l'épaule se fond dans le
+    gilet (masque en dégradé, méthode d'Aurelle : aucune couture), le haut du bras nu (écailles, biceps), le coude qui
+    plie vers l'arrière, l'avant-bras dans un gantelet de pierre sculpté (évasé au coude, plus étroit au poignet, deux
+    plaques taillées), le poing griffu serré sur le haut du manche. Le marteau : un long manche de bois, une grosse tête de
+    pierre (une masse) posée au sol à côté du pied proche, une douille de bronze, une gemme d'ambre."""
     W = P['wrist']
     E, W = arm_ik(SN, W, LN1, LN2, bend=1)
+    su = unit(SN, E)
     fu = unit(E, W)                              # le sens de l'avant-bras
-    # le bras (de l'épaule au coude, un peu dans le gantelet)
-    E2 = add(E, fu, 2.0)
-    arm = limb([SN, lerp(SN, E, 0.5), E2], [8.6, 7.8, 7.0])
-    fig.part('narm', arm, SCALE, cel=1.4, rim=0.6, cast=1.0, cast_on=['vest', 'straps', 'plateN', 'belt', 'trousers', 'manef'],
-             details=[(scale_plate(*lerp(SN, E, 0.35), 3.0, 2.0, 0), SCALE.hi, 0.35),
-                      (scale_plate(*lerp(SN, E, 0.7), 2.6, 1.8, 0), SCALE.hi, 0.3)])
-    # l'emmanchure du gilet : le cuir épais de l'épaule recouvre le haut du bras (le bras sort du gilet)
-    vsh = sm([(26.0, 51.6), (26.8, 47.8), (30.2, 45.6), (34.6, 44.4), (37.0, 45.6), (36.2, 48.6), (33.6, 51.4), (29.6, 53.6)],
-             sharp=(0,), t=0.8)
-    fig.part('vsh', vsh, LEATHER, grad=(36, 44, 27, 53, [(0, LEATHER.light), (0.5, LEATHER.base), (1, LEATHER.shadow)]),
-             cel=1.0, rim=0.7, cast=1.0, cast_on=['narm', 'vest', 'straps'],
-             details=[(ribbon([(27.4, 49.0), (30.6, 46.4), (35.4, 45.2)], [0.2, 0.8, 0.2]), LEATHER.hi, 0.55)])
-    # le gantelet de pierre : un gros bracelet évasé vers la main, un rebord en haut (au coude)
     n = (-fu[1], fu[0])
-    g0, g1 = add(E, fu, -0.2), add(W, fu, 0.6)
-    # un bracelet de pierre évasé vers la main (une seule forme arrondie), son rebord épais au poignet
-    gc = [g0, lerp(g0, g1, 0.5), g1]
-    gaunt = limb(gc, [7.8, 8.8, 10.0])
-    cuff = band_along([add(g1, n, 4.9), add(g1, n, -4.9)], 2.6)
-    gd = [(cuff, STONE.shadow, 0.5),
-          (band_along([add(add(g1, fu, -1.0), n, 4.6), add(add(g1, fu, -1.0), n, -4.6)], 0.8), STONE.hi, 0.5),
-          (ribbon([add(lerp(g0, g1, 0.1), n, 2.8), add(lerp(g0, g1, 0.5), n, 3.4), add(lerp(g0, g1, 0.85), n, 3.8)], [0.1, 0.9, 0.1]), STONE.hi, 0.55)]
-    gd += [(scale_plate(*add(lerp(g0, g1, 0.42), n, 0.4), 3.6, 2.6, math.degrees(math.atan2(fu[1], fu[0])) - 90), STONE.shadow, 0.3)]
-    fig.part('gaunt', gaunt, STONE, cel=1.3, rim=0.7, cast=1.1, cast_on=['vest', 'belt', 'trousers', 'narm', 'plateN', 'buckle'],
-             details=gd)
-    # le marteau : le manche passe dans le poing ; la tête de pierre au bout
+    sn_ = (-su[1], su[0])
+    s1 = 1 if (sn_[0] * 0.6 - sn_[1] * 0.8) > 0 else -1      # le côté du bras tourné vers la lumière
+    s2 = 1 if (n[0] * 0.6 - n[1] * 0.8) > 0 else -1
+    A1 = lambda t, o=0.0: add(lerp(SN, E, t), sn_, o)         # noqa: E731
+    A2 = lambda t, o=0.0: add(lerp(E, W, t), n, o)            # noqa: E731
+    aa1 = math.degrees(math.atan2(su[1], su[0]))
+    # ---- le marteau (derrière le poing) ----
     ha = math.radians(HA0 + P['ha'])
     hu = (math.cos(ha), math.sin(ha))
     hn = (-hu[1], hu[0])
-    G = add(W, fu, 3.2)                          # le milieu du poing (là où il serre le manche)
-    h0, h1 = add(G, hu, -5.2), add(G, hu, 15.6)
-    haft = limb([h0, lerp(h0, h1, 0.5), h1], [2.8, 2.6, 2.7])
-    fig.part('haft', haft, WOOD, grad=(h0[0] + 2, h0[1] - 2, h1[0] - 2, h1[1] + 2, [(0, WOOD.light), (0.5, WOOD.base), (1, WOOD.shadow)]),
-             cel=0.6, rim=0.5, cast=0.9, cast_on=['vest', 'belt', 'trousers', 'gaunt', 'narm', 'nfoot', 'tail'],
-             details=[(ribbon([add(h0, hn, 0.4), add(lerp(h0, h1, 0.5), hn, 0.5), add(h1, hn, 0.4)], [0.1, 0.5, 0.1]), WOOD.hi, 0.5)])
-    # la tête : un bloc de pierre taillée (un peu plus étroit côté frappe), deux bagues de bronze autour du manche
-    C = add(h1, hu, 3.6)
-    HL = lambda x, y: add(add(C, hu, y * 1.22), hn, x * 1.22)  # noqa: E731  (x le long de la tête, y le long du manche)
-    hh = sm([HL(-6.4, -3.4), HL(-1.0, -3.8), HL(6.0, -3.6), HL(6.6, -3.0), HL(6.6, 3.0), HL(6.0, 3.6), HL(-1.0, 3.8),
-             HL(-6.4, 3.4), HL(-7.0, 2.6), HL(-7.0, -2.6)], sharp=(0, 2, 3, 4, 5, 7, 8, 9), t=0.6)
-    hdet = [(sm([HL(5.0, -3.6), HL(6.6, -3.0), HL(6.6, 3.0), HL(5.0, 3.6)], sharp=(0, 1, 2, 3), t=0.4), STONE.shadow, 0.45),
-            (sm([HL(-7.0, -2.6), HL(-5.6, -3.4), HL(-5.6, 3.4), HL(-7.0, 2.6)], sharp=(0, 1, 2, 3), t=0.4), STONE.light, 0.35)]
-    hdet += gem(*HL(0.4, 0.0), 1.5, gl)
-    fig.part('hhead', hh, STONE, cel=1.2, rim=0.7, cast=1.1, cast_on=['haft', 'trousers', 'vest', 'tail', 'nfoot', 'nc0', 'nc1', 'nc2'],
-             details=hdet)
-    for j, xx in enumerate((-3.4, 4.0)):
-        band = sm([HL(xx - 0.9, -4.3), HL(xx + 0.9, -4.3), HL(xx + 0.9, 4.3), HL(xx - 0.9, 4.3)], sharp=(0, 1, 2, 3), t=0.4)
-        fig.part('hband%d' % j, band, BRONZE, cel=0.4, rim=0.5, cast=0.5, cast_on=['hhead'])
-    # le poing : la main griffue serrée sur le manche (dos de la main vers nous), trois griffes d'ivoire, le pouce par-dessus
-    F = lambda x, y: add(add(G, fu, y), n, x)   # noqa: E731  (x en travers de l'avant-bras, y le long)
-    fist = sm([F(-3.6, -2.2), F(3.6, -2.4), F(4.4, 0.6), F(3.4, 3.4), F(-3.2, 3.6), F(-4.4, 0.6)], t=0.9)
-    fdet = [(sm([F(-2.6, -2.0), F(2.8, -2.2), F(3.4, -0.2), F(-3.2, 0.0)]), SCALE.light, 0.45)]
-    for k_ in (-1.6, 0.6, 2.6):
-        fdet.append((ribbon([F(k_ - 0.4, 1.6), F(k_, 2.6), F(k_ + 0.2, 3.4)], [0.1, 0.5, 0.1]), SCALE.deep, 0.55))
-    fig.part('fist', fist, SCALE, cel=1.1, rim=0.6, cast=1.0, cast_on=['haft', 'gaunt', 'vest', 'belt', 'trousers'], details=fdet)
-    for j, k_ in enumerate((-2.2, 0.0, 2.2)):
-        cl = sm([F(k_ - 0.8, 3.0), F(k_ + 0.8, 3.0), F(k_ + 0.5, 4.8), F(k_ - 0.3, 6.2), F(k_ - 0.9, 4.6)], sharp=(3,))
+    G = add(W, fu, 3.6)                          # le milieu du poing : il serre le manche
+    h0, h1 = add(G, hu, -3.4), add(G, hu, HL - 3.0)
+    haft = limb([h0, lerp(h0, h1, 0.5), h1], [3.4, 3.1, 3.3])
+    fig.part('haft', haft, WOOD, grad=(h0[0] + 3, h0[1] - 3, h1[0] - 3, h1[1] + 3, [(0, WOOD.light), (0.5, WOOD.base), (1, WOOD.shadow)]),
+             cel=0.7, rim=0.6, cast=1.0, cast_on=['vest', 'belt', 'trousers', 'nfoot', 'nc0', 'nc1', 'nc2', 'tail', 'buckle'],
+             details=[(ribbon([add(lerp(h0, h1, 0.08), hn, 0.6), add(lerp(h0, h1, 0.5), hn, 0.7), add(lerp(h0, h1, 0.92), hn, 0.6)], [0.1, 0.7, 0.1]), WOOD.hi, 0.5),
+                      # la poignée gainée de cuir sous le poing (d'un bord à l'autre du manche)
+                      (band_along([add(G, hu, -2.6), add(G, hu, 6.4)], 3.6), LEATHER.base, 0.9),
+                      (band_along([add(add(G, hu, -2.6), hn, 0.7), add(add(G, hu, 6.4), hn, 0.7)], 0.9), LEATHER.light, 0.6)])
+    C = add(G, hu, HL)
+    HQ = lambda x, y: add(add(C, hn, x), hu, y)   # noqa: E731  (x le long de la tête, y le long du manche)
+    hh = sm([HQ(-8.0, -4.6), HQ(-6.6, -5.4), HQ(6.6, -5.4), HQ(8.0, -4.6), HQ(8.6, -3.6), HQ(8.6, 3.6), HQ(8.0, 4.6),
+             HQ(6.6, 5.4), HQ(-6.6, 5.4), HQ(-8.0, 4.6), HQ(-8.6, 3.6), HQ(-8.6, -3.6)], sharp=tuple(range(12)), t=0.5)
+    # les deux faces de frappe (un peu plus larges, biseautées), le dessus éclairé, une gemme d'ambre au milieu
+    hdet = [(sm([HQ(-8.6, -3.6), HQ(-8.0, -4.6), HQ(-6.0, -4.6), HQ(-6.0, 4.6), HQ(-8.0, 4.6), HQ(-8.6, 3.6)], sharp=tuple(range(6)), t=0.4),
+             ('lin', HQ(-8.6, 0)[0], HQ(-8.6, 0)[1], HQ(-6, 0)[0], HQ(-6, 0)[1], [(0, STONE.shadow), (1, STONE.base)]), 0.55),
+            (sm([HQ(8.6, -3.6), HQ(8.0, -4.6), HQ(6.0, -4.6), HQ(6.0, 4.6), HQ(8.0, 4.6), HQ(8.6, 3.6)], sharp=tuple(range(6)), t=0.4),
+             STONE.light, 0.35),
+            (sm([HQ(-5.6, -1.6), HQ(5.6, -1.6), HQ(5.6, 1.6), HQ(-5.6, 1.6)], sharp=(0, 1, 2, 3), t=0.4), STONE.shadow, 0.18)]
+    hdet += gem(*HQ(0.0, 0.6), 1.8, gl)
+    fig.part('hhead', hh, STONE, grad=(C[0] + 8, C[1] - 6, C[0] - 8, C[1] + 6, [(0, STONE.light), (0.5, STONE.base), (1, STONE.shadow)]),
+             cel=1.4, rim=0.8, cast=1.2, cast_on=['haft', 'trousers', 'vest', 'tail', 'nfoot', 'nc0', 'nc1', 'nc2', 'ffoot', 'fc0', 'fc1', 'fc2',
+                                                   'shield', 'shside', 'belt'], details=hdet)
+    collar = sm([HQ(-2.6, -5.0), HQ(2.6, -5.0), HQ(2.2, -7.4), HQ(-2.2, -7.4)], sharp=(0, 1, 2, 3), t=0.5)
+    fig.part('hcollar', collar, BRONZE, cel=0.5, rim=0.5, cast=0.7, cast_on=['hhead', 'haft'])
+    # ---- le bras : l'épaule, le haut du bras (biceps), le coude ; il continue sous le gantelet ----
+    arm, _, _ = taper([add(SN, su, -2.2), A1(0.5), E, add(E, fu, 3.0)], [9.6, 8.2, 7.4, 7.2])
+    ad = [(ellipse(*A1(0.18, 1.6 * s1), 4.6, 3.4, aa1), SCALE.light, 0.45),            # le dôme de l'épaule éclairé
+          (ellipse(*A1(0.55, 1.8 * s1), 3.8, 2.2, aa1), SCALE.light, 0.4),             # le biceps
+          (ellipse(*A1(0.55, 2.6 * s1), 2.2, 0.8, aa1), SCALE.hi, 0.45),
+          (ribbon([A1(0.35, -3.0 * s1), A1(0.65, -3.4 * s1), A1(0.95, -2.8 * s1)], [0.1, 1.2, 0.1]), SCALE.deep, 0.35),
+          (scale_plate(*A1(0.32, 0.2), 2.6, 1.8, aa1 - 90), SCALE.hi, 0.3),
+          (scale_plate(*A1(0.72, -0.6), 2.2, 1.6, aa1 - 90), SCALE.hi, 0.28)]
+    mo = mapp(U, add(SN, su, 2.6))
+    mt = mapp(U, add(SN, su, -3.6))
+    fig.masks['narm'] = (mo[0], mo[1], mt[0], mt[1], 'vest')
+    fig.part('narm', arm, SCALE, cel=1.4, rim=0.6, cast=1.1, cast_on=['vest', 'straps', 'plateN', 'belt', 'trousers', 'manef', 'haft', 'buckle'],
+             details=ad)
+    # ---- le poing griffu, serré sur le manche (le dos de la main vers nous, les doigts passent devant le manche) ----
+    F = lambda x, y: add(add(W, n, x), fu, y)    # noqa: E731  (x en travers de l'avant-bras, y le long)
+    fist = sm([F(-4.4, 0.6), F(4.2, 0.4), F(5.2, 3.8), F(4.6, 7.4), F(0.4, 8.6), F(-4.0, 7.8), F(-5.2, 4.2)], t=0.9)
+    fdet = [(sm([F(-3.6, 1.0), F(3.8, 0.8), F(4.4, 3.2), F(-4.4, 3.4)]), SCALE.light, 0.4)]
+    for k_ in (-2.0, 0.4, 2.8):                   # les doigts repliés : de petits creux entre eux, les jointures éclairées
+        fdet += [(ribbon([F(k_ - 0.1, 4.6), F(k_, 6.4), F(k_ + 0.1, 8.0)], [0.1, 0.6, 0.1]), SCALE.deep, 0.5)]
+    for k_ in (-3.2, -0.8, 1.6, 3.8):
+        fdet += [(ellipse(*F(k_ + 0.2, 5.0), 0.9, 0.6), SCALE.hi, 0.45)]
+    fig.part('fist', fist, SCALE, cel=1.1, rim=0.6, cast=1.0, cast_on=['haft', 'vest', 'belt', 'trousers', 'buckle'], details=fdet)
+    for j, k_ in enumerate((-2.6, -0.2, 2.2)):
+        cl = sm([F(k_ - 0.8, 8.0), F(k_ + 0.8, 8.0), F(k_ + 0.6, 9.6), F(k_ - 0.1, 10.8), F(k_ - 0.8, 9.4)], sharp=(3,))
         fig.part('ncl%d' % j, cl, IVORY, cel=0.4, rim=0.35, cast=0.4, cast_on=['fist', 'haft', 'trousers'])
-    thumb = limb([F(-3.4, -0.6), F(-1.2, 0.6), F(1.4, 1.0)], [2.8, 2.6, 2.2])
-    fig.part('nthumb', thumb, SCALE, cel=0.7, rim=0.6, cast=0.7, cast_on=['fist', 'haft'])
+    # ---- le gantelet de pierre sculpté : il suit l'avant-bras (évasé au coude, étroit au poignet), deux plaques ----
+    g0, g1 = add(E, fu, 0.6), add(W, fu, 1.4)
+    gaunt, gc, gw = taper([g0, lerp(g0, g1, 0.35), lerp(g0, g1, 0.75), g1], [9.6, 9.0, 7.6, 7.0])
+    # la plaque du dessus (côté lumière) : une pierre taillée en biseau ; la plaque du dos de la main au bout ; le rebord
+    # épais du coude (une seule lèvre, pas de rayures)
+    top = sm([A2(0.12, 1.0 * s2), A2(0.1, 4.2 * s2), A2(0.55, 4.2 * s2), A2(0.95, 3.2 * s2), A2(1.05, 1.0 * s2), A2(0.6, 0.4 * s2)],
+             sharp=(0, 1, 3, 4), t=0.6)
+    gd = [(top, ('lin', A2(0.5, 4 * s2)[0], A2(0.5, 4 * s2)[1], A2(0.5, 0)[0], A2(0.5, 0)[1], [(0, STONE.hi, 0.5), (1, STONE.light, 0.15)]), 1),
+          (ribbon([A2(0.12, 0.6 * s2), A2(0.6, 0.0), A2(1.05, 0.6 * s2)], [0.1, 0.7, 0.1]), STONE.deep, 0.4),
+          (band_along([A2(0.06, 4.6), A2(0.06, -4.6)], 1.8), STONE.shadow, 0.45),
+          (band_along([add(A2(0.02, 4.6), fu, -0.9), add(A2(0.02, -4.6), fu, -0.9)], 0.8), STONE.hi, 0.45),
+          (scale_plate(*A2(0.55, -1.8 * s2), 2.6, 1.8, math.degrees(math.atan2(fu[1], fu[0])) - 90), STONE.shadow, 0.25)]
+    fig.part('gaunt', gaunt, STONE, grad=(min(g0[0], g1[0]) + 10, min(g0[1], g1[1]) - 2, max(g0[0], g1[0]) - 10, max(g0[1], g1[1]) + 2,
+                                         [(0, STONE.light), (0.5, STONE.base), (1, STONE.shadow)]),
+             cel=1.2, rim=0.7, cast=1.1, cast_on=['vest', 'belt', 'trousers', 'narm', 'plateN', 'buckle', 'fist', 'haft'], details=gd)
+    # le pouce, par-dessus le manche
+    thumb = limb([F(3.6 * s2, 1.4), F(3.0 * s2, 4.0), F(1.2 * s2, 5.6)], [3.0, 2.8, 2.4])
+    fig.part('nthumb', thumb, SCALE, cel=0.7, rim=0.6, cast=0.7, cast_on=['fist', 'haft', 'gaunt'])
     fig.ctx_hammer = C
     fig.ctx_wrist = W
 

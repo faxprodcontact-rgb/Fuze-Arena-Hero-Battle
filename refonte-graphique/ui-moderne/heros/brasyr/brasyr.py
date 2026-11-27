@@ -136,10 +136,11 @@ HEAD_PTS = [(38.0, 21.0), (42.6, 17.4), (49, 15.8), (55.6, 16.4), (60.6, 16.6), 
             (50, 36.6), (43.6, 35.6), (39.4, 32.4), (37.4, 26.6)]
 # la racine : le dos du crâne et le dessus de la tête derrière les cornes ; son bord de devant (la naissance des poils)
 # passe derrière l'œil et la corne proche, sans toucher l'arcade
-SCALP = [(53.4, 16.4), (52.6, 15.0), (51.4, 13.6), (50.0, 14.4), (47.6, 13.4), (45.0, 12.6), (41.0, 13.6), (38.0, 16.0),
-         (35.8, 22.0), (35.4, 29.0), (36.4, 35.0), (40.0, 37.6), (42.8, 34.8), (44.2, 31.6), (44.8, 28.4), (45.0, 25.4),
-         (45.8, 22.6), (47.0, 20.2), (48.8, 18.2), (50.8, 17.0)]
-SCALP_SHARP = (2,)
+SCALP = [(52.6, 16.0), (51.6, 14.4), (50.0, 13.8), (47.6, 13.0), (45.0, 12.6), (41.0, 13.6), (38.0, 16.0),
+         (35.8, 22.0), (35.4, 29.0), (36.4, 35.0), (40.0, 37.6), (42.2, 35.4), (43.0, 33.4), (43.2, 30.6), (45.6, 27.4),
+         (44.8, 25.6), (45.4, 22.8), (47.8, 20.4), (47.4, 19.0), (49.6, 17.6)]
+# (le bord de devant : trois touffes couchées qui pointent vers le bas et l'arrière, en retrait derrière l'œil)
+SCALP_SHARP = (14, 17)
 # le bord des poils autour de la base des cornes : de petites touffes qui remontent contre elles (les cornes sortent des
 # poils)
 CAP = [(39.6, 19.0), (41.4, 16.4), (42.6, 13.8), (44.4, 14.6), (45.6, 12.6), (47.2, 14.0), (49.2, 12.8), (50.4, 14.6),
@@ -148,18 +149,15 @@ CAP = [(39.6, 19.0), (41.4, 16.4), (42.6, 13.8), (44.4, 14.6), (45.6, 12.6), (47
 # arrière par l'élan, les pointes qui se relèvent comme des langues de feu ; la mèche le long de la nuque ; les mèches
 # courtes couchées sur le dos du crâne.
 MANE_LOCKS = [
-    ('mF', (37.6, 31.6), (32.4, 38.8), (23.0, 41.4), (14.6, 37.0), 9.6, 0.45, 1.0, 4.5),
-    ('mA', (39.4, 29.6), (37.6, 39.4), (32.6, 46.2), (25.4, 48.6), 8.4, 0.4, 0.8, 4.5),
-    ('mE', (37.6, 25.4), (30.0, 29.4), (19.0, 31.0), (9.4, 25.4), 11.4, 0.5, 1.0, 4.5),
-    ('mD', (40.0, 21.4), (31.0, 22.6), (20.0, 22.6), (11.0, 15.4), 12.0, 0.5, 1.0, 4.5),
-    ('mC', (42.6, 17.4), (35.0, 15.0), (26.0, 13.4), (18.4, 6.4), 10.2, 0.48, 1.0, 4.5),
-    ('mB', (46.0, 15.0), (40.0, 12.6), (32.6, 11.4), (25.8, 6.4), 8.4, 0.45, 1.0, 4.5),
-    ('mH', (50.2, 15.0), (46.6, 12.8), (42.0, 12.0), (37.0, 9.6), 4.8, 0.4, 0.6, 3.5),
-    ('mG1', (44.4, 17.8), (40.4, 16.4), (35.8, 17.2), (30.2, 20.6), 7.6, 0.4, 0.5, 3.5),
-    ('mG2', (42.4, 23.6), (38.8, 24.0), (34.4, 26.0), (29.6, 29.6), 7.4, 0.4, 0.5, 3.5),
+    ('mA', (39.4, 31.0), (37.6, 40.4), (32.6, 46.2), (26.4, 46.6), 9.0, 0.45, 0.8, 5.0),
+    ('mE', (37.8, 27.0), (30.4, 34.6), (20.8, 37.4), (13.2, 31.0), 11.6, 0.55, 1.0, 5.5),
+    ('mD', (39.6, 21.6), (28.8, 24.2), (15.6, 23.6), (5.8, 11.4), 16.0, 0.6, 1.0, 6.0),
+    ('mC', (43.4, 16.8), (35.0, 13.0), (24.4, 11.2), (17.8, 2.6), 12.6, 0.55, 1.0, 5.5),
+    ('mB', (47.6, 14.4), (43.6, 9.6), (37.6, 7.8), (32.4, 2.8), 7.6, 0.5, 0.7, 4.0),
+    ('mG', (43.6, 22.6), (39.0, 23.4), (34.0, 26.6), (29.8, 31.6), 7.0, 0.4, 0.5, 3.5),
 ]
 MANE_FILL = [(0, MANE.light), (0.45, MANE.base), (1, '#ff7a2a')]
-MANE_UNDER = [(0, '#f27a32'), (0.5, '#f27a32'), (1, '#e8622c')]
+MANE_UNDER = [(0, '#f68a36'), (0.5, '#f68a36'), (1, '#ee7030')]
 
 
 def mane_geom(P):
@@ -180,21 +178,19 @@ def mane_geom(P):
     for name, sh, p0, p1, p2, p3, w0, fade in strands:
         ax = (p0[0], p0[1], p3[0], p3[1])
         fd = min(0.55, fade / math.dist(p0, p3))
-        sh_ = cast_off(sh, -0.5, 1.2)
-        if sh_:
-            det.append((sh_, ('lin',) + ax + (faded([(0, '#6a1a3a'), (1, '#6a1a3a')], fd),), 0.18))
         det.append((sh, ('lin',) + ax + (faded(MANE_FILL, fd),), 1))
-        det.append((sm_under(sh, 0.8, -2.2), ('lin',) + ax + (faded(MANE_UNDER, fd),), 0.85))
-        sheen = ribbon(resample(bez(lerp(p0, p1, 0.55), p1, p2, lerp(p2, p3, 0.6), 12), 6),
-                       [0.2, w0 * 0.12, w0 * 0.16, w0 * 0.13, w0 * 0.08, 0.1, 0.1])
-        det.append((sheen.move(0.4, -1.0), MANE.hi, 0.55))
+        det.append((sm_under(sh, 0.6, -1.8), ('lin',) + ax + (faded(MANE_UNDER, fd),), 0.55))
+        if w0 > 10:          # un reflet doux sur les grandes langues seulement (pas de traits parallèles)
+            sheen = ribbon(resample(bez(lerp(p0, p1, 0.6), p1, p2, lerp(p2, p3, 0.5), 12), 6),
+                           [0.2, w0 * 0.1, w0 * 0.16, w0 * 0.14, w0 * 0.08, 0.1, 0.1])
+            det.append((sheen.move(0.6, -1.2), MANE.hi, 0.4))
     det.append((Shape(mass.subs + mass.move(0.8, -1.0).subs, evenodd=True), MANE.shadow, 0.35))
     det.append((Shape(mass.subs + mass.move(-0.6, 0.8).subs, evenodd=True), MANE.hi, 0.85))
     g = _poly(mass)
     from shapely.geometry import Polygon
     F = Polygon(HEAD_PTS).buffer(1.5).union(_poly(sm(CAP, sharp=(2, 4, 6, 8), t=0.8)))
     root = _shape(g.intersection(F))
-    grad = (54, 6, 18, 50, [(0, MANE.hi), (0.3, MANE.light), (1, MANE.base)])
+    grad = (50, 2, 14, 46, [(0, MANE.light), (0.35, MANE.base), (1, '#f47a2c')])
     return dict(mass=mass, root=root, det=det, grad=grad)
 
 
@@ -225,8 +221,10 @@ def horn(beam, w0, w1=0.5):
 
 # les cornes noires (repère de la tête) : elles partent du dessus du crâne, derrière l'œil, filent vers l'arrière en
 # arc et relèvent la pointe ; celle du fond est un peu plus haute et plus en arrière (même longueur apparente)
-HORN_N = [(50.0, 15.6), (49.0, 10.4), (45.0, 5.6), (38.8, 2.6), (31.8, 1.6), (26.4, -0.2), (23.2, -3.2)]
-HORN_F = [(45.2, 14.6), (44.6, 9.2), (41.6, 3.8), (36.0, -0.6), (29.6, -3.0), (24.6, -4.0), (21.2, -6.8)]
+HORN_SHAPE = [(0, 0), (-1.0, -5.2), (-5.0, -10.0), (-11.2, -13.0), (-18.2, -14.0), (-23.6, -15.8), (-26.8, -18.8)]
+HORN_N = [(50.0 + x, 15.6 + y) for x, y in HORN_SHAPE]
+HORN_F = [(43.2 + 0.86 * (x * math.cos(math.radians(16)) - y * math.sin(math.radians(16))),
+           14.4 + 0.86 * (x * math.sin(math.radians(16)) + y * math.cos(math.radians(16)))) for x, y in HORN_SHAPE]
 
 
 # ---------- la hallebarde ----------
@@ -334,8 +332,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('mane', MG['mass'], MANE, grad=MG['grad'], cel=0, rim=0, cast=0, details=MG['det'])
 
     # ---- la corne du fond (derrière la tête) ----
-    hF, cF, wF = horn(HORN_F, 5.8, 1.3)
-    fig.part('hornF', hF, HORN, grad=(48, -4, 26, 16, [(0, HORN.light), (0.5, HORN.base), (1, HORN.shadow)]), cel=1.0, rim=0.6, cast=0)
+    hF, cF, wF = horn(HORN_F, 6.2, 1.2)
+    fig.part('hornF', hF, HORN, grad=(46, -8, 22, 14, [(0, HORN.light), (0.5, HORN.base), (1, HORN.shadow)]), cel=1.0, rim=0.6,
+             cast=0.9, cast_on=['mane'],
+             details=[(ribbon([add(p, (0.4, -0.8)) for p in resample(cF[2:14], 6)], [0.1, 0.5, 0.6, 0.5, 0.4, 0.3, 0.1]), HORN.hi, 0.45)])
 
     # ---- la jambe du fond (en avant) : cuisse, genou plié au-dessus du pied, tibia, grand pied griffu ----
     legF = limb(catmull([hipF, lerp(hipF, kneeF, 0.55), kneeF, lerp(kneeF, ANK_F, 0.5), ANK_F], 4),
@@ -587,18 +587,20 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # la racine du museau (le « nez » de placer() : sur la médiane, devant l'œil) : un pli doux qui descend de l'arcade
     nz = FACE['nez']
     hd += [(ribbon([(nz[0] + 0.9, 22.6), (nz[0] + 0.5, 25.2), nz], [0.1, 1.2, 0.2]), SCALE.shadow, 0.3)]
+    # la naissance de la crinière : la peau prend une teinte de braise sous les poils (aucune ligne entre crâne et crinière)
+    hd += [(head, ('rad', 42.0, 24.0, 8.5, 12.0, [(0, MANE.base, 0.75), (0.55, MANE.shadow, 0.35), (1, MANE.shadow, 0)]), 1)]
     hd += eye_kit(P)
     fig.part('head', head, SCALE, grad=(74, 18, 42, 36, [(0, '#f06a52'), (0.45, SCALE.base), (1, '#8e1c46')]),
              cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'cuirass'], details=hd)
 
     # ---- la corne proche (côté spectateur) : devant la tête, sa base enfouie dans la racine de la crinière ----
-    hN, cN, wN = horn(HORN_N, 6.6, 1.4)
+    hN, cN, wN = horn(HORN_N, 7.2, 1.3)
     hdet = [(ribbon([add(p, (0.5, -0.9)) for p in resample(cN[2:14], 6)], [0.1, 0.6, 0.7, 0.6, 0.5, 0.3, 0.1]), HORN.hi, 0.55)]
     fig.part('hornN', hN, HORN, grad=(56, 0, 30, 18, [(0, HORN.light), (0.5, HORN.base), (1, HORN.shadow)]), cel=1.1, rim=0.7,
              cast=0.9, cast_on=['mane', 'head', 'hornF'], details=hdet)
 
     # ---- le devant de la crinière : il couvre le dos du crâne et la base des deux cornes ----
-    fig.part('mroot', MG['root'], MANE, grad=CLEAR, cel=0, rim=0, cast=1.0,
+    fig.part('mroot', MG['root'], MANE, grad=CLEAR, cel=0, rim=0, cast=0.35,
              cast_on=['head', 'hornN', 'hornF', 'neck'], details=as_layer(fig, MG['mass'], MG['grad'], MG['det']))
 
     # ---- les moustaches de dragon (couleur de braise) : elles partent du bout du museau et filent en arrière ----
