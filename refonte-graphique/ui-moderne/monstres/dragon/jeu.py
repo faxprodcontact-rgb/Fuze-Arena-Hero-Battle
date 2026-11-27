@@ -58,7 +58,7 @@ JEU = {
     # « Tempête de feu » : il se cabre, ailes ouvertes, crache la boule de feu vers le ciel ; la pluie de blocs de lave
     # tombe en biais sur le héros (gerbes, brûlure, fumée)
     'speciale': dict(genre='sort', coup=A.SP_RAIN[0], cible=(A.TARGET[0], A.GR - 44),
-                     coupe=lambda t: 400 if t < PLUIE else 240, charge=(300, 1150), fps=4,
+                     coupe=lambda t: 400 if t < PLUIE else 240, charge=(300, 1050), fps=4,
                      # deux moments forts : la boule de feu crachée, puis la pluie de lave qui frappe
-                     dense=[(A.SP_SPIT - 50, PLUIE), (A.SP_RAIN[0] - 180, A.SP_RAIN[1] + 160)], fps_coup=10),
+                     dense=[(A.SP_SPIT, PLUIE), (A.SP_RAIN[0] - 180, A.SP_RAIN[1] + 160)], fps_coup=10),
 }

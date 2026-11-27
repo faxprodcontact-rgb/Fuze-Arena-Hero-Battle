@@ -66,7 +66,7 @@ JEU = {
                     avance=lambda t: A.pose_at(t / 1000.0, 'attack', 0)[0]['sp'][0]),
     # « Lame de fond » : l'eau s'enroule autour de la pince, il l'abat dans le sol ; la vague roule au ras du sol jusqu'à
     # la vraie cible et y déferle (écume, gouttes, flaques posées sur la cible)
-    'speciale': dict(genre='tir', duree=A.SPECIAL[-1][0] * A.K, tir=TIR, coup=A.SP_CRASH, cible=(A.ENEMY_X, A.GR - 16),
+    'speciale': dict(genre='tir', duree=A.SPECIAL[-1][0] * A.K, tir=round(TIR), coup=round(A.SP_CRASH), cible=(A.ENEMY_X, A.GR - 16),
                      depuis=front(TIR) - 24, coupe=175, bouche=(front(TIR), A.GR), projectile=vague, rase=1,
                      charge=(100 * A.K, A.SP_WIND)),
 }

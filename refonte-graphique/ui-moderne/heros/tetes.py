@@ -1,5 +1,6 @@
-# Les têtes des héros pour les CASES (cartes du bas en combat, collection, formation, fusion, courrier…) : la tête
-# entière avec un peu de cou et d'épaules, centrée sur le visage, toutes à la même échelle de tête.
+# Les têtes des héros pour leurs CARTES DE COMBAT (les cartes du bas, sur lesquelles on appuie ; demande du 27/11) : la
+# tête entière avec un peu de cou et d'épaules, centrée sur le visage, toutes à la même échelle de tête. (Les cases des
+# menus gardent le héros en entier.)
 #   python3 refonte-graphique/ui-moderne/heros/tetes.py            # fabrique les 47 têtes + la planche de contrôle
 #   python3 refonte-graphique/ui-moderne/heros/tetes.py kael nyrra # seulement ces héros (ids du jeu)
 #
@@ -15,9 +16,13 @@
 #                              du crâne (cheveux, casque ; sans les cornes, plumes ou ailes qui dépassent) au menton,
 #                              d'une joue à l'autre (museau compris pour les animaux) ;
 #   "zoom" (1 par défaut)      > 1 rapproche, < 1 éloigne ;
-#   "dx", "dy" (0 par défaut)  décalage du carré, en fraction de la taille de la tête (dy > 0 = descend).
+#   "dx", "dy" (0 par défaut)  décalage du carré, en fraction de la taille de la tête (dy > 0 = descend) ;
+#   "haut" (facultatif)        le haut de la coiffe à garder entière (cornes, cimier, ailes, couronne, bois), en y du
+#                              dessin : le carré part de là (la tête rapetisse un peu si la coiffe est très haute).
 # Le carré : côté = COTE × la taille de la tête (la plus grande de sa hauteur et de 0,85 × sa largeur), centré sur la
-# boîte, un peu plus bas (BAS) pour montrer le cou et le haut des épaules.
+# boîte ; BAS > 0 remonte la tête dans le carré : dans la carte de combat, le bas du portrait porte le nom du héros (la
+# tête occupe la fenêtre au-dessus du nom, cornes et chapeaux compris).
+# Contrôle dans le vrai jeu : la planche des 47 cartes de combat (planche-combat.png, même dossier de sortie).
 import glob
 import importlib
 import json
@@ -38,8 +43,9 @@ RENDU_LOT = os.path.join(HERE, 'rendu-lot.cjs')
 
 TAILLE = 192          # côté de l'image finale (px)
 RENDU = 2 * TAILLE    # rendu deux fois plus grand, puis réduit : contour bien lisse
-COTE = 1.62           # côté du carré = COTE × taille de la tête
-BAS = 0.07            # le carré descend de BAS × son côté sous le milieu de la tête (cou, épaules)
+COTE = 1.95           # côté du carré = COTE × taille de la tête
+BAS = 0.12            # le carré descend de BAS × son côté sous le milieu de la tête : la tête est plus haut que le milieu
+FENETRE = 0.72        # la part du haut de l'image visible au-dessus du nom, dans la carte de combat
 
 
 def heros():
@@ -80,8 +86,16 @@ def carre(r):
     """Le carré découpé (x, y, côté) dans le repère du dessin, d'après les réglages d'un héros."""
     x0, y0, x1, y1 = r['tete']
     t = max(y1 - y0, 0.85 * (x1 - x0))
-    s = COTE * t / r.get('zoom', 1.0)
+    z = r.get('zoom', 1.0)
     cx = (x0 + x1) / 2 + r.get('dx', 0) * t
+    if 'haut' in r:
+        # une coiffe haute (cornes, cimier, ailes, couronne, bois) : le carré la garde entière ; la tête rapetisse juste
+        # assez pour que coiffe + tête tiennent au-dessus du nom (FENETRE), avec la même petite marge en haut
+        e = max(0.0, (y0 - r['haut']) / t)
+        z = min(z, COTE * (FENETRE - 0.04 - 0.07) / (e + 1))
+        s = COTE * t / z
+        return cx - s / 2, r['haut'] - 0.04 * s + r.get('dy', 0) * t, s
+    s = COTE * t / z
     cy = (y0 + y1) / 2 + BAS * s + r.get('dy', 0) * t
     return cx - s / 2, cy - s / 2, s
 

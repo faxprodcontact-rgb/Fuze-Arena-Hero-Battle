@@ -8,31 +8,32 @@ import aurelle as K
 ID = 'angels-10'
 ANIM, DESSIN = A, K
 
-# Les éclairs ronds (un disque de lumière posé PAR-DESSUS les éclats) cachent, pour la mesure de l'outil, ce qui est
-# dessous : un effet caché resterait avec Aurelle. Au combat, les petits (r < 45) passent sous les autres effets ; les
-# grands (r ≥ 45 : plus larges que fx_max) seraient retirés de toute façon (le jeu a son éclair) : on les enlève avant.
-# Le dessin et anim.py ne changent pas.
+# Les grands éclairs ronds de la terre (r ≥ 45 : un disque de lumière, plus large que fx_max) seraient retirés de
+# toute façon (le jeu a son éclair et sa secousse) : on les enlève avant la mesure de l'outil, sinon ils cachent ce qui
+# est dessous (qui resterait avec Aurelle). Après l'écrasement du rocher, tout ce qui est dessiné va sur la cible : on
+# le groupe (un effet derrière, un devant), pour qu'aucun éclat fin ou caché ne reste collé à Aurelle. Le dessin et
+# anim.py ne changent pas.
 DISC = re.compile(r'<circle [^>]*r="([\d.]+)"')
 
 
-def tidy(fx):
+def tidy(fx, t_group=1e9):
     def wrap(tl):
         f = fx(tl)
 
         def g(fig, ctx):
             nb, nf = len(fig.fx_back), len(fig.fx_front)
             f(fig, ctx)
-            r = lambda e: float(DISC.match(e).group(1)) if DISC.match(e) else 0.0   # noqa: E731
-            new = fig.fx_front[nf:]
-            small = [e for e in new if 20 <= r(e) < 45]
-            fig.fx_front[nf:] = [e for e in new if r(e) < 20]
-            fig.fx_back[nb:nb] = small
+            fig.fx_front[nf:] = [e for e in fig.fx_front[nf:] if not (DISC.match(e) and float(DISC.match(e).group(1)) >= 45)]
+            if tl >= t_group:
+                for lst, n in ((fig.fx_back, nb), (fig.fx_front, nf)):
+                    if len(lst) > n + 1:
+                        lst[n:] = ['<g>%s</g>' % ''.join(lst[n:])]
         return g
     return wrap
 
 
 A.fx_attack = tidy(A.fx_attack)
-A.fx_special = tidy(A.fx_special)
+A.fx_special = tidy(A.fx_special, A.SP_IMPACT - 6)
 
 
 def rocher(fig, i):
@@ -49,6 +50,6 @@ JEU = {
     # vole en cloche (en tournant) jusqu'à la vraie cible et s'y écrase
     'speciale': dict(genre='tir', tir=A.SP_HIT + 80, coup=A.SP_IMPACT + 20, cible=(A.IMP_X, A.GR - 14),
                      depuis=A.B_TOP[0] - 4, bouche=A.B_TOP, projectile=rocher, proj_images=3, proj_ms=[80, 80, 80],
-                     arc=46, charge=(200, 548), coupe=lambda t: 400 if t < A.SP_IMPACT - 10 else -200,
+                     arc=46, charge=(200, 548), fx_max=400, coupe=lambda t: 400 if t < A.SP_IMPACT - 10 else -200,
                      dense=[(A.SP_HIT - 180, A.SP_HIT + 160), (A.SP_IMPACT - 60, A.SP_IMPACT + 260)]),
 }

@@ -9,30 +9,33 @@ import elvyn as E
 ID = 'angels-6'
 ANIM, DESSIN = A, E
 
-# Les grands éclats ronds (un disque de lumière posé PAR-DESSUS l'impact) cachent, pour la mesure de l'outil, ce qui est
-# dessous (l'outil peint chaque effet d'une couleur pour savoir où il est : un effet caché resterait avec Elvyn). Au
-# combat : celui de l'orbe (r 22) passe sous les autres effets de l'impact ; celui du dragon (r 130, arrêt sur image)
-# serait retiré de toute façon (le jeu a son éclair) : on l'enlève avant. Le dessin et anim.py ne changent pas.
+# Deux retouches pour la mesure de l'outil (le dessin et anim.py ne changent pas) :
+#  - le grand éclair rond du dragon (r 130, arrêt sur image) serait retiré de toute façon (le jeu a son éclair) : on
+#    l'enlève avant, sinon il cache ce qui est dessous ;
+#  - dès que l'orbe part (attaque) ou que le dragon jaillit (spéciale), TOUT ce qui est dessiné va ensemble (sur le
+#    projectile, puis sur la cible) : on le groupe (un effet derrière, un devant), pour qu'aucune goutte trop fine ou
+#    cachée sous une autre ne reste collée à Elvyn.
 DISC = re.compile(r'<circle [^>]*r="(\d+)"')
 
 
-def tidy(fx):
+def tidy(fx, t_group):
     def wrap(tl):
         f = fx(tl)
 
         def g(fig, ctx):
-            n = len(fig.fx_front)
+            nb, nf = len(fig.fx_back), len(fig.fx_front)
             f(fig, ctx)
-            new = fig.fx_front[n:]
-            big = lambda e: DISC.match(e) and int(DISC.match(e).group(1)) >= 20   # noqa: E731
-            disc = [e for e in new if big(e) and int(DISC.match(e).group(1)) < 100]
-            fig.fx_front[n:] = disc + [e for e in new if not big(e)]
+            fig.fx_front[nf:] = [e for e in fig.fx_front[nf:] if not (DISC.match(e) and int(DISC.match(e).group(1)) >= 100)]
+            if tl >= t_group:
+                for lst, n in ((fig.fx_back, nb), (fig.fx_front, nf)):
+                    if len(lst) > n + 1:
+                        lst[n:] = ['<g>%s</g>' % ''.join(lst[n:])]
         return g
     return wrap
 
 
-A.fx_attack = tidy(A.fx_attack)
-A.fx_special = tidy(A.fx_special)
+A.fx_attack = tidy(A.fx_attack, A.ATT_FIRE)
+A.fx_special = tidy(A.fx_special, A.SP_EMERGE)
 
 # Le dragon d'eau est dessiné comme des MORCEAUX de la figure (avec ses ombres), pas comme un effet : l'outil le
 # laisserait collé à Elvyn. Au combat, on rend ces morceaux à part, en un seul effet (devant lui), pour qu'il puisse
@@ -100,7 +103,7 @@ JEU = {
                     coupe=lambda t: 150 if t < A.ATT_HIT else -200),
     # « Dragon des marées » : il éveille la perle (bras d'eau, bulles : avec lui) ; le dragon d'eau jaillit, serpente et
     # plonge sur l'ennemi : dès qu'il jaillit, il est posé sur chaque cible (il ne se perd pas en route)
-    'speciale': dict(genre='sort', coup=A.SP_HIT, cible=A.FOE, charge=(160, A.SP_EMERGE), fx_max=200,
+    'speciale': dict(genre='sort', coup=A.SP_HIT, cible=A.FOE, charge=(160, A.SP_EMERGE), fx_max=400,
                      coupe=lambda t: 150 if t < A.SP_EMERGE else -200,
                      dense=[(A.SP_EMERGE - 60, A.SP_EMERGE + 200), (A.SP_HIT - 180, A.SP_HIT + 260)]),
 }

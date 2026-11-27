@@ -250,8 +250,9 @@ def hidden_parts(bb, fig):
     return out
 
 
-def idmap_svg(fig, view, elems):
-    """Chaque effet peint d'une couleur pleine qui porte son numéro (pour mesurer sa place, ombres comprises)."""
+def idmap_svg(fig, view, elems, reverse=False):
+    """Chaque effet peint d'une couleur pleine qui porte son numéro (pour mesurer sa place, ombres comprises) ;
+    `reverse` : peints dans l'ordre inverse (seconde mesure des effets cachés sous un autre)."""
     style = []
     wrapped = []
     for i, (layer, el) in enumerate(elems):
@@ -260,6 +261,8 @@ def idmap_svg(fig, view, elems):
         style.append('.%s,.%s *{fill:%s!important;stroke:%s!important;opacity:1!important;fill-opacity:1!important;'
                      'stroke-opacity:1!important}' % (cls, cls, col, col))
         wrapped.append('<g class="%s">%s</g>' % (cls, el))
+    if reverse:
+        wrapped.reverse()
     st = '<style>%s</style>' % ''.join(style)
     return fig_svg(fig, view, keep_body=False, back=[], front=wrapped, extra=st)
 
@@ -276,7 +279,10 @@ def times_for(dur, fps, keys, dense=(), fps_dense=FPS_COUP):
         d = 1000.0 / fps_dense
         grid = [t for t in grid if not a <= t < b] + [a + i * d for i in range(int(math.ceil((b - a) / d))) if 0 <= a + i * d < dur]
     grid.sort()
-    ts = [t for t in grid if all(abs(t - k) > step * 0.4 for k in keys)] + keys
+    # une image trop proche d'un instant clé lui laisse la place (à 40 % du pas LOCAL : dans une fenêtre serrée, le pas
+    # serré ; sinon le bond juste avant le coup perdait toutes ses images)
+    near = lambda t: 1000.0 / fps_dense if any(a <= t < b for a, b in dense) else step   # noqa: E731
+    ts = [t for t in grid if all(abs(t - k) > near(t) * 0.4 for k in keys)] + keys
     ts = sorted(set(round(t, 1) for t in ts))
     return [t for t in ts if t < dur - 8] or [0.0]
 
@@ -365,6 +371,17 @@ def export_one(folder, voir=None):
     print('%s : %d images, mesure des effets…' % (name, len(id_jobs)), flush=True)
     maps = main_job.run()
     main_job.items = []
+    # un effet entièrement caché sous un AUTRE effet (une bouffée de l'impact sous la lueur de l'éclat) n'a pas de boîte :
+    # seconde mesure de ces images, les effets peints dans l'ordre inverse (lot 5, 27/11)
+    second, n = {}, 0
+    for figs in caught.values():
+        for fig, elems in figs:
+            j = id_jobs[n]
+            n += 1
+            if j is not None and len(hidden_parts(bboxes(maps[j], len(elems)), fig)) < len(elems):
+                second[j] = main_job.add(idmap_svg(fig, view, elems, reverse=True))
+    maps2 = main_job.run() if second else []
+    main_job.items = []
     n = 0
     vx = lambda px: view[0] + px / up   # noqa: E731
     for which, figs in caught.items():
@@ -375,7 +392,10 @@ def export_one(folder, voir=None):
             t = p['ts'][i]
             j = id_jobs[n]
             n += 1
-            bb = hidden_parts(bboxes(maps[j], len(elems)), fig) if j is not None else {}
+            bb = bboxes(maps[j], len(elems)) if j is not None else {}
+            if j in second:
+                bb = {**bboxes(maps2[second[j]], len(elems)), **bb}
+            bb = hidden_parts(bb, fig) if j is not None else {}
             near_b, near_f, tgt_b, tgt_f, proj_b, proj_f = [], [], [], [], [], []
             coupe = cfg.get('coupe')
             if callable(coupe):
@@ -417,7 +437,9 @@ def export_one(folder, voir=None):
                         report.append('%s %s %d : effet de %dx%d retiré (trop grand)' % (name, which, i, w_, h_))
                     elif flying and (cfg['vol'](t, cx, view[1] + (y0 + y1) / 2 / up, layer, el) if 'vol' in cfg else cx >= depuis):
                         where = 'proj'
-                    elif which != 'pose' and coupe is not None and cx >= coupe and t >= cfg.get('cible_des', 0):
+                    elif which != 'pose' and t >= cfg.get('cible_des', 0) and (
+                            cfg['sur_cible'](t, cx, view[1] + (y0 + y1) / 2 / up, layer, el) if 'sur_cible' in cfg
+                            else coupe is not None and cx >= coupe):
                         where = 'tgt'
                 lists = {'near': (near_b, near_f), 'tgt': (tgt_b, tgt_f), 'proj': (proj_b, proj_f), 'ray': (ray_b, ray_f)}.get(where)
                 if lists:

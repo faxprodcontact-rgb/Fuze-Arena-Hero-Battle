@@ -5,6 +5,31 @@ import anim as A
 ID = 'mon-arachne-costaud'
 ANIM, DESSIN = A, A.A            # anim.py charge le dessin (araignee-cuirassee.py) sous le nom A
 K = A.K
+
+# L'onde de la spéciale (dalles, cristaux, éclats et poussière de chaque grappe) va sur la cible : on la groupe en un seul
+# effet, pour qu'aucun petit éclat caché sous une dalle ne reste collé à l'araignée. Pour savoir où elle commence, la
+# spéciale est dessinée une première fois sans l'onde (le dessin et anim.py ne changent pas).
+_fx_special = A.fx_special
+
+
+def fx_special(tl):
+    def g(fig, ctx):
+        nb, nf = len(fig.fx_back), len(fig.fx_front)
+        wave, A.WAVE = A.WAVE, []
+        try:
+            _fx_special(tl)(fig, ctx)
+        finally:
+            A.WAVE = wave
+        k = len(fig.fx_front) - nf
+        del fig.fx_back[nb:], fig.fx_front[nf:]
+        _fx_special(tl)(fig, ctx)
+        if len(fig.fx_front) > nf + k + 1:
+            fig.fx_front[nf + k:] = ['<g>%s</g>' % ''.join(fig.fx_front[nf + k:])]
+    return g
+
+
+A.fx_special = fx_special
+
 JEU = {
     'pose': dict(periode=2200),
     # « Coup de massue » : il va jusqu'à l'ennemi, se cabre et abat ses deux pattes avant sur lui (le coup : l'éclat

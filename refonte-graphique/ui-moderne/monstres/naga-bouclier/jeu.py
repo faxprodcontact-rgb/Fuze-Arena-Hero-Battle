@@ -19,6 +19,30 @@ def crack(fig, x0, x1, op=1.0, seed=3):
 
 A.crack = crack
 
+# Les éclats de roche (et leurs blocs, leur poussière, leur lueur) vont sur la cible : on les groupe en un seul effet,
+# pour qu'aucun petit bloc caché sous un éclat ne reste collé au naga. Pour savoir où ils commencent, la spéciale est
+# dessinée une première fois sans eux.
+_fx_special = A.fx_special
+
+
+def fx_special(tl):
+    def g(fig, ctx):
+        nb, nf = len(fig.fx_back), len(fig.fx_front)
+        spikes, A.SPIKES = A.SPIKES, []
+        try:
+            _fx_special(tl)(fig, ctx)
+        finally:
+            A.SPIKES = spikes
+        k = len(fig.fx_front) - nf
+        del fig.fx_back[nb:], fig.fx_front[nf:]
+        _fx_special(tl)(fig, ctx)
+        if len(fig.fx_front) > nf + k + 1:
+            fig.fx_front[nf + k:] = ['<g>%s</g>' % ''.join(fig.fx_front[nf + k:])]
+    return g
+
+
+A.fx_special = fx_special
+
 JEU = {
     'pose': dict(periode=1000 * A.LOOP),
     # « Coup de bouclier » : il va jusqu'à l'ennemi, se ramasse et le frappe du bouclier ; l'éclat sur l'ennemi
@@ -26,5 +50,5 @@ JEU = {
     # « Séisme du trident » : il s'abat sur place ; la fissure et les éclats de roche courent jusqu'à l'ennemi
     # (le plus gros jaillit sous lui) ; rien ne part sur la cible avant l'impact
     'speciale': dict(genre='sort', coup=1170, cible=(A.ENEMY_X, 86), coupe=118, charge=(110, 700),
-                     cible_des=A.SP_SLAM - 10, fx_max=160),
+                     cible_des=A.SP_SLAM - 10, fx_max=400),
 }
