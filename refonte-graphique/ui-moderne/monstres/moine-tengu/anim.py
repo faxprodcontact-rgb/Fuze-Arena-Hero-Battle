@@ -35,7 +35,7 @@ ROOT = O.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'moine-tengu')
 TMP = os.environ.get('MOINE_TMP', '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-moine-tengu/_images')
 FPS = 24
-VIEW = (-50, -70, 348, 196)          # la scène de la vidéo, en pixels du dessin (16/9)
+VIEW = (-56, -88, 380, 214)          # la scène de la vidéo, en pixels du dessin (16/9)
 VW, VH = 1280, 720
 GR = O.GRD
 FOE = (214.0, 80.0)                  # l'ennemi (milieu du corps), là où frappe le vent
@@ -123,22 +123,24 @@ def keyed(keys, t):
 # pointe frappe le sol (le corps suit, penché) ; tenu ; il redresse lentement le bâton et revient en garde.
 ATTACK = [
     (0, {}),
-    (260, dict(crouch=0.8, lean=-1.2, head=(-0.6, 0.4), nh=(25.0, 46.0), sa=-104, gs=-6, pg=0.6, rsw=-8, bn=-1)),
-    (600, dict(crouch=-0.2, lean=-3.0, head=(-1.0, -0.6), tilt=-3, nh=(29.0, 22.0), sa=-128, gs=-20, pg=1.0, rsw=-14,
+    (260, dict(crouch=0.8, lean=-1.2, head=(-0.6, 0.4), nh=(25.0, 46.0), sa=-104, gs=-10, pg=0.6, rsw=-8, bn=-1)),
+    (600, dict(crouch=-0.2, lean=-3.0, head=(-1.0, -0.6), tilt=-3, nh=(29.0, 22.0), sa=-128, gs=-40, pg=1.0, rsw=-14,
                w=('fold', 'demi', 0.25), bn=-1, ws=0.4)),
-    (840, dict(crouch=-0.4, lean=-3.4, head=(-1.2, -1.0), tilt=-4, nh=(36.0, 5.0), sa=-156, gs=-20, pg=1.2, rsw=-6,
+    (840, dict(crouch=-0.4, lean=-3.4, head=(-1.2, -1.0), tilt=-4, nh=(36.0, 5.0), sa=-140, gs=-55, pg=1.2, rsw=-6,
                w=('fold', 'demi', 0.35), bn=-1, ws=0.6, growl=0.6)),
-    (930, dict(crouch=0.6, lean=1.0, head=(0.2, 0.0), tilt=0, nh=(54.0, 20.0), sa=-24, gs=-36, pg=0.4, rsw=24,
-               w=('fold', 'demi', 0.2), bn=-1, trail=0.8, ws=0.8, growl=1)),
-    (1000, dict(crouch=2.4, lean=6.0, head=(1.2, 1.0), tilt=3, nh=(64.0, 52.0), sa=44, gs=-36, pg=-1.2, rsw=50,
-                w=('fold', 'demi', 0.45), bn=-1, trail=1.2, ws=1.0, growl=1)),
-    (1250, dict(crouch=2.2, lean=5.6, head=(1.0, 0.8), tilt=2.6, nh=(64.0, 52.0), sa=44, gs=-36, pg=-0.8, rsw=20,
-                w=('fold', 'demi', 0.3), bn=-1, trail=0.6, ws=0.6, growl=1)),
-    (1390, dict(crouch=1.4, lean=2.6, head=(0.6, 0.4), tilt=1.2, nh=(40.0, 60.0), sa=62, gs=-18, pg=0.2, rsw=0,
-                w=('fold', 'demi', 0.15), bn=-1, growl=0.6)),
-    (1490, dict(crouch=1.0, lean=1.4, head=(0.2, 0.2), tilt=0.4, nh=(34.0, 56.0), sa=122, gs=-18, pg=0.6, rsw=-10,
+    (930, dict(crouch=0.6, lean=1.0, head=(0.2, 0.0), tilt=0, nh=(60.0, 9.0), sa=-40, gs=-50, pg=0.4, rsw=24,
+               w=('fold', 'demi', 0.2), bn=0, trail=0.8, ws=0.8, growl=1)),
+    (1000, dict(crouch=2.4, lean=6.0, head=(1.2, 1.0), tilt=3, nh=(72.0, 60.0), sa=31, gs=-40, pg=-1.2, rsw=50,
+                w=('fold', 'demi', 0.45), bn=1, trail=1.2, ws=1.0, growl=1)),
+    (1250, dict(crouch=2.2, lean=5.6, head=(1.0, 0.8), tilt=2.6, nh=(71.0, 59.6), sa=31.5, gs=-40, pg=-0.8, rsw=20,
+                w=('fold', 'demi', 0.3), bn=1, trail=0.6, ws=0.6, growl=1)),
+    (1390, dict(crouch=1.4, lean=2.6, head=(0.6, 0.4), tilt=1.2, nh=(26.0, 80.0), sa=30, gs=-18, pg=0.2, rsw=0,
+                w=('fold', 'demi', 0.15), bn=0, growl=0.6)),
+    (1440, dict(crouch=1.2, lean=2.0, head=(0.4, 0.3), tilt=0.8, nh=(30.0, 58.0), sa=52, gs=-22, pg=0.4, rsw=-4,
+                w=('fold', 'demi', 0.12), bn=-0.5, growl=0.5)),
+    (1490, dict(crouch=1.0, lean=1.4, head=(0.2, 0.2), tilt=0.4, nh=(32.0, 44.0), sa=118, gs=-14, pg=0.6, rsw=-10,
                 w=('fold', 'demi', 0.1), bn=-1, growl=0.4)),
-    (1590, dict(crouch=0.6, lean=0.4, head=(-0.2, 0.0), tilt=-0.4, nh=(29.0, 54.0), sa=205, gs=-14, pg=0.8, rsw=-24,
+    (1590, dict(crouch=0.6, lean=0.4, head=(-0.2, 0.0), tilt=-0.4, nh=(28.0, 53.0), sa=205, gs=-14, pg=0.8, rsw=-24,
                 w=('fold', 'demi', 0.05), bn=-1, growl=0.2)),
     (1700, dict(crouch=0.3, lean=0.2, head=(0.1, 0.2), tilt=0.2, nh=(23.4, 49.0), sa=268, gs=-2, pg=0.4, rsw=10, bn=-1)),
     (1850, dict(sa=270)),

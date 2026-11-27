@@ -35,7 +35,7 @@ ROOT = K.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'golem-lave')
 TMP = os.environ.get('GOLEM_TMP') or os.path.join(tempfile.gettempdir(), 'golem-lave-anim')
 FPS = 24
-VIEW = (-30, -40, 300, 168.75)       # la scène de la vidéo, en pixels du dessin (16/9)
+VIEW = (-22, -36, 288, 162.0)       # la scène de la vidéo, en pixels du dessin (16/9)
 VW, VH = 1280, 720
 GR = K.GRD
 FINK = '#3a0c18'                     # le contour de la lave
@@ -384,12 +384,12 @@ def geyser(fig, x, k, seed=0):
     up = env(k, 0.0, 0.25, 0.45, 1.0)
     if up <= 0.01:
         return ''
-    H = 30.0 * up
+    H = 46.0 * up
     out.append('<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"/>' % (
         fm(x), fm(GR), fm(10 * up + 2), fm(3.2 * up + 0.6), g_rad(fig, (x, GR), 10 * up + 2, [(0, LAVA[1], 0.8 * up), (1, LAVA[3], 0)])))
     j = [(-0.35, 0.7, -97), (0.35, 0.75, -83), (0.0, 1.0, -90)][:]
     for i, (dx, hk, ang) in enumerate(j):
-        out.append(tongue(fig, (x + dx * 5, GR + 0.5), H * hk, 5.0 * (0.6 + 0.4 * up) * (0.8 if i < 2 else 1.0),
+        out.append(tongue(fig, (x + dx * 7, GR + 0.5), H * hk, 8.0 * (0.6 + 0.4 * up) * (0.8 if i < 2 else 1.0),
                           bend=0.5 * math.sin(k * 9 + i + seed), lean=0.06 * (i - 1), direction=ang))
     return ''.join(out)
 
@@ -467,7 +467,7 @@ def fx_attack(tl, prev):
             fl = env(tl, ATTACK_HIT - 5, ATTACK_HIT + 10, ATTACK_HIT + 40, ATTACK_HIT + 120)
             if fl > 0:
                 fig.fx_front.append('<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"/>' % (
-                    fm(bx + 4), fm(GR - 2), fm(22), fm(9), g_rad(fig, (bx + 4, GR - 2), 22, [(0, LAVA[0], 0.75 * fl), (0.4, LAVA[1], 0.4 * fl), (1, LAVA[2], 0)])))
+                    fm(bx + 6), fm(GR - 2), fm(16), fm(5), g_rad(fig, (bx + 6, GR - 2), 16, [(0, LAVA[1], 0.55 * fl), (0.5, LAVA[2], 0.3 * fl), (1, LAVA[2], 0)])))
             for i, (dx, sp, r0) in enumerate(((-14, -1, 3.0), (-6, -1, 2.4), (16, 1, 3.2), (26, 1, 2.6))):
                 k = min(1.0, t / 0.7)
                 op = env(tl, ATTACK_HIT, ATTACK_HIT + 60, ATTACK_HIT + 300, ATTACK_HIT + 700)
@@ -494,9 +494,9 @@ def fx_special(tl, prev):
         # le cratère bout puis crache une fontaine de lave (gouttes en cloche)
         fo = env(tl, 120, 420, 900, 1150)
         if fo > 0:
-            h = 6 + 16 * fo + 2 * math.sin(tl / 40)
-            for i, (dx, hk, ang) in enumerate(((-3.0, 0.7, -100), (3.0, 0.75, -80), (0.0, 1.0, -90))):
-                fig.fx_back.append(tongue(fig, (cr[0] + dx, cr[1] + 1.0), h * hk, 4.6 * (0.6 + 0.4 * fo),
+            h = 8 + 26 * fo + 3 * math.sin(tl / 40)
+            for i, (dx, hk, ang) in enumerate(((-4.4, 0.62, -104), (4.6, 0.7, -76), (0.0, 1.0, -90))):
+                fig.fx_back.append(tongue(fig, (cr[0] + dx, cr[1] + 1.0), h * hk, 10.0 * (0.6 + 0.4 * fo),
                                           bend=0.4 * math.sin(tl / 70 + i), lean=0.05 * (i - 1), direction=ang))
             for i in range(7):
                 k = ((tl - 150) / 520 + i / 7) % 1
@@ -509,11 +509,20 @@ def fx_special(tl, prev):
         if fl > 0:
             MC = ctx['near']['MC']
             a3 = P['a3']
-            for i, (pt, hk) in enumerate((((10.6, 96.0), 0.8), ((21.6, 89.6), 1.0), ((36.2, 94.0), 0.75), ((6.0, 104.0), 0.6), ((40.0, 104.0), 0.55))):
+            # des langues de feu qui montent du bout de la massue (derrière elle : elles l'enveloppent) et lèchent
+            # ses flancs (devant) ; elles montent toujours (le feu va vers le haut)
+            for i, (pt, hk, wk, back) in enumerate((((12.0, 112.0), 0.8, 1.0, True), ((32.0, 112.0), 0.9, 1.0, True),
+                                                    ((22.0, 115.0), 1.0, 1.25, True), ((3.0, 100.0), 0.45, 0.55, False),
+                                                    ((45.0, 103.0), 0.5, 0.55, False))):
                 b = mapp(MC, pt)
-                d = -90.0 if tl < 990 else a3 + 180
-                fig.fx_front.append(tongue(fig, b, (7 + 3 * math.sin(tl / 50 + i * 1.7)) * hk * fl, 3.6 * fl,
-                                           bend=0.5 * math.sin(tl / 60 + i), lean=-0.15, direction=d, op=min(1, fl * 1.3)))
+                h_ = (24 + 5 * math.sin(tl / 55 + i * 1.7)) * hk * fl
+                tg = tongue(fig, b, h_, 13.0 * fl * wk, bend=0.7 * math.sin(tl / 65 + i * 2.1), lean=-0.12 + 0.1 * (i % 3 - 1),
+                            direction=-90.0, op=min(1, fl * 1.3))
+                (fig.fx_back if back else fig.fx_front).append(tg)
+            for i in range(4):
+                k = ((tl - 380) / 360 + i / 4) % 1
+                b = mapp(MC, (14.0 + 7 * i, 92.0))
+                fig.fx_front.append(ember(fig, b[0] + 3 * math.sin(k * 7 + i), b[1] - 4 - 16 * k, 0.5, op=fl * (1 - k)))
         # le croissant de feu de la massue qui s'abat
         C = club_head(ctx)
         if 950 < tl < 1080 and prev:
@@ -533,7 +542,7 @@ def fx_special(tl, prev):
             fl = env(tl, SP_HIT - 5, SP_HIT + 10, SP_HIT + 50, SP_HIT + 160)
             if fl > 0:
                 fig.fx_front.append('<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"/>' % (
-                    fm(bx), fm(GR - 4), fm(34), fm(16), g_rad(fig, (bx, GR - 4), 34, [(0, LAVA[0], 0.9 * fl), (0.35, LAVA[1], 0.55 * fl), (1, LAVA[2], 0)])))
+                    fm(bx + 6), fm(GR - 3), fm(26), fm(9), g_rad(fig, (bx + 6, GR - 3), 26, [(0, LAVA[0], 0.7 * fl), (0.35, LAVA[1], 0.4 * fl), (1, LAVA[2], 0)])))
             # la faille qui court vers l'ennemi, puis refroidit
             run = min(1.0, t / 0.32)
             x1 = bx + (240 - bx) * (1 - (1 - run) ** 2)

@@ -146,7 +146,7 @@ def heat_tint(sh, k):
     if k <= 0.02:
         return []
     x0, y0, x1, y1 = sh.bbox()
-    return [(sh, ('lin', x1, y0, x0, y1, [(0, LAVA[1], 0.6 * k), (0.5, LAVA[3], 0.55 * k), (1, LAVA[5], 0.6 * k)]), 1)]
+    return [(sh, ('lin', x1, y0, x0, y1, [(0, LAVA[2], 0.7 * k), (0.5, LAVA[3], 0.7 * k), (1, LAVA[5], 0.75 * k)]), 1)]
 
 
 def rk(pts, r=2.0):
@@ -250,7 +250,7 @@ def club_geom():
     from shapely import affinity
     from shapely.ops import unary_union
     gs = [affinity.scale(Point(c).buffer(1, 48), rx, ry) for c, rx, ry in CLUB_BUMPS]
-    gs.append(box(2.0, 106.0, 46.0, 117.0).buffer(-2.5).buffer(2.5))
+    gs.append(box(2.0, 106.0, 46.0, 117.0).buffer(-3.6).buffer(3.6))
     g = unary_union(gs).buffer(1.6, join_style=1).buffer(-1.6, join_style=1)
     return g.intersection(box(-50, -50, 200, GRD))
 
