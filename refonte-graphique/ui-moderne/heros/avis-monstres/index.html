@@ -1,0 +1,287 @@
+<title>Avis sur les monstres</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600&family=Lilita+One&display=swap">
+<style>
+/* même salle de pierre sombre et or que la page de suivi : un seul thème, voulu */
+:root { --bg: #15131b; --panel: #221f2b; --panel2: #1a1822; --line: #3a3546; --text: #f1ece0; --muted: #aaa3b8;
+  --gold: #e8b64c; --ok: #5fcf8a; --redo: #ff7a5c; --ink: #ff3b3b; --ink2: #ffd34a;
+  --display: "Lilita One", "Trebuchet MS", sans-serif; --body: "Fredoka", system-ui, sans-serif; color-scheme: dark; }
+body { background: var(--bg); color: var(--text); font: 16px/1.45 var(--body); }
+main { max-width: 1180px; margin: 0 auto; padding-block: 20px 60px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+h1 { font: 400 clamp(28px, 7vw, 40px)/1.1 var(--display); color: var(--gold); margin: 0 0 4px; text-wrap: balance; }
+.sub { color: var(--muted); margin: 0 0 14px; max-width: 60ch; text-wrap: pretty; }
+.note-cx { margin: 0 0 14px; padding: 10px 14px; border-radius: 12px; background: #3a2a1a; color: #ffd9a8; font-size: 14px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 18px; position: sticky; top: env(safe-area-inset-top, 0px);
+  z-index: 5; padding: 8px 0; background: var(--bg); }
+.filters button { font: 500 14px var(--body); color: var(--text); background: var(--panel); border: 1px solid var(--line);
+  border-radius: 999px; padding: 8px 14px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.filters button[aria-pressed="true"] { background: var(--gold); color: #1b1408; border-color: var(--gold); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 460px), 1fr)); gap: 16px; }
+.hero { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px; min-width: 0;
+  display: grid; gap: 10px; }
+.hero.st-ok { border-color: #2f6b47; } .hero.st-redo { border-color: #8a3a2a; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.top h2 { margin: 0; font: 400 26px/1 var(--display); }
+.meta { color: var(--muted); font-size: 13px; }
+.choice { display: flex; gap: 6px; }
+.choice button { font: 600 14px var(--body); border-radius: 999px; padding: 7px 12px; cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--panel2); color: var(--muted); }
+.choice .b-ok[aria-pressed="true"] { background: var(--ok); border-color: var(--ok); color: #0d2417; }
+.choice .b-redo[aria-pressed="true"] { background: var(--redo); border-color: var(--redo); color: #2b0d06; }
+.duo { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.pane { background: var(--panel2); border-radius: 12px; padding: 8px; display: grid; place-items: center;
+  min-height: 220px; position: relative; }
+.pane small { position: absolute; left: 10px; top: 8px; font-size: 11px; color: var(--muted); letter-spacing: .06em;
+  text-transform: uppercase; }
+.draw { border: 0; background: none; padding: 0; cursor: crosshair; }
+.stage { position: relative; display: inline-block; line-height: 0; }
+.stage img { max-height: 340px; width: auto; max-width: 100%; }
+.stage svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.pen-tag { position: absolute; right: 8px; bottom: 8px; font: 600 13px var(--body); color: #1b1408; background: var(--gold);
+  border-radius: 999px; padding: 5px 11px; pointer-events: none; }
+.gifpane { padding: 0; overflow: hidden; min-height: 0; }
+.gifpane img { width: 100%; height: auto; display: block; }
+textarea { width: 100%; box-sizing: border-box; min-height: 84px; resize: vertical; font: 16px/1.4 var(--body);
+  color: var(--text); background: var(--panel2); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+textarea:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+.saved { font-size: 12px; color: var(--muted); min-height: 1em; }
+.empty { color: var(--muted); padding: 30px 0; text-align: center; }
+.foot { color: var(--muted); margin-top: 22px; font-size: 14px; }
+/* éditeur plein écran */
+#ed { border: 0; padding: 0; margin: 0; width: 100vw; height: 100dvh; max-width: 100vw; max-height: 100dvh;
+  background: #0d0b12; color: var(--text); }
+#ed::backdrop { background: #000; }
+.ed-wrap { height: 100%; display: grid; grid-template-rows: auto 1fr auto; }
+.ed-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px max(12px, env(safe-area-inset-left, 0px));
+  padding-top: max(10px, env(safe-area-inset-top, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+.ed-bar h3 { margin: 0 auto 0 0; font: 400 22px var(--display); color: var(--gold); }
+.ed-bar button, .ed-foot button { font: 600 15px var(--body); border-radius: 999px; padding: 9px 14px; cursor: pointer;
+  border: 1.5px solid var(--line); background: var(--panel); color: var(--text); }
+.ed-bar button[aria-pressed="true"] { border-color: var(--gold); background: #3a3020; }
+.dot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; vertical-align: -2px; margin-right: 4px; }
+.ed-main { display: grid; place-items: center; min-height: 0; padding: 8px; }
+.ed-main .stage img { max-height: calc(100dvh - 150px); max-width: calc(100vw - 24px); }
+.ed-main .stage svg { pointer-events: auto; touch-action: none; cursor: crosshair; }
+.ed-foot { display: flex; justify-content: center; gap: 10px; padding: 10px; padding-bottom: max(12px, env(safe-area-inset-bottom, 0px)); }
+.ed-foot .done { background: var(--gold); color: #1b1408; border-color: var(--gold); padding-inline: 26px; }
+.hint { color: var(--muted); font-size: 13px; align-self: center; }
+</style>
+
+<main>
+  <h1>Avis sur les monstres</h1>
+  <p class="sub">Pour chaque monstre : écris ce qu’il faut changer, touche le dessin pour entourer au doigt, puis choisis « OK » ou « À reprendre ». Tout s’enregistre tout seul.</p>
+  <p class="note-cx" id="cx" hidden></p>
+  <nav class="filters" id="filters" aria-label="Filtrer"></nav>
+  <section class="grid" id="grid"></section>
+  <p class="foot" id="foot"></p>
+</main>
+
+<dialog id="ed" aria-label="Entourer sur le dessin">
+  <div class="ed-wrap">
+    <div class="ed-bar">
+      <h3 id="ed-name"></h3>
+      <button type="button" data-tool="pen" data-color="#ff3b3b" aria-pressed="true"><span class="dot" style="background:#ff3b3b"></span>Rouge</button>
+      <button type="button" data-tool="pen" data-color="#ffd34a" aria-pressed="false"><span class="dot" style="background:#ffd34a"></span>Jaune</button>
+      <button type="button" data-tool="erase" aria-pressed="false">Gomme</button>
+      <button type="button" id="ed-undo">Annuler</button>
+      <button type="button" id="ed-clear">Tout effacer</button>
+    </div>
+    <div class="ed-main"><div class="stage" id="ed-stage"><img id="ed-img" alt=""><svg id="ed-svg" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg></div></div>
+    <div class="ed-foot"><span class="hint">Dessine avec le doigt sur le monstre</span><button type="button" class="done" id="ed-done">Terminé</button></div>
+  </div>
+</dialog>
+
+<script>
+const DATA = {"heroes": [], "total": 20};
+const HEROES = DATA.heroes;
+const state = {};          // id -> {text, status, strokes:[{c, p:[[x,y],...]}]}
+HEROES.forEach(h => { state[h.id] = { text: '', status: '', strokes: [] }; });
+let filter = 'all';
+let db = null, col = null;
+const $ = (s, r = document) => r.querySelector(s);
+
+/* ---------- enregistrement (base de la page, sinon cet appareil) ---------- */
+const LS = 'fuze-avis-3-';   // tour 3 (remis à zéro le 26/11 au soir) : ignore les brouillons locaux du tour 1
+function lsGet(id) { try { return JSON.parse(localStorage.getItem(LS + id) || 'null'); } catch (e) { return null; } }
+function lsSet(id, v) { try { localStorage.setItem(LS + id, JSON.stringify(v)); } catch (e) {} }
+const packStrokes = (ss) => ss.map(s => ({ c: s.c, p: s.p.map(q => q[0] + ',' + q[1]).join(' ') }));
+const unpackStrokes = (ss) => (Array.isArray(ss) ? ss : []).map(s => ({
+  c: typeof s.c === 'string' && /^#[0-9a-f]{6}$/i.test(s.c) ? s.c : '#ff3b3b',
+  p: String(s.p || '').split(' ').filter(Boolean).map(t => t.split(',').map(Number)).filter(q => q.length === 2 && q.every(isFinite)),
+}));
+const writing = {}, dirty = {}, timers = {};
+function body(id) { const s = state[id]; return { text: s.text, status: s.status, strokes: packStrokes(s.strokes), at: Date.now() }; }
+function save(id, delay = 0) {
+  clearTimeout(timers[id]);
+  timers[id] = setTimeout(() => flush(id), delay);
+  setSaved(id, '…');
+}
+async function flush(id) {
+  if (!col) { lsSet(id, body(id)); setSaved(id, 'enregistré sur cet appareil'); return; }
+  if (writing[id]) { dirty[id] = true; return; }
+  writing[id] = true;
+  try { await col.doc(id).set(body(id)); setSaved(id, 'enregistré'); }
+  catch (e) { lsSet(id, body(id)); setSaved(id, 'pas enregistré en ligne (gardé sur cet appareil)'); }
+  writing[id] = false;
+  if (dirty[id]) { dirty[id] = false; flush(id); }
+}
+function setSaved(id, t) { const el = document.getElementById('sv-' + id); if (el) el.textContent = t; }
+
+/* ---------- dessin des traits ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+function drawStrokes(svg, strokes, w) {
+  svg.textContent = '';
+  for (const s of strokes) {
+    if (!s.p.length) continue;
+    const pl = document.createElementNS(NS, 'polyline');
+    pl.setAttribute('points', s.p.length === 1 ? `${s.p[0]} ${s.p[0][0] + 1},${s.p[0][1] + 1}` : s.p.join(' '));
+    pl.setAttribute('fill', 'none'); pl.setAttribute('stroke', s.c); pl.setAttribute('stroke-width', w);
+    pl.setAttribute('stroke-linecap', 'round'); pl.setAttribute('stroke-linejoin', 'round');
+    pl.setAttribute('vector-effect', 'non-scaling-stroke');
+    svg.appendChild(pl);
+  }
+}
+
+/* ---------- cartes ---------- */
+function counts() {
+  const c = { all: HEROES.length, todo: 0, redo: 0, ok: 0 };
+  HEROES.forEach(h => { const st = state[h.id].status; c[st === 'ok' ? 'ok' : st === 'redo' ? 'redo' : 'todo']++; });
+  return c;
+}
+function renderFilters() {
+  const c = counts();
+  const items = [['all', 'Tous'], ['todo', 'À regarder'], ['redo', 'À reprendre'], ['ok', 'OK']];
+  const nav = $('#filters'); nav.textContent = '';
+  for (const [k, label] of items) {
+    const b = document.createElement('button'); b.type = 'button';
+    b.textContent = `${label} · ${c[k]}`; b.setAttribute('aria-pressed', String(filter === k));
+    b.onclick = () => { filter = k; renderFilters(); applyFilter(); };
+    nav.appendChild(b);
+  }
+}
+function visible(h) {
+  const st = state[h.id].status;
+  return filter === 'all' || (filter === 'todo' && !st) || filter === st;
+}
+function applyFilter() {
+  let n = 0;
+  HEROES.forEach(h => { const el = document.getElementById('h-' + h.id); const v = visible(h); el.hidden = !v; if (v) n++; });
+  $('#grid').dataset.n = n;
+  let e = $('#none'); if (!n) { if (!e) { e = document.createElement('p'); e.id = 'none'; e.className = 'empty'; e.textContent = 'Aucun monstre ici.'; $('#grid').after(e); } } else if (e) e.remove();
+}
+function buildCards() {
+  const grid = $('#grid');
+  for (const h of HEROES) {
+    const a = document.createElement('article'); a.className = 'hero'; a.id = 'h-' + h.id;
+    a.innerHTML = `
+      <div class="top"><div><h2></h2><div class="meta"></div></div>
+        <div class="choice"><button type="button" class="b-ok" aria-pressed="false">OK</button><button type="button" class="b-redo" aria-pressed="false">À reprendre</button></div></div>
+      <div class="duo">
+        <div class="pane"><small>dessin</small><button type="button" class="draw" aria-label="Entourer sur le dessin"><span class="stage"><img alt="" loading="lazy"><svg viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg></span></button><span class="pen-tag">Entourer</span></div>
+        <div class="pane gifpane"><small>animation</small><img alt="" loading="lazy"></div>
+      </div>
+      <textarea rows="3" autocomplete="off" placeholder="Ce qu’il faut changer…"></textarea>
+      <div class="saved" id="sv-${h.id}"></div>`;
+    $('h2', a).textContent = h.name;
+    $('.meta', a).textContent = `${h.r} · ${h.el}`;
+    const still = $('.stage img', a); still.src = `img/${h.id}.webp?v=${h.v}`; still.alt = `${h.name}, dessin`;
+    const gif = $('.gifpane img', a); gif.src = `gif/${h.id}.gif?v=${h.v}`; gif.alt = `${h.name}, animation`;
+    $('.draw', a).onclick = () => openEditor(h);
+    $('.b-ok', a).onclick = () => setStatus(h.id, 'ok');
+    $('.b-redo', a).onclick = () => setStatus(h.id, 'redo');
+    const ta = $('textarea', a);
+    ta.oninput = () => { state[h.id].text = ta.value.slice(0, 4000); save(h.id, 900); };
+    ta.onblur = () => { if (timers[h.id]) { clearTimeout(timers[h.id]); flush(h.id); } };
+    grid.appendChild(a);
+  }
+}
+function setStatus(id, st) {
+  state[id].status = state[id].status === st ? '' : st;
+  paint(id); renderFilters(); save(id);
+}
+function paint(id) {
+  const a = document.getElementById('h-' + id), s = state[id];
+  a.classList.toggle('st-ok', s.status === 'ok'); a.classList.toggle('st-redo', s.status === 'redo');
+  $('.b-ok', a).setAttribute('aria-pressed', String(s.status === 'ok'));
+  $('.b-redo', a).setAttribute('aria-pressed', String(s.status === 'redo'));
+  const ta = $('textarea', a); if (document.activeElement !== ta && ta.value !== s.text) ta.value = s.text;
+  drawStrokes($('.stage svg', a), s.strokes, 3);
+  $('.pen-tag', a).textContent = s.strokes.length ? `Entouré · ${s.strokes.length}` : 'Entourer';
+}
+
+/* ---------- éditeur plein écran ---------- */
+const ed = $('#ed'), edSvg = $('#ed-svg');
+let cur = null, tool = 'pen', color = '#ff3b3b', drawing = null;
+function openEditor(h) {
+  cur = h; $('#ed-name').textContent = h.name; $('#ed-img').src = `img/${h.id}.webp?v=${h.v}`; $('#ed-img').alt = `${h.name}, dessin`;
+  drawStrokes(edSvg, state[h.id].strokes, 5); ed.showModal();
+}
+function closeEditor() { if (!cur) return; const id = cur.id; ed.close(); cur = null; paint(id); save(id); }
+$('#ed-done').onclick = closeEditor;
+ed.addEventListener('cancel', (e) => { e.preventDefault(); closeEditor(); });
+document.querySelectorAll('.ed-bar [data-tool]').forEach(b => b.onclick = () => {
+  tool = b.dataset.tool; if (b.dataset.color) color = b.dataset.color;
+  document.querySelectorAll('.ed-bar [data-tool]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+});
+$('#ed-undo').onclick = () => { if (!cur) return; state[cur.id].strokes.pop(); drawStrokes(edSvg, state[cur.id].strokes, 5); };
+$('#ed-clear').onclick = () => { if (!cur) return; state[cur.id].strokes = []; drawStrokes(edSvg, [], 5); };
+function pt(e) {
+  const r = edSvg.getBoundingClientRect();
+  return [Math.round(Math.min(1000, Math.max(0, (e.clientX - r.left) / r.width * 1000))),
+          Math.round(Math.min(1000, Math.max(0, (e.clientY - r.top) / r.height * 1000)))];
+}
+function eraseAt(p) {
+  const ss = state[cur.id].strokes, before = ss.length;
+  state[cur.id].strokes = ss.filter(s => !s.p.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < 28));
+  if (state[cur.id].strokes.length !== before) drawStrokes(edSvg, state[cur.id].strokes, 5);
+}
+edSvg.addEventListener('pointerdown', (e) => {
+  if (!cur) return; e.preventDefault(); edSvg.setPointerCapture(e.pointerId);
+  const p = pt(e);
+  if (tool === 'erase') { drawing = 'erase'; eraseAt(p); return; }
+  drawing = { c: color, p: [p] }; state[cur.id].strokes.push(drawing); drawStrokes(edSvg, state[cur.id].strokes, 5);
+});
+edSvg.addEventListener('pointermove', (e) => {
+  if (!drawing || !cur) return; const p = pt(e);
+  if (drawing === 'erase') { eraseAt(p); return; }
+  const last = drawing.p[drawing.p.length - 1];
+  if (Math.hypot(p[0] - last[0], p[1] - last[1]) < 4 || drawing.p.length > 600) return;
+  drawing.p.push(p); edSvg.lastChild && edSvg.lastChild.setAttribute('points', drawing.p.join(' '));
+});
+const endDraw = () => { drawing = null; };
+edSvg.addEventListener('pointerup', endDraw); edSvg.addEventListener('pointercancel', endDraw);
+
+/* ---------- démarrage ---------- */
+function applyRemote(id, d) {
+  if (!state[id] || !d) return;
+  const s = state[id];
+  const ta = document.querySelector(`#h-${CSS.escape(id)} textarea`);
+  if (typeof d.text === 'string' && !(ta && document.activeElement === ta)) s.text = d.text.slice(0, 4000);
+  if (d.status === 'ok' || d.status === 'redo' || d.status === '') s.status = d.status;
+  if (!(cur && cur.id === id)) s.strokes = unpackStrokes(d.strokes);
+  paint(id);
+}
+buildCards();
+HEROES.forEach(h => { const v = lsGet(h.id); if (v) applyRemote(h.id, v); paint(h.id); });
+renderFilters(); applyFilter();
+$('#foot').textContent = `${HEROES.length} monstres sur ${DATA.total} prêts à relire. Les autres arrivent au fur et à mesure.`;
+
+function note(t) { const el = $('#cx'); el.textContent = t; el.hidden = !t; }
+(async () => {
+  const timer = setTimeout(() => note('La sauvegarde en ligne ne répond pas encore : tes notes restent sur cet appareil en attendant.'), 10000);
+  try { db = window.claude && await window.claude.use('db'); } catch (e) { db = null; }
+  if (!db) { clearTimeout(timer); note('Sauvegarde en ligne indisponible ici (connecte-toi à claude.ai) : tes notes restent sur cet appareil.'); return; }
+  col = db.collection('avis');
+  col.onSnapshot((snap) => {
+    if (!snap.metadata || !snap.metadata.fromCache) { clearTimeout(timer); note(''); }
+    const seen = new Set();
+    snap.docs.forEach(d => { if (d.exists) { seen.add(d.id); applyRemote(d.id, d.data()); } });
+    // réponse définitive de la base : un monstre sans avis enregistré repart à vide (copie ancienne du téléphone effacée)
+    if (!snap.metadata || !snap.metadata.fromCache) {
+      HEROES.forEach(h => { if (!seen.has(h.id) && !timers[h.id] && !writing[h.id]) applyRemote(h.id, { text: '', status: '', strokes: [] }); });
+    }
+    renderFilters(); applyFilter();
+  }, () => { clearTimeout(timer); col = null; note('Sauvegarde en ligne coupée : tes notes restent sur cet appareil.'); });
+})();
+</script>
