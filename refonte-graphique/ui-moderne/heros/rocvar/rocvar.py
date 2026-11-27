@@ -145,8 +145,8 @@ HEAD_PTS = [(38.0, 21.0), (42.6, 17.4), (49, 15.8), (55.6, 16.4), (60.6, 16.6), 
             (50, 36.6), (43.6, 35.6), (39.4, 32.4), (37.4, 26.6)]
 # la racine : le dos du crâne et le dessus de la tête ; son bord de devant (la naissance des poils) suit le dos du crâne
 # derrière l'œil (l'œil est plus en avant que chez Elvyn : la racine avance un peu, pas de front trop grand)
-SCALP = [(61.2, 16.9), (60.2, 15.8), (59.3, 14.7), (58.0, 15.6), (55.6, 15.6), (54.0, 13.3), (52.6, 14.4), (49.0, 13.4),
-         (45.0, 12.6), (41.0, 13.6), (38.0, 16.0), (35.8, 22.0), (35.4, 29.0), (36.4, 35.0), (40.0, 37.6), (43.6, 35.4),
+SCALP = [(60.4, 17.4), (59.6, 16.4), (58.8, 15.6), (57.6, 16.2), (55.6, 16.0), (54.0, 14.6), (52.6, 15.2), (49.0, 14.6),
+         (45.0, 13.6), (41.0, 14.4), (38.0, 16.0), (35.8, 22.0), (35.4, 29.0), (36.4, 35.0), (40.0, 37.6), (43.6, 35.4),
          (45.6, 32.0), (46.4, 28.4), (46.2, 25.2), (46.8, 22.4), (48.2, 19.8), (50.4, 18.0), (52.8, 17.0), (55.4, 16.7),
          (57.8, 16.8), (60.0, 16.9)]
 SCALP_SHARP = (2, 5)
@@ -156,18 +156,25 @@ CAP = [(40.6, 19.0), (42.2, 16.6), (43.6, 15.2), (44.6, 13.6), (46.2, 14.6), (47
 # les mèches (nom, racine, contrôles, pointe, largeur, renflement, amplitude du balancement, fondu depuis la racine) :
 # courtes et épaisses, elles retombent lourdement (une crinière de lion plus qu'une vague) ; toutes partent de la racine.
 MANE_LOCKS = [
-    ('mF', (37.4, 31.0), (36.4, 40.0), (33.4, 47.4), (29.4, 51.6), 12.6, 0.5, 0.8, 4.5),
-    ('mE', (37.6, 24.6), (32.6, 33.6), (26.0, 41.4), (21.0, 43.6), 13.6, 0.52, 1.0, 4.5),
-    ('mD', (40.0, 20.6), (31.8, 24.0), (24.4, 31.4), (20.0, 35.4), 13.6, 0.52, 1.0, 4.5),
-    ('mC', (43.0, 16.8), (35.0, 14.4), (27.0, 18.0), (22.4, 23.0), 12.4, 0.5, 1.0, 4.5),
-    ('mB', (47.4, 14.4), (42.2, 9.8), (34.8, 9.0), (29.8, 12.2), 10.2, 0.48, 0.9, 4.5),
-    ('mH', (52.6, 14.6), (49.4, 11.4), (44.6, 10.0), (40.0, 11.2), 5.6, 0.4, 0.6, 3.5),
-    ('mA', (40.0, 28.0), (39.8, 36.4), (38.8, 42.6), (36.6, 48.6), 9.4, 0.4, 0.7, 4.5),
-    ('mG1', (45.6, 18.2), (41.6, 17.0), (37.2, 18.0), (32.4, 21.6), 7.8, 0.42, 0.5, 3.5),
-    ('mG2', (44.2, 24.4), (40.4, 24.6), (36.6, 27.0), (32.8, 31.0), 7.6, 0.42, 0.5, 3.5),
+    ('mF', (37.4, 31.0), (36.4, 38.6), (35.0, 44.6), (33.6, 49.6), 11.8, 0.45, 0.7, 4.5),
+    ('mE', (37.6, 24.6), (32.2, 30.4), (28.6, 37.6), (27.6, 45.0), 12.8, 0.5, 0.9, 4.5),
+    ('mD', (40.0, 20.6), (32.0, 22.4), (26.0, 28.0), (22.8, 36.4), 12.8, 0.5, 1.0, 4.5),
+    ('mC', (43.0, 16.8), (35.4, 14.2), (28.4, 17.0), (24.2, 24.6), 11.8, 0.48, 1.0, 4.5),
+    ('mB', (47.4, 14.6), (42.0, 11.2), (35.2, 11.0), (30.8, 16.0), 9.6, 0.46, 0.9, 4.5),
+    ('mH', (52.0, 15.4), (48.6, 12.8), (44.4, 12.6), (41.0, 15.0), 5.0, 0.4, 0.6, 3.5),
+    ('mA', (40.0, 28.0), (39.8, 35.6), (39.0, 41.2), (37.6, 46.4), 8.8, 0.4, 0.7, 4.5),
+    ('mG1', (45.6, 18.2), (41.8, 17.6), (38.0, 19.2), (34.6, 23.4), 7.0, 0.42, 0.5, 3.5),
+    ('mG2', (44.2, 24.4), (40.6, 25.0), (37.6, 27.8), (35.2, 32.2), 6.8, 0.42, 0.5, 3.5),
 ]
 MANE_FILL = [(0, MANE.light), (0.45, MANE.base), (1, '#8a5230')]
 MANE_UNDER = [(0, '#8a5430'), (0.5, '#8a5430'), (1, '#6a3a26')]
+
+
+def mlock(p0, p1, p2, p3, w0, n=14, bulge=0.45, tip=2.6):
+    """Une mèche lourde : large à la racine, elle s'affine sans devenir une pointe (bout arrondi) et retombe."""
+    c = resample(bez(p0, p1, p2, p3, 40), n)
+    ws = [max(tip, w0 * (1 - t) ** 0.75 * (1 + bulge * math.sin(math.pi * min(1, t * 1.6)))) for t in (i / n for i in range(n + 1))]
+    return limb(c, ws)
 
 
 def mane_geom(P):
@@ -183,7 +190,7 @@ def mane_geom(P):
         p1 = (p1[0] - 0.3 * amp * m_, p1[1])
         p2 = (p2[0] + 0.4 * k * w1 - 0.7 * amp * m_, p2[1] + 0.5 * k * w2)
         p3 = (p3[0] + 0.8 * k * w2 - 1.3 * amp * m_, p3[1] + 0.6 * k * w1 + 0.4 * amp * m_)
-        strands.append((name, lock(p0, p1, p2, p3, w0, n=14, bulge=bu), p0, p1, p2, p3, w0, fade))
+        strands.append((name, mlock(p0, p1, p2, p3, w0, bulge=bu), p0, p1, p2, p3, w0, fade))
     mass = fused([sm(SCALP, sharp=SCALP_SHARP, t=0.9)] + [s[1] for s in strands])
     det = []
     for name, sh, p0, p1, p2, p3, w0, fade in strands:
@@ -193,18 +200,18 @@ def mane_geom(P):
         if sh_:
             det.append((sh_, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], fd),), 0.22))
         det.append((sh, ('lin',) + ax + (faded(MANE_FILL, fd),), 1))
-        det.append((sm_under(sh, 0.8, -2.2), ('lin',) + ax + (faded(MANE_UNDER, fd),), 0.6))
+        det.append((sm_under(sh, 0.8, -2.2), ('lin',) + ax + (faded(MANE_UNDER, fd),), 0.45))
         sheen = ribbon(resample(bez(lerp(p0, p1, 0.55), p1, p2, lerp(p2, p3, 0.6), 12), 6),
                        [0.2, w0 * 0.12, w0 * 0.16, w0 * 0.13, w0 * 0.08, 0.1, 0.1])
-        det.append((sheen.move(0.4, -1.0), MANE.hi, 0.35))
+        det.append((sheen.move(0.4, -1.0), MANE.hi, 0.22))
     det.append((Shape(mass.subs + mass.move(0.8, -1.0).subs, evenodd=True), MANE.shadow, 0.35))
-    det.append((Shape(mass.subs + mass.move(-0.6, 0.8).subs, evenodd=True), MANE.hi, 0.7))
+    det.append((Shape(mass.subs + mass.move(-0.6, 0.8).subs, evenodd=True), MANE.light, 0.55))
     g = _poly(mass)
     front = _shape(g.intersection(_poly(strands[[s_[0] for s_ in strands].index('mA')][1])))
     from shapely.geometry import Polygon
     F = Polygon(HEAD_PTS).buffer(1.5).union(_poly(sm(CAP, sharp=(3,), t=0.8)))
     root = _shape(g.intersection(F))
-    grad = (54, 8, 24, 52, [(0, MANE.hi), (0.3, MANE.light), (1, MANE.base)])
+    grad = (54, 8, 24, 52, [(0, MANE.light), (0.35, MANE.base), (1, '#985c30')])
     return dict(mass=mass, front=front, root=root, det=det, grad=grad)
 
 
@@ -338,9 +345,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- le pantalon large (bassin et deux jambes d'un seul tenant), serré aux chevilles ----
     # les pieds d'abord (les chevilles du pantalon les recouvrent)
     foot(fig, 'f', 56.4, 0.94)
-    trousers = sm([(31.6, 64.0), (30.2, 72.0), (26.6, 83.0), (24.0, 92.6), (24.6, 99.6), (25.6, 104.8), (34.6, 105.2),
-                   (35.2, 99.8), (38.2, 93.4), (42.8, 89.6), (47.6, 88.4), (52.4, 89.6), (56.6, 93.4), (59.0, 99.8),
-                   (59.4, 105.2), (68.4, 104.8), (69.4, 99.6), (70.4, 91.8), (69.4, 81.0), (66.6, 71.0), (64.8, 64.0)],
+    # l'entrejambe est bas (le pantalon ample tombe entre les jambes) : il ne reste qu'un petit jour entre les chevilles
+    trousers = sm([(31.6, 64.0), (30.2, 72.0), (26.6, 83.0), (24.0, 92.6), (24.6, 99.6), (25.6, 104.8), (35.0, 105.2),
+                   (36.2, 101.4), (40.2, 98.2), (44.4, 96.6), (47.8, 96.2), (51.4, 96.8), (55.0, 98.6), (58.2, 101.4),
+                   (59.0, 105.2), (68.4, 104.8), (69.4, 99.6), (70.4, 91.8), (69.4, 81.0), (66.6, 71.0), (64.8, 64.0)],
                   sharp=(5, 6, 14, 15), t=0.85)
     tdet2 = []
     # les plis : l'étoffe ample tombe des hanches et se froisse au-dessus des chevilles (creux doux, inégaux)
@@ -369,8 +377,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- le gilet de cuir épais (épaules, buste, pans sous la ceinture d'un seul tenant), sans manches ----
     vest = sm([(27.0, 49.6), (30.6, 45.8), (36.4, 44.0), (40.8, 44.4), (45.0, 51.0), (49.6, 56.4), (54.0, 50.6), (58.0, 44.4),
-               (61.6, 44.2), (65.6, 46.2), (68.0, 50.4), (67.4, 58.0), (66.2, 66.4), (67.0, 74.0), (68.6, 83.4), (61.4, 85.2),
-               (54.6, 83.6), (49.0, 85.0), (42.4, 83.8), (35.6, 85.4), (28.4, 83.2), (29.6, 74.0), (30.0, 66.0), (28.4, 57.0)],
+               (61.6, 44.2), (65.6, 46.2), (68.0, 50.4), (67.4, 58.0), (66.2, 66.4), (67.0, 74.0), (68.8, 85.4), (61.4, 87.6),
+               (54.6, 86.4), (49.0, 89.0), (42.4, 87.0), (35.6, 87.8), (28.2, 85.4), (29.6, 74.0), (30.0, 66.0), (28.4, 57.0)],
               sharp=(4, 6, 14, 15, 16, 17, 18, 19, 20), t=0.85)
     vdet = [(vest, ('lin', 30, 60, 50, 58, [(0, LEATHER.deep, 0.4), (1, LEATHER.deep, 0)]), 1)]
     # les larges revers épais de l'encolure (le cuir retourné, plus clair) : ils suivent le V jusqu'aux plaques
@@ -381,12 +389,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              (lapR, ('lin', 61, 44, 53, 55, [(0, LEATHER.light), (1, LEATHER.shadow)]), 1),
              (ribbon([(60.8, 45.0), (57.6, 49.6), (54.2, 53.6)], [0.2, 0.7, 0.2]), LEATHER.hi, 0.5)]
     # les pans sous la ceinture : trois pans de cuir (de légers creux entre eux, pas de trait)
-    vdet += [(ribbon([(42.0, 76), (42.4, 80), (42.4, 83.6)], [0.2, 1.2, 0.2]), LEATHER.deep, 0.6),
-             (ribbon([(55.0, 76), (54.8, 80), (54.6, 83.4)], [0.2, 1.2, 0.2]), LEATHER.deep, 0.6),
-             (ribbon([(57.0, 76.6), (60.8, 80), (62.8, 84.2)], [0.2, 0.9, 0.2]), LEATHER.light, 0.4),
+    vdet += [(ribbon([(42.0, 76), (42.4, 81), (42.4, 86.6)], [0.2, 1.2, 0.2]), LEATHER.deep, 0.6),
+             (ribbon([(55.0, 76), (54.8, 81), (54.6, 86.0)], [0.2, 1.2, 0.2]), LEATHER.deep, 0.6),
+             (ribbon([(57.0, 76.6), (60.8, 81), (62.8, 86.4)], [0.2, 0.9, 0.2]), LEATHER.light, 0.4),
              (ribbon([(31.4, 77), (33.0, 82.6)], [0.2, 0.2]), LEATHER.shadow, 0.0)]
     # les bords épais du cuir : un ourlet plus clair en bas des pans (d'un bord à l'autre)
-    vdet += [(band_along([(28.0, 82.6), (35.6, 84.8), (42.4, 83.2), (49.0, 84.4), (54.6, 83.0), (61.4, 84.6), (69.0, 82.8)], 1.6), LEATHER.shadow, 0.7)]
+    vdet += [(band_along([(27.8, 84.8), (35.6, 87.2), (42.4, 86.4), (49.0, 88.4), (54.6, 85.8), (61.4, 87.0), (69.2, 84.8)], 1.6), LEATHER.shadow, 0.7)]
     # les plis du cuir sur le flanc
     vdet += [(ribbon([(33.0, 52), (32.0, 60), (32.6, 66)], [0.2, 1.6, 0.3]), LEATHER.shadow, 0.6),
              (ribbon([(64.6, 52), (64.0, 60), (63.4, 66)], [0.2, 1.0, 0.2]), LEATHER.light, 0.45)]
@@ -533,7 +541,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     head_parts = ['head', 'beard', 'beard2', 'barbel', 'hornN', 'hornF', 'mroot', 'mane', 'manef']
     fig.pose(head_parts, HEAD)
     fig.pose(['neck'], NECK)
-    fig.pose(['vest', 'straps', 'plateN', 'plateF', 'belt', 'buckle'], TOR)
+    fig.pose(['vest', 'straps', 'plateN', 'plateF', 'belt', 'buckle', 'vhole'], TOR)
     fig.pose(['farm'], UC)
     fig.pose(['shield', 'shside', 'shgem'], SHM)
     fig.pose(['narm', 'gaunt', 'fist', 'nthumb', 'ncl0', 'ncl1', 'ncl2', 'haft', 'hhead', 'hcollar'], U)
@@ -667,6 +675,10 @@ def near_arm(fig, P, gl, U):
     fig.masks['narm'] = (mo[0], mo[1], mt[0], mt[1], 'vest')
     fig.part('narm', arm, SCALE, cel=1.4, rim=0.6, cast=1.1, cast_on=['vest', 'straps', 'plateN', 'belt', 'trousers', 'manef', 'haft', 'buckle'],
              details=ad)
+    # l'emmanchure du gilet : le bord épais du cuir passe sur la racine du bras (qui se fond dessous dans le gilet)
+    hole = band_along(catmull([(35.4, 44.4), (31.6, 45.8), (29.4, 48.8), (29.2, 52.8), (30.4, 56.4)], 4), 2.4)
+    fig.part('vhole', hole, LEATHER, grad=(35, 44, 29, 56, [(0, LEATHER.light), (1, LEATHER.shadow)]), cel=0.5, rim=0.5, cast=0.8,
+             cast_on=['narm', 'vest'], details=[(ribbon([(35.0, 44.2), (31.4, 45.4), (29.0, 48.6)], [0.1, 0.7, 0.1]), LEATHER.hi, 0.5)])
     # ---- le poing griffu, serré sur le manche (le dos de la main vers nous, les doigts passent devant le manche) ----
     F = lambda x, y: add(add(W, n, x), fu, y)    # noqa: E731  (x en travers de l'avant-bras, y le long)
     fist = sm([F(-4.4, 0.6), F(4.2, 0.4), F(5.2, 3.8), F(4.6, 7.4), F(0.4, 8.6), F(-4.0, 7.8), F(-5.2, 4.2)], t=0.9)
