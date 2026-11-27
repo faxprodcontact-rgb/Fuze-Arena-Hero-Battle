@@ -56,7 +56,7 @@ def _star(fig, i, back):
 
 
 JEU = {
-    'pose': dict(periode=1600),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     'vue_proj': (-40, -18, 80, 36),
     # « Shuriken du vent » : il file en tournoyant jusqu'à l'ennemi (le jeu le fait voler), s'y plante un instant
     # (éclat, croissants, étincelles sur la cible), puis revient en boomerang jusqu'à sa main (`retour`)

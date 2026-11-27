@@ -152,7 +152,17 @@ S_GATHER, S_SPIN0, S_SPIN1, S_LAUNCH, S_ENGULF, S_GOLD = 90, 340, 760, 800, 960,
 
 
 # ======================================================================== la danse sur place (en boucle)
-PER = 1.2                               # deux temps (comme les 10 images du pixel art : 1,18 s)
+PER = 1.5                               # deux temps : deux par boucle du repos (1,2 s avant le 27/11, pixel art : 1,18 s)
+IDLE_T = 3.0                            # la boucle du repos (s) : danse et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la flamme de la torche enfle lentement et s'éclaire (son cœur blanchit), puis retombe ; ses langues
+    lèchent l'air (une par seconde). Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus
+    (heros/repos.py)."""
+    u = TAU * T / IDLE_T
+    return dict(tf=0.5 - 0.5 * math.cos(u), fl=3 * u)
 
 
 def idle_offsets(T):
@@ -187,8 +197,10 @@ def pose_at(T, action=None, t0=0.0):
                glow=P['glow'], spin=P['spin'] % 360, hw=P['hw'])
     # la crinière : la vague court sans arrêt (plus vite quand elle tourne ou fouette)
     out['ph'] = TAU * T / 1.0 + (0.004 * P['spin'] if action == 'special' else 0) + 1.5 * P['trail'] * (T - t0 if action else 0)
-    out['fl'] = TAU * T * 2.2
-    out['blink'] = 1.0 if (w > 0.95 and 1.70 <= (T % 4.0) < 1.79) else 0.0
+    sg = signe(T)                                  # le signe du repos : la flamme de la torche (anim.signe)
+    out['tf'] = w * sg['tf']
+    out['fl'] = sg['fl']                           # (2,2 langues par s avant le 27/11)
+    out['blink'] = 1.0 if (w > 0.95 and 1.70 <= (T % IDLE_T) < 1.79) else 0.0
     return out
 
 
@@ -526,7 +538,7 @@ def fx_idle(T):
     """Au repos, une braise s'envole de la torche de temps en temps (comme le pixel art)."""
     def f(fig, ctx):
         for j in range(2):
-            k = ((T + j * 0.95) / 1.9) % 1
+            k = ((T + j * 0.75) / 1.5) % 1          # (1,9 s avant le 27/11 : deux braises par boucle de 3 s)
             base = ctx['flame']
             x = base[0] - 2 - 8 * k + 1.6 * math.sin(k * 9 + j)
             y = base[1] - 8 - 22 * k

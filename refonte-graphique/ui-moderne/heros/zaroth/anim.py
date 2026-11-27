@@ -147,7 +147,15 @@ S_LAUNCH = 900              # LANCEMENT : le dôme s'abaisse en anneau qui s'él
 S_HEAL = 1060
 S_DEFI = 1420
 
-IDLE_T = 2.0
+IDLE_T = 3.0     # la boucle du repos (s) : respiration et signe du héros (2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : un reflet d'eau clair glisse lentement le long du sabre, de la garde à la pointe, puis s'efface.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    f = (T / IDLE_T) % 1.0
+    return dict(sheen=math.sin(math.pi * f), sx=f)
 
 
 def idle_offsets(T):
@@ -175,7 +183,9 @@ def pose_at(T, action=None, t0=0.0):
     P['breath'] = w * idl['breath']
     for p in PAIRS:
         P[p] = (P.pop(p + 'x'), P.pop(p + 'y'))
-    P['blink'] = 1.0 if (w > 0.95 and 1.3 <= (T % 4.2) < 1.38) else 0.0
+    sg = signe(T)                                  # le signe du repos : le reflet du sabre (anim.signe)
+    P['sheen'], P['sx'] = w * sg['sheen'], sg['sx']
+    P['blink'] = 1.0 if (w > 0.95 and 1.3 <= (T % IDLE_T) < 1.38) else 0.0
     P['sw_front'] = P['O'][1] < 63.5 and P['ang'] < -60
     return P
 

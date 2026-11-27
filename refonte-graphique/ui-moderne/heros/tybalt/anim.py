@@ -148,7 +148,16 @@ SP_JET = (620, 1260)
 
 
 # ======================================================================== la respiration (en boucle)
-IDLE = 1.4                           # la durée d'un souffle (s), le rythme du pixel art (1,33 s)
+IDLE = 1.5                           # la durée d'un souffle (s) : deux par boucle du repos (1,4 s avant le 27/11)
+IDLE_T = 3.0                         # la boucle du repos (s) : respiration et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la crosse de la queue se dresse et s'enroule lentement, puis se déroule. Une pose partielle pour
+    build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(qw=3.0 * math.sin(u), qu=1.4 * (0.5 - 0.5 * math.cos(u)))
 
 
 def idle_offsets(T):
@@ -181,8 +190,11 @@ def pose_at(T, action=None, t0=0.0):
     P['head'] = (P.pop('headx'), P.pop('heady'))
     P['na'] = (P.pop('nax'), P.pop('nay'))
     P['fw'] = (P.pop('fwx'), P.pop('fwy'))
-    P['ph'] = 2 * math.pi * T * 1.3
-    P['blink'] = 1.0 if (w > 0.95 and 2.1 <= (T % 4.0) < 2.18) else 0.0
+    sg = signe(T)                                  # le signe du repos : la crosse de la queue (anim.signe)
+    P['qw'] += w * sg['qw']
+    P['qu'] += w * sg['qu']
+    P['ph'] = 2 * math.pi * T * 4 / IDLE_T         # les pans du bandana : 4 ondes par boucle (1,3 par s avant le 27/11)
+    P['blink'] = 1.0 if (w > 0.95 and 2.1 <= (T % IDLE_T) < 2.18) else 0.0
     return P, tl
 
 

@@ -8,7 +8,7 @@ ANIM, DESSIN = A, K
 GUEULE = (116.9, 63.6)           # la gueule grande ouverte pendant le souffle (ctx['mouth'] de 640 à 900 ms)
 
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Entaille de braise » : il glisse vers l'ennemi dans sa propre animation (`avance` = son `shift`), la dague
     # remonte en croissant de feu ; l'éclat au bout de la lame part sur la cible (au-delà de 140)
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(172, 60), coupe=140,

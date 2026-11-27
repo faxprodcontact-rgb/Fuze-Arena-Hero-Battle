@@ -23,7 +23,7 @@ def croissant(fig, i):
 JEU = {
     # la scène rendue : plus large qu'anim.py (l'anneau d'eau de la spéciale s'éloigne jusqu'à 180 de chaque côté)
     'vue': (-130, -38, 520, 160),
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # la coupe en diagonale : le croissant d'eau se détache (560) ; le jeu le fait voler jusqu'à la vraie cible, qu'il
     # fend (880 : la gerbe, les nappes, les gouttes, tout ce qui est à droite de x = 170)
     'attaque': dict(genre='tir', tir=A.A_MOON, coup=A.A_HIT, cible=A.FOE, depuis=C0[0] + 6, coupe=170,

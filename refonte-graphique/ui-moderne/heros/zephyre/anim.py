@@ -152,8 +152,21 @@ def vis_special(tl):
 
 # ======================================================================== la respiration (en boucle)
 
+BREATH = 1.5     # la respiration vive : deux par boucle du repos (1,6 s avant le 27/11)
+IDLE_T = 3.0     # la boucle du repos (s) : respiration et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : les deux pans du bandeau turquoise flottent lentement dans le vent (ils montent derrière elle, puis
+    retombent) et le grand shuriken bascule doucement entre ses doigts. Une pose partielle pour build() ; jouée au
+    combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(t=2.0 * math.sin(u), spin=7.0 * math.sin(u - 0.8))
+
+
 def idle_offsets(T):
-    u = 2 * math.pi * T / 1.6
+    u = 2 * math.pi * T / BREATH
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, crouch=0.5 * (0.5 - 0.5 * math.cos(u - 2.4)), heady=0.3 * math.sin(u - 1.9),
                 tilt=0.5 * math.sin(u - 1.2), t=0.9 * math.sin(u - 1.9), e=0.8 * math.sin(u - 2.5),
@@ -182,7 +195,10 @@ def pose_at(T, action=None, t0=0.0):
     P['fw'] = (P.pop('fwx'), P.pop('fwy'))
     P['nw'] = (P.pop('nwx'), P.pop('nwy'))
     P['shift'] = (P.pop('shx'), P.pop('shy'))
-    P['blink'] = 1.0 if (w > 0.95 and 1.9 <= (T % 3.4) < 2.0) else 0.0
+    sg = signe(T)                                  # le signe du repos : les pans du bandeau, le shuriken (anim.signe)
+    P['t'] += w * sg['t']
+    P['spin'] += w * sg['spin']
+    P['blink'] = 1.0 if (w > 0.95 and 1.9 <= (T % IDLE_T) < 2.0) else 0.0
     return P
 
 

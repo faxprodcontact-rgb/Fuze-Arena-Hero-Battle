@@ -80,7 +80,8 @@ FS_X, FS_Y, FS_H, FS_STEP, FS_N = (88.6, 97.4), 54.8, 5.4, 4.6, 3
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, O=O0, ang=ANG0, edge=1,
             bn=0, bf=0, shn=(0.0, 0.0), shf=(0.0, 0.0), lift=0.0, sn=0.0, sf=0.0, kz=0.0, stretch=0.0,
-            sw_front=False, tint=0.0)
+            sw_front=False, tint=0.0,
+            sheen=0.0, sx=0.5)   # sheen, sx : un reflet d'eau court le long de la lame (le signe du repos, anim.signe)
 
 
 def rot(v, deg):
@@ -319,6 +320,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fs = plate_parts(fig, 'fs', [(FS_X[0] + 0.15 * i, FS_Y + FS_STEP * i, FS_X[1] + 0.3 * i, FS_Y + FS_H + FS_STEP * i) for i in range(FS_N)],
                      cords=(0.58,), gold_top=True, gold_bot=True, cast=0.8, tilt=0.3)
 
+    def sheen():
+        """Le repos (anim.signe) : un reflet d'eau clair glisse de la garde vers la pointe (dans la lame)."""
+        if P['sheen'] <= 0:
+            return []
+        x = 4.0 + (BLADE_L - 8.0) * P['sx']
+        y = -0.6 - 2.0 * (x / BLADE_L) ** 2
+        c = loc((x * st_, y))
+        fig.glow(c[0], c[1], 7.0, 7.0, WATER[3], P['sheen'], stops=[(0, WATER[2], P['sheen']), (0.5, WATER[3], 0.6 * P['sheen']), (1, WATER[3], 0)])
+        return [(xb(ellipse(x, y, 8.0, 3.0)), ('rad', c[0], c[1], 8.0, 8.0, [(0, WATER[3], 1), (0.4, WATER[3], 0.8), (1, WATER[2], 0)]), P['sheen']),
+                (xb(ellipse(x + 0.6, y - 0.4, 2.6, 0.7)), '#ffffff', 0.9 * P['sheen'])]
+
     def sword():
         blade = sm([(2.4, -1.55), (16, -1.85), (30, -2.45), (42, -3.25), (BLADE_L, -4.35), (46.4, -2.2), (42.6, -1.0),
                     (30, -0.15), (16, 0.35), (2.4, 0.55)], sharp=(0, 4, 9), t=0.6)
@@ -330,7 +342,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  details=[(xb(blade), ('lin', *loc((0, -1.8)), *loc((0, 0.6)), [(0, BLADE.base), (0.55, BLADE.light), (1, BLADE.hi)]), 1),
                           (xb(back), BLADE.shadow, 1),
                           (xb(edge), ('lin', *loc((0, -0.6)), *loc((0, 0.6)), [(0, BLADE.light), (1, '#ffffff')]), 1),
-                          (xb(ribbon([(6, -0.9), (24, -1.25), (40, -2.0)], [0.1, 0.45, 0.1])), '#ffffff', 0.85)])
+                          (xb(ribbon([(6, -0.9), (24, -1.25), (40, -2.0)], [0.1, 0.45, 0.1])), '#ffffff', 0.85)] + sheen())
         fig.part('habaki', xs(rpoly([(0.6, -2.1), (3.4, -1.8), (3.4, 0.85), (0.6, 1.1)], 0.4)), GOLD, cel=0.4, rim=0.4, cast=0.5)
         fig.part('tsuba', xs(sm([(1.2, -4.6), (1.4, 0), (1.2, 4.4), (-0.8, 4.8), (-1.4, 0), (-0.8, -5.0)])), GOLD, cel=0.7, rim=0.6, cast=0.7,
                  details=[(xs(ellipse(0.2, -0.1, 0.5, 1.6)), GOLD.shadow, 0.9)])

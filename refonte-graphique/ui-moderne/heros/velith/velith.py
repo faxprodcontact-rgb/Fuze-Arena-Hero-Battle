@@ -81,7 +81,8 @@ LF1, LF2 = 16.5, 15.0
 AXE0 = math.degrees(math.atan2(2.0 - 45.0, 22.5 - 29.5))   # le manche monte vers la lame (un peu penché en arrière)
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, shift=0.0, lift=0.0, feet_up=0.0, head=(0.0, 0.0), tilt=0.0,
             jaw=0.0, blink=0.0, ph=0.0, sway=0.0, crest=0.0, nG=G0, axe=0.0, fW=W_F0, fang=90.0, claw=0.0,
-            spread=1.0, ffront=0.0, pg=0.0, freach=1.0, nreach=1.0)
+            spread=1.0, ffront=0.0, pg=0.0, freach=1.0, nreach=1.0,
+            givre=0.0)   # givre : la lame de glace s'éclaire (le signe du repos, anim.signe)
 
 
 def M_apply(M, pts):
@@ -766,6 +767,15 @@ def near_hand(fig, P):
             (sm(A([(43.0, 5.4), (44.9, 8.8), (45.6, 14.0), (44.6, 19.2), (43.4, 18.4), (44.0, 13.8), (43.4, 9.4), (42.2, 6.4)]),
                 sharp=(3,)), ICE.glint, 0.95),
             (sm(A([(36.8, 3.2), (40.2, 3.6), (38.6, 5.6)])), ICE.glint, 0.8)]
+    gv = P.get('givre', 0.0)                     # le repos (anim.signe) : la lame s'éclaire, un halo de froid serré
+    if gv > 0:
+        bc = mapp(MA, (37.0, 10.5))
+        fig.glow(bc[0], bc[1], 18, 10, '#9ceaf7', 0.55 * gv, stops=[(0, '#dcfbff', 0.9 * gv), (0.6, '#9ceaf7', 0.6 * gv), (1, '#9ceaf7', 0)])
+        bdet += [(blade, ICE.hi, 0.35 * gv),
+                 (sm(A([(24.4, 9.6), (33, 8.8), (41.8, 10.4), (44.6, 19.2), (42.4, 17.6), (38.6, 14.8), (33.4, 13.6),
+                        (28.6, 13.8), (24.6, 13.6)]), sharp=(0, 3)), ICE.light, 0.7 * gv),
+                 (sm(A([(30, 3.8), (36.4, 2.4), (40.4, 3.0), (43.4, 5.6), (41.6, 10.2), (33, 8.8)]), sharp=(1, 4, 5)), ICE.hi, 0.7 * gv),
+                 (ribbon(A([(26, 8.6), (33, 8.8), (41.8, 10.2)]), [0.4, 1.3, 0.4]), ICE.glint, 0.9 * gv)]
     fig.part('blade', blade, ICE, grad=(mapp(MA, (44, 2))[0], mapp(MA, (44, 2))[1], mapp(MA, (26, 16))[0], mapp(MA, (26, 16))[1],
                                          [(0, ICE.light), (0.5, ICE.base), (1, ICE.shadow)]),
              cel=0.9, rim=0.8, cast=0.9, details=bdet)

@@ -207,11 +207,11 @@ export function SlotPanel({ heroUid, slot }: { heroUid: number; slot: GearSlot }
             </span>
           )}
         </div>
-        {current && <Btn tone="basalte" small onClick={() => unequipItem(current.uid)}>{t('item.unequip')}</Btn>}
+        {current && <Btn tone="galet" small onClick={() => unequipItem(current.uid)}>{t('item.unequip')}</Btn>}
       </div>
       {current && setLine(current, s.items.filter((x) => x.heroUid === heroUid && x.set === current.set).length)}
       {cost ? (
-        <Btn kind="gold" wide disabled={!ok} onClick={() => upgradeSlot(heroUid, slot)}>
+        <Btn tone="galet" wide disabled={!ok} onClick={() => upgradeSlot(heroUid, slot)}>
           {t('slot.upgrade')} <Cur k="gold" n={cost.gold} /> <Cur k="dust" n={cost.dust} />
         </Btn>
       ) : <p class="center gold-text">{t('slot.max')}</p>}
@@ -232,7 +232,7 @@ export function SlotPanel({ heroUid, slot }: { heroUid: number; slot: GearSlot }
               <span class="rar-dot" style={{ background: ITEM_COLORS[picked.rarity] }} />
               {t(`stat.${SLOT_STAT[slot]}`)} <b>+{main} %</b>
               {main !== cur && <span class={main > cur ? 'gear-up' : 'gear-down'}>{main > cur ? '▲' : '▼'} {Math.abs(main - cur)}</span>}
-              <Btn kind="gold" small class="gear-equip" onClick={() => { equipItem(picked.uid, heroUid); setSel(null); }}>{t('item.equip')}</Btn>
+              <Btn tone="galet" small class="gear-equip" onClick={() => { equipItem(picked.uid, heroUid); setSel(null); }}>{t('item.equip')}</Btn>
             </div>
             {subs && <div class="gear-subs">{subs}</div>}
             {setLine(picked, setCount(picked))}

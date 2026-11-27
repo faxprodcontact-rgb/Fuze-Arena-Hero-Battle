@@ -62,7 +62,9 @@ NW0, FW0 = (37.0, 82.4), (84.0, 63.0)                  # les poignets au repos
 BK = 1.22                                              # la taille des lames
 HD0 = (5.0, 16.0)                                      # la tête, posée plus bas qu'Elvyn (il est accroupi)
 REST = dict(breath=0.0, hip=(0.0, 0.0), lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, mane=0.0, scarf=0.0, tail=0.0,
-            tuft=0.0, nw=NW0, fw=FW0, nb=0.0, fb=0.0, blink=0.0, jaw=0.0, trail=0.0)
+            tuft=0.0, nw=NW0, fw=FW0, nb=0.0, fb=0.0, blink=0.0, jaw=0.0, trail=0.0,
+            wf=0.0, sph=None)   # wf, sph : le signe du repos (anim.signe) : l'écharpe ondule plus fort, sur sa propre phase
+#   (sph : la phase des pans de l'écharpe ; None = 1,25 × ph, le dessin d'avant)
 
 
 # ---- le visage, construit avec ../visage.py (méthode commune) ----
@@ -378,15 +380,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- l'écharpe : les deux pans qui flottent derrière (derrière tout) ----
     knot = mapp(NECK, (50.0, 60.6))
     sc = P['scarf']
+    sp = ph * 1.25 if P['sph'] is None else P['sph']          # la phase des pans (le repos : la sienne, anim.signe)
+    wa = 1 + P['wf']                                           # le repos : les pans ondulent plus fort
     pans = []
     for j, (L, dy, w0, amp, lag) in enumerate(((47, 1.0, 6.2, 1.0, 0.0), (37, 9.0, 5.2, 0.9, 1.4))):
         pts = []
         for i in range(13):
             t = i / 12
-            x = knot[0] - L * t * (1 - 0.05 * sc) + 1.2 * math.sin(ph * 1.25 - t * 5.0 - lag) * t
-            y = knot[1] + dy * t + 4.2 * t ** 0.8 * math.sin(ph * 1.25 - t * 5.4 - lag + 0.6) * amp + 2.4 * sc * t * t - 3.0 * t * t
+            x = knot[0] - L * t * (1 - 0.05 * sc) + 1.2 * wa * math.sin(sp - t * 5.0 - lag) * t
+            y = knot[1] + dy * t + 4.2 * wa * t ** 0.8 * math.sin(sp - t * 5.4 - lag + 0.6) * amp + 2.4 * sc * t * t - 3.0 * t * t
             pts.append((x, y))
-        ws = [w0 * (1 - 0.25 * (i / 12)) + 0.8 * math.sin(ph * 1.25 - i * 0.5 - lag) * (i / 12) for i in range(13)]
+        ws = [w0 * (1 - 0.25 * (i / 12)) + 0.8 * math.sin(sp - i * 0.5 - lag) * (i / 12) for i in range(13)]
         sh = limb(resample(catmull(pts, 4), 18), [ws[min(12, round(i * 12 / 18))] for i in range(19)])
         pans.append((sh, pts, ws))
     for j, (sh, pts, ws) in enumerate(reversed(pans)):

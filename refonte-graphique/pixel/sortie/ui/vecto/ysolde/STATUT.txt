@@ -2,3 +2,4 @@ fait
 Corrigée d'après l'avis du propriétaire (tour 3 : « le bandeau un peu plus bas ») : le bandana descend sur le front (presque 2 unités devant, à peine derrière près du nœud), il cache nettement plus de front ; au-dessus de lui ce sont les cheveux tirés en arrière (plus aucune bande de peau entre les cheveux et le tissu).
 Il reste collé à la tête et coupé au bord du crâne ; liseré d'or, losanges, reflet du tissu suivent la bande ; le nœud derrière l'oreille, les plumes, leur perle d'or et les deux pans ne bougent pas (toujours dans la ligne de la bande).
 Visage inchangé (verifier() sans défaut, aussi dans les poses) ; vérifié dans toutes les poses (repos, attaque, spéciale et pirouette) : le bandana tourne avec la tête.
+signe du repos (27/11) : la flamme de la torche enfle lentement et s'éclaire (cœur qui blanchit, lueur serrée), puis retombe, ses langues lèchent l'air ; menus 1,7 Mo, planche de combat 3,2 Mo (danse : 2 pas par boucle de 3 s, 1,2 s avant).

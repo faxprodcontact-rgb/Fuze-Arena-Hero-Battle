@@ -84,7 +84,8 @@ WAIST = (68.0, 72.0)                 # le pivot du buste
 
 REST = dict(breath=0.0, crouch=0.0, hip=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, hw=1.0, trail=0.0, lift=0.0,
             pan=0.0, lk=0.0, foot=AF0, arm=WF0, bend=1.0, tang=0.0, near=WN0, nbend=-1.0, fl=0.0, flare=0.0,
-            blink=0.0, spin=0.0, smile=1.0, glow=0.0, open=0.0)
+            blink=0.0, spin=0.0, smile=1.0, glow=0.0, open=0.0,
+            tf=0.0)   # tf : la flamme de la torche enfle et s'éclaire (le signe du repos, anim.signe)
 
 
 def LT(m):
@@ -112,6 +113,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     torch = torch_frame(WF, P['tang'])
     fc = torch(0, -16.5)
     fig.glow(fc[0], fc[1], 15 + 4 * P['flare'], 15 + 4 * P['flare'], '#ff8a2a', 0.3 + 0.08 * P['flare'] + 0.12 * P['glow'])
+    if P['tf'] > 0:                              # le repos (anim.signe) : une lueur serrée autour de la flamme qui enfle
+        fig.glow(fc[0], fc[1] + 1, 8, 9, '#ffb040', 0.5 * P['tf'], stops=[(0, '#ffd070', 0.5 * P['tf']), (0.6, '#ffa030', 0.3 * P['tf']), (1, '#ff8a2a', 0)])
 
     # ---- la crinière : cinq mèches ondulées (de la plus basse à la plus haute), puis la longue mèche du dos ----
     hair_names = mane(fig, P, HEADN, HEAD)
@@ -688,12 +691,13 @@ def torch_parts(fig, P, T):
     # la flamme : trois langues (la plus haute au milieu), penchées vers l'arrière, d'UNE seule forme
     ph, fl = P['fl'], P['flare']
     lean = -4.0 - 2.0 * P['trail']
-    k = 1 + 0.18 * fl
+    tf = P['tf']                                 # le repos (anim.signe) : la flamme enfle, son cœur blanchit
+    k = 1 + 0.18 * fl + 0.05 * tf
     tongues = [((-1.6, -12.6), (-4.4 + lean * 0.3, -15.6), (-5.6 + lean * 0.7 + 0.7 * math.sin(ph + 1.3), -19.6 * k), (-6.0 + lean + 0.9 * math.sin(ph + 2.1), -23.6 * k + 0.6 * math.cos(ph)), 4.2),
                ((0.4, -12.6), (0.2 + lean * 0.3, -17.0), (-1.4 + lean * 0.7 + 0.8 * math.sin(ph), -22.6 * k), (-1.6 + lean + 1.1 * math.sin(ph + 0.8), -28.6 * k + 0.8 * math.cos(ph + 0.5)), 5.6),
                ((2.2, -12.4), (3.6 + lean * 0.3, -15.4), (3.6 + lean * 0.6 + 0.6 * math.sin(ph + 2.6), -19.4 * k), (4.6 + lean * 0.8 + 0.8 * math.sin(ph + 3.0), -22.0 * k + 0.6 * math.cos(ph + 1.7)), 3.8)]
     shapes = [lock(T(*a), T(*b), T(*c), T(*d), w, n=12, bulge=0.45) for a, b, c, d, w in tongues]
-    base = ellipse(*T(0.2, -13.2), 3.8 + 0.4 * fl, 2.8)
+    base = ellipse(*T(0.2, -13.2), 3.8 + 0.4 * fl + 0.4 * tf, 2.8)
     flame = union(base, *shapes, step=0.35, smooth=0.6)
     cx, cy = T(0.0, -14.2)
     det = [(flame, ('rad', cx, cy + 1, 15 * k, 15 * k, [(0, '#fff8d0'), (0.2, '#ffe070'), (0.45, '#ffaa30'), (0.75, '#f86a1e'), (1, '#d8361a')]), 1)]
@@ -701,6 +705,8 @@ def torch_parts(fig, P, T):
             ellipse(*T(0.0, -13.6), 2.4, 1.8)]
     coresh = union(*core, step=0.3, smooth=0.4)
     det += [(under(flame, 0.6, -1.8), '#e8461c', 0.35), (coresh, ('rad', cx, cy - 1, 7 * k, 7 * k, [(0, '#ffffff'), (0.4, '#fff6c0'), (1, '#ffd23a')]), 0.95)]
+    if tf > 0:
+        det.append((flame, ('rad', cx, cy - 2, 11 * k, 11 * k, [(0, '#ffffff', 0.9), (0.45, '#fff0a0', 0.55), (1, '#ffd23a', 0)]), 0.7 * tf))
     fig.part('flame', flame, FLAME, cel=0, rim=0.6, cast=0, ink=FINK, details=det)
     names.append('flame')
     # la coupe d'or (plus large en haut, son bord tourné vers nous : on voit l'ellipse du dessus)

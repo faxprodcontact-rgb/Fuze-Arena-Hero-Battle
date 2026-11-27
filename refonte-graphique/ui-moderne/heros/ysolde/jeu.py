@@ -32,7 +32,7 @@ def vortex_x(t):
 
 
 JEU = {
-    'pose': dict(periode=1000 * A.PER),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     'vue_proj': (-56, -48, 84, 96),
     # « Ruban de feu » : elle fouette la torche, le ruban de flammes file jusqu'à l'ennemi (le jeu fait voler sa tête)
     # et claque : il s'enroule autour de lui (anneau, langues, braises, fumée), sa queue se détache vers lui

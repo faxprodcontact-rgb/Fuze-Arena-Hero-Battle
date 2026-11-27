@@ -135,8 +135,20 @@ SP_END = 1700                   # il se défait
 
 # ======================================================================== la respiration (en boucle, 2 s)
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration et signe du héros (2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : l'écharpe safran ondule plus fort dans le vent (deux grandes vagues par boucle) et ses pans montent
+    puis retombent lentement. Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus
+    (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(wf=0.8, sph=2 * u, scarf=-1.4 * math.sin(u))
+
+
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, hipy=0.5 * (0.5 - 0.5 * math.cos(u - 1.2)), heady=0.35 * math.sin(u - 0.6),
                 tilt=0.7 * math.sin(u - 0.9), mane=0.4 * math.sin(u - 1.2), scarf=0.5 * math.sin(u - 0.4), tail=1.0 * math.sin(u),
@@ -163,8 +175,11 @@ def pose_at(T, action=None, t0=0.0):
     P['breath'] = w * idl['breath']
     for key, (a, b) in PAIRS.items():
         P[key] = (P.pop(a), P.pop(b))
-    P['ph'] = 2 * math.pi * T * 0.9
-    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % 4.0) < 1.40) else 0.0
+    P['ph'] = 2 * math.pi * T * 3 / IDLE_T         # la crinière : 3 ondes par boucle (0,9 par s avant le 27/11)
+    sg = signe(T)                                  # le signe du repos : l'écharpe (anim.signe)
+    P['wf'], P['scarf'] = w * sg['wf'], P['scarf'] + w * sg['scarf']
+    P['sph'] = sg['sph']
+    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % IDLE_T) < 1.40) else 0.0
     return P
 
 

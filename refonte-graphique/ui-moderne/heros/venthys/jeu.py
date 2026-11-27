@@ -33,7 +33,7 @@ def cyclone(fig, i):
 
 JEU = {
     'vue': (-50, -52, 290, 178),          # plus large que la vidéo : l'arme levée au-dessus de la tête
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     'vue_proj': (-50, -76, 60, 84),
     # « Lame de vent » : il bondit pendant qu'il arme (jusqu'au départ de la lame de vent), tranche ; la lame de vent
     # reste avec lui pendant son court vol, l'entaille et les feuilles sont posées sur la cible

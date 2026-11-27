@@ -165,10 +165,21 @@ WAVE0 = 1400                                         # l'onde part dans le sol g
 
 # ======================================================================== la respiration (en boucle, 2 s)
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration et signe du héros (2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la lame de glace de la hache s'éclaire lentement (facettes qui blanchissent, halo de froid serré),
+    puis s'éteint. Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(givre=0.5 - 0.5 * math.cos(u))
+
+
 def idle(T):
     """Il gonfle le torse, la tête suit avec un temps de retard, le poing lointain se balance (encore plus en retard) ;
     les mèches qui pendent ondulent, la crête du crâne frémit ; à l'expiration, une bouffée de buée sort de la gueule."""
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, hy=-0.6 * (0.5 - 0.5 * math.cos(u - 0.6)), tilt=-0.6 * math.sin(u - 0.9),
                 fwx=0.7 * math.sin(u - 1.7), fwy=-0.5 * (0.5 - 0.5 * math.cos(u - 1.4)), crouch=0.35 * (0.5 - 0.5 * math.cos(u - 2.4)),
@@ -195,10 +206,11 @@ def pose_at(T, action=None, t0=0.0):
     for key, (a, b) in PAIRS.items():
         out[key] = (P[a], P[b])
     out['breath'] = P['breath']
-    out['ph'] = 2 * math.pi * T * 0.55
+    out['ph'] = 2 * math.pi * T * 2 / IDLE_T       # la fourrure : 2 ondes par boucle (0,55 par s avant le 27/11)
+    out['givre'] = w * signe(T)['givre']           # le signe du repos : la lame de glace s'éclaire (anim.signe)
     out['sway'] = 1.0 + (1.2 if act else 0.0)
-    out['crest'] = max(0.0, math.sin(2 * math.pi * T / 2.0 - 1.2)) * w
-    out['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % 4.0) < 1.40) else 0.0
+    out['crest'] = max(0.0, math.sin(2 * math.pi * T / IDLE_T - 1.2)) * w
+    out['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % IDLE_T) < 1.40) else 0.0
     return out, tl
 
 
@@ -392,7 +404,7 @@ def mouth_pt(ctx):
 
 def fx_breath_idle(T):
     """Au repos, à l'expiration : une petite bouffée de buée sort de la gueule et monte en se défaisant."""
-    k = ((T % 2.0) - 1.05) / 0.9
+    k = ((T % IDLE_T) - 1.575) / 1.35
     def f(fig, ctx):
         if not (0 <= k <= 1):
             return
@@ -409,7 +421,7 @@ def fx_flakes(T):
     """Deux ou trois flocons qui tombent en se balançant, derrière lui."""
     def f(fig, ctx):
         for (x0, y0, vy, ph) in ((8, -6, 9.0, 0.0), (114, 14, 11.0, 2.0), (54, -16, 10.0, 4.0)):
-            t = (T * 0.5 + ph * 0.13) % 1.0
+            t = (T / IDLE_T + ph * 0.13) % 1.0
             x = x0 + 3.0 * math.sin(2 * math.pi * t + ph)
             y = y0 + vy * t * 4.4
             o = env(t, 0, 0.15, 0.8, 1)

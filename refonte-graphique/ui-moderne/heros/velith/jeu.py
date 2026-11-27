@@ -6,7 +6,7 @@ import velith as V
 ID = 'demons-9'
 ANIM, DESSIN = A, V
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=10),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe) ; 10 images (budget)
     # « Revers de griffes » : il va jusqu'à l'ennemi, balaie de la griffe ; la gerbe de neige et de glace reste avec lui
     # (le croissant et la gerbe se chevauchent : tout reste avec lui, il est collé à l’ennemi)
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(180, 92), coupe=165),
