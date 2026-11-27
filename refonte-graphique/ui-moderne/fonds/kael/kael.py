@@ -1397,13 +1397,12 @@ def ecrire_ts(doc):
         else:
             out.append(dict(id=c['id'], g='p', z=z, f=c['cases'], zone=c['zone'], n=c['nombre'], vie=c['vie'],
                             vx=[round(v, 4) for v in c['vx']], vy=c['vy'], ondule=c['ondule'], ms=c['ms']))
-    meta = {'kael': {'w': W, 'h': H, 'up': UP, 'periode': PERIODE, 'calques': out}}
-    ts = ('// Généré par refonte-graphique/ui-moderne/fonds/kael/kael.py : ne pas modifier à la main.\n'
-          '// Les fonds de combat VECTORIELS (essai, seulement avec ?vecto=1 : bg/fond-px.ts). Même format que FOND_META,\n'
-          '// mais l\'image fixe et la planche (art/vecto/fonds/<clan>.webp, <clan>-anim.webp) sont rendues ×up et\n'
-          '// agrandies en lissant : x, y, w, h, zone en pixels du fond (590 × 1100) ; f en pixels de la planche.\n'
-          'export const FOND_VECTO = %s as const;\n' % json.dumps(meta, separators=(',', ':')))
-    open(os.path.join(ROOT, 'src', 'game', 'fond-vecto.ts'), 'w').write(ts)
+    meta = {'w': W, 'h': H, 'up': UP, 'periode': PERIODE, 'calques': out}
+    json.dump(meta, open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'meta.json'), 'w'), separators=(',', ':'))
+    import sys as _sys
+    _sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+    from assemble_ts import assemble
+    assemble()
 
 
 def composer_jeu(doc, t):

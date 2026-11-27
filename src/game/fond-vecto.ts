@@ -1,4 +1,4 @@
-// Généré par refonte-graphique/ui-moderne/fonds/kael/kael.py : ne pas modifier à la main.
+// Généré par refonte-graphique/ui-moderne/fonds/assemble_ts.py : ne pas modifier à la main.
 // Les fonds de combat VECTORIELS (essai, seulement avec ?vecto=1 : bg/fond-px.ts). Même format que FOND_META,
 // mais l'image fixe et la planche (art/vecto/fonds/<clan>.webp, <clan>-anim.webp) sont rendues ×up et
 // agrandies en lissant : x, y, w, h, zone en pixels du fond (590 × 1100) ; f en pixels de la planche.
