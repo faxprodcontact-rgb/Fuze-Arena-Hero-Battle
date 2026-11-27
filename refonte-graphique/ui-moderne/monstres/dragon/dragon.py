@@ -538,33 +538,16 @@ def flame(fig, P, name, root, up, L, w, k, on='body'):
     hk = min(1.0, heat / 3.0)
     sway = math.sin(ph * 1.15 + k * 1.7) + 0.35 * math.sin(ph * 2.3 + k * 0.9)
     st = 0.14 * math.sin(ph * 1.9 + k * 2.3) + 0.06 * math.sin(ph * 3.7 + k)
-    Lr = 1.9 * L * (1 + st) * (1 + 0.45 * hk)
-    w_ = 1.75 * w * (1 + 0.25 * hk)
-    up = unit((0, 0), add(up, (-0.15, -0.7)))
+    Lr = 2.05 * L * (1 + st) * (1 + 0.45 * hk)
+    w_ = 2.0 * w * (1 + 0.25 * hk)
+    up = unit((0, 0), (up[0] * 0.55 - 0.1, up[1] * 0.55 - 1.0))      # le feu monte : la flamme se redresse
     back = (-1.0, 0.0)
     n = (-up[1], up[0])
-    tilt = 0.16 + 0.08 * math.sin(k * 2.9)               # chacune se couche un peu, pas toutes pareil
+    kind, bw, heart = FLAME_KIND.get(name, ('langue', 1.0, 0.7))
+    w_ *= bw
     p0 = add(root, up, -2.4)
-    p1 = add(add(root, up, Lr * 0.34), n, w_ * 0.45 * sway)
-    p2 = add(add(add(root, up, Lr * 0.66), back, Lr * tilt * 0.5), n, -w_ * 0.55 * sway)
-    p3 = add(add(add(root, up, Lr), back, Lr * tilt), n, w_ * 0.45 * sway)
-    main = lock(p0, p1, p2, p3, w_, n=12, bulge=0.5)
-    # deux petites langues qui partent du flanc de la flamme (une de chaque côté, plus courtes, à contretemps) : une
-    # vraie flamme découpée, pas une épine lisse
-    tongues = [main]
-    for sgn, at, ln, ph2 in ((1, 0.30, 0.55, 1.3), (-1, 0.42, 0.40, 2.6)):
-        sw2 = math.sin(ph * 1.6 + k * 1.1 + ph2)
-        b0 = add(lerp(p0, p1, at * 2.4), n, sgn * w_ * 0.22)
-        dirn = unit((0, 0), add(up, (n[0] * sgn * 0.55 + back[0] * 0.25, n[1] * sgn * 0.55)))
-        L2 = Lr * ln * (1 + 0.18 * sw2)
-        n2 = (-dirn[1], dirn[0])
-        q1 = add(add(b0, dirn, L2 * 0.4), n2, w_ * 0.25 * sw2)
-        q2 = add(add(b0, dirn, L2 * 0.75), n2, -w_ * 0.25 * sw2)
-        q3 = add(add(add(b0, dirn, L2), back, L2 * 0.2), n2, w_ * 0.2 * sw2)
-        tongues.append(lock(b0, q1, q2, q3, w_ * 0.55, n=8, bulge=0.4))
-    sh = fused(tongues, smooth=0.3)
-    q = lambda p, t: lerp(p0, p, t)
-    core = lock(lerp(p0, p1, 0.8), p1, lerp(p2, p1, 0.2), lerp(p3, p2, 0.35), w_ * 0.45, n=8, bulge=0.2)
+    sh, tip, core = flame_geom(kind, p0, root, up, n, back, Lr, w_, sway, ph, k, heart)
+    p3 = tip
     if hk < 0.5:
         stops = [(0, LAVA[4], 0), (0.13, LAVA[4], 0), (0.3, LAVA[4], 1), (0.55, LAVA[3]), (0.82, LAVA[2]), (1, LAVA[1])]
         cst = [(0, LAVA[2], 0), (0.5, LAVA[1], 0.9), (1, LAVA[0], 0.9)]
@@ -577,7 +560,7 @@ def flame(fig, P, name, root, up, L, w, k, on='body'):
     host.details += [(ellipse(root[0], root[1], w_ * 1.3, w_ * 1.3), ('rad', root[0], root[1], w_ * 1.3, w_ * 1.3,
                       [(0, LAVA[2], 0.7), (0.5, LAVA[3], 0.3), (1, LAVA[4], 0)]), 1), (crack, LAVA[2], 0.9)]
     fig.part(name, sh, Mat(LAVA[0], LAVA[1], LAVA[2], LAVA[3], LAVA[4]), grad=(p0[0], p0[1], p3[0], p3[1], stops),
-             cel=0, rim=0, cast=0, ink=FINK, details=[(core, ('lin', p0[0], p0[1], p3[0], p3[1], cst), 1)])
+             cel=0, rim=0, cast=0, ink=FINK, details=[(core, ('lin', p0[0], p0[1], p3[0], p3[1], cst), 1)] if core else [])
     # la braise qui se détache (une fois de temps en temps, chacune à son heure)
     per = 2.6 + 0.7 * math.sin(k * 1.3)
     u = ((ph / (2 * math.pi)) / per + k * 0.37) % 1.0
@@ -590,6 +573,85 @@ def flame(fig, P, name, root, up, L, w, k, on='body'):
         co = fig.rad(e[0] - r * 0.2, e[1] - r * 0.2, r, r, [(0, LAVA[0], op), (0.6, LAVA[1], op), (1, LAVA[3], op)])
         fig.over.append('<circle cx="%.2f" cy="%.2f" r="%.2f" fill="%s"/><circle cx="%.2f" cy="%.2f" r="%.2f" fill="%s"/>' % (
             e[0], e[1], r * 3.2, gl, e[0], e[1], r, co))
+
+
+# la forme de chaque flamme (forme, largeur de la base, part de jaune au coeur) : deux voisines n'ont jamais la même
+FLAME_KIND = {
+    'fd0': ('braise', 1.15, 0.9), 'fd1': ('fourche', 0.95, 0.5), 'fd2': ('S', 0.85, 0.7), 'fd3': ('trois', 1.15, 0.45),
+    'fd4': ('langue', 0.8, 0.85), 'fd5': ('crochet', 1.0, 0.6), 'fd6': ('detache', 0.9, 0.75), 'fd7': ('fourche', 1.05, 0.4),
+    'ft0': ('S', 0.9, 0.55), 'ft1': ('braise', 1.2, 0.95), 'ft2': ('trois', 1.05, 0.5), 'ft3': ('langue', 0.75, 0.8),
+    'ft4': ('crochet', 0.95, 0.45),
+    'fe0': ('fourche', 1.1, 0.7), 'fe1': ('braise', 1.1, 0.85),
+    'fc0': ('crochet', 1.0, 0.65), 'fc1': ('langue', 0.85, 0.5),
+    'flH': ('trois', 1.0, 0.6), 'flF': ('S', 0.95, 0.8),
+}
+
+
+def _tongue(base, d, L, w, bend=0.0, curl=0.0, bulge=0.45):
+    """Une langue de feu le long d'une courbe : de `base` vers `d` (unitaire), longueur L, largeur w à la racine ;
+    bend = ondulation en S (fraction de w), curl = la pointe se recourbe vers l'arrière (fraction de L)."""
+    n = (-d[1], d[0])
+    p1 = add(add(base, d, L * 0.34), n, w * bend)
+    p2 = add(add(add(base, d, L * 0.68), n, -w * bend * 1.1), (-1, 0), L * curl * 0.45)
+    p3 = add(add(add(base, d, L * (1 - 0.25 * curl)), n, w * bend * 0.7), (-1, 0), L * curl)
+    if curl > 0.4:
+        p3 = add(p3, (0, 1), L * (curl - 0.4) * 0.8)            # le crochet : la pointe redescend
+    return lock(base, p1, p2, p3, w, n=12, bulge=bulge), p3
+
+
+def flame_geom(kind, p0, root, up, n, back, Lr, w, sway, ph, k, heart):
+    """La silhouette d'une flamme selon sa forme ; renvoie (forme, pointe principale, coeur jaune)."""
+    tilt = 0.16 + 0.08 * math.sin(k * 2.9)
+    d = unit((0, 0), add(up, (back[0] * tilt, back[1] * tilt)))
+    sw = 0.45 * sway
+    parts = []
+    if kind == 'langue':                               # une langue simple, fine et haute
+        sh, tip = _tongue(p0, d, Lr * 1.25, w * 0.78, bend=sw * 0.6, curl=0.08)
+        parts = [sh]
+    elif kind == 'fourche':                            # deux pointes, dont une plus courte
+        sh, tip = _tongue(p0, d, Lr, w, bend=sw, curl=0.12)
+        b2 = add(add(p0, d, Lr * 0.3), n, w * 0.18)
+        d2 = unit((0, 0), add(d, (n[0] * 0.7, n[1] * 0.7)))
+        s2, _ = _tongue(b2, d2, Lr * 0.55, w * 0.55, bend=-sw * 0.8, curl=0.05)
+        parts = [sh, s2]
+    elif kind == 'trois':                              # trois pointes inégales, en éventail
+        sh, tip = _tongue(p0, d, Lr * 0.95, w * 0.62, bend=sw * 0.6, curl=0.1)
+        parts = [sh]
+        for sgn, ln, ang, at in ((1, 0.68, 0.75, 0.18), (-1, 0.48, 0.85, 0.22)):
+            b2 = add(add(p0, d, Lr * at), n, sgn * w * 0.25)
+            d2 = unit((0, 0), add(d, (n[0] * ang * sgn, n[1] * ang * sgn)))
+            s2, _ = _tongue(b2, d2, Lr * ln, w * 0.5, bend=-sw * 0.7 * sgn, curl=0.06)
+            parts.append(s2)
+        parts.append(ellipse(*add(p0, d, Lr * 0.2), w * 0.55, w * 0.5))
+    elif kind == 'braise':                             # petite, ronde et trapue : une braise qui flambe
+        sh, tip = _tongue(p0, d, Lr * 0.7, w * 1.45, bend=sw * 0.35, curl=0.18, bulge=1.1)
+        b2 = add(add(p0, d, Lr * 0.28), n, -w * 0.35)
+        d2 = unit((0, 0), add(d, (-n[0] * 0.9, -n[1] * 0.9)))
+        s2, _ = _tongue(b2, d2, Lr * 0.34, w * 0.6, bend=sw * 0.6, curl=0.05, bulge=0.7)
+        parts = [sh, s2]
+    elif kind == 'crochet':                            # recourbée nettement vers l'arrière
+        sh, tip = _tongue(p0, d, Lr * 1.05, w * 0.95, bend=sw * 0.5, curl=0.62)
+        parts = [sh]
+    elif kind == 'S':                                  # elle ondule en S
+        sh, tip = _tongue(p0, d, Lr * 1.15, w * 0.85, bend=0.75 + 0.3 * sway, curl=0.05)
+        parts = [sh]
+    else:                                              # 'detache' : une flamme, et une plus petite détachée à côté
+        sh, tip = _tongue(p0, d, Lr * 0.9, w * 0.9, bend=sw, curl=0.15)
+        parts = [sh]
+        drift = 0.5 + 0.5 * math.sin(ph * 1.4 + k)
+        b2 = add(add(root, d, Lr * (0.75 + 0.15 * drift)), back, w * 1.3)
+        s2, _ = _tongue(b2, d, Lr * 0.38, w * 0.42, bend=-sw, curl=0.1, bulge=0.6)
+        parts.append(s2)
+    shape = fused(parts, smooth=0.3)
+    core = None
+    if heart > 0.05:
+        cl = Lr * (0.35 + 0.45 * heart)
+        if kind == 'braise':
+            core = ellipse(*add(p0, d, Lr * 0.3), w * 0.45 * heart + 0.4, w * 0.4 * heart + 0.4)
+        else:
+            core, _ = _tongue(add(p0, d, Lr * 0.18), unit(add(p0, d, Lr * 0.18), lerp(add(p0, d, Lr * 0.3), tip, 0.6)),
+                              cl * 0.8, w * (0.25 + 0.3 * heart), bend=0.0, curl=0.0, bulge=0.3)
+    return shape, tip, core
 
 
 def surface_up(p, q):
@@ -615,7 +677,7 @@ def body_flames(R, tc, tw):
         out.append(('fd%d' % j, add(a, surface_up(a, b), -0.8), surface_up(a, b), L, w, j))
     # la queue : de plus en plus petites vers le bout (sur le dessus de la courbe)
     n = len(tc)
-    for j, (t, L, w) in enumerate(((0.12, 7.0, 4.0), (0.27, 6.0, 3.6), (0.42, 5.0, 3.2), (0.57, 4.2, 2.8), (0.72, 3.6, 2.4))):
+    for j, (t, L, w) in enumerate(((0.12, 7.6, 4.2), (0.27, 6.9, 3.9), (0.42, 6.1, 3.6), (0.57, 5.3, 3.2), (0.72, 4.7, 2.9))):
         i = int(t * (n - 1))
         p, q = tc[i], tc[i + 1]
         d = unit(p, q)
