@@ -1,0 +1,80 @@
+# Elvyn au combat : ce que l'outil commun doit savoir (../../jeu_export_vecto.py, consigne ../../EXPORT-JEU.md).
+# Les instants sont en ms depuis le début du coup (ceux d'anim.py) ; les x, y en pixels du dessin (repère d'anim.py).
+import math
+import re
+
+import anim as A
+import elvyn as E
+
+ID = 'angels-6'
+ANIM, DESSIN = A, E
+
+# Les grands éclats ronds (un disque de lumière posé PAR-DESSUS l'impact) cachent, pour la mesure de l'outil, ce qui est
+# dessous (l'outil peint chaque effet d'une couleur pour savoir où il est : un effet caché resterait avec Elvyn). Au
+# combat : celui de l'orbe (r 22) passe sous les autres effets de l'impact ; celui du dragon (r 130, arrêt sur image)
+# serait retiré de toute façon (le jeu a son éclair) : on l'enlève avant. Le dessin et anim.py ne changent pas.
+DISC = re.compile(r'<circle [^>]*r="(\d+)"')
+
+
+def tidy(fx):
+    def wrap(tl):
+        f = fx(tl)
+
+        def g(fig, ctx):
+            n = len(fig.fx_front)
+            f(fig, ctx)
+            new = fig.fx_front[n:]
+            big = lambda e: DISC.match(e) and int(DISC.match(e).group(1)) >= 20   # noqa: E731
+            disc = [e for e in new if big(e) and int(DISC.match(e).group(1)) < 100]
+            fig.fx_front[n:] = disc + [e for e in new if not big(e)]
+        return g
+    return wrap
+
+
+A.fx_attack = tidy(A.fx_attack)
+A.fx_special = tidy(A.fx_special)
+
+BOUCHE = (103.3, 39.2)          # là où l'orbe se détache de la perle (perle + (6, -4,5) au lâcher)
+
+
+def orbe(fig, i):
+    """Le projectile : l'orbe d'eau et sa traîne torsadée (comme dans fx_attack), centre en (0, 0), vers la droite."""
+    tl = 40 * i
+    c, size, L = (0.0, 0.0), 4.6, 34.0
+    cen = [(-L * k / 12, 1.2 * (k / 12) * math.sin(k * 0.9 + tl / 40)) for k in range(13)]
+    ws = [2 * size * (1 - k / 12) ** 1.3 + 0.3 for k in range(13)]
+    trail = A.limb(cen, ws)
+    gtr = A.g_lin(fig, cen[-1], c, [(0, A.WA[3], 0.0), (0.5, A.WA[2], 0.9), (1, A.WA[1], 1)])
+    fig.fx_front.append(A.outlined([(trail, gtr, 1)], w=1.1))
+    fig.fx_front.append(A.water_ball(fig, c, size))
+    run, shapes = [], []
+    for k in range(40):
+        t_ = k / 39
+        ph = t_ * 3 * 2 * math.pi + tl / 30
+        r_ = (2 * size * (1 - t_) ** 1.3) / 2
+        p = (-L * t_, r_ * math.cos(ph))
+        if math.sin(ph) > 0 and 0.1 < t_ < 0.9:
+            run.append(p)
+        else:
+            if len(run) > 2:
+                shapes.append(A.ribbon(run, [0.1] + [0.7] * (len(run) - 2) + [0.1]))
+            run = []
+    for sh in shapes:
+        fig.fx_front.append('<path d="%s" fill="#ffffff" opacity="0.9"/>' % sh.d())
+    for kk, sd in ((0.5, 4.6), (0.9, -3.8)):
+        fig.fx_front.append(A.wdrop(fig, -L * kk, sd, 1, 0, 0.9))
+
+
+JEU = {
+    'pose': dict(periode=2000),
+    # « L'orbe de la perle » : il charge la perle, tend le bras ; l'orbe vole jusqu'à la vraie cible et y éclate
+    # (après l'impact, toutes les gouttes restent sur la cible, même celles qui rebondissent vers lui)
+    'attaque': dict(genre='tir', tir=A.ATT_FIRE, coup=A.ATT_HIT, cible=A.FOE, depuis=BOUCHE[0] - 2, bouche=BOUCHE,
+                    projectile=orbe, proj_images=2, proj_ms=[60, 60], arc=8,
+                    coupe=lambda t: 150 if t < A.ATT_HIT else -200),
+    # « Dragon des marées » : il éveille la perle (bras d'eau, bulles : avec lui) ; le dragon d'eau jaillit, serpente et
+    # plonge sur l'ennemi : dès qu'il jaillit, il est posé sur chaque cible (il ne se perd pas en route)
+    'speciale': dict(genre='sort', coup=A.SP_HIT, cible=A.FOE, charge=(A.SP_GATHER[0], A.SP_EMERGE), fx_max=200,
+                     coupe=lambda t: 150 if t < A.SP_EMERGE else -200,
+                     dense=[(A.SP_EMERGE - 60, A.SP_EMERGE + 200), (A.SP_HIT - 180, A.SP_HIT + 260)]),
+}
