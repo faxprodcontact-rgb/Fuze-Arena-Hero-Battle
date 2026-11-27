@@ -54,14 +54,14 @@ export function BagView() {
       </div>
       {picking ? (
         <div class="recycle-bar">
-          <div class="row center-y" style={{ justifyContent: 'flex-end' }}>
-            <Cur k="dust" n={dust} big />
-          </div>
-          <div class="row gap-s">
+          {/* une seule ligne : les raretés à choisir d'un geste, puis ce que la fonderie rendra */}
+          <div class="row gap-s center-y recycle-line">
             {[0, 1, 2].map((r) => (
               <button class="chip" onClick={() => selectRarity(r)}><span class="chip-dot" style={{ background: ITEM_COLORS[r] }} />{t(`item.${r}`)}</button>
             ))}
             <button class="chip" aria-label="✕" onClick={() => setPicked(new Set())}><Sign name="cross" /></button>
+            <span class="grow" />
+            <Cur k="dust" n={dust} big />
           </div>
           <div class="row gap-s">
             <Btn kind="ghost" small wide onClick={stop}>{t('cancel')}</Btn>

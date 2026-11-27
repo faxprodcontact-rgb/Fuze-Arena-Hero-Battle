@@ -1441,6 +1441,7 @@ button.setting-row:active { filter: brightness(0.95); }
 .forge-pick.on { background: var(--inset); box-shadow: 0 0 0 1.5px var(--trim); }
 .forge-count { font: 800 11px var(--font-title); color: var(--muted); }
 .forge-pick.ready .forge-count { color: var(--accent-text); }
+.recycle-line { flex-wrap: nowrap; min-width: 0; } .recycle-line .chip { padding: 5px 10px; } .recycle-line .cur-big { flex: none; padding: 3px 10px 3px 4px; font-size: 16px; }
 .recycle-bar { display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 12px; background: color-mix(in srgb, var(--red) 22%, transparent); border: 1.5px solid var(--red-dark); }
 .pickable { position: relative; display: inline-flex; }
 .pickable.picked::after { content: ''; position: absolute; inset: 0; border-radius: 11px; background: var(--px-check) center / 30px 24px no-repeat, #dc4f4f99; image-rendering: pixelated; pointer-events: none; }
