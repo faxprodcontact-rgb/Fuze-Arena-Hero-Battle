@@ -520,25 +520,36 @@ def bracer(E, W, t0, t1, w_fo, mat=BRONZE):
 
 
 def fist_parts(fig, F, ang=0.0):
-    """Le poing serré sur la hampe verticale : l'avant-bras arrive de la droite ; on voit le dos des doigts repliés
-    DEVANT la hampe (quatre doigts empilés, plis doux et inégaux), le pouce posé par-dessus l'index ; la hampe ressort
-    en haut et en bas du poing."""
+    """Le poing serré sur la hampe verticale : l'avant-bras arrive de la droite ; on voit le dos des quatre doigts
+    repliés, empilés DEVANT la hampe (leurs bouts arrondis tournent autour d'elle à gauche, longueurs inégales), le
+    pouce couché par-dessus l'index ; la hampe ressort en haut et en bas du poing."""
+    from outils import fuse as fz
     T = lambda s: xf(s, F[0], F[1], ang)
-    body = T(sm([(-4.6, -4.4), (0.4, -5.6), (4.8, -4.6), (6.4, -1.0), (6.0, 3.6), (2.6, 5.8), (-2.2, 5.8), (-5.0, 3.8), (-5.6, -0.4)], t=0.95))
+    hand = sm([(-0.6, -4.6), (4.4, -5.0), (6.8, -2.6), (7.0, 2.2), (5.2, 5.8), (0.0, 6.2), (-1.0, 1.0)], t=0.95)
+    fingers = []
+    for k, (y, xl) in enumerate(((-2.6, -5.0), (-0.1, -5.5), (2.35, -5.2), (4.65, -4.4))):
+        h = 2.5 if k < 3 else 2.2
+        fingers.append(sm([(xl + 1.2, y - h / 2), (3.0, y - h / 2), (3.0, y + h / 2), (xl + 1.2, y + h / 2), (xl, y)], t=0.9))
+    thumb = sm([(6.0, -2.4), (5.2, -5.0), (1.6, -6.0), (-1.4, -5.6), (-2.8, -4.4), (-1.6, -3.4), (1.6, -3.6), (4.6, -1.2)], t=0.95)
+    body, _ = fz([hand, thumb] + fingers, smooth=0.3)
+    body = T(body)
     det = []
-    # le dessus éclairé (le pouce et l'index), le dessous dans l'ombre
-    det.append((T(sm([(-5.0, 1.6), (5.8, 1.8), (5.6, 4.0), (2.4, 5.8), (-2.2, 5.8), (-5.2, 3.6)], t=0.9)), SCALE.shadow, 0.55))
-    # les doigts repliés : trois plis doux (le pli suit la rondeur des doigts), des bouts de doigts arrondis à gauche
-    for y, w in ((-1.6, 0.55), (0.9, 0.6), (3.3, 0.5)):
-        det.append((T(ribbon([(-5.2, y + 0.3), (-2.0, y - 0.1), (1.6, y - 0.2), (3.6, y + 0.3)], [0.1, w, w, 0.1])), SCALE.deep, 0.55))
-        det.append((T(ribbon([(-4.6, y - 0.6), (-1.6, y - 0.9), (1.2, y - 1.0)], [0.05, 0.4, 0.05])), SCALE.light, 0.45))
-    # le pouce : il passe par-dessus l'index, de la droite (la main) vers la gauche, son bout arrondi devant la hampe
-    thumb = T(sm([(5.6, -3.6), (2.0, -5.0), (-1.6, -4.8), (-3.2, -3.6), (-2.4, -2.4), (0.4, -2.6), (4.0, -1.8)], t=0.95))
-    det.append((thumb.move(-0.4, 0.8), SCALE.deep, 0.5))
-    det.append((thumb, ('lin', F[0] + 4, F[1] - 5, F[0] - 3, F[1] - 2, [(0, SCALE.hi), (0.4, SCALE.light), (1, SCALE.base)]), 1))
-    det.append((T(ellipse(-2.4, -3.4, 0.7, 0.45, -10)), '#c8c4b0', 0.9))           # l'ongle du pouce, pâle
+    # le dessous dans l'ombre (la lumière vient d'en haut à droite)
+    det.append((T(sm([(-6.0, 3.2), (7.2, 2.6), (7.2, 7.0), (-6.0, 7.0)])), ('lin', F[0], F[1] + 2, F[0] - 1, F[1] + 6.5, [(0, SCALE.shadow, 0), (1, SCALE.shadow, 0.7)]), 1))
+    # chaque doigt : bombé (lumière sur le dessus, pli d'ombre dessous) ; les plis s'arrêtent avant le dos de la main
+    for k, (y, xl) in enumerate(((-2.6, -5.0), (-0.1, -5.5), (2.35, -5.2), (4.65, -4.4))):
+        h = 2.5 if k < 3 else 2.2
+        if k > 0:
+            det.append((T(ribbon([(xl - 0.2, y - h / 2 + 0.1), (xl + 2.0, y - h / 2 - 0.05), (1.0, y - h / 2), (2.8, y - h / 2 + 0.2)], [0.1, 0.55, 0.45, 0.1])), SCALE.deep, 0.6))
+        det.append((T(ribbon([(xl + 0.8, y - 0.55), (xl + 2.6, y - 0.75), (0.8, y - 0.7)], [0.05, 0.45, 0.05])), SCALE.light, 0.5))
+    # les jointures (le dos des doigts, côté main) : une arête douce
+    det.append((T(ribbon([(2.2, -3.2), (2.8, 0.0), (2.6, 3.4), (2.0, 5.4)], [0.1, 0.7, 0.6, 0.1])), SCALE.shadow, 0.45))
+    # le pouce couché sur l'index : son ombre portée, sa lumière, l'ongle pâle au bout (devant la hampe)
+    det.append((T(thumb).move(-0.35, 0.7), SCALE.deep, 0.55))
+    det.append((T(thumb), ('lin', F[0] + 5, F[1] - 6, F[0] - 2, F[1] - 3, [(0, SCALE.hi), (0.35, SCALE.light), (1, SCALE.base)]), 1))
+    det.append((T(ellipse(-1.4, -4.6, 0.9, 0.55, -8)), '#d8d4bc', 0.9))
     fig.part('fist', body, SCALE, grad=(F[0] + 6, F[1] - 6, F[0] - 5, F[1] + 6, [(0, SCALE.light), (0.5, SCALE.base), (1, SCALE.shadow)]),
-             cel=1.1, rim=0.6, cast=1.0, details=det)
+             cel=1.0, rim=0.55, cast=1.0, details=det)
 
 
 def pauldron_parts(fig, UC):
@@ -844,13 +855,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     F = add(mapp(TRI, FN0), (0, P['slide']))
     Wr = add(F, WN_OFF)
     E = ik(S, Wr, math.dist(SN0, EN0), math.dist(EN0, add(FN0, WN_OFF)), low=True)
-    arm = bent(S, E, Wr, 9.6, 8.8, 7.6, bulge=(0.1, 0.06))
+    arm = bent(S, E, Wr, 10.6, 9.6, 8.0, bulge=(0.1, 0.06))
     ga, gb = add(S, (6, -4)), add(S, (-14, 20))
     fig.part('arm', arm, SCALE, grad=(ga[0], ga[1], gb[0], gb[1], [(0, SCALE.light), (0.5, SCALE.base), (1, SCALE.shadow)]),
              cel=1.4, rim=0.7, cast=1.4, cast_on=['coil', 'belly', 'torso', 'skirt'],
              details=[(ribbon([lerp(S, E, 0.25), lerp(S, E, 0.6), lerp(S, E, 0.88)], [0.2, 1.3, 0.2]), SCALE.light, 0.35),
                       (ribbon([lerp(E, Wr, 0.1), lerp(E, Wr, 0.3), lerp(E, Wr, 0.45)], [0.1, 0.8, 0.1]), SCALE.light, 0.3)]
-             + bracer(E, Wr, 0.42, 0.92, 8.6))
+             + bracer(E, Wr, 0.42, 0.92, 9.2))
     fist_parts(fig, F)
     pauldron_parts(fig, UC)
 

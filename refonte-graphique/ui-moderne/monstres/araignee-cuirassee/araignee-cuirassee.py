@@ -101,8 +101,8 @@ FRONT = ['A', 'B', 'C']
 # les autres poses des pattes qui se lèvent pour frapper (repère du corps) ; 'w' : repère du dessin (pointe au sol)
 ALT = {
     'P': {
-        'up': [(84.0, 72.0), (92.0, 56.0), (103.0, 45.5), (114.5, 47.5)],
-        'high': [(84.0, 72.0), (91.0, 52.0), (101.0, 40.0), (113.5, 40.0)],
+        'up': [(85.0, 77.0), (94.0, 55.0), (106.0, 44.0), (120.0, 46.0)],
+        'high': [(85.0, 77.0), (93.0, 50.0), (105.0, 38.0), (120.0, 38.5)],
     },
     'F2': {
         'up': [(104.0, 73.0), (112.0, 50.0), (121.0, 31.0), (131.0, 27.5), (139.0, 31.0), (144.0, 37.0)],
@@ -112,12 +112,12 @@ ALT = {
 # les poses « frappe » : repère du DESSIN (les pointes plantées dans le sol devant lui), la hanche suit le corps
 ALTW = {
     'P': {
-        'hit': [None, (101.0, 74.0), (117.0, 95.0), (124.0, 116.5)],
-        'mid': [None, (103.0, 64.0), (117.0, 80.0), (125.0, 99.0)],
-        'off': [None, (98.0, 70.0), (112.0, 88.0), (116.0, 104.0)],
+        'hit': [None, (100.0, 61.0), (119.0, 90.0), (129.0, 116.5)],
+        'mid': [None, (101.0, 54.0), (119.0, 72.0), (129.0, 94.0)],
+        'off': [None, (99.0, 60.0), (114.0, 84.0), (119.0, 104.0)],
     },
     'F2': {
-        'hit': [None, (121.0, 58.0), (131.0, 46.0), (139.0, 66.0), (145.0, 92.0), (147.5, 116.5)],
+        'hit': [None, (122.0, 58.0), (133.0, 46.0), (142.0, 66.0), (148.0, 92.0), (150.5, 116.5)],
         'mid': [None, (122.0, 52.0), (132.0, 38.0), (141.0, 56.0), (146.0, 78.0), (147.0, 96.0)],
         'off': [None, (119.0, 54.0), (129.0, 42.0), (136.0, 62.0), (140.0, 84.0), (140.0, 100.0)],
     },
@@ -528,7 +528,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     a_, b_, c_, d_, e_, f_ = BODY
     gshp = affinity.affine_transform(gsh, [a_, c_, b_, d_, e_, f_])
     hipP = J['P'][0]
-    lines['P'] = leg_part(fig, 'P', J['P'], cut=gshp.intersection(Point(hipP).buffer(7.0)))
+    # (levée pour frapper, elle passe DEVANT le bouclier : la découpe s'efface avec la levée)
+    lev = min(1.0, sum(max(0.0, w) for w in ((P['alt'] or {}).get('P') or {}).values()))
+    rc = 7.0 * (1 - lev) ** 2
+    lines['P'] = leg_part(fig, 'P', J['P'], cut=gshp.intersection(Point(hipP).buffer(rc)) if rc > 0.3 else None)
     if croc:
         fig.pose(['cheN', 'fangN'], mchain(BODY, mR(-7 * croc, mx - 3.6, 84.0)))
         fig.pose(['cheF', 'fangF'], mchain(BODY, mR(6 * croc, mx + 4.0, 84.0)))

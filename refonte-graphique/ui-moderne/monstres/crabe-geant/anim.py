@@ -309,7 +309,7 @@ def arc_trail(fig, keys, tl, t0, t1, w, op):
     if b - a < 12:
         return
     pts = [tip_at(keys, a + (b - a) * i / 8) for i in range(9)]
-    fig.fx_back.append(stream(fig, pts, 0.8, w, op=op))
+    fig.fx_back.append(stream(fig, pts, 1.4, w, op=op))
 
 
 def fx_idle_bubble(T):

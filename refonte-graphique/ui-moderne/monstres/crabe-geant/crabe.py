@@ -469,15 +469,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     mx, my = MOUTH[0], MOUTH[1]
     mouth = sm([(mx - 4.6, 63.0), (mx - 0.4, 62.0), (mx + 3.8, 62.6), (mx + 4.0, 68.0), (mx + 3.2, 74.0),
                 (mx + 0.2, 75.8), (mx - 3.4, 75.0), (mx - 4.8, 69.6)], t=0.95)
-    slit = sm([(mx, 63.4), (mx + 0.65, 66.0), (mx + 0.75, 70.4), (mx + 0.55, 74.4), (mx, 75.4), (mx - 0.6, 74.4),
-               (mx - 0.7, 70.4), (mx - 0.6, 66.0)], sharp=(0, 4), t=0.9)
+    # la fente : un trait fin et droit (rouge sombre) entre les deux plaques qui ferment la bouche
+    slit = sm([(mx - 0.1, 63.2), (mx + 0.32, 66.0), (mx + 0.36, 70.4), (mx + 0.3, 74.6), (mx, 75.6), (mx - 0.3, 74.6),
+               (mx - 0.36, 70.4), (mx - 0.32, 66.0)], sharp=(0, 4), t=0.9)
     mdet = [
-        (slit.scale(1.6, 1.0, mx, 69.4), GORGE[0], 0.55),
+        (slit.scale(2.2, 1.0, mx, 69.4), GORGE[0], 0.45),
         (slit, ('lin', mx + 1, 64, mx - 1, 75, [(0, GORGE[2]), (0.45, GORGE[1]), (1, GORGE[0])]), 1),
-        # les deux plaques : la proche plus large, un reflet sur chacune
-        (ribbon([(mx - 3.0, 64.4), (mx - 2.0, 69.0), (mx - 2.6, 73.4)], [0.1, 0.8, 0.1]), SHELL.shadow, 0.5),
-        (ribbon([(mx - 1.6, 63.6), (mx - 1.2, 66.4), (mx - 1.4, 69.0)], [0.1, 0.6, 0.1]), SHELL.hi, 0.6),
-        (ribbon([(mx + 2.0, 63.6), (mx + 2.4, 66.4), (mx + 2.2, 69.0)], [0.1, 0.5, 0.1]), SHELL.hi, 0.5),
+        # les deux plaques : un pli doux en travers (leurs deux articles), un reflet sur chacune
+        (ribbon([(mx - 4.4, 70.2), (mx - 2.2, 69.6), (mx - 0.5, 69.8)], [0.1, 0.55, 0.1]), SHELL.deep, 0.55),
+        (ribbon([(mx + 0.5, 69.8), (mx + 2.2, 69.4), (mx + 3.6, 69.8)], [0.1, 0.5, 0.1]), SHELL.deep, 0.5),
+        (ribbon([(mx - 2.6, 63.4), (mx - 1.6, 65.8), (mx - 1.5, 68.2)], [0.1, 0.6, 0.1]), SHELL.hi, 0.55),
+        (ribbon([(mx + 2.0, 63.4), (mx + 2.5, 65.8), (mx + 2.4, 68.2)], [0.1, 0.5, 0.1]), SHELL.hi, 0.45),
     ]
     fig.part('bouche', mouth, SHELL, grad=(mx + 4, 62, mx - 4, 76, [(0, SHELL.light), (0.5, '#a4583e'), (1, RIM.shadow)]),
              cel=0.9, rim=0.45, cast=0.9, details=mdet)

@@ -387,20 +387,23 @@ def sleeve_geom(S, E, W, hang, cuff=(3.0, 3.4)):
     inner = pa if pa[0] * u[0] + pa[1] * u[1] > 0 else pb
     outer = (-inner[0], -inner[1])
     ic = norm((inner[0] + n_up[0], inner[1] + n_up[1]))
+    # quand l'avant-bras se dresse, la poche pend sous le coude (et moins bas) : le tissu tombe toujours
+    hz = min(1.0, abs(u[0]) / 0.62) ** 1.5
     T = add(add(W, n_up, cuff[0]), u, 0.6)
-    B = add(add(add(W, nd, cuff[1]), u, -0.3), (0, 2.6))
-    L = add(lerp(E, W, 0.4), (-0.6, hang))
+    B = add(add(add(W, nd, cuff[1] * (0.7 + 0.3 * hz)), u, -0.3), (0, 2.6 * hz))
+    L = add(lerp(E, W, 0.4 * hz), (-0.6 * hz, 2.5 + (hang - 2.5) * hz))
     oE = add(add(E, outer, 2.5), (0, 1.8))
     mid = lerp(T, B, 0.5)
     pts = [add(S, (0, -2.6)), add(S, inner, 2.7), add(E, ic, 2.7), T, add(mid, u, 1.5), B,
-           add(lerp(B, L, 0.45), (0.4, 1.7)), add(L, (0.6, 0.4)), add(L, (-1.4, -0.9)), add(lerp(L, oE, 0.5), (-0.9, 0.2)), oE,
+           add(lerp(B, L, 0.45), (0.4, 1.4 * hz)), add(L, (1.3, -0.1)), add(L, (0.0, 0.5)), add(L, (-1.3, -0.5)),
+           add(lerp(L, oE, 0.5), (-0.9 * hz, 0.2)), oE,
            add(lerp(S, E, 0.55), outer, 2.9), add(S, outer, 2.7)]
     shape = sm(pts, sharp=(3, 5), t=0.9)
-    return shape, (T, B), u, L
+    return shape, (T, B), u, L, hz
 
 
 def sleeve_part(fig, name, S, E, W, hang, cuff=(3.0, 3.4), cast_on=None):
-    shape, (T, B), u, Lw = sleeve_geom(S, E, W, hang, cuff)
+    shape, (T, B), u, Lw, hz = sleeve_geom(S, E, W, hang, cuff)
     det = []
     # l'ouverture vue de trois quarts : l'intérieur sombre (entre la lèvre de devant, sur le bord, et celle du fond),
     # l'ourlet d'or sur les deux lèvres (il fait le tour de l'ouverture)
@@ -412,7 +415,7 @@ def sleeve_part(fig, name, S, E, W, hang, cuff=(3.0, 3.4), cast_on=None):
             (ribbon(offset_line(front, 0.0), [0.6] + [2.0] * 13 + [0.6]), GOLD.base, 1),
             (ribbon(offset_line(front, 0.0)[1:8], [0.1, 0.7, 0.8, 0.8, 0.7, 0.5, 0.1]), GOLD.light, 0.9)]
     # le pli doux de la poche (le tissu tombe en un creux), le haut du bras éclairé
-    det += [(ribbon([lerp(E, Lw, 0.2), lerp(E, Lw, 0.65), add(lerp(Lw, B, 0.35), (0, -1.0))], [0.2, 1.1, 0.2]), LILAC.shadow, 0.55),
+    det += [(ribbon([lerp(E, Lw, 0.2), lerp(E, Lw, 0.65), add(lerp(Lw, B, 0.35), (0, -1.0))], [0.2, 1.1, 0.2]), LILAC.shadow, 0.55 * hz),
             (ribbon([lerp(S, E, 0.15), lerp(S, E, 0.6), lerp(E, T, 0.55)], [0.1, 0.9, 0.1]).move(0.9, -0.7), LILAC.hi, 0.3)]
     fig.part(name, shape, LILAC, cel=1.3, rim=0.6, cast=1.1, details=det, cast_on=cast_on)
     return T, B
@@ -877,7 +880,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     th = P['stilt']
     WF = add(F, rot((WF0[0] - FIST0[0], WF0[1] - FIST0[1]), th * 0.4))
     EF = ik(SF, WF, LF[0], LF[1], BEND_F)
-    sleeve_part(fig, 'fsleeve', SF, EF, WF, 9.0, (2.8, 3.2), cast_on=['veilback', 'body'])
+    sleeve_part(fig, 'fsleeve', SF, EF, WF, 8.0, (2.8, 3.2), cast_on=['veilback', 'body'])
     SM = mchain(mT(F[0] - FIST0[0], F[1] - FIST0[1]), mR(th, FIST0[0], FIST0[1]))
     snames, gem_c = staff_parts(fig, P, SM, P['gem'])
 
