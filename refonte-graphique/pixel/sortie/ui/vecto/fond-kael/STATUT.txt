@@ -1,0 +1,4 @@
+fait
+Test du 27/11 : le fond du volcan (clan de Kael) redessiné en vectoriel lisse et animé, mêmes mesures que le pixel.
+Regarder situation.png (téléphone 390 × 844, héros et monstres vectoriels), comparaison.png (pixel | vectoriel), anim.mp4 / anim.gif.
+Images du jeu prêtes mais pas branchées : public/art/vecto/fonds/kael.webp + kael-anim.webp, calques dans ui-moderne/fonds/kael/fond-kael.json.
