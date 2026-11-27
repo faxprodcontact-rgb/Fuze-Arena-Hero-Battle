@@ -382,9 +382,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                (C_(ribbon([(u1, -1.4), (u1 - 0.05, 2.4), (u1 + 0.1, ve - 0.4)], [0.1, 0.55, 0.1])), SKIN.deep, 0.55 if i < 3 else 0)]
     fd += [(C_(ribbon([(-6.0, -2.2), (0.0, -2.6), (6.0, -2.0)], [0.1, 0.8, 0.1])), SKIN.deep, 0.35)]
     fig.part('nfist', out, SKIN, cel=1.3, rim=0.7, cast=1.1, cast_on=['narm', 'apron', 'torso'] + cannon_names, details=fd)
-    thumb = C_(limb([(0.6, -6.6), (4.4, -7.4), (8.2, -7.0)], [3.4, 3.2, 2.8]))
-    fig.part('nthumb', thumb, SKIN, cel=0.8, rim=0.6, cast=0.8, cast_on=['nfist'] + cannon_names,
-             details=[(C_(ellipse(8.0, -7.2, 1.0, 0.8)), '#f4c8b0', 0.9), (C_(ellipse(8.2, -7.5, 0.45, 0.35)), '#ffffff', 0.6)])
+    # (pas de pouce visible : le poing serre la culasse par l'arrière et par-dessous, le pouce est caché derrière ;
+    #  avis du propriétaire, tour 1 des monstres) — les jointures en haut, chacune un petit dôme éclairé
+    for k, u_ in enumerate((-5.0, -1.6, 1.8, 5.0)):
+        fd.append((C_(ellipse(u_ + 0.3, -6.4 + 0.25 * abs(k - 1.5), 1.2, 0.55)), SKIN.hi, 0.45))
+    fig.parts[-1].details = fd
 
     # ======================================================================== la main lointaine posée sur le fût : le dos
     # de la main sur le dessus, quatre doigts qui descendent devant, bouts arrondis
@@ -404,7 +406,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(tails, TAILS)
     fig.pose(['torso', 'fvest', 'apron', 'strapn', 'strapf'], TOR)
     fig.pose(sash_parts, SASH)
-    fig.pose(['narm', 'farm', 'nfist', 'nthumb', 'fhand'] + cannon_names, U)
+    fig.pose(['narm', 'farm', 'nfist', 'fhand'] + cannon_names, U)
     fig.pose(['peg', 'sleeve'], PEGM)
     # ce que les effets doivent savoir (repère du dessin)
     fig.ctx = dict(U=U, P=P, muzzle=mapp(U, Cp(57.4, 0)), muzzle_dir=norm(sub(mapp(U, Cp(60, 0)), mapp(U, Cp(50, 0)))),
