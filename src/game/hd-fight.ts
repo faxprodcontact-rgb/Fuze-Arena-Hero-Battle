@@ -1,10 +1,15 @@
 // Personnages HD animés au combat : les planches de refonte-graphique/pixel/hd/anim/jeu_export.py
-// (public/art/hd/, hd-meta.ts) et leur chorégraphie. Le personnage est dessiné « en place » : c'est le jeu qui le
+// (public/art/hd/, hd-meta.ts) et leur chorégraphie. Avec ?vecto=1, un personnage déjà exporté en VECTORIEL
+// (refonte-graphique/ui-moderne/jeu_export_vecto.py : public/art/vecto/jeu/, vecto-anim.ts, même format) remplace
+// son pixel art ; les autres gardent le leur. Le personnage est dessiné « en place » : c'est le jeu qui le
 // déplace (corps à corps), fait voler le projectile jusqu'à la vraie cible (tir) et pose l'impact sur la cible.
 import Phaser from 'phaser';
 import type { Hit, SkillDef } from '../core/battle/types';
 import type { Element } from '../core/types';
 import { HD_ANIM } from './hd-meta';
+import { VECTO_ANIM } from './vecto-anim';
+import { VECTO_FX } from './vecto-fx';
+import { vectoOn } from './vecto';
 import { meleeTempo, plainTempo, tirTempo } from './hd-tempo';
 import { artUrl } from './art-url';
 
@@ -33,9 +38,13 @@ interface Anim {
   retourDe?: number;
   rayon?: readonly number[];
   longueur?: number;
+  /** le projectile suit la courbe de son vol (il bascule), au lieu de garder l'angle du départ */
+  suit?: number;
 }
 interface Char {
   name: string;
+  /** planche vectorielle : pixels de la planche par pixel du dessin (cases en pixels de la planche) ; absent = pixel art */
+  up?: number;
   top: number;
   avant?: number;
   sol: readonly number[];
@@ -48,12 +57,16 @@ interface Fx {
   devant: readonly number[];
   frames: readonly Rect[];
   eclat: readonly [string, Record<string, number>];
+  /** effet vectoriel (vecto-fx.ts) : pixels de la planche par pixel du dessin ; absent = pixel art */
+  up?: number;
 }
 /** L'avant du corps d'un ennemi « ordinaire » (pixels du dessin) : celui que les animateurs ont imaginé en face. */
 const AVANT = 40;
-const CHARS = HD_ANIM.chars as unknown as Record<string, Char>;
-const FXS = HD_ANIM.fx as unknown as Record<string, Fx>;
-const UP = HD_ANIM.up;
+const CHARS = (vectoOn() ? { ...HD_ANIM.chars, ...VECTO_ANIM.chars } : HD_ANIM.chars) as unknown as Record<string, Char>;
+// avec ?vecto=1, les effets reçus vectoriels (refonte-graphique/ui-moderne/effets/recus.py) remplacent ceux du pixel art
+const VFX = (vectoOn() ? VECTO_FX.fx : {}) as unknown as Record<string, Fx>;
+const FXS = { ...(HD_ANIM.fx as unknown as Record<string, Fx>), ...VFX };
+const UP: number = HD_ANIM.up;
 /** Les éléments dans le nom des effets reçus (refonte-graphique/pixel/hd/anim/effets). */
 const FX_ELEMENT: Record<Element, string> = { fire: 'feu', wind: 'vent', water: 'eau', earth: 'terre' };
 /** La lumière de la charge, à la couleur de l'élément (douce : elle se reconnaît sans éblouir). */
@@ -82,29 +95,35 @@ export interface HdHost {
 
 /** Charge la planche d'un personnage HD (et, pour un sort d'équipe, les effets reçus de son élément). */
 export function loadHd(scene: Phaser.Scene, id: string, element: Element) {
-  if (!scene.textures.exists(`hd-${id}`)) scene.load.image(`hd-${id}`, artUrl(`art/hd/${id}.webp`));
+  if (!scene.textures.exists(`hd-${id}`)) scene.load.image(`hd-${id}`, artUrl(CHARS[id]?.up ? `art/vecto/jeu/${id}.webp` : `art/hd/${id}.webp`));
   if (CHARS[id]?.anims.speciale.genre === 'equipe') {
-    for (const key of Object.keys(FXS)) {
-      if ((key.endsWith(`-${FX_ELEMENT[element]}`) || !key.includes('-')) && !scene.textures.exists(`hdfx-${key}`)) scene.load.image(`hdfx-${key}`, artUrl(`art/hd/fx/${key}.webp`));
+    const vec = Object.keys(VFX).length > 0;
+    for (const key of Object.keys(vec ? VFX : FXS)) {
+      if ((key.endsWith(`-${FX_ELEMENT[element]}`) || (!vec && !key.includes('-'))) && !scene.textures.exists(`hdfx-${key}`)) {
+        scene.load.image(`hdfx-${key}`, artUrl(vec ? `art/vecto/fx/${key}.webp` : `art/hd/fx/${key}.webp`));
+      }
     }
   }
 }
 
-/** Les cases d'une planche (une seule fois par texture). */
-function cut(scene: Phaser.Scene, key: string, rects: readonly Rect[]) {
+/** Les cases d'une planche (une seule fois par texture) ; `mul` : pixels de la planche par unité des cases. */
+function cut(scene: Phaser.Scene, key: string, rects: readonly Rect[], mul = UP) {
   const tex = scene.textures.get(key);
   if (tex.has('0')) return;
-  rects.forEach((r, i) => tex.add(String(i), 0, r[0]! * UP, r[1]! * UP, r[2]! * UP, r[3]! * UP));
+  rects.forEach((r, i) => tex.add(String(i), 0, r[0]! * mul, r[1]! * mul, r[2]! * mul, r[3]! * mul));
 }
 
-/** Pose la case `i` d'une planche : son coin haut-gauche à (ax, ay) × k du repère (pieds, bout du projectile…). */
-function setCell(img: Phaser.GameObjects.Image, key: string, rects: readonly Rect[], i: number, k: number) {
+/**
+ * Pose la case `i` d'une planche : son coin haut-gauche à (ax, ay) × k du repère (pieds, bout du projectile…) ;
+ * `up` : pixels de la planche par pixel du dessin.
+ */
+function setCell(img: Phaser.GameObjects.Image, key: string, rects: readonly Rect[], i: number, k: number, up = UP) {
   if (i < 0) {
     img.setVisible(false);
     return;
   }
   const r = rects[i]!;
-  img.setTexture(key, String(i)).setOrigin(0).setPosition(r[4]! * k, r[5]! * k).setScale(k / UP).setVisible(true);
+  img.setTexture(key, String(i)).setOrigin(0).setPosition(r[4]! * k, r[5]! * k).setScale(k / up).setVisible(true);
 }
 
 /** Lumière douce (dégradé rond) partagée par toutes les charges. */
@@ -132,6 +151,8 @@ export class HdActor {
   readonly ch: Char;
   /** Taille d'un pixel du dessin, en unités du jeu. */
   readonly k: number;
+  /** Pixels de la planche par pixel du dessin (pixel art : UP ; vectoriel : le sien). */
+  readonly up: number;
   private play?: Play;
   /** Figé (il tombe) : plus aucune image ne change. */
   private halted = false;
@@ -143,7 +164,8 @@ export class HdActor {
     this.key = `hd-${id}`;
     this.ch = CHARS[id]!;
     this.k = k;
-    cut(scene, this.key, this.ch.frames);
+    this.up = this.ch.up ?? UP;
+    cut(scene, this.key, this.ch.frames, this.ch.up ? 1 : UP);
     this.img = scene.add.image(0, 0, this.key, '0');
     fig.add(this.img);
     const pose = this.ch.anims.pose;
@@ -162,7 +184,7 @@ export class HdActor {
   private show() {
     const p = this.play!;
     const a = this.ch.anims[p.name];
-    setCell(this.img, this.key, this.ch.frames, a.f[p.i]!, this.k);
+    setCell(this.img, this.key, this.ch.frames, a.f[p.i]!, this.k, this.up);
     const ch = a.charge;
     this.setCharge(!!ch && p.name !== 'pose' && p.i >= ch[0]! && p.i <= ch[1]!);
   }
@@ -292,7 +314,7 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
       scene.time.delayedCall(at, () => {
         const p = feet(v);
         c.setPosition(p.x + dx, p.y).setVisible(true).setDepth(v.body.depth + 2);
-        setCell(img, actor.key, actor.ch.frames, cells[i]!, k);
+        setCell(img, actor.key, actor.ch.frames, cells[i]!, k, actor.up);
       });
       t += ms[i]!;
     }
@@ -405,7 +427,7 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
         const pm = (a.projMs ?? []).map((m) => m / sp);
         const loop = a.proj!.length > 1 ? a.proj!.slice(1) : a.proj!;
         const lms = a.proj!.length > 1 ? pm.slice(1) : pm;
-        setCell(img, actor.key, actor.ch.frames, a.proj![0]!, k);
+        setCell(img, actor.key, actor.ch.frames, a.proj![0]!, k, actor.up);
         const arc = a.rase ? 0 : (a.arc ?? 0) * k;
         scene.tweens.addCounter({
           from: 0, to: 1, duration: fly, ease: 'Linear',
@@ -416,9 +438,11 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
               const per = lms.reduce((s, m) => s + m, 0) || 1;
               let r = (el - (pm[0] ?? 0)) % per, j = 0;
               while (r >= lms[j]! && j < lms.length - 1) r -= lms[j++]!;
-              setCell(img, actor.key, actor.ch.frames, loop[j]!, k);
+              setCell(img, actor.key, actor.ch.frames, loop[j]!, k, actor.up);
             }
             c.setPosition(p0.x + (p1.x - p0.x) * u, p0.y + (p1.y - p0.y) * u - arc * 4 * u * (1 - u));
+            // il bascule le long de sa cloche (monte, puis pique sur la cible)
+            if (a.suit && arc) c.setRotation(dir * Math.atan2(p1.y - p0.y - arc * 4 * (1 - 2 * u), Math.abs(p1.x - p0.x)));
           },
           onComplete: () => {
             c.destroy();
@@ -437,12 +461,14 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
       const img = scene.add.image(0, 0, actor.key, '0');
       c.add(img);
       scene.time.delayedCall(t0, () => {
+        // la 1re image du retour AVANT de la montrer (sinon la case 0, le corps au repos, apparaît un instant sur la cible)
+        setCell(img, actor.key, actor.ch.frames, ret[0]!, k, actor.up);
         c.setDepth(Math.max(src.body.depth, tg.body.depth) + 3).setVisible(true);
         scene.tweens.addCounter({
           from: 0, to: 1, duration: dur, ease: 'Sine.easeIn',
           onUpdate: (tw) => {
             const u = tw.getValue() ?? 0;
-            setCell(img, actor.key, actor.ch.frames, ret[Math.min(ret.length - 1, Math.floor((tw.elapsed / Math.max(1, dur)) * ret.length))]!, k);
+            setCell(img, actor.key, actor.ch.frames, ret[Math.min(ret.length - 1, Math.floor((tw.elapsed / Math.max(1, dur)) * ret.length))]!, k, actor.up);
             c.setPosition(q0.x + (p0.x - q0.x) * u, q0.y + (p0.y - q0.y) * u);
           },
           onComplete: () => c.destroy(),
@@ -499,7 +525,7 @@ function beam(scene: Phaser.Scene, host: HdHost, src: HdView, dst: HdView, a: An
       const stretch = Phaser.Math.Clamp(len / Math.max(20, (a.longueur ?? 100) * k), 0.5, 6);
       c.setPosition(p0.x, p0.y).setScale(dir * stretch, Phaser.Math.Clamp(Math.sqrt(stretch), 0.85, 1.35)).setRotation(dir * Math.atan2(p1.y - p0.y, Math.abs(p1.x - p0.x)))
         .setDepth(Math.max(src.body.depth, dst.body.depth) + 3).setVisible(true);
-      setCell(img, actor.key, actor.ch.frames, cell, k);
+      setCell(img, actor.key, actor.ch.frames, cell, k, actor.up);
     });
     t += ms[i]!;
   });
@@ -525,7 +551,7 @@ function playReception(scene: Phaser.Scene, v: HdView, name: string, k: number, 
   const fx = FXS[name];
   const key = `hdfx-${name}`;
   if (!fx || !scene.textures.exists(key)) return 0;
-  cut(scene, key, fx.frames);
+  cut(scene, key, fx.frames, fx.up ? 1 : UP);
   const kk = v.hd?.k ?? k;
   const mk = (dz: number) => {
     const c = scene.add.container(0, 0).setVisible(false);
@@ -542,7 +568,7 @@ function playReception(scene: Phaser.Scene, v: HdView, name: string, k: number, 
       const x = v.body.x, y = v.body.y + feetY;
       for (const L of [back, front]) {
         L.c.setPosition(x, y).setDepth(v.body.depth + L.dz).setVisible(true);
-        setCell(L.img, key, fx.frames, (L === back ? fx.dos : fx.devant)[i]!, kk);
+        setCell(L.img, key, fx.frames, (L === back ? fx.dos : fx.devant)[i]!, kk, fx.up ?? UP);
       }
       const p = per[String(i)] ?? 0;
       glow.setPosition(x, y - 55).setDisplaySize(130, 150).setDepth(v.body.depth + 2).setVisible(p > 0).setAlpha(p / 45);

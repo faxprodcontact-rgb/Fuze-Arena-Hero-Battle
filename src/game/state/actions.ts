@@ -14,7 +14,7 @@ import {
   ARENA_WIN_POINTS, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ATTEMPTS_PER_DAY,
   DUNGEON_LEVELS, DUNGEON_REWARD_HOURS, DUNGEON_STAGE_PER_LEVEL, ESSENCE_RATIO, dungeonItems, FAST_LOOT_COSTS, FAST_LOOT_HOURS, GEMS_PER_10_SUMMONS,
   GEMS_PER_SUMMON, GUILD_BOSS_ATTEMPTS, GUILD_COINS_PER_ATTACK, GUILD_SHOP, IDLE_ITEM_HOURS, MISSION_TEMPLATES,
-  MISSIONS_PER_DAY, MONTHLY_CARD, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL, RESET_COST, STAGE_GEMS, TOWER_REWARD,
+  MISSIONS_PER_DAY, MONTHLY_CARD, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL, RED_SCROLLS, RESET_COST, STAGE_GEMS, TOWER_REWARD,
   TOWER_STAGE_PER_FLOOR, WEEKLY_CHESTS, WEEKLY_QUESTS, accountXpForLevel, type DungeonKind, type QuestEvent,
   type Reward,
 } from '../../core/data/modes';
@@ -25,7 +25,8 @@ import { createRng, pick, type Rng } from '../../core/rng';
 import { MAIL_KEEP_DAYS, MAILS, type MailDef } from '../../core/data/mail';
 import { BOSS_ELEMENT, BOSSES, GUILD_BOSSES } from '../../core/data/monsters';
 import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '../../core/stages';
-import { summonBasic, summonOne } from '../../core/summon';
+import { summonBasic, summonFeatured, summonOne } from '../../core/summon';
+import type { SummonKind } from '../../core/data/summon';
 import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
 import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, isUnlocked, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
@@ -588,14 +589,16 @@ export function fuseAllSimple(): number {
 
 // ---------- Invocations ----------
 
-export function summonCost(kind: 'normal' | 'basic', count: 1 | 10): { currency: keyof Wallet; amount: number } {
+/** Simple : parchemins simples ; spécial : parchemins rouges ; normal : parchemins, sinon gemmes. */
+export function summonCost(kind: SummonKind, count: 1 | 10): { currency: keyof Wallet; amount: number } {
   const s = getState();
   if (kind === 'basic') return { currency: 'basicScrolls', amount: count };
+  if (kind === 'featured') return { currency: 'redScrolls', amount: count };
   if (s.wallet.scrolls >= count) return { currency: 'scrolls', amount: count };
   return { currency: 'gems', amount: count === 10 ? GEMS_PER_10_SUMMONS : GEMS_PER_SUMMON };
 }
 
-export function summon(kind: 'normal' | 'basic', count: 1 | 10, free = false): Hero[] | null {
+export function summon(kind: SummonKind, count: 1 | 10, free = false): Hero[] | null {
   return update((s) => {
     const cost = summonCost(kind, count);
     if (!free) {
@@ -605,10 +608,11 @@ export function summon(kind: 'normal' | 'basic', count: 1 | 10, free = false): H
     const rng = nextRng(s);
     const out: Hero[] = [];
     for (let i = 0; i < count; i++) {
-      const def = kind === 'basic' ? summonBasic(rng) : summonOne(s.summon, rng);
+      const def = kind === 'basic' ? summonBasic(rng) : kind === 'featured' ? summonFeatured(s.summon, rng) : summonOne(s.summon, rng);
       out.push(addHero(s, def.id));
     }
-    if (kind === 'normal') {
+    // le portail spécial compte comme le normal (même compteur de Légendaire garanti, mêmes quêtes)
+    if (kind !== 'basic') {
       s.summon.total += count;
       track(s, 'summon', count);
     }
@@ -898,6 +902,7 @@ export function finishBattle(req: BattleRequest, res: BattleResult): Gain {
         if (stage === 1) addCurrency(s, gain, 'scrolls', 10);
         if (stage % STAGES_PER_CHAPTER === 0) {
           addCurrency(s, gain, 'scrolls', REWARDS.chapterSummons);
+          addCurrency(s, gain, 'redScrolls', RED_SCROLLS.perChapter);
           gain.items.push(makeItem(s, rng, undefined, 1));
         }
         s.account.xp += ACCOUNT_XP_PER_STAGE;
@@ -935,6 +940,7 @@ export function finishBattle(req: BattleRequest, res: BattleResult): Gain {
         s.daily.bossBest = Math.max(s.daily.bossBest, res.damage);
         const tier = [...DAILY_BOSS_TIERS].reverse().find((t) => share >= t.share);
         addCurrency(s, gain, 'gems', tier?.gems ?? 15);
+        addCurrency(s, gain, 'redScrolls', tier?.redScrolls ?? 0);
         addCurrency(s, gain, 'gold', perHour);
         track(s, 'dailyBoss');
         break;
@@ -1192,6 +1198,26 @@ export function buyOffer(id: string): Gain | null {
     if (offer.kind === 'card') s.shop.cardUntil = Math.max(now(), s.shop.cardUntil) + MONTHLY_CARD.days * 86_400_000;
     if (offer.kind === 'pass') s.shop.passPremium = true;
     if (offer.kind === 'noAds') s.shop.noAds = true;
+    return gain;
+  });
+}
+
+/** Parchemins rouges achetés en gemmes cette semaine (au plus RED_SCROLLS.gemsPerWeek). */
+export function redScrollsBought(s: PlayerState = getState()): number {
+  return s.shop.bought[`red-${weekKey(now())}`] ?? 0;
+}
+
+/** Un parchemin rouge contre des gemmes (boutique, onglet Échanges), limité chaque semaine. */
+export function buyRedScroll(): Gain | null {
+  return update((s) => {
+    const key = `red-${weekKey(now())}`;
+    if (redScrollsBought(s) >= RED_SCROLLS.gemsPerWeek || s.wallet.gems < RED_SCROLLS.gems) return null;
+    // les compteurs des semaines passées ne servent plus
+    for (const k of Object.keys(s.shop.bought)) if (k.startsWith('red-') && k !== key) delete s.shop.bought[k];
+    s.wallet.gems -= RED_SCROLLS.gems;
+    s.shop.bought[key] = (s.shop.bought[key] ?? 0) + 1;
+    const gain = emptyGain();
+    addCurrency(s, gain, 'redScrolls', 1);
     return gain;
   });
 }

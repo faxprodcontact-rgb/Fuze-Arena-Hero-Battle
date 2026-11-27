@@ -352,15 +352,17 @@ const CLAN_HEROES: HeroDef[] = [
 
 // ---------- Les 3 dragons, famille d'Elvyn (demande du propriétaire, 27/11/2026) ----------
 // Dessinés seulement en vectoriel (refonte-graphique/ui-moderne/heros/brasyr|rocvar|venthys/, images
-// public/art/vecto/dragon-<élément>.webp) : pas de pixel art. Compétence = leur attaque spéciale animée. Valeurs dans la
-// moyenne des Épiques de leur rôle, sans simulation : le grand réglage se fera avant la bêta. Noms provisoires.
+// public/art/vecto/dragon-<élément>.webp) : pas de pixel art. Compétence = leur attaque spéciale animée. Légendaires comme
+// Elvyn (décision du propriétaire, 27/11 : les 4 dragons sont les Légendaires du portail spécial, FEATURED_BANNER de
+// data/summon.ts) ; valeurs au niveau des Légendaires de leur rôle, sans simulation : le grand réglage se fera avant la
+// bêta. Noms provisoires.
 const DRAGONS: HeroDef[] = [
   // Brasyr, dragon de feu, hallebarde : « souffle du dragon », un long jet de feu qui enveloppe la première ligne
   build({
-    id: 'dragon-feu', name: 'Brasyr', element: 'fire', role: 'warrior', rarity: 'epic',
+    id: 'dragon-feu', name: 'Brasyr', element: 'fire', role: 'warrior', rarity: 'legendary',
     skill: { id: 'brasyr', effects: [
-      { type: 'damage', target: 'frontRow', power: pw(1.5, 'epic') },
-      { type: 'status', target: 'same', status: 'burn', value: 0.45, seconds: 5, chance: 0.9 },
+      { type: 'damage', target: 'frontRow', power: pw(1.6, 'legendary') },
+      { type: 'status', target: 'same', status: 'burn', value: 0.5, seconds: 5, chance: 0.9 },
     ] },
     // son attaque de base, le « croissant de braise », met parfois le feu
     passives: [first('warrior'), { kind: 'trigger', on: 'attack', chance: 0.3, effects: [{ type: 'status', target: 'attacker', status: 'burn', value: 0.3, seconds: 3 }] }],
@@ -368,25 +370,25 @@ const DRAGONS: HeroDef[] = [
   // Rocvar, dragon de terre, marteau et pavois : « la colère de la montagne », il enfonce son pavois dans le sol et des
   // aiguilles de pierre jaillissent sous l'ennemi (étourdi, défense brisée) ; il attire les coups sur lui
   build({
-    id: 'dragon-terre', name: 'Rocvar', element: 'earth', role: 'protector', rarity: 'epic',
+    id: 'dragon-terre', name: 'Rocvar', element: 'earth', role: 'protector', rarity: 'legendary',
     skill: { id: 'rocvar', effects: [
-      { type: 'damage', target: 'front', power: pw(1.6, 'epic') },
-      { type: 'status', target: 'same', status: 'stun', seconds: 2, chance: 0.6 },
-      { type: 'status', target: 'same', status: 'defDown', value: 0.2, seconds: 5, chance: 0.6 },
+      { type: 'damage', target: 'front', power: pw(1.6, 'legendary') },
+      { type: 'status', target: 'same', status: 'stun', seconds: 2, chance: 0.7 },
+      { type: 'status', target: 'same', status: 'defDown', value: 0.25, seconds: 5, chance: 0.7 },
       { type: 'status', target: 'self', status: 'taunt', seconds: 3 },
     ] },
     // « le roc lancé » : celui qui le frappe peut recevoir un rocher en retour
     passives: [first('protector'), { kind: 'trigger', on: 'hurt', chance: 0.25, effects: [{ type: 'damage', target: 'attacker', power: 0.8 }] }],
-    talent: { defMult: 1.2 },
+    talent: { defMult: 1.3 },
   }),
   // Venthys, dragon de vent, deux lames : « cyclone », un tourbillon qui file jusqu'à la dernière ligne et l'entaille
   // trois fois ; le vent le rend plus rapide
   build({
-    id: 'dragon-vent', name: 'Venthys', element: 'wind', role: 'assassin', rarity: 'epic',
+    id: 'dragon-vent', name: 'Venthys', element: 'wind', role: 'assassin', rarity: 'legendary',
     skill: { id: 'venthys', effects: [
-      { type: 'damage', target: 'back', power: pw(0.9, 'epic') },
-      { type: 'damage', target: 'same', power: pw(0.9, 'epic') },
-      { type: 'damage', target: 'same', power: pw(0.9, 'epic') },
+      { type: 'damage', target: 'back', power: pw(1, 'legendary') },
+      { type: 'damage', target: 'same', power: pw(1, 'legendary') },
+      { type: 'damage', target: 'same', power: pw(1, 'legendary') },
       { type: 'status', target: 'self', status: 'speedUp', value: 0.3, seconds: 4 },
     ] },
     passives: [first('assassin'), { kind: 'trigger', on: 'kill', effects: [{ type: 'status', target: 'self', status: 'speedUp', value: 0.3, seconds: 5 }] }],

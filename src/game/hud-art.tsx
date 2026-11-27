@@ -89,14 +89,67 @@ function cardFrame(g: CanvasRenderingContext2D) {
   rr(g, m + 1.5, m + 1.5, w - 3, h - 3, r - 1.5); g.stroke();
 }
 
-/** La lueur d'or d'une carte dont l'attaque spéciale est prête. */
-function cardGlow(g: CanvasRenderingContext2D) {
-  const p = 22, { w, h, r } = CARD;
-  g.save();
-  g.shadowColor = '#ffc22e'; g.shadowBlur = 20;
-  g.strokeStyle = '#ffe27a'; g.lineWidth = 5;
-  rr(g, p, p, w, h, r); g.stroke(); g.stroke();
-  g.restore();
+/** La marge autour d'une carte pour sa lueur (attaque spéciale prête) : la texture fait CARD + 2 × GLOW_PAD. */
+export const GLOW_PAD = 28;
+/** La couleur de la lueur, par élément (vive, plus claire que le haut de la carte) ; or si l'élément est inconnu. */
+const GLOW_TINT: Record<string, string> = { fire: '255, 120, 60', wind: '110, 240, 140', water: '90, 190, 255', earth: '255, 196, 90', none: '255, 210, 80' };
+
+/**
+ * Le halo d'une carte dont l'attaque spéciale est prête (demande du 27/11) : une lumière douce à la couleur de l'élément,
+ * de plus en plus forte vers la carte. Sans flou (iPhone) : des contours arrondis empilés, de plus en plus opaques.
+ */
+function cardHalo(rgb: string) {
+  return (g: CanvasRenderingContext2D) => {
+    const p = GLOW_PAD, { w, h, r } = CARD;
+    for (let i = p; i >= 1; i--) {
+      const k = 1 - i / p;
+      g.strokeStyle = `rgba(${rgb}, ${(0.06 + 0.66 * k * k).toFixed(3)})`;
+      g.lineWidth = 2.2;
+      rr(g, p - i, p - i, w + 2 * i, h + 2 * i, r + i);
+      g.stroke();
+    }
+  };
+}
+
+/** Le liseré qui brille, posé par-dessus le cadre de la carte : or clair, cœur blanc. */
+function cardRim(g: CanvasRenderingContext2D) {
+  const p = GLOW_PAD, { w, h, r } = CARD;
+  g.strokeStyle = 'rgba(255, 196, 46, 0.95)'; g.lineWidth = 7;
+  rr(g, p, p, w, h, r); g.stroke();
+  g.strokeStyle = '#fff1b8'; g.lineWidth = 3.5;
+  rr(g, p, p, w, h, r); g.stroke();
+  g.strokeStyle = 'rgba(255, 255, 255, 0.9)'; g.lineWidth = 1.2;
+  rr(g, p, p, w, h, r); g.stroke();
+}
+
+/** L'éclat qui court le long du liseré : un point de lumière (dégradé rond), blanc au cœur, or autour. */
+function spark(g: CanvasRenderingContext2D) {
+  const s = 18;
+  const grad = g.createRadialGradient(s, s, 0, s, s, s);
+  grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  grad.addColorStop(0.25, 'rgba(255, 246, 200, 0.9)');
+  grad.addColorStop(0.6, 'rgba(255, 200, 60, 0.35)');
+  grad.addColorStop(1, 'rgba(255, 190, 40, 0)');
+  g.fillStyle = grad; g.fillRect(0, 0, 2 * s, 2 * s);
+}
+
+/** Un point du bord d'une carte (repère : son centre), `t` de 0 à 1 fait le tour dans le sens des aiguilles d'une montre. */
+export function cardRimPoint(t: number): [number, number] {
+  const { w, h, r } = CARD, sw = w - 2 * r, sh = h - 2 * r, arc = (Math.PI * r) / 2;
+  let d = (((t % 1) + 1) % 1) * (2 * sw + 2 * sh + 4 * arc);
+  const corner = (cx: number, cy: number, a0: number): [number, number] => {
+    const a = a0 + (d / arc) * (Math.PI / 2);
+    return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+  };
+  const x0 = -w / 2, y0 = -h / 2;
+  if (d < sw) return [x0 + r + d, y0]; d -= sw;
+  if (d < arc) return corner(x0 + w - r, y0 + r, -Math.PI / 2); d -= arc;
+  if (d < sh) return [x0 + w, y0 + r + d]; d -= sh;
+  if (d < arc) return corner(x0 + w - r, y0 + h - r, 0); d -= arc;
+  if (d < sw) return [x0 + w - r - d, y0 + h]; d -= sw;
+  if (d < arc) return corner(x0 + r, y0 + h - r, Math.PI / 2); d -= arc;
+  if (d < sh) return [x0, y0 + h - r - d]; d -= sh;
+  return corner(x0 + r, y0 + r, Math.PI);
 }
 
 /** Le creux d'une jauge (pilule sombre) : `w` × `h` unités. */
@@ -131,7 +184,9 @@ export function loadHudArt(sc: Phaser.Scene) {
   add(sc, 'hud-fade', 8, 256, fade);
   for (const [el, tint] of Object.entries(TINTS)) add(sc, `hud-card-${el}`, CARD.w + 16, CARD.h + 16, card(tint));
   add(sc, 'hud-card-frame', CARD.w + 16, CARD.h + 16, cardFrame);
-  add(sc, 'hud-card-glow', CARD.w + 44, CARD.h + 44, cardGlow);
+  for (const [el, rgb] of Object.entries(GLOW_TINT)) add(sc, `hud-card-glow-${el}`, CARD.w + 2 * GLOW_PAD, CARD.h + 2 * GLOW_PAD, cardHalo(rgb));
+  add(sc, 'hud-card-rim', CARD.w + 2 * GLOW_PAD, CARD.h + 2 * GLOW_PAD, cardRim);
+  add(sc, 'hud-spark', 36, 36, spark);
   add(sc, 'hud-hp', 108, 14, track(108, 14));
   add(sc, 'hud-en', 108, 8, track(108, 8));
   add(sc, 'hud-pause', 36, 36, pauseSign);

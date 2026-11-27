@@ -134,13 +134,13 @@ export function Stars({ stars }: { stars: number }) {
  * Le héros en entier dans sa case (demande du propriétaire, 26/11 : « pas seulement la tête »), petit, au milieu, loin
  * des bords. Tous les héros ont la MÊME échelle : la case fait 128 pixels du dessin de large (le plus large des héros,
  * arme comprise, mesuré sur ses images) plus une marge ; ses pieds sont au milieu, à 80 % de la hauteur (`--feet`).
- * Il respire (sa bande d'images défile), sans flou. Sans planche HD : son visage.
+ * Immobile, sans flou. Sans dessin : son visage.
  */
 export function CardFigure({ id, alt = '' }: { id: string; alt?: string }) {
-  const v = vectoFig(id);
+  // le dessin vectoriel lisse (27/11 : toujours, plus seulement avec ?vecto=1), même échelle et mêmes pieds que le pixel
+  // art (la petite image, au contour plus épais, faite pour les cases) ; le pixel art ne reste que s'il n'y en a pas
+  const v = vectoFig(id, true);
   if (v) {
-    // essai ?vecto=1 (vecto.ts) : le dessin vectoriel lisse, même échelle et mêmes pieds que le pixel art (la petite image,
-    // au contour plus épais, faite pour les cases)
     return (
       <span class="hcard-fig" role="img" aria-label={alt} style={{ '--w': v.w, '--h': v.h, '--fx': v.fx, '--fy': v.fy } as never}>
         <span class="hcard-still hcard-vec" style={{ backgroundImage: `url(${v.small})`, backgroundSize: '100% 100%' }} />

@@ -66,6 +66,7 @@ export const COLISEUM_SHOP: ShopItem[] = [
   { id: 'c-item', cost: 450, reward: { item: 4 } },
   { id: 'c-basic', cost: 120, reward: { basicScrolls: 10 } },
   { id: 'c-dust', cost: 150, reward: { dust: 300 } },
+  { id: 'c-red', cost: 400, reward: { redScrolls: 1 } },
 ];
 
 /** Les noms des autres joueurs du groupe : deux morceaux tirés au hasard (graine de la semaine). */

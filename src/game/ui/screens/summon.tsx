@@ -1,6 +1,9 @@
-// Invocations : normale (parchemins ou gemmes), simple (Communs et Rares), fragments. Le tirage lui-même (portail qui
-// s'ouvre, héros qui sortent) est dans sections/summon-reveal.tsx ; le portail et son estrade dans sections/summon-gate.tsx.
-import { BASIC_SUMMON_RATES, LEGENDARY_PITY, SUMMON_RATES } from '../../../core/data/summon';
+// Invocations : trois portails (27/11/2026) : simple (Communs et Rares), normal (parchemins ou gemmes) et spécial (même
+// prix que le normal ; ses Légendaires sont seulement le groupe mis en avant, FEATURED_BANNER de core/data/summon.ts),
+// puis les fragments. Le tirage lui-même (portail qui s'avance, s'ouvre, héros qui sortent) est dans
+// sections/summon-reveal.tsx ; le portail et son estrade dans sections/summon-gate.tsx.
+import { BASIC_SUMMON_RATES, FEATURED_BANNER, LEGENDARY_PITY, SUMMON_RATES, type SummonKind } from '../../../core/data/summon';
+import { featuredLegends } from '../../../core/summon';
 import { HEROES, heroDef } from '../../../core/data/heroes';
 import { FRAGMENTS_PER_COPY, RARITY_RULES } from '../../../core/data/stars';
 import { RARITIES, type Hero, type Rarity } from '../../../core/types';
@@ -8,7 +11,7 @@ import { RARITY_COLOR, heroImage } from '../../art';
 import { useState } from 'preact/hooks';
 import { fmt, t } from '../../i18n';
 import { GateStage } from '../sections/summon-gate';
-import { rememberCast } from '../sections/summon-reveal';
+import { kindTone, rememberCast } from '../sections/summon-reveal';
 import { adsLeft, claimFragments, summon, summonCost, watchAd } from '../../state/actions';
 import { useGame } from '../../state/store';
 import { Bar, Btn, Cur, HeroCard, Icon, Modal } from '../kit';
@@ -18,14 +21,23 @@ import '../sections/invoquer.css';
 
 export { SummonResult } from '../sections/summon-reveal';
 
-type Kind = 'normal' | 'basic';
+type Kind = SummonKind;
+/** L'ordre des onglets (demande du propriétaire : le simple, le normal, le spécial). */
+const KINDS: Kind[] = ['basic', 'normal', 'featured'];
 
-/** Le choix du portail : deux onglets arrondis, chacun avec son parchemin et le nombre qu'il en reste. */
-function KindTab({ kind, on, icon, n, onClick }: { kind: Kind; on: boolean; icon: string; n: number; onClick: () => void }) {
+/** Le nom d'un portail (le spécial porte le nom de son groupe). */
+const kindName = (k: Kind) => (k === 'featured' ? t(`banner.${FEATURED_BANNER.id}`) : t(`summon.${k}`));
+
+/** Le signe de chaque portail : son parchemin (simple, normal ; rouge pour le spécial, sa propre monnaie). */
+const KIND_CUR: Record<Kind, 'basicScrolls' | 'scrolls' | 'redScrolls'> = { basic: 'basicScrolls', normal: 'scrolls', featured: 'redScrolls' };
+
+/** Le choix du portail : trois onglets arrondis, chacun avec son parchemin et le nombre qu'il en reste. */
+function KindTab({ kind, on, onClick }: { kind: Kind; on: boolean; onClick: () => void }) {
+  const s = useGame();
   return (
-    <button class={`sum-kind sum-kind-tab-${kind}${on ? ` on ${btClass('or', 's')}` : ''}`} aria-pressed={on} onClick={onClick}>
-      <Icon name={icon} size={30} />
-      <span class="sum-kind-n">{fmt(n)}</span>
+    <button class={`sum-kind sum-kind-tab-${kind}${on ? ` on ${btClass('or', 's')}` : ''}`} aria-pressed={on} aria-label={kindName(kind)} onClick={onClick}>
+      <Icon name={KIND_CUR[kind]} size={30} />
+      <span class="sum-kind-n">{fmt(s.wallet[KIND_CUR[kind]])}</span>
     </button>
   );
 }
@@ -46,11 +58,13 @@ export function SummonScreen() {
   const [kind, setKind] = useState<Kind>('normal');
   // L'invocation est décidée tout de suite (le coût est payé) ; le portail de l'onglet aspire un instant, puis le tirage
   // s'ouvre par-dessus (sections/summon-reveal.tsx).
+  // (le portail de l'onglet ne s'emballe pas : il s'avance vers nous ; le tirage ne commence qu'une fois le portail installé
+  // au premier plan, dans summon-reveal.tsx)
   const [casting, setCasting] = useState(false);
   const cast = (heroes: Hero[] | null | undefined) => {
     if (!heroes) return;
     setCasting(true);
-    setTimeout(() => { setCasting(false); open({ type: 'summon', heroes }); }, 420);
+    setTimeout(() => { setCasting(false); open({ type: 'summon', heroes }); }, 380);
   };
   const button = (count: 1 | 10) => {
     const cost = summonCost(kind, count);
@@ -69,13 +83,12 @@ export function SummonScreen() {
   const owned = Object.entries(s.fragments).filter(([, n]) => n > 0);
   const left = LEGENDARY_PITY - s.summon.pity;
   return (
-    <div class={`screen summon sum-kind-${kind}${casting ? ' sum-casting' : ''}`}>
+    <div class={`screen summon sum-kind-${kind}${casting ? ' sum-casting' : ''}`} style={kindTone(kind) as never}>
       <div class="sum-head">
         <div class="sum-kinds bt-rail" role="tablist">
-          <KindTab kind="normal" on={kind === 'normal'} icon="scrolls" n={s.wallet.scrolls} onClick={() => setKind('normal')} />
-          <KindTab kind="basic" on={kind === 'basic'} icon="basicScrolls" n={s.wallet.basicScrolls} onClick={() => setKind('basic')} />
+          {KINDS.map((k) => <KindTab kind={k} on={kind === k} onClick={() => setKind(k)} />)}
         </div>
-        <h1 class="sum-name">{t(`summon.${kind}`)}</h1>
+        <h1 class="sum-name">{kindName(kind)}</h1>
       </div>
 
       <div class="sum-stage">
@@ -97,10 +110,10 @@ export function SummonScreen() {
         </div>
       </div>
 
-      {/* le panneau : la même hauteur pour les deux portails ; en haut, la jauge du Légendaire garanti (portail normal) ou
-          les deux raretés possibles et leur part (invocation simple), puis les deux gros boutons */}
+      {/* le panneau : la même hauteur pour les trois portails ; en haut, la jauge du Légendaire garanti (portails normal et
+          spécial : le même compteur) ou les deux raretés possibles et leur part (invocation simple), puis les deux gros boutons */}
       <div class="sum-panel">
-        {kind === 'normal' ? (
+        {kind !== 'basic' ? (
           <div class="sum-pity">
             <span class="sum-pity-gem"><Icon name="star" size={22} /></span>
             <div class="sum-pity-bar"><span style={{ width: `${(s.summon.pity / LEGENDARY_PITY) * 100}%` }} /></div>
@@ -150,13 +163,14 @@ let oddsKind: Kind = 'normal';
 /**
  * Les chances d'un portail, calculées sur les vraies tables (core/data/summon.ts) et le vrai tirage (core/summon.ts : la
  * rareté d'abord, puis un héros de cette rareté, tous à parts égales) : pour chaque rareté, de la plus rare à la plus
- * commune, sa part, puis chaque héros avec sa propre chance, du plus probable au moins probable.
+ * commune, sa part, puis chaque héros avec sa propre chance, du plus probable au moins probable. Portail spécial : les
+ * chances du normal, mais ses Légendaires sont seulement les héros mis en avant (core/summon.ts, summonFeatured).
  */
 function oddsOf(kind: Kind) {
   const rates: Partial<Record<Rarity, number>> = kind === 'basic' ? BASIC_SUMMON_RATES : SUMMON_RATES;
   return [...RARITIES].reverse().map((r) => {
     const total = rates[r] ?? 0;
-    const defs = HEROES.filter((h) => h.rarity === r);
+    const defs = kind === 'featured' && r === 'legendary' ? featuredLegends() : HEROES.filter((h) => h.rarity === r);
     const list = defs.map((def) => ({ def, p: defs.length ? total / defs.length : 0 }))
       .sort((a, b) => b.p - a.p || a.def.name.localeCompare(b.def.name));
     return { r, total, list };
@@ -178,10 +192,10 @@ export function OddsModal() {
     <Modal title={t('summon.odds')}>
       <div class={`odds2 odds2-${kind}`}>
         <div class="odds2-kinds bt-rail" role="tablist">
-          {(['normal', 'basic'] as const).map((k) => (
+          {KINDS.map((k) => (
             <button class={`odds2-kind${kind === k ? ` on ${btClass('or', 's')}` : ''}`} aria-pressed={kind === k} onClick={() => pick(k)}>
-              <Icon name={k === 'basic' ? 'basicScrolls' : 'scrolls'} size={24} />
-              <span>{t(`summon.${k}`)}</span>
+              <Icon name={KIND_CUR[k]} size={24} />
+              <span>{k === 'featured' ? t(`banner.${FEATURED_BANNER.id}.short`) : t(`summon.${k}Short`)}</span>
             </button>
           ))}
         </div>
@@ -192,10 +206,11 @@ export function OddsModal() {
                 <span class="odds2-rar">{t(`rarity.${g.r}`)}</span>
                 <strong class="odds2-total">{pct(g.total, s.lang)}</strong>
               </header>
-              {g.r === 'legendary' && kind === 'normal' && <p class="odds2-pity">{t('summon.pity', { n: LEGENDARY_PITY })}</p>}
+              {g.r === 'legendary' && kind !== 'basic' && <p class="odds2-pity">{t('summon.pity', { n: LEGENDARY_PITY })}</p>}
               <div class="odds2-grid">
                 {g.list.map(({ def, p }) => (
-                  <div class={`odds2-cell${s.discovered.includes(def.id) ? '' : ' unknown'}`}>
+                  // les héros mis en avant du portail spécial se montrent toujours (c'est ici qu'on les découvre)
+                  <div class={`odds2-cell${s.discovered.includes(def.id) || (kind === 'featured' && g.r === 'legendary') ? '' : ' unknown'}`}>
                     <HeroCard hero={{ uid: 0, defId: def.id, stars: RARITY_RULES[def.rarity].bornStars, level: 1 }} small />
                     <span class="odds2-p">{pct(p, s.lang)}</span>
                   </div>

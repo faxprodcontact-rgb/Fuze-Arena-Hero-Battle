@@ -11,6 +11,8 @@ export interface Wallet {
   gems: number;
   scrolls: number;
   basicScrolls: number;
+  /** Parchemins rouges : la monnaie du portail spécial (27/11/2026), gagnés à quelques endroits (core/data/modes.ts). */
+  redScrolls: number;
   arenaTokens: number;
   guildCoins: number;
   crystals: number;

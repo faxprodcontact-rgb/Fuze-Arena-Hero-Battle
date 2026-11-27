@@ -36,6 +36,18 @@ export function accountXpForLevel(level: number): number {
 // ---------- Invocations ----------
 
 export const GEMS_PER_SUMMON = 300;
+
+/**
+ * Parchemins rouges (demande du propriétaire, 27/11/2026) : la monnaie du portail spécial, 1 par invocation (×10 = 10).
+ * Rares, gagnés à quelques endroits seulement (valeurs raisonnables, à revoir au grand réglage avant la bêta) :
+ * - fin de chaque chapitre de la campagne : RED_SCROLLS.perChapter ;
+ * - boss du jour : le dernier palier (100 % de ses PV) en donne 1 (DAILY_BOSS_TIERS) ;
+ * - coffre de la semaine à 100 points : 1 (WEEKLY_CHESTS) ;
+ * - boutique du Colisée : 1 contre des insignes (COLISEUM_SHOP, core/data/coliseum.ts) ;
+ * - boutique, onglet Échanges : 1 contre RED_SCROLLS.gems gemmes, au plus RED_SCROLLS.gemsPerWeek par semaine ;
+ * - courrier de bienvenue du portail (core/data/mail.ts, `parchemins-rouges-2711`) : 10.
+ */
+export const RED_SCROLLS = { perChapter: 1, gems: 300, gemsPerWeek: 5 };
 export const GEMS_PER_10_SUMMONS = 2700;
 
 // ---------- Tour des Épreuves ----------
@@ -85,9 +97,9 @@ export const MISSION_TEMPLATES: MissionTemplate[] = [
 
 export const DAILY_BOSS_ATTEMPTS = 2;
 /** Paliers de dégâts, exprimés en part des PV du boss, et leur récompense en gemmes. */
-export const DAILY_BOSS_TIERS = [
+export const DAILY_BOSS_TIERS: readonly { share: number; gems: number; redScrolls?: number }[] = [
   { share: 0.05, gems: 30 }, { share: 0.15, gems: 60 }, { share: 0.3, gems: 100 },
-  { share: 0.5, gems: 150 }, { share: 0.75, gems: 220 }, { share: 1, gems: 300 },
+  { share: 0.5, gems: 150 }, { share: 0.75, gems: 220 }, { share: 1, gems: 300, redScrolls: 1 },
 ];
 
 // ---------- Arène ----------
@@ -138,7 +150,7 @@ export const WEEKLY_QUESTS: QuestDef[] = [
   { id: 'w-guild', event: 'guildBoss', goal: 6, points: 20 },
 ];
 /** Coffres d'activité : à 20, 40, 60, 80 et 100 points. */
-export type Reward = Partial<Record<'gold' | 'essence' | 'gems' | 'scrolls' | 'basicScrolls' | 'crystals' | 'dust', number>>;
+export type Reward = Partial<Record<'gold' | 'essence' | 'gems' | 'scrolls' | 'basicScrolls' | 'redScrolls' | 'crystals' | 'dust', number>>;
 export const DAILY_CHESTS: { points: number; reward: Reward }[] = [
   { points: 20, reward: { basicScrolls: 4 } },
   { points: 40, reward: { gems: 150 } },
@@ -148,7 +160,7 @@ export const DAILY_CHESTS: { points: number; reward: Reward }[] = [
 ];
 export const WEEKLY_CHESTS: { points: number; reward: Reward }[] = [
   { points: 40, reward: { scrolls: 5 } },
-  { points: 100, reward: { gems: 1500, scrolls: 5 } },
+  { points: 100, reward: { gems: 1500, scrolls: 5, redScrolls: 1 } },
 ];
 
 // ---------- Pubs volontaires ----------

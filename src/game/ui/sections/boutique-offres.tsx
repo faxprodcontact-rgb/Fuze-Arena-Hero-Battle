@@ -6,10 +6,11 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { HEROES } from '../../../core/data/heroes';
 import {
-  GEMS_PER_SUMMON, MONTHLY_CARD, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL, type Offer, type Reward,
+  GEMS_PER_SUMMON, MONTHLY_CARD, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL, RED_SCROLLS, type Offer, type Reward,
 } from '../../../core/data/modes';
 import { fmt, t } from '../../i18n';
-import { claimPass, passLevel } from '../../state/actions';
+import { buyRedScroll, claimPass, passLevel, redScrollsBought } from '../../state/actions';
+import { open } from '../nav';
 import { now, useGame } from '../../state/store';
 import { Art, Icon, Sign } from '../kit';
 import { btClass } from '../buttons';
@@ -235,6 +236,26 @@ export function PassTab({ onBuy }: { onBuy: () => void }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Le parchemin rouge (portail spécial) contre des gemmes, quelques-uns par semaine (onglet Échanges). */
+export function RedScrollOffer() {
+  const s = useGame();
+  const left = RED_SCROLLS.gemsPerWeek - redScrollsBought(s);
+  const poor = s.wallet.gems < RED_SCROLLS.gems;
+  return (
+    <div class={`bq-card bq-red${left <= 0 ? ' bq-out' : ''}`}>
+      <span class="bq-stage"><i class="lg-glow" /><Art name="redScrolls" class="bq-art" />{left > 0 && <Sparkles n={3} />}</span>
+      <span class="bq-red-text">
+        <strong>{t('cur.redScrolls')}</strong>
+        <span class="bq-red-left"><b>{Math.max(0, left)}</b>/{RED_SCROLLS.gemsPerWeek}</span>
+      </span>
+      <button class={`bq-price bq-red-price ${btClass('or', 'm')}`} disabled={left <= 0 || poor}
+        onClick={() => { const gain = buyRedScroll(); if (gain) open({ type: 'gain', title: t('cur.redScrolls'), gain }); }}>
+        {left <= 0 ? <Sign name="check" k={1.6} /> : <><Icon name="gems" size={22} />{fmt(RED_SCROLLS.gems)}</>}
+      </button>
     </div>
   );
 }

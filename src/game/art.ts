@@ -25,6 +25,15 @@ export function figureUrl(id: string): string {
   return artUrl(`art/hd/pied/${id}.webp`);
 }
 
+/**
+ * La tête d'un héros pour sa CARTE DE COMBAT (les cartes du bas, demande du 27/11) : sa tête vectorielle, lisse, centrée
+ * sur le visage, à la même échelle pour tous (art/vecto/v/<id du jeu>.webp, faite par
+ * refonte-graphique/ui-moderne/heros/tetes.py). Les cases des menus gardent le héros en entier.
+ */
+export function headUrl(defId: string): string {
+  return artUrl(`art/vecto/v/${defId}.webp`);
+}
+
 /** Image d'un héros pour les menus (balise <img>) : son visage. */
 export function heroImage(defId: string): string {
   return faceUrl(heroArt(defId));

@@ -352,7 +352,7 @@ p { margin: 6px 0; }
 
 /* ---------- Case d'un héros (HeroCard de kit.tsx) ----------
    Derrière lui : un mur à la couleur de sa rareté (une carte par rareté : sections/cartes-heros.css), frappé de
-   l'emblème de son élément (--crest). Le héros est en ENTIER (CardFigure : sa bande d'images en pied, art/hd/pied/), petit, au milieu, loin des
+   l'emblème de son élément (--crest). Le héros est en ENTIER (CardFigure : son dessin vectoriel lisse, 27/11), petit, au milieu, loin des
    bords ; tous à la même échelle (la case = 128 pixels du dessin + une marge), ses pieds à --feet (80 %) de la hauteur.
    Par-dessus : un liseré net de la couleur de la rareté, le niveau, l'élément, les étoiles. */
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(78px, 1fr)); gap: 9px; }

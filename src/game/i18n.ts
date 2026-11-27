@@ -13,7 +13,7 @@ const FR = {
   'item.chapter': 'Chapitre {n}', 'item.forge': 'Forger', 'item.forgeNeed': '{have} / 3 identiques', 'item.recycle': 'Recycler',
   'item.unequip': 'Retirer', 'item.wornBy': 'Porté par {n}', 'item.equip': 'Équiper',
   'slot.upgrade': 'Renforcer', 'slot.level': 'Emplacement +{n}', 'slot.max': 'Renforcement maximum', 'slot.choose': 'Objets du sac',
-  'cur.gold': 'Or', 'cur.essence': 'Essence', 'cur.gems': 'Gemmes', 'cur.scrolls': 'Parchemins', 'cur.basicScrolls': 'Parchemins simples',
+  'cur.gold': 'Or', 'cur.essence': 'Essence', 'cur.gems': 'Gemmes', 'cur.scrolls': 'Parchemins', 'cur.basicScrolls': 'Parchemins simples', 'cur.redScrolls': 'Parchemins d’événement',
   'cur.arenaTokens': "Jetons d'arène", 'cur.guildCoins': 'Pièces de guilde', 'cur.crystals': "Cristaux d'éveil", 'cur.fragments': 'Fragments',
 
   fight: 'Combattre', collect: 'Récolter', claim: 'Récupérer', claimed: 'Reçu', buy: 'Acheter', free: 'Gratuit', close: 'Fermer',
@@ -80,6 +80,9 @@ const FR = {
   'summon.pity': 'Légendaire garanti dans {n}', 'summon.odds': 'Chances', 'summon.adFree': 'Invocation gratuite',
   'summon.fragments': 'Fragments', 'summon.copy': 'Obtenir une copie', 'summon.target': 'Cible des fragments',
   'summon.freeShort': 'Gratuite', // Invoquer, vague 3
+  // le 3e portail (27/11) : son nom suit le groupe mis en avant (FEATURED_BANNER de core/data/summon.ts, `banner.<id>`)
+  'summon.featured': 'Invocation d’événement', 'summon.basicShort': 'Simple', 'summon.normalShort': 'Normale',
+  'banner.dragons-2711': 'Portail d’événement', 'banner.dragons-2711.short': 'Événement',
   'adv.tower': 'Tour des Épreuves', 'adv.dungeons': 'Donjons', 'adv.missions': 'Missions', 'adv.dailyBoss': 'Boss du jour',
   'adv.arena': 'Arène', 'adv.defense': 'Colisée',
   'tower.floor': 'Étage {n}', 'tower.challenge': 'Défier',
@@ -173,7 +176,7 @@ const EN: Record<Key, string> = {
   'item.chapter': 'Chapter {n}', 'item.forge': 'Forge', 'item.forgeNeed': '{have} / 3 identical', 'item.recycle': 'Recycle',
   'item.unequip': 'Remove', 'item.wornBy': 'Worn by {n}', 'item.equip': 'Equip',
   'slot.upgrade': 'Upgrade', 'slot.level': 'Slot +{n}', 'slot.max': 'Max upgrade', 'slot.choose': 'Items in bag',
-  'cur.gold': 'Gold', 'cur.essence': 'Essence', 'cur.gems': 'Gems', 'cur.scrolls': 'Scrolls', 'cur.basicScrolls': 'Basic scrolls',
+  'cur.gold': 'Gold', 'cur.essence': 'Essence', 'cur.gems': 'Gems', 'cur.scrolls': 'Scrolls', 'cur.basicScrolls': 'Basic scrolls', 'cur.redScrolls': 'Event scrolls',
   'cur.arenaTokens': 'Arena tokens', 'cur.guildCoins': 'Guild coins', 'cur.crystals': 'Awakening crystals', 'cur.fragments': 'Shards',
 
   fight: 'Fight', collect: 'Collect', claim: 'Claim', claimed: 'Claimed', buy: 'Buy', free: 'Free', close: 'Close',
@@ -240,6 +243,8 @@ const EN: Record<Key, string> = {
   'summon.pity': 'Legendary guaranteed in {n}', 'summon.odds': 'Odds', 'summon.adFree': 'Free summon',
   'summon.fragments': 'Shards', 'summon.copy': 'Get a copy', 'summon.target': 'Shard target',
   'summon.freeShort': 'Free', // Invoquer, vague 3
+  'summon.featured': 'Event summon', 'summon.basicShort': 'Basic', 'summon.normalShort': 'Normal',
+  'banner.dragons-2711': 'Event Portal', 'banner.dragons-2711.short': 'Event',
   'adv.tower': 'Tower of Trials', 'adv.dungeons': 'Dungeons', 'adv.missions': 'Missions', 'adv.dailyBoss': 'Daily boss',
   'adv.arena': 'Arena', 'adv.defense': 'Colosseum',
   'tower.floor': 'Floor {n}', 'tower.challenge': 'Challenge',

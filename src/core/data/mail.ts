@@ -45,6 +45,17 @@ export const MAILS: MailDef[] = [
       en: 'The game now keeps 36 heroes, all redrawn. The heroes removed from your collection are exchanged for this gift; their levels and gear are given back.',
     },
   },
+  {
+    // Le portail spécial et sa monnaie, le parchemin d’événement (rouge) (27/11/2026) : de quoi l'essayer tout de suite
+    id: 'parchemins-rouges-2711',
+    at: '2026-11-27T00:00:00Z',
+    title: { fr: 'Le portail d’événement', en: 'The Event Portal' },
+    body: {
+      fr: 'Un nouveau portail s\'ouvre : ses Légendaires sont les dragons. Il s\'ouvre avec des parchemins d\'événement, en voici pour commencer.',
+      en: 'A new portal opens: its Legendaries are the dragons. It opens with event scrolls; here are some to start.',
+    },
+    reward: { redScrolls: 10 },
+  },
 ];
 
 /** Un message reste 30 jours dans la boîte. */

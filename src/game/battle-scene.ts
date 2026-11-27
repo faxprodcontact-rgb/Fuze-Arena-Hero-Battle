@@ -9,11 +9,9 @@ import { Battle } from '../core/battle/engine';
 import { ENERGY_MAX, TICK_MS, type Slot, type Unit } from '../core/battle/types';
 import { heroDef, isHero } from '../core/data/heroes';
 import { C, FONT, FightScene, W, applyTheme } from './fight-view';
-import { CARD, HUD_RES, ROUND, ROUND_LIP, WIDE, hudText, loadHudArt, pillKey, type HudTone } from './hud-art';
+import { CARD, GLOW_PAD, HUD_RES, ROUND, ROUND_LIP, WIDE, cardRimPoint, hudText, loadHudArt, pillKey, type HudTone } from './hud-art';
 import { t } from './i18n';
-import { figureUrl, heroImage } from './art';
-import { HD_FIG } from './hd-figures';
-import { heroArt } from './look';
+import { headUrl } from './art';
 import { battleLook } from './look';
 import { setAuto, setSpeed, type BattleRequest, type BattleResult } from './state/actions';
 import { getState } from './state/store';
@@ -28,20 +26,17 @@ const FOND_ZOOM = 1.4;
 /** Marges du bas : sous les cartes, entre les cartes et les boutons ronds. */
 const CARD_BOTTOM = 14, CARD_GAP = 10;
 
-/** Les mesures du héros en entier [largeur, hauteur, x et y des pieds, images, durée d'une image] (hd-figures.ts). */
-type Fig = readonly [number, number, number, number, number, number, number];
-function pied(defId: string): Fig | undefined {
-  return (HD_FIG.chars as Record<string, Fig | undefined>)[heroArt(defId)];
-}
-
 interface Portrait {
   unit: Unit;
   x: number;
   y: number;
   bars: Phaser.GameObjects.Graphics;
+  /** la lueur de l'attaque spéciale prête : halo (derrière), liseré qui brille et éclat qui court (devant) */
   glow: Phaser.GameObjects.Image;
+  rim: Phaser.GameObjects.Image;
+  spark: Phaser.GameObjects.Image;
   card: Phaser.GameObjects.Container;
-  face: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite;
+  face: Phaser.GameObjects.Image;
 }
 
 export interface BattleSceneData {
@@ -138,12 +133,9 @@ export class BattleScene extends FightScene {
   preload() {
     super.preload();
     loadHudArt(this);
-    // les visages des cartes du bas (refonte-graphique/pixel/hd/anim/vignettes.py)
-    // le héros en entier qui respire (art/hd/pied/, vignettes.py) ; à défaut, son visage
+    // la tête de chaque héros pour sa carte (art/vecto/v/, refonte-graphique/ui-moderne/heros/tetes.py), lisse
     for (const u of this.req.heroes) {
-      const f = pied(u.defId);
-      if (f && !this.textures.exists(`pied-${u.defId}`)) this.load.spritesheet(`pied-${u.defId}`, figureUrl(heroArt(u.defId)), { frameWidth: f[0] * HD_FIG.up, frameHeight: f[1] * HD_FIG.up });
-      else if (!f && !this.textures.exists(`v-${u.defId}`)) this.load.image(`v-${u.defId}`, heroImage(u.defId));
+      if (!this.textures.exists(`tete-${u.defId}`)) this.load.image(`tete-${u.defId}`, headUrl(u.defId));
     }
   }
 
@@ -218,23 +210,15 @@ export class BattleScene extends FightScene {
     units.forEach((unit, i) => {
       const x = W / 2 - total / 2 + w / 2 + i * (w + gap);
       const card = this.add.container(x, y).setDepth(3600);
-      const glow = this.add.image(0, 0, 'hud-card-glow').setDisplaySize(CARD.w + 44, CARD.h + 44).setVisible(false);
       const el = this.textures.exists(`hud-card-${unit.element}`) ? unit.element : 'none';
+      const gs = { w: CARD.w + 2 * GLOW_PAD, h: CARD.h + 2 * GLOW_PAD };
+      const glow = this.add.image(0, 0, `hud-card-glow-${el}`).setDisplaySize(gs.w, gs.h).setVisible(false);
       const bg = this.add.image(0, 0, `hud-card-${el}`).setDisplaySize(CARD.w + 16, CARD.h + 16);
-      // le visage, au haut de la carte, coupé à sa forme (coins du haut arrondis)
+      // le portrait, au haut de la carte, coupé à sa forme (coins du haut arrondis) : la TÊTE du héros, bien centrée
+      // (demande du 27/11 : plus le héros en entier), toutes à la même échelle (tetes.py)
       const top = -CARD.h / 2;
-      // le héros en entier, petit, centré, avec de l'air autour (demande du 26/11 : plus de visage trop zoomé)
-      const f = pied(unit.defId);
-      let face: Phaser.GameObjects.Image | Phaser.GameObjects.Sprite;
-      if (f && this.textures.exists(`pied-${unit.defId}`)) {
-        const [fw, fh, fx, fy, n, ms] = f;
-        const k = Math.min((CARD.w - 22) / fw, (CARD.face - 40) / fh);
-        const sp = this.add.sprite(0, top + CARD.face - 30, `pied-${unit.defId}`, 0).setOrigin(fx / fw, fy / fh).setScale(k / HD_FIG.up);
-        const key = `pied-${unit.defId}-idle`;
-        if (!this.anims.exists(key)) this.anims.create({ key, frames: this.anims.generateFrameNumbers(`pied-${unit.defId}`, { start: 0, end: n - 1 }), frameRate: 1000 / ms, repeat: -1 });
-        sp.play({ key, startFrame: i % n });
-        face = sp;
-      } else face = this.add.image(0, top + CARD.face / 2 + 4, `v-${unit.defId}`).setDisplaySize(CARD.w + 4, CARD.w + 4);
+      // le haut de l'image au haut de la carte ; la tête se tient au-dessus du nom (tetes.py la place ainsi)
+      const face = this.add.image(0, top + (CARD.w + 4) / 2, `tete-${unit.defId}`).setDisplaySize(CARD.w + 4, CARD.w + 4);
       const mask = this.make.graphics({}, false).fillRoundedRect(x - CARD.w / 2, y + top, CARD.w, CARD.face, { tl: CARD.r, tr: CARD.r, bl: 0, br: 0 });
       face.setMask(mask.createGeometryMask());
       const frame = this.add.image(0, 0, 'hud-card-frame').setDisplaySize(CARD.w + 16, CARD.h + 16);
@@ -244,13 +228,18 @@ export class BattleScene extends FightScene {
       const hp = this.add.image(0, CARD.h / 2 - 34, 'hud-hp').setDisplaySize(108, 14);
       const en = this.add.image(0, CARD.h / 2 - 16, 'hud-en').setDisplaySize(108, 8);
       const bars = this.add.graphics();
-      card.add([glow, bg, face, frame, name, hp, en, bars]);
-      this.tweens.add({ targets: glow, alpha: 0.4, yoyo: true, repeat: -1, duration: 420 });
+      const rim = this.add.image(0, 0, 'hud-card-rim').setDisplaySize(gs.w, gs.h).setVisible(false);
+      const spark = this.add.image(0, 0, 'hud-spark').setDisplaySize(36, 36).setVisible(false).setBlendMode(Phaser.BlendModes.ADD);
+      card.add([glow, bg, face, frame, name, hp, en, bars, rim, spark]);
+      // la lueur pulse doucement : le halo respire (plus fort, un peu plus large), le liseré brille à contretemps
+      this.tweens.add({ targets: glow, alpha: { from: 0.55, to: 1 }, scaleX: { from: glow.scaleX, to: glow.scaleX * 1.035 },
+        scaleY: { from: glow.scaleY, to: glow.scaleY * 1.025 }, yoyo: true, repeat: -1, duration: 650, ease: 'Sine.easeInOut' });
+      this.tweens.add({ targets: rim, alpha: { from: 1, to: 0.6 }, yoyo: true, repeat: -1, duration: 650, ease: 'Sine.easeInOut' });
       card.setSize(CARD.w, CARD.h).setInteractive({ useHandCursor: true }).on('pointerdown', () => {
         if (this.paused) return;
         if (this.battle.requestSkill(unit.id)) this.tweens.add({ targets: card, scale: 0.93, yoyo: true, duration: 90 });
       });
-      this.portraits.push({ unit, x, y, bars, glow, card, face });
+      this.portraits.push({ unit, x, y, bars, glow, rim, spark, card, face });
     });
   }
 
@@ -299,7 +288,15 @@ export class BattleScene extends FightScene {
     for (const p of this.portraits) {
       const u = p.unit;
       const ready = u.hp > 0 && u.energy >= ENERGY_MAX;
-      p.glow.setVisible(ready && !this.battle.auto);
+      // l'attaque spéciale est prête (jauge pleine) : la carte s'entoure de sa lueur, en AUTO aussi ; elle s'éteint dès
+      // que l'attaque est lancée (l'énergie retombe). Un éclat fait le tour du liseré en 1,6 s.
+      p.glow.setVisible(ready);
+      p.rim.setVisible(ready);
+      p.spark.setVisible(ready);
+      if (ready) {
+        const [sx, sy] = cardRimPoint(this.time.now / 1600);
+        p.spark.setPosition(sx, sy);
+      }
       p.card.setAlpha(u.hp > 0 ? 1 : 0.45);
       p.face.setTint(u.hp > 0 ? 0xffffff : 0x8a87a3);
       p.bars.clear();

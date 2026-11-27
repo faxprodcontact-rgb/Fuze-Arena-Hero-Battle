@@ -1,12 +1,16 @@
 // Le tirage (refait de zéro le 26/11/2026, demande du propriétaire : « qu'ils n'arrivent plus en mode carte, mais en
-// mode héros invoqué ; refais les animations de zéro, le portail aussi »).
+// mode héros invoqué ; refais les animations de zéro, le portail aussi »). Repris le 27/11 : le portail arrive d'abord et
+// s'installe au premier plan (0), le tirage ne commence qu'ensuite ; tout est un peu plus lent, et plus spectaculaire
+// selon la rareté (Commun sobre ; Rare un éclat ; Épique plus long, la couleur monte ; Légendaire : montée en tension,
+// l'écran s'assombrit, le sol gronde, un éclair frappe, une onde, des étincelles d'or et de son élément, sortie lente).
 // Le portail (le même que dans l'onglet) est posé sur l'estrade ; les héros sortent du tourbillon et se posent devant lui.
+// 0. Le portail s'avance depuis l'onglet, se pose (une onde de poussière à ses pieds) et reste calme un instant.
 // 1. Le portail se charge : des grains de lumière filent vers lui en spirale, et sa couleur monte d'un cran par rareté
 //    gagnée (argent, bleu, violet, or) : on devine ce qui arrive avant de le voir.
 // 2. Il éclate : un éclair, une onde, des grains projetés en courbes ; pour un ×10, dix perles de la couleur de chaque
 //    héros filent vers la rangée du haut.
 // 3. Chaque héros sort du portail : une colonne de lumière descend sur l'estrade, sa silhouette de lumière grandit, puis
-//    le vrai héros (pixel art HD, net) apparaît et respire, entouré d'une aura de sa rareté (Épique : deux croissants
+//    le vrai héros (son dessin vectoriel, public/art/vecto/<id>.webp) apparaît et respire, entouré d'une aura de sa rareté (Épique : deux croissants
 //    qui tournent ; Légendaire : un temps d'attente doré, l'écran tremble, une pluie d'étincelles d'or).
 //    Dessous : rareté, élément, rôle, nom, étoiles, et « Nouveau ! » ou le nombre d'exemplaires possédés.
 // 4. ×10 : les héros sortent l'un après l'autre (du moins rare au plus rare), puis un récapitulatif : les dix héros en
@@ -16,7 +20,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'preact/hooks';
 import { heroDef } from '../../../core/data/heroes';
 import { RARITIES, type Hero, type Rarity } from '../../../core/types';
-import { RARITY_COLOR } from '../../art';
+import { FEATURED_BANNER, type SummonKind } from '../../../core/data/summon';
+import { ELEMENT_COLOR, RARITY_COLOR } from '../../art';
 import { t } from '../../i18n';
 import { newlyFound, summon, summonCost } from '../../state/actions';
 import { useGame } from '../../state/store';
@@ -28,30 +33,36 @@ import { Dais, GATE_VIEW, Gate } from './summon-gate';
 import { SummonFx } from './summon-fx';
 import './invoquer.css';
 
-type Kind = 'normal' | 'basic';
+type Kind = SummonKind;
 
 /** La dernière invocation lancée depuis l'onglet (pour « encore une fois ») ; rien pour les fragments ou la pub. */
 let lastCast: { kind: Kind; count: 1 | 10 } | null = null;
 export function rememberCast(c: { kind: Kind; count: 1 | 10 } | null): void { lastCast = c; }
 
-/** Les couleurs du portail et des grains : [principale, claire, profonde] ; la base, puis une par rareté. */
-const TONES: Record<Kind | Rarity, [string, string, string]> = {
-  normal: ['#9b5cff', '#6fe3ff', '#2a145e'],
+/** Les couleurs du portail et des grains : [principale, claire, profonde] ; une par portail (sa lumière au repos : bleu
+ * calme pour le simple, violet et or pour le normal, celle du groupe mis en avant pour le spécial), puis une par rareté. */
+const TONES: Record<Kind | Rarity, readonly [string, string, string]> = {
+  normal: ['#9b5cff', '#ffd36a', '#2a145e'],
   basic: ['#3b95ff', '#a9f3ff', '#12306b'],
+  featured: FEATURED_BANNER.tone,
   common: ['#b9c2da', '#ffffff', '#3a3f5c'],
   rare: ['#2f8cff', '#8fe0ff', '#0f2f72'],
   epic: ['#a35cff', '#f0a8ff', '#35107a'],
   legendary: ['#ffb21f', '#fff0a0', '#7a3a00'],
 };
 const toneVars = (k: Kind | Rarity) => ({ '--g-a': TONES[k][0], '--g-b': TONES[k][1], '--g-deep': TONES[k][2] });
+/** Les couleurs d'un portail au repos (posées sur l'onglet, screens/summon.tsx). */
+export const kindTone = (k: Kind) => toneVars(k);
 
-/** Le rythme (ms). La charge dure plus longtemps pour une belle rareté ; un Légendaire se fait attendre (PRE). */
-const CHARGE = [650, 900, 1150, 1450];
-/** Le moment où la silhouette de lumière devient le héros (plus vite pour un Commun, pour garder le rythme). */
-const MAT = [250, 290, 420, 420];
-const PRE_LEGEND = 520;
-/** Combien de temps un héros reste seul à l'écran avant le suivant (×10), selon sa rareté. */
-const DWELL = [1050, 1150, 1700, 2900];
+/** Le rythme (ms). Le portail arrive et se pose (ARRIVE) avant tout ; la charge dure plus longtemps pour une belle rareté. */
+const ARRIVE = 1050;
+const CHARGE = [1000, 1350, 1800, 2400];
+/** L'attente avant que le héros sorte : un Épique fait monter sa couleur, un Légendaire la tension (puis l'éclair). */
+const PRE = [0, 0, 420, 1450];
+/** Le moment où la silhouette de lumière devient le héros (après PRE) ; un Légendaire sort lentement, en majesté. */
+const MAT = [340, 440, 660, 900];
+/** Combien de temps un héros reste seul à l'écran avant le suivant (×10), selon sa rareté (PRE compris). */
+const DWELL = [1350, 1650, 2500, 4300];
 
 const rankOf = (h: Hero) => RARITIES.indexOf(heroDef(h.defId).rarity);
 
@@ -80,7 +91,10 @@ function HeroShow({ hero, instant }: { hero: Hero; instant?: boolean }) {
   const d = heroDef(hero.defId);
   const r = RARITIES.indexOf(d.rarity);
   return (
-    <div class={`sr-show sr-r${r}${instant ? ' sr-instant' : ''}`} style={{ '--rar': RARITY_COLOR[d.rarity], '--pre': `${!instant && r === 3 ? PRE_LEGEND : 0}ms`, '--mat': `${instant ? 0 : MAT[r]}ms`, ...toneVars(d.rarity) } as never}>
+    <div class={`sr-show sr-r${r}${instant ? ' sr-instant' : ''}`}
+      style={{ '--rar': RARITY_COLOR[d.rarity], '--el': ELEMENT_COLOR[d.element], '--pre': `${instant ? 0 : PRE[r]}ms`, '--mat': `${instant ? 0 : MAT[r]}ms`, ...toneVars(d.rarity) } as never}>
+      {r === 3 && !instant && <><span class="sr-strike" /><LegendBolt /></>}
+      {r >= 1 && !instant && <span class="sr-ring" />}
       <span class="sr-beam" />
       <span class="sr-aura" />
       {r >= 2 && (
@@ -94,11 +108,25 @@ function HeroShow({ hero, instant }: { hero: Hero; instant?: boolean }) {
         </svg>
       )}
       <div class="sr-hero">
-        <HeroFigure defId={hero.defId} class="sr-real" />
-        {!instant && <HeroFigure defId={hero.defId} class="sr-ghost" />}
+        <HeroFigure defId={hero.defId} class="sr-real" vecto />
+        {!instant && <HeroFigure defId={hero.defId} class="sr-ghost" vecto />}
       </div>
       {r === 3 && !instant && <span class="sr-wave" />}
     </div>
+  );
+}
+
+/** L'éclair du Légendaire : une ligne courbe (jamais droite) qui tombe du haut de l'écran sur l'estrade, deux branches. */
+function LegendBolt() {
+  // repère 100 × 300 étiré sur la hauteur de la scène ; l'épaisseur des traits ne s'étire pas (non-scaling-stroke)
+  const main = 'M58 -4 Q44 30 56 52 T46 104 Q60 128 50 150 T56 204 Q44 232 52 258 T50 300';
+  const br1 = 'M53 96 Q70 110 66 128 T80 160';
+  const br2 = 'M51 182 Q36 196 40 214 T28 236';
+  const line = (d: string, w: number, c: string, o = 1) => <path d={d} fill="none" stroke={c} stroke-width={w} stroke-linecap="round" stroke-linejoin="round" opacity={o} vector-effect="non-scaling-stroke" />;
+  return (
+    <svg class="sr-bolt" viewBox="0 0 100 300" preserveAspectRatio="none" aria-hidden="true">
+      {[main, br1, br2].map((d, i) => <g opacity={i ? 0.8 : 1}>{line(d, i ? 9 : 16, 'var(--el)', 0.35)}{line(d, i ? 4 : 7, '#ffd34a')}{line(d, i ? 1.6 : 2.8, '#fff')}</g>)}
+    </svg>
   );
 }
 
@@ -109,7 +137,7 @@ function HeroInfo({ hero, instant }: { hero: Hero; instant?: boolean }) {
   const r = RARITIES.indexOf(d.rarity);
   const owned = s.heroes.filter((h) => h.defId === hero.defId).length;
   return (
-    <div class={`sr-info sr-r${r}${instant ? ' sr-instant' : ''}`} style={{ '--rar': RARITY_COLOR[d.rarity], '--pre': `${!instant && r === 3 ? PRE_LEGEND : 0}ms`, '--mat': `${instant ? 0 : MAT[r]}ms` } as never}>
+    <div class={`sr-info sr-r${r}${instant ? ' sr-instant' : ''}`} style={{ '--rar': RARITY_COLOR[d.rarity], '--pre': `${instant ? 0 : PRE[r]}ms`, '--mat': `${instant ? 0 : MAT[r]}ms` } as never}>
       <div class="sr-tags">
         <span class="sr-rarity">{t(`rarity.${d.rarity}`)}</span>
         <span class="sr-chip"><Icon name={d.element} size={20} /></span>
@@ -135,7 +163,9 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
   const best = rankOf(order[order.length - 1]!);
   const base: Kind = lastCast?.kind ?? 'normal';
 
-  const [phase, setPhase] = useState<'charge' | 'show' | 'recap'>('charge');
+  const [phase, setPhase] = useState<'arrive' | 'charge' | 'show' | 'recap'>('arrive');
+  /** Le Légendaire se fait attendre : la tension (écran sombre, portail qui s'emballe, le sol qui gronde). */
+  const [tense, setTense] = useState(false);
   const [idx, setIdx] = useState(0);
   const [tease, setTease] = useState(-1);
   const [ready, setReady] = useState(false);
@@ -185,18 +215,26 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
     return g ? { x: g.x + g.width / 2, y: g.y + (g.height * GATE_VIEW.cy) / GATE_VIEW.h, r: (g.width * GATE_VIEW.ring) / GATE_VIEW.w } : null;
   };
 
+  // 0. le portail arrive et se pose au premier plan ; rien d'autre ne bouge tant qu'il n'est pas installé
+  useEffect(() => {
+    if (phase !== 'arrive') return;
+    const id = window.setTimeout(() => setPhase('charge'), ARRIVE);
+    return () => clearTimeout(id);
+  }, [phase]);
+
   // 1. la charge : les grains aspirés, la couleur qui monte d'un cran par rareté gagnée
   useEffect(() => {
     if (phase !== 'charge') return;
     const total = CHARGE[best]!;
     const g = gateCenter();
-    if (g) fx.current?.charge(g.x, g.y, g.r * 1.5, [TONES[base][0], TONES[base][1], '#ffffff'], total - 120);
+    const extra = base === 'featured' ? FEATURED_BANNER.sparks : [];
+    if (g) fx.current?.charge(g.x, g.y, g.r * 1.5, [TONES[base][0], TONES[base][1], '#ffffff', ...extra], total - 120);
     const ids: number[] = [];
     for (let k = 0; k <= best; k++) {
       ids.push(window.setTimeout(() => {
         setTease(k);
         const gate = root.current?.querySelector<HTMLElement>('.sr-gate .sg-hole');
-        gate?.animate?.([{ scale: '1' }, { scale: `${1.08 + k * 0.04}` }, { scale: '1' }], { duration: 360, easing: 'cubic-bezier(.2,1.6,.4,1)' });
+        gate?.animate?.([{ scale: '1' }, { scale: `${1.08 + k * 0.05}` }, { scale: '1' }], { duration: 420 + k * 60, easing: 'cubic-bezier(.2,1.6,.4,1)' });
         if (k > 0) shake(stage.current, k - 1);
       }, total * (0.18 + (0.62 * k) / Math.max(1, best))));
     }
@@ -209,33 +247,61 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
     const c = TONES[RARITIES[best]!];
     fx.current?.clear();
     if (g) fx.current?.burst(g.x, g.y, [c[0], c[1], '#ffffff'], 70 + best * 30, 480 + best * 90);
-    shake(stage.current, best);
+    shake(stage.current, Math.min(best, 2));
     setTease(best);
     setPhase('show');
   };
 
-  // 2. un héros sort : grains rassemblés dans sa silhouette, puis (×10) le suivant au bout d'un moment
+  // 2. un héros sort : grains rassemblés dans sa silhouette, puis (×10) le suivant au bout d'un moment.
+  //    Rare : un éclat de grains, une onde bleue sur l'estrade. Épique : la couleur monte (PRE), un éclat plus grand, la
+  //    scène vibre. Légendaire : la tension (PRE : l'écran s'assombrit, le portail s'emballe, le sol gronde de plus en
+  //    plus fort, des grains d'or et de son élément aspirés), l'éclair, l'onde, puis le héros sort lentement, en majesté,
+  //    sous une pluie d'étincelles d'or et de son élément.
   useEffect(() => {
     if (phase !== 'show') return;
     const h = order[idx]!;
+    const d = heroDef(h.defId);
     const r = rankOf(h);
     const c = TONES[RARITIES[r]!];
-    const pre = r === 3 ? PRE_LEGEND : 0;
+    const el = ELEMENT_COLOR[d.element];
+    const pre = PRE[r]!, mat = MAT[r]!;
     const ids: number[] = [];
     const later = (ms: number, fn: () => void) => ids.push(window.setTimeout(fn, ms));
+    const W = root.current?.clientWidth ?? 390, H = root.current?.clientHeight ?? 700;
+    if (r === 3) {
+      setTense(true);
+      const g = gateCenter();
+      if (g) fx.current?.charge(g.x, g.y, g.r * 1.8, ['#ffd34a', '#fff0a0', el, '#ffffff'], pre - 200);
+      [0, 380, 700, 960, 1180].forEach((ms, k) => later(ms, () => shake(stage.current, Math.min(2, k * 0.5))));
+      // l'éclair tombe juste avant la sortie : l'écran se rallume d'un coup
+      later(pre - 140, () => { setTense(false); shake(root.current, 3); });
+    }
     later(pre + 40, () => {
       const box = where('.sr-show .sr-real');
-      if (box) fx.current?.converge(box.x, box.y, box.width, box.height, c[0], 24 + r * 12);
+      if (box) fx.current?.converge(box.x, box.y, box.width, box.height, r === 3 ? el : c[0], 24 + r * 14);
     });
-    later(pre + MAT[r]!, () => {
+    if (r === 3) later(pre, () => {
+      const g = gateCenter();
+      if (g) fx.current?.burst(g.x, g.y, ['#ffd34a', '#fff0a0', el, '#ffffff'], 120, 760);
+    });
+    later(pre + mat, () => {
       const box = where('.sr-show .sr-real'), dais = where('.sr-show .sr-dais');
-      if (dais) fx.current?.motes(dais.x + dais.width / 2, dais.y + dais.height * 0.3, dais.width * 0.5, c[1], one ? 60000 : DWELL[r]! - MAT[r]!, 8 + r * 4);
-      if (r >= 2 && box) fx.current?.burst(box.x + box.width / 2, box.y + box.height * 0.45, [c[0], c[1], '#ffffff'], r === 3 ? 80 : 36, r === 3 ? 620 : 420);
-      if (r === 3) { shake(stage.current, 3); fx.current?.rain(root.current?.clientWidth ?? 390, root.current?.clientHeight ?? 700, '#ffd34a', one ? 4000 : DWELL[3]! - MAT[3]!); }
+      if (dais) fx.current?.motes(dais.x + dais.width / 2, dais.y + dais.height * 0.3, dais.width * 0.5, r === 3 ? el : c[1], one ? 60000 : DWELL[r]! - pre - mat, 8 + r * 5);
+      if (r >= 1 && box) {
+        const cols = r === 3 ? ['#ffd34a', el, '#fff0a0', '#ffffff'] : [c[0], c[1], '#ffffff'];
+        fx.current?.burst(box.x + box.width / 2, box.y + box.height * 0.45, cols, [0, 26, 48, 96][r]!, [0, 340, 460, 680][r]!);
+      }
+      if (r === 2) shake(stage.current, 1);
+      if (r === 3) {
+        shake(stage.current, 2);
+        const left = one ? 5200 : DWELL[3]! - pre - mat;
+        fx.current?.rain(W, H, '#ffd34a', left);
+        fx.current?.rain(W, H, el, left * 0.7);
+      }
     });
-    if (one) later(pre + MAT[r]! + 380, () => setReady(true));
-    else later(pre + DWELL[r]!, () => next());
-    return () => ids.forEach(clearTimeout);
+    if (one) later(pre + mat + 420, () => setReady(true));
+    else later(DWELL[r]!, () => next());
+    return () => { ids.forEach(clearTimeout); setTense(false); };
   }, [phase, idx]);
 
   const next = () => {
@@ -261,13 +327,13 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
 
   const tap = () => {
     if (focus !== null) { setFocus(null); return; }
-    if (phase === 'charge') burstNow();
+    if (phase === 'arrive' || phase === 'charge') burstNow();
     else if (phase === 'show') {
       if (one) { if (!ready) { fx.current?.clear(); setReady(true); } }
       else next();
     }
   };
-  const skip = (e: Event) => { e.stopPropagation(); if (phase === 'charge') burstNow(); toRecap(); };
+  const skip = (e: Event) => { e.stopPropagation(); setTense(false); toRecap(); };
 
   const again = (e: Event) => {
     e.stopPropagation();
@@ -279,9 +345,9 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
 
   const shown = phase === 'show' ? order[idx]! : null;
   const focused = focus !== null ? recap.find((h) => h.uid === focus) ?? null : null;
-  const tone: Kind | Rarity = phase === 'charge' ? (tease < 0 ? base : RARITIES[tease]!) : shown ? heroDef(shown.defId).rarity : focused ? heroDef(focused.defId).rarity : RARITIES[best]!;
+  const tone: Kind | Rarity = phase === 'arrive' || phase === 'charge' ? (tease < 0 ? base : RARITIES[tease]!) : shown ? heroDef(shown.defId).rarity : focused ? heroDef(focused.defId).rarity : RARITIES[best]!;
   return (
-    <div ref={root} class={`sr-screen sr-p-${phase}${one ? ' sr-one' : ' sr-many'}${ready ? ' sr-ready' : ''}${focused ? ' sr-focus' : ''}`}
+    <div ref={root} class={`sr-screen sr-p-${phase}${one ? ' sr-one' : ' sr-many'}${ready ? ' sr-ready' : ''}${focused ? ' sr-focus' : ''}${tense ? ' sr-tense' : ''}`}
       style={toneVars(tone) as never} onClick={tap}>
       <h2 class="sr-only">{t('summon.normal')}</h2>
       <div class="sr-top">
@@ -298,8 +364,9 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
 
       <div class="sr-stage" ref={stage}>
         {/* le portail, posé sur l'estrade : les héros en sortent et se posent devant lui */}
-        <Gate uid="rv" charging={phase === 'charge'} open={phase !== 'charge'} class="sr-gate" />
+        <Gate uid="rv" charging={phase === 'charge' || tense} open={phase === 'show' || phase === 'recap'} class="sr-gate" />
         <Dais uid="rv" class="sr-dais" />
+        {phase === 'arrive' && <span class="sr-land" />}
         {phase === 'charge' && <span class="sr-charge-ring" />}
         {phase === 'show' && shown && <HeroShow hero={shown} key={`s${idx}`} />}
         {phase === 'recap' && !focused && (
@@ -312,7 +379,7 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
                   <span class="sr-cell-fig">
                     <span class="sr-cell-glow" />
                     <span class="sr-cell-plinth" />
-                    <HeroFigure defId={h.defId} />
+                    <HeroFigure defId={h.defId} vecto />
                     {newlyFound.has(h.uid) && <span class="sr-cell-new">{t('new')}</span>}
                   </span>
                   <span class="sr-cell-name">{d.name}</span>
@@ -343,7 +410,8 @@ function Reveal({ heroes, onAgain }: { heroes: Hero[]; onAgain: (h: Hero[]) => v
           <span class="sr-btn-n">{t('ok')}</span>
         </button>
       </div>
-      <span class="sr-flash" key={`fl${phase === 'charge' ? 0 : 1}`} />
+      <span class="sr-dim" />
+      <span class="sr-flash" key={`fl${phase === 'arrive' || phase === 'charge' ? 0 : 1}`} />
       <canvas class="sr-fx" ref={canvas} />
     </div>
   );

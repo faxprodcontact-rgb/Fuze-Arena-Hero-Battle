@@ -34,9 +34,10 @@ export function Figure({ id, class: cls = '' }: { id: string; class?: string }) 
   return <span class={`px-fit ${cls}`} style={{ aspectRatio: `${w} / ${h}` }}><Strip id={id} n={n} ms={ms} /></span>;
 }
 
-export function HeroFigure({ defId, class: cls = '' }: { defId: string; class?: string }) {
+/** `vecto` : toujours le dessin vectoriel quand il existe (tirage des invocations), même sans `?vecto=1`. */
+export function HeroFigure({ defId, class: cls = '', vecto = false }: { defId: string; class?: string; vecto?: boolean }) {
   const art = heroArt(defId);
-  const v = vectoFig(art);
+  const v = vectoFig(art, vecto);
   if (v) {
     // essai ?vecto=1 : le dessin vectoriel lisse, même échelle et mêmes pieds que le pixel art (il respire par le CSS)
     const left = 53 - ((v.fx * BOX_PER_PX) / 200) * 100, top = 95 - ((v.fy * BOX_PER_PX) / 240) * 100;

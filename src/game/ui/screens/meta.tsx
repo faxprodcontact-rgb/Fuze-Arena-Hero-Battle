@@ -19,7 +19,7 @@ import { Art, Bar, Btn, Cur, HeroCard, Icon, ItemIcon, Modal, Sign, Tabs } from 
 import { close, open, toast } from '../nav';
 import { Halo } from '../anim';
 import { AvatarRow } from './avatar';
-import { GemsTab, OffersTab, PassTab } from '../sections/boutique-offres';
+import { GemsTab, OffersTab, PassTab, RedScrollOffer } from '../sections/boutique-offres';
 import { ModeShop } from '../sections/boutiques-modes';
 import '../sections/boutique.css';
 import { artUrl } from '../../art-url';
@@ -104,6 +104,7 @@ export function ShopModal({ tab: initial = 'offers' }: { tab?: 'offers' | 'pass'
       {tab === 'pass' && <PassTab onBuy={() => simulatedBuy('pass')} />}
       {tab === 'exchange' && (
         <div class="bq-ex">
+          <RedScrollOffer />
           <ModeShop kind="arena" items={ARENA_SHOP} league={[...ARENA_LEAGUES].reverse().find((l) => s.arena.points >= l.from)?.id} compact />
           <ModeShop kind="guild" items={GUILD_SHOP} compact />
         </div>

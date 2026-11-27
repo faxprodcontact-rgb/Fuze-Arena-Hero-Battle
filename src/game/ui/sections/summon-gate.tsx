@@ -12,6 +12,7 @@
 //   couleur de la rareté pendant le tirage) ; la pierre, elle, ne change jamais.
 // Repère du portail : viewBox « -150 -150 300 278 », centre de l'anneau en (0, 0), le sol (dessous du socle) en y = 128,
 // c'est-à-dire tout en bas de la boîte : on pose la boîte sur le dessus de l'estrade.
+import { FEATURED_BANNER, type SummonKind } from '../../../core/data/summon';
 import { spark } from '../portal';
 
 const f = (n: number) => n.toFixed(1);
@@ -376,15 +377,27 @@ export function Dais({ uid, crystals = false, class: cls = '' }: { uid: string; 
 }
 
 /** La scène de l'onglet : l'estrade, le portail posé dessus, des grains qui montent. Même taille et même place pour les
- * deux portails : seule la couleur change (elle glisse), avec une onde de lumière au changement. */
-export function GateStage({ kind, casting }: { kind: 'normal' | 'basic'; casting: boolean }) {
+ * trois portails ; au repos chacun a sa lumière (couleurs posées par le CSS, ou par FEATURED_BANNER pour le spécial),
+ * avec une onde de lumière au changement. Le portail spécial : quatre éclats des éléments tournent autour de l'anneau (ses
+ * héros mis en avant ne se montrent que dans les chances, demande du propriétaire du 27/11).
+ * `casting` : le portail s'avance vers nous (le tirage s'ouvre ensuite par-dessus, summon-reveal.tsx). */
+export function GateStage({ kind, casting }: { kind: SummonKind; casting: boolean }) {
+  const featured = kind === 'featured';
   return (
     <div class={`sg-stage sg-kind-${kind}${casting ? ' sg-casting' : ''}`}>
       <Dais uid="tab" crystals class="sg-stage-dais" />
-      <Gate uid="tab" charging={casting} class="sg-stage-gate" />
+      <Gate uid="tab" class="sg-stage-gate" />
+      {featured && (
+        <span class="sg-orbit" aria-hidden="true">
+          {FEATURED_BANNER.sparks.map((c, i) => <i style={{ '--c': c, '--i': i } as never}><b style={{ animationDelay: `${-i * 0.55}s` }} /></i>)}
+        </span>
+      )}
       <span class="sg-swap" key={kind} />
       <span class="sg-motes" aria-hidden="true">
-        {Array.from({ length: 12 }, (_, i) => <i style={{ left: `${10 + ((i * 37) % 80)}%`, animationDelay: `${-i * 0.47}s`, animationDuration: `${3.2 + (i % 4) * 0.6}s` }} />)}
+        {Array.from({ length: 12 }, (_, i) => (
+          <i style={{ left: `${10 + ((i * 37) % 80)}%`, animationDelay: `${-i * 0.47}s`, animationDuration: `${3.2 + (i % 4) * 0.6}s`,
+            ...(featured ? { '--mote': FEATURED_BANNER.sparks[i % FEATURED_BANNER.sparks.length] } : {}) } as never} />
+        ))}
       </span>
     </div>
   );

@@ -1,11 +1,11 @@
 // Invocations : tirage de la rareté, puis d'un héros de cette rareté.
-import { HEROES } from './data/heroes';
-import { BASIC_SUMMON_RATES, LEGENDARY_PITY, SUMMON_RATES } from './data/summon';
+import { HEROES, heroDef } from './data/heroes';
+import { BASIC_SUMMON_RATES, FEATURED_BANNER, LEGENDARY_PITY, SUMMON_RATES, type FeaturedBanner } from './data/summon';
 import { pick, type Rng } from './rng';
 import { RARITIES, type HeroDef, type Rarity } from './types';
 
 export interface SummonState {
-  /** Invocations faites depuis le dernier Légendaire. */
+  /** Invocations faites depuis le dernier Légendaire (le même compteur pour le portail normal et le spécial). */
   pity: number;
 }
 
@@ -22,11 +22,27 @@ export function rollRarity(rng: Rng): Rarity {
   return 'common';
 }
 
-export function summonOne(state: SummonState, rng: Rng): HeroDef {
+/** La rareté d'une invocation normale ou spéciale (avec le Légendaire garanti). */
+function rollWithPity(state: SummonState, rng: Rng): Rarity {
   state.pity += 1;
   const rarity = state.pity >= LEGENDARY_PITY ? 'legendary' : rollRarity(rng);
   if (rarity === 'legendary') state.pity = 0;
-  return pick(rng, BY_RARITY.get(rarity) ?? []);
+  return rarity;
+}
+
+export function summonOne(state: SummonState, rng: Rng): HeroDef {
+  return pick(rng, BY_RARITY.get(rollWithPity(state, rng)) ?? []);
+}
+
+/** Les Légendaires du portail spécial (ceux de la liste qui existent et sont bien Légendaires). */
+export function featuredLegends(banner: FeaturedBanner = FEATURED_BANNER): HeroDef[] {
+  return banner.heroes.map(heroDef).filter((h) => h.rarity === 'legendary');
+}
+
+/** Invocation spéciale : comme la normale, mais un Légendaire est toujours un des héros mis en avant. */
+export function summonFeatured(state: SummonState, rng: Rng, banner: FeaturedBanner = FEATURED_BANNER): HeroDef {
+  const rarity = rollWithPity(state, rng);
+  return pick(rng, rarity === 'legendary' ? featuredLegends(banner) : BY_RARITY.get(rarity) ?? []);
 }
 
 /** Invocation simple : un Commun ou un Rare. */

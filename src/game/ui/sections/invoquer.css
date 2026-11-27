@@ -82,9 +82,24 @@
    L'onglet
    ====================================================================================================================== */
 html .adv-scroll > .screen.summon { gap: 8px; padding-bottom: 2px; }
-html .screen.summon { --g-a: #9b5cff; --g-b: #6fe3ff; --g-deep: #2a145e; transition: --g-a 0.4s, --g-b 0.4s, --g-deep 0.4s; }
-/* seule la couleur du portail change d'un portail à l'autre (elle glisse) : violet, ou saphir pour l'invocation simple */
-html .screen.summon.sum-kind-basic { --g-a: #2f6bff; --g-b: #8fe2ff; --g-deep: #0d1d5c; }
+html .screen.summon { --g-a: #9b5cff; --g-b: #ffd36a; --g-deep: #2a145e; transition: --g-a 0.4s, --g-b 0.4s, --g-deep 0.4s; }
+/* chaque portail a sa lumière au repos (elle glisse d'un portail à l'autre ; les vraies valeurs viennent de TONES,
+   summon-reveal.tsx, posées sur l'écran) : bleu calme pour le simple, violet et or pour le normal, la couleur du groupe
+   mis en avant pour le spécial (aujourd'hui : braise et or, avec un éclat de chacun des 4 éléments) */
+html .screen.summon.sum-kind-basic { --g-a: #3b95ff; --g-b: #a9f3ff; --g-deep: #12306b; }
+/* le simple est calme : il tourne lentement, sans éclair ; le spécial couve comme une braise */
+.sg-kind-basic .sg-sw1 { animation-duration: 16s; } .sg-kind-basic .sg-sw2 { animation-duration: 9s; } .sg-kind-basic .sg-sw3 { animation-duration: 5s; }
+.sg-kind-basic .sg-bolt { display: none; }
+.sg-kind-basic .sg-tunnel { animation-duration: 3.6s; }
+.sg-kind-basic .sg-aura { animation-duration: 5s; }
+.sg-kind-featured .sg-core { animation-duration: 1.2s; }
+.sg-kind-featured .sg-ember { animation-duration: 2s; }
+/* la lumière du portail sur la scène, derrière lui (un dégradé, jamais de flou) */
+.sg-stage::before { content: ''; position: absolute; left: -12%; right: -12%; top: -8%; height: 104%; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--g-a) 34%, transparent), color-mix(in srgb, var(--g-a) 12%, transparent) 55%, transparent);
+  animation: sg-breathe 4s ease-in-out infinite; }
+.sg-kind-basic::before { opacity: 0.6; animation-duration: 6s; }
+.sg-kind-featured::before { background: radial-gradient(closest-side, color-mix(in srgb, var(--g-b) 30%, transparent), color-mix(in srgb, var(--g-a) 22%, transparent) 50%, transparent); }
 
 /* en haut : le choix du portail (deux onglets dans un rail de pierre ; l'ouvert est une dalle allumée), le nom du portail choisi */
 .sum-head { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 4px; }
@@ -113,11 +128,24 @@ html .screen.summon .sum-stage { position: relative; flex: 1; min-height: 0; dis
 .sg-motes i { position: absolute; bottom: 20%; width: 5px; height: 5px; border-radius: 50%; background: #fff;
   box-shadow: 0 0 6px 2px color-mix(in srgb, var(--g-b) 80%, transparent); opacity: 0; animation: sg-mote 3.6s linear infinite; }
 @keyframes sg-mote { 0% { translate: 0 0; opacity: 0; } 15% { opacity: 0.9; } 100% { translate: 8px -170px; opacity: 0; scale: 0.4; } }
-/* l'invocation part : le portail s'emballe, la colonne s'allume, un voile clair monte */
+.sg-kind-featured .sg-motes i { background: #fff6dc; box-shadow: 0 0 6px 2px color-mix(in srgb, var(--mote, var(--g-b)) 85%, transparent); }
+/* l'invocation part : le portail s'avance vers nous (il ne s'emballe pas : le tirage commence une fois qu'il est installé
+   au premier plan, summon-reveal.tsx), l'estrade et les cristaux s'effacent, un voile sombre monte */
+.sg-casting .sg-stage-gate { animation: sg-forward 0.38s cubic-bezier(.5, 0, .8, .6) forwards; transform-origin: 50% 60%; }
+@keyframes sg-forward { to { scale: 1.16; translate: 0 -3%; } }
+.sg-casting .sg-stage-dais, .sg-casting .sg-orbit { transition: opacity 0.3s; opacity: 0.3; }
 .sg-casting::after { content: ''; position: absolute; left: -15%; right: -15%; top: -12%; height: 112%; pointer-events: none; border-radius: 50%;
-  background: radial-gradient(closest-side, #fff 0%, color-mix(in srgb, var(--g-b) 60%, transparent) 40%, transparent 70%);
-  animation: sg-cast 0.42s ease-in forwards; }
-@keyframes sg-cast { from { opacity: 0; scale: 0.4; } to { opacity: 1; scale: 1.3; } }
+  background: radial-gradient(closest-side, transparent 30%, #07041a99 70%, transparent);
+  animation: sg-cast 0.38s ease-in forwards; }
+@keyframes sg-cast { from { opacity: 0; } to { opacity: 1; } }
+
+/* le portail spécial : quatre éclats des éléments qui tournent lentement autour de l'anneau (centre : 50 %, 43,6 %) */
+.sg-orbit { position: absolute; left: 50%; top: 43.6%; width: 78%; aspect-ratio: 1; translate: -50% -50%; pointer-events: none; animation: sg-spin 14s linear infinite; }
+.sg-orbit i { position: absolute; inset: 0; rotate: calc(var(--i) * 90deg + 45deg); }
+.sg-orbit b { position: absolute; left: 50%; top: 0; width: 13px; height: 13px; margin: -6.5px; border-radius: 50%;
+  background: radial-gradient(circle at 60% 40%, #fff 0 22%, var(--c) 55%, color-mix(in srgb, var(--c) 0%, transparent) 72%);
+  box-shadow: 0 0 10px 3px color-mix(in srgb, var(--c) 70%, transparent); animation: sg-orb-pulse 2.2s ease-in-out infinite; }
+@keyframes sg-orb-pulse { 50% { scale: 1.35; } }
 
 /* les petits boutons ronds posés dans les coins de la scène */
 .sum-corner { position: absolute; top: 2px; z-index: 2; }
@@ -180,7 +208,11 @@ html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum
   background: radial-gradient(60% 40% at 50% 62%, color-mix(in srgb, var(--g-b) 18%, transparent), transparent 70%); }
 .sr-fx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 5; }
 .sr-flash { position: absolute; inset: 0; z-index: 6; pointer-events: none; background: #fff; opacity: 0; }
-.sr-screen:not(.sr-p-charge) .sr-flash { animation: sr-flash 0.55s ease-out; }
+.sr-p-show .sr-flash, .sr-p-recap .sr-flash { animation: sr-flash 0.55s ease-out; }
+/* Légendaire : la tension, l'écran s'assombrit sur les bords (un dégradé, jamais de flou) ; l'éclair le rallume d'un coup */
+.sr-dim { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; transition: opacity 0.12s ease-out;
+  background: radial-gradient(70% 50% at 50% 52%, transparent 0%, #05021acc 75%, #05021af2 100%); }
+.sr-tense .sr-dim { opacity: 1; transition: opacity 1.2s ease-in; }
 @keyframes sr-flash { 0% { opacity: 0.9; } 100% { opacity: 0; } }
 
 /* en haut : la rangée des héros à venir (×10) et le bouton « passer » */
@@ -198,9 +230,16 @@ html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum
 .sr-stage { position: relative; z-index: 2; flex: 1; min-height: 0; container-type: size; --dais-w: min(80cqw, 56cqh); }
 .sr-gate { position: absolute !important; left: 50%; bottom: calc(var(--dais-w) * 0.2111); width: calc(var(--dais-w) * 1.2); translate: -50% 0;
   transform-origin: 50% 100%; transition: opacity 0.4s; }
-.sr-p-charge .sr-gate { animation: sr-gate-in 0.4s cubic-bezier(.2, 1.4, .4, 1) backwards; }
-@keyframes sr-gate-in { from { scale: 0.7; opacity: 0; } }
-.sr-screen:not(.sr-p-charge) .sr-gate { opacity: 0.85; }
+/* 0. le portail arrive : il glisse vers nous, se pose (un léger rebond), une onde de poussière part de ses pieds ; il reste
+   calme jusqu'à la charge (summon-reveal.tsx : ARRIVE) */
+.sr-p-arrive .sr-gate { animation: sr-gate-arrive 0.82s cubic-bezier(.25, .9, .3, 1) backwards; }
+@keyframes sr-gate-arrive { 0% { scale: 0.78; translate: -50% -8%; opacity: 0.35; } 62% { scale: 1.025; translate: -50% 1%; opacity: 1; }
+  80% { scale: 0.995; translate: -50% 0; } 100% { scale: 1; translate: -50% 0; } }
+.sr-land { position: absolute; left: 50%; bottom: calc(var(--dais-w) * 0.2111); width: calc(var(--dais-w) * 0.7); aspect-ratio: 5 / 1; translate: -50% 50%; border-radius: 50%;
+  pointer-events: none; opacity: 0; z-index: 1; box-shadow: 0 0 0 3px color-mix(in srgb, var(--g-b) 60%, #fff), 0 0 18px 4px color-mix(in srgb, var(--g-a) 60%, transparent);
+  animation: sr-land 0.6s 0.5s ease-out; }
+@keyframes sr-land { 0% { opacity: 0.9; scale: 0.5; } 100% { opacity: 0; scale: 1.5; } }
+.sr-p-show .sr-gate, .sr-p-recap .sr-gate { opacity: 0.85; }
 /* le récapitulatif : le portail et son estrade s'effacent derrière la grille (un héros touché : le portail reste pâle) */
 .sr-screen.sr-p-recap .sr-gate { opacity: 0.16; }
 .sr-dais { transition: opacity 0.3s; }
@@ -214,7 +253,7 @@ html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum
   /* la taille du héros : --hero-px est calculé par summon-reveal.tsx (un pixel du dessin = un nombre entier de pixels de
      l'écran, pour qu'il reste net), sinon environ 72 % de la place (demande du 26/11 : « qu'il arrive moins gros ») */
   --hero-h: var(--hero-px, min(46cqh, 72cqw)); }
-.sr-dais { position: absolute; left: 50%; bottom: 0; width: var(--dais-w); translate: -50% 0; animation: sr-dais 0.4s cubic-bezier(.2, 1.3, .4, 1) backwards; }
+.sr-dais { position: absolute; left: 50%; bottom: 0; width: var(--dais-w); translate: -50% 0; animation: sr-dais 0.6s cubic-bezier(.2, 1.2, .4, 1) backwards; }
 @keyframes sr-dais { from { translate: -50% 30%; opacity: 0; } }
 /* le haut de la dalle (et donc les pieds du héros) est à 69 % de la hauteur de l'estrade, comptée depuis le bas */
 .sr-hero { position: absolute; left: 50%; bottom: calc(var(--dais-w) * 0.2108 - var(--hero-h) * 0.05); height: var(--hero-h); aspect-ratio: 200 / 240; translate: -53% 0; z-index: 2; }
@@ -224,19 +263,33 @@ html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum
 .sr-real.hfig { transform-origin: 53% 95%; }
 .sr-real .px-win { animation: hf-breathe 3.4s ease-in-out infinite; transform-origin: 50% 100%; }
 @keyframes sr-real { 0% { opacity: 0; filter: brightness(3.5) saturate(0); } 100% { opacity: 1; filter: none; } }
+.sr-r2 .sr-real { animation-duration: 0.6s; }
+.sr-r3 .sr-real { animation-duration: 0.9s; }
 /* la silhouette de lumière : le même dessin, tout blanc, cerclé de la couleur de la rareté ; elle sort du portail */
 .sr-ghost { transform-origin: 53% 45%; filter: drop-shadow(0 0 4px var(--rar)) drop-shadow(0 0 12px var(--rar)); opacity: 0;
   animation: sr-ghost-in calc(var(--mat) * 0.9) calc(var(--pre) + 40ms) cubic-bezier(.2, 1.1, .4, 1) forwards, sr-ghost-out 0.35s calc(var(--pre) + var(--mat)) ease-out forwards; }
 .sr-ghost .px-win { filter: none; }
 .sr-ghost img { filter: brightness(0) invert(1) !important; }
-@keyframes sr-ghost-in { 0% { opacity: 0; transform: translateY(-14%) scale(0.12); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+/* elle part du cœur du tourbillon (centre de l'anneau : 0,7231 × --dais-w du bas) et descend se poser sur l'estrade */
+@keyframes sr-ghost-in { 0% { opacity: 0; transform: translateY(calc(var(--hero-h) * 0.5 - var(--dais-w) * 0.5123)) scale(0.12); } 30% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+/* Légendaire : elle sort lentement, en majesté : elle grandit au cœur du portail, s'arrête un instant, puis descend */
+.sr-r3 .sr-ghost { animation-name: sr-ghost-legend, sr-ghost-out; animation-timing-function: cubic-bezier(.3, .8, .3, 1), ease-out; }
+@keyframes sr-ghost-legend { 0% { opacity: 0; transform: translateY(calc(var(--hero-h) * 0.5 - var(--dais-w) * 0.5123)) scale(0.08); }
+  45% { opacity: 1; transform: translateY(calc((var(--hero-h) * 0.5 - var(--dais-w) * 0.5123) * 0.85)) scale(0.62); }
+  60% { opacity: 1; transform: translateY(calc((var(--hero-h) * 0.5 - var(--dais-w) * 0.5123) * 0.8)) scale(0.66); }
+  100% { opacity: 1; transform: none; } }
 @keyframes sr-ghost-out { from { opacity: 1; } to { opacity: 0; transform: scale(1.06); } }
 /* la colonne de lumière qui descend du tourbillon sur l'estrade */
 .sr-beam { position: absolute; left: 50%; bottom: calc(var(--dais-w) * 0.2); height: calc(var(--dais-w) * 0.52); width: calc(var(--hero-h) * 0.55); translate: -50% 0; border-radius: 999px 999px 40% 40%;
   background: linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--rar) 55%, transparent) 45%, #ffffffd9 100%); filter: blur(10px);
   transform-origin: 50% 0; opacity: 0; animation: sr-beam 0.95s ease-out forwards; }
 @keyframes sr-beam { 0% { opacity: 0; transform: scaleX(0.15) scaleY(0.2); } 25% { opacity: 1; transform: scaleX(1) scaleY(1); } 100% { opacity: 0.18; transform: scaleX(0.7); } }
-.sr-r3 .sr-beam { animation: sr-beam-legend calc(var(--pre) + 1.2s) ease-out forwards; }
+.sr-r1 .sr-beam { animation-duration: 1.15s; }
+/* Épique : la colonne monte en couleur (blanche et fine, puis large et violette) avant la sortie */
+.sr-r2 .sr-beam { animation: sr-beam-epic calc(var(--pre) + 1.3s) ease-out forwards; }
+@keyframes sr-beam-epic { 0% { opacity: 0; transform: scaleX(0.1) scaleY(0.2); background: linear-gradient(180deg, transparent, #ffffffb3 50%, #fff); }
+  30% { opacity: 0.9; transform: scaleX(0.4) scaleY(1); } 55% { opacity: 1; transform: scaleX(1.15); } 100% { opacity: 0.22; transform: scaleX(0.75); } }
+.sr-r3 .sr-beam { animation: sr-beam-legend calc(var(--pre) + 1.6s) ease-out forwards; }
 @keyframes sr-beam-legend { 0% { opacity: 0; transform: scaleX(0.1) scaleY(0.2); } 15% { opacity: 0.8; transform: scaleX(0.35); } 25% { opacity: 0.5; transform: scaleX(0.3); }
   35% { opacity: 0.9; transform: scaleX(0.45); } 45% { opacity: 1; transform: scaleX(1.2); } 100% { opacity: 0.3; transform: scaleX(0.85); } }
 /* l'aura derrière le héros : de plus en plus forte avec la rareté */
@@ -252,9 +305,22 @@ html .screen.summon.sum-casting .sum-panel, html .screen.summon.sum-casting .sum
 .sr-halo-spin { transform-box: fill-box; transform-origin: center; animation: sg-spin 3.2s linear infinite; }
 .sr-r3 .sr-halo-spin { animation-duration: 2.2s; }
 @keyframes sr-halo-in { from { opacity: 0; transform: scale(0.4) rotateX(62deg); } to { opacity: 1; transform: scale(1) rotateX(62deg); } }
+/* Rare et plus : une onde de la couleur de la rareté court sur l'estrade quand il se pose */
+.sr-ring { position: absolute; left: 50%; bottom: calc(var(--dais-w) * 0.2108); width: calc(var(--dais-w) * 0.75); aspect-ratio: 4 / 1; translate: -50% 50%; border-radius: 50%;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--rar) 60%, #fff), 0 0 16px 4px var(--rar); opacity: 0; pointer-events: none; z-index: 1;
+  animation: sr-wave 0.8s calc(var(--pre) + var(--mat)) ease-out; }
+.sr-r3 .sr-ring { box-shadow: 0 0 0 3px color-mix(in srgb, var(--el) 50%, #fff), 0 0 18px 6px var(--el); animation-duration: 1.2s; animation-delay: calc(var(--pre) + var(--mat) + 120ms); }
+/* Légendaire : l'éclair (courbe) qui tombe du haut sur l'estrade juste avant la sortie, et l'écran qui blanchit d'un coup */
+.sr-bolt { position: absolute; left: 50%; top: -60px; width: calc(var(--dais-w) * 0.5); height: calc(100% - var(--dais-w) * 0.2 + 60px); translate: -50% 0; z-index: 4;
+  pointer-events: none; overflow: visible; opacity: 0; animation: sr-bolt 0.7s calc(var(--pre) - 160ms) linear forwards; }
+@keyframes sr-bolt { 0% { opacity: 0; clip-path: inset(0 0 100% 0); } 6% { opacity: 1; } 18% { opacity: 1; clip-path: inset(0 0 0 0); }
+  26% { opacity: 0.25; } 34% { opacity: 1; } 44% { opacity: 0.4; } 52% { opacity: 0.9; } 100% { opacity: 0; clip-path: inset(0 0 0 0); } }
+.sr-strike { position: absolute; left: -40px; right: -40px; top: -200px; bottom: -200px; z-index: 5; pointer-events: none; opacity: 0;
+  background: radial-gradient(60% 45% at 50% 55%, #fff 0%, #fff4c2 45%, #ffd34a00 100%); animation: sr-strike 0.75s calc(var(--pre) - 60ms) ease-out; }
+@keyframes sr-strike { 0% { opacity: 0; } 8% { opacity: 1; } 22% { opacity: 0.45; } 32% { opacity: 0.9; } 100% { opacity: 0; } }
 /* Légendaire : une onde dorée qui part des pieds */
 .sr-wave { position: absolute; left: 50%; bottom: calc(var(--dais-w) * 0.2108); width: var(--dais-w); aspect-ratio: 4 / 1; translate: -50% 50%; border-radius: 50%;
-  box-shadow: 0 0 0 4px #ffe27a, 0 0 24px 6px #ffb21f; opacity: 0; animation: sr-wave 0.9s calc(var(--pre) + var(--mat)) ease-out; z-index: 3; pointer-events: none; }
+  box-shadow: 0 0 0 4px #ffe27a, 0 0 24px 6px #ffb21f; opacity: 0; animation: sr-wave 1.1s calc(var(--pre) - 40ms) ease-out; z-index: 3; pointer-events: none; }
 @keyframes sr-wave { 0% { opacity: 1; scale: 0.2; } 100% { opacity: 0; scale: 1.6; } }
 /* montré tout de suite (un héros touché dans le récapitulatif) */
 .sr-instant .sr-real, .sr-instant .sr-aura, .sr-instant .sr-halo { animation-delay: 0ms, 400ms; animation-duration: 0.25s, 2.6s; }

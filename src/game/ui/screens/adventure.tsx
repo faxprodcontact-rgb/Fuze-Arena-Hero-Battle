@@ -297,6 +297,8 @@ function DailyBoss() {
               <i />
               <Icon name="gems" size={18} />
               <small>{tier.gems}</small>
+              {/* le dernier palier donne aussi un parchemin rouge (portail spécial) */}
+              {tier.redScrolls ? <span class="av-tier-red"><Icon name="redScrolls" size={18} /></span> : null}
             </span>
           ))}
         </div>

@@ -19,7 +19,7 @@ export const dots = {
       const h = heroByUid(s, uid);
       return !!h && (canLevelUp(s, h) || !!fusionPreview(uid).plan);
     }),
-  summon: (s: PlayerState) => s.wallet.scrolls >= 1 || s.wallet.basicScrolls >= 1,
+  summon: (s: PlayerState) => s.wallet.scrolls >= 1 || s.wallet.basicScrolls >= 1 || s.wallet.redScrolls >= 1,
   missions: (s: PlayerState) =>
     s.daily.missions.some((m) => !m.claimed && (!m.startedAt || now() >= missionEnd(m))),
   dungeons: (s: PlayerState) => (['gold', 'essence', 'gear'] as const).some((k) => dungeonAttemptsLeft(s, k) > 0),

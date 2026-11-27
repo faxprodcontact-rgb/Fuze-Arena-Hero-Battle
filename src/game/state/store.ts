@@ -27,7 +27,7 @@ export function fresh(now = Date.now()): PlayerState {
     rng: 1,
     nextUid: 2,
     account: { level: 1, xp: 0 },
-    wallet: { gold: 300, essence: 150, gems: 0, scrolls: 0, basicScrolls: 0, arenaTokens: 0, guildCoins: 0, crystals: 0, dust: 0, badge: 0 },
+    wallet: { gold: 300, essence: 150, gems: 0, scrolls: 0, basicScrolls: 0, redScrolls: 0, arenaTokens: 0, guildCoins: 0, crystals: 0, dust: 0, badge: 0 },
     fragments: {},
     discovered: [starter],
     heroes: [{ uid: 1, defId: starter, stars: RARITY_RULES.epic.bornStars, level: 1 }],

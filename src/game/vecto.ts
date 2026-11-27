@@ -94,9 +94,10 @@ export interface VectoFig { w: number; h: number; fx: number; fy: number; big: s
 /**
  * Le dessin vectoriel d'un héros si l'essai est allumé et qu'il en a un ; sinon rien (on garde le pixel art).
  * Un personnage SANS pixel art (les 3 dragons, 27/11) a toujours son dessin vectoriel, essai allumé ou non.
+ * `force` : le dessin vectoriel dès qu'il existe, essai allumé ou non (le tirage des invocations, 27/11).
  */
-export function vectoFig(id: string): VectoFig | undefined {
-  const m = VECTO_ON || !(id in HD_FIG.chars) ? VECTO[id] : undefined;
+export function vectoFig(id: string, force = false): VectoFig | undefined {
+  const m = force || VECTO_ON || !(id in HD_FIG.chars) ? VECTO[id] : undefined;
   if (!m) return undefined;
   const [w, h, fx, fy] = m;
   return { w, h, fx, fy, big: artUrl(`art/vecto/${id}.webp`), small: artUrl(`art/vecto/${id}-160.webp`) };
