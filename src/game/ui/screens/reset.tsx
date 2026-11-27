@@ -2,7 +2,9 @@
 // En dessous, les héros qui ont quelque chose à rendre, les plus forts d'abord.
 import { useState } from 'preact/hooks';
 import { RESET_COST } from '../../../core/data/modes';
+import { heroDef } from '../../../core/data/heroes';
 import type { Hero } from '../../../core/types';
+import { ELEMENT_COLOR } from '../../art';
 import { t } from '../../i18n';
 import { canReset, heroRefund, resetHero } from '../../state/actions';
 import { heroByUid, heroPower } from '../../state/selectors';
@@ -22,7 +24,7 @@ export function ResetPage({ uid }: { uid?: number }) {
   return (
     <Page title={t('detail.reset')}>
       {target && back ? (
-        <section class="fuse-stage reset-stage">
+        <section class="fuse-stage fuse-altar reset-stage" style={{ '--el': ELEMENT_COLOR[heroDef(target.defId).element] } as never}>
           <div class="fuse-main">
             <div class="fuse-big"><HeroCard hero={target} /><span class="reset-lv">{t('lv')} {target.level}</span></div>
             <Sign name="op-arrow" class="fuse-op" />
@@ -47,7 +49,7 @@ export function ResetPage({ uid }: { uid?: number }) {
       ) : <p class="center muted">{t('reset.none')}</p>}
 
       {list.length > 0 && (
-        <div class="roster">
+        <div class="roster fuse-roster">
           {list.map((h) => (
             <HeroCard hero={h} small power={heroPower(s, h)} selected={h.uid === target?.uid} onClick={() => setPicked(h.uid)} />
           ))}

@@ -1442,6 +1442,12 @@ button.setting-row:active { filter: brightness(0.95); }
 .dropdown-menu button { padding: 10px 12px; text-align: left; border-radius: 8px; font-weight: 800; color: var(--text); border: 1px solid #0000; }
 .reset-lv { display: block; text-align: center; margin-top: 4px; font: 800 13px var(--font-title); color: var(--muted); }
 .reset-back { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 14px; }
+/* la renaissance sur l'autel de la fusion (27/11) : ce qu'on récupère dans le même creux de pierre, en pilules sombres */
+.fuse-altar .reset-lv { color: var(--c-on-dark-muted); }
+.fuse-altar .reset-back { gap: 6px 8px; padding: 8px 10px; margin: 0 auto; border-radius: var(--r-m); background: linear-gradient(180deg, #0000004d, #00000026);
+  box-shadow: inset 0 2px 6px #000a, inset 0 0 0 1px #ffffff14, 0 1px 0 #ffffff1f; }
+.fuse-altar .reset-back .cur-big { --pxf: linear-gradient(180deg, var(--c-bg-2), var(--c-bg-1)); --psh: inset 0 0 0 1px #ffffff1f, 0 2px 4px #0006;
+  color: #fff; font-size: 15px; padding: 4px 10px 4px 5px; }
 .empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 26px 0 10px; color: #fff; text-shadow: 0 1px 3px #000c; }
 .empty .muted { color: #ffffffd9; }
 .empty .icon { filter: drop-shadow(0 5px 5px #00000059); }
