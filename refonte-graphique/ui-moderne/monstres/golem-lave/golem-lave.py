@@ -504,7 +504,11 @@ def near_arm(fig, P, UC, TOR):
                 [(13.4, 98.8), (17.0, 103.0), (18.0, 107.6)],
                 [(34.6, 97.0), (39.4, 96.4)]):
         det += vein([C(p) for p in br_], 1.3 if len(br_) > 3 else 0.9, 2.0, tail=0.6)
-    det += heat_tint(shp, P['heat'])
+    if P['heat'] > 0.02:
+        # seule la massue rougit (le bras reste de roche) ; la chaleur remonte un peu sur l'avant-bras
+        hot_ = geom_shapes(cg.union(PG(fo).intersection(cg.buffer(6.0))).intersection(g))
+        if hot_ is not None:
+            det += heat_tint(hot_, P['heat'])
     # le liseré de lumière (haut-droit) seulement sur le vrai bord, pas sous l'épaule-rocher
     rim_ = g.difference(affinity.translate(g, -0.6, 0.8)).difference(sh_w.buffer(1.4))
     rs_ = geom_shapes(rim_, simplify=0.02)
