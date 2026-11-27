@@ -7,7 +7,7 @@ ID = 'mon-orin-rapide'
 ANIM, DESSIN = A, K
 
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # Bond et coupe montante : un battement d'ailes le jette vers l'ennemi dans sa propre animation (`avance` = son X),
     # la coupe porte (éclat, marque, plumes sur l'ennemi), il revient d'un saut en arrière
     'attaque': dict(genre='melee', coup=A.A_HIT, cible=A.FOE, coupe=160,

@@ -6,7 +6,7 @@ import mira as M
 ID = 'mages-2'
 ANIM, DESSIN = A, M
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Fauche du ciel » : elle bondit jusqu'à l'ennemi (à portée de lance) pendant qu'elle arme ; la lance s'abat en
     # arc et finit couchée (le croissant de vent qui suit le fer reste avec elle, jusqu'à l'image du coup) : l'éclat
     # de vent, les volutes, les bouffées et les plumes d'air sont sur l'ennemi

@@ -139,7 +139,8 @@ def necklace():
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, jaw=0.0, ph=0.0, ml=0.0, mu=0.0, pg=0.0,
             blink=0.0, G=G0, ang=ANG0, bend=1.0, wr=WR0, length=1.0, shs=(0.0, 0.0), rn=0.0, rf=0.0, far=(0.0, 0.0),
-            far_rot=0.0, lift=0.0, shift=0.0, glow=0.0, hot=0.0, tuck=0.0)
+            far_rot=0.0, lift=0.0, shift=0.0, glow=0.0, hot=0.0, tuck=0.0,
+            braise=0.0)   # braise : le signe du repos (anim.signe) : la tête de fer du kanabō rougeoie comme une braise
 
 
 def rot(v, deg):
@@ -601,6 +602,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     if hot > 0:
         hd_.append((head_c, ('lin', *C(Shape([((SA, 0), [])])).subs[0][0], *C(Shape([((SB, 0), [])])).subs[0][0],
                              [(0, LAVA[4], 0.25 * hot), (1, LAVA[2], 0.45 * hot)]), 1))
+    bz = P['braise']
+    if bz > 0:
+        # le repos (anim.signe) : la tête de fer rougeoie lentement depuis le bout, une lueur douce autour (derrière tout)
+        hd_.append((head_c, ('lin', *C(Shape([((SA, 0), [])])).subs[0][0], *C(Shape([((SB, 0), [])])).subs[0][0],
+                             [(0, LAVA[4], 0.0), (0.5, LAVA[3], 0.45 * bz), (1, LAVA[2], 0.85 * bz)]), 1))
+        gx_, gy_ = C(Shape([(((SA + 2 * SB) / 3, 0), [])])).subs[0][0]
+        fig.glow(gx_, gy_, 15, 12, '#ff6a1e', 0.4 * bz)
     fig.part('chead', head_c, iron, cel=1.0, rim=0.7, cast=0, details=hd_)
     # les clous : rangées décalées ; ceux du bord dépassent de la silhouette
     STUDS = [(16.2, (-1.0, -0.36, 0.36, 1.0)), (20.8, (-0.68, 0.0, 0.68)), (25.4, (-1.0, -0.36, 0.36, 1.0)), (30.0, (-0.68, 0.0, 0.68))]

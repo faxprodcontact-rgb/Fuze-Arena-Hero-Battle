@@ -162,10 +162,21 @@ SP_BLOW = 680         # LANCEMENT 1 : le soin et la purification partent vers l'
 SP_NOTE2 = 1310       # LANCEMENT 2 : la résurrection (le grand halo doré au plus large)
 
 
-# ======================================================================== la respiration (2 s)
+# ======================================================================== la respiration (3 s)
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : son auréole d'or flotte plus haut puis redescend, et s'illumine doucement en montant.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(halo=-2.2 * (0.5 - 0.5 * math.cos(u)), aur=0.5 - 0.5 * math.cos(u))
+
 
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     # la tête suit le souffle avec un temps de retard, l'auréole avec un peu plus ; les ailes se soulèvent à
     # l'inspiration, les plumes ondulent ; le bas de la robe ondule ; la trompette se balance d'un rien
@@ -218,15 +229,18 @@ def pose_at(T, action=None, t0=0.0):
     tm = lerp(M.TM0, mp, tb)
     tang = M.TANG0 + (ta_ - M.TANG0) * tb
     # au repos, elle se balance d'un rien avec le souffle
-    tang += w * 0.8 * math.sin(2 * math.pi * T / 2.0 - 0.9)
+    tang += w * 0.8 * math.sin(2 * math.pi * T / IDLE_T - 0.9)
     st = wing_state(P['wo'], P['wb'])
     # le battement des ailes ouvertes : les plumes ondulent plus quand elles sont ouvertes
     out = dict(breath=br, lean=P['lean'], crouch=P['crouch'], lift=P['lift'], head=(P['headx'], P['heady']), tilt=P['tilt'],
                halo=P['halo'], glow=P['glow'], wing=st, wl=P['wl'], wlF=P['wl'] * 0.8,
-               wph=2 * math.pi * T / 2.0 * (1 + 0.6 * min(2, P['wo'])) + P['wph'],
+               wph=2 * math.pi * T / IDLE_T * (1 + 0.6 * min(2, P['wo'])) + P['wph'],
                tm=tm, tang=tang, gs=P['gs'], nh=P['nh'], hem=P['hem'], cheek=P['cheek'], gold=P['gold'],
-               ear=math.sin(2 * math.pi * T * 0.8 - 0.5) + 0.6 * P['lean'], tb=tb)
-    out['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % 4.0) < 1.39) else 0.0
+               ear=math.sin(2 * 2 * math.pi * T / IDLE_T - 0.5) + 0.6 * P['lean'], tb=tb)
+    sg = signe(T)
+    out['halo'] += w * sg['halo']
+    out['aur'] = w * sg['aur']
+    out['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % IDLE_T) < 1.39) else 0.0
     out['aura'] = P['aura']
     return out
 

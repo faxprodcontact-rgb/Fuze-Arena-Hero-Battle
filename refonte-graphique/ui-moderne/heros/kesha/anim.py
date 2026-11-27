@@ -159,10 +159,22 @@ SP_BITE = 1130
 SP_CUT = (400, 1760)
 
 
-# ======================================================================== la respiration (en boucle, 2 s)
+# ======================================================================== la respiration (en boucle, 3 s)
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : sa queue de requin en croissant ondule lentement, comme dans l'eau (elle se balance, la pointe fouette
+    en retard).
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(q=2.6 * math.sin(u - 0.4), qw=2.4 * math.sin(u - 1.6))
+
 
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     g = max(0.0, math.sin(2 * u - 0.6)) ** 2
     return dict(breath=br, crouch=0.4 * (0.5 - 0.5 * math.cos(u - 1.3)), heady=0.3 * math.sin(u - 0.6),
@@ -187,11 +199,13 @@ def pose_at(T, action=None, t0=0.0):
     idl = idle_offsets(T)
     src = act or flat({})
     P = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
+    for n, v in signe(T).items():
+        P[n] += w * v
     P['breath'] = w * idl['breath']
     P['head'] = (P.pop('headx'), P.pop('heady'))
     P['na'] = (P.pop('nax'), P.pop('nay'))
     P['arm'] = (P.pop('armx'), P.pop('army'))
-    P['blink'] = 1.0 if (w > 0.95 and 1.28 <= (T % 4.0) < 1.36) else 0.0
+    P['blink'] = 1.0 if (w > 0.95 and 1.28 <= (T % IDLE_T) < 1.36) else 0.0
     P['cut'] = action == 'special' and SP_CUT[0] <= tl <= SP_CUT[1]
     return P, tl
 

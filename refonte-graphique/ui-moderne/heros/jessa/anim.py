@@ -523,7 +523,15 @@ IMPACT_X = FOE_X - 2.0
 
 
 # ======================================================================== la pose (le repos : elle respire, l'ara hoche)
-IDLE_T = 1.6
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (1,6 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : son ara rouge entrouvre lentement les ailes puis les replie, et sa longue queue se balance.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(pw=0.4 * (0.5 - 0.5 * math.cos(u)), pt=-1.6 * math.sin(u - 1.2))
 
 
 def idle_offsets(T):
@@ -550,12 +558,14 @@ def pose_at(T, action=None, t0=0.0):
     idl, br = idle_offsets(T)
     src = act or flat({})
     P = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
+    for n, v in signe(T).items():
+        P[n] += w * v
     br = br * w + P['b']
     out = dict(breath=min(1.3, br), lean=P['lean'], dn=P['dn'], head=(P['headx'], P['heady']), tilt=P['tilt'], hs=P['hs'],
                cl=P['cl'], sq=max(0, min(1, P['sq'])), smile=max(0, min(1, P['smile'])), g=(P['gx'], P['gy']), ga=P['ga'],
                fu=P['fu'], nwa=P['nwa'], fwa=P['fwa'], fired=max(0, min(1, P['fired'])), ph=(P['phx'], P['phy']), pr=P['pr'],
                pt=P['pt'], pw=max(0, min(1, P['pw'])), pc=max(0, min(1, P['pc'])), pb=max(0, P['pb']))
-    out['blink'] = 1.0 if (w > 0.95 and 2.30 <= (T % 3.7) < 2.39) else 0.0
+    out['blink'] = 1.0 if (w > 0.95 and 2.30 <= (T % IDLE_T) < 2.39) else 0.0
     return out
 
 

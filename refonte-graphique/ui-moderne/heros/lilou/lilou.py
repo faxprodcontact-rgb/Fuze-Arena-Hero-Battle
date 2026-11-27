@@ -65,7 +65,7 @@ TAILR = (36.0, 98.0)            # la racine de la queue
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, pan=0.0, ph=0.0, blink=0.0, shift=0.0, lift=0.0,
             nw=(0.0, 0.0), fw=(0.0, 0.0), nga=0.0, fga=0.0, sq=0.0, tail=0.0, shell=(0.0, 0.0), sh=(0.0, 0.0), tuck=0.0,
-            gape=0.0, fstretch=0.0, nstretch=0.0, fabs=0.0)
+            gape=0.0, fstretch=0.0, nstretch=0.0, fabs=0.0, pw=0.0)   # pw : le signe du repos (anim.signe)
 #   breath : souffle 0..1 ; crouch : elle plie les genoux (pixels, négatif : elle se dresse) ; lean : elle se penche en
 #   avant (+) ; head / tilt : la tête ; pan : les pans du bandeau se soulèvent (+) ou retombent ; ph : la phase de leur
 #   ondulation ; shift : tout le corps glisse vers l'ennemi ; lift : il décolle du sol (saut) ; nw / fw : décalage des
@@ -317,7 +317,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         plus sombre) ; le bout est coupé en biais."""
         c = HDp(ctrl)
         n = len(c) - 1
-        c = [(x - 0.6 * pan * (i / n) ** 1.2, y - pan * k * (i / n) ** 1.3 + 0.7 * math.sin(phs - i * 1.4) * (i / n) ** 0.9)
+        c = [(x - 0.6 * pan * (i / n) ** 1.2,
+              y - pan * k * (i / n) ** 1.3 + 0.7 * (1 + Pz['pw']) * math.sin(phs - i * 1.4) * (i / n) ** 0.9)
              for i, (x, y) in enumerate(c)]
         cc = crpath(c, n=24)
         ws = []

@@ -97,7 +97,7 @@ def wing_vals(d, state):
 
 REST = dict(X=0.0, lift=0.0, breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0,
             wn=wing_vals(WINGS_N, 'demi'), wf=wing_vals(WINGS_F, 'demi'), ws=0.0, ph=0.0, tail=0.0, pg=0.0, sw=0.0,
-            fh=FH0, sang=SANG0, open=0.0)
+            fh=FH0, sang=SANG0, open=0.0, wtip=0.0)   # wtip : le signe du repos (anim.signe)
 
 
 def rot(v, deg):
@@ -142,7 +142,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fw_names, fW, fT = wing(fig, 'wf', R_F, P['wf'], RAVENF, ph + 1.3, P['ws'], scale=0.78,
                             widths=[13.0, 13.0, 12.0, 11.4, 10.6, 9.6, 8.4, 7.2], cov=(0.85, 0.9))
     nw_names, nW, nT = wing(fig, 'wn', R_N, P['wn'], RAVEN, ph, P['ws'], scale=1.0,
-                            widths=[14.0, 14.0, 13.0, 12.0, 9.0, 7.8, 7.0, 6.2])
+                            widths=[14.0, 14.0, 13.0, 12.0, 9.0, 7.8, 7.0, 6.2], tip=P['wtip'])
 
     # ================================================================ la petite queue de corbeau (sous la veste)
     tail_names = []

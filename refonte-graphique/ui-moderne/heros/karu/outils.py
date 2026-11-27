@@ -208,12 +208,13 @@ def scallop(line, dirs, depths, lobes):
     return sm(top + bot[::-1], sharp=(), t=0.9)
 
 
-def wing(fig, key, R, vals, mat, ph, ws, scale=1.0, widths=None, cov=(1.0, 1.0)):
+def wing(fig, key, R, vals, mat, ph, ws, scale=1.0, widths=None, cov=(1.0, 1.0), tip=0.0):
     """Une aile de corbeau : les rémiges (du bout vers le corps, chacune pose une ombre douce sur la précédente,
     aucune ligne), deux rangées de couvertures festonnées, puis le bord d'attaque éclairé de reflets bleus.
     vals = (W, T, a_in, a_out, l_in, l_out) : W (le poignet de l'aile) relatif à l'attache R, T (le bout de la main)
     relatif à W ; a_in / a_out : l'angle des plumes près du corps / au bout ; l_in / l_out : leur longueur.
-    Plumes larges qui se recouvrent, longueurs et angles inégaux : une masse de plumes, jamais des rayons."""
+    Plumes larges qui se recouvrent, longueurs et angles inégaux : une masse de plumes, jamais des rayons.
+    tip : les grandes rémiges du bout se lèvent en éventail (degrés ; 0 = le dessin)."""
     wx, wy, tx, ty, ai, ao, li, lo = vals
     W = (R[0] + wx, R[1] + wy)
     T = (W[0] + tx, W[1] + ty)
@@ -226,7 +227,7 @@ def wing(fig, key, R, vals, mat, ph, ws, scale=1.0, widths=None, cov=(1.0, 1.0))
     feathers = []
     for i in range(n):
         t = i / (n - 1)
-        a = ai + (ao - ai) * t + jit_a[i] + 3.0 * ws * math.sin(ph - 0.7 * i)
+        a = ai + (ao - ai) * t + jit_a[i] + 3.0 * ws * math.sin(ph - 0.7 * i) + tip * max(0.0, t - 0.4) / 0.6
         L = (li + (lo - li) * t) * jit_l[i]
         p0 = roots[i]
         d = unit(a)

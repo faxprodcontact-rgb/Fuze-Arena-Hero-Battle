@@ -46,7 +46,7 @@ def avance_spe(t):
 
 JEU = {
     'rendu': rendu,
-    'pose': dict(periode=1000 * A.IDLE),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Une-deux » : elle glisse vers l'ennemi dans sa propre animation (`avance`), jab puis direct (les dégâts au
     # direct) ; les gerbes d'eau des deux impacts sont sur l'ennemi, les traînées d'eau des gants restent avec elle
     'attaque': dict(genre='melee', coup=A.CROSS_HIT, cible=(188, 68), coupe=144, cible_des=A.JAB_HIT - 5,

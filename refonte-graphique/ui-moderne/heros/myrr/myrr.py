@@ -79,7 +79,7 @@ HAND0 = (46.6, 79.0)       # le poignet proche
 
 REST = dict(breath=0.0, lean=0.0, crouch=0.0, lift=0.0, head=(0.0, 0.0), tilt=0.0, halo=0.0, glow=0.0,
             wing=None, wingF=None, wl=0.0, wlF=None, wph=0.0, tm=TM0, tang=TANG0, gs=GS0, nh=0.0, hem=0.0, ear=0.0,
-            blink=0.0, cheek=0.0, gold=0.0)
+            blink=0.0, cheek=0.0, gold=0.0, aur=0.0)   # aur : le signe du repos (anim.signe) : l'auréole s'illumine
 
 
 # ======================================================================== les ailes
@@ -558,6 +558,9 @@ def halo(fig, P):
            (ribbon([(cx - 6.0, cy + 2.5), (cx + 2.0, cy + 3.0), (cx + 9.0, cy + 2.3)], [0.1, 0.45, 0.1]), GOLD.light, 0.7)]
     if g > 0:
         det.append((ring, GOLD.hi, 0.55 * g))
+    if P['aur'] > 0:
+        # le repos (anim.signe) : l'anneau s'illumine doucement (sans changer son dégradé)
+        det.append((ring, GOLD.hi, 0.85 * P['aur']))
     fig.part('halo', ring, GOLD, grad=(cx + rx, cy - ry, cx - rx, cy + ry, [(0, GOLD.hi if g > 0.5 else GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]),
              cel=0.6, rim=0.5, cast=0, details=det)
     return ['halo']

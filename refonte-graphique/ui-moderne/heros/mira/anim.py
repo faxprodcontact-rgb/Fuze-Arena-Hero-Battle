@@ -183,8 +183,16 @@ SP_DEFI = (1460, 1890)  # la lueur rouge du défi
 SP_COUCH = (1430, 1990)
 
 
-# ======================================================================== la respiration (1,6 s)
-IDLE_T = 1.6
+# ======================================================================== la respiration (3 s)
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (1,6 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : les deux ailes blanches de son casque battent lentement, la lointaine un peu en retard.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(wn=10.0 * math.sin(u - 0.9), wf=9.0 * math.sin(u - 1.3))
 
 
 def idle_offsets(T):
@@ -225,7 +233,9 @@ def pose_at(T, action=None, t0=0.0):
                cl=P['cl'], sk=P['sk'], grip=(P['gx'], P['gy']), ang=P['ang'], sh=(P['shx'], P['shy']), sht=P['sht'],
                glow=max(0.0, P['glow']), stretch=P['stretch'], behind=behind, couch=couch,
                wing=P['wing'], wop=max(0.0, min(1.0, P['wop'])))
-    out['blink'] = 1.0 if (w > 0.95 and 1.10 <= (T % 3.2) < 1.19) else 0.0
+    for n, v in signe(T).items():
+        out[n] += w * v
+    out['blink'] = 1.0 if (w > 0.95 and 1.10 <= (T % IDLE_T) < 1.19) else 0.0
     return out
 
 

@@ -6,7 +6,7 @@ import lenore as L
 ID = 'knights-9'
 ANIM, DESSIN = A, L
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Revers du kanabō » : il bondit jusqu'à l'ennemi, ramène la massue derrière lui et frappe à l'horizontale ;
     # l'éclat de feu, les braises et la fumée sont sur l'ennemi (la traînée à plat autour de lui reste avec lui)
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(155, 78), coupe=lambda t: 1000 if t < A.ATTACK_HIT else 104),

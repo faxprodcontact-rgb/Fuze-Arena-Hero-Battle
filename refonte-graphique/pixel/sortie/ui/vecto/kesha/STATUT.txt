@@ -2,3 +2,4 @@ fait
 Correction d'après l'avis du propriétaire (« Supprimer son œil du fond ») : l'œil du fond (le petit œil près du museau), sa paupière, son orbite et son sourcil sont retirés ; la tête de requin, vue de profil, n'a plus qu'UN SEUL œil.
 Cet œil unique est placé et dimensionné par la méthode commune (visage.py, tête de profil tour=75) : plus grand et bien lisible au téléphone, loin du bord avant du museau, toujours sous l'arcade en colère ; vérifié sans défaut (visage.png).
 Contrôlé dans toutes les poses (repos, clignement, « Coup de scie », « Grand blanc » : plongeon, gerbe, morsure) : aucune trace de l'ancien œil ; le reste du dessin et des animations est inchangé (avant-apres.png).
+signe du repos (27/11) : sa queue de requin en croissant ondule lentement comme dans l'eau (la pointe fouette en retard) ; menus 6,6 Mo (dont deux petites zones au museau et au buste : la silhouette fondue se recalcule, léger frémissement du reflet), planche de combat 3,2 Mo.

@@ -6,7 +6,7 @@ import kesha as K
 ID = 'demons-5'
 ANIM, DESSIN = A, K
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Coup de scie » : il fond sur l'ennemi en fente dans sa propre animation (`avance`), la lame plonge et frappe ;
     # la gerbe au bout de la lame et les gouttes de l'arrachement sont sur l'ennemi (la traînée de la lame reste à lui)
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(196, 52), coupe=156, cible_des=A.ATTACK_HIT - 5,

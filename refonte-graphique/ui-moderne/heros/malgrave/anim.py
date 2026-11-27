@@ -182,8 +182,17 @@ S_STRIKES = (550, 700, 920)
 S_LAUNCH = 1240
 
 
-# ======================================================================== la respiration (en boucle, 2,48 s)
-IDLE_T = 2.48
+# ======================================================================== la respiration (en boucle, 3 s)
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2,48 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : le crâne qu'il présente s'allume lentement (les orbites brillent, une lueur violette autour) et tourne
+    un peu dans sa main, puis s'éteint.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(sk=1.4 * (0.5 - 0.5 * math.cos(u)), skr=4.0 * math.sin(u - 0.8))
 
 
 def bump(t, a, b, c):
@@ -224,11 +233,13 @@ def pose_at(T, action=None, t0=0.0):
     src = act or flat({})
     for n in NUM:
         P[n] = src[n] + w * idl.get(n, 0.0)
+    for n, v in signe(T).items():
+        P[n] += w * v
     P['breath'] = w * idl['breath']
     P['hand'] = (P.pop('hx'), P.pop('hy'))
     P['head'] = (P.pop('headx'), P.pop('heady'))
     P['hat'] = (P.pop('hatx'), P.pop('haty'))
-    P['blink'] = 1.0 if (P['blink'] > 0.5 or (w > 0.95 and 2.90 <= (T % 4.0) < 2.98)) else 0.0
+    P['blink'] = 1.0 if (P['blink'] > 0.5 or (w > 0.95 and 2.50 <= (T % IDLE_T) < 2.58)) else 0.0
     return P, tl
 
 

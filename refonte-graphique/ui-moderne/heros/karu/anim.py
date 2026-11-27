@@ -200,8 +200,32 @@ S_LEAP, S_VORTEX, S_DIVE, S_STAB, S_UNRAVEL, S_LAND = 665, 760, 885, 935, 1245, 
 # ======================================================================== la respiration (en boucle, comme le pixel art)
 # 10 images du pixel art (950 ms) : il inspire (buste, ailes et tête montent), la tête suit puis pique en avant d'un
 # coup sec, comme un oiseau qui guette, et revient ; il expire et rebondit sur ses genoux ; le bout des rémiges frémit,
-# la petite queue frétille. Le clignement revient une fois sur deux.
-IDLE_T = 0.95
+# la petite queue frétille. Le clignement revient une fois par boucle.
+# Depuis le 27/11 : boucle du repos de 3 s (IDLE_T), le souffle d'oiseau y revient deux fois (IDLE_N).
+IDLE_T = 3.0     # la boucle du repos (s) : respiration et signe du héros (0,95 s avant le 27/11)
+IDLE_N = 2       # souffles d'oiseau par boucle (un toutes les 1,5 s)
+_DW_N = [b - a for a, b in zip(K.wing_vals(K.WINGS_N, 'demi'), K.wing_vals(K.WINGS_N, 'grande'))]
+_DW_F = [b - a for a, b in zip(K.wing_vals(K.WINGS_F, 'demi'), K.wing_vals(K.WINGS_F, 'grande'))]
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : les grandes rémiges du bout de son aile proche (l'éventail à gauche) se lèvent lentement puis se
+    couchent. Au combat seulement (pose_at, trop grand pour la mémoire des menus), les deux ailes s'ouvrent aussi un peu.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(wtip=38.0 * (0.5 - 0.5 * math.cos(u)))
+
+
+def signe_combat(T):
+    """Au combat seulement : les deux ailes s'entrouvrent avec le signe (la lointaine un peu en retard)."""
+    u = 2 * math.pi * T / IDLE_T
+    o, of = 0.3 * (0.5 - 0.5 * math.cos(u)), 0.3 * (0.5 - 0.5 * math.cos(u - 0.3))
+    d = {'wn%d' % i: o * v for i, v in enumerate(_DW_N)}
+    d.update({'wf%d' % i: of * v for i, v in enumerate(_DW_F)})
+    return d
+
+
 IDLE_KEYS = [  # temps (fraction du cycle), tête x, tête y, ailes (lève +), queue
     (0.00, 0.0, 0.0, 0.0, 0.0),
     (0.10, 0.0, 0.7, 0.6, 0.0),
@@ -217,7 +241,7 @@ IDLE_KEYS = [  # temps (fraction du cycle), tête x, tête y, ailes (lève +), q
 
 
 def idle_offsets(T):
-    ph = (T / IDLE_T) % 1.0
+    ph = (IDLE_N * T / IDLE_T) % 1.0
     ts = [k[0] for k in IDLE_KEYS]
     hx, hy, wu, tq = [monotone(ts, [k[i] for k in IDLE_KEYS], ph) for i in range(1, 5)]
     u = 2 * math.pi * ph
@@ -241,6 +265,8 @@ def pose_at(T, action=None, t0=0.0):
     idl = idle_offsets(T)
     src = act or flat({})
     V = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
+    for n, v in signe_combat(T).items():
+        V[n] += w * v
     P = {n: V[n] for n in SCAL}
     for p in PAIRS:
         P[p] = (V[p + 'x'], V[p + 'y'])
@@ -248,8 +274,9 @@ def pose_at(T, action=None, t0=0.0):
     P['wf'] = [V['wf%d' % i] for i in range(8)]
     P['breath'] = w * idl['breath']
     P['ws'] = max(P['ws'], idl['ws'])
-    P['ph'] = 2 * math.pi * T / IDLE_T * 0.5 + (2.0 * P['ws'] * T if act else 0)
-    P['blink'] = 1.0 if (w > 0.95 and 0.40 <= (T % (2 * IDLE_T)) < 0.48) else 0.0
+    P['wtip'] = w * signe(T)['wtip']
+    P['ph'] = 2 * 2 * math.pi * T / IDLE_T + (2.0 * P['ws'] * T if act else 0)    # deux ondulations par boucle
+    P['blink'] = 1.0 if (w > 0.95 and 0.40 <= (T % IDLE_T) < 0.48) else 0.0
     return P
 
 

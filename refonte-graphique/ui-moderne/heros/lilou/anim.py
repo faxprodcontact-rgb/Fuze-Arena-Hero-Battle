@@ -186,14 +186,23 @@ def top_at(tl):
     return tuple(monotone(ts, [k[i] for k in TOP_KEYS], tl) for i in range(1, 6))
 
 
-IDLE = 1.21                           # la boucle du repos (s) : deux petits bonds, comme le pixel art (1,21 s)
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (1,21 s avant le 27/11)
+IDLE = IDLE_T    # (ancien nom)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : les deux pans rouges de son bandeau de ninja flottent au vent, se soulèvent et retombent en ondulant.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    v = 2 * math.pi * T / IDLE_T
+    return dict(pan=1.6 * math.sin(v - 1.2), pw=1.0, ph=2 * v)
 
 
 def idle_offsets(T):
     """La garde du boxeur qui sautille : deux petits bonds par boucle (elle décolle, retombe, plie les genoux), la
     carapace et la tête suivent avec retard, les gants roulent en petits cercles décalés, les pans flottent."""
-    u = 2 * math.pi * T / (IDLE / 2)
-    v = 2 * math.pi * T / IDLE
+    u = 2 * math.pi * T / (IDLE_T / 2)
+    v = 2 * math.pi * T / IDLE_T
     up = max(0.0, math.sin(u)) ** 1.3
     down = max(0.0, -math.sin(u)) ** 1.2
     return dict(lift=0.9 * up, crouch=0.8 * down - 0.2 * up, breath=0.5 - 0.5 * math.cos(v), sly=0.55 * math.sin(u - 1.1),
@@ -220,8 +229,11 @@ def pose_at(T, action=None, t0=0.0):
     P['breath'] = w * idl['breath'] + P.pop('inhale')
     for k, (a, b) in PAIRS.items():
         P[k] = (P.pop(a), P.pop(b))
-    P['ph'] = 2 * math.pi * T * 1.6
-    P['blink'] = 1.0 if (w > 0.95 and 2.0 <= (T % 3.6) < 2.09) else 0.0
+    sg = signe(T)
+    P['pan'] += w * sg['pan']
+    P['pw'] = w * sg['pw']
+    P['ph'] = sg['ph']
+    P['blink'] = 1.0 if (w > 0.95 and 2.0 <= (T % IDLE_T) < 2.09) else 0.0
     return P, tl
 
 

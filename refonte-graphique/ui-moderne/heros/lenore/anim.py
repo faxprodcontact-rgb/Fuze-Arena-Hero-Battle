@@ -153,12 +153,23 @@ SP_HIT = 915
 WALK = None
 
 
-# ======================================================================== la respiration (en boucle, 2 s)
+# ======================================================================== la respiration (en boucle, 3 s)
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la tête de fer de son kanabō rougeoie lentement comme une braise, puis refroidit.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(braise=0.5 - 0.5 * math.cos(u))
+
 
 def idle_offsets(T):
     """Il inspire (le buste monte), les épaules roulent l'une après l'autre, la tête suit en retard et se relève un peu
     (menton en avant), à l'expiration il se tasse sur ses jambes ; mèches et pagne se balancent en retard."""
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, crouch=0.5 * (0.5 - 0.5 * math.cos(u - 2.6)), heady=0.35 * math.sin(u - 0.7),
                 tilt=-0.8 * math.sin(u - 0.9), rn=0.7 * (0.5 - 0.5 * math.cos(u - 0.5)), rf=0.6 * (0.5 - 0.5 * math.cos(u - 1.2)),
@@ -188,8 +199,9 @@ def pose_at(T, action=None, t0=0.0):
     P['shs'] = (src['shx'], src['shy'])
     P['wr'] = (src['wrs'], src['wrt'])
     P['breath'] = w * idl['breath']
-    P['ph'] = 2 * math.pi * T * 0.8 + (0.8 * T if act and action == 'special' else 0)
-    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % 4.0) < 1.39) else 0.0
+    P['ph'] = 2 * 2 * math.pi * T / IDLE_T + (0.8 * T if act and action == 'special' else 0)   # deux vagues par boucle
+    P['braise'] = w * signe(T)['braise']
+    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % IDLE_T) < 1.39) else 0.0
     return P, tl
 
 

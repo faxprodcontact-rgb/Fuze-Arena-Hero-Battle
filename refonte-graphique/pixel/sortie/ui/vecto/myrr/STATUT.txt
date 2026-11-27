@@ -1,3 +1,4 @@
 fait
 Tour 2 de l'avis (26/11 soir) : « les yeux blancs total sans pupille » : l'iris turquoise et la pupille sont supprimés ; les deux yeux sont maintenant entièrement blancs et lumineux (cœur blanc pur, bord à peine doré, léger rayonnement doux sur la peau autour, sans flou), comme un ange divin. La forme des yeux, les cils, les sourcils, le clignement et tout le reste du visage sont gardés ; vérifié dans toutes les poses (repos, attaque à la trompette, spéciale).
 Tour 1 (gardé) : cheveux qui épousent le crâne, tête et cou centrés sur le buste, visage construit avec visage.py (contrôle sans défaut : visage.png). Image avant | après : avant-apres.png.
+signe du repos (27/11) : son auréole d'or flotte plus haut puis redescend, et s'illumine doucement en montant ; menus 1,7 Mo, planche de combat 3,3 Mo.

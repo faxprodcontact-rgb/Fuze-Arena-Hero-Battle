@@ -27,7 +27,7 @@ def follet(fig, i):
 JEU = {
     # la scène rendue : un peu plus large qu'anim.py (la ronde des feux follets s'envole loin autour de lui)
     'vue': (-60, -40, 300, 165),
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Feu follet » : la canne frappe le sol, le crâne follet jaillit de la mâchoire (430) ; le jeu le fait voler
     # jusqu'à la vraie cible, où il éclate (590 : flammes vertes, fumée violette, étincelles, à droite de x = 160)
     'attaque': dict(genre='tir', tir=A.A_STRIKE, coup=A.A_HIT, cible=A.ENEMY, depuis=P0[0] - 2, coupe=160,

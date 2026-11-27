@@ -46,7 +46,7 @@ def onde(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Appel du héraut » : elle souffle dans la trompette (345), l'onde part (350) ; le jeu la fait voler jusqu'à la
     # vraie cible, qu'elle frappe (560 : l'éclat, les volutes, les bouffées, la plume, tout ce qui est à droite de x = 165)
     'attaque': dict(genre='tir', tir=A.ATT_FLY[0], coup=A.ATT_HIT, cible=A.HIT_AT, depuis=BOUCHE[0] + 2, coupe=165,

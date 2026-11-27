@@ -30,7 +30,7 @@ def balle_eau(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     'vue_proj': (-48, -12, 56, 24),
     # « Coup de hanche » : le coup part, la balle file jusqu'à l'ennemi (le jeu la fait voler) ; pas d'impact dessiné
     'attaque': dict(genre='tir', tir=TIR, coup=COUP, cible=(A.FOE_X, M_AT[1]), bouche=(M_AT[0] + 4, M_AT[1]),
