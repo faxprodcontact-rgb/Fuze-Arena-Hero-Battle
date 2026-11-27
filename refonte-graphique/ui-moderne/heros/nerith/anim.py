@@ -177,9 +177,20 @@ def smooth(x):
     return x * x * (3 - 2 * x)
 
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la lanterne de palais se balance lentement au bout de la crosse (le pompon suit en retard) et sa
+    flamme de jade s'avive. Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(la=7.0 * math.sin(u), pa=6.0 * math.sin(u - 1.3), glow=0.9 * (0.5 - 0.5 * math.cos(u)))
+
+
 def idle_offsets(T):
-    """La respiration (2 s) et ses mouvements secondaires, en retard les uns sur les autres."""
-    u = 2 * math.pi * T / 2.0
+    """La respiration (3 s) et ses mouvements secondaires, en retard les uns sur les autres."""
+    u = 2 * math.pi * T / IDLE_T
     return dict(breath=0.5 - 0.5 * math.cos(u), hy=0.35 * math.sin(u - 0.7), tilt=0.5 * math.sin(u - 1.0),
                 la=2.6 * math.sin(u - 0.4), pa=3.2 * math.sin(u - 1.5), tl=0.9 * math.sin(u - 2.2), tc=0.7 * math.sin(u - 1.4),
                 mp=0.8 * math.sin(u - 2.6), mf=0.6 * math.sin(u - 2.3), glow=0.35 * (0.5 + 0.5 * math.sin(2 * u)),
@@ -206,9 +217,12 @@ def pose_at(T, action=None, t0=0.0):
         P['breath'] = src['breath'] + w * idl['breath']
     P['head'] = (P.pop('hx'), P.pop('hy'))
     P['arm'] = (P.pop('ax'), P.pop('ay'))
+    for n, v in signe(T).items():                    # le signe du repos (anim.signe)
+        P[n] += w * v
     P['ph'] = 2 * math.pi * T
-    # le regard qui se pose, méprisant, puis un clignement (cycle de 4 s, seulement au repos)
-    c4 = T % 4.0
+    # le regard qui se pose, méprisant, puis un clignement (une fois par boucle du repos : le cycle de 4 s d'avant,
+    # ramené sur IDLE_T, seulement au repos)
+    c4 = (T % IDLE_T) * 4.0 / IDLE_T
     P['mep'] = max(P['mep'], w * env(c4, 2.5, 2.7, 3.15, 3.35))
     P['blink'] = 1.0 if (w > 0.95 and 3.6 <= c4 < 3.68) else 0.0
     # les bijoux scintillent chacun son tour ; les étincelles de la lanterne aussi
@@ -218,7 +232,7 @@ def pose_at(T, action=None, t0=0.0):
         if k > 0.05:
             tw.append((name, k))
     P['tw'] = tw
-    P['lspk'] = tuple(max(0.0, 1.0 + 0.35 * math.sin(2 * math.pi * T * 0.9 + i * 2.1) + 0.6 * P['glow'] * 0.25) for i in range(3))
+    P['lspk'] = tuple(max(0.0, 1.0 + 0.35 * math.sin(3 * 2 * math.pi * T / IDLE_T + i * 2.1) + 0.6 * P['glow'] * 0.25) for i in range(3))
     P['_tl'] = tl
     return P
 

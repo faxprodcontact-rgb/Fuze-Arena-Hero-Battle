@@ -144,14 +144,26 @@ CURVES = ((22, -44), (40, -14), (36, 26))   # le premier point de contrôle de c
 # ======================================================================== la respiration (en boucle) et la lanterne
 
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2,3 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la lumière de la lanterne de papier respire lentement (la flamme monte, le papier s'éclaire)
+    et le chapelet d'ivoire se balance sous le poing. Une pose partielle pour build() ; jouée au combat
+    (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(lum=1.5 * (0.5 - 0.5 * math.cos(u)), ro=7.0 * math.sin(u - 0.6))
+
+
 def idle_offsets(T):
     """Le repos d'un vieillard : souffle lent qui soulève la bosse, la tête suit avec retard, la barbe et le chapelet
     se balancent en retard."""
-    u = 2 * math.pi * T / 2.3
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, heady=0.35 * math.sin(u - 0.9) - 0.15, headx=0.12 * math.sin(u - 1.2), tilt=0.5 * math.sin(u - 1.0),
                 bs=0.7 * math.sin(u - 1.6), hs=0.5 * math.sin(u - 1.2), hem=0.35 * math.sin(u - 2.0),
-                ro=2.2 * math.sin(2 * math.pi * T / 1.9 + 0.8), glow=0.12 * math.sin(2 * math.pi * T / 0.9))
+                ro=2.2 * math.sin(2 * u + 0.8), glow=0.12 * math.sin(3 * u))
 
 
 def pose_at(T, action=None, t0=0.0):
@@ -171,8 +183,11 @@ def pose_at(T, action=None, t0=0.0):
     P = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
     P['breath'] = w * idl['breath']
     P['head'] = (P.pop('headx'), P.pop('heady'))
-    P['flick'] = T * 11.0
-    P['blink'] = 1.0 if (w > 0.95 and 1.3 <= (T % 3.7) < 1.4) else 0.0
+    sg = signe(T)                                  # le signe du repos (anim.signe)
+    P['ro'] += w * sg['ro']
+    P['lum'] = w * sg['lum']
+    P['flick'] = 10 * 2 * math.pi * T / IDLE_T     # la flamme tremble (boucle sur IDLE_T : 21 et 17 tours)
+    P['blink'] = 1.0 if (w > 0.95 and 1.3 <= (T % IDLE_T) < 1.4) else 0.0
     return P, tl
 
 
@@ -202,7 +217,7 @@ def lantern_track(segs, n, sub=10):
         a = (0.0, 0.0) if vprev is None else ((v[0] - vprev[0]) / dt, (v[1] - vprev[1]) / dt)
         prev, vprev = h, v
         # le repos entretient un petit balancement (la lanterne n'est jamais tout à fait immobile)
-        drive = 9.0 * math.sin(2 * math.pi * T / 1.55)
+        drive = 9.0 * math.sin(2 * 2 * math.pi * T / IDLE_T)      # deux fois par boucle du repos
         # (le crochet est mené par des poses clés : ses à-coups sont adoucis de moitié, et le balancement reste
         # mesuré — jamais la lanterne ne vient heurter sa tête)
         acc = (-(g - 0.5 * a[1]) * math.sin(th) + 0.5 * a[0] * math.cos(th)) / Lp - c * om + drive * math.pi / 180

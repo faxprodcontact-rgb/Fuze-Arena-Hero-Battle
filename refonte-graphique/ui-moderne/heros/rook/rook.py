@@ -79,7 +79,8 @@ BL = 36.0                                # la longueur de la lame
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, fire=0.0, trail=(0.0, 0.0),
             aura=1.0, eyes=1.0, cpl=0.0, cpr=0.0, pq=0.0, pg=0.0, G=G0, ang=ANG0, bend=1.0, FH=FH0, fbend=-1.0,
-            stretch=0.0)
+            stretch=0.0, bph=None)   # bph : la phase des flammes de la lame seule (le signe du repos, anim.signe ;
+                                     # None : celle de tout le feu, ph)
 
 _LAST = {}
 
@@ -155,7 +156,7 @@ def _aura_tongue(fig, x, h, w, ph, P, k):
     if hh < 1.0:
         return ''
     lean = 0.08 + 0.22 * math.sin(t + ph * 1.3)
-    bend = 1.1 * math.sin(t * 1.5 + ph)
+    bend = 1.1 * math.sin(t * 4 / 3 + ph)                # 4/3 (1,5 avant le 27/11) : la boucle du repos se referme
     sh = tongue_shape((x, GRD + 0.6), hh, w * (0.7 + 0.3 * min(1.5, a)), bend, lean)
     core = tongue_shape((x + 0.1, GRD + 0.6), hh * 0.55, w * 0.5 * (0.7 + 0.3 * min(1.5, a)), bend * 0.6, lean)
     g1 = fig.lin(x, GRD, x, GRD - hh, [(0, FIRE[1]), (0.35, FIRE[2]), (0.75, FIRE[3]), (1, FIRE[4])])
@@ -177,8 +178,10 @@ def aura_back(fig, P):
                 fig.fx_back.append(_aura_tongue(fig, x, h, w, ph, P, 1.0))
 
 
-EMBERS = [(38.0, 0.00, 0.9, 1.0), (47.0, 0.37, 1.1, 0.8), (62.0, 0.71, 0.8, 0.7), (75.0, 0.18, 1.0, 0.9),
-          (88.0, 0.55, 0.9, 1.0), (97.0, 0.86, 1.2, 0.8), (55.0, 0.93, 1.0, 0.6)]
+# (x, départ, vitesse, taille) ; vitesses 2/3 ou 4/3 depuis le 27/11 (0,8 à 1,2 avant) : chaque braise fait un nombre
+# entier de montées par boucle du repos (3 tours de ph), la boucle se referme ; au repos (ph = 0) rien ne change
+EMBERS = [(38.0, 0.00, 2 / 3, 1.0), (47.0, 0.37, 4 / 3, 0.8), (62.0, 0.71, 2 / 3, 0.7), (75.0, 0.18, 4 / 3, 0.9),
+          (88.0, 0.55, 2 / 3, 1.0), (97.0, 0.86, 4 / 3, 0.8), (55.0, 0.93, 2 / 3, 0.6)]
 
 
 def ember(fig, x, y, r=0.7, op=1.0):
@@ -258,7 +261,7 @@ def plume(fig, P, HEAD):
     """Une courte queue de crin rouge sang, plantée dans la douille à l'arrière de la crête du heaume ; elle tombe vers
     l'arrière en une seule mèche qui s'effile et se balance (pq)."""
     q = P['pq']
-    w = math.sin(P['ph'] * 0.8)
+    w = math.sin(P['ph'] * 2 / 3)                        # 2/3 (0,8 avant le 27/11) : la boucle du repos se referme
     from outils import smooth_line
     from atelier import sides
     strands = []
@@ -710,7 +713,7 @@ def blade_flames(P, G, ang, st, vis):
     clair, un seul contour."""
     T = lambda a, b=0.0: sword_pt(G, ang, a, b, st)
     f = P['fire']
-    ph = P['ph']
+    ph = P['ph'] if P['bph'] is None else P['bph']
     tx, ty = P['trail']
     if vis < 3:
         return None
@@ -726,7 +729,7 @@ def blade_flames(P, G, ang, st, vis):
         h = h0 * (1 + 0.28 * f) * fl * (1 + 0.04 * ty) / (1 + 0.35 * P['stretch'])
         w = w0 * (1 + 0.12 * f)
         lean = -0.26 + 0.12 * math.sin(ph + i * 1.3) + tx * 0.06
-        bend = 1.0 * math.sin(ph * 1.6 + i * 2.3)
+        bend = 1.0 * math.sin(ph * 5 / 3 + i * 2.3)       # 5/3 (1,6 avant le 27/11) : la boucle du repos se referme
         tongues.append((base, h, w, bend, lean))
         cores.append(((base[0] + 0.2, base[1] + 0.6), h * 0.52, w * 0.5, bend * 0.6, lean))
     from outils import tongue_shape as ts

@@ -211,8 +211,32 @@ def pulse(t, t0, up=0.06, hold=0.14, down=0.1):
     return u * u * (3 - 2 * u)
 
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2 s avant le 27/11)
+
+
+def tongues(T):
+    """Les langues des six serpents, chacune à son tour (le cycle de 2 s d'avant, ramené sur IDLE_T)."""
+    tt = (T % IDLE_T) * 2.0 / IDLE_T
+    return {'t%s' % k: 1.2 * max(pulse(tt, t0), pulse(tt, t1, hold=0.1)) for k, (t0, t1) in FLICK.items()}
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : les six serpents de sa chevelure ondulent plus largement, chacun à son rythme (les deux du front deux
+    fois plus vite), et sortent la langue à tour de rôle. Une pose partielle pour build() ; jouée au combat (pose_at :
+    l'ondulation s'ajoute à la respiration, les langues y sont déjà) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    sn = {k: (SG_K * ax * math.cos(turns * u + ph), SG_K * ay * math.sin(turns * u + ph))
+          for k, (ax, ay, turns, ph) in RHYTHM.items()}
+    tg = tongues(T)
+    return dict(sn=sn, tg={k: tg['t%s' % k] for k in RHYTHM})
+
+
+SG_K = 3.0       # l'ondulation du signe : 3 fois celle de la respiration
+
+
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     d = dict(breath=0.5 - 0.5 * math.cos(u), wave=1.2 * math.sin(u), lean=0.7 * math.sin(u - 1.3),
              coil=0.55 * math.sin(u - 2.0), heady=0.3 * math.sin(u - 0.6), tilt=0.8 * math.sin(u - 0.9),
              hfy=0.4 * math.sin(u - 1.0), hfx=0.2 * math.sin(u - 1.4), rotF=2.0 * math.sin(u - 1.1),
@@ -221,9 +245,7 @@ def idle_offsets(T):
     for k, (ax, ay, turns, ph) in RHYTHM.items():
         d['%sx' % k] = ax * math.cos(turns * u + ph)
         d['%sy' % k] = ay * math.sin(turns * u + ph)
-    tt = T % 2.0
-    for k, (t0, t1) in FLICK.items():
-        d['t%s' % k] = 1.2 * max(pulse(tt, t0), pulse(tt, t1, hold=0.1))
+    d.update(tongues(T))
     return d
 
 
@@ -253,10 +275,12 @@ def pose_at(T, action=None, t0=0.0):
              hand=(Q['hnx'], Q['hny']), rot=Q['rot'], curl=Q['curl'], glow=Q['glow'], jaw=Q['jaw'],
              sn={k: (Q['%sx' % k], Q['%sy' % k]) for k in SN}, tg={k: Q['t%s' % k] for k in SN},
              gape={k: Q['g%s' % k] for k in SN})
+    sg = signe(T)['sn']                       # le signe du repos : les serpents ondulent plus largement
+    P['sn'] = {k: (P['sn'][k][0] + w * sg[k][0], P['sn'][k][1] + w * sg[k][1]) for k in SN}
     # la bosse qui court le long de la queue (seulement au repos)
-    P['hump'] = ((T % 2.0) / 2.0 * 1.3 - 0.15, 0.75 * w)
-    P['ear'] = math.sin(2 * math.pi * T / 2.0 - 2.0)
-    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % 4.0) < 1.40) else 0.0
+    P['hump'] = ((T % IDLE_T) / IDLE_T * 1.3 - 0.15, 0.75 * w)
+    P['ear'] = math.sin(2 * math.pi * T / IDLE_T - 2.0)
+    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % IDLE_T) < 1.40) else 0.0
     return P
 
 

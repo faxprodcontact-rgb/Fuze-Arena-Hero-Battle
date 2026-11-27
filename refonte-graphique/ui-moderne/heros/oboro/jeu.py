@@ -7,8 +7,9 @@ import oboro as K
 
 ID = 'mon-lenore-sorts'
 ANIM, DESSIN = A, K
-PERIODE = 2300                     # la respiration du vieillard (idle_offsets d'anim.py)
-DECALE = 3 * PERIODE / 1000.0      # la lanterne (un pendule) a le temps de prendre son balancement de repos
+PERIODE = 3000                     # la boucle du repos (anim.IDLE_T : respiration et signe)
+DECALE = 6.9    # la lanterne (un pendule) a le temps de prendre son balancement de repos (6,9 s comme avant le 27/11 :
+                # une autre valeur décale d'un rien les arrondis des instants et fait perdre une image d'effet)
 
 # ---- les feux follets en vol : c'est le jeu qui les fait voler (projectile) ; le dessin ne les montre plus
 VOL = {'on': False}
@@ -62,7 +63,7 @@ def ames(n):
 
 JEU = {
     'rendu': rendu,
-    'pose': dict(periode=PERIODE),
+    'pose': dict(periode=PERIODE, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Feu follet » : il pousse son bâton, la lanterne crache le feu follet qui file en ondulant et éclate sur l'ennemi
     'attaque': dict(genre='tir', tir=A.AT_LAUNCH, coup=A.AT_HIT, cible=A.HIT, depuis=BOUCHE[0] + 3, coupe=160,
                     bouche=BOUCHE, projectile=ames(1), arc=14),

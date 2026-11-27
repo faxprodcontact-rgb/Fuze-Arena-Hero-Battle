@@ -16,7 +16,7 @@ def croc(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=2000),                # la respiration d'anim.py : 2 s
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Croc de pierre » : le croc se forme dans la paume, part en tournoyant et vole jusqu'à la vraie cible ; il la
     # traverse (après le coup, ce qui est au-delà de 120 est posé sur la cible)
     'attaque': dict(genre='tir', tir=A.FANG_THROW, coup=ARRIVE, cible=(A.FOE[0], 50), depuis=MAIN[0] + 17, bouche=MAIN,

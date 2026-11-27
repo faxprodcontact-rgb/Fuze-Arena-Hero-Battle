@@ -59,7 +59,8 @@ HA0 = 84.0                                            # le marteau au repos : le
 HL = 34.6                                             # du poing au milieu de la tête du marteau
 SC0 = (74.6, 79.0)                                    # le milieu du pavois au repos
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, mane=0.0, tail=0.0, tuft=0.0,
-            barb=0.0, blink=0.0, jaw=0.0, wrist=W0, ha=0.0, sh=(0.0, 0.0), shr=0.0, glow=0.0)
+            barb=0.0, blink=0.0, jaw=0.0, wrist=W0, ha=0.0, sh=(0.0, 0.0), shr=0.0, glow=0.0,
+            rune=0.0)   # rune : le signe du repos (anim.signe), le signe de montagne du pavois s'emplit d'ambre
 HEAD_REST = (0.6, 1.0, 4.0)                           # menton rentré : la tête descend un peu et penche en avant
 
 
@@ -591,13 +592,17 @@ def shield_parts(fig, P, gl):
     det += [(mt.move(0.6, -0.7), STONE.hi, 0.55),
             (mt, ('lin', cx + 4, cy - 2, cx - 4, cy + 14, [(0, STONE.shadow), (1, STONE.deep)]), 0.85),
             (sm([L(0.6, 1.2), L(2.6, -2.4), L(4.6, 1.6), L(2.8, 0.8)], sharp=(0, 1, 2), t=0.5), STONE.light, 0.8)]
+    rn = P['rune']
+    if rn > 0:     # le repos (anim.signe) : la pierre sombre du signe s'emplit lentement d'ambre (plus clair en haut à droite)
+        det += [(mt.scale(0.86, 0.8, cx + 0.3, cy + 9.0), ('lin', cx + 5, cy - 2, cx - 5, cy + 14,
+                                                           [(0, AMBER[0]), (0.45, AMBER[1]), (1, AMBER[3])]), 0.9 * rn)]
     fig.part('shield', face, STONE, grad=(cx + 12, cy - 27, cx - 8, cy + 26, [(0, STONE.light), (0.45, STONE.base), (1, STONE.shadow)]),
              cel=1.6, rim=0.9, cast=1.2, cast_on=['shside', 'vest', 'belt', 'buckle', 'trousers', 'farm', 'ffoot', 'fc0', 'fc1',
                                                     'fc2', 'plateF', 'straps'], details=det, occl=(STONE.deep, 0.18, 3.0))
     # la gemme d'ambre sertie en haut de la côte
     gx, gy = L(0.8, -16.0)
     setting = sm([(gx, gy - 3.6), (gx + 3.0, gy), (gx, gy + 3.6), (gx - 3.0, gy)], sharp=(0, 1, 2, 3), t=0.4)
-    fig.part('shgem', setting, BRONZE, cel=0.6, rim=0.5, cast=0.9, cast_on=['shield'], details=gem(gx, gy, 1.8, gl))
+    fig.part('shgem', setting, BRONZE, cel=0.6, rim=0.5, cast=0.9, cast_on=['shield'], details=gem(gx, gy, 1.8, max(gl, P['rune'])))
 
 
 # ======================================================================== le bras proche et le marteau

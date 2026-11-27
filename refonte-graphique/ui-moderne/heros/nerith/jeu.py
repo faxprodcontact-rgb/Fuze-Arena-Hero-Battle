@@ -23,7 +23,7 @@ def perle(fig, i):
 # la scène rendue : un peu plus large qu'anim.py à gauche (l'anneau d'eau de la spéciale va jusqu'à x = -55)
 JEU = {
     'vue': (-62, -40, 330, 163.125),
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Perle de jade » : d'un coup de poignet la lanterne lance la perle en cloche (460) ; le jeu la fait voler jusqu'à
     # la vraie cible, où elle éclate en fleur de lotus d'eau (600 ; tout ce qui est à droite de x = 170)
     'attaque': dict(genre='tir', tir=A.A_RELEASE, coup=A.A_HIT, cible=A.FOE, depuis=RELEASE[0] - 3, coupe=170,

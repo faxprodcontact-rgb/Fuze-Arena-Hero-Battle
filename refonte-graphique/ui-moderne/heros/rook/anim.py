@@ -148,13 +148,26 @@ S_HEAL, S_REZ = 590, 1250
 
 # ======================================================================== la respiration (boucle de 1,6 s)
 
-IDLE_T = 1.6
+# Depuis le 27/11 : boucle du repos de 3 s (IDLE_T), la respiration lourde y revient deux fois (IDLE_N) ; le feu
+# (ph) y fait 3 tours (1 par seconde ; 1,1 s avant), tous ses rythmes sont des multiples de 1/3 : la boucle se referme.
+IDLE_T = 3.0     # la boucle du repos (s) : respiration et signe du héros (1,6 s avant le 27/11)
+IDLE_N = 2       # respirations par boucle (une toutes les 1,5 s)
+FIRE_N = 3       # tours du feu par boucle
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la lame en feu s'embrase lentement (les flammes montent et rougeoient plus fort, le tranchant
+    s'éclaire) puis retombe. Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus
+    (heros/repos.py : les flammes de la lame dansent aussi, bph ; l'aura des pieds reste immobile)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(fire=1.0 * (0.5 - 0.5 * math.cos(u)), bph=FIRE_N * u)
 
 
 def idle_offsets(T):
     """La respiration lourde : le buste monte, il se tasse un peu à l'expiration, le heaume suit avec retard,
     la main de l'épée bouge à peine, les braises du heaume battent doucement."""
-    u = 2 * math.pi * T / IDLE_T
+    u = 2 * math.pi * IDLE_N * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     d = dict(crouch=0.5 * (0.5 - 0.5 * math.cos(u + math.pi)) ** 2, heady=-0.35 * math.sin(u - 1.0),
              tilt=0.5 * math.sin(u - 1.3), gy=0.4 * math.sin(u - 0.6), ang=1.2 * math.sin(u - 0.9),
@@ -181,6 +194,7 @@ def raw_pose(T, action=None, t0=0.0):
         P['ang'] += 0.7 * math.sin(tl / 1000.0 * 2 * math.pi * 22)
     if action == 'special' and 300 <= tl <= 500:
         P['ang'] += 0.6 * math.sin(tl / 1000.0 * 2 * math.pi * 20)
+    P['_w'] = w                                              # le poids du repos (pour le signe, pose_at)
     return P, w * br, tl
 
 
@@ -200,9 +214,10 @@ def pose_at(T, action=None, t0=0.0):
     tx = max(-4.0, min(4.0, -vx / 60.0))
     ty = max(-3.0, min(3.0, vy / 80.0))
     dl = (P['lean'] - Pp['lean']) * 24
-    u = 2 * math.pi * T / IDLE_T
+    u = 2 * math.pi * IDLE_N * T / IDLE_T
+    sg = signe(T)                                            # le signe du repos : la lame s'embrase (anim.signe)
     out = dict(breath=br, crouch=P['crouch'], lean=P['lean'], head=(P['headx'], P['heady']), tilt=P['tilt'],
-               ph=2 * math.pi * T / 1.1, fire=max(0.0, P['fire']), trail=(tx, ty), aura=max(0.0, P['aura']),
+               ph=sg['bph'], fire=max(0.0, P['fire']) + P['_w'] * sg['fire'], trail=(tx, ty), aura=max(0.0, P['aura']),
                eyes=max(0.0, P['eyes']), G=(P['gx'], P['gy']), ang=P['ang'], bend=max(-1.0, min(1.0, P['bend'])),
                FH=(P['fhx'], P['fhy']), fbend=-1.0,
                cpl=0.9 * math.sin(u - 1.2) - 0.5 * P['lean'] - 0.06 * dl, cpr=0.7 * math.sin(u - 1.6) - 0.4 * P['lean'] - 0.05 * dl,

@@ -79,7 +79,14 @@ def wing_vals(d, state):
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, lift=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, trail=0.0, pg=0.0,
             blink=0.0, nh=(25.6, 33.4), ne=(25.4, 50.2), fang=-90.0, fh=(93.0, 66.6), fe=(86.6, 66.4), sang=-45.0,
-            sw=0.0, wing_n=wing_vals(WINGS_N, 'fold'), wing_f=wing_vals(WINGS_F, 'fold'), ws=0.0, fan_fl=0.0)
+            sw=0.0, wing_n=wing_vals(WINGS_N, 'fold'), wing_f=wing_vals(WINGS_F, 'fold'), ws=0.0, fan_fl=0.0,
+            fsw=0.0, fsp=0.0)   # fsw, fsp : le signe du repos (anim.signe), les plumes de l'éventail basculent et s'ouvrent
+
+
+def rotp(p, c, deg):
+    a = math.radians(deg)
+    x, y = p[0] - c[0], p[1] - c[1]
+    return (c[0] + x * math.cos(a) - y * math.sin(a), c[1] + x * math.sin(a) + y * math.cos(a))
 
 
 def rot(v, deg):
@@ -560,8 +567,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fnames = []
     for j, (ac, al, nm, wd) in enumerate(FEATH):
         al = al + 0.5 * fl * math.sin(ph * 2 + j)
+        ac = ac * (1 + P['fsp'])                         # le repos (anim.signe) : l'éventail s'ouvre un peu
         base = (12.0, ac * 0.12)
         tip = (al, ac + 0.25 * fl * math.sin(ph * 2 + j * 1.7))
+        if P['fsw']:                                     # … et ses plumes basculent autour du poing
+            base, tip = (rotp(base, (12.0, 0.0), P['fsw']), rotp(tip, (12.0, 0.0), P['fsw']))
         d = norm(sub_(tip, base))
         sd = (-d[1], d[0])
         mid = lerp(base, tip, 0.62)

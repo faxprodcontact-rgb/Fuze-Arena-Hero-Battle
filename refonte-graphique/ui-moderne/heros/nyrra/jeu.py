@@ -6,7 +6,7 @@ import nyrra as N
 
 ID = 'mon-arachne-tisseuse'
 ANIM, DESSIN = A, N
-IDLE = 2200                                 # la respiration (anim.py : 2,2 s)
+IDLE = 3000                                 # la boucle du repos (anim.IDLE_T : 3 s)
 _TRACKS = {}
 
 
@@ -50,7 +50,7 @@ def pelote(fig, i):
 
 JEU = {
     'rendu': rendu,
-    'pose': dict(periode=IDLE),
+    'pose': dict(periode=IDLE, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     'vue_proj': (-52, -16, 64, 32),
     # « Crachat de soie » : l'abdomen se détend, la boule de soie file jusqu'à l'ennemi (le jeu la fait voler) et s'y
     # écrase (éclaboussure, gouttes de venin posées sur la vraie cible)

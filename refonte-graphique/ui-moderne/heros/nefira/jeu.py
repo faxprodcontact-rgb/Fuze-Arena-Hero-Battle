@@ -23,7 +23,7 @@ def scarabee(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Scarabée d'or » : elle pointe la croix, le scarabée s'envole de la boucle (370) ; le jeu le fait voler jusqu'à
     # la vraie cible, où il éclate en bouffée d'or (600 : éclat, sable, grains, tout ce qui est à droite de x = 160)
     'attaque': dict(genre='tir', tir=A.ATT_FLY[0], coup=A.ATT_HIT, cible=A.FOE, depuis=LOOP[0] + 2, coupe=160,

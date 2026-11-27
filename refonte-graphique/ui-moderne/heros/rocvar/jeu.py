@@ -41,7 +41,7 @@ A.fx_special = fx_special
 
 JEU = {
     'vue': (-50, -52, 290, 178),          # plus large que la vidéo : l'arme levée au-dessus de la tête
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Le roc lancé » : il bondit pendant qu'il arme (le rocher se forme sur le marteau), frappe ; le rocher reste avec
     # lui pendant son court vol, l'éclatement (éclats, poussière) est posé sur la cible
     'attaque': dict(genre='melee', coup=A.ATT_HIT + 20, cible=A.FOE, elan=(0, A.ATT_FIRE),

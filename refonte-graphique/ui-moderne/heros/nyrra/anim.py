@@ -135,12 +135,24 @@ BALL_G = (108.0, 84.0)                # où se forme la pelote (repère du corps
 # ======================================================================== la respiration (en boucle)
 
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2,2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : ses deux cocons de soie se balancent lentement au bout de leur fil (en sens contraire), et ses yeux
+    rouge braise s'allument doucement. Une pose partielle pour build() ; jouée au combat (pose_at, ajoutée au
+    balancement calculé des cocons) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(c1=17.0 * math.sin(u), c2=-14.0 * math.sin(u - 0.8), eyes=0.9 * (0.5 - 0.5 * math.cos(u)))
+
+
 def idle_offsets(T):
     """Elle respire lentement : le corps monte (les pointes restent plantées), l'abdomen suit avec retard et gonfle ;
     les pattes levées flottent avec retard ; la pointe de la patte avant proche « goûte l'air » (un petit cercle)."""
-    u = 2 * math.pi * T / 2.2
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
-    v = 2 * math.pi * T / 1.7
+    v = 2 * u                 # deux petits cercles par boucle
     return dict(breath=br, aby=0.35 * math.sin(u - 1.0), sw=0.25 * (0.5 - 0.5 * math.cos(u - 0.8)),
                 raA=1.2 * math.sin(u - 0.9), rbA=0.9 * math.sin(u - 1.3), rcA=0.6 * math.sin(u - 0.7),
                 rdA=0.7 * math.sin(u - 1.5), twx=0.7 * math.cos(v), twy=0.6 * math.sin(v))
@@ -168,7 +180,10 @@ def pose_at(T, action=None, t0=0.0):
              tw={'RC': (Q['twx'] * w, Q['twy'] * w)},
              alt={'RC': {'low': Q['rcLow'], 'low2': Q['rcLow2'], 'high': Q['rcHigh'], 'fling': Q['rcFling']},
                   'RD': {'high': Q['rdHigh'], 'fling': Q['rdFling'], 'out': Q['rdOut']}})
-    P['blink'] = 1.0 if (w > 0.95 and 1.6 <= (T % 3.4) < 1.72) else 0.0
+    sg = signe(T)                         # le signe du repos ; les cocons s'ajoutent à leur pendule (frame_svg)
+    P['eyes'] = max(P['eyes'], w * sg['eyes'])
+    P['c1'], P['c2'] = w * sg['c1'], w * sg['c2']
+    P['blink'] = 1.0 if (w > 0.95 and 1.6 <= (T % IDLE_T) < 1.72) else 0.0
     return P, tl
 
 
@@ -629,7 +644,7 @@ def which(segs, T):
 def frame_svg(T, segs, cc, view=VIEW, ow=0.95):
     act, t0 = which(segs, T)
     P, tl = pose_at(T, act, t0)
-    P['c1'], P['c2'] = cc
+    P['c1'], P['c2'] = P['c1'] + cc[0], P['c2'] + cc[1]      # le pendule + le balancement du repos (signe)
     fx = []
     if act == 'attack':
         fx = [fx_attack(tl)]

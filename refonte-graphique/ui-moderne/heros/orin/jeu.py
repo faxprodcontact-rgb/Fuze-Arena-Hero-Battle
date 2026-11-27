@@ -46,7 +46,8 @@ def rafale(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=8),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe) ; 8 images
+    # seulement : avec 10 ou 12, la planche dépasse le budget de 4,2 Mo (4,3 et 4,4 Mo)
     'vue_proj': (-64, -36, 96, 72),
     # coup de sabre puis coup d'éventail : la lame de vent file jusqu'à l'ennemi (le jeu la fait voler) et le frappe
     # (éclat, croissant, volutes, bouffée posés sur la vraie cible)

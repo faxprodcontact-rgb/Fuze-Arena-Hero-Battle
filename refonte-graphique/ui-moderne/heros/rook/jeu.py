@@ -41,7 +41,7 @@ def vague(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Taille de braise » : il abat l'épée, l'arc de feu se détache (545) ; le jeu le fait voler jusqu'à la vraie
     # cible, qui s'enflamme (700 : langues de feu, braises, fumée, tout ce qui est à droite de x = 160)
     'attaque': dict(genre='tir', tir=A.A_LAUNCH, coup=A.A_HIT, cible=A.FOE, depuis=START[0] - 14, coupe=160,

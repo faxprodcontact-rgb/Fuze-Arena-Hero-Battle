@@ -76,7 +76,8 @@ EYE_N, EYE_F = (87.5, 49.5), (96.45, 49.4)
 HORN_ROT = 12.0                           # la corne du fond, un peu plus droite que la proche (degrés)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, s=0.0, sdy=0.0, la=0.0, glow=0.0,
-            flick=0.0, ro=0.0, bs=0.0, hs=0.0, hem=0.0, blink=0.0, eyes=0.0)
+            flick=0.0, ro=0.0, bs=0.0, hs=0.0, hem=0.0, blink=0.0, eyes=0.0,
+            lum=0.0)   # lum : le signe du repos (anim.signe), le papier et la flamme de la lanterne s'éclairent (pas sa lueur)
 
 
 def rot(v, deg):
@@ -248,7 +249,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(ribbon([(-3.0, 2.0), (0.6, 1.8), (4.0, 2.4)], [0.1, 0.7, 0.1]), LACQ.hi, 0.7)])
     pc = (0.4, 11.2)
     paper = ellipse(pc[0], pc[1], 7.6, 7.6)
-    g3 = min(3.0, glow) / 3.0
+    g3 = min(3.0, glow + P['lum']) / 3.0
     hot = [PAPER[0] if g3 < 0.6 else '#ffffff', PAPER[1] if g3 < 0.3 else PAPER[0], PAPER[2] if g3 < 0.6 else PAPER[1]]
     flame_h = 5.6 + 0.8 * math.sin(fl * 2.1) + 2.4 * g3
     fx_ = 0.5 * math.sin(fl * 1.7 + 0.6)

@@ -73,7 +73,8 @@ LU, LF = 13.2, 9.6         # bras proche
 HAND0 = (46.6, 80.4)       # le poignet proche (la main ouverte part de là)
 
 REST = dict(breath=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, wl=0.0, wlF=None, ws=0.0, wph=0.0, theta=0.0,
-            grip=GRIP0, nh=0.0, pend=0.0, ear=0.0, hem=0.0, blink=0.0, smile=0.0, gold=0.0)   # gold : l'or de la croix s'illumine
+            grip=GRIP0, nh=0.0, pend=0.0, ear=0.0, hem=0.0, blink=0.0, smile=0.0, gold=0.0,
+            lueur=0.0, wwv=0.0)   # gold : l'or de la croix s'illumine ; lueur, wwv : le signe du repos (anim.signe)
 
 
 def rot(v, deg):
@@ -252,7 +253,7 @@ def wing(fig, pre, mp, far, P):
     def fan(i, n, base, tip, k=1.0):
         """Les rémiges s'écartent en éventail (ws) et ondulent un peu (wph), de la racine vers le bout."""
         spread = ws_ * (i - (n - 1) * 0.75) * 1.4 * k
-        wave = 0.5 * math.sin(ph - i * 0.8) * k
+        wave = (0.5 + P['wwv']) * math.sin(ph - i * 0.8) * k     # wwv : le repos fait onduler les rémiges (combat)
         ang = spread + wave
         return base, add(base, rot((tip[0] - base[0], tip[1] - base[1]), ang))
 
@@ -570,12 +571,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             det = [(ribbon([(cx + 1.0, 15.6), (cx + 3.4, 18.4), (cx + 3.6, 22.6), (cx + 2.2, 26.4)], [0.1, 0.7, 0.6, 0.1]), GOLD.hi, 0.85)]
         if gl > 0:
             det.append((sh, GOLD.hi, 0.35 * gl))
+        if P['lueur'] > 0:                       # le repos (anim.signe) : l'or de la croix s'éclaire lentement
+            det.append((sh, GOLD.hi, 0.75 * P['lueur']))
         fig.part(name, sh, GOLD, grad=(cx + 6, 16, cx - 6, 48, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]),
                  cel=0.7, rim=0.55, cast=0.8 if name != 'aloop' else 0.9, cast_on=['farm'] + wing_names if name != 'abar' else None,
                  details=det)
     gem = sm([(cx, 28.0), (cx + 1.7, 29.9), (cx, 31.8), (cx - 1.7, 29.9)], sharp=(0, 1, 2, 3), t=0.5)
     fig.part('agem', gem, TURQ, cel=0.4, rim=0.35, cast=0.4,
-             details=[(sm([(cx, 28.4), (cx + 1.3, 29.9), (cx, 30.1)], sharp=(0, 1, 2), t=0.4), TURQ.hi, 0.85)])
+             details=([(gem, TURQ.hi, 0.8 * P['lueur'])] if P['lueur'] > 0 else [])
+             + [(sm([(cx, 28.4), (cx + 1.3, 29.9), (cx, 30.1)], sharp=(0, 1, 2), t=0.4), TURQ.hi, 0.85)])
     fig.pose(['aloop', 'abar', 'ashaft', 'agem'], AM)
 
     # ---- la tête ----

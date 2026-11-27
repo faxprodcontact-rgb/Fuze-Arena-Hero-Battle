@@ -152,8 +152,20 @@ SP_HIT = 1260                   # les aiguilles jaillissent sous l'ennemi
 
 # ======================================================================== la respiration (en boucle, 2 s)
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : le signe de montagne taillé dans son pavois s'emplit lentement d'ambre, la gemme du pavois s'éveille
+    avec lui, puis tout s'éteint. Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus
+    (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(rune=0.5 - 0.5 * math.cos(u))
+
+
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, crouch=0.3 * (0.5 - 0.5 * math.cos(u - 1.4)), heady=0.3 * math.sin(u - 0.6),
                 tilt=0.5 * math.sin(u - 0.9), mane=0.4 * math.sin(u - 1.2), tail=0.7 * math.sin(u),
@@ -181,8 +193,9 @@ def pose_at(T, action=None, t0=0.0):
     P['wrist'] = (P.pop('wx'), P.pop('wy'))
     P['head'] = (P.pop('headx'), P.pop('heady'))
     P['sh'] = (P.pop('shx'), P.pop('shy'))
-    P['ph'] = 2 * math.pi * T * 0.8
-    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % 4.0) < 1.40) else 0.0
+    P['rune'] = w * signe(T)['rune']                          # le signe du repos (anim.signe)
+    P['ph'] = 2 * 2 * math.pi * T / IDLE_T                     # deux ondulations par boucle du repos
+    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % IDLE_T) < 1.40) else 0.0
     return P
 
 

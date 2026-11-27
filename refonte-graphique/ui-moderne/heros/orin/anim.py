@@ -200,11 +200,22 @@ S_HIT = 1100
 S_LAND = 1610
 
 # ======================================================================== la respiration (en boucle, comme le pixel art)
-IDLE_T = 1.4
+# Depuis le 27/11 : boucle du repos de 3 s (IDLE_T), le souffle vif du tengu y revient deux fois (IDLE_N).
+IDLE_T = 3.0     # la boucle du repos (s) : respiration et signe du héros (1,4 s avant le 27/11)
+IDLE_N = 2       # souffles par boucle (un toutes les 1,5 s)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : l'éventail de plumes d'or s'évente lentement (les plumes basculent d'un côté puis de l'autre autour du
+    poing, et s'ouvrent un peu plus en passant). Une pose partielle pour build() ; jouée au combat (pose_at) et dans
+    les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(fsw=11.0 * math.sin(u), fsp=0.22 * (0.5 - 0.5 * math.cos(2 * u)))
 
 
 def idle_offsets(T):
-    u = 2 * math.pi * T / IDLE_T
+    u = 2 * math.pi * IDLE_N * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, crouch=0.45 * (0.5 - 0.5 * math.cos(u - 2.2)), heady=0.35 * math.sin(u - 0.8),
                 tilt=0.6 * math.sin(u - 1.0), nhy=0.45 * math.sin(u - 1.2), pg=0.9 * math.sin(u + 0.4),
@@ -233,8 +244,10 @@ def pose_at(T, action=None, t0=0.0):
     P['breath'] = w * idl['breath']
     P['ws'] = max(P['ws'], idl['ws'])
     P['fan_fl'] = max(P['fan_fl'], idl['fan_fl'] * w)
-    P['ph'] = 2 * math.pi * T / IDLE_T + (1.5 * P['ws'] * T if act else 0)
-    P['blink'] = 1.0 if (w > 0.95 and 0.95 <= (T % 2.8) < 1.04) else 0.0
+    sg = signe(T)                             # le signe du repos (anim.signe)
+    P['fsw'], P['fsp'] = w * sg['fsw'], w * sg['fsp']
+    P['ph'] = 2 * math.pi * IDLE_N * T / IDLE_T + (1.5 * P['ws'] * T if act else 0)
+    P['blink'] = 1.0 if (w > 0.95 and 0.95 <= (T % IDLE_T) < 1.04) else 0.0
     return P
 
 
@@ -699,8 +712,8 @@ def background(w, h, view, floor_y=GR):
 def timeline():
     """La suite : repos ×2, attaque ×2, spéciale ×1 (en secondes)."""
     A, S = ATTACK[-1][0] / 1000, SPECIAL[-1][0] / 1000
-    seq = [('idle', 2 * IDLE_T), ('attack', A), ('idle', IDLE_T * 0.75), ('attack', A), ('idle', IDLE_T),
-           ('special', S), ('idle', IDLE_T)]
+    seq = [('idle', IDLE_T), ('attack', A), ('idle', IDLE_T * 0.35), ('attack', A), ('idle', IDLE_T / 2),
+           ('special', S), ('idle', IDLE_T / 2)]
     out, T = [], 0.0
     for a, d in seq:
         out.append((a, T, T + d))

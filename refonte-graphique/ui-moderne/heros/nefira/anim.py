@@ -166,8 +166,26 @@ def pulse(t, t0, up=0.06, hold=0.08, down=0.12):
     return u * u * (3 - 2 * u)
 
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : l'or de la croix de vie s'éclaire lentement, la gemme turquoise du croisement avec lui.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(lueur=0.5 - 0.5 * math.cos(u))
+
+
+def signe_combat(T):
+    """Au combat seulement (les ailes sont trop grandes pour la mémoire des menus) : les rémiges ondulent plus fort,
+    deux vagues par boucle."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(wwv=2.2, wph=2 * u)
+
+
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     # la tête suit le souffle avec un temps de retard ; les ailes se soulèvent un peu à l'inspiration ; la croix se balance
     d = dict(heady=-0.25 * (0.5 - 0.5 * math.cos(u - 0.6)), tilt=0.5 * math.sin(u - 1.0),
@@ -197,9 +215,10 @@ def pose_at(T, action=None, t0=0.0):
     if action == 'attack' and 160 <= tl <= 340:
         P['theta'] += 0.8 * math.sin(tl / 1000.0 * 2 * math.pi * 18)
     out = dict(breath=w * br, lean=P['lean'], head=(P['headx'], P['heady']), tilt=P['tilt'], wl=P['wl'],
-               wlF=P['wl'] * 0.8, ws=P['ws'], wph=2 * math.pi * T / 2.0 + P['wph'], theta=P['theta'],
+               wlF=P['wl'] * 0.8, ws=P['ws'], wph=signe_combat(T)['wph'] + P['wph'], theta=P['theta'],
                grip=(N.GRIP0[0] + P['gx'], N.GRIP0[1] + P['gy']), nh=P['nh'], pend=P['pend'], hem=P['hem'],
-               smile=P['smile'], gold=P['gold'], ear=math.sin(2 * math.pi * T * 0.8 - 0.5) + 0.5 * P['lean'])
+               smile=P['smile'], gold=P['gold'], ear=math.sin(2 * 2 * math.pi * T / IDLE_T - 0.5) + 0.5 * P['lean'],
+               lueur=w * signe(T)['lueur'], wwv=w * signe_combat(T)['wwv'])
     return out
 
 
