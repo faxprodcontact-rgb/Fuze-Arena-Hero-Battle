@@ -206,7 +206,7 @@ def arm(fig, key, S, E, H, Wd, mat_cast, P, far=False):
     C = lerp(S, E, k_roll)                       # le bourrelet, au-dessus du coude
     Wr = Wd                                      # le poignet
     w_up, w_el, w_wr = (9.8, 9.4, 7.8) if not far else (8.4, 8.0, 7.0)
-    skin = bent(lerp(S, E, 0.5), E, Wr, w_up, w_el, w_wr, bulge=(0.04, 0.12), n=8)
+    skin = bent(lerp(S, E, 0.72), E, Wr, w_up, w_el, w_wr, bulge=(0.04, 0.12), n=8)
     a2 = Seg(E, Wr)
     aa2 = math.degrees(math.atan2(a2.u[1], a2.u[0]))
     s2 = 1 if (a2.v[0] * 0.6 - a2.v[1] * 0.8) > 0 else -1
@@ -414,7 +414,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ff = fist(fig, 'ffist', FH, math.degrees(math.atan2(FH[1] - FE[1], FH[0] - FE[0])) - 90, k=1.15, cast_on=['fskin'])
     far_names += ff
     # la racine de la manche lointaine se fond dans le buste (aucune couture à l'épaule)
-    mo_ = mapp(U, lerp(S_F, fC, 0.5))
+    mo_ = mapp(U, lerp(S_F, fC, 0.35))
     mt_ = mapp(U, add(S_F, norm(sub_(S_F, fC)), 4.0))
     fig.masks['fsleeve'] = (mo_[0], mo_[1], mt_[0], mt_[1], 'torso')
 

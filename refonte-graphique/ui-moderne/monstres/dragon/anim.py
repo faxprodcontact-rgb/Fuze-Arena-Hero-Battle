@@ -106,14 +106,14 @@ def keyed(keys, t):
 # vers l'ennemi, griffes ouvertes ; elle tient ; puis elle s'abat en arc devant lui et frappe le sol ; il tient ; retour.
 ATTACK = [
     (0, {}),
-    (180, dict(fx=-2, fr=-1.2, hx=-1, hy=0.5, ht=-2, jaw=3, heat=0.6, paw=(168, 200, -40, 1.1), lag=(1, 0.5), tail=0.6)),
-    (380, dict(fx=-3.4, fr=-3.2, hx=-1.6, hy=-1, ht=-5, jaw=7, heat=1.2, paw=(197, 153, -82, 1.6), lag=(1.6, 1), tail=1)),
-    (560, dict(fx=-3.6, fr=-3.5, hx=-1.8, hy=-1.2, ht=-5.5, jaw=7.5, heat=1.4, paw=(199, 150, -86, 1.65), lag=(1.8, 1.1), tail=1)),
-    (640, dict(fx=1.5, fr=0.5, hx=0.5, hy=1, ht=1, jaw=9, heat=1.2, paw=(204, 186, -30, 1.3), lag=(-1, -0.5), tail=0)),
-    (700, dict(fx=4.2, fr=2.6, hx=1.4, hy=3, ht=5, jaw=10, heat=1.0, paw=(192, 215, 4, 1.0), lag=(-2.2, -1.2), tail=-1)),
-    (900, dict(fx=4.0, fr=2.4, hx=1.3, hy=2.8, ht=4.5, jaw=8, heat=0.9, paw=(192, 215, 4, 1.0), lag=(-1.6, -0.8), tail=-1)),
-    (1060, dict(fx=2.2, fr=1, hx=0.6, hy=1.4, ht=2, jaw=4, heat=0.5, paw=(180, 207, -12, 1.0), lag=(0.6, 0.3), tail=-0.4)),
-    (1250, dict(fx=0.4, hy=0.2, jaw=1, heat=0.2, paw=(163, 215, 0, 1.0))),
+    (180, dict(fx=-2, fr=-1.0, hx=-0.4, hy=0.2, ht=-0.8, jaw=2, heat=0.6, paw=(176, 198, -40, 1.1), lag=(1, 0.5), tail=0.6)),
+    (380, dict(fx=-3.2, fr=-2.6, hx=-0.8, hy=-0.4, ht=-2.0, jaw=5, heat=1.2, paw=(199, 153, -82, 1.6), lag=(1.6, 1), tail=1)),
+    (560, dict(fx=-3.4, fr=-2.8, hx=-0.9, hy=-0.5, ht=-2.2, jaw=5.5, heat=1.4, paw=(201, 150, -86, 1.65), lag=(1.8, 1.1), tail=1)),
+    (640, dict(fx=1.2, fr=0.4, hx=0.2, hy=0.4, ht=0.2, jaw=7, heat=1.2, paw=(208, 184, -30, 1.3), lag=(-1, -0.5), tail=0)),
+    (700, dict(fx=3.6, fr=2.0, hx=0.6, hy=1.2, ht=1.8, jaw=8, heat=1.0, paw=(197, 214, 4, 1.0), lag=(-2.2, -1.2), tail=-1)),
+    (900, dict(fx=3.4, fr=1.9, hx=0.6, hy=1.2, ht=1.7, jaw=7, heat=0.9, paw=(197, 214, 4, 1.0), lag=(-1.6, -0.8), tail=-1)),
+    (1080, dict(fx=1.8, fr=0.8, hx=0.3, hy=0.6, ht=0.8, jaw=3.5, heat=0.5, paw=(186, 206, -12, 1.0), lag=(0.6, 0.3), tail=-0.4)),
+    (1260, dict(fx=0.3, hy=0.1, jaw=1, heat=0.2, paw=(171, 214, 0, 1.0))),
     (1400, {}),
 ]
 ATTACK_HIT = 700
@@ -142,9 +142,9 @@ SP_RAIN = (2050, 2300)    # les blocs de lave arrivent sur le héros (premier, d
 def idle_offsets(T):
     u = 2 * math.pi * T / 2.6
     br = 0.5 - 0.5 * math.cos(u)
-    return dict(br=br, hy=0.6 * math.sin(u - 0.9), ht=0.8 * math.sin(u - 1.1), jaw=1.2 * math.sin(u - 0.6),
+    return dict(br=br, hy=0.25 * math.sin(u - 0.9), ht=0.3 * math.sin(u - 1.1), jaw=0.6 * math.sin(u - 0.6),
                 tail=1.2 * math.sin(u * 0.5 + 0.4), lagx=0.6 * math.sin(u - 1.6), lagy=0.8 * math.sin(u - 1.6),
-                heat=0.5 * br, fx=0.3 * math.sin(u - 0.3))
+                heat=0.5 * br, fx=0.15 * math.sin(u - 0.3))
 
 
 def pose_at(T, action=None, t0=0.0):
@@ -336,7 +336,7 @@ def fx_attack(tl):
         # le croissant de braise derrière les griffes pendant le coup (de la patte levée au sol)
         k = env(tl, 580, 640, 690, 780)
         if k > 0:
-            C = (164.0, 198.0)
+            C = (172.0, 198.0)
             a1 = math.degrees(math.atan2(A[1] - C[1], A[0] - C[0])) + 8
             R = math.dist(C, A) + 12
             a0 = a1 - 70 * min(1, (tl - 560) / 120)
@@ -350,7 +350,7 @@ def fx_attack(tl):
         # l'impact au sol : poussière et éclats devant la patte
         if tl >= ATTACK_HIT:
             t = (tl - ATTACK_HIT) / 1000
-            x0 = 220.0
+            x0 = 224.0
             for j in range(3):
                 r = 2.5 + 9 * (1 - math.exp(-t * 6)) * (0.7 + 0.3 * j)
                 fig.fx_front.append(dust(fig, x0 - 10 + 11 * j, GR - 2 - 2.5 * t * 10 * (0.4 + 0.2 * j), r * 0.75,

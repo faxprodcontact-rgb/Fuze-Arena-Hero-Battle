@@ -106,6 +106,13 @@ class FigureM(Figure):
         super().__init__(*a, **k)
         self.masks = {}
 
+    def _fill(self, p):
+        # (ajout du boss de feu) un remplissage en dégradé radial : p.fillx = ('rad', cx, cy, rx, ry, arrêts)
+        fx = getattr(p, 'fillx', None)
+        if fx and fx[0] == 'rad':
+            return self.rad(*fx[1:])
+        return super()._fill(p)
+
     def svg(self, size=None, bg=None):
         n0 = self.n
         s = super().svg(size, bg)

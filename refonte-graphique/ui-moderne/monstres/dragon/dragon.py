@@ -67,7 +67,7 @@ REST = dict(br=0.0, fx=0.0, fy=0.0, fr=0.0, sq=0.0, hx=0.0, hy=0.0, ht=0.0, jaw=
 HIP_PIV = (100.0, 176.0)        # le pivot du cabré (au-dessus des pattes arrière)
 NECK_J = (192.0, 104.0)        # la nuque (la tête tourne autour)
 HEAD_K, HEAD_C = 1.1, (198.0, 108.0)    # la tête un peu plus grande (la zone forte), comme les héros
-HEAD_OFF = (-3.0, -24.0)               # la tête portée haut, au bout du long cou en S
+HEAD_OFF = (0.0, -32.0)               # la tête portée haut, au bout du long cou en S
 
 # les pattes : (racine, coude/genou, poignet/jarret, bout du pied) au repos ; longueurs prises au repos
 LEG_N_FRONT = dict(S=(172.0, 160.0), K=(157.0, 190.0), A=(171.0, 214.0), B=(185.0, 228.0), g=GRD)
@@ -181,8 +181,8 @@ def horn_shape(root, c1, c2, tip, w0):
 # le torse (bosse d'épaules, dos, croupe, ventre, poitrail) ; le cou ; la queue (une ligne et ses largeurs)
 TORSO = [(56, 150), (62, 137), (80, 131), (110, 128), (138, 123), (158, 119), (184, 126), (204, 138), (214, 154),
          (212, 171), (202, 183), (184, 187), (162, 183), (136, 177), (112, 176), (92, 180), (72, 179), (60, 167)]
-NECK = [(148, 122), (161, 111), (169, 97), (175, 84), (185, 72), (198, 72), (206, 86), (206, 102), (204, 118), (208, 134),
-        (194, 140), (172, 132)]
+NECK = [(148, 122), (160, 112), (167, 98), (173, 84), (181, 73), (190, 66), (202, 68), (206, 82), (203, 96), (199, 112),
+        (206, 134), (194, 140), (172, 132)]
 TAIL_C = [(62, 148), (42, 151), (25, 160), (13, 177), (8, 197), (13, 214), (26, 225), (44, 231), (64, 233.6)]
 TAIL_W = [27, 23, 19.5, 16.5, 13.5, 10.5, 8, 5.5, 3.6]
 
@@ -198,6 +198,8 @@ class Rig:
         hx, hy = P['hx'], P['hy']
         self.HEAD = mchain(self.F, mT(hx + HEAD_OFF[0], hy + HEAD_OFF[1] - 0.8 * P['br']), mR(P['ht'], *NECK_J), mS(HEAD_K, HEAD_K, *HEAD_C))
         self.JAW = mchain(self.HEAD, mR(JAW0 + P['jaw'], *JAW_PIV))
+        # le mouvement de la tête seul (sans sa place ni son agrandissement) : le haut du cou le suit
+        self.HEADM = mchain(self.F, mT(hx, hy - 0.8 * P['br']), mR(P['ht'], *NECK_J))
         self.br = P['br']
         self.tail = P['tail']
 
@@ -217,7 +219,7 @@ class Rig:
         # le cou : il suit la tête près de la nuque
         wn = smooth((x - 168) / 30) * smooth((150 - y) / 30)
         if wn > 0:
-            h = mapp(self.HEAD, p)
+            h = mapp(self.HEADM, p)
             fq = mapp(self.F, p)
             q = (q[0] + (h[0] - fq[0]) * wn, q[1] + (h[1] - fq[1]) * wn)
         # la queue : elle se balance (plus au bout), le bout reste près du sol
@@ -354,17 +356,17 @@ def wing_skel(R, name, u, flap=0.0, lag=(0.0, 0.0)):
     """Le squelette d'une aile : racine (dans le dos), coude, poignet, griffe du pouce, trois bouts de doigts, et le
     point où le bord de fuite rejoint le flanc. u = 0 : repliée (le dessin) ; u = 1 : grande ouverte."""
     if name == 'N':
-        root0 = (142.0, 122.0)
-        folded = dict(eh=-96.0, lh=16.0, ef=-114.0, lf=82.0, fing=[(136.4, 117.0), (124.6, 118.0), (112.8, 116.0)],
-                      att=(136.0, 122.0))
-        opened = dict(eh=-140.0, lh=26.0, ef=-122.0, lf=104.0, fing=[(164.0, 82.0), (134.0, 108.0), (102.0, 112.0)],
-                      att=(114.0, 128.0))
+        root0 = (152.0, 128.0)
+        folded = dict(eh=-63.4, lh=26.8, ef=-120.8, lf=109.0, fing=[(130.4, 123.0), (116.6, 130.0), (101.5, 130.6)],
+                      att=(140.0, 136.0))
+        opened = dict(eh=-105.0, lh=30.0, ef=-125.0, lf=100.0, fing=[(186.0, 96.0), (158.0, 106.0), (124.0, 110.0)],
+                      att=(120.0, 140.0))
     else:
-        root0 = (164.0, 112.0)
-        folded = dict(eh=-84.0, lh=12.0, ef=-100.0, lf=72.0, fing=[(110.0, 84.0), (104.0, 87.0), (98.5, 88.0)],
-                      att=(150.0, 118.0))
-        opened = dict(eh=-70.0, lh=18.0, ef=-84.0, lf=75.0, fing=[(29.0, 62.0), (55.5, 78.0), (74.6, 83.0)],
-                      att=(170.0, 114.0))
+        root0 = (168.0, 122.0)
+        folded = dict(eh=-61.4, lh=25.0, ef=-109.7, lf=89.0, fing=[(108.0, 90.0), (100.4, 99.6), (92.2, 104.0)],
+                      att=(160.0, 126.0))
+        opened = dict(eh=-70.0, lh=22.0, ef=-80.0, lf=80.0, fing=[(20.0, 70.0), (50.0, 84.0), (78.0, 90.0)],
+                      att=(176.0, 126.0))
     k = smooth(u) if 0 <= u <= 1 else u
     eh = lerp(folded['eh'], opened['eh'], k) + flap * 0.4
     lh = lerp(folded['lh'], opened['lh'], k)
@@ -379,19 +381,24 @@ def wing_skel(R, name, u, flap=0.0, lag=(0.0, 0.0)):
         a = lerp(a0, a1, k) + flap * (1.0 if name == 'N' else -1.0)
         tips.append(polar(W, a, lerp(L0, L1, k)))
     att = R.D(lerp(folded['att'], opened['att'], k))
-    thumb = polar(W, ef + (40 if name == 'N' else 30), 9)
+    thumb = polar(W, ef - 10, 13)
     return dict(root=root, E=E, W=W, tips=tips, att=att, thumb=thumb)
 
 
-def scallop(a, b, depth, n=10):
-    """Le bord libre de la membrane entre deux bouts de doigts : un feston (creux vers le corps)."""
+def scallop(a, b, depth, n=10, tear=None):
+    """Le bord libre de la membrane entre deux bouts de doigts : un feston (creux vers le corps) ; `tear` : une petite
+    déchirure (une encoche) à cette fraction du bord."""
     d = unit(a, b)
-    nrm = (d[1], -d[0])                   # vers l'intérieur de l'aile (on tourne autour dans le sens horaire)
+    nrm = (d[1], -d[0])
     out = []
     for i in range(1, n):
         t = i / n
         p = lerp(a, b, t)
-        out.append(add(p, nrm, -depth * math.sin(math.pi * t)))
+        out.append(add(p, nrm, -depth * math.sin(math.pi * t) ** 0.8))
+        if tear and abs(t - tear) < 0.5 / n:
+            q = add(add(p, nrm, -depth * math.sin(math.pi * t) ** 0.8 - 5.5), d, 0.8)
+            out.append(q)
+            out.append(add(p, d, 1.8 + 0.0))
     return out
 
 
@@ -496,7 +503,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
 
 # (point sur le dos, point suivant vers la queue, longueur) : la nuque, le cou, le dos (sous l'aile), la croupe
-DORSAL = [((183, 75), (176, 83), 5.0), ((173, 90), (168, 100), 6.4), ((165, 106), (158, 114), 7.6), ((150, 121), (140, 123), 8.6),
+DORSAL = [((179, 76), (174, 84), 5.0), ((171, 88), (167, 98), 6.4), ((165, 106), (158, 114), 7.6), ((150, 121), (140, 123), 8.6),
           ((128, 124.5), (118, 126), 9.0), ((106, 128), (96, 129), 8.6), ((86, 130), (76, 131.5), 7.6), ((67, 135), (58, 139), 6.4)]
 
 
@@ -598,39 +605,58 @@ def chest_plates():
 
 
 def draw_wing(fig, name, sk, mat, bone, P):
-    """Une aile : la membrane en pans (sombre contre l'os de gauche, éclairée contre celui de droite), le bord libre
-    rougi par la braise, le bras et les doigts d'obsidienne, la griffe du pouce."""
+    """Une aile de dragon : des os anguleux (bras, coude en pointe, avant-bras, poignet, griffe du pouce, trois longs
+    doigts à une jointure), une membrane tendue entre eux (pourpre sombre à la racine → braise au bord), des pans
+    creusés par la tension, un bord libre en festons pointus, une petite déchirure."""
     root, E, W, tips, att = sk['root'], sk['E'], sk['W'], sk['tips'], sk['att']
     f1, f2, f3 = tips
-    sc = [scallop(f1, f2, 6.0), scallop(f2, f3, 5.4), scallop(f3, att, 7.0)]
+    sc = [scallop(f1, f2, 8.0), scallop(f2, f3, 7.0, tear=0.62), scallop(f3, att, 8.5)]
     edge = [f1] + sc[0] + [f2] + sc[1] + [f3] + sc[2] + [att]
-    memb = sm([W] + edge + [root, E], sharp=(0, 1, 11, 21), t=0.6)
+    i2, i3 = 1 + len(sc[0]) + 1, 1 + len(sc[0]) + 1 + len(sc[1]) + 1
+    memb = sm([W] + edge + [root, E], sharp=(0, 1, i2, i3), t=0.55)
+    rr = max(math.dist(W, t) for t in tips) * 1.02
+    ember = '#d24a2a' if name == 'N' else '#9a3028'
+    fill = ('rad', W[0], W[1], rr, rr, [(0, mat.deep), (0.4, mat.shadow), (0.76, mat.base), (0.9, '#9a2c3c'), (1, ember)])
     det = []
-    # les pans : chaque pan est un pli ; sombre contre l'os de gauche, éclairé contre celui de droite
+    # les pans : chaque pan est tendu entre deux os : sombre contre l'os de gauche, éclairé contre celui de droite
     mid_arm = lerp(E, W, 0.4)
     for (a, b, s_), right in (((f1, f2, sc[0]), f2), ((f2, f3, sc[1]), f3), ((f3, att, sc[2]), mid_arm)):
         pan = sm([W, a] + s_ + [b] + ([root, E] if b is att else []), sharp=(0, 1), t=0.6)
         ga = lerp(W, a, 0.62)
         gb = lerp(W, right, 0.62) if right is not mid_arm else lerp(att, mid_arm, 0.5)
-        det.append((pan, ('lin', ga[0], ga[1], gb[0], gb[1], [(0, mat.deep, 0.75), (0.35, mat.shadow, 0.3), (0.7, mat.light, 0.0),
-                                                              (1, mat.hi, 0.3)]), 1))
+        det.append((pan, ('lin', ga[0], ga[1], gb[0], gb[1], [(0, mat.deep, 0.6), (0.35, mat.shadow, 0.22), (0.7, mat.light, 0.0),
+                                                              (1, mat.hi, 0.22)]), 1))
+        # le creux de la membrane : une ombre douce qui suit le feston, un peu en retrait du bord
+        cr = [lerp(p, W, 0.1) for p in [a] + s_ + [b]]
+        n_ = len(cr)
+        det.append((ribbon(cr, [0.2] + [4.5 * math.sin(math.pi * k / (n_ - 1)) + 0.3 for k in range(1, n_ - 1)] + [0.2]), mat.deep, 0.2))
     # le bord libre rougi par la braise
-    det.append((ribbon(edge, [0.3] + [1.6] * (len(edge) - 2) + [0.3]), LAVA[4], 0.9))
-    det.append((ribbon(edge, [0.2] + [0.65] * (len(edge) - 2) + [0.2]), LAVA[2], 0.8))
-    x0, y0, x1, y1 = memb.bbox()
-    fig.part('wing' + name, memb, mat, grad=(x1, y0, x0, y1, [(0, mat.light), (0.5, mat.base), (1, mat.shadow)]),
-             cel=1.2, rim=0.5, cast=1.0 if name == 'N' else 0, details=det)
-    # les doigts : fins, d'obsidienne
+    det.append((ribbon(edge, [0.3] + [1.7] * (len(edge) - 2) + [0.3]), LAVA[4], 0.9))
+    det.append((ribbon(edge, [0.2] + [0.7] * (len(edge) - 2) + [0.2]), LAVA[2], 0.85))
+    fig.part('wing' + name, memb, mat, grad=None, cel=1.2, rim=0.5, cast=1.0 if name == 'N' else 0, details=det)
+    fig.parts[-1].grad = None
+    fig.parts[-1].fillx = fill
+    # les doigts : longs, une jointure (un léger angle), le bout qui dépasse un peu de la membrane, en pointe
     for j, t in enumerate(tips):
-        c = [lerp(W, t, s) for s in (0, 0.35, 0.7, 1.0)]
-        fig.part('wf%s%d' % (name, j), limb(c, [3.8 - 0.3 * j, 2.8, 1.9, 1.0]), bone, cel=0.5, rim=0.45, cast=0.5,
-                 cast_on=['wing' + name])
-    # le bras (la racine dans le dos, le coude, le poignet) et la griffe du pouce
-    arm = limb([root, E, lerp(E, W, 0.5), W], [8.0, 7.2, 5.6, 6.4])
-    fig.part('wa' + name, arm, bone, cel=0.9, rim=0.6, cast=0.8, cast_on=['wing' + name, 'body'])
-    fig.part('wk' + name, ellipse(W[0], W[1], 4.0, 4.0), bone, cel=0.7, rim=0.6, cast=0.5)
+        L = math.dist(W, t)
+        d = unit(W, t)
+        nrm = (-d[1], d[0])
+        jt = add(lerp(W, t, 0.48), nrm, L * 0.035 * (1 if name == 'N' else -1))
+        te = add(t, unit(jt, t), 4.5)
+        fig.part('wf%s%d' % (name, j), limb([W, jt, lerp(jt, te, 0.6), te], [4.0 - 0.3 * j, 3.0, 2.2, 0.5]), bone, cel=0.5, rim=0.45,
+                 cast=0.5, cast_on=['wing' + name])
+        fig.part('wj%s%d' % (name, j), ellipse(jt[0], jt[1], 2.0, 2.0), bone, cel=0.4, rim=0.4, cast=0.3, cast_on=['wing' + name])
+    # le bras : de l'épaule au coude (en pointe, un éperon), puis l'avant-bras jusqu'au poignet
+    fig.part('wh' + name, limb([root, lerp(root, E, 0.5), E], [9.0, 7.6, 7.0]), bone, cel=0.9, rim=0.6, cast=0.8,
+             cast_on=['wing' + name, 'body'])
+    fig.part('wa' + name, limb([E, lerp(E, W, 0.5), W], [7.0, 5.4, 6.2]), bone, cel=0.9, rim=0.6, cast=0.8,
+             cast_on=['wing' + name, 'body', 'wh' + name])
+    fig.part('we' + name, ellipse(E[0], E[1], 4.6, 4.6), bone, cel=0.7, rim=0.6, cast=0.5)
+    de = unit((0, 0), add(unit(W, E), unit(root, E)))
+    fig.part('wes' + name, shard(add(E, de, -1), add(E, de, 9), 4.8, bend=0.4), bone, cel=0.4, rim=0.4, cast=0.4)
+    fig.part('wk' + name, ellipse(W[0], W[1], 4.4, 4.4), bone, cel=0.7, rim=0.6, cast=0.5)
     d = unit(W, sk['thumb'])
-    fig.part('wt' + name, shard(add(W, d, 1), add(W, d, 10), 4.6, bend=-0.6), bone, cel=0.4, rim=0.4, cast=0.4)
+    fig.part('wt' + name, shard(add(W, d, 1), add(W, d, 14), 5.4, bend=-0.7), bone, cel=0.4, rim=0.4, cast=0.4)
 
 
 # ---------------------------------------------------------------- la tête (repère de la tête au repos)
