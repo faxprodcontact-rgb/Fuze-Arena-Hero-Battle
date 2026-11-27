@@ -71,7 +71,7 @@ FACE_BOX = (86.0, 41.0, 108.0, 63.0)
 FACE_V = placer(FACE_BOX, l_oeil=0.22)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, glow=0.0, blink=0.0, heat=0.0, gape=0.0,
-            a1=A1_0, a2=A2_0, a3=CLUB0, front=0.0, fw=FW0, frot=0.0, drip=0.35, crater=0.0)
+            nw=NW0, a3=CLUB0, front=0.0, fw=FW0, frot=0.0, drip=0.35, crater=0.0)
 _GL = [0.0, 0.0]                 # l'embrasement de la lave en cours, la chaleur de la massue
 
 
@@ -439,11 +439,25 @@ def far_arm(fig, P, UC):
     fig.ctx_far = dict(S=S, E=E, W=W, tip=tips[1], ang=a)
 
 
+def sign_for(S, E, W):
+    best = None
+    for s_ in (-1, 1):
+        e, _ = ik(S, W, NL1, NL2, s_)
+        d = math.dist(e, E)
+        if best is None or d < best[0]:
+            best = (d, s_)
+    return best[1]
+
+
+SG_N = sign_for(NS0, NE0, NW0)
+
+
 def arm_points(P, UC):
-    """Épaule, coude, poignet du bras-massue et la matrice de la massue (repère du repos → pose)."""
+    """Épaule, coude, poignet du bras-massue et la matrice de la massue (repère du repos → pose). Le poignet suit sa
+    cible P['nw'] (repère du dessin : la massue reste posée au sol quand le buste respire) ; le coude plie au vrai
+    coude (cinématique inverse) ; P['a3'] = l'axe de la massue (degrés, 90 = vers le bas)."""
     S = mapp(UC, NS0)
-    E = (S[0] + dirv(P['a1'], NL1)[0], S[1] + dirv(P['a1'], NL1)[1])
-    W = (E[0] + dirv(P['a2'], NL2)[0], E[1] + dirv(P['a2'], NL2)[1])
+    E, W = ik(S, P['nw'], NL1, NL2, SG_N)
     MC = mchain(mT(W[0], W[1]), mR(P['a3'] - CLUB0), mT(-NW0[0], -NW0[1]))
     return S, E, W, MC
 
@@ -451,25 +465,13 @@ def arm_points(P, UC):
 def near_arm(fig, P, UC, TOR):
     """Le bras-massue : bras + avant-bras + massue d'une seule silhouette (aucune couture)."""
     from shapely import affinity
-    S = mapp(UC, NS0)
-    E = (S[0] + dirv(P['a1'], NL1)[0], S[1] + dirv(P['a1'], NL1)[1])
-    W = (E[0] + dirv(P['a2'], NL2)[0], E[1] + dirv(P['a2'], NL2)[1])
-    rot = P['a3'] - CLUB0
-    MC = mchain(mT(W[0], W[1]), mR(rot), mT(-NW0[0], -NW0[1]))     # la massue : repère du repos → pose
+    S, E, W, MC = arm_points(P, UC)
 
     def C(p):
         return mapp(MC, p)
     cg = affinity.affine_transform(CLUB_G, [MC[0], MC[2], MC[1], MC[3], MC[4], MC[5]])
     up = limb([S, lerp(S, E, 0.5), E], [17.0, 16.6, 15.6])
     fo = limb([E, lerp(E, W, 0.5), W], [15.4, 16.6, 19.0])
-    # la pointe de roche du coude (il ressort vers l'arrière)
-    d1 = dirv(P['a1'])
-    d2 = dirv(P['a2'])
-    o = (d1[0] - d2[0], d1[1] - d2[1])
-    Lo = math.hypot(*o) or 1
-    o = (o[0] / Lo, o[1] / Lo)
-    ec = (E[0] + o[0] * 4.6, E[1] + o[1] * 4.6)
-    elbow = ellipse(ec[0], ec[1], 5.2, 4.4, math.degrees(math.atan2(o[1], o[0])))
     shp, g = fuse([up, fo], smooth=2.6, sharp_deg=80)
     from shapely.ops import unary_union
     g = unary_union([g, cg]).buffer(1.2, join_style=1).buffer(-1.2, join_style=1)
