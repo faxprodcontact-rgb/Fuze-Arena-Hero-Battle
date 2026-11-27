@@ -31,7 +31,7 @@ sys.path.insert(0, HERE)
 sys.path.insert(0, os.path.join(HERE, '..', '..', 'heros'))
 from atelier import Mat, sm, limb, ribbon, ellipse, resample, bez, mchain, mT, mR, mS, mapp, ID  # noqa: E402
 from outils import (FigureM, taper, crpath, plume, feather, lerp, add, unit, norm, rot_about, sub_, fused,  # noqa: E402
-                    pointed_row, scallop, under)
+                    pointed_row, scallop, under, feather_row, poly_of, shape_of)
 from lib import Shape  # noqa: E402
 from visage import placer  # noqa: E402
 
@@ -69,9 +69,9 @@ NECKP = (182.0, 94.0)             # le pivot de la tête
 R_N = (140.0, 104.0)              # l'épaule de l'aile proche
 W_N = (64.0, 33.0)                # son poignet (le point le plus haut)
 T_N = (50.0, 40.0)                # le bout de sa main
-R_F = (178.0, 98.0)               # l'attache de l'aile lointaine (derrière le cou)
-W_F = (190.0, 62.0)
-T_F = (200.0, 58.0)
+R_F = (176.0, 96.0)               # l'attache de l'aile lointaine (derrière le cou)
+W_F = (184.0, 40.0)               # son poignet (derrière la crête)
+T_F = (196.0, 36.0)
 FACE = (158.0, 53.0, 206.0, 101.0)   # la sphère de la tête (sans le bec ni la crête), pour visage.py
 GAPE = (204.0, 90.0)              # le coin du bec (le bec du bas y pivote)
 MESURES = {}
@@ -85,14 +85,15 @@ NEAR_FEATHERS = [
 ]
 # l'aile lointaine : quatre rémiges levées vers le haut à droite, puis des secondaires cachées derrière le cou
 FAR_FEATHERS = [
-    ((201, 58), (240, 37), 10.0), ((198, 60), (224, 26), 11.0), ((194, 61), (205, 21), 11.5), ((190, 63), (186, 24), 11.5),
-    ((186, 70), (172, 36), 12.0), ((182, 80), (165, 48), 12.0),
+    ((196, 37), (240, 41), 10.0), ((193, 37), (233, 29), 11.0), ((190, 38), (220, 22), 11.0), ((187, 40), (204, 21), 11.0),
+    ((185, 46), (226, 52), 12.0), ((183, 54), (220, 62), 12.0),
 ]
 # la queue en éventail posée au sol (racine, pointe, largeur), du dessus vers le dessous
 TAIL = [((118, 186), (50, 193), 15.0), ((118, 190), (46, 207), 16.0), ((118, 194), (51, 220), 16.0),
         ((119, 198), (61, 229), 16.0), ((121, 202), (77, 233), 15.0)]
 # la crête : quatre plumes jade (racine, pointe), couchées vers l'arrière, la pointe qui se relève
-CREST = [((185, 57), (170, 22), 7.0), ((181, 58), (150, 28), 7.6), ((177, 60), (136, 42), 7.6), ((173, 63), (135, 59), 7.0)]
+CREST = [([(177, 63), (165, 61), (150, 62), (137, 55)], 7.4), ([(181, 61), (168, 53), (152, 47), (137, 38)], 8.2),
+         ([(185, 59), (176, 48), (161, 37), (149, 27)], 8.6), ([(189, 58.5), (183, 47), (174, 33), (168, 22)], 7.6)]
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, jaw=0.0, crest=0.0, wn_l=0.0, wf_l=0.0,
             wn_s=0.0, wf_s=0.0, wd=0.0, ws=0.0, ph=0.0, tail=0.0, blink=0.0, glow=0.0, scream=0.0)
@@ -142,7 +143,7 @@ def quill_feather(fig, nm, p0, p3, w, mat, bend=1.0, cast=1.3, tipw=0.3, light_v
 
 
 def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0, ph=0.0, ws=0.0,
-              rows=((46, 7), (30, 9), (15, 11)), lead_w=(9.0, 8.0, 6.0, 4.0), far=False, bolt=None, glow=0.0):
+              rows=((48, 8), (32, 10), (17, 13)), lead_w=(9.0, 8.0, 6.0, 4.0), far=False, bolt=None, glow=0.0):
     """Une aile de rapace : les grandes plumes (du bout de l'aile vers le corps), trois rangées de couvertures en
     vraies plumes pointues (la plus longue d'abord), puis le bord d'attaque (l'épaule → le poignet → la main), éclairé.
     feathers : [(racine, pointe, largeur)] dans la pose du dessin ; lift : toute l'aile tourne autour de R ;
@@ -182,17 +183,18 @@ def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0,
                 best = (dd, a0)
         return unit(best[1] - 12)
     dirs = [fdir(k / m) for k in range(m + 1)]
-    taper_ = [min(1.0, 0.55 + 0.9 * k / m) * (1 - 0.55 * max(0.0, (k / m - 0.7) / 0.3)) for k in range(m + 1)]
-    for j, (dep, lobes) in enumerate(rows):
+    taper_ = [min(1.0, 0.6 + 0.8 * k / m) * (1 - 0.5 * max(0.0, (k / m - 0.72) / 0.28)) for k in range(m + 1)]
+    for j, (dep, nf) in enumerate(rows):
         deps = [dep * taper_[k] for k in range(m + 1)]
-        row = pointed_row(line, dirs, deps, lobes, top=2.0)
+        wid = [max(5.0, dep * 0.34) * (0.8 + 0.4 * taper_[k]) for k in range(m + 1)]
+        row, shades, _ = feather_row(line, dirs, deps, nf, wid, bend=0.9 if not far else 0.6,
+                                     jit=[(1.0, 0.84, 1.12, 0.92, 1.06, 0.88, 1.1, 0.95, 1.03, 0.9),
+                                          (0.92, 1.1, 0.86, 1.04, 0.96, 1.12, 0.9, 1.0, 1.08, 0.94),
+                                          (1.06, 0.9, 1.0, 1.12, 0.88, 1.04, 0.94, 1.1, 0.92, 1.0)][j % 3])
         nm = '%s_cov%d' % (key, j)
         tone = [mat.base, mat.light, mat.light][j]
-        a = line[m // 2]
         fig.part(nm, row, mat, grad=(Wp[0] + 10, Wp[1] - 8, R[0] - 10, R[1] + 30, [(0, tone), (0.55, mat.base), (1, mat.shadow)]),
-                 cel=1.3, rim=0.6, cast=1.5,
-                 details=[(ribbon([add(line[k], dirs[k], deps[k] * 0.35) for k in range(2, m - 1, 3)],
-                                  [0.1] + [0.6] * (len(range(2, m - 1, 3)) - 2) + [0.1]), mat.hi, 0.0)])
+                 cel=1.2, rim=0.55, cast=1.6, details=[(sh, mat.shadow, 0.55) for sh in shades])
         names.append(nm)
     # le bord d'attaque (le « bras » de l'aile), d'un seul tenant, éclairé de reflets bleus
     lead_pts = [lerp(R, Wp, 0.02), lerp(R, Wp, 0.5), lerp(R, Wp, 0.92), lerp(Wp, Tp, 0.45), lerp(Wp, Tp, 1.0)]
@@ -259,7 +261,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- l'aile lointaine (derrière tout) ----
     fw_names, fW, fT = bird_wing(fig, 'fw', STORMF, R_F, W_F, T_F, FAR_FEATHERS, lift=P['wf_l'], spread=P['wf_s'],
-                                 droop=P['wd'], ph=ph - 0.8, ws=ws, rows=((30, 5), (18, 6), (9, 7)),
+                                 droop=P['wd'], ph=ph - 0.8, ws=ws, rows=((26, 6), (17, 7), (10, 8)),
                                  lead_w=(8.0, 7.0, 5.0, 3.5), far=True)
 
     # ---- la queue en éventail, posée au sol ----
@@ -303,14 +305,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
            (201, 96)]
     breast = sm([skin(p) for p in bre])
     bd = [(breast, ('lin', *skin((206, 110)), *skin((160, 200)), [(0, CLOUD.light), (0.5, CLOUD.base), (1, CLOUD.shadow)]), 1)]
-    # les plumes en écailles du poitrail : des rangées de petits festons, lus seulement dans la demi-teinte
-    rng = [(0.95, 1.08), (1.1, 0.9), (0.85, 1.15), (1.05, 0.95)]
-    for j, (y0, x0, x1, lob) in enumerate(((118, 172, 205, 4), (136, 162, 208, 5), (154, 158, 208, 5), (172, 157, 204, 5),
-                                           (190, 162, 196, 4))):
-        line = [skin((x0 + (x1 - x0) * k / 10, y0 + 2.0 * math.sin(k / 10 * math.pi) - 3 * (k / 10))) for k in range(11)]
-        dirs = [(-0.25, 1.0)] * 11
-        row = scallop(line, dirs, [4.6] * 11, lob, jit=rng[j % 4] + (1.0, 0.92, 1.06))
-        bd.append((Shape(row.subs + row.move(0.5, -1.4).subs, evenodd=True), CLOUD.shadow, 0.28 + 0.04 * j))
     # le bord gauche du plastron : une rangée de plumes arrondies qui mordent sur le flanc d'orage
     edge = [skin(p) for p in ((172, 108), (165, 120), (160, 133), (156, 146), (154, 160), (154, 174), (157, 188), (163, 200))]
     edirs = [norm((-1.0, 0.25))] * len(edge)
@@ -327,6 +321,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                toes=[((118, 229), (112, 231), (106, 236.2)), ((141, 231), (149, 232), (154, 236.3)),
                      ((139, 228), (151, 226), (159, 232.0)), ((136, 233), (141, 235), (144, 236.6))])
 
+    # ---- la culotte proche (cuisse de plumes de nuage qui retombe en mèches sur le tarse) ----
+    nthigh = fused([ellipse(133, 188, 20, 19, -10)] + [plume((x0, 196), (x0 + 0.4, 202), (x0 + 0.2, 208), (x0 - 1.0 + jj, 211 + dd), w_, n=8, tip=0.55)
+                                                       for x0, dd, w_, jj in ((118, 0.5, 7.5, 0), (125, 3.5, 8.5, 0.5), (133, 5.0, 9.0, 1.0), (141, 2.5, 8.0, 1.2), (147, 0.0, 6.5, 1.5))],
+                   smooth=0.8)
+    fig.part('nthigh', nthigh, CLOUD, grad=(150, 172, 118, 210, [(0, CLOUD.light), (0.45, CLOUD.base), (1, CLOUD.shadow)]),
+             cel=1.6, rim=0.8, cast=1.6)
+    fig.masks['nthigh'] = (134.0, 196.0, 136.0, 172.0, 'body')
     # ---- l'aile proche (devant le corps) ----
     def near_bolt(fig_, key, tf, gl):
         draw_bolt(fig_, key + '_bolt', [([(76, 58), (81, 66), (78, 74), (84, 83), (92, 89), (97, 96), (100, 104)], 2.3),
@@ -350,61 +351,52 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                  cel=1.2, rim=0.6, cast=1.4)
         scap_names.append(nm)
 
-    # ---- la culotte proche (cuisse de plumes de nuage qui retombe en mèches sur le tarse) ----
-    nthigh = fused([ellipse(133, 188, 20, 19, -10)] + [plume((x0, 196), (x0 + 0.4, 202), (x0 + 0.2, 208), (x0 - 1.0 + jj, 211 + dd), w_, n=8, tip=0.55)
-                                                       for x0, dd, w_, jj in ((118, 0.5, 7.5, 0), (125, 3.5, 8.5, 0.5), (133, 5.0, 9.0, 1.0), (141, 2.5, 8.0, 1.2), (147, 0.0, 6.5, 1.5))],
-                   smooth=0.8)
-    td = []
-    for j, (y0, x0, x1) in enumerate(((180, 118, 148), (192, 116, 150))):
-        line = [(x0 + (x1 - x0) * k / 8, y0 + 3 * math.sin(k / 8 * math.pi)) for k in range(9)]
-        row = scallop(line, [(-0.3, 1.0)] * 9, [4.4] * 9, 4, jit=(1.0, 0.9, 1.1, 0.95))
-        td.append((Shape(row.subs + row.move(0.5, -1.4).subs, evenodd=True), CLOUD.shadow, 0.3))
-    fig.part('nthigh', nthigh, CLOUD, grad=(150, 172, 118, 210, [(0, CLOUD.light), (0.45, CLOUD.base), (1, CLOUD.shadow)]),
-             cel=1.6, rim=0.8, cast=1.6, details=td)
 
     # ---- la tête : le bec du bas (il pivote au coin du bec), puis le crâne et le bec du haut d'une seule forme ----
     V = placer(FACE, tour=75)
     ex, ey, ew = V['oeil_proche']
     nx_, ny_ = V['nez']                 # la racine du bec (la cire), sur la ligne du profil
     bx_, by_, _ = V['bouche']           # le coin du bec
-    lm = sm([(199, 87), (207, 90.5), (215, 95.5), (222, 101), (228, 107), (232.5, 113.5), (231, 116.2), (226, 113.5),
-             (218, 108), (209, 102.5), (200, 97.5)], sharp=(5, 6))
-    lmd = [(sm([(224, 107), (228.6, 110.5), (232.6, 113.6), (231, 116.2), (226.6, 113.6)], sharp=(2, 3)), SLATE.base, 1),
-           (ribbon([(206, 92.5), (214, 97), (222, 102.5), (229, 109.5)], [0.2, 1.0, 0.9, 0.2]), GOLD.hi, 0.55),
-           (sm([(199, 87), (204, 89.4), (205.5, 93), (203, 96.6), (199.5, 96)]), RED.base, 0.95)]
-    fig.part('lbeak', lm, GOLD, grad=(226, 98, 206, 108, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]),
-             cel=1.0, rim=0.5, cast=1.0, details=lmd)
+    lm = sm([(199.5, 88.5), (205, 91.6), (212.5, 95.4), (220, 100.6), (226.6, 106.6), (231.2, 112.6), (232.4, 116.6),
+             (228.4, 114.8), (222, 109.6), (214, 104.2), (206, 99.8), (199, 97.2)], sharp=(6,))
+    lmd = [(sm([(226.6, 106.6), (231.2, 112.6), (232.4, 116.6), (228.4, 114.8), (224.6, 111.6), (226, 109)], sharp=(2,)),
+            ('lin', 232, 110, 225, 115, g2(SLATE.light, SLATE.shadow)), 1),
+           (ribbon([(207, 93.4), (214, 97.0), (221, 101.8), (227, 107.6)], [0.2, 1.0, 0.9, 0.2]), GOLD.hi, 0.6),
+           (sm([(199.5, 88.5), (204.6, 91.2), (206.2, 95.0), (204.0, 98.6), (199.5, 97.4)]), ('lin', 206, 92, 200, 97, g2(RED.light, RED.shadow)), 0.95)]
+    fig.part('lbeak', lm, GOLD, grad=(228, 100, 206, 108, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]),
+             cel=1.1, rim=0.5, cast=1.0, details=lmd)
 
-    skull = sm([(160, 66), (167, 57.5), (178, 53.2), (191, 53.0), (201, 55.5), (207, 60), (209, 68), (208, 78),
-                (206, 86), (203, 92), (198, 98), (190, 102), (179, 103.5), (169, 100), (162, 93), (158.5, 83), (158.5, 73)])
-    ubeak = sm([(201, 58.5), (210, 57.0), (222, 58.6), (233, 63.5), (240.5, 70.5), (244.6, 79.5), (244.8, 89.5),
-                (242.4, 98.5), (238.6, 106.5), (236.6, 99.6), (234.4, 94.6), (227, 91.2), (217, 90.0), (207, 90.6),
-                (203.5, 88)], sharp=(8,))
-    head = fused([skull, ubeak], smooth=1.2)
+    skull = sm([(161, 68), (167, 59.5), (176, 54.6), (187, 53.0), (197, 54.4), (204, 57.4), (207.4, 62), (208.6, 70),
+                (207.6, 80), (205.6, 87.4), (203.4, 91.6), (200, 97), (194, 102), (186, 105), (176, 105), (167, 101),
+                (161, 94), (158, 84), (158.4, 75)])
+    ubeak = sm([(203, 57.4), (212, 55.8), (223, 57.4), (232, 61.8), (238.6, 68.4), (242.6, 77), (243.6, 86), (242.2, 94.4),
+                (239.6, 101), (236.6, 107.4), (234.8, 101.6), (233.0, 97.2), (229, 94.4), (222.5, 92.8), (218.6, 92.8),
+                (215.6, 93.8), (212.4, 92.6), (207, 91.8), (203.6, 89.8)], sharp=(9,))
+    head = fused([skull, ubeak], smooth=1.4)
     hd = []
     # le bec d'or (dans la même forme que le crâne) : la cire claire avec sa narine, l'arête éclairée, le bord
     # tranchant plus sombre, le crochet d'ardoise
-    gold = sm([(203.5, 58.5), (210, 57.0), (222, 58.6), (233, 63.5), (240.5, 70.5), (244.6, 79.5), (244.8, 89.5),
-               (242.4, 98.5), (238.6, 106.5), (236.6, 99.6), (234.4, 94.6), (227, 91.2), (217, 90.0), (207, 90.6),
-               (203.6, 88.0), (204.6, 80), (205.2, 70), (204.6, 62)], sharp=(8,))
-    hd.append((gold, ('lin', 238, 64, 214, 92, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), 1))
-    cere = sm([(203.5, 59.0), (209, 57.6), (214, 58.0), (215.6, 64), (215.2, 74), (213.6, 84), (211.5, 89.6),
-               (206.5, 90.4), (203.8, 87), (204.8, 78), (205.2, 68)])
-    hd.append((cere, ('lin', 214, 60, 205, 88, [(0, GOLD.hi), (0.6, GOLD.light), (1, GOLD.base)]), 0.9))
-    hd.append((ellipse(nx_ + 3.6, ny_ - 9.2, 1.5, 1.05, -20), GOLD.deep, 0.75))          # la narine (dans la cire)
-    hd.append((ribbon([(216, 60.5), (227, 63.0), (236, 69.5), (241.5, 78)], [0.2, 1.6, 1.3, 0.2]), GOLD.hi, 0.75))   # l'arête
-    hd.append((sm([(213, 89.0), (222, 89.2), (230, 90.6), (235.6, 94.4), (236.8, 98.4), (232, 93.6), (224, 91.6), (214, 91.4)]),
-               GOLD.shadow, 0.7))                                                     # le bord tranchant
-    hd.append((sm([(240.0, 86), (244.8, 87.5), (244.4, 95), (242.4, 98.5), (238.6, 106.5), (236.6, 99.6), (236.0, 95.5), (237.6, 90.5)],
-                  sharp=(4,)), ('lin', 244, 88, 237, 104, [(0, SLATE.light), (0.5, SLATE.base), (1, SLATE.shadow)]), 1))  # le crochet
-    # le masque d'orage : il traverse l'œil, de la cire jusqu'à la nuque, en s'élargissant
-    mask = sm([(205.5, 69.5), (203.5, 75.5), (201.5, 82.5), (195.5, 85.5), (186, 87.0), (176, 90.0), (166.0, 94.5), (159, 92),
-               (158.0, 84), (158.5, 75), (166, 73.5), (176, 71.0), (187, 69.5), (196, 68.6)])
-    hd.append((mask, ('lin', 204, 70, 160, 92, [(0, STORM.base), (0.5, STORM.shadow), (1, STORM.deep)]), 1))
-    hd.append((ribbon([(203, 72.5), (196, 71.6), (186, 72.4), (174, 74.6), (163, 78)], [0.2, 0.9, 1.0, 0.8, 0.2]), STORM.light, 0.55))
-    # la gorge et la joue sous le masque, dans la demi-teinte lavande
-    hd.append((sm([(199, 88), (196, 95), (189, 100.5), (178, 102.5), (168, 99), (162, 93), (170, 92.5), (182, 90.5), (192, 88.5)]),
-               CLOUD.base, 0.55))
+    gold = sm([(204.2, 57.2), (212, 55.8), (223, 57.4), (232, 61.8), (238.6, 68.4), (242.6, 77), (243.6, 86), (242.2, 94.4),
+               (239.6, 101), (236.6, 107.4), (234.8, 101.6), (233.0, 97.2), (229, 94.4), (222.5, 92.8), (218.6, 92.8),
+               (215.6, 93.8), (212.4, 92.6), (207, 91.8), (203.8, 89.6), (205.6, 84), (206.6, 74), (206.2, 63)], sharp=(9,))
+    hd.append((gold, ('lin', 238, 62, 214, 94, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), 1))
+    cere = sm([(204.2, 57.6), (209.6, 56.6), (214.6, 57.4), (216.2, 63), (215.8, 73), (214.2, 83), (212.2, 91.6),
+               (207, 91.6), (204.4, 88.6), (206.0, 82), (206.8, 72), (206.2, 63)])
+    hd.append((cere, ('lin', 214, 60, 206, 88, [(0, GOLD.hi), (0.6, GOLD.light), (1, GOLD.base)]), 0.9))
+    hd.append((ellipse(211.0, 75.0, 1.5, 1.0, -25), GOLD.deep, 0.8))                       # la narine (dans la cire)
+    hd.append((ribbon([(217, 59.0), (227, 61.6), (235.6, 67.6), (240.8, 76)], [0.2, 1.6, 1.3, 0.2]), GOLD.hi, 0.75))   # l'arête
+    hd.append((sm([(214, 91.0), (220, 91.0), (226, 91.6), (231.6, 93.6), (235.4, 98.0), (236.0, 101.0), (232.4, 96.6),
+                   (226.4, 93.6), (219.6, 93.4), (215.6, 93.8)]), GOLD.shadow, 0.75))     # le bord tranchant
+    hd.append((sm([(239.0, 84.5), (243.4, 85.0), (243.6, 86), (242.2, 94.4), (239.6, 101), (236.6, 107.4), (234.8, 101.6),
+                   (233.6, 97.8), (236.2, 92.0)], sharp=(5,)),
+               ('lin', 243, 86, 236, 104, [(0, SLATE.light), (0.5, SLATE.base), (1, SLATE.shadow)]), 1))  # le crochet
+    # le masque d'orage : il traverse l'œil, de la cire jusqu'à la nuque, en s'élargissant ; son bord bas s'effile
+    # en petites plumes vers l'arrière
+    mask = sm([(206.6, 70.6), (205.6, 78), (203.6, 84.4), (196, 86.6), (189, 88.0), (182.6, 92.4), (180.6, 90.2),
+               (173.6, 93.6), (170.6, 96.8), (168.4, 94.2), (162.6, 98.4), (159.0, 92), (157.8, 82), (159.2, 74.6),
+               (166, 71.6), (176, 69.6), (187, 68.6), (197, 68.2)], sharp=(5, 8, 10))
+    hd.append((mask, ('lin', 205, 70, 160, 94, [(0, STORM.base), (0.45, STORM.shadow), (1, STORM.deep)]), 1))
+    hd.append((ribbon([(184, 70.6), (176, 71.4), (167, 73.6), (161, 77)], [0.2, 0.9, 0.8, 0.2]), STORM.light, 0.45))
     # l'œil d'or à pupille ronde tournée vers l'ennemi (place donnée par placer(), tour = 75 : un seul œil)
     rx, ry = ew * 0.5, ew * 0.47
     ir = ew * 0.38
@@ -419,35 +411,39 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                (ellipse(px_ + 0.4, ey + 0.2, ir * 0.55, ir * 0.6), EYE[3], 1),
                (ellipse(px_ + 1.6, ey - 1.5, ir * 0.25, ir * 0.22), '#ffffff', 1)]
     # la corniche du sourcil : lourde et pâle, elle descend vers le bec (regard froncé) et jette son ombre sur l'œil
-    brow = sm([(184.0, 66.5), (190, 64.0), (197, 63.6), (204, 65.5), (208.5, 69.5), (206, 72.4), (201.5, 72.2), (196, 71.6),
-               (190.5, 71.6), (186, 70.4)])
-    hd.append((Shape(brow.subs + brow.move(-0.6, 2.4).subs, evenodd=True), STORM.deep, 0.0))
-    hd.append((sm([(186, 71.0), (192, 72.2), (198, 72.6), (204, 73.0), (207.5, 72.0), (204, 75.6), (198, 76.0), (191, 74.6)]),
-               STORM.deep, 0.55))                                                     # son ombre sur le haut de l'œil
-    hd.append((brow, ('lin', 205, 64, 186, 72, [(0, CLOUD.hi), (0.6, CLOUD.light), (1, CLOUD.base)]), 1))
-    hd.append((ribbon([(187, 66.0), (194, 64.6), (201, 65.2), (206.5, 68.6)], [0.2, 0.9, 0.8, 0.2]), '#ffffff', 0.9))
-    # le haut du crâne : un reflet doux ; la nuque, de petites plumes d'orage qui s'effilent
-    hd.append((sm([(178, 55.0), (189, 54.2), (199, 56.0), (204, 59.5), (196, 59.0), (186, 58.6), (178, 58.8)]), '#ffffff', 0.7))
-    fig.part('head', head, CLOUD, grad=(204, 54, 166, 100, [(0, CLOUD.light), (0.55, CLOUD.base), (1, CLOUD.shadow)]),
+    hd.append((sm([(184, 69.0), (192, 70.6), (199, 71.4), (205.4, 72.4), (207.0, 74.2), (203.4, 76.0), (197, 75.4),
+                   (190.6, 74.2), (185.6, 72.6)]), STORM.deep, 0.6))                       # son ombre sur le haut de l'œil
+    brow = sm([(182.6, 66.2), (188, 63.4), (195, 62.0), (202, 62.6), (206.8, 65.0), (208.6, 69.0), (207.2, 72.6),
+               (202, 72.0), (196, 71.2), (190, 70.4), (185, 69.4)])
+    hd.append((brow, ('lin', 206, 63, 186, 71, [(0, CLOUD.hi), (0.55, CLOUD.light), (1, CLOUD.base)]), 1))
+    hd.append((ribbon([(185.6, 66.0), (192, 63.8), (199.6, 63.2), (205.6, 65.6)], [0.2, 0.9, 0.8, 0.2]), '#ffffff', 0.9))
+    hd.append((ribbon([(187, 69.8), (194, 70.8), (201, 71.4), (206.6, 71.8)], [0.2, 0.7, 0.7, 0.2]), CLOUD.shadow, 0.6))
+    # le haut du crâne : un reflet doux
+    hd.append((sm([(178, 55.6), (189, 54.4), (198, 55.8), (203.4, 59.0), (196, 58.8), (186, 58.6), (179, 59.2)]), '#ffffff', 0.6))
+    fig.part('head', head, CLOUD, grad=(204, 54, 166, 102, [(0, CLOUD.light), (0.55, CLOUD.base), (1, CLOUD.shadow)]),
              cel=1.4, rim=0.8, cast=1.6, details=hd)
+    # le bas de la tête se fond dans le cou (aucune couture sous la joue ni à la nuque)
+    fig.masks['head'] = (190.0, 84.0, 177.0, 108.0, 'body')
     MESURES.update(oeil_proche=(ex, ey, 2 * rx), oeil_fond=None, nez=(nx_, ny_), bouche=(bx_, by_, 4.0))
 
-    # ---- la crête : quatre plumes jade couchées vers l'arrière, nées du crâne (racine fondue dans le blanc) ----
+    # ---- la crête : quatre plumes jade souples, couchées vers l'arrière, la pointe qui se relève ; elles naissent du
+    # crâne (racine fondue dans le blanc) ----
     crest_names = []
-    for i, (r0, r1, w) in enumerate(CREST):
-        d = norm(sub_(r1, r0))
-        L = math.dist(r0, r1)
-        sd = (d[1], -d[0])                                   # vers le haut (la pointe se relève)
-        p1 = add(add(r0, d, L * 0.35), sd, -1.5)
-        p2 = add(add(r0, d, L * 0.72), sd, -0.5 + 0.6 * math.sin(ph * 1.3 + i) * ws)
-        p3 = add(add(r0, d, L), sd, 3.2)
-        sh = plume(r0, p1, p2, p3, w, n=14, tip=0.4)
+    for i, (pts, w) in enumerate(CREST):
+        r0, p1, p2, p3 = pts
+        p2 = add(p2, (0.0, 0.0), 1)
+        wob = 0.9 * math.sin(ph * 1.3 + i * 1.1) * ws
+        p2 = (p2[0], p2[1] + wob * 0.6)
+        p3 = (p3[0] - wob * 0.4, p3[1] + wob)
+        sh = plume(r0, p1, p2, p3, w, n=16, tip=0.5)
         nm = 'crest%d' % i
-        det = [(plume(add(r0, sd, 1.0), add(p1, sd, 1.2), add(p2, sd, 1.2), add(p3, sd, 0.4), w * 0.5, n=12, tip=0.4), JADE.light, 0.6),
-               (ribbon([lerp(r0, p1, 0.6), p1, p2, lerp(p2, p3, 0.6)], [0.1, 0.5, 0.4, 0.1]), JADE.deep, 0.35)]
-        fig.part(nm, sh, JADE, grad=(p3[0] + 4, p3[1] - 4, r0[0], r0[1] + 4, [(0, JADE.light), (0.55, JADE.base), (1, JADE.shadow)]),
-                 cel=1.0, rim=0.5, cast=1.3, cast_on=crest_names[:] + ['head'], details=det)
-        fig.masks[nm] = (r0[0] - d[0] * 1.0, r0[1] - d[1] * 1.0, r0[0] + d[0] * 9.0, r0[1] + d[1] * 9.0, 'head')
+        d = norm(sub_(p1, r0))
+        lift = (d[1], -d[0]) if d[1] < 0 or d[0] > 0 else (-d[1], d[0])
+        det = [(plume(add(r0, (0.4, -0.9)), add(p1, (0.4, -1.1)), add(p2, (0.3, -1.0)), add(p3, (0.2, -0.3)), w * 0.5, n=14, tip=0.5), JADE.light, 0.55),
+               (ribbon([lerp(r0, p1, 0.7), p1, p2, lerp(p2, p3, 0.6)], [0.1, 0.55, 0.45, 0.1]), JADE.deep, 0.3)]
+        fig.part(nm, sh, JADE, grad=(p3[0] + 6, p3[1] - 6, r0[0] - 2, r0[1] + 6, [(0, JADE.light), (0.55, JADE.base), (1, JADE.shadow)]),
+                 cel=1.1, rim=0.5, cast=1.4, cast_on=crest_names[:] + ['head'], details=det)
+        fig.masks[nm] = (r0[0] - d[0] * 0.5, r0[1] - d[1] * 0.5, r0[0] + d[0] * 6.5, r0[1] + d[1] * 6.5, 'head')
         crest_names.append(nm)
 
     # ---- chaque groupe de morceaux prend sa pose ----

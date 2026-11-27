@@ -486,3 +486,41 @@ def pointed_row(line, dirs, depths, lobes, jit=(1.0, 0.86, 1.1, 0.94, 1.05, 0.9,
     nb = len(bot)
     sharp = tuple(len(tops) + (nb - 1 - (3 * j + 2)) for j in range(lobes)) if sharp_tips else ()
     return sm(tops + bot[::-1], sharp=sharp, t=0.85)
+
+
+def feather_row(line, dirs, lengths, n, widths, jit=(1.0, 0.84, 1.12, 0.92, 1.06, 0.88, 1.1, 0.95, 1.03, 0.9), bend=0.8):
+    """Une rangée de couvertures en VRAIES PLUMES (allongées, bout pointu) : n plumes posées le long de `line`, de la
+    fin de la ligne vers son début (chacune recouvre la suivante), de longueurs et de largeurs un peu inégales.
+    Renvoie (la silhouette fondue de la rangée, la liste des ombres douces que chaque plume pose sur sa voisine)."""
+    from shapely.ops import unary_union
+    m = len(line) - 1
+    feathers = []
+    for j in range(n):
+        u = (j + 0.5) / n
+        k = u * m
+        k0 = min(m - 1, int(k))
+        f_ = k - k0
+        p = lerp(line[k0], line[k0 + 1], f_)
+        d = norm(lerp(dirs[k0], dirs[k0 + 1], f_))
+        L = (lengths[k0] + (lengths[k0 + 1] - lengths[k0]) * f_) * jit[j % len(jit)]
+        w = (widths[k0] + (widths[k0 + 1] - widths[k0]) * f_) * (0.9 + 0.2 * jit[(j + 3) % len(jit)])
+        root = add(p, d, -3.0)
+        side = (-d[1], d[0])
+        tip = add(add(p, d, L), side, bend * 0.6)
+        sh = plume(root, add(add(root, d, (L + 3) * 0.35), side, bend * 0.3), add(add(root, d, (L + 3) * 0.72), side, bend), tip,
+                   w, n=12, tip=0.42)
+        feathers.append(sh)
+    # la plume du début de la ligne recouvre celle d'après : on pose de la fin vers le début
+    polys = [poly_of(s) for s in feathers]
+    union = unary_union(polys)
+    shades = []
+    for j in range(n - 1):
+        from shapely import affinity
+        g = polys[j]
+        c = affinity.translate(g, -0.9, 1.3).difference(g).intersection(unary_union(polys[j + 1:]))
+        c = c.buffer(-0.05).buffer(0.05)
+        if not c.is_empty:
+            sh = shape_of(c, min_area=0.2)
+            if sh:
+                shades.append(sh)
+    return shape_of(union.buffer(0.3, join_style=1).buffer(-0.3, join_style=1), sharp_deg=50), shades, feathers

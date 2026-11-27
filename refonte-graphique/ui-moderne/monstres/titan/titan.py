@@ -42,10 +42,10 @@ FRAME = (20.0, 14.0, 238.0, 224.0)   # x0, y0, largeur, hauteur de l'image (pixe
 HIP = (150.0, 194.0)            # le haut du corps bascule autour des hanches (il se cabre)
 NECK = (206.0, 150.0)           # la tête tourne autour de la nuque (sous la mâchoire)
 NS, NE0, NW0 = (82.0, 104.0), (50.0, 146.0), (68.0, 194.0)        # bras proche : épaule, coude, poignet (repos)
-FS, FE0, FW0 = (204.0, 148.0), (212.0, 170.0), (224.0, 198.0)     # bras lointain (l'épaule est cachée par la mâchoire)
+FS, FE0, FW0 = (214.0, 146.0), (220.0, 172.0), (224.0, 198.0)     # bras lointain (l'épaule est cachée par la mâchoire)
 
 # la face (ovale du visage, sans le crâne moussu ni l'oreille) et la place des traits : visage.py, commun à tous
-FACE_BOX = (176.0, 78.0, 238.0, 150.0)
+FACE_BOX = (175.0, 80.0, 241.0, 154.0)
 FACE_ARGS = dict(y_oeil=0.42, y_nez=0.6, y_bouche=0.78, l_oeil=0.19)
 FACE_V = _placer(FACE_BOX, **FACE_ARGS)
 
@@ -198,33 +198,37 @@ def _rnd(i, seed):
     return x - math.floor(x)
 
 
-def moss_geom(top, thick, seed=0, drips=(), step=None):
-    """Le coussin de mousse posé le long d'une ligne `top` (de gauche à droite) : une nappe d'épaisseur `thick`, le
-    dessus en quelques grosses bosses douces de tailles inégales (jamais un rang de petites boules), le bord bas en
-    lobes ; drips = (t le long de la ligne, longueur, largeur) : des mèches qui pendent."""
-    from shapely.geometry import Point, Polygon
+def moss_geom(top, thick, seed=0, drips=()):
+    """Le coussin de mousse posé le long d'une ligne `top` (de gauche à droite) : une nappe épaisse et douce, le dessus
+    en larges bosses de tailles inégales, le bord bas en quelques lobes ; drips = (t le long de la ligne, longueur,
+    largeur) : des mèches qui pendent (gravité), de longueurs différentes."""
+    from shapely.geometry import Polygon
     from shapely.ops import unary_union
-    step = step or thick * 1.25
     L = sum(math.dist(top[i - 1], top[i]) for i in range(1, len(top)))
-    n = max(3, int(L / step))
+    n = max(8, int(L / 1.2))
     c = crpath(top, n)
-    parts = []
-    left, right = sides(c, [thick] * len(c))
-    band = Polygon(c + right[::-1]).buffer(0)
-    parts.append(band)
+    ph = [6.283 * _rnd(k, seed) for k in range(4)]
+    lt, lb = thick * 3.0, thick * 2.2
+    up_pts, dn_pts = [], []
     for i, p in enumerate(c):
-        r = thick * (0.42 + 0.34 * _rnd(i, seed))
-        parts.append(Point(p[0], p[1] + r * 0.55).buffer(r, 20))
-    for i in range(1, len(c) - 1, 3):
-        rr = thick * (0.34 + 0.2 * _rnd(i + 50, seed))
-        q = right[i]
-        parts.append(Point(q[0], q[1] - rr * 0.35).buffer(rr, 20))
+        a, b = c[max(0, i - 1)], c[min(len(c) - 1, i + 1)]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        ll = math.hypot(dx, dy) or 1
+        nu = (dy / ll, -dx / ll)                     # vers le haut (on marche de gauche à droite)
+        sarc = L * i / (len(c) - 1)
+        end = min(1.0, min(i, len(c) - 1 - i) / max(1.0, thick * 0.9 / (L / (len(c) - 1))))
+        bump = (0.5 + 0.5 * math.sin(6.283 * sarc / lt + ph[0])) * (0.65 + 0.35 * math.sin(6.283 * sarc / (lt * 2.3) + ph[1]))
+        hu = (0.18 + 0.62 * bump) * thick * end
+        hd = (0.62 + 0.3 * (0.5 + 0.5 * math.sin(6.283 * sarc / lb + ph[2]))) * thick * (0.35 + 0.65 * end)
+        up_pts.append((p[0] + nu[0] * hu, p[1] + nu[1] * hu))
+        dn_pts.append((p[0] - nu[0] * hd, p[1] - nu[1] * hd))
+    parts = [Polygon(up_pts + dn_pts[::-1]).buffer(0)]
     for (t, ln, w) in drips:
         i = min(len(c) - 1, int(t * (len(c) - 1)))
-        q = right[i]
-        d = taper(crpath([(q[0], q[1] - 2.0), (q[0] - 0.4, q[1] + ln * 0.5), (q[0] - 0.9, q[1] + ln)], 8), w, w * 0.62)
+        q = dn_pts[i]
+        d = taper(crpath([(q[0], q[1] - 2.5), (q[0] - 0.4, q[1] + ln * 0.5), (q[0] - 0.9, q[1] + ln)], 8), w, w * 0.62)
         parts.append(PG(d))
-    g = unary_union(parts).buffer(1.2, join_style=1).buffer(-1.2, join_style=1)
+    g = unary_union(parts).buffer(0.9, join_style=1).buffer(-0.9, join_style=1)
     return g, c
 
 
@@ -233,13 +237,16 @@ def moss_part(fig, name, top, thick, seed=0, drips=(), cast_on=None, cast=1.3, k
     sh = geom_shape(g, sharp_deg=200, simplify=0.03)
     x0, y0, x1, y1 = sh.bbox()
     det = []
-    # quelques touffes éclairées sur le dessus (en haut à droite de certaines bosses), jamais en rang régulier
-    for i in range(1, len(c) - 1):
-        if _rnd(i + 7, seed) < 0.55:
+    # quelques touffes éclairées sur le dessus (des reflets doux allongés, espacés inégalement)
+    step = max(2, int(thick * 2.2 / 1.2))
+    for i in range(step // 2, len(c) - 2, step):
+        if _rnd(i + 7, seed) < 0.35:
             continue
-        r = thick * (0.3 + 0.18 * _rnd(i + 3, seed))
+        r = thick * (0.32 + 0.2 * _rnd(i + 3, seed))
+        a, b = c[max(0, i - 1)], c[min(len(c) - 1, i + 1)]
+        ang = math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))
         p = c[i]
-        det.append((ellipse(p[0] + r * 0.4, p[1] - r * 0.05, r * 1.1, r * 0.55), MOSS.hi if _rnd(i, seed + 2) > 0.5 else MOSS.light, 0.5 * k))
+        det.append((ellipse(p[0] + 0.5, p[1] - thick * 0.05, r * 1.4, r * 0.45, ang), MOSS.hi if _rnd(i, seed + 2) > 0.5 else MOSS.light, 0.55 * k))
     fig.part(name, sh, MOSS, grad=(x1, y0, x0 + (x1 - x0) * 0.2, y1, [(0, MOSS.light), (0.45, MOSS.base), (1, MOSS.shadow)]),
              cel=1.4, rim=0.7, cast=cast, cast_on=cast_on, details=det)
     return sh
@@ -251,16 +258,18 @@ def lite_(c, t):
 
 
 def glyph(cx, cy, s, kind):
-    """Un signe inventé (jamais une lettre) gravé et luisant : losange, chevrons, croc, œil."""
+    """Un signe inventé (jamais une lettre) gravé et luisant : losange, croissant, croc, amande."""
     if kind == 0:
         return [sm([(cx, cy - s), (cx + s * 0.7, cy), (cx, cy + s), (cx - s * 0.7, cy)], sharp=(0, 1, 2, 3), t=0.5)]
     if kind == 1:
-        return [sm([(cx - s * 0.8, cy - s * 0.6), (cx, cy + s * 0.2), (cx + s * 0.8, cy - s * 0.6), (cx + s * 0.8, cy - s * 0.1),
-                    (cx, cy + s * 0.75), (cx - s * 0.8, cy - s * 0.1)], sharp=(0, 1, 2, 3, 4, 5), t=0.5)]
+        # un croissant couché (la lune du clan), pointes vers le haut
+        return [sm([(cx - s, cy - s * 0.3), (cx - s * 0.5, cy + s * 0.55), (cx + s * 0.5, cy + s * 0.55), (cx + s, cy - s * 0.3),
+                    (cx + s * 0.45, cy + s * 0.05), (cx - s * 0.45, cy + s * 0.05)], sharp=(0, 3), t=0.9)]
     if kind == 2:
-        return [sm([(cx - s * 0.5, cy - s), (cx + s * 0.55, cy - s * 0.2), (cx - s * 0.5, cy + s * 0.9), (cx - s * 0.1, cy - s * 0.1)],
-                   sharp=(0, 1, 2, 3), t=0.5)]
-    return [ellipse(cx, cy, s * 0.85, s * 0.5), ]
+        # un croc : un triangle courbe, pointe vers le bas
+        return [sm([(cx - s * 0.7, cy - s * 0.7), (cx + s * 0.7, cy - s * 0.7), (cx + s * 0.1, cy + s * 0.9)], sharp=(0, 1, 2), t=0.7)]
+    # une amande (deux pointes), couchée
+    return [sm([(cx - s, cy), (cx, cy - s * 0.45), (cx + s, cy), (cx, cy + s * 0.45)], sharp=(0, 2), t=0.9)]
 
 
 # ---------- les poings (posés sur les phalanges) ----------
@@ -341,8 +350,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         fig.glow(c[0], c[1], 70, 46, '#ff4a6a', min(0.32, 0.07 * g))
 
     # ================================================================ derrière : cristaux du dos, bras et jambe lointains
-    BACK_CR = [('cr1', (68.0, 64.0), -26, 34.0, 10.5), ('cr2', (60.0, 70.0), -44, 22.0, 8.0), ('cr3', (86.0, 58.0), -8, 24.0, 9.0),
-               ('cr4', (151.0, 56.0), 18, 20.0, 8.5), ('cr5', (163.0, 62.0), 34, 12.0, 6.0)]
+    BACK_CR = [('cr1', (70.0, 66.0), -24, 34.0, 13.0), ('cr2', (61.0, 72.0), -46, 20.0, 9.5), ('cr3', (88.0, 60.0), -6, 25.0, 11.5),
+               ('cr4', (152.0, 58.0), 16, 21.0, 10.5), ('cr5', (164.0, 63.0), 36, 12.0, 7.0)]
     for nm, b, a, L, w in BACK_CR:
         crystal_part(fig, nm, mapp(UC, b), a + P['pitch'], L, w, cast=0)
 
@@ -350,11 +359,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     S = mapp(UC, FS)
     Wt = (FW0[0] + P['ff'][0], FW0[1] + P['ff'][1])
     E, Wf = ik(S, Wt, FL[0] * 1.02, FL[1] * 1.02, FSG)
-    farm = fuse([limb([S, lerp(S, E, 0.5), E], [30.0, 31.0, 30.0]), limb([E, lerp(E, Wf, 0.5), Wf], [30.0, 33.0, 30.0])], 1.5, 70)[0]
-    fdet = [face([lerp(E, Wf, 0.1), (Wf[0] + 13, Wf[1] - 6), (Wf[0] + 8, Wf[1] - 2), (E[0] + 7, E[1] + 4)], ROCKF.light, 0.5)]
-    fdet += fissure(zig((Wf[0] + 2, Wf[1] - 24), (Wf[0] - 4, Wf[1] - 8), 3, 1.2, 1), 0.7, ROCKF)
+    farm = fuse([limb([S, lerp(S, E, 0.5), E], [30.0, 31.0, 29.0]), limb([E, lerp(E, Wf, 0.5), Wf], [29.0, 32.0, 29.0])], 1.5, 70)[0]
+    fd = ((Wf[0] - E[0]) / FL[1], (Wf[1] - E[1]) / FL[1])
+    fn_ = (fd[1], -fd[0])
+    fdet = [face([(E[0] + fn_[0] * 5, E[1] + fn_[1] * 5), (E[0] + fn_[0] * 14, E[1] + fn_[1] * 14), (Wf[0] + fn_[0] * 14, Wf[1] + fn_[1] * 14 - 4),
+                  (Wf[0] + fn_[0] * 6, Wf[1] + fn_[1] * 6 - 4)], ROCKF.light, 0.55)]
+    fdet += fissure(zig(lerp(E, Wf, 0.25), lerp(E, Wf, 0.8), 3, 1.2, 1), 0.7, ROCKF)
     fig.part('farm', farm, ROCKF, grad=grad_of(farm, ROCKF_G), cel=1.8, rim=0.7, cast=0, details=fdet)
-    crystal_part(fig, 'crf', (Wf[0] + 12.0, Wf[1] - 34.0), 62, 15.0, 7.0, cast=0.6, cast_on=['farm'], dim=0.2)
+    crystal_part(fig, 'crf', lerp((E[0] + fn_[0] * 13, E[1] + fn_[1] * 13), (Wf[0] + fn_[0] * 13, Wf[1] + fn_[1] * 13), 0.2), 64, 13.0, 6.4, cast=0.6, cast_on=['farm'], dim=0.2)
     fa = (ang_of(E, Wf) - ang_of(FE0, FW0)) * 0.4 + P['frot']
     fist_parts(fig, 'ffist', Wf, fa, 0.72, ROCKF, ROCKF_G, dark=0.3)
 
@@ -383,8 +395,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ================================================================ le corps : la montagne (bosse, poitrine, ventre)
     body = sm([(56.0, 128.0), (52.0, 104.0), (55.0, 84.0), (66.0, 70.0), (84.0, 60.0), (106.0, 54.0), (130.0, 51.0), (152.0, 53.0),
-               (170.0, 59.0), (184.0, 66.0), (196.0, 74.0), (214.0, 96.0), (232.0, 132.0), (238.0, 158.0), (236.0, 180.0), (226.0, 192.0),
-               (206.0, 197.0), (186.0, 198.0), (164.0, 196.0), (144.0, 192.0), (122.0, 188.0), (104.0, 182.0), (98.0, 168.0),
+               (170.0, 59.0), (184.0, 66.0), (196.0, 74.0), (214.0, 96.0), (230.0, 132.0), (234.0, 156.0), (228.0, 172.0), (214.0, 188.0),
+               (200.0, 196.0), (186.0, 198.0), (164.0, 196.0), (144.0, 192.0), (122.0, 188.0), (104.0, 182.0), (98.0, 168.0),
                (98.0, 150.0), (90.0, 138.0), (72.0, 134.0)], t=0.9)
     bdet = []
     # les grandes dalles de roche (lisibles dans la lumière, perdues dans l'ombre)
@@ -398,9 +410,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     bdet += fissure([(160.0, 86.0), (162.0, 94.0), (154.0, 110.0)], 0.8, k=0.8)
     bdet += fissure([(98.0, 78.0), (106.0, 92.0), (104.0, 108.0)], 0.7, k=0.6)
     # la poitrine dans l'ombre, sous la tête (l'avant du corps regarde le sol)
-    bdet += [(sm([(96.0, 128.0), (124.0, 118.0), (160.0, 122.0), (186.0, 140.0), (200.0, 170.0), (196.0, 198.0), (100.0, 198.0), (94.0, 160.0)], t=0.9),
-              ROCK.shadow, 0.55),
-             (sm([(100.0, 150.0), (130.0, 140.0), (164.0, 146.0), (184.0, 164.0), (186.0, 198.0), (104.0, 196.0)], t=0.9), ROCK.deep, 0.3)]
+    bdet += [(sm([(92.0, 118.0), (124.0, 108.0), (164.0, 112.0), (194.0, 132.0), (206.0, 170.0), (200.0, 200.0), (100.0, 200.0), (90.0, 160.0)], t=0.9),
+              ('lin', 0, 110.0, 0, 190.0, [(0, ROCK.shadow, 0.0), (0.4, ROCK.shadow, 0.55), (1, ROCK.deep, 0.75)]), 1)]
+    # le flanc du dos (loin de la lumière) et quelques dalles de plus au milieu du corps, à peine marquées
+    bdet += [face([(54.0, 92.0), (64.0, 84.0), (74.0, 96.0), (70.0, 122.0), (56.0, 126.0)], ROCK.shadow, 0.35, 4.0)]
+    bdet += fissure([(98.0, 108.0), (114.0, 114.0), (130.0, 112.0)], 0.7, k=0.5)
+    bdet += fissure([(154.0, 110.0), (170.0, 118.0), (180.0, 130.0)], 0.7, k=0.5)
+    bdet += [face([(132.0, 114.0), (152.0, 112.0), (168.0, 120.0), (160.0, 130.0), (138.0, 128.0)], ROCK.light, 0.18, 4.0)]
     bdet += fissure([(128.0, 130.0), (134.0, 146.0), (130.0, 164.0), (136.0, 182.0)], 0.7, k=0.5)
     # le signe du clan sur le ventre : un losange de grenat entre deux crochets, gravé et luisant
     sg = (156.0, 174.0)
@@ -430,23 +446,23 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('lintel', lin_, SAND, grad=(147.0, 26.0, 94.0, 37.0, [(0, SAND.light), (0.6, SAND.base), (1, SAND.shadow)]), cel=1.2, rim=0.7,
              cast=1.2, cast_on=['pill', 'pilr', 'body'], details=ldet)
     # la mousse du linteau (une seule nappe sur le dessus, deux mèches qui pendent)
-    moss_part(fig, 'lmoss', [(94.4, 28.6), (110.0, 27.2), (128.0, 27.8), (147.0, 29.4)], 4.6, seed=3, drips=[(0.14, 5.0, 2.0), (0.72, 3.2, 1.8)],
+    moss_part(fig, 'lmoss', [(94.4, 28.0), (110.0, 26.8), (128.0, 27.4), (147.0, 29.0)], 5.0, seed=3, drips=[(0.14, 4.0, 2.6)],
               cast_on=['lintel'], cast=1.0)
     fig.pose(['pill', 'pilr', 'lintel', 'lmoss'], mchain(UC, mR(P['sway'] * 0.4, 120, 58)))
 
     # ---- la nappe de mousse du dos (une seule, de la bosse au crâne : elle couvre le pied des montants) ----
     moss_part(fig, 'bmoss', [(53.0, 100.0), (54.0, 86.0), (61.0, 73.0), (75.0, 63.0), (93.0, 56.0), (112.0, 51.6), (130.0, 50.0), (148.0, 51.0),
-                             (164.0, 56.0), (178.0, 63.0), (190.0, 71.0)], 9.0, seed=1,
-              drips=[(0.06, 10.0, 2.8), (0.2, 4.0, 2.2), (0.47, 7.0, 2.6), (0.8, 5.0, 2.2)], cast_on=['body', 'pill', 'pilr'], cast=1.6)
+                             (164.0, 56.0), (178.0, 62.0), (192.0, 68.0)], 10.5, seed=1,
+              drips=[(0.07, 9.0, 3.4), (0.5, 6.0, 3.0), (0.83, 4.0, 2.6)], cast_on=['body', 'pill', 'pilr'], cast=1.6)
     fig.pose(['bmoss'], UC)
 
     # ================================================================ le col de rocher sous la mâchoire
-    col = sm([(170.0, 142.0), (190.0, 136.0), (222.0, 138.0), (242.0, 148.0), (246.0, 164.0), (242.0, 182.0), (228.0, 190.0),
-              (204.0, 190.0), (184.0, 182.0), (172.0, 166.0)], t=0.9)
-    cdet = [face([(214.0, 146.0), (240.0, 150.0), (244.0, 164.0), (236.0, 168.0), (222.0, 160.0)], ROCK.light, 0.55, 3.0),
-            face([(176.0, 164.0), (192.0, 170.0), (210.0, 186.0), (188.0, 184.0), (176.0, 174.0)], ROCK.deep, 0.35, 3.0)]
-    cdet += fissure([(222.0, 160.0), (218.0, 172.0), (224.0, 186.0)], 0.8)
-    cdet += fissure([(196.0, 150.0), (200.0, 164.0), (196.0, 176.0)], 0.7, k=0.7)
+    col = sm([(172.0, 140.0), (190.0, 135.0), (220.0, 137.0), (238.0, 144.0), (243.0, 156.0), (238.0, 168.0), (222.0, 175.0),
+              (200.0, 176.0), (184.0, 170.0), (174.0, 158.0)], t=0.9)
+    cdet = [face([(216.0, 144.0), (236.0, 147.0), (241.0, 157.0), (234.0, 162.0), (222.0, 156.0)], ROCK.light, 0.55, 3.0),
+            face([(176.0, 158.0), (190.0, 164.0), (208.0, 174.0), (190.0, 172.0), (178.0, 166.0)], ROCK.deep, 0.35, 3.0)]
+    cdet += fissure([(222.0, 156.0), (219.0, 164.0), (223.0, 173.0)], 0.8)
+    cdet += fissure([(198.0, 152.0), (200.0, 162.0), (197.0, 172.0)], 0.7, k=0.7)
     fig.part('col', col, ROCK, grad=grad_of(col, [(0, '#a8a084'), (0.5, '#6e6866'), (1, '#433b52')]), cel=2.0, rim=0.8, cast=1.6,
              cast_on=['body', 'farm'], details=cdet)
     fig.pose(['col'], UC)
@@ -490,151 +506,191 @@ def head_parts(fig, P, HEAD, UC):
     V = FACE_V
     g = P['glow']
     gape = 1.0 + P['gape']
+    mx = V['mediane']
+    ep, ef = V['oeil_proche'], V['oeil_fond']
+    nx_, ny_ = V['nez']
+    bx_, by_, bw = V['bouche']
     names = []
 
-    # ---- l'oreille sculptée et la tête (une seule forme : l'oreille est soudée au crâne) ----
-    skull = sm([(172.0, 96.0), (176.0, 82.0), (186.0, 74.0), (202.0, 70.0), (220.0, 72.0), (232.0, 78.0), (238.0, 88.0),
-                (239.0, 102.0), (238.0, 116.0), (237.5, 128.0), (236.0, 140.0), (230.0, 148.0), (220.0, 152.6), (206.0, 153.4),
-                (192.0, 150.0), (182.0, 142.0), (175.0, 128.0), (171.5, 112.0)], t=0.9)
-    ox, oy = V['oreille']
-    ear = sm([(ox + 3.0, oy - 9.0), (ox - 3.0, oy - 10.0), (ox - 7.0, oy - 5.0), (ox - 7.6, oy + 3.0), (ox - 4.0, oy + 10.0), (ox + 2.0, oy + 11.0),
-              (ox + 4.0, oy + 4.0)], t=0.9)
-    head, _ = fuse([skull, ear], 1.6, 80)
-    V_ = V
-    hdet = []
-    # les plans de la face : le front éclairé, la joue proche ronde (demi-teinte), le côté du fond plus clair
-    hdet += [(sm([(190.0, 78.0), (214.0, 74.0), (232.0, 80.0), (237.0, 92.0), (226.0, 96.0), (204.0, 94.0), (188.0, 90.0)], t=0.9), SAND.light, 0.55)]
-    hdet += [(sm([(222.0, 104.0), (236.0, 100.0), (238.0, 120.0), (236.0, 138.0), (228.0, 132.0), (224.0, 118.0)], t=0.9), SAND.hi, 0.28)]
-    hdet += [(sm([(174.0, 100.0), (186.0, 104.0), (190.0, 122.0), (196.0, 140.0), (204.0, 150.0), (190.0, 150.0), (178.0, 138.0), (172.0, 116.0)], t=0.9),
-              SAND.shadow, 0.5)]
-    # le bandeau sculpté sur le front (un morceau d'ellipse autour de la tête), serti d'un grenat sur la médiane
-    yb = 85.0
-    band_top = [(173.0, yb - 1.0), (190.0, yb - 4.4), (V['mediane'](yb), yb - 5.6), (234.0, yb - 5.0), (240.0, yb - 3.6)]
-    band_bot = [(240.0, yb + 3.0), (234.0, yb + 2.2), (V['mediane'](yb), yb + 2.6), (190.0, yb + 3.8), (173.0, yb + 6.8)]
-    band = sm(crpath(band_top, 14) + crpath(band_bot, 14), sharp=(0, 14, 15, 29), t=0.8)
-    hdet += [(band.move(-0.4, 1.0), SAND.deep, 0.45), (band, ('lin', 238.0, 78.0, 176.0, 92.0, [(0, SAND.hi), (0.5, SAND.light), (1, SAND.shadow)]), 1)]
-    hdet += [(sm(crpath(band_top, 14) + crpath([(240.0, yb - 2.2), (234.0, yb - 3.4), (V['mediane'](yb), yb - 3.6), (190.0, yb - 2.6), (173.0, yb + 0.6)], 14),
-                 sharp=(0, 14, 15, 29), t=0.8), SAND.hi, 0.6)]
-    gx = V['mediane'](yb)
-    hdet += [(ellipse(gx, yb - 1.4, 5.2 + 0.6 * g, 4.2 + 0.6 * g), ('rad', gx, yb - 1.4, 5.2 + 0.6 * g, 4.2 + 0.6 * g, [(0, '#ff7088', 0.5 + 0.1 * g), (1, '#ff7088', 0)]), 1)]
-    gem = sm([(gx, yb - 5.0), (gx + 2.6, yb - 1.4), (gx, yb + 2.2), (gx - 2.4, yb - 1.4)], sharp=(0, 1, 2, 3), t=0.5)
-    hdet += [(gem.move(-0.3, 0.6), SAND.deep, 0.6), (gem, ('lin', gx + 2, yb - 5, gx - 2, yb + 2, [(0, GAR.hi), (0.45, GAR.light), (1, GAR.shadow)]), 1),
-             (ellipse(gx + 0.7, yb - 2.6, 0.8, 0.6), '#ffffff', 0.85)]
-    # signes du bandeau (inventés) de part et d'autre du grenat
-    for (x, k_) in ((198.0, 1), (230.0, 2)):
-        y = yb - 0.6 + (0.0 if x > 210 else 0.2)
-        for gl in glyph(x, y, 2.0, k_):
-            hdet += [(gl, GAR.base, 0.55 + 0.1 * g)]
+    # ---- la nuque prise dans la montagne : une coque de roche brute DERRIÈRE le crâne (la bosse l'enveloppe) ----
+    nape = sm([(176.0, 140.0), (166.0, 120.0), (163.0, 98.0), (168.0, 80.0), (180.0, 68.0), (196.0, 62.0), (210.0, 62.0),
+               (206.0, 74.0), (190.0, 80.0), (182.0, 96.0), (182.0, 120.0)], t=0.85)
+    fig.part('nape', nape, ROCK, grad=grad_of(nape, ROCK_G), cel=1.6, rim=0.7, cast=1.2, cast_on=['body', 'col'],
+             details=[face([(172.0, 76.0), (184.0, 66.0), (198.0, 63.0), (192.0, 72.0), (178.0, 82.0)], ROCK.light, 0.55, 2.0)]
+             + fissure([(167.0, 96.0), (170.0, 108.0), (167.0, 120.0)], 0.7))
+    names.append('nape')
 
-    # ---- les orbites (creux sous l'arcade froncée), les yeux de braise ----
-    ep, ef = V['oeil_proche'], V['oeil_fond']
-    for (ex, ey, ew), near in ((ep, True), (ef, False)):
+    # ---- la tête de statue : crâne, arcade, pommette, mâchoire carrée ; l'oreille sculptée soudée au crâne ----
+    skull = sm([(177.0, 106.0), (177.6, 90.0), (184.0, 80.0), (198.0, 74.4), (216.0, 73.6), (230.0, 77.0), (238.0, 85.0),
+                (241.0, 96.0), (242.2, 102.0), (239.2, 108.0), (240.4, 114.0), (240.6, 126.0), (242.0, 138.0), (239.6, 148.0),
+                (228.0, 155.6), (214.0, 157.6), (199.0, 155.6), (187.0, 149.0), (180.0, 138.0), (177.4, 122.0)], sharp=(8,), t=0.9)
+    ox, oy = V['oreille']
+    ear = sm([(ox + 4.0, oy - 9.0), (ox - 1.5, oy - 11.0), (ox - 6.6, oy - 6.4), (ox - 7.6, oy + 1.0), (ox - 5.6, oy + 8.0), (ox - 1.0, oy + 12.0),
+              (ox + 4.0, oy + 10.0)], t=0.9)
+    head, _ = fuse([skull, ear], 1.8, 80)
+    hdet = []
+    # le grès s'use en roche brute vers la nuque : un bord irrégulier, une cassure sombre
+    worn = sm([(176.0, 96.0), (179.0, 86.0), (186.0, 77.0), (194.0, 73.0), (191.0, 80.0), (186.0, 84.0), (184.0, 92.0), (181.0, 96.0),
+               (180.5, 104.0)], sharp=(4, 5, 6, 7), t=0.6)
+    hdet += [(worn, ROCK.base, 0.85), (worn.move(0.8, 0.4), ROCK.light, 0.25)]
+    # les plans de la face (lumière en haut à droite) : le côté proche qui tourne vers l'oreille est dans l'ombre
+    side = sm([(181.0, 100.0), (191.0, 102.0), (194.0, 114.0), (195.0, 128.0), (200.0, 144.0), (206.0, 156.4), (196.0, 155.0), (186.0, 148.0),
+               (180.0, 134.0), (177.6, 118.0)], t=0.9)
+    hdet += [(side, SAND.shadow, 0.5)]
+    # le front éclairé (sous la mousse), la pommette du fond et la mâchoire du fond dans la lumière
+    hdet += [(sm([(190.0, 80.0), (210.0, 74.6), (228.0, 78.0), (237.0, 90.0), (226.0, 92.0), (206.0, 91.0), (192.0, 90.0)], t=0.9), SAND.light, 0.5)]
+    hdet += [(sm([(230.0, 114.0), (239.8, 114.6), (240.2, 125.0), (234.0, 125.0)], t=0.9), SAND.hi, 0.45)]
+    hdet += [(sm([(224.0, 144.0), (240.0, 138.0), (238.6, 148.0), (228.0, 154.0)], t=0.9), SAND.light, 0.5)]
+    # le dessous de la mâchoire, dans l'ombre (elle avance au-dessus du col)
+    hdet += [(sm([(190.0, 150.0), (206.0, 155.4), (228.0, 154.6), (239.0, 148.0), (238.0, 152.0), (226.0, 158.4), (206.0, 158.6), (188.0, 154.0)], t=0.9),
+              SAND.deep, 0.35)]
+    # le bandeau sculpté : un morceau d'ellipse autour de la tête, serti d'un grenat sur la médiane
+    yb = 87.0
+    def bandline(dy, sag):
+        return [(x, yb + dy - sag * (1 - ((x - 207.0) / 34.0) ** 2) + 0.12 * (x - 207.0)) for x in (173.0, 186.0, 198.0, 208.0, 218.0, 228.0, 241.0)]
+    btop, bbot = bandline(-4.0, 2.6), bandline(3.2, 2.6)
+    band = sm(crpath(btop, 14) + crpath(bbot[::-1], 14), sharp=(0, 14, 15, 29), t=0.8)
+    blit = sm(crpath(btop, 14) + crpath(bandline(-1.8, 2.6)[::-1], 14), sharp=(0, 14, 15, 29), t=0.8)
+    hdet += [(band.move(-0.4, 1.2), SAND.deep, 0.5), (band, ('lin', 238.0, 80.0, 176.0, 94.0, [(0, SAND.light), (0.5, SAND.base), (1, SAND.shadow)]), 1),
+             (blit, SAND.hi, 0.5)]
+    gx = mx(yb)
+    gy = yb - 2.6 * 1.0 + 0.12 * (gx - 207.0) - 0.4
+    hdet += [(ellipse(gx, gy, 6.0 + 0.8 * g, 4.6 + 0.8 * g), ('rad', gx, gy, 6.0 + 0.8 * g, 4.6 + 0.8 * g, [(0, '#ff7088', 0.45 + 0.1 * g), (1, '#ff7088', 0)]), 1)]
+    gem = sm([(gx, gy - 4.0), (gx + 2.6, gy), (gx, gy + 3.6), (gx - 2.4, gy)], sharp=(0, 1, 2, 3), t=0.5)
+    hdet += [(gem.move(-0.3, 0.7), SAND.deep, 0.6), (gem, ('lin', gx + 2, gy - 4, gx - 2, gy + 3, [(0, GAR.hi), (0.45, GAR.light), (1, GAR.shadow)]), 1),
+             (ellipse(gx + 0.7, gy - 1.2, 0.8, 0.6), '#ffffff', 0.85)]
+    for (x, k_) in ((193.0, 3), (227.5, 0)):
+        y = yb - 2.6 * (1 - ((x - 207.0) / 34.0) ** 2) + 0.12 * (x - 207.0) - 0.2
+        for gl in glyph(x, y, 1.6, k_):
+            hdet += [(gl, GAR.base, 0.5 + 0.12 * g)]
+
+    # ---- les orbites profondes, les yeux de braise (même dessin, même ligne ; l'œil du fond plus étroit) ----
+    for (ex, ey, ew) in (ep, ef):
         hw = ew / 2
-        orb = sm([(ex - hw - 1.2, ey - 1.0), (ex - hw * 0.3, ey - 4.4), (ex + hw + 1.0, ey - 3.0), (ex + hw + 0.6, ey + 2.4),
-                  (ex, ey + 4.0), (ex - hw - 0.6, ey + 2.6)], t=0.9)
-        hdet += [(orb, SAND.deep, 0.85), (orb.move(0.8, 0.8), MOUTH[2], 0.35)]
-    eyes = []
+        orb = sm([(ex - hw - 1.0, ey - 1.4), (ex - hw * 0.2, ey - 4.2), (ex + hw + 0.8, ey - 3.0), (ex + hw + 0.8, ey + 2.0),
+                  (ex + hw * 0.2, ey + 3.8), (ex - hw - 0.4, ey + 2.4)], t=0.9)
+        hdet += [(orb, SAND.deep, 0.8), (orb.move(1.0, 0.6), MOUTH[2], 0.35)]
     for (ex, ey, ew), near in ((ep, True), (ef, False)):
-        hw = ew / 2 * 0.78
-        eh = 2.3 * (1 - P['blink'])
-        if P['blink'] < 0.9:
-            # l'œil : une braise en amande (coin intérieur plus bas, côté du nez), regard dur sous l'arcade
+        hw = ew / 2 * 0.8
+        eh = 2.4
+        r_ = 6.4 + 1.2 * g
+        hdet += [(ellipse(ex, ey, r_, r_ * 0.72), ('rad', ex, ey, r_, r_ * 0.72, [(0, EYE[2], 0.5 + 0.1 * g), (1, EYE[3], 0)]), 1)]
+        if P['blink'] < 0.5:
+            # une braise en amande : le coin du côté du nez plus bas (regard froncé), même forme pour les deux yeux
+            pts = [(ex - hw, ey - eh * 0.45), (ex - hw * 0.1, ey - eh * 0.95), (ex + hw, ey - eh * 0.55), (ex + hw * 0.55, ey + eh * 0.6),
+                   (ex - hw * 0.45, ey + eh * 0.62)]
             if near:
-                pts = [(ex - hw, ey - 0.2), (ex - hw * 0.2, ey - eh * 0.9), (ex + hw, ey - eh * 0.5), (ex + hw * 0.6, ey + eh * 0.55), (ex - hw * 0.4, ey + eh * 0.6)]
-            else:
-                pts = [(ex - hw, ey - eh * 0.5), (ex + hw * 0.2, ey - eh * 0.9), (ex + hw, ey - 0.2), (ex + hw * 0.4, ey + eh * 0.6), (ex - hw * 0.6, ey + eh * 0.55)]
+                pts = [(ex + hw, ey + 0.2 - eh * 0.2), (ex + hw * 0.1, ey - eh * 0.95), (ex - hw, ey - eh * 0.55), (ex - hw * 0.55, ey + eh * 0.6),
+                       (ex + hw * 0.45, ey + eh * 0.62)]
+                pts = [pts[2], pts[1], pts[0], pts[4], pts[3]]
             eye = sm(pts, sharp=(0, 2), t=0.8)
-            r_ = 7.0 + 1.2 * g
-            eyes += [(ellipse(ex, ey, r_, r_ * 0.75), ('rad', ex, ey, r_, r_ * 0.75, [(0, EYE[2], 0.55 + 0.1 * g), (1, EYE[3], 0)]), 1),
-                     (eye, ('rad', ex + 0.6, ey - 0.4, hw * 1.1, hw * 1.1, [(0, EYE[0]), (0.35, EYE[1]), (0.75, EYE[2]), (1, EYE[3])]), 1),
-                     (ellipse(ex + hw * 0.15, ey - 0.3, 0.9, 0.7), '#ffffff', 0.9)]
+            hdet += [(eye, ('rad', ex + 0.4, ey - 0.3, hw * 1.15, hw * 1.15, [(0, EYE[0]), (0.35, EYE[1]), (0.75, EYE[2]), (1, EYE[3])]), 1),
+                     (ellipse(ex + hw * 0.2, ey - 0.5, 0.95, 0.7), '#ffffff', 0.9)]
         else:
-            eyes += [(ribbon([(ex - hw, ey), (ex, ey + 0.6), (ex + hw, ey)], [0.1, 0.8, 0.1]), SAND.deep, 0.8)]
-    hdet += eyes
-    # l'arcade lourde, froncée en V vers le nez (le sourcil de la statue) : un bourrelet de pierre au-dessus des yeux
-    nx_, ny_ = V['nez']
-    m_y = ep[1] - 4.6
-    brow = sm([(ep[0] - ep[2] / 2 - 3.6, m_y - 3.2), (ep[0] - 1.0, m_y - 4.4), (V['mediane'](m_y) - 0.6, m_y + 1.6), (ef[0] + 1.0, m_y - 3.6),
-               (ef[0] + ef[2] / 2 + 2.6, m_y - 3.0), (ef[0] + ef[2] / 2 + 2.2, m_y - 0.6), (ef[0] + 0.6, m_y - 0.6),
-               (V['mediane'](m_y) - 0.4, m_y + 4.0), (ep[0] - 1.0, m_y - 0.8), (ep[0] - ep[2] / 2 - 3.6, m_y - 0.2)], sharp=(2, 7), t=0.8)
-    hdet += [(brow.move(-0.4, 1.4), SAND.deep, 0.55), (brow, ('lin', ef[0] + 6, m_y - 4, ep[0] - 6, m_y + 2, [(0, SAND.hi), (0.5, SAND.light), (1, SAND.base)]), 1)]
-    # le nez : large et plat, SUR la médiane entre les deux yeux (racine entre les arcades, base au-dessus de la bouche)
-    mx = V['mediane']
-    nose = sm([(mx(m_y + 3.0) - 1.6, m_y + 3.4), (mx(m_y + 3.0) + 1.8, m_y + 3.2), (nx_ + 3.6, ny_ - 3.0), (nx_ + 5.0, ny_ + 0.4),
-               (nx_ + 2.6, ny_ + 2.0), (nx_, ny_ + 1.2), (nx_ - 2.8, ny_ + 2.0), (nx_ - 5.4, ny_ + 0.4), (nx_ - 4.0, ny_ - 3.0)], t=0.85)
-    hdet += [(nose.move(-0.8, 1.2), SAND.shadow, 0.6),
-             (nose, ('lin', nx_ + 5, m_y, nx_ - 5, ny_ + 2, [(0, SAND.hi), (0.45, SAND.light), (1, SAND.base)]), 1),
-             (ellipse(nx_ - 2.6, ny_ + 0.6, 1.4, 0.75), SAND.deep, 0.75), (ellipse(nx_ + 2.5, ny_ + 0.6, 1.1, 0.65), SAND.deep, 0.6),
-             (ribbon([(mx(m_y + 4) + 0.6, m_y + 5.0), (nx_ + 1.8, ny_ - 5.0), (nx_ + 3.0, ny_ - 1.6)], [0.1, 0.9, 0.1]), SAND.glint, 0.5)]
-    # la gueule ouverte : lèvres de pierre, rangées de dents carrées, l'intérieur rouge sombre (jamais noir)
-    bx_, by_, bw = V['bouche']
-    mw = bw * 1.55
-    top = by_ - 3.2 * gape
-    bot = by_ + 4.6 * gape
+            hdet += [(ribbon([(ex - hw, ey), (ex, ey + 0.7), (ex + hw, ey)], [0.1, 0.9, 0.1]), SAND.deep, 0.85)]
+    # l'arcade lourde, froncée en V vers la racine du nez : UNE seule arête de pierre au-dessus des deux yeux
+    by0 = ep[1] - 4.8
+    brow = sm([(ep[0] - ep[2] / 2 - 4.4, by0 - 0.2), (ep[0] - 2.0, by0 - 4.8), (mx(by0) - 2.8, by0 - 1.0), (mx(by0), by0 + 1.6),
+               (mx(by0) + 2.6, by0 - 1.0), (ef[0] + 0.4, by0 - 4.4), (ef[0] + ef[2] / 2 + 3.6, by0 - 1.4), (ef[0] + ef[2] / 2 + 3.0, by0 + 1.8),
+               (ef[0] + 0.4, by0 + 1.2), (mx(by0) + 0.8, by0 + 4.6), (mx(by0) - 1.0, by0 + 4.6), (ep[0] - 1.4, by0 + 1.4),
+               (ep[0] - ep[2] / 2 - 3.8, by0 + 2.8)], sharp=(3, 9, 10), t=0.85)
+    hdet += [(brow.move(-0.5, 1.6), SAND.deep, 0.55),
+             (brow, ('lin', ef[0] + 6, by0 - 4, ep[0] - 6, by0 + 3, [(0, SAND.hi), (0.55, SAND.light), (1, SAND.base)]), 1)]
+    # le nez : large et plat, SUR la médiane, entre les deux yeux (sa racine entre les arcades, sa base sur la bouche)
+    nr = by0 + 3.6
+    nose = sm([(mx(nr) - 1.8, nr), (mx(nr) + 2.0, nr), (nx_ + 3.8, ny_ - 4.0), (nx_ + 5.6, ny_ - 0.2), (nx_ + 3.4, ny_ + 2.0),
+               (nx_, ny_ + 1.2), (nx_ - 3.4, ny_ + 2.0), (nx_ - 6.0, ny_ - 0.2), (nx_ - 4.0, ny_ - 4.0)], t=0.85)
+    nshade = sm([(mx(nr) - 1.8, nr), (mx(nr) - 0.2, nr + 1.0), (nx_ - 1.4, ny_ - 3.0), (nx_ - 2.0, ny_ + 1.4), (nx_ - 6.0, ny_ - 0.2), (nx_ - 4.0, ny_ - 4.0)], t=0.85)
+    hdet += [(nose.move(-1.0, 1.4), SAND.shadow, 0.55),
+             (nose, ('lin', nx_ + 5, nr, nx_ - 5, ny_ + 2, [(0, SAND.hi), (0.45, SAND.light), (1, SAND.base)]), 1),
+             (nshade, SAND.base, 0.6),
+             (ellipse(nx_ - 2.8, ny_ + 0.4, 1.5, 0.8), SAND.deep, 0.8), (ellipse(nx_ + 2.6, ny_ + 0.4, 1.2, 0.7), SAND.deep, 0.65),
+             (ribbon([(mx(nr) + 0.8, nr + 1.0), (nx_ + 1.6, ny_ - 6.0), (nx_ + 3.4, ny_ - 2.0)], [0.1, 1.0, 0.1]), SAND.glint, 0.55)]
+    # la gueule ouverte, centrée sous le nez (une gueule de monstre voulue : il rugit)
+    mw = bw * 1.9
+    top = by_ - 5.6 - 0.8 * P['gape']
+    bot = by_ + 6.4 + 3.4 * P['gape']
     hdet += mouth(bx_, top, bot, mw, gape)
-    # la fêlure du crâne à la mâchoire (côté proche, derrière l'œil), des cristaux poussent dedans à la tempe
-    hdet += fissure([(188.0, 72.0), (186.0, 84.0), (182.0, 94.0), (184.0, 106.0), (180.0, 118.0), (182.0, 132.0), (188.0, 146.0)], 1.0, SAND)
-    hdet += fissure([(222.0, 140.0), (226.0, 146.0), (224.0, 152.0)], 0.6, SAND, 0.7)
-    fig.part('head', head, SAND, grad=grad_of(head, SAND_G), cel=2.2, rim=0.9, cast=1.8, cast_on=['col', 'body', 'farm'],
-             details=hdet, occl=(SAND.deep, 0.2, 3.0))
+    # la longue fêlure du crâne à la mâchoire (côté proche, derrière l'œil) ; les cristaux de la tempe y poussent
+    hdet += fissure([(192.0, 74.0), (189.0, 84.0), (186.0, 92.0), (188.0, 102.0), (185.0, 114.0), (187.0, 128.0), (192.0, 142.0), (190.0, 150.0)], 1.0, SAND)
+    hdet += fissure([(232.0, 128.0), (235.0, 134.0), (233.0, 140.0)], 0.55, SAND, 0.6)
+    # l'oreille sculptée : un creux en C, le bord éclairé
+    hdet += [(sm([(ox + 1.0, oy - 6.0), (ox - 3.6, oy - 4.4), (ox - 4.4, oy + 1.0), (ox - 2.6, oy + 6.6), (ox + 0.6, oy + 7.4),
+                  (ox - 1.0, oy + 2.0), (ox - 0.6, oy - 3.0)], t=0.9), SAND.deep, 0.65)]
+    fig.part('head', head, SAND, grad=grad_of(head, SAND_G), cel=2.2, rim=0.9, cast=1.8, cast_on=['col', 'body', 'farm', 'nape'],
+             details=hdet, occl=(SAND.deep, 0.18, 3.0))
     names.append('head')
 
-    # ---- les défenses de grenat : elles montent de la mâchoire du bas, aux coins de la gueule (la lointaine plus sombre)
-    t1 = (bx_ - mw / 2 + 1.6, bot - 0.6)
-    t2 = (bx_ + mw / 2 - 1.2, bot - 0.6)
-    crystal_part(fig, 'tusk2', t2, 6, 13.0 + 2 * P['gape'], 4.4, cast=0.6, cast_on=['head'], dim=0.35)
-    crystal_part(fig, 'tusk1', t1, -6, 17.0 + 2 * P['gape'], 5.2, cast=0.8, cast_on=['head'])
+    # ---- les défenses de grenat : elles montent de la mâchoire du bas, dans les coins de la gueule ----
+    tusk(fig, 'tusk2', (bx_ + mw / 2 - 1.8, bot - 1.0), 11.0 + 1.5 * P['gape'], 4.0, 8.0, dim=0.4)
+    tusk(fig, 'tusk1', (bx_ - mw / 2 + 2.0, bot - 1.0), 14.0 + 2.0 * P['gape'], 4.8, -8.0)
     names += ['tusk1', 'tusk2']
 
-    # ---- la bosse enveloppe la nuque : une coque de roche brute, le grès se fend contre elle ----
-    nape = sm([(170.0, 128.0), (166.0, 104.0), (168.0, 86.0), (176.0, 72.0), (190.0, 66.0), (196.0, 70.0), (190.0, 78.0),
-               (184.0, 86.0), (180.0, 100.0), (181.0, 112.0), (178.0, 122.0)], t=0.85)
-    fig.part('nape', nape, ROCK, grad=grad_of(nape, ROCK_G), cel=1.6, rim=0.7, cast=1.4, cast_on=['head'],
-             details=[face([(178.0, 72.0), (190.0, 67.0), (192.0, 72.0), (184.0, 80.0), (176.0, 82.0)], ROCK.light, 0.55, 2.0)]
-             + fissure([(172.0, 96.0), (176.0, 106.0), (173.0, 116.0)], 0.7))
-    names.append('nape')
     # ---- un seul coussin de mousse passe de la bosse au crâne ----
-    moss_part(fig, 'hmoss', [(169.0, 88.0), (173.0, 75.0), (183.0, 67.0), (198.0, 63.4), (214.0, 64.0), (228.0, 69.0), (236.5, 78.0)], 7.4,
-              seed=5, drips=[(0.1, 6.0, 2.4), (0.93, 3.4, 1.8)], cast_on=['head', 'nape'], cast=1.3)
+    moss_part(fig, 'hmoss', [(174.0, 82.0), (181.0, 70.0), (196.0, 64.6), (212.0, 65.0), (227.0, 69.4), (236.4, 78.4)], 8.4,
+              seed=5, drips=[(0.06, 6.0, 3.0), (0.96, 3.2, 2.2)], cast_on=['head', 'nape'], cast=1.3)
     names.append('hmoss')
     # ---- la barbe de mousse pend sous le menton (gravité), sur le col ----
-    moss_part(fig, 'beard', [(196.0, 150.0), (206.0, 152.4), (220.0, 151.6), (233.0, 145.6)], 4.0, seed=8,
-              drips=[(0.22, 9.0, 2.6), (0.55, 6.0, 2.2), (0.86, 4.0, 1.8)], cast_on=['col'], cast=1.2, k=0.8)
+    moss_part(fig, 'beard', [(198.0, 151.0), (208.0, 153.6), (220.0, 153.0), (232.0, 147.0)], 4.0, seed=8,
+              drips=[(0.3, 7.0, 3.0), (0.75, 4.0, 2.4)], cast_on=['col'], cast=1.2, k=0.8)
     names.append('beard')
-    # ---- les cristaux de la tempe (dans la fêlure) et de la jointure sous l'oreille ----
-    crystal_part(fig, 'ct1', (184.0, 94.0), -58, 11.0, 5.0, cast=0.7, cast_on=['head', 'nape'])
-    crystal_part(fig, 'ct2', (185.5, 98.0), -82, 8.0, 4.0, cast=0.6, cast_on=['head', 'nape'])
+    # ---- les cristaux de la tempe, dans la fêlure ----
+    crystal_part(fig, 'ct1', (187.0, 93.0), -50, 12.0, 5.2, cast=0.7, cast_on=['head', 'nape'])
+    crystal_part(fig, 'ct2', (187.5, 97.5), -84, 8.0, 4.2, cast=0.6, cast_on=['head', 'nape'])
     names += ['ct1', 'ct2']
-    crystal_part(fig, 'cj1', (174.0, 132.0), -62, 16.0, 6.4, cast=0.8, cast_on=['head', 'col', 'body'])
-    crystal_part(fig, 'cj2', (172.0, 138.0), -96, 12.0, 5.4, cast=0.7, cast_on=['head', 'col', 'body'])
-    crystal_part(fig, 'cj3', (177.0, 141.0), -128, 8.0, 4.2, cast=0.6, cast_on=['col', 'body'])
-    names += ['cj1', 'cj2', 'cj3']
     fig.pose(names, HEAD)
+    # ---- la grappe de cristaux dans la jointure sous l'oreille (elle pousse dans la roche du corps) ----
+    crystal_part(fig, 'cj1', (174.0, 134.0), -60, 17.0, 6.6, cast=0.8, cast_on=['head', 'col', 'body', 'nape'])
+    crystal_part(fig, 'cj2', (172.0, 140.0), -94, 11.0, 5.4, cast=0.7, cast_on=['head', 'col', 'body', 'nape'])
+    crystal_part(fig, 'cj3', (177.0, 143.0), -126, 7.0, 4.2, cast=0.6, cast_on=['col', 'body'])
     fig.pose(['cj1', 'cj2', 'cj3'], UC)
 
 
+def tusk(fig, name, base, L, w, lean, dim=0.0):
+    """Une défense de grenat : un croc conique légèrement courbé vers l'extérieur, planté dans la lèvre du bas."""
+    a = math.radians(lean)
+    u = (math.sin(a), -math.cos(a))
+    v = (math.cos(a), math.sin(a))
+    bend = 0.18 * L * (1 if lean > 0 else -1)
+
+    def P(s, t):
+        k = (s / L) ** 2 * bend
+        return (base[0] + u[0] * s + v[0] * (t + k), base[1] + u[1] * s + v[1] * (t + k))
+    h = w / 2
+    sh = sm([P(-1.5, -h), P(L * 0.45, -h * 0.7), P(L, 0.0), P(L * 0.5, h * 0.72), P(-1.5, h)], sharp=(2,), t=0.85)
+    dk = sm([P(-1.5, -h), P(L * 0.45, -h * 0.7), P(L, 0.0), P(L * 0.45, -h * 0.05), P(-1.5, -h * 0.1)], sharp=(2,), t=0.85)
+    gl = ribbon([P(L * 0.15, h * 0.4), P(L * 0.5, h * 0.3), P(L * 0.85, h * 0.08)], [0.1, max(0.4, w * 0.12), 0.1])
+    det = [(dk, GAR.shadow, 0.75 - 0.15 * dim), (gl, GAR.glint, 0.7)]
+    if dim:
+        det.append((sh, '#2a0f40', 0.3 * dim))
+    x0, y0, x1, y1 = sh.bbox()
+    fig.part(name, sh, GAR, grad=(x1, y0, x0, y1, [(0, GAR.light), (0.55, GAR.base), (1, GAR.shadow)]), cel=0.0, rim=0.45,
+             cast=0.7, cast_on=['head'], details=det)
+
+
 def mouth(cx, top, bot, w, gape):
-    """La gueule ouverte de la statue, centrée sous le nez : l'ouverture (rouge sombre), une rangée de dents carrées en
-    haut (plantées dans la lèvre du haut) et en bas, la lèvre de pierre éclairée en dessous."""
+    """La gueule ouverte de la statue, centrée sous le nez : la lèvre du haut en arc, l'ouverture rouge sombre (jamais
+    noire), une rangée de dents carrées plantées dans chaque mâchoire, la lèvre du bas éclairée."""
     hw = w / 2
     out = []
-    op = sm([(cx - hw, top + 1.4), (cx - hw * 0.4, top - 0.4), (cx + hw * 0.5, top - 0.2), (cx + hw, top + 1.6),
-             (cx + hw * 0.92, bot - 0.6), (cx + hw * 0.3, bot + 0.6), (cx - hw * 0.4, bot + 0.6), (cx - hw * 0.95, bot - 0.8)], sharp=(0, 3), t=0.85)
-    out += [(op.move(-0.4, 1.2), SAND.deep, 0.5),
-            (op, ('lin', cx, top, cx, bot, [(0, MOUTH[2]), (0.55, MOUTH[1]), (1, MOUTH[0])]), 1)]
-    # les dents du haut : carrées, plantées dans la lèvre ; plus étroites vers le fond (côté droit)
-    n = 5
-    xs = [cx - hw + 1.2 + i * (w - 2.0) / n for i in range(n + 1)]
-    for i in range(n):
-        a, b = xs[i] + 0.35, xs[i + 1] - 0.35
-        hgt = 3.0 + 0.4 * (1 - abs(i - 2) / 2)
-        out += [(rk([(a, top - 0.8), (b, top - 0.8), (b, top + hgt), (a, top + hgt)], [0.3, 0.3, 0.9, 0.9]), SAND.hi if i >= 2 else SAND.light, 1)]
-    for i in range(1, n - 1):
+    op = sm([(cx - hw, top + 2.2), (cx - hw * 0.45, top), (cx + hw * 0.5, top + 0.2), (cx + hw, top + 2.4),
+             (cx + hw * 0.86, bot - 1.4), (cx + hw * 0.3, bot), (cx - hw * 0.35, bot), (cx - hw * 0.9, bot - 1.6)], sharp=(0, 3), t=0.85)
+    out += [(op.move(-0.6, 1.4), SAND.deep, 0.45),
+            (op, ('lin', cx, top, cx, bot, [(0, MOUTH[2]), (0.5, MOUTH[1]), (1, MOUTH[0])]), 1)]
+    # la langue de pierre, au fond
+    out += [(ellipse(cx + 0.6, bot - 2.0, hw * 0.55, 2.0), MOUTH[0], 0.8)]
+    # les dents du haut : carrées, plantées dans la lèvre ; plus étroites vers le fond (à droite)
+    xs = [cx - hw * 0.78, cx - hw * 0.42, cx - hw * 0.06, cx + hw * 0.28, cx + hw * 0.56, cx + hw * 0.8]
+    for i in range(len(xs) - 1):
+        a, b = xs[i] + 0.3, xs[i + 1] - 0.3
+        t0 = top + 0.4 + (0.9 if i in (0, len(xs) - 2) else 0.0)
+        out += [(rk([(a, t0 - 1.0), (b, t0 - 1.0), (b, t0 + 3.2), (a, t0 + 3.2)], [0.3, 0.3, 1.0, 1.0]), SAND.hi if i >= 2 else SAND.light, 1)]
+        out += [(rk([(a, t0 + 2.2), (b, t0 + 2.2), (b, t0 + 3.2), (a, t0 + 3.2)], [0.2, 0.2, 1.0, 1.0]), SAND.base, 0.5)]
+    for i in range(1, len(xs) - 2):
         a, b = xs[i] + 0.4, xs[i + 1] - 0.4
-        hgt = 2.4 + 0.3 * (i % 2)
-        out += [(rk([(a, bot - hgt), (b, bot - hgt), (b, bot + 0.8), (a, bot + 0.8)], [0.9, 0.9, 0.3, 0.3]), SAND.light if i >= 2 else SAND.base, 1)]
+        out += [(rk([(a, bot - 3.0), (b, bot - 3.0), (b, bot + 0.8), (a, bot + 0.8)], [1.0, 1.0, 0.3, 0.3]), SAND.light if i >= 2 else SAND.base, 1)]
     # la lèvre du bas (le menton de pierre) éclairée
-    out += [(ribbon([(cx - hw * 0.8, bot + 1.8), (cx, bot + 2.6), (cx + hw * 0.9, bot + 1.6)], [0.2, 1.1, 0.2]), SAND.hi, 0.5)]
+    out += [(ribbon([(cx - hw * 0.8, bot + 1.6), (cx, bot + 2.4), (cx + hw * 0.9, bot + 1.4)], [0.2, 1.1, 0.2]), SAND.hi, 0.5)]
     return out
 
 
@@ -644,7 +700,7 @@ def near_arm(fig, P, UC):
     S = mapp(UC, NS)
     Wt = (NW0[0] + P['fn'][0], NW0[1] + P['fn'][1])
     E, W = ik(S, Wt, NL[0], NL[1], NSG)
-    up = limb([S, lerp(S, E, 0.5), E], [46.0, 42.0, 34.0])
+    up = limb([S, lerp(S, E, 0.5), E], [52.0, 44.0, 35.0])
     fo = limb([E, lerp(E, W, 0.55), W], [34.0, 41.0, 36.0])
     arm, garm = fuse([up, fo], 2.0, 80)
     det = []

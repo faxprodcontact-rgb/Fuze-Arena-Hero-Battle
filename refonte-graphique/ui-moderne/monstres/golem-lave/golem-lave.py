@@ -165,7 +165,7 @@ def plates(region, seeds, light_c, light_r, gap=0.95, round_=1.3, warm_below=Non
     out = []
     cx, cy = light_c
     rx, ry = light_r
-    out.append((geom_shapes(reg.buffer(2.5)), GAP, 0.8))
+    out.append((geom_shapes(reg.buffer(2.5)), GAP, 0.5))
     if warm_below:
         y0, y1 = warm_below
         x0_, _, x1_, _ = reg.bounds
@@ -197,12 +197,12 @@ def plates(region, seeds, light_c, light_r, gap=0.95, round_=1.3, warm_below=Non
         rim = sdiff(g, affinity.translate(g, -0.55, 0.6))
         rs = geom_shapes(rim, simplify=0.02) if rim is not None and not rim.is_empty else None
         if rs is not None:
-            out.append((rs, ROCK.hi, 0.05 + 0.6 * lam * lam))
+            out.append((rs, ROCK.hi, 0.04 + 0.45 * lam * lam))
         # l'ombre du bas-gauche (le bord de la plaque qui plonge dans la fêlure)
         sd = sdiff(g, affinity.translate(g, 0.6, -0.7))
         ss = geom_shapes(sd, simplify=0.02) if sd is not None and not sd.is_empty else None
         if ss is not None:
-            out.append((ss, ROCK.deep, 0.35))
+            out.append((ss, ROCK.deep, 0.22))
     return out
 
 
@@ -242,10 +242,10 @@ BODY0 = sm([(34.0, 20.6), (40.0, 14.8), (47.0, 11.2), (55.0, 9.6), (64.0, 9.0), 
 BODY = fuse([BODY0, rpoly([(42.0, 15.6), (44.0, 10.4), (48.6, 7.2), (53.0, 7.6), (54.6, 10.6), (50.0, 13.0)], 1.4),
              rpoly([(66.6, 9.6), (69.6, 6.4), (74.4, 6.6), (78.4, 9.8), (79.0, 14.4), (73.0, 12.4)], 1.4)], smooth=1.4, sharp_deg=200)[0]
 # les plaques de la croûte (graines des cellules), irrégulières, plus grandes en haut de la bosse
-BODY_SEEDS = [(47, 19), (61, 18.5), (75.5, 21), (89, 31), (100, 42.5), (39.5, 28), (53, 30.5), (66.5, 33), (79, 40),
-              (21, 34), (31, 31), (18.4, 47), (30, 47.6),
-              (44, 45), (58.5, 46), (72, 52.5), (89, 57), (46, 63), (61, 62.5), (78, 67), (96, 70),
-              (50, 79), (65, 80), (83, 83), (98.5, 85), (58, 95), (76.5, 96), (91, 93)]
+BODY_SEEDS = [(52, 19), (67, 20), (58.5, 35), (66, 44),          # petites : autour du cratère et de la grande coulée
+              (42, 31), (84, 30), (99, 43), (23, 41),             # grandes : le dos, le capuchon, l'épaule-rocher
+              (38, 59),                                           # petite : la jonction bras / ventre
+              (59, 66), (84, 70), (51, 89), (75, 93), (95, 86)]   # grandes : le ventre
 # la partie de la bosse qui passe DEVANT : l'épaule-rocher (devant la racine du bras), le capuchon (devant le haut de
 # la tête)
 SHOULDER_CUT = rpoly([(12.0, 44.0), (13.4, 33.6), (19.6, 25.8), (29.0, 21.6), (37.4, 24.6), (39.6, 33.0), (40.4, 44.6),
@@ -301,7 +301,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ================================================================ la masse du corps (bosse + ventre)
     gb = PG(BODY)
-    bdet = plates(gb, BODY_SEEDS, (66, 52), (38, 44), warm_below=(62, 100), outer=gb)
+    bdet = plates(gb, BODY_SEEDS, (66, 52), (38, 44), gap=0.7, warm_below=(62, 100), outer=gb)
     # le cratère : la lèvre du fond déchiquetée éclairée par la lave, le bassin jaune-blanc, la lèvre de devant
     bdet += crater_details(P)
     # la lave : trois coulées qui descendent du cratère, la fêlure de la poitrine qui finit en goutte
@@ -374,27 +374,27 @@ def legs(fig, P):
     # jambe lointaine (droite de l'image)
     fleg = limb([(88.4, 92.0), (88.8, 100.0), (89.2, 108.0)], [17.6, 16.8, 16.0])
     fig.part('fleg', fleg, ROCK, grad=rock_grad(fleg, 0.35), cel=1.4, rim=0.6, cast=0,
-             details=plates(fleg, [(85, 96), (93, 97), (86, 105), (93, 106)], (89, 98), (9, 10), gap=0.8, round_=1.0, k_lit=0.7, outer=fleg)
+             details=plates(fleg, [(87, 96), (90, 106)], (89, 98), (9, 10), gap=0.8, round_=1.0, k_lit=0.7, outer=fleg)
              + vein([(81.0, 101.6), (85.0, 100.4), (89.6, 101.6), (94.0, 100.2)], 0.7, 2.0))
     ffoot = fuse([rk([(78.0, 117.0), (78.4, 111.4), (81.6, 107.8), (89.6, 106.6), (97.4, 107.0), (103.0, 109.2), (106.4, 113.0),
                       (106.8, 117.0)], [0.4, 2.6, 3, 3, 3, 3, 2.4, 0.4]),
                   rk([(101.0, 117.0), (101.4, 112.4), (104.6, 110.6), (109.0, 111.4), (111.0, 114.0), (111.2, 117.0)], [0.3, 1.6, 1.8, 1.8, 1.2, 0.3])],
                  smooth=0.7)[0]
     fig.part('ffoot', ffoot, ROCK, grad=rock_grad(ffoot, 0.2), cel=1.3, rim=0.7, cast=1.0,
-             details=plates(ffoot, [(84, 111), (94, 110), (103, 112), (108.6, 114.4)], (95, 108), (16, 6), gap=0.8, round_=1.0, outer=ffoot)
+             details=plates(ffoot, [(86, 111), (104, 112)], (95, 108), (16, 6), gap=0.8, round_=1.0, outer=ffoot)
              + vein([(90.6, 109.0), (91.6, 111.6), (90.8, 114.6)], 0.6, 2.0)
              + [(rk([(77.6, 115.0), (112, 115.0), (112, 117.6), (77.6, 117.6)], 0.3), ROCK.deep, 0.5)])
     # jambe proche (gauche de l'image)
     nleg = limb([(57.4, 91.0), (57.4, 100.0), (57.8, 107.6)], [21.0, 20.0, 19.2])
     fig.part('nleg', nleg, ROCK, grad=rock_grad(nleg, 0.2), cel=1.6, rim=0.6, cast=1.0, cast_on=['fleg', 'ffoot'],
-             details=plates(nleg, [(52, 96), (62, 95), (51, 105), (62, 105)], (59, 97), (11, 10), gap=0.85, round_=1.1, k_lit=0.8, outer=nleg)
+             details=plates(nleg, [(55, 96), (59, 106)], (59, 97), (11, 10), gap=0.85, round_=1.1, k_lit=0.8, outer=nleg)
              + vein([(48.0, 100.0), (53.0, 101.6), (58.6, 100.2), (64.4, 101.6), (67.0, 100.6)], 0.8, 2.0))
     nfoot = fuse([rk([(43.4, 117.0), (43.8, 110.6), (48.0, 106.4), (57.6, 105.0), (68.0, 105.4), (74.4, 108.0), (78.4, 112.0),
                       (78.8, 117.0)], [0.4, 2.8, 3.4, 3.4, 3.4, 3, 2.4, 0.4]),
                   rk([(72.0, 117.0), (72.4, 111.6), (76.6, 109.6), (81.4, 110.6), (83.6, 113.4), (83.8, 117.0)], [0.3, 1.8, 2.0, 2.0, 1.4, 0.3])],
                  smooth=0.7)[0]
     fig.part('nfoot', nfoot, ROCK, grad=rock_grad(nfoot, 0.1), cel=1.4, rim=0.7, cast=1.0,
-             details=plates(nfoot, [(49, 110), (59, 109), (69, 110), (77, 112), (81, 114.5)], (63, 107), (20, 6), gap=0.85, round_=1.1, outer=nfoot)
+             details=plates(nfoot, [(52, 110), (72, 111)], (63, 107), (20, 6), gap=0.85, round_=1.1, outer=nfoot)
              + vein([(62.0, 108.0), (63.6, 110.8), (62.6, 114.4)], 0.65, 2.0)
              + [(rk([(43.0, 115.0), (84.0, 115.0), (84.0, 117.6), (43.0, 117.6)], 0.3), ROCK.deep, 0.5)])
 
@@ -503,11 +503,10 @@ def near_arm(fig, P, UC, TOR):
         L_ = math.dist(A, B) or 1
         p = lerp(A, B, t)
         return (p[0] - (B[1] - A[1]) / L_ * off, p[1] + (B[0] - A[0]) / L_ * off)
-    seeds_u = [side(S, E, 0.3, 3.0), side(S, E, 0.95, -5.0), side(E, W, 0.55, 4.0)]
-    det += plates(gu.union(gf).intersection(g), seeds_u, lerp(S, W, 0.5), (14, 22), gap=0.9, round_=1.1, k_lit=1.25, outer=g)
-    seeds_c = [C(p) for p in [(8.0, 96.0), (19.0, 92.0), (28.0, 95.0), (38.0, 97.0), (6.0, 108.0), (16.0, 106.0), (27.0, 108.0),
-                              (39.0, 109.0), (12.0, 113.6), (34.0, 114.0)]]
-    det += plates(cg, seeds_c, C((24.0, 100.0)), (22, 16), gap=0.95, round_=1.2, k_lit=1.15, outer=g)
+    seeds_u = [side(S, E, 0.35, 2.0), side(E, W, 0.6, -2.0)]
+    det += plates(gu.union(gf).intersection(g), seeds_u, lerp(S, W, 0.5), (14, 22), gap=0.7, round_=1.1, k_lit=1.25, outer=g)
+    seeds_c = [C(p) for p in [(11.0, 99.0), (27.0, 94.0), (19.0, 111.0), (38.0, 108.0)]]
+    det += plates(cg, seeds_c, C((24.0, 100.0)), (22, 16), gap=0.75, round_=1.2, k_lit=1.15, outer=g)
     # la coulée de lave du bras (de l'épaule jusqu'à la massue), les fissures de la massue
     det += vein([lerp(S, E, 0.15), lerp(S, E, 0.55), lerp(S, E, 0.92), lerp(E, W, 0.2), lerp(E, W, 0.6), lerp(E, W, 0.95)], 1.5, 2.0, tail=0.8)
     for br_ in ([(20.6, 88.0), (18.4, 93.6), (13.6, 98.4), (9.0, 104.0), (7.4, 110.4)],

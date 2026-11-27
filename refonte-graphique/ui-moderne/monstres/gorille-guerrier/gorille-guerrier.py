@@ -176,43 +176,46 @@ def arm(fig, tag, S, Wt, L1_, L2_, bend, fx, keys, k, inner, hwb, cast_on):
     lbh = lit_of(H.v)
     from shapely.ops import unary_union
     from shapely.geometry import Polygon
-    fingers = [(-8.6, 18.8, 5.9), (-2.9, 19.5, 6.0), (2.9, 19.5, 6.0), (8.6, 19.0, 5.8)]
+    fingers = [(-9.0, 18.4, 5.7), (-3.0, 19.5, 6.1), (3.0, 19.5, 6.1), (9.0, 18.8, 5.7)]
     geo = [Polygon(L(H, [(-1.0 * k, -11.6 * k), (-1.0 * k, 12.4 * k), (9.0 * k, 12.8 * k), (9.0 * k, -12.0 * k)]))]
     for b0, a1, w in fingers:
-        geo.append(poly_of(limb(L(H, [(7.0 * k, b0 * k), (a1 * k - w * k / 2, b0 * k)]), [w * k, w * k], n=4), 6))
-    thumb_c = L(H, [(4.0 * k, inner * 11.2 * k), (9.0 * k, inner * 13.6 * k), (12.6 * k, inner * 13.4 * k)])
-    geo.append(poly_of(limb(thumb_c, [5.4 * k, 5.0 * k, 4.6 * k], n=None), 6))
+        geo.append(poly_of(limb(L(H, [(9.0 * k, b0 * k), (a1 * k - w * k / 2, b0 * k)]), [w * k, w * k], n=4), 6))
+    thumb_c = L(H, [(7.0 * k, inner * 11.6 * k), (11.4 * k, inner * 13.8 * k), (15.0 * k, inner * 13.4 * k)])
+    geo.append(poly_of(limb(thumb_c, [5.4 * k, 5.0 * k, 4.4 * k], n=None), 6))
     g = unary_union(geo).buffer(0.5 * k, 32, join_style=1).buffer(-0.5 * k, 32, join_style=1)
     hand = shape_of(g, step=0.4, t=0.9)
     hd = []
     for i, (b0, a1, w) in enumerate(fingers):
         # chaque doigt replié : le dessus éclairé (côté lumière), le pli de la phalange, le creux entre deux doigts
-        hd.append((ellipse(*H((a1 - 4.6) * k, (b0 + 1.2 * lbh) * k), 1.5 * k, 1.0 * k, _ang(E, W) + fx), SKIN.light, 0.55))
-        hd.append((ribbon(L(H, [((a1 - 7.0) * k, (b0 - 2.2) * k), ((a1 - 6.4) * k, b0 * k), ((a1 - 7.0) * k, (b0 + 2.2) * k)]),
-                          [0.1, 0.6 * k, 0.1]), SKIN.deep, 0.45))
+        # le dos de la phalange éclairé (côté lumière), le pli de la deuxième phalange, l'ombre du bas (posée au sol)
+        hd.append((ellipse(*H((a1 - 4.4) * k, (b0 + 0.9 * lbh) * k), 1.9 * k, 1.25 * k, _ang(E, W) + fx + 90), SKIN.light, 0.6))
+        hd.append((ellipse(*H((a1 - 4.8) * k, (b0 + 1.3 * lbh) * k), 0.8 * k, 0.5 * k, _ang(E, W) + fx + 90), SKIN.hi, 0.7))
+        hd.append((ribbon(L(H, [((a1 - 2.0) * k, (b0 - 2.0) * k), ((a1 - 1.4) * k, b0 * k), ((a1 - 2.0) * k, (b0 + 2.0) * k)]),
+                          [0.1, 0.5 * k, 0.1]), SKIN.deep, 0.4))
         if i:
-            m_ = (b0 - 2.85)
-            hd.append((ribbon(L(H, [(9.0 * k, m_ * k), (14.0 * k, m_ * k), (a1 * k, m_ * k)]), [0.1, 0.8 * k, 0.1]), SKIN.deep, 0.75))
-    hd.append((ribbon(L(H, [(4.6 * k, inner * 11.0 * k), (9.0 * k, inner * 12.0 * k), (12.2 * k, inner * 11.8 * k)]),
-                      [0.1, 0.7 * k, 0.1]), SKIN.deep, 0.5))
-    hd.append((ribbon(L(H, [(18.6 * k, -10.0 * k), (19.6 * k, 0.0), (18.8 * k, 10.5 * k)]), [0.1, 1.2 * k, 0.1]), SKIN.deep, 0.4))
+            m_ = (b0 - 3.0)
+            hd.append((ribbon(L(H, [(11.0 * k, m_ * k), (15.0 * k, m_ * k), ((min(a1, fingers[i - 1][1]) - 0.4) * k, m_ * k)]),
+                              [0.1, 0.9 * k, 0.1]), SKIN.deep, 0.8))
+    hd.append((ribbon(L(H, [(9.6 * k, inner * 11.2 * k), (12.6 * k, inner * 11.6 * k), (15.2 * k, inner * 11.2 * k)]),
+                      [0.1, 0.8 * k, 0.1]), SKIN.deep, 0.6))
+    hd.append((ellipse(*H(12.4 * k, inner * 14.2 * k), 1.0 * k, 0.6 * k, _ang(E, W) + fx), SKIN.light, 0.5))
     fig.part(tag + 'hand', hand, SKIN, cel=1.2, rim=0.6, cast=0.9, cast_on=[tag + 'arm'], details=hd)
 
     # le gantelet : la plaque d'or sur le dos de la main (sertie d'un jade), la lame de laque rouge sur les jointures
-    gp = [(-1.6, -12.4), (-1.6, 13.0), (3.0, 13.8), (8.0, 13.6), (9.2, 6.6), (9.6, 0.4), (9.2, -6.2), (8.0, -12.8), (3.0, -13.2)]
-    gaunt = sm(L(H, [(a * k, b * k) for a, b in gp]), sharp=(0, 1), t=0.8)
+    gp = [(-1.6, -12.2), (-1.6, 12.8), (4.0, 13.8), (9.0, 12.8), (10.8, 6.4), (11.4, 0.4), (10.8, -5.8), (9.0, -12.2), (4.0, -13.2)]
+    gaunt = sm(L(H, [(a * k, b * k) for a, b in gp]), sharp=(0, 1), t=0.85)
     gd = [(ribbon(L(H, [(0.8 * k, (11.4 if lbh > 0 else -11.0) * k), (4.6 * k, (12.4 if lbh > 0 else -12.0) * k),
                         (7.2 * k, (12.0 if lbh > 0 else -11.6) * k)]), [0.1, 1.6 * k, 0.1]), GOLD.hi, 0.7),
           (ribbon(L(H, [(1.0 * k, -6.0 * k), (1.4 * k, 1.0 * k), (1.0 * k, 8.0 * k)]), [0.1, 0.9 * k, 0.1]), GOLD.shadow, 0.55),
           (ellipse(*H(4.0 * k, 1.2 * k), 3.4 * k, 2.6 * k, _ang(E, W) + fx + 90), GOLD.shadow, 0.6)]
     fig.part(tag + 'gaunt', gaunt, GOLD, cel=1.0, rim=0.7, cast=1.0, cast_on=[tag + 'hand', tag + 'arm'], details=gd)
-    lp = [(6.4, -12.6), (7.2, -5.0), (7.6, 0.4), (7.2, 6.2), (6.4, 13.4), (10.2, 13.4), (11.0, 6.4), (11.4, 0.4),
-          (11.0, -6.0), (10.2, -12.6)]
-    lacq = sm(L(H, [(a * k, b * k) for a, b in lp]), sharp=(0, 4, 5, 9), t=0.8)
-    fig.part(tag + 'lacq', lacq, RED, cel=0.8, rim=0.6, cast=0.8, cast_on=[tag + 'hand', tag + 'gaunt'],
-             details=[(ribbon(L(H, [(7.3 * k, -10.0 * k), (7.9 * k, 0.4 * k), (7.3 * k, 11.0 * k)]), [0.1, 0.8 * k, 0.1]), RED.hi, 0.55),
-                      (ribbon(L(H, [(10.6 * k, -11.4 * k), (11.2 * k, 0.4 * k), (10.6 * k, 12.4 * k)]), [0.1, 0.6 * k, 0.1]), RED.deep, 0.5)])
-    jc = H(3.8 * k, 1.2 * k)
+    lp = [(6.2, -10.6), (7.0, -5.0), (7.4, 0.4), (7.0, 6.0), (6.2, 11.4), (7.4, 12.4), (9.4, 12.0), (10.2, 6.2),
+          (10.6, 0.4), (10.2, -5.4), (9.4, -11.2), (7.4, -11.6)]
+    lacq = sm(L(H, [(a * k, b * k) for a, b in lp]), t=0.8)
+    fig.part(tag + 'lacq', lacq, RED, cel=0.7, rim=0.55, cast=0.8, cast_on=[tag + 'hand', tag + 'gaunt'],
+             details=[(ribbon(L(H, [(7.2 * k, -8.0 * k), (7.9 * k, 0.4 * k), (7.3 * k, 9.4 * k)]), [0.1, 0.7 * k, 0.1]), RED.hi, 0.6),
+                      (ribbon(L(H, [(9.6 * k, -9.4 * k), (10.1 * k, 0.4 * k), (9.6 * k, 10.4 * k)]), [0.1, 0.5 * k, 0.1]), RED.deep, 0.45)])
+    jc = H(3.4 * k, 1.2 * k)
     ja = _ang(E, W) + fx
     bez_ = ellipse(jc[0], jc[1], 2.9 * k, 2.3 * k, ja + 90)
     fig.part(tag + 'bezel', bez_, GOLD, cel=0.5, rim=0.45, cast=0.6, cast_on=[tag + 'gaunt'],
@@ -229,11 +232,11 @@ def arm(fig, tag, S, Wt, L1_, L2_, bend, fx, keys, k, inner, hwb, cast_on):
     A0 = -0.8 * L2_
     bow = 1.3 * k
     brac = cyl(B, A0, 0.4, hwb, hwb + 0.7 * k, bow)
-    bd = [(ribbon([B(A0 + 3.0, hwb * 0.5 * lbb), B(A0 * 0.5, hwb * 0.58 * lbb), B(-2.6, hwb * 0.6 * lbb)], [0.1, 3.0 * k, 0.1]), RED.light, 0.75),
-          (ribbon([B(A0 + 3.4, hwb * 0.62 * lbb), B(A0 * 0.5, hwb * 0.72 * lbb), B(-3.0, hwb * 0.74 * lbb)], [0.1, 0.9 * k, 0.1]), RED.hi, 0.8),
-          (ribbon([B(A0 + 3.0, -hwb * 0.66 * lbb), B(A0 * 0.5, -hwb * 0.74 * lbb), B(-2.6, -hwb * 0.76 * lbb)], [0.1, 2.6 * k, 0.1]), RED.deep, 0.55)]
+    bd = [(limb([B(A0 + 2.0, hwb * 0.52 * lbb), B(A0 * 0.5, hwb * 0.56 * lbb), B(-1.6, hwb * 0.58 * lbb)], [3.6 * k, 4.2 * k, 3.6 * k]), RED.light, 0.45),
+          (limb([B(A0 + 3.0, hwb * 0.68 * lbb), B(A0 * 0.5, hwb * 0.72 * lbb), B(-2.6, hwb * 0.74 * lbb)], [0.9 * k, 1.1 * k, 0.9 * k]), RED.hi, 0.6),
+          (limb([B(A0 + 2.0, -hwb * 0.62 * lbb), B(A0 * 0.5, -hwb * 0.66 * lbb), B(-1.6, -hwb * 0.68 * lbb)], [3.2 * k, 3.8 * k, 3.2 * k]), RED.deep, 0.35)]
     fig.part(tag + 'brac', brac, RED, cel=1.2, rim=0.7, cast=1.2, cast_on=[tag + 'arm', tag + 'hand', tag + 'gaunt', tag + 'lacq'], details=bd)
-    for nm, a0_, a1_, hw_ in ((tag + 'ring1', A0 - 0.6, A0 + 2.6, hwb + 0.45 * k), (tag + 'ring2', -2.4, 0.9, hwb + 1.05 * k)):
+    for nm, a0_, a1_, hw_ in ((tag + 'ring1', A0 - 0.6, A0 + 2.6, hwb + 0.45 * k), (tag + 'ring2', -1.8, 0.9, hwb + 1.05 * k)):
         ring = cyl(B, a0_, a1_, hw_, hw_ + 0.15, bow)
         rd = [(ribbon(cyl_line(B, a0_ + 0.9, hw_ * 0.86, bow), [0.1, 0.5, 0.7, 0.8, 0.7, 0.5, 0.1]), GOLD.hi, 0.8),
               (ribbon(cyl_line(B, a1_ - 0.6, hw_ * 0.86, bow), [0.1, 0.4, 0.5, 0.6, 0.5, 0.4, 0.1]), GOLD.shadow, 0.6),
@@ -258,8 +261,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig._glow = P['glow']
 
     # ---- le squelette : une matrice par groupe de morceaux ----
-    ROOTM = mT(P['shift'], -P['lift'])
-    PEL = mchain(ROOTM, mT(0, P['crouch'] * 0.9))
+    ROOTM = mT(0, 0)                                                         # les pieds ne quittent jamais le sol
+    PEL = mT(P['shift'], P['crouch'] * 0.9 - P['lift'])                      # le bassin (glisse, se tasse, se soulève)
     U = mchain(PEL, mT(P['lean'] * 0.3, 0), mR(P['lean'], *HIP))            # le haut du corps (depuis les hanches)
     br = P['breath']
     UC = mchain(U, mT(0, -0.8 * br))                                         # ce qui monte avec la poitrine
@@ -365,16 +368,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     tor_part = fig.part('torso', torso0, FUR, cel=2.2, rim=0.75, cast=1.3, details=det, occl=(FUR.deep, 0.2, 3.4))
 
     # la poitrine nue (peau ardoise) : deux gros pectoraux, le proche plus large, posés sous le menton
-    chest = sm([(48.6, 61.0), (51.4, 56.4), (57.6, 54.2), (65.0, 54.6), (71.0, 56.8), (77.6, 55.6), (85.4, 54.6),
-                (92.6, 56.0), (97.0, 59.6), (96.8, 65.0), (93.4, 69.6), (87.0, 72.4), (80.0, 72.8), (75.0, 71.2),
-                (71.8, 69.4), (68.2, 71.6), (61.0, 72.8), (54.6, 71.0), (50.2, 66.8)])
+    chest = sm([(44.0, 60.0), (47.0, 55.6), (54.0, 53.2), (62.0, 53.0), (70.0, 54.0), (78.0, 53.4), (86.0, 53.2),
+                (93.0, 55.0), (96.6, 59.0), (96.4, 64.6), (93.4, 69.6), (87.0, 72.4), (80.0, 72.8), (75.0, 71.2),
+                (71.8, 69.4), (68.2, 71.6), (61.0, 72.8), (53.6, 71.4), (47.6, 67.6)])
     cd = [(sm([(52.0, 60.0), (58.0, 57.4), (66.0, 58.0), (70.6, 61.6), (70.0, 66.4), (63.0, 69.0), (56.0, 68.0), (51.6, 64.6)]), SKIN.light, 0.35),
           (sm([(76.6, 59.4), (84.0, 57.6), (92.0, 58.6), (96.0, 62.0), (94.4, 66.0), (88.0, 68.6), (80.0, 68.4), (76.0, 64.4)]), SKIN.hi, 0.3),
           (ribbon([(50.6, 66.0), (56.0, 70.6), (63.0, 72.0), (69.0, 70.2), (71.8, 67.0)], [0.1, 1.4, 1.6, 1.2, 0.1]), SKIN.deep, 0.65),
           (ribbon([(75.6, 68.6), (81.0, 71.6), (88.0, 71.6), (94.0, 68.0)], [0.1, 1.3, 1.3, 0.1]), SKIN.deep, 0.6),
           (ribbon([(71.8, 58.4), (72.4, 63.0), (71.8, 68.4)], [0.1, 1.2, 0.2]), SKIN.shadow, 0.65)]
-    fig.part('chest', chest, SKIN, grad=(96, 55, 52, 72, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
-             cel=1.6, rim=0.6, cast=1.2, cast_on=['torso'], details=cd)
+    fig.part('chest', chest, SKIN, grad=(96, 55, 52, 72, [(0, SKIN.base), (0.55, SKIN.shadow), (1, SKIN.deep)]),
+             cel=1.0, rim=0.6, cast=1.0, cast_on=['torso'], details=cd)
 
     if far_front:
         FA = far_arm()
@@ -407,16 +410,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (ellipse(74.9, 84.8, 0.45, 0.32, -20), JADE.glint, 0.95)])
 
     # ======================================================================== la tête
-    head0 = sm([(63.4, 17.4), (67.6, 18.6), (73.0, 21.6), (79.6, 25.0), (86.6, 27.8), (93.0, 29.8), (97.4, 31.6),
+    head0 = sm([(64.0, 17.2), (68.6, 18.0), (74.8, 20.4), (81.6, 23.8), (88.0, 27.0), (93.6, 29.6), (97.6, 31.6),
                 (99.8, 34.0), (100.2, 36.6), (98.8, 39.4), (99.4, 42.6), (100.4, 45.8), J((100.8, 48.8), 0.3),
                 J((100.4, 51.8)), J((98.6, 55.0)), J((95.6, 57.6)), J((91.6, 59.4)), J((85.6, 60.4)), J((79.4, 60.0), 0.7),
-                (73.6, 58.6), (68.6, 57.6), (64.4, 55.6), (61.4, 52.0), (59.6, 46.4), (59.0, 40.0), (59.0, 32.0),
-                (60.0, 25.0), (61.4, 20.0)])
+                (73.6, 58.8), (69.0, 58.0), (65.6, 55.6), (63.4, 51.0), (62.4, 45.0), (61.0, 38.6), (59.4, 32.4),
+                (59.2, 26.0), (60.8, 20.6)])
     hd = [
         # la crête : le versant tourné vers la lumière (haut-droit) éclairé, le côté du crâne dans l'ombre
         (sm([(64.6, 19.2), (70.0, 21.0), (78.0, 25.2), (88.0, 29.0), (96.0, 31.2), (88.0, 31.0), (78.0, 28.6), (70.0, 25.0), (65.0, 22.6)]), FUR.light, 0.55),
         (ribbon([(65.4, 19.4), (72.0, 22.2), (80.0, 26.0), (90.0, 29.4)], [0.1, 0.9, 0.8, 0.1]), FUR.hi, 0.55),
-        (sm([(59.6, 30.0), (62.4, 24.0), (64.0, 30.0), (64.6, 40.0), (63.8, 50.0), (61.4, 51.6), (59.6, 46.0), (59.2, 38.0)]), FUR.deep, 0.45),
+        (sm([(59.6, 28.0), (62.4, 23.0), (64.4, 30.0), (65.4, 40.0), (65.6, 50.0), (64.2, 53.0), (62.6, 46.0), (60.6, 36.0)]), FUR.deep, 0.45),
         # des mèches de fourrure sur le crâne (peu, longueurs inégales)
         (ribbon([(68.0, 24.4), (70.6, 27.4), (72.0, 30.4)], [0.1, 0.8, 0.1]), FUR.shadow, 0.6),
         (ribbon([(75.6, 27.2), (78.0, 29.4), (79.0, 31.0)], [0.1, 0.7, 0.1]), FUR.shadow, 0.5),
@@ -424,7 +427,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         (ribbon([(71.2, 44.0), (72.2, 48.4), (71.4, 52.0)], [0.1, 0.8, 0.1]), FUR.light, 0.5),
         (ribbon([(69.0, 49.6), (70.6, 53.6), (70.0, 57.0)], [0.1, 0.8, 0.1]), FUR.shadow, 0.55),
         (ribbon([(72.4, 53.4), (74.0, 56.8), (74.6, 59.0)], [0.1, 0.7, 0.1]), FUR.light, 0.45),
-        (ribbon([(64.0, 50.0), (66.0, 53.6), (66.0, 56.0)], [0.1, 0.6, 0.1]), FUR.shadow, 0.5),
+        (ribbon([(65.6, 50.6), (67.4, 53.8), (67.4, 56.0)], [0.1, 0.6, 0.1]), FUR.shadow, 0.5),
     ]
     fig.part('head', head0, FUR, grad=(99, 20, 62, 52, [(0, FUR.light), (0.45, FUR.base), (1, FUR.shadow)]),
              cel=1.5, rim=0.7, cast=1.5, details=hd,
