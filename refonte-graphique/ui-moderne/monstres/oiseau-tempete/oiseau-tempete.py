@@ -64,6 +64,7 @@ FRAME = (0.0, 18.0, 252.0, 222.0)
 #   pour la proche) ; wn_s / wf_s : les rémiges s'écartent ; wd : le bout des plumes traîne ; ws : les plumes ondulent
 #   (phase ph) ; tail : la queue s'ouvre ; blink : l'œil se ferme ; glow : les éclairs du plumage s'embrasent (0..2) ;
 #   scream : le bec grand ouvert du cri (la gorge se dresse).
+BASE_LEAN = 3.5                   # le buste penche un peu vers l'avant (≈ 3°), même au repos
 HIP = (152.0, 204.0)              # le pivot du buste (les hanches)
 NECKP = (182.0, 94.0)             # le pivot de la tête
 R_N = (140.0, 104.0)              # l'épaule de l'aile proche
@@ -78,26 +79,41 @@ MESURES = {}
 
 # les plumes de l'aile proche (racine, pointe, largeur), du bout de l'aile vers le corps : rémiges puis secondaires
 NEAR_FEATHERS = [
-    ((60, 34), (6, 41), 13.0), ((55, 38), (4, 66), 14.0), ((52, 45), (12, 93), 14.5), ((52, 53), (24, 118), 15.0),
-    ((55, 61), (34, 137), 15.5), ((60, 69), (45, 155), 16.0),
-    ((68, 76), (54, 166), 19.0), ((80, 86), (69, 178), 19.5), ((94, 95), (86, 181), 20.0), ((108, 104), (99, 189), 19.0),
-    ((122, 112), (116, 186), 17.0),
+    ((60, 34), (12, 35), 12.5), ((55, 38), (1, 60), 14.0), ((52, 45), (5, 92), 15.0), ((52, 53), (25, 116), 13.5),
+    ((55, 61), (38, 132), 15.5), ((60, 69), (45, 155), 16.5),
+    ((68, 76), (53, 163), 18.0), ((80, 86), (70, 181), 20.5), ((94, 95), (85, 175), 18.5), ((108, 104), (101, 190), 21.0),
+    ((122, 112), (118, 182), 17.0),
 ]
 # l'aile lointaine : quatre rémiges levées vers le haut à droite, puis des secondaires cachées derrière le cou
 FAR_FEATHERS = [
     ((197, 37), (239, 43), 10.5), ((194, 37), (232, 31), 11.0), ((190, 38), (220, 24), 11.0), ((187, 40), (204, 22), 10.5),
 ]
 # la queue en éventail posée au sol (racine, pointe, largeur), du dessus vers le dessous
-TAIL = [((118, 186), (50, 193), 15.0), ((118, 190), (46, 207), 16.0), ((118, 194), (51, 220), 16.0),
-        ((119, 198), (61, 229), 16.0), ((121, 202), (77, 233), 15.0)]
+TAIL = [((118, 186), (56, 189), 14.0), ((118, 190), (43, 205), 18.0), ((118, 194), (57, 217), 14.5),
+        ((119, 198), (58, 230), 18.5), ((121, 202), (86, 233), 13.0)]
 # la crête : quatre plumes jade (racine, pointe), couchées vers l'arrière, la pointe qui se relève
 CREST = [([(178, 62), (166, 58.5), (150, 59.5), (137, 51)], 8.6), ([(182, 60), (170, 50), (152, 45), (139, 36)], 10.0),
          ([(186, 58.5), (178, 46), (163, 35), (151, 25)], 10.0), ([(190, 58), (187, 46), (179, 33), (170, 23)], 8.4)]
 
 # le plastron de nuage (le bord gauche fait de plumes arrondies recouvre le flanc d'orage)
-BRE = [(194, 76), (186, 84), (178, 93), (170, 104), (164, 114), (161, 126), (158, 138), (155, 150), (153, 163), (153, 176),
-       (156, 189), (162, 200), (170, 207), (180, 212), (196, 204), (206, 182), (211, 156), (210, 128), (206, 108),
-       (201, 96)]
+BRE_CORE = [(194, 76), (187, 86), (181, 98), (176, 112), (172, 128), (169, 145), (167, 162), (167, 178), (170, 192),
+            (176, 203), (183, 208), (191, 201), (198, 188), (204, 171), (209, 151), (212.5, 131), (210.5, 115),
+            (205, 104), (201, 96)]
+# les grosses plumes arrondies, de tailles inégales, par lesquelles le bord du poitrail se fond dans le plumage sombre
+BRE_FEATHERS = [((186, 103), (173, 117), 10.0), ((183, 121), (165, 139), 14.0), ((180, 150), (168, 159), 8.0),
+                ((181, 166), (163, 184), 13.0), ((182, 190), (171, 201), 9.0)]
+
+
+def bre_feather(r0, r1, w):
+    d = norm(sub_(r1, r0))
+    sd = (-d[1], d[0])
+    L = math.dist(r0, r1)
+    return plume(r0, add(add(r0, d, L * 0.35), sd, 0.6), add(add(r0, d, L * 0.75), sd, 1.2), r1, w, n=12, tip=0.75)
+
+
+def breast_shape():
+    """Le poitrail de nuage : un plastron étroit et bombé, bordé de grosses plumes arrondies de tailles variées."""
+    return fused([sm(BRE_CORE)] + [bre_feather(*f_) for f_ in BRE_FEATHERS], smooth=0.8)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, jaw=0.0, crest=0.0, wn_l=0.0, wf_l=0.0,
             wn_s=0.0, wf_s=0.0, wd=0.0, ws=0.0, ph=0.0, tail=0.0, blink=0.0, glow=0.0, scream=0.0)
@@ -145,7 +161,7 @@ def quill_feather(fig, nm, p0, p3, w, mat, bend=1.0, cast=1.3, tipw=0.3, light_v
     lsd = side if (side[0] - side[1]) > 0 else (-side[0], -side[1])
     if light_vane:
         vane = plume(add(p0, lsd, w * 0.18), add(p1, lsd, w * 0.24), add(p2, lsd, w * 0.26), add(p3b, lsd, w * 0.05), w * 0.52, n=14, tip=tipw)
-        det.append((vane, mat.light, 0.55))
+        det.append((vane, mat.light, 0.3))
     if rachis:
         det.append((ribbon([lerp(p0, p1, 0.3), p1, p2, lerp(p2, p3b, 0.55)], [0.1, w * 0.07, w * 0.05, 0.1]), mat.deep, 0.35))
     gr = (p3b[0] + 4, p3b[1] - 6, p0[0] - 2, p0[1] + 6, [(0, mat.light), (0.5, mat.base), (1, mat.shadow)])
@@ -154,8 +170,8 @@ def quill_feather(fig, nm, p0, p3, w, mat, bend=1.0, cast=1.3, tipw=0.3, light_v
 
 
 def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0, ph=0.0, ws=0.0,
-              rows=((40, 9, 15, 0.08, 1.12), (27, 11, 12, 0.05, 1.08), (15, 13, 9, 0.03, 1.02)),
-              cdir=((0, 112), (0.6, 122), (0.95, 140), (1.2, 162)), lead_w=(11.0, 8.5, 6.0, 4.0), far=False, bolt=None,
+              rows=((44, 6, 19, 0.1, 1.0), (19, 8, 11, 0.04, 1.02)),
+              cdir=((0, 112), (0.6, 122), (0.95, 140), (1.2, 162)), lead_w=(10.0, 6.5, 4.0, 1.6), far=False, bolt=None,
               glow=0.0, down_k=1.0):
     """Une aile de rapace : les grandes plumes (du bout de l'aile vers le corps), trois rangées de couvertures en
     vraies plumes pointues (la plus longue d'abord), puis le bord d'attaque (l'épaule → le poignet → la main), éclairé.
@@ -184,7 +200,7 @@ def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0,
         quill_feather(fig, nm, root, tip, w, mat, bend=1.6 + droop * 0.15 + 0.6 * ws * math.sin(ph - 0.5 * i + 1),
                       cast=1.6 if not far else 1.2)
         names.append(nm)
-    # les couvertures : trois rangées de vraies plumes pointues posées le long du bord d'attaque (de l'épaule s = 0
+    # les couvertures : deux rangées de plumes (quelques grandes couvertures lisses, puis de petites près du bord) posées le long du bord d'attaque (de l'épaule s = 0
     # au poignet s = 1, puis sur la main), la plus longue d'abord ; leur racine est cachée sous le bord d'attaque ou
     # sous la rangée du dessus
     def line_at(s_):
@@ -197,25 +213,31 @@ def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0,
                 t = max(0.0, (s_ - s0) / (s1 - s0))
                 return a0 + (a1 - a0) * t + flift
         return ks[-1][1] + flift
-    jits = [(1.0, 0.84, 1.12, 0.92, 1.06, 0.88, 1.1, 0.95, 1.03, 0.9, 1.08, 0.93, 1.0),
-            (0.92, 1.1, 0.86, 1.04, 0.96, 1.12, 0.9, 1.0, 1.08, 0.94, 1.02, 0.88, 1.06),
-            (1.06, 0.9, 1.0, 1.12, 0.88, 1.04, 0.94, 1.1, 0.92, 1.0, 0.86, 1.08, 0.96)]
+    def rnd(k):
+        # un hasard fixe (le même à chaque image : les plumes ne sautent pas d'une image à l'autre)
+        return (math.sin(k * 12.9898 + 78.233) * 43758.5453) % 1.0
     from shapely.ops import unary_union
     from shapely import affinity
     for j, (Lr, nf, wr, s0, s1) in enumerate(rows):
         polys = []
+        # des places inégales le long du bras, des longueurs, des angles et des largeurs variés (jamais un motif)
+        gaps = [0.7 + 0.6 * rnd(31 * j + q + (7 if far else 0)) for q in range(nf)]
+        tot = sum(gaps)
+        acc = 0.0
         for q in range(nf):
-            s_ = s0 + (s1 - s0) * (q + 0.5) / nf
-            J = jits[j][q % 13]
+            acc += gaps[q] / 2
+            s_ = s0 + (s1 - s0) * acc / tot
+            acc += gaps[q] / 2
+            k_ = 17 * j + 3 * q + (5 if far else 0)
             edge = 1.0 - 0.45 * max(0.0, (abs(s_ - (s0 + s1) / 2) / ((s1 - s0) / 2)) - 0.55) / 0.45
-            a = dir_at(s_) + 4.0 * (J - 1.0) * 3
+            a = dir_at(s_) - 9 + 18 * rnd(k_ + 1)
             d = unit(a)
             sd = (-d[1], d[0])
-            Lq = Lr * J * edge
+            Lq = Lr * (0.72 + 0.56 * rnd(k_ + 2)) * edge
             root = add(line_at(s_), d, 1.5)
             tip = add(add(root, d, Lq), sd, 0.9)
             sh = plume(root, add(add(root, d, Lq * 0.35), sd, 0.3), add(add(root, d, Lq * 0.72), sd, 0.9), tip,
-                       wr * (0.92 + 0.16 * J) * (0.8 + 0.2 * edge), n=12, tip=0.4)
+                       wr * (0.85 + 0.35 * rnd(k_ + 3)) * (0.8 + 0.2 * edge), n=12, tip=0.5)
             polys.append(poly_of(sh))
         # la plume côté épaule recouvre sa voisine côté main : ombre douce posée sur la voisine
         shades = []
@@ -234,14 +256,14 @@ def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0,
                  cel=1.1, rim=0.5, cast=1.6, details=[(sh_, mat.shadow, 0.5) for sh_ in shades])
         names.append(nm)
     # le bord d'attaque (le « bras » de l'aile), d'un seul tenant, éclairé de reflets bleus
-    ctr = crpath([lerp(R, Wp, 0.0), lerp(R, Wp, 0.5), lerp(R, Wp, 0.9), add(Wp, norm(sub_(Tp, R)), 1.5), lerp(Wp, Tp, 0.5), Tp], 20)
+    ctr = crpath([lerp(R, Wp, 0.0), lerp(R, Wp, 0.5), lerp(R, Wp, 0.92), add(Wp, norm(sub_(Tp, R)), 1.2), lerp(Wp, Tp, 0.55)], 20)
     wl = [lead_w[0] + (lead_w[1] - lead_w[0]) * k / 10 if k <= 10 else (lead_w[1] + (lead_w[2] - lead_w[1]) * (k - 10) / 5 if k <= 15 else
           lead_w[2] + (lead_w[3] - lead_w[2]) * (k - 15) / 5) for k in range(21)]
     lead = limb(ctr, wl)
     nm = key + '_lead'
     fig.part(nm, lead, mat, grad=(Wp[0] + 6, Wp[1] - 6, R[0], R[1] + 6, [(0, mat.light), (0.45, mat.base), (1, mat.shadow)]),
-             cel=1.3, rim=0.9, cast=1.5,
-             details=[(ribbon(ctr[3:17:3], [0.1, 1.0, 1.1, 0.9, 0.1]), mat.hi, 0.3)])
+             cel=1.3, rim=0.7, cast=1.5,
+             details=[(ribbon(ctr[3:15:3], [0.1, 1.0, 0.9, 0.1]), mat.hi, 0.2)])
     names.append(nm)
     if bolt:
         bolt(fig, key, lambda p: rot_about(p, R, lift), glow)
@@ -282,6 +304,7 @@ def draw_bolt(fig, nm, paths, tf, glow, w=1.0):
 
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     P = dict(REST, **(pose or {}))
+    P['lean'] = P['lean'] + BASE_LEAN          # au repos déjà penché vers la cible
     fig = FigureM(*frame, ow=ow)
     ph, ws = P['ph'], P['ws']
     br = P['breath']
@@ -335,26 +358,27 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         a = mapp(UC, p)
         b = mapp(HEAD, p)
         return (a[0] + (b[0] - a[0]) * wgt, a[1] + (b[1] - a[1]) * wgt)
+    # une posture de rapace : le poitrail bombé en avant (vers la cible), le ventre qui rentre vers les pattes
     body_pts = [(171, 66), (162, 78), (156, 90), (147, 99), (134, 108), (120, 120), (108, 138), (101, 158),
-                (104, 180), (116, 196), (134, 207), (156, 213), (178, 213), (195, 201), (204, 181), (209, 156),
-                (208, 128), (204, 109), (199, 99), (197, 90), (190, 70)]
+                (104, 180), (116, 196), (134, 207), (154, 212), (172, 211), (187, 204), (197, 191), (205, 173),
+                (210.5, 152), (213.5, 131), (211, 114), (205, 103), (199, 96), (197, 90), (190, 70)]
     body = sm([skin(p) for p in body_pts])
     # le poitrail de nuage : un grand plastron dont le bord gauche est fait de plumes arrondies (il recouvre le flanc)
-    bre = BRE
-    breast = sm([skin(p) for p in bre])
+    BS = breast_shape()
+    breast = BS.map(skin)
     # le dos et le flanc d'orage : une ombre douce sous l'aile
     bd = [(sm([skin(p) for p in ((150, 100), (134, 110), (118, 124), (108, 142), (104, 162), (108, 182), (120, 196),
                                  (140, 206), (152, 206), (150, 188), (146, 160), (146, 130))]), STORM.shadow, 0.45)]
-    bd.append((breast, ('lin', *skin((206, 110)), *skin((160, 204)), [(0, CLOUD.light), (0.45, CLOUD.base), (1, CLOUD.shadow)]), 1))
-    # le bord gauche du plastron : une rangée de plumes arrondies, de tailles inégales, qui mordent sur le flanc
-    edge = [skin(p) for p in ((170, 104), (164, 117), (159, 131), (156, 145), (154, 160), (154, 174), (157, 188), (163, 200))]
-    edirs = [norm((-1.0, 0.3))] * len(edge)
-    erow = scallop(edge, edirs, [3.0, 4.6, 3.8, 5.2, 4.2, 5.0, 3.6, 2.8], 6)
-    bd.append((erow, ('lin', *skin((172, 106)), *skin((150, 200)), [(0, CLOUD.base), (1, CLOUD.shadow)]), 1))
-    # les plumes en écailles du poitrail : quelques bouts de plumes arrondis, lus seulement dans la demi-teinte
-    # (des touches éparses de tailles inégales, jamais une rangée régulière)
-    for (x, y, rx, ry, op) in ((176, 126, 7.4, 3.6, 0.16), (167, 146, 8.0, 3.8, 0.22), (189, 154, 6.6, 3.4, 0.14),
-                               (172, 170, 8.4, 4.0, 0.24), (194, 180, 6.4, 3.2, 0.16), (178, 192, 8.0, 3.8, 0.26)):
+    bd.append((breast, ('lin', *skin((208, 112)), *skin((166, 204)), [(0, CLOUD.light), (0.45, CLOUD.base), (1, CLOUD.shadow)]), 1))
+    # l'ombre douce que chaque grosse plume du bord pose sur la suivante
+    for f_ in BRE_FEATHERS:
+        bd.append((lobe_shadow(bre_feather(*f_), 0.8, 1.6).map(skin), CLOUD.shadow, 0.5))
+    # une ombre douce sous le cou, une autre vers le bas du ventre (le poitrail est bombé)
+    bd.append((inter(ellipse(*skin((193, 104)), 20, 9), breast), ('lin', *skin((193, 97)), *skin((193, 114)), [(0, CLOUD.shadow, 0.55), (1, CLOUD.shadow, 0)]), 1))
+    bd.append((inter(ellipse(*skin((186, 205)), 24, 16), breast), ('lin', *skin((190, 188)), *skin((184, 210)), [(0, CLOUD.shadow, 0), (1, CLOUD.shadow, 0.6)]), 1))
+    # quelques touches de plumes douces dans le blanc (éparses, de tailles inégales, jamais une rangée)
+    for (x, y, rx, ry, op) in ((186, 124, 6.6, 3.4, 0.14), (178, 143, 7.6, 3.8, 0.2), (197, 152, 5.4, 3.0, 0.12),
+                               (181, 168, 8.2, 4.0, 0.22), (194, 183, 5.8, 3.0, 0.16)):
         c = skin((x, y))
         bd.append((lobe_shadow(ellipse(c[0], c[1], rx, ry, -10), 0.9, 1.2), CLOUD.shadow, op))
     fig.part('body', body, STORM, grad=(*skin((200, 100)), *skin((110, 200)), [(0, STORM.light), (0.4, STORM.base), (1, STORM.shadow)]),
@@ -379,7 +403,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     frow, fshades, _ = feather_row(fline, [norm((0.12, 1.0))] * 13, [7.0, 8.0, 9.0, 10.0, 10.8, 10.4, 9.8, 9.4, 9.8, 8.6, 7.8, 7.0, 6.0],
                                    6, [9.0] * 13, bend=0.4)
     frow = fused([frow, sm([(106, 150), (153, 150), (153, 167), (106, 167)])], smooth=0.4)
-    frow = shape_of(poly_of(frow).difference(poly_of(sm(bre)).buffer(4.5)))
+    frow = shape_of(poly_of(frow).difference(poly_of(breast_shape()).buffer(3.0)))
     fig.part('flank', frow, STORM, grad=(150, 160, 116, 184, [(0, STORM.base), (0.5, STORM.shadow), (1, STORM.shadow)]),
              cel=1.0, rim=0.4, cast=1.8, details=[(sh_, STORM.deep, 0.45) for sh_ in fshades])
     fig.masks['flank'] = (130.0, 175.0, 130.0, 163.0, 'body')
@@ -453,7 +477,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                (176.4, 96.6), (174.6, 103.6), (170.4, 106.4), (163, 104), (158.6, 96), (157.8, 84), (159.2, 74.6),
                (166, 71.6), (176, 69.6), (187, 68.6), (197, 68.2)], sharp=(5, 8))
     # sous le masque, la gorge reprend exactement le dégradé du poitrail (la tête se fond dans le cou sans couture)
-    hd.append((inter(sm(BRE), skull), ('lin', 206, 110, 160, 204, [(0, CLOUD.light), (0.45, CLOUD.base), (1, CLOUD.shadow)]), 1))
+    hd.append((inter(breast_shape(), skull), ('lin', 208, 112, 166, 204, [(0, CLOUD.light), (0.45, CLOUD.base), (1, CLOUD.shadow)]), 1))
     hd.append((mask, ('lin', 205, 70, 160, 100, [(0, STORM.base), (0.35, STORM.shadow), (0.7, STORM.deep), (1, hexmix(STORM.base, STORM.light, 0.45))]), 1))
     hd.append((ribbon([(184, 70.6), (176, 71.4), (167, 73.6), (161, 77)], [0.2, 0.9, 0.8, 0.2]), STORM.light, 0.45))
     # l'œil d'or à pupille ronde tournée vers l'ennemi (place donnée par placer(), tour = 75 : un seul œil)
