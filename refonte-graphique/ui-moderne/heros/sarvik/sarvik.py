@@ -87,7 +87,8 @@ MOUTH_FRONT = (99.0, 50.3)                    # l'avant de la fente des lèvres 
 
 REST = dict(breath=0.0, spring=0.0, lean=0.0, wave=0.0, dash=0.0, reach=0.0, hook=0.0, hump=(0.0, 0.0),
             head=(0.0, 0.0), tilt=0.0, tg=1.0, jaw=0.0, blink=0.0, flare=0.0, venom=0.0,
-            nhand=(0.0, 0.0), nang=0.0, farm=0.0, lift=0.0, phi=0.0)
+            nhand=(0.0, 0.0), nang=0.0, farm=0.0, lift=0.0, phi=0.0,
+            hf=0.0, oc=0.0)   # hf : le capuchon s'ouvre ; oc : l'ocelle s'allume (le signe du repos, anim.signe)
 
 
 def rot(v, deg):
@@ -454,7 +455,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- la tête (et la langue) ----
     head_parts(fig, P)
-    fig.pose(['hood', 'head', 'tongue'], HEAD)
+    fig.pose(['head', 'tongue'], HEAD)
+    hf = P['hf']                                 # le repos : le capuchon s'ouvre (plus large que haut, depuis le cou)
+    fig.pose(['hood'], mchain(HEAD, mS(1 + 0.13 * hf, 1 + 0.06 * hf, 82.0, 51.0)) if hf else HEAD)
 
     fig.ctx = dict(P=P, U=U, HEAD=HEAD, tipF=tipF, tipN=tipN, Gf=Gf, Gn=Gn, Ff=Ff, Fn=Fn, W=W,
                    mouth=mapp(HEAD, (99.0, 51.0)), eye=mapp(HEAD, (88.4, 46.8)), chest=mapp(TOR, (70, 70)), tail=tinfo)
@@ -565,10 +568,14 @@ def hood_parts(fig, P):
         det.append((xf(ribbon([(-r * 0.75, -r * 1.0), (-r * 0.05, 0), (-r * 0.75, r * 1.0)], [0.05, r * 0.32, 0.05]), x, y, a), SCALE.light, 0.3))
     # l'ocelle : un oeil de cobra inventé (anneau d'or, coeur violet), sur l'aile proche
     ox, oy = 57.2, 52.4
+    oc = P['oc']                                 # le repos : l'ocelle s'allume (une lumière d'or douce sur l'écaille)
+    if oc > 0:
+        det.append((ellipse(ox, oy, 5.6, 5.8), ('rad', ox, oy, 5.6, 5.8, [(0, GOLD.light, 0.75), (0.55, GOLD.base, 0.3), (1, GOLD.base, 0)]), oc))
     det += [(ellipse(ox - 0.2, oy + 0.3, 3.3, 3.6, -12), SCALE.deep, 0.55),
             (ellipse(ox, oy, 3.0, 3.3, -12), ('lin', ox + 3, oy - 3, ox - 2, oy + 3, [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), 1),
             (ellipse(ox - 0.05, oy + 0.1, 1.95, 2.25, -12), PURPLE.shadow, 1),
             (ellipse(ox + 0.1, oy - 0.1, 1.5, 1.8, -12), ('lin', ox + 1.5, oy - 1.8, ox - 1, oy + 1.5, [(0, PURPLE.light), (1, PURPLE.base)]), 1),
+            (ellipse(ox + 0.1, oy - 0.1, 1.5, 1.8, -12), PURPLE.hi, 0.55 * oc),
             (ellipse(ox - 0.1, oy + 0.3, 0.7, 0.95, -12), PURPLE.deep, 1),
             (ellipse(ox + 0.8, oy - 0.9, 0.45, 0.4), PURPLE.hi, 0.95),
             (ribbon([(ox + 0.6, oy - 3.0), (ox + 2.4, oy - 1.8), (ox + 2.9, oy + 0.2)], [0.1, 0.55, 0.1]), GOLD.hi, 0.85)]

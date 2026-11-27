@@ -170,7 +170,17 @@ SP_SPLASH = 1330             # elle s'écrase
 # Le ressort de la queue rebondit deux fois par boucle (la taille monte et descend), il respire une fois ; la tête suit
 # avec retard ; le S ondule ; la lame haute frémit avec retard ; le crochet frétille ; une bosse court le long de la
 # queue au sol ; la langue fourchue sort deux fois ; un clignement de temps en temps.
-LOOP = 1.2
+LOOP = 1.5       # la respiration nerveuse : deux par boucle du repos (1,2 s avant le 27/11)
+IDLE_T = 3.0     # la boucle du repos (s) : respiration et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : le capuchon de cobra s'ouvre lentement (il s'élargit derrière la tête) et son ocelle d'or s'allume,
+    puis tout retombe. Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    k = 0.5 - 0.5 * math.cos(u)
+    return dict(hf=k, oc=k)
 
 
 def idle_offsets(T):
@@ -205,7 +215,9 @@ def pose_at(T, action=None, t0=0.0):
     P['head'] = (Q['headx'], Q['heady'])
     P['nhand'] = (Q['nhx'], Q['nhy'])
     P['hump'] = ((T % LOOP) / LOOP * 1.3 - 0.15, 0.7 * w)
-    P['blink'] = 1.0 if (w > 0.95 and 2.0 <= (T % 3.6) < 2.1) else 0.0
+    P['blink'] = 1.0 if (w > 0.95 and 2.0 <= (T % IDLE_T) < 2.1) else 0.0
+    sg = signe(T)                                  # le signe du repos : le capuchon s'ouvre (anim.signe)
+    P['hf'], P['oc'] = w * sg['hf'], w * sg['oc']
     return P, tl
 
 

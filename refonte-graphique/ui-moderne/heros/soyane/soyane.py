@@ -80,7 +80,8 @@ LEGW = {'L1': (5.6, 3.9, 2.8, 0.55), 'R4': (4.6, 3.5, 2.5, 0.5), 'R2': (4.6, 3.5
         'L4': (4.2, 3.2, 2.4, 0.5), 'L2': (5.4, 4.0, 2.9, 0.55), 'R3': (5.4, 4.0, 2.9, 0.55), 'R1': (5.0, 3.8, 2.8, 0.55)}
 
 REST = dict(breath=0.0, sp=(0.0, 0.0), lean=0.0, head=(0.0, 0.0), tilt=0.0, abd=0.0, legs=None, hand=HAND0, ang=ANG0,
-            bend=-1.0, handF=HANDF0, angF=ANGF0, bendF=1.0, blink=0.0, ear=0.0, grin=0.0, smear=0.0, smearF=0.0)
+            bend=-1.0, handF=HANDF0, angF=ANGF0, bendF=1.0, blink=0.0, ear=0.0, grin=0.0, smear=0.0, smearF=0.0,
+            mk=0.0)   # mk : la marque rouge de l'abdomen s'allume (le signe du repos, anim.signe)
 
 
 def rot(v, deg):
@@ -354,9 +355,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     dia = sm([(43.6, 64.8), (47.0, 69.8), (43.8, 75.6), (40.6, 70.0)], sharp=(0, 1, 2, 3), t=0.5)
     det += [(dia.scale(1.22, 1.16, 43.8, 70.2), RED.deep, 0.75), (dia, ('lin', 47, 65, 41, 75, [(0, RED.hi), (0.35, RED.light), (0.7, RED.base), (1, RED.shadow)]), 1),
             (sm([(43.7, 65.6), (46.4, 69.8), (43.9, 70.4)], sharp=(0, 1, 2), t=0.5), '#ffd0b0', 0.55)]
+    mk = P['mk']
+    if mk > 0:                  # le repos : la marque s'allume comme une braise (une lumière rouge douce sur la chitine)
+        det.insert(1, (ellipse(43.8, 70.0, 13.0, 11.5), ('rad', 43.8, 70.0, 13.0, 11.5, [(0, '#ff6a50', 0.7), (0.45, RED.base, 0.3), (1, RED.base, 0)]), mk))
+        det.append((dia.scale(0.8, 0.8, 43.8, 70.2), ('rad', 44.2, 69.4, 3.6, 4.6, [(0, '#ffe8c8'), (1, RED.hi)]), 0.75 * mk))
     for sgn, cx in ((-1, 36.0), (1, 51.4)):
         hook = ribbon([(cx + 1.6 * sgn, 64.6), (cx - 0.6 * sgn, 68.6), (cx + 0.2 * sgn, 72.6), (cx + 2.4 * sgn, 75.0)], [0.4, 1.6, 1.5, 0.3])
         det += [(hook.move(-0.25, 0.35), RED.deep, 0.7), (hook, ('lin', cx + 2, 64, cx - 2, 75, [(0, RED.light), (0.6, RED.base), (1, RED.shadow)]), 1)]
+        if P['mk'] > 0:
+            det.append((hook, RED.hi, 0.6 * P['mk']))
     # le reflet net (un seul), et un liseré clair sur le bord haut-droit
     det += [(sm([(51.2, 66.4), (56.4, 66.8), (59.6, 69.6), (57.0, 70.6), (52.2, 69.4)]), '#c4c2ec', 0.85),
             (ellipse(56.6, 68.0, 1.4, 0.7, 25), '#f4f4ff', 0.95)]

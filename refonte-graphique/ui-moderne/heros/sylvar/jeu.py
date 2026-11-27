@@ -56,7 +56,7 @@ def fleche(stone):
 
 JEU = {
     'vue_proj': (-112, -14, 120, 28),
-    'pose': dict(periode=2400),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # le tir : il lâche, la flèche file (droite et rapide) jusqu'à l'ennemi
     'attaque': dict(genre='tir', tir=A.ATTACK_REL, coup=A.ATTACK_REL + 100, cible=(A.ENEMY_X, BOUCHE[1]), depuis=999,
                     coupe=999, bouche=BOUCHE, projectile=fleche(False), proj_images=1),

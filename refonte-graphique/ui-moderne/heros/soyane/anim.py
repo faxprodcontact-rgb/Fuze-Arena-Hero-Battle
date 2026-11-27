@@ -226,18 +226,31 @@ def pulse(t, t0, up=0.06, hold=0.08, down=0.12):
     return u * u * (3 - 2 * u)
 
 
-# chaque patte a son tressaillement, à son moment (jamais toutes ensemble) : (patte, instant, genou, pointe)
-TWITCH = [('L1', 0.12, (0, -1.0), (0, 0)), ('R4', 0.34, (0, -1.0), (0, 0)), ('R3', 0.56, (0.8, -1.8), (1.6, -2.6)),
-          ('R2', 0.92, (-1.0, 0), (0, 0)), ('L2', 1.16, (0, -1.1), (0, 0)), ('L4', 1.34, (0.8, -0.4), (0, 0)),
-          ('R1', 1.56, (0.9, -0.9), (0, 0)), ('L3', 1.78, (-0.9, -0.3), (0, 0))]
+# chaque patte a son tressaillement, à son moment (jamais toutes ensemble) : (patte, instant, genou, pointe) ; les
+# instants s'étalent sur la boucle du repos de 3 s depuis le 27/11 (×1,5 : elle durait 2 s)
+TWITCH = [('L1', 0.18, (0, -1.0), (0, 0)), ('R4', 0.51, (0, -1.0), (0, 0)), ('R3', 0.84, (0.8, -1.8), (1.6, -2.6)),
+          ('R2', 1.38, (-1.0, 0), (0, 0)), ('L2', 1.74, (0, -1.1), (0, 0)), ('L4', 2.01, (0.8, -0.4), (0, 0)),
+          ('R1', 2.34, (0.9, -0.9), (0, 0)), ('L3', 2.67, (-0.9, -0.3), (0, 0))]
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la marque rouge de l'abdomen (le losange entre ses deux crochets) s'allume lentement, comme une
+    braise, puis s'éteint ; l'abdomen se gonfle un peu avec elle. Une pose partielle pour build() ; jouée au combat
+    (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    k = 0.5 - 0.5 * math.cos(u)
+    return dict(mk=k, abd=0.9 * k)
 
 
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
-    t = T % 2.0
+    t = T % IDLE_T
     d = dict(heady=0.35 * math.sin(u - 0.7) * 0.6, tilt=0.6 * math.sin(u - 1.0),
-             abd=pulse(t, 0.1, 0.05, 0.05, 0.12) + 0.8 * pulse(t, 0.36, 0.05, 0.04, 0.14) + 0.6 * pulse(t, 1.2, 0.06, 0.06, 0.16),
+             abd=pulse(t, 0.15, 0.05, 0.05, 0.12) + 0.8 * pulse(t, 0.54, 0.05, 0.04, 0.14) + 0.6 * pulse(t, 1.8, 0.06, 0.06, 0.16),
              spy=0.35 * (0.5 - 0.5 * math.cos(u - 2.2)), fhy=0.3 * math.sin(u - 1.1), angF=1.2 * math.sin(u - 1.2),
              hy=0.3 * math.sin(u - 0.9), ang=-0.8 * math.sin(u - 0.9))
     for L, t0, dk, dt in TWITCH:
@@ -278,11 +291,12 @@ def pose_at(T, action=None, t0=0.0):
         P['R3ky'] += 0.5 * j
         P['R4ky'] -= 0.5 * j
         P['angF'] += 1.0 * j
+    sg = signe(T)                                  # le signe du repos : la marque de l'abdomen s'allume (anim.signe)
     out = dict(breath=w * br, sp=(P['spx'], P['spy']), lean=P['lean'], head=(P['headx'], P['heady']), tilt=P['tilt'],
-               abd=P['abd'], hand=(P['hx'], P['hy']), ang=P['ang'], handF=(P['fhx'], P['fhy']), angF=P['angF'],
-               grin=P['grin'], smear=P['smear'], smearF=P['smearF'], ear=math.sin(2 * math.pi * T * 0.9) + 0.6 * P['lean'] / 4)
+               abd=P['abd'] + w * sg['abd'], mk=w * sg['mk'], hand=(P['hx'], P['hy']), ang=P['ang'], handF=(P['fhx'], P['fhy']), angF=P['angF'],
+               grin=P['grin'], smear=P['smear'], smearF=P['smearF'], ear=math.sin(3 * 2 * math.pi * T / IDLE_T) + 0.6 * P['lean'] / 4)   # 1 s (1,1 avant le 27/11)
     out['legs'] = {L: [S.LEGS0[L][0]] + [(P['%s%sx' % (L, c)], P['%s%sy' % (L, c)]) for c in 'kat'] for L in LEGN}
-    out['blink'] = 1.0 if (w > 0.95 and 1.40 <= (T % 4.0) < 1.48) else 0.0
+    out['blink'] = 1.0 if (w > 0.95 and 1.40 <= (T % IDLE_T) < 1.48) else 0.0
     return out
 
 

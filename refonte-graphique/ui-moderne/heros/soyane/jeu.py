@@ -47,7 +47,7 @@ def fx_special(tl):
 A.fx_special = fx_special
 
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Piqûre » : elle bondit jusqu'à l'ennemi, la dague pique (deux fois), les pattes avant se plantent devant lui
     'attaque': dict(genre='melee', coup=A.HITS[0], cible=(170, 67), coupe=130,
                     dense=[(A.HITS[0] - 180, A.HITS[1] + 200)]),

@@ -162,7 +162,23 @@ SPECIAL = [
 SP_VORTEX = (60, 820)                 # la spirale autour de lui
 SP_BEAT = (770, 850)                  # le battement et le coup d'éventail (traînée)
 SP_GO, SP_HIT, SP_END = 850, 1150, 1960   # la trombe part / avale l'ennemi / s'est défaite
-IDLE_T = 2.1                          # une respiration (s)
+IDLE_T = 3.0                          # une respiration, la boucle du repos (s) (2,1 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : l'éventail de plumes s'évente lentement (il bascule de quelques degrés autour du poing) et ses
+    plumes s'ouvrent en roue puis se referment. Une pose partielle pour build() ; jouée au combat (pose_at) et dans
+    les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(fo=0.5 - 0.5 * math.cos(u), fr=6.0 * math.sin(u - 0.6))
+
+
+def signe_combat(T):
+    """Au combat seulement (trop grand pour les menus : mémoire de l'iPhone) : les grandes ailes se lèvent un peu plus
+    avec le souffle (la lointaine suit avec retard, comme la respiration)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(wl=3.4 * math.sin(u - 0.5))
 
 
 def idle_offsets(T):
@@ -173,7 +189,7 @@ def idle_offsets(T):
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, heady=0.4 * math.sin(u - 0.9) - 0.1, headx=0.15 * math.sin(u - 1.2), tilt=0.5 * math.sin(u - 1.0),
                 wl=2.6 * math.sin(u - 0.5), wd=1.6 * math.sin(u - 1.4), fl=0.6,
-                po=0.55 * math.sin(u - 1.6), pa=0.6 * math.sin(u - 1.9), ro=0.5 * math.sin(2 * math.pi * T / 1.7 + 0.8),
+                po=0.55 * math.sin(u - 1.6), pa=0.6 * math.sin(u - 1.9), ro=0.5 * math.sin(2 * u + 0.8),
                 hem=0.3 * math.sin(u - 2.2), sw=0.6 * math.sin(u - 1.7), army=0.35 * math.sin(u - 1.1))
 
 
@@ -193,6 +209,8 @@ def pose_at(T, action=None, t0=0.0):
         w = w * w * (3 - 2 * w)
     idl = idle_offsets(T)
     idl_l = idle_offsets(T - 0.12)
+    idl['wl'] += signe_combat(T)['wl']              # le signe du repos, au combat : les ailes se lèvent plus
+    idl_l['wl'] += signe_combat(T - 0.12)['wl']
     src = act or flat({})
     srcl = act_l or flat({})
     V = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
@@ -204,7 +222,9 @@ def pose_at(T, action=None, t0=0.0):
     P['breath'] = w * idl['breath']
     P['ws'] = 0.5 + (0.8 if act else 0.0)
     P['ph'] = 2 * math.pi * T / IDLE_T + (2.0 * T if act else 0.0)
-    P['blink'] = 1.0 if (w > 0.95 and 1.25 <= (T % 3.6) < 1.36) else 0.0
+    P['blink'] = 1.0 if (w > 0.95 and 1.25 <= (T % IDLE_T) < 1.36) else 0.0
+    sg = signe(T)                                    # le signe du repos : l'éventail s'évente (anim.signe)
+    P['fo'], P['fr'] = w * sg['fo'], w * sg['fr']
     return P, tl
 
 

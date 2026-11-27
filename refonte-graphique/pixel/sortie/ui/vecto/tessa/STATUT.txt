@@ -1,3 +1,4 @@
 fait
 Tour 2 de l'avis (26/11 soir, un cercle sans texte sur le haut de l'aile du fond, contre la tête) : le bord de cette aile faisait des marches et des petits copeaux de plumes, et venait se coller en biais contre le crâne. Il a maintenant un bord d'attaque net d'un seul trait (bande claire, comme l'aile proche) qui longe la grande plume du haut puis plonge franchement derrière la tête, avec un peu d'air entre l'aile et le crâne au-dessus du croisement.
 Vérifié au repos et dans les poses extrêmes (aile hérissée et levée de la spéciale, tête tournée vers le ciel, recul du tir) ; l'aile proche, le visage (visage.png, aucun défaut), l'armure, l'arc et les animations sont inchangés.
+signe du repos (27/11) : les longues plumes blanches du cou se hérissent lentement et frémissent ; au combat seulement, les ailes s'ouvrent aussi un peu en éventail ; menus 2,6 Mo, planche de combat 3,3 Mo.

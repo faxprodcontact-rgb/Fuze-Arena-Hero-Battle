@@ -15,7 +15,7 @@ def fleche(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # le tir : la flèche part dans son tourbillon et file jusqu'à la vraie cible ; elle la traverse (après le coup, ce
     # qui est au-delà de 150, la flèche et sa traînée qui pâlit, est posé sur la cible)
     'attaque': dict(genre='tir', tir=A.REL, coup=ARRIVE, cible=A.FOE, depuis=85, bouche=POINTE, projectile=fleche,

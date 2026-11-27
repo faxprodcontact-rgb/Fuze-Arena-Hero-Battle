@@ -181,8 +181,17 @@ SP_CLANG = 1210           # la masse frappe le bouclier
 SP_TAUNT = (1210, 1640)   # la lueur rouge du défi
 
 
-# ======================================================================== la respiration (1,5 s)
-IDLE_T = 1.5
+# ======================================================================== la respiration (3 s)
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (1,5 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : le signe gravé du bouclier (losange et pic de montagne) s'allume lentement d'or puis s'éteint, et
+    les flammes de la crinière ondulent plus fort (deux vagues par boucle). Une pose partielle pour build() ; jouée
+    au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(emb=0.85 * (0.5 - 0.5 * math.cos(u)), wv=1.2, sw=2 * u)
 
 
 def idle_offsets(T):
@@ -212,12 +221,14 @@ def pose_at(T, action=None, t0=0.0):
     P = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
     br *= w
     behind = action == 'attack' and ATT_BEHIND[0] <= tl < ATT_BEHIND[1]
+    sg = signe(T)                                  # le signe du repos : le bouclier s'allume (anim.signe)
     out = dict(breath=br, lean=P['lean'], crouch=P['crouch'], head=(P['headx'], P['heady']), tilt=P['tilt'],
-               mouth=max(0.0, P['mouth']), fury=max(0.0, P['fury']), sw=2 * math.pi * T / 1.2, flare=P['flare'],
+               mouth=max(0.0, P['mouth']), fury=max(0.0, P['fury']), sw=sg['sw'], flare=P['flare'], wv=w * sg['wv'],
                bd=P['bd'], brd=0.8 * math.sin(2 * math.pi * T / IDLE_T - 2.0) + 0.6 * P['bd'],
-               grip=(P['gx'], P['gy']), ang=P['ang'], sh=(P['shx'], P['shy']), sht=P['sht'], glow=max(0.0, P['glow']),
+               grip=(P['gx'], P['gy']), ang=P['ang'], sh=(P['shx'], P['shy']), sht=P['sht'],
+               glow=max(0.0, P['glow']), emb=w * sg['emb'],
                stretch=P['stretch'], legn=(P['lnx'], min(0.0, P['lny'])), behind=behind)
-    out['blink'] = 1.0 if (w > 0.95 and 1.10 <= (T % 3.1) < 1.19) else 0.0
+    out['blink'] = 1.0 if (w > 0.95 and 1.10 <= (T % IDLE_T) < 1.19) else 0.0
     return out
 
 

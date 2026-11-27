@@ -152,7 +152,18 @@ SPECIAL = [
 SP_HIT = 1100
 
 
-# ======================================================================== la respiration (en boucle, 2,4 s)
+# ======================================================================== la respiration (en boucle, 3 s)
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2,4 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : un reflet de lumière glisse lentement le long du fil des deux lames de la grande hache (il naît, file
+    d'un bout à l'autre du croissant, s'éteint). Une pose partielle pour build() ; jouée au combat (pose_at) et dans
+    les menus (heros/repos.py)."""
+    p = (T % IDLE_T) / IDLE_T
+    return dict(gk=math.sin(math.pi * p), gp=p)
 
 def scrape_curve(tau):
     """Le grattement du sabot avant (le lointain) : il le lève, le tire en arrière en raclant, le repose (tau en s)."""
@@ -163,13 +174,19 @@ def scrape_curve(tau):
     return (monotone(ts, [k[1] for k in keys], tau), monotone(ts, [k[2] for k in keys], tau))
 
 
+def scrape_tau(T):
+    """Le grattement revient un cycle sur deux (toutes les 6 s, dans le second) : jamais dans la boucle du repos du jeu
+    (3 s), seulement dans les vidéos."""
+    return (T % (2 * IDLE_T)) - (IDLE_T + 1.1)
+
+
 def idle_offsets(T):
     """Il inspire (le buste monte), les épaules roulent l'une après l'autre (la proche, puis la lointaine), la tête suit
     en retard ; à l'expiration il souffle par les naseaux et se tasse sur ses jambes ; la crinière ondule ; un cycle sur
     deux, il gratte le sol du sabot avant."""
-    u = 2 * math.pi * T / 2.4
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
-    lh, lb = scrape_curve((T % 4.8) - 3.3)
+    lh, lb = scrape_curve(scrape_tau(T))
     return dict(breath=br, crouch=0.6 * (0.5 - 0.5 * math.cos(u - 2.6)), heady=0.4 * math.sin(u - 0.7),
                 tilt=-0.7 * math.sin(u - 0.9), rn=0.8 * (0.5 - 0.5 * math.cos(u - 0.4)), rf=0.7 * (0.5 - 0.5 * math.cos(u - 1.3)),
                 ml=0.6 * math.sin(u - 1.6), pg=0.6 * math.sin(u + 0.4), llh=lh, llb=lb)
@@ -199,8 +216,10 @@ def pose_at(T, action=None, t0=0.0):
     P['fsh'] = (src['fshx'], src['fshy'])
     P['nsh'] = (src['nshx'], src['nshy'])
     P['breath'] = w * idl['breath']
-    P['ph'] = 2 * math.pi * T * 0.6 + (1.2 * T if act and action == 'special' else 0)
-    P['blink'] = 1.0 if (w > 0.95 and 1.86 <= (T % 4.8) < 1.95) else 0.0
+    P['ph'] = 2 * 2 * math.pi * T / IDLE_T + (1.2 * T if act and action == 'special' else 0)
+    P['blink'] = 1.0 if (w > 0.95 and 1.86 <= (T % IDLE_T) < 1.95) else 0.0
+    sg = signe(T)                                  # le signe du repos : un reflet glisse sur la hache (anim.signe)
+    P['gk'], P['gp'] = w * sg['gk'], sg['gp']
     return P, tl
 
 
@@ -645,8 +664,8 @@ def frame_svg(T, segs, view=VIEW, ow=0.95):
         fx = [fx_special(tl)]
     else:
         # au repos : à l'expiration, la vapeur sort des naseaux ; un cycle sur deux, il gratte le sol du sabot
-        k = ((T % 2.4) - 1.25) / 0.95
-        tau = (T % 4.8) - 3.3
+        k = ((T % IDLE_T) - 1.56) / 1.19
+        tau = scrape_tau(T)
         fx = [lambda fig, ctx: steam(fig, ctx, k, big=1.1), lambda fig, ctx: scrape_fx(fig, ctx, tau, seed=3)]
     return K.build(ow=ow, pose=P, fx=fx, frame=view).svg(), P
 

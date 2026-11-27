@@ -32,7 +32,7 @@ def lion_x(t):
 
 
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     'vue_proj': (-78, -36, 112, 72),
     # « khopesh lancé » : il file en tournoyant jusqu'à l'ennemi (le jeu le fait voler), puis revient comme un boomerang
     # jusqu'à sa main (`retour`) ; elle le rattrape (éclat d'or)

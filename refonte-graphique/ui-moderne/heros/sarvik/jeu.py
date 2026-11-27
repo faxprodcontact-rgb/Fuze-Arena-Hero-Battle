@@ -6,7 +6,7 @@ import anim as A
 ID = 'mon-meduse-rapide'
 ANIM, DESSIN = A, A.K
 JEU = {
-    'pose': dict(periode=1000 * A.LOOP),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Morsure de bronze » : tout le serpent glisse vers l'ennemi dans sa propre animation (`avance`), la lame s'abat
     # (la traînée reste avec lui) ; l'entaille et le venin sont sur l'ennemi ; il revient en glissant
     'attaque': dict(genre='melee', coup=A.AT_CUT, cible=(156, 74), coupe=140,

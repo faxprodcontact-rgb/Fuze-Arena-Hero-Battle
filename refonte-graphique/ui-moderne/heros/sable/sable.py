@@ -184,7 +184,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     La = math.atan2(dyq, dxq)
     def tq(d, a):
         return (tx + d * math.cos(La + a), ty + d * math.sin(La + a))
-    wob = 0.6 * math.sin(ph * 1.7 + 1)
+    wob = 0.6 * math.sin(ph * 2 + 1)                 # 2 (1,7 avant le 27/11) : la boucle du repos se referme
     tuft = [lock(tq(-1.8, 0), tq(4.0, -0.3), tq(9.0, 0.1 + 0.06 * wob), tq(14.0, -0.12 + 0.05 * wob), 8.4, n=12, bulge=0.5),
             lock(tq(-0.4, 0.25), tq(4.0, 0.32), tq(7.2, 0.3), tq(10.2, 0.42 + 0.05 * wob), 5.2, n=10, bulge=0.35)]
     fig.part('tuftc', tuft[1], DARKFUR, cel=0.6, rim=0.5, cast=0)

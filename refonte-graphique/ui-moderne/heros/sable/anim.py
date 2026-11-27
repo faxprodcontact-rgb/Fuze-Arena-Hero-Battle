@@ -138,13 +138,23 @@ SPECIAL = [
 SP_ROAR, SP_STRIKE, SP_HIT = 380, 640, 830
 LION = [(640, (128, 36)), (720, (164, 40)), (780, (192, 44)), (830, (210, 50))]
 
-# ======================================================================== la respiration (en boucle, 2 s)
+# ======================================================================== la respiration (en boucle, 3 s)
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la queue de lion se balance lentement, se dresse un peu, et sa touffe sombre fouette en retard.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(q=2.0 * math.sin(u), qu=1.8 * (0.5 - 0.5 * math.cos(u - 0.7)), ph=u)
 
 
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
-    ear = 1.0 if 0.55 <= (T % 4.0) < 0.75 else 0.0
+    ear = 1.0 if 0.55 <= (T % IDLE_T) < 0.75 else 0.0
     return dict(breath=br, crouch=0.35 * (0.5 - 0.5 * math.cos(u - 1.4)), heady=0.35 * math.sin(u - 0.6),
                 tilt=0.8 * math.sin(u - 0.9), pg=0.7 * math.sin(u + 0.5), q=0.6 * math.sin(u - 0.4), ear=ear)
 
@@ -171,8 +181,11 @@ def pose_at(T, action=None, t0=0.0):
     P['breath'] = w * idl['breath']
     P['wrist'] = (P.pop('wx'), P.pop('wy'))
     P['head'] = (P.pop('headx'), P.pop('heady'))
-    P['ph'] = 2 * math.pi * T * 0.5 + (2.5 * T if act else 0)
-    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % 4.0) < 1.38) else 0.0
+    sg = signe(T)                                  # le signe du repos : la queue se balance (anim.signe)
+    P['q'] += w * sg['q']
+    P['qu'] += w * sg['qu']
+    P['ph'] = sg['ph'] + (2.5 * T if act else 0)
+    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % IDLE_T) < 1.38) else 0.0
     P['kh'] = 1
     if action == 'attack' and THROW_T <= tl < CATCH_T:
         P['kh'] = 0

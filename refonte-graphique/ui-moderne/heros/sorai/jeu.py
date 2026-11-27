@@ -63,7 +63,7 @@ def tornade(fig, i):
 JEU = {
     'rendu': rendu,
     'vue_proj': (-56, -68, 84, 80),
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Volute » : coup d'éventail, la boule de vent file vers l'ennemi et frappe
     'attaque': dict(genre='tir', tir=A.AT_LAUNCH, coup=A.AT_HIT, cible=A.HIT, depuis=BOUCHE[0] + 1, coupe=150,
                     bouche=BOUCHE, projectile=volute, proj_images=2, arc=8),

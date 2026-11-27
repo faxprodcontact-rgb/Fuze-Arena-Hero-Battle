@@ -34,7 +34,7 @@ A.fx_attack = tidy(A.fx_attack)
 A.fx_special = tidy(A.fx_special)
 
 JEU = {
-    'pose': dict(periode=2400),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Coup de hache du colosse » : il bondit jusqu'à l'ennemi pendant qu'il lève la hache (comme le pixel art), tient,
     # l'abat : le fer mord la terre devant l'ennemi (éclats, dalles, poussière sur lui ; le coup : 15 ms après le
     # choc, l'éclat est là) ; la grande traînée d'acier est gardée (fx_max)

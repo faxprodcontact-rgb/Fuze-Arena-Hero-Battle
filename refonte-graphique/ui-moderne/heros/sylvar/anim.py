@@ -181,10 +181,22 @@ SP_REL = 690
 SP_HIT = 790              # la faille arrive chez l'ennemi
 
 
-# ======================================================================== la respiration (en boucle, 2,4 s)
+# ======================================================================== la respiration (en boucle, 3 s)
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros (2,4 s avant le 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : les yeux verts au fond du crâne de cerf s'embrasent lentement puis baissent, et le talisman pendu au
+    bois (perle d'os, plume rouge) se balance plus large. Une pose partielle pour build() ; jouée au combat (pose_at)
+    et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(eyes=2.4 * (0.5 - 0.5 * math.cos(u)), tal=1.5 * math.sin(u - 0.8))
+
 
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.4
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, crouch=0.45 * (0.5 - 0.5 * math.cos(u - 1.6)), heady=0.35 * math.sin(u - 0.7),
                 tilt=0.5 * math.sin(u - 0.9), tal=0.55 * math.sin(u - 1.9), cape=0.5 * math.sin(u - 2.2),
@@ -215,8 +227,11 @@ def pose_at(T, action=None, t0=0.0):
     P['W'] = (src['Wx'], src['Wy'])
     for n in STEP:
         P[n] = src[n]
+    sg = signe(T)                                  # le signe du repos : les yeux s'embrasent (anim.signe)
+    P['eyes'] += w * sg['eyes']
+    P['tal'] += w * sg['tal']
     # clignement : la lueur des yeux baisse un instant
-    P['blink'] = 1.0 if (w > 0.95 and 1.62 <= (T % 4.2) < 1.72) else 0.0
+    P['blink'] = 1.0 if (w > 0.95 and 2.62 <= (T % IDLE_T) < 2.72) else 0.0
     return P
 
 

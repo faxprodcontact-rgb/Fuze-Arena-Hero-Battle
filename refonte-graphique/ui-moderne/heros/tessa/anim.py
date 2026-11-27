@@ -157,7 +157,23 @@ SPECIAL = [
     (2500, {}),
 ]
 
-IDLE_T = 2.4                  # la respiration : un cycle (s)
+IDLE_T = 3.0                  # la respiration : un cycle, la boucle du repos (s) (2,4 s avant le 27/11)
+
+
+def signe(T_):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : les longues plumes blanches du cou se hérissent lentement (elles s'allongent, s'évasent et frémissent)
+    puis se couchent. Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py).
+    rph : la phase des plumes du cou seules (0,75 tour par boucle : leurs rythmes, ×4/3 et ×4, y font 1 et 3 tours)."""
+    u = 2 * math.pi * T_ / IDLE_T
+    return dict(ruff=2.2 * (0.5 - 0.5 * math.cos(u)), rph=0.75 * u)
+
+
+def signe_combat(T_):
+    """Au combat seulement (trop grand pour les menus : mémoire de l'iPhone) : les grandes ailes s'ouvrent un peu en
+    éventail avec le signe (la lointaine en retard)."""
+    u = 2 * math.pi * T_ / IDLE_T
+    return dict(wn_spread=5.0 * (0.5 - 0.5 * math.cos(u - 0.3)), wf_spread=4.0 * (0.5 - 0.5 * math.cos(u - 0.8)))
 
 
 # ======================================================================== la respiration et l'affût (en boucle)
@@ -209,6 +225,10 @@ def pose_at(T_, action=None, t0=0.0):
         w = min(1.0, max(0.0, 1 - tl / 200), max(0.0, (tl - (dur - 300)) / 300))
         w = w * w * (3 - 2 * w)
     idl = idle_offsets(T_)
+    sg = signe(T_)                                  # le signe du repos : les plumes du cou se hérissent (anim.signe)
+    idl['ruff'] += sg['ruff']
+    for n, v in signe_combat(T_).items():           # au combat : les ailes s'ouvrent un peu
+        idl[n] = idl.get(n, 0.0) + v
     src = act or flat({})
     for n in NUM:
         P[n] = src[n] + w * idl.get(n, 0.0)
@@ -223,8 +243,9 @@ def pose_at(T_, action=None, t0=0.0):
     P['breath'] = w * idl['breath']
     P['hand'] = (P.pop('hx'), P.pop('hy'))
     P['head'] = (P.pop('headx'), P.pop('heady'))
-    P['ph'] = 2 * math.pi * T_ * 0.9
-    P['blink'] = 1.0 if (w > 0.95 and 3.05 <= (T_ % 4.8) < 3.13) else 0.0
+    P['ph'] = 3 * 2 * math.pi * T_ / IDLE_T        # 1 tour par seconde (0,9 avant le 27/11) : la boucle se referme
+    P['rph'] = None if act else sg['rph']
+    P['blink'] = 1.0 if (w > 0.95 and 0.55 <= (T_ % IDLE_T) < 0.63) else 0.0
     if P['fix'] > 0.5:
         P['fix'] = 1.0
     return P, tl

@@ -75,7 +75,8 @@ L1N, L2N = 17.6, 13.4       # bras, avant-bras (proche)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, fix=0.0, ruff=0.0, ph=0.0,
             wn_lift=0.0, wn_spread=0.0, wf_lift=0.0, wf_spread=0.0, hand=HAND0, open=0.0, arrow=1.0, free=0.0,
-            bulge=0.0, relax=0.0, bow_dx=0.0, bow_tilt=0.0, wave=0.0)
+            bulge=0.0, relax=0.0, bow_dx=0.0, bow_tilt=0.0, wave=0.0,
+            rph=None)   # rph : la phase des plumes du cou seules (le signe du repos, anim.signe ; None : ph)
 
 
 def rot(v, deg):
@@ -115,7 +116,7 @@ def eagle_wing(fig, key, R, W, feathers, mat, P, lift, spread, ph, cov=1.0, edge
         dirs_at.append((u, d))
         side = (-d[1], d[0])
         L = math.dist(root, tip)
-        bend = 1.2 + 0.4 * math.sin(ph * 0.7 - 0.5 * i)
+        bend = 1.2 + 0.4 * math.sin(ph * 2 / 3 - 0.5 * i)      # 2/3 (0,7 avant le 27/11) : la boucle du repos se referme
         p1 = add(add(root, d, L * 0.33), side, bend * 0.3)
         p2 = add(add(root, d, L * 0.7), side, bend)
         sh = plume(root, p1, p2, tip, w)
@@ -358,7 +359,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                       (ellipse(67.0, 75.6, 0.4, 0.35), '#ffffff', 0.9)])
 
     # ---- le tablier de jade qui pend droit (un pli, ourlet d'or, pendentif en losange brodé) ----
-    sway = 0.25 * math.sin(ph * 0.8 + 0.5) + P['wave'] * 0.6
+    sway = 0.25 * math.sin(ph * 2 / 3 + 0.5) + P['wave'] * 0.6   # 2/3 (0,8 avant le 27/11) : la boucle se referme
     apron = sm([(60.4, 77.4), (72.2, 77.6), (72.4 + sway * 0.4, 86), (72.8 + sway, 96.6), (60.0 + sway, 96.8), (60.2 + sway * 0.4, 86)],
                sharp=(3, 4), t=0.6)
     hem = sm([(59.9 + sway, 94.6), (72.9 + sway, 94.4), (72.9 + sway, 97.0), (59.9 + sway, 97.2)], sharp=(0, 1, 2, 3), t=0.5)
@@ -448,11 +449,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ]
     rn = []
     rf = P['ruff']
+    rp = ph if P['rph'] is None else P['rph']
     for i, (r0, t0, w, cv, front) in enumerate(RUFF):
         d = norm((t0[0] - r0[0], t0[1] - r0[1]))
         side = (-d[1], d[0])
         L = math.dist(r0, t0) * (1 + 0.05 * rf)
-        flick = 0.4 * math.sin(ph * 1.3 - 0.9 * i) + 0.5 * rf * math.sin(ph * 4 - 1.3 * i)
+        flick = 0.4 * math.sin(rp * 4 / 3 - 0.9 * i) + 0.5 * rf * math.sin(rp * 4 - 1.3 * i)   # 4/3 : 1,3 avant le 27/11
         tip = add(add(r0, d, L), side, flick + 0.4 * rf * (r0[0] - 68) / 8)
         sh = plume(r0, add(add(r0, d, L * 0.35), side, cv * 0.6), add(add(r0, d, L * 0.72), side, cv + 0.2 * flick), tip, w, tip=0.42)
         nm = 'ruff%d' % i

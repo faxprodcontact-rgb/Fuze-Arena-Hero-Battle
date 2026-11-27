@@ -100,7 +100,8 @@ S_POM, S_END, S_HEAD = -22.6, 88.0, 79.0     # le pommeau, le bout du manche, l'
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, ml=0.0, pg=0.0, blink=0.0,
             rn=0.0, rf=0.0, G=G0, ang=ANG0, sf=SF0, bn=1.0, bf=-1.0, lift=0.0, shift=0.0, legl=(0.0, 0.0),
-            legn=(0.0, 0.0), glow=0.0, hot=0.0, length=1.0, fsh=(0.0, 0.0), nsh=(0.0, 0.0), farfront=0.0)
+            legn=(0.0, 0.0), glow=0.0, hot=0.0, length=1.0, fsh=(0.0, 0.0), nsh=(0.0, 0.0), farfront=0.0,
+            gk=0.0, gp=0.0)   # gk, gp : le reflet qui glisse sur le fil de la hache (force, place 0..1 ; le signe du repos)
 
 
 def sm_under(sh, dx=0.8, dy=-2.4):
@@ -644,6 +645,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         bd += [(loz, STEEL.deep, 0.9), (lozi, STEEL.light, 1)]
         cpt = Ap(s0 + 8.0, 17.0 * side)
         bd += [(ellipse(cpt[0], cpt[1], 2.6, 0.8, ang - 20), STEEL.glint, 0.7 if lit else 0.45)]
+        if P['gk'] > 0:          # le repos : un reflet de lumière glisse le long du fil (anim.signe)
+            sc = s0 - 17.0 + 34.0 * P['gp']
+            q0, q1 = Ap(sc - 7.0, 20.0 * side), Ap(sc + 7.0, 20.0 * side)
+            bd.append((A_(edge_band(side, 0.6, 4.6)), ('lin', q0[0], q0[1], q1[0], q1[1],
+                                                       [(0, '#ffffff', 0), (0.5, '#ffffff', (1.0 if lit else 0.8) * P['gk']), (1, '#ffffff', 0)]), 1))
         if hot > 0:
             p_a, p_b = Ap(s0, 0), Ap(s0, 23 * side)
             bd.append((sh, ('lin', p_a[0], p_a[1], p_b[0], p_b[1], [(0, EARTH[1], 0), (0.7, EARTH[1], 0.25 * hot), (1, EARTH[0], 0.8 * hot)]), 1))

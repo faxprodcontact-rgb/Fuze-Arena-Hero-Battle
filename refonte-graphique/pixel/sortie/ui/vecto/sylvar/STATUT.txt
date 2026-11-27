@@ -1,3 +1,4 @@
 fait
 Corrigé d'après le 3e avis du 26/11 (« la main doit tenir l'arc par l'arrière ») : le poing qui tient l'arc passe maintenant DERRIÈRE le bois ; devant l'arc on ne voit plus que les doigts qui se referment sur la poignée (ils tournent autour du bord droit du bois et se posent sur sa moitié droite), la moitié gauche de l'arc reste visible, et la flèche passe devant l'arc. Vérifié dans toutes les poses (repos, tir, spéciale avec la pointe de pierre, corde qui vibre).
 Rien d'autre n'a changé (corde devant l'épaulette, flèche au-dessus de l'épaulette, visage vérifié avec visage.py : aucun défaut). Image avant | après (avec la main agrandie) : avant-apres.png.
+signe du repos (27/11) : les yeux verts au fond du crâne de cerf s'embrasent lentement, le talisman pendu au bois se balance plus large ; menus 1,9 Mo, planche de combat 2,8 Mo.

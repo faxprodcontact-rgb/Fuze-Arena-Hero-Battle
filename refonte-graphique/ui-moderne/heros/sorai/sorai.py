@@ -99,7 +99,8 @@ FAR_FEATHERS = [
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, ph=0.0,
             wn_l=0.0, wf_l=0.0, wn_s=0.0, wf_s=0.0, wd=0.0, ws=0.0, nh=NH0, fang=-90.0, fl=0.0,
-            po=0.0, pa=0.0, ro=0.0, hem=0.0, sw=0.0, eyes=0.0)
+            po=0.0, pa=0.0, ro=0.0, hem=0.0, sw=0.0, eyes=0.0,
+            fo=0.0, fr=0.0)   # fo : les plumes de l'éventail s'ouvrent ; fr : il bascule (degrés) (le signe du repos)
 
 
 def g2(c1, c2):
@@ -302,7 +303,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fing_f = claw_fist(fig, 'f', (81.8, 92.8), 90.0, 0.62, -1.0, ['rstring', 'bead0', 'fcuff'])
 
     # ================================================================ le bras proche et sa manche (sous la collerette)
-    fang = P['fang']
+    fang = P['fang'] + P['fr']                       # fr : le repos, l'éventail s'évente (anim.signe)
     NH = P['nh']
     NW = add(NH, unit(fang), -FAN_OFF)                       # le poignet
     NE = ik(S_N, NW, L1N, L2N, -1)                           # le coude (en bas, sous le poignet)
@@ -472,13 +473,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     WHITES = [(-24, 14.6, 7.4), (24, 14.6, 7.4), (0, 16.2, 8.0)]
     fnames = []
     for j, (a, L, w, mat, kind) in enumerate([(a, L, w, JADE, 'j') for a, L, w in JADES] + [(a, L, w, MASK, 'w') for a, L, w in WHITES]):
-        a2 = a + 1.4 * fl * math.sin(ph * 2.2 + j * 1.3)
+        # 2 (2,2 avant le 27/11) : la boucle du repos se referme ; fo : le repos ouvre les plumes en roue
+        a2 = a * (1 + 0.13 * P['fo']) + 1.4 * fl * math.sin(ph * 2 + j * 1.3)
         d = unit(a2)
         side = (-d[1], d[0])
         base = (B, 0.0)
         tip = add(base, d, L)
         p1 = add(base, d, L * 0.33)
-        p2 = add(add(base, d, L * 0.7), side, 0.25 * fl * math.sin(ph * 2.2 + j))
+        p2 = add(add(base, d, L * 0.7), side, 0.25 * fl * math.sin(ph * 2 + j))
         sh = E_(plume(base, p1, p2, tip, w, n=12, tip=0.5))
         nm = 'fan%s%d' % (kind, j)
         gt, gb = mapp(EM, tip), mapp(EM, base)

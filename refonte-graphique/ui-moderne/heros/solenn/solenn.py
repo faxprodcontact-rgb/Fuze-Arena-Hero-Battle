@@ -76,7 +76,8 @@ E0 = (24.4, 64.6)                          # le coude au repos (sorti à gauche)
 SHIELD_C = (97.0, 78.6)                    # le centre du bouclier (l'umbo)
 REST = dict(breath=0.0, lean=0.0, crouch=0.0, head=(0.0, 0.0), tilt=0.0, mouth=0.0, blink=0.0, fury=0.0, sw=0.0,
             flare=0.0, bd=0.0, brd=0.0, grip=G0, ang=ANG0, bend=None, sh=(0.0, 0.0), sht=0.0, glow=0.0, behind=False,
-            stretch=0.0, legn=(0.0, 0.0), tint=None)
+            stretch=0.0, legn=(0.0, 0.0), tint=None,
+            wv=0.0, emb=0.0)   # le signe du repos (anim.signe) : wv, la crinière ondule plus ; emb, le signe du bouclier s'allume
 
 
 def frame_of(G, ang):
@@ -272,7 +273,7 @@ def flame_locks(P):
     """Les flammes de la crinière (racine, contrôles, pointe, largeur), couchées vers l'arrière ; elles ondulent à la
     pointe (sw) et se dressent (flare)."""
     sw, fl = P['sw'], P['flare']
-    w = [math.sin(sw + k * 1.3) for k in range(5)]
+    w = [(1 + P['wv']) * math.sin(sw + k * 1.3) for k in range(5)]   # wv : le repos les fait onduler (anim.signe)
     return [
         # la mèche qui retombe derrière l'oreille, jusqu'à la nuque
         ('flD', (51.0, 40.0), (48.4, 45.0), (47.6, 50.0), (45.8 + 0.4 * w[3], 56.0 - 0.6 * fl), 8.0),
@@ -641,7 +642,7 @@ def head(fig, P):
               (53.4, 22.6), (60.4, 19.4), (67.6, 19.0), (74.0, 21.0), (78.8, 24.8), (81.6, 29.6)],
              sharp=(3, 7), t=0.9)
     # la mèche de devant : une langue de flamme née au bord du front, qui se couche vers l'arrière, la pointe relevée
-    w1 = math.sin(sw + 0.7)
+    w1 = (1 + P['wv']) * math.sin(sw + 0.7)
     fore = lock((73.0, 31.0), (82.6, 27.6), (81.4, 19.6 + 0.4 * w1), (73.0 - 0.8 * fl, 15.0 + 0.6 * w1 - 1.4 * fl), 10.0, bulge=0.35)
     # les favoris et la barbe des joues : ils descendent de la tempe DEVANT l'oreille sans crochet (le bord du côté
     # du visage est une seule courbe douce), suivent la mâchoire et, du côté lointain, s'arrêtent au bord de la joue
@@ -780,13 +781,19 @@ def shield(fig, P):
     d += [(ribbon(pk, [0.4, 0.9, 1.0, 0.9, 0.4]), WOOD.deep, 0.75),
           (ribbon([add(p, (0.3, -0.3)) for p in pk], [0.1, 0.3, 0.35, 0.3, 0.1]), WOOD.hi, 0.5),
           (ribbon([(cx - 1.0, cy - 14.4), (cx + 0.3, cy - 15.8), (cx + 1.4, cy - 14.4)], [0.3, 0.6, 0.3]), WOOD.deep, 0.6)]
-    if g > 0:
-        gl = min(1.0, g / 3)
+    em = P['emb']
+    if g > 0 or em > 0:
+        gl = min(1.0, g / 3 + em)
         for i in range(4):
             a, b = dia[i], dia[(i + 1) % 4]
             d += [(ribbon([a, lerp(a, b, 0.5), b], [0.8, 1.6, 0.8]), ('lin', a[0], a[1], b[0], b[1], [(0, GOLD.light), (1, '#fff6c8')]), gl)]
-        d += [(ribbon(pk, [0.6, 1.4, 1.6, 1.4, 0.6]), '#fff2b0', gl),
-              (ellipse(cx, cy - 2, 12, 17), ('rad', cx, cy - 2, 12, 17, [(0, '#ffe680', 0.45 * gl), (1, '#ffd45c', 0)]), 1)]
+        d += [(ribbon(pk, [0.6, 1.4, 1.6, 1.4, 0.6]), '#fff2b0', gl)]
+        if g > 0:
+            gs = min(1.0, g / 3)
+            d += [(ellipse(cx, cy - 2, 12, 17), ('rad', cx, cy - 2, 12, 17, [(0, '#ffe680', 0.45 * gs), (1, '#ffd45c', 0)]), 1)]
+        if em > 0:              # le repos : une lumière serrée sur le signe seul (elle ne déborde pas sur le bois)
+            d += [(ellipse(cx + 0.3, cy - 3.0, 7.6, 14.6), ('rad', cx + 0.3, cy - 3.0, 7.6, 14.6,
+                                                         [(0, '#ffe680', 0.42 * em), (0.6, '#ffd45c', 0.22 * em), (1, '#ffd45c', 0)]), 1)]
     # les dix rivets du cercle (inégalement éclairés)
     for a in range(-80, 280, 36):
         t = math.radians(a)
