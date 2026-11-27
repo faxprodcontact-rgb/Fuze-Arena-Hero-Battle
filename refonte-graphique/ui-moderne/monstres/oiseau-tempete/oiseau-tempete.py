@@ -85,8 +85,7 @@ NEAR_FEATHERS = [
 ]
 # l'aile lointaine : quatre rémiges levées vers le haut à droite, puis des secondaires cachées derrière le cou
 FAR_FEATHERS = [
-    ((196, 37), (240, 41), 10.0), ((193, 37), (233, 29), 11.0), ((190, 38), (220, 22), 11.0), ((187, 40), (204, 21), 11.0),
-    ((185, 46), (226, 52), 12.0), ((183, 54), (220, 62), 12.0),
+    ((197, 37), (239, 43), 10.5), ((194, 37), (232, 31), 11.0), ((190, 38), (220, 24), 11.0), ((187, 40), (204, 22), 10.5),
 ]
 # la queue en éventail posée au sol (racine, pointe, largeur), du dessus vers le dessous
 TAIL = [((118, 186), (50, 193), 15.0), ((118, 190), (46, 207), 16.0), ((118, 194), (51, 220), 16.0),
@@ -143,7 +142,9 @@ def quill_feather(fig, nm, p0, p3, w, mat, bend=1.0, cast=1.3, tipw=0.3, light_v
 
 
 def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0, ph=0.0, ws=0.0,
-              rows=((48, 8), (32, 10), (17, 13)), lead_w=(9.0, 8.0, 6.0, 4.0), far=False, bolt=None, glow=0.0):
+              rows=((40, 9, 15, 0.08, 1.12), (27, 11, 12, 0.05, 1.08), (15, 13, 9, 0.03, 1.02)),
+              cdir=((0, 112), (0.6, 122), (0.95, 140), (1.2, 162)), lead_w=(11.0, 8.5, 6.0, 4.0), far=False, bolt=None,
+              glow=0.0):
     """Une aile de rapace : les grandes plumes (du bout de l'aile vers le corps), trois rangées de couvertures en
     vraies plumes pointues (la plus longue d'abord), puis le bord d'attaque (l'épaule → le poignet → la main), éclairé.
     feathers : [(racine, pointe, largeur)] dans la pose du dessin ; lift : toute l'aile tourne autour de R ;
@@ -168,33 +169,54 @@ def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0,
         quill_feather(fig, nm, root, tip, w, mat, bend=1.6 + droop * 0.15 + 0.6 * ws * math.sin(ph - 0.5 * i + 1),
                       cast=1.6 if not far else 1.2)
         names.append(nm)
-    # les couvertures : la ligne suit le bord d'attaque (de l'épaule vers la main)
-    line = resample([lerp(R, Wp, 0.04), lerp(R, Wp, 0.5), Wp, lerp(Wp, Tp, 0.8)], 16)
-    m = len(line) - 1
+    # les couvertures : trois rangées de vraies plumes pointues posées le long du bord d'attaque (de l'épaule s = 0
+    # au poignet s = 1, puis sur la main), la plus longue d'abord ; leur racine est cachée sous le bord d'attaque ou
+    # sous la rangée du dessus
+    def line_at(s_):
+        return lerp(R, Wp, s_) if s_ <= 1 else lerp(Wp, Tp, s_ - 1)
 
-    def fdir(u):
-        # la direction des plumes de couverture : celle des grandes plumes dessous, couchées vers le bout de l'aile
-        best = None
-        for (r0, r1, w) in feathers:
-            rr = posed(r0)
-            dd = math.dist(rr, line[min(m, int(u * m))])
-            if best is None or dd < best[0]:
-                a0 = math.degrees(math.atan2(r1[1] - r0[1], r1[0] - r0[0])) + lift
-                best = (dd, a0)
-        return unit(best[1] - 12)
-    dirs = [fdir(k / m) for k in range(m + 1)]
-    taper_ = [min(1.0, 0.6 + 0.8 * k / m) * (1 - 0.5 * max(0.0, (k / m - 0.72) / 0.28)) for k in range(m + 1)]
-    for j, (dep, nf) in enumerate(rows):
-        deps = [dep * taper_[k] for k in range(m + 1)]
-        wid = [max(5.0, dep * 0.34) * (0.8 + 0.4 * taper_[k]) for k in range(m + 1)]
-        row, shades, _ = feather_row(line, dirs, deps, nf, wid, bend=0.9 if not far else 0.6,
-                                     jit=[(1.0, 0.84, 1.12, 0.92, 1.06, 0.88, 1.1, 0.95, 1.03, 0.9),
-                                          (0.92, 1.1, 0.86, 1.04, 0.96, 1.12, 0.9, 1.0, 1.08, 0.94),
-                                          (1.06, 0.9, 1.0, 1.12, 0.88, 1.04, 0.94, 1.1, 0.92, 1.0)][j % 3])
+    def dir_at(s_):
+        ks = cdir
+        for (s0, a0), (s1, a1) in zip(ks, ks[1:]):
+            if s_ <= s1:
+                t = max(0.0, (s_ - s0) / (s1 - s0))
+                return a0 + (a1 - a0) * t + lift
+        return ks[-1][1] + lift
+    jits = [(1.0, 0.84, 1.12, 0.92, 1.06, 0.88, 1.1, 0.95, 1.03, 0.9, 1.08, 0.93, 1.0),
+            (0.92, 1.1, 0.86, 1.04, 0.96, 1.12, 0.9, 1.0, 1.08, 0.94, 1.02, 0.88, 1.06),
+            (1.06, 0.9, 1.0, 1.12, 0.88, 1.04, 0.94, 1.1, 0.92, 1.0, 0.86, 1.08, 0.96)]
+    from shapely.ops import unary_union
+    from shapely import affinity
+    for j, (Lr, nf, wr, s0, s1) in enumerate(rows):
+        polys = []
+        for q in range(nf):
+            s_ = s0 + (s1 - s0) * (q + 0.5) / nf
+            J = jits[j][q % 13]
+            edge = 1.0 - 0.45 * max(0.0, (abs(s_ - (s0 + s1) / 2) / ((s1 - s0) / 2)) - 0.55) / 0.45
+            a = dir_at(s_) + 4.0 * (J - 1.0) * 3
+            d = unit(a)
+            sd = (-d[1], d[0])
+            Lq = Lr * J * edge
+            root = add(line_at(s_), d, 1.5)
+            tip = add(add(root, d, Lq), sd, 0.9)
+            sh = plume(root, add(add(root, d, Lq * 0.35), sd, 0.3), add(add(root, d, Lq * 0.72), sd, 0.9), tip,
+                       wr * (0.92 + 0.16 * J) * (0.8 + 0.2 * edge), n=12, tip=0.4)
+            polys.append(poly_of(sh))
+        # la plume côté épaule recouvre sa voisine côté main : ombre douce posée sur la voisine
+        shades = []
+        for q in range(nf - 1, 0, -1):
+            g = polys[q - 1]
+            c = affinity.translate(g, -0.9, 1.4).difference(g).intersection(polys[q])
+            c = c.buffer(-0.05).buffer(0.05)
+            if not c.is_empty:
+                sh_ = shape_of(c, min_area=0.15)
+                if sh_:
+                    shades.append(sh_)
+        row = shape_of(unary_union(polys).buffer(0.25, join_style=1).buffer(-0.25, join_style=1), sharp_deg=55)
         nm = '%s_cov%d' % (key, j)
         tone = [mat.base, mat.light, mat.light][j]
         fig.part(nm, row, mat, grad=(Wp[0] + 10, Wp[1] - 8, R[0] - 10, R[1] + 30, [(0, tone), (0.55, mat.base), (1, mat.shadow)]),
-                 cel=1.2, rim=0.55, cast=1.6, details=[(sh, mat.shadow, 0.55) for sh in shades])
+                 cel=1.1, rim=0.5, cast=1.6, details=[(sh_, mat.shadow, 0.5) for sh_ in shades])
         names.append(nm)
     # le bord d'attaque (le « bras » de l'aile), d'un seul tenant, éclairé de reflets bleus
     lead_pts = [lerp(R, Wp, 0.02), lerp(R, Wp, 0.5), lerp(R, Wp, 0.92), lerp(Wp, Tp, 0.45), lerp(Wp, Tp, 1.0)]
@@ -261,7 +283,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- l'aile lointaine (derrière tout) ----
     fw_names, fW, fT = bird_wing(fig, 'fw', STORMF, R_F, W_F, T_F, FAR_FEATHERS, lift=P['wf_l'], spread=P['wf_s'],
-                                 droop=P['wd'], ph=ph - 0.8, ws=ws, rows=((26, 6), (17, 7), (10, 8)),
+                                 droop=P['wd'], ph=ph - 0.8, ws=ws, rows=((22, 5, 11, 0.45, 1.1), (13, 6, 9, 0.4, 1.06)), cdir=((0, 20), (0.7, 8), (1.0, -8), (1.2, -20)),
                                  lead_w=(8.0, 7.0, 5.0, 3.5), far=True)
 
     # ---- la queue en éventail, posée au sol ----

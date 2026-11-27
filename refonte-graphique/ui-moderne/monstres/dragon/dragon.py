@@ -475,7 +475,7 @@ def tail_spikes(fig, tc, tw):
         out.append(shard(base, tip, w, bend=-0.5))
     end, prev = tc[-1], tc[-3]
     d = unit(prev, end)
-    for ang, L, w in ((-128, 15.0, 7.4), (-86, 20.0, 8.6), (-44, 13.0, 7.0)):
+    for ang, L, w in ((-130, 17.0, 8.2), (-88, 23.0, 9.6), (-46, 15.5, 7.8)):
         dd = rotv(d, ang)
         base = add(end, d, -4)
         out.append(shard(base, add(base, dd, L), w, bend=0.4 if ang < -80 else -0.4))
@@ -501,9 +501,12 @@ def body_details(R, P):
         out.append((sh, ('lin', x1, y0, x0, y1, [(0, ROCK.light, op), (0.6, ROCK.light, op * 0.35), (1, ROCK.light, 0)]), 1))
     # le four : une grande zone de lave sous le poitrail et la gorge
     chest = CHEST
-    csh = sm([D(p) for p in chest], t=0.9)
     cx, cy = D((190, 160))
     k = min(1.0, heat / 3)
+    # la chaleur déborde un peu sur la roche autour du four (la croûte rougit près de la lave)
+    out.append((ellipse(cx, cy, 34, 40), ('rad', cx, cy, 34, 40, [(0, LAVA[4], 0.0), (0.62, LAVA[4], 0.0), (0.74, LAVA[4], 0.3 + 0.15 * k),
+                                                              (1, LAVA[5], 0)]), 1))
+    csh = sm([D(p) for p in chest], t=0.9)
     out.append((csh, ('rad', cx + 4, cy - 6, 38, 38, [(0, LAVA[0] if heat > 2 else LAVA[1]), (0.45, LAVA[2]), (1, LAVA[4])]), 1))
     # les plaques de croûte chauffée (cellules irrégulières, rognées et arrondies : la lave brille entre elles)
     for poly in chest_plates():
@@ -523,8 +526,9 @@ def body_details(R, P):
     return out
 
 
-CHEST = [(172, 140), (184, 128), (198, 128), (210, 140), (214, 158), (210, 178), (200, 190), (184, 194), (172, 188),
-         (166, 172), (166, 154)]
+CHEST = [(172, 140), (178, 133), (184, 129), (191, 130), (198, 127), (205, 133), (210, 140), (213, 149), (214, 158),
+         (213, 168), (210, 178), (205, 185), (200, 190), (192, 191), (184, 194), (177, 190), (172, 188), (169, 180),
+         (166, 172), (167, 163), (166, 154), (169, 147)]
 
 
 _PLATES = []
