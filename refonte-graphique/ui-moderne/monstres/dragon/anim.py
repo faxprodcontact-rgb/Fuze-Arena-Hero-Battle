@@ -118,7 +118,7 @@ ATTACK = [
 ]
 ATTACK_HIT = 700
 
-# 3) « Tempête de feu » (pixel : SPECIALE, ≈ 3,3 s).
+# 3) « Tempête de feu » (pixel : SPECIALE, ≈ 3,7 s).
 SPECIAL = [
     (0, {}),
     (260, dict(sq=3, fr=1.6, fx=-1, hy=1.5, ht=3, jaw=-4, heat=1, wu=0.12, lag=(1.5, 1), tail=1)),
@@ -128,13 +128,13 @@ SPECIAL = [
     (1180, dict(sq=-0.8, fr=-10, fx=-2.0, fy=-3, hx=-0.5, hy=-5, ht=-30, jaw=16, heat=3, wu=1.0, flap=-4, tail=1)),
     (1300, dict(sq=0.4, fr=-8, fx=-1.5, fy=-2.5, hx=0, hy=-4, ht=-26, jaw=14, heat=2.4, wu=1.0, flap=18, tail=0)),
     (1520, dict(sq=0.2, fr=-7, fx=-1.5, fy=-2.2, hx=0, hy=-3, ht=-16, jaw=8, heat=2.0, wu=1.0, flap=4, tail=0.4)),
-    (2150, dict(sq=0, fr=-6, fx=-1.2, fy=-2, hy=-2.4, ht=-10, jaw=7, heat=1.6, wu=0.95, flap=-4, tail=0.6)),
-    (2700, dict(sq=1.4, fr=-1, fx=-0.4, fy=-0.4, hy=0.6, ht=1, jaw=2, heat=0.8, wu=0.2, flap=0, lag=(1.2, 1.4), tail=0.2)),
-    (3050, dict(sq=0.6, heat=0.3, wu=0.0, lag=(0.4, 0.5))),
-    (3300, {}),
+    (2450, dict(sq=0, fr=-6, fx=-1.2, fy=-2, hy=-2.4, ht=-10, jaw=7, heat=1.6, wu=0.95, flap=-4, tail=0.6)),
+    (3000, dict(sq=1.4, fr=-1, fx=-0.4, fy=-0.4, hy=0.6, ht=1, jaw=2, heat=0.8, wu=0.2, flap=0, lag=(1.2, 1.4), tail=0.2)),
+    (3350, dict(sq=0.6, heat=0.3, wu=0.0, lag=(0.4, 0.5))),
+    (3700, {}),
 ]
 SP_SPIT = 1180            # la boule de feu part
-SP_RAIN = (1700, 1950)    # les blocs de lave arrivent sur le héros (premier, dernier)
+SP_RAIN = (2050, 2300)    # les blocs de lave arrivent sur le héros (premier, dernier)
 
 
 # ======================================================================== la respiration (en boucle, 2,6 s)
@@ -443,7 +443,7 @@ def lava_block(fig, c, s, rot, v, op=1.0):
 
 RAIN = [  # (instant de l'impact en ms, décalage en x au sol, taille)
     (SP_RAIN[0], -12.0, 5.8), (SP_RAIN[0] + 120, 10.0, 5.2), (SP_RAIN[1], -1.0, 6.6)]
-RAIN_V = (150.0, 330.0)        # la vitesse des blocs (ils tombent en biais, venus du haut, côté dragon)
+RAIN_V = (190.0, 520.0)        # la vitesse des blocs (ils tombent en biais, venus du haut, côté dragon)
 
 
 def fx_special(tl):
@@ -481,7 +481,7 @@ def fx_special(tl):
         # la pluie de blocs de lave sur le héros
         for j, (ti, dx, s) in enumerate(RAIN):
             t = (tl - ti) / 1000
-            if -0.55 < t < 0:
+            if -0.62 < t < 0:
                 hit = (TARGET[0] + dx, GR - 2)
                 c = (hit[0] + RAIN_V[0] * t, hit[1] + RAIN_V[1] * t)
                 fig.fx_front.append(lava_block(fig, c, s, tl * 0.6 + 90 * j, RAIN_V))
@@ -494,7 +494,7 @@ def fx_special(tl):
                 x = TARGET[0] - 22 + 11 * k
                 h = (17 + 7 * math.sin(tl / 85 + k * 1.7) + 6 * rnd(k, 9)) * b
                 fig.fx_front.append(tongue(fig, (x, GR), h, 6.4 * b, bend=0.7 * math.sin(tl / 110 + k), lean=0.15 * math.sin(tl / 150 + k), op=1))
-        sm_ = env(tl, SP_RAIN[1] + 300, SP_RAIN[1] + 700, SP_RAIN[1] + 1100, SP_RAIN[1] + 1450)
+        sm_ = env(tl, SP_RAIN[1] + 300, SP_RAIN[1] + 650, SP_RAIN[1] + 1000, SP_RAIN[1] + 1380)
         if sm_ > 0:
             for k in range(4):
                 u = ((tl - SP_RAIN[1] - 300) / 900 + k / 4) % 1.0

@@ -28,7 +28,7 @@ ID_JEU = 'boss-terre'
 # ---------- matières (tons du pixel art passés à la gamme de l'interface : lumières chaudes, ombres violettes) ----------
 ROCK = Mat('#d6cca2', '#a09878', '#716c66', '#4a4256', '#2b2338', glint='#f6eed2')
 ROCKF = Mat('#a49c86', '#7a7270', '#56505e', '#3a3248', '#241c30')          # la roche du fond (bras et jambe lointains)
-SAND = Mat('#fbefcc', '#e2cfa8', '#b9a387', '#856e74', '#503c4c', glint='#fffaea')   # grès taillé : la statue, le portique
+SAND = Mat('#f0e2c0', '#cfbd9c', '#a8957f', '#77656c', '#473848', glint='#fff6e0')   # grès taillé : la statue, le portique
 MOSS = Mat('#d8e486', '#8eb24a', '#5a883a', '#335c3a', '#1a3a32')
 GAR = Mat('#ffd6dc', '#ff7488', '#d6365a', '#8c1c4a', '#4e143a', glint='#ffffff')    # grenat
 EYE = ('#fff0dc', '#ffb08a', '#ff5a3c', '#d82a2e', '#8c1626')
@@ -48,6 +48,7 @@ FS, FE0, FW0 = (214.0, 146.0), (220.0, 172.0), (224.0, 198.0)     # bras lointai
 FACE_BOX = (175.0, 80.0, 241.0, 154.0)
 FACE_ARGS = dict(y_oeil=0.42, y_nez=0.6, y_bouche=0.78, l_oeil=0.19)
 FACE_V = _placer(FACE_BOX, **FACE_ARGS)
+HEAD_OFF = (-3.0, 5.0)          # la tête est baissée et rentrée dans la montagne (dessinée à FACE_BOX, posée ici)
 
 REST = dict(breath=0.0, bx=0.0, by=0.0, pitch=0.0, head=(0.0, 0.0), tilt=0.0, gape=0.0, ff=(0.0, 0.0), fn=(0.0, 0.0),
             frot=0.0, nrot=0.0, glow=0.0, blink=0.0, sway=0.0)
@@ -139,7 +140,7 @@ def grad_of(sh, stops):
 
 ROCK_G = [(0, '#aaa182'), (0.45, '#77716a'), (1, '#463e52')]
 ROCKF_G = [(0, '#7c7470'), (0.5, '#59525e'), (1, '#352d44')]
-SAND_G = [(0, '#efe0bc'), (0.5, '#c4ae90'), (1, '#8a7478')]
+SAND_G = [(0, '#dccaa6'), (0.5, '#ab9882'), (1, '#74626c')]
 
 
 def moss_cap(pts, k=1.0, drips=()):
@@ -333,7 +334,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     U = mchain(mT(P['bx'], P['by']), mR(P['pitch'], *HIP))                 # le haut du corps (depuis les hanches)
     UC = mchain(U, mT(0, -1.0 * br))                                         # ce qui monte avec le souffle
     BODY = mchain(U, mS(1, 1 + 0.008 * br, 150, 196))
-    HEAD = mchain(UC, mT(P['head'][0], P['head'][1] - 0.4 * br), mR(P['tilt'], *NECK))
+    HEAD = mchain(UC, mT(P['head'][0], P['head'][1] - 0.4 * br), mR(P['tilt'], *NECK), mT(*HEAD_OFF))
     lift = -P['by'] + P['pitch'] * 0.6
     LEGN = mchain(mS(1, 1 + lift / 50.0, 0, GRD), mT(0, 0))
     LEGF = mchain(mS(1, 1 + lift / 52.0, 0, GRD))
@@ -459,17 +460,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
               drips=[(0.07, 7.0, 3.4), (0.5, 4.6, 3.0), (0.83, 3.0, 2.6)], cast_on=['body', 'pill', 'pilr'], cast=1.6)
     fig.pose(['bmoss'], UC)
 
-    # ================================================================ le col de rocher sous la mâchoire
-    col = sm([(172.0, 140.0), (190.0, 135.0), (220.0, 137.0), (238.0, 144.0), (243.0, 156.0), (238.0, 168.0), (222.0, 175.0),
-              (200.0, 176.0), (184.0, 170.0), (174.0, 158.0)], t=0.9)
-    cdet = [face([(216.0, 144.0), (236.0, 147.0), (241.0, 157.0), (234.0, 162.0), (222.0, 156.0)], ROCK.light, 0.55, 3.0),
-            face([(176.0, 158.0), (190.0, 164.0), (208.0, 174.0), (190.0, 172.0), (178.0, 166.0)], ROCK.deep, 0.35, 3.0)]
-    cdet += fissure([(222.0, 156.0), (219.0, 164.0), (223.0, 173.0)], 0.8)
-    cdet += fissure([(198.0, 152.0), (200.0, 162.0), (197.0, 172.0)], 0.7, k=0.7)
-    fig.part('col', col, ROCK, grad=grad_of(col, [(0, '#a8a084'), (0.5, '#6e6866'), (1, '#433b52')]), cel=2.0, rim=0.8, cast=1.6,
-             cast_on=['body', 'farm'], details=cdet)
-    fig.pose(['col'], UC)
-
     # ================================================================ la tête de statue (la zone forte)
     head_parts(fig, P, HEAD, UC)
 
@@ -505,6 +495,25 @@ def drips_of(drips):
 
 # ---------------------------------------------------------------- la tête
 
+COL = [(166.0, 128.0), (175.0, 132.0), (184.0, 142.0), (194.0, 151.0), (206.0, 156.6), (220.0, 157.2), (232.0, 153.0), (239.0, 148.0),
+       (244.0, 145.0), (248.0, 152.0), (247.0, 168.0), (232.0, 178.0), (206.0, 180.0), (186.0, 175.0), (171.0, 161.0), (163.0, 143.0)]
+
+
+def collar(fig, M):
+    """Le col de rocher : il monte de la poitrine et ENVELOPPE le bas de la tête (la mâchoire sort de la roche) ; son bord
+    haut passe sous la bouche et le menton, remonte sur les deux côtés de la mâchoire."""
+    col = sm(COL, t=0.85)
+    cdet = [face([(222.0, 158.0), (238.0, 151.0), (245.0, 147.0), (249.0, 154.0), (242.0, 164.0), (228.0, 166.0)], ROCK.light, 0.55, 3.0),
+            face([(170.0, 150.0), (186.0, 160.0), (204.0, 176.0), (186.0, 174.0), (172.0, 162.0)], ROCK.deep, 0.35, 3.0),
+            face([(176.0, 134.0), (186.0, 143.0), (194.0, 153.0), (186.0, 152.0), (176.0, 142.0)], ROCK.light, 0.3, 2.0)]
+    cdet += fissure([(226.0, 162.0), (222.0, 170.0), (226.0, 178.0)], 0.8)
+    cdet += fissure([(198.0, 160.0), (200.0, 168.0), (196.0, 176.0)], 0.7, k=0.7)
+    cdet += fissure([(244.0, 150.0), (242.0, 157.0)], 0.6, k=0.6)
+    fig.part('col', col, ROCK, grad=grad_of(col, [(0, '#a8a084'), (0.5, '#6e6866'), (1, '#433b52')]), cel=2.0, rim=0.0, cast=1.6,
+             cast_on=['body', 'farm', 'nape'], details=cdet)
+    fig.pose(['col'], M)
+
+
 def head_parts(fig, P, HEAD, UC):
     V = FACE_V
     g = P['glow']
@@ -535,7 +544,6 @@ def head_parts(fig, P, HEAD, UC):
     # le grès s'use en roche brute vers la nuque : un bord irrégulier, une cassure sombre
     worn = sm([(176.0, 96.0), (179.0, 86.0), (186.0, 77.0), (194.0, 73.0), (191.0, 80.0), (186.0, 84.0), (184.0, 92.0), (181.0, 96.0),
                (180.5, 104.0)], sharp=(4, 5, 6, 7), t=0.6)
-    hdet += [(worn, ROCK.base, 0.85), (worn.move(0.8, 0.4), ROCK.light, 0.25)]
     # les plans de la face (lumière en haut à droite) : le côté proche qui tourne vers l'oreille est dans l'ombre
     side = sm([(181.0, 100.0), (191.0, 102.0), (194.0, 114.0), (195.0, 128.0), (200.0, 144.0), (206.0, 156.4), (196.0, 155.0), (186.0, 148.0),
                (180.0, 134.0), (177.6, 118.0)], t=0.9)
@@ -620,8 +628,13 @@ def head_parts(fig, P, HEAD, UC):
     # l'oreille sculptée : un creux en C, le bord éclairé
     hdet += [(sm([(ox + 1.0, oy - 6.0), (ox - 3.6, oy - 4.4), (ox - 4.4, oy + 1.0), (ox - 2.6, oy + 6.6), (ox + 0.6, oy + 7.4),
                   (ox - 1.0, oy + 2.0), (ox - 0.6, oy - 3.0)], t=0.9), SAND.deep, 0.65)]
-    fig.part('head', head, SAND, grad=grad_of(head, SAND_G), cel=2.2, rim=0.9, cast=1.8, cast_on=['col', 'body', 'farm', 'nape'],
-             details=hdet, occl=(SAND.deep, 0.18, 3.0))
+    # l'ombre douce de la roche qui recouvre le grès : sous l'avancée de la bosse (front) et au-dessus du col (mâchoire)
+    hood = hood_shape()
+    hdet += [(hood.move(-2.2, 6.5), SAND.deep, 0.22), (hood.move(-1.2, 3.6), SAND.deep, 0.25)]
+    colh = sm(COL, t=0.85).move(-HEAD_OFF[0], -HEAD_OFF[1])
+    hdet += [(colh.move(0.6, -6.0), SAND.deep, 0.18), (colh.move(0.3, -3.2), SAND.deep, 0.25)]
+    fig.part('head', head, SAND, grad=grad_of(head, SAND_G), cel=2.6, rim=0.7, cast=1.8, cast_on=['body', 'farm', 'nape'],
+             details=hdet, occl=(SAND.deep, 0.34, 5.0))
     names.append('head')
 
     # ---- les défenses de grenat : elles montent de la mâchoire du bas, dans les coins de la gueule ----
@@ -629,17 +642,30 @@ def head_parts(fig, P, HEAD, UC):
     tusk(fig, 'tusk1', (bx_ - mw / 2 + 2.0, bot - 1.0), 14.0 + 2.0 * P['gape'], 4.8, -8.0)
     names += ['tusk1', 'tusk2']
 
-    # ---- un seul coussin de mousse passe de la bosse au crâne ----
-    moss_part(fig, 'hmoss', [(174.0, 82.0), (181.0, 70.0), (196.0, 64.6), (212.0, 65.0), (227.0, 69.4), (236.4, 78.4)], 8.4,
-              seed=5, drips=[(0.06, 4.6, 3.0)], cast_on=['head', 'nape'], cast=1.3)
+    # ---- l'avancée de la bosse : la roche passe PAR-DESSUS le haut et l'arrière du crâne (la tête est enchâssée) ;
+    # son bord bas est cassé (la roche s'use), elle pose une ombre douce sur le front ----
+    hood = hood_shape()
+    fig.part('hood', hood, ROCK, grad=grad_of(hood, ROCK_G), cel=1.8, rim=0.0, cast=2.6, cast_on=['head', 'tusk1', 'tusk2'],
+             details=[face([(184.0, 70.0), (200.0, 64.0), (218.0, 64.0), (232.0, 70.0), (224.0, 76.0), (204.0, 75.0), (190.0, 78.0)], ROCK.light, 0.6, 3.0),
+                      face([(226.0, 66.0), (238.0, 73.0), (243.0, 82.0), (239.0, 83.6), (232.0, 78.0)], ROCK.hi, 0.5, 1.5),
+                      face([(166.0, 104.0), (170.0, 92.0), (176.0, 98.0), (172.0, 118.0), (167.0, 120.0)], ROCK.shadow, 0.4, 2.0)]
+             + fissure([(204.0, 66.0), (208.0, 73.0), (205.0, 79.0)], 0.7) + fissure([(171.0, 82.0), (176.0, 88.0)], 0.6, k=0.7))
+    names.append('hood')
+    # ---- un seul coussin de mousse passe de la bosse au crâne (posé sur l'avancée de roche) ----
+    moss_part(fig, 'hmoss', [(168.0, 86.0), (174.0, 72.0), (190.0, 63.0), (208.0, 60.6), (224.0, 63.0), (236.0, 70.0), (242.4, 79.0)], 8.0,
+              seed=5, drips=[(0.06, 4.6, 3.0)], cast_on=['hood', 'nape'], cast=1.3)
     names.append('hmoss')
+    fig.pose(names, HEAD)
+    # ---- le col de roche enveloppe la mâchoire ----
+    collar(fig, mchain(HEAD, mT(-HEAD_OFF[0], -HEAD_OFF[1])))     # il suit la tête : aucun bord du grès ne réapparaît
+    names = []
     # ---- la barbe de mousse pend sous le menton (gravité), sur le col ----
-    moss_part(fig, 'beard', [(198.0, 151.0), (208.0, 153.6), (220.0, 153.0), (232.0, 147.0)], 4.0, seed=8,
+    moss_part(fig, 'beard', [(200.0, 150.6), (210.0, 153.2), (221.0, 152.8), (231.0, 148.4)], 4.0, seed=8,
               drips=[(0.3, 4.6, 3.0), (0.75, 2.8, 2.4)], cast_on=['col'], cast=1.2, k=0.8)
     names.append('beard')
     # ---- les cristaux de la tempe, dans la fêlure ----
-    crystal_part(fig, 'ct1', (187.0, 94.0), -52, 13.5, 7.4, cast=0.7, cast_on=['head', 'nape'])
-    crystal_part(fig, 'ct2', (186.0, 90.0), -18, 7.5, 5.0, cast=0.6, cast_on=['head', 'nape'])
+    crystal_part(fig, 'ct1', (187.0, 94.0), -52, 13.5, 7.4, cast=0.7, cast_on=['head', 'hood'])
+    crystal_part(fig, 'ct2', (186.0, 90.0), -18, 7.5, 5.0, cast=0.6, cast_on=['head', 'hood'])
     names += ['ct1', 'ct2']
     fig.pose(names, HEAD)
     # ---- la grappe de cristaux dans la jointure sous l'oreille (elle pousse dans la roche du corps) ----
@@ -647,6 +673,15 @@ def head_parts(fig, P, HEAD, UC):
     crystal_part(fig, 'cj2', (172.0, 140.0), -94, 11.0, 5.4, cast=0.7, cast_on=['head', 'col', 'body', 'nape'])
     crystal_part(fig, 'cj3', (177.0, 143.0), -126, 7.0, 4.2, cast=0.6, cast_on=['col', 'body'])
     fig.pose(['cj1', 'cj2', 'cj3'], UC)
+
+
+def hood_shape():
+    """L'avancée de roche de la bosse sur la tête (repère de la tête) : elle couvre le crâne et l'arrière de la tête,
+    son bord bas cassé passe au-dessus du bandeau et derrière l'oreille."""
+    return sm([(178.0, 138.0), (167.0, 124.0), (163.0, 104.0), (166.0, 84.0), (176.0, 70.0), (192.0, 62.0), (210.0, 60.4), (227.0, 63.6),
+               (238.0, 72.0), (243.6, 83.0), (240.0, 85.4), (233.0, 81.6), (224.0, 80.2), (214.0, 80.8), (205.0, 80.0), (196.0, 82.6),
+               (189.0, 87.0), (184.0, 93.4), (177.0, 96.6), (170.6, 104.0), (167.4, 114.0), (169.0, 125.0), (175.6, 133.0)],
+              sharp=(10, 12, 15, 17, 19), t=0.75)
 
 
 def tusk(fig, name, base, L, w, lean, dim=0.0):

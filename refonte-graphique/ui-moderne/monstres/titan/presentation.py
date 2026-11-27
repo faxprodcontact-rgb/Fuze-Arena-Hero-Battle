@@ -79,9 +79,18 @@ def guide(boite, args, couleur='#00e0ff'):
 def mesures():
     """Les positions RÉELLES des traits du dessin (titan.py les construit à ces places)."""
     V = K.FACE_V
+    dx, dy = K.HEAD_OFF                       # la tête est dessinée à FACE_BOX puis posée (baissée, rentrée) de HEAD_OFF
     bx, by, bw = V['bouche']
     top, bot = by - 5.6, by + 6.4
-    return {'oeil_proche': V['oeil_proche'], 'oeil_fond': V['oeil_fond'], 'nez': V['nez'], 'bouche': (bx, (top + bot) / 2, bw * 1.9)}
+    e1, e2, n = V['oeil_proche'], V['oeil_fond'], V['nez']
+    return {'oeil_proche': (e1[0] + dx, e1[1] + dy, e1[2]), 'oeil_fond': (e2[0] + dx, e2[1] + dy, e2[2]), 'nez': (n[0] + dx, n[1] + dy),
+            'bouche': (bx + dx, (top + bot) / 2 + dy, bw * 1.9)}
+
+
+def boite():
+    x0, y0, x1, y1 = K.FACE_BOX
+    dx, dy = K.HEAD_OFF
+    return (x0 + dx, y0 + dy, x1 + dx, y1 + dy)
 
 
 def main():
@@ -120,13 +129,13 @@ def main():
     hk = 8
     svg = K.build(frame=fr).svg(bg='#3a2a5a')
     a = render(svg, int(fr[3] * hk), 'tete')
-    b = render(svg.replace('</svg>', guide(K.FACE_BOX, K.FACE_ARGS) + '</svg>'), int(fr[3] * hk), 'tete2')
+    b = render(svg.replace('</svg>', guide(boite(), K.FACE_ARGS) + '</svg>'), int(fr[3] * hk), 'tete2')
     im = Image.new('RGB', (a.width * 2 + 30, a.height + 60), (20, 12, 36))
     im.paste(a.convert('RGB'), (0, 60))
     im.paste(b.convert('RGB'), (a.width + 30, 60))
     d = ImageDraw.Draw(im)
-    defauts = verifier(mesures(), K.FACE_BOX)
-    d.text((10, 10), 'visage.py : boite %s, tour 18, reglages %s' % (K.FACE_BOX, K.FACE_ARGS), fill=(230, 230, 240))
+    defauts = verifier(mesures(), boite())
+    d.text((10, 10), 'visage.py : boite %s, tour 18, reglages %s' % (boite(), K.FACE_ARGS), fill=(230, 230, 240))
     d.text((10, 32), 'verifier() : ' + ('aucun defaut' if not defauts else '; '.join(defauts)), fill=(140, 240, 160) if not defauts else (255, 140, 140))
     im.save(os.path.join(OUT, 'visage.png'))
     print('verifier :', defauts or 'aucun défaut')
