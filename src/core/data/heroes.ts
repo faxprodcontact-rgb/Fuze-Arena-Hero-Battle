@@ -1,7 +1,7 @@
-// Les 44 héros du jeu. 36 sont construits comme des GABARITS : rareté × élément × rôle × variante (statistiques,
+// Les 47 héros du jeu. 36 sont construits comme des GABARITS : rareté × élément × rôle × variante (statistiques,
 // attaque, compétence, passifs et, 1 sur 3, talent de chef) ; les 72 gabarits d'origine sont gardés pour les
-// statistiques, seuls les 36 dessinés en HD sont dans le jeu (HERO_IDS). Les 8 autres sont des monstres de clan devenus
-// héros (CLAN_HEROES), avec une compétence écrite pour eux.
+// statistiques, seuls les 36 dessinés en HD sont dans le jeu (HERO_IDS). 8 sont des monstres de clan devenus
+// héros (CLAN_HEROES) et 3 sont les dragons de la famille d'Elvyn (DRAGONS), avec une compétence écrite pour eux.
 import type { Effect, Passive, SkillDef, Talent } from '../battle/types';
 import { ELEMENTS, type Element, type HeroDef, type Rarity, type Role } from '../types';
 
@@ -350,7 +350,50 @@ const CLAN_HEROES: HeroDef[] = [
   }),
 ];
 
-export const HEROES: HeroDef[] = [...TEMPLATES.filter((h) => KEPT.has(h.id)), ...CLAN_HEROES];
+// ---------- Les 3 dragons, famille d'Elvyn (demande du propriétaire, 27/11/2026) ----------
+// Dessinés seulement en vectoriel (refonte-graphique/ui-moderne/heros/brasyr|rocvar|venthys/, images
+// public/art/vecto/dragon-<élément>.webp) : pas de pixel art. Compétence = leur attaque spéciale animée. Valeurs dans la
+// moyenne des Épiques de leur rôle, sans simulation : le grand réglage se fera avant la bêta. Noms provisoires.
+const DRAGONS: HeroDef[] = [
+  // Brasyr, dragon de feu, hallebarde : « souffle du dragon », un long jet de feu qui enveloppe la première ligne
+  build({
+    id: 'dragon-feu', name: 'Brasyr', element: 'fire', role: 'warrior', rarity: 'epic',
+    skill: { id: 'brasyr', effects: [
+      { type: 'damage', target: 'frontRow', power: pw(1.5, 'epic') },
+      { type: 'status', target: 'same', status: 'burn', value: 0.45, seconds: 5, chance: 0.9 },
+    ] },
+    // son attaque de base, le « croissant de braise », met parfois le feu
+    passives: [first('warrior'), { kind: 'trigger', on: 'attack', chance: 0.3, effects: [{ type: 'status', target: 'attacker', status: 'burn', value: 0.3, seconds: 3 }] }],
+  }),
+  // Rocvar, dragon de terre, marteau et pavois : « la colère de la montagne », il enfonce son pavois dans le sol et des
+  // aiguilles de pierre jaillissent sous l'ennemi (étourdi, défense brisée) ; il attire les coups sur lui
+  build({
+    id: 'dragon-terre', name: 'Rocvar', element: 'earth', role: 'protector', rarity: 'epic',
+    skill: { id: 'rocvar', effects: [
+      { type: 'damage', target: 'front', power: pw(1.6, 'epic') },
+      { type: 'status', target: 'same', status: 'stun', seconds: 2, chance: 0.6 },
+      { type: 'status', target: 'same', status: 'defDown', value: 0.2, seconds: 5, chance: 0.6 },
+      { type: 'status', target: 'self', status: 'taunt', seconds: 3 },
+    ] },
+    // « le roc lancé » : celui qui le frappe peut recevoir un rocher en retour
+    passives: [first('protector'), { kind: 'trigger', on: 'hurt', chance: 0.25, effects: [{ type: 'damage', target: 'attacker', power: 0.8 }] }],
+    talent: { defMult: 1.2 },
+  }),
+  // Venthys, dragon de vent, deux lames : « cyclone », un tourbillon qui file jusqu'à la dernière ligne et l'entaille
+  // trois fois ; le vent le rend plus rapide
+  build({
+    id: 'dragon-vent', name: 'Venthys', element: 'wind', role: 'assassin', rarity: 'epic',
+    skill: { id: 'venthys', effects: [
+      { type: 'damage', target: 'back', power: pw(0.9, 'epic') },
+      { type: 'damage', target: 'same', power: pw(0.9, 'epic') },
+      { type: 'damage', target: 'same', power: pw(0.9, 'epic') },
+      { type: 'status', target: 'self', status: 'speedUp', value: 0.3, seconds: 4 },
+    ] },
+    passives: [first('assassin'), { kind: 'trigger', on: 'kill', effects: [{ type: 'status', target: 'self', status: 'speedUp', value: 0.3, seconds: 5 }] }],
+  }),
+];
+
+export const HEROES: HeroDef[] = [...TEMPLATES.filter((h) => KEPT.has(h.id)), ...CLAN_HEROES, ...DRAGONS];
 
 /** Les héros retirés du jeu (identifiant → rareté, élément) : seulement pour dédommager les vieilles sauvegardes. */
 export const RETIRED_HEROES: ReadonlyMap<string, { rarity: Rarity; element: Element }> = new Map(

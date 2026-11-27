@@ -2,7 +2,7 @@
 // (public/art/hd/v/<id>.webp) et leur respiration en pied (public/art/hd/pied/<id>.webp), tirés des planches HD par
 // refonte-graphique/pixel/hd/anim/vignettes.py. Au combat, les planches HD elles-mêmes (hd-fight.ts).
 import type { Element, Rarity } from '../core/types';
-import { DEFAULT_LOOK, heroArt, monsterArtId, type Look } from './look';
+import { DEFAULT_LOOK, hasFigure, heroArt, monsterArtId, type Look } from './look';
 import { artUrl } from './art-url';
 
 export const ELEMENT_COLOR: Record<Element, string> = {
@@ -13,9 +13,12 @@ export const RARITY_COLOR: Record<Rarity, string> = {
 };
 export const ITEM_COLORS = ['#9aa0b5', '#4cc46b', '#3d8bff', '#a35cff', '#ffc94a', '#ff4d5e'];
 
-/** Le visage d'un personnage HD (héros, monstre de clan, grand boss) : carré, en pixel art agrandi sans flou. */
+/**
+ * Le visage d'un personnage HD (héros, monstre de clan, grand boss) : carré, en pixel art agrandi sans flou. Un
+ * personnage sans pixel art (les 3 dragons) a un visage vectoriel lisse, coupé dans son dessin : art/vecto/v/<id>.webp.
+ */
 export function faceUrl(id: string): string {
-  return artUrl(`art/hd/v/${id}.webp`);
+  return artUrl(hasFigure(id) ? `art/hd/v/${id}.webp` : `art/vecto/v/${id}.webp`);
 }
 /** La respiration d'un personnage HD : une bande d'images de même taille (mesures dans hd-figures.ts). */
 export function figureUrl(id: string): string {

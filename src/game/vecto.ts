@@ -3,6 +3,7 @@
 // l'adresse `?vecto=1` allume l'essai (gardé sur le téléphone), `?vecto=0` l'éteint. Le combat reste en pixel art.
 // À retirer (ou à généraliser) après l'avis du propriétaire.
 import { artUrl } from './art-url';
+import { HD_FIG } from './hd-figures';
 
 const VECTO_ON = (() => {
   try {
@@ -90,9 +91,12 @@ const VECTO: Record<string, readonly [number, number, number, number]> = {
 
 export interface VectoFig { w: number; h: number; fx: number; fy: number; big: string; small: string }
 
-/** Le dessin vectoriel d'un héros si l'essai est allumé et qu'il en a un ; sinon rien (on garde le pixel art). */
+/**
+ * Le dessin vectoriel d'un héros si l'essai est allumé et qu'il en a un ; sinon rien (on garde le pixel art).
+ * Un personnage SANS pixel art (les 3 dragons, 27/11) a toujours son dessin vectoriel, essai allumé ou non.
+ */
 export function vectoFig(id: string): VectoFig | undefined {
-  const m = VECTO_ON ? VECTO[id] : undefined;
+  const m = VECTO_ON || !(id in HD_FIG.chars) ? VECTO[id] : undefined;
   if (!m) return undefined;
   const [w, h, fx, fy] = m;
   return { w, h, fx, fy, big: artUrl(`art/vecto/${id}.webp`), small: artUrl(`art/vecto/${id}-160.webp`) };

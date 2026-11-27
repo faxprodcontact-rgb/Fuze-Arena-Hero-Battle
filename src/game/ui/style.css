@@ -1493,3 +1493,5 @@ button.setting-row:active { filter: brightness(0.95); }
 .hfig .px-win.vec-win { overflow: visible; }
 .hfig .px-win.vec-win img { width: 100%; height: 100%; image-rendering: auto; }
 .hcard .hcard-still.hcard-vec { image-rendering: auto; }
+/* les dessins vectoriels (les 3 dragons n'ont que ceux-là, même visage) restent lisses partout, jamais « pixelated » */
+img[src^="art/vecto/"] { image-rendering: auto !important; }
