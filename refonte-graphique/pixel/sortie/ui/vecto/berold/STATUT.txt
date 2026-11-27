@@ -1,4 +1,7 @@
 fait
+Avis du 27/11, corrigé :
+- tête recentrée : le casque, le visage, la barbe et le cimier ont glissé ensemble de 4 pixels du dessin vers la gauche, d'un seul bloc ; le casque est maintenant posé au milieu, entre les deux épaules, dans l'axe du buste (ligne de la boucle de ceinture) ; le visage regarde toujours à droite (3/4) ;
+- le cou suit : son haut reste sous la tête, son bas est centré sur le col de la cuirasse (raccord cou / col propre) ; visage.py : aucun défaut ; la tête reste centrée dans toutes les poses (repos, estoc, bouclier levé, cri).
 Tour 2 de l'avis (26/11 soir), corrigé point par point :
 - flamme du bouclier redessinée : une seule flamme d'or à trois pointes recourbées (la grande au milieu), avec une petite flamme orange au cœur (plus de fente rouge ni de boule) ;
 - raccord épaule / torse : une épaulière d'or bombée part du col de la cuirasse et coiffe le haut de l'épaule (le bras sort dessous, elle tient dans toutes les poses) ;

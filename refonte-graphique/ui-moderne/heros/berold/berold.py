@@ -73,6 +73,8 @@ NL1, NL2 = 11.0, 9.2                     # bras, avant-bras
 FS0 = (75.2, 56.4)                       # l'épaule lointaine (cachée)
 HIP = (60.0, 84.0)                       # le pivot du buste
 NECK = (64.0, 49.0)                      # le pivot (et le centre d'agrandissement) de la tête
+HEAD_DX = -4.0                           # la tête (casque, visage, cimier) recentrée d'un seul bloc entre les
+#                                          épaules, dans l'axe du cou et du buste (avis du 27/11)
 C0 = (86.2, 69.6)                        # le milieu de la face du bouclier
 SRX, SRY, DEPTH = 16.4, 20.4, 3.4        # ses demi-axes, l'épaisseur vue sur la gauche
 G0 = (28.4, 64.0)                        # le point de prise, au repos
@@ -100,7 +102,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     br = P['breath']
     UC = mchain(U, mT(0, -0.55 * br))
     TOR = mchain(U, mS(1, 1 + 0.014 * br, 60, 80))
-    HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], 64, 46), mS(1.1, 1.1, *NECK))
+    HEAD = mchain(UC, mT(*P['head']), mT(HEAD_DX, 0), mR(P['tilt'], 64, 46), mS(1.1, 1.1, *NECK))
     LEG = mS(1, 1 - dyb / 26.5, 0, 110.6)
     SKIRT = mchain(U, mskx(-0.07 * P['pg'], 79))
 
@@ -125,9 +127,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     skirt(fig, P)
 
     # ======================================================================== le cou, la cuirasse, la ceinture
-    neck = sm([(57.6, 38.0), (66.6, 38.0), (67.6, 44.0), (68.4, 51.0), (56.4, 51.0), (56.6, 44.0)])
+    # le cou : son haut suit la tête (recentrée), son bas est centré sur le col de la cuirasse (milieu x 61,4)
+    ndx = lambda y: HEAD_DX + (-0.9 - HEAD_DX) * max(0.0, min(1.0, (y - 44.0) / 7.0))
+    neck = sm([(x + ndx(y), y) for (x, y) in ((57.6, 38.0), (66.6, 38.0), (67.6, 44.0), (68.4, 51.0), (56.4, 51.0), (56.6, 44.0))])
     fig.part('neck', neck, SKIN, cel=1.2, rim=0.4, cast=0,
-             details=[(neck, ('lin', 62, 46, 62, 51, [(0, SKIN.deep, 0.75), (1, SKIN.shadow, 0.2)]), 1)])
+             details=[(neck, ('lin', 61.5, 46, 61.5, 51, [(0, SKIN.deep, 0.75), (1, SKIN.shadow, 0.2)]), 1)])
     torso_ = cuirass(fig, P)
     belt(fig, P, torso_)
 
