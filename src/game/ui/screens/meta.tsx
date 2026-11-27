@@ -210,7 +210,7 @@ export function NameScreen() {
   const [name, setName] = useState(randomName());
   const [error, setError] = useState<string | null>(null);
   return (
-    <div class="name-screen" style={{ backgroundImage: `linear-gradient(180deg, #120c3366, #120c33d9), url(${artUrl('art/ui-px/chargement.webp')})` }}>
+    <div class="name-screen" style={{ backgroundImage: `linear-gradient(180deg, #120c3366, #120c33d9), url(${artUrl('art/chargement/chargement.webp')})` }}>
       {/* refaite le 26/11 (demande du propriétaire) : plus d'image, une carte bleu nuit cerclée d'or */}
       {!s.auth && !guest ? <SignInCard onGuest={() => setGuest(true)} /> : (
         <div class="name-card">

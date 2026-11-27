@@ -8,7 +8,7 @@ le logo ne dépend d'aucune police chargée. Or : dégradé métallique (haut cl
 liseré clair sur les bords tournés vers la lumière (en haut à droite), bord plus sombre en bas à gauche, reflet doux,
 tranche brun rouge en dessous, un seul contour sombre épais, ombre portée douce.
 
-  python3 refonte-graphique/pixel/ui/logo_hd.py → public/art/ui/logo.svg (lu par chargement.py, posé dans index.html)
+  python3 refonte-graphique/pixel/ui/logo_hd.py → public/art/ui/logo.svg (lu par ui-moderne/chargement/chargement.py, posé dans index.html)
 Aperçu PNG haute définition : refonte-graphique/pixel/sortie/ui/logo-hd.png (fait par la capture Playwright).
 """
 import os

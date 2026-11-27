@@ -1,6 +1,6 @@
 # Atelier commun des anciens FONDS DE COMBAT en pixel art HD. Les fonds pixel et leur chaîne (pixel/fonds/) sont
 # supprimés depuis la v0.65.0 (les fonds du jeu sont vectoriels : refonte-graphique/ui-moderne/fonds/) ; ce fichier
-# est gardé ici parce que le paysage de l'écran de chargement (paysage.py, chargement.py) s'en sert.
+# est gardé ici pour les anciennes planches de présentation (ui-moderne/monstres/*/presentation.py) ; l'écran de chargement est vectoriel depuis la v0.66.0.
 #
 # Un fond = une image fixe (590 × 1100 pixels, le bas = le bas du terrain de combat) + des CALQUES ANIMÉS :
 #   - « boucle »     : un morceau posé à un endroit fixe, qui joue N images en boucle sans couture (lave, cascade,

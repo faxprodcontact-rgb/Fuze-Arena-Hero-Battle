@@ -18,8 +18,7 @@ Ce qui ne change pas : les **textes** restent en Lilita One / Fredoka (lisibles,
 |---|---|
 | `uilib.py` | l'atelier commun : toile numpy, masques, contour unique, texte Lilita sans lissage, lecture des `*-meta.ts` |
 | `logo_hd.py` | le logo HD vectoriel → `public/art/ui/logo.svg` (posé dans `index.html` par `chargement.py`) |
-| `paysage.py` | le paysage de l'écran de chargement (dessiné pour lui) |
-| `chargement.py` | l'écran de chargement → `public/art/ui-px/chargement*.webp` + le bloc « chargement » d'`index.html` |
+| ~~`chargement.py`~~ | remplacé (v0.66.0) par `ui-moderne/chargement/chargement.py` (vectoriel) → `public/art/chargement/` + le bloc « chargement » d'`index.html` |
 | `icone.py` | l'icône de l'application → `public/art/ui-px/icone-180/192/512.png` |
 | `lilita-one.woff2` | la police des titres (licence OFL) : ses contours font les lettres du logo |
 

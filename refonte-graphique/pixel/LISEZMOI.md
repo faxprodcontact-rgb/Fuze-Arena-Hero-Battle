@@ -6,8 +6,8 @@ retrouve dans l'historique git si besoin (commit de la v0.65.0 et ceux d'avant).
 
 Ce qui reste ici :
 
-- `ui/` : le plan et le style de l'interface (`PLAN.md`, `STYLE.md`), l'écran de chargement (`chargement.py`,
-  `paysage.py`, qui se sert de `fondlib.py`), le logo, l'icône, les anciens pictos pixel (`pictos/assemble.py --pixel`) ;
-- `pix.py` : l'atelier de formes pixel dont `ui/fondlib.py` a besoin (paysage du chargement) ;
+- `ui/` : le plan et le style de l'interface (`PLAN.md`, `STYLE.md`), `fondlib.py` (encore lu par
+  `ui-moderne/monstres/*/presentation.py`), le logo, l'icône, les anciens pictos pixel (`pictos/assemble.py --pixel`) ;
+- `pix.py` : l'atelier de formes pixel dont `ui/fondlib.py` a besoin  ;
 - `sortie/ui/` : les captures de l'interface et, dans `sortie/ui/vecto/`, **toutes les sorties vectorielles** (vidéos,
   planches de contrôle, avis, combat, têtes, fonds).
