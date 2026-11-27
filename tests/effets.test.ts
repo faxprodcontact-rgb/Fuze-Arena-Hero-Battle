@@ -75,8 +75,8 @@ describe('effets', () => {
     expect(elementBonus([h('fire'), h('water')])).toBeNull();
   });
 
-  it('44 héros (36 + 8 monstres de clan) : au moins 9 par élément, chaque rôle présent, tous dessinés en HD', () => {
-    expect(HEROES).toHaveLength(44);
+  it('47 héros (36 + 8 monstres de clan + 3 dragons) : au moins 9 par élément, chaque rôle présent, dessinés en HD sauf les dragons', () => {
+    expect(HEROES).toHaveLength(47);
     for (const el of ['fire', 'water', 'wind', 'earth']) {
       const list = HEROES.filter((h) => h.element === el);
       expect(list.length).toBeGreaterThanOrEqual(9);
@@ -84,7 +84,8 @@ describe('effets', () => {
       // la fusion des Épiques demande des héros du même élément : chaque élément en a de chaque rareté
       for (const r of ['common', 'rare', 'epic', 'legendary']) expect(list.filter((h) => h.rarity === r).length).toBeGreaterThan(0);
     }
-    expect(HEROES.filter((h) => h.talent)).toHaveLength(15);
-    expect(HEROES.every((h) => heroArt(h.id) in HD_ANIM.chars)).toBe(true);
+    expect(HEROES.filter((h) => h.talent)).toHaveLength(16);
+    // les 3 dragons n'ont que leur dessin vectoriel (tests/dragons.test.ts)
+    expect(HEROES.filter((h) => !h.id.startsWith('dragon-')).every((h) => heroArt(h.id) in HD_ANIM.chars)).toBe(true);
   });
 });

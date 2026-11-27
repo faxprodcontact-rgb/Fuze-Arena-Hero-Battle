@@ -25,7 +25,7 @@ const IDS = Object.keys(NEW);
 
 describe('monstres de clan devenus héros', () => {
   it('les 8 existent, avec leur nom et leur élément ; 2 Épiques, 3 Rares, 3 Communs', () => {
-    expect(HEROES).toHaveLength(44);
+    expect(HEROES).toHaveLength(47);
     for (const id of IDS) {
       expect(isHero(id)).toBe(true);
       expect(heroDef(id).name).toBe(NEW[id]![0]);
@@ -40,7 +40,7 @@ describe('monstres de clan devenus héros', () => {
     const anims = HD_ANIM.chars as Record<string, unknown>;
     const figs = HD_FIG.chars as Record<string, unknown>;
     expect(Object.keys(HERO_ART).sort()).toEqual([...IDS].sort());
-    for (const h of HEROES) {
+    for (const h of HEROES.filter((d) => !d.id.startsWith('dragon-'))) {
       expect(heroArt(h.id) in anims).toBe(true);
       expect(heroArt(h.id) in figs).toBe(true);
     }
