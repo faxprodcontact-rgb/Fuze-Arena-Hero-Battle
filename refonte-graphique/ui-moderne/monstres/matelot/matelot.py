@@ -224,7 +224,6 @@ def foot_shape(A, far, P):
     """Un pied nu posé à plat (le talon derrière la cheville, les orteils vers l'ennemi) ; d'un seul tenant avec la
     cheville. A = la cheville."""
     x, y = A
-    g = GRD - P['lift'] if False else None  # (le pied suit la cheville : il se pose quand la cheville y est)
     s = 0.94 if far else 1.0
     pts = [(x - 2.0 * s, y - 2.2), (x + 1.8 * s, y - 2.0), (x + 3.6 * s, y + 1.4), (x + 6.6 * s, y + 2.8), (x + 9.0 * s, y + 3.6),
            (x + 10.2 * s, y + 4.6), (x + 10.0 * s, y + 5.5), (x + 3.0 * s, y + 5.6), (x - 3.0 * s, y + 5.6), (x - 4.4 * s, y + 4.6),
@@ -316,8 +315,6 @@ def shirt(fig, P, S, E, SF, EF):
                (81.4, 81.6), (81.8, 86.0), (70.5, 86.8), (59.6, 86.2), (59.6, 81.2), (59.0, 76.2), (57.8, 72.2), (56.0, 69.2),
                (57.4, 65.8), (62.0, 64.0)], t=0.9)
     # les moignons de manche (calculés dans le repère du buste : la pose du buste les reposera)
-    import atelier
-    inv = lambda p: p  # le buste est posé ensuite par TOR (même repère que UC au souffle près)
     sn, en, dn, nn = stub(S, E, False)
     sf, ef, df, nf = stub(SF, EF, True)
     sh = fused([body, sn, sf], smooth=0.6)
@@ -428,9 +425,7 @@ def knife_fist(fig, P, E, W):
         b = (-b[0], -b[1])
     H = lambda x, y: (W[0] + a[0] * x + b[0] * y, W[1] + a[1] * x + b[1] * y)   # x : vers les doigts, y : vers l'avant
     # la lame : du bas-arrière du poing, vers le bas et l'arrière
-    kd = norm(add(rot(a, 38), (0, 0)))
-    kd = norm((a[0] * math.cos(math.radians(40)) - a[1] * math.sin(math.radians(40)) * 0 - b[0] * 0.75,
-               a[1] * 0.77 - b[1] * 0.75))
+    kd = norm((a[0] * 0.77 - b[0] * 0.75, a[1] * 0.77 - b[1] * 0.75))     # vers le bas et l'arrière
     base = H(3.4, -1.2)
     tip = add(base, kd, 8.6)
     kn = (-kd[1], kd[0])
@@ -654,12 +649,9 @@ def bandana(fig, P):
         names.append(name)
         return fig.part(name, *a, **k)
     edge = band_edge()
-    dome = [(84.4, 44.0), (84.0, 40.2), (81.8, 36.4), (77.6, 33.6), (72.0, 32.6), (66.2, 33.4), (61.6, 35.8), (58.8, 39.4), (57.8, 43.0)]
-    pts = edge[::-1][:-1] + [(59.0, 46.6)] + dome[::-1][:0] + dome[::-1][::-1][::-1][::-1]
     # (le bord du bas, de la droite vers l'arrière de la tête, puis la calotte de l'arrière vers l'avant)
-    pts = edge[::-1] + [(59.4, 46.8), (58.0, 44.6)] + dome[::-1][1:][::-1][::-1]
-    pts = list(edge[::-1]) + [(59.4, 46.8)] + list(reversed(dome))[0:0] + [(57.8, 43.0), (58.8, 39.4), (61.6, 35.8), (66.2, 33.4),
-                                                                          (72.0, 32.6), (77.6, 33.6), (81.8, 36.4), (84.0, 40.2), (84.4, 44.0)]
+    dome = [(57.8, 43.0), (58.8, 39.4), (61.6, 35.8), (66.2, 33.4), (72.0, 32.6), (77.6, 33.6), (81.8, 36.4), (84.0, 40.2), (84.4, 44.0)]
+    pts = edge[::-1] + [(59.4, 46.8)] + dome
     cap = sm(pts, sharp=(0, len(edge) - 1), t=0.9)
     # le bord du bas : une bande d'épaisseur égale (l'ourlet du foulard), une seule courbe
     ein = [(x, y - 1.3) for x, y in edge]
