@@ -13,3 +13,5 @@ JEU = {
     # l'ennemi (tout ce qui est devant lui part sur la cible)
     'speciale': dict(genre='sort', coup=1485, cible=(A.GEYSER_X, 75), coupe=106, charge=(120, 900), fx_max=100),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-30, -26, 267, 166)

@@ -72,3 +72,5 @@ JEU = {
     'speciale': dict(genre='sort', coup=A.SP_HIT, cible=(A.EX, A.EY), charge=(80, 330),
                      coupe=lambda t: 1e9 if t < 430 else 104, fx_max=180),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-24, -42, 292, 180.25)

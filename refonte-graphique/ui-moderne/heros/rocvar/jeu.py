@@ -51,3 +51,5 @@ JEU = {
     # les trois aiguilles de pierre jaillissent sous la vraie cible (au-delà de 150) puis s'effritent
     'speciale': dict(genre='sort', coup=A.SP_HIT, cible=A.FOE, coupe=150, charge=A.SP_GATHER),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-50, -52, 290, 194)

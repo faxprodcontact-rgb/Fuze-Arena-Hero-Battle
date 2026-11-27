@@ -11,3 +11,5 @@ JEU = {
     # il frappe le sol : trois geysers sortent en ligne jusqu'à l'ennemi (posés devant la vraie cible)
     'speciale': dict(genre='sort', coup=A.GEYSERS[-1][1], cible=(A.GEYSERS[-1][0], 70), coupe=100, charge=(150, 900)),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-44, -82, 320, 210)

@@ -16,3 +16,5 @@ JEU = {
                      coupe=lambda t: 1000 if t < A.SP_HIT else 140,
                      avance=lambda t: A.keyed(A.SPECIAL, t)['spx']),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-14, -32, 280, 197.5)

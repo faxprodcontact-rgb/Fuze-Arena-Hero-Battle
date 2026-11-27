@@ -38,3 +38,5 @@ JEU = {
     # geyser de vent chaud, les anneaux, les orbes ; les effets reçus partent à ce moment
     'speciale': dict(genre='equipe', coup=AN.SP_LAUNCH, charge=(260, 800), fx_max=170),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-70, -130, 340, 271.6)

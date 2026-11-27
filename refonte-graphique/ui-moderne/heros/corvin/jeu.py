@@ -14,3 +14,5 @@ JEU = {
     # s'étend tout autour (le bouclier se pose sur l'équipe à ce moment) ; tout reste avec lui
     'speciale': dict(genre='equipe', coup=A.SP_RING, charge=(A.SP_RISE, A.SP_PLANT), fx_max=270),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-82, -14, 280, 175)

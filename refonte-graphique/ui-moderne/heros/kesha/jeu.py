@@ -16,3 +16,5 @@ JEU = {
     'speciale': dict(genre='melee', coup=A.SP_BITE, cible=(228, 60), charge=(100, 370),
                      coupe=lambda t: 1000 if t < 830 else 190, avance=lambda t: A.keyed(A.SPECIAL, t)['shift']),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-26, -44, 290, 179.125)

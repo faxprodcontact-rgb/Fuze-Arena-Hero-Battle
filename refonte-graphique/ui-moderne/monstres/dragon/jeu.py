@@ -52,7 +52,7 @@ def rendu(T, segs):
 JEU = {
     'rendu': rendu,
     'up': 0.55,
-    'pose': dict(periode=PERIODE, images=8),          # 8 (et pas 10) : la planche tient dans le budget de 4,2 Mo
+    'pose': dict(periode=PERIODE, images=7),          # 7 (et pas 10) : la planche tient dans le budget de 4,2 Mo (vue élargie le 27/11)
     # « Coup de griffe » : il lève la patte et l'abat devant lui ; trois griffures de lave se tracent sur le héros
     'attaque': dict(genre='sort', coup=A.ATTACK_HIT, cible=A.HIT_C, coupe=300, fps=4),
     # « Tempête de feu » : il se cabre, ailes ouvertes, crache la boule de feu vers le ciel ; la pluie de blocs de lave
@@ -62,3 +62,5 @@ JEU = {
                      # deux moments forts : la boule de feu crachée, puis la pluie de lave qui frappe
                      dense=[(A.SP_SPIT, PLUIE), (A.SP_RAIN[0] - 180, A.SP_RAIN[1] + 160)], fps_coup=10),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-60, -86, 537, 348)

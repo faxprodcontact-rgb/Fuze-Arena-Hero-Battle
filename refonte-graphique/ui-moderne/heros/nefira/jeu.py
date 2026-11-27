@@ -32,3 +32,5 @@ JEU = {
     # se forme ; elle s'illumine (780) : l'anneau d'or s'élargit autour d'elle et les effets reçus partent
     'speciale': dict(genre='equipe', coup=A.SP_FLASH, charge=(140, 700)),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-26, -56, 267, 196)

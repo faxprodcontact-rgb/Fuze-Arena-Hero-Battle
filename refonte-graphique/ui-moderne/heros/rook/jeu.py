@@ -50,3 +50,5 @@ JEU = {
     # feu court autour de lui ; les effets reçus partent quand l'épée se plante
     'speciale': dict(genre='equipe', coup=A.S_HEAL, charge=(100, 500)),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-22, -24, 272, 169)

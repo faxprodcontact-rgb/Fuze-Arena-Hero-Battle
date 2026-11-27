@@ -65,3 +65,5 @@ JEU = {
     'speciale': dict(genre='tir', tir=A.SP_REL, coup=A.SP_HIT, cible=(A.ENEMY_X, BOUCHE_S[1]), depuis=BOUCHE_S[0] - 8,
                      coupe=150, bouche=BOUCHE_S, projectile=fleche(True), proj_images=1, charge=(100, A.SP_REL - 10)),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-30, -26, 297, 150)

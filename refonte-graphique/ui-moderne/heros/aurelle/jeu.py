@@ -53,3 +53,5 @@ JEU = {
                      arc=46, charge=(200, 548), fx_max=400, coupe=lambda t: 400 if t < A.SP_IMPACT - 10 else -200,
                      dense=[(A.SP_HIT - 180, A.SP_HIT + 160), (A.SP_IMPACT - 60, A.SP_IMPACT + 260)]),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-30, -40, 288, 178)

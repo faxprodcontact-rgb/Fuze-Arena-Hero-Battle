@@ -61,3 +61,5 @@ JEU = {
                      vol=lambda t, x, y, couche, el: x > 118 and y < O.GRD - 15, coupe=150, cible_des=A.S_HIT,
                      projectile=rafale, proj_images=3, proj_ms=[80, 80, 80]),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-80, -86, 350, 210)

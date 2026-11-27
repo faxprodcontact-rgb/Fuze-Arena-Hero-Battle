@@ -14,3 +14,5 @@ JEU = {
     # l'enveloppe et s'ouvre en anneau au sol tout autour de lui (le bouclier se pose sur l'équipe) ; puis le défi
     'speciale': dict(genre='equipe', coup=A.SP_RING, charge=(A.SP_PLANT, A.SP_BUBBLE), fx_max=200),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-52, -34, 272, 193)

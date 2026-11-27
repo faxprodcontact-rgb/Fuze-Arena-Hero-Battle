@@ -18,3 +18,5 @@ JEU = {
                      avance=lambda t: A.keyed(A.SPECIAL, t)['X'],
                      dense=[(A.S_DASH - 40, A.S_HIT2 + 120), (A.S_STAB - 180, A.S_STAB + 260)]),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-4, -56, 267, 180)

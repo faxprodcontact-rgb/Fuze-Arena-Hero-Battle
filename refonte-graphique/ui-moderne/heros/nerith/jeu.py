@@ -32,3 +32,5 @@ JEU = {
     # (720) : les effets reçus partent avec l'anneau d'eau
     'speciale': dict(genre='equipe', coup=A.S_LAUNCH, charge=(130, 650), fx_max=260),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-62, -40, 330, 203.125)

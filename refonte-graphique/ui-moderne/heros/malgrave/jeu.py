@@ -36,3 +36,5 @@ JEU = {
     # ronde des feux follets ; le crâne s'allume (1240) : la ronde s'envole et les effets reçus partent
     'speciale': dict(genre='equipe', coup=A.S_LAUNCH, charge=(520, 1200)),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-60, -40, 300, 181)

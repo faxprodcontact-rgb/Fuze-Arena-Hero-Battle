@@ -14,3 +14,5 @@ JEU = {
     # d'or (le bouclier se pose sur l'équipe au lancement) ; tout reste avec lui
     'speciale': dict(genre='equipe', coup=A.SP_LAUNCH[0], charge=(A.SP_GATHER[0], A.SP_STOMP)),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-76, -30, 280, 173.5)

@@ -29,3 +29,5 @@ JEU = {
                      bouche=(A.WAVE_X0, A.GR), projectile=vague, proj_images=2, proj_ms=[90, 90], rase=1,
                      charge=(150, 900), fps=4, fps_coup=10),  # fps_coup 10 : la planche tient dans 4,2 Mo
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-6, 6, 510, 247.5)

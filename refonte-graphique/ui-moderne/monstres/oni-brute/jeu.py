@@ -18,3 +18,5 @@ JEU = {
     # l'un après l'autre (les deux premiers devant lui, les suivants et le bout de la faille posés sur la cible)
     'speciale': dict(genre='sort', coup=A.SP_HIT + 330, cible=(CX + 79, 60), coupe=CX + 54, charge=(150, 820)),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-64, -92, 360, 230)

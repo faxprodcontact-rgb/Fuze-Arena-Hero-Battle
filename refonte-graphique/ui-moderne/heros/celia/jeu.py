@@ -34,3 +34,5 @@ JEU = {
     # « Voile de neige » (bonus d'attaque + énergie à l'équipe) : elle inspire, souffle ; les effets reçus partent au souffle
     'speciale': dict(genre='equipe', coup=A.LAUNCH, charge=(120, 570)),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-22, -96, 297, 236)

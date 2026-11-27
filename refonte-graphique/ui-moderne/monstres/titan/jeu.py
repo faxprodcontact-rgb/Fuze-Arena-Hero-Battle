@@ -38,3 +38,5 @@ JEU = {
     'speciale': dict(genre='sort', coup=A.SP_SLAM + 260, cible=(A.ENEMY_X, A.GR - 46), coupe=340, charge=(120, 900),
                      dense=[(A.SP_SLAM - 70, A.SP_SLAM + 560)], fps_coup=12),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-36, -16, 510, 270)

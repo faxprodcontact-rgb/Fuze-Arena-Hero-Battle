@@ -16,3 +16,5 @@ JEU = {
     # l'onde de chaleur court au sol tout autour (le soin et le bouclier se posent sur l'équipe) ; puis le défi
     'speciale': dict(genre='equipe', coup=A.SP_LAUNCH, charge=(100, 800), fx_max=230),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-56, -32, 314, 199.75)

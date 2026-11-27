@@ -16,3 +16,5 @@ JEU = {
     # lancement il s'élargit jusqu'au sol tout autour d'elle (défense et soin se posent sur l'équipe) ; puis le défi
     'speciale': dict(genre='equipe', coup=A.SP_LAUNCH, charge=(A.SP_CLANG, A.SP_RING[0]), fx_max=320),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-92, -58, 366, 205)

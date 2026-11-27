@@ -57,3 +57,5 @@ JEU = {
                      coupe=lambda t: 400 if t < A.SP_HIT else -200,
                      dense=[(TIR - 120, TIR + 80), (A.SP_HIT - 180, A.SP_HIT + 260)]),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-24, -72, 292, 194.25)

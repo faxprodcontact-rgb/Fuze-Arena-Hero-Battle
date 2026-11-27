@@ -15,3 +15,5 @@ JEU = {
     'speciale': dict(genre='rayon', rayon=(A.S_WAVE[0], A.S_WAVE[1] + 200), coup=A.S_FOE, cible=(A.FOE[0], DEPART[1]),
                      bouche=DEPART, depuis=DEPART[0] - 4, coupe=188, charge=(300, 1080)),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-56, -88, 380, 230)

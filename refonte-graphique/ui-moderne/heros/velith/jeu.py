@@ -14,3 +14,5 @@ JEU = {
     # (la fissure et les premiers pics restent devant lui, les derniers pics et le gros bouquet sont posés sur la cible)
     'speciale': dict(genre='sort', coup=A.WAVE0 + 280, cible=(242, 60), coupe=206, charge=(150, 920)),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-40, -58, 320, 196)

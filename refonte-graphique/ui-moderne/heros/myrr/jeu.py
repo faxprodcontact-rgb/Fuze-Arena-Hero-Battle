@@ -55,3 +55,5 @@ JEU = {
     # tout autour d'elle ; les effets reçus partent avec lui
     'speciale': dict(genre='equipe', coup=A.SP_BLOW, charge=(100, 620), fx_max=230),
 }
+# la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
+JEU['vue'] = (-70, -52, 330, 201.6)
