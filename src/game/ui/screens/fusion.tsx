@@ -5,7 +5,7 @@
 import { useState } from 'preact/hooks';
 import { heroDef } from '../../../core/data/heroes';
 import { canGainStar } from '../../../core/fusion';
-import type { Element, Hero } from '../../../core/types';
+import { RARITIES, type Element, type Hero } from '../../../core/types';
 import { ELEMENT_COLOR, heroImage } from '../../art';
 import { t } from '../../i18n';
 import { autoPicks, fuse, fuseAllSimple, fusionNeeds, fusionPool, type FusionNeed, type FusionPicks, type NeedKind } from '../../state/actions';
@@ -40,10 +40,14 @@ function progress(uid: number): number {
 export function FusionPage({ uid }: { uid?: number }) {
   const s = useGame();
   const candidates = s.heroes.filter((h) => canGainStar(h));
+  // rangés par rareté (demande du 27/11), puis étoiles, puis les plus proches d'une fusion, puis la puissance
+  const rank = (h: Hero) => RARITIES.indexOf(heroDef(h.defId).rarity);
   const ranked = candidates
     .map((h) => ({ h, p: progress(h.uid) }))
-    .sort((a, b) => b.p - a.p || b.h.stars - a.h.stars || heroPower(s, b.h) - heroPower(s, a.h));
-  const [picked, setPicked] = useState<number | undefined>(uid ?? ranked[0]?.h.uid);
+    .sort((a, b) => rank(b.h) - rank(a.h) || b.h.stars - a.h.stars || b.p - a.p || heroPower(s, b.h) - heroPower(s, a.h));
+  // proposé d'office : le plus proche d'une fusion
+  const closest = [...ranked].sort((a, b) => b.p - a.p)[0];
+  const [picked, setPicked] = useState<number | undefined>(uid ?? closest?.h.uid);
   // Héros choisis pour être sacrifiés (proposés d'office, modifiables en touchant une case).
   const [picks, setPicks] = useState<FusionPicks | undefined>(undefined);
   const [editing, setEditing] = useState<NeedKind | undefined>(undefined);
@@ -102,7 +106,7 @@ export function FusionPage({ uid }: { uid?: number }) {
             <Btn kind="green" small onClick={() => setEditing(undefined)}>OK</Btn>
           </div>
           {fusionPool(target.uid, editing).length === 0 ? <p class="center muted">{t('fusion.none')}</p> : (
-            <div class="roster">
+            <div class="roster fuse-roster">
               {fusionPool(target.uid, editing).map((h) => {
                 const other = usedElsewhere(editing).has(h.uid);
                 return (
@@ -121,7 +125,7 @@ export function FusionPage({ uid }: { uid?: number }) {
             <strong>{t('nav.heroes')}</strong>
             <Btn kind="gold" small onClick={() => toast(t('heroes.fused', { n: fuseAllSimple() }))}>{t('heroes.fuseAll')}</Btn>
           </div>
-          <div class="roster">
+          <div class="roster fuse-roster">
             {ranked.map(({ h, p }) => (
               <div class="hcard-wrap">
                 <HeroCard hero={h} small selected={h.uid === picked} dim={p < 0} onClick={() => selectTarget(h.uid)} />

@@ -623,6 +623,11 @@ p { margin: 6px 0; }
 .prep-bar { padding: 0 2px; }
 .roster { flex: 1; min-height: 0; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 9px; align-content: start; padding: 3px 3px 22px; }
 .roster .hcard-small { width: 100%; aspect-ratio: auto; height: 108px; --feet: 74%; }
+/* la liste de la fusion (27/11) : les cartes passent sous la barre « Héros / Tout fusionner » dans un fondu (plus de
+   coupure nette), et la carte choisie garde de l'air en haut (son cadre d'or et sa coche ne sont pas coupés) */
+.roster.fuse-roster { padding-top: 16px; margin-top: -10px;
+  -webkit-mask-image: linear-gradient(180deg, #0000 0, #000 14px, #000 calc(100% - 22px), #0000);
+  mask-image: linear-gradient(180deg, #0000 0, #000 14px, #000 calc(100% - 22px), #0000); }
 .grid > *, .roster > * { min-width: 0; }
 .prep-go { padding: 8px 0 max(14px, env(safe-area-inset-bottom, 0px)); }
 /* le plateau : la scène du combat à venir, bord à bord sous le titre ; le bas se fond dans le fond de la page */
