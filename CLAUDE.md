@@ -76,6 +76,8 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   Avis du propriétaire (notes, cercles au doigt, OK / à reprendre) : `python3 refonte-graphique/ui-moderne/heros/avis.py`
   → https://claude.ai/artifact/D5UVkXKfKg8AmFzy5Ezart (republier avec root = dépôt et `avis/fichiers.json` ; ses notes se lisent
   avec ArtifactData, collection `avis`, un document par héros : text, status ok/redo, strokes en 0-1000).
+  **3 nouveaux dragons** (27/11, même famille qu'Elvyn = eau) : Brasyr feu, Rocvar terre, Venthys vent (`heros/brasyr|rocvar|venthys/`,
+  images `dragon-feu|terre|vent`), dessinés seulement : pas encore dans les données du jeu ni au combat (liste `NOUVEAUX` de `suivi.py`).
 - Plus tard : profil du joueur, événements, sons et musique, Siège. Ensuite : serveur (Supabase) → habillage → social
   réel → argent réel → bêta → lancement.
 
