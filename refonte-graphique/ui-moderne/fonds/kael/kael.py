@@ -54,10 +54,11 @@ RENDU = os.path.join(ROOT, 'refonte-graphique', 'ui-moderne', 'heros', 'rendu-lo
 # ------------------------------------------------------------------------------------------------ les mesures
 W, H = 590, 1100
 UP = 2                          # les images du jeu sont rendues ×2 (vectoriel : plus fin que le pixel)
-HZ, P0, P1 = 789, 819, 1047
+HZ, P0, P1 = 789, 800, 1047      # P0 avancé (819 → 800) : en combat, le rang du fond a ses pieds à 828
 RANGS = (860, 934, 1007)
 VISIBLE = {'court': 377, 'moyen': 148, 'long': 50}
-PERIODE = 9600                  # toutes les boucles divisent cette période : l'aperçu boucle sans couture
+PERIODE = 19200                 # toutes les boucles divisent cette période : l'aperçu boucle sans couture
+                                # (19,2 s : les dragons traversent le ciel lentement, une fois par période)
 UNIT = 720 / W
 HERO_X_U = {3: 82, 4: 82, 2: 163, 0: 245, 1: 245}
 ENEMY_X_U = {0: 475, 1: 475, 2: 557, 3: 638, 4: 638}
@@ -67,6 +68,31 @@ ROW_OF = {0: 0, 3: 0, 2: 1, 1: 2, 4: 2}
 def place(side, slot):
     xs = HERO_X_U if side == 'heros' else ENEMY_X_U
     return int(round(xs[slot] / UNIT)), RANGS[ROW_OF[slot]]
+
+
+# Le VRAI combat (src/game/battle-scene.ts, fight-view.ts) : le décor y est agrandi ×1,4 (FOND_ZOOM), centré, son bas
+# au bas de l'écran (au-dessus de la barre de geste) ; on n'en voit que x = 84 → 506. Les combattants : spreadX,
+# ROW_DY (90 / 180 / 270) + FEET (47) sous le haut du sol (= bas de l'image − 430 × 1,4), dessinés à 1,22 × 0,95.
+ZOOM = 1.4
+UC = 720 / W * ZOOM                                   # unités de jeu par pixel du fond, en combat
+OXC = (720 - W * UC) / 2                              # le bord gauche de l'image (unités, négatif : coupé)
+VUE_X = (-OXC / UC, (720 - OXC) / UC)                 # 84,3 → 505,7 : ce qu'on voit en largeur
+K_PERSO = 1.22 * 0.95 / UC                            # un pixel d'un personnage = 0,68 pixel du fond en combat
+ROW_DY = {0: 90, 3: 90, 2: 180, 1: 270, 4: 270}
+RANGS_COMBAT = tuple(1100 - (430 * ZOOM - d - 47) / UC for d in (90, 180, 270))     # 828 / 880 / 933
+CARTES = 1100 - (14 + 182) / UC                       # 985 : le haut des cartes des héros (tout ce qui est dessous est caché)
+
+
+def place_combat(side, slot):
+    spread = lambda x: (720 - 288) / 2 + (x - 245) * 0.88
+    x = spread(HERO_X_U[slot]) if side == 'heros' else 720 - spread(720 - ENEMY_X_U[slot])
+    return (x - OXC) / UC, 1100 - (430 * ZOOM - ROW_DY[slot] - 47) / UC
+
+
+def telephone(w, h, bas=0):
+    """Un téléphone (w × h points, `bas` = la barre de geste) : (haut visible du fond, hauteur du jeu en unités)."""
+    hu = max(1280, min(1640, round(720 * h / w)))
+    return 1100 - (hu - bas * 720 / w) / UC, hu
 
 
 # ------------------------------------------------------------------------------------------------ les couleurs
@@ -205,11 +231,16 @@ def interp(pts, x):
     return pts[0][1] if x < pts[0][0] else pts[-1][1]
 
 
-FAL_G_HAUT = [(-14, 486), (14, 480), (44, 476), (72, 482), (96, 493), (110, 499), (126, 499), (142, 494),
-              (160, 493), (176, 503)]
-FAL_G_FACE = [(184, 530), (180, 572), (190, 612), (184, 652), (194, 692), (200, 730), (214, 776)]
-FAL_D_FACE = [(418, 776), (424, 730), (414, 690), (424, 648), (418, 604), (430, 570)]
-FAL_D_HAUT = [(442, 556), (468, 551), (494, 547), (520, 545), (548, 540), (576, 543), (604, 538)]
+# La falaise de gauche est plus basse que dans le pixel (les dragons passent au-dessus) ; l'éperon de droite est
+# avancé de 18 pixels vers le milieu (le combat coupe les bords : on voit x = 84 → 506).
+FAL_G_HAUT = [(-14, 536), (14, 530), (44, 526), (72, 530), (96, 538), (110, 544), (126, 545), (142, 540),
+              (160, 538), (176, 546)]
+FAL_G_FACE = [(184, 572), (182, 612), (190, 650), (186, 690), (196, 730), (214, 776)]
+FAL_D_DX = -18
+FAL_D_FACE = [(x + FAL_D_DX, y) for x, y in
+              [(418, 776), (424, 730), (414, 690), (424, 648), (418, 604), (430, 570)]]
+FAL_D_HAUT = [(x + FAL_D_DX, y) for x, y in
+              [(442, 556), (468, 551), (494, 547), (520, 545), (548, 540), (576, 543), (604, 538)]] + [(604, 538)]
 
 
 def sol_g(x):
@@ -240,6 +271,9 @@ def element(id, prof, genre, **kw):
 
 
 # ---------------------------------------------------------------------------------------------------- le ciel
+SOLEIL = (450, 388)          # vu sur tous les téléphones (le court montre le fond à partir de y = 351), à droite des pilules
+
+
 @element('ciel', -29.9, 'fixe')
 def ciel(doc):
     out = [path('M-20 -20H610V840H-20Z', doc.lin(0, 0, 0, 830, CIEL))]
@@ -247,7 +281,7 @@ def ciel(doc):
     out.append('<ellipse cx="340" cy="740" rx="360" ry="190" fill="%s"/>' % doc.rad(
         340, 740, 360, [(0, '#b4553e', 0.45), (0.5, '#a04a3e', 0.2), (1, '#8a3c3e', 0)], ry=190))
     # le soleil pâle voilé de cendre, en haut à droite (la seule lumière)
-    sx, sy = 476, 214
+    sx, sy = SOLEIL
     out.append('<circle cx="%d" cy="%d" r="120" fill="%s"/>' % (sx, sy, doc.rad(
         sx, sy, 120, [(0, '#f4c48c', 0.30), (0.35, '#d88a6a', 0.14), (1, '#a04a4e', 0)])))
     out.append('<circle cx="%d" cy="%d" r="21" fill="%s"/>' % (sx, sy, doc.rad(
@@ -258,21 +292,22 @@ def ciel(doc):
 @element('nuages', -29.5, 'fixe')
 def nuages(doc):
     out = []
-    # A : le grand banc en haut à gauche, où le panache du volcan se perd
-    a = lobes_shape(-30, 330, 292, [(300, 280, 18), (262, 262, 30), (214, 246, 38), (160, 236, 40), (104, 228, 44),
-                                    (50, 232, 40), (2, 244, 38), (-30, 262, 30)], sag=6)
+    # A : le grand banc en haut à gauche, où le panache du volcan se perd (le haut des téléphones longs)
+    a = lobes_shape(-30, 320, 330, [(292, 318, 18), (254, 300, 30), (206, 284, 38), (152, 274, 40), (96, 266, 44),
+                                    (42, 270, 40), (-6, 282, 38), (-30, 300, 30)], sag=6)
     out.append(vol(doc, a, FUMEE, r=2.2, c=4))
-    a2 = lobes_shape(-30, 250, 196, [(232, 186, 16), (196, 172, 26), (150, 160, 30), (100, 156, 32), (50, 160, 30),
-                                     (4, 168, 28), (-30, 180, 20)], sag=4)
+    a2 = lobes_shape(-30, 250, 232, [(232, 222, 16), (196, 208, 26), (150, 196, 30), (100, 192, 32), (50, 196, 30),
+                                     (4, 204, 28), (-30, 216, 20)], sag=4)
     out.append(vol(doc, a2, dict(FUMEE, base='#3f1d30', light='#4c2436', sh='#311629'), r=2, c=3.5))
-    # B : à droite, devant le bas du soleil (il est voilé)
-    b = lobes_shape(392, 620, 252, [(612, 240, 16), (578, 228, 22), (540, 222, 22), (500, 226, 20), (462, 232, 18),
-                                    (420, 240, 14)], sag=3)
+    # B : en haut à droite
+    b = lobes_shape(380, 620, 292, [(612, 280, 16), (578, 268, 22), (540, 262, 22), (500, 266, 20), (460, 272, 18),
+                                    (414, 280, 14)], sag=3)
     out.append(vol(doc, b, FUMEE, r=2, c=3))
-    # C : un petit banc à droite, plus bas, et un à gauche
-    c = lobes_shape(470, 620, 336, [(610, 326, 12), (578, 318, 16), (540, 318, 14), (504, 324, 12)], sag=2)
+    # C : un petit banc au-dessus du soleil (il le voile un peu), E : un petit à gauche, sous le banc A
+    c = lobes_shape(452, 620, 330, [(610, 322, 12), (578, 312, 16), (540, 310, 15), (500, 316, 13), (470, 322, 9)],
+                    sag=2)
     out.append(vol(doc, c, dict(FUMEE, base='#55283a', light='#64303f'), r=1.8, c=2.6))
-    e = lobes_shape(-20, 110, 372, [(98, 364, 10), (70, 356, 14), (34, 354, 14), (0, 358, 12)], sag=2)
+    e = lobes_shape(90, 214, 372, [(204, 366, 9), (176, 358, 13), (140, 356, 14), (106, 362, 11)], sag=2)
     out.append(vol(doc, e, dict(FUMEE, base='#55283a', light='#64303f'), r=1.8, c=2.6))
     return ''.join(out)
 
@@ -336,8 +371,25 @@ def coulee_ligne(k, n=24):
     return c, wl
 
 
+# Le volcan (cône, panache, cratère, coulées) est dessiné dans ses coordonnées d'origine puis décalé : un peu à
+# gauche et plus bas, pour qu'il soit au milieu de ce que montre le combat (x = 84 → 506) et sous les pilules du haut.
+VDX, VDY = -24, 10
+
+
+def vgroupe(body):
+    return '<g transform="translate(%d %d)">%s</g>' % (VDX, VDY, body)
+
+
+def vbox(x, y, w, h):
+    return (x + VDX, y + VDY, w, h)
+
+
 @element('volcan', -28, 'fixe')
 def volcan(doc):
+    return vgroupe(volcan_brut(doc))
+
+
+def volcan_brut(doc):
     out = []
     s = sm(VOLCAN, sharp=(0, 6, 7, 9, 10, len(VOLCAN) - 1), t=0.8)
     g = doc.lin(470, 470, 250, 640, [(0, VOLC['light']), (0.5, VOLC['base']), (1, VOLC['sh'])])
@@ -367,6 +419,10 @@ def volcan(doc):
 
 @element('panache', -29.6, 'fixe')
 def panache(doc):
+    return vgroupe(panache_brut(doc))
+
+
+def panache_brut(doc):
     """Le grand panache fixe : il sort de derrière la lèvre du cratère, monte et part vers la gauche, jusqu'au banc
     de fumée (qui le recouvre). Une seule forme (des volutes réunies), éclairée en haut à droite."""
     c = resample(bez((352, 446), (350, 396), (306, 346), (196, 262)), 36)
@@ -386,6 +442,10 @@ def panache(doc):
 
 
 def cratere(doc, ph):
+    return vgroupe(cratere_brut(doc, ph))
+
+
+def cratere_brut(doc, ph):
     """La lèvre du cratère et sa lueur qui respire (doucement : une montée et une descente par boucle)."""
     k = 0.5 - 0.5 * math.cos(2 * math.pi * ph)
     out = ['<ellipse cx="352" cy="438" rx="%s" ry="%s" fill="%s"/>' % (
@@ -401,7 +461,7 @@ def cratere(doc, ph):
     return ''.join(out)
 
 
-element('cratere', -26, 'boucle', box=(300, 406, 104, 54), n=8, ms=600, plein=True)(cratere)
+element('cratere', -26, 'boucle', box=vbox(306, 412, 92, 54), n=8, ms=600)(cratere)
 
 
 def fumee_image(doc, i, n):
@@ -415,17 +475,17 @@ def fumee_image(doc, i, n):
                                                               (cx - r * 0.75, cy + r * 0.05, r * 0.55)], sag=r * 0.12)
     m = dict(base=mix('#5c2b3b', '#4c2435', t), light=mix('#6e3444', '#5a2a3b', t), rim=mix('#8a4a52', '#74404a', t),
              sh='#3f1d30')
-    return '<g opacity="%g">%s</g>' % (op * 0.8, vol(doc, s, m, r=1.3, c=0))
+    return '<g opacity="%g">%s</g>' % (op * 0.8, vol(doc, s, m, r=0.8, c=0, rim_op=0.6))
 
 
-element('fumee', -25, 'particules', taille=(40, 40), images=7, dessin=fumee_image, zone=(340, 426, 362, 436),
+element('fumee', -25, 'particules', taille=(40, 40), images=7, dessin=fumee_image, zone=(316, 436, 338, 446),
         nombre=7, vie=(4200, 5200), vx=(-11, -5), vy=(-15, -10), ondule=(2.5, 2400))
 
 
 def coulee_masque():
     """Les coulées passent derrière l'éperon de droite : on les coupe là où il commence."""
-    return 'M250 430H460V640H250Z' + sm([(442, 556), (430, 570), (418, 604), (424, 648), (420, 662), (480, 662),
-                                         (480, 540)], sharp=(4, 5, 6), t=0.75).d()
+    return 'M240 436H460V650H240Z' + sm([(424, 556), (412, 570), (400, 604), (406, 648), (402, 662), (462, 662),
+                                         (462, 540)], sharp=(4, 5, 6), t=0.75).d()
 
 
 def le_long(c, u):
@@ -453,13 +513,13 @@ def coulee(k):
                 fm(x), fm(y), fm(w * 0.9), fm(w * 1.8), doc.rad(x, y, w * 0.9, [
                     (0, LAVE['hot'], 0.75), (1, LAVE['glow'], 0)], ry=w * 1.8)))
         out.append('<g clip-path="%s">%s</g>' % (doc.clip(body.d()), ''.join(inner)))
-        return '<g clip-path="%s">%s</g>' % (doc.clip(coulee_masque(), evenodd=True), ''.join(out))
+        return '<g clip-path="%s">%s</g>' % (doc.clip(coulee_masque(), evenodd=True), vgroupe(''.join(out)))
     return fn
 
 
-element('coulee-g', -24, 'boucle', box=(286, 438, 50, 134), n=12, ms=200)(coulee(0))
-element('coulee-d', -24, 'boucle', box=(364, 438, 72, 180), n=12, ms=200)(coulee(1))
-element('coulee-c', -24, 'boucle', box=(345, 440, 18, 54), n=12, ms=200)(coulee(2))
+element('coulee-g', -24, 'boucle', box=vbox(286, 438, 50, 134), n=12, ms=200)(coulee(0))
+element('coulee-d', -24, 'boucle', box=vbox(364, 438, 72, 180), n=12, ms=200)(coulee(1))
+element('coulee-c', -24, 'boucle', box=vbox(345, 440, 18, 54), n=12, ms=200)(coulee(2))
 
 
 @element('brume', -23, 'fixe')
@@ -500,7 +560,7 @@ def cristaux(doc, x, y, k=1.0, flip=False):
     return ''.join(out)
 
 
-CORN_G = [[(-14, 604), (30, 598), (78, 606), (104, 616)], [(126, 688), (156, 680), (194, 690)]]
+CORN_G = [[(20, 640), (60, 634), (98, 642), (134, 652)], [(126, 712), (156, 706), (194, 716)]]
 CORN_D = [[(486, 640), (530, 630), (576, 636), (606, 630)], [(422, 708), (452, 700), (478, 706)]]
 
 
@@ -515,13 +575,14 @@ def falaises(doc):
         inner = []
         if not droite:
             # la face de droite (tournée vers la lumière), un grand pan plus clair ; une fente côté ombre
-            inner.append(path(sm([(150, 520), (178, 506), (186, 540), (182, 600), (192, 650), (198, 720),
-                                  (212, 780), (170, 780), (160, 690), (156, 600)], t=0.8), FAL['light'], 0.7))
-            inner.append(path(ribbon(resample([(52, 520), (46, 580), (54, 640), (42, 720)], 12),
+            inner.append(path(sm([(150, 560), (178, 548), (186, 580), (182, 620), (190, 660), (198, 720),
+                                  (212, 780), (170, 780), (160, 690), (156, 630)], t=0.8), FAL['light'], 0.7))
+            inner.append(path(ribbon(resample([(52, 572), (46, 620), (54, 670), (42, 730)], 12),
                                      [0.4, 1.6, 2.4, 2.8, 3.0, 2.8, 2.6, 2.2, 2, 1.6, 1.2, 0.8, 0.3]), FAL['sh'], 0.8))
             inner.append(path(sm([(-14, 600), (40, 640), (70, 720), (60, 790), (-14, 790)], t=0.8), FAL['sh'], 0.45))
         else:
-            inner.append(path(sm([(500, 560), (604, 548), (604, 680), (560, 700), (520, 650)], t=0.8),
+            inner.append('<g transform="translate(%d 0)">' % FAL_D_DX)
+            inner.append(path(sm([(500, 560), (640, 548), (640, 680), (560, 700), (520, 650)], t=0.8),
                               FAL['light'], 0.55))
             inner.append(path(ribbon(resample([(470, 580), (476, 640), (466, 700), (472, 760)], 12),
                                      [0.4, 1.4, 2.2, 2.6, 2.8, 2.6, 2.4, 2.2, 2, 1.6, 1.2, 0.8, 0.3]), FAL['sh'], 0.8))
@@ -538,24 +599,21 @@ def falaises(doc):
             wl = [0.6 + 7 * math.sin(math.pi * i / n_) ** 0.8 for i in range(n_ + 1)]
             inner.append(path(ribbon([(x, y + 4) for x, y in c], wl), FAL['sh'], 0.55))
             inner.append(path(ribbon(c, [w * 0.4 for w in wl]), FAL['rim'], 0.45))
+        if droite:
+            inner.append('</g>')
         # la lave d'en bas chauffe le pied des falaises (lumière douce, tout près de la rivière)
         inner.append(path('M-20 700H610V800H-20Z', doc.lin(0, 712, 0, 790, [(0, '#c0523a', 0), (1, '#d0603e', 0.35)])))
         out.append('<g clip-path="%s">%s</g>' % (doc.clip(forme.d()), ''.join(inner)))
     # des cristaux de feu posés sur la falaise de gauche, et au pied de l'éperon
     out.append(cristaux(doc, 160, sol_g(160) + 1, 0.9))
-    out.append(cristaux(doc, 588, sol_d(588) + 1, 0.8, flip=True))
-    out.append(cristaux(doc, 40, 600, 0.75))
-    out.append(cristaux(doc, 548, 633, 0.7, flip=True))
-    # la stèle d'obsidienne du clan (son signe est un calque qui respire)
-    out.append(stele(doc))
-    # les mâts des bannières (la toile est un calque)
-    for x, y in MATS:
-        out.append(mat(doc, x, y))
+    out.append(cristaux(doc, 154, 707, 0.75))
+    out.append(cristaux(doc, 442, 702, 0.7, flip=True))
+    # la stèle (avec son signe) et les bannières (avec leurs mâts) sont des calques : ils passent devant les dragons
     return ''.join(out)
 
 
 # ---------------------------------------------------------------------------------------------------- le clan
-STELE = (516, sol_d(516))
+STELE = (461, sol_d(461))
 
 
 def stele(doc):
@@ -593,9 +651,9 @@ def signe(doc, ph):
     return ''.join(out)
 
 
-element('signe', -19, 'boucle', box=(500, STELE[1] - 54, 32, 64), n=12, ms=400, plein=True)(signe)
+element('signe', -19, 'boucle', box=(STELE[0] - 18, STELE[1] - 53, 36, 60), n=12, ms=400)(signe)
 
-MATS = [(34, sol_g(34)), (470, sol_d(470)), (566, sol_d(566))]
+MATS = [(100, sol_g(100)), (433, sol_d(433)), (492, sol_d(492))]
 MAT_H = 52
 
 
@@ -631,7 +689,7 @@ def banniere(k):
         for v in (0.92, 0.66, 0.33):
             pts.append(P(-1, v))
         s = sm(pts, sharp=(0, 1, 5, 7, 9), t=0.6)
-        out = [vol(doc, s, POURPRE, r=1.3, c=2.0, ink=INK, iw=0.9)]
+        out = [mat(doc, x, y), vol(doc, s, POURPRE, r=1.3, c=2.0, ink=INK, iw=0.9)]
         sx, sy = P(0, 0.45)
         out.append(path(signe_forme(sx, sy + 1, 1.2), '#e8a45a', extra=EO))
         return ''.join(out)
@@ -640,15 +698,15 @@ def banniere(k):
 
 for _k in range(3):
     _x, _y = MATS[_k]
-    element('banniere%d' % (_k + 1), -16, 'boucle', box=(_x - 20, _y - MAT_H, 40, 46), n=12, ms=200,
-            plein=True)(banniere(_k))
+    element('banniere%d' % (_k + 1), -16, 'boucle', box=(_x - 20, _y - MAT_H - 5, 40, MAT_H + 10), n=12,
+            ms=200)(banniere(_k))
 
 
 # ---------------------------------------------------------------------------------------------------- les chutes
 CHUTES = [
     # (haut, bas, largeur en haut, en bas)
-    ((118, 498), (114, 756), 22, 30),
-    ((439, 646), (437, 760), 13, 18),
+    ((118, 547), (114, 764), 22, 30),
+    ((421, 646), (419, 764), 13, 18),
 ]
 
 
@@ -701,8 +759,8 @@ def chute(k, n_):
     return fn
 
 
-element('chute1', -17, 'boucle', box=(96, 494, 46, 270), n=16, ms=150)(chute(0, 1))
-element('chute2', -17, 'boucle', box=(424, 640, 28, 128), n=16, ms=150)(chute(1, 1))
+element('chute1', -17, 'boucle', box=(95, 542, 46, 232), n=16, ms=150)(chute(0, 1))
+element('chute2', -17, 'boucle', box=(405, 640, 28, 134), n=16, ms=150)(chute(1, 1))
 
 
 @element('lueurs-chutes', -21, 'fixe')
@@ -734,8 +792,8 @@ def plaque(doc, cx, y, w_, h_, k=1.0, loin=0.0):
 
 
 # ---------------------------------------------------------------------------------------------------- la rivière
-RIV = (0, 742, 590, 46)          # la boîte du défilé (x, y, w, h)
-RIV_T = (192, 46)                # la tuile
+RIV = (0, 744, 590, 44)          # la boîte du défilé (x, y, w, h)
+RIV_T = (192, 44)                # la tuile
 
 
 def riviere_tuile(doc, ox=0):
@@ -743,8 +801,8 @@ def riviere_tuile(doc, ox=0):
     tw, th = RIV_T
     out = [path('M0 0H%dV%dH0Z' % (tw, th), doc.lin(0, 0, 0, th, [
         (0, '#c8583a'), (0.35, LAVE['mid']), (0.7, '#f39448'), (1, LAVE['mid'])]))]
-    plaques = [(34, 11, 40, 3.6), (126, 9, 30, 3.0), (78, 26, 50, 5.0), (168, 28, 36, 4.4), (24, 40, 44, 5.6),
-               (118, 41, 56, 6.0)]
+    plaques = [(34, 11, 40, 3.6), (126, 9, 30, 3.0), (78, 26, 50, 5.0), (168, 28, 36, 4.4), (24, 38, 44, 5.0),
+               (118, 39, 56, 5.4)]
     for x, y, w_, h_ in plaques:
         for dx in (-tw, 0, tw):
             out.append(plaque(doc, x + dx, y, w_, h_, k=0.8, loin=0.35 * (1 - y / th)))
@@ -753,18 +811,18 @@ def riviere_tuile(doc, ox=0):
     return ''.join(out)
 
 
-@element('rives', -17.5, 'morceau', box=(0, 740, 590, 79))
+@element('rives', -17.5, 'morceau', box=(0, 740, 590, P0 - 740))
 def rives(doc):
     """La rive d'en face (un fil sombre) et la rive proche, la corniche de basalte qui va jusqu'à l'arène."""
     out = []
     loin = sm([(-10, 740), (600, 740), (600, 745), (520, 746), (430, 744), (330, 746), (240, 745), (150, 747),
                (60, 745), (-10, 746)], sharp=(0, 1), t=0.7)
     out.append(path(loin, '#5a2a36', 0.85))
-    pts = [(-10, 804), (-10, 783), (30, 780), (80, 784), (130, 780), (190, 783), (250, 779), (300, 782), (360, 778),
-           (420, 782), (480, 779), (540, 783), (600, 780), (600, 804)]
+    pts = [(-10, P0 + 4), (-10, 783), (30, 780), (80, 784), (130, 780), (190, 783), (250, 779), (300, 782),
+           (360, 778), (420, 782), (480, 779), (540, 783), (600, 780), (600, P0 + 4)]
     s = sm(pts, sharp=(0, 1, len(pts) - 2, len(pts) - 1), t=0.7)
     out.append(vol(doc, s, dict(base='#3a2730', light='#4a3238', rim='#8a5a4e', sh='#2c1e28'),
-                   grad=doc.lin(0, 780, 0, 804, [(0, '#5a3634'), (0.4, '#3e2a32'), (1, '#33232d')]), r=1.4, c=0))
+                   grad=doc.lin(0, 780, 0, P0, [(0, '#5a3634'), (0.45, '#3e2a32'), (1, '#2e2029')]), r=1.4, c=0))
     out.append(corniche(doc))
     return ''.join(out)
 
@@ -784,14 +842,13 @@ element('riviere', -18, 'defile', box=RIV, tuile=RIV_T, vx=20.0, vy=0.0, dessin=
 # ---------------------------------------------------------------------------------------------------- l'arène
 def corniche(doc):
     """Entre la rive et l'arène : la corniche de basalte, calme, et quelques pierres posées."""
-    out = [path('M-10 800H600V%dH-10Z' % P0, doc.lin(0, 800, 0, P0, [(0, '#33232d'), (1, '#2c1f29')]))]
-    out.append(path('M-10 %dH600V%dH-10Z' % (P0 - 2, P0), '#241820', 0.8))
+    out = [path('M-10 %dH600V%dH-10Z' % (P0 - 2, P0), '#241820', 0.8)]
     for x, w_, h_ in ((22, 26, 8), (246, 18, 6), (338, 22, 7), (548, 30, 9)):
-        y = 818
+        y = P0 - 1
         s = sm([(x - w_ / 2, y), (x - w_ * 0.3, y - h_), (x + w_ * 0.2, y - h_ * 1.05), (x + w_ / 2, y)],
                sharp=(0, 3), t=0.8)
         out.append(vol(doc, s, ROC, r=1.0, c=1.4))
-    out.append(cristaux(doc, 292, 812, 0.7))
+    out.append(cristaux(doc, 296, P0 - 5, 0.65))
     return ''.join(out)
 
 
@@ -810,7 +867,7 @@ def arene(doc):
     out.append(path('M-10 %dH600V%dH-10Z' % (P0, P1), doc.lin(0, 0, 590, 0, [(0, '#2a1a2a', 0.06),
                                                                               (1, '#fff0d8', 0.04)])))
     # les dalles : des joints à peine marqués (rangs plus hauts devant), décalés d'un rang à l'autre
-    rows = [P0, 842, 872, 910, 956, 1010, P1]
+    rows = [P0, 824, 852, 886, 928, 980, P1]
     joints = []
     for i in range(len(rows) - 1):
         ya, yb = rows[i], rows[i + 1]
@@ -850,51 +907,22 @@ def arene(doc):
     return ''.join(out)
 
 
-# ---------------------------------------------------------------------------------------------------- la lave du bas
-LAV = (0, 1056, 590, 44)
-LAV_T = (240, 44)
-
-
-def lave_tuile(doc, ox=0):
-    """La tuile de la lave du bas (240 × 44) : plus de croûte, moins de blanc (elle touche le rail d'or)."""
-    tw, th = LAV_T
-    out = [path('M0 0H%dV%dH0Z' % (tw, th), doc.lin(0, 0, 0, th, [
-        (0, '#9a3426'), (0.3, LAVE['deep']), (0.65, '#e2703a'), (1, LAVE['deep'])]))]
-    plaques = [(30, 13, 70, 9), (138, 10, 58, 8), (206, 15, 40, 8), (84, 29, 82, 11), (194, 31, 68, 10),
-               (22, 43, 52, 8), (132, 44, 64, 8)]
-    for x, y, w_, h_ in plaques:
-        for dx in (-tw, 0, tw):
-            out.append(plaque(doc, x + dx, y, w_, h_, k=0.6))
-    return ''.join(out)
-
-
-def lave(doc, off):
-    x, y, w, h = LAV
-    tw, th = LAV_T
-    out = []
-    for k in range(-1, w // tw + 2):
-        out.append('<g transform="translate(%s %s)">%s</g>' % (fm(x + k * tw + off), fm(y), lave_tuile(doc)))
-    return '<g clip-path="%s">%s</g>' % (doc.clip('M%d %dH%dV%dH%dZ' % (x, y, x + w, y + h, x)), ''.join(out))
-
-
-element('lave', -13, 'defile', box=LAV, tuile=LAV_T, vx=25.0, vy=0.0, dessin=lave, tuile_dessin=lave_tuile)
-
-
-@element('flanc-bas', -12.5, 'morceau', box=(0, 1052, 590, 18))
-def flanc_bas(doc):
-    """Le bas du flanc de l'arène, irrégulier, posé sur la lave (remis devant le défilé)."""
-    pts = [(-10, 1052), (600, 1052), (600, 1060)]
-    x = 600
-    i = 0
+# ---------------------------------------------------------------------------------------------------- sous l'arène
+@element('dessous', -15.4, 'fixe')
+def dessous(doc):
+    """Sous le flanc de l'arène : en combat, c'est sous les cartes des héros (y > 985) ; donc simple et sombre, une
+    croûte de lave refroidie à peine rougie, sans détail perdu (l'accueil, qui la montre, garde un bas calme)."""
+    out = [path('M-10 1062H600V1104H-10Z', doc.lin(0, 1062, 0, 1100, [(0, '#5a2a28'), (0.3, '#3e1e26'),
+                                                                     (1, '#2e1822')]))]
+    pts = [(-10, 1058), (600, 1058), (600, 1064)]
+    x, i = 600, 0
     while x > -10:
         x -= 22 + 9 * math.sin(i * 1.7)
-        pts.append((x, 1060 + 3.5 * math.sin(i * 2.3) + 1.5 * math.cos(i * 1.1)))
+        pts.append((x, 1064 + 3 * math.sin(i * 2.3) + 1.5 * math.cos(i * 1.1)))
         i += 1
-    pts.append((-10, 1060))
-    s = sm(pts, sharp=(0, 1), t=0.7)
-    return (path(s, doc.lin(0, 1052, 0, 1066, [(0, '#6a3630'), (1, '#7e3a2e')])) +
-            path(sm([p for p in pts[2:]] + [(-10, 1058), (600, 1058)], sharp=(len(pts) - 2, len(pts) - 1), t=0.7),
-                 '#a0482e', 0.35))
+    pts.append((-10, 1064))
+    out.append(path(sm(pts, sharp=(0, 1), t=0.7), doc.lin(0, 1058, 0, 1068, [(0, '#6a3630'), (1, '#5a2c2a')])))
+    return ''.join(out)
 
 
 def braise_image(doc, i, n):
@@ -908,8 +936,7 @@ def braise_image(doc, i, n):
 
 element('braises-fond', -14, 'particules', taille=(12, 12), images=4, dessin=braise_image, zone=(10, 748, 580, 776),
         nombre=6, vie=(2200, 3400), vx=(-3, 4), vy=(-14, -8), ondule=(2, 1800))
-element('braises', -12, 'particules', taille=(12, 12), images=4, dessin=braise_image, zone=(0, 1066, 590, 1094),
-        nombre=10, vie=(1500, 2400), vx=(-4, 5), vy=(-20, -11), ondule=(2, 1400))
+
 
 
 # ---------------------------------------------------------------------------------------------------- premier plan
@@ -929,6 +956,125 @@ def rocher_d(doc):
     out = [vol(doc, s, ROC, r=2.0, c=3.0, ink=INK, iw=1.1)]
     out.append(path(sm([(566, 1046), (590, 1040), (600, 1056), (584, 1064)], t=0.9), ROC['light'], 0.5))
     return ''.join(out)
+
+
+# ---------------------------------------------------------------------------------------------------- les dragons
+# Demande du propriétaire (27/11) : « des ombres de dragons qui volent dans le fond ». Trois silhouettes lointaines,
+# ailes déployées (bras, doigts en os, membrane), long cou, longue queue, dans la couleur de la brume du ciel en un
+# peu plus foncé ; plus loin = plus petit, plus clair et plus lent. Ils traversent le ciel derrière le volcan et la
+# fumée (deux « morceaux » remettent le panache et le haut du cône devant eux), jamais sur l'arène. Chacun est une
+# particule seule qui vit une période entière : il naît caché (hors de l'image, ou derrière le cône ou le panache)
+# et finit caché ; ses ailes battent lentement (12 images en boucle).
+DRAGONS = [
+    # id, y, échelle, x de départ, x d'arrivée, montée (px/s), couleur, opacité, profondeur
+    ('dragon1', 418, 0.6, -46, 636, -0.6, '#280e24', 0.9, -29.75),       # le plus proche : de bord à bord
+    ('dragon2', 490, 0.3, 330, -30, 0.0, '#3a1830', 0.7, -29.74),        # sort de derrière le cône, part à gauche
+    ('dragon3', 352, 0.2, 262, 630, -0.4, '#321430', 0.62, -29.73),      # le plus loin : sort du panache
+]
+DRAGON_N, DRAGON_MS = 12, 160                     # un battement d'ailes = 1,92 s
+DRAGON_BOITE = (-74, -64, 114, 104)                # la silhouette (repère local, tête à droite) : x, y, w, h
+
+
+def aile(ph, near=True):
+    """Une aile (repère local, tête à droite) : le bras (épaule, coude, poignet), trois doigts en os et la membrane
+    festonnée tendue entre eux jusqu'à la hanche. ph : le battement (0 = en haut, 0,5 = en bas)."""
+    a = 2 * math.pi * ph
+    f = 0.2 + 0.8 * math.cos(a)                  # 1 : en haut, −0,6 : en bas
+    sx = 0.8 + 0.2 * abs(f)
+    S = (0, -3) if near else (4, -4)
+    k = 1 if near else 0.84
+
+    def P(dx, dy):
+        return (S[0] + dx * sx * k, S[1] + dy * f * k)
+    e, wr = (-8, -18), (4, -38)
+    tips = [(-18, -56), (-40, -45), (-56, -25)]
+    hip = (-26, 2)
+
+    def creux(a, b, k_=0.26):
+        """Deux points d'un feston entre deux pointes : la membrane se creuse vers le poignet."""
+        out = []
+        for t in (0.33, 0.67):
+            m = (a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t)
+            out.append((m[0] + (wr[0] - m[0]) * k_ * (1 - abs(t - 0.5)), m[1] + (wr[1] - m[1]) * k_ * (1 - abs(t - 0.5))))
+        return out
+    loc = [(0, 0), e, wr, tips[0]] + creux(tips[0], tips[1]) + [tips[1]] + creux(tips[1], tips[2]) + [tips[2]] + \
+        creux(tips[2], (hip[0], hip[1] - 2), 0.18) + [(hip[0] + 4, hip[1] - 3)]
+    memb = [P(x, y) for x, y in loc]
+    Wr, E = P(*wr), P(*e)
+    F = [P(*t_) for t_ in tips]
+    os_ = [([S, E, Wr], 2.0), ([Wr, F[0]], 1.3), ([Wr, F[1]], 1.2), ([Wr, F[2]], 1.1)]
+    return memb, os_
+
+
+def dragon_corps(ph):
+    """Le cou, la tête, le corps, la queue et les pattes repliées (repère local), qui montent un peu au battement."""
+    b = -1.2 * math.sin(2 * math.pi * ph)
+    dos = [(-64, -6), (-54, 0), (-42, 3), (-28, 2), (-14, 0), (0, -1), (10, -4), (18, -9), (25, -13)]
+    dos = [(x, y + b * (0.4 + 0.6 * min(1, max(0, (x + 20) / 40)))) for x, y in dos]
+    c = resample(catmull(dos), 24)
+    ws = []
+    for i in range(25):
+        u = i / 24
+        ws.append(0.6 + 7.6 * math.sin(math.pi * min(1, max(0, (u - 0.12) / 0.74))) ** 1.8 if u < 0.85
+                  else 2.4 - 3 * (u - 0.85))
+    corps = ribbon(c, ws)
+    hx, hy = c[-1]
+    tete = sm([(hx - 4, hy - 2.2), (hx + 4, hy - 2.6), (hx + 10, hy + 0.4), (hx + 4, hy + 2.4), (hx - 3, hy + 2.6)],
+              sharp=(2,), t=0.8)
+    cornes = [ribbon([(hx - 1, hy - 1.6), (hx - 6, hy - 5), (hx - 10, hy - 6.4)], [1.4, 0.9, 0.2]),
+              ribbon([(hx + 1, hy - 2), (hx - 3, hy - 6.6), (hx - 6, hy - 9)], [1.2, 0.8, 0.2])]
+    tx, ty = c[0]
+    pique = sm([(tx + 3, ty), (tx - 3, ty - 4), (tx - 8, ty + 0.5), (tx - 3, ty + 3)], sharp=(1, 2, 3), t=0.6)
+    pattes = [ribbon([(-14, 2 + b * 0.5), (-19, 7), (-25, 8.5)], [2.4, 1.6, 0.4]),
+              ribbon([(4, 0 + b), (3, 5), (-1, 6.5)], [1.8, 1.2, 0.3])]
+    return [corps, tete, pique] + cornes + pattes
+
+
+def dragon_image(id_):
+    _, y, k, x0, x1, vy, col, op, _ = next(d for d in DRAGONS if d[0] == id_)
+    sg = 1 if x1 > x0 else -1
+    bx, by, bw, bh = DRAGON_BOITE
+    w, h = bw * k + 4, bh * k + 4
+
+    def fn(doc, i, n):
+        ph = i / n
+        ciel_ = mix(col, '#5a2338', 0.35)                   # l'aile lointaine, plus dans la brume
+        ox = w / 2 - (bx + bw / 2) * k * sg
+        oy = h / 2 - (by + bh / 2) * k
+        out = ['<g transform="translate(%s %s) scale(%s %s)">' % (fm(ox), fm(oy), fm(k * sg), fm(k))]
+        for near, c in ((False, ciel_), (True, col)):
+            memb, os_ = aile(ph, near)
+            if near:
+                out.extend(path(p_, col) for p_ in dragon_corps(ph))
+            out.append(path(sm(memb, sharp=(0, 2, 3, 6, 9, 12), t=0.7), c, 0.88))
+            for b_, sw in os_:
+                out.append('<path d="%s" fill="none" stroke="%s" stroke-width="%s" stroke-linecap="round" '
+                           'stroke-linejoin="round"/>' % (polyline_d(b_), mix(c, '#1a0818', 0.25), sw))
+        out.append('</g>')
+        return '<g opacity="%g">%s</g>' % (op, ''.join(out))
+    return fn, (round(w), round(h))
+
+
+for _d in DRAGONS:
+    _fn, _t = dragon_image(_d[0])
+    _vx = (_d[4] - _d[3]) * 1000 / PERIODE
+    element(_d[0], _d[8], 'particules', taille=_t, images=DRAGON_N, ms=DRAGON_MS, dessin=_fn,
+            zone=(_d[3], _d[1], _d[3], _d[1]), nombre=1, vie=(PERIODE, PERIODE), vx=(_vx, _vx), vy=(_d[5], _d[5]),
+            ondule=(0, PERIODE))
+
+
+def devant(ids, box):
+    """Un morceau du paysage remis devant les dragons : ces éléments seuls (sans le ciel), coupés à la boîte."""
+    def fn(doc):
+        x, y, w, h = box
+        body = ''.join(e['fn'](doc) for e in sorted(ELEMS, key=lambda e: e['prof']) if e['id'] in ids)
+        return '<g clip-path="%s">%s</g>' % (doc.clip('M%s %sH%sV%sH%sZ' % (x, y, x + w, y + h, x)), body)
+    return fn
+
+
+element('devant-panache', -27.9, 'morceau', box=(226, 336, 150, 118))(devant(('panache', 'nuages', 'volcan'),
+                                                                              (226, 336, 150, 118)))
+element('devant-volcan', -27.9, 'morceau', box=(276, 474, 104, 32))(devant(('volcan',), (276, 474, 104, 32)))
 
 
 # ================================================================================================ LE TEMPS
@@ -956,7 +1102,8 @@ _PART_CACHE = {}
 
 
 def particules_a(e, t):
-    """Où sont les particules à l'instant t (la règle du jeu : chaque place renaît au même endroit à chaque période)."""
+    """Où sont les particules à l'instant t (la règle du jeu : chaque place renaît au même endroit à chaque période ;
+    images jouées sur la vie, ou en boucle toutes les `ms`)."""
     if e['id'] not in _PART_CACHE:
         r = rng('kael-' + e['id'])
         P = PERIODE
@@ -973,6 +1120,7 @@ def particules_a(e, t):
         _PART_CACHE[e['id']] = lst
     out = []
     amp, per = e['ondule']
+    ms = e.get('ms', 0)
     for life, born, x0, y0, vx, vy, ph in _PART_CACHE[e['id']]:
         age = ((t - born) % PERIODE + PERIODE) % PERIODE
         if age >= life:
@@ -980,7 +1128,7 @@ def particules_a(e, t):
         s = age / 1000
         x = x0 + vx * s + amp * math.sin(ph + 2 * math.pi * age / max(1, per))
         y = y0 + vy * s
-        i = min(e['images'] - 1, int(age / life * e['images']))
+        i = int((age + ph * 100) // ms) % e['images'] if ms else min(e['images'] - 1, int(age / life * e['images']))
         out.append((x, y, i))
     return out
 
@@ -993,27 +1141,24 @@ def phase(e, t, override=None):
     return 0
 
 
-def scene(t=0, box=(0, 0, W, H), particules=True, upto=None, override=None, sauf=()):
-    """Tout le fond à l'instant t, en SVG (sans les personnages). upto : seulement les éléments jusqu'à cette
-    profondeur (pour les images « pleines » d'une boucle) ; override : {id: phase} imposé."""
+def scene(t=0, box=(0, 0, W, H), particules=True, base=False):
+    """Tout le fond à l'instant t, en SVG (sans les personnages). base : seulement l'image fixe du jeu (ce qui ne
+    bouge pas : les boucles, défilés et particules sont des calques posés par-dessus)."""
     doc = Doc()
     body = []
     for e in sorted(ELEMS, key=lambda e: e['prof']):
-        if upto is not None and e['prof'] > upto:
-            continue
-        if e['id'] in sauf:
-            continue
         g = e['genre']
+        if base and g not in ('fixe', 'morceau'):
+            continue
         if g in ('fixe', 'morceau'):
             body.append(e['fn'](doc))
         elif g == 'boucle':
-            body.append(e['fn'](doc, phase(e, t, override)))
+            body.append(e['fn'](doc, phase(e, t)))
         elif g == 'defile':
             tw = e['tuile'][0]
             off = (t / 1000 * e['vx']) % tw
             body.append(e['dessin'](doc, off))
         elif g == 'particules' and particules:
-            # les images de la particule, une fois dans les defs, posées par <use>
             ids = []
             for i in range(e['images']):
                 sid = doc.uid('s')
@@ -1041,63 +1186,78 @@ def rendre(jobs, w, h):
 
 
 # ------------------------------------------------------------------------------------------------ les personnages
+# Côté héros : Aurelle (angels-10) au fond, Brasyr (dragon-feu) au milieu, Kael (assassins-2) devant ; en face, les
+# trois monstres du clan de Kael (lutin de magma, golem, salamandre), retournés vers la gauche.
 PERSOS = [('angels-10', 'heros', 0), ('dragon-feu', 'heros', 2), ('assassins-2', 'heros', 4),
           ('mon-kael-rapide', 'ennemis', 0), ('mon-kael-costaud', 'ennemis', 2), ('mon-kael-tireur', 'ennemis', 4)]
 
 
 def vecto_table():
+    import re
     s = open(os.path.join(ROOT, 'src', 'game', 'vecto.ts')).read()
     out = {}
-    import re
     for m in re.finditer(r"'([\w-]+)': \[([\d.]+), ([\d.]+), ([\d.]+), ([\d.]+)\]", s):
         out[m.group(1)] = tuple(float(m.group(i)) for i in range(2, 6))
     return out
 
 
-def poser(im, s, y0, persos=PERSOS):
-    """Pose les personnages vectoriels (public/art/vecto/<id>.webp) sur une image du fond rendue à l'échelle s
-    (pixels d'image par pixel du fond), dont le haut est à y0 (pixels du fond). Un pixel de mesure = un pixel du fond
-    (comme dans le jeu) ; l'ombre du jeu sous chacun (ovale noir à 30 %)."""
+def poser(im, s, x0, y0, persos=PERSOS):
+    """Pose les personnages vectoriels (public/art/vecto/<id>.webp) comme le combat : places de place_combat(),
+    taille K_PERSO (un pixel de mesure = 0,68 pixel du fond), l'ombre du jeu (ovale noir à 30 %). L'image `im` est le
+    fond rendu à l'échelle s (pixels d'image par pixel du fond), son coin haut-gauche en (x0, y0) du fond."""
     tab = vecto_table()
-    acts = sorted([(place(side, slot)[1], cid, side, slot) for cid, side, slot in persos])
+    acts = sorted([(place_combat(side, slot)[1], cid, side, slot) for cid, side, slot in persos])
     ss = 4
     sh = Image.new('L', (im.width * ss, im.height * ss), 0)
     d = ImageDraw.Draw(sh)
     for fy, cid, side, slot in acts:
-        fx, fy = place(side, slot)
-        w_ = tab[cid][0] * 0.62
-        d.ellipse(((fx - w_ / 2) * s * ss, (fy - y0 - 7) * s * ss, (fx + w_ / 2) * s * ss, (fy - y0 + 7) * s * ss),
-                  fill=77)
+        fx, fy = place_combat(side, slot)
+        w_ = min(160, tab[cid][0] * 0.6 * 1.22 * 0.95 * 1.1) / UC
+        hh = 10 / UC
+        d.ellipse(((fx - x0 - w_ / 2) * s * ss, (fy - y0 - hh) * s * ss, (fx - x0 + w_ / 2) * s * ss,
+                   (fy - y0 + hh) * s * ss), fill=77)
     sh = sh.resize(im.size, Image.LANCZOS)
     black = Image.new('RGBA', im.size, (0, 0, 0, 255))
     black.putalpha(sh)
     im.alpha_composite(black)
     for fy, cid, side, slot in acts:
-        fx, fy = place(side, slot)
+        fx, fy = place_combat(side, slot)
         w_, h_, ax, ay = tab[cid]
+        k = K_PERSO * s
         sp = Image.open(os.path.join(ROOT, 'public', 'art', 'vecto', cid + '.webp')).convert('RGBA')
-        sp = sp.resize((round(w_ * s), round(h_ * s)), Image.LANCZOS)
+        sp = sp.resize((round(w_ * k), round(h_ * k)), Image.LANCZOS)
         if side == 'heros':
-            x = fx - ax
+            x = (fx - x0) * s - ax * k
         else:
             sp = sp.transpose(Image.FLIP_LEFT_RIGHT)
-            x = fx - (w_ - ax)
-        y = fy - ay
-        im.alpha_composite(sp, (round(x * s), round((y - y0) * s))) if x >= 0 else im.paste(
-            sp, (round(x * s), round((y - y0) * s)), sp)
+            x = (fx - x0) * s - (w_ - ax) * k
+        y = (fy - y0) * s - ay * k
+        im.paste(sp, (round(x), round(y)), sp) if x < 0 or y < 0 else im.alpha_composite(sp, (round(x), round(y)))
     return im
 
 
-def panneau(im, s, hauteur):
-    """Le panneau du bas du combat (bleu nuit) et son rail d'or, à cheval sur le bas du terrain."""
-    out = Image.new('RGBA', (im.width, im.height + hauteur), (15, 21, 51, 255))
+def vue_combat(t, largeur, phone=(390, 844, 34), fond=None):
+    """Ce que montre le combat sur un téléphone (sans l'interface) : le fond (vectoriel à l'instant t, ou l'image
+    `fond` donnée), les personnages, et sous le terrain la bande de la barre de geste (fond du jeu)."""
+    top, hu = telephone(*phone)
+    x0 = VUE_X[0]
+    s = largeur / (VUE_X[1] - VUE_X[0])
+    hh = round((H - top) * s)
+    if fond is None:
+        p = os.path.join(TMP, 'vue-%d.png' % largeur)
+        rendre([(scene(t, (x0, top, VUE_X[1] - x0, H - top)), p)], largeur, hh)
+        im = Image.open(p).convert('RGBA')
+    else:
+        im = fond.crop((round(x0 * fond.width / W), round(top * fond.height / H), round(VUE_X[1] * fond.width / W),
+                        fond.height)).resize((largeur, hh), Image.NEAREST).convert('RGBA')
+    im = poser(im, s, x0, top)
+    return geste(im, s, phone)
+
+
+def geste(im, s, phone):
+    bas = round(phone[2] * 720 / phone[0] / UC * s)
+    out = Image.new('RGBA', (im.width, im.height + bas), (21, 15, 54, 255))
     out.alpha_composite(im, (0, 0))
-    d = ImageDraw.Draw(out)
-    y = im.height
-    k = s
-    d.rectangle((0, y - 5 * k, out.width, y + 3 * k), fill=(217, 166, 62, 255))
-    d.rectangle((0, y - 5 * k, out.width, y - 3.8 * k), fill=(255, 226, 140, 255))
-    d.rectangle((0, y + 1.8 * k, out.width, y + 3 * k), fill=(120, 80, 30, 255))
     return out
 
 
@@ -1106,19 +1266,15 @@ def calques():
     """Rend les images de chaque calque (×UP), les range dans une planche et écrit la description JSON."""
     os.makedirs(os.path.join(TMP, 'calques'), exist_ok=True)
     groupes = {}        # (w, h) → [(svg, png, (id, i))]
-    meta = []
     for e in sorted(ELEMS, key=lambda e: e['prof']):
         g = e['genre']
         if g in ('boucle', 'morceau'):
             x, y, w_, h_ = e['box']
             n = e.get('n', 1)
             for i in range(n):
-                if g == 'boucle' and e.get('plein'):
-                    svg = scene(0, (x, y, w_, h_), particules=False, upto=e['prof'], override={e['id']: i / n})
-                else:
-                    doc = Doc()
-                    body = e['fn'](doc, i / n) if g == 'boucle' else e['fn'](doc)
-                    svg = doc.svg(body, (x, y, w_, h_))
+                doc = Doc()
+                body = e['fn'](doc, i / n) if g == 'boucle' else e['fn'](doc)
+                svg = doc.svg(body, (x, y, w_, h_))
                 png = os.path.join(TMP, 'calques', '%s-%02d.png' % (e['id'], i))
                 groupes.setdefault((w_ * UP, h_ * UP), []).append((svg, png, (e['id'], i)))
         elif g == 'defile':
@@ -1139,24 +1295,38 @@ def calques():
         rendre([(s_, p_) for s_, p_, _ in lst], w_, h_)
         for _, p_, key in lst:
             images[key] = Image.open(p_).convert('RGBA')
-    # la planche : des étagères, les plus hautes d'abord, 2048 px de large au plus
+    # la planche : des étagères, les plus hautes d'abord, 2048 px de large au plus. Chaque image est « étirée » de 2 px
+    # tout autour (ses bords recopiés) : le jeu agrandit en lissant, et sans cela un liseré sombre apparaît au bord
+    # des morceaux remis devant (vu dans le vrai combat).
     keys = sorted(images, key=lambda k: (-images[k].height, k))
-    PW = 2048
+    PW, EX = 2048, 2
     pos = {}
-    x = y = rowh = 0
+    x = y = EX
+    rowh = 0
     for k in keys:
         im = images[k]
-        if x + im.width > PW:
-            x, y, rowh = 0, y + rowh + 2, 0
+        if x + im.width + EX > PW:
+            x, y, rowh = EX, y + rowh + 2 * EX + 1, 0
         pos[k] = (x, y)
-        x += im.width + 2
+        x += im.width + 2 * EX + 1
         rowh = max(rowh, im.height)
-    ph = y + rowh
+    ph = y + rowh + EX
     planche = Image.new('RGBA', (PW, ph), (0, 0, 0, 0))
     for k, (px_, py_) in pos.items():
-        planche.alpha_composite(images[k], (px_, py_))
-    used = max(px_ + images[k].width for k, (px_, py_) in pos.items())
+        im = images[k]
+        w_, h_ = im.size
+        big = Image.new('RGBA', (w_ + 2 * EX, h_ + 2 * EX))
+        big.paste(im.resize((w_ + 2 * EX, h_ + 2 * EX), Image.NEAREST), (0, 0))   # les bords, étirés
+        big.paste(im, (EX, EX))
+        for i in range(EX):
+            big.paste(im.crop((0, 0, w_, 1)), (EX, i))
+            big.paste(im.crop((0, h_ - 1, w_, h_)), (EX, h_ + EX + i))
+            big.paste(im.crop((0, 0, 1, h_)), (i, EX))
+            big.paste(im.crop((w_ - 1, 0, w_, h_)), (w_ + EX + i, EX))
+        planche.paste(big, (px_ - EX, py_ - EX))
+    used = max(px_ + images[k].width + EX for k, (px_, py_) in pos.items())
     planche = planche.crop((0, 0, used, ph))
+    meta = []
     for e in sorted(ELEMS, key=lambda e: e['prof']):
         g = e['genre']
         c = dict(id=e['id'], prof=e['prof'])
@@ -1174,7 +1344,8 @@ def calques():
             w_, h_ = e['taille']
             c.update(genre='particules', cases=[list(pos[(e['id'], i)]) + [w_ * UP, h_ * UP] for i in range(e['images'])],
                      zone=list(e['zone']), nombre=e['nombre'], vie=list(e['vie']), vx=list(e['vx']), vy=list(e['vy']),
-                     ondule=list(e['ondule']), images='vie', graine='kael-' + e['id'])
+                     ondule=list(e['ondule']), images='boucle' if e.get('ms') else 'vie', ms=e.get('ms', 0),
+                     graine='kael-' + e['id'])
         else:
             continue
         meta.append(c)
@@ -1184,12 +1355,12 @@ def calques():
 def exporter():
     os.makedirs(JEU, exist_ok=True)
     os.makedirs(SORTIE, exist_ok=True)
-    # l'image fixe ×UP (toutes les boucles à leur image 0, sans particules)
+    # l'image fixe du jeu ×UP : seulement ce qui ne bouge pas (les calques animés se posent dessus, entiers)
     fixe = os.path.join(TMP, 'fixe-x2.png')
-    rendre([(scene(0, particules=False), fixe)], W * UP, H * UP)
-    im = Image.open(fixe).convert('RGB')
-    im.save(os.path.join(JEU, 'kael.webp'), quality=95, method=6)
-    im.save(os.path.join(SORTIE, 'fond.png'))
+    rendre([(scene(0, particules=False, base=True), fixe)], W * UP, H * UP)
+    Image.open(fixe).convert('RGB').save(os.path.join(JEU, 'kael.webp'), quality=95, method=6)
+    # le fond entier pour le propriétaire (les dragons en vol)
+    rendre([(scene(5200), os.path.join(SORTIE, 'fond.png'))], W * UP, H * UP)
     planche, meta = calques()
     planche.save(os.path.join(JEU, 'kael-anim.webp'), quality=90, alpha_quality=100, method=6)
     planche.save(os.path.join(TMP, 'planche.png'))
@@ -1197,12 +1368,14 @@ def exporter():
         'clan': 'kael', 'style': 'vecto', 'w': W, 'h': H, 'up': UP, 'unite': round(UNIT, 5),
         'image': 'art/vecto/fonds/kael.webp', 'planche': 'art/vecto/fonds/kael-anim.webp',
         'note': ('Coordonnées x, y, w, h, zone en pixels du fond (590 × 1100) ; cases et tuiles en pixels de la '
-                 'planche (×up). Les images sont lisses : les agrandir en LINÉAIRE (pas au plus proche). Boucle : '
-                 'images changées toutes les ms (ms 0 = fixe, un morceau remis devant). Défilé : la tuile coule à vx, '
-                 'vy px du fond par seconde dans le rectangle (sans arrondi au pixel). Particules : la règle de '
-                 'fond-px.ts (hasard rng(graine)), centre en (x, y), sans arrondi au pixel.'),
-        'reperes': {'hz': HZ, 'p0': P0, 'p1': P1, 'rangs': list(RANGS)}, 'periode_ms': PERIODE,
-        'planche_taille': list(planche.size), 'calques': meta}
+                 'planche (×up). L\'image fixe ne contient que ce qui ne bouge pas : chaque calque animé se pose '
+                 'dessus, entier (transparent autour). Images lisses : agrandir en LINÉAIRE. Boucle : images changées '
+                 'toutes les ms (ms 0 = un morceau remis devant). Défilé : la tuile coule à vx, vy px du fond par '
+                 'seconde. Particules : la règle de fond-px.ts (hasard rng("kael-" + id)), centre en (x, y), images '
+                 'sur la vie ou en boucle toutes les ms. Branché dans le jeu derrière ?vecto=1 (src/game/fond-vecto.ts).'),
+        'reperes': {'hz': HZ, 'p0': P0, 'p1': P1, 'rangs_combat': [round(r, 1) for r in RANGS_COMBAT],
+                    'rangs_accueil': list(RANGS), 'cartes': round(CARTES, 1), 'vue_x': [round(v, 1) for v in VUE_X]},
+        'periode_ms': PERIODE, 'planche_taille': list(planche.size), 'calques': meta}
     json.dump(doc, open(os.path.join(HERE, 'fond-kael.json'), 'w'), indent=1, ensure_ascii=False)
     ecrire_ts(doc)
     print('  jeu : public/art/vecto/fonds/kael.webp %d Ko, kael-anim.webp %d Ko (%d × %d), %d calques' % (
@@ -1223,7 +1396,7 @@ def ecrire_ts(doc):
                             vy=c['vy']))
         else:
             out.append(dict(id=c['id'], g='p', z=z, f=c['cases'], zone=c['zone'], n=c['nombre'], vie=c['vie'],
-                            vx=c['vx'], vy=c['vy'], ondule=c['ondule'], ms=0))
+                            vx=[round(v, 4) for v in c['vx']], vy=c['vy'], ondule=c['ondule'], ms=c['ms']))
     meta = {'kael': {'w': W, 'h': H, 'up': UP, 'periode': PERIODE, 'calques': out}}
     ts = ('// Généré par refonte-graphique/ui-moderne/fonds/kael/kael.py : ne pas modifier à la main.\n'
           '// Les fonds de combat VECTORIELS (essai, seulement avec ?vecto=1 : bg/fond-px.ts). Même format que FOND_META,\n'
@@ -1234,15 +1407,14 @@ def ecrire_ts(doc):
 
 
 def composer_jeu(doc, t):
-    """Contrôle : l'image à l'instant t refaite comme le jeu la ferait (fixe + calques de la planche), à ×1."""
+    """Contrôle : l'image à l'instant t refaite comme le jeu la ferait (fixe + calques de la planche), à ×UP."""
     base = Image.open(os.path.join(JEU, 'kael.webp')).convert('RGBA')
     pl = Image.open(os.path.join(TMP, 'planche.png')).convert('RGBA')
     for c in sorted(doc['calques'], key=lambda c: c['prof']):
         if c['genre'] == 'boucle':
             i = 0 if c['ms'] == 0 else int(t // c['ms']) % len(c['cases'])
             sx, sy = c['cases'][i]
-            fr = pl.crop((sx, sy, sx + c['w'] * UP, sy + c['h'] * UP))
-            base.alpha_composite(fr, (c['x'] * UP, c['y'] * UP))
+            base.alpha_composite(pl.crop((sx, sy, sx + c['w'] * UP, sy + c['h'] * UP)), (c['x'] * UP, c['y'] * UP))
         elif c['genre'] == 'defile':
             sx, sy, tw, th = c['case']
             tile = pl.crop((sx, sy, sx + tw, sy + th))
@@ -1254,17 +1426,14 @@ def composer_jeu(doc, t):
     return base
 
 
-# ================================================================================================ LE TEST
 def contrôles(img_x1):
-    """Mesures du sol de combat (comme le contrôle du pixel) et des couleurs."""
+    """Mesures du sol de combat (comme le contrôle du pixel) : là où sont les pieds en combat, au-dessus des cartes."""
     a = np.asarray(img_x1.convert('RGB'), float)
-    zone = a[P0 + 6:P1 - 4]
+    zone = a[P0 + 6:int(CARTES), int(VUE_X[0]):int(VUE_X[1])]
     L = zone[..., 0] * 0.3 + zone[..., 1] * 0.59 + zone[..., 2] * 0.11
     edges = (np.abs(np.diff(L, axis=1)) > 28).mean()
-    print('  sol de combat : luminosité moyenne %.0f, écart %.1f, %.2f %% de bords durs' % (
-        L.mean(), L.std(), edges * 100))
-    hsv = np.asarray(img_x1.convert('RGB').convert('HSV'), float)
-    print('  saturation moyenne : fond %.0f, sol %.0f' % (hsv[377:, :, 1].mean(), hsv[P0:P1, :, 1].mean()))
+    print('  sol de combat (y %d → %d, x %d → %d) : luminosité moyenne %.0f, écart %.1f, %.2f %% de bords durs' % (
+        P0 + 6, CARTES, VUE_X[0], VUE_X[1], L.mean(), L.std(), edges * 100))
     return L.mean(), L.std(), edges
 
 
@@ -1272,12 +1441,10 @@ def main():
     args = sys.argv[1:]
     os.makedirs(TMP, exist_ok=True)
     if '--fixe' in args:
-        p = os.path.join(TMP, 'brouillon-fixe.png')
-        rendre([(scene(0), p)], W * UP, H * UP)
-        im = Image.open(p)
-        im.resize((W, H), Image.LANCZOS).save(os.path.join(TMP, 'brouillon-fixe-x1.png'))
-        contrôles(im.resize((W, H), Image.LANCZOS))
-        print('  ', p)
+        # le brouillon : la vue du combat sur un téléphone 390 × 844 (avec les personnages) et sur un court
+        vue_combat(5200, 780).convert('RGB').save(os.path.join(TMP, 'brouillon-390.png'))
+        vue_combat(5200, 720, phone=(360, 640, 0)).convert('RGB').save(os.path.join(TMP, 'brouillon-360.png'))
+        print('  ', TMP)
         return
     os.makedirs(SORTIE, exist_ok=True)
     doc = exporter()
@@ -1292,58 +1459,52 @@ def main():
             t, diff.mean(), (diff > 24).mean() * 100))
         if t == 1650:
             Image.fromarray(np.clip(diff * 4, 0, 255).astype(np.uint8)).save(os.path.join(TMP, 'diff-jeu.png'))
-    fixe1 = Image.open(os.path.join(SORTIE, 'fond.png')).resize((W, H), Image.LANCZOS)
-    contrôles(fixe1)
-    # --- la situation : un téléphone 390 × 844 (rendu ×2 = 780 × 1688), panneau du bas compris
-    s = 780 / W
-    y0 = VISIBLE['moyen']
-    pan = round(398 * 780 / 720)
-    hh = 1688 - pan
-    top = H - hh / s
-    p = os.path.join(TMP, 'situation-fond.png')
-    rendre([(scene(1200, (0, top, W, H - top)), p)], 780, hh)
-    im = poser(Image.open(p).convert('RGBA'), s, top)
-    panneau(im, s, pan).convert('RGB').save(os.path.join(SORTIE, 'situation.png'))
-    # --- la comparaison : ancien fond pixel | nouveau fond vectoriel, mêmes personnages, même cadrage
+    contrôles(Image.open(os.path.join(TMP, 'ref-0.png')).resize((W, H), Image.LANCZOS))
+    # la situation : un téléphone 390 × 844 (×2), cadré comme le vrai combat, sans l'interface
+    vue_combat(5200, 780).convert('RGB').save(os.path.join(SORTIE, 'situation.png'))
+    # la comparaison : ancien fond pixel | nouveau fond vectoriel, mêmes personnages, même cadrage
     pix = Image.open(os.path.join(ROOT, 'public', 'art', 'px', 'fonds', 'kael.webp')).convert('RGBA')
-    pix = pix.crop((0, round(top), W, H)).resize((780, hh), Image.NEAREST)
-    pix = poser(pix, s, top)
-    vec = poser(Image.open(p).convert('RGBA'), s, top)
-    comp = Image.new('RGB', (780 * 2 + 12, hh), (31, 18, 56))
-    comp.paste(pix.convert('RGB'), (0, 0))
-    comp.paste(vec.convert('RGB'), (792, 0))
+    a = vue_combat(0, 780, fond=pix)
+    b = vue_combat(5200, 780)
+    comp = Image.new('RGB', (780 * 2 + 12, a.height), (31, 18, 56))
+    comp.paste(a.convert('RGB'), (0, 0))
+    comp.paste(b.convert('RGB'), (792, 0))
     comp.save(os.path.join(SORTIE, 'comparaison.png'))
     print('  test : fond.png, situation.png, comparaison.png')
     if '--video' in args:
-        video(top)
+        video()
 
 
-def video(top):
-    """L'animation en situation : une période entière (9,6 s), 25 images par seconde, sans couture ; le mp4 en
-    format téléphone (720 de large = les unités du jeu), le gif à 400 de large (une image sur deux)."""
+def video():
+    """L'animation en situation, cadrée comme le combat d'un téléphone 390 × 844 : une période entière (19,2 s),
+    25 images par seconde, sans couture. Le mp4 à 720 de large (= les unités du jeu), le gif à 400 (une image sur
+    deux)."""
     fps = 25
     n = PERIODE * fps // 1000
-    s = 720 / W
+    phone = (390, 844, 34)
+    top, hu = telephone(*phone)
+    x0 = VUE_X[0]
+    s = 720 / (VUE_X[1] - x0)
     hh = round((H - top) * s)
-    hh += hh % 2
     d = os.path.join(TMP, 'video')
-    shutil.rmtree(d, ignore_errors=True)
-    os.makedirs(d)
-    jobs = [(scene(i * 1000 / fps, (0, top, W, H - top)), os.path.join(d, 'f%04d.png' % i)) for i in range(n)]
+    os.makedirs(d, exist_ok=True)
+    for f in os.listdir(d):
+        os.unlink(os.path.join(d, f))
+    jobs = [(scene(i * 1000 / fps, (x0, top, VUE_X[1] - x0, H - top)), os.path.join(d, 'f%04d.png' % i))
+            for i in range(n)]
     rendre(jobs, 720, hh)
-    strip = 36
     gif = []
     for i in range(n):
-        im = poser(Image.open(jobs[i][1]).convert('RGBA'), s, top)
-        im = panneau(im, s, strip).convert('RGB')
+        im = geste(poser(Image.open(jobs[i][1]).convert('RGBA'), s, x0, top), s, phone).convert('RGB')
+        if im.height % 2:
+            im = im.crop((0, 0, im.width, im.height - 1))
         im.save(os.path.join(d, 'v%04d.png' % i))
         if i % 2 == 0:
-            g = im.resize((400, round(im.height * 400 / 720)), Image.LANCZOS)
-            gif.append(g)
+            gif.append(im.resize((400, round(im.height * 400 / 720)), Image.LANCZOS))
     mp4 = os.path.join(SORTIE, 'anim.mp4')
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(fps), '-i', os.path.join(d, 'v%04d.png'),
-                    '-filter_complex', 'loop=loop=1:size=%d:start=0' % n, '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
-                    '-crf', '20', '-preset', 'slow', '-movflags', '+faststart', mp4], check=True)
+                    '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-preset', 'slow', '-movflags',
+                    '+faststart', mp4], check=True)
     sample = Image.new('RGB', (400, gif[0].height * 4))
     for k in range(4):
         sample.paste(gif[k * len(gif) // 4], (0, k * gif[0].height))

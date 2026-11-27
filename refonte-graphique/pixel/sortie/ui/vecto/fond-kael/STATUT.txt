@@ -1,4 +1,3 @@
 fait
-Test du 27/11 : le fond du volcan (clan de Kael) redessiné en vectoriel lisse et animé, mêmes mesures que le pixel.
-Regarder situation.png (téléphone 390 × 844, héros et monstres vectoriels), comparaison.png (pixel | vectoriel), anim.mp4 / anim.gif.
-Images du jeu prêtes mais pas branchées : public/art/vecto/fonds/kael.webp + kael-anim.webp, calques dans ui-moderne/fonds/kael/fond-kael.json.
+27/11 (2e passage, avis du propriétaire) : le fond du volcan recomposé pour le vrai écran de combat (le jeu l'agrandit ×1,4 et coupe les côtés : tout l'important est entre x 84 et 506, sous les pilules du haut, au-dessus des cartes) ; trois dragons lointains traversent le ciel derrière le volcan et la fumée.
+Branché dans le jeu derrière ?vecto=1 (clan de Kael seulement). Vraies captures : combat-390x844.png, combat-360x640.png, combat-430x932.png ; situation.png, comparaison.png (pixel | vectoriel), anim.mp4 / anim.gif.
