@@ -556,12 +556,11 @@ def fx_attack(tl, prev):
                 e = env(th, 0, 40, 120, 320)
                 fig.fx_front.append(flash(fig, T, 15 * (0.7 + 0.3 * e), op=e))
                 k = th / 480
-                fig.fx_front.append(gust(fig, (T[0] - 4, T[1] + 6), (T[0] + 4, T[1] - 4 - 6 * k), (T[0] + 12, T[1] - 10 - 10 * k),
-                                         (T[0] + 18, T[1] - 20 - 12 * k), 4.0 * (1 - 0.5 * k), curl=3.8 + 1.4 * k, up=True,
+                # le croissant de vent qui frappe (bombé vers l'ennemi), puis une volute qui remonte en se défaisant
+                fig.fx_front.append(moon(fig, (T[0] - 10 + 6 * k, T[1] + 2), 14 + 5 * k, 0, 5.5 * (1 - k) + 0.6, op=1 - k, span=70))
+                fig.fx_front.append(gust(fig, (T[0] - 6, T[1] + 8), (T[0] + 4, T[1] + 2 - 4 * k), (T[0] + 12, T[1] - 6 - 8 * k),
+                                         (T[0] + 16, T[1] - 16 - 10 * k), 4.0 * (1 - 0.5 * k), curl=3.8 + 1.4 * k, up=True,
                                          tail=0.5 * k, op=1 - k ** 2))
-                fig.fx_back.append(gust(fig, (T[0] - 8, T[1] + 8), (T[0] - 2, T[1] - 2), (T[0] + 2, T[1] - 12 - 8 * k),
-                                        (T[0] - 4, T[1] - 22 - 10 * k), 3.4 * (1 - 0.5 * k), curl=3.4 + k, up=False,
-                                        tail=0.5 * k, op=1 - k ** 2))
                 if th > 100:
                     k2 = (th - 100) / 380
                     fig.fx_back.append(dust(fig, T[0] + 3 + 5 * k2, GR - 4 - 4 * k2, 5.5 - 2 * k2, op=0.85 * (1 - k2)))
