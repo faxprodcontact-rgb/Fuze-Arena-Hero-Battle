@@ -118,7 +118,7 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
         <Btn kind="ghost" small onClick={() => autoFormation([...tired], team)}>{t('heroes.autoTeam')}</Btn>
       </div>
 
-      <div class="roster">
+      <div class="roster fuse-roster">
         {sortedHeroes(s).map((h) => (
           <HeroCard key={h.uid} hero={h} small power={heroPower(s, h)} selected={inTeam.has(h.uid)} dim={tired.has(h.uid)}
             onClick={() => {

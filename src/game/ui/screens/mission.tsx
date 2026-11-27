@@ -46,7 +46,7 @@ export function MissionPage({ id }: { id: string }) {
           <Btn kind="blue" small wide disabled={team.length !== c.need} onClick={() => { if (sendMission(id, team)) close(); }}>{t('send')}</Btn>
         </div>
       </section>
-      <div class="roster">
+      <div class="roster fuse-roster">
         {roster.map((h) => (
           <div class="hcard-wrap">
             <HeroCard hero={h} small power={heroPower(s, h)} selected={team.includes(h.uid)} dim={!ok.has(h.uid)}
