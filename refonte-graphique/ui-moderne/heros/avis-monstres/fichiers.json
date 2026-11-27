@@ -24,5 +24,7 @@
 "img/mon-kael-rapide.webp": "public/art/vecto/mon-kael-rapide.webp",
 "gif/mon-kael-rapide.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-kael-rapide.gif",
 "img/mon-kael-tireur.webp": "public/art/vecto/mon-kael-tireur.webp",
-"gif/mon-kael-tireur.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-kael-tireur.gif"
+"gif/mon-kael-tireur.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-kael-tireur.gif",
+"img/mon-orin-costaud.webp": "public/art/vecto/mon-orin-costaud.webp",
+"gif/mon-orin-costaud.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-orin-costaud.gif"
 }

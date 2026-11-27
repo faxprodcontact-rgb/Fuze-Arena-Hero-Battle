@@ -35,7 +35,7 @@ ROOT = K.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'golem-lave')
 TMP = os.environ.get('GOLEM_TMP') or os.path.join(tempfile.gettempdir(), 'golem-lave-anim')
 FPS = 24
-VIEW = (-22, -36, 288, 162.0)       # la scène de la vidéo, en pixels du dessin (16/9)
+VIEW = (-44, -52, 320, 180.0)       # la scène de la vidéo, en pixels du dessin (16/9)
 VW, VH = 1280, 720
 GR = K.GRD
 FINK = '#3a0c18'                     # le contour de la lave
@@ -101,7 +101,7 @@ def keyed(keys, t):
 # massue en arrière et se redresse lentement. nw = où est le poignet ; a3 = l'axe de la massue (degrés, 90 = vers le
 # bas ; il tourne dans le sens des aiguilles d'une montre : derrière, en haut, par-dessus, devant).
 HIT_W = (56.0, 87.6)              # le poignet au moment du choc (la massue posée devant lui, à plat)
-HIT_A = 430.0
+HIT_A = 450.0
 ATTACK = [
     (0, {}),
     (140, dict(nw=(15.0, 80.0), a3=112.0, lean=-1.0, tilt=-1.0, crouch=0.8, head=(0.0, 0.8), fw=(113.0, 87.0), frot=6)),
@@ -111,11 +111,11 @@ ATTACK = [
     (800, dict(nw=(52.0, 12.0), a3=330.0, lean=1.0, tilt=1.0, crouch=0.0, head=(0.0, 0.0), fw=(112.4, 86.0), frot=4, glow=1.4, gape=0.4)),
     (850, dict(nw=HIT_W, a3=HIT_A, lean=4.0, tilt=3.0, crouch=3.0, head=(0.7, 1.3), fw=(115.6, 90.6), frot=-8, glow=2.2, gape=1.0,
                shake=1.0)),
-    (1050, dict(nw=(HIT_W[0] + 0.4, HIT_W[1] + 0.3), a3=HIT_A + 1, lean=4.0, tilt=3.2, crouch=3.0, head=(0.7, 1.4), fw=(115.0, 90.4),
+    (1050, dict(nw=(HIT_W[0] + 0.4, HIT_W[1] + 0.3), a3=HIT_A, lean=4.0, tilt=3.2, crouch=3.0, head=(0.7, 1.4), fw=(115.0, 90.4),
                 frot=-6, glow=1.6, gape=0.8)),
-    (1200, dict(nw=(43.0, 88.0), a3=HIT_A + 10, lean=3.0, tilt=2.2, crouch=2.0, head=(0.5, 1.0), fw=(114.4, 89.4), frot=-3, glow=1.0,
+    (1200, dict(nw=(43.0, 88.0), a3=HIT_A, lean=3.0, tilt=2.2, crouch=2.0, head=(0.5, 1.0), fw=(114.4, 89.4), frot=-3, glow=1.0,
                 gape=0.4)),
-    (1400, dict(nw=(29.0, 88.0), a3=HIT_A + 17, lean=1.2, tilt=1.0, crouch=1.0, head=(0.2, 0.5), glow=0.5)),
+    (1400, dict(nw=(29.0, 88.0), a3=HIT_A, lean=1.2, tilt=1.0, crouch=1.0, head=(0.2, 0.5), glow=0.5)),
     (1720, dict(a3=450.0)),
 ]
 ATTACK_HIT = 850
@@ -140,13 +140,13 @@ SPECIAL = [
                fw=(112.4, 86.0), frot=4, gape=1.0)),
     (1040, dict(nw=HIT_W, a3=HIT_A, lean=4.2, tilt=3.4, crouch=3.2, head=(0.7, 1.4), glow=4.0, heat=1.0, crater=0.3,
                 fw=(115.6, 90.6), frot=-8, gape=1.3, shake=1.0)),
-    (1250, dict(nw=(HIT_W[0] + 0.3, HIT_W[1] + 0.3), a3=HIT_A + 1, lean=4.2, tilt=3.4, crouch=3.2, head=(0.7, 1.4), glow=3.4, heat=0.8,
+    (1250, dict(nw=(HIT_W[0] + 0.3, HIT_W[1] + 0.3), a3=HIT_A, lean=4.2, tilt=3.4, crouch=3.2, head=(0.7, 1.4), glow=3.4, heat=0.8,
                 fw=(115.2, 90.4), frot=-7, gape=1.0)),
-    (1600, dict(nw=(HIT_W[0] + 0.6, HIT_W[1] + 0.4), a3=HIT_A + 2, lean=4.0, tilt=3.0, crouch=3.0, head=(0.6, 1.2), glow=2.4, heat=0.45,
+    (1600, dict(nw=(HIT_W[0] + 0.6, HIT_W[1] + 0.4), a3=HIT_A, lean=4.0, tilt=3.0, crouch=3.0, head=(0.6, 1.2), glow=2.4, heat=0.45,
                 fw=(115.0, 90.2), frot=-6, gape=0.7)),
-    (1830, dict(nw=(43.0, 88.0), a3=HIT_A + 10, lean=3.0, tilt=2.2, crouch=2.0, head=(0.5, 1.0), glow=1.6, heat=0.2, fw=(114.4, 89.4),
+    (1830, dict(nw=(43.0, 88.0), a3=HIT_A, lean=3.0, tilt=2.2, crouch=2.0, head=(0.5, 1.0), glow=1.6, heat=0.2, fw=(114.4, 89.4),
                 frot=-3, gape=0.3)),
-    (1990, dict(nw=(29.0, 88.0), a3=HIT_A + 17, lean=1.2, tilt=1.0, crouch=1.0, head=(0.2, 0.5), glow=1.0)),
+    (1990, dict(nw=(29.0, 88.0), a3=HIT_A, lean=1.2, tilt=1.0, crouch=1.0, head=(0.2, 0.5), glow=1.0)),
     (2300, dict(a3=450.0)),
 ]
 SP_HIT = 1040
@@ -474,11 +474,11 @@ def fx_attack(tl, prev):
                 fig.fx_front.append(dust(fig, bx + 4 + dx + sp * 14 * k, GR - 1.0 - r0 * 0.4 - 2 * k, r0 * (0.6 + 0.8 * k), op=op))
             for i, (vx, vy, s_, hot) in enumerate(((-26, -44, 1.6, False), (30, -52, 1.4, True), (-12, -60, 1.2, False), (44, -36, 1.3, False),
                                                    (8, -64, 1.1, True))):
-                p = ballistic((bx + 4, GR - 3), (vx, vy), 160.0, t)
+                p = ballistic((bx + (24 if vx > 0 else -16), GR - 2), (vx, vy), 160.0, t + 0.02)
                 if p[1] < GR - 0.8 and t < 0.6:
                     fig.fx_front.append(chunk(fig, p[0], p[1], s_, rot=t * 500 * (1 if vx > 0 else -1), hot=hot))
             for i, (vx, vy) in enumerate(((-20, -56), (24, -64), (40, -46), (-34, -40))):
-                p = ballistic((bx + 4, GR - 3), (vx, vy), 150.0, t)
+                p = ballistic((bx + (24 if vx > 0 else -16), GR - 2), (vx, vy), 150.0, t + 0.02)
                 if p[1] < GR - 0.5 and t < 0.6:
                     fig.fx_front.append(drop(fig, p[0], p[1], vx, vy + 150 * t, 0.85))
     return f

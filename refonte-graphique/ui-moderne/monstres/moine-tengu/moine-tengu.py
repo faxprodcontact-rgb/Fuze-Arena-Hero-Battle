@@ -48,7 +48,7 @@ LACQ = Mat('#9aa2d6', '#4c4c74', '#2c2842', '#1c1628', '#0e0a16', glint='#e8ecff
 EYE = ('#fff3c8', '#f2a826', '#b8620e', '#220c16')
 
 GRD = 116          # le sol (dessous des geta)
-FRAME = (4, -3, 116, 121)       # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
+FRAME = (7.4, 0.9, 114, 118)       # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
 FEET = (64, 116)
 
 # ---------- le visage (visage.py) : la boîte de la face, SANS crâne de derrière, oreille, barbe ni nez ----------

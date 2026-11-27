@@ -160,7 +160,7 @@ def plates(region, seeds, light_c, light_r, gap=0.95, round_=1.3, warm_below=Non
     from shapely.geometry import MultiPoint
     from shapely.ops import voronoi_diagram
     from shapely import affinity
-    reg = PG(region) if hasattr(region, 'subs') else region
+    reg = (PG(region) if hasattr(region, 'subs') else region).buffer(0)
     vd = voronoi_diagram(MultiPoint(seeds), envelope=reg.buffer(20))
     out = []
     cx, cy = light_c
@@ -172,12 +172,12 @@ def plates(region, seeds, light_c, light_r, gap=0.95, round_=1.3, warm_below=Non
         out.append((geom_shapes(reg), ('lin', 0, y0, 0, y1, [(0, LAVA[4], 0), (0.6, LAVA[4], 0.55), (1, LAVA[3], 0.85)]), 1))
     # les plaques vont jusqu'au contour (pas de liseré clair entre la croûte et le trait) ; une fêlure seulement
     # entre deux plaques ou deux régions
-    out_ = PG(outer) if outer is not None and hasattr(outer, 'subs') else (outer if outer is not None else reg)
+    out_ = (PG(outer) if outer is not None and hasattr(outer, 'subs') else (outer if outer is not None else reg)).buffer(0)
     keep = reg.buffer(-gap / 2, join_style=1).union(out_.buffer(2.5).difference(out_)).union(reg.difference(out_.buffer(-gap / 2 - 0.05)))
     for cell in vd.geoms:
         g = cell.buffer(-gap / 2, join_style=1)
         g = g.buffer(-round_, join_style=1).buffer(round_, join_style=1)
-        g = g.intersection(keep).intersection(reg.buffer(2.5))
+        g = g.intersection(keep).intersection(reg.buffer(2.5)).buffer(0)
         if g.is_empty:
             continue
         if g.is_empty or g.area < 1.0:
@@ -193,16 +193,28 @@ def plates(region, seeds, light_c, light_r, gap=0.95, round_=1.3, warm_below=Non
         tone_lo = mix(ROCK.deep, ROCK.shadow, lam / 0.5) if lam < 0.5 else mix(ROCK.shadow, ROCK.base, (lam - 0.5) / 0.5)
         out.append((sh, ('lin', c_, b, a, d_, [(0, tone_hi), (1, tone_lo)]), 1))
         # le bord éclairé en haut à droite (un croissant fin), la lumière tire vers le jaune chaud
-        rim = g.difference(affinity.translate(g, -0.55, 0.6))
-        rs = geom_shapes(rim.intersection(g), simplify=0.02)
+        g = g.simplify(0.02).buffer(0)
+        rim = sdiff(g, affinity.translate(g, -0.55, 0.6))
+        rs = geom_shapes(rim, simplify=0.02) if rim is not None and not rim.is_empty else None
         if rs is not None:
             out.append((rs, ROCK.hi, 0.05 + 0.6 * lam * lam))
         # l'ombre du bas-gauche (le bord de la plaque qui plonge dans la fêlure)
-        sd = g.difference(affinity.translate(g, 0.6, -0.7))
-        ss = geom_shapes(sd.intersection(g), simplify=0.02)
+        sd = sdiff(g, affinity.translate(g, 0.6, -0.7))
+        ss = geom_shapes(sd, simplify=0.02) if sd is not None and not sd.is_empty else None
         if ss is not None:
             out.append((ss, ROCK.deep, 0.35))
     return out
+
+
+def sdiff(a, b):
+    """a moins b, sans planter sur une géométrie un peu dégénérée (on la simplifie, sinon on renonce au détail)."""
+    try:
+        return a.difference(b)
+    except Exception:
+        try:
+            return a.simplify(0.05).buffer(0).difference(b.simplify(0.05).buffer(0))
+        except Exception:
+            return None
 
 
 def mix(a, b, t):
@@ -477,7 +489,7 @@ def near_arm(fig, P, UC, TOR):
     g = unary_union([g, cg]).buffer(1.2, join_style=1).buffer(-1.2, join_style=1)
     # l'épaule-rocher (partie de la bosse) passe devant la racine du bras : on la découpe
     sh_w = gtrans(PG(BODY).intersection(PG(SHOULDER_CUT)), TOR)
-    g = g.difference(sh_w)
+    g = g.buffer(0).difference(sh_w.buffer(0)).buffer(0)
     shp = geom_shape(g, sharp_deg=80)
     det = []
     for dy, op in ((2.8, 0.22), (1.3, 0.3)):
