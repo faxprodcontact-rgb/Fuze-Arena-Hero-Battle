@@ -36,5 +36,7 @@
 "img/boss-eau.webp": "public/art/vecto/boss-eau.webp",
 "gif/boss-eau.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/boss-eau.gif",
 "img/boss-terre.webp": "public/art/vecto/boss-terre.webp",
-"gif/boss-terre.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/boss-terre.gif"
+"gif/boss-terre.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/boss-terre.gif",
+"img/boss-vent.webp": "public/art/vecto/boss-vent.webp",
+"gif/boss-vent.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/boss-vent.gif"
 }
