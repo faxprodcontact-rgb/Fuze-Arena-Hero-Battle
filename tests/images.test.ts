@@ -31,8 +31,8 @@ describe('images vectorielles', () => {
 
   it('le signe du repos des menus : la base et une bande par zone (vecto-live.tsx)', () => {
     for (const [id, r] of Object.entries(VECTO_REPOS)) {
-      expect(existsSync(`public/art/vecto/repos/${id}-base.webp`), id).toBe(true);
-      r.zones.forEach((_, k) => expect(existsSync(`public/art/vecto/repos/${id}-${k}.webp`), `${id}-${k}`).toBe(true));
+      expect(existsSync(`public/art/vecto/repos/${id}-${r.v}-base.webp`), id).toBe(true);
+      r.zones.forEach((_, k) => expect(existsSync(`public/art/vecto/repos/${id}-${r.v}-${k}.webp`), `${id}-${k}`).toBe(true));
       expect(vectoFig(id), id).toBeDefined();
     }
   });

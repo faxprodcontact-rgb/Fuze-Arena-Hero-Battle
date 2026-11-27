@@ -147,6 +147,29 @@ export function CardFigure({ id, alt = '' }: { id: string; alt?: string }) {
   );
 }
 
+/**
+ * Le signe d'un élément, épuré, d'une seule couleur (27/11, pour le coin des cartes : « un nouveau signe terre épuré
+ * d'une couleur ») : la montagne (terre), la flamme (feu), la goutte (eau), trois souffles (vent). Signes inventés,
+ * une forme pleine (ou des traits ronds pour le vent), la couleur claire de l'élément.
+ */
+const EL_SIGN: Record<string, { c: string; d: string; stroke?: boolean }> = {
+  earth: { c: '#e7ab63', d: 'M1.5 20.5L8.6 7.2l3.6 6.1 2.6-3.9 7.7 11.1Z' },
+  fire: { c: '#ff8a4a', d: 'M12.6 1.8c.6 4.3 6.4 6.6 6.4 12.6a7 7 0 0 1-14 0c0-3.4 2.1-5.6 3.4-6.6-.1 2.2.8 3.5 2.1 3.7-1-3.4.4-6.9 2.1-9.7Z' },
+  water: { c: '#5ab8ff', d: 'M12 1.8C9.2 6.6 5 10.6 5 15.2a7 7 0 0 0 14 0c0-4.6-4.2-8.6-7-13.4Z' },
+  wind: { c: '#6fe08c', d: 'M2.5 8.5h11.2a3.2 3.2 0 1 0-3.2-3.2M2.5 13h16.3a3.3 3.3 0 1 1-3.3 3.3M2.5 17.5h7', stroke: true },
+};
+export function ElementSign({ el }: { el: string }) {
+  const s = EL_SIGN[el];
+  if (!s) return null;
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      {s.stroke
+        ? <path d={s.d} fill="none" stroke={s.c} stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+        : <path d={s.d} fill={s.c} />}
+    </svg>
+  );
+}
+
 export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; selected?: boolean; dim?: boolean; badge?: string; small?: boolean }) {
   const d = heroDef(p.hero.defId);
   const mythic = p.hero.stars >= MYTHIC_STARS;
@@ -169,7 +192,7 @@ export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; 
       {shiny && <i class="hcard-aura" />}
       <span class="hcard-clip"><CardFigure id={heroArt(d.id)} alt={d.name} /></span>
       <i class="hcard-frame" />
-      <Art name={d.element} class="hcard-el" />
+      <span class="hcard-elt"><ElementSign el={d.element} /></span>
       <span class="hcard-lv">{p.hero.level}</span>
       <Stars stars={p.hero.stars} />
       {p.power !== undefined && <span class="hcard-pow">{fmt(p.power)}</span>}

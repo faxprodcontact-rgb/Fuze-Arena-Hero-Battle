@@ -125,8 +125,8 @@
 :where(:root[data-theme="pierre"]) .hcard-lv {
     background: #15141acc
 }
-:where(:root[data-theme="pierre"]) .hcard-el {
-    background-color: #15141ab3
+:where(:root[data-theme="pierre"]) .hcard-elt {
+    background: #15141acc
 }
 :where(:root[data-theme="pierre"]) .item-owner {
     background: linear-gradient(200deg, #5e5b74, #343340)

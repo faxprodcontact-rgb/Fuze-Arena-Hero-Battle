@@ -380,7 +380,10 @@ p { margin: 6px 0; }
 .hcard .stars { position: relative; z-index: 4; font-size: 12px; line-height: 13px; }
 .hcard-lv { position: absolute; top: 0; left: 0; z-index: 4; min-width: 23px; text-align: center; font: 400 12px/18px var(--font-title); color: #fff;
   background: #0d0826cc; border-radius: 16px 0 12px 0; padding: 0 6px 0 7px; }
-.hcard-el { position: absolute; top: 4px; right: 4px; width: 21px; height: 21px; z-index: 4; border-radius: 50%; background-color: #0d0826b3; }
+/* l'élément, en haut à droite : la même languette sombre que le niveau, en symétrie, et le signe épuré (ElementSign) */
+.hcard-elt { position: absolute; top: 0; right: 0; z-index: 4; display: grid; place-items: center; min-width: 23px; height: 18px;
+  padding: 0 6px 0 5px; background: #0d0826cc; border-radius: 0 16px 0 12px; }
+.hcard-elt svg { display: block; width: 13px; height: 13px; }
 .hcard-pow { position: relative; z-index: 4; font: 400 10.5px/12px var(--font-title); color: var(--gold-hi); text-shadow: 0 1px 0 #2a1802, 0 0 3px #000; }
 .hcard-badge { position: absolute; top: 20px; left: 5px; z-index: 4; color: var(--gold-hi); font-size: 14px; text-shadow: 0 1px 2px #000; }
 /* choisi : un anneau d'or et une coche */
@@ -390,7 +393,8 @@ p { margin: 6px 0; }
 .hcard-dim { filter: saturate(0.2) brightness(0.7); }
 .hcard-small { width: 72px; border-radius: 14px; }
 .hcard-small .hcard-frame { border-radius: 14px; }
-.hcard-small .hcard-el { width: 17px; height: 17px; }
+.hcard-small .hcard-elt { min-width: 20px; height: 15px; padding: 0 5px 0 4px; border-radius: 0 14px 0 10px; }
+.hcard-small .hcard-elt svg { width: 11px; height: 11px; }
 .hcard-small .hcard-lv { min-width: 20px; font-size: 10.5px; line-height: 15px; padding: 0 4px 0 5px; border-radius: 14px 0 10px 0; }
 .hcard-wrap { position: relative; }
 .hcard-wrap .dot { top: -5px; right: -5px; z-index: 3; }
@@ -1133,7 +1137,7 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 .reveal-one .hcard { aspect-ratio: 5 / 6; box-shadow: 0 0 0 2px color-mix(in srgb, var(--rar) 55%, #fff), 0 0 0 3.5px #17100a, 0 0 30px 8px var(--rar) !important; filter: none !important; }
 .reveal-one .hcard-frame { padding: 6px; }
 .reveal-one .hcard .stars { font-size: 24px; }
-.reveal-one .hcard-el { width: 30px; height: 30px; }
+.reveal-one .hcard-elt { height: 26px; min-width: 32px; } .reveal-one .hcard-elt svg { width: 19px; height: 19px; }
 .reveal-one .hcard-pow { font-size: 15px; }
 .reveal-one .reveal-name { font-size: 17px; padding: 2px 14px; border-radius: 10px; margin-top: 4px; }
 .reveal-one .new-ribbon { top: -13px; right: -10px; font-size: 12px; padding: 0 8px; }
@@ -1407,7 +1411,7 @@ button.setting-row:active { filter: brightness(0.95); }
 .fuse-altar .fuse-slot { width: 54px; }
 .fuse-altar .fuse-slot.pick .hcard-small { width: 54px; border-radius: 11px; }
 .fuse-altar .fuse-slot.pick .hcard-small .hcard-frame { border-radius: 11px; }
-.fuse-altar .fuse-slot.pick .hcard-small .hcard-el { width: 13px; height: 13px; }
+.fuse-altar .fuse-slot.pick .hcard-small .hcard-elt { min-width: 16px; height: 12px; padding: 0 3px; } .fuse-altar .fuse-slot.pick .hcard-small .hcard-elt svg { width: 9px; height: 9px; }
 .fuse-altar .fuse-slot.pick .hcard-small .hcard-lv { min-width: 16px; font-size: 9px; line-height: 12px; }
 .fuse-altar .fuse-slot.pick .hcard-small .stars { scale: 0.78; }
 .fuse-altar .fuse-plus { --k: 1.5; color: #ffd66a; position: relative; z-index: 2; }
