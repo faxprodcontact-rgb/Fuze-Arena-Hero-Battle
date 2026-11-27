@@ -70,7 +70,10 @@ def monstres():
     page = os.path.join(suivi.HEROS, 'avis-monstres')
     os.makedirs(os.path.join(page, 'gif'), exist_ok=True)
     rows, files = [], {}
+    sans = set(os.environ.get('AVIS_SANS', '').split(','))  # monstres encore en cours de dessin
     for art, dos, nom, role, el in MONSTRES:
+        if dos in sans:
+            continue
         f = os.path.join(suivi.SORTIE_V, dos, 'STATUT.txt')
         img = os.path.join(suivi.RACINE, 'public', 'art', 'vecto', f'{art}.webp')
         g = os.path.join(suivi.SORTIE_V, dos, 'anim.gif')

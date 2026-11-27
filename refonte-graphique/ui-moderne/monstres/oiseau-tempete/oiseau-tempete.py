@@ -156,7 +156,7 @@ def quill_feather(fig, nm, p0, p3, w, mat, bend=1.0, cast=1.3, tipw=0.3, light_v
 def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0, ph=0.0, ws=0.0,
               rows=((40, 9, 15, 0.08, 1.12), (27, 11, 12, 0.05, 1.08), (15, 13, 9, 0.03, 1.02)),
               cdir=((0, 112), (0.6, 122), (0.95, 140), (1.2, 162)), lead_w=(11.0, 8.5, 6.0, 4.0), far=False, bolt=None,
-              glow=0.0):
+              glow=0.0, down_k=1.0):
     """Une aile de rapace : les grandes plumes (du bout de l'aile vers le corps), trois rangées de couvertures en
     vraies plumes pointues (la plus longue d'abord), puis le bord d'attaque (l'épaule → le poignet → la main), éclairé.
     feathers : [(racine, pointe, largeur)] dans la pose du dessin ; lift : toute l'aile tourne autour de R ;
@@ -164,6 +164,9 @@ def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0,
     Wp = rot_about(W, R, lift)
     Tp = rot_about(T, R, lift + spread * 0.3)
     names = []
+    # quand l'aile s'abaisse (battement), les plumes ne tournent pas tout à fait avec le bras : elles pendent sous le
+    # bord d'attaque et traînent vers l'arrière, au lieu de passer devant le corps
+    flift = lift if lift >= 0 else lift * down_k
 
     def posed(p):
         return rot_about(p, R, lift)
@@ -175,7 +178,7 @@ def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0,
         # la racine suit l'aile ; les rémiges (près du poignet) s'écartent davantage
         root = posed(r0)
         k = max(0.0, 1 - math.dist(r0, W) / 60.0)
-        a = a0 + lift + spread * k * (1 - i / n) * 1.6 + 2.2 * ws * math.sin(ph - 0.6 * i) + droop * 0.4
+        a = a0 + flift + spread * k * (1 - i / n) * 1.6 + 2.2 * ws * math.sin(ph - 0.6 * i) + droop * 0.4
         tip = add(root, unit(a), L)
         nm = '%s_f%d' % (key, i)
         quill_feather(fig, nm, root, tip, w, mat, bend=1.6 + droop * 0.15 + 0.6 * ws * math.sin(ph - 0.5 * i + 1),
@@ -192,8 +195,8 @@ def bird_wing(fig, key, mat, R, W, T, feathers, lift=0.0, spread=0.0, droop=0.0,
         for (s0, a0), (s1, a1) in zip(ks, ks[1:]):
             if s_ <= s1:
                 t = max(0.0, (s_ - s0) / (s1 - s0))
-                return a0 + (a1 - a0) * t + lift
-        return ks[-1][1] + lift
+                return a0 + (a1 - a0) * t + flift
+        return ks[-1][1] + flift
     jits = [(1.0, 0.84, 1.12, 0.92, 1.06, 0.88, 1.1, 0.95, 1.03, 0.9, 1.08, 0.93, 1.0),
             (0.92, 1.1, 0.86, 1.04, 0.96, 1.12, 0.9, 1.0, 1.08, 0.94, 1.02, 0.88, 1.06),
             (1.06, 0.9, 1.0, 1.12, 0.88, 1.04, 0.94, 1.1, 0.92, 1.0, 0.86, 1.08, 0.96)]
@@ -384,7 +387,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     def near_bolt(fig_, key, tf, gl):
         draw_bolt(fig_, key + '_bolt', [([(76, 58), (81, 66), (78, 74), (84, 83), (92, 89), (97, 96), (100, 104)], 2.3),
                                         ([(84, 83), (79, 88), (74, 91), (69, 97)], 1.5)], tf, gl)
-    nw_names, nW, nT = bird_wing(fig, 'nw', STORM, R_N, W_N, T_N, NEAR_FEATHERS, lift=P['wn_l'], spread=P['wn_s'],
+    nw_names, nW, nT = bird_wing(fig, 'nw', STORM, R_N, W_N, T_N, NEAR_FEATHERS, lift=P['wn_l'], spread=P['wn_s'], down_k=0.4,
                                  droop=P['wd'], ph=ph, ws=ws, bolt=near_bolt, glow=glow)
 
     # ---- les scapulaires : trois rangées de plumes qui partent de la bosse de l'épaule et retombent sur le flanc et
