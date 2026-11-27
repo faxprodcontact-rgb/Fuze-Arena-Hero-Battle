@@ -263,7 +263,7 @@ export function HeroDetail({ uid }: { uid: number }) {
 
       {/* les fenêtres, au milieu de l'écran */}
       {sheet?.kind === 'gear' && (
-        <Modal center title={t('detail.equip')} onClose={() => setSheet(null)}>
+        <Modal center class="modal-dark" title={t('detail.equip')} onClose={() => setSheet(null)}>
           <div class="hx-sheet">
             <div class="hx-sheet-slots">
               {GEAR_SLOTS.map((g) => (
