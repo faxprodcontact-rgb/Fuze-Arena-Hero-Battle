@@ -127,8 +127,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
 
         <button class="dock-fast" aria-label={t('camp.fast')} onClick={() => open({ type: 'fastLoot' })}>
           {/* même hauteur que le coffre (son dessin remplit toute sa case, celui du coffre les trois quarts) ; plus de libellé */}
-          <span class="dock-pic"><Icon name="hourglass" size={46} /></span>
-          <span class="dock-time" aria-hidden="true" />
+          <span class="dock-pic"><HourglassLive /></span>
           {fastLootCost(s) === 0 && <RedDot />}
         </button>
         <BarArt kind="dock" />
@@ -186,3 +185,39 @@ export function WorldMapModal() {
     </Modal>
   );
 }
+
+/**
+ * Le sablier du butin rapide, vivant (27/11 : « son animation, c'est juste le sable qui coule ; il arrête de se
+ * retourner ») : le même dessin que le picto `hourglass` (socle et chapeau de basalte cerclés d'or, montants d'or, verre
+ * ambré) ; seul le sable bouge : le filet tombe grain à grain, le haut baisse, le tas du bas monte (style.css, .hg-*).
+ */
+function HourglassLive() {
+  const glass = 'M31 19H69Q68 30 66 37Q60 45 54 50Q60 55 66 63Q68 70 69 81H31Q32 70 34 63Q40 55 46 50Q40 45 34 37Q32 30 31 19Z';
+  return (
+    <svg class="hg" viewBox="0 0 100 100" width="46" height="46" aria-hidden="true">
+      <defs>
+        <radialGradient id="hg-glow" cx="50" cy="70" r="34" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ffc94d" stop-opacity="0.55" /><stop offset="1" stop-color="#ffc94d" stop-opacity="0" /></radialGradient>
+        <linearGradient id="hg-glass" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff8e6" /><stop offset="0.55" stop-color="#e9dcc2" /><stop offset="1" stop-color="#b9a98c" /></linearGradient>
+        <linearGradient id="hg-gold" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b8701a" /><stop offset="0.5" stop-color="#ffd86a" /><stop offset="1" stop-color="#e0961f" /></linearGradient>
+        <linearGradient id="hg-stone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a6788" /><stop offset="1" stop-color="#2e2c47" /></linearGradient>
+        <clipPath id="hg-in"><path d={glass} /></clipPath>
+        <clipPath id="hg-up"><rect x="0" y="0" width="100" height="49" /></clipPath>
+      </defs>
+      <ellipse cx="50" cy="70" rx="34" ry="28" fill="url(#hg-glow)" />
+      <path d={glass} fill="url(#hg-glass)" stroke="#2a1f33" stroke-width="2.6" stroke-linejoin="round" />
+      <g clip-path="url(#hg-in)">
+        <g clip-path="url(#hg-up)"><g class="hg-top"><path d="M28 30H72V52H28Z" fill="#ffcf3a" /><path d="M28 30H72V32.5H28Z" fill="#fff0a8" opacity="0.8" /></g></g>
+        <path class="hg-stream" d="M50 47V80" stroke="#ffcf3a" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="3 2.4" />
+        <g class="hg-bottom"><path d="M28 82H72L66 71Q50 58 34 71Z" fill="#f6a417" /><path d="M40 81H61L58 73Q50 65 43 73Z" fill="#ffe58a" opacity="0.8" /></g>
+      </g>
+      <path d="M61 24Q63 30 61 35" stroke="#fff" stroke-width="2.2" stroke-linecap="round" fill="none" opacity="0.8" />
+      {[23, 77].map((x) => <rect x={x - 3.5} y="15" width="7" height="70" rx="3.5" fill="url(#hg-gold)" stroke="#2a1f33" stroke-width="1.6" />)}
+      {[[5, 17], [82, 78]].map(([y, rim]) => (
+        <g><rect x="13" y={y} width="74" height="13" rx="6.5" fill="url(#hg-stone)" stroke="#2a1f33" stroke-width="2" />
+          <rect x="18" y={rim} width="64" height="5.5" rx="2.7" fill="url(#hg-gold)" /></g>
+      ))}
+      {[11.5, 88.5].map((y) => <circle cx="50" cy={y} r="3.4" fill="#f29a12" stroke="#7a3d06" stroke-width="1" />)}
+    </svg>
+  );
+}
+

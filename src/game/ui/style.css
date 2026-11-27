@@ -575,9 +575,18 @@ p { margin: 6px 0; }
 .dock-chest.ready .icon { animation: chest-hop 2.2s ease-in-out infinite; }
 .dock-chest.full .icon { animation: chest-hop 1.4s ease-in-out infinite; }
 @keyframes chest-hop { 0%, 64%, 100% { translate: 0 0; rotate: 0deg; } 70% { translate: 0 -6px; rotate: -5deg; } 76% { translate: 0 0; rotate: 4deg; } 82% { translate: 0 -3px; rotate: 0deg; } 88% { translate: 0 0; } }
-/* le sablier se retourne de temps en temps */
-.dock-fast .icon { animation: hourglass-turn 5s ease-in-out infinite; }
-@keyframes hourglass-turn { 0%, 86% { rotate: 0deg; } 94%, 100% { rotate: 180deg; } }
+/* le sablier (27/11) : centré sur la hauteur de Combattre (il n'a ni libellé ni jauge) ; il ne se retourne plus : seul le
+   sable coule (HourglassLive de campaign.tsx) : le filet tombe grain à grain, le haut baisse, le tas monte */
+.dock-fast { display: flex; align-items: center; justify-content: center; align-self: center; }
+.dock-fast .dock-pic { align-items: center; }
+.hg { display: block; overflow: visible; filter: drop-shadow(-1px 2px 2px #0008); }
+.hg-stream { animation: hg-fall 0.5s linear infinite; }
+@keyframes hg-fall { to { stroke-dashoffset: -5.4; } }
+.hg-top { animation: hg-top 7s ease-in-out infinite; }
+@keyframes hg-top { 0% { transform: translateY(0); } 88% { transform: translateY(7px); } 100% { transform: translateY(0); } }
+.hg-bottom { animation: hg-bottom 7s ease-in-out infinite; }
+@keyframes hg-bottom { 0% { transform: translateY(6px); } 88% { transform: translateY(0); } 100% { transform: translateY(6px); } }
+@media (prefers-reduced-motion: reduce) { .hg-stream, .hg-top, .hg-bottom { animation: none; } }
 .dock-time { font: 400 13px/15px var(--font-title); letter-spacing: 0.2px; color: #fff; white-space: nowrap; text-shadow: 0 1px 0 #0a0620; }
 /* la jauge du butin : un creux sombre, l'or qui monte (un reflet clair dessus) */
 .dock-bar { --pxf: linear-gradient(#0b0818a6, #0b0818a6); --pr: var(--r-pill); --psh: inset -1px 1px 0 #0000008c, inset 0 -1px 0 #ffffff1f;
