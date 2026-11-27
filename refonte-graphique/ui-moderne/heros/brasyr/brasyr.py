@@ -60,7 +60,7 @@ G1_0, WANG0, GS = (49.0, 69.0), -24.0, 40.0        # la main proche sur la hampe
 HEAD0 = (5.0, 1.6, -14.0)                          # la tête en avant du cou (décalage, rotation)
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, mane=0.0, tail=0.0, tuft=0.0,
             sash=0.0, barb=0.0, glow=1.0, blink=0.0, jaw=0.0, grip=G1_0, wang=WANG0, gs=GS, flame=1.0, tassel=0.0,
-            hip=(0.0, 0.0))
+            hip=(0.0, 0.0), wv=0.0, lame=0.0, pm=None)   # wv, lame, pm : le signe du repos (anim.signe)
 
 # ---- le visage, construit avec ../visage.py (méthode commune) ----
 # Tête de dragon vue de PROFIL (long museau) : placer(tour=75) → UN seul œil, juste derrière la racine du museau.
@@ -163,10 +163,10 @@ MANE_UNDER = [(0, '#f68a36'), (0.5, '#f68a36'), (1, '#ee7030')]
 def mane_geom(P):
     """La crinière entière : la masse (racine + toutes les mèches fondues), ses détails (chaque mèche qui se détache en
     fondu depuis sa racine) et le devant (le dos du crâne et la base des cornes). Même contenu partout : aucune couture."""
-    ph, m_ = P['ph'], P['mane']
+    ph, m_ = (P['ph'] if P['pm'] is None else P['pm']), P['mane']   # pm : la phase du repos (anim.signe)
     strands = []
     for i, (name, p0, p1, p2, p3, w0, bu, amp, fade) in enumerate(MANE_LOCKS):
-        k = (0.7 + 0.1 * min(i, 4)) * amp
+        k = (0.7 + 0.1 * min(i, 4)) * amp * (1 + P['wv'])     # wv : le repos fait onduler la crinière plus fort
         w1 = math.sin(ph - i * 0.8)
         w2 = math.cos(ph - i * 0.8 - 0.6)
         p1 = (p1[0] - 0.3 * amp * m_, p1[1])
@@ -314,11 +314,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ta = math.degrees(math.atan2(td[1], td[0]))
 
     def tuft_pt(x, y):
-        return add(tip, rot((x, y), ta + 78 + qt * 7 + 2.5 * math.sin(ph * 1.3)))
+        return add(tip, rot((x, y), ta + 78 + qt * 7 + 2.5 * math.sin(ph * 1.5)))
     fig.part('tail', tail, SCALE, cel=1.6, rim=0.7, cast=0, details=tdet)
     # la houppe de braise au bout de la queue : une flamme de poils (pointes qui se relèvent)
-    w1 = math.sin(ph * 1.3)
-    w2 = math.sin(ph * 1.3 - 1.0)
+    w1 = math.sin(ph * 1.5)          # 1,5 × ph : la boucle du repos (3 s) se referme
+    w2 = math.sin(ph * 1.5 - 1.0)
     TP = [(-3.4, 3.2), (-6.0, -1.4), (-7.0 - 0.4 * w2, -6.6), (-5.0 - 0.6 * w2, -10.8 + 0.2 * w2), (-3.0, -7.6), (-1.4, -12.8),
           (1.6 + 0.8 * w1, -18.4), (3.4, -12.6), (5.4, -9.2), (9.6 + 0.8 * w1, -11.4 - 0.4 * w1), (8.0, -5.8), (9.4, -3.2),
           (12.4 + 0.6 * w2, -2.0 + 0.3 * w2), (8.0, 0.8), (3.4, 3.0)]
@@ -457,7 +457,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     K = mapp(PEL, (43.6, 74.2))                   # le nœud (sur la hanche proche)
     ends = []
     for j, (dx, L_, wd, ph0) in enumerate(((-1.2, 15.0, 3.6, 0.0), (1.4, 12.0, 3.2, 1.3))):
-        s_ = math.sin(ph * 1.1 - ph0) * 0.8 + sw
+        s_ = math.sin(ph - ph0) * 0.8 + sw
         p0 = add(K, (dx, 1.4))
         p1 = add(p0, (1.0 - 0.6 * s_, L_ * 0.34))
         p2 = add(p0, (-1.0 - 1.4 * s_, L_ * 0.7))
@@ -514,6 +514,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     hot2 = sm([BL(*p) for p in edge_pts[1:5]] + [BL(*p) for p in [(20.0, 5.8), (13.0, 6.4), (6.2, 4.9)]], t=0.85)
     bdet += [(hot, ('lin',) + BL(10, 0.5) + BL(11, 6.4) + ([(0, LAVA[3], 0.0), (0.4, LAVA[3], 0.7 * min(1, flame)), (1, LAVA[4], 0.9 * min(1, flame))],), 1),
              (hot2, ('lin',) + BL(10, 4.0) + BL(11, 6.4) + ([(0, LAVA[2], 0.9 * min(1, flame)), (1, LAVA[1], min(1, flame))],), 1)]
+    if P['lame'] > 0:
+        # le repos (anim.signe) : la lame rougeoie lentement, le tranchant s'éclaire, une lueur douce autour (derrière)
+        bdet += [(hot, ('lin',) + BL(10, 0.5) + BL(11, 6.4) + ([(0, LAVA[1], 0.0), (0.5, LAVA[1], 0.6 * P['lame']), (1, LAVA[0], 0.9 * P['lame'])],), 1)]
+        gx_, gy_ = BL(14, 2.0)
+        fig.glow(gx_, gy_, 15, 11, '#ff7a1e', 0.32 * P['lame'])
     # le dos de la lame : un filet de bronze et l'encoche
     bdet.append((band_along([BL(*p) for p in [(0.4, -1.9), (9.4, -2.3), (17.2, -3.4)]], 0.9), BRONZE.base, 0.9))
     fig.part('blade', blade, STEEL, grad=BL(20, -4) + BL(4, 5) + ([(0, STEEL.hi), (0.45, STEEL.light), (1, STEEL.shadow)],),

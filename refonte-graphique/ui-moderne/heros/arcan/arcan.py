@@ -69,7 +69,7 @@ NECK = (72.0, 50.0)                             # le pivot de la tête (et le ce
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, jaw=0.0, blink=0.0, ph=0.0, sk=0.0,
             ff=None, fa=-90.0, fb=None, nf=None, na=-91.0, nb=None, fend=40.0, nend=140.0, fopen=0.0, nopen=0.0,
-            cs=0.0, pg=0.0, bag=None, aura=0.0, wind=0.0)
+            cs=0.0, pg=0.0, bag=None, aura=0.0, wind=0.0, wv=0.0)   # wv : le signe du repos (anim.signe)
 
 
 def arm_bend(S, E, W):
@@ -372,7 +372,7 @@ HAIR_INK = '#0c0d1c'
 def wave(i, p0, p1, p2, p3, w, P):
     """Une mèche qui vit : la vague du vent court de la racine vers la pointe."""
     ph = P['ph'] - i * 0.8
-    k = 0.45 + 0.1 * i
+    k = (0.45 + 0.1 * i) * (1 + P['wv'])     # wv : le repos fait onduler la crinière plus fort
     wd = P['wind']
     p2 = (p2[0] + 0.4 * k * math.sin(2 * ph + 1.0) - 1.4 * wd, p2[1] + 0.7 * k * math.sin(ph))
     p3 = (p3[0] + 0.9 * k * math.sin(ph + 0.8) - 2.6 * wd, p3[1] + 1.0 * k * math.cos(ph) + 0.4 * wd)

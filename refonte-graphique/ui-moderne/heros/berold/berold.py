@@ -84,7 +84,7 @@ GD0 = 52.2                               # la prise, depuis le talon (le talon t
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ct=0.0, cq=0.0, cpl=0.0, cpr=0.0, pg=0.0,
             blink=0.0, cri=0.0, G=G0, ang=ANG0, gd=GD0, grip=0.0, behind=False, stretch=0.0, hot=0.0,
-            sh=(0.0, 0.0), srot=0.0, shot=0.0, ph=0.0)
+            sh=(0.0, 0.0), srot=0.0, shot=0.0, ph=0.0, emb=0.0)   # emb : le signe du repos (anim.signe)
 
 
 def unit(deg):
@@ -382,7 +382,7 @@ def shield(fig, P, C):
     det += [(ribbon(arc(cx, cy, SRX * 0.93, SRY * 0.93, -78, -18, a), [0.1, 1.0, 1.1, 0.9, 0.1]), gold.glint, 0.85),
             (ellipse(cx + SRX * 0.44, cy - SRY * 0.46, 2.4, 1.1, -52), '#ffd2b0', 0.35)]
     # l'emblème (aplati comme la face : trois quarts)
-    det += emblem(cx, cy, a, P['shot'], gold)
+    det += emblem(cx, cy, a, P['shot'], gold, P['emb'])
     fig.part('shield', face, gold, cel=1.0, rim=0.7, cast=1.4, details=det)
     _LAST['shield'] = C
 
@@ -397,7 +397,7 @@ def arc(cx, cy, rx, ry, a0, a1, rot_=0.0, n=5):
     return out
 
 
-def emblem(cx, cy, a, shot, gold):
+def emblem(cx, cy, a, shot, gold, emb=0.0):
     """La flamme d'or peinte sur la face bombée (vue de trois quarts : aplatie) : une seule flamme ronde en bas, trois
     langues qui montent en se recourbant (celle du milieu la plus haute, celles des côtés plus courtes, penchées vers
     l'extérieur), et dans son creux une flamme plus petite, orange vif, de la même forme (le cœur du feu)."""
@@ -429,6 +429,10 @@ def emblem(cx, cy, a, shot, gold):
            (T(ribbon([(2.2, -1.0), (2.8, 1.4), (2.6, 3.6)], [0.1, 0.5, 0.1])), '#fffbe8', 0.7)]
     if h > 0:
         out.insert(0, (T(ellipse(0, -2, 13, 13)), ('rad', ox, oy - 2, 13 * kx, 13, [(0, LAVA[1], 0.7 * h), (0.6, LAVA[2], 0.35 * h), (1, LAVA[3], 0)]), 1))
+    if emb > 0:
+        # le repos (anim.signe) : la flamme peinte s'allume lentement du dedans, une lueur chaude sur la face autour
+        out.insert(0, (T(ellipse(0, -2, 14, 14)), ('rad', ox, oy - 2, 14 * kx, 14, [(0, LAVA[1], 0.75 * emb), (0.55, LAVA[2], 0.4 * emb), (1, LAVA[3], 0)]), 1))
+        out.append((T(whole), ('rad', ox + 0.4, oy - 1.0, 12.0, 12.0, [(0, '#fffbe0', 0.85 * emb), (0.5, LAVA[0], 0.55 * emb), (1, LAVA[1], 0.15 * emb)]), 1))
     return out
 
 

@@ -147,8 +147,19 @@ SP_STOP = (1300, 1480)          # le jet s'éteint (de la gueule vers l'ennemi)
 
 # ======================================================================== la respiration (en boucle, 2 s)
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la crinière de flammes ondule plus fort (deux vagues par boucle) et la lame de la hallebarde rougeoie
+    lentement. Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(wv=1.4, lame=0.5 - 0.5 * math.cos(u), pm=2 * u)
+
+
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     cr = 0.4 * (0.5 - 0.5 * math.cos(u - 1.4))
     return dict(breath=br, crouch=cr, heady=0.3 * math.sin(u - 0.6), tilt=0.6 * math.sin(u - 0.9), mane=0.5 * math.sin(u - 1.2),
@@ -176,8 +187,10 @@ def pose_at(T, action=None, t0=0.0):
     P['breath'] = w * idl['breath'] + 1.2 * P.pop('swell')
     P['grip'] = (P.pop('gx'), P.pop('gy'))
     P['head'] = (P.pop('headx'), P.pop('heady'))
-    P['ph'] = 2 * math.pi * T * 0.8
-    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % 4.0) < 1.40) else 0.0
+    sg = signe(T)
+    P['wv'], P['lame'] = w * sg['wv'], w * sg['lame']
+    P['ph'] = P['pm'] = sg['pm']     # la queue, les pans : la même phase, périodique sur 3 s
+    P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % IDLE_T) < 1.40) else 0.0
     return P
 
 

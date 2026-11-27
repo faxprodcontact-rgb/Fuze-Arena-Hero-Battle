@@ -194,8 +194,19 @@ def orbit(theta, L=40.0, R=15.0, lift=0.3):
 
 # ======================================================================== la respiration (2 s, en boucle)
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : le vent soulève la grande crinière, qui ondule plus fort (deux vagues par boucle).
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(wv=1.8, ph=2 * u)
+
+
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     d = dict(sk=0.9 * math.sin(u - 1.1), crouch=0.35 * (0.5 - 0.5 * math.cos(u - 2.7)), heady=0.3 * math.sin(u - 0.7),
              tilt=0.6 * math.sin(u - 1.0), jaw=0.25 * max(0.0, math.sin(u - 3.5)) ** 2, cs=0.9 * math.sin(u + 0.4),
@@ -240,7 +251,9 @@ def pose_at(T, action=None, t0=0.0):
     if m > 0.001:
         out['bag'] = dict(m=smooth(m), dir=P['bdir'], L=P['bL'], R=P['bR'], full=max(0.02, min(1.0, P['bfull'])),
                           wob=P['bwob'], sway=P['bsway'], front=P['bfront'] > 0.5)
-    out['ph'] = 2 * math.pi * T * 0.8 + 1.5 * P['wind'] * T
+    sg = signe(T)
+    out['wv'] = w * sg['wv']
+    out['ph'] = sg['ph'] + 1.5 * P['wind'] * T
     out['blink'] = 1.0 if ((w > 0.95 and 1.30 <= (T % 4.0) < 1.38) or (action == 'special' and 1700 <= tl < 1770)) else 0.0
     return out
 

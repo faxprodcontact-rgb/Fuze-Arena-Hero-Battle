@@ -40,7 +40,7 @@ def grand_nuage(fig, i):
 
 JEU = {
     'vue': (-12, -40, 300, 170),          # plus large que la vidéo : le vent qui tourne autour de lui
-    'pose': dict(periode=2600),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Bouffée de la gourde » : il pousse le bâton, la gourde lâche une bouffée qui vole jusqu'à la vraie cible
     # et y éclate en volutes et en feuilles
     'attaque': dict(genre='tir', tir=TIR_A, coup=A.AT_HIT, cible=(A.HIT[0], A.HIT[1]), depuis=B_A[0] - 12,

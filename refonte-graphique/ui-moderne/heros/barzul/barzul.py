@@ -88,7 +88,7 @@ FIST_D = 5.0               # du poignet au milieu du poing (le long de l'avant-b
 
 REST = dict(breath=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, pl=0.0, q=0.0, cl=0.0, bl=0.0, blink=0.0, sq=0.0,
             cri=0.0, aim=0.0, back=0.0, ptilt=0.0, spin=0.0, fired=0.0, open=0.0, nw=NW0, sang=SANG0, nbend=1.0,
-            glint=0.0, sg=1)
+            glint=0.0, sg=1, pv=0.0, pp=0.0)   # pv, pp : le signe du repos (anim.signe) : la plume ondule
 
 
 def P_(o, u, v):
@@ -731,6 +731,18 @@ def plume(fig, P):
            (sm([(40.6, 7.0), (39.0, 9.6), (41.4, 9.0)], t=0.8), RED.shadow, 0.8),
            (sm([(33.4, 13.4), (34.6, 11.4), (35.8, 13.0)], t=0.8), RED.deep, 0.55),
            (sm([(30.6, 10.0), (27.4, 13.0), (28.2, 15.4), (31.2, 13.8)]), RED.shadow, 0.6)]
+    if P['pv']:
+        # le repos (anim.signe) : la plume ondule, la vague court de la cocarde vers la pointe (tout le dessin de la
+        # plume suit : forme, ombres, encoches)
+        R, pv, pp = (49.4, 21.6), P['pv'], P['pp']
+
+        def bend(p):
+            d = math.dist(p, R) / 24.0
+            a = math.radians(13.0 * pv * d ** 1.2 * math.sin(pp - 1.6 * d))
+            x, y = p[0] - R[0], p[1] - R[1]
+            return (R[0] + x * math.cos(a) - y * math.sin(a), R[1] + x * math.sin(a) + y * math.cos(a))
+        sh = sh.map(bend)
+        det = [(d_.map(bend), c_, o_) for d_, c_, o_ in det]
     fig.part('plume', sh, RED, grad=(46, 10, 30, 16, [(0, RED.hi), (0.35, RED.light), (0.75, RED.base), (1, RED.shadow)]),
              cel=0, rim=0.6, cast=1.0, details=det)
     return ['plume']

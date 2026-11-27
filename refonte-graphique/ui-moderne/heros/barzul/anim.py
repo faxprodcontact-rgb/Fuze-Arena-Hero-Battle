@@ -192,7 +192,15 @@ def fx_time(t):
 
 
 # ======================================================================== la pose (2 s… le crâneur qui tangue)
-IDLE_T = 1.4
+IDLE_T = 3.0     # la boucle du repos (s) : le tangage et le signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la grande plume rouge du chapeau ondule lentement (la vague court de la cocarde vers la pointe).
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(pv=1.0, pp=u)
 
 
 def idle_offsets(T):
@@ -228,9 +236,11 @@ def pose_at(T, action=None, t0=0.0):
                ptilt=P['ptilt'], spin=P['spin'], fired=max(0, min(1, P['fired'])), open=max(0, min(1, P['open'])),
                nw=(P['nwx'], P['nwy']), sang=P['sang'], glint=max(0, min(1, P['glint'])) if action == 'special' else 0.0,
                nbend=1.0 if P['nb'] >= 0 else -1.0)
+    sg = signe(T)
+    out['pv'], out['pp'] = w * sg['pv'], sg['pp']
     out['sg'] = -1 if (action == 'special' and SG_FLIP[0] <= tl < SG_FLIP[1]) else 1
     # un clignement de temps en temps (pas pendant l'attaque, où il plisse l'œil)
-    out['blink'] = 1.0 if (w > 0.95 and 2.10 <= (T % 3.6) < 2.19) else 0.0
+    out['blink'] = 1.0 if (w > 0.95 and 2.10 <= (T % IDLE_T) < 2.19) else 0.0
     return out
 
 

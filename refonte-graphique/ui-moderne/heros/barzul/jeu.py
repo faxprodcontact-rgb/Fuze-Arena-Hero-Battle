@@ -19,7 +19,7 @@ def balle(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Coup de pistolet » : la balle part de la bouche et file jusqu'à la vraie cible (après le coup, ce qui est
     # au-delà de 150 est posé sur la cible) ; la fumée reste là où le coup est parti
     'attaque': dict(genre='tir', tir=A.ATT_SHOT, coup=ARRIVE, cible=(A.FOE_X, CANON[1]), depuis=CANON[0] + 7, bouche=CANON,

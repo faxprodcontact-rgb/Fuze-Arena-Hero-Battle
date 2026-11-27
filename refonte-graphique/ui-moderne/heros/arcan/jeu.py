@@ -29,7 +29,7 @@ def boule(fig, i):
 JEU = {
     # la scène rendue : plus haute qu'anim.py (les orbes de la spéciale montent haut au-dessus de lui)
     'vue': (-70.0, -130.0, 340.0, 255.6),
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Coup de col » : il desserre le col, la boule de vent jaillit (560) ; le jeu la fait voler en arc jusqu'à la vraie
     # cible, qu'elle frappe (690 : éclat, volutes, feuilles, bouffées, tout ce qui est à droite de x = 165)
     'attaque': dict(genre='tir', tir=AN.ATT_REL, coup=AN.ATT_HIT, cible=AN.HIT, depuis=M0[0] + 5, coupe=165,

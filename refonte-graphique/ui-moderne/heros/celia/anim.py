@@ -166,7 +166,15 @@ SPECIAL = [
 LAUNCH = 720               # elle souffle : tout part (ms) ; l'image est tenue jusqu'à 870
 
 # ======================================================================== la respiration (en boucle, 2,16 s comme le pixel)
-IDLE_T = 2.16
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : les longues mèches ondulent plus fort dans le vent froid et se soulèvent un peu.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(ha=2.2, ph=u, hl=0.7 * (0.5 - 0.5 * math.cos(u - 0.6)))
 
 
 def idle_offsets(T):
@@ -198,9 +206,12 @@ def pose_at(T, action=None, t0=0.0):
     P['hand'] = (P.pop('hx'), P.pop('hy'))
     P['head'] = (P.pop('headx'), P.pop('heady'))
     u = 2 * math.pi * T / IDLE_T
-    P['ph'] = u + (0.0 if not act else 0.0018 * tl * (P['ha'] - 1.0))
+    sg = signe(T)
+    P['ha'] += w * (sg['ha'] - 1.0)
+    P['hl'] += w * sg['hl']
+    P['ph'] = sg['ph'] + (0.0 if not act else 0.0018 * tl * (P['ha'] - 1.0))
     P['bob'] = tuple(1.2 * math.sin(u - 2 * math.pi * k / 3) for k in range(3))
-    P['blink'] = 1.0 if (w > 0.95 and 1.62 <= (T % (2 * IDLE_T)) < 1.72) else 0.0
+    P['blink'] = 1.0 if (w > 0.95 and 1.62 <= (T % IDLE_T) < 1.72) else 0.0
     return P
 
 

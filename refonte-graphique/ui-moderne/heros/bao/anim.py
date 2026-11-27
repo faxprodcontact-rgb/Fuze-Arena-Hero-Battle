@@ -142,16 +142,26 @@ SP_ARRIVE = 1380                       # il s'ouvre sur l'ennemi (tourbillon)
 # ======================================================================== le repos (en boucle)
 
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la gourde d'or au bout du bâton s'allume lentement du dedans (le vent qu'elle a avalé), puis s'éteint.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(glow=1.4 * (0.5 - 0.5 * math.cos(u)))
+
+
 def idle_offsets(T):
     """Le repos d'un vieux sage qui flotte : tout monte et descend doucement avec le nuage (2 px), le dos respire, la
     tête suit avec retard, la crosse de la queue traîne, la barbe, le chapelet et les pans se balancent en retard."""
-    u = 2 * math.pi * T / 2.6
+    u = 2 * math.pi * T / IDLE_T
     lift = 1.0 - math.cos(u)                       # 0..2
     br = 0.5 - 0.5 * math.cos(u - 0.6)
     return dict(L=lift, breath=br, heady=-0.45 * math.sin(u - 1.1) + 0.2, headx=0.12 * math.sin(u - 1.3),
                 tilt=0.5 * math.sin(u - 1.0), bs=0.8 * math.sin(u - 1.7), q=2.2 * math.sin(u - 1.4),
-                sash=0.6 * math.sin(u - 1.9), ro=2.4 * math.sin(2 * math.pi * T / 2.0 + 0.8),
-                glow=0.15 + 0.1 * math.sin(2 * math.pi * T / 1.3))
+                sash=0.6 * math.sin(u - 1.9), ro=2.4 * math.sin(u + 0.8))     # la gourde : signe()
 
 
 def pose_at(T, action=None, t0=0.0):
@@ -171,8 +181,9 @@ def pose_at(T, action=None, t0=0.0):
     P = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
     P['breath'] = w * idl['breath']
     P['head'] = (P.pop('headx'), P.pop('heady'))
-    P['cp'] = (T / 2.2) % 1.0
-    blink = 1.0 if (w > 0.95 and 1.6 <= (T % 4.1) < 1.72) else 0.0
+    P['glow'] = P['glow'] + w * signe(T)['glow']
+    P['cp'] = (T / IDLE_T) % 1.0
+    blink = 1.0 if (w > 0.95 and 1.6 <= (T % IDLE_T) < 1.72) else 0.0
     P['blink'] = max(blink, 1.0 if P.pop('shut') > 0.5 else 0.0)
     return P, tl
 

@@ -2,3 +2,4 @@ fait
 Museau (avis du 26/11, tour 2) : il ne s'étend plus vers la droite. Le museau est maintenant un ovale rond, centré sous le nez (la moitié du fond à peine plus étroite, comme le veut le 3/4) ; la bosse qui dépassait du contour de la joue droite est enlevée, la joue revient en rond vers le menton.
 La moustache est symétrique : ses deux moitiés ont la même forme en miroir autour du nez (celle du fond juste un peu raccourcie), au lieu d'une pointe droite deux fois plus longue. Le haut de la barbe suit le nouveau contour de la joue (il ne dépasse plus à droite).
 Tout le reste ne change pas (yeux, nez, bouche, barbe, robe, bâton, nuage, animations) ; visage contrôlé avec visage.py (aucun défaut), correction vérifiée dans le repos, l'attaque et la spéciale.
+signe du repos (27/11) : la gourde d'or au bout du bâton s'allume lentement du dedans puis s'éteint ; menus 2,6 Mo, planche de combat 2,2 Mo.

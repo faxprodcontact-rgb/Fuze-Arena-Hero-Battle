@@ -169,7 +169,17 @@ SP_PLANT, SP_BUBBLE, SP_RING, SP_HIT1, SP_HIT2 = 170, 480, 680, 1070, 1230
 
 
 # ======================================================================== la respiration (en boucle)
-IDLE = 1.46                          # la durée d'un souffle (s), le rythme du pixel art
+IDLE = 3.0                           # la durée d'un souffle (s) : la boucle du repos (signe du héros)
+IDLE_T = IDLE
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : le grand cimier de crin se balance plus fort (sa queue répond à contretemps) et la flamme d'or du
+    bouclier chauffe lentement. Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus
+    (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(ct=6.0 * math.sin(u - 1.7), cq=4.5 * math.sin(u - 2.8), emb=0.5 - 0.5 * math.cos(u))
 
 
 def idle_offsets(T):
@@ -204,13 +214,17 @@ def pose_at(T, action=None, t0=0.0):
     idl = idle_offsets(T)
     src = act or keyed([(0, {}), (1, {})], 0)
     P = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
+    sg = signe(T)
+    for n in ('ct', 'cq'):
+        P[n] += w * sg[n]
     P['breath'] = w * idl['breath'] + P.pop('inhale')
     for n in STEP:
         P[n] = src[n]
     P['behind'] = bool(P['behind'] > 0.5)
     for k, (a, b) in PAIRS.items():
         P[k] = (P.pop(a), P.pop(b))
-    P['blink'] = 1.0 if (w > 0.95 and 0.95 <= (T % 3.6) < 1.03) else 0.0
+    P['emb'] = w * sg['emb']
+    P['blink'] = 1.0 if (w > 0.95 and 0.95 <= (T % IDLE_T) < 1.03) else 0.0
     return P, tl
 
 

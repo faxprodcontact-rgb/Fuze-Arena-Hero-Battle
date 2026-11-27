@@ -191,22 +191,34 @@ IMP_X = 214.0                # là où il s'écrase (l'ennemi)
 
 # ======================================================================== la respiration (en boucle, 2,4 s)
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros
+
+
 def eye_roll(T):
-    """L'œil unique roule (cycle de 4,8 s) : il regarde en arrière, revient, remonte, puis cligne."""
-    keys = [(0.0, 0.0, 0.0), (0.6, 0.0, 0.0), (1.0, -1.8, 0.1), (1.7, -1.8, 0.1), (2.1, 0.0, -0.9), (2.8, 0.2, -0.9),
-            (3.2, 0.0, 0.0), (4.8, 0.0, 0.0)]
-    t = T % 4.8
+    """L'œil unique roule (une boucle du repos, 3 s) : il regarde en arrière, revient, remonte, se pose."""
+    keys = [(0.0, 0.0, 0.0), (0.3, 0.0, 0.0), (0.75, -2.3, 0.15), (1.25, -2.3, 0.15), (1.7, 0.3, -1.1), (2.15, 0.3, -1.1),
+            (2.6, 0.0, 0.0), (3.0, 0.0, 0.0)]
+    t = T % IDLE_T
     ts = [k[0] for k in keys]
     return monotone(ts, [k[1] for k in keys], t), monotone(ts, [k[2] for k in keys], t)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : l'œil unique du cyclope roule (en arrière, puis en haut) et s'allume lentement d'une lueur ambre.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    ex, ey = eye_roll(T)
+    return dict(eye=(ex, ey), oeil=0.5 - 0.5 * math.cos(u))
 
 
 def idle_offsets(T):
     """Il inspire (le buste monte d'un souffle), les épaules roulent l'une après l'autre (la proche, qui porte la
     massue, puis la lointaine), la tête suit en retard ; la massue levée oscille (sa tête traîne derrière le poing) ;
     à l'expiration il se tasse sur ses jambes, lourd ; le pagne se balance."""
-    u = 2 * math.pi * T / 2.4
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
-    ex, ey = eye_roll(T)
+    ex, ey = 0.0, 0.0           # le roulement de l'œil est dans signe()
     return dict(breath=br, crouch=0.7 * (0.5 - 0.5 * math.cos(u - 2.6)), heady=0.5 * math.sin(u - 0.7),
                 tilt=-0.8 * math.sin(u - 0.9), rn=0.9 * (0.5 - 0.5 * math.cos(u - 0.4)), rf=0.8 * (0.5 - 0.5 * math.cos(u - 1.3)),
                 pg=0.6 * math.sin(u + 0.4), gx=0.5 * math.sin(u - 0.5), gy=-0.9 * (0.5 - 0.5 * math.cos(u - 0.4)),
@@ -235,11 +247,13 @@ def pose_at(T, action=None, t0=0.0):
     P['head'] = (src['headx'], src['heady'] + w * idl['heady'])
     P['nsh'] = (src['nshx'], src['nshy'])
     P['FF'] = (src['ffx'], src['ffy'] + w * idl['ffy'])
-    P['eye'] = (src['eyex'] + w * idl['eyex'], src['eyey'] + w * idl['eyey'])
+    sg = signe(T)
+    P['eye'] = (src['eyex'] + w * sg['eye'][0], src['eyey'] + w * sg['eye'][1])
+    P['oeil'] = w * sg['oeil']
     P['breath'] = w * idl['breath']
     P['bn'] = -1.0
     # le clignement (au repos, à la fin du roulement de l'œil)
-    tb = (T % 4.8) - 3.55
+    tb = (T % IDLE_T) - 2.62
     P['blink'] = (max(0.0, 1 - abs(tb) / 0.08) if w > 0.95 else 0.0)
     return P, tl
 

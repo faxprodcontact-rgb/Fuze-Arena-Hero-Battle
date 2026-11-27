@@ -6,7 +6,7 @@ import berold as B
 ID = 'knights-1'
 ANIM, DESSIN = A, B
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Estoc de l'hoplite » : il va jusqu'à l'ennemi (à portée de lance), arme, estoc ; la pointe touche l'ennemi à
     # hauteur de poitrine : l'éclat de feu, les braises et la fumée sont sur l'ennemi (les filets d'air restent au fer)
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(179, 61), coupe=134),

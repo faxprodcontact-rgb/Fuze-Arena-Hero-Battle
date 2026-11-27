@@ -159,13 +159,24 @@ SPECIAL = [
 SP_TOSS, SP_KICK, SP_BOOM, SP_CATCH = 361, 690, 860, 1225
 
 
-# ======================================================================== la respiration (en boucle, 2 s)
+# ======================================================================== la respiration (en boucle, 3 s)
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : les pans du bandeau ondulent plus fort (deux vagues par boucle) et l'anneau levé chauffe lentement.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(wv=1.3, ph=2 * u, pw=2 * u, braise=0.5 - 0.5 * math.cos(u))
+
 
 def idle_offsets(T):
     """Posture de moine concentré : le souffle soulève le buste (tête, épaules, bras tendu et anneau), puis à
     l'expiration il se pose sur ses genoux ; la tête suit en retard ; les pans du bandeau flottent, ceux de la ceinture se
     balancent à peine."""
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, crouch=0.55 * (0.5 - 0.5 * math.cos(u - 2.6)), heady=0.3 * math.sin(u - 0.9),
                 tilt=-0.5 * math.sin(u - 1.0), tail=0.7 * math.sin(u - 1.5), pg=0.6 * math.sin(u + 0.4))
@@ -193,13 +204,16 @@ def pose_at(T, action=None, t0=0.0):
     P['nw'] = (src['nwx'], src['nwy'])
     P['fa'] = (src['fax'], src['fay'])
     P['breath'] = min(1.0, src['breath'] + w * idl['breath'])
-    P['ph'] = 2 * math.pi * T * 0.9 + (1.2 * T if act else 0)
+    sg = signe(T)
+    P['wv'], P['braise'] = w * sg['wv'], w * sg['braise']
+    P['ph'] = sg['ph'] + (1.2 * T if act else 0)
+    P['pw'] = sg['pw'] + (1.56 * T if act else 0)
     P['blink'] = 1.0 if (w > 0.95 and 1.30 <= (T % 4.0) < 1.39) else 0.0
     P['ffront'] = 1.0 if P['ffront'] > 0.5 else 0.0
     P['ringF'] = 1.0 if P['ringF'] > 0.5 else 0.0
     P['ringN'] = 1.0 if P['ringN'] > 0.5 else 0.0
     # un reflet fait le tour du tranchant de l'anneau levé, puis passe sur l'anneau de la hanche
-    c = T % 2.0
+    c = (T % IDLE_T) * 2.0 / IDLE_T
     P['gl'] = -160 + 200 * (c / 0.7) if c < 0.7 else None
     P['gn'] = -150 + 160 * ((c - 0.9) / 0.5) if 0.9 <= c < 1.4 else None
     if act:

@@ -88,7 +88,7 @@ FA_REST = math.degrees(math.atan2(_W[1] - _E[1], _W[0] - _E[0]))
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, tail=0.0, pg=0.0, blink=0.0,
             fw=FW0, fbend=1.0, fsh=0.0, ffront=0.0, frot=0.0, ringF=1.0, rF_sy=1.0, rF_spin=0.0, rF_rot=0.0, rF_da=0.0,
             nw=NW0, nrot=0.0, ringN=1.0, fa=FA0, fext=0.0, foot=0.0, fkb=-1.0, hot=0.0, gl=None, gn=None,
-            shift=0.0, lift=0.0)
+            shift=0.0, lift=0.0, wv=0.0, pw=None, braise=0.0)   # wv, pw, braise : le signe du repos (anim.signe)
 
 
 def build(ow=0.95, pose=None, fx=None, frame=FRAME):
@@ -110,7 +110,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ======================================================================== les pans du bandeau (derrière tout)
     ph, tl = P['ph'], P['tail']
-    tails = band_tails(ph, tl)
+    tails = band_tails(ph, tl, P['wv'], P['pw'])
     for name, sh, det in tails:
         fig.part(name, sh, RED, cel=0.8, rim=0.6, cast=0.9, details=det)
 
@@ -145,7 +145,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             sy = P['rF_sy']
             Rm = (RR + Rr) / 2 * math.hypot(d[0], d[1] * sy)
             C = (G[0] + d[0] * Rm, G[1] + d[1] * Rm)
-            chakram(fig, 'ringF', C, 1.0, sy, P['rF_rot'], P['rF_spin'], bronze, P['gl'], cast=0.9)
+            # le repos (anim.signe) : l'anneau levé chauffe lentement, une lueur douce autour (derrière tout)
+            br_ = P['braise']
+            if br_ > 0:
+                gx, gy = mapp(UC, C)
+                fig.glow(gx, gy, 19, 19, '#ff9a2e', 0.32 * br_)
+            chakram(fig, 'ringF', C, 1.0, sy, P['rF_rot'], P['rF_spin'],
+                    matmix(BRONZE, BRONZE_HOT, 0.5 * hot + 0.55 * br_) if br_ > 0 else bronze, P['gl'], cast=0.9)
         fig.part('ffist', fist.map(lambda p: mapp(M, p)), SKIN, cel=1.2, rim=0.6, cast=0.9,
                  details=[(s.map(lambda p: mapp(M, p)), c, o) for s, c, o in fdet])
         fig.part('fthumb', thumb.map(lambda p: mapp(M, p)), SKIN, cel=0.7, rim=0.55, cast=0.7, cast_on=['ffist', 'ringF'])
@@ -611,9 +617,12 @@ def cut_strip(pts, w0, w1, slant=1):
     return sm(p, sharp=(len(left) - 1, len(left)), t=0.85)
 
 
-def band_tails(ph, tl):
+def band_tails(ph, tl, wv=0.0, pw=None):
     """Les deux pans du bandeau qui volent derrière la tête : ils partent du noeud, ondulent (la vague court vers le
-    bout) et se relèvent (tl > 0) ou retombent (tl < 0)."""
+    bout) et se relèvent (tl > 0) ou retombent (tl < 0). wv : le repos les fait onduler plus fort ; pw : la phase de la
+    vague (par défaut 1,3 × ph)."""
+    pw = ph * 1.3 if pw is None else pw
+    k = 1 + wv
     out = []
     for i, (name, pts, w0, w1, sl) in enumerate((
             ('tailA', [(50.0, 30.2), (46.6, 29.0), (42.6, 28.4), (38.0, 27.8)], 2.8, 4.0, 1),
@@ -621,8 +630,8 @@ def band_tails(ph, tl):
         q = []
         for k, (x, y) in enumerate(pts):
             t = k / (len(pts) - 1)
-            wv = math.sin(ph * 1.3 - 1.6 * t - 0.9 * i)
-            q.append((x + 0.3 * t * math.cos(ph - i), y + (0.9 * wv - 1.6 * tl * (1 if i == 0 else 0.8)) * t ** 1.2))
+            wa = math.sin(pw - 1.6 * t - 0.9 * i)
+            q.append((x + 0.3 * k * t * math.cos(ph - i), y + (0.9 * k * wa - 1.6 * tl * (1 if i == 0 else 0.8)) * t ** 1.2))
         sh = cut_strip(q, w0, w1, slant=sl)
         det = [(ribbon([q[0], lerp(q[1], q[2], 0.5), lerp(q[2], q[3], 0.8)], [0.1, 0.7, 0.1]), RED.shadow if i == 0 else RED.deep, 0.45),
                (ribbon([(q[0][0], q[0][1] - 0.8), (q[1][0], q[1][1] - 1.0), (q[2][0], q[2][1] - 1.2)], [0.1, 0.5, 0.1]), RED.hi, 0.5)]

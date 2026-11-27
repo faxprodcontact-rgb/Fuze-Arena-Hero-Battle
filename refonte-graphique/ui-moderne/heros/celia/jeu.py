@@ -25,7 +25,7 @@ def aiguilles(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE_T),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « aiguilles de glace » : la main poussée, les trois aiguilles partent ; le jeu les fait voler jusqu'à la vraie
     # cible, où éclôt la fleur de glace qui éclate (tout ce qui est devant elle, à droite de x = 150, part sur la cible)
     'attaque': dict(genre='tir', tir=A.NEEDLE_GO + 12, coup=ARRIVE, cible=A.FOE, depuis=BOUCHE[0] - 3, coupe=150,

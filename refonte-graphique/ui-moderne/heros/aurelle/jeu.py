@@ -42,7 +42,7 @@ def rocher(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=2400),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Double coup de massue » : il va jusqu'à l'ennemi ; la grande massue le frappe au ventre (le coup), la petite
     # s'abat, puis la grande frappe le sol devant lui
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(166, 75), coupe=124, dense=[(430, 1100)]),

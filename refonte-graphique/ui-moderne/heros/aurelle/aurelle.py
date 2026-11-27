@@ -100,7 +100,7 @@ MOUTH_C = (FACE['bouche'][0], FACE['bouche'][1] + 0.6)   # le milieu de la bouch
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, eye=(0.0, 0.0), glow=0.0,
             G=G0, ang=ANG0, bn=-1.0, nsh=(0.0, 0.0), rn=0.0, rf=0.0, FF=FF0, ffa=FFA0, bf=1.0, pg=0.0, lift=0.0,
-            shift=0.0, front=0.0, length=1.0, mouth=0.0, fca=0.0)
+            shift=0.0, front=0.0, length=1.0, mouth=0.0, fca=0.0, oeil=0.0)   # oeil : le signe du repos (anim.signe)
 
 
 def sm_under(sh, dx=0.8, dy=-2.4):
@@ -532,6 +532,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                    (ellipse(ix + 0.3, iy + 0.2, 1.05, 2.35), '#1e0c18', 1),
                    (ellipse(ix + 1.4, iy - 1.6, 0.95, 0.75, -20), '#ffffff', 0.95),
                    (ellipse(ix - 1.2, iy + 1.8, 0.4, 0.3), '#ffffff', 0.6)]
+            if P['oeil'] > 0:
+                # le repos (anim.signe) : l'iris s'allume lentement de l'intérieur
+                oe = P['oeil']
+                hd += [(iris, ('rad', ix + 0.3, iy - 0.2, 4.2, 4.2, [(0, '#fffbe2', 0.8 * oe), (0.55, IRIS[0], 0.45 * oe),
+                                                                     (1, IRIS[1], 0)]), 1)]
             # l'ombre du sourcil sur le haut de l'œil (par-dessus l'iris)
             cres = [(ex + 6.5 * math.cos(math.radians(t)), ey + 4.5 * math.sin(math.radians(t))) for t in range(180, 361, 15)]
             cres += [(ex + 6.5 * math.cos(math.radians(t)), ey + 4.5 * 0.3 * math.sin(math.radians(t)) - 0.6) for t in range(345, 179, -15)]
@@ -548,6 +553,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             hd += [(white, ('lin', ex, ey - 5, ex, ey + 5, [(0, SKIN.base), (1, SKIN.shadow)]), 1),
                    (ribbon([(ex - 6.4, ey + 1.0), (ex, ey + 2.6), (ex + 6.4, ey + 1.0)], [0.2, 1.0, 0.2]), '#3a1424', 0.9),
                    (ribbon([(ex - 4.0, ey - 1.6), (ex + 1.0, ey - 2.4), (ex + 5.0, ey - 1.4)], [0.1, 0.5, 0.1]), SKIN.light, 0.6)]
+        if P['oeil'] > 0 and bl < 0.95:
+            hd += [(ellipse(ex + 1.0, ey - 0.3, 11.0, 9.0), ('rad', ex + 1.0, ey - 0.3, 11.0, 11.0,
+                                                           [(0, EARTH[1], 0.0), (0.5, EARTH[1], 0.4 * P['oeil']), (1, EARTH[2], 0)]), 1)]
         if glow > 0:
             hd += [(ellipse(ex + 1.4, ey - 0.4, 9.0, 7.6), ('rad', ex + 1.4, ey - 0.4, 9.0, 9.0,
                                                            [(0, EARTH[1], 0.0), (0.45, EARTH[1], 0.32 * min(1, glow)), (1, EARTH[2], 0)]), 1)]

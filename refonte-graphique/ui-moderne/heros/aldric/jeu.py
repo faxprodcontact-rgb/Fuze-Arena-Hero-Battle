@@ -62,7 +62,7 @@ def vol_speciale(t, x, y, couche, el):
 
 
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     'vue_proj': (-62, -34, 92, 68),
     # « Anneau lancé » : l'anneau file à plat jusqu'à l'ennemi (le jeu le fait voler), l'éclat de feu sur l'ennemi, puis
     # il revient dans sa main (`retour`) ; petit éclat au rattrapé
