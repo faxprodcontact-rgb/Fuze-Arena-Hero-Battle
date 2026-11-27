@@ -236,4 +236,4 @@ button.hx-dot { cursor: pointer; }
 .hall-med .sum-med-icon .icon { width: 72% !important; height: 72% !important; }
 /* le héros vectoriel lisse respire, pieds fixes (vecto.ts) */
 .hx-stage-win.hx-vec { overflow: visible; }
-.hx-stage-win.hx-vec img { width: 100%; image-rendering: auto; animation: hf-breathe 3.4s ease-in-out infinite; }
+.hx-stage-win.hx-vec > img, .hx-stage-win.hx-vec > .vl { width: 100%; height: 100%; image-rendering: auto; animation: hf-breathe 3.4s ease-in-out infinite; }

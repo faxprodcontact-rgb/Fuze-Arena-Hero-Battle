@@ -6,7 +6,7 @@ import kael as K
 ID = 'assassins-2'
 ANIM, DESSIN = A, K
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Taille du colosse » : il bondit jusqu'à l'ennemi, abat l'épée ; la coupe flambe sur l'ennemi
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(150, 85), coupe=108),
     # « Lame de magma » : il se charge sur place, revers de feu ; le mur de flammes roule et le geyser éclate sous

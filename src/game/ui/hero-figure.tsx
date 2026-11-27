@@ -5,6 +5,7 @@
 import { heroImage } from '../art';
 import { heroArt } from '../look';
 import { vectoFig } from '../vecto';
+import { VectoImage } from './vecto-live';
 
 /** Un pixel du dessin, en unités de la boîte (200 × 240) : un héros de 115 pixels mesure 200 unités. */
 const BOX_PER_PX = 1.75;
@@ -16,14 +17,16 @@ export function Figure({ id, class: cls = '' }: { id: string; class?: string }) 
   return <img class={cls} src={v.big} alt="" draggable={false} style={{ aspectRatio: `${v.w} / ${v.h}` }} />;
 }
 
-export function HeroFigure({ defId, class: cls = '' }: { defId: string; class?: string }) {
-  const v = vectoFig(heroArt(defId));
+/** `live` : le héros joue son signe du repos (vecto-live.tsx) : là où il est en grand et peu nombreux. */
+export function HeroFigure({ defId, class: cls = '', live = false }: { defId: string; class?: string; live?: boolean }) {
+  const art = heroArt(defId);
+  const v = vectoFig(art);
   if (!v) return <span class={`hfig ${cls}`}><img class="hfig-flat" src={heroImage(defId)} alt="" /></span>;
   const left = 53 - ((v.fx * BOX_PER_PX) / 200) * 100, top = 95 - ((v.fy * BOX_PER_PX) / 240) * 100;
   return (
     <span class={`hfig hfig-vec ${cls}`}>
       <span class="px-win vec-win" style={{ left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%`, width: `${(((v.w * BOX_PER_PX) / 200) * 100).toFixed(2)}%`, aspectRatio: `${v.w} / ${v.h}` }}>
-        <img src={v.big} alt="" draggable={false} />
+        <VectoImage id={art} src={v.big} live={live} />
       </span>
     </span>
   );

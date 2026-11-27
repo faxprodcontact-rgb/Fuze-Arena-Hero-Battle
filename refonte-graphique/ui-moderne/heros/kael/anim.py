@@ -140,8 +140,19 @@ WALL_X0, WALL_X1, GEYSER_X = 112.0, 184.0, 188.0
 
 # ======================================================================== la respiration (en boucle, 2 s)
 
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la crinière de flammes ondule plus fort (deux vagues par boucle) et la lame rougeoie lentement.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(wv=1.4, lame=0.5 - 0.5 * math.cos(u), ph=2 * u)
+
+
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, crouch=0.4 * (0.5 - 0.5 * math.cos(u - 1.3)), heady=0.3 * math.sin(u - 0.6),
                 tilt=0.7 * math.sin(u - 0.9), farmy=0.45 * math.sin(u - 1.0), farm_rot=1.0 * math.sin(u - 1.1),
@@ -171,7 +182,9 @@ def pose_at(T, action=None, t0=0.0):
     P['hand'] = (P.pop('hx'), P.pop('hy'))
     P['head'] = (P.pop('headx'), P.pop('heady'))
     P['farm'] = (P.pop('farmx'), P.pop('farmy'))
-    P['ph'] = 2 * math.pi * T * 1.0 + (0.6 * (P['trail'] + P['flare']) * T if act else 0)
+    sg = signe(T)
+    P['wv'], P['lame'] = w * sg['wv'], w * sg['lame']
+    P['ph'] = sg['ph'] + (0.6 * (P['trail'] + P['flare']) * T if act else 0)
     P['blink'] = 1.0 if (w > 0.95 and 1.28 <= (T % 4.0) < 1.36) else 0.0
     P['edge'] = 1
     return P, (act['ang'] if act else K.ANG0)

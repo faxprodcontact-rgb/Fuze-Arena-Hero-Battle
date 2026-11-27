@@ -27,6 +27,7 @@ import { runSkillPreview } from '../../scenes';
 import { close, open, swap, toast } from '../nav';
 import { heroArt } from '../../look';
 import { vectoFig } from '../../vecto';
+import { VectoImage } from '../vecto-live';
 import '../sections/heros.css';
 
 export function talentText(talent: Talent | undefined): string {
@@ -91,7 +92,8 @@ function StageFigure({ defId, up }: { defId: string; up: number }) {
     return () => ro.disconnect();
   }, []);
   const [bw, bh] = box;
-  const v = vectoFig(heroArt(defId));
+  const art = heroArt(defId);
+  const v = vectoFig(art);
   if (!v) return <span class="hx-stage-fig" ref={host}><img class="hx-flat" src={heroImage(defId)} alt="" /></span>;
   // le dessin vectoriel lisse : en hauteur, 116 pixels du dessin (un grand héros) sur 80 % de la scène ; en largeur,
   // entre les médaillons ; puis réduit d'un quart (demande du 26/11) : le héros garde de l'air autour de lui. Il
@@ -104,7 +106,7 @@ function StageFigure({ defId, up }: { defId: string; up: number }) {
     <span class="hx-stage-fig" ref={host}>
       {bh > 0 && (
         <span class="hx-stage-win hx-vec" key={`${defId}-${up}`} style={{ left: `${bw / 2 - v.fx * fit}px`, top: `${feetY - v.fy * fit}px`, width: `${v.w * fit}px`, height: `${v.h * fit}px` }}>
-          <img src={v.big} alt="" draggable={false} style={{ transformOrigin: `${((v.fx / v.w) * 100).toFixed(1)}% ${((v.fy / v.h) * 100).toFixed(1)}%` }} />
+          <VectoImage id={art} src={v.big} style={{ transformOrigin: `${((v.fx / v.w) * 100).toFixed(1)}% ${((v.fy / v.h) * 100).toFixed(1)}%` }} />
         </span>
       )}
     </span>

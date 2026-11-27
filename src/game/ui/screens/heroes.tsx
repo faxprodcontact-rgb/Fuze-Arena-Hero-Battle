@@ -68,7 +68,7 @@ function Hall() {
       <button class="hall-team" aria-label={t('heroes.team')} onClick={() => prepare(null, 'main')}>
         {order.map(({ hero, spot }, i) => (
           <span class={`hall-hero${spot.back ? ' hall-back' : ''}`} style={{ left: `${spot.x}%`, top: `${spot.y}%`, width: `${spot.w}%`, animationDelay: `${-i * 0.7}s` }}>
-            <HeroFigure defId={hero.defId} />
+            <HeroFigure defId={hero.defId} live />
           </span>
         ))}
         <span class="hall-power"><Icon name="power" size={17} />{fmt(teamPower(s))}</span>

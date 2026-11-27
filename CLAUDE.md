@@ -42,6 +42,8 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
     budget 4,2 Mo par planche ; contrôle en vrai combat : `combat-video.cjs`, temps virtuel) ;
   - têtes (cartes du combat et visages des menus) : `heros/tetes.py` → `public/art/vecto/v/<id>.webp` ;
   - effets reçus des sorts d'équipe : `effets/recus.py` → `public/art/vecto/fx/`, `src/game/vecto-fx.ts` ;
+  - **signe du repos** (l'élément propre à chaque héros qui bouge lentement, au combat et dans les menus en grand) :
+    `signe(T)` dans `anim.py`, `heros/repos.py` → `art/vecto/repos/` + `vecto-repos.ts`, `ui/vecto-live.tsx` (consigne **`heros/REPOS.md`**) ;
   - écran de chargement : `chargement/chargement.py` → `public/art/chargement/` + bloc « chargement » d'`index.html` (v0.66.0) ;
   - fonds : `fonds/<clan>/<clan>.py` puis `fonds/assemble_ts.py` → `public/art/vecto/fonds/` (`<clan>-menu.webp` :
     image réduite pour les menus), `src/game/fond-vecto.ts` (lu par `bg/fond-px.ts`).

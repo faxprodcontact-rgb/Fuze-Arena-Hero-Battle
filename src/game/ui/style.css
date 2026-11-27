@@ -710,6 +710,16 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 .hall-hero .hfig { transform-origin: 53% 95%; animation: hf-breathe 3.4s ease-in-out infinite; animation-delay: inherit; }
 @keyframes hf-breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.012, 1.024); } }
 .hall-back .hfig img { filter: drop-shadow(0 2px 2px #00000080) brightness(0.84) saturate(0.92); }
+.hall-back .hfig .vl { filter: brightness(0.84) saturate(0.92); }
+/* le signe du repos (vecto-live.tsx) : la base, et par zone une bande d'images qui défile ; l'ombre portée est sur le
+   cadre (jamais sur chaque morceau : pas de trait aux raccords) */
+.vl { position: relative; display: block; width: 100%; height: 100%; }
+.vl img { position: absolute; left: 0; top: 0; height: 100%; max-width: none; filter: none !important; }
+.vl > img { width: 100%; }
+.vl-z { position: absolute; display: block; overflow: hidden; }
+.vl-z img { animation-name: vl-run; animation-iteration-count: infinite; }
+@keyframes vl-run { to { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) { .vl-z img { animation: none; } }
 .hall-team:active .hall-hero { filter: brightness(1.15); }
 .hall-power { position: absolute; left: 50%; bottom: -5px; translate: -50% 0; z-index: 2; display: inline-flex; align-items: center; gap: 3px; padding: 0 12px 0 8px; border-radius: 10px;
   font: 800 15px/23px var(--font-title); color: var(--gold-hi); text-shadow: 0 1px 0 #000a;

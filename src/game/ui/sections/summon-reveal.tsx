@@ -108,7 +108,7 @@ function HeroShow({ hero, instant }: { hero: Hero; instant?: boolean }) {
         </svg>
       )}
       <div class="sr-hero">
-        <HeroFigure defId={hero.defId} class="sr-real" />
+        <HeroFigure defId={hero.defId} class="sr-real" live />
         {!instant && <HeroFigure defId={hero.defId} class="sr-ghost" />}
       </div>
       {r === 3 && !instant && <span class="sr-wave" />}

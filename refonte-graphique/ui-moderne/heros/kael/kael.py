@@ -61,7 +61,7 @@ def rot(v, deg):
 HAND0 = (G0[0] + rot(GRIP, ANG0)[0], G0[1] + rot(GRIP, ANG0)[1])
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, trail=0.0, flare=0.0, rise=0.0,
             glow=0.0, molten=0.0, farm=(0.0, 0.0), farm_rot=0.0, pg=0.0, blink=0.0, hand=HAND0, ang=ANG0, edge=1,
-            bend=1.0, stretch=0.0)
+            bend=1.0, stretch=0.0, wv=0.0, lame=0.0)   # wv, lame : le signe du repos (anim.signe)
 _GL = [0.0]                                           # l'embrasement en cours (lueur des veines)
 
 
@@ -376,11 +376,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fuller = xfb(ribbon([(3, -0.2), (16, -0.3), (29, -0.4)], [0.2, 1.1, 0.2]), G[0], G[1], ang)
     grip = xs(sm([(-1, -1.3), (-15, -1.2), (-15, 1.2), (-1, 1.3)], sharp=(0, 1, 2, 3), t=0.3), G[0], G[1], ang)
     guard = xs(sm([(1.3, -6.8), (1.5, 7.0), (-0.7, 7.6), (-1.6, 0), (-0.9, -7.4)], sharp=(0, 1, 2, 4)), G[0], G[1], ang)
+    # le repos (anim.signe) : la lame rougeoie lentement, le tranchant s'éclaire, une lueur douce autour (derrière tout)
+    lame = [(edgeb, LAVA[0], 0.8 * P['lame'])] if P['lame'] > 0 else []
+    if P['lame'] > 0:
+        mx, my = mapp(U, (G[0] + rot((22, 0), ang)[0], G[1] + rot((22, 0), ang)[1]))
+        fig.glow(mx, my, 26, 14, '#ff7a1e', 0.3 * P['lame'])
     fig.part('blade', blade, BLADE, cel=0.9, rim=0.8, cast=0,
              details=[(edgeb, ('lin', G[0], G[1], G[0] + rot((40, 0), ang)[0], G[1] + rot((40, 0), ang)[1],
                                 [(0, LAVA[3] if mol < 1 else LAVA[1]), (0.6, LAVA[2] if mol < 1 else LAVA[0]), (1, LAVA[1] if mol < 2 else LAVA[0])]), 1),
                       (xfb(sm([(0, 2.6), (37.8, 2.1), (38.2, 2.6), (0, 3.4)], sharp=(0, 1, 2, 3), t=0.3), G[0], G[1], ang), LAVA[1], 1),
-                      (fuller, BLADE.deep, 0.8)])
+                      (fuller, BLADE.deep, 0.8)] + lame)
     fig.part('grip', grip, LEATHER, cel=0.6, rim=0.4, cast=0.6)
     fig.part('guard', guard, OBS, cel=0.7, rim=0.6, cast=0.9, edge=(LAVA[2], LAVA[3], 0.7, rot((1, 0), ang)))
 
@@ -468,7 +473,7 @@ def wave_lock(i, L, P):
     vers l'arrière quand il fonce (trail), flambe (flare) ou se dresse (rise)."""
     name, p0, p1, p2, p3, w0, spur = L
     ph = P['ph'] - i * 0.9
-    k = 0.6 + 0.12 * i                      # les grandes mèches ondulent plus
+    k = (0.6 + 0.12 * i) * (1 + P['wv'])    # les grandes mèches ondulent plus ; wv : le repos les fait onduler
     tr, fl, ri = P['trail'], P['flare'], P['rise']
     p2 = (p2[0] + 0.5 * k * math.sin(2 * ph + 1.0) - 1.2 * tr, p2[1] + 0.9 * k * math.sin(ph) - 0.8 * ri)
     p3 = (p3[0] + 1.1 * k * math.sin(ph + 0.8) - 2.6 * tr - 1.2 * fl, p3[1] + 1.3 * k * math.cos(ph) - 1.6 * ri - 1.6 * fl + 0.6 * tr)
@@ -483,7 +488,7 @@ def front_locks(P):
     l'arrière en suivant le crâne, comme le reste de la crinière, la pointe relevée."""
     ph = P['ph']
     tr, fl, ri = P['trail'], P['flare'], P['rise']
-    w1, w2 = math.sin(ph + 0.4), math.sin(ph - 0.5)
+    w1, w2 = (1 + P['wv']) * math.sin(ph + 0.4), (1 + P['wv']) * math.sin(ph - 0.5)
     return [
         # la grande : elle monte au-dessus du front puis file vers l'arrière en suivant le crâne, pointe relevée
         ('fore', (96.3, 24.0), (99.9, 16.4), (94.5, 11.6 + 0.5 * w1), (80.5 - 1.8 * tr - fl, 7.2 + 1.0 * w1 - 1.4 * ri - fl), 9.8 * (1 + 0.1 * fl)),
