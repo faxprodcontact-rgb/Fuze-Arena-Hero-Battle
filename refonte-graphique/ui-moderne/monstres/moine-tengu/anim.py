@@ -35,7 +35,7 @@ ROOT = O.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'moine-tengu')
 TMP = os.environ.get('MOINE_TMP', '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-moine-tengu/_images')
 FPS = 24
-VIEW = (-44, -50, 320, 180)          # la scène de la vidéo, en pixels du dessin (16/9)
+VIEW = (-50, -70, 348, 196)          # la scène de la vidéo, en pixels du dessin (16/9)
 VW, VH = 1280, 720
 GR = O.GRD
 FOE = (214.0, 80.0)                  # l'ennemi (milieu du corps), là où frappe le vent
@@ -123,20 +123,22 @@ def keyed(keys, t):
 # pointe frappe le sol (le corps suit, penché) ; tenu ; il redresse lentement le bâton et revient en garde.
 ATTACK = [
     (0, {}),
-    (260, dict(crouch=0.8, lean=-1.2, head=(-0.6, 0.4), nh=(25.0, 46.0), sa=-104, pg=0.6, rsw=-8, bn=-1)),
-    (600, dict(crouch=-0.2, lean=-3.0, head=(-1.0, -0.6), tilt=-3, nh=(29.0, 22.0), sa=-128, gs=3, pg=1.0, rsw=-14,
+    (260, dict(crouch=0.8, lean=-1.2, head=(-0.6, 0.4), nh=(25.0, 46.0), sa=-104, gs=-6, pg=0.6, rsw=-8, bn=-1)),
+    (600, dict(crouch=-0.2, lean=-3.0, head=(-1.0, -0.6), tilt=-3, nh=(29.0, 22.0), sa=-128, gs=-20, pg=1.0, rsw=-14,
                w=('fold', 'demi', 0.25), bn=-1, ws=0.4)),
-    (840, dict(crouch=-0.4, lean=-3.4, head=(-1.2, -1.0), tilt=-4, nh=(36.0, 5.0), sa=-96, gs=8, pg=1.2, rsw=-6,
+    (840, dict(crouch=-0.4, lean=-3.4, head=(-1.2, -1.0), tilt=-4, nh=(36.0, 5.0), sa=-156, gs=-20, pg=1.2, rsw=-6,
                w=('fold', 'demi', 0.35), bn=-1, ws=0.6, growl=0.6)),
-    (930, dict(crouch=0.6, lean=1.0, head=(0.2, 0.0), tilt=0, nh=(54.0, 20.0), sa=-28, gs=12, pg=0.4, rsw=24,
+    (930, dict(crouch=0.6, lean=1.0, head=(0.2, 0.0), tilt=0, nh=(54.0, 20.0), sa=-24, gs=-36, pg=0.4, rsw=24,
                w=('fold', 'demi', 0.2), bn=1, trail=0.8, ws=0.8, growl=1)),
-    (1000, dict(crouch=2.4, lean=6.0, head=(1.2, 1.0), tilt=3, nh=(64.0, 52.0), sa=44, gs=14, pg=-1.2, rsw=50,
+    (1000, dict(crouch=2.4, lean=6.0, head=(1.2, 1.0), tilt=3, nh=(64.0, 52.0), sa=44, gs=-36, pg=-1.2, rsw=50,
                 w=('fold', 'demi', 0.45), bn=1, trail=1.2, ws=1.0, growl=1)),
-    (1250, dict(crouch=2.2, lean=5.6, head=(1.0, 0.8), tilt=2.6, nh=(64.0, 52.0), sa=44, gs=14, pg=-0.8, rsw=20,
+    (1250, dict(crouch=2.2, lean=5.6, head=(1.0, 0.8), tilt=2.6, nh=(64.0, 52.0), sa=44, gs=-36, pg=-0.8, rsw=20,
                 w=('fold', 'demi', 0.3), bn=1, trail=0.6, ws=0.6, growl=1)),
-    (1520, dict(crouch=0.8, lean=1.2, head=(0.2, 0.2), tilt=0.6, nh=(30.0, 44.0), sa=-96, gs=3, pg=0.6, rsw=-10,
-                w=('fold', 'demi', 0.1), bn=-1, growl=0.2)),
-    (1800, {}),
+    (1390, dict(crouch=1.4, lean=2.6, head=(0.6, 0.4), tilt=1.2, nh=(38.0, 60.0), sa=62, gs=-16, pg=0.2, rsw=0,
+                w=('fold', 'demi', 0.15), bn=1, growl=0.6)),
+    (1580, dict(crouch=0.6, lean=0.8, head=(0.2, 0.2), tilt=0.4, nh=(27.0, 46.0), sa=-94, gs=-4, pg=0.6, rsw=-10,
+                w=('fold', 'demi', 0.05), bn=-1, growl=0.2)),
+    (1850, {}),
 ]
 A_SWING = (840, 1010)                  # la traînée du bâton
 A_HIT = 1000                           # la pointe frappe le sol
@@ -749,7 +751,7 @@ def frame_svg(T, segs, view=VIEW, ow=0.95):
         if act == 'attack':
             if 'x' not in HIT:
                 Ph = pose_at(t0 + A_HIT / 1000.0, act, t0)
-                HIT['x'] = O.build(pose=Ph).ctx['foot'][0]
+                HIT['x'] = O.build(pose=Ph).ctx['top'][0]
             fx = [fx_attack(tl, prev)]
         else:
             if 'foot_x' not in SP:
