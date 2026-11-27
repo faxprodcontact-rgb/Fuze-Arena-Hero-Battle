@@ -559,21 +559,29 @@ def _():
     return ic
 
 
-@picto('recycle')
+@picto('foundry')
 def _():
-    """Recycler : deux flèches courbes qui se suivent en rond."""
+    """La fonderie (27/11, à la place du « recyclage ») : un creuset de fonte penché verse un filet de métal en fusion
+    dans un moule à lingot ; quelques étincelles. Fondre un objet rend de la poussière."""
     ic = Icon()
-    for k, c in [(0, 'green'), (180, 'teal')]:
-        o = ic.obj()
-        a0, a1 = 200 + k, 330 + k
-        outer = arc_pts(50, 50, 38, a0, a1, 14)
-        inner = arc_pts(50, 50, 24, a1, a0, 14)
-        tip_a = math.radians(a1 + 26)
-        tip = (50 + 31 * math.cos(tip_a), 50 + 31 * math.sin(tip_a))
-        o1 = (50 + 46 * math.cos(math.radians(a1)), 50 + 46 * math.sin(math.radians(a1)))
-        i1 = (50 + 16 * math.cos(math.radians(a1)), 50 + 16 * math.sin(math.radians(a1)))
-        pts = outer + [o1, tip, i1] + inner
-        o.part(rpoly(pts, 1.4), c, gloss=False)
+    ic.glow(62, 74, 30, '#ffb02e', 0.45)
+    MOLTEN = [(0, '#fff6b0'), (0.35, '#ffc23a'), (0.75, '#ff7a1e'), (1, '#d8401e')]
+    # le moule (fonte sombre) et le métal qui l'emplit
+    m = ic.obj()
+    m.part(rpoly([(34, 70), (94, 70), (88, 92), (40, 92)], 4), ('metal', 'iron'), gloss=False)
+    m.part(rpoly([(40, 69), (88, 69), (85, 81), (43, 81)], 2), [(0, '#fff6b0'), (0.45, '#ffc23a'), (1, '#ff7a1e')], gloss=False)
+    m.detail(ellipse(70, 72.5, 10, 1.6), fill='#fffbe0', opacity=0.8)
+    # le filet qui coule de la lèvre du creuset jusqu'au moule
+    f = ic.obj()
+    f.part(band([(48, 38), (55, 45), (60, 56), (61, 66), (61, 74)], 7.5), [(0, '#fff3a0'), (0.5, '#ffc23a'), (1, '#ff8a1e')], gloss=False)
+    # le creuset penché (bord épais, métal fondu à la lèvre)
+    c = ic.obj()
+    pot = rpoly([(10, 16), (46, 16), (42, 50), (16, 50)], 7).rot(-38, 30, 34)
+    c.part(pot, ('metal', 'iron'), gloss=False)
+    c.part(rpoly([(7, 12), (49, 12), (49, 20), (7, 20)], 4).rot(-38, 30, 34), dark(col('iron'), 0.25), gloss=False)
+    c.part(ellipse(28, 16.5, 16, 5).rot(-38, 30, 34), [(0, '#fff6b0'), (0.5, '#ffc23a'), (1, '#ff7a1e')], gloss=False)
+    ic.sparkle(80, 56, 7, color='#ffd36b')
+    ic.sparkle(26, 72, 5, color='#ffb02e')
     return ic
 
 
