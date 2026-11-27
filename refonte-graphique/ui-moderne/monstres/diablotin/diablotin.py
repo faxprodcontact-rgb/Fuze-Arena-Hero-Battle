@@ -56,7 +56,7 @@ LAVA = ['#fffbe4', '#ffe68a', '#ffb43a', '#f2701a', '#cc3a12', '#8a1a10']
 GRD = 116.0        # le sol (le point « sol » du pixel art)
 FEET = (64.0, 116.0)
 # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
-FRAME = (25.0, 43.0, 76.0, 75.0)
+FRAME = (28.0, 43.0, 78.0, 76.0)
 
 # ---------- le squelette (pose de repos, pixels du dessin, y vers le bas) ----------
 HIP = (69.0, 100.0)                       # le pivot du buste (il se penche depuis les hanches)
