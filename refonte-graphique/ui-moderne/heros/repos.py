@@ -119,9 +119,10 @@ def one(arg):
     # la zone qui bouge : tout pixel qui change (couleur pondérée par l'opacité) d'une image à l'autre
     pm = [f[:, :, :3] * (f[:, :, 3:4] / 255.0) for f in fr]
     mv = np.zeros((H, W), bool)
-    for a, b in zip(pm, pm[1:] + pm[:1]):
-        mv |= np.abs(a - b).max(axis=2) > SEUIL
-    for f in fr[1:]:
+    # (chaque image comparée à la première, pas seulement à sa voisine : une lueur qui monte doucement change peu
+    # d'une image à l'autre mais beaucoup sur la boucle ; sinon ses bords pâles restaient figés dans la base)
+    for f, q in zip(fr[1:], pm[1:]):
+        mv |= np.abs(q - pm[0]).max(axis=2) > SEUIL
         mv |= np.abs(f[:, :, 3] - fr[0][:, :, 3]) > SEUIL
     zones = zones_de(mv, W, H)
     if not zones:
