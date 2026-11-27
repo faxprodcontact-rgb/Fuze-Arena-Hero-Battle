@@ -1,0 +1,4 @@
+fait
+Golem de lave (clan de Kael, costaud) redessiné en vectoriel : un colosse de roche volcanique bossu, couvert de plaques de croûte éclairées en haut à droite, avec un cratère de lave sur le dos d'où coulent trois coulées douces, une fêlure de lave sur la poitrine, la larme de lave sous l'œil, un énorme bras-massue à trois bosses posé au sol (il sort de sous l'épaule-rocher) et un petit bras griffu d'où pend une goutte de lave.
+Visage construit avec visage.py (vérifié, aucun défaut) : deux yeux de braise froncés, petit nez entre les yeux, gueule ouverte qui rougeoie (gueule de monstre voulue), crocs plantés dans les mâchoires, mâchoire du bas qui avance.
+Animations : respiration par la bosse (bulle du cratère, goutte qui tombe de la griffe, clignement), « Coup de massue » (massue levée derrière la bosse puis abattue devant lui) et « Faille de magma » (fontaine du cratère, massue en feu, faille et trois geysers de lave vers l'ennemi).

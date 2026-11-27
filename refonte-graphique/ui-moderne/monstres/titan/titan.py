@@ -157,9 +157,10 @@ def moss_cap(pts, k=1.0, drips=()):
 
 # ---------- les cristaux de grenat ----------
 
-def crystal(base, ang, L, w, tipk=0.3):
-    """Un cristal de grenat : un prisme hexagonal pointu (vu de 3/4), planté par sa base ; ang = direction (degrés,
-    0 = vers le haut, + = vers la droite). Renvoie la forme et ses faces (gauche sombre, droite claire, arête vive)."""
+def crystal(base, ang, L, w, tipk=0.36):
+    """Un cristal de grenat : un prisme pointu (vu de 3/4) qui s'affine un peu vers la pointe, planté par sa base
+    (cachée dans la roche) ; ang = direction (degrés, 0 = vers le haut, + = vers la droite). Renvoie la forme et ses
+    faces : face gauche sombre, face droite éclairée, deux facettes de pointe, un reflet sur l'arête."""
     a = math.radians(ang)
     u = (math.sin(a), -math.cos(a))           # le long du cristal
     v = (math.cos(a), math.sin(a))            # en travers (vers la droite du cristal)
@@ -168,25 +169,80 @@ def crystal(base, ang, L, w, tipk=0.3):
         return (base[0] + u[0] * s + v[0] * t, base[1] + u[1] * s + v[1] * t)
     h = w / 2
     sL = L * (1 - tipk)
-    body = sm([P(-2, -h), P(sL, -h), P(L, -h * 0.12), P(L * 0.99, h * 0.05), P(sL * 0.97, h), P(-2, h)], sharp=(1, 2, 3, 4), t=0.4)
-    ridge = 0.18 * h
-    left = sm([P(-2, -h), P(sL, -h), P(L, -h * 0.12), P(sL * 1.0, -ridge * 0.6), P(-2, -ridge)], sharp=(0, 1, 2, 3, 4), t=0.3)
-    right = sm([P(-2, ridge), P(sL * 0.98, ridge), P(L * 0.985, 0.0), P(sL * 0.97, h), P(-2, h)], sharp=(0, 1, 2, 3, 4), t=0.3)
-    tipf = sm([P(sL, -h), P(L, -h * 0.12), P(L * 0.99, h * 0.05), P(sL * 0.97, h), P(sL * 0.98, ridge)], sharp=(0, 1, 2, 3, 4), t=0.3)
-    glint = ribbon([P(sL * 0.15, ridge * 1.4), P(sL * 0.6, ridge * 1.6), P(sL * 0.95, ridge * 1.2)], [0.1, max(0.35, w * 0.08), 0.1])
-    return body, left, right, tipf, glint
+    hs = h * 0.84                              # il s'affine vers la pointe
+    r = h * 0.16                               # l'arête : un peu à droite du milieu (on voit plus la face gauche)
+    body = sm([P(-3, -h), P(sL, -hs), P(L, r * 0.6), P(sL, hs), P(-3, h)], sharp=(1, 2, 3), t=0.4)
+    left = sm([P(-3, -h), P(sL, -hs), P(sL, r * 0.8), P(-3, r)], sharp=(0, 1, 2, 3), t=0.2)
+    tipl = sm([P(sL, -hs), P(L, r * 0.6), P(sL, r * 0.8)], sharp=(0, 1, 2), t=0.2)
+    tipr = sm([P(sL, r * 0.8), P(L, r * 0.6), P(sL, hs)], sharp=(0, 1, 2), t=0.2)
+    glint = ribbon([P(sL * 0.2, r * 0.9 + 0.3), P(sL * 0.62, r * 0.85 + 0.3), P(sL * 0.96, r * 0.8 + 0.2)], [0.1, max(0.4, w * 0.09), 0.1])
+    return body, left, tipl, tipr, glint
 
 
 def crystal_part(fig, name, base, ang, L, w, cast=0.8, cast_on=None, dim=0.0):
-    body, left, right, tipf, glint = crystal(base, ang, L, w)
+    body, left, tipl, tipr, glint = crystal(base, ang, L, w)
     g = _GL[0]
-    lit = GAR.light if g < 1.5 else GAR.hi
-    det = [(left, GAR.shadow, 0.85 - 0.25 * dim), (right, lit, 0.75), (tipf, GAR.hi, 0.55 + 0.1 * g), (glint, GAR.glint, 0.7)]
+    det = [(left, GAR.shadow, 0.8 - 0.2 * dim), (tipl, GAR.base, 0.9), (tipr, GAR.hi if g > 1.5 else lite_(GAR.light, 0.35), 0.9),
+           (glint, GAR.glint, 0.75)]
     if dim:
         det.append((body, '#2a0f40', 0.35 * dim))
     x0, y0, x1, y1 = body.bbox()
-    fig.part(name, body, GAR, grad=(x1, y0, x0, y1, [(0, lite_(GAR.light, 0.15 * g)), (0.5, GAR.base), (1, GAR.shadow)]),
-             cel=0.6, rim=0.45, cast=cast, cast_on=cast_on, details=det)
+    fig.part(name, body, GAR, grad=(x1, y0, x0, y1, [(0, lite_(GAR.light, 0.12 * g)), (0.55, lite_(GAR.base, 0.08 * g)), (1, GAR.shadow)]),
+             cel=0.0, rim=0.45, cast=cast, cast_on=cast_on, details=det)
+
+
+# ---------- la mousse : des coussins bosselés (tailles inégales), quelques mèches qui pendent ----------
+
+def _rnd(i, seed):
+    x = math.sin(i * 12.9898 + seed * 78.233) * 43758.5453
+    return x - math.floor(x)
+
+
+def moss_geom(top, thick, seed=0, drips=(), step=None):
+    """Le coussin de mousse posé le long d'une ligne `top` (de gauche à droite) : une nappe d'épaisseur `thick`, le
+    dessus en quelques grosses bosses douces de tailles inégales (jamais un rang de petites boules), le bord bas en
+    lobes ; drips = (t le long de la ligne, longueur, largeur) : des mèches qui pendent."""
+    from shapely.geometry import Point, Polygon
+    from shapely.ops import unary_union
+    step = step or thick * 1.25
+    L = sum(math.dist(top[i - 1], top[i]) for i in range(1, len(top)))
+    n = max(3, int(L / step))
+    c = crpath(top, n)
+    parts = []
+    left, right = sides(c, [thick] * len(c))
+    band = Polygon(c + right[::-1]).buffer(0)
+    parts.append(band)
+    for i, p in enumerate(c):
+        r = thick * (0.42 + 0.34 * _rnd(i, seed))
+        parts.append(Point(p[0], p[1] + r * 0.55).buffer(r, 20))
+    for i in range(1, len(c) - 1, 3):
+        rr = thick * (0.34 + 0.2 * _rnd(i + 50, seed))
+        q = right[i]
+        parts.append(Point(q[0], q[1] - rr * 0.35).buffer(rr, 20))
+    for (t, ln, w) in drips:
+        i = min(len(c) - 1, int(t * (len(c) - 1)))
+        q = right[i]
+        d = taper(crpath([(q[0], q[1] - 2.0), (q[0] - 0.4, q[1] + ln * 0.5), (q[0] - 0.9, q[1] + ln)], 8), w, w * 0.62)
+        parts.append(PG(d))
+    g = unary_union(parts).buffer(1.2, join_style=1).buffer(-1.2, join_style=1)
+    return g, c
+
+
+def moss_part(fig, name, top, thick, seed=0, drips=(), cast_on=None, cast=1.3, k=1.0):
+    g, c = moss_geom(top, thick, seed, drips)
+    sh = geom_shape(g, sharp_deg=200, simplify=0.03)
+    x0, y0, x1, y1 = sh.bbox()
+    det = []
+    # quelques touffes éclairées sur le dessus (en haut à droite de certaines bosses), jamais en rang régulier
+    for i in range(1, len(c) - 1):
+        if _rnd(i + 7, seed) < 0.55:
+            continue
+        r = thick * (0.3 + 0.18 * _rnd(i + 3, seed))
+        p = c[i]
+        det.append((ellipse(p[0] + r * 0.4, p[1] - r * 0.05, r * 1.1, r * 0.55), MOSS.hi if _rnd(i, seed + 2) > 0.5 else MOSS.light, 0.5 * k))
+    fig.part(name, sh, MOSS, grad=(x1, y0, x0 + (x1 - x0) * 0.2, y1, [(0, MOSS.light), (0.45, MOSS.base), (1, MOSS.shadow)]),
+             cel=1.4, rim=0.7, cast=cast, cast_on=cast_on, details=det)
+    return sh
 
 
 def lite_(c, t):
@@ -218,7 +274,8 @@ THUMB = [(16.0, 12.0), (24.0, 8.0), (30.0, 12.0), (31.0, 20.0), (27.0, 26.0), (2
 
 
 def fist_parts(fig, name, W, ang, k, mat, grad, dark=0.0, front_cast=None):
-    """Pose un poing au poignet W, tourné de `ang` degrés (0 = posé au sol), à l'échelle k."""
+    """Pose un poing au poignet W, tourné de `ang` degrés (0 = posé au sol), à l'échelle k. La silhouette suit les
+    doigts (chaque doigt bombe le contour), les creux entre les doigts ne montent qu'à mi-hauteur : pas de rayures."""
     a = math.radians(ang)
     ca, sa = math.cos(a), math.sin(a)
 
@@ -227,23 +284,24 @@ def fist_parts(fig, name, W, ang, k, mat, grad, dark=0.0, front_cast=None):
         return (W[0] + x * ca - y * sa, W[1] + x * sa + y * ca)
 
     def LR(pts, r):
-        return rk([L(p) for p in pts], r * k)
-    body = sm([L(p) for p in FIST], t=0.9)
-    det = []
-    # le dos de la main : un plan éclairé en haut à droite
-    det.append((LR([(-14.0, 1.0), (4.0, -2.0), (16.0, 1.0), (24.0, 9.0), (12.0, 12.0), (-6.0, 11.0)], 3.0), mat.light, 0.55))
-    det.append((LR([(-31.0, 18.0), (-25.0, 10.0), (-20.0, 19.0), (-24.0, 34.0), (-31.0, 34.0)], 2.0), mat.shadow, 0.45))
-    # les doigts repliés : chacun un gros bout arrondi posé au sol, plus clair devant
-    tones = [mat.shadow, mat.base, lite_(mat.base, 0.06), mat.light]
+        return rk([L(p) for p in pts], [x * k for x in r] if isinstance(r, (list, tuple)) else r * k)
+    fings = []
     for i, (x0, x1, top) in enumerate(FINGERS):
-        fg = LR([(x0 + 0.4, top), (x1 - 0.4, top - 0.6), (x1 - 0.2, 41.6), (x0 + 0.2, 41.6)], [4.6, 4.6, 0.6, 0.6])
-        det.append((LR([(x0 - 0.8, top + 1.2), (x0 + 1.6, top + 0.4), (x0 + 1.6, 41.8), (x0 - 0.8, 41.8)], 0.8), mat.deep, 0.55))
-        det.append((fg, tones[i], 0.95))
-        # la face éclairée de chaque doigt (haut-droit)
-        det.append((LR([((x0 + x1) / 2 - 1.0, top + 1.4), (x1 - 1.6, top + 1.2), (x1 - 1.4, top + 9.0), ((x0 + x1) / 2 + 0.4, top + 8.0)], 1.6),
-                    mat.hi, 0.35))
-    # l'ombre au ras du sol
-    det.append((LR([(-33.0, 38.6), (31.0, 38.6), (31.0, 42.4), (-33.0, 42.4)], 0.4), mat.deep, 0.45))
+        fings.append(LR([(x0, top), (x1, top - 0.8), (x1 + 0.6, 42.0), (x0 - 0.6, 42.0)], [5.5, 5.5, 2.2, 2.2]))
+    body, _ = fuse([sm([L(p) for p in FIST], t=0.9)] + fings, 0.8, 70)
+    det = []
+    # le dos de la main : un plan éclairé en haut à droite ; le côté du fond dans l'ombre
+    det.append((LR([(-16.0, 2.0), (4.0, -2.4), (16.0, 0.6), (25.0, 9.0), (12.0, 13.0), (-8.0, 12.0)], 4.0), mat.light, 0.55))
+    det.append((LR([(-33.0, 18.0), (-26.0, 9.0), (-20.0, 17.0), (-23.0, 30.0), (-33.0, 30.0)], 3.0), mat.shadow, 0.45))
+    # les doigts repliés : un gros bout arrondi chacun, plus clair devant ; un creux doux entre deux doigts, en bas
+    tones = [mat.shadow, mat.base, lite_(mat.base, 0.08), lite_(mat.light, 0.0)]
+    for i, (x0, x1, top) in enumerate(FINGERS):
+        det.append((LR([(x0 + 0.8, top + 0.6), (x1 - 0.6, top), (x1 - 0.2, 41.0), (x0 + 0.6, 41.0)], [5.0, 5.0, 1.6, 1.6]), tones[i], 0.6))
+        det.append((LR([((x0 + x1) / 2 - 0.6, top + 1.2), (x1 - 1.8, top + 0.9), (x1 - 1.2, top + 7.0), ((x0 + x1) / 2 + 1.2, top + 6.0)], 2.0),
+                    mat.hi, 0.4))
+        if i > 0:
+            det.append((ribbon([L((x0, 42.4)), L((x0 + 0.3, 36.0)), L((x0 - 0.2, top + 9.0))], [1.6 * k, 1.0 * k, 0.1]), mat.deep, 0.55))
+    det.append((LR([(-33.0, 39.0), (31.0, 39.0), (31.0, 42.6), (-33.0, 42.6)], 0.4), mat.deep, 0.4))
     if dark:
         det.append((body, '#2a0f40', 0.25 * dark))
     fig.part(name, body, mat, grad=grad_of(body, grad), cel=1.8, rim=0.8, cast=1.4, details=det, cast_on=front_cast)
@@ -304,12 +362,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fleg = limb([(178.0, 178.0), (177.0, 200.0), (178.0, 220.0)], [32.0, 30.0, 28.0])
     fig.part('fleg', fleg, ROCKF, grad=grad_of(fleg, ROCKF_G), cel=1.8, rim=0.6, cast=0,
              details=[face([(180.0, 196.0), (192.0, 194.0), (193.0, 208.0), (184.0, 209.0)], ROCKF.light, 0.45)])
-    ffoot = rk([(158.0, 236.0), (158.5, 226.0), (163.0, 218.0), (176.0, 214.0), (190.0, 215.0), (198.0, 222.0), (200.0, 236.0)], [0.6, 4, 5, 5, 5, 4, 0.6])
+    ffoot, fdet2 = foot([(158.0, 236.0), (158.5, 226.0), (163.0, 218.0), (176.0, 214.0), (186.0, 215.0), (190.0, 236.0)], [0.6, 4, 5, 5, 5, 0.6],
+                        [(184.0, 192.0), (191.0, 199.0)], 221.0, ROCKF)
     fig.part('ffoot', ffoot, ROCKF, grad=grad_of(ffoot, ROCKF_G), cel=1.6, rim=0.7, cast=1.0,
-             details=toes([(183.0, 192.0), (191.0, 199.5)], 222.0, ROCKF) + [
-                 face([(164.0, 220.0), (176.0, 216.0), (186.0, 217.0), (180.0, 222.0), (168.0, 223.0)], ROCKF.light, 0.45)])
+             details=fdet2 + [face([(164.0, 220.0), (176.0, 216.0), (186.0, 217.0), (180.0, 222.0), (168.0, 223.0)], ROCKF.light, 0.45)])
     fig.pose(['fleg', 'ffoot'], LEGF)
-    fig.pose(['fleg'], mchain(LEGF))
 
     # ---- la jambe proche : la cuisse sort de sous le ventre, genou de rocher, pied large aux trois orteils ----
     nleg = fuse([limb([(124.0, 176.0), (120.0, 198.0), (122.0, 220.0)], [44.0, 42.0, 38.0]),
@@ -318,12 +375,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[face([(112.0, 193.0), (126.0, 191.0), (133.0, 199.0), (128.0, 206.0), (116.0, 204.0)], ROCK.light, 0.6),
                       face([(103.0, 204.0), (110.0, 200.0), (112.0, 214.0), (104.0, 216.0)], ROCK.shadow, 0.5)]
              + fissure(zig((130.0, 208.0), (136.0, 222.0), 3, 1.0, 2), 0.7))
-    nfoot = rk([(100.0, 236.0), (100.0, 226.0), (105.0, 216.0), (118.0, 212.0), (134.0, 212.0), (146.0, 216.0), (153.0, 224.0), (155.0, 236.0)],
-               [0.6, 4, 6, 6, 6, 5, 4, 0.6])
+    nfoot, ndet2 = foot([(100.0, 236.0), (100.0, 226.0), (105.0, 216.0), (118.0, 212.0), (132.0, 212.0), (140.0, 215.0), (142.0, 236.0)],
+                        [0.6, 4, 6, 6, 6, 5, 0.6], [(129.0, 138.5), (138.0, 147.0), (146.5, 155.0)], 220.0, ROCK)
     fig.part('nfoot', nfoot, ROCK, grad=grad_of(nfoot, ROCK_G), cel=1.8, rim=0.8, cast=1.2,
-             details=toes([(128.0, 138.0), (137.5, 146.5), (146.0, 155.0)], 222.0, ROCK) + [
-                 face([(106.0, 218.0), (118.0, 213.5), (134.0, 213.5), (128.0, 219.0), (112.0, 221.0)], ROCK.light, 0.5),
-                 (moss_cap([(103.0, 222.0), (106.0, 216.5), (113.0, 213.6), (118.0, 214.0), (113.0, 217.0), (107.0, 222.0)])[1][0], MOSS.base, 0.0)])
+             details=ndet2 + [face([(106.0, 218.0), (118.0, 213.5), (132.0, 213.5), (126.0, 219.0), (112.0, 221.0)], ROCK.light, 0.5)])
     fig.pose(['nleg', 'nfoot'], LEGN)
 
     # ================================================================ le corps : la montagne (bosse, poitrine, ventre)
@@ -375,21 +430,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('lintel', lin_, SAND, grad=(147.0, 26.0, 94.0, 37.0, [(0, SAND.light), (0.6, SAND.base), (1, SAND.shadow)]), cel=1.2, rim=0.7,
              cast=1.2, cast_on=['pill', 'pilr', 'body'], details=ldet)
     # la mousse du linteau (une seule nappe sur le dessus, deux mèches qui pendent)
-    lm = sm([(94.0, 28.0), (96.0, 23.4), (104.0, 21.6), (114.0, 22.8), (124.0, 21.4), (136.0, 23.0), (146.0, 24.6), (148.6, 28.4),
-             (144.0, 30.2), (136.0, 29.0), (126.0, 30.4), (114.0, 29.0), (104.0, 30.4), (97.0, 30.2)], t=0.85)
-    fig.part('lmoss', lm, MOSS, grad=(148.0, 21.0, 96.0, 31.0, [(0, MOSS.hi), (0.3, MOSS.light), (0.75, MOSS.base), (1, MOSS.shadow)]),
-             cel=0.9, rim=0.6, cast=1.0, cast_on=['lintel'],
-             details=drips_of([(103.0, 29.6, 5.0, 2.0), (131.0, 29.0, 3.2, 1.8)]))
+    moss_part(fig, 'lmoss', [(94.4, 28.6), (110.0, 27.2), (128.0, 27.8), (147.0, 29.4)], 4.6, seed=3, drips=[(0.14, 5.0, 2.0), (0.72, 3.2, 1.8)],
+              cast_on=['lintel'], cast=1.0)
     fig.pose(['pill', 'pilr', 'lintel', 'lmoss'], mchain(UC, mR(P['sway'] * 0.4, 120, 58)))
 
     # ---- la nappe de mousse du dos (une seule, de la bosse au crâne : elle couvre le pied des montants) ----
-    bm = sm([(52.0, 96.0), (53.0, 82.0), (60.0, 71.0), (72.0, 63.0), (88.0, 56.0), (106.0, 51.6), (124.0, 49.2), (142.0, 49.6),
-             (160.0, 54.0), (176.0, 61.0), (188.0, 68.0), (182.0, 72.0), (170.0, 67.0), (156.0, 62.4), (146.0, 61.2), (138.0, 63.0),
-             (126.0, 60.6), (114.0, 62.6), (100.0, 63.4), (88.0, 66.6), (76.0, 72.6), (66.0, 80.0), (60.0, 90.0)], t=0.85)
-    fig.part('bmoss', bm, MOSS, grad=(186.0, 48.0, 56.0, 96.0, [(0, MOSS.hi), (0.3, MOSS.light), (0.7, MOSS.base), (1, MOSS.shadow)]),
-             cel=1.4, rim=0.7, cast=1.6, cast_on=['body', 'pill', 'pilr'],
-             details=drips_of([(64.0, 84.0, 9.0, 2.6), (79.0, 70.0, 5.0, 2.2), (118.0, 61.6, 6.4, 2.4), (150.0, 61.6, 4.0, 2.0),
-                               (172.0, 66.0, 7.4, 2.4)]))
+    moss_part(fig, 'bmoss', [(53.0, 100.0), (54.0, 86.0), (61.0, 73.0), (75.0, 63.0), (93.0, 56.0), (112.0, 51.6), (130.0, 50.0), (148.0, 51.0),
+                             (164.0, 56.0), (178.0, 63.0), (190.0, 71.0)], 9.0, seed=1,
+              drips=[(0.06, 10.0, 2.8), (0.2, 4.0, 2.2), (0.47, 7.0, 2.6), (0.8, 5.0, 2.2)], cast_on=['body', 'pill', 'pilr'], cast=1.6)
     fig.pose(['bmoss'], UC)
 
     # ================================================================ le col de rocher sous la mâchoire
@@ -411,16 +459,20 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     return fig
 
 
-def toes(xs, top, mat):
-    """Les orteils d'un pied posé à plat : des bouts arrondis posés au sol, séparés par des creux doux (devant)."""
-    out = []
-    for i, (x0, x1) in enumerate(xs):
-        out.append((rk([(x0 - 0.6, top + 1.0), (x0 + 1.0, top + 0.6), (x0 + 1.0, 236.4), (x0 - 0.6, 236.4)], 0.6), mat.deep, 0.55))
-        out.append((rk([(x0 + 0.5, top), (x1 - 0.5, top - 0.4), (x1, 236.0), (x0 + 0.2, 236.0)], [4.0, 4.0, 0.4, 0.4]),
-                    mat.light if i == len(xs) - 1 else mat.base, 0.8))
-        out.append((rk([((x0 + x1) / 2, top + 1.2), (x1 - 1.0, top + 1.0), (x1 - 0.8, top + 6.5), ((x0 + x1) / 2 + 0.8, top + 6.0)], 1.2), mat.hi, 0.3))
-    out.append((rk([(xs[0][0] - 30, 233.0), (xs[-1][1] + 2, 233.0), (xs[-1][1] + 2, 236.6), (xs[0][0] - 30, 236.6)], 0.3), mat.deep, 0.4))
-    return out
+def foot(pts, radii, toes_x, top, mat):
+    """Un pied posé à plat : la masse du pied et ses orteils devant (chacun bombe le contour, posé au sol) ; les creux
+    entre les orteils ne montent qu'à mi-hauteur. Renvoie la forme et ses détails."""
+    lumps = [rk([(x0, top), (x1, top - 0.6), (x1 + 0.5, GRD), (x0 - 0.5, GRD)], [4.6, 4.6, 0.5, 0.5]) for x0, x1 in toes_x]
+    sh, _ = fuse([rk(pts, radii)] + lumps, 0.7, 70)
+    det = []
+    for i, (x0, x1) in enumerate(toes_x):
+        det.append((rk([(x0 + 0.6, top + 0.6), (x1 - 0.6, top), (x1 - 0.2, GRD - 0.6), (x0 + 0.4, GRD - 0.6)], [4.0, 4.0, 0.5, 0.5]),
+                    mat.light if i == len(toes_x) - 1 else mat.base, 0.55))
+        det.append((rk([((x0 + x1) / 2 - 0.4, top + 1.2), (x1 - 1.4, top + 0.9), (x1 - 1.0, top + 6.0), ((x0 + x1) / 2 + 1.0, top + 5.4)], 1.6), mat.hi, 0.38))
+        if i > 0:
+            det.append((ribbon([(x0, GRD + 0.4), (x0 + 0.2, GRD - 5.0), (x0 - 0.2, top + 7.0)], [1.5, 0.9, 0.1]), mat.deep, 0.55))
+    det.append((rk([(pts[0][0] - 2, GRD - 2.6), (toes_x[-1][1] + 2, GRD - 2.6), (toes_x[-1][1] + 2, GRD + 0.6), (pts[0][0] - 2, GRD + 0.6)], 0.3), mat.deep, 0.4))
+    return sh, det
 
 
 def drips_of(drips):
@@ -542,17 +594,12 @@ def head_parts(fig, P, HEAD, UC):
              + fissure([(172.0, 96.0), (176.0, 106.0), (173.0, 116.0)], 0.7))
     names.append('nape')
     # ---- un seul coussin de mousse passe de la bosse au crâne ----
-    hm = sm([(168.0, 80.0), (172.0, 70.0), (182.0, 64.6), (196.0, 63.6), (212.0, 65.0), (226.0, 68.6), (234.0, 74.0), (237.0, 80.0),
-             (231.0, 80.6), (224.0, 77.0), (214.0, 76.4), (202.0, 76.0), (192.0, 78.0), (182.0, 82.0), (174.0, 88.0)], t=0.85)
-    fig.part('hmoss', hm, MOSS, grad=(236.0, 62.0, 170.0, 88.0, [(0, MOSS.hi), (0.3, MOSS.light), (0.72, MOSS.base), (1, MOSS.shadow)]),
-             cel=1.2, rim=0.7, cast=1.3, cast_on=['head', 'nape'],
-             details=drips_of([(176.0, 84.0, 6.0, 2.2), (196.0, 76.4, 3.6, 1.8), (229.0, 78.4, 4.4, 1.8)]))
+    moss_part(fig, 'hmoss', [(169.0, 88.0), (173.0, 75.0), (183.0, 67.0), (198.0, 63.4), (214.0, 64.0), (228.0, 69.0), (236.5, 78.0)], 7.4,
+              seed=5, drips=[(0.1, 6.0, 2.4), (0.93, 3.4, 1.8)], cast_on=['head', 'nape'], cast=1.3)
     names.append('hmoss')
     # ---- la barbe de mousse pend sous le menton (gravité), sur le col ----
-    bd = sm([(196.0, 150.0), (206.0, 152.4), (220.0, 152.0), (231.0, 147.0), (234.0, 151.0), (230.0, 156.0), (226.0, 156.4),
-             (222.0, 162.4), (218.0, 157.6), (212.0, 158.0), (207.0, 166.0), (203.0, 158.0), (198.0, 156.0)], t=0.85)
-    fig.part('beard', bd, MOSS, grad=(234.0, 148.0, 198.0, 164.0, [(0, MOSS.light), (0.5, MOSS.base), (1, MOSS.shadow)]),
-             cel=1.0, rim=0.6, cast=1.2, cast_on=['col'], details=[])
+    moss_part(fig, 'beard', [(196.0, 150.0), (206.0, 152.4), (220.0, 151.6), (233.0, 145.6)], 4.0, seed=8,
+              drips=[(0.22, 9.0, 2.6), (0.55, 6.0, 2.2), (0.86, 4.0, 1.8)], cast_on=['col'], cast=1.2, k=0.8)
     names.append('beard')
     # ---- les cristaux de la tempe (dans la fêlure) et de la jointure sous l'oreille ----
     crystal_part(fig, 'ct1', (184.0, 94.0), -58, 11.0, 5.0, cast=0.7, cast_on=['head', 'nape'])

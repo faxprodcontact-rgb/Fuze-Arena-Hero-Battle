@@ -29,8 +29,8 @@ from outils import FigureM, fused, _poly, _shape, ik, smooth, lerp  # noqa: E402
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
 # ---------- matières (tons du pixel art passés à la gamme de l'interface : lumières chaudes, ombres violettes) ----------
-ROCK = Mat('#dcae8a', '#9a7670', '#6a4d5c', '#442d47', '#281a32')        # roche volcanique (celle de Kael, plus chaude)
-ROCKF = Mat('#a88478', '#6e5262', '#4e3850', '#33223e', '#1e1430')       # la même, du côté du fond (pattes lointaines)
+ROCK = Mat('#d2a282', '#8a6660', '#5e4454', '#3e2a42', '#24172e')        # roche volcanique (celle de Kael, plus chaude)
+ROCKF = Mat('#9a7a72', '#5e4656', '#44304a', '#2e1f3c', '#1c122c')       # la même, du côté du fond (pattes lointaines)
 OBS = Mat('#b4c2f2', '#6472ae', '#3d4679', '#272b52', '#181936', glint='#f2f5ff')   # obsidienne (celle de Kael)
 OBSF = Mat('#8a96c8', '#4c5690', '#323a68', '#20244a', '#141530')
 MEMB = Mat('#f2909a', '#b43c56', '#862a48', '#58183a', '#380e2a')       # membrane pourpre (le pagne de Kael, plus sombre)
@@ -68,10 +68,10 @@ HIP_PIV = (92.0, 176.0)        # le pivot du cabré (au-dessus des pattes arriè
 NECK_J = (192.0, 104.0)        # la nuque (la tête tourne autour)
 
 # les pattes : (racine, coude/genou, poignet/jarret, bout du pied) au repos ; longueurs prises au repos
-LEG_N_FRONT = dict(S=(168.0, 160.0), K=(141.0, 189.0), A=(168.0, 213.0), bend=-1)
-LEG_F_FRONT = dict(S=(203.0, 162.0), K=(190.0, 194.0), A=(214.0, 214.0), bend=-1)
-LEG_N_HIND = dict(S=(76.0, 162.0), K=(101.0, 190.0), A=(66.0, 213.0), bend=1)
-LEG_F_HIND = dict(S=(118.0, 176.0), K=(134.0, 198.0), A=(112.0, 216.0), bend=1)
+LEG_N_FRONT = dict(S=(160.0, 160.0), K=(139.0, 191.0), A=(163.0, 212.0), B=(178.0, 228.0), g=GRD)
+LEG_F_FRONT = dict(S=(198.0, 168.0), K=(192.0, 198.0), A=(214.0, 213.0), B=(228.0, 226.0), g=GRD - 3)
+LEG_N_HIND = dict(S=(74.0, 160.0), K=(101.0, 190.0), A=(66.0, 212.0), B=(84.0, 229.0), g=GRD)
+LEG_F_HIND = dict(S=(118.0, 174.0), K=(136.0, 197.0), A=(113.0, 214.0), B=(129.0, 227.0), g=GRD - 3)
 
 
 def unit(a, b):
@@ -170,8 +170,8 @@ def horn_shape(root, c1, c2, tip, w0):
 # ======================================================================== le corps (déformé point par point)
 
 # le torse (bosse d'épaules, dos, croupe, ventre, poitrail) ; le cou ; la queue (une ligne et ses largeurs)
-TORSO = [(36, 150), (46, 136), (66, 128), (92, 118), (116, 104), (136, 96), (156, 98), (176, 110), (194, 128),
-         (206, 146), (208, 164), (200, 181), (184, 191), (160, 194), (134, 195), (106, 197), (80, 193), (56, 184),
+TORSO = [(36, 150), (46, 134), (66, 124), (92, 110), (116, 98), (136, 92), (156, 95), (176, 108), (196, 126),
+         (209, 146), (212, 164), (204, 182), (186, 192), (160, 196), (134, 198), (106, 199), (80, 194), (56, 185),
          (40, 170)]
 NECK = [(150, 102), (166, 92), (182, 86), (194, 86), (202, 96), (206, 112), (206, 130), (200, 144), (182, 140),
         (164, 124)]
@@ -237,58 +237,63 @@ def body_shape(R):
 
 # ======================================================================== les pattes
 
-def leg_geom(R, L, near=True, A=None, toe_dir=0.0, spread=1.0, front=True):
-    """Une patte d'un seul tenant (muscle de l'épaule ou de la cuisse, os, poignet ou jarret, pied, doigts) ; renvoie la
-    forme fondue, les griffes (base, direction, longueur, largeur) et les points utiles."""
-    S0, K0, A0 = L['S'], L['K'], L['A']
+def leg_geom(R, L, near=True, front=True, A=None, fdir=0.0, spread=1.0, lifted=False):
+    """Une patte d'un seul tenant (muscle de l'épaule ou de la cuisse, os, coude ou genou, poignet ou jarret, pied,
+    doigts) : renvoie la forme fondue, les griffes (base, direction, longueur, largeur) et les points utiles.
+    Pattes de gros reptile : coude en arrière (pattes avant), genou en avant et jarret à l'envers (pattes arrière) ;
+    le pied (du poignet ou du jarret à la plante) puis les doigts posés au sol vers l'avant. fdir tourne le pied
+    (degrés), spread ouvre les doigts (patte levée)."""
+    S0, K0, A0, B0 = L['S'], L['K'], L['A'], L['B']
+    g = L['g']
     l1, l2 = math.dist(S0, K0), math.dist(K0, A0)
     S = R.D(S0)
     A = A or A0
-    K = ik(S, A, l1, l2, L['bend'])
+    v = rotv((B0[0] - A0[0], B0[1] - A0[1]), fdir)
+    B = add(A, v)
+    # le pli reste du même côté qu'au repos (coude derrière, genou devant)
+    side0 = (A0[0] - S0[0]) * (K0[1] - S0[1]) - (A0[1] - S0[1]) * (K0[0] - S0[0])
+    K = None
+    for bend in (1, -1):
+        k_ = ik(S, A, l1, l2, bend)
+        sd = (A[0] - S[0]) * (k_[1] - S[1]) - (A[1] - S[1]) * (k_[0] - S[0])
+        if sd * side0 > 0:
+            K = k_
+    K = K or ik(S, A, l1, l2, 1)
+    f = 1.0 if near else 0.88
     if front:
-        w_s, w_k, w_a = 22.0, 12.6, 10.4
-        mus = ellipse(S[0] - 1, S[1] + 3, 15.5, 17)
+        w = [29 * f, 20 * f, 17 * f, 13 * f, 11.6 * f]
+        ang = math.degrees(math.atan2(K[1] - S[1], K[0] - S[0]))
+        mc = lerp(S, K, 0.32)
+        mus = ellipse(mc[0], mc[1], 0.45 * math.dist(S, K) + 7, 15.5 * f).rot(ang, mc[0], mc[1])
     else:
-        w_s, w_k, w_a = 26.0, 14.0, 8.6
-        mus = ellipse(S[0] + 1, S[1] + 4, 21, 19)
-    if not near:
-        w_s, w_k, w_a = w_s * 0.88, w_k * 0.9, w_a * 0.9
-    upper = limb([S, lerp(S, K, 0.5), K], [w_s, (w_s + w_k) / 2 * 0.98, w_k])
-    lower = limb([K, lerp(K, A, 0.5), A], [w_k * 0.96, (w_k + w_a) / 2, w_a])
-    # le pied : le poignet / talon, puis les doigts posés au sol vers l'avant
-    fd = (math.cos(math.radians(toe_dir)), math.sin(math.radians(toe_dir)))
-    up = (fd[1], -fd[0])                 # vers le haut du pied
-    if front:
-        toes = [(-0.42, 0.62, 7.4), (0.0, 1.0, 13.5), (0.38, 0.95, 12.0)]    # (écart, longueur relative, longueur)
-        heel = add(A, fd, -2)
-    else:
-        toes = [(-0.30, 0.9, 10.5), (0.15, 1.0, 14.5)]
-        heel = add(A, fd, -3)
-    pad = add(add(A, fd, 8), up, -1.5)
-    foot = sm([add(heel, up, 4.8), add(add(A, fd, 7), up, 4.2), add(pad, up, 3.2), add(pad, up, -4.0),
-               add(add(A, fd, 2), up, -4.6), add(heel, up, -3.8)], t=0.9)
-    shapes = [upper, lower, foot]
+        w = [34 * f, 20 * f, 15 * f, 11.6 * f, 10.6 * f]
+        ang = math.degrees(math.atan2(K[1] - S[1], K[0] - S[0]))
+        mc = lerp(S, K, 0.36)
+        mus = ellipse(mc[0], mc[1], 0.5 * math.dist(S, K) + 11, 20 * f).rot(ang, mc[0], mc[1])
+    upper = limb([S, lerp(S, K, 0.5), K], [w[0], (w[0] + w[1]) / 2, w[1]])
+    lower = limb([K, lerp(K, A, 0.5), A], [w[2] * 1.05, (w[2] + w[3]) / 2, w[3]])
+    meta = limb([A, lerp(A, B, 0.5), B], [w[3], (w[3] + w[4]) / 2, w[4]])
+    shapes = [mus, upper, lower, meta]
     claws = []
-    pts = {'S': S, 'K': K, 'A': A, 'pad': pad}
-    for k, (off, _, Ln) in enumerate(toes):
-        a0 = toe_dir + off * 38 * spread
-        d = (math.cos(math.radians(a0)), math.sin(math.radians(a0)))
-        root = add(pad, d, -3)
-        tip = add(root, d, Ln * (0.6 if not near else 0.66))
-        # le doigt : il descend vers le sol, la griffe le prolonge
-        tip = (tip[0], min(tip[1], GRD - 2.6) if A[1] > 200 else tip[1])
-        w0 = 6.2 if front else 6.8
-        if not near:
-            w0 *= 0.88
-        shapes.append(limb([root, lerp(root, tip, 0.5), tip], [w0, w0 * 0.86, w0 * 0.7]))
+    td = math.radians(12 + fdir)
+    fd = (math.cos(td), math.sin(td))
+    n = (-fd[1], fd[0])                       # vers le côté proche (le bas de l'écran au repos)
+    toes = [(-3.2, 12.5), (0.0, 16.5), (3.2, 14.0)]
+    for k, (off, Ln) in enumerate(toes):
+        root = add(B, n, off * 0.5)
+        tip = add(add(B, fd, Ln * f), n, off * spread * (1.4 if lifted else 1.0))
+        if not lifted:
+            tip = (tip[0], g - 3.4 + 0.35 * off)
+        w0 = (7.0 if front else 7.4) * f
+        shapes.append(limb([root, lerp(root, tip, 0.5), tip], [w0 * 1.1, w0 * 0.9, w0 * 0.72]))
         dd = unit(root, tip)
-        claws.append((add(tip, dd, 1.4), dd, 4.6 if near else 3.8, w0 * 0.62))
+        claws.append((add(tip, dd, 1.2), dd, 6.0 * f, w0 * 0.68))
     if front and near:
         # l'ergot : un petit doigt au talon, vers l'arrière
-        e0 = add(heel, up, -1.5)
-        claws.append((add(e0, fd, -3.6), (-fd[0], -fd[1]), 3.2, 3.2))
-    shapes.append(mus)
-    return fused(shapes, smooth=1.6), claws, pts
+        e0 = add(lerp(A, B, 0.55), (-fd[0], -fd[1]), 3.0)
+        claws.append((e0, rotv((-fd[0], -fd[1]), -30), 3.4, 3.4))
+    pts = {'S': S, 'K': K, 'A': A, 'B': B, 'mc': mc}
+    return fused(shapes, smooth=1.8), claws, pts
 
 
 # ======================================================================== les ailes
@@ -298,13 +303,13 @@ def wing_skel(R, name, u, flap=0.0, lag=(0.0, 0.0)):
     point où le bord de fuite rejoint le flanc. u = 0 : repliée (le dessin) ; u = 1 : grande ouverte."""
     if name == 'N':
         root0 = (142.0, 122.0)
-        folded = dict(eh=-96.0, lh=16.0, ef=-114.0, lf=82.0, fing=[(-136.0, 98.0), (-122.0, 92.0), (-108.0, 86.0)],
-                      att=(134.0, 132.0))
+        folded = dict(eh=-96.0, lh=16.0, ef=-114.0, lf=82.0, fing=[(136.4, 117.0), (124.6, 118.0), (112.8, 116.0)],
+                      att=(136.0, 122.0))
         opened = dict(eh=-150.0, lh=24.0, ef=-128.0, lf=86.0, fing=[(-186.0, 112.0), (-158.0, 112.0), (-128.0, 100.0)],
                       att=(118.0, 128.0))
     else:
         root0 = (164.0, 112.0)
-        folded = dict(eh=-84.0, lh=12.0, ef=-100.0, lf=72.0, fing=[(-136.0, 70.0), (-118.0, 66.0), (-104.0, 62.0)],
+        folded = dict(eh=-84.0, lh=12.0, ef=-100.0, lf=72.0, fing=[(110.0, 84.0), (104.0, 87.0), (98.5, 88.0)],
                       att=(150.0, 118.0))
         opened = dict(eh=-48.0, lh=20.0, ef=-80.0, lf=64.0, fing=[(-20.0, 84.0), (-2.0, 84.0), (14.0, 76.0)],
                       att=(164.0, 120.0))
@@ -359,8 +364,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     head_horns(fig, R, P, far=True)
 
     # ---- les pattes du fond (plus sombres) ----
-    for nm, L, front, tdir in (('legFH', LEG_F_HIND, False, 4.0), ('legFF', LEG_F_FRONT, True, 6.0)):
-        sh, claws, pts = leg_geom(R, L, near=False, front=front, toe_dir=tdir)
+    for nm, L, front in (('legFH', LEG_F_HIND, False), ('legFF', LEG_F_FRONT, True)):
+        sh, claws, pts = leg_geom(R, L, near=False, front=front)
         fig.part(nm, sh, ROCKF, cel=1.4, rim=0.5, cast=0)
         for j, (b, d, Lc, w) in enumerate(claws):
             fig.part('%sc%d' % (nm, j), claw_shape(b, d, Lc, w), OBSF, cel=0.4, rim=0.3, cast=0.3, cast_on=[nm])
@@ -376,7 +381,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=2.4, rim=1.0, cast=0, details=det)
 
     # ---- la patte arrière proche (la cuisse s'efface dans la croupe) ----
-    sh, claws, pts = leg_geom(R, LEG_N_HIND, near=True, front=False, toe_dir=6.0)
+    sh, claws, pts = leg_geom(R, LEG_N_HIND, near=True, front=False)
     K, A = pts['K'], pts['A']
     det = lava_vein([lerp(pts['S'], K, 0.1), lerp(pts['S'], K, 0.45), lerp(pts['S'], K, 0.8)], 1.0, heat) \
         + fissure([add(A, (1, -12)), add(A, (3, -6)), add(A, (2, -1))], 0.7)
@@ -394,9 +399,9 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- la patte avant proche (l'épaule s'efface dans le poitrail) ----
     paw = P['paw']
     if paw:
-        sh, claws, pts = leg_geom(R, LEG_N_FRONT, near=True, front=True, A=(paw[0], paw[1]), toe_dir=paw[2], spread=paw[3])
+        sh, claws, pts = leg_geom(R, LEG_N_FRONT, near=True, front=True, A=(paw[0], paw[1]), fdir=paw[2], spread=paw[3], lifted=True)
     else:
-        sh, claws, pts = leg_geom(R, LEG_N_FRONT, near=True, front=True, toe_dir=4.0)
+        sh, claws, pts = leg_geom(R, LEG_N_FRONT, near=True, front=True)
     S, K, A = pts['S'], pts['K'], pts['A']
     det = lava_vein([lerp(K, A, 0.15), lerp(K, A, 0.5), lerp(K, A, 0.85)], 0.95, heat) \
         + fissure([lerp(S, K, 0.35), lerp(S, K, 0.6), lerp(S, K, 0.8)], 0.8)
@@ -426,14 +431,14 @@ def tail_spikes(fig, tc, tw):
         i = int(t * (n - 1))
         p, q = tc[i], tc[i + 1]
         d = unit(p, q)
-        nrm = (d[1], -d[0])                   # vers l'extérieur de la courbe (à gauche de la marche)
+        nrm = (-d[1], d[0])                   # vers l'extérieur de la courbe (à gauche de la marche)
         ww = tw[0] + (tw[-1] - tw[0]) * t
         base = add(p, nrm, ww * 0.38)
         tip = add(add(base, nrm, L), d, -L * 0.55)
         out.append(shard(base, tip, w, bend=-0.5))
     end, prev = tc[-1], tc[-3]
     d = unit(prev, end)
-    for ang, L, w in ((-118, 15.0, 6.4), (-80, 17.0, 7.2), (-42, 12.5, 6.0)):
+    for ang, L, w in ((-128, 15.0, 7.4), (-86, 20.0, 8.6), (-44, 13.0, 7.0)):
         dd = rotv(d, ang)
         base = add(end, d, -4)
         out.append(shard(base, add(base, dd, L), w, bend=0.4 if ang < -80 else -0.4))
@@ -448,8 +453,7 @@ def body_details(R, P):
     D = R.D
     out = []
     # le four : une grande zone de lave sous le poitrail et la gorge
-    chest = [(166, 140), (180, 128), (196, 128), (207, 140), (210, 158), (206, 176), (196, 188), (180, 192), (166, 188),
-             (160, 172), (160, 154)]
+    chest = CHEST
     csh = sm([D(p) for p in chest], t=0.9)
     cx, cy = D((190, 160))
     k = min(1.0, heat / 3)
@@ -472,14 +476,17 @@ def body_details(R, P):
     return out
 
 
+CHEST = [(172, 140), (184, 128), (198, 128), (210, 140), (214, 158), (210, 178), (200, 190), (184, 194), (172, 188),
+         (166, 172), (166, 154)]
+
+
 def chest_plates():
     """Les plaques du four (au repos) : un pavage irrégulier (cellules de Voronoï), rogné et arrondi."""
     from shapely.geometry import Polygon, MultiPoint
     from shapely.ops import voronoi_diagram
-    region = Polygon([(166, 140), (180, 128), (196, 128), (207, 140), (210, 158), (206, 176), (196, 188), (180, 192),
-                      (166, 188), (160, 172), (160, 154)])
-    seeds = [(170, 146), (186, 136), (200, 142), (176, 158), (194, 154), (206, 162), (168, 172), (184, 172),
-             (200, 176), (176, 186), (192, 188)]
+    region = Polygon(CHEST)
+    seeds = [(178, 142), (192, 134), (205, 146), (182, 158), (198, 158), (210, 168), (176, 174), (192, 174),
+             (205, 182), (184, 190), (170, 160)]
     cells = voronoi_diagram(MultiPoint(seeds), envelope=region.buffer(20))
     out = []
     for c in cells.geoms:
