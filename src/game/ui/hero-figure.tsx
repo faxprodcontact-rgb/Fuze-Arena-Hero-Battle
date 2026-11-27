@@ -6,8 +6,9 @@ import { heroImage } from '../art';
 import { heroArt } from '../look';
 import { vectoFig } from '../vecto';
 import { VectoImage } from './vecto-live';
+import { sizeK } from '../hero-size';
 
-/** Un pixel du dessin, en unités de la boîte (200 × 240) : un héros de 115 pixels mesure 200 unités. */
+/** Un pixel du dessin, en unités de la boîte (200 × 240), pour un humain de 100 pixels (× sizeK de hero-size.ts). */
 const BOX_PER_PX = 1.75;
 
 /** N'importe quel personnage dessiné (monstre, boss), à la largeur de son cadre (regard tourné par le CSS). */
@@ -22,10 +23,12 @@ export function HeroFigure({ defId, class: cls = '', live = false }: { defId: st
   const art = heroArt(defId);
   const v = vectoFig(art);
   if (!v) return <span class={`hfig ${cls}`}><img class="hfig-flat" src={heroImage(defId)} alt="" /></span>;
-  const left = 53 - ((v.fx * BOX_PER_PX) / 200) * 100, top = 95 - ((v.fy * BOX_PER_PX) / 240) * 100;
+  // même taille de corps pour tous, selon leur gabarit (hero-size.ts) : un humain de 100 pixels du dessin = 175 unités
+  const px = BOX_PER_PX * sizeK(art);
+  const left = 53 - ((v.fx * px) / 200) * 100, top = 95 - ((v.fy * px) / 240) * 100;
   return (
     <span class={`hfig hfig-vec ${cls}`}>
-      <span class="px-win vec-win" style={{ left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%`, width: `${(((v.w * BOX_PER_PX) / 200) * 100).toFixed(2)}%`, aspectRatio: `${v.w} / ${v.h}` }}>
+      <span class="px-win vec-win" style={{ left: `${left.toFixed(2)}%`, top: `${top.toFixed(2)}%`, width: `${(((v.w * px) / 200) * 100).toFixed(2)}%`, aspectRatio: `${v.w} / ${v.h}` }}>
         <VectoImage id={art} src={v.big} live={live} />
       </span>
     </span>

@@ -28,6 +28,7 @@ import { close, open, swap, toast } from '../nav';
 import { heroArt } from '../../look';
 import { vectoFig } from '../../vecto';
 import { VectoImage } from '../vecto-live';
+import { sizeK } from '../../hero-size';
 import '../sections/heros.css';
 
 export function talentText(talent: Talent | undefined): string {
@@ -95,12 +96,11 @@ function StageFigure({ defId, up }: { defId: string; up: number }) {
   const art = heroArt(defId);
   const v = vectoFig(art);
   if (!v) return <span class="hx-stage-fig" ref={host}><img class="hx-flat" src={heroImage(defId)} alt="" /></span>;
-  // le dessin vectoriel lisse : en hauteur, 116 pixels du dessin (un grand héros) sur 80 % de la scène ; en largeur,
-  // entre les médaillons ; puis réduit d'un quart (demande du 26/11) : le héros garde de l'air autour de lui. Il
-  // respire par le CSS, pieds fixes.
-  const steps = (Math.round(window.devicePixelRatio || 1) || 1) >= 2 ? Math.round(window.devicePixelRatio || 1) : 2;
-  const fit0 = 0.74 * Math.min((bh * 0.8) / 116, (bw - 2 * 64) / (v.w * 0.82));
-  const fit = Math.max(1, Math.floor(fit0 * steps) / steps);
+  // le dessin vectoriel lisse : tous à la même taille de corps (hero-size.ts : un humain = 100 pixels du dessin, × son
+  // gabarit ; demande du 27/11), un humain sur ~45 % de la hauteur de la scène (de l'air autour, demande du 26/11) ; la
+  // largeur ne le réduit que s'il passait sous les flèches (arme, ailes). Il respire par le CSS, pieds fixes.
+  const k = sizeK(art);
+  const fit = Math.min(((0.65 * bh * 0.8) / 116) * k, (bw / 2 - 30) / Math.max(v.fx, v.w - v.fx));
   const feetY = bh * 0.88;
   return (
     <span class="hx-stage-fig" ref={host}>
