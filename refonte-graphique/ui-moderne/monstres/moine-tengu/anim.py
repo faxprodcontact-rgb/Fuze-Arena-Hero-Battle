@@ -136,8 +136,10 @@ ATTACK = [
                 w=('fold', 'demi', 0.3), bn=1, trail=0.6, ws=0.6, growl=1)),
     (1390, dict(crouch=1.4, lean=2.6, head=(0.6, 0.4), tilt=1.2, nh=(38.0, 60.0), sa=62, gs=-16, pg=0.2, rsw=0,
                 w=('fold', 'demi', 0.15), bn=1, growl=0.6)),
-    (1580, dict(crouch=0.6, lean=0.8, head=(0.2, 0.2), tilt=0.4, nh=(27.0, 46.0), sa=-94, gs=-4, pg=0.6, rsw=-10,
-                w=('fold', 'demi', 0.05), bn=-1, growl=0.2)),
+    (1510, dict(crouch=0.8, lean=0.6, head=(-0.4, -0.2), tilt=-0.6, nh=(28.0, 40.0), sa=-74, gs=-8, pg=0.8, rsw=-30,
+                w=('fold', 'demi', 0.1), bn=-1, growl=0.4)),
+    (1640, dict(crouch=0.5, lean=0.4, head=(0.1, 0.2), tilt=0.2, nh=(26.6, 46.6), sa=-93, gs=-3, pg=0.5, rsw=8,
+                w=('fold', 'demi', 0.04), bn=-1, growl=0.2)),
     (1850, {}),
 ]
 A_SWING = (840, 1010)                  # la traînée du bâton
