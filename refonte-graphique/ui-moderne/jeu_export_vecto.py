@@ -435,6 +435,8 @@ def export_one(folder, voir=None):
                 for k in ('arc', 'rase'):
                     if k in cfg:
                         a[k] = cfg[k]
+                if cfg.get('arc'):
+                    a['suit'] = 1          # le projectile suit la courbe de son vol (la flèche bascule)
                 ids = dict(projs)[which]
                 a['proj'] = [add_cell(pimgs[q], (0, 0), pview) for q in ids]
                 a['projMs'] = cfg.get('proj_ms', [80] * len(ids))

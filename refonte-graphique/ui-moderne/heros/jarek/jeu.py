@@ -17,7 +17,9 @@ JEU = {
     'pose': dict(periode=1000 * A.IDLE_T, images=10),
     # le tir en cloche : la flèche part au lâcher (REL), le jeu la fait voler jusqu'à la vraie cible ; elle s'y plante
     'attaque': dict(genre='tir', tir=A.REL, coup=A.REL + A.FLY, cible=(A.FOE[0], A.FOE[1]), depuis=BOUCHE[0] + 3,
-                    coupe=180, bouche=BOUCHE, projectile=fleche, proj_images=1, arc=10),
+                    coupe=140, bouche=BOUCHE, projectile=fleche, proj_images=1, arc=26),
     # « Averse des steppes » : il se charge, tire vers le ciel ; la volée retombe sur l'ennemi
-    'speciale': dict(genre='sort', coup=A.S_HIT, cible=(A.FOE[0], A.FOE[1]), coupe=150, charge=(130, A.SREL - 10)),
+    # (la flèche qui monte reste avec lui jusqu'à x = 150 ; dès que la volée tombe, tout ce qui est devant lui part sur la cible)
+    'speciale': dict(genre='sort', coup=A.S_HIT, cible=(A.FOE[0], A.FOE[1]), charge=(130, A.SREL - 10),
+                     coupe=lambda t: 150 if t < A.S_BURST else 112),
 }
