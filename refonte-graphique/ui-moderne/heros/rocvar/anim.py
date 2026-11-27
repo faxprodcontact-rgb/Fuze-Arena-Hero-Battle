@@ -101,16 +101,16 @@ def keyed(keys, t):
 # le long de la jambe (il fait un tour complet dans la main : ha = 360, la même pose que 0).
 ATTACK = [
     (0, {}),
-    (130, dict(wrist=(28.6, 57.6), ha=58, lean=-1, head=(-0.6, 0.6), tail=1, tuft=1, mane=0.6, barb=1, glow=1, sh=(0.4, -0.4))),
-    (340, dict(wrist=(25.4, 42.4), ha=146, lean=-2.4, crouch=1, head=(-1, 1), tilt=-1.5, tail=2, tuft=2, mane=1, barb=1, glow=2,
+    (130, dict(wrist=(28.6, 57.6), ha=70, lean=-1, head=(-0.6, 0.6), tail=1, tuft=1, mane=0.6, barb=1, glow=1, sh=(0.4, -0.4))),
+    (340, dict(wrist=(25.4, 42.4), ha=158, lean=-2.4, crouch=1, head=(-1, 1), tilt=-1.5, tail=2, tuft=2, mane=1, barb=1, glow=2,
                sh=(0.6, -0.8), shr=-1)),
-    (395, dict(wrist=(42.6, 54.6), ha=252, lean=2.6, crouch=0, head=(1, 0.4), tilt=1.5, tail=-1, tuft=1, mane=-1, barb=-1.5, glow=1,
+    (395, dict(wrist=(42.6, 54.6), ha=264, lean=2.6, crouch=0, head=(1, 0.4), tilt=1.5, tail=-1, tuft=1, mane=-1, barb=-1.5, glow=1,
                sh=(1.6, 1.0), shr=1.5)),
-    (470, dict(wrist=(44.0, 58.6), ha=268, lean=2.8, head=(1.1, 0.6), tilt=1.8, tail=-2, tuft=-1, mane=-1, barb=-2, glow=0.6,
+    (470, dict(wrist=(44.0, 58.6), ha=280, lean=2.8, head=(1.1, 0.6), tilt=1.8, tail=-2, tuft=-1, mane=-1, barb=-2, glow=0.6,
                sh=(1.4, 1.2), shr=1.2)),
-    (640, dict(wrist=(42.4, 61.4), ha=284, lean=2.2, head=(1, 0.4), tilt=1.2, tail=-1, tuft=-2, mane=-0.6, barb=-1, sh=(1.0, 0.8), shr=0.8)),
-    (800, dict(wrist=(37.6, 65.0), ha=318, lean=1, head=(0.4, 0), tail=0.6, tuft=-1, mane=0.3, barb=0.5, sh=(0.4, 0.3))),
-    (960, dict(wrist=(33.0, 67.4), ha=350, crouch=0.7, tail=1, tuft=0.6, mane=0.6, barb=1)),
+    (640, dict(wrist=(42.4, 61.4), ha=296, lean=2.2, head=(1, 0.4), tilt=1.2, tail=-1, tuft=-2, mane=-0.6, barb=-1, sh=(1.0, 0.8), shr=0.8)),
+    (800, dict(wrist=(37.6, 65.0), ha=330, lean=1, head=(0.4, 0), tail=0.6, tuft=-1, mane=0.3, barb=0.5, sh=(0.4, 0.3))),
+    (960, dict(wrist=(37.4, 69.6), ha=360, crouch=0.7, tail=1, tuft=0.6, mane=0.6, barb=1)),
     (1150, dict(ha=360, tuft=0.5, mane=0.2)),
     (1300, dict(ha=360)),
 ]
@@ -125,23 +125,23 @@ ATT_FIRE, ATT_HIT = 395, 545    # le rocher part, le rocher éclate
 # éclats et en poussière. Il arrache le pavois et revient en garde.
 SPECIAL = [
     (0, {}),
-    (160, dict(wrist=(28.4, 56.4), ha=40, crouch=1, lean=-1, head=(0, 0.8), tail=1, tuft=1, mane=0.6, barb=1, glow=1, sh=(0, -1.0))),
-    (400, dict(wrist=(26.0, 43.0), ha=140, crouch=-1.2, lean=-2, head=(-1, -0.6), tilt=-2, tail=2, tuft=1, mane=1, barb=1, glow=2,
+    (160, dict(wrist=(28.4, 56.4), ha=52, crouch=1, lean=-1, head=(0, 0.8), tail=1, tuft=1, mane=0.6, barb=1, glow=1, sh=(0, -1.0))),
+    (400, dict(wrist=(26.0, 43.0), ha=152, crouch=-1.2, lean=-2, head=(-1, -0.6), tilt=-2, tail=2, tuft=1, mane=1, barb=1, glow=2,
                sh=(-0.4, -2.6), shr=-2)),
-    (700, dict(wrist=(25.4, 40.2), ha=158, crouch=-2, lean=-2.4, head=(-1, -1), tilt=-2.5, tail=2, tuft=2, mane=1, barb=0.6, glow=2.4,
+    (700, dict(wrist=(25.4, 40.2), ha=170, crouch=-2, lean=-2.4, head=(-1, -1), tilt=-2.5, tail=2, tuft=2, mane=1, barb=0.6, glow=2.4,
                sh=(-0.6, -3.4), shr=-3)),
-    (790, dict(wrist=(44.0, 58.4), ha=266, crouch=2.2, lean=3, head=(1, 1), tilt=2.5, jaw=0.35, tail=-1, tuft=1, mane=-1, barb=-1.5,
+    (790, dict(wrist=(44.0, 58.4), ha=278, crouch=2.2, lean=3, head=(1, 1), tilt=2.5, jaw=0.35, tail=-1, tuft=1, mane=-1, barb=-1.5,
                glow=2.4, sh=(0.4, 3.8), shr=1)),
-    (900, dict(wrist=(44.4, 59.0), ha=268, crouch=2.4, lean=3.1, head=(1, 1.2), tilt=3, jaw=0.3, tail=-2, tuft=-1, mane=-1, barb=-2,
+    (900, dict(wrist=(44.4, 59.0), ha=280, crouch=2.4, lean=3.1, head=(1, 1.2), tilt=3, jaw=0.3, tail=-2, tuft=-1, mane=-1, barb=-2,
                glow=2, sh=(0.4, 3.9), shr=1)),
-    (1180, dict(wrist=(44.0, 59.4), ha=270, crouch=1.8, lean=2.6, head=(1, 0.8), tilt=2.5, jaw=0.15, tail=-1, tuft=-2, mane=-0.8,
+    (1180, dict(wrist=(44.0, 59.4), ha=282, crouch=1.8, lean=2.6, head=(1, 0.8), tilt=2.5, jaw=0.15, tail=-1, tuft=-2, mane=-0.8,
                 barb=-1, glow=1.6, sh=(0.4, 3.7), shr=0.8)),
-    (1300, dict(wrist=(43.0, 60.4), ha=276, crouch=1.2, lean=2.2, head=(1.1, 0.4), tilt=2, tuft=-1, mane=-0.5, glow=1.2,
+    (1300, dict(wrist=(43.0, 60.4), ha=288, crouch=1.2, lean=2.2, head=(1.1, 0.4), tilt=2, tuft=-1, mane=-0.5, glow=1.2,
                 sh=(0.3, 3.0), shr=0.6)),
-    (1520, dict(wrist=(39.6, 63.2), ha=300, crouch=0.4, lean=1.4, head=(1, 0), tilt=1, tail=1, mane=0.4, barb=1, glow=0.6,
+    (1520, dict(wrist=(39.6, 63.2), ha=312, crouch=0.4, lean=1.4, head=(1, 0), tilt=1, tail=1, mane=0.4, barb=1, glow=0.6,
                 sh=(0.2, 1.6), shr=0.3)),
-    (1760, dict(wrist=(35.0, 66.2), ha=330, lean=0.6, head=(0.4, 0), tail=0.6, tuft=1, mane=0.6, barb=0.6, sh=(0, 0.4))),
-    (1980, dict(ha=352, crouch=0.8, tail=-0.6, tuft=0.6, mane=-0.3, barb=-0.4)),
+    (1760, dict(wrist=(35.0, 66.2), ha=342, lean=0.6, head=(0.4, 0), tail=0.6, tuft=1, mane=0.6, barb=0.6, sh=(0, 0.4))),
+    (1980, dict(ha=360, crouch=0.8, tail=-0.6, tuft=0.6, mane=-0.3, barb=-0.4)),
     (2200, dict(ha=360, tuft=-0.3)),
     (2400, dict(ha=360)),
 ]
@@ -158,7 +158,7 @@ def idle_offsets(T):
     return dict(breath=br, crouch=0.3 * (0.5 - 0.5 * math.cos(u - 1.4)), heady=0.3 * math.sin(u - 0.6),
                 tilt=0.5 * math.sin(u - 0.9), mane=0.4 * math.sin(u - 1.2), tail=0.7 * math.sin(u),
                 tuft=0.9 * math.sin(u - 0.9), barb=0.8 * math.sin(u - 1.6), glow=0.2 * (0.5 - 0.5 * math.cos(u - 2.2)),
-                wy=0.3 * math.sin(u - 1.0), ha=1.6 * math.sin(u - 1.8), shy=0.3 * math.sin(u - 0.7))
+                wy=0.1 * math.sin(u - 1.0), ha=0.3 * math.sin(u - 1.8), shy=0.3 * math.sin(u - 0.7))
 
 
 def pose_at(T, action=None, t0=0.0):

@@ -184,10 +184,14 @@ def mane_geom(P):
             sheen = ribbon(resample(bez(lerp(p0, p1, 0.6), p1, p2, lerp(p2, p3, 0.5), 12), 6),
                            [0.2, w0 * 0.1, w0 * 0.16, w0 * 0.14, w0 * 0.08, 0.1, 0.1])
             det.append((sheen.move(0.6, -1.2), MANE.hi, 0.4))
-    det.append((Shape(mass.subs + mass.move(0.8, -1.0).subs, evenodd=True), MANE.shadow, 0.35))
-    det.append((Shape(mass.subs + mass.move(-0.6, 0.8).subs, evenodd=True), MANE.hi, 0.85))
-    g = _poly(mass)
+    # l'ombre et le liseré de lumière sur le bord de la masse, SAUF sur le crâne (la naissance des poils n'a pas de bord)
     from shapely.geometry import Polygon
+    g = _poly(mass)
+    skull = Polygon(HEAD_PTS).buffer(0.6)
+    for (dx, dy), col, op in (((0.8, -1.0), MANE.shadow, 0.35), ((-0.6, 0.8), MANE.hi, 0.85)):
+        rim_ = _shape(g.difference(_poly(mass.move(dx, dy))).difference(skull), min_area=0.02)
+        if rim_:
+            det.append((rim_, col, op))
     F = Polygon(HEAD_PTS).buffer(1.5).union(_poly(sm(CAP, sharp=(2, 4, 6, 8), t=0.8)))
     root = _shape(g.intersection(F))
     grad = (50, 2, 14, 46, [(0, MANE.light), (0.35, MANE.base), (1, '#f47a2c')])
@@ -588,7 +592,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     nz = FACE['nez']
     hd += [(ribbon([(nz[0] + 0.9, 22.6), (nz[0] + 0.5, 25.2), nz], [0.1, 1.2, 0.2]), SCALE.shadow, 0.3)]
     # la naissance de la crinière : la peau prend une teinte de braise sous les poils (aucune ligne entre crâne et crinière)
-    hd += [(head, ('rad', 42.0, 24.0, 8.5, 12.0, [(0, MANE.base, 0.75), (0.55, MANE.shadow, 0.35), (1, MANE.shadow, 0)]), 1)]
+    hd += [(head, ('rad', 45.6, 25.0, 5.4, 11.0, [(0, MANE.base, 0.85), (0.5, MANE.shadow, 0.45), (1, MANE.shadow, 0)]), 1)]
     hd += eye_kit(P)
     fig.part('head', head, SCALE, grad=(74, 18, 42, 36, [(0, '#f06a52'), (0.45, SCALE.base), (1, '#8e1c46')]),
              cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'cuirass'], details=hd)
