@@ -1,0 +1,90 @@
+/* PLUS DE FOND BLANC (demande du propriétaire du 27/11 : « passer tous les fonds blancs en fond comme les fusions, pas que
+   ceux que je t'ai envoyés, tous ceux qui le sont dans le jeu »). Chargé APRÈS theme-pierre.css (main.tsx) : les surfaces
+   claires (fenêtres, cartes, lignes posées dans une fenêtre, champs) deviennent la pierre grise de l'autel de la fusion
+   (.fuse-altar, style.css) : un dégradé de basalte, un reflet doux en haut, un filet d'or ; dedans, des creux de pierre
+   plus sombres ; les lettres claires. Les jetons sont redéfinis ici, pour tout le jeu à la fois. */
+:root[data-theme="pierre"] {
+  /* les surfaces : la pierre de l'autel */
+  --c-surface: var(--c-bg-3); --c-surface-2: var(--c-bg-2); --c-surface-3: var(--c-bg-1); --c-line: #ffffff1f;
+  --px-frame: radial-gradient(120% 50% at 50% 0%, #ffffff12, #ffffff00 60%), linear-gradient(180deg, var(--c-bg-3), var(--c-bg-1) 72%, var(--c-bg-0));
+  --px-panel: radial-gradient(120% 60% at 50% 0%, #ffffff14, #ffffff00 60%), linear-gradient(180deg, var(--c-bg-3), var(--c-bg-1));
+  --px-inset: linear-gradient(180deg, #00000047, #00000026);
+  /* les lettres */
+  --c-text: #ffffff; --c-title: #ffffff; --c-muted: var(--c-on-dark-muted);
+  --text: #ffffff; --title: #ffffff; --muted: var(--c-on-dark-muted); --accent-text: #ffc94d;
+  /* les anciens noms des surfaces claires */
+  --panel: var(--c-bg-3); --panel-flat: var(--c-bg-2); --inset: var(--c-bg-0); --inset-line: #ffffff2e; --field: var(--c-bg-0);
+  --cream-1: #ffffff2e; --cream-2: var(--c-bg-2); --cream-3: var(--c-bg-3);
+  --ghost-1: var(--c-bg-3); --ghost-2: var(--c-bg-2); --ghost-edge: #ffffff2e; --ghost-text: #ffffff;
+  --chip: var(--c-bg-2);
+  --s-surface-3: var(--c-bg-0);
+  /* les lettres de couleur posées sur le clair deviennent leur version claire */
+  --c-action-lo: #5fe07a; --c-danger-lo: #ff7a8a;
+}
+/* une fenêtre : le filet d'or de l'autel autour de son corps */
+:root[data-theme="pierre"] .modal { --psh: var(--sh-3), inset 0 0 0 1.5px #ffc94d8c; }
+/* les lignes posées dans une fenêtre (réglages, quêtes, cases…) : des creux de pierre */
+:root[data-theme="pierre"] :is(.block, .versus, .quests li, .ranking li, .setting-row, .stat-grid span, .pass-cell, .boss-tiers span, .slot-panel,
+  .login-day, .dungeon-step, .chat-list, .frag-pick) { --psh: inset 0 0 0 1px #ffffff14, inset 0 2px 6px #0000008c; }
+/* les pièces en pilule (monnaies) : la pierre sombre */
+:root[data-theme="pierre"] .cur-big { --pxf: linear-gradient(180deg, var(--c-bg-2), var(--c-bg-1)); --psh: inset 0 0 0 1px #ffffff1f, 0 2px 4px #0006; color: #fff; }
+/* les jauges posées dans une fenêtre ou une carte : creusées dans la pierre (elles étaient lavande), chiffres blancs */
+:root[data-theme="pierre"] :is(.modal, .card) .bar { --pxf: var(--px-groove-s); --psh: inset 0 1px 3px #000a, inset 0 0 0 1px #ffffff14; }
+:root[data-theme="pierre"] :is(.modal, .card) .bar-label { color: #fff; text-shadow: 0 1px 2px #0a0620, 0 0 2px #0a0620; }
+
+/* ---------- les écrans qui avaient leurs propres cartes blanches ---------- */
+/* les pierres de l'autel, réutilisées ci-dessous : --sb-card (une carte), --sb-row (une ligne posée), --sb-well (un creux) */
+:root[data-theme="pierre"] {
+  --sb-card: radial-gradient(120% 50% at 50% 0%, #ffffff12, #ffffff00 60%), linear-gradient(180deg, var(--c-bg-3), var(--c-bg-1) 72%, var(--c-bg-0));
+  --sb-card-sh: inset 0 0 0 1.5px #ffc94d8c, inset 0 1px 0 #ffffff26, 0 10px 24px #0009;
+  --sb-row: linear-gradient(180deg, var(--c-bg-3), var(--c-bg-2));
+  --sb-row-sh: inset 0 0 0 1px #ffffff17, inset 0 1px 0 #ffffff1f, 0 4px 10px #0007;
+  --sb-well: linear-gradient(180deg, #00000059, #00000033);
+  --sb-well-sh: inset 0 2px 5px #000a, inset 0 0 0 1px #ffffff12;
+  --sb-gold-tint: color-mix(in srgb, #ffc22e 16%, var(--c-bg-2));
+  /* les lettres des sections */
+  --av-text: #ffffff; --av-muted: var(--c-on-dark-muted); --av-line: #ffffff1f;
+}
+:root[data-theme="pierre"] .screen.guild { --g-ink: #ffffff; --g-muted: var(--c-on-dark-muted); }
+
+/* l'Aventure (tour, missions, donjons) */
+:root[data-theme="pierre"] .av-panel { background: var(--sb-card); box-shadow: var(--sb-card-sh); }
+:root[data-theme="pierre"] :is(.av-row, .av-step-card) { background: var(--sb-row); box-shadow: var(--sb-row-sh); }
+:root[data-theme="pierre"] .av-row-icon { background: var(--sb-well); box-shadow: var(--sb-well-sh); }
+:root[data-theme="pierre"] .av-mission.ready { background: linear-gradient(180deg, var(--sb-gold-tint), var(--c-bg-2)); box-shadow: 0 0 0 2.5px #ffc22e, 0 6px 16px #ffc22e4d; }
+:root[data-theme="pierre"] .av-mission.ready .av-row-icon { background: linear-gradient(160deg, #6a4a12, #3a2810); }
+:root[data-theme="pierre"] .av-mission.running .av-row-icon { background: var(--sb-well); }
+:root[data-theme="pierre"] :is(.av-progress, .av-track-bar) { background: var(--c-bg-0); box-shadow: inset 0 1px 3px #000a, inset 0 0 0 1px #ffffff12; }
+:root[data-theme="pierre"] .av-tier > i { background: var(--c-bg-3); box-shadow: inset 0 0 0 3px #ffffff2e, 0 1px 3px #0008; }
+:root[data-theme="pierre"] :is(.av-rewards .cur, .av-row-side > .cur, .av-reward .cur) { background: #ffc22e24; color: #ffe08a; box-shadow: inset 0 0 0 1px #ffc22e66; }
+:root[data-theme="pierre"] .av-floor:not(.now):not(.done) { background: #2a2935e6; color: #fff; }
+
+/* la Guilde */
+:root[data-theme="pierre"] .g-panel { background: var(--sb-card); box-shadow: var(--sb-card-sh); }
+:root[data-theme="pierre"] .g-row { background: var(--sb-row); box-shadow: var(--sb-row-sh); }
+:root[data-theme="pierre"] :is(.g-stat, .g-rank) { background: var(--sb-well); box-shadow: var(--sb-well-sh); }
+:root[data-theme="pierre"] .g-stat.mine { background: var(--sb-gold-tint); }
+:root[data-theme="pierre"] .g-role.leader { background: #ffc22e33; color: #ffd66a; }
+:root[data-theme="pierre"] .g-role.officer { background: #9b5cff38; color: #d2b6ff; }
+:root[data-theme="pierre"] .g-vs { background: linear-gradient(90deg, #2f8cff33 0%, var(--c-bg-2) 46%, var(--c-bg-2) 54%, #f03e5833 100%); }
+:root[data-theme="pierre"] :is(.g-war-result, .g-fort, .g-ranking) { background: var(--sb-row); box-shadow: var(--sb-row-sh); color: #fff; }
+:root[data-theme="pierre"] .g-war-result h2 { color: #ffc94d; }
+:root[data-theme="pierre"] .g-power.ok { color: #7cf08a; } :root[data-theme="pierre"] .g-power.low { color: #ff8a96; }
+
+/* le tchat (guilde, amis) et les bulles */
+:root[data-theme="pierre"] :is(.msg, .chat .msg) { background: var(--c-bg-3); color: #fff; box-shadow: inset 0 0 0 1px #ffffff17; }
+:root[data-theme="pierre"] .chat .chat-input input { background: var(--c-bg-0); color: #fff; box-shadow: inset 0 1px 3px #000a, inset 0 0 0 1px #ffffff1f; }
+:root[data-theme="pierre"] .modal .chat .chat-input { background: var(--sb-well); box-shadow: var(--sb-well-sh); }
+
+/* le butin rapide, les membres choisis, les essais des donjons, les étages de la tour */
+:root[data-theme="pierre"] .fast-hero { background: var(--sb-row); box-shadow: var(--sb-row-sh); }
+:root[data-theme="pierre"] .fast-hero > .icon { background: var(--sb-well); box-shadow: var(--sb-well-sh); }
+:root[data-theme="pierre"] :is(.member.me, .dropdown-menu button.on) { background-color: var(--sb-gold-tint); }
+:root[data-theme="pierre"] :is(button.dungeon .dungeon-tries, .dungeon-head .dungeon-tries) { background: #2fc45726; color: #7cf08a; border-color: #2fc45780; }
+:root[data-theme="pierre"] .tower-floor { background: linear-gradient(180deg, var(--c-bg-4), var(--c-bg-3)); color: #fff; }
+
+/* les fenêtres de la fiche (attributs, talents) */
+:root[data-theme="pierre"] :is(.hx-statlist > span, .hx-tallist section) { background: var(--sb-well); box-shadow: var(--sb-well-sh); }
+
+/* le Colisée : les cadeaux */
+:root[data-theme="pierre"] .col-gifts .cur { background: #ffc22e24; color: #ffe08a; box-shadow: inset 0 0 0 1px #ffc22e66; }

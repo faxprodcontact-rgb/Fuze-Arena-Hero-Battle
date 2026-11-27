@@ -59,7 +59,8 @@ export function Icon({ name, size = 22 }: { name: string; size?: number }) {
 type BtnKind = 'green' | 'blue' | 'gold' | 'ghost' | 'red' | 'purple';
 
 /** La teinte de pierre de chaque sorte de bouton (buttons.ts) : l'action principale est le basalte allumé. */
-const BTN_TONE: Record<BtnKind, BtTone> = { green: 'basalte', gold: 'or', purple: 'arcane', red: 'feu', blue: 'ardoise', ghost: 'ardoise' };
+// (bleu et discret : la pierre grise sans lueur, lettres blanches, depuis que les fenêtres sont sombres, 27/11 ; c'était le beige)
+const BTN_TONE: Record<BtnKind, BtTone> = { green: 'basalte', gold: 'or', purple: 'arcane', red: 'feu', blue: 'galet', ghost: 'galet' };
 
 /**
  * Un bouton « Pierre de l'arène » (style.css, « Boutons »). Taille : `small` = s (38 px), normal = m (48), `btn-fight` = l

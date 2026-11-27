@@ -65,7 +65,8 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
 - **Interface en nouvelle DA, partie par partie** (demande du 25/11) : plan, inventaire et outils dans
   `refonte-graphique/pixel/ui/` (lire `PLAN.md`) ; partie 1 faite en v0.57.0 (chargement, logo, icône d'application).
   **Style « moderne » choisi le 26/11 : lire `refonte-graphique/pixel/ui/STYLE.md`** (jetons en tête de
-  `src/game/ui/style.css` : fond raisin, couleurs à rôle, arrondis, ombres douces ; fenêtres claires à bandeau coloré ;
+  `src/game/ui/style.css` : fond raisin, couleurs à rôle, arrondis, ombres douces ; **plus de fond blanc depuis la v0.69.0 :
+  fenêtres et cartes en pierre sombre comme l'autel de la fusion, `ui/theme-sombre.css`** ;
   plus de pièces en pixels ni de `?skin=`) ; tout le jeu est passé (v0.59.0), sections dans
   `src/game/ui/sections/<section>.css` ; **boutons « Pierre de l'arène »** (v0.60.0, `ui/buttons.ts`, classes `bt-<teinte>`) ; **habillage pierre grise et or** (v0.63.0 : `ui/theme.ts` + `theme-pierre.css` GÉNÉRÉ par `npx tsx refonte-graphique/ui-moderne/theme/pierre.ts` : le relancer après tout changement de couleur dans un CSS) ;
   fonds des menus dessinés par le code (`ui/backdrop-kit.tsx`, `backdrop-*.tsx`, préparation `formation-stage.tsx`). Personnages, monstres, décors : en vectoriel.

@@ -6,6 +6,8 @@ import { App } from './ui/app';
 // l'essai d'habillage « pierre » (?theme=pierre, ui/theme.ts) : après tous les CSS, pour gagner à priorité égale
 import './ui/theme-pierre.css';
 import './ui/theme-pierre-or.css';
+// plus aucun fond blanc (27/11) : les surfaces claires deviennent la pierre de l'autel de la fusion
+import './ui/theme-sombre.css';
 import { installButtons } from './ui/buttons';
 import { installSigns } from './ui/px';
 import { installSkin } from './ui/skin';
