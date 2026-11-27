@@ -22,7 +22,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', '..', 'heros'))
 sys.path.insert(0, HERE)
-from atelier import Mat, sm, limb, ribbon, ellipse, bez, resample, mchain, mT, mR, mS, mapp  # noqa: E402
+from atelier import Mat, sm, limb, ribbon, ellipse, bez, resample, mchain, mT, mR, mS, mapp, lock  # noqa: E402
 from lib import Shape  # noqa: E402
 from outils import FigureM, fused, _poly, _shape, ik, smooth, lerp  # noqa: E402
 
@@ -42,7 +42,7 @@ GUM = '#7a1a2a'
 
 GRD = 236                      # le sol
 FEET = (128, 236)              # le point « sol » de la case
-FRAME = (-4, -4, 270, 246)     # la boîte de l'image (x0, y0, largeur, hauteur) : les pieds (128, 236) tombent en (132, 240)
+FRAME = (-16, -4, 282, 246)    # la boîte de l'image (x0, y0, largeur, hauteur) : les pieds (128, 236) tombent en (144, 240)
 
 # ---------- le visage (../../heros/visage.py) : tête de dragon de PROFIL → placer(tour=75), un seul oeil ----------
 # La boîte = la sphère du crâne, gueule fermée (du dos du crâne à la racine du museau, du dessus du crâne au bas de la
@@ -232,7 +232,18 @@ class Rig:
         return sh.map(self.D)
 
 
+CHEEK = (200.0, 110.5, 6.4)      # la joue : un rond fixe sur la charnière (repère de la tête), il la couvre
+
+
+def mapped(M, sh):
+    return sh.map(lambda p: mapp(M, p))
+
+
 def body_shape(R):
+    """Le corps d'UN seul tenant : queue, torse, cou, crâne, mâchoire du bas et joue (aucune couture). La joue est un
+    rond fixe sur la charnière (comme le léviathan) : le coin de la gueule garde une courbe douce à toutes les
+    ouvertures ; sous la gorge, la peau se tend jusqu'à la mâchoire (un creux arrondi, ni pointe ni marche)."""
+    from shapely.geometry import Point
     torso = sm([R.D(p) for p in catmull(TORSO, 5)], t=0.9)
     neck = sm([R.D(p) for p in catmull(NECK, 5)], t=0.9)
     c = [R.D(p) for p in catmull(TAIL_C, 4, closed=False)]
@@ -242,7 +253,19 @@ def body_shape(R):
         j = min(len(TAIL_W) - 2, int(u))
         ws.append(TAIL_W[j] + (TAIL_W[j + 1] - TAIL_W[j]) * (u - j))
     tail = limb(c, ws)
-    return fused([torso, neck, tail], smooth=2.5), c, ws
+    skull = mapped(R.HEAD, sm(SKULL, sharp=SKULL_SHARP, t=0.9))
+    jaw = mapped(R.JAW, sm(LJAW, t=0.9))
+    ck = mapp(R.HEAD, CHEEK[:2])
+    from shapely.ops import unary_union
+    g = unary_union([_poly(torso), _poly(neck), _poly(tail), _poly(skull), _poly(jaw),
+                     Point(*ck).buffer(CHEEK[2] * HEAD_K, 24)])
+    g = g.buffer(2.5, join_style=1, quad_segs=6).buffer(-2.5, join_style=1, quad_segs=6)
+    # sous la gorge : là où le bas de la mâchoire rejoint le cou, une fermeture plus large (la peau se tend)
+    zc = mapp(R.HEAD, (196.0, 122.0))
+    zone = Point(*zc).buffer(11.0, 24)
+    tight = g.buffer(5.5, join_style=1, quad_segs=8).buffer(-5.5, join_style=1, quad_segs=8)
+    g = g.union(tight.intersection(zone))
+    return _shape(g.buffer(0.15).buffer(-0.15)), c, ws
 
 
 # ======================================================================== les pattes
@@ -429,25 +452,20 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         pts['grad'] = pts['grad'][:4] + ([(0, ROCKF.light), (0.5, ROCKF.base), (1, ROCKF.shadow)],)
         draw_claws(fig, nm, pts, OBSF, ROCKF)
 
-    # ---- les échardes de la queue (derrière la queue : racines cachées) ----
-    body, tc, tw = body_shape(R)
-    tail_spikes(fig, tc, tw)
-    # les piquants dorsaux : ils suivent la courbe du dos, de la nuque à la croupe, leur taille varie en douceur (plus
-    # grands au milieu du dos) ; racines cachées dans le corps
-    for j, (p0, p1, L) in enumerate(DORSAL):
-        b = R.D(p0)
-        d = unit(R.D(p1), b)                      # vers l'arrière le long du dos
-        nrm = (d[1], -d[0]) if d[0] < 0 else (-d[1], d[0])
-        if nrm[1] > 0:
-            nrm = (-nrm[0], -nrm[1])
-        tip = add(add(b, nrm, L), d, L * 0.6)
-        fig.part('dsp%d' % j, shard(add(b, nrm, -2.0), tip, L * 0.62, bend=-0.5), OBS, cel=0.6, rim=0.5, cast=0)
+    # ---- le fond de la gueule (gorge, crocs, corne du museau, goutte de lave) : derrière la peau ----
+    head_back(fig, R, P)
 
-    # ---- le corps : torse, cou, queue d'un seul tenant ----
+    # ---- le corps : queue, torse, cou, tête et mâchoire d'UN seul tenant (la joue couvre la charnière) ----
+    body, tc, tw = body_shape(R)
     bx0, by0, bx1, by1 = body.bbox()
-    det = body_details(R, P)
+    det = body_details(R, P) + head_details(R, P)
     fig.part('body', body, ROCK, grad=(bx1 - 20, by0 + 10, bx0 + 60, by1, [(0, ROCK.light), (0.45, ROCK.base), (1, ROCK.shadow)]),
              cel=2.4, rim=1.0, cast=0, details=det)
+    fig.ctx['tail'] = (tc, tw)
+
+    # ---- les petites flammes du dos, du cou, de la collerette et de la queue (elles naissent de la peau) ----
+    for spec in body_flames(R, tc, tw):
+        flame(fig, P, *spec)
 
     # ---- la patte arrière proche (la cuisse s'efface dans la croupe) ----
     sh, claws, pts = leg_geom(R, LEG_N_HIND, near=True, front=False)
@@ -458,12 +476,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     det = plate(lambda p: p, pc[0], pc[1], 10, 6.5, ang_ + 8, 11) \
         + lava_vein([add(lerp(S_, K, 0.2), (6, -2)), add(lerp(S_, K, 0.5), (9, 1)), add(lerp(S_, K, 0.85), (6, 2))], 1.0, heat) \
         + fissure([add(A, (1, -12)), add(A, (3, -6)), add(A, (2, -1))], 0.7)
-    fig.part('legNH', sh, ROCK, cel=1.8, rim=0.8, cast=1.2, cast_on=['body', 'legFH', 'legFHc0', 'legFHc1', 'legFHc2', 'tsp5', 'tsp4', 'tsp3'], details=det)
+    fig.part('legNH', sh, ROCK, cel=1.8, rim=0.8, cast=1.2, cast_on=['body', 'legFH', 'legFHc0', 'legFHc1', 'legFHc2'], details=det)
     S = pts['S']
     o_, t_ = add(S, (6, 10)), add(S, (-6, -16))
     fig.masks['legNH'] = (o_[0], o_[1], t_[0], t_[1], 'body')        # le haut de la cuisse s'efface dans la croupe
     draw_claws(fig, 'legNH', pts, OBS)
-    fig.part('spurH', shard(add(A, (-1, -3)), add(A, (-11, -2)), 5.5, bend=-0.6), OBS, cel=0.6, rim=0.5, cast=0.5)
+    flame(fig, P, 'flH', add(A, (-2.5, -3.5)), unit((0, 0), (-0.5, -1.0)), 5.6, 3.4, 14, on='legNH')
 
     # ---- l'aile proche, repliée sur le flanc ----
     wn = wing_skel(R, 'N', P['wu'], P['flap'], P['lag'])
@@ -491,10 +509,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     ku = unit(S, K)
     kd = unit(A, K)
     sp = unit((0, 0), add(ku, kd))
-    fig.part('spurF', shard(add(K, sp, -2), add(K, sp, 11), 5.6, bend=0.5), OBS, cel=0.6, rim=0.5, cast=0.6)
+    flame(fig, P, 'flF', add(K, sp, 2.5), unit((0, 0), add(sp, (0, -1.4))), 6.2, 3.6, 15, on='legNF')
 
-    # ---- la tête ----
-    draw_head(fig, R, P)
+    # ---- devant la tête : l'arcade d'obsidienne et la grande corne proche ----
+    head_front(fig, R, P)
 
     if fx:
         for f_ in fx:
@@ -507,27 +525,112 @@ DORSAL = [((179, 76), (174, 84), 5.0), ((171, 88), (167, 98), 6.4), ((165, 106),
           ((128, 124.5), (118, 126), 9.0), ((106, 128), (96, 129), 8.6), ((86, 130), (76, 131.5), 7.6), ((67, 135), (58, 139), 6.4)]
 
 
-def tail_spikes(fig, tc, tw):
-    """Les échardes d'obsidienne sur le dessus de la courbe de la queue, et la gerbe de trois au bout (posée au sol)."""
-    n = len(tc)
+FINK = '#3a0c18'                 # le contour des flammes (comme la crinière de Kael)
+
+
+def flame(fig, P, name, root, up, L, w, k, on='body'):
+    """Une petite flamme vivante qui naît de la peau (sur une fissure de lave) : racine fondue (transparente) dans la
+    roche, rouge braise à la base → orange → jaune pâle à la pointe, un seul contour, aucun flou. Elle se couche un peu
+    vers l'arrière (la gauche de l'image), ondule (chacune son décalage k), sa pointe s'étire et se rétracte ; une petite
+    braise s'en détache de temps en temps ; pendant la charge (heat), elle grandit et blanchit."""
+    ph = P['ph']
+    heat = P['heat']
+    hk = min(1.0, heat / 3.0)
+    sway = math.sin(ph * 1.15 + k * 1.7) + 0.35 * math.sin(ph * 2.3 + k * 0.9)
+    st = 0.14 * math.sin(ph * 1.9 + k * 2.3) + 0.06 * math.sin(ph * 3.7 + k)
+    Lr = 1.9 * L * (1 + st) * (1 + 0.45 * hk)
+    w_ = 1.75 * w * (1 + 0.25 * hk)
+    up = unit((0, 0), add(up, (-0.15, -0.7)))
+    back = (-1.0, 0.0)
+    n = (-up[1], up[0])
+    tilt = 0.16 + 0.08 * math.sin(k * 2.9)               # chacune se couche un peu, pas toutes pareil
+    p0 = add(root, up, -2.4)
+    p1 = add(add(root, up, Lr * 0.34), n, w_ * 0.45 * sway)
+    p2 = add(add(add(root, up, Lr * 0.66), back, Lr * tilt * 0.5), n, -w_ * 0.55 * sway)
+    p3 = add(add(add(root, up, Lr), back, Lr * tilt), n, w_ * 0.45 * sway)
+    main = lock(p0, p1, p2, p3, w_, n=12, bulge=0.5)
+    # deux petites langues qui partent du flanc de la flamme (une de chaque côté, plus courtes, à contretemps) : une
+    # vraie flamme découpée, pas une épine lisse
+    tongues = [main]
+    for sgn, at, ln, ph2 in ((1, 0.30, 0.55, 1.3), (-1, 0.42, 0.40, 2.6)):
+        sw2 = math.sin(ph * 1.6 + k * 1.1 + ph2)
+        b0 = add(lerp(p0, p1, at * 2.4), n, sgn * w_ * 0.22)
+        dirn = unit((0, 0), add(up, (n[0] * sgn * 0.55 + back[0] * 0.25, n[1] * sgn * 0.55)))
+        L2 = Lr * ln * (1 + 0.18 * sw2)
+        n2 = (-dirn[1], dirn[0])
+        q1 = add(add(b0, dirn, L2 * 0.4), n2, w_ * 0.25 * sw2)
+        q2 = add(add(b0, dirn, L2 * 0.75), n2, -w_ * 0.25 * sw2)
+        q3 = add(add(add(b0, dirn, L2), back, L2 * 0.2), n2, w_ * 0.2 * sw2)
+        tongues.append(lock(b0, q1, q2, q3, w_ * 0.55, n=8, bulge=0.4))
+    sh = fused(tongues, smooth=0.3)
+    q = lambda p, t: lerp(p0, p, t)
+    core = lock(lerp(p0, p1, 0.8), p1, lerp(p2, p1, 0.2), lerp(p3, p2, 0.35), w_ * 0.45, n=8, bulge=0.2)
+    if hk < 0.5:
+        stops = [(0, LAVA[4], 0), (0.13, LAVA[4], 0), (0.3, LAVA[4], 1), (0.55, LAVA[3]), (0.82, LAVA[2]), (1, LAVA[1])]
+        cst = [(0, LAVA[2], 0), (0.5, LAVA[1], 0.9), (1, LAVA[0], 0.9)]
+    else:
+        stops = [(0, LAVA[3], 0), (0.13, LAVA[3], 0), (0.3, LAVA[3], 1), (0.5, LAVA[2]), (0.76, LAVA[1]), (1, LAVA[0])]
+        cst = [(0, LAVA[1], 0), (0.4, LAVA[0], 0.95), (1, '#ffffff', 1)]
+    # la fissure de lave d'où elle naît : une lueur douce et une courte fente sur la peau, sous la flamme
+    host = [p_ for p_ in fig.parts if p_.name == on][0]
+    crack = ribbon([add(root, n, -w_ * 0.8), add(root, up, -0.5), add(root, n, w_ * 0.8)], [0.1, w_ * 0.24, 0.1])
+    host.details += [(ellipse(root[0], root[1], w_ * 1.3, w_ * 1.3), ('rad', root[0], root[1], w_ * 1.3, w_ * 1.3,
+                      [(0, LAVA[2], 0.7), (0.5, LAVA[3], 0.3), (1, LAVA[4], 0)]), 1), (crack, LAVA[2], 0.9)]
+    fig.part(name, sh, Mat(LAVA[0], LAVA[1], LAVA[2], LAVA[3], LAVA[4]), grad=(p0[0], p0[1], p3[0], p3[1], stops),
+             cel=0, rim=0, cast=0, ink=FINK, details=[(core, ('lin', p0[0], p0[1], p3[0], p3[1], cst), 1)])
+    # la braise qui se détache (une fois de temps en temps, chacune à son heure)
+    per = 2.6 + 0.7 * math.sin(k * 1.3)
+    u = ((ph / (2 * math.pi)) / per + k * 0.37) % 1.0
+    if u < 0.32 and k % 2 == 0:
+        a = u / 0.32
+        e = add(add(p3, up, 2 + 9 * a), back, 4 * a + 1.5 * math.sin(a * 6 + k))
+        r = 0.75 * (1 - 0.5 * a)
+        op = min(1.0, a * 6) * (1 - a)
+        gl = fig.rad(e[0], e[1], r * 3.2, r * 3.2, [(0, LAVA[2], 0.55 * op), (1, LAVA[3], 0)])
+        co = fig.rad(e[0] - r * 0.2, e[1] - r * 0.2, r, r, [(0, LAVA[0], op), (0.6, LAVA[1], op), (1, LAVA[3], op)])
+        fig.over.append('<circle cx="%.2f" cy="%.2f" r="%.2f" fill="%s"/><circle cx="%.2f" cy="%.2f" r="%.2f" fill="%s"/>' % (
+            e[0], e[1], r * 3.2, gl, e[0], e[1], r, co))
+
+
+def surface_up(p, q):
+    """La normale vers le haut (vers l'extérieur du dos) entre deux points voisins de la ligne du dos."""
+    d = unit(p, q)
+    nrm = (d[1], -d[0])
+    if nrm[1] > 0:
+        nrm = (-nrm[0], -nrm[1])
+    return nrm
+
+
+# (point sur le dos, point voisin vers la queue, longueur, largeur) : de la nuque à la croupe, plus grandes au milieu
+DORSAL = [((179, 76), (174, 84), 6.0, 3.6), ((171, 88), (167, 98), 7.6, 4.2), ((164, 107), (158, 114), 9.6, 4.8),
+          ((150, 120), (140, 122.5), 11.6, 5.4), ((128, 124), (118, 125.5), 13.0, 5.8), ((106, 127.5), (96, 128.5), 12.0, 5.4),
+          ((86, 129.5), (76, 131.5), 10.0, 4.8), ((67, 134.5), (58, 138.5), 8.0, 4.2)]
+
+
+def body_flames(R, tc, tw):
+    """Toutes les flammes du corps : (nom, racine, direction, longueur, largeur, décalage)."""
     out = []
-    for t, L, w in ((0.12, 5.4, 3.6), (0.27, 4.6, 3.2), (0.42, 3.8, 2.8), (0.57, 3.0, 2.4)):
+    for j, (p0, p1, L, w) in enumerate(DORSAL):
+        a, b = R.D(p0), R.D(p1)
+        out.append(('fd%d' % j, add(a, surface_up(a, b), -0.8), surface_up(a, b), L, w, j))
+    # la queue : de plus en plus petites vers le bout (sur le dessus de la courbe)
+    n = len(tc)
+    for j, (t, L, w) in enumerate(((0.12, 7.0, 4.0), (0.27, 6.0, 3.6), (0.42, 5.0, 3.2), (0.57, 4.2, 2.8), (0.72, 3.6, 2.4))):
         i = int(t * (n - 1))
         p, q = tc[i], tc[i + 1]
         d = unit(p, q)
-        nrm = (-d[1], d[0])                   # vers l'extérieur de la courbe (à gauche de la marche)
-        ww = tw[i]
-        base = add(p, nrm, ww * 0.5 - 1.6)
-        tip = add(add(base, nrm, L + 1.6), d, -L * 0.6)
-        out.append(shard(base, tip, w, bend=-0.5))
+        nrm = (-d[1], d[0])                   # vers l'extérieur de la courbe
+        out.append(('ft%d' % j, add(p, nrm, tw[i] * 0.5 - 0.8), nrm, L, w, 20 + j))
+    # le bout de la queue : une petite gerbe de deux flammes (à la place des échardes)
     end, prev = tc[-1], tc[-3]
     d = unit(prev, end)
-    for ang, L, w in ((-140, 8.0, 4.4), (-96, 11.0, 5.2), (-52, 7.5, 4.2)):
-        dd = rotv(d, ang)
-        base = add(end, d, -2)
-        out.append(shard(base, add(base, dd, L), w, bend=0.4 if ang < -80 else -0.4))
-    for j, sh in enumerate(out):
-        fig.part('tsp%d' % j, sh, OBS, cel=0.7, rim=0.5, cast=0)
+    out.append(('fe0', add(end, d, -2.5), unit((0, 0), add(d, (0, -2.2))), 6.2, 3.4, 30))
+    out.append(('fe1', add(end, d, -6.0), unit((0, 0), add(d, (-0.6, -2.6))), 4.6, 2.8, 31))
+    # la collerette derrière la joue (repère de la tête) : deux flammes couchées vers l'arrière
+    for j, (r_, dir_, L, w) in enumerate((((192.0, 110.0), (-1.0, -0.3), 7.0, 3.8), ((190.5, 100.5), (-1.0, -0.6), 6.0, 3.4))):
+        r = mapp(R.HEAD, r_)
+        out.append(('fc%d' % j, r, unit((0, 0), dir_), L, w, 40 + j))
+    return out
 
 
 def body_details(R, P):
@@ -687,43 +790,44 @@ def head_horns(fig, R, P, far):
         sh = horn_shape(root, c1, c2, tip, 12.0)
         det = [(ribbon([(196, 76.5), (184, 69.5), (170, 63.8)], [0.2, 1.3, 0.2]), OBS.glint, 0.55)]
         fig.part('hornN', sh, OBS, grad=(200, 62, 160, 82, [(0, OBS.light), (0.5, OBS.base), (1, OBS.shadow)]),
-                 cel=1.1, rim=0.7, cast=1.0, cast_on=['head', 'body'], details=det)
+                 cel=1.1, rim=0.7, cast=1.0, cast_on=['body'], details=det)
         fig.pose(['hornN'], R.HEAD)
 
 
-def draw_head(fig, R, P):
+def to_fig(M, det):
+    """Des détails dessinés dans un repère (tête ou mâchoire) → dans le dessin (formes et dégradés posés par M)."""
+    k = math.sqrt(abs(M[0] * M[3] - M[1] * M[2]))
+    out = []
+    for sh, fill, op in det:
+        if isinstance(fill, tuple) and fill[0] == 'rad':
+            c = mapp(M, fill[1:3])
+            fill = ('rad', c[0], c[1], fill[3] * k, fill[4] * k) + tuple(fill[5:])
+        elif isinstance(fill, tuple) and fill[0] == 'lin':
+            a, b = mapp(M, fill[1:3]), mapp(M, fill[3:5])
+            fill = ('lin', a[0], a[1], b[0], b[1]) + tuple(fill[5:])
+        out.append((mapped(M, sh), fill, op))
+    return out
+
+
+def head_back(fig, R, P):
+    """Ce qui est DERRIÈRE la peau de la tête : la gorge au fond de la gueule, les crocs (racines cachées dans les
+    gencives), la corne du museau (racine cachée), la goutte de lave qui pend de la lèvre."""
     heat = P['heat']
-    # la gorge (rouge sombre, la lueur du four remonte) : au fond de la gueule, derrière les deux mâchoires
     th = sm(THROAT, t=0.9)
     fig.part('throat', th, MEMB, grad=(222, 106, 202, 120, [(0, LAVA[3] if heat < 1.5 else LAVA[2]), (0.5, '#a0283a'), (1, '#4a1030')]),
              cel=0, rim=0, cast=0)
     fig.pose(['throat'], R.HEAD)
-    # les crocs du bas (derrière la mâchoire : la mâchoire couvre leurs racines)
     low = [(222, 4.2, 2.6), (231, 3.4, 2.2), (241, 6.4, 3.4), (249, 3.2, 2.2)]
     for j, (x, L, w) in enumerate(low):
         y = jaw_top(x)
         sh = sm([(x - w / 2, y + 1.6), (x - w * 0.2, y - L * 0.6), (x + 0.4, y - L), (x + w * 0.45, y - L * 0.5), (x + w / 2, y + 1.6)], sharp=(2,), t=0.8)
         fig.part('tl%d' % j, sh, FANG, cel=0.4, rim=0.4, cast=0)
-    # la goutte de lave qui pend de la lèvre du bas (gravité) : sa racine est cachée sous la lèvre
     dx_, dy_ = 238.0, 119.0
     d_ = sm([(dx_ - 1.6, dy_), (dx_ + 1.6, dy_), (dx_ + 1.4, dy_ + 4.4), (dx_ + 0.2, dy_ + 7.6), (dx_ - 1.2, dy_ + 4.6)], sharp=(3,), t=0.9)
     fig.part('drip', d_, Mat(LAVA[0], LAVA[1], LAVA[2], LAVA[3], LAVA[4]), grad=(dx_ + 1, dy_ + 2, dx_ - 1, dy_ + 7,
              [(0, LAVA[1]), (0.5, LAVA[2]), (1, LAVA[4])]), cel=0.3, rim=0.3, cast=0)
-    jaw = sm(LJAW, t=0.9)
-    det = [(ribbon([(205, 111.4), (220, 110.4), (236, 111.2), (248, 110.8)], [0.2, 1.0, 1.0, 0.2]), GUM, 0.9),
-           (ribbon([(214, 120.6), (230, 120.0), (244, 117.6)], [0.2, 1.2, 0.2]), ROCK.deep, 0.35)]
-    fig.part('jaw', jaw, ROCK, grad=(250, 108, 205, 124, [(0, ROCK.light), (0.5, ROCK.base), (1, ROCK.shadow)]), cel=1.3, rim=0.6,
-             cast=0, details=det)
-    fig.pose(['jaw', 'drip'] + ['tl%d' % j for j in range(len(low))], R.JAW)
-    # la goutte de lave qui pend de la lèvre du bas
-    # (dessinée dans le repère de la mâchoire : elle suit la gueule)
-    # les échardes de la collerette (derrière la joue)
-    for j, (r_, t_, w) in enumerate((((193, 108), (178, 112), 5.2), ((191, 99), (176, 99), 5.0))):
-        fig.part('col%d' % j, shard(r_, t_, w, bend=0.5), OBS, cel=0.5, rim=0.45, cast=0)
-    fig.pose(['col0', 'col1'], R.HEAD)
-    # la corne du museau (derrière le crâne : la racine est cachée)
+    fig.pose(['drip'] + ['tl%d' % j for j in range(len(low))], R.JAW)
     fig.part('snh', shard((241, 90), (244.5, 79), 6.0, bend=-0.8), OBS, cel=0.6, rim=0.5, cast=0)
-    # les crocs du haut (derrière le crâne)
     up = [(217, 3.6, 2.4), (227, 7.6, 3.8), (235, 4.0, 2.4), (244, 7.0, 3.6), (251, 3.4, 2.2)]
     names = []
     for j, (x, L, w) in enumerate(up):
@@ -732,26 +836,49 @@ def draw_head(fig, R, P):
         fig.part('tu%d' % j, sh, FANG, cel=0.4, rim=0.4, cast=0)
         names.append('tu%d' % j)
     fig.pose(['snh'] + names, R.HEAD)
-    # le crâne et la mâchoire du haut
-    skull = sm(SKULL, sharp=SKULL_SHARP, t=0.9)
+
+
+def head_details(R, P):
+    """Ce qui est peint DANS la peau de la tête et de la mâchoire (une seule forme avec le corps) : le dessus du museau
+    pris par la lumière, la narine, l'oeil, la larme de lave, la joue bombée sur la charnière, le pli des lèvres qui
+    continue la gueule vers l'arrière, la gencive qui fait le tour du coin de la gueule, le dessous de la mâchoire."""
+    heat = P['heat']
     ex, ey, ew = EYE
+    H, J = R.HEAD, R.JAW
     det = []
-    # le dessus du museau pris par la lumière, la joue dans l'ombre
     det.append((sm([(214, 80), (232, 85), (250, 91), (254, 97), (240, 94), (222, 89)], t=0.9), ROCK.light, 0.45))
-    det.append((sm([(189, 100), (196, 104), (204, 108), (200, 116), (192, 114)], t=0.9), ROCK.shadow, 0.5))
-    # la narine qui rougeoie
     det.append((ellipse(249.6, 96.2, 2.4, 1.4).rot(-18, 249.6, 96.2), ('rad', 249.6, 96.2, 3.4, 3.4, [(0, LAVA[1]), (0.5, LAVA[3]), (1, LAVA[5])]), 1))
-    # l'oeil de braise (pupille fendue), une larme de lave dessous
     det += eye_kit(P)
     det += lava_vein([(ex - 1.8, ey + 3.4), (ex - 2.6, ey + 7.2), (ex - 1.6, ey + 11.4)], 0.9, heat, glow=2.2)
-    fig.part('head', skull, ROCK, grad=(252, 80, 196, 116, [(0, ROCK.light), (0.5, ROCK.base), (1, ROCK.shadow)]),
-             cel=1.5, rim=0.8, cast=1.0, cast_on=['body', 'col0', 'col1', 'jaw', 'throat', 'hornF', 'wingF', 'waF', 'wkF', 'wtF',
-                                                   'tl0', 'tl1', 'tl2', 'tl3'], details=det)
-    # l'arcade d'obsidienne au-dessus de l'oeil (regard dur, elle descend vers l'avant)
+    # la joue bombée au-dessus de la charnière : une lumière douce en arc (elle couvre l'articulation)
+    cx_, cy_, cr_ = CHEEK
+    det.append((ribbon([(cx_ - 6.0, cy_ + 1.5), (cx_ - 4.4, cy_ - 4.4), (cx_ + 1.0, cy_ - 6.6), (cx_ + 6.0, cy_ - 5.0)],
+                       [0.2, 1.6, 1.5, 0.2]), ROCK.light, 0.4))
+    # le pli des lèvres : il continue la ligne de la gueule au-delà du coin, file en arrière et descend sur la joue
+    fold = [(cx_ + 6.4, cy_ + 0.2), (cx_ + 1.2, cy_ + 2.4), (cx_ - 3.6, cy_ + 5.6), (cx_ - 6.6, cy_ + 9.4)]
+    det.append((ribbon([(x - 0.4, y + 0.5) for x, y in fold], [0.6, 1.2, 0.9, 0.1]), ROCK.deep, 0.5))
+    det.append((ribbon([(x + 0.7, y - 0.6) for x, y in fold], [0.1, 0.8, 0.7, 0.1]), ROCK.hi, 0.25))
+    out = to_fig(H, det)
+    # la gencive : une seule lèvre rouge sombre qui suit le bord de la gueule, de la mâchoire du haut, autour du coin
+    # (en courbe douce, sur la joue), jusqu'à la mâchoire du bas
+    ug = [mapp(H, p) for p in [(249.5, 108.0), (238.0, 108.2), (226.0, 107.4), (214.0, 107.6), (208.5, 109.4)]]
+    lg = [mapp(J, p) for p in [(208.0, 112.2), (216.0, 110.8), (232.0, 111.6), (246.0, 111.2), (251.0, 112.4)]]
+    corner = lerp(mapp(H, (206.0, 111.6)), mapp(J, (206.0, 111.6)), 0.5)
+    corner = add(corner, unit(lerp(ug[-1], lg[0], 0.5), corner), 1.6)
+    path = catmull(ug + [corner] + lg, 4, closed=False)
+    out.append((ribbon(path, [0.3] + [1.5] * (len(path) - 2) + [0.3]), GUM, 0.95))
+    out.append((ribbon([(x + 0.3, y - 0.3) for x, y in path], [0.1] + [0.5] * (len(path) - 2) + [0.1]), '#b83a44', 0.6))
+    # le dessous de la mâchoire : une ombre douce qui file vers la gorge
+    out += to_fig(J, [(ribbon([(244, 117.6), (230, 120.0), (214, 120.6), (202, 118.6)], [0.2, 1.3, 1.2, 0.2]), ROCK.deep, 0.35)])
+    return out
+
+
+def head_front(fig, R, P):
+    """Devant la tête : l'arcade d'obsidienne au-dessus de l'oeil (regard dur) et la grande corne proche."""
     brow = sm([(203.0, 89.8), (206.5, 85.4), (214, 84.0), (222.5, 85.6), (229.8, 90.0), (228.2, 93.4), (220, 93.6), (213, 92.8), (206.5, 93.4)], t=0.9)
     fig.part('brow', brow, OBS, grad=(226, 82, 206, 90, [(0, OBS.light), (0.5, OBS.base), (1, OBS.shadow)]), cel=0.7, rim=0.6, cast=0.8,
-             cast_on=['head'])
-    fig.pose(['head', 'brow'], R.HEAD)
+             cast_on=['body'])
+    fig.pose(['brow'], R.HEAD)
     head_horns(fig, R, P, far=False)
 
 
