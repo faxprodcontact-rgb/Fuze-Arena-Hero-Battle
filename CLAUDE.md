@@ -17,7 +17,8 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
 - Site de test : https://faxprodcontact-rgb.github.io/Fuze-Arena-Hero-Battle/ — mis en ligne à chaque envoi par
   `.github/workflows/site-test.yml` (branche `gh-pages`, jamais à la main). Les téléphones se mettent à jour seuls
   (`src/game/updater.ts`, `version.json`). Copie claude.ai : https://claude.ai/artifact/EigGhykFPgfeb7L1UoYfDX (`dist/`,
-  CSS dans la page, plusieurs fichiers `assets/` : publier les nouveaux, retirer les anciens), à republier à chaque envoi.
+  CSS dans la page, plusieurs fichiers `assets/` : publier les nouveaux, retirer les anciens ; **511 fichiers au plus** : on n'y
+  met pas `art/vecto/repos/`, le jeu montre alors l'image fixe), à republier à chaque envoi.
 - Publier : changer `src/game/version.ts`, `npx tsc --noEmit`, `npm test`, `npm run build`, une note courte dans
   `docs/journal.md`, commit, envoi, copie claude.ai.
 - Disposition (inspirée d'AFK Arena / Idle Heroes) : accueil = combat permanent (`idle-scene.ts`) avec médaillons sur
