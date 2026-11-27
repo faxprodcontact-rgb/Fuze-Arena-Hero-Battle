@@ -29,7 +29,7 @@ ID_JEU = 'boss-terre'
 ROCK = Mat('#d6cca2', '#a09878', '#716c66', '#4a4256', '#2b2338', glint='#f6eed2')
 ROCKF = Mat('#a49c86', '#7a7270', '#56505e', '#3a3248', '#241c30')          # la roche du fond (bras et jambe lointains)
 SAND = Mat('#fbefcc', '#e2cfa8', '#b9a387', '#856e74', '#503c4c', glint='#fffaea')   # grès taillé : la statue, le portique
-MOSS = Mat('#dcea84', '#97bc46', '#5e9236', '#33623a', '#1a3a32')
+MOSS = Mat('#d8e486', '#8eb24a', '#5a883a', '#335c3a', '#1a3a32')
 GAR = Mat('#ffd6dc', '#ff7488', '#d6365a', '#8c1c4a', '#4e143a', glint='#ffffff')    # grenat
 EYE = ('#fff0dc', '#ffb08a', '#ff5a3c', '#d82a2e', '#8c1626')
 MOUTH = ('#7a2238', '#561630', '#3a0e26')                                     # l'intérieur de la gueule (rouge sombre)
@@ -157,7 +157,7 @@ def moss_cap(pts, k=1.0, drips=()):
 
 # ---------- les cristaux de grenat ----------
 
-def crystal(base, ang, L, w, tipk=0.36):
+def crystal(base, ang, L, w, tipk=0.42):
     """Un cristal de grenat : un prisme pointu (vu de 3/4) qui s'affine un peu vers la pointe, planté par sa base
     (cachée dans la roche) ; ang = direction (degrés, 0 = vers le haut, + = vers la droite). Renvoie la forme et ses
     faces : face gauche sombre, face droite éclairée, deux facettes de pointe, un reflet sur l'arête."""
@@ -169,7 +169,7 @@ def crystal(base, ang, L, w, tipk=0.36):
         return (base[0] + u[0] * s + v[0] * t, base[1] + u[1] * s + v[1] * t)
     h = w / 2
     sL = L * (1 - tipk)
-    hs = h * 0.84                              # il s'affine vers la pointe
+    hs = h * 0.74                              # il s'affine vers la pointe
     r = h * 0.16                               # l'arête : un peu à droite du milieu (on voit plus la face gauche)
     body = sm([P(-3, -h), P(sL, -hs), P(L, r * 0.6), P(sL, hs), P(-3, h)], sharp=(1, 2, 3), t=0.4)
     left = sm([P(-3, -h), P(sL, -hs), P(sL, r * 0.8), P(-3, r)], sharp=(0, 1, 2, 3), t=0.2)
@@ -226,7 +226,7 @@ def moss_geom(top, thick, seed=0, drips=()):
     for (t, ln, w) in drips:
         i = min(len(c) - 1, int(t * (len(c) - 1)))
         q = dn_pts[i]
-        d = taper(crpath([(q[0], q[1] - 2.5), (q[0] - 0.4, q[1] + ln * 0.5), (q[0] - 0.9, q[1] + ln)], 8), w, w * 0.62)
+        d = taper(crpath([(q[0], q[1] - 2.5), (q[0] - 0.3, q[1] + ln * 0.5), (q[0] - 0.7, q[1] + ln)], 8), w * 1.25, w * 0.85)
         parts.append(PG(d))
     g = unary_union(parts).buffer(0.9, join_style=1).buffer(-0.9, join_style=1)
     return g, c
@@ -279,7 +279,7 @@ def glyph(cx, cy, s, kind):
 FIST = [(-27.0, 10.0), (-19.0, 0.0), (-4.0, -4.0), (13.0, -2.0), (24.0, 7.0), (29.0, 22.0), (30.0, 34.0), (29.0, 42.0),
         (-30.0, 42.0), (-32.0, 30.0)]
 FINGERS = [(-27.0, -15.5, 22.0), (-16.5, -3.0, 19.5), (-4.0, 9.5, 18.0), (8.5, 23.0, 17.0)]   # x0, x1, haut du doigt
-THUMB = [(16.0, 12.0), (24.0, 8.0), (30.0, 12.0), (31.0, 20.0), (27.0, 26.0), (21.0, 25.0), (17.5, 19.0)]
+THUMB = [(10.0, 9.0), (19.0, 5.6), (27.0, 8.6), (31.0, 15.0), (29.6, 22.0), (24.6, 23.0), (18.0, 17.6)]
 
 
 def fist_parts(fig, name, W, ang, k, mat, grad, dark=0.0, front_cast=None):
@@ -316,7 +316,7 @@ def fist_parts(fig, name, W, ang, k, mat, grad, dark=0.0, front_cast=None):
     fig.part(name, body, mat, grad=grad_of(body, grad), cel=1.8, rim=0.8, cast=1.4, details=det, cast_on=front_cast)
     th = sm([L(p) for p in THUMB], t=0.9)
     fig.part(name + 't', th, mat, grad=grad_of(th, grad), cel=1.0, rim=0.6, cast=1.0, cast_on=[name],
-             details=[(LR([(22.0, 9.6), (28.6, 12.6), (29.6, 18.0), (25.0, 15.0)], 1.4), mat.hi, 0.45)])
+             details=[(LR([(17.0, 7.0), (25.0, 8.6), (29.4, 14.0), (24.0, 12.6), (17.6, 10.6)], 1.4), mat.hi, 0.45)])
     return body
 
 
@@ -339,10 +339,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     LEGF = mchain(mS(1, 1 + lift / 52.0, 0, GRD))
 
     if fx:
+        # les effets de l'animation (anim.py) : des fonctions qui reçoivent la figure (pour ses dégradés) et rendent
+        # (derrière, devant) en SVG
         for item in fx:
-            if isinstance(item, tuple):
-                fig.fx_back.append(item[0])
-                fig.fx_front.append(item[1])
+            back, front = item(fig) if callable(item) else item
+            fig.fx_back.extend(b for b in back if b)
+            fig.fx_front.extend(f_ for f_ in front if f_)
 
     # lueur douce des cristaux quand il se charge (dégradé, aucun flou)
     if g > 0.6:
@@ -371,7 +373,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fist_parts(fig, 'ffist', Wf, fa, 0.72, ROCKF, ROCKF_G, dark=0.3)
 
     # ---- la jambe lointaine (à moitié cachée, plus sombre) ----
-    fleg = limb([(178.0, 178.0), (177.0, 200.0), (178.0, 220.0)], [32.0, 30.0, 28.0])
+    fleg = limb([(177.0, 180.0), (176.0, 200.0), (177.0, 220.0)], [38.0, 36.0, 33.0])
     fig.part('fleg', fleg, ROCKF, grad=grad_of(fleg, ROCKF_G), cel=1.8, rim=0.6, cast=0,
              details=[face([(180.0, 196.0), (192.0, 194.0), (193.0, 208.0), (184.0, 209.0)], ROCKF.light, 0.45)])
     ffoot, fdet2 = foot([(158.0, 236.0), (158.5, 226.0), (163.0, 218.0), (176.0, 214.0), (186.0, 215.0), (190.0, 236.0)], [0.6, 4, 5, 5, 5, 0.6],
@@ -381,7 +383,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['fleg', 'ffoot'], LEGF)
 
     # ---- la jambe proche : la cuisse sort de sous le ventre, genou de rocher, pied large aux trois orteils ----
-    nleg = fuse([limb([(124.0, 176.0), (120.0, 198.0), (122.0, 220.0)], [44.0, 42.0, 38.0]),
+    nleg = fuse([limb([(124.0, 178.0), (120.0, 198.0), (122.0, 220.0)], [50.0, 48.0, 43.0]),
                  rk([(104.0, 196.0), (114.0, 190.0), (130.0, 192.0), (134.0, 206.0), (124.0, 214.0), (108.0, 212.0)], 6.0)], 1.0, 70)[0]
     fig.part('nleg', nleg, ROCK, grad=grad_of(nleg, ROCK_G), cel=2.0, rim=0.7, cast=1.0, cast_on=['fleg', 'ffoot'],
              details=[face([(112.0, 193.0), (126.0, 191.0), (133.0, 199.0), (128.0, 206.0), (116.0, 204.0)], ROCK.light, 0.6),
@@ -396,12 +398,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ================================================================ le corps : la montagne (bosse, poitrine, ventre)
     body = sm([(56.0, 128.0), (52.0, 104.0), (55.0, 84.0), (66.0, 70.0), (84.0, 60.0), (106.0, 54.0), (130.0, 51.0), (152.0, 53.0),
                (170.0, 59.0), (184.0, 66.0), (196.0, 74.0), (214.0, 96.0), (230.0, 132.0), (234.0, 156.0), (228.0, 172.0), (214.0, 188.0),
-               (200.0, 196.0), (186.0, 198.0), (164.0, 196.0), (144.0, 192.0), (122.0, 188.0), (104.0, 182.0), (98.0, 168.0),
+               (200.0, 198.0), (186.0, 201.0), (164.0, 200.0), (144.0, 197.0), (122.0, 193.0), (104.0, 185.0), (98.0, 168.0),
                (98.0, 150.0), (90.0, 138.0), (72.0, 134.0)], t=0.9)
     bdet = []
     # les grandes dalles de roche (lisibles dans la lumière, perdues dans l'ombre)
-    bdet += [face([(98.0, 58.0), (128.0, 53.0), (150.0, 56.0), (146.0, 74.0), (120.0, 80.0), (100.0, 74.0)], ROCK.light, 0.55, 4.0),
-             face([(152.0, 58.0), (170.0, 62.0), (186.0, 72.0), (178.0, 88.0), (160.0, 86.0), (150.0, 76.0)], ROCK.light, 0.5, 4.0),
+    bdet += [face([(98.0, 58.0), (128.0, 53.0), (150.0, 56.0), (146.0, 74.0), (120.0, 80.0), (100.0, 74.0)], ROCK.light, 0.72, 4.0),
+             face([(104.0, 60.0), (126.0, 56.0), (144.0, 58.0), (140.0, 66.0), (120.0, 70.0), (106.0, 67.0)], ROCK.hi, 0.3, 4.0),
+             face([(152.0, 58.0), (170.0, 62.0), (186.0, 72.0), (178.0, 88.0), (160.0, 86.0), (150.0, 76.0)], ROCK.light, 0.65, 4.0),
              face([(122.0, 84.0), (148.0, 80.0), (162.0, 92.0), (154.0, 110.0), (130.0, 112.0), (120.0, 100.0)], ROCK.light, 0.28, 4.0),
              face([(66.0, 76.0), (90.0, 64.0), (98.0, 78.0), (90.0, 92.0), (70.0, 92.0)], ROCK.light, 0.32, 4.0)]
     bdet += fissure([(100.0, 74.0), (120.0, 80.0), (146.0, 74.0), (150.0, 56.0)], 0.9)
@@ -411,7 +414,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     bdet += fissure([(98.0, 78.0), (106.0, 92.0), (104.0, 108.0)], 0.7, k=0.6)
     # la poitrine dans l'ombre, sous la tête (l'avant du corps regarde le sol)
     bdet += [(sm([(92.0, 118.0), (124.0, 108.0), (164.0, 112.0), (194.0, 132.0), (206.0, 170.0), (200.0, 200.0), (100.0, 200.0), (90.0, 160.0)], t=0.9),
-              ('lin', 0, 110.0, 0, 190.0, [(0, ROCK.shadow, 0.0), (0.4, ROCK.shadow, 0.55), (1, ROCK.deep, 0.75)]), 1)]
+              ('lin', 0, 108.0, 0, 190.0, [(0, ROCK.shadow, 0.0), (0.35, ROCK.shadow, 0.7), (1, ROCK.deep, 0.85)]), 1)]
     # le flanc du dos (loin de la lumière) et quelques dalles de plus au milieu du corps, à peine marquées
     bdet += [face([(54.0, 92.0), (64.0, 84.0), (74.0, 96.0), (70.0, 122.0), (56.0, 126.0)], ROCK.shadow, 0.35, 4.0)]
     bdet += fissure([(98.0, 108.0), (114.0, 114.0), (130.0, 112.0)], 0.7, k=0.5)
@@ -453,7 +456,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- la nappe de mousse du dos (une seule, de la bosse au crâne : elle couvre le pied des montants) ----
     moss_part(fig, 'bmoss', [(53.0, 100.0), (54.0, 86.0), (61.0, 73.0), (75.0, 63.0), (93.0, 56.0), (112.0, 51.6), (130.0, 50.0), (148.0, 51.0),
                              (164.0, 56.0), (178.0, 62.0), (192.0, 68.0)], 10.5, seed=1,
-              drips=[(0.07, 9.0, 3.4), (0.5, 6.0, 3.0), (0.83, 4.0, 2.6)], cast_on=['body', 'pill', 'pilr'], cast=1.6)
+              drips=[(0.07, 7.0, 3.4), (0.5, 4.6, 3.0), (0.83, 3.0, 2.6)], cast_on=['body', 'pill', 'pilr'], cast=1.6)
     fig.pose(['bmoss'], UC)
 
     # ================================================================ le col de rocher sous la mâchoire
@@ -513,8 +516,8 @@ def head_parts(fig, P, HEAD, UC):
     names = []
 
     # ---- la nuque prise dans la montagne : une coque de roche brute DERRIÈRE le crâne (la bosse l'enveloppe) ----
-    nape = sm([(176.0, 140.0), (166.0, 120.0), (163.0, 98.0), (168.0, 80.0), (180.0, 68.0), (196.0, 62.0), (210.0, 62.0),
-               (206.0, 74.0), (190.0, 80.0), (182.0, 96.0), (182.0, 120.0)], t=0.85)
+    nape = sm([(176.0, 140.0), (166.0, 120.0), (163.0, 98.0), (168.0, 80.0), (180.0, 68.0), (192.0, 64.0), (202.0, 66.0),
+               (200.0, 74.0), (190.0, 80.0), (182.0, 96.0), (182.0, 120.0)], t=0.85)
     fig.part('nape', nape, ROCK, grad=grad_of(nape, ROCK_G), cel=1.6, rim=0.7, cast=1.2, cast_on=['body', 'col'],
              details=[face([(172.0, 76.0), (184.0, 66.0), (198.0, 63.0), (192.0, 72.0), (178.0, 82.0)], ROCK.light, 0.55, 2.0)]
              + fissure([(167.0, 96.0), (170.0, 108.0), (167.0, 120.0)], 0.7))
@@ -628,15 +631,15 @@ def head_parts(fig, P, HEAD, UC):
 
     # ---- un seul coussin de mousse passe de la bosse au crâne ----
     moss_part(fig, 'hmoss', [(174.0, 82.0), (181.0, 70.0), (196.0, 64.6), (212.0, 65.0), (227.0, 69.4), (236.4, 78.4)], 8.4,
-              seed=5, drips=[(0.06, 6.0, 3.0), (0.96, 3.2, 2.2)], cast_on=['head', 'nape'], cast=1.3)
+              seed=5, drips=[(0.06, 4.6, 3.0)], cast_on=['head', 'nape'], cast=1.3)
     names.append('hmoss')
     # ---- la barbe de mousse pend sous le menton (gravité), sur le col ----
     moss_part(fig, 'beard', [(198.0, 151.0), (208.0, 153.6), (220.0, 153.0), (232.0, 147.0)], 4.0, seed=8,
-              drips=[(0.3, 7.0, 3.0), (0.75, 4.0, 2.4)], cast_on=['col'], cast=1.2, k=0.8)
+              drips=[(0.3, 4.6, 3.0), (0.75, 2.8, 2.4)], cast_on=['col'], cast=1.2, k=0.8)
     names.append('beard')
     # ---- les cristaux de la tempe, dans la fêlure ----
-    crystal_part(fig, 'ct1', (187.0, 93.0), -50, 12.0, 5.2, cast=0.7, cast_on=['head', 'nape'])
-    crystal_part(fig, 'ct2', (187.5, 97.5), -84, 8.0, 4.2, cast=0.6, cast_on=['head', 'nape'])
+    crystal_part(fig, 'ct1', (187.0, 94.0), -52, 13.5, 7.4, cast=0.7, cast_on=['head', 'nape'])
+    crystal_part(fig, 'ct2', (186.0, 90.0), -18, 7.5, 5.0, cast=0.6, cast_on=['head', 'nape'])
     names += ['ct1', 'ct2']
     fig.pose(names, HEAD)
     # ---- la grappe de cristaux dans la jointure sous l'oreille (elle pousse dans la roche du corps) ----
@@ -700,8 +703,8 @@ def near_arm(fig, P, UC):
     S = mapp(UC, NS)
     Wt = (NW0[0] + P['fn'][0], NW0[1] + P['fn'][1])
     E, W = ik(S, Wt, NL[0], NL[1], NSG)
-    up = limb([S, lerp(S, E, 0.5), E], [52.0, 44.0, 35.0])
-    fo = limb([E, lerp(E, W, 0.55), W], [34.0, 41.0, 36.0])
+    up = limb([S, lerp(S, E, 0.5), E], [54.0, 46.0, 37.0])
+    fo = limb([E, lerp(E, W, 0.55), W], [36.0, 46.0, 40.0])
     arm, garm = fuse([up, fo], 2.0, 80)
     det = []
     # les faces de roche du bras : l'épaule-dôme éclairée, le dessus de l'avant-bras ; l'intérieur dans l'ombre
@@ -723,18 +726,19 @@ def near_arm(fig, P, UC):
     fig.part('narm', arm, ROCK, grad=grad_of(arm, [(0, '#a29a7c'), (0.5, '#736d68'), (1, '#463e52')]), cel=2.2, rim=0.9, cast=2.0,
              cast_on=['body', 'nleg', 'nfoot', 'col', 'farm', 'fleg'], details=det)
     # la racine du bras se fond dans la bosse (aucune couture à l'épaule)
-    a0 = mapp(UC, (72.0, 112.0))
-    a1 = mapp(UC, (104.0, 84.0))
+    a0 = mapp(UC, (60.0, 128.0))
+    a1 = mapp(UC, (98.0, 88.0))
     fig.masks['narm'] = (a0[0], a0[1], a1[0], a1[1], 'body')
     # les cristaux du coude (dans la jointure, côté du dos), de longueurs différentes
-    ob = (-d1[0] * 0.5 - fdir[0] * 0.5, -d1[1] * 0.5 - fdir[1] * 0.5)
+    mid = lerp(S, W, 0.5)
+    ob = (E[0] - mid[0], E[1] - mid[1])
     L_ = math.hypot(*ob) or 1
     ob = (ob[0] / L_, ob[1] / L_)
-    base = (E[0] + ob[0] * 12.0, E[1] + ob[1] * 12.0)
+    base = (E[0] + ob[0] * 13.0, E[1] + ob[1] * 13.0)
     a_ob = math.degrees(math.atan2(ob[0], -ob[1]))
-    crystal_part(fig, 'ce1', (base[0] + 2.0, base[1] - 6.0), a_ob + 34, 20.0, 7.4, cast=1.0, cast_on=['narm'])
-    crystal_part(fig, 'ce2', base, a_ob + 4, 14.0, 6.4, cast=0.9, cast_on=['narm', 'ce1'])
-    crystal_part(fig, 'ce3', (base[0] + 1.0, base[1] + 6.0), a_ob - 30, 9.0, 5.0, cast=0.8, cast_on=['narm'])
+    crystal_part(fig, 'ce1', (base[0] + 1.0, base[1] - 5.0), a_ob + 40, 21.0, 8.4, cast=1.0, cast_on=['narm'])
+    crystal_part(fig, 'ce2', base, a_ob + 8, 14.0, 7.0, cast=0.9, cast_on=['narm', 'ce1'])
+    crystal_part(fig, 'ce3', (base[0] + 0.5, base[1] + 6.0), a_ob - 22, 9.0, 5.4, cast=0.8, cast_on=['narm'])
     # le poing proche, posé sur les phalanges
     na = (ang_of(E, W) - ang_of(NE0, NW0)) * 0.4 + P['nrot']
     fist_parts(fig, 'nfist', W, na, 1.0, ROCK, [(0, '#aaa286'), (0.5, '#78726c'), (1, '#4a4256')])

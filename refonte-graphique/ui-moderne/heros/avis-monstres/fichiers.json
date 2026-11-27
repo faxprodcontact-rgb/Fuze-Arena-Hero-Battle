@@ -28,5 +28,11 @@
 "img/mon-kael-tireur.webp": "public/art/vecto/mon-kael-tireur.webp",
 "gif/mon-kael-tireur.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-kael-tireur.gif",
 "img/mon-orin-costaud.webp": "public/art/vecto/mon-orin-costaud.webp",
-"gif/mon-orin-costaud.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-orin-costaud.gif"
+"gif/mon-orin-costaud.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-orin-costaud.gif",
+"img/mon-eldra-costaud.webp": "public/art/vecto/mon-eldra-costaud.webp",
+"gif/mon-eldra-costaud.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/mon-eldra-costaud.gif",
+"img/boss-eau.webp": "public/art/vecto/boss-eau.webp",
+"gif/boss-eau.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/boss-eau.gif",
+"img/boss-terre.webp": "public/art/vecto/boss-terre.webp",
+"gif/boss-terre.gif": "refonte-graphique/ui-moderne/heros/avis-monstres/gif/boss-terre.gif"
 }

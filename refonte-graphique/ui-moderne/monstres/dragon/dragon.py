@@ -29,12 +29,12 @@ from outils import FigureM, fused, _poly, _shape, ik, smooth, lerp  # noqa: E402
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 
 # ---------- matières (tons du pixel art passés à la gamme de l'interface : lumières chaudes, ombres violettes) ----------
-ROCK = Mat('#d2a282', '#8a6660', '#5e4454', '#3e2a42', '#24172e')        # roche volcanique (celle de Kael, plus chaude)
-ROCKF = Mat('#9a7a72', '#5e4656', '#44304a', '#2e1f3c', '#1c122c')       # la même, du côté du fond (pattes lointaines)
+ROCK = Mat('#cc9c7c', '#7c5a5c', '#523a4c', '#35233e', '#1f1429')        # roche volcanique (celle de Kael, plus chaude)
+ROCKF = Mat('#8e6e6a', '#523c4e', '#3a2840', '#271a36', '#170f26')       # la même, du côté du fond (pattes lointaines)
 OBS = Mat('#b4c2f2', '#6472ae', '#3d4679', '#272b52', '#181936', glint='#f2f5ff')   # obsidienne (celle de Kael)
 OBSF = Mat('#8a96c8', '#4c5690', '#323a68', '#20244a', '#141530')
-MEMB = Mat('#f2909a', '#b43c56', '#862a48', '#58183a', '#380e2a')       # membrane pourpre (le pagne de Kael, plus sombre)
-MEMBF = Mat('#c0607a', '#80264a', '#5e1a3c', '#3e1030', '#280a22')
+MEMB = Mat('#e47e8c', '#a4304c', '#7a2240', '#4e1434', '#300c24')       # membrane pourpre (le pagne de Kael, plus sombre)
+MEMBF = Mat('#b0566e', '#702042', '#521636', '#360e2a', '#22081e')
 FANG = Mat('#fffaf0', '#f4ead2', '#dccbb0', '#a8906e', '#6b5040')
 HEAT = Mat('#ffc89a', '#c86a4c', '#94403a', '#622632', '#3c1626')       # la croûte chauffée du four
 LAVA = ['#fffbe4', '#ffe68a', '#ffb43a', '#f2701a', '#cc3a12', '#8a1a10']
@@ -42,7 +42,7 @@ GUM = '#7a1a2a'
 
 GRD = 236                      # le sol
 FEET = (128, 236)              # le point « sol » de la case
-FRAME = (-6, 8, 274, 234)      # la boîte de l'image (x0, y0, largeur, hauteur)
+FRAME = (-10, 16, 276, 225)    # la boîte de l'image (x0, y0, largeur, hauteur) : les pieds (128, 236) tombent en (138, 220)
 
 # ---------- le visage (../../heros/visage.py) : tête de dragon de PROFIL → placer(tour=75), un seul oeil ----------
 # La boîte = la sphère du crâne, gueule fermée (du dos du crâne à la racine du museau, du dessus du crâne au bas de la
@@ -135,6 +135,13 @@ def lava_vein(pts, w=1.1, g=0.0, glow=2.6):
     hot = ribbon(pts, [0.05] + [w * 0.45] * (len(pts) - 2) + [0.05])
     halo = ribbon(pts, [0.6] + [w * glow * (1 + 0.3 * g)] * (len(pts) - 2) + [0.6])
     return [(halo, LAVA[3], min(0.75, 0.3 + 0.14 * g)), (core, LAVA[4], 1), (hot, LAVA[1] if g < 2 else LAVA[0], 1)]
+
+
+def claw_tip(base, d, L, curl=0.5):
+    n = (-d[1], d[0])
+    if n[1] < 0:
+        n = (-n[0], -n[1])
+    return add(add(base, d, L), n, L * curl)
 
 
 def claw_shape(base, d, L, w, curl=0.5):
@@ -286,18 +293,25 @@ def leg_geom(R, L, near=True, front=True, A=None, fdir=0.0, spread=1.0, lifted=F
     # les doigts, fondus dans le pied (une seule forme) : trois bosses à l'avant, séparées par de petits creux ; le doigt
     # proche est le plus bas, ceux du fond dépassent derrière lui, plus haut (perspective du sol)
     tips = []
-    spec = [(-4.0, -10.0, 12.0, -9.4), (0.0, 6.0, 15.5, -6.2), (3.6, 24.0, 12.5, -3.4)]   # (racine, angle, longueur, haut)
-    for k, (off, a, Ln, hy) in enumerate(spec):
+    spec = [(-4.0, -10.0, 12.0, -3.4), (0.0, 6.0, 15.5, -1.8), (3.6, 24.0, 12.5, -0.2)]   # (racine, angle, longueur, sol)
+    for k, (off, a, Ln, gy) in enumerate(spec):
         root = add(add(B, n, off * 0.9), fd, 0.5)
         dk = rotv(fd, a * spread * (1.3 if lifted else 1.0))
         tip = add(root, dk, Ln * f)
-        if not lifted:
-            tip = (B[0] + (tip[0] - B[0]), g + hy)
-        kn = add(lerp(root, tip, 0.5), (-n[0], -n[1]), 1.0)
         w0 = (7.6 if front else 7.8) * f
-        shapes.append(limb([root, kn, tip], [w0 * 1.1, w0 * 0.98, w0 * 0.8]))
+        if not lifted:
+            tip = (tip[0], g + gy - w0 * 0.4 - 0.3)          # le coussin du doigt posé au sol
+        kn = add(lerp(root, tip, 0.5), (-n[0], -n[1]), 1.0)
         dd = unit(kn, tip)
-        toes.append((None, (add(tip, dd, w0 * 0.05), dd, 8.4 * f, w0 * 0.78)))
+        cd = rotv(dd, 8)
+        cb = add(add(tip, dd, w0 * 0.22), (-n[0], -n[1]), w0 * 0.12)
+        cl = 8.0 * f
+        if not lifted:
+            # la griffe plonge jusqu'au sol (plus haut pour les doigts du fond : perspective du sol)
+            ct = claw_tip(cb, cd, 1.0)
+            cl = max(5.0, min(9.5, (g + gy + 0.4 - cb[1]) / max(0.2, ct[1] - cb[1])))
+        shapes.append(limb([root, kn, tip], [w0 * 1.1, w0 * 0.98, w0 * 0.8]))
+        toes.append((None, (cb, cd, max(cl, 6.4 * f), w0 * 0.7)))
         tips.append(tip)
     claws = []
     if front and near:
@@ -321,12 +335,11 @@ def toe_creases(pts, mat):
 
 
 def draw_claws(fig, nm, pts, cmat):
-    """Les griffes d'une patte, DERRIÈRE le pied (leur racine est cachée dans le bout du doigt) : à peindre avant la
-    patte."""
+    """Les griffes d'une patte, au bout des doigts (peintes après la patte, une ombre douce sur le doigt)."""
     names = []
     for j, (_, (b, d, Lc, w)) in enumerate(pts['toes']):
         names.append('%sc%d' % (nm, j))
-        fig.part(names[-1], claw_shape(b, d, Lc, w), cmat, cel=0.45, rim=0.4, cast=0)
+        fig.part(names[-1], claw_shape(b, d, Lc, w), cmat, cel=0.45, rim=0.4, cast=0.45, cast_on=[nm] + names[:-1])
     return names
 
 
@@ -339,14 +352,14 @@ def wing_skel(R, name, u, flap=0.0, lag=(0.0, 0.0)):
         root0 = (142.0, 122.0)
         folded = dict(eh=-96.0, lh=16.0, ef=-114.0, lf=82.0, fing=[(136.4, 117.0), (124.6, 118.0), (112.8, 116.0)],
                       att=(136.0, 122.0))
-        opened = dict(eh=-150.0, lh=24.0, ef=-128.0, lf=86.0, fing=[(-186.0, 112.0), (-158.0, 112.0), (-128.0, 100.0)],
-                      att=(118.0, 128.0))
+        opened = dict(eh=-140.0, lh=26.0, ef=-122.0, lf=104.0, fing=[(164.0, 82.0), (134.0, 108.0), (102.0, 112.0)],
+                      att=(114.0, 128.0))
     else:
         root0 = (164.0, 112.0)
         folded = dict(eh=-84.0, lh=12.0, ef=-100.0, lf=72.0, fing=[(110.0, 84.0), (104.0, 87.0), (98.5, 88.0)],
                       att=(150.0, 118.0))
-        opened = dict(eh=-48.0, lh=20.0, ef=-80.0, lf=64.0, fing=[(-20.0, 84.0), (-2.0, 84.0), (14.0, 76.0)],
-                      att=(164.0, 120.0))
+        opened = dict(eh=-70.0, lh=18.0, ef=-84.0, lf=75.0, fing=[(29.0, 62.0), (55.5, 78.0), (74.6, 83.0)],
+                      att=(170.0, 114.0))
     k = smooth(u) if 0 <= u <= 1 else u
     eh = lerp(folded['eh'], opened['eh'], k) + flap * 0.4
     lh = lerp(folded['lh'], opened['lh'], k)
@@ -400,8 +413,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- les pattes du fond (plus sombres) ----
     for nm, L, front in (('legFH', LEG_F_HIND, False), ('legFF', LEG_F_FRONT, True)):
         sh, claws, pts = leg_geom(R, L, near=False, front=front)
-        cl = draw_claws(fig, nm, pts, OBSF)
-        fig.part(nm, sh, ROCKF, cel=1.4, rim=0.5, cast=0.5, cast_on=cl, details=toe_creases(pts, ROCKF))
+        fig.part(nm, sh, ROCKF, cel=1.4, rim=0.5, cast=0, details=toe_creases(pts, ROCKF))
+        draw_claws(fig, nm, pts, OBSF)
 
     # ---- les échardes de la queue (derrière la queue : racines cachées) ----
     body, tc, tw = body_shape(R)
@@ -421,10 +434,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     K, A = pts['K'], pts['A']
     det = lava_vein([lerp(pts['S'], K, 0.1), lerp(pts['S'], K, 0.45), lerp(pts['S'], K, 0.8)], 1.0, heat) \
         + fissure([add(A, (1, -12)), add(A, (3, -6)), add(A, (2, -1))], 0.7) + toe_creases(pts, ROCK)
-    cl = draw_claws(fig, 'legNH', pts, OBS)
-    fig.part('legNH', sh, ROCK, cel=1.8, rim=0.8, cast=1.2, cast_on=['body', 'legFH'] + cl, details=det)
+    fig.part('legNH', sh, ROCK, cel=1.8, rim=0.8, cast=1.2, cast_on=['body', 'legFH', 'legFHc0', 'legFHc1', 'legFHc2', 'tsp5', 'tsp4', 'tsp3'], details=det)
     S = pts['S']
-    fig.masks['legNH'] = (S[0] + 4, S[1] - 2, S[0] + 2, S[1] - 20, 'body')
+    o_, t_ = add(S, (6, 10)), add(S, (-6, -16))
+    fig.masks['legNH'] = (o_[0], o_[1], t_[0], t_[1], 'body')        # le haut de la cuisse s'efface dans la croupe
+    draw_claws(fig, 'legNH', pts, OBS)
     fig.part('spurH', shard(add(A, (-1, -3)), add(A, (-11, -2)), 5.5, bend=-0.6), OBS, cel=0.6, rim=0.5, cast=0.5)
 
     # ---- l'aile proche, repliée sur le flanc ----
@@ -434,18 +448,22 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- la patte avant proche (l'épaule s'efface dans le poitrail) ----
     paw = P['paw']
     if paw:
-        sh, claws, pts = leg_geom(R, LEG_N_FRONT, near=True, front=True, A=(paw[0], paw[1]), fdir=paw[2], spread=paw[3], lifted=True)
+        sh, claws, pts = leg_geom(R, LEG_N_FRONT, near=True, front=True, A=(paw[0], paw[1]), fdir=paw[2], spread=paw[3],
+                                  lifted=paw[1] < 214.5)
     else:
         sh, claws, pts = leg_geom(R, LEG_N_FRONT, near=True, front=True)
     S, K, A = pts['S'], pts['K'], pts['A']
+    fig.ctx['paw'] = pts
     det = lava_vein([lerp(K, A, 0.15), lerp(K, A, 0.5), lerp(K, A, 0.85)], 0.95, heat) \
         + fissure([lerp(S, K, 0.35), lerp(S, K, 0.6), lerp(S, K, 0.8)], 0.8) + toe_creases(pts, ROCK)
-    cl = draw_claws(fig, 'legNF', pts, OBS)
+    cl = []
     for j, (b, d, Lc, w) in enumerate(claws):
         cl.append('legNFe%d' % j)
         fig.part(cl[-1], claw_shape(b, d, Lc, w), OBS, cel=0.4, rim=0.35, cast=0)
     fig.part('legNF', sh, ROCK, cel=1.8, rim=0.8, cast=1.3, cast_on=['body', 'legFF', 'legFH', 'wingN'] + cl, details=det)
-    fig.masks['legNF'] = (S[0] + 2, S[1] + 4, S[0] + 1, S[1] - 14, 'body')
+    o_, t_ = add(S, (8, 6)), add(S, (-8, -14))
+    fig.masks['legNF'] = (o_[0], o_[1], t_[0], t_[1], 'body')        # la racine du bras s'efface dans le poitrail
+    draw_claws(fig, 'legNF', pts, OBS)
     ku = unit(S, K)
     kd = unit(A, K)
     sp = unit((0, 0), add(ku, kd))
@@ -708,7 +726,7 @@ def draw_head(fig, R, P):
              cel=1.5, rim=0.8, cast=1.0, cast_on=['body', 'col0', 'col1', 'jaw', 'throat', 'hornF', 'wingF', 'waF', 'wkF', 'wtF',
                                                    'tl0', 'tl1', 'tl2', 'tl3'], details=det)
     # l'arcade d'obsidienne au-dessus de l'oeil (regard dur, elle descend vers l'avant)
-    brow = sm([(203.0, 89.6), (206.5, 85.2), (214, 83.8), (222.5, 85.4), (229.8, 89.6), (228.0, 93.0), (220, 93.4), (213, 92.6), (206.5, 93.0)], t=0.9)
+    brow = sm([(203.0, 89.8), (206.5, 85.4), (214, 84.0), (222.5, 85.6), (229.8, 90.0), (228.2, 93.4), (220, 93.6), (213, 92.8), (206.5, 93.4)], t=0.9)
     fig.part('brow', brow, OBS, grad=(226, 82, 206, 90, [(0, OBS.light), (0.5, OBS.base), (1, OBS.shadow)]), cel=0.7, rim=0.6, cast=0.8,
              cast_on=['head'])
     fig.pose(['head', 'brow'], R.HEAD)

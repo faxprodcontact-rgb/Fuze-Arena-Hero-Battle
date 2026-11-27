@@ -64,11 +64,13 @@ WATER_Y = 215.0                # la ligne d'eau autour du corps
 # place du pixel art. Le « nez » = la narine fendue, sur la médiane ; la « bouche » = le milieu de la gueule ouverte,
 # juste sous elle.
 FACE_BOX = (160.0, 42.0, 228.0, 102.0)
-FACE_ARGS = dict(tour=75, az_oeil=58, y_oeil=0.33, y_nez=0.63, y_bouche=0.98, l_oeil=0.24)
+FACE_ARGS = dict(tour=75, az_oeil=58, y_oeil=0.33, y_nez=0.63, y_bouche=0.70, l_oeil=0.24)
 FACE = placer(FACE_BOX, **FACE_ARGS)
 EYE = FACE['oeil_proche']                                     # (x, y, largeur)
 NOSE = FACE['nez']                                            # la narine
-MOUTH = (FACE['bouche'][0], 109.4, FACE['bouche'][2])         # le milieu de la gueule ouverte, sous la narine
+# la ligne médiane du museau descend presque droite sous la narine : le milieu de la gueule ouverte (entre les deux
+# gencives, à l'aplomb de la narine) est la « bouche »
+MOUTH = (FACE['bouche'][0], 110.4, FACE['bouche'][2])
 
 # ---------- le squelette (animation) ----------
 #   br : souffle 0..1 ; wph / wamp : la vague qui monte le long de la colonne (phase, ampleur en px) ; rise : la
@@ -176,7 +178,7 @@ FAN0 = [
     ((146.0, 74.0), (137.0, 86.0), (104.0, 75.0), (121.0, 80.0)),
 ]
 # la nageoire du côté proche : elle sort de la fente de l'opercule et se couche en arrière sur le cou
-PECT0 = [(162.6, 80.0), (152.0, 81.6), (139.0, 88.0), (127.0, 98.4), (138.0, 101.6), (149.0, 106.2), (161.4, 108.0)]
+PECT0 = [(160.0, 79.0), (150.0, 81.6), (138.0, 88.0), (126.0, 98.4), (137.0, 101.6), (149.0, 106.4), (160.6, 106.0), (161.6, 92.0)]
 CREST0 = [(0.355, 9.0), (0.43, 7.6), (0.505, 6.4), (0.585, 5.4), (0.665, 4.4), (0.745, 3.4)]   # (place sur le dos, taille)
 
 # les tentacules : points clés (x, y, largeur) de la racine (dans l'eau) au bout enroulé
@@ -225,7 +227,7 @@ def scales_rest():
     rnd = random.Random(11)
     row = 0
     y = 50.0
-    while y < WATER_Y - 3:
+    while y < 234:
         s_ = 2.8 + 4.6 * sm01((y - 55) / 150)               # le rayon de l'écaille
         dx_ = s_ * 2.5
         x = 58.0 + (dx_ * 0.5 if row % 2 else 0.0)
@@ -238,11 +240,10 @@ def scales_rest():
                 ang = math.degrees(math.atan2(math.cos(math.radians(80 * tt)), -math.sin(math.radians(80 * tt)))) - 90
                 ang += rnd.uniform(-9, 9)
                 lit = sm01((q0[0] - 76) / 36) * (0.4 + 0.6 * sm01((q0[0] - 70) / 90 + (170 - q0[1]) / 150))
-                if lit > 0.3 and rnd.random() > 0.4:
-                    # l'ombre du bord libre (un croissant fin) et la tuile éclairée au-dessus
-                    arc = xf(sm([(-sz, -0.1 * sz), (0, 0.55 * sz), (sz, -0.1 * sz), (0, 0.32 * sz)], sharp=(0, 2), t=0.9), q0[0], q0[1], ang)
-                    lip = xf(sm([(-0.85 * sz, -0.2 * sz), (-0.4 * sz, -0.75 * sz), (0.45 * sz, -0.8 * sz), (0.85 * sz, -0.2 * sz),
-                                 (0, 0.2 * sz)], sharp=(0, 3), t=0.9), q0[0], q0[1], ang)
+                if lit > 0.3 and not inhead and rnd.random() > 0.42:
+                    # le bord libre de l'écaille (un arc sombre fin) et, juste au-dessus, son bord éclairé
+                    arc = xf(ribbon([(-sz, -0.3 * sz), (0, 0.42 * sz), (sz, -0.3 * sz)], [0.05, 0.3 * sz, 0.05]), q0[0], q0[1], ang)
+                    lip = xf(ribbon([(-0.8 * sz, -0.62 * sz), (0, 0.02 * sz), (0.8 * sz, -0.62 * sz)], [0.05, 0.22 * sz, 0.05]), q0[0], q0[1], ang)
                     _SCALES.append(((q0, inhead, arc), lip, lit))
             x += dx_
         y += s_ * 1.75
@@ -385,8 +386,8 @@ def tentacle(fig, name, keys, mat, cut_y, suckers=0, side=1, cast=1.0, extra_cut
 
 # ======================================================================== l'eau
 def boil_shape(cx, y, half, h, ph, seed=0):
-    """Un bouillon d'eau autour d'une racine : l'eau monte en bosse autour d'elle (pied large posé sur l'eau, plus
-    bas devant), coiffée d'écume en grappes (bulles de tailles variées, jamais régulières)."""
+    """Un bouillon d'eau autour d'une racine : l'eau monte en bosse autour d'elle (pied mince posé sur l'eau), coiffée
+    d'écume en grappes sur deux rangs (bulles de tailles variées, jamais régulières)."""
     from shapely.geometry import Point, Polygon
     from shapely.ops import unary_union
     n = 24
@@ -394,39 +395,42 @@ def boil_shape(cx, y, half, h, ph, seed=0):
     for i in range(n + 1):
         u = -1 + 2 * i / n
         prof = math.sqrt(max(0.0, 1 - u * u))
-        top.append((cx + half * u, y - h * 0.62 * prof ** 0.55))
-        bot.append((cx + half * u, y + 1.0 + h * 0.34 * prof))
+        top.append((cx + half * u, y - h * 0.45 * prof ** 0.6))
+        bot.append((cx + half * u, y + 0.6 + h * 0.1 * prof))
     blobs = [Polygon(top + bot[::-1]).buffer(0)]
-    nb = max(4, int(half / 3.6))
-    for j in range(nb):
-        u = -0.9 + 1.8 * (j + 0.5) / nb + 0.06 * math.sin(j * 4.1 + seed)
-        prof = math.sqrt(max(0.0, 1 - u * u))
-        x = cx + half * u
-        r = h * (0.22 + 0.14 * prof) * (0.8 + 0.4 * abs(math.sin(j * 2.31 + seed * 1.7)))
-        r *= 1 + 0.14 * math.sin(ph + j * 1.7)
-        yy = y - h * 0.62 * prof ** 0.55 + r * 0.35 - 0.5 * math.cos(ph * 1.3 + j * 2.1)
-        blobs.append(Point(x, yy).buffer(max(0.6, r), 12))
-    return unary_union(blobs).buffer(0.3).buffer(-0.3)
+    for row, (k_, lift, rk) in enumerate(((1.0, 0.62, 0.36), (0.86, 0.3, 0.3))):
+        nb = max(3, int(half * k_ / (h * 0.42)))
+        for j in range(nb):
+            u = (-0.92 + 1.84 * (j + 0.5) / nb + 0.05 * math.sin(j * 4.1 + seed + row)) * k_
+            prof = math.sqrt(max(0.0, 1 - u * u))
+            x = cx + half * u
+            r = h * rk * (0.55 + 0.45 * prof) * (0.75 + 0.45 * abs(math.sin(j * 2.31 + seed * 1.7 + row * 0.9)))
+            r *= 1 + 0.12 * math.sin(ph + j * 1.7 + row)
+            yy = y - h * lift * prof ** 0.6 + r * 0.3 - 0.5 * math.cos(ph * 1.3 + j * 2.1 + row)
+            blobs.append(Point(x, yy).buffer(max(0.6, r), 14))
+    return unary_union(blobs).buffer(1.2).buffer(-1.2).buffer(-0.6).buffer(0.6)
 
 
 def boil_part(fig, name, cx, y, half, h, ph, seed=0, cast=0.6):
     g = boil_shape(cx, y, half, h, ph, seed)
-    sh = S(g, sharp=70)
+    sh = S(g, sharp=100)
     x0, y0, x1, y1 = g.bounds
     det = []
-    # le pied du bouillon se fond dans l'eau (bleu), l'écume coiffe le dessus (blanc), une ombre douce entre les deux
-    det.append((SS(g.intersection(G(ellipse(cx - 0.6, y + 2.2 + h * 0.12, half * 1.02, h * 0.42)))),
-                ('lin', 0, y - h * 0.1, 0, y1, [(0, FOAMC[2]), (0.5, POOL[4]), (1, POOL[3])]), 1))
-    # quelques reflets ronds sur les bulles (la lumière en haut à droite)
-    nb = max(3, int(half / 6))
+    # le pied du bouillon se fond dans l'eau (même bleu que l'eau à cet endroit), l'écume coiffe le dessus
+    det.append((SS(g.intersection(G(ellipse(cx - 0.4, y + 1.4, half * 1.04, h * 0.2 + 1.2)))),
+                ('lin', 0, y - h * 0.15, 0, y1, [(0, FOAMC[2], 0), (0.45, POOL[4], 0.9), (1, POOL[3])]), 1))
+    # des reflets ronds sur les plus grosses bulles (la lumière en haut à droite)
+    nb = max(3, int(half / (h * 0.42)))
     for j in range(nb):
-        u = -0.8 + 1.6 * (j + 0.5) / nb
+        u = -0.92 + 1.84 * (j + 0.5) / nb + 0.05 * math.sin(j * 4.1 + seed)
         prof = math.sqrt(max(0.0, 1 - u * u))
-        x = cx + half * u + 0.8 * math.sin(j * 3.1 + seed)
-        yy = y - h * 0.62 * prof ** 0.55 - 0.2
-        det.append((ellipse(x + 0.7, yy - 0.5, 0.8 + 0.5 * prof, 0.55 + 0.3 * prof, -20), '#ffffff', 0.95))
+        r = h * 0.36 * (0.55 + 0.45 * prof) * (0.75 + 0.45 * abs(math.sin(j * 2.31 + seed * 1.7)))
+        x = cx + half * u
+        yy = y - h * 0.62 * prof ** 0.6 + r * 0.3
+        if j % 2 == 0 or r > h * 0.3:
+            det.append((ellipse(x + r * 0.35, yy - r * 0.42, r * 0.32, r * 0.22, -25), '#ffffff', 0.95))
     fig.part(name, sh, Mat(FOAMC[0], FOAMC[1], FOAMC[2], FOAMC[3], FOAMC[4]),
-             grad=(cx + half * 0.4, y0, cx - half * 0.4, y1, [(0, '#ffffff'), (0.35, FOAMC[1]), (0.7, FOAMC[2]), (1, FOAMC[3])]),
+             grad=(cx + half * 0.4, y0, cx - half * 0.4, y1, [(0, '#ffffff'), (0.4, FOAMC[1]), (0.75, FOAMC[2]), (1, FOAMC[3])]),
              cel=0.9, rim=0.5, cast=cast, details=det)
     return g
 
@@ -511,7 +515,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- le tentacule du fond (plus fin, plus sombre, sans ventouses) et son bouillon ----
     tB = tentacle(fig, 'tentB', tent_keys(TB0, P['tB']), TENTB, TCUT['B'], cast=0)
-    boil_part(fig, 'boilB', 60.0, TCUT['B'] + 0.6, 8.0, 4.2, P['foam'] + 1.0, seed=3, cast=0.4)
+    boil_part(fig, 'boilB', 60.0, TCUT['B'] + 1.4, 9.0, 6.0, P['foam'] + 1.0, seed=3, cast=0.4)
 
     # ---- la crête du dos et l'éventail de nageoires (derrière le corps) ----
     back = [BM(p) for p in NECK0[1:14]]
@@ -627,7 +631,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # les plaques : de plus en plus grandes vers l'eau ; chacune : son bord bas dans l'ombre, la lumière au-dessus
     ys = []
     y = 127.0
-    while y < WATER_Y + 4:
+    while y < 238:
         ys.append(y)
         y += 4.2 + 0.034 * (y - 120)
     bodyfront = crpath([(p[0], p[1]) for p in NECK0[19:28]], n=60)
@@ -652,8 +656,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     for arc, lip, op in scales_rest():
         q0 = arc[0]
         mp = hp if arc[1] else BM
-        det.append((arc[2].map(mp), SKIN.shadow, 0.42 * op))
-        det.append((lip.map(mp), SKIN.hi, 0.2 * op))
+        det.append((arc[2].map(mp), SKIN.shadow, 0.5 * op))
+        det.append((lip.map(mp), SKIN.hi, 0.32 * op))
     # -- la ligne des taches lumineuses des abysses (elles battent ; elles flambent pendant la charge) --
     for k, (x, y, r) in enumerate(SPOTS0):
         q = BM((x, y))
@@ -671,8 +675,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # l'ombre portée de l'opercule sur le cou (à gauche de la fente)
     det.append((HS(band_along([(x - 2.0, y + 0.6) for x, y in gill], [0.1, 2.6, 3.2, 3.2, 2.6, 0.1])), SHADE, 0.14))
     # le gros muscle de la mâchoire (derrière l'oeil, au-dessus de la commissure)
-    det.append((HS(ellipse(182.0, 92.0, 10.0, 8.0, -20)), SKIN.light, 0.28))
-    det.append((HS(ellipse(184.0, 89.6, 6.0, 4.0, -24)), SKIN.hi, 0.2))
+    det.append((HS(band_along([(172.0, 96.0), (176.0, 86.6), (185.0, 82.4), (193.0, 84.6)], [0.2, 1.8, 1.6, 0.2])), SKIN.hi, 0.3))
     det.append((HS(band_along([(170.0, 104.0), (178.0, 102.6), (186.0, 102.4)], [0.2, 1.4, 0.2])), SKIN.shadow, 0.45))
     # la pommette (sous l'oeil) : une arête éclairée, son ombre dessous
     det.append((HS(band_along([(190.0, 72.0), (200.0, 74.2), (212.0, 73.0), (220.0, 70.2)], [0.2, 1.5, 1.3, 0.2])), SKIN.hi, 0.35))
@@ -743,12 +746,19 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- la nageoire du côté proche (sortie de l'opercule, couchée sur le cou) ----
     pf = 1.2 * math.sin(P['fph'] + 0.6)
-    pect = [PECT0[0], PECT0[1], PECT0[2], (PECT0[3][0] - 0.5 * pf, PECT0[3][1] + pf), PECT0[4], PECT0[5], PECT0[6]]
+    pect = PECT0[:3] + [(PECT0[3][0] - 0.5 * pf, PECT0[3][1] + pf)] + PECT0[4:]
     fig.part('pect', HS(sm(pect, sharp=(3,), t=0.9)), FIN, grad=(162, 80, 128, 104, [(0, FIN.light), (0.5, FIN.base), (1, FIN.shadow)]),
              cel=1.0, rim=0.6, cast=1.2, cast_on=['body'],
              details=[(HS(band_along([(160.0, 82.4), (148.0, 85.0), (134.0, 94.0), (128.6, 97.8)], [1.4, 1.2, 0.6, 0.1])), FIN.hi, 0.6),
                       (HS(band_along([(160.0, 95.0), (148.0, 96.0), (136.0, 99.0)], [0.2, 1.2, 0.2])), FIN.shadow, 0.55),
                       (HS(band_along([(160.6, 103.4), (150.0, 103.8), (141.0, 102.6)], [0.2, 0.9, 0.2])), FIN.shadow, 0.45)])
+
+    # la fente de l'opercule passe DEVANT la racine de la nageoire (elle sort de dessous la plaque des branchies)
+    gl_ = [(159.9, 74.0), (158.7, 84.0), (158.5, 94.0), (159.4, 103.0), (161.4, 110.0)]
+    fig.part('gill', HS(band_along(gl_, [0.3, 1.5, 1.6, 1.5, 0.3])), Mat(GUM[3], GUM[1], GUM[0], GUM[0], GUM[0]), grad=None,
+             cel=0, rim=0, cast=0.7, cast_on=['pect'], outline=False,
+             details=[(HS(band_along([(x + 0.55, y - 0.1) for x, y in gl_[1:-1]], [0.1, 0.55, 0.1])), GUM[1], 0.9),
+                      (HS(band_along([(x + 1.7, y) for x, y in gl_], [0.2, 1.5, 1.8, 1.5, 0.2])), SKIN.light, 0.0)])
 
     # ---- les dents du haut (elles pendent de la gencive dans la gueule ouverte) ----
     uteeth = tooth_row(UPG, UPT, True, hp)
@@ -757,11 +767,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- le bouillon d'écume autour de la colonne ----
     bx = BM((106.0, 214.0))[0]
-    boil_part(fig, 'boil', bx, WATER_Y + 2.4, 49.0, 7.4, P['foam'], seed=0, cast=0.8)
+    boil_part(fig, 'boil', bx, WATER_Y + 4.6, 55.0, 15.0, P['foam'], seed=0, cast=0.8)
 
     # ---- le grand tentacule de devant à gauche ----
     tL = tentacle(fig, 'tentL', tent_keys(TL0, P['tL']), TENT, TCUT['L'], suckers=1, side=-1, cast=1.4)
-    boil_part(fig, 'boilL', 44.0, TCUT['L'] + 0.8, 12.6, 5.0, P['foam'] + 2.0, seed=1, cast=0.6)
+    boil_part(fig, 'boilL', 44.0, TCUT['L'] + 2.0, 14.0, 8.0, P['foam'] + 2.0, seed=1, cast=0.6)
 
     # ---- le tentacule de devant à droite (il plonge dans le trou pendant l'attaque) ----
     tR = None
@@ -770,7 +780,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         d = P['dive']
         keysR = [(x + (186.0 - x) * 0.25 * d, y + 70 * d * d + (226 - y) * 0.15 * d, w) for x, y, w in keysR]
     tR = tentacle(fig, 'tentR', keysR, TENT, TCUT['R'], suckers=1, side=1, cast=1.4)
-    boil_part(fig, 'boilR', 189.0, TCUT['R'] + 0.8, 11.4 + 2.0 * math.sin(math.pi * min(1, P['dive'] * 1.5)), 4.6, P['foam'] + 4.0, seed=2, cast=0.6)
+    boil_part(fig, 'boilR', 189.0, TCUT['R'] + 2.0, 13.0 + 2.0 * math.sin(math.pi * min(1, P['dive'] * 1.5)), 7.6, P['foam'] + 4.0, seed=2, cast=0.6)
 
     # ---- ce que les effets doivent savoir ----
     fig.ctx = dict(P=P, HEAD=H, JAW=JW, BM=BM, mouth=hp((236.0, 112.0)), eye=hp(EYE[:2]), head=hp((205.0, 70.0)),

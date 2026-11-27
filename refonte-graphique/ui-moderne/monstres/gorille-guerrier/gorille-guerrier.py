@@ -145,13 +145,28 @@ def volute(c, r, ang=0.0, turns=1.6, n=22):
     return ribbon(pts, [0.05] + [0.1 + 0.42 * r * (i / n) ** 0.7 / 3.2 for i in range(1, n)] + [0.12])
 
 
+def ik3(S, W, L1_, L2_, bend):
+    """Le coude d'un bras (cinématique inverse), vu comme la projection d'un bras en 3D : bend = ±1, le coude est sur le
+    côté (sens des aiguilles d'une montre ou l'inverse) ; entre les deux, il tourne vers nous ou vers le fond (le bras se
+    raccourcit en perspective, aucune longueur ne change) : le coude peut changer de côté sans à-coup."""
+    d = math.dist(S, W)
+    dd = max(abs(L1_ - L2_) + 0.01, min(L1_ + L2_ - 0.01, d))
+    al = math.acos(max(-1, min(1, (L1_ * L1_ + dd * dd - L2_ * L2_) / (2 * L1_ * dd))))
+    ux, uy = (W[0] - S[0]) / (d or 1), (W[1] - S[1]) / (d or 1)
+    b = max(-1.0, min(1.0, bend))
+    E = (S[0] + L1_ * math.cos(al) * ux - b * L1_ * math.sin(al) * uy, S[1] + L1_ * math.cos(al) * uy + b * L1_ * math.sin(al) * ux)
+    if d > L1_ + L2_:
+        W = (S[0] + ux * (L1_ + L2_), S[1] + uy * (L1_ + L2_))
+    return E, W
+
+
 # ======================================================================== un bras entier (fourrure, poing, brassard)
 
 def arm(fig, tag, S, Wt, L1_, L2_, bend, fx, keys, k, inner, hwb, cast_on):
     """Le bras : épaule S → coude → poignet (au plus près de Wt), d'un seul tenant ; le poing ganté au bout (plié de fx
     degrés au poignet) ; le brassard de laque rouge à bagues d'or et médaillon sur l'avant-bras. k = l'échelle du poing,
     inner = le côté du pouce (+1 / −1 en travers), hwb = la demi-largeur du brassard. Rend les points utiles."""
-    E, W = ik(S, Wt, L1_, L2_, bend)
+    E, W = ik3(S, Wt, L1_, L2_, bend)
     fur = body_limb([S, E, W], keys, n=30)
     s1, s2 = Seg(S, E), Seg(E, W)
     lb1 = lit_of(s1.v)
@@ -570,7 +585,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ======================================================================== l'épaulière d'or (coupole à bord roulé, jade) et
     # ses deux lames de laque rouge bordées d'or et rivetées ; elle suit l'épaule (et un peu le bras quand il se lève)
     ea = math.degrees(math.atan2(NA['E'][1] - Sn[1], NA['E'][0] - Sn[0])) - _ang(S_N, E_N)
-    er = P['ep'] if P['ep'] else 0.45 * ea
+    ea = (ea + 180) % 360 - 180
+    er = P['ep'] if P['ep'] else max(-38.0, min(38.0, 0.45 * ea))
     EM = mchain(mT(Sn[0], Sn[1]), mR(er), mS(0.95, 0.95))
     E_ = lambda pts: [mapp(EM, p) for p in pts]
 
