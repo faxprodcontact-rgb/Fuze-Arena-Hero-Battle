@@ -16,7 +16,7 @@ from visage import verifier, guide_svg  # noqa: E402
 
 TMP = os.environ.get('VECTO_TMP', '/tmp/claude-0/-home-user-Fuze-Arena-Hero-Battle/4f44ed70-e2c6-5441-ade8-1b1349ae17e5/scratchpad/vecto-dragon')
 OUT = os.path.join(E.ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'dragon')
-ZOOM = (176.0, 66.0, 266.0, 136.0)      # la tête (pixels du dessin)
+ZOOM = (172.0, 34.0, 266.0, 112.0)      # la tête (pixels du dessin)
 K = 4 * 960 / E.FRAME[3]                # ×4 par rapport à l'image du jeu
 TOUR = 75
 

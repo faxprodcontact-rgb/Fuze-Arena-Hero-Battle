@@ -42,7 +42,7 @@ GUM = '#7a1a2a'
 
 GRD = 236                      # le sol
 FEET = (128, 236)              # le point « sol » de la case
-FRAME = (-12, -6, 278, 248)    # la boîte de l'image (x0, y0, largeur, hauteur) : les pieds (128, 236) tombent en (140, 242)
+FRAME = (-4, -4, 270, 246)     # la boîte de l'image (x0, y0, largeur, hauteur) : les pieds (128, 236) tombent en (132, 240)
 
 # ---------- le visage (../../heros/visage.py) : tête de dragon de PROFIL → placer(tour=75), un seul oeil ----------
 # La boîte = la sphère du crâne, gueule fermée (du dos du crâne à la racine du museau, du dessus du crâne au bas de la
