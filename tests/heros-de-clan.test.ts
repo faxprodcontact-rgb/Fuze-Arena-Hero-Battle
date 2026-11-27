@@ -44,8 +44,7 @@ describe('monstres de clan devenus héros', () => {
       expect(heroArt(h.id) in anims).toBe(true);
       expect(heroArt(h.id) in figs).toBe(true);
     }
-    // dans les cases : leur tête vectorielle (art/vecto/v/<id du jeu>, faite depuis leur monstre par tetes.py, 27/11)
-    expect(heroImage('nyrra')).toMatch(/^art\/vecto\/v\/nyrra\.webp(\?h=\w+)?$/);
+    expect(heroImage('nyrra')).toMatch(/^art\/hd\/v\/mon-arachne-tisseuse\.webp(\?h=\w+)?$/);
     expect(figureUrl(heroArt('karu'))).toMatch(/^art\/hd\/pied\/mon-orin-rapide\.webp(\?h=\w+)?$/);
     expect(heroArt('knights-8')).toBe('knights-8');
     // ils jouent toujours les monstres de leur clan
