@@ -375,7 +375,7 @@ p { margin: 6px 0; }
 .hcard-still { position: absolute; inset: 0; background-repeat: no-repeat; background-position: 0 0; }
 .hcard-face { position: absolute; bottom: 22%; left: 50%; transform: translateX(-50%); width: 80%; }
 /* le liseré (la page d'un héros) ; sur les cartes, un cadre de métal par rareté (sections/cartes-heros.css) */
-.hcard-frame { position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: 16px;
+.hcard-frame { position: absolute; inset: 0; z-index: 3; pointer-events: none; border-radius: 16px; overflow: hidden; /* le reflet qui passe reste dans la carte */
   box-shadow: inset 0 0 0 2.5px color-mix(in srgb, var(--rar) 80%, #fff), inset 0 0 0 4px #0000002e; }
 .hcard .stars { position: relative; z-index: 4; font-size: 12px; line-height: 13px; }
 .hcard-lv { position: absolute; top: 0; left: 0; z-index: 4; min-width: 23px; text-align: center; font: 400 12px/18px var(--font-title); color: #fff;
@@ -1575,3 +1575,8 @@ button.setting-row:active { filter: brightness(0.95); }
 /* Les dessins vectoriels (src/game/vecto.ts) : lisses, ils respirent par une transformation (rien d'autre ne bouge). */
 .hfig .px-win.vec-win { overflow: visible; }
 .hfig .px-win.vec-win img { width: 100%; height: 100%; }
+
+/* Rien ne défile de côté (27/11 : on pouvait glisser à droite et à gauche dans les listes : un reflet de carte sortait
+   de sa carte) : toutes les zones qui défilent ne défilent qu'en hauteur. */
+.content, .modal-body, .page-body, .roster, .hall-scroll, .hp-sheet-body, .chat-list, .ps-list, .col-body, .g-scroll, .odds2-list,
+.adv-scroll { overflow-x: hidden; }
