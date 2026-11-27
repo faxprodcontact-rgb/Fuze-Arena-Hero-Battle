@@ -554,3 +554,7 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
   léviathan (« jamais de rond au sol ») ; sourires ouverts de certains monstres ; épaulière ronde du gorille.
 - Reste à faire : passer le combat aux dessins vectoriels ; mettre les 3 dragons dans le jeu (statistiques, compétences,
   textes FR/EN) ; nouveaux tours d'avis.
+- **Fonds de combat** (27/11) : les 8 fonds de clan refaits en vectoriel animé (volcan de Kael en pilote, puis les 7 autres
+  en même temps), recadrés pour le vrai écran de combat, chacun avec une touche vivante au loin (dragons, chauves-souris,
+  serpents ailés, raies et serpent de mer, mouettes et voilier, corbeaux, grues et singe). Branchés derrière `?vecto=1`
+  seulement ; sorties et vraies captures dans `refonte-graphique/pixel/sortie/ui/vecto/fond-<clan>/`.
