@@ -64,7 +64,7 @@ const VECTO: Record<string, readonly [number, number, number, number]> = {
   'dragon-feu': [140, 127, 62, 125],
   'dragon-vent': [116, 108, 62, 104],
   'mon-kesha-sorts': [80, 94, 51, 91],
-  'mon-kesha-costaud': [131, 107, 64, 104],
+  'mon-kesha-costaud': [140, 103, 72, 99],
   'mon-arachne-rapide': [126, 78, 60, 74],
   'mon-arachne-costaud': [130, 116, 64, 112],
   'mon-kesha-rapide': [87, 86, 26, 83],
