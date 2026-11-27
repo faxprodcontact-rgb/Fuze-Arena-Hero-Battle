@@ -16,7 +16,7 @@ générée. `src/game/hd-fight.ts` sert tel quel (même chorégraphie : course j
 jusqu'à la vraie case, impact posé aux pieds de la cible, lumière de charge, tempo commun des attaques de base). Seules
 différences, lues par `hd-fight.ts` :
 
-- la planche est `public/art/vecto/jeu/<id>.webp`, rendue lisse à ×`up` (1,25 pixel de planche par pixel du dessin ;
+- la planche est `public/art/vecto/jeu/<id>.webp`, rendue lisse à ×`up` (1 pixel de planche par pixel du dessin ;
   le combat montre ~1,16 pixel d'écran par pixel du dessin) ;
 - dans la table `src/game/vecto-anim.ts` (GÉNÉRÉE), les cases `[x, y, l, h]` sont en pixels de la planche et
   `(ax, ay)` en pixels du dessin ; chaque personnage porte son `up`.
@@ -25,9 +25,29 @@ Pourquoi pas autre chose : animer le dessin vectoriel en direct dans le jeu (SVG
 au téléphone et demanderait de réécrire chaque `anim.py` en TypeScript ; une vidéo par personnage interdit de séparer
 le personnage, l'impact et le projectile. La planche garde la mémoire sous contrôle et réutilise tout ce qui marche.
 
-Mémoire (iPhone) : une planche vectorielle fait 2048 × 680 à 2048 × 970 (5,6 à 7,9 Mo de mémoire graphique), contre
-~3 Mo pour le pixel art. Un combat charge ~9 planches différentes (5 héros, 3 monstres, le général) : ~60 Mo. À
-surveiller sur un vrai iPhone ; leviers dans `jeu.py` : `fps` (12 par défaut), `images` du repos (10), `up`.
+### Budget mémoire (OBLIGATOIRE : l'iPhone a déjà planté par manque de mémoire graphique)
+
+**Au plus 4,2 Mo de mémoire graphique par planche** (largeur × hauteur × 4 octets ; 2048 × 512), comme le pixel art
+(~3 Mo). Un combat charge ~9 planches : ~30 Mo, comme avant. L'outil affiche la mémoire de chaque planche, écrit
+`ATTENTION : BUDGET MÉMOIRE DÉPASSÉ` au-delà de 4,2 Mo (ne pas rendre le personnage dans cet état) et refuse au-delà de
+6 Mo.
+
+Réglages par défaut (choisis sur le pilote, à ne pas relever sans raison) :
+
+| réglage | défaut | pourquoi |
+|---|---|---|
+| `up` | 1,0 | le combat montre ~1,16 pixel d'écran par pixel du dessin : sur un dessin lisse, la différence avec 1,25 ne se voit pas à la taille du téléphone (−36 % de mémoire) |
+| repos | 8 images par boucle | la respiration est lente : 8 images suffisent |
+| coups | 6 images/s loin du coup, **14 images/s de 180 ms avant à 260 ms après le coup** | le geste qui compte reste fluide ; la préparation et le retour, lents, se lisent bien avec moins d'images |
+| fusion | deux images de suite presque identiques (écart moyen < 4/255 sur les pixels peints) n'en font qu'une | tenues, arrêts sur image |
+| rangement | la largeur de planche (1024 à 2048) qui donne la plus petite surface | |
+| effets | `fx_max` 150 : éclairs plein écran et longues fissures retirés | le jeu a son éclair et sa secousse |
+
+Un autre moment fort que le coup (le revers de Kael, un éclair, un saut) : ajouter une fenêtre serrée avec `dense`
+(liste de `(t0, t1)` ; remplace celle du coup, à remettre dans la liste). Si la planche dépasse : d'abord `fps`
+(5), puis `images` du repos (6), puis retirer des effets (`fx_max`) ; `up` en dernier (jamais sous 0,9).
+
+Pilote (27/11) : Kael 3,5 Mo, Jarek 3,3 Mo, golem de lave 3,6 Mo (pixel art : 3,0 / 2,4 / 3,2 Mo).
 
 ## 2. Ce qu'il faut écrire : `jeu.py` dans le dossier du personnage
 
@@ -62,8 +82,9 @@ Les **instants** sont en ms depuis le début du coup (ceux d'`anim.py` : `ATTACK
 | `arc`, `rase`, `vitesse`, `pente` | (tir, facultatifs) hauteur de la cloche (le projectile bascule le long de la courbe), vol au ras du sol, vitesse (défaut : celle de l'animation), angle du dessin. |
 | `fx_max` | (150) un effet plus large (ou large ET haut) que ça est retiré : éclair plein écran (le jeu a son éclair et sa secousse), longues fissures qui iraient du lanceur à la cible. |
 | `cible_des` | (facultatif) avant cet instant, rien ne part sur la cible. |
-| `periode`, `images` | (`pose`) la durée d'une respiration (ms ; défaut `IDLE_T`/`IDLE` d'anim.py) et le nombre d'images. |
-| `fps`, `duree`, `action` | (facultatifs) images par seconde des coups (12), durée du coup (défaut : dernière clé de `ATTACK`/`SPECIAL`), nom de l'action dans `anim.py` (`'attack'`, `'special'`). |
+| `periode`, `images` | (`pose`) la durée d'une respiration (ms ; défaut `IDLE_T`/`IDLE` d'anim.py) et le nombre d'images (8). |
+| `fps`, `fps_coup`, `dense` | (facultatifs) images par seconde loin du coup (6) et dans les fenêtres serrées (14) ; `dense` = les fenêtres serrées, liste de `(t0, t1)` en ms (défaut : de 180 ms avant à 260 ms après le coup). |
+| `duree`, `action` | (facultatifs) durée du coup (défaut : dernière clé de `ATTACK`/`SPECIAL`), nom de l'action dans `anim.py` (`'attack'`, `'special'`). |
 | `vue`, `up`, `pieds`, `sol`, `rendu` | (rarement) la scène rendue (défaut `VIEW` d'anim.py), la finesse, les pieds (`FEET`), le sol (`GRD`), une fonction `rendu(T, segs)` si `frame_svg` a une autre signature (3 anim.py : `alg`, `cc`, `la`). |
 
 Comment c'est rendu (rien à changer dans `anim.py`) : l'outil appelle `frame_svg(T, segs)` aux bons instants (l'action
@@ -82,7 +103,7 @@ python3 refonte-graphique/ui-moderne/jeu_export_vecto.py --voir <BROUILLON>/expo
 `<dossier>/jeu.json`, puis réassemble `src/game/vecto-anim.ts` à partir de TOUS les `jeu.json` (plusieurs agents en
 même temps : chacun n'écrit que son `jeu.json` ; la table est refaite entière à chaque fois). Seulement la table :
 `--assembler`. Il affiche, par animation, le nombre d'images, la durée, l'image du coup, les effets retirés, la taille
-de la planche (prévient au-delà de 2048 × 1024).
+de la planche et **sa mémoire graphique** (budget : 4,2 Mo, voir section 1).
 
 La planche de contrôle `<BROUILLON>/export/export-<nom>.png` montre chaque image : le personnage en place (ligne verte
 = sol, croix jaune = pieds), en ROUGE ce qui sera posé sur la cible (à la place imaginée), en BLEU le projectile, la
