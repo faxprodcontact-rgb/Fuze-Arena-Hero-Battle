@@ -1,4 +1,4 @@
-// Les 3 dragons de la famille d'Elvyn (Brasyr feu, Rocvar terre, Venthys vent ; 27/11) : de vrais héros Épiques qu'on
+// Les 3 dragons de la famille d'Elvyn (Brasyr feu, Rocvar terre, Venthys vent ; 27/11) : de vrais héros Légendaires qu'on
 // peut invoquer et fusionner avec leur élément, qui combattent, avec leurs noms de compétence en français et en anglais,
 // et leurs images vectorielles (ils n'ont pas de pixel art).
 import { existsSync } from 'node:fs';
@@ -24,12 +24,12 @@ const DRAGONS: Record<string, [string, string, string]> = {
 const IDS = Object.keys(DRAGONS);
 
 describe('les 3 dragons', () => {
-  it('sont des héros Épiques, avec leur nom, leur élément et leur rôle', () => {
+  it('sont des héros Légendaires, avec leur nom, leur élément et leur rôle', () => {
     for (const id of IDS) {
       const [name, element, role] = DRAGONS[id]!;
       expect(isHero(id)).toBe(true);
-      expect(heroDef(id)).toMatchObject({ name, element, role, rarity: 'epic' });
-      expect(heroesOfElement(heroDef(id).element, 'epic').map((h) => h.id)).toContain(id);
+      expect(heroDef(id)).toMatchObject({ name, element, role, rarity: 'legendary' });
+      expect(heroesOfElement(heroDef(id).element, 'legendary').map((h) => h.id)).toContain(id);
     }
   });
 
