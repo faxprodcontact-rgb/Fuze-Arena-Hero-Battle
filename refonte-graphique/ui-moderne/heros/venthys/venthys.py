@@ -43,8 +43,8 @@ IVORY = Mat('#fffaf0', '#f4eed6', '#dccfb2', '#b0a088', '#7a6a58')
 WIND = ['#ffffff', '#eafff6', '#c2f5e2', '#8fe6cc', '#58c8b0', '#2f8f8a', '#1c5866']
 
 GRD = 113          # le sol
-FEET = (55, 113)   # le point « sol » (milieu de l'appui, entre les deux pieds)
-FRAME = (-9, 0, 117, 115)
+FEET = (50, 113)   # le point « sol » : sous le bassin, au milieu de l'ombre (entre le pied de devant et le genou de derrière)
+FRAME = (-12, 9, 116, 108)
 
 # ---------- le squelette (animation) ----------
 #   breath : souffle 0..1 ; hip : le bassin se déplace (les pieds restent au sol, les genoux plient) ; lean : le buste se

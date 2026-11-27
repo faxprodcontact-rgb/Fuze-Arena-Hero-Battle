@@ -34,7 +34,7 @@ def main():
     fig = Image.open(big).convert('RGBA')
     x0, y0, fw, fh = V.FRAME
     k = 1000 / fh
-    fx, fy = (48 - x0) * k, (V.FEET[1] - y0) * k
+    fx, fy = (V.FEET[0] - 2 - x0) * k, (V.FEET[1] - y0) * k
     W, H = fig.width + 120, fig.height + 100
     im = Image.new('RGBA', (W, H), BG)
     im.alpha_composite(ground(W, H, 60 + fx, 40 + fy, 46 * k, 4.2 * k))
