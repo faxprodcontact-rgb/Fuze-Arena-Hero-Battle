@@ -1,5 +1,5 @@
 // Le VRAI combat, image par image, pour contrôler un personnage exporté (consigne EXPORT-JEU.md, étape 4).
-// Le temps du jeu est VIRTUEL : requestAnimationFrame et performance.now sont tenus par ce script ; chaque pas avance
+// Le temps du jeu est VIRTUEL : requestAnimationFrame, performance.now et Date.now sont tenus par ce script ; chaque pas avance
 // de 1000/FPS ms, puis une capture nette (×2) est prise. Aucune image manquée, même si la capture est lente.
 //
 //   npx vite build --outDir <brouillon>/dist && npx vite preview --outDir <brouillon>/dist --port 5010 &
@@ -34,10 +34,13 @@ const SAVE = `(s) => {
 function virtualClock() {
   const raf = window.requestAnimationFrame.bind(window);
   const pnow = performance.now.bind(performance);
-  let on = false, vt = 0, q = [];
+  let on = false, vt = 0, q = [], v0 = 0, d0 = 0;
+  // les tweens de Phaser lisent Date.now : on le tient aussi (sinon projectiles et retours vont à la vitesse réelle)
+  const dnow = Date.now.bind(Date);
+  Date.now = () => (on ? d0 + (vt - v0) : dnow());
   window.requestAnimationFrame = (cb) => { if (on) { q.push(cb); return q.length; } return raf(cb); };
   performance.now = () => (on ? vt : pnow());
-  window.__virtOn = () => { vt = pnow(); on = true; };
+  window.__virtOn = () => { vt = pnow(); v0 = vt; d0 = dnow(); on = true; };
   window.__step = (ms) => { vt += ms; const run = q; q = []; run.forEach((cb) => cb(vt)); };
 }
 (async () => {
