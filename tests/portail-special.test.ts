@@ -1,11 +1,14 @@
-// Le portail spécial (27/11/2026) : même prix, mêmes chances par rareté et même Légendaire garanti que le portail
+// Le portail spécial (27/11/2026) : sa monnaie, le parchemin rouge ; mêmes chances par rareté et même Légendaire garanti que le portail
 // normal ; un Légendaire est toujours un des héros mis en avant (aujourd'hui les 4 dragons). Le reste ne change pas.
 import { beforeEach, describe, expect, it } from 'vitest';
 import { HEROES, heroDef } from '../src/core/data/heroes';
 import { FEATURED_BANNER, LEGENDARY_PITY, SUMMON_RATES } from '../src/core/data/summon';
 import { createRng } from '../src/core/rng';
 import { featuredLegends, summonFeatured, summonOne } from '../src/core/summon';
-import { summon, summonCost } from '../src/game/state/actions';
+import { COLISEUM_SHOP } from '../src/core/data/coliseum';
+import { MAILS } from '../src/core/data/mail';
+import { DAILY_BOSS_TIERS, RED_SCROLLS, WEEKLY_CHESTS } from '../src/core/data/modes';
+import { buyExchange, buyRedScroll, checkMail, claimMail, redScrollsBought, summon, summonCost } from '../src/game/state/actions';
 import { fresh, getState, replaceState, restore } from '../src/game/state/store';
 
 describe('le portail spécial', () => {
@@ -54,19 +57,53 @@ describe('le portail spécial', () => {
     expect(s.pity).toBe(0);
   });
 
-  it('coûte comme le portail normal et fait avancer le même compteur', () => {
+  it('se paie en parchemins rouges (1 par invocation) et fait avancer le même compteur', () => {
     const st = getState();
-    st.wallet.scrolls = 10;
-    st.wallet.gems = 0;
-    expect(summonCost('featured', 10)).toEqual(summonCost('normal', 10));
+    st.wallet.redScrolls = 10;
+    st.wallet.scrolls = 50;
+    st.wallet.gems = 99999;
+    expect(summonCost('featured', 1)).toEqual({ currency: 'redScrolls', amount: 1 });
+    expect(summonCost('featured', 10)).toEqual({ currency: 'redScrolls', amount: 10 });
     const out = summon('featured', 10);
     expect(out?.length).toBe(10);
-    expect(getState().wallet.scrolls).toBe(0);
+    expect(getState().wallet.redScrolls).toBe(0);
+    // ni parchemins ni gemmes : seulement des parchemins rouges
+    expect(getState().wallet.scrolls).toBe(50);
+    expect(getState().wallet.gems).toBe(99999);
     expect(getState().summon.total).toBe(10);
-    expect(getState().summon.pity).toBeGreaterThanOrEqual(0);
-    // sans parchemin : en gemmes, comme le normal
-    expect(summonCost('featured', 1)).toEqual(summonCost('normal', 1));
     expect(summon('featured', 1)).toBeNull();
+  });
+
+  it('une vieille sauvegarde démarre avec 0 parchemin rouge, et le courrier en offre 10', () => {
+    const old = fresh() as unknown as { wallet: Record<string, number> };
+    delete old.wallet.redScrolls;
+    const s = restore(JSON.parse(JSON.stringify(old)));
+    expect(s.wallet.redScrolls).toBe(0);
+    replaceState(s);
+    const mail = MAILS.find((m) => m.id === 'parchemins-rouges-2711')!;
+    expect(mail.reward).toEqual({ redScrolls: 10 });
+    expect(new Set(MAILS.map((m) => m.id)).size).toBe(MAILS.length);
+    checkMail();
+    expect(claimMail('parchemins-rouges-2711').currencies.redScrolls).toBe(10);
+    expect(getState().wallet.redScrolls).toBe(10);
+  });
+
+  it('où gagner des parchemins rouges : boss du jour, coffre de la semaine, Colisée, boutique (limitée)', () => {
+    expect(DAILY_BOSS_TIERS[DAILY_BOSS_TIERS.length - 1]!.redScrolls).toBe(1);
+    expect(WEEKLY_CHESTS[WEEKLY_CHESTS.length - 1]!.reward.redScrolls).toBe(1);
+    expect(RED_SCROLLS.perChapter).toBeGreaterThan(0);
+    // Colisée : contre des insignes
+    const st = getState();
+    const red = COLISEUM_SHOP.find((x) => x.reward.redScrolls)!;
+    st.wallet.badge = red.cost;
+    expect(buyExchange('coliseum', red.id)?.currencies.redScrolls).toBe(1);
+    // boutique : contre des gemmes, au plus RED_SCROLLS.gemsPerWeek par semaine
+    st.wallet.gems = RED_SCROLLS.gems * (RED_SCROLLS.gemsPerWeek + 2);
+    for (let i = 0; i < RED_SCROLLS.gemsPerWeek; i++) expect(buyRedScroll()?.currencies.redScrolls).toBe(1);
+    expect(buyRedScroll()).toBeNull();
+    expect(redScrollsBought()).toBe(RED_SCROLLS.gemsPerWeek);
+    expect(getState().wallet.gems).toBe(RED_SCROLLS.gems * 2);
+    expect(getState().wallet.redScrolls).toBe(1 + RED_SCROLLS.gemsPerWeek);
   });
 
   it('une vieille sauvegarde avec un dragon Épique (★3) reste valable : il passe à ★4, la naissance des Légendaires', () => {

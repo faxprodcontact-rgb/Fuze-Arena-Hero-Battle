@@ -137,6 +137,18 @@ def _():
     return ic
 
 
+@picto('redScrolls')
+def _():
+    """Le parchemin rouge du portail spécial (27/11/2026) : parchemin roulé rouge braise, ruban et sceau d'or."""
+    ic = Icon()
+    ic.glow(48, 50, 40, '#ff6a1f', 0.35)
+    o = scroll(ic, 48, 50, 72, 60, seal='gold', paper='#d9363f')
+    # le ruban d'or qui serre le parchemin en son milieu (dans le même contour que le parchemin)
+    o.part(rect(48 - 5, 50 - 60 * 0.34, 10, 60 * 0.68, 1.5).rot(-12, 48, 50), 'gold', gloss=False)
+    ic.sparkle(84, 18, 8)
+    return ic
+
+
 @picto('goldPile')
 def _():
     """Une pile de pièces d'or et une pièce posée de face."""

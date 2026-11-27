@@ -72,7 +72,7 @@ Les **instants** sont en ms depuis le début du coup (ceux d'`anim.py` : `ATTACK
 
 | clé | sens |
 |---|---|
-| `genre` | `'melee'` : le jeu l'amène devant sa cible, il frappe, il revient. `'tir'` : il tire de sa place, le jeu fait voler le projectile jusqu'à la vraie cible. `'sort'` : il lance sur place, ce qui est « sur la cible » apparaît sur chaque cible. `'equipe'` : sort d'équipe (soin, bouclier, bonus) : le jeu pose les effets reçus sur les alliés. |
+| `genre` | `'melee'` : le jeu l'amène devant sa cible, il frappe, il revient. `'tir'` : il tire de sa place, le jeu fait voler le projectile jusqu'à la vraie cible. `'sort'` : il lance sur place, ce qui est « sur la cible » apparaît sur chaque cible. `'equipe'` : sort d'équipe (soin, bouclier, bonus) : le jeu pose les effets reçus sur les alliés. `'rayon'` : un jet continu (souffle, rayon) tendu de sa bouche à chaque cible (voir `rayon`). |
 | `coup` | l'instant où les dégâts tombent (chiffre, recul). Il tombe toujours pile au début d'une image. Tir : l'arrivée du projectile. |
 | `cible` | `(x, y)` : l'ennemi imaginé par l'animation. x = ses pieds, y = la hauteur où le coup le touche. Corps à corps : `x − FEET[0]` est la distance pieds à pieds au moment du coup (l'arme doit toucher un ennemi dont l'avant est à 40 px de ses pieds). |
 | `coupe` | colonne : un effet (élément de `fig.fx_back` / `fig.fx_front`) dont le MILIEU est à droite part « sur la cible » (posé aux pieds de la vraie cible). Un nombre, ou une fonction de l'instant (`lambda t: 150 if t < A.S_BURST else 112`). Un effet n'est jamais coupé en deux. |
@@ -80,6 +80,7 @@ Les **instants** sont en ms depuis le début du coup (ceux d'`anim.py` : `ATTACK
 | `elan` | (corps à corps, facultatif) `(t0, t1)` : quand il bondit jusqu'à la cible (défaut : de la fin de la charge au coup). |
 | `tir`, `depuis`, `bouche`, `projectile` | (tir) `tir` = l'instant où le projectile part ; pendant le vol, les effets à droite de la colonne `depuis` sont le projectile (retirés du personnage) ; `bouche` = `(x, y)` d'où il part (bout de l'arme) ; `projectile(fig, i)` dessine le projectile SEUL, pointe en (0, 0), vers la droite (ex. `fig.fx_front.append(A.arrow_fx(fig, (0, 0), 0))`). `proj_images` (2), `proj_ms`. |
 | `arc`, `rase`, `vitesse`, `pente` | (tir, facultatifs) hauteur de la cloche (le projectile bascule le long de la courbe), vol au ras du sol, vitesse (défaut : celle de l'animation), angle du dessin. |
+| `rayon`, `bouche`, `depuis`, `rayon_max`, `vue_rayon` | (genre `'rayon'`, ajouté le 27/11, modèle `monstres/salamandre/jeu.py`) `rayon` = `(t0, t1)` : quand le jet est dessiné ; `bouche` = `(x, y)` d'où il part (OBLIGATOIRE ; souvent `ctx['mouth']` du dessin à l'instant du coup) ; pendant la fenêtre, un effet dont le milieu est entre `depuis` (défaut : `bouche` − 4) et `coupe` est le jet, rendu à part, couché à l'horizontale depuis la bouche (l'outil le tourne de l'angle bouche → `cible`). Le jeu (`beam` de `hd-fight.ts`) le tourne vers la vraie cible et l'étire de `longueur` (bouche → `cible` du dessin) jusqu'à elle. Ce qui est au-delà de `coupe` (l'impact, l'ennemi qui s'embrase) part sur la cible comme d'habitude. Le jet n'est pas retiré par `fx_max` (seulement s'il est plus long que `rayon_max`, 400, ou plus haut que 0,6 × `fx_max`) ; `vue_rayon` : le cadre de rendu du jet (défaut : de 40 px derrière la bouche à 60 px après la cible, 120 de haut). Planche de contrôle : le jet en BLEU, tourné. |
 | `fx_max` | (150) un effet plus large (ou large ET haut) que ça est retiré : éclair plein écran (le jeu a son éclair et sa secousse), longues fissures qui iraient du lanceur à la cible. |
 | `cible_des` | (facultatif) avant cet instant, rien ne part sur la cible. |
 | `periode`, `images` | (`pose`) la durée d'une respiration (ms ; défaut `IDLE_T`/`IDLE` d'anim.py) et le nombre d'images (8). |
@@ -141,7 +142,7 @@ d'agent par personnage** (un peu plus pour un tir).
 
 ### Pas encore géré par l'outil (à ajouter au premier personnage qui en a besoin)
 
-- `rayon` (jet continu étiré jusqu'à la cible : salamandre, moine-tengu, Tybalt, Méduse, prêtresse-serpent en pixel) ;
+- ~~`rayon`~~ : fait le 27/11 (lot 6, voir la clé `rayon` plus haut ; `hd-fight.ts` n'a pas changé) ;
 - `retour` (arme qui revient : Sable, Zéphyre) ;
 - `avance` (personnage qui fonce dans son animation) : si `anim.py` déplace tout le corps vers l'avant, il faut retirer
   ce déplacement au rendu et le donner au jeu (`avance` de `hd-fight.ts`) ; sinon il bondit (comme Kael et le golem) ;

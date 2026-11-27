@@ -51,6 +51,7 @@ MEM_MAX = 4.2        # Mo (2048 × 512)
 MEM_STOP = 6.0       # Mo
 PAD = 2              # vide autour de chaque image dans la planche (le lissage ne bave pas sur la voisine)
 ALPHA_MIN = 4        # un pixel plus transparent que ça ne compte pas pour rogner
+RAYON_MAX = 400      # un jet (`rayon`) plus long que ça est retiré quand même
 FX_MAX = 150         # un effet plus large ou plus haut que ça (pixels du dessin : éclair plein écran) est retiré
 POSE_IMAGES = 8      # images du repos (une boucle : ~4 i/s, la respiration est lente)
 FPS = 6              # images par seconde des coups, loin du coup…
@@ -138,14 +139,27 @@ def split_top(frag):
     return out or ([frag] if frag.strip() else [])
 
 
-def fig_svg(fig, view, keep_body=True, back=None, front=None, extra=''):
-    """Le SVG d'une figure capturée, cadrée sur `view`, avec seulement les effets donnés."""
+def part_cx(q):
+    """Le milieu (x) d'un morceau du dessin, dans sa pose (matrice a b c d e f)."""
+    x0, y0, x1, y1 = q.shape.bbox()
+    M = getattr(q, 'M', None) or (1, 0, 0, 1, 0, 0)
+    xs = [M[0] * x + M[2] * y + M[4] for x in (x0, x1) for y in (y0, y1)]
+    return (min(xs) + max(xs)) / 2
+
+
+def fig_svg(fig, view, keep_body=True, back=None, front=None, extra='', drop=(), only=()):
+    """Le SVG d'une figure capturée, cadrée sur `view`, avec seulement les effets donnés. `drop` : morceaux retirés du
+    corps ; `only` (sans le corps) : morceaux gardés quand même (l'arme lancée, `arme` de jeu.py)."""
     c = snapshot(fig)
     c.x0, c.y0, c.w, c.h = view
     if not keep_body:
         for k in ('parts', 'under', 'over'):
             if hasattr(c, k):
                 setattr(c, k, [])
+        if only:
+            c.parts = [q for q in fig.parts if q.name in only]
+    elif drop:
+        c.parts = [q for q in c.parts if q.name not in drop]
     if back is not None:
         c.fx_back = list(back)
     if front is not None:
@@ -189,19 +203,50 @@ def crop(a):
     return Image.fromarray(sub), int(x0), int(y0)
 
 
+def id_color(c):
+    """La couleur qui porte le numéro c (1 à 4095) : vert et bleu = le numéro, espacé de 4 en 4 (sur un bord presque
+    opaque, l'arrondi du navigateur décale une couleur d'une unité) ; rouge = une clé de contrôle tirée du numéro."""
+    return (40 + 4 * ((c * 37) % 48), (c >> 6) * 4, (c & 63) * 4)
+
+
 def bboxes(idmap, n):
-    """Les boîtes (en pixels de la toile) des éléments peints dans la carte d'identité (couleur = numéro + 1)."""
+    """Les boîtes (en pixels de la toile) des éléments peints dans la carte d'identité (couleur = id_color(numéro + 1)).
+    Là où deux effets se recouvrent, le lissage mélange leurs couleurs : le bord prendrait le numéro d'un troisième
+    (ex. une ombre au sol mesurée 158 px de large, puis retirée). La clé de contrôle (rouge) écarte ces mélanges, et on
+    ne garde que les pixels qui ont au moins deux voisins du même numéro ; un effet qui n'en a aucun (un fin liseré caché
+    sous l'effet suivant) garde tous ses pixels qui passent la clé."""
     a = idmap.astype(np.int64)
     solid = a[:, :, 3] >= 250
-    code = (a[:, :, 1] << 8) | a[:, :, 2]
+    code = (((a[:, :, 1] + 2) // 4) << 6) | ((a[:, :, 2] + 2) // 4)
+    key = 40 + 4 * ((code * 37) % 48)
+    code = np.where(solid & (np.abs(a[:, :, 0] - key) <= 2), code, 0)
+    h, w = code.shape
+    pad = np.pad(code, 1)
+    same = sum((pad[1 + dy:1 + dy + h, 1 + dx:1 + dx + w] == code).astype(np.int32) for dy in (-1, 0, 1) for dx in (-1, 0, 1))
     out = {}
-    ys, xs = np.nonzero(solid & (code > 0) & (a[:, :, 0] == 7))
-    codes = code[ys, xs]
-    for c in np.unique(codes):
-        if c - 1 >= n:
+    for strict in (True, False):
+        ys, xs = np.nonzero((code > 0) & (same >= 3) if strict else (code > 0))
+        codes = code[ys, xs]
+        for c in np.unique(codes):
+            if c - 1 >= n or int(c) - 1 in out:
+                continue
+            sel = codes == c
+            out[int(c) - 1] = (int(xs[sel].min()), int(ys[sel].min()), int(xs[sel].max()) + 1, int(ys[sel].max()) + 1)
+    return out
+
+
+def hidden_parts(bb, fig):
+    """Un morceau d'effet entièrement caché sous le suivant (le liseré sous le remplissage d'une goutte) n'a pas de boîte :
+    il prend celle de son effet (les autres morceaux du même fx_back / fx_front), pour partir avec lui."""
+    frag = [i for i, fr in enumerate(fig.fx_back) for _ in split_top(fr)]
+    frag += [len(fig.fx_back) + i for i, fr in enumerate(fig.fx_front) for _ in split_top(fr)]
+    out = dict(bb)
+    for k, g in enumerate(frag):
+        if k in bb:
             continue
-        sel = codes == c
-        out[int(c) - 1] = (int(xs[sel].min()), int(ys[sel].min()), int(xs[sel].max()) + 1, int(ys[sel].max()) + 1)
+        mates = [bb[q] for q, h in enumerate(frag) if h == g and q in bb]
+        if mates:
+            out[k] = (min(b[0] for b in mates), min(b[1] for b in mates), max(b[2] for b in mates), max(b[3] for b in mates))
     return out
 
 
@@ -210,7 +255,7 @@ def idmap_svg(fig, view, elems):
     style = []
     wrapped = []
     for i, (layer, el) in enumerate(elems):
-        col = '#07%02x%02x' % ((i + 1) >> 8, (i + 1) & 255)
+        col = '#%02x%02x%02x' % id_color(i + 1)
         cls = 'q%d' % i
         style.append('.%s,.%s *{fill:%s!important;stroke:%s!important;opacity:1!important;fill-opacity:1!important;'
                      'stroke-opacity:1!important}' % (cls, cls, col, col))
@@ -282,11 +327,24 @@ def export_one(folder, voir=None):
         act = cfg.get('action', act_default)
         dur = cfg.get('duree') or float(getattr(A, keys_name)[-1][0])
         keys = [cfg['coup']] + list(cfg.get('charge', ())) + list(cfg.get('elan', ())) + ([cfg['tir']] if 'tir' in cfg else [])
+        keys += list(cfg.get('rayon', ())) if cfg['genre'] == 'rayon' else []
+        keys += list(cfg.get('retour', ())) if cfg['genre'] == 'tir' else []
         dense = cfg.get('dense', [(cfg['coup'] - COUP_AVANT, cfg['coup'] + COUP_APRES)])
         ts = times_for(dur, cfg.get('fps', FPS), keys, dense, cfg.get('fps_coup', FPS_COUP))
         # l'action se termine sur la phase 0 du repos : la respiration repart sans à-coup
         t0 = math.ceil(dur / period) * period - dur
         plan[which] = dict(genre=cfg['genre'], ts=ts, dur=dur, act=act, t0=t0, cfg=cfg)
+        if cfg['genre'] == 'rayon':
+            # `rayon` : un jet continu tendu de la bouche à la cible. Il est rendu à part, couché à l'horizontale
+            # depuis la bouche (le jeu le tourne vers la vraie cible et l'étire jusqu'à elle : hd-fight.ts, beam)
+            for k in ('rayon', 'bouche', 'cible'):
+                if k not in cfg:
+                    sys.exit('%s %s : un rayon demande rayon=(t0, t1), bouche=(x, y) et cible=(x, y)' % (name, which))
+            b, c = cfg['bouche'], cfg['cible']
+            rlen = math.hypot(c[0] - b[0], c[1] - b[1])
+            rv = tuple(cfg.get('vue_rayon', (b[0] - 40, b[1] - 60, rlen + 100, 120)))
+            plan[which].update(rjob=Job(tmp, rv, up), rview=rv, rlen=rlen,
+                               rang=math.degrees(math.atan2(c[1] - b[1], c[0] - b[0])))
 
     # ---- 1) rejouer l'animation, attraper les figures, mesurer les effets
     caught = {}
@@ -317,12 +375,31 @@ def export_one(folder, voir=None):
             t = p['ts'][i]
             j = id_jobs[n]
             n += 1
-            bb = bboxes(maps[j], len(elems)) if j is not None else {}
+            bb = hidden_parts(bboxes(maps[j], len(elems)), fig) if j is not None else {}
             near_b, near_f, tgt_b, tgt_f, proj_b, proj_f = [], [], [], [], [], []
             coupe = cfg.get('coupe')
             if callable(coupe):
                 coupe = coupe(t)
             flying = p['genre'] == 'tir' and cfg.get('tir', 0) <= t < cfg['coup']
+            # `retour` : l'arme revient de la cible à la main (boomerang) ; le jeu la fait voler, elle quitte le corps
+            if p['genre'] == 'tir' and 'retour' in cfg and cfg['retour'][0] <= t < cfg['retour'][1]:
+                flying = True
+            depuis = cfg.get('depuis')
+            if callable(depuis):
+                depuis = depuis(t)
+            # `arme` : les MORCEAUX du dessin qui sont l'arme lancée (pas des effets) : retirés du corps pendant le vol
+            # (aller et retour), posés sur la cible s'ils sont à droite de `coupe`, sinon gardés avec le corps
+            arme_out, arme_tgt = set(), set()
+            for q in fig.parts:
+                if q.name not in cfg.get('arme', ()):
+                    continue
+                if flying:
+                    arme_out.add(q.name)
+                elif which != 'pose' and coupe is not None and part_cx(q) >= coupe and t >= cfg.get('cible_des', 0):
+                    arme_out.add(q.name)
+                    arme_tgt.add(q.name)
+            beaming = p['genre'] == 'rayon' and cfg['rayon'][0] <= t < cfg['rayon'][1]
+            ray_b, ray_f = [], []
             for k, (layer, el) in enumerate(elems):
                 box = bb.get(k)
                 where = 'near'
@@ -330,19 +407,33 @@ def export_one(folder, voir=None):
                     x0, y0, x1, y1 = box
                     w_, h_ = (x1 - x0) / up, (y1 - y0) / up
                     cx = vx((x0 + x1) / 2)
-                    if w_ > cfg.get('fx_max', FX_MAX) or (w_ > 0.6 * cfg.get('fx_max', FX_MAX) and h_ > 0.6 * cfg.get('fx_max', FX_MAX)):
+                    # le jet : ce qui est à droite de `depuis` (et avant `coupe`) pendant la fenêtre `rayon` ; il est
+                    # long par nature, `fx_max` ne le retire pas (seulement au-delà de `rayon_max`)
+                    if (beaming and cx >= cfg.get('depuis', cfg['bouche'][0] - 4) and (coupe is None or cx < coupe)
+                            and w_ <= cfg.get('rayon_max', RAYON_MAX) and h_ <= 0.6 * cfg.get('fx_max', FX_MAX)):
+                        where = 'ray'
+                    elif w_ > cfg.get('fx_max', FX_MAX) or (w_ > 0.6 * cfg.get('fx_max', FX_MAX) and h_ > 0.6 * cfg.get('fx_max', FX_MAX)):
                         where = 'drop'
                         report.append('%s %s %d : effet de %dx%d retiré (trop grand)' % (name, which, i, w_, h_))
-                    elif flying and cx >= cfg['depuis']:
+                    elif flying and cx >= depuis:
                         where = 'proj'
                     elif which != 'pose' and coupe is not None and cx >= coupe and t >= cfg.get('cible_des', 0):
                         where = 'tgt'
-                lists = {'near': (near_b, near_f), 'tgt': (tgt_b, tgt_f), 'proj': (proj_b, proj_f)}.get(where)
+                lists = {'near': (near_b, near_f), 'tgt': (tgt_b, tgt_f), 'proj': (proj_b, proj_f), 'ray': (ray_b, ray_f)}.get(where)
                 if lists:
                     (lists[0] if layer == 'b' else lists[1]).append(el)
-            body = main_job.add(fig_svg(fig, view, True, near_b, near_f))
-            tgt = main_job.add(fig_svg(fig, view, False, tgt_b, tgt_f)) if (tgt_b or tgt_f) else None
-            out.append(dict(t=t, body=body, tgt=tgt))
+            body = main_job.add(fig_svg(fig, view, True, near_b, near_f, drop=arme_out))
+            tgt = (main_job.add(fig_svg(fig, view, False, tgt_b, tgt_f, only=arme_tgt))
+                   if (tgt_b or tgt_f or arme_tgt) else None)
+            # `avance` (corps à corps) : le corps fonce dans sa propre animation ; ce déplacement (pixels du dessin vers
+            # l'avant, à l'instant t) est retiré de l'image (elle est ancrée aux pieds déplacés) et donné au jeu
+            av = float(cfg['avance'](t)) if which != 'pose' and callable(cfg.get('avance')) else 0.0
+            ray = None
+            if ray_b or ray_f:
+                b = cfg['bouche']
+                rot = lambda lst: ['<g transform="rotate(%.3f %.2f %.2f)">%s</g>' % (-p['rang'], b[0], b[1], ''.join(lst))] if lst else []   # noqa: E731
+                ray = p['rjob'].add(fig_svg(fig, p['rview'], False, rot(ray_b), rot(ray_f)))
+            out.append(dict(t=t, body=body, tgt=tgt, av=av, ray=ray))
         p['frames'] = out
 
     # ---- le projectile : dessiné par jeu.py (pointe en (0, 0), vers la droite), quelques images
@@ -354,19 +445,27 @@ def export_one(folder, voir=None):
             if not draw:
                 sys.exit('%s %s : un tir demande projectile=(fonction qui dessine le projectile, pointe en 0,0)' % (name, which))
             fig0 = caught[which][0][0]
-            n_img = cfg.get('proj_images', 2)
-            ids = []
-            for q in range(n_img):
-                pf = snapshot(fig0)
-                pf.fx_back, pf.fx_front = [], []
-                for k in ('parts', 'under', 'over'):
-                    setattr(pf, k, [])
-                draw(pf, q)
-                ids.append(proj_job.add(fig_svg(pf, pview, False)))
-            projs.append((which, ids))
+
+            def draw_imgs(draw, n_img):
+                ids = []
+                for q in range(n_img):
+                    pf = snapshot(fig0)
+                    pf.fx_back, pf.fx_front = [], []
+                    for k in ('parts', 'under', 'over'):
+                        setattr(pf, k, [])
+                    draw(pf, q)
+                    # le corps est vidé avant : seuls restent les morceaux que `draw` a ajoutés (une arme dessinée en morceaux)
+                    ids.append(proj_job.add(fig_svg(pf, pview, True)))
+                return ids
+            projs.append((which, draw_imgs(draw, cfg.get('proj_images', 2))))
+            if 'retour' in cfg:
+                # l'arme qui revient (boomerang) : dessinée par `revient` (défaut : `projectile`), centre en (0, 0),
+                # vers la GAUCHE (vers le lanceur)
+                projs.append((which + ':retour', draw_imgs(cfg.get('revient', draw), cfg.get('retour_images', cfg.get('proj_images', 2)))))
     print('%s : rendu…' % name, flush=True)
     imgs = main_job.run()
     pimgs = proj_job.run()
+    rimgs = {w: q['rjob'].run() for w, q in plan.items() if 'rjob' in q}      # les jets (`rayon`)
 
     # ---- 2) rogner, dédoublonner, ranger
     cells = []          # (image PIL, ax, ay) ax, ay en pixels du dessin
@@ -405,6 +504,19 @@ def export_one(folder, voir=None):
         if which != 'pose':
             for k in [cfg['coup']] + list(cfg.get('charge', ())) + list(cfg.get('elan', ())) + ([cfg['tir']] if 'tir' in cfg else []):
                 key_idx.add(index_at(p['ts'], k))
+        if p['genre'] == 'rayon':
+            for k in cfg['rayon']:
+                key_idx.add(index_at(p['ts'], k))
+        if p['genre'] == 'tir' and 'retour' in cfg:
+            for k in cfg['retour']:
+                key_idx.add(index_at(p['ts'], k))
+        rj = rimgs.get(which)
+
+        def ray_same(i, j):
+            ri, rk = p['frames'][i].get('ray'), p['frames'][j].get('ray')
+            if ri is None or rk is None:
+                return ri is None and rk is None
+            return close(rj[ri], rj[rk])
         # images identiques de suite (tenue, arrêt sur image) : une seule, plus longue
         keep, dur = [], []
         for i, fr in enumerate(p['frames']):
@@ -414,7 +526,8 @@ def export_one(folder, voir=None):
                 pb = imgs[p['frames'][keep[-1]]['body']]
                 pt = p['frames'][keep[-1]]['tgt']
                 pt = imgs[pt] if pt is not None else None
-                if close(a_b, pb) and ((a_t is None and pt is None) or (a_t is not None and pt is not None and close(a_t, pt))):
+                same_av = abs(fr['av'] - p['frames'][keep[-1]]['av']) < 0.5
+                if same_av and ray_same(i, keep[-1]) and close(a_b, pb) and ((a_t is None and pt is None) or (a_t is not None and pt is not None and close(a_t, pt))):
                     dur[-1] += ms[i]
                     continue
             keep.append(i)
@@ -423,10 +536,12 @@ def export_one(folder, voir=None):
         for nidx, i in enumerate(keep):
             old_to_new[i] = nidx
         remap = lambda i: old_to_new[max(k for k in keep if k <= i)]   # noqa: E731
-        f_list, c_list = [], []
+        f_list, c_list, r_list = [], [], []
         for i in keep:
             fr = p['frames'][i]
-            f_list.append(add_cell(imgs[fr['body']], feet))
+            if rj is not None:
+                r_list.append(add_cell(rj[fr['ray']], tuple(cfg['bouche']), p['rview']) if fr.get('ray') is not None else -1)
+            f_list.append(add_cell(imgs[fr['body']], (feet[0] + fr['av'], feet[1])))
             c_list.append(add_cell(imgs[fr['tgt']], tgt_anchor) if fr['tgt'] is not None else -1)
         a = dict(genre=p['genre'], ms=[int(round(m)) for m in dur], f=f_list)
         if which != 'pose':
@@ -440,6 +555,16 @@ def export_one(folder, voir=None):
                 a['charge'] = [remap(index_at(p['ts'], cfg['charge'][0])), remap(index_at(p['ts'], cfg['charge'][1]))]
             if 'elan' in cfg:
                 a['elan'] = [remap(index_at(p['ts'], cfg['elan'][0])), remap(index_at(p['ts'], cfg['elan'][1]))]
+            avs = [round(p['frames'][i]['av'], 1) for i in keep]
+            if p['genre'] == 'melee' and max(avs) > 3:
+                a['avance'] = avs          # hd-fight.ts : il avance au rythme dessiné (ramené à la vraie distance)
+            if p['genre'] == 'rayon':
+                # le jet : chaque image ancrée à la bouche, couchée à l'horizontale ; le jeu la tourne vers la vraie
+                # cible et l'étire de `longueur` (bouche → cible du dessin) jusqu'à elle
+                b = cfg['bouche']
+                a['rayon'] = r_list
+                a['bouche'] = [round(b[0] - feet[0], 1), round(b[1] - grd, 1)]
+                a['longueur'] = round(p['rlen'], 1)
             if p['genre'] == 'tir':
                 a['depart'] = remap(index_at(p['ts'], cfg['tir']))
                 b = cfg['bouche']
@@ -455,6 +580,14 @@ def export_one(folder, voir=None):
                 ids = dict(projs)[which]
                 a['proj'] = [add_cell(pimgs[q], (0, 0), pview) for q in ids]
                 a['projMs'] = cfg.get('proj_ms', [80] * len(ids))
+                if 'retour' in cfg:
+                    # hd-fight.ts : l'arme revient de la 1re cible à la bouche pendant les images retourDe … retourDe +
+                    # len(retour) (le jeu leur donne la durée du vol) ; une image du retour par image de l'animation
+                    r0 = remap(index_at(p['ts'], cfg['retour'][0]))
+                    r1 = remap(index_at(p['ts'], cfg['retour'][1]))
+                    rc = [add_cell(pimgs[q], (0, 0), pview) for q in dict(projs)[which + ':retour']]
+                    a['retourDe'] = r0
+                    a['retour'] = [rc[q % len(rc)] for q in range(max(1, r1 - r0))]
         meta_anims[which] = a
         report.append('%s %s : %d images (%d avant fusion), %d ms, coup à l’image %s' % (
             name, which, len(keep), len(p['frames']), int(sum(dur)), a.get('coup', '-')))
@@ -548,7 +681,8 @@ def control_sheet(out_dir, name, meta, sheet, view, feet, grd, plan):
             d = ImageDraw.Draw(c)
             gy = int((grd - view[1]) * S)
             d.line([(0, gy), (W, gy)], fill=(80, 200, 120, 255), width=1)
-            put(c, f, feet)
+            av = a['avance'][i] if 'avance' in a else 0       # le corps à sa place dans l'animation (l'élan dessiné)
+            put(c, f, (feet[0] + av, feet[1]))
             if 'cible' in a and a['cible'][i] >= 0:
                 put(c, a['cible'][i], (cfg['cible'][0], grd), (255, 60, 60))
             if 'cible' in cfg:
@@ -561,6 +695,19 @@ def control_sheet(out_dir, name, meta, sheet, view, feet, grd, plan):
                 bx = feet[0] + a['bouche'][0]
                 by = grd + a['bouche'][1]
                 put(c, a['proj'][0], (bx + (cfg['cible'][0] - bx) * 0.5, by), (60, 120, 255))
+            if a.get('retour') and a['retourDe'] <= i < a['retourDe'] + len(a['retour']):
+                # l'arme qui revient, en BLEU, entre la cible et la bouche (avancée avec les images du retour)
+                bx, by = feet[0] + a['bouche'][0], grd + a['bouche'][1]
+                u = (i - a['retourDe'] + 0.5) / len(a['retour'])
+                put(c, a['retour'][i - a['retourDe']], (cfg['cible'][0] + (bx - cfg['cible'][0]) * u,
+                                                        cfg['cible'][1] + (by - cfg['cible'][1]) * u), (60, 120, 255))
+            if a.get('rayon') and a['rayon'][i] >= 0:
+                # le jet en BLEU, tourné de la bouche vers la cible du dessin (comme le jeu le tourne vers la vraie)
+                b = cfg['bouche']
+                lay = Image.new('RGBA', (W, H))
+                put(lay, a['rayon'][i], b, (60, 120, 255))
+                ang = math.degrees(math.atan2(cfg['cible'][1] - b[1], cfg['cible'][0] - b[0]))
+                c.alpha_composite(lay.rotate(-ang, resample=Image.BICUBIC, center=((b[0] - view[0]) * S, (b[1] - view[1]) * S)))
             fx_, fy_ = int((feet[0] - view[0]) * S), int((feet[1] - view[1]) * S)
             d.line([(fx_ - 5, fy_), (fx_ + 5, fy_)], fill=(255, 255, 0, 255))
             d.line([(fx_, fy_ - 5), (fx_, fy_ + 5)], fill=(255, 255, 0, 255))
@@ -570,6 +717,8 @@ def control_sheet(out_dir, name, meta, sheet, view, feet, grd, plan):
             ch = a.get('charge')
             if ch and ch[0] <= i <= ch[1]:
                 lab += '  charge'
+            if av:
+                lab += '  avance %g' % av
             d.text((6, 4), lab, fill=(255, 255, 255, 255), font=font)
             cells.append(c)
         rows.append(cells)
