@@ -74,7 +74,8 @@ SC0 = (85.0, 79.0)         # le centre du bouclier
 SA0 = 9.0                  # l'inclinaison du bouclier (la pointe vers l'arrière)
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ear=0.0, fr=0.0, cape=0.0, blink=0.0,
-            sh=(0.0, 0.0), srot=0.0, glow=0.0, g=G0, da=DA0, wa=WA0, stretch=0.0, red=0.0, bend=1.0)
+            sh=(0.0, 0.0), srot=0.0, glow=0.0, g=G0, da=DA0, wa=WA0, stretch=0.0, red=0.0, bend=1.0,
+            feuille=0.0)   # feuille : le signe du repos (anim.signe), la feuille d'or du bouclier luit lentement
 
 # la boîte de la face (ovale du visage, SANS les cheveux ni l'oreille, avant l'agrandissement ×1,1) : ../visage.py
 FACEBOX = (60.0, 28.0, 82.4, 52.2)
@@ -525,6 +526,7 @@ def shield(fig, P, SHM):
     body = LS(SH_PTS, sharp=(8,), t=0.92)
     laq = inset(body, 2.1)
     g = P['glow']
+    fe = P['feuille']
     sdet = [
         # le bord de bois (le flanc gauche, dans l'ombre, montre son épaisseur)
         (ribbon(crpath([L(-15.4, -18), L(-15.6, -4), L(-13.4, 8), L(-8.6, 17), L(-2.4, 24.4)], 18), swell(18, 1.4)), LEATHER.shadow, 0.8),
@@ -560,9 +562,9 @@ def shield(fig, P, SHM):
         # l'éclat sur le bord droit
         (taper(crpath([L(lc[0] + 2.2, lc[1] - 12.0), L(lc[0] + 4.2, lc[1] - 7.0), L(lc[0] + 4.2, lc[1] - 2.0)], 8), 0.6, 0.2, tip='sharp', wmid=0.9), GOLD.glint, 0.85),
     ]
-    if g > 0:
-        # la feuille s'illumine : de l'or au blanc doré
-        ldet += [(leaf, ('rad', *L(lc[0] + 0.6, lc[1] - 4), 9, 9, [(0, '#fffde8'), (0.5, '#fff0a0'), (1, GOLD.light)]), min(1.0, 0.35 * g))]
+    if g > 0 or fe > 0:
+        # la feuille s'illumine : de l'or au blanc doré (fe : le repos, anim.signe, elle luit lentement)
+        ldet += [(leaf, ('rad', *L(lc[0] + 0.6, lc[1] - 4), 9, 9, [(0, '#fffde8'), (0.5, '#fff0a0'), (1, GOLD.light)]), min(1.0, 0.35 * g + 0.6 * fe))]
     fig.part('leaf', leaf, GOLD, grad=(*L(lc[0] + 5, lc[1] - 14), *L(lc[0] - 5, lc[1] + 7), [(0, GOLD.hi), (0.4, GOLD.light), (1, GOLD.base)]),
              cel=0.5, rim=0.5, cast=0.9, cast_on=['shield'], details=ldet)
     stem = limb([L(lc[0] + 0.2, lc[1] + 7.0), L(lc[0] - 0.2, lc[1] + 9.0), L(lc[0] - 1.0, lc[1] + 10.4)], [1.0, 0.8, 0.6])

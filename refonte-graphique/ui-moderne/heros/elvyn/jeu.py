@@ -95,7 +95,7 @@ def orbe(fig, i):
 
 
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « L'orbe de la perle » : il charge la perle, tend le bras ; l'orbe vole jusqu'à la vraie cible et y éclate
     # (le coup : 20 ms après l'arrivée, l'éclat est déjà là ; après l'impact, toutes les gouttes restent sur la cible, même celles qui rebondissent vers lui)
     'attaque': dict(genre='tir', tir=A.ATT_FIRE, coup=A.ATT_HIT + 20, cible=A.FOE, depuis=BOUCHE[0] - 2, bouche=BOUCHE,

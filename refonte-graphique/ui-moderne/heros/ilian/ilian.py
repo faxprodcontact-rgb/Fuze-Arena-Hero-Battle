@@ -63,7 +63,7 @@ L1, L2 = 13.6, 13.4                                  # bras, avant-bras
 SF = (91.4, 54.4)                                    # l'épaule lointaine
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, mane=0.0, beard=0.0, cape=0.0, far=0.0,
             ep=(0.0, 0.0), blink=0.0, roar=0.0, glow=0.0, hand=G0, ang=-90.0, slide=0.0, plant=1.0, grip=1,
-            bend=-1.0, stretch=0.0)
+            bend=-1.0, stretch=0.0, mer=0.0)   # mer : le signe du repos (anim.signe), la pierre du trident s'éveille
 
 
 def rot(v, deg):
@@ -681,7 +681,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
             (TR(sm([g2t(p) for p in [(25.7, 16.0), (25.7, 9.6), (23.5, 10.0), (27.0, 2.8), (26.8, 9.6), (26.8, 16.6)]], sharp=(1, 2, 3, 4))), GOLD.shadow, 0.5)]
     hdet += [(TR(ribbon([g2t(p) for p in [(12.2, 19.0), (15.4, 20.8), (18.75, 21.4), (22.2, 20.8), (25.4, 19.0)]], [0.2, 0.7, 0.8, 0.7, 0.2])), GOLD.hi, 0.7)]
     gx, gy = g2t((18.75, 21.6))
-    hdet += [(TR(sh_), fl, op) for sh_, fl, op in gem(gx, gy, 1.7, 1.5, g)]
+    mer = P['mer']
+    hdet += [(TR(sh_), fl, op) for sh_, fl, op in gem(gx, gy, 1.7, 1.5, g + 1.6 * mer)]
+    if mer > 0:
+        # le repos (anim.signe) : la pierre de mer du trident s'éveille, les dents s'éclairent de bleu, une lueur douce
+        # autour du fer (derrière tout)
+        hdet += [(TR(sm([g2t(p) for p in [(10.5, 2.8), (11.8, 9.6), (11.6, 18.0), (10.0, 17.6), (9.6, 9.8)]], sharp=(0,))), GEM.light, 0.55 * mer),
+                 (TR(sm([g2t(p) for p in [(18.75, 2.0), (20.2, 9.6), (20.0, 18.2), (18.4, 18.2), (18.1, 9.8)]], sharp=(0,))), GEM.light, 0.55 * mer),
+                 (TR(sm([g2t(p) for p in [(27.0, 2.8), (28.3, 9.6), (28.1, 17.8), (26.6, 17.2), (26.2, 9.8)]], sharp=(0,))), GEM.light, 0.55 * mer)]
+        cx_, cy_ = g2t((18.75, 13.0))
+        a_ = math.radians(ang)
+        fig.glow(O[0] + cx_ * st_ * math.cos(a_) - cy_ * math.sin(a_), O[1] + cx_ * st_ * math.sin(a_) + cy_ * math.cos(a_),
+                 17, 17, '#7fe6ff', 0.32 * mer)
     fig.part('thead', head_sh, GOLD, cel=0.8, rim=0.7, cast=0.9, details=hdet,
              grad=None)
 

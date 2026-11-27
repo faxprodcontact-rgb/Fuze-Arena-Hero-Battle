@@ -165,7 +165,16 @@ SPECIAL = [
     (2500, {}),
 ]
 
-IDLE_T = 2.4                  # la respiration : un cycle (s)
+IDLE_T = 3.0                  # la boucle du repos (s) : respiration lente et signe du héros (2,4 s avant le 27/11)
+
+
+def signe(T_):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : le vent des steppes balance sa longue natte d'avant en arrière (elle ondule jusqu'au lien rouge) et
+    les deux pans rouges de sa ceinture flottent en retard sur elle.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T_ / IDLE_T
+    return dict(braid=-2.4 * math.sin(u - 0.4), pans=3.0 * math.sin(u - 1.4), pb=2 * u)
 
 
 # ======================================================================== la respiration et l'affût (en boucle)
@@ -176,7 +185,7 @@ def idle_offsets(T_):
     # la tête suit le buste avec un petit retard ; le vent des steppes vient de face : la natte part en arrière et
     # revient, les pans se balancent en retard sur elle, la fourrure frémit par bouffées ; la main serre la corde en
     # inspirant (tension de l'affût)
-    gust = 0.5 + 0.5 * math.sin(2 * math.pi * T_ / (2 * IDLE_T) - 0.6)
+    gust = 0.5 + 0.5 * math.sin(u - 0.6)
     return dict(breath=br, heady=0.35 * (0.5 - 0.5 * math.cos(u - 0.9)) - 0.35 * br, braid=-0.55 * gust - 0.2 * math.sin(u - 0.4),
                 skirt=-0.45 * gust * (0.6 + 0.4 * math.sin(u - 1.4)), fur=0.4 + 0.8 * gust, draw=0.45 * br, crouch=0.15 * br)
 
@@ -215,8 +224,12 @@ def pose_at(T_, action=None, t0=0.0):
             P['open'] = 1.0 if tl < grab + 20 else 0.0
             P['hold'] = 1.0 if tl >= grab + 20 else 0.0
     P['head'] = (P.pop('headx'), P.pop('heady'))
-    P['ph'] = 2 * math.pi * T_ * 0.9
-    P['blink'] = 1.0 if (w > 0.95 and 3.05 <= (T_ % 4.8) < 3.13) else 0.0
+    sg = signe(T_)
+    P['braid'] += w * sg['braid']
+    P['pans'] = w * sg['pans']
+    P['pb'] = sg['pb']
+    P['ph'] = 3 * 2 * math.pi * T_ / IDLE_T          # les frémissements de la fourrure (trois par boucle du repos)
+    P['blink'] = 1.0 if (w > 0.95 and 2.05 <= (T_ % IDLE_T) < 2.13) else 0.0
     return P, tl
 
 

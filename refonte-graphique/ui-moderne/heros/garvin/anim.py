@@ -160,7 +160,16 @@ SP_CLASH = 1580
 
 
 # ======================================================================== la respiration (en boucle)
-IDLE = 2.33                          # un souffle (s) : le rythme lent du pixel art
+IDLE_T = 3.0                         # la boucle du repos (s) : respiration lente et signe du héros
+IDLE = IDLE_T                        # un souffle (s) (2,33 s avant le signe du repos du 27/11)
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : le petit arbre sur son épaule se balance lentement, le feuillage un peu plus que le tronc.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(sway=7.0 * math.sin(u - 2.0))
 
 
 def bump(x, c, w):
@@ -194,13 +203,15 @@ def pose_at(T, action=None, t0=0.0):
     idl = idle_offsets(T)
     src = act or flat({})
     P = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
+    for n, v in signe(T).items():
+        P[n] += w * v
     P['breath'] = P.pop('inhale')
     P['head'] = (P.pop('headx'), P.pop('heady'))
     P['fw'] = (P.pop('fwx'), P.pop('fwy'))
     P['nw'] = (P.pop('nwx'), P.pop('nwy'))
     P['glow'] = max(0.0, P['glow'])
     P['heat'] = max(0.0, P['heat'])
-    P['blink'] = 1.0 if (w > 0.95 and 1.55 <= (T % 4.6) < 1.65) else 0.0
+    P['blink'] = 1.0 if (w > 0.95 and 1.55 <= (T % IDLE_T) < 1.65) else 0.0
     return P, tl
 
 
@@ -450,8 +461,8 @@ def fx_idle(T, w):
                 kk = k / 0.45
                 fig.fx_front.append(ember(fig, src[0] + side * 3 * kk + 0.8 * math.sin(kk * 9), src[1] + 4 - 14 * kk - 4 * kk * kk,
                                           0.55, op=w * (1 - kk)))
-        # un gravier se détache sous le coude proche et tombe au sol
-        k = (T / (2 * IDLE)) % 1
+        # un gravier se détache sous le coude proche et tombe au sol (une fois par boucle du repos)
+        k = (T / IDLE) % 1
         if k < 0.3:
             kk = k / 0.3
             E = ctx['near']['E']

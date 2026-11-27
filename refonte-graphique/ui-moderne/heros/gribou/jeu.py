@@ -6,7 +6,7 @@ import anim as A
 ID = 'mon-eldra-rapide'
 ANIM, DESSIN = A, A.K
 JEU = {
-    'pose': dict(periode=950),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Coup de patte du chapardeur » : il bondit en rasant le sol dans sa propre animation (`avance`), tranche de bas
     # en haut (le croissant reste avec lui), l'éclat du coup est sur l'ennemi ; il repart d'un saut à sa place
     'attaque': dict(genre='melee', coup=A.AT_HIT, cible=(A.HIT_X, 92), coupe=160,

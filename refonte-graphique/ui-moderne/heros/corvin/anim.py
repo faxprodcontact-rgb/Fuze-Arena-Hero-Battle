@@ -155,13 +155,23 @@ SP_PLANT = 580                        # le bouclier planté : le dôme se referm
 SP_RING = 880                         # LANCEMENT : le dôme s'abaisse en anneau au sol
 SP_DEFI = 1420                        # la provocation
 
-# ======================================================================== la garde (en boucle, 2 s)
+# ======================================================================== la garde (en boucle, 3 s)
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la longue cape se balance plus ample derrière lui et la feuille d'or du bouclier luit lentement.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(cape=1.8 * math.sin(u - 0.8), feuille=0.5 - 0.5 * math.cos(u))
 
 
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
-    tw = 4.0
+    tw = IDLE_T
     ear = 0.6 * math.sin(u - 1.4)
     ph = T % tw
     if 2.3 <= ph < 2.7:                                   # l'oreille frémit (il écoute)
@@ -190,7 +200,10 @@ def pose_at(T, action=None, t0=0.0):
     P['g'] = (P.pop('gx'), P.pop('gy'))
     P['head'] = (P.pop('headx'), P.pop('heady'))
     P['sh'] = (P.pop('sx'), P.pop('sy'))
-    P['blink'] = 1.0 if (w > 0.95 and 1.36 <= (T % 4.0) < 1.46) else 0.0
+    sg = signe(T)
+    P['cape'] += w * sg['cape']
+    P['feuille'] = w * sg['feuille']
+    P['blink'] = 1.0 if (w > 0.95 and 1.36 <= (T % IDLE_T) < 1.46) else 0.0
     return P
 
 

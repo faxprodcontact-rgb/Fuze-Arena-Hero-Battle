@@ -6,7 +6,7 @@ import garvin as G
 ID = 'knights-8'
 ANIM, DESSIN = A, G
 JEU = {
-    'pose': dict(periode=1000 * A.IDLE),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Poing du rempart » : il marche jusqu'à l'ennemi en levant le poing, l'abat au sol juste devant lui (la traînée
     # du poing reste avec lui) ; l'éclair du choc, la fente de lave, les dalles, les éclats et la poussière sont sur
     # l'ennemi

@@ -26,7 +26,7 @@ def avance_spe(t):
 
 
 JEU = {
-    'pose': dict(periode=A.IDLE_MS),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Coup de dard » : la queue fouette par-dessus la tête, la goutte de venin part du dard et vole jusqu'à la vraie
     # cible ; elle y éclabousse (au-delà de 165)
     'attaque': dict(genre='tir', tir=A.SPIT, coup=A.HIT, cible=(A.FOE_X, A.VENOM_HIT[1]), depuis=DARD[0] + 3, bouche=DARD,

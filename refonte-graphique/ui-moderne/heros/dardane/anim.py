@@ -127,8 +127,9 @@ def to_pose(d):
 
 
 # ======================================================================== les actions (poses clés du pixel art)
-# 1) la pose : inspiration, expiration (il se tasse), la tête suit avec retard ; le dard se dresse lentement, tient,
-# puis redescend d'un coup sec vers l'avant (une menace) et revient ; pans et pompon se balancent ; un clignement.
+# 1) la pose du pixel art (gardée pour mémoire, plus jouée depuis le signe du repos du 27/11 : voir idle_pose) :
+# inspiration, expiration (il se tasse), la tête suit avec retard ; le dard se dresse lentement, tient, puis redescend
+# d'un coup sec vers l'avant (une menace) et revient ; pans et pompon se balancent ; un clignement.
 IDLE = [
     (0, dict(b=0, c=0, hy=0, bend=tb(0, 0), pan=0, pom=0)),
     (140, dict(b=1, c=0, hy=1, bend=tb(1, 1), pan=0, pom=0)),
@@ -142,8 +143,9 @@ IDLE = [
     (1180, dict(b=0, c=0, hy=1, bend=tb(0, -1), pan=0, pom=0)),
     (1310, dict(b=0, c=0, hy=0, bend=tb(0, 0), pan=0, pom=0)),
 ]
-IDLE_MS = 1310
-BLINK = (930, 1010)
+IDLE_T = 3.0                          # la boucle du repos (s) : respiration lente et signe du héros
+IDLE_MS = int(1000 * IDLE_T)
+BLINK = (1900, 1980)
 
 # 2) l'attaque de base : il arme (la queue se dresse en arrière, le buste recule, les genoux plient), tient, la queue
 # fouette par-dessus la tête, le dard frappe loin devant et crache une goutte de venin qui file sur l'ennemi.
@@ -203,8 +205,32 @@ def erupt_curve(rise):
     return [(x, y + (1 - rise) * 80.0) for x, y in C]
 
 
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la grande queue de scorpion se balance lentement, le dard se dresse en arrière puis menace vers
+    l'avant (le bout suit avec retard). Nul à la phase 0 (le repos du dessin, d'où partent les coups).
+    Une pose partielle pour build() ; jouée au combat (idle_pose) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    a = 4.0 * math.sin(u)
+    b = 7.0 * (math.sin(u) - 0.35 * math.sin(2 * u))
+    return dict(bend=tb(a, b))
+
+
+def idle_offsets(T):
+    """La respiration (3 s) : la poitrine se soulève, il se tasse un peu en expirant, la tête suit ; pans et pompon
+    se balancent à peine. Tout est nul à la phase 0 (le repos du dessin)."""
+    u = 2 * math.pi * T / IDLE_T
+    br = 0.5 - 0.5 * math.cos(u)
+    return dict(breath=br, crouch=0.6 * br * br, heady=0.5 * math.sin(u) * br, pan=0.6 * math.sin(u) * br,
+                pom=0.6 * math.sin(u - 0.4) * br)
+
+
 def idle_pose(tl):
-    P = to_pose(keyed(IDLE, tl % IDLE_MS))
+    T = (tl % IDLE_MS) / 1000.0
+    d = flat({})
+    d.update(idle_offsets(T))
+    P = to_pose(d)
+    P.update(signe(T))
     P['blink'] = 1.0 if BLINK[0] <= tl % IDLE_MS < BLINK[1] else 0.0
     return P
 

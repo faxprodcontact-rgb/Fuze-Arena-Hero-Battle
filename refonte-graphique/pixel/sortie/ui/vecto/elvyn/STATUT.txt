@@ -8,3 +8,4 @@ Visage refait avec la méthode commune (visage.py : placer() pour les places, ve
 Elvyn, le dragon des eaux : tête de dragon d'Orient (yeux d'or à paupière lourde, crocs, naseau, barbillon d'or en S, barbiche blanche), grands bois d'or, crinière blanche en mèches qui se relèvent en crête de vague.
 Robe bleu nuit croisée au col d'or, ceinture à médaillon, tablier brodé d'une vague, poing griffu sur la ceinture, perle tenue dans la paume ; queue en crosse avec sa houppe blanche, grands pieds griffus.
 Animé : respiration (crinière, houppe, manches, barbillon), attaque « orbe de la perle », spéciale « dragon des marées » qui jaillit de la perle et plonge sur l'ennemi.
+signe du repos (27/11) : la perle d'eau s'éveille lentement dans sa paume (elle s'éclaire, sa lueur grandit) et la houppe blanche de la queue se balance ; la crinière garde sa petite ondulation au combat seulement (trop grande pour les menus : 7,8 Mo à l'essai) ; menus 3,2 Mo, planche de combat 3,5 Mo.

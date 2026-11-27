@@ -45,7 +45,7 @@ def vague(fig, i):
 
 JEU = {
     'vue_proj': (-112, -104, 118, 110),          # la scène du projectile (la vague est haute)
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Le trident s'abat » : il bondit jusqu'à l'ennemi pendant qu'il lève le trident (comme le pixel art), puis
     # l'abat d'un seul bras ; la gerbe d'eau jaillit sur l'ennemi
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(190, 90), coupe=150, elan=(0, 350)),

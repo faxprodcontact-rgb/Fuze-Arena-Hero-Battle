@@ -51,7 +51,8 @@ SF = (62.4, 50.2)                                     # l'épaule du fond
 LF1, LF2 = 9.6, 9.8                                   # bras, avant-bras (dans la manche)
 W0 = (80.2, 51.0)                                     # le poignet au repos
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, mane=0.0, tail=0.0, tuft=0.0,
-            sn=0.0, sf=0.0, barb=0.0, glow=0.0, blink=0.0, wrist=W0, hrot=0.0, pearl=1.0, jaw=0.0, fist=(0.0, 0.0))
+            sn=0.0, sf=0.0, barb=0.0, glow=0.0, blink=0.0, wrist=W0, hrot=0.0, pearl=1.0, jaw=0.0, fist=(0.0, 0.0),
+            pt=None)   # pt : la phase de la houppe (par défaut 1,3 × ph) ; le signe du repos (anim.signe)
 
 
 # ---- le visage, construit avec ../visage.py (méthode commune) ----
@@ -268,13 +269,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     td = unit(tail_c[-4], tail_c[-1])
     ta = math.degrees(math.atan2(td[1], td[0]))
 
+    pt = ph * 1.3 if P['pt'] is None else P['pt']
+
     def tuft_pt(x, y):
-        return add(tip, rot((x, y), ta + 78 + qt * 7 + 2.5 * math.sin(ph * 1.3)))
+        return add(tip, rot((x, y), ta + 78 + qt * 7 + 2.5 * math.sin(pt)))
     fig.part('tail', tail, SCALE, cel=1.6, rim=0.7, cast=0, details=tdet)
 
     # la houppe blanche : UNE forme qui coiffe le bout de la queue, en pinceau de mèches aux pointes recourbées vers l'avant
-    w1 = math.sin(ph * 1.3)
-    w2 = math.sin(ph * 1.3 - 1.0)
+    w1 = math.sin(pt)
+    w2 = math.sin(pt - 1.0)
     TP = [(-3.4, 3.2), (-6.2, -1.6), (-7.6 - 0.4 * w2, -7.2), (-6.0 - 0.6 * w2, -11.4 + 0.2 * w2), (-3.8, -8.4), (-2.6, -13.6),
           (1.0 + 0.8 * w1, -19.0), (3.0, -13.2), (5.6, -10.0), (10.8 + 0.8 * w1, -12.0 - 0.4 * w1), (8.2, -6.6), (9.8, -3.8),
           (13.2 + 0.6 * w2, -2.4 + 0.3 * w2), (8.4, 0.6), (3.4, 3.0)]

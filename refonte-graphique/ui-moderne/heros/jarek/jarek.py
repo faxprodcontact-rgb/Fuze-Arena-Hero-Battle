@@ -84,7 +84,8 @@ CUFF = [(-2.8, -4.6), (0.8, -5.4), (3.4, -5.2), (4.6, -3.4), (3.2, -1.2), (1.8, 
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, blink=0.0, squint=0.0, grit=0.0, ph=0.0,
             braid=0.0, skirt=0.0, fur=0.0, aim=0.0, draw=0.0, relax=0.0, bow_dx=0.0, arrow=1.0, free=0.0, bulge=0.0,
-            rk=0.0, tx=44.0, ty=74.0, hdx=0.0, hdy=0.0, open=0.0, hold=0.0, ga=-60.0)
+            rk=0.0, tx=44.0, ty=74.0, hdx=0.0, hdy=0.0, open=0.0, hold=0.0, ga=-60.0,
+            pans=0.0, pb=None)   # pans, pb : le signe du repos (anim.signe) ; pb : la phase de la natte (par défaut 1,3 × ph)
 
 V = placer(FACEBOX)
 
@@ -146,7 +147,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], NECK[0], NECK[1] - 3), mS(1.1, 1.1, NECK[0], NECK[1]))
     sk = P['skirt']
     SKI = mchain(mT(P['lean'] * 0.15, dyb * 0.9), mskx(-0.045 * sk, 70))     # les pans du manteau (ils traînent)
-    TAIL = mchain(U, mskx(-0.09 * sk, 74))                                     # les pans de la ceinture
+    TAIL = mchain(U, mskx(-0.09 * (sk + P['pans']), 74))                       # les pans de la ceinture (pans : le repos)
     QUI = mchain(mT(P['lean'] * 0.15, dyb * 0.9), mR(sk * 2.0, 44, 77))        # le carquois se balance à la hanche
     aim = P['aim']
     AIMM = mchain(UC, mT(P['bow_dx'], 0), mR(aim, S_F[0], S_F[1]))           # le bras lointain, l'arc, la flèche
@@ -205,12 +206,13 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     IH = inv(HEAD)
     root = mapp(HEAD, (55.4, 46.4))
     bw = P['braid']
+    pb = ph * 1.3 if P['pb'] is None else P['pb']
     bpts0 = [(55.4, 46.4), (51.8, 49.8), (47.8, 53.0), (44.4, 56.2), (42.0, 59.0), (40.6, 61.8), (39.6, 64.8)]
     bpts = [root]
     for k, p in enumerate(bpts0[1:], 1):
         t = k / (len(bpts0) - 1)
         q = mapp(UC, p)
-        sw = bw * (1.9 * t ** 1.3) + 0.35 * math.sin(ph * 1.3 - 1.6 * t) * t
+        sw = bw * (1.9 * t ** 1.3) + 0.35 * math.sin(pb - 1.6 * t) * t
         bpts.append((q[0] + sw, q[1] - 0.35 * abs(bw) * t))
     bc = crpath(bpts, 20)
     tie_i = 14

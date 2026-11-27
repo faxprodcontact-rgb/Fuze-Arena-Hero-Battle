@@ -384,20 +384,30 @@ SP_S2, SP_H2 = 450, 520                # deuxième coup : de haut en bas
 SP_THRUST = 780                        # l'estoc : la trombe jaillit
 SP_COIN0, SP_COIN1 = 960, 1290         # la pièce vole de la trombe au sac
 
-# ======================================================================== le repos (en boucle)
+# ======================================================================== le repos (en boucle, 3 s)
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : la longue queue en point d'interrogation se balance lentement et sa crosse s'enroule puis se déroule.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    v = 2 * math.pi * T / IDLE_T
+    return dict(sw=5.0 * math.sin(v - 1.2), q=1.5 * math.sin(v - 0.6))
 
 
 def idle_offsets(T):
-    """Le repos d'un petit singe nerveux : souffle court et rapide, la tête suit avec retard et jette parfois un coup
+    """Le repos d'un petit singe nerveux : souffle court (deux par boucle), la tête suit avec retard et jette un coup
     d'oeil, le sac ballotte en retard, la queue ondule lentement, les pans du foulard se balancent."""
-    u = 2 * math.pi * T / 0.95
+    u = 2 * 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
-    v = 2 * math.pi * T / 2.6
-    glance = math.sin(math.pi * min(1.0, max(0.0, ((T % 3.3) - 2.2) / 0.6))) ** 2     # un coup d'oeil, de temps en temps
+    v = 2 * math.pi * T / IDLE_T
+    glance = math.sin(math.pi * min(1.0, max(0.0, ((T % IDLE_T) - 2.2) / 0.6))) ** 2     # un coup d'oeil, à chaque boucle
     return dict(br=br, dosy=0.35 * math.sin(u - 0.3), heady=-0.4 * math.sin(u - 1.0) + 0.1, headx=0.15 * math.sin(u - 1.2) + 0.5 * glance,
                 tilt=0.6 * math.sin(v) - 2.0 * glance, sk=2.4 * math.sin(u - 1.6), q=0.8 * math.sin(v - 0.6),
                 sw=1.6 * math.sin(v - 1.2), sc=0.6 * math.sin(v - 1.8), wry=0.35 * math.sin(u - 0.9),
-                ang=1.5 * math.sin(v * 1.3))
+                ang=1.5 * math.sin(v))
 
 
 def pose_at(T, action=None, t0=0.0):
@@ -415,11 +425,13 @@ def pose_at(T, action=None, t0=0.0):
     idl = idle_offsets(T)
     src = act or flat({})
     P = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
+    for n, v in signe(T).items():
+        P[n] += w * v
     out = dict(T=(P['Tx'], P['Ty']), bas=P['bas'], dos=(P['dosx'], P['dosy']), br=w * idl['br'],
                head=(P['headx'], P['heady']), tilt=P['tilt'], sk=P['sk'], q=P['q'], sw=P['sw'], sc=P['sc'],
                arr=(P['arrx'], P['arry']), av=(P['avx'], P['avy']), wr=(P['wrx'], P['wry']), ang=P['ang'],
                eyes=P['eyes'])
-    blink = 1.0 if (w > 0.95 and 1.5 <= (T % 3.7) < 1.62) else 0.0
+    blink = 1.0 if (w > 0.95 and 1.5 <= (T % IDLE_T) < 1.62) else 0.0
     out['blink'] = max(blink, 1.0 if P['shut'] > 0.5 else 0.0)
     return out, tl
 

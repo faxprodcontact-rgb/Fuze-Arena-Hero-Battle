@@ -6,7 +6,7 @@ import eldra as E
 ID = 'mages-8'
 ANIM, DESSIN = A, E
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Estoc en fente » : le jeu l'amène devant l'ennemi (bond), l'estoc part ; le souffle le long du bâton reste avec
     # elle, l'éclat du vent au bout du bâton et les feuilles sont sur l'ennemi
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(190, 62), coupe=155),

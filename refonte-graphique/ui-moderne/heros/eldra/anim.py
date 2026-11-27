@@ -143,11 +143,21 @@ SPECIAL = [
 ]
 SP_IMPACT = 870
 
-# ======================================================================== la respiration (en boucle, 2 s)
+# ======================================================================== la respiration (en boucle, 3 s)
+
+IDLE_T = 3.0     # la boucle du repos (s) : respiration lente et signe du héros
+
+
+def signe(T):
+    """LE SIGNE DU REPOS (demande du 27/11 : « chaque héros a quelque chose à lui, une petite animation lente mais
+    visible ») : les deux longues plumes de faisan se balancent lentement et la queue en crosse ondule avec elles.
+    Une pose partielle pour build() ; jouée au combat (pose_at) et dans les menus (heros/repos.py)."""
+    u = 2 * math.pi * T / IDLE_T
+    return dict(fx=3.2 * math.sin(u), fy=2.6 * math.sin(u - 0.8), q=2.4 * math.sin(u - 1.2))
 
 
 def idle_offsets(T):
-    u = 2 * math.pi * T / 2.0
+    u = 2 * math.pi * T / IDLE_T
     br = 0.5 - 0.5 * math.cos(u)
     return dict(breath=br, crouch=0.35 * (0.5 - 0.5 * math.cos(u - 1.3)), heady=0.35 * math.sin(u - 0.6),
                 tilt=0.8 * math.sin(u - 0.9), fx=0.9 * math.sin(u - 1.5), fy=0.8 * math.sin(u - 2.1),
@@ -169,6 +179,8 @@ def pose_at(T, action=None, t0=0.0):
     idl = idle_offsets(T)
     src = act or flat({})
     P = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
+    for n, v in signe(T).items():
+        P[n] += w * v
     P['breath'] = w * idl['breath']
     P['grip'] = (P.pop('gx'), P.pop('gy'))
     P['head'] = (P.pop('headx'), P.pop('heady'))
@@ -177,7 +189,7 @@ def pose_at(T, action=None, t0=0.0):
     P['one'] = one if ow > 0.02 else None
     P['onew'] = ow
     P['stretch'] = (P.pop('st0'), P.pop('st1'))
-    P['blink'] = 1.0 if (w > 0.95 and 1.22 <= (T % 3.6) < 1.32) else 0.0
+    P['blink'] = 1.0 if (w > 0.95 and 1.22 <= (T % IDLE_T) < 1.32) else 0.0
     return P
 
 # ======================================================================== les effets (dessinés, un seul contour)

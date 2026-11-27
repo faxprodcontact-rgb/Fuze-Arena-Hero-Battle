@@ -6,7 +6,7 @@ import corvin as C
 ID = 'assassins-7'
 ANIM, DESSIN = A, C
 JEU = {
-    'pose': dict(periode=2000),
+    'pose': dict(periode=3000, images=12),   # la boucle du repos : anim.IDLE_T, signe du héros (anim.signe)
     # « Bouclier et dague » : il bondit jusqu'à l'ennemi pour le choc du bouclier, puis l'estocade par-dessus le bord
     # (les dégâts tombent quand la pointe touche) ; le tourbillon de feuilles s'enroule sur l'ennemi
     'attaque': dict(genre='melee', coup=A.ATTACK_HIT, cible=(150, 66), coupe=106, elan=(80, A.ATTACK_BASH)),

@@ -2,3 +2,4 @@ fait
 Corrigé d'après l'avis du 26/11 (tour 3) (« l'oreille doit apparaître devant et la barbe l'entourer ») : l'oreille est maintenant dessinée par-dessus la barbe, entière et bien visible (bord roulé éclairé en haut, creux dans l'ombre, petit lobe) ; le favori part de sous la couronne, passe au-dessus de l'oreille, derrière elle et dessous, puis rejoint la barbe : la barbe l'entoure sans la cacher.
 Le reste n'a pas changé (couronne qui s'arrête au-dessus de la tempe, visage validé par visage.py, barbe collée à la joue, jambes resserrées : avis précédents).
 Vérifié en grand au repos, pendant l'attaque et la spéciale (tête penchée, barbe qui traîne) : l'oreille reste devant et entourée. Avant / après : avant-apres.png.
+signe du repos (27/11) : la pierre de mer du trident s'éveille lentement (les dents s'éclairent de bleu, lueur douce autour du fer) et la longue crinière blanche flotte plus ample ; menus 5,7 Mo, planche de combat 3,6 Mo.
