@@ -43,7 +43,7 @@ AMBER = ['#fffbd8', '#ffe27a', '#ffb52e', '#e07a18', '#a4461a', '#6a2a1a']
 GRD = 113          # le sol
 FEET = (48, 113)   # le point « sol » (entre les deux pieds, sous le bassin)
 # la boîte de l'image (x0, y0, largeur, hauteur), en pixels du dessin
-FRAME = (-6, -6, 100, 121)
+FRAME = (-5, -1, 95, 116.5)
 
 # ---------- le squelette (animation) ----------
 #   breath : souffle 0..1 ; crouch : il se tasse (+) ou se dresse (−) ; lean : il se penche en avant (+) ;

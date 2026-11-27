@@ -34,7 +34,7 @@ MANE = Mat('#fff4b8', '#ffd060', '#ff9630', '#e2562a', '#9a2a2e')
 HORN = Mat('#b8aad0', '#665a80', '#3a3048', '#261e34', '#150f20')
 LAC = Mat('#ff9a86', '#a32a40', '#781832', '#4c0e2c', '#2c0820')        # la laque rouge sombre de l'armure
 BRONZE = Mat('#fff0b4', '#f0c264', '#c88a3a', '#8c5428', '#52301e', glint='#fffbe6')
-SASH = Mat('#b49aa6', '#66505e', '#46343f', '#2e2030', '#1c1220')       # la ceinture de tissu, noir chaud
+SASH = Mat('#c08aa0', '#6c3a50', '#46223a', '#2c1428', '#1a0a1a')       # la ceinture de tissu, noir rougeâtre
 STEEL = Mat('#ffffff', '#ecebf6', '#bcb6d2', '#837ba0', '#4c4668')
 WOOD = Mat('#c88a7c', '#6e2c36', '#4c1c2c', '#30101e', '#1c0814')       # la hampe laquée
 IVORY = Mat('#fffaf0', '#f4eed6', '#dccfb2', '#b0a088', '#7a6a58')
@@ -42,7 +42,7 @@ LAVA = ['#fffbe4', '#ffe68a', '#ffb43a', '#f2701a', '#cc3a12', '#8a1a10']   # le
 
 GRD = 113          # le sol
 FEET = (52, 113)   # le point « sol » du dessin (entre les deux pieds)
-FRAME = (-10, -2, 140, 117)
+FRAME = (-10, -12, 140, 127)
 
 # ---------- le squelette ----------
 # Le bassin (jambes, jupe, ceinture) ; le buste tourne autour de la taille (PIV) : penché en avant de LEAN0 degrés.
@@ -55,8 +55,8 @@ HIP_N, HIP_F = (45.4, 77.0), (56.6, 76.0)          # hanches (proche, du fond), 
 ANK_N, ANK_F = (25.4, 105.8), (73.6, 105.8)        # chevilles (fixes, au sol)
 LT, LS = 18.6, 17.6                                # cuisse, tibia
 SH_N, SH_F = (38.2, 49.0), (63.0, 48.6)            # épaules (repère du buste, droit)
-LA1, LA2 = 11.6, 11.2                              # bras, avant-bras
-G1_0, WANG0, GS = (50.0, 68.0), -27.0, 40.0        # la main proche sur la hampe, l'angle de la hampe, l'écart des mains
+LA1, LA2 = 12.6, 12.0                              # bras, avant-bras
+G1_0, WANG0, GS = (49.0, 69.0), -24.0, 40.0        # la main proche sur la hampe, l'angle de la hampe, l'écart des mains
 HEAD0 = (5.0, 1.6, -14.0)                          # la tête en avant du cou (décalage, rotation)
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, mane=0.0, tail=0.0, tuft=0.0,
             sash=0.0, barb=0.0, glow=1.0, blink=0.0, jaw=0.0, grip=G1_0, wang=WANG0, gs=GS, flame=1.0, tassel=0.0,
@@ -153,8 +153,8 @@ MANE_LOCKS = [
     ('mE', (37.6, 25.4), (30.0, 29.4), (19.0, 31.0), (9.4, 25.4), 11.4, 0.5, 1.0, 4.5),
     ('mD', (40.0, 21.4), (31.0, 22.6), (20.0, 22.6), (11.0, 15.4), 12.0, 0.5, 1.0, 4.5),
     ('mC', (42.6, 17.4), (35.0, 15.0), (26.0, 13.4), (18.4, 6.4), 10.2, 0.48, 1.0, 4.5),
-    ('mB', (46.4, 14.6), (41.0, 10.6), (34.0, 8.2), (27.6, 1.6), 8.4, 0.45, 1.0, 4.5),
-    ('mH', (50.6, 14.6), (47.6, 11.0), (43.4, 9.4), (39.0, 5.4), 4.8, 0.4, 0.6, 3.5),
+    ('mB', (46.0, 15.0), (40.0, 12.6), (32.6, 11.4), (25.8, 6.4), 8.4, 0.45, 1.0, 4.5),
+    ('mH', (50.2, 15.0), (46.6, 12.8), (42.0, 12.0), (37.0, 9.6), 4.8, 0.4, 0.6, 3.5),
     ('mG1', (44.4, 17.8), (40.4, 16.4), (35.8, 17.2), (30.2, 20.6), 7.6, 0.4, 0.5, 3.5),
     ('mG2', (42.4, 23.6), (38.8, 24.0), (34.4, 26.0), (29.6, 29.6), 7.4, 0.4, 0.5, 3.5),
 ]
@@ -225,8 +225,8 @@ def horn(beam, w0, w1=0.5):
 
 # les cornes noires (repère de la tête) : elles partent du dessus du crâne, derrière l'œil, filent vers l'arrière en
 # arc et relèvent la pointe ; celle du fond est un peu plus haute et plus en arrière (même longueur apparente)
-HORN_N = [(49.8, 15.4), (48.4, 10.8), (43.8, 6.8), (37.4, 5.2), (32.0, 5.8), (28.6, 4.4)]
-HORN_F = [(46.4, 13.4), (45.0, 8.8), (40.4, 4.6), (34.0, 3.0), (28.6, 3.6), (25.2, 2.2)]
+HORN_N = [(50.0, 15.6), (49.0, 10.4), (45.0, 5.6), (38.8, 2.6), (31.8, 1.6), (26.4, -0.2), (23.2, -3.2)]
+HORN_F = [(45.2, 14.6), (44.6, 9.2), (41.6, 3.8), (36.0, -0.6), (29.6, -3.0), (24.6, -4.0), (21.2, -6.8)]
 
 
 # ---------- la hallebarde ----------
@@ -268,6 +268,18 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     kneeF = ik(hipF, ANK_F, LT, LS, bend=-1)         # le genou du fond : en avant, au-dessus du pied
     G1, G2, d, n = weapon_frame(P)
     shN, shF = mapp(UC, SH_N), mapp(UC, SH_F)
+    # la main du fond glisse sur la hampe (vers la main proche) si le bras ne peut pas l'atteindre : elle reste tenue
+    R = LA1 + LA2 - 0.4 + 2.4
+    if math.dist(G2, shF) > R:
+        w_ = (G1[0] - shF[0], G1[1] - shF[1])
+        bq = w_[0] * d[0] + w_[1] * d[1]
+        cq = w_[0] ** 2 + w_[1] ** 2 - R * R
+        disc = bq * bq - cq
+        if disc > 0:
+            g2 = -bq + math.sqrt(disc)
+            if 0 < g2 < P['gs']:
+                G2 = add(G1, d, g2)
+    reach = (math.dist(G1, shN) / R, math.dist(G2, shF) / R)
 
     # ---- la lueur de la lame (derrière tout) ----
     bc = wpt(G1, d, n, SHAFT[1] + 11, 1.5)
@@ -322,7 +334,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('mane', MG['mass'], MANE, grad=MG['grad'], cel=0, rim=0, cast=0, details=MG['det'])
 
     # ---- la corne du fond (derrière la tête) ----
-    hF, cF, wF = horn(HORN_F, 5.4, 1.3)
+    hF, cF, wF = horn(HORN_F, 5.8, 1.3)
     fig.part('hornF', hF, HORN, grad=(48, -4, 26, 16, [(0, HORN.light), (0.5, HORN.base), (1, HORN.shadow)]), cel=1.0, rim=0.6, cast=0)
 
     # ---- la jambe du fond (en avant) : cuisse, genou plié au-dessus du pied, tibia, grand pied griffu ----
@@ -362,7 +374,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('neck', neck, SCALE, cel=1.4, rim=0.5, cast=0, details=ndet)
 
     # ---- le buste (écailles), puis le plastron laqué par-dessus ----
-    torso = sm([(34.4, 50.6), (37.6, 45.6), (43.0, 43.0), (52.0, 42.6), (60.0, 43.2), (65.6, 45.6), (68.6, 51.0), (69.0, 58.0),
+    torso = sm([(34.4, 50.6), (37.6, 45.6), (42.4, 43.6), (45.4, 46.4), (51.6, 54.0), (57.8, 45.6), (61.4, 43.6), (65.6, 45.6), (68.6, 51.0), (69.0, 58.0),
                 (66.8, 65.0), (64.8, 71.0), (65.4, 76.0), (50.0, 77.6), (36.6, 76.4), (36.6, 70.0), (35.4, 63.0), (33.8, 56.0)], t=0.85)
     fig.part('torso', torso, SCALE, cel=1.5, rim=0.7, cast=0.8, cast_on=['armF', 'brF', 'neck'])
     VL, VB, VR = (43.4, 44.6), (51.6, 55.6), (58.8, 43.6)
@@ -373,8 +385,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # le plastron : une grande plaque laquée et lisse (reflet doux), bordée de bronze le long de l'encolure et des emmanchures
     cdet += [(sm([(37.2, 52.4), (40.0, 48.6), (44.6, 47.6), (51.4, 57.6), (58.6, 46.6), (63.8, 47.4), (67.0, 52.0), (67.6, 60.6),
                   (61.0, 63.4), (51.0, 64.0), (40.0, 63.2), (35.6, 61.0)], t=0.85), ('lin', 64, 47, 40, 64, [(0, LAC.light), (0.55, LAC.base), (1, LAC.shadow)]), 1),
-             (sm([(56.2, 50.6), (61.4, 48.6), (65.6, 51.6), (66.0, 56.0), (62.6, 55.2), (58.4, 54.6)]), LAC.hi, 0.35),
-             (sm([(59.6, 49.8), (62.6, 49.2), (64.6, 51.4), (62.6, 51.8)]), '#ffffff', 0.35)]
+             (ribbon([(55.6, 49.6), (60.4, 48.0), (64.6, 50.2), (66.2, 54.6)], [0.1, 1.6, 1.4, 0.1]), LAC.hi, 0.35),
+             (ribbon([(59.4, 48.8), (62.6, 48.8), (64.8, 50.8)], [0.1, 0.7, 0.1]), '#ffffff', 0.3)]
     cdet += [(band_along([(37.4, 52.4), VL, VB], 2.2), BRZ, 1),
              (band_along([VB, VR, (63.8, 45.6)], 2.2), BRZ, 1),
              (ribbon([add(VL, (0.6, 0.0)), lerp(VL, VB, 0.5), add(VB, (0.0, -1.0))], [0.1, 0.6, 0.1]), BRONZE.hi, 0.7),
@@ -425,8 +437,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- la ceinture de tissu nouée devant, les deux pans qui pendent et flottent ----
     sw = P['sash']
-    belt = sm([mapp(PEL, p) for p in [(33.6, 70.4), (50.0, 71.8), (67.6, 69.8), (68.0, 75.6), (50.0, 77.6), (34.0, 76.2)]],
+    band = sm([mapp(PEL, p) for p in [(28.0, 70.0), (50.0, 71.6), (72.0, 69.4), (72.0, 75.8), (50.0, 77.6), (28.0, 76.4)]],
               sharp=(0, 2, 3, 5), t=0.7)
+    body = None
+    for q in fig.parts:
+        if q.name in ('torso', 'skF', 'skC', 'skN'):
+            M_ = U if q.name == 'torso' else q.M
+            g_ = _poly(q.shape.map(lambda pt, M_=M_: mapp(M_, pt)))
+            body = g_ if body is None else body.union(g_)
+    belt = _shape(_poly(band).intersection(body.buffer(-0.15)))
     fig.part('belt', belt, SASH, grad=(60, 70, 50, 78, [(0, SASH.light), (0.5, SASH.base), (1, SASH.shadow)]), cel=0.9, rim=0.6,
              cast=1.0, cast_on=['cuirass', 'torso', 'skF', 'skC', 'skN'],
              details=[(ribbon([mapp(PEL, p) for p in [(36, 72.6), (44, 73.4), (52, 73.6), (60, 73.0)]], [0.1, 0.8, 0.8, 0.1]), SASH.shadow, 0.6),
@@ -457,15 +476,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     armN = limb(catmull([shN, lerp(shN, elN, 0.6), elN, lerp(elN, wrN, 0.5), wrN], 4), [8.6, 8.2, 7.6, 7.0, 6.6, 6.4, 6.2, 6.0, 5.8, 5.8, 5.6, 5.6, 5.6, 5.6, 5.6, 5.6, 5.6])
     ue = unit(shN, elN)
     fig.part('armN', armN, SCALE, cel=1.4, rim=0.7, cast=1.1, cast_on=['cuirass', 'torso', 'belt', 'knot', 'skN', 'skC'],
-             details=[(ellipse(*add(lerp(shN, elN, 0.3), (ue[1], -ue[0]), 1.6), 2.4, 1.3, math.degrees(math.atan2(ue[1], ue[0]))), SCALE.hi, 0.35),
+             details=[(ribbon([add(lerp(shN, elN, 0.1), (-ue[1], ue[0]), 2.2), add(lerp(shN, elN, 0.45), (-ue[1], ue[0]), 2.6), add(lerp(shN, elN, 0.85), (-ue[1], ue[0]), 2.0)], [0.1, 1.0, 0.1]), SCALE.hi, 0.35),
                       (scale_plate(*lerp(shN, elN, 0.35), 2.6, 1.8, math.degrees(math.atan2(ue[1], ue[0])) - 90), SCALE.light, 0.35)])
-    # la bretelle du plastron, posée sur l'épaule proche (elle cache le raccord épaule ↔ buste)
-    s0, s1 = mapp(UC, (36.6, 52.4)), mapp(UC, (43.4, 44.8))
-    strap = sm([add(s0, (-1.6, 0.6)), add(lerp(s0, s1, 0.5), (-1.6, -1.4)), add(s1, (-0.6, -1.6)), add(s1, (1.6, 0.6)),
-                add(lerp(s0, s1, 0.5), (1.4, 1.2)), add(s0, (1.4, 1.6))], t=0.8)
-    fig.part('strap', strap, LAC, grad=(s1[0] + 2, s1[1] - 2, s0[0] - 2, s0[1] + 2, [(0, LAC.light), (0.5, LAC.base), (1, LAC.shadow)]),
-             cel=0.8, rim=0.6, cast=0.9, cast_on=['armN', 'cuirass', 'torso'],
-             details=[(ribbon([add(s0, (-1.0, 0.0)), add(lerp(s0, s1, 0.5), (-1.0, -0.8)), add(s1, (-0.2, -1.0))], [0.1, 0.6, 0.1]), BRONZE.light, 0.8)])
     bracer(fig, 'brN', elN, wrN, ['armN', 'cuirass', 'belt', 'knot'])
 
     # ---- la hallebarde : la hampe laquée, le talon de bronze, le collet, la lame courbe au tranchant rougeoyant ----
@@ -478,7 +490,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                      ('lin',) + W_(uu, -1.4) + W_(uu, 1.4) + ([(0, BRONZE.light), (1, BRONZE.shadow)],), 1))
     fig.part('shaft', shaft, WOOD, grad=W_(0, -1.3) + W_(0, 1.3) + ([(0, WOOD.light), (0.5, WOOD.base), (1, WOOD.shadow)],),
              cel=0.5, rim=0.4, cast=1.0, cast_on=['cuirass', 'torso', 'armN', 'brN', 'belt', 'knot', 'skC', 'skF', 'skN', 'legF', 'legN',
-                                                  'sashE0', 'sashE1', 'neck', 'armF', 'brF', 'strap'], details=sdet)
+                                                  'sashE0', 'sashE1', 'neck', 'armF', 'brF'], details=sdet)
     pommel = sm([W_(u0 + 0.6, -1.9), W_(u0 - 1.6, -1.6), W_(u0 - 5.4, 0.0), W_(u0 - 1.6, 1.6), W_(u0 + 0.6, 1.9)], sharp=(2,), t=0.8)
     fig.part('pommel', pommel, BRONZE, grad=W_(u0, -2) + W_(u0 - 4, 2) + ([(0, BRONZE.light), (0.5, BRONZE.base), (1, BRONZE.shadow)],),
              cel=0.6, rim=0.5, cast=0.6, cast_on=['shaft', 'legN', 'tail', 'skN'])
@@ -536,11 +548,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fist(fig, 'fistF', G2, d, n, P, ['shaft', 'brF', 'armF', 'cuirass', 'neck'], near=False)
 
     # ---- la tête ----
-    # la corne du fond est posée plus haut (avant la tête). La barbiche de braise sous le menton :
     bw = math.sin(ph - 0.4) * 0.5 + P['barb'] * 0.4
-    beard = lock((67.4, 34.6), (67.4, 38.6), (66.0 - 0.5 * bw, 41.6), (68.4 - 1.0 * bw, 44.2 + 0.2 * bw), 6.4, n=12, bulge=0.5)
-    fig.part('beard', beard, MANE, grad=(70, 35, 63, 44, [(0, MANE.light), (1, MANE.base)]), cel=0.9, rim=0.6, cast=1.0,
-             cast_on=['neck', 'cuirass'], details=[(sm_under(beard, 0.6, -1.6), MANE.shadow, 0.7)])
     jw = P['jaw']
     head = sm([(38.0, 21.0), (42.6, 17.4), (49, 15.8), (55.6, 16.4), (60.6, 16.6), (64.4, 19.2), (69.6, 20.8), (73.6, 20.0),
                (76.8, 21.6), (78.6, 25.2), (78.4, 29.4), (77.0, 31.2 + 0.3 * jw), (75.4, 32.2 + 1.6 * jw), (74.0, 35.2 + 1.8 * jw),
@@ -574,17 +582,17 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     for (x, y, w_, h_, a, op) in ((66.2, 24.2, 1.6, 1.2, 0, 0.32), (69.4, 27.4, 1.8, 1.3, 10, 0.3), (64.4, 28.2, 2.0, 1.4, 5, 0.28),
                                   (49.6, 28.4, 2.4, 1.6, 8, 0.28), (45.4, 19.6, 3.2, 2.2, -20, 0.35), (41.2, 23.0, 3.0, 2.2, -40, 0.3),
                                   (53.6, 30.0, 2.2, 1.5, 0, 0.26), (42.6, 28.4, 3.2, 2.4, -60, 0.28)):
-        hd.append((scale_plate(x, y, w_, h_, a), SCALE.hi, op))
-        hd.append((ribbon([(x - w_ * 0.42, y + h_ * 0.2), (x, y + h_ * 0.55), (x + w_ * 0.42, y + h_ * 0.2)], [0.1, 0.45, 0.1]), SCALE.deep, op * 1.3))
+        hd.append((scale_plate(x, y, w_, h_, a), SCALE.hi, op * 0.7))
+        hd.append((ribbon([(x - w_ * 0.42, y + h_ * 0.2), (x, y + h_ * 0.55), (x + w_ * 0.42, y + h_ * 0.2)], [0.1, 0.45, 0.1]), SCALE.deep, op))
     # la racine du museau (le « nez » de placer() : sur la médiane, devant l'œil) : un pli doux qui descend de l'arcade
     nz = FACE['nez']
     hd += [(ribbon([(nz[0] + 0.9, 22.6), (nz[0] + 0.5, 25.2), nz], [0.1, 1.2, 0.2]), SCALE.shadow, 0.3)]
     hd += eye_kit(P)
     fig.part('head', head, SCALE, grad=(74, 18, 42, 36, [(0, '#f06a52'), (0.45, SCALE.base), (1, '#8e1c46')]),
-             cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'cuirass', 'beard'], details=hd)
+             cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'cuirass'], details=hd)
 
     # ---- la corne proche (côté spectateur) : devant la tête, sa base enfouie dans la racine de la crinière ----
-    hN, cN, wN = horn(HORN_N, 6.0, 1.4)
+    hN, cN, wN = horn(HORN_N, 6.6, 1.4)
     hdet = [(ribbon([add(p, (0.5, -0.9)) for p in resample(cN[2:14], 6)], [0.1, 0.6, 0.7, 0.6, 0.5, 0.3, 0.1]), HORN.hi, 0.55)]
     fig.part('hornN', hN, HORN, grad=(56, 0, 30, 18, [(0, HORN.light), (0.5, HORN.base), (1, HORN.shadow)]), cel=1.1, rim=0.7,
              cast=0.9, cast_on=['mane', 'head', 'hornF'], details=hdet)
@@ -595,21 +603,21 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- les moustaches de dragon (couleur de braise) : elles partent du bout du museau et filent en arrière ----
     bb = P['barb']
-    b0 = (77.0, 28.4)
-    bpts = bez(b0, (80.6 + 0.3 * bw, 29.6), (81.6 - 0.5 * bb + 0.4 * bw, 33.0), (80.0 - 0.8 * bb + 0.6 * bw, 35.6 + 0.2 * bb), 10)
-    bpts = bpts + bez(bpts[-1], (78.8 - 1.0 * bb + 0.8 * bw, 37.2), (80.2 - 1.2 * bb + 1.0 * bw, 38.6), (82.0 - 1.4 * bb + 1.4 * bw, 37.6 - 0.4 * bb), 6)[1:]
+    b0 = (77.2, 27.4)
+    bpts = bez(b0, (80.0 + 0.3 * bw, 27.6), (82.4 - 0.4 * bb + 0.4 * bw, 29.0), (82.8 - 0.6 * bb + 0.6 * bw, 31.4 + 0.2 * bb), 10)
+    bpts = bpts + bez(bpts[-1], (83.2 - 0.8 * bb + 0.8 * bw, 33.2), (82.6 - 0.9 * bb + 1.0 * bw, 34.4), (81.4 - 1.0 * bb + 1.2 * bw, 34.4 - 0.3 * bb), 6)[1:]
     whisk = limb(bpts, [1.9 - 1.4 * (i / (len(bpts) - 1)) for i in range(len(bpts))])
     fig.part('barbel', whisk, MANE, grad=(80, 28, 62, 42, [(0, MANE.light), (0.5, MANE.base), (1, MANE.shadow)]), cel=0.45, rim=0.4, cast=0.7)
 
     # ---- chaque groupe de morceaux prend sa pose ----
-    head_parts = ['head', 'beard', 'barbel', 'hornN', 'hornF', 'mroot', 'mane']
+    head_parts = ['head', 'barbel', 'hornN', 'hornF', 'mroot', 'mane']
     fig.pose(head_parts, HEAD)
     fig.pose(['neck'], NECK)
     fig.pose(['cuirass'], TOR)
     fig.pose(['torso'], U)
     fig.ctx = dict(U=U, UC=UC, HEAD=HEAD, P=P, G1=G1, G2=G2, d=d, n=n, blade=BL, edge_y=edge_y, B0=B0,
                    head=mapp(HEAD, (55, 24)), mouth=mapp(HEAD, (76, 31)), nostril=mapp(HEAD, (75, 24)),
-                   tip=BL(31.0, -5.0), chest=mapp(TOR, (54, 60)), kneeF=kneeF, kneeN=kneeN)
+                   tip=BL(31.0, -5.0), chest=mapp(TOR, (54, 60)), kneeF=kneeF, kneeN=kneeN, reach=reach)
     if fx:
         for f_ in fx:
             f_(fig, fig.ctx)
@@ -661,11 +669,11 @@ def bracer(fig, name, el, wr, cast_on):
     nn = (-u[1], u[0])
     a = add(el, u, 2.6)
     b = add(wr, u, -0.6)
-    sh = sm([add(a, nn, 3.6), add(lerp(a, b, 0.5), nn, 3.9), add(b, nn, 3.4), add(b, nn, -3.4), add(lerp(a, b, 0.5), nn, -3.9), add(a, nn, -3.6)],
-            sharp=(0, 2, 3, 5), t=0.8)
-    det = [(band_along([add(a, nn, 3.8), add(a, nn, -3.8)], 1.4), BRONZE.base, 1),
-           (band_along([add(b, nn, 3.6), add(b, nn, -3.6)], 1.4), BRONZE.shadow, 1),
-           (ellipse(*lerp(a, b, 0.5), 0.9, 0.9), BRONZE.light, 0.9)]
+    sh = sm([add(a, nn, 3.2), add(lerp(a, b, 0.5), nn, 3.6), add(b, nn, 3.3), add(add(b, u, 0.6), nn, 0), add(b, nn, -3.3),
+             add(lerp(a, b, 0.5), nn, -3.6), add(a, nn, -3.2), add(add(a, u, -0.8), nn, 0)], t=0.8)
+    det = [(band_along([add(add(a, u, 0.6), nn, 4.0), add(add(a, u, -0.2), nn, 0), add(add(a, u, 0.6), nn, -4.0)], 1.3), BRONZE.base, 1),
+           (band_along([add(add(b, u, -0.8), nn, 4.0), add(b, nn, 0), add(add(b, u, -0.8), nn, -4.0)], 1.3), BRONZE.shadow, 1),
+           (ribbon([add(add(a, u, 2), nn, 2.0), add(lerp(a, b, 0.5), nn, 2.4), add(add(b, u, -2), nn, 2.0)], [0.1, 0.7, 0.1]), LAC.hi, 0.4)]
     fig.part(name, sh, LAC, grad=add(a, nn, 3) + add(b, nn, -3) + ([(0, LAC.light), (0.5, LAC.base), (1, LAC.shadow)],),
              cel=0.9, rim=0.6, cast=0.8, cast_on=cast_on, details=det)
 
