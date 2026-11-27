@@ -530,3 +530,27 @@ journal seulement quand on retouche une partie (chercher son nom ou son fichier 
 - Plus tard : profil du joueur, événements temporaires, sons et musique, ouverture du Siège.
 - Ensuite : serveur (Supabase) → habillage manga → social réel → argent réel → bêta → lancement.
 
+
+## Refonte en vectoriel animé (26-27/11/2026) : héros, dragons, monstres
+
+- **Héros** : les 44 héros redessinés en vectoriel lisse et animés (repos, attaque, spéciale), modèle Kael
+  (`refonte-graphique/ui-moderne/heros/<nom>/`, outil `atelier.py`, visage par `visage.py`). Visibles dans les menus avec
+  `?vecto=1` (table `VECTO` de `src/game/vecto.ts`) ; le combat utilise encore le pixel art HD.
+- **Avis du propriétaire** : 4 tours sur la page https://claude.ai/artifact/D5UVkXKfKg8AmFzy5Ezart (archives
+  `heros/avis/historique-1..4/`). Leçons retenues (à appliquer à tout nouveau dessin) : visages cohérents (visage.py),
+  un seul œil sur les têtes de profil, dents qui partent de la bouche, cheveux et crinières nés du crâne, épaules fondues
+  dans le buste (méthode d'Aurelle, `FigureM`), oreilles/becs/museaux soudés au crâne, colliers et ceintures sur une
+  seule courbe, objets tenus de façon crédible, rien de vide entre les jambes, aucun motif répété (rayures, rayons,
+  grillage de plaques), deux cornes bien visibles.
+- **Rook** : le phénix est remplacé par un chevalier (heaume, armure noir/gris, touches rouge sang, épée de feu, aura) ;
+  même id `assassins-5`, nom provisoire. Ysolde porte un bandana.
+- **3 nouveaux dragons** de la famille d'Elvyn (eau) : Brasyr feu, Rocvar terre, Venthys vent (images `dragon-*`).
+  Dessinés seulement : pas encore dans les données du jeu ni au combat (à faire quand le propriétaire valide).
+- **Monstres** : les 16 monstres de clan restants + 4 grands boss redessinés
+  (`refonte-graphique/ui-moderne/monstres/<nom>/`), page d'avis à part https://claude.ai/artifact/JgkepjcHadyFrT3UUpMqD8
+  (`avis.py --monstres`, archive `heros/avis-monstres/historique-1/`). Tour 1 de l'avis : 6 corrigés (canonnier, oni
+  brute, léviathan, dragon redevenu élancé, diablotin, moine tengu).
+- Questions encore ouvertes avec le propriétaire : nom du chevalier Rook ; noms des dragons ; trou d'eau ovale du
+  léviathan (« jamais de rond au sol ») ; sourires ouverts de certains monstres ; épaulière ronde du gorille.
+- Reste à faire : passer le combat aux dessins vectoriels ; mettre les 3 dragons dans le jeu (statistiques, compétences,
+  textes FR/EN) ; nouveaux tours d'avis.

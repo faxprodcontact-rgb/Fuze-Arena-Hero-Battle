@@ -80,6 +80,8 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   images `dragon-feu|terre|vent`), dessinés seulement : pas encore dans les données du jeu ni au combat (liste `NOUVEAUX` de `suivi.py`).
   **Monstres en vectoriel** (27/11) : 16 monstres de clan + 4 grands boss, `refonte-graphique/ui-moderne/monstres/<nom>/`, sorties `pixel/sortie/ui/vecto/<nom>/` ;
   avis à part : `python3 refonte-graphique/ui-moderne/heros/avis.py --monstres` → https://claude.ai/artifact/JgkepjcHadyFrT3UUpMqD8 (même base `avis`, liste `MONSTRES`).
+  État au 27/11 (détail : `docs/journal.md`, « Refonte en vectoriel animé ») : héros après 4 tours d'avis, monstres après 1 tour ;
+  combat encore en pixel art ; dragons pas encore dans les données du jeu.
 - Plus tard : profil du joueur, événements, sons et musique, Siège. Ensuite : serveur (Supabase) → habillage → social
   réel → argent réel → bêta → lancement.
 
