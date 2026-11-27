@@ -1,0 +1,4 @@
+fait
+27/11 : le sommet sacré des tengu (clan d'Orin, vent) redessiné en vectoriel lisse et animé, recadré pour le vrai combat (tout l'important entre x 84 et 506, sous les pilules du haut, au-dessus des cartes) : la pagode à trois toits noir corbeau au milieu, le grand pin tordu et le pont de cordes à gauche, la pierre levée et les bannières à droite, la mer de nuages, la terrasse de granit calme.
+Touche vivante : trois grands corbeaux lointains traversent le ciel (derrière le temple) et quelques pétales passent avec le vent ; la mer de nuages et la brume dérivent, le pin, les bannières, les lanternes bougent.
+Branché derrière ?vecto=1. Vraies captures (campagne 18-4) : combat-390x844.png, combat-360x640.png, combat-430x932.png ; situation.png, comparaison.png (pixel | vectoriel), anim.mp4 / anim.gif.

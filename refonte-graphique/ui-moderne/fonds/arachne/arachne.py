@@ -1443,10 +1443,17 @@ def ecrire_ts(doc):
     assemble()
 
 
-def composer_jeu(doc, t):
-    """Contrôle : l'image à l'instant t refaite comme le jeu la ferait (fixe + calques de la planche), à ×UP."""
-    base = Image.open(os.path.join(JEU, 'arachne.webp')).convert('RGBA')
-    pl = Image.open(os.path.join(TMP, 'planche.png')).convert('RGBA')
+_JEU_IMG = {}
+
+
+def composer_jeu(doc, t, particules=False):
+    """Contrôle : l'image à l'instant t refaite comme le jeu la ferait (fixe + calques de la planche, et les
+    particules si demandé : la règle de bg/fond-px.ts), à ×UP."""
+    if not _JEU_IMG:
+        _JEU_IMG['fixe'] = Image.open(os.path.join(JEU, CLAN + '.webp')).convert('RGBA')
+        _JEU_IMG['planche'] = Image.open(os.path.join(JEU, CLAN + '-anim.webp')).convert('RGBA')
+    base = _JEU_IMG['fixe'].copy()
+    pl = _JEU_IMG['planche']
     for c in sorted(doc['calques'], key=lambda c: c['prof']):
         if c['genre'] == 'boucle':
             i = 0 if c['ms'] == 0 else int(t // c['ms']) % len(c['cases'])
@@ -1460,6 +1467,17 @@ def composer_jeu(doc, t):
             for k in range(c['w'] * UP // tw + 3):
                 strip.alpha_composite(tile, (k * tw, 0))
             base.alpha_composite(strip.crop((tw - off, 0, tw - off + c['w'] * UP, th)), (c['x'] * UP, c['y'] * UP))
+        elif c['genre'] == 'particules' and particules:
+            e = next(e for e in ELEMS if e['id'] == c['id'])
+            for x, y, i in particules_a(e, t):
+                sx, sy, w_, h_ = c['cases'][i]
+                px, py = round((x - w_ / UP / 2) * UP), round((y - h_ / UP / 2) * UP)
+                im = pl.crop((sx, sy, sx + w_, sy + h_))
+                ox, oy = max(0, -px), max(0, -py)
+                if ox or oy:
+                    im = im.crop((ox, oy, w_, h_))
+                if px + ox < base.width and py + oy < base.height:
+                    base.alpha_composite(im, (px + ox, py + oy))
     return base
 
 
@@ -1527,12 +1545,17 @@ def video():
     os.makedirs(d, exist_ok=True)
     for f in os.listdir(d):
         os.unlink(os.path.join(d, f))
-    jobs = [(scene(i * 1000 / fps, (x0, top, VUE_X[1] - x0, H - top)), os.path.join(d, 'f%04d.png' % i))
-            for i in range(n)]
-    rendre(jobs, 720, hh)
+    # chaque image est composée comme le jeu la fait (l'image fixe ×UP, puis les calques de la planche, particules
+    # comprises) : c'est ce que montre le combat, et bien plus rapide que de redessiner le SVG 480 fois
+    doc = json.load(open(os.path.join(HERE, 'fond-%s.json' % CLAN)))
     gif = []
+    persos = poser(Image.new('RGBA', (720, hh), (0, 0, 0, 0)), s, x0, top)       # les personnages : une fois
     for i in range(n):
-        im = geste(poser(Image.open(jobs[i][1]).convert('RGBA'), s, x0, top), s, phone).convert('RGB')
+        t = i * 1000 / fps
+        full = composer_jeu(doc, t, particules=True)
+        im = full.crop((round(x0 * UP), round(top * UP), round(VUE_X[1] * UP), H * UP)).resize((720, hh), Image.LANCZOS)
+        im.alpha_composite(persos)
+        im = geste(im, s, phone).convert('RGB')
         if im.height % 2:
             im = im.crop((0, 0, im.width, im.height - 1))
         im.save(os.path.join(d, 'v%04d.png' % i))
