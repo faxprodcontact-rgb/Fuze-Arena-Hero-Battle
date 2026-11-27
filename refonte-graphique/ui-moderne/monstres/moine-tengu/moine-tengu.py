@@ -273,7 +273,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         ((60.6, 31.0), (57.4, 37.0), (55.8, 42.6), (53.0, 48.6), 8.0),
         ((59.8, 25.0), (54.6, 30.0), (51.0, 37.6), (47.4, 45.8), 9.0),
         ((60.2, 19.0), (53.8, 22.0), (48.8, 29.4), (44.4, 38.6), 8.6),
-        ((61.0, 18.4), (55.6, 19.8), (50.6, 24.6), (46.8, 31.0), 6.6),
+        ((61.6, 20.0), (56.2, 20.8), (51.0, 25.2), (47.0, 31.4), 6.6),
     ]
     lock_names = []
     for i, (p0, p1, p2, p3, w0) in enumerate(LOCKS):
@@ -485,10 +485,10 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # la couronne de cheveux gris : elle POUSSE du crâne chauve. Sa racine se fond dans le crâne en dégradé (masque :
     # aucun bord net, aucune « perruque » posée), elle fait le tour du derrière de la tête jusque derrière l'oreille ;
     # les grosses mèches du dos sortent de dessous. Sur le crâne, de fines mèches couchées remontent vers l'arrière.
-    fringe = sm([(60.8, 14.2), (63.6, 16.4), (65.0, 20.6), (65.4, 25.0), (66.0, 29.4), (65.8, 33.4), (63.8, 37.4),
-                 (60.4, 36.0), (56.6, 31.0), (54.8, 24.4), (55.6, 18.6), (57.8, 15.4)])
-    fig.part('fringe', fringe, GREY, grad=(66, 14, 56, 34, [(0, GREY.light), (0.5, GREY.base), (1, GREY.shadow)]),
-             cel=1.0, rim=0.0, cast=0.0,
+    fringe = sm([(61.6, 15.4), (63.8, 17.0), (65.0, 20.6), (65.4, 25.0), (66.0, 29.4), (65.8, 33.4), (63.8, 37.4),
+                 (60.4, 36.0), (56.6, 31.0), (55.0, 25.0), (55.4, 20.0), (57.2, 16.4), (59.6, 15.0)])
+    fig.part('fringe', fringe, GREY, grad=(64, 15, 54, 36, [(0, GREY.light), (0.55, GREY.base), (1, GREY.shadow)]),
+             cel=0.0, rim=0.0, cast=0.0,
              details=[(ribbon([(60.6, 18.0), (61.4, 23.0), (62.4, 29.0), (63.2, 34.0)], [0.1, 0.8, 0.7, 0.1]), GREY.hi, 0.55),
                       (ribbon([(58.6, 20.0), (58.8, 25.0), (59.8, 31.0)], [0.1, 0.7, 0.1]), GREY.shadow, 0.45)])
     # le dégradé de la racine : opaque vers l'arrière et le bas, transparent vers le sommet du crâne et le visage
