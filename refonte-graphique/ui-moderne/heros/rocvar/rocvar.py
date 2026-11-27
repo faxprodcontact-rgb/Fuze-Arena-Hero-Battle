@@ -31,10 +31,10 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 SCALE = Mat('#e4f4b4', '#8cc47a', '#4f9466', '#33665e', '#22384c', glint='#f4ffe0')
 BELLY = Mat('#fffbe6', '#f2e2b2', '#d6bb88', '#a48266', '#6e5458')
 MANE = Mat('#ffe2a4', '#dc9c50', '#a8662e', '#6e3c26', '#44221e')
-HORN = Mat('#f6efdc', '#d2c6aa', '#a39278', '#6f5e5c', '#43364a', glint='#fffaf0')
+HORN = Mat('#efe4c8', '#c4b496', '#927f68', '#615058', '#3e3046', glint='#fff6e0')
 STONE = Mat('#f2eee0', '#c8c2b0', '#958d82', '#625a6a', '#3a3048', glint='#ffffff')
 LEATHER = Mat('#f6c48c', '#c47a46', '#93502e', '#613026', '#3c1c20')
-CLOTH = Mat('#f0dcb0', '#c0a274', '#8e7352', '#5e4842', '#3a2a32')
+CLOTH = Mat('#fbf3dc', '#dccdaa', '#b09c7c', '#7a6658', '#4c3c44')
 BRONZE = Mat('#fff0c0', '#eab468', '#b8783a', '#7a4628', '#4a2620', glint='#fffbe2')
 WOOD = Mat('#f2c892', '#b88250', '#875634', '#5a3428', '#381e20')
 IVORY = Mat('#fffaf0', '#f4eed6', '#dccfb2', '#b0a088', '#7a6a58')
@@ -156,16 +156,16 @@ CAP = [(40.6, 19.0), (42.2, 16.6), (43.6, 15.2), (44.6, 13.6), (46.2, 14.6), (47
 MANE_LOCKS = [
     ('mF', (37.4, 31.0), (36.4, 40.0), (33.4, 47.4), (29.4, 51.6), 12.6, 0.5, 0.8, 4.5),
     ('mE', (37.6, 24.6), (32.6, 33.6), (26.0, 41.4), (21.0, 43.6), 13.6, 0.52, 1.0, 4.5),
-    ('mD', (40.0, 20.6), (31.6, 23.0), (23.4, 29.4), (18.2, 31.6), 13.6, 0.52, 1.0, 4.5),
-    ('mC', (43.0, 16.8), (35.0, 13.8), (26.6, 16.0), (21.4, 19.0), 12.4, 0.5, 1.0, 4.5),
-    ('mB', (47.4, 14.4), (42.2, 9.4), (34.6, 7.8), (29.6, 9.4), 10.2, 0.48, 0.9, 4.5),
+    ('mD', (40.0, 20.6), (31.8, 24.0), (24.4, 31.4), (20.0, 35.4), 13.6, 0.52, 1.0, 4.5),
+    ('mC', (43.0, 16.8), (35.0, 14.4), (27.0, 18.0), (22.4, 23.0), 12.4, 0.5, 1.0, 4.5),
+    ('mB', (47.4, 14.4), (42.2, 9.8), (34.8, 9.0), (29.8, 12.2), 10.2, 0.48, 0.9, 4.5),
     ('mH', (52.6, 14.6), (49.4, 11.4), (44.6, 10.0), (40.0, 11.2), 5.6, 0.4, 0.6, 3.5),
     ('mA', (40.0, 28.0), (39.8, 36.4), (38.8, 42.6), (36.6, 48.6), 9.4, 0.4, 0.7, 4.5),
     ('mG1', (45.6, 18.2), (41.6, 17.0), (37.2, 18.0), (32.4, 21.6), 7.8, 0.42, 0.5, 3.5),
     ('mG2', (44.2, 24.4), (40.4, 24.6), (36.6, 27.0), (32.8, 31.0), 7.6, 0.42, 0.5, 3.5),
 ]
 MANE_FILL = [(0, MANE.light), (0.45, MANE.base), (1, '#8a5230')]
-MANE_UNDER = [(0, MANE.shadow), (0.5, MANE.shadow), (1, '#58301f')]
+MANE_UNDER = [(0, '#8a5430'), (0.5, '#8a5430'), (1, '#6a3a26')]
 
 
 def mane_geom(P):
@@ -189,12 +189,12 @@ def mane_geom(P):
         fd = min(0.55, fade / math.dist(p0, p3))
         sh_ = cast_off(sh, -0.5, 1.2)
         if sh_:
-            det.append((sh_, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], fd),), 0.3))
+            det.append((sh_, ('lin',) + ax + (faded([(0, '#2a0f55'), (1, '#2a0f55')], fd),), 0.22))
         det.append((sh, ('lin',) + ax + (faded(MANE_FILL, fd),), 1))
-        det.append((sm_under(sh, 0.8, -2.2), ('lin',) + ax + (faded(MANE_UNDER, fd),), 0.85))
+        det.append((sm_under(sh, 0.8, -2.2), ('lin',) + ax + (faded(MANE_UNDER, fd),), 0.6))
         sheen = ribbon(resample(bez(lerp(p0, p1, 0.55), p1, p2, lerp(p2, p3, 0.6), 12), 6),
                        [0.2, w0 * 0.12, w0 * 0.16, w0 * 0.13, w0 * 0.08, 0.1, 0.1])
-        det.append((sheen.move(0.4, -1.0), MANE.hi, 0.6))
+        det.append((sheen.move(0.4, -1.0), MANE.hi, 0.35))
     det.append((Shape(mass.subs + mass.move(0.8, -1.0).subs, evenodd=True), MANE.shadow, 0.35))
     det.append((Shape(mass.subs + mass.move(-0.6, 0.8).subs, evenodd=True), MANE.hi, 0.7))
     g = _poly(mass)
@@ -267,11 +267,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- la queue : lourde, elle sort de derrière la jambe proche, se couche au sol, le bout se relève un peu ----
     q, qt = P['tail'], P['tuft']
     bendc = (6.0, 106.0)
-    cpts = [(33, 98.0), (27, 104.0), (20, 108.6), (11, 109.0), (4.2, 106.0), (0.6, 101.0), (0.8, 95.6), (3.4, 92.0)]
+    cpts = [(29, 100.0), (25, 104.6), (20, 108.6), (11, 109.0), (4.2, 106.0), (0.6, 101.0), (0.8, 95.6), (3.4, 92.0)]
     cpts = [p if i < 4 else add(bendc, rot((p[0] - bendc[0], p[1] - bendc[1]), q * 3.0 * (i - 3) / 4)) for i, p in enumerate(cpts)]
     tail_c = resample(bez(cpts[0], cpts[1], cpts[2], cpts[3], 12) + bez(cpts[3], cpts[4], cpts[5], cpts[6], 12)[1:]
                       + bez(cpts[6], (cpts[6][0] + 0.6, cpts[6][1] - 2.0), (cpts[7][0] - 1.4, cpts[7][1] + 1.0), cpts[7], 6)[1:], 28)
-    tw = [13.4 - 7.4 * (i / 28) ** 0.9 for i in range(29)]
+    tw = [12.0 - 6.2 * (i / 28) ** 0.9 for i in range(29)]
     tail = limb(tail_c, tw)
     tl, trr = sides(tail_c, tw)
     vb_out = trr
@@ -420,14 +420,16 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              details=[(ribbon([(30, 70.0), (48, 70.3), (66, 69.4)], [0.2, 0.8, 0.2]), LEATHER.light, 0.6)])
     buckle = sm([(47.0, 67.6), (53.4, 67.2), (55.0, 72.2), (53.0, 77.0), (47.2, 77.2), (45.6, 72.4)], sharp=(0, 1, 2, 3, 4, 5), t=0.5)
     fig.part('buckle', buckle, STONE, grad=(55, 67, 46, 77, [(0, STONE.light), (0.5, STONE.base), (1, STONE.shadow)]),
-             cel=0.8, rim=0.6, cast=1.0, cast_on=['belt', 'vest'], details=gem(50.4, 72.2, 1.7, gl))
+             cel=0.8, rim=0.6, cast=1.0, cast_on=['belt', 'vest'],
+             details=[(sm([(48.2, 69.4), (52.6, 69.2), (53.4, 72.2), (52.2, 74.8), (48.4, 75.0), (47.4, 72.4)], sharp=(0, 1, 2, 3, 4, 5), t=0.5),
+                       ('lin', 53, 69, 48, 75, [(0, STONE.hi, 0.6), (1, STONE.light, 0.1)]), 1)])
 
     # ---- le pavois de pierre, tenu devant lui par le bras du fond (il cache la main) ----
     shield_parts(fig, P, gl)
 
     # ---- la tête (le cou, les cornes, la barbiche, la tête, la crinière de devant, le barbillon) ----
     # la corne du fond (derrière la tête, sa base cachée par le crâne)
-    horn_part('hornF', [(57.4, 21.0), (57.6, 16.2), (56.0, 11.6), (52.6, 8.4)], 6.4, ['hornF', 'mane'])
+    horn_part('hornF', [(57.4, 21.0), (57.6, 16.2), (56.0, 11.6), (52.6, 8.4)], 7.2, ['hornF', 'mane'])
     # la barbiche ocre sous le menton
     bw = math.sin(ph - 0.4) * 0.4 + P['barb'] * 0.4
     beard2 = lock((64.6, 34.4), (63.2, 38.6), (60.8 - 0.3 * bw, 41.4), (58.4 - 0.6 * bw, 41.2 + 0.2 * bw), 5.4, n=12, bulge=0.45)
@@ -476,8 +478,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         hd.append((ribbon([(x - w_ * 0.42, y + h_ * 0.2), (x, y + h_ * 0.55), (x + w_ * 0.42, y + h_ * 0.2)], [0.1, 0.45, 0.1]), SCALE.deep, op * 1.3))
     # la racine du museau (le « nez » de placer()) : un pli doux où le museau quitte la face, sous l'œil
     nz = FACE['nez']
-    hd += [(ribbon([(nz[0] - 1.2, nz[1] - 2.4), (nz[0] - 0.2, nz[1] - 0.8), (nz[0] + 0.2, nz[1] + 0.8)], [0.1, 0.7, 0.1]), SCALE.shadow, 0.55),
-           (ribbon([(nz[0] - 0.4, nz[1] - 2.6), (nz[0] + 0.6, nz[1] - 1.0), (nz[0] + 1.0, nz[1] + 0.6)], [0.1, 0.4, 0.1]), SCALE.hi, 0.35)]
+    hd += [(ribbon([(nz[0] - 2.2, nz[1] - 3.0), (nz[0] - 0.6, nz[1] - 1.6), (nz[0] + 0.2, nz[1] + 0.4)], [0.1, 0.8, 0.1]), SCALE.shadow, 0.35)]
     # L'ŒIL (un seul : tête de profil) : le dessin de l'œil d'Elvyn (iris d'or, pupille fendue, paupière lourde) posé à la
     # place donnée par placer(tour=75), sous une arcade plus basse et plus sévère (le gardien fronce le sourcil).
     ECX, ECY = 52.2, 23.9            # l'œil d'Elvyn tel qu'il est dessiné (coordonnées des points ci-dessous)
@@ -497,7 +498,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
         hd += [(to(e), ('rad', X(ECX + 0.6), cy + 0.6 + dy, 4.0, 4.0, [(0, '#fff4a0'), (0.4, '#ffd63a'), (0.85, '#f09a24'), (1, '#e2761c')]), 1),
                (to(ellipse(ECX + 0.4, cy + 0.6, 0.62, 1.4)), '#140a1c', 1),
                # la paupière lourde, plus basse et inclinée vers l'avant (regard sévère)
-               (to(sm([(ECX - 5, cy - 3.0), (ECX + 3.8, cy - 2.0), (ECX + 3.6, cy + 0.55), (ECX - 4.6, cy - 0.95)], sharp=(0, 1, 2, 3), t=0.5)), '#2e6a52', 1),
+               (to(sm([(ECX - 4.6, cy - 0.95), (ECX - 4.2, cy - 2.4), (ECX - 0.4, cy - 2.9), (ECX + 3.4, cy - 1.6), (ECX + 3.6, cy + 0.55)],
+                      sharp=(0, 4), t=0.8)), ('lin', 0, cy - 3 + dy, 0, cy + 0.6 + dy, [(0, '#2f6a58'), (1, '#428a62')]), 1),
                (to(ribbon([(ECX - 4.6, cy - 0.95), (ECX - 0.4, cy - 0.2), (ECX + 3.6, cy + 0.55)], [0.2, 0.8, 0.3])), '#1a0c2c', 0.9),
                (ellipse(X(ECX + 1.2), cy + 0.9 + dy, 0.42, 0.34), '#ffffff', 1)]
     hd.append((to(ribbon([(48.6, 26.8), (52, 27.4), (55.6, 26.8)], [0.1, 0.5, 0.1])), SCALE.shadow, 0.6))
@@ -505,7 +507,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'vest', 'lapels'], details=hd)
 
     # la corne proche (côté spectateur) : devant la tête, sa base enfouie dans la racine de la crinière
-    horn_part('hornN', [(46.0, 17.6), (45.2, 12.6), (42.6, 8.0), (38.4, 5.0)], 7.0, ['hornF', 'mane', 'head'])
+    horn_part('hornN', [(46.0, 17.6), (45.2, 12.6), (42.6, 8.0), (38.4, 5.0)], 7.8, ['hornF', 'mane', 'head'])
 
     # ---- le devant de la crinière : il couvre le dos du crâne (derrière l'œil) et la base des deux cornes ----
     fig.part('mroot', MG['root'], MANE, grad=CLEAR, cel=0, rim=0, cast=1.0,
@@ -611,14 +613,15 @@ def near_arm(fig, P, gl):
              details=[(ribbon([(27.4, 49.0), (30.6, 46.4), (35.4, 45.2)], [0.2, 0.8, 0.2]), LEATHER.hi, 0.55)])
     # le gantelet de pierre : un gros bracelet évasé vers la main, un rebord en haut (au coude)
     n = (-fu[1], fu[0])
-    g0, g1 = add(E, fu, 0.4), add(W, fu, 0.8)
-    gpts = [add(g0, n, 4.4), add(lerp(g0, g1, 0.5), n, 4.6), add(g1, n, 5.0), add(add(g1, fu, 1.2), n, 2.8),
-            add(add(g1, fu, 1.2), n, -2.8), add(g1, n, -5.0), add(lerp(g0, g1, 0.5), n, -4.6), add(g0, n, -4.4)]
-    gaunt = sm(gpts, sharp=(0, 2, 5, 7), t=0.7)
-    gd = [(band_along([add(g0, n, 4.0), add(g0, n, -4.0)], 2.2), STONE.shadow, 0.55),
-          (ribbon([add(lerp(g0, g1, 0.15), n, 3.6), add(lerp(g0, g1, 0.55), n, 4.2), add(lerp(g0, g1, 0.95), n, 4.6)], [0.1, 0.9, 0.1]), STONE.hi, 0.6),
-          (scale_plate(*add(lerp(g0, g1, 0.55), n, -0.6), 3.4, 2.4, math.degrees(math.atan2(fu[1], fu[0])) - 90), STONE.shadow, 0.35)]
-    gd += gem(*add(lerp(g0, g1, 0.55), n, 0.4), 1.15, gl)
+    g0, g1 = add(E, fu, -0.2), add(W, fu, 0.6)
+    # un bracelet de pierre évasé vers la main (une seule forme arrondie), son rebord épais au poignet
+    gc = [g0, lerp(g0, g1, 0.5), g1]
+    gaunt = limb(gc, [7.8, 8.8, 10.0])
+    cuff = band_along([add(g1, n, 4.9), add(g1, n, -4.9)], 2.6)
+    gd = [(cuff, STONE.shadow, 0.5),
+          (band_along([add(add(g1, fu, -1.0), n, 4.6), add(add(g1, fu, -1.0), n, -4.6)], 0.8), STONE.hi, 0.5),
+          (ribbon([add(lerp(g0, g1, 0.1), n, 2.8), add(lerp(g0, g1, 0.5), n, 3.4), add(lerp(g0, g1, 0.85), n, 3.8)], [0.1, 0.9, 0.1]), STONE.hi, 0.55)]
+    gd += [(scale_plate(*add(lerp(g0, g1, 0.42), n, 0.4), 3.6, 2.6, math.degrees(math.atan2(fu[1], fu[0])) - 90), STONE.shadow, 0.3)]
     fig.part('gaunt', gaunt, STONE, cel=1.3, rim=0.7, cast=1.1, cast_on=['vest', 'belt', 'trousers', 'narm', 'plateN', 'buckle'],
              details=gd)
     # le marteau : le manche passe dans le poing ; la tête de pierre au bout
@@ -627,18 +630,18 @@ def near_arm(fig, P, gl):
     hn = (-hu[1], hu[0])
     G = add(W, fu, 3.2)                          # le milieu du poing (là où il serre le manche)
     h0, h1 = add(G, hu, -5.2), add(G, hu, 15.6)
-    haft = limb([h0, lerp(h0, h1, 0.5), h1], [2.4, 2.2, 2.3])
+    haft = limb([h0, lerp(h0, h1, 0.5), h1], [2.8, 2.6, 2.7])
     fig.part('haft', haft, WOOD, grad=(h0[0] + 2, h0[1] - 2, h1[0] - 2, h1[1] + 2, [(0, WOOD.light), (0.5, WOOD.base), (1, WOOD.shadow)]),
              cel=0.6, rim=0.5, cast=0.9, cast_on=['vest', 'belt', 'trousers', 'gaunt', 'narm', 'nfoot', 'tail'],
              details=[(ribbon([add(h0, hn, 0.4), add(lerp(h0, h1, 0.5), hn, 0.5), add(h1, hn, 0.4)], [0.1, 0.5, 0.1]), WOOD.hi, 0.5)])
     # la tête : un bloc de pierre taillée (un peu plus étroit côté frappe), deux bagues de bronze autour du manche
-    C = add(h1, hu, 3.2)
-    HL = lambda x, y: add(add(C, hu, y), hn, x)  # noqa: E731  (x le long de la tête, y le long du manche)
+    C = add(h1, hu, 3.6)
+    HL = lambda x, y: add(add(C, hu, y * 1.22), hn, x * 1.22)  # noqa: E731  (x le long de la tête, y le long du manche)
     hh = sm([HL(-6.4, -3.4), HL(-1.0, -3.8), HL(6.0, -3.6), HL(6.6, -3.0), HL(6.6, 3.0), HL(6.0, 3.6), HL(-1.0, 3.8),
              HL(-6.4, 3.4), HL(-7.0, 2.6), HL(-7.0, -2.6)], sharp=(0, 2, 3, 4, 5, 7, 8, 9), t=0.6)
     hdet = [(sm([HL(5.0, -3.6), HL(6.6, -3.0), HL(6.6, 3.0), HL(5.0, 3.6)], sharp=(0, 1, 2, 3), t=0.4), STONE.shadow, 0.45),
             (sm([HL(-7.0, -2.6), HL(-5.6, -3.4), HL(-5.6, 3.4), HL(-7.0, 2.6)], sharp=(0, 1, 2, 3), t=0.4), STONE.light, 0.35)]
-    hdet += gem(*HL(0.4, 0.0), 1.3, gl)
+    hdet += gem(*HL(0.4, 0.0), 1.5, gl)
     fig.part('hhead', hh, STONE, cel=1.2, rim=0.7, cast=1.1, cast_on=['haft', 'trousers', 'vest', 'tail', 'nfoot', 'nc0', 'nc1', 'nc2'],
              details=hdet)
     for j, xx in enumerate((-3.4, 4.0)):

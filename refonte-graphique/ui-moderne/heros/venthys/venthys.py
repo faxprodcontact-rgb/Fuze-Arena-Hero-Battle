@@ -51,14 +51,14 @@ FRAME = (-9, 0, 117, 115)
 #   penche en avant (+, degrés autour du bassin) ; head / tilt : la tête ; ph : la phase des ondulations (crinière,
 #   écharpe, houppe) ; mane / scarf : la crinière et l'écharpe balancent ; tail / tuft : la queue et sa houppe ;
 #   nw / fw : les poignets (proche, du fond) ; nb / fb : l'angle des lames ; blink : yeux fermés ; jaw : la gueule.
-PELV = (47.0, 89.0)                                    # le bassin (centre)
-SN0, SF0 = (46.6, 63.4), (64.6, 60.6)                  # les épaules (proche, du fond)
+PELV = (46.0, 86.0)                                    # le bassin (centre)
+SN0, SF0 = (50.4, 64.4), (68.2, 61.4)                  # les épaules (proche, du fond)
 LA1, LA2 = 10.2, 10.0                                  # bras, avant-bras
 LL1, LL2 = 16.0, 15.0                                  # cuisse, tibia
-HIP_N0, HIP_F0 = (42.6, 89.0), (53.4, 87.2)            # les hanches
-ANK_N, ANK_F = (21.6, 98.4), (69.0, 104.0)             # les chevilles (fixes : les pieds ne glissent pas)
-NW0, FW0 = (33.0, 76.6), (80.4, 57.0)                  # les poignets au repos
-HD0 = (2.0, 14.0)                                      # la tête, posée plus bas qu'Elvyn (il est accroupi)
+HIP_N0, HIP_F0 = (42.0, 87.0), (54.0, 85.0)            # les hanches
+ANK_N, ANK_F = (24.0, 100.0), (70.0, 103.0)             # les chevilles (fixes : les pieds ne glissent pas)
+NW0, FW0 = (36.0, 78.6), (82.0, 58.6)                  # les poignets au repos
+HD0 = (5.0, 16.0)                                      # la tête, posée plus bas qu'Elvyn (il est accroupi)
 REST = dict(breath=0.0, hip=(0.0, 0.0), lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, mane=0.0, scarf=0.0, tail=0.0,
             tuft=0.0, nw=NW0, fw=FW0, nb=0.0, fb=0.0, blink=0.0, jaw=0.0, trail=0.0)
 
@@ -153,11 +153,11 @@ CAP = [(39.6, 19.0), (41.4, 16.8), (43.0, 15.6), (44.0, 14.0), (45.4, 15.0), (47
        (53.0, 13.0), (57.0, 13.0), (60.0, 14.0), (62.0, 17.0), (62.0, 19.5)]
 # (nom, racine, contrôles, pointe, largeur, renflement, amplitude, fondu) : de la plus basse à la plus haute
 MANE_LOCKS = [
-    ('mF', (37.6, 32.6), (33.0, 42.0), (21.0, 47.6), (9.0, 45.2), 10.0, 0.45, 1.2, 4.5),
-    ('mE', (37.8, 25.4), (31.0, 33.6), (17.4, 37.8), (2.6, 33.6), 11.6, 0.5, 1.3, 4.5),
-    ('mD', (40.2, 21.6), (31.0, 23.4), (16.8, 25.2), (1.0, 20.0), 12.0, 0.5, 1.3, 4.5),
-    ('mC', (42.8, 17.6), (34.6, 13.6), (22.4, 12.6), (8.8, 7.6), 10.6, 0.48, 1.2, 4.5),
-    ('mB', (47.0, 14.6), (41.0, 8.6), (31.6, 5.4), (21.6, 4.4), 8.4, 0.45, 1.0, 4.5),
+    ('mF', (37.6, 32.6), (33.0, 43.0), (22.0, 46.0), (12.0, 49.4), 9.6, 0.45, 1.2, 4.5),
+    ('mE', (37.8, 25.4), (30.0, 35.6), (19.4, 33.4), (7.6, 38.0), 11.0, 0.5, 1.3, 4.5),
+    ('mD', (40.2, 21.6), (30.0, 25.6), (19.0, 20.8), (6.4, 24.0), 11.4, 0.5, 1.3, 4.5),
+    ('mC', (42.8, 17.6), (34.6, 15.0), (25.0, 9.6), (12.6, 10.6), 10.2, 0.48, 1.2, 4.5),
+    ('mB', (47.0, 14.6), (41.0, 9.0), (33.0, 3.4), (23.8, 4.0), 8.2, 0.45, 1.0, 4.5),
     ('mH', (52.4, 14.8), (48.0, 11.6), (42.0, 10.2), (35.4, 12.0), 4.8, 0.4, 0.6, 3.5),
     ('mG1', (44.4, 17.8), (40.4, 16.8), (35.8, 17.6), (29.6, 20.6), 7.4, 0.4, 0.6, 3.5),
     ('mG2', (42.4, 23.6), (38.8, 24.4), (34.4, 26.6), (28.6, 29.8), 7.2, 0.4, 0.6, 3.5),
@@ -223,22 +223,30 @@ def as_layer(fig, base, grad, det):
 # ---------- les lames en croissant ----------
 
 def crescent_shapes(k=1.0):
-    """Une lame en croissant dans son repère : la poignée le long de +x (le poing en 0), le croissant posé au bout, son
-    tranchant (le dos bombé) tourné vers +x, ses deux cornes revenant vers la main. → (poignée, lame, fil, reflet)."""
-    grip = limb([(-2.6 * k, 0), (5.4 * k, 0)], [2.3 * k, 2.1 * k])
-    R = 8.6 * k
-    tips = [(1.6 * k, -R), (1.6 * k, R)]
-    outer = [(1.6 * k + 9.4 * k * math.cos(math.radians(a)) - 1.2 * k, R * math.sin(math.radians(a)))
-             for a in range(-86, 87, 12)]
-    inner = [(3.4 * k + 4.6 * k * math.cos(math.radians(a)), R * 0.86 * math.sin(math.radians(a)))
-             for a in range(80, -81, -16)]
+    """Une lame en croissant dans son repère : la poignée le long de +x (le poing en 0), le croissant posé au bout de la
+    poignée, son tranchant (le dos bombé) tourné vers +x, ses deux cornes pointues revenant vers la main, épais au milieu.
+    → (poignée, lame, fil, creux)."""
+    R = 10.4 * k                      # le dos (cercle de centre (cx, 0))
+    cx = -1.6 * k
+    A = 74
+    tips = [(cx + R * math.cos(math.radians(-A)), R * math.sin(math.radians(-A))),
+            (cx + R * math.cos(math.radians(A)), R * math.sin(math.radians(A)))]
+    th = 5.6 * k                      # l'épaisseur au milieu
+    xm = cx + R - th
+    # le creux : un cercle qui passe par les deux pointes et par (xm, 0)
+    ty = tips[1][1]
+    tx = tips[1][0]
+    c2 = (tx * tx + ty * ty - xm * xm) / (2 * (tx - xm))
+    r2 = xm - c2
+    b2 = math.degrees(math.asin(max(-1, min(1, ty / r2))))
+    outer = [(cx + R * math.cos(math.radians(a)), R * math.sin(math.radians(a))) for a in [-A + 2 * A * i / 16 for i in range(1, 16)]]
+    inner = [(c2 + r2 * math.cos(math.radians(a)), r2 * math.sin(math.radians(a))) for a in [b2 - 2 * b2 * i / 10 for i in range(1, 10)]]
     blade = sm([tips[0]] + outer + [tips[1]] + inner, sharp=(0, len(outer) + 1), t=0.85)
-    # le fil du tranchant : une bande claire le long du dos bombé
-    edge_c = [(1.6 * k + 9.4 * k * math.cos(math.radians(a)) - 1.2 * k, R * math.sin(math.radians(a))) for a in range(-80, 81, 10)]
-    edge = ribbon(edge_c, [0.1] + [1.5 * k] * (len(edge_c) - 2) + [0.1])
-    # le creux (le plat de la lame, côté de la main) un peu plus sombre
-    hollow = ribbon([(3.6 * k + 4.0 * k * math.cos(math.radians(a)), R * 0.7 * math.sin(math.radians(a))) for a in range(60, -61, -15)],
-                    [0.1, 0.9 * k, 1.3 * k, 1.5 * k, 1.5 * k, 1.5 * k, 1.3 * k, 0.9 * k, 0.1])
+    grip = limb([(-2.8 * k, 0), (xm + 0.8 * k, 0)], [2.4 * k, 2.2 * k])
+    edge_c = [(cx + (R - 0.9 * k) * math.cos(math.radians(a)), (R - 0.9 * k) * math.sin(math.radians(a))) for a in range(-64, 65, 8)]
+    edge = ribbon(edge_c, [0.1] + [1.3 * k] * (len(edge_c) - 2) + [0.1])
+    hc = [(c2 + (r2 + 1.0 * k) * math.cos(math.radians(a)), (r2 + 1.0 * k) * math.sin(math.radians(a))) for a in [b2 * 0.8 - 1.6 * b2 * i / 8 for i in range(9)]]
+    hollow = ribbon(hc, [0.1, 0.8 * k, 1.2 * k, 1.4 * k, 1.5 * k, 1.4 * k, 1.2 * k, 0.8 * k, 0.1])
     return grip, blade, edge, hollow
 
 
@@ -251,9 +259,8 @@ def put_blade(fig, pre, W, ang, k=1.0, M=None):
             (G(ribbon([(1.6 * k, -0.9 * k), (4.0 * k, 0.9 * k)], [0.1, 0.5 * k, 0.1])), GRIP.deep, 0.6)]
     fig.part(pre + 'grip', g_, GRIP, cel=0.6, rim=0.4, cast=0.5, details=gdet)
     b = G(blade)
-    c0 = G((0, 0)) if False else None  # noqa: F841
-    tip_hi = add(W, rot((11 * k, -6 * k), ang))
-    tip_lo = add(W, rot((2 * k, 8 * k), ang))
+    bx0, by0, bx1, by1 = b.bbox()
+    tip_hi, tip_lo = (bx1, by0), (bx0, by1)
     det = [(G(hollow), STEEL.shadow, 0.55),
            (G(edge), STEEL.hi, 0.95)]
     fig.part(pre + 'blade', b, STEEL, grad=(tip_hi[0], tip_hi[1], tip_lo[0], tip_lo[1], [(0, STEEL.hi), (0.4, STEEL.light), (1, STEEL.shadow)]),
@@ -271,18 +278,20 @@ def fist(fig, pre, W, ang, k=1.0, flip=False, cast_on=None):
     poignée, deux griffes d'ivoire repliées devant les doigts. flip : le pouce de l'autre côté."""
     s = -1 if flip else 1
     L = lambda pts: [add(W, rot((x * k, y * k * s), ang)) for x, y in pts]          # noqa: E731
-    body = sm(L([(-0.6, -2.6), (2.6, -3.4), (5.6, -2.9), (7.0, -0.8), (6.8, 2.0), (5.2, 3.4), (1.6, 3.4), (-0.6, 2.4)]), t=0.9)
-    det = [(sm(L([(1.0, -2.6), (5.2, -2.6), (6.4, -0.6), (4.0, -0.2), (1.2, -0.6)])), SCALE.light, 0.55),
-           (ribbon(L([(5.4, -1.6), (6.2, 0.4), (5.8, 2.4)]), [0.1, 0.5, 0.1]), SCALE.deep, 0.5),
-           (ribbon(L([(3.0, 0.6), (5.0, 1.0), (6.4, 0.9)]), [0.1, 0.45, 0.1]), SCALE.shadow, 0.6),
-           (ribbon(L([(3.0, 2.2), (5.0, 2.6), (6.0, 2.6)]), [0.1, 0.4, 0.1]), SCALE.shadow, 0.5)]
+    # le poing : les doigts repliés font un bloc arrondi, les jointures devant (+x)
+    body = sm(L([(-0.8, -2.6), (2.4, -3.6), (5.6, -3.4), (7.4, -1.4), (7.4, 1.6), (5.8, 3.6), (2.0, 3.6), (-0.8, 2.6)]), t=0.9)
+    det = [(sm(L([(1.0, 0.2), (5.4, 0.0), (7.0, 1.0), (6.6, 3.0), (2.0, 3.0)])), SCALE.light, 0.45),
+           # les doigts repliés : deux creux doux entre les phalanges, sur le devant
+           (ribbon(L([(4.6, -2.6), (6.2, -2.0), (7.2, -0.6)]), [0.1, 0.5, 0.1]), SCALE.deep, 0.45),
+           (ribbon(L([(4.4, -0.6), (6.0, -0.2), (7.3, 0.6)]), [0.1, 0.5, 0.1]), SCALE.shadow, 0.55)]
     fig.part(pre + 'fist', body, SCALE, cel=0.9, rim=0.6, cast=0.9, cast_on=cast_on, details=det)
     names = [pre + 'fist']
-    for j, (x, y) in enumerate(((6.9, 0.0), (6.6, 2.4))):
-        cl = sm(L([(x - 0.4, y - 0.6), (x + 1.0, y - 0.3), (x + 0.6, y + 0.9), (x - 0.4, y + 0.6)]), sharp=(1,))
+    # les griffes d'ivoire au bout des doigts repliés (côté paume), recourbées vers le poignet
+    for j, (x, y) in enumerate(((6.4, -3.2), (4.0, -3.7))):
+        cl = sm(L([(x + 0.9, y + 0.5), (x + 0.5, y - 0.9), (x - 1.0, y - 1.5), (x - 0.4, y + 0.3)]), sharp=(2,))
         fig.part(pre + 'cl%d' % j, cl, IVORY, cel=0.3, rim=0.3, cast=0.3, cast_on=[pre + 'fist'])
         names.append(pre + 'cl%d' % j)
-    th = limb(L([(1.4, -2.8), (4.0, -3.4), (6.0, -2.2)]), [2.6 * k, 2.4 * k, 2.0 * k])
+    th = limb(L([(1.0, 3.0), (3.6, 3.8), (6.0, 3.0)]), [2.6 * k, 2.5 * k, 2.1 * k])
     fig.part(pre + 'thumb', th, SCALE, cel=0.6, rim=0.5, cast=0.6, cast_on=[pre + 'fist', pre + 'grip', pre + 'blade'])
     names.append(pre + 'thumb')
     return names
@@ -365,15 +374,15 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     HN, HF = mapp(PM, HIP_N0), mapp(PM, HIP_F0)
 
     # ---- l'écharpe : les deux pans qui flottent derrière (derrière tout) ----
-    knot = mapp(NECK, (50.6, 57.6))
+    knot = mapp(NECK, (50.0, 60.6))
     sc = P['scarf']
     pans = []
-    for j, (L, dy, w0, amp, lag) in enumerate(((52, -2.0, 6.4, 1.0, 0.0), (40, 7.0, 5.4, 0.8, 1.3))):
+    for j, (L, dy, w0, amp, lag) in enumerate(((47, 1.0, 6.2, 1.0, 0.0), (37, 9.0, 5.2, 0.9, 1.4))):
         pts = []
         for i in range(13):
             t = i / 12
-            x = knot[0] - L * t * (1 - 0.05 * sc)
-            y = knot[1] + dy * t + 2.4 * t * math.sin(ph * 1.25 - t * 4.2 - lag) * amp + 2.2 * sc * t * t - 1.2 * t * t
+            x = knot[0] - L * t * (1 - 0.05 * sc) + 1.2 * math.sin(ph * 1.25 - t * 5.0 - lag) * t
+            y = knot[1] + dy * t + 4.2 * t ** 0.8 * math.sin(ph * 1.25 - t * 5.4 - lag + 0.6) * amp + 2.4 * sc * t * t - 3.0 * t * t
             pts.append((x, y))
         ws = [w0 * (1 - 0.25 * (i / 12)) + 0.8 * math.sin(ph * 1.25 - i * 0.5 - lag) * (i / 12) for i in range(13)]
         sh = limb(resample(catmull(pts, 4), 18), [ws[min(12, round(i * 12 / 18))] for i in range(19)])
@@ -482,57 +491,56 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # la jambe proche : derrière, genou bas, sur la pointe du pied (le pied tourne autour des orteils)
     KN = leg(fig, 'n', HN, ANK_N, near=True, cast_on=['fleg', 'ffoot', 'tail'])
     toe = (ANK_N[0] + 8.6, GRD)
-    nf = foot(fig, 'n', toe[0] - 21.0, 1.0, cast_on=['nleg', 'tail', 'fleg'])
-    fig.pose(nf, mR(34, toe[0], toe[1]))
+    nf = foot(fig, 'n', toe[0] - 21.0 * 0.92, 0.92, cast_on=['nleg', 'tail', 'fleg'])
+    fig.pose(nf, mR(26, toe[0], toe[1]))
     # (l'ordre : le pied proche passe devant le bas de sa jambe)
 
     # ---- le cou (gorge à plaques ivoire) ----
-    neck = sm([(43.4, 43.0), (52.0, 44.6), (63.4, 47.4), (66.8, 53.4), (66.4, 61.0), (58.0, 65.0), (50.0, 64.0), (45.6, 55.0)])
-    ndet = [(sm([(55.0, 46.6), (63.6, 47.8), (66.6, 53.6), (66.0, 61.0), (60.0, 63.0), (56.6, 55.0)]),
-             ('lin', 64, 48, 56, 60, [(0, BELLY.light), (0.55, BELLY.base), (1, BELLY.shadow)]), 1)]
-    for y in (50.6, 54.2, 57.8):
-        ndet.append((ribbon([(56.6, y + 0.6), (61.0, y), (66.2, y - 0.4)], [0.1, 0.6, 0.1]), BELLY.shadow, 0.55))
+    neck = sm([(46.0, 45.6), (55.0, 47.6), (66.0, 50.6), (70.6, 56.0), (70.4, 63.4), (61.0, 67.4), (52.0, 66.0), (47.2, 57.0)])
+    ndet = [(sm([(58.0, 49.6), (66.4, 51.2), (70.4, 56.0), (70.0, 63.0), (63.0, 65.6), (59.6, 57.0)]),
+             ('lin', 68, 51, 58, 63, [(0, BELLY.light), (0.55, BELLY.base), (1, BELLY.shadow)]), 1)]
+    for y in (53.6, 57.2, 60.8):
+        ndet.append((ribbon([(59.6, y + 0.6), (64.4, y), (70.2, y - 0.4)], [0.1, 0.6, 0.1]), BELLY.shadow, 0.55))
     fig.part('neck', neck, SCALE, cel=1.3, rim=0.5, cast=0, details=ndet)
 
     # ---- la veste courte croisée (vert d'eau), le buste penché en avant ----
-    jk = sm([(43.6, 61.4), (49.0, 58.2), (56.0, 58.6), (61.6, 57.0), (67.0, 58.6), (69.4, 63.4), (69.0, 70.8), (66.6, 78.6),
-             (65.2, 86.0), (66.4, 93.6), (58.0, 95.0), (49.0, 94.6), (39.4, 95.2), (35.4, 93.0), (36.8, 84.0), (38.6, 74.0), (40.4, 66.0)],
+    jk = sm([(45.0, 63.6), (50.4, 60.0), (58.0, 60.6), (65.0, 58.8), (70.6, 59.8), (73.4, 64.0), (73.2, 70.4), (70.6, 77.6),
+             (67.6, 83.4), (66.4, 89.0), (58.0, 90.0), (50.0, 89.4), (40.0, 90.6), (35.6, 89.4), (36.4, 82.0), (38.6, 74.4), (41.4, 67.6)],
             sharp=(9, 13), t=0.85)
     jdet = []
     # le pan gauche croisé par-dessus le droit : la bordure crème descend de l'épaule proche vers la hanche du fond
-    lap = [(50.6, 58.4), (55.2, 64.6), (59.6, 71.6), (63.6, 78.6)]
-    lap2 = [(62.4, 57.8), (61.4, 62.8), (60.0, 66.2)]
+    lap = [(53.4, 60.2), (58.4, 66.4), (63.6, 72.6), (68.6, 78.4)]
+    lap2 = [(66.0, 59.2), (64.8, 64.0), (63.2, 67.4)]
     jdet += [(band_along([add(p, (1.0, 0.7)) for p in lap], 3.4), JACKET.deep, 0.55),
-             (band_along(lap2, 2.6), ('lin', 62, 57, 60, 66, [(0, WRAP.light), (1, WRAP.shadow)]), 1),
-             (band_along(lap, 3.0), ('lin', 50, 58, 64, 79, [(0, WRAP.light), (0.6, WRAP.base), (1, WRAP.shadow)]), 1),
+             (band_along(lap2, 2.6), ('lin', 66, 59, 63, 68, [(0, WRAP.light), (1, WRAP.shadow)]), 1),
+             (band_along(lap, 3.0), ('lin', 53, 60, 69, 79, [(0, WRAP.light), (0.6, WRAP.base), (1, WRAP.shadow)]), 1),
              (ribbon([add(p, (0.4, -0.5)) for p in lap], [0.1, 0.7, 0.7, 0.1]), WRAP.hi, 0.8)]
     # les plis : le tissu tire de l'épaule vers la ceinture
-    jdet += [(ribbon([(45.0, 66.0), (44.0, 74.0), (45.0, 79.0)], [0.2, 1.6, 0.3]), JACKET.shadow, 0.6),
-             (ribbon([(66.6, 62.0), (65.6, 68.0), (63.4, 74.0)], [0.2, 1.1, 0.2]), JACKET.hi, 0.35),
-             (ribbon([(41.0, 88.0), (44.0, 92.0), (48.0, 93.4)], [0.2, 1.0, 0.2]), JACKET.shadow, 0.6),
-             (ribbon([(55.0, 86.0), (56.0, 90.0), (56.4, 94.0)], [0.2, 1.1, 0.2]), JACKET.shadow, 0.55)]
+    jdet += [(ribbon([(46.0, 68.0), (43.6, 74.0), (42.6, 79.0)], [0.2, 1.6, 0.3]), JACKET.shadow, 0.6),
+             (ribbon([(71.0, 64.0), (70.0, 70.0), (67.6, 75.0)], [0.2, 1.1, 0.2]), JACKET.hi, 0.35),
+             (ribbon([(40.4, 86.6), (44.0, 88.6), (48.0, 89.0)], [0.2, 0.9, 0.2]), JACKET.shadow, 0.6)]
     # l'ourlet crème d'un bord à l'autre
-    jdet += [(band_along([(34, 92.6), (39.6, 94.8), (49, 94.2), (58, 94.6), (67.4, 93.0)], 2.4), ('lin', 40, 92, 40, 96, [(0, WRAP.light), (1, WRAP.shadow)]), 1)]
-    # la ceinture nouée (tissu safran comme l'écharpe), d'un bord à l'autre, le nœud sur la hanche du fond
-    belt = sm([(30, 81.4), (50, 80.4), (72, 77.6), (72, 83.8), (50, 86.6), (30, 87.4)], sharp=(0, 2, 3, 5), t=0.7)
-    jdet += [(belt, ('lin', 50, 79, 50, 87, [(0, SCARF.light), (0.5, SCARF.base), (1, SCARF.shadow)]), 1),
-             (ribbon([(38, 81.4), (52, 80.8), (66, 78.6)], [0.2, 0.8, 0.2]), SCARF.hi, 0.6),
-             (ribbon([(38, 86.6), (52, 86.0), (66, 83.8)], [0.2, 0.9, 0.2]), SCARF.deep, 0.45)]
+    jdet += [(band_along([(34, 88.0), (40.0, 90.4), (50, 89.2), (58, 89.8), (68.4, 88.2)], 2.4), ('lin', 40, 88, 40, 91, [(0, WRAP.light), (1, WRAP.shadow)]), 1)]
+    # la ceinture nouée (tissu safran comme l'écharpe), d'un bord à l'autre, le nœud sur le devant
+    belt = sm([(30, 79.0), (52, 77.8), (76, 73.6), (76, 79.6), (52, 83.8), (30, 85.2)], sharp=(0, 2, 3, 5), t=0.7)
+    jdet += [(belt, ('lin', 50, 77, 50, 85, [(0, SCARF.light), (0.5, SCARF.base), (1, SCARF.shadow)]), 1),
+             (ribbon([(38, 79.0), (54, 78.2), (70, 75.0)], [0.2, 0.8, 0.2]), SCARF.hi, 0.6),
+             (ribbon([(38, 84.4), (54, 83.4), (70, 79.8)], [0.2, 0.9, 0.2]), SCARF.deep, 0.45)]
     fig.part('jacket', jk, JACKET, grad=(68, 58, 40, 92, [(0, JACKET.light), (0.45, JACKET.base), (1, JACKET.shadow)]),
              cel=1.6, rim=0.8, cast=1.1, details=jdet, occl=(JACKET.deep, 0.2, 3.0))
     # le nœud de la ceinture et ses deux bouts qui pendent (sur le devant, côté du fond)
-    kn = sm([(60.6, 80.4), (64.2, 78.8), (66.4, 81.2), (64.6, 84.6), (61.0, 84.4)], t=0.9)
+    kn = sm([(62.6, 77.6), (66.2, 76.0), (68.6, 78.4), (66.8, 81.8), (63.0, 81.6)], t=0.9)
     fig.part('bknot', kn, SCARF, cel=0.7, rim=0.5, cast=0.8, cast_on=['jacket'])
-    for j, (p0, p3, w) in enumerate((((62.4, 84.0), (60.4 - 1.2 * P['scarf'], 94.8), 3.0), ((64.6, 83.6), (66.2 - 0.8 * P['scarf'], 92.4), 2.6))):
+    for j, (p0, p3, w) in enumerate((((64.0, 81.2), (61.0 - 1.2 * P['scarf'], 91.6), 3.0), ((66.4, 80.8), (67.0 - 0.8 * P['scarf'], 89.6), 2.6))):
         e_ = lock(p0, add(p0, (0.2, 3.4)), add(p3, (0.6, -3.0)), p3, w, n=10, bulge=0.3)
         fig.part('bend%d' % j, e_, SCARF, cel=0.6, rim=0.4, cast=0.7, cast_on=['jacket', 'fleg'])
 
     # ---- l'écharpe autour du cou (devant le col) ----
-    wrapc = sm([(43.8, 58.6), (48.0, 55.6), (55.0, 55.4), (62.0, 56.8), (67.4, 56.2), (68.6, 59.6), (66.4, 63.4), (58.0, 64.0),
-                (50.0, 63.2), (44.4, 62.6)], t=0.85)
-    wdet = [(ribbon([(46.0, 59.6), (54.0, 59.0), (62.0, 60.2), (67.0, 59.6)], [0.2, 1.2, 1.2, 0.2]), SCARF.shadow, 0.55),
-            (ribbon([(47.0, 57.0), (55.0, 56.4), (62.0, 57.8), (66.6, 57.4)], [0.1, 0.8, 0.8, 0.1]), SCARF.hi, 0.6)]
-    fig.part('scarf', wrapc, SCARF, grad=(66, 55, 46, 64, [(0, SCARF.light), (0.5, SCARF.base), (1, SCARF.shadow)]),
+    wrapc = sm([(46.0, 60.4), (50.4, 57.2), (57.4, 57.0), (64.4, 58.4), (70.0, 57.6), (72.4, 61.0), (70.0, 65.4), (61.0, 66.6),
+                (52.6, 65.6), (46.8, 64.6)], t=0.85)
+    wdet = [(ribbon([(48.4, 61.4), (56.4, 61.0), (64.4, 62.2), (70.4, 61.4)], [0.2, 1.2, 1.2, 0.2]), SCARF.shadow, 0.55),
+            (ribbon([(49.4, 58.8), (57.4, 58.2), (64.4, 59.6), (69.6, 59.0)], [0.1, 0.8, 0.8, 0.1]), SCARF.hi, 0.6)]
+    fig.part('scarf', wrapc, SCARF, grad=(70, 57, 48, 66, [(0, SCARF.light), (0.5, SCARF.base), (1, SCARF.shadow)]),
              cel=1.0, rim=0.6, cast=1.0, cast_on=['jacket', 'neck', 'pan0', 'pan1'], details=wdet)
 
     # ---- la tête (celle d'Elvyn, de profil : un seul œil) ----
@@ -611,11 +619,11 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cast_on=['head', 'hornN', 'hornF', 'neck'], details=as_layer(fig, MG['mass'], MG['grad'], MG['det']))
     # ---- la moustache de dragon : le barbillon qui part de la truffe et flotte vers l'arrière ----
     sw = math.sin(ph * 1.2 - 0.8)
-    b0 = (77.0, 28.0)
-    bpts = bez(b0, (79.4, 31.0), (74.0 + 0.6 * sw, 37.0 + 0.5 * sw), (66.0 + 1.0 * sw, 39.4 + 0.8 * sw), 10)
-    bpts = bpts + bez(bpts[-1], (60.0 + 1.2 * sw, 41.2 + 1.0 * sw), (55.0 + 1.4 * sw, 39.4 + 1.4 * sw), (50.4 + 1.6 * sw, 41.6 + 2.0 * sw), 8)[1:]
-    whisk = limb(bpts, [1.8 - 1.3 * (i / (len(bpts) - 1)) for i in range(len(bpts))])
-    fig.part('barbel', whisk, MANE, grad=(78, 28, 50, 42, [(0, MANE.hi), (0.6, MANE.light), (1, MANE.base)]), cel=0.45, rim=0.4, cast=0.7)
+    b0 = (76.4, 28.6)
+    bpts = bez(b0, (78.4, 32.6), (75.0 + 0.4 * sw, 38.6 + 0.5 * sw), (68.0 + 0.8 * sw, 41.0 + 0.8 * sw), 10)
+    bpts = bpts + bez(bpts[-1], (62.0 + 1.0 * sw, 42.6 + 1.0 * sw), (57.0 + 1.4 * sw, 41.0 + 1.6 * sw), (51.6 + 1.8 * sw, 43.6 + 2.2 * sw), 8)[1:]
+    whisk = limb(bpts, [1.5 - 1.1 * (i / (len(bpts) - 1)) for i in range(len(bpts))])
+    fig.part('barbel', whisk, MANE, grad=(78, 28, 50, 44, [(0, MANE.light), (0.5, MANE.base), (1, MANE.shadow)]), cel=0.45, rim=0.4, cast=0.7)
 
     # ---- le bras proche : bas, derrière lui, lame en prise inversée ----
     NW = P['nw']

@@ -31,10 +31,10 @@ ROOT = os.path.abspath(os.path.join(HERE, '..', '..', '..', '..'))
 SCALE = Mat('#ffc2a0', '#f2604c', '#c92e3c', '#8c1a46', '#500e38', glint='#fff0e2')
 BELLY = Mat('#fff6d2', '#f6d47c', '#dca44c', '#a8683e', '#6c3a34')
 MANE = Mat('#fff4b8', '#ffd060', '#ff9630', '#e2562a', '#9a2a2e')
-HORN = Mat('#b4a6cc', '#5e5274', '#3a3050', '#261e38', '#160f24')
+HORN = Mat('#c4b8da', '#7a6c92', '#4c4064', '#30264a', '#1a1230')
 LAC = Mat('#ff9a86', '#a32a40', '#781832', '#4c0e2c', '#2c0820')        # la laque rouge sombre de l'armure
 BRONZE = Mat('#fff0b4', '#f0c264', '#c88a3a', '#8c5428', '#52301e', glint='#fffbe6')
-SASH = Mat('#a698c4', '#5c4c78', '#3e3258', '#2a2140', '#1a1428')       # la ceinture de tissu, noir prune
+SASH = Mat('#b49aa6', '#66505e', '#46343f', '#2e2030', '#1c1220')       # la ceinture de tissu, noir chaud
 STEEL = Mat('#ffffff', '#ecebf6', '#bcb6d2', '#837ba0', '#4c4668')
 WOOD = Mat('#c88a7c', '#6e2c36', '#4c1c2c', '#30101e', '#1c0814')       # la hampe laquée
 IVORY = Mat('#fffaf0', '#f4eed6', '#dccfb2', '#b0a088', '#7a6a58')
@@ -42,7 +42,7 @@ LAVA = ['#fffbe4', '#ffe68a', '#ffb43a', '#f2701a', '#cc3a12', '#8a1a10']   # le
 
 GRD = 113          # le sol
 FEET = (52, 113)   # le point « sol » du dessin (entre les deux pieds)
-FRAME = (-10, -7, 136, 122)
+FRAME = (-10, -2, 140, 117)
 
 # ---------- le squelette ----------
 # Le bassin (jambes, jupe, ceinture) ; le buste tourne autour de la taille (PIV) : penché en avant de LEAN0 degrés.
@@ -50,14 +50,14 @@ FRAME = (-10, -7, 136, 122)
 # (IK), les mains sur la hampe. La hallebarde : la main proche (G1) et l'angle de la hampe ; la main du fond glisse sur
 # la hampe à GS de la main proche.
 PIV = (50.0, 73.0)
-LEAN0 = 13.0
+LEAN0 = 18.0
 HIP_N, HIP_F = (45.4, 77.0), (56.6, 76.0)          # hanches (proche, du fond), repère du bassin
 ANK_N, ANK_F = (25.4, 105.8), (73.6, 105.8)        # chevilles (fixes, au sol)
 LT, LS = 18.6, 17.6                                # cuisse, tibia
 SH_N, SH_F = (38.2, 49.0), (63.0, 48.6)            # épaules (repère du buste, droit)
-LA1, LA2 = 10.8, 10.6                              # bras, avant-bras
-G1_0, WANG0, GS = (51.0, 64.6), -31.0, 35.0        # la main proche sur la hampe, l'angle de la hampe, l'écart des mains
-HEAD0 = (9.0, 3.4, -10.0)                          # la tête en avant du cou (décalage, rotation)
+LA1, LA2 = 11.6, 11.2                              # bras, avant-bras
+G1_0, WANG0, GS = (50.0, 68.0), -27.0, 40.0        # la main proche sur la hampe, l'angle de la hampe, l'écart des mains
+HEAD0 = (5.0, 1.6, -14.0)                          # la tête en avant du cou (décalage, rotation)
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, ph=0.0, mane=0.0, tail=0.0, tuft=0.0,
             sash=0.0, barb=0.0, glow=1.0, blink=0.0, jaw=0.0, grip=G1_0, wang=WANG0, gs=GS, flame=1.0, tassel=0.0,
             hip=(0.0, 0.0))
@@ -148,13 +148,13 @@ CAP = [(39.6, 19.0), (41.4, 16.4), (42.6, 13.8), (44.4, 14.6), (45.6, 12.6), (47
 # arrière par l'élan, les pointes qui se relèvent comme des langues de feu ; la mèche le long de la nuque ; les mèches
 # courtes couchées sur le dos du crâne.
 MANE_LOCKS = [
-    ('mF', (37.6, 31.6), (33.4, 40.0), (25.0, 45.6), (16.8, 44.0), 9.6, 0.45, 1.0, 4.5),
-    ('mA', (39.4, 29.6), (38.0, 40.0), (33.6, 47.6), (26.6, 52.4), 8.4, 0.4, 0.8, 4.5),
-    ('mE', (37.6, 25.4), (30.6, 30.6), (20.6, 34.4), (11.6, 30.6), 11.4, 0.5, 1.0, 4.5),
-    ('mD', (40.0, 21.4), (31.6, 21.6), (21.6, 22.6), (12.6, 16.8), 12.0, 0.5, 1.0, 4.5),
-    ('mC', (42.6, 17.4), (35.8, 13.4), (27.6, 11.2), (19.6, 5.2), 10.2, 0.48, 1.0, 4.5),
-    ('mB', (46.4, 14.6), (42.2, 8.4), (36.6, 4.6), (30.4, -1.8), 8.4, 0.45, 1.0, 4.5),
-    ('mH', (50.6, 14.6), (48.0, 10.2), (44.4, 7.4), (40.6, 2.8), 4.8, 0.4, 0.6, 3.5),
+    ('mF', (37.6, 31.6), (32.4, 38.8), (23.0, 41.4), (14.6, 37.0), 9.6, 0.45, 1.0, 4.5),
+    ('mA', (39.4, 29.6), (37.6, 39.4), (32.6, 46.2), (25.4, 48.6), 8.4, 0.4, 0.8, 4.5),
+    ('mE', (37.6, 25.4), (30.0, 29.4), (19.0, 31.0), (9.4, 25.4), 11.4, 0.5, 1.0, 4.5),
+    ('mD', (40.0, 21.4), (31.0, 22.6), (20.0, 22.6), (11.0, 15.4), 12.0, 0.5, 1.0, 4.5),
+    ('mC', (42.6, 17.4), (35.0, 15.0), (26.0, 13.4), (18.4, 6.4), 10.2, 0.48, 1.0, 4.5),
+    ('mB', (46.4, 14.6), (41.0, 10.6), (34.0, 8.2), (27.6, 1.6), 8.4, 0.45, 1.0, 4.5),
+    ('mH', (50.6, 14.6), (47.6, 11.0), (43.4, 9.4), (39.0, 5.4), 4.8, 0.4, 0.6, 3.5),
     ('mG1', (44.4, 17.8), (40.4, 16.4), (35.8, 17.2), (30.2, 20.6), 7.6, 0.4, 0.5, 3.5),
     ('mG2', (42.4, 23.6), (38.8, 24.0), (34.4, 26.0), (29.6, 29.6), 7.4, 0.4, 0.5, 3.5),
 ]
@@ -225,8 +225,8 @@ def horn(beam, w0, w1=0.5):
 
 # les cornes noires (repère de la tête) : elles partent du dessus du crâne, derrière l'œil, filent vers l'arrière en
 # arc et relèvent la pointe ; celle du fond est un peu plus haute et plus en arrière (même longueur apparente)
-HORN_N = [(53.6, 18.6), (52.4, 12.6), (47.8, 7.2), (41.0, 4.8), (35.2, 5.6), (31.0, 3.4), (29.4, -0.6)]
-HORN_F = [(47.6, 16.0), (46.6, 10.4), (42.4, 4.8), (36.0, 2.0), (30.6, 2.4), (26.8, 0.0), (25.6, -3.6)]
+HORN_N = [(51.2, 18.4), (49.4, 13.6), (44.0, 9.8), (37.4, 8.8), (31.6, 9.6), (27.4, 7.8), (25.4, 4.2)]
+HORN_F = [(46.4, 16.6), (44.6, 12.2), (39.6, 8.6), (33.6, 7.4), (28.4, 8.0), (24.6, 6.4), (22.8, 3.0)]
 
 
 # ---------- la hallebarde ----------
@@ -240,7 +240,7 @@ def weapon_frame(P):
     return G1, G2, d, n
 
 
-SHAFT = (-27.0, 60.0)       # la hampe, depuis la main proche (le talon, la base de la lame)
+SHAFT = (-27.0, 54.0)       # la hampe, depuis la main proche (le talon, la base de la lame)
 
 
 def wpt(G1, d, n, u, v):
@@ -322,7 +322,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('mane', MG['mass'], MANE, grad=MG['grad'], cel=0, rim=0, cast=0, details=MG['det'])
 
     # ---- la corne du fond (derrière la tête) ----
-    hF, cF, wF = horn(HORN_F, 4.6, 0.5)
+    hF, cF, wF = horn(HORN_F, 5.6, 0.7)
     fig.part('hornF', hF, HORN, grad=(48, -4, 26, 16, [(0, HORN.light), (0.5, HORN.base), (1, HORN.shadow)]), cel=1.0, rim=0.6, cast=0)
 
     # ---- la jambe du fond (en avant) : cuisse, genou plié au-dessus du pied, tibia, grand pied griffu ----
@@ -362,12 +362,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.part('neck', neck, SCALE, cel=1.4, rim=0.5, cast=0, details=ndet)
 
     # ---- le buste (écailles), puis le plastron laqué par-dessus ----
-    torso = sm([(33.4, 50.6), (37.0, 45.6), (43.0, 43.0), (52.0, 42.6), (60.0, 43.2), (65.6, 45.6), (68.6, 51.0), (69.2, 58.0),
-                (67.4, 65.0), (66.4, 71.0), (66.6, 76.0), (50.0, 77.6), (35.4, 76.4), (35.0, 70.0), (34.2, 63.0), (32.6, 56.0)], t=0.85)
+    torso = sm([(34.4, 50.6), (37.6, 45.6), (43.0, 43.0), (52.0, 42.6), (60.0, 43.2), (65.6, 45.6), (68.6, 51.0), (69.0, 58.0),
+                (66.8, 65.0), (64.8, 71.0), (65.4, 76.0), (50.0, 77.6), (36.6, 76.4), (36.6, 70.0), (35.4, 63.0), (33.8, 56.0)], t=0.85)
     fig.part('torso', torso, SCALE, cel=1.5, rim=0.7, cast=0.8, cast_on=['armF', 'brF', 'neck'])
     VL, VB, VR = (43.4, 44.6), (51.6, 55.6), (58.8, 43.6)
-    cuir = sm([(34.4, 57.0), (36.0, 51.4), (38.6, 47.6), VL, VB, VR, (63.6, 45.2), (66.8, 49.6), (68.2, 55.6), (68.4, 61.0),
-               (67.0, 67.0), (66.2, 73.4), (50.0, 75.4), (35.8, 74.6), (35.2, 68.0), (34.6, 62.0)], sharp=(3, 4, 5), t=0.85)
+    cuir = sm([(35.4, 57.0), (36.8, 51.4), (39.2, 47.6), VL, VB, VR, (63.6, 45.2), (66.8, 49.6), (68.0, 55.6), (67.8, 61.0),
+               (66.0, 67.0), (64.6, 73.4), (50.0, 75.4), (37.0, 74.6), (36.6, 68.0), (35.8, 62.0)], sharp=(3, 4, 5), t=0.85)
     BRZ = ('lin', 66, 44, 40, 74, [(0, BRONZE.light), (0.5, BRONZE.base), (1, BRONZE.shadow)])
     cdet = []
     # le plastron : une grande plaque laquée et lisse (reflet doux), bordée de bronze le long de l'encolure et des emmanchures
@@ -380,8 +380,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              (ribbon([add(VL, (0.6, 0.0)), lerp(VL, VB, 0.5), add(VB, (0.0, -1.0))], [0.1, 0.6, 0.1]), BRONZE.hi, 0.7),
              (band_along([(66.4, 49.6), (67.9, 55.6), (68.1, 61.0)], 1.6), BRONZE.shadow, 0.8)]
     # l'emblème du plastron : une flamme qui s'enroule (signe inventé), en bronze, sous l'encolure
-    emb = sm([(51.2, 62.4), (48.8, 60.6), (48.6, 58.0), (50.0, 56.6), (50.0, 58.8), (51.8, 59.6), (52.4, 57.4), (54.2, 57.8),
-              (54.8, 60.4), (53.6, 62.2)], sharp=(3,), t=0.85)
+    emb = sm([(51.6, 62.6), (48.8, 61.4), (47.8, 58.8), (49.0, 56.2), (49.6, 58.2), (50.8, 58.6), (51.0, 55.4), (52.6, 53.2),
+              (52.8, 56.6), (54.2, 57.8), (55.0, 56.0), (55.8, 58.4), (55.2, 61.2), (53.4, 62.6)], sharp=(3, 7, 10), t=0.85)
     cdet += [(emb.move(-0.3, 0.4), LAC.deep, 0.7), (emb, ('lin', 54, 57, 49, 62, [(0, BRONZE.hi), (0.5, BRONZE.light), (1, BRONZE.base)]), 1)]
     # le ventre : deux rangs de lamelles laquées (bas des plaques arrondi, un rang posé sur l'autre), le bord en bronze
     for r_, (y0, y1) in enumerate(((63.2, 68.6), (68.0, 73.8))):
@@ -431,7 +431,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cast=1.0, cast_on=['cuirass', 'torso', 'skF', 'skC', 'skN'],
              details=[(ribbon([mapp(PEL, p) for p in [(36, 72.6), (44, 73.4), (52, 73.6), (60, 73.0)]], [0.1, 0.8, 0.8, 0.1]), SASH.shadow, 0.6),
                       (ribbon([mapp(PEL, p) for p in [(46, 71.6), (56, 71.6), (66.6, 70.4)]], [0.1, 0.7, 0.1]), SASH.hi, 0.6)])
-    K = mapp(PEL, (57.4, 74.0))                   # le nœud
+    K = mapp(PEL, (43.6, 74.2))                   # le nœud (sur la hanche proche)
     ends = []
     for j, (dx, L_, wd, ph0) in enumerate(((-1.2, 15.0, 3.6, 0.0), (1.4, 12.0, 3.2, 1.3))):
         s_ = math.sin(ph * 1.1 - ph0) * 0.8 + sw
@@ -453,7 +453,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
 
     # ---- le bras proche : l'épaule nue (écailles), le coude en arrière, l'avant-bras et son brassard, la main sur la hampe ----
     wrN = add(G1, unit(G1, shN), 2.4)
-    elN = ik(shN, wrN, LA1, LA2, bend=-1)
+    elN = ik(shN, wrN, LA1, LA2, bend=1)
     armN = limb(catmull([shN, lerp(shN, elN, 0.6), elN, lerp(elN, wrN, 0.5), wrN], 4), [8.6, 8.2, 7.6, 7.0, 6.6, 6.4, 6.2, 6.0, 5.8, 5.8, 5.6, 5.6, 5.6, 5.6, 5.6, 5.6, 5.6])
     ue = unit(shN, elN)
     fig.part('armN', armN, SCALE, cel=1.4, rim=0.7, cast=1.1, cast_on=['cuirass', 'torso', 'belt', 'knot', 'skN', 'skC'],
@@ -486,20 +486,20 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     B0 = u1 + 3.0
     BL = lambda u, v: W_(B0 + u, v)              # noqa: E731
     flame = P['flame']
-    edge_pts = [(0, 2.2), (5.0, 4.8), (11.0, 6.2), (17.0, 5.6), (21.6, 2.8), (25.0, -1.6), (26.4, -4.2)]
-    spine = [(26.4, -4.2), (22.4, -3.2), (18.6, -2.8), (16.8, -4.6), (15.0, -3.4), (8.0, -2.4), (0, -2.0)]
+    edge_pts = EDGE
+    spine = [(31.0, -5.0), (26.4, -3.6), (22.0, -3.2), (19.8, -5.4), (17.6, -3.8), (9.4, -2.6), (0, -2.2)]
     blade = sm([BL(*p) for p in edge_pts + spine[1:]], sharp=(0, 6, 9, 13), t=0.85)
-    bdet = [(sm([BL(*p) for p in [(1.0, -1.0), (8.0, -1.4), (15.6, -2.2), (20.6, -1.6), (23.6, -2.2), (20.0, 0.6), (13.0, 1.4), (6.0, 0.8), (1.0, 0.4)]]),
+    bdet = [(sm([BL(*p) for p in [(1.0, -1.2), (9.4, -1.6), (18.4, -2.4), (24.4, -1.8), (27.8, -2.6), (23.6, 0.8), (15.4, 1.6), (7.0, 1.0), (1.0, 0.4)]]),
              STEEL.light, 0.55),
-            (ribbon([BL(*p) for p in [(2.0, -1.2), (10.0, -1.4), (17.0, -1.4), (22.0, -2.2)]], [0.1, 0.6, 0.5, 0.1]), '#ffffff', 0.7)]
+            (ribbon([BL(*p) for p in [(2.0, -1.4), (11.6, -1.6), (20.0, -1.6), (26.0, -2.6)]], [0.1, 0.6, 0.5, 0.1]), '#ffffff', 0.7)]
     # le tranchant rougeoie : une bande de braise le long du bord (du rouge au jaune vers le fil)
-    e_in = [(1.2, 1.2), (5.4, 3.2), (11.2, 4.4), (16.8, 3.8), (20.8, 1.6), (24.0, -2.0)]
+    e_in = [(1.2, 1.3), (6.4, 3.8), (13.2, 5.3), (19.8, 4.6), (24.6, 1.9), (28.2, -2.4)]
     hot = sm([BL(*p) for p in edge_pts[:6]] + [BL(*p) for p in e_in[::-1]], t=0.85)
-    hot2 = sm([BL(*p) for p in edge_pts[1:5]] + [BL(*p) for p in [(17.0, 4.8), (11.0, 5.4), (5.2, 4.2)]], t=0.85)
+    hot2 = sm([BL(*p) for p in edge_pts[1:5]] + [BL(*p) for p in [(20.0, 5.8), (13.0, 6.4), (6.2, 4.9)]], t=0.85)
     bdet += [(hot, ('lin',) + BL(10, 0.5) + BL(11, 6.4) + ([(0, LAVA[3], 0.0), (0.4, LAVA[3], 0.7 * min(1, flame)), (1, LAVA[4], 0.9 * min(1, flame))],), 1),
              (hot2, ('lin',) + BL(10, 4.0) + BL(11, 6.4) + ([(0, LAVA[2], 0.9 * min(1, flame)), (1, LAVA[1], min(1, flame))],), 1)]
     # le dos de la lame : un filet de bronze et l'encoche
-    bdet.append((band_along([BL(*p) for p in [(0.4, -1.7), (8.0, -2.1), (14.6, -3.0)]], 0.9), BRONZE.base, 0.9))
+    bdet.append((band_along([BL(*p) for p in [(0.4, -1.9), (9.4, -2.3), (17.2, -3.4)]], 0.9), BRONZE.base, 0.9))
     fig.part('blade', blade, STEEL, grad=BL(20, -4) + BL(4, 5) + ([(0, STEEL.hi), (0.45, STEEL.light), (1, STEEL.shadow)],),
              cel=0.9, rim=0.6, cast=1.0, cast_on=['shaft'], details=bdet)
     # le collet de bronze (une gueule de dragon stylisée : un anneau à crête, signe inventé)
@@ -517,7 +517,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # les flammes qui lèchent la lame : quelques langues de feu inégales qui partent du tranchant et se couchent vers
     # la pointe (comme si la lame fendait l'air) ; elles ondulent (ph)
     if flame > 0.05:
-        for j, (u_, h_, w_, ph0) in enumerate(((4.0, 6.4, 3.2, 0.0), (10.4, 8.6, 3.8, 1.7), (16.6, 7.0, 3.4, 3.1), (22.0, 5.2, 2.6, 4.4))):
+        for j, (u_, h_, w_, ph0) in enumerate(((4.6, 7.0, 3.4, 0.0), (12.0, 9.6, 4.2, 1.7), (19.4, 8.0, 3.8, 3.1), (25.8, 5.8, 2.8, 4.4))):
             fl = flame * (0.85 + 0.15 * math.sin(ph * 2.3 - ph0))
             base = BL(u_, edge_y(u_) - 0.3)
             # la langue s'élève vers le haut du dessin et se couche vers la pointe de la lame
@@ -585,7 +585,7 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=1.2, rim=0.7, cast=1.3, cast_on=['neck', 'cuirass', 'beard'], details=hd)
 
     # ---- la corne proche (côté spectateur) : devant la tête, sa base enfouie dans la racine de la crinière ----
-    hN, cN, wN = horn(HORN_N, 5.0, 0.5)
+    hN, cN, wN = horn(HORN_N, 6.2, 0.7)
     hdet = [(ribbon([add(p, (0.5, -0.9)) for p in resample(cN[2:14], 6)], [0.1, 0.6, 0.7, 0.6, 0.5, 0.3, 0.1]), HORN.hi, 0.55)]
     fig.part('hornN', hN, HORN, grad=(56, 0, 30, 18, [(0, HORN.light), (0.5, HORN.base), (1, HORN.shadow)]), cel=1.1, rim=0.7,
              cast=0.9, cast_on=['mane', 'head', 'hornF'], details=hdet)
@@ -597,8 +597,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- les moustaches de dragon (couleur de braise) : elles partent du bout du museau et filent en arrière ----
     bb = P['barb']
     b0 = (77.0, 28.4)
-    bpts = bez(b0, (80.4 + 0.3 * bw, 31.4), (78.6 - 0.8 * bb + 0.6 * bw, 37.6), (74.0 - 1.2 * bb + 0.9 * bw, 40.6 + 0.2 * bb), 10)
-    bpts = bpts + bez(bpts[-1], (70.4 - 1.4 * bb + 1.0 * bw, 42.8), (66.4 - 1.6 * bb + 1.4 * bw, 42.4), (63.6 - 1.8 * bb + 1.8 * bw, 40.4 - 0.4 * bb), 8)[1:]
+    bpts = bez(b0, (80.6 + 0.3 * bw, 29.6), (81.6 - 0.5 * bb + 0.4 * bw, 33.0), (80.0 - 0.8 * bb + 0.6 * bw, 35.6 + 0.2 * bb), 10)
+    bpts = bpts + bez(bpts[-1], (78.8 - 1.0 * bb + 0.8 * bw, 37.2), (80.2 - 1.2 * bb + 1.0 * bw, 38.6), (82.0 - 1.4 * bb + 1.4 * bw, 37.6 - 0.4 * bb), 6)[1:]
     whisk = limb(bpts, [1.9 - 1.4 * (i / (len(bpts) - 1)) for i in range(len(bpts))])
     fig.part('barbel', whisk, MANE, grad=(80, 28, 62, 42, [(0, MANE.light), (0.5, MANE.base), (1, MANE.shadow)]), cel=0.45, rim=0.4, cast=0.7)
 
@@ -610,14 +610,14 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['torso'], U)
     fig.ctx = dict(U=U, UC=UC, HEAD=HEAD, P=P, G1=G1, G2=G2, d=d, n=n, blade=BL, edge_y=edge_y, B0=B0,
                    head=mapp(HEAD, (55, 24)), mouth=mapp(HEAD, (76, 31)), nostril=mapp(HEAD, (75, 24)),
-                   tip=BL(26.4, -4.2), chest=mapp(TOR, (54, 60)), kneeF=kneeF, kneeN=kneeN)
+                   tip=BL(31.0, -5.0), chest=mapp(TOR, (54, 60)), kneeF=kneeF, kneeN=kneeN)
     if fx:
         for f_ in fx:
             f_(fig, fig.ctx)
     return fig
 
 
-EDGE = [(0, 2.2), (5.0, 4.8), (11.0, 6.2), (17.0, 5.6), (21.6, 2.8), (25.0, -1.6), (26.4, -4.2)]
+EDGE = [(0, 2.4), (6.0, 5.6), (13.0, 7.4), (20.0, 6.8), (25.4, 3.4), (29.4, -1.8), (31.0, -5.0)]
 
 
 def edge_y(u):
