@@ -718,7 +718,6 @@ def fx_special(tl):
             q = ease(prog(tl, SP_FLY[0], SP_FLY[1]))
             i1 = max(5, int(round(q * n)))
             i0 = max(0, i1 - 45)
-            back.append(trail(fig, path[max(0, i0 - 25):i0 + 1], 0.4, 1.6, 0.0, 0, op=0.7 * (1 - prog(tl, SP_FLY[1] - 40, SP_COIL[0] + 60))))
             front.append(serpent(fig, path[i0:i1 + 1], w_head=4.0, op=1 - prog(tl, SP_COIL[0], SP_COIL[0] + 60)))
         # 4) il s'enroule autour de l'ennemi en spirale ; des éclats de roche jaillissent du sol ; la pierre monte dans
         # ses anneaux et l'enferme ; le serpent devient pierre lui aussi

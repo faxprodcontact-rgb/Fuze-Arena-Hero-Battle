@@ -35,7 +35,7 @@ ROOT = C.ROOT
 OUT = os.path.join(ROOT, 'refonte-graphique', 'pixel', 'sortie', 'ui', 'vecto', 'crabe-geant')
 TMP = os.environ.get('CRABE_TMP') or tempfile.mkdtemp(prefix='crabe-anim-')
 FPS = 24
-VIEW = (-6.0, -20.0, 276.0, 155.25)     # la scène de la vidéo, en pixels du dessin (16/9), même échelle que les héros
+VIEW = (-10.0, -20.0, 276.0, 155.25)     # la scène de la vidéo, en pixels du dessin (16/9), même échelle que les héros
 VW, VH = 1280, 720
 GR = C.GRD
 HIT = (176.0, 93.0)                      # l'ennemi (le milieu de son corps), où la pince frappe
@@ -110,7 +110,7 @@ ATTACK = flat([
     (535, dict(spx=6.0, spy=0.4, rot=0.5, ca=18, cw=2, co=1.0, sa=-4, sAx=9.0, sAl=3.4, ex=-1.2)),
     (600, dict(spx=20.0, spy=1.8, rot=3.0, ca=64, cw=12, co=0.0, sa=6, so=0.6, sAx=20.0, sBx=5.0, sBl=2.6, er=0.8,
                ex=0.6)),
-    (700, dict(spx=20.6, spy=2.1, rot=3.3, ca=66, cw=13, sBx=20.0, er=0.6, ex=0.0)),
+    (700, dict(spx=20.6, spy=2.1, rot=3.3, ca=62, cw=13, sBx=20.0, er=0.6, ex=0.0)),
     (800, dict(spx=20.0, spy=1.6, rot=2.6, ca=63, cw=12, co=0.1, er=0.3)),
     (900, dict(spx=15.0, spy=0.6, rot=0.0, ca=22, cw=0, co=0.7, sa=0, so=1.0, sBx=12.0, sBl=3.0, er=0.1, ex=-0.6)),
     (1000, dict(spx=9.0, spy=0.4, ca=4, co=0.95, sAx=12.0, sAl=3.0, sBx=8.0, er=0.0, ex=-0.3)),
@@ -134,9 +134,9 @@ SPECIAL = flat([
     (700, dict(spy=-4.8, rot=-4.5, ca=-30, cw=-14, co=1.8, sa=-38, so=1.6)),
     (760, dict(spy=-4.8, rot=-4.5, ca=-32, cw=-14, co=1.8)),
     (795, dict(spx=4.0, spy=-1.0, rot=0.0, ca=30, cw=4, co=1.0, sAx=4.0, sAl=2.6)),
-    (830, dict(spx=8.0, spy=2.0, rot=5.0, ca=81, cw=12, co=0.15, sa=-8, sw=0, so=0.8, sAx=8.0, sBx=3.0, sBl=2.2)),
-    (1010, dict(spx=8.4, spy=2.2, rot=5.2, ca=82, co=0.1, sa=-4, sBx=8.0)),
-    (1290, dict(spx=8.0, spy=1.6, rot=4.6, ca=80, cw=12, co=0.2)),
+    (830, dict(spx=8.0, spy=2.0, rot=2.0, ca=60, cw=22, co=0.15, sa=-8, sw=0, so=0.8, sAx=8.0, sBx=3.0, sBl=2.2)),
+    (1010, dict(spx=8.4, spy=2.2, rot=2.2, ca=59, co=0.1, sa=-4, sBx=8.0)),
+    (1290, dict(spx=8.0, spy=1.6, rot=1.8, ca=58, cw=21, co=0.2)),
     (1490, dict(spx=6.0, spy=0.6, rot=1.5, ca=40, cw=6, co=0.6, sa=0, so=1.0, sBx=4.0, sBl=2.6)),
     (1690, dict(spx=2.0, spy=0.2, rot=0.0, ca=4, cw=0, co=0.95, sAx=2.0, sAl=2.6, sBx=2.0)),
     (1930, dict(spx=0.2, spy=0.6, ca=0, sAx=0.0, sBx=0.0)),
@@ -424,7 +424,7 @@ def fx_special(tl):
             k = 1 - max(0.0, (tl - SP_SLAM) / 80)
             arc_trail(fig, SPECIAL, tl, SP_WIND, SP_SLAM, 4.4 * k, k)
         dt = tl - SP_SLAM
-        imp = (ctx['tip'][0] + 2, GR - 1)
+        imp = (ctx['low'][0] + 1, GR - 1)
         if 0 <= dt < 420:
             k = dt / 420
             fig.fx_front.append(flash(fig, (imp[0], GR - 4), 20 * (0.5 + 0.7 * k), 1 - k))

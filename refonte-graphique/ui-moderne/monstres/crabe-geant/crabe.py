@@ -51,7 +51,7 @@ INK = '#1f1238'
 
 GRD = 116.0        # le sol
 FEET = (64.0, 116.0)
-FRAME = (0.0, 12.0, 131.0, 107.0)     # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
+FRAME = (-8.0, 17.0, 140.0, 103.0)     # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
 
 # ---------- le visage (la face avant de la carapace) : construit avec visage.placer ----------
 # Boîte de la face (le mur avant de la carapace, sans les pinces) ; les fractions de hauteur sont celles d'un crabe :
@@ -82,21 +82,28 @@ SHINGE = (115.6, 88.6)       # l'articulation de son doigt mobile
 
 # les pattes : jointures de la hanche à la pointe (hanche, genou, cheville, pointe), largeur à chaque jointure ;
 # far = lointaine (plus sombre, derrière) ; wt = combien chaque jointure suit le corps (la pointe reste plantée).
-WT = [1.0, 0.9, 0.72, 0.5, 0.2, 0.0]
-# hanche, milieu de la cuisse, genou (le plus haut, pointe vers l'extérieur), haut de la jambe, cheville, pointe
+WT = [1.0, 0.9, 0.7, 0.3, 0.0]
+LOWER = 5.0        # le corps est posé plus bas que sur le pixel art (peu de vide sous la carapace)
+
+
+def _leg(root, knee, ank, tip, w, far):
+    """Une patte de crabe : la hanche sous le flanc, la cuisse qui MONTE vers l'extérieur jusqu'au genou (au niveau du
+    bord de la carapace), la jambe qui redescend en biais, un léger coude, la pointe posée en oblique."""
+    mid = ((root[0] + knee[0]) / 2, (root[1] + knee[1]) / 2 - 1.0)
+    return dict(j=[root, mid, knee, ank, tip], w=w, far=far)
+
+
+# coordonnées FINALES (corps abaissé de LOWER compris) ; les pattes s'écartent en éventail : les arrière vers l'arrière,
+# les avant vers l'avant ; les lointaines (plus sombres) passent derrière, entre les proches
+WN = [7.4, 7.6, 6.2, 4.8, 0.9]
+WF = [5.6, 5.8, 4.9, 3.8, 0.8]
 LEGS = {
-    'L4': dict(j=[(66.0, 88.0), (63.0, 88.6), (60.0, 88.6), (59.6, 96.0), (59.0, 106.0), (58.4, 116.0)],
-               w=[5.4, 5.6, 4.8, 5.0, 3.4, 0.8], far=True),
-    'L6': dict(j=[(84.0, 86.0), (89.0, 85.6), (93.6, 85.6), (95.0, 94.0), (96.0, 105.0), (96.6, 116.0)],
-               w=[5.6, 5.8, 4.9, 5.1, 3.5, 0.8], far=True),
-    'L1': dict(j=[(32.0, 80.0), (20.0, 76.6), (8.6, 73.6), (6.8, 84.0), (5.2, 101.0), (3.8, 116.0)],
-               w=[7.6, 7.8, 6.2, 6.4, 4.3, 0.9], far=False),
-    'L2': dict(j=[(46.0, 84.6), (32.0, 81.0), (18.0, 78.6), (17.8, 89.0), (18.6, 103.0), (19.4, 116.0)],
-               w=[7.6, 7.8, 6.2, 6.4, 4.3, 0.9], far=False),
-    'L3': dict(j=[(58.0, 88.6), (49.4, 86.2), (40.4, 84.0), (40.2, 94.0), (41.2, 105.0), (42.4, 116.0)],
-               w=[7.2, 7.4, 6.0, 6.2, 4.2, 0.9], far=False),
-    'L5': dict(j=[(63.6, 88.4), (71.0, 86.4), (78.8, 84.8), (79.4, 94.6), (79.0, 105.4), (78.2, 116.0)],
-               w=[7.2, 7.4, 6.0, 6.2, 4.2, 0.9], far=False),
+    'L4': _leg((68.0, 91.0), (60.6, 84.6), (56.4, 100.4), (55.6, 116.0), WF, True),
+    'L6': _leg((84.0, 90.0), (97.0, 84.0), (103.4, 100.0), (105.6, 116.0), WF, True),
+    'L1': _leg((32.0, 87.0), (6.4, 71.6), (-1.0, 94.0), (-3.6, 116.0), WN, False),
+    'L2': _leg((45.0, 90.0), (20.4, 78.4), (13.2, 97.6), (11.4, 116.0), WN, False),
+    'L3': _leg((57.0, 92.6), (40.2, 84.4), (34.0, 100.6), (33.0, 116.0), WN, False),
+    'L5': _leg((66.4, 92.8), (80.6, 87.0), (87.4, 101.0), (90.4, 116.0), WN, False),
 }
 FAR_LEGS = ['L4', 'L6']
 NEAR_LEGS = ['L1', 'L2', 'L3', 'L5']
@@ -134,7 +141,8 @@ def quadband(c, u, w, h):
 
 def skeleton(P):
     br = P['breath']
-    BODY = mchain(mT(P['sp'][0], P['sp'][1] - 1.6 * br), mR(P['rot'], *C0))
+    BODY0 = mchain(mT(P['sp'][0], P['sp'][1] - 1.6 * br), mR(P['rot'], *C0))
+    BODY = mchain(mT(0.0, LOWER), BODY0)
     # la grosse pince : suit le corps (avec son propre retard cl), tourne à l'épaule, se plie au poignet
     ARM = mchain(BODY, mT(*P['cl']), mR(P['ca'], *SH))
     CLAW = mchain(ARM, mR(P['cw'], *WR))
@@ -143,7 +151,7 @@ def skeleton(P):
     # les yeux : suivent le corps avec retard, rentrent dans leurs logettes
     er = P['er']
     EYES = mchain(BODY, mT(P['eyes'][0] - 0.6 * er, P['eyes'][1] + 3.4 * er))
-    J = {k: leg_joints(k, P, BODY) for k in LEGS}
+    J = {k: leg_joints(k, P, BODY0) for k in LEGS}
     return BODY, ARM, CLAW, SARM, SCLAW, EYES, J
 
 
@@ -152,7 +160,7 @@ def leg_joints(name, P, BODY):
     dx, lift = ((P['steps'] or {}).get(name) or (0.0, 0.0))
     out = []
     for i, (p, w) in enumerate(zip(L['j'], WT)):
-        planted = (p[0] + dx, p[1] - lift * (1.0 if i == 5 else 0.9))
+        planted = (p[0] + dx, p[1] - lift * (1.0 if i == 4 else 0.9))
         out.append(lerp(planted, mapp(BODY, p), w))
     return out
 
@@ -190,15 +198,15 @@ def leg_part(fig, name, J):
     # l'ombre du dessous de la cuisse (le plat de la patte, côté bas-gauche) : une seule courbe douce
     a, b = J[0], J[1]
     # la pointe bleu des abysses : un dégradé peint dans le bout de la patte (de la cheville à la pointe)
-    ank, tip = J[3], J[5]
+    ank, tip = J[2], J[4]
     u = norm((tip[0] - ank[0], tip[1] - ank[1]))
-    c = lerp(ank, tip, 0.7)
-    blue = ellipse(c[0], c[1] + 2.0, 4.0, 9.6, math.degrees(math.atan2(u[1], u[0])) - 90)
-    k0 = lerp(ank, tip, 0.42)
+    c = lerp(ank, tip, 0.84)
+    blue = ellipse(c[0], c[1] + 2.0, 4.6, 9.0, math.degrees(math.atan2(u[1], u[0])) - 90)
+    k0 = lerp(ank, tip, 0.64)
     det.append((blue, ('lin', k0[0], k0[1], tip[0], tip[1],
                        [(0, ABYSS[1], 0.0), (0.22, ABYSS[1], 0.85 if not far else 0.7), (0.6, ABYSS[2]),
                         (1, ABYSS[3])]), 1))
-    det.append((ribbon([lerp(ank, tip, 0.55), lerp(ank, tip, 0.7), lerp(ank, tip, 0.86)], [0.1, 0.5, 0.1])
+    det.append((ribbon([lerp(ank, tip, 0.7), lerp(ank, tip, 0.82), lerp(ank, tip, 0.93)], [0.1, 0.5, 0.1])
                 .move(0.9, -0.1), ABYSS[0], 0.6 if not far else 0.35))
     # un éclat sur la cuisse (proches seulement)
     if not far:
@@ -403,8 +411,6 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(['dessous'], BODY)
 
     # ---- les pattes proches ----
-    for k in NEAR_LEGS:
-        lines[k] = leg_part(fig, k, J[k])
 
     # ---- le bras de la grosse pince (sort de sous le bord avant), l'anneau de bronze serré dessus ----
     arm = limb([SH, (95.4, 77.2), WR], [8.8, 8.2, 8.8])
@@ -460,7 +466,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
                                              (18.6, 59.2, 3.8, 4.6, -46))):
         barnacle(fig, 'barn%d' % i, (bx, by), h, b, ang, BODY)
 
-    # ---- les algues qui pendent du bord (derrière la face, devant les pattes) ----
+    # ---- les pattes proches : elles partent du flanc, sous le bord, et passent DEVANT le bord épais (genou au niveau
+    # du bord de la carapace)
+    for k in NEAR_LEGS:
+        lines[k] = leg_part(fig, k, J[k])
+
+    # ---- les algues qui pendent du bord (elles tombent devant les cuisses) ----
     alga(fig, 'alg0', (11.6, 58.6), 18.0, P['alg'], 2.7, BODY, 1.0)
     alga(fig, 'alg1', (16.6, 63.4), 9.6, P['alg2'], 2.2, BODY, -0.9)
     alga(fig, 'alg2', (22.2, 65.8), 13.4, P['alg'] * 0.8, 2.4, BODY, 0.8)
@@ -527,7 +538,8 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
              cel=1.8, rim=0.75, cast=1.2, details=cdet2, occl=(SHELL.deep, 0.22, 2.6))
     fig.pose(['pince'], CLAW)
 
-    fig.ctx = dict(P=P, BODY=BODY, ARM=ARM, CLAW=CLAW, SCLAW=SCLAW, J=J, lines=lines,
+    low = max((mapp(CLAW, q) for q in csh.pts()), key=lambda q: q[1])
+    fig.ctx = dict(P=P, BODY=BODY, low=low, ARM=ARM, CLAW=CLAW, SCLAW=SCLAW, J=J, lines=lines,
                    tip=mapp(CLAW, (113.4, 19.0)), fist=mapp(CLAW, (111.0, 46.0)), mouth=mapp(BODY, (MOUTH[0] + 1.0, 71.0)),
                    stip=mapp(SCLAW, (126.0, 92.0)))
     if fx:
