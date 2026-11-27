@@ -108,7 +108,7 @@
 @keyframes hc-sheen { 0%, 50% { transform: translateX(-120%) skewX(-12deg); } 80%, 100% { transform: translateX(330%) skewX(-12deg); } }
 
 /* la gemme en haut du cadre (Légendaire : ambre ; Mythique : rubis), sertie d'or */
-.hcard-legendary::after { content: ''; position: absolute; left: 50%; top: 0.5px; z-index: 4; width: max(9px, 12cqw); aspect-ratio: 1; translate: -50% 0; rotate: 45deg;
+.hcard-legendary::after { content: ''; position: absolute; left: 50%; top: 0; z-index: 4; width: max(9px, 12cqw); aspect-ratio: 1; translate: -50% -38%; rotate: 45deg;
   border-radius: 2px; pointer-events: none;
   background: radial-gradient(60% 60% at 70% 30%, #fffbe8 0 18%, #ffb03a 42%, #c2410c 100%);
   box-shadow: 0 0 0 max(1.4px, 1.8cqw) #ffd54a, 0 0 0 max(2.2px, 2.8cqw) #6b3206, 0 1px 4px #000a; }

@@ -167,7 +167,7 @@ export function HeroCard(p: { hero: Hero; power?: number; onClick?: () => void; 
       onClick={p.onClick}
     >
       {shiny && <i class="hcard-aura" />}
-      <CardFigure id={heroArt(d.id)} alt={d.name} />
+      <span class="hcard-clip"><CardFigure id={heroArt(d.id)} alt={d.name} /></span>
       <i class="hcard-frame" />
       <Art name={d.element} class="hcard-el" />
       <span class="hcard-lv">{p.hero.level}</span>

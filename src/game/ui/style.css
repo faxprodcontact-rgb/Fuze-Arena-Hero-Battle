@@ -361,9 +361,12 @@ p { margin: 6px 0; }
 .el-water { --crest: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23fff' fill-opacity='.2' fill-rule='evenodd' d='M50 6C62 28 82 46 82 65C82 82 68 95 50 95C32 95 18 82 18 65C18 46 38 28 50 6ZM33 62C32 76 41 85 52 86C44 81 38 73 38 62Z'/%3E%3C/svg%3E"); }
 .el-earth { --crest: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath fill='%23fff' fill-opacity='.2' d='M6 84L30 34L43 56L60 16L94 84ZM2 88H98V94H2Z'/%3E%3C/svg%3E"); }
 .hcard { --rar: #8e97a8; --crest: none; --feet: 80%;
-  position: relative; width: 100%; align-self: start; aspect-ratio: 3 / 4; border-radius: 16px; overflow: hidden; isolation: isolate; container-type: inline-size;
+  /* (rien n'y est coupé par la carte : chaque couche se coupe elle-même ; la gemme des Légendaires dépasse du cadre, 27/11) */
+  position: relative; width: 100%; align-self: start; aspect-ratio: 3 / 4; border-radius: 16px; overflow: visible; isolation: isolate; container-type: inline-size;
   border: 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 5px; }
 /* (le mur, la lumière, le cadre et ce qui bouge, rareté par rareté : sections/cartes-heros.css) */
+/* le héros est coupé par le bord de la carte (la carte elle-même ne coupe plus rien : la gemme en dépasse) */
+.hcard-clip { position: absolute; inset: 0; z-index: 1; overflow: hidden; border-radius: inherit; pointer-events: none; }
 /* le héros en pied : 1 pixel du dessin = --u ; ses pieds (--fx, --fy dans sa bande) au milieu, à --feet de la hauteur */
 .hcard-fig { --u: calc(84cqw / 128); position: absolute; z-index: 1; pointer-events: none; overflow: hidden;
   left: calc(50% - var(--fx) * var(--u)); top: calc(var(--feet) - var(--fy) * var(--u)); width: calc(var(--w) * var(--u)); aspect-ratio: var(--w) / var(--h);
