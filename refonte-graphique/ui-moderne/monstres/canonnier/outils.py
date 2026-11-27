@@ -431,3 +431,44 @@ def rim_band(shape, d0, d1=0.0):
 def morph(a, b, t):
     """Les points entre deux listes de points de même longueur."""
     return [lerp(p, q, t) for p, q in zip(a, b)]
+
+
+# ---------- en plus pour le Canonnier : un membre très plié fait de deux fuseaux réunis (shapely) ----------
+
+def spindle(A, B, wa, wb, bulge=(0.0, 0.0), n=16, caps=(True, True)):
+    """Un fuseau de A à B : demi-épaisseurs (dos, devant) wa en A et wb en B, renflement bulge (dos, devant) au milieu,
+    bouts arrondis. Renvoie la liste des points (polygone). « dos » = à gauche quand on va de A vers B en descendant."""
+    dx, dy = B[0] - A[0], B[1] - A[1]
+    L = math.hypot(dx, dy) or 1
+    ux, uy = dx / L, dy / L
+    nx, ny = -uy, ux
+    back, front = [], []
+    for i in range(n + 1):
+        t = i / n
+        c = (A[0] + dx * t, A[1] + dy * t)
+        s = math.sin(math.pi * t)
+        wb_ = wa[0] + (wb[0] - wa[0]) * t + bulge[0] * s
+        wf_ = wa[1] + (wb[1] - wa[1]) * t + bulge[1] * s
+        back.append((c[0] + nx * wb_, c[1] + ny * wb_))
+        front.append((c[0] - nx * wf_, c[1] - ny * wf_))
+    def cap(C, p, q, r, through):
+        a0 = math.atan2(p[1] - C[1], p[0] - C[0])
+        a1 = math.atan2(q[1] - C[1], q[0] - C[0])
+        return _cap(C, a0, a1, r, 8, through)
+    endc = cap(B, back[-1], front[-1], (wb[0] + wb[1]) / 2, math.atan2(uy, ux)) if caps[1] else []
+    startc = cap(A, front[0], back[0], (wa[0] + wa[1]) / 2, math.atan2(-uy, -ux)) if caps[0] else []
+    return back + endc + front[::-1] + startc
+
+
+def union_shape(polys, close=1.0, n=80, t=0.9):
+    """Plusieurs polygones réunis en UNE forme lisse (shapely) : le creux entre deux fuseaux est arrondi (fermeture
+    de rayon `close`), puis le bord est rééchantillonné en n points et passé en courbe souple (sm)."""
+    from shapely.geometry import Polygon
+    from shapely.ops import unary_union
+    g = unary_union([Polygon(p).buffer(0) for p in polys])
+    if close > 0:
+        g = g.buffer(close, join_style=1).buffer(-close, join_style=1)
+    if g.geom_type != 'Polygon':
+        g = max(g.geoms, key=lambda q: q.area)
+    pts = list(g.exterior.coords)
+    return sm(resample(pts, n)[:-1], t=t)

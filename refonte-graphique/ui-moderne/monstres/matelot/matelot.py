@@ -56,9 +56,10 @@ EYE_INK = '#1c0c1c'
 
 GRD = 116          # le sol
 FEET = (64, 116)   # le point « pieds » du pixel art (sol: 64 116)
-FRAME = (34, 26, 96, 94)       # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
+FRAME = (39, 28, 83, 91)       # la boîte de l'image (x0, y0, largeur, hauteur) en pixels du dessin
 H0 = (73.0, 62.6)  # le pivot de la tête (agrandie ×1,1 : proportions stylisées, comme Kael)
 PELVIS = (70.5, 88.0)
+LEAN0 = 3.0        # le buste penche un peu vers l'ennemi (escrimeur prêt à bondir)
 
 # ---------- le squelette (animation) ----------
 # Une pose = ces réglages ; REST est la pose du dessin. Pixels du dessin, degrés (y vers le bas).
@@ -67,21 +68,22 @@ PELVIS = (70.5, 88.0)
 #   blink : œil fermé ; sq : il plisse les yeux ; grin : le sourire en coin s'élargit ;
 #   tx / lift : tout le corps avance / décolle (il fond sur l'ennemi) ; fn / ff : les pieds (proche / lointain) se
 #   replient sous lui en l'air (décalage) ; fist : le poing au sabre (décalage) ; sa : l'angle de la lame (−50° au
-#   repos, 0 = à plat vers la droite) ; na : le bras au couteau se balance (degrés).
-SA0 = -50.0
-F0 = (97.0, 68.4)          # le milieu du poing au sabre (au repos)
+#   repos, 0 = à plat vers la droite) ; na : le bras au couteau se balance (degrés) ; behind : le sabre armé passe
+#   derrière la tête (bras, poing et lame peints avant tout le reste).
+SA0 = -58.0
+F0 = (101.0, 69.4)         # le milieu de la poignée dans le poing au sabre (au repos)
 S0 = (58.0, 68.6)          # l'épaule proche
 SF0 = (81.2, 67.6)         # l'épaule lointaine
 LU, LF = 9.6, 9.4          # bras proche : bras, avant-bras
 LUF, LFF = 10.0, 9.8       # bras lointain
-W0 = (52.2, 85.6)          # le poignet proche (au repos)
+W0 = (50.4, 85.2)          # le poignet proche (au repos)
 HN0, HF0 = (64.2, 89.6), (76.6, 89.6)   # les hanches (proche, lointaine)
-AN0, AF0 = (48.6, 110.6), (86.4, 110.6)  # les chevilles (proche, lointaine)
-LTN, LSN = 14.2, 12.8      # jambe proche : cuisse, tibia
-LTF, LSF = 13.4, 11.4      # jambe lointaine
+AN0, AF0 = (45.4, 110.6), (86.4, 110.6)  # les chevilles (proche, lointaine)
+LTN, LSN = 14.8, 13.8      # jambe proche : cuisse, tibia (tendue loin en arrière)
+LTF, LSF = 14.0, 11.6      # jambe lointaine
 
 REST = dict(breath=0.0, crouch=0.0, lean=0.0, head=(0.0, 0.0), tilt=0.0, pl=0.0, blink=0.0, sq=0.0, grin=0.0,
-            tx=0.0, lift=0.0, fn=(0.0, 0.0), ff=(0.0, 0.0), fist=(0.0, 0.0), sa=SA0, na=0.0)
+            tx=0.0, lift=0.0, fn=(0.0, 0.0), ff=(0.0, 0.0), fist=(0.0, 0.0), sa=SA0, na=0.0, behind=0.0)
 
 
 def saber_frame(F, a):
@@ -111,24 +113,33 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig = FigN(*frame, ow=ow)
     br = P['breath']
     ROOTM = mT(P['tx'], -P['lift'])
-    U = mchain(ROOTM, mT(0, P['crouch']), mR(P['lean'], *PELVIS))           # le haut du corps (depuis le bassin)
+    U = mchain(ROOTM, mT(0, P['crouch']), mR(LEAN0 + P['lean'], *PELVIS))   # le haut du corps (depuis le bassin)
     UC = mchain(U, mT(0, -0.45 * br))                                       # ce qui monte avec le souffle
     TOR = mchain(U, mS(1, 1 + 0.014 * br, 70, 86))
-    HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'], 72.5, 63.0), mS(1.1, 1.1, *H0))
+    HEAD = mchain(UC, mT(*P['head']), mR(P['tilt'] - 0.7 * LEAN0, 72.5, 63.0), mS(1.1, 1.1, *H0))   # la tête reste presque droite
 
-    # ---- derrière tout : les pans du bandana, les cheveux de la nuque ----
+    # ---- le bras lointain et son sabre : calculés ici (le poing suit le sabre, le bras suit le poing) ----
+    SF = mapp(UC, SF0)
+    Fs = mapp(ROOTM, add(F0, P['fist']))
+    GM = mchain(mT(Fs[0] - F0[0], Fs[1] - F0[1]), mR(P['sa'] - SA0, *F0))  # la pose du sabre et de son poing
+    WF = mapp(GM, saber_frame(F0, SA0)(-4.3, -3.3))                         # le poignet (côté dos de la main)
+    EF = ik(SF, WF, LUF, LFF, 1)
+    behind = P['behind'] > 0.5
+    if behind:
+        # le sabre armé au-dessus de l'épaule : le bras, le poing et la lame passent derrière la tête et le buste
+        arm(fig, 'f', SF, EF, WF)
+        sab = saber(fig, P)
+        fig.pose(sab, GM)
+
+    # ---- derrière : les pans du bandana, les cheveux de la nuque ----
     tails = bandana_tails(fig, P)
     fig.pose(tails, HEAD)
     hb = hair_back(fig, P)
     fig.pose(hb, HEAD)
 
     # ---- le bras lointain (derrière le buste ; le poing et le sabre viendront tout devant) ----
-    SF = mapp(UC, SF0)
-    Fs = mapp(ROOTM, add(F0, P['fist']))
-    GM = mchain(mT(Fs[0] - F0[0], Fs[1] - F0[1]), mR(P['sa'] - SA0, *F0))  # la pose du sabre et de son poing
-    WF = mapp(GM, saber_frame(F0, SA0)(-5.6, 1.5))                          # le poignet, au talon de la main
-    EF = ik(SF, WF, LUF, LFF, 1)
-    arm(fig, 'f', SF, EF, WF)
+    if not behind:
+        arm(fig, 'f', SF, EF, WF)
 
     # ---- les jambes (la lointaine, fléchie en avant, puis la proche, tendue en arrière) ----
     HN, HF = mapp(U, HN0), mapp(U, HF0)
@@ -145,11 +156,12 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     # ---- le bras proche (sur le côté, devant la jambe) ----
     S = mapp(UC, S0)
     W = add(S, rot(sub(W0, S0), P['na']))
-    E = ik(S, W, LU, LF, -1)
+    E = ik(S, W, LU, LF, 1)
     arm(fig, 'n', S, E, W)
 
     # ---- le buste : chemise (et ses moignons de manches en lambeaux), gilet, ceinture, chiffon rouge ----
-    shirt(fig, P, S, E, SF, EF)
+    TI = minv(TOR)                       # les moignons de manche se calculent dans le repère du buste (posé ensuite)
+    shirt(fig, P, mapp(TI, S), mapp(TI, E), mapp(TI, SF), mapp(TI, EF))
     fig.pose(['shirt'], TOR)
     vest(fig, P)
     fig.pose(['vestN', 'vestF'], TOR)
@@ -171,17 +183,25 @@ def build(ow=0.95, pose=None, fx=None, frame=FRAME):
     fig.pose(bn, HEAD)
 
     # ---- le sabre et le poing lointain, tout devant ----
-    sab = saber(fig, P)
-    fig.pose(sab, GM)
+    if not behind:
+        sab = saber(fig, P)
+        fig.pose(sab, GM)
 
     L = saber_frame(Fs, P['sa'])
-    fig.ctx = dict(P=P, U=U, UC=UC, HEAD=HEAD, GM=GM, L=L, tip=L(36.0, -1.4), guard=L(4.2, 0.0), fist=Fs,
+    fig.ctx = dict(P=P, U=U, UC=UC, HEAD=HEAD, GM=GM, L=L, tip=L(33.6, -4.2), guard=L(4.2, 0.0), fist=Fs,
                    head=mapp(HEAD, (72, 46)), mouth=mapp(HEAD, (74.4, 58.0)), chest=mapp(TOR, (70, 74)),
                    knife=mapp(ROOTM, (0, 0)), feet=(mapp(ROOTM, AN0), mapp(ROOTM, AF0)), AN=AN, AF=AF)
     if fx:
         for f_ in fx:
             f_(fig, fig.ctx)
     return fig
+
+
+def minv(M):
+    """L'inverse d'une matrice SVG (a b c d e f)."""
+    a, b, c, d, e, f_ = M
+    det = a * d - b * c
+    return (d / det, -b / det, -c / det, a / det, (c * f_ - d * e) / det, (b * e - a * f_) / det)
 
 
 def xf_pt(o, a, p):
@@ -221,14 +241,14 @@ def _pp(shape):
 
 
 def foot_shape(A, far, P):
-    """Un pied nu posé à plat (le talon derrière la cheville, les orteils vers l'ennemi) ; d'un seul tenant avec la
-    cheville. A = la cheville."""
+    """Un pied nu posé à plat (le talon rond derrière la cheville, la cambrure, les orteils vers l'ennemi) ; il se
+    soude au tibia par la cheville. A = la cheville."""
     x, y = A
     s = 0.94 if far else 1.0
-    pts = [(x - 2.0 * s, y - 2.2), (x + 1.8 * s, y - 2.0), (x + 3.6 * s, y + 1.4), (x + 6.6 * s, y + 2.8), (x + 9.0 * s, y + 3.6),
-           (x + 10.2 * s, y + 4.6), (x + 10.0 * s, y + 5.5), (x + 3.0 * s, y + 5.6), (x - 3.0 * s, y + 5.6), (x - 4.4 * s, y + 4.6),
-           (x - 4.2 * s, y + 2.4), (x - 3.0 * s, y + 0.4)]
-    return sm(pts, sharp=(6, 8), t=0.92)
+    pts = [(x - 1.5 * s, y - 1.8), (x + 1.4 * s, y - 1.6), (x + 1.9 * s, y + 0.2), (x + 4.8 * s, y + 2.0), (x + 8.2 * s, y + 3.1),
+           (x + 9.8 * s, y + 3.8), (x + 10.3 * s, y + 4.8), (x + 9.4 * s, y + 5.45), (x + 2.0 * s, y + 5.5), (x - 2.1 * s, y + 5.4),
+           (x - 2.8 * s, y + 3.9), (x - 2.3 * s, y + 1.4)]
+    return sm(pts, sharp=(), t=0.92)
 
 
 def leg(fig, pre, H, K, A, P, far):
@@ -237,7 +257,7 @@ def leg(fig, pre, H, K, A, P, far):
     dS = norm(sub(A, K))
     # le tibia et le pied : une seule forme (de dans le pantalon jusqu'aux orteils)
     top = add(K, dT, -2.6)
-    shin = limb([top, K, lerp(K, A, 0.5), A], [4.6, 4.4, 3.9, 3.4] if not far else [4.3, 4.1, 3.7, 3.2])
+    shin = limb([top, K, lerp(K, A, 0.45), A], [4.5, 4.3, 3.8, 3.0] if not far else [4.2, 4.0, 3.6, 2.9])
     foot = foot_shape(A, far, P)
     sh = fused([shin, foot], smooth=0.5)
     x, y = A
@@ -245,9 +265,9 @@ def leg(fig, pre, H, K, A, P, far):
     det = [(ribbon([lerp(K, A, 0.1), lerp(K, A, 0.55), add(A, dS, -1.0)], [0.2, 0.8, 0.2]).move(1.0, -0.2), SKIN.light, 0.5),
            (ribbon([lerp(K, A, 0.1), lerp(K, A, 0.6), A], [0.2, 0.9, 0.2]).move(-1.2, 0.3), SKIN.shadow, 0.35),
            # le dessus du pied éclairé, la cheville (une bosse douce), la séparation du gros orteil (un seul trait court)
-           (ellipse(x + 4.8 * s, y + 2.4, 2.6 * s, 0.8, 22), SKIN.hi, 0.35),
-           (ellipse(x + 0.6 * s, y + 0.4, 0.9, 0.7), SKIN.shadow, 0.35),
-           (ribbon([(x + 7.4 * s, y + 4.0), (x + 8.0 * s, y + 4.8), (x + 8.2 * s, y + 5.4)], [0.1, 0.35, 0.1]), SKIN.deep, 0.5),
+           (ellipse(x + 5.4 * s, y + 2.6, 2.6 * s, 0.6, 20), SKIN.hi, 0.35),
+           (ellipse(x - 0.2 * s, y + 0.6, 0.7, 0.55), SKIN.shadow, 0.22),
+           (ribbon([(x + 7.8 * s, y + 3.6), (x + 8.3 * s, y + 4.6), (x + 8.3 * s, y + 5.3)], [0.1, 0.32, 0.1]), SKIN.deep, 0.45),
            # la plante : un liseré sombre au ras du sol
            (sm([(x - 6, y + 4.9), (x + 12, y + 4.9), (x + 12, y + 7), (x - 6, y + 7)]), SKIN.deep, 0.45)]
     fig.part(pre + 'shin', sh, SKIN, grad=(x + 8, K[1], x - 4, y + 5, [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
@@ -271,10 +291,13 @@ def leg(fig, pre, H, K, A, P, far):
             (ribbon([add(hem, nS, -3.4), add(add(hem, dS, 0.8), nS, 0), add(hem, nS, 3.4)], [0.2, 1.0, 0.2]), PANTS.shadow, 0.5)]
     if not far:
         # l'accroc au genou proche : la peau du genou dans une petite déchirure aux bords effilochés
-        c = add(add(K, dT, -0.4), nS, -0.6)
-        tear = sm([add(c, rot(dT, 0), 1.5), add(c, nS, 1.1), add(c, rot(dT, 180), 1.4), add(c, nS, -1.0)], t=0.95)
-        pdet += [(tear.scale(1.25, 1.25, *c), PANTS.deep, 0.8), (tear, ('lin', c[0] + 1, c[1] - 1, c[0] - 1, c[1] + 1, [(0, SKIN.light), (1, SKIN.shadow)]), 1),
-                 (ribbon([add(c, rot(dT, 180), 1.4), add(c, nS, -0.9), add(c, rot(dT, 0), 1.5)], [0.1, 0.35, 0.1]), PANTS.light, 0.5)]
+        c = add(add(K, dT, -0.2), nS, -0.9)
+        tear = sm([add(c, dT, -1.7), add(add(c, dT, -0.6), nS, -0.75), add(add(c, dT, 0.2), nS, -0.55), add(add(c, dT, 1.0), nS, -0.8),
+                   add(c, dT, 1.6), add(add(c, dT, 0.7), nS, 0.7), add(add(c, dT, -0.2), nS, 0.45), add(add(c, dT, -0.9), nS, 0.75)],
+                  sharp=(0, 2, 4, 6), t=0.9)
+        pdet += [(tear.scale(1.3, 1.3, *c), PANTS.deep, 0.7),
+                 (tear, ('lin', c[0] + 1, c[1] - 1.4, c[0] - 1, c[1] + 1.4, [(0, SKIN.light), (0.6, SKIN.base), (1, SKIN.shadow)]), 1),
+                 (ribbon([add(c, dT, -1.6), add(add(c, dT, -0.2), nS, -0.5), add(c, dT, 1.5)], [0.1, 0.3, 0.1]), SKIN.deep, 0.45)]
     fig.part(pre + 'pants', tube, PANTS, grad=(H[0] + 6, H[1], K[0] - 4, hem[1] + 2, [(0, PANTS.light), (0.5, PANTS.base), (1, PANTS.shadow)]),
              cel=1.0, rim=0.5, cast=1.0, cast_on=[pre + 'shin', 'fshin', 'fpants'], details=pdet)
     names.append(pre + 'pants')
@@ -284,11 +307,11 @@ def leg(fig, pre, H, K, A, P, far):
 def seat(fig, P, U, HN, HF):
     """Le haut du pantalon : du dessous de la ceinture à l'entrejambe (il réunit les deux cuisses)."""
     pts = [mapp(U, p) for p in [(59.6, 83.6), (70.5, 84.2), (81.4, 83.6), (82.2, 87.4)]]
-    pts += [add(HF, (3.6, 1.6)), add(HF, (1.4, 5.2)), mapp(U, (71.0, 94.2)), add(HN, (-2.0, 5.0)), add(HN, (-4.6, 1.0)), mapp(U, (59.2, 86.8))]
+    pts += [add(HF, (3.6, 1.6)), add(HF, (0.6, 5.6)), mapp(U, (70.8, 96.2)), add(HN, (-1.4, 5.6)), add(HN, (-4.6, 1.0)), mapp(U, (59.2, 86.8))]
     sh = sm(pts, t=0.9)
     det = [(ribbon([mapp(U, (68.6, 86.0)), mapp(U, (70.2, 89.6)), mapp(U, (71.0, 93.4))], [0.1, 0.7, 0.1]), PANTS.deep, 0.45),
            (ribbon([mapp(U, (76.0, 86.0)), mapp(U, (79.6, 87.6)), mapp(U, (81.4, 86.4))], [0.2, 1.0, 0.2]), PANTS.light, 0.4)]
-    fig.part('seat', sh, PANTS, grad=(82, 84, 60, 94, [(0, PANTS.light), (0.5, PANTS.base), (1, PANTS.shadow)]), cel=1.0, rim=0.5,
+    fig.part('seat', sh, PANTS, grad=(*mapp(U, (82, 84)), *mapp(U, (60, 94)), [(0, PANTS.light), (0.5, PANTS.base), (1, PANTS.shadow)]), cel=1.0, rim=0.5,
              cast=0.9, cast_on=['fpants', 'npants'], details=det)
 
 
@@ -417,51 +440,51 @@ def rag(fig, P):
 
 # ---------------------------------------------------------------- la main au couteau (dos de la main, prise à l'envers)
 def knife_fist(fig, P, E, W):
-    """Le poing proche, vu de dos (jointures vers l'ennemi) : le manche de bois le traverse de l'avant-haut (pommeau,
-    sous le pouce) à l'arrière-bas (la lame sort sous l'auriculaire, vers l'arrière et le bas)."""
+    """Le poing proche, vu de dos : la main part du poignet vers l'avant et le bas (poignet plié), la rangée des
+    jointures au bout ; le manche de bois la traverse en travers (côté index en haut, côté auriculaire en bas) : le
+    pommeau dépasse en haut sous le pouce, la lame sort en bas, vers le bas et l'arrière."""
     a = norm(sub(W, E))                                     # l'axe de l'avant-bras (vers la main)
-    b = (a[1], -a[0])                                       # vers l'avant (l'ennemi) quand le bras pend
-    if b[0] < 0:
-        b = (-b[0], -b[1])
-    H = lambda x, y: (W[0] + a[0] * x + b[0] * y, W[1] + a[1] * x + b[1] * y)   # x : vers les doigts, y : vers l'avant
-    # la lame : du bas-arrière du poing, vers le bas et l'arrière
-    kd = norm((a[0] * 0.77 - b[0] * 0.75, a[1] * 0.77 - b[1] * 0.75))     # vers le bas et l'arrière
-    base = H(3.4, -1.2)
-    tip = add(base, kd, 8.6)
+    h = rot(a, -55)                                         # la main : vers l'avant et le bas
+    g = rot(h, 90)                                          # le manche : vers le bas et l'arrière (la lame)
+    H = lambda x, y: (W[0] + h[0] * x + g[0] * y, W[1] + h[1] * x + g[1] * y)   # x : vers les jointures, y : vers la lame
+    # la lame : elle sort sous le poing (côté auriculaire), dos du côté de l'avant-bras
+    base = H(2.9, 2.6)
+    tip = H(2.4, 11.4)
+    kd = norm(sub(tip, base))
     kn = (-kd[1], kd[0])
-    blade = sm([add(base, kn, -0.95), add(lerp(base, tip, 0.55), kn, -1.05), tip, add(lerp(base, tip, 0.7), kn, 0.95),
+    blade = sm([add(base, kn, -0.9), add(lerp(base, tip, 0.55), kn, -1.0), tip, add(lerp(base, tip, 0.62), kn, 1.05),
                 add(base, kn, 0.85)], sharp=(2,), t=0.85)
-    fig.part('kblade', blade, STEEL, grad=(*add(base, kn, -1), *add(tip, kn, 1), [(0, STEEL.light), (0.5, STEEL.base), (1, STEEL.shadow)]),
+    fig.part('kblade', blade, STEEL, grad=(*add(base, kn, 1), *add(tip, kn, -1), [(0, STEEL.light), (0.5, STEEL.base), (1, STEEL.shadow)]),
              cel=0.35, rim=0.35, cast=0.6, cast_on=['npants', 'nshin'],
-             details=[(ribbon([lerp(base, tip, 0.1), lerp(base, tip, 0.85)], [0.45, 0.15]).move(0.3, -0.3), STEEL.hi, 0.8)])
-    # le pommeau de bois qui dépasse au-dessus du poing, côté pouce (cerclé d'une bague d'or)
-    pc = H(1.2, 2.6)
-    pom = ellipse(*pc, 1.25, 1.05, ang_of(a))
-    fig.part('kpom', pom, WOOD, cel=0.4, rim=0.4, cast=0.5, details=[(ellipse(pc[0] + 0.3, pc[1] - 0.35, 0.45, 0.3), WOOD.hi, 0.6)])
-    # le poing : dos de la main, jointures en avant, doigts repliés dessous
-    body = sm([H(-0.6, -2.2), H(1.6, -2.6), H(4.2, -2.4), H(5.6, -1.2), H(5.8, 0.6), H(5.0, 2.2), H(3.0, 2.8), H(0.8, 2.6), H(-0.6, 1.8)], t=0.92)
-    det = [(sm([H(0.2, -1.6), H(2.8, -2.0), H(3.6, -0.6), H(2.4, 1.2), H(0.4, 1.0)]), SKIN.hi, 0.22),
-           # la rangée des jointures (le long de l'avant), le pli des doigts repliés
-           (ellipse(*H(4.4, 1.6), 0.6, 0.5), SKIN.hi, 0.45), (ellipse(*H(4.9, 0.2), 0.6, 0.5), SKIN.hi, 0.4),
-           (ellipse(*H(5.0, -1.2), 0.55, 0.45), SKIN.hi, 0.35),
-           (ribbon([H(3.6, 2.2), H(4.6, 0.4), H(4.6, -1.6)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.5),
-           (ribbon([H(5.4, 0.9), H(5.9, 0.95)], [0.25, 0.1]), SKIN.deep, 0.4),
-           (ribbon([H(5.3, -0.6), H(5.8, -0.55)], [0.25, 0.1]), SKIN.deep, 0.4)]
-    fig.part('nfist', body, SKIN, grad=(*H(0, 3), *H(5, -3), [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
+             details=[(ribbon([lerp(base, tip, 0.12), lerp(base, tip, 0.82)], [0.4, 0.12]), STEEL.hi, 0.85)])
+    # le pommeau de bois au-dessus du poing (côté index), sous le pouce
+    pc = H(3.0, -3.0)
+    pom = ellipse(*pc, 1.3, 1.05, ang_of(g))
+    fig.part('kpom', pom, WOOD, cel=0.4, rim=0.4, cast=0.5, details=[(ellipse(pc[0] + 0.3, pc[1] - 0.3, 0.45, 0.3), WOOD.hi, 0.6)])
+    # le poing (dos de la main) : du poignet aux jointures
+    body = sm([H(0.2, -2.0), H(2.6, -2.7), H(4.8, -2.4), H(5.9, -1.0), H(6.0, 1.0), H(5.2, 2.7), H(3.0, 3.1), H(0.8, 2.6), H(-0.2, 0.4)], t=0.92)
+    det = [(sm([H(0.6, -1.4), H(3.4, -2.0), H(4.0, -0.4), H(2.6, 1.6), H(0.6, 1.2)]), SKIN.hi, 0.2),
+           # la rangée des jointures (au bout de la main), le pli des doigts repliés derrière
+           (ellipse(*H(5.1, -1.5), 0.62, 0.5, ang_of(g)), SKIN.hi, 0.45), (ellipse(*H(5.3, -0.1), 0.62, 0.5, ang_of(g)), SKIN.hi, 0.4),
+           (ellipse(*H(5.2, 1.3), 0.56, 0.46, ang_of(g)), SKIN.hi, 0.35),
+           (ribbon([H(4.3, -2.2), H(4.4, 0.0), H(4.1, 2.4)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.45),
+           (ribbon([H(5.6, -0.8), H(6.0, -0.8)], [0.25, 0.1]), SKIN.deep, 0.4),
+           (ribbon([H(5.7, 0.6), H(6.0, 0.6)], [0.25, 0.1]), SKIN.deep, 0.4)]
+    fig.part('nfist', body, SKIN, grad=(*H(5, -3), *H(0, 3), [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]),
              cel=0.7, rim=0.45, cast=0.8, cast_on=['kblade', 'kpom', 'npants', 'nshin', 'narm', 'seat'], details=det)
     # le pouce, replié sur le pommeau
-    t0 = H(0.6, 1.8)
-    th = limb([t0, H(1.0, 2.8), H(2.0, 3.0)], [2.0, 1.9, 1.6])
+    th = limb([H(1.4, -1.8), H(2.6, -2.8), H(3.8, -2.9)], [2.0, 1.9, 1.6])
     fig.part('nthumb', th, SKIN, cel=0.4, rim=0.35, cast=0.5, cast_on=['nfist', 'kpom'],
-             details=[(ellipse(*H(1.6, 3.0), 0.5, 0.3), SKIN.hi, 0.45)])
+             details=[(ellipse(*H(3.4, -3.1), 0.5, 0.3, ang_of(h)), SKIN.hi, 0.45)])
 
 
 # ---------------------------------------------------------------- le cou
 def neck(fig, P):
-    sh = sm([(68.8, 57.6), (75.6, 58.4), (76.2, 62.4), (76.6, 65.4), (72.2, 66.4), (68.4, 65.6), (68.6, 61.6)], t=0.9)
+    sh = sm([(67.4, 57.4), (75.6, 58.4), (76.2, 62.4), (76.6, 65.4), (72.2, 66.4), (65.8, 65.8), (66.4, 61.4)], t=0.9)
     fig.part('neck', sh, SKIN, grad=(76, 58, 68, 64, [(0, SKIN.base), (1, SKIN.shadow)]), cel=0.8, rim=0.4, cast=0.8,
              cast_on=['shirt', 'vestN', 'vestF'],
-             details=[(sm([(67, 57), (77, 58), (77, 61.6), (72, 62.4), (67, 61.0)]), SKIN.deep, 0.4),
+             details=[(sm([(64, 57), (77, 58), (77, 61.6), (72, 62.4), (64, 62.0)]), SKIN.deep, 0.4),
+                      (sm([(63, 57), (68.6, 57), (68.4, 67), (63, 67)]), SKIN.deep, 0.4),
                       (ribbon([(73.6, 62.4), (74.2, 64.0), (74.0, 65.6)], [0.1, 0.45, 0.1]), SKIN.shadow, 0.4)])
 
 
@@ -493,7 +516,7 @@ def head(fig, P):
                 (66.0, 60.0), (62.4, 55.6), (60.6, 49.0)]), ('lin', 61, 50, 69, 48, [(0, SKIN.shadow, 0.55), (1, SKIN.shadow, 0)]), 1),
            (sm([(77.6, 41.0), (81.6, 41.4), (82.4, 44.6), (82.0, 46.6), (79.8, 45.4), (77.8, 43.4)]), SKIN.hi, 0.35),
            # la pommette (un méplat éclairé sous l'œil), le creux de la joue dessous (garçon maigre)
-           (ellipse(70.6, 54.0, 2.4, 0.7, -8), SKIN.light, 0.4),
+           (ellipse(70.6, 54.0, 2.2, 0.6, -8), SKIN.light, 0.22),
            (ribbon(crpath([(65.4, 54.8), (67.6, 57.0), (70.4, 58.6)], 8), swell(8, 1.2)), SKIN.shadow, 0.35),
            (ribbon(crpath([(80.6, 54.6), (79.8, 56.8), (78.4, 58.6)], 8), swell(8, 0.6)), SKIN.shadow, 0.25),
            # le menton pointu (une lumière douce), l'ombre sous la mâchoire
@@ -518,9 +541,9 @@ def head(fig, P):
         hw = ew / 2
         o_ = (ex - s * hw, ey + 0.05)              # coin extérieur
         i_ = (ex + s * hw, ey + 0.25)              # coin intérieur (vers le nez)
-        top = 0.95 - 0.3 * sq
-        al = [o_, (ex - s * hw * 0.4, ey - top), (ex + s * hw * 0.35, ey - top * 0.95), i_, (ex + s * hw * 0.3, ey + 0.8 - 0.15 * sq),
-              (ex - s * hw * 0.4, ey + 0.75 - 0.15 * sq)]
+        top = 0.78 - 0.25 * sq
+        al = [o_, (ex - s * hw * 0.4, ey - top), (ex + s * hw * 0.35, ey - top * 0.95), i_, (ex + s * hw * 0.3, ey + 0.66 - 0.12 * sq),
+              (ex - s * hw * 0.4, ey + 0.6 - 0.12 * sq)]
         if not near:
             al = [al[3], al[2], al[1], al[0], al[5], al[4]]
         eye = sm(al, sharp=(0, 3), t=0.9)
@@ -544,52 +567,54 @@ def head(fig, P):
                   (i_[0] + s * 0.2, i_[1] - 0.1), (ex + s * hw * 0.35, ey - top * 0.95 + 0.1), (ex - s * hw * 0.4, ey - top + 0.12)],
                  sharp=(0, 3), t=0.85)
         fd += [(lid, EYE_INK, 1),
-               (ribbon([o_, (ex - s * hw * 0.4, ey + 0.72), (ex + s * hw * 0.3, ey + 0.78), i_], [0.1, 0.22, 0.18, 0.06]), EYE_INK, 0.45)]
+               (ribbon([o_, (ex - s * hw * 0.4, ey + 0.58), (ex + s * hw * 0.3, ey + 0.64), i_], [0.1, 0.22, 0.18, 0.06]), EYE_INK, 0.45)]
     # le pli au-dessus de la paupière, la petite poche plissée sous l'œil proche (il sourit des yeux)
     fd += [(ribbon([(68.6, 49.6 + 0.2 * sq), (70.4, 49.2 + 0.25 * sq), (72.2, 49.8)], [0.1, 0.36, 0.1]), SKIN.shadow, 0.5),
            (ribbon([(68.8, 52.6), (70.4, 53.0), (72.0, 52.7)], [0.1, 0.3, 0.1]), SKIN.shadow, 0.35 + 0.2 * gr)]
     # le nez fin (sur la médiane, entre les yeux) : l'ombre côté proche, l'ombre douce dessous
     fd += [(sm([(74.0, 51.6), (74.4, 53.0), (74.4, 54.6), (73.8, 55.0), (73.4, 54.2), (73.6, 52.6)]),
             ('lin', 73.2, 53, 75, 53, [(0, SKIN.shadow, 0.45), (1, SKIN.shadow, 0)]), 1),
-           (ellipse(75.0, 55.6, 1.3, 0.35, 2), SKIN.shadow, 0.4)]
+           (ellipse(75.0, 55.55, 1.0, 0.28, 2), SKIN.shadow, 0.28)]
     # la bouche : le sourire en coin (le coin du fond relevé), entrouverte sur les dents du haut ; une dent en moins
     # (le trou dans la rangée). Elle est centrée sous le nez, pas plus large que l'écart des yeux.
     mx, my, mw = MESURES['bouche']
     xl, xr = mx - mw / 2, mx + mw / 2
-    lift = 0.7 + 0.35 * gr
-    mo = sm([(xl, my + 0.25), (mx - 0.6, my - 0.35), (mx + 0.9, my - 0.55 - 0.2 * lift), (xr, my - lift), (mx + 1.0, my + 0.45 + 0.15 * gr),
-             (mx - 0.7, my + 0.55)], sharp=(0, 3), t=0.85)
+    lift = 0.75 + 0.3 * gr
+    yl, yr = my + 0.35, my - lift                            # les deux coins : le proche bas, celui du fond relevé
+    line = lambda t: (xl + (xr - xl) * t, yl + (yr - yl) * t + 0.55 * math.sin(math.pi * t) * (1 - 0.4 * t))   # le sourire
+    op = 0.95 + 0.3 * gr                                     # l'ouverture (sur la moitié du fond)
+    up = [line(t / 10) for t in range(2, 10)]
+    lo = [(x, y + op * math.sin(math.pi * (i + 1) / (len(up) + 1)) ** 0.8) for i, (x, y) in enumerate(up)]
+    up = [(x, y - 0.05) for x, y in up]
+    mo = sm([line(0.18)] + up + [line(0.94)] + lo[::-1], sharp=(0, len(up) + 1), t=0.85)
     cid = fig.uid('mouth')
-    teeth = sm([(xl - 0.2, my - 1.2), (xr + 0.3, my - 2.2), (xr + 0.3, my + 0.05 - 0.4 * lift), (mx + 0.6, my + 0.15), (xl - 0.2, my + 0.35)],
-               sharp=(0, 1, 2, 4), t=0.5)
-    gap = rpoly([(mx + 0.45, my - 1.6), (mx + 1.2, my - 1.7), (mx + 1.2, my + 0.6), (mx + 0.45, my + 0.6)], 0.2)
-    fd += [(mo.scale(1.12, 1.6, mx, my), SKIN.shadow, 0.35),
-           (mo, LIPS[0], 1),
+    tb = [add(line(t / 10), (0, 0.5 * math.sin(math.pi * t / 10) ** 0.5)) for t in range(11)]
+    teeth = sm([(xl - 0.4, my - 2.6), (xr + 0.6, my - 3.0)] + tb[::-1], sharp=(0, 1), t=0.7)
+    tteeth = line(0.55)
+    gap = rpoly([(tteeth[0] - 0.05, my - 2.4), (tteeth[0] + 0.62, my - 2.4), (tteeth[0] + 0.62, my + 1.0), (tteeth[0] - 0.05, my + 1.0)], 0.2)
+    fd += [(mo.scale(1.15, 1.7, *line(0.6)), SKIN.shadow, 0.3),
+           (mo, '#4a1022', 1),
            ('<clipPath id="%s"><path d="%s"/></clipPath><g clip-path="url(#%s)"><path d="%s" fill="FILL"/>'
-            '<path d="%s" fill="%s"/><path d="%s" fill="%s" opacity="0.5"/></g>' % (
-                cid, mo.d(), cid, teeth.d(), gap.d(), '#3a0e1c', ribbon([(xl, my + 0.1), (mx, my - 0.05), (xr, my - lift + 0.2)], [0.1, 0.3, 0.1]).d(), TEETH.shadow),
-            ('lin', 0, my - 1, 0, my + 0.4, [(0, TEETH.hi), (1, TEETH.base)]), 1),
-           # la lèvre du haut (un trait sombre qui suit le sourire), la lèvre du bas (un méplat clair), la fossette du coin
-           (ribbon([(xl - 0.15, my + 0.2), (mx - 0.6, my - 0.38), (mx + 0.9, my - 0.6 - 0.2 * lift), (xr + 0.15, my - lift - 0.05)],
-                   [0.1, 0.28, 0.28, 0.12]), LIPS[0], 1),
-           (ellipse(mx + 0.2, my + 1.25, 1.1, 0.3, -6), LIPS[2], 0.45),
-           (ribbon([(xr + 0.2, my - lift - 0.6), (xr + 0.6, my - lift), (xr + 0.45, my - lift + 0.6)], [0.1, 0.26, 0.1]), SKIN.shadow, 0.5),
-           (ribbon([(xl - 0.4, my - 0.2), (xl - 0.6, my + 0.3), (xl - 0.4, my + 0.7)], [0.1, 0.2, 0.1]), SKIN.shadow, 0.3)]
+            '<path d="%s" fill="%s"/></g>' % (cid, mo.d(), cid, teeth.d(), gap.d(), '#3a0e1c'),
+            ('lin', 0, my - 1, 0, my + 0.6, [(0, TEETH.hi), (1, TEETH.base)]), 1),
+           # la ligne des lèvres (un trait sombre qui suit le sourire, plus fin au coin proche), la lèvre du bas, la fossette
+           (ribbon([add(line(t / 8), (0, -0.12)) for t in range(9)], [0.1, 0.16, 0.2, 0.24, 0.26, 0.26, 0.24, 0.2, 0.12]), LIPS[0], 1),
+           (ellipse(*add(line(0.55), (0.0, 1.25)), 1.2, 0.3, -8), LIPS[2], 0.4),
+           (ribbon([(xr + 0.2, yr - 0.6), (xr + 0.6, yr), (xr + 0.45, yr + 0.6)], [0.1, 0.26, 0.1]), SKIN.shadow, 0.5)]
     part('face', face, SKIN, grad=(83, 41, 62, 58, [(0, SKIN.light), (0.55, SKIN.base), (1, SKIN.shadow)]), cel=0.8, rim=0.5, cast=1.0,
          cast_on=['hairB'], details=fd)
     # ---- le nez, fin, sur la médiane (sans contour : il est dans le visage) ; son petit bout arrondi ----
-    nose = sm([(74.5, 51.4), (75.2, 51.8), (75.6, 53.4), (76.0, 54.5), (75.7, 55.1), (74.9, 55.3), (74.1, 55.0), (74.0, 54.2),
-               (74.4, 52.8)], t=0.9)
+    nose = sm([(74.6, 52.0), (75.1, 52.3), (75.4, 53.6), (75.8, 54.5), (75.5, 55.05), (74.8, 55.2), (74.15, 54.95), (74.1, 54.3),
+               (74.45, 53.1)], t=0.9)
     part('nose', nose, SKIN, grad=(76, 51.4, 74, 55.3, [(0, SKIN.light), (0.6, SKIN.base), (1, SKIN.base)]), cel=0, rim=0, cast=0,
          outline=False,
-         details=[(ribbon([(74.9, 51.9), (75.4, 53.2), (75.6, 54.2)], [0.1, 0.28, 0.12]), SKIN.hi, 0.7),
-                  (ellipse(75.4, 54.4, 0.34, 0.26), '#ffffff', 0.4),
+         details=[(ribbon([(75.0, 52.6), (75.3, 53.5), (75.5, 54.2)], [0.1, 0.22, 0.1]), SKIN.hi, 0.5),
+                  (ellipse(75.3, 54.45, 0.3, 0.22), '#ffffff', 0.25),
                   (ellipse(74.5, 54.85, 0.38, 0.2, 15), SKIN.deep, 0.75)])
     # ---- la mèche de la tempe (elle sort de sous le bandana, devant l'oreille) ----
-    lock = fused([taper(crpath([(63.0, 45.4), (63.6, 47.6), (63.2, 50.2)], 8), 2.6, 0.3, tip='sharp'),
-                  taper(crpath([(64.8, 45.6), (65.6, 47.2), (66.0, 48.4)], 8), 1.8, 0.2, tip='sharp')], smooth=0.3)
+    lock = taper(crpath([(64.6, 45.4), (64.4, 47.6), (63.2, 49.8)], 8), 3.0, 0.4, tip='sharp', wmid=2.6)
     part('hairT', lock, HAIR, grad=(66, 45, 62, 50, [(0, HAIR.light), (1, HAIR.shadow)]), cel=0.4, rim=0.3, cast=0.6, cast_on=['face'],
-         details=[(ribbon([(63.6, 45.8), (63.9, 47.6)], [0.3, 0.1]), HAIR.hi, 0.5)])
+         details=[(ribbon([(65.0, 45.8), (64.8, 47.6), (64.0, 48.8)], [0.3, 0.2, 0.1]), HAIR.light, 0.5)])
     # ---- l'anneau d'or au lobe (un fil courbe qui part du lobe et y revient : l'ouverture cachée dans le lobe) ----
     ring = limb([(61.4 + 1.05 * math.cos(math.radians(a_)), 57.6 + 1.25 * math.sin(math.radians(a_))) for a_ in range(-60, 261, 20)],
                 [0.5] * 17)
@@ -601,17 +626,16 @@ def head(fig, P):
 # ---------------------------------------------------------------- les cheveux de la nuque (sous le bandana)
 def hair_back(fig, P):
     """Les mèches noires en bataille qui dépassent du bandana derrière l'oreille : UNE masse sous le bord du bandana,
-    quelques mèches arrondies et lourdes de tailles différentes (jamais un éventail de pointes égales)."""
-    core = sm([(58.6, 44.0), (64.0, 44.6), (64.6, 50.0), (64.4, 56.6), (62.6, 59.6), (60.0, 58.6), (58.6, 55.0), (58.0, 49.0)], t=0.9)
-    locks = [taper(crpath([(59.6, 47.0), (57.4, 49.0), (56.0, 50.8)], 8), 3.2, 0.5, tip='round'),
-             taper(crpath([(59.4, 51.4), (57.6, 53.6), (57.0, 55.8)], 8), 3.0, 0.6, tip='round'),
-             taper(crpath([(60.6, 55.4), (59.6, 58.2), (60.2, 60.4)], 8), 2.6, 0.5, tip='round'),
-             taper(crpath([(62.6, 57.4), (63.0, 59.6), (64.4, 61.0)], 8), 2.0, 0.4, tip='round')]
-    sh = fused([core] + locks, smooth=0.4)
-    det = [(ribbon(crpath([(60.2, 46.4), (58.6, 48.6), (57.4, 50.2)], 10), swell(10, 0.7)), HAIR.light, 0.6),
-           (ribbon(crpath([(60.0, 51.2), (58.6, 53.4), (58.0, 55.0)], 10), swell(10, 0.6)), HAIR.light, 0.5),
-           (ribbon(crpath([(61.4, 47.0), (61.6, 52.0), (61.4, 56.0)], 10), swell(10, 0.9)), HAIR.deep, 0.4)]
-    fig.part('hairB', sh, HAIR, grad=(64, 44, 56, 60, [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)]), cel=0.9, rim=0.5,
+    trois mèches arrondies et lourdes de tailles différentes (jamais un éventail de pointes égales)."""
+    core = sm([(59.0, 44.6), (64.0, 45.0), (64.6, 50.0), (64.8, 56.0), (64.4, 60.6), (62.4, 61.2), (60.4, 57.8), (59.2, 54.6), (58.6, 49.0)], t=0.9)
+    locks = [taper(crpath([(60.0, 47.2), (58.2, 49.0), (57.4, 50.8)], 8), 3.4, 1.3, tip='round'),
+             taper(crpath([(60.0, 51.6), (58.6, 53.4), (58.4, 55.4)], 8), 3.2, 1.4, tip='round'),
+             taper(crpath([(61.6, 55.6), (61.0, 57.8), (61.8, 59.6)], 8), 2.6, 1.2, tip='round')]
+    sh = fused([core] + locks, smooth=0.5)
+    det = [(ribbon(crpath([(60.6, 46.8), (59.2, 48.6), (58.4, 50.2)], 10), swell(10, 0.6)), HAIR.light, 0.45),
+           (ribbon(crpath([(60.6, 51.4), (59.4, 53.2), (59.2, 54.8)], 10), swell(10, 0.5)), HAIR.light, 0.4),
+           (ribbon(crpath([(61.8, 47.4), (62.0, 52.0), (61.8, 56.0)], 10), swell(10, 0.9)), HAIR.deep, 0.35)]
+    fig.part('hairB', sh, HAIR, grad=(64, 44, 57, 59, [(0, HAIR.light), (0.45, HAIR.base), (1, HAIR.shadow)]), cel=0.8, rim=0.35,
              cast=0, details=det)
     return ['hairB']
 
@@ -620,7 +644,7 @@ def hair_back(fig, P):
 # Le bord du bas : un morceau d'ellipse en perspective autour de la tête (au-dessus des sourcils), une seule courbe
 # lisse qui file derrière la tête jusqu'au nœud.
 def band_edge(n=14):
-    cx, cy, R, r = 71.6, 45.4, 11.4, 1.1
+    cx, cy, R, r = 71.8, 45.0, 11.1, 1.8
     out = []
     for i in range(n + 1):
         ph = math.radians(-96 + 190 * i / n)
@@ -629,16 +653,24 @@ def band_edge(n=14):
 
 
 def bandana_tails(fig, P):
-    """Les deux pans du nœud, qui pendent derrière la nuque (ils se balancent avec `pl`)."""
+    """Les deux pans du nœud : deux bandes de tissu plates qui pendent derrière la nuque, le bout coupé en pointe (ils
+    se balancent avec `pl`)."""
     pl = P['pl']
-    a = taper(crpath([(57.6, 46.6), (55.2, 50.6 + 0.3 * pl), (52.8 - 0.8 * pl, 55.0), (50.4 - 1.6 * pl, 58.6)], 14), 3.4, 2.2, tip='round', wmid=3.6)
-    b = taper(crpath([(58.6, 47.4), (57.6, 51.6), (56.0 - 0.6 * pl, 56.4), (54.8 - 1.2 * pl, 60.6)], 14), 3.0, 1.8, tip='round', wmid=3.2)
-    fig.part('tailA', a, RED, grad=(58, 46, 50, 59, [(0, RED.base), (1, RED.shadow)]), cel=0.7, rim=0.4, cast=0,
-             details=[(ribbon(crpath([(57.0, 48.0), (54.6, 52.2), (52.0, 56.6)], 10), swell(10, 0.6)), RED.deep, 0.4),
-                      (ribbon(crpath([(56.4, 47.8), (54.0, 51.6)], 6), swell(6, 0.5)).move(0.6, -0.4), RED.light, 0.5)])
-    fig.part('tailB', b, RED, grad=(59, 47, 54, 61, [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]), cel=0.7, rim=0.45, cast=0.8,
+
+    def pan(pts, w0, w1, wm):
+        c = crpath(pts, 14)
+        n = len(c) - 1
+        ws = [w0 * (1 - t) ** 2 + 2 * wm * t * (1 - t) + w1 * t * t for t in (i / n for i in range(n + 1))]
+        left, right = sides(c, ws)
+        # le bout coupé en biais : un coin pointu (côté extérieur), l'autre arrondi
+        return sm(left + [add(c[-1], norm(sub(c[-1], c[-2])), 0.9)] + right[::-1], sharp=(len(left),), t=0.9)
+    a = pan([(58.2, 46.2), (56.4, 49.4 + 0.3 * pl), (54.6 - 0.6 * pl, 52.8), (52.8 - 1.4 * pl, 56.2)], 2.6, 2.0, 2.9)
+    b = pan([(59.0, 47.0), (58.2, 50.4), (57.0 - 0.5 * pl, 54.0), (56.2 - 1.0 * pl, 57.4)], 2.3, 1.8, 2.5)
+    fig.part('tailA', a, RED, grad=(58, 46, 52, 57, [(0, RED.base), (1, RED.shadow)]), cel=0.6, rim=0.4, cast=0,
+             details=[(ribbon(crpath([(57.6, 47.6), (55.8, 51.0), (53.8, 54.8)], 10), swell(10, 0.5)), RED.deep, 0.35)])
+    fig.part('tailB', b, RED, grad=(59, 47, 56, 58, [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]), cel=0.6, rim=0.45, cast=0.8,
              cast_on=['tailA'],
-             details=[(ribbon(crpath([(58.0, 49.0), (57.0, 53.4), (55.6, 58.0)], 10), swell(10, 0.5)), RED.shadow, 0.5)])
+             details=[(ribbon(crpath([(58.6, 48.6), (57.8, 51.8), (56.8, 55.4)], 10), swell(10, 0.45)), RED.shadow, 0.45)])
     return ['tailA', 'tailB']
 
 
@@ -650,8 +682,8 @@ def bandana(fig, P):
         return fig.part(name, *a, **k)
     edge = band_edge()
     # (le bord du bas, de la droite vers l'arrière de la tête, puis la calotte de l'arrière vers l'avant)
-    dome = [(57.8, 43.0), (58.8, 39.4), (61.6, 35.8), (66.2, 33.4), (72.0, 32.6), (77.6, 33.6), (81.8, 36.4), (84.0, 40.2), (84.4, 44.0)]
-    pts = edge[::-1] + [(59.4, 46.8)] + dome
+    dome = [(58.0, 43.0), (59.0, 39.6), (61.8, 36.4), (66.2, 34.2), (72.0, 33.5), (77.4, 34.4), (81.2, 37.0), (83.2, 40.4), (83.6, 44.0)]
+    pts = edge[::-1] + [(59.6, 47.0)] + dome
     cap = sm(pts, sharp=(0, len(edge) - 1), t=0.9)
     # le bord du bas : une bande d'épaisseur égale (l'ourlet du foulard), une seule courbe
     ein = [(x, y - 1.3) for x, y in edge]
@@ -666,40 +698,46 @@ def bandana(fig, P):
     part('cap', cap, RED, grad=(83, 34, 60, 46, [(0, RED.light), (0.45, RED.base), (1, RED.shadow)]), cel=1.0, rim=0.6, cast=1.0,
          cast_on=['face', 'hairB', 'hairT', 'nose'], details=det)
     # le nœud derrière la tête : deux lobes serrés, posé sur le bord de la calotte
-    knot = fused([ellipse(58.6, 45.0, 2.6, 2.0, -30), ellipse(57.2, 46.8, 1.9, 1.6, 20)], smooth=0.4)
+    knot = fused([ellipse(59.0, 45.6, 1.9, 1.5, -20), ellipse(57.6, 44.4, 1.3, 1.0, -50), ellipse(57.9, 46.8, 1.2, 1.0, 30)], smooth=0.5)
     part('knot', knot, RED, grad=(61, 43, 55, 48, [(0, RED.light), (0.5, RED.base), (1, RED.shadow)]), cel=0.6, rim=0.45, cast=0.9,
          cast_on=['cap', 'tailA', 'tailB', 'hairB'],
-         details=[(ribbon([(57.0, 44.2), (58.2, 45.6), (59.8, 46.2)], [0.1, 0.5, 0.1]), RED.shadow, 0.6),
-                  (ellipse(59.4, 44.2, 0.8, 0.5, -30), RED.hi, 0.5)])
+         details=[(ribbon([(57.6, 45.2), (58.8, 46.0), (60.4, 46.4)], [0.1, 0.45, 0.1]), RED.shadow, 0.55),
+                  (ellipse(59.6, 44.9, 0.8, 0.45, -25), RED.hi, 0.5)])
     return names
 
 
 # ---------------------------------------------------------------- le sabre d'abordage et le poing qui le serre
 def saber(fig, P):
-    """Dessiné au repos (poing en F0, lame à SA0), puis posé par GM. Le poing est vu côté paume : les doigts repliés
-    autour de la poignée, le pouce couché dessus vers la coquille ; la branche de garde passe derrière le poing."""
+    """Dessiné au repos (poignée en F0, lame à SA0), puis posé par GM. Le poing est vu côté paume : les quatre doigts
+    repliés autour de la poignée (l'index contre la coquille), le pouce couché par-dessus ; la branche de garde longe
+    le bord des doigts (derrière le poing), du pommeau à la coquille."""
     names = []
 
     def part(name, *a, **k):
         names.append(name)
         return fig.part(name, *a, **k)
     L = saber_frame(F0, SA0)
-    # la branche de garde (derrière le poing) : de la coquille au pommeau, en arc du côté des jointures
-    bow = limb([L(4.0, 2.6), L(3.0, 4.0), L(0.0, 4.6), L(-3.0, 4.0), L(-4.6, 2.0), L(-5.0, 0.6)], [0.95, 1.05, 1.1, 1.05, 1.0, 0.95])
-    part('bow', bow, GOLD, cel=0.4, rim=0.4, cast=0.5, details=[(ribbon([L(3.0, 3.6), L(0.0, 4.1), L(-3.0, 3.6)], [0.1, 0.35, 0.1]), GOLD.hi, 0.7)])
+    # la branche de garde (derrière le poing) : de la coquille au pommeau, le long des doigts
+    bow = limb([L(3.8, 3.6), L(2.0, 4.2), L(-1.0, 4.3), L(-3.6, 3.7), L(-5.2, 1.9)], [0.95, 1.0, 1.05, 1.0, 0.95])
+    part('bow', bow, GOLD, cel=0.4, rim=0.4, cast=0.5, details=[(ribbon([L(2.6, 3.9), L(-1.0, 4.0), L(-3.4, 3.4)], [0.1, 0.35, 0.1]), GOLD.hi, 0.7)])
+    # le bout de la poignée de cuir et le pommeau d'or (sous le talon de la main)
+    grip = limb([L(-3.0, 0.3), L(-5.0, 0.5)], [2.1, 2.0])
+    part('grip', grip, LEATHER, cel=0.4, rim=0.3, cast=0.4,
+         details=[(ribbon([L(-4.0, -0.6), L(-4.2, 1.4)], [0.25, 0.25]), LEATHER.deep, 0.6)])
+    pom = ellipse(*L(-5.6, 0.8), 1.35, 1.2, SA0)
+    part('pommel', pom, GOLD, cel=0.4, rim=0.4, cast=0.5, details=[(ellipse(*L(-5.4, 0.3), 0.45, 0.32), GOLD.glint, 0.8)])
     # la lame courbe : le dos (v < 0) et le tranchant (v > 0) ; elle s'élargit vers la pointe, qui remonte vers le dos
     n = 20
     back, edge_ = [], []
     for i in range(n + 1):
         t = i / n
-        u = 4.2 + 30.0 * t
-        bend = -2.6 * t * t                                         # la courbe : la lame se cambre vers le dos
-        w = 1.9 + 1.6 * t ** 1.3
+        u = 4.4 + 27.5 * t
+        bend = -3.0 * t * t                                         # la courbe : la lame se cambre vers le dos
+        w = 2.1 + 1.9 * t ** 1.3
         back.append(L(u, bend - 0.9))
         edge_.append(L(u, bend - 0.9 + w))
-    tip = L(36.0, -2.6 - 1.2)
-    blade = sm([L(3.6, -1.0)] + back[1:] + [tip] + edge_[::-1][:-1] + [L(3.6, 1.2)], sharp=(n + 1,), t=0.85)
-    # le tranchant affûté (une bande claire le long du bord bas), la gouttière le long du dos, les reflets
+    tip = L(33.6, -4.2)
+    blade = sm([L(3.8, -1.0)] + back[1:] + [tip] + edge_[::-1][:-1] + [L(3.8, 1.2)], sharp=(n + 1,), t=0.85)
     fil = sm(edge_ + [tip] + [lerp(a, b, 0.62) for a, b in zip(back, edge_)][::-1], t=0.85)
     det = [(fil, STEEL.light, 0.6),
            (ribbon([lerp(back[i], edge_[i], 0.25) for i in (2, 8, 14, 18)], [0.1, 0.3, 0.3, 0.1]), STEEL.shadow, 0.7),
@@ -707,31 +745,26 @@ def saber(fig, P):
            (ellipse(*lerp(back[16], edge_[16], 0.6), 1.4, 0.35, SA0 - 8), '#ffffff', 0.8)]
     part('blade', blade, STEEL, grad=(*L(20, -2), *L(14, 4), [(0, STEEL.light), (0.5, STEEL.base), (1, STEEL.shadow)]),
          cel=0.5, rim=0.45, cast=0.6, details=det)
-    # le bout de la poignée de cuir et le pommeau d'or (sous le talon de la main)
-    grip = limb([L(-2.0, 0.2), L(-4.4, 0.4)], [2.0, 1.9])
-    part('grip', grip, LEATHER, cel=0.4, rim=0.3, cast=0.4,
-         details=[(ribbon([L(-2.6, -0.6), L(-3.0, 0.9)], [0.25, 0.25]), LEATHER.deep, 0.6)])
-    pom = ellipse(*L(-5.0, 0.5), 1.25, 1.1, SA0)
-    part('pommel', pom, GOLD, cel=0.4, rim=0.4, cast=0.5, details=[(ellipse(*L(-4.8, 0.1), 0.45, 0.32), GOLD.glint, 0.8)])
-    # le poing : vu côté paume, les quatre doigts repliés autour de la poignée (trois plis courts, pas de rayons)
-    body = sm([L(-3.2, -2.5), L(0.0, -2.8), L(2.8, -2.5), L(3.6, -0.6), L(3.4, 1.6), L(2.4, 3.0), L(0.0, 3.3), L(-2.4, 3.1),
-               L(-3.6, 2.0), L(-3.8, -0.6)], t=0.92)
-    det = [(sm([L(-2.2, -2.0), L(1.8, -2.2), L(2.4, -0.6), L(-1.8, -0.2)]), SKIN.hi, 0.2),
-           # les doigts repliés (vus de face) : trois plis courts entre eux, les bouts arrondis du côté du pouce
-           (ribbon([L(1.6, 0.4), L(1.7, 1.8), L(1.4, 3.0)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.55),
-           (ribbon([L(-0.3, 0.6), L(-0.2, 2.0), L(-0.4, 3.1)], [0.1, 0.4, 0.1]), SKIN.shadow, 0.55),
-           (ribbon([L(-2.1, 0.6), L(-2.1, 1.9), L(-2.3, 2.9)], [0.1, 0.35, 0.1]), SKIN.shadow, 0.5),
-           (ribbon([L(-3.2, 0.2), L(0.0, 0.0), L(3.0, 0.2)], [0.1, 0.5, 0.1]), SKIN.shadow, 0.35),
-           (ellipse(*L(2.4, 1.5), 0.55, 0.45), SKIN.hi, 0.35), (ellipse(*L(0.6, 1.7), 0.55, 0.45), SKIN.hi, 0.3),
-           (ellipse(*L(-1.2, 1.7), 0.5, 0.42), SKIN.hi, 0.3)]
+    # le poing, vu côté paume : la paume (côté poignet), les quatre doigts repliés en colonne le long de la poignée
+    body = sm([L(2.9, -1.6), L(3.5, 0.4), L(3.1, 2.7), L(1.0, 3.4), L(-1.4, 3.4), L(-3.3, 2.8), L(-4.0, 0.8), L(-3.9, -1.4),
+               L(-2.9, -3.2), L(-0.6, -3.5), L(1.6, -2.9)], t=0.92)
+    det = [(sm([L(-2.6, -2.6), L(0.6, -2.8), L(1.4, -1.0), L(-2.0, 0.2)]), SKIN.hi, 0.18),
+           # les trois plis courts entre les doigts (un pour chaque séparation), le pli où les doigts rejoignent la paume
+           (ribbon([L(1.7, 1.0), L(1.8, 2.2), L(1.6, 3.3)], [0.1, 0.42, 0.1]), SKIN.shadow, 0.6),
+           (ribbon([L(0.1, 1.0), L(0.2, 2.3), L(0.0, 3.4)], [0.1, 0.42, 0.1]), SKIN.shadow, 0.6),
+           (ribbon([L(-1.6, 1.0), L(-1.6, 2.2), L(-1.8, 3.2)], [0.1, 0.38, 0.1]), SKIN.shadow, 0.55),
+           (ribbon([L(-3.4, 1.0), L(-0.4, 0.8), L(2.8, 0.9)], [0.1, 0.5, 0.1]), SKIN.shadow, 0.4),
+           (ellipse(*L(2.6, 2.0), 0.6, 0.48), SKIN.hi, 0.4), (ellipse(*L(0.9, 2.2), 0.6, 0.48), SKIN.hi, 0.35),
+           (ellipse(*L(-0.8, 2.2), 0.56, 0.45), SKIN.hi, 0.32), (ellipse(*L(-2.5, 2.0), 0.5, 0.42), SKIN.hi, 0.3)]
     part('ffist', body, SKIN, grad=(*L(3, -3), *L(-3, 3), [(0, SKIN.light), (0.5, SKIN.base), (1, SKIN.shadow)]), cel=0.7,
          rim=0.45, cast=0.8, cast_on=['bow', 'grip', 'pommel', 'farm'], details=det)
-    # le pouce, couché le long de la poignée, le bout contre la coquille
-    th = limb([L(-1.8, -1.6), L(0.6, -2.0), L(2.6, -1.4)], [2.3, 2.0, 1.7])
+    # le pouce, couché par-dessus les doigts, le bout contre la coquille
+    th = limb([L(-2.2, -2.2), L(0.4, -1.6), L(2.6, -0.4)], [2.4, 2.1, 1.8])
     part('fthumb', th, SKIN, cel=0.45, rim=0.35, cast=0.55, cast_on=['ffist'],
-         details=[(ellipse(*L(2.0, -1.8), 0.7, 0.3, SA0), SKIN.hi, 0.5)])
-    # la coquille d'or (une coupe vue de côté, entre le poing et la lame)
-    shell = sm([L(3.4, -3.0), L(4.6, -2.6), L(5.0, 0.2), L(4.6, 3.6), L(3.6, 4.2), L(3.0, 3.4), L(3.6, 0.2), L(3.0, -2.2)], t=0.9)
+         details=[(ellipse(*L(2.0, -0.9), 0.75, 0.32, SA0 + 15), SKIN.hi, 0.5),
+                  (ribbon([L(2.4, -1.0), L(2.9, -0.3)], [0.2, 0.1]), SKIN.shadow, 0.5)])
+    # la coquille d'or (une coupe vue de côté, entre le poing et la lame), qui rejoint la branche de garde
+    shell = sm([L(3.4, -3.0), L(4.6, -2.7), L(5.0, 0.4), L(4.7, 3.6), L(3.7, 4.4), L(3.1, 3.5), L(3.7, 0.4), L(3.1, -2.2)], t=0.9)
     part('shell', shell, GOLD, grad=(*L(5, -3), *L(3, 4), [(0, GOLD.light), (0.5, GOLD.base), (1, GOLD.shadow)]), cel=0.5, rim=0.45,
          cast=0.6, cast_on=['ffist', 'fthumb', 'blade', 'bow'],
          details=[(ribbon([L(4.5, -2.0), L(4.8, 0.6), L(4.4, 3.2)], [0.1, 0.4, 0.1]), GOLD.hi, 0.8),

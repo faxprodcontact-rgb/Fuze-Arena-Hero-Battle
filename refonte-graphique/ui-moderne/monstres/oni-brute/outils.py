@@ -1,11 +1,12 @@
-# Outils de Taurok : copie de ../eldra/outils.py (crpath, bent, taper) et des outils de membre de ../lenore/lenore.py
-# (body_limb, ik, Seg…), pour ne pas dépendre des dossiers des autres héros. atelier.py n'est pas touché.
+# Outils de l'oni brute : copie de ../../heros/taurok/outils.py (crpath, bent, taper, body_limb, round_limb, ik, Seg,
+# FigureM, poly_of, shape_of) et, en bas, des outils de forme de ../../heros/lenore/lenore.py (fused, cast_off, clip_shape),
+# pour ne dépendre d'aucun dossier de héros. atelier.py n'est pas touché.
 import math
 import os
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, '..'))
+sys.path.insert(0, os.path.join(HERE, '..', '..', 'heros'))
 from atelier import sm, sides, resample, Figure  # noqa: E402
 
 
@@ -374,3 +375,69 @@ class FigureM(Figure):
             i = s.index('</defs>')
             s = s[:i] + ''.join(add_defs) + s[i:]
         return s
+
+
+# ---------- copiés de ../../heros/lenore/lenore.py (formes fondues, ombres de mèches, découpes) ----------
+
+def _ring(coords, sharp_deg=38):
+    """Un anneau de polygone → une forme souple qui garde les coins vifs (pointes des mèches)."""
+    pts = list(coords)[:-1]
+    n = len(pts)
+    sharp = []
+    for i in range(n):
+        a, b, c = pts[i - 1], pts[i], pts[(i + 1) % n]
+        d = abs((math.atan2(c[1] - b[1], c[0] - b[0]) - math.atan2(b[1] - a[1], b[0] - a[0]) + math.pi) % (2 * math.pi) - math.pi)
+        if math.degrees(d) > sharp_deg:
+            sharp.append(i)
+    return sm(pts, sharp=tuple(sharp), t=0.9).subs
+
+
+def shape_g(geom, simplify=0.02, min_area=0.05):
+    """Un (multi)polygone shapely → une forme (tous les morceaux, coins vifs gardés)."""
+    from shapely.geometry import Polygon
+    from shapely.geometry.polygon import orient
+    from lib import Shape
+    gs = list(geom.geoms) if hasattr(geom, 'geoms') else [geom]
+    subs = []
+    for g in gs:
+        if g.geom_type != 'Polygon' or g.area < min_area:
+            continue
+        g = orient(g.simplify(simplify), 1.0)
+        subs += _ring(g.exterior.coords)
+        for h in g.interiors:
+            if Polygon(h).area >= 1.0:
+                subs += _ring(h.coords)
+    return Shape(subs) if subs else None
+
+
+def fused(shapes, smooth=0.35):
+    """Plusieurs formes fondues en UNE silhouette (aucune couture), creux à peine arrondis."""
+    from shapely.ops import unary_union
+    g = unary_union([poly_of(s, 8) for s in shapes])
+    g = g.buffer(smooth, join_style=1, quad_segs=6).buffer(-smooth, join_style=1, quad_segs=6)
+    return shape_g(g)
+
+
+def cast_off(sh, dx, dy, hors=None):
+    """L'ombre d'une mèche sur ce qui est dessous : la mèche décalée, moins la mèche elle-même (et moins `hors`)."""
+    from shapely import affinity
+    g = poly_of(sh, 8)
+    d = affinity.translate(g, dx, dy).difference(g)
+    if hors is not None:
+        d = d.difference(hors)
+    return shape_g(d.buffer(-0.04).buffer(0.04), min_area=0.3)
+
+
+def sm_under(sh, dx=0.8, dy=-2.4):
+    """La face du dessous d'une mèche : la mèche moins elle-même décalée vers le haut (le haut reste éclairé)."""
+    from lib import Shape
+    return Shape(sh.subs + sh.move(dx, dy).subs, evenodd=True)
+
+
+def matmix(m, hot, t):
+    """Une matière qui chauffe (vers la matière `hot`, t de 0 à 1)."""
+    from atelier import Mat
+    if t <= 0:
+        return m
+    return Mat(*(hexmix(getattr(m, k), getattr(hot, k), min(1, t)) for k in ('hi', 'light', 'base', 'shadow', 'deep')),
+               glint=m.glint)
