@@ -685,20 +685,21 @@ p { margin: 6px 0; }
 .passive.locked { opacity: 0.55; }
 .slot-panel { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; padding: 10px; animation: pop-in 0.15s ease-out; }
 .slot-panel .better { right: auto; left: -5px; }
-/* une fenêtre SOMBRE (demande du 27/11, la fenêtre Équipement : « change le fond blanc aussi ») : le bleu nuit des
-   bandeaux, des cases creusées plus sombres, les textes clairs, l'or vif */
-.modal.modal-dark { --px-frame: linear-gradient(180deg, #221a55, #171040); --px-inset: linear-gradient(180deg, #120b33d9, #0d0826d9);
-  --c-surface: #2a2063; --c-surface-2: #1b1449; --c-surface-3: #120b33; --s-surface-3: #120b33; --inset: #0d0826b3; --inset-line: #ffffff2e;
-  --c-text: #ffffff; --c-title: #ffffff; --c-muted: #b6addf; --text: #ffffff; --title: #ffffff; --muted: #b6addf; --accent-text: #ffc94d;
+/* une fenêtre SOMBRE (demande du 27/11, la fenêtre Équipement : « change le fond blanc aussi », « la couleur grise de
+   la DA ») : la pierre grise des bandeaux et des barres (--c-navy…, grises dans l'habillage pierre), des cases creusées
+   plus sombres, les textes clairs, l'or vif */
+.modal.modal-dark { --px-frame: linear-gradient(180deg, var(--c-navy), var(--c-navy-lo)); --px-inset: linear-gradient(180deg, var(--c-bg-1), var(--c-bg-0));
+  --c-surface: var(--c-bg-3); --c-surface-2: var(--c-bg-2); --c-surface-3: var(--c-bg-0); --s-surface-3: var(--c-bg-0); --inset: var(--c-bg-0); --inset-line: #ffffff2e;
+  --c-text: #ffffff; --c-title: #ffffff; --c-muted: var(--c-on-dark-muted); --text: #ffffff; --title: #ffffff; --muted: var(--c-on-dark-muted); --accent-text: #ffc94d;
   --c-action-lo: #5fe07a; --c-danger-lo: #ff7a8a; color: #fff; }
 .modal-dark .slot-panel { --psh: inset 0 0 0 1.5px #ffffff17, inset 0 2px 6px #0000008c; }
-.modal-dark .item-empty { border: 1.5px solid #070a1c; background: radial-gradient(circle at 50% 40%, #2a2063, #0c0822 80%); box-shadow: inset 0 3px 6px #000c, inset 0 0 0 1.5px #8a86a859; }
-.modal-dark .hx-sheet-slot .item-empty { background: radial-gradient(circle at 50% 40%, #2a2063, #0c0822 80%); box-shadow: inset 0 3px 6px #000c, inset 0 0 0 1.5px #8a86a859; }
+.modal-dark .item-empty, .modal-dark .hx-sheet-slot .item-empty { border: 1.5px solid var(--c-bg-0); background: radial-gradient(circle at 50% 40%, var(--c-bg-3), var(--c-bg-0) 80%);
+  box-shadow: inset 0 3px 6px #000c, inset 0 0 0 1.5px #8a86a859; }
 .modal-dark .hx-sheet-slot > .icon { opacity: 0.55; }
 .modal-dark .gear-pick { border-color: color-mix(in srgb, var(--rar) 70%, transparent); box-shadow: 0 0 0 1px #0008, 0 4px 14px #0008; }
 .modal-dark .set-line { background: #ffffff12; }
-.modal-dark .set-line.set-on { background: color-mix(in srgb, var(--set) 26%, #0d0826); }
-.modal-dark .set-line .set-dot { box-shadow: 0 0 0 2px #0d0826, 0 0 6px var(--set); }
+.modal-dark .set-line.set-on { background: color-mix(in srgb, var(--set) 26%, var(--c-bg-0)); }
+.modal-dark .set-line .set-dot { box-shadow: 0 0 0 2px var(--c-bg-0), 0 0 6px var(--set); }
 /* l'emplacement (refait le 27/11) : l'objet porté et son renforcement ; l'objet touché dans la liste est cerclé d'or et
    sa fiche (chiffres, panoplie et bonus) s'ouvre dessous, avec « Équiper » */
 .gear-now { display: flex; align-items: center; gap: 10px; }

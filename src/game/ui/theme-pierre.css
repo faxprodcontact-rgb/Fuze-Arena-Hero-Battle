@@ -1,5 +1,5 @@
 /* FABRIQUÉ par refonte-graphique/ui-moderne/theme/pierre.ts — ne pas modifier à la main (relancer le script).
-   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 320 règles, 426 couleurs. */
+   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 324 règles, 430 couleurs. */
 /*  style.css  */
 :root:where([data-theme="pierre"]) {
     --c-bg-0: #131218;
@@ -212,6 +212,12 @@
 }
 :where(:root[data-theme="pierre"]) .team-face {
     background: radial-gradient(circle at 60% 30%, #6c6986, #343340 75%)
+}
+:where(:root[data-theme="pierre"]) .modal-dark .item-empty, :where(:root[data-theme="pierre"]) .modal-dark .hx-sheet-slot .item-empty {
+    box-shadow: inset 0 3px 6px #000c, inset 0 0 0 1.5px #8d8ba359
+}
+:where(:root[data-theme="pierre"]) .gear-pick {
+    box-shadow: 0 4px 12px #1e1d251f
 }
 :where(:root[data-theme="pierre"]) .hall-hero::before {
     background: radial-gradient(closest-side, #15141ab3, #15141a00)
@@ -802,6 +808,9 @@
     background: linear-gradient(180deg, #fffbe0 0%, #ffe27a 25%, #ffc22e 60%, #f0a018 100%);
     box-shadow: inset 0 1px 0 #fff, -1px 2px 0 #8a4a00, 0 0 12px #ffc22e88
 }
+:where(:root[data-theme="pierre"]) .bq-red {
+    box-shadow: inset 0 0 0 1.5px #8c8aa38c, inset 0 0 0 3px #ff6a1f40, inset 0 1px 0 #ffffff33, -2px 5px 10px #0f0f1399
+}
 /*  sections/boutiques-modes.css  */
 :where(:root[data-theme="pierre"]) .mx {
     --mx-n0: #15141a;
@@ -1122,13 +1131,16 @@ html:where([data-theme="pierre"]) .screen.summon {
     --g-deep: #343240
 }
 html:where([data-theme="pierre"]) .screen.summon.sum-kind-basic {
-    --g-deep: #2f2e3b
+    --g-deep: #393746
 }
 :where(:root[data-theme="pierre"]) .sum-kind {
     color: #cccbd6
 }
 :where(:root[data-theme="pierre"]) .sum-kind .icon {
     filter: drop-shadow(0 2px 2px #0006)
+}
+:where(:root[data-theme="pierre"]) .sg-casting::after {
+    background: radial-gradient(closest-side, transparent 30%, #0e0d1199 70%, transparent)
 }
 :where(:root[data-theme="pierre"]) .sum-round-icon {
     filter: drop-shadow(-2px 3px 3px #15151a59)
