@@ -122,8 +122,8 @@ SPECIAL = [
     (520, dict(spx=24.0, spy=-58.0, rot=-3, eyes=1.0, ground=0.0, tuck=1.0)),
     (650, dict(spx=36.0, spy=-70.0, rot=0, eyes=1.0, ground=0.0, tuck=1.0, sw=0.4)),
     (700, dict(spx=56.0, spy=-38.0, rot=12, eyes=1.0, ground=0.0, dive=1.0, fang=1.0)),
-    (750, dict(spx=70.0, spy=2.0, rot=5, eyes=1.0, ground=0.0, stab=1.0, trail=0.5, fang=1.0, pale=1.0)),
-    (950, dict(spx=70.0, spy=2.0, rot=5, eyes=1.0, ground=0.0, stab=1.0, trail=0.5, fang=1.0, pale=0.0)),
+    (750, dict(spx=70.0, spy=2.0, rot=5, eyes=1.0, ground=0.0, stab=1.0, trail=0.5, fang=1.0)),
+    (950, dict(spx=70.0, spy=2.0, rot=5, eyes=1.0, ground=0.0, stab=1.0, trail=0.5, fang=1.0)),
     (1040, dict(spx=70.5, spy=3.0, rot=6, eyes=1.0, ground=0.0, stab=1.0, trail=0.5, fang=0.0, sw=0.6)),
     (1120, dict(spx=68.0, spy=3.0, rot=4, eyes=0.8, ground=0.0, stab=1.0, trail=0.5, fang=0.2, sw=0.8)),
     (1180, dict(spx=46.0, spy=-28.0, rot=-2, eyes=0.5, ground=0.0, land=1.0)),
@@ -175,6 +175,8 @@ def pose_at(T, action=None, t0=0.0):
     idl = idle_offsets(T)
     src = act or {n: DEF.get(n, 0.0) for n in NUM}
     Q = {n: src[n] + w * idl.get(n, 0.0) for n in NUM}
+    if action == 'special':
+        Q['pale'] = env(tl, SP_HIT - 1, SP_HIT, SP_HIT + 60, SP_HIT + 260)   # elle pâlit d'un coup à l'impact
     P = params(Q, w * idl['breath'])
     P['blink'] = 1.0 if (w > 0.95 and 1.3 <= (T % 3.1) < 1.42) else 0.0
     return P, tl, Q
@@ -399,16 +401,16 @@ def fx_special(tl):
                 t = u * 0.9
                 fig.fx_front.append(stone(fig, x0 + vx * t, GR - 3 + vy * t + 120 * t * t, 1.3 + 0.2 * (i % 2), k,
                                           op=min(1.0, (1 - u) * 3), rot=300 * t + i * 40))
-        # la traînée de venin du plongeon (derrière elle : courbe qui suit les crocs, s'effile)
+        # la traînée de venin du plongeon (derrière elle : la courbe de sa course, qui part de l'abdomen et s'effile)
         if SP_DIVE - 40 <= tl < SP_HIT:
             t_end = min(tl, SP_HIT)
             pts = []
             for i in range(14):
                 t = max(SP_DIVE - 60, t_end - 140 + 140 * i / 13)
                 B = body_at(SPECIAL, t)
-                pts.append(mapp(B, (82.0, 100.0)))
+                pts.append(mapp(B, (20.0, 86.0)))
             op = 1.0
-            w = [0.1] + [3.6 * (i / 13) ** 0.9 for i in range(1, 13)] + [3.4]
+            w = [0.1] + [4.4 * (i / 13) ** 0.9 for i in range(1, 13)] + [4.0]
             tr = ribbon(pts, w, sharp_ends=False)
             fig.fx_back.append(outlined([(tr, g_lin(fig, pts[0], pts[-1], [(0, VENOM[3], 0.5), (0.6, VENOM[2]), (1, VENOM[1])]), 1)],
                                         ink='#16302c', w=1.1, op=op))

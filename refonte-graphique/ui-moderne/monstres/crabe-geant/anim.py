@@ -293,6 +293,25 @@ def puddle(fig, X, L, op=1.0):
 TRAIL = []
 
 
+def tip_at(keys, t):
+    """Où est le bout de la grosse pince à l'instant t (ms) de l'action (pour dessiner l'arc de sa traînée)."""
+    Q = keyed(keys, t)
+    P = dict(C.REST, sp=(Q['spx'], Q['spy']), rot=Q['rot'], ca=Q['ca'], cw=Q['cw'], co=Q['co'])
+    return mapp(C.skeleton(P)[2], (113.4, 19.0))
+
+
+def arc_trail(fig, keys, tl, t0, t1, w, op):
+    """La traînée d'eau qui suit le bout de la pince : l'arc réellement parcouru pendant les 90 dernières ms."""
+    if op <= 0.02:
+        return
+    a = max(t0, tl - 95)
+    b = min(tl, t1)
+    if b - a < 12:
+        return
+    pts = [tip_at(keys, a + (b - a) * i / 8) for i in range(9)]
+    fig.fx_back.append(stream(fig, pts, 0.8, w, op=op))
+
+
 def fx_idle_bubble(T):
     """Il bave : une bulle naît à la bouche, monte en ondulant et éclate (toutes les 3,6 s)."""
     def f(fig, ctx):
@@ -314,13 +333,9 @@ def fx_attack(tl):
     def f(fig, ctx):
         tip = ctx['tip']
         # la traînée d'eau qui suit le bout de la pince pendant qu'elle s'abat
-        if AT_SWING + 75 < tl < AT_HIT + 120:
-            TRAIL.append(tip)
-        if tl >= AT_HIT + 120 or tl < AT_SWING:
-            TRAIL.clear()
-        if len(TRAIL) >= 3 and tl < AT_HIT + 120:
+        if AT_SWING + 20 < tl < AT_HIT + 120:
             k = 1 - max(0.0, (tl - AT_HIT) / 120)
-            fig.fx_back.append(stream(fig, TRAIL[-4:], 0.8, 3.6 * k, op=min(1, k * 1.5)))
+            arc_trail(fig, ATTACK, tl, AT_SWING + 20, AT_HIT, 3.8 * k, min(1, k * 1.5))
         # l'impact : éclair, écume, nappes d'eau qui s'ouvrent autour du point frappé, gouttes ; poussière sous les pattes
         dt = tl - AT_HIT
         if 0 <= dt < 520:
@@ -405,13 +420,9 @@ def fx_special(tl):
             grow = min(1.0, (tl - SP_COIL0) / 420)
             op = 1.0 if tl < SP_SLAM - 20 else max(0.0, 1 - (tl - (SP_SLAM - 20)) / 60)
             coil(fig, ctx, grow, tl / 1000, op)
-        if SP_WIND + 10 < tl < SP_SLAM + 60:
-            TRAIL.append(ctx['tip'])
-            if len(TRAIL) >= 3:
-                k = 1 - max(0.0, (tl - SP_SLAM) / 60)
-                fig.fx_back.append(stream(fig, TRAIL[-4:], 1.0, 4.0 * k, op=k))
-        else:
-            TRAIL.clear()
+        if SP_WIND < tl < SP_SLAM + 80:
+            k = 1 - max(0.0, (tl - SP_SLAM) / 80)
+            arc_trail(fig, SPECIAL, tl, SP_WIND, SP_SLAM, 4.4 * k, k)
         dt = tl - SP_SLAM
         imp = (ctx['tip'][0] + 2, GR - 1)
         if 0 <= dt < 420:
