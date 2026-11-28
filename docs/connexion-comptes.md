@@ -51,6 +51,14 @@ Prévoir environ 1 h 30. Garde une note (papier ou gestionnaire de mots de passe
 
 ### 2.1 Supabase (gratuit) — en premier, car Google et Apple demandent son adresse
 
+> **FAIT le 28/11/2026** (par Claude, avec le jeton du compte dédié rangé dans les secrets réseau de l'environnement
+> cloud, hôte `api.supabase.com`) : projet **« Fuze Arena - Hero Battle »** (créé par le propriétaire, région
+> `eu-west-1`, Irlande), code `fervxczzgbbyawaqzrxj`, adresse `https://fervxczzgbbyawaqzrxj.supabase.co`, clé publique
+> (publishable) `sb_publishable_Tw5VsJpYBNSALG0MRCnAjQ_f3Rdc3RY`. Site URL et Redirect URLs réglés (point 3 ci-dessous).
+> Tables `players` et `saves` créées, lecture de sa seule ligne (`supabase/migrations/`). L'ancien compte et son
+> ancien projet ne servent plus au jeu (rien n'y a été touché). Reste : Google et Apple (§2.2 à 2.4), puis les deux
+> variables GitHub (§2.5) **seulement quand Google et Apple marchent** (sinon les boutons s'allument pour rien).
+
 Décidé : au début de l'étape 3, on supprime l'ancien projet « Fuze Arena » (après une sauvegarde) pour faire de la
 place, et on garde le projet AVA.
 

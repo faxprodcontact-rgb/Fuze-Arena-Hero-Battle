@@ -167,8 +167,10 @@ vrai jeu jouée par un joueur automatique).
   Aucun nom, personnage, symbole ou histoire repris. Graphismes : faits par Claude, sans autre abonnement d’IA (choix du propriétaire).
 - **Langues** : français et anglais dès le départ ; aucun texte écrit en dur dans le code de l'interface.
 - **Supabase** : ne rien lire ni modifier sans l'accord explicite du propriétaire, ne jamais lui demander de
-  clé dans la conversation. Décidé : au début de l'étape 3, supprimer l'ancien projet Fuze Arena (après une
-  sauvegarde) pour faire de la place ; garder le projet AVA.
+  clé dans la conversation. Depuis le 28/11 : un **compte dédié au jeu**, projet « Fuze Arena - Hero Battle »
+  (`fervxczzgbbyawaqzrxj`, Irlande), joint par l'API (`api.supabase.com`) avec un jeton rangé dans les secrets réseau
+  de l'environnement cloud (pas par le connecteur, qui est l'ancien compte : n'y plus rien toucher pour le jeu) ;
+  état et suite : `docs/connexion-comptes.md` §2.1 ; tables dans `supabase/migrations/`.
 - Code en anglais (noms de variables), commentaires et textes pour le propriétaire en français.
 - **Économie de crédits** (demande du propriétaire) : pas d'agents en parallèle ni de relecteur sans son accord ; peu
   d'images, petites, sur la zone utile ; lire les fichiers par morceaux (`grep -n`, `sed -n`) ; une conversation par
