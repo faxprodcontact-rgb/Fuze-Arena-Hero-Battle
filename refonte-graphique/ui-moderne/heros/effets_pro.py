@@ -255,6 +255,8 @@ def profil(kind, u):
         return max(0.0, math.sin(math.pi * u)) ** 0.7
     if kind == 'tete':             # queue effilée, tête pleine et ronde
         return (max(0.0, u) ** 0.75) * (math.sqrt(max(0.0, 1 - ((u - 0.86) / 0.14) ** 2)) if u > 0.86 else 1.0)
+    if kind == 'doux':             # plein, à peine effilé aux deux bouts (morceaux d'un ruban coupé devant / derrière)
+        return max(0.0, min(1.0, u / 0.1, (1 - u) / 0.1)) ** 0.5 * 0.85 + 0.15
     if kind == 'pointe':           # queue effilée, plein aux 2/3, pointe fine
         return max(0.0, math.sin(math.pi * min(1.0, u * 0.75 + 0.02))) ** 0.8 * max(0.0, 1 - max(0, (u - 0.7) / 0.3)) ** 0.6
     return 1.0

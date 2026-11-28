@@ -45,9 +45,12 @@ BOUCHE_S = (_N['special'][0] + 4 + 63.5, _N['special'][1])
 def fleche(stone):
     def f(fig, i):
         """Le projectile seul, la pointe en (0, 0), vers la droite : la flèche (ou le carreau de pierre) et sa traînée."""
-        if stone:
-            fig.fx_front.append(_streak(fig, (-110, 0), (-57, 0), 5.0, (A.GOLD[2], A.GOLD[0])))
-            fig.fx_front.append(_streak(fig, (-90, 0.6), (-59, 0), 2.4, (A.DUST[1], '#ffffff')))
+        if stone:                         # le carreau de la spéciale : sa traînée « pro » (28/11)
+            A._PRO[0] = True
+            try:
+                fig.fx_front.append(A.streak(fig, (-110, 0), (-57, 0), 5.0, (A.GOLD[2], A.GOLD[0])))
+            finally:
+                A._PRO[0] = False
         else:
             fig.fx_front.append(_streak(fig, (-100, 0), (-59.5, 0), 2.6, ('#f4ecd6', '#ffffff')))
         fig.fx_front.append(_arrow(fig, (-63.5, 0.0), 0, stone=3 if stone else 0))

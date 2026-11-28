@@ -910,5 +910,37 @@ def main():
     shutil.rmtree(TMP)
 
 
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : les rubans de sable et d'or d'un seul tenant sans contour sombre, la poussière en bouffées
+# fondues, les grains en galets (moins nombreux), les pétales en feuilles d'une forme, l'anneau d'or en rubans, les
+# éclats en lumières ; la pyramide et l'attaque gardent leur dessin.
+import effets_pro as E  # noqa: E402
+
+
+def _ring(fig, rx, w, op):
+    if op <= 0.02 or rx < 1:
+        return '', ''
+    return (E.ruban(fig, E.arc_ell(CEN, rx, rx * 0.2, 180, 360), w * 2.4, 'or', op=op * 0.75, kind='fuseau'),
+            E.ruban(fig, E.arc_ell(CEN, rx, rx * 0.2, 0, 180), w * 2.4, 'or', op=op, kind='fuseau'))
+
+
+def _grain(fig, x, y, s=0.7, op=1.0, rot=0.0, warm=False):
+    if int(x * 5.7 + y * 2.3) % 2:
+        return ''
+    return E.caillou(fig, x, y, s * 1.8, rot, seed=int(rot) % 5, op=op)
+
+
+E.accrocher(sys.modules[__name__], {
+    'ring': _ring,
+    'grain': _grain,
+    'sand_ribbon': lambda fig, pts, w, tones, op=1.0: E.ruban(fig, pts, w * 1.8, 'or' if tones is GOLDFX else 'sable', op=op, kind='doux', halo=0.3),
+    'puff': lambda fig, cx, cy, r, op=1.0, tones=None: E.nuage(fig, cx, cy, r * 1.15, 'sable', op=op, seed=int(cx) % 3, flat=0.8),
+    'petal': lambda fig, x, y, s=1.0, rot=0.0, op=1.0: E.feuille(fig, x, y, rot, 0.7 * s, op=op),
+    'sparkle': lambda fig, c, r, op=1.0, rot=0.0: E.lumiere(fig, c, r * 2.4, op, 'or'),
+})
+
+
 if __name__ == '__main__':
     main()

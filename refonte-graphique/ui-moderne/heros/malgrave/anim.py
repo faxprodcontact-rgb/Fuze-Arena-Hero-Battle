@@ -589,25 +589,25 @@ def fx_special(tl):
         # les volutes de fumée qui montent de l'anneau quand il s'éteint
         if 1500 <= t < 2000:
             q = (t - 1500) / 500.0
-            for j, a in enumerate((20, 75, 130, 200, 250, 320)):
+            for j, a in enumerate((20, 130, 250)):
                 x, y = ell(54, a)
                 lay = fig.fx_back if math.sin(math.radians(a)) > 0.05 else fig.fx_front
                 r = (3.6 + (j % 2)) * (1 + 0.5 * q)
                 o = env(q, 0, 0.15, 0.5, 1.0)
                 cx, cy = x + 5 * q * (1 if j % 2 else -1), y - 4 - 16 * q - r * 0.5
                 lay.append(puff(fig, cx, cy, r, op=o))
-                lay.append(puff(fig, cx + (0.7 if j % 2 else -0.7) * r, cy - 0.9 * r, r * 0.6, op=o * 0.9))
         # l'aura de la danse vaudou
         a_k = interp([(900, 0), (930, 0.45), (1060, 0.7), (1150, 0.9), (1240, 1.0), (1450, 1.1), (1540, 0.8), (1630, 0.5), (1740, 0.25), (1850, 0)], t)
         if a_k > 0.02:
             mats = dict(HAT=ctx['HAT'], HEAD=ctx['HEAD'], UC=ctx['UC'], U=ctx['U'], TAIL=ctx['TAIL'], SK=ctx['SKM'], **{'': (1, 0, 0, 1, 0, 0)})
             from atelier import mapp
+            items = []
             for j, (grp, p_) in enumerate(AURA):
                 x, y = mapp(mats[grp], p_)
                 wav = 0.55 * math.sin(j * 1.7 + ph * 1.3) + 0.45 * math.sin(j * 0.6 - ph * 0.8 + 1.3)
                 h = a_k * (11 + 6 * wav) * (0.8 if grp == '' else 1.0)
-                fig.fx_back.append(tongue(fig, (x, y + 2.5), h, 5.6 + 1.4 * wav, bend=0.9 * math.sin(ph + j), lean=0.25 * math.sin(ph * 0.7 + j * 2.1),
-                                          violet=(j % 2 == 1), op=min(1.0, a_k * 1.6)))
+                items.append(((x, y + 2.5), h, 6.4 + 1.6 * wav, 0.9 * math.sin(ph + j), -90 + 14 * math.sin(ph * 0.7 + j * 2.1)))
+            fig.fx_back.append(E.langues(fig, items, _VERT, op=min(1.0, a_k * 1.6)))   # l'aura : UNE silhouette (28/11)
         # la ronde des feux follets, puis la gerbe
         if 880 <= t < 1760:
             u = interp(U_TABLE, t)
@@ -636,8 +636,7 @@ def fx_special(tl):
             fig.fx_back.append(puff(fig, sk[0] - 12, sk[1] + 3, 3.2 * (0.6 + 0.4 * fl), op=fl))
             fig.fx_back.append(puff(fig, sk[0] + 12, sk[1] + 2, 3.0 * (0.6 + 0.4 * fl), op=fl))
             c = ((sk[0] + ctx['head'][0]) / 2, (sk[1] + ctx['head'][1]) / 2)
-            fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(80), g_rad(
-                fig, c, 80, [(0, '#f4ffe8', 0.3 * fl), (0.2, W_[1], 0.18 * fl), (0.55, W_[2], 0.06 * fl), (1, W_[3], 0)])))
+            fig.fx_front.append(E.lumiere(fig, c, 70, 0.35 * fl, _VERT))
     return f
 
 
@@ -767,6 +766,58 @@ def main():
                     gifp], check=True)
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : l'aura et l'anneau de feu follet sont UNE silhouette chacun (langues fondues, crête continue),
+# les feux follets des boules à traîne d'un seul ruban, la fumée violette en bouffées fondues, les coups de canne en
+# flammes d'une forme, éclats en lumières, grains en galets ; l'attaque garde son dessin.
+import effets_pro as E  # noqa: E402
+
+_VERT = dict(bord=(W_[2], W_[3], W_[4]), milieu=(W_[1], W_[2]), coeur=(W_[0], W_[1]), halo=W_[2], clair=W_[0], fonce=W_[5],
+             fumee=(VIO[1], VIO[2], VIO[3]))
+
+
+def _ring(fig, rx, k, ph, lit=False, smoke=True):
+    if k <= 0.02:
+        return
+    c = ((ell(rx, 0)[0] + ell(rx, 180)[0]) / 2, ell(rx, 0)[1])
+    ry = FLAT * rx
+    bk, fr = E.anneau(fig, c, rx, ry, k * 12.5, ph * 140, _VERT, op=min(1.0, k), seed=3)
+    fig.fx_back.append(bk)
+    fig.fx_front.append(fr)
+    if smoke:
+        for j, a in enumerate((60, 200, 320)):
+            x, y = ell(rx, a)
+            (fig.fx_back if math.sin(math.radians(a)) > 0.05 else fig.fx_front).append(E.nuage(fig, x, y - 3, 2.6 + 1.6 * min(k, 1.0), _VERT, op=0.8, seed=j))
+
+
+def _strike(fig, foot, level, tau):
+    if tau < 0 or tau > 0.45:
+        return
+    e = env(tau, 0, 0.03, 0.08, 0.3)
+    x, y = foot
+    fig.fx_back.append(E.lumiere(fig, (x + 0.5, y - 2), (10 + 3 * level) * (0.6 + 0.4 * e), e, _VERT))
+    if e > 0.05:
+        fig.fx_front.append(E.flamme(fig, (x, y), [(-2.2, 6 * (1 + 0.3 * level) * e, 4.4, -0.8, -0.5), (1.6, 8 * (1 + 0.3 * level) * e, 4.6, 0.7, 0.3)],
+                                     _VERT, op=e))
+    for j, (vx, vy) in enumerate(((-34, -60), (32, -66))):
+        if tau < 0.4:
+            (px, py), _ = E.vol((x, y - 1), (vx * (1 + 0.3 * level), vy * (1 + 0.2 * level)), 300, tau, drag=1.0)
+            if py < y:
+                fig.fx_front.append(E.caillou(fig, px, py, 1.6, tau * 700 + j * 60, seed=j, op=1 - tau / 0.4))
+
+
+E.accrocher(sys.modules[__name__], {
+    'ring': _ring,
+    'strike': _strike,
+    'puff': lambda fig, cx, cy, r, op=1.0: E.nuage(fig, cx, cy, r * 1.15, _VERT, op=op, seed=int(cx) % 3),
+    'ball': lambda fig, x, y, r, op=1.0: E.boule(fig, (x, y), r, 0, _VERT, op=op),
+    'trail_of': lambda fig, pts, w, op=1.0: E.ruban(fig, pts, w * 1.5, _VERT, op=op, kind='tete', halo=0.5),
+    'pop': lambda fig, c, r, op=1.0: E.lumiere(fig, c, r * 1.8, op, _VERT),
+})
 
 
 if __name__ == '__main__':

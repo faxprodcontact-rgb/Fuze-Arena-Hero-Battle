@@ -478,10 +478,10 @@ def fx_special(tl):
                 fig.glow(X, GR - 8, 26 * fl, 18 * fl, GOLD[1], 0.55 * fl)
             sc = env(ti, 0, 70, 380, 620)
             if sc > 0:
-                for j, (dx, hh, ww, ln) in enumerate(((0, 30, 9.0, 0.05), (-9, 21, 7.0, -0.25), (9, 24, 7.5, 0.22),
-                                                      (-17, 12, 5.5, -0.45), (17, 14, 5.5, 0.4), (-4, 15, 5.0, -0.1))):
-                    grow = min(1.0, sc * (1.2 - 0.06 * j))
-                    (fig.fx_front if j in (0, 2) else fig.fx_back).append(spike(fig, X + dx, hh * grow, ww, lean=ln))
+                # les pics de pierre jaillissent : UNE silhouette (effets_pro, 28/11), le bourrelet de sol soulevé compris
+                sp_ = [(dx, hh, ww * 1.2, ln * 40, min(1.0, sc * (1.2 - 0.06 * j))) for j, (dx, hh, ww, ln) in
+                       enumerate(((0, 30, 9.0, 0.05), (-9, 21, 7.0, -0.25), (9, 24, 7.5, 0.22), (-17, 12, 5.5, -0.45), (17, 14, 5.5, 0.4)))]
+                fig.fx_front.append(E.aiguilles(fig, X, GR, sp_, min(1.0, sc), p='terre', pierre=_PIERRE))
             for j, (vx, vy) in enumerate(((-70, -150), (60, -170), (-110, -90), (115, -100), (-25, -210), (30, -195), (-150, -40), (150, -50))):
                 t_ = (ti - 15 * (j % 3)) / 1000.0
                 if 0 <= t_ < 0.8:
@@ -718,6 +718,40 @@ def main():
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024),
           '— partie 1 : %.1f s, partie 2 : %.1f s' % (total, n2 / FPS))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : la fente du sol une courbe lisse, la traînée du carreau un ruban d'or, l'onde de l'arc un anneau
+# d'une forme, les pics de pierre sur l'ennemi UNE silhouette, cailloux en galets (moins nombreux), poussière en
+# bouffées fondues, poussières d'or en étincelles ; la flèche et l'attaque gardent leur dessin.
+import effets_pro as E  # noqa: E402
+
+_PIERRE = (STONE[0], STONE[1], STONE[2], STONE[3], STONE[4], '#24142e')
+
+
+def _crack(fig, x0, x1, heat, seed=0, w=1.0):
+    if x1 - x0 < 2 or heat <= 0.02:
+        return ''
+    return E.fissure(fig, [(x0, GR + 0.5), ((x0 * 2 + x1) / 3, GR + 1.0), ((x0 + x1 * 2) / 3, GR + 0.3), (x1, GR + 0.6)], 2.6 * w, 'terre',
+                     op=min(1, heat * 1.2), glow=heat, pierre=_PIERRE)
+
+
+def _rock(fig, x, y, s=1.6, rot=0.0, op=1.0, seed=0, vein=False):
+    if seed % 2 and s < 1.8:
+        return ''
+    return E.caillou(fig, x, y, s * 1.25, rot, seed=seed, op=op, hot=0.6 if vein else 0.0, pierre=_PIERRE)
+
+
+E.accrocher(sys.modules[__name__], {
+    'crack': _crack,
+    'rock': _rock,
+    'dust': lambda fig, cx, cy, r, op=1.0: E.nuage(fig, cx, cy, r * 1.15, 'terre', op=op, seed=int(cx) % 3, flat=0.75),
+    'mote': lambda fig, x, y, r=0.6, op=1.0: E.etincelle(fig, x, y, 0, -30, r * 1.2, 'or', op=op),
+    'streak': lambda fig, a, b, w, cols, op=1.0: E.ruban(fig, [a, ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2), b], w * 1.5, 'or', op=op, kind='tete', halo=0.5),
+    'ring_wave': lambda fig, c, r, w, op, cols=None: E.ruban(fig, E.arc_ell(c, r * 0.45, r, -80, 80, 10), w * 1.6, 'or', op=op, kind='fuseau'),
+})
 
 
 if __name__ == '__main__':

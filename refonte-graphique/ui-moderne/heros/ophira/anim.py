@@ -688,7 +688,7 @@ def fx_special(tl):
             front.append(glow(fig, c, 9 * lv + 2, GAZE[2], 0.4 * lv))
             # une lueur courbe : un croissant vert qui naît devant le visage
             arc = [(c[0] - 2 + 3.2 * math.cos(a), c[1] + 6.0 * math.sin(a)) for a in [(-1.2 + 2.4 * i / 10) for i in range(11)]]
-            front.append(outlined([(ribbon(arc, [0.1] + [1.6 * lv] * 9 + [0.1]), GAZE[1], 1)], ink=GINK, w=0.7, op=lv))
+            front.append(E.ruban(fig, arc, 2.8 * lv, _REGARD, op=lv, kind='fuseau'))   # « pro » (28/11)
         # 3) le regard part et voyage jusqu'à l'ennemi
         g0, g1 = SP_GAZE
         if g0 <= tl < g1 + 260:
@@ -945,6 +945,52 @@ def main():
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024),
           '— partie 1 : %.1f s, partie 2 : %.1f s' % (total, n2 / FPS))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : le regard est UN jet ondulant (tête ronde, cœur blanc, halo doux, sans contour sombre), l'éclat
+# de l'impact une lumière (plus d'étoile à branches), la poussière en bouffées fondues, les cailloux en galets ;
+# la statue, ses morceaux et l'attaque gardent leur dessin.
+import effets_pro as E  # noqa: E402
+
+_REGARD = dict(bord=(GAZE[3], GAZE[4], GAZE[4]), milieu=(GAZE[2], GAZE[1]), coeur=(GAZE[0], GAZE[1]), halo=GAZE[2],
+               clair=GAZE[0], fonce=GAZE[5], fumee=(GAZE[1], GAZE[2], GAZE[3]))
+_PIERRE = (STONE[0], STONE[1], STONE[2], STONE[3], STONE[4], '#24142e')
+
+
+def _gaze(fig, ctx, p, tail=0.0, amp=3.2, ph=0.0):
+    path = resample(gaze_path(ctx), 80)
+    n = len(path) - 1
+    head = int(p * n)
+    i0 = int(tail * n)
+    if head - i0 < 2:
+        return ''
+    pts, ws = [], []
+    for i in range(i0, head + 1, 2):
+        a = path[max(0, i - 1)]
+        b = path[min(n, i + 1)]
+        dx, dy = b[0] - a[0], b[1] - a[1]
+        L = math.hypot(dx, dy) or 1
+        nx, ny = -dy / L, dx / L
+        rel = (head - i) / max(head, 1)
+        off = amp * math.sin(rel * 9.0 + ph) * min(1.0, rel * 4)
+        pts.append((path[i][0] + nx * off, path[i][1] + ny * off))
+        ws.append(0.4 + 5.0 * (1 - rel) ** 1.4)
+    if len(pts) < 2:
+        return ''
+    ws[0] = 0.1
+    hx, hy = pts[-1]
+    return E.group([E.jet(fig, pts, ws, _REGARD), E.lumiere(fig, (hx, hy), 10, 0.6, _REGARD), E.boule(fig, (hx, hy), 3.0, ph * 30, _REGARD)])
+
+
+E.accrocher(sys.modules[__name__], {
+    'gaze': _gaze,
+    'burst': lambda fig, c, r, rot=0.0, op=1.0, tones=None: E.lumiere(fig, c, r * 2.4, op, _REGARD if tones is None else 'terre'),
+    'dust': lambda fig, cx, cy, r, op=1.0, seed=0: E.nuage(fig, cx, cy, r * 1.15, 'terre', op=op, seed=seed, flat=0.75),
+    'pebble': lambda fig, x, y, s=1.0, rot=0.0, op=1.0, seed=0: E.caillou(fig, x, y, 1.6 * s, math.degrees(rot), seed=seed, op=op, pierre=_PIERRE),
+})
 
 
 if __name__ == '__main__':
