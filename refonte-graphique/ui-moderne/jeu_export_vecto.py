@@ -362,7 +362,8 @@ def grow(el, box, s, grd):
 
 def glow_defs(fid, ec):
     """Le filtre de l'éclat (rendu dans l'image exportée, jamais en direct dans le jeu) : halo large et lisière serrée à
-    la couleur de l'élément autour des parties CLAIRES (la fumée et la roche ne brillent pas), couleurs un peu
+    la couleur de l'élément autour des parties CLAIRES et OPAQUES (la fumée et la roche ne brillent pas ; un voile
+    transparent devant le corps, bouclier ou dôme, compte au carré de son opacité : il ne noie pas le personnage), couleurs un peu
     relevées, et cœur presque blanc là où c'est déjà très clair."""
     halo, rim, core = ECLAT_COULEURS[ec['element']]
     lu, co = ec['lueur'], ec['coeur']
@@ -371,7 +372,8 @@ def glow_defs(fid, ec):
     return ('<defs><filter id="%(id)s" filterUnits="userSpaceOnUse" x="-600" y="-600" width="1600" height="1600" '
             'color-interpolation-filters="sRGB">'
             '<feColorMatrix in="SourceGraphic" type="matrix" values="%(lum)s" result="l0"/>'
-            '<feComposite in="l0" in2="SourceAlpha" operator="in" result="l1"/>'
+            '<feComposite in="l0" in2="SourceAlpha" operator="in" result="la"/>'
+            '<feComposite in="la" in2="SourceAlpha" operator="in" result="l1"/>'
             '<feGaussianBlur in="l1" stdDeviation="5" result="b1"/>'
             '<feFlood flood-color="%(halo)s" flood-opacity="%(o1)s"/><feComposite in2="b1" operator="in" result="h1"/>'
             '<feGaussianBlur in="l1" stdDeviation="1.6" result="b2"/>'
@@ -380,7 +382,8 @@ def glow_defs(fid, ec):
             '<feFuncG type="linear" slope="1.1" intercept="0.03"/><feFuncB type="linear" slope="1.1" intercept="0.03"/>'
             '</feComponentTransfer>'
             '<feColorMatrix in="SourceGraphic" type="matrix" values="%(hot)s" result="c0"/>'
-            '<feComposite in="c0" in2="SourceAlpha" operator="in" result="c1"/>'
+            '<feComposite in="c0" in2="SourceAlpha" operator="in" result="ca"/>'
+            '<feComposite in="ca" in2="SourceAlpha" operator="in" result="c1"/>'
             '<feGaussianBlur in="c1" stdDeviation="0.7" result="c2"/>'
             '<feFlood flood-color="%(core)s" flood-opacity="%(o3)s"/><feComposite in2="c2" operator="in" result="c3"/>'
             '<feMerge><feMergeNode in="h1"/><feMergeNode in="h2"/><feMergeNode in="src"/><feMergeNode in="c3"/></feMerge>'

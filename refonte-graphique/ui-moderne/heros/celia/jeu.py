@@ -36,3 +36,6 @@ JEU = {
 }
 # la vue élargie (27/11) : des images touchaient son bord et étaient coupées net (bords_combat)
 JEU['vue'] = (-22, -96, 297, 236)
+
+# l'éclat de la spéciale (28/11) : des effets agrandis touchaient le bord de la vue (bords_combat) : vue plus large
+JEU['speciale']['eclat'] = dict(marge=70)

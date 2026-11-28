@@ -107,3 +107,6 @@ JEU = {
                      coupe=lambda t: 150 if t < A.SP_EMERGE else -200,
                      dense=[(A.SP_EMERGE - 60, A.SP_EMERGE + 200), (A.SP_HIT - 180, A.SP_HIT + 260)]),
 }
+
+# l'éclat de la spéciale (28/11) : des effets agrandis touchaient le bord de la vue (bords_combat) : vue plus large
+JEU['speciale']['eclat'] = dict(marge=130)

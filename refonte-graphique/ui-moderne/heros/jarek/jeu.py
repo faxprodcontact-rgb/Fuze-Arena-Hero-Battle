@@ -23,3 +23,6 @@ JEU = {
     'speciale': dict(genre='sort', coup=A.S_HIT, cible=(A.FOE[0], A.FOE[1]), charge=(130, A.SREL - 10),
                      coupe=lambda t: 150 if t < A.S_BURST else 112),
 }
+
+# l'éclat de la spéciale (28/11) : des effets agrandis touchaient le bord de la vue (bords_combat) : vue plus large
+JEU['speciale']['eclat'] = dict(marge=70)
