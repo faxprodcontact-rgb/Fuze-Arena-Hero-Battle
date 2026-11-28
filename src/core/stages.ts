@@ -13,10 +13,10 @@ import { ELEMENTS, type Element } from './types';
  * gagne environ 2 fois sur 3 (réglé par simulations/combat.ts).
  */
 export const BALANCE = {
-  // (28/11 : 1.1 → 1.9, les héros ont été renforcés au grand réglage ; à puissance égale on gagne environ 2 fois sur 3)
-  monsterScale: 1.9,
+  // (28/11 : 1.1 → 1.25, réglé sur les vraies sections du joueur simulé : à puissance égale, on gagne le plus souvent)
+  monsterScale: 1.25,
   /** Plus il y a de vagues, plus chacune est légère : les héros doivent tenir jusqu'au bout. */
-  waveExponent: 0.35,
+  waveExponent: 0.3, // (28/11 : 0.35 → 0.3, mesuré niveau par niveau sur un chapitre : le plus plat)
   /** Force du boss par rapport à un monstre normal, multipliée par le nombre de héros. */
   bossFactor: 0.2,
   /**
