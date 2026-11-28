@@ -978,5 +978,68 @@ def main():
     shutil.rmtree(TMP)
 
 
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement, les petits outils d'effets ci-dessus passent par effets_pro (gerbes, colonne et bosse d'eau d'une
+# forme, gouttes étirées par leur course, rubans d'eau, bouffées fondues, lumières) ; l'attaque de base garde son dessin.
+import effets_pro as E  # noqa: E402
+
+
+def _gouttes(fig, X, k, big):
+    out = []
+    for j, (vx, vy) in enumerate(((-60, -130), (45, -145), (-95, -85), (90, -100))):
+        tau = k * 0.7 - 0.03 * (j % 2)
+        if 0 < tau < 0.7:
+            (x, y), (wx, wy) = E.vol((X, GR - 3), (vx * big ** 0.6, vy * big ** 0.6), 380, tau, drag=1.1)
+            if y < GR:
+                out.append(E.goutte(fig, x, y, wx, wy, (1.15 if j % 2 else 0.9) * big ** 0.4, 'eau'))
+    return out
+
+
+def _splash_crown(fig, X, k, big=1.0, seed=0):
+    if k <= 0 or k >= 1:
+        return [], []
+    return [], [E.gerbe(fig, X, GR, k, big * 1.1, seed=seed)] + _gouttes(fig, X, k, big)
+
+
+def _curl(fig, p, d, r0, turn, s, w, op=1.0, tones=None):
+    if op <= 0.02:
+        return ''
+    return E.ruban(fig, spiral(p, d, r0, turn, s, 8), w * 1.8, 'eau', op=op, kind='pointe', halo=0.3)
+
+
+def _ball_flight(fig, j, k):
+    r = 2.6 if j < 2 else 3.4
+    c = ball_pos(j, k)
+    out = []
+    k0 = max(0.0, k - 0.32)
+    if k - k0 > 0.02:
+        pts = [ball_pos(j, k0 + (k - k0) * i / 6) for i in range(7)]
+        out.append(E.ruban(fig, pts, r * 3.0, 'eau', kind='tete', halo=0.5))
+        kk = k - 0.12
+        if kk > 0:
+            p = ball_pos(j, kk)
+            out.append(E.goutte(fig, p[0], p[1] + 4 + 6 * (k - kk), 0, 60, 0.9, 'eau', op=1 - (k - kk) * 3))
+    q = ball_pos(j, min(1, k + 0.01))
+    out.append(cannonball(fig, c, r, sub(q, c)))
+    return out
+
+
+E.accrocher(sys.modules[__name__], {
+    'splash_crown': _splash_crown,
+    'column': lambda fig, X, top, wb, wt, sway, t, op=1.0: E.colonne(fig, X, top, GR, wb, wt, sway, t, op=op),
+    'mound': lambda fig, X, h, L, op=1.0, foamy=1.0: E.bosse(fig, X, GR, h, L, 'eau', op=op, foamy=foamy),
+    'foam': lambda fig, cx, cy, r, op=1.0, seed=0: E.nuage(fig, cx, cy, r * 1.2, 'eau', op=op, seed=seed),
+    'smoke': lambda fig, cx, cy, r, op=1.0, k=0: E.nuage(fig, cx, cy, r * 1.1, 'eau', op=op, seed=k),
+    'spark': lambda fig, c, r, op=1.0, rot=0.0: E.lumiere(fig, c, r * 2.4, op, 'eau'),
+    'flash': lambda fig, c, r, facing=0.0, op=1.0: E.lumiere(fig, c, r * 1.8, op, 'feu'),
+    'drop': lambda fig, x, y, vx, vy, r=1.0, op=1.0: E.goutte(fig, x, y, vx, vy, r, 'eau', op=op),
+    'curl': _curl,
+    'stream': lambda fig, pts, w0, w1, op=1.0, light=False: E.ruban(fig, pts, w1 * 1.5, 'eau', op=op, kind='tete'),
+    'fx_ball_flight': _ball_flight,
+})
+
+
 if __name__ == '__main__':
     main()

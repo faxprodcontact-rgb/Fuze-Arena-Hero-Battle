@@ -695,10 +695,8 @@ def fx_special(tl):
                 for j in range(3):
                     a0 = (spin * 1.3 + j * 120) % 360
                     a1 = a0 + 80
-                    sh = ring_arc(C, 34, 6.6, a0, a1, 2.6 * L)
-                    gr = g_lin(fig, (C[0] + 34, C[1]), (C[0] - 34, C[1]), [(0, WATER[1]), (0.5, WATER[2]), (1, WATER[3])])
                     mid = math.sin(math.radians((a0 + a1) / 2))
-                    (front if mid > 0 else back).append(outlined([(sh, gr, 1)], w=1.1, op=L))
+                    (front if mid > 0 else back).append(E.ruban(fig, E.arc_ell(C, 34, 6.6, a0, a1), 4.4 * L, 'eau', op=L, kind='fuseau'))
             # la vague se brise devant elle quand elle freine
             if tl >= 740:
                 k = (tl - 740) / 200
@@ -905,6 +903,52 @@ def main():
                     gifp], check=True)
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement, les petits outils d'effets ci-dessus passent par effets_pro (gerbes, vague, trombe d'eau d'une
+# forme, gouttes étirées par leur course, rubans et volutes d'eau, écume fondue) ; l'attaque de base garde son dessin.
+import effets_pro as E  # noqa: E402
+
+
+def _burst(fig, X, Y, k, seeds, big=1.0, g=260.0, sizes=(1.2, 0.9)):
+    out = []
+    for j, (vx, vy) in enumerate(seeds[:3]):
+        if k <= 0:
+            break
+        (x, y), (wx, wy) = E.vol((X, Y), (vx * big * 1.3, vy * big * 1.3), g * 1.2, k, drag=1.2)
+        if y < GR - 0.5:
+            out.append(E.goutte(fig, x, y, wx, wy, sizes[j % len(sizes)] * big, 'eau', op=min(1, 2.5 - k * 2.2)))
+    return out
+
+
+def _splash(fig, X, Y, k, big=1.0, dirs=None, seed=0):
+    if not (0 < k < 1):
+        return [], []
+    L = max(d[1] for d in dirs) if dirs else 13
+    return [], [E.gerbe(fig, X, Y + 1.5, k, big * L / 15.0, seed=seed)]
+
+
+def _curl(fig, C, r, a0, turn, w, op=1.0):
+    if op <= 0.02 or r < 0.4:
+        return ''
+    pts = [(C[0] + r * (1 - 0.6 * i / 10) * math.cos(math.radians(a0 + turn * i / 10)),
+            C[1] + r * (1 - 0.6 * i / 10) * math.sin(math.radians(a0 + turn * i / 10))) for i in range(11)]
+    return E.ruban(fig, pts, w * 1.7, 'eau', op=op, kind='pointe', halo=0.3)
+
+
+E.accrocher(sys.modules[__name__], {
+    'burst': _burst,
+    'splash': _splash,
+    'curl': _curl,
+    'wave': lambda fig, X, h, L, lead, op=1.0, crest=1.0: E.bosse(fig, X, GR, h, L * 1.1, 'eau', op=op, foamy=crest),
+    'spout': lambda fig, X, top, wb, wt, t, op=1.0, spiral=1.0, crown=1.0: E.colonne(fig, X, top, GR, wb, wt, 2 * math.sin(t * 6), t, op=op, lips=crown),
+    'foam': lambda fig, cx, cy, r, op=1.0, seed=0: E.nuage(fig, cx, cy, r * 1.2, 'eau', op=op, seed=seed),
+    'drop': lambda fig, x, y, vx, vy, r=1.0, op=1.0: E.goutte(fig, x, y, vx, vy, r, 'eau', op=op),
+    'stream': lambda fig, pts, w0, w1, op=1.0: E.ruban(fig, pts, w1 * 1.6, 'eau', op=op, kind='tete'),
+})
 
 
 if __name__ == '__main__':

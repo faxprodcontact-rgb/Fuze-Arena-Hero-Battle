@@ -734,5 +734,74 @@ def main():
     shutil.rmtree(TMP)
 
 
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : l'onde de pics de glace est UNE silhouette (cornes de glace fondues avec le bourrelet de sol
+# gelé), la fente du sol une courbe lisse, les éclats des galets de glace, la buée et la neige des bouffées fondues, le
+# souffle et les traînées des rubans d'un seul tenant, l'éclat de l'impact une lumière ; l'attaque garde son dessin.
+import effets_pro as E  # noqa: E402
+
+GLACE = E.pierre_de(ICE, IINK)
+
+
+def _spikes_at(fig, tw, x0):
+    SPIKES = [(0, 9, 8, 2, 0), (5, 15, 9, -1, 1), (17, 12, 9, 3, 2), (26, 22, 11, 1, 3), (31, 13, 8, 5, 4),
+              (36, 27, 12, -2, 5), (50, 18, 10, 2, 6), (57, 31, 12, 4, 7), (64, 19, 9, -4, 8), (76, 40, 14, 2, 9),
+              (83, 25, 10, 7, 10), (88, 16, 8, -3, 15), (93, 44, 14, -6, 12), (101, 62, 19, 4, 11), (110, 48, 15, 9, 13),
+              (118, 24, 10, 6, 14)]
+    FR = 80.0
+    k = tw / FR
+    reach = (k + 1) * 36
+    back, front = [], []
+    if 0 <= k <= 7.5:
+        x1 = min(x0 + reach, x0 + 124)
+        if x1 - x0 > 6:
+            back.append(E.fissure(fig, [(x0 - 8, GR + 0.6), ((x0 + x1) / 2 - 4, GR + 1.1), (x1, GR + 0.6)], 3.0, 'glace',
+                                  op=env(k, 0, 0.2, 6.5, 7.5), glow=0.8, pierre=GLACE))
+    sp, crumbs = [], []
+    for (dx, h, w, lean, sd) in SPIKES:
+        age = k - dx / 36
+        if age < -0.2:
+            continue
+        brk = 5.0 + dx / 80.0
+        if k < brk:
+            a = max(0.0, age + 0.2)
+            grow = min(1.12, a / 0.8 * 1.12) if a < 0.8 else 1.12 - 0.12 * min(1.0, (a - 0.8) / 0.8)
+            sp.append((dx, h, w * 1.1, lean * 3.0, grow))
+            if a < 1.0 and sd % 3 == 0:
+                front.append(E.nuage(fig, x0 + dx - 1, GR - 2.5, 2.0 + w * 0.24, 'glace', op=1 - a, seed=sd, flat=0.7))
+        else:
+            b = k - brk
+            if b < 0.6:
+                sp.append((dx, h, w * 1.1, lean * 3.0, 1.0 - 0.6 * b / 0.6))
+            if b < 2.2 and sd % 2 == 0:
+                front.append(E.nuage(fig, x0 + dx, GR - h * 0.25 * (1 - b / 2.2) - 2.5, (2.0 + w * 0.25) * (0.8 + 0.4 * b), 'glace',
+                                     op=1 - b / 2.2, seed=sd + 3))
+                for j, (ox, vy, rr) in enumerate(((-3, -26, 0.32), (3, -34, 0.24))):
+                    t = b * FR / 1000
+                    (px, py), _ = E.vol((x0 + dx + ox + lean * 0.5, GR - h * 0.55), (ox * 12, vy * 1.6), 260, t, drag=0.8)
+                    if py < GR:
+                        front.append(E.caillou(fig, px, py, max(1.0, h * rr * 0.32), 300 * t + sd * 17, seed=sd + j, op=1 - b / 2.2,
+                                               hot=0.3, p='glace', pierre=GLACE))
+    if sp:
+        back.append(E.aiguilles(fig, x0, GR, sp, min(1.0, k / 2 + 0.3), p='glace', hot=0.5, pierre=GLACE))
+    c = (x0 + 104, GR - 58)
+    if 3.5 <= k < 6:
+        q = k - 3.5
+        front.append(E.lumiere(fig, c, 22 * env(q, 0, 0.25, 0.7, 1.4), env(q, 0, 0.25, 0.7, 1.4), 'glace'))
+    return back, front
+
+
+E.accrocher(sys.modules[__name__], {
+    'spikes_at': _spikes_at,
+    'puff': lambda fig, cx, cy, r, op=1.0, kind='snow', seed=0: E.nuage(fig, cx, cy, r * 1.15, 'glace', op=op * (0.8 if kind == 'mist' else 1), seed=seed),
+    'flake': lambda fig, x, y, s=1.0, op=1.0, rot=0.0: E.etincelle(fig, x, y, 6 * math.cos(math.radians(rot)), 25, 0.55 * s, 'glace', op=op),
+    'wisp': lambda fig, p0, p1, p2, p3, w, op=1.0: E.ruban(fig, [p0, p1, p2, p3], w * 1.6, 'glace', op=op, kind='pointe'),
+    'snow_trail': lambda fig, C, R, a0, a1, w, op=1.0: E.croissant(fig, C, R, a0, a1, w * 1.2, 'glace', op=op),
+    'burst': lambda fig, c, r, op=1.0, seed=0, facing=0.0: E.lumiere(fig, c, r * 2.6, op, 'glace'),
+})
+
+
 if __name__ == '__main__':
     main()

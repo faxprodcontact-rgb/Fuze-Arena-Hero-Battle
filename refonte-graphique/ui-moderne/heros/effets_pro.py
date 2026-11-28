@@ -571,7 +571,7 @@ def bosse(fig, X, sol, h, L, p='eau', op=1.0, foamy=1.0):
 
 # ======================================================================== le vent
 
-def spirale(fig, C, R0, R1, a0, span, w, tilt=0.4, rise=0.0, p='vent', n=40, stops=None):
+def spirale(fig, C, R0, R1, a0, span, w, tilt=0.4, rise=0.0, p='vent', n=40, stops=None, rfun=None):
     """Un ruban de vent en spirale autour de C (rayons R0 → R1, de a0 sur span degrés, qui monte de rise) : coupé en
     deux listes de rubans, ceux qui passent DERRIÈRE et ceux qui passent DEVANT (même dégradé, pas de contour : la
     jonction ne se voit pas). Rend (derrière, devant)."""
@@ -580,7 +580,7 @@ def spirale(fig, C, R0, R1, a0, span, w, tilt=0.4, rise=0.0, p='vent', n=40, sto
     for i in range(n + 1):
         u = i / n
         a = math.radians(a0 + span * u)
-        R = R0 + (R1 - R0) * u
+        R = rfun(u) if rfun else R0 + (R1 - R0) * u      # rfun : le rayon le long du ruban (un dôme…)
         rows.append(((C[0] + R * math.cos(a), C[1] - rise * u + R * tilt * math.sin(a)), math.sin(a) > 0, u))
     ws = [w * profil('fuseau', r[2]) for r in rows]
     c = [r[0] for r in rows]
@@ -1178,3 +1178,42 @@ def jet(fig, cen, ws, p='feu', op=1.0, halo=0.45):
            path(g2, lin(fig, a, b, [(0, P['milieu'][0]), (1, P['milieu'][1])])),
            path(g3, lin(fig, a, b, [(0, P['coeur'][0]), (0.7, P['coeur'][1]), (1, P['coeur'][1], 0.5)]))]
     return group(out, op)
+
+
+def accrocher(mod, table, quand='fx_special'):
+    """Fait passer les petits outils d'effets d'un anim.py par effets_pro PENDANT la spéciale seulement (l'attaque de
+    base garde son dessin) : table = {nom de l'outil : remplaçant de même signature}. Chaque outil est enveloppé (il
+    appelle le remplaçant quand la spéciale est en train de dessiner), et fx_special allume ce drapeau le temps de
+    dessiner une image. À appeler à la fin d'anim.py : E.accrocher(sys.modules[__name__], {...})."""
+    flag = mod.__dict__.setdefault('_PRO', [False])
+    for name, rep in table.items():
+        orig = getattr(mod, name)
+
+        def w(*a, _o=orig, _r=rep, **k):
+            return _r(*a, **k) if flag[0] else _o(*a, **k)
+        w.__name__ = name
+        setattr(mod, name, w)
+    fs = getattr(mod, quand)
+
+    def fx(*a, **k):
+        f = fs(*a, **k)
+
+        def g(fig, ctx):
+            flag[0] = True
+            try:
+                return f(fig, ctx)
+            finally:
+                flag[0] = False
+        return g
+    setattr(mod, quand, fx)
+
+
+def arc_ell(C, rx, ry, a0, a1, n=14, tilt=0.0):
+    """Des points sur un arc d'ellipse (degrés, y vers le bas), tourné de tilt."""
+    ct, st = math.cos(math.radians(tilt)), math.sin(math.radians(tilt))
+    out = []
+    for i in range(n + 1):
+        a = math.radians(a0 + (a1 - a0) * i / n)
+        x, y = rx * math.cos(a), ry * math.sin(a)
+        out.append((C[0] + x * ct - y * st, C[1] + x * st + y * ct))
+    return out

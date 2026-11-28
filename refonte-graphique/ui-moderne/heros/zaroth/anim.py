@@ -467,10 +467,8 @@ def fx_special(tl, ang_prev):
         if 0 <= tau < 0.45:
             e = env(tau, 0, 0.04, 0.12, 0.45)
             x = tip[0]
-            fig.fx_front.append(sheet(fig, (x - 2, GR), 14 * e, 5.0, lean=-0.7, bend=-0.8, op=e))
-            fig.fx_front.append(sheet(fig, (x + 3, GR), 15 * e, 5.0, lean=0.7, bend=0.8, op=e))
-            fig.fx_back.append(sheet(fig, (x + 0.5, GR), 9 * e, 3.6, lean=0.1, op=e))
-            for i, (vx, vy) in enumerate(((-60, -110), (70, -120), (10, -150), (-95, -60), (100, -70))):
+            fig.fx_front.append(E.gerbe(fig, x + 0.5, GR, min(0.95, tau / 0.45), 0.95, seed=1))
+            for i, (vx, vy) in enumerate(((-60, -110), (70, -120), (10, -150))):
                 px, py = ballistic((x, GR - 3), (vx, vy), 380, tau)
                 if py < GR:
                     fig.fx_front.append(drop(fig, px, py, vx, vy + 380 * tau, 1.0 if i % 2 else 0.8, op=1 - tau / 0.45))
@@ -484,14 +482,13 @@ def fx_special(tl, ang_prev):
             H, RX = 104 * (1 - 0.85 * down), 58 + 30 * down
             op = 1 - down
             for j in range(3):
-                pts = helix(cx, H, RX, ph + 120 * j, 1.15, level)
-                for run in runs(pts):
-                    if len(run) < 3:
-                        continue
-                    xy = [(x, y) for x, y, _, _ in run]
-                    w = 3.2 * (1 - 0.5 * run[len(run) // 2][3]) + 0.6
-                    layer = fig.fx_front if run[1][2] else fig.fx_back
-                    layer.append(stream(fig, xy, w, w * 0.8, op=(0.75 if run[1][2] else 0.95) * op))
+                # UN ruban d'eau en spirale sur la surface du dôme (effets_pro), coupé devant / derrière sans jonction visible
+                if level > 0.03:
+                    bk, fr, _ = E.spirale(fig, (cx, GR - 1), RX, RX, ph + 120 * j, 360 * 1.15 * level, 6.4, tilt=0.16, rise=H * level,
+                                          p='eau', n=40, stops=E.spirale_feu('eau'),
+                                          rfun=lambda u, L=level: RX * math.sqrt(max(0.0, 1 - (u * L) ** 2)) + 1.5)
+                    fig.fx_back.append(E.group(bk, op * 0.85))
+                    fig.fx_front.append(E.group(fr, op))
             # le voile du dôme (translucide), et l'eau qui tourbillonne à son pied
             if level > 0.15:
                 gy = GR - H * level
@@ -515,10 +512,10 @@ def fx_special(tl, ang_prev):
             w = 5.0 * (1 - 0.6 * k)
             fig.fx_back.append(ground_ring(fig, cx, rx, ry, w, op, False))
             fig.fx_front.append(ground_ring(fig, cx, rx, ry, w, op, True))
-            for j in range(8):
-                a = math.radians(25 + 45 * j)
+            for j in range(3):
+                a = math.radians(40 + 130 * j)
                 x, y = cx + rx * math.cos(a), GR - 0.6 + ry * math.sin(a)
-                (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(sheet(fig, (x, y), 7 * op * (0.6 + 0.4 * (j % 2)), 3.0, lean=0.4 * math.cos(a), op=op))
+                (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(E.gerbe(fig, x, y + 0.6, min(0.95, 0.2 + k), 0.55, op=op, seed=j))
         # l'armure d'eau : une lueur bleue, des éclats qui scintillent sur les plaques
         arm = env(t, S_LAUNCH, S_LAUNCH + 120, S_DEFI, S_DEFI + 260)
         if arm > 0:
@@ -533,17 +530,17 @@ def fx_special(tl, ang_prev):
         # le soin : un peu d'eau claire tombe sur lui, de petites bulles montent
         if S_HEAL <= t < S_HEAL + 600:
             k = (t - S_HEAL) / 600.0
-            for j in range(7):
-                st = j * 0.07
+            for j in range(4):
+                st = j * 0.1
                 kk = (k - st) / 0.5
                 if 0 <= kk <= 1:
-                    x = 48 + 7 * j
+                    x = 48 + 12 * j
                     y = -30 + 70 * kk * kk
                     fig.fx_front.append(drop(fig, x, y, 0, 1, 0.9, op=1 - kk ** 3))
-            for j in range(8):
-                kk = (k - 0.25 - 0.05 * j) / 0.6
+            for j in range(4):
+                kk = (k - 0.25 - 0.1 * j) / 0.6
                 if 0 <= kk <= 1:
-                    x = 46 + 6 * j + 2 * math.sin(kk * 7 + j)
+                    x = 46 + 12 * j + 2 * math.sin(kk * 7 + j)
                     y = 100 - 70 * kk - 4 * (j % 3)
                     fig.fx_front.append(bead(fig, x, y, 0.7 + 0.3 * (j % 3), op=math.sin(math.pi * kk)))
         # le défi : une lueur rouge douce qui gonfle puis s'éteint, la marque qui bat au-dessus du casque
@@ -678,6 +675,31 @@ def main():
                     gifp], check=True)
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement, les petits outils d'effets ci-dessus passent par effets_pro (anneaux et rubans d'eau d'un seul
+# tenant, gouttes étirées par leur course, perles et reflets en lumière, marque sans contour) ; l'attaque garde son dessin.
+import effets_pro as E  # noqa: E402
+
+
+def _ground_ring(fig, cx, rx, ry, w, op, front):
+    if op <= 0.02 or rx < 2:
+        return ''
+    a0, a1 = (180, 360) if not front else (0, 180)
+    return E.ruban(fig, E.arc_ell((cx, GR - 0.6), rx, ry, a0, a1), w * 1.7, 'eau', op=op * (1 if front else 0.75), kind='fuseau')
+
+
+E.accrocher(sys.modules[__name__], {
+    'ground_ring': _ground_ring,
+    'stream': lambda fig, pts, w0, w1, gr_dir=None, op=1.0: E.ruban(fig, pts, max(w0, w1) * 1.6, 'eau', op=op, kind='fuseau'),
+    'drop': lambda fig, x, y, vx, vy, r=1.0, op=1.0: E.goutte(fig, x, y, vx * 40, vy * 40 + 20, r, 'eau', op=op),
+    'bead': lambda fig, x, y, r=1.0, op=1.0: E.lumiere(fig, (x, y), r * 3.2, op, 'eau'),
+    'glint': lambda fig, x, y, r, op=1.0: E.lumiere(fig, (x, y), r * 2.2, op, 'eau'),
+    'mark': lambda fig, c, s, op=1.0: E.amande(fig, c, 5.4 * s, 'sang', op=op),
+})
 
 
 if __name__ == '__main__':
