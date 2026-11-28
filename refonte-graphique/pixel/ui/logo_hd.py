@@ -22,7 +22,7 @@ from fontTools.pens.transformPen import TransformPen
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import uilib as U  # noqa: E402
 
-VW, VH = 640, 474           # tout compris : pommeaux des épées, queues du ruban, contour épais, ombre floue
+VW, VH = 640, 500           # tout compris : pointes et pommeaux des épées, queues du ruban, contour épais, ombre
 FONT = TTFont(U.POLICE)
 GS = FONT.getGlyphSet()
 CMAP = FONT.getBestCmap()
@@ -53,55 +53,62 @@ def mot(texte, taille, cx, base, espace=0.0, courbe=None):
 
 
 def epee(id_, sens):
-    """Une épée en X : la garde en bas, la pointe en haut vers l'extérieur. Dessinée verticale puis tournée."""
-    ang = 50 * sens
-    cx, cy = 320, 262
-    # (repère de l'épée : 0 = la garde, la lame monte vers y négatif ; la pointe à 530 de la garde)
-    lame = 'M-14,-12 L-14,-490 L0,-530 L14,-490 L14,-12 Z'
-    lame_ombre = 'M0,-12 L0,-530 L14,-490 L14,-12 Z'
-    arete = 'M-2,-20 L-2,-490 L0,-502 L2,-490 L2,-20 Z'
+    """Une des deux épées, refaites le 29/11 (« le bandeau et les 2 épées : refais-les correctement et mieux ») : elles se
+    croisent par leurs poignées juste sous le ruban, au milieu (garde d'or courbée avec un rubis, poignée de cuir,
+    pommeau d'or), et leurs lames s'ouvrent en V derrière le logo : les pointes d'acier ressortent en haut, de part et
+    d'autre de « FUZE ». Un seul contour sombre ; la moitié de la lame tournée vers la lumière est claire ; une arête fine."""
+    ang = 39 * sens                        # sens -1 : la lame part en haut à gauche ; +1 : en haut à droite
+    gx, gy = 320 - 22 * sens, 392          # la garde, sous le ruban (les deux poignées se croisent en dessous)
+    lame = 'M-17,-8 L17,-8 L15,-388 Q10,-420 0,-442 Q-10,-420 -15,-388 Z'
+    clair = 'M0,-8 L17,-8 L15,-388 Q10,-420 0,-442 Z'
+    arete = 'M-1.8,-16 L1.8,-16 L1.6,-408 L0,-424 L-1.6,-408 Z'
+    garde = 'M-64,6 Q-40,-2 0,-2 Q40,-2 64,6 Q72,-6 68,-19 Q40,-11 0,-12 Q-40,-11 -68,-19 Q-72,-6 -64,6 Z'
     return f'''
-  <g transform="translate({cx},{cy}) rotate({ang}) translate(0,200)">
-    <path d="{lame}" fill="url(#lg-acier)" stroke="#241434" stroke-width="7" stroke-linejoin="round"/>
-    <path d="{lame_ombre}" fill="#5f6a9e" opacity=".55"/>
-    <path d="{arete}" fill="#f6f9ff" opacity=".9"/>
-    <rect x="-10" y="4" width="20" height="62" rx="7" fill="url(#lg-cuir)" stroke="#241434" stroke-width="6"/>
-    <rect x="-52" y="-16" width="104" height="22" rx="11" fill="url(#lg-or-piece)" stroke="#241434" stroke-width="6"/>
-    <circle cx="0" cy="-5" r="9" fill="#d9303a" stroke="#5e1418" stroke-width="3"/>
-    <circle cx="3" cy="-8" r="3" fill="#ffc0b0"/>
-    <circle cx="0" cy="78" r="15" fill="url(#lg-or-piece)" stroke="#241434" stroke-width="6"/>
-    <circle cx="4" cy="73" r="4.5" fill="#fff6c8"/>
+  <g transform="translate({gx},{gy}) rotate({ang}) scale(1.08)">
+    <path d="{lame}" fill="#7e89b8" stroke="#241434" stroke-width="8" stroke-linejoin="round"/>
+    <path d="{clair}" fill="url(#lg-acier)"/>
+    <path d="{arete}" fill="#f6f9ff" opacity=".85"/>
+    <rect x="-11" y="4" width="22" height="58" rx="9" fill="url(#lg-cuir)" stroke="#241434" stroke-width="7"/>
+    <rect x="1" y="10" width="4" height="46" rx="2" fill="#c8605a" opacity=".55"/>
+    <path d="{garde}" fill="url(#lg-or-piece)" stroke="#241434" stroke-width="7" stroke-linejoin="round"/>
+    <circle cx="0" cy="-5" r="10" fill="#d9303a" stroke="#5e1418" stroke-width="3.5"/>
+    <circle cx="3" cy="-8.5" r="3.4" fill="#ffc8b8"/>
+    <circle cx="0" cy="76" r="17" fill="url(#lg-or-piece)" stroke="#241434" stroke-width="7"/>
+    <circle cx="0" cy="76" r="6.5" fill="#d9303a" stroke="#5e1418" stroke-width="2.5"/>
+    <circle cx="4.5" cy="70" r="4.5" fill="#fff6c8"/>
   </g>'''
 
 
 def ruban_y(x):
     """Le ruban est cintré : ses bouts remontent (sourire), et chaque lettre s'incline avec lui."""
-    t = (x - 320) / 190
-    return 22 * t * t, math.degrees(math.atan(2 * 22 * t / 190))
+    t = (x - 320) / 224
+    return 24 * t * t, math.degrees(math.atan(2 * 24 * t / 224))
 
 
 def svg():
     fuze = mot('FUZE', 178, 320, 160, espace=4)
     arena = mot('ARENA', 186, 320, 300, espace=2)
-    hero = mot('HERO BATTLE', 50, 320, 361, espace=3, courbe=ruban_y)
+    hero = mot('HERO BATTLE', 54, 320, 371, espace=5, courbe=ruban_y)
     lettres = f'{fuze} {arena}'
-    # le ruban : bande cintrée de x 120 à 520 (bouts relevés), queues repliées derrière
-    def bord(y0):
-        pts = []
-        for i in range(0, 41):
-            x = 120 + i * 10
-            pts.append((x, y0 + ruban_y(x)[0]))
-        return pts
-    haut, bas = bord(318), bord(372)
+    # le ruban (29/11, refait) : une bande cintrée de x 96 à 544, haute de 64, bordée de deux filets d'or ; à chaque bout
+    # une queue plus sombre qui part derrière, fendue en V, et le pli (le plus sombre) qui relie la bande à la queue
+    X0, X1, TOP, BOT = 96, 544, 316, 380
+
+    def bord(y0, a=X0, b=X1, n=44):
+        return [(a + (b - a) * i / n, y0 + ruban_y(a + (b - a) * i / n)[0]) for i in range(n + 1)]
+    haut, bas = bord(TOP), bord(BOT)
     bande = 'M' + ' L'.join(f'{x:.1f},{y:.1f}' for x, y in haut) + ' L' + ' L'.join(
         f'{x:.1f},{y:.1f}' for x, y in reversed(bas)) + ' Z'
-    ligne_h = 'M' + ' L'.join(f'{x:.1f},{y + 6:.1f}' for x, y in haut)
-    ligne_b = 'M' + ' L'.join(f'{x:.1f},{y - 6:.1f}' for x, y in bas)
-    yl, yr = ruban_y(120)[0], ruban_y(520)[0]
-    queue_g = f'M132,{336 + yl:.0f} L64,{346 + yl:.0f} L86,{374 + yl:.0f} L58,{404 + yl:.0f} L140,{398 + yl:.0f} Z'
-    queue_d = f'M508,{336 + yr:.0f} L576,{346 + yr:.0f} L554,{374 + yr:.0f} L582,{404 + yr:.0f} L500,{398 + yr:.0f} Z'
-    pli_g = f'M120,{372 + yl:.0f} L140,{398 + yl:.0f} L140,{372 + yl:.0f} Z'
-    pli_d = f'M520,{372 + yr:.0f} L500,{398 + yr:.0f} L500,{372 + yr:.0f} Z'
+    ligne_h = 'M' + ' L'.join(f'{x:.1f},{y:.1f}' for x, y in bord(TOP + 7, X0 + 6, X1 - 6))
+    ligne_b = 'M' + ' L'.join(f'{x:.1f},{y:.1f}' for x, y in bord(BOT - 7, X0 + 6, X1 - 6))
+    reflet = 'M' + ' L'.join(f'{x:.1f},{y:.1f}' for x, y in bord(TOP + 12, X0 + 20, X1 - 20))
+    yl, yr = ruban_y(X0)[0], ruban_y(X1)[0]
+    queue_g = (f'M{X0 + 26},{TOP + 18 + yl:.0f} L{X0 - 62},{TOP + 26 + yl:.0f} L{X0 - 34},{TOP + 54 + yl:.0f} '
+               f'L{X0 - 66},{BOT + 30 + yl:.0f} L{X0 + 26},{BOT + 24 + yl:.0f} Z')
+    queue_d = (f'M{X1 - 26},{TOP + 18 + yr:.0f} L{X1 + 62},{TOP + 26 + yr:.0f} L{X1 + 34},{TOP + 54 + yr:.0f} '
+               f'L{X1 + 66},{BOT + 30 + yr:.0f} L{X1 - 26},{BOT + 24 + yr:.0f} Z')
+    pli_g = f'M{X0},{BOT + yl:.0f} L{X0 + 26},{BOT + 24 + yl:.0f} L{X0 + 26},{BOT + yl - 4:.0f} Z'
+    pli_d = f'M{X1},{BOT + yr:.0f} L{X1 - 26},{BOT + 24 + yr:.0f} L{X1 - 26},{BOT + yr - 4:.0f} Z'
     return f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="4 0 {VW - 8} {VH}" role="img" aria-label="Fuze Arena – Hero Battle">
   <defs>
     <linearGradient id="lg-or" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="300">
@@ -121,7 +128,10 @@ def svg():
     <linearGradient id="lg-cuir" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0" stop-color="#5e1e2a"/><stop offset=".6" stop-color="#9a3a34"/><stop offset="1" stop-color="#6a2230"/>
     </linearGradient>
-    <linearGradient id="lg-rouge" gradientUnits="userSpaceOnUse" x1="0" y1="318" x2="0" y2="400">
+    <linearGradient id="lg-queue" gradientUnits="userSpaceOnUse" x1="0" y1="330" x2="0" y2="420">
+      <stop offset="0" stop-color="#b8283a"/><stop offset="1" stop-color="#6e1222"/>
+    </linearGradient>
+    <linearGradient id="lg-rouge" gradientUnits="userSpaceOnUse" x1="0" y1="316" x2="0" y2="404">
       <stop offset="0" stop-color="#ff7a62"/><stop offset=".22" stop-color="#e4423e"/><stop offset=".7" stop-color="#b42632"/><stop offset="1" stop-color="#7e1426"/>
     </linearGradient>
     <linearGradient id="lg-reflet" gradientUnits="userSpaceOnUse" x1="0" y1="40" x2="0" y2="170">
@@ -131,9 +141,12 @@ def svg():
     <clipPath id="lg-c0"><use href="#lg-l"/></clipPath>
     <clipPath id="lg-c1"><use href="#lg-l" transform="translate(-3,4)"/></clipPath>
     <clipPath id="lg-c2"><use href="#lg-l" transform="translate(3,-4)"/></clipPath>
-    <filter id="lg-flou" x="-10%" y="-10%" width="120%" height="130%"><feGaussianBlur stdDeviation="7"/></filter>
   </defs>
-  <g filter="url(#lg-flou)" opacity=".55" transform="translate(0,12)">
+  <g opacity=".2" transform="translate(-8,20)">
+    <use href="#lg-l" fill="#0c0614" stroke="#0c0614" stroke-width="30" stroke-linejoin="round"/>
+    <path d="{bande}" fill="#0c0614" stroke="#0c0614" stroke-width="18"/>
+  </g>
+  <g opacity=".28" transform="translate(-4,13)">
     <use href="#lg-l" fill="#0c0614" stroke="#0c0614" stroke-width="26" stroke-linejoin="round"/>
     <path d="{bande}" fill="#0c0614" stroke="#0c0614" stroke-width="12"/>
   </g>
@@ -151,13 +164,15 @@ def svg():
     </g>
     <ellipse cx="350" cy="78" rx="250" ry="66" fill="url(#lg-reflet)" opacity=".7"/>
   </g>
-  <path d="{queue_g}" fill="#8a1a2a" stroke="#2a1030" stroke-width="7" stroke-linejoin="round"/>
-  <path d="{queue_d}" fill="#8a1a2a" stroke="#2a1030" stroke-width="7" stroke-linejoin="round"/>
-  <path d="{pli_g}" fill="#4e0c1a"/><path d="{pli_d}" fill="#4e0c1a"/>
-  <path d="{bande}" fill="url(#lg-rouge)" stroke="#2a1030" stroke-width="7" stroke-linejoin="round"/>
-  <path d="{ligne_h}" fill="none" stroke="#ffd24a" stroke-width="4" stroke-linecap="round"/>
-  <path d="{ligne_b}" fill="none" stroke="#c98a24" stroke-width="4" stroke-linecap="round"/>
-  <path d="{hero}" fill="#2a1030" stroke="#2a1030" stroke-width="9" stroke-linejoin="round" transform="translate(0,3)"/>
+  <path d="{queue_g}" fill="url(#lg-queue)" stroke="#2a1030" stroke-width="8" stroke-linejoin="round"/>
+  <path d="{queue_d}" fill="url(#lg-queue)" stroke="#2a1030" stroke-width="8" stroke-linejoin="round"/>
+  <path d="{pli_g}" fill="#4a0c1a" stroke="#2a1030" stroke-width="5" stroke-linejoin="round"/>
+  <path d="{pli_d}" fill="#4a0c1a" stroke="#2a1030" stroke-width="5" stroke-linejoin="round"/>
+  <path d="{bande}" fill="url(#lg-rouge)" stroke="#2a1030" stroke-width="8" stroke-linejoin="round"/>
+  <path d="{reflet}" fill="none" stroke="#ff9a82" stroke-width="5" stroke-linecap="round" opacity=".45"/>
+  <path d="{ligne_h}" fill="none" stroke="#ffd24a" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="{ligne_b}" fill="none" stroke="#c98a24" stroke-width="4.5" stroke-linecap="round"/>
+  <path d="{hero}" fill="#2a1030" stroke="#2a1030" stroke-width="10" stroke-linejoin="round" transform="translate(0,3)"/>
   <path d="{hero}" fill="#fff3d6" stroke="#5e1418" stroke-width="5" stroke-linejoin="round" paint-order="stroke"/>
 </svg>'''
 
