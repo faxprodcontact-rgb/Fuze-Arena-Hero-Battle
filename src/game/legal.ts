@@ -9,7 +9,7 @@ const FR: Record<LegalDoc, Block[]> = {
   privacy: [
     { p: 'Brouillon — version de test.' },
     { h: 'Qui sommes-nous' },
-    { p: "Fuze Arena – Hero Battle est édité par [À COMPLÉTER : nom officiel de l'éditeur], Faulquemont (57380), France. Contact : faxprod.contact@gmail.com." },
+    { p: "Fuze Arena – Hero Battle est édité par Simon Ribic EI (entreprise individuelle), Faulquemont (57380), France. Contact : faxprod.contact@gmail.com." },
     { h: 'Données collectées' },
     { p: "Un identifiant de compte (anonyme, ou lié à ton compte Apple ou Google si tu le choisis), ton nom de joueur, ta progression dans le jeu, tes achats dans le jeu, tes messages dans le tchat, et des statistiques d'utilisation (pages vues, durée des sessions)." },
     { p: "Connexion avec Google ou Apple (si tu la choisis) : le jeu reçoit ton adresse e-mail (Apple peut donner une adresse relais qui cache la vraie), ton nom si tu l'as partagé, et un identifiant de compte. Aucun mot de passe n'est reçu. Ces informations servent seulement à garder ta partie et à la retrouver sur un autre appareil ; elles ne sont ni vendues ni utilisées pour la publicité." },
@@ -45,15 +45,15 @@ const FR: Record<LegalDoc, Block[]> = {
   notice: [
     { p: 'Brouillon — version de test.' },
     { h: 'Éditeur' },
-    { p: '[À COMPLÉTER : nom officiel, statut, numéro SIRET], Faulquemont (57380), France. Contact : faxprod.contact@gmail.com' },
+    { p: 'Simon Ribic EI (entreprise individuelle), SIRET [À COMPLÉTER], Faulquemont (57380), France. Contact : faxprod.contact@gmail.com' },
     { h: 'Directeur de la publication' },
-    { p: '[À COMPLÉTER]' },
+    { p: 'Simon Ribic' },
     { h: 'Hébergement' },
     { p: "Site de test : GitHub Pages (GitHub, Inc., San Francisco, États-Unis). Serveur du jeu : Supabase (serveurs en Europe, Irlande). Applications : App Store (Apple) et Google Play (Google)." },
   ],
   credits: [
     { h: 'Conception' },
-    { p: "[À COMPLÉTER : ton nom ou ton studio]" },
+    { p: 'Simon Ribic' },
     { h: 'Développement' },
     { p: "Réalisé avec l'aide de Claude (Anthropic)." },
     { h: 'Outils libres' },
@@ -67,7 +67,7 @@ const EN: Record<LegalDoc, Block[]> = {
   privacy: [
     { p: 'Draft — test version.' },
     { h: 'Who we are' },
-    { p: 'Fuze Arena – Hero Battle is published by [TO COMPLETE: publisher’s legal name], Faulquemont (57380), France. Contact: faxprod.contact@gmail.com.' },
+    { p: 'Fuze Arena – Hero Battle is published by Simon Ribic EI (sole proprietorship), Faulquemont (57380), France. Contact: faxprod.contact@gmail.com.' },
     { h: 'Data we collect' },
     { p: 'An account ID (anonymous, or linked to your Apple or Google account if you choose), your player name, your game progress, your in-game purchases, your chat messages, and usage statistics (screens viewed, session length).' },
     { p: 'Sign in with Google or Apple (if you choose it): the game receives your e-mail address (Apple may give a relay address that hides the real one), your name if you shared it, and an account ID. No password is ever received. This is only used to keep your progress and find it again on another device; it is never sold or used for advertising.' },
@@ -103,13 +103,13 @@ const EN: Record<LegalDoc, Block[]> = {
   notice: [
     { p: 'Draft — test version.' },
     { h: 'Publisher' },
-    { p: '[TO COMPLETE: legal name, status, registration number], Faulquemont (57380), France. Contact: faxprod.contact@gmail.com' },
+    { p: 'Simon Ribic EI (sole proprietorship), SIRET [TO COMPLETE], Faulquemont (57380), France. Contact: faxprod.contact@gmail.com' },
     { h: 'Hosting' },
     { p: 'Test site: GitHub Pages (GitHub, Inc., San Francisco, USA). Game server: Supabase (servers in Europe, Ireland). Apps: App Store (Apple) and Google Play (Google).' },
   ],
   credits: [
     { h: 'Design' },
-    { p: '[TO COMPLETE: your name or studio]' },
+    { p: 'Simon Ribic' },
     { h: 'Development' },
     { p: 'Made with the help of Claude (Anthropic).' },
     { h: 'Open-source tools' },
