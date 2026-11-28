@@ -29,7 +29,33 @@ plus vite** sur les étoiles et les héros.
 **Niveaux visés (joueur de référence)** : jour 1 : 150 ; jour 3 : 260 ; semaine 1 : 380 ; semaine 2 : 500 ; mois 1 :
 680 ; mois 2 : 860 ; mois 3 : 980 ; mois 4 : 1 070 ; mois 5 : 1 140 ; jour 175 : 1 200.
 
-RÉSULTATS_28_11
+**Résultats (réglages de la v0.72.0, médiane de 3 joueurs gratuits ; 2 payeurs)**
+
+| Moment | Visé | Joueur gratuit (3 × 20 min) |
+|---|---|---|
+| Jour 1 | 150 | 158 |
+| Jour 3 | 260 | 283 |
+| Semaine 1 | 380 | 386 |
+| Semaine 2 | 500 | 464 |
+| Mois 1 | 680 | 633 |
+| Mois 2 | 860 | 862 |
+| Mois 3 | 980 | 921 |
+| Mois 4 | 1 070 | 1 016 |
+| Mois 5 | 1 140 | 1 082 |
+| Jour 175 | 1 200 | 1 082 (fin vers le 7e mois) |
+
+| Étape (jour) | Joueur gratuit | Payeurs (2 joueurs) |
+|---|---|---|
+| Premier ★5 | 5 | 2 |
+| Première étoile rouge | 17 | 6 et 12 |
+| 5 héros en étoiles rouges | 38 | 24 et 27 |
+| Premier ★5 rouge, premier Mythique | 158 | 84 et 88 |
+| Fin de la campagne | ≈ 200 | 84 et 100 |
+
+Le payeur va donc environ 1,8 fois plus vite sur les étoiles et 2 fois plus vite sur la campagne. Les joueurs gratuits
+sont très différents selon la chance aux tirages : à réglages égaux, l'un a fini la campagne vers le jour 60, un autre
+vers le jour 170. Reste à surveiller : un palier lent vers le niveau 1 080 (environ 25 jours), et le plus long « mur »
+mesuré (10 jours vers le niveau 911). Invocations : environ 9 par jour pour le joueur gratuit (≈ 1 600 en 6 mois).
 
 **Ce que le réglage a appris**
 1. Le joueur automatique doit jouer comme un vrai joueur : garder les copies de ses Légendaires (ne faire monter que la
