@@ -98,9 +98,12 @@ export class RealPlayer {
     while (getState().wallet.gems >= 2700 + 300) summon('normal', 10);
     while (getState().wallet.redScrolls >= 10) summon('featured', 10);
     for (let k = 0; k < 200 && getState().wallet.basicScrolls >= 1; k++) summon('basic', 1);
-    // fragments : le Légendaire visé
+    // fragments : le Légendaire le plus avancé de la section (comme un vrai joueur)
     const s0 = getState();
-    if (!s0.fragmentTarget) setFragmentTarget(HEROES.find((h) => h.rarity === 'legendary')!.id);
+    const best = s0.formation.map(([u]) => s0.heroes.find((h) => h.uid === u)!).filter((h) => h && heroDef(h.defId).rarity === 'legendary')
+      .sort((a, b) => b.stars - a.stars)[0];
+    if (best && s0.fragmentTarget !== best.defId) setFragmentTarget(best.defId);
+    else if (!s0.fragmentTarget) setFragmentTarget(HEROES.find((h) => h.rarity === 'legendary')!.id);
     for (const [id, n] of Object.entries(getState().fragments)) if (n >= FRAGMENTS_PER_COPY) claimFragments(id);
     fuseAllSimple();
     // les fusions des Épiques et Légendaires (les autres : fuseAllSimple) ; on recommence tant que quelque chose a fusionné
@@ -132,8 +135,9 @@ export class RealPlayer {
     claimMail();
     collectIdle();
     if (fastLootCost(getState()) === 0) fastLoot();
-    const ads: ('summon' | 'idle' | 'gems')[] = ['summon', 'summon', 'idle', 'idle', 'gems', 'gems'];
-    while (adsLeft(getState()) > 0) watchAd(ads[6 - adsLeft(getState())] ?? 'gems');
+    // les 6 pubs du jour : l'invocation gratuite (une par jour), puis le butin et les gemmes
+    const ads: ('summon' | 'idle' | 'gems')[] = ['summon', 'idle', 'idle', 'idle', 'gems', 'gems'];
+    while (adsLeft(getState()) > 0) if (!watchAd(ads[6 - adsLeft(getState())] ?? 'gems')) break;
     for (const m of [...getState().daily.missions]) claimMission(m.id);
     for (const m of [...getState().daily.missions]) if (!m.startedAt) sendMission(m.id);
     void s;
@@ -195,6 +199,7 @@ export class RealPlayer {
         if (!req) break;
         finishBattle(req, fight(req));
       }
+      for (let k = 0; k < 20; k++) if (!buyExchange('arena', 'a-frag')) break;
       for (let k = 0; k < 20; k++) if (!buyExchange('arena', 'a-scroll')) break;
     }
     // guilde : rejoindre, puis le boss
@@ -205,7 +210,7 @@ export class RealPlayer {
         if (!req) break;
         finishBattle(req, fight(req));
       }
-      for (let k = 0; k < 20; k++) if (!buyExchange('guild', 'g-basic')) break;
+      for (let k = 0; k < 20; k++) if (!buyExchange('guild', 'g-frag')) break;
     }
   }
 

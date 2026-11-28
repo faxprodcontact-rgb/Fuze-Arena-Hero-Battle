@@ -1234,9 +1234,13 @@ export function buyExchange(shop: 'arena' | 'guild' | 'coliseum', id: string): G
     const { fragments, item, ...rest } = entry.reward;
     addReward(s, gain, rest);
     if (fragments) {
-      // Les fragments vont à un Légendaire déjà découvert (sinon à un Légendaire au hasard, qui se découvre ainsi).
+      // Les fragments vont au Légendaire visé ; sinon à celui qui en a déjà le plus (28/11 : avant, à un Légendaire au
+      // hasard à chaque achat, et on n'arrivait presque jamais aux 50 fragments d'une copie) ; sinon à un Légendaire
+      // découvert au hasard (ou inconnu, qui se découvre ainsi).
       const known = HEROES.filter((h) => h.rarity === 'legendary' && s.discovered.includes(h.id));
-      const target = known.length ? pick(nextRng(s), known).id : pick(nextRng(s), HEROES.filter((h) => h.rarity === 'legendary')).id;
+      const most = known.filter((h) => (s.fragments[h.id] ?? 0) > 0).sort((a, b) => (s.fragments[b.id] ?? 0) - (s.fragments[a.id] ?? 0))[0];
+      const aimed = s.fragmentTarget && heroDef(s.fragmentTarget).rarity === 'legendary' ? s.fragmentTarget : undefined;
+      const target = aimed ?? most?.id ?? (known.length ? pick(nextRng(s), known).id : pick(nextRng(s), HEROES.filter((h) => h.rarity === 'legendary')).id);
       s.fragments[target] = (s.fragments[target] ?? 0) + fragments;
       gain.fragments = { defId: target, amount: fragments };
     }

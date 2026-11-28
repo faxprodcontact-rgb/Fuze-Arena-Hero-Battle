@@ -44,12 +44,13 @@ export interface LadderStep {
 export const LADDER: Record<number, LadderStep> = {
   4: { copies: 1, fodderCount: 2, fodderStars: 3, crystals: 0 },
   5: { copies: 1, fodderCount: 2, fodderStars: 4, crystals: 0 },
-  6: { copies: 1, fodderCount: 3, fodderStars: 5, crystals: 0 },
-  7: { copies: 1, fodderCount: 3, fodderStars: 5, crystals: 0 },
-  8: { copies: 2, fodderCount: 4, fodderStars: 5, crystals: 0 },
-  9: { copies: 2, fodderCount: 4, fodderStars: 5, crystals: 0 },
-  10: { copies: 3, fodderCount: 5, fodderStars: 5, crystals: 0 },
-  11: { copies: 2, fodderCount: 0, fodderStars: 0, crystals: 600 },
+  // (28/11, grand réglage : les étoiles rouges étaient hors d'atteinte d'un joueur gratuit en 6 mois sur le vrai jeu)
+  6: { copies: 1, fodderCount: 2, fodderStars: 5, crystals: 0 },
+  7: { copies: 1, fodderCount: 2, fodderStars: 5, crystals: 0 },
+  8: { copies: 1, fodderCount: 3, fodderStars: 5, crystals: 0 },
+  9: { copies: 2, fodderCount: 3, fodderStars: 5, crystals: 0 },
+  10: { copies: 2, fodderCount: 4, fodderStars: 5, crystals: 0 },
+  11: { copies: 2, fodderCount: 0, fodderStars: 0, crystals: 400 },
 };
 
 /** Fragments nécessaires pour obtenir une copie d'un héros. */
