@@ -14,12 +14,12 @@ export const CAMPAIGN_ANCHORS: Anchor[] = [
   { stage: 260, power: 12400 },
   { stage: 380, power: 21500 },
   { stage: 500, power: 34300 },
-  { stage: 680, power: 62000 },
-  { stage: 860, power: 78000 },
-  { stage: 980, power: 108000 },
-  { stage: 1070, power: 128000 },
-  { stage: 1140, power: 145000 },
-  { stage: 1200, power: 160000 },
+  { stage: 680, power: 64000 },
+  { stage: 860, power: 90000 },
+  { stage: 980, power: 125000 },
+  { stage: 1070, power: 150000 },
+  { stage: 1140, power: 170000 },
+  { stage: 1200, power: 190000 },
 ];
 
 export function curveFromAnchors(anchors: readonly Anchor[]): (stage: number) => number {
