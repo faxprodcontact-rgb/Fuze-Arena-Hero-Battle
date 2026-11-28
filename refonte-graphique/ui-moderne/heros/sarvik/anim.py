@@ -678,5 +678,51 @@ def main():
     shutil.rmtree(TMP)
 
 
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : traînées et entailles de venin en croissants d'un seul tenant, volutes en rubans, taches de
+# venin en boules sans contour sombre, gouttes étirées par leur course, bulles, poussière fondue ; l'attaque garde
+# son dessin.
+import effets_pro as E  # noqa: E402
+
+_VENIN = dict(bord=(VEN[2], VEN[3], VEN[3]), milieu=(VEN[1], VEN[1]), coeur=('#ffffff', VEN[0]), halo=VEN[2], clair='#ffffff',
+              fonce=VEN[3], fumee=(VEN[0], VEN[1], VEN[2]))
+
+
+def _smear(fig, ctx, phi0, phi1, op=1.0, venom=False):
+    if op <= 0.02:
+        return ''
+    G = ctx['Gf']
+    st = K.SPINE[-1]
+    r = math.hypot(*st)
+    off = math.degrees(math.atan2(st[1], st[0]))
+    return E.croissant(fig, G, r, -phi0 + off, -phi1 + off, 6.0, _VENIN, op=op)
+
+
+def _crescent(fig, c, r, a0, a1, w, op=1.0, venom=True, wy=1.0):
+    return E.croissant(fig, c, r, a0, a1, w * 1.4, _VENIN, op=op)
+
+
+def _curl(fig, c, r, a0, turn, w, op=1.0, cw=False):
+    if op <= 0.02:
+        return ''
+    sg = -1 if cw else 1
+    pts = [(c[0] + r * (1 - 0.6 * i / 8) * math.cos(math.radians(a0 + sg * turn * i / 8)), c[1] + r * (1 - 0.6 * i / 8) * math.sin(math.radians(a0 + sg * turn * i / 8)))
+           for i in range(9)]
+    return E.ruban(fig, pts, w * 1.7, _VENIN, op=op, kind='pointe', halo=0.3)
+
+
+E.accrocher(sys.modules[__name__], {
+    'smear': _smear,
+    'crescent': _crescent,
+    'curl': _curl,
+    'drop': lambda fig, p, r, vel, op=1.0: E.goutte(fig, p[0], p[1], vel[0] * 40, vel[1] * 40, r * 0.9, _VENIN, op=op),
+    'bubble': lambda fig, p, r, op=1.0: E.boule(fig, p, r * 1.1, 0, _VENIN, op=op * 0.9),
+    'blob': lambda fig, c, r, op=1.0, seed=0, hollow=0.0, tones=None: E.boule(fig, c, r, seed * 30, _VENIN, op=op * (1 - 0.6 * hollow), seed=seed),
+    'dust': lambda fig, cx, cy, r, op=1.0, seed=0: E.nuage(fig, cx, cy, r * 1.15, 'terre', op=op, seed=seed, flat=0.75),
+})
+
+
 if __name__ == '__main__':
     main()

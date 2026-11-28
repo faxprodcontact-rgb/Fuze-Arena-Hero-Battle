@@ -652,8 +652,7 @@ def fx_special(tl):
         fl = env(t, SP_FLASH - 10, SP_FLASH, SP_FLASH + 30, SP_FLASH + 150)
         if fl > 0:
             c = (COCOON[0], COCOON[1] - 4)
-            fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(120), g_rad(
-                fig, c, 120, [(0, '#ffffff', 0.85 * fl), (0.14, '#ffe2d4', 0.5 * fl), (0.45, '#ff8a74', 0.14 * fl), (1, '#e2384c', 0)])))
+            fig.fx_front.append(E.lumiere(fig, c, 56, fl, 'sang'))   # « pro » (28/11)
         # éclats de pierre et de cristal projetés, puis poussière
         if SP_FLASH <= t < 1700:
             tau = (t - SP_FLASH) / 1000.0
@@ -668,7 +667,7 @@ def fx_special(tl):
         if 1180 <= t < 1760:
             k = (t - 1180) / 580.0
             o = env(k, 0, 0.12, 0.5, 1.0)
-            for j, (dx, rr, sp) in enumerate(((-24, 5.2, 10), (23, 5.0, 12), (-12, 4.2, 18), (13, 4.0, 16), (0, 5.6, 22))):
+            for j, (dx, rr, sp) in enumerate(((-24, 5.6, 10), (23, 5.4, 12), (0, 6.2, 22))):
                 fig.fx_front.append(dust(fig, FOE[0] + dx * (1 + 0.3 * k), GR - 3 - sp * k, rr * (0.7 + 0.6 * k), op=0.9 * o))
         # pendant la charge : l'abdomen gonflé luit d'un rouge sourd (la marque s'allume)
         ch = env(t, 150, 300, 560, 700)
@@ -891,6 +890,32 @@ def main():
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024),
           '— partie 1 : %.1f s, partie 2 : %.1f s' % (total, n2 / FPS))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : la fente du sol une courbe lisse, les morceaux de pierre en galets aux arêtes adoucies (moins
+# nombreux), la poussière en bouffées fondues, l'éclat en lumière ; les griffes de pierre, le cocon, la soie et
+# l'attaque gardent leur dessin.
+import effets_pro as E  # noqa: E402
+
+_PIERRE = (STONE[0], STONE[1], STONE[2], STONE[3], STONE[4] if len(STONE) > 4 else STONE[3], '#24142e')
+
+
+def _crack(fig, x0, x1, seed=1):
+    if x1 - x0 < 2:
+        return ''
+    return E.fissure(fig, [(x0, GR + 0.5), ((x0 * 2 + x1) / 3, GR + 1.0), ((x0 + x1 * 2) / 3, GR + 0.3), (x1, GR + 0.6)], 2.8, 'terre',
+                     glow=0.9, pierre=_PIERRE)
+
+
+E.accrocher(sys.modules[__name__], {
+    'crack': _crack,
+    'dust': lambda fig, cx, cy, r, op=1.0: E.nuage(fig, cx, cy, r * 1.15, 'terre', op=op, seed=int(cx) % 3, flat=0.75),
+    'chunk': lambda fig, x, y, s=1.6, rot=0.0, op=1.0: E.caillou(fig, x, y, s * 1.3, rot, seed=int(rot) % 5, op=op, pierre=_PIERRE),
+    'shard': lambda fig, x, y, s=1.5, rot=0.0, op=1.0: '' if int(rot) % 2 else E.caillou(fig, x, y, s * 1.1, rot, seed=int(rot) % 5, op=op, hot=0.5, pierre=_PIERRE),
+})
 
 
 if __name__ == '__main__':

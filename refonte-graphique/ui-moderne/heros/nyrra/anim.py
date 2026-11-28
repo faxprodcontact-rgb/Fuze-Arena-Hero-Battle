@@ -533,9 +533,7 @@ def fx_special(tl):
                 p3 = (cx + ex * (0.6 + 0.6 * u), cy + ey * (0.6 + 0.6 * u))
                 fig.fx_front.append(fil(bezier(p0, (p0[0] + ex * 0.3, p0[1] + ey * 0.2), (p3[0], p3[1] - 2), p3, 10), 0.9, SILKC[1], op=1 - u * 0.5))
                 fig.fx_front.append(puff(fig, p3, 1.3, 1 - u * 0.5))
-            fig.fx_front.append(outlined([(circ(cx + dx, cy + dy, r * (1 - 0.3 * u), 14),
-                                           fig.rad(cx + 3, cy - 4, 10, 10, [(0, SILKC[0]), (0.5, SILKC[2]), (1, SILKC[3])]), 1)
-                                          for dx, dy, r in ((0, 0, 7), (5, -3, 4.4), (-5, 3, 4.6), (2, 5, 3.8), (-3, -5, 4))], w=1.4))
+            fig.fx_front.append(E.nuage(fig, cx, cy, 7.5 * (1 - 0.3 * u), _SOIE, seed=2))   # la tache de soie : UNE forme (28/11)
             for k, (dx, dy) in enumerate(((-15, -12), (13, -14), (16, 6), (-16, 8))):
                 fig.fx_front.append(stone(fig, cx + dx * (0.6 + 0.8 * u), cy + dy * (0.6 + 0.8 * u) + 8 * u * u, 1.6, k, rot=200 * u))
         # le filet s'ouvre (éclair), retombe, se plante, colle, se défait
@@ -565,8 +563,7 @@ def fx_special(tl):
             for pts in rad:
                 fig.fx_front.append(fil(pts, 0.55, col, op=op_ * fade))
             if tl < SP_UNDO:
-                fig.fx_front.append(outlined([(circ(hub[0], hub[1], 3.8, 14), fig.rad(hub[0] + 1, hub[1] - 1, 4, 4, [(0, SILKC[0]), (1, SILKC[3])]), 1),
-                                              (circ(hub[0] + 2, hub[1] + 3, 2.4, 12), SILKC[2], 1)], w=1.3, op=op_))
+                fig.fx_front.append(E.boule(fig, hub, 4.0, 0, _SOIE, op=op_))
             # les cailloux arrachés volent encore, puis retombent
             if tl < SP_PLANT + 60:
                 u = (tl - SP_OPEN) / (SP_PLANT + 60 - SP_OPEN)
@@ -715,6 +712,29 @@ def main():
                     gifp], check=True)
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : la tache de soie à l'impact et le nœud de la toile d'UNE forme sans contour sombre, les
+# cailloux en galets, la poussière et les flocons de soie en bouffées fondues, les gouttes de venin étirées, les
+# éclats en lumières ; la pelote, la toile (fils) et l'attaque gardent leur dessin.
+import effets_pro as E  # noqa: E402
+
+_SOIE = dict(bord=(SILKC[3], SILKC[4], SILKC[4]), milieu=(SILKC[2], SILKC[1]), coeur=(SILKC[0], SILKC[1]), halo=SILKC[2], clair='#ffffff',
+             fonce=SILKC[4], fumee=(SILKC[0], SILKC[2], SILKC[3]))
+_VENIN = dict(bord=(VENOM[2], VENOM[3], VENOM[3]), milieu=(VENOM[1], VENOM[1]), coeur=('#ffffff', VENOM[0]), halo=VENOM[2], clair='#ffffff',
+              fonce=VENOM[3], fumee=(VENOM[0], VENOM[1], VENOM[2]))
+_PIERRE = (STONE[0], STONE[1], STONE[2], STONE[3], STONE[4], '#24142e')
+
+E.accrocher(sys.modules[__name__], {
+    'stone': lambda fig, x, y, r, k=0, op=1.0, rot=0.0: E.caillou(fig, x, y, r * 1.2, rot, seed=k, op=op, pierre=_PIERRE),
+    'dust': lambda fig, cx, cy, r, op=1.0: E.nuage(fig, cx, cy, r * 1.15, 'terre', op=op, seed=int(cx) % 3, flat=0.75),
+    'drop': lambda fig, x, y, r=1.0, op=1.0, ang=0.0: E.goutte(fig, x, y, 0, 40, r * 1.1, _VENIN, op=op),
+    'puff': lambda fig, c, r, op=1.0: E.nuage(fig, c[0], c[1], r * 1.4, _SOIE, op=op, seed=int(c[0]) % 3),
+    'flash': lambda fig, c, r, op: E.lumiere(fig, c, r * 1.3, op, _SOIE),
+})
 
 
 if __name__ == '__main__':

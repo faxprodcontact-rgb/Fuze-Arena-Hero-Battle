@@ -213,3 +213,29 @@ pour aller vite : corps à corps (modèle Kael, golem), tirs (modèle Jarek), so
 tombe sur un `rayon`, un `retour` ou une `avance` ajoute ce cas à l'outil (et à cette consigne) avant les autres de ce
 genre. Les 3 dragons (Brasyr, Rocvar, Venthys) passent comme les autres : ils remplacent alors `stillStrike`.
 Ensuite : effets reçus vectoriels, visages des monstres, puis la bascule et la suppression (section 5).
+
+## 7. Les effets « pro » des sorts spéciaux (`heros/effets_pro.py`, 28/11/2026)
+
+Demande du propriétaire : « je ne veux pas voir des formes l'une sur les autres […] des vraies courbes, tout relié,
+professionnel et beau ». Validé sur Kael, Kesha, Venthys, Rocvar, puis appliqué aux 47 héros. Règles du module :
+chaque effet est UNE silhouette (morceaux fondus par union shapely + fermeture, redessinés en courbes lisses), ses zones
+de couleur sont emboîtées DEDANS (bord → milieu → cœur blanc), pas de contour sombre sur l'énergie (halo doux, flou rendu
+dans l'image exportée seulement), une lumière en haut à droite, peu de particules mues par `vol` (air + gravité).
+
+- Outils : `flamme`, `foyer`, `langues` (flammes posées n'importe où, fondues : auras, armes en feu), `meches` (crinière,
+  aile, `zones=False` pour une seule couleur), `ruban` (profils `fuseau`, `tete`, `pointe`, `doux`), `croissant`,
+  `spirale` (devant / derrière, `stops`, `rfun` pour un dôme), `tourbillon`, `anneau` (mur d'énergie au sol, crête
+  continue), `onde` (choc au sol), `bulle` (bouclier, dôme), `couronne` (anneau d'explosion), `boule`, `souffle` et
+  `jet` (jets continus, aussi pour `genre='rayon'`), `gerbe`, `colonne`, `bosse`, `goutte`, `etincelle`, `nuage`,
+  `lumiere`, `choc`, `amande` (signe inventé), `feuille`, `caillou`, `aiguilles` (pics de pierre ou de glace d'une
+  silhouette), `fissure`. Palettes : `feu`, `or`, `sang`, `eau`, `glace`, `jade`, `vent`, `terre`, `sable`, `ombre`
+  (ou un dict aux mêmes clés, ex. le venin) ; `pierre_de(mat)` pour la roche d'un héros.
+- `accrocher(module, {nom: remplaçant})` (à la fin d'un `anim.py`) : les petits outils d'effets du héros (`drop`,
+  `foam`, `puff`, `tongue`…) passent par le module PENDANT la spéciale seulement ; l'attaque de base garde son dessin.
+  Un projectile de la spéciale dessiné par `jeu.py` allume le drapeau lui-même (`A._PRO[0] = True`, voir Jessa, Sylvar).
+- Attention aux tris de `jeu.py` qui reconnaissent un effet par son SVG (`vol`, `sur_cible`) : un effet du module
+  commence par `<g` ; `marque(el)` l'enveloppe dans un groupe reconnaissable (`'class="retour"' in el`, voir Aldric) ;
+  la fumée de poudre de Jessa garde son dessin (repérée par sa couleur de contour).
+- Les créatures et objets dessinés comme le héros (dragon d'eau d'Elvyn, aigle de Tessa, statue d'Ophira, menhirs,
+  rochers, pyramide, cocon, toile) gardent leur dessin ; seul ce qui est énergie, matière projetée ou poussière change.
+- Contrôle : l'outil de l'export prévient si l'éclat fait dépasser le budget (il allège seul) ; `bords_combat.py`.
