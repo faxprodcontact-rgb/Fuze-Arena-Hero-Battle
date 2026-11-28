@@ -21,6 +21,7 @@ import {
 } from '../src/game/state/actions';
 import { canLevelUp, isUnlocked, teamPower } from '../src/game/state/selectors';
 import { fresh, getState, now, replaceState, update } from '../src/game/state/store';
+import type { Hero } from '../src/core/types';
 import { ARENA_FREE_TICKETS, GUILD_BOSS_ATTEMPTS } from '../src/core/data/modes';
 import { FRAGMENTS_PER_COPY, RARITY_RULES } from '../src/core/data/stars';
 
@@ -109,7 +110,14 @@ export class RealPlayer {
     // les fusions des Épiques et Légendaires (les autres : fuseAllSimple) ; on recommence tant que quelque chose a fusionné
     for (let k = 0, again = true; k < 4 && again; k++) {
       again = false;
-      const ladder = getState().heroes.filter((h) => RARITY_RULES[heroDef(h.defId).rarity].fusion === 'ladder' && h.stars < RARITY_RULES[heroDef(h.defId).rarity].maxStars);
+      // (comme un vrai joueur) d'un même Légendaire, on ne fait monter que la meilleure copie : les autres restent des copies
+      const best = new Map<string, Hero>();
+      for (const h of getState().heroes) {
+        const b = best.get(h.defId);
+        if (!b || h.stars > b.stars || (h.stars === b.stars && h.level > b.level)) best.set(h.defId, h);
+      }
+      const ladder = getState().heroes.filter((h) => RARITY_RULES[heroDef(h.defId).rarity].fusion === 'ladder' && h.stars < RARITY_RULES[heroDef(h.defId).rarity].maxStars
+        && (heroDef(h.defId).rarity !== 'legendary' || best.get(h.defId) === h));
       for (const h of ladder.sort((a, b) => b.stars - a.stars).slice(0, 60)) if (getState().heroes.includes(h) && fuse(h.uid)) again = true;
     }
     autoFormation();

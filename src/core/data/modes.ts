@@ -231,12 +231,12 @@ export interface ShopItem {
 }
 export const ARENA_SHOP: ShopItem[] = [
   { id: 'a-scroll', cost: 300, reward: { scrolls: 1 } },
-  { id: 'a-frag', cost: 200, reward: { fragments: 20 } },
+  { id: 'a-frag', cost: 300, reward: { fragments: 20 } }, // (28/11 : 200 → 300, les fragments vont au Légendaire visé)
   { id: 'a-gold', cost: 100, reward: { goldH: 8 } },
   { id: 'a-item', cost: 400, reward: { item: 4 } },
 ];
 export const GUILD_SHOP: ShopItem[] = [
-  { id: 'g-frag', cost: 150, reward: { fragments: 20 } },
+  { id: 'g-frag', cost: 250, reward: { fragments: 20 } },
   { id: 'g-basic', cost: 100, reward: { basicScrolls: 10 } },
   { id: 'g-crystal', cost: 300, reward: { crystals: 50 } },
   { id: 'g-item', cost: 350, reward: { item: 4 } },
