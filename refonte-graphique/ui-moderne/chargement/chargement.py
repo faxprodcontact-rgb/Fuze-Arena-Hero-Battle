@@ -20,7 +20,7 @@
 #       public/art/chargement/chargement.webp l'image fixe complète (fond de l'écran du nom au premier lancement)
 #       index.html                            style, dessin et logo entre les repères « chargement »
 #       refonte-graphique/pixel/sortie/ui/chargement/ (scene.png, aperçu)
-# Le logo reste public/art/ui/logo.svg (refonte-graphique/pixel/ui/logo_hd.py), posé tel quel dans la page.
+# Le logo reste public/art/ui/logo.svg (depuis le 29/11 : refonte-graphique/ui-moderne/logo/logo.py, style moderne), posé tel quel dans la page.
 import json
 import math
 import os
