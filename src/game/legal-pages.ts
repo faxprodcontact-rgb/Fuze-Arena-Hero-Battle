@@ -51,7 +51,7 @@ ${body(p.doc, 'fr')}
 <hr>
 <h1 id="en">${esc(p.en)}</h1>
 ${body(p.doc, 'en')}
-<footer>${others} · <a href="./">Jouer / Play</a></footer>
+<footer>Un jeu de FAXSTUDIO – Simon Ribic · A FAXSTUDIO – Simon Ribic game<br>${others} · <a href="./">Jouer / Play</a></footer>
 </main>
 </body>
 </html>
