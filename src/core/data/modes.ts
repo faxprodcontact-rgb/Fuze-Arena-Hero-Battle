@@ -2,14 +2,17 @@
 // Valeurs de départ, à affiner avec les simulations et les essais.
 
 /** Niveau de campagne à finir pour débloquer chaque fonction. */
+// Réglés le 28/11 sur le rythme visé (joueur de référence : 3 × 20 min par jour) : un mode de plus à chaque étape du
+// premier jour (tour, missions, donjons, Événement), l'arène en fin de premier jour, la guilde le 2e ou 3e jour, le
+// Colisée vers la fin de la première semaine.
 export const UNLOCKS = {
-  tower: 20,
+  tower: 15,
   missions: 30,
-  dungeons: 40,
-  event: 60,   // le mode Événement (27/11, à la place du boss du jour : core/data/event.ts)
-  arena: 80,
-  guild: 100,
-  defense: 400,
+  dungeons: 50,
+  event: 90,   // le mode Événement (27/11, à la place du boss du jour : core/data/event.ts)
+  arena: 140,
+  guild: 220,
+  defense: 360,
 } as const;
 export type Feature = keyof typeof UNLOCKS;
 
@@ -54,7 +57,8 @@ export const GEMS_PER_10_SUMMONS = 2700;
 
 /** Puissance demandée pour l'étage n : au niveau d'un niveau de campagne qui avance de 6 par étage. */
 export const TOWER_STAGE_PER_FLOOR = 6;
-export const TOWER_REWARD = { essencePerFloor: 40, scrollsEvery: 5, gemsEvery: 10, gems: 100 };
+/** Chaque étage gagné : des heures d'essence (au revenu du joueur) ; un parchemin tous les 5 étages, des gemmes tous les 10. */
+export const TOWER_REWARD = { essenceHours: 1, scrollsEvery: 5, gemsEvery: 10, gems: 100 };
 
 // ---------- Donjons du jour ----------
 
@@ -66,8 +70,8 @@ export const DUNGEON_ATTEMPTS_PER_DAY = 3;
 export const DUNGEON_LEVELS = 150;
 /** Force d'un niveau de donjon = celle du niveau de campagne (niveau × ce nombre). */
 export const DUNGEON_STAGE_PER_LEVEL = 8;
-/** Récompense : heures de butin hors ligne du niveau de campagne équivalent. */
-export const DUNGEON_REWARD_HOURS = 6;
+/** Récompense : heures de butin hors ligne du niveau de campagne équivalent (or : de l'or ; source d'essence : de l'essence). */
+export const DUNGEON_REWARD_HOURS = 4;
 /** Armurerie : nombre d'objets et chance de rareté selon le niveau. */
 export function dungeonItems(level: number): { count: number; luck: number } {
   return { count: Math.min(6, 2 + Math.floor(level / 30)), luck: 1 + Math.floor(level / 25) };
@@ -143,7 +147,12 @@ export const WEEKLY_QUESTS: QuestDef[] = [
   { id: 'w-guild', event: 'guildBoss', goal: 6, points: 20 },
 ];
 /** Coffres d'activité : à 20, 40, 60, 80 et 100 points. */
-export type Reward = Partial<Record<'gold' | 'essence' | 'gems' | 'scrolls' | 'basicScrolls' | 'redScrolls' | 'crystals' | 'dust', number>>;
+/**
+ * Une récompense. `goldH` / `essenceH` (28/11) : de l'or ou de l'essence comptés en HEURES DE BUTIN du joueur (le revenu
+ * horaire de son niveau de campagne) : la récompense garde sa valeur du premier jour au dernier (un montant fixe valait
+ * des centaines d'heures au début et presque rien à la fin). Changées en montants par resolveReward (state/selectors.ts).
+ */
+export type Reward = Partial<Record<'gold' | 'essence' | 'goldH' | 'essenceH' | 'gems' | 'scrolls' | 'basicScrolls' | 'redScrolls' | 'crystals' | 'dust', number>>;
 export const DAILY_CHESTS: { points: number; reward: Reward }[] = [
   { points: 20, reward: { basicScrolls: 4 } },
   { points: 40, reward: { gems: 150 } },
@@ -175,37 +184,40 @@ export const OFFERS: Offer[] = [
   { id: 'starter', price: '0,99 €', reward: { gems: 1000, scrolls: 10 }, limit: 1, kind: 'starter' },
   { id: 'growth', price: '4,99 €', reward: { gems: 3000, scrolls: 15, crystals: 100 }, limit: 1, kind: 'growth' },
   { id: 'card', price: '4,99 €', reward: { gems: 300 }, limit: 0, kind: 'card' },
-  { id: 'pass', price: '9,99 €', reward: {}, limit: 1, kind: 'pass' },
+  { id: 'pass', price: '9,99 €', reward: {}, limit: 0, kind: 'pass' }, // une fois par saison (passPremium)
   { id: 'noads', price: '5,99 €', reward: {}, limit: 1, kind: 'noAds' },
   { id: 'gems-1', price: '1,99 €', reward: { gems: 300 }, limit: 0, kind: 'gems' },
   { id: 'gems-2', price: '9,99 €', reward: { gems: 1700 }, limit: 0, kind: 'gems' },
   { id: 'gems-3', price: '19,99 €', reward: { gems: 3600 }, limit: 0, kind: 'gems' },
   { id: 'gems-4', price: '49,99 €', reward: { gems: 9500 }, limit: 0, kind: 'gems' },
 ];
-/** Carte mensuelle : 300 gemmes à l'achat, puis 200 par jour pendant 30 jours (choix du propriétaire, 26/11). */
-export const MONTHLY_CARD = { days: 30, gemsPerDay: 200 };
+/** Carte mensuelle : 300 gemmes à l'achat, puis 300 par jour pendant 30 jours (26/11 : 200 ; 28/11 : 300, une invocation
+ * par jour, pour qu'un petit payeur avance environ 2 fois plus vite). */
+export const MONTHLY_CARD = { days: 30, gemsPerDay: 300 };
 
 /** Passe de saison : on gagne des points avec les quêtes ; chaque palier a une récompense gratuite et une payante. */
 export const PASS_POINTS_PER_LEVEL = 100;
+/** Une saison du passe dure 28 jours (28/11) : ensuite points, paliers pris et voie premium repartent de zéro. */
+export const PASS_SEASON_DAYS = 28;
 // Plus de choses à chaque palier (demande du propriétaire, 26/11) : chaque palier mélange plusieurs gains, ceux qui
 // tombent sur 5 sont de gros paliers, le 30e est le grand final. Valeurs raisonnables, à revoir au réglage final.
 export const PASS_LEVELS: { free: Reward; premium: Reward }[] = Array.from({ length: 30 }, (_, i) => {
   const lv = i + 1;
   if (lv === 30) return {
-    free: { scrolls: 3, gems: 300, gold: 100000 },
+    free: { scrolls: 3, gems: 300, goldH: 24 },
     premium: { scrolls: 10, crystals: 200, gems: 1000, dust: 500 },
   };
   if (lv % 5 === 0) return {
-    free: { scrolls: 1, gems: 100, gold: 4000 * lv },
-    premium: { scrolls: 3, crystals: 50, gems: 300, essence: 1000 * lv },
+    free: { scrolls: 1, gems: 100, goldH: 8 },
+    premium: { scrolls: 3, crystals: 50, gems: 300, essenceH: 8 },
   };
   // les autres paliers : un gain principal qui tourne, toujours avec un peu d'or et d'essence
   const turn = lv % 4;
   return {
-    free: { gold: 2000 * lv, essence: 300 * lv, ...(turn === 1 ? { basicScrolls: 2 } : turn === 3 ? { gems: 30 } : {}) },
+    free: { goldH: 3, essenceH: 2, ...(turn === 1 ? { basicScrolls: 2 } : turn === 3 ? { gems: 30 } : {}) },
     premium: {
       gems: 120,
-      ...(turn === 0 ? { scrolls: 1 } : turn === 1 ? { crystals: 20 } : turn === 2 ? { dust: 80 } : { basicScrolls: 5, essence: 600 * lv }),
+      ...(turn === 0 ? { scrolls: 1 } : turn === 1 ? { crystals: 20 } : turn === 2 ? { dust: 80 } : { basicScrolls: 5, essenceH: 4 }),
     },
   };
 });
@@ -219,7 +231,7 @@ export interface ShopItem {
 export const ARENA_SHOP: ShopItem[] = [
   { id: 'a-scroll', cost: 300, reward: { scrolls: 1 } },
   { id: 'a-frag', cost: 200, reward: { fragments: 20 } },
-  { id: 'a-gold', cost: 100, reward: { gold: 20000 } },
+  { id: 'a-gold', cost: 100, reward: { goldH: 8 } },
   { id: 'a-item', cost: 400, reward: { item: 4 } },
 ];
 export const GUILD_SHOP: ShopItem[] = [
@@ -260,11 +272,14 @@ export const GUILD_WAR = {
 
 export type LoginReward = Reward & { legendary?: number };
 
+/** Le cadeau de la fin du tutoriel : des parchemins pour une invocation ×10 (28/11). */
+export const TUTORIAL_GIFT_SCROLLS = 10;
+
 export const LOGIN_WELCOME: LoginReward[] = [
-  { gold: 20000 }, { scrolls: 5 }, { essence: 10000 }, { gems: 300 }, { scrolls: 5 }, { basicScrolls: 10 }, { legendary: 1 },
+  { goldH: 12 }, { scrolls: 5 }, { essenceH: 12 }, { gems: 300 }, { scrolls: 5 }, { basicScrolls: 10 }, { legendary: 1 },
 ];
 
 export const LOGIN_MONTH: LoginReward[] = Array.from({ length: 28 }, (_, i): LoginReward => {
   if (i % 7 === 6) return { scrolls: 3, crystals: 30 };
-  return [{ gold: 30000 }, { essence: 15000 }, { gems: 100 }, { basicScrolls: 5 }, { scrolls: 1 }, { gems: 150 }][i % 7]!;
+  return [{ goldH: 8 }, { essenceH: 8 }, { gems: 100 }, { basicScrolls: 5 }, { scrolls: 1 }, { gems: 150 }][i % 7]!;
 });

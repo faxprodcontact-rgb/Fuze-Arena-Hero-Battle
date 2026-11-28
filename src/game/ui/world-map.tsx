@@ -339,7 +339,8 @@ function Abysses({ x, y }: { x: number; y: number }) {
   );
 }
 
-const PLACES = [Prairie, Ronces, Bayou, Cendres, Toundra, Orage, Temple, Abysses];
+// dans l'ordre des clans (look.ts, CLANS) : eldra, barzul, meduse, kael, orin, kesha, arachne, lenore
+const PLACES = [Prairie, Orage, Bayou, Cendres, Toundra, Abysses, Ronces, Temple];
 
 /** Le chemin d'une région à la suivante (même rangée : tout droit ; rangée du dessus : un lacet par l'extérieur). */
 function leg(i: number): string {

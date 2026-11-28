@@ -157,6 +157,8 @@ export interface PlayerState {
   coliseum?: ColiseumState;
   /** Étape du tutoriel des premières minutes (-1 = fini ou passé). */
   tutorial?: number;
+  /** Le cadeau de la fin du tutoriel (10 invocations) a été donné. */
+  tutorialGift?: boolean;
   /** Courrier : messages reçus (id → date d'arrivée), lus, cadeaux récupérés, et cadeaux propres à ce joueur (id → cadeau). */
   mail?: { got: Record<string, number>; read: string[]; claimed: string[]; personal?: Record<string, Reward> };
   /** Calendrier de connexion : dernier jour coché et nombre de jours cochés. */
@@ -168,7 +170,7 @@ export interface PlayerState {
   guild: { joined: string | null; bossDamage: number; chat: ChatMessage[]; lastBotAt: number };
   worldChat: ChatMessage[];
   shop: { bought: Record<string, number>; cardUntil: number; passPremium: boolean; noAds: boolean };
-  pass: { points: number; claimedFree: number[]; claimedPremium: number[] };
+  pass: { points: number; claimedFree: number[]; claimedPremium: number[]; /** n° de la saison (depuis la création du compte) */ season?: number };
   daily: {
     day: string;
     ads: number;

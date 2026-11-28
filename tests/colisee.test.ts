@@ -11,6 +11,10 @@ import {
   buyColiseumFight, claimColiseumWeek, coliseumFightsLeft, coliseumTeam, ensureDay, findColiseumFoe, finishColiseum,
 } from '../src/game/state/actions';
 import { getState, now, update } from '../src/game/state/store';
+import { summon as firstSummon } from '../src/game/state/actions';
+
+// (28/11) on commence sans héros : le premier tirage du tutoriel
+if (!getState().heroes.length) firstSummon('normal', 1);
 
 const ids = HERO_IDS as readonly string[];
 const unit = (defId: string, level: number, n: number, side: 'hero' | 'enemy') => ({

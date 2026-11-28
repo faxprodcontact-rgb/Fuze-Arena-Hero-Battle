@@ -22,7 +22,7 @@ import { ResetPage } from './screens/reset';
 import { MissionPage } from './screens/mission';
 import { DungeonPage } from './screens/dungeon';
 import { FriendsPage } from './screens/friends';
-import { LoginModal } from './screens/login';
+import { LegendPickModal, LoginModal } from './screens/login';
 import { TutorialHand } from './tutorial';
 import { MailPage } from './screens/mail';
 import { HeroDetail } from './screens/hero-detail';
@@ -118,6 +118,7 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'dungeon': return <DungeonPage kind={modal.kind} />;
     case 'friends': return <FriendsPage />;
     case 'login': return <LoginModal />;
+    case 'legendPick': return <LegendPickModal />;
     case 'mail': return <MailPage />;
     case 'item': return <ItemModal uid={modal.uid} />;
     case 'legal': return <LegalModal doc={modal.doc} />;

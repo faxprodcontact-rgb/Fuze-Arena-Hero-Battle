@@ -6,13 +6,15 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { HEROES } from '../../../core/data/heroes';
 import type { LoginReward } from '../../../core/data/modes';
 import { fmt, t } from '../../i18n';
-import { claimLogin, loginCalendar } from '../../state/actions';
+import { claimLogin, loginCalendar, loginLegendChoices, loginNeedsChoice } from '../../state/actions';
 import { now, useGame } from '../../state/store';
-import { Art, Btn, Icon, Modal, Sign } from '../kit';
+import { Art, Btn, HeroCard, Icon, Modal, Sign } from '../kit';
 import { open, swap } from '../nav';
 import { BqFigure, Sparkles } from '../sections/boutique-kit';
 import { figMeta } from '../sections/hero-fig';
 import '../sections/boutique.css';
+import { resolveReward } from '../../state/selectors';
+import { getState } from '../../state/store';
 
 type DayState = 'done' | 'today' | 'next';
 
@@ -26,7 +28,7 @@ function untilTomorrow(ms: number): string {
 
 /** Les monnaies d'une récompense (sans le héros Légendaire). */
 function parts(r: LoginReward): [string, number][] {
-  return Object.entries(r).filter(([k, v]) => k !== 'legendary' && v) as [string, number][];
+  return Object.entries(resolveReward(getState(), r)).filter(([k, v]) => k !== 'legendary' && v) as [string, number][];
 }
 
 const WINGED = ['assassins-5', 'mages-11'];
@@ -105,6 +107,8 @@ export function LoginModal() {
 
   const claim = () => {
     if (cal.claimed || burst >= 0) return;
+    // le 7e jour de bienvenue : le joueur choisit son Légendaire (28/11)
+    if (loginNeedsChoice()) { swap({ type: 'legendPick' }); return; }
     const index = cal.index;
     const gain = claimLogin();
     if (!gain) return;
@@ -141,6 +145,24 @@ export function LoginModal() {
         ) : (
           <Btn kind="gold" size="l" wide class="lg-claim" onClick={claim}><Icon name="gift" size={30} /> {t('claim')}</Btn>
         )}
+      </div>
+    </Modal>
+  );
+}
+
+/** Le 7e jour de bienvenue : un Légendaire au choix (ceux qu'on n'a pas encore d'abord). */
+export function LegendPickModal() {
+  const s = useGame();
+  const choices = loginLegendChoices(s);
+  return (
+    <Modal title={t('login.pick')} wide center>
+      <div class="grid lg-pick">
+        {choices.map((id) => (
+          <HeroCard hero={{ uid: -1, defId: id, stars: 4, level: 1 }} onClick={() => {
+            const gain = claimLogin(id);
+            if (gain) swap({ type: 'gain', title: t('login.welcome'), gain });
+          }} />
+        ))}
       </div>
     </Modal>
   );

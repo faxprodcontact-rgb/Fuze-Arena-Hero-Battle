@@ -13,7 +13,8 @@ import type { Element } from '../core/types';
 import { VECTO_ANIM } from './vecto-anim';
 
 /** Les 8 clans, dans l'ordre des régions de la campagne (et de leurs décors). */
-export const CLANS = ['eldra', 'arachne', 'meduse', 'kael', 'orin', 'barzul', 'lenore', 'kesha'] as const;
+// (28/11 : vent, eau, terre, feu, deux fois, comme REGION_ELEMENTS de core/stages.ts ; la région finale est le temple des oni)
+export const CLANS = ['eldra', 'barzul', 'meduse', 'kael', 'orin', 'kesha', 'arachne', 'lenore'] as const;
 export type Clan = (typeof CLANS)[number];
 
 const CLAN_ELEMENT: Record<Clan, Element> = {
@@ -68,16 +69,9 @@ function clanLook(clan: Clan, bigBoss = false): Look {
   return { fond: clan, clan: (e) => (CLAN_ELEMENT[clan] === e ? clan : OF_ELEMENT(e)[0]!), bigBoss };
 }
 
-/**
- * Campagne : l'élément des monstres change à chaque chapitre (règles du jeu). Chaque région a son clan ; un chapitre
- * d'un autre élément prend l'un des deux clans de cet élément (en alternant d'une région à l'autre). Le décor suit le clan.
- */
+/** Campagne : chaque région a son clan, du premier au dernier chapitre (monstres, décor, élément). */
 export function campaignLook(chapter: number, finale = false): Look {
-  const r = regionOf(chapter);
-  const home = CLANS[r.index]!;
-  const e = chapterElement(chapter);
-  const clan = CLAN_ELEMENT[home] === e ? home : OF_ELEMENT(e)[r.index % 2]!;
-  return clanLook(clan, finale);
+  return clanLook(CLANS[regionOf(chapter).index]!, finale);
 }
 
 /** Le décor de la tour : le clan de l'élément de l'étage, l'un ou l'autre tous les 4 étages. */

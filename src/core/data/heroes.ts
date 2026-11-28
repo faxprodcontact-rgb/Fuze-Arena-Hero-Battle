@@ -14,21 +14,21 @@ interface Profile {
 }
 
 export const ROLE_PROFILES: Record<Role, Profile> = {
-  protector: { hp: 1000, atk: 45, def: 60, interval: 12, crit: 0.05, critDmg: 1.5, dodge: 0.02, tenacity: 0.2, ranged: false },
+  protector: { hp: 950, atk: 45, def: 54, interval: 12, crit: 0.05, critDmg: 1.5, dodge: 0.02, tenacity: 0.2, ranged: false },
   warrior: { hp: 780, atk: 80, def: 40, interval: 11, crit: 0.08, critDmg: 1.5, dodge: 0.03, tenacity: 0.1, ranged: false },
-  marksman: { hp: 540, atk: 86, def: 22, interval: 14, crit: 0.1, critDmg: 1.6, dodge: 0.03, tenacity: 0.05, ranged: true },
+  marksman: { hp: 620, atk: 104, def: 24, interval: 12, crit: 0.12, critDmg: 1.6, dodge: 0.03, tenacity: 0.05, ranged: true },
   assassin: { hp: 560, atk: 92, def: 24, interval: 9, crit: 0.18, critDmg: 1.7, dodge: 0.1, tenacity: 0.05, ranged: false, hitsBack: true },
-  healer: { hp: 600, atk: 52, def: 26, interval: 14, crit: 0.05, critDmg: 1.5, dodge: 0.03, tenacity: 0.1, ranged: true },
-  support: { hp: 680, atk: 60, def: 32, interval: 13, crit: 0.05, critDmg: 1.5, dodge: 0.05, tenacity: 0.15, ranged: true },
+  healer: { hp: 660, atk: 64, def: 28, interval: 14, crit: 0.05, critDmg: 1.5, dodge: 0.03, tenacity: 0.1, ranged: true },
+  support: { hp: 680, atk: 64, def: 32, interval: 13, crit: 0.05, critDmg: 1.5, dodge: 0.05, tenacity: 0.15, ranged: true },
 };
 
 /** PV, attaque et défense selon la rareté. */
-export const RARITY_STAT: Record<Rarity, number> = { common: 0.9, rare: 0.95, epic: 1, legendary: 1.08 };
+export const RARITY_STAT: Record<Rarity, number> = { common: 0.83, rare: 0.94, epic: 1, legendary: 1.1 };
 /** Force des compétences selon la rareté. */
-export const RARITY_SKILL: Record<Rarity, number> = { common: 1, rare: 1.05, epic: 1.12, legendary: 1.22 };
+export const RARITY_SKILL: Record<Rarity, number> = { common: 0.95, rare: 1.05, epic: 1.12, legendary: 1.22 };
 /** Petite touche de chaque élément sur les statistiques. */
 export const ELEMENT_STAT: Record<Element, { hp?: number; atk?: number; def?: number; speed?: number }> = {
-  fire: { atk: 0.05 }, water: { hp: 0.05 }, wind: { speed: 0.05 }, earth: { def: 0.1 },
+  fire: { atk: 0.05 }, water: { hp: 0.05 }, wind: { speed: 0.03 }, earth: { hp: 0.05, def: 0.08 },
 };
 
 /** Étoiles nécessaires pour débloquer le 1er et le 2e passif. Éveil des Légendaires (compétence +25 %) à ★10. */
@@ -51,7 +51,7 @@ function elementRider(element: Element, kind: 'damage' | 'heal'): Effect {
   switch (element) {
     case 'fire': return { type: 'status', target: 'same', status: 'burn', value: 0.3, seconds: 4, chance: 0.7 };
     case 'water': return { type: 'status', target: 'same', status: 'slow', value: 0.4, seconds: 3, chance: 0.6 };
-    case 'wind': return { type: 'status', target: 'self', status: 'speedUp', value: 0.3, seconds: 4 };
+    case 'wind': return { type: 'status', target: 'self', status: 'speedUp', value: 0.2, seconds: 4 };
     case 'earth': return { type: 'status', target: 'same', status: 'defDown', value: 0.2, seconds: 5, chance: 0.6 };
   }
 }
@@ -68,20 +68,20 @@ function skillFor(role: Role, v: number, element: Element, rarity: Rarity): Skil
     case 'protector':
       return [
         plain([{ type: 'shield', target: 'allies', power: p(0.12) }, { type: 'status', target: 'self', status: 'taunt', seconds: 3 }]),
-        dmg([{ type: 'damage', target: 'frontRow', power: p(1.3) }, { type: 'status', target: 'same', status: 'stun', seconds: 1.5, chance: 0.5 }]),
-        plain([{ type: 'status', target: 'allies', status: 'defUp', value: 0.3, seconds: 5 }, { type: 'heal', target: 'self', pctMax: p(0.15) }, { type: 'status', target: 'self', status: 'taunt', seconds: 3 }]),
+        dmg([{ type: 'damage', target: 'frontRow', power: p(1.5) }, { type: 'status', target: 'same', status: 'stun', seconds: 2, chance: 0.65 }, { type: 'status', target: 'self', status: 'taunt', seconds: 2 }]),
+        plain([{ type: 'status', target: 'allies', status: 'defUp', value: 0.25, seconds: 5 }, { type: 'heal', target: 'self', pctMax: p(0.12) }, { type: 'status', target: 'self', status: 'taunt', seconds: 3 }]),
       ][v]!;
     case 'warrior':
       return [
         dmg([{ type: 'damage', target: 'front', power: p(2.4), execute: 0.5 }]),
         dmg([{ type: 'damage', target: 'frontRow', power: p(1.5) }, { type: 'status', target: 'same', status: 'bleed', value: 0.35, seconds: 4, chance: 0.8 }]),
-        dmg([{ type: 'damage', target: 'front', power: p(2.6), lifesteal: 0.3 }, { type: 'status', target: 'self', status: 'atkUp', value: 0.3, seconds: 6 }]),
+        dmg([{ type: 'damage', target: 'front', power: p(2.6), lifesteal: 0.2 }, { type: 'status', target: 'self', status: 'atkUp', value: 0.25, seconds: 6 }]),
       ][v]!;
     case 'marksman':
       return [
-        dmg([{ type: 'damage', target: 'all', power: p(1.1) }]),
-        dmg([{ type: 'damage', target: 'backRow', power: p(1.9) }]),
-        dmg([{ type: 'damage', target: 'random3', power: p(1.6) }, { type: 'status', target: 'self', status: 'critUp', value: 0.2, seconds: 6 }]),
+        dmg([{ type: 'damage', target: 'all', power: p(1.45) }]),
+        dmg([{ type: 'damage', target: 'backRow', power: p(2.7) }]),
+        dmg([{ type: 'damage', target: 'random3', power: p(1.8) }, { type: 'status', target: 'self', status: 'critUp', value: 0.2, seconds: 6 }]),
       ][v]!;
     case 'assassin':
       return [
@@ -91,18 +91,18 @@ function skillFor(role: Role, v: number, element: Element, rarity: Rarity): Skil
       ][v]!;
     case 'healer':
       return [
-        heal([{ type: 'heal', target: 'allies', power: p(2.2) }]),
-        heal([{ type: 'heal', target: 'lowestAlly', power: p(4.5) }, { type: 'status', target: 'allies', status: 'regen', value: 0.25, seconds: 5 }]),
+        heal([{ type: 'heal', target: 'allies', power: p(2.4) }]),
+        heal([{ type: 'heal', target: 'lowestAlly', power: p(5.5) }, { type: 'status', target: 'allies', status: 'regen', value: 0.25, seconds: 5 }]),
         heal([
-          { type: 'heal', target: 'allies', power: p(1.6) }, { type: 'cleanse', target: 'allies' },
+          { type: 'heal', target: 'allies', power: p(2.1) }, { type: 'cleanse', target: 'allies' },
           ...(rarity === 'legendary' ? [{ type: 'revive', pctMax: 0.3 } as Effect] : []),
         ]),
       ][v]!;
     case 'support':
       return [
-        plain([{ type: 'damage', target: 'frontRow', power: p(0.9) }, { type: 'status', target: 'same', status: 'stun', seconds: 2.5, chance: 0.7 }]),
-        plain([{ type: 'status', target: 'allies', status: 'atkUp', value: p(0.25), seconds: 6 }, { type: 'energy', target: 'allies', amount: 20 }]),
-        plain([{ type: 'status', target: 'all', status: 'defDown', value: p(0.3), seconds: 6, chance: 0.8 }, { type: 'status', target: 'all', status: 'slow', value: 0.4, seconds: 4, chance: 0.6 }]),
+        plain([{ type: 'damage', target: 'frontRow', power: p(1.4) }, { type: 'status', target: 'same', status: 'stun', seconds: 2.5, chance: 0.8 }]),
+        plain([{ type: 'status', target: 'allies', status: 'atkUp', value: p(0.2), seconds: 6 }, { type: 'energy', target: 'allies', amount: 15 }]),
+        plain([{ type: 'damage', target: 'all', power: p(0.8) }, { type: 'status', target: 'same', status: 'defDown', value: p(0.3), seconds: 6, chance: 0.8 }, { type: 'status', target: 'same', status: 'slow', value: 0.4, seconds: 4, chance: 0.6 }]),
       ][v]!;
   }
 }
@@ -268,7 +268,7 @@ const CLAN_HEROES: HeroDef[] = [
   build({
     id: 'nyrra', name: 'Nyrra', element: 'earth', role: 'marksman', rarity: 'rare',
     skill: { id: 'nyrra', effects: [
-      { type: 'damage', target: 'back', power: pw(2, 'rare') },
+      { type: 'damage', target: 'back', power: pw(3, 'rare') },
       { type: 'status', target: 'same', status: 'slow', value: 0.5, seconds: 5 },
       { type: 'status', target: 'same', status: 'stun', seconds: 1.5, chance: 0.5 },
     ] },
@@ -278,8 +278,8 @@ const CLAN_HEROES: HeroDef[] = [
   build({
     id: 'sarvik', name: 'Sarvik', element: 'earth', role: 'assassin', rarity: 'common', tweak: { interval: 8 },
     skill: { id: 'sarvik', effects: [
-      { type: 'damage', target: 'lowestHp', power: pw(1.4, 'common') },
-      { type: 'damage', target: 'same', power: pw(1.4, 'common') },
+      { type: 'damage', target: 'lowestHp', power: pw(1.6, 'common') },
+      { type: 'damage', target: 'same', power: pw(1.6, 'common') },
       { type: 'status', target: 'same', status: 'poison', value: 0.03, seconds: 5, chance: 0.9 },
     ] },
     passives: [first('assassin'), { kind: 'trigger', on: 'attack', chance: 0.3, effects: [{ type: 'status', target: 'attacker', status: 'poison', value: 0.02, seconds: 3 }] }],
@@ -288,7 +288,7 @@ const CLAN_HEROES: HeroDef[] = [
   build({
     id: 'jessa', name: 'Jessa', element: 'water', role: 'marksman', rarity: 'common', tweak: { crit: 0.14 },
     skill: { id: 'jessa', effects: [
-      { type: 'damage', target: 'highestAtk', power: pw(2.4, 'common') },
+      { type: 'damage', target: 'highestAtk', power: pw(3.8, 'common') },
       { type: 'status', target: 'same', status: 'slow', value: 0.4, seconds: 4, chance: 0.8 },
       { type: 'status', target: 'self', status: 'critUp', value: 0.2, seconds: 6 },
     ] },
@@ -309,7 +309,7 @@ const CLAN_HEROES: HeroDef[] = [
   build({
     id: 'sorai', name: 'Sorai', element: 'wind', role: 'support', rarity: 'rare',
     skill: { id: 'sorai', effects: [
-      { type: 'damage', target: 'frontRow', power: pw(0.9, 'rare') },
+      { type: 'damage', target: 'frontRow', power: pw(1.25, 'rare') },
       { type: 'energy', target: 'same', amount: -25 },
       { type: 'status', target: 'same', status: 'slow', value: 0.3, seconds: 3, chance: 0.7 },
     ] },
@@ -372,7 +372,7 @@ const DRAGONS: HeroDef[] = [
   build({
     id: 'dragon-terre', name: 'Rocvar', element: 'earth', role: 'protector', rarity: 'legendary',
     skill: { id: 'rocvar', effects: [
-      { type: 'damage', target: 'front', power: pw(1.6, 'legendary') },
+      { type: 'damage', target: 'front', power: pw(1.9, 'legendary') },
       { type: 'status', target: 'same', status: 'stun', seconds: 2, chance: 0.7 },
       { type: 'status', target: 'same', status: 'defDown', value: 0.25, seconds: 5, chance: 0.7 },
       { type: 'status', target: 'self', status: 'taunt', seconds: 3 },

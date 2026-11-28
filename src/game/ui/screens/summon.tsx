@@ -70,7 +70,7 @@ export function SummonScreen() {
     const cost = summonCost(kind, count);
     return (
       <button
-        class={`sum-btn sum-btn-${count} ${btClass(count === 10 ? 'basalte' : 'arcane', 'l')}${kind === 'normal' && count === 10 ? ' tuto-summon10' : ''}`}
+        class={`sum-btn sum-btn-${count} ${btClass(count === 10 ? 'basalte' : 'arcane', 'l')}${kind === 'normal' ? ` tuto-summon${count}` : ''}`}
         disabled={s.wallet[cost.currency] < cost.amount}
         onClick={() => { rememberCast({ kind, count }); cast(summon(kind, count)); }}
       >

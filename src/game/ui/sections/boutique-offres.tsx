@@ -16,6 +16,8 @@ import { Art, Icon, Sign } from '../kit';
 import { btClass } from '../buttons';
 import { BqFigure, Sparkles } from './boutique-kit';
 import { figMeta } from './hero-fig';
+import { resolveReward } from '../../state/selectors';
+import { getState } from '../../state/store';
 
 const euros = (o: Offer) => parseFloat(o.price.replace(',', '.').replace(/[^\d.]/g, '')) || 1;
 
@@ -57,7 +59,7 @@ function Price({ o, soldOut, size, onBuy }: { o: Offer; soldOut: boolean; size: 
 function Rewards({ o, big }: { o: Offer; big?: boolean }) {
   return (
     <span class={`bq-rw${big ? ' bq-rw-big' : ''}`}>
-      {Object.entries(o.kind === 'pass' ? PASS_TOTAL : o.reward).map(([k, v]) => <span class="bq-chip"><Icon name={k} size={big ? 26 : 20} /><b>{fmt(v ?? 0)}</b></span>)}
+      {Object.entries(resolveReward(getState(), o.kind === 'pass' ? PASS_TOTAL : o.reward)).map(([k, v]) => <span class="bq-chip"><Icon name={k} size={big ? 26 : 20} /><b>{fmt(v ?? 0)}</b></span>)}
     </span>
   );
 }
@@ -143,7 +145,7 @@ export function PassBuy({ onBuy }: { onBuy: () => void }) {
 
 /** L'ordre des gains, du plus précieux au plus commun : le premier est montré en grand. */
 const RANK = ['scrolls', 'crystals', 'gems', 'dust', 'basicScrolls', 'essence', 'gold'];
-const gains = (r: Reward) => (Object.entries(r) as [string, number][]).sort((a, b) => RANK.indexOf(a[0]) - RANK.indexOf(b[0]));
+const gains = (r: Reward) => (Object.entries(resolveReward(getState(), r)) as [string, number][]).sort((a, b) => RANK.indexOf(a[0]) - RANK.indexOf(b[0]));
 
 /** Les gains d'un palier : le principal en grand (picto et chiffre), les autres en petites pilules à côté. */
 function Loot({ reward, list }: { reward: Reward; list?: boolean }) {

@@ -1,28 +1,39 @@
 // Tutoriel des premières minutes : une main montre où toucher, sans texte. Toucher l'endroit montré passe à l'étape suivante.
-// Les étapes : premier combat, coffre de butin, invocation, monter un héros, régler la section.
+// Les étapes (refaites le 28/11) : le premier tirage (un héros au hasard, on commence sans héros), le premier combat,
+// le coffre de butin, monter le héros d'un niveau, le cadeau de bienvenue (10 invocations), l'invocation ×10, la section.
 import { useEffect, useState } from 'preact/hooks';
-import { setTutorial } from '../state/actions';
+import { t } from '../i18n';
+import { setTutorial, tutorialGift } from '../state/actions';
 import { useGame } from '../state/store';
 import { Art } from './kit';
+import { open } from './nav';
 
 /** Ce qu'il faut toucher à chaque étape (sélecteur CSS de l'élément). */
 export const TUTORIAL_STEPS: string[] = [
+  '.tabbar-btn:nth-child(3)', // invoquer
+  '.tuto-summon1', // le premier tirage
+  '.reveal-ok', // fin du tirage
+  '.tabbar-btn:nth-child(1)', // campagne
   '.dock-fight', // combattre
   '.prep .btn-fight', // lancer le combat
   '.modal .btn-green', // fin du combat
   '.dock-chest', // coffre de butin
   '.modal .btn-green',
-  '.tabbar-btn:nth-child(3)', // invoquer
-  '.tuto-summon10',
-  '.reveal-ok', // fin du tirage
   '.tabbar-btn:nth-child(2)', // héros
   '.grid .hcard',
   '.tuto-levelup',
-  '.modal .x',
-  '.team-strip', // section
-  '.prep .prep-bar .btn',
+  '.hx-act-back',
+  '.modal .btn-green', // le cadeau de bienvenue (GIFT_STEP : la fenêtre s'ouvre seule)
+  '.tabbar-btn:nth-child(3)', // invoquer
+  '.tuto-summon10',
+  '.reveal-ok',
+  '.tabbar-btn:nth-child(2)', // héros
+  '.hall-formation', // la section
+  '.prep .prep-bar .btn', // la meilleure section
   '.prep .prep-head .x',
 ];
+/** L'étape où le cadeau de bienvenue s'ouvre de lui-même. */
+const GIFT_STEP = 13;
 
 function visible(el: Element | null): el is HTMLElement {
   if (!el) return false;
@@ -38,6 +49,13 @@ export function TutorialHand() {
   const [rect, setRect] = useState<DOMRect | null>(null);
 
   // Suit la position de l'élément à montrer (il peut apparaître plus tard, ou bouger).
+  // le cadeau de bienvenue : sa fenêtre s'ouvre d'elle-même (son bouton OK passe à l'étape suivante)
+  useEffect(() => {
+    if (!active || step !== GIFT_STEP) return;
+    const gain = tutorialGift();
+    if (gain) open({ type: 'gain', title: t('tuto.gift'), gain });
+  }, [active, step]);
+
   useEffect(() => {
     if (!active) return;
     const sel = TUTORIAL_STEPS[step]!;

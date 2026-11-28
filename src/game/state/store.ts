@@ -1,6 +1,6 @@
 // Stockage de la partie et notification des écrans à chaque changement.
 import { useEffect, useState } from 'preact/hooks';
-import { HEROES, STARTER_HERO, heroDef } from '../../core/data/heroes';
+import { HEROES, heroDef } from '../../core/data/heroes';
 import { levelCap } from '../../core/data/stats';
 import { RARITY_RULES } from '../../core/data/stars';
 import { retireHeroes } from './migrate';
@@ -10,7 +10,8 @@ const KEY = 'hero-battle-v2';
 const HERO_IDS = new Set(HEROES.map((h) => h.id));
 
 export function fresh(now = Date.now()): PlayerState {
-  const starter = STARTER_HERO;
+  // (28/11) on commence SANS héros : le tutoriel ouvre sur un premier tirage, au hasard, aux chances normales ; le
+  // parchemin du départ sert à ce tirage
   const lang = typeof navigator !== 'undefined' && !navigator.language.startsWith('fr') ? 'en' : 'fr';
   return {
     v: 2,
@@ -25,15 +26,15 @@ export function fresh(now = Date.now()): PlayerState {
     speed: 2,
     auto: true,
     rng: 1,
-    nextUid: 2,
+    nextUid: 1,
     account: { level: 1, xp: 0 },
-    wallet: { gold: 300, essence: 150, gems: 0, scrolls: 0, basicScrolls: 0, redScrolls: 0, arenaTokens: 0, guildCoins: 0, crystals: 0, dust: 0, badge: 0 },
+    wallet: { gold: 300, essence: 150, gems: 0, scrolls: 1, basicScrolls: 0, redScrolls: 0, arenaTokens: 0, guildCoins: 0, crystals: 0, dust: 0, badge: 0 },
     fragments: {},
-    discovered: [starter],
-    heroes: [{ uid: 1, defId: starter, stars: RARITY_RULES.epic.bornStars, level: 1 }],
+    discovered: [],
+    heroes: [],
     items: [],
     slotLevels: {},
-    formation: [[1, 2]],
+    formation: [],
     campaign: { cleared: 0, idleFrom: now, itemHours: 0 },
     summon: { pity: 0, total: 0 },
     tower: { floor: 0 },

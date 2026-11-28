@@ -17,6 +17,8 @@ import {
   MISSIONS_PER_DAY, MONTHLY_CARD, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL, RED_SCROLLS, RESET_COST, STAGE_GEMS, TOWER_REWARD,
   TOWER_STAGE_PER_FLOOR, WEEKLY_CHESTS, WEEKLY_QUESTS, accountXpForLevel, type DungeonKind, type QuestEvent,
   type Reward,
+  TUTORIAL_GIFT_SCROLLS,
+  PASS_SEASON_DAYS,
 } from '../../core/data/modes';
 import { FRAGMENTS_PER_COPY, LADDER, RARITY_RULES } from '../../core/data/stars';
 import { levelCap } from '../../core/data/stats';
@@ -35,7 +37,7 @@ import { summonBasic, summonFeatured, summonOne } from '../../core/summon';
 import type { SummonKind } from '../../core/data/summon';
 import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
-import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, isUnlocked, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
+import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, isUnlocked, levelUpCost, resolveReward, slotLevel, teamPower, teamUnits } from './selectors';
 import type { TeamKind } from './selectors';
 import type { ArenaOpponent, AuthProvider, ColiseumFoe, ColiseumState, EventState, Friend, Gain, GuildWarState, MissionState, PlayerState, Wallet } from './types';
 import {
@@ -74,7 +76,7 @@ function addCurrency(s: PlayerState, gain: Gain, key: keyof Wallet, amount: numb
 }
 
 function addReward(s: PlayerState, gain: Gain, reward: Reward) {
-  for (const [k, v] of Object.entries(reward)) addCurrency(s, gain, k as keyof Wallet, v ?? 0);
+  for (const [k, v] of Object.entries(resolveReward(s, reward))) addCurrency(s, gain, k as keyof Wallet, v ?? 0);
 }
 
 /** Héros obtenus pour la première fois pendant cette session (étiquette « Nouveau ! » à la révélation). */
@@ -83,6 +85,8 @@ export const newlyFound = new Set<number>();
 function addHero(s: PlayerState, defId: string): Hero {
   const hero: Hero = { uid: s.nextUid++, defId, stars: RARITY_RULES[heroDef(defId).rarity].bornStars, level: 1 };
   s.heroes.push(hero);
+  // le tout premier héros (le tirage du tutoriel) entre tout de suite dans la section, au milieu
+  if (!s.formation.length) s.formation = [[hero.uid, 2]];
   if (!s.discovered.includes(defId)) {
     s.discovered.push(defId);
     newlyFound.add(hero.uid);
@@ -133,6 +137,12 @@ export function ensureDay(): void {
       }
       track(st, 'login');
       if (!st.arena.opponents.length) st.arena.opponents = makeOpponents(st);
+      // une nouvelle saison du passe (28 jours depuis la création du compte) : tout repart de zéro
+      const season = Math.floor((now() - st.createdAt) / (PASS_SEASON_DAYS * 86_400_000));
+      if ((st.pass.season ?? 0) !== season) {
+        st.pass = { points: 0, claimedFree: [], claimedPremium: [], season };
+        st.shop.passPremium = false;
+      }
     }
   });
 }
@@ -822,8 +832,8 @@ function dungeonWaves(kind: DungeonKind, level: number): UnitInit[][] {
 /** Ce que rapporte un niveau de donjon (même chose en combat ou en balayage). */
 export function dungeonRewardPreview(kind: DungeonKind, level: number): { gold?: number; essence?: number; items?: number } {
   const perHour = incomePerHour(level * DUNGEON_STAGE_PER_LEVEL);
-  if (kind === 'gold') return { gold: Math.round(perHour * DUNGEON_REWARD_HOURS * 1.5) };
-  if (kind === 'essence') return { essence: Math.round(perHour * DUNGEON_REWARD_HOURS) };
+  if (kind === 'gold') return { gold: Math.round(perHour * DUNGEON_REWARD_HOURS) };
+  if (kind === 'essence') return { essence: Math.round(perHour * DUNGEON_REWARD_HOURS * ESSENCE_RATIO * 2) };
   return { items: dungeonItems(level).count };
 }
 
@@ -876,7 +886,9 @@ function arenaEnemies(o: ArenaOpponent): UnitInit[] {
 /** Le combat permanent de l'accueil : la section contre les vagues du dernier niveau gagné. */
 export function idleSetup(): { heroes: UnitInit[]; waves: UnitInit[][] } {
   const s = getState();
-  return { heroes: teamUnits(s), waves: campaignWaves(Math.max(1, s.campaign.cleared)) };
+  const heroes = teamUnits(s);
+  // pas encore de héros (avant le premier tirage du tutoriel) : un décor calme, sans monstres
+  return { heroes, waves: heroes.length ? campaignWaves(Math.max(1, s.campaign.cleared)) : [] };
 }
 
 /** Le résultat d'un combat : récompenses selon le mode. */
@@ -893,8 +905,6 @@ export function finishBattle(req: BattleRequest, res: BattleResult): Gain {
         addCurrency(s, gain, 'gold', incomePerHour(stage) * STAGE_REWARD_HOURS);
         addCurrency(s, gain, 'essence', incomePerHour(stage) * STAGE_REWARD_HOURS * ESSENCE_RATIO);
         addCurrency(s, gain, 'gems', STAGE_GEMS);
-        // Première victoire : de quoi faire l'invocation guidée du tutoriel.
-        if (stage === 1) addCurrency(s, gain, 'scrolls', 10);
         if (stage % STAGES_PER_CHAPTER === 0) {
           addCurrency(s, gain, 'scrolls', REWARDS.chapterSummons);
           addCurrency(s, gain, 'redScrolls', RED_SCROLLS.perChapter);
@@ -913,7 +923,7 @@ export function finishBattle(req: BattleRequest, res: BattleResult): Gain {
         if (!res.win) break;
         s.tower.floor += 1;
         const f = s.tower.floor;
-        addCurrency(s, gain, 'essence', TOWER_REWARD.essencePerFloor * f);
+        addReward(s, gain, { essenceH: TOWER_REWARD.essenceHours });
         if (f % TOWER_REWARD.scrollsEvery === 0) addCurrency(s, gain, 'scrolls', 1);
         if (f % TOWER_REWARD.gemsEvery === 0) addCurrency(s, gain, 'gems', TOWER_REWARD.gems);
         track(s, 'tower');
@@ -1179,6 +1189,7 @@ export function buyOffer(id: string): Gain | null {
     if (!offer) return null;
     const bought = s.shop.bought[id] ?? 0;
     if (offer.limit && bought >= offer.limit) return null;
+    if (offer.kind === 'pass' && s.shop.passPremium) return null;
     s.shop.bought[id] = bought + 1;
     const gain = emptyGain();
     addReward(s, gain, offer.reward);
@@ -1616,18 +1627,30 @@ export function loginCalendar(s: PlayerState = getState()): { kind: 'welcome' | 
   return { kind: 'month', rewards: LOGIN_MONTH, index: (n - LOGIN_WELCOME.length) % LOGIN_MONTH.length, claimed };
 }
 
-export function claimLogin(): Gain | null {
+/** Le jour de connexion du jour donne-t-il un Légendaire à choisir ? */
+export function loginNeedsChoice(): boolean {
+  const cal = loginCalendar();
+  return !cal.claimed && !!cal.rewards[cal.index]?.legendary;
+}
+
+/** Les Légendaires qu'on peut choisir au 7e jour de bienvenue : tous, ceux qu'on n'a pas encore d'abord. */
+export function loginLegendChoices(s: PlayerState = getState()): string[] {
+  const owned = new Set(s.heroes.map((h) => h.defId));
+  return HEROES.filter((h) => h.rarity === 'legendary').map((h) => h.id).sort((a, b) => Number(owned.has(a)) - Number(owned.has(b)));
+}
+
+/** Prend la case du jour ; le 7e jour de bienvenue, `choice` = le Légendaire choisi par le joueur (28/11 : au choix). */
+export function claimLogin(choice?: string): Gain | null {
   const cal = loginCalendar();
   if (cal.claimed) return null;
   return update((s) => {
     const gain = emptyGain();
     const { legendary, ...rest } = cal.rewards[cal.index]!;
     addReward(s, gain, rest);
+    const choices = loginLegendChoices(s);
     for (let i = 0; i < (legendary ?? 0); i++) {
-      // Un Légendaire pas encore possédé si possible : c'est un vrai cadeau de bienvenue.
-      const owned = new Set(s.heroes.map((h) => h.defId));
-      const pool = HEROES.filter((h) => h.rarity === 'legendary' && !owned.has(h.id));
-      gain.heroes.push(addHero(s, pick(nextRng(s), pool.length ? pool : HEROES.filter((h) => h.rarity === 'legendary')).id));
+      const id = choice && choices.includes(choice) ? choice : pick(nextRng(s), choices.slice(0, Math.max(1, choices.length)));
+      gain.heroes.push(addHero(s, id));
     }
     s.login = { day: dayKey(now()), count: (s.login?.count ?? 0) + 1 };
     return gain;
@@ -1693,6 +1716,17 @@ export function mailWaiting(s: PlayerState = getState()): number {
 }
 
 // ---------- Tutoriel ----------
+
+/** Le cadeau de la fin du tutoriel : 10 invocations (une seule fois). */
+export function tutorialGift(): Gain | null {
+  return update((s) => {
+    if (s.tutorialGift) return null;
+    s.tutorialGift = true;
+    const gain = emptyGain();
+    addCurrency(s, gain, 'scrolls', TUTORIAL_GIFT_SCROLLS);
+    return gain;
+  });
+}
 
 export function setTutorial(step: number): void {
   update((s) => void (s.tutorial = step));

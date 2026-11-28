@@ -5,7 +5,7 @@ import { BOSSES, MONSTERS } from '../src/core/data/monsters';
 import { FOND_VECTO } from '../src/game/fond-vecto';
 import { VECTO_ANIM } from '../src/game/vecto-anim';
 import { CLANS, CLAN_CHIEF, battleLook, bossArt, campaignLook, isBigBoss, monsterArtId } from '../src/game/look';
-import { campaignWaves, chapterElement, isRegionFinale } from '../src/core/stages';
+import { campaignWaves, chapterElement, campaignElement, isRegionFinale } from '../src/core/stages';
 import { ELEMENTS } from '../src/core/types';
 import { heroDef } from '../src/core/data/heroes';
 
@@ -42,7 +42,7 @@ describe('clans et décors', () => {
   it('en campagne, le décor est celui du clan des monstres du chapitre', () => {
     for (let c = 1; c <= 30; c++) {
       const look = campaignLook(c);
-      const id = monsterArtId('goblin', chapterElement(c), look);
+      const id = monsterArtId('goblin', campaignElement(c), look);
       expect(id.startsWith(`mon-${look.fond}-`)).toBe(true);
     }
   });
@@ -52,9 +52,9 @@ describe('clans et décors', () => {
   });
 
   it('la fin d’une région est un boss seul', () => {
-    expect(isRegionFinale(160)).toBe(true);
-    expect(isRegionFinale(120)).toBe(false);
-    const waves = campaignWaves(160);
+    expect(isRegionFinale(200)).toBe(true);
+    expect(isRegionFinale(160)).toBe(false);
+    const waves = campaignWaves(200);
     expect(waves.at(-1)).toHaveLength(1);
     expect(waves.at(-1)![0]!.boss).toBe(true);
     expect(campaignWaves(120).at(-1)!.length).toBeGreaterThan(1);

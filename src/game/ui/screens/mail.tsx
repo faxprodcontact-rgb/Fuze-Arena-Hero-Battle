@@ -5,10 +5,12 @@ import { claimMail, mailbox, readMail, type MailItem } from '../../state/actions
 import { useGame } from '../../state/store';
 import { Btn, Cur, Icon, Page, Sign } from '../kit';
 import { open } from '../nav';
+import { resolveReward } from '../../state/selectors';
+import { getState } from '../../state/store';
 
 function Rewards({ m }: { m: MailItem }) {
   if (!m.def.reward) return null;
-  return <span class={`row gap-s center-y${m.claimed ? ' claimed' : ''}`}>{Object.entries(m.def.reward).map(([k, v]) => <Cur k={k} n={v ?? 0} />)}</span>;
+  return <span class={`row gap-s center-y${m.claimed ? ' claimed' : ''}`}>{Object.entries(resolveReward(getState(), m.def.reward)).map(([k, v]) => <Cur k={k} n={v ?? 0} />)}</span>;
 }
 
 export function MailPage() {

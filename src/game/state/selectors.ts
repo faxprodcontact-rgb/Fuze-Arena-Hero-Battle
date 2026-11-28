@@ -5,7 +5,7 @@ import { incomePerHour, OFFLINE_CAP_HOURS, REWARDS, levelCost } from '../../core
 import { heroDef } from '../../core/data/heroes';
 import { equippedBonus, gearStats, type GearSlot, type Item } from '../../core/data/items';
 import type { StatMods } from '../../core/battle/types';
-import { ESSENCE_RATIO, IDLE_ITEM_HOURS, UNLOCKS, type Feature } from '../../core/data/modes';
+import { ESSENCE_RATIO, IDLE_ITEM_HOURS, UNLOCKS, type Feature, type Reward } from '../../core/data/modes';
 import { levelCap } from '../../core/data/stats';
 import { slotsAt } from '../../core/stages';
 import type { Hero } from '../../core/types';
@@ -128,4 +128,15 @@ export function heroName(hero: Hero): string {
 export function avatarOf(s: PlayerState): string | undefined {
   if (s.avatar && s.discovered.includes(s.avatar)) return s.avatar;
   return (s.heroes.find((h) => h.uid === s.formation[0]?.[0]) ?? s.heroes[0])?.defId;
+}
+
+/** Une récompense en montants : les heures de butin (goldH, essenceH) au revenu horaire du joueur. */
+export function resolveReward<R extends Reward>(s: PlayerState, r: R): Omit<R, 'goldH' | 'essenceH'> {
+  const { goldH, essenceH, ...rest } = r;
+  if (!goldH && !essenceH) return rest;
+  const perHour = incomePerHour(s.campaign.cleared);
+  const out = { ...rest } as Record<string, number>;
+  if (goldH) out.gold = (out.gold ?? 0) + Math.round(perHour * goldH);
+  if (essenceH) out.essence = (out.essence ?? 0) + Math.round(perHour * essenceH * ESSENCE_RATIO);
+  return out as Omit<R, 'goldH' | 'essenceH'>;
 }

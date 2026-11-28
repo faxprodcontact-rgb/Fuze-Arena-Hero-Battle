@@ -5,7 +5,7 @@ import type { ComponentChildren } from 'preact';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { stagePower } from '../../../core/data/campaign';
 import { CAMPAIGN_STAGES, OFFLINE_CAP_HOURS, STAGES_PER_CHAPTER } from '../../../core/data/economy';
-import { chapterElement, chapterOf, isBossStage, stageInChapter } from '../../../core/stages';
+import { campaignElement, chapterOf, isBossStage, stageInChapter } from '../../../core/stages';
 import { ELEMENT_COLOR } from '../../art';
 import { runIdle } from '../../scenes';
 import { fmt, t } from '../../i18n';
@@ -82,7 +82,7 @@ export function CampaignScreen({ running }: { running: boolean }) {
   const rightDots = [mailWaiting(s) > 0, s.friends.inbox.length > 0];
 
   return (
-    <div class="home" style={{ '--el': ELEMENT_COLOR[chapterElement(chapter)] } as never}>
+    <div class="home" style={{ '--el': ELEMENT_COLOR[campaignElement(chapter)] } as never}>
       <div class="stage">
         <IdleStage running={running} />
         <button class="stage-title" aria-label={`${t('chapter')} ${chapter}`} onClick={() => open({ type: 'worldMap' })}>

@@ -20,6 +20,8 @@ import { open } from '../nav';
 import { Sparkles } from './boutique-kit';
 import './boutique.css';
 import './boutiques-modes.css';
+import { resolveReward } from '../../state/selectors';
+import { getState } from '../../state/store';
 
 // le Colisée prend l'allure de la salle des trophées de l'arène, avec ses insignes
 type Kind = 'guild' | 'arena' | 'coliseum';
@@ -27,7 +29,7 @@ const CURRENCY: Record<Kind, 'guildCoins' | 'arenaTokens' | 'badge'> = { guild: 
 
 /** Le contenu d'un objet : sa monnaie (ou son équipement) et sa quantité. */
 function content(x: ShopItem): [string, number] {
-  const [k, v] = Object.entries(x.reward)[0] ?? ['gold', 0];
+  const [k, v] = Object.entries(resolveReward(getState(), x.reward))[0] ?? ['gold', 0];
   return [k, v ?? 0];
 }
 const artOf = (k: string, v: number) => (k === 'item' ? `weapon-${v}` : k === 'gold' ? 'goldPile' : k);

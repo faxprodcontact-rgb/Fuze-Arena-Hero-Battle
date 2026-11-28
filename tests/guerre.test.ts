@@ -5,6 +5,10 @@ import {
   claimWar, ensureWar, finishBattle, joinGuild, warAttacksLeft, warPhase, warPlan, warScores, warStars, BOT_GUILDS,
 } from '../src/game/state/actions';
 import { getState, now, update } from '../src/game/state/store';
+import { summon as firstSummon } from '../src/game/state/actions';
+
+// (28/11) on commence sans héros : le premier tirage du tutoriel
+if (!getState().heroes.length) firstSummon('normal', 1);
 
 /** Place l'heure du jeu sur le prochain jour de la semaine voulu (0 = dimanche … 6 = samedi), à midi. */
 function goTo(weekday: number) {
