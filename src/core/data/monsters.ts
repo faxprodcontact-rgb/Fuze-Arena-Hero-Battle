@@ -24,9 +24,9 @@ export const MONSTERS: MonsterDef[] = [
   { id: 'wraith', hp: 500, atk: 66, def: 20, interval: 14, ranged: true, skill: { id: 'doom', effects: [{ type: 'damage', target: 'all', power: 1.1 }] } },
   { id: 'ogre', hp: 2600, atk: 110, def: 55, interval: 14, ranged: false, boss: true, skill: { id: 'crush', effects: [{ type: 'damage', target: 'frontRow', power: 2 }, { type: 'status', target: 'frontRow', status: 'stun', seconds: 1.5, chance: 0.4 }] } },
   { id: 'lich', hp: 2300, atk: 100, def: 45, interval: 14, ranged: true, boss: true, skill: { id: 'doom', effects: [{ type: 'damage', target: 'all', power: 1.3 }, { type: 'status', target: 'all', status: 'poison', value: 0.02, seconds: 4, chance: 0.5 }] } },
-  // l'oiseau-tempête (vent), 4e boss de guilde (choix du propriétaire, 26/11) : il ne sert qu'à la guilde
+  // l'oiseau-tempête (vent), 4e boss de guilde (choix du propriétaire, 26/11) ; depuis le 28/11, aussi le boss des régions de vent
   { id: 'storm', hp: 2500, atk: 108, def: 48, interval: 13, ranged: true, boss: true, skill: { id: 'tempest', effects: [{ type: 'damage', target: 'all', power: 1.25 }, { type: 'status', target: 'all', status: 'slow', value: 0.3, seconds: 4, chance: 0.6 }] } },
-  { id: 'dragon', hp: 3000, atk: 105, def: 60, interval: 15, ranged: true, boss: true, skill: { id: 'firestorm', effects: [{ type: 'damage', target: 'all', power: 1.4 }, { type: 'status', target: 'all', status: 'burn', value: 0.25, seconds: 4, chance: 0.6 }] } },
+  { id: 'dragon', hp: 3000, atk: 105, def: 60, interval: 15, ranged: true, boss: true, skill: { id: 'firestorm', effects: [{ type: 'damage', target: 'all', power: 1.15 }, { type: 'status', target: 'all', status: 'burn', value: 0.25, seconds: 4, chance: 0.45 }] } }, // (28/11 : 1.4 → 1.15, le plus dur des grands boss)
 ];
 
 export const FRONT_MONSTERS = ['goblin', 'wolf', 'golem'];

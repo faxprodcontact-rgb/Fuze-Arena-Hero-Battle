@@ -258,8 +258,10 @@ export class RealPlayer {
     if (ok && this.milestones[m] === undefined) this.milestones[m] = this.day;
   }
 
+  /** Joue `days` jours de plus (on peut l'appeler plusieurs fois : il reprend là où il s'était arrêté). */
   run(days: number): this {
-    for (this.day = 0; this.day < days; this.day++) {
+    const end = this.days.length + days;
+    for (this.day = this.days.length; this.day < end; this.day++) {
       // le premier jour : 30 min en arrivant, puis 2 × 20 min ; ensuite 3 × 20 min (matin, midi, soir)
       const plan: [number, number][] = this.day === 0 ? [[0, 30], [3, 20], [10, 20]] : [[1, 20], [6, 20], [14, 20]];
       for (const [hour, min] of plan) {
