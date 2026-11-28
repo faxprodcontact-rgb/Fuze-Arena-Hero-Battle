@@ -428,100 +428,96 @@ def fx_attack(tl, path):
     return f
 
 
-# ---- l'attaque spéciale
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : gerbes et colonne d'UNE forme, courbes continues,
+# sans contour sombre sur l'eau, moins de gouttes et mieux lancées ; même rythme, mêmes instants qu'avant)
+
+import effets_pro as E  # noqa: E402
+
+
+def _gouttes(fig, X, Y, vels, tau0, g=360, big=1.0, life=0.6, drag=1.2):
+    for j, (vx, vy) in enumerate(vels):
+        tau = tau0 - 0.03 * (j % 3)
+        if 0 < tau < life:
+            (x, y), (wx, wy) = E.vol((X, Y), (vx * big, vy * big), g, tau, drag=drag)
+            if y < GR - 0.5:
+                fig.fx_front.append(E.goutte(fig, x, y, wx, wy, (1.25 if j % 2 else 0.95) * (0.6 + 0.4 * (1 - tau / life)), 'eau',
+                                             op=min(1, (life - tau) * 6)))
+
 
 def fx_special(tl):
     def f(fig, ctx):
         t = tl
-        # 1) la plongée : la couronne d'eau là où il entre
+        # 1) la plongée : UNE gerbe en couronne là où il entre, quelques gouttes
         if 400 <= t <= 1000:
-            b, fr = splash_crown(fig, ENTRY_X, (t - 400) / 560.0, 1.0)
-            fig.fx_back += b
-            fig.fx_front += fr
-        # 2) l'aileron file : vague d'étrave devant, sillage d'eau sombre et nappes derrière
+            k = (t - 400) / 560.0
+            fig.fx_front.append(E.gerbe(fig, ENTRY_X, GR, k, 1.05, seed=1))
+            _gouttes(fig, ENTRY_X, GR - 3, ((-60, -130), (45, -145), (-95, -80), (90, -95)), k * 0.7)
+        # 2) l'aileron file : un sillage d'un seul ruban derrière lui, une vague d'étrave devant (une forme), embruns
         if 520 <= t <= 1000:
             fx_ = ctx['fin'][0]
             ew = env(t, 520, 580, 830, 1000)
             run = env(t, 520, 560, 760, 860)
             x0 = ENTRY_X + 4
-            if fx_ > x0 + 2:
-                wk = [(x0 + (fx_ - x0) * i / 8, GR - 0.6 - 0.4 * math.sin(i * 1.3 + t / 60.0)) for i in range(9)]
-                band = taper(wk, 0.4, 3.2 * ew + 0.4, tip='round')
-                gb = g_lin(fig, (x0, GR), (fx_, GR), [(0, WATER[4], 0.3 * ew), (1, WATER[3], ew)])
-                fig.fx_back.append('<path d="%s" fill="%s"/>' % (band.d(), gb))
-                for j in range(4):
-                    xx = fx_ - 10 - 16 * j - (t / 12.0) % 16
-                    if xx > x0:
-                        fig.fx_front.append(foam(fig, xx, GR - 0.8, 1.3 * ew * (1 - 0.15 * j), op=ew * (1 - 0.2 * j), seed=j))
-            fig.fx_front.append(mound(fig, fx_ + 6, 4.5 * ew + 2.5 * run, 9 + 3 * run, op=ew))
-            fig.fx_back.append(sheet(fig, (fx_ + 8, GR), -50, 10 * run + 2, 40, 3.2, op=ew * run))
-            fig.fx_back.append(sheet(fig, (fx_ - 4, GR), -140, 8 * run + 2, -30, 2.8, op=ew * run))
-            for j in range(5):
-                tt = ((t - 520) / 1000.0 + j * 0.07) % 0.35
-                x, y = ballistic((fx_ + 4, GR - 2), (40 + 15 * j, -70 - 10 * j), 320, tt)
-                if y < GR and run > 0.2:
-                    fig.fx_front.append(drop(fig, x, y, 40, -70 + 320 * tt, 0.8, op=run))
-        # 3) sous l'ennemi : le sol bouillonne (tenu), puis la grande gerbe jaillit, tient, et s'effondre en pluie
+            if fx_ > x0 + 4:
+                wk = [(x0 + (fx_ - x0) * i / 5, GR - 0.8 - 0.5 * math.sin(i * 1.3 + t / 60.0)) for i in range(6)]
+                fig.fx_back.append(E.ruban(fig, wk, 4.2 * ew + 0.6, 'eau', op=ew, kind='tete', halo=0.5))
+            fig.fx_front.append(E.gerbe(fig, fx_ + 6, GR, 0.3 + 0.04 * math.sin(t / 40.0), 0.45 + 0.35 * run, op=ew, seed=2))
+            if run > 0.2:
+                for j in range(3):
+                    tt = ((t - 520) / 1000.0 + j * 0.1) % 0.3
+                    (x, y), (wx, wy) = E.vol((fx_ + 5, GR - 3), (45 + 18 * j, -80 - 12 * j), 340, tt, drag=1.5)
+                    if y < GR:
+                        fig.fx_front.append(E.goutte(fig, x, y, wx, wy, 0.9, 'eau', op=run * min(1, (0.3 - tt) * 8)))
+        # 3) sous l'ennemi : le sol bouillonne (tenu), puis la grande colonne jaillit, tient, et s'effondre en pluie
         if 800 <= t <= 1900:
             X = GEY_X
             bub = env(t, 800, 860, 940, 1000)
             if bub > 0:
-                fig.fx_back.append(mound(fig, X, 5 * bub + 1.2 * math.sin(t / 25.0), 18, op=bub))
-                for j in range(4):
-                    ph = (t / 70.0 + j * 0.7) % 1
-                    fig.fx_front.append(foam(fig, X - 12 + 8 * j, GR - 2 - 4 * ph, 1.4 * (1 - ph) + 0.4, op=bub * (1 - ph), seed=j))
+                fig.fx_back.append(E.bosse(fig, X, GR, 5 * bub + 1.2 * math.sin(t / 25.0), 18, op=bub))
             if t >= 950:
                 tg = (t - 950) / 1000.0
-                # elle monte d'un coup, tient, puis s'effondre : elle maigrit et se défait en pluie (le sommet ne
-                # redescend pas à travers lui)
                 up = env(tg, 0, 0.12, 0.5, 0.68)
                 rise = env(tg, 0, 0.12, 0.5, 0.7)
-                top = GR - 112 * up
+                top = GR - 100 * up            # la gerbe du sommet monte encore ~25 px : rien n'est coupé
                 wb = (30 + 8 * up) * (0.75 + 0.25 * rise)
                 wt = (18 + 8 * up) * (0.75 + 0.25 * rise)
                 if rise > 0:
-                    fig.fx_back.append(column(fig, X, top, wb, wt, 3 * math.sin(tg * 6), tg, op=min(1, rise * 1.6)))
-                    fig.fx_front.append(mound(fig, X, 12 * rise, 30, op=min(1, rise * 2.5)))
-                    for j, (dx, ang, L, bd) in enumerate(((-16, -150, 18, -40), (16, -30, 18, 40), (-10, -125, 14, -30), (10, -55, 14, 30))):
-                        fig.fx_front.append(sheet(fig, (X + dx, GR), ang, L * rise, bd, 4.4, op=min(1, rise * 2)))
-                # la pluie : la gerbe s'effondre, des gouttes partent de ses bords et retombent (en désordre)
-                RAIN = [(-0.9, 0.62, -55, 0.38), (0.8, 0.48, 60, 0.4), (-0.5, 0.85, -30, 0.44), (0.3, 0.92, 25, 0.42),
-                        (1.0, 0.7, 75, 0.47), (-1.0, 0.3, -70, 0.5), (0.6, 0.25, 45, 0.53), (-0.2, 0.55, -15, 0.49),
-                        (0.15, 0.75, 10, 0.56), (-0.7, 0.45, -45, 0.58), (0.9, 0.9, 35, 0.6), (-0.35, 0.98, -20, 0.62)]
+                    fig.fx_back.append(E.colonne(fig, X, top, GR, wb, wt, 3 * math.sin(tg * 6), tg, op=min(1, rise * 1.6), lips=rise))
+                # au pied : la gerbe qui s'ouvre (une forme), puis la flaque qui s'étale
+                kb = 0.08 + 0.42 * min(1, tg / 0.12) if tg < 0.5 else min(0.97, 0.5 + (tg - 0.5) * 2)
+                fig.fx_front.append(E.gerbe(fig, X, GR, kb, 1.7, seed=3))
+                # la pluie : la colonne s'effondre, des gouttes partent de ses bords et retombent
+                RAIN = [(-0.9, 0.62, -55, 0.38), (0.8, 0.48, 60, 0.42), (-0.5, 0.85, -30, 0.46), (0.3, 0.92, 25, 0.5),
+                        (1.0, 0.7, 75, 0.54), (-0.7, 0.4, -45, 0.58), (0.5, 0.25, 40, 0.62)]
                 for j, (sx, hy, vx, st) in enumerate(RAIN):
                     tt = tg - st - 0.1
                     if 0 < tt < 0.6:
-                        p0 = (X + sx * 13, GR - 104 * hy)
-                        x, y = ballistic(p0, (vx, -25 - 10 * (j % 3)), 360, tt)
+                        (x, y), (wx, wy) = E.vol((X + sx * 13, GR - 104 * hy), (vx, -30 - 10 * (j % 3)), 420, tt, drag=0.8)
                         if y < GR:
-                            fig.fx_front.append(drop(fig, x, y, vx, -25 + 360 * tt, 1.3 if j % 3 == 0 else 0.95, op=min(1, (0.6 - tt) * 6)))
+                            fig.fx_front.append(E.goutte(fig, x, y, wx, wy, 1.4 if j % 3 == 0 else 1.05, 'eau', op=min(1, (0.6 - tt) * 6)))
                 pud = env(tg, 0.4, 0.55, 0.75, 0.95)
                 if pud > 0:
-                    fig.fx_front.append(mound(fig, X, 3.5 * pud, 26, op=pud, foamy=0.7))
-        # 4) il MORD : l'éclat d'écume sur la gueule, des gouttes
+                    fig.fx_front.append(E.bosse(fig, X, GR, 3.5 * pud, 26, op=pud, foamy=0.7))
+        # 4) il MORD : un éclat d'écume (une bouffée) sur la gueule, quelques gouttes
         tb = (t - SP_BITE) / 1000.0
         if 0 <= tb < 0.6:
             M = ctx['mouth']
             pe = env(tb, 0, 0.02, 0.12, 0.3)
             if pe > 0:
-                fig.fx_front.append(foam(fig, M[0] + 4, M[1] - 1, 5.5 * pe + 1, op=pe, seed=2))
-                fig.fx_front.append(foam(fig, M[0] + 8, M[1] + 3, 3.2 * pe + 0.6, op=pe, seed=1))
-            for j, (vx, vy) in enumerate(((70, -90), (100, -30), (40, -120), (-10, -100), (90, 20), (130, -60))):
-                x, y = ballistic((M[0] + 5, M[1]), (vx, vy), 280, tb)
-                if y < GR:
-                    fig.fx_front.append(drop(fig, x, y, vx, vy + 280 * tb, 1.0 if j % 2 else 0.8, op=min(1, (0.6 - tb) * 4)))
-        # 5) il ressurgit chez lui : un rejaillissement, puis l'eau ruisselle
+                fig.fx_front.append(E.nuage(fig, M[0] + 5, M[1], 5.5 * pe + 1.2, 'eau', op=pe, seed=2))
+            _gouttes(fig, M[0] + 5, M[1], ((75, -95), (105, -35), (40, -125), (-10, -100)), tb, g=320, life=0.55)
+        # 5) il ressurgit chez lui : une gerbe, puis l'eau ruisselle (quelques gouttes)
         if 1540 <= t <= 2080:
-            b, fr = splash_crown(fig, HOME_X, (t - 1540) / 520.0, 0.85, seed=1)
-            fig.fx_back += b
-            fig.fx_front += fr
+            k = (t - 1540) / 520.0
+            fig.fx_front.append(E.gerbe(fig, HOME_X, GR, k, 0.9, seed=4))
+            _gouttes(fig, HOME_X, GR - 3, ((-55, -120), (50, -130), (-85, -70)), k * 0.7, big=0.85)
         if 1700 <= t <= 2080:
             k = (t - 1700) / 380.0
-            for j, (px, py) in enumerate(((60, 62), (96, 56), (48, 88), (90, 80), (70, 40), (36, 70))):
-                tt = (k * 0.9 + 0.17 * j) % 0.5
-                x, y = ballistic((px, py + 10 * ((j * 0.37) % 1)), (0, 10), 300, tt)
+            for j, (px, py) in enumerate(((60, 62), (94, 58), (50, 86), (88, 80))):
+                tt = (k * 0.9 + 0.2 * j) % 0.5
+                (x, y), (wx, wy) = E.vol((px, py), (0, 10), 380, tt, drag=0.5)
                 if y < GR - 1:
-                    fig.fx_front.append(drop(fig, x, y, 0, 10 + 300 * tt, 0.7, op=(1 - k)))
+                    fig.fx_front.append(E.goutte(fig, x, y, wx, wy, 0.75, 'eau', op=(1 - k)))
     return f
 
 

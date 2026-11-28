@@ -360,7 +360,13 @@ def fx_attack(tl, ang_prev):
     return f
 
 
-# ---- l'attaque spéciale
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : silhouettes unies, courbes continues, sans contour
+# sombre sur le feu ; même rythme, mêmes instants qu'avant)
+
+import effets_pro as E  # noqa: E402
+
+ROCK6 = E.pierre_de(K.ROCK, FINK)
+
 
 def fx_special(tl, ang_prev):
     def f(fig, ctx):
@@ -372,44 +378,45 @@ def fx_special(tl, ang_prev):
         # l'embrasement du corps : une lueur chaude derrière le buste
         if g > 0.3:
             fig.under.append((ctx['chest'][0], ctx['chest'][1], 26 + 6 * g, 30 + 6 * g, '#ff7a1e', 0.12 * g, None))
-        # la lave qui coule sur la lame : une lueur le long de l'épée
+        # la lave qui coule sur la lame : un ruban de feu le long de l'épée
         if P['molten'] > 0.2:
-            fig.fx_back.append('<path d="%s" fill="%s" opacity="%g"/>' % (
-                ribbon([G, ((G[0] + tip[0]) / 2, (G[1] + tip[1]) / 2), tip], [3, 8, 2]).d(), LAVA[2], 0.22 * P['molten']))
-        # la charge : braises qui montent autour de lui ; la pointe plantée fait bouillir le sol
+            fig.fx_back.append(E.ruban(fig, [G, ((G[0] + tip[0]) / 2, (G[1] + tip[1]) / 2), tip], 7, 'feu',
+                                       op=0.35 * P['molten'], kind='fuseau', halo=0.6, coeur=False))
+        # la charge : quelques étincelles montent autour de lui (accélèrent, ondulent, s'éteignent en rétrécissant) ;
+        # la pointe plantée fait naître UN petit feu au sol
         ch = env(t, 120, 300, 900, 1100)
         if ch > 0:
-            for i in range(16):
+            for i in range(8):
                 fr = (i * 0.618) % 1
-                x0 = 18 + 92 * fr
-                sp = 0.55 + 0.4 * ((i * 0.37) % 1)
+                x0 = 22 + 84 * fr
+                sp = 0.6 + 0.4 * ((i * 0.37) % 1)
                 k = ((t / 1000.0) * sp + (i * 0.29) % 1) % 1
-                y = GR - 4 - 72 * k
-                x = x0 + 3 * math.sin(k * 6 + i)
-                fig.fx_front.append(ember(fig, x, y, 0.5 + 0.3 * (i % 3) / 2, op=ch * (1 - k) * min(1, k * 5)))
+                y = GR - 6 - 70 * k * k ** 0.3
+                x = x0 + 4 * math.sin(k * 5 + i)
+                fig.fx_front.append(E.etincelle(fig, x, y, 20 * math.cos(k * 5 + i), -60 - 90 * k, 0.55 + 0.25 * (1 - k),
+                                                'feu', op=ch * (1 - k) * min(1, k * 6)))
             if t < 940:
-                tx = tip[0]
-                for j, (dx, hh, ww, bd) in enumerate(((-2.5, 6, 3.2, -0.8), (1.0, 9, 4.0, 0.7), (4, 5, 2.6, -0.5))):
-                    fl = 1 + 0.25 * math.sin(t / 38.0 + j * 2.1)
-                    fig.fx_front.append(tongue(fig, (tx + dx, GR), hh * fl * ch, ww, bend=bd, lean=-0.1 + 0.1 * j))
-        # le raclement : un sillon qui s'allume derrière la pointe, des étincelles
+                fig.fx_front.append(E.foyer(fig, tip[0] + 0.5, GR, 9.5 * ch, 9, t, n=3, seed=1))
+        # le raclement : un sillon de lave d'un seul tenant derrière la pointe, quelques étincelles
         if 880 <= t:
             x_start = 18.0
             x_end = min(WALL_X0 - 8, max(x_start, tip[0])) if t < 1035 else WALL_X0 - 8
             if t >= SP_FLASH:
                 x_end = WALL_X0 + (min(t, 1485) - SP_FLASH) / (1485 - SP_FLASH) * (WALL_X1 - WALL_X0)
             heat = env(t, 880, 940, 1700, 2380)
-            fig.fx_back.append(furrow(fig, x_start, x_end, heat))
+            if x_end - x_start > 2 and heat > 0.02:
+                pts = [(x_start + (x_end - x_start) * i / 6, GR + 0.4 + 0.3 * math.sin(i * 1.7)) for i in range(7)]
+                fig.fx_back.append(E.fissure(fig, pts, 3.0, 'feu', op=min(1, heat * 1.3), glow=heat, pierre=ROCK6))
         if 900 <= t <= 1100:
-            for i in range(7):
-                st = 900 + i * 22
+            for i in range(5):
+                st = 900 + i * 30
                 if t >= st:
                     tau = (t - st) / 1000.0
                     p = (20 + (tip[0] - 20) * min(1, (st - 900) / 130.0), GR - 1)
-                    x, y = ballistic(p, (-30 - 12 * i % 40, -60 - 9 * i), 160, tau)
-                    if tau < 0.35:
-                        fig.fx_front.append(ember(fig, x, y, 0.6, op=1 - tau / 0.35))
-        # le revers montant : un grand croissant de feu derrière la lame
+                    (x, y), (vx, vy) = E.vol(p, (-40 - 10 * i, -70 - 12 * i), 220, tau, drag=2.5)
+                    if tau < 0.32:
+                        fig.fx_front.append(E.etincelle(fig, x, y, vx, vy, 0.6, 'feu', op=1 - tau / 0.32))
+        # le revers montant : UN grand croissant de feu d'un seul tenant derrière la lame
         if 930 <= t <= 1400:
             a_start = 144 + P['lean'] * 1.1
             a1 = ang
@@ -419,73 +426,67 @@ def fx_special(tl, ang_prev):
             while a0 > a1 + 360:
                 a0 -= 360
             e = env(t, 930, 960, 1215, 1400)
-            fig.fx_back.append(trail(fig, G, R + 1, a0, a1, 16 * e, hot=True, op=e))
-        # l'éclair (arrêt sur l'image)
+            fig.fx_back.append(E.croissant(fig, G, R + 1, a0, a1, 17 * e, 'feu', op=e))
+        # l'éclair (arrêt sur l'image) : un éclat chaud qui part de la lame (dégradé rond, pas un voile plat)
         fl = env(t, SP_FLASH - 10, SP_FLASH, SP_FLASH + 20, SP_FLASH + 110)
         if fl > 0:
-            # un éclat chaud qui part de la lame (dégradé rond), pas un voile plat
             c = ((G[0] + tip[0]) / 2, (G[1] + tip[1]) / 2)
             fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(150), g_rad(
                 fig, c, 150, [(0, '#fffbe4', 0.85 * fl), (0.12, '#ffe68a', 0.55 * fl), (0.45, '#ffb43a', 0.18 * fl), (1, '#ff7a1e', 0)])))
-        # le mur de flammes qui roule vers l'ennemi
+        # le mur de flammes qui roule vers l'ennemi : UNE flamme penchée en avant, qui grandit en roulant
         if SP_FLASH <= t < 1500:
             k = (t - SP_FLASH) / (1485 - SP_FLASH)
             X = WALL_X0 + (WALL_X1 - WALL_X0) * min(1, k)
             hmax = 30 + 16 * min(1, k)
-            ln = 0.25 + 0.35 * min(1, k)
-            for j, (dx, hf, bd) in enumerate(((-11, 0.5, -0.6), (-5, 0.82, 0.4), (1, 1.0, -0.3), (7, 0.7, 0.6), (12, 0.42, -0.5))):
-                flick = 1 + 0.1 * math.sin(t / 30.0 + j * 1.9)
-                layer = fig.fx_front if j % 2 == 0 else fig.fx_back
-                layer.append(tongue(fig, (X + dx, GR), hmax * hf * flick, 5.5 + 3 * hf, bend=bd, lean=ln * (0.6 + 0.6 * hf)))
-            for j, (vx, vy, kind) in enumerate(((50, -95, 'c'), (85, -70, 'd'), (30, -120, 'c'), (100, -50, 'd'), (-15, -85, 'c'), (65, -100, 'd'))):
-                st = SP_FLASH + j * 30
+            fig.fx_front.append(E.foyer(fig, X, GR, hmax, 30, t, n=5, lean=0.25 + 0.3 * min(1, k), seed=3, spread=0.7))
+            for j, (vx, vy, kind) in enumerate(((60, -160, 'c'), (95, -120, 'd'), (-10, -150, 'd'))):
+                st = SP_FLASH + j * 40
                 if t >= st:
                     tau = (t - st) / 1000.0
-                    p0 = (WALL_X0 + (WALL_X1 - WALL_X0) * min(1, (st - SP_FLASH) / 270.0) - 4, GR - 3)
-                    x, y = ballistic(p0, (vx, vy), 260, tau)
+                    p0 = (WALL_X0 + (WALL_X1 - WALL_X0) * min(1, (st - SP_FLASH) / 270.0) - 4, GR - 4)
+                    (x, y), (wx, wy) = E.vol(p0, (vx, vy), 300, tau, drag=1.2)
                     if y < GR - 1 and tau < 0.6:
-                        fig.fx_front.append(chunk(fig, x, y, 1.5, rot=tau * 500 + j * 60) if kind == 'c'
-                                            else drop(fig, x, y, vx, vy + 260 * tau, 1.0 if j % 2 else 1.3))
+                        fig.fx_front.append(E.caillou(fig, x, y, 1.6, ang=tau * 9 + j, seed=40 + j, hot=0.8, p='feu', pierre=ROCK6) if kind == 'c'
+                                            else E.goutte(fig, x, y, wx, wy, 1.2, 'feu', op=min(1, (0.6 - tau) * 5)))
             if k > 0.3:
-                fig.fx_back.append(smoke(fig, X - 30 - 10 * k, GR - 5 - 4 * k, 3 + 3 * k, op=0.8))
-                fig.fx_back.append(smoke(fig, X - 44 - 12 * k, GR - 12 - 8 * k, 2.4 + 2 * k, op=0.6))
-        # le geyser de lave sur l'ennemi, puis le feu retombe en fumée
+                fig.fx_back.append(E.nuage(fig, X - 32 - 10 * k, GR - 7 - 6 * k, 3.5 + 3 * k, 'feu', op=0.75, seed=2))
+        # le geyser de lave sur l'ennemi : UNE grande flamme qui jaillit du sol, puis le feu retombe en fumée
         if 1485 <= t:
             X = GEYSER_X
             tg = t - 1485
             sc = env(tg, 0, 90, 240, 520)
             if sc > 0:
-                dome = sm([(X - 18 * sc, GR + 0.5), (X - 9, GR - 6 * sc), (X + 9, GR - 6 * sc), (X + 18 * sc, GR + 0.5)], t=0.9)
-                fig.fx_back.append(outlined([(dome, g_lin(fig, (X, GR - 6), (X, GR), [(0, LAVA[1]), (1, LAVA[4])]), 1)], w=1.4))
-                for j, (dx, hh, ww, bd, ln) in enumerate(((0, 56, 15.0, 0.5, 0.05), (-12, 36, 10.5, -1.0, -0.45), (12, 40, 11.0, 1.0, 0.5),
-                                                          (-23, 19, 6.0, -0.9, -0.9), (24, 21, 6.0, 0.9, 0.9))):
-                    flick = 1 + 0.08 * math.sin(t / 26.0 + j * 2.3)
-                    (fig.fx_front if j == 0 else fig.fx_back).append(
-                        tongue(fig, (X + dx * (0.7 + 0.3 * sc), GR), hh * sc * flick, ww * (0.6 + 0.4 * sc), bend=bd, lean=ln))
-            for j, (vx, vy) in enumerate(((-70, -150), (60, -170), (-110, -80), (115, -95), (-25, -210), (30, -195), (-140, -30), (150, -40))):
-                tau = (tg - 20 * (j % 3)) / 1000.0
-                if 0 <= tau < 0.75:
-                    x, y = ballistic((X, GR - 6), (vx, vy), 300, tau)
-                    if y < GR:
-                        fig.fx_front.append(drop(fig, x, y, vx, vy + 300 * tau, 1.4 if j % 2 else 1.0))
-            for j, (vx, vy) in enumerate(((-90, -120), (95, -130), (-40, -180), (130, -60), (-150, -70))):
+                tongues = [(0, 56 * sc, 16.0, 0.5, 0.05), (-11, 38 * sc, 12, -1.0, -0.42), (11, 42 * sc, 12, 1.0, 0.45),
+                           (-21, 20 * sc, 8, -0.9, -0.85), (22, 22 * sc, 8, 0.9, 0.85)]
+                tongues = [(dx * (0.7 + 0.3 * sc), hh * (1 + 0.08 * math.sin(t / 26.0 + j * 2.3)), ww * (0.6 + 0.4 * sc), bd, ln)
+                           for j, (dx, hh, ww, bd, ln) in enumerate(tongues)]
+                fig.fx_front.append(E.flamme(fig, (X, GR), tongues, 'feu'))
+            # la lave jaillit : quelques gouttes freinées par l'air, qui retombent et s'éteignent
+            for j, (vx, vy) in enumerate(((-90, -250), (80, -280), (-140, -150), (150, -170), (15, -320))):
+                tau = (tg - 25 * (j % 3)) / 1000.0
+                if 0 <= tau < 0.7:
+                    (x, y), (wx, wy) = E.vol((X, GR - 8), (vx, vy), 420, tau, drag=0.7)
+                    if y < GR - 1:
+                        fig.fx_front.append(E.goutte(fig, x, y, wx, wy, 1.5 if j % 2 else 1.15, 'feu', op=min(1, (0.7 - tau) * 5)))
+            for j, (vx, vy) in enumerate(((-100, -210), (110, -230), (-30, -280))):
                 tau = tg / 1000.0
                 if tau < 0.7:
-                    x, y = ballistic((X, GR - 4), (vx, vy), 320, tau)
-                    if y < GR - 0.5:
-                        fig.fx_front.append(chunk(fig, x, y, 1.7, rot=tau * 600 + j * 70))
-            # retombée : petites flammes, fumée qui monte, braises qui flottent
+                    (x, y), _ = E.vol((X, GR - 5), (vx, vy), 420, tau, drag=0.7)
+                    if y < GR - 1:
+                        fig.fx_front.append(E.caillou(fig, x, y, 1.9, ang=tau * 8 + j, seed=50 + j, hot=max(0, 1 - tau * 2), p='feu', pierre=ROCK6))
+            # retombée : un petit feu, la fumée qui monte en s'élargissant, des braises qui flottent
             e2 = env(tg, 200, 330, 520, 900)
             if e2 > 0:
-                fig.fx_back.append(tongue(fig, (X - 4, GR), 18 * e2, 7.0, bend=0.8, lean=0.3))
-                fig.fx_back.append(tongue(fig, (X + 9, GR), 11 * e2, 5.0, bend=-0.7, lean=0.5))
+                fig.fx_back.append(E.foyer(fig, X + 2, GR, 20 * e2, 16, t, n=3, seed=5))
             sm_k = (tg - 150) / 1000.0
             if 0 < sm_k < 1.2:
                 o = env(sm_k, 0, 0.15, 0.5, 1.2)
-                for j, (dx, rr, sp) in enumerate(((-14, 5.0, 22), (0, 6.5, 30), (15, 5.0, 25), (-26, 3.6, 14), (26, 3.8, 16))):
-                    fig.fx_back.append(smoke(fig, X + dx + 4 * sm_k * (1 if dx > 0 else -1), GR - 5 - sp * sm_k, rr * (0.7 + 0.6 * sm_k), op=0.85 * o))
-                for j in range(5):
-                    fig.fx_front.append(ember(fig, X - 20 + 10 * j + 3 * math.sin(sm_k * 5 + j), GR - 20 - 40 * sm_k - 6 * j, 0.6, op=o))
+                for j, (dx, rr, sp) in enumerate(((-12, 5.5, 24), (6, 7.0, 32), (20, 4.6, 18))):
+                    fig.fx_back.append(E.nuage(fig, X + dx + 5 * sm_k * (1 if dx > 0 else -1), GR - 8 - sp * sm_k,
+                                               rr * (0.7 + 0.7 * sm_k), 'feu', op=0.8 * o, seed=j))
+                for j in range(4):
+                    fig.fx_front.append(E.etincelle(fig, X - 18 + 12 * j + 3 * math.sin(sm_k * 5 + j), GR - 20 - 42 * sm_k - 6 * j,
+                                                    3 * math.cos(sm_k * 5 + j), -40, 0.6, 'feu', op=o))
     return f
 
 

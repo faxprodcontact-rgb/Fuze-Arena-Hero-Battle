@@ -417,54 +417,30 @@ def fx_attack(tl):
 
 # ---- l'attaque spéciale : le cyclone
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : cyclone d'UNE silhouette, rubans de vent d'un seul
+# tenant, sans contour sombre, moins de feuilles et de bouffées ; même rythme, mêmes instants qu'avant)
+
+import effets_pro as E  # noqa: E402
+
+
 def tornado(fig, base, h, top_r, rot, op=1.0, lean=0.0):
-    """Un cyclone posé au sol en `base` : un entonnoir translucide (sans contour) et trois rubans de vent qui
-    s'enroulent en hélice du sol jusqu'en haut (passages devant / derrière), plus fins en bas, larges en haut."""
+    """Le cyclone posé au sol (effets_pro.tourbillon) : le voile et les rubans de derrière derrière, ceux de devant
+    devant (ce qu'il engloutit passe entre les deux)."""
     if op <= 0.02 or h < 2:
         return
-    bx, by = base
-    # l'entonnoir : une forme douce, plus claire en haut à droite (derrière les rubans)
-    L, R_ = [], []
-    for i in range(13):
-        t = i / 12
-        r = 1.6 + top_r * t ** 1.25
-        x = bx + lean * t * t * h * 0.25 + 1.4 * math.sin(rot / 40.0 + t * 3)
-        y = by - h * t
-        L.append((x - r, y))
-        R_.append((x + r, y))
-    funnel = sm(L + R_[::-1], t=0.85)
-    gr = g_lin(fig, (bx + top_r, by - h), (bx - top_r, by), [(0, '#ffffff', 0.55 * op), (0.5, WA[2], 0.42 * op), (1, WA[4], 0.3 * op)])
-    fig.fx_back.append('<path d="%s" fill="%s"/>' % (funnel.d(), gr))
-    # les rubans en hélice
-    grh = g_lin(fig, (bx + top_r, by - h), (bx - top_r, by), [(0, '#ffffff'), (0.45, WA[1]), (1, WA[3])])
-    for j in range(3):
-        rows = []
-        for i in range(37):
-            t = i / 36
-            a = math.radians(rot + 120 * j + 540 * t)
-            r = 2.0 + top_r * t ** 1.25
-            x0 = bx + lean * t * t * h * 0.25 + 1.4 * math.sin(rot / 40.0 + t * 3)
-            y0 = by - h * t
-            w = (0.8 + 4.2 * t) * (1 - 0.6 * max(0, (t - 0.9) / 0.1))
-            cx_, cy_ = x0 + r * math.cos(a), y0 + r * 0.28 * math.sin(a)
-            rows.append((math.sin(a) > 0, (cx_, cy_ - w / 2), (cx_, cy_ + w / 2)))
+    b, f_ = E.tourbillon(fig, base, h, top_r, rot, 'vent', op=op, lean=lean, split=True)
+    fig.fx_back.append(b)
+    fig.fx_front.append(f_)
 
-        def shape(rr):
-            o = [r_[1] for r_ in rr]
-            i_ = [r_[2] for r_ in rr]
-            return sm(o + i_[::-1], sharp=(0, len(o) - 1, len(o), 2 * len(o) - 1), t=0.6)
-        fig.fx_back.append(outlined([(shape(rows), grh, 1)], w=1.0, op=op))
-        cur = []
-        for r_ in rows:
-            if r_[0]:
-                cur.append(r_)
-            elif cur:
-                cur.append(r_)
-                if len(cur) > 2:
-                    fig.fx_front.append('<path d="%s" fill="%s" opacity="%g"/>' % (shape(cur).d(), grh, op))
-                cur = []
-        if len(cur) > 2:
-            fig.fx_front.append('<path d="%s" fill="%s" opacity="%g"/>' % (shape(cur).d(), grh, op))
+
+def _whirl(fig, c, R, w, rot, op, tilt=0.45, span=160, rise=0.0, arms=1):
+    """Des rubans de vent qui tournent autour d'un point : chacun d'un seul tenant, derrière puis devant."""
+    if op <= 0.02:
+        return
+    for j in range(arms):
+        back, front, _ = E.spirale(fig, c, R + 3.0, R - 1.2, rot + 360.0 / arms * j, span, w, tilt, rise)
+        fig.fx_back.append(E.group(back, op))
+        fig.fx_front.append(E.group(front, op))
 
 
 TW = {}
@@ -474,28 +450,30 @@ def fx_special(tl):
     def f(fig, ctx):
         fc = blade_center(ctx, 'f')
         nc = blade_center(ctx, 'n')
-        # la charge : le vent se lève autour de lui (rubans qui montent du sol en spirale), les feuilles tournent
+        # la charge : le vent se lève autour de lui (rubans qui montent du sol en spirale), quelques feuilles tournent
         ch = env(tl, SP_GATHER[0], SP_GATHER[0] + 160, SP_GATHER[1] - 60, SP_GATHER[1] + 60)
         if ch > 0:
             k = (tl - SP_GATHER[0]) / (SP_GATHER[1] - SP_GATHER[0])
             for j in range(3):
                 rise = ((tl / 650.0) + j / 3.0) % 1.0
                 o = ch * env(rise, 0, 0.2, 0.7, 1.0)
-                whirl(fig, (50, GR - 4 - 58 * rise), 30 - 8 * rise, 1, 2.8 + 1.4 * k, -tl * 0.8 + j * 120, op=o, tilt=0.26, span=200)
-            for i in range(9):
-                u = ((tl / 900.0) + i / 9.0) % 1.0
-                a = tl / 160.0 + i * 0.7
+                _whirl(fig, (50, GR - 4 - 58 * rise), 30 - 8 * rise, 3.4 + 1.6 * k, -tl * 0.8 + j * 120, o, tilt=0.26, span=200)
+            for i in range(5):
+                u = ((tl / 900.0) + i / 5.0) % 1.0
+                a = tl / 160.0 + i * 1.3
                 x = 50 + (26 - 10 * u) * math.cos(a)
                 y = GR - 3 - 64 * u + 7 * math.sin(a)
-                (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(leaf(fig, x, y, math.degrees(a) * 2 + i * 40, 0.9, op=ch * env(u, 0, 0.15, 0.8, 1.0)))
-            whirl(fig, fc, 9, 2, 2.0, -tl * 1.3, op=ch * smooth(k * 2), tilt=0.45, span=140)
-            whirl(fig, nc, 8, 2, 1.8, tl * 1.2, op=ch * smooth(k * 2 - 0.4), tilt=0.45, span=140)
-        # le cyclone naît des lames, file vers l'ennemi en grandissant
+                (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(
+                    E.feuille(fig, x, y, math.degrees(a) * 2 + i * 40, 0.95, op=ch * env(u, 0, 0.15, 0.8, 1.0)))
+            _whirl(fig, fc, 9, 2.6, -tl * 1.3, ch * smooth(k * 2), span=150, arms=2)
+            _whirl(fig, nc, 8, 2.4, tl * 1.2, ch * smooth(k * 2 - 0.4), span=150, arms=2)
+        # le cyclone naît des lames : deux rubans courbes d'un seul tenant
         if SP_EMERGE - 20 <= tl < SP_EMERGE + 110:
             e = env(tl, SP_EMERGE - 20, SP_EMERGE + 10, SP_EMERGE + 40, SP_EMERGE + 110)
             for j, (cx, cy, rr, a0) in enumerate(((fc[0] - 4, fc[1], 15, -130), (nc[0] + 4, nc[1] - 4, 16, -70))):
-                arc = [(cx + rr * math.cos(math.radians(a0 + d)), cy + rr * math.sin(math.radians(a0 + d))) for d in range(0, 161, 10)]
-                fig.fx_front.append(gust(fig, arc, 4.2, op=e))
+                arc = [(cx + rr * math.cos(math.radians(a0 + d)), cy + rr * math.sin(math.radians(a0 + d))) for d in range(0, 161, 40)]
+                fig.fx_front.append(E.ruban(fig, arc, 5.0, 'vent', op=e, kind='tete', halo=0.8))
+        # il file vers l'ennemi en grandissant
         if tl >= SP_EMERGE:
             kk = min(1.0, (tl - SP_EMERGE) / (SP_HIT - SP_EMERGE))
             x = 96 + (FOE[0] - 96) * (smooth(kk) * 0.8 + 0.2 * kk)
@@ -509,19 +487,21 @@ def fx_special(tl):
             base_y = GR - (0 if tl <= SP_END else 30 * smooth((tl - SP_END) / 450.0))
             if fade > 0.02:
                 tornado(fig, (x, base_y), hh, 17 * grow, tl * 1.4, op=fade, lean=-0.4 + 0.4 * kk)
-                # le cyclone soulève de la poussière claire au sol
+                # le cyclone soulève une bouffée d'air clair au sol
                 if tl < SP_END:
-                    for j in range(3):
-                        u = ((tl / 300.0) + j / 3.0) % 1.0
-                        fig.fx_back.append(puff(fig, x - 8 + 16 * j / 2 + 6 * u * (1 if j else -1), GR - 2 - 3 * u, 2.6 * (1 - 0.5 * u) * grow, op=0.9 * (1 - u)))
-                # les feuilles prises dans le cyclone
-                for i in range(7):
-                    a = tl / 90.0 + i * 0.9
-                    t = ((tl / 700.0) + i / 7.0) % 1.0
+                    for j in range(2):
+                        u = ((tl / 360.0) + j / 2.0) % 1.0
+                        fig.fx_back.append(E.nuage(fig, x - 6 + 12 * j + 7 * u * (1 if j else -1), GR - 2.5 - 3 * u,
+                                                   3.0 * (1 - 0.4 * u) * grow, 'vent', op=0.85 * (1 - u), seed=j))
+                # quelques feuilles prises dans le cyclone
+                for i in range(4):
+                    a = tl / 90.0 + i * 1.6
+                    t = ((tl / 700.0) + i / 4.0) % 1.0
                     r = 3 + 15 * grow * t
                     lx, ly = x + r * math.cos(a), base_y - hh * t + r * 0.28 * math.sin(a)
-                    (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(leaf(fig, lx, ly, math.degrees(a) * 1.5, 0.95, op=fade * env(t, 0, 0.1, 0.85, 1.0)))
-        # l'éclat sur l'ennemi, trois entailles en croissant dans le tourbillon
+                    (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(
+                        E.feuille(fig, lx, ly, math.degrees(a) * 1.5, 1.0, op=fade * env(t, 0, 0.1, 0.85, 1.0)))
+        # l'éclat sur l'ennemi, trois entailles de lumière en croissant dans le tourbillon
         if tl >= SP_HIT - 20:
             tg = tl - SP_HIT
             fl = env(tg, -20, 0, 30, 160)
@@ -531,18 +511,20 @@ def fx_special(tl):
             for j, (t0, ang, dx, dy) in enumerate(((0, -40, 0, -4), (110, 30, 3, 2), (230, -80, -2, -10))):
                 u = (tg - t0) / 1000.0
                 if 0 <= u < 0.3:
-                    fig.fx_front.append(slash_mark(fig, (FOE[0] + dx, FOE[1] + dy), ang, 30, smooth(u / 0.05), op=env(u, 0, 0.01, 0.1, 0.3)))
-            # à la fin : le cyclone se défait, les feuilles et les bouffées retombent
+                    fig.fx_front.append(E.entaille(fig, (FOE[0] + dx, FOE[1] + dy), ang, 32, smooth(u / 0.05), 'vent',
+                                                   op=env(u, 0, 0.01, 0.1, 0.3)))
+            # à la fin : le cyclone se défait, les bouffées montent et s'étalent, quelques feuilles retombent
             fk = (tl - SP_END) / 1000.0
             if 0 < fk < 0.9:
                 o = env(fk, 0, 0.1, 0.5, 0.9)
-                for j, (dx, dy, rr, sp) in enumerate(((-12, -10, 4.4, -16), (10, -24, 3.8, 14), (0, -40, 5.0, 4), (-18, -30, 3.0, -22), (18, -6, 3.2, 20))):
-                    fig.fx_back.append(puff(fig, FOE[0] + dx + sp * fk, GR + dy - 10 * fk, rr * (0.8 + 0.4 * fk), op=0.95 * o))
-                for i in range(8):
-                    x = FOE[0] - 24 + i * 7 + 6 * math.sin(fk * 5 + i)
+                for j, (dx, dy, rr, sp) in enumerate(((-12, -12, 4.6, -16), (8, -30, 4.2, 14), (16, -8, 3.4, 22))):
+                    fig.fx_back.append(E.nuage(fig, FOE[0] + dx + sp * fk, GR + dy - 12 * fk, rr * (0.8 + 0.5 * fk), 'vent',
+                                               op=0.9 * o, seed=j))
+                for i in range(5):
+                    x = FOE[0] - 22 + i * 11 + 6 * math.sin(fk * 5 + i)
                     y = GR - 60 + 8 * (i % 3) + 50 * fk
                     if y < GR - 1:
-                        fig.fx_front.append(leaf(fig, x, y, 40 * math.sin(fk * 6 + i) + i * 30, 0.95, op=o))
+                        fig.fx_front.append(E.feuille(fig, x, y, 40 * math.sin(fk * 6 + i) + i * 30, 1.0, op=o))
     return f
 
 

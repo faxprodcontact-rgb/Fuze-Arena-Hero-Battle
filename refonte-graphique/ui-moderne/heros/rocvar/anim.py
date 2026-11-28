@@ -442,48 +442,64 @@ def crack_path(x0, x1, seed):
     return pts
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : aiguilles en cornes courbes d'UNE silhouette avec
+# leur bourrelet, fissure d'un seul tenant aux courbes lisses, galets sans coins vifs, moins d'éclats ; même rythme)
+
+import effets_pro as E  # noqa: E402
+
+STONE6 = E.pierre_de(ST, RINK)
+
+
+def _smooth_crack(pts, step=3):
+    """Le tracé d'une fissure adouci : un point sur `step` (la courbe lisse d'effets_pro passe par eux)."""
+    out = pts[::step]
+    if out[-1] != pts[-1]:
+        out.append(pts[-1])
+    return out
+
+
 def fx_special(tl):
     def f(fig, ctx):
-        P = ctx['P']
-        g = P['glow']
         foot = ctx['shield_foot']
-        # la charge : le sol se fend d'ambre sous lui, des pierres se soulèvent autour de lui et flottent
+        # la charge : le sol se fend d'ambre sous lui (fissures lisses), quelques pierres se soulèvent et flottent
         ch = env(tl, SP_GATHER[0], SP_GATHER[0] + 200, SP_GATHER[1], SP_GATHER[1] + 140)
         if ch > 0:
             fig.under.append((44, GR + 1, 54, 9, AM[2], 0.22 * ch, None))
-            for j, (xa, xb, sd) in enumerate(((40, 6, 1), (52, 88, 2), (30, -6, 3))):
+            for j, (xa, xb, sd) in enumerate(((40, 6, 1), (52, 88, 2))):
                 k = smooth((tl - SP_GATHER[0] - 60 * j) / 420)
-                if k > 0:
+                if k > 0.05:
                     pts = crack_path(xa, xa + (xb - xa) * k, sd)
-                    pts = [(x, GR + 0.6 + (y - GR - 2.6) * 0.5) for x, y in pts]
-                    fig.fx_back.append(ground_crack(fig, pts, 1.6, glow=ch, op=ch))
-        for i in range(6):
+                    pts = [(x, GR + 0.6 + (y - GR - 2.6) * 0.4) for x, y in pts]
+                    fig.fx_back.append(E.fissure(fig, _smooth_crack(pts, 4), 2.2, 'terre', op=ch, glow=ch, pierre=STONE6))
+        for i in range(4):
             rnd = random.Random(500 + i)
-            x0 = (-6, 10, 26, 58, 82, 96)[i]
-            r = rnd.uniform(1.3, 2.4)
-            t_up = SP_GATHER[0] + 80 + i * 50
+            x0 = (-4, 22, 66, 92)[i]
+            r = rnd.uniform(1.8, 2.6)
+            t_up = SP_GATHER[0] + 80 + i * 70
             if t_up <= tl < SP_EMERGE:
                 k = smooth((tl - t_up) / 380)
                 y = GR - r - (10 + 8 * (i % 3)) * k + 1.2 * math.sin(tl / 120 + i)
-                fig.fx_front.append(rock(fig, x0 + 1.5 * math.sin(tl / 200 + i), y, r, ang=tl / 400 + i, seed=520 + i, hot=0.6 * k))
+                fig.fx_front.append(E.caillou(fig, x0 + 1.5 * math.sin(tl / 200 + i), y, r, ang=tl / 400 + i, seed=520 + i,
+                                              hot=0.7 * k, pierre=STONE6))
             elif SP_EMERGE <= tl < SP_EMERGE + 600:
                 if ('lev', i) not in DR:
                     DR[('lev', i)] = (x0 + 1.5 * math.sin(SP_EMERGE / 200 + i), GR - r - (10 + 8 * (i % 3)) + 1.2 * math.sin(SP_EMERGE / 120 + i))
-                p0 = DR[('lev', i)]
                 tau = (tl - SP_EMERGE) / 1000.0
-                x, y = ballistic(p0, (25 + 8 * i, -30 - 6 * (i % 2)), 320, tau)
+                (x, y), _ = E.vol(DR[('lev', i)], (40 + 10 * i, -40 - 8 * (i % 2)), 380, tau, drag=1.2)
                 if y < GR - r * 0.7:
-                    fig.fx_front.append(rock(fig, x, y, r, ang=SP_EMERGE / 400 + i + tau * 8, seed=520 + i, op=min(1, (0.6 - tau) * 6)))
-        # le pavois enfoncé : éclat de lumière et nuage de poussière à son pied, la fissure qui court jusqu'à l'ennemi
+                    fig.fx_front.append(E.caillou(fig, x, y, r, ang=SP_EMERGE / 400 + i + tau * 8, seed=520 + i,
+                                                  op=min(1, (0.6 - tau) * 6), pierre=STONE6))
+        # le pavois enfoncé : éclat de lumière, une bouffée de poussière à son pied, la fissure qui court jusqu'à l'ennemi
         if tl >= SP_EMERGE - 10:
             tg = (tl - SP_EMERGE) / 1000.0
             fig.fx_front.append(flash(fig, (foot[0], GR - 2), 24, env(tg, -0.01, 0.01, 0.04, 0.16)))
-            for j, (dx, r0, sp) in enumerate(((-9, 3.4, -20), (8, 3.8, 22), (-2, 4.4, 4), (14, 2.8, 34), (-16, 2.6, -30))):
-                if 0 <= tg < 0.7:
-                    k = tg / 0.7
-                    fig.fx_front.append(dust(fig, foot[0] + dx + sp * k, GR - 2.5 - 3.5 * k, r0 * (0.7 + 0.7 * k), op=0.95 * (1 - k)))
+            if 0 <= tg < 0.7:
+                k = tg / 0.7
+                for j, (dx, r0, sp) in enumerate(((-8, 4.0, -22), (9, 4.4, 26), (0, 5.2, 4))):
+                    fig.fx_front.append(E.nuage(fig, foot[0] + dx + sp * k, GR - 3 - 4 * k, r0 * (0.7 + 0.7 * k), 'terre',
+                                                op=0.95 * (1 - k) ** 1.3, seed=j))
             if 'crack' not in DR:
-                DR['crack'] = crack_path(foot[0] + 4, FOE[0] + 2, 9)
+                DR['crack'] = _smooth_crack(crack_path(foot[0] + 4, FOE[0] + 2, 9), 3)
             cpath = DR['crack']
             run = smooth((tl - SP_EMERGE) / (SP_HIT - SP_EMERGE - 40)) if tl < SP_HIT else 1.0
             fade = 1 - smooth((tl - SP_HIT - 500) / 500)
@@ -494,16 +510,18 @@ def fx_special(tl):
                     t_ = run * (len(cpath) - 1) - (L - 1)
                     a, b = cpath[L - 1], cpath[L]
                     pts = pts + [(a[0] + (b[0] - a[0]) * t_, a[1] + (b[1] - a[1]) * t_)]
-                fig.fx_back.append(ground_crack(fig, pts, 2.6, glow=1.0, op=fade))
+                if len(pts) >= 2 and pts[-1][0] - pts[0][0] > 2:
+                    fig.fx_back.append(E.fissure(fig, pts, 3.2, 'terre', op=fade, pierre=STONE6))
                 fig.under.append((pts[-1][0], GR + 2, 16, 5, AM[2], 0.35 * fade, None))
-                # au bout de la fissure : des éclats qui sautent, une bouffée de poussière
+                # au bout de la fissure : deux éclats qui sautent, une bouffée de poussière
                 if tl < SP_HIT:
                     tip = pts[-1]
-                    for j in range(3):
-                        ph_ = ((tl - SP_EMERGE) / 90.0 + j / 3.0) % 1.0
-                        x, y = ballistic((tip[0] - 4 * ph_ * 3, GR), (-8 + 10 * j, -60 - 12 * j), 420, ph_ * 0.28)
-                        fig.fx_front.append(rock(fig, x, y, 0.9 + 0.3 * j, ang=ph_ * 6 + j, seed=600 + j, op=1 - ph_))
-                    fig.fx_front.append(dust(fig, tip[0] - 3, GR - 1.8, 2.4, op=0.8))
+                    for j in range(2):
+                        ph_ = ((tl - SP_EMERGE) / 110.0 + j / 2.0) % 1.0
+                        (x, y), _ = E.vol((tip[0] - 6 * ph_, GR), (-6 + 14 * j, -70 - 12 * j), 460, ph_ * 0.28, drag=1.0)
+                        fig.fx_front.append(E.caillou(fig, x, y, 1.2 + 0.3 * j, ang=ph_ * 6 + j, seed=600 + j, op=1 - ph_ ** 2,
+                                                      pierre=STONE6))
+                    fig.fx_front.append(E.nuage(fig, tip[0] - 3, GR - 2.2, 2.8, 'terre', op=0.8, seed=1))
         # sous l'ennemi : les aiguilles de pierre jaillissent (arrêt sur l'image), puis s'effritent
         if tl >= SP_HIT - 20:
             tg = tl - SP_HIT
@@ -512,45 +530,42 @@ def fx_special(tl):
             fig.under.append((X, GR, 40, 10, AM[2], 0.4 * env(tg, -20, 0, 500, 900), None))
             rise = smooth(tg / 110.0)
             crumble = smooth((tg - 520) / 380.0)
-            for j, (dx, h, w, lean, sd) in enumerate(SPIKES):
-                rj = smooth((tg - 18 * j) / 110.0)
-                hh = h * rj * (1 - crumble)
-                if hh > 0.8:
-                    tgt = fig.fx_front if j in (0, 2) else fig.fx_back
-                    tgt.append(spike(fig, X + dx, hh, w * (1 - 0.3 * crumble), lean, sd, hot=1 - 0.6 * crumble))
-            # le sol soulevé : un bourrelet de pierre au pied des aiguilles
+            # deux bouquets d'une silhouette chacun : celui de derrière (2 aiguilles) et celui de devant (2 aiguilles et
+            # le bourrelet de sol soulevé) ; l'ennemi est pris entre les deux
+            sp = [(dx, h, w, lean, smooth((tg - 18 * j) / 110.0)) for j, (dx, h, w, lean, sd) in enumerate(SPIKES)]
             if rise > 0 and crumble < 1:
-                k = rise * (1 - crumble)
-                mound = sm([(X - 26 * k, GR + 1), (X - 14, GR - 4.5 * k), (X - 2, GR - 6 * k), (X + 12, GR - 5 * k), (X + 24 * k, GR + 1)], t=0.8)
-                fig.fx_front.append(outlined([(mound, g_lin(fig, (X + 10, GR - 6), (X - 10, GR + 1), [(0, ST.light), (0.5, ST.base), (1, ST.shadow)]), 1)], w=1.2))
-            # les éclats qui volent à l'impact
-            for i, (vx, vy, r) in enumerate(((-70, -150, 2.2), (60, -170, 1.8), (-110, -80, 1.6), (115, -95, 2.0), (-25, -210, 1.4),
-                                             (30, -195, 1.6), (-140, -40, 1.2), (150, -50, 1.3))):
+                fig.fx_back.append(E.aiguilles(fig, X, GR, [sp[1], sp[3]], rise, crumble=crumble, hot=1 - 0.6 * crumble,
+                                               pierre=STONE6, bourrelet=False))
+                fig.fx_front.append(E.aiguilles(fig, X, GR, [sp[0], sp[2]], rise, crumble=crumble, hot=1 - 0.6 * crumble,
+                                                pierre=STONE6))
+            # quelques éclats qui volent à l'impact (freinés par l'air), la veine d'ambre s'y éteint
+            for i, (vx, vy, r) in enumerate(((-40, -240, 2.3), (80, -260, 2.0), (-35, -150, 1.7), (140, -160, 2.1), (20, -290, 1.6))):
                 tau = (tg - 15 * (i % 3)) / 1000.0
                 if 0 <= tau < 0.9:
-                    x, y = ballistic((X, GR - 10), (vx, vy), 320, tau)
+                    (x, y), _ = E.vol((X, GR - 10), (vx, vy), 420, tau, drag=0.8)
                     if y < GR - r * 0.6:
-                        fig.fx_front.append(rock(fig, x, y, r, ang=tau * 7 + i, seed=700 + i, hot=max(0, 1 - tau * 4)))
-            # l'effritement : les aiguilles se défont en morceaux qui tombent, la poussière roule au sol
+                        fig.fx_front.append(E.caillou(fig, x, y, r, ang=tau * 7 + i, seed=700 + i, hot=max(0, 1 - tau * 4), pierre=STONE6))
+            # l'effritement : quelques morceaux tombent des aiguilles, la poussière roule au sol
             if tg > 520:
-                for i in range(10):
+                for i in range(5):
                     rnd = random.Random(800 + i)
                     j = i % len(SPIKES)
                     dx, h, w, lean, sd = SPIKES[j]
-                    st = 520 + 30 * i
-                    tau = (tg - st) / 1000.0
+                    tau = (tg - 520 - 45 * i) / 1000.0
                     if 0 <= tau < 0.7:
-                        hgt = h * rnd.uniform(0.25, 0.85)
+                        hgt = h * rnd.uniform(0.3, 0.8)
                         a = math.radians(lean)
                         p0 = (X + dx + math.sin(a) * hgt, GR + 2 - math.cos(a) * hgt)
-                        x, y = ballistic(p0, (rnd.uniform(-30, 30), rnd.uniform(-30, 0)), 300, tau)
+                        (x, y), _ = E.vol(p0, (rnd.uniform(-12, 35), rnd.uniform(-30, 0)), 360, tau, drag=0.8)
                         if y < GR - 1:
-                            fig.fx_front.append(rock(fig, x, y, rnd.uniform(1.4, 2.6), ang=tau * 5 + i, seed=820 + i, op=min(1, (0.7 - tau) * 5)))
+                            fig.fx_front.append(E.caillou(fig, x, y, rnd.uniform(1.8, 2.8), ang=tau * 5 + i, seed=820 + i,
+                                                          op=min(1, (0.7 - tau) * 5), pierre=STONE6))
                 fk = (tg - 560) / 1000.0
                 if 0 < fk < 1.1:
                     o = env(fk, 0, 0.12, 0.55, 1.1)
-                    for j, (dx, rr, sp) in enumerate(((-16, 4.6, -18), (-4, 6.0, -6), (12, 5.0, 14), (-28, 3.4, -26), (26, 3.6, 24))):
-                        fig.fx_back.append(dust(fig, X + dx + sp * fk, GR - 3 - 4 * fk, rr * (0.75 + 0.5 * fk), op=0.9 * o))
+                    for j, (dx, rr, sp_) in enumerate(((-14, 5.4, -20), (0, 6.6, -4), (16, 5.6, 18))):
+                        fig.fx_back.append(E.nuage(fig, X + dx + sp_ * fk, GR - 4 - 5 * fk, rr * (0.75 + 0.55 * fk), 'terre',
+                                                   op=0.9 * o, seed=j))
     return f
 
 

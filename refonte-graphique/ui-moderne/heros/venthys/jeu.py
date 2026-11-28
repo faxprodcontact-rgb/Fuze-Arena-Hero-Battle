@@ -22,13 +22,13 @@ TIR = A.SP_EMERGE + 100                 # le cyclone a quitté les lames : le je
 
 
 def cyclone(fig, i):
-    """Le projectile de la spéciale : le cyclone debout (à mi-course : déjà grand), son pied au sol, l'avant en (0, 0)."""
+    """Le projectile de la spéciale : le cyclone debout (à mi-course : déjà grand), son pied au sol, l'avant en (0, 0)
+    (effets_pro depuis le 28/11 : une silhouette, une bouffée d'air au pied, deux feuilles)."""
     top = 14.0
     A.tornado(fig, (-top, 0.0), 58.0, top, 140.0 * i + 60, op=1.0, lean=-0.2)
-    for j in range(3):
-        fig.fx_back.append(A.puff(fig, -top - 8 + 8 * j, -2 - 1.5 * ((i + j) % 2), 2.2, op=0.85))
-    for j in range(4):
-        fig.fx_front.append(A.leaf(fig, -top + (7 + 3 * j) * (1 if (i + j) % 2 else -1), -12 - 12 * j, 70 * j + 40 * i, 0.95))
+    fig.fx_back.append(A.E.nuage(fig, -top, -2.5, 3.0, 'vent', op=0.85, seed=i))
+    for j in range(2):
+        fig.fx_front.append(A.E.feuille(fig, -top + (8 + 4 * j) * (1 if (i + j) % 2 else -1), -16 - 20 * j, 70 * j + 40 * i, 1.0))
 
 
 JEU = {
