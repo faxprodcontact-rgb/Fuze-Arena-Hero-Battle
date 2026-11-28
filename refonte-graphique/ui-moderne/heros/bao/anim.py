@@ -445,6 +445,44 @@ def impact_small(fig, t):
 # ---- la spéciale
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : le tourbillon d'UNE silhouette, anneau, rafales et
+# volutes d'un seul ruban sans contour sombre, bouffées fondues, feuilles d'une forme, lumières ; même rythme)
+import effets_pro as E  # noqa: E402
+
+
+def puff_p(fig, cx, cy, r, op=1.0, seed=0, hollow=0.0):
+    return E.nuage(fig, cx, cy, r * 1.1, 'vent', op=op * (1 - 0.5 * hollow), seed=seed)
+
+
+def ring_arc_p(fig, C, rx, ry, a0, a1, w, op=1.0, dark=False):
+    pts = [(C[0] + rx * math.cos(math.radians(a0 + (a1 - a0) * i / 14)), C[1] + ry * math.sin(math.radians(a0 + (a1 - a0) * i / 14)))
+           for i in range(15)]
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op * (0.7 if dark else 1), kind='fuseau', halo=0.4)
+
+
+def gust_p(fig, p0, p1, p2, p3, w, curl=4.0, s=-1, tail=0.0, op=1.0, turn=290):
+    if op <= 0.02 or w < 0.15:
+        return ''
+    c = resample(bez(p0, p1, p2, p3, 30), 12)
+    if curl > 0.3:
+        c = c + spiral(p3, (p3[0] - p2[0], p3[1] - p2[1]), curl, turn, s, 8)
+    c = c[int(tail * (len(c) - 4)):]
+    return E.ruban(fig, c, w * 1.7, 'vent', op=op, kind='pointe', halo=0.4)
+
+
+def curl_p(fig, c, r, a0, turn, w, op=1.0, cw=True, dark=False):
+    if op <= 0.02 or r < 0.6:
+        return ''
+    sg = -1 if cw else 1
+    pts = [(c[0] + r * (1 - 0.6 * i / 10) * math.cos(math.radians(a0 + sg * turn * i / 10)),
+            c[1] + r * (1 - 0.6 * i / 10) * math.sin(math.radians(a0 + sg * turn * i / 10))) for i in range(11)]
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op * (0.7 if dark else 1), kind='pointe', halo=0.3)
+
+
+def twinkle_p(fig, x, y, R, op=1.0):
+    return E.lumiere(fig, (x, y), R * 2.4, op, 'vent')
+
+
 def fx_special(tl):
     def f(fig, ctx):
         t = tl
@@ -455,8 +493,8 @@ def fx_special(tl):
         # le nuage se gonfle : des bouffées crème naissent à ses deux bouts (derrière lui, à sa hauteur)
         e = env(t, 80, 300, 1100, 1500)
         if e > 0:
-            for (dx, dy, r, sd) in ((-41, -8, 4.6, 0), (-34, -3, 3.6, 1), (41, -7, 4.4, 2), (34, -2, 3.4, 0)):
-                fig.fx_back.append(puff(fig, cx + dx * (0.9 + 0.1 * e), gy + dy, r * e, op=min(1, e * 1.4), seed=sd))
+            for (dx, dy, r, sd) in ((-39, -6, 5.4, 0), (39, -5, 5.2, 2)):
+                fig.fx_back.append(puff_p(fig, cx + dx * (0.9 + 0.1 * e), gy + dy, r * e, op=min(1, e * 1.4), seed=sd))
         # le vent se lève : un anneau qui tourne autour de lui et monte avec lui (le bout de devant passe devant)
         e = env(t, 160, 420, 960, 1120)
         if e > 0:
@@ -464,14 +502,14 @@ def fx_special(tl):
             ry = 11 + 3 * lv
             C = (cx + 2, gy - 22 - 6 * lv)
             ph = 0.35 * t
-            fig.fx_back.append(ring_arc(fig, C, 46, ry, 190 + ph % 40, 340 + ph % 40, 2.6 + 0.8 * lv, op=e, dark=True))
-            fig.fx_front.append(ring_arc(fig, C, 46, ry, 20 + ph % 40, 150 + ph % 40, 3.0 + 0.8 * lv, op=e))
+            fig.fx_back.append(ring_arc_p(fig, C, 46, ry, 190 + ph % 40, 340 + ph % 40, 2.6 + 0.8 * lv, op=e, dark=True))
+            fig.fx_front.append(ring_arc_p(fig, C, 46, ry, 20 + ph % 40, 150 + ph % 40, 3.0 + 0.8 * lv, op=e))
             # deux rafales qui montent de chaque côté, en volute
             k = env(t, 300, 520, 960, 1120)
             if k > 0:
-                fig.fx_back.append(gust(fig, (cx - 44, gy - 4), (cx - 55, gy - 20), (cx - 47, gy - 40), (cx - 31, gy - 50),
+                fig.fx_back.append(gust_p(fig, (cx - 44, gy - 4), (cx - 55, gy - 20), (cx - 47, gy - 40), (cx - 31, gy - 50),
                                         3.0, curl=3.4, s=1, op=k))
-                fig.fx_front.append(gust(fig, (cx + 47, gy - 4), (cx + 57, gy - 16), (cx + 53, gy - 32), (cx + 41, gy - 42),
+                fig.fx_front.append(gust_p(fig, (cx + 47, gy - 4), (cx + 57, gy - 16), (cx + 53, gy - 32), (cx + 41, gy - 42),
                                          2.8, curl=3.0, s=-1, op=k))
             # des feuilles qui montent en tournant autour de lui
             for i, (a0, h0) in enumerate(((0, 8), (130, 20), (250, 34), (60, 46))):
@@ -479,29 +517,29 @@ def fx_special(tl):
                 x = cx + 2 + 44 * math.cos(a)
                 y = gy - h0 - 0.02 * (t - 160)
                 lay = fig.fx_front if math.sin(a) > 0 else fig.fx_back
-                lay.append(leaf(fig, x, y, a0 + 0.7 * t, 1.5, op=e))
+                if i % 2 == 0:
+                    lay.append(E.feuille(fig, x, y, a0 + 0.7 * t, 0.95, op=e))
         # le vent avalé : deux volutes s'enroulent vers la gourde, qui brille
         e = env(t, 520, 700, 1000, 1110)
         if e > 0:
-            fig.fx_back.append(curl(fig, (g[0] + 0.5, g[1] + 0.5), 15 - 4 * e, 0.6 * t, 300, 2.8, op=e, cw=False))
-            fig.fx_front.append(curl(fig, (g[0], g[1] + 1), 11 - 3 * e, 180 + 0.6 * t, 280, 2.3, op=e, cw=False))
-            fig.fx_front.append(twinkle(fig, g[0] - 7, g[1] - 9, 2.4, op=e))
-            fig.fx_front.append(twinkle(fig, g[0] + 9, g[1] + 6, 1.6, op=e * 0.9))
+            fig.fx_back.append(curl_p(fig, (g[0] + 0.5, g[1] + 0.5), 15 - 4 * e, 0.6 * t, 300, 2.8, op=e, cw=False))
+            fig.fx_front.append(curl_p(fig, (g[0], g[1] + 1), 11 - 3 * e, 180 + 0.6 * t, 280, 2.3, op=e, cw=False))
+            fig.fx_front.append(twinkle_p(fig, g[0] - 7, g[1] - 9, 2.4, op=e))
+            fig.fx_front.append(twinkle_p(fig, g[0] + 9, g[1] + 6, 1.6, op=e * 0.9))
         # le grand moment : l'éclair blanc de vent, la gourde crache un grand nuage roulé entouré de rafales
         fl = env(t, SP_BLAST - 10, SP_BLAST, SP_BLAST + 40, SP_BLAST + 170)
         if fl > 0:
-            fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(g[0]), fm(g[1]), fm(130), g_rad(
-                fig, g, 130, [(0, '#ffffff', 0.85 * fl), (0.12, WIND[1], 0.55 * fl), (0.45, WIND[2], 0.16 * fl), (1, WIND[3], 0)])))
+            fig.fx_front.append(E.lumiere(fig, g, 100, 0.9 * fl, 'vent'))
         e = env(t, SP_BLAST - 10, SP_BLAST + 10, SP_BLAST + 90, SP_BLAST + 200)
         if e > 0:
             gx, gy2 = g[0] + 10, g[1] + 2
-            fig.fx_back.append(pop(fig, (gx + 2, gy2 - 1), 8 * e, facing=0, op=e))
-            fig.fx_back.append(gust(fig, (gx - 4, gy2 + 8), (gx + 10, gy2 + 18), (gx + 28, gy2 + 18), (gx + 40, gy2 + 8),
+            fig.fx_back.append(E.lumiere(fig, (gx + 2, gy2 - 1), 16 * e, e, 'vent'))
+            fig.fx_back.append(gust_p(fig, (gx - 4, gy2 + 8), (gx + 10, gy2 + 18), (gx + 28, gy2 + 18), (gx + 40, gy2 + 8),
                                     3.6, curl=3.6, s=-1, op=e))
-            fig.fx_back.append(gust(fig, (gx - 4, gy2 - 8), (gx + 10, gy2 - 20), (gx + 26, gy2 - 22), (gx + 38, gy2 - 12),
+            fig.fx_back.append(gust_p(fig, (gx - 4, gy2 - 8), (gx + 10, gy2 - 20), (gx + 26, gy2 - 22), (gx + 38, gy2 - 12),
                                     3.0, curl=3.2, s=1, op=e))
             # le recul du souffle : une petite bouffée derrière son nuage
-            fig.fx_back.append(puff(fig, cx - 46, gy - 9, 4.4, op=e, seed=1))
+            fig.fx_back.append(puff_p(fig, cx - 46, gy - 9, 4.4, op=e, seed=1))
         # le grand nuage roulé file vers l'ennemi
         if SP_BLAST <= t < SP_ARRIVE:
             s = (t - SP_BLAST) / (SP_ARRIVE - SP_BLAST)
@@ -565,24 +603,22 @@ def storm(fig, t):
     # l'éclat
     e0 = env(t, -1, 0, 60, 240)
     if e0 > 0:
-        fig.fx_front.append(pop(fig, (x, y), 13 * (0.6 + 0.4 * min(1, t / 60)), facing=180, op=e0))
-        fig.fx_front.append(puff(fig, x - 5, y - 6, 8 * (0.8 + 0.4 * min(1, t / 120)), op=e0, seed=2, hollow=min(1, t / 240)))
+        fig.fx_front.append(E.lumiere(fig, (x, y), 24 * (0.6 + 0.4 * min(1, t / 60)), e0, 'vent'))
+        fig.fx_front.append(puff_p(fig, x - 5, y - 6, 8 * (0.8 + 0.4 * min(1, t / 120)), op=e0, seed=2, hollow=min(1, t / 240)))
     grow = min(1.0, t / 180)
     fade = max(0.0, (t - 520) / 380)
     if t < 900:
         hgt = (44 + 14 * grow) * (0.4 + 0.6 * grow)
         wid = (14 + 6 * grow + 4 * fade)
-        back, front = tornado(fig, x, base, hgt, wid, 0.75 * t, fade=min(0.95, fade))
         op = 1.0 - max(0.0, (t - 760) / 140)
-        fig.fx_back.extend('<g opacity="%g">%s</g>' % (op, b) for b in back)
-        fig.fx_front.extend('<g opacity="%g">%s</g>' % (op, f_) for f_ in front)
+        bk, fr = E.tourbillon(fig, (x, base), hgt * (1 - 0.3 * fade), wid * 1.1, 0.75 * t, 'vent', op=op * (1 - 0.5 * fade), split=True)
+        fig.fx_back.append(bk)
+        fig.fx_front.append(fr)
         # le nuage qui coiffe le tourbillon, et les bouffées qui roulent au sol
         top = base - hgt - 2
-        fig.fx_back.append(puff(fig, x + 3 * math.cos(t / 150), top, (wid * 0.42) * (1 - 0.4 * fade), op=op, seed=3, hollow=fade * 0.7))
-        fig.fx_back.append(puff(fig, x - wid * 0.62, top + 3, wid * 0.3 * (1 - 0.4 * fade), op=op, seed=4, hollow=fade * 0.7))
-        fig.fx_back.append(puff(fig, x + wid * 0.66, top + 2, wid * 0.32 * (1 - 0.4 * fade), op=op, seed=5, hollow=fade * 0.7))
-        fig.fx_back.append(puff(fig, x - 18 - 6 * fade, base - 5 - 4 * fade, (6 + 2 * grow) * (1 - 0.3 * fade), op=op * grow, seed=0, hollow=fade * 0.8))
-        fig.fx_back.append(puff(fig, x + 20 + 6 * fade, base - 5 - 4 * fade, (5 + 2 * grow) * (1 - 0.3 * fade), op=op * grow, seed=1, hollow=fade * 0.8))
+        fig.fx_back.append(puff_p(fig, x + 3 * math.cos(t / 150), top, (wid * 0.42) * (1 - 0.4 * fade), op=op, seed=3, hollow=fade * 0.7))
+        fig.fx_back.append(puff_p(fig, x - 18 - 6 * fade, base - 5 - 4 * fade, (6 + 2 * grow) * (1 - 0.3 * fade), op=op * grow, seed=0, hollow=fade * 0.8))
+        fig.fx_back.append(puff_p(fig, x + 20 + 6 * fade, base - 5 - 4 * fade, (5 + 2 * grow) * (1 - 0.3 * fade), op=op * grow, seed=1, hollow=fade * 0.8))
     # des feuilles qui montent en tournant autour du tourbillon
     for i, (a0, h0) in enumerate(((0, 10), (120, 24), (240, 38), (60, 50), (180, 62))):
         e = env(t, 40, 140, 600, 900)
@@ -590,14 +626,15 @@ def storm(fig, t):
             a = math.radians(a0 + 0.5 * t)
             lx = x + (16 + 2 * i) * math.cos(a)
             ly = base - h0 - 0.03 * t
-            (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(leaf(fig, lx, ly, a0 + 0.8 * t, 1.6, op=e))
+            if i % 2 == 0:
+                (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(E.feuille(fig, lx, ly, a0 + 0.8 * t, 1.0, op=e))
     # il se défait en volutes
     e = env(t, 600, 720, 860, 1000)
     if e > 0:
         k = (t - 600) / 400
-        fig.fx_front.append(curl(fig, (x + 22, base - 70 - 6 * k), 6, 60 + 200 * k, 300, 2.0, op=e))
-        fig.fx_front.append(curl(fig, (x - 24, base - 58 - 6 * k), 5, 120 + 200 * k, 300, 1.8, op=e, cw=False))
-        fig.fx_front.append(twinkle(fig, x + 6, base - 80 - 8 * k, 2.0, op=e))
+        fig.fx_front.append(curl_p(fig, (x + 22, base - 70 - 6 * k), 6, 60 + 200 * k, 300, 2.0, op=e))
+        fig.fx_front.append(curl_p(fig, (x - 24, base - 58 - 6 * k), 5, 120 + 200 * k, 300, 1.8, op=e, cw=False))
+        fig.fx_front.append(twinkle_p(fig, x + 6, base - 80 - 8 * k, 2.0, op=e))
 
 
 START = {}

@@ -330,8 +330,42 @@ def arc_band(C, R, a0, a1, w, taper=0.8, n=28):
     return sm(outer + inner[::-1], sharp=(0, n, n + 1), t=0.5)
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : pendant la spéciale, les outils d'effets ci-dessous
+# dessinent d'un seul ruban sans contour sombre (rubans, hélices, rafales, croissants), bouffées fondues, lumières ;
+# l'attaque de base garde son dessin ; même rythme, mêmes instants)
+import effets_pro as E  # noqa: E402
+
+_PRO = [False]
+
+
+def _moon_p(fig, c, R, facing, d, op=1.0, span=72):
+    if R < 1 or op <= 0.02:
+        return ''
+    pts = [(c[0] + (R - d * 0.5) * math.cos(math.radians(facing - span + 2 * span * i / 14)),
+            c[1] + (R - d * 0.5) * math.sin(math.radians(facing - span + 2 * span * i / 14))) for i in range(15)]
+    return E.ruban(fig, pts, d * 1.25, 'vent', op=op, kind='fuseau', halo=0.5)
+
+
+def _gust_p(fig, p0, p1, p2, p3, w, curl=3.0, up=True, op=1.0, tail=0.0, pale=False):
+    if op <= 0.02 or w < 0.3:
+        return ''
+    c = resample(bez(p0, p1, p2, p3, 30), 12)
+    dx, dy = c[-1][0] - c[-2][0], c[-1][1] - c[-2][1]
+    L = math.hypot(dx, dy) or 1
+    nx, ny = (dy / L, -dx / L) if up else (-dy / L, dx / L)
+    cc = (c[-1][0] + nx * curl, c[-1][1] + ny * curl)
+    a0 = math.degrees(math.atan2(c[-1][1] - cc[1], c[-1][0] - cc[0]))
+    s1, s2 = spiral_pts(cc, curl, a0, 0.85, not up, n=8), spiral_pts(cc, curl, a0, 0.85, up, n=8)
+    cont = lambda s_: (s_[1][0] - s_[0][0]) * dx + (s_[1][1] - s_[0][1]) * dy   # noqa: E731
+    pts = c + (s1 if cont(s1) > cont(s2) else s2)[1:]
+    pts = pts[int(len(pts) * tail):]
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op * (0.75 if pale else 1), kind='pointe', halo=0.4)
+
+
 def smear(fig, C, R, a0, a1, w, op=1.0):
     """La traînée d'un coup de lame : un croissant courbe qui s'efface vers l'arrière (vent clair, liseré jade)."""
+    if _PRO[0]:
+        return E.croissant(fig, C, R, a0, a1, w, 'vent', op=op)
     if abs(a1 - a0) < 4 or op <= 0.02:
         return ''
     pa = (C[0] + R * math.cos(math.radians(a0)), C[1] + R * math.sin(math.radians(a0)))
@@ -345,6 +379,8 @@ def smear(fig, C, R, a0, a1, w, op=1.0):
 
 def moon(fig, c, R, facing, d, op=1.0, span=72):
     """La marque de la coupe : un croissant plein bombé vers `facing`, cœur blanc au bord qui avance, cornes jade."""
+    if _PRO[0]:
+        return _moon_p(fig, c, R, facing, d, op, span)
     if R < 1 or op <= 0.02:
         return ''
     outer, inner = [], []
@@ -384,6 +420,8 @@ def spiral_pts(c, r, a0, turns, up, n=14):
 
 def gust(fig, p0, p1, p2, p3, w, curl=3.0, up=True, op=1.0, tail=0.0, pale=False):
     """Une rafale : un ruban de vent effilé le long d'une courbe, qui finit en volute ; `tail` l'efface par l'arrière."""
+    if _PRO[0]:
+        return _gust_p(fig, p0, p1, p2, p3, w, curl, up, op, tail, pale)
     if op <= 0.02 or w < 0.3:
         return ''
     c = resample(bez(p0, p1, p2, p3, 30), 16)
@@ -414,6 +452,8 @@ def gust(fig, p0, p1, p2, p3, w, curl=3.0, up=True, op=1.0, tail=0.0, pale=False
 
 def band(fig, pts, w, op=1.0, pale=False):
     """Un ruban de vent le long de points donnés (plein au milieu, effilé aux deux bouts)."""
+    if _PRO[0]:
+        return E.ruban(fig, pts[::2] + [pts[-1]], w * 1.7, 'vent', op=op * (0.75 if pale else 1), kind='fuseau', halo=0.4)
     if op <= 0.02 or len(pts) < 4:
         return ''
     n = len(pts)
@@ -435,6 +475,8 @@ def ring(fig, c, rx, ry, a0, a1, w, op=1.0):
 
 def puff(fig, cx, cy, r, op=1.0, tones=None, ink=None):
     """Une bouffée (vent pâle, ou poussière) : quelques boules réunies sous un contour, éclairées en haut à droite."""
+    if _PRO[0]:
+        return E.nuage(fig, cx, cy, r * 1.1, 'terre' if tones else 'vent', op=op, seed=int(cx) % 3, flat=0.7 if tones else 0.9)
     if r < 0.3 or op <= 0.02:
         return ''
     tones = tones or [WIND[0], WIND[1], WIND[3]]
@@ -452,6 +494,8 @@ def dust(fig, cx, cy, r, op=1.0):
 
 def flash(fig, c, r, op=1.0):
     """Un éclat : un dégradé rond (blanc → cyan → transparent), pas un voile plat."""
+    if _PRO[0]:
+        return E.lumiere(fig, c, r * 1.4, op, 'vent')
     if op <= 0.02:
         return ''
     return '<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(r), g_rad(
@@ -585,6 +629,14 @@ def helix(fig, base, H, r0, r1, turns, phase, w, op=1.0, s0=0.0, s1=1.0, pale=Fa
     """Un ruban en hélice : la moitié qui passe devant va devant le héros, l'autre derrière ; épais au milieu."""
     if op <= 0.02:
         return
+    if _PRO[0]:
+        # UN ruban en spirale (effets_pro) : coupé en devant / derrière sans que la jonction se voie
+        bk, fr, _ = E.spirale(fig, (base[0], base[1] - H * s0), r0 + (r1 - r0) * s0, r0 + (r1 - r0) * s1,
+                              math.degrees(phase) + 360 * turns * s0, 360 * turns * (s1 - s0), w * 1.8, tilt=0.32,
+                              rise=H * (s1 - s0), p='vent', n=56)
+        fig.fx_back.append(E.group(bk, op * (0.8 if pale else 1)))
+        fig.fx_front.append(E.group(fr, op * (0.8 if pale else 1)))
+        return
     pts = helix_pts(base, H, r0, r1, turns, phase, s0, s1)
     runs = []
     cur = [pts[0]]
@@ -608,6 +660,13 @@ def helix(fig, base, H, r0, r1, turns, phase, w, op=1.0, s0=0.0, s1=1.0, pale=Fa
 
 def fx_special(tl, prev):
     def f(fig, ctx):
+        _PRO[0] = True
+        try:
+            _f(fig, ctx)
+        finally:
+            _PRO[0] = False
+
+    def _f(fig, ctx):
         P = ctx['P']
         fig.fx_back.insert(0, ground_shadow(fig, P['lift'], 66 + P['X']))
         # 1) le vent se lève à ses pieds : un anneau ras du sol qui s'élargit, des volutes, des plumes qui montent

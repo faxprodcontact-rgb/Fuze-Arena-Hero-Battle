@@ -544,67 +544,30 @@ def impact(fig, t, big=1.0):
 
 # ---- l'attaque spéciale « Le tourbillon des plumes »
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : la spirale et la trombe d'un seul ruban sans
+# contour sombre, rafales, volutes et traînées d'un seul tenant, bouffées fondues, feuilles et plumes d'une forme)
+import effets_pro as E  # noqa: E402
+
+
 def helix(fig, cx, y0, h, r0, r1, turns, phase, w, flat_=0.32, t0=0.0, t1=1.0, op=1.0, sway=0.0):
-    """Une spirale de vent qui monte en s'évasant (de y0, en bas, à y0 − h ; rayon r0 → r1). Elle passe devant le
-    sujet quand elle tourne du côté du spectateur, derrière sinon : renvoie (derrière, devant). Un seul ruban, effilé
-    aux deux bouts ; t0..t1 : la partie dessinée."""
-    back, front = [], []
+    """Une spirale de vent qui monte en s'évasant (de y0, en bas, à y0 − h ; rayon r0 → r1) : UN ruban effilé aux
+    deux bouts, qui passe devant le sujet du côté du spectateur, derrière sinon : renvoie (derrière, devant)."""
     if op <= 0.02 or t1 - t0 < 0.02:
-        return back, front
-    n = int(turns * 64) + 12
-    pts = []
-    for i in range(n + 1):
-        t = t0 + (t1 - t0) * i / n
-        a = math.radians(phase) + 2 * math.pi * turns * t
-        r = r0 + (r1 - r0) * t
-        x = cx + r * math.cos(a) + sway * t * t
-        y = y0 - h * t + r * flat_ * math.sin(a)
-        pts.append((x, y, math.sin(a) > 0, t))
-    # couper en morceaux devant / derrière
-    segs = []
-    cur = [pts[0]]
-    for p in pts[1:]:
-        if p[2] != cur[-1][2]:
-            cur.append(p)
-            segs.append(cur)
-            cur = [p]
-        else:
-            cur.append(p)
-    segs.append(cur)
-    for sg in segs:
-        if len(sg) < 3:
-            continue
-        P = [(x, y) for x, y, _, _ in sg]
-        ws = []
-        for j, (_, _, _, t) in enumerate(sg):
-            u = (t - t0) / max(1e-6, t1 - t0)
-            ww = w * (0.35 + 0.65 * t) * min(1, u * 6) * min(1, (1 - u) * 6)
-            ends = min(1.0, j / 2.0, (len(sg) - 1 - j) / 2.0)
-            ws.append(max(0.1, ww * (0.35 + 0.65 * ends)))
-        sh = ribbon(P, ws)
-        fr = sg[len(sg) // 2][2]
-        if fr:
-            core = ribbon(P, [x * 0.38 for x in ws])
-            gr = g_lin(fig, P[0], P[-1], [(0, WIND[2]), (0.5, WIND[1]), (1, WIND[3])])
-            front.append(outlined([(sh, gr, 1), (core, WIND[0], 0.9)], w=1.0, op=op))
-        else:
-            gr = g_lin(fig, P[0], P[-1], [(0, WIND[4]), (0.5, WIND[3]), (1, WIND[4])])
-            back.append(outlined([(sh, gr, 1)], w=1.0, op=op * 0.95))
-    return back, front
+        return [], []
+    bk, fr, full = E.spirale(fig, (cx + sway * t0 * t0, y0 - h * t0), r0 + (r1 - r0) * t0, r0 + (r1 - r0) * t1, phase + 360 * turns * t0,
+                             360 * turns * (t1 - t0), w * 1.7, tilt=flat_, rise=h * (t1 - t0), p='vent', n=48)
+    return [E.group([E.bloom(fig, full, E.pal('vent')['halo'], 0.25, grow=1.0, s=1.4)] + bk, op)], [E.group(fr, op)]
 
 
 def orbiters(fig, cx, y0, h, r, phase, op, n=5):
     """Les feuilles et les plumes jade qui tournent dans la spirale (devant ou derrière selon le côté)."""
-    for i in range(n):
-        t = 0.15 + 0.7 * i / max(1, n - 1)
+    for i in range(max(1, n // 2 + 1)):
+        t = 0.15 + 0.7 * i / max(1, n // 2)
         a = math.radians(phase * 1.3 + i * 137)
         x = cx + (r * (0.8 + 0.3 * t)) * math.cos(a)
         y = y0 - h * t + r * 0.32 * math.sin(a)
         lay = fig.fx_front if math.sin(a) > 0 else fig.fx_back
-        if i % 2:
-            lay.append(jade_feather(fig, x, y, math.degrees(a) + 90, 0.85, op=op))
-        else:
-            lay.append(leaf(fig, x, y, math.degrees(a) * 1.5, 0.9, op=op))
+        lay.append(E.feuille(fig, x, y, math.degrees(a) * 1.5, 0.62, op=op))
 
 
 def trombe(fig, cx, k, grow, phase, op=1.0, lean=0.0, t0=0.0, t1=1.0):
@@ -614,6 +577,46 @@ def trombe(fig, cx, k, grow, phase, op=1.0, lean=0.0, t0=0.0, t1=1.0):
                   t0=t0, t1=t1, op=op, sway=lean)
     fig.fx_back += b
     fig.fx_front += fr
+
+
+def curl_p(fig, c, r, a0, turn=300, w=2.0, op=1.0, cw=False):
+    if op <= 0.02 or r < 0.6:
+        return ''
+    sg = -1 if cw else 1
+    pts = [(c[0] + r * (1 - 0.6 * i / 10) * math.cos(math.radians(a0 + sg * turn * i / 10)),
+            c[1] + r * (1 - 0.6 * i / 10) * math.sin(math.radians(a0 + sg * turn * i / 10))) for i in range(11)]
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op, kind='pointe', halo=0.3)
+
+
+def gust_p(fig, p0, p1, p2, p3, w, curl=3.0, up=True, op=1.0, tail=0.0):
+    if op <= 0.02 or w < 0.3:
+        return ''
+    c = resample(bez(p0, p1, p2, p3, 30), 12)
+    dx, dy = c[-1][0] - c[-2][0], c[-1][1] - c[-2][1]
+    L = math.hypot(dx, dy) or 1
+    nx, ny = (dy / L, -dx / L) if up else (-dy / L, dx / L)
+    cc = (c[-1][0] + nx * curl, c[-1][1] + ny * curl)
+    a0 = math.degrees(math.atan2(c[-1][1] - cc[1], c[-1][0] - cc[0]))
+    best = None
+    for sg in (1, -1):
+        sp = [(cc[0] + curl * (1 - 0.7 * i / 8) * math.cos(math.radians(a0 + sg * 300 * i / 8)),
+               cc[1] + curl * (1 - 0.7 * i / 8) * math.sin(math.radians(a0 + sg * 300 * i / 8))) for i in range(9)]
+        sc = (sp[1][0] - sp[0][0]) * dx + (sp[1][1] - sp[0][1]) * dy
+        if best is None or sc > best[0]:
+            best = (sc, sp)
+    pts = c + best[1][1:]
+    pts = pts[int(len(pts) * tail):]
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op, kind='pointe', halo=0.4)
+
+
+def ring_arc_p(fig, c, rx, ry, a0, a1, w, op=1.0, tones=None):
+    pts = [(c[0] + rx * math.cos(math.radians(a0 + (a1 - a0) * i / 14)), c[1] + ry * math.sin(math.radians(a0 + (a1 - a0) * i / 14)))
+           for i in range(15)]
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op, kind='fuseau', halo=0.4)
+
+
+def dust_p(fig, cx, cy, r, op=1.0):
+    return E.nuage(fig, cx, cy, r * 1.15, 'terre', op=op, seed=int(cx) % 3, flat=0.7)
 
 
 def fx_special(tl):
@@ -629,20 +632,20 @@ def fx_special(tl):
             fig.fx_back += b
             fig.fx_front += fr
             orbiters(fig, cx, GR - 4, 16 + 30 * grow, 22, ph, ev, n=int(2 + 4 * grow))
-            for j, dx in enumerate((-18, -8, 20)):
-                fig.fx_back.append(dust(fig, cx + dx + 2 * math.sin(t / 80 + j), GR - 1.5, 2.2 + 0.6 * j % 2, op=ev * 0.85))
+            for j, dx in enumerate((-16, 20)):
+                fig.fx_back.append(dust_p(fig, cx + dx + 2 * math.sin(t / 80 + j), GR - 1.5, 2.2 + 0.6 * j % 2, op=ev * 0.85))
             # les yeux du masque s'allument (le dessin s'en charge) ; une petite volute autour de l'éventail levé
             c = ctx['fan_c']
-            fig.fx_front.append(curl(fig, (c[0] + 6, c[1] - 10), 3.6, 30 + 0.6 * t, 260, 1.6, op=ev * 0.9, cw=True))
+            fig.fx_front.append(curl_p(fig, (c[0] + 6, c[1] - 10), 3.6, 30 + 0.6 * t, 260, 1.6, op=ev * 0.9, cw=True))
         # le battement et le coup d'éventail : une grande traînée
         e1 = env(t, SP_BEAT[0], SP_BEAT[0] + 30, SP_BEAT[1] - 10, SP_BEAT[1] + 110)
         if e1 > 0:
             a_now = ctx['fang']
-            fig.fx_back.append(smear(fig, ctx['fist'], 30.0, a_now - 85 * e1, a_now + 2, 11.0, op=e1))
+            fig.fx_back.append(E.croissant(fig, ctx['fist'], 30.0, a_now - 85 * e1, a_now + 2, 12.0, 'vent', op=e1))
             # la spirale autour de lui se défait vers l'ennemi
-            fig.fx_front.append(gust(fig, (cx - 10, 104), (cx + 10, 112), (cx + 30, 96), (cx + 50, 100), 4.0, curl=4.0,
+            fig.fx_front.append(gust_p(fig, (cx - 10, 104), (cx + 10, 112), (cx + 30, 96), (cx + 50, 100), 4.0, curl=4.0,
                                      up=True, op=e1, tail=0.3 * (1 - e1)))
-            fig.fx_back.append(gust(fig, (cx - 14, 80), (cx + 6, 70), (cx + 26, 80), (cx + 44, 76), 3.4, curl=3.6,
+            fig.fx_back.append(gust_p(fig, (cx - 14, 80), (cx + 6, 70), (cx + 26, 80), (cx + 44, 76), 3.4, curl=3.6,
                                     up=False, op=e1, tail=0.3 * (1 - e1)))
         # la trombe : elle file vers l'ennemi en grandissant, l'avale, le fait tourner, puis se défait par le bas
         if SP_GO <= t < SP_END:
@@ -659,8 +662,8 @@ def fx_special(tl):
             trombe(fig, x, u, grow, ph, op=op, lean=-3 * (1 - u), t0=t0)
             # la poussière à sa base
             if t0 < 0.3:
-                for j, dx in enumerate((-9, -3, 6, 11)):
-                    fig.fx_back.append(dust(fig, x + dx * (0.7 + 0.4 * grow) + 1.5 * math.sin(t / 60 + j), GR - 1.6,
+                for j, dx in enumerate((-8, 9)):
+                    fig.fx_back.append(dust_p(fig, x + dx * (0.7 + 0.4 * grow) + 1.5 * math.sin(t / 60 + j), GR - 1.6,
                                             1.6 + 0.9 * grow - 0.3 * (j % 2), op=0.9 * (1 - t0 / 0.3)))
             # les feuilles et les plumes jade emportées dedans
             if t < SP_HIT + 380:
@@ -669,23 +672,23 @@ def fx_special(tl):
         if SP_HIT - 20 <= t < SP_HIT + 420:
             tt = t - SP_HIT
             e2 = env(tt, -20, 30, 140, 420)
-            fig.fx_back.append(flash(fig, HIT, 22 * (0.7 + 0.3 * e2), op=e2))
+            fig.fx_back.append(E.lumiere(fig, HIT, 30 * (0.7 + 0.3 * e2), e2, 'vent'))
             for j in range(2):
-                fig.fx_front.append(ring_arc(fig, (HIT[0], HIT[1] - 6 + 12 * j), 16 + 4 * j + 0.02 * tt, 5 + j,
+                fig.fx_front.append(ring_arc_p(fig, (HIT[0], HIT[1] - 6 + 12 * j), 16 + 4 * j + 0.02 * tt, 5 + j,
                                              -10 - 0.5 * tt, 170 - 0.5 * tt, 3.0, op=e2))
         # elle se défait en volutes qui montent ; les feuilles et les plumes retombent en se balançant
         if t >= SP_HIT + 260:
             tt = (t - SP_HIT - 260) / 1000.0
             e3 = env(t, SP_HIT + 260, SP_HIT + 360, SP_END - 200, SP_END + 120)
             for j, (dx, dy, a0) in enumerate(((-6, -30, 200), (8, -42, 20), (-2, -52, 300))):
-                fig.fx_front.append(curl(fig, (HIT[0] + dx + 4 * tt, HIT[1] + dy + 12 - 26 * tt), 4.5 + 3 * tt, a0 + 200 * tt, 300,
+                fig.fx_front.append(curl_p(fig, (HIT[0] + dx + 4 * tt, HIT[1] + dy + 12 - 26 * tt), 4.5 + 3 * tt, a0 + 200 * tt, 300,
                                          2.0, op=e3 * (1 - min(1, tt * 1.1)), cw=bool(j % 2)))
             for j, (dx, sp) in enumerate(((-14, 1.0), (6, 1.3), (16, 0.8), (-4, 1.1))):
                 x = HIT[0] + dx + 5 * math.sin(tt * 6 * sp + j)
                 y = HIT[1] - 30 + 6 * j + 34 * tt * sp
                 if y < GR - 3:
-                    fn = leaf if j % 2 == 0 else jade_feather
-                    fig.fx_front.append(fn(fig, x, y, 30 * math.sin(tt * 6 * sp + j) + (0 if j % 2 == 0 else 90), 0.95, op=e3))
+                    if j % 2 == 0:
+                        fig.fx_front.append(E.feuille(fig, x, y, 30 * math.sin(tt * 6 * sp + j), 0.66, op=e3))
         # deux plumes noires arrachées par le battement : elles descendent en se balançant de part et d'autre
         if t >= SP_GO:
             tt = (t - SP_GO) / 1000.0

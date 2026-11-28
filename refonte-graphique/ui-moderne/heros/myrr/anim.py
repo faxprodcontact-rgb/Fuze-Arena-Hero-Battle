@@ -558,6 +558,43 @@ RAIN = [(200, 880, -18, 1.0), (330, 930, -30, -1.0), (20, 960, -22, 1.0), (140, 
         (110, 1330, -30, 1.0), (350, 1380, -18, -1.0)]
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : anneaux de vent et d'or, rafales d'un seul ruban
+# sans contour sombre, halo de la note d'une forme, plumes d'un fuseau, lumières et étincelles ; même rythme)
+import effets_pro as E  # noqa: E402
+
+
+def wind_ring_p(fig, c, rx, ry, w, op, back, p='vent'):
+    if op <= 0.02:
+        return ''
+    a0, a1 = (190, 350) if back else (10, 170)
+    return E.ruban(fig, ring_pts(c, rx, ry, a0, a1, 14), w * 1.8, p, op=op * (0.7 if back else 1), kind='fuseau', halo=0.4)
+
+
+def gold_ring_p(fig, c, rx, ry, w, op, back):
+    return wind_ring_p(fig, c, rx, ry, w, op, back, 'or')
+
+
+def gust_p(fig, p0, p1, p2, p3, w, curl=4.0, s=-1, tail=0.0, op=1.0, turn=290):
+    if op <= 0.02 or w < 0.15:
+        return ''
+    c = resample(bez(p0, p1, p2, p3, 30), 12) if 'resample' in globals() else [bezp(p0, p1, p2, p3, i / 12) for i in range(13)]
+    if curl > 0.3:
+        c = c + spiral(p3, (p3[0] - p2[0], p3[1] - p2[1]), curl, turn, s, 8)
+    c = c[int(tail * (len(c) - 4)):]
+    return E.ruban(fig, c, w * 1.7, 'vent', op=op, kind='pointe', halo=0.4)
+
+
+def puff_p(fig, cx, cy, r, op=1.0, k=0):
+    return E.nuage(fig, cx, cy, r * 1.15, 'vent', op=op, seed=k, flat=0.75)
+
+
+def plume_p(fig, c, ang, s=1.0, op=1.0, light=False):
+    a = math.radians(ang)
+    u, v = (math.cos(a), math.sin(a)), (-math.sin(a), math.cos(a))
+    P = lambda i, j: (c[0] + s * (u[0] * i + v[0] * j), c[1] + s * (u[1] * i + v[1] * j))   # noqa: E731
+    return E.ruban(fig, [P(-3.2, 0.3), P(0, -0.3), P(3.0, 0.2)], 2.6 * s, 'vent', op=op, kind='fuseau', halo=0.3)
+
+
 def fx_special(tl):
     def f(fig, ctx):
         P = ctx['P']
@@ -569,12 +606,12 @@ def fx_special(tl):
         if k > 0:
             sp = (tl / 1000) * 360 * 1.4
             for j, (rx, ry, w, a0) in enumerate(((22, 4.2, 2.0, 0), (30, 5.8, 1.6, 150))):
-                fig.fx_back.append(wind_ring(fig, (feet[0], feet[1] - 2 - 4 * j * k), rx * (0.7 + 0.3 * k), ry, w, k * 0.9, True))
-                fig.fx_front.append(wind_ring(fig, (feet[0], feet[1] - 2 - 4 * j * k), rx * (0.7 + 0.3 * k), ry, w, k * 0.9, False))
+                fig.fx_back.append(wind_ring_p(fig, (feet[0], feet[1] - 2 - 4 * j * k), rx * (0.7 + 0.3 * k), ry, w, k * 0.9, True))
+                fig.fx_front.append(wind_ring_p(fig, (feet[0], feet[1] - 2 - 4 * j * k), rx * (0.7 + 0.3 * k), ry, w, k * 0.9, False))
             for j in range(3):
                 a = math.radians(sp + 120 * j)
                 q = (feet[0] + 20 * math.cos(a), feet[1] - 3 - 6 * k * (j % 2))
-                fig.fx_front.append(gust(fig, q, add(q, (-3, -4)), add(q, (2, -9)), add(q, (6, -10)), 1.5, curl=2.4, s=1, op=k * 0.8))
+                fig.fx_front.append(gust_p(fig, q, add(q, (-3, -4)), add(q, (2, -9)), add(q, (6, -10)), 1.5, curl=2.4, s=1, op=k * 0.8))
         # ---- l'élan : rafales qui descendent sous les ailes quand elle s'élève ----
         for t0, t1 in ((300, 640), (690, 1000)):
             kd = env(tl, t0, t0 + 80, t1 - 120, t1)
@@ -583,10 +620,10 @@ def fx_special(tl):
                 for j, x in enumerate((30, 104)):
                     s_ = -1 if j == 0 else 1
                     q0 = (x, 70 - lift + 18 * u)
-                    fig.fx_back.append(gust(fig, q0, add(q0, (0, 10)), add(q0, (-4 * s_, 22)), add(q0, (-8 * s_, 30 * (0.6 + 0.4 * u))),
+                    fig.fx_back.append(gust_p(fig, q0, add(q0, (0, 10)), add(q0, (-4 * s_, 22)), add(q0, (-8 * s_, 30 * (0.6 + 0.4 * u))),
                                             2.2, curl=3.4, s=s_, tail=0.4 * u, op=kd * 0.85))
-                fig.fx_back.append(puff(fig, feet[0] - 26 - 6 * u, GR - 2, 2.4 + 1.6 * u, op=kd * 0.8, k=1))
-                fig.fx_back.append(puff(fig, feet[0] + 26 + 6 * u, GR - 2, 2.4 + 1.6 * u, op=kd * 0.8, k=0))
+                fig.fx_back.append(puff_p(fig, feet[0] - 26 - 6 * u, GR - 2, 2.4 + 1.6 * u, op=kd * 0.8, k=1))
+                fig.fx_back.append(puff_p(fig, feet[0] + 26 + 6 * u, GR - 2, 2.4 + 1.6 * u, op=kd * 0.8, k=0))
         # ---- l'auréole s'illumine : une lueur douce autour d'elle ----
         gh = min(1.6, P['glow'])
         if gh > 0:
@@ -596,7 +633,7 @@ def fx_special(tl):
         if kf > 0:
             b = ctx['bell']
             fig.fx_front.append(glow(fig, b, 30 * kf, '#ffffff', 0.7 * kf))
-            fig.fx_front.append(pop(fig, b, 4.0 * (0.6 + 0.5 * kf), facing=ctx['tang'], op=kf, gold=True))
+            fig.fx_front.append(E.lumiere(fig, b, 10 * (0.6 + 0.5 * kf), kf, 'or'))
         au = P.get('aura', 0.0)
         if au > 0.02:
             fig.aura = (GOLDFX[1], 1.3 * au, 0.85 * au)
@@ -608,21 +645,21 @@ def fx_special(tl):
             ry = rx * 0.26
             c = (waist[0], waist[1] + 18 * u + 4)
             w = 3.4 - 1.4 * u
-            fig.fx_back.append(wind_ring(fig, c, rx, ry, w, op, True))
-            fig.fx_front.append(wind_ring(fig, c, rx, ry, w, op, False))
+            fig.fx_back.append(wind_ring_p(fig, c, rx, ry, w, op, True))
+            fig.fx_front.append(wind_ring_p(fig, c, rx, ry, w, op, False))
             # le second anneau, plus fin, en retard
             if tl > SP_BLOW + 80:
                 u2 = smooth((tl - SP_BLOW - 80) / 420)
                 rx2 = 10 + 70 * u2
-                fig.fx_back.append(wind_ring(fig, (waist[0], waist[1] + 12 * u2 + 2), rx2, rx2 * 0.26, 2.0 - 0.8 * u2, op * 0.8, True))
-                fig.fx_front.append(wind_ring(fig, (waist[0], waist[1] + 12 * u2 + 2), rx2, rx2 * 0.26, 2.0 - 0.8 * u2, op * 0.8, False))
+                fig.fx_back.append(wind_ring_p(fig, (waist[0], waist[1] + 12 * u2 + 2), rx2, rx2 * 0.26, 2.0 - 0.8 * u2, op * 0.8, True))
+                fig.fx_front.append(wind_ring_p(fig, (waist[0], waist[1] + 12 * u2 + 2), rx2, rx2 * 0.26, 2.0 - 0.8 * u2, op * 0.8, False))
             # il se défait en volutes, au bord
             if tl > 980:
                 v = (tl - 980) / 320
                 for j, a in enumerate((20, 160, 200, 340)):
                     q = (c[0] + rx * math.cos(math.radians(a)), c[1] + ry * math.sin(math.radians(a)))
                     s_ = 1 if math.cos(math.radians(a)) > 0 else -1
-                    fig.fx_front.append(gust(fig, q, add(q, (4 * s_, -3)), add(q, (8 * s_, -7)), add(q, (10 * s_, -12 * v - 2)),
+                    fig.fx_front.append(gust_p(fig, q, add(q, (4 * s_, -3)), add(q, (8 * s_, -7)), add(q, (10 * s_, -12 * v - 2)),
                                              1.6, curl=2.4 + 2 * v, s=-s_, tail=0.5 * v, op=(1 - v) * 0.9))
         # ---- les taches sombres : elles apparaissent à l'éclair, se détachent et s'évaporent ----
         if SP_BLOW - 60 <= tl <= 1320:
@@ -648,9 +685,9 @@ def fx_special(tl):
                 op = env(tl, t0, t0 + 80, t0 + 600, t0 + 820)
                 ang = 20 * tw * math.sin(u * 6 + j) - 10 + 30 * fall * tw
                 layer = fig.fx_back if math.sin(math.radians(a)) < 0 else fig.fx_front
-                layer.append(plume(fig, (x, y), ang, 0.95, op=op, light=True))
+                layer.append(plume_p(fig, (x, y), ang, 0.95, op=op, light=True))
                 if u >= 1:
-                    layer.append(sparkle(fig, (x, y - 1), 1.6 * (1 - (u - 1) / 0.32), op, rot=10 * j))
+                    layer.append(E.lumiere(fig, (x, y - 1), 4 * (1 - (u - 1) / 0.32), op, 'or'))
         # ---- 2de note : l'auréole s'embrase, le grand halo doré pulse une fois, un anneau d'or au sol ----
         kn = env(tl, SP_NOTE2 - 40, SP_NOTE2, SP_NOTE2 + 200, SP_NOTE2 + 480)
         if kn > 0:
@@ -658,28 +695,23 @@ def fx_special(tl):
             u = smooth((tl - SP_NOTE2 + 40) / 260)
             R = 30 + 34 * u
             fig.under.append((c[0], c[1], R, R, GOLDFX[1], 0.3 * kn, [(0, GOLDFX[0], 0.0), (0.72, GOLDFX[1], 0.18 * kn), (0.9, GOLDFX[0], 0.55 * kn), (1, GOLDFX[1], 0)]))
-            ring_ = sm([(c[0] + R * math.cos(math.radians(i * 12)), c[1] + R * math.sin(math.radians(i * 12))) for i in range(30)], t=0.9)
-            inner = sm([(c[0] + (R - 1.6) * math.cos(math.radians(i * 12)), c[1] + (R - 1.6) * math.sin(math.radians(i * 12))) for i in range(30)], t=0.9)
-            from lib import Shape
-            band = Shape(ring_.subs + inner.rev().subs, evenodd=True)
-            fig.fx_back.append('<path d="%s" fill-rule="evenodd" fill="%s" opacity="%g"/>' % (band.d(), GOLDFX[1], 0.8 * kn))
-            for j in range(10):
-                a = j * 36 + 12 * u
-                fig.fx_front.append(sparkle(fig, (c[0] + R * math.cos(math.radians(a)), c[1] + R * math.sin(math.radians(a))),
-                                            1.4 + 0.8 * ((j * 7) % 3) / 2, kn, rot=a))
+            fig.fx_back.append(E.couronne(fig, c, R, 3.0, tl, 0.0, 'or', op=0.85 * kn, seed=2))
+            for j in range(4):
+                a = math.radians(j * 90 + 40 + 12 * u)
+                fig.fx_front.append(E.etincelle(fig, c[0] + R * math.cos(a), c[1] + R * math.sin(a), 50 * math.cos(a), 50 * math.sin(a), 0.7, 'or', op=kn))
             gx = (feet[0], GR - 0.5)
-            fig.fx_back.append(gold_ring(fig, gx, 26 + 30 * u, (26 + 30 * u) * 0.2, 2.4, kn, True))
-            fig.fx_front.append(gold_ring(fig, gx, 26 + 30 * u, (26 + 30 * u) * 0.2, 2.4, kn, False))
+            fig.fx_back.append(gold_ring_p(fig, gx, 26 + 30 * u, (26 + 30 * u) * 0.2, 2.4, kn, True))
+            fig.fx_front.append(gold_ring_p(fig, gx, 26 + 30 * u, (26 + 30 * u) * 0.2, 2.4, kn, False))
         # les lueurs qui montent, après la seconde note
         if SP_NOTE2 + 100 <= tl <= SP_NOTE2 + 820:
-            for j in range(9):
-                t0 = SP_NOTE2 + 100 + 50 * j
+            for j in range(5):
+                t0 = SP_NOTE2 + 100 + 90 * j
                 if t0 <= tl <= t0 + 560:
                     u = (tl - t0) / 560
                     a = math.radians(j * 40 + 15)
                     x = feet[0] + 44 * math.cos(a) * (1 - 0.3 * u)
                     y = GR - 4 + 10 * math.sin(a) - 46 * u
-                    fig.fx_front.append(sparkle(fig, (x, y), 1.3 * (1 - 0.5 * u), env(u, 0, 0.15, 0.6, 1.0), rot=30 * j))
+                    fig.fx_front.append(E.etincelle(fig, x, y, 0, -60, 0.7 * (1 - 0.4 * u), 'or', op=env(u, 0, 0.15, 0.6, 1.0)))
     return f
 
 
