@@ -76,7 +76,8 @@ function prepareSide(units: readonly UnitInit[]): UnitInit[] {
 
 function spawn(init: UnitInit, startEnergy = 0): Unit {
   // Le décalage de départ dépend du poste : les attaques ne tombent pas toutes en même temps.
-  return { ...init, hp: init.maxHp, energy: startEnergy, shield: 0, stun: 0, cooldown: 3 + init.slot * 2, dead: false, statuses: [] };
+  const hp = init.hpFrac === undefined ? init.maxHp : Math.max(1, Math.round(init.maxHp * init.hpFrac));
+  return { ...init, hp, energy: startEnergy, shield: 0, stun: 0, cooldown: 3 + init.slot * 2, dead: false, statuses: [] };
 }
 
 interface Ctx {

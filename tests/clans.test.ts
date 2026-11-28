@@ -24,7 +24,7 @@ describe('clans et décors', () => {
     const looks = [
       ...Array.from({ length: 30 }, (_, i) => campaignLook(i + 1)),
       battleLook('tower', '7'), battleLook('dungeon', '1', 'gold'), battleLook('dungeon', '1', 'essence'),
-      battleLook('dungeon', '1', 'gear'), battleLook('dailyBoss', 'ogre'), battleLook('guildBoss', 'dragon'), battleLook('arena', 'Kaïro'),
+      battleLook('dungeon', '1', 'gear'), battleLook('event', '1-5'), battleLook('event', '2-20'), battleLook('guildBoss', 'dragon'), battleLook('arena', 'Kaïro'),
     ];
     for (const look of looks) {
       expect(look.fond in FOND_VECTO).toBe(true);

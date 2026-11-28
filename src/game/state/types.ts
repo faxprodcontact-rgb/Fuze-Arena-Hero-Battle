@@ -2,6 +2,7 @@
 import type { Slot } from '../../core/battle/types';
 import type { GearSlot, Item } from '../../core/data/items';
 import type { DungeonKind, Reward } from '../../core/data/modes';
+import type { EventBonus } from '../../core/data/event';
 import type { FoeHero } from '../../core/coliseum';
 import type { Hero } from '../../core/types';
 
@@ -175,6 +176,8 @@ export interface PlayerState {
     entries: Record<DungeonKind, number>;
     bossAttempts: number;
     bossBest: number;
+    /** Parties du mode Événement commencées aujourd'hui. */
+    eventTries?: number;
     arenaFights: number;
     guildAttempts: number;
     missions: MissionState[];
@@ -186,6 +189,25 @@ export interface PlayerState {
   weekly: { week: string; quests: Record<string, number>; claimed: string[]; chests: number[] };
   /** Fonctions déjà ouvertes au moins une fois (pour le point rouge « nouveau »). */
   seen: string[];
+  /** Le mode Événement (core/data/event.ts) : l'événement en cours, sa difficulté, la partie commencée. */
+  event?: EventState;
+}
+
+/** Une partie du mode Événement : l'équipe inscrite (ses places), le prochain niveau, la vie de chacun (part de sa vie
+ * max, 0 = mort), les bonus d'attaque et de défense gagnés, et le choix de bonus en attente. */
+export interface EventRun {
+  team: [number, Slot][];
+  level: number;
+  hp: Record<number, number>;
+  atk: number;
+  def: number;
+  offer?: EventBonus[];
+}
+export interface EventState {
+  /** L'événement (l'id du portail d'événement) : un nouveau remet la difficulté à 1. */
+  id: string;
+  difficulty: number;
+  run?: EventRun;
 }
 
 /** Récompense affichée après une action (coffre, combat, quête…). */
@@ -194,4 +216,7 @@ export interface Gain {
   heroes: Hero[];
   items: Item[];
   fragments?: { defId: string; amount: number };
+  /** XP gagnée par chaque héros de l'équipe (mode Événement) et niveaux qu'elle leur a fait gagner. */
+  xp?: number;
+  levelsUp?: number;
 }

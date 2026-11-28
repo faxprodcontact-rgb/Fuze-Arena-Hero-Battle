@@ -112,7 +112,11 @@ export function battleLook(kind: string, title: string, dungeon?: DungeonKind): 
       return towerLook(Number.parseInt(title, 10) || 1);
     case 'dungeon':
       return clanLook(DUNGEON_CLAN[dungeon ?? 'gold']);
-    case 'dailyBoss':
+    case 'event': {
+      // le mode Événement (« 2-7 » = difficulté 2, niveau 7) : chaque niveau du chemin a son clan ; le grand boss au 20e
+      const level = Number.parseInt(title.split('-')[1] ?? '1', 10) || 1;
+      return clanLook(CLANS[(level - 1) % CLANS.length]!, level % 5 === 0);
+    }
     case 'guildBoss':
       return clanLook(bossClan(title), true);
     case 'coliseum':

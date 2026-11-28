@@ -50,4 +50,6 @@ export interface Hero {
   level: number;
   /** Niveau d'équipement résumé (simulations). Le vrai jeu aura 4 objets par héros. */
   gear?: number;
+  /** XP vers le niveau suivant (gagnée en mode Événement, core/data/event.ts). */
+  xp?: number;
 }

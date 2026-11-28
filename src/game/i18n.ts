@@ -83,7 +83,12 @@ const FR = {
   // le 3e portail (27/11) : son nom suit le groupe mis en avant (FEATURED_BANNER de core/data/summon.ts, `banner.<id>`)
   'summon.featured': 'Invocation d’événement', 'summon.basicShort': 'Simple', 'summon.normalShort': 'Normale',
   'banner.dragons-2711': 'Portail d’événement', 'banner.dragons-2711.short': 'Événement',
-  'adv.tower': 'Tour des Épreuves', 'adv.dungeons': 'Donjons', 'adv.missions': 'Missions', 'adv.dailyBoss': 'Boss du jour',
+  'adv.tower': 'Tour des Épreuves', 'adv.dungeons': 'Donjons', 'adv.missions': 'Missions', 'adv.event': 'Événement',
+  'event.difficulty': 'Difficulté {n}', 'event.level': 'Niveau {n}', 'event.join': 'Inscrire une équipe', 'event.quit': 'Abandonner',
+  'event.quitAsk': 'Abandonner la partie ? L’essai du jour est perdu.', 'event.pick': 'Choisis un bonus', 'event.xp': '+{n} XP',
+  'event.bonus.heal': 'Soin', 'event.bonus.atk': 'Attaque', 'event.bonus.def': 'Défense', 'event.bonus.revive': 'Retour',
+  'event.bonusText.heal': 'Toute l’équipe : +{p} % de vie', 'event.bonusText.atk': 'Attaque +{p} % jusqu’à la fin',
+  'event.bonusText.def': 'Défense +{p} % jusqu’à la fin', 'event.bonusText.revive': 'Un héros tombé revient ({p} % de vie)',
   'adv.arena': 'Arène', 'adv.defense': 'Colisée',
   'tower.floor': 'Étage {n}', 'tower.challenge': 'Défier',
   'dungeon.gold': "Mine d'or", 'dungeon.essence': "Source d'essence", 'dungeon.gear': 'Armurerie', 'dungeon.level': 'Niveau {n}', 'dungeon.sweep': 'Balayer', 'dungeon.tries': 'Essais',
@@ -111,7 +116,7 @@ const FR = {
   'quests.daily': 'Du jour', 'quests.weekly': 'De la semaine', 'quests.activity': 'Activité',
   'quest.login': 'Connexion', 'quest.collectIdle': 'Récolter le butin', 'quest.winStage': 'Gagner en campagne', 'quest.summon': 'Invoquer',
   'quest.levelUp': 'Monter des niveaux', 'quest.fuse': 'Fusionner', 'quest.tower': 'Étages de la tour', 'quest.dungeon': 'Donjon',
-  'quest.mission': 'Missions', 'quest.dailyBoss': 'Boss du jour', 'quest.arena': 'Combats d’arène', 'quest.guildBoss': 'Boss de guilde',
+  'quest.mission': 'Missions', 'quest.event': 'Niveaux d’événement', 'quest.arena': 'Combats d’arène', 'quest.guildBoss': 'Boss de guilde',
   'quest.watchAd': 'Pub',
   'shop.offers': 'Offres', 'shop.gems': 'Gemmes', 'shop.pass': 'Passe', 'shop.exchange': 'Échanges', 'shop.simulated': 'Achat simulé (prototype)',
   'offer.starter': 'Offre de départ', 'offer.growth': 'Pack de croissance', 'offer.card': 'Carte mensuelle', 'offer.pass': 'Passe premium',
@@ -146,7 +151,7 @@ const FR = {
 
   'result.victory': 'Victoire !', 'result.defeat': 'Défaite', 'result.damage': 'Dégâts', 'result.nothing': 'Rien cette fois',
   'battle.quit': 'Quitter', 'battle.resume': 'Reprendre', 'battle.wave': 'Vague', 'battle.auto': 'AUTO',
-  'mode.campaign': 'Niveau', 'mode.tower': 'Étage', 'mode.dungeon': 'Donjon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arène', 'mode.guildBoss': 'Guilde', 'mode.friend': 'Défi',
+  'mode.campaign': 'Niveau', 'mode.tower': 'Étage', 'mode.dungeon': 'Donjon', 'mode.event': 'Événement', 'mode.arena': 'Arène', 'mode.guildBoss': 'Guilde', 'mode.friend': 'Défi',
   'mail.title': 'Courrier', 'mail.claimAll': 'Tout récupérer',
   'login.title': 'Connexion', 'login.welcome': 'Bienvenue',
   // vague 3 « Boutique » : calendrier de connexion et vitrine de la boutique
@@ -245,7 +250,12 @@ const EN: Record<Key, string> = {
   'summon.freeShort': 'Free', // Invoquer, vague 3
   'summon.featured': 'Event summon', 'summon.basicShort': 'Basic', 'summon.normalShort': 'Normal',
   'banner.dragons-2711': 'Event Portal', 'banner.dragons-2711.short': 'Event',
-  'adv.tower': 'Tower of Trials', 'adv.dungeons': 'Dungeons', 'adv.missions': 'Missions', 'adv.dailyBoss': 'Daily boss',
+  'adv.tower': 'Tower of Trials', 'adv.dungeons': 'Dungeons', 'adv.missions': 'Missions', 'adv.event': 'Event',
+  'event.difficulty': 'Difficulty {n}', 'event.level': 'Stage {n}', 'event.join': 'Enter a team', 'event.quit': 'Give up',
+  'event.quitAsk': 'Give up this run? Today’s try is lost.', 'event.pick': 'Choose a bonus', 'event.xp': '+{n} XP',
+  'event.bonus.heal': 'Heal', 'event.bonus.atk': 'Attack', 'event.bonus.def': 'Defense', 'event.bonus.revive': 'Return',
+  'event.bonusText.heal': 'Whole team: +{p} % HP', 'event.bonusText.atk': 'Attack +{p} % until the end',
+  'event.bonusText.def': 'Defense +{p} % until the end', 'event.bonusText.revive': 'A fallen hero returns ({p} % HP)',
   'adv.arena': 'Arena', 'adv.defense': 'Colosseum',
   'tower.floor': 'Floor {n}', 'tower.challenge': 'Challenge',
   'dungeon.gold': 'Gold mine', 'dungeon.essence': 'Essence spring', 'dungeon.gear': 'Armory', 'dungeon.level': 'Level {n}', 'dungeon.sweep': 'Sweep', 'dungeon.tries': 'Tries',
@@ -273,7 +283,7 @@ const EN: Record<Key, string> = {
   'quests.daily': 'Daily', 'quests.weekly': 'Weekly', 'quests.activity': 'Activity',
   'quest.login': 'Log in', 'quest.collectIdle': 'Collect loot', 'quest.winStage': 'Win campaign stages', 'quest.summon': 'Summon',
   'quest.levelUp': 'Level up heroes', 'quest.fuse': 'Fuse', 'quest.tower': 'Tower floors', 'quest.dungeon': 'Dungeon',
-  'quest.mission': 'Missions', 'quest.dailyBoss': 'Daily boss', 'quest.arena': 'Arena fights', 'quest.guildBoss': 'Guild boss',
+  'quest.mission': 'Missions', 'quest.event': 'Event stages', 'quest.arena': 'Arena fights', 'quest.guildBoss': 'Guild boss',
   'quest.watchAd': 'Ad',
   'shop.offers': 'Offers', 'shop.gems': 'Gems', 'shop.pass': 'Pass', 'shop.exchange': 'Exchange', 'shop.simulated': 'Simulated purchase (prototype)',
   'offer.starter': 'Starter pack', 'offer.growth': 'Growth pack', 'offer.card': 'Monthly card', 'offer.pass': 'Premium pass',
@@ -307,7 +317,7 @@ const EN: Record<Key, string> = {
 
   'result.victory': 'Victory!', 'result.defeat': 'Defeat', 'result.damage': 'Damage', 'result.nothing': 'Nothing this time',
   'battle.quit': 'Quit', 'battle.resume': 'Resume', 'battle.wave': 'Wave', 'battle.auto': 'AUTO',
-  'mode.campaign': 'Stage', 'mode.tower': 'Floor', 'mode.dungeon': 'Dungeon', 'mode.dailyBoss': 'Boss', 'mode.arena': 'Arena', 'mode.guildBoss': 'Guild', 'mode.friend': 'Challenge',
+  'mode.campaign': 'Stage', 'mode.tower': 'Floor', 'mode.dungeon': 'Dungeon', 'mode.event': 'Event', 'mode.arena': 'Arena', 'mode.guildBoss': 'Guild', 'mode.friend': 'Challenge',
   'mail.title': 'Mail', 'mail.claimAll': 'Claim all',
   'login.title': 'Check-in', 'login.welcome': 'Welcome',
   // vague 3 « Boutique » : calendrier de connexion et vitrine de la boutique

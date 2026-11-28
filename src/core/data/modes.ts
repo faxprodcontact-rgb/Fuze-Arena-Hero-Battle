@@ -6,7 +6,7 @@ export const UNLOCKS = {
   tower: 20,
   missions: 30,
   dungeons: 40,
-  dailyBoss: 60,
+  event: 60,   // le mode Événement (27/11, à la place du boss du jour : core/data/event.ts)
   arena: 80,
   guild: 100,
   defense: 400,
@@ -41,7 +41,7 @@ export const GEMS_PER_SUMMON = 300;
  * Parchemins rouges (demande du propriétaire, 27/11/2026) : la monnaie du portail spécial, 1 par invocation (×10 = 10).
  * Rares, gagnés à quelques endroits seulement (valeurs raisonnables, à revoir au grand réglage avant la bêta) :
  * - fin de chaque chapitre de la campagne : RED_SCROLLS.perChapter ;
- * - boss du jour : le dernier palier (100 % de ses PV) en donne 1 (DAILY_BOSS_TIERS) ;
+ * - mode Événement : aux niveaux 10 et 20 de chaque zone (core/data/event.ts, eventScrolls) ;
  * - coffre de la semaine à 100 points : 1 (WEEKLY_CHESTS) ;
  * - boutique du Colisée : 1 contre des insignes (COLISEUM_SHOP, core/data/coliseum.ts) ;
  * - boutique, onglet Échanges : 1 contre RED_SCROLLS.gems gemmes, au plus RED_SCROLLS.gemsPerWeek par semaine ;
@@ -93,14 +93,7 @@ export const MISSION_TEMPLATES: MissionTemplate[] = [
   { id: 'siege', hours: 8, heroes: 4, minStars: 4, reward: { kind: 'gems', amount: 150 } },
 ];
 
-// ---------- Boss du jour ----------
-
-export const DAILY_BOSS_ATTEMPTS = 2;
-/** Paliers de dégâts, exprimés en part des PV du boss, et leur récompense en gemmes. */
-export const DAILY_BOSS_TIERS: readonly { share: number; gems: number; redScrolls?: number }[] = [
-  { share: 0.05, gems: 30 }, { share: 0.15, gems: 60 }, { share: 0.3, gems: 100 },
-  { share: 0.5, gems: 150 }, { share: 0.75, gems: 220 }, { share: 1, gems: 300, redScrolls: 1 },
-];
+// (le boss du jour est remplacé par le mode Événement le 27/11 : core/data/event.ts)
 
 // ---------- Arène ----------
 
@@ -123,7 +116,7 @@ export const GUILD_COINS_PER_ATTACK = 60;
 
 export type QuestEvent =
   | 'login' | 'collectIdle' | 'winStage' | 'summon' | 'levelUp' | 'fuse' | 'tower'
-  | 'dungeon' | 'mission' | 'dailyBoss' | 'arena' | 'guildBoss' | 'watchAd';
+  | 'dungeon' | 'mission' | 'event' | 'arena' | 'guildBoss' | 'watchAd';
 
 export interface QuestDef {
   id: string;
@@ -140,7 +133,7 @@ export const DAILY_QUESTS: QuestDef[] = [
   { id: 'd-dungeon', event: 'dungeon', goal: 1, points: 10 },
   { id: 'd-mission', event: 'mission', goal: 2, points: 10 },
   { id: 'd-arena', event: 'arena', goal: 2, points: 10 },
-  { id: 'd-boss', event: 'dailyBoss', goal: 1, points: 10 },
+  { id: 'd-event', event: 'event', goal: 2, points: 10 },
 ];
 export const WEEKLY_QUESTS: QuestDef[] = [
   { id: 'w-stage', event: 'winStage', goal: 30, points: 20 },

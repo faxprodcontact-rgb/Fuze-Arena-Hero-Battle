@@ -118,6 +118,8 @@ export interface UnitInit {
   boss?: boolean;
   /** Vrai pour les héros (le bonus d'équipe par élément ne vaut que pour eux). */
   hero?: boolean;
+  /** Part de sa vie max avec laquelle il commence (mode Événement : la vie reste d'un niveau à l'autre). 1 par défaut. */
+  hpFrac?: number;
 }
 
 export interface Status {

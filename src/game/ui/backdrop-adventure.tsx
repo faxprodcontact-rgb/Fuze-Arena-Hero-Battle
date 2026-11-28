@@ -48,7 +48,7 @@ const LOOKS: Record<string, Look> = {
   tower: { sky: ['#4a32b8', '#8f6cf0', '#f0dcff'], far: '#7458d4', mid: '#5238ae', ground: '#3a2a86', shape: 'peaks', cloud: '#f6f0ff' },
   missions: { sky: ['#0c5e70', '#279c94', '#d4f7e6'], far: '#3a9e8e', mid: '#1d7c72', ground: '#135a58', shape: 'isles', cloud: '#f0fffa' },
   dungeons: { sky: ['#5e2620', '#b85a36', '#ffd49a'], far: '#a05436', mid: '#743a28', ground: '#4e261e', shape: 'rocks', cloud: '#fff0dc' },
-  dailyBoss: { sky: ['#4e1030', '#ad2c48', '#ffb08a'], far: '#84223e', mid: '#5e1830', ground: '#421026', shape: 'volcano', cloud: '#ffe2d8' },
+  event: { sky: ['#4e1030', '#ad2c48', '#ffb08a'], far: '#84223e', mid: '#5e1830', ground: '#421026', shape: 'volcano', cloud: '#ffe2d8' },
   arena: { sky: ['#161e5e', '#3846a8', '#cbc8f6'], far: '#454eac', mid: '#2e358a', ground: '#20276a', shape: 'hills', cloud: '#f2f0ff' },
   defense: { sky: ['#7e440c', '#d08c34', '#ffecb6'], far: '#bc7a30', mid: '#965c20', ground: '#6c4018', shape: 'dunes', cloud: '#fff6de' },
 };
@@ -91,7 +91,7 @@ function Props({ mode, P }: { mode: string; P: string }) {
       </g>
     );
     case 'dungeons': return <>{[[14, g, 20, 16], [186, g, 24, 20], [32, g, 10, 8]].map(([x, y, w, h]) => <Vol p={P} d={rock(x!, y!, w!, h!)} fill={`url(#${P}-prop)`} line={1} inkA={0.45} depth={2.5} />)}</>;
-    case 'dailyBoss': return (
+    case 'event': return (
       <>
         <path class="bk-breathe" d={`M84 ${g - 66} Q99 ${g - 76} 114 ${g - 66} Q99 ${g - 62} 84 ${g - 66} Z`} fill="#ffcf6a" />
         <g class="bk-cloud bk-slow" opacity="0.55"><Vol p={P} d={cloud(80, g - 76, 36, 4)} fill="#4a1a2e" line={0} shade={0} rim={0} /></g>
@@ -104,7 +104,7 @@ function Props({ mode, P }: { mode: string; P: string }) {
   }
 }
 
-const SEEDS: Record<string, number> = { tower: 3, missions: 5, dungeons: 8, dailyBoss: 11, arena: 13, defense: 17 };
+const SEEDS: Record<string, number> = { tower: 3, missions: 5, dungeons: 8, event: 11, arena: 13, defense: 17 };
 
 /** Le paysage d'une tuile : dessiné une seule fois (l'application se redessine chaque seconde). */
 export class TileScene extends Component<{ mode: string }> {

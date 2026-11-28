@@ -192,7 +192,7 @@ export class BattleScene extends FightScene {
   }
 
   private titleSuffix(): string {
-    if (this.req.kind === 'dailyBoss' || this.req.kind === 'guildBoss') return `· ${t(`monster.${this.req.title}`)}`;
+    if (this.req.kind === 'guildBoss') return `· ${t(`monster.${this.req.title}`)}`;
     return this.req.title;
   }
 
@@ -341,6 +341,7 @@ export class BattleScene extends FightScene {
       win: this.battle.over && this.battle.win,
       damage: this.damage(),
       alive: this.battle.heroes.filter((h) => h.hp > 0).length / Math.max(1, this.battle.heroes.length),
+      heroHp: Object.fromEntries(this.battle.heroes.map((h) => [h.id, h.hp > 0 ? h.hp / h.maxHp : 0])),
       inputs: this.battle.inputs,
     });
   }

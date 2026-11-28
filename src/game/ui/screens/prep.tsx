@@ -105,7 +105,7 @@ export function Prep({ plan, team = 'main' }: { plan: BattlePlan | null; team?: 
       <div class="backdrop prep-bg" aria-hidden="true" />
       <header class="prep-head">
         <button class="x bt-rond bt-galet" aria-label={t('close')} onClick={close}>‹</button>
-        <h2>{plan ? `${t(`mode.${plan.kind}`)} ${plan.kind === 'dailyBoss' || plan.kind === 'guildBoss' ? t(`monster.${plan.title}`) : plan.title}` : team === 'defense' ? t('war.defense') : t('heroes.formation')}</h2>
+        <h2>{plan ? `${t(`mode.${plan.kind}`)} ${plan.kind === 'guildBoss' ? t(`monster.${plan.title}`) : plan.title}` : team === 'defense' ? t('war.defense') : t('heroes.formation')}</h2>
         <span class={`power-chip${need === undefined ? '' : mine >= need ? ' ok' : ' low'}`}>
           <Icon name="power" size={18} />{fmt(mine)}{need !== undefined && <small> / {fmt(need)}</small>}
         </span>

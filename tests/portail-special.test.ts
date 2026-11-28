@@ -7,7 +7,8 @@ import { createRng } from '../src/core/rng';
 import { featuredLegends, summonFeatured, summonOne } from '../src/core/summon';
 import { COLISEUM_SHOP } from '../src/core/data/coliseum';
 import { MAILS } from '../src/core/data/mail';
-import { DAILY_BOSS_TIERS, RED_SCROLLS, WEEKLY_CHESTS } from '../src/core/data/modes';
+import { EVENT_SCROLL_LEVELS, eventScrolls } from '../src/core/data/event';
+import { RED_SCROLLS, WEEKLY_CHESTS } from '../src/core/data/modes';
 import { buyExchange, buyRedScroll, checkMail, claimMail, redScrollsBought, summon, summonCost } from '../src/game/state/actions';
 import { fresh, getState, replaceState, restore } from '../src/game/state/store';
 
@@ -88,8 +89,8 @@ describe('le portail spécial', () => {
     expect(getState().wallet.redScrolls).toBe(10);
   });
 
-  it('où gagner des parchemins rouges : boss du jour, coffre de la semaine, Colisée, boutique (limitée)', () => {
-    expect(DAILY_BOSS_TIERS[DAILY_BOSS_TIERS.length - 1]!.redScrolls).toBe(1);
+  it('où gagner des parchemins rouges : mode Événement, coffre de la semaine, Colisée, boutique (limitée)', () => {
+    expect(EVENT_SCROLL_LEVELS.map((l) => eventScrolls(1, l))).toEqual([1, 1]);
     expect(WEEKLY_CHESTS[WEEKLY_CHESTS.length - 1]!.reward.redScrolls).toBe(1);
     expect(RED_SCROLLS.perChapter).toBeGreaterThan(0);
     // Colisée : contre des insignes

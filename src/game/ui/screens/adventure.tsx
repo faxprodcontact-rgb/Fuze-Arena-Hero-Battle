@@ -1,4 +1,4 @@
-// Aventure : les modes du quotidien (tour, missions, donjons, boss du jour, arène, Colisée).
+// Aventure : les modes du quotidien (tour, missions, donjons, Événement, arène, Colisée).
 // Style moderne (26/11/2026), onglet refait le 27/11 : six tuiles qui prennent tout l'écran (un petit paysage du mode dessiné
 // par le code, TileScene de backdrop-adventure.tsx, son picto posé sur le sol, son nom, UNE information utile), sur un fond
 // épuré. Chaque mode : une tête, son décor, une seule action. Mise en page dans sections/aventure.css (classes « av- »).
@@ -8,15 +8,15 @@ import { useEffect, useState } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
 import { stagePower } from '../../../core/data/campaign';
 import {
-  ARENA_FREE_TICKETS, ARENA_LEAGUES, ARENA_SHOP, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS,
+  ARENA_FREE_TICKETS, ARENA_LEAGUES, ARENA_SHOP,
   DUNGEON_ATTEMPTS_PER_DAY, TOWER_STAGE_PER_FLOOR, UNLOCKS, type DungeonKind,
 } from '../../../core/data/modes';
 import { heroImage } from '../../art';
-import { DUNGEON_CLAN, battleLook, bossArt, bossClan } from '../../look';
+import { DUNGEON_CLAN, battleLook } from '../../look';
 import { Figure } from '../hero-figure';
 import { fmt, t } from '../../i18n';
 import {
-  arenaPlan, claimMission, dailyBossId, dailyBossPlan, dungeonAttemptsLeft, markSeen, missionEnd,
+  arenaPlan, claimMission, dungeonAttemptsLeft, eventAbandon, eventBattle, eventChooseBonus, eventOf, eventPlan, eventTriesLeft, markSeen, missionEnd,
   missionTemplate, opponentPower, refreshOpponents, towerPlan,
 } from '../../state/actions';
 import { isUnlocked, teamPower } from '../../state/selectors';
@@ -29,7 +29,10 @@ import { COLISEUM_LEAGUES } from '../../../core/data/coliseum';
 import { Art, Btn, Cur, Icon, Locked, duration, starText } from '../kit';
 import { btClass } from '../buttons';
 import { ModeShop } from '../sections/boutiques-modes';
-import { open, openSub, prepare, toast, type Sub } from '../nav';
+import { open, openSub, prepare, startBattle, toast, type Sub } from '../nav';
+import { EVENT_BONUS_VALUE, EVENT_LEVELS, EVENT_SCROLL_LEVELS, EVENT_TRIES_PER_DAY, eventStage, type EventBonus } from '../../../core/data/event';
+import { FEATURED_BANNER } from '../../../core/data/summon';
+import { heroByUid } from '../../state/selectors';
 
 type Mode = (typeof ADVENTURE_ORDER)[number];
 
@@ -54,8 +57,12 @@ function TileInfo({ f }: { f: Mode }) {
       const left = DUNGEON_KINDS.reduce((a, k) => a + dungeonAttemptsLeft(s, k), 0);
       return <span class={`av-chip${left ? '' : ' off'}`}>{t('dungeon.tries')} {left} / {DUNGEON_ATTEMPTS_PER_DAY * DUNGEON_KINDS.length}</span>;
     }
-    case 'dailyBoss':
-      return <span class="av-chip">{t(`monster.${dailyBossId()}`)} · {DAILY_BOSS_ATTEMPTS - s.daily.bossAttempts} / {DAILY_BOSS_ATTEMPTS}</span>;
+    case 'event': {
+      const ev = eventOf(s);
+      return ev.run
+        ? <span class="av-chip gold">{t('event.level', { n: ev.run.level })} / {EVENT_LEVELS}</span>
+        : <span class={`av-chip${eventTriesLeft(s) ? '' : ' off'}`}>{t('event.difficulty', { n: ev.difficulty })} · {eventTriesLeft(s)} / {EVENT_TRIES_PER_DAY}</span>;
+    }
     case 'arena': {
       const l = leagueOf(s.arena.points).id;
       return <span class={`av-chip league-${l}`}><Icon name={`league-${l}`} size={16} />{t(`league.${l}`)}</span>;
@@ -77,7 +84,7 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
         {sub === 'tower' && <Tower />}
         {sub === 'missions' && <Missions />}
         {sub === 'dungeons' && <Dungeons />}
-        {sub === 'dailyBoss' && <DailyBoss />}
+        {sub === 'event' && <EventMode />}
         {sub === 'arena' && <Arena />}
         {sub === 'defense' && <Coliseum />}
       </div>
@@ -103,7 +110,7 @@ export function AdventureScreen({ sub }: { sub: Sub }) {
               {/* le petit paysage du mode, son picto posé sur le sol (jamais coupé : il tient dans la case) */}
               <span class="av-tile-scene">
                 <TileScene mode={f} />
-                <Art name={f} class="av-tile-art" />
+                <Art name={f === 'event' ? 'redScrolls' : f} class="av-tile-art" />
                 {fresh && <span class="av-new">{t('new')}</span>}
                 {!unlocked && <span class="av-lock"><Icon name="lock" size={30} /></span>}
               </span>
@@ -273,41 +280,134 @@ function Dungeons() {
   );
 }
 
-function DailyBoss() {
+/** Le chemin des 20 niveaux : un serpentin qui monte (4 niveaux par rangée, le niveau 1 en bas à gauche), en unités
+ * d'une boîte de 400 × 520. */
+const PATH_W = 400, PATH_H = 520;
+function nodePos(n: number): [number, number] {
+  const r = Math.floor((n - 1) / 4), c = (n - 1) % 4;
+  const col = r % 2 === 0 ? c : 3 - c;
+  return [(col * PATH_W) / 3, PATH_H - (r * PATH_H) / 4];
+}
+/** Une courbe douce qui passe par tous les points (Catmull-Rom → Bézier). */
+function smoothPath(pts: [number, number][]): string {
+  if (pts.length < 2) return '';
+  let d = `M${pts[0]![0]} ${pts[0]![1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i]!, p1 = pts[i]!, p2 = pts[i + 1]!, p3 = pts[i + 2] ?? p2;
+    const k = 0.22;
+    d += ` C${(p1[0] + (p2[0] - p0[0]) * k).toFixed(1)} ${(p1[1] + (p2[1] - p0[1]) * k).toFixed(1)} ${(p2[0] - (p3[0] - p1[0]) * k).toFixed(1)} ${(p2[1] - (p3[1] - p1[1]) * k).toFixed(1)} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+const BONUS_ICON: Record<EventBonus, string> = { heal: 'hp', atk: 'atk', def: 'def', revive: 'revive' };
+
+/** Le mode Événement (27/11, à la place du boss du jour ; règles : core/data/event.ts). Un chemin de 20 niveaux sur le
+ * décor d'un clan ; l'équipe inscrite et sa vie ; un choix de bonus tous les 2 niveaux ; on s'arrête entre deux combats. */
+function EventMode() {
   const s = useGame();
-  const boss = dailyBossId();
-  const left = DAILY_BOSS_ATTEMPTS - s.daily.bossAttempts;
-  const total = dailyBossPlan().waves[0]!.reduce((a, u) => a + u.maxHp, 0);
-  const best = Math.min(1, s.daily.bossBest / total);
+  const ev = eventOf(s);
+  const run = ev.run;
+  const level = run?.level ?? 1;
+  const left = eventTriesLeft(s);
+  const all = Array.from({ length: EVENT_LEVELS }, (_, i) => nodePos(i + 1));
+  const done = run ? all.slice(0, level) : [all[0]!];
   return (
     <>
-      <SubHead title={t('adv.dailyBoss')}>
-        <Tries left={left} max={DAILY_BOSS_ATTEMPTS} />
+      <SubHead title={t('adv.event')}>
+        <Tries left={left} max={EVENT_TRIES_PER_DAY} />
       </SubHead>
-      <section class="av-panel av-boss">
-        <div class="av-scene av-grow" style={sceneVar(bossClan(boss))}>
-          <Figure id={bossArt(boss)} class="av-boss-img" />
-          <span class="av-scene-name">{t(`monster.${boss}`)}</span>
+      <section class="av-panel ev-panel">
+        <div class="ev-head">
+          <span class="ev-diff"><Icon name="redScrolls" size={20} />{t('event.difficulty', { n: ev.difficulty })}</span>
+          <span class="ev-name">{t(`banner.${FEATURED_BANNER.id}`)}</span>
         </div>
-        {/* Les récompenses sont des paliers sur la barre des dégâts : on voit d'un coup d'œil où on en est. */}
-        <div class="av-track">
-          <div class="av-track-bar"><span style={{ width: `${best * 100}%` }} /></div>
-          {DAILY_BOSS_TIERS.map((tier) => (
-            <span class={`av-tier${best >= tier.share ? ' on' : ''}`} style={{ left: `${tier.share * 100}%` }}>
-              <i />
-              <Icon name="gems" size={18} />
-              <small>{tier.gems}</small>
-              {/* le dernier palier donne aussi un parchemin rouge (portail spécial) */}
-              {tier.redScrolls ? <span class="av-tier-red"><Icon name="redScrolls" size={18} /></span> : null}
+        {/* le chemin, sur le décor du clan du niveau à jouer */}
+        <div class="ev-map av-scene" style={sceneVar(battleLook('event', `${ev.difficulty}-${level}`).fond)}>
+          <div class="ev-track">
+          <svg class="ev-road" viewBox={`0 0 ${PATH_W} ${PATH_H}`} preserveAspectRatio="none" aria-hidden="true">
+            <path d={smoothPath(all)} class="ev-road-edge" />
+            <path d={smoothPath(all)} class="ev-road-in" />
+            {run && level > 1 && <path d={smoothPath(done)} class="ev-road-done" />}
+          </svg>
+          {all.map(([x, y], i) => {
+            const n = i + 1;
+            const state = run && n < level ? 'done' : n === level ? 'now' : 'next';
+            const boss = n % 5 === 0;
+            return (
+              <span class={`ev-node ${state}${boss ? ' boss' : ''}`} style={{ left: `${(x / PATH_W) * 100}%`, top: `${(y / PATH_H) * 100}%` }}>
+                {boss ? <Icon name="dailyBoss" size={26} /> : <b>{n}</b>}
+                {state === 'done' && <i class="ev-check" />}
+                {EVENT_SCROLL_LEVELS.includes(n) && state !== 'done' && <span class="ev-prize"><Icon name="redScrolls" size={18} /></span>}
+                {n % 2 === 0 && n < EVENT_LEVELS && state !== 'done' && <span class="ev-gift"><Icon name="gift" size={14} /></span>}
+              </span>
+            );
+          })}
+          </div>
+        </div>
+        {run ? <EventRunPanel /> : (
+          <div class="av-action">
+            <span class="av-power ev-need"><Icon name="power" size={18} /><small>{t('event.level', { n: 1 })}</small><b>{fmt(stagePower(eventStage(ev.difficulty, 1)))}</b></span>
+            <Btn kind="green" wide disabled={left <= 0} onClick={() => prepare(eventPlan())}>{t('event.join')}</Btn>
+          </div>
+        )}
+      </section>
+      {run?.offer && <EventOffer offer={run.offer} />}
+    </>
+  );
+}
+
+/** La partie en cours : l'équipe (vie de chacun, morts éteints), les bonus gagnés, combattre ou abandonner. */
+function EventRunPanel() {
+  const s = useGame();
+  const run = eventOf(s).run!;
+  return (
+    <div class="ev-run">
+      <div class="ev-team">
+        {run.team.map(([uid]) => {
+          const h = heroByUid(s, uid);
+          if (!h) return null;
+          const hp = run.hp[uid] ?? 1;
+          return (
+            <span class={`ev-hero${hp > 0 ? '' : ' dead'}`}>
+              <img src={heroImage(h.defId)} alt="" />
+              <i class="ev-hp"><i style={{ width: `${Math.round(hp * 100)}%` }} /></i>
             </span>
+          );
+        })}
+      </div>
+      {(run.atk > 0 || run.def > 0) && (
+        <div class="ev-buffs">
+          {run.atk > 0 && <span class="ev-buff"><Icon name="atk" size={16} />+{Math.round(run.atk * 100)} %</span>}
+          {run.def > 0 && <span class="ev-buff"><Icon name="def" size={16} />+{Math.round(run.def * 100)} %</span>}
+        </div>
+      )}
+      <div class="row gap-s">
+        <Btn tone="galet" small onClick={() => open({ type: 'confirm', text: t('event.quitAsk'), onYes: eventAbandon })}>{t('event.quit')}</Btn>
+        <Btn kind="green" wide onClick={() => { const req = eventBattle(); if (req) startBattle(req); }}>
+          {t('fight')} · {t('event.level', { n: run.level })}
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+/** Le choix d'un bonus (tous les 2 niveaux gagnés) : deux cartes, on en touche une. */
+function EventOffer({ offer }: { offer: EventBonus[] }) {
+  return (
+    <div class="ev-offer-back">
+      <div class="ev-offer">
+        <h3>{t('event.pick')}</h3>
+        <div class="ev-offer-cards">
+          {offer.map((b) => (
+            <button class={`ev-card ev-card-${b}`} onClick={() => eventChooseBonus(b)}>
+              <Art name={BONUS_ICON[b]} class="ev-card-art" />
+              <strong>{t(`event.bonus.${b}`)}</strong>
+              <small>{t(`event.bonusText.${b}`, { p: Math.round(EVENT_BONUS_VALUE[b] * 100) })}</small>
+            </button>
           ))}
         </div>
-        <div class="av-action">
-          <span class="av-record"><Icon name="trophy" size={18} />{t('boss.best')} <b>{fmt(s.daily.bossBest)}</b></span>
-          <Btn kind="green" wide disabled={left <= 0} onClick={() => prepare(dailyBossPlan())}>{t('boss.attack')}</Btn>
-        </div>
-      </section>
-    </>
+      </div>
+    </div>
   );
 }
 

@@ -1,5 +1,5 @@
 /* FABRIQUÉ par refonte-graphique/ui-moderne/theme/pierre.ts — ne pas modifier à la main (relancer le script).
-   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 326 règles, 432 couleurs. */
+   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 339 règles, 445 couleurs. */
 /*  style.css  */
 :root:where([data-theme="pierre"]) {
     --c-bg-0: #131218;
@@ -639,6 +639,47 @@
 }
 :where(:root[data-theme="pierre"]) .av-seg button {
     color: #cccbd6
+}
+:where(:root[data-theme="pierre"]) .ev-map::after {
+    background: linear-gradient(180deg, #0e0e1166, #0e0e1133 40%, #0e0e1199)
+}
+:where(:root[data-theme="pierre"]) .ev-road-edge {
+    stroke: #15151a
+}
+:where(:root[data-theme="pierre"]) .ev-road-in {
+    stroke: #6c6986
+}
+:where(:root[data-theme="pierre"]) .ev-node {
+    text-shadow: 0 1px 0 #0c0b0f;
+    background: radial-gradient(circle at 60% 35%, #6c6986, #343340 75%)
+}
+:where(:root[data-theme="pierre"]) .ev-node.done {
+    text-shadow: none
+}
+:where(:root[data-theme="pierre"]) .ev-node.now {
+    background: radial-gradient(circle at 60% 35%, #8d8ba3, #474558 75%);
+    box-shadow: 0 0 0 3px #ffc94d, 0 0 16px 4px #ffc94d99, 0 3px 8px #000c
+}
+:where(:root[data-theme="pierre"]) .ev-check {
+    box-shadow: 0 0 0 2px #15151a
+}
+:where(:root[data-theme="pierre"]) .ev-prize {
+    background: #15151acc
+}
+:where(:root[data-theme="pierre"]) .ev-gift {
+    background: #15151acc
+}
+:where(:root[data-theme="pierre"]) .ev-hero img {
+    background: radial-gradient(circle at 50% 35%, #474558, #15151a 80%)
+}
+:where(:root[data-theme="pierre"]) .ev-hp {
+    background: #0e0e11
+}
+:where(:root[data-theme="pierre"]) .ev-offer-back {
+    background: #111115c4
+}
+:where(:root[data-theme="pierre"]) .ev-card {
+    background: linear-gradient(180deg, #5e5b74, #343340)
 }
 /*  sections/backdrops.css  */
 :where(:root[data-theme="pierre"]) .backdrop-heroes.bk, :where(:root[data-theme="pierre"]) .backdrop-guild.bk, :where(:root[data-theme="pierre"]) .backdrop-page.bk {

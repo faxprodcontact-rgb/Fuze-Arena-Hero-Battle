@@ -11,7 +11,7 @@ import {
 } from '../../core/data/items';
 import {
   ACCOUNT_XP_PER_STAGE, ADS_PER_DAY, FRIEND_GIFT, FRIENDS_MAX, GUILD_WAR, LOGIN_MONTH, LOGIN_WELCOME, type LoginReward, RENAME_COST, ARENA_FREE_TICKETS, ARENA_LOSS_POINTS, ARENA_SHOP, ARENA_TOKENS_PER_FIGHT,
-  ARENA_WIN_POINTS, DAILY_BOSS_ATTEMPTS, DAILY_BOSS_TIERS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ATTEMPTS_PER_DAY,
+  ARENA_WIN_POINTS, DAILY_CHESTS, DAILY_QUESTS, DUNGEON_ATTEMPTS_PER_DAY,
   DUNGEON_LEVELS, DUNGEON_REWARD_HOURS, DUNGEON_STAGE_PER_LEVEL, ESSENCE_RATIO, dungeonItems, FAST_LOOT_COSTS, FAST_LOOT_HOURS, GEMS_PER_10_SUMMONS,
   GEMS_PER_SUMMON, GUILD_BOSS_ATTEMPTS, GUILD_COINS_PER_ATTACK, GUILD_SHOP, IDLE_ITEM_HOURS, MISSION_TEMPLATES,
   MISSIONS_PER_DAY, MONTHLY_CARD, OFFERS, PASS_LEVELS, PASS_POINTS_PER_LEVEL, RED_SCROLLS, RESET_COST, STAGE_GEMS, TOWER_REWARD,
@@ -19,6 +19,12 @@ import {
   type Reward,
 } from '../../core/data/modes';
 import { FRAGMENTS_PER_COPY, LADDER, RARITY_RULES } from '../../core/data/stars';
+import { levelCap } from '../../core/data/stats';
+import { FEATURED_BANNER } from '../../core/data/summon';
+import {
+  EVENT_BONUS_EVERY, EVENT_BONUS_VALUE, EVENT_BONUSES, EVENT_LEVELS, EVENT_TRIES_PER_DAY, eventScrolls, eventStage, eventXp, heroXpForLevel,
+  type EventBonus,
+} from '../../core/data/event';
 import { applyFusion, canGainStar, isValidFusion, planFusion, type FusionPlan } from '../../core/fusion';
 import { levelRefund } from '../../core/power';
 import { createRng, pick, type Rng } from '../../core/rng';
@@ -31,7 +37,7 @@ import type { Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
 import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, isUnlocked, levelUpCost, slotLevel, teamPower, teamUnits } from './selectors';
 import type { TeamKind } from './selectors';
-import type { ArenaOpponent, AuthProvider, ColiseumFoe, ColiseumState, Friend, Gain, GuildWarState, MissionState, PlayerState, Wallet } from './types';
+import type { ArenaOpponent, AuthProvider, ColiseumFoe, ColiseumState, EventState, Friend, Gain, GuildWarState, MissionState, PlayerState, Wallet } from './types';
 import {
   botTeam, foeUnits, leagueAfter, makeGroup, mixSeed, myRank, pointsChange, rankReward, runColiseum, standings, WEEK_HOURS,
   type ColiseumBot, type ColiseumSetup, type Standing,
@@ -634,7 +640,7 @@ export function claimFragments(defId: string): Hero | null {
 
 // ---------- Combats ----------
 
-export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'dailyBoss' | 'arena' | 'guildBoss' | 'friend' | 'guildWar';
+export type BattleKind = 'campaign' | 'tower' | 'dungeon' | 'event' | 'arena' | 'guildBoss' | 'friend' | 'guildWar';
 
 export interface BattleRequest {
   kind: BattleKind;
@@ -653,6 +659,8 @@ export interface BattleResult {
   damage: number;
   /** Part des héros encore debout à la fin (0 à 1). */
   alive?: number;
+  /** Vie de chaque héros à la fin (id de l'unité → part de sa vie max ; 0 = mort) : mode Événement. */
+  heroHp?: Record<string, number>;
   inputs: BattleInput[];
 }
 
@@ -733,16 +741,6 @@ function bossWave(s: PlayerState, bossId: string, hpFactor: number, seed: number
   return waves.map((w) => w.map((u) => ({ ...u, maxHp: Math.round(u.maxHp * hpFactor) })));
 }
 
-export function dailyBossBattle(): BattleRequest {
-  return update((s) => ({
-    kind: 'dailyBoss' as const,
-    title: dailyBossId(),
-    heroes: teamUnits(s),
-    waves: bossWave(s, dailyBossId(), 12, 7),
-    seed: seedFor(s),
-    damageMode: true,
-  }));
-}
 
 export function guildBossBattle(): BattleRequest {
   return update((s) => ({
@@ -856,9 +854,6 @@ export function sweepDungeon(kind: DungeonKind): Gain | null {
   });
 }
 
-export function dailyBossPlan(): BattlePlan {
-  return { kind: 'dailyBoss', title: dailyBossId(), waves: bossWave(getState(), dailyBossId(), 12, 7), build: dailyBossBattle };
-}
 
 export function guildBossPlan(): BattlePlan {
   return { kind: 'guildBoss', title: guildBossId(), waves: bossWave(getState(), guildBossId(), 40, 11), build: guildBossBattle };
@@ -933,16 +928,8 @@ export function finishBattle(req: BattleRequest, res: BattleResult): Gain {
         giveDungeonReward(s, gain, kind, level);
         break;
       }
-      case 'dailyBoss': {
-        s.daily.bossAttempts += 1;
-        const total = req.waves[0]!.reduce((a, u) => a + u.maxHp, 0);
-        const share = res.damage / total;
-        s.daily.bossBest = Math.max(s.daily.bossBest, res.damage);
-        const tier = [...DAILY_BOSS_TIERS].reverse().find((t) => share >= t.share);
-        addCurrency(s, gain, 'gems', tier?.gems ?? 15);
-        addCurrency(s, gain, 'redScrolls', tier?.redScrolls ?? 0);
-        addCurrency(s, gain, 'gold', perHour);
-        track(s, 'dailyBoss');
+      case 'event': {
+        eventAfterBattle(s, gain, res);
         break;
       }
       case 'arena': {
@@ -1916,5 +1903,154 @@ export function claimColiseumWeek(): Gain | null {
     addCurrency(s, gain, 'badge', p.badge);
     delete s.coliseum!.pending;
     return gain;
+  });
+}
+
+// ---------- Le mode Événement (core/data/event.ts) ----------
+
+/** L'état du mode pour l'événement en cours : un nouvel événement (portail d'événement changé) remet la difficulté à 1. */
+export function eventOf(s: PlayerState): EventState {
+  return s.event && s.event.id === FEATURED_BANNER.id ? s.event : { id: FEATURED_BANNER.id, difficulty: 1 };
+}
+
+export function eventTriesLeft(s: PlayerState): number {
+  return Math.max(0, EVENT_TRIES_PER_DAY - (s.daily.eventTries ?? 0));
+}
+
+/** Les ennemis d'un niveau : une vague de 5 ; tous les 5 niveaux, un boss (le dernier de la zone en a deux vagues). */
+export function eventWaves(difficulty: number, level: number): UnitInit[][] {
+  const bossy = level % 5 === 0;
+  return buildWaves({
+    power: stagePower(eventStage(difficulty, level)), count: 5, waves: level === EVENT_LEVELS ? 2 : 1,
+    element: chapterElement(difficulty * EVENT_LEVELS + level), seed: difficulty * 7919 + level * 104729,
+    boss: bossy ? BOSSES[(difficulty + level / 5) % BOSSES.length] : undefined,
+  });
+}
+
+/** Les héros de la partie en cours : seulement les vivants, avec leur vie gardée et les bonus d'attaque et de défense. */
+function eventUnits(s: PlayerState): UnitInit[] {
+  const run = eventOf(s).run;
+  if (!run) return [];
+  return run.team
+    .map(([uid, slot]) => ({ hero: heroByUid(s, uid), slot, hp: run.hp[uid] ?? 1 }))
+    .filter((x) => x.hero && x.hp > 0)
+    .map(({ hero, slot, hp }) => {
+      const u = heroToUnit(hero!, slot, gearStatsOf(s, hero!.uid));
+      return { ...u, atk: Math.round(u.atk * (1 + run.atk)), def: Math.round(u.def * (1 + run.def)), hpFrac: hp };
+    });
+}
+
+/** Le combat du prochain niveau de la partie en cours (sans écran de préparation : l'équipe est inscrite). */
+export function eventBattle(): BattleRequest | null {
+  return update((s) => {
+    const ev = eventOf(s);
+    if (!ev.run || ev.run.offer) return null;
+    const heroes = eventUnits(s);
+    if (!heroes.length) return null;
+    return { kind: 'event' as const, title: `${ev.difficulty}-${ev.run.level}`, heroes, waves: eventWaves(ev.difficulty, ev.run.level), seed: seedFor(s) };
+  });
+}
+
+/** L'inscription (écran de préparation, section principale) : elle commence une partie, prend un essai du jour, puis
+ * lance le niveau 1. */
+export function eventPlan(): BattlePlan {
+  const ev = eventOf(getState());
+  return {
+    kind: 'event', title: `${ev.difficulty}-1`, waves: eventWaves(ev.difficulty, 1), need: stagePower(eventStage(ev.difficulty, 1)),
+    build: () => {
+      const ok = update((s) => {
+        const e = eventOf(s);
+        if (e.run || eventTriesLeft(s) <= 0) return false;
+        const team = formationOf(s).filter(([u]) => heroByUid(s, u));
+        if (!team.length) return false;
+        s.daily.eventTries = (s.daily.eventTries ?? 0) + 1;
+        s.event = { ...e, run: { team: team.map(([u, sl]) => [u, sl]), level: 1, hp: Object.fromEntries(team.map(([u]) => [u, 1])), atk: 0, def: 0 } };
+        return true;
+      });
+      return ok ? eventBattle() : null;
+    },
+  };
+}
+
+/** Après un combat d'Événement : la vie gardée ; gagné : récompense, niveau suivant, choix de bonus tous les 2 niveaux,
+ * zone finie → difficulté suivante ; perdu : la partie s'arrête. */
+function eventAfterBattle(s: PlayerState, gain: Gain, res: BattleResult) {
+  const ev = eventOf(s);
+  const run = ev.run;
+  if (!run) return;
+  for (const [uid] of run.team) {
+    const v = res.heroHp?.[`h-${uid}`];
+    if (v !== undefined) run.hp[uid] = v;
+  }
+  if (!res.win) {
+    s.event = { id: ev.id, difficulty: ev.difficulty };
+    return;
+  }
+  const level = run.level;
+  addCurrency(s, gain, 'redScrolls', eventScrolls(ev.difficulty, level));
+  const xp = eventXp(ev.difficulty, level);
+  let ups = 0;
+  for (const [uid] of run.team) {
+    const h = heroByUid(s, uid);
+    if (!h || !(run.hp[uid]! > 0)) continue;
+    h.xp = (h.xp ?? 0) + xp;
+    while (h.level < levelCap(h.stars) && h.xp >= heroXpForLevel(h.level)) {
+      h.xp -= heroXpForLevel(h.level);
+      h.level += 1;
+      ups += 1;
+    }
+    if (h.level >= levelCap(h.stars)) h.xp = 0;
+  }
+  gain.xp = xp;
+  gain.levelsUp = ups;
+  track(s, 'event');
+  if (level >= EVENT_LEVELS) {
+    // la zone est finie : la difficulté suivante, une nouvelle partie à commencer
+    s.event = { id: ev.id, difficulty: ev.difficulty + 1 };
+    return;
+  }
+  run.level = level + 1;
+  if (level % EVENT_BONUS_EVERY === 0) run.offer = eventOffer(s, run, nextRng(s));
+  s.event = { ...ev, run };
+}
+
+/** Deux bonus différents au hasard (le retour d'un héros seulement s'il y a un mort, le soin seulement s'il y a un
+ * blessé). */
+function eventOffer(s: PlayerState, run: NonNullable<EventState['run']>, rng: Rng): EventBonus[] {
+  const dead = run.team.some(([u]) => (run.hp[u] ?? 1) <= 0 && heroByUid(s, u));
+  const hurt = run.team.some(([u]) => { const v = run.hp[u] ?? 1; return v > 0 && v < 1; });
+  const pool = EVENT_BONUSES.filter((b) => (b !== 'revive' || dead) && (b !== 'heal' || hurt));
+  const a = pick(rng, pool);
+  const b = pick(rng, pool.filter((x) => x !== a));
+  return [a, b];
+}
+
+/** Le joueur choisit un des deux bonus proposés. */
+export function eventChooseBonus(bonus: EventBonus): boolean {
+  return update((s) => {
+    const ev = eventOf(s);
+    const run = ev.run;
+    if (!run?.offer?.includes(bonus)) return false;
+    const v = EVENT_BONUS_VALUE[bonus];
+    if (bonus === 'atk') run.atk += v;
+    if (bonus === 'def') run.def += v;
+    if (bonus === 'heal') for (const [u] of run.team) { const h = run.hp[u] ?? 1; if (h > 0) run.hp[u] = Math.min(1, h + v); }
+    if (bonus === 'revive') {
+      // le plus fort des héros morts revient
+      const dead = run.team.map(([u]) => heroByUid(s, u)).filter((h): h is Hero => !!h && (run.hp[h.uid] ?? 1) <= 0)
+        .sort((x, y) => heroPower(s, y) - heroPower(s, x));
+      if (dead[0]) run.hp[dead[0].uid] = v;
+    }
+    run.offer = undefined;
+    s.event = { ...ev, run };
+    return true;
+  });
+}
+
+/** Abandonner la partie en cours (l'essai du jour est déjà pris). */
+export function eventAbandon(): void {
+  update((s) => {
+    const ev = eventOf(s);
+    s.event = { id: ev.id, difficulty: ev.difficulty };
   });
 }

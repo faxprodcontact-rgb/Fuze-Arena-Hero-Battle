@@ -262,7 +262,7 @@ export function LegalModal({ doc }: { doc: LegalDoc | 'support' }) {
 }
 
 export function GainModal({ title, gain, damage, win }: { title: string; gain: Gain; damage?: number; win?: boolean }) {
-  const empty = !Object.keys(gain.currencies).length && !gain.heroes.length && !gain.items.length && !gain.fragments;
+  const empty = !Object.keys(gain.currencies).length && !gain.heroes.length && !gain.items.length && !gain.fragments && !gain.xp;
   return (
     <Modal title={title}>
       {win !== undefined && <div class="result-stage">{win && <Halo size={164} />}<Art class={`result-art ${win ? 'win' : 'lose'}`} name={win ? 'trophy' : 'defeat'} /></div>}
@@ -271,6 +271,7 @@ export function GainModal({ title, gain, damage, win }: { title: string; gain: G
       <div class="gain">
         {Object.entries(gain.currencies).map(([k, v]) => <Cur k={k} n={v ?? 0} big />)}
         {gain.fragments && <span class="cur cur-big">{heroDef(gain.fragments.defId).name} <Cur k="fragments" n={gain.fragments.amount} /></span>}
+        {gain.xp ? <span class="cur cur-big"><Icon name="levelUp" size={26} /><span>{t('event.xp', { n: gain.xp })}</span></span> : null}
       </div>
       {gain.items.length > 0 && <div class="items-row">{gain.items.map((it) => <ItemIcon item={it} />)}</div>}
       {gain.heroes.length > 0 && <div class="grid">{gain.heroes.map((h) => <HeroCard hero={h} small />)}</div>}

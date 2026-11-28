@@ -287,3 +287,61 @@
   /* l'équipe se règle aussi sur l'écran de préparation, avant chaque combat */
   .av-arena .team-strip { display: none; }
 }
+
+/* ==================== l'Événement (27/11, à la place du boss du jour) ==================== */
+/* un chemin de 20 niveaux qui serpente en montant sur le décor d'un clan ; l'équipe inscrite dessous ; le choix d'un bonus */
+.adv-scroll > .screen.av-sub-event { flex: 1 1 0; min-height: 0; }
+.ev-panel { gap: 10px; flex: 1 1 0; min-height: 0; }
+.ev-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ev-diff { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px 4px 6px; border-radius: 999px; font: 400 15px/1 var(--font-title); color: #fff;
+  background: linear-gradient(180deg, #8a2a3a, #5a1626); box-shadow: inset 0 0 0 1.5px #ffc94d99, 0 2px 6px #0008; text-shadow: 0 1px 0 #2a0610; }
+.ev-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 400 15px/1 var(--font-title); color: #ffd66a; }
+.ev-map { position: relative; flex: 1 1 0; min-height: 230px; border-radius: 18px; overflow: hidden;
+  box-shadow: inset 0 0 0 1.5px #ffc94d73, inset 0 2px 10px #000a; }
+/* un voile sombre par-dessus le décor : la route et les niveaux se lisent */
+.ev-map::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(180deg, #0d0b1466, #0d0b1433 40%, #0d0b1499); }
+.ev-track { position: absolute; inset: 34px 34px 28px; z-index: 1; }
+.ev-road { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; overflow: visible; }
+.ev-road path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.ev-road-edge { stroke: #15131c; stroke-width: 24px; opacity: 0.85; }
+.ev-road-in { stroke: #6a6788; stroke-width: 16px; }
+.ev-road-done { stroke: #ffc94d; stroke-width: 9px; filter: drop-shadow(0 0 4px #ffb53a99); }
+.ev-node { position: absolute; z-index: 2; translate: -50% -50%; width: 40px; height: 40px; display: grid; place-items: center; border-radius: 50%;
+  font: 400 16px/1 var(--font-title); color: #fff; text-shadow: 0 1px 0 #0a0614; background: radial-gradient(circle at 60% 35%, #6a6788, #2e2c47 75%);
+  box-shadow: inset 0 0 0 2px #ffc94d8c, inset -1px 2px 0 #ffffff33, 0 3px 6px #000a; }
+.ev-node.boss { width: 50px; height: 50px; box-shadow: inset 0 0 0 2.5px #ff6a7a, inset -1px 2px 0 #ffffff33, 0 3px 8px #000c; }
+.ev-node.done { background: radial-gradient(circle at 60% 35%, #ffe27a, #e0961f 75%); color: #5a2c00; text-shadow: none; box-shadow: inset 0 0 0 2px #fff3c0, 0 2px 5px #000a; }
+.ev-node.now { background: radial-gradient(circle at 60% 35%, #8a86a8, #45435a 75%); box-shadow: 0 0 0 3px #ffc94d, 0 0 16px 4px #ffc94d99, 0 3px 8px #000c;
+  animation: ev-pulse 1.6s ease-in-out infinite; }
+@keyframes ev-pulse { 0%, 100% { scale: 1; } 50% { scale: 1.1; } }
+.ev-check { position: absolute; right: -4px; bottom: -4px; width: 16px; height: 16px; border-radius: 50%; background: var(--px-check) center / 10px no-repeat, #2fc457;
+  box-shadow: 0 0 0 2px #15131c; }
+.ev-prize { position: absolute; top: -9px; right: -9px; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #15131ccc;
+  box-shadow: 0 0 0 1.5px #ffc94d99; }
+.ev-gift { position: absolute; bottom: -8px; left: -8px; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%; background: #15131ccc; }
+/* la partie en cours */
+.ev-run { display: flex; flex-direction: column; gap: 8px; }
+.ev-team { display: flex; justify-content: center; gap: 8px; }
+.ev-hero { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ev-hero img { width: 50px; height: 50px; border-radius: 14px; background: radial-gradient(circle at 50% 35%, #45435a, #15131c 80%); box-shadow: inset 0 0 0 1.5px #ffc94d73, 0 2px 5px #0009; }
+.ev-hp { display: block; width: 46px; height: 6px; border-radius: 999px; background: #0d0b14; box-shadow: inset 0 0 0 1px #ffffff1a; overflow: hidden; }
+.ev-hp > i { display: block; height: 100%; border-radius: 999px; background: linear-gradient(180deg, #7cf08a, #2fc457); }
+.ev-hero.dead img { filter: grayscale(1) brightness(0.55); }
+.ev-hero.dead::after { content: ''; position: absolute; top: 15px; left: 50%; translate: -50% 0; width: 20px; height: 20px; background: var(--px-cross) center / contain no-repeat; }
+.ev-buffs { display: flex; justify-content: center; gap: 8px; }
+.ev-buff { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px 3px 5px; border-radius: 999px; font: 400 14px/1 var(--font-title); color: #ffe08a;
+  background: #ffc22e24; box-shadow: inset 0 0 0 1px #ffc22e66; }
+.ev-need small { margin-right: 4px; }
+/* le choix d'un bonus : par-dessus l'écran, deux cartes de pierre */
+.ev-offer-back { position: fixed; inset: 0; z-index: 49; display: grid; place-items: center; padding: 16px; background: #0a0620c4; animation: fade 0.18s; }
+.ev-offer { width: min(100%, 380px); display: flex; flex-direction: column; gap: 14px; padding: 16px; border-radius: 24px;
+  background: radial-gradient(120% 50% at 50% 0%, #ffffff12, #ffffff00 60%), linear-gradient(180deg, var(--c-bg-3), var(--c-bg-1) 72%, var(--c-bg-0));
+  box-shadow: inset 0 0 0 1.5px #ffc94d8c, 0 12px 30px #000a; animation: pop-in 0.2s ease-out; }
+.ev-offer h3 { margin: 0; text-align: center; font: 400 21px var(--font-title); color: #fff; }
+.ev-offer-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ev-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px 8px 12px; border-radius: 18px; color: #fff; text-align: center;
+  background: linear-gradient(180deg, #5a5778, #2e2c47); box-shadow: inset 0 0 0 1.5px #ffffff26, inset 0 1px 0 #ffffff33, 0 4px 10px #0009; }
+.ev-card:active { translate: 0 2px; box-shadow: inset 0 0 0 2px #ffc94d, 0 2px 6px #0009; }
+.ev-card-art { width: 54px; height: 54px; }
+.ev-card strong { font: 400 18px var(--font-title); }
+.ev-card small { font-size: 13px; font-weight: 600; color: var(--c-on-dark-muted); line-height: 1.25; }

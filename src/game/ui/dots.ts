@@ -1,9 +1,9 @@
 // Points rouges : « il y a quelque chose à faire ici ».
 import {
-  ARENA_FREE_TICKETS, DAILY_BOSS_ATTEMPTS, DAILY_CHESTS, DAILY_QUESTS,
+  ARENA_FREE_TICKETS, DAILY_CHESTS, DAILY_QUESTS,
   GUILD_BOSS_ATTEMPTS, UNLOCKS, WEEKLY_CHESTS, WEEKLY_QUESTS, type Feature,
 } from '../../core/data/modes';
-import { coliseumFightsLeft, dungeonAttemptsLeft, fusionPreview, missionEnd, passLevel, questPoints } from '../state/actions';
+import { coliseumFightsLeft, dungeonAttemptsLeft, eventOf, eventTriesLeft, fusionPreview, missionEnd, passLevel, questPoints } from '../state/actions';
 import { canLevelUp, heroByUid, idlePreview, isUnlocked } from '../state/selectors';
 import { now } from '../state/store';
 import type { PlayerState } from '../state/types';
@@ -23,13 +23,14 @@ export const dots = {
   missions: (s: PlayerState) =>
     s.daily.missions.some((m) => !m.claimed && (!m.startedAt || now() >= missionEnd(m))),
   dungeons: (s: PlayerState) => (['gold', 'essence', 'gear'] as const).some((k) => dungeonAttemptsLeft(s, k) > 0),
-  dailyBoss: (s: PlayerState) => s.daily.bossAttempts < DAILY_BOSS_ATTEMPTS,
+  // Événement : une partie en cours (un bonus à choisir, un niveau à jouer) ou un essai du jour à prendre
+  event: (s: PlayerState) => !!eventOf(s).run || eventTriesLeft(s) > 0,
   arena: (s: PlayerState) => s.daily.arenaFights < ARENA_FREE_TICKETS,
   tower: () => false,
   // Colisée : des combats à jouer aujourd'hui, ou la récompense de la semaine à prendre
   defense: (s: PlayerState) => !!s.coliseum && (!!s.coliseum.pending || coliseumFightsLeft(s) > 0),
   adventure: (s: PlayerState) =>
-    (['tower', 'missions', 'dungeons', 'dailyBoss', 'arena', 'defense'] as const).some(
+    (['tower', 'missions', 'dungeons', 'event', 'arena', 'defense'] as const).some(
       (f) => isUnlocked(s, f) && (isNew(s, f) || dots[f](s)),
     ),
   guild: (s: PlayerState) =>
@@ -52,5 +53,5 @@ export const dots = {
   },
 };
 
-export const ADVENTURE_ORDER: Exclude<Feature, 'guild'>[] = ['tower', 'missions', 'dungeons', 'dailyBoss', 'arena', 'defense'];
+export const ADVENTURE_ORDER: Exclude<Feature, 'guild'>[] = ['tower', 'missions', 'dungeons', 'event', 'arena', 'defense'];
 export { UNLOCKS };
