@@ -470,7 +470,7 @@ export abstract class FightScene extends Phaser.Scene {
   }
 
   /** Un éclair de lumière bref au point d'impact, avec une onde qui s'élargit. */
-  private flashAt(x: number, y: number, color = 0xffffff, r = 34, t = 1) {
+  protected flashAt(x: number, y: number, color = 0xffffff, r = 34, t = 1) {
     const c = this.add.circle(x, y, r, color, 0.8).setDepth(1600).setBlendMode(Phaser.BlendModes.ADD);
     this.tweens.add({ targets: c, scale: 1.8, alpha: 0, duration: 180 * t, onComplete: () => c.destroy() });
     const ring = this.add.circle(x, y, r * 0.8).setStrokeStyle(5, color, 0.9).setDepth(1600).setBlendMode(Phaser.BlendModes.ADD);

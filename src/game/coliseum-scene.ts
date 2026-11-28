@@ -1,6 +1,6 @@
 // Combat du Colisée (demande du 26/11/2026) : des duels en chaîne, tout automatique. Les deux combattants du duel sont
-// face à face au milieu de l'arène ; ceux qui attendent leur tour sont plus petits, sur les côtés (chacun de son côté).
-// Le gagnant d'un duel reste au milieu avec la vie qui lui reste ; le suivant de l'autre équipe s'avance.
+// face à face au milieu de l'arène, seuls (28/11 : ceux qui attendent leur tour ne se voient pas). Le gagnant d'un duel
+// reste avec la vie qui lui reste ; quand un combattant tombe, le suivant de son équipe apparaît à sa place (lumière).
 // En haut : la pause, le titre, et les 3 visages de chaque équipe (éteints quand le héros est tombé). En bas : la vitesse.
 // Les règles viennent de src/core/coliseum.ts (DuelChain) : l'écran ne fait que montrer le combat.
 import Phaser from 'phaser';
@@ -19,11 +19,12 @@ import { killGame, releaseIdle } from './game-kill';
 const H = 1280;
 const H_MAX = 1640;
 const FOND_ZOOM = 1.4;
-/** Place des deux combattants du duel (écart au milieu) et des remplaçants (au bord, plus petits). */
+/** Place des deux combattants du duel (écart au milieu). */
 const DUEL_DX = 138;
 const DUEL_DY = 250;
-const BENCH = [{ x: 72, dy: 130, k: 0.66 }, { x: 132, dy: 375, k: 0.66 }];
 const FACE = 58;
+/** La lumière de l'arrivée d'un combattant, de la couleur de son élément. */
+const ARRIVAL_COLOR: Record<string, number> = { fire: 0xff9a4a, wind: 0x5ff0b0, water: 0x5ab8ff, earth: 0xf0bc50 };
 
 export interface ColiseumSceneData {
   setup: ColiseumSetup;
@@ -84,12 +85,9 @@ export class ColiseumScene extends FightScene {
     return { groundTop: bottom - Math.round(430 * FOND_ZOOM), bottom };
   }
 
-  /** Place du duel (au milieu) ou du banc (au bord : 0 = le prochain, 1 = celui d'après). */
-  private spot(side: 'hero' | 'enemy', bench: number | null): { x: number; y: number; k: number } {
-    const mirror = (x: number) => (side === 'hero' ? x : W - x);
-    if (bench === null) return { x: mirror(W / 2 - DUEL_DX), y: this.groundTop + DUEL_DY, k: 1 };
-    const b = BENCH[Math.min(bench, BENCH.length - 1)]!;
-    return { x: mirror(b.x), y: this.groundTop + b.dy, k: b.k };
+  /** La place du duel, de son côté. */
+  private spot(side: 'hero' | 'enemy'): { x: number; y: number; k: number } {
+    return { x: side === 'hero' ? W / 2 - DUEL_DX : W / 2 + DUEL_DX, y: this.groundTop + DUEL_DY, k: 1 };
   }
 
   private place(v: View, p: { x: number; y: number; k: number }, ms = 0) {
@@ -113,21 +111,20 @@ export class ColiseumScene extends FightScene {
     this.groundTop = groundTop;
     this.drawArena(bottom);
 
-    // les combattants : le duel au milieu, les autres sur le banc de leur côté
+    // les combattants : le duel au milieu ; les suivants sont prêts à leur place, cachés jusqu'à leur tour
     this.addView(this.chain.hero);
     this.addView(this.chain.enemy);
-    this.place(this.views.get(this.chain.hero.id)!, this.spot('hero', null));
-    this.place(this.views.get(this.chain.enemy.id)!, this.spot('enemy', null));
-    this.setup.heroes.slice(1).forEach((u, i) => {
-      const unit = benchUnit(u, 'hero');
-      this.addView(unit);
-      this.place(this.views.get(unit.id)!, this.spot('hero', i));
-    });
-    this.setup.foes.slice(1).forEach((u, i) => {
-      const unit = benchUnit(u, 'enemy');
-      this.addView(unit);
-      this.place(this.views.get(unit.id)!, this.spot('enemy', i));
-    });
+    this.place(this.views.get(this.chain.hero.id)!, this.spot('hero'));
+    this.place(this.views.get(this.chain.enemy.id)!, this.spot('enemy'));
+    for (const [list, side] of [[this.setup.heroes, 'hero'], [this.setup.foes, 'enemy']] as const) {
+      for (const u of list.slice(1)) {
+        const unit = benchUnit(u, side);
+        this.addView(unit);
+        const v = this.views.get(unit.id)!;
+        this.place(v, this.spot(side));
+        v.body.setVisible(false);
+      }
+    }
 
     // en haut : la pause, le titre, les deux équipes (visages) et le duel en cours
     const top = this.safe.top;
@@ -189,28 +186,33 @@ export class ColiseumScene extends FightScene {
     face?.setTint(0x55526b).setAlpha(0.55);
   }
 
-  /** Un nouveau duel : le gagnant reste (sa vie est celle qui lui reste), le suivant de l'autre équipe s'avance. */
+  /**
+   * Un nouveau duel : le gagnant reste (sa vie est celle qui lui reste) ; le suivant de l'équipe du vaincu apparaît à la
+   * place de celui qui est tombé, une fois sa chute finie : une lumière de son élément au sol, il descend dedans et se pose.
+   */
   private nextDuel(e: DuelEvent, speed: number) {
-    const walk = 650 / speed;
+    const wait = Math.max(0, this.deathsEnd - this.time.now) + 120 / speed;
+    const appear = 520 / speed;
     for (const [unit, isNew] of [[e.hero, e.heroNew], [e.enemy, e.enemyNew]] as const) {
       const v = this.views.get(unit.id);
       if (!v) continue;
       v.unit = unit;
       v.hp = unit.hp;
-      if (isNew) {
-        this.place(v, this.spot(unit.side, null), walk);
-        // les remplaçants restants avancent d'une place sur le banc
-        const lineup = unit.side === 'hero' ? this.setup.heroes : this.setup.foes;
-        const next = lineup.findIndex((u) => u.id === unit.id);
-        lineup.slice(next + 1).forEach((u, i) => {
-          const b = this.views.get(u.id);
-          if (b) this.place(b, this.spot(unit.side, i), walk);
-        });
-      }
+      if (!isNew) continue;
+      const p = this.spot(unit.side);
+      this.place(v, p);
+      v.body.setVisible(false);
+      this.time.delayedCall(wait, () => {
+        const color = ARRIVAL_COLOR[unit.element] ?? 0xffe27a;
+        this.flashAt(p.x, p.y + 6, color, 46, 1.6 / speed);
+        v.body.setVisible(true).setAlpha(0).setScale(0.55).setPosition(p.x, p.y - 70);
+        this.tweens.add({ targets: v.body, alpha: 1, scale: 1, y: p.y, duration: appear, ease: 'Back.easeOut' });
+        this.time.delayedCall(appear * 0.8, () => this.flashAt(p.x, p.y + 4, color, 30, 1 / speed));
+      });
     }
     this.setDuel(e.index);
-    this.banner(t('col.duel', { n: e.index + 1 }), this.groundTop - 60);
-    this.turnMs = walk + 500 / speed;
+    this.time.delayedCall(wait, () => this.banner(t('col.duel', { n: e.index + 1 }), this.groundTop - 60));
+    this.turnMs = wait + appear + 420 / speed;
   }
 
   protected onEnd(win: boolean) {
