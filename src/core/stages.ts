@@ -26,6 +26,9 @@ export const BALANCE = {
    */
   bossAtk: 0.5,
   bossHp: 1.25,
+  /** Le grand boss seul d'une fin de région (une seule vague) : réglé sur les vraies sections du joueur simulé. */
+  soloBossAtk: 0.35,
+  soloBossHp: 0.8,
 };
 
 export function slotsAt(cleared: number): number {
@@ -117,7 +120,9 @@ export function buildWaves(o: WaveOptions): UnitInit[][] {
       const adds = Math.min(2, o.count - 1);
       const mult = perMonster * Math.max(1, o.count * BALANCE.bossFactor) + (o.soloBoss ? adds * perMonster * 0.4 : 0);
       const boss = monsterToUnit(o.boss, 2, o.element, mult, `e-${w}-boss`);
-      units.push({ ...boss, atk: Math.round(boss.atk * BALANCE.bossAtk), maxHp: Math.round(boss.maxHp * BALANCE.bossHp) });
+      const hpK = o.soloBoss ? BALANCE.soloBossHp : BALANCE.bossHp;
+      const atkK = o.soloBoss ? BALANCE.soloBossAtk : BALANCE.bossAtk;
+      units.push({ ...boss, atk: Math.round(boss.atk * atkK), maxHp: Math.round(boss.maxHp * hpK) });
       if (!o.soloBoss) for (let i = 0; i < adds; i++) units.push(monsterToUnit(pick(rng, FRONT_MONSTERS), i as Slot, o.element, perMonster * 0.6, `e-${w}-${i}`));
     } else {
       const front = Math.min(3, Math.max(1, Math.ceil(o.count * 0.6)));
@@ -139,7 +144,8 @@ export function campaignWaves(stage: number): UnitInit[][] {
   return buildWaves({
     power: stagePower(stage),
     count: slotsAt(stage - 1),
-    waves: pos <= 10 ? 1 : pos <= 30 ? 2 : 3,
+    // (28/11) la fin d'une région : le grand boss seul, dès la première vague (avant, deux vagues l'usaient d'abord : un mur)
+    waves: isRegionFinale(stage) ? 1 : pos <= 10 ? 1 : pos <= 30 ? 2 : 3,
     element: campaignElement(chapter),
     seed: stage * 7919,
     boss: isBossStage(stage) ? bossOfElement(campaignElement(chapter)) : undefined,

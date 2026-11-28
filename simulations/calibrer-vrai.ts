@@ -43,6 +43,15 @@ for (let pass = 1; pass <= passes; pass++) {
     const prev = CAMPAIGN_ANCHORS[i - 1]!;
     if (CAMPAIGN_ANCHORS[i]!.power <= prev.power) CAMPAIGN_ANCHORS[i]!.power = Math.round(prev.power * 1.05);
   }
+  // la plus longue série de jours sans gagner un niveau de campagne (un « mur »), avant la fin de la campagne
+  const wall = median(runs.map((r) => {
+    let best = 0, cur = 0, at = 0;
+    for (let i = 1; i < r.days.length; i++) {
+      if (r.days[i]!.stage === r.days[i - 1]!.stage && r.days[i]!.stage < 1200) { cur++; if (cur > best) { best = cur; at = r.days[i]!.stage; } } else cur = 0;
+    }
+    return best * 10000 + at;
+  }));
+  line.push(`mur ${Math.floor(wall / 10000)} j au niveau ${wall % 10000}`);
   const m = runs.map((r) => r.milestones);
   const ms = (k: keyof (typeof m)[0]) => median(m.map((x) => x[k] ?? 999)) + 1;
   console.log(`  ancres : ${CAMPAIGN_ANCHORS.map((x) => `${x.stage}:${x.power}`).join(' ')}`);
