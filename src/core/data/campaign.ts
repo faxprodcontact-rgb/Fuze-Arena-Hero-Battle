@@ -1,5 +1,5 @@
 // Puissance demandée pour chaque niveau de campagne.
-// Points d'ancrage réglés par `npm run simuler -- --calibrer` (voir docs/simulations.md),
+// Points d'ancrage réglés le 28/11 sur le VRAI jeu par `npx tsx simulations/calibrer-vrai.ts` (voir docs/simulations.md),
 // entre deux points la puissance monte de façon régulière (interpolation logarithmique).
 
 export interface Anchor {
@@ -17,9 +17,9 @@ export const CAMPAIGN_ANCHORS: Anchor[] = [
   { stage: 680, power: 57500 },
   { stage: 860, power: 72000 },
   { stage: 980, power: 100000 },
-  { stage: 1070, power: 120000 },
-  { stage: 1140, power: 138000 },
-  { stage: 1200, power: 155000 },
+  { stage: 1070, power: 117000 },
+  { stage: 1140, power: 130000 },
+  { stage: 1200, power: 143000 },
 ];
 
 export function curveFromAnchors(anchors: readonly Anchor[]): (stage: number) => number {
