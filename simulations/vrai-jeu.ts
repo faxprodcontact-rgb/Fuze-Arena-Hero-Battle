@@ -273,7 +273,8 @@ export class RealPlayer {
       this.mark('legendary', s.heroes.some((h) => heroDef(h.defId).rarity === 'legendary'));
       this.mark('star5', s.heroes.some((h) => h.stars >= 5));
       this.mark('red1', s.heroes.some((h) => h.stars >= 6));
-      this.mark('teamRed', team.length >= 5 && team.every((h) => h.stars >= 6));
+      // (5 héros en étoiles rouges, de quoi faire une section entière)
+      this.mark('teamRed', s.heroes.filter((h) => h.stars >= 6).length >= 5);
       this.mark('red5', s.heroes.some((h) => h.stars >= 10));
       this.mark('mythic', s.heroes.some((h) => h.stars >= MYTHIC_STARS));
       this.mark('campaignEnd', s.campaign.cleared >= CAMPAIGN_STAGES);
