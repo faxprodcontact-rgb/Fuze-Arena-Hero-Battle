@@ -185,7 +185,8 @@ export const TICK_MS = 100;
 export const CRIT_CHANCE = 0.05;
 export const CRIT_MULT = 1.5;
 /** Avantage d'élément : +30 % de dégâts (pas de malus dans l'autre sens). */
-export const ADVANTAGE_MULT = 1.3;
+// (29/11 : 1.3 → 1.2 ; une région de l'élément « contraire » arrêtait des semaines une équipe plus puissante que demandé)
+export const ADVANTAGE_MULT = 1.2;
 /** Un statut dure un nombre de secondes ; les dégâts et soins dans le temps tombent chaque seconde. */
 export const TICKS_PER_SECOND = 10;
 /** Bonus d'équipe selon les éléments des héros (à partir de 3 du même élément, ou les 4 éléments réunis). */

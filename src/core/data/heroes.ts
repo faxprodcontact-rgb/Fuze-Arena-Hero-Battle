@@ -402,7 +402,20 @@ export const RETIRED_HEROES: ReadonlyMap<string, { rarity: Rarity; element: Elem
   TEMPLATES.filter((h) => !KEPT.has(h.id)).map((h) => [h.id, { rarity: h.rarity, element: h.element }]),
 );
 
-const BY_ID = new Map(HEROES.map((h) => [h.id, h]));
+// ---------- Le héros joker (29/11/2026, demande du propriétaire) ----------
+// Un petit golem de cristal, un par élément (refonte-graphique/ui-moderne/monstres/golem-joker/) : la grande récompense
+// du 20e niveau d'une zone d'Événement (une fois par événement). Il NE COMBAT PAS : il sert seulement de héros ★5 de son
+// élément à sacrifier dans les fusions. Hors de HEROES (jamais tiré au portail, jamais dans une section ni une mission).
+export const JOKERS: HeroDef[] = ELEMENTS.map((element) => build({
+  id: `joker-${element}`, name: 'Joker', element, role: 'protector', rarity: 'epic',
+  skill: { id: 'joker', effects: [] }, passives: [first('protector'), first('protector')],
+}));
+const JOKER_IDS = new Set(JOKERS.map((h) => h.id));
+/** Le héros joker (il ne combat pas, il ne sert qu'aux fusions). */
+export const isJoker = (id: string): boolean => JOKER_IDS.has(id);
+export const jokerId = (element: Element): string => `joker-${element}`;
+
+const BY_ID = new Map([...HEROES, ...JOKERS].map((h) => [h.id, h]));
 
 export function isHero(id: string): boolean {
   return BY_ID.has(id);

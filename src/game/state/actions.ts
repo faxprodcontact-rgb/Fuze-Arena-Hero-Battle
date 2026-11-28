@@ -4,7 +4,7 @@ import { LEADER_SLOT, type BattleInput, type Slot, type UnitInit } from '../../c
 import { heroToUnit } from '../../core/battle/units';
 import { stagePower } from '../../core/data/campaign';
 import { incomePerHour, REWARDS, STAGE_REWARD_HOURS, STAGES_PER_CHAPTER } from '../../core/data/economy';
-import { HEROES, heroDef } from '../../core/data/heroes';
+import { HEROES, heroDef, isJoker, jokerId } from '../../core/data/heroes';
 import {
   FORGE_COUNT, GEAR_SETS, GEAR_SLOTS, ITEM_RARITIES, SLOT_MAX_LEVEL, itemBonus, recycleDust, rollItemRarity, slotUpgradeCost,
   type GearSlot, type Item,
@@ -35,7 +35,7 @@ import { BOSS_ELEMENT, BOSSES, GUILD_BOSSES } from '../../core/data/monsters';
 import { buildWaves, campaignWaves, chapterElement, chapterOf, slotsAt } from '../../core/stages';
 import { summonBasic, summonFeatured, summonOne } from '../../core/summon';
 import type { SummonKind } from '../../core/data/summon';
-import type { Hero } from '../../core/types';
+import type { Element, Hero } from '../../core/types';
 import { fresh, getState, now, replaceState, update } from './store';
 import { CRYSTAL_HOURS, formationOf, gearStatsOf, heroByUid, heroPower, idlePreview, isUnlocked, levelUpCost, resolveReward, slotLevel, teamPower, teamUnits } from './selectors';
 import type { TeamKind } from './selectors';
@@ -85,6 +85,7 @@ export const newlyFound = new Set<number>();
 function addHero(s: PlayerState, defId: string): Hero {
   const hero: Hero = { uid: s.nextUid++, defId, stars: RARITY_RULES[heroDef(defId).rarity].bornStars, level: 1 };
   s.heroes.push(hero);
+  if (isJoker(defId)) return hero; // le héros joker : ni section, ni collection (il ne sert qu'aux fusions)
   // le tout premier héros (le tirage du tutoriel) entre tout de suite dans la section, au milieu
   if (!s.formation.length) s.formation = [[hero.uid, 2]];
   if (!s.discovered.includes(defId)) {
@@ -210,7 +211,7 @@ export function toggleInFormation(uid: number, team: TeamKind = 'main'): 'added'
     }
     if (list.length >= slotsAt(s.campaign.cleared)) return 'full';
     const hero = heroByUid(s, uid);
-    if (!hero) return 'full';
+    if (!hero || isJoker(hero.defId)) return 'full';
     const taken = new Set(list.map(([, slot]) => slot));
     const slot = PREFERRED_SLOTS[heroDef(hero.defId).role]!.find((x) => !taken.has(x))!;
     editTeam(s, team, (l) => [...l, [uid, slot]]);
@@ -229,6 +230,7 @@ export function placeInSlot(uid: number, slot: Slot, team: TeamKind = 'main'): '
     const here = list.find(([, sl]) => sl === slot)?.[0];
     const mine = list.find(([u]) => u === uid)?.[1];
     if (here === uid) return 'placed';
+    if (isJoker(heroByUid(s, uid)?.defId ?? '')) return 'full';
     if (mine !== undefined) {
       editTeam(s, team, (l) => l.map(([u, sl]): [number, Slot] => [u, sl === slot ? mine : sl === mine ? slot : sl]));
       return 'placed';
@@ -246,7 +248,7 @@ export function swapSlots(a: Slot, b: Slot, team: TeamKind = 'main'): void {
 /** Remplit la section avec les héros les plus forts, chacun à son poste conseillé (un chef au centre si possible). */
 export function autoFormation(exclude: readonly number[] = [], team: TeamKind = 'main'): void {
   update((s) => {
-    const best = [...s.heroes].filter((h) => !exclude.includes(h.uid)).sort((a, b) => heroPower(s, b) - heroPower(s, a)).slice(0, slotsAt(s.campaign.cleared));
+    const best = [...s.heroes].filter((h) => !exclude.includes(h.uid) && !isJoker(h.defId)).sort((a, b) => heroPower(s, b) - heroPower(s, a)).slice(0, slotsAt(s.campaign.cleared));
     const taken = new Set<Slot>();
     const list: [number, Slot][] = best.map((h) => {
       const slot = PREFERRED_SLOTS[heroDef(h.defId).role]!.find((x) => !taken.has(x))!;
@@ -1002,7 +1004,7 @@ export function missionCandidates(id: string): { eligible: Hero[]; need: number;
   const busy = new Set(s.daily.missions.filter((x) => x.startedAt && !x.claimed).flatMap((x) => x.heroUids));
   const inTeam = new Set(s.formation.map(([u]) => u));
   const eligible = s.heroes
-    .filter((h) => !busy.has(h.uid) && h.stars >= t.minStars)
+    .filter((h) => !busy.has(h.uid) && h.stars >= t.minStars && !isJoker(h.defId))
     .sort((a, b) => Number(inTeam.has(a.uid)) - Number(inTeam.has(b.uid)) || a.stars - b.stars || a.level - b.level);
   return { eligible, need: t.heroes, minStars: t.minStars };
 }
@@ -1724,6 +1726,25 @@ export function mailWaiting(s: PlayerState = getState()): number {
 
 // ---------- Tutoriel ----------
 
+// ---------- Héros joker (29/11) ----------
+
+/** Un héros joker attend d'être pris (gagné au 20e niveau d'une zone d'Événement). */
+export function jokerPending(s: PlayerState = getState()): boolean {
+  return !!eventOf(s).jokerPending;
+}
+
+/** Prend le héros joker gagné : un golem de cristal ★5 de l'élément choisi (il ne sert qu'aux fusions). */
+export function claimJoker(element: Element): Hero | null {
+  return update((s) => {
+    const ev = eventOf(s);
+    if (!ev.jokerPending) return null;
+    s.event = { ...ev, jokerPending: false };
+    const hero = addHero(s, jokerId(element));
+    hero.stars = 5;
+    return hero;
+  });
+}
+
 /** Le cadeau de la fin du tutoriel : 10 invocations (une seule fois). */
 export function tutorialGift(): Gain | null {
   return update((s) => {
@@ -1851,9 +1872,9 @@ export function buyColiseumFight(): boolean {
 /** Les 3 héros du Colisée (ordre de passage) : ceux choisis, complétés par les plus forts. */
 export function coliseumTeam(s: PlayerState = getState()): Hero[] {
   const chosen = (s.coliseum?.team ?? []).map((u) => heroByUid(s, u)).filter((h): h is Hero => !!h);
-  const want = Math.min(COLISEUM.team, s.heroes.length);
+  const want = Math.min(COLISEUM.team, s.heroes.filter((h) => !isJoker(h.defId)).length);
   if (chosen.length >= want) return chosen.slice(0, want);
-  const rest = s.heroes.filter((h) => !chosen.includes(h)).sort((a, b) => heroPower(s, b) - heroPower(s, a));
+  const rest = s.heroes.filter((h) => !chosen.includes(h) && !isJoker(h.defId)).sort((a, b) => heroPower(s, b) - heroPower(s, a));
   return [...chosen, ...rest].slice(0, want);
 }
 
@@ -2024,7 +2045,7 @@ function eventAfterBattle(s: PlayerState, gain: Gain, res: BattleResult) {
     if (v !== undefined) run.hp[uid] = v;
   }
   if (!res.win) {
-    s.event = { id: ev.id, difficulty: ev.difficulty };
+    s.event = { ...ev, run: undefined };
     return;
   }
   const level = run.level;
@@ -2046,8 +2067,10 @@ function eventAfterBattle(s: PlayerState, gain: Gain, res: BattleResult) {
   gain.levelsUp = ups;
   track(s, 'event');
   if (level >= EVENT_LEVELS) {
-    // la zone est finie : la difficulté suivante, une nouvelle partie à commencer
-    s.event = { id: ev.id, difficulty: ev.difficulty + 1 };
+    // la zone est finie : la difficulté suivante, une nouvelle partie à commencer ; la première zone finie de chaque
+    // événement donne le héros joker (29/11)
+    const joker = !ev.jokerWon;
+    s.event = { id: ev.id, difficulty: ev.difficulty + 1, jokerWon: true, jokerPending: ev.jokerPending || joker };
     return;
   }
   run.level = level + 1;
@@ -2092,6 +2115,6 @@ export function eventChooseBonus(bonus: EventBonus): boolean {
 export function eventAbandon(): void {
   update((s) => {
     const ev = eventOf(s);
-    s.event = { id: ev.id, difficulty: ev.difficulty };
+    s.event = { ...ev, run: undefined };
   });
 }

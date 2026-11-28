@@ -345,3 +345,13 @@
 .ev-card-art { width: 54px; height: 54px; }
 .ev-card strong { font: 400 18px var(--font-title); }
 .ev-card small { font-size: 13px; font-weight: 600; color: var(--c-on-dark-muted); line-height: 1.25; }
+
+/* le héros joker (29/11) : sa tête sur le 20e niveau tant qu'il n'est pas gagné ; gagné, une carte à prendre */
+.ev-joker { position: absolute; right: calc(100% + 4px); top: 50%; translate: 0 -50%; width: 36px; height: 36px; border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #fff6, #0000 70%), #15131ccc; box-shadow: 0 0 0 2px #ffc94d, 0 0 12px 2px #ffc94d99;
+  animation: ev-pulse 1.6s ease-in-out infinite; }
+.ev-joker-card { position: relative; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 10px 12px; border: 0; border-radius: 18px;
+  background: radial-gradient(80% 120% at 50% 0%, #ffc94d38, #0000 70%), linear-gradient(180deg, var(--c-bg-3), var(--c-bg-1));
+  box-shadow: inset 0 0 0 2px #ffc94d, 0 0 18px #ffc94d55, 0 6px 14px #0009; color: #fff; animation: ev-pulse 1.8s ease-in-out infinite; }
+.ev-joker-card img { width: 44px; height: 44px; border-radius: 12px; background: #15131c; box-shadow: inset 0 0 0 1px #ffffff26; }
+.ev-joker-card strong { margin-left: 8px; font: 400 19px var(--font-title); color: #ffe08a; }

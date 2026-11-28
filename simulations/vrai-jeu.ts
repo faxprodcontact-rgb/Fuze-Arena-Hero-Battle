@@ -13,7 +13,7 @@ import { DAILY_CHESTS, DAILY_QUESTS, PASS_LEVELS, WEEKLY_CHESTS, WEEKLY_QUESTS, 
 import { MYTHIC_STARS } from '../src/core/data/stars';
 import { CAMPAIGN_STAGES } from '../src/core/data/economy';
 import {
-  adsLeft, arenaPlan, autoFormation, buyExchange, buyOffer, campaignBattle, claimChest, claimLogin, claimMail, claimMission,
+  adsLeft, arenaPlan, claimJoker, jokerPending, autoFormation, buyExchange, buyOffer, campaignBattle, claimChest, claimLogin, claimMail, claimMission,
   claimPass, claimQuest, collectIdle, dungeonAttemptsLeft, dungeonPlan, ensureDay, equipBest, eventBattle, eventChooseBonus,
   eventOf, eventPlan, eventTriesLeft, fastLoot, fastLootCost, finishBattle, forgeAll, fuse, fuseAllSimple, guildBossPlan,
   joinGuild, levelUp, loginLegendChoices, opponentPower, passLevel, recycleItems, sendMission, setFragmentTarget, claimFragments,
@@ -155,6 +155,12 @@ export class RealPlayer {
     const s = getState();
     if (claimLogin()) {/* ok */} else claimLogin(loginLegendChoices()[0]);
     claimMail();
+    // le héros joker gagné à l'Événement : l'élément de son meilleur Légendaire (pour ses étoiles rouges)
+    if (jokerPending()) {
+      const st = getState();
+      const best = this.core().map((u) => st.heroes.find((h) => h.uid === u)!).find((h) => h && heroDef(h.defId).rarity === 'legendary');
+      claimJoker(best ? heroDef(best.defId).element : 'fire');
+    }
     collectIdle();
     if (fastLootCost(getState()) === 0) fastLoot();
     // les 6 pubs du jour : l'invocation gratuite (une par jour), puis le butin et les gemmes

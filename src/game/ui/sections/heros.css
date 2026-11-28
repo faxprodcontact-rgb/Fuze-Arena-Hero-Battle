@@ -237,3 +237,12 @@ button.hx-dot { cursor: pointer; }
 /* le héros vectoriel lisse respire, pieds fixes (vecto.ts) */
 .hx-stage-win.hx-vec { overflow: visible; }
 .hx-stage-win.hx-vec > img, .hx-stage-win.hx-vec > .vl { width: 100%; height: 100%; image-rendering: auto; animation: hf-breathe 3.4s ease-in-out infinite; }
+
+/* le héros joker (29/11) : les 4 éléments, de gros galets ronds */
+.joker-pick { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; justify-items: center; padding: 8px 4px 4px; }
+.joker-el { position: relative; width: 100%; max-width: 78px; aspect-ratio: 78 / 96; display: grid; place-items: end center; padding: 0 0 6px; border: 0;
+  border-radius: 18px; background: radial-gradient(70% 55% at 50% 60%, color-mix(in srgb, var(--bt-c, #ffc94d) 45%, #0000), #0000), linear-gradient(180deg, var(--c-bg-3), var(--c-bg-1));
+  box-shadow: inset 0 0 0 1.5px #ffc94d73, 0 4px 10px #0009; }
+.joker-el img { position: absolute; left: 6%; right: 6%; bottom: 20px; width: 88%; }
+.joker-el .art { position: relative; filter: drop-shadow(0 1px 2px #000a); }
+.joker-el:active { translate: 0 2px; }

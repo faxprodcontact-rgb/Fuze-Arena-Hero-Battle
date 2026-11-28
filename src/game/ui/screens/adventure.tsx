@@ -33,6 +33,7 @@ import { open, openSub, prepare, startBattle, toast, type Sub } from '../nav';
 import { EVENT_BONUS_VALUE, EVENT_LEVELS, EVENT_SCROLL_LEVELS, EVENT_TRIES_PER_DAY, eventStage, type EventBonus } from '../../../core/data/event';
 import { FEATURED_BANNER } from '../../../core/data/summon';
 import { heroByUid } from '../../state/selectors';
+import { jokerId } from '../../../core/data/heroes';
 
 type Mode = (typeof ADVENTURE_ORDER)[number];
 
@@ -338,13 +339,21 @@ function EventMode() {
                 {boss ? <Icon name="dailyBoss" size={26} /> : <b>{n}</b>}
                 {state === 'done' && <i class="ev-check" />}
                 {EVENT_SCROLL_LEVELS.includes(n) && state !== 'done' && <span class="ev-prize"><Icon name="redScrolls" size={18} /></span>}
+                {/* la grande récompense de la zone : le héros joker (une fois par événement) */}
+                {n === EVENT_LEVELS && !ev.jokerWon && <img class="ev-joker" src={heroImage(jokerId('earth'))} alt="" />}
                 {n % 2 === 0 && n < EVENT_LEVELS && state !== 'done' && <span class="ev-gift"><Icon name="gift" size={14} /></span>}
               </span>
             );
           })}
           </div>
         </div>
-        {run ? <EventRunPanel /> : (
+        {ev.jokerPending ? (
+          <button class="ev-joker-card" onClick={() => open({ type: 'joker' })}>
+            {(['fire', 'water', 'wind', 'earth'] as const).map((e) => <img src={heroImage(jokerId(e))} alt="" />)}
+            <strong>{t('joker.title')}</strong>
+            <span class="dot" />
+          </button>
+        ) : run ? <EventRunPanel /> : (
           <div class="av-action">
             <span class="av-power ev-need"><Icon name="power" size={18} /><small>{t('event.level', { n: 1 })}</small><b>{fmt(stagePower(eventStage(ev.difficulty, 1)))}</b></span>
             <Btn kind="green" wide disabled={left <= 0} onClick={() => prepare(eventPlan())}>{t('event.join')}</Btn>

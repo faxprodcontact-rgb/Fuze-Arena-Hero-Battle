@@ -212,6 +212,9 @@ export interface EventState {
   id: string;
   difficulty: number;
   run?: EventRun;
+  /** Le héros joker de cet événement est gagné (la première zone finie) ; il attend d'être pris (choix de l'élément). */
+  jokerWon?: boolean;
+  jokerPending?: boolean;
 }
 
 /** Récompense affichée après une action (coffre, combat, quête…). */

@@ -153,7 +153,7 @@ const FR = {
   'battle.quit': 'Quitter', 'battle.resume': 'Reprendre', 'battle.wave': 'Vague', 'battle.auto': 'AUTO',
   'mode.campaign': 'Niveau', 'mode.tower': 'Étage', 'mode.dungeon': 'Donjon', 'mode.event': 'Événement', 'mode.arena': 'Arène', 'mode.guildBoss': 'Guilde', 'mode.friend': 'Défi',
   'mail.title': 'Courrier', 'mail.claimAll': 'Tout récupérer',
-  'login.title': 'Connexion', 'login.welcome': 'Bienvenue', 'tuto.gift': 'Cadeau de bienvenue', 'login.pick': 'Choisis ton Légendaire',
+  'login.title': 'Connexion', 'login.welcome': 'Bienvenue', 'tuto.gift': 'Cadeau de bienvenue', 'joker.title': 'Héros joker', 'login.pick': 'Choisis ton Légendaire',
   // vague 3 « Boutique » : calendrier de connexion et vitrine de la boutique
   'login.week': 'Semaine {n}', 'bq.value': '×{n}', 'bq.bonus': '+{n} %', 'bq.best': 'Meilleur prix', 'bq.once': 'Unique',
   'bq.perDay': '+{n} / jour', 'bq.days': '{n} j',
@@ -319,7 +319,7 @@ const EN: Record<Key, string> = {
   'battle.quit': 'Quit', 'battle.resume': 'Resume', 'battle.wave': 'Wave', 'battle.auto': 'AUTO',
   'mode.campaign': 'Stage', 'mode.tower': 'Floor', 'mode.dungeon': 'Dungeon', 'mode.event': 'Event', 'mode.arena': 'Arena', 'mode.guildBoss': 'Guild', 'mode.friend': 'Challenge',
   'mail.title': 'Mail', 'mail.claimAll': 'Claim all',
-  'login.title': 'Check-in', 'login.welcome': 'Welcome', 'tuto.gift': 'Welcome gift', 'login.pick': 'Choose your Legendary',
+  'login.title': 'Check-in', 'login.welcome': 'Welcome', 'tuto.gift': 'Welcome gift', 'joker.title': 'Joker hero', 'login.pick': 'Choose your Legendary',
   // vague 3 « Boutique » : calendrier de connexion et vitrine de la boutique
   'login.week': 'Week {n}', 'bq.value': '×{n}', 'bq.bonus': '+{n}%', 'bq.best': 'Best value', 'bq.once': 'One-time',
   'bq.perDay': '+{n} / day', 'bq.days': '{n} d',

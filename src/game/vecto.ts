@@ -73,6 +73,11 @@ const VECTO: Record<string, readonly [number, number, number, number]> = {
   'boss-eau': [258, 226, 128, 222],
   'boss-vent': [252, 222, 128, 218],
   'boss-feu': [282, 246, 144, 240],
+  // le héros joker, un golem de cristal par élément (monstres/golem-joker/golem-joker.py)
+  'joker-fire': [84, 92, 42, 90],
+  'joker-water': [84, 92, 42, 90],
+  'joker-wind': [84, 92, 42, 90],
+  'joker-earth': [84, 92, 42, 90],
 };
 
 export interface VectoFig { w: number; h: number; fx: number; fy: number; big: string; small: string }

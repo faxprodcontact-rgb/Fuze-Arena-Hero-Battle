@@ -23,6 +23,7 @@ export type Modal =
   | { type: 'odds' }
   | { type: 'fragments' }
   | { type: 'legendPick' }
+  | { type: 'joker' }
   | { type: 'confirm'; text: string; onYes: () => void }
   | { type: 'ad'; onDone: () => void }
   | { type: 'prep'; plan: BattlePlan | null; team?: TeamKind }

@@ -1,5 +1,5 @@
 /* FABRIQUÉ par refonte-graphique/ui-moderne/theme/pierre.ts — ne pas modifier à la main (relancer le script).
-   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 339 règles, 445 couleurs. */
+   Essai d'habillage « pierre » (26/11) : allumé par ?theme=pierre (src/game/ui/theme.ts). 342 règles, 447 couleurs. */
 /*  style.css  */
 :root:where([data-theme="pierre"]) {
     --c-bg-0: #131218;
@@ -680,6 +680,15 @@
 }
 :where(:root[data-theme="pierre"]) .ev-card {
     background: linear-gradient(180deg, #5e5b74, #343340)
+}
+:where(:root[data-theme="pierre"]) .ev-joker {
+    background: radial-gradient(circle at 50% 40%, #fff6, #0000 70%), #15151acc
+}
+:where(:root[data-theme="pierre"]) .ev-joker-card {
+    background: radial-gradient(80% 120% at 50% 0%, #ffc94d38, #0000 70%), linear-gradient(180deg, var(--c-bg-3), var(--c-bg-1))
+}
+:where(:root[data-theme="pierre"]) .ev-joker-card img {
+    background: #15151a
 }
 /*  sections/backdrops.css  */
 :where(:root[data-theme="pierre"]) .backdrop-heroes.bk, :where(:root[data-theme="pierre"]) .backdrop-guild.bk, :where(:root[data-theme="pierre"]) .backdrop-page.bk {

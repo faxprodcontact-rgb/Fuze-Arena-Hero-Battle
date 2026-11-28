@@ -35,7 +35,8 @@ export const REWARDS = {
   /** Fragments du Légendaire choisi, gagnés chaque jour dans les boutiques, à partir de ce jour. */
   fragmentsFromDay: 7,
   fragmentsPerDay: 20,
-  /** Héros jokers ★5 (tour, événements, guilde) : un tous les `jokerEveryDays` jours à partir du jour `jokerFromDay`. */
+  /** (ancien modèle seulement) Héros jokers ★5 : dans le vrai jeu depuis le 29/11, ils se gagnent au 20e niveau d'une
+   * zone d'Événement, une fois par événement (JOKERS de data/heroes.ts, claimJoker de state/actions.ts). */
   jokerFromDay: 30,
   jokerEveryDays: 15,
   /** Cristaux d'éveil : gagnés chaque jour une fois ce niveau de campagne atteint. */

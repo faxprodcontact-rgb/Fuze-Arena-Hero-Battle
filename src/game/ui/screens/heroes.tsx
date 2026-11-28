@@ -3,18 +3,19 @@
 // puis la collection : filtre par élément, tri dépliable, les cases.
 import { useState } from 'preact/hooks';
 import { LEADER_SLOT } from '../../../core/battle/types';
-import { heroDef } from '../../../core/data/heroes';
+import { heroDef, isJoker, jokerId } from '../../../core/data/heroes';
 import { ELEMENTS, RARITIES, type Element, type Hero } from '../../../core/types';
 import { heroImage } from '../../art';
 import { fmt, t } from '../../i18n';
-import { fusionPreview } from '../../state/actions';
+import { claimJoker, fusionPreview } from '../../state/actions';
 import { canLevelUp, heroPower, teamHeroes, teamPower, type TeamKind } from '../../state/selectors';
 import { useGame } from '../../state/store';
 import type { PlayerState } from '../../state/types';
-import { Art, HeroCard, Icon, RedDot, Sign } from '../kit';
+import { Art, HeroCard, Icon, Modal, RedDot, Sign } from '../kit';
 import { ELEMENT_TONE, btClass } from '../buttons';
 import { HeroFigure } from '../hero-figure';
-import { open, prepare } from '../nav';
+import { vectoFig } from '../../vecto';
+import { open, prepare, swap } from '../nav';
 import { BagView } from './bag';
 import { Tabs } from '../kit';
 import '../sections/heros.css';
@@ -145,7 +146,7 @@ function HeroList() {
                 hero={h}
                 power={heroPower(s, h)}
                 selected={inTeam.has(h.uid)}
-                onClick={() => open({ type: 'hero', uid: h.uid })}
+                onClick={() => !isJoker(h.defId) && open({ type: 'hero', uid: h.uid })}
               />
               {inTeam.has(h.uid) && canLevelUp(s, h) && <RedDot />}
             </div>
@@ -153,5 +154,25 @@ function HeroList() {
         </div>
       </div>
     </div>
+  );
+}
+
+/** Le héros joker gagné (20e niveau d'une zone d'Événement) : on choisit l'élément de son golem de cristal, il sort du
+ * portail. */
+export function JokerModal() {
+  return (
+    <Modal title={t('joker.title')} center>
+      <div class="joker-pick">
+        {ELEMENTS.map((e) => (
+          <button class={`joker-el bt-${ELEMENT_TONE[e]}`} aria-label={t(`element.${e}`)} onClick={() => {
+            const hero = claimJoker(e);
+            if (hero) swap({ type: 'summon', heroes: [hero] });
+          }}>
+            <img src={vectoFig(jokerId(e))!.small} alt="" draggable={false} />
+            <Art name={e} size={22} />
+          </button>
+        ))}
+      </div>
+    </Modal>
   );
 }

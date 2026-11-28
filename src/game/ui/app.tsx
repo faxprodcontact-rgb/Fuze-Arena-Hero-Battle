@@ -26,7 +26,7 @@ import { LegendPickModal, LoginModal } from './screens/login';
 import { TutorialHand } from './tutorial';
 import { MailPage } from './screens/mail';
 import { HeroDetail } from './screens/hero-detail';
-import { HeroesScreen } from './screens/heroes';
+import { HeroesScreen, JokerModal } from './screens/heroes';
 import { AvatarModal } from './screens/avatar';
 import { AuthSoonModal } from './sign-in';
 import { AdModal, ConfirmModal, GainModal, LegalModal, NameScreen, QuestsModal, RenameModal, SettingsModal, ShopModal } from './screens/meta';
@@ -119,6 +119,7 @@ function ModalView({ modal }: { modal: Modal }) {
     case 'friends': return <FriendsPage />;
     case 'login': return <LoginModal />;
     case 'legendPick': return <LegendPickModal />;
+    case 'joker': return <JokerModal />;
     case 'mail': return <MailPage />;
     case 'item': return <ItemModal uid={modal.uid} />;
     case 'legal': return <LegalModal doc={modal.doc} />;
