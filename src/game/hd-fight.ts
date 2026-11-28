@@ -121,6 +121,24 @@ function setCell(img: Phaser.GameObjects.Image, key: string, rects: readonly Rec
   img.setTexture(key, String(i)).setOrigin(0).setPosition(r[4]! * k, r[5]! * k).setScale(k / up).setVisible(true);
 }
 
+/**
+ * Le décalage (en x) qui garde dans l'écran les images `cells` posées en `x` (retournées si `dir` < 0) : un sort trop large
+ * pour la place du bord (sort d'équipe au bord gauche, impact sur l'ennemi du bord droit) est rentré d'autant (contrôle du 28/11).
+ */
+function keepInside(rects: readonly Rect[], cells: readonly number[], x: number, dir: number, k: number, up: number, width: number): number {
+  let lo = Infinity, hi = -Infinity;
+  for (const c of cells) {
+    if (c < 0) continue;
+    const r = rects[c]!;
+    const a = r[4]! * k, b = a + (r[2]! / up) * k;
+    lo = Math.min(lo, dir > 0 ? x + a : x - b);
+    hi = Math.max(hi, dir > 0 ? x + b : x - a);
+  }
+  if (lo === Infinity) return 0;
+  const M = 4;
+  return Math.max(0, M - lo) - Math.max(0, hi - (width - M));
+}
+
 /** Un éclat (losange effilé, cœur blanc, bord de l'élément) : une petite texture par élément, partagée. */
 function shardTexture(scene: Phaser.Scene, element: Element): string {
   const key = `hd-shard-${element}`;
@@ -365,6 +383,7 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
     const c = scene.add.container(0, 0).setDepth(v.body.depth + 2);
     const img = scene.add.image(0, 0, actor.key, '0');
     c.add(img).setScale(dir, 1).setVisible(false);
+    dx += keepInside(actor.ch.frames, cells.slice(from), v.homeX + dx, dir, k, actor.up, scene.scale.width);
     let t = delay;
     for (let i = from; i < cells.length; i++) {
       const at = t;
@@ -454,10 +473,26 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
     return total;
   }
 
+  // il lance de sa place (tout sauf le corps à corps) : si son sort sortirait de l'écran, il s'avance d'autant le temps du sort
+  let nudge = 0;
+  let backHome: Phaser.Time.TimerEvent | undefined;
+  const nudgeBack = () => {
+    backHome?.remove();
+    const home = src.homeX;
+    backHome = scene.time.delayedCall(T(ms.length) + 60 / sp, () => scene.tweens.add({ targets: src.body, x: home, duration: 220 / sp, ease: 'Quad.easeInOut' }));
+  };
+  if (a.genre !== 'melee') {
+    nudge = keepInside(actor.ch.frames, a.f, src.homeX, dir, k, actor.up, scene.scale.width);
+    if (nudge) {
+      scene.tweens.add({ targets: src.body, x: src.homeX + nudge, duration: 140 / sp, ease: 'Quad.easeOut' });
+      nudgeBack();
+    }
+  }
+
   if (a.genre === 'tir' && a.proj && foes.length) {
     const dep = a.depart ?? 0;
     // il tire de sa place : le départ et l'arrivée se calculent tout de suite (la cible peut reculer d'un pas, pas plus)
-    const p0 = { x: src.homeX + dir * a.bouche![0]! * k, y: src.homeY + host.feetY + a.bouche![1]! * k };
+    const p0 = { x: src.homeX + nudge + dir * a.bouche![0]! * k, y: src.homeY + host.feetY + a.bouche![1]! * k };
     const path = (tg: { v: HdView }) => {
       // au ras du sol (vague, pics) : il garde sa hauteur au-dessus du sol jusqu'aux pieds de la cible
       const p1 = { x: tg.v.homeX - dir * 8, y: tg.v.homeY + host.feetY + (a.rase ? a.bouche![1]! * k : -(a.haut ?? 40) * k) };
@@ -470,6 +505,7 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
     const tp = tirTempo(a, first.fly, sp, even);
     ms = tp.ms;
     first.fly = tp.fly;
+    if (nudge) nudgeBack();
     const ret = a.retour, r0 = a.retourDe ?? 0;
     total = T(ms.length);
     actor.start(which, ms, false, {});
@@ -624,9 +660,12 @@ function playReception(scene: Phaser.Scene, v: HdView, name: string, k: number, 
   const [col, per] = fx.eclat;
   const glow = scene.add.image(0, 0, glowTexture(scene)).setBlendMode(Phaser.BlendModes.ADD).setTint(Phaser.Display.Color.HexStringToColor(col).color).setVisible(false);
   let t = delay;
+  // un allié tout au bord : l'effet est rentré dans l'écran (mesuré une fois, au début, là où il se tient alors)
+  let inset: number | undefined;
   fx.ms.forEach((m, i) => {
     scene.time.delayedCall(t, () => {
-      const x = v.body.x, y = v.body.y + feetY;
+      inset ??= keepInside(fx.frames, [...fx.dos, ...fx.devant], v.body.x, 1, kk, fx.up, scene.scale.width);
+      const x = v.body.x + inset, y = v.body.y + feetY;
       for (const L of [back, front]) {
         L.c.setPosition(x, y).setDepth(v.body.depth + L.dz).setVisible(true);
         setCell(L.img, key, fx.frames, (L === back ? fx.dos : fx.devant)[i]!, kk, fx.up);
