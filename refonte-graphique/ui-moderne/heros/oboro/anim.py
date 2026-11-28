@@ -323,9 +323,11 @@ def pop(fig, c, r, facing=0.0, op=1.0):
     return outlined([(ellipse(x, y, rr), gr, 1) for x, y, rr in lobes], w=1.4, op=op)
 
 
-def follet(fig, trail, r, wob=0.0, op=1.0):
+def follet(fig, trail, r, wob=0.0, op=1.0, pro=False):
     """Un feu follet (une âme de feu) : une boule au coeur blanc et sa flamme qui traîne derrière elle en ondulant, le
     long du chemin parcouru (trail : du plus ancien au plus récent). Un seul contour, aucun flou."""
+    if pro:
+        return follet_pro(fig, trail, r, wob=wob, op=op)
     if op <= 0.02:
         return ''
     head = trail[-1]
@@ -533,50 +535,86 @@ def follets(fig, u, tail_ms=110):
                 pts.append(q[:2])
         if not pts or pts[-1] != (x, y):
             pts.append((x, y))
-        lay.append(follet(fig, pts, r, wob=u / 30.0 + i * 2))
+        lay.append(follet(fig, pts, r, wob=u / 30.0 + i * 2, pro=True))
+
+
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : feux follets d'une forme (boule et flamme qui
+# traîne d'un seul ruban), gerbe de flammes fondue, sans contour sombre ; même rythme, mêmes instants qu'avant)
+import effets_pro as E  # noqa: E402
+
+
+def follet_pro(fig, trail, r, wob=0.0, op=1.0):
+    """Un feu follet : sa flamme qui traîne (UN ruban effilé le long du chemin parcouru) et la boule au cœur blanc."""
+    if op <= 0.02:
+        return ''
+    head = trail[-1]
+    pts = [p for i, p in enumerate(trail) if i == 0 or math.dist(p, trail[i - 1]) > 0.05]
+    out = [E.lumiere(fig, head, r * 3.0, 0.5, 'feu')]
+    if len(pts) > 2 and sum(math.dist(pts[i - 1], pts[i]) for i in range(1, len(pts))) > 1.0:
+        c = resample(pts, 12)
+        cc = []
+        for i, p in enumerate(c):
+            u = 1 - i / 12
+            a_, b_ = c[max(0, i - 1)], c[min(12, i + 1)]
+            dx, dy = b_[0] - a_[0], b_[1] - a_[1]
+            ll = math.hypot(dx, dy) or 1
+            amp = r * 0.45 * u * math.sin(wob + u * 7.0)
+            cc.append((p[0] - dy / ll * amp, p[1] + dx / ll * amp))
+        out.append(E.ruban(fig, cc, r * 2.4, 'feu', kind='tete', halo=0.5))
+    out.append(E.boule(fig, head, r, wob * 30, 'feu', seed=int(wob) % 7))
+    return E.group(out, op)
+
+
+def blaze_pro(fig, ctx, level, t):
+    """La lanterne flambe : UNE flamme sur son chapeau, deux étincelles qui montent."""
+    if level <= 0.05:
+        return
+    top = ctx['lant_top']
+    c = ctx['lantern']
+    ph = t / 90.0
+    h1 = (7 + 7 * level) * (0.85 + 0.15 * math.sin(ph))
+    h2 = (6 + 6 * level) * (0.85 + 0.15 * math.sin(ph + 2.1))
+    fig.fx_back.append(E.flamme(fig, (top[0] + 0.4, top[1] + 1.3), [(-2, h1, 5.4, -0.8 + 0.4 * math.sin(ph * 0.7), -0.12),
+                                                                    (2.4, h2, 4.6, 0.9 - 0.3 * math.sin(ph * 0.9), 0.16)], 'feu',
+                                op=min(1.0, level * 1.4)))
+    for k, (dx, dy, sp) in enumerate(((-6, -16, 1.0), (5, -20, 1.3))):
+        rise = (t * 0.018 * sp + k * 7) % 14
+        fig.fx_front.append(E.etincelle(fig, c[0] + dx + 1.2 * math.sin(t / 140 + k), c[1] + dy - rise, 0, -40, 0.6, 'feu',
+                                        op=min(1, level) * (1 - rise / 14)))
 
 
 def fire_burst(fig, t):
-    """La gerbe de flammes sur l'ennemi (t en ms depuis l'arrivée) : de grandes langues de feu montent, se recourbent,
-    puis s'éteignent en volutes de fumée et en braises."""
+    """La gerbe de flammes sur l'ennemi (t en ms depuis l'arrivée) : UNE flamme monte, se recourbe, puis s'éteint en
+    bouffées de fumée et en étincelles."""
     x, y = HIT
     base = y + 7
     grow = min(1.0, t / 140)
     sink = 1.0 - env(t, 300, 700, 2000, 2001) if t > 300 else 1.0       # les flammes retombent
     op = 1.0 - env(t, 520, 760, 2000, 2001) if t > 520 else 1.0
     if t < 760:
-        # quatre grandes langues, de hauteurs, largeurs et penchés inégaux, qui montent et se recourbent
         LICKS = [(-6.5, 0.72, 8.0, -0.9, -0.24), (-1.0, 1.0, 10.5, 0.7, -0.06), (5.0, 0.86, 9.0, -0.6, 0.16),
                  (9.5, 0.5, 6.5, 0.9, 0.34)]
+        tongues = []
         for j, (dx, hk, w, bend, lean) in enumerate(LICKS):
             wob = math.sin(t / 70 + j * 1.7)
-            h = 36 * hk * grow * sink * (1 + 0.07 * wob)
-            fig.fx_back.append(tongue(fig, (x + dx * (0.7 + 0.3 * grow), base), h, w * (0.6 + 0.4 * sink),
-                                      bend=bend + 0.3 * wob, lean=lean + 0.1 * math.sin(t / 110 + j), op=op, hot=True))
-        # le coeur du brasier, rond, au pied des flammes
-        fig.fx_front.append(pop(fig, (x + 1, base - 3), 8 * (0.5 + 0.5 * grow) * (0.4 + 0.6 * sink), facing=-90, op=op))
-    # le premier éclat (les trois âmes se rejoignent)
+            tongues.append((dx * (0.7 + 0.3 * grow), 40 * hk * grow * sink * (1 + 0.07 * wob), 1.25 * w * (0.6 + 0.4 * sink),
+                            bend + 0.3 * wob, lean + 0.1 * math.sin(t / 110 + j)))
+        fig.fx_back.append(E.flamme(fig, (x, base), tongues, 'feu', op=op))
     e0 = env(t, -1, 0, 50, 200)
     if e0 > 0:
-        fig.fx_front.append(pop(fig, (x, y), 12 * (0.7 + 0.4 * min(1, t / 60)), facing=180, op=e0))
-        fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(x), fm(y), fm(40), g_rad(
-            fig, (x, y), 40, [(0, '#fffbe4', 0.7 * e0), (0.3, '#ffb43a', 0.25 * e0), (1, '#ff7a1e', 0)])))
-    # la fumée qui monte en volutes
-    for j, (dx, st, r) in enumerate(((-6, 260, 5.0), (5, 330, 6.0), (0, 420, 4.4))):
+        fig.fx_front.append(E.boule(fig, (x, y), 10 * (0.7 + 0.4 * min(1, t / 60)), t, 'feu', op=e0, seed=1))
+        fig.fx_front.append(E.lumiere(fig, (x, y), 40, 0.8 * e0, 'feu'))
+    for j, (dx, st, r) in enumerate(((-4, 260, 6.0), (5, 380, 6.5))):
         e = env(t, st, st + 120, st + 260, st + 560)
         if e > 0:
             k = (t - st) / 560
-            fig.fx_back.append(smoke(fig, x + dx + 3 * k, base - 22 - 18 * k, r * (0.8 + 0.5 * k), op=e * 0.9))
-            fig.fx_back.append(curl(fig, (x + dx + 4, base - 30 - 16 * k), 5 + 3 * k, 180 + 90 * k + 60 * j, 230, 2.0, op=e * 0.75))
-    # les braises
-    for j in range(7):
-        a = math.radians(-160 + j * 23 + 7 * math.sin(j * 3.1))
-        sp = 0.045 + 0.012 * ((j * 5) % 3)
+            fig.fx_back.append(E.nuage(fig, x + dx + 3 * k, base - 24 - 18 * k, r * (0.8 + 0.5 * k), 'feu', op=e * 0.9, seed=j))
+    for j in range(4):
+        a = math.radians(-150 + j * 40 + 7 * math.sin(j * 3.1))
         e = env(t, 80, 120, 520, 860)
         if e > 0:
-            tt = t - 80
-            fig.fx_front.append(ember(fig, x + math.cos(a) * sp * tt, y + math.sin(a) * sp * tt + 0.00006 * tt * tt - 4,
-                                      0.7 if j % 2 else 0.55, op=e, hot=tt < 420))
+            (px, py), (vx, vy) = E.vol((x, y - 4), (110 * math.cos(a), 110 * math.sin(a)), 160, (t - 80) / 1000, drag=1.8)
+            fig.fx_front.append(E.etincelle(fig, px, py, vx, vy, 0.7 if j % 2 else 0.6, 'feu', op=e))
 
 
 def fx_special(tl):
@@ -584,25 +622,23 @@ def fx_special(tl):
         t = tl
         if 'lantern' not in START:
             START['lantern'] = ctx['lantern']
-        # le bâton replanté : un peu de poussière au pied, la lanterne sursaute
+        # le bâton replanté : une bouffée de poussière au pied
         e = env(t, SP_TAP - 10, SP_TAP + 10, SP_TAP + 60, SP_TAP + 300)
         if e > 0:
             foot = ctx['staff_foot']
             k = (t - SP_TAP) / 300
-            for dx, r in ((-5, 2.4), (5, 2.8), (-2, 1.8), (8, 1.6)):
-                fig.fx_back.append(smoke(fig, foot[0] + dx * (0.5 + 0.9 * k), GR - 1.5 - 3 * k * (1 + (dx > 0)), r * (0.6 + 0.6 * k), op=e * 0.9, dust=True))
+            fig.fx_back.append(E.nuage(fig, foot[0] + 1, GR - 2 - 3 * k, 2.8 * (0.7 + 0.6 * k), 'terre', op=e * 0.9, seed=2, flat=0.6))
         # la lanterne s'embrase et flambe pendant toute la charge ; les yeux sont allumés (dans la pose)
-        blaze(fig, ctx, 1.6 * env(t, SP_TAP, SP_TAP + 100, RELEASE, RELEASE + 260), t)
+        blaze_pro(fig, ctx, 1.6 * env(t, SP_TAP, SP_TAP + 100, RELEASE, RELEASE + 260), t)
         # les trois feux follets : la ronde autour de la tête, puis le vol vers l'ennemi
         if BORN[0] <= t < ARRIVE:
             follets(fig, t, 70 if t < RELEASE else 50)
-        # le grand moment : l'éclair, chaud, qui part de la lanterne (un dégradé rond, pas un voile plat)
+        # le grand moment : l'éclair, chaud, qui part de la lanterne
         fl = env(t, RELEASE - 10, RELEASE, RELEASE + 30, RELEASE + 140)
         if fl > 0:
             c = ctx['lantern']
-            fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(140), g_rad(
-                fig, c, 140, [(0, '#fffbe4', 0.85 * fl), (0.12, '#ffe68a', 0.55 * fl), (0.45, '#ffb43a', 0.16 * fl), (1, '#ff7a1e', 0)])))
-            fig.fx_back.append(pop(fig, (c[0] + 7, c[1] - 2), 7 * fl, facing=0, op=fl))
+            fig.fx_front.append(E.lumiere(fig, c, 100, 0.85 * fl, 'feu'))
+            fig.fx_back.append(E.boule(fig, (c[0] + 7, c[1] - 2), 5 * fl, t, 'feu', op=fl))
         if t >= ARRIVE:
             fire_burst(fig, t - ARRIVE)
     return f

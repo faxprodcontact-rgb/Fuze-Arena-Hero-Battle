@@ -445,85 +445,54 @@ AURA = [(46, 56, 18, -0.5), (53, 52, 22, -0.4), (46, 40, 20, -0.6), (49, 28, 24,
         (101, 70, 14, 0.45), (42, 70, 16, -0.6), (43, 84, 13, -0.6), (100, 84, 12, 0.45), (74, 54, 10, 0.0)]
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : l'aura et le feu de la massue fondus en UNE
+# silhouette, croissants et anneau d'un seul tenant, sans contour sombre ; même rythme, mêmes instants qu'avant)
+import effets_pro as E  # noqa: E402
+
+
 def aura(fig, ctx, level, t):
-    """L'aura de l'oni : des langues de feu derrière sa silhouette (on ne voit que ce qui dépasse), quelques petites
-    devant, sur les épaules, et des braises qui montent."""
+    """L'aura de l'oni : UNE flamme derrière sa silhouette (on ne voit que ce qui dépasse), quelques étincelles qui
+    montent."""
     if level <= 0.02:
         return
+    items = []
     for i, (x, y, h, ln) in enumerate(AURA):
         wob = math.sin(t / 70.0 + i * 2.3)
         M = ctx['HEAD'] if y < 50 else ctx['U']
-        # la racine un peu en dedans de la silhouette : la flamme sort de derrière lui, jamais détachée
         x, y = x + (72 - x) * 0.08, y + (60 - y) * 0.06
         p = mapp(M, (x + 0.5, y + 3.5))
         hh = h * level * (1 + 0.16 * wob)
-        fig.fx_back.append(tongue(fig, p, hh, max(2.6, hh * 0.42), bend=0.9 * wob, lean=ln))
-    for i in range(10):
+        items.append((p, hh, max(3.4, hh * 0.5), 0.9 * wob, -90 + math.degrees(math.atan(ln))))
+    fig.fx_back.append(E.langues(fig, items, 'feu'))
+    for i in range(5):
         fr = (i * 0.618) % 1
         sp = 0.5 + 0.4 * ((i * 0.37) % 1)
         k = ((t / 1000.0) * sp + (i * 0.29) % 1) % 1
         x = mapp(ctx['ROOT'], (30 + 80 * fr, 0))[0] + 3 * math.sin(k * 6 + i)
         y = GR - 10 - 90 * k - ctx['P']['lift']
         o = level * (1 - k) * min(1, k * 5)
-        (fig.fx_front if i % 2 else fig.fx_back).append(ember(fig, x, y, 0.5 + 0.25 * (i % 3), op=min(1, o)))
+        (fig.fx_front if i % 2 else fig.fx_back).append(E.etincelle(fig, x, y, 6 * math.cos(k * 6 + i), -60, 0.6, 'feu', op=min(1, o)))
 
 
 def club_fire(fig, ctx, level, trail):
-    """Le kanabō en feu : des langues de flamme sur la tête de fer, couchées à l'opposé du mouvement (trail : vecteur)."""
+    """Le kanabō en feu : UNE flamme qui enveloppe la tête de fer, couchée à l'opposé du mouvement (trail : vecteur)."""
     a = math.radians(ctx['ang'])
     u = (math.cos(a), math.sin(a))
     nv = (-u[1], u[0])
+    items = []
     for i, s_ in enumerate((17.0, 25.0, 31.0)):
         for side in (-1, 1):
             hw = 4.6 + 2.0 * (s_ - 12.8) / 20.6
             p = club_pt(ctx, s_)
-            p = (p[0] + side * hw * nv[0], p[1] + side * hw * nv[1])
-            d = (side * nv[0] * 0.5 + trail[0] - 0.0, side * nv[1] * 0.5 + trail[1] - 0.6)
-            L = math.hypot(*d) or 1
-            d = (d[0] / L, d[1] / L)
+            p = (p[0] + side * hw * 0.6 * nv[0], p[1] + side * hw * 0.6 * nv[1])
+            d = (side * nv[0] * 0.5 + trail[0], side * nv[1] * 0.5 + trail[1] - 0.6)
             wob = math.sin(ctx['P']['ph'] * 3 + i * 1.7 + side)
-            h = (7 + 2.5 * wob) * (0.6 + 0.4 * level)
-            fig.fx_back.append(tongue_dir(fig, p, d, h, 3.6, bend=0.6 * side))
+            h = (8 + 2.5 * wob) * (0.6 + 0.4 * level)
+            items.append((p, h, 5.0, 0.6 * side, math.degrees(math.atan2(d[1], d[0]))))
     tip = club_pt(ctx, 34.0)
     d = (u[0] * 0.6 + trail[0], u[1] * 0.6 + trail[1] - 0.5)
-    L = math.hypot(*d) or 1
-    fig.fx_back.append(tongue_dir(fig, tip, (d[0] / L, d[1] / L), 10 + 4 * level, 5.0, bend=0.5))
-
-
-def ring_flames(fig, cx, rx, hmax, n, t, tail=0.0, seed=0, gap=None):
-    """L'anneau de feu au ras du sol, vu en perspective (une ellipse très couchée) : un sillon de braise et des langues
-    de flamme posées dessus, penchées vers l'extérieur ; celles de l'arrière derrière le héros, celles de devant devant
-    lui ; les plus hautes sur les côtés (là où l'onde avance) ; tail : l'anneau se défait."""
-    ry = min(rx * 0.16, 5.5)
-    cy = GR - 1.2
-    # le sillon brûlant (moitié arrière derrière, moitié avant devant)
-    for half, lay in ((0, fig.fx_back), (1, fig.fx_front)):
-        a0, a1 = (180, 360) if half == 0 else (0, 180)
-        pts_o, pts_i = [], []
-        for i in range(25):
-            a = math.radians(a0 + (a1 - a0) * i / 24)
-            pts_o.append((cx + (rx + 0.9) * math.cos(a), cy + (ry + 0.5) * math.sin(a)))
-            pts_i.append((cx + (rx - 0.9) * math.cos(a), cy + (ry - 0.5) * math.sin(a)))
-        band = sm(pts_o + pts_i[::-1], sharp=(0, 24, 25, 49), t=0.6)
-        heat = max(0.0, 1 - tail)
-        lay.append('<path d="%s" fill="%s" opacity="%g"/>' % (band.d(), g_lin(fig, (cx - rx, cy), (cx + rx, cy), [
-            (0, LAVA[3]), (0.5, LAVA[1] if tail < 0.4 else LAVA[3]), (1, LAVA[3])]), 0.9 * heat))
-    for i in range(n):
-        a = 2 * math.pi * (i + 0.5 * (seed % 2)) / n + 0.1 * math.sin(i * 7.3 + seed)
-        ca, sa = math.cos(a), math.sin(a)
-        x, y = cx + rx * ca, cy + ry * sa
-        if gap and gap[0] < x < gap[1] and sa > 0:
-            continue
-        side = 0.55 + 0.45 * abs(ca)
-        h = hmax * side * (0.75 + 0.3 * math.sin(t / 45.0 + i * 1.9)) * (1 - 0.6 * tail)
-        if tail and ((i * 0.618 + seed * 0.3) % 1) < tail * 0.6:
-            continue
-        lay = fig.fx_front if sa > 0.15 else fig.fx_back
-        if h < 4:
-            if tail:
-                lay.append(smoke(fig, x, y - 2.5, 1.8 + 0.3 * (i % 3), op=0.7 * (1 - tail * 0.5)))
-            continue
-        lay.append(tongue(fig, (x, y), h, max(2.8, h * 0.45), bend=0.7 * ca + 0.3 * math.sin(i), lean=0.4 * ca))
+    items.append((tip, 11 + 4 * level, 6.5, 0.5, math.degrees(math.atan2(d[1], d[0]))))
+    fig.fx_back.append(E.langues(fig, items, 'feu'))
 
 
 def fx_special(tl):
@@ -541,8 +510,7 @@ def fx_special(tl):
             k = (t - 60) / 460
             x = club_pt(ctx, 33)[0]
             o = env(k, 0, 0.1, 0.4, 1)
-            fig.fx_back.append(smoke(fig, x - 5 - 3 * k, GR - 2.5 - 2 * k, 2.6 + 1.2 * k, op=0.8 * o))
-            fig.fx_back.append(smoke(fig, x + 4 + 3 * k, GR - 2.6 - 2.5 * k, 2.2 + 1.0 * k, op=0.75 * o))
+            fig.fx_back.append(E.nuage(fig, x - 4 - 3 * k, GR - 3 - 2 * k, 3.2 + 1.6 * k, 'terre', op=0.8 * o, seed=1, flat=0.7))
         # 1) le rugissement : l'air brûlant sort de la gueule en croissants courbes qui s'écartent (pas des rayons)
         if 200 < t < 620:
             m = ctx['mouth']
@@ -550,7 +518,7 @@ def fx_special(tl):
                 k = ((t - 200) / 420 * 1.6 + j * 0.33) % 1
                 o = env(t, 200, 260, 520, 620) * (1 - k)
                 R = 4 + 14 * k
-                fig.fx_front.append(fire_trail(fig, (m[0] - 2, m[1]), R, -42, 40, 2.2 + 1.2 * (1 - k), op=o))
+                fig.fx_front.append(E.croissant(fig, (m[0] - 2, m[1]), R, -42, 40, 2.8 + 1.6 * (1 - k), 'feu', op=o))
         # 2) le kanabō chauffe au rouge et flambe (couché à l'opposé du mouvement)
         hot_l = env(t, 600, 700, 1150, 1450)
         if hot_l > 0.05:
@@ -570,14 +538,12 @@ def fx_special(tl):
             while a_to - a_from > 300:
                 a_from += 360
             e = env(t, 855, 880, 930, 1050)
-            fig.fx_back.append(fire_trail(fig, S, R, a_from, a_to, 15 * e + 2, op=e))
-            fig.fx_back.append(fire_trail(fig, S, R * 0.62, a_from + 10, a_to, 5 * e + 1, op=e))
+            fig.fx_back.append(E.croissant(fig, S, R, a_from, a_to, 17 * e + 2, 'feu', op=e, halo=0.6))
         # 4) l'éclair (arrêt sur l'image)
         fl = env(t, SP_HIT - 5, SP_HIT, SP_HIT + 30, SP_HIT + 160)
         cx = IMP_AT.get('x', 118.0)         # le point d'impact au sol (devant lui)
         if fl > 0:
-            fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(cx), fm(GR - 10), fm(170), g_rad(
-                fig, (cx, GR - 10), 170, [(0, '#fffbe4', 0.85 * fl), (0.12, '#ffe68a', 0.5 * fl), (0.45, '#ffb43a', 0.16 * fl), (1, '#ff7a1e', 0)])))
+            fig.fx_front.append(E.lumiere(fig, (cx, GR - 10), 120, fl, 'feu'))
         # 5) l'explosion : la boule de feu, l'anneau de flammes qui s'élargit tout autour, la fumée, les braises
         if t >= SP_HIT:
             tg = t - SP_HIT
@@ -588,41 +554,44 @@ def fx_special(tl):
             if so > 0:
                 fig.fx_back.append('<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s" opacity="%g"/>' % (
                     fm(cx), fm(GR + 0.2), fm(sr), fm(sr * 0.13), g_rad(fig, (cx, GR), sr, [(0, '#2a0e14'), (0.6, '#4a1a1a'), (1, '#6e2a20', 0)]), 0.85 * so))
-                for dx in (-12, -4, 5, 13):
-                    if abs(dx) < sr:
-                        fig.fx_back.append(ember(fig, cx + dx, GR + 0.3, 0.55, op=so * (0.6 + 0.4 * math.sin(t / 90 + dx)), hot=tg < 500))
+                fig.fx_back.append(E.fissure(fig, [(cx - sr * 0.6, GR + 0.4), (cx, GR + 0.9), (cx + sr * 0.6, GR + 0.3)], 2.4, 'feu',
+                                             op=so, glow=1.0 if tg < 500 else 0.5))
             # l'anneau de flammes
             kk = min(1.0, tg / 900)
             rx = 10 + 74 * (1 - (1 - kk) ** 2)
             hm = 20 * env(tg, 0, 120, 380, 900) + 4
             tail = max(0.0, (tg - 350) / 600)
             if tail < 1:
-                ring_flames(fig, cx, rx, hm, 10 + int(4 * kk), t, tail=min(1, tail), seed=int(tg / 90), gap=gap)
+                ry = min(rx * 0.16, 5.5)
+                g0 = math.degrees(math.acos(max(-1.0, min(1.0, (gap[1] - cx) / rx))))
+                g1 = math.degrees(math.acos(max(-1.0, min(1.0, (gap[0] - cx) / rx))))
+                arcs = [(g1, 360 + g0)]           # un seul arc : du devant gauche, par derrière, au devant droit
+                if tail > 0.3:
+                    arcs = [(a0_ + (a1_ - a0_) * 0.25 * tail, a1_ - (a1_ - a0_) * 0.25 * tail) for a0_, a1_ in arcs]
+                bk, fr = E.anneau(fig, (cx, GR - 1.2), rx, ry, hm * (1 - 0.6 * tail), t, 'feu', op=1 - tail, arcs=arcs, seed=int(tg / 400))
+                fig.fx_back.append(bk)
+                fig.fx_front.append(fr)
             # la boule de feu qui monte, gonfle, puis devient un champignon de fumée
             b1 = env(tg, 0, 40, 160, 360)
             if b1 > 0:
-                for (dx, h, w, bd) in ((-6, 30, 10, -0.6), (4, 54, 15, 0.4), (15, 40, 12, 0.9), (2, 22, 16, -0.2)):
-                    fl_ = 1 + 0.08 * math.sin(t / 26.0 + dx)
-                    fig.fx_front.append(tongue(fig, (cx + dx, GR), h * b1 * fl_, w * (0.6 + 0.4 * b1), bend=bd, lean=0.15 + 0.012 * dx))
+                fig.fx_front.append(E.flamme(fig, (cx, GR), [(-6, 30 * b1, 12, -0.6, 0.08), (4, 56 * b1, 17, 0.4 * math.sin(t / 40), 0.2),
+                                                             (15, 40 * b1, 13, 0.9, 0.33), (2, 22 * b1, 18, -0.2, 0.17)], 'feu', sol=GR))
             rise = tg / 1000.0
             if tg < 520:
                 pr = env(tg, 0, 30, 200, 520)
-                fig.fx_front.append(pop(fig, (cx + 2 + 14 * rise, GR - 8 - 60 * rise), 9.0 + 5 * rise, facing=-90, op=pr))
+                fig.fx_front.append(E.boule(fig, (cx + 2 + 14 * rise, GR - 8 - 60 * rise), 9.0 + 5 * rise, t, 'feu', op=pr, seed=3))
             sk = (tg - 150) / 1000.0
             if 0 < sk < 1.3:
                 o = env(sk, 0, 0.15, 0.6, 1.3)
-                fig.fx_back.append(smoke(fig, cx + 14 + 5 * sk, GR - 30 - 30 * sk, 6 + 4 * sk, op=0.85 * o))
-                fig.fx_back.append(smoke(fig, cx + 8 + 3 * sk, GR - 18 - 14 * sk, 4 + 2.5 * sk, op=0.8 * o))
-                fig.fx_back.append(curl(fig, (cx + 26 + 6 * sk, GR - 44 - 18 * sk), 3.8 + 1.5 * sk, 200 + 90 * sk, 280, 2.4, op=0.8 * o))
-                fig.fx_back.append(curl(fig, (cx - 2 - 4 * sk, GR - 30 - 14 * sk), 3.2 + 1.2 * sk, 340 - 90 * sk, -280, 2.0, op=0.7 * o))
+                fig.fx_back.append(E.nuage(fig, cx + 14 + 5 * sk, GR - 32 - 30 * sk, 8 + 5 * sk, 'feu', op=0.85 * o, seed=2))
+                fig.fx_back.append(E.nuage(fig, cx + 4 + 3 * sk, GR - 18 - 14 * sk, 5 + 3 * sk, 'feu', op=0.75 * o, seed=1))
             # les braises projetées par le choc : elles montent en cloche et retombent
-            for j, (vx, vy, big) in enumerate(((22, -50, 1), (36, -34, 0), (-20, -46, 1), (-34, -28, 0), (10, -62, 0),
-                                               (48, -20, 1), (-10, -56, 0), (56, -42, 0), (-46, -36, 0), (28, -70, 1))):
+            for j, (vx, vy, big) in enumerate(((40, -100, 1), (-36, -92, 1), (62, -64, 0), (-60, -60, 0), (16, -124, 1))):
                 tau = tg / 1000.0
                 if tau < 1.0:
-                    x, y = ballistic((cx, GR - 8), (vx * 1.6, vy * 1.8), 150, tau)
+                    (x, y), (wx, wy) = E.vol((cx, GR - 8), (vx * 1.3, vy * 1.4), 200, tau, drag=1.3)
                     if y < GR - 1:
-                        fig.fx_front.append(ember(fig, x, y, 0.8 if big else 0.55, op=max(0, 1 - tau), hot=tau < 0.55))
+                        fig.fx_front.append(E.etincelle(fig, x, y, wx, wy, 0.8 if big else 0.6, 'feu', op=max(0, 1 - tau)))
     return f
 
 

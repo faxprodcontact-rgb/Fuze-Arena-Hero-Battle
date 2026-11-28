@@ -16,8 +16,8 @@ VOL = {'on': False}
 _follet = A.follet
 
 
-def _follet_jeu(fig, pts, r, wob=0.0, op=1.0):
-    return '' if VOL['on'] else _follet(fig, pts, r, wob=wob, op=op)
+def _follet_jeu(fig, pts, r, wob=0.0, op=1.0, pro=False):
+    return '' if VOL['on'] else _follet(fig, pts, r, wob=wob, op=op, pro=pro)
 
 
 A.follet = _follet_jeu
@@ -57,7 +57,7 @@ def ames(n):
         for j, (dx, dy) in enumerate(((0, 0), (-9, -6), (-8, 6))[:n]):
             r = 3.6 if j == 0 else 3.1
             pts = [(dx - r - 24 * (1 - q / 12), dy + 1.2 * math.sin(q / 12 * math.pi * 2 + i * 1.5 + j)) for q in range(13)]
-            fig.fx_front.append(_follet(fig, pts, r, wob=i * 3.0 + j * 2))
+            fig.fx_front.append(_follet(fig, pts, r, wob=i * 3.0 + j * 2, pro=n > 1))   # la spéciale : effets « pro » (28/11)
     return f
 
 

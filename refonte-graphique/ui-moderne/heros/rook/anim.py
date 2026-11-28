@@ -434,6 +434,11 @@ def ring(fig, c, rx, ry, hmax, ph, op, lst_back, lst_front, w=3.0):
         lst.append(outlined([(band, gr, 1), (core, gc, 0.9)], ink=FINK, w=0.9, op=op * (0.9 if half == 0 else 1)))
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : anneau rouge sang d'un seul tenant aux crêtes
+# continues, flammes fondues en une silhouette, sans contour sombre ; même rythme, mêmes instants qu'avant)
+import effets_pro as E  # noqa: E402
+
+
 def fx_special(tl):
     def f(fig, ctx):
         sw = ctx['sword']
@@ -441,29 +446,27 @@ def fx_special(tl):
         # la montée : des braises montent autour de lui pendant qu'il lève l'épée
         ch = env(tl, 120, 300, 560, 700)
         if ch > 0:
-            for i in range(12):
+            for i in range(5):
                 fr = (i * 0.618) % 1
                 x0 = 30 + 72 * fr
                 sp = 0.6 + 0.4 * ((i * 0.37) % 1)
                 k = ((tl / 1000.0) * sp * 1.4 + (i * 0.29) % 1) % 1
                 y = GR - 4 - 70 * k
                 x = x0 + 3 * math.sin(k * 6 + i)
-                fig.fx_front.append(ember(fig, x, y, 0.5 + 0.3 * (i % 3) / 2, op=ch * (1 - k) * min(1, k * 5)))
+                fig.fx_front.append(E.etincelle(fig, x, y, 0, -70, 0.6, 'sang', op=ch * (1 - k) * min(1, k * 5)))
         # l'épée plantée : la lueur et la fente du sol à la pointe
         if sw.get('planted'):
             tp = sw['tip']
             e = env(tl, 560, 600, 1600, 1760)
             fig.under.append((tp[0], GR, 10 + 6 * e, 3 + 1.5 * e, FIRE[3], 0.5 * e, None))
-            fig.fx_back.append('<path d="%s" fill="%s" opacity="%g"/>' % (
-                ribbon([(tp[0] - 9 * e, GR + 0.4), (tp[0] - 3, GR + 0.1), (tp[0], GR), (tp[0] + 3, GR + 0.1), (tp[0] + 9 * e, GR + 0.4)],
-                       [0.1, 0.9, 1.3, 0.9, 0.1]).d(), FIRE[1], 0.9 * e))
+            fig.fx_back.append(E.fissure(fig, [(tp[0] - 10 * e, GR + 0.4), (tp[0], GR + 0.6), (tp[0] + 10 * e, GR + 0.4)], 2.6, 'sang',
+                                         op=min(1, 1.2 * e), glow=e))
         # l'éclair de l'impact (590) : une fleur de flammes à la pointe
         fl = env(tl, S_HEAL - 10, S_HEAL + 30, S_HEAL + 80, S_HEAL + 260)
         if fl > 0:
             tp = sw['tip']
             fig.under.append((tp[0], GR - 6, 30 * fl, 18 * fl, BLOODF[2], 0.45 * fl, None))
-            fig.fx_front.append(tongue(fig, (tp[0] - 3, GR + 0.5), 12 * fl, 5.0, bend=1.0, lean=-0.5, pal=BLOODF))
-            fig.fx_front.append(tongue(fig, (tp[0] + 3, GR + 0.5), 10 * fl, 4.4, bend=-1.0, lean=0.6, pal=BLOODF))
+            fig.fx_front.append(E.flamme(fig, (tp[0], GR + 0.5), [(-3, 13 * fl, 6.0, 1.0, -0.5), (3, 11 * fl, 5.4, -1.0, 0.6)], 'sang'))
         # l'anneau : il part de l'épée et s'élargit autour de lui ; ses flammes montent jusqu'au sommet (1250)
         if tl >= S_HEAL:
             k = (tl - S_HEAL) / 400.0
@@ -474,29 +477,32 @@ def fx_special(tl):
             up = env(tl, S_HEAL, 900, S_REZ + 60, 1700)
             hmax = 3 + 7 * e + 9 * env(tl, 950, S_REZ, S_REZ + 60, 1600)
             op = min(1.0, (tl - S_HEAL) / 60.0) * (1.0 if tl < 1550 else max(0.0, 1 - (tl - 1550) / 300))
-            ring(fig, c, rx, ry, hmax * (0.5 + 0.5 * up), P['ph'] * 1.4, op, fig.fx_back, fig.fx_front)
+            bk, fr = E.anneau(fig, c, rx, ry, hmax * (0.5 + 0.5 * up) + 2, P['ph'] * 1.4 * 60, 'sang', op=op)
+            fig.fx_back.append(bk)
+            fig.fx_front.append(fr)
             # la lueur rouge sang et or autour de lui
             fig.under.append((66, GR - 20, 44 * up + 10, 34 * up + 6, BLOODF[3], 0.22 * up, None))
             # les grandes flammes qui montent de l'anneau, devant et derrière lui (au sommet)
             top = env(tl, 900, S_REZ, S_REZ + 80, 1620)
             if top > 0:
+                back, front = [], []
                 for j, (aa, hh, ww) in enumerate(((200, 18, 6.0), (240, 24, 7.0), (290, 22, 6.6), (330, 17, 5.6),
                                                   (20, 15, 5.4), (90, 12, 5.0), (150, 16, 5.6))):
                     ar = math.radians(aa)
                     base = (c[0] + rx * math.cos(ar), c[1] + ry * math.sin(ar) + 0.5)
-                    lst = fig.fx_back if 180 <= aa <= 360 else fig.fx_front
                     h = hh * top * (0.85 + 0.15 * math.sin(P['ph'] * 2 + j * 1.7))
-                    lst.append(tongue(fig, base, h, ww, bend=math.sin(P['ph'] + j), lean=0.15 * math.cos(ar),
-                                      pal=BLOODF, op=min(1.0, top * 1.4)))
+                    (back if 180 <= aa <= 360 else front).append((base, h, ww * 1.3, math.sin(P['ph'] + j), -90 + 9 * math.cos(ar)))
+                fig.fx_back.append(E.langues(fig, back, 'sang', op=min(1.0, top * 1.4)))
+                fig.fx_front.append(E.langues(fig, front, 'sang', op=min(1.0, top * 1.4)))
             # des braises d'or qui montent de l'anneau
             if 0.05 < up:
-                for i in range(14):
-                    a = math.radians(i * 360 / 14 + 13)
+                for i in range(6):
+                    a = math.radians(i * 360 / 6 + 13)
                     k2 = ((tl - S_HEAL) / 700.0 + (i * 0.37) % 1) % 1
                     x = c[0] + rx * math.cos(a) + 2 * math.sin(k2 * 6 + i)
                     y = c[1] + ry * math.sin(a) - 46 * k2
                     lst = fig.fx_back if math.sin(a) < 0 else fig.fx_front
-                    lst.append(ember(fig, x, y, 0.55 + 0.25 * (i % 3) / 2, op=up * (1 - k2) * min(1, k2 * 6), pal=BLOODF))
+                    lst.append(E.etincelle(fig, x, y, 0, -60, 0.65, 'or', op=up * (1 - k2) * min(1, k2 * 6)))
     return f
 
 

@@ -419,6 +419,11 @@ def stream_shape(m, s0, s1, tl, wid=1.0):
     return cen, ws, at
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : le souffle d'UNE forme aux bords qui roulent,
+# flammes et boules d'une silhouette, sans contour sombre ; même rythme, mêmes instants qu'avant)
+import effets_pro as EP  # noqa: E402
+
+
 def fx_special(tl):
     def f(fig, ctx):
         P = ctx['P']
@@ -427,8 +432,8 @@ def fx_special(tl):
         # il aspire : des braises tourbillonnent vers sa gueule (de plus en plus près), les naseaux rougeoient
         ch = env(tl, SP_GATHER[0], SP_GATHER[0] + 160, SP_GATHER[1] - 80, SP_GATHER[1] + 20)
         if ch > 0:
-            for i in range(12):
-                st = SP_GATHER[0] + (i * 53) % 380
+            for i in range(6):
+                st = SP_GATHER[0] + (i * 97) % 380
                 dur = 360 + (i * 41) % 140
                 u = (tl - st) / dur
                 if 0 <= u <= 1:
@@ -439,9 +444,9 @@ def fx_special(tl):
                     a = a0 + 2.4 * e_
                     x = mouth[0] + 4 + R * math.cos(a)
                     y = mouth[1] + R * math.sin(a) * 0.8
-                    fig.fx_front.append(ember(fig, x, y, 0.5 + 0.3 * (i % 3), op=min(1, u * 5) * ch))
-            fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(nos[0]), fm(nos[1]), fm(4 + 2 * ch), g_rad(
-                fig, nos, 4 + 2 * ch, [(0, LAVA[1], 0.8 * ch), (0.5, LAVA[2], 0.35 * ch), (1, LAVA[3], 0)])))
+                    fig.fx_front.append(EP.etincelle(fig, x, y, (mouth[0] + 4 - x) * 5, (mouth[1] - y) * 5, 0.6 + 0.2 * (i % 3), 'feu',
+                                                     op=min(1, u * 5) * ch))
+            fig.fx_front.append(EP.lumiere(fig, nos, 5 + 3 * ch, 0.9 * ch, 'feu'))
         # le jet de feu : il sort de la gueule et file jusqu'à l'ennemi, puis s'éteint de la gueule vers l'ennemi
         if SP_EMERGE <= tl < SP_STOP[1] + 40:
             s1 = smooth((tl - SP_EMERGE) / (SP_REACH - SP_EMERGE))
@@ -449,59 +454,40 @@ def fx_special(tl):
             if s1 - s0 > 0.02:
                 m = (mouth[0] + 1.0, mouth[1] + 0.6)
                 cen, ws, at = stream_shape(m, s0, s1, tl)
-                outer = limb(cen, ws)
-                mid_ = limb(cen, [w * 0.62 for w in ws])
-                core = limb(cen, [w * 0.3 for w in ws])
-                go = g_lin(fig, cen[0], cen[-1], [(0, LAVA[2]), (0.5, LAVA[3]), (1, LAVA[4])])
-                gm = g_lin(fig, cen[0], cen[-1], [(0, LAVA[1]), (0.6, LAVA[2]), (1, LAVA[3])])
-                gc = g_lin(fig, cen[0], cen[-1], [(0, '#ffffff'), (0.5, LAVA[0]), (1, LAVA[1])])
-                fig.fx_front.append(outlined([(outer, go, 1), (mid_.move(0.3, -0.4), gm, 0.95), (core.move(0.5, -0.6), gc, 0.9)], w=1.4))
-                # des bouffées de feu sur les bords du jet (elles le rendent vivant, tailles et places inégales)
-                for j in range(7):
-                    s = s0 + (s1 - s0) * ((j * 0.37 + tl / 420.0) % 1.0)
-                    p = at(s)
-                    side = 1 if j % 2 else -1
-                    r = (1.4 + 3.6 * s) * (0.8 + 0.2 * math.sin(j * 1.7 + tl / 50.0))
-                    fig.fx_front.append(fireball(fig, p[0] + 0.6 * side, p[1] + side * (2 + 6 * s), r, op=0.95))
-                # des braises qui s'échappent du jet
-                for j in range(6):
-                    s = s0 + (s1 - s0) * ((j * 0.29 + tl / 600.0) % 1.0)
-                    p = at(s)
-                    fig.fx_front.append(ember(fig, p[0] + 3 * math.sin(j * 2 + tl / 70), p[1] - 6 - 8 * ((tl / 500.0 + j * 0.3) % 1.0), 0.55))
+                # les bords gonflent en vagues qui roulent vers l'ennemi (pas de boules posées dessus)
+                ws = [w * 1.6 * (1 + 0.16 * math.sin(i * 1.3 - tl / 40.0)) for i, w in enumerate(ws)]
+                fig.fx_front.append(EP.jet(fig, cen, ws, 'feu'))
         # le feu enveloppe l'ennemi : un éclat, une gerbe de langues de feu, des gouttes de feu, la fumée qui monte
         if tl >= SP_REACH - 20:
             tg = tl - SP_HIT
             X, Y = FOE
             fl = env(tl - SP_REACH, -20, 20, 60, 200) * 0.6 + env(tg, -20, 0, 40, 180)
             if fl > 0:
-                fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(X), fm(Y), fm(70), g_rad(
-                    fig, (X, Y), 70, [(0, '#ffffff', 0.7 * min(1, fl)), (0.18, LAVA[1], 0.5 * min(1, fl)), (0.5, LAVA[2], 0.15 * min(1, fl)), (1, LAVA[3], 0)])))
+                fig.fx_front.append(EP.lumiere(fig, (X, Y), 60, min(1, fl), 'feu'))
             sc = env(tl, SP_REACH, SP_REACH + 120, SP_HIT + 260, SP_HIT + 620)
             if sc > 0:
-                burst(fig, (X, Y + 2), sc, 1.25, tl)
-                for j, (dx, hh, ww, bd) in enumerate(((-11, 13, 5.6, 0.7), (10, 8, 4.4, -0.6), (19, 5, 3.4, 0.6))):
-                    flick = 1 + 0.08 * math.sin(tl / 26.0 + j * 2.3)
-                    (fig.fx_front if j == 0 else fig.fx_back).append(tongue(fig, (X + dx, GR), hh * sc * flick, ww * (0.6 + 0.4 * sc), bend=bd))
-            for j, (vx, vy) in enumerate(((-70, -150), (60, -170), (-110, -80), (115, -95), (-25, -200), (30, -185), (-140, -30), (150, -40))):
-                tau = (tg - 20 * (j % 3)) / 1000.0
+                # le feu qui l'enveloppe : UN foyer posé au sol, une boule de feu au cœur
+                fig.fx_back.append(EP.foyer(fig, X, GR, 30 + 30 * sc, 30 + 10 * sc, tl, n=5, p='feu', op=min(1, sc * 1.5), seed=3))
+                fig.fx_front.append(EP.boule(fig, (X + 1, Y + 4), 7 * (0.5 + 0.5 * sc), tl, 'feu', op=0.95, seed=1))
+            for j, (vx, vy) in enumerate(((-70, -150), (60, -170), (-110, -80), (115, -95))):
+                tau = (tg - 20 * (j % 2)) / 1000.0
                 if 0 <= tau < 0.8:
-                    x, y = ballistic((X, Y), (vx, vy), 300, tau)
+                    (x, y), (wx, wy) = EP.vol((X, Y), (vx, vy), 300, tau, drag=1.2)
                     if y < GR - 0.5:
-                        fig.fx_front.append(spark(fig, x, y, vx, vy + 300 * tau, 1.3 if j % 2 else 1.0))
+                        fig.fx_front.append(EP.goutte(fig, x, y, wx, wy, 1.3 if j % 2 else 1.0, 'feu'))
             fk = (tg - 140) / 1000.0
             if 0 < fk < 1.1:
                 o = env(fk, 0, 0.15, 0.6, 1.1)
-                for j, (dx, rr, sp) in enumerate(((-8, 5.0, 26), (6, 6.0, 34), (16, 4.0, 22), (-18, 3.6, 18))):
-                    fig.fx_back.append(smoke(fig, X + dx + 4 * fk, Y - 10 - sp * fk, rr * (0.8 + 0.6 * fk), op=0.85 * o))
-                for j, (dx, sp) in enumerate(((-10, 36), (6, 46), (18, 30), (-22, 26), (0, 54))):
-                    fig.fx_front.append(ember(fig, X + dx + 2 * math.sin(fk * 8 + j), Y - 8 - sp * fk, 0.6, op=o))
+                fig.fx_back.append(EP.nuage(fig, X + 2 + 4 * fk, Y - 16 - 30 * fk, 7.5 * (0.8 + 0.6 * fk), 'feu', op=0.85 * o, seed=1))
+                for j, (dx, sp) in enumerate(((-10, 36), (12, 46))):
+                    fig.fx_front.append(EP.etincelle(fig, X + dx + 2 * math.sin(fk * 8 + j), Y - 8 - sp * fk, 0, -50, 0.65, 'feu', op=o))
         # la fumée qui sort des naseaux après le souffle
         tau = (tl - 1420) / 1000.0
         if 0 < tau < 0.9:
             for j in range(3):
                 k = tau - j * 0.18
                 if 0 < k < 0.6:
-                    fig.fx_front.append(smoke(fig, nos[0] - 2 - 14 * k, nos[1] - 3 - 10 * k, 1.2 + 2.6 * k, op=0.8 * (1 - k / 0.6)))
+                    fig.fx_front.append(EP.nuage(fig, nos[0] - 2 - 14 * k, nos[1] - 3 - 10 * k, 1.4 + 2.8 * k, 'feu', op=0.8 * (1 - k / 0.6), seed=j))
     return f
 
 

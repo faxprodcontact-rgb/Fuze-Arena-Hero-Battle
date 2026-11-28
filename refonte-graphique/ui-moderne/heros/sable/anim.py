@@ -397,35 +397,26 @@ MANE = [
 ]
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : crinière de mèches fondues en UNE silhouette,
+# flammes et croissants d'un seul tenant, tête de lionne sans contour sombre ; même rythme, mêmes instants qu'avant)
+import effets_pro as E  # noqa: E402
+
+
 def mane_svg(fig, tf, k, t, ink=True):
-    """La crinière de flammes : un seul contour autour de toute la masse ; tf : repère de la tête → dessin ; k : sa
-    taille (0..1). Les mèches ondulent (la vague court de la racine vers la pointe)."""
+    """La crinière de flammes : ses mèches fondues en UNE silhouette ; tf : repère de la tête → dessin ; k : sa taille
+    (0..1). Les mèches ondulent (la vague court de la racine vers la pointe)."""
     if k <= 0.02:
         return ''
-    shapes = []
+    locks = []
+    sc_ = abs(tf((1, 0))[0] - tf((0, 0))[0])
     for j, (p0, p1, p2, p3, w) in enumerate(MANE):
         ph = t / 90.0 - j * 0.9
         sc = lambda p, kk: (p0[0] + (p[0] - p0[0]) * kk, p0[1] + (p[1] - p0[1]) * kk)
         q1 = sc(p1, k)
         q2 = sc((p2[0] + 0.8 * math.sin(2 * ph + 1), p2[1] + 1.2 * math.sin(ph)), k)
         q3 = sc((p3[0] + 1.6 * math.sin(ph + 0.8), p3[1] + 1.8 * math.cos(ph)), k)
-        P0, P1, P2, P3 = tf(p0), tf(q1), tf(q2), tf(q3)
-        sh = lock(P0, P1, P2, P3, w * (0.55 + 0.45 * k) * abs(tf((1, 0))[0] - tf((0, 0))[0]), n=12, bulge=0.32)
-        under = __import__('lib').Shape(sh.subs + sh.move(0.8, -2.4).subs, evenodd=True)
-        shapes.append((sh, g_lin(fig, P0, P3, [(0, '#ffe680'), (0.22, '#ffbc34'), (0.58, '#ff7a22'), (1, '#e03a1a')]), 1))
-        shapes.append((under, g_lin(fig, P0, P3, [(0, '#ff8a24'), (0.5, '#d8381a'), (1, '#a82418')]), 0.85))
-    # chaque mèche pose une ligne sombre sur la suivante : on peint mèche par mèche, silhouettes d'abord
-    sil = ''.join('<path d="%s" fill="%s" stroke="%s" stroke-width="1.5" stroke-linejoin="round"/>' % (sh.d(), FINK, FINK)
-                  for sh, _, _ in shapes[::2]) if ink else ''
-    col = ''
-    for i in range(0, len(shapes), 2):
-        a, b = shapes[i], shapes[i + 1]
-        col += '<path d="%s" fill="%s"/>' % (a[0].d(), a[1])
-        col += '<path d="%s" fill-rule="evenodd" fill="%s" opacity="0.85" clip-path="none"/>' % (b[0].d(), b[1]) if False else ''
-        col += '<g><clipPath id="mc%d_%d"><path d="%s"/></clipPath><path d="%s" fill-rule="evenodd" fill="%s" opacity="0.85" clip-path="url(#mc%d_%d)"/></g>' % (
-            fig.n, i, a[0].d(), b[0].d(), b[1], fig.n, i)
-    fig.n += 1
-    return '<g>%s%s</g>' % (sil, col)
+        locks.append((E.bez(tf(p0), tf(q1), tf(q2), tf(q3)), 1.5 * w * (0.55 + 0.45 * k) * sc_))
+    return E.meches(fig, locks, 'feu')
 
 
 def mane(fig, ctx, k, t, under=True):
@@ -445,18 +436,16 @@ def spirit(fig, c, k=1.0, t=0.0, mane_k=1.0, trail_k=1.0, head=True):
     out_back, out_front = [], []
     # la traînée : deux longues langues couchées vers l'arrière, des braises
     if trail_k > 0:
-        for j, (dy, L, w) in enumerate(((-6, 30, 9.0), (6, 22, 7.0))):
-            fl = 1 + 0.1 * math.sin(t / 40.0 + j * 2)
-            out_back.append(tongue(fig, (c[0] - 12 * k, c[1] + dy * k), L * trail_k * fl, w * k, bend=0.7 if j else -0.7,
-                                   lean=0.15 * (1 if j else -1), direction=180 + dy * 1.2))
-        for j in range(6):
+        L = 30 * trail_k * (1 + 0.1 * math.sin(t / 40.0))
+        pts = [(c[0] - 8 * k - L * i / 5, c[1] + (2 + 3 * math.sin(t / 50.0 + i * 1.2) * i / 5) * k) for i in range(6)]
+        out_back.append(E.ruban(fig, pts[::-1], 18 * k, 'feu', kind='tete', halo=0.6))
+        for j in range(3):
             fr = (j * 0.37 + t / 400.0) % 1
-            out_back.append(ember(fig, c[0] - 20 * k - 30 * fr * trail_k, c[1] + (8 * math.sin(j * 2.1) + 4 * math.sin(t / 60 + j)) * k,
-                                  0.55 + 0.25 * (j % 2), op=1 - fr))
+            out_back.append(E.etincelle(fig, c[0] - 20 * k - 30 * fr * trail_k, c[1] + (8 * math.sin(j * 2.1) + 4 * math.sin(t / 60 + j)) * k,
+                                        -40, 0, 0.6 + 0.2 * (j % 2), 'feu', op=1 - fr))
     # la crinière : les mèches de feu qui fuient vers l'arrière
     if mane_k > 0:
-        out_back.append('<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"/>' % (
-            fm(c[0] - 6 * k), fm(c[1] - 2 * k), fm(20 * k), fm(18 * k), g_rad(fig, (c[0] - 6 * k, c[1] - 2 * k), 20 * k, [(0, FIRE[1], 0.5), (1, FIRE[3], 0)])))
+        out_back.append(E.lumiere(fig, (c[0] - 6 * k, c[1] - 2 * k), 20 * k, 0.6, 'feu'))
         out_back.append(mane_svg(fig, tf, mane_k, t))
     if head:
         sh = S.head_outline(1.0).map(tf)
@@ -471,7 +460,10 @@ def spirit(fig, c, k=1.0, t=0.0, mane_k=1.0, trail_k=1.0, head=True):
                   (sm([(79, 27), (90.8, 31.6), (98.4, 35.0), (96, 36.6), (84, 34.4)]).map(tf), FIRE[0], 0.55),
                   (mouth, g_lin(fig, tf((90, 41)), tf((86, 48)), [(0, FIRE[4]), (1, FIRE[5])]), 1),
                   (eye, '#fffbe4', 1)]
-        out_front.append(outlined(parts, w=1.4))
+        # sans contour sombre : un halo doux de feu autour de la tête, puis ses couleurs
+        halo = '<path d="%s" fill="%s" opacity="0.55" filter="url(#%s)"/>' % (sh.d(), E.pal('feu')['halo'], E.blur_id(fig, 1.4))
+        out_front.append('<g>%s%s</g>' % (halo, ''.join('<path d="%s" fill="%s"%s/>' % (q.d(), fl_, '' if o_ == 1 else ' opacity="%g"' % o_)
+                                                           for q, fl_, o_ in parts)))
     fig.fx_back.extend(out_back)
     fig.fx_front.extend(out_front)
 
@@ -486,28 +478,28 @@ def fx_special(tl, P, Pp):
             fig.under.append((c[0], c[1], 30 + 8 * hot, 34 + 8 * hot, '#ff7a1e', 0.08 * hot, None))
         ch = env(t, 60, 260, 640, 900)
         if ch > 0:
-            for i in range(14):
+            for i in range(5):
                 fr = (i * 0.618) % 1
                 x0 = 14 + 96 * fr
                 sp = 0.6 + 0.4 * ((i * 0.37) % 1)
                 k = ((t / 1000.0) * sp + (i * 0.29) % 1) % 1
-                fig.fx_front.append(ember(fig, x0 + 3 * math.sin(k * 6 + i), GR - 4 - 70 * k, 0.45 + 0.25 * (i % 3) / 2,
-                                          op=ch * (1 - k) * min(1, k * 5)))
-            for j, (x, hh, ww, bd) in enumerate(((28, 8, 4.0, 0.6), (108, 7, 3.6, -0.6))):
-                fl = 1 + 0.2 * math.sin(t / 40.0 + j * 2.4)
-                (fig.fx_back if j == 0 else fig.fx_front).append(tongue(fig, (x, GR), hh * fl * ch, ww, bend=bd))
+                fig.fx_front.append(E.etincelle(fig, x0 + 3 * math.sin(k * 6 + i), GR - 4 - 70 * k, 0, -60, 0.6, 'feu',
+                                                op=ch * (1 - k) * min(1, k * 5)))
+            for j, x in enumerate((28, 108)):
+                (fig.fx_back if j == 0 else fig.fx_front).append(E.foyer(fig, x, GR, 10 * ch, 8, t, n=3, p='feu', seed=j))
         # la lame s'embrase : des langues de feu montent de son dos
         if hot > 0.2 and t < 1000:
+            items = []
             for j, p in enumerate(ctx['blade'][1:6:2]):
                 fl = 1 + 0.2 * math.sin(t / 35.0 + j * 2.1)
-                L = (4 + 4.5 * min(hot, 2)) * fl * (1.2 if j == 1 else 1.0)
-                (fig.fx_front if j == 1 else fig.fx_back).append(
-                    tongue(fig, p, L, 3.2 + 1.4 * min(hot, 2), bend=0.8 if j % 2 else -0.7, lean=-0.1 * (j - 1)))
+                L = (5 + 5 * min(hot, 2)) * fl * (1.2 if j == 1 else 1.0)
+                items.append((p, L, 4.2 + 1.6 * min(hot, 2), 0.8 if j % 2 else -0.7, -90 - 6 * (j - 1)))
+            fig.fx_front.append(E.langues(fig, items, 'feu'))
         # la touffe de la queue prend feu
         tf_ = env(t, 300, 400, 650, 900)
         if tf_ > 0:
             tip = ctx['tuft']
-            fig.fx_front.append(tongue(fig, tip, 7 * tf_ * (1 + 0.15 * math.sin(t / 30.0)), 3.6, bend=0.6))
+            fig.fx_front.append(E.langues(fig, [(tip, 8 * tf_ * (1 + 0.15 * math.sin(t / 30.0)), 4.6, 0.6, -90)], 'feu'))
         # le rugissement : la crinière de flammes jaillit (derrière la tête), l'air brûlant sort de la gueule
         mk = env(t, SP_ROAR - 30, SP_ROAR + 40, SP_STRIKE - 20, SP_STRIKE + 60)
         if mk > 0:
@@ -518,20 +510,18 @@ def fx_special(tl, P, Pp):
             for j in range(2):
                 tau = ((t - SP_ROAR) / 260.0 + j * 0.5) % 1
                 R = 4 + 18 * tau
-                fig.fx_front.append(trail(fig, (m[0] - 6 + 4 * tau, m[1]), R + 6, -50, 50, (5.5 - 3 * tau) * rk, hot=True, op=rk * (1 - tau)))
-            fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(m[0] + 2), fm(m[1]), fm(6 * rk), g_rad(
-                fig, (m[0] + 2, m[1]), 6 * rk, [(0, FIRE[0], 0.9 * rk), (0.5, FIRE[1], 0.5 * rk), (1, FIRE[2], 0)])))
+                fig.fx_front.append(E.croissant(fig, (m[0] - 6 + 4 * tau, m[1]), R + 6, -50, 50, (6.5 - 3.5 * tau) * rk, 'feu', op=rk * (1 - tau)))
+            fig.fx_front.append(E.lumiere(fig, (m[0] + 2, m[1]), 8 * rk, rk, 'feu'))
         # l'éclair du rugissement (arrêt sur l'image) : un éclat chaud qui part de la tête
         fl = env(t, SP_ROAR - 10, SP_ROAR + 10, SP_ROAR + 40, SP_ROAR + 160)
         if fl > 0:
             c = ctx['head']
-            fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(140), g_rad(
-                fig, c, 140, [(0, '#fffbe4', 0.6 * fl), (0.15, '#ffe68a', 0.35 * fl), (0.5, '#ffb43a', 0.1 * fl), (1, '#ff7a1e', 0)])))
+            fig.fx_front.append(E.lumiere(fig, c, 100, 0.7 * fl, 'feu'))
         # l'abattage : un grand arc de feu en croissant, de la lame armée jusqu'à la lame abattue
         e = env(t, SP_STRIKE - 30, SP_STRIKE, SP_STRIKE + 40, SP_STRIKE + 160)
         if e > 0:
             W = ctx['wrist']
-            fig.fx_back.append(trail(fig, (W[0] - 6, W[1] + 8), 46, -115, -20, 14 * e, hot=True, op=e))
+            fig.fx_back.append(E.croissant(fig, (W[0] - 6, W[1] + 8), 46, -115, -20, 16 * e, 'feu', op=e))
         # la lionne de feu bondit vers l'ennemi
         if SP_STRIKE - 20 <= t < SP_HIT + 30:
             ts = [a for a, _ in LION]
@@ -550,27 +540,20 @@ def fx_special(tl, P, Pp):
             tg = t - SP_HIT
             sc = env(tg, 0, 60, 230, 600)
             if sc > 0:
-                for j, (dx, hh, ww, bd, ln) in enumerate(((0, 50, 14.0, 0.5, 0.05), (-11, 34, 10.0, -1.0, -0.45), (11, 38, 10.5, 1.0, 0.5),
-                                                          (-21, 18, 6.0, -0.9, -0.9), (22, 20, 6.0, 0.9, 0.9))):
-                    flick = 1 + 0.08 * math.sin(t / 26.0 + j * 2.3)
-                    (fig.fx_front if j == 0 else fig.fx_back).append(
-                        tongue(fig, (X + dx * (0.7 + 0.3 * sc), GR), hh * sc * flick, ww * (0.6 + 0.4 * sc), bend=bd, lean=ln))
+                fig.fx_front.append(E.foyer(fig, X, GR, 66 * sc, 44 * (0.6 + 0.4 * sc), t, n=5, p='feu', seed=5))
             fb = env(tg, 0, 20, 60, 220)
             if fb > 0:
-                c = (X - 2, GR - 22)
-                fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(30), g_rad(
-                    fig, c, 30, [(0, FIRE[0], fb), (0.3, FIRE[1], 0.8 * fb), (0.7, FIRE[2], 0.35 * fb), (1, FIRE[3], 0)])))
-            for j, (vx, vy) in enumerate(((-26, -50), (22, -60), (-10, -70), (34, -38), (-36, -30), (10, -66))):
+                fig.fx_front.append(E.boule(fig, (X - 2, GR - 22), 15 * fb, t, 'feu', op=fb, seed=2))
+            for j, (vx, vy) in enumerate(((-50, -110), (44, -125), (-14, -140), (64, -80))):
                 tau = tg / 1000.0
                 if tau < 0.7:
-                    x, y = ballistic((X, GR - 20), (vx * 1.6, vy * 1.6), 260, tau)
+                    (x, y), (wx, wy) = E.vol((X, GR - 20), (vx, vy), 300, tau, drag=1.3)
                     if y < GR - 1:
-                        fig.fx_front.append(ember(fig, x, y, 0.8 if vx > 0 else 0.6, op=1 - tau / 0.7))
+                        fig.fx_front.append(E.etincelle(fig, x, y, wx, wy, 0.8 if vx > 0 else 0.65, 'feu', op=1 - tau / 0.7))
             sm_k = (tg - 120) / 1000.0
             if 0 < sm_k < 0.9:
                 o = env(sm_k, 0, 0.12, 0.4, 0.9)
-                for j, (dx, rr, sp) in enumerate(((-10, 5.0, 26), (4, 6.5, 34), (16, 4.4, 24))):
-                    fig.fx_back.append(smoke(fig, X + dx + 3 * sm_k * (1 if dx > 0 else -1), GR - 14 - sp * sm_k, rr * (0.7 + 0.7 * sm_k), op=0.85 * o))
+                fig.fx_back.append(E.nuage(fig, X + 3 + 3 * sm_k, GR - 20 - 32 * sm_k, 8 * (0.7 + 0.7 * sm_k), 'feu', op=0.85 * o, seed=1))
     return f
 
 

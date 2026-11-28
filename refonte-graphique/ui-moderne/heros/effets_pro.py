@@ -42,6 +42,8 @@ PAL = {
     # l'ombre (poison, ténèbres d'un héros de l'eau) : mêmes rôles de couleurs
     'or': dict(bord=('#ffa620', '#f07e12', '#c4520c'), milieu=('#ffe070', '#ffc23a'), coeur=('#ffffff', '#fff4bc'),
                halo='#ffb020', clair='#fff6d0', fonce='#7a3410', fumee=('#fff4dc', '#ecd2a6', '#b8946c')),
+    'sang': dict(bord=('#ff5a4a', '#d81e34', '#8a0a26'), milieu=('#ffb04a', '#ff6a3a'), coeur=('#fff6e0', '#ffd88a'),
+                 halo='#e02a3a', clair='#fff0d0', fonce='#5a0618', fumee=('#e8c8c8', '#a87888', '#6a4058')),
     'glace': dict(bord=('#3a86d8', '#6cc0f4', '#c4ecff'), milieu=('#b8eaff', '#eafaff'), coeur=('#ffffff', '#f4fdff'),
                   halo='#5ab8ff', clair='#ffffff', fonce='#1e4c96', fumee=('#ffffff', '#e0f4fc', '#a8d4ee')),
     'ombre': dict(bord=('#5a2a9a', '#8a4ad0', '#c49af4'), milieu=('#d0b0ff', '#efe2ff'), coeur=('#ffffff', '#f6efff'),
@@ -874,15 +876,17 @@ def anneau(fig, C, rx, ry, h, t, p='feu', op=1.0, arcs=((0, 360),), seed=0, kind
     cx, cy = C
     back, front = [], []
 
-    def band(b0, b1, kh):
+    def band(b0, b1, kh, A0, A1):
         n = max(12, int(abs(b1 - b0) / 3))
         lo, hi = [], []
+        full = abs(A1 - A0) >= 359
+        span = max(1.0, (A1 - A0) * 0.18)
         for i in range(n + 1):
             a = b0 + (b1 - b0) * i / n
             ar = math.radians(a)
             x, y = cx + rx * math.cos(ar), cy + ry * math.sin(ar)
-            end = min(1.0, min(i, n - i) / max(1.0, n * 0.18)) if abs(b1 - b0) < 359 else 1.0
-            hh = h * kh * _crete(rx, a, t, seed, kind) * (end ** 0.7)
+            end = 1.0 if full else min(1.0, (a - A0) / span, (A1 - a) / span)
+            hh = h * kh * _crete(rx, a, t, seed, kind) * (max(0.0, end) ** 0.7)
             lo.append((x, y + 0.6))
             hi.append((x + 0.12 * hh * math.cos(ar), y - hh))
         return poly(lo + hi[::-1]).buffer(0.25 * kh, join_style=1)
@@ -892,9 +896,9 @@ def anneau(fig, C, rx, ry, h, t, p='feu', op=1.0, arcs=((0, 360),), seed=0, kind
             b0, b1 = max(a0, lo_), min(a1, hi_)
             if b1 - b0 < 3:
                 continue
-            g = band(b0, b1, 1.0)
-            g2 = inside(band(b0, b1, 0.6), g)
-            g3 = inside(band(b0, b1, 0.3), g2)
+            g = band(b0, b1, 1.0, a0, a1)
+            g2 = inside(band(b0, b1, 0.6, a0, a1), g)
+            g3 = inside(band(b0, b1, 0.3, a0, a1), g2)
             top = (cx, cy - h)
             k = 0.75 if lst is back else 1.0
             lst.append(group([bloom(fig, g, P['halo'], 0.4, grow=1.3, s=1.5),
@@ -1018,7 +1022,7 @@ def boule(fig, c, r, t=0.0, p='feu', op=1.0, seed=0):
         pts = []
         for i in range(40):
             a = 2 * math.pi * i / 40
-            rr = r * k * (1 + 0.09 * math.sin(a * 5 + t / 45.0 + seed) + 0.05 * math.sin(a * 3 - t / 70.0 + 2 * seed))
+            rr = r * k * (1 + 0.05 * math.sin(a * 4 + t / 45.0 + seed) + 0.04 * math.sin(a * 3 - t / 70.0 + 2 * seed))
             pts.append((cx + dx + rr * math.cos(a), cy + dy + rr * math.sin(a)))
         return poly(pts)
     g = g_(1.0)
@@ -1064,9 +1068,9 @@ def souffle(fig, M, T, d0, d1, t, w0=3.0, w1=16.0, p='feu', op=1.0, amp=2.4, rol
     g3 = inside(g3, g2)
     a, b = c[0], c[-1]
     out = [bloom(fig, g, P['halo'], 0.45, grow=1.6, s=1.8),
-           path(g, lin(fig, a, b, [(0, P['bord'][0]), (0.6, P['bord'][1]), (1, P['bord'][2])])),
+           path(g, lin(fig, a, b, [(0, P['bord'][0]), (0.7, P['bord'][1]), (1, P['bord'][1])])),
            path(g2, lin(fig, a, b, [(0, P['milieu'][0]), (1, P['milieu'][1])])),
-           path(g3, lin(fig, a, b, [(0, P['coeur'][0]), (0.7, P['coeur'][1]), (1, P['coeur'][1], 0.3)]))]
+           path(g3, lin(fig, a, b, [(0, P['coeur'][0]), (0.7, P['coeur'][1]), (1, P['coeur'][1], 0.5)]))]
     return group(out, op)
 
 
@@ -1074,3 +1078,97 @@ def spirale_feu(p='feu'):
     """Le dégradé d'une spirale (queue éteinte → tête blanche) qui marche pour tout élément (`spirale(..., stops=…)`)."""
     P = pal(p)
     return [(0, P['bord'][1], 0), (0.35, P['bord'][1], 0.85), (0.65, P['milieu'][1]), (0.9, P['milieu'][0]), (1, P['coeur'][0], 0.8)]
+
+
+def langues(fig, items, p='feu', op=1.0, halo=1.0):
+    """Des langues de flamme posées à des endroits différents (aura autour d'un corps, feu le long d'une arme), fondues
+    en UNE silhouette : items = [(base (x, y), h, w, bend, ang)] (ang : direction de la pointe en degrés, -90 = vers le
+    haut). Zones emboîtées (même langue plus petite, plus près de sa racine), halo doux, sans contour."""
+    items = [it for it in items if it[1] >= 0.8]
+    if op <= 0.02 or not items:
+        return ''
+    P = pal(p)
+
+    def geom(ks, kw):
+        gs = []
+        for (b, h, w, bend, ang) in items:
+            g = langue((0.0, 0.0), h * ks, w * kw, bend, 0.0)
+            g = affinity.rotate(g, ang + 90, origin=(0, 0))
+            gs.append(affinity.translate(g, b[0], b[1]))
+        return fuse(gs, close=0.35 * min(it[2] for it in items) * kw)
+    g = geom(1.0, 1.0)
+    g2 = inside(geom(0.66, 0.62), g, 0.3)
+    g3 = inside(geom(0.36, 0.34), g2, 0.2)
+    x0, y0, x1, y1 = g.bounds
+    lo, hi = ((x0 + x1) / 2, y1), ((x0 + x1) / 2, y0)
+    out = [bloom(fig, g, P['halo'], 0.45 * halo, grow=1.4, s=1.6),
+           path(g, lin(fig, lo, hi, [(0, P['bord'][0]), (0.5, P['bord'][1]), (1, P['bord'][2])])),
+           path(g2, lin(fig, lo, hi, [(0, P['milieu'][0]), (1, P['milieu'][1])])),
+           path(g3, P['coeur'][0], 0.95)]
+    return group(out, op)
+
+
+def bez(p0, p1, p2, p3, n=12):
+    """Les points d'une courbe de Bézier cubique."""
+    out = []
+    for i in range(n + 1):
+        t = i / n
+        a, b, c, d = (1 - t) ** 3, 3 * (1 - t) ** 2 * t, 3 * (1 - t) * t * t, t ** 3
+        out.append((a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]))
+    return out
+
+
+def meches(fig, locks, p='feu', op=1.0, halo=1.0):
+    """Des mèches d'énergie (crinière de flammes, chevelure d'eau, tentacules de vent) fondues en UNE silhouette :
+    locks = [(points de la racine à la pointe, largeur)] ; chaque mèche est un ruban effilé à la pointe ; zones
+    emboîtées (les mêmes mèches plus fines), claires à la racine, colorées vers les pointes ; halo doux, sans contour."""
+    locks = [(pts, w) for pts, w in locks if len(pts) >= 2 and w > 0.3]
+    if op <= 0.02 or not locks:
+        return ''
+    P = pal(p)
+
+    def geom(k, cut=1.0):
+        gs = []
+        for pts, w in locks:
+            q = pts[:max(2, int(round(len(pts) * cut)))]
+            g, _ = ribbon_geom(q, w * k, 'pointe', n=24)
+            gs.append(g)
+        return fuse(gs, close=0.5 * k)
+    g = geom(1.0)
+    roots = [pts[0] for pts, _ in locks]
+    tips = [pts[-1] for pts, _ in locks]
+    a = (sum(x for x, _ in roots) / len(roots), sum(y for _, y in roots) / len(roots))
+    b = (sum(x for x, _ in tips) / len(tips), sum(y for _, y in tips) / len(tips))
+    L = sum(math.dist(pts[0], pts[-1]) for pts, _ in locks) / len(locks)
+    wm = sum(w for _, w in locks) / len(locks)
+    # le milieu et le cœur : la silhouette rétrécie, gardée du côté des racines (le feu est plus chaud près du corps)
+    near = fuse([Point(r).buffer(L * 0.75) for r in roots], close=0)
+    g2 = inside(g.buffer(-wm * 0.18, join_style=1).intersection(near), g, 0.2)
+    near3 = fuse([Point(r).buffer(L * 0.45) for r in roots], close=0)
+    g3 = inside(g.buffer(-wm * 0.36, join_style=1).intersection(near3), g2, 0.15)
+    out = [bloom(fig, g, P['halo'], 0.45 * halo, grow=1.4, s=1.6),
+           path(g, lin(fig, a, b, [(0, P['bord'][0]), (0.6, P['bord'][1]), (1, P['bord'][2])])),
+           path(g2, lin(fig, a, b, [(0, P['milieu'][0]), (1, P['milieu'][1])])),
+           path(g3, P['coeur'][0], 0.9)]
+    return group(out, op)
+
+
+def jet(fig, cen, ws, p='feu', op=1.0, halo=0.45):
+    """Un jet d'énergie le long d'une ligne donnée (cen, de la source à la tête) avec sa largeur en chaque point (ws) :
+    UNE forme à tête arrondie, zones emboîtées (bord, milieu, cœur blanc près de la source), halo doux, sans contour."""
+    if op <= 0.02 or len(cen) < 2:
+        return ''
+    P = pal(p)
+    shapes = []
+    for k in (1.0, 0.58, 0.26):
+        w_ = [w * k for w in ws]
+        shapes.append(fuse([strip(cen, w_), Point(cen[-1]).buffer(max(0.2, w_[-1] * 0.5), quad_segs=10)], close=0.3))
+    g, g2, g3 = shapes
+    g2 = inside(g2, g, 0.2)
+    g3 = inside(g3, g2)
+    a, b = cen[0], cen[-1]
+    out = [bloom(fig, g, P['halo'], halo, grow=1.6, s=1.8),
+           path(g, lin(fig, a, b, [(0, P['bord'][0]), (0.7, P['bord'][1]), (1, P['bord'][1])])),
+           path(g2, lin(fig, a, b, [(0, P['milieu'][0]), (1, P['milieu'][1])])),
+           path(g3, lin(fig, a, b, [(0, P['coeur'][0]), (0.7, P['coeur'][1]), (1, P['coeur'][1], 0.5)]))]
+    return group(out, op)
