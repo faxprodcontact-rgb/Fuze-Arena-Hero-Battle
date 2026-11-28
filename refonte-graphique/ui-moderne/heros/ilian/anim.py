@@ -415,7 +415,7 @@ def fx_special(tl, ang_prev):
                 fig.fx_back.append(ring_arc(fig, (cx, y), rx, ry, 190 + rot_ * 0.2, 345 + rot_ * 0.2, w * 0.85, op=op * 0.9))
                 fig.fx_front.append(ring_arc(fig, (cx, y), rx, ry, 8 + rot_ * 0.3, 62 + rot_ * 0.3, w, op=op))
                 fig.fx_front.append(ring_arc(fig, (cx, y), rx, ry, 128 + rot_ * 0.2, 176 + rot_ * 0.05, w * 0.8, op=op))
-            for i in range(10):
+            for i in range(0, 10, 2):
                 fr = (i * 0.618) % 1
                 x0 = 30 + 68 * fr
                 k = ((t / 1000.0) * (0.6 + 0.3 * ((i * 0.37) % 1)) + (i * 0.29) % 1) % 1
@@ -424,8 +424,7 @@ def fx_special(tl, ang_prev):
         # la flaque qui frémit, puis la vague qui se lève devant lui
         if 120 <= t < 400:
             e = env(t, 120, 220, 300, 400)
-            fig.fx_back.append(outlined([(ribbon([(WAVE_X - 16, GR + 0.3), (WAVE_X, GR - 1.2), (WAVE_X + 16, GR + 0.3)], [0.3, 2.6 * e, 0.3]),
-                                          g_lin(fig, (WAVE_X, GR - 2), (WAVE_X, GR), [(0, WATER[2]), (1, WATER[4])]), 1)], op=e))
+            fig.fx_back.append(E.bosse(fig, WAVE_X, GR, 2.6 * e + 0.5, 32, 'eau', op=e))
         if 260 <= t < SP_HIT:
             if t < 880:
                 k = smooth((t - 260) / 560.0)
@@ -460,8 +459,7 @@ def fx_special(tl, ang_prev):
         fl = env(t, SP_HIT - 10, SP_HIT, SP_HIT + 20, SP_HIT + 120)
         if fl > 0:
             c = (CRASH_X, GR - 20)
-            fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(120), g_rad(
-                fig, c, 120, [(0, '#ffffff', 0.85 * fl), (0.15, WATER[1], 0.5 * fl), (0.5, WATER[2], 0.15 * fl), (1, WATER[3], 0)])))
+            fig.fx_front.append(E.lumiere(fig, c, 90, fl, 'eau'))
         # l'écrasement : la vague s'aplatit et roule en déferlante basse ; deux grandes nappes s'ouvrent en coupe
         if SP_HIT <= t < 1900:
             tg = (t - SP_HIT) / 1000.0
@@ -475,17 +473,12 @@ def fx_special(tl, ang_prev):
             se = env(tg, 0, 0.06, 0.25, 0.6)
             if se > 0:
                 grow = smooth(tg / 0.25)
-                fig.fx_front.append(sheet(fig, (px - 4, GR - 3), -102, 34 + 26 * grow, -26, 15 * se, op=1, tail=0.15 * smooth((tg - 0.25) / 0.35)))
-                fig.fx_front.append(sheet(fig, (px + 6, GR - 3), -74, 38 + 30 * grow, 26, 16 * se, op=1, tail=0.15 * smooth((tg - 0.25) / 0.35)))
-                fig.fx_back.append(sheet(fig, (px - 12, GR - 2), -134, 18 + 12 * grow, -24, 9 * se, op=1))
-                fig.fx_back.append(sheet(fig, (px + 14, GR - 2), -44, 20 + 14 * grow, 24, 9 * se, op=1))
+                fig.fx_front.append(E.gerbe(fig, px + 1, GR, min(0.97, 0.08 + tg / 0.62), 3.2, seed=5))   # UNE gerbe (effets_pro, 28/11)
             fe = env(tg, 0, 0.05, 0.4, 0.75)
             if fe > 0:
-                fig.fx_front.append(foam(fig, px + 2, GR - 9, 9 * fe, op=1, seed=5))
                 fig.fx_front.append(foam(fig, px - 24 - 10 * tg, GR - 4, 5 * fe, op=1, seed=6))
                 fig.fx_front.append(foam(fig, px + 28 + 10 * tg, GR - 4, 5.4 * fe, op=1, seed=7))
-            for j, (vx, vy, rr) in enumerate(((-70, -170, 1.6), (60, -190, 1.8), (-110, -90, 1.2), (115, -110, 1.3), (-25, -230, 1.1),
-                                              (30, -210, 1.4), (-140, -40, 1.0), (150, -50, 1.1), (5, -150, 0.9), (85, -150, 1.0))):
+            for j, (vx, vy, rr) in enumerate(((-70, -170, 1.6), (60, -190, 1.8), (-110, -90, 1.2), (115, -110, 1.3), (-25, -230, 1.1))):
                 tau = tg - 0.02 * (j % 3)
                 if 0 <= tau < 0.85:
                     x, y = ballistic((px, GR - 10), (vx, vy), 300, tau)
@@ -496,8 +489,7 @@ def fx_special(tl, ang_prev):
             if re > 0:
                 for j, (dx, rr) in enumerate(((-34, 3.4), (-12, 4.2), (16, 3.8), (40, 3.0))):
                     fig.fx_front.append(foam(fig, px + dx + 6 * (tg - 0.35), GR - 2.5, rr * re, op=re, seed=j))
-                fig.fx_back.append(outlined([(ribbon([(px - 50, GR + 0.3), (px, GR - 1.0), (px + 50, GR + 0.3)], [0.3, 2.4, 0.3]),
-                                              g_lin(fig, (px, GR - 2), (px, GR), [(0, WATER[2]), (1, WATER[4])]), 1)], op=re))
+                fig.fx_back.append(E.bosse(fig, px, GR, 2.4, 64, 'eau', op=re, foamy=0.6))
     return f
 
 
@@ -622,6 +614,53 @@ def main():
             break
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : la vague est UNE forme lisse sans contour sombre (creux, crête d'écume et reflet peints dedans,
+# halo doux), la gerbe de l'impact d'une forme, anneaux et traînée des rubans d'un seul tenant, gouttes étirées par
+# leur course, écume fondue, lumière ; l'attaque garde son dessin.
+import effets_pro as E  # noqa: E402
+
+
+def _wave(fig, xb, h, L, lip, r, op=1.0, foamy=1.0):
+    if h < 1.5 or op <= 0.02:
+        return ''
+    G = GR + 0.4
+    top = (xb + lip * 0.3, G - h)
+    pts = [(xb - L * 0.62, G), (xb - L * 0.34, G - h * 0.22), (xb - L * 0.14, G - h * 0.62), (top[0] - r * 0.6, G - h * 0.97), top,
+           (xb + lip * 0.75, G - h + r * 0.5), (xb + lip, G - h + r * 1.5), (xb + lip - r * 0.7, G - h + r * 2.3),
+           (xb + lip - r * 1.5, G - h + r * 1.6), (xb + lip * 0.5, G - h + r * 1.6), (xb + L * 0.1, G - h * 0.45),
+           (xb + L * 0.36, G - h * 0.08), (xb + L * 0.5, G)]
+    g = E.fuse([E.poly(E.catmull(pts + [pts[0]], 6))], close=0.6)
+    hollow = E.poly(E.catmull([(xb + lip - r * 1.4, G - h + r * 1.7), (xb + lip * 0.5, G - h + r * 1.7), (xb + L * 0.08, G - h * 0.45),
+                               (xb + L * 0.05, G - h * 0.2), (xb - L * 0.05, G - h * 0.5), (xb + lip * 0.2, G - h + r * 1.1),
+                               (xb + lip - r * 1.4, G - h + r * 1.7)], 6))
+    crest = E.poly(E.catmull([(xb - L * 0.2, G - h * 0.72), (top[0] - r * 0.7, G - h * 0.99), top, (xb + lip * 0.78, G - h + r * 0.55),
+                              (xb + lip, G - h + r * 1.5), (xb + lip * 0.86, G - h + r * 1.2), (xb + lip * 0.5, G - h + r * 0.55),
+                              (top[0] - r * 0.5, G - h + r * 0.6), (xb - L * 0.15, G - h * 0.6), (xb - L * 0.2, G - h * 0.72)], 6))
+    P = E.pal('eau')
+    out = [E.bloom(fig, g, P['halo'], 0.4, grow=1.6, s=1.8),
+           E.path(g, E.lin(fig, (xb + lip * 0.5, G - h), (xb - L * 0.3, G), [(0, WATER[2]), (0.3, WATER[3]), (0.7, WATER[4]), (1, WATER[5])])),
+           E.path(E.inside(hollow, g, 0.4), WATER[5], 0.4),
+           E.path(E.inside(crest, g), E.lin(fig, top, (xb - L * 0.2, G - h * 0.6), [(0, '#ffffff'), (1, WATER[1])]), min(1, foamy)),
+           E.path(E.inside(E.lit(g, 1.2), g, 0.2), '#ffffff', 0.55)]
+    return E.group(out, op)
+
+
+def _ring_arc(fig, c, rx, ry, a0, a1, w, op=1.0):
+    return E.ruban(fig, E.arc_ell(c, rx, ry, a0, a1), w * 1.7, 'eau', op=op, kind='fuseau')
+
+
+E.accrocher(sys.modules[__name__], {
+    'wave': _wave,
+    'ring_arc': _ring_arc,
+    'trail': lambda fig, C, R, a0, a1, w, op=1.0: E.croissant(fig, C, R, a0, a1, w, 'eau', op=op),
+    'drop': lambda fig, x, y, vx, vy, r=1.0, op=1.0: E.goutte(fig, x, y, vx if abs(vx) > 5 else vx * 40, vy if abs(vy) > 5 else vy * 40, r, 'eau', op=op),
+    'foam': lambda fig, cx, cy, r, op=1.0, seed=0: E.nuage(fig, cx, cy, r * 1.15, 'eau', op=op, seed=seed),
+})
 
 
 if __name__ == '__main__':

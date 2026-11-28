@@ -40,7 +40,7 @@ def vague(fig, i):
     """Le projectile : la vague qui bascule, l'avant de la crête en (0, 0), posée au sol (y = 0), vers la droite."""
     k = (0.3, 0.6)[i]
     h, L, lip, r = 106 - 40 * k, 60 + 30 * k, 30 + 38 * k, 10 - 2 * k
-    fig.fx_front.append('<g transform="translate(0 %s)">%s</g>' % (-(A.GR + 0.4), A.wave(fig, -lip, h, L, lip, r)))
+    fig.fx_front.append('<g transform="translate(0 %s)">%s</g>' % (-(A.GR + 0.4), A._wave(fig, -lip, h, L, lip, r)))   # « pro » (28/11)
 
 
 JEU = {

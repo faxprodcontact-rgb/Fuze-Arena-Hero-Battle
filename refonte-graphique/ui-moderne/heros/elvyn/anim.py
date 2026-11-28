@@ -629,7 +629,7 @@ def fx_special(tl):
             k = (tl - SP_GATHER[0]) / (SP_GATHER[1] - SP_GATHER[0])
             vortex(fig, pc, pr + 8 - 3 * k, 3, 3.2 + 1.0 * k, -tl * (0.6 + 0.6 * k), op=ch)
             vortex(fig, pc, pr + 13 - 4 * k, 2, 2.4 + 0.6 * k, tl * 0.5 + 40, op=ch * 0.8, tilt=0.4, span=110)
-            for i in range(11):
+            for i in range(0, 11, 2):
                 st = SP_GATHER[0] + (i * 61) % 420
                 dur = 420 + (i * 37) % 160
                 u = (tl - st) / dur
@@ -664,7 +664,7 @@ def fx_special(tl):
                 fig.fx_front.append(water_ball(fig, (pc[0] + 0.6, pc[1] - 0.6), pr * (1.0 + 0.35 * e0), op=0.8 * e0))
             # la queue se défait en gouttes et en bulles
             if tl > SP_HIT + 60:
-                for i in range(14):
+                for i in range(0, 14, 2):
                     fr = 1 - (i + 0.5) / 14            # du bout de la queue vers la tête
                     t_cut = SP_HIT + 60 + (1 - fr) * 380
                     tau = (tl - t_cut) / 1000.0
@@ -687,19 +687,15 @@ def fx_special(tl):
             X = FOE[0]
             fl = env(tg, -20, 0, 30, 140)
             if fl > 0:
-                fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(X), fm(FOE[1] + 10), fm(130), g_rad(
-                    fig, (X, FOE[1] + 10), 130, [(0, '#ffffff', 0.85 * fl), (0.14, WA[1], 0.55 * fl), (0.45, WA[2], 0.18 * fl), (1, WA[3], 0)])))
+                fig.fx_front.append(EP.lumiere(fig, (X, FOE[1] + 10), 90, fl, 'eau'))
             sc = env(tg, 0, 90, 260, 560)
             if sc > 0:
-                dome = sm([(X - 19 * sc, GR + 0.5), (X - 10, GR - 7 * sc), (X + 10, GR - 7 * sc), (X + 19 * sc, GR + 0.5)], t=0.9)
-                fig.fx_back.append(outlined([(dome, g_lin(fig, (X + 5, GR - 7), (X - 5, GR), [(0, '#ffffff'), (0.5, WA[2]), (1, WA[4])]), 1)], w=1.3))
-                for j, (dx, hh, ww, ang, bd) in enumerate(((0, 50, 12.0, -88, 0.4), (-11, 34, 9.0, -112, -0.8), (11, 38, 9.4, -68, 0.8),
-                                                          (-21, 20, 6.0, -140, -0.7), (22, 22, 6.0, -40, 0.7), (-4, 26, 6.0, -100, 0.5))):
-                    flick = 1 + 0.07 * math.sin(tl / 26.0 + j * 2.3)
-                    (fig.fx_front if j in (0, 3, 4) else fig.fx_back).append(
-                        jet(fig, (X + dx * (0.7 + 0.3 * sc), GR - 2), hh * sc * flick, ww * (0.6 + 0.4 * sc), ang, bend=bd))
-            for j, (vx, vy) in enumerate(((-70, -150), (60, -170), (-110, -80), (115, -95), (-25, -210), (30, -195), (-140, -30), (150, -40),
-                                          (-50, -120), (90, -140))):
+                # l'eau enveloppe l'ennemi : UNE colonne d'eau et sa gerbe, une bosse au pied (effets_pro, 28/11)
+                fig.fx_back.append(EP.bosse(fig, X, GR, 7 * sc, 40, 'eau', op=min(1, sc * 1.5)))
+                fig.fx_back.append(EP.colonne(fig, X, GR - 50 * sc, GR, 22 * (0.6 + 0.4 * sc), 14 * (0.6 + 0.4 * sc), 2 * math.sin(tl / 40), tg / 1000,
+                                              op=min(1, sc * 1.6), lips=sc))
+                fig.fx_front.append(EP.gerbe(fig, X, GR, min(0.95, 0.1 + tg / 700), 1.8, seed=3))
+            for j, (vx, vy) in enumerate(((-70, -150), (60, -170), (-110, -80), (115, -95), (-25, -210))):
                 tau = (tg - 20 * (j % 3)) / 1000.0
                 if 0 <= tau < 0.8:
                     x, y = ballistic((X, GR - 8), (vx, vy), 300, tau)
@@ -709,9 +705,9 @@ def fx_special(tl):
             fk = (tg - 120) / 1000.0
             if 0 < fk < 1.1:
                 o = env(fk, 0, 0.12, 0.6, 1.1)
-                for j, (dx, rr, sp) in enumerate(((-16, 4.6, -18), (-4, 6.0, -6), (12, 5.0, 14), (-28, 3.4, -26), (26, 3.6, 24))):
+                for j, (dx, rr, sp) in enumerate(((-16, 5.4, -18), (14, 5.8, 14))):
                     fig.fx_back.append(foam(fig, X + dx + sp * fk, GR - 3 - 4 * fk, rr * (0.75 + 0.5 * fk), op=0.95 * o))
-                for j, (dx, sp, rr) in enumerate(((-10, 36, 1.8), (6, 46, 2.2), (18, 30, 1.4), (-22, 26, 1.2), (0, 54, 1.6))):
+                for j, (dx, sp, rr) in enumerate(((-10, 36, 1.8), (6, 46, 2.2), (18, 30, 1.4))):
                     fig.fx_front.append(bubble(fig, X + dx + 2 * math.sin(fk * 8 + j), GR - 14 - sp * fk, rr, op=o))
     return f
 
@@ -837,6 +833,34 @@ def main():
                     gifp], check=True)
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : le tourbillon autour de la perle en rubans d'un seul tenant, la perle et les bulles des boules
+# d'eau sans contour sombre, les gouttes étirées par leur course, l'écume fondue, l'impact en colonne et gerbe d'une
+# forme ; le dragon d'eau (dessiné comme le héros) et l'attaque gardent leur dessin.
+import effets_pro as EP  # noqa: E402
+
+
+def _vortex(fig, c, R, arms, w, rot, op=1.0, tilt=0.55, span=150):
+    if op <= 0.02:
+        return
+    for j in range(arms):
+        a0 = rot + 360.0 / arms * j
+        bk, fr, _ = EP.spirale(fig, c, R + 1, R + 1, a0, span, w * 1.8, tilt=tilt, p='eau', n=24, stops=EP.spirale_feu('eau'))
+        fig.fx_back.append(EP.group(bk, op * 0.8))
+        fig.fx_front.append(EP.group(fr, op))
+
+
+EP.accrocher(sys.modules[__name__], {
+    'vortex': _vortex,
+    'bubble': lambda fig, x, y, r=1.4, op=1.0: EP.boule(fig, (x, y), r * 1.1, 0, 'eau', op=op * 0.9),
+    'water_ball': lambda fig, c, r, op=1.0, glint=True: EP.boule(fig, c, r, 0, 'eau', op=op),
+    'wdrop': lambda fig, x, y, vx, vy, r=1.0, op=1.0: EP.goutte(fig, x, y, vx, vy, r, 'eau', op=op),
+    'foam': lambda fig, cx, cy, r, op=1.0: EP.nuage(fig, cx, cy, r * 1.15, 'eau', op=op, seed=int(cx) % 3),
+})
 
 
 if __name__ == '__main__':

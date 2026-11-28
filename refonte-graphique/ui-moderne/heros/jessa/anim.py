@@ -956,5 +956,55 @@ def main():
     shutil.rmtree(TMP)
 
 
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : colonne, gerbe et bosse d'eau d'une forme, filets, gerbes de la bouche et traînée d'un seul
+# ruban, la balle d'eau une boule enroulée d'un ruban d'écume, les anneaux d'une forme sans contour sombre, gouttes
+# étirées par leur course, écume fondue ; la fumée de poudre (reconnue par jeu.py) et l'attaque gardent leur dessin.
+import effets_pro as E  # noqa: E402
+
+
+def _ring(fig, c, rx, ry, w, op, tilt=0.0):
+    if op <= 0.02 or ry < 0.4:
+        return ''
+    g = E.ellipse_g(c[0], c[1], rx + w / 2, ry + w / 2).difference(E.ellipse_g(c[0] + 0.1, c[1], max(0.1, rx - w / 2), max(0.1, ry - w / 2)))
+    return E.group([E.bloom(fig, g, E.pal('eau')['halo'], 0.4, grow=0.8, s=1.0),
+                    E.path(g, E.lin(fig, (c[0] + rx, c[1] - ry), (c[0] - rx, c[1] + ry), [(0, '#ffffff'), (0.35, WATER[2]), (1, WATER[3])]))], op)
+
+
+def _water_ball(fig, c, r, t, op=1.0):
+    pts = []
+    for i in range(10):
+        s_ = i / 9
+        ang = t * 0.03 + 5.5 * s_
+        pts.append((c[0] - r * 2.2 * (1 - s_) + r * 0.95 * math.cos(ang) * s_, c[1] + r * 1.05 * math.sin(ang) * (0.4 + 0.6 * s_)))
+    return E.group([E.boule(fig, c, r, t, 'eau'), E.ruban(fig, pts, r * 0.8, 'eau', kind='tete', halo=0.3)], op)
+
+
+def _sheet(fig, base, ang, length, bend, w, op=1.0, tail=0.0):
+    if length < 0.5 or op <= 0.02:
+        return ''
+    a = math.radians(ang)
+    u, nv = (math.cos(a), math.sin(a)), (-math.sin(a), math.cos(a))
+    pts = [base, (base[0] + u[0] * length * 0.5 + nv[0] * bend * 0.05 * length, base[1] + u[1] * length * 0.5 + nv[1] * bend * 0.05 * length),
+           (base[0] + u[0] * length, base[1] + u[1] * length)]
+    return E.ruban(fig, pts, w * 2.0, 'eau', op=op, kind='pointe')
+
+
+E.accrocher(sys.modules[__name__], {
+    'column': lambda fig, X, top, wb, wt, sway, t, op=1.0: E.colonne(fig, X, top, GR, wb, wt, sway, t, op=op),
+    'splash_crown': lambda fig, X, k, big=1.0, seed=0: ([], [E.gerbe(fig, X, GR, k, big * 1.1, seed=seed)] if 0 < k < 1 else []),
+    'stream': lambda fig, pts, w0, w1, op=1.0, light=False: E.ruban(fig, pts, w1 * 1.6, 'eau', op=op, kind='tete'),
+    'foam': lambda fig, cx, cy, r, op=1.0, seed=0: E.nuage(fig, cx, cy, r * 1.15, 'eau', op=op, seed=seed),
+    'drop': lambda fig, x, y, vx, vy, r=1.0, op=1.0: E.goutte(fig, x, y, vx, vy, r, 'eau', op=op),
+    'mound': lambda fig, X, h, L, op=1.0, foamy=1.0: E.bosse(fig, X, GR, h, L, 'eau', op=op, foamy=foamy),
+    'ring': _ring,
+    'water_ball': _water_ball,
+    'flash': lambda fig, c, r, facing=0.0, op=1.0: E.lumiere(fig, c, r * 2.2, op, 'eau'),
+    'sheet': _sheet,
+})
+
+
 if __name__ == '__main__':
     main()

@@ -798,5 +798,123 @@ def main():
     shutil.rmtree(TMP)
 
 
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : le trône d'eau est UNE silhouette (colonne, accoudoirs en volute, cascades et vasque fondus,
+# reflets peints dedans, sans contour sombre), la perle de jade une boule de lumière, les anneaux et la pluie de jade
+# des rubans et des gouttes étirées par leur course, les étincelles des lumières ; l'attaque garde son dessin.
+import effets_pro as E  # noqa: E402
+from shapely.geometry import box as _box  # noqa: E402
+
+
+def _fountain(fig, ctx, lift, phase, rise, spill):
+    back, front = fig.fx_back, fig.fx_front
+    cx = THRONE_X
+    G = GR + 0.2
+    rx, ry = 26 + 22 * rise, 1.4 + 1.4 * rise
+    if rise > 0.02:
+        pud = E.ellipse_g(cx, G - 0.4, rx, ry)
+        back.append(E.group([E.bloom(fig, pud, E.pal('eau')['halo'], 0.3), E.path(pud, E.lin(fig, (cx + rx, G - ry), (cx - rx, G + ry),
+                                                                                              [(0, WATER[1]), (0.5, WATER[2]), (1, WATER[3])]))], min(1, rise * 2)))
+    if lift < 1.0:
+        return
+    top = G - lift
+    L, R = [], []
+    n = 14
+    for i in range(n + 1):
+        t = i / n
+        y = top + (G - top) * t
+        hw = 22 - 10 * math.sin(math.pi * min(1.0, t * 1.12)) * (1 - 0.45 * spill) + 9 * t * t
+        hw = min(hw, 4 + lift * 1.6)
+        wob = 1.1 * math.sin(phase + t * 6.0)
+        off = 0.8 * math.sin(phase * 0.7 + t * 3.0)
+        L.append((cx - hw + wob + off, y))
+        R.append((cx + hw + wob * 0.6 + off, y))
+    parts = [E.poly(L + R[::-1])]
+    if lift >= 4:
+        h = min(14.0, lift * 0.9)
+        for sgn in (-1, 1):
+            base = (cx + sgn * 26, top + 1.5)
+            cc = (cx + sgn * 33.4, top - h + 0.6)
+            spiral = [base, (cx + sgn * 28, top - h * 0.5)]
+            for j in range(11):
+                a = math.radians(180 + j * 30)
+                rr = 3.4 * (1 - 0.62 * j / 10)
+                spiral.append((cc[0] + sgn * rr * math.cos(a), cc[1] + rr * math.sin(a)))
+            path = crpath(spiral, 24)
+            parts.append(E.strip(path, [4.6 - 2.2 * i / (len(path) - 1) for i in range(len(path))]))
+            q = (cx + sgn * 37.5, top - h + 4)
+            fall = crpath([q, (q[0] + sgn * 2.6, q[1] + 5), (q[0] + sgn * 4, (q[1] + G) / 2 + 2), (q[0] + sgn * 3.2, G - 1.6)], 14)
+            parts.append(E.strip(fall, [2.6 - 1.0 * k / (len(fall) - 1) + 0.35 * math.sin(phase * 1.3 + k * 0.9) + 1.0 * spill for k in range(len(fall))]))
+            front.append(E.nuage(fig, q[0] + sgn * 3.4, G - 1.8, 2.6 + 1.0 * spill, 'eau', seed=int(phase) + (sgn > 0)))
+    vrx = 20 + 13 * min(1.0, lift / 10) + 2 * spill
+    vry = 3.4 + 1.4 * min(1.0, lift / 10) + 0.8 * spill
+    vc = (cx, top + 0.6)
+    bowl = E.ellipse_g(vc[0], vc[1], vrx, vry + 0.6)
+    g = E.fuse(parts + [bowl], close=1.2).intersection(_box(-1e4, -1e4, 1e4, G + 0.2))
+    P = E.pal('eau')
+    hi = (cx + 24, top - 6)
+    lo = (cx - 24, G)
+    body = [E.bloom(fig, g, P['halo'], 0.35, grow=1.4, s=1.6),
+            E.path(g, E.lin(fig, hi, lo, [(0, WATER[1]), (0.35, WATER[2]), (0.75, WATER[3]), (1, WATER[4])])),
+            E.path(E.inside(E.lit(g, 1.4), g, 0.2), '#ffffff', 0.7),
+            E.path(E.inside(E.ellipse_g(vc[0] + 1, vc[1] - 0.6, vrx * 0.82, vry * 0.6), g), WATER[1], 0.8)]
+    back.append(E.group(body))
+    # devant elle : la lèvre de la vasque (la moitié basse de la vasque, dans la même silhouette)
+    lip = E.inside(bowl.intersection(_box(-1e4, vc[1] + 0.2, 1e4, 1e4)), g)
+    front.append(E.group([E.path(lip, E.lin(fig, (vc[0] + vrx, vc[1]), (vc[0] - vrx, vc[1] + vry), [(0, WATER[1]), (1, WATER[3])])),
+                          E.path(E.inside(E.lit(lip, 0.9), lip), '#ffffff', 0.8)]))
+
+
+def _palm_pearl(fig, ctx, level, t):
+    c = ctx['spark']
+    if level <= 1:
+        fig.fx_front.append(E.lumiere(fig, c, 8 + 8 * level, 0.6 * level, 'jade'))
+        fig.fx_front.append(E.boule(fig, c, 0.8 + 2.8 * level, t * 40, 'jade'))
+    else:
+        k = level - 1
+        fig.fx_front.append(E.lumiere(fig, c, 16 + 12 * k, 1 - k, 'jade'))
+        fig.fx_front.append(E.couronne(fig, c, 3 + 7 * k, 2.6 * (1 - k) + 0.4, t * 40, 0.0, 'jade', op=1 - smooth((k - 0.25) / 0.5), seed=1))
+
+
+def _ground_ring(fig, rx, w, op, tag):
+    c = (THRONE_X, GR - 0.6)
+    ry = rx * RING_FLAT
+    fig.fx_back.append(E.ruban(fig, E.arc_ell(c, rx, ry, 180, 360), w * 1.7, 'eau', op=op * 0.75, kind='fuseau'))
+    fig.fx_front.append(E.ruban(fig, E.arc_ell(c, rx, ry, 0, 180), w * 1.7, 'eau', op=op, kind='fuseau'))
+
+
+def _jade_rain(fig, t, lift):
+    for i in range(7):
+        a = math.radians(i * 360 / 7 + 12)
+        R = 42 + 10 * ((i * 7) % 3)
+        k = t * (1.0 + 0.12 * (i % 3)) - 0.05 * (i % 4)
+        if k <= 0:
+            continue
+        top = (THRONE_X + 31 * math.cos(a), GR - lift + 0.6 + 4.5 * math.sin(a))
+        gx, gy = THRONE_X + R * math.cos(a), GR - 0.5 + R * RING_FLAT * math.sin(a)
+        lay = fig.fx_back if math.sin(a) < 0 else fig.fx_front
+        if k < 1:
+            x = top[0] + (gx - top[0]) * k
+            y = top[1] + (gy - top[1]) * k - 34 * 4 * k * (1 - k) * (0.85 + 0.15 * (i % 2))
+            vx = gx - top[0]
+            vy = (gy - top[1]) - 34 * 4 * (1 - 2 * k)
+            lay.append(E.goutte(fig, x, y, vx * 3, vy * 3, 1.2, 'jade'))
+        elif k < 1.5:
+            q = (k - 1) / 0.5
+            lay.append(E.lumiere(fig, (gx, gy - 1.2), 5 * (1 - q) + 1, 1 - q, 'jade'))
+
+
+E.accrocher(sys.modules[__name__], {
+    'fountain': _fountain,
+    'palm_pearl': _palm_pearl,
+    'ground_ring': _ground_ring,
+    'jade_rain': _jade_rain,
+    'spark': lambda fig, c, r, op=1.0: E.lumiere(fig, c, r * 2.6, op, 'jade'),
+    'halo': lambda fig, c, r, color, op: E.lumiere(fig, c, r, op, 'jade'),
+})
+
+
 if __name__ == '__main__':
     main()

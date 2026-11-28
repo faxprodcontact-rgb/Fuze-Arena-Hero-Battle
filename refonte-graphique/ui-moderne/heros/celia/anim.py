@@ -512,14 +512,16 @@ def fx_special(tl):
             bases = [(52, 22, 9, -0.25), (60, 13, 10, -0.1), (70, 11, 11, 0.0), (80, 14, 9, 0.12), (86, 26, 8, 0.2),
                      (46, 56, 8, -0.35), (90, 54, 7, 0.3), (44, 84, 7, -0.3), (88, 84, 6, 0.25), (104, 46, 6, 0.3),
                      (40, 104, 6, -0.25), (90, 106, 5, 0.2)]
+            items = []
             for i, (x, y, w, ln) in enumerate(bases):
                 h = au * (5.5 + 2.4 * math.sin(ph + i * 1.7) + 1.6 * math.sin(0.45 * ph + i * 2.9)) * (1.25 if y < 30 else 1.0)
-                back.append(tongue(fig, (x, y + 4), h, w * (0.7 + 0.1 * au), lean=ln * 0.4, wob=math.sin(ph * 1.3 + i), op=min(1, au)))
+                items.append(((x, y + 4), h, w * (0.7 + 0.1 * au) * 1.1, math.sin(ph * 1.3 + i), -90 + 22 * ln))
+            back.append(E.langues(fig, items, 'glace', op=min(1, au)))   # l'aura de givre : UNE silhouette (effets_pro, 28/11)
         # la neige de l'air converge vers elle (l'inspiration)
         g = env(tl, 420, 520, 640, 720)
         if g > 0:
             k = clamp((tl - 420) / 300)
-            for j in range(10):
+            for j in range(0, 10, 2):
                 a = math.radians(j * 36 + 25 + 60 * k)
                 r = (60 - 26 * k) * (0.8 + 0.25 * (j % 3) / 2)
                 x, y = HC[0] + 4 + r * math.cos(a), HC[1] + 14 - 0.6 * r * math.sin(a)
@@ -550,10 +552,13 @@ def fx_special(tl):
         if hh > ht + 0.02 and tl < 1250:
             pts = helix_pts(ht, hh)
             fade = 1 - ease((tl - 1050) / 200)
-            for side, run in split_runs(pts):
-                (back if side else front).append(frost(fig, run, 4.0 * (0.4 + 0.6 * (len(run) / len(pts))), op=fade,
-                                                       tones=('#ffffff', '#c8f6ff', '#5ccaee')))
-            for j in range(9):
+            # le tourbillon de givre : UN ruban en spirale (effets_pro, 28/11), devant / derrière sans jonction visible
+            bk, fr, _ = E.spirale(fig, (FEET_X, 42 + (GR - 51) * ht), 0, 0, 22 + 470 * ht, 470 * (hh - ht), 6.4, tilt=0.3,
+                                  rise=-(GR - 51) * (hh - ht), p='glace', n=56, stops=E.spirale_feu('glace'),
+                                  rfun=lambda u: 14 + 26 * min(1.0, (ht + (hh - ht) * u) / 0.3) ** 0.8)
+            back.append(E.group(bk, fade * 0.85))
+            front.append(E.group(fr, fade))
+            for j in range(0, 9, 3):
                 x, y, bk = pts[int((j * 0.37 + 0.11) % 1 * (len(pts) - 1))]
                 (back if bk else front).append(flake(fig, x + 2 * math.sin(j), y + 1.5 * math.cos(j * 2), 1.3, op=fade, rot=tl * 0.3 + 40 * j)
                                                if j % 3 == 0 else snow(fig, x + 2 * math.sin(j), y - 1.5, 0.8, op=fade))
@@ -565,15 +570,13 @@ def fx_special(tl):
             ryy = 0.22 * rr
             c = (FEET_X, GR - 0.6 - ryy * 0.4)
             op = (1 - thin) * ease((tl - 800) / 80)
-            for (off, Lr, wv, tones) in ((0, 230, 5.0, ('#ffffff', '#dfe6fb', '#a6aee4')), (180, 190, 3.4, ('#ffffff', '#c8f6ff', '#5ccaee'))):
+            for (off, Lr, wv) in ((0, 230, 5.0), (180, 190, 3.4)):
                 L_ = Lr * (1 - 0.6 * thin)
-                pts = []
-                for i in range(41):
-                    a = math.radians(spin + off - L_ + L_ * i / 40)
-                    pts.append((c[0] + rr * math.cos(a), c[1] - ryy * math.sin(a), math.sin(a) > -0.05))
-                for side, run in split_runs(pts):
-                    (back if side else front).append(frost(fig, run, wv * (1 - 0.6 * thin) * (0.5 + 0.5 * len(run) / 41), op=op, tones=tones))
-            for j in range(12):
+                bk, fr, _ = E.spirale(fig, c, rr, rr, L_ - spin - off, -L_, wv * 2.4 * (1 - 0.6 * thin), tilt=0.22, p='glace', n=48,
+                                      stops=[(0, '#9ccff2', 0.25), (0.3, '#c8f0ff', 0.9), (0.8, '#eefbff'), (1, '#ffffff')])
+                back.append(E.group(bk, op * 0.8))
+                front.append(E.group(fr, op))
+            for j in range(0, 12, 2):
                 a = j * 30 + spin * 0.6 + 11 * (j % 2)
                 (x, y), bk = orbit_pos(a, rr * (0.92 + 0.12 * (j % 3) / 2), ryy, c)
                 y -= 2 + 3 * ((j * 7) % 4) + 6 * thin * (1 + j % 2)
@@ -609,7 +612,7 @@ def fx_special(tl):
         # la neige retombe doucement quand tout se défait
         fz = env(tl, 1250, 1360, 1600, 1900)
         if fz > 0:
-            for j in range(10):
+            for j in range(0, 10, 2):
                 x = 30 + 8.4 * j + 3 * math.sin(j * 2.3 + tl / 300)
                 y = 20 + ((j * 37) % 70) + (tl - 1250) * 0.035
                 front.append(snow(fig, x, y, 0.8 + 0.2 * (j % 2), op=fz))
@@ -886,6 +889,22 @@ def main():
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024),
           '— partie 1 : %.1f s, partie 2 : %.1f s' % (total, n2 / FPS))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : l'aura de givre fondue en UNE silhouette, le tourbillon et l'anneau de givre en spirales
+# continues, le souffle et les traînées des éclats des rubans d'un seul tenant, flocons et neige en lumières douces ;
+# les cristaux et les éclats (objets) gardent leur dessin, l'attaque aussi.
+import effets_pro as E  # noqa: E402
+
+E.accrocher(sys.modules[__name__], {
+    'frost': lambda fig, pts, wmax, op=1.0, tones=None, head=0.6: E.ruban(fig, pts, wmax * 1.7, 'glace', op=op, kind='tete', halo=0.4),
+    'flake': lambda fig, x, y, r=1.6, op=1.0, rot=0.0: E.etincelle(fig, x, y, 8 * math.cos(math.radians(rot)), 20, 0.5 * r, 'glace', op=op),
+    'snow': lambda fig, x, y, r=0.9, op=1.0: E.lumiere(fig, (x, y), r * 2.6, op * 0.9, 'glace'),
+    'halo': lambda fig, c, r, op=0.6: E.lumiere(fig, c, r * 2.2, op, 'glace'),
+})
 
 
 if __name__ == '__main__':

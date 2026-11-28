@@ -49,6 +49,7 @@ PAL = {
     'ombre': dict(bord=('#5a2a9a', '#8a4ad0', '#c49af4'), milieu=('#d0b0ff', '#efe2ff'), coeur=('#ffffff', '#f6efff'),
                   halo='#8a4ad0', clair='#f6efff', fonce='#2e1450', fumee=('#d8cce8', '#9a86b4', '#5e4a7a')),
 }
+PAL['jade'] = PAL['vent']        # le jade (lanterne, perles de lumière) : les couleurs du vent
 # la pierre (aiguilles, éclats) : très clair, clair, base, ombre, creux, bord
 PIERRE = ('#f4e4cc', '#c9ae92', '#8f7464', '#5e4656', '#3a2838', '#24142e')
 
@@ -594,9 +595,10 @@ def spirale(fig, C, R0, R1, a0, span, w, tilt=0.4, rise=0.0, p='vent', n=40, sto
         side = rows[i][1]
         while j < n and rows[j + 1][1] == side:
             j += 1
-        seg = strip(c[i:j + 2], ws[i:j + 2]) if j + 1 <= n else None
+        e_ = min(j + 2, n + 1)                       # (28/11) le dernier morceau n'est plus oublié
+        seg = strip(c[i:e_], ws[i:e_]) if e_ - i >= 2 else None
         if seg is not None and not seg.is_empty:
-            core = strip(c[i:j + 2], [x * 0.3 for x in ws[i:j + 2]])
+            core = strip(c[i:e_], [x * 0.3 for x in ws[i:e_]])
             (front if side else back).append(group([path(seg, gr), path(inside(core, seg), core_gr)], 1.0 if side else 0.7))
         i = j + 1
     return back, front, full

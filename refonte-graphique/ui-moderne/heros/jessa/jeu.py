@@ -25,8 +25,12 @@ def balle(fig, i):
 def balle_eau(fig, i):
     """La grosse balle d'eau enroulée d'écume et le filet d'eau derrière elle, devant en (0, 0)."""
     t = 860 + 60 * i
-    fig.fx_front.append(A.stream(fig, [(-37.6 + 34 * j / 8, 0.6 * A.math.sin(j + t * 0.05)) for j in range(9)], 0.3, 3.2))
-    fig.fx_front.append(A.water_ball(fig, (-3.6, 0.0), 3.6, t))
+    A._PRO[0] = True                      # la balle de la spéciale : effets « pro » (28/11)
+    try:
+        fig.fx_front.append(A.stream(fig, [(-37.6 + 34 * j / 8, 0.6 * A.math.sin(j + t * 0.05)) for j in range(9)], 0.3, 3.2))
+        fig.fx_front.append(A.water_ball(fig, (-3.6, 0.0), 3.6, t))
+    finally:
+        A._PRO[0] = False
 
 
 JEU = {
