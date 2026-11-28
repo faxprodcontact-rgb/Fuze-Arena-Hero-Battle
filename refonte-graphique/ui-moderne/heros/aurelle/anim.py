@@ -728,8 +728,9 @@ def fx_special(tl):
                 w_ = env(tau, 0, 0.04, 0.25, 0.5)
                 if w_ > 0:
                     R = 12 + 70 * min(1.0, tau / 0.5)
-                    fig.fx_back.append('<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="none" stroke="%s" stroke-width="%s" opacity="%g"/>' % (
-                        fm(cx), fm(GR), fm(R), fm(R * 0.09), E[1], fm(2.2 * w_ + 0.3), 0.8 * w_))
+                    bk_, fr_ = EP.onde(fig, (cx, GR), 82, min(0.99, tau / 0.5), 4.0, 'terre', op=w_, tilt=0.09)
+                    fig.fx_back.append(bk_)
+                    fig.fx_front.append(fr_)
                 # les blocs du rocher qui volent et retombent en roulant
                 for i, (vx, vy, r) in enumerate(((-40, -90, 3.2), (34, -104, 3.6), (66, -70, 2.6), (-70, -60, 2.4),
                                                  (92, -40, 2.0), (-14, -120, 2.0), (48, -126, 1.6), (-96, -36, 1.6))):
@@ -743,9 +744,7 @@ def fx_special(tl):
                     if tau < 0.9:
                         px, py = ballistic((cx, GR - 12), (vx, vy), 230, tau)
                         if py < GR - 1:
-                            fig.fx_front.append(outlined([(ellipse(px, py, 2.2, 1.4, tau * 300), K.MOSS.base, 1),
-                                                          (ellipse(px + 0.5, py - 0.4, 1.1, 0.5, tau * 300), K.MOSS.light, 1)],
-                                                         ink='#1e3226', w=1.1, op=min(1, 2.5 * (0.9 - tau))))
+                            fig.fx_front.append(EP.feuille(fig, px, py, tau * 300, 0.85, op=min(1, 2.5 * (0.9 - tau))))
                 # la couronne de dalles
                 rise = min(1.0, tau / 0.09)
                 so = env(tau, 0, 0.04, 0.42, 0.75)
@@ -905,6 +904,59 @@ def main():
                     gifp], check=True)
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : les traînées de la massue en croissants d'un seul tenant, les fentes du sol en courbes lisses,
+# les éclats en galets aux arêtes adoucies (moins nombreux), la poussière en bouffées fondues, les volutes en rubans,
+# les éclats de lumière sans forme, l'onde au sol d'un anneau, la mousse en feuilles ; le rocher, les dalles et
+# l'attaque gardent leur dessin.
+import effets_pro as EP  # noqa: E402
+
+_PIERRE = ('#f6e6c8', E[3], E[4], E[5], E[6], '#24142e')
+_N = [0]
+
+
+def _rock(fig, c, r, seed=0, rot=0.0, op=1.0, flat=1.0):
+    _N[0] += 1
+    if seed % 2 and r < 2.5:               # moins d'éclats, mieux mus
+        return ''
+    return EP.caillou(fig, c[0], c[1], r * 1.15, rot, seed=seed, op=op, pierre=_PIERRE)
+
+
+def _crack(fig, x, half, level, seed=0, op=1.0):
+    if op <= 0.02 or half < 1:
+        return []
+    return [EP.fissure(fig, [(x - half, GR + 0.4), (x - half * 0.2, GR + 0.9), (x + half * 0.4, GR + 0.3), (x + half, GR + 0.6)],
+                       2.8, 'terre', op=op, glow=1.0, pierre=_PIERRE)]
+
+
+def _running_crack(fig, x0, x1, op=1.0, level=2):
+    if x1 - x0 < 2 or op <= 0.02:
+        return []
+    return [EP.fissure(fig, [(x0, GR + 0.5), ((x0 * 2 + x1) / 3, GR + 1.0), ((x0 + x1 * 2) / 3, GR + 0.3), (x1, GR + 0.6)],
+                       2.6, 'terre', op=op, glow=1.0, pierre=_PIERRE)]
+
+
+def _flash(fig, c, R, fl):
+    if fl > 0:
+        fig.fx_front.append(EP.lumiere(fig, c, R * 0.8, fl, 'terre'))
+
+
+EP.accrocher(sys.modules[__name__], {
+    'rock': _rock,
+    'crack': _crack,
+    'running_crack': _running_crack,
+    'flash': _flash,
+    'club_trail': lambda fig, C, R, a0, a1, w, op=1.0: EP.croissant(fig, C, R, a0, a1, w * 1.1, 'terre', op=op),
+    'pop': lambda fig, c, r, facing=0.0, op=1.0: EP.lumiere(fig, c, r * 2.4, op, 'terre'),
+    'puff': lambda fig, cx, cy, r, op=1.0, *a, **k: EP.nuage(fig, cx, cy, r * 1.15, 'terre', op=op, seed=int(cx) % 3, flat=0.75),
+    'curl': lambda fig, c, r, a0, turn, w, op=1.0, kind='dust': EP.ruban(
+        fig, [(c[0] + r * (1 - 0.6 * i / 8) * math.cos(math.radians(a0 + turn * i / 8)), c[1] + r * (1 - 0.6 * i / 8) * math.sin(math.radians(a0 + turn * i / 8)))
+              for i in range(9)], w * 1.7, 'terre', op=op, kind='pointe', halo=0.2),
+})
 
 
 if __name__ == '__main__':

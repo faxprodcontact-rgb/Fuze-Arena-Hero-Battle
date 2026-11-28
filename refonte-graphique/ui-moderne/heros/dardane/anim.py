@@ -900,5 +900,52 @@ def main():
     shutil.rmtree(TMP)
 
 
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : le tourbillon de sable en spirale continue, les bosses de sable d'une forme, la poussière en
+# bouffées fondues, les grains en galets (deux fois moins), le venin en boule et gouttes étirées, l'éclat en lumière ;
+# le scorpion et l'attaque gardent leur dessin.
+import effets_pro as E  # noqa: E402
+
+_VENIN = dict(bord=(VEN[2], VEN[3], VEN[3]), milieu=(VEN[1], VEN[1]), coeur=('#ffffff', VEN[0]), halo=VEN[2], clair='#ffffff',
+              fonce=VEN[3], fumee=(VEN[0], VEN[1], VEN[2]))
+
+
+def _helix(fig, c, R, h, ph, w, op=1.0):
+    bk, fr, _ = E.spirale(fig, c, R, R * 0.75, 360 * ph, 450, w * 1.8, tilt=0.28, rise=h, p='sable', n=48, stops=E.spirale_feu('sable'))
+    return [E.group(bk, op * 0.85)], [E.group(fr, op)]
+
+
+def _grain(fig, x, y, r=0.55, op=1.0, a=0.0):
+    if int(x * 7.3 + y * 3.1) % 2:
+        return ''
+    return E.caillou(fig, x, y, r * 1.7, a * 40, seed=int(a) % 5, op=op)
+
+
+def _v_splash(fig, c, tau, seed=0, size=1.0):
+    out = []
+    e = env(tau, 0, 0.04, 0.12, 0.4)
+    if e > 0:
+        out.append(E.boule(fig, c, 4.4 * size * e, tau * 1000, _VENIN, op=e))
+    for j, (vx, vy) in enumerate(((-50, -90), (45, -100), (-80, -40), (85, -50))):
+        if 0 < tau < 0.6:
+            (x, y), (wx, wy) = E.vol(c, (vx * size, vy * size), 260, tau, drag=1.2)
+            if y < GR - 0.5:
+                out.append(E.goutte(fig, x, y, wx, wy, 1.1 * size, _VENIN, op=min(1, (0.6 - tau) * 4)))
+    return [], out
+
+
+E.accrocher(sys.modules[__name__], {
+    'helix': _helix,
+    'grain': _grain,
+    'v_splash': _v_splash,
+    'puff': lambda fig, cx, cy, r, op=1.0, seed=0: E.nuage(fig, cx, cy, r * 1.15, 'terre', op=op, seed=seed, flat=0.75),
+    'mound': lambda fig, cx, w, h, op=1.0: E.bosse(fig, cx, GR, h, w * 2.0, 'sable', op=op, foamy=0.4),
+    'flash': lambda fig, c, r, e: E.lumiere(fig, c, r, e, 'terre'),
+    'v_drop': lambda fig, x, y, vx, vy, r=1.2, op=1.0: E.goutte(fig, x, y, vx, vy, r, _VENIN, op=op),
+})
+
+
 if __name__ == '__main__':
     main()

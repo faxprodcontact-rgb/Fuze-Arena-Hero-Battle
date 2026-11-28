@@ -49,6 +49,8 @@ PAL = {
     'ombre': dict(bord=('#5a2a9a', '#8a4ad0', '#c49af4'), milieu=('#d0b0ff', '#efe2ff'), coeur=('#ffffff', '#f6efff'),
                   halo='#8a4ad0', clair='#f6efff', fonce='#2e1450', fumee=('#d8cce8', '#9a86b4', '#5e4a7a')),
 }
+PAL['sable'] = dict(bord=('#b88a5e', '#d8b07c', '#f0d6a4'), milieu=('#f2d8a8', '#fbe9c4'), coeur=('#fffaf0', '#fff3d8'),
+                   halo='#d8a868', clair='#fff6e2', fonce='#6e4a36', fumee=('#fbf1dc', '#e2cca6', '#ad9070'))   # sable, poussière dense
 PAL['jade'] = PAL['vent']        # le jade (lanterne, perles de lumière) : les couleurs du vent
 # la pierre (aiguilles, éclats) : très clair, clair, base, ombre, creux, bord
 PIERRE = ('#f4e4cc', '#c9ae92', '#8f7464', '#5e4656', '#3a2838', '#24142e')

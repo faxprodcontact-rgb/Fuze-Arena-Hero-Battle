@@ -603,18 +603,17 @@ def fx_special(tl):
                     if i % 3 == int(tl / 70) % 3:
                         tgt = fig.fx_back if math.sin(math.radians(STONES[i][0])) < 0 else fig.fx_front
                         tgt.append(sparkle(fig, (base[0] - w * 0.06, base[1] - hh - 0.6), 2.6, op=gold))
-                for j in range(10):
+                for j in range(0, 10, 2):
                     tt = ((tl - SP_LAUNCH[0]) / 600 + hsh(j, 5)) % 1
                     a = 360 * hsh(j, 6)
                     p = ring_pt(a, 0.4 + 0.5 * hsh(j, 7))
                     y = p[1] - 30 * tt
-                    fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s" opacity="%.3f"/>' % (
-                        fm(p[0]), fm(y), fm(0.6 + 0.5 * hsh(j, 8)), E[0] if j % 2 else E[1], gold * (1 - tt)))
+                    fig.fx_front.append(EP.etincelle(fig, p[0], y, 0, -50, 0.6 + 0.4 * hsh(j, 8), 'or', op=gold * (1 - tt)))
             # la poussière soulevée par les dalles
             od = env(tl, SP_STOMP, SP_STOMP + 60, SP_STOMP + 200, SP_STOMP + 420) + env(tl, SP_SINK[0], SP_SINK[0] + 60, SP_SINK[0] + 160, SP_SINK[1] + 60)
             if od > 0:
-                for j in range(6):
-                    a = 30 + 60 * j
+                for j in range(3):
+                    a = 30 + 120 * j
                     p = ring_pt(a, 1.04)
                     tgt = fig.fx_back if math.sin(math.radians(a)) < 0 else fig.fx_front
                     tgt.append(puff(fig, p[0], p[1] - 1.5, 2.2 + 0.8 * hsh(j, 3), op=0.7 * min(1, od)))
@@ -898,6 +897,53 @@ def main():
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024),
           '— partie 1 : %.1f s, partie 2 : %.1f s' % (total, n2 / FPS))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : la veine d'or au sol en rubans d'un seul tenant, la fente du sol une courbe lisse, les
+# cailloux en galets aux arêtes adoucies, la poussière en bouffées fondues, l'éclat du coup en lumière et étincelles ;
+# les menhirs (la matière du sort) et l'attaque gardent leur dessin.
+import effets_pro as EP  # noqa: E402
+
+_PIERRE = ('#f6e6c8', E[3], E[4], E[5], E[6], '#24142e')
+
+
+def _gold_ring(fig, s, level, back):
+    if s <= 0.02 or level <= 0.01:
+        return ''
+    a0, a1 = (180, 360) if back else (0, 180)
+    out = EP.ruban(fig, EP.arc_ell(RING_C, RING_RX * s, RING_RY * s, a0, a1, 18), (2.2 + 1.2 * level) * 1.4, 'or',
+                   op=min(1, 0.4 + 0.5 * level) * (0.8 if back else 1), kind='fuseau', halo=0.6)
+    if back:
+        out = EP.lumiere(fig, RING_C, RING_RX * s * 0.9, 0.25 * level, 'or') + out
+    return out
+
+
+def _crack(fig, x, half, level, seed=0, op=1.0, y=GR):
+    if op <= 0.02 or half < 1:
+        return []
+    return [EP.fissure(fig, [(x - half * 1.4, y + 0.4), (x - half * 0.3, y + 0.9), (x + half * 0.5, y + 0.3), (x + half * 1.4, y + 0.6)],
+                       2.6, 'terre', op=op, glow=min(1, 0.5 + 0.3 * level), pierre=_PIERRE)]
+
+
+def _sparks(fig, c, k, seed=0, scale=1.0, facing=0.0, spread=150):
+    return EP.group(EP.choc(fig, c, k, 7 * scale, 'or', ang=facing, n=3, seed=seed))
+
+
+EP.accrocher(sys.modules[__name__], {
+    'gold_ring': _gold_ring,
+    'crack': _crack,
+    'sparks': _sparks,
+    'curl': lambda fig, c, r, a0, turn, w, op=1.0, kind='dust': EP.ruban(
+        fig, [(c[0] + r * (1 - 0.6 * i / 8) * math.cos(math.radians(a0 + turn * i / 8)), c[1] + r * (1 - 0.6 * i / 8) * math.sin(math.radians(a0 + turn * i / 8)))
+              for i in range(9)], w * 1.8, 'terre', op=op, kind='pointe', halo=0.2),
+    'rock': lambda fig, c, r, seed=0, rot=0.0, op=1.0: EP.caillou(fig, c[0], c[1], r * 1.2, rot, seed=seed, op=op, pierre=_PIERRE),
+    'puff': lambda fig, cx, cy, r, op=1.0, kind='dust': EP.nuage(fig, cx, cy, r * 1.15, 'terre', op=op, seed=int(cx) % 3, flat=0.75),
+    'sparkle': lambda fig, c, r, op=1.0: EP.lumiere(fig, c, r * 2.0, op, 'or'),
+    'pop': lambda fig, c, r, facing=0.0, op=1.0: EP.lumiere(fig, c, r * 2.4, op, 'or'),
+})
 
 
 if __name__ == '__main__':

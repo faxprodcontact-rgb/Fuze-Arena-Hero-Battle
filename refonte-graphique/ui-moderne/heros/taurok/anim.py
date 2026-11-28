@@ -529,12 +529,11 @@ def fx_special(tl):
             fo = env(t, 960, 1000, 1350, 1700)
             if hoof > x_start + 2:
                 pts = [(x_start, GR + 0.4), ((x_start + hoof) / 2, GR + 0.6), (hoof, GR + 0.5)]
-                fig.fx_back.append('<path d="%s" fill="%s" opacity="%g"/>' % (
-                    ribbon(pts, [0.3, 2.2, 1.6]).d(), g_lin(fig, (x_start, GR), (hoof, GR), [(0, E[6]), (0.75, E[5]), (1, E[1])]), fo))
+                fig.fx_back.append(EP.fissure(fig, pts, 3.0, 'terre', op=fo, glow=0.8, pierre=_PIERRE))
             dk = env(t, 970, 1010, 1150, 1500)
             if dk > 0:
                 sx = P['shift']
-                for i in range(5):
+                for i in range(0, 5, 2):
                     tt = i / 4
                     x = x_start - 6 + (sx - 4) * (1 - tt) * 0.85 + 20
                     r = (4 + 6 * tt) * (0.6 + 0.4 * dk)
@@ -547,8 +546,7 @@ def fx_special(tl):
             tg = t - SP_HIT
             fl = env(tg, -6, 0, 40, 170)
             if fl > 0:
-                fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(cx), fm(GR - 24), fm(150), g_rad(
-                    fig, (cx, GR - 24), 150, [(0, '#fffef0', 0.85 * fl), (0.12, E[0], 0.5 * fl), (0.45, E[1], 0.15 * fl), (1, E[2], 0)])))
+                fig.fx_front.append(EP.lumiere(fig, (cx, GR - 24), 110, fl, 'terre'))
             if tg >= 0:
                 tau = tg / 1000.0
                 e = env(tau, 0, 0.03, 0.16, 0.36)
@@ -560,11 +558,13 @@ def fx_special(tl):
                 rise = min(1.0, tau / 0.09)
                 so = env(tau, 0, 0.04, 0.42, 0.75)
                 sink = max(0.0, (tau - 0.42) / 0.33)
-                for i, (dx, h, w, ln, front) in enumerate(((-24, 12, 8, -3.4, False), (-13, 18, 9, -2.0, False), (0, 22, 10, 0.4, False),
-                                                           (13, 17, 9, 2.4, False), (25, 12, 8, 3.6, False),
-                                                           (-18, 10, 8, -3.0, True), (19, 11, 8, 3.2, True))):
-                    hh = h * rise * (1 - 0.7 * sink)
-                    (fig.fx_front if front else fig.fx_back).append(slab(fig, cx + dx, hh, w, lean=ln, seed=40 + i, op=so))
+                # les dalles jaillissent : des aiguilles de pierre d'UNE silhouette (effets_pro, 28/11), derrière et devant
+                kk = rise * (1 - 0.7 * sink)
+                fig.fx_back.append(EP.aiguilles(fig, cx, GR, [(dx, h * 1.1, w * 1.15, ln * 5, kk) for dx, h, w, ln in
+                                                              ((-24, 12, 8, -3.4), (-13, 18, 9, -2.0), (0, 22, 10, 0.4), (13, 17, 9, 2.4), (25, 12, 8, 3.6))],
+                                                k=kk, p='terre', op=so, crumble=0.3 * sink, pierre=_PIERRE))
+                fig.fx_front.append(EP.aiguilles(fig, cx, GR + 1, [(dx, h, w * 1.1, ln * 5, kk) for dx, h, w, ln in ((-18, 10, 8, -3.0), (19, 11, 8, 3.2))],
+                                                 k=kk, p='terre', op=so, crumble=0.3 * sink, pierre=_PIERRE, bourrelet=False))
                 # des rochers qui volent haut et retombent
                 for i, (vx, vy, r) in enumerate(((-40, -110, 2.4), (30, -124, 2.8), (62, -90, 2.0), (-70, -80, 1.8),
                                                  (90, -60, 1.5), (-12, -140, 1.4), (46, -150, 1.2), (-90, -50, 1.2))):
@@ -576,7 +576,7 @@ def fx_special(tl):
                 if 0.05 < tau < 1.4:
                     k = (tau - 0.05) / 1.35
                     o = env(k, 0, 0.1, 0.5, 1)
-                    for dx, dy, r in ((-22, -4, 5), (22, -5, 5.5), (0, -14, 6.5), (-10, -26, 4.5), (12, -30, 4.0)):
+                    for dx, dy, r in ((-22, -4, 5.6), (22, -5, 6.0), (2, -20, 7.0)):
                         fig.fx_back.append(puff(fig, cx + dx * (1 + 0.8 * k), GR + dy - 8 * k, r * (0.7 + 0.8 * k), op=0.85 * o))
                     fig.fx_back.append(curl(fig, (cx + 30 + 8 * k, GR - 30 - 10 * k), 4 + 2 * k, 200 + 90 * k, 280, 2.6, op=0.8 * o, kind='dust'))
                     fig.fx_back.append(curl(fig, (cx - 30 - 8 * k, GR - 26 - 10 * k), 3.6 + 2 * k, 340 - 90 * k, -280, 2.4, op=0.7 * o, kind='dust'))
@@ -587,7 +587,7 @@ def fx_special(tl):
                 o = env(k, 0, 0.12, 0.45, 1)
                 for x_ in (40 + xo, 90 + xo):
                     fig.fx_back.append(puff(fig, x_ - 12 - 6 * k, GR - 3 - 1.5 * k, 3 + 2.5 * k, op=0.85 * o))
-                    fig.fx_front.append(puff(fig, x_ + 12 + 6 * k, GR - 2.5 - 1.2 * k, 2.6 + 2 * k, op=0.8 * o))
+                    fig.fx_front.append(puff(fig, x_ + 8 + 4 * k, GR - 2.5 - 1.2 * k, 2.6 + 2 * k, op=0.8 * o))
     return f
 
 
@@ -736,6 +736,57 @@ def main():
                     gifp], check=True)
     print('écrit', mp4, '(%d ko)' % (os.path.getsize(mp4) // 1024), 'et', gifp, '(%d ko)' % (os.path.getsize(gifp) // 1024))
     shutil.rmtree(TMP)
+
+
+
+# ======================================================================== la spéciale « pro » (28/11)
+# Demande du propriétaire : des effets d'une seule silhouette, aux courbes continues, sans formes empilées. Pendant la
+# spéciale seulement : les traînées de la massue en croissants d'un seul tenant, les fentes du sol en courbes lisses,
+# les éclats en galets aux arêtes adoucies (moins nombreux), la poussière en bouffées fondues, les volutes en rubans,
+# les dalles en aiguilles de pierre d'une silhouette, l'éclat en lumière ; l'attaque garde son dessin.
+import effets_pro as EP  # noqa: E402
+
+_PIERRE = ('#f6e6c8', E[3], E[4], E[5], E[6], '#24142e')
+_N = [0]
+
+
+def _rock(fig, c, r, seed=0, rot=0.0, op=1.0, flat=1.0):
+    _N[0] += 1
+    if seed % 2 and r < 2.5:               # moins d'éclats, mieux mus
+        return ''
+    return EP.caillou(fig, c[0], c[1], r * 1.15, rot, seed=seed, op=op, pierre=_PIERRE)
+
+
+def _crack(fig, x, half, level, seed=0, op=1.0):
+    if op <= 0.02 or half < 1:
+        return []
+    return [EP.fissure(fig, [(x - half, GR + 0.4), (x - half * 0.2, GR + 0.9), (x + half * 0.4, GR + 0.3), (x + half, GR + 0.6)],
+                       2.8, 'terre', op=op, glow=1.0, pierre=_PIERRE)]
+
+
+def _running_crack(fig, x0, x1, op=1.0, level=2):
+    if x1 - x0 < 2 or op <= 0.02:
+        return []
+    return [EP.fissure(fig, [(x0, GR + 0.5), ((x0 * 2 + x1) / 3, GR + 1.0), ((x0 + x1 * 2) / 3, GR + 0.3), (x1, GR + 0.6)],
+                       2.6, 'terre', op=op, glow=1.0, pierre=_PIERRE)]
+
+
+def _flash(fig, c, R, fl):
+    if fl > 0:
+        fig.fx_front.append(EP.lumiere(fig, c, R * 0.8, fl, 'terre'))
+
+
+EP.accrocher(sys.modules[__name__], {
+    'rock': _rock,
+    'crack': _crack,
+    'steel_trail': lambda fig, C, R, a0, a1, w, op=1.0: EP.croissant(fig, C, R, a0, a1, w * 1.1, 'terre', op=op),
+    'pop': lambda fig, c, r, facing=0.0, op=1.0: EP.lumiere(fig, c, r * 2.4, op, 'terre'),
+    'puff': lambda fig, cx, cy, r, op=1.0, kind='dust': EP.nuage(fig, cx, cy, r * 0.95, 'terre' if kind == 'dust' else 'glace', op=op,
+                                                                 seed=int(cx) % 3, flat=0.75 if kind == 'dust' else 0.9),
+    'curl': lambda fig, c, r, a0, turn, w, op=1.0, kind='dust': EP.ruban(
+        fig, [(c[0] + r * (1 - 0.6 * i / 8) * math.cos(math.radians(a0 + turn * i / 8)), c[1] + r * (1 - 0.6 * i / 8) * math.sin(math.radians(a0 + turn * i / 8)))
+              for i in range(9)], w * 1.7, 'terre', op=op, kind='pointe', halo=0.2),
+})
 
 
 if __name__ == '__main__':
