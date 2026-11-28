@@ -796,8 +796,11 @@ h3 .icon, .leader-line .icon, .member .icon, .gold-text .icon, .war-score .icon 
 .sort-btn { gap: 7px; }
 .sort-caret { width: 0; height: 0; border: 5px solid #0000; border-top-color: currentColor; margin-top: 5px; }
 /* la liste : elle défile seule, sous la salle ; le bas s'efface */
-.hall-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px 6px 22px; margin: 0 -6px;
-  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 22px), #0000); mask-image: linear-gradient(180deg, #000 calc(100% - 22px), #0000); }
+/* (28/11) le haut aussi : les cartes passent sous les filtres dans un fondu, plus de coupure nette */
+.hall-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 22px 6px 22px; margin: -14px -6px 0;
+  -webkit-mask-image: linear-gradient(180deg, #0000 0, #0000 3px, #000 22px, #000 calc(100% - 22px), #0000);
+  mask-image: linear-gradient(180deg, #0000 0, #0000 3px, #000 22px, #000 calc(100% - 22px), #0000); }
+.heroes > .hero-filters { position: relative; z-index: 3; }
 /* petit téléphone : le titre s'efface, pour laisser la place à la liste (le fond de la salle : sections/backdrops.css) */
 @media (max-height: 700px) {
   .hall-scroll { padding-bottom: 14px; }

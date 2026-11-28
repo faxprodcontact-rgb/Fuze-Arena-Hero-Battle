@@ -163,6 +163,9 @@ export function HeroDetail({ uid }: { uid: number }) {
         <Stars stars={hero.stars} />
         <h1>{d.name}</h1>
         <span class="hx-tag-rar">{t(mythic ? 'rarity.mythic' : `rarity.${d.rarity}`)}</span>
+        {/* les flèches de part et d'autre du nom (28/11 : dans la scène, elles passaient sous les médaillons) */}
+        {order.length > 1 && <button class="hx-arrow hx-arrow-l" aria-label="‹" onClick={() => step(-1)}><Sign name="chev" class="flip" /></button>}
+        {order.length > 1 && <button class="hx-arrow hx-arrow-r" aria-label="›" onClick={() => step(1)}><Sign name="chev" /></button>}
       </header>
 
       {/* la scène : le héros en grand, ses capacités de part et d'autre */}
@@ -206,8 +209,6 @@ export function HeroDetail({ uid }: { uid: number }) {
           )}
         </div>
 
-        {order.length > 1 && <button class="hx-arrow hx-arrow-l" aria-label="‹" onClick={() => step(-1)}><Sign name="chev" class="flip" /></button>}
-        {order.length > 1 && <button class="hx-arrow hx-arrow-r" aria-label="›" onClick={() => step(1)}><Sign name="chev" /></button>}
       </div>
 
       {/* la puissance, entre de petits ronds */}
