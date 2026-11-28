@@ -8,6 +8,49 @@ Relancer : `npm run simuler` (environ 5 minutes). Recalculer la difficulté de l
 `npm run simuler -- --calibrer` (environ 15 minutes), puis recopier les points d'ancrage dans
 `src/core/data/campaign.ts`.
 
+## Grand réglage du 28/11/2026 (sur le VRAI jeu)
+
+**Objectif (décidé par le propriétaire le 28/11)** : un joueur qui joue 3 fois 20 minutes par jour (environ 1 h) voit
+tout le jeu en **5 à 7 mois** (fin des 1 200 niveaux, premier Mythique) ; un joueur qui paie (carte mensuelle, passe de
+saison, offre de départ, fonds de croissance, un paquet de gemmes par mois, ≈ 25 € par mois) avance **environ 2 fois
+plus vite** sur les étoiles et les héros.
+
+**Outils** (ils remplacent l'ancien modèle ci-dessous, qui ne suivait plus le vrai jeu) :
+- `npx tsx simulations/vrai-jeu.ts regulier|payeur [jours] [graine]` : un joueur automatique joue le vrai jeu (mêmes
+  actions que les boutons : tirages, fusions, équipement, niveaux, campagne, tour, donjons, Événement, arène, guilde,
+  quêtes, passe, connexion, pubs, boutiques) ; environ 1 minute pour 180 jours ;
+- `npx tsx simulations/calibrer-vrai.ts [passes] [graines]` : règle `CAMPAIGN_ANCHORS` (src/core/data/campaign.ts) pour
+  que le joueur de référence atteigne chaque niveau visé au jour visé ; affiche aussi le plus long « mur » (jours sans
+  gagner un niveau) et les étapes des étoiles. En fin de partie la puissance monte lentement : la courbe oscille d'une
+  passe à l'autre, prendre la moyenne de deux passes qui encadrent la cible ;
+- `npx tsx simulations/heros.ts [combats] [niveau] [étoiles]` : la force de chaque héros (combats 5 contre 5 au hasard,
+  tous au même niveau et aux mêmes étoiles).
+
+**Niveaux visés (joueur de référence)** : jour 1 : 150 ; jour 3 : 260 ; semaine 1 : 380 ; semaine 2 : 500 ; mois 1 :
+680 ; mois 2 : 860 ; mois 3 : 980 ; mois 4 : 1 070 ; mois 5 : 1 140 ; jour 175 : 1 200.
+
+RÉSULTATS_28_11
+
+**Ce que le réglage a appris**
+1. Le joueur automatique doit jouer comme un vrai joueur : garder les copies de ses Légendaires (ne faire monter que la
+   meilleure), acheter les fragments de son héros. Sinon les étoiles rouges paraissent impossibles.
+2. Les « murs » (des semaines sans gagner un niveau) venaient de la structure, pas de la courbe : le grand boss de fin
+   de région usé par deux vagues avant lui, l'attaque pleine des boss (le dragon frappe toute l'équipe), et le premier
+   niveau d'un chapitre (une seule vague, plus forte). Réglages : `BALANCE` de src/core/stages.ts.
+3. La force des monstres se règle sur des sections ordinaires (`monsterScale` 1,25), pas sur une équipe idéale : sinon la
+   puissance conseillée ne veut rien dire.
+4. Une récompense fixe d'or ou d'essence vaut des centaines d'heures au début et rien à la fin : on la compte en heures de
+   butin (`goldH`, `essenceH`).
+5. Les fragments achetés en boutique doivent aller au même héros (le Légendaire visé, sinon celui qui en a le plus).
+
+**Force des héros** (`simulations/heros.ts`, niveau 60, ★5) : Légendaires 58 % de victoires, Épiques 52 %, Rares 47 %,
+Communs 43 % ; dans une rareté, la plupart à ± 6 points. Encore à part : Eldra (65 %, le plus fort des Légendaires),
+Nyrra, Jessa et Jarek (35 à 39 %, les plus faibles).
+
+---
+
+## Ancien modèle (19/11/2026, joueur de 3 × 5 min, avant le vrai jeu)
+
 ## Objectif (décidé le 19/11/2026)
 
 72 héros au lancement. Un joueur régulier voit **tout le jeu en 6 à 7 mois** : fin de la campagne
