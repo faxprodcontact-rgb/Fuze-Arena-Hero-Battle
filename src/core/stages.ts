@@ -19,6 +19,13 @@ export const BALANCE = {
   waveExponent: 0.35,
   /** Force du boss par rapport à un monstre normal, multipliée par le nombre de héros. */
   bossFactor: 0.2,
+  /**
+   * (28/11) L'attaque et la vie des boss (campagne, tour, donjons, Événement ; pas le boss de guilde) : leurs sorts
+   * frappent souvent toute l'équipe, avec l'attaque pleine ils faisaient d'une fin de région un mur (le joueur simulé
+   * restait 60 jours devant le dragon du niveau 480). Moins d'attaque, un peu plus de vie : un combat long, pas un mur.
+   */
+  bossAtk: 0.5,
+  bossHp: 1.25,
 };
 
 export function slotsAt(cleared: number): number {
@@ -109,7 +116,8 @@ export function buildWaves(o: WaveOptions): UnitInit[][] {
     if (last && o.boss) {
       const adds = Math.min(2, o.count - 1);
       const mult = perMonster * Math.max(1, o.count * BALANCE.bossFactor) + (o.soloBoss ? adds * perMonster * 0.4 : 0);
-      units.push(monsterToUnit(o.boss, 2, o.element, mult, `e-${w}-boss`));
+      const boss = monsterToUnit(o.boss, 2, o.element, mult, `e-${w}-boss`);
+      units.push({ ...boss, atk: Math.round(boss.atk * BALANCE.bossAtk), maxHp: Math.round(boss.maxHp * BALANCE.bossHp) });
       if (!o.soloBoss) for (let i = 0; i < adds; i++) units.push(monsterToUnit(pick(rng, FRONT_MONSTERS), i as Slot, o.element, perMonster * 0.6, `e-${w}-${i}`));
     } else {
       const front = Math.min(3, Math.max(1, Math.ceil(o.count * 0.6)));
