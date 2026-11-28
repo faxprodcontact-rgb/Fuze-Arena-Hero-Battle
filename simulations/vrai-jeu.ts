@@ -11,6 +11,7 @@ import { HEROES, heroDef } from '../src/core/data/heroes';
 import { GEAR_SLOTS } from '../src/core/data/items';
 import { DAILY_CHESTS, DAILY_QUESTS, PASS_LEVELS, WEEKLY_CHESTS, WEEKLY_QUESTS, type DungeonKind } from '../src/core/data/modes';
 import { MYTHIC_STARS } from '../src/core/data/stars';
+import { FEATURED_BANNER } from '../src/core/data/summon';
 import { CAMPAIGN_STAGES } from '../src/core/data/economy';
 import {
   adsLeft, arenaPlan, claimJoker, jokerPending, autoFormation, buyExchange, buyOffer, campaignBattle, claimChest, claimLogin, claimMail, claimMission,
@@ -282,6 +283,8 @@ export class RealPlayer {
   run(days: number): this {
     const end = this.days.length + days;
     for (this.day = this.days.length; this.day < end; this.day++) {
+      // un nouvel événement toutes les 2 semaines (comme dans le vrai jeu : un nouveau portail d'événement)
+      FEATURED_BANNER.id = `sim-${Math.floor(this.day / 14)}`;
       // le premier jour : 30 min en arrivant, puis 2 × 20 min ; ensuite 3 × 20 min (matin, midi, soir)
       const plan: [number, number][] = this.day === 0 ? [[0, 30], [3, 20], [10, 20]] : [[1, 20], [6, 20], [14, 20]];
       for (const [hour, min] of plan) {
