@@ -4,7 +4,7 @@ import { Battle } from '../src/core/battle/engine';
 import { DAILY_CHESTS, DAILY_QUESTS, WEEKLY_CHESTS, WEEKLY_QUESTS } from '../src/core/data/modes';
 import {
   autoFormation, campaignBattle, claimChest, claimQuest, collectIdle, ensureDay, equipBest, finishBattle, fuse,
-  fuseAllSimple, levelUp, summon,
+  fuseAllSimple, levelUp, summon, tutorialGift,
 } from '../src/game/state/actions';
 import { canLevelUp, teamPower } from '../src/game/state/selectors';
 import { getState, update } from '../src/game/state/store';
@@ -48,6 +48,9 @@ function play(minutes: number) {
 }
 
 ensureDay();
+// le tutoriel (28/11) : le premier tirage, puis le cadeau de 10 invocations
+summon('normal', 1);
+tutorialGift();
 const sessions: [number, number][] = [[0, 10], [0, 10], [4, 15], [6, 10]];
 for (const [wait, min] of sessions) {
   timeTravel(wait);

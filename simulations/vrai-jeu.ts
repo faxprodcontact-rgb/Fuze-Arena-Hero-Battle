@@ -22,7 +22,7 @@ import {
 import { canLevelUp, isUnlocked, teamPower } from '../src/game/state/selectors';
 import { fresh, getState, now, replaceState, update } from '../src/game/state/store';
 import { ARENA_FREE_TICKETS, GUILD_BOSS_ATTEMPTS } from '../src/core/data/modes';
-import { FRAGMENTS_PER_COPY } from '../src/core/data/stars';
+import { FRAGMENTS_PER_COPY, RARITY_RULES } from '../src/core/data/stars';
 
 export type ProfileId = 'regulier' | 'payeur';
 
@@ -103,7 +103,12 @@ export class RealPlayer {
     if (!s0.fragmentTarget) setFragmentTarget(HEROES.find((h) => h.rarity === 'legendary')!.id);
     for (const [id, n] of Object.entries(getState().fragments)) if (n >= FRAGMENTS_PER_COPY) claimFragments(id);
     fuseAllSimple();
-    for (let k = 0; k < 3; k++) for (const h of [...getState().heroes].sort((a, b) => b.stars - a.stars)) if (getState().heroes.includes(h)) fuse(h.uid);
+    // les fusions des Épiques et Légendaires (les autres : fuseAllSimple) ; on recommence tant que quelque chose a fusionné
+    for (let k = 0, again = true; k < 4 && again; k++) {
+      again = false;
+      const ladder = getState().heroes.filter((h) => RARITY_RULES[heroDef(h.defId).rarity].fusion === 'ladder' && h.stars < RARITY_RULES[heroDef(h.defId).rarity].maxStars);
+      for (const h of ladder.sort((a, b) => b.stars - a.stars).slice(0, 60)) if (getState().heroes.includes(h) && fuse(h.uid)) again = true;
+    }
     autoFormation();
     for (const [uid] of getState().formation) equipBest(uid);
     forgeAll();

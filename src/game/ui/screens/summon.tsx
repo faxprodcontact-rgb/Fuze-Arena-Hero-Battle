@@ -101,7 +101,7 @@ export function SummonScreen() {
             <RoundBtn icon="fragments" label={t('summon.fragments')} dot={owned.some(([, n]) => n >= FRAGMENTS_PER_COPY)} onClick={() => open({ type: 'fragments' })} />
           )}
           {/* l'invocation gratuite (une publicité) : seulement pour le portail normal ; sa place est gardée pour l'autre */}
-          <RoundBtn icon="ad" label={t('summon.freeShort')} off={kind !== 'normal'} disabled={adsLeft(s) <= 0} dot={kind === 'normal' && adsLeft(s) > 0}
+          <RoundBtn icon="ad" label={t('summon.freeShort')} off={kind !== 'normal'} disabled={adsLeft(s) <= 0 || !!s.daily.adSummon} dot={kind === 'normal' && adsLeft(s) > 0 && !s.daily.adSummon}
             onClick={() => {
               const go = () => { rememberCast(null); cast(watchAd('summon')?.heroes); };
               if (s.shop.noAds) go();

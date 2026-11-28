@@ -153,16 +153,17 @@ export const WEEKLY_QUESTS: QuestDef[] = [
  * des centaines d'heures au début et presque rien à la fin). Changées en montants par resolveReward (state/selectors.ts).
  */
 export type Reward = Partial<Record<'gold' | 'essence' | 'goldH' | 'essenceH' | 'gems' | 'scrolls' | 'basicScrolls' | 'redScrolls' | 'crystals' | 'dust', number>>;
+// (28/11) un peu moins généreux : le joueur gratuit de référence reçoit environ 9 invocations par jour (il en avait 13)
 export const DAILY_CHESTS: { points: number; reward: Reward }[] = [
   { points: 20, reward: { basicScrolls: 4 } },
-  { points: 40, reward: { gems: 150 } },
-  { points: 60, reward: { scrolls: 1 } },
-  { points: 80, reward: { gems: 250 } },
-  { points: 100, reward: { scrolls: 2, basicScrolls: 8 } },
+  { points: 40, reward: { gems: 100, goldH: 2 } },
+  { points: 60, reward: { basicScrolls: 4, essenceH: 2 } },
+  { points: 80, reward: { gems: 150 } },
+  { points: 100, reward: { scrolls: 1, basicScrolls: 6 } },
 ];
 export const WEEKLY_CHESTS: { points: number; reward: Reward }[] = [
-  { points: 40, reward: { scrolls: 5 } },
-  { points: 100, reward: { gems: 1500, scrolls: 5, redScrolls: 1 } },
+  { points: 40, reward: { scrolls: 3 } },
+  { points: 100, reward: { gems: 1000, scrolls: 3, redScrolls: 1 } },
 ];
 
 // ---------- Pubs volontaires ----------
@@ -205,19 +206,19 @@ export const PASS_LEVELS: { free: Reward; premium: Reward }[] = Array.from({ len
   const lv = i + 1;
   if (lv === 30) return {
     free: { scrolls: 3, gems: 300, goldH: 24 },
-    premium: { scrolls: 10, crystals: 200, gems: 1000, dust: 500 },
+    premium: { scrolls: 15, crystals: 200, gems: 1500, dust: 500 },
   };
   if (lv % 5 === 0) return {
     free: { scrolls: 1, gems: 100, goldH: 8 },
-    premium: { scrolls: 3, crystals: 50, gems: 300, essenceH: 8 },
+    premium: { scrolls: 5, crystals: 50, gems: 500, essenceH: 8 },
   };
   // les autres paliers : un gain principal qui tourne, toujours avec un peu d'or et d'essence
   const turn = lv % 4;
   return {
     free: { goldH: 3, essenceH: 2, ...(turn === 1 ? { basicScrolls: 2 } : turn === 3 ? { gems: 30 } : {}) },
     premium: {
-      gems: 120,
-      ...(turn === 0 ? { scrolls: 1 } : turn === 1 ? { crystals: 20 } : turn === 2 ? { dust: 80 } : { basicScrolls: 5, essenceH: 4 }),
+      gems: 200,
+      ...(turn === 0 ? { scrolls: 2 } : turn === 1 ? { crystals: 20 } : turn === 2 ? { dust: 80 } : { basicScrolls: 5, essenceH: 4 }),
     },
   };
 });

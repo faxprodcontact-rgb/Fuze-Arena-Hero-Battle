@@ -1163,8 +1163,11 @@ export function adsLeft(s: PlayerState): number {
 export function watchAd(kind: AdReward): Gain | null {
   const s0 = getState();
   if (adsLeft(s0) <= 0) return null;
+  // une seule invocation gratuite par jour (28/11 : les 6 pubs du jour pouvaient toutes servir à invoquer)
+  if (kind === 'summon' && s0.daily.adSummon) return null;
   update((s) => {
     s.daily.ads += 1;
+    if (kind === 'summon') s.daily.adSummon = true;
     track(s, 'watchAd');
   });
   if (kind === 'summon') {

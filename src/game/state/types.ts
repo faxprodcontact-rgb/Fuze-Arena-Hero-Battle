@@ -174,6 +174,8 @@ export interface PlayerState {
   daily: {
     day: string;
     ads: number;
+    /** L'invocation gratuite d'une pub a déjà servie aujourd'hui (une par jour, 28/11). */
+    adSummon?: boolean;
     fastLoot: number;
     entries: Record<DungeonKind, number>;
     bossAttempts: number;

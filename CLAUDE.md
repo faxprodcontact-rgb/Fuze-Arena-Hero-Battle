@@ -33,7 +33,9 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
   gabarits sont retirés, une vieille sauvegarde reçoit un dédommagement par courrier : `src/game/state/migrate.ts`).
   Effets dans `src/core/battle/`, textes par `src/game/describe.ts`, équipements dans `src/core/data/items.ts`. Courrier :
   `src/core/data/mail.ts` (un `id` unique, jamais réutilisé ; `personal` = cadeau rangé dans la sauvegarde). Tutoriel :
-  `src/game/ui/tutorial.tsx` (il vise les éléments par sélecteurs CSS).
+  `src/game/ui/tutorial.tsx` (il vise les éléments par sélecteurs CSS ; depuis le 28/11 on commence SANS héros : premier
+  tirage au hasard, combat, coffre, niveau +1, cadeau de 10 invocations `tutorialGift`, tirage ×10, section ; le 7e jour de
+  connexion donne un Légendaire AU CHOIX, `LegendPickModal` de `screens/login.tsx`).
 - **Tout le jeu est en VECTORIEL** (v0.65.0, 27/11 : le pixel art HD et ses chaînes sont supprimés, plus de drapeau
   `?vecto`). Outils, tous dans `refonte-graphique/ui-moderne/` :
   - dessin et animation d'un personnage : `heros/<nom>/` ou `monstres/<nom>/` (`<nom>.py`, `anim.py` ; outil commun
@@ -54,7 +56,9 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
 - **8 clans** (2 par élément : Arachné et Méduse = terre, Kesha et Barzul = eau, Lenore et Kael = feu, Orin et Eldra =
   vent) : un général (un héros, joue les boss, dessiné plus grand), 3 monstres `mon-<clan>-<rôle>` et un décor animé
   (`refonte-graphique/ui-moderne/fonds/`, `public/art/vecto/fonds/`, `src/game/fond-vecto.ts`, `src/game/bg/fond-px.ts`).
-  `src/game/look.ts` choisit le clan et son décor selon le mode (campagne : région + élément du chapitre ; tour ; donjons ;
+  `src/game/look.ts` choisit le clan et son décor selon le mode (campagne : une région = un clan, son élément et son décor du
+  premier au dernier chapitre, ordre vent, eau, terre, feu deux fois : `CLANS` de look.ts = `REGION_ELEMENTS` de
+  core/stages.ts, régions de 2 à 5 chapitres `REGION_CHAPTERS` ; tour ; donjons ;
   boss ; arène). **Grands boss** (un par élément, `ui-moderne/monstres/` dragon, leviathan, titan, oiseau-tempete ; ids `boss-feu`, `boss-eau`, `boss-terre`, `boss-vent`) :
   boss du jour, de guilde et fin de chaque région (seul, au milieu) dès qu'ils sont exportés, sinon le général du clan.
   Décors : une plateforme rectangulaire d'un bord à l'autre (**jamais de rond au sol**), tout est posé.
