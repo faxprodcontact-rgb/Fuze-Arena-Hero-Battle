@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
+import { legalPages } from './src/game/legal-pages';
 
 // Numéro unique de chaque construction : écrit dans version.json et dans le jeu.
 // Le jeu compare les deux et se recharge tout seul quand une mise à jour est en ligne.
@@ -14,6 +15,17 @@ function versionFile(): Plugin {
     apply: 'build',
     generateBundle() {
       this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ build: BUILD_ID }) });
+    },
+  };
+}
+
+// Les pages légales en ligne (confidentialite.html, conditions.html, mentions.html), faites des textes du jeu (legal.ts).
+function legalFiles(): Plugin {
+  return {
+    name: 'legal-pages',
+    apply: 'build',
+    generateBundle() {
+      for (const [fileName, source] of legalPages()) this.emitFile({ type: 'asset', fileName, source });
     },
   };
 }
@@ -45,7 +57,7 @@ function artHash(): Plugin {
 export default defineConfig({
   base: './',
   define: { __BUILD__: JSON.stringify(BUILD_ID) },
-  plugins: [versionFile(), artHash()],
+  plugins: [versionFile(), legalFiles(), artHash()],
   // Phaser (les deux tiers du code) a son propre fichier : il ne change pas d'une mise à jour à l'autre, les téléphones le gardent.
   // Tests : ignorer les copies de travail des agents (.claude/worktrees), sinon chaque test compte deux fois.
   test: { exclude: ['**/node_modules/**', '**/dist/**', '.claude/**'] },

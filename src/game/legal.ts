@@ -12,6 +12,7 @@ const FR: Record<LegalDoc, Block[]> = {
     { p: "Fuze Arena – Hero Battle est édité par [À COMPLÉTER : nom ou société, adresse]. Contact : [À COMPLÉTER : adresse e-mail d'assistance]." },
     { h: 'Données collectées' },
     { p: "Un identifiant de compte (anonyme, ou lié à ton compte Apple ou Google si tu le choisis), ton nom de joueur, ta progression dans le jeu, tes achats dans le jeu, tes messages dans le tchat, et des statistiques d'utilisation (pages vues, durée des sessions)." },
+    { p: "Connexion avec Google ou Apple (si tu la choisis) : le jeu reçoit ton adresse e-mail (Apple peut donner une adresse relais qui cache la vraie), ton nom si tu l'as partagé, et un identifiant de compte. Aucun mot de passe n'est reçu. Ces informations servent seulement à garder ta partie et à la retrouver sur un autre appareil ; elles ne sont ni vendues ni utilisées pour la publicité." },
     { p: "Publicité : uniquement si tu choisis de regarder une pub, et seulement avec ton accord pour le suivi publicitaire." },
     { h: 'Pourquoi' },
     { p: "Faire fonctionner le jeu et sauvegarder ta partie, gérer les achats, modérer le tchat, améliorer le jeu, et afficher les publicités que tu choisis de regarder." },
@@ -22,7 +23,7 @@ const FR: Record<LegalDoc, Block[]> = {
     { h: 'Mineurs' },
     { p: "Les moins de 15 ans doivent avoir l'accord d'un parent pour la publicité personnalisée et les achats." },
     { h: 'Prestataires' },
-    { p: "Hébergement des données : Supabase. Achats : Apple, Google et RevenueCat. Publicité : Google AdMob. Chacun traite les données selon sa propre politique de confidentialité." },
+    { p: "Hébergement des données : Supabase (serveurs en Europe, Irlande). Connexion : Google et Apple. Achats : Apple, Google et RevenueCat. Publicité : Google AdMob. Chacun traite les données selon sa propre politique de confidentialité." },
   ],
   terms: [
     { p: 'Brouillon — version de test.' },
@@ -48,7 +49,7 @@ const FR: Record<LegalDoc, Block[]> = {
     { h: 'Directeur de la publication' },
     { p: '[À COMPLÉTER]' },
     { h: 'Hébergement' },
-    { p: "Site de test : GitHub Pages (GitHub, Inc., San Francisco, États-Unis). Serveur du jeu : Supabase. Applications : App Store (Apple) et Google Play (Google)." },
+    { p: "Site de test : GitHub Pages (GitHub, Inc., San Francisco, États-Unis). Serveur du jeu : Supabase (serveurs en Europe, Irlande). Applications : App Store (Apple) et Google Play (Google)." },
   ],
   credits: [
     { h: 'Conception' },
@@ -69,6 +70,7 @@ const EN: Record<LegalDoc, Block[]> = {
     { p: 'Fuze Arena – Hero Battle is published by [TO COMPLETE: name or company, address]. Contact: [TO COMPLETE: support e-mail].' },
     { h: 'Data we collect' },
     { p: 'An account ID (anonymous, or linked to your Apple or Google account if you choose), your player name, your game progress, your in-game purchases, your chat messages, and usage statistics (screens viewed, session length).' },
+    { p: 'Sign in with Google or Apple (if you choose it): the game receives your e-mail address (Apple may give a relay address that hides the real one), your name if you shared it, and an account ID. No password is ever received. This is only used to keep your progress and find it again on another device; it is never sold or used for advertising.' },
     { p: 'Advertising: only if you choose to watch an ad, and only with your consent to ad tracking.' },
     { h: 'Why' },
     { p: 'To run the game and save your progress, process purchases, moderate the chat, improve the game, and show the ads you choose to watch.' },
@@ -79,7 +81,7 @@ const EN: Record<LegalDoc, Block[]> = {
     { h: 'Children' },
     { p: 'Players under 15 need a parent’s consent for personalised ads and purchases.' },
     { h: 'Service providers' },
-    { p: 'Data hosting: Supabase. Purchases: Apple, Google and RevenueCat. Advertising: Google AdMob. Each processes data under its own privacy policy.' },
+    { p: 'Data hosting: Supabase (servers in Europe, Ireland). Sign-in: Google and Apple. Purchases: Apple, Google and RevenueCat. Advertising: Google AdMob. Each processes data under its own privacy policy.' },
   ],
   terms: [
     { p: 'Draft — test version.' },
@@ -103,7 +105,7 @@ const EN: Record<LegalDoc, Block[]> = {
     { h: 'Publisher' },
     { p: '[TO COMPLETE: name or company, legal status, registration number, address, e-mail]' },
     { h: 'Hosting' },
-    { p: 'Test site: GitHub Pages (GitHub, Inc., San Francisco, USA). Game server: Supabase. Apps: App Store (Apple) and Google Play (Google).' },
+    { p: 'Test site: GitHub Pages (GitHub, Inc., San Francisco, USA). Game server: Supabase (servers in Europe, Ireland). Apps: App Store (Apple) and Google Play (Google).' },
   ],
   credits: [
     { h: 'Design' },
