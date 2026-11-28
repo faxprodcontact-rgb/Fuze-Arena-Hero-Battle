@@ -59,6 +59,27 @@ FPS_COUP = 14        # …et autour du coup (de COUP_AVANT ms avant à COUP_APRE
 COUP_AVANT, COUP_APRES = 180, 260
 SAME = 4.0           # deux images de suite plus proches que ça (écart moyen sur les pixels peints, sur 255) n'en font qu'une
 
+# ---- l'ÉCLAT des sorts spéciaux (demande du propriétaire, 28/11 : « plus spectaculaires, plus gros, plus lumineux, avec
+# des traits plus épais »). Appliqué par l'outil aux EFFETS de la spéciale (fx_back / fx_front d'anim.py, jamais au
+# corps), pour tous les personnages ; réglable dans jeu.py : 'speciale': dict(…, eclat=dict(cible=1.4, …)), ou
+# eclat=False pour l'éteindre.
+#   trait : épaisseur des contours et des filets d'énergie (stroke-width × trait) ;
+#   cible, pres, rayon, proj : agrandissement de ce qui est posé sur la cible / près du lanceur / du jet / du projectile
+#     (chaque effet grandit autour de son milieu, ou de sa base s'il est posé au sol : il reste posé) ;
+#   lueur : force du halo de l'élément (0 : pas de halo) ; coeur : force du cœur presque blanc des parties claires ;
+#   marge : la vue de la spéciale est élargie d'autant (pixels du dessin) : un effet agrandi n'est pas coupé.
+ECLAT = dict(trait=1.7, cible=1.5, pres=1.18, rayon=1.35, proj=1.3, lueur=1.0, coeur=1.0, marge=34)
+# halo (large), lisière (serrée), cœur (presque blanc) de chaque élément
+ECLAT_COULEURS = {
+    'fire': ('#ff5a14', '#ffb347', '#fff6e0'),
+    'water': ('#1e9bff', '#7fd8ff', '#f0fbff'),
+    'wind': ('#22d68c', '#9cf5c8', '#f2fff8'),
+    'earth': ('#e08a1e', '#ffd166', '#fffae6'),
+}
+CLAN_ELEMENT = {'arachne': 'earth', 'meduse': 'earth', 'kesha': 'water', 'barzul': 'water', 'lenore': 'fire', 'kael': 'fire',
+                'orin': 'wind', 'eldra': 'wind'}
+BOSS_ELEMENT = {'feu': 'fire', 'eau': 'water', 'terre': 'earth', 'vent': 'wind'}
+
 
 # ======================================================================== chargement d'un personnage
 
@@ -267,6 +288,110 @@ def idmap_svg(fig, view, elems, reverse=False):
     return fig_svg(fig, view, keep_body=False, back=[], front=wrapped, extra=st)
 
 
+# ======================================================================== l'éclat des sorts spéciaux (28/11)
+
+_ELEMENTS = None
+
+
+def element_of(cid):
+    """L'élément d'un personnage du jeu : celui des règles (src/core/data/heroes.ts) pour un héros, celui de son clan
+    pour un monstre (mon-<clan>-…), celui de son nom pour un grand boss (boss-<élément>)."""
+    global _ELEMENTS
+    m = re.match(r'mon-([a-z]+)-', cid)
+    if m and m.group(1) in CLAN_ELEMENT:
+        return CLAN_ELEMENT[m.group(1)]
+    if cid.startswith('boss-') and cid[5:] in BOSS_ELEMENT:
+        return BOSS_ELEMENT[cid[5:]]
+    if _ELEMENTS is None:
+        code = ("import { HEROES } from './src/core/data/heroes'; "
+                "console.log(JSON.stringify(Object.fromEntries(HEROES.map((h) => [h.id, h.element]))));")
+        try:
+            out = subprocess.run(['npx', 'tsx', '-e', code], cwd=ROOT, check=True, capture_output=True, text=True).stdout
+            _ELEMENTS = json.loads(out.strip().splitlines()[-1])
+        except (subprocess.CalledProcessError, ValueError, IndexError):
+            _ELEMENTS = {}
+    if cid not in _ELEMENTS:
+        sys.exit('%s : élément inconnu (mettre eclat=dict(element=\'fire\'|\'water\'|\'wind\'|\'earth\') dans jeu.py)' % cid)
+    return _ELEMENTS[cid]
+
+
+def eclat_of(cfg, cid):
+    """Les réglages de l'éclat de la spéciale (ECLAT + ce que jeu.py change), ou None s'il est éteint."""
+    e = cfg.get('eclat', {})
+    if e is False:
+        return None
+    d = dict(ECLAT)
+    d.update(e)
+    d['element'] = e.get('element') or element_of(cid)
+    return d
+
+
+def vue_speciale(view, cfg, cid=None):
+    """La vue de rendu de la spéciale : celle du personnage, élargie de la marge de l'éclat."""
+    e = cfg.get('eclat', {})
+    if e is False:
+        return tuple(view)
+    m = (e or {}).get('marge', ECLAT['marge'])
+    return (view[0] - m, view[1] - m, view[2] + 2 * m, view[3] + 2 * m)
+
+
+def thick(el, k):
+    """Les contours et filets d'un effet plus épais (stroke-width × k)."""
+    if abs(k - 1) < 1e-3:
+        return el
+    f = lambda m: '%s%s' % (m.group(1), fm_(float(m.group(2)) * k))   # noqa: E731
+    el = re.sub(r'(stroke-width=")([\d.]+)', f, el)
+    return re.sub(r'(stroke-width:\s*)([\d.]+)', f, el)
+
+
+def fm_(v):
+    return ('%.2f' % v).rstrip('0').rstrip('.')
+
+
+def grow(el, box, s, grd):
+    """L'effet agrandi ×s autour de son milieu ; autour de sa base s'il est posé au sol (il reste posé).
+    box = (x0, y0, x1, y1) en pixels du dessin."""
+    if abs(s - 1) < 1e-3 or not box:
+        return el
+    x0, y0, x1, y1 = box
+    cx = (x0 + x1) / 2
+    cy = y1 if y1 >= grd - 4 else (y0 + y1) / 2
+    return '<g transform="translate(%s %s) scale(%s) translate(%s %s)">%s</g>' % (
+        fm_(cx), fm_(cy), fm_(s), fm_(-cx), fm_(-cy), el)
+
+
+def glow_defs(fid, ec):
+    """Le filtre de l'éclat (rendu dans l'image exportée, jamais en direct dans le jeu) : halo large et lisière serrée à
+    la couleur de l'élément autour des parties CLAIRES (la fumée et la roche ne brillent pas), couleurs un peu
+    relevées, et cœur presque blanc là où c'est déjà très clair."""
+    halo, rim, core = ECLAT_COULEURS[ec['element']]
+    lu, co = ec['lueur'], ec['coeur']
+    lum = '0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.55 1.1 0.3 0 -0.62'
+    hot = '0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 1.1 2.0 0.8 0 -2.55'
+    return ('<defs><filter id="%(id)s" filterUnits="userSpaceOnUse" x="-600" y="-600" width="1600" height="1600" '
+            'color-interpolation-filters="sRGB">'
+            '<feColorMatrix in="SourceGraphic" type="matrix" values="%(lum)s" result="l0"/>'
+            '<feComposite in="l0" in2="SourceAlpha" operator="in" result="l1"/>'
+            '<feGaussianBlur in="l1" stdDeviation="5" result="b1"/>'
+            '<feFlood flood-color="%(halo)s" flood-opacity="%(o1)s"/><feComposite in2="b1" operator="in" result="h1"/>'
+            '<feGaussianBlur in="l1" stdDeviation="1.6" result="b2"/>'
+            '<feFlood flood-color="%(rim)s" flood-opacity="%(o2)s"/><feComposite in2="b2" operator="in" result="h2"/>'
+            '<feComponentTransfer in="SourceGraphic" result="src"><feFuncR type="linear" slope="1.1" intercept="0.03"/>'
+            '<feFuncG type="linear" slope="1.1" intercept="0.03"/><feFuncB type="linear" slope="1.1" intercept="0.03"/>'
+            '</feComponentTransfer>'
+            '<feColorMatrix in="SourceGraphic" type="matrix" values="%(hot)s" result="c0"/>'
+            '<feComposite in="c0" in2="SourceAlpha" operator="in" result="c1"/>'
+            '<feGaussianBlur in="c1" stdDeviation="0.7" result="c2"/>'
+            '<feFlood flood-color="%(core)s" flood-opacity="%(o3)s"/><feComposite in2="c2" operator="in" result="c3"/>'
+            '<feMerge><feMergeNode in="h1"/><feMergeNode in="h2"/><feMergeNode in="src"/><feMergeNode in="c3"/></feMerge>'
+            '</filter></defs>') % dict(id=fid, lum=lum, hot=hot, halo=halo, rim=rim, core=core,
+                                       o1=fm_(min(1, 0.95 * lu)), o2=fm_(min(1, 1.0 * lu)), o3=fm_(min(1, 0.9 * co)))
+
+
+def glow_wrap(lst, fid):
+    return ['<g filter="url(#%s)">%s</g>' % (fid, ''.join(lst))] if lst else []
+
+
 # ======================================================================== un personnage
 
 def times_for(dur, fps, keys, dense=(), fps_dense=FPS_COUP):
@@ -296,9 +421,17 @@ def index_at(ts, t):
     return best
 
 
-def export_one(folder, voir=None):
+def export_one(folder, voir=None, allege=0):
     jm = load_jeu(folder)
-    A, D, J = jm.ANIM, jm.DESSIN, jm.JEU
+    A, D, J = jm.ANIM, jm.DESSIN, dict(jm.JEU)
+    if allege:
+        # l'éclat a fait dépasser le budget mémoire : la spéciale perd des images (loin du coup d'abord), puis le repos
+        sp_ = dict(J['speciale'])
+        sp_['fps'] = min(sp_.get('fps', FPS), (5, 4, 4, 3)[min(allege, 4) - 1])
+        sp_['fps_coup'] = min(sp_.get('fps_coup', FPS_COUP), (12, 11, 10, 9)[min(allege, 4) - 1])
+        J['speciale'] = sp_
+        if allege >= 3:
+            J['pose'] = dict(J['pose'], images=max(6, J['pose'].get('images', POSE_IMAGES) - 2 * (allege - 2)))
     cid = jm.ID
     name = os.path.basename(folder)
     up = J.get('up', UP)
@@ -310,6 +443,14 @@ def export_one(folder, voir=None):
     tmp = tempfile.mkdtemp(prefix='vecto-jeu-%s-' % name)
     main_job, proj_job = Job(tmp, view, up), Job(tmp, pview, up)
     rendu = J.get('rendu')
+    # l'éclat de la spéciale (28/11) : ses effets sont épaissis, agrandis, rendus avec le halo de l'élément, dans une
+    # vue élargie (un effet agrandi n'est pas coupé)
+    ec = eclat_of(J['speciale'], cid)
+    sview = vue_speciale(view, J['speciale']) if ec else view
+    spview = (pview[0] - 18, pview[1] - 18, pview[2] + 36, pview[3] + 36) if ec else pview
+    spec_job, sproj_job = Job(tmp, sview, up), Job(tmp, spview, up)
+    FID = 'eclat-sp'
+    defs = glow_defs(FID, ec) if ec and (ec['lueur'] > 0 or ec['coeur'] > 0) else ''
 
     def frame(T, segs):
         cap.fig = None
@@ -349,6 +490,8 @@ def export_one(folder, voir=None):
             b, c = cfg['bouche'], cfg['cible']
             rlen = math.hypot(c[0] - b[0], c[1] - b[1])
             rv = tuple(cfg.get('vue_rayon', (b[0] - 40, b[1] - 60, rlen + 100, 120)))
+            if which == 'speciale' and ec:
+                rv = (rv[0] - 10, rv[1] - 24, rv[2] + 20, rv[3] + 48)
             plan[which].update(rjob=Job(tmp, rv, up), rview=rv, rlen=rlen,
                                rang=math.degrees(math.atan2(c[1] - b[1], c[0] - b[0])))
 
@@ -419,7 +562,9 @@ def export_one(folder, voir=None):
                     arme_out.add(q.name)
                     arme_tgt.add(q.name)
             beaming = p['genre'] == 'rayon' and cfg['rayon'][0] <= t < cfg['rayon'][1]
+            sp = which == 'speciale' and ec is not None
             ray_b, ray_f = [], []
+            picked = []
             for k, (layer, el) in enumerate(elems):
                 box = bb.get(k)
                 where = 'near'
@@ -441,11 +586,29 @@ def export_one(folder, voir=None):
                             cfg['sur_cible'](t, cx, view[1] + (y0 + y1) / 2 / up, layer, el) if 'sur_cible' in cfg
                             else coupe is not None and cx >= coupe):
                         where = 'tgt'
+                picked.append((k, layer, el, where, (vx(x0), view[1] + y0 / up, vx(x1), view[1] + y1 / up) if box else None))
+            # l'éclat : chaque effet (un morceau de fx_back / fx_front d'anim.py, souvent plusieurs éléments : la traînée et
+            # sa lisière) grandit d'un bloc autour du milieu de ce qui en va au même endroit (de sa base s'il est posé au
+            # sol), contours plus épais
+            union = {}
+            if sp:
+                frag = [i for i, fr in enumerate(fig.fx_back) for _ in split_top(fr)]
+                frag += [len(fig.fx_back) + i for i, fr in enumerate(fig.fx_front) for _ in split_top(fr)]
+                for k, layer, el, where, bxd in picked:
+                    if bxd:
+                        u = union.get((frag[k], where))
+                        union[(frag[k], where)] = bxd if not u else (min(u[0], bxd[0]), min(u[1], bxd[1]), max(u[2], bxd[2]), max(u[3], bxd[3]))
+            for k, layer, el, where, bxd in picked:
                 lists = {'near': (near_b, near_f), 'tgt': (tgt_b, tgt_f), 'proj': (proj_b, proj_f), 'ray': (ray_b, ray_f)}.get(where)
                 if lists:
+                    if sp:
+                        el = grow(thick(el, ec['trait']), union.get((frag[k], where)), {'near': ec['pres'], 'tgt': ec['cible']}.get(where, 1.0), grd)
                     (lists[0] if layer == 'b' else lists[1]).append(el)
-            body = main_job.add(fig_svg(fig, view, True, near_b, near_f, drop=arme_out))
-            tgt = (main_job.add(fig_svg(fig, view, False, tgt_b, tgt_f, only=arme_tgt))
+            job, v_ = (spec_job, sview) if sp else (main_job, view)
+            wrap = (lambda lst: glow_wrap(lst, FID)) if sp and defs else (lambda lst: lst)   # noqa: E731
+            ex = defs if sp else ''
+            body = job.add(fig_svg(fig, v_, True, wrap(near_b), wrap(near_f), extra=ex, drop=arme_out))
+            tgt = (job.add(fig_svg(fig, v_, False, wrap(tgt_b), wrap(tgt_f), extra=ex, only=arme_tgt))
                    if (tgt_b or tgt_f or arme_tgt) else None)
             # `avance` (corps à corps) : le corps fonce dans sa propre animation ; ce déplacement (pixels du dessin vers
             # l'avant, à l'instant t) est retiré de l'image (elle est ancrée aux pieds déplacés) et donné au jeu
@@ -453,9 +616,19 @@ def export_one(folder, voir=None):
             ray = None
             if ray_b or ray_f:
                 b = cfg['bouche']
-                rot = lambda lst: ['<g transform="rotate(%.3f %.2f %.2f)">%s</g>' % (-p['rang'], b[0], b[1], ''.join(lst))] if lst else []   # noqa: E731
-                ray = p['rjob'].add(fig_svg(fig, p['rview'], False, rot(ray_b), rot(ray_f)))
-            out.append(dict(t=t, body=body, tgt=tgt, av=av, ray=ray))
+
+                def rot(lst):
+                    if not lst:
+                        return []
+                    g = '<g transform="rotate(%.3f %.2f %.2f)">%s</g>' % (-p['rang'], b[0], b[1], ''.join(lst))
+                    if sp:
+                        # l'éclat : le jet plus épais (en travers), avec le halo de l'élément
+                        g = '<g transform="translate(%s %s) scale(1 %s) translate(%s %s)">%s</g>' % (
+                            fm_(b[0]), fm_(b[1]), fm_(ec['rayon']), fm_(-b[0]), fm_(-b[1]), g)
+                        g = glow_wrap([g], FID)[0] if defs else g
+                    return [g]
+                ray = p['rjob'].add(fig_svg(fig, p['rview'], False, rot(ray_b), rot(ray_f), extra=ex))
+            out.append(dict(t=t, body=body, tgt=tgt, av=av, ray=ray, sp=sp))
         p['frames'] = out
 
     # ---- le projectile : dessiné par jeu.py (pointe en (0, 0), vers la droite), quelques images
@@ -468,6 +641,8 @@ def export_one(folder, voir=None):
                 sys.exit('%s %s : un tir demande projectile=(fonction qui dessine le projectile, pointe en 0,0)' % (name, which))
             fig0 = caught[which][0][0]
 
+            spj = which == 'speciale' and ec is not None
+
             def draw_imgs(draw, n_img):
                 ids = []
                 for q in range(n_img):
@@ -476,8 +651,13 @@ def export_one(folder, voir=None):
                     for k in ('parts', 'under', 'over'):
                         setattr(pf, k, [])
                     draw(pf, q)
+                    if spj:
+                        # l'éclat : le projectile de la spéciale plus gros (autour de sa pointe), plus épais, lumineux
+                        g = lambda lst: ['<g transform="scale(%s)">%s</g>' % (fm_(ec['proj']), ''.join(thick(e, ec['trait']) for e in lst))] if lst else []   # noqa: E731
+                        pf.fx_back = glow_wrap(g(pf.fx_back), FID) if defs else g(pf.fx_back)
+                        pf.fx_front = glow_wrap(g(pf.fx_front), FID) if defs else g(pf.fx_front)
                     # le corps est vidé avant : seuls restent les morceaux que `draw` a ajoutés (une arme dessinée en morceaux)
-                    ids.append(proj_job.add(fig_svg(pf, pview, True)))
+                    ids.append((sproj_job if spj else proj_job).add(fig_svg(pf, spview if spj else pview, True, extra=defs if spj else '')))
                 return ids
             projs.append((which, draw_imgs(draw, cfg.get('proj_images', 2))))
             if 'retour' in cfg:
@@ -486,7 +666,15 @@ def export_one(folder, voir=None):
                 projs.append((which + ':retour', draw_imgs(cfg.get('revient', draw), cfg.get('retour_images', cfg.get('proj_images', 2)))))
     print('%s : rendu…' % name, flush=True)
     imgs = main_job.run()
+    off = len(imgs)
+    imgs = imgs + spec_job.run()
+    for fr in plan['speciale'].get('frames', []):
+        if fr.get('sp'):
+            fr['body'] += off
+            if fr['tgt'] is not None:
+                fr['tgt'] += off
     pimgs = proj_job.run()
+    pimgs_sp = sproj_job.run()
     rimgs = {w: q['rjob'].run() for w, q in plan.items() if 'rjob' in q}      # les jets (`rayon`)
 
     # ---- 2) rogner, dédoublonner, ranger
@@ -563,8 +751,9 @@ def export_one(folder, voir=None):
             fr = p['frames'][i]
             if rj is not None:
                 r_list.append(add_cell(rj[fr['ray']], tuple(cfg['bouche']), p['rview']) if fr.get('ray') is not None else -1)
-            f_list.append(add_cell(imgs[fr['body']], (feet[0] + fr['av'], feet[1])))
-            c_list.append(add_cell(imgs[fr['tgt']], tgt_anchor) if fr['tgt'] is not None else -1)
+            vv = sview if fr.get('sp') else view
+            f_list.append(add_cell(imgs[fr['body']], (feet[0] + fr['av'], feet[1]), vv))
+            c_list.append(add_cell(imgs[fr['tgt']], tgt_anchor, vv) if fr['tgt'] is not None else -1)
         a = dict(genre=p['genre'], ms=[int(round(m)) for m in dur], f=f_list)
         if which != 'pose':
             a['coup'] = remap(index_at(p['ts'], cfg['coup']))
@@ -600,14 +789,15 @@ def export_one(folder, voir=None):
                 if cfg.get('arc'):
                     a['suit'] = 1          # le projectile suit la courbe de son vol (la flèche bascule)
                 ids = dict(projs)[which]
-                a['proj'] = [add_cell(pimgs[q], (0, 0), pview) for q in ids]
+                pim, pv = (pimgs_sp, spview) if which == 'speciale' and ec else (pimgs, pview)
+                a['proj'] = [add_cell(pim[q], (0, 0), pv) for q in ids]
                 a['projMs'] = cfg.get('proj_ms', [80] * len(ids))
                 if 'retour' in cfg:
                     # hd-fight.ts : l'arme revient de la 1re cible à la bouche pendant les images retourDe … retourDe +
                     # len(retour) (le jeu leur donne la durée du vol) ; une image du retour par image de l'animation
                     r0 = remap(index_at(p['ts'], cfg['retour'][0]))
                     r1 = remap(index_at(p['ts'], cfg['retour'][1]))
-                    rc = [add_cell(pimgs[q], (0, 0), pview) for q in dict(projs)[which + ':retour']]
+                    rc = [add_cell(pim[q], (0, 0), pv) for q in dict(projs)[which + ':retour']]
                     a['retourDe'] = r0
                     a['retour'] = [rc[q % len(rc)] for q in range(max(1, r1 - r0))]
         meta_anims[which] = a
@@ -662,9 +852,14 @@ def export_one(folder, voir=None):
         '\n  ATTENTION : BUDGET MÉMOIRE DÉPASSÉ (iPhone) : baisser fps / images / up dans jeu.py, ou retirer des effets'
         if mb > MEM_MAX else ''))
     if voir:
-        control_sheet(voir, name, meta, sheet, view, feet, grd, plan)
+        control_sheet(voir, name, meta, sheet, sview, feet, grd, plan)
     shutil.rmtree(tmp, ignore_errors=True)
+    D.build = cap.orig
+    if allege:
+        report.append('%s : allégé (niveau %d : spéciale à %s/%s images par seconde, repos %d images) pour l’éclat' % (
+            name, allege, J['speciale']['fps'], J['speciale']['fps_coup'], J['pose'].get('images', POSE_IMAGES)))
     print('\n'.join(report))
+    return mb, ec is not None
 
 
 # ======================================================================== planche de contrôle
@@ -793,7 +988,11 @@ def main():
         del args[i:i + 2]
     if '--un' in args:
         args.remove('--un')
-        export_one(folder_of(args[0]), voir)
+        # l'éclat de la spéciale grossit les images : au-delà du budget, on refait en allégeant (jamais au-delà)
+        for n in range(5):
+            mb, ec = export_one(folder_of(args[0]), voir, n)
+            if mb <= MEM_MAX or not ec:
+                break
         return
     if '--assembler' in args:
         assemble()

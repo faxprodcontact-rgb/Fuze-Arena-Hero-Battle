@@ -13,18 +13,24 @@ js = json.load(open(os.path.join(folder, 'jeu.json')))
 up = js['up']
 fr = js['frames']
 out = []
+grd = JE.get('sol', getattr(D, 'GRD', feet[1]))
 for an, a in js['anims'].items():
-    av = a.get('av') or [0] * len(a['f'])
-    for i, f in enumerate(a['f']):
+    # la spéciale est rendue dans une vue élargie (l'éclat, 28/11) ; ce qui est sur la cible aussi (posé à `cible`, sol)
+    v = J.vue_speciale(view, JE['speciale']) if an == 'speciale' else view
+    av = a.get('avance') or [0] * len(a['f'])
+    cells = [(i, f, (feet[0] + (av[i] if i < len(av) else 0), feet[1]), '') for i, f in enumerate(a['f'])]
+    if 'cible' in a and 'cible' in JE[an if an != 'pose' else 'attaque']:
+        cx = JE[an]['cible'][0]
+        cells += [(i, f, (cx, grd), 'cible') for i, f in enumerate(a['cible'])]
+    for i, f, (fx, fy), lab in cells:
         if f < 0: continue
         sx, sy, w, h, ax, ay = fr[f]
-        dx = av[i] if i < len(av) else 0
-        L = view[0] - (feet[0] + dx); T = view[1] - feet[1]
-        R = view[0] + view[2] - (feet[0] + dx); B = view[1] + view[3] - feet[1]
+        L = v[0] - fx; T = v[1] - fy
+        R = v[0] + v[2] - fx; B = v[1] + v[3] - fy
         side = []
         if abs(ax - L) < 0.6: side.append('gauche')
         if abs(ay - T) < 0.6: side.append('haut')
         if abs(ax + w / up - R) < 0.6: side.append('droite')
         if abs(ay + h / up - B) < 0.6: side.append('bas')
-        if side: out.append('%s#%d:%s' % (an, i, '/'.join(side)))
+        if side: out.append('%s%s#%d:%s' % (an, lab and '-' + lab, i, '/'.join(side)))
 print(nom, 'OK' if not out else ' '.join(out[:12]) + (' …(%d)' % len(out) if len(out) > 12 else ''))

@@ -29,33 +29,38 @@ plus vite** sur les étoiles et les héros.
 **Niveaux visés (joueur de référence)** : jour 1 : 150 ; jour 3 : 260 ; semaine 1 : 380 ; semaine 2 : 500 ; mois 1 :
 680 ; mois 2 : 860 ; mois 3 : 980 ; mois 4 : 1 070 ; mois 5 : 1 140 ; jour 175 : 1 200.
 
-**Résultats (réglages de la v0.72.0, médiane de 3 joueurs gratuits ; 2 payeurs)**
+**Résultats (réglages de la v0.73.0 : avantage d'élément 20 %, héros joker à chaque Événement, marches rouges
+d'origine ; médiane de 3 joueurs gratuits, et un payeur)**
 
 | Moment | Visé | Joueur gratuit (3 × 20 min) |
 |---|---|---|
-| Jour 1 | 150 | 158 |
+| Jour 1 | 150 | 157 |
 | Jour 3 | 260 | 283 |
-| Semaine 1 | 380 | 386 |
-| Semaine 2 | 500 | 464 |
+| Semaine 1 | 380 | 367 |
+| Semaine 2 | 500 | 486 |
 | Mois 1 | 680 | 633 |
-| Mois 2 | 860 | 862 |
-| Mois 3 | 980 | 921 |
-| Mois 4 | 1 070 | 1 016 |
-| Mois 5 | 1 140 | 1 082 |
-| Jour 175 | 1 200 | 1 082 (fin vers le 7e mois) |
+| Mois 2 | 860 | 846 |
+| Mois 3 | 980 | 1 016 |
+| Mois 4 | 1 070 | 1 125 |
+| Mois 5 | 1 140 | 1 197 |
+| Fin de la campagne | jour 175 | jour 155 (environ 5 mois) |
 
-| Étape (jour) | Joueur gratuit | Payeurs (2 joueurs) |
+| Étape (jour) | Joueur gratuit | Payeur |
 |---|---|---|
-| Premier ★5 | 5 | 2 |
-| Première étoile rouge | 17 | 6 et 12 |
-| 5 héros en étoiles rouges | 38 | 24 et 27 |
-| Premier ★5 rouge, premier Mythique | 158 | 84 et 88 |
-| Fin de la campagne | ≈ 200 | 84 et 100 |
+| Premier ★5 | 2 | 2 |
+| Première étoile rouge | 17 | 18 |
+| 5 héros en étoiles rouges | 45 | 44 |
+| Premier ★5 rouge | 84 | 117 |
+| Premier Mythique | 110 | 117 |
+| Fin de la campagne | 155 | 118 |
 
-Le payeur va donc environ 1,8 fois plus vite sur les étoiles et 2 fois plus vite sur la campagne. Les joueurs gratuits
-sont très différents selon la chance aux tirages : à réglages égaux, l'un a fini la campagne vers le jour 60, un autre
-vers le jour 170. Reste à surveiller : un palier lent vers le niveau 1 080 (environ 25 jours), et le plus long « mur »
-mesuré (10 jours vers le niveau 911). Invocations : environ 9 par jour pour le joueur gratuit (≈ 1 600 en 6 mois).
+Plus long « mur » du joueur médian : 7 jours (vers le niveau 870). Les joueurs restent très différents selon la chance
+aux tirages : l'un des trois (un seul bon Légendaire, deux Rares plafonnés au niveau 80 dans sa section) avance plus
+lentement et bute encore sur le dragon final ; c'est aussi en partie la façon de jouer du joueur automatique. À
+surveiller au réglage suivant : l'écart payeur / gratuit, mesuré ici sur un seul payeur, n'est net que sur la campagne.
+
+Réglages de la v0.72.0 (pour mémoire) : fin de la campagne vers le jour 200, premier Mythique au jour 158, payeurs 1,8 à
+2 fois plus rapides ; des blocages de 20 jours chez les joueurs malchanceux (élément contraire, pas assez de héros ★5).
 
 **Ce que le réglage a appris**
 1. Le joueur automatique doit jouer comme un vrai joueur : garder les copies de ses Légendaires (ne faire monter que la

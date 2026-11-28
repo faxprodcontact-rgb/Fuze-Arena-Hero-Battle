@@ -6,7 +6,8 @@
 //   HEROS=assassins-2,assassins-9 CLEARED=25 node refonte-graphique/ui-moderne/combat-video.cjs <brouillon>/video 5010 30 25
 //
 // HEROS : les héros de l'équipe (ids du jeu, 5 au plus, complétés par d'autres) ; CLEARED : étapes de campagne déjà
-// faites (le combat est la suivante : 25 → étape 26 = clan de Kael, 3 golems de lave) ; LVL : niveau des héros.
+// faites (le combat est la suivante : 25 → étape 26 = clan de Kael, 3 golems de lave) ; LVL : niveau des héros ;
+// SAUTE : secondes jouées sans capture au début (pour arriver vite aux spéciales).
 // Sorties : <dossier>/img/v0000.jpg… (390 × 844 à ×2). Montage : ffmpeg -framerate 25 -i img/v%04d.jpg …
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -73,6 +74,8 @@ function virtualClock() {
   await page.click('.btn-fight');
   await page.waitForTimeout(900);                    // le combat se charge (planches) en temps réel
   await page.evaluate(() => window.__virtOn());
+  // SAUTE=<s> : les premières secondes passent sans capture (la spéciale n'arrive qu'à énergie pleine, souvent après 30 s)
+  for (let i = 0; i < Math.round(Number(process.env.SAUTE || 0) * FPS); i++) await page.evaluate((ms) => window.__step(ms), 1000 / FPS);
   const n = Math.round(SECS * FPS);
   for (let i = 0; i < n; i++) {
     await page.evaluate((ms) => window.__step(ms), 1000 / FPS);

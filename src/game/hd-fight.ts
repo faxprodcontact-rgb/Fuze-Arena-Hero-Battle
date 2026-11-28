@@ -66,6 +66,9 @@ const FXS = VECTO_FX.fx as unknown as Record<string, Fx>;
 const FX_ELEMENT: Record<Element, string> = { fire: 'feu', wind: 'vent', water: 'eau', earth: 'terre' };
 /** La lumière de la charge, à la couleur de l'élément (douce : elle se reconnaît sans éblouir). */
 const CHARGE_COLOR: Record<Element, number> = { fire: 0xffa04a, wind: 0x8cf0c0, water: 0x7cc4ff, earth: 0xe8c070 };
+/** L'éclat des sorts spéciaux (28/11, « plus spectaculaires, plus lumineux ») : la couleur vive de l'élément (halo de
+ * l'impact, éclats), plus franche que celle de la charge. */
+const BURST_COLOR: Record<Element, number> = { fire: 0xff7a1e, wind: 0x2ee6a0, water: 0x35a8ff, earth: 0xf0a830 };
 
 export const hasHd = (id: string): boolean => id in CHARS;
 export const hdChar = (id: string): Char => CHARS[id]!;
@@ -116,6 +119,66 @@ function setCell(img: Phaser.GameObjects.Image, key: string, rects: readonly Rec
   }
   const r = rects[i]!;
   img.setTexture(key, String(i)).setOrigin(0).setPosition(r[4]! * k, r[5]! * k).setScale(k / up).setVisible(true);
+}
+
+/** Un éclat (losange effilé, cœur blanc, bord de l'élément) : une petite texture par élément, partagée. */
+function shardTexture(scene: Phaser.Scene, element: Element): string {
+  const key = `hd-shard-${element}`;
+  if (scene.textures.exists(key)) return key;
+  const c = scene.textures.createCanvas(key, 28, 10)!;
+  const ctx = c.getContext();
+  const col = BURST_COLOR[element];
+  const rgb = `${(col >> 16) & 255},${(col >> 8) & 255},${col & 255}`;
+  const g = ctx.createLinearGradient(0, 0, 28, 0);
+  g.addColorStop(0, `rgba(${rgb},0)`);
+  g.addColorStop(0.45, `rgba(${rgb},1)`);
+  g.addColorStop(1, `rgba(${rgb},1)`);
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(0, 5); ctx.lineTo(19, 0.5); ctx.lineTo(28, 5); ctx.lineTo(19, 9.5); ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,250,0.95)';
+  ctx.beginPath();
+  ctx.moveTo(9, 5); ctx.lineTo(20, 3); ctx.lineTo(25, 5); ctx.lineTo(20, 7); ctx.closePath();
+  ctx.fill();
+  c.refresh();
+  return key;
+}
+
+/**
+ * L'impact d'un sort spécial : grande lumière de l'élément à cœur blanc (lumière ajoutée), flaque de lumière au sol,
+ * éclats qui jaillissent et retombent (directions irrégulières : jamais une couronne de rayons).
+ */
+function specialBurst(scene: Phaser.Scene, x: number, y: number, gy: number, depth: number, element: Element, t: number) {
+  const key = glowTexture(scene);
+  const col = BURST_COLOR[element];
+  const halo = scene.add.image(x, y, key).setTint(col).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth).setDisplaySize(70, 70).setAlpha(0.95);
+  const core = scene.add.image(x, y, key).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth + 1).setDisplaySize(34, 34).setAlpha(0.9);
+  const pool = scene.add.image(x, gy, key).setTint(col).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth - 1).setDisplaySize(90, 20).setAlpha(0.8);
+  scene.tweens.add({ targets: halo, displayWidth: 170, displayHeight: 170, alpha: 0, duration: 420 * t, ease: 'Cubic.easeOut', onComplete: () => halo.destroy() });
+  scene.tweens.add({ targets: core, displayWidth: 90, displayHeight: 90, alpha: 0, duration: 260 * t, ease: 'Quad.easeOut', onComplete: () => core.destroy() });
+  scene.tweens.add({ targets: pool, displayWidth: 190, displayHeight: 34, alpha: 0, duration: 560 * t, ease: 'Quad.easeOut', onComplete: () => pool.destroy() });
+  const sk = shardTexture(scene, element);
+  const n = 9;
+  for (let i = 0; i < n; i++) {
+    // vers le haut surtout, chaque éclat à sa façon (angle, vitesse, taille tirés au hasard : c'est un décor, pas une règle)
+    const a = -Math.PI / 2 + (i / (n - 1) - 0.5) * 2.6 + (Math.random() - 0.5) * 0.35;
+    const v = 46 + Math.random() * 50;
+    const s = 0.55 + Math.random() * 0.6;
+    const img = scene.add.image(x, y, sk).setBlendMode(Phaser.BlendModes.ADD).setDepth(depth + 1).setScale(s).setRotation(a);
+    const d = (360 + Math.random() * 200) * t;
+    scene.tweens.addCounter({
+      from: 0, to: 1, duration: d, ease: 'Linear',
+      onUpdate: (tw) => {
+        const u = tw.getValue() ?? 0;
+        const vx = Math.cos(a) * v, vy = Math.sin(a) * v;
+        // il file, ralentit, puis retombe (pesanteur douce)
+        const px = x + vx * (1 - (1 - u) ** 2), py = y + vy * (1 - (1 - u) ** 2) + 70 * u * u;
+        img.setPosition(px, py).setRotation(Math.atan2(vy + 140 * u, vx)).setAlpha(1 - u * u).setScale(s * (1 - 0.5 * u));
+      },
+      onComplete: () => img.destroy(),
+    });
+  }
 }
 
 /** Lumière douce (dégradé rond) partagée par toutes les charges. */
@@ -228,9 +291,9 @@ export class HdActor {
       const color = CHARGE_COLOR[this.element];
       const h = this.ch.top * this.k;
       const back = this.scene.add.image(0, -h * 0.48, key).setTint(color).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
-      back.setDisplaySize(h * 1.15, h * 1.25);
+      back.setDisplaySize(h * 1.35, h * 1.45);
       const ground = this.scene.add.image(0, 0, key).setTint(color).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
-      ground.setDisplaySize(h * 1.3, h * 0.26);
+      ground.setDisplaySize(h * 1.6, h * 0.32);
       const lit = this.scene.add.image(0, 0, this.key, this.img.frame.name).setOrigin(0).setBlendMode(Phaser.BlendModes.ADD).setTint(color).setAlpha(0);
       this.fig.addAt(ground, 0);
       this.fig.addAt(back, 0);
@@ -252,14 +315,16 @@ export class HdActor {
       this.glow = undefined;
       return;
     }
-    const pulse = 0.5 + 0.5 * Math.sin(g.t / 120);
-    g.back.setAlpha(g.a * (0.32 + 0.16 * pulse));
-    g.ground.setAlpha(g.a * (0.4 + 0.2 * pulse));
-    const h = this.ch.top * this.k * (0.96 + 0.06 * pulse);
-    g.back.setDisplaySize(h * 1.15, h * 1.25);
+    // la charge de la spéciale (plus forte depuis le 28/11 : on doit sentir le sort monter)
+    const pulse = 0.5 + 0.5 * Math.sin(g.t / 110);
+    g.back.setAlpha(g.a * (0.5 + 0.22 * pulse));
+    g.ground.setAlpha(g.a * (0.62 + 0.25 * pulse));
+    const h = this.ch.top * this.k * (1.0 + 0.1 * pulse);
+    g.back.setDisplaySize(h * 1.35, h * 1.45);
+    g.ground.setDisplaySize(h * 1.6, h * 0.32);
     // le dessin lui-même s'éclaire (même image, en lumière ajoutée)
     g.lit.setTexture(this.key, this.img.frame.name).setPosition(this.img.x, this.img.y).setScale(this.img.scaleX, this.img.scaleY).setVisible(this.img.visible);
-    g.lit.setAlpha(g.a * (0.12 + 0.12 * pulse));
+    g.lit.setAlpha(g.a * (0.2 + 0.18 * pulse));
   }
 }
 
@@ -319,8 +384,12 @@ export function hdStrike(scene: Phaser.Scene, host: HdHost, src: HdView, which: 
     if (tg.hits.some((h) => h.kind === 'damage')) {
       host.recoil(tg.v, dir, which === 'speciale' ? 18 : 10, 1 / sp);
       const p = feet(tg.v);
-      host.flash(p.x - dir * 6, p.y - (a.haut ?? 40) * k, color, drawn ? 14 : 24, 1 / sp);
-      if (which === 'speciale') scene.cameras.main.shake(120 / sp, 0.004);
+      if (which === 'speciale') {
+        // l'éclat de la spéciale : grand éclair de l'élément à cœur blanc, éclats, secousse plus forte
+        host.flash(p.x - dir * 6, p.y - (a.haut ?? 40) * k, BURST_COLOR[src.unit.element], drawn ? 14 : 24, 1 / sp);
+        specialBurst(scene, p.x - dir * 6, p.y - (a.haut ?? 40) * k, p.y, tg.v.body.depth + 3, src.unit.element, 1 / sp);
+        scene.cameras.main.shake(190 / sp, 0.0075);
+      } else host.flash(p.x - dir * 6, p.y - (a.haut ?? 40) * k, color, drawn ? 14 : 24, 1 / sp);
     }
   };
 
