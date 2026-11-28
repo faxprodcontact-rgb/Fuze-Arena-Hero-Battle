@@ -326,6 +326,8 @@ class Icon:
         self.over = []        # étincelles et lueurs, par-dessus tout
         self.under = []       # lueurs derrière tout
         self.defs = []
+        # net : ombres et liserés moins flous (un picto montré en grand, comme le coffre de l'accueil, 28/11)
+        self.crisp = False
 
     def obj(self, **kw):
         o = Obj(self, **kw)
@@ -402,6 +404,10 @@ class Icon:
             '<filter id="bl1" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="1"/></filter>'
             '<filter id="bl2" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2.2"/></filter>'
         )
+        if self.crisp:
+            filt = (filt.replace('stdDeviation="1.7"', 'stdDeviation="0.8"').replace('dx="2.6" dy="-2.6"', 'dx="1.5" dy="-1.5"')
+                    .replace('dx="-2.2" dy="2.2"', 'dx="-1.3" dy="1.3"').replace('stdDeviation="1.3"', 'stdDeviation="0.6"')
+                    .replace('stdDeviation="1.6"', 'stdDeviation="0.7"'))
         body = ''.join(self.defs) + ''.join(out)
         import re as _re
         used = set(_re.findall(r'url\(#(bv|cs|ds|bl1|bl2)\)', body))

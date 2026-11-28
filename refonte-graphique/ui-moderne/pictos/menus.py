@@ -478,6 +478,7 @@ def _():
 @picto('chestClosed')
 def _():
     ic = Icon()
+    ic.crisp = True
     stone_chest(ic, 'closed')
     return ic
 
@@ -485,6 +486,7 @@ def _():
 @picto('chestReady')
 def _():
     ic = Icon()
+    ic.crisp = True
     stone_chest(ic, 'ready')
     sparkles(ic, [(86, 18, 8), (14, 26, 5.5)])
     return ic
@@ -493,6 +495,7 @@ def _():
 @picto('chestOpen')
 def _():
     ic = Icon()
+    ic.crisp = True
     stone_chest(ic, 'open')
     sparkles(ic, [(74, 12, 7)])
     return ic
