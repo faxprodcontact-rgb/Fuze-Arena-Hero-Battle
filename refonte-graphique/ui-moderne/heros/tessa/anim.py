@@ -633,6 +633,39 @@ FEATHERS = [(-2.6, -6.5, 'vent', 0), (2.0, -7.5, 'vent', 1), (3.8, -4.8, 'brun',
 P0_VOLLEY = [None]
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : traînées, volutes, croissants et ondes de vent
+# d'un seul ruban sans contour sombre, bouffées fondues, lumières ; l'aigle, les flèches, le rythme et les instants
+# inchangés)
+import effets_pro as E  # noqa: E402
+
+
+def stroke_p(fig, pts, w, op=1.0, pale=False, core=True, ink=True):
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op * (0.7 if pale else 1.0), kind='fuseau', halo=0.4)
+
+
+def curl_p(fig, c, r, a0, turns=0.85, w=2.2, cw=False, op=1.0, lead=None):
+    if op <= 0.02 or r < 0.4:
+        return ''
+    pts = spiral_pts(c, r, a0, turns, cw, n=10)
+    if lead:
+        pts = [lead] + pts
+    return E.ruban(fig, pts, w * 1.6, 'vent', op=op, kind='pointe', halo=0.3)
+
+
+def crescent_p(fig, C, rx, ry, a0, a1, w, op=1.0, tilt=0.0, head=0.55):
+    if op <= 0.02 or w < 0.25:
+        return ''
+    return E.ruban(fig, arc_pts(C, rx, ry, a0, a1, 14, tilt), w * 1.7, 'vent', op=op, kind='fuseau', halo=0.4)
+
+
+def dust_p(fig, cx, cy, r, op=1.0):
+    return E.nuage(fig, cx, cy, r * 1.1, 'terre', op=op, seed=int(cx) % 3, flat=0.7)
+
+
+def flash_p(fig, c, r, op=1.0):
+    return E.lumiere(fig, c, r * 1.4, op, 'vent')
+
+
 def fx_special(tl):
     def f(fig, ctx):
         P = ctx['P']
@@ -648,9 +681,9 @@ def fx_special(tl):
             for i in range(3):
                 a = 90 + i * 120 + tl * 0.55
                 c = (tip[0] + 3 + R * math.cos(math.radians(a)), tip[1] + 0.8 * R * math.sin(math.radians(a)))
-                (front if i != 1 else back).append(curl(fig, c, 4.4 - 1.4 * lv, a + 90, 0.85, 2.4 * kc, cw=True, op=kc))
+                (front if i != 1 else back).append(curl_p(fig, c, 4.4 - 1.4 * lv, a + 90, 0.85, 2.4 * kc, cw=True, op=kc))
             if lv > 0.75:
-                front.append(flash(fig, (tip[0] + 2, tip[1]), 4 + 3 * (lv - 0.75) * 4, op=kc * (lv - 0.75) * 4))
+                front.append(flash_p(fig, (tip[0] + 2, tip[1]), 4 + 3 * (lv - 0.75) * 4, op=kc * (lv - 0.75) * 4))
             src = [(feet[0] - 40, GR - 60), (feet[0] - 30, GR - 14), (feet[0] + 24, GR - 8)]
             for i, (sx, sy) in enumerate(src):
                 t = min(1.0, lv * 1.15 - 0.1 * i)
@@ -660,7 +693,7 @@ def fx_special(tl):
                 y = sy + (tip[1] - sy) * t - 14 * math.sin(math.pi * t)
                 (front if i % 2 else back).append(feather_fx(fig, x, y, -30 + 140 * t + 40 * i, 'vent', 0.9, op=kc * (1 - max(0, t - 0.85) / 0.15)))
             pts = [(feet[0] + 28 * math.cos(math.radians(a)), GR - 1.5 + 3 * math.sin(math.radians(a))) for a in range(200, 345, 9)]
-            back.append(stroke_fx(fig, pts, 1.2 + 1.4 * lv, op=kc))
+            back.append(stroke_p(fig, pts, 1.2 + 1.4 * lv, op=kc))
         # ---- le lâcher : les ailes se rabattent, la poussière fuse sous ses serres, un souffle part derrière elle
         tr = tl - SREL
         if 0 <= tr <= 360:
@@ -668,12 +701,12 @@ def fx_special(tl):
             g = ctx['grip']
             if tr < 170:
                 kk = env(tr, 0, 25, 60, 170)
-                front.append(crescent(fig, (g[0] + 2 + 6 * (tr / 170), g[1] + 0.5), 5 + 4 * tr / 170, 10 + 4 * tr / 170, -70, 70, 3.4 * kk, op=kk))
-            for j, (dx, r0) in enumerate(((-30, 4.6), (26, 4.0), (-42, 3.4))):
-                out = dust(fig, feet[0] + dx * (1 + 0.5 * tr / 360), GR - 2.4, r0 * (0.6 + 0.6 * tr / 360), op=k)
+                front.append(crescent_p(fig, (g[0] + 2 + 6 * (tr / 170), g[1] + 0.5), 5 + 4 * tr / 170, 10 + 4 * tr / 170, -70, 70, 3.4 * kk, op=kk))
+            for j, (dx, r0) in enumerate(((-34, 5.0), (26, 4.4))):
+                out = dust_p(fig, feet[0] + dx * (1 + 0.5 * tr / 360), GR - 2.4, r0 * (0.6 + 0.6 * tr / 360), op=k)
                 (back if j != 1 else front).append(out)
             pts = [(feet[0] - 44 + 12 * math.cos(math.radians(a)), GR - 44 + 24 * math.sin(math.radians(a))) for a in range(120, 245, 8)]
-            back.append(stroke_fx(fig, pts, 2.6 * k, op=k))
+            back.append(stroke_p(fig, pts, 2.6 * k, op=k))
         # ---- les trois flèches montent en se tressant, avec leurs traînées ; elles se resserrent là où l'aigle naît
         if P0_VOLLEY[0] is None:
             P0_VOLLEY[0] = (tip[0] + 1, tip[1])
@@ -703,11 +736,11 @@ def fx_special(tl):
                     if side is None or sd == side:
                         seg.append(q)
                     else:
-                        (front if side else back).append(stroke_fx(fig, seg, 2.6, op=fade, pale=not side))
+                        (front if side else back).append(stroke_p(fig, seg, 2.6, op=fade, pale=not side))
                         seg = [seg[-1], q]
                     side = sd
                 if len(seg) >= 3:
-                    (front if side else back).append(stroke_fx(fig, seg, 2.6, op=fade, pale=not side))
+                    (front if side else back).append(stroke_p(fig, seg, 2.6, op=fade, pale=not side))
                 hp, hd = path_at(pts, s_head)
                 o, z = off(s_head)
                 nn = (hd[1], -hd[0])
@@ -725,13 +758,13 @@ def fx_special(tl):
             b_, f_ = eagle(fig, (APEX[0], APEX[1] + bob), -14, 1.05 * (0.6 + 0.4 * grow), 'cri', op=op, open_=open_)
             front.append(b_ + f_)
             if grow > 0.2:
-                front.append(flash(fig, APEX, 14 * (1 - open_) + 4, op=(1 - open_) * 0.8))
+                front.append(flash_p(fig, APEX, 14 * (1 - open_) + 4, op=(1 - open_) * 0.8))
             kc = env(tl, S_EAGLE + 120, S_EAGLE + 180, S_DIVE - 120, S_DIVE - 20)
             if kc > 0:
                 bk = (APEX[0] + 29 * math.cos(math.radians(-14)) + 8 * math.sin(math.radians(-14)), APEX[1] + 29 * math.sin(math.radians(-14)) - 9 * math.cos(math.radians(14)))
                 cyc = ((tl - (S_EAGLE + 120)) % 160) / 160
                 for i, r in enumerate((6 + 6 * cyc, 13 + 6 * cyc)):
-                    front.append(crescent(fig, bk, r, r * 1.2, -60, 60, (4.0 - 0.8 * i) * (1 - 0.5 * cyc), op=kc * (1 - 0.6 * cyc), tilt=-14))
+                    front.append(crescent_p(fig, bk, r, r * 1.2, -60, 60, (4.0 - 0.8 * i) * (1 - 0.5 * cyc), op=kc * (1 - 0.6 * cyc), tilt=-14))
         # ---- le piqué, serres en avant : deux rubans courbes de l'apex à l'aigle
         if S_DIVE <= tl <= S_HIT + 10:
             u = ease((tl - S_DIVE) / (S_HIT - S_DIVE))
@@ -753,7 +786,7 @@ def fx_special(tl):
                         b_ = seg[max(0, j - 1)]
                         d = norm((a_[0] - b_[0], a_[1] - b_[1]))
                         pts_.append((q[0] - d[1] * dx, q[1] + d[0] * dx))
-                    back.append(stroke_fx(fig, resample(pts_, 16), w, op=1))
+                    back.append(stroke_p(fig, resample(pts_, 16), w, op=1))
             b_, f_ = eagle(fig, C, rot, 1.1, 'pique')
             front.append(b_ + f_)
         # ---- l'impact : arrêt sur l'image (l'aigle frappe), puis il éclate : ses ailes s'ouvrent en deux grands
@@ -761,28 +794,28 @@ def fx_special(tl):
         th = tl - S_HIT
         X, Y = IMPACT
         if 0 <= th < 120:
-            back.append(flash(fig, (X + 2, Y - 2), 16, op=1))
+            back.append(flash_p(fig, (X + 2, Y - 2), 16, op=1))
             b_, f_ = eagle(fig, (X - 14, Y - 16), 58, 1.1, 'pique')
             front.append(b_ + f_)
-            back.append(dust(fig, X - 20, GR - 3, 5.0))
-            front.append(dust(fig, X + 20, GR - 3, 4.5))
+            back.append(dust_p(fig, X - 20, GR - 3, 5.0))
+            front.append(dust_p(fig, X + 20, GR - 3, 4.5))
         if 120 <= th <= 760:
             k = (th - 120) / 640
             op = 1 - ease((k - 0.55) / 0.45)
             if k < 0.3:
-                back.append(flash(fig, (X, Y - 5), 18 * (1 - k), op=1 - k / 0.3))
+                back.append(flash_p(fig, (X, Y - 5), 18 * (1 - k), op=1 - k / 0.3))
             r = 20 + 22 * ease(k * 1.4)
-            back.append(crescent(fig, (X, GR - 2), 18 + 34 * ease(k), 3 + 3 * ease(k), 0, 360, 2.6 * (1 - k) + 0.4, op=op, head=0.5))
-            front.append(crescent(fig, (X, Y - 2 - 10 * k), r, 12 + 10 * k, 180, 100, 4.4 * (1 - 0.6 * k), op=op, head=0.35))
-            front.append(crescent(fig, (X, Y - 2 - 10 * k), r, 12 + 10 * k, 0, 80, 4.4 * (1 - 0.6 * k), op=op, head=0.35))
-            front.append(curl(fig, (X - r + 5, Y - 9 - 14 * k), 5.5 - 2 * k, 170, 0.85, 2.8 * (1 - 0.5 * k), cw=True, op=op))
-            front.append(curl(fig, (X + r - 5, Y - 9 - 14 * k), 5.5 - 2 * k, 10, 0.85, 2.8 * (1 - 0.5 * k), cw=False, op=op))
+            back.append(crescent_p(fig, (X, GR - 2), 18 + 34 * ease(k), 3 + 3 * ease(k), 0, 360, 2.6 * (1 - k) + 0.4, op=op, head=0.5))
+            front.append(crescent_p(fig, (X, Y - 2 - 10 * k), r, 12 + 10 * k, 180, 100, 4.4 * (1 - 0.6 * k), op=op, head=0.35))
+            front.append(crescent_p(fig, (X, Y - 2 - 10 * k), r, 12 + 10 * k, 0, 80, 4.4 * (1 - 0.6 * k), op=op, head=0.35))
+            front.append(curl_p(fig, (X - r + 5, Y - 9 - 14 * k), 5.5 - 2 * k, 170, 0.85, 2.8 * (1 - 0.5 * k), cw=True, op=op))
+            front.append(curl_p(fig, (X + r - 5, Y - 9 - 14 * k), 5.5 - 2 * k, 10, 0.85, 2.8 * (1 - 0.5 * k), cw=False, op=op))
             rr = 7 + 3 * math.sin(math.pi * min(1, k * 1.3))
-            back.append(dust(fig, X - 20 - 14 * k, GR - rr * 0.5, rr * 0.8, op=op))
-            front.append(dust(fig, X + 20 + 14 * k, GR - rr * 0.5, rr * 0.7, op=op))
+            back.append(dust_p(fig, X - 20 - 14 * k, GR - rr * 0.5, rr * 0.8, op=op))
+            front.append(dust_p(fig, X + 20 + 14 * k, GR - rr * 0.5, rr * 0.7, op=op))
         if 120 <= th <= 1100:
             t = (th - 120) / 1000 * 4.4
-            for i, (vx, vy, kind, sd) in enumerate(FEATHERS):
+            for i, (vx, vy, kind, sd) in enumerate(FEATHERS[::2]):
                 x = X - 3 + vx * t * 2.8 + 2 * math.sin(t * 1.7 + i)
                 y = Y - 10 + vy * t * 4 + 2.4 * t * t * 2.2
                 y = min(y, GR - 2.5)

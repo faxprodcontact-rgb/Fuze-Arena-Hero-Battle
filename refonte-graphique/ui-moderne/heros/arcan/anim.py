@@ -571,6 +571,46 @@ AURA = [(28, 62, 24, 8.0, 0.0), (42, 50, 26, 8.6, 1.3), (100, 54, 26, 8.4, 2.1),
 AURA_FRONT = [(24, 113, 12, 6.4, 0.4), (40, 114, 9, 5.6, 2.2), (96, 114, 10, 6.0, 1.1), (114, 113, 12, 6.4, 3.0)]
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : l'aura de vent chaud fondue en UNE silhouette,
+# rubans, anneaux et rafales d'un seul tenant sans contour sombre, orbes d'une forme, bouffées fondues ; même rythme)
+import effets_pro as E  # noqa: E402
+
+
+def puff_p(fig, cx, cy, r, op=1.0, k=0, warm=False, dust=False):
+    return E.nuage(fig, cx, cy, r * 1.15, 'terre' if dust else ('or' if warm else 'vent'), op=op, seed=k, flat=0.7 if dust else 0.9)
+
+
+def gust_p(fig, p0, p1, p2, p3, w, curl=4.0, s=-1, tail=0.0, op=1.0, turn=290, warm=False):
+    if op <= 0.02 or w < 0.15:
+        return ''
+    c = resample(bez(p0, p1, p2, p3, 30), 12)
+    if curl > 0.3:
+        c = c + spiral(p3, (p3[0] - p2[0], p3[1] - p2[1]), curl, turn, s, 8)
+    c = c[int(tail * (len(c) - 4)):]
+    return E.ruban(fig, c, w * 1.7, 'or' if warm else 'vent', op=op, kind='pointe', halo=0.4)
+
+
+def ell_arc_p(fig, C, rx, ry, a0, a1, w, op, warm=False):
+    return E.ruban(fig, ring_pts(C, rx, ry, a0, a1, 14), w * 1.6, 'or' if warm else 'vent', op=op, kind='tete', halo=0.4)
+
+
+def flat_ring_p(fig, c, rx, ry, w, op, back, warm=False, a_off=0.0, span=160):
+    if op <= 0.02 or rx < 1:
+        return ''
+    a0 = (190 if back else 10) + a_off
+    return E.ruban(fig, ring_pts(c, rx, ry, a0, a0 + span, 14), w * 1.7, 'or' if warm else 'vent', op=op * (0.7 if back else 1), kind='fuseau')
+
+
+def orb_p(fig, c, r, vel, gold=False, op=1.0):
+    """Un orbe d'énergie : UNE boule de lumière et sa traîne d'un seul ruban derrière elle."""
+    if op <= 0.02:
+        return ''
+    p = 'or' if gold else 'vent'
+    tail = (c[0] - vel[0] * 0.9, c[1] - vel[1] * 0.9)
+    return E.group([E.ruban(fig, [tail, ((tail[0] + c[0]) / 2, (tail[1] + c[1]) / 2), c], r * 2.2, p, kind='tete', halo=0.4),
+                    E.boule(fig, c, r * 1.35, 0, p)], op)
+
+
 def fx_special(tl):
     def f(fig, ctx):
         P = ctx['P']
@@ -579,8 +619,8 @@ def fx_special(tl):
         # ---- il se ramasse : la poussière se lève à ses pieds ----
         k = env(tl, 60, 200, 300, 520)
         if k > 0:
-            fig.fx_back.append(puff(fig, feet[0] - 34 - 4 * k, GR - 2, 2.2 + 1.6 * k, op=k * 0.8, k=1, dust=True))
-            fig.fx_back.append(puff(fig, feet[0] + 36 + 4 * k, GR - 2, 2.2 + 1.6 * k, op=k * 0.8, k=0, dust=True))
+            fig.fx_back.append(puff_p(fig, feet[0] - 34 - 4 * k, GR - 2, 2.2 + 1.6 * k, op=k * 0.8, k=1, dust=True))
+            fig.fx_back.append(puff_p(fig, feet[0] + 36 + 4 * k, GR - 2, 2.2 + 1.6 * k, op=k * 0.8, k=0, dust=True))
         # ---- la fronde : le vent tourne autour de lui en suivant le sac ----
         if 260 <= tl <= 760:
             th = monotone([o[0] for o in ORBIT], [o[1] for o in ORBIT], min(tl, 630))
@@ -594,21 +634,22 @@ def fx_special(tl):
             # la traîne du sac : un ruban courbe qui le suit (la moitié de derrière passe derrière lui)
             a1 = -th
             lay = fig.fx_back if math.sin(math.radians(th)) > 0.15 else fig.fx_front
-            lay.append(ell_arc(fig, C, rx, 0.34 * rx, a1 + 110, a1 + 18, 3.0 + lvl * 1.2, kw * 0.9))
+            lay.append(ell_arc_p(fig, C, rx, 0.34 * rx, a1 + 110, a1 + 18, 3.0 + lvl * 1.2, kw * 0.9))
             if lvl >= 1:
                 lay2 = fig.fx_front if lay is fig.fx_back else fig.fx_back
-                lay2.append(ell_arc(fig, C, rx - 8, 0.34 * (rx - 8), a1 + 240, a1 + 160, 2.0 + lvl * 0.6, kw * 0.8))
+                lay2.append(ell_arc_p(fig, C, rx - 8, 0.34 * (rx - 8), a1 + 240, a1 + 160, 2.0 + lvl * 0.6, kw * 0.8))
             # l'anneau au sol, la poussière, les feuilles qui montent en spirale
             rr = 30 + 6 * lvl
-            fig.fx_back.append(flat_ring(fig, (feet[0], GR - 2), rr, 6 + lvl, 1.6 + 0.8 * lvl, kw * min(1, lvl), True, a_off=th * 0.5 % 40))
-            fig.fx_front.append(flat_ring(fig, (feet[0], GR - 2), rr, 6 + lvl, 1.6 + 0.8 * lvl, kw * min(1, lvl), False, a_off=th * 0.5 % 40))
+            fig.fx_back.append(flat_ring_p(fig, (feet[0], GR - 2), rr, 6 + lvl, 1.6 + 0.8 * lvl, kw * min(1, lvl), True, a_off=th * 0.5 % 40))
+            fig.fx_front.append(flat_ring_p(fig, (feet[0], GR - 2), rr, 6 + lvl, 1.6 + 0.8 * lvl, kw * min(1, lvl), False, a_off=th * 0.5 % 40))
             for j in range(6):
                 a = math.radians(j * 60 + th * 0.8)
                 h = ((tl - 260) / 500 * 0.9 + j / 6 * 0.6) % 1.0
                 x = feet[0] + math.cos(a) * (44 + 12 * h)
                 y = GR - 8 - h * 50 + math.sin(a) * 6
                 if abs(x - feet[0]) > 44:
-                    fig.fx_front.append(leaf(fig, x, y, j * 70 + th, 1.5, op=kw * min(1, lvl - 0.5) * (1 - h * 0.6), dry=(j % 3 == 0)))
+                    if j % 2 == 0:
+                        fig.fx_front.append(E.feuille(fig, x, y, j * 70 + th, 0.95, op=kw * min(1, lvl - 0.5) * (1 - h * 0.6)))
         # ---- l'aura : des flammes douces rouge-orangé et or montent sur lui ----
         au = P['aura']
         if au > 0.02:
@@ -620,13 +661,17 @@ def fx_special(tl):
                        (add(ctx['EF'], (6, -1)), 26, 8.0), (add(ctx['GN'], (-5, 1)), 22, 7.4), (mapp(HD, (60, 14)), 28, 8.6),
                        (mapp(HD, (80, 9)), 30, 9.0), (mapp(HD, (46, 32)), 24, 8.0), (mapp(U, (44, 98)), 24, 8.0),
                        (mapp(U, (100, 98)), 24, 8.0), ((30, 104), 20, 7.4), ((106, 103), 20, 7.4)]
+            items = []
             for j, (b, h, w) in enumerate(anchors):
                 ph = j * 1.37
                 fl = 0.75 + 0.25 * math.sin(T * 9 + ph * 1.7)
-                fig.fx_back.append(tongue(fig, b, h * au * fl, w * (0.7 + 0.3 * au), bend=math.sin(T * 7 + ph), lean=0.15 * math.sin(T * 5 + ph), op=min(1, au * 1.4)))
+                items.append((b, h * au * fl, 1.15 * w * (0.7 + 0.3 * au), math.sin(T * 7 + ph), -90 + 8 * math.sin(T * 5 + ph)))
+            fig.fx_back.append(E.langues(fig, items, 'or', op=min(1, au * 1.4)))
+            items = []
             for j, (x, y, h, w, ph) in enumerate(AURA_FRONT):
                 fl = 0.75 + 0.25 * math.sin(T * 10 + ph * 2)
-                fig.fx_front.append(tongue(fig, (x, y + 1.5), h * au * fl, w, bend=math.sin(T * 8 + ph), lean=0.1 * math.sin(T * 6 + ph), op=min(1, au * 1.3)))
+                items.append(((x, y + 1.5), h * au * fl, w * 1.15, math.sin(T * 8 + ph), -90 + 6 * math.sin(T * 6 + ph)))
+            fig.fx_front.append(E.langues(fig, items, 'or', op=min(1, au * 1.3)))
         # ---- le LANCEMENT : un éclair chaud au col ouvert, le geyser de vent chaud vers le ciel ----
         M = ctx.get('end_n')
         bu = ctx['bu']
@@ -635,26 +680,26 @@ def fx_special(tl):
             if kf > 0:
                 fig.fx_back.append(glow(fig, M, 110 * (0.6 + 0.4 * kf), WARM[1], 0.35 * kf))
                 fig.fx_front.append(glow(fig, M, 30 * kf, '#ffffff', 0.7 * kf))
-                fig.fx_front.append(pop(fig, M, 5.0 * (0.6 + 0.5 * kf), facing=ang_of(bu), op=kf, warm=True))
+                fig.fx_front.append(E.lumiere(fig, M, 12 * (0.6 + 0.5 * kf), kf, 'or'))
             kg = env(tl, SP_LAUNCH - 10, SP_LAUNCH + 40, 1180, 1420)
             if kg > 0:
                 u = (tl - SP_LAUNCH) / 600
                 # la colonne : des bouffées chaudes qui montent du col, de plus en plus grosses
-                for j in range(5):
-                    s = ((tl - SP_LAUNCH) / 420 + j / 5) % 1.0
+                for j in range(3):
+                    s = ((tl - SP_LAUNCH) / 420 + j / 3) % 1.0
                     q = add(M, bu, 4 + 26 * s)
                     q = (q[0] + 2.0 * math.sin(s * 6 + j), q[1])
-                    fig.fx_front.append(puff(fig, q[0], q[1], (2.2 + 3.2 * s) * (0.6 + 0.4 * kg), op=kg * (1 - s ** 2), k=j, warm=True))
+                    fig.fx_front.append(puff_p(fig, q[0], q[1], (2.2 + 3.2 * s) * (0.6 + 0.4 * kg), op=kg * (1 - s ** 2), k=j, warm=True))
                 # elle retombe des deux côtés en volutes
                 top = add(M, bu, 24)
                 for j, s_ in enumerate((-1, 1)):
                     g = smooth(min(1, u * 1.6))
                     p0 = add(top, (0, 2))
                     p3 = add(top, (s_ * (14 + 16 * g), 14 + 16 * g))
-                    fig.fx_front.append(gust(fig, p0, add(p0, (s_ * 6, -8)), add(p3, (s_ * 2, -14)), p3, 2.8, curl=3.6, s=-s_ if s_ > 0 else 1,
+                    fig.fx_front.append(gust_p(fig, p0, add(p0, (s_ * 6, -8)), add(p3, (s_ * 2, -14)), p3, 2.8, curl=3.6, s=-s_ if s_ > 0 else 1,
                                              op=kg * 0.95, warm=True, tail=0.3 * g))
                     p3b = add(top, (s_ * (8 + 10 * g), 24 + 10 * g))
-                    fig.fx_front.append(gust(fig, add(p0, (0, 6)), add(p0, (s_ * 4, 0)), add(p3b, (s_ * 2, -8)), p3b, 2.0, curl=2.6, s=-s_ if s_ > 0 else 1,
+                    fig.fx_front.append(gust_p(fig, add(p0, (0, 6)), add(p0, (s_ * 4, 0)), add(p3b, (s_ * 2, -8)), p3b, 2.0, curl=2.6, s=-s_ if s_ > 0 else 1,
                                              op=kg * 0.8, tail=0.3 * g))
         # ---- les anneaux qui s'élargissent autour de lui (un chaud, un de jade, l'élément du vent) ----
         if SP_LAUNCH - 10 <= tl <= 1700:
@@ -666,14 +711,14 @@ def fx_special(tl):
                 rx = 26 + 54 * u if j < 2 else 22 + 48 * u
                 c = mapp(U, (66, y_)) if j < 2 else (feet[0], GR - 1.5)
                 ry = rx * (0.24 if j < 2 else 0.14)
-                fig.fx_back.append(flat_ring(fig, c, rx, ry, w - 1.0 * u, op, True, warm=warm))
-                fig.fx_front.append(flat_ring(fig, c, rx, ry, w - 1.0 * u, op, False, warm=warm))
+                fig.fx_back.append(flat_ring_p(fig, c, rx, ry, w - 1.0 * u, op, True, warm=warm))
+                fig.fx_front.append(flat_ring_p(fig, c, rx, ry, w - 1.0 * u, op, False, warm=warm))
             # la poussière s'écarte en rond à ses pieds
             u = smooth((tl - SP_LAUNCH) / 600)
             kd = env(tl, SP_LAUNCH, SP_LAUNCH + 80, 1300, 1700)
             for j, sx in enumerate((-1, 1)):
-                fig.fx_back.append(puff(fig, feet[0] + sx * (40 + 26 * u), GR - 2 - 2 * u, 2.6 + 1.8 * u, op=kd * 0.85, k=j, dust=True))
-                fig.fx_front.append(puff(fig, feet[0] + sx * (28 + 30 * u), GR + 0.5, 2.0 + 1.4 * u, op=kd * 0.8, k=j + 1, dust=True))
+                fig.fx_back.append(puff_p(fig, feet[0] + sx * (40 + 26 * u), GR - 2 - 2 * u, 2.6 + 1.8 * u, op=kd * 0.85, k=j, dust=True))
+                fig.fx_front.append(puff_p(fig, feet[0] + sx * (28 + 30 * u), GR + 0.5, 2.0 + 1.4 * u, op=kd * 0.8, k=j + 1, dust=True))
         # ---- les orbes d'énergie, en gerbe dans toutes les directions ----
         if M is not None and tl >= SP_LAUNCH:
             if 'M' not in _SP or tl < SP_LAUNCH + 20:
@@ -695,11 +740,11 @@ def fx_special(tl):
                 vel = sub(c2, c)
                 op = env(t, 0.0, 0.06, 0.75, 1.02)
                 lay = fig.fx_back if back else fig.fx_front
-                lay.append(orb(fig, c, r * (0.6 + 0.4 * min(1, t * 4)), (vel[0] * 3, vel[1] * 3), gold=gold, op=op))
+                lay.append(orb_p(fig, c, r * (0.6 + 0.4 * min(1, t * 4)), (vel[0] * 3, vel[1] * 3), gold=gold, op=op))
         # ---- le sac se vide : des bouffées sortent encore du col, puis il claque au vent ----
         if 1150 <= tl <= 1500 and M is not None:
             v = (tl - 1150) / 350
-            fig.fx_front.append(puff(fig, *add(M, bu, 6 + 10 * v), 2.0 * (1 - v) + 0.5, op=(1 - v) * 0.9, k=1, warm=True))
+            fig.fx_front.append(puff_p(fig, *add(M, bu, 6 + 10 * v), 2.0 * (1 - v) + 0.5, op=(1 - v) * 0.9, k=1, warm=True))
         # ---- pof ! il le remet sur ses épaules : l'air rentre, il se regonfle ----
         k = env(tl, 1880, 1960, 2010, 2160)
         if k > 0:
@@ -707,9 +752,9 @@ def fx_special(tl):
             top = mapp(ctx['UC'], (62, 2))
             for j, (dx, dy, s_) in enumerate(((-30, 8, 1), (30, 6, -1), (-12, -6, 1), (16, -8, -1))):
                 q = add(top, (dx * (0.8 + 0.4 * v), dy - 6 * v))
-                fig.fx_front.append(gust(fig, q, add(q, (4 * s_, -3)), add(q, (8 * s_, -5)), add(q, (10 * s_, -9)), 1.6, curl=2.4, s=-s_, op=k * 0.85))
-            fig.fx_front.append(puff(fig, top[0] - 36 - 4 * v, top[1] + 30, 2.4, op=k * 0.7, k=1))
-            fig.fx_front.append(puff(fig, top[0] + 40 + 4 * v, top[1] + 28, 2.2, op=k * 0.7, k=0))
+                fig.fx_front.append(gust_p(fig, q, add(q, (4 * s_, -3)), add(q, (8 * s_, -5)), add(q, (10 * s_, -9)), 1.6, curl=2.4, s=-s_, op=k * 0.85))
+            fig.fx_front.append(puff_p(fig, top[0] - 36 - 4 * v, top[1] + 30, 2.4, op=k * 0.7, k=1))
+            fig.fx_front.append(puff_p(fig, top[0] + 40 + 4 * v, top[1] + 28, 2.2, op=k * 0.7, k=0))
     return f
 
 

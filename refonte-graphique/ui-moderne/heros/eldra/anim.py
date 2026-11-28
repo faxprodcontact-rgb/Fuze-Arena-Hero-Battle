@@ -405,6 +405,35 @@ def fx_attack(tl):
 
 # ---- l'attaque spéciale
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : rafales, tourbillon et traînées du bâton d'un seul
+# ruban sans contour sombre, bouffées fondues, feuilles et galets d'une forme, lumière ; même rythme, mêmes instants)
+import effets_pro as EP  # noqa: E402
+
+
+def gust_p(fig, p0, p1, p2, p3, w, curl=4.0, s=-1, tail=0.0, op=1.0, turn=290, front=True):
+    if op <= 0.02 or w < 0.15:
+        return ''
+    c = resample(bez(p0, p1, p2, p3, 30), 12)
+    if curl > 0.3:
+        c = c + spiral(p3, (p3[0] - p2[0], p3[1] - p2[1]), curl, turn, s, 8)
+    c = c[int(tail * (len(c) - 4)):]
+    return EP.ruban(fig, c, w * 1.7, 'vent', op=op, kind='pointe', halo=0.4)
+
+
+def swirl_p(fig, C, rx, ry, a0, a1, w, op=1.0):
+    pts = [(C[0] + rx * math.cos(math.radians(a0 + (a1 - a0) * i / 14)), C[1] + ry * math.sin(math.radians(a0 + (a1 - a0) * i / 14)))
+           for i in range(15)]
+    return EP.ruban(fig, pts, w * 1.7, 'vent', op=op, kind='fuseau', halo=0.4)
+
+
+def trail_p(fig, C, R, a0, a1, w, op=1.0, gold=True):
+    return EP.croissant(fig, C, R, a0, a1, w, 'vent', op=op)
+
+
+def dust_p(fig, cx, cy, r, op=1.0, k=0):
+    return EP.nuage(fig, cx, cy, r * 1.1, 'terre', op=op, seed=k, flat=0.7)
+
+
 def fx_special(tl, ang_prev):
     def f(fig, ctx):
         P = ctx['P']
@@ -417,13 +446,13 @@ def fx_special(tl, ang_prev):
             rx = 30 + 12 * env(t, 40, 480, 2000, 2001)
             ry = 4.5 + 3 * env(t, 40, 480, 2000, 2001)
             rot = t / 1000 * 260
-            fig.fx_back.append(swirl(fig, (cx, gy - 1 - 3 * g), rx, ry, 190 + rot % 40, 340 + rot % 40, 2.6 * g, op=g))
-            fig.fx_front.append(swirl(fig, (cx, gy - 1 - 3 * g), rx, ry, 10 + rot % 40, 165 + rot % 40, 3.4 * g, op=g))
+            fig.fx_back.append(swirl_p(fig, (cx, gy - 1 - 3 * g), rx, ry, 190 + rot % 40, 340 + rot % 40, 2.6 * g, op=g))
+            fig.fx_front.append(swirl_p(fig, (cx, gy - 1 - 3 * g), rx, ry, 10 + rot % 40, 165 + rot % 40, 3.4 * g, op=g))
             h = env(t, 150, 450, 560, 700)
             if h > 0:
-                fig.fx_front.append(gust(fig, (cx + 30, gy - 1), (cx + 40, gy - 8 * h), (cx + 40, gy - 20 * h), (cx + 34, gy - 28 * h - 6),
+                fig.fx_front.append(gust_p(fig, (cx + 30, gy - 1), (cx + 40, gy - 8 * h), (cx + 40, gy - 20 * h), (cx + 34, gy - 28 * h - 6),
                                          3.2 * h + 0.6, curl=3.5, s=-1, op=h))
-                fig.fx_back.append(gust(fig, (cx - 30, gy - 1), (cx - 42, gy - 10 * h), (cx - 42, gy - 26 * h), (cx - 34, gy - 34 * h - 6),
+                fig.fx_back.append(gust_p(fig, (cx - 30, gy - 1), (cx - 42, gy - 10 * h), (cx - 42, gy - 26 * h), (cx - 34, gy - 34 * h - 6),
                                         2.8 * h + 0.5, curl=3.0, s=1, op=h))
             for j in range(5):
                 k = ((t / 1000) * (0.7 + 0.13 * j) + j * 0.21) % 1
@@ -431,13 +460,14 @@ def fx_special(tl, ang_prev):
                 x = cx + (26 + 8 * j % 3) * math.cos(a)
                 y = gy - 2 - 50 * k * env(t, 60, 400, 560, 700)
                 layer = fig.fx_front if math.sin(a) > 0 else fig.fx_back
-                layer.append(leaf(fig, x, y, t * 0.7 + j * 70, 1.3, op=g * min(1, 4 * (1 - k))))
+                if j % 2 == 0:
+                    layer.append(EP.feuille(fig, x, y, t * 0.7 + j * 70, 0.85, op=g * min(1, 4 * (1 - k))))
         # le bond : poussière du départ
         if 520 <= t < 1000:
             k = (t - 520) / 480
             o = env(t, 520, 560, 700, 1000)
-            fig.fx_front.append(dust(fig, 42 - 6 * k, GR - 2 - 3 * k, 3 + 3 * k, op=o, k=1))
-            fig.fx_front.append(dust(fig, 92 + 7 * k, GR - 2 - 3 * k, 3 + 3 * k, op=o, k=0))
+            fig.fx_front.append(dust_p(fig, 42 - 6 * k, GR - 2 - 3 * k, 3 + 3 * k, op=o, k=1))
+            fig.fx_front.append(dust_p(fig, 92 + 7 * k, GR - 2 - 3 * k, 3 + 3 * k, op=o, k=0))
         # le moulinet : une traînée derrière chaque bout (le bâton tourne dans le sens des aiguilles d'une montre)
         if 560 <= t <= 860:
             a1 = scr_ang(u)
@@ -452,14 +482,14 @@ def fx_special(tl, ang_prev):
             C = GN
             for end, base in ((B, a1), (A, a1 + 180)):
                 R = math.dist(C, end)
-                fig.fx_back.append(trail(fig, C, R + 0.5, base - span, base - 2 * (1 if span > 0 else -1), 11, op=o))
-                fig.fx_back.append(trail(fig, C, R * 0.62, base - span * 0.6, base - 4 * (1 if span > 0 else -1), 4.5, op=o * 0.8, gold=False))
+                fig.fx_back.append(trail_p(fig, C, R + 0.5, base - span, base - 2 * (1 if span > 0 else -1), 11, op=o))
+                fig.fx_back.append(trail_p(fig, C, R * 0.62, base - span * 0.6, base - 4 * (1 if span > 0 else -1), 4.5, op=o * 0.8, gold=False))
         # l'abattage : une grande traînée entre l'ancien angle et le nouveau
         if 800 <= t <= 1000:
             o = env(t, 800, 830, 880, 1000)
             a1 = scr_ang(u)
-            fig.fx_back.append(trail(fig, GN, math.dist(GN, B) + 0.5, a1 - 75, a1 - 2, 20, op=o))
-            fig.fx_back.append(trail(fig, GN, math.dist(GN, B) * 0.55, a1 - 45, a1 - 4, 6, op=o * 0.8, gold=False))
+            fig.fx_back.append(trail_p(fig, GN, math.dist(GN, B) + 0.5, a1 - 75, a1 - 2, 20, op=o))
+            fig.fx_back.append(trail_p(fig, GN, math.dist(GN, B) * 0.55, a1 - 45, a1 - 4, 6, op=o * 0.8, gold=False))
         # l'impact : l'éclat au point de frappe, puis l'onde de vent au ras du sol vers l'ennemi
         if t >= SP_IMPACT:
             if 'px' not in HIT:
@@ -468,14 +498,14 @@ def fx_special(tl, ang_prev):
             tau = t - SP_IMPACT
             if tau < 260:
                 k = tau / 260
-                fig.fx_front.append(pop(fig, (px + 1, GR - 7 - 2 * k), 7 + 6 * k, facing=-20, op=1 - k ** 1.5))
+                fig.fx_front.append(EP.lumiere(fig, (px + 1, GR - 7 - 2 * k), 14 + 10 * k, 1 - k ** 1.5, 'vent'))
             # les gerbes de l'impact : une grande vers l'avant, une petite vers l'arrière (courbes, pas des rayons)
             o = env(tau, 0, 40, 200, 420)
             if o > 0:
                 k = min(1, tau / 260)
-                fig.fx_back.append(gust(fig, (px + 4, GR - 3), (px + 14, GR - 16 - 6 * k), (px + 28 + 6 * k, GR - 26 - 6 * k),
+                fig.fx_back.append(gust_p(fig, (px + 4, GR - 3), (px + 14, GR - 16 - 6 * k), (px + 28 + 6 * k, GR - 26 - 6 * k),
                                         (px + 42 + 10 * k, GR - 22 - 6 * k), 6.0, curl=5.5 + 2 * k, s=1, op=o, tail=0.5 * k))
-                fig.fx_back.append(gust(fig, (px - 3, GR - 3), (px - 8, GR - 13 - 3 * k), (px - 16 - 3 * k, GR - 19 - 3 * k),
+                fig.fx_back.append(gust_p(fig, (px - 3, GR - 3), (px - 8, GR - 13 - 3 * k), (px - 16 - 3 * k, GR - 19 - 3 * k),
                                         (px - 23 - 5 * k, GR - 17 - 3 * k), 3.6, curl=3.5 + k, s=-1, op=o, tail=0.5 * k))
             # l'onde : des rafales qui filent au ras du sol vers l'ennemi et finissent en volutes
             if 60 <= tau < 760:
@@ -484,30 +514,30 @@ def fx_special(tl, ang_prev):
                 o = env(tau, 60, 120, 470, 760)
                 tail = max(0, k - 0.25) * 0.9
                 WV = 7.0 - 3 * k
-                fig.fx_front.append(gust(fig, (px - 2, GR - 2.5), (px + L * 0.3, GR - 1.5), (px + L * 0.6, GR - 4.5),
+                fig.fx_front.append(gust_p(fig, (px - 2, GR - 2.5), (px + L * 0.3, GR - 1.5), (px + L * 0.6, GR - 4.5),
                                          (px + L, GR - 8 - 3 * k), WV, curl=5 + 4 * k, s=-1, op=o, tail=tail))
-                fig.fx_back.append(gust(fig, (px - 4, GR - 8), (px + L * 0.2, GR - 26), (px + L * 0.5, GR - 32 - 4 * k),
+                fig.fx_back.append(gust_p(fig, (px - 4, GR - 8), (px + L * 0.2, GR - 26), (px + L * 0.5, GR - 32 - 4 * k),
                                         (px + L * 0.78, GR - 26 - 6 * k), WV * 0.7, curl=4 + 3 * k, s=1, op=o, tail=tail))
                 if k > 0.15:
-                    fig.fx_front.append(gust(fig, (px + L * 0.15, GR - 10), (px + L * 0.35, GR - 16), (px + L * 0.5, GR - 14),
+                    fig.fx_front.append(gust_p(fig, (px + L * 0.15, GR - 10), (px + L * 0.35, GR - 16), (px + L * 0.5, GR - 14),
                                              (px + L * 0.62, GR - 19), WV * 0.5, curl=3 + 2 * k, s=-1, op=o * 0.9, tail=tail))
             # poussière au ras du sol : elle enfle puis se défait
             if tau < 900:
                 k = tau / 900
                 o = env(tau, 0, 60, 420, 900)
-                fig.fx_back.append(dust(fig, px + 2 + 6 * k, GR - 4 - 3 * k, 5 + 6 * k, op=o, k=0))
-                fig.fx_back.append(dust(fig, px - 12 - 6 * k, GR - 3 - 2 * k, 3 + 4 * k, op=o * 0.85, k=1))
+                fig.fx_back.append(dust_p(fig, px + 2 + 6 * k, GR - 4 - 3 * k, 5 + 6 * k, op=o, k=0))
+                fig.fx_back.append(dust_p(fig, px - 12 - 6 * k, GR - 3 - 2 * k, 3 + 4 * k, op=o * 0.85, k=1))
                 if k > 0.15:
-                    fig.fx_back.append(dust(fig, px + 30 + 30 * k, GR - 3 - 2 * k, 3 + 5 * k, op=o * 0.9, k=1))
+                    fig.fx_back.append(dust_p(fig, px + 30 + 30 * k, GR - 3 - 2 * k, 3 + 5 * k, op=o * 0.9, k=1))
             # débris : feuilles et cailloux projetés en cloche
-            for j, (vx, vy, kind) in enumerate(((35, -95, 'f'), (60, -70, 'p'), (15, -110, 'f'), (80, -50, 'f'),
-                                               (-25, -80, 'p'), (-10, -100, 'f'), (48, -85, 'p'), (95, -35, 'p'))):
-                tt = (tau - 15 * (j % 3)) / 1000
+            for j, (vx, vy, kind) in enumerate(((45, -125, 'f'), (75, -95, 'p'), (-30, -105, 'p'), (100, -60, 'f'))):
+                tt = (tau - 15 * (j % 2)) / 1000
                 if 0 <= tt < 0.9:
-                    x, y = ballistic((px, GR - 4), (vx, vy), 230, tt)
+                    (x, y), _ = EP.vol((px, GR - 4), (vx, vy), 260, tt, drag=0.9)
                     if y < GR - 0.8:
                         o = min(1, (0.9 - tt) * 4)
-                        fig.fx_front.append(leaf(fig, x, y, tt * 800 + j * 50, 1.5, op=o) if kind == 'f' else pebble(fig, x, y, 1.2, tt * 600 + j * 40, op=o))
+                        fig.fx_front.append(EP.feuille(fig, x, y, tt * 800 + j * 50, 0.95, op=o) if kind == 'f' else
+                                            EP.caillou(fig, x, y, 1.6, tt * 600 + j * 40, seed=j, op=o))
     return f
 
 

@@ -528,6 +528,59 @@ def storm_path(p0):
     return resample(bez(p0, (p0[0] + 50, p0[1] - 24), (T[0] - 30, T[1] - 46), T, 60), 120), T
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : tresses, rafales, anneaux et lames de vent d'un
+# seul ruban sans contour sombre, bouffées fondues, lumières ; plumes noires, rythme et instants inchangés)
+import effets_pro as E  # noqa: E402
+
+
+def ring_p(fig, c, rx, ry, a0, a1, w, op=1.0):
+    pts = [(c[0] + rx * math.cos(math.radians(a0 + (a1 - a0) * i / 14)), c[1] + ry * math.sin(math.radians(a0 + (a1 - a0) * i / 14)))
+           for i in range(15)]
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op, kind='fuseau', halo=0.4)
+
+
+def moon_p(fig, c, R, facing, d, op=1.0, span=72):
+    """La lame de vent : UN croissant plein bombé vers `facing`, effilé aux cornes, cœur blanc."""
+    if R < 1 or op <= 0.02:
+        return ''
+    pts = [(c[0] + (R - d * 0.5) * math.cos(math.radians(facing - span + 2 * span * i / 14)),
+            c[1] + (R - d * 0.5) * math.sin(math.radians(facing - span + 2 * span * i / 14))) for i in range(15)]
+    return E.ruban(fig, pts, d * 1.25, 'vent', op=op, kind='fuseau', halo=0.5)
+
+
+def gust_p(fig, p0, p1, p2, p3, w, curl=3.0, up=True, op=1.0, tail=0.0, pale=False):
+    """Une rafale : UN ruban effilé le long d'une courbe, qui finit en volute ; `tail` l'efface par l'arrière."""
+    if op <= 0.02 or w < 0.3:
+        return ''
+    c = resample(bez(p0, p1, p2, p3, 30), 12)
+    dx, dy = c[-1][0] - c[-2][0], c[-1][1] - c[-2][1]
+    L = math.hypot(dx, dy) or 1
+    nx, ny = (dy / L, -dx / L) if up else (-dy / L, dx / L)
+    cc = (c[-1][0] + nx * curl, c[-1][1] + ny * curl)
+    a0 = math.degrees(math.atan2(c[-1][1] - cc[1], c[-1][0] - cc[0]))
+    s1, s2 = spiral_pts(cc, curl, a0, 0.85, not up, n=8), spiral_pts(cc, curl, a0, 0.85, up, n=8)
+    cont = lambda s_: (s_[1][0] - s_[0][0]) * dx + (s_[1][1] - s_[0][1]) * dy   # noqa: E731
+    pts = c + (s1 if cont(s1) > cont(s2) else s2)[1:]
+    pts = pts[int(len(pts) * tail):]
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op * (0.75 if pale else 1), kind='pointe', halo=0.4)
+
+
+def dust_p(fig, cx, cy, r, op=1.0):
+    return E.nuage(fig, cx, cy, r * 1.1, 'terre', op=op, seed=int(cx) % 3, flat=0.7)
+
+
+def puff_p(fig, cx, cy, r, op=1.0):
+    return E.nuage(fig, cx, cy, r, 'vent', op=op, seed=1)
+
+
+def flash_p(fig, c, r, op=1.0):
+    return E.lumiere(fig, c, r * 1.4, op, 'vent')
+
+
+def smear_p(fig, C, R, a0, a1, w, gold=False, op=1.0):
+    return E.croissant(fig, C, R, a0, a1, w, 'or' if gold else 'vent', op=op)
+
+
 def fx_special(tl, prev):
     def f(fig, ctx):
         P = ctx['P']
@@ -540,13 +593,13 @@ def fx_special(tl, prev):
             k = min(1, (t - S_GATHER[0]) / 150)
             rx, ry = 30 + 10 * k, 5 + 2 * k
             sp = t * 0.35
-            fig.fx_back.append(ring(fig, (cx, gy - k), rx, ry, 200 + sp % 60, 340 + sp % 60, 3.0 + k, op=e))
-            fig.fx_front.append(ring(fig, (cx, gy - k), rx, ry, 20 + sp % 60, 160 + sp % 60, 3.6 + k, op=e))
+            fig.fx_back.append(ring_p(fig, (cx, gy - k), rx, ry, 200 + sp % 60, 340 + sp % 60, 3.0 + k, op=e))
+            fig.fx_front.append(ring_p(fig, (cx, gy - k), rx, ry, 20 + sp % 60, 160 + sp % 60, 3.6 + k, op=e))
             if k > 0.6:
-                fig.fx_front.append(gust(fig, (cx + 34, gy - 3), (cx + 44, gy - 12), (cx + 42, gy - 24), (cx + 36, gy - 30), 3.0, curl=3.2, up=True, op=e))
-                fig.fx_back.append(gust(fig, (cx - 36, gy - 5), (cx - 46, gy - 15), (cx - 44, gy - 28), (cx - 36, gy - 34), 2.6, curl=3.0, up=False, op=e))
-                fig.fx_back.append(dust(fig, cx - 32, GR - 2.4, 3.4, op=e))
-                fig.fx_back.append(dust(fig, cx + 32, GR - 2.4, 3.4, op=e))
+                fig.fx_front.append(gust_p(fig, (cx + 34, gy - 3), (cx + 44, gy - 12), (cx + 42, gy - 24), (cx + 36, gy - 30), 3.0, curl=3.2, up=True, op=e))
+                fig.fx_back.append(gust_p(fig, (cx - 36, gy - 5), (cx - 46, gy - 15), (cx - 44, gy - 28), (cx - 36, gy - 34), 2.6, curl=3.0, up=False, op=e))
+                fig.fx_back.append(dust_p(fig, cx - 32, GR - 2.4, 3.4, op=e))
+                fig.fx_back.append(dust_p(fig, cx + 32, GR - 2.4, 3.4, op=e))
             for j, (x, y0, a) in enumerate(((cx + 34, GR - 5, 20), (cx - 42, GR - 4, 160), (cx + 40, GR - 18, -30), (cx - 46, GR - 24, 200))):
                 if j >= 2 and k < 0.6:
                     continue
@@ -558,20 +611,20 @@ def fx_special(tl, prev):
             k = tau / 520
             o = 1 - k ** 1.5
             for s in (-1, 1):
-                fig.fx_front.append(dust(fig, cx + s * (26 + 34 * ease(k * 1.6)), GR - 3 - 3 * k, 5 + 2.5 * k, op=o))
-                fig.fx_back.append(dust(fig, cx + s * (14 + 22 * ease(k * 1.6)), GR - 5 - 5 * k, 3.6 + 2 * k, op=o * 0.9))
-            fig.fx_front.append(ring(fig, (cx, GR - 1.5), 30 + 30 * k, 4 + 2 * k, 15, 165, 3.2 * (1 - k) + 0.4, op=o))
+                fig.fx_front.append(dust_p(fig, cx + s * (26 + 34 * ease(k * 1.6)), GR - 3 - 3 * k, 5 + 2.5 * k, op=o))
+                fig.fx_back.append(dust_p(fig, cx + s * (14 + 22 * ease(k * 1.6)), GR - 5 - 5 * k, 3.6 + 2 * k, op=o * 0.9))
+            fig.fx_front.append(ring_p(fig, (cx, GR - 1.5), 30 + 30 * k, 4 + 2 * k, 15, 165, 3.2 * (1 - k) + 0.4, op=o))
             if k < 0.6:
                 ly = GR - 10 - 40 * k
-                fig.fx_back.append(gust(fig, (cx - 22, GR - 4), (cx - 30, ly + 12), (cx - 26, ly), (cx - 18, ly - 6), 3.2, curl=3.0, up=False, op=1 - k / 0.6))
-                fig.fx_back.append(gust(fig, (cx + 24, GR - 4), (cx + 34, ly + 12), (cx + 30, ly), (cx + 22, ly - 6), 3.0, curl=2.8, up=True, op=1 - k / 0.6))
+                fig.fx_back.append(gust_p(fig, (cx - 22, GR - 4), (cx - 30, ly + 12), (cx - 26, ly), (cx - 18, ly - 6), 3.2, curl=3.0, up=False, op=1 - k / 0.6))
+                fig.fx_back.append(gust_p(fig, (cx + 24, GR - 4), (cx + 34, ly + 12), (cx + 30, ly), (cx + 22, ly - 6), 3.0, curl=2.8, up=True, op=1 - k / 0.6))
         # le coup d'éventail : grande traînée d'or et de vent
         if S_FAN[0] <= t <= S_FAN[1] + 60:
             S = ctx['shoulder']
             tipp = ctx['fan_tip']
             a1 = math.degrees(math.atan2(tipp[1] - S[1], tipp[0] - S[0]))
             e = env(t, S_FAN[0], S_FAN[0] + 20, S_FAN[1] - 30, S_FAN[1] + 60)
-            fig.fx_back.append(smear(fig, S, math.dist(S, tipp) + 1, a1 - 150 * min(1, (t - S_FAN[0]) / 45), a1 - 2, 18 * e, gold=True, op=e))
+            fig.fx_back.append(smear_p(fig, S, math.dist(S, tipp) + 1, a1 - 150 * min(1, (t - S_FAN[0]) / 45), a1 - 2, 18 * e, gold=True, op=e))
         # la rafale : elle jaillit de l'éventail, file en cône vers l'ennemi en emportant une volée de plumes noires
         if t >= S_STORM:
             p0 = SP_STORE.get('fan_tip')
@@ -582,7 +635,7 @@ def fx_special(tl, prev):
             ts = t - S_STORM
             if ts < 120:
                 k = ts / 120
-                fig.fx_front.append(flash(fig, (p0[0] + 6, p0[1]), 12 + 6 * k, op=1 - k * 0.6))
+                fig.fx_front.append(flash_p(fig, (p0[0] + 6, p0[1]), 12 + 6 * k, op=1 - k * 0.6))
             sf = ease(min(1, ts / (S_HIT - S_STORM)))                    # le front de la rafale
             st = max(0.0, min(1.0, (ts - 120) / 520))                    # l'arrière s'efface
             if ts < S_HIT - S_STORM + 260:
@@ -598,22 +651,17 @@ def fx_special(tl, prev):
                             nn = (v[1] / L, -v[0] / L)
                             amp = (3 + 9 * q) * math.sin(q * 14 + ph0 - ts / 60.0)
                             seg.append((pts[i][0] + nn[0] * amp, pts[i][1] + nn[1] * amp))
-                        m = len(seg)
-                        ws_ = [0.2 + w0 * math.sin(math.pi * j / (m - 1)) ** 0.6 * (0.6 + 0.4 * (j / (m - 1))) for j in range(m)]
-                        sh = ribbon(seg, ws_)
-                        core = ribbon(seg, [x * 0.35 for x in ws_])
-                        gr = g_lin(fig, seg[0], seg[-1], [(0, WIND[3], 0.2), (0.6, WIND[2]), (1, WIND[1])])
-                        lay.append(outlined([(sh, gr, 1), (core, WIND[0], 0.85)], w=1.0, op=1.0 - 0.6 * st))
+                        lay.append(E.ruban(fig, seg[::4] + [seg[-1]], w0 * 1.8, 'vent', op=(1.0 - 0.6 * st) * (0.7 if pale else 1), kind='tete', halo=0.4))
                 # la tête de la rafale : un grand croissant bombé vers où elle va, des volutes de part et d'autre
                 if ts < S_HIT - S_STORM:
                     i = int(sf * n)
                     pf = pts[i]
                     q = (pts[i][0] - pts[max(i - 4, 0)][0], pts[i][1] - pts[max(i - 4, 0)][1])
                     fa = math.degrees(math.atan2(q[1], q[0])) if math.hypot(*q) > 0.1 else -20
-                    fig.fx_front.append(moon(fig, pf, 20, fa, 8.5))
+                    fig.fx_front.append(moon_p(fig, pf, 20, fa, 8.5))
                     if sf > 0.15:
-                        fig.fx_back.append(gust(fig, (pf[0] - 30, pf[1] - 14), (pf[0] - 20, pf[1] - 22), (pf[0] - 8, pf[1] - 22), (pf[0], pf[1] - 15), 3.0, curl=3.4, up=False))
-                        fig.fx_back.append(gust(fig, (pf[0] - 30, pf[1] + 14), (pf[0] - 20, pf[1] + 22), (pf[0] - 8, pf[1] + 22), (pf[0], pf[1] + 15), 2.8, curl=3.2, up=True))
+                        fig.fx_back.append(gust_p(fig, (pf[0] - 30, pf[1] - 14), (pf[0] - 20, pf[1] - 22), (pf[0] - 8, pf[1] - 22), (pf[0], pf[1] - 15), 3.0, curl=3.4, up=False))
+                        fig.fx_back.append(gust_p(fig, (pf[0] - 30, pf[1] + 14), (pf[0] - 20, pf[1] + 22), (pf[0] - 8, pf[1] + 22), (pf[0], pf[1] + 15), 2.8, curl=3.2, up=True))
             # la volée de plumes le long de la rafale
             if ts < S_HIT - S_STORM + 40:
                 for j, (lag, side, big) in enumerate(FLOCK):
@@ -631,22 +679,22 @@ def fx_special(tl, prev):
             th = t - S_HIT
             if th >= 0:
                 e = env(th, 0, 40, 140, 380)
-                fig.fx_front.append(flash(fig, (T[0] + 2, T[1]), 24, op=e))
+                fig.fx_front.append(flash_p(fig, (T[0] + 2, T[1]), 24, op=e))
                 if th < 420:
                     k = th / 420
-                    fig.fx_back.append(moon(fig, (T[0] - 6, T[1] - 2), 24 + 6 * k, -30, 7 * (1 - k) + 0.5, op=1 - k))
-                    fig.fx_front.append(gust(fig, (T[0] + 4, T[1] - 8), (T[0] + 14, T[1] - 20 - 6 * k), (T[0] + 26, T[1] - 20 - 8 * k), (T[0] + 32, T[1] - 30 - 8 * k),
+                    fig.fx_back.append(moon_p(fig, (T[0] - 6, T[1] - 2), 24 + 6 * k, -30, 7 * (1 - k) + 0.5, op=1 - k))
+                    fig.fx_front.append(gust_p(fig, (T[0] + 4, T[1] - 8), (T[0] + 14, T[1] - 20 - 6 * k), (T[0] + 26, T[1] - 20 - 8 * k), (T[0] + 32, T[1] - 30 - 8 * k),
                                              5.0 * (1 - 0.4 * k), curl=5.0 + k, up=True, tail=0.4 * k, op=1 - k ** 2))
-                    fig.fx_back.append(gust(fig, (T[0] + 4, T[1] + 8), (T[0] + 14, T[1] + 17), (T[0] + 26, T[1] + 16 + 4 * k), (T[0] + 33, T[1] + 23 + 6 * k),
+                    fig.fx_back.append(gust_p(fig, (T[0] + 4, T[1] + 8), (T[0] + 14, T[1] + 17), (T[0] + 26, T[1] + 16 + 4 * k), (T[0] + 33, T[1] + 23 + 6 * k),
                                             4.4 * (1 - 0.4 * k), curl=4.4 + k, up=False, tail=0.4 * k, op=1 - k ** 2))
                 # le tourbillon (anneaux qui tournent) et la bouffée qui se creuse
                 ew = env(th, 60, 160, 420, 700)
                 if ew > 0:
                     rot = th * 0.45
-                    fig.fx_back.append(ring(fig, (T[0], T[1] - 2), 30, 14, 200 + rot, 340 + rot, 3.6, op=ew))
-                    fig.fx_front.append(ring(fig, (T[0], T[1] - 2), 30, 14, 20 + rot, 170 + rot, 4.4, op=ew))
-                    fig.fx_front.append(ring(fig, (T[0] + 2, T[1] + 10), 22, 8, 40 + rot * 1.3, 150 + rot * 1.3, 2.8, op=ew * 0.9))
-                    fig.fx_back.append(puff(fig, T[0] + 2, T[1] + 2 - 0.01 * th, 9 * (1 - 0.4 * min(1, th / 600)), op=0.8 * ew))
+                    fig.fx_back.append(ring_p(fig, (T[0], T[1] - 2), 30, 14, 200 + rot, 340 + rot, 3.6, op=ew))
+                    fig.fx_front.append(ring_p(fig, (T[0], T[1] - 2), 30, 14, 20 + rot, 170 + rot, 4.4, op=ew))
+                    fig.fx_front.append(ring_p(fig, (T[0] + 2, T[1] + 10), 22, 8, 40 + rot * 1.3, 150 + rot * 1.3, 2.8, op=ew * 0.9))
+                    fig.fx_back.append(puff_p(fig, T[0] + 2, T[1] + 2 - 0.01 * th, 9 * (1 - 0.4 * min(1, th / 600)), op=0.8 * ew))
                 # les plumes : elles tournoient (orbite qui s'élargit), puis retombent en se balançant
                 for i, (lag, side, big) in enumerate(FLOCK):
                     a0 = i * 360 / len(FLOCK)
@@ -674,8 +722,8 @@ def fx_special(tl, prev):
             k = tau / 420
             o = 1 - k ** 1.4
             for s in (-1, 1):
-                fig.fx_front.append(dust(fig, cx + s * (24 + 16 * ease(k * 1.5)), GR - 3 - 2 * k, 4.6 + 1.5 * k, op=o))
-            fig.fx_front.append(ring(fig, (cx, GR - 1.5), 30 + 14 * k, 3.6, 25, 155, 2.6 * (1 - k) + 0.3, op=o))
+                fig.fx_front.append(dust_p(fig, cx + s * (24 + 16 * ease(k * 1.5)), GR - 3 - 2 * k, 4.6 + 1.5 * k, op=o))
+            fig.fx_front.append(ring_p(fig, (cx, GR - 1.5), 30 + 14 * k, 3.6, 25, 155, 2.6 * (1 - k) + 0.3, op=o))
     return f
 
 

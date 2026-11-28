@@ -36,11 +36,11 @@ def lame(fig, i):
 def rafale(fig, i):
     """La tête de la rafale (grand croissant, volutes) et quelques plumes noires emportées, avant vers (0, 0)."""
     c = (-8.0, 0.0)
-    fig.fx_back.append(A.gust(fig, (c[0] - 30, c[1] - 14), (c[0] - 20, c[1] - 22), (c[0] - 8, c[1] - 22), (c[0], c[1] - 15), 3.0,
+    fig.fx_back.append(A.gust_p(fig, (c[0] - 30, c[1] - 14), (c[0] - 20, c[1] - 22), (c[0] - 8, c[1] - 22), (c[0], c[1] - 15), 3.0,
                               curl=3.4, up=False))
-    fig.fx_back.append(A.gust(fig, (c[0] - 30, c[1] + 14), (c[0] - 20, c[1] + 22), (c[0] - 8, c[1] + 22), (c[0], c[1] + 15), 2.8,
+    fig.fx_back.append(A.gust_p(fig, (c[0] - 30, c[1] + 14), (c[0] - 20, c[1] + 22), (c[0] - 8, c[1] + 22), (c[0], c[1] + 15), 2.8,
                               curl=3.2, up=True))
-    fig.fx_front.append(A.moon(fig, c, 20, 0, 8.5))
+    fig.fx_front.append(A.moon_p(fig, c, 20, 0, 8.5))   # effets « pro » (28/11)
     for j, (dx, dy, big) in enumerate(((-26, -6, True), (-38, 7, False), (-48, -3, True), (-18, 10, False))):
         fig.fx_front.append(A.crow(fig, dx, dy + 2 * math.sin(i * 2 + j), 25 * math.sin(i * 1.7 + j), 1.35 if big else 1.0))
 
