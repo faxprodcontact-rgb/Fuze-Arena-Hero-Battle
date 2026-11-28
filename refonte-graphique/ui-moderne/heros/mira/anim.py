@@ -493,62 +493,73 @@ def wind_wing_state(k):
     return out
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : ailes de vent dont les plumes sont fondues en UNE
+# silhouette, anneaux et rafales d'un seul ruban, plumes d'une forme, sans contour sombre ; même rythme, mêmes instants)
+import effets_pro as E  # noqa: E402
+
+
 def wind_wing(fig, st, M_, op, far=False, ph=0.0):
-    """Une grande aile de VENT (sans contour noir, un liseré jade) : le bord d'attaque R → W → T, sept plumes d'air
-    en feuilles qui en pendent, en éventail. M_ : un point de l'aile proche → le dessin (miroir pour la lointaine)."""
+    """Une grande aile de VENT d'UNE silhouette : le bord d'attaque R → W → T et sept plumes d'air qui en pendent en
+    éventail, fondus ensemble ; plus claire près du bord, halo doux, sans contour. M_ : aile proche → dessin."""
     if op <= 0.02:
         return ''
     R, W, T = st['R'], st['W'], st['T']
     edge = resample(bez(R, lerp(R, W, 0.6), lerp(W, T, 0.3), T, 30), 30)
-    shapes = []
+    locks = []
     n = 7
     for i in range(n):
-        s = 0.3 + 0.7 * i / (n - 1)
-        p = edge[int(s * 30)]
+        s_ = 0.3 + 0.7 * i / (n - 1)
+        p = edge[int(s_ * 30)]
         a = st['a0'] + (st['a1'] - st['a0']) * i / (n - 1) + 3 * math.sin(ph + i * 0.9)
         ln = st['l0'] + (st['l1'] - st['l0']) * i / (n - 1)
         tip = add(p, unit(a), ln)
-        sh = leaf(M_(p), M_(tip), 7.5, bend=1.4 * (-1 if far else 1), root=0.8, belly=1.05)
-        gr = g_lin(fig, M_(p), M_(tip), [(0, WIND[1]), (0.55, WIND[2] if not far else WIND[3]), (1, WIND[3] if not far else WIND[4])])
-        shapes.append((sh, gr, 0.92))
-    # le bord d'attaque (les couvertures) : un ruban plein, plus large au poignet
-    ws = [max(0.3, 7.0 * math.sin(math.pi * min(1, 0.15 + 0.85 * i / 30)) ** 0.6 * (1 - 0.5 * i / 30)) for i in range(31)]
-    band = stroke_shape([M_(p) for p in edge], ws)
-    gr = g_lin(fig, M_(R), M_(T), [(0, '#ffffff'), (0.6, WIND[1]), (1, WIND[2])])
-    shapes.append((band, gr, 0.95))
-    shapes.append((stroke_shape([M_(add(p, (0.6, -1.0))) for p in edge[2:-2]], [max(0.05, x * 0.3) for x in ws[2:-2]]), '#ffffff', 0.9))
-    return outlined(shapes, ink=WIND[5], w=1.0, op=op)
+        sd = (-unit(a)[1], unit(a)[0])
+        mid = add(add(p, unit(a), ln * 0.5), sd, 1.4 * (-1 if far else 1))
+        locks.append(([M_(p), M_(mid), M_(tip)], 7.5))
+    locks.append(([M_(q) for q in edge[::3]], 7.0))
+    return E.meches(fig, locks, 'vent', op=op * (0.8 if far else 1.0), halo=0.6, zones=False)
+
+
+def plume_p(fig, c, ang, s=1.0, op=1.0):
+    """Une plume d'air : UN fuseau courbe, clair, sans contour."""
+    a = math.radians(ang)
+    u, v = (math.cos(a), math.sin(a)), (-math.sin(a), math.cos(a))
+    P = lambda i, j: (c[0] + s * (u[0] * i + v[0] * j), c[1] + s * (u[1] * i + v[1] * j))   # noqa: E731
+    return E.ruban(fig, [P(-3.2, 0.3), P(0, -0.3), P(3.0, 0.2)], 2.6 * s, 'vent', op=op, kind='fuseau', halo=0.3)
+
+
+def gust_p(fig, p0, p1, p2, p3, w, curl=4.0, s=-1, tail=0.0, op=1.0, turn=290):
+    """Une rafale : UN ruban effilé le long d'une courbe, qui s'enroule en volute au bout."""
+    if op <= 0.02 or w < 0.15:
+        return ''
+    c = resample(bez(p0, p1, p2, p3, 30), 12)
+    d = (p3[0] - p2[0], p3[1] - p2[1])
+    if curl > 0.3:
+        c = c + spiral(p3, d, curl, turn, s, 8)[1:]
+    c = c[int(tail * (len(c) - 4)):]
+    return E.ruban(fig, c, w * 1.7, 'vent', op=op, kind='pointe', halo=0.4)
 
 
 def feather_ring(fig, c, rx, ry, ph, op, back, n=16, s=1.0):
-    """L'anneau de plumes de vent autour d'elle (à plat : une ellipse). Sa moitié du fond passe derrière elle, celle de
-    devant devant ; les plumes tournent le long de l'anneau."""
+    """L'anneau de plumes de vent autour d'elle (une ellipse) : UN ruban d'air (sa moitié du fond derrière elle,
+    celle de devant devant) et quelques plumes qui tournent le long de l'anneau."""
     if op <= 0.02:
         return ''
-    shapes = []
-    for i in range(n):
-        th = ph + 2 * math.pi * i / n
+    a0, a1 = (190, 350) if back else (10, 170)
+    out = [E.ruban(fig, ring_pts(c, rx, ry, a0, a1, 14), 4.2 * s, 'vent', op=op * (0.6 if back else 0.95), kind='fuseau')]
+    for i in range(n // 3):
+        th = ph + 2 * math.pi * i / (n // 3)
         sn = math.sin(th)
         if (sn < 0) != back:
             continue
         p = (c[0] + rx * math.cos(th), c[1] + ry * sn)
-        d = norm((-rx * math.sin(th), ry * math.cos(th)))
-        L = (4.2 + 1.4 * (sn + 1) / 2) * s
-        sh = leaf(add(p, d, -L * 0.5), add(p, d, L * 0.6), 3.4 * s * (0.8 + 0.25 * (sn + 1) / 2), bend=0.8)
-        tone = (WIND[1], WIND[3]) if not back else (WIND[2], WIND[4])
-        shapes.append((sh, g_lin(fig, add(p, (2, -2)), add(p, (-2, 2)), [(0, '#ffffff'), (0.5, tone[0]), (1, tone[1])]), 1))
-    # le ruban d'air qui les porte
-    a0, a1 = (190, 350) if back else (10, 170)
-    pts = ring_pts(c, rx, ry, a0, a1, 36)
-    ws = [max(0.05, 2.2 * s * math.sin(math.pi * i / 36) ** 0.6) for i in range(37)]
-    band = stroke_shape(pts, ws)
-    out = outlined([(band, g_lin(fig, pts[0], pts[-1], [(0, WIND[3]), (0.5, WIND[1]), (1, WIND[3])]), 0.9)], w=0.9, op=op * (0.7 if back else 0.95))
-    out += outlined(shapes, w=0.9, op=op * (0.8 if back else 1))
-    return out
+        d = (-rx * math.sin(th), ry * math.cos(th))
+        out.append(plume_p(fig, p, math.degrees(math.atan2(d[1], d[0])), 1.1 * s, op=op * (0.7 if back else 1)))
+    return ''.join(out)
 
 
 def ring_arcs(fig, c, rx, ry, w, op, back, gaps=0.0, ph=0.0):
-    """L'anneau qui s'élargit en descendant : un ruban effilé aux bouts, qui se défait en arcs (gaps 0..1)."""
+    """L'anneau qui s'élargit en descendant : des rubans effilés aux bouts, qui se défont en arcs (gaps 0..1)."""
     if op <= 0.02:
         return ''
     out = ''
@@ -558,12 +569,7 @@ def ring_arcs(fig, c, rx, ry, w, op, back, gaps=0.0, ph=0.0):
     for j in range(nseg):
         s0 = a0 + j * span + span * gaps * 0.3 + 8 * math.sin(ph + j)
         s1 = a0 + (j + 1) * span - span * gaps * 0.3 + 8 * math.sin(ph + j)
-        pts = ring_pts(c, rx, ry, s0, s1, 24)
-        ws = [max(0.05, w * math.sin(math.pi * i / 24) ** 0.6) for i in range(25)]
-        body = stroke_shape(pts, ws)
-        core = stroke_shape([(x, y - 0.25 * w) for x, y in pts], [x * 0.38 for x in ws])
-        gr = g_lin(fig, pts[0], pts[-1], [(0, WIND[3]), (0.5, WIND[1]), (1, WIND[3])])
-        out += outlined([(body, gr, 1), (core, '#ffffff', 0.85)], w=1.0, op=op * (0.75 if back else 1))
+        out += E.ruban(fig, ring_pts(c, rx, ry, s0, s1, 14), w * 1.7, 'vent', op=op * (0.7 if back else 1), kind='fuseau')
     return out
 
 
@@ -581,12 +587,9 @@ def fx_special(tl):
         if k > 0:
             rim = ctx['rim']
             u = (tl - SP_CLANG) / 220
-            fig.fx_front.append(sparkle(fig, rim, 4.4 * k, k, rot=12))
-            for j in range(2):
-                uu = max(0.0, u - 0.25 * j)
-                if uu > 0:
-                    pts, ws = lens_pts(rim, 4 + 16 * uu, 205 + 10 * j, 300 + 10 * j, 1.5 * (1 - uu))
-                    fig.fx_front.append(outlined([(stroke_shape(pts, ws), GOLDFX[1], 1)], ink='#6a3a1a', w=0.8, op=(1 - uu) * 0.9))
+            fig.fx_front.append(E.lumiere(fig, rim, 10 * k, k, 'or'))
+            if u > 0:
+                fig.fx_front.append(E.ruban(fig, ring_pts(rim, 4 + 16 * u, 4 + 16 * u, 205, 300, 10), 3.2 * (1 - u), 'or', op=(1 - u) * 0.9))
         # 2) le vent se lève à ses pieds (de fines rafales qui montent en spirale)
         kg = env(tl, 280, 380, 560, 680)
         if kg > 0:
@@ -594,7 +597,7 @@ def fx_special(tl):
                 ph = tl / 120 + j * 2.1
                 x0 = 66 + 22 * math.cos(ph)
                 p0 = (x0, GR - 2 - lift)
-                fig.fx_back.append(gust(fig, p0, add(p0, (6 * math.sin(ph), -8)), add(p0, (-4, -18)), add(p0, (2, -26)), 2.0,
+                fig.fx_back.append(gust_p(fig, p0, add(p0, (6 * math.sin(ph), -8)), add(p0, (-4, -18)), add(p0, (2, -26)), 2.0,
                                         curl=2.6, s=1 if j % 2 else -1, tail=0.2, op=0.8 * kg))
         # 3) les grandes ailes de vent, dans son dos
         if P['wop'] > 0.02 and P['wing'] >= 0.99:
@@ -610,8 +613,8 @@ def fx_special(tl):
         kt = env(tl, 560, 620, 700, 900)
         if kt > 0:
             u = (tl - 560) / 340
-            for j, (dx, r) in enumerate(((-26, 4.2), (-12, 3.4), (14, 3.6), (30, 4.4))):
-                fig.fx_front.append(puff(fig, 66 + dx * (0.7 + 0.8 * u), GR - 2.0 - 4 * u, r * (0.6 + 0.6 * u), op=kt * 0.9, k=j, dust=True))
+            for j, (dx, r) in enumerate(((-22, 4.6), (24, 4.8))):
+                fig.fx_front.append(E.nuage(fig, 66 + dx * (0.7 + 0.8 * u), GR - 2.5 - 4 * u, r * (0.6 + 0.6 * u), 'terre', op=kt * 0.9, seed=j, flat=0.7))
         # 5) l'anneau de plumes de vent : il se forme depuis son dos, plein (arrêt sur l'image), puis part
         c = mapp(ctx['U'], (66.0, 84.0))
         kr = env(tl, SP_RING[0], SP_RING[0] + 80, SP_LAUNCH, SP_LAUNCH + 40)
@@ -630,10 +633,10 @@ def fx_special(tl):
                 q = mapp(M_, p)
                 arr = smooth((tl - SP_RING[0] - 80 - 25 * j) / 90)
                 q = add(q, (14 * (1 - arr) * (1 if j % 2 else -1), -10 * (1 - arr)))
-                fig.fx_front.append(plume(fig, q, a + 40 * (1 - arr), s, op=ka * arr))
+                fig.fx_front.append(plume_p(fig, q, a + 40 * (1 - arr), s, op=ka * arr))
                 kk = env(tl, SP_RING[0] + 150 + 30 * j, SP_RING[0] + 180 + 30 * j, SP_RING[0] + 200 + 30 * j, SP_RING[0] + 300 + 30 * j)
                 if kk > 0:
-                    fig.over.append(sparkle(fig, add(q, (1.2, -1.0)), 2.2 * kk, kk, rot=10, tones=(WIND[1], WIND[2])))
+                    fig.over.append(E.lumiere(fig, add(q, (1.2, -1.0)), 5 * kk, kk, 'vent'))
         # l'aura d'air (le liseré autour d'elle) quand l'anneau est plein ; le voile d'air
         kw = env(tl, SP_RING[0] + 60, SP_RING[0] + 120, SP_LAUNCH, SP_LAUNCH + 120)
         # 6) LANCEMENT : l'anneau s'élargit dans toutes les directions en descendant jusqu'au sol, se défait en arcs
@@ -649,20 +652,20 @@ def fx_special(tl):
             for j in range(5):
                 th = math.radians(30 + 72 * j + 10 * math.sin(j))
                 q = (cc[0] + rx * 0.92 * math.cos(th), cc[1] + ry * 0.92 * math.sin(th) - 6 * u)
-                fig.fx_front.append(plume(fig, q, 40 * j + 220 * u, 0.9, op=op * 0.9))
+                fig.fx_front.append(plume_p(fig, q, 40 * j + 220 * u, 0.9, op=op * 0.9))
         # 7) le souffle qui soigne : des grains de lumière montent en spirale autour d'elle, sa silhouette s'éclaire
         kh = env(tl, SP_HEAL[0] - 20, SP_HEAL[0] + 90, SP_HEAL[1] - 120, SP_HEAL[1] + 160)
         if kh > 0:
             ch = mapp(ctx['U'], (68.0, 80.0))
-            for j in range(9):
-                t_ = ((tl - SP_HEAL[0]) / 520 + j / 9) % 1.0
+            for j in range(5):
+                t_ = ((tl - SP_HEAL[0]) / 520 + j / 5) % 1.0
                 th = 2 * math.pi * (t_ * 1.4 + j * 0.37)
                 q = (ch[0] + (20 - 8 * t_) * math.cos(th), ch[1] + 24 - 70 * t_ + 4 * math.sin(th))
                 front = math.sin(th) > 0
-                el = mote(fig, q, 0.8 + 0.5 * (1 - t_), kh * (1 - t_ ** 3))
+                el = E.etincelle(fig, q[0], q[1], -20 * math.sin(th), -60, 0.7 + 0.3 * (1 - t_), 'vent', op=kh * (1 - t_ ** 3))
                 (fig.fx_front if front else fig.fx_back).append(el)
             p0 = (ch[0] - 20, ch[1] + 26)
-            fig.fx_back.append(gust(fig, p0, add(p0, (40, -6)), add(p0, (44, -30)), add(p0, (14, -44)), 2.2, curl=3.0, s=-1,
+            fig.fx_back.append(gust_p(fig, p0, add(p0, (40, -6)), add(p0, (44, -30)), add(p0, (14, -44)), 2.2, curl=3.0, s=-1,
                                     tail=smooth((tl - SP_HEAL[0]) / 400) * 0.6, op=0.8 * kh))
         # 8) le défi : la lueur rouge douce qui gonfle puis s'éteint (aucun trait, aucun anneau)
         kd = env(tl, SP_DEFI[0], SP_DEFI[0] + 60, SP_DEFI[0] + 280, SP_DEFI[1])

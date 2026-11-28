@@ -531,6 +531,59 @@ def rain_tip(i, tr):
     return add(land, u, -D * (1 - pe)), False
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : rubans, volutes et anneaux de vent d'un seul
+# tenant sans contour sombre, bouffées fondues, lumières ; flèches, rythme et instants inchangés)
+import effets_pro as E  # noqa: E402
+
+
+def stroke_p(fig, pts, w, op=1.0, pale=False, core=True, ink=True):
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op * (0.75 if pale else 1.0), kind='fuseau', halo=0.4)
+
+
+def trail_p(fig, pts, w, op=1.0):
+    return E.ruban(fig, pts, w * 1.7, 'vent', op=op, kind='tete', halo=0.4)
+
+
+def curl_p(fig, c, r, a0, turns=0.85, w=2.2, cw=False, op=1.0):
+    if op <= 0.02 or r < 0.4:
+        return ''
+    return E.ruban(fig, spiral_pts(c, r, a0, turns, cw, n=10), w * 1.6, 'vent', op=op, kind='pointe', halo=0.3)
+
+
+def puff_p(fig, cx, cy, r, op=1.0):
+    return E.nuage(fig, cx, cy, r * 1.2, 'vent', op=op, seed=int(cx) % 3)
+
+
+def dust_p(fig, cx, cy, r, op=1.0):
+    return E.nuage(fig, cx, cy, r * 1.15, 'terre', op=op, seed=int(cx) % 3, flat=0.7)
+
+
+def flash_p(fig, c, r, op=1.0):
+    return E.lumiere(fig, c, r * 1.4, op, 'vent')
+
+
+def crescent_p(fig, C, rx, ry, a0, a1, w, op=1.0, tilt=0.0, head=0.55, dark=False):
+    if op <= 0.02 or w < 0.25:
+        return ''
+    return E.ruban(fig, arc_pts(C, rx, ry, a0, a1, 12, tilt), w * 1.7, 'vent', op=op, kind='fuseau')
+
+
+def ring_halves_p(fig, c, rx, ry, w, phase, op=1.0, tilt=0.0, span=250):
+    """Un anneau de vent couché autour du corps : deux rubans d'un seul tenant qui tournent ; la partie de derrière
+    (plus pâle) et celle de devant (claire) sont rendues à part."""
+    a0 = phase % 360
+    back, front = [], []
+    for k in range(2):
+        s0 = a0 + k * 180
+        pts = arc_pts(c, rx, ry, s0, s0 + span * 0.5, 12, tilt)
+        mid = (s0 + span * 0.25) % 360
+        if 0 < mid < 180:
+            front.append(E.ruban(fig, pts, w * 1.7, 'vent', op=op, kind='tete', halo=0.4))
+        else:
+            back.append(E.ruban(fig, pts, w * 1.5, 'vent', op=op * 0.6, kind='tete', halo=0.2))
+    return ''.join(back), ''.join(front)
+
+
 def fx_special(tl, p0):
     def f(fig, ctx):
         back, front = fig.fx_back, fig.fx_front
@@ -540,23 +593,23 @@ def fx_special(tl, p0):
         lv = env(tl, 80, 380, SREL + 60, SREL + 420)
         if lv > 0:
             ph = tl * 0.75
-            b1, f1 = ring_halves(fig, (cx, GR - 9), 27 + 4 * lv, 6.5, 2.8 * lv, ph, op=lv, tilt=-4)
-            b2, f2 = ring_halves(fig, (cx + 2, GR - 47), 30 + 5 * lv, 9, 3.2 * lv, ph * 1.2 + 100, op=lv * env(tl, 200, 420, SREL, SREL + 300), tilt=6)
+            b1, f1 = ring_halves_p(fig, (cx, GR - 9), 27 + 4 * lv, 6.5, 2.8 * lv, ph, op=lv, tilt=-4)
+            b2, f2 = ring_halves_p(fig, (cx + 2, GR - 47), 30 + 5 * lv, 9, 3.2 * lv, ph * 1.2 + 100, op=lv * env(tl, 200, 420, SREL, SREL + 300), tilt=6)
             back += [b1, b2]
             front += [f1, f2]
-            for j in range(4):
-                px = cx - 30 + j * 19 + 3 * math.sin(tl * 0.01 + j)
+            for j in range(2):
+                px = cx - 26 + j * 46 + 3 * math.sin(tl * 0.01 + j)
                 r = (2.0 + 0.8 * lv) * (0.7 + 0.3 * math.sin(tl * 0.008 + j * 1.7))
-                back.append(dust(fig, px, GR - 2 - (j % 2) * 1.5 - 2 * lv, r, op=lv * 0.9))
+                back.append(dust_p(fig, px, GR - 2 - (j % 2) * 1.5 - 2 * lv, r, op=lv * 0.9))
             if tl > 260:
                 k = env(tl, 260, 420, SREL, SREL + 200)
-                front.append(curl(fig, (cx - 38, GR - 30 - 6 * math.sin(tl * 0.006)), 4.0, 300 + tl * 0.4, 0.85, 2.0, cw=True, op=k))
-                back.append(curl(fig, (cx + 40, GR - 66 - 4 * math.sin(tl * 0.007)), 3.6, 120 + tl * 0.5, 0.85, 1.8, op=k))
+                front.append(curl_p(fig, (cx - 38, GR - 30 - 6 * math.sin(tl * 0.006)), 4.0, 300 + tl * 0.4, 0.85, 2.0, cw=True, op=k))
+                back.append(curl_p(fig, (cx + 40, GR - 66 - 4 * math.sin(tl * 0.007)), 3.6, 120 + tl * 0.5, 0.85, 1.8, op=k))
         # la volute à la pointe (tenue)
         k = env(tl, 300, 420, SREL - 30, SREL + 10)
         if k > 0:
             u = unit(ctx['ang'])
-            front.append(curl(fig, add(tip, u, 3.6), 4.0 + 0.8 * k, 60 + tl * 0.8, 0.9, 2.2 * k + 0.4, cw=True, op=k))
+            front.append(curl_p(fig, add(tip, u, 3.6), 4.0 + 0.8 * k, 60 + tl * 0.8, 0.9, 2.2 * k + 0.4, cw=True, op=k))
         tr = tl - SREL
         # la flèche qui monte dans sa rafale (le fil de vent s'élargit derrière elle et se courbe)
         SKY = [p0, (p0[0] + 26, p0[1] - 18), (BURST[0] - 18, BURST[1] + 30), BURST]
@@ -569,27 +622,27 @@ def fx_special(tl, p0):
             a = math.degrees(math.atan2(q[1] - qa[1], q[0] - qa[0])) if i > 1 else ctx['ang']
             if i > 14:
                 j0 = max(0, i - 34)
-                back.append(trail_fx(fig, path[j0:i - 12], 4.6))
+                back.append(trail_p(fig, path[j0:i - 12], 4.6))
             front.append(arrow_fx(fig, q, a))
         if 200 <= tr <= 520:
             fd = (tr - 200) / 320
-            back.append(stroke_fx(fig, path[int(10 + 26 * fd):48], 3.4 * (1 - fd) + 0.4, op=1 - fd, pale=True))
+            back.append(stroke_p(fig, path[int(10 + 26 * fd):48], 3.4 * (1 - fd) + 0.4, op=1 - fd, pale=True))
         # elle éclate là-haut en bouffée de vent
         tb = tl - S_BURST
         if 0 <= tb <= 380:
             s_ = tb / 380
-            front.append(flash(fig, BURST, 8 + 10 * s_, env(tb, 0, 30, 80, 300)))
-            front.append(puff(fig, BURST[0] + 1, BURST[1], 3 + 6 * s_, op=1 - s_ ** 1.4))
-            front.append(curl(fig, (BURST[0] - 12 - 4 * s_, BURST[1] + 4), 4.6 - s_, 330 + 60 * s_, 0.85, 2.4, cw=True, op=1 - s_))
-            front.append(curl(fig, (BURST[0] + 14 + 4 * s_, BURST[1] + 2), 4.0 - s_, 120 + 60 * s_, 0.85, 2.2, op=1 - s_))
+            front.append(flash_p(fig, BURST, 8 + 10 * s_, env(tb, 0, 30, 80, 300)))
+            front.append(puff_p(fig, BURST[0] + 1, BURST[1], 3 + 6 * s_, op=1 - s_ ** 1.4))
+            front.append(curl_p(fig, (BURST[0] - 12 - 4 * s_, BURST[1] + 4), 4.6 - s_, 330 + 60 * s_, 0.85, 2.4, cw=True, op=1 - s_))
+            front.append(curl_p(fig, (BURST[0] + 14 + 4 * s_, BURST[1] + 2), 4.0 - s_, 120 + 60 * s_, 0.85, 2.2, op=1 - s_))
         # la grande rafale courbe qui porte la volée vers l'ennemi
         kg = env(tl, S_RAIN - 40, S_RAIN + 120, S_RAIN + 420, S_RAIN + 640)
         if kg > 0:
             sh = (tl - S_RAIN) * 0.02
             g1 = resample(bez((BURST[0] - 4, BURST[1] + 8), (BURST[0] + 44, BURST[1] + 16), (FOE[0] + 40, 64 + sh), (FOE[0] + 14, GR - 12), 50), 40)
-            back.append(stroke_fx(fig, g1, 6.0 * kg, op=kg))
+            back.append(stroke_p(fig, g1, 6.0 * kg, op=kg))
             g2 = resample(bez((BURST[0] + 14, BURST[1] + 22), (BURST[0] + 52, BURST[1] + 40), (FOE[0] + 46, 80 + sh), (FOE[0] + 28, GR - 22), 50), 40)
-            back.append(stroke_fx(fig, g2, 3.4 * kg, op=kg * 0.8, pale=True))
+            back.append(stroke_p(fig, g2, 3.4 * kg, op=kg * 0.8, pale=True))
         # l'averse : les flèches qui tombent (fil de vent court et courbe), celles qui se plantent, la poussière
         trr = tl - S_RAIN
         fade = ease((tl - (SGRAB + 60)) / 300)
@@ -605,36 +658,36 @@ def fx_special(tl, p0):
                     front.append(arrow_fx(fig, q, ang, L=L + dep, buried=dep + 3, op=1 - fade))
                 if fade > 0.05:
                     c = add(q, u, -L * 0.5)
-                    front.append(curl(fig, (c[0] - 2, c[1] - 3), 3.0 + (i % 3) * 0.5, 90 + i * 37 + 200 * fade, 0.85, 1.8,
+                    front.append(curl_p(fig, (c[0] - 2, c[1] - 3), 3.0 + (i % 3) * 0.5, 90 + i * 37 + 200 * fade, 0.85, 1.8,
                                       cw=bool(i % 2), op=env(fade, 0.05, 0.3, 0.6, 1.0)))
                 if tland < 260:
                     s_ = tland / 260
-                    front.append(dust(fig, q[0] - 2 - 2 * s_, GR - 2.5 - 1.5 * s_, 2.4 + 2.6 * s_ + (i % 3) * 0.5, op=1 - s_ ** 1.3))
+                    front.append(dust_p(fig, q[0] - 2 - 2 * s_, GR - 2.5 - 1.5 * s_, 2.4 + 2.6 * s_ + (i % 3) * 0.5, op=1 - s_ ** 1.3))
             else:
                 tail = add(q, u, -L)
                 sd = (-u[1], u[0])
                 m = add(add(tail, u, -7), sd, 2 + i % 3)
                 pts = resample(bez(add(add(tail, u, -16), sd, 3), m, m, tail, 14), 12)
-                back.append(trail_fx(fig, pts, 2.2))
+                back.append(trail_p(fig, pts, 2.2))
                 front.append(arrow_fx(fig, q, ang, L=L + dep))
         # le cœur de l'averse : un tourbillon de vent et de poussière qui éclate sur l'ennemi (arrêt sur image)
         th = tl - S_HIT
         if 0 <= th <= 520:
             s_ = th / 520
             x, y = FOE[0], GR - 14
-            front.append(flash(fig, (x, y - 10), 12 + 10 * s_, env(th, 0, 30, 90, 360)))
-            back.append(dust(fig, x - 17 - 6 * s_, GR - 6, 6 + 3 * s_, op=1 - s_ ** 1.2))
-            back.append(dust(fig, x + 19 + 6 * s_, GR - 5, 5.4 + 3 * s_, op=1 - s_ ** 1.2))
-            b_, f_ = ring_halves(fig, (x, y - 3), 26 + 14 * s_, 7 + 2 * s_, 3.6 * (1 - s_) + 0.3, th * 0.9 + 30, op=1 - s_, tilt=-3)
+            front.append(flash_p(fig, (x, y - 10), 12 + 10 * s_, env(th, 0, 30, 90, 360)))
+            back.append(dust_p(fig, x - 17 - 6 * s_, GR - 6, 6 + 3 * s_, op=1 - s_ ** 1.2))
+            back.append(dust_p(fig, x + 19 + 6 * s_, GR - 5, 5.4 + 3 * s_, op=1 - s_ ** 1.2))
+            b_, f_ = ring_halves_p(fig, (x, y - 3), 26 + 14 * s_, 7 + 2 * s_, 3.6 * (1 - s_) + 0.3, th * 0.9 + 30, op=1 - s_, tilt=-3)
             back.append(b_)
             front.append(f_)
-            front.append(curl(fig, (x - 28 - 6 * s_, y - 18 - 8 * s_), 5.0 - 1.5 * s_, 330 + 90 * s_, 0.85, 2.4, cw=True, op=1 - s_))
-            front.append(curl(fig, (x + 30 + 6 * s_, y - 20 - 8 * s_), 5.0 - 1.5 * s_, 210 + 90 * s_, 0.85, 2.4, op=1 - s_))
+            front.append(curl_p(fig, (x - 28 - 6 * s_, y - 18 - 8 * s_), 5.0 - 1.5 * s_, 330 + 90 * s_, 0.85, 2.4, cw=True, op=1 - s_))
+            front.append(curl_p(fig, (x + 30 + 6 * s_, y - 20 - 8 * s_), 5.0 - 1.5 * s_, 210 + 90 * s_, 0.85, 2.4, op=1 - s_))
         # le claquement de la corde
         k = env(tr, 0, 30, 70, 170)
         if k > 0:
             g = ctx['grip']
-            front.append(crescent(fig, (g[0] + 3 + 6 * (tr / 170), g[1] - 2), 5 + 4 * tr / 170, 12 + 4 * tr / 170, -100, 40, 3.0 * k, op=k))
+            front.append(crescent_p(fig, (g[0] + 3 + 6 * (tr / 170), g[1] - 2), 5 + 4 * tr / 170, 12 + 4 * tr / 170, -100, 40, 3.0 * k, op=k))
         reload_fx(fig, ctx, tl, SGRAB, SSWING, SNOCK)
     return f
 

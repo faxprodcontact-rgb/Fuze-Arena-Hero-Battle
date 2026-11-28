@@ -402,7 +402,7 @@ def falling_leaves(fig, t, seed, n, C, R, h0, dur, front_only=False):
         y = C[1] - h0 * (1 - k) * (0.6 + 0.4 * ((j * 0.37) % 1)) + 6 * z
         x = x0 + 3.2 * math.sin(k * 9 + j)
         op = env(t, 0, 80, dur * 0.75, dur)
-        el = leaf(fig, x, y, 40 * math.sin(k * 8 + j) + j * 50, 1.25, op=op, gold=(j % 3 == 0))
+        el = E.feuille(fig, x, y, 40 * math.sin(k * 8 + j) + j * 50, 0.78, op=op)
         (fig.fx_front if z >= 0 else fig.fx_back).append(el)
 
 
@@ -494,43 +494,40 @@ def fx_attack(tl):
 DOME_RX, DOME_H = 50.0, 104.0
 
 
-def dome_path(C, rx, h):
-    """Le dôme : une demi-ellipse posée au sol (contour fermé par le bas)."""
-    pts = [(C[0] + rx * math.cos(math.radians(a)), C[1] - h * math.sin(math.radians(a))) for a in range(0, 181, 6)]
-    pts += [(C[0] - rx * math.cos(math.radians(a)), C[1] + 0.16 * rx * math.sin(math.radians(a))) for a in range(6, 175, 12)]
-    return sm(pts, sharp=(0, 30), t=0.8)
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : rubans de vent d'un seul tenant, dôme d'UNE
+# forme au bord lumineux sans contour, feuilles d'une forme, marque sans contour ; même rythme, mêmes instants)
+import effets_pro as E  # noqa: E402
+
+
+def swirl_p(fig, C, rx, ry, a0, a1, w, op=1.0):
+    """Un ruban de vent le long d'un arc d'ellipse : UNE forme effilée aux deux bouts, cœur clair, halo doux."""
+    if op <= 0.02 or w < 0.1:
+        return ''
+    return E.ruban(fig, ell_pts(C, rx, ry, a0, a1, 12), w * 1.8, 'vent', op=op, kind='fuseau', halo=0.4)
+
+
+def leaf_p(fig, x, y, a, s=1.6, op=1.0, gold=False):
+    return E.feuille(fig, x, y, a, s * 0.62, op=op)
 
 
 def dome(fig, C, rx, h, op, t):
-    """Le dôme de vent translucide : un voile jade derrière lui (bord plus clair en haut à droite), un voile très
-    léger devant, le bord lumineux (UN contour, ouvert sur le sol), des rubans qui tournent à sa surface."""
+    """Le dôme de vent translucide d'UNE forme (posé au sol, bord lumineux en haut à droite), deux rubans qui
+    tournent à sa surface."""
     if op <= 0.02:
         return
-    sh = dome_path(C, rx, h)
-    fig.fx_back.append('<path d="%s" fill="%s"/>' % (sh.d(), g_rad(fig, (C[0] + rx * 0.35, C[1] - h * 0.75), rx * 1.25, [
-        (0, WIND[1], 0.42 * op), (0.55, WIND[3], 0.26 * op), (1, WIND[4], 0.34 * op)], ry=h * 1.2)))
-    fig.fx_front.append('<path d="%s" fill="%s"/>' % (sh.d(), g_rad(fig, (C[0] + rx * 0.35, C[1] - h * 0.75), rx * 1.25, [
-        (0, WIND[0], 0.22 * op), (0.6, WIND[2], 0.08 * op), (1, WIND[3], 0.16 * op)], ry=h * 1.2)))
-    # le bord : une bande plus épaisse en haut à droite (là où la lumière frappe la bulle)
-    pts = [(C[0] + rx * math.cos(math.radians(a)), C[1] - h * math.sin(math.radians(a))) for a in range(0, 181, 5)]
-    ws = [max(0.1, (0.9 + 1.6 * max(0, math.cos(math.radians(a - 50)))) * math.sin(math.radians(a)) ** 0.25) for a in range(0, 181, 5)]
-    ws[0] = ws[-1] = 0.1
-    rim = stroke_shape(pts, ws)
-    core = stroke_shape(pts, [w * 0.45 for w in ws])
-    fig.fx_front.append(outlined([(rim, g_lin(fig, pts[-1], pts[0], [(0, WIND[3]), (0.6, WIND[1]), (1, WIND[2])]), 1),
-                                  (core, WIND[0], 0.9)], w=1.0, op=op))
-    # deux rubans qui tournent à la surface du dôme (une bande de l'ellipse, devant et derrière)
+    bk, fr = E.bulle(fig, C, rx, h, 'vent', op=op, sol=GR + 0.5, fond=1.3)
+    fig.fx_back.append(bk)
+    fig.fx_front.append(fr)
     for j, (yk, sp) in enumerate(((0.38, 1.0), (0.68, -0.8))):
         yy = C[1] - h * yk
         rr = rx * math.sqrt(max(0.0, 1 - yk * yk))
         a = (t * 0.5 * sp + j * 90) % 360
-        fig.fx_front.append(swirl(fig, (C[0], yy), rr, rr * 0.18, a, a + 140, 2.2, op=op * 0.9))
-        fig.fx_back.append(swirl(fig, (C[0], yy), rr, rr * 0.18, a + 180, a + 300, 1.6, op=op * 0.6))
+        fig.fx_front.append(swirl_p(fig, (C[0], yy), rr, rr * 0.18, a, a + 140, 2.2, op=op * 0.9))
+        fig.fx_back.append(swirl_p(fig, (C[0], yy), rr, rr * 0.18, a + 180, a + 300, 1.6, op=op * 0.6))
 
 
 def ring(fig, C, rx, w, op, gap=0.0, curls=0.0):
-    """L'anneau de vent posé au sol (une ellipse aplatie), devant et derrière lui ; il se défait en arcs (gap) et en
-    volutes (curls)."""
+    """L'anneau de vent posé au sol (une ellipse aplatie), devant et derrière lui ; il se défait en arcs effilés."""
     if op <= 0.02:
         return
     ry = rx * 0.16
@@ -541,13 +538,7 @@ def ring(fig, C, rx, w, op, gap=0.0, curls=0.0):
             continue
         mid = (a1 + a2) / 2
         dst = fig.fx_front if math.sin(math.radians(mid)) > 0 else fig.fx_back
-        dst.append(swirl(fig, C, rx, ry, a1, a2, w, op=op))
-        if curls > 0.05:
-            p = (C[0] + rx * math.cos(math.radians(a2)), C[1] + ry * math.sin(math.radians(a2)))
-            d = (-math.sin(math.radians(a2)) * rx, math.cos(math.radians(a2)) * ry)
-            q = (p[0] + d[0] * 0.12, p[1] + d[1] * 0.12)
-            dst.append(gust(fig, p, lerp2(p, q, 0.4), lerp2(p, q, 0.8), q, w * 0.8, curl=2.0 + 1.5 * curls,
-                            s=1 if math.cos(math.radians(a2)) > 0 else -1, op=op * curls))
+        dst.append(swirl_p(fig, C, rx, ry, a1, a2 + 25 * curls, w, op=op))
 
 
 def lerp2(a, b, t):
@@ -565,8 +556,8 @@ def fx_special(tl):
         g = env(t, SP_RISE, 260, SP_PLANT - 20, SP_PLANT + 40)
         if g > 0:
             rot = t * 0.7
-            fig.fx_back.append(swirl(fig, (C[0], C[1] - 1.5), 34, 6, 190 + rot % 60, 340 + rot % 60, 2.6 * g, op=g))
-            fig.fx_front.append(swirl(fig, (C[0], C[1] - 1.5), 34, 6, 10 + rot % 60, 165 + rot % 60, 3.2 * g, op=g))
+            fig.fx_back.append(swirl_p(fig, (C[0], C[1] - 1.5), 34, 6, 190 + rot % 60, 340 + rot % 60, 2.6 * g, op=g))
+            fig.fx_front.append(swirl_p(fig, (C[0], C[1] - 1.5), 34, 6, 10 + rot % 60, 165 + rot % 60, 3.2 * g, op=g))
             up = smooth((t - SP_RISE) / (SP_PLANT - SP_RISE))
             for j in range(3):
                 # trois rubans : aux genoux, à la taille, et au-dessus de la capuche (jamais devant le visage)
@@ -578,15 +569,15 @@ def fx_special(tl):
                 o = g * env(t, SP_RISE + 60 * j, SP_RISE + 60 * j + 140, 2000, 2001)
                 if j == 2:
                     o *= smooth((up - 0.25) / 0.25)
-                fig.fx_front.append(swirl(fig, (C[0], yy), rr, rr * 0.2, a, a + 150, 2.6, op=o))
-                fig.fx_back.append(swirl(fig, (C[0], yy), rr, rr * 0.2, a + 180, a + 310, 2.0, op=o * 0.8))
-            for j in range(9):
-                k = ((t - SP_RISE) / 900 * (0.8 + 0.1 * (j % 3)) + j / 9) % 1
+                fig.fx_front.append(swirl_p(fig, (C[0], yy), rr, rr * 0.2, a, a + 150, 2.6, op=o))
+                fig.fx_back.append(swirl_p(fig, (C[0], yy), rr, rr * 0.2, a + 180, a + 310, 2.0, op=o * 0.8))
+            for j in range(5):
+                k = ((t - SP_RISE) / 900 * (0.8 + 0.1 * (j % 3)) + j / 5) % 1
                 a = math.radians(j * 40 + t * 0.6)
                 rr = 30 + 6 * (j % 3)
                 x = C[0] + rr * math.cos(a)
                 y = C[1] - 4 - 100 * k * up + 0.2 * rr * math.sin(a)
-                el = leaf(fig, x, y, t * 0.5 + j * 50, 1.25, op=g * min(1, 3 * (1 - k)), gold=(j % 3 == 0))
+                el = leaf_p(fig, x, y, t * 0.5 + j * 50, 1.25, op=g * min(1, 3 * (1 - k)), gold=(j % 3 == 0))
                 (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(el)
         # 2) il plante le bouclier : poussière sous la pointe, le tourbillon se referme en dôme (éclat en haut)
         tau = t - SP_PLANT
@@ -594,9 +585,8 @@ def fx_special(tl):
             L = ctx['shield_L']
             from atelier import mapp
             tipw = mapp(ctx['SHM'], L(0, 26.4))
-            for j, (dx, r) in enumerate(((-6, 2.6), (5, 3.0), (-1, 2.2), (9, 1.8))):
-                k = tau / 420
-                fig.fx_front.append(dust(fig, tipw[0] + dx * (0.5 + k), GR - 1.5 - 3 * k - (j % 2), r * (0.6 + 0.6 * k), op=1 - k, k=j))
+            k = tau / 420
+            fig.fx_front.append(E.nuage(fig, tipw[0] + 1, GR - 2 - 3 * k, 3.4 * (0.6 + 0.6 * k), 'terre', op=1 - k, seed=1, flat=0.6))
         d_op = env(t, SP_PLANT - 30, SP_PLANT + 50, SP_RING, SP_RING + 120)
         if d_op > 0:
             grow = 0.85 + 0.15 * smooth((t - SP_PLANT + 30) / 120)
@@ -605,15 +595,15 @@ def fx_special(tl):
             fl = env(t, SP_PLANT, SP_PLANT + 40, SP_PLANT + 120, SP_PLANT + 260)
             if fl > 0:                                   # l'éclat en haut du dôme
                 top = (C[0] + 14, C[1] - DOME_H * 0.93)
-                fig.fx_front.append(pop(fig, top, 5 + 3 * fl, facing=-60, op=fl))
+                fig.fx_front.append(E.lumiere(fig, top, 10 + 6 * fl, fl, 'vent'))
             # des feuilles prises dans le dôme
-            for j in range(7):
-                a = math.radians(j * 51 + t * 0.25)
+            for j in range(4):
+                a = math.radians(j * 90 + t * 0.25)
                 yk = 0.2 + 0.1 * (j % 5)
                 rr = DOME_RX * grow * math.sqrt(1 - yk * yk) * 0.96
                 x = C[0] + rr * math.cos(a)
                 y = C[1] - DOME_H * grow * (1 - 0.9 * low) * yk + 0.18 * rr * math.sin(a)
-                el = leaf(fig, x, y, t * 0.4 + j * 60, 1.2, op=d_op * (1 - low), gold=(j % 3 == 1))
+                el = leaf_p(fig, x, y, t * 0.4 + j * 60, 1.2, op=d_op * (1 - low), gold=(j % 3 == 1))
                 (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(el)
         # 3) LANCEMENT : l'anneau posé au sol s'étend TOUT AUTOUR de lui, se défait en arcs et en volutes
         tau = t - SP_RING
@@ -621,7 +611,7 @@ def fx_special(tl):
             k = smooth(tau / 560)
             ring(fig, (C[0], C[1] + 1), DOME_RX * 1.2 + 70 * k, 3.4 * (1 - 0.6 * k), op=1 - k ** 2, gap=k, curls=k)
         if 0 <= tau < 900:
-            falling_leaves(fig, tau, 1, 10, (C[0], C[1] - 1), 40 + 30 * smooth(tau / 900), 70, 900)
+            falling_leaves(fig, tau, 1, 6, (C[0], C[1] - 1), 40 + 30 * smooth(tau / 900), 70, 900)
         # 4) le défi : une lueur rouge douce qui gonfle puis s'éteint, un liseré rouge sur lui, la marque qui bat
         dv = env(t, SP_DEFI - 60, SP_DEFI + 40, SP_DEFI + 300, 1840)
         if dv > 0:
@@ -630,7 +620,7 @@ def fx_special(tl):
             fig.under.append((ch[0], ch[1] - 6, 40 + 6 * pulse, 56 + 6 * pulse, RED[2], (0.24 + 0.16 * pulse) * dv, None))
             fig.aura = (RED[1], 1.0 + 0.8 * pulse, 0.75 * dv)
             c = ctx['hood_top']
-            fig.over.append(mark(fig, (c[0] + 4, c[1] - 9), (1.15 + 0.2 * pulse) * (0.6 + 0.4 * dv), op=dv))
+            fig.over.append(E.amande(fig, (c[0] + 4, c[1] - 9), 5.4 * (1.15 + 0.2 * pulse) * (0.6 + 0.4 * dv), 'sang', op=dv))
     return f
 
 

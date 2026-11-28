@@ -1118,7 +1118,7 @@ def bez(p0, p1, p2, p3, n=12):
     return out
 
 
-def meches(fig, locks, p='feu', op=1.0, halo=1.0):
+def meches(fig, locks, p='feu', op=1.0, halo=1.0, zones=True):
     """Des mèches d'énergie (crinière de flammes, chevelure d'eau, tentacules de vent) fondues en UNE silhouette :
     locks = [(points de la racine à la pointe, largeur)] ; chaque mèche est un ruban effilé à la pointe ; zones
     emboîtées (les mêmes mèches plus fines), claires à la racine, colorées vers les pointes ; halo doux, sans contour."""
@@ -1146,6 +1146,12 @@ def meches(fig, locks, p='feu', op=1.0, halo=1.0):
     g2 = inside(g.buffer(-wm * 0.18, join_style=1).intersection(near), g, 0.2)
     near3 = fuse([Point(r).buffer(L * 0.45) for r in roots], close=0)
     g3 = inside(g.buffer(-wm * 0.36, join_style=1).intersection(near3), g2, 0.15)
+    if not zones:
+        # une seule couleur qui passe de la racine (claire) aux pointes, le liseré de lumière en haut à droite
+        out = [bloom(fig, g, P['halo'], 0.45 * halo, grow=1.4, s=1.6),
+               path(g, lin(fig, a, b, [(0, P['coeur'][1]), (0.45, P['milieu'][1]), (1, P['bord'][1])])),
+               path(inside(lit(g, 0.9), g), P['coeur'][0], 0.8)]
+        return group(out, op)
     out = [bloom(fig, g, P['halo'], 0.45 * halo, grow=1.4, s=1.6),
            path(g, lin(fig, a, b, [(0, P['bord'][0]), (0.6, P['bord'][1]), (1, P['bord'][2])])),
            path(g2, lin(fig, a, b, [(0, P['milieu'][0]), (1, P['milieu'][1])])),

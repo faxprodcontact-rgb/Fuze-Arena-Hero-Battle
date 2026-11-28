@@ -510,7 +510,72 @@ def leaf_stream(fig, p0, p1, p2, p3, s0, s1, n, seed=0, op=1.0, size=1.1):
         u = s0 + (s1 - s0) * ((j * 0.618 + seed * 0.29) % 1.0)
         p = bez(p0, p1, p2, p3, u)
         off = 5 * math.sin(j * 2.3 + seed)
-        fig.fx_front.append(leaf(fig, (p[0], p[1] + off), j * 67 + seed * 30 + u * 400, size, op=op, flip=math.cos(j + u * 9)))
+        fig.fx_front.append(E.feuille(fig, p[0], p[1] + off, j * 67 + seed * 30 + u * 400, size * 0.7, op=op))
+
+
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : le tourbillon d'UNE silhouette, rubans et
+# croissants de vent d'un seul tenant sans contour sombre, feuilles d'une forme, lumière et étincelles ; les doubles,
+# le rythme et les instants inchangés)
+import effets_pro as E  # noqa: E402
+
+
+def _ell(C, rx, ry, a0, a1, rot=0.0, n=14):
+    cr, sr = math.cos(math.radians(rot)), math.sin(math.radians(rot))
+    out = []
+    for i in range(n + 1):
+        a = math.radians(a0 + (a1 - a0) * i / n)
+        x, y = rx * math.cos(a), ry * math.sin(a)
+        out.append((C[0] + x * cr - y * sr, C[1] + x * sr + y * cr))
+    return out
+
+
+def crescent_p(fig, C, rx, ry, a0, a1, w, op=1.0, rot=0.0, ink=True):
+    if op <= 0.02 or w <= 0.1:
+        return ''
+    return E.ruban(fig, _ell(C, rx, ry, a0, a1, rot), w * 1.6, 'vent', op=op, kind='fuseau', halo=0.4)
+
+
+def gust_p(fig, pts, w, op=1.0, curl=0.0, core=True):
+    if op <= 0.02:
+        return ''
+    c = crpath(pts, 16)
+    if curl > 0:
+        a_end = math.atan2(c[-1][1] - c[-2][1], c[-1][0] - c[-2][0])
+        ctr = (c[-1][0] - math.sin(a_end) * curl, c[-1][1] + math.cos(a_end) * curl)
+        a0 = math.atan2(c[-1][1] - ctr[1], c[-1][0] - ctr[0])
+        c = c + [(ctr[0] + curl * (1 - 0.35 * k / 8) * math.cos(a0 + 0.55 * k), ctr[1] + curl * (1 - 0.35 * k / 8) * math.sin(a0 + 0.55 * k))
+                 for k in range(1, 9)]
+    return E.ruban(fig, c, w * 1.7, 'vent', op=op, kind='pointe', halo=0.4)
+
+
+def leaf_p(fig, c, ang, s=1.0, op=1.0, flip=1.0):
+    return E.feuille(fig, c[0], c[1], ang, s * 0.7 * max(0.45, abs(flip)) ** 0.3, op=op)
+
+
+def flash_p(fig, c, r, op=1.0):
+    return E.lumiere(fig, c, r * 1.5, op, 'vent')
+
+
+def tornado_p(fig, c, k, height=78.0, phase=0.0, tight=1.0, op=1.0, leaves=14):
+    """Le tourbillon de feuilles : UN cyclone posé au sol (voile et rubans en hélice d'une silhouette), ce qu'il
+    avale passe entre ses deux moitiés ; quelques feuilles prises dedans, sur une hélice."""
+    if op <= 0.02 or k <= 0.02:
+        return
+    bk, fr = E.tourbillon(fig, c, height * k, 26 * tight, phase, 'vent', op=op, split=True)
+    fig.fx_back.append(bk)
+    fig.fx_front.append(fr)
+    n = max(3, leaves // 3)
+    for j in range(n):
+        u = j / n
+        a = math.radians(phase * 2.2 + j * 137.5)
+        hh = c[1] - 4 - height * k * ((u + phase / 900.0) % 1.0)
+        r = (9 + 18 * ((c[1] - hh) / max(1, height))) * tight
+        p = (c[0] + r * math.cos(a), hh + r * 0.28 * math.sin(a))
+        (fig.fx_front if math.sin(a) > 0 else fig.fx_back).append(leaf_p(fig, p, phase * 3 + j * 50, 1.1, op=op, flip=math.cos(a + phase / 40)))
+
+
+def leaf_stream_p(fig, p0, p1, p2, p3, s0, s1, n, seed=0, op=1.0, size=1.1):
+    leaf_stream(fig, p0, p1, p2, p3, s0, s1, max(2, n // 2), seed=seed, op=op, size=size)
 
 
 def fx_special(tl, P_clone):
@@ -523,17 +588,17 @@ def fx_special(tl, P_clone):
         if k:
             for i in range(3):
                 r = 14 + 6 * i
-                fig.fx_back.append(crescent(fig, (home[0], GR - 1.5 - 2 * i), r, r * 0.22, 190 + tl * 0.6 + 70 * i, 330 + tl * 0.6 + 70 * i, 1.8, op=k * 0.8))
-                fig.fx_front.append(crescent(fig, (home[0], GR - 1.5 - 2 * i), r, r * 0.22, 10 + tl * 0.6 + 70 * i, 150 + tl * 0.6 + 70 * i, 2.2, op=k))
-            for j in range(7):
+                fig.fx_back.append(crescent_p(fig, (home[0], GR - 1.5 - 2 * i), r, r * 0.22, 190 + tl * 0.6 + 70 * i, 330 + tl * 0.6 + 70 * i, 1.8, op=k * 0.8))
+                fig.fx_front.append(crescent_p(fig, (home[0], GR - 1.5 - 2 * i), r, r * 0.22, 10 + tl * 0.6 + 70 * i, 150 + tl * 0.6 + 70 * i, 2.2, op=k))
+            for j in range(4):
                 u = ((tl / 420.0) * 0.9 + j * 0.143) % 1.0
                 a = math.radians(j * 97 + tl * 0.9)
                 p = (home[0] + (12 + 8 * u) * math.cos(a), GR - 4 - 34 * u)
-                fig.fx_front.append(leaf(fig, p, j * 70 + tl, 1.0, op=k * (1 - u ** 3), flip=math.cos(a)))
+                fig.fx_front.append(leaf_p(fig, p, j * 70 + tl, 1.0, op=k * (1 - u ** 3), flip=math.cos(a)))
         # 1) le tourbillon l'avale
         k = env(tl, 260, 360, 440, 540)
         if k:
-            tornado(fig, home, k, phase=tl * 1.1, tight=1.0, op=k)
+            tornado_p(fig, home, k, phase=tl * 1.1, tight=1.0, op=k)
         # 2) la rafale de feuilles file jusqu'à l'ennemi
         k = env(tl, 430, 470, 520, 600)
         if k:
@@ -542,8 +607,8 @@ def fx_special(tl, P_clone):
             for i, dy in enumerate((0, 12)):
                 q0, q3 = (p0[0], p0[1] + dy), (p3[0], p3[1] + dy * 0.5)
                 pts = [bez(q0, (q0[0] + 30, q0[1] - 40), (q3[0] - 40, q3[1] - 40), q3, max(0.0, s1 - 0.5 + 0.5 * u)) for u in (0, 0.25, 0.5, 0.75, 1)]
-                fig.fx_front.append(gust(fig, pts, 4.0 - i, op=k, curl=3.0 if s1 > 0.9 else 0))
-                leaf_stream(fig, q0, (q0[0] + 30, q0[1] - 40), (q3[0] - 40, q3[1] - 40), q3, max(0, s1 - 0.5), s1, 8, seed=i, op=k)
+                fig.fx_front.append(gust_p(fig, pts, 4.0 - i, op=k, curl=3.0 if s1 > 0.9 else 0))
+                leaf_stream_p(fig, q0, (q0[0] + 30, q0[1] - 40), (q3[0] - 40, q3[1] - 40), q3, max(0, s1 - 0.5), s1, 8, seed=i, op=k)
         # 3) les doubles surgissent, frappent ensemble, s'effritent
         k_in = smooth((tl - 500) / 90)
         k_out = 1 - smooth((tl - 860) / 110)
@@ -563,38 +628,38 @@ def fx_special(tl, P_clone):
             c = (EX, EY)
             sweep = smooth((tl - SP_HIT + 20) / 160) * 120
             for i, a in enumerate((200, 320, 80)):
-                fig.fx_front.append(crescent(fig, c, 19 - 2 * i, 13 + 2 * i, a + sweep, a + sweep + 100, 3.2, op=k, rot=-20 + 25 * i))
-            fig.fx_front.append(flash(fig, c, 10 + 10 * k, op=k))
-            for i in range(5):
-                a = math.radians(-140 + i * 70)
+                fig.fx_front.append(crescent_p(fig, c, 19 - 2 * i, 13 + 2 * i, a + sweep, a + sweep + 100, 3.2, op=k, rot=-20 + 25 * i))
+            fig.fx_front.append(flash_p(fig, c, 10 + 10 * k, op=k))
+            for i in range(4):
+                a = math.radians(-140 + i * 85)
                 d = 9 + 12 * smooth((tl - SP_HIT) / 260)
-                fig.fx_front.append(spark(fig, (c[0] + math.cos(a) * d, c[1] + math.sin(a) * d), 1.5 * k + 0.2, ang=30 * i + tl * 0.3, op=k))
+                fig.fx_front.append(E.etincelle(fig, c[0] + math.cos(a) * d, c[1] + math.sin(a) * d, 60 * math.cos(a), 60 * math.sin(a), 0.7, 'vent', op=k))
         # 4) ils s'effritent en feuilles, qui repartent vers elle
         k = env(tl, 850, 900, 980, 1080)
         if k:
-            for j in range(18):
+            for j in range(8):
                 u = (tl - 850) / 230
-                a = math.radians(j * 20 + 7 * (j % 3))
+                a = math.radians(j * 45 + 7 * (j % 3))
                 d = 6 + 30 * smooth(u) * (0.6 + 0.4 * ((j * 0.37) % 1))
                 p = (EX + math.cos(a) * d, EY + 10 + math.sin(a) * d * 0.8 + 12 * u * u)
-                fig.fx_front.append(leaf(fig, p, j * 40 + tl * 0.8, 1.1, op=k, flip=math.cos(j + tl / 60)))
+                fig.fx_front.append(leaf_p(fig, p, j * 40 + tl * 0.8, 1.1, op=k, flip=math.cos(j + tl / 60)))
         k = env(tl, 980, 1040, 1120, 1220)
         if k:
             s1 = smooth((tl - 980) / 180)
             p0, p3 = (EX - 4, EY + 14), (home[0] + 4, GR - 26)
             pts = [bez(p0, (p0[0] - 30, p0[1] - 46), (p3[0] + 40, p3[1] - 44), p3, max(0.0, s1 - 0.5 + 0.5 * u)) for u in (0, 0.25, 0.5, 0.75, 1)]
-            fig.fx_front.append(gust(fig, pts, 3.6, op=k, curl=3.0 if s1 > 0.85 else 0))
-            leaf_stream(fig, p0, (p0[0] - 30, p0[1] - 46), (p3[0] + 40, p3[1] - 44), p3, max(0, s1 - 0.5), s1, 10, seed=3, op=k)
+            fig.fx_front.append(gust_p(fig, pts, 3.6, op=k, curl=3.0 if s1 > 0.85 else 0))
+            leaf_stream_p(fig, p0, (p0[0] - 30, p0[1] - 46), (p3[0] + 40, p3[1] - 44), p3, max(0, s1 - 0.5), s1, 10, seed=3, op=k)
         # 5) le tourbillon la rend, les feuilles retombent
         k = env(tl, 1080, 1160, 1240, 1360)
         if k:
-            tornado(fig, home, k, phase=tl * 1.1 + 200, tight=1.0, op=k, leaves=10)
+            tornado_p(fig, home, k, phase=tl * 1.1 + 200, tight=1.0, op=k, leaves=10)
         k = env(tl, 1260, 1300, 1380, 1600)
         if k:
             u = (tl - 1260) / 340
-            for j in range(6):
-                p = (home[0] - 22 + j * 9 + 4 * math.sin(tl / 70 + j), GR - 30 + 26 * u * (0.7 + 0.3 * ((j * 0.41) % 1)))
-                fig.fx_front.append(leaf(fig, p, j * 60 + tl * 0.5, 1.0, op=k, flip=math.cos(tl / 50 + j)))
+            for j in range(3):
+                p = (home[0] - 22 + j * 18 + 4 * math.sin(tl / 70 + j), GR - 30 + 26 * u * (0.7 + 0.3 * ((j * 0.41) % 1)))
+                fig.fx_front.append(leaf_p(fig, p, j * 60 + tl * 0.5, 1.0, op=k, flip=math.cos(tl / 50 + j)))
     return f
 
 
