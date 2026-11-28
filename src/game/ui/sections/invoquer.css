@@ -129,15 +129,11 @@ html .screen.summon .sum-stage { position: relative; flex: 1; min-height: 0; dis
   box-shadow: 0 0 6px 2px color-mix(in srgb, var(--g-b) 80%, transparent); opacity: 0; animation: sg-mote 3.6s linear infinite; }
 @keyframes sg-mote { 0% { translate: 0 0; opacity: 0; } 15% { opacity: 0.9; } 100% { translate: 8px -170px; opacity: 0; scale: 0.4; } }
 .sg-kind-featured .sg-motes i { background: #fff6dc; box-shadow: 0 0 6px 2px color-mix(in srgb, var(--mote, var(--g-b)) 85%, transparent); }
-/* l'invocation part : le portail s'avance vers nous (il ne s'emballe pas : le tirage commence une fois qu'il est installé
-   au premier plan, summon-reveal.tsx), l'estrade et les cristaux s'effacent, un voile sombre monte */
-.sg-casting .sg-stage-gate { animation: sg-forward 0.38s cubic-bezier(.5, 0, .8, .6) forwards; transform-origin: 50% 60%; }
-@keyframes sg-forward { to { scale: 1.16; translate: 0 -3%; } }
-.sg-casting .sg-stage-dais, .sg-casting .sg-orbit { transition: opacity 0.3s; opacity: 0.3; }
-.sg-casting::after { content: ''; position: absolute; left: -15%; right: -15%; top: -12%; height: 112%; pointer-events: none; border-radius: 50%;
-  background: radial-gradient(closest-side, transparent 30%, #07041a99 70%, transparent);
-  animation: sg-cast 0.38s ease-in forwards; }
-@keyframes sg-cast { from { opacity: 0; } to { opacity: 1; } }
+/* l'invocation part (demande du 28/11) : rien ne bouge, seule une lumière monte à l'intérieur du portail ; le tirage
+   s'ouvre ensuite par-dessus (summon-reveal.tsx), où le portail passe au premier plan */
+.sg-cast-light { opacity: 0; pointer-events: none; }
+.sg-casting .sg-cast-light { animation: sg-cast-light 0.45s ease-in forwards; }
+@keyframes sg-cast-light { from { opacity: 0; } to { opacity: 1; } }
 
 /* le portail spécial : quatre éclats des éléments qui tournent lentement autour de l'anneau (centre : 50 %, 43,6 %) */
 .sg-orbit { position: absolute; left: 50%; top: 43.6%; width: 78%; aspect-ratio: 1; translate: -50% -50%; pointer-events: none; animation: sg-spin 14s linear infinite; }

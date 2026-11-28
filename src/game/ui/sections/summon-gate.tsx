@@ -227,6 +227,8 @@ export function Gate({ uid, charging = false, open = false, class: cls = '' }: {
             {/* le cœur */}
             <circle class="sg-core" r="34" fill={url('glow')} opacity="0.6" />
             <circle class="sg-core sg-core-2" r="10" fill="#fff" />
+            {/* l'invocation part : la lumière monte dans le portail, rien ne bouge (28/11) */}
+            <circle class="sg-cast-light" r="81" fill={url('glow')} />
           </g>
 
           {/* la pierre : d'abord un seul contour pour tout (anneau, couronne, socle), puis les morceaux par-dessus */}
@@ -380,7 +382,8 @@ export function Dais({ uid, crystals = false, class: cls = '' }: { uid: string; 
  * trois portails ; au repos chacun a sa lumière (couleurs posées par le CSS, ou par FEATURED_BANNER pour le spécial),
  * avec une onde de lumière au changement. Le portail spécial : quatre éclats des éléments tournent autour de l'anneau (ses
  * héros mis en avant ne se montrent que dans les chances, demande du propriétaire du 27/11).
- * `casting` : le portail s'avance vers nous (le tirage s'ouvre ensuite par-dessus, summon-reveal.tsx). */
+ * `casting` : la lumière monte à l'intérieur du portail, sans aucun mouvement (le tirage s'ouvre ensuite par-dessus,
+ * summon-reveal.tsx ; demande du 28/11). */
 export function GateStage({ kind, casting }: { kind: SummonKind; casting: boolean }) {
   const featured = kind === 'featured';
   return (

@@ -58,13 +58,13 @@ export function SummonScreen() {
   const [kind, setKind] = useState<Kind>('normal');
   // L'invocation est décidée tout de suite (le coût est payé) ; le portail de l'onglet aspire un instant, puis le tirage
   // s'ouvre par-dessus (sections/summon-reveal.tsx).
-  // (le portail de l'onglet ne s'emballe pas : il s'avance vers nous ; le tirage ne commence qu'une fois le portail installé
+  // (le portail de l'onglet ne bouge pas : une lumière monte en lui ; le tirage ne commence qu'une fois le portail installé
   // au premier plan, dans summon-reveal.tsx)
   const [casting, setCasting] = useState(false);
   const cast = (heroes: Hero[] | null | undefined) => {
     if (!heroes) return;
     setCasting(true);
-    setTimeout(() => { setCasting(false); open({ type: 'summon', heroes }); }, 380);
+    setTimeout(() => { setCasting(false); open({ type: 'summon', heroes }); }, 450);
   };
   const button = (count: 1 | 10) => {
     const cost = summonCost(kind, count);
