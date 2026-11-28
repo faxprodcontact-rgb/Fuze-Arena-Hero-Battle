@@ -74,6 +74,16 @@ export class RealPlayer {
     tutorialGift();
   }
 
+  /** Les 5 héros sur lesquels le joueur mise : le plus d'étoiles, les Légendaires d'abord, puis le plus haut niveau. */
+  private core(): number[] {
+    const leg = (h: Hero) => Number(heroDef(h.defId).rarity === 'legendary');
+    const seen = new Set<string>();
+    return [...getState().heroes]
+      .sort((a, b) => b.stars - a.stars || leg(b) - leg(a) || b.level - a.level)
+      .filter((h) => (seen.has(h.defId) ? false : (seen.add(h.defId), true)))
+      .slice(0, 5).map((h) => h.uid);
+  }
+
   private spend(): boolean {
     if (this.budget < FIGHT_SECONDS) return false;
     this.budget -= FIGHT_SECONDS;
@@ -101,7 +111,7 @@ export class RealPlayer {
     for (let k = 0; k < 200 && getState().wallet.basicScrolls >= 1; k++) summon('basic', 1);
     // fragments : le Légendaire le plus avancé de la section (comme un vrai joueur)
     const s0 = getState();
-    const best = s0.formation.map(([u]) => s0.heroes.find((h) => h.uid === u)!).filter((h) => h && heroDef(h.defId).rarity === 'legendary')
+    const best = this.core().map((u) => s0.heroes.find((h) => h.uid === u)!).filter((h) => h && heroDef(h.defId).rarity === 'legendary')
       .sort((a, b) => b.stars - a.stars)[0];
     if (best && s0.fragmentTarget !== best.defId) setFragmentTarget(best.defId);
     else if (!s0.fragmentTarget) setFragmentTarget(HEROES.find((h) => h.rarity === 'legendary')!.id);
@@ -127,12 +137,16 @@ export class RealPlayer {
     // recycler l'équipement inutile (pas porté, gris et vert) pour la poussière
     const st = getState();
     recycleItems(st.items.filter((it) => it.heroUid === undefined && it.rarity <= 1).map((it) => it.uid));
-    // les niveaux : le moins haut de la section d'abord
+    // les niveaux (comme un vrai joueur) : ses 5 meilleurs héros, ceux qui ont le plus d'étoiles, les Légendaires d'abord
+    // (ils iront plus loin), le moins haut d'abord ; puis la meilleure section les prend
+    const core = this.core();
     for (let k = 0; k < 2000; k++) {
       const s = getState();
-      const team = s.formation.map(([u]) => s.heroes.find((h) => h.uid === u)!).filter((h) => h && canLevelUp(s, h)).sort((a, b) => a.level - b.level);
+      const team = core.map((u) => s.heroes.find((h) => h.uid === u)!).filter((h) => h && canLevelUp(s, h)).sort((a, b) => a.level - b.level);
       if (!team.length || !levelUp(team[0]!.uid)) break;
     }
+    autoFormation();
+    for (const [uid] of getState().formation) equipBest(uid);
     // le renforcement des emplacements, s'il reste de l'or
     for (const [uid] of getState().formation) for (const slot of GEAR_SLOTS) upgradeSlot(uid, slot);
   }
