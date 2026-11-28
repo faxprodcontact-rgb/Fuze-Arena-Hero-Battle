@@ -45,7 +45,7 @@ const FR: Record<LegalDoc, Block[]> = {
   notice: [
     { p: 'Brouillon — version de test.' },
     { h: 'Éditeur' },
-    { p: 'Simon Ribic EI (entreprise individuelle), nom commercial FAXSTUDIO, SIRET [À COMPLÉTER], Faulquemont (57380), France. Contact : faxprod.contact@gmail.com' },
+    { p: 'Simon Ribic EI (entreprise individuelle), nom commercial FAXSTUDIO, SIRET 780 023 925 00032, Faulquemont (57380), France. Contact : faxprod.contact@gmail.com' },
     { h: 'Directeur de la publication' },
     { p: 'Simon Ribic' },
     { h: 'Hébergement' },
@@ -103,7 +103,7 @@ const EN: Record<LegalDoc, Block[]> = {
   notice: [
     { p: 'Draft — test version.' },
     { h: 'Publisher' },
-    { p: 'Simon Ribic EI (sole proprietorship), trading as FAXSTUDIO, SIRET [TO COMPLETE], Faulquemont (57380), France. Contact: faxprod.contact@gmail.com' },
+    { p: 'Simon Ribic EI (sole proprietorship), trading as FAXSTUDIO, SIRET 780 023 925 00032, Faulquemont (57380), France. Contact: faxprod.contact@gmail.com' },
     { h: 'Hosting' },
     { p: 'Test site: GitHub Pages (GitHub, Inc., San Francisco, USA). Game server: Supabase (servers in Europe, Ireland). Apps: App Store (Apple) and Google Play (Google).' },
   ],
