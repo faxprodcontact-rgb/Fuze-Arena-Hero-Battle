@@ -437,32 +437,28 @@ def fire_band(fig, pts, ws, op=1.0, hot=0.0):
     return outlined([(sh, g1, 1), (core, g2, 0.9)], w=1.2, op=op)
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : rubans de feu en spirale d'un seul tenant,
+# flamme d'une silhouette, sans contour sombre ; même rythme, mêmes instants qu'avant)
+import effets_pro as E  # noqa: E402
+
+
 def vortex(fig, cx, ybot, ytop, R, phase, n_rib=2, turns=1.0, w=4.0, op=1.0):
-    """Le tourbillon : des rubans de flammes en hélice (larges au milieu, effilés aux bouts) ; les morceaux de devant
-    passent devant elle, ceux de derrière derrière."""
+    """Le tourbillon : des rubans de flammes en spirale (larges au milieu, effilés aux bouts), chacun d'un seul
+    tenant ; les morceaux de devant passent devant elle, ceux de derrière derrière."""
+    if op <= 0.02:
+        return
     for j in range(n_rib):
         tj = turns * (1 - 0.18 * j)
         yb = ybot - 4 * j
         yt = ytop + 6 * j
-        pts = helix(cx, yb, yt, R, phase + j * TAU / max(2, n_rib) + 0.7 * j, tj, n=48)
-        n = len(pts) - 1
-        wj = w * (1 - 0.15 * j)
-        ws = [0.15 + wj * math.sin(math.pi * i / n) ** 0.8 for i in range(n + 1)]
-        run, rw, side = [], [], None
-        for (p, dep), w_ in zip(pts, ws):
-            sd = dep > 0
-            if side is not None and sd != side:
-                run.append(p)
-                rw.append(0.2)
-                (fig.fx_front if side else fig.fx_back).append(fire_band(fig, run, rw, op=op, hot=1 if side else 0))
-                run, rw = [p], [0.2]
-            else:
-                run.append(p)
-                rw.append(w_)
-            side = sd
-        if len(run) > 2:
-            rw[-1] = 0.15
-            (fig.fx_front if side else fig.fx_back).append(fire_band(fig, run, rw, op=op, hot=1 if side else 0))
+        r0 = R(0) if callable(R) else R
+        r1 = R(1) if callable(R) else R
+        a0 = math.degrees(phase + j * TAU / max(2, n_rib) + 0.7 * j)
+        bk, fr, _ = E.spirale(fig, (cx, yb), r0, r1, a0, 360 * tj, w * (1 - 0.15 * j) * 2.2, tilt=0.32, rise=yb - yt, p='feu', n=48,
+                                  stops=E.spirale_feu('feu'))
+        fig.fx_back.append(E.bloom(fig, _, E.pal('feu')['halo'], 0.3 * op, grow=1.2, s=1.6))
+        fig.fx_back.append(E.group(bk, op))
+        fig.fx_front.append(E.group(fr, op))
 
 
 def fx_special(tl, T):
@@ -475,7 +471,7 @@ def fx_special(tl, T):
                 a = TAU * (j / 5) + 5 * k
                 r = 16 * (1 - k)
                 p = add(ctx['flame'], (r * math.cos(a), r * 0.7 * math.sin(a)))
-                fig.fx_front.append(ember(fig, p[0], p[1], 0.45 + 0.3 * (1 - k), op=e))
+                fig.fx_front.append(E.etincelle(fig, p[0], p[1], -r * math.sin(a) * 8, r * 0.7 * math.cos(a) * 8, 0.5 + 0.3 * (1 - k), 'feu', op=e))
         # le tourbillon autour d'elle, de plus en plus grand et serré
         if S_SPIN0 <= tl <= S_LAUNCH:
             k = smooth((tl - S_SPIN0) / (S_SPIN1 - S_SPIN0))
@@ -484,9 +480,10 @@ def fx_special(tl, T):
             e = min(1.0, (tl - S_SPIN0) / 80)
             vortex(fig, AXIS + 4, GR - 6, GR - 34 - 60 * k, lambda s: 17 + 6 * k + 5 * s, ph, n_rib=nr, turns=0.9 + 0.3 * k,
                    w=4.0 + 2.2 * k, op=e)
-            for i in range(3):
-                kk = ((tl - S_SPIN0) / 220 + i / 3) % 1
-                fig.fx_back.append(dust(fig, AXIS - 6 - 12 * kk + (24 * kk if i % 2 else 0), GR - 1.2 - 2 * kk, 1.4 + 2.2 * kk, op=0.8 * (1 - kk) * e))
+            for i in range(2):
+                kk = ((tl - S_SPIN0) / 220 + i / 2) % 1
+                fig.fx_back.append(E.nuage(fig, AXIS - 6 - 12 * kk + (24 * kk if i % 2 else 0), GR - 1.6 - 2 * kk, 1.8 + 2.6 * kk, 'terre',
+                                           op=0.7 * (1 - kk) * e, seed=i, flat=0.6))
         # le tourbillon se détache et file vers l'ennemi
         if S_LAUNCH <= tl <= S_ENGULF + 60:
             k = smooth((tl - S_LAUNCH) / (S_ENGULF - S_LAUNCH))
@@ -502,19 +499,18 @@ def fx_special(tl, T):
             ph = -(tl - S_SPIN0) / 1000 * 26
             if e > 0:
                 vortex(fig, c[0], GR - 2, GR - 64, lambda s: 14 + 3 * s - 4 * tau, ph, n_rib=2, turns=1.2, w=4.6, op=e)
-                fig.fx_back.append('<ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"/>' % (
-                    fm(c[0]), fm(c[1]), fm(22 * e), fm(22 * e), g_rad(fig, c, 22 * e, [(0, LAVA[0], 0.75 * e), (0.35, LAVA[2], 0.4 * e), (1, LAVA[3], 0)])))
+                fig.fx_back.append(E.lumiere(fig, c, 24 * e, 0.8 * e, 'feu'))
             g = env(tau, 0.05, 0.14, 0.3, 0.5)
-            for x, h, w_, b, l in ((-9, 13, 5.0, 1.0, -0.3), (-3, 22, 7.2, -0.8, 0.2), (4, 17, 6.0, 1.0, 0.4), (10, 11, 4.4, -0.6, 0.7)):
-                fig.fx_front.append(tongue(fig, (c[0] + x, GR + 0.5), h * g, w_, bend=b, lean=l))
-            for i, (vx, vy) in enumerate(((50, -90), (80, -40), (10, -110), (-40, -80), (100, -10), (-60, -30), (30, -60))):
+            if g > 0:
+                fig.fx_front.append(E.flamme(fig, (c[0], GR + 0.5), [(-9, 13 * g, 6.0, 1.0, -0.3), (-3, 22 * g, 8.5, -0.8, 0.2),
+                                                                     (4, 17 * g, 7.0, 1.0, 0.4), (10, 11 * g, 5.2, -0.6, 0.7)], 'feu', sol=GR + 0.5))
+            for i, (vx, vy) in enumerate(((60, -110), (90, -50), (10, -130), (-50, -95))):
                 if 0.05 < tau < 0.5:
-                    x, y = ballistic((c[0], c[1] - 4), (vx, vy), 150, tau - 0.05)
-                    fig.fx_front.append(ember(fig, x, y, 0.7 if i % 2 else 0.5, op=max(0, 1 - (tau - 0.05) / 0.45)))
+                    (x, y), (wx, wy) = E.vol((c[0], c[1] - 4), (vx, vy), 200, tau - 0.05, drag=1.5)
+                    fig.fx_front.append(E.etincelle(fig, x, y, wx, wy, 0.7 if i % 2 else 0.55, 'feu', op=max(0, 1 - (tau - 0.05) / 0.45)))
         if 0.25 < tau < 0.85:
             k = (tau - 0.25) / 0.6
-            fig.fx_back.append(smoke(fig, FOE[0] + 2 + 3 * k, FOE[1] - 10 - 16 * k, 2.6 + 3.8 * k, op=0.75 * (1 - k)))
-            fig.fx_back.append(smoke(fig, FOE[0] - 6 - 2 * k, FOE[1] - 2 - 10 * k, 2.0 + 2.6 * k, op=0.6 * (1 - k)))
+            fig.fx_back.append(E.nuage(fig, FOE[0] + 2 + 3 * k, FOE[1] - 10 - 16 * k, 3.2 + 4.2 * k, 'feu', op=0.75 * (1 - k), seed=1))
         # les étincelles d'or qui retombent sur elle en se balançant (elle reçoit la bénédiction du feu)
         if S_GOLD <= tl <= 1700:
             k = (tl - S_GOLD) / 550
@@ -526,11 +522,12 @@ def fx_special(tl, T):
                 op = min(1, (1 - k) * 2.2) * (0 if y > 92 else 1)
                 if 60 <= x <= 92 and 18 <= y <= 50:
                     op *= 0.0                          # jamais devant le visage
-                fig.fx_front.append(sparkle(fig, (x, y), 1.6 if j % 3 == 0 else 1.1, op=op, rot_=20 * k * (1 if j % 2 else -1)))
+                if j % 2 == 0:
+                    fig.fx_front.append(E.etincelle(fig, x, y, 15 * math.cos(ph + k * 5), 160, 0.75 if j % 3 == 0 else 0.6, 'or', op=op))
             for (hx, hy, t0) in ((44, 56, 0.25), (97, 28, 0.3), (32, 60, 0.5), (70, 70, 0.55), (99, 46, 0.7), (76, 88, 0.82)):
                 e = env(k, t0, t0 + 0.05, t0 + 0.08, t0 + 0.2)
                 if e > 0:
-                    fig.fx_front.append(pop(fig, (hx, hy), 1.2 + 1.8 * (k - t0) * 4, op=e))
+                    fig.fx_front.append(E.lumiere(fig, (hx, hy), 3 + 4 * (k - t0) * 4, e, 'or'))
     return f
 
 

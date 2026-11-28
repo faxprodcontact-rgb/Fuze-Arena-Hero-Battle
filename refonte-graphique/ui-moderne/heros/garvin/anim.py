@@ -561,6 +561,11 @@ def ring_pt(th, r=1.0):
     return (RING_C[0] + RING_R[0] * r * math.cos(a), RING_C[1] - RING_R[1] * r * math.sin(a))
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : fentes de lave lisses d'un seul tenant, joint de
+# lave en ruban, onde au sol, lumières et étincelles sans contour ; plaques, rythme et instants inchangés)
+import effets_pro as E  # noqa: E402
+
+
 def fx_special(tl):
     def f(fig, ctx):
         P = ctx['P']
@@ -570,7 +575,7 @@ def fx_special(tl):
         gg = env(t, 150, 450, 900, 1300)
         if gg > 0:
             fig.under.append((64, GR - 2, 48 + 10 * gg, 10, '#ff7a1e', 0.35 * gg, None))
-            fig.fx_back.append(ground_crack(fig, 22, 108, gg * 0.7, 2, 0.8))
+            fig.fx_back.append(E.fissure(fig, [(22, GR + 0.6), (50, GR + 1.2), (78, GR + 0.2), (108, GR + 0.8)], 3.2, 'feu', op=min(1, gg * 1.2), glow=gg))
         # le dôme : les plaques s'arrachent du sol et montent en arc autour de lui ; les joints se remplissent de lave
         if 200 <= t < SP_LAUNCH:
             ready = []
@@ -590,7 +595,7 @@ def fx_special(tl):
                 if p > 0:
                     ready.append((pos, a, p))
                 if 0 < p < 0.35:
-                    fig.fx_back.append(dust(fig, start[0], GR - 1.5, 2.0 + 3 * p, op=1 - p / 0.35))
+                    fig.fx_back.append(E.nuage(fig, start[0], GR - 2, 2.4 + 3.5 * p, 'terre', op=1 - p / 0.35, seed=i, flat=0.6))
             mort = env(t, 420, 560, 850, 900)
             if mort > 0:
                 a0, a1 = 180, 0
@@ -598,23 +603,20 @@ def fx_special(tl):
                 for k in range(41):
                     a = math.radians(a0 + (a1 - a0) * k / 40)
                     pts.append((DOME_C[0] + DOME_R[0] * math.cos(a), DOME_C[1] - DOME_R[1] * math.sin(a)))
-                band = ribbon(pts, [1.0] + [2.6 + 1.6 * heat] * 39 + [1.0])
-                halo = ribbon(pts, [2.0] + [7.0 + 3.0 * heat] * 39 + [2.0])
-                fig.fx_back.append('<path d="%s" fill="%s" opacity="%g"/><path d="%s" fill="%s" opacity="%g"/>' % (
-                    halo.d(), LAVA[3], 0.3 * mort, band.d(), LAVA[2] if heat < 0.7 else LAVA[1], mort))
+                fig.fx_back.append(E.ruban(fig, pts, 5.0 + 3.0 * heat, 'feu', op=mort, kind='fuseau', halo=0.8))
             for i, (pos, a, p) in enumerate(ready):
                 fig.fx_back.append(plate(fig, pos, a, 22, 11, heat=heat * p, seed=i))
         # LANCEMENT : l'éclair, le dôme s'ouvre, les plaques vont se poser debout en anneau autour de ses pieds
         fl = env(t, SP_LAUNCH - 10, SP_LAUNCH, SP_LAUNCH + 40, SP_LAUNCH + 200)
         if fl > 0:
-            c = (66, 66)
-            fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(130), g_rad(
-                fig, c, 130, [(0, '#fffbe4', 0.75 * fl), (0.2, '#ffe68a', 0.45 * fl), (0.55, '#ffb43a', 0.14 * fl), (1, '#ff7a1e', 0)])))
+            fig.fx_front.append(E.lumiere(fig, (66, 66), 100, 0.85 * fl, 'feu'))
         if SP_LAUNCH <= t < 1700:
             # l'onde de chaleur qui court au sol en cercle
             k = (t - SP_LAUNCH) / 380.0
             if k < 1:
-                fig.fx_back.append(ring_band(fig, RING_C[0], RING_C[1], 20 + 90 * k, 3 + 13 * k, 3.0 + 2 * k, op=1 - k))
+                bk, fr = E.onde(fig, (RING_C[0], RING_C[1]), 110, k, 5.0, 'feu', tilt=0.14)
+                fig.fx_back.append(bk)
+                fig.fx_front.append(fr)
             for i in range(NPL):
                 (dx, dy), ang = dome_pt(i)
                 th = RING_A[i]
@@ -638,7 +640,9 @@ def fx_special(tl):
                         lay.append(slab(fig, rp[0], 10 * depth, hh, 0.0, 0.12 + 0.4 * glow_, i, by=rp[1] + 0.6))
                     ck = env(t, 1180, 1260, 1380, 1700)
                     if ck > 0:
-                        fig.fx_back.append(lava_dash(fig, rp, 5.5 * depth, ck))
+                        w_ = 5.5 * depth
+                        fig.fx_back.append(E.fissure(fig, [(rp[0] - w_, rp[1] + 0.4), (rp[0], rp[1] + 0.8), (rp[0] + w_, rp[1] + 0.5)], 2.6, 'feu',
+                                                     op=min(1, ck * 1.3), glow=ck))
         # le soin : une chaleur d'or monte autour de lui, ses fissures luisent
         hl = P.get('heal', 0.0)
         if hl > 0.02:
@@ -648,7 +652,8 @@ def fx_special(tl):
                 k = ((t - 1000) / 600.0 + j * 0.13) % 1
                 x = 26 + 82 * ((j * 0.618) % 1) + 2.5 * math.sin(k * 6 + j)
                 y = GR - 6 - 80 * k
-                fig.fx_front.append(ember(fig, x, y, 0.65, op=hl * (1 - k) * min(1, k * 6), gold=True))
+                if j % 2 == 0:
+                    fig.fx_front.append(E.etincelle(fig, x, y, 4 * math.cos(k * 6 + j), -70, 0.65, 'or', op=hl * (1 - k) * min(1, k * 6)))
         # le défi : étincelles au choc des poings, lueur rouge qui gonfle et s'éteint
         rd = P.get('red', 0.0)
         if rd > 0.02:
@@ -660,12 +665,11 @@ def fx_special(tl):
             c = ((Wf[0] + Wn[0]) / 2, (Wf[1] + Wn[1]) / 2 - 1)
             fl2 = env(tc, 0, 0.01, 0.05, 0.2)
             if fl2 > 0:
-                fig.fx_front.append('<circle cx="%s" cy="%s" r="%s" fill="%s"/>' % (fm(c[0]), fm(c[1]), fm(26), g_rad(
-                    fig, c, 26, [(0, '#fffbe4', 0.9 * fl2), (0.3, '#ffe68a', 0.5 * fl2), (1, '#ff7a1e', 0)])))
-            for i, (vx, vy) in enumerate(((-60, -110), (70, -100), (-90, -40), (95, -50), (-20, -140), (30, -130), (110, -10), (-110, 0))):
+                fig.fx_front.append(E.lumiere(fig, c, 22, fl2, 'feu'))
+            for i, (vx, vy) in enumerate(((-80, -140), (90, -130), (-120, -50), (125, -60), (10, -170))):
                 if tc < 0.45:
-                    x, y = ballistic(c, (vx, vy), 260, tc)
-                    fig.fx_front.append(ember(fig, x, y, 0.75 if i % 2 else 0.55, op=1 - tc / 0.45))
+                    (x, y), (wx, wy) = E.vol(c, (vx, vy), 300, tc, drag=1.6)
+                    fig.fx_front.append(E.etincelle(fig, x, y, wx, wy, 0.75 if i % 2 else 0.6, 'feu', op=1 - tc / 0.45))
     return f
 
 

@@ -505,69 +505,51 @@ def arc_band(C, R, a0, a1, w, n=28):
     return sm(outer + inner[::-1], sharp=(0, n, n + 1), t=0.5)
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : traînées et croissants d'un seul tenant, flammes
+# fondues en une forme, anneau d'explosion sans contour sombre, étincelles et bouffées ; même rythme qu'avant)
+import effets_pro as E  # noqa: E402
+
+
+def trainee(fig, pts, w0, op=1.0, hot=True):
+    """La traînée de feu d'un objet en vol (pts : de l'objet vers la queue), un ruban effilé ; marquée « retour »
+    (jeu.py la reconnaît pendant le vol)."""
+    if len(pts) < 3 or op <= 0.02:
+        return ''
+    return E.marque(E.ruban(fig, pts[::-1], w0 * 1.6, 'feu' if hot else 'or', op=op, kind='tete', halo=0.5))
+
+
+def ring_fire(fig, C, sx, sy, level, t, seed=0):
+    """Les anneaux s'embrasent dans les mains : UNE flamme qui monte du haut de l'anneau, deux étincelles."""
+    if level <= 0.02:
+        return
+    R = K.RR
+    b = (C[0], C[1] - R * sy * 0.95)
+    h = (6 + 7 * level) * (1 + 0.08 * math.sin(t / 55.0 + seed))
+    fig.fx_back.append(E.flamme(fig, b, [(-R * sx * 0.55, h * 0.6, 4, 0.7, -0.25), (0, h, 5.5, 0.5 * math.sin(t / 60 + seed), 0.05),
+                                         (R * sx * 0.55, h * 0.7, 4, -0.7, 0.3)], 'feu', op=min(1, level)))
+    for i in range(2):
+        k = ((t / 700.0) + i * 0.5 + seed * 0.1) % 1
+        x = C[0] + (i - 0.5) * 6 + 1.5 * math.sin(k * 7 + i)
+        y = C[1] - R * sy - 4 - 14 * k
+        fig.fx_front.append(E.etincelle(fig, x, y, 0, -40, 0.55, 'feu', op=level / 2 * (1 - k)))
+
+
 def fire_wheel(fig, C, ph, orbit=8.0, size=1.0, trail=0.0, t=0.0):
     """La roue de feu : les deux anneaux chauffés à blanc tournent l'un autour de l'autre (autour de C, angle ph) ;
     autour d'eux, deux croissants de flammes qui suivent leur ronde ; trail : elle file vers la droite (une queue de
-    flammes derrière elle, à gauche)."""
+    flammes d'un seul ruban derrière elle, à gauche)."""
     R = (orbit + K.RR + 3) * size
+    if trail:
+        L = trail * 1.3
+        pts = [(C[0] - R * 0.2 - L * i / 6, C[1] + 1.5 * size + 2.5 * math.sin(t / 50.0 + i * 1.1) * i / 6) for i in range(7)]
+        fig.fx_back.append(E.ruban(fig, pts[::-1], 15 * size, 'feu', kind='tete', halo=0.6))
     for k in (0, 180):
         a0 = ph + k
-        band = arc_band(C, R, a0 + 150, a0, 6.5 * size)
-        gr = g_lin(fig, (C[0] + R * math.cos(math.radians(a0 + 150)), C[1] + R * math.sin(math.radians(a0 + 150))),
-                   (C[0] + R * math.cos(math.radians(a0)), C[1] + R * math.sin(math.radians(a0))),
-                   [(0, LAVA[4]), (0.5, LAVA[2]), (1, LAVA[0])])
-        fig.fx_back.append(outlined([(band, gr, 1)], w=1.2))
-    if trail:
-        for i, (dy, ln, wd, bd) in enumerate(((-6, 0.75, 5.0, 0.9), (1, 1.0, 7.0, -0.6), (7, 0.6, 4.2, -1.0))):
-            wob = math.sin(t / 50.0 + i * 2)
-            d = (-1, -0.12 * (dy / 7) - 0.15)
-            L = math.hypot(*d)
-            fig.fx_back.append(tongue_dir(fig, (C[0] - R * 0.5, C[1] + dy * size), (d[0] / L, d[1] / L),
-                                          trail * ln * (1 + 0.12 * wob), wd * size, bend=bd))
+        fig.fx_back.append(E.croissant(fig, C, R, a0 + 150, a0, 7.5 * size, 'feu'))
     for k in (0, 180):
         a = math.radians(ph + k)
         rc = (C[0] + orbit * size * math.cos(a), C[1] + orbit * size * math.sin(a) * 0.9)
         ring_fx(fig, rc, size, size, 0, ph * 2.2 + k, hot=2.0)
-    for j in range(5):
-        a = math.radians(ph * 0.7 + j * 72 + 20 * math.sin(j))
-        r = R + 2 + 2.5 * ((j * 0.37) % 1) * 3
-        fig.fx_front.append(ember(fig, C[0] + r * math.cos(a), C[1] + r * math.sin(a), 0.6 if j < 2 else 0.45))
-
-
-def flame_ring(fig, C, R, w, t, gap=0.0, seed=0, cool=0.0, op=1.0):
-    """L'anneau de flammes de l'explosion : un anneau épais, blanc à l'intérieur, rouge au bord, le bord extérieur en
-    lobes arrondis (des bouffées, pas des rayons) ; gap > 0 : il se défait en arcs."""
-    from shapely.geometry import Polygon
-    N = 120
-    outer, inner = [], []
-    for i in range(N):
-        a = 2 * math.pi * i / N
-        lobe = 1.6 * abs(math.sin(a * 4.5 + seed)) * (w / 8) + 0.5 * math.sin(a * 7 + t / 60.0)
-        outer.append((C[0] + (R + w / 2 + lobe) * math.cos(a), C[1] + (R + w / 2 + lobe) * math.sin(a)))
-        ri = R - w / 2 + 0.6 * math.sin(a * 3 + seed)
-        inner.append((C[0] + ri * math.cos(a), C[1] + ri * math.sin(a)))
-    g = Polygon(outer, [inner]).buffer(0)
-    if gap > 0:
-        for j in range(4):
-            a0 = j * 90 + 30 * seed + 20
-            half = 45 * gap
-            pts = [C] + [(C[0] + 3 * R * math.cos(math.radians(a0 + 2 * half * i / 8 - half)),
-                          C[1] + 3 * R * math.sin(math.radians(a0 + 2 * half * i / 8 - half))) for i in range(9)]
-            g = g.difference(Polygon(pts))
-        g = g.buffer(0.6, join_style=1).buffer(-0.6, join_style=1)
-    parts = list(g.geoms) if hasattr(g, 'geoms') else [g]
-    stops = [(0, LAVA[0]), (max(0.01, (R - w / 2) / (R + w)), LAVA[0]), (min(0.99, R / (R + w)), LAVA[1] if cool < 0.5 else LAVA[2]),
-             (min(0.995, (R + w * 0.45) / (R + w)), LAVA[2] if cool < 0.5 else LAVA[3]), (1, LAVA[4])]
-    gr = g_rad(fig, C, R + w, stops)
-    shapes = []
-    for p in parts:
-        if p.is_empty or p.area < 1:
-            continue
-        sh = geom_shape(p, sharp_deg=70, simplify=0.05)
-        if sh is not None:
-            shapes.append((sh, gr, 1))
-    if shapes:
-        fig.fx_back.append(outlined(shapes, w=1.4, op=op))
 
 
 def scorch(fig, x, w, heat):
@@ -590,8 +572,8 @@ def fx_special(tl):
             for key, M_, sd in (('ringF', UC, 0), ('ringN', U, 3)):
                 r = ctx[key]
                 C = mapp(M_, r['C'])
-                fig.fx_back.append(ring_glow(fig, C, 16, lv / 2))
-                hot_ring_flames(fig, C, r['sx'], r['sy'], lv, t, seed=sd, front=(key == 'ringF'))
+                fig.fx_back.append(E.lumiere(fig, C, 15, 0.35 * lv, 'feu'))
+                ring_fire(fig, C, r['sx'], r['sy'], lv, t, seed=sd)
         # le lancer : les deux anneaux montent en tournant et se rejoignent
         if SP_TOSS <= t < 480:
             k = (t - SP_TOSS) / (480 - SP_TOSS)
@@ -603,7 +585,7 @@ def fx_special(tl):
             prevs = (lerp((112.0, 50.0), (110.0, 22.0), ep), lerp((50.0, 86.0), (116.0, 25.0), ep ** 0.8))
             for p, prev, ph in ((pa, prevs[0], 40), (pb, prevs[1], 160)):
                 pts = trim([lerp(p, prev, i / 16) for i in range(17)], p, 9.0)
-                fig.fx_back.append(fire_ribbon(fig, pts, 4.0, op=1 - 0.5 * k))
+                fig.fx_back.append(trainee(fig, pts, 4.0, op=1 - 0.5 * k))
                 ring_fx(fig, p, 1.0, 1.0 - 0.3 * math.sin(k * 3), 0, ph - 3 * (t - SP_TOSS), hot=2.0)
         # la roue de feu : au-dessus, devant lui ; elle redescend ; le coup de pied ; elle file vers l'ennemi
         if 440 <= t < SP_BOOM:
@@ -620,11 +602,11 @@ def fx_special(tl):
         if -0.03 <= tk < 0.13:
             foot = ctx['fleg'][2]
             e = env(tk, -0.03, 0.0, 0.04, 0.13)
-            fig.fx_front.append(pop(fig, (foot[0] + 8, foot[1] - 6), 4.6 * (0.6 + 0.4 * e), facing=-20, op=e))
+            fig.fx_front.append(E.lumiere(fig, (foot[0] + 8, foot[1] - 6), 9, e, 'feu'))
             from atelier import bez
             B_ = mapp(ctx['ROOT'], (95.0, 90.0))
             pts = bez((foot[0] + 3, foot[1]), (foot[0] - 2, foot[1] + 10), (B_[0] + 8, B_[1] + 6), B_, 24)
-            fig.fx_back.append(fire_ribbon(fig, pts, 5.0, op=e))
+            fig.fx_back.append(E.ruban(fig, pts[::-1], 7.0, 'feu', op=e, kind='tete'))
         # l'explosion : l'anneau de flammes jaillit sur l'ennemi, s'élargit et se défait ; le sol brûlé
         tb = (t - SP_BOOM) / 1000.0
         if tb >= 0:
@@ -634,26 +616,22 @@ def fx_special(tl):
                 w = 9 * (1 - tb / 0.5) + 1.5
                 gap = max(0.0, (tb - 0.12) / 0.38)
                 if gap < 0.95:
-                    flame_ring(fig, (X, Y), R, w, t, gap=gap, seed=2, cool=gap, op=1 - 0.3 * gap)
+                    fig.fx_back.append(E.couronne(fig, (X, Y), R, w, t, gap=gap, p='feu', op=1 - 0.3 * gap, seed=2))
             if tb < 0.12:
-                fig.fx_front.append(pop(fig, (X, Y), 7 * (1 - tb / 0.12) + 2, facing=0))
+                fig.fx_front.append(E.lumiere(fig, (X, Y), 16 * (1 - tb / 0.12) + 5, 1 - tb / 0.12, 'feu'))
             if tb < 0.6:
-                hh = 14 * env(tb, 0, 0.05, 0.2, 0.6)
-                for j, (dx, s_) in enumerate(((-9, 0.7), (0, 1.0), (10, 0.75), (-3, 0.55))):
-                    wob = math.sin(t / 45.0 + j * 1.7)
-                    fig.fx_back.append(tongue(fig, (X + dx, GR - 0.5), hh * s_ * (1 + 0.15 * wob), 4.6 * s_ + 1.4,
-                                              bend=0.7 * wob, lean=0.1 * dx / 10))
+                hh = 16 * env(tb, 0, 0.05, 0.2, 0.6)
+                if hh > 0.8:
+                    fig.fx_back.append(E.foyer(fig, X, GR, hh, 22, t, n=4, p='feu', seed=3))
             scorch(fig, X, 22 * min(1, tb / 0.1 + 0.3) * (1 - max(0, tb - 0.6) / 1.2), 1 - tb)
-            for i, (vx, vy) in enumerate(((-26, -50), (22, -62), (-12, -70), (34, -38), (-36, -30), (8, -56))):
+            for i, (vx, vy) in enumerate(((-40, -80), (34, -96), (-14, -110), (50, -60))):
                 if tb < 0.8:
-                    x, y = ballistic((X, Y), (vx * 1.2, vy * 1.2), 120, tb)
+                    (x, y), (wx, wy) = E.vol((X, Y), (vx, vy), 160, tb, drag=1.5)
                     if y < GR - 1:
-                        fig.fx_front.append(ember(fig, x, y, 0.7 if i % 2 else 0.5, op=max(0, 1 - tb / 0.8), hot=tb < 0.35))
+                        fig.fx_front.append(E.etincelle(fig, x, y, wx, wy, 0.7 if i % 2 else 0.55, 'feu', op=max(0, 1 - tb / 0.8)))
             if 0.12 < tb < 1.2:
                 k = (tb - 0.12) / 1.08
-                fig.fx_back.append(smoke(fig, X - 3 + 4 * k, Y - 26 - 14 * k, 4 + 3 * k, op=0.85 * (1 - k)))
-                fig.fx_back.append(smoke(fig, X + 9 + 3 * k, Y - 18 - 10 * k, 3 + 2 * k, op=0.7 * (1 - k)))
-                fig.fx_back.append(curl(fig, (X + 15, Y - 22 - 8 * k), 3.6 + 1.2 * k, 200 + 100 * k, 280, 2.0, op=0.75 * (1 - k)))
+                fig.fx_back.append(E.nuage(fig, X + 2 + 4 * k, Y - 24 - 14 * k, 5 + 3.5 * k, 'feu', op=0.85 * (1 - k), seed=1))
         # les deux anneaux rebondissent vers lui en tournoyant et refroidissent
         if SP_BOOM + 60 <= t < SP_CATCH:
             k = (t - SP_BOOM - 60) / (SP_CATCH - SP_BOOM - 60)
@@ -666,7 +644,7 @@ def fx_special(tl):
                 pv = lerp(p0, p1, max(0, e - 0.12))
                 pv = (pv[0], pv[1] - lift * math.sin(math.pi * max(0, e - 0.12)))
                 pts = trim([lerp(p, pv, i / 14 * 1.4) for i in range(15)], p, 8.0)
-                fig.fx_back.append(fire_ribbon(fig, pts, 3.2, op=1 - 0.6 * e, hot=e < 0.5))
+                fig.fx_back.append(trainee(fig, pts, 3.2, op=1 - 0.6 * e, hot=e < 0.5))
                 ring_fx(fig, p, 1.0, 0.75 + 0.25 * e, 0, ph - 2.6 * (t - SP_BOOM), hot=max(0.0, 1.6 * (1 - e)))
         # rattrapés : petits éclats aux deux mains
         tc = (t - SP_CATCH) / 1000.0
@@ -675,7 +653,7 @@ def fx_special(tl):
             for key, M_ in (('ringF', UC), ('ringN', U)):
                 if ctx[key]:
                     C = mapp(M_, ctx[key]['C'])
-                    fig.fx_front.append(pop(fig, (C[0] - 6, C[1] + 4), 2.4 * (0.6 + 0.4 * e), facing=200, op=e, cool=True))
+                    fig.fx_front.append(E.lumiere(fig, (C[0] - 6, C[1] + 4), 6, e, 'or'))
     return f
 
 

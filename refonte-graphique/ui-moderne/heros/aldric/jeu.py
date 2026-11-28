@@ -36,7 +36,7 @@ def deux_anneaux(fig, i):
     """Les deux anneaux qui rebondissent vers lui en refroidissant (vers la gauche), leurs traînées à droite."""
     for (dx, dy), ph in (((-3, -12), 0), ((3, 12), 90)):
         pts = [(dx + 30 * k / 14, dy + 4 * k / 14) for k in range(15)]
-        fig.fx_back.append(A.fire_ribbon(fig, A.trim(pts, (dx, dy), 8.0), 3.2, op=0.8, hot=i == 0))
+        fig.fx_back.append(A.trainee(fig, A.trim(pts, (dx, dy), 8.0), 3.2, op=0.8, hot=i == 0))
         A.ring_fx(fig, (dx, dy), 1.0, 0.85, 0, ph - 60 * i, hot=1.0 - 0.4 * i)
 
 
@@ -58,7 +58,7 @@ def vol_speciale(t, x, y, couche, el):
     if t < A.SP_BOOM:                     # la roue (anneaux, croissants, queue, braises) autour de son centre
         wx, wy = wheel(t)
         return math.hypot(x - wx, y - wy) < 34
-    return bool(RING.search(el)) or (couche == 'b' and el.startswith('<path'))   # les anneaux qui reviennent
+    return bool(RING.search(el)) or 'class="retour"' in el[:24]   # les anneaux qui reviennent et leurs traînées
 
 
 JEU = {

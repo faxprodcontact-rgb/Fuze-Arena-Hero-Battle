@@ -410,63 +410,74 @@ def ring_line(cx, cy, rx, ry, a0, a1, w, n=40):
     return ribbon(pts, ws), pts
 
 
+# ---- l'attaque spéciale (effets refaits le 28/11 avec effets_pro : flammes d'UNE silhouette, bulle et anneau d'un
+# seul tenant aux crêtes continues, sans contour sombre ; même rythme, mêmes instants qu'avant)
+import effets_pro as E  # noqa: E402
+
+
 def fx_special(tl):
     def f(fig, ctx):
         P = ctx['P']
         C = ctx['shield']
         butt = ctx['butt']
-        # -- l'emblème chauffe : de petites flammes montent du bord du bouclier (côté ennemi et en haut)
+        # -- l'emblème chauffe : deux flammes dorées montent du bord du bouclier (côté ennemi et en haut)
         lv = env(tl, 60, 260, 470, 560)
         if lv > 0:
-            spots = [(-66, 0.85), (-31, 1.0), (4, 0.6), (-100, 0.45)]
-            for j, (a, hk) in enumerate(spots):
+            for j, (a, hk) in enumerate(((-58, 1.0), (-8, 0.65))):
                 ar = math.radians(a + P['srot'])
-                bx = C[0] + K.SRX * 0.92 * math.cos(ar)
-                by = C[1] + K.SRY * 0.92 * math.sin(ar)
-                h = (4 + 9 * lv) * hk * (1 + 0.15 * math.sin(tl / 40 + j * 1.9))
-                fig.fx_front.append(tongue(fig, (bx, by), h * 1.25, 3.4 + 2.0 * lv * hk, bend=0.8 if j % 2 else -0.7,
-                                           lean=0.25 * math.cos(ar), op=min(1, 1.6 * lv)))
-        # -- la lance plantée : poussière des deux côtés, petite couronne de feu, braises
+                bx = C[0] + K.SRX * 0.9 * math.cos(ar)
+                by = C[1] + K.SRY * 0.9 * math.sin(ar)
+                h = (5 + 11 * lv) * hk
+                w = 4.5 + 2.5 * lv * hk
+                ln = 0.3 * math.cos(ar)
+                fig.fx_front.append(E.flamme(fig, (bx, by), [(0, h, w, 0.5 * math.sin(tl / 50 + j), ln),
+                                                             (-w * 0.35, h * 0.6, w * 0.7, -0.8, ln - 0.25),
+                                                             (w * 0.35, h * 0.7, w * 0.7, 0.8, ln + 0.2)], 'or', op=min(1, 1.6 * lv)))
+        # -- la lance plantée : une bouffée de poussière, une petite flamme d'un seul foyer, trois étincelles
         pk = (tl - SP_PLANT) / 1000.0
         if 0 <= pk < 0.6:
             x = butt[0]
             o = env(pk, 0, 0.03, 0.2, 0.6)
-            fig.fx_front.append(dust(fig, x - 5 - 10 * pk, GR - 1.2, 1.8 + 3 * pk, op=o))
-            fig.fx_back.append(dust(fig, x + 6 + 10 * pk, GR - 1.4, 1.6 + 2.6 * pk, op=o))
+            fig.fx_front.append(E.nuage(fig, x - 6 - 10 * pk, GR - 1.8, 2.2 + 3 * pk, 'terre', op=0.8 * o, seed=1, flat=0.6))
             fo = env(pk, 0, 0.02, 0.08, 0.22)
-            for j, (dx, h, b) in enumerate(((-2.4, 6, -0.8), (0.4, 9, 0.5), (2.6, 7, 0.8))):
-                fig.fx_back.append(tongue(fig, (x + dx, GR), h * (0.6 + 0.6 * fo), 3.0, bend=b, lean=dx * 0.06, op=fo))
-            fig.fx_back.append('<ellipse cx="%s" cy="%s" rx="%s" ry="1.2" fill="%s" opacity="%g"/>' % (
-                fm(x), fm(GR), fm(7 - 3 * pk), LAVA[2], 0.8 * env(pk, 0, 0.02, 0.15, 0.5)))
-            for j, (vx, vy) in enumerate(((-30, -50), (26, -62), (8, -76))):
-                p = ballistic((x, GR - 2), (vx, vy), 120, pk)
-                fig.fx_front.append(ember(fig, p[0], p[1], 0.6, op=env(pk, 0, 0.02, 0.3, 0.55)))
+            if fo > 0:
+                fig.fx_back.append(E.foyer(fig, x, GR, 7 + 5 * fo, 7, tl, n=3, p='or', op=fo, seed=2))
+            for j, (vx, vy) in enumerate(((-40, -70), (34, -84), (8, -100))):
+                (px, py), (vx2, vy2) = E.vol((x, GR - 2), (vx, vy), 160, pk, drag=1.4)
+                fig.fx_front.append(E.etincelle(fig, px, py, vx2, vy2, 0.6, 'or', op=env(pk, 0, 0.02, 0.3, 0.55)))
         # -- le voile de feu doré : il naît du bouclier levé et grandit jusqu'à l'envelopper tout entier
-        grow = monotone([340, 410, 480, 680], [0.3, 0.68, 1.0, 1.0], tl) if 330 <= tl < 700 else None
+        grow = monotone([340, 410, 480, 680], [0.3, 0.68, 1.0, 1.0], tl) if 330 <= tl < 680 else None
         if grow is not None:
-            o = 1.0 if tl < 680 else 0.0
             DC, DR = (68.0, GR - 58.0), (58.0, 66.0)
             cx = C[0] + (DC[0] - C[0]) * grow
             cy = C[1] + (DC[1] - C[1]) * grow
             rx = 15 + (DR[0] - 15) * grow
             ry = 17 + (DR[1] - 17) * grow
-            veil(fig, cx, cy, rx, ry, tl, o, flash=env(tl, 470, 490, 520, 600))
+            bk, fr = E.bulle(fig, (cx, cy), rx, ry, 'or', sol=GR, flash=env(tl, 470, 490, 520, 600))
+            fig.fx_back.append(bk)
+            fig.fx_front.append(fr)
         # -- l'anneau de feu doré posé au sol, tout autour de lui, qui s'éloigne, se défait en arcs et s'éteint
         rk = (tl - SP_RING) / 420.0
         if 0 <= rk < 1:
-            ring(fig, rk)
-        # -- le défi : chocs sur le bouclier, lueur rouge qui pulse, la marque au-dessus du casque
+            e = 1 - (1 - rk) ** 2
+            rx = 34 + 58 * e
+            if rk < 0.5:
+                arcs = ((0, 360),)
+            else:
+                g = (rk - 0.5) / 0.5
+                arcs = ((10 + 30 * g, 120 - 20 * g), (150 + 20 * g, 250 - 25 * g), (275 + 15 * g, 350 - 30 * g))
+            bk, fr = E.anneau(fig, (66.0, GR), rx, rx * 0.2, 12 * (1 - rk) ** 1.2 + 1.5, tl, 'or', op=env(rk, 0, 0.05, 0.6, 1), arcs=arcs)
+            fig.fx_back.append(bk)
+            fig.fx_front.append(fr)
+        # -- le défi : chocs sur le bouclier (une lumière, quelques étincelles), lueur rouge qui pulse, la marque
         for th in (SP_HIT1, SP_HIT2):
-            k = (tl - th) / 1000.0
-            if 0 <= k < 0.25:
+            k = (tl - th) / 250.0
+            if 0 <= k < 1:
                 G = P['G']
                 a = math.radians(P['ang'])
                 xc = C[0] - K.SRX * 0.86
                 pc = (xc, G[1] + (xc - G[0]) * math.tan(a))
-                fig.fx_front.append(sparkle(fig, pc, 7.5 * (1 - 2 * k) if k < 0.4 else 0, op=env(k, 0, 0.01, 0.06, 0.16), rot=20 + 90 * k))
-                for j, (vx, vy) in enumerate(((-30, -40), (24, -52), (-8, -60), (34, -20))):
-                    p = ballistic(pc, (vx, vy), 160, k)
-                    fig.fx_front.append(ember(fig, p[0], p[1], 0.55, op=env(k, 0, 0.01, 0.1, 0.25)))
+                fig.fx_front += E.choc(fig, pc, k, 9, 'or', ang=-110, n=3, seed=th)
         tint = monotone([SP_HIT1 - 10, SP_HIT1 + 30, SP_HIT2 - 20, SP_HIT2 + 30, 1430, 1560, 1700],
                         [0, 0.7, 0.45, 1.0, 0.9, 0.35, 0], tl) if SP_HIT1 - 10 <= tl < 1700 else 0
         if tint > 0.01:
@@ -478,89 +489,14 @@ def fx_special(tl):
         if mk > 0:
             hx, hy = ctx['head']
             pulse = 1 + 0.12 * math.sin((tl - SP_HIT2) / 45)
-            mark(fig, (hx - 9, hy - 46), 5.2 * pulse * (0.7 + 0.3 * mk), mk)
+            fig.fx_front.append(E.amande(fig, (hx - 9, hy - 46), 7.0 * pulse * (0.7 + 0.3 * mk), 'feu', op=mk))
         # -- le bouclier refroidit : de petites bouffées montent de l'emblème
-        for j, t0 in enumerate((1430, 1500, 1580)):
+        for j, t0 in enumerate((1430, 1530)):
             kk = (tl - t0) / 420
             if 0 < kk < 1:
-                fig.fx_front.append(smoke(fig, C[0] + 3 - 2 * kk + j, C[1] - 18 - 10 * kk - 3 * j, 1.2 + 1.2 * kk, op=0.8 * env(kk, 0, 0.15, 0.5, 1)))
+                fig.fx_front.append(E.nuage(fig, C[0] + 3 - 2 * kk + j, C[1] - 18 - 10 * kk - 3 * j, 1.6 + 1.6 * kk, 'feu',
+                                            op=0.7 * env(kk, 0, 0.15, 0.5, 1), seed=j))
     return f
-
-
-def veil(fig, cx, cy, rx, ry, tl, op, flash=0.0):
-    """La bulle de feu doré, translucide : l'intérieur teinté d'or (derrière lui), le bord lumineux (plus épais et
-    plus clair en haut à droite, plus rouge en bas à gauche), des braises qui s'en échappent ; coupée par le sol."""
-    if op <= 0.01:
-        return
-    clip = fig.uid('c')
-    fig.defs.append('<clipPath id="%s"><rect x="-400" y="-400" width="900" height="%s"/></clipPath>' % (clip, fm(GR + 400)))
-    inner = g_rad(fig, (cx + rx * 0.3, cy - ry * 0.35), max(rx, ry) * 1.2,
-                  [(0, '#ffe680', 0.22 + 0.15 * flash), (0.65, '#ffb42a', 0.3 + 0.1 * flash), (1, '#ff9a1a', 0.55)])
-    fig.fx_back.append('<g clip-path="url(#%s)"><ellipse cx="%s" cy="%s" rx="%s" ry="%s" fill="%s"/></g>' % (
-        clip, fm(cx), fm(cy), fm(rx), fm(ry), inner))
-    # le bord : une couronne (anneau) de feu doré, plus épaisse en haut à droite
-    outer = ellipse(cx, cy, rx, ry)
-    inn = ellipse(cx + 1.6, cy - 1.0, rx - 2.6, ry - 2.6)
-    band = Shape(outer.subs + inn.rev().subs)
-    gb = g_lin(fig, (cx + rx * 0.7, cy - ry * 0.7), (cx - rx * 0.7, cy + ry * 0.7), [(0, '#ffffff'), (0.3, LAVA[1]), (0.7, LAVA[2]), (1, LAVA[3])])
-    inn2 = ellipse(cx + 3.6, cy - 2.6, rx - 5.0, ry - 5.0)
-    glow = Shape(outer.subs + inn2.rev().subs)
-    fig.fx_front.append('<g clip-path="url(#%s)" opacity="%g"><path d="%s" fill="#ffe08a" opacity="0.28"/>'
-                        '<path d="%s" fill="%s" opacity="0.9"/></g>' % (clip, op, glow.d(), band.d(), gb))
-    for j, (a, d) in enumerate(((-110, 6), (-50, 9), (-80, 12))):
-        ar = math.radians(a)
-        fig.fx_front.append(ember(fig, cx + (rx + d) * math.cos(ar), cy + (ry + d) * math.sin(ar) - 0.03 * tl % 6, 0.55, op=op * 0.8))
-
-
-def ring(fig, k):
-    """L'anneau de feu doré posé au sol tout autour de lui : il s'éloigne en s'abaissant ; à la fin il se défait en
-    arcs (de longueurs inégales) et s'éteint en braises. La moitié lointaine passe derrière lui, la proche devant."""
-    cx, cy = 66.0, GR
-    e = 1 - (1 - k) ** 2
-    rx = 34 + 58 * e
-    ry = rx * 0.2
-    h = 9 * (1 - k) ** 1.2 + 1
-    op = env(k, 0, 0.05, 0.6, 1)
-    # les arcs qui restent (il se défait en arcs) : (début, fin) en degrés ; 0 = à droite, 90 = devant
-    if k < 0.5:
-        arcs = [(0, 360)]
-    else:
-        g = (k - 0.5) / 0.5
-        arcs = [(10 + 30 * g, 120 - 20 * g), (150 + 20 * g, 250 - 25 * g), (275 + 15 * g, 350 - 30 * g)]
-    for a0, a1 in arcs:
-        for lo_, hi_, layer in ((180, 360, fig.fx_back), (0, 180, fig.fx_front)):
-            b0, b1 = max(a0, lo_), min(a1, hi_)
-            if b1 - b0 < 4:
-                continue
-            wall = ring_band(cx, cy, rx, ry, h, b0, b1)
-            gw = g_lin(fig, (cx, cy - h), (cx, cy), [(0, LAVA[1], 0.0), (0.6, LAVA[2], 0.35), (1, LAVA[1], 0.55)])
-            line, pts = ring_line(cx, cy, rx, ry, b0, b1, 1.6 * (1 - 0.5 * k))
-            gl = g_lin(fig, (cx + rx, cy - ry), (cx - rx, cy + ry), [(0, '#ffffff'), (0.4, LAVA[1]), (1, LAVA[2])])
-            layer.append('<g opacity="%g"><path d="%s" fill="%s"/><path d="%s" fill="%s"/></g>' % (op, wall.d(), gw, line.d(), gl))
-            # de petites langues de feu dorées le long de l'anneau, à des places irrégulières
-            for j, a in enumerate((b0 + (b1 - b0) * t for t in (0.13, 0.41, 0.58, 0.86))):
-                if (j + int(a)) % 3 == 0:
-                    continue
-                ar = math.radians(a)
-                x, y = cx + rx * math.cos(ar), cy + ry * math.sin(ar)
-                layer.append(tongue(fig, (x, y), (3.5 + 2 * math.sin(a)) * (1 - k), 2.2, bend=0.6, lean=0.1, op=op, gold=True))
-    if k > 0.55:
-        for j, a in enumerate((20, 75, 140, 200, 300, 330)):
-            ar = math.radians(a)
-            x, y = cx + rx * math.cos(ar), cy + ry * math.sin(ar)
-            (fig.fx_front if math.sin(ar) > 0 else fig.fx_back).append(ember(fig, x, y - 3 - 8 * (k - 0.55), 0.6, op=env(k, 0.55, 0.65, 0.85, 1)))
-
-
-def mark(fig, c, R, op):
-    """La marque du défi (l'œil en amande des effets communs, inventée) : une amande rouge, une pupille fendue."""
-    cx, cy = c
-    alm = sm([(cx - R, cy), (cx - R * 0.4, cy - R * 0.5), (cx + R * 0.4, cy - R * 0.5), (cx + R, cy),
-              (cx + R * 0.4, cy + R * 0.5), (cx - R * 0.4, cy + R * 0.5)], sharp=(0, 3), t=0.9)
-    pupil = sm([(cx, cy - R * 0.42), (cx + R * 0.16, cy), (cx, cy + R * 0.42), (cx - R * 0.16, cy)], sharp=(0, 2), t=0.9)
-    gr = g_rad(fig, (cx + R * 0.3, cy - R * 0.3), R * 1.2, [(0, '#ffb0a0'), (0.4, '#ff4a52'), (1, '#b81834')])
-    fig.glow(cx, cy, R * 2.4, R * 1.8, '#ff3c46', 0.4 * op)
-    fig.fx_front.append(outlined([(alm, gr, 1), (pupil, '#3a0818', 1, 'n'),
-                                  (ellipse(cx + R * 0.35, cy - R * 0.2, R * 0.16, R * 0.1), '#ffffff', 0.9, 'n')], w=1.3, op=op))
 
 
 # ======================================================================== la vidéo

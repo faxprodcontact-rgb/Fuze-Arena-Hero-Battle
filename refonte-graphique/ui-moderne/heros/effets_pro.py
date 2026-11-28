@@ -38,6 +38,14 @@ PAL = {
                  halo='#22d68c', clair='#ffffff', fonce='#16705e', fumee=('#ffffff', '#dcf8ec', '#9ad8c0')),
     'terre': dict(bord=('#e07a18', '#ffb02e', '#ffe08a'), milieu=('#ffc94a', '#fff0b0'), coeur=('#fffdf0', '#fff6d0'),
                   halo='#e08a1e', clair='#fffae6', fonce='#5a2e1a', fumee=('#fbf1dc', '#e2cca6', '#ad9070')),
+    # (ajouts du 28/11, généralisation aux 47 héros) le feu doré (boucliers, auréoles), la glace, la lumière sacrée,
+    # l'ombre (poison, ténèbres d'un héros de l'eau) : mêmes rôles de couleurs
+    'or': dict(bord=('#ffa620', '#f07e12', '#c4520c'), milieu=('#ffe070', '#ffc23a'), coeur=('#ffffff', '#fff4bc'),
+               halo='#ffb020', clair='#fff6d0', fonce='#7a3410', fumee=('#fff4dc', '#ecd2a6', '#b8946c')),
+    'glace': dict(bord=('#3a86d8', '#6cc0f4', '#c4ecff'), milieu=('#b8eaff', '#eafaff'), coeur=('#ffffff', '#f4fdff'),
+                  halo='#5ab8ff', clair='#ffffff', fonce='#1e4c96', fumee=('#ffffff', '#e0f4fc', '#a8d4ee')),
+    'ombre': dict(bord=('#5a2a9a', '#8a4ad0', '#c49af4'), milieu=('#d0b0ff', '#efe2ff'), coeur=('#ffffff', '#f6efff'),
+                  halo='#8a4ad0', clair='#f6efff', fonce='#2e1450', fumee=('#d8cce8', '#9a86b4', '#5e4a7a')),
 }
 # la pierre (aiguilles, éclats) : très clair, clair, base, ombre, creux, bord
 PIERRE = ('#f4e4cc', '#c9ae92', '#8f7464', '#5e4656', '#3a2838', '#24142e')
@@ -561,7 +569,7 @@ def bosse(fig, X, sol, h, L, p='eau', op=1.0, foamy=1.0):
 
 # ======================================================================== le vent
 
-def spirale(fig, C, R0, R1, a0, span, w, tilt=0.4, rise=0.0, p='vent', n=40):
+def spirale(fig, C, R0, R1, a0, span, w, tilt=0.4, rise=0.0, p='vent', n=40, stops=None):
     """Un ruban de vent en spirale autour de C (rayons R0 → R1, de a0 sur span degrés, qui monte de rise) : coupé en
     deux listes de rubans, ceux qui passent DERRIÈRE et ceux qui passent DEVANT (même dégradé, pas de contour : la
     jonction ne se voit pas). Rend (derrière, devant)."""
@@ -575,7 +583,7 @@ def spirale(fig, C, R0, R1, a0, span, w, tilt=0.4, rise=0.0, p='vent', n=40):
     ws = [w * profil('fuseau', r[2]) for r in rows]
     c = [r[0] for r in rows]
     full = strip(c, ws)
-    gr = lin(fig, c[0], c[-1], [(0, P['bord'][1], 0), (0.4, P['bord'][2], 0.85), (0.8, P['milieu'][1]), (1, P['coeur'][0], 0.6)])
+    gr = lin(fig, c[0], c[-1], stops or [(0, P['bord'][1], 0), (0.4, P['bord'][2], 0.85), (0.8, P['milieu'][1]), (1, P['coeur'][0], 0.6)])
     core_gr = lin(fig, c[0], c[-1], [(0, '#ffffff', 0), (0.6, '#ffffff', 0.8), (1, '#ffffff', 0)])
     back, front = [], []
     i = 0
@@ -811,3 +819,258 @@ def env(t, a, b, c, d):
 def smooth(x):
     x = max(0.0, min(1.0, x))
     return x * x * (3 - 2 * x)
+
+
+# ======================================================================== ajouts (28/11, les 43 autres héros)
+
+def ellipse_g(cx, cy, rx, ry, n=48):
+    return affinity.scale(Point(cx, cy).buffer(1, quad_segs=max(8, n // 4)), max(0.01, rx), max(0.01, ry))
+
+
+def bulle(fig, C, rx, ry, p='or', op=1.0, sol=None, flash=0.0, fond=0.5):
+    """Un bouclier / dôme d'énergie, d'UNE forme : l'intérieur translucide (dégradé, plus clair en haut à droite), le
+    bord en croissant lumineux plus épais en haut à droite (zones emboîtées bord → cœur, pas de contour), halo doux ;
+    coupé net au sol s'il est posé (sol). Rend (derrière, devant) : l'intérieur passe derrière le personnage."""
+    if op <= 0.02 or rx < 1 or ry < 1:
+        return '', ''
+    P = pal(p)
+    cx, cy = C
+    cut = box(-1e4, -1e4, 1e4, sol + 0.3) if sol is not None else None
+    out = ellipse_g(cx, cy, rx, ry)
+    w = max(1.2, 0.07 * min(rx, ry))
+    inn = ellipse_g(cx - w * 0.55, cy + w * 0.45, rx - w, ry - w)
+    rim = out.difference(inn)
+    rim2 = out.difference(ellipse_g(cx - w * 0.9, cy + w * 0.8, rx - w * 0.45, ry - w * 0.45))
+    rim3 = out.difference(ellipse_g(cx - w * 1.1, cy + w * 1.0, rx - w * 0.12, ry - w * 0.12))
+    if cut is not None:
+        out, rim, rim2, rim3 = (g.intersection(cut) for g in (out, rim, rim2, rim3))
+    hi = (cx + rx * 0.45, cy - ry * 0.5)
+    lo = (cx - rx * 0.6, cy + ry * 0.7)
+    body = fig.rad(cx + rx * 0.3, cy - ry * 0.35, max(rx, ry) * 1.25, max(rx, ry) * 1.25,
+                   [(0, P['coeur'][1], (0.18 + 0.2 * flash) * fond), (0.6, P['milieu'][1], 0.26 * fond + 0.1 * flash), (1, P['bord'][1], 0.5 * fond)])
+    back = path(out, body)
+    front = [bloom(fig, rim, P['halo'], 0.4, grow=1.4, s=1.6),
+             path(rim, lin(fig, hi, lo, [(0, P['milieu'][0]), (0.45, P['bord'][1]), (1, P['bord'][2], 0.7)]), 0.9),
+             path(inside(rim2, rim), lin(fig, hi, lo, [(0, P['coeur'][0]), (0.5, P['milieu'][0], 0.6), (1, P['milieu'][0], 0)])),
+             path(inside(rim3, rim2), P['coeur'][0], 0.6 + 0.4 * flash)]
+    return group([back], op), group(front, op)
+
+
+def _crete(rx_, a, t, seed, kind):
+    """La hauteur relative de la crête d'un mur de feu à l'angle a (degrés) : des vagues de langues qui ondulent."""
+    if kind == 'feu':
+        return (0.62 + 0.38 * math.sin(math.radians(a) * 5 + t / 70.0 + seed) * math.sin(math.radians(a) * 3.1 - t / 53.0 + seed * 2)) ** 1.6
+    return 0.75 + 0.25 * math.sin(math.radians(a) * 4 + t / 90.0 + seed)
+
+
+def anneau(fig, C, rx, ry, h, t, p='feu', op=1.0, arcs=((0, 360),), seed=0, kind='feu'):
+    """Un mur d'énergie posé au sol en anneau (feu, eau, vent) : pour chaque arc (degrés ; 0 = à droite, 90 = devant),
+    UNE bande dont la crête ondule en langues continues (une courbe, pas des flammes posées côte à côte), effilée aux
+    bouts ; zones emboîtées bord → cœur vers le bas, halo doux. Rend (derrière, devant) : la moitié lointaine passe
+    derrière le personnage, la proche devant."""
+    if op <= 0.02 or h < 0.5:
+        return '', ''
+    P = pal(p)
+    cx, cy = C
+    back, front = [], []
+
+    def band(b0, b1, kh):
+        n = max(12, int(abs(b1 - b0) / 3))
+        lo, hi = [], []
+        for i in range(n + 1):
+            a = b0 + (b1 - b0) * i / n
+            ar = math.radians(a)
+            x, y = cx + rx * math.cos(ar), cy + ry * math.sin(ar)
+            end = min(1.0, min(i, n - i) / max(1.0, n * 0.18)) if abs(b1 - b0) < 359 else 1.0
+            hh = h * kh * _crete(rx, a, t, seed, kind) * (end ** 0.7)
+            lo.append((x, y + 0.6))
+            hi.append((x + 0.12 * hh * math.cos(ar), y - hh))
+        return poly(lo + hi[::-1]).buffer(0.25 * kh, join_style=1)
+
+    for a0, a1 in arcs:
+        for lo_, hi_, lst in ((180, 360, back), (0, 180, front), (-180, 0, back), (360, 540, front)):
+            b0, b1 = max(a0, lo_), min(a1, hi_)
+            if b1 - b0 < 3:
+                continue
+            g = band(b0, b1, 1.0)
+            g2 = inside(band(b0, b1, 0.6), g)
+            g3 = inside(band(b0, b1, 0.3), g2)
+            top = (cx, cy - h)
+            k = 0.75 if lst is back else 1.0
+            lst.append(group([bloom(fig, g, P['halo'], 0.4, grow=1.3, s=1.5),
+                              path(g, lin(fig, (cx, cy), top, [(0, P['bord'][0]), (0.6, P['bord'][1]), (1, P['bord'][2], 0.8)])),
+                              path(g2, lin(fig, (cx, cy), top, [(0, P['milieu'][0]), (1, P['milieu'][1])])),
+                              path(g3, P['coeur'][0], 0.9)], op * k))
+    return ''.join(back), ''.join(front)
+
+
+def onde(fig, C, R, k, w=3.0, p='feu', op=1.0, tilt=0.22):
+    """Une onde de choc posée au sol (k : 0 → 1) : UN anneau aplati qui s'élargit et s'amincit, plus épais et plus
+    clair devant (en bas) et à droite ; dégradé de l'élément, sans contour. Rend (derrière, devant)."""
+    if k <= 0 or k >= 1 or op <= 0.02:
+        return '', ''
+    P = pal(p)
+    r = R * (1 - (1 - k) ** 2.2)
+    ww = w * (1 - k) ** 0.8 + 0.3
+    o = op * min(1, (1 - k) * 2.5)
+    cx, cy = C
+    ring = ellipse_g(cx, cy, r + ww / 2, (r + ww / 2) * tilt).difference(ellipse_g(cx - ww * 0.15, cy - ww * 0.25 * tilt, r - ww / 2, (r - ww / 2) * tilt))
+    halfb = ring.intersection(box(-1e4, -1e4, 1e4, cy))
+    halff = ring.intersection(box(-1e4, cy, 1e4, 1e4))
+    hi = (cx + r, cy - r * tilt)
+    lo = (cx - r, cy + r * tilt)
+    out = []
+    for g, kk in ((halfb, 0.6), (halff, 1.0)):
+        core = inside(g.buffer(-ww * 0.25, join_style=1), g)
+        out.append(group([bloom(fig, g, P['halo'], 0.35, grow=1.0, s=1.2),
+                          path(g, lin(fig, hi, lo, [(0, P['milieu'][0]), (0.5, P['bord'][1]), (1, P['bord'][0], 0.6)])),
+                          path(core, P['coeur'][1], 0.7)], o * kk))
+    return out[0], out[1]
+
+
+def choc(fig, c, k, R=10.0, p='feu', op=1.0, ang=0.0, n=0, seed=0):
+    """L'éclat d'un coup (k : 0 → 1) : une lumière ronde (sans forme) et, si n, n étincelles qui partent du point en
+    éventail autour de l'angle ang (degrés), freinées par l'air. Rend une liste d'effets."""
+    out = []
+    if k <= 0 or k >= 1:
+        return out
+    e = env(k, 0, 0.05, 0.25, 0.7)
+    out.append(lumiere(fig, c, R * (0.6 + 0.6 * k), e * op, p))
+    rnd = random.Random(seed)
+    for j in range(n):
+        a = math.radians(ang + (j - (n - 1) / 2) * (300 / max(1, n)) * 0.45 + rnd.uniform(-12, 12))
+        sp = rnd.uniform(70, 120)
+        (x, y), (vx, vy) = vol(c, (sp * math.cos(a), sp * math.sin(a)), 140, k * 0.5, drag=3.0)
+        out.append(etincelle(fig, x, y, vx, vy, 0.6, p, op=op * env(k, 0, 0.03, 0.4, 0.9)))
+    return out
+
+
+def amande(fig, c, R, p, op=1.0, ang=0.0, pupille='#3a0818'):
+    """Un signe inventé (marque d'un défi, d'un sort) : une amande lumineuse d'une forme, pupille fendue peinte dedans,
+    halo doux, pas de contour."""
+    if op <= 0.02 or R < 0.5:
+        return ''
+    P = pal(p)
+    cx, cy = c
+    pts = []
+    for i in range(48):
+        a = 2 * math.pi * i / 48
+        pts.append((R * math.cos(a), R * 0.48 * math.sin(a) * (1 - 0.25 * math.cos(a) ** 2)))
+    g = affinity.translate(affinity.rotate(poly(pts), ang, origin=(0, 0)), cx, cy)
+    pup = affinity.translate(affinity.rotate(affinity.scale(Point(0, 0).buffer(1, quad_segs=12), R * 0.16, R * 0.4), ang, origin=(0, 0)), cx, cy)
+    out = [bloom(fig, g, P['halo'], 0.6, grow=R * 0.3, s=R * 0.3 + 0.5),
+           path(g, fig.rad(cx + R * 0.3, cy - R * 0.25, R * 1.1, R * 1.1, [(0, P['coeur'][1]), (0.45, P['milieu'][1]), (1, P['bord'][1])])),
+           path(inside(lit(g, R * 0.12), g), P['coeur'][0], 0.7),
+           path(inside(pup, g), pupille)]
+    return group(out, op)
+
+
+def couronne(fig, C, R, w, t, gap=0.0, p='feu', op=1.0, seed=0, tilt=1.0):
+    """L'anneau d'une explosion autour de C (rayon R, épaisseur w), d'UNE forme : le bord extérieur en lobes arrondis
+    (des bouffées, pas des rayons), blanc à l'intérieur, couleur de l'élément au bord, halo doux, sans contour ;
+    gap > 0 : il se défait en quatre arcs (bouts arrondis). tilt < 1 : couché (au sol)."""
+    if op <= 0.02 or R <= 0.5 or w <= 0.2:
+        return ''
+    P = pal(p)
+    N = 120
+    outer, inner = [], []
+    for i in range(N):
+        a = 2 * math.pi * i / N
+        lobe = 1.6 * abs(math.sin(a * 4.5 + seed)) * (w / 8) + 0.5 * math.sin(a * 7 + t / 60.0)
+        ro = R + w / 2 + lobe
+        ri = R - w / 2 + 0.6 * math.sin(a * 3 + seed)
+        outer.append((C[0] + ro * math.cos(a), C[1] + ro * tilt * math.sin(a)))
+        inner.append((C[0] + ri * math.cos(a), C[1] + ri * tilt * math.sin(a)))
+    g = Polygon(outer, [inner]).buffer(0)
+    if gap > 0:
+        for j in range(4):
+            a0 = j * 90 + 30 * seed + 20
+            half = 45 * gap
+            pts = [C] + [(C[0] + 3 * R * math.cos(math.radians(a0 + 2 * half * i / 8 - half)),
+                          C[1] + 3 * R * math.sin(math.radians(a0 + 2 * half * i / 8 - half))) for i in range(9)]
+            g = g.difference(poly(pts))
+        g = g.buffer(0.8, join_style=1).buffer(-0.8, join_style=1)
+    if g.is_empty:
+        return ''
+    r_out = R + w
+    st = [(0, P['coeur'][0]), (max(0.01, (R - w / 2) / r_out), P['coeur'][0]), (min(0.99, R / r_out), P['milieu'][0]),
+          (min(0.995, (R + w * 0.45) / r_out), P['bord'][0]), (1, P['bord'][1])]
+    out = [bloom(fig, g, P['halo'], 0.45, grow=1.6, s=1.8),
+           path(g, fig.rad(C[0], C[1], r_out, r_out * tilt, st)),
+           path(inside(lit(g, max(0.6, w * 0.12)), g), P['coeur'][0], 0.6)]
+    return group(out, op)
+
+
+def marque(el, tag='retour'):
+    """Enveloppe un effet dans un groupe reconnaissable par jeu.py (vol=… : `'class="retour"' in el`)."""
+    return '<g class="%s">%s</g>' % (tag, el) if el else ''
+
+
+def boule(fig, c, r, t=0.0, p='feu', op=1.0, seed=0):
+    """Une boule d'énergie (boule de feu, bulle d'eau, noyau de vent) d'UNE forme : un rond aux bords en lobes doux
+    qui ondulent avec t (ms), zones emboîtées (bord de l'élément → cœur blanc décalé vers la lumière), halo doux."""
+    if op <= 0.02 or r < 0.4:
+        return ''
+    P = pal(p)
+    cx, cy = c
+
+    def g_(k, dx=0.0, dy=0.0):
+        pts = []
+        for i in range(40):
+            a = 2 * math.pi * i / 40
+            rr = r * k * (1 + 0.09 * math.sin(a * 5 + t / 45.0 + seed) + 0.05 * math.sin(a * 3 - t / 70.0 + 2 * seed))
+            pts.append((cx + dx + rr * math.cos(a), cy + dy + rr * math.sin(a)))
+        return poly(pts)
+    g = g_(1.0)
+    g2 = inside(g_(0.68, r * 0.1, -r * 0.1), g, 0.2)
+    g3 = inside(g_(0.36, r * 0.2, -r * 0.2), g2)
+    out = [bloom(fig, g, P['halo'], 0.5, grow=r * 0.25 + 0.6, s=r * 0.2 + 0.8),
+           path(g, fig.rad(cx + r * 0.3, cy - r * 0.3, r * 1.3, r * 1.3, [(0, P['milieu'][1]), (0.65, P['bord'][0]), (1, P['bord'][1])])),
+           path(g2, P['milieu'][0]),
+           path(g3, P['coeur'][0], 0.95)]
+    return group(out, op)
+
+
+def souffle(fig, M, T, d0, d1, t, w0=3.0, w1=16.0, p='feu', op=1.0, amp=2.4, roll=0.18):
+    """Un jet continu (souffle de feu, rayon, trombe) de la bouche M vers T, de la distance d0 à d1 : UNE forme qui
+    ondule et s'évase (w0 → w1), ses bords gonflent en vagues qui roulent vers l'avant (pas de boules posées dessus),
+    tête arrondie ; zones emboîtées (bord, milieu, cœur blanc près de la bouche), halo doux, sans contour."""
+    if d1 - d0 < 1 or op <= 0.02:
+        return ''
+    P = pal(p)
+    vx, vy = T[0] - M[0], T[1] - M[1]
+    L = math.hypot(vx, vy) or 1
+    u = (vx / L, vy / L)
+    up = (u[1], -u[0])
+
+    def at(d):
+        s = (0.3 + amp * d / L) * math.sin(d / 8.0 - t / 60.0)
+        return (M[0] + d * u[0] + up[0] * s, M[1] + d * u[1] + up[1] * s)
+
+    def wid(d, k):
+        base = w0 + (w1 - w0) * (max(0.0, d) / L) ** 0.8
+        return k * base * (1 + roll * math.sin(d / 6.0 - t / 40.0))
+    n = 40
+    ds = [d0 + (d1 - d0) * i / n for i in range(n + 1)]
+    c = [at(d) for d in ds]
+    shapes = []
+    for k in (1.0, 0.55, 0.24):
+        ws = [wid(d, k) * max(0.35, min(1.0, (d - d0) / 6.0 + (0.6 if d0 <= 0 else 0.0))) for d in ds]
+        g = strip(c, ws)
+        g = fuse([g, Point(c[-1]).buffer(ws[-1] * 0.5, quad_segs=10)], close=0.3)
+        shapes.append(g)
+    g, g2, g3 = shapes
+    g2 = inside(g2, g, 0.2)
+    g3 = inside(g3, g2)
+    a, b = c[0], c[-1]
+    out = [bloom(fig, g, P['halo'], 0.45, grow=1.6, s=1.8),
+           path(g, lin(fig, a, b, [(0, P['bord'][0]), (0.6, P['bord'][1]), (1, P['bord'][2])])),
+           path(g2, lin(fig, a, b, [(0, P['milieu'][0]), (1, P['milieu'][1])])),
+           path(g3, lin(fig, a, b, [(0, P['coeur'][0]), (0.7, P['coeur'][1]), (1, P['coeur'][1], 0.3)]))]
+    return group(out, op)
+
+
+def spirale_feu(p='feu'):
+    """Le dégradé d'une spirale (queue éteinte → tête blanche) qui marche pour tout élément (`spirale(..., stops=…)`)."""
+    P = pal(p)
+    return [(0, P['bord'][1], 0), (0.35, P['bord'][1], 0.85), (0.65, P['milieu'][1]), (0.9, P['milieu'][0]), (1, P['coeur'][0], 0.8)]
