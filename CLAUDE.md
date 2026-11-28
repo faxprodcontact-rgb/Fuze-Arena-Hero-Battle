@@ -45,6 +45,8 @@ une partie (`grep -n`) avant de la retoucher, plutôt que de tout relire.
     heros/<nom>` → `public/art/vecto/jeu/<id>.webp` + `src/game/vecto-anim.ts` GÉNÉRÉ (consigne **`EXPORT-JEU.md`** ;
     budget 4,2 Mo par planche ; contrôle en vrai combat : `combat-video.cjs`, temps virtuel) ;
   - têtes (cartes du combat et visages des menus) : `heros/tetes.py` → `public/art/vecto/v/<id>.webp` ;
+  - **sorts spéciaux** (v0.75.0) : toujours dessinés avec `heros/effets_pro.py` (formes fusionnées, vraies courbes, jamais
+    de formes posées l'une sur l'autre ; `accrocher()` dans `anim.py`) ;
   - effets reçus des sorts d'équipe : `effets/recus.py` → `public/art/vecto/fx/`, `src/game/vecto-fx.ts` ;
   - **signe du repos** (l'élément propre à chaque héros qui bouge lentement, au combat et dans les menus en grand) :
     `signe(T)` dans `anim.py`, `heros/repos.py` → `art/vecto/repos/` + `vecto-repos.ts`, `ui/vecto-live.tsx` (consigne **`heros/REPOS.md`**) ;
